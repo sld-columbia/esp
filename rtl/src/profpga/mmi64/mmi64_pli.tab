@@ -1,0 +1,2 @@
+$mmi64_stimulate  check=mmi64_stimulate_check_vcs  call=mmi64_stimulate_call_vcs      acc=rw,wn,cbka,frc:%CELL
+$mmi64_pli_init   check=mmi64_pli_init_check_vcs   call=mmi64_pli_init_call_vcs       acc=rw,wn,cbka,frc:%CELL

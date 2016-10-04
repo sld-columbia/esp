@@ -1,0 +1,6 @@
+sldcommon
+fpu
+bus
+noc
+tile
+accelerators
