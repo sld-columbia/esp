@@ -16,12 +16,12 @@
 --
 --  You should have received a copy of the GNU General Public License
 --  along with this program; if not, write to the Free Software
---  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA 
+--  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 -----------------------------------------------------------------------------
 -- Entity:      leon_dsu_stat_base
 -- File:        leon_dsu_stat_base.vhd
 -- Author:      Cobham Gaisler AB
--- Description: Entity that instantiates LEON3 and LEON4 together with the
+-- Description: Entity that instantiates LEON3 together with the
 --              corresponding debug support unit and performance counters.
 --
 -- Limitations:
@@ -32,7 +32,7 @@
 --  Memory BIST signals are not propagated to the top-level
 --
 --  Scan test is disabled
--- 
+--
 ------------------------------------------------------------------------------
 
 
@@ -43,7 +43,6 @@ use work.stdlib.all;
 use work.gencomp.all;
 use work.coretypes.all;
 use work.leon3.all;
-use work.leon4.all;
 use work.subsys.all;
 
 
@@ -120,7 +119,7 @@ entity leon_dsu_stat_base is
     stat_pmask  : integer := 16#ffc#;
     stat_ncnt   : integer := 1;
     stat_nmax   : integer := 0
-    --
+   --
     );
   port (
     rstn                : in  std_ulogic;
@@ -128,7 +127,7 @@ entity leon_dsu_stat_base is
     ahbclk              : in  std_ulogic;    -- bus clock
     cpuclk              : in  std_ulogic;    -- cpu clock
     hclken              : in  std_ulogic;    -- bus clock enable qualifier
-    -- 
+    --
     leon_ahbmi          : in  ahb_mst_in_type;
     leon_ahbmo          : out ahb_mst_out_vector_type(ncpu-1 downto 0);
     leon_ahbsi          : in  ahb_slv_in_type;
@@ -149,16 +148,16 @@ entity leon_dsu_stat_base is
     --
     sysi                : in  leon_dsu_stat_base_in_type;
     syso                : out leon_dsu_stat_base_out_type
-   );
+    );
 end;
 
 architecture rtl of leon_dsu_stat_base is
-  
+
   signal fpi : grfpu_in_vector_type;
   signal fpo : grfpu_out_vector_type;
-  
+
   signal vcc : std_ulogic;
-  
+
 begin
 
   vcc <= '1';
@@ -172,7 +171,7 @@ begin
       signal l3dbgi : l3_debug_in_vector(0 to ncpu-1);
       signal l3dbgo : l3_debug_out_vector(0 to ncpu-1);
       signal l3dsui : dsu_in_type;
-      signal l3dsuo : dsu_out_type; 
+      signal l3dsuo : dsu_out_type;
     begin
       cpu : for i in 0 to ncpu-1 generate
         leon3 : leon3x               -- LEON3 processor
@@ -245,7 +244,7 @@ begin
             ahbi       => leon_ahbmi,
             ahbo       => leon_ahbmo(i),
             ahbsi      => leon_ahbsi,
-            ahbso      => leon_ahbso, 
+            ahbso      => leon_ahbso,
             irqi       => irqi(i),
             irqo       => irqo(i),
             dbgi       => l3dbgi(i),
@@ -262,7 +261,7 @@ begin
           generic map (
             hindex   => dsu_hindex,
             haddr    => dsu_haddr,
-            hmask    => dsu_hmask, 
+            hmask    => dsu_hmask,
             ncpu     => ncpu,
             tbits    => 30,
             tech     => memtech,
@@ -325,177 +324,16 @@ begin
     end block leon3blk;
   end generate;
 
-----------------------------------------------------------------------
----  LEON4 processor and DSU -----------------------------------------
-----------------------------------------------------------------------
-  
-  l4 : if leon = 4 generate
-    leon4blk : block
-      signal l4dbgi : l4_debug_in_vector(0 to ncpu-1);
-      signal l4dbgo : l4_debug_out_vector(0 to ncpu-1);
-      signal l4dsui : dsu4_in_type;
-      signal l4dsuo : dsu4_out_type; 
-    begin
-      cpu : for i in 0 to ncpu-1 generate
-        leon4 : leon4x            -- LEON4 processor
-          generic map (
-            hindex     => i,
-            fabtech    => fabtech,
-            memtech    => memtech,
-            nwindows   => nwindows,
-            dsu        => dsu,
-            fpu        => fpu + 32*grfpush,
-            v8         => v8, 
-            cp         => 0,
-            mac        => mac,
-            pclow      => pclow,
-            notag      => notag,
-            nwp        => nwp,
-            icen       => icen,
-            irepl      => irepl,
-            isets      => isets,
-            ilinesize  => ilinesize, 
-            isetsize   => isetsize,
-            isetlock   => isetlock,
-            dcen       => dcen,
-            drepl      => drepl,
-            dsets      => dsets,
-            dlinesize  => dlinesize,
-            dsetsize   => dsetsize,
-            dsetlock   => dsetlock,
-            dsnoop     => dsnoop,
-            ilram      => ilram,
-            ilramsize  => ilramsize,
-            ilramstart => ilramstart,
-            dlram      => dlram,
-            dlramsize  => dlramsize,
-            dlramstart => dlramstart,
-            mmuen      => mmuen,
-            itlbnum    => itlbnum,
-            dtlbnum    => dtlbnum,
-            tlb_type   => tlb_type,
-            tlb_rep    => tlb_rep, 
-            lddel      => lddel,
-            disas      => disas,
-            tbuf       => tbuf,
-            pwd        => pwd,
-            svt        => svt,
-            rstaddr    => rstaddr,
-            smp        => smp,
-            cached     => cached, 
-            clk2x      => 0,
-            scantest   => 0,
-            wbmask     => wbmask,
-            busw       => busw,
-            netlist    => netlist,
-            ft         => ft,
-            npasi      => npasi,
-            pwrpsr     => pwrpsr)
-          port map (
-            ahbclk     => ahbclk,
-            cpuclk     => cpuclk,
-            gcpuclk    => cpuclk,
-            fpuclk     => cpuclk,
-            hclken     => hclken,
-            rstn       => rstn,
-            ahbi       => leon_ahbmi,
-            ahbo       => leon_ahbmo(i),
-            ahbsi      => leon_ahbsi,
-            ahbso      => leon_ahbso,
-            irqi       => irqi(i),
-            irqo       => irqo(i),
-            dbgi       => l4dbgi(i),
-            dbgo       => l4dbgo(i),
-            fpui       => fpi(i),
-            fpuo       => fpo(i)
-            );
-      end generate cpu;
-      syso.proc_error  <= l4dbgo(0).error;
-      syso.proc_errorn <= not l4dbgo(0).error;
-      -- LEON4 Debug Support Unit    
-      dsugen : if dsu = 1 generate
-        dsu0 : dsu4x
-          generic map (
-            hindex   => dsu_hindex,
-            haddr    => dsu_haddr,
-            hmask    => dsu_hmask,
-            ncpu     => ncpu,
-            tbits    => 30,
-            tech     => memtech, 
-            irq      => 0,
-            kbytes   => atbsz,
-            clk2x    => 0,              -- fixme
-            bwidth   => AHBDW,
-            ahbpf    => 0,              -- fixme
-            ahbwp    => 0,              -- fixme
-            scantest => 0,
-            pipedbg  => 0,
-            pipeahbt => 0)
-          port map (
-            rst      => rstn,
-            hclk     => ahbclk, 
-            cpuclk   => cpuclk,
-            fcpuclk  => cpuclk,
-            ahbmi    => dsu_tahbmi,
-            ahbsi    => dsu_ahbsi,
-            ahbso    => dsu_ahbso,
-            tahbsi   => dsu_tahbsi,
-            dbgi     => l4dbgo,
-            dbgo     => l4dbgi,
-            dsui     => l4dsui,
-            dsuo     => l4dsuo,
-            hclken   => hclken
-            );
-
-        l4dsui.enable <= sysi.dsu_enable;
-        l4dsui.break <= sysi.dsu_break;
-        syso.dsu_active <= l4dsuo.active;
-        syso.dsu_tstop <= l4dsuo.tstop;
-      end generate;
-      nodsugen : if dsu = 0 generate
-        l4dbgi <= (others => l4_dbgi_none);
-      end generate;
-      l4sgen : if stat /= 0 generate
-        l4s : l4stat
-          generic map (
-            pindex => stat_pindex,
-            paddr  => stat_paddr,
-            pmask  => stat_pmask,
-            ncnt   => stat_ncnt,
-            ncpu   => ncpu,
-            nmax   => stat_nmax,
-            lahben => 0,
-            dsuen  => dsu,
-            nextev => 7)
-          port map (
-            rstn  => rstn,
-            clk   => ahbclk,
-            apbi  => stat_apbi,
-            apbo  => stat_apbo,
-            ahbsi => stat_ahbsi,
-            dbgo  => l4dbgo,
-            dsuo  => l4dsuo,
-            stati => stati,
-            apb2i   => apb_slv_in_none,
-            apb2o   => open,
-            astat   => amba_stat_none);
-      end generate;
-      nol4s : if stat = 0 generate
-        stat_apbo <= apb_none;
-      end generate;
-    end block leon4blk;
-  end generate;
-
   nodsu : if dsu = 0 generate
     syso.dsu_tstop <= '0'; syso.dsu_active <= '0';
     dsu_ahbso <= ahbs_none;
   end generate;
-  
+
 ----------------------------------------------------------------------
 ---  Optional shared FPU     -----------------------------------------
 ----------------------------------------------------------------------
 
-  shfpu : if grfpush = 1 generate    
+  shfpu : if grfpush = 1 generate
     grfpush0 : grfpushwx generic map ((fpu-1), ncpu, fabtech)
       port map (cpuclk, rstn, fpi, fpo);
   end generate;
@@ -503,8 +341,4 @@ begin
     fpo <= (others => grfpu_out_none);
   end generate;
 
-
-
-
- end;
-
+end;

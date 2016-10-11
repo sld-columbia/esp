@@ -1,2 +1,0 @@
-pci_arb_pkg.vhd
-pcicomp.vhd
