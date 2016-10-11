@@ -1,0 +1,92 @@
+  mainmenu_option next_comment
+  comment '8/32-bit PROM/SRAM controller with EDAC'
+    bool 'Enable 32-bit PROM/SRAM controller    ' CONFIG_SRCTRLFT
+    if [ "$CONFIG_SRCTRLFT" = "y" ]; then
+      bool 'Enable APB interface' CONFIG_SRCTRLFT_APBEN
+      if [ "$CONFIG_SRCTRLFT_APBEN" != "y" ]; then
+        int 'PROM waitstates' CONFIG_SRCTRLFT_PROMWS 3
+        int 'RAM waitstates' CONFIG_SRCTRLFT_RAMWS 0
+        int 'IO waitstates' CONFIG_SRCTRLFT_IOWS 0
+      fi
+      bool 'Use read-modify-write for sub-word writes  ' CONFIG_SRCTRLFT_RMW
+      bool '8-bit PROM interface ' CONFIG_SRCTRLFT_8BIT
+      bool 'Enable EDAC                     ' CONFIG_SRCTRLFT_EDAC
+
+      choice 'SRAM banks' \
+   	  "1		CONFIG_SRCTRLFT_SRBANKS1 \
+   	   2		CONFIG_SRCTRLFT_SRBANKS2 \
+   	   3		CONFIG_SRCTRLFT_SRBANKS3 \
+   	   4		CONFIG_SRCTRLFT_SRBANKS4 \
+   	   5		CONFIG_SRCTRLFT_SRBANKS5 \
+   	   6		CONFIG_SRCTRLFT_SRBANKS6 \
+   	   7		CONFIG_SRCTRLFT_SRBANKS7 \
+   	   8  	CONFIG_SRCTRLFT_SRBANKS8" 1
+
+      choice 'SRAM fixed bank size, or programmable' \
+   	  " programmable CONFIG_SRCTRLFT_BANKSZ0 \
+   	    16_kByte CONFIG_SRCTRLFT_BANKSZ1 \
+   	    32_kByte CONFIG_SRCTRLFT_BANKSZ2 \
+   	    64_kByte CONFIG_SRCTRLFT_BANKSZ3 \
+   	   128_kByte CONFIG_SRCTRLFT_BANKSZ4 \
+   	   256_kByte CONFIG_SRCTRLFT_BANKSZ5 \
+   	   512_kByte CONFIG_SRCTRLFT_BANKSZ6 \
+   	     1_MByte CONFIG_SRCTRLFT_BANKSZ7 \
+   	     2_MByte CONFIG_SRCTRLFT_BANKSZ8 \
+   	     4_MByte CONFIG_SRCTRLFT_BANKSZ9 \
+   	  	  8_MByte CONFIG_SRCTRLFT_BANKSZ10 \
+   	  	 16_MByte CONFIG_SRCTRLFT_BANKSZ11 \
+   	    32_MByte CONFIG_SRCTRLFT_BANKSZ12 \
+   	    64_MByte CONFIG_SRCTRLFT_BANKSZ13 \
+   	   128_MByte CONFIG_SRCTRLFT_BANKSZ14 \
+   	   256_MByte CONFIG_SRCTRLFT_BANKSZ15" 0
+
+      choice 'PROM banks' \
+   	  "1		CONFIG_SRCTRLFT_ROMBANKS1 \
+   	   2		CONFIG_SRCTRLFT_ROMBANKS2 \
+   	   3		CONFIG_SRCTRLFT_ROMBANKS3 \
+   	   4		CONFIG_SRCTRLFT_ROMBANKS4 \
+   	   5		CONFIG_SRCTRLFT_ROMBANKS5 \
+   	   6		CONFIG_SRCTRLFT_ROMBANKS6 \
+   	   7		CONFIG_SRCTRLFT_ROMBANKS7 \
+   	   8  	CONFIG_SRCTRLFT_ROMBANKS8" 1
+
+      choice 'PROM fixed bank size, or programmable' \
+   	  " programmable CONFIG_SRCTRLFT_ROMBANKSZ0 \
+   	    16_kByte CONFIG_SRCTRLFT_ROMBANKSZ1 \
+   	    32_kByte CONFIG_SRCTRLFT_ROMBANKSZ2 \
+   	    64_kByte CONFIG_SRCTRLFT_ROMBANKSZ3 \
+   	   128_kByte CONFIG_SRCTRLFT_ROMBANKSZ4 \
+   	   256_kByte CONFIG_SRCTRLFT_ROMBANKSZ5 \
+   	   512_kByte CONFIG_SRCTRLFT_ROMBANKSZ6 \
+   	     1_MByte CONFIG_SRCTRLFT_ROMBANKSZ7 \
+   	     2_MByte CONFIG_SRCTRLFT_ROMBANKSZ8 \
+   	     4_MByte CONFIG_SRCTRLFT_ROMBANKSZ9 \
+   	  	  8_MByte CONFIG_SRCTRLFT_ROMBANKSZ10 \
+   	  	 16_MByte CONFIG_SRCTRLFT_ROMBANKSZ11 \
+   	    32_MByte CONFIG_SRCTRLFT_ROMBANKSZ12 \
+   	    64_MByte CONFIG_SRCTRLFT_ROMBANKSZ13 \
+   	   128_MByte CONFIG_SRCTRLFT_ROMBANKSZ14 \
+   	   256_MByte CONFIG_SRCTRLFT_ROMBANKSZ15" 0
+
+         if [ "$CONFIG_SRCTRLFT_ROMBANKSZ0" = "1" ]; then
+            choice 'PROM default bank size, when programmable' \
+         	  "  8_kByte CONFIG_SRCTRLFT_ROMBANKSZDEF0 \
+         	    16_kByte CONFIG_SRCTRLFT_ROMBANKSZDEF1 \
+         	    32_kByte CONFIG_SRCTRLFT_ROMBANKSZDEF2 \
+         	    64_kByte CONFIG_SRCTRLFT_ROMBANKSZDEF3 \
+         	   128_kByte CONFIG_SRCTRLFT_ROMBANKSZDEF4 \
+         	   256_kByte CONFIG_SRCTRLFT_ROMBANKSZDEF5 \
+         	   512_kByte CONFIG_SRCTRLFT_ROMBANKSZDEF6 \
+         	     1_MByte CONFIG_SRCTRLFT_ROMBANKSZDEF7 \
+         	     2_MByte CONFIG_SRCTRLFT_ROMBANKSZDEF8 \
+         	     4_MByte CONFIG_SRCTRLFT_ROMBANKSZDEF9 \
+         	  	  8_MByte CONFIG_SRCTRLFT_ROMBANKSZDEF10 \
+         	  	 16_MByte CONFIG_SRCTRLFT_ROMBANKSZDEF11 \
+         	    32_MByte CONFIG_SRCTRLFT_ROMBANKSZDEF12 \
+         	    64_MByte CONFIG_SRCTRLFT_ROMBANKSZDEF13 \
+         	   128_MByte CONFIG_SRCTRLFT_ROMBANKSZDEF14 \
+         	   256_MByte CONFIG_SRCTRLFT_ROMBANKSZDEF15" 0
+         fi
+    fi
+    bool 'Use VHDL/EDIF netlist           ' CONFIG_SRCTRLFT_NETLIST
+  endmenu

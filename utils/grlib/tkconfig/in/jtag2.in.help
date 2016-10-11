@@ -1,0 +1,5 @@
+JTAG2 Enable
+CONFIG_DSU_JTAG2
+  Say Y to enable a second JTAG debug link (JTAG-to-AHB). Some template
+  designs use both a macro based interface as well as a generic (VHDL).
+  See the README.txt file for the template design in question.

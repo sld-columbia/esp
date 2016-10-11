@@ -1,0 +1,14 @@
+JTAG Enable
+CONFIG_DSU_JTAG
+  Say Y to enable the JTAG debug link (JTAG-to-AHB). Debugging is done 
+  with GRMON through the boards JTAG chain at speeds of up to 800 kbits/s. 
+
+  The TAP controller can be implemented in custom macros on
+  Altera, Actel Proasic/3 and Xilinx devices. The commercial
+  GRLIB also includes a generic TAP controller in VHDL.
+
+  Supported JTAG cables are Xilinx Parallel Cable III and IV, 
+  Xilinx Platform cables (USB), and Altera parallel and USB cables,
+  Amontech JTAG key, various FTDI chip based USB/JTAG devices, and
+  Actel Flash Pro 3/4 cable.
+

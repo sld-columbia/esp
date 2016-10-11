@@ -1,0 +1,1 @@
+     bool 'Enable JTAG boundary scan ' 			  CONFIG_BOUNDSCAN_EN

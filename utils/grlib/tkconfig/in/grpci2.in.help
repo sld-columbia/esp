@@ -1,0 +1,105 @@
+PCI interface type
+CONFIG_GRPCI2_MASTER
+  Enable the PCI initiator.
+
+PCI interface type
+CONFIG_GRPCI2_TARGET
+  Enable the PCI target.
+
+PCI DMA controller
+CONFIG_GRPCI2_DMA
+  Enable the PCI DMA controller.
+
+PCI device-id
+CONFIG_GRPCI2_DEVICEID
+  Sets the PCI device ID in the PCI configuration area.
+
+PCI vendor-id
+CONFIG_GRPCI2_VENDORID
+  Sets the PCI vendor ID in the PCI configuration area.
+
+PCI class-code
+CONFIG_GRPCI2_CLASS
+  Sets the PCI class-code in the PCI configuration area.
+
+PCI revision-id
+CONFIG_GRPCI2_REVID
+  Sets the PCI revision ID in the PCI configuration area.
+
+PCI Capability pointer
+CONFIG_GRPCI2_CAPPOINT
+  Sets the PCI capability pointer in the PCI configuration area. 
+  Sets the offset for the extended PCI Configuration Space.
+
+PCI Next Capability pointer
+CONFIG_GRPCI2_NEXTCAPPOINT
+  Sets the PCI capability pointer of second item in the extended 
+  capability list (in the PCI configuration) If no user defined 
+  extended capability item is implemented this should be set to 0.
+
+PCI BAR size
+CONFIG_GRPCI2_BAR0
+  Set the size of BAR 0. 26 => bit[31:26] in the BAR register is 
+  implemented. BAR size = 64 MiB.
+
+PCI BAR size
+CONFIG_GRPCI2_BAR1
+  see help for BAR0.
+
+PCI BAR size
+CONFIG_GRPCI2_BAR2
+  see help for BAR0.
+
+PCI BAR size
+CONFIG_GRPCI2_BAR3
+  see help for BAR0.
+
+PCI BAR size
+CONFIG_GRPCI2_BAR4
+  see help for BAR0.
+
+PCI BAR size
+CONFIG_GRPCI2_BAR5
+  see help for BAR0.
+
+FIFO depth
+CONFIG_GRPCI2_FIFO8
+  The number words in each PCI FIFO buffer.
+
+FIFO count
+CONFIG_GRPCI2_FIFOCNT1
+  The number buffer implemented in each FIFO.
+
+GRPCI2 PCI little-endian
+CONFIG_GRPCI2_ENDIAN
+  Set the default PCI bus endianes.
+
+GRPCI2 Device Interrupt
+CONFIG_GRPCI2_DINT
+  Enable the device to assert the PCI int signal.
+
+GRPCI2 Device Interrupt mask
+CONFIG_GRPCI2_DINTMASK
+  The default mask. '1' = enable.
+
+GRPCI2 Host Interrupt
+CONFIG_GRPCI2_HINT
+  Enable the device to sample the PCI int signal.
+
+GRPCI2 Host Interrupt mask
+CONFIG_GRPCI2_HINTMASK
+  The default mask. '1' = enable.
+
+GRPCI2 PCI trace buffer
+CONFIG_GRPCI2_TRACE0
+  Set the depth of the PCI trace buffer.
+
+GRPCI2 Input pad bypass
+CONFIG_GRPCI2_BYPASS
+  If the PADs do not implements output-to-input bypass, this option 
+  implements the bypass in the core.
+
+Extended Configuration Space mappit
+CONFIG_GRPCI2_EXTCFG
+  The mapping of the user defined Extended PCI Configuration Space 
+  to AMBA.

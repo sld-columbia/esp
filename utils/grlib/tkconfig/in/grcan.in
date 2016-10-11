@@ -1,0 +1,5 @@
+    bool 'Enable GRCAN interface                 ' CONFIG_GRCAN_ENABLE
+    if [ "$CONFIG_GRCAN_ENABLE" = "y" ]; then
+      int 'Interrupt number                      ' CONFIG_GRCANIRQ 13
+      bool 'Enable single common interrupt       ' CONFIG_GRCANSINGLE
+    fi

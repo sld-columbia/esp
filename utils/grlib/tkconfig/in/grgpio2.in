@@ -1,0 +1,7 @@
+
+    bool 'Enable second generic GPIO port              ' CONFIG_GRGPIO2_ENABLE
+    if [ "$CONFIG_GRGPIO2_ENABLE" = "y" ]; then
+      int 'GPIO2 width            '   CONFIG_GRGPIO2_WIDTH 8
+      hex 'GPIO2 interrupt mask   '   CONFIG_GRGPIO2_IMASK 0000
+    fi
+

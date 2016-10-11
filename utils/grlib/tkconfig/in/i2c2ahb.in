@@ -1,0 +1,11 @@
+   bool 'Enable I2C to AHB bridge ' CONFIG_I2C2AHB
+   if [ "$CONFIG_I2C2AHB" = "y" ]; then
+     bool 'Enable APB interface   ' CONFIG_I2C2AHB_APB
+     hex  'AHB protection address (high) ' CONFIG_I2C2AHB_ADDRH 0000
+     hex  'AHB protection address (low) ' CONFIG_I2C2AHB_ADDRL 0000
+     hex  'AHB protection mask (high) ' CONFIG_I2C2AHB_MASKH 0000
+     hex  'AHB protection mask (low) ' CONFIG_I2C2AHB_MASKL 0000
+     bool 'Enable after reset  ' CONFIG_I2C2AHB_RESEN
+     hex  'I2C memory address ' CONFIG_I2C2AHB_SADDR 50
+     hex  'I2C configuration address ' CONFIG_I2C2AHB_CADDR 51
+   fi

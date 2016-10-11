@@ -1,0 +1,296 @@
+Leon2 memory controller
+CONFIG_MCTRLFT
+  Say Y here to enable a memory controller with EDAC. The controller
+  can access PROM, I/O, SRAM and SDRAM. The bus width for PROM
+  and SRAM is programmable to 8-, 16- or 32-bits.
+
+8-bit memory support
+CONFIG_MCTRLFT_8BIT
+  If you say Y here, the PROM/SRAM memory controller will support
+  8-bit mode, i.e. operate from 8-bit devices as if they were 32-bit.
+  Say N to save a few hundred gates.
+
+16-bit memory support
+CONFIG_MCTRLFT_16BIT
+  If you say Y here, the PROM/SRAM memory controller will support
+  16-bit mode, i.e. operate from 16-bit devices as if they were 32-bit.
+  Say N to save a few hundred gates.
+
+Write strobe feedback
+CONFIG_MCTRLFT_WFB
+  If you say Y here, the PROM/SRAM write strobe (WRITEN) will
+  be used to enable the data bus drivers during write cycles. This
+  will guarantee that the data is still valid on the rising edge of
+  the write strobe. If you say N, the write strobes and the data bus
+  drivers will be clocked on the rising edge, potentially creating
+  a hold time problem in external memory or I/O. However, in all
+  practical cases, there is enough capacitance in the data bus lines
+  to keep the value stable for a few (many?) nano-seconds after the
+  buffers have been disabled, making it safe to say N and remove a
+  combinational path in the netlist that might be difficult to
+  analyze.
+
+Write strobe feedback
+CONFIG_MCTRLFT_5CS
+  If you say Y here, the 5th (RAMSN[4]) SRAM chip select signal will
+  be enabled. If you don't intend to use it, say N and save some gates.
+
+SDRAM controller enable
+CONFIG_MCTRLFT_SDRAM
+  Say Y here to enabled the PC100/PC133 SDRAM controller. If you don't
+  intend to use SDRAM, say N and save about 1 kgates.
+
+SDRAM controller inverted clock
+CONFIG_MCTRLFT_SDRAM_INVCLK
+  If you say Y here, the SDRAM clock will be inverted in respect to the
+  system clock and the SDRAM signals. This will limit the SDRAM frequency
+  to 50/66 MHz, but has the benefit that you will not need a PLL to
+  generate the SDRAM clock. On FPGA targets, say Y. On ASIC targets,
+  say N and tell your foundry to balance the SDRAM clock output.
+
+SDRAM separate address buses
+CONFIG_MCTRLFT_SDRAM_SEPBUS
+  Say Y here if your SDRAM is connected through separate address
+  and data buses (SA & SD). This is the case on the GR-CPCI-XC2V6000
+  board, but not on the GR-PCI-XC2V3000 or Avnet XCV1500E boards.
+
+Edac enable
+CONFIG_MCTRLFT_EDAC
+  Say Y here to enable the EDAC.
+
+Edac pipeline
+CONFIG_MCTRLFT_EDACPIPE
+  Say Y here to enable EDAC pipelining. This will improve the timing
+  on the HREADY output, but incur one extra clock latency on the
+  first read data in a burst (or single access).
+
+Edac pipeline
+CONFIG_MCTRLFT_RSEDAC
+  Say Y here to enable Reed-Solomon EDAC for SDRAM. This EDAC is
+  able to correct two independent 4-bit errors in a 32-bit word.
+
+Page burst enable
+CONFIG_MCTRLFT_PAGE
+  Say Y here to enable SDRAM page burst operation. This will implement
+  read operations using page bursts rather than 8-word bursts and save
+  about 500 gates (100 LUTs). Note that not all SDRAM supports page
+  burst, so use this option with care.
+
+Programmable page burst enable
+CONFIG_MCTRLFT_PROGPAGE
+  Say Y here to enable programmable SDRAM page burst operation. This
+  will allow to dynamically enable/disable page burst by setting
+  bit 17 in MCFG2.
+
+
+PROM bank and size configuration
+CONFIG_MCTRLFT_ROMASEL0
+  Select number of PROM banks and their sizes. Two or four banks can be selected.
+  For two banks, a fixed bank size can be selected, ranging from 64 kByte to 256 MByte.
+  For four banks, a fixed bank size can be selected, ranging from 16 kByte to 128 MByte,
+  or the size can be programmable.
+
+PROM bank and size configuration
+CONFIG_MCTRLFT_ROMASEL1
+  Select number of PROM banks and their sizes. Two or four banks can be selected.
+  For two banks, a fixed bank size can be selected, ranging from 64 kByte to 256 MByte.
+  For four banks, a fixed bank size can be selected, ranging from 16 kByte to 128 MByte,
+  or the size can be programmable.
+
+PROM bank and size configuration
+CONFIG_MCTRLFT_ROMASEL2
+  Select number of PROM banks and their sizes. Two or four banks can be selected.
+  For two banks, a fixed bank size can be selected, ranging from 64 kByte to 256 MByte.
+  For four banks, a fixed bank size can be selected, ranging from 16 kByte to 128 MByte,
+  or the size can be programmable.
+
+PROM bank and size configuration
+CONFIG_MCTRLFT_ROMASEL3
+  Select number of PROM banks and their sizes. Two or four banks can be selected.
+  For two banks, a fixed bank size can be selected, ranging from 64 kByte to 256 MByte.
+  For four banks, a fixed bank size can be selected, ranging from 16 kByte to 128 MByte,
+  or the size can be programmable.
+
+PROM bank and size configuration
+CONFIG_MCTRLFT_ROMASEL4
+  Select number of PROM banks and their sizes. Two or four banks can be selected.
+  For two banks, a fixed bank size can be selected, ranging from 64 kByte to 256 MByte.
+  For four banks, a fixed bank size can be selected, ranging from 16 kByte to 128 MByte,
+  or the size can be programmable.
+
+PROM bank and size configuration
+CONFIG_MCTRLFT_ROMASEL5
+  Select number of PROM banks and their sizes. Two or four banks can be selected.
+  For two banks, a fixed bank size can be selected, ranging from 64 kByte to 256 MByte.
+  For four banks, a fixed bank size can be selected, ranging from 16 kByte to 128 MByte,
+  or the size can be programmable.
+
+PROM bank and size configuration
+CONFIG_MCTRLFT_ROMASEL6
+  Select number of PROM banks and their sizes. Two or four banks can be selected.
+  For two banks, a fixed bank size can be selected, ranging from 64 kByte to 256 MByte.
+  For four banks, a fixed bank size can be selected, ranging from 16 kByte to 128 MByte,
+  or the size can be programmable.
+
+PROM bank and size configuration
+CONFIG_MCTRLFT_ROMASEL7
+  Select number of PROM banks and their sizes. Two or four banks can be selected.
+  For two banks, a fixed bank size can be selected, ranging from 64 kByte to 256 MByte.
+  For four banks, a fixed bank size can be selected, ranging from 16 kByte to 128 MByte,
+  or the size can be programmable.
+
+PROM bank and size configuration
+CONFIG_MCTRLFT_ROMASEL8
+  Select number of PROM banks and their sizes. Two or four banks can be selected.
+  For two banks, a fixed bank size can be selected, ranging from 64 kByte to 256 MByte.
+  For four banks, a fixed bank size can be selected, ranging from 16 kByte to 128 MByte,
+  or the size can be programmable.
+
+PROM bank and size configuration
+CONFIG_MCTRLFT_ROMASEL9
+  Select number of PROM banks and their sizes. Two or four banks can be selected.
+  For two banks, a fixed bank size can be selected, ranging from 64 kByte to 256 MByte.
+  For four banks, a fixed bank size can be selected, ranging from 16 kByte to 128 MByte,
+  or the size can be programmable.
+
+PROM bank and size configuration
+CONFIG_MCTRLFT_ROMASEL10
+  Select number of PROM banks and their sizes. Two or four banks can be selected.
+  For two banks, a fixed bank size can be selected, ranging from 64 kByte to 256 MByte.
+  For four banks, a fixed bank size can be selected, ranging from 16 kByte to 128 MByte,
+  or the size can be programmable.
+
+PROM bank and size configuration
+CONFIG_MCTRLFT_ROMASEL11
+  Select number of PROM banks and their sizes. Two or four banks can be selected.
+  For two banks, a fixed bank size can be selected, ranging from 64 kByte to 256 MByte.
+  For four banks, a fixed bank size can be selected, ranging from 16 kByte to 128 MByte,
+  or the size can be programmable.
+
+PROM bank and size configuration
+CONFIG_MCTRLFT_ROMASEL12
+  Select number of PROM banks and their sizes. Two or four banks can be selected.
+  For two banks, a fixed bank size can be selected, ranging from 64 kByte to 256 MByte.
+  For four banks, a fixed bank size can be selected, ranging from 16 kByte to 128 MByte,
+  or the size can be programmable.
+
+PROM bank and size configuration
+CONFIG_MCTRLFT_ROMASEL13
+  Select number of PROM banks and their sizes. Two or four banks can be selected.
+  For two banks, a fixed bank size can be selected, ranging from 64 kByte to 256 MByte.
+  For four banks, a fixed bank size can be selected, ranging from 16 kByte to 128 MByte,
+  or the size can be programmable.
+
+PROM bank and size configuration
+CONFIG_MCTRLFT_ROMASEL14
+  Select number of PROM banks and their sizes. Two or four banks can be selected.
+  For two banks, a fixed bank size can be selected, ranging from 64 kByte to 256 MByte.
+  For four banks, a fixed bank size can be selected, ranging from 16 kByte to 128 MByte,
+  or the size can be programmable.
+
+PROM bank and size configuration
+CONFIG_MCTRLFT_ROMASEL15
+  Select number of PROM banks and their sizes. Two or four banks can be selected.
+  For two banks, a fixed bank size can be selected, ranging from 64 kByte to 256 MByte.
+  For four banks, a fixed bank size can be selected, ranging from 16 kByte to 128 MByte,
+  or the size can be programmable.
+
+PROM bank and size configuration
+CONFIG_MCTRLFT_ROMASEL16
+  Select number of PROM banks and their sizes. Two or four banks can be selected.
+  For two banks, a fixed bank size can be selected, ranging from 64 kByte to 256 MByte.
+  For four banks, a fixed bank size can be selected, ranging from 16 kByte to 128 MByte,
+  or the size can be programmable.
+
+PROM bank and size configuration
+CONFIG_MCTRLFT_ROMASEL17
+  Select number of PROM banks and their sizes. Two or four banks can be selected.
+  For two banks, a fixed bank size can be selected, ranging from 64 kByte to 256 MByte.
+  For four banks, a fixed bank size can be selected, ranging from 16 kByte to 128 MByte,
+  or the size can be programmable.
+
+PROM bank and size configuration
+CONFIG_MCTRLFT_ROMASEL18
+  Select number of PROM banks and their sizes. Two or four banks can be selected.
+  For two banks, a fixed bank size can be selected, ranging from 64 kByte to 256 MByte.
+  For four banks, a fixed bank size can be selected, ranging from 16 kByte to 128 MByte,
+  or the size can be programmable.
+
+PROM bank and size configuration
+CONFIG_MCTRLFT_ROMASEL19
+  Select number of PROM banks and their sizes. Two or four banks can be selected.
+  For two banks, a fixed bank size can be selected, ranging from 64 kByte to 256 MByte.
+  For four banks, a fixed bank size can be selected, ranging from 16 kByte to 128 MByte,
+  or the size can be programmable.
+
+PROM bank and size configuration
+CONFIG_MCTRLFT_ROMASEL20
+  Select number of PROM banks and their sizes. Two or four banks can be selected.
+  For two banks, a fixed bank size can be selected, ranging from 64 kByte to 256 MByte.
+  For four banks, a fixed bank size can be selected, ranging from 16 kByte to 128 MByte,
+  or the size can be programmable.
+
+PROM bank and size configuration
+CONFIG_MCTRLFT_ROMASEL21
+  Select number of PROM banks and their sizes. Two or four banks can be selected.
+  For two banks, a fixed bank size can be selected, ranging from 64 kByte to 256 MByte.
+  For four banks, a fixed bank size can be selected, ranging from 16 kByte to 128 MByte,
+  or the size can be programmable.
+
+PROM bank and size configuration
+CONFIG_MCTRLFT_ROMASEL22
+  Select number of PROM banks and their sizes. Two or four banks can be selected.
+  For two banks, a fixed bank size can be selected, ranging from 64 kByte to 256 MByte.
+  For four banks, a fixed bank size can be selected, ranging from 16 kByte to 128 MByte,
+  or the size can be programmable.
+
+PROM bank and size configuration
+CONFIG_MCTRLFT_ROMASEL23
+  Select number of PROM banks and their sizes. Two or four banks can be selected.
+  For two banks, a fixed bank size can be selected, ranging from 64 kByte to 256 MByte.
+  For four banks, a fixed bank size can be selected, ranging from 16 kByte to 128 MByte,
+  or the size can be programmable.
+
+PROM bank and size configuration
+CONFIG_MCTRLFT_ROMASEL24
+  Select number of PROM banks and their sizes. Two or four banks can be selected.
+  For two banks, a fixed bank size can be selected, ranging from 64 kByte to 256 MByte.
+  For four banks, a fixed bank size can be selected, ranging from 16 kByte to 128 MByte,
+  or the size can be programmable.
+
+PROM bank and size configuration
+CONFIG_MCTRLFT_ROMASEL25
+  Select number of PROM banks and their sizes. Two or four banks can be selected.
+  For two banks, a fixed bank size can be selected, ranging from 64 kByte to 256 MByte.
+  For four banks, a fixed bank size can be selected, ranging from 16 kByte to 128 MByte,
+  or the size can be programmable.
+
+PROM bank and size configuration
+CONFIG_MCTRLFT_ROMASEL26
+  Select number of PROM banks and their sizes. Two or four banks can be selected.
+  For two banks, a fixed bank size can be selected, ranging from 64 kByte to 256 MByte.
+  For four banks, a fixed bank size can be selected, ranging from 16 kByte to 128 MByte,
+  or the size can be programmable.
+
+PROM bank and size configuration
+CONFIG_MCTRLFT_ROMASEL27
+  Select number of PROM banks and their sizes. Two or four banks can be selected.
+  For two banks, a fixed bank size can be selected, ranging from 64 kByte to 256 MByte.
+  For four banks, a fixed bank size can be selected, ranging from 16 kByte to 128 MByte,
+  or the size can be programmable.
+
+PROM bank and size configuration
+CONFIG_MCTRLFT_ROMASEL28
+  Select number of PROM banks and their sizes. Two or four banks can be selected.
+  For two banks, a fixed bank size can be selected, ranging from 64 kByte to 256 MByte.
+  For four banks, a fixed bank size can be selected, ranging from 16 kByte to 128 MByte,
+  or the size can be programmable.
+
+Use netlist
+CONFIG_MCTRLFT_NETLIST
+  Use a technology-specific pre-compiled netlist of FTMCTRL
+
+64-bit data bus
+CONFIG_MCTRLFT_SDRAM_BUS64
+  Say Y here to enable 64-bit SDRAM data bus.
+

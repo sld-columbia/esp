@@ -1,0 +1,11 @@
+mainmenu_option next_comment
+    comment 'MIG memory controller   '
+	bool 'Enable Xilinx MIG memory controller' CONFIG_MIG_DDR2
+        if [ "$CONFIG_MIG_DDR2" = "y" ]; then
+          int 'Chip selects (ranks)  ' CONFIG_MIG_RANKS 1
+          int 'Column bits  ' CONFIG_MIG_COLBITS 10
+          int 'Row bits     ' CONFIG_MIG_ROWBITS 13
+          int 'Bank bits    ' CONFIG_MIG_BANKBITS 2
+          hex 'AHB HMASK    ' CONFIG_MIG_HMASK F00
+        fi
+endmenu

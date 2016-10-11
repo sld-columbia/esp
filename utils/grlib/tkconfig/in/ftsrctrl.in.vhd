@@ -1,0 +1,16 @@
+-- PROM/SRAM controller
+  constant CFG_SRCTRLFT         : integer := CONFIG_SRCTRLFT;
+  constant CFG_SRCTRLFT_APBEN   : integer := CONFIG_SRCTRLFT_APBEN;
+  constant CFG_SRCTRLFT_PROMWS  : integer := CONFIG_SRCTRLFT_PROMWS;
+  constant CFG_SRCTRLFT_RAMWS   : integer := CONFIG_SRCTRLFT_RAMWS;
+  constant CFG_SRCTRLFT_IOWS    : integer := CONFIG_SRCTRLFT_IOWS;
+  constant CFG_SRCTRLFT_RMW  	  : integer := CONFIG_SRCTRLFT_RMW;
+  constant CFG_SRCTRLFT_EDAC    : integer := CONFIG_SRCTRLFT_EDAC;
+  constant CFG_SRCTRLFT_NETLIST : integer := CONFIG_SRCTRLFT_NETLIST;
+  constant CFG_SRCTRLFT_8BIT         : Integer := CONFIG_SRCTRLFT_8BIT;
+  constant CFG_SRCTRLFT_SRBANKS      : Integer := CFG_SR_CTRLFT_SRBANKS;
+  constant CFG_SRCTRLFT_BANKSZ       : Integer := CFG_SR_CTRLFT_BANKSZ;
+  constant CFG_SRCTRLFT_ROMBANKS     : Integer := CFG_SR_CTRLFT_ROMBANKS;
+  constant CFG_SRCTRLFT_ROMBANKSZ    : Integer := CFG_SR_CTRLFT_ROMBANKSZ;
+  constant CFG_SRCTRLFT_ROMBANKSZDEF : Integer := CFG_SR_CTRLFT_ROMBANKSZDEF;
+

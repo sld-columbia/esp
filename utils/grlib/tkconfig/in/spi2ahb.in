@@ -1,0 +1,11 @@
+   bool 'Enable SPI to AHB bridge ' CONFIG_SPI2AHB
+   if [ "$CONFIG_SPI2AHB" = "y" ]; then
+     bool 'Enable APB interface   ' CONFIG_SPI2AHB_APB
+     hex  'AHB protection address (high) ' CONFIG_SPI2AHB_ADDRH 0000
+     hex  'AHB protection address (low) ' CONFIG_SPI2AHB_ADDRL 0000
+     hex  'AHB protection mask (high) ' CONFIG_SPI2AHB_MASKH 0000
+     hex  'AHB protection mask (low) ' CONFIG_SPI2AHB_MASKL 0000
+     bool 'Enable after reset  ' CONFIG_SPI2AHB_RESEN
+     hex  'Clock polarity ' CONFIG_SPI2AHB_CPOL 0
+     hex  'Clock phase    ' CONFIG_SPI2AHB_CPHA 0
+   fi

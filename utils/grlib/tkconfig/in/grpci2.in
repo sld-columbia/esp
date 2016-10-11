@@ -1,0 +1,64 @@
+  bool 'GRPCI2 PCI Master interface'  CONFIG_GRPCI2_MASTER
+  bool 'GRPCI2 PCI Target interface'  CONFIG_GRPCI2_TARGET
+  if [ "$CONFIG_GRPCI2_MASTER" = "y" ]; then
+    bool 'GRPCI2 PCI DMA interface'  CONFIG_GRPCI2_DMA
+  fi
+  
+  if [ "$CONFIG_GRPCI2_MASTER" = "y" -o "$CONFIG_GRPCI2_TARGET" = "y" ]; then
+    hex 'PCI vendor ID'   CONFIG_GRPCI2_VENDORID 1AC8
+    hex 'PCI device ID'   CONFIG_GRPCI2_DEVICEID 0054
+    hex 'PCI class code'   CONFIG_GRPCI2_CLASS 000000
+    hex 'PCI Revision ID'   CONFIG_GRPCI2_REVID 00
+    hex 'Capability pointer'   CONFIG_GRPCI2_CAPPOINT 40
+    hex 'Next Capability pointer'   CONFIG_GRPCI2_NEXTCAPPOINT 00
+  fi 
+  if [ "$CONFIG_GRPCI2_TARGET" = "y" ]; then
+    int 'BAR0' CONFIG_GRPCI2_BAR0 26
+    int 'BAR1' CONFIG_GRPCI2_BAR1 0
+    int 'BAR2' CONFIG_GRPCI2_BAR2 0
+    int 'BAR3' CONFIG_GRPCI2_BAR3 0
+    int 'BAR4' CONFIG_GRPCI2_BAR4 0
+    int 'BAR5' CONFIG_GRPCI2_BAR5 0
+  fi
+  if [ "$CONFIG_GRPCI2_MASTER" = "y" -o "$CONFIG_GRPCI2_TARGET" = "y" ]; then
+    choice 'GRPCI2 FIFO depth' \
+	  "8		CONFIG_GRPCI2_FIFO8 \
+	  16		CONFIG_GRPCI2_FIFO16 \
+	  32		CONFIG_GRPCI2_FIFO32 \
+	  64		CONFIG_GRPCI2_FIFO64 \
+	  128 	CONFIG_GRPCI2_FIFO128" 8
+    
+    choice 'GRPCI2 FIFO Count' \
+	  "1		CONFIG_GRPCI2_FIFOCNT1 \
+	   2		CONFIG_GRPCI2_FIFOCNT2 \
+	   3		CONFIG_GRPCI2_FIFOCNT3 \
+	   4		CONFIG_GRPCI2_FIFOCNT4" 2
+  fi
+  
+  bool 'GRPCI2 PCI little-endian'  CONFIG_GRPCI2_ENDIAN
+  
+  bool 'GRPCI2 Device Int'  CONFIG_GRPCI2_DINT
+  if [ "$CONFIG_GRPCI2_DINT" = "y" ]; then
+    hex 'GRPCI2 Device Int mask'   CONFIG_GRPCI2_DINTMASK 0
+  fi
+
+  bool 'GRPCI2 Host Int'  CONFIG_GRPCI2_HINT
+  if [ "$CONFIG_GRPCI2_HINT" = "y" ]; then
+    hex 'GRPCI2 Hevice Int mask'   CONFIG_GRPCI2_HINTMASK 0
+  fi
+
+  choice 'GRPCI2 PCI trace buffer' \
+	"none		CONFIG_GRPCI2_TRACE0 \
+  256		CONFIG_GRPCI2_TRACE256 \
+	512		CONFIG_GRPCI2_TRACE512 \
+	1024		CONFIG_GRPCI2_TRACE1024 \
+	2048		CONFIG_GRPCI2_TRACE2048 \
+	4096 		CONFIG_GRPCI2_TRACE4096" none
+
+  if [ "$CONFIG_GRPCI2_TRACE0" = "n" ]; then
+    bool 'Separate PCI trace buffer APB interface' CONFIG_GRPCI2_TRACEAPB 0
+  fi
+
+  bool 'GRPCI2 Input pad bypass'  CONFIG_GRPCI2_BYPASS
+  
+  int 'Extended Configuration Space mappit' CONFIG_GRPCI2_EXTCFG 0

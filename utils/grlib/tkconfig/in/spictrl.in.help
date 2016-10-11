@@ -1,0 +1,24 @@
+Gaisler Research SPI controller
+CONFIG_SPICTRL_ENABLE
+  Say Y here to enable the SPI controller(s)
+
+CONFIG_SPICTRL_NUM
+  Number of SPI controllers to implement in design. Note that most
+  template designs are limited to one SPI controller.
+  Configuration options made here in xconfig will apply to all
+  implemented SPI controllers.
+
+CONFIG_SPICTRL_MAXWLEN
+  0: Core will support lengths up to 32 bits
+  1-2: Illegal values
+  3-15: Maximum word length will be value+1 (4-16)
+
+CONFIG_SPICTRL_SYNCRAM
+  Say Y here to use SYNCRAM_2P components for the core's receive
+  and transmit queues. This is the recommended setting, particularly
+  if the core is implemented with support for automatic mode.
+
+CONFIG_SPICTRL_FT
+  Fault-tolerance for internal buffers. Only applicable if core
+  buffers are implemented with SYNCRAM components.
+

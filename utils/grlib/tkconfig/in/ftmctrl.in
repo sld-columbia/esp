@@ -1,0 +1,60 @@
+  mainmenu_option next_comment
+  comment 'PROM/SRAM/SDRAM Memory controller with EDAC       '
+      bool 'Enable PROM/SRAM/SDRAM memory controller  ' CONFIG_MCTRLFT
+      if [ "$CONFIG_MCTRLFT" = "y" ]; then
+        bool '8-bit PROM/SRAM bus support    ' CONFIG_MCTRLFT_8BIT
+        bool '16-bit PROM/SRAM bus support    ' CONFIG_MCTRLFT_16BIT
+        bool '5th SRAM chip-select  ' CONFIG_MCTRLFT_5CS
+        choice 'PROM banks and sizes, or programmable' \
+      	  "4xprogrammable 		   CONFIG_MCTRLFT_ROMASEL0 \
+      	   4x16_kByte	   CONFIG_MCTRLFT_ROMASEL1 \
+      	   4x32_kByte	   CONFIG_MCTRLFT_ROMASEL2 \
+      	   4x64_kByte		CONFIG_MCTRLFT_ROMASEL3 \
+      	   4x128_kByte		CONFIG_MCTRLFT_ROMASEL4 \
+      	   4x256_kByte		CONFIG_MCTRLFT_ROMASEL5 \
+      	   4x512_kByte		CONFIG_MCTRLFT_ROMASEL6 \
+      	   4x1_MByte	CONFIG_MCTRLFT_ROMASEL7 \
+      	   4x2_MByte	CONFIG_MCTRLFT_ROMASEL8 \
+      	   4x4_MByte	CONFIG_MCTRLFT_ROMASEL9 \
+      	  	4x8_MByte	CONFIG_MCTRLFT_ROMASEL10 \
+      	  	4x16_MByte	CONFIG_MCTRLFT_ROMASEL11 \
+      	   4x32_MByte	CONFIG_MCTRLFT_ROMASEL12 \
+      	   4x64_MByte  CONFIG_MCTRLFT_ROMASEL13 \
+      	   4x128_MByte CONFIG_MCTRLFT_ROMASEL14 \
+      	   2x256_MByte CONFIG_MCTRLFT_ROMASEL15 \
+      	   2x64_kByte		CONFIG_MCTRLFT_ROMASEL16 \
+      	   2x128_kByte		CONFIG_MCTRLFT_ROMASEL17 \
+      	   2x256_kByte		CONFIG_MCTRLFT_ROMASEL18 \
+      	   2x512_kByte		CONFIG_MCTRLFT_ROMASEL19 \
+      	   2x1_MByte	CONFIG_MCTRLFT_ROMASEL20 \
+      	   2x2_MByte	CONFIG_MCTRLFT_ROMASEL21 \
+      	   2x4_MByte	CONFIG_MCTRLFT_ROMASEL22 \
+      	  	2x8_MByte	CONFIG_MCTRLFT_ROMASEL23 \
+      	  	2x16_MByte	CONFIG_MCTRLFT_ROMASEL24 \
+      	   2x32_MByte	CONFIG_MCTRLFT_ROMASEL25 \
+      	   2x64_MByte  CONFIG_MCTRLFT_ROMASEL26 \
+      	   2x128_MByte CONFIG_MCTRLFT_ROMASEL27 \
+      	   2x256_MByte CONFIG_MCTRLFT_ROMASEL28" 4xprogrammable
+    	bool 'SDRAM controller       ' CONFIG_MCTRLFT_SDRAM
+    	if [ "$CONFIG_MCTRLFT_SDRAM" = "y" ]; then
+          bool 'Separate address and data buses' CONFIG_MCTRLFT_SDRAM_SEPBUS
+    	  if [ "$CONFIG_MCTRLFT_SDRAM_SEPBUS" = "y" ]; then
+            bool '64-bit SDRAM data bus' CONFIG_MCTRLFT_SDRAM_BUS64
+	  fi
+          bool 'Inverted sdclock' CONFIG_MCTRLFT_SDRAM_INVCLK
+	  bool 'Enable page burst operation     ' CONFIG_MCTRLFT_PAGE
+    	  if [ "$CONFIG_MCTRLFT_PAGE" = "y" ]; then
+	    bool 'Enable programmable page burst ' CONFIG_MCTRLFT_PROGPAGE
+	  fi
+        fi
+	bool 'Enable EDAC                     ' CONFIG_MCTRLFT_EDAC
+    	if [ "$CONFIG_MCTRLFT_EDAC" = "y" ]; then
+	  bool 'Enable pipelined EDAC   ' CONFIG_MCTRLFT_EDACPIPE
+        fi
+    	if [ "$CONFIG_MCTRLFT_EDACPIPE" = "y" -a "$CONFIG_MCTRLFT_SDRAM" = "y"]; then
+	  bool 'Enable Reed-Solomon EDAC   ' CONFIG_MCTRLFT_RSEDAC
+        fi
+	bool 'Extended data bus drive         ' CONFIG_MCTRLFT_WFB
+	bool 'Use FTMCTRL netlist             ' CONFIG_MCTRLFT_NETLIST
+      fi
+  endmenu

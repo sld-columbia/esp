@@ -1,0 +1,22 @@
+#ifndef CONFIG_GRETH2_ENABLE
+#define CONFIG_GRETH2_ENABLE 0
+#endif
+
+#ifndef CONFIG_GRETH2_GIGA
+#define CONFIG_GRETH2_GIGA 0
+#endif
+
+#if defined CONFIG_GRETH2_FIFO4
+#define CFG_GRETH2_FIFO 4
+#elif defined CONFIG_GRETH2_FIFO8
+#define CFG_GRETH2_FIFO 8
+#elif defined CONFIG_GRETH2_FIFO16
+#define CFG_GRETH2_FIFO 16
+#elif defined CONFIG_GRETH2_FIFO32
+#define CFG_GRETH2_FIFO 32
+#elif defined CONFIG_GRETH2_FIFO64
+#define CFG_GRETH2_FIFO 64
+#else
+#define CFG_GRETH2_FIFO 8
+#endif
+

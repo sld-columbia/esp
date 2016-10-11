@@ -1,0 +1,5 @@
+    bool 'Enable LEON4 Statistics Module       ' CONFIG_STAT_ENABLE
+    if [ "$CONFIG_L4S_ENABLE" = "y" ]; then
+      int 'Number of counters (1 - 64)           ' CONFIG_STAT_CNT 4
+      int 'Number of accumulative counters       ' CONFIG_STAT_NMAX 0
+    fi

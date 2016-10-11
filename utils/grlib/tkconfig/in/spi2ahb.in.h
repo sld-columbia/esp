@@ -1,0 +1,40 @@
+#ifndef CONFIG_SPI2AHB
+#define CONFIG_SPI2AHB 0
+#endif
+
+#ifndef CONFIG_SPI2AHB_APB
+#define CONFIG_SPI2AHB_APB 0
+#endif
+
+#ifndef CONFIG_SPI2AHB_ADDRH
+#define CONFIG_SPI2AHB_ADDRH 0
+#endif
+
+#ifndef CONFIG_SPI2AHB_ADDRL
+#define CONFIG_SPI2AHB_ADDRL 0
+#endif
+
+#ifndef CONFIG_SPI2AHB_MASKH
+#define CONFIG_SPI2AHB_MASKH 0
+#endif
+
+#ifndef CONFIG_SPI2AHB_MASKL
+#define CONFIG_SPI2AHB_MASKL 0
+#endif
+
+#ifndef CONFIG_SPI2AHB_RESEN
+#define CONFIG_SPI2AHB_RESEN 0
+#endif
+
+#ifndef CONFIG_SPI2AHB_FILTER
+#define CONFIG_SPI2AHB_FILTER 2
+#endif
+
+#ifndef CONFIG_SPI2AHB_CPOL
+#define CONFIG_SPI2AHB_CPOL 0
+#endif
+
+#ifndef CONFIG_SPI2AHB_CPHA
+#define CONFIG_SPI2AHB_CPHA 0
+#endif
+

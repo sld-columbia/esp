@@ -1,0 +1,29 @@
+FT SDRAM controller enable
+CONFIG_FTSDCTRL
+  Say Y here to enabled a 32-bit PC133 SDRAM controller with EDAC. 
+
+FT SDRAM controller inverted clock
+CONFIG_FTSDCTRL_INVCLK
+  If you say Y here, the SDRAM clock will be inverted in respect to the
+  system clock and the SDRAM signals. This will limit the SDRAM frequency
+  to 50/66 MHz, but has the benefit that you will not need a PLL to
+  generate the SDRAM clock. On FPGA targets, say Y. On ASIC targets,
+  say N and tell your foundry to balance the SDRAM clock output.
+
+EDAC enable
+CONFIG_FTSDCTRL_EDAC
+  Say Y here to enable the EDAC.
+
+Page burst enable
+CONFIG_FTSDCTRL_PAGE
+  Say Y here to enable SDRAM page burst operation. This will implement
+  read operations using page bursts rather than 8-word bursts and save
+  about 500 gates (100 LUTs). Note that not all SDRAM supports page 
+  burst, so use this option with care.
+
+Programmable page burst enable
+CONFIG_FTSDCTRL_PROGPAGE
+  Say Y here to enable programmable SDRAM page burst operation. This
+  will allow to dynamically enable/disable page burst by setting
+  bit 17 in MCFG2.
+

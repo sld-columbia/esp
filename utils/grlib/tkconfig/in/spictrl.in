@@ -1,0 +1,24 @@
+  mainmenu_option next_comment
+   comment 'SPI controller(s) '
+    bool 'Enable SPI controller(s) ' CONFIG_SPICTRL_ENABLE
+    if [ "$CONFIG_SPICTRL_ENABLE" = "y" ]; then
+     int 'Number of SPI controllers   '   CONFIG_SPICTRL_NUM 1
+     int 'Slave select lines    '   CONFIG_SPICTRL_SLVS 1
+     int 'FIFO depth (2^N)      '   CONFIG_SPICTRL_FIFO 1
+     bool 'Enable slave select registers'   CONFIG_SPICTRL_SLVREG
+     bool 'Enable automatic slave select'   CONFIG_SPICTRL_ASEL
+     bool 'Support automated transfers  '   CONFIG_SPICTRL_AM
+     bool 'Support open drain mode      '   CONFIG_SPICTRL_ODMODE
+     bool 'Support three-wire mode      '   CONFIG_SPICTRL_TWEN
+     int  'Maximum supported word length (see help!) ' CONFIG_SPICTRL_MAXWLEN 0
+     bool 'Use SYNCRAM for rx and tx queues '  CONFIG_SPICTRL_SYNCRAM
+     if [ "$CONFIG_SPICTRL_SYNCRAM" = "y" ]; then
+      choice 'Fault-tolerance' \
+	"None		CONFIG_SPICTRL_NOFT \
+	 Parity-DMR	CONFIG_SPICTRL_DMRFT \
+	 TMR		CONFIG_SPICTRL_TMRFT" None
+     fi
+    fi
+  endmenu
+
+

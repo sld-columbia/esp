@@ -1,0 +1,22 @@
+    bool 'FT On-chip AHB RAM                  ' CONFIG_FTAHBRAM_ENABLE
+    if [ "$CONFIG_FTAHBRAM_ENABLE" = "y" ]; then
+      choice 'AHB RAM size (KiB)   ' \
+	"1		CONFIG_FTAHBRAM_SZ1 \
+	2		CONFIG_FTAHBRAM_SZ2 \
+	4		CONFIG_FTAHBRAM_SZ4 \
+	8		CONFIG_FTAHBRAM_SZ8 \
+	16		CONFIG_FTAHBRAM_SZ16 \
+	32		CONFIG_FTAHBRAM_SZ32 \
+	64		CONFIG_FTAHBRAM_SZ64 \
+	128		CONFIG_FTAHBRAM_SZ128 \
+	256		CONFIG_FTAHBRAM_SZ256" 4
+      hex  'RAM start address (haddr[31:20])    ' CONFIG_FTAHBRAM_START A00
+      bool 'Pipelined implementation            ' CONFIG_FTAHBRAM_PIPE
+      if [ "$CONFIG_FTAHBRAM_PIPE" = "n" ]; then
+         bool 'EDAC enable                         ' CONFIG_FTAHBRAM_EDAC
+         bool 'Auto-scrubbing enable               ' CONFIG_FTAHBRAM_AUTOSCRUB
+         bool 'Error counter enable                ' CONFIG_FTAHBRAM_ERRORCNTR
+         int  'Error counter bits                  ' CONFIG_FTAHBRAM_CNTBITS 2
+      fi
+    fi
+

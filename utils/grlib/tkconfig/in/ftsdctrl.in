@@ -1,0 +1,14 @@
+
+  mainmenu_option next_comment
+  comment 'FT PC133 SDRAM controller             '
+    bool 'Enable PC133 SDRAM controller with EDAC  ' CONFIG_FTSDCTRL
+    if [ "$CONFIG_FTSDCTRL" = "y" ]; then
+      bool 'Enable BCH EDAC' CONFIG_FTSDCTRL_EDAC
+      bool 'Enable RS EDAC' CONFIG_FTSDCTRL_EDAC_RS
+      bool 'Inverted sdclock' CONFIG_FTSDCTRL_INVCLK
+      bool 'Enable page burst operation     ' CONFIG_FTSDCTRL_PAGE
+      if [ "$CONFIG_FTSDCTRL_PAGE" = "y" ]; then
+        bool 'Enable programmable page burst ' CONFIG_FTSDCTRL_PROGPAGE
+      fi
+    fi
+  endmenu

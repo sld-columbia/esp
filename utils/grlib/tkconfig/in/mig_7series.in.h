@@ -1,0 +1,4 @@
+
+#ifndef CONFIG_MIG_7SERIES_MODEL
+#define CONFIG_MIG_7SERIES_MODEL 0
+#endif

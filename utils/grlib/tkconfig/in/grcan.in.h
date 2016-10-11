@@ -1,0 +1,11 @@
+#ifndef CONFIG_GRCAN_ENABLE
+#define CONFIG_GRCAN_ENABLE 0
+#endif
+
+#ifndef CONFIG_GRCANIRQ
+#define CONFIG_GRCANIRQ 0
+#endif
+
+#ifndef CONFIG_GRCANSINGLE
+#define CONFIG_GRCANSINGLE 0
+#endif

@@ -1,0 +1,42 @@
+    choice 'Clock generator                     ' \
+	"Inferred		CONFIG_CLK_INFERRED \
+	Actel-HCLKBUF		CONFIG_CLK_HCLKBUF \
+	Aeroflex-UT130HBD	CONFIG_CLK_UT130HBD \
+	Altera-ALTPLL		CONFIG_CLK_ALTDLL \
+	Lattice-EXPLL		CONFIG_CLK_LATDLL \
+	Proasic3-PLL		CONFIG_CLK_PRO3PLL \
+	Proasic3E-PLL		CONFIG_CLK_PRO3EPLL \
+	Proasic3L-PLL		CONFIG_CLK_PRO3LPLL \
+	Fusion-PLL		CONFIG_CLK_FUSPLL \
+	RH-LIB18T-PLL		CONFIG_CLK_LIB18T \
+	RHUMC-PLL    		CONFIG_CLK_RHUMC \
+	DARE-PLL     		CONFIG_CLK_DARE \
+	SAED32-PLL   		CONFIG_CLK_SAED32 \
+	EASIC45-PLL   		CONFIG_CLK_EASIC45 \
+	RHS65-PLL   		CONFIG_CLK_RHS65 \
+	Xilinx-PLLE2		CONFIG_CLK_CLKPLLE2 \
+	Xilinx-CLKDLL		CONFIG_CLK_CLKDLL \
+	Xilinx-DCM    		CONFIG_CLK_DCM" Inferred
+    if [ "$CONFIG_CLK_DCM" = "y" -o "$CONFIG_CLK_ALTDLL" = "y" \
+        -o "$CONFIG_CLK_LATDLL" = "y" -o "$CONFIG_CLK_PRO3PLL" = "y" \
+        -o "$CONFIG_CLK_PRO3EPLL" = "y" -o "$CONFIG_CLK_PRO3LPLL" = "y" \
+	-o "$CONFIG_CLK_CLKDLL" = "y" -o "$CONFIG_CLK_LIB18T" = "y" \
+	-o "$CONFIG_CLK_FUSPLL" = "y" -o "$CONFIG_CLK_CLKPLLE2" = "y"]; then
+      int 'Clock multiplication factor (allowed values are tech dependent)' CONFIG_CLK_MUL 2
+      int 'Clock division factor (allowed values are tech dependent)' CONFIG_CLK_DIV 2
+    fi
+    if [ "$CONFIG_CLK_PRO3PLL" = "y" -o "$CONFIG_CLK_PRO3EPLL" = "y" \
+         -o "$CONFIG_CLK_PRO3LPLL" = "y" -o "$CONFIG_CLK_FUSPLL" = "y"]; then
+      int 'Outout division factor (1 - 32)' CONFIG_OCLK_DIV 1
+      int 'Outout division factor, 2nd clk (0 - 32, see help)' CONFIG_OCLKB_DIV 0
+      int 'Outout division factor, 3rd clk (0 - 32, see help)' CONFIG_OCLKC_DIV 0
+    fi
+    if [ "$CONFIG_CLK_CLKDLL" = "y" -o "$CONFIG_CLK_DCM" = "y" ]; then
+      bool 'Enable Xilinx CLKDLL for PCI clock' CONFIG_PCI_CLKDLL
+    fi
+    if [ "$CONFIG_CLK_DCM" = "y" ]; then
+      bool 'Disable external feedback for SDRAM clock' CONFIG_CLK_NOFB
+    fi
+  if [ "$CONFIG_PCI_ENABLE" != "y" ]; then
+    bool 'Use PCI clock as system clock' CONFIG_PCI_SYSCLK
+  fi

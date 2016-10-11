@@ -1,0 +1,31 @@
+GRLIB SPI2AHB core
+CONFIG_SPI2AHB
+  Say Y here to enable SPI2AHB
+
+CONFIG_SPI2AHB_APB
+  Say Y here to include the core's APB interface
+
+CONFIG_SPI2AHB_ADDRH
+  Defines address bits 31:16 of the core's AHB protection area 
+
+CONFIG_SPI2AHB_ADDRL
+  Defines address bits 15:0 of the core's AHB protection area 
+
+CONFIG_SPI2AHB_MASKH
+  Defines mask bits 31:16 of the core's AHB protection area 
+
+CONFIG_SPI2AHB_MASKL
+  Defines mask bits 15:0 of the core's AHB protection area 
+
+CONFIG_SPI2AHB_RESEN
+  Say Y here to enable the core after reset (APB version only)
+
+CONFIG_SPI2AHB_CPOL
+  The core's clock polarity. Valid values are 0 and 1.
+
+CONFIG_SPI2AHB_CPHA
+  The core's clock phase. Valid values are 0 and 1.
+
+CONFIG_SPI2AHB_FILTER
+  Core filter. See IP core documentation for filter VHDL generic
+

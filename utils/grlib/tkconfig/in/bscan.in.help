@@ -1,0 +1,13 @@
+Enable JTAG Boundary Scan
+CONFIG_BOUNDSCAN_EN
+  Say Y to create boundary scan registers along the I/O pad ring and 
+  some control logic to allow I/O control and sampling through the JTAG
+  TAP. 
+
+  The supported boundary-scan commands are SAMPLE/PRELOAD, EXTEST, 
+  INTEST, HIGHZ and CLAMP. HIGHZ may not be implemented on all designs
+  since it requires tri-state ability on all pads. 
+  
+  If the JTAG debug link is enabled, the boundary scan logic connects 
+  to the same TAP controller, otherwise a dedicated TAP controller is 
+  added to the design.

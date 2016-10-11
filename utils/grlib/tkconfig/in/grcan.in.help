@@ -1,0 +1,12 @@
+CAN interface enable
+CONFIG_GRCAN_ENABLE
+  Say Y here to enable GRCAN core.
+
+CAN interrupt
+CONFIG_GRCANIRQ
+  Defines which interrupt number the CAN core will generate.
+
+CAN interrupt
+CONFIG_GRCANSINGLE
+  Say Y here to assign one   interrupt  (common).
+  Say N here to assign three interrupts (common, txsync, rxsync).

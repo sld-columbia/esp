@@ -1,0 +1,2 @@
+bool 'Enable System ACE I/F Controller ' CONFIG_GRACECTRL
+

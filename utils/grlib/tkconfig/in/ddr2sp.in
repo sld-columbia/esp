@@ -1,0 +1,38 @@
+
+  mainmenu_option next_comment
+  comment 'DDR2 SDRAM controller             '
+    if [ "$CONFIG_MIG_DDR2" != "y" ]; then
+      bool 'Enable DDR2 SDRAM controller       ' CONFIG_DDR2SP
+      if [ "$CONFIG_DDR2SP" = "y" ]; then
+      bool 'Enable power-on initialization       ' CONFIG_DDR2SP_INIT
+      bool 'DDR clock is aligned to system clock ' CONFIG_DDR2SP_NOSYNC
+      if [ "$CONFIG_DDR2SP_NOSYNC" = "n" ]; then
+        int 'Memory frequency (MHz)  ' CONFIG_DDR2SP_FREQ 100
+      fi
+      int 'Refresh to Activate (tRFC) in ns  ' CONFIG_DDR2SP_TRFC 130
+      if [ "$CONFIG_DDR2SP_INIT" = "y" ]; then
+        int 'Column address bits (9 - 12)  ' CONFIG_DDR2SP_COL 9
+        int 'Chip select bank size (Mbyte) ' CONFIG_DDR2SP_MBYTE 16
+      fi
+      int 'Data width (64, 32, 16) bit ' CONFIG_DDR2SP_DATAWIDTH 64
+      bool 'Fault-tolerant DDR2 controller     ' CONFIG_DDR2SP_FTEN
+      if [ "$CONFIG_DDR2SP_FTEN" = "y" ]; then
+        int 'Checkbits width (32,16,8) bit ' CONFIG_DDR2SP_FTWIDTH 32
+      fi
+      int 'Input pad delay for bits 7:0 (0 - 63)' CONFIG_DDR2SP_DELAY0 0
+      int 'Input pad delay for bits 15:8 (0 - 63)' CONFIG_DDR2SP_DELAY1 0
+      int 'Input pad delay for bits 23:16 (0 - 63)' CONFIG_DDR2SP_DELAY2 0
+      int 'Input pad delay for bits 31:24 (0 - 63)' CONFIG_DDR2SP_DELAY3 0
+      int 'Input pad delay for bits 39:32 (0 - 63)' CONFIG_DDR2SP_DELAY4 0
+      int 'Input pad delay for bits 47:40 (0 - 63)' CONFIG_DDR2SP_DELAY5 0
+      int 'Input pad delay for bits 55:48 (0 - 63)' CONFIG_DDR2SP_DELAY6 0
+      int 'Input pad delay for bits 63:56 (0 - 63)' CONFIG_DDR2SP_DELAY7 0
+      if [ "$CONFIG_DDR2SP_FTEN" = "y" ]; then
+        int 'Input pad delay for checkbits 7:0 (0 - 63)' CONFIG_DDR2SP_CBDELAY0 0
+        int 'Input pad delay for checkbits 15:8 (0 - 63)' CONFIG_DDR2SP_CBDELAY1 0
+        int 'Input pad delay for checkbits 23:16 (0 - 63)' CONFIG_DDR2SP_CBDELAY2 0
+        int 'Input pad delay for checkbits 31:24 (0 - 63)' CONFIG_DDR2SP_CBDELAY3 0
+      fi
+      fi
+    fi
+  endmenu

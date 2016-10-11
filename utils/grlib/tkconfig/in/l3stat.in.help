@@ -1,0 +1,16 @@
+LEON3 Statistical Module
+CONFIG_L3S_ENABLE
+  Say Y here to enable the LEON3 Statistical Unit. The unit consists
+  of a number of timers that can count various processor and MMU/FPU
+  events to allow analysis of processor behavior and performance.        
+
+Number of L3S counters
+CONFIG_L3S_CNT 
+  Set the number of 32-bit counters in the unit (1 - 32).
+
+Number of L3S accumulative counters
+CONFIG_L3S_NMAX
+  If this value is higher than 0, the core will include functionality 
+  for tracking the longest consecutive time that an event is active or 
+  inactive. The functionality will be available for the nmax first 
+  counters. This value must not exceed the number of available counters.

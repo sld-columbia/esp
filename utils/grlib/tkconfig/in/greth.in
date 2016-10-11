@@ -1,0 +1,21 @@
+    bool 'Gaisler Research 10/100/1000 Mbit Ethernet MAC ' CONFIG_GRETH_ENABLE
+    if [ "$CONFIG_GRETH_ENABLE" = "y" ]; then
+      bool 'Enable 1000 Mbit support    ' CONFIG_GRETH_GIGA
+      if [ "$CONFIG_GRETH_GIGA" = "n" ]; then
+        choice 'AHB FIFO size (words)            ' \
+	  "4		CONFIG_GRETH_FIFO4 \
+	  8		CONFIG_GRETH_FIFO8 \
+	  16		CONFIG_GRETH_FIFO16 \
+	  32		CONFIG_GRETH_FIFO32 \
+	  64		CONFIG_GRETH_FIFO64" 8
+      fi
+      if [ "$CONFIG_LEON3FT_PRESENT" = "y" ]; then
+        bool 'Enable fault-tolerance' CONFIG_GRETH_FT
+        if [ "$CONFIG_GRETH_FT" = "y" ]; then
+          bool 'Enable fault tolerance for EDCL buffer ' CONFIG_GRETH_EDCLFT
+        fi
+      fi
+      if [ "$CONFIG_GRETH_SGMII_PRESENT" = "y" ]; then
+        bool 'Enable SGMII' CONFIG_GRETH_SGMII_MODE
+      fi
+    fi

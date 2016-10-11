@@ -1,0 +1,31 @@
+GRLIB I2C2AHB core
+CONFIG_I2C2AHB
+  Say Y here to enable I2C2AHB
+
+CONFIG_I2C2AHB_APB
+  Say Y here to configure the core's APB interface
+
+CONFIG_I2C2AHB_ADDRH
+  Defines address bits 31:16 of the core's AHB protection area 
+
+CONFIG_I2C2AHB_ADDRL
+  Defines address bits 15:0 of the core's AHB protection area 
+
+CONFIG_I2C2AHB_MASKH
+  Defines mask bits 31:16 of the core's AHB protection area 
+
+CONFIG_I2C2AHB_MASKL
+  Defines mask bits 15:0 of the core's AHB protection area 
+
+CONFIG_I2C2AHB_RESEN
+  Say Y here to enable the core after reset (APB version only)
+
+CONFIG_I2C2AHB_SADDR
+  The core's (initial) I2C memory address
+
+CONFIG_I2C2AHB_CADDR
+  The core's (initial) I2C configuration address
+
+CONFIG_I2C2AHB_FILTER
+  Core filter. See IP core documentation for filter VHDL generic
+

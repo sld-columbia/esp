@@ -1,0 +1,343 @@
+PROM/SRAM memory controller
+CONFIG_SRCTRLFT
+  Say Y here to enable a  small PROM/SRAM memory controller with
+  EDAC protection (SEC/DED). The controller can ahve a fixed number
+  of waitstates, or be programmable through APB. The data bus is
+  always 32 bits.
+
+APB confoguration
+CONFIG_SRCTRLFT_APBEN
+  Enable programming of the controller through APB.
+
+PROM waitstates
+CONFIG_SRCTRLFT_PROMWS
+  Select the number of waitstates for PROM access.
+
+RAM waitstates
+CONFIG_SRCTRLFT_RAMWS
+  Select the number of waitstates for RAM access.
+
+IO waitstates
+CONFIG_SRCTRLFT_IOWS
+  Select the number of waitstates for IO access.
+
+Read-modify-write support
+CONFIG_SRCTRLFT_RMW
+  Say Y here to perform byte- and half-word writes as a
+  read-modify-write sequence. This is necessary if your
+  SRAM does not have individual byte enables. If you are
+  unsure, it is safe to say Y.
+
+8-bit PROM support
+CONFIG_SRCTRLFT_8BIT
+  Say Y here to include support for 8-bit wide PROM devices.
+
+EDAC enable
+CONFIG_SRCTRLFT_EDAC
+  Enable data error-correction using an EDAC.
+
+
+SRAM bank select
+CONFIG_SRCTRLFT_SRBANKS1
+  Select number of SRAM banks (1 to 8).
+
+SRAM bank select
+CONFIG_SRCTRLFT_SRBANKS2
+  Select number of SRAM banks (1 to 8).
+
+SRAM bank select
+CONFIG_SRCTRLFT_SRBANKS3
+  Select number of SRAM banks (1 to 8).
+
+SRAM bank select
+CONFIG_SRCTRLFT_SRBANKS4
+  Select number of SRAM banks (1 to 8).
+
+SRAM bank select
+CONFIG_SRCTRLFT_SRBANKS5
+  Select number of SRAM banks (1 to 8).
+
+SRAM bank select
+CONFIG_SRCTRLFT_SRBANKS6
+  Select number of SRAM banks (1 to 8).
+
+SRAM bank select
+CONFIG_SRCTRLFT_SRBANKS7
+  Select number of SRAM banks (1 to 8).
+
+SRAM bank select
+CONFIG_SRCTRLFT_SRBANKS8
+  Select number of SRAM banks (1 to 8).
+
+
+
+SRAM bank size select
+CONFIG_SRCTRLFT_BANKSZ0
+  Select fixed size of each SRAM bank (8 kByte to 256 MByte),
+  or select programmable bank size.
+
+SRAM bank size select
+CONFIG_SRCTRLFT_BANKSZ1
+  Select fixed size of each SRAM bank (8 kByte to 256 MByte),
+  or select programmable bank size.
+
+SRAM bank size select
+CONFIG_SRCTRLFT_BANKSZ2
+  Select fixed size of each SRAM bank (8 kByte to 256 MByte),
+  or select programmable bank size.
+
+SRAM bank size select
+CONFIG_SRCTRLFT_BANKSZ3
+  Select fixed size of each SRAM bank (8 kByte to 256 MByte),
+  or select programmable bank size.
+
+SRAM bank size select
+CONFIG_SRCTRLFT_BANKSZ4
+  Select fixed size of each SRAM bank (8 kByte to 256 MByte),
+  or select programmable bank size.
+
+SRAM bank size select
+CONFIG_SRCTRLFT_BANKSZ5
+  Select fixed size of each SRAM bank (8 kByte to 256 MByte),
+  or select programmable bank size.
+
+SRAM bank size select
+CONFIG_SRCTRLFT_BANKSZ6
+  Select fixed size of each SRAM bank (8 kByte to 256 MByte),
+  or select programmable bank size.
+
+SRAM bank size select
+CONFIG_SRCTRLFT_BANKSZ7
+  Select fixed size of each SRAM bank (8 kByte to 256 MByte),
+  or select programmable bank size.
+
+SRAM bank size select
+CONFIG_SRCTRLFT_BANKSZ8
+  Select fixed size of each SRAM bank (8 kByte to 256 MByte),
+  or select programmable bank size.
+
+SRAM bank size select
+CONFIG_SRCTRLFT_BANKSZ9
+  Select fixed size of each SRAM bank (8 kByte to 256 MByte),
+  or select programmable bank size.
+
+SRAM bank size select
+CONFIG_SRCTRLFT_BANKSZ10
+  Select fixed size of each SRAM bank (8 kByte to 256 MByte),
+  or select programmable bank size.
+
+SRAM bank size select
+CONFIG_SRCTRLFT_BANKSZ11
+  Select fixed size of each SRAM bank (8 kByte to 256 MByte),
+  or select programmable bank size.
+
+SRAM bank size select
+CONFIG_SRCTRLFT_BANKSZ12
+  Select fixed size of each SRAM bank (8 kByte to 256 MByte),
+  or select programmable bank size.
+
+SRAM bank size select
+CONFIG_SRCTRLFT_BANKSZ13
+  Select fixed size of each SRAM bank (8 kByte to 256 MByte),
+  or select programmable bank size.
+
+SRAM bank size select
+CONFIG_SRCTRLFT_BANKSZ14
+  Select fixed size of each SRAM bank (8 kByte to 256 MByte),
+  or select programmable bank size.
+
+SRAM bank size select
+CONFIG_SRCTRLFT_BANKSZ15
+  Select fixed size of each SRAM bank (8 kByte to 256 MByte),
+  or select programmable bank size.
+
+
+
+
+PROM bank select
+CONFIG_SRCTRLFT_ROMBANKS1
+  Select number of PROM banks.
+
+PROM bank select
+CONFIG_SRCTRLFT_ROMBANKS2
+  Select number of PROM banks.
+
+PROM bank select
+CONFIG_SRCTRLFT_ROMBANKS3
+  Select number of PROM banks.
+
+PROM bank select
+CONFIG_SRCTRLFT_ROMBANKS4
+  Select number of PROM banks.
+
+PROM bank select
+CONFIG_SRCTRLFT_ROMBANKS5
+  Select number of PROM banks.
+
+PROM bank select
+CONFIG_SRCTRLFT_ROMBANKS6
+  Select number of PROM banks.
+
+PROM bank select
+CONFIG_SRCTRLFT_ROMBANKS7
+  Select number of PROM banks.
+
+PROM bank select
+CONFIG_SRCTRLFT_ROMBANKS8
+  Select number of PROM banks.
+
+
+
+PROM bank size select
+CONFIG_SRCTRLFT_ROMBANKSZ0
+  Select fixed size of each PROM bank (8 kByte to 256 MByte),
+  or select programmable bank size.
+
+PROM bank size select
+CONFIG_SRCTRLFT_ROMBANKSZ1
+  Select fixed size of each PROM bank (8 kByte to 256 MByte),
+  or select programmable bank size.
+
+PROM bank size select
+CONFIG_SRCTRLFT_ROMBANKSZ2
+  Select fixed size of each PROM bank (8 kByte to 256 MByte),
+  or select programmable bank size.
+
+PROM bank size select
+CONFIG_SRCTRLFT_ROMBANKSZ3
+  Select fixed size of each PROM bank (8 kByte to 256 MByte),
+  or select programmable bank size.
+
+PROM bank size select
+CONFIG_SRCTRLFT_ROMBANKSZ4
+  Select fixed size of each PROM bank (8 kByte to 256 MByte),
+  or select programmable bank size.
+
+PROM bank size select
+CONFIG_SRCTRLFT_ROMBANKSZ5
+  Select fixed size of each PROM bank (8 kByte to 256 MByte),
+  or select programmable bank size.
+
+PROM bank size select
+CONFIG_SRCTRLFT_ROMBANKSZ6
+  Select fixed size of each PROM bank (8 kByte to 256 MByte),
+  or select programmable bank size.
+
+PROM bank size select
+CONFIG_SRCTRLFT_ROMBANKSZ7
+  Select fixed size of each PROM bank (8 kByte to 256 MByte),
+  or select programmable bank size.
+
+PROM bank size select
+CONFIG_SRCTRLFT_ROMBANKSZ8
+  Select fixed size of each PROM bank (8 kByte to 256 MByte),
+  or select programmable bank size.
+
+PROM bank size select
+CONFIG_SRCTRLFT_ROMBANKSZ9
+  Select fixed size of each PROM bank (8 kByte to 256 MByte),
+  or select programmable bank size.
+
+PROM bank size select
+CONFIG_SRCTRLFT_ROMBANKSZ10
+  Select fixed size of each PROM bank (8 kByte to 256 MByte),
+  or select programmable bank size.
+
+PROM bank size select
+CONFIG_SRCTRLFT_ROMBANKSZ11
+  Select fixed size of each PROM bank (8 kByte to 256 MByte),
+  or select programmable bank size.
+
+PROM bank size select
+CONFIG_SRCTRLFT_ROMBANKSZ12
+  Select fixed size of each PROM bank (8 kByte to 256 MByte),
+  or select programmable bank size.
+
+PROM bank size select
+CONFIG_SRCTRLFT_ROMBANKSZ13
+  Select fixed size of each PROM bank (8 kByte to 256 MByte),
+  or select programmable bank size.
+
+PROM bank size select
+CONFIG_SRCTRLFT_ROMBANKSZ14
+  Select fixed size of each PROM bank (8 kByte to 256 MByte),
+  or select programmable bank size.
+
+PROM bank size select
+CONFIG_SRCTRLFT_ROMBANKSZ15
+  Select fixed size of each PROM bank (8 kByte to 256 MByte),
+  or select programmable bank size.
+
+
+
+
+
+PROM bank size select
+CONFIG_SRCTRLFT_ROMBANKSZDEF0
+  Select default start up size of each PROM bank, when programmable.
+
+PROM bank size select
+CONFIG_SRCTRLFT_ROMBANKSZDEF1
+  Select default start up size of each PROM bank, when programmable.
+
+PROM bank size select
+CONFIG_SRCTRLFT_ROMBANKSZDEF2
+  Select default start up size of each PROM bank, when programmable.
+
+PROM bank size select
+CONFIG_SRCTRLFT_ROMBANKSZDEF3
+  Select default start up size of each PROM bank, when programmable.
+
+PROM bank size select
+CONFIG_SRCTRLFT_ROMBANKSZDEF4
+  Select default start up size of each PROM bank, when programmable.
+
+PROM bank size select
+CONFIG_SRCTRLFT_ROMBANKSZDEF5
+  Select default start up size of each PROM bank, when programmable.
+
+PROM bank size select
+CONFIG_SRCTRLFT_ROMBANKSZDEF6
+  Select default start up size of each PROM bank, when programmable.
+
+PROM bank size select
+CONFIG_SRCTRLFT_ROMBANKSZDEF7
+  Select default start up size of each PROM bank, when programmable.
+
+PROM bank size select
+CONFIG_SRCTRLFT_ROMBANKSZDEF8
+  Select default start up size of each PROM bank, when programmable.
+
+PROM bank size select
+CONFIG_SRCTRLFT_ROMBANKSZDEF9
+  Select default start up size of each PROM bank, when programmable.
+
+PROM bank size select
+CONFIG_SRCTRLFT_ROMBANKSZDEF10
+  Select default start up size of each PROM bank, when programmable.
+
+PROM bank size select
+CONFIG_SRCTRLFT_ROMBANKSZDEF11
+  Select default start up size of each PROM bank, when programmable.
+
+PROM bank size select
+CONFIG_SRCTRLFT_ROMBANKSZDEF12
+  Select default start up size of each PROM bank, when programmable.
+
+PROM bank size select
+CONFIG_SRCTRLFT_ROMBANKSZDEF13
+  Select default start up size of each PROM bank, when programmable.
+
+PROM bank size select
+CONFIG_SRCTRLFT_ROMBANKSZDEF14
+  Select default start up size of each PROM bank, when programmable.
+
+PROM bank size select
+CONFIG_SRCTRLFT_ROMBANKSZDEF15
+  Select default start up size of each PROM bank, when programmable.
+
+Use netlist
+CONFIG_SRCTRLFT_NETLIST
+  Use a pre-compiled netlist instead of VHDL source code. Say yes
+  here if you have a grlib distribution without the FTSRCTRL in
+  source code.

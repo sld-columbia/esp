@@ -1,0 +1,4 @@
+#ifndef CONFIG_GRACECTRL
+#define CONFIG_GRACECTRL 0
+#endif
+
