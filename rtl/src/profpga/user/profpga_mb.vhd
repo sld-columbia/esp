@@ -19,26 +19,6 @@
 -- =============================================================================
 
 
---! TODO: check port naming mmi64_p_muxdemux since regular mmi64 naming scheme breaks on bidirectional modules. Also check if this is called a phy since bridge seams to be more appropriate!
-
-package profpga_mb_pkg is
-
-  -- number of master beats on mainboard (clock and associated sync)
-  constant MASTER_BEAT_COUNT : natural := 8;
-
-  -- number of external clocks
-  constant EXT_CLOCK_COUNT : natural := 4;
-
-  -- number of source clocks per fpga module (clock and associated sync)
-  constant SRC_CLOCK_COUNT : natural := 4;
-
-  -- bit width of DMBI bus transferring MMI64 domain signals between fpga module and mainboard
-  constant DMBI_BUS_WIDTH : natural := 20;
-
-end profpga_mb_pkg;
-
---
-
 library ieee;
 use ieee.std_logic_1164.all;
 
@@ -1750,7 +1730,7 @@ library ieee;
 use ieee.std_logic_1164.all;
 
 architecture beh of mb_clock_generator is
-  component clkgen is
+  component profpga_clkgen is
     port (
       -- reference clock inputs
       refclk_125MHz_i : in std_ulogic;
@@ -1774,7 +1754,7 @@ architecture beh of mb_clock_generator is
       cfg_rdata_o      : out std_ulogic_vector(15 downto 0);
       cfg_rdatavalid_o : out std_ulogic
       );
-  end component clkgen;
+  end component profpga_clkgen;
 
   -- MMI command interface
   signal cfg_addr_r  : std_ulogic_vector(12 downto 0);
@@ -1796,7 +1776,7 @@ architecture beh of mb_clock_generator is
 
 begin
 
-  u_clockgen : clkgen
+  u_clockgen : profpga_clkgen
     port map (
       -- reference clock inputs
       refclk_125MHz_i => refclk_125MHz_i,
@@ -1906,7 +1886,7 @@ end architecture beh;  -- of mb_clock_generator
 library ieee;
 use ieee.std_logic_1164.all;
 
-entity clkgen is
+entity profpga_clkgen is
   port (
     -- reference clock inputs
     refclk_125MHz_i : in std_ulogic;
@@ -1930,7 +1910,7 @@ entity clkgen is
     cfg_rdata_o      : out std_ulogic_vector(15 downto 0);
     cfg_rdatavalid_o : out std_ulogic
     );
-end entity clkgen;
+end entity profpga_clkgen;
 
 --
 
@@ -1941,7 +1921,7 @@ use ieee.numeric_std.all;
 library unisim;
 use unisim.vcomponents.all;
 
-architecture beh of clkgen is
+architecture beh of profpga_clkgen is
   type     clkinselx_vector is array(natural range <>) of std_ulogic_vector(1 downto 0);
   constant ALL_ZERO : std_ulogic_vector(7 downto 1) := (others => '0');
 
