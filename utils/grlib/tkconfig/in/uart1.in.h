@@ -18,3 +18,6 @@
 #define CFG_UA1_FIFO 1
 #endif
 
+#ifndef CONFIG_UA1_IRQ
+#define CONFIG_UA1_IRQ 2
+#endif

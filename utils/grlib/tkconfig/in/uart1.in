@@ -1,5 +1,6 @@
     bool 'Enable console UART                  ' CONFIG_UART1_ENABLE
     if [ "$CONFIG_UART1_ENABLE" = "y" ]; then
+       int 'UART1 APB slave irq  ' CONFIG_UA1_IRQ 2
         choice 'UART1 FIFO depth' \
 	  "1		CONFIG_UA1_FIFO1 \
 	   2		CONFIG_UA1_FIFO2 \
