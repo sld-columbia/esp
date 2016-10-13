@@ -120,6 +120,7 @@ end component;
 -- pragma translate_on
 
 function unary_to_slv(i: std_logic_vector) return std_logic_vector;
+function to_std_logic (i : integer) return std_logic;
 function gray_encoder(idata : in std_logic_vector) return std_logic_vector;
 function gray_decoder(idata : in std_logic_vector) return std_logic_vector;
 
@@ -659,6 +660,18 @@ end;
 
     return o;
   end unary_to_slv;
+
+  -- purpose: Convert integer range 0 to 1 to std_logic
+  function to_std_logic (
+    i : integer)
+    return std_logic is
+  begin  -- to_std_logic
+    if i = 0 then
+      return '0';
+    else
+      return '1';
+    end if;
+  end to_std_logic;
 
   function gray_encoder(idata : in std_logic_vector) return std_logic_vector is
     variable vdata : std_logic_vector(idata'left downto idata'right);
