@@ -9,7 +9,7 @@
 
 use work.gencomp.all;
 
-package config is
+package grlib_config is
 
 #include "grlib_config.vhd.h"
 
