@@ -266,7 +266,8 @@ end;
 
 LIBRARY ieee;
 use ieee.std_logic_1164.all;
-use work.stdlib.conv_integer;
+use ieee.std_logic_arith.all;
+use ieee.std_logic_unsigned.all;
 --pragma translate_off
 library unisim;
 use unisim.vcomponents.RAMB16_S36_S36;
@@ -431,6 +432,12 @@ end component;
 signal gnd, vcc : std_ulogic;
 signal do1, do2, di1, di2 : std_logic_vector(dbits+36 downto 0);
 signal addr1, addr2 : std_logic_vector(19 downto 0);
+signal ce1, ce2 : std_logic_vector(63 downto 0);
+signal we1, we2 : std_logic_vector(63 downto 0);
+signal ce1_idx, ce2_idx : integer range 63 downto 0;
+signal ce1_idx_r, ce2_idx_r : integer range 63 downto 0;
+type dout_vector_type is array (63 downto 0) of std_logic_vector(dbits+36 downto 0);
+signal do1v, do2v : dout_vector_type;
 
 subtype qword is std_logic_vector(dbits+36 downto 0);
 type qqtype is array (0 to 3) of qword;
@@ -543,7 +550,7 @@ begin
     do1(dbits+36 downto dbits) <= (others => '0');
     do2(dbits+36 downto dbits) <= (others => '0');
   end generate;
-  
+
   a15a16 : if abits >= 15 and abits <= 16 generate
     y : for j in 0 to (2**(abits-14))-1 generate
       enable1_t(j) <= '1' when ((enable1 = '1') and (conv_integer(addr1(15 downto 14)) = j)) else '0';
@@ -578,12 +585,82 @@ begin
     do2(dbits+36 downto dbits) <= (others => '0');
   end generate;
 
+  agt16 : if abits > 16 generate
+    ce1_r: process (clk1)
+    begin  -- process ce1_r
+      if clk1'event and clk1 = '1' then  -- rising clock edge
+        ce1_idx_r <= ce1_idx;
+      end if;
+    end process ce1_r;
+    ce2_r: process (clk2)
+    begin  -- process ce2_r
+      if clk2'event and clk2 = '1' then  -- rising clock edge
+        ce2_idx_r <= ce2_idx;
+      end if;
+    end process ce2_r;
+
+    do1 <= do1v(ce1_idx_r);
+    do2 <= do2v(ce2_idx_r);
+
+    out_mux: process (addr1, addr2, ce1, ce2, ce1_idx_r, ce2_idx_r)
+    begin  -- process out_mus
+      ce1_idx <= ce1_idx_r;
+      ce2_idx <= ce2_idx_r;
+      for j in 2**(abits-14)-1 downto 0 loop
+        if ce1(j) = '1' then
+          ce1_idx <= j;
+        end if;
+        if ce2(j) = '1' then
+          ce2_idx <= j;
+        end if;
+      end loop;  -- j
+    end process out_mux;
+
+    no_ce : for j in 63 downto (2**(abits-14)) generate
+      ce1(j) <= '0';
+      ce2(j) <= '0';
+      do1v(j) <= (others => '0');
+      do2v(j) <= (others => '0');
+    end generate;
+
+    y : for j in (2**(abits-14)-1) downto 0 generate
+      chip_enable: process (enable1, enable2, addr1, addr2)
+      begin  -- process chip_enable
+        if (conv_integer(addr1(abits-1 downto 14)) = j) then
+          ce1(j) <= enable1;
+        else
+          ce1(j) <= '0';
+        end if;
+        if (conv_integer(addr2(abits-1 downto 14)) = j) then
+          ce2(j) <= enable2;
+        else
+          ce2(j) <= '0';
+        end if;
+      end process chip_enable;
+
+      x : for i in 0 to ((dbits-1)/1) generate
+        r0 : RAMB16_S1_S1
+          generic map(SIM_COLLISION_CHECK => "GENERATE_X_ONLY")
+          port map (
+            do1v(j)(((i+1)*1)-1 downto i*1), do2v(j)(((i+1)*1)-1 downto i*1),
+            addr1(13 downto 0), addr2(13 downto 0), clk1, clk2,
+            di1(((i+1)*1)-1 downto i*1), di2(((i+1)*1)-1 downto i*1),
+--	vcc, vcc, gnd, gnd, write1, write2);
+            ce1(j), ce2(j), gnd, gnd, write1, write2);
+      end generate;
+      do1v(j)(dbits+36 downto dbits) <= (others => '0');
+      do2v(j)(dbits+36 downto dbits) <= (others => '0');
+
+    end generate;
+  end generate;
+
+
 -- pragma translate_off
-  a_to_high : if abits > 16 generate
+  a_to_high : if abits > 20 generate
     x : process
     begin
       assert false
-      report  "Address depth larger than 16 not supported for unisim_syncram_dp"
+      report  "Address depth larger than 20 not supported for unisim_syncram_dp"
       severity failure;
       wait;
     end process;
