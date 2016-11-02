@@ -4,7 +4,6 @@ from tkinter import *
 from tkinter import messagebox
 import os.path
 
-from BusConfiguration import *
 from NoCConfiguration import *
 
 class Components():
@@ -79,48 +78,36 @@ class SoC_Config():
     else:
       self.transfers.set(0)
 
-    line = fp.readline()
-    if line.find("HAS_BUS") != -1:
-      self.interconnection_type.set(0)
-      line = fp.readline().replace("\n","")
-      for x in range(0, int(line)):
+    self.noc.create_topology(self.noc.top, int(fp.readline().replace("\n","")), int(fp.readline().replace("\n","")))
+    self.noc.monitor_ddr.set(int(fp.readline().replace("\n","")))
+    self.noc.monitor_inj.set(int(fp.readline().replace("\n","")))
+    self.noc.monitor_routers.set(int(fp.readline().replace("\n","")))
+    self.noc.monitor_accelerators.set(int(fp.readline().replace("\n","")))
+    self.noc.monitor_dvfs.set(int(fp.readline().replace("\n","")))
+    for y in range(0, self.noc.rows):
+      for x in range(0, self.noc.cols):
         line = fp.readline().replace("\n","")
+        tile = self.noc.topology[y][x]
         tokens = line.split(' ')
         if len(tokens) > 1:
-          self.bus.list_accelerators.append(tokens[1])
- 
-    if line.find("HAS_NOC") != -1:
-      self.interconnection_type.set(1)
-      self.noc.create_topology(self.noc.top, int(fp.readline().replace("\n","")), int(fp.readline().replace("\n","")))
-      self.noc.monitor_ddr.set(int(fp.readline().replace("\n","")))
-      self.noc.monitor_inj.set(int(fp.readline().replace("\n","")))
-      self.noc.monitor_routers.set(int(fp.readline().replace("\n","")))
-      self.noc.monitor_accelerators.set(int(fp.readline().replace("\n","")))
-      self.noc.monitor_dvfs.set(int(fp.readline().replace("\n","")))
-      for y in range(0, self.noc.rows):
-        for x in range(0, self.noc.cols):
-          line = fp.readline().replace("\n","")
-          tile = self.noc.topology[y][x]
-          tokens = line.split(' ')
-          if len(tokens) > 1:
-            tile.ip_type.set(tokens[1])
-            tile.clk_region.set(int(tokens[3]))
-            tile.has_pll.set(int(tokens[4]))
-            tile.has_clkbuf.set(int(tokens[5]))
-      self.noc.vf_points = int(fp.readline().replace("\n",""))
-      for y in range(0, self.noc.rows):
-        for x in range(0, self.noc.cols):
-          line = fp.readline().replace("\n","")
-          tile = self.noc.topology[y][x]
-          if len(line) == 0:
-            return
-          tokens = line.split(' ')
-          tile.create_characterization(self, self.noc.vf_points)
-          if tile.ip_type.get() == tokens[0]:
-            for vf in range(self.noc.vf_points):
-              tile.energy_values.vf_points[vf].voltage = float(tokens[1 + vf * 3])
-              tile.energy_values.vf_points[vf].frequency = float(tokens[1 + vf * 3 + 1])
-              tile.energy_values.vf_points[vf].energy = float(tokens[1 + vf * 3 + 2])
+          tile.ip_type.set(tokens[1])
+          tile.clk_region.set(int(tokens[3]))
+          tile.has_pll.set(int(tokens[4]))
+          tile.has_clkbuf.set(int(tokens[5]))
+    self.noc.vf_points = int(fp.readline().replace("\n",""))
+    for y in range(0, self.noc.rows):
+      for x in range(0, self.noc.cols):
+        line = fp.readline().replace("\n","")
+        tile = self.noc.topology[y][x]
+        if len(line) == 0:
+          return
+        tokens = line.split(' ')
+        tile.create_characterization(self, self.noc.vf_points)
+        if tile.ip_type.get() == tokens[0]:
+          for vf in range(self.noc.vf_points):
+            tile.energy_values.vf_points[vf].voltage = float(tokens[1 + vf * 3])
+            tile.energy_values.vf_points[vf].frequency = float(tokens[1 + vf * 3 + 1])
+            tile.energy_values.vf_points[vf].energy = float(tokens[1 + vf * 3 + 2])
     return 0
           
   def write_config(self):
@@ -132,64 +119,57 @@ class SoC_Config():
       fp.write("HAS_BP\n")
     else:
       fp.write("(unknown)")
-    if self.interconnection_type.get() == 0:
-      fp.write("HAS_BUS\n")
-      fp.write(str(len(self.bus.list_accelerators)) + "\n")
-      for x in self.bus.list_accelerators:
-        fp.write("acc " + x + "\n")
-    if self.interconnection_type.get() == 1:
-      fp.write("HAS_NOC\n")
-      fp.write(str(self.noc.rows) + "\n")
-      fp.write(str(self.noc.cols) + "\n")
-      fp.write(str(self.noc.monitor_ddr.get()) + "\n")
-      fp.write(str(self.noc.monitor_inj.get()) + "\n")
-      fp.write(str(self.noc.monitor_routers.get()) + "\n")
-      fp.write(str(self.noc.monitor_accelerators.get()) + "\n")
-      fp.write(str(self.noc.monitor_dvfs.get()) + "\n")
-      i = 0
-      for y in range(0, self.noc.rows):
-        for x in range(0, self.noc.cols):
-          tile = self.noc.topology[y][x]
-          selection = tile.ip_type.get()
-          if self.IPs.PROCESSORS.count(selection):
-            fp.write("cpu")
-          elif self.IPs.MISC.count(selection):
-            fp.write("misc")
-          elif self.IPs.MEM.count(selection):
-            if selection == "mem_dbg":
-              fp.write("mem_dbg")
-            else:
-              fp.write("mem_lite")
-          elif self.IPs.ACCELERATORS.count(selection):
-            fp.write("acc")
+    fp.write(str(self.noc.rows) + "\n")
+    fp.write(str(self.noc.cols) + "\n")
+    fp.write(str(self.noc.monitor_ddr.get()) + "\n")
+    fp.write(str(self.noc.monitor_inj.get()) + "\n")
+    fp.write(str(self.noc.monitor_routers.get()) + "\n")
+    fp.write(str(self.noc.monitor_accelerators.get()) + "\n")
+    fp.write(str(self.noc.monitor_dvfs.get()) + "\n")
+    i = 0
+    for y in range(0, self.noc.rows):
+      for x in range(0, self.noc.cols):
+        tile = self.noc.topology[y][x]
+        selection = tile.ip_type.get()
+        if self.IPs.PROCESSORS.count(selection):
+          fp.write("cpu")
+        elif self.IPs.MISC.count(selection):
+          fp.write("misc")
+        elif self.IPs.MEM.count(selection):
+          if selection == "mem_dbg":
+            fp.write("mem_dbg")
           else:
-            fp.write("empty")
-          fp.write(" " + selection)
-          fp.write(" " + str(i))
-          try:
-            clk_region = tile.clk_region.get()
-            fp.write(" " + str(clk_region))
-          except:
-            fp.write(" " + str(0))
-          fp.write(" " + str(tile.has_pll.get()))
-          fp.write(" " + str(tile.has_clkbuf.get()))
+            fp.write("mem_lite")
+        elif self.IPs.ACCELERATORS.count(selection):
+          fp.write("acc")
+        else:
+          fp.write("empty")
+        fp.write(" " + selection)
+        fp.write(" " + str(i))
+        try:
+          clk_region = tile.clk_region.get()
+          fp.write(" " + str(clk_region))
+        except:
+          fp.write(" " + str(0))
+        fp.write(" " + str(tile.has_pll.get()))
+        fp.write(" " + str(tile.has_clkbuf.get()))
+        fp.write("\n")
+        i += 1
+    fp.write(str(self.noc.vf_points) + "\n")
+    for y in range(self.noc.rows):
+      for x in range(self.noc.cols):
+        tile = self.noc.topology[y][x]
+        selection = tile.ip_type.get()
+        fp.write(selection + " ")
+        if self.IPs.ACCELERATORS.count(selection) == 0:
+          for vf in range(self.noc.vf_points):
+            fp.write(str(0) + " " + str(0) + " " + str(0) + " ")
           fp.write("\n")
-          i += 1
-      fp.write(str(self.noc.vf_points) + "\n")
-      for y in range(self.noc.rows):
-        for x in range(self.noc.cols):
-          tile = self.noc.topology[y][x]
-          selection = tile.ip_type.get()
-          fp.write(selection + " ")
-          if self.IPs.ACCELERATORS.count(selection) == 0:
-            for vf in range(self.noc.vf_points):
-              fp.write(str(0) + " " + str(0) + " " + str(0) + " ")
-            fp.write("\n")
-          else:
-            for vf in range(self.noc.vf_points):
-              fp.write(str(tile.energy_values.vf_points[vf].voltage) + " " + str(tile.energy_values.vf_points[vf].frequency) + " " + str(tile.energy_values.vf_points[vf].energy) + " ")
-            fp.write("\n")
-  
+        else:
+          for vf in range(self.noc.vf_points):
+            fp.write(str(tile.energy_values.vf_points[vf].voltage) + " " + str(tile.energy_values.vf_points[vf].frequency) + " " + str(tile.energy_values.vf_points[vf].energy) + " ")
+          fp.write("\n")
+
   def check_cfg(self, line, token, end):
     line = line[line.find(token)+len(token):]
     line = line[:line.find(end)]
@@ -229,8 +209,6 @@ class SoC_Config():
           self.HAS_SVGA = int(self.check_cfg(line, "integer := ", ";"))
     #post process configuration
     self.set_IP()
-    #0 = Bus ; 1 = NoC
-    self.interconnection_type = IntVar()
     #0 = Bigphysical area ; 1 = Scatter/Gather
     self.transfers = IntVar()
 

@@ -10,7 +10,6 @@ from power_gen import *
 
 root = Tk()
 soc = SoC_Config()
-soc.bus = Bus()
 soc.noc = NoC()
 x = soc.read_config(False)
 if x == -1:

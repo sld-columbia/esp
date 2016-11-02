@@ -51,7 +51,6 @@ class soc_config:
   nacc = 0
   nmem_ctrl = 0
   #interconnection
-  has_noc = False
   ntiles = 0
   #peripherals
 
@@ -63,79 +62,73 @@ class soc_config:
 
   def __init__(self, soc):
     #components
-    if soc.interconnection_type.get() == 0:
-      self.has_noc = False
-      self.ncpu = 1  
-      self.nmem_ctrl = 1
-      self.nacc = len(soc.bus.list_accelerators)
-    elif soc.interconnection_type.get() == 1:
-      self.has_noc = True
-      for x in range(soc.noc.rows):
-        for y in range(soc.noc.cols):
-          tile = soc.noc.topology[x][y]
-          ip_type = tile.ip_type.get()
-          if soc.IPs.PROCESSORS.count(ip_type):
-            self.ncpu += 1
-          elif soc.IPs.MEM.count(ip_type):
-            self.nmem_ctrl += 1
-          elif soc.IPs.ACCELERATORS.count(ip_type):
-            self.nacc += 1
-      self.ntiles = soc.noc.rows * soc.noc.cols
-      self.accelerators = []
-      self.tiles = [tile_info() for x in range(0, self.ntiles)]
-      self.acc_types = soc.IPs.ACCELERATORS
-      self.acc_num = [0 for x in range(0, len(self.acc_types))]
-      self.acc_irq = defaultdict(lambda: 0)
+    self.has_noc = True
+    for x in range(soc.noc.rows):
+      for y in range(soc.noc.cols):
+        tile = soc.noc.topology[x][y]
+        ip_type = tile.ip_type.get()
+        if soc.IPs.PROCESSORS.count(ip_type):
+          self.ncpu += 1
+        elif soc.IPs.MEM.count(ip_type):
+          self.nmem_ctrl += 1
+        elif soc.IPs.ACCELERATORS.count(ip_type):
+          self.nacc += 1
+    self.ntiles = soc.noc.rows * soc.noc.cols
+    self.accelerators = []
+    self.tiles = [tile_info() for x in range(0, self.ntiles)]
+    self.acc_types = soc.IPs.ACCELERATORS
+    self.acc_num = [0 for x in range(0, len(self.acc_types))]
+    self.acc_irq = defaultdict(lambda: 0)
 
-      t = 0
-      cpuid = 0
-      acc_tile_idx = 0
-      acc_idx = 5 #first available line
-      acc_irq = 3
-      for x in range(soc.noc.rows): 
-        for y in range(soc.noc.cols): 
-          selection = soc.noc.topology[x][y].ip_type.get()
-          t = y + x * soc.noc.cols
-          self.tiles[t].row = x
-          self.tiles[t].col = y
-          self.tiles[t].clk_region = soc.noc.topology[x][y].get_clk_region()
-          self.tiles[t].has_pll = soc.noc.topology[x][y].has_pll.get()
-          self.tiles[t].has_clkbuf = soc.noc.topology[x][y].has_clkbuf.get()
-          if selection == "cpu":
-            self.tiles[t].type = "cpu"
-            self.tiles[t].cpuid = 0
-            cpuid += 1
-          if selection == "mem_dbg":
-            self.tiles[t].type = "mem_dbg"
-          if selection == "mem_lite":
-            self.tiles[t].type = "mem_lite"
-          if selection == "IO":
-            self.tiles[t].type = "misc"
-          if soc.IPs.ACCELERATORS.count(selection):
-            self.tiles[t].type = "acc"
-            self.tiles[t].idx = acc_tile_idx
-            for i in range(0, len(self.acc_types)):
-              if self.acc_types[i] == selection:
-                 self.acc_num[i] += 1
-            acc = acc_info()
-            acc.lowercase_name = selection.lower()
-            acc.uppercase_name = selection
-            acc.idx = acc_idx
-            self.acc_irq[selection] = acc_irq
-            '''
-            if self.acc_irq[selection] == 0:
-              self.acc_irq[selection] = acc_irq
-              acc_irq += 1
-              if acc_irq > 7:
-                 acc_irq = 3
-            acc.irq = self.acc_irq[selection]
-            '''
-            acc.number = acc_tile_idx
-            acc_idx += 1
-            acc_tile_idx += 1
-            if acc_idx == 13:
-               acc_idx = 16
-            self.accelerators.append(acc)
+    t = 0
+    cpuid = 0
+    acc_tile_idx = 0
+    acc_idx = 5 #first available line
+    acc_irq = 3
+    for x in range(soc.noc.rows): 
+      for y in range(soc.noc.cols): 
+        selection = soc.noc.topology[x][y].ip_type.get()
+        t = y + x * soc.noc.cols
+        self.tiles[t].row = x
+        self.tiles[t].col = y
+        self.tiles[t].clk_region = soc.noc.topology[x][y].get_clk_region()
+        self.tiles[t].has_pll = soc.noc.topology[x][y].has_pll.get()
+        self.tiles[t].has_clkbuf = soc.noc.topology[x][y].has_clkbuf.get()
+        if selection == "cpu":
+          self.tiles[t].type = "cpu"
+          self.tiles[t].cpuid = 0
+          cpuid += 1
+        if selection == "mem_dbg":
+          self.tiles[t].type = "mem_dbg"
+        if selection == "mem_lite":
+          self.tiles[t].type = "mem_lite"
+        if selection == "IO":
+          self.tiles[t].type = "misc"
+        if soc.IPs.ACCELERATORS.count(selection):
+          self.tiles[t].type = "acc"
+          self.tiles[t].idx = acc_tile_idx
+          for i in range(0, len(self.acc_types)):
+            if self.acc_types[i] == selection:
+              self.acc_num[i] += 1
+          acc = acc_info()
+          acc.lowercase_name = selection.lower()
+          acc.uppercase_name = selection
+          acc.idx = acc_idx
+          self.acc_irq[selection] = acc_irq
+          '''
+          if self.acc_irq[selection] == 0:
+          self.acc_irq[selection] = acc_irq
+          acc_irq += 1
+          if acc_irq > 7:
+          acc_irq = 3
+          acc.irq = self.acc_irq[selection]
+          '''
+          acc.number = acc_tile_idx
+          acc_idx += 1
+          acc_tile_idx += 1
+          if acc_idx == 13:
+            acc_idx = 16
+          self.accelerators.append(acc)
 
 def print_header(fp):
   fp.write("------------------------------------------------------------------------------\n")
@@ -166,22 +159,21 @@ def print_constants(fp, esp_config, soc):
   fp.write("  -- CFG_CPU processors\n")
   fp.write("  constant CFG_NCPU_TILE : integer := " + str(soc.noc.get_cpu_num(soc)) + ";\n\n")
 
-  if soc.interconnection_type.get() == 1:
-    fp.write("-- NoC settings\n")
-    fp.write("  constant CFG_FIXED_ADDR : integer := 1;\n")
-    fp.write("  constant CFG_USE_NOC : integer := 1;\n")
-    fp.write("  constant CFG_XLEN : integer := " + str(soc.noc.cols) + ";\n")
-    fp.write("  constant CFG_YLEN : integer := " + str(soc.noc.rows) + ";\n")
-    fp.write("  constant CFG_TILES_NUM : integer := CFG_XLEN * CFG_YLEN;\n")
+  fp.write("-- NoC settings\n")
+  fp.write("  constant CFG_FIXED_ADDR : integer := 1;\n")
+  fp.write("  constant CFG_USE_NOC : integer := 1;\n")
+  fp.write("  constant CFG_XLEN : integer := " + str(soc.noc.cols) + ";\n")
+  fp.write("  constant CFG_YLEN : integer := " + str(soc.noc.rows) + ";\n")
+  fp.write("  constant CFG_TILES_NUM : integer := CFG_XLEN * CFG_YLEN;\n")
 
-    fp.write("-- Monitor settings\n")
-    fp.write("  constant CFG_MON_DDR_EN : integer := " + str(soc.noc.monitor_ddr.get()) + ";\n")
-    fp.write("  constant CFG_MON_NOC_INJECT_EN : integer := " + str(soc.noc.monitor_inj.get()) + ";\n")
-    fp.write("  constant CFG_MON_NOC_QUEUES_EN : integer := " + str(soc.noc.monitor_routers.get()) + ";\n")
-    fp.write("  constant CFG_MON_ACC_EN : integer := " + str(soc.noc.monitor_accelerators.get()) + ";\n")
-    fp.write("  constant CFG_MON_DVFS_EN : integer := " + str(soc.noc.monitor_dvfs.get()) + ";\n")
+  fp.write("-- Monitor settings\n")
+  fp.write("  constant CFG_MON_DDR_EN : integer := " + str(soc.noc.monitor_ddr.get()) + ";\n")
+  fp.write("  constant CFG_MON_NOC_INJECT_EN : integer := " + str(soc.noc.monitor_inj.get()) + ";\n")
+  fp.write("  constant CFG_MON_NOC_QUEUES_EN : integer := " + str(soc.noc.monitor_routers.get()) + ";\n")
+  fp.write("  constant CFG_MON_ACC_EN : integer := " + str(soc.noc.monitor_accelerators.get()) + ";\n")
+  fp.write("  constant CFG_MON_DVFS_EN : integer := " + str(soc.noc.monitor_dvfs.get()) + ";\n")
 
-    fp.write("-- Other settings\n")
+  fp.write("-- Other settings\n")
   if soc.noc.has_dvfs() or soc.noc.get_mem_num(soc)[0] > 1:
     fp.write("  constant CFG_HAS_SYNC : integer := 2;\n")
   else:

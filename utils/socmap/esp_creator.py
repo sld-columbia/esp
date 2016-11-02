@@ -7,7 +7,6 @@ import os.path
 import shutil
 from subprocess import Popen, PIPE
 
-from BusConfiguration import *
 from NoCConfiguration import *
 from soc import *
 from socmap_gen import *
@@ -52,9 +51,6 @@ class OptionFrame(Frame):
     self.soc = soc
     Frame.__init__(self, top_frame, width=50, borderwidth=2, relief=RIDGE) 
     self.pack(side=LEFT, expand=NO, fill=Y)      
-    Label(self, text = "Interconnection: ", font="TkDefaultFont 11 bold").pack(side = TOP)
-    Radiobutton(self, text = "Bus", variable = soc.interconnection_type, value = 0).pack(side = TOP)
-    Radiobutton(self, text = "NoC", variable = soc.interconnection_type, value = 1).pack(side = TOP)
     Label(self, text = "Data transfers: ", font="TkDefaultFont 11 bold").pack(side = TOP)
     Radiobutton(self, text = "Bigphysical area", variable = soc.transfers, value = 0).pack(side = TOP)
     Radiobutton(self, text = "Scatter/Gather  ", variable = soc.transfers, value = 1).pack(side = TOP)
@@ -62,24 +58,9 @@ class OptionFrame(Frame):
 
 class EspCreator(Frame):
 
-  def update_interconnect(self, *args):
-    if self.soc.interconnection_type.get() == 0:
-      self.message.delete(0.0, END)
-      self.bottom_frame_noccfg.noc_config_frame.pack_forget()
-      self.bottom_frame_noccfg.pack_forget()
-      self.bottom_frame_buscfg.pack(side=LEFT,fill=BOTH,expand=YES)
-      self.done.config(state=NORMAL)
-    if self.soc.interconnection_type.get() == 1:
-      self.bottom_frame_buscfg.pack_forget()
-      self.bottom_frame_noccfg.noc_config_frame.pack(side=LEFT, expand=NO, fill=Y)
-      self.bottom_frame_noccfg.create_noc()
-      self.done.config(state=DISABLED)
-
   def __init__(self, master, _soc):
     self.soc = _soc
-    self.soc.bus = Bus()
     self.soc.noc = NoC()
-    self.bus = self.soc.bus
     self.noc = self.soc.noc
     self.ParentFrame = master 
     #.:: creating the general layout
@@ -105,13 +86,11 @@ class EspCreator(Frame):
     #.:: creating the selection frame
     self.select_frame = OptionFrame(self.soc, self.top_frame)
 
-    #bus frame
-    self.bottom_frame_buscfg = BusFrame(self.soc, self.bottom_frame) 
     #noc frame
     self.bottom_frame_noccfg = NoCFrame(self.soc, self.bottom_frame) 
-    #set default interconnection and method to update frames
-    self.soc.interconnection_type.trace('w', self.update_interconnect)
-    self.soc.interconnection_type.set(1)
+    self.bottom_frame_noccfg.noc_config_frame.pack(side=LEFT, expand=NO, fill=Y)
+    self.bottom_frame_noccfg.create_noc()
+    self.done.config(state=DISABLED)
 
     #message box
     self.message=Text(self.message_bar, width = 75, height = 7, wrap = WORD)
@@ -119,10 +98,7 @@ class EspCreator(Frame):
     self.bottom_frame_noccfg.set_message(self.message, cfg_frame, self.done)   
 
     self.soc.read_config(True)
-    if self.soc.interconnection_type.get() == 0:
-      self.bottom_frame_buscfg.update_frame()
-    elif self.soc.interconnection_type.get() == 1:
-      self.bottom_frame_noccfg.update_frame()
+    self.bottom_frame_noccfg.update_frame()
 
   def generate_files(self):
       self.generate_socmap()
@@ -132,15 +108,14 @@ class EspCreator(Frame):
         shutil.move(".esp_config.bak", ".esp_config")
 
   def generate_socmap(self):
-      if self.soc.interconnection_type.get() == 1:
-        try:
-          int(self.bottom_frame_noccfg.vf_points_entry.get())
-        except:
-          return
-        self.soc.noc.vf_points = int(self.bottom_frame_noccfg.vf_points_entry.get())
-      self.soc.write_config()
-      esp_config = soc_config(soc)
-      create_socmap(esp_config, soc)
+    try:
+      int(self.bottom_frame_noccfg.vf_points_entry.get())
+    except:
+      return
+    self.soc.noc.vf_points = int(self.bottom_frame_noccfg.vf_points_entry.get())
+    self.soc.write_config()
+    esp_config = soc_config(soc)
+    create_socmap(esp_config, soc)
  
   def generate_power(self):
       create_power(soc)
@@ -158,12 +133,11 @@ root.geometry("%dx%d+0+0" % (w, h))
 app = EspCreator(root, soc)
 
 def on_closing():
-  if soc.interconnection_type.get() == 1:
-    try:
-      int(app.bottom_frame_noccfg.vf_points_entry.get())
-    except:
-      return
-    soc.noc.vf_points = int(app.bottom_frame_noccfg.vf_points_entry.get())
+  try:
+    int(app.bottom_frame_noccfg.vf_points_entry.get())
+  except:
+    return
+  soc.noc.vf_points = int(app.bottom_frame_noccfg.vf_points_entry.get())
   if messagebox.askokcancel("Quit", "Do you want to quit?"):
     soc.write_config()
     root.destroy()
