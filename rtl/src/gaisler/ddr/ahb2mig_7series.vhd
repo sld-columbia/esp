@@ -71,8 +71,6 @@ entity ahb2mig_7series is
     ddr3_odt          : out   std_logic_vector(0 downto 0);
     ahbso             : out   ahb_slv_out_type;
     ahbsi             : in    ahb_slv_in_type;
-    apbi              : in    apb_slv_in_type;
-    apbo              : out   apb_slv_out_type;
     calib_done        : out   std_logic;
     rst_n_syn         : in    std_logic;
     rst_n_async       : in    std_logic;
@@ -557,11 +555,6 @@ begin
   ahbso.hirq    <= (others => '0');
   ahbso.hindex  <= hindex;
   ahbso.hsplit  <= (others => '0');
-
-  apbo.pindex  <= pindex;
-  apbo.pconfig <= pconfig;
-  apbo.pirq    <= (others => '0');
-  apbo.prdata  <= (others => '0');
 
   regs : process(clk_amba)
   begin
