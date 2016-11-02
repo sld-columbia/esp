@@ -1,0 +1,654 @@
+##########################
+###    ESP Makefile    ###
+##########################
+
+
+### Some pretty aliases ###
+
+# Define V=1 for a more verbose compilation
+ifndef V
+	QUIET_AR            = @echo '   ' AR $@;
+	QUIET_AS            = @echo '   ' AS $@;
+	QUIET_BUILD         = @echo '   ' BUILD $@;
+	QUIET_CHMOD         = @echo '   ' CHMOD $@;
+	QUIET_CC            = @echo '   ' CC $@;
+	QUIET_CXX           = @echo '   ' CXX $@;
+	QUIET_OBJCP         = @echo '   ' OBJCP $@;
+	QUIET_CHECKPATCH    = @echo '   ' CHECKPATCH $(subst .o,.c,$@);
+	QUIET_CHECK         = @echo '   ' CHECK $(subst .o,.c,$@);
+	QUIET_LINK          = @echo '   ' LINK $@;
+	QUIET_CP            = @echo '   ' CP $@;
+	QUIET_RM            = @echo '   ' RM $@;
+	QUIET_MKDIR         = @echo '   ' MKDIR $@;
+	QUIET_MAKE          = @echo '   ' MAKE $@;
+	QUIET_INFO          = @echo -n '   ' INFO '';
+	QUIET_DIFF          = @echo -n '   ' DIFF '';
+	QUIET_RUN           = @echo '   ' RUN $@;
+	QUIET_CLEAN         = @echo '   ' CLEAN $@;
+endif
+	SPACES              = "    "
+	SPACING             = echo -n "    ";
+
+CC  = LD_LIBRARY="" /usr/bin/gcc
+LD  = LD_LIBRARY="" /usr/bin/ld
+SED = sed
+RM  = rm -rf
+
+
+### Common targets ###
+
+all: help
+
+help:
+	@echo
+	@echo " ESP Targets:"
+	@echo "   make BLA BLA         : TODO"
+	@echo
+
+
+clean: 		soft-clean		\
+		ahbrom-clean 		\
+		xilinx_lib-clean 	\
+		sim-clean		\
+		esp-config-clean	\
+		grlib-config-clean	\
+		vivado-clean
+
+distclean:	check_all_srcs-distclean 	\
+		check_all_rtl_srcs-distclean	\
+		soft-distclean 			\
+		ahbrom-distclean		\
+		xilinx_lib-distclean 		\
+		sim-distclean			\
+		esp-config-distclean		\
+		grlib-config-distclean		\
+		vivado-distclean
+
+.PHONY: help clean distclean
+
+### SoC configuration for ESP ###
+
+.esp_config:
+	$(QUIET_CP)cp ../defconfig/esp_$(BOARD)_defconfig $@
+
+esp-defconfig: ../defconfig/esp_$(BOARD)_defconfig
+	$(QUIET_CP)cp $< .esp_config
+	$(QUIET_MAKE)$(MAKE) esp-config
+
+socmap.vhd: .esp_config
+	@echo ""
+	@echo "Generating ESP configuration..."
+	@python3 $(ESP_ROOT)/utils/socmap/esp_creator_batch.py
+
+esp-config: socmap.vhd
+
+esp-xconfig:
+	@echo ""
+	@echo "Running interactive ESP configuration..."
+	@python3 $(ESP_ROOT)/utils/socmap/esp_creator.py
+
+esp-config-clean:
+	$(QUIET_CLEAN)$(RM) \
+		.esp_config.bak
+
+esp-config-distclean: esp-config-clean
+	$(QUIET_CLEAN)$(RM)	\
+		socmap.vhd	\
+		.esp_config	\
+		mmi64_regs.h	\
+		power.h
+
+
+.PHONY: esp-xconfig esp-defconfig esp-config-clean esp-config-distclean
+
+### RTL simulator executables for Modelsim SE ###
+VLIB = vlib
+VCOM = vcom -quiet $(VCOMOPT)
+VLOG = vlog -quiet $(VLOGOPT)
+
+### RTL simulator executables for Incisive ###
+NCVHDL = ncvhdl -nowarn DLCPTH -NOVITALCHECK -linedebug -nocopyright $(NCVHDLOPT)
+NCVLOG = ncvlog -nowarn DLCPTH -nocopyright -linedebug $(NCVLOGOPT)
+
+### Patsh shortcuts ###
+UTILS_GRLIB = $(ESP_ROOT)/utils/grlib
+TKCONFIG   = $(UTILS_GRLIB)/tkconfig
+
+### Board files ###
+BOARD_FILES = $(wildcard $(ESP_ROOT)/constraints/$(BOARD)/*)
+
+### Software targets ###
+ifeq ("$(CPU_ARCH)", "leon3")
+  include $(UTILS_GRLIB)/leon3_sw.mk
+else
+soft-clean:
+
+soft-distclean:
+
+endif
+
+.PHONY: soft-clean soft-distclean
+
+
+### Leon3 prom ###
+
+ahbrom: $(UTILS_GRLIB)/ahbrom.c
+	$(QUIET_CC)$(CC) $< -o $@
+
+ahbrom.bin: prom.exe
+	$(QUIET_OBJCP)$(CROSS_COMPILE)objcopy -O binary $< $@
+
+ahbrom.vhd: ahbrom.bin ahbrom
+	$(QUIET_BUILD)./ahbrom $< $@
+
+ahbrom-clean:
+	$(QUIET_CLEAN)$(RM) ahbrom ahbrom.bin
+
+ahbrom-distclean: ahbrom-clean
+	$(QUIET_CLEAN)$(RM) ahbrom.vhd
+
+.PHONY: ahbrom-clean ahbrom-distclean
+
+
+### GRLIB config targets ###
+
+TKCONFIG_DEP   = $(TKCONFIG)/config.vhd
+TKCONFIG_DEP  += $(wildcard $(TKCONFIG)/in/*.in)
+TKCONFIG_DEP  += $(wildcard $(TKCONFIG)/in/*.in.vhd)
+TKCONFIG_DEP  += $(wildcard $(TKCONFIG)/in/*.in.h)
+TKCONFIG_DEP  += $(wildcard $(TKCONFIG)/in/*.in.help)
+TKCONFIG_DEP  += grlib_config.in
+
+.grlib_config:
+	$(QUIET_CP)cp ../defconfig/grlib_$(BOARD)_defconfig $@
+
+grlib-defconfig: ../defconfig/grlib_$(BOARD)_defconfig
+	$(QUIET_CP)cp $< .grlib_config
+	$(QUIET_MAKE)$(MAKE) grlib_config.vhd
+
+.PHONY: grlib-defconfig
+
+tkparse.o: $(TKCONFIG)/tkparse.c
+	$(QUIET_CC)$(CC) -g -c $<
+
+tkcond.o: $(TKCONFIG)/tkcond.c
+	$(QUIET_CC)$(CC) -g -c $<
+
+tkgen.o: $(TKCONFIG)/tkgen.c
+	$(QUIET_CC)$(CC) -g -c $<
+
+tkparse: tkparse.o tkcond.o tkgen.o
+	$(QUIET_LINK)$(CC) -g tkparse.o tkcond.o tkgen.o -o $@
+
+main.tk: tkparse grlib_config.in $(TKCONFIG_DEP)
+	$(QUIET_BUILD) ./$< grlib_config.in $(TKCONFIG)/in > $@
+
+lconfig.tk: main.tk $(TKCONFIG_DEP) grlib_config.in
+	$(QUIET_BUILD)cat $(TKCONFIG)/header.tk $< $(TKCONFIG)/tail.tk > $@
+	$(QUIET_CHMOD)chmod a+x lconfig.tk
+
+grlib_config.vhd: lconfig.tk .grlib_config
+	$(QUIET_DIFF)echo "checking .grlib_config..."
+	@/usr/bin/diff .grlib_config ../defconfig/grlib_profpga-xc7v2000t_defconfig -q > /dev/null; \
+	if test $$? = "0"; then \
+		echo $(SPACES)"INFO Using default configuration file for GRLIB"; \
+	else \
+		echo $(SPACES)"INFO Using custom configuration found in \".grlib_config\" for GRLIB"; \
+	fi
+	$(QUIET_RUN)
+	$(QUIET_INFO)echo "Creating grlib_config.vhd";
+	@unset LD_LIBRARY_PATH ; \
+	wish -f lconfig.tk -regen; \
+	if test $$? = "2" ; then \
+	   cpp -P -I$$PWD $(TKCONFIG)/config.vhd > grlib_config.vhd; \
+	   echo $(SPACES)"INFO grlib_config.vhd written"; \
+	fi
+
+grlib-xconfig: lconfig.tk
+	$(QUIET_RUN)
+	$(QUIET_INFO)echo "Creating grlib_config.vhd";
+	@unset LD_LIBRARY_PATH ; \
+	wish -f lconfig.tk; \
+	if test $$? = "2" ; then \
+	   cpp -P -I$$PWD $(TKCONFIG)/config.vhd > grlib_config.vhd; \
+	   echo $(SPACES)"INFO grlib_config.vhd written"; \
+	fi
+
+grlib-config-clean:
+	$(QUIET_CLEAN)$(RM)        \
+		tkparse.o          \
+		tkcond.o           \
+		tkgen.o            \
+		tkparse            \
+		main.tk            \
+		grlib_config.h     \
+		grlib_config.help  \
+		grlib_config.vhd.h \
+		.grlib_config.old
+
+grlib-config-distclean: grlib-config-clean
+	$(QUIET_CLEAN)$(RM)      \
+		lconfig.tk       \
+		tkconfig.h       \
+		grlib_config.vhd \
+		.grlib_config
+
+.PHONY: grlib-xconfig grlib-config-clean grlib-config-distclean
+
+
+### Desing source files ###
+
+PKG_LIST  = $(shell (find $(ESP_ROOT)/rtl -name "*.txt" ))
+PKG_LIST += $(shell (find $(ESP_ROOT)/sim -name "*.txt" ))
+
+RTL_LIBS += $(foreach lib, $(shell (cat $(ESP_ROOT)/rtl/libs.txt)), $(lib))
+SIM_LIBS += $(foreach lib, $(shell (cat $(ESP_ROOT)/sim/libs.txt)), $(lib))
+
+VHDL_RTL_PKGS  = $(shell (find $(ESP_ROOT)/rtl/include -name "*.vhd" ))
+VHDL_RTL_SRCS  = $(shell (find $(ESP_ROOT)/rtl/src -name "*.vhd" ))
+VLOG_RTL_SRCS  = $(shell (find $(ESP_ROOT)/rtl/src -name "*.v" ))
+
+VHDL_SIM_PKGS  = $(shell (find $(ESP_ROOT)/sim/include -name "*.vhd" ))
+VHDL_SIM_SRCS  = $(shell (find $(ESP_ROOT)/sim/src -name "*.vhd" ))
+VLOG_SIM_SRCS  = $(shell (find $(ESP_ROOT)/sim/src -name "*.v" ))
+
+VHDL_PKGS = $(VHDL_RTL_PKGS) $(VHDL_SIM_PKGS) $(TOP_VHDL_RTL_PKGS) $(TOP_VHDL_SIM_PKGS)
+VHDL_SRCS = $(VHDL_RTL_SRCS) $(VHDL_SIM_SRCS) $(TOP_VHDL_RTL_SRCS) $(TOP_VHDL_SIM_SRCS)
+VLOG_SRCS = $(VLOG_RTL_SRCS) $(VLOG_SIM_SRCS) $(TOP_VLOG_RTL_SRCS) $(TOP_VLOG_SIM_SRCS)
+
+ALL_SRCS  = $(VHDL_PKGS) $(VHDL_SRCS) $(VLOG_SRCS)
+
+VHDL_ALL_RTL = $(VHDL_RTL_PKGS) $(TOP_VHDL_RTL_PKGS)  $(VHDL_RTL_SRCS) $(TOP_VHDL_RTL_SRCS)
+VLOG_ALL_RTL = $(VLOG_RTL_PKGS) $(TOP_VLOG_RTL_PKGS)  $(VLOG_RTL_SRCS) $(TOP_VLOG_RTL_SRCS)
+
+ALL_RTL_SRCS  = $(VHDL_ALL_RTL) $(VLOG_ALL_RTL)
+
+check_all_srcs: grlib_config.vhd
+	@echo $(ALL_SRCS) > $@.new; \
+	if test -f $@.old; then \
+		/usr/bin/diff -q $@.old $@.new > /dev/null; \
+		if [ $$? -eq 0 ]; then \
+			rm $@.new; \
+		else \
+			mv $@.new $@.old; \
+		fi; \
+	else \
+		mv $@.new $@.old; \
+	fi;
+
+check_all_srcs-distclean:
+	$(QUIET_CLEAN)rm -rf check_all_srcs.old
+
+.PHONY: check_all_srcs check_all_srcs-distclean
+
+check_all_rtl_srcs: grlib_config.vhd
+	@echo $(ALL_RTL_SRCS) > $@.new; \
+	if test -f $@.old; then \
+		/usr/bin/diff -q $@.old $@.new > /dev/null; \
+		if [ $$? -eq 0 ]; then \
+			rm $@.new; \
+		else \
+			mv $@.new $@.old; \
+		fi; \
+	else \
+		mv $@.new $@.old; \
+	fi;
+
+check_all_rtl_srcs-distclean:
+	$(QUIET_CLEAN)rm -rf check_all_rtl_srcs.old
+
+.PHONY: check_all_rtl_srcs check_all_rtl_srcs-distclean
+
+
+### Xilinx Simulation libs targets ###
+
+ifeq ("$(TECHLIB)", "virtex7")
+modelsim/xilinx_lib: $(XILINX)
+	$(QUIET_MKDIR)mkdir -p $@
+	@echo "compile_simlib -directory xilinx_lib -simulator modelsim -no_ip_compile" > $@/simlib.tcl; \
+	cd modelsim; \
+	vivado -mode batch -source xilinx_lib/simlib.tcl; \
+	lib_path=$$(cat modelsim.ini | grep secureip | cut -d " " -f 3); \
+	sed -i "/secureip =/a secureip_ver = "$$lib_path"" modelsim.ini; \
+	sed -i 's/; Show_source = 1/Show_source = 1/g' modelsim.ini; \
+	sed -i 's/; Show_Warning3 = 0/Show_Warning3 = 0/g' modelsim.ini; \
+	sed -i 's/; Show_Warning5 = 0/Show_Warning5 = 0/g' modelsim.ini; \
+	sed -i 's/; StdArithNoWarnings = 1/StdArithNoWarnings = 1/g' modelsim.ini; \
+	sed -i 's/; NumericStdNoWarnings = 1/NumericStdNoWarnings = 1/g' modelsim.ini; \
+	cd ../;
+
+xilinx_lib-clean:
+	$(QUIET_CLEAN)$(RM) \
+		.cxl.mti_se.version \
+		.cxl.modelsim.version \
+		.cxl.ies.version \
+		*.log \
+		*.bak \
+		*.jou \
+		*backup* \
+
+xilinx_lib-distclean: xilinx_lib-clean
+	$(QUIET_CLEAN)$(RM) \
+		modelsim/xilinx_lib \
+
+else
+modelsim/xilinx_lib:
+
+xilinx_lib-clean:
+
+xilinx_lib-distclean:
+
+endif
+
+.PHONY: xilinx_lib-clean xilinx_lib-distclean
+
+### Modelsim targets ###
+
+modelsim/mig:
+	$(QUIET_MKDIR)mkdir -p $@
+	@if test -r $(ESP_ROOT)/constraints/$(BOARD)/mig.xci; then \
+		echo $(SPACES)"INFO generating MIG IP for simulation"; \
+		cp $(ESP_ROOT)/constraints/$(BOARD)/mig.xci $@; \
+		cp $(ESP_ROOT)/constraints/$(BOARD)/mig.prj $@; \
+		echo "create_project -part $(DEVICE) dummy ." > $@/vivado.tcl; \
+		if [ "$(PROTOBOARD)" != "" ]; then \
+			echo "set_property board_part $(PROTOBOARD) [current_project]"  >> $@/vivado.tcl; \
+		fi; \
+		echo "read_ip mig.xci" >> $@/vivado.tcl; \
+		echo "generate_target  all [get_files mig.xci] -force " >> $@/vivado.tcl; \
+		cd $@; \
+		vivado -mode batch -source vivado.tcl; \
+		cd $(DESIGN_PATH); \
+	else \
+		echo $(SPACES)"WARNING: no MIG IP was found"; \
+	fi;
+
+
+ifeq ($(CONFIG_GRETH_ENABLE),y)
+modelsim/sgmii:
+	$(QUIET_MKDIR)mkdir -p $@
+	@if test -r $(ESP_ROOT)/constraints/$(BOARD)/sgmii.xci; then \
+		echo $(SPACES)"INFO generating SGMII IP for simulation"; \
+		cp $(ESP_ROOT)/constraints/$(BOARD)/sgmii.* $@; \
+		echo "create_project -part $(DEVICE) dummy ." > $@/vivado.tcl; \
+		if [ "$(PROTOBOARD)" != "" ]; then \
+			echo "set_property board_part $(PROTOBOARD) [current_project]"  >> $@/vivado.tcl; \
+		fi; \
+		echo "read_ip sgmii.xci" >> $@/vivado.tcl; \
+		echo "generate_target  all [get_files sgmii.xci] -force " >> $@/vivado.tcl; \
+		cd $@; \
+		vivado -mode batch -source vivado.tcl; \
+		cd $(DESIGN_PATH); \
+	else \
+		echo $(SPACES)"WARNING: no SGMII IP was found"; \
+	fi;
+else
+modelsim/sgmii:
+
+endif
+
+# Note that vmake fails to find unisim.vcomponents, however produces the correct
+# makefile for future compilation and all components are properly bound in simulation.
+# Please keep 2> /dev/null until the bug is fixed with a newer Modelsim release.
+modelsim/vsim.mk: modelsim/xilinx_lib check_all_srcs.old $(PKG_LIST)
+	$(QUIET_MKDIR)mkdir -p modelsim
+	@cd modelsim; \
+	vlib -type directory work; \
+	echo $(SPACES)"### Compile VHDL packages ###"; \
+	for lib in $$(cat $(ESP_ROOT)/rtl/include/libs.txt); do \
+		for dir in $$(cat $(ESP_ROOT)/rtl/include/$$lib/dirs.txt); do \
+			for vhd in $$(cat $(ESP_ROOT)/rtl/include/$$lib/$$dir/pkgs.txt); do \
+				rtl=$(ESP_ROOT)/rtl/include/$$lib/$$dir/$$vhd; \
+				echo $(SPACES)"$(VCOM) $$rtl"; \
+				$(VCOM) $$rtl || exit; \
+			done; \
+			if test -d $(ESP_ROOT)/sim/include/$$lib/$$dir/; then \
+				for vhd in $$(cat $(ESP_ROOT)/sim/include/$$lib/$$dir/pkgs.txt); do \
+					rtl=$(ESP_ROOT)/sim/include/$$lib/$$dir/$$vhd; \
+					echo $(SPACES)"$(VCOM) $$rtl"; \
+					$(VCOM) $$rtl || exit; \
+				done; \
+			fi; \
+		done; \
+	done; \
+	for vhd in $(TOP_VHDL_RTL_PKGS); do \
+		rtl=$$vhd; \
+		echo $(SPACES)"$(VCOM) $$rtl"; \
+		$(VCOM) $$rtl || exit; \
+	done; \
+	echo $(SPACES)"### Compile VHDL source files ###"; \
+		for rtl in $(VHDL_SRCS); do \
+			echo $(SPACES)"$(VCOM) $$rtl"; \
+			$(VCOM) $$rtl || exit; \
+		done; \
+	echo $(SPACES)"### Compile Verilog source files ###"; \
+		for rtl in $(VLOG_SRCS); do \
+			echo $(SPACES)"$(VLOG) $$rtl"; \
+			$(VLOG) $$rtl || exit; \
+		done; \
+	echo $(SPACES)"### Compile IPs simulation files ###"; \
+	if test -r ./mig/mig.xci; then \
+		echo $(SPACES)"$(VLOG) ./mig/mig/user_design/rtl/mig.v"; \
+		$(VLOG) ./mig/mig/user_design/rtl/mig.v; \
+		$(VLOG) ./mig/mig/user_design/rtl/*/*.v; \
+		$(VLOG) $(XILINX)/verilog/src/glbl.v; \
+	fi; \
+	if test -r ./sgmii/sgmii.xci; then \
+		vlib -type directory gig_ethernet_pcs_pma_v16_0_0; \
+		vmap gig_ethernet_pcs_pma_v16_0_0 gig_ethernet_pcs_pma_v16_0_0; \
+		echo $(SPACES)"$(VCOM) ./sgmii/hdl/gig_ethernet_pcs_pma_v16_0_rfs.vhd"; \
+		$(VCOM) -work gig_ethernet_pcs_pma_v16_0_0 ./sgmii/hdl/gig_ethernet_pcs_pma_v16_0_rfs.vhd; \
+		$(VLOG) ./sgmii/synth/*.v; \
+		$(VLOG) ./sgmii/synth/*/*.v ;\
+        fi; \
+	$(SPACING)vmap work work;\
+	echo $(SPACES)"vmake > vsim.mk"; \
+	vmake 2> /dev/null > vsim.mk; \
+	ln -s ../prom.srec; \
+	ln -s ../ram.srec; \
+	cd ../;
+
+sim-compile: check_all_srcs modelsim/mig modelsim/sgmii modelsim/vsim.mk soft
+	$(QUIET_MAKE)make -C modelsim -f vsim.mk
+
+sim: sim-compile
+	@cd modelsim; \
+	echo $(SPACES)"vsim -c $(VSIMOPT)"; \
+	vsim -c $(VSIMOPT); \
+	cd ../
+
+sim-gui: sim-compile
+	@cd modelsim; \
+	echo $(SPACES)"vsim $(VSIMOPT)"; \
+	vsim $(VSIMOPT); \
+	cd ../
+
+sim-clean:
+	$(QUIET_CLEAN)rm -rf transcript *.wlf
+
+sim-distclean: sim-clean
+	$(QUIET_CLEAN)rm -rf modelsim
+
+.PHONY: sim sim-gui sim-compile sim-clean sim-distclean
+
+
+### Vivado targets ###
+
+vivado:
+	$(QUIET_MKDIR)mkdir -p vivado
+
+vivado/srcs.tcl: vivado check_all_rtl_srcs.old
+	$(QUIET_INFO)echo "generating source list for Vivado"
+	@$(RM) $@
+	@for rtl in $(VHDL_ALL_RTL); do \
+		echo "read_vhdl $$rtl" >> $@; \
+	done; \
+	for rtl in $(VLOG_ALL_RTL); do \
+		echo "read_verilog $$rtl" >> $@; \
+	done;
+
+
+print:
+	@echo $(BOARD_FILES)
+
+vivado/setup.tcl: vivado $(XDC) $(BOARD_FILES)
+	$(QUIET_INFO)echo "generating project script for Vivado"
+	@$(RM) $@
+	@echo "create_project $(DESIGN) -part ${DEVICE} -force" > $@
+	@echo "set_property target_language verilog [current_project]" >> $@
+	@echo "source ./srcs.tcl" >> $@
+ifneq ("$(PROTOBOARD)","")
+	@echo "set_property board_part $(PROTOBOARD) [current_project]"  >> $@
+endif
+	@if test -r $(ESP_ROOT)/constraints/$(BOARD)/mig.xci; then \
+		echo $(SPACES)"INFO including MIG IP"; \
+		mkdir -p vivado/mig; \
+		cp $(ESP_ROOT)/constraints/$(BOARD)/mig.xci ./vivado/mig; \
+		cp $(ESP_ROOT)/constraints/$(BOARD)/mig.prj ./vivado/mig; \
+		echo "import_ip -files ./mig/mig.xci" >> $@; \
+		echo "generate_target  all [get_ips mig] -force " >> $@; \
+	else \
+		echo $(SPACES)"WARNING: no MIG IP was found"; \
+	fi;
+ifeq ($(CONFIG_GRETH_ENABLE),y)
+	@if test -r $(ESP_ROOT)/constraints/$(BOARD)/sgmii.xci; then \
+		echo $(SPACES)"INFO including SGMII IP"; \
+		mkdir -p vivado/sgmii; \
+		cp $(ESP_ROOT)/constraints/$(BOARD)/sgmii.* ./vivado/sgmii; \
+		echo "set_property target_language verilog [current_project]" >> $@; \
+		echo "import_ip -files ./sgmii/sgmii.xci" >> $@; \
+		echo "generate_target  all [get_ips sgmii] -force " >> $@; \
+	else \
+		echo $(SPACES)"WARNING: no SGMII IP was found"; \
+	fi;
+endif
+	@if test -r $(UTILS_GRLIB)/netlists/xilinx/$(TECHNOLOGY); then \
+		echo "import_files $(UTILS_GRLIB)/netlists/xilinx/$(TECHNOLOGY)" >> $@; \
+	fi;
+	@for i in $(XDC); do \
+	  echo "read_xdc $$i" >> $@; \
+	  echo "set_property used_in_synthesis true [get_files $$i]" >> $@; \
+	  echo "set_property used_in_implementation true [get_files $$i]" >> $@; \
+	done;
+	@echo "set_property top $(TOP) [current_fileset]" >> $@
+
+vivado/syn.tcl: vivado
+	$(QUIET_INFO)echo "generating synthesis script for Vivado"
+	@$(RM) $@
+	@echo "open_project $(DESIGN).xpr" > $@
+	@echo "synth_design -rtl -name rtl_1" >> $@
+	@echo "synth_design -directive runtimeoptimized -resource_sharing off -keep_equivalent_registers -no_lc -rtl -name rtl_1" >> $@
+	@echo "launch_runs synth_1" >> $@
+	@echo "get_ips" >> $@
+	@echo "wait_on_run -timeout 360 synth_1" >> $@
+	@echo "set_msg_config -suppress -id {Drc 23-20}" >> $@
+	@echo "launch_runs impl_1 -to_step write_bitstream" >> $@
+	@echo "wait_on_run -timeout 360 impl_1" >> $@
+
+vivado/program.tcl: vivado
+	$(QUIET_INFO)echo "generating programming script for $(PART)"
+	@$(RM) $@
+	@echo "set fpga_host [lindex \$$argv 0]" >> $@
+	@echo "set part [lindex \$$argv 1]" >> $@
+	@echo "set bit [lindex \$$argv 2]" >> $@
+	@echo "" >> $@
+	@echo "open_hw" >> $@
+	@echo "connect_hw_server -url \$$fpga_host:3125" >> $@
+	@echo "puts \"Connected to \$$fpga_host\"" >> $@
+	@echo "puts \"Searching for \$$part...\"" >> $@
+	@echo "" >> $@
+	@echo "foreach cable [get_hw_targets ] {" >> $@
+	@echo "    open_hw_target \$$cable" >> $@
+	@echo "    set dev [get_hw_devices]" >> $@
+	@echo "    if [string match -nocase \"\$$part*\" \$$dev] {" >> $@
+	@echo "	puts \"Programming \$$part ...\"" >> $@
+	@echo "	set_property PROGRAM.FILE \$$bit \$$dev" >> $@
+	@echo "	program_hw_devices \$$dev" >> $@
+	@echo "	close_hw_target" >> $@
+	@echo "	disconnect_hw_server" >> $@
+	@echo "	close_hw" >> $@
+	@echo "	exit" >> $@
+	@echo "    }" >> $@
+	@echo "    close_hw_target" >> $@
+	@echo "}" >> $@
+	@echo "" >> $@
+	@echo "disconnect_hw_server" >> $@
+	@echo "close_hw" >> $@
+	@echo "error \"ERROR: \$$part not found at host \$$fpga_host\"" >> $@
+
+
+vivado/$(DESIGN): vivado vivado/srcs.tcl vivado/setup.tcl vivado/syn.tcl
+	$(QUIET_INFO)echo "launching Vivado setup script"
+	@cd vivado; \
+	if test -r $(DESIGN).xpr; then \
+		echo -n $(SPACES)"WARNING: overwrite existing Vivado project \"$(DESIGN)\"? [y|n]"; \
+		while true; do \
+			read -p " " yn; \
+			case $$yn in \
+				[Yy] ) \
+					$(RM) $(DESIGN); \
+					vivado -mode batch -source setup.tcl | tee ../vivado_setup.log; \
+					break;; \
+				[Nn] ) \
+					echo $(SPACES)"INFO aborting $@"; \
+					break;; \
+				* ) echo -n $(SPACES)"INFO Please answer yes or no [y|n].";; \
+			esac; \
+		done; \
+	else \
+		vivado -mode batch -source setup.tcl | tee ../vivado_setup.log; \
+	fi; \
+	cd ../;
+
+vivado-setup: check_all_rtl_srcs vivado/$(DESIGN)
+
+vivado-gui: vivado-setup
+	$(QUIET_RUN)
+	@cd vivado; \
+	vivado $(DESIGN).xpr; \
+	cd ../;
+
+vivado-syn: vivado-setup
+	$(QUIET_INFO)echo "launching Vivado implementation script"
+	@cd vivado; \
+	vivado -mode batch -source syn.tcl | tee ../vivado_syn.log; \
+	cd ../;
+	bit=vivado/$(DESIGN).runs/impl_1/top.bit; \
+	if test -r $$bit; then \
+		ln -s $$bit; \
+	else \
+		echo $(SPACES)"ERROR: bistream not found; synthesis failed"; \
+	fi; \
+
+vivado-prog-fpga: vivado/program.tcl
+	@cd vivado; \
+	bit=$(DESIGN).runs/impl_1/top.bit; \
+	if test -r $$bit; then \
+		vivado -mode batch -source program.tcl -tclargs $(FPGA_HOST) $(PART) $$bit; \
+	else \
+		echo $(SPACES)"ERROR: bistream not found; please run target vivado-syn first"; \
+	fi; \
+	cd ../;
+
+vivado-clean:
+	$(QUIET_CLEAN)$(RM) \
+		vivado_*.log
+
+vivado-distclean: vivado-clean
+	$(QUIET_CLEAN)$(RM) \
+		vivado	\
+		*.bit
+
+.PHONY: vivado-clean vivado-distclean vivado-syn vivado-prog-fpga vivado/$(DESIGN) vivado-setup vivado-gui
+
+
+### TODO: PROFPGA targets ###
+
+profpga-prog-fpga:
+	profpga_run profpga.cfg --up
+
+profpga-close-fpga:
+	profpga_run profpga.cfg --down
+
+
+.PHONY: profpga-prog-fpga profpga-close-fpga
