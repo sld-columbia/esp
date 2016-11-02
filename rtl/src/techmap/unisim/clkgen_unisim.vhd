@@ -289,6 +289,235 @@ use UNISIM.vcomponents.all;
 -- pragma translate_on
 use work.gencomp.all;
 
+entity pll_virtex7 is
+  generic (
+    clk_mul     : integer := 1;
+    clk0_div    : integer := 1;
+    clk1_div    : integer := 1;
+    clk2_div    : integer := 1;
+    clk3_div    : integer := 1;
+    clk4_div    : integer := 1;
+    clk5_div    : integer := 1;
+    clk0_phase  : real := 0.0;
+    clk1_phase  : real := 0.0;
+    clk2_phase  : real := 0.0;
+    clk3_phase  : real := 0.0;
+    clk4_phase  : real := 0.0;
+    clk5_phase  : real := 0.0;
+    freq     : integer := 200000  -- clock frequency in KHz
+    );
+  port (
+    clk     : in  std_ulogic;
+    rst     : in  std_ulogic;
+    dvfs_clk0    : out std_ulogic;     -- main clock 0
+    dvfs_clk1    : out std_ulogic;     -- main clock 1
+    dvfs_clk2    : out std_ulogic;     -- main clock 2
+    dvfs_clk3    : out std_ulogic;     -- main clock 3
+    dvfs_clk4    : out std_ulogic;     -- main clock 4
+    dvfs_clk5    : out std_ulogic;     -- main clock 5
+    locked  : out std_ulogic
+    );
+
+end;
+
+architecture struct of pll_virtex7 is
+
+  component BUFG port (O : out std_logic; I : in std_logic); end component;
+
+----- component PLLE2_ADV -----
+  component PLLE2_ADV
+    generic (
+      BANDWIDTH : string := "OPTIMIZED";
+      CLKFBOUT_MULT : integer := 5;
+      CLKFBOUT_PHASE : real := 0.0;
+      CLKIN1_PERIOD : real := 0.0;
+      CLKIN2_PERIOD : real := 0.0;
+      CLKOUT0_DIVIDE : integer := 1;
+      CLKOUT0_DUTY_CYCLE : real := 0.5;
+      CLKOUT0_PHASE : real := 0.0;
+      CLKOUT1_DIVIDE : integer := 1;
+      CLKOUT1_DUTY_CYCLE : real := 0.5;
+      CLKOUT1_PHASE : real := 0.0;
+      CLKOUT2_DIVIDE : integer := 1;
+      CLKOUT2_DUTY_CYCLE : real := 0.5;
+      CLKOUT2_PHASE : real := 0.0;
+      CLKOUT3_DIVIDE : integer := 1;
+      CLKOUT3_DUTY_CYCLE : real := 0.5;
+      CLKOUT3_PHASE : real := 0.0;
+      CLKOUT4_DIVIDE : integer := 1;
+      CLKOUT4_DUTY_CYCLE : real := 0.5;
+      CLKOUT4_PHASE : real := 0.0;
+      CLKOUT5_DIVIDE : integer := 1;
+      CLKOUT5_DUTY_CYCLE : real := 0.5;
+      CLKOUT5_PHASE : real := 0.0;
+      COMPENSATION : string := "ZHOLD";
+      DIVCLK_DIVIDE : integer := 1;
+      REF_JITTER1 : real := 0.0;
+      REF_JITTER2 : real := 0.0;
+      STARTUP_WAIT : string := "FALSE"
+      );
+    port (
+      CLKFBOUT : out std_ulogic := '0';
+      CLKOUT0 : out std_ulogic := '0';
+      CLKOUT1 : out std_ulogic := '0';
+      CLKOUT2 : out std_ulogic := '0';
+      CLKOUT3 : out std_ulogic := '0';
+      CLKOUT4 : out std_ulogic := '0';
+      CLKOUT5 : out std_ulogic := '0';
+      DO : out std_logic_vector (15 downto 0);
+      DRDY : out std_ulogic := '0';
+      LOCKED : out std_ulogic := '0';
+      CLKFBIN : in std_ulogic;
+      CLKIN1 : in std_ulogic;
+      CLKIN2 : in std_ulogic;
+      CLKINSEL : in std_ulogic;
+      DADDR : in std_logic_vector(6 downto 0);
+      DCLK : in std_ulogic;
+      DEN : in std_ulogic;
+      DI : in std_logic_vector(15 downto 0);
+      DWE : in std_ulogic;
+      PWRDWN : in std_ulogic;
+      RST : in std_ulogic
+      );
+
+  end component;
+
+  constant period : real := 1000000.0/real(freq);
+  signal CLKFBOUT : std_logic;
+  signal CLKFBIN : std_logic;
+  signal pll_rst : std_logic;
+  signal clk0_nobuf : std_logic;
+  signal clk1_nobuf : std_logic;
+  signal clk2_nobuf : std_logic;
+  signal clk3_nobuf : std_logic;
+  signal clk4_nobuf : std_logic;
+  signal clk5_nobuf : std_logic;
+
+begin
+
+  CLKFBIN <= CLKFBOUT;
+  pll_rst <= rst;
+
+  PLLE2_ADV_inst : PLLE2_ADV
+    generic map (
+      BANDWIDTH          => "OPTIMIZED",  -- OPTIMIZED, HIGH, LOW
+      CLKFBOUT_MULT      => clk_mul,      -- Multiply value for all CLKOUT, (2-64)
+      CLKFBOUT_PHASE     => 0.0,          -- Phase offset in degrees of CLKFB, (-360.000-360.000).
+      -- CLKIN_PERIOD: Input clock period in nS to ps resolution (i.e. 33.333 is 30 MHz).
+      CLKIN1_PERIOD      => period,
+      CLKIN2_PERIOD      => 0.0,
+      -- CLKOUT0_DIVIDE - CLKOUT5_DIVIDE: Divide amount for CLKOUT (1-128)
+      CLKOUT0_DIVIDE     => clk0_div,
+      CLKOUT1_DIVIDE     => clk1_div,
+      CLKOUT2_DIVIDE     => clk2_div,
+      CLKOUT3_DIVIDE     => clk3_div,
+      CLKOUT4_DIVIDE     => clk4_div,
+      CLKOUT5_DIVIDE     => clk5_div,
+      -- CLKOUT0_DUTY_CYCLE - CLKOUT5_DUTY_CYCLE: Duty cycle for CLKOUT outputs (0.001-0.999).
+      CLKOUT0_DUTY_CYCLE => 0.5,
+      CLKOUT1_DUTY_CYCLE => 0.5,
+      CLKOUT2_DUTY_CYCLE => 0.5,
+      CLKOUT3_DUTY_CYCLE => 0.5,
+      CLKOUT4_DUTY_CYCLE => 0.5,
+      CLKOUT5_DUTY_CYCLE => 0.5,
+      -- CLKOUT0_PHASE - CLKOUT5_PHASE: Phase offset for CLKOUT outputs (-360.000-360.000).
+      CLKOUT0_PHASE      => clk0_phase,
+      CLKOUT1_PHASE      => clk1_phase,
+      CLKOUT2_PHASE      => clk2_phase,
+      CLKOUT3_PHASE      => clk3_phase,
+      CLKOUT4_PHASE      => clk4_phase,
+      CLKOUT5_PHASE      => clk5_phase,
+      COMPENSATION       => "ZHOLD",      -- ZHOLD, BUF_IN, EXTERNAL, INTERNAL
+      DIVCLK_DIVIDE      => 1,            -- Master division value (1-56)
+      -- REF_JITTER: Reference input jitter in UI (0.000-0.999).
+      REF_JITTER1        => 0.0,
+      REF_JITTER2        => 0.0,
+      STARTUP_WAIT       => "TRUE"        -- Delay DONE until PLL Locks, ("TRUE"/"FALSE")
+      )
+    port map (
+      -- Clock Outputs: 1-bit (each) output: User configurable clock outputs
+      CLKOUT0           => clk0_nobuf,
+      CLKOUT1           => clk1_nobuf,
+      CLKOUT2           => clk2_nobuf,
+      CLKOUT3           => clk3_nobuf,
+      CLKOUT4           => clk4_nobuf,
+      CLKOUT5           => clk5_nobuf,
+      -- DRP Ports: 16-bit (each) output: Dynamic reconfigration ports
+      DO                => OPEN,
+      DRDY              => OPEN,
+      -- Feedback Clocks: 1-bit (each) output: Clock feedback ports
+      CLKFBOUT          => CLKFBOUT,
+      -- Status Ports: 1-bit (each) output: PLL status ports
+      LOCKED            => locked,
+      -- Clock Inputs: 1-bit (each) input: Clock inputs
+      CLKIN1            => clk,
+      CLKIN2            => '0',
+      -- Con trol Ports: 1-bit (each) input: PLL control ports
+      CLKINSEL          => '1',
+      PWRDWN            => '0',
+      RST               => pll_rst,
+      -- DRP Ports: 7-bit (each) input: Dynamic reconfigration ports
+      DADDR             => "0000000",
+      DCLK              => '0',
+      DEN               => '0',
+      DI                => "0000000000000000",
+      DWE               => '0',
+      -- Feedback Clocks: 1-bit (each) input: Clock feedback ports
+      CLKFBIN           => CLKFBIN
+      );
+
+  --bufgclk0 : BUFG port map (I => clk0_nobuf, O => clk0);
+  --bufgclk1 : BUFG port map (I => clk1_nobuf, O => clk1);
+  --bufgclk2 : BUFG port map (I => clk2_nobuf, O => clk2);
+  --bufgclk3 : BUFG port map (I => clk3_nobuf, O => clk3);
+  --bufgclk4 : BUFG port map (I => clk4_nobuf, O => clk4);
+  --bufgclk5 : BUFG port map (I => clk5_nobuf, O => clk5);
+  dvfs_clk0 <= clk0_nobuf;
+  dvfs_clk1 <= clk1_nobuf;
+  dvfs_clk2 <= clk2_nobuf;
+  dvfs_clk3 <= clk3_nobuf;
+  dvfs_clk4 <= clk4_nobuf;
+  dvfs_clk5 <= clk5_nobuf;
+
+end;
+
+
+library ieee;
+use ieee.std_logic_1164.all;
+-- pragma translate_off
+use work.stdlib.all;
+library unisim;
+use UNISIM.vcomponents.all;
+-- pragma translate_on
+use work.gencomp.all;
+
+entity clkbuf_unisim is
+  port (
+    clki : in  std_ulogic;
+    clko : out std_ulogic);
+
+end clkbuf_unisim;
+
+architecture struct of clkbuf_unisim is
+
+    component BUFG port (O : out std_logic; I : in std_logic); end component;
+
+begin  -- struct
+
+  bufgpllouta : BUFG port map (I => clki, O => clko);
+
+end struct;
+
+
+library ieee;
+use ieee.std_logic_1164.all;
+-- pragma translate_off
+use work.stdlib.all;
+library unisim;
+use UNISIM.vcomponents.all;
+-- pragma translate_on
+use work.gencomp.all;
+
 entity clkgen_virtex7 is
   generic (
     clk_mul  : integer := 1; 
