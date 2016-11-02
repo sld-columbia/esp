@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<power_characterization>
+  <accelerator name="FFT2D">
+    <vf_point voltage="1.0" frequency="1000" energy="75.1940"/>
+    <vf_point voltage="0.9" frequency="900" energy="64.9284"/>
+    <vf_point voltage="0.8" frequency="800" energy="56.7607"/>
+    <vf_point voltage="0.75" frequency="600" energy="55.8396"/>
+  </accelerator>
+</power_characterization>

@@ -1,0 +1,4 @@
+*~
+*.o
+socmap_gen
+__pycache__
