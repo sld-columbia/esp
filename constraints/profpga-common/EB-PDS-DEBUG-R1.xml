@@ -1,0 +1,18 @@
+<BOARD>
+  <NAME value="EB-PDS-DEBUG-R1"/>
+  <TYPE value="EB"/>
+  <SIZE value="A1A1"/>
+  <REV_HIGH value="1"/>
+  <REV_LOW value="0"/>
+  <VENDOR value="ProDesign"/>
+  <SERIAL_NO value="n.a."/>
+  <DESCRIPTION value="A1A1 ProDesign Debug Board"/>
+  <CONNECTORS>
+    <BA1>
+      <MIN_VOLTAGE value="1710"/>
+      <DEF_VOLTAGE value="1800"/>
+      <MAX_VOLTAGE value="1890"/>
+      <USER_TEXT value=""/>
+    </BA1>
+  </CONNECTORS>
+</BOARD>
