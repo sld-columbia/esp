@@ -75,14 +75,14 @@ esp-defconfig: ../defconfig/esp_$(BOARD)_defconfig
 	$(QUIET_CP)cp $< .esp_config
 	$(QUIET_MAKE)$(MAKE) esp-config
 
-socmap.vhd: .esp_config
+socmap.vhd: .esp_config grlib_config.vhd
 	@echo ""
 	@echo "Generating ESP configuration..."
 	@python3 $(ESP_ROOT)/utils/socmap/esp_creator_batch.py
 
 esp-config: socmap.vhd
 
-esp-xconfig:
+esp-xconfig: grlib_config.vhd
 	@echo ""
 	@echo "Running interactive ESP configuration..."
 	@python3 $(ESP_ROOT)/utils/socmap/esp_creator.py
