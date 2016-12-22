@@ -25,6 +25,7 @@ endif
 
 ### Include grlib configuration (remake may occur) ###
 -include .grlib_config
+-include .esp_config
 
 
 ### Vivado constaints ###
