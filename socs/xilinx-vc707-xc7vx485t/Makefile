@@ -30,7 +30,10 @@ VCOMOPT += -93
 NCVHDLOPT += -v93
 
 # GRLIB options
-VSIMOPT += -gdisas=1
+
+# Print CPU instructions to simulator console
+# VSIMOPT += -gdisas=1
+
 ifeq ($(CONFIG_GRETH_ENABLE),y)
 VSIMOPT += -L gig_ethernet_pcs_pma_v16_0_0
 endif
