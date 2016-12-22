@@ -27,3 +27,6 @@ tkparse
 socmap.vhd
 mmi64_regs.h
 power.h
+
+*.exe
+*.srec
