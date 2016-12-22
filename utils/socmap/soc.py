@@ -43,7 +43,7 @@ class SoC_Config():
   HAS_SVGA = False
   IP_ADDR = ""
   IPs = Components()
-  
+
   def read_config(self, temporary):
     filename = ".esp_config"
     warning = False
@@ -72,29 +72,53 @@ class SoC_Config():
               print("SAVED: " + line_orig.replace("\n","") + " -- TEMP: " + line_bak.replace("\n",""))
     fp = open(filename, 'r')
     line = fp.readline()
-    if line.find("HAS_SG") != -1:
+    if line.find("CONFIG_HAS_SG = y") != -1:
       self.transfers.set(1)
       self.HAS_SG = True
     else:
       self.transfers.set(0)
-
-    self.noc.create_topology(self.noc.top, int(fp.readline().replace("\n","")), int(fp.readline().replace("\n","")))
-    self.noc.monitor_ddr.set(int(fp.readline().replace("\n","")))
-    self.noc.monitor_inj.set(int(fp.readline().replace("\n","")))
-    self.noc.monitor_routers.set(int(fp.readline().replace("\n","")))
-    self.noc.monitor_accelerators.set(int(fp.readline().replace("\n","")))
-    self.noc.monitor_dvfs.set(int(fp.readline().replace("\n","")))
+    # Topology
+    line = fp.readline()
+    item = line.split()
+    rows = int(item[2])
+    line = fp.readline()
+    item = line.split()
+    cols = int(item[2])
+    self.noc.create_topology(self.noc.top, rows, cols)
+    # Monitors
+    line = fp.readline()
+    if line.find("CONFIG_MON_DDR = y") != -1:
+        self.noc.monitor_ddr.set(1)
+    line = fp.readline()
+    if line.find("CONFIG_MON_INJ = y") != -1:
+        self.noc.monitor_inj.set(1)
+    line = fp.readline()
+    if line.find("CONFIG_MON_ROUTERS = y") != -1:
+        self.noc.monitor_routers.set(1)
+    line = fp.readline()
+    if line.find("CONFIG_MON_ACCELERATORS = y") != -1:
+        self.noc.monitor_accelerators.set(1)
+    line = fp.readline()
+    if line.find("CONFIG_MON_DVFS = y") != -1:
+        self.noc.monitor_dvfs.set(1)
+    # Tiles configuration
     for y in range(0, self.noc.rows):
       for x in range(0, self.noc.cols):
         line = fp.readline().replace("\n","")
         tile = self.noc.topology[y][x]
         tokens = line.split(' ')
         if len(tokens) > 1:
-          tile.ip_type.set(tokens[1])
-          tile.clk_region.set(int(tokens[3]))
-          tile.has_pll.set(int(tokens[4]))
-          tile.has_clkbuf.set(int(tokens[5]))
-    self.noc.vf_points = int(fp.readline().replace("\n",""))
+          tile.ip_type.set(tokens[4])
+          tile.clk_region.set(int(tokens[5]))
+          tile.has_pll.set(int(tokens[6]))
+          tile.has_clkbuf.set(int(tokens[7]))
+    # DVFS (skip whether it has it or not; we know that already)
+    line = fp.readline()
+    line = fp.readline()
+    item = line.split();
+    vf_points = int(item[2])
+    self.noc.vf_points = vf_points
+    # Power annotation
     for y in range(0, self.noc.rows):
       for x in range(0, self.noc.cols):
         line = fp.readline().replace("\n","")
@@ -103,34 +127,52 @@ class SoC_Config():
           return
         tokens = line.split(' ')
         tile.create_characterization(self, self.noc.vf_points)
-        if tile.ip_type.get() == tokens[0]:
+        if tile.ip_type.get() == tokens[2]:
           for vf in range(self.noc.vf_points):
-            tile.energy_values.vf_points[vf].voltage = float(tokens[1 + vf * 3])
-            tile.energy_values.vf_points[vf].frequency = float(tokens[1 + vf * 3 + 1])
-            tile.energy_values.vf_points[vf].energy = float(tokens[1 + vf * 3 + 2])
+            tile.energy_values.vf_points[vf].voltage = float(tokens[3 + vf * 3])
+            tile.energy_values.vf_points[vf].frequency = float(tokens[3 + vf * 3 + 1])
+            tile.energy_values.vf_points[vf].energy = float(tokens[3 + vf * 3 + 2])
     return 0
-          
+
   def write_config(self):
     print("Writing backup configuration: \".esp_config.bak\"")
     fp = open('.esp_config.bak', 'w')
+    has_dvfs = False;
     if self.transfers.get() == 1:
-      fp.write("HAS_SG\n")
-    elif self.transfers.get() == 0:
-      fp.write("HAS_BP\n")
+      fp.write("CONFIG_HAS_SG = y\n")
     else:
-      fp.write("(unknown)")
-    fp.write(str(self.noc.rows) + "\n")
-    fp.write(str(self.noc.cols) + "\n")
-    fp.write(str(self.noc.monitor_ddr.get()) + "\n")
-    fp.write(str(self.noc.monitor_inj.get()) + "\n")
-    fp.write(str(self.noc.monitor_routers.get()) + "\n")
-    fp.write(str(self.noc.monitor_accelerators.get()) + "\n")
-    fp.write(str(self.noc.monitor_dvfs.get()) + "\n")
+      fp.write("#CONFIG_HAS_SG is not set\n")
+    fp.write("CONFIG_NOC_ROWS = " + str(self.noc.rows) + "\n")
+    fp.write("CONFIG_NOC_COLS = " + str(self.noc.cols) + "\n")
+    if self.noc.monitor_ddr.get() == 1:
+      fp.write("CONFIG_MON_DDR = y\n")
+    else:
+      fp.write("#CONFIG_MON_DDR is not set\n")
+    if self.noc.monitor_inj.get() == 1:
+      fp.write("CONFIG_MON_INJ = y\n")
+    else:
+      fp.write("#CONFIG_MON_INJ is not set\n")
+    if self.noc.monitor_routers.get() == 1:
+      fp.write("CONFIG_MON_ROUTERS = y\n")
+    else:
+      fp.write("#CONFIG_MON_ROUTERS is not set\n")
+    if self.noc.monitor_accelerators.get() == 1:
+      fp.write("CONFIG_MON_ACCELERATORS = y\n")
+    else:
+      fp.write("#CONFIG_MON_ACCELERATORS is not set\n")
+    if self.noc.monitor_dvfs.get() == 1:
+      fp.write("CONFIG_MON_DVFS = y\n")
+    else:
+      fp.write("#CONFIG_MON_DVFS is not set\n")
     i = 0
     for y in range(0, self.noc.rows):
       for x in range(0, self.noc.cols):
         tile = self.noc.topology[y][x]
         selection = tile.ip_type.get()
+        fp.write("TILE_" + str(y) + "_" + str(x) + " = ")
+		# Tile number
+        fp.write(str(i) + " ")
+		# Tile type
         if self.IPs.PROCESSORS.count(selection):
           fp.write("cpu")
         elif self.IPs.MISC.count(selection):
@@ -144,22 +186,29 @@ class SoC_Config():
           fp.write("acc")
         else:
           fp.write("empty")
+		# Selected accelerator or tile type repeated
         fp.write(" " + selection)
-        fp.write(" " + str(i))
+		# Clock region info
         try:
           clk_region = tile.clk_region.get()
           fp.write(" " + str(clk_region))
+          has_dvfs = True;
         except:
           fp.write(" " + str(0))
         fp.write(" " + str(tile.has_pll.get()))
         fp.write(" " + str(tile.has_clkbuf.get()))
         fp.write("\n")
         i += 1
-    fp.write(str(self.noc.vf_points) + "\n")
+    if has_dvfs:
+      fp.write("CONFIG_HAS_DVFS = y\n")
+    else:
+      fp.write("#CONFIG_HAS_DVFS is not set\n")
+    fp.write("CONFIG_VF_POINTS = " + str(self.noc.vf_points) + "\n")
     for y in range(self.noc.rows):
       for x in range(self.noc.cols):
         tile = self.noc.topology[y][x]
         selection = tile.ip_type.get()
+        fp.write("POWER_" + str(y) + "_" + str(x) + " = ")
         fp.write(selection + " ")
         if self.IPs.ACCELERATORS.count(selection) == 0:
           for vf in range(self.noc.vf_points):
@@ -211,4 +260,3 @@ class SoC_Config():
     self.set_IP()
     #0 = Bigphysical area ; 1 = Scatter/Gather
     self.transfers = IntVar()
-

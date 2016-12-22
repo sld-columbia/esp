@@ -103,6 +103,12 @@ class Tile():
             self.energy_values.vf_points[x].voltage = float(xml_vf_points[x].get('voltage'))
             self.energy_values.vf_points[x].frequency = float(xml_vf_points[x].get('frequency'))
             self.energy_values.vf_points[x].energy = float(xml_vf_points[x].get('energy'))
+        else:
+          end_point = num_points
+          for x in range(end_point):
+            self.energy_values.vf_points[x].voltage = 0.0
+            self.energy_values.vf_points[x].frequency = 0.0
+            self.energy_values.vf_points[x].energy = 0.0
     else:
       new_vf_points = [VFPoint() for x in range(num_points)]
       end_point = num_points

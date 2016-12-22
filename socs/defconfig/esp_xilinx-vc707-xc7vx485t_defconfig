@@ -1,17 +1,18 @@
-HAS_SG
-2
-2
-0
-0
-0
-0
-0
-mem_dbg mem_dbg 0 0 0 0
-cpu cpu 1 0 0 0
-acc FFT 2 1 1 1
-misc IO 3 0 0 0
-4
-mem_dbg 0 0 0 0 0 0 0 0 0 0 0 0 
-cpu 0 0 0 0 0 0 0 0 0 0 0 0 
-FFT 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 
-IO 0 0 0 0 0 0 0 0 0 0 0 0 
+CONFIG_HAS_SG = y
+CONFIG_NOC_ROWS = 2
+CONFIG_NOC_COLS = 2
+#CONFIG_MON_DDR is not set
+#CONFIG_MON_INJ is not set
+#CONFIG_MON_ROUTERS is not set
+#CONFIG_MON_ACCELERATORS is not set
+#CONFIG_MON_DVFS is not set
+TILE_0_0 = 0 mem_dbg mem_dbg 0 0 0
+TILE_0_1 = 1 cpu cpu 0 0 0
+TILE_1_0 = 2 acc FFT 0 0 0
+TILE_1_1 = 3 misc IO 0 0 0
+CONFIG_HAS_DVFS = y
+CONFIG_VF_POINTS = 4
+POWER_0_0 = mem_dbg 0 0 0 0 0 0 0 0 0 0 0 0 
+POWER_0_1 = cpu 0 0 0 0 0 0 0 0 0 0 0 0 
+POWER_1_0 = FFT 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 
+POWER_1_1 = IO 0 0 0 0 0 0 0 0 0 0 0 0 
