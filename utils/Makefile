@@ -613,7 +613,7 @@ vivado-syn: vivado-setup
 	@cd vivado; \
 	vivado -mode batch -source syn.tcl | tee ../vivado_syn.log; \
 	cd ../;
-	bit=vivado/$(DESIGN).runs/impl_1/top.bit; \
+	@bit=vivado/$(DESIGN).runs/impl_1/top.bit; \
 	if test -r $$bit; then \
 		ln -s $$bit; \
 	else \
