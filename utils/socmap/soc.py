@@ -192,7 +192,8 @@ class SoC_Config():
         try:
           clk_region = tile.clk_region.get()
           fp.write(" " + str(clk_region))
-          has_dvfs = True;
+          if clk_region != 0:
+            has_dvfs = True;
         except:
           fp.write(" " + str(0))
         fp.write(" " + str(tile.has_pll.get()))
