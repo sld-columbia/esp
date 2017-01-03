@@ -4,6 +4,7 @@
 *.log
 *.bak
 *.jou
+vivado
 modelsim.ini
 *backup*
 xilinx_lib
