@@ -178,7 +178,7 @@ signal remote_irq_ack_wrreq               : std_ulogic;
 signal remote_irq_ack_data_in             : noc_flit_type;
 signal remote_irq_ack_full                : std_ulogic;
 
-constant nslaves : integer := 3;
+constant nslaves : integer := 2;
 constant ahbslv_proxy_hindex : hindex_vector(0 to NAHBSLV-1) := (
   0 => ddr0_hindex,
   1 => fb_hindex,
