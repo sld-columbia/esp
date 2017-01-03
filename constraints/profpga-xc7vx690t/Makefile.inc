@@ -1,0 +1,5 @@
+# FPGA and Dev Board used in Design
+TECHNOLOGY=Virtex7
+PART=XC7VX690T
+PACKAGE=ffg1761
+SPEED=2
