@@ -11,6 +11,19 @@ ifeq ("$(TECHLIB)","")
 $(error technology library not specified)
 endif
 
+ifneq ($(findstring profpga, $(BOARD)),)
+
+ifeq ("$(PROFPGA)","")
+$(error proFPGA path not specified)
+endif
+
+PROFPGA_REQUIRED_VER = proFPGA-2016B
+PROFPGA_CURRENT_VER = $(shell basename $(PROFPGA))
+ifneq ("$(PROFPGA_REQUIRED_VER)", "$(PROFPGA_CURRENT_VER)")
+$(error proFPGA tools version must be "$(PROFPGA_REQUIRED_VER)")
+endif
+
+endif
 
 ### Create FPGA part name ###
 ifneq ($(filter $(TECHLIB),$(FPGALIBS)),)
