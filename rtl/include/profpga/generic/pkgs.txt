@@ -1,7 +1,0 @@
-afifo_core-e.vhd
-ethernet_crc-e.vhd
-fpga_wrapper_pkg.vhd
-generic_ram.vhd
-rtl_templates_log2.vhd
-timer-e.vhd
-txt_util.vhd
