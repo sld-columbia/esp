@@ -31,3 +31,5 @@ power.h
 
 *.exe
 *.srec
+
+*.bit
