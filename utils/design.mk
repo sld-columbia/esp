@@ -44,10 +44,10 @@ endif
 ### Vivado constaints ###
 ifneq ($(filter $(TECHLIB),$(FPGALIBS)),)
 XDC   = $(ESP_ROOT)/constraints/$(BOARD)/$(BOARD).xdc
+XDC  += $(ESP_ROOT)/constraints/$(BOARD)/$(BOARD)-mig-pins.xdc $(ESP_ROOT)/constraints/$(BOARD)/$(BOARD)-mig-constraints.xdc
 ifneq ($(findstring profpga, $(BOARD)),)
 XDC  += $(ESP_ROOT)/constraints/$(BOARD)/$(BOARD)-mmi64.xdc
 endif
-XDC  += $(ESP_ROOT)/constraints/$(BOARD)/$(BOARD)-mig-pins.xdc $(ESP_ROOT)/constraints/$(BOARD)/$(BOARD)-mig-constraints.xdc
 XDC  += $(ESP_ROOT)/constraints/$(BOARD)/$(BOARD)-eth-pins.xdc
 XDC  += $(ESP_ROOT)/constraints/$(BOARD)/$(BOARD)-dvi-pins.xdc
 ifeq ($(CONFIG_GRETH_ENABLE),y)
