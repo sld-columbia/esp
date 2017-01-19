@@ -254,7 +254,11 @@ RTL_LIBS += $(foreach lib, $(shell (cat $(ESP_ROOT)/rtl/libs.txt)), $(lib))
 SIM_LIBS += $(foreach lib, $(shell (cat $(ESP_ROOT)/sim/libs.txt)), $(lib))
 
 VHDL_RTL_PKGS  = $(shell (find $(ESP_ROOT)/rtl/include -name "*.vhd" ))
+ifneq ($(findstring profpga, $(BOARD)),)
 VHDL_RTL_SRCS  = $(shell (find $(ESP_ROOT)/rtl/src -name "*.vhd" ))
+else
+VHDL_RTL_SRCS  = $(shell (find $(ESP_ROOT)/rtl/src -name "*.vhd" | grep -v "sld/sldcommon/monitor.vhd"))
+endif
 VLOG_RTL_SRCS  = $(shell (find $(ESP_ROOT)/rtl/src -name "*.v" ))
 
 VHDL_SIM_PKGS  = $(shell (find $(ESP_ROOT)/sim/include -name "*.vhd" ))
