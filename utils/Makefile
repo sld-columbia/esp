@@ -31,7 +31,6 @@ endif
 
 CC  = LD_LIBRARY="" /usr/bin/gcc
 LD  = LD_LIBRARY="" /usr/bin/ld
-SED = sed
 RM  = rm -rf
 
 
@@ -106,9 +105,12 @@ VLIB = vlib
 VCOM = vcom -quiet $(VCOMOPT)
 VLOG = vlog -quiet $(VLOGOPT)
 
-### RTL simulator executables for Incisive ###
-NCVHDL = ncvhdl -nowarn DLCPTH -NOVITALCHECK -linedebug -nocopyright $(NCVHDLOPT)
-NCVLOG = ncvlog -nowarn DLCPTH -nocopyright -linedebug $(NCVLOGOPT)
+### Options for Vivado batch mode ###
+VIVADO_BATCH_OPT = -mode batch -quiet -notrace
+
+### proFPGA include paths ###
+PROFPGA_INCDIR = $(PROFPGA)/hdl/generic_hdl $(PROFPGA)/hdl/mmi64 $(PROFPGA)/hdl/profpga_user
+PROFPGA_INCDIR_MODELSIM = $(foreach dir, $(PROFPGA_INCDIR), +incdir+$(dir))
 
 ### Patsh shortcuts ###
 UTILS_GRLIB = $(ESP_ROOT)/utils/grlib
@@ -189,7 +191,7 @@ lconfig.tk: main.tk $(TKCONFIG_DEP) grlib_config.in
 
 grlib_config.vhd: lconfig.tk .grlib_config
 	$(QUIET_DIFF)echo "checking .grlib_config..."
-	@/usr/bin/diff .grlib_config ../defconfig/grlib_profpga-xc7v2000t_defconfig -q > /dev/null; \
+	@/usr/bin/diff .grlib_config ../defconfig/grlib_$(BOARD)_defconfig -q > /dev/null; \
 	if test $$? = "0"; then \
 		echo $(SPACES)"INFO Using default configuration file for GRLIB"; \
 	else \
@@ -237,6 +239,13 @@ grlib-config-distclean: grlib-config-clean
 
 
 ### Desing source files ###
+ifneq ("$(PROFPGA)","")
+VHDL_PROFPGA = $(shell strings $(ESP_ROOT)/utils/profpga_vhd.txt)
+VERILOG_PROFPGA = $(shell strings $(ESP_ROOT)/utils/profpga_verilog.txt)
+else
+VHDL_PROFPGA =
+VERILOG_PROFPGA =
+endif
 
 PKG_LIST  = $(shell (find $(ESP_ROOT)/rtl -name "*.txt" ))
 PKG_LIST += $(shell (find $(ESP_ROOT)/sim -name "*.txt" ))
@@ -263,7 +272,7 @@ VLOG_ALL_RTL = $(VLOG_RTL_PKGS) $(TOP_VLOG_RTL_PKGS)  $(VLOG_RTL_SRCS) $(TOP_VLO
 
 ALL_RTL_SRCS  = $(VHDL_ALL_RTL) $(VLOG_ALL_RTL)
 
-check_all_srcs: grlib_config.vhd
+check_all_srcs: grlib_config.vhd socmap.vhd
 	@echo $(ALL_SRCS) > $@.new; \
 	if test -f $@.old; then \
 		/usr/bin/diff -q $@.old $@.new > /dev/null; \
@@ -281,7 +290,7 @@ check_all_srcs-distclean:
 
 .PHONY: check_all_srcs check_all_srcs-distclean
 
-check_all_rtl_srcs: grlib_config.vhd
+check_all_rtl_srcs: grlib_config.vhd socmap.vhd
 	@echo $(ALL_RTL_SRCS) > $@.new; \
 	if test -f $@.old; then \
 		/usr/bin/diff -q $@.old $@.new > /dev/null; \
@@ -307,7 +316,7 @@ modelsim/xilinx_lib: $(XILINX)
 	$(QUIET_MKDIR)mkdir -p $@
 	@echo "compile_simlib -directory xilinx_lib -simulator modelsim -no_ip_compile" > $@/simlib.tcl; \
 	cd modelsim; \
-	vivado -mode batch -source xilinx_lib/simlib.tcl; \
+	vivado $(VIVADO_BATCH_OPT) -source xilinx_lib/simlib.tcl; \
 	lib_path=$$(cat modelsim.ini | grep secureip | cut -d " " -f 3); \
 	sed -i "/secureip =/a secureip_ver = "$$lib_path"" modelsim.ini; \
 	sed -i 's/; Show_source = 1/Show_source = 1/g' modelsim.ini; \
@@ -357,7 +366,7 @@ modelsim/mig:
 		echo "read_ip mig.xci" >> $@/vivado.tcl; \
 		echo "generate_target  all [get_files mig.xci] -force " >> $@/vivado.tcl; \
 		cd $@; \
-		vivado -mode batch -source vivado.tcl; \
+		vivado $(VIVADO_BATCH_OPT) -source vivado.tcl; \
 		cd $(DESIGN_PATH); \
 	else \
 		echo $(SPACES)"WARNING: no MIG IP was found"; \
@@ -377,7 +386,7 @@ modelsim/sgmii:
 		echo "read_ip sgmii.xci" >> $@/vivado.tcl; \
 		echo "generate_target  all [get_files sgmii.xci] -force " >> $@/vivado.tcl; \
 		cd $@; \
-		vivado -mode batch -source vivado.tcl; \
+		vivado $(VIVADO_BATCH_OPT) -source vivado.tcl; \
 		cd $(DESIGN_PATH); \
 	else \
 		echo $(SPACES)"WARNING: no SGMII IP was found"; \
@@ -393,6 +402,18 @@ endif
 modelsim/vsim.mk: modelsim/xilinx_lib check_all_srcs.old $(PKG_LIST)
 	$(QUIET_MKDIR)mkdir -p modelsim
 	@cd modelsim; \
+	vlib -type directory profpga; \
+	echo $(SPACES)"### Compile proFPGA source files ###"; \
+	for vhd in $(VHDL_PROFPGA); do \
+		rtl=$(PROFPGA)/hdl/$$vhd; \
+		echo $(SPACES)"$(VCOM) -work profpga $$rtl"; \
+		$(VCOM) -work profpga $$rtl || exit; \
+	done; \
+	for ver in $(VERILOG_PROFPGA); do \
+		rtl=$(PROFPGA)/hdl/$$ver; \
+		echo $(SPACES)"$(VLOG) -work profpga +incdir+... $$rtl"; \
+		$(VLOG) -work profpga $(PROFPGA_INCDIR_MODELSIM) $$rtl || exit; \
+	done; \
 	vlib -type directory work; \
 	echo $(SPACES)"### Compile VHDL packages ###"; \
 	for lib in $$(cat $(ESP_ROOT)/rtl/include/libs.txt); do \
@@ -442,6 +463,7 @@ modelsim/vsim.mk: modelsim/xilinx_lib check_all_srcs.old $(PKG_LIST)
 		$(VLOG) ./sgmii/synth/*/*.v ;\
         fi; \
 	$(SPACING)vmap work work;\
+	$(SPACING)vmap profpga profpga;\
 	echo $(SPACES)"vmake > vsim.mk"; \
 	vmake 2> /dev/null > vsim.mk; \
 	ln -s ../prom.srec; \
@@ -480,6 +502,14 @@ vivado:
 vivado/srcs.tcl: vivado check_all_rtl_srcs.old
 	$(QUIET_INFO)echo "generating source list for Vivado"
 	@$(RM) $@
+	@for vhd in $(VHDL_PROFPGA); do \
+		rtl=$(PROFPGA)/hdl/$$vhd; \
+		echo "read_vhdl -library profpga $$rtl" >> $@; \
+	done;
+	@for ver in $(VERILOG_PROFPGA); do \
+		rtl=$(PROFPGA)/hdl/$$ver; \
+		echo "read_verilog -library profpga $$rtl" >> $@; \
+	done;
 	@for rtl in $(VHDL_ALL_RTL); do \
 		echo "read_vhdl $$rtl" >> $@; \
 	done; \
@@ -488,14 +518,14 @@ vivado/srcs.tcl: vivado check_all_rtl_srcs.old
 	done;
 
 
-print:
-	@echo $(BOARD_FILES)
-
 vivado/setup.tcl: vivado $(XDC) $(BOARD_FILES)
 	$(QUIET_INFO)echo "generating project script for Vivado"
 	@$(RM) $@
 	@echo "create_project $(DESIGN) -part ${DEVICE} -force" > $@
 	@echo "set_property target_language verilog [current_project]" >> $@
+ifneq ("$(PROFPGA)","")
+	@echo "set_property include_dirs {$(PROFPGA_INCDIR)} [get_filesets {sim_1 sources_1}]" >> $@
+endif
 	@echo "source ./srcs.tcl" >> $@
 ifneq ("$(PROTOBOARD)","")
 	@echo "set_property board_part $(PROTOBOARD) [current_project]"  >> $@
@@ -537,7 +567,8 @@ vivado/syn.tcl: vivado
 	@$(RM) $@
 	@echo "open_project $(DESIGN).xpr" > $@
 	@echo "synth_design -rtl -name rtl_1" >> $@
-	@echo "synth_design -directive runtimeoptimized -resource_sharing off -keep_equivalent_registers -no_lc -rtl -name rtl_1" >> $@
+#	@echo "synth_design -directive runtimeoptimize -resource_sharing off -keep_equivalent_registers -no_lc -rtl -name rtl_1" >> $@
+#	@echo "synth_design -resource_sharing off -keep_equivalent_registers -no_lc -rtl -name rtl_1" >> $@
 	@echo "launch_runs synth_1" >> $@
 	@echo "get_ips" >> $@
 	@echo "wait_on_run -timeout 360 synth_1" >> $@
@@ -549,15 +580,19 @@ vivado/program.tcl: vivado
 	$(QUIET_INFO)echo "generating programming script for $(PART)"
 	@$(RM) $@
 	@echo "set fpga_host [lindex \$$argv 0]" >> $@
-	@echo "set part [lindex \$$argv 1]" >> $@
-	@echo "set bit [lindex \$$argv 2]" >> $@
+	@echo "set port [lindex \$$argv 1]" >> $@
+	@echo "set part [lindex \$$argv 2]" >> $@
+	@echo "set bit [lindex \$$argv 3]" >> $@
 	@echo "" >> $@
 	@echo "open_hw" >> $@
-	@echo "connect_hw_server -url \$$fpga_host:3125" >> $@
+	@echo "connect_hw_server -url \$$fpga_host:\$$port" >> $@
 	@echo "puts \"Connected to \$$fpga_host\"" >> $@
 	@echo "puts \"Searching for \$$part...\"" >> $@
 	@echo "" >> $@
 	@echo "foreach cable [get_hw_targets ] {" >> $@
+ifneq ("$(PROFPGA)","")
+	@echo "    set_property PARAM.FREQUENCY 3000000 [get_hw_targets \$$cable]" >> $@
+endif
 	@echo "    open_hw_target \$$cable" >> $@
 	@echo "    set dev [get_hw_devices]" >> $@
 	@echo "    if [string match -nocase \"\$$part*\" \$$dev] {" >> $@
@@ -587,7 +622,7 @@ vivado/$(DESIGN): vivado vivado/srcs.tcl vivado/setup.tcl vivado/syn.tcl
 			case $$yn in \
 				[Yy] ) \
 					$(RM) $(DESIGN); \
-					vivado -mode batch -source setup.tcl | tee ../vivado_setup.log; \
+					vivado $(VIVADO_BATCH_OPT) -source setup.tcl | tee ../vivado_setup.log; \
 					break;; \
 				[Nn] ) \
 					echo $(SPACES)"INFO aborting $@"; \
@@ -596,7 +631,7 @@ vivado/$(DESIGN): vivado vivado/srcs.tcl vivado/setup.tcl vivado/syn.tcl
 			esac; \
 		done; \
 	else \
-		vivado -mode batch -source setup.tcl | tee ../vivado_setup.log; \
+		vivado $(VIVADO_BATCH_OPT) -source setup.tcl | tee ../vivado_setup.log; \
 	fi; \
 	cd ../;
 
@@ -611,10 +646,11 @@ vivado-gui: vivado-setup
 vivado-syn: vivado-setup
 	$(QUIET_INFO)echo "launching Vivado implementation script"
 	@cd vivado; \
-	vivado -mode batch -source syn.tcl | tee ../vivado_syn.log; \
+	vivado $(VIVADO_BATCH_OPT) -source syn.tcl | tee ../vivado_syn.log; \
 	cd ../;
-	@bit=vivado/$(DESIGN).runs/impl_1/top.bit; \
+	@bit=vivado/$(DESIGN).runs/impl_1/$(TOP).bit; \
 	if test -r $$bit; then \
+		rm -rf $(TOP).bit; \
 		ln -s $$bit; \
 	else \
 		echo $(SPACES)"ERROR: bistream not found; synthesis failed"; \
@@ -622,9 +658,9 @@ vivado-syn: vivado-setup
 
 vivado-prog-fpga: vivado/program.tcl
 	@cd vivado; \
-	bit=$(DESIGN).runs/impl_1/top.bit; \
+	bit=$(DESIGN).runs/impl_1/$(TOP).bit; \
 	if test -r $$bit; then \
-		vivado -mode batch -source program.tcl -tclargs $(FPGA_HOST) $(PART) $$bit; \
+		vivado $(VIVADO_BATCH_OPT) -source program.tcl -tclargs $(FPGA_HOST) $(XIL_HW_SERVER_PORT) $(PART) $$bit; \
 	else \
 		echo $(SPACES)"ERROR: bistream not found; please run target vivado-syn first"; \
 	fi; \
