@@ -239,7 +239,7 @@ grlib-config-distclean: grlib-config-clean
 
 
 ### Desing source files ###
-ifneq ("$(PROFPGA)","")
+ifneq ($(findstring profpga, $(BOARD)),)
 VHDL_PROFPGA = $(shell strings $(ESP_ROOT)/utils/profpga_vhd.txt)
 VERILOG_PROFPGA = $(shell strings $(ESP_ROOT)/utils/profpga_verilog.txt)
 else
@@ -523,7 +523,7 @@ vivado/setup.tcl: vivado $(XDC) $(BOARD_FILES)
 	@$(RM) $@
 	@echo "create_project $(DESIGN) -part ${DEVICE} -force" > $@
 	@echo "set_property target_language verilog [current_project]" >> $@
-ifneq ("$(PROFPGA)","")
+ifneq ($(findstring profpga, $(BOARD)),)
 	@echo "set_property include_dirs {$(PROFPGA_INCDIR)} [get_filesets {sim_1 sources_1}]" >> $@
 endif
 	@echo "source ./srcs.tcl" >> $@
@@ -590,7 +590,7 @@ vivado/program.tcl: vivado
 	@echo "puts \"Searching for \$$part...\"" >> $@
 	@echo "" >> $@
 	@echo "foreach cable [get_hw_targets ] {" >> $@
-ifneq ("$(PROFPGA)","")
+ifneq ($(findstring profpga, $(BOARD)),)
 	@echo "    set_property PARAM.FREQUENCY 3000000 [get_hw_targets \$$cable]" >> $@
 endif
 	@echo "    open_hw_target \$$cable" >> $@
