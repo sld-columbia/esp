@@ -3,7 +3,6 @@ techmap
 eth
 opencores
 common
-profpga
 sld
 gaisler
 esa

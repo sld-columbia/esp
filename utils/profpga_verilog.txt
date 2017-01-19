@@ -1,0 +1,13 @@
+generic_hdl/axi_ram_slave.v
+mmi64/mmi64_axi_master.v
+mmi64/mmi64_disco.v
+mmi64/mmi64_identify.v
+mmi64/mmi64_m_ahbm.v
+mmi64/mmi64_m_devzero.v
+mmi64/mmi64_m_regif.v
+mmi64/mmi64_m_upstreamif.v
+mmi64/mmi64_router_core.v
+mmi64/mmi64_router_upstream.v
+mmi64/mmi64_rt.v
+mmi64/mmi64_serializer.v
+mmi64/mmi64_stimulate.v
