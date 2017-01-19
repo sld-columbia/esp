@@ -1,5 +1,6 @@
 ### Global variables ###
 FPGA_HOST ?= espdev
+XIL_HW_SERVER_PORT ?= 3125
 
 ### Supported technology libraries ###
 ASICLIBS =
