@@ -24,10 +24,11 @@ library unisim;
 use unisim.vcomponents.all;
 --pragma translate_on
 
-use work.afifo_core_pkg.all;
-use work.mmi64_pkg.all;
-use work.profpga_pkg.all;
-use work.mmi64_m_regif_comp.all;
+library profpga;
+use profpga.afifo_core_pkg.all;
+use profpga.mmi64_pkg.all;
+use profpga.profpga_pkg.all;
+use profpga.mmi64_m_regif_comp.all;
 
 use work.sldcommon.all;
 
@@ -247,18 +248,20 @@ begin
       srcsync_n     => open,
       dmbi_h2f      => dmbi_h2f,
       dmbi_f2h      => dmbi_f2h,
-      -- source clock/sync not used
-      clk_200mhz_o      => open,
-      src_clk_i         => "0000",
-      src_clk_locked_i  => "0000",
-      src_event_id_i    => (others => x"00"),
-      src_event_en_i    => "0000",
-      src_event_busy_o  => open,
-      src_event_reset_i => "1111",
-      src_event_strobe1_i => "0000",
-      src_event_strobe2_i => "0000",
-      clk0_event_id_o   => open,
-      clk0_event_en_o   => open,
+      -- 200 MHz clock (useful for delay calibration)
+      clk_200mhz_o => open,
+      -- source clock/sync input, not used
+      src_clk_i           => (others => '0'),
+      src_clk_locked_i    => (others => '1'),
+      src_event_id_i      => (others => (others => '0')),
+      src_event_en_i      => (others => '0'),
+      src_event_busy_o    => open,
+      src_event_reset_i   => (others => '1'),
+      src_event_strobe1_i => (others => '0'),
+      src_event_strobe2_i => (others => '0'),
+      -- clk0 sync events (synchronized with mmi64_clk)
+      clk0_event_id_o      => open,
+      clk0_event_en_o      => open,
       clk0_event_strobe1_o => open,
       clk0_event_strobe2_o => open,
       -- MMI-64 access (synchronous to mmi64_clk)
@@ -275,7 +278,7 @@ begin
       mmi64_m_up_accept_o => mmi64_up_accept,
       mmi64_m_up_start_i  => mmi64_up_start,
       mmi64_m_up_stop_i   => mmi64_up_stop,
-      -- clock configuration ports (synchronous to mmi64_clk)
+      -- clock configuration ports (synchronous to mmi64_clk), not used in this example
       clk1_cfg_dn_o => open,
       clk1_cfg_up_i => (others => '0'),
       clk2_cfg_dn_o => open,
@@ -283,7 +286,13 @@ begin
       clk3_cfg_dn_o => open,
       clk3_cfg_up_i => (others => '0'),
       clk4_cfg_dn_o => open,
-      clk4_cfg_up_i => (others => '0')
+      clk4_cfg_up_i => (others => '0'),
+      clk5_cfg_dn_o => open,
+      clk5_cfg_up_i => (others => '0'),
+      clk6_cfg_dn_o => open,
+      clk6_cfg_up_i => (others => '0'),
+      clk7_cfg_dn_o => open,
+      clk7_cfg_up_i => (others => '0')
       );
 
   mmi64_resetn <= not mmi64_reset;
