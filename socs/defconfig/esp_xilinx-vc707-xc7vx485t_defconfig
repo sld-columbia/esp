@@ -10,7 +10,7 @@ TILE_0_0 = 0 mem_dbg mem_dbg 0 0 0
 TILE_0_1 = 1 cpu cpu 0 0 0
 TILE_1_0 = 2 acc FFT 0 0 0
 TILE_1_1 = 3 misc IO 0 0 0
-CONFIG_HAS_DVFS = y
+#CONFIG_HAS_DVFS is not set
 CONFIG_VF_POINTS = 4
 POWER_0_0 = mem_dbg 0 0 0 0 0 0 0 0 0 0 0 0 
 POWER_0_1 = cpu 0 0 0 0 0 0 0 0 0 0 0 0 
