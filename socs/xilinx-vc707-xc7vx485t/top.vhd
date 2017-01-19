@@ -84,10 +84,10 @@ entity top is
     emdc            : out   std_ulogic;
     eint            : in    std_ulogic;
     erst            : out   std_ulogic;
-    dsurx           : in    std_ulogic;  -- UART1_RX (u1i.rxd)
-    dsutx           : out   std_ulogic;  -- UART1_TX (u1o.txd)
-    dsuctsn         : in    std_ulogic;  -- UART1_RTSN (u1i.ctsn)
-    dsurtsn         : out   std_ulogic;  -- UART1_RTSN (u1o.rtsn)
+    uart_rxd        : in    std_ulogic;  -- UART1_RX (u1i.rxd)
+    uart_txd        : out   std_ulogic;  -- UART1_TX (u1o.txd)
+    uart_ctsn       : in    std_ulogic;  -- UART1_RTSN (u1i.ctsn)
+    uart_rtsn       : out   std_ulogic;  -- UART1_RTSN (u1o.rtsn)
     button          : in    std_logic_vector(3 downto 0);
     switch          : inout std_logic_vector(4 downto 0);
     led             : out   std_logic_vector(6 downto 0)
@@ -605,12 +605,12 @@ begin
       mctrl_apbo    => mctrl_apbo,
       mctrl_clk     => mctrl_clk,
       --pragma translate_on
-      dsurx         => dsurx,
-      dsutx         => dsutx,
-      dsuctsn       => dsuctsn,
-      dsurtsn       => dsurtsn,
-      ndsuact       => ndsuact,
-      dsuerr        => dsuerr,
+      uart_rxd       => uart_rxd,
+      uart_txd       => uart_txd,
+      uart_ctsn      => uart_ctsn,
+      uart_rtsn      => uart_rtsn,
+      ndsuact        => ndsuact,
+      dsuerr         => dsuerr,
       ddr0_ahbsi     => ddr_ahbsi,
       ddr0_ahbso     => ddr_ahbso,
       ddr1_ahbsi     => open,

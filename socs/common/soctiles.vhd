@@ -73,10 +73,10 @@ package soctiles is
       mctrl_apbo    : in    apb_slv_out_type;
       mctrl_clk     : out   std_ulogic;
       --pragma translate_on
-      dsurx         : in    std_ulogic;
-      dsutx         : out   std_ulogic;
-      dsuctsn       : in    std_ulogic;
-      dsurtsn       : out   std_ulogic;
+      uart_rxd      : in    std_ulogic;
+      uart_txd      : out   std_ulogic;
+      uart_ctsn     : in    std_ulogic;
+      uart_rtsn     : out   std_ulogic;
       ndsuact       : out   std_ulogic;
       dsuerr        : out   std_ulogic;
       ddr0_ahbsi    : out ahb_slv_in_type;
@@ -256,10 +256,10 @@ package soctiles is
     port (
       rst                : in  std_ulogic;
       clk                : in  std_ulogic;
-      dsurx              : in  std_ulogic;
-      dsutx              : out std_ulogic;
-      dsuctsn            : in  std_ulogic;
-      dsurtsn            : out std_ulogic;
+      uart_rxd           : in  std_ulogic;
+      uart_txd           : out std_ulogic;
+      uart_ctsn          : in  std_ulogic;
+      uart_rtsn          : out std_ulogic;
       dvi_apbi      : out apb_slv_in_type;
       dvi_apbo      : in  apb_slv_out_type;
       dvi_ahbmi     : out ahb_mst_in_type;

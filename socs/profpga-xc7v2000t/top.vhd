@@ -56,11 +56,11 @@ entity top is
     dmbi_h2f              : in  std_ulogic_vector(19 downto 0);
     dmbi_f2h              : out std_ulogic_vector(19 downto 0);
     --
-    reset                 : in    std_ulogic;
-    clkp_0          : in    std_ulogic;  -- 160 MHz clock
-    clkn_0          : in    std_ulogic;  -- 160 MHz clock
-    clkp_1          : in    std_ulogic;  -- 160 MHz clock
-    clkn_1          : in    std_ulogic;  -- 160 MHz clock
+    reset           : in    std_ulogic;
+    c0_main_clk_p   : in    std_ulogic;  -- 160 MHz clock
+    c0_main_clk_n   : in    std_ulogic;  -- 160 MHz clock
+    c1_main_clk_p   : in    std_ulogic;  -- 160 MHz clock
+    c1_main_clk_n   : in    std_ulogic;  -- 160 MHz clock
     clk_ref_p       : in    std_ulogic;  -- 200 MHz clock
     clk_ref_n       : in    std_ulogic;  -- 200 MHz clock
     --dsu_break      : in    std_ulogic;
@@ -104,10 +104,10 @@ entity top is
     c1_ddr3_dm         : out   std_logic_vector(7 downto 0);
     c1_ddr3_odt        : out   std_logic_vector(0 downto 0);
     c1_calib_complete  : out   std_logic;
-    dsurx           : in    std_ulogic;
-    dsutx           : out   std_ulogic;
-    dsuctsn         : in    std_ulogic;
-    dsurtsn         : out   std_ulogic;
+    uart_rxd           : in    std_ulogic;
+    uart_txd           : out   std_ulogic;
+    uart_ctsn          : in    std_ulogic;
+    uart_rtsn          : out   std_ulogic;
     -- Ethernet signals
     reset_o2  : out   std_ulogic;
     etx_clk   : in    std_ulogic;
@@ -144,11 +144,8 @@ entity top is
     LED_GREEN       : out   std_ulogic;
     LED_BLUE        : out   std_ulogic;
     LED_YELLOW      : out   std_ulogic;
-    rst_led         : out   std_ulogic;
-    rstraw_led      : out   std_ulogic;
-    rstn_led        : out   std_ulogic;
-    migrstn_led     : out   std_ulogic;
-    diagnostic_led  : out   std_ulogic
+    c0_diagnostic_led  : out   std_ulogic;
+    c1_diagnostic_led  : out   std_ulogic
    );
 end;
 
@@ -304,6 +301,7 @@ signal sel0, sel1, sel2, sel3, sel4 : std_ulogic;
 
 -- clock and reset
 signal clkm, clkm_2 : std_ulogic := '0';
+signal clkm_sync_rst, clkm_2_sync_rst : std_ulogic;
 signal rstn, rstraw : std_ulogic;
 signal lock, rst : std_ulogic;
 signal migrstn : std_logic;
@@ -443,8 +441,10 @@ signal vref : std_logic_vector(CFG_TILES_NUM-1 downto 0);
 attribute keep of clkm : signal is true;
 attribute keep of clkm_2 : signal is true;
 
-signal diagnostic_count : std_logic_vector(26 downto 0);
-signal diagnostic_toggle : std_ulogic;
+signal c0_diagnostic_count : std_logic_vector(26 downto 0);
+signal c0_diagnostic_toggle : std_ulogic;
+signal c1_diagnostic_count : std_logic_vector(26 downto 0);
+signal c1_diagnostic_toggle : std_ulogic;
 
 -- MMI64
 signal user_rstn        : std_ulogic;
@@ -456,16 +456,27 @@ signal mon_dvfs         : monitor_dvfs_vector(0 to CFG_TILES_NUM-1);
 
 begin
 
-  diagnostic: process (clkm, rstn)
-  begin  -- process diagnostic
-    if rstn = '0' then                  -- asynchronous reset (active low)
-      diagnostic_count <= (others => '0');
+  c0_diagnostic: process (clkm, clkm_sync_rst)
+  begin  -- process c0_diagnostic
+    if clkm_sync_rst = '1' then                  -- asynchronous reset (active high)
+      c0_diagnostic_count <= (others => '0');
     elsif clkm'event and clkm = '1' then  -- rising clock edge
-      diagnostic_count <= diagnostic_count + 1;
+      c0_diagnostic_count <= c0_diagnostic_count + 1;
     end if;
-  end process diagnostic;
-  diagnostic_toggle <= diagnostic_count(26);
-  led_diag_pad : outpad generic map (tech => padtech, level => cmos, voltage => x15v) port map (diagnostic_led, diagnostic_toggle);
+  end process c0_diagnostic;
+  c0_diagnostic_toggle <= c0_diagnostic_count(26);
+  c0_led_diag_pad : outpad generic map (tech => padtech, level => cmos, voltage => x15v) port map (c0_diagnostic_led, c0_diagnostic_toggle);
+
+  c1_diagnostic: process (clkm_2, clkm_2_sync_rst)
+  begin  -- process c1_diagnostic
+    if clkm_2_sync_rst = '1' then                  -- asynchronous reset (active high)
+      c1_diagnostic_count <= (others => '0');
+    elsif clkm_2'event and clkm_2 = '1' then  -- rising clock edge
+      c1_diagnostic_count <= c1_diagnostic_count + 1;
+    end if;
+  end process c1_diagnostic;
+  c1_diagnostic_toggle <= c1_diagnostic_count(26);
+  c1_led_diag_pad : outpad generic map (tech => padtech, level => cmos, voltage => x15v) port map (c1_diagnostic_led, c1_diagnostic_toggle);
 
 -------------------------------------------------------------------------------
 -- Leds -----------------------------------------------------------------------
@@ -491,12 +502,7 @@ begin
 
   led3_pad : outpad generic map (tech => padtech, level => cmos, voltage => x18v) port map (LED_BLUE, lock);
 
-  led4_pad : outpad generic map (tech => padtech, level => cmos, voltage => x18v) port map (LED_YELLOW, ddr0_ahbso.hready);
-
-  led_rst_pad : outpad generic map (tech => padtech, level => cmos, voltage => x15v) port map (rst_led, rst);
-  led_rstn_pad : outpad generic map (tech => padtech, level => cmos, voltage => x15v) port map (rstn_led, rstn);
-  led_migrstn_pad : outpad generic map (tech => padtech, level => cmos, voltage => x15v) port map (migrstn_led, migrstn);
-  led_rstraw_pad : outpad generic map (tech => padtech, level => cmos, voltage => x15v) port map (rstraw_led, rstraw);
+  led4_pad : outpad generic map (tech => padtech, level => cmos, voltage => x18v) port map (LED_YELLOW, '0');
 
 -------------------------------------------------------------------------------
 -- Switches -------------------------------------------------------------------
@@ -690,10 +696,10 @@ begin
         c1_ddr3_cs_n            => c1_ddr3_cs_n,
         c1_ddr3_dm              => c1_ddr3_dm,
         c1_ddr3_odt             => c1_ddr3_odt,
-        c0_sys_clk_p            => clkp_0,
-        c0_sys_clk_n            => clkn_0,
-        c1_sys_clk_p            => clkp_1,
-        c1_sys_clk_n            => clkn_1,
+        c0_sys_clk_p            => c0_main_clk_p,
+        c0_sys_clk_n            => c0_main_clk_n,
+        c1_sys_clk_p            => c1_main_clk_p,
+        c1_sys_clk_n            => c1_main_clk_n,
         clk_ref_p               => clk_ref_p,
         clk_ref_n               => clk_ref_n,
         c0_app_addr             => c0_app_addr,
@@ -715,7 +721,7 @@ begin
         c0_app_ref_ack          => open,
         c0_app_zq_ack           => open,
         c0_ui_clk               => clkm,
-        c0_ui_clk_sync_rst      => open,
+        c0_ui_clk_sync_rst      => clkm_sync_rst,
         c0_init_calib_complete  => c0_calib_done,
         c1_app_addr             => c1_app_addr,
         c1_app_cmd              => c1_app_cmd,
@@ -736,7 +742,7 @@ begin
         c1_app_ref_ack          => open,
         c1_app_zq_ack           => open,
         c1_ui_clk               => clkm_2,
-        c1_ui_clk_sync_rst      => open,
+        c1_ui_clk_sync_rst      => clkm_2_sync_rst,
         c1_init_calib_complete  => c1_calib_done,
         sys_rst                 => rstraw
         );
@@ -1064,10 +1070,10 @@ begin
       mctrl_apbo    => mctrl_apbo,
       mctrl_clk     => mctrl_clk,
       --pragma translate_on
-      dsurx         => dsurx,
-      dsutx         => dsutx,
-      dsuctsn       => dsuctsn,
-      dsurtsn       => dsurtsn,
+      uart_rxd      => uart_rxd,
+      uart_txd      => uart_txd,
+      uart_ctsn     => uart_ctsn,
+      uart_rtsn     => uart_rtsn,
       ndsuact       => ndsuact,
       dsuerr        => dsuerr,
       ddr0_ahbsi    => ddr0_ahbsi,

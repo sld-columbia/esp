@@ -119,10 +119,10 @@ signal ctsn2 , rtsn2 , dsurtsn : std_ulogic;
   signal tft_npd : std_ulogic;
 
 signal clk27           : std_ulogic := '0';
-signal clkp_0         : std_ulogic := '0';
-signal clkn_0         : std_ulogic := '1';
-signal clkp_1         : std_ulogic := '0';
-signal clkn_1         : std_ulogic := '1';
+signal c0_main_clk_p         : std_ulogic := '0';
+signal c0_main_clk_n         : std_ulogic := '1';
+signal c1_main_clk_p         : std_ulogic := '0';
+signal c1_main_clk_n         : std_ulogic := '1';
 signal clk_ref_p       : std_ulogic := '0';
 signal clk_ref_n       : std_ulogic := '1';
 signal clk33           : std_ulogic := '0';
@@ -227,10 +227,10 @@ component top
     dmbi_f2h              : out std_ulogic_vector(19 downto 0);
     --
     reset          : in    std_ulogic;
-    clkp_0          : in    std_ulogic;  -- 160 MHz clock
-    clkn_0          : in    std_ulogic;  -- 160 MHz clock
-    clkp_1          : in    std_ulogic;  -- 160 MHz clock
-    clkn_1          : in    std_ulogic;  -- 160 MHz clock
+    c0_main_clk_p          : in    std_ulogic;  -- 160 MHz clock
+    c0_main_clk_n          : in    std_ulogic;  -- 160 MHz clock
+    c1_main_clk_p          : in    std_ulogic;  -- 160 MHz clock
+    c1_main_clk_n          : in    std_ulogic;  -- 160 MHz clock
     clk_ref_p       : in    std_ulogic;  -- 200 MHz clock
     clk_ref_n       : in    std_ulogic;  -- 200 MHz clock
     --dsu_break      : in    std_ulogic;
@@ -272,10 +272,10 @@ component top
     c1_ddr3_dm        : out   std_logic_vector(7 downto 0);
     c1_ddr3_odt       : out   std_logic_vector(0 downto 0);
     c1_calib_complete : out   std_logic;
-    dsurx          : in    std_ulogic;
-    dsutx          : out   std_ulogic;
-    dsuctsn        : in    std_ulogic;
-    dsurtsn        : out   std_ulogic;
+    uart_rxd          : in    std_ulogic;
+    uart_txd          : out   std_ulogic;
+    uart_ctsn         : in    std_ulogic;
+    uart_rtsn         : out   std_ulogic;
     -- Ethernet signals
     reset_o2  : out   std_ulogic;
     etx_clk   : in    std_ulogic;
@@ -311,7 +311,9 @@ component top
     LED_RED        : out   std_ulogic;
     LED_GREEN      : out   std_ulogic;
     LED_BLUE       : out   std_ulogic;
-    LED_YELLOW     : out   std_ulogic);
+    LED_YELLOW     : out   std_ulogic;
+    c0_diagnostic_led  : out   std_ulogic;
+    c1_diagnostic_led  : out   std_ulogic);
 end component;
 
 begin
@@ -324,10 +326,10 @@ begin
   dmbi_h2f <= (others => '0');
 
   -- clock and reset
-  clkp_0 <= not clkp_0 after 3.125 ns;
-  clkn_0 <= not clkn_0 after 3.125 ns;
-  clkp_1 <= not clkp_1 after 3.125 ns;
-  clkn_1 <= not clkn_1 after 3.125 ns;
+  c0_main_clk_p <= not c0_main_clk_p after 3.125 ns;
+  c0_main_clk_n <= not c0_main_clk_n after 3.125 ns;
+  c1_main_clk_p <= not c1_main_clk_p after 3.125 ns;
+  c1_main_clk_n <= not c1_main_clk_n after 3.125 ns;
   clk_ref_p <= not clk_ref_p after 2.5 ns;
   clk_ref_n <= not clk_ref_n after 2.5 ns;
   clkethp <= not clkethp after 4 ns;
@@ -362,10 +364,10 @@ begin
        dmbi_h2f        => dmbi_h2f,
        dmbi_f2h        => dmbi_f2h,
        reset           => rst,
-       clkp_0          => clkp_0,
-       clkn_0          => clkn_0,
-       clkp_1          => clkp_1,
-       clkn_1          => clkn_1,
+       c0_main_clk_p          => c0_main_clk_p,
+       c0_main_clk_n          => c0_main_clk_n,
+       c1_main_clk_p          => c1_main_clk_p,
+       c1_main_clk_n          => c1_main_clk_n,
        clk_ref_p       => clk_ref_p,
        clk_ref_n       => clk_ref_n,
        --dsu_break       => '0',
@@ -407,10 +409,10 @@ begin
        c1_ddr3_dm         => c0_ddr3_dm,
        c1_ddr3_odt        => c0_ddr3_odt,
        c1_calib_complete  => open,
-       dsurx           => dsurx,
-       dsutx           => dsutx,
-       dsuctsn         => dsuctsn,
-       dsurtsn         => dsurtsn,
+       uart_rxd           => dsurx,
+       uart_txd           => dsutx,
+       uart_ctsn          => dsuctsn,
+       uart_rtsn          => dsurtsn,
        reset_o2  => reset_o2,
        etx_clk   => etx_clk,
        erx_clk   => erx_clk,
@@ -444,7 +446,9 @@ begin
        LED_RED         => open,
        LED_GREEN       => open,
        LED_BLUE        => open,
-       LED_YELLOW      => open
+       LED_YELLOW      => open,
+       c0_diagnostic_led => open,
+       c1_diagnostic_led => open
       );
 
   phy0 : if (CFG_GRETH = 1) generate

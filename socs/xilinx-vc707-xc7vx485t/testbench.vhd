@@ -227,10 +227,10 @@ component top is
     emdc            : out   std_ulogic;
     eint            : in    std_ulogic;
     erst            : out   std_ulogic;
-    dsurx           : in    std_ulogic;
-    dsutx           : out   std_ulogic;
-    dsuctsn         : in    std_ulogic;
-    dsurtsn         : out   std_ulogic;
+    uart_rxd        : in    std_ulogic;
+    uart_txd        : out   std_ulogic;
+    uart_ctsn       : in    std_ulogic;
+    uart_rtsn       : out   std_ulogic;
     button          : in    std_logic_vector(3 downto 0);
     switch          : inout std_logic_vector(4 downto 0);
     led             : out   std_logic_vector(6 downto 0)
@@ -300,10 +300,10 @@ begin
        emdc            => phy_mdc,
        eint            => '0',
        erst            => OPEN,
-       dsurx           => dsurx,
-       dsutx           => dsutx,
-       dsuctsn         => dsuctsn,
-       dsurtsn         => dsurtsn,
+       uart_rxd        => dsurx,
+       uart_txd        => dsutx,
+       uart_ctsn       => dsuctsn,
+       uart_rtsn       => dsurtsn,
        button          => button,
        switch          => switch,
        led             => led

@@ -2,33 +2,80 @@
 #              DVI                                         -
 #-----------------------------------------------------------
 
+# {eb_ba2_2_DVI_OUT_DATA_0}
+set_property PACKAGE_PIN AJ39 [get_ports {tft_data[0]}]
+
+# {eb_ba2_2_DVI_OUT_DATA_1}
+set_property PACKAGE_PIN AK41 [get_ports {tft_data[1]}]
+
+# {eb_ba2_2_DVI_OUT_DATA_2}
+set_property PACKAGE_PIN AJ41 [get_ports {tft_data[2]}]
+
+# {eb_ba2_2_DVI_OUT_DATA_3}
+set_property PACKAGE_PIN AH43 [get_ports {tft_data[3]}]
+
+# {eb_ba2_2_DVI_OUT_DATA_4}
+set_property PACKAGE_PIN AH33 [get_ports {tft_data[4]}]
+
+# {eb_ba2_2_DVI_OUT_DATA_5}
+set_property PACKAGE_PIN AH44 [get_ports {tft_data[5]}]
+
+# {eb_ba2_2_DVI_OUT_DATA_6}
+set_property PACKAGE_PIN AJ35 [get_ports {tft_data[6]}]
+
+# {eb_ba2_2_DVI_OUT_DATA_7}
+set_property PACKAGE_PIN AJ43 [get_ports {tft_data[7]}]
+
+# {eb_ba2_2_DVI_OUT_DATA_8}
+set_property PACKAGE_PIN AJ40 [get_ports {tft_data[8]}]
+
+# {eb_ba2_2_DVI_OUT_DATA_9}
+set_property PACKAGE_PIN AK40 [get_ports {tft_data[9]}]
+
+# {eb_ba2_2_DVI_OUT_DATA_10}
+set_property PACKAGE_PIN AK43 [get_ports {tft_data[10]}]
+
+# {eb_ba2_2_DVI_OUT_DATA_11}
+set_property PACKAGE_PIN AK42 [get_ports {tft_data[11]}]
+
+# {eb_ba2_2_DVI_OUT_DATA_12}
+set_property PACKAGE_PIN AJ34 [get_ports {tft_data[12]}]
+
+# {eb_ba2_2_DVI_OUT_DATA_13}
+set_property PACKAGE_PIN AJ33 [get_ports {tft_data[13]}]
+
+# {eb_ba2_2_DVI_OUT_DATA_14}
+set_property PACKAGE_PIN AK35 [get_ports {tft_data[14]}]
+
+# {eb_ba2_2_DVI_OUT_DATA_15}
+set_property PACKAGE_PIN AJ44 [get_ports {tft_data[15]}]
+
+# {eb_ba2_2_DVI_OUT_DATA_16}
+set_property PACKAGE_PIN AL33 [get_ports {tft_data[16]}]
+
+# {eb_ba2_2_DVI_OUT_DATA_17}
+set_property PACKAGE_PIN AK33 [get_ports {tft_data[17]}]
+
+# {eb_ba2_2_DVI_OUT_DATA_18}
+set_property PACKAGE_PIN AL34 [get_ports {tft_data[18]}]
+
+# {eb_ba2_2_DVI_OUT_DATA_19}
+set_property PACKAGE_PIN AM34 [get_ports {tft_data[19]}]
+
+# {eb_ba2_2_DVI_OUT_DATA_20}
+set_property PACKAGE_PIN AM35 [get_ports {tft_data[20]}]
+
+# {eb_ba2_2_DVI_OUT_DATA_21}
+set_property PACKAGE_PIN AL35 [get_ports {tft_data[21]}]
+
+# {eb_ba2_2_DVI_OUT_DATA_22}
+set_property PACKAGE_PIN AL40 [get_ports {tft_data[22]}]
+
+# {eb_ba2_2_DVI_OUT_DATA_23}
+set_property PACKAGE_PIN AH32 [get_ports {tft_data[23]}]
+
 set_property IOSTANDARD LVCMOS18 [get_ports {tft_*}]
 
-# {eb_ba2_2_DVI_OUT_DATA_*}
-set_property PACKAGE_PIN AJ39 [get_ports {tft_data[0]}]
-set_property PACKAGE_PIN AK41 [get_ports {tft_data[1]}]
-set_property PACKAGE_PIN AJ41 [get_ports {tft_data[2]}]
-set_property PACKAGE_PIN AH43 [get_ports {tft_data[3]}]
-set_property PACKAGE_PIN AH33 [get_ports {tft_data[4]}]
-set_property PACKAGE_PIN AH44 [get_ports {tft_data[5]}]
-set_property PACKAGE_PIN AJ35 [get_ports {tft_data[6]}]
-set_property PACKAGE_PIN AJ43 [get_ports {tft_data[7]}]
-set_property PACKAGE_PIN AJ40 [get_ports {tft_data[8]}]
-set_property PACKAGE_PIN AK40 [get_ports {tft_data[9]}]
-set_property PACKAGE_PIN AK43 [get_ports {tft_data[10]}]
-set_property PACKAGE_PIN AK42 [get_ports {tft_data[11]}]
-set_property PACKAGE_PIN AJ34 [get_ports {tft_data[12]}]
-set_property PACKAGE_PIN AJ33 [get_ports {tft_data[13]}]
-set_property PACKAGE_PIN AK35 [get_ports {tft_data[14]}]
-set_property PACKAGE_PIN AJ44 [get_ports {tft_data[15]}]
-set_property PACKAGE_PIN AL33 [get_ports {tft_data[16]}]
-set_property PACKAGE_PIN AK33 [get_ports {tft_data[17]}]
-set_property PACKAGE_PIN AL34 [get_ports {tft_data[18]}]
-set_property PACKAGE_PIN AM34 [get_ports {tft_data[19]}]
-set_property PACKAGE_PIN AM35 [get_ports {tft_data[20]}]
-set_property PACKAGE_PIN AL35 [get_ports {tft_data[21]}]
-set_property PACKAGE_PIN AL40 [get_ports {tft_data[22]}]
-set_property PACKAGE_PIN AH32 [get_ports {tft_data[23]}]
 
 # {eb_ba2_2_DVI_OUT_DE}
 set_property PACKAGE_PIN BA43 [get_ports {tft_de}]

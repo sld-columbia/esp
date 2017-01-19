@@ -35,10 +35,10 @@ entity tile_io is
   port (
     rst             : in    std_ulogic;
     clk             : in    std_ulogic;
-    dsurx           : in    std_ulogic;   -- UART1_RX (u1i.rxd)
-    dsutx           : out   std_ulogic;   -- UART1_TX (u1o.txd)
-    dsuctsn         : in    std_ulogic;   -- UART1_CTSN (u1i.ctsn)
-    dsurtsn         : out   std_ulogic;   -- UART1_RTSN (u1o.rtsn)
+    uart_rxd        : in    std_ulogic;   -- UART1_RX (u1i.rxd)
+    uart_txd        : out   std_ulogic;   -- UART1_TX (u1o.txd)
+    uart_ctsn       : in    std_ulogic;   -- UART1_CTSN (u1i.ctsn)
+    uart_rtsn       : out   std_ulogic;   -- UART1_RTSN (u1o.rtsn)
     dvi_apbi        : out apb_slv_in_type;
     dvi_apbo        : in  apb_slv_out_type;
     dvi_ahbmi       : out ahb_mst_in_type;
@@ -170,10 +170,10 @@ begin
 -------------------------------------------------------------------------------
 -- APB 1: UART interface ------------------------------------------------------
 -------------------------------------------------------------------------------
-  dsutx    <= u1o.txd;
-  u1i.rxd  <= dsurx;
-  dsurtsn  <= u1o.rtsn;
-  u1i.ctsn <= dsuctsn;
+  uart_txd  <= u1o.txd;
+  u1i.rxd   <= uart_rxd;
+  uart_rtsn <= u1o.rtsn;
+  u1i.ctsn  <= uart_ctsn;
 
   ua1 : if CFG_UART1_ENABLE /= 0 generate
     uart1 : apbuart                     -- UART 1

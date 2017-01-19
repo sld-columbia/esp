@@ -52,10 +52,10 @@ entity esp is
     mctrl_apbo  : in  apb_slv_out_type;
     mctrl_clk   : out std_ulogic;
     --pragma translate_on
-    dsurx           : in    std_logic;  -- UART1_RX (u1i.rxd)
-    dsutx           : out   std_logic;  -- UART1_TX (u1o.txd)
-    dsuctsn         : in    std_logic;  -- UART1_RTSN (u1i.ctsn)
-    dsurtsn         : out   std_logic;  -- UART1_RTSN (u1o.rtsn)
+    uart_rxd        : in    std_logic;  -- UART1_RX (u1i.rxd)
+    uart_txd        : out   std_logic;  -- UART1_TX (u1o.txd)
+    uart_ctsn       : in    std_logic;  -- UART1_RTSN (u1i.ctsn)
+    uart_rtsn       : out   std_logic;  -- UART1_RTSN (u1o.rtsn)
     ndsuact         : out   std_logic;
     dsuerr          : out   std_logic;
     ddr0_ahbsi      : out ahb_slv_in_type;
@@ -128,17 +128,17 @@ signal mctrl_ahbsi_cpu       : ahb_slv_in_type_vec;
 signal mctrl_apbi_cpu        : apb_slv_in_type_vec;
 --pragma translate_on
 
-signal rst_int :    std_logic;
-signal noc_clk_int :    std_logic;
-signal mem_clk_int :    std_logic;
-signal refclk_int :    std_logic_vector(TILES_NUM -1 downto 0);
-signal pllbypass_int   :    std_logic_vector(TILES_NUM - 1 downto 0);
-signal dsurx_int       :    std_logic;  -- UART1_RX (u1i.rxd)
-signal dsutx_int       :    std_logic;  -- UART1_TX (u1o.txd)
-signal dsuctsn_int         :    std_logic;  -- UART1_RTSN (u1i.ctsn)
-signal dsurtsn_int         :    std_logic;  -- UART1_RTSN (u1o.rtsn)
-signal ndsuact_int         :    std_logic;
-signal dsuerr_int          :    std_logic;
+signal rst_int       : std_logic;
+signal noc_clk_int   : std_logic;
+signal mem_clk_int   : std_logic;
+signal refclk_int    : std_logic_vector(TILES_NUM -1 downto 0);
+signal pllbypass_int : std_logic_vector(TILES_NUM - 1 downto 0);
+signal uart_rxd_int  : std_logic;       -- UART1_RX (u1i.rxd)
+signal uart_txd_int  : std_logic;       -- UART1_TX (u1o.txd)
+signal uart_ctsn_int : std_logic;       -- UART1_RTSN (u1i.ctsn)
+signal uart_rtsn_int : std_logic;       -- UART1_RTSN (u1o.rtsn)
+signal ndsuact_int   : std_logic;
+signal dsuerr_int    : std_logic;
 
 type monitor_noc_cast_vector is array (1 to nocs_num) of monitor_noc_vector(0 to TILES_NUM-1);
 signal mon_noc_vec : monitor_noc_cast_vector;
@@ -162,10 +162,10 @@ begin
   -- UART pads
   -----------------------------------------------------------------------------
 
-  dsurx_pad   : inpad  generic map (level => cmos, voltage => x18v, tech => padtech) port map (dsurx, dsurx_int);
-  dsutx_pad   : outpad generic map (level => cmos, voltage => x18v, tech => padtech) port map (dsutx, dsutx_int);
-  dsuctsn_pad : inpad  generic map (level => cmos, voltage => x18v, tech => padtech) port map (dsuctsn, dsuctsn_int);
-  dsurtsn_pad : outpad generic map (level => cmos, voltage => x18v, tech => padtech) port map (dsurtsn, dsurtsn_int);
+  uart_rxd_pad   : inpad  generic map (level => cmos, voltage => x18v, tech => padtech) port map (uart_rxd, uart_rxd_int);
+  uart_txd_pad   : outpad generic map (level => cmos, voltage => x18v, tech => padtech) port map (uart_txd, uart_txd_int);
+  uart_ctsn_pad : inpad  generic map (level => cmos, voltage => x18v, tech => padtech) port map (uart_ctsn, uart_ctsn_int);
+  uart_rtsn_pad : outpad generic map (level => cmos, voltage => x18v, tech => padtech) port map (uart_rtsn, uart_rtsn_int);
 
 
   -----------------------------------------------------------------------------
@@ -403,10 +403,10 @@ begin
         port map (
           rst                => rst_int,
           clk                => noc_clk_int,
-          dsurx              => dsurx_int,
-          dsutx              => dsutx_int,
-          dsuctsn            => dsuctsn_int,
-          dsurtsn            => dsurtsn_int,
+          uart_rxd           => uart_rxd_int,
+          uart_txd           => uart_txd_int,
+          uart_ctsn          => uart_ctsn_int,
+          uart_rtsn          => uart_rtsn_int,
           dvi_apbi           => dvi_apbi,
           dvi_apbo           => dvi_apbo,
           dvi_ahbmi          => dvi_ahbmi,

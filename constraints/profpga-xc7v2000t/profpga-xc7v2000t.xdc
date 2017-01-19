@@ -7,38 +7,108 @@ set_property BITSTREAM.CONFIG.UNUSEDPIN Pullnone [current_design]
 set_property BITSTREAM.GENERAL.COMPRESS True [current_design]
 
 #-----------------------------------------------------------
-#              Clocks                                      -
+#              Clock Pins                                  -
 #-----------------------------------------------------------
 
-set_property IOSTANDARD LVDS [get_ports clkp_0]
-set_property PACKAGE_PIN AD41 [get_ports clkp_0]
+# {CLK_P_1}
+set_property IOSTANDARD LVDS [get_ports c0_main_clk_p]
+set_property PACKAGE_PIN AD41 [get_ports c0_main_clk_p]
 
-set_property IOSTANDARD LVDS [get_ports clkn_0]
-set_property PACKAGE_PIN AE41 [get_ports clkn_0]
+# {CLK_N_1}
+set_property IOSTANDARD LVDS [get_ports c0_main_clk_n]
+set_property PACKAGE_PIN AE41 [get_ports c0_main_clk_n]
 
-set_property IOSTANDARD LVDS [get_ports clkp_1]
-set_property PACKAGE_PIN AC41 [get_ports clkp_1]
+# {CLK_P_3}
+set_property IOSTANDARD LVDS [get_ports c1_main_clk_p]
+set_property PACKAGE_PIN AC41 [get_ports c1_main_clk_p]
 
-set_property IOSTANDARD LVDS [get_ports clkn_1]
-set_property PACKAGE_PIN AB41 [get_ports clkn_1]
+# {CLK_N_3}
+set_property IOSTANDARD LVDS [get_ports c1_main_clk_n]
+set_property PACKAGE_PIN AB41 [get_ports c1_main_clk_n]
 
+# {CLK_P_2}
 set_property VCCAUX_IO DONTCARE [get_ports {clk_ref_p}]
 set_property IOSTANDARD LVDS [get_ports {clk_ref_p}]
 set_property PACKAGE_PIN AA38 [get_ports {clk_ref_p}]
 
+# {CLK_N_2}
 set_property VCCAUX_IO DONTCARE [get_ports {clk_ref_n}]
 set_property IOSTANDARD LVDS [get_ports {clk_ref_n}]
 set_property PACKAGE_PIN AA39 [get_ports {clk_ref_n}]
 
 
 #-----------------------------------------------------------
+#              UART                                        -
+#-----------------------------------------------------------
+
+# {eb_ba2_1_USB2UART_PVIO_A3_NCTS}
+set_property PACKAGE_PIN N33 [get_ports uart_rtsn]
+
+# {eb_ba2_1_USB2UART_PVIO_A2_NRTS}
+set_property PACKAGE_PIN L29 [get_ports uart_ctsn]
+
+# {eb_ba2_1_USB2UART_PVIO_A1_RXD}
+set_property PACKAGE_PIN L30 [get_ports uart_txd]
+
+# {eb_ba2_1_USB2UART_PVIO_A0_TXD}
+set_property PACKAGE_PIN L32 [get_ports uart_rxd]
+
+set_property IOSTANDARD LVCMOS18 [get_ports {uart_*}]
+
+#-----------------------------------------------------------
+#              LEDs                                        -
+#-----------------------------------------------------------
+
+# {LED_RED}
+set_property PACKAGE_PIN AD31 [get_ports LED_RED]
+
+# {LED_GREEN}
+set_property PACKAGE_PIN AD30 [get_ports LED_GREEN]
+
+# {LED_BLUE}
+set_property PACKAGE_PIN AC29 [get_ports LED_BLUE]
+
+# {LED_YELLOW}
+set_property PACKAGE_PIN AD29 [get_ports LED_YELLOW]
+
+set_property IOSTANDARD LVCMOS18 [get_ports {LED_*}]
+
+#-----------------------------------------------------------
+#              Diagnostic LEDs                             -
+#-----------------------------------------------------------
+
+# {eb_ta1_1_LED01}
+set_property IOSTANDARD LVCMOS15 [get_ports c0_calib_complete]
+set_property PACKAGE_PIN K36 [get_ports c0_calib_complete]
+
+# {eb_ta1_1_LED02}
+set_property IOSTANDARD LVCMOS15 [get_ports c0_diagnostic_led]
+set_property PACKAGE_PIN L35 [get_ports c0_diagnostic_led]
+
+# {eb_ta2_1_LED01}
+set_property IOSTANDARD LVCMOS15 [get_ports c1_calib_complete]
+set_property PACKAGE_PIN AM26 [get_ports c1_calib_complete]
+
+# {eb_ta2_1_LED02}
+set_property IOSTANDARD LVCMOS15 [get_ports c1_diagnostic_led]
+set_property PACKAGE_PIN AL28 [get_ports c1_diagnostic_led]
+
+#-----------------------------------------------------------
+#              Reset                                       -
+#-----------------------------------------------------------
+
+# {eb_ta1_1_SW1}
+set_property IOSTANDARD LVCMOS15 [get_ports reset]
+set_property PACKAGE_PIN J44 [get_ports reset]
+
+
+#-----------------------------------------------------------
 #              Timing constraints                          -
 #-----------------------------------------------------------
 
-# --- Define and constrain system clock
-create_clock -period 6.250 [get_ports clkp_0]
+create_clock -period 6.250 [get_ports c0_main_clk_p]
 
-create_clock -period 6.250 [get_ports clkp_1]
+create_clock -period 6.250 [get_ports c1_main_clk_p]
 
 create_clock -period 5 [get_ports clk_ref_p]
 
@@ -48,68 +118,19 @@ create_clock -period 5 [get_ports clk_ref_p]
 #   placed at an optimal clock IOB / PLL site pair.
 # This warning can be ignored.  See the Users Guide for more information.
 
-set_property CLOCK_DEDICATED_ROUTE BACKBONE [get_nets clkp_0]
-set_property CLOCK_DEDICATED_ROUTE BACKBONE [get_nets clkp_1]
+set_property CLOCK_DEDICATED_ROUTE BACKBONE [get_nets c0_main_clk_p]
+set_property CLOCK_DEDICATED_ROUTE BACKBONE [get_nets c1_main_clk_p]
 set_property CLOCK_DEDICATED_ROUTE BACKBONE [get_pins -hierarchical *pll*CLKIN1]
-
-#-----------------------------------------------------------
-#      Common constraints for all memory controllers       -
-#-----------------------------------------------------------
-
-set_false_path -through [get_pins -filter {NAME =~ */DQSFOUND} -of [get_cells -hier -filter {REF_NAME == PHASER_IN_PHY}]]
-
-set_multicycle_path -through [get_pins -filter {NAME =~ */OSERDESRST} -of [get_cells -hier -filter {REF_NAME == PHASER_OUT_PHY}]] -setup 2 -start
-set_multicycle_path -through [get_pins -filter {NAME =~ */OSERDESRST} -of [get_cells -hier -filter {REF_NAME == PHASER_OUT_PHY}]] -hold 1 -start
-
-set_max_delay -datapath_only -from [get_cells -hier -filter {NAME =~ *temp_mon_enabled.u_tempmon/* && IS_SEQUENTIAL}] -to [get_cells -hier -filter {NAME =~ *temp_mon_enabled.u_tempmon/device_temp_sync_r1*}] 20
-set_max_delay -from [get_cells -hier *rstdiv0_sync_r1_reg*] -to [get_pins -filter {NAME =~ */RESET} -of [get_cells -hier -filter {REF_NAME == PHY_CONTROL}]] -datapath_only 5
-
-set_max_delay -datapath_only -from [get_cells -hier -filter {NAME =~ *ddr3_infrastructure/rstdiv0_sync_r1_reg*}] -to [get_cells -hier -filter {NAME =~ *temp_mon_enabled.u_tempmon/xadc_supplied_temperature.rst_r1*}] 20
 
 # Both memory controllers impose their user clock. Make them asynchronous
 set_clock_groups -asynchronous -group [get_clocks clk_pll_i] -group [get_clocks clk_pll_i_1]
 
-
 #-----------------------------------------------------------
-#              UART                                         -
-#-----------------------------------------------------------
-
-# UART - usign daughter card UART2USB
-# (eb_tb2b2_1_UART_CTSN_FPGA2HOST)
-set_property PACKAGE_PIN M5 [get_ports dsurtsn]
-set_property IOSTANDARD LVCMOS18 [get_ports dsurtsn]
-# (eb_tb2b2_1_UART_RTSN_HOST2FPGA)
-set_property PACKAGE_PIN M4 [get_ports dsuctsn]
-set_property IOSTANDARD LVCMOS18 [get_ports dsuctsn]
-# (eb_tb2b2_1_UART_RXD_FPGA2HOST)
-set_property PACKAGE_PIN D3 [get_ports dsutx]
-set_property IOSTANDARD LVCMOS18 [get_ports dsutx]
-# (eb_tb2b2_1_UART_TXD_HOST2FPGA)
-set_property PACKAGE_PIN C3 [get_ports dsurx]
-set_property IOSTANDARD LVCMOS18 [get_ports dsurx]
-
-#-----------------------------------------------------------
-#              LEDs                                         -
-#-----------------------------------------------------------
-
-#Motherboard LEDs
-set_property PACKAGE_PIN AD31 [get_ports LED_RED]
-set_property PACKAGE_PIN AD30 [get_ports LED_GREEN]
-set_property PACKAGE_PIN AC29 [get_ports LED_BLUE]
-set_property PACKAGE_PIN AD29 [get_ports LED_YELLOW]
-
-set_property IOSTANDARD LVCMOS18 [get_ports LED_YELLOW]
-set_property IOSTANDARD LVCMOS18 [get_ports LED_BLUE]
-set_property IOSTANDARD LVCMOS18 [get_ports LED_GREEN]
-set_property IOSTANDARD LVCMOS18 [get_ports LED_RED]
-
-#-----------------------------------------------------------
-#              False Paths
+#              False Paths                                 -
 #-----------------------------------------------------------
 set_false_path -from [get_ports reset]
 set_false_path -to [get_ports LED_YELLOW]
 set_false_path -to [get_ports LED_BLUE]
 set_false_path -to [get_ports LED_GREEN]
 set_false_path -to [get_ports LED_RED]
-
 
