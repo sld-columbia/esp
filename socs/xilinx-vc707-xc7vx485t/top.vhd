@@ -420,7 +420,7 @@ begin
         );
 
     clkgenmigref0 : clkgen
-      generic map (fabtech, 16, 8, 0, 0, 0, 0, 0, 100000)
+      generic map (fabtech, 22, 9, 0, 0, 0, 0, 0, 81248)
       port map (clkm, clkm, clkref, open, open, open, open, cgi, cgo, open, open, open);
   end generate gen_mig;
 
