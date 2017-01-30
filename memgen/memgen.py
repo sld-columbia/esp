@@ -230,6 +230,29 @@ class memory():
                 self.bank_type = ram
                 self.area = new_area
 
+    def __write_check_access_task(self, fd):
+        fd.write("\n")
+        fd.write("  task check_access;\n")
+        fd.write("    input integer iface;\n")
+        fd.write("    input integer d;\n")
+        fd.write("    input integer h;\n")
+        fd.write("    input integer v;\n")
+        fd.write("    input integer hh;\n")
+        fd.write("    input integer p;\n")
+        fd.write("  begin\n")
+        fd.write("    if ((check_bank_access[d][h][v][hh][p] != -1) &&\n")
+        fd.write("        (check_bank_access[d][h][v][hh][p] != iface)) begin\n")
+        fd.write("      $display(\"ASSERTION FAILED in %m: port clash on bank\", h, \"h\", v, \"v\", hh, \"hh\", \" for port\", p, \" involving interfaces\", check_bank_access[d][h][v][hh][p], iface);\n")
+        fd.write("      $finish;\n")
+        fd.write("    end\n")
+        fd.write("    else begin\n")
+        fd.write("      check_bank_access[d][h][v][hh][p] = iface;\n")
+        fd.write("    end\n")
+        fd.write("  end\n")
+        fd.write("  endtask\n")
+
+
+
     def __write_ctrl_assignment(self, fd, bank_addr_range_str, hh_range_str, duplicated_bank_set, port, iface, is_write, parallelism):
         ce_str = [ ]
         a_str = [ ]
@@ -267,17 +290,7 @@ class memory():
         # Check that no port is accessed by more than one interface
         if (ASSERT_ON):
             fd.write("// synthesis translate_off\n")
-            fd.write("              if ((" + self.name + "_CE" + str(iface) + " == 1\'b1) &&\n")
-            fd.write("                  (check_bank_access["  + str(d) + "][h][v][hh]["  + str(p) + "] != -1) &&\n")
-            fd.write("                  (check_bank_access["  + str(d) + "][h][v][hh]["  + str(p) + "] != " + str(iface) + ")) begin\n")
-            fd.write("                $display(\"ASSERTION FAILED in %m: port clash on bank\", h, \"h\", v, \"v\", hh, \"hh\", \" for port " + str(p) + " involving interfaces\", check_bank_access["  + str(d) + "][h][v][hh]["  + str(p) + "], " + str(iface) + ");\n")
-            fd.write("                $finish;\n")
-            fd.write("              end\n")
-            fd.write("              else begin\n")
-            fd.write("                if (" + self.name + "_CE" + str(iface) + " == 1\'b1) begin\n")
-            fd.write("                  check_bank_access["  + str(d) + "][h][v][hh]["  + str(p) + "] = " + str(iface) + ";\n")
-            fd.write("                end\n")
-            fd.write("              end\n")
+            fd.write("              check_access(" + str(iface) + ", " + str(duplicated_bank_set) + ", h, v, hh, " + str(port) + ");\n")
             fd.write("// synthesis translate_on\n")
         fd.write(ce_str[duplicated_bank_set][port]  + str(iface)                       + ";\n")
         fd.write(a_str[duplicated_bank_set][port]   + str(iface) + bank_addr_range_str + ";\n")
@@ -374,6 +387,7 @@ class memory():
         if (ASSERT_ON):
             fd.write("// synthesis translate_off\n")
             fd.write("  " + "integer check_bank_access " + bank_wire_dims_str + ";\n")
+            self.__write_check_access_task(fd)
             fd.write("// synthesis translate_on\n")
         fd.write("\n")
 
