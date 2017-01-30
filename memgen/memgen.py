@@ -67,7 +67,7 @@ def is_power2z(n):
     # True if zero or power of 2
     return ((n & (n - 1)) == 0)
 
-ASSERT_ON = False
+ASSERT_ON = True
 
 ### Data structures ###
 class sram():
