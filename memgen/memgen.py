@@ -654,10 +654,27 @@ class memory():
         for iface in range(self.write_interfaces, self.write_interfaces + self.read_interfaces):
             fd.write("  " + self.name + "_CE" + str(iface) + " = 0;\n")
             fd.write("  " + self.name + "_A" + str(iface) + " = 0;\n")
+        # Go through operations
         for op in self.ops:
             fd.write("  #500000 $display(\"Testing parallel access " + str(op) + "\");\n")
+            # Reset memory content
+            if op.wn != 0:
+                fd.write("  $display(\"Set all memory cells to 0 for writing test\");\n")
+                for addr in range(0, self.words):
+                    wi = addr % op.wn
+                    fd.write("  @ (posedge CLK) $display(\"Reset addr " + str(addr) + "\");\n")
+                    fd.write("  " + self.name + "_CE" + str(wi) + " = 1'b1;\n")
+                    fd.write("  " + self.name + "_A" + str(wi) + " = " + str(addr) + ";\n")
+                    data = 0
+                    data_str = str(data)
+                    fd.write("  " + self.name + "_D" + str(wi) + " = " + data_str + ";\n")
+                    fd.write("  " + self.name + "_WE" + str(wi) + " = 1'b1;\n")
+                    fd.write("  " + self.name + "_WEM" + str(wi) + " = {" + str(self.width) + "{1'b1}};\n")
+                    # Disable write interfaces before testing
+                    fd.write("  @ (posedge CLK) " + self.name + "_CE" + str(wi) + " = 1'b0;\n")
             # Handle <N>r:<M>w with N and M power of 2.
             if op.wn > 0 and op.rn > 0 and op.wp == "modulo" and op.rp == "modulo":
+                fd.write("  $display(\"Begin test for " + str(op) + "\");\n")
                 waddr = 0
                 raddr = 0
                 caddr = 0
@@ -722,6 +739,9 @@ class memory():
                             caddr = caddr + 1
                     ccycle = ccycle + 1
                     if caddr >= self.words:
+                        fd.write("  $display(\"\");\n")
+                        fd.write("  $display(\"--- End of Test " + str(op) + " PASSED ---\");\n")
+                        fd.write("  $display(\"\");\n")
                         break
         fd.write("  $display(\"\");\n")
         fd.write("  $display(\"*** Test completed successfully ***\");\n")
