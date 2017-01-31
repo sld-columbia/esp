@@ -861,7 +861,7 @@ def read_infile(name, mem_list):
         mem_ops = []
         for i in range(3, len(item)):
             op = parse_op(item[i], mem_words)
-            if op.wn == 0:
+            if op.wn == 0 and i == 3:
                 die_werr("First operation in list should have at least one write access or testbench will fail")
             mem_ops.append(op)
         mem = memory(mem_name, mem_words, mem_width, mem_ops)
