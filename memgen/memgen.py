@@ -621,12 +621,15 @@ def parse_sram(s):
         return None
     return sram(name, words, width, area, ports)
 
-def parse_op(op):
+def parse_op(op, mem_words):
     item = op.split(":")
     write_number = int(re.split('[a-z]+', item[0], re.M|re.I)[0])
     write_pattern_abbrv = str(re.split('[0-9]+', item[0], re.M|re.I)[1])
     read_number = int(re.split('[a-z]+', item[1], re.M|re.I)[0])
     read_pattern_abbrv = str(re.split('[0-9]+', item[1], re.M|re.I)[1])
+
+    if read_number > mem_words or write_number > mem_words:
+        die_werr("Too many ports for the specified number of words for "+op)
 
     if read_number > 16 or read_number < 0:
         die_werr("Too many paralle accesses specified for "+op);
@@ -693,7 +696,7 @@ def read_infile(name, mem_list):
         mem_width = int(item[2])
         mem_ops = []
         for i in range(3, len(item)):
-            mem_ops.append(parse_op(item[i]))
+            mem_ops.append(parse_op(item[i], mem_words))
         mem = memory(mem_name, mem_words, mem_width, mem_ops)
         mem_list.append(mem)
     fd.close()
