@@ -147,7 +147,7 @@ class memory():
     # Type of SRAM chosen to implement banks
     bank_type = None
     # Total area
-    area = math.inf
+    area = float('inf')
 
     def __init__(self, name, words, width, ops):
         self.name = name
