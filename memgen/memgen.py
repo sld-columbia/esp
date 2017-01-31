@@ -315,6 +315,8 @@ class memory():
         fd.write("* @author Paolo Mantovani <paolo@cs.columbia.edu>\n")
         fd.write("*/\n")
         fd.write("\n")
+        fd.write("`timescale  1 ps / 1 ps\n")
+        fd.write("\n")
         fd.write("module " + self.name + "(\n")
         fd.write("    CLK")
         # Module interface
