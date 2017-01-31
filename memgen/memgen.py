@@ -149,6 +149,9 @@ class memory():
     bank_type = None
     # Total area
     area = float('inf')
+    # Port assignment array
+    read_ports = [ ]
+    write_ports = [ ]
 
     def __init__(self, name, words, width, ops):
         self.name = name
@@ -462,7 +465,7 @@ class memory():
                 for d in range(0, self.dbanks):
                     fd.write("          // Duplicated bank set " + str(d) + "\n")
                     for wi in range(0, op.wn):
-                        p = wi % self.bank_type.ports
+                        p = self.write_ports[wi]
                         self.__write_ctrl_assignment(fd, bank_addr_range_str, hh_range_str, d, p, wi, True, 0)
             # Handle <N>w:0r with N power of 2
             if op.rn == 0 and op.wp == "modulo":
@@ -470,9 +473,7 @@ class memory():
                 for d in range(0, self.dbanks):
                     fd.write("          // Duplicated bank set " + str(d) + "\n")
                     for wi in range(0, op.wn):
-                        p = 0
-                        if not self.need_parallel_rw:
-                            p = (int(wi / self.hbanks) + (wi % self.bank_type.ports)) % self.bank_type.ports
+                        p = self.write_ports[wi]
                         self.__write_ctrl_assignment(fd, bank_addr_range_str, hh_range_str, d, p, wi, True, op.wn)
             # Handle 0w:<N>r with N power of 2
             if op.wn == 0 and op.rp == "modulo":
@@ -480,30 +481,28 @@ class memory():
                 d = 0
                 fd.write("          // Always choose duplicated bank set " + str(d) + "\n")
                 for ri in range(0, op.rn):
-                    p = 1
-                    if not self.need_parallel_rw:
-                        p = (int(ri / self.hbanks) + (ri % self.bank_type.ports)) % self.bank_type.ports
+                    p = self.read_ports[ri]
                     self.__write_ctrl_assignment(fd, bank_addr_range_str, hh_range_str, d, p, ri + self.write_interfaces, False, op.rn)
 
-            # Handle <N>r:<M>w with N and M power of 2. In this case hbanks matches max(op.rn, op.wn) foreach op in the list of operations
+            # Handle <N>w:<M>r with N and M power of 2. In this case hbanks matches max(op.rn, op.wn) foreach op in the list of operations
             if op.wn > 0 and op.rn > 0 and op.wp == "modulo" and op.rp == "modulo":
                 # Write to all duplicated sets
                 for d in range(0, self.dbanks):
                     fd.write("          // Duplicated bank set " + str(d) + "\n")
                     for wi in range(0, op.wn):
-                        p = 0
+                        p = self.write_ports[wi]
                         self.__write_ctrl_assignment(fd, bank_addr_range_str, hh_range_str, d, p, wi, True, op.wn)
                 # All duplicated sets would return the same data. 0 is correct even with no duplication
                 d = 0
                 fd.write("          // Always choose duplicated bank set " + str(d) + "\n")
                 for ri in range(0, op.rn):
-                    p = 1
+                    p = self.read_ports[ri]
                     self.__write_ctrl_assignment(fd, bank_addr_range_str, hh_range_str, d, p, ri + self.write_interfaces, False, op.rn)
             # Handle <N>ru:0w with N > 1
             if op.rn > 1 and op.wn == 0 and op.rp == "unknown":
                 # Duplicated set matches the read interface number
                 for ri in range(0, op.rn):
-                    p = (int(ri / self.dbanks) + (ri % self.bank_type.ports)) % self.bank_type.ports
+                    p = self.read_ports[ri]
                     self.__write_ctrl_assignment(fd, bank_addr_range_str, hh_range_str, ri % self.dbanks, p, ri + self.write_interfaces, False, 0)
             # Handle <N>ru:<M>w with N > 1 and M power of 2
             if op.rn > 1 and op.wn > 0 and op.rp == "unknown" and op.wp == "modulo":
@@ -511,11 +510,11 @@ class memory():
                 for d in range(0, self.dbanks):
                     fd.write("          // Duplicated bank set " + str(d) + "\n")
                     for wi in range(0, op.wn):
-                        p = 0
+                        p = self.write_ports[wi]
                         self.__write_ctrl_assignment(fd, bank_addr_range_str, hh_range_str, d, p, wi, True, op.wn)
                 # Duplicated set matches the read interface number
                 for ri in range(0, op.rn):
-                    p = 1
+                    p = self.read_ports[ri]
                     self.__write_ctrl_assignment(fd, bank_addr_range_str, hh_range_str, ri % self.dbanks, p, ri + self.write_interfaces, False, 0)
             fd.write("\n")
         fd.write("        end\n")
@@ -535,11 +534,7 @@ class memory():
         hh_last_range_str = "[" + hh_last_msb_str + ":" + hh_lsb_str + "]"
 
         for ri in range(self.write_interfaces, self.write_interfaces + self.read_interfaces):
-            p = 1
-            if self.bank_type.ports == 1:
-                p = 0
-            elif not self.need_parallel_rw:
-                p = ri % self.bank_type.ports
+            p = self.read_ports[ri - self.write_interfaces]
             fd.write("    if (hh == " + str(self.hhbanks - 1) + " && (hh + 1) * " + str(self.bank_type.width) + " > " + str(self.width) + ")\n")
             fd.write("      assign " + self.name + "_Q" + str(ri) + hh_last_range_str + " = bank_Q" + "[seld[" + str(ri) +"]]" + "[selh[" + str(ri) +"]]" + "[selv[" + str(ri) +"]]" + "[hh]" + "[" + str(p) + "][" + str((self.width - 1) % self.bank_type.width) + ":0];\n")
             fd.write("    else\n")
@@ -589,11 +584,25 @@ class memory():
         fd.write("endmodule\n")
         fd.close()
 
+    def __set_rwports(self):
+        for wi in range(0, self.write_interfaces):
+            if self.need_parallel_rw:
+                self.write_ports.append(0)
+            else:
+                self.write_ports.append((int(wi / self.hbanks) + (wi % self.bank_type.ports)) % self.bank_type.ports)
+        for ri in range(0, self.read_interfaces):
+            if self.need_parallel_rw:
+                self.read_ports.append(1)
+            else:
+                self.read_ports.append((int(ri / self.hbanks) + (ri % self.bank_type.ports)) % self.bank_type.ports)
+
+
 
     def gen(self, lib):
         # Determine memory requirements (first pass over ops list)
         self.__find_hbanks()
         self.__find_vbanks(lib)
+        self.__set_rwports()
         print("        " + "read_interfaces " + str(self.read_interfaces))
         print("        " + "write_interfaces " + str(self.write_interfaces))
         print("        " + "duplication_factor " + str(self.duplication_factor))
@@ -605,6 +614,8 @@ class memory():
         print("        " + "v-banks " + str(self.vbanks))
         print("        " + "hh-banks " + str(self.hhbanks))
         print("        " + "bank type " + str(self.bank_type.name))
+        print("        " + "Write interfaces are assigned to ports " + str(self.write_ports))
+        print("        " + "Read interfaces are assigned to ports " + str(self.read_ports))
         print("        " + "Total area " + str(self.area))
 
 
