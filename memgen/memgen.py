@@ -87,7 +87,7 @@ class sram():
 
     def print(self):
         token1 = self.name
-        token1 = format(token1, '>20')
+        token1 = format(token1, '>30')
         token2 = str(self.words)
         token2 = format(token2, '>7')
         token3 = str(self.width)
