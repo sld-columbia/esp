@@ -425,7 +425,7 @@ class memory():
         hh_msb_str = str(bank_wire_data_width) + " * (hh + 1) - 1"
         hh_lsb_str = str(bank_wire_data_width) + " * hh"
         hh_range_str = "[" + hh_msb_str + ":" + hh_lsb_str + "]"
-        bank_addr_msb_str = str(bank_wire_addr_width + sel_hbank_reg_width - 1)
+        bank_addr_msb_str = str(min(int(math.ceil(math.log(self.words, 2))) - 1, bank_wire_addr_width + sel_hbank_reg_width - 1))
         bank_addr_lsb_str = str(sel_hbank_reg_width)
         bank_addr_range_str = "[" + bank_addr_msb_str + ":" + bank_addr_lsb_str + "]"
         fd.write("  generate\n")
@@ -530,13 +530,19 @@ class memory():
         # Otherwise, modulo is applied to choose which port should be used.
         fd.write("  generate\n")
         fd.write("  for (hh = 0; hh < " + str(self.hhbanks) + "; hh = hh + 1) begin : gen_q_assign_hhbanks\n")
+        hh_last_msb_str = str(int(min(self.width - 1, self.hhbanks * self.bank_type.width - 1)))
+        hh_last_range_str = "[" + hh_last_msb_str + ":" + hh_lsb_str + "]"
+
         for ri in range(self.write_interfaces, self.write_interfaces + self.read_interfaces):
             p = 1
             if self.bank_type.ports == 1:
                 p = 0
             elif not self.need_parallel_rw:
                 p = ri % self.bank_type.ports
-            fd.write("    assign " + self.name + "_Q" + str(ri) + hh_range_str + " = bank_Q" + "[seld[" + str(ri) +"]]" + "[selh[" + str(ri) +"]]" + "[selv[" + str(ri) +"]]" + "[hh]" + "[" + str(p) + "];\n")
+            fd.write("    if (hh == " + str(self.hhbanks - 1) + " && (hh + 1) * " + str(self.bank_type.width) + " > " + str(self.width) + ")\n")
+            fd.write("      assign " + self.name + "_Q" + str(ri) + hh_last_range_str + " = bank_Q" + "[seld[" + str(ri) +"]]" + "[selh[" + str(ri) +"]]" + "[selv[" + str(ri) +"]]" + "[hh]" + "[" + str(p) + "][" + str((self.width - 1) % self.bank_type.width) + ":0];\n")
+            fd.write("    else\n")
+            fd.write("      assign " + self.name + "_Q" + str(ri) + hh_range_str + " = bank_Q" + "[seld[" + str(ri) +"]]" + "[selh[" + str(ri) +"]]" + "[selv[" + str(ri) +"]]" + "[hh]" + "[" + str(p) + "];\n")
         fd.write("  end\n")
         fd.write("  endgenerate\n")
         fd.write("\n")
