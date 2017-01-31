@@ -607,6 +607,149 @@ class memory():
         print("        " + "Total area " + str(self.area))
 
 
+    def write_tb(self):
+        try:
+            fd = open(self.name + "_tb.v", 'w')
+        except IOError as e:
+            die_werr(e)
+        fd.write("/**\n")
+        fd.write("* Created with the ESP Memory Generator\n")
+        fd.write("*\n")
+        fd.write("* Copyright (c) 2014-2017, Columbia University\n")
+        fd.write("*\n")
+        fd.write("* @author Paolo Mantovani <paolo@cs.columbia.edu>\n")
+        fd.write("*/\n")
+        fd.write("\n")
+        fd.write("`timescale  1 ps / 1 ps\n")
+        fd.write("\n")
+        fd.write("module " + self.name + "_tb(\n")
+        fd.write("\n  );\n")
+        fd.write("  reg CLK;\n")
+        for i in range(0, self.write_interfaces):
+            fd.write("  " + "reg  " + self.name + "_CE" + str(i) + ";\n")
+            fd.write("  " + "reg  " + "[" + str(int(math.ceil(math.log(self.words, 2)))-1) + ":0] " + self.name + "_A" + str(i) + ";\n")
+            fd.write("  " + "reg  " + "[" + str(self.width-1) + ":0] " + self.name + "_D" + str(i) + ";\n")
+            fd.write("  " + "reg  " + self.name + "_WE" + str(i) + ";\n")
+            fd.write("  " + "reg  " + "[" + str(self.width-1) + ":0] " + self.name + "_WEM" + str(i) + ";\n")
+        for i in range(self.write_interfaces, self.write_interfaces + self.read_interfaces):
+            fd.write("  " + "reg  " + self.name + "_CE" + str(i) + ";\n")
+            fd.write("  " + "reg  " + "[" + str(int(math.ceil(math.log(self.words, 2)))-1) + ":0] " + self.name + "_A" + str(i) + ";\n")
+            fd.write("  " + "wire " + "[" + str(self.width-1) + ":0] " + self.name + "_Q" + str(i) + ";\n")
+        fd.write("\n")
+        fd.write("  initial begin\n")
+        fd.write("    CLK = 0;\n")
+        fd.write("    forever begin\n")
+        fd.write("      #5000 CLK = !CLK;\n")
+        fd.write("    end\n")
+        fd.write("  end\n")
+        fd.write("\n")
+        fd.write("  initial begin\n")
+        for iface in range(0, self.write_interfaces):
+            fd.write("  " + self.name + "_CE" + str(iface) + " = 0;\n")
+            fd.write("  " + self.name + "_A" + str(iface) + " = 0;\n")
+            fd.write("  " + self.name + "_D" + str(iface) + " = 0;\n")
+            fd.write("  " + self.name + "_WE" + str(iface) + " = 0;\n")
+            fd.write("  " + self.name + "_WEM" + str(iface) + " = 0;\n")
+        for iface in range(self.write_interfaces, self.write_interfaces + self.read_interfaces):
+            fd.write("  " + self.name + "_CE" + str(iface) + " = 0;\n")
+            fd.write("  " + self.name + "_A" + str(iface) + " = 0;\n")
+        for op in self.ops:
+            fd.write("  #500000 $display(\"Testing parallel access " + str(op) + "\");\n")
+            # Handle <N>r:<M>w with N and M power of 2.
+            if op.wn > 0 and op.rn > 0 and op.wp == "modulo" and op.rp == "modulo":
+                waddr = 0
+                raddr = 0
+                caddr = 0
+                wcycle = 1
+                rcycle = 1
+                ccycle = 1
+                format_str = "0" + str(int(math.ceil(self.width / 4))) + "x"
+                while True:
+                    fd.write("  @ (posedge CLK) $display(\"Current waddr and raddr are " + str(waddr) + ", " + str(raddr) + "\");\n")
+                    if waddr >= self.words:
+                        for wi in range(0, self.write_interfaces):
+                            fd.write("  " + self.name + "_CE" + str(wi) + " = 1'b0;\n")
+                    if raddr >= self.words:
+                        for ri in range(self.write_interfaces, self.write_interfaces + self.read_interfaces):
+                            fd.write("  " + self.name + "_CE" + str(ri) + " = 1'b0;\n")
+                    for wi in range(0, op.wn):
+                        if waddr < self.words:
+                            fd.write("  " + self.name + "_CE" + str(wi) + " = 1'b1;\n")
+                            fd.write("  " + self.name + "_A" + str(wi) + " = " + str(waddr) + ";\n")
+                            addr_width = int(math.ceil(math.log(self.words, 2)))
+                            data = waddr
+                            if ( addr_width > self.width):
+                                data = waddr % (int(math.pow(2, self.width)) - 1)
+                            if waddr % 2 != 0:
+                                data = (data << (self.width - int(math.log(max(data, 1), 2)) - 1)) | data
+                            data_str = str(self.width) + "'h" + format(data, format_str)
+                            fd.write("  " + self.name + "_D" + str(wi) + " = " + data_str + ";\n")
+                            fd.write("  " + self.name + "_WE" + str(wi) + " = 1'b1;\n")
+                            fd.write("  " + self.name + "_WEM" + str(wi) + " = {" + str(self.width) + "{1'b1}};\n")
+                            waddr = waddr + 1
+                        else:
+                            fd.write("  " + self.name + "_CE" + str(wi) + " = 1'b0;\n")
+                    wcycle = wcycle + 1
+                    if waddr < (min(raddr + op.rn - 1, self.words - 1)) or (wcycle - 1) / rcycle <= math.ceil(op.rn / op.wn):
+                        continue
+                    for ri in range(self.write_interfaces, self.write_interfaces + op.rn):
+                        if raddr < self.words:
+                            fd.write("  " + self.name + "_CE" + str(ri) + " = 1'b1;\n")
+                            fd.write("  " + self.name + "_A" + str(ri) + " = " + str(raddr) + ";\n")
+                            raddr = raddr + 1
+                        else:
+                            fd.write("  " + self.name + "_CE" + str(ri) + " = 1'b0;\n")
+                    rcycle = rcycle + 1
+                    if raddr < (min(caddr + op.rn - 1, self.words - 1)) or rcycle - ccycle <= 1:
+                        continue
+                    for ri in range(self.write_interfaces, self.write_interfaces + op.rn):
+                        if caddr < self.words:
+                            data = caddr
+                            if ( addr_width > self.width):
+                                data = caddr % (int(math.pow(2, self.width)) - 1)
+                            if caddr % 2 != 0:
+                                data = (data << (self.width - int(math.log(max(data, 1), 2)) - 1)) | data
+                            data_str = str(self.width) + "'h" + format(data, format_str)
+                            fd.write("  #200 ;\n")
+                            fd.write("  if (" + self.name + "_Q" + str(ri) + " != " + str(data_str) + ") begin\n")
+                            fd.write("    $display(\"Memory failure on interface " + str(ri) + " at address " + str(caddr) + ": reading %h, but expecting %h\", " + self.name + "_Q" + str(ri) + ", " + data_str + ");\n")
+                            fd.write("    $finish;\n")
+                            fd.write("  end\n")
+                            fd.write("  else begin\n")
+                            fd.write("    $display(\"Memory read on interface " + str(ri) + " at address " + str(caddr) + ": reading %h\", " + self.name + "_Q" + str(ri) + ");\n")
+                            fd.write("  end\n")
+                            caddr = caddr + 1
+                    ccycle = ccycle + 1
+                    if caddr >= self.words:
+                        break
+        fd.write("  $display(\"\");\n")
+        fd.write("  $display(\"*** Test completed successfully ***\");\n")
+        fd.write("  $display(\"\");\n")
+        fd.write("  $finish;\n")
+        fd.write("  end\n")
+        fd.write("\n")
+        fd.write("  // Memory instance\n")
+        fd.write("  " + self.name + " dut (\n")
+        fd.write("    .CLK(CLK)")
+        for i in range(0, self.write_interfaces):
+            fd.write(",\n    ." + self.name + "_CE" + str(i) + "(" + self.name + "_CE" + str(i) + ")")
+            fd.write(",\n    ." + self.name + "_A" + str(i) + "(" + self.name + "_A" + str(i) + ")")
+            fd.write(",\n    ." + self.name + "_D" + str(i) + "(" + self.name + "_D" + str(i) + ")")
+            fd.write(",\n    ." + self.name + "_WE" + str(i) + "(" + self.name + "_WE" + str(i) + ")")
+            fd.write(",\n    ." + self.name + "_WEM" + str(i) + "(" + self.name + "_WEM" + str(i) + ")")
+        for i in range(self.write_interfaces, self.write_interfaces + self.read_interfaces):
+            fd.write(",\n    ." + self.name + "_CE" + str(i) + "(" + self.name + "_CE" + str(i) + ")")
+            fd.write(",\n    ." + self.name + "_A" + str(i) + "(" + self.name + "_A" + str(i) + ")")
+            fd.write(",\n    ." + self.name + "_Q" + str(i) + "(" + self.name + "_Q" + str(i) + ")")
+        fd.write("\n  );\n")
+        fd.write("\n")
+        fd.write("endmodule\n")
+        fd.close()
+
+
+
+
+
 ### Input parsing ###
 def parse_sram(s):
     item = s.split()
@@ -721,3 +864,4 @@ for mem in mem_list:
     mem.print()
     mem.gen(sram_list)
     mem.write_verilog()
+    mem.write_tb()
