@@ -588,11 +588,19 @@ class memory():
         for wi in range(0, self.write_interfaces):
             if self.need_parallel_rw:
                 self.write_ports.append(0)
+            elif self.write_interfaces == 1:
+                self.write_ports.append(0)
+            elif self.write_interfaces == 2:
+                self.write_ports.append(wi)
             else:
                 self.write_ports.append((int(wi / self.hbanks) + (wi % self.bank_type.ports)) % self.bank_type.ports)
         for ri in range(0, self.read_interfaces):
             if self.need_parallel_rw:
                 self.read_ports.append(1)
+            elif self.read_interfaces == 1:
+                self.read_ports.append(0)
+            elif self.read_interfaces == 2:
+                self.read_ports.append(ri)
             else:
                 self.read_ports.append((int(ri / self.hbanks) + (ri % self.bank_type.ports)) % self.bank_type.ports)
 
@@ -747,8 +755,8 @@ class memory():
                             if op.wn != 0:
                                 fd.write("  " + self.name + "_CE" + str(wi) + " = 1'b0;\n")
                     wcycle = wcycle + 1
-                    if waddr < (min(raddr + op.rn - 1, self.words - 1)) or (wcycle - 1) / rcycle <= math.ceil(op.rn / op.wn):
-                        if op.wn != 0:
+                    if op.wn != 0:
+                        if waddr < (min(raddr + op.rn - 1, self.words - 1)) or (wcycle - 1) / rcycle <= math.ceil(op.rn / op.wn):
                             continue
                     for ri in range(self.write_interfaces, self.write_interfaces + op.rn):
                         if raddr < self.words:
