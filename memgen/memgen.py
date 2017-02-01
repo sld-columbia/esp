@@ -503,7 +503,8 @@ class memory():
                 # Duplicated set matches the read interface number
                 for ri in range(0, op.rn):
                     p = self.read_ports[ri]
-                    self.__write_ctrl_assignment(fd, bank_addr_range_str, hh_range_str, ri % self.dbanks, p, ri + self.write_interfaces, False, 0)
+                    d = (ri + self.write_interfaces) % self.dbanks
+                    self.__write_ctrl_assignment(fd, bank_addr_range_str, hh_range_str, d, p, ri + self.write_interfaces, False, 0)
             # Handle <N>ru:<M>w with N > 1 and M power of 2
             if op.rn > 1 and op.wn > 0 and op.rp == "unknown" and op.wp == "modulo":
                 # Write to all duplicated sets
@@ -515,7 +516,8 @@ class memory():
                 # Duplicated set matches the read interface number
                 for ri in range(0, op.rn):
                     p = self.read_ports[ri]
-                    self.__write_ctrl_assignment(fd, bank_addr_range_str, hh_range_str, ri % self.dbanks, p, ri + self.write_interfaces, False, 0)
+                    d = (ri + self.write_interfaces) % self.dbanks
+                    self.__write_ctrl_assignment(fd, bank_addr_range_str, hh_range_str, d, p, ri + self.write_interfaces, False, 0)
             fd.write("\n")
         fd.write("        end\n")
         fd.write("\n")
