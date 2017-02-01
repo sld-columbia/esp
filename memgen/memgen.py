@@ -676,31 +676,50 @@ class memory():
         # Go through operations and merge them for testing purposes
         tb_ops = [ ]
         wmax = 0
+        wumax = 0
         rmax = 0
         rumax = 0
         for op in self.ops:
-            if op.wn > wmax:
+            if op.wp == "modulo" and op.wn > wmax:
                 wmax = op.wn
+            if op.wp == "unknown" and op.wn == 2:
+                wumax = 2
             if op.rp == "modulo" and op.rn > rmax:
                 rmax = op.rn
             if op.rp == "unknown" and op.rn > rumax:
                 rumax = op.rn
-        if rmax != 0 and self.need_parallel_rw:
+        # Do 2wu:0r first, if required
+        if wumax != 0:
+            tb_ops.append(memory_operation(0, "modulo", wumax, "unknown"))
+            # Check what's written with any read-only op (even if not in the original list of ops)
+            if rumax != 0:
+                tb_ops.append(memory_operation(rumax, "unknown", 0, "modulo"))
+            else:
+                tb_ops.append(memory_operation(rmax, "modulo", 0, "modulo"))
+        # Merge other modulo operations
+        if rmax != 0 and wmax != 0 and self.need_parallel_rw:
             tb_ops.append(memory_operation(rmax, "modulo", wmax, "modulo"))
-        elif rmax != 0:
-            tb_ops.append(memory_operation(0, "modulo", wmax, "modulo"))
-            tb_ops.append(memory_operation(rmax, "modulo", 0, "modulo"))
-        elif self.need_parallel_rw:
-            tb_ops.append(memory_operation(rumax, "unknown", wmax, "modulo"))
         else:
-            tb_ops.append(memory_operation(0, "modulo", wmax, "modulo"))
+            if wmax != 0:
+                tb_ops.append(memory_operation(0, "modulo", wmax, "modulo"))
+            if rmax != 0:
+                tb_ops.append(memory_operation(rmax, "modulo", 0, "modulo"))
+        # Check parallel read/write with unknown pattern for read if required
+        if rumax != 0 and wmax != 0 and self.need_parallel_rw:
+            tb_ops.append(memory_operation(rumax, "unknown", wmax, "modulo"))
+        elif rumax != 0:
             tb_ops.append(memory_operation(rumax, "unknown", 0, "modulo"))
-
+        tb_operations = " ".join(map(str, self.ops))
+        print("  INFO: Generating testbench for merged operations " + tb_operations)
+        # Write testbench
         for op in tb_ops:
-            fd.write("  #500000 $display(\"Testing parallel access " + str(op) + "\");\n")
+            fd.write("  $display(\"\");\n")
+            fd.write("  #500000 $display(\"* Testing parallel access " + str(op) + " *\");\n")
             # Reset memory content
             if op.wn != 0:
-                fd.write("  $display(\"Set all memory cells to 0 for writing test\");\n")
+                fd.write("  $display(\"\");\n")
+                fd.write("  $display(\"--- Set all memory cells to 0 for writing test ---\");\n")
+                fd.write("  $display(\"\");\n")
                 for addr in range(0, self.words):
                     wi = addr % op.wn
                     fd.write("  @ (posedge CLK) $display(\"Reset addr " + str(addr) + "\");\n")
@@ -713,87 +732,107 @@ class memory():
                     fd.write("  " + self.name + "_WEM" + str(wi) + " = {" + str(self.width) + "{1'b1}};\n")
                     # Disable write interfaces before testing
                     fd.write("  @ (posedge CLK) " + self.name + "_CE" + str(wi) + " = 1'b0;\n")
-            # Handle modulo operations only
-            if op.wp == "modulo" and op.rp == "modulo":
-                fd.write("  $display(\"Begin test for " + str(op) + "\");\n")
-                waddr = 0
-                raddr = 0
-                caddr = 0
-                wcycle = 1
-                rcycle = 1
-                ccycle = 1
-                format_str = "0" + str(int(math.ceil(self.width / 4))) + "x"
-                while True:
-                    fd.write("  @ (posedge CLK) $display(\"Current waddr and raddr are " + str(waddr) + ", " + str(raddr) + "\");\n")
-                    if waddr >= self.words:
-                        if op.wn != 0:
-                            for wi in range(0, self.write_interfaces):
-                                fd.write("  " + self.name + "_CE" + str(wi) + " = 1'b0;\n")
-                        if op.rn == 0:
-                            break
-                    if raddr >= self.words:
-                        if op.rn != 0:
-                            for ri in range(self.write_interfaces, self.write_interfaces + self.read_interfaces):
-                                fd.write("  " + self.name + "_CE" + str(ri) + " = 1'b0;\n")
-                    for wi in range(0, op.wn):
-                        if waddr < self.words:
-                            if op.wn != 0:
-                                fd.write("  " + self.name + "_CE" + str(wi) + " = 1'b1;\n")
-                                fd.write("  " + self.name + "_A" + str(wi) + " = " + str(waddr) + ";\n")
-                                addr_width = int(math.ceil(math.log(self.words, 2)))
-                                data = waddr
-                                if ( addr_width > self.width):
-                                    data = waddr % (int(math.pow(2, self.width)) - 1)
-                                if waddr % 2 != 0:
-                                    data = (data << (self.width - int(math.log(max(data, 1), 2)) - 1)) | data
-                                data_str = str(self.width) + "'h" + format(data, format_str)
-                                fd.write("  " + self.name + "_D" + str(wi) + " = " + data_str + ";\n")
-                                fd.write("  " + self.name + "_WE" + str(wi) + " = 1'b1;\n")
-                                fd.write("  " + self.name + "_WEM" + str(wi) + " = {" + str(self.width) + "{1'b1}};\n")
-                            waddr = waddr + 1
-                        else:
-                            if op.wn != 0:
-                                fd.write("  " + self.name + "_CE" + str(wi) + " = 1'b0;\n")
-                    wcycle = wcycle + 1
+            # By default we assume modulo access pattern
+            wi_start = 0
+            wi_end = op.wn
+            wi_step = 1
+            ri_start = self.write_interfaces
+            ri_end = self.write_interfaces + op.rn
+            ri_step = 1
+            # Reversing the interface order makes them access different banks than the ones assigned for pattern modulo
+            if op.wp == "unknown":
+                wi_start = op.wn - 1
+                wi_end = -1
+                wi_step = -1
+            if op.rp == "unknown":
+                ri_start = self.write_interfaces + op.rn - 1
+                ri_end =  self.write_interfaces - 1
+                ri_step = -1
+            fd.write("  $display(\"\");\n")
+            fd.write("  $display(\"--- Begin test for " + str(op) + " ---\");\n")
+            fd.write("  $display(\"\");\n")
+            waddr = 0
+            raddr = 0
+            caddr = 0
+            wcycle = 1
+            rcycle = 1
+            ccycle = 1
+            format_str = "0" + str(int(math.ceil(self.width / 4))) + "x"
+            while True:
+                fd.write("  @ (posedge CLK) $display(\"Current waddr and raddr are " + str(waddr) + ", " + str(raddr) + "\");\n")
+                if waddr >= self.words:
                     if op.wn != 0:
-                        if waddr < (min(raddr + op.rn - 1, self.words - 1)) or (wcycle - 1) / rcycle <= math.ceil(op.rn / op.wn):
-                            continue
-                    for ri in range(self.write_interfaces, self.write_interfaces + op.rn):
-                        if raddr < self.words:
-                            if op.rn != 0:
-                                fd.write("  " + self.name + "_CE" + str(ri) + " = 1'b1;\n")
-                                fd.write("  " + self.name + "_A" + str(ri) + " = " + str(raddr) + ";\n")
-                            raddr = raddr + 1
-                        else:
-                            if op.rn != 0:
-                                fd.write("  " + self.name + "_CE" + str(ri) + " = 1'b0;\n")
-                    rcycle = rcycle + 1
-                    if raddr < (min(caddr + op.rn - 1, self.words - 1)) or rcycle - ccycle <= 1:
-                        continue
-                    for ri in range(self.write_interfaces, self.write_interfaces + op.rn):
-                        if caddr < self.words:
-                            if op.rn != 0:
-                                data = caddr
-                                if ( addr_width > self.width):
-                                    data = caddr % (int(math.pow(2, self.width)) - 1)
-                                if caddr % 2 != 0:
-                                    data = (data << (self.width - int(math.log(max(data, 1), 2)) - 1)) | data
-                                data_str = str(self.width) + "'h" + format(data, format_str)
-                                fd.write("  #200 ;\n")
-                                fd.write("  if (" + self.name + "_Q" + str(ri) + " != " + str(data_str) + ") begin\n")
-                                fd.write("    $display(\"Memory failure on interface " + str(ri) + " at address " + str(caddr) + ": reading %h, but expecting %h\", " + self.name + "_Q" + str(ri) + ", " + data_str + ");\n")
-                                fd.write("    $finish;\n")
-                                fd.write("  end\n")
-                                fd.write("  else begin\n")
-                                fd.write("    $display(\"Memory read on interface " + str(ri) + " at address " + str(caddr) + ": reading %h\", " + self.name + "_Q" + str(ri) + ");\n")
-                                fd.write("  end\n")
-                            caddr = caddr + 1
-                    ccycle = ccycle + 1
-                    if caddr >= self.words:
+                        for wi in range(0, self.write_interfaces):
+                            fd.write("  " + self.name + "_CE" + str(wi) + " = 1'b0;\n")
+                    if op.rn == 0:
                         fd.write("  $display(\"\");\n")
                         fd.write("  $display(\"--- End of Test " + str(op) + " PASSED ---\");\n")
                         fd.write("  $display(\"\");\n")
                         break
+                if raddr >= self.words:
+                    if op.rn != 0:
+                        for ri in range(self.write_interfaces, self.write_interfaces + self.read_interfaces):
+                            fd.write("  " + self.name + "_CE" + str(ri) + " = 1'b0;\n")
+                for wi in range(wi_start, wi_end, wi_step):
+                    if waddr < self.words:
+                        if op.wn != 0:
+                            fd.write("  " + self.name + "_CE" + str(wi) + " = 1'b1;\n")
+                            fd.write("  " + self.name + "_A" + str(wi) + " = " + str(waddr) + ";\n")
+                            addr_width = int(math.ceil(math.log(self.words, 2)))
+                            data = waddr
+                            if ( addr_width > self.width):
+                                data = waddr % (int(math.pow(2, self.width)) - 1)
+                            if waddr % 2 != 0:
+                                data = (data << (self.width - int(math.log(max(data, 1), 2)) - 1)) | data
+                            data_str = str(self.width) + "'h" + format(data, format_str)
+                            fd.write("  " + self.name + "_D" + str(wi) + " = " + data_str + ";\n")
+                            fd.write("  " + self.name + "_WE" + str(wi) + " = 1'b1;\n")
+                            fd.write("  " + self.name + "_WEM" + str(wi) + " = {" + str(self.width) + "{1'b1}};\n")
+                        waddr = waddr + 1
+                    else:
+                        if op.wn != 0:
+                            fd.write("  " + self.name + "_CE" + str(wi) + " = 1'b0;\n")
+                wcycle = wcycle + 1
+                if op.wn != 0:
+                    if waddr < (min(raddr + op.rn - 1, self.words - 1)) or (wcycle - 1) / rcycle <= math.ceil(op.rn / op.wn):
+                        continue
+                for ri in range(ri_start, ri_end, ri_step):
+                    if raddr < self.words:
+                        if op.rn != 0:
+                            fd.write("  " + self.name + "_CE" + str(ri) + " = 1'b1;\n")
+                            fd.write("  " + self.name + "_A" + str(ri) + " = " + str(raddr) + ";\n")
+                        raddr = raddr + 1
+                    else:
+                        if op.rn != 0:
+                            fd.write("  " + self.name + "_CE" + str(ri) + " = 1'b0;\n")
+                rcycle = rcycle + 1
+                if raddr < (min(caddr + op.rn - 1, self.words - 1)) or rcycle - ccycle <= 1:
+                    continue
+                for ri in range(ri_start, ri_end, ri_step):
+                    if caddr < self.words:
+                        if op.rn != 0:
+                            data = caddr
+                            if ( addr_width > self.width):
+                                data = caddr % (int(math.pow(2, self.width)) - 1)
+                            if caddr % 2 != 0:
+                                data = (data << (self.width - int(math.log(max(data, 1), 2)) - 1)) | data
+                            data_str = str(self.width) + "'h" + format(data, format_str)
+                            fd.write("  #200 ;\n")
+                            fd.write("  if (" + self.name + "_Q" + str(ri) + " != " + str(data_str) + ") begin\n")
+                            fd.write("    $display(\"Memory failure on interface " + str(ri) + " at address " + str(caddr) + ": reading %h, but expecting %h\", " + self.name + "_Q" + str(ri) + ", " + data_str + ");\n")
+                            fd.write("    $finish;\n")
+                            fd.write("  end\n")
+                            fd.write("  else begin\n")
+                            fd.write("    $display(\"Memory read on interface " + str(ri) + " at address " + str(caddr) + ": reading %h\", " + self.name + "_Q" + str(ri) + ");\n")
+                            fd.write("  end\n")
+                        caddr = caddr + 1
+                ccycle = ccycle + 1
+                if caddr >= self.words:
+                    fd.write("  $display(\"\");\n")
+                    fd.write("  $display(\"--- End of Test " + str(op) + " PASSED ---\");\n")
+                    fd.write("  $display(\"\");\n")
+                    break
+
         fd.write("  $display(\"\");\n")
         fd.write("  $display(\"*** Test completed successfully ***\");\n")
         fd.write("  $display(\"\");\n")
