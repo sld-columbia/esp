@@ -709,8 +709,8 @@ class memory():
             tb_ops.append(memory_operation(rumax, "unknown", wmax, "modulo"))
         elif rumax != 0:
             tb_ops.append(memory_operation(rumax, "unknown", 0, "modulo"))
-        tb_operations = " ".join(map(str, self.ops))
-        print("  INFO: Generating testbench for merged operations " + tb_operations)
+        tb_operations = " ".join(map(str, tb_ops))
+        print("  INFO: Generating testbench for " + self.name + " with merged operations " + tb_operations)
         # Write testbench
         for op in tb_ops:
             fd.write("  $display(\"\");\n")
