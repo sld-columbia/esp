@@ -188,22 +188,22 @@ class memory():
             # Duplication
             op_duplication_factor = 1
             if (op.rp == "unknown" and op.rn > 1):
-                if (op.wn == 0):
-                    op_duplication_factor = int(math.ceil(op.rn / 2))
-                else:
+                if (op.wn != 0 or self.need_parallel_rw):
                     op_duplication_factor = op.rn
-            if (op.wp == "unknown" and op.wn > 1):
-                if (op.rn == 0):
-                    op_duplication_factor = int(math.ceil(op.wn / 2))
                 else:
+                    op_duplication_factor = int(math.ceil(op.rn / 2))
+            if (op.wp == "unknown" and op.wn > 1):
+                if (op.rn != 0 or self.need_parallel_rw):
                     op_duplication_factor = max(op_duplication_factor, op.wn)
+                else:
+                    op_duplication_factor = int(math.ceil(op.wn / 2))
             self.duplication_factor = max(self.duplication_factor, op_duplication_factor)
 
         for op in self.ops:
             # Distribution
             op_distribution_factor = 1
             if (op.rp == "modulo" and op.rn > 1):
-                if (op.wn != 0 or self.need_parallel_rw ):
+                if (op.wn != 0 or self.need_parallel_rw):
                     op_distribution_factor = op.rn
                 else:
                     op_distribution_factor = op.rn >> 1
