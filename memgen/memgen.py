@@ -270,11 +270,11 @@ class memory():
             we_str_i = [ ]
             wem_str_i = [ ]
             for p in range(0, self.bank_type.ports):
-                ce_str_i.append ("              bank_CE["  + str(d) + "][h][v][hh]["  + str(p) + "]  = "  + self.name + "_CE")
-                a_str_i.append  ("              bank_A["   + str(d) + "][h][v][hh]["  + str(p) + "]   = " + self.name + "_A")
-                d_str_i.append  ("              bank_D["   + str(d) + "][h][v][hh]["  + str(p) + "]   = " + self.name + "_D")
-                we_str_i.append ("              bank_WE["  + str(d) + "][h][v][hh]["  + str(p) + "]  = "  + self.name + "_WE")
-                wem_str_i.append("              bank_WEM[" + str(d) + "][h][v][hh]["  + str(p) + "] = "   + self.name + "_WEM")
+                ce_str_i.append ("              bank_CE["  + str(d) + "][h][v][hh]["  + str(p) + "]  = CE")
+                a_str_i.append  ("              bank_A["   + str(d) + "][h][v][hh]["  + str(p) + "]   = A")
+                d_str_i.append  ("              bank_D["   + str(d) + "][h][v][hh]["  + str(p) + "]   = D")
+                we_str_i.append ("              bank_WE["  + str(d) + "][h][v][hh]["  + str(p) + "]  = WE")
+                wem_str_i.append("              bank_WEM[" + str(d) + "][h][v][hh]["  + str(p) + "] = WEM")
             ce_str.append(ce_str_i)
             a_str.append(a_str_i)
             d_str.append(d_str_i)
@@ -290,7 +290,7 @@ class memory():
             normalized_iface = normalized_iface % self.hbanks
             normalized_parallelism = min(parallelism, self.hbanks)
             fd.write("          if (h % " + str(normalized_parallelism) + " == " + str(normalized_iface) + ") begin\n")
-        fd.write("            if (ctrlh[" + str(iface) + "] == h && ctrlv[" + str(iface) + "] == v && " + self.name + "_CE" + str(iface) + " == 1'b1) begin\n")
+        fd.write("            if (ctrlh[" + str(iface) + "] == h && ctrlv[" + str(iface) + "] == v && CE" + str(iface) + " == 1'b1) begin\n")
         # Check that no port is accessed by more than one interface
         if (ASSERT_ON):
             fd.write("// synthesis translate_off\n")
@@ -325,27 +325,27 @@ class memory():
         fd.write("    CLK")
         # Module interface
         for i in range(0, self.write_interfaces):
-            fd.write(",\n    " + self.name + "_CE" + str(i))
-            fd.write(",\n    " + self.name + "_A" + str(i))
-            fd.write(",\n    " + self.name + "_D" + str(i))
-            fd.write(",\n    " + self.name + "_WE" + str(i))
-            fd.write(",\n    " + self.name + "_WEM" + str(i))
+            fd.write(",\n    CE" + str(i))
+            fd.write(",\n    A" + str(i))
+            fd.write(",\n    D" + str(i))
+            fd.write(",\n    WE" + str(i))
+            fd.write(",\n    WEM" + str(i))
         for i in range(self.write_interfaces, self.write_interfaces + self.read_interfaces):
-            fd.write(",\n    " + self.name + "_CE" + str(i))
-            fd.write(",\n    " + self.name + "_A" + str(i))
-            fd.write(",\n    " + self.name + "_Q" + str(i))
+            fd.write(",\n    CE" + str(i))
+            fd.write(",\n    A" + str(i))
+            fd.write(",\n    Q" + str(i))
         fd.write("\n  );\n")
         fd.write("  input CLK;\n")
         for i in range(0, self.write_interfaces):
-            fd.write("  " + "input " + self.name + "_CE" + str(i) + ";\n")
-            fd.write("  " + "input " + "[" + str(int(math.ceil(math.log(self.words, 2)))-1) + ":0] " + self.name + "_A" + str(i) + ";\n")
-            fd.write("  " + "input " + "[" + str(self.width-1) + ":0] " + self.name + "_D" + str(i) + ";\n")
-            fd.write("  " + "input " + self.name + "_WE" + str(i) + ";\n")
-            fd.write("  " + "input " + "[" + str(self.width-1) + ":0] " + self.name + "_WEM" + str(i) + ";\n")
+            fd.write("  " + "input CE" + str(i) + ";\n")
+            fd.write("  " + "input " + "[" + str(int(math.ceil(math.log(self.words, 2)))-1) + ":0] A" + str(i) + ";\n")
+            fd.write("  " + "input " + "[" + str(self.width-1) + ":0] D" + str(i) + ";\n")
+            fd.write("  " + "input WE" + str(i) + ";\n")
+            fd.write("  " + "input " + "[" + str(self.width-1) + ":0] WEM" + str(i) + ";\n")
         for i in range(self.write_interfaces, self.write_interfaces + self.read_interfaces):
-            fd.write("  " + "input " + self.name + "_CE" + str(i) + ";\n")
-            fd.write("  " + "input " + "[" + str(int(math.ceil(math.log(self.words, 2)))-1) + ":0] " + self.name + "_A" + str(i) + ";\n")
-            fd.write("  " + "output " + "[" + str(self.width-1) + ":0] " + self.name + "_Q" + str(i) + ";\n")
+            fd.write("  " + "input CE" + str(i) + ";\n")
+            fd.write("  " + "input " + "[" + str(int(math.ceil(math.log(self.words, 2)))-1) + ":0] A" + str(i) + ";\n")
+            fd.write("  " + "output " + "[" + str(self.width-1) + ":0] Q" + str(i) + ";\n")
         fd.write("  genvar d, h, v, hh;\n")
         fd.write("\n")
 
@@ -406,12 +406,12 @@ class memory():
                 fd.write("  assign ctrld[" + str(ri) + "] = 0;\n")
         for ri in range(0, self.write_interfaces + self.read_interfaces):
             if self.hbanks > 1:
-                fd.write("  assign ctrlh[" + str(ri) + "] = " + self.name + "_A" + str(ri) + "[" + str(sel_hbank_reg_width - 1) + ":" + "0" + "];\n")
+                fd.write("  assign ctrlh[" + str(ri) + "] = A" + str(ri) + "[" + str(sel_hbank_reg_width - 1) + ":" + "0" + "];\n")
             else:
                 fd.write("  assign ctrlh[" + str(ri) + "] = 0;\n")
         for ri in range(0, self.write_interfaces + self.read_interfaces):
             if self.vbanks > 1:
-                fd.write("  assign ctrlv[" + str(ri) + "] = " + self.name + "_A" + str(ri) + "[" + str(bank_wire_addr_width + sel_hbank_reg_width + sel_vbank_reg_width - 1) + ":" +str(bank_wire_addr_width + sel_hbank_reg_width) + "];\n")
+                fd.write("  assign ctrlv[" + str(ri) + "] = A" + str(ri) + "[" + str(bank_wire_addr_width + sel_hbank_reg_width + sel_vbank_reg_width - 1) + ":" +str(bank_wire_addr_width + sel_hbank_reg_width) + "];\n")
             else:
                 fd.write("  assign ctrlv[" + str(ri) + "] = 0;\n")
         fd.write("\n")
@@ -536,9 +536,9 @@ class memory():
         for ri in range(self.write_interfaces, self.write_interfaces + self.read_interfaces):
             p = self.read_ports[ri - self.write_interfaces]
             fd.write("    if (hh == " + str(self.hhbanks - 1) + " && (hh + 1) * " + str(self.bank_type.width) + " > " + str(self.width) + ")\n")
-            fd.write("      assign " + self.name + "_Q" + str(ri) + hh_last_range_str + " = bank_Q" + "[seld[" + str(ri) +"]]" + "[selh[" + str(ri) +"]]" + "[selv[" + str(ri) +"]]" + "[hh]" + "[" + str(p) + "][" + str((self.width - 1) % self.bank_type.width) + ":0];\n")
+            fd.write("      assign Q" + str(ri) + hh_last_range_str + " = bank_Q" + "[seld[" + str(ri) +"]]" + "[selh[" + str(ri) +"]]" + "[selv[" + str(ri) +"]]" + "[hh]" + "[" + str(p) + "][" + str((self.width - 1) % self.bank_type.width) + ":0];\n")
             fd.write("    else\n")
-            fd.write("      assign " + self.name + "_Q" + str(ri) + hh_range_str + " = bank_Q" + "[seld[" + str(ri) +"]]" + "[selh[" + str(ri) +"]]" + "[selv[" + str(ri) +"]]" + "[hh]" + "[" + str(p) + "];\n")
+            fd.write("      assign Q" + str(ri) + hh_range_str + " = bank_Q" + "[seld[" + str(ri) +"]]" + "[selh[" + str(ri) +"]]" + "[selv[" + str(ri) +"]]" + "[hh]" + "[" + str(p) + "];\n")
         fd.write("  end\n")
         fd.write("  endgenerate\n")
         fd.write("\n")
@@ -646,15 +646,15 @@ class memory():
         fd.write("\n  );\n")
         fd.write("  reg CLK;\n")
         for i in range(0, self.write_interfaces):
-            fd.write("  " + "reg  " + self.name + "_CE" + str(i) + ";\n")
-            fd.write("  " + "reg  " + "[" + str(int(math.ceil(math.log(self.words, 2)))-1) + ":0] " + self.name + "_A" + str(i) + ";\n")
-            fd.write("  " + "reg  " + "[" + str(self.width-1) + ":0] " + self.name + "_D" + str(i) + ";\n")
-            fd.write("  " + "reg  " + self.name + "_WE" + str(i) + ";\n")
-            fd.write("  " + "reg  " + "[" + str(self.width-1) + ":0] " + self.name + "_WEM" + str(i) + ";\n")
+            fd.write("  " + "reg  CE" + str(i) + ";\n")
+            fd.write("  " + "reg  " + "[" + str(int(math.ceil(math.log(self.words, 2)))-1) + ":0] A" + str(i) + ";\n")
+            fd.write("  " + "reg  " + "[" + str(self.width-1) + ":0] D" + str(i) + ";\n")
+            fd.write("  " + "reg  WE" + str(i) + ";\n")
+            fd.write("  " + "reg  " + "[" + str(self.width-1) + ":0] WEM" + str(i) + ";\n")
         for i in range(self.write_interfaces, self.write_interfaces + self.read_interfaces):
-            fd.write("  " + "reg  " + self.name + "_CE" + str(i) + ";\n")
-            fd.write("  " + "reg  " + "[" + str(int(math.ceil(math.log(self.words, 2)))-1) + ":0] " + self.name + "_A" + str(i) + ";\n")
-            fd.write("  " + "wire " + "[" + str(self.width-1) + ":0] " + self.name + "_Q" + str(i) + ";\n")
+            fd.write("  " + "reg  CE" + str(i) + ";\n")
+            fd.write("  " + "reg  " + "[" + str(int(math.ceil(math.log(self.words, 2)))-1) + ":0] A" + str(i) + ";\n")
+            fd.write("  " + "wire " + "[" + str(self.width-1) + ":0] Q" + str(i) + ";\n")
         fd.write("\n")
         fd.write("  initial begin\n")
         fd.write("    CLK = 0;\n")
@@ -665,14 +665,14 @@ class memory():
         fd.write("\n")
         fd.write("  initial begin\n")
         for iface in range(0, self.write_interfaces):
-            fd.write("  " + self.name + "_CE" + str(iface) + " = 0;\n")
-            fd.write("  " + self.name + "_A" + str(iface) + " = 0;\n")
-            fd.write("  " + self.name + "_D" + str(iface) + " = 0;\n")
-            fd.write("  " + self.name + "_WE" + str(iface) + " = 0;\n")
-            fd.write("  " + self.name + "_WEM" + str(iface) + " = 0;\n")
+            fd.write("  CE" + str(iface) + " = 0;\n")
+            fd.write("  A" + str(iface) + " = 0;\n")
+            fd.write("  D" + str(iface) + " = 0;\n")
+            fd.write("  WE" + str(iface) + " = 0;\n")
+            fd.write("  WEM" + str(iface) + " = 0;\n")
         for iface in range(self.write_interfaces, self.write_interfaces + self.read_interfaces):
-            fd.write("  " + self.name + "_CE" + str(iface) + " = 0;\n")
-            fd.write("  " + self.name + "_A" + str(iface) + " = 0;\n")
+            fd.write("  CE" + str(iface) + " = 0;\n")
+            fd.write("  A" + str(iface) + " = 0;\n")
         # Go through operations and merge them for testing purposes
         tb_ops = [ ]
         wmax = 0
@@ -723,15 +723,15 @@ class memory():
                 for addr in range(0, self.words):
                     wi = addr % op.wn
                     fd.write("  @ (posedge CLK) $display(\"Reset addr " + str(addr) + "\");\n")
-                    fd.write("  " + self.name + "_CE" + str(wi) + " = 1'b1;\n")
-                    fd.write("  " + self.name + "_A" + str(wi) + " = " + str(addr) + ";\n")
+                    fd.write("  CE" + str(wi) + " = 1'b1;\n")
+                    fd.write("  A" + str(wi) + " = " + str(addr) + ";\n")
                     data = 0
                     data_str = str(data)
-                    fd.write("  " + self.name + "_D" + str(wi) + " = " + data_str + ";\n")
-                    fd.write("  " + self.name + "_WE" + str(wi) + " = 1'b1;\n")
-                    fd.write("  " + self.name + "_WEM" + str(wi) + " = {" + str(self.width) + "{1'b1}};\n")
+                    fd.write("  D" + str(wi) + " = " + data_str + ";\n")
+                    fd.write("  WE" + str(wi) + " = 1'b1;\n")
+                    fd.write("  WEM" + str(wi) + " = {" + str(self.width) + "{1'b1}};\n")
                     # Disable write interfaces before testing
-                    fd.write("  @ (posedge CLK) " + self.name + "_CE" + str(wi) + " = 1'b0;\n")
+                    fd.write("  @ (posedge CLK) CE" + str(wi) + " = 1'b0;\n")
             # By default we assume modulo access pattern
             wi_start = 0
             wi_end = op.wn
@@ -763,7 +763,7 @@ class memory():
                 if waddr >= self.words:
                     if op.wn != 0:
                         for wi in range(0, self.write_interfaces):
-                            fd.write("  " + self.name + "_CE" + str(wi) + " = 1'b0;\n")
+                            fd.write("  CE" + str(wi) + " = 1'b0;\n")
                     if op.rn == 0:
                         fd.write("  $display(\"\");\n")
                         fd.write("  $display(\"--- End of Test " + str(op) + " PASSED ---\");\n")
@@ -772,12 +772,12 @@ class memory():
                 if raddr >= self.words:
                     if op.rn != 0:
                         for ri in range(self.write_interfaces, self.write_interfaces + self.read_interfaces):
-                            fd.write("  " + self.name + "_CE" + str(ri) + " = 1'b0;\n")
+                            fd.write("  CE" + str(ri) + " = 1'b0;\n")
                 for wi in range(wi_start, wi_end, wi_step):
                     if waddr < self.words:
                         if op.wn != 0:
-                            fd.write("  " + self.name + "_CE" + str(wi) + " = 1'b1;\n")
-                            fd.write("  " + self.name + "_A" + str(wi) + " = " + str(waddr) + ";\n")
+                            fd.write("  CE" + str(wi) + " = 1'b1;\n")
+                            fd.write("  A" + str(wi) + " = " + str(waddr) + ";\n")
                             addr_width = int(math.ceil(math.log(self.words, 2)))
                             data = waddr
                             if ( addr_width > self.width):
@@ -785,13 +785,13 @@ class memory():
                             if waddr % 2 != 0:
                                 data = (data << (self.width - int(math.log(max(data, 1), 2)) - 1)) | data
                             data_str = str(self.width) + "'h" + format(data, format_str)
-                            fd.write("  " + self.name + "_D" + str(wi) + " = " + data_str + ";\n")
-                            fd.write("  " + self.name + "_WE" + str(wi) + " = 1'b1;\n")
-                            fd.write("  " + self.name + "_WEM" + str(wi) + " = {" + str(self.width) + "{1'b1}};\n")
+                            fd.write("  D" + str(wi) + " = " + data_str + ";\n")
+                            fd.write("  WE" + str(wi) + " = 1'b1;\n")
+                            fd.write("  WEM" + str(wi) + " = {" + str(self.width) + "{1'b1}};\n")
                         waddr = waddr + 1
                     else:
                         if op.wn != 0:
-                            fd.write("  " + self.name + "_CE" + str(wi) + " = 1'b0;\n")
+                            fd.write("  CE" + str(wi) + " = 1'b0;\n")
                 wcycle = wcycle + 1
                 if op.wn != 0:
                     if waddr < (min(raddr + op.rn - 1, self.words - 1)) or (wcycle - 1) / rcycle <= math.ceil(op.rn / op.wn):
@@ -799,12 +799,12 @@ class memory():
                 for ri in range(ri_start, ri_end, ri_step):
                     if raddr < self.words:
                         if op.rn != 0:
-                            fd.write("  " + self.name + "_CE" + str(ri) + " = 1'b1;\n")
-                            fd.write("  " + self.name + "_A" + str(ri) + " = " + str(raddr) + ";\n")
+                            fd.write("  CE" + str(ri) + " = 1'b1;\n")
+                            fd.write("  A" + str(ri) + " = " + str(raddr) + ";\n")
                         raddr = raddr + 1
                     else:
                         if op.rn != 0:
-                            fd.write("  " + self.name + "_CE" + str(ri) + " = 1'b0;\n")
+                            fd.write("  CE" + str(ri) + " = 1'b0;\n")
                 rcycle = rcycle + 1
                 if raddr < (min(caddr + op.rn - 1, self.words - 1)) or rcycle - ccycle <= 1:
                     continue
@@ -818,12 +818,12 @@ class memory():
                                 data = (data << (self.width - int(math.log(max(data, 1), 2)) - 1)) | data
                             data_str = str(self.width) + "'h" + format(data, format_str)
                             fd.write("  #200 ;\n")
-                            fd.write("  if (" + self.name + "_Q" + str(ri) + " != " + str(data_str) + ") begin\n")
-                            fd.write("    $display(\"Memory failure on interface " + str(ri) + " at address " + str(caddr) + ": reading %h, but expecting %h\", " + self.name + "_Q" + str(ri) + ", " + data_str + ");\n")
+                            fd.write("  if (Q" + str(ri) + " != " + str(data_str) + ") begin\n")
+                            fd.write("    $display(\"Memory failure on interface " + str(ri) + " at address " + str(caddr) + ": reading %h, but expecting %h\", Q" + str(ri) + ", " + data_str + ");\n")
                             fd.write("    $finish;\n")
                             fd.write("  end\n")
                             fd.write("  else begin\n")
-                            fd.write("    $display(\"Memory read on interface " + str(ri) + " at address " + str(caddr) + ": reading %h\", " + self.name + "_Q" + str(ri) + ");\n")
+                            fd.write("    $display(\"Memory read on interface " + str(ri) + " at address " + str(caddr) + ": reading %h\", Q" + str(ri) + ");\n")
                             fd.write("  end\n")
                         caddr = caddr + 1
                 ccycle = ccycle + 1
@@ -843,15 +843,15 @@ class memory():
         fd.write("  " + self.name + " dut (\n")
         fd.write("    .CLK(CLK)")
         for i in range(0, self.write_interfaces):
-            fd.write(",\n    ." + self.name + "_CE" + str(i) + "(" + self.name + "_CE" + str(i) + ")")
-            fd.write(",\n    ." + self.name + "_A" + str(i) + "(" + self.name + "_A" + str(i) + ")")
-            fd.write(",\n    ." + self.name + "_D" + str(i) + "(" + self.name + "_D" + str(i) + ")")
-            fd.write(",\n    ." + self.name + "_WE" + str(i) + "(" + self.name + "_WE" + str(i) + ")")
-            fd.write(",\n    ." + self.name + "_WEM" + str(i) + "(" + self.name + "_WEM" + str(i) + ")")
+            fd.write(",\n    .CE" + str(i) + "(CE" + str(i) + ")")
+            fd.write(",\n    .A" + str(i) + "(A" + str(i) + ")")
+            fd.write(",\n    .D" + str(i) + "(D" + str(i) + ")")
+            fd.write(",\n    .WE" + str(i) + "(WE" + str(i) + ")")
+            fd.write(",\n    .WEM" + str(i) + "(WEM" + str(i) + ")")
         for i in range(self.write_interfaces, self.write_interfaces + self.read_interfaces):
-            fd.write(",\n    ." + self.name + "_CE" + str(i) + "(" + self.name + "_CE" + str(i) + ")")
-            fd.write(",\n    ." + self.name + "_A" + str(i) + "(" + self.name + "_A" + str(i) + ")")
-            fd.write(",\n    ." + self.name + "_Q" + str(i) + "(" + self.name + "_Q" + str(i) + ")")
+            fd.write(",\n    .CE" + str(i) + "(CE" + str(i) + ")")
+            fd.write(",\n    .A" + str(i) + "(A" + str(i) + ")")
+            fd.write(",\n    .Q" + str(i) + "(Q" + str(i) + ")")
         fd.write("\n  );\n")
         fd.write("\n")
         fd.write("endmodule\n")
