@@ -1,19 +1,29 @@
 #!/usr/bin/python3
 
 import sys
+import os
 import re
 import math
 
 ### Helpers ###
 def print_usage():
-    print("Usage                    : ./memgen.py <tech> <infile>")
+    print("Usage                    : ./memgen.py <tech_path> <tech> <infile> <out_path>")
     print("")
     print("")
-    print("      <tech>             : Target technology for memory generation.")
-    print("                           Supported technologies: unisim")
+    print("      <tech_path>        : Path to technology liraries for memories.")
     print("")
-    print("      <infile>           : List of required memories to generate.")
-    print("                           One descriptor per line.")
+    print("      <tech>             : Target technology for memory generation. A list of available SRAMS should")
+    print("                           be available at the path <tech_path>/<tech>/lib.txt")
+    print("                         : In addition the folder <tech_path>/<tech> should contain all wrappers and/or")
+    print("                           necessary behavioral models of the SRAMs listed in lib.txt")
+    print("                           While wrappers must exist, behavioral models may be compiled separately from")
+    print("                           a third party library")
+    print("")
+    print("      <infile>           : Path to the List of required memories to generate. Each memory is specified")
+    print("                           with one memory descriptor per line.")
+    print("")
+    print("      <out_path>         : Path where the generated verilog and log files will be created.")
+    print("                           If the specified folder doesn't exist, it will be created.")
     print("")
     print("")
     print("")
@@ -306,9 +316,9 @@ class memory():
         if parallelism != 0:
             fd.write("          end\n")
 
-    def write_verilog(self):
+    def write_verilog(self, out_path):
         try:
-            fd = open(self.name + ".v", 'w')
+            fd = open(out_path + "/" + self.name + ".v", 'w')
         except IOError as e:
             die_werr(e)
         fd.write("/**\n")
@@ -608,7 +618,7 @@ class memory():
 
 
 
-    def gen(self, lib):
+    def gen(self, lib, area_log):
         # Determine memory requirements (first pass over ops list)
         self.__find_hbanks()
         self.__find_vbanks(lib)
@@ -627,11 +637,12 @@ class memory():
         print("        " + "Write interfaces are assigned to ports " + str(self.write_ports))
         print("        " + "Read interfaces are assigned to ports " + str(self.read_ports))
         print("        " + "Total area " + str(self.area))
+        area_log.write(self.name + " " + str(self.area) + "\n")
 
 
-    def write_tb(self):
+    def write_tb(self, out_path):
         try:
-            fd = open(self.name + "_tb.v", 'w')
+            fd = open(out_path + "/" + self.name + "_tb.v", 'w')
         except IOError as e:
             die_werr(e)
         fd.write("/**\n")
@@ -919,9 +930,9 @@ def parse_op(op, mem_words):
 
 
 
-def read_techfile(tech, sram_list):
+def read_techfile(tech, tech_path, sram_list):
     try:
-        fd = open(tech + "/lib.txt", 'r')
+        fd = open(tech_path + "/" + tech + "/lib.txt", 'r')
     except IOError as e:
         die_werr(e)
     for line in fd:
@@ -936,7 +947,7 @@ def read_techfile(tech, sram_list):
     fd.close()
 
 
-def read_infile(name, mem_list):
+def read_infile(name, tech, mem_list):
     try:
         fd = open(name, 'r')
     except IOError as e:
@@ -947,7 +958,7 @@ def read_infile(name, mem_list):
         # Check for commented line
         if re.match(r'#\.*', line, re.M|re.I):
             continue
-        mem_name = item[0]
+        mem_name = item[0] + "_" + tech
         mem_words = int(item[1])
         mem_width = int(item[2])
         mem_ops = []
@@ -960,22 +971,35 @@ def read_infile(name, mem_list):
 
 
 ### Start script ###
-if len(sys.argv) != 3:
+if len(sys.argv) != 5:
     print_usage()
-tech = sys.argv[1]
-infile = sys.argv[2]
+tech_path = sys.argv[1]
+tech = sys.argv[2]
+infile = sys.argv[3]
+out_path = sys.argv[4]
 mem_list = []
 sram_list = []
 
 print("  INFO: Target technology: " + tech)
-read_techfile(tech, sram_list)
+read_techfile(tech, tech_path, sram_list)
 for ram in sram_list:
     ram.print()
 
+if not os.path.exists(out_path):
+    os.makedirs(out_path)
+
+try:
+    area_log = open(out_path + "/area.log", 'w')
+except IOError as e:
+    die_werr(e)
+
+
 print("  INFO: Memory list file: " + infile)
-read_infile(infile, mem_list)
+read_infile(infile, tech, mem_list)
 for mem in mem_list:
     mem.print()
-    mem.gen(sram_list)
-    mem.write_verilog()
-    mem.write_tb()
+    mem.gen(sram_list, area_log)
+    mem.write_verilog(out_path)
+    mem.write_tb(out_path)
+
+area_log.close()
