@@ -82,11 +82,6 @@ ASSERT_ON = True
 
 ### Data structures ###
 class sram():
-    name = ""
-    words = 0
-    width = 0
-    area = 0.0
-    ports = 0
 
     def __init__(self, name, words, width, area, ports):
         self.name = name
@@ -111,10 +106,6 @@ class sram():
 
 
 class memory_operation():
-    rn = 1
-    rp = "unknown"
-    wn = 1
-    wp = "unknown"
 
     def __init__(self, rn, rp, wn, wp):
         self.rn = rn
@@ -136,32 +127,6 @@ class memory_operation():
 
 
 class memory():
-    name = ""
-    words = 0
-    width = 0
-    ops = [ ]
-
-    read_interfaces = 1
-    write_interfaces = 1
-    need_dual_port = False
-    need_parallel_rw = False
-    duplication_factor = 1
-    distribution_factor = 1
-    # Horizontally duplicated banks when read pattern is unknown
-    dbanks = 1
-    # Horizontally composed banks to obtain desired parallelism
-    hbanks = 1
-    # Vertically composed banks to obtain desired word count
-    vbanks = 1
-    # Horizontally composed banks to obtain desired bit-width
-    hhbanks = 1
-    # Type of SRAM chosen to implement banks
-    bank_type = None
-    # Total area
-    area = float('inf')
-    # Port assignment array
-    read_ports = [ ]
-    write_ports = [ ]
 
     def __init__(self, name, words, width, ops):
         self.name = name
@@ -174,6 +139,28 @@ class memory():
         self.words = words
         self.width = width
         self.ops = ops
+        self.read_interfaces = 1
+        self.write_interfaces = 1
+        self.need_dual_port = False
+        self.need_parallel_rw = False
+        self.duplication_factor = 1
+        self.distribution_factor = 1
+        # Horizontally duplicated banks when read pattern is unknown
+        self.dbanks = 1
+        # Horizontally composed banks to obtain desired parallelism
+        self.hbanks = 1
+        # Vertically composed banks to obtain desired word count
+        self.vbanks = 1
+        # Horizontally composed banks to obtain desired bit-width
+        self.hhbanks = 1
+        # Type of SRAM chosen to implement banks
+        self.bank_type = None
+        # Total area
+        self.area = float('inf')
+        # Port assignment array
+        self.read_ports = [ ]
+        self.write_ports = [ ]
+
 
     def print(self):
         operations = " ".join(map(str, self.ops))
