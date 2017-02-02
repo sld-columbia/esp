@@ -62,12 +62,12 @@ package allacc is
       conf_len     : in  std_logic_vector(31 downto 0);
       conf_log_len : in  std_logic_vector(31 downto 0);
       conf_done    : in  std_ulogic;
-      bufdin_valid : in std_ulogic; -- FIXME non used
+      bufdin_valid : in std_ulogic;
       bufdin_data  : in  std_logic_vector(31 downto 0);
       bufdin_ready : out std_ulogic;
       bufdout_valid : out std_ulogic;
       bufdout_data  : out std_logic_vector(31 downto 0);
-      bufdout_ready : in std_ulogic; -- FIXME non used
+      bufdout_ready : in std_ulogic;
       rd_index     : out std_logic_vector(31 downto 0);
       rd_length    : out std_logic_vector(31 downto 0);
       rd_request   : out std_ulogic;
@@ -89,12 +89,12 @@ package allacc is
       conf_batch     : in  std_logic_vector(31 downto 0);
       conf_transpose : in  std_ulogic;
       conf_done      : in  std_ulogic;
-      bufdin_valid   : in  std_ulogic; -- FIXME non used
+      bufdin_valid   : in  std_ulogic;
       bufdin_data    : in  std_logic_vector(31 downto 0);
       bufdin_ready   : out std_ulogic;
       bufdout_valid  : out std_ulogic;
       bufdout_data   : out std_logic_vector(31 downto 0);
-      bufdout_ready  : in  std_ulogic; -- FIXME non used
+      bufdout_ready  : in  std_ulogic;
       rd_index       : out std_logic_vector(31 downto 0);
       rd_length      : out std_logic_vector(31 downto 0);
       rd_request     : out std_ulogic;
