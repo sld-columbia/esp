@@ -1,6 +1,0 @@
-#plm_16w16r_cellwise_math_ops 1024 32 16w:0r 0w:16r
-#plm_8w8r_cellwise_math_ops 1024 32 8w:0r 0w:8r
-#plm_4w4r_cellwise_math_ops 1024 32 4w:0r 0w:4r
-#plm_2w2r_cellwise_math_ops 1024 32 2w:0r 0w:2r
-#plm_1w1r_cellwise_math_ops 1024 32 1w:0r 0w:1r
-accelerator_plm 7000 32 2wu:0r 1w:0r 2w:0r 4w:0r 8w:0r 0w:1r 0w:2r 0w:4r 0w:8r 1w:1r 2w:2r 4w:4r 8w:8r 1w:8r 0w:2ru 0w:3ru 0w:4ru 0w:8ru 1w:8ru 2w:4ru
