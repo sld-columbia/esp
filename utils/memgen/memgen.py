@@ -7,14 +7,12 @@ import math
 
 ### Helpers ###
 def print_usage():
-    print("Usage                    : ./memgen.py <tech_path> <tech> <infile> <out_path>")
+    print("Usage                    : ./memgen.py <tech_path> <infile> <out_path>")
     print("")
     print("")
-    print("      <tech_path>        : Path to technology liraries for memories.")
-    print("")
-    print("      <tech>             : Target technology for memory generation. A list of available SRAMS should")
-    print("                           be available at the path <tech_path>/<tech>/lib.txt")
-    print("                         : In addition the folder <tech_path>/<tech> should contain all wrappers and/or")
+    print("      <tech_path>        : Path to technology liraries for memories. A list of available SRAMS should")
+    print("                           be available at the path <tech_path>/lib.txt")
+    print("                         : In addition the folder <tech_path> should contain all wrappers and/or")
     print("                           necessary behavioral models of the SRAMs listed in lib.txt")
     print("                           While wrappers must exist, behavioral models may be compiled separately from")
     print("                           a third party library")
@@ -627,9 +625,9 @@ class memory():
         area_log.write(self.name + " " + str(self.area) + "\n")
 
 
-    def write_tb(self, out_path):
+    def write_tb(self, tb_path):
         try:
-            fd = open(out_path + "/" + self.name + "_tb.v", 'w')
+            fd = open(tb_path + "/" + self.name + "_tb.v", 'w')
         except IOError as e:
             die_werr(e)
         fd.write("/**\n")
@@ -858,7 +856,117 @@ class memory():
         fd.close()
 
 
+    def write_hpp(self):
+        try:
+            fd = open("./memlib/" + self.name + ".hpp", 'w')
+        except IOError as e:
+            die_werr(e)
+        print("  INFO: Generating SystemC explicit memory definition for " + self.name)
+        fd.write("/**\n")
+        fd.write("* Created with the ESP Memory Generator\n")
+        fd.write("*\n")
+        fd.write("* Copyright (c) 2014-2017, Columbia University\n")
+        fd.write("*\n")
+        fd.write("* @author Paolo Mantovani <paolo@cs.columbia.edu>\n")
+        fd.write("*/\n")
+        fd.write("\n")
+        fd.write("#ifndef __" + self.name.upper() + "_HPP__\n")
+        fd.write("#define __" + self.name.upper() + "_HPP__\n")
+        fd.write("#include \"" + self.name + ".h\"\n")
+        fd.write("template<class T, unsigned S, typename ioConfig=CYN::PIN>\n")
+        fd.write("class " + self.name +"_t : public sc_module\n")
+        fd.write("{\n")
+        fd.write("\n")
+        fd.write("  HLS_INLINE_MODULE;\n")
+        fd.write("public:\n")
+        fd.write("  " + self.name + "_t(const sc_module_name& name = sc_gen_unique_name(\"" + self.name + "\"))\n")
+        fd.write("  : sc_module(name)\n")
+        fd.write("  , clk(\"clk\")\n")
+        for iface in range(1, self.read_interfaces + self.write_interfaces + 1):
+            fd.write("  , port" + str(iface) + "(\"port" + str(iface) + "\")\n")
+        fd.write("  {\n")
+        fd.write("    m_m0.clk_rst(clk);\n")
+        for iface in range(1, self.read_interfaces + self.write_interfaces + 1):
+            fd.write("    port" + str(iface) + "(m_m0.if" + str(iface) + ");\n")
+        fd.write("  }\n")
+        fd.write("\n")
+        fd.write("  sc_in<bool> clk;\n")
+        fd.write("\n")
+        fd.write("  " + self.name + "::wrapper<ioConfig> m_m0;\n")
+        fd.write("\n")
+        for iface in range(1, self.read_interfaces + self.write_interfaces + 1):
+            # TODO: there is a bug in Stratus that prevents a port interface to have a single dimension (so use [1] for now)
+            fd.write("  typedef " + self.name + "::port_" + str(iface) + "<ioConfig, T[1][S]> Port" + str(iface) + "_t;\n")
+        fd.write("\n")
+        for iface in range(1, self.read_interfaces + self.write_interfaces + 1):
+            fd.write("  Port" + str(iface) + "_t port" + str(iface) + ";\n")
+        fd.write("};\n")
+        fd.write("#endif\n")
+        fd.close()
 
+    def write_bdm(self, out_path):
+        try:
+            fd = open("./memlib/" + self.name + ".bdm", 'w')
+        except IOError as e:
+            die_werr(e)
+        print("  INFO: Generating Stratus bdw_memgen input for " + self.name)
+        fd.write("setName " + self.name + "\n")
+        fd.write("catch {setToolVersion \"16.20-p100\"}\n")
+        fd.write("setModelStyle 1\n")
+        fd.write("setWordSize " + str(self.width) + "\n")
+        fd.write("setNumWords " + str(self.words) + "\n")
+        fd.write("setArea " + str(self.area) + "\n")
+        fd.write("setLatency 1\n")
+        # TODO: these delays are arbitrary, but should be taken from lib
+        fd.write("setDelay 600.0000\n")
+        fd.write("setSetup 200.0000\n")
+        fd.write("setInputDataFormat 1\n")
+        fd.write("setFileSuffix 0\n")
+        fd.write("setHasReset 0\n")
+        fd.write("setNoSpecReads 1\n")
+        fd.write("setSharedAccess 1\n")
+        fd.write("setIntRegMemIn 0\n")
+        fd.write("setIntRegMemOut 0\n")
+        fd.write("setExtRegMemIn 1\n")
+        fd.write("setExtRegMemOut 0\n")
+        fd.write("setIntRegsAtMemIn 0\n")
+        fd.write("setIntRegsAtMemOut 0\n")
+        fd.write("setExtRegsAtMemIn 0\n")
+        fd.write("setExtRegsAtMemOut 0\n")
+        fd.write("setClockMult 0\n")
+        fd.write("setExtraPortsInWrapper 0\n")
+        fd.write("setNumAccessPorts " + str(self.read_interfaces + self.write_interfaces) + "\n")
+        fd.write("setNumExtraPorts 0\n")
+        fd.write("setPipelined 1\n")
+        fd.write("setVendorModel \"\"\n")
+        fd.write("setModelWrapper \"" + out_path + "/" + self.name + ".v\"\n")
+        for wi in range(0, self.write_interfaces):
+            fd.write("setPortData " + str(wi) + " setType 1\n")
+            fd.write("setPortData " + str(wi) + " setAddr \"A" + str(wi) + "\"\n")
+            fd.write("setPortData " + str(wi) + " setClk \"CLK\"\n")
+            fd.write("setPortData " + str(wi) + " setReqName \"REQ" + str(wi) + "\"\n")
+            fd.write("setPortData " + str(wi) + " setDin \"D" + str(wi) + "\"\n")
+            fd.write("setPortData " + str(wi) + " setHasRW 1\n")
+            fd.write("setPortData " + str(wi) + " setRwName \"WE" + str(wi) + "\"\n")
+            fd.write("setPortData " + str(wi) + " setRwActive 1\n")
+            fd.write("setPortData " + str(wi) + " setWMWord 1\n")
+            fd.write("setPortData " + str(wi) + " setWMName \"WEM" + str(wi) + "\"\n")
+            fd.write("setPortData " + str(wi) + " setWMActive 1\n")
+            fd.write("setPortData " + str(wi) + " setHasCE 1\n")
+            fd.write("setPortData " + str(wi) + " setCEName \"CE" + str(wi) + "\"\n")
+            fd.write("setPortData " + str(wi) + " setCEActive 1\n")
+        for ri in range(self.write_interfaces, self.read_interfaces + self.write_interfaces):
+            fd.write("setPortData " + str(ri) + " setType 0\n")
+            fd.write("setPortData " + str(ri) + " setAddr \"A" + str(ri) + "\"\n")
+            fd.write("setPortData " + str(ri) + " setClk \"CLK\"\n")
+            fd.write("setPortData " + str(ri) + " setReqName \"REQ" + str(ri) + "\"\n")
+            fd.write("setPortData " + str(ri) + " setDout \"Q" + str(ri) + "\"\n")
+            fd.write("setPortData " + str(ri) + " setHasOE 0\n")
+            fd.write("setPortData " + str(ri) + " setHasRE 0\n")
+            fd.write("setPortData " + str(ri) + " setHasCE 1\n")
+            fd.write("setPortData " + str(ri) + " setCEName \"CE" + str(ri) + "\"\n")
+            fd.write("setPortData " + str(ri) + " setCEActive 1\n")
+        fd.close()
 
 
 ### Input parsing ###
@@ -917,9 +1025,9 @@ def parse_op(op, mem_words):
 
 
 
-def read_techfile(tech, tech_path, sram_list):
+def read_techfile(tech_path, sram_list):
     try:
-        fd = open(tech_path + "/" + tech + "/lib.txt", 'r')
+        fd = open(tech_path + "/lib.txt", 'r')
     except IOError as e:
         die_werr(e)
     for line in fd:
@@ -934,7 +1042,7 @@ def read_techfile(tech, tech_path, sram_list):
     fd.close()
 
 
-def read_infile(name, tech, mem_list):
+def read_infile(name, mem_list):
     try:
         fd = open(name, 'r')
     except IOError as e:
@@ -945,7 +1053,7 @@ def read_infile(name, tech, mem_list):
         # Check for commented line
         if re.match(r'#\.*', line, re.M|re.I):
             continue
-        mem_name = item[0] + "_" + tech
+        mem_name = item[0]
         mem_words = int(item[1])
         mem_width = int(item[2])
         mem_ops = []
@@ -958,35 +1066,45 @@ def read_infile(name, tech, mem_list):
 
 
 ### Start script ###
-if len(sys.argv) != 5:
+if len(sys.argv) != 4:
     print_usage()
 tech_path = sys.argv[1]
-tech = sys.argv[2]
-infile = sys.argv[3]
-out_path = sys.argv[4]
+infile = sys.argv[2]
+out_path = sys.argv[3]
+tb_path = out_path + "/tb"
 mem_list = []
 sram_list = []
 
-print("  INFO: Target technology: " + tech)
-read_techfile(tech, tech_path, sram_list)
+print("  INFO: Target technology path: " + tech_path)
+read_techfile(tech_path, sram_list)
 for ram in sram_list:
     ram.print()
 
+print("  INFO: Output path: " + out_path)
 if not os.path.exists(out_path):
     os.makedirs(out_path)
 
+if not os.path.exists(tb_path):
+    os.makedirs(tb_path)
+
+print("  INFO: Stratus memory library path: ./memlib")
+if not os.path.exists("memlib"):
+    os.makedirs("memlib")
+
 try:
-    area_log = open(out_path + "/area.log", 'w')
+    area_log = open("memlib/area.log", 'w')
 except IOError as e:
     die_werr(e)
 
 
 print("  INFO: Memory list file: " + infile)
-read_infile(infile, tech, mem_list)
+read_infile(infile, mem_list)
 for mem in mem_list:
     mem.print()
     mem.gen(sram_list, area_log)
     mem.write_verilog(out_path)
-    mem.write_tb(out_path)
+    mem.write_tb(tb_path)
+    mem.write_hpp()
+    mem.write_bdm(out_path)
 
 area_log.close()
