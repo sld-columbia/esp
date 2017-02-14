@@ -12,6 +12,11 @@ set TECH $::env(TECH)
 set TECH_PATH "../../../tech/$TECH"
 
 #
+# Set the private memory library
+#
+use_hls_lib "./memlib"
+
+#
 # Setup technology and include behavioral models and/or libraries
 #
 if {$TECH eq "virtex7"} {
@@ -24,19 +29,16 @@ if {$TECH eq "virtex7"} {
     set CLOCK_PERIOD 10000.0
 }
 if {$TECH eq "cmos32soi"} {
-    set_attr verilog_files {$TECH_PATH/verilog/*v $TECH_PATH/mem/*v}
+    set_attr verilog_files "$TECH_PATH/verilog/*v $TECH_PATH/mem/*v"
     set LIB_PATH "$TECH_PATH/lib"
-    set LIB_NAME "cmos32soi_1000.lib"
+    set LIB_NAME "ibm32soi_hvt_1p0v.lib"
+    use_tech_lib "$LIB_PATH/$LIB_NAME"
 
     set CLOCK_PERIOD 1000.0
 
     use_hls_lib "[get_install_path]/share/stratus/cynware/cynw_cm_float"
 }
 
-#
-# Set the private memory library
-#
-use_hls_lib "./memlib"
 
 #
 # Global synthesis attributes
