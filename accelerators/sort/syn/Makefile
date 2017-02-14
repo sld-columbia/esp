@@ -3,9 +3,18 @@
 # Makefile - top-level project makefile
 #
 #*******************************************************************************
+ifeq ("$(ESP_ROOT)","")
+$(error ESP_ROOT not set)
+endif
+
+ifeq ("$(TECH)","")
+$(error target technology TECH is not specified)
+endif
+
+
 # list subdirectories that contain memory libraries
 # (must be in subdirectories of the current directory)
-MEMLIBS =
+MEMLIBS = ./memlib
 
 # list subdirectories that contain interface libraries
 # (must be in subdirectories of the current directory)
@@ -22,7 +31,16 @@ BDW_VLOGSIM_ARGS = -NOTIMINGCHECKS
 
 -include Makefile.prj
 
-Makefile.prj : project.tcl ../../common/stratus/project.tcl
+# Memory wrappers
+MEMGEN = $(ESP_ROOT)/utils/memgen/memgen.py
+MEMTECH = $(ESP_ROOT)/tech/$(TECH)/mem
+MEMGEN_OUT = $(ESP_ROOT)/tech/$(TECH)/memgen
+
+memlib: ../memlist.txt
+	@$(MEMGEN) $(MEMTECH) $< $(MEMGEN_OUT)
+	@bdw_memgen ./memlib/*.bdm
+
+Makefile.prj : memlib project.tcl ../../common/stratus/project.tcl
 	@bdw_makegen
 
 # Clean out undesirable junk files from the project directory
@@ -40,5 +58,15 @@ clean: clean_all clean_libs
 	@rm -rf *.pro *.pro.user
 	@rm -rf INCA_libs
 	@rm -rf *.log
+	@rm -rf *.shm
+	@rm -rf *.diag
+	@rm -rf *.key
+	@rm -rf memlib
 
 CLEAN: clean
+
+# WARNING: this target will delete generated resources for HLS
+distclean: clean
+	@rm -f cachelib
+
+.PHONY: clean CLEAN distclean
