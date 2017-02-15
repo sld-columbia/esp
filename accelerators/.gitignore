@@ -53,3 +53,4 @@ restore_waveform.tcl.svcf
 *.pro.user
 .Xil
 memlib
+hls-work-*
