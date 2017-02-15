@@ -143,10 +143,13 @@ void sort<DMA_WIDTH>::store_output()
 				HLS_UNROLL_LOOP(OFF); // disabled by default
 
 				uint32_t data;
-				if (ping)
-					data = B0.port2[0][i];
-				else
-					data = B1.port2[0][i];
+				{
+					HLS_CONSTRAIN_LATENCY(0, 1, "constraint-store-mem-access");
+					if (ping)
+						data = B0.port2[0][i];
+					else
+						data = B1.port2[0][i];
+				}
 				this->dma_write_chnl.put(data);
 			}
 			ping = !ping;
@@ -399,7 +402,7 @@ MERGE_SORT:
 
 		if (chunk_max > 1)  //MERGE is needed
 		{
-			//DEBUG
+			// // DEBUG
 			// for (int chunk = 0; chunk < LEN/NUM; chunk++) {
 			//    if (chunk*NUM == len)
 			//       break;
@@ -434,7 +437,7 @@ MERGE_SORT:
 				head[0] = C1.port2[0][1];
 			fidx[0]++;
 
-			//DEBUG
+			// // DEBUG
 			// cout << "INIT HEADS" << endl;
 			// for (int chunk = 0; chunk < LEN/NUM; chunk++) {
 			//    if (chunk == chunk_max)
@@ -491,7 +494,7 @@ MERGE_SORT:
 					}
 				}
 
-				//DEBUG:
+				// // DEBUG:
 				// cout << "POP from...";
 				// for (int chunk = 0; chunk < LEN/NUM; chunk++) {
 				//    if (chunk == chunk_max)
@@ -511,7 +514,7 @@ MERGE_SORT:
 					regs[chunk] = regs_in[chunk];
 				}
 
-				//DEBUG
+				// // DEBUG
 				// cout << "regs after shift: ";
 				// for (int chunk = 0; chunk < LEN/NUM; chunk++) {
 				//    if (chunk == chunk_max)
@@ -580,7 +583,7 @@ MERGE_SORT:
 					shift[i] = false;
 				}
 
-				//DEBUG
+				// DEBUG
 				// cout << "heads after pop: ";
 				// for (int chunk = 0; chunk < LEN/NUM; chunk++) {
 				//    if (chunk == chunk_max)
@@ -610,7 +613,7 @@ MERGE_SORT:
 						elem = C0.port2[0][chunk * NUM + i];
 					else
 						elem = C1.port2[0][chunk * NUM + i];
-					wait();
+
 					if (ping)
 						B0.port1[0][i] = elem;
 					else
