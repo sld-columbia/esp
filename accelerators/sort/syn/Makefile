@@ -67,6 +67,6 @@ CLEAN: clean
 
 # WARNING: this target will delete generated resources for HLS
 distclean: clean
-	@rm -f cachelib
+	@rm -rf cachelib
 
 .PHONY: clean CLEAN distclean
