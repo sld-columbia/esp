@@ -70,18 +70,6 @@ foreach tb $TESTBENCHES {
     }
 }
 
-if {$TECH eq "virtex7"} {
-    foreach config [find -hls_config *] {
-	set cname [get_attr name $config]
-
-	define_logic_synthesis_config FPGA_$cname "sort32 -all" \
-	    -command "bdw_runvivado" \
-	    -options \
-	    {BDW_LS_FPGA_TOOL Vivado } \
-	    {BDW_LS_FPGA_PART xc7v2000t-2-flg1925} \
-	    {BDW_LS_CLK_PERIOD $CLOCK_PERIOD}
-    }
-}
 
 #
 # Compile Flags
