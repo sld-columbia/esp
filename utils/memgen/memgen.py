@@ -904,7 +904,7 @@ class memory():
         fd.write("#endif\n")
         fd.close()
 
-    def write_bdm(self, out_path):
+    def write_bdm(self, out_path, tech_path):
         try:
             fd = open("./memlib/" + self.name + ".bdm", 'w')
         except IOError as e:
@@ -923,23 +923,24 @@ class memory():
         fd.write("setInputDataFormat 1\n")
         fd.write("setFileSuffix 0\n")
         fd.write("setHasReset 0\n")
-        fd.write("setNoSpecReads 1\n")
+        fd.write("setNoSpecReads 0\n")
         fd.write("setSharedAccess 1\n")
+        fd.write("setMaxSharedPorts 32\n")
         fd.write("setIntRegMemIn 0\n")
         fd.write("setIntRegMemOut 0\n")
-        fd.write("setExtRegMemIn 1\n")
+        fd.write("setExtRegMemIn 0\n")
         fd.write("setExtRegMemOut 0\n")
         fd.write("setIntRegsAtMemIn 0\n")
         fd.write("setIntRegsAtMemOut 0\n")
         fd.write("setExtRegsAtMemIn 0\n")
         fd.write("setExtRegsAtMemOut 0\n")
         fd.write("setClockMult 0\n")
-        fd.write("setExtraPortsInWrapper 0\n")
         fd.write("setNumAccessPorts " + str(self.read_interfaces + self.write_interfaces) + "\n")
         fd.write("setNumExtraPorts 0\n")
-        fd.write("setPipelined 1\n")
-        fd.write("setVendorModel \"\"\n")
+        fd.write("setPipelined 0\n")
+        fd.write("setVendorModel \"" + tech_path + "/" + self.bank_type.name + ".v\"\n")
         fd.write("setModelWrapper \"" + out_path + "/" + self.name + ".v\"\n")
+        fd.write("setExtraPortsInWrapper 0\n")
         for wi in range(0, self.write_interfaces):
             fd.write("setPortData " + str(wi) + " setType 1\n")
             fd.write("setPortData " + str(wi) + " setAddr \"A" + str(wi) + "\"\n")
@@ -1105,6 +1106,6 @@ for mem in mem_list:
     mem.write_verilog(out_path)
     mem.write_tb(tb_path)
     mem.write_hpp()
-    mem.write_bdm(out_path)
+    mem.write_bdm(out_path, tech_path)
 
 area_log.close()
