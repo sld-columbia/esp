@@ -53,6 +53,8 @@ foreach tb $TESTBENCHES {
 
 }
 
+define_sim_config "BEHAV_default" "sort32 BEH" {tb32 TESTBENCH32} -argv "64 8"
+
 #
 # The following rules are TCL code to create a simulation configuration
 # for both RTL_C and RTL_V for each hls_config defined
@@ -66,10 +68,19 @@ foreach tb $TESTBENCHES {
 
     foreach config [find -hls_config *] {
         set cname [get_attr name $config]
-        define_sim_config "$cname\_$test\_V" "sort32 RTL_V $cname" {tb32 TESTBENCH32} -argv $ARGV
+	if {$TECH_IS_XILINX == 1} {
+	    define_sim_config "$cname\_$test\_V" "sort32 RTL_V $cname" {tb32 TESTBENCH32} -argv $ARGV -verilog_top_modules glbl
+	} else {
+	    define_sim_config "$cname\_$test\_V" "sort32 RTL_V $cname" {tb32 TESTBENCH32} -argv $ARGV
+	}
     }
 }
 
+if {$TECH_IS_XILINX == 1} {
+    define_sim_config "RTL_V_default" "sort32 RTL_V BASIC32" {tb32 TESTBENCH32} -argv "64 8" -verilog_top_modules glbl
+} else {
+    define_sim_config "RTL_V_default" "sort32 RTL_V BASIC32" {tb32 TESTBENCH32} -argv "64 8"
+}
 
 #
 # Compile Flags

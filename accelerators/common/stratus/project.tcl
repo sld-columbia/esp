@@ -21,10 +21,14 @@ use_hls_lib "./memlib"
 #
 if {$TECH eq "virtex7"} {
     set VIVADO $::env(VIVADO)
-    set_attr verilog_files "$TECH_PATH/mem/*.v $VIVADO/ids_lite/ISE/verilog/src/unisims/RAMB16_S*.v"
+    set_attr verilog_files "$TECH_PATH/mem/*.v"
+    set_attr verilog_files "$VIVADO/ids_lite/ISE/verilog/src/glbl.v"
+    set_attr verilog_files "$VIVADO/ids_lite/ISE/verilog/src/unisims/RAMB16_S*.v"
     set_attr fpga_use_dsp on
     set_attr fpga_tool "vivado"
     set_attr fpga_part "xc7v2000tflg1925-2"
+
+    set TECH_IS_XILINX 1
 
     set CLOCK_PERIOD 10000.0
 }
@@ -33,6 +37,8 @@ if {$TECH eq "cmos32soi"} {
     set LIB_PATH "$TECH_PATH/lib"
     set LIB_NAME "ibm32soi_hvt_1p0v.lib"
     use_tech_lib "$LIB_PATH/$LIB_NAME"
+
+    set TECH_IS_XILINX 0
 
     set CLOCK_PERIOD 1000.0
 
