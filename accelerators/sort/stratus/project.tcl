@@ -4,8 +4,6 @@
 # Design Parameters
 ############################################################
 
-set MODULE sort
-
 #
 # Source the common configurations
 #
@@ -13,73 +11,37 @@ source ../../common/stratus/project.tcl
 
 
 #
-# Testbench or system level modules
-#
-#define_system_module main ../tb/sc_main.cpp
-define_system_module tb32 ../tb/system.cpp ../tb/sc_main.cpp
-
-define_system_config tb32 TESTBENCH32  -DDMA_WIDTH_VAL=32
-
-#
 # System level modules to be synthesized
 #
-define_hls_module sort32 ../src/$MODULE.cpp --template "$MODULE<32>"
+define_hls_module sort ../src/sort.cpp
+
 
 #
-# HLS Configuration (associated with SC_MODULEs)
+# Testbench or system level modules
 #
-define_hls_config sort32 BASIC32 --clock_period=$CLOCK_PERIOD $COMMON_HLS_FLAGS
-
+define_system_module tb ../tb/system.cpp ../tb/sc_main.cpp
 
 ######################################################################
-# Simulation configurations
+# HLS and Simulation configurations
 ######################################################################
+set DEFAULT_ARGV "128 4"
 
+foreach dma [list 32 64] {
+    define_io_config * IOCFG_DMA$dma -DDMA_WIDTH=$dma
 
-set TESTBENCHES {{32 1} }
-append TESTBENCHES {{32 4} }
-append TESTBENCHES {{64 8} }
-append TESTBENCHES {{256 16} }
-append TESTBENCHES {{1024 1204} }
+    define_system_config tb TESTBENCH_DMA$dma -io_config IOCFG_DMA$dma
 
-foreach tb $TESTBENCHES {
+    define_sim_config "BEHAV_DMA$dma" "sort BEH" "tb TESTBENCH_DMA$dma" -io_config IOCFG_DMA$dma -argv $DEFAULT_ARGV
 
-    set test [lindex $tb 0]_[lindex $tb 1]
-    set ARGV ""
-    append ARGV [lindex $tb 0];  # argv[1]
-    append ARGV " "
-    append ARGV [lindex $tb 1];  # argv[2]
-    define_sim_config "BEHAV_$test" "sort32 BEH" {tb32 TESTBENCH32} -argv $ARGV
-
-}
-
-define_sim_config "BEHAV_default" "sort32 BEH" {tb32 TESTBENCH32} -argv "64 8"
-
-#
-# The following rules are TCL code to create a simulation configuration
-# for both RTL_C and RTL_V for each hls_config defined
-#
-foreach tb $TESTBENCHES {
-    set test [lindex $tb 0]_[lindex $tb 1]
-    set ARGV ""
-    append ARGV [lindex $tb 0] ;  # argv[1]
-    append ARGV " "
-    append ARGV [lindex $tb 1] ;  # argv[2]
-
-    foreach config [find -hls_config *] {
-        set cname [get_attr name $config]
+    foreach cfg [list BASIC] {
+	set cname $cfg\_DMA$dma
+	define_hls_config sort $cname -io_config IOCFG_DMA$dma --clock_period=$CLOCK_PERIOD $COMMON_HLS_FLAGS -DHLS_DIRECTIVES_$cfg
 	if {$TECH_IS_XILINX == 1} {
-	    define_sim_config "$cname\_$test\_V" "sort32 RTL_V $cname" {tb32 TESTBENCH32} -argv $ARGV -verilog_top_modules glbl
+	    define_sim_config "$cname\_V" "sort RTL_V $cname" "tb TESTBENCH_DMA$dma" -io_config IOCFG_DMA$dma -argv $DEFAULT_ARGV -verilog_top_modules glbl
 	} else {
-	    define_sim_config "$cname\_$test\_V" "sort32 RTL_V $cname" {tb32 TESTBENCH32} -argv $ARGV
+	    define_sim_config "$cname\_V" "sort RTL_V $cname" "tb TESTBENCH_DMA$dma" -io_config IOCFG_DMA$dma -argv $DEFAULT_ARGV
 	}
     }
-}
-
-if {$TECH_IS_XILINX == 1} {
-    define_sim_config "RTL_V_default" "sort32 RTL_V BASIC32" {tb32 TESTBENCH32} -argv "64 8" -verilog_top_modules glbl
-} else {
-    define_sim_config "RTL_V_default" "sort32 RTL_V BASIC32" {tb32 TESTBENCH32} -argv "64 8"
 }
 
 #

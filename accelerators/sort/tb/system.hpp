@@ -11,22 +11,22 @@ const size_t MEM_SIZE = LEN * LEN * sizeof(uint32_t);
 
 #include "core/systems/esp_system.hpp"
 
-#include GENERATE_MODULE_INCLUDE_NAME(sort, DMA_WIDTH_VAL)
+#include "sort_wrap.h"
 
-class system_t : public esp_system<DMA_WIDTH_VAL, MEM_SIZE>
+class system_t : public esp_system<DMA_WIDTH, MEM_SIZE>
 {
 public:
 
         // ACC instance
-        GENERATE_MODULE_NAME(sort, DMA_WIDTH_VAL) *acc;
+       sort_wrapper *acc;
 
         // Constructor
         SC_HAS_PROCESS(system_t);
         system_t(sc_module_name name)
-          : esp_system<DMA_WIDTH_VAL, MEM_SIZE>(name)
+          : esp_system<DMA_WIDTH, MEM_SIZE>(name)
         {
              // ACC
-             acc = new GENERATE_MODULE_NAME(sort, DMA_WIDTH_VAL)("sort_wrapper");
+             acc = new sort_wrapper("sort_wrapper");
 
              // Binding ACC
              acc->clk(clk);

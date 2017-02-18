@@ -8,10 +8,7 @@
 
 // Processes
 
-template <
-	size_t DMA_WIDTH
-	>
-void sort<DMA_WIDTH>::load_input()
+void sort::load_input()
 {
 	bool ping;
 	unsigned len; // from conf_info.len
@@ -84,10 +81,7 @@ void sort<DMA_WIDTH>::load_input()
 
 
 
-template <
-	size_t DMA_WIDTH
-	>
-void sort<DMA_WIDTH>::store_output()
+void sort::store_output()
 {
 	bool ping;
 	unsigned len; // from conf_info.len
@@ -164,10 +158,7 @@ void sort<DMA_WIDTH>::store_output()
 }
 
 
-template <
-	size_t DMA_WIDTH
-	>
-void sort<DMA_WIDTH>::compute_kernel()
+void sort::compute_kernel()
 {
 	// Bi-tonic sort
 	bool ping;
@@ -329,10 +320,7 @@ BITONIC_SORT:
 }
 
 
-template <
-	size_t DMA_WIDTH
-	>
-void sort<DMA_WIDTH>::compute_2_kernel()
+void sort::compute_2_kernel()
 {
 	// Bi-tonic sort
 	bool ping;

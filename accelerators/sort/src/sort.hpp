@@ -21,9 +21,6 @@
 #define lgNUM 5
 #define NUM (1<<lgNUM)
 
-template <
-  size_t DMA_WIDTH // width of the DMA channel in num of bits
->
 class sort : public esp_accelerator_3P<DMA_WIDTH>
 {
     public:
@@ -113,38 +110,26 @@ class sort : public esp_accelerator_3P<DMA_WIDTH>
 
 };
 
-template <
-    size_t DMA_WIDTH
->
-inline void sort<DMA_WIDTH>::reset_compute_1_kernel()
+inline void sort::reset_compute_1_kernel()
 {
     this->input_ready_ack.reset_ack();
     this->compute_2_ready_req.reset_req();
 }
 
-template <
-    size_t DMA_WIDTH
->
-inline void sort<DMA_WIDTH>::reset_compute_2_kernel()
+inline void sort::reset_compute_2_kernel()
 {
     this->compute_2_ready_ack.reset_ack();
     this->output_ready_req.reset_req();
 }
 
-template <
-    size_t DMA_WIDTH
->
-inline void sort<DMA_WIDTH>::compute_compute_2_handshake()
+inline void sort::compute_compute_2_handshake()
 {
 	HLS_DEFINE_PROTOCOL("compute-compute_2-handshake");
 
 	this->compute_2_ready_req.req();
 }
 
-template <
-	size_t DMA_WIDTH
-	>
-inline void sort<DMA_WIDTH>::compute_2_compute_handshake()
+inline void sort::compute_2_compute_handshake()
 {
 	HLS_DEFINE_PROTOCOL("compute_2-compute-handshake");
 

@@ -37,7 +37,7 @@ MEMTECH = $(ESP_ROOT)/tech/$(TECH)/mem
 MEMGEN_OUT = $(ESP_ROOT)/tech/$(TECH)/memgen
 
 memlib: ../memlist.txt
-	@$(MEMGEN) $(MEMTECH) $< $(MEMGEN_OUT)
+	@$(MEMGEN) $(MEMTECH) $< $(MEMGEN_OUT) | tee memgen.log
 	@bdw_memgen ./memlib/*.bdm
 
 Makefile.prj : memlib project.tcl ../../common/stratus/project.tcl
