@@ -28,7 +28,10 @@ void sort::load_input()
 		ping = true;
 		A0.port1.reset();
 		A1.port1.reset();
-
+#if (DMA_WIDTH == 64)
+		A0.port2.reset();
+		A1.port2.reset();
+#endif
 		wait();
 	}
 
@@ -52,21 +55,38 @@ void sort::load_input()
 			{
 				HLS_DEFINE_PROTOCOL("load-dma-conf");
 
-				dma_info_t dma_info(index, len);
+				dma_info_t dma_info(index / (DMA_WIDTH / 32), len / (DMA_WIDTH / 32));
 				index += len;
 				this->dma_read_ctrl.put(dma_info);
 			}
 		LOAD_INPUT_LOOP:
+#if (DMA_WIDTH == 32)
 			for (uint16_t i = 0; i < len; i++)
 			{
 				HLS_UNROLL_LOOP(OFF); // disabled by default
 
 				uint32_t data = this->dma_read_chnl.get().to_uint();
-
 				if (ping)
 					A0.port1[0][i] = data;
 				else
 					A1.port1[0][i] = data;
+#elif (DMA_WIDTH == 64)
+			for (uint16_t i = 0; i < len; i += 2)
+			{
+				HLS_UNROLL_LOOP(OFF); // disabled by default
+
+				sc_dt::sc_bv<64> data_bv = this->dma_read_chnl.get();
+				uint32_t data_1 = data_bv.range(31, 0).to_uint();
+				uint32_t data_2 = data_bv.range(63, 32).to_uint();
+				if (ping) {
+					A0.port1[0][i]     = data_1;
+					A0.port2[0][i + 1] = data_2;
+				} else {
+					A1.port1[0][i]     = data_1;
+					A1.port2[0][i + 1] = data_2;
+				}
+
+#endif
 			}
 			ping = !ping;
 			this->load_compute_handshake();
@@ -101,7 +121,10 @@ void sort::store_output()
 		ping = true;
 		B0.port2.reset();
 		B1.port2.reset();
-
+#if (DMA_WIDTH == 64)
+		B0.port3.reset();
+		B1.port3.reset();
+#endif
 		wait();
 	}
 
@@ -127,11 +150,12 @@ void sort::store_output()
 			{
 				HLS_DEFINE_PROTOCOL("store-dma-conf");
 
-				dma_info_t dma_info(index, len);
+				dma_info_t dma_info(index / (DMA_WIDTH / 32), len / (DMA_WIDTH / 32));
 				index += len;
 				this->dma_write_ctrl.put(dma_info);
 			}
 		STORE_INPUT_LOOP:
+#if (DMA_WIDTH == 32)
 			for (uint16_t i = 0; i < len; i++)
 			{
 				HLS_UNROLL_LOOP(OFF); // disabled by default
@@ -145,6 +169,24 @@ void sort::store_output()
 						data = B1.port2[0][i];
 				}
 				this->dma_write_chnl.put(data);
+#elif (DMA_WIDTH == 64)
+			for (uint16_t i = 0; i < len; i += 2)
+			{
+				HLS_UNROLL_LOOP(OFF); // disabled by default
+
+				sc_dt::sc_bv<64> data_bv;
+				{
+					HLS_CONSTRAIN_LATENCY(0, 1, "constraint-store-mem-access");
+					if (ping) {
+						data_bv.range(31, 0)  = B0.port2[0][i];
+						data_bv.range(63, 32) = B0.port3[0][i + 1];
+					} else {
+						data_bv.range(31, 0)  = B1.port2[0][i];
+						data_bv.range(63, 32) = B1.port3[0][i + 1];
+					}
+				}
+				this->dma_write_chnl.put(data_bv);
+#endif
 			}
 			ping = !ping;
 		}
@@ -175,8 +217,13 @@ void sort::compute_kernel()
 		bursts = 0;
 
 		ping = true;
+#if (DMA_WIDTH == 32)
 		A0.port2.reset();
 		A1.port2.reset();
+#elif (DMA_WIDTH == 64)
+		A0.port3.reset();
+		A1.port3.reset();
+#endif
 		C0.port1.reset();
 		C1.port1.reset();
 
@@ -235,13 +282,21 @@ BITONIC_SORT:
 					unsigned elem;
 					if (ping)
 					{
+#if (DMA_WIDTH == 32)
 						elem = A0.port2[0][chunk * NUM + i];
+#elif (DMA_WIDTH == 64)
+						elem = A0.port3[0][chunk * NUM + i];
+#endif
 						if (pipe_full)
 							C0.port1[0][wchunk * NUM + i] = regs[idx][i];
 					}
 					else
 					{
+#if (DMA_WIDTH == 32)
 						elem = A1.port2[0][chunk * NUM + i];
+#elif (DMA_WIDTH == 64)
+						elem = A1.port3[0][chunk * NUM + i];
+#endif
 						if (pipe_full)
 							C1.port1[0][wchunk * NUM + i] = regs[idx][i];
 					}

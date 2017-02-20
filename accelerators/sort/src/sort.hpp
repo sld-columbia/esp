@@ -12,7 +12,9 @@
 
 #include "core/accelerators/esp_accelerator_3P.hpp"
 
-#include "sort_plm_block.hpp"
+#include "sort_plm_block_1w1r.hpp"
+#include "sort_plm_block_2w1r.hpp"
+#include "sort_plm_block_1w2r.hpp"
 
 // Local memory size: number of elements
 #define lgLEN 10
@@ -99,15 +101,21 @@ class sort : public esp_accelerator_3P<DMA_WIDTH>
         inline void compute_2_compute_handshake();
 
         // Private local memories
-	sort_plm_block_t<uint32_t, LEN> A0;
-	sort_plm_block_t<uint32_t, LEN> A1;
+#if (DMA_WIDTH == 32)
+	sort_plm_block_1w1r_t<uint32_t, LEN> A0;
+	sort_plm_block_1w1r_t<uint32_t, LEN> A1;
 
-	sort_plm_block_t<uint32_t, ((LEN / NUM) * NUM)> C0;
-	sort_plm_block_t<uint32_t, ((LEN / NUM) * NUM)> C1;
+	sort_plm_block_1w1r_t<uint32_t, LEN> B0;
+	sort_plm_block_1w1r_t<uint32_t, LEN> B1;
+#elif (DMA_WIDTH == 64)
+	sort_plm_block_2w1r_t<uint32_t, LEN> A0;
+	sort_plm_block_2w1r_t<uint32_t, LEN> A1;
 
-	sort_plm_block_t<uint32_t, LEN> B0;
-	sort_plm_block_t<uint32_t, LEN> B1;
-
+	sort_plm_block_1w2r_t<uint32_t, LEN> B0;
+	sort_plm_block_1w2r_t<uint32_t, LEN> B1;
+#endif
+	sort_plm_block_1w1r_t<uint32_t, ((LEN / NUM) * NUM)> C0;
+	sort_plm_block_1w1r_t<uint32_t, ((LEN / NUM) * NUM)> C1;
 };
 
 inline void sort::reset_compute_1_kernel()

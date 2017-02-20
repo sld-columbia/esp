@@ -7,7 +7,7 @@
 #include "sort_debug_info.hpp"
 #include "sort.hpp"
 
-const size_t MEM_SIZE = LEN * LEN * sizeof(uint32_t);
+const size_t MEM_SIZE = LEN * LEN * (DMA_WIDTH / 32);
 
 #include "core/systems/esp_system.hpp"
 

@@ -1,1 +1,3 @@
-sort_plm_block 1024 32 1w:1r
+sort_plm_block_1w1r 1024 32 1w:1r
+sort_plm_block_2w1r 1024 32 2w:1r
+sort_plm_block_1w2r 1024 32 1w:2r

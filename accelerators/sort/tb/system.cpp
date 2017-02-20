@@ -132,14 +132,16 @@ void system_t::load_memory()
 	vectors = new float[SORT_LEN * SORT_BATCH];
 	gold = new float[SORT_LEN * SORT_BATCH];
 
+	const uint32_t ratio = DMA_WIDTH / 32;
 	for (int32_t j = 0; j < SORT_BATCH; j++)
-		for (uint32_t i = 0; i < SORT_LEN; i++) {
-			float data_fl = ((float) rand () / (float) RAND_MAX);
-			uint32_t data_uint = *((uint32_t *) &data_fl);
-			sc_dt::sc_bv<32> data_bv(data_uint);
-			gold[SORT_LEN * j + i] = data_fl;
-			mem[SORT_LEN * j + i] = data_bv;
-		}
+		for (uint32_t i = 0; i < SORT_LEN / ratio; i++)
+			for (uint32_t k = 0; k < ratio; k++) {
+				float data_fl = ((float) rand () / (float) RAND_MAX);
+				uint32_t data_uint = *((uint32_t *) &data_fl);
+				sc_dt::sc_bv<32> data_bv(data_uint);
+				gold[SORT_LEN * j + i * ratio + k] = data_fl;
+				mem[SORT_LEN * j / ratio + i].range(32 * (k + 1) - 1, 32 * k) = data_bv;
+			}
 
 	ESP_REPORT_INFO("load memory completed");
 }
@@ -147,14 +149,15 @@ void system_t::load_memory()
 void system_t::dump_memory()
 {
 	// Get results
+	const uint32_t ratio = DMA_WIDTH / 32;
 	for (int32_t j = 0; j < SORT_BATCH; j++)
-		for (uint32_t i = 0; i < SORT_LEN; i++) {
-			sc_dt::sc_bv<32> data_bv = mem[SORT_LEN * j + i];
-			uint32_t data_uint = data_bv.to_uint();
-			float data_fl = *((float *) &data_uint);
-			vectors[SORT_LEN * j + i] = data_fl;
-		}
-
+		for (uint32_t i = 0; i < SORT_LEN / ratio; i++)
+			for (uint32_t k = 0; k < ratio; k++) {
+				sc_dt::sc_bv<32> data_bv = mem[SORT_LEN * j / ratio + i].range(32 * (k + 1) - 1, 32 * k);
+				uint32_t data_uint = data_bv.to_uint();
+				float data_fl = *((float *) &data_uint);
+				vectors[SORT_LEN * j + i * ratio + k] = data_fl;
+			}
 
 	ESP_REPORT_INFO("dump memory completed");
 }
