@@ -603,7 +603,7 @@ class memory():
 
 
 
-    def gen(self, lib, area_log):
+    def gen(self, lib):
         # Determine memory requirements (first pass over ops list)
         self.__find_hbanks()
         self.__find_vbanks(lib)
@@ -622,7 +622,6 @@ class memory():
         print("        " + "Write interfaces are assigned to ports " + str(self.write_ports))
         print("        " + "Read interfaces are assigned to ports " + str(self.read_ports))
         print("        " + "Total area " + str(self.area))
-        area_log.write(self.name + " " + str(self.area) + "\n")
 
 
     def write_tb(self, tb_path):
@@ -1092,20 +1091,14 @@ print("  INFO: Stratus memory library path: ./memlib")
 if not os.path.exists("memlib"):
     os.makedirs("memlib")
 
-try:
-    area_log = open("memlib/area.log", 'w')
-except IOError as e:
-    die_werr(e)
-
 
 print("  INFO: Memory list file: " + infile)
 read_infile(infile, mem_list)
 for mem in mem_list:
     mem.print()
-    mem.gen(sram_list, area_log)
+    mem.gen(sram_list)
     mem.write_verilog(out_path)
     mem.write_tb(tb_path)
     mem.write_hpp()
     mem.write_bdm(out_path, tech_path)
 
-area_log.close()
