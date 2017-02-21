@@ -15,6 +15,7 @@ use work.config_types.all;
 use work.config.all;
 use work.amba.all;
 use work.stdlib.all;
+use work.sld_devices.all;
 use work.devices.all;
 use work.gencomp.all;
 

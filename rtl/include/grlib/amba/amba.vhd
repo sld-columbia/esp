@@ -34,6 +34,7 @@ use std.textio.all;
 use work.config_types.all;
 use work.config.all;
 use work.stdlib.all;
+use work.sld_devices.all;
 
 package amba is
 
@@ -281,8 +282,6 @@ type apb_config_type is array (0 to NAPBCFG-1) of amba_config_word;
 
   constant AMBA_CONFIG_VER0  : std_logic_vector(1 downto 0) := "00";
 
-  subtype amba_vendor_type  is integer range 0 to  16#ff#;
-  subtype amba_device_type  is integer range 0 to 16#3ff#;
   subtype amba_version_type is integer range 0 to  16#3f#;
   subtype amba_cfgver_type  is integer range 0 to      3;
   subtype amba_irq_type     is integer range 0 to NAHBIRQ-1;
@@ -324,7 +323,7 @@ type apb_config_type is array (0 to NAPBCFG-1) of amba_config_word;
 -- Subprograms
 -------------------------------------------------------------------------------
 
-  function ahb_device_reg(vendor : amba_vendor_type; device : amba_device_type;
+  function ahb_device_reg(vendor : vendor_t; device : devid_t;
         cfgver : amba_cfgver_type; version : amba_version_type;
         interrupt : amba_irq_type)
   return std_logic_vector;
@@ -928,16 +927,7 @@ component ahbxb is
       apbo       : in apb_slv_out_vector;
       err        : out std_ulogic);
   end component;
-  
-  subtype vendor_description is string(1 to 24);
-  subtype device_description is string(1 to 31);
-  type device_table_type is array (0 to 1023) of device_description;
-  type vendor_library_type is record
-    vendorid     : amba_vendor_type;
-    vendordesc   : vendor_description;
-    device_table : device_table_type;
-  end record;
-  type device_array is array (0 to 255) of vendor_library_type;
+
 
 -- pragma translate_on
 
@@ -945,7 +935,7 @@ end;
 
 package body amba is
 
-  function ahb_device_reg(vendor : amba_vendor_type; device : amba_device_type;
+  function ahb_device_reg(vendor : vendor_t; device : devid_t;
         cfgver : amba_cfgver_type; version : amba_version_type;
         interrupt : amba_irq_type)
   return std_logic_vector is

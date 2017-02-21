@@ -34,6 +34,7 @@ use ieee.std_logic_textio.all;
 
 use work.amba.all;
 use work.stdlib.all;
+use work.sld_devices.all;
 use work.devices.all;
 
 use work.gencomp.all;
@@ -54,7 +55,7 @@ entity dvfs_top is
     paddr                 : integer                            := 0;
     pmask                 : integer                            := 16#fff#;
     revision              : integer                            := 0;
-    devid                 : amba_device_type                   := 16#001#);
+    devid                 : devid_t                   := 16#001#);
   port (
     rst       : in  std_ulogic;
     clk       : in  std_ulogic;

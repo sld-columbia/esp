@@ -12,6 +12,7 @@ use ieee.std_logic_1164.all;
 
 use work.amba.all;
 use work.stdlib.all;
+use work.sld_devices.all;
 use work.devices.all;
 
 use work.gencomp.all;
@@ -36,7 +37,7 @@ entity acc_dma2bus is
     pirq                  : integer                            := 0;
     memtech               : integer range 0 to NTECH           := 0;
     revision              : integer                            := 0;
-    devid                 : amba_device_type                   := 16#001#;
+    devid                 : devid_t                   := 16#001#;
     available_reg_mask    : std_logic_vector(0 to MAXREGNUM-1) := (others => '1');
     rdonly_reg_mask       : std_logic_vector(0 to MAXREGNUM-1) := (others => '0');
     exp_registers         : integer range 0 to 1               := 0;  -- Not implemented

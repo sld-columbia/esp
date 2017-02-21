@@ -30,6 +30,7 @@ use ieee.numeric_std.all;
 
 use work.amba.all;
 use work.stdlib.all;
+use work.sld_devices.all;
 use work.devices.all;
 use work.leon3.all;
 use work.gencomp.all;
@@ -184,7 +185,7 @@ package soctiles is
       local_x        : local_yx;
       io_y           : local_yx;
       io_x           : local_yx;
-      device         : amba_device_type;
+      device         : devid_t;
       pindex         : integer;
       paddr          : integer;
       pmask          : integer;

@@ -6,6 +6,7 @@ library ieee;
 use ieee.std_logic_1164.all;
 use work.amba.all;
 use work.stdlib.all;
+use work.sld_devices.all;
 use work.devices.all;
 use work.gencomp.all;
 use work.sldcommon.all;
@@ -26,7 +27,7 @@ entity tile_acc is
     local_x             : local_yx := "011";
     io_y                : local_yx := "001";
     io_x                : local_yx := "010";
-    device              : amba_device_type := SLD_SORT;
+    device              : devid_t := SLD_SORT;
     pindex              : integer := 5;
     paddr               : integer := 16#105#;
     pmask               : integer := 16#fff#;

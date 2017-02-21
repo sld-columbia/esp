@@ -42,6 +42,7 @@ use ieee.std_logic_textio.all;
 
 use work.amba.all;
 use work.stdlib.all;
+use work.sld_devices.all;
 use work.devices.all;
 
 use work.gencomp.all;

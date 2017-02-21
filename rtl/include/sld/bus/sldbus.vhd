@@ -12,6 +12,7 @@ use ieee.std_logic_1164.all;
 
 use work.amba.all;
 use work.stdlib.all;
+use work.sld_devices.all;
 use work.devices.all;
 
 use work.gencomp.all;
@@ -31,7 +32,7 @@ package sldbus is
       pirq               : integer;
       memtech            : integer range 0 to NTECH;
       revision           : integer;
-      devid              : amba_device_type;
+      devid              : devid_t;
       available_reg_mask : std_logic_vector(0 to MAXREGNUM-1);
       rdonly_reg_mask    : std_logic_vector(0 to MAXREGNUM-1);
       exp_registers      : integer range 0 to 1;

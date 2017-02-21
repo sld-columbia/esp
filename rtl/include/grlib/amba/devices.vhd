@@ -27,7 +27,7 @@
 library ieee;
 use ieee.std_logic_1164.all;
 use work.amba.all;
-use work.sld_devices.all
+use work.sld_devices.all;
 -- pragma translate_off
 use std.textio.all;
 -- pragma translate_on
@@ -36,324 +36,324 @@ package devices is
 
 -- Vendor codes
 
-  constant VENDOR_RESERVED   : amba_vendor_type := 16#00#;  -- Do not use!
-  constant VENDOR_GAISLER    : amba_vendor_type := 16#01#;
-  constant VENDOR_PENDER     : amba_vendor_type := 16#02#;
-  constant VENDOR_ESA        : amba_vendor_type := 16#04#;
-  constant VENDOR_ASTRIUM    : amba_vendor_type := 16#06#;
-  constant VENDOR_OPENCHIP   : amba_vendor_type := 16#07#;
-  constant VENDOR_OPENCORES  : amba_vendor_type := 16#08#;
-  constant VENDOR_CONTRIB    : amba_vendor_type := 16#09#;
-  constant VENDOR_DLR        : amba_vendor_type := 16#0A#;
-  constant VENDOR_EONIC      : amba_vendor_type := 16#0B#;
-  constant VENDOR_TELECOMPT  : amba_vendor_type := 16#0C#;
-  constant VENDOR_DTU        : amba_vendor_type := 16#0D#;
-  constant VENDOR_BSC        : amba_vendor_type := 16#0E#;
-  constant VENDOR_RADIONOR   : amba_vendor_type := 16#0F#;
-  constant VENDOR_GLEICHMANN : amba_vendor_type := 16#10#;
-  constant VENDOR_MENTA      : amba_vendor_type := 16#11#;
-  constant VENDOR_SUN        : amba_vendor_type := 16#13#;
-  constant VENDOR_MOVIDIA    : amba_vendor_type := 16#14#;
-  constant VENDOR_ORBITA     : amba_vendor_type := 16#17#;
-  constant VENDOR_SYNOPSYS   : amba_vendor_type := 16#21#;
-  constant VENDOR_NASA       : amba_vendor_type := 16#22#;
-  constant VENDOR_S3         : amba_vendor_type := 16#31#;
-  constant VENDOR_ACTEL      : amba_vendor_type := 16#AC#;
-  constant VENDOR_APPLECORE  : amba_vendor_type := 16#AE#;
-  constant VENDOR_C3E        : amba_vendor_type := 16#C3#;
-  constant VENDOR_CBKPAN     : amba_vendor_type := 16#C8#;
-  constant VENDOR_CAL        : amba_vendor_type := 16#CA#;
-  constant VENDOR_CETON      : amba_vendor_type := 16#CB#;
-  constant VENDOR_EMBEDDIT   : amba_vendor_type := 16#EA#;
-  constant VENDOR_NASA_GSFC  : amba_vendor_type := 16#FC#;
+  constant VENDOR_RESERVED   : vendor_t := 16#00#;  -- Do not use!
+  constant VENDOR_GAISLER    : vendor_t := 16#01#;
+  constant VENDOR_PENDER     : vendor_t := 16#02#;
+  constant VENDOR_ESA        : vendor_t := 16#04#;
+  constant VENDOR_ASTRIUM    : vendor_t := 16#06#;
+  constant VENDOR_OPENCHIP   : vendor_t := 16#07#;
+  constant VENDOR_OPENCORES  : vendor_t := 16#08#;
+  constant VENDOR_CONTRIB    : vendor_t := 16#09#;
+  constant VENDOR_DLR        : vendor_t := 16#0A#;
+  constant VENDOR_EONIC      : vendor_t := 16#0B#;
+  constant VENDOR_TELECOMPT  : vendor_t := 16#0C#;
+  constant VENDOR_DTU        : vendor_t := 16#0D#;
+  constant VENDOR_BSC        : vendor_t := 16#0E#;
+  constant VENDOR_RADIONOR   : vendor_t := 16#0F#;
+  constant VENDOR_GLEICHMANN : vendor_t := 16#10#;
+  constant VENDOR_MENTA      : vendor_t := 16#11#;
+  constant VENDOR_SUN        : vendor_t := 16#13#;
+  constant VENDOR_MOVIDIA    : vendor_t := 16#14#;
+  constant VENDOR_ORBITA     : vendor_t := 16#17#;
+  constant VENDOR_SYNOPSYS   : vendor_t := 16#21#;
+  constant VENDOR_NASA       : vendor_t := 16#22#;
+  constant VENDOR_S3         : vendor_t := 16#31#;
+  constant VENDOR_ACTEL      : vendor_t := 16#AC#;
+  constant VENDOR_APPLECORE  : vendor_t := 16#AE#;
+  constant VENDOR_C3E        : vendor_t := 16#C3#;
+  constant VENDOR_CBKPAN     : vendor_t := 16#C8#;
+  constant VENDOR_CAL        : vendor_t := 16#CA#;
+  constant VENDOR_CETON      : vendor_t := 16#CB#;
+  constant VENDOR_EMBEDDIT   : vendor_t := 16#EA#;
+  constant VENDOR_NASA_GSFC  : vendor_t := 16#FC#;
 
 -- Cobham Gaisler device ids
 
-  constant GAISLER_LEON2DSU  : amba_device_type := 16#002#;
-  constant GAISLER_LEON3     : amba_device_type := 16#003#;
-  constant GAISLER_LEON3DSU  : amba_device_type := 16#004#;
-  constant GAISLER_ETHAHB    : amba_device_type := 16#005#;
-  constant GAISLER_APBMST    : amba_device_type := 16#006#;
-  constant GAISLER_AHBUART   : amba_device_type := 16#007#;
-  constant GAISLER_SRCTRL    : amba_device_type := 16#008#;
-  constant GAISLER_SDCTRL    : amba_device_type := 16#009#;
-  constant GAISLER_SSRCTRL   : amba_device_type := 16#00A#;
-  constant GAISLER_I2C2AHB   : amba_device_type := 16#00B#;
-  constant GAISLER_APBUART   : amba_device_type := 16#00C#;
-  constant GAISLER_IRQMP     : amba_device_type := 16#00D#;
-  constant GAISLER_AHBRAM    : amba_device_type := 16#00E#;
-  constant GAISLER_AHBDPRAM  : amba_device_type := 16#00F#;
-  constant GAISLER_GRIOMMU2  : amba_device_type := 16#010#;
-  constant GAISLER_GPTIMER   : amba_device_type := 16#011#;
-  constant GAISLER_PCITRG    : amba_device_type := 16#012#;
-  constant GAISLER_PCISBRG   : amba_device_type := 16#013#;
-  constant GAISLER_PCIFBRG   : amba_device_type := 16#014#;
-  constant GAISLER_PCITRACE  : amba_device_type := 16#015#;
-  constant GAISLER_DMACTRL   : amba_device_type := 16#016#;
-  constant GAISLER_AHBTRACE  : amba_device_type := 16#017#;
-  constant GAISLER_DSUCTRL   : amba_device_type := 16#018#;
-  constant GAISLER_CANAHB    : amba_device_type := 16#019#;
-  constant GAISLER_GPIO      : amba_device_type := 16#01A#;
-  constant GAISLER_AHBROM    : amba_device_type := 16#01B#;
-  constant GAISLER_AHBJTAG   : amba_device_type := 16#01C#;
-  constant GAISLER_ETHMAC    : amba_device_type := 16#01D#;
-  constant GAISLER_SWNODE    : amba_device_type := 16#01E#;
-  constant GAISLER_SPW       : amba_device_type := 16#01F#;
-  constant GAISLER_AHB2AHB   : amba_device_type := 16#020#;
-  constant GAISLER_USBDC     : amba_device_type := 16#021#;
-  constant GAISLER_USB_DCL   : amba_device_type := 16#022#;
-  constant GAISLER_DDRMP     : amba_device_type := 16#023#;
-  constant GAISLER_ATACTRL   : amba_device_type := 16#024#;
-  constant GAISLER_DDRSP     : amba_device_type := 16#025#;
-  constant GAISLER_EHCI      : amba_device_type := 16#026#;
-  constant GAISLER_UHCI      : amba_device_type := 16#027#;
-  constant GAISLER_I2CMST    : amba_device_type := 16#028#;
-  constant GAISLER_SPW2      : amba_device_type := 16#029#;
-  constant GAISLER_AHBDMA    : amba_device_type := 16#02A#;
-  constant GAISLER_NUHOSP3   : amba_device_type := 16#02B#;
-  constant GAISLER_CLKGATE   : amba_device_type := 16#02C#;
-  constant GAISLER_SPICTRL   : amba_device_type := 16#02D#;
-  constant GAISLER_DDR2SP    : amba_device_type := 16#02E#;
-  constant GAISLER_SLINK     : amba_device_type := 16#02F#;
-  constant GAISLER_GRTM      : amba_device_type := 16#030#;
-  constant GAISLER_GRTC      : amba_device_type := 16#031#;
-  constant GAISLER_GRPW      : amba_device_type := 16#032#;
-  constant GAISLER_GRCTM     : amba_device_type := 16#033#;
-  constant GAISLER_GRHCAN    : amba_device_type := 16#034#;
-  constant GAISLER_GRFIFO    : amba_device_type := 16#035#;
-  constant GAISLER_GRADCDAC  : amba_device_type := 16#036#;
-  constant GAISLER_GRPULSE   : amba_device_type := 16#037#;
-  constant GAISLER_GRTIMER   : amba_device_type := 16#038#;
-  constant GAISLER_AHB2PP    : amba_device_type := 16#039#;
-  constant GAISLER_GRVERSION : amba_device_type := 16#03A#;
-  constant GAISLER_APB2PW    : amba_device_type := 16#03B#;
-  constant GAISLER_PW2APB    : amba_device_type := 16#03C#;
-  constant GAISLER_GRCAN     : amba_device_type := 16#03D#;
-  constant GAISLER_I2CSLV    : amba_device_type := 16#03E#;
-  constant GAISLER_U16550    : amba_device_type := 16#03F#;
-  constant GAISLER_AHBMST_EM : amba_device_type := 16#040#;
-  constant GAISLER_AHBSLV_EM : amba_device_type := 16#041#;
-  constant GAISLER_GRTESTMOD : amba_device_type := 16#042#;
-  constant GAISLER_ASCS      : amba_device_type := 16#043#;
-  constant GAISLER_IPMVBCTRL : amba_device_type := 16#044#;
-  constant GAISLER_SPIMCTRL  : amba_device_type := 16#045#;
-  constant GAISLER_L4STAT    : amba_device_type := 16#047#;
-  constant GAISLER_LEON4     : amba_device_type := 16#048#;
-  constant GAISLER_LEON4DSU  : amba_device_type := 16#049#;
-  constant GAISLER_PWM       : amba_device_type := 16#04A#;
-  constant GAISLER_L2CACHE   : amba_device_type := 16#04B#;
-  constant GAISLER_SDCTRL64  : amba_device_type := 16#04C#;
-  constant GAISLER_GR1553B   : amba_device_type := 16#04D#;
-  constant GAISLER_1553TST   : amba_device_type := 16#04E#;
-  constant GAISLER_GRIOMMU   : amba_device_type := 16#04F#;
-  constant GAISLER_FTAHBRAM  : amba_device_type := 16#050#;
-  constant GAISLER_FTSRCTRL  : amba_device_type := 16#051#;
-  constant GAISLER_AHBSTAT   : amba_device_type := 16#052#;
-  constant GAISLER_LEON3FT   : amba_device_type := 16#053#;
-  constant GAISLER_FTMCTRL   : amba_device_type := 16#054#;
-  constant GAISLER_FTSDCTRL  : amba_device_type := 16#055#;
-  constant GAISLER_FTSRCTRL8 : amba_device_type := 16#056#;
-  constant GAISLER_MEMSCRUB  : amba_device_type := 16#057#;
-  constant GAISLER_FTSDCTRL64: amba_device_type := 16#058#;
-  constant GAISLER_NANDFCTRL : amba_device_type := 16#059#;
-  constant GAISLER_N2DLLCTRL : amba_device_type := 16#05A#;
-  constant GAISLER_N2PLLCTRL : amba_device_type := 16#05B#;
-  constant GAISLER_SPI2AHB   : amba_device_type := 16#05C#;
-  constant GAISLER_DDRSDMUX  : amba_device_type := 16#05D#;
-  constant GAISLER_AHBFROM   : amba_device_type := 16#05E#;
-  constant GAISLER_PCIEXP    : amba_device_type := 16#05F#;
-  constant GAISLER_APBPS2    : amba_device_type := 16#060#;
-  constant GAISLER_VGACTRL   : amba_device_type := 16#061#;
-  constant GAISLER_LOGAN     : amba_device_type := 16#062#;
-  constant GAISLER_SVGACTRL  : amba_device_type := 16#063#;
-  constant GAISLER_T1AHB     : amba_device_type := 16#064#;
-  constant GAISLER_MP7WRAP   : amba_device_type := 16#065#;
-  constant GAISLER_GRSYSMON  : amba_device_type := 16#066#;
-  constant GAISLER_GRACECTRL : amba_device_type := 16#067#;
-  constant GAISLER_ATAHBSLV  : amba_device_type := 16#068#;
-  constant GAISLER_ATAHBMST  : amba_device_type := 16#069#;
-  constant GAISLER_ATAPBSLV  : amba_device_type := 16#06A#;
-  constant GAISLER_MIGDDR2   : amba_device_type := 16#06B#;
-  constant GAISLER_LCDCTRL   : amba_device_type := 16#06C#;
-  constant GAISLER_SWITCHOVER: amba_device_type := 16#06D#;
-  constant GAISLER_FIFOUART  : amba_device_type := 16#06E#;
-  constant GAISLER_MUXCTRL   : amba_device_type := 16#06F#;
-  constant GAISLER_B1553BC   : amba_device_type := 16#070#;
-  constant GAISLER_B1553RT   : amba_device_type := 16#071#;
-  constant GAISLER_B1553BRM  : amba_device_type := 16#072#;
-  constant GAISLER_AES       : amba_device_type := 16#073#;
-  constant GAISLER_ECC       : amba_device_type := 16#074#;
-  constant GAISLER_PCIF      : amba_device_type := 16#075#;
-  constant GAISLER_CLKMOD    : amba_device_type := 16#076#;
-  constant GAISLER_HAPSTRAK  : amba_device_type := 16#077#;
-  constant GAISLER_TEST_1X2  : amba_device_type := 16#078#;
-  constant GAISLER_WILD2AHB  : amba_device_type := 16#079#;
-  constant GAISLER_BIO1      : amba_device_type := 16#07A#;
-  constant GAISLER_AESDMA    : amba_device_type := 16#07B#;
-  constant GAISLER_GRPCI2    : amba_device_type := 16#07C#;
-  constant GAISLER_GRPCI2_DMA: amba_device_type := 16#07D#;
-  constant GAISLER_GRPCI2_TB : amba_device_type := 16#07E#;
-  constant GAISLER_MMA       : amba_device_type := 16#07F#;
-  constant GAISLER_SATCAN    : amba_device_type := 16#080#;
-  constant GAISLER_CANMUX    : amba_device_type := 16#081#;
-  constant GAISLER_GRTMRX    : amba_device_type := 16#082#;
-  constant GAISLER_GRTCTX    : amba_device_type := 16#083#;
-  constant GAISLER_GRTMDESC  : amba_device_type := 16#084#;
-  constant GAISLER_GRTMVC    : amba_device_type := 16#085#;
-  constant GAISLER_GEFFE     : amba_device_type := 16#086#;
-  constant GAISLER_GPREG     : amba_device_type := 16#087#;
-  constant GAISLER_GRTMPAHB  : amba_device_type := 16#088#;
-  constant GAISLER_SPWCUC    : amba_device_type := 16#089#;
-  constant GAISLER_SPW2_DMA  : amba_device_type := 16#08A#;
-  constant GAISLER_SPWROUTER : amba_device_type := 16#08B#;
-  constant GAISLER_EDCLMST   : amba_device_type := 16#08C#;
-  constant GAISLER_GRPWTX    : amba_device_type := 16#08D#;
-  constant GAISLER_GRPWRX    : amba_device_type := 16#08E#;
-  constant GAISLER_GPREGBANK : amba_device_type := 16#08F#;
-  constant GAISLER_MIG_7SERIES   : amba_device_type := 16#090#;
-  constant GAISLER_GRSPW2_SIST   : amba_device_type := 16#091#;
-  constant GAISLER_SGMII     : amba_device_type := 16#092#;
-  constant GAISLER_RGMII     : amba_device_type := 16#093#;
-  constant GAISLER_IRQGEN    : amba_device_type := 16#094#;
-  constant GAISLER_GRDMAC    : amba_device_type := 16#095#;
-  constant GAISLER_AHB2AVLA  : amba_device_type := 16#096#;
-  constant GAISLER_SPWTDP    : amba_device_type := 16#097#;
-  constant GAISLER_L3STAT    : amba_device_type := 16#098#;
-  constant GAISLER_GR740THS  : amba_device_type := 16#099#;
-  constant GAISLER_GRRM      : amba_device_type := 16#09A#;
-  constant GAISLER_CMAP      : amba_device_type := 16#09B#;
-  constant GAISLER_CPGEN     : amba_device_type := 16#09C#;
-  constant GAISLER_AMBAPROT  : amba_device_type := 16#09D#;
-  constant GAISLER_IGLOO2_BRIDGE : amba_device_type := 16#09E#;
-  constant GAISLER_AHB2AXI   : amba_device_type := 16#09F#;
-  constant GAISLER_AXI2AHB   : amba_device_type := 16#0A0#;
-  constant GAISLER_FDIR_RSTCTRL : amba_device_type := 16#0A1#;
-  constant GAISLER_APB3MST   : amba_device_type := 16#0A2#;
-  constant GAISLER_LRAM      : amba_device_type := 16#0A3#;
-  constant GAISLER_BOOTSEQ   : amba_device_type := 16#0A4#;
+  constant GAISLER_LEON2DSU  : devid_t := 16#002#;
+  constant GAISLER_LEON3     : devid_t := 16#003#;
+  constant GAISLER_LEON3DSU  : devid_t := 16#004#;
+  constant GAISLER_ETHAHB    : devid_t := 16#005#;
+  constant GAISLER_APBMST    : devid_t := 16#006#;
+  constant GAISLER_AHBUART   : devid_t := 16#007#;
+  constant GAISLER_SRCTRL    : devid_t := 16#008#;
+  constant GAISLER_SDCTRL    : devid_t := 16#009#;
+  constant GAISLER_SSRCTRL   : devid_t := 16#00A#;
+  constant GAISLER_I2C2AHB   : devid_t := 16#00B#;
+  constant GAISLER_APBUART   : devid_t := 16#00C#;
+  constant GAISLER_IRQMP     : devid_t := 16#00D#;
+  constant GAISLER_AHBRAM    : devid_t := 16#00E#;
+  constant GAISLER_AHBDPRAM  : devid_t := 16#00F#;
+  constant GAISLER_GRIOMMU2  : devid_t := 16#010#;
+  constant GAISLER_GPTIMER   : devid_t := 16#011#;
+  constant GAISLER_PCITRG    : devid_t := 16#012#;
+  constant GAISLER_PCISBRG   : devid_t := 16#013#;
+  constant GAISLER_PCIFBRG   : devid_t := 16#014#;
+  constant GAISLER_PCITRACE  : devid_t := 16#015#;
+  constant GAISLER_DMACTRL   : devid_t := 16#016#;
+  constant GAISLER_AHBTRACE  : devid_t := 16#017#;
+  constant GAISLER_DSUCTRL   : devid_t := 16#018#;
+  constant GAISLER_CANAHB    : devid_t := 16#019#;
+  constant GAISLER_GPIO      : devid_t := 16#01A#;
+  constant GAISLER_AHBROM    : devid_t := 16#01B#;
+  constant GAISLER_AHBJTAG   : devid_t := 16#01C#;
+  constant GAISLER_ETHMAC    : devid_t := 16#01D#;
+  constant GAISLER_SWNODE    : devid_t := 16#01E#;
+  constant GAISLER_SPW       : devid_t := 16#01F#;
+  constant GAISLER_AHB2AHB   : devid_t := 16#020#;
+  constant GAISLER_USBDC     : devid_t := 16#021#;
+  constant GAISLER_USB_DCL   : devid_t := 16#022#;
+  constant GAISLER_DDRMP     : devid_t := 16#023#;
+  constant GAISLER_ATACTRL   : devid_t := 16#024#;
+  constant GAISLER_DDRSP     : devid_t := 16#025#;
+  constant GAISLER_EHCI      : devid_t := 16#026#;
+  constant GAISLER_UHCI      : devid_t := 16#027#;
+  constant GAISLER_I2CMST    : devid_t := 16#028#;
+  constant GAISLER_SPW2      : devid_t := 16#029#;
+  constant GAISLER_AHBDMA    : devid_t := 16#02A#;
+  constant GAISLER_NUHOSP3   : devid_t := 16#02B#;
+  constant GAISLER_CLKGATE   : devid_t := 16#02C#;
+  constant GAISLER_SPICTRL   : devid_t := 16#02D#;
+  constant GAISLER_DDR2SP    : devid_t := 16#02E#;
+  constant GAISLER_SLINK     : devid_t := 16#02F#;
+  constant GAISLER_GRTM      : devid_t := 16#030#;
+  constant GAISLER_GRTC      : devid_t := 16#031#;
+  constant GAISLER_GRPW      : devid_t := 16#032#;
+  constant GAISLER_GRCTM     : devid_t := 16#033#;
+  constant GAISLER_GRHCAN    : devid_t := 16#034#;
+  constant GAISLER_GRFIFO    : devid_t := 16#035#;
+  constant GAISLER_GRADCDAC  : devid_t := 16#036#;
+  constant GAISLER_GRPULSE   : devid_t := 16#037#;
+  constant GAISLER_GRTIMER   : devid_t := 16#038#;
+  constant GAISLER_AHB2PP    : devid_t := 16#039#;
+  constant GAISLER_GRVERSION : devid_t := 16#03A#;
+  constant GAISLER_APB2PW    : devid_t := 16#03B#;
+  constant GAISLER_PW2APB    : devid_t := 16#03C#;
+  constant GAISLER_GRCAN     : devid_t := 16#03D#;
+  constant GAISLER_I2CSLV    : devid_t := 16#03E#;
+  constant GAISLER_U16550    : devid_t := 16#03F#;
+  constant GAISLER_AHBMST_EM : devid_t := 16#040#;
+  constant GAISLER_AHBSLV_EM : devid_t := 16#041#;
+  constant GAISLER_GRTESTMOD : devid_t := 16#042#;
+  constant GAISLER_ASCS      : devid_t := 16#043#;
+  constant GAISLER_IPMVBCTRL : devid_t := 16#044#;
+  constant GAISLER_SPIMCTRL  : devid_t := 16#045#;
+  constant GAISLER_L4STAT    : devid_t := 16#047#;
+  constant GAISLER_LEON4     : devid_t := 16#048#;
+  constant GAISLER_LEON4DSU  : devid_t := 16#049#;
+  constant GAISLER_PWM       : devid_t := 16#04A#;
+  constant GAISLER_L2CACHE   : devid_t := 16#04B#;
+  constant GAISLER_SDCTRL64  : devid_t := 16#04C#;
+  constant GAISLER_GR1553B   : devid_t := 16#04D#;
+  constant GAISLER_1553TST   : devid_t := 16#04E#;
+  constant GAISLER_GRIOMMU   : devid_t := 16#04F#;
+  constant GAISLER_FTAHBRAM  : devid_t := 16#050#;
+  constant GAISLER_FTSRCTRL  : devid_t := 16#051#;
+  constant GAISLER_AHBSTAT   : devid_t := 16#052#;
+  constant GAISLER_LEON3FT   : devid_t := 16#053#;
+  constant GAISLER_FTMCTRL   : devid_t := 16#054#;
+  constant GAISLER_FTSDCTRL  : devid_t := 16#055#;
+  constant GAISLER_FTSRCTRL8 : devid_t := 16#056#;
+  constant GAISLER_MEMSCRUB  : devid_t := 16#057#;
+  constant GAISLER_FTSDCTRL64: devid_t := 16#058#;
+  constant GAISLER_NANDFCTRL : devid_t := 16#059#;
+  constant GAISLER_N2DLLCTRL : devid_t := 16#05A#;
+  constant GAISLER_N2PLLCTRL : devid_t := 16#05B#;
+  constant GAISLER_SPI2AHB   : devid_t := 16#05C#;
+  constant GAISLER_DDRSDMUX  : devid_t := 16#05D#;
+  constant GAISLER_AHBFROM   : devid_t := 16#05E#;
+  constant GAISLER_PCIEXP    : devid_t := 16#05F#;
+  constant GAISLER_APBPS2    : devid_t := 16#060#;
+  constant GAISLER_VGACTRL   : devid_t := 16#061#;
+  constant GAISLER_LOGAN     : devid_t := 16#062#;
+  constant GAISLER_SVGACTRL  : devid_t := 16#063#;
+  constant GAISLER_T1AHB     : devid_t := 16#064#;
+  constant GAISLER_MP7WRAP   : devid_t := 16#065#;
+  constant GAISLER_GRSYSMON  : devid_t := 16#066#;
+  constant GAISLER_GRACECTRL : devid_t := 16#067#;
+  constant GAISLER_ATAHBSLV  : devid_t := 16#068#;
+  constant GAISLER_ATAHBMST  : devid_t := 16#069#;
+  constant GAISLER_ATAPBSLV  : devid_t := 16#06A#;
+  constant GAISLER_MIGDDR2   : devid_t := 16#06B#;
+  constant GAISLER_LCDCTRL   : devid_t := 16#06C#;
+  constant GAISLER_SWITCHOVER: devid_t := 16#06D#;
+  constant GAISLER_FIFOUART  : devid_t := 16#06E#;
+  constant GAISLER_MUXCTRL   : devid_t := 16#06F#;
+  constant GAISLER_B1553BC   : devid_t := 16#070#;
+  constant GAISLER_B1553RT   : devid_t := 16#071#;
+  constant GAISLER_B1553BRM  : devid_t := 16#072#;
+  constant GAISLER_AES       : devid_t := 16#073#;
+  constant GAISLER_ECC       : devid_t := 16#074#;
+  constant GAISLER_PCIF      : devid_t := 16#075#;
+  constant GAISLER_CLKMOD    : devid_t := 16#076#;
+  constant GAISLER_HAPSTRAK  : devid_t := 16#077#;
+  constant GAISLER_TEST_1X2  : devid_t := 16#078#;
+  constant GAISLER_WILD2AHB  : devid_t := 16#079#;
+  constant GAISLER_BIO1      : devid_t := 16#07A#;
+  constant GAISLER_AESDMA    : devid_t := 16#07B#;
+  constant GAISLER_GRPCI2    : devid_t := 16#07C#;
+  constant GAISLER_GRPCI2_DMA: devid_t := 16#07D#;
+  constant GAISLER_GRPCI2_TB : devid_t := 16#07E#;
+  constant GAISLER_MMA       : devid_t := 16#07F#;
+  constant GAISLER_SATCAN    : devid_t := 16#080#;
+  constant GAISLER_CANMUX    : devid_t := 16#081#;
+  constant GAISLER_GRTMRX    : devid_t := 16#082#;
+  constant GAISLER_GRTCTX    : devid_t := 16#083#;
+  constant GAISLER_GRTMDESC  : devid_t := 16#084#;
+  constant GAISLER_GRTMVC    : devid_t := 16#085#;
+  constant GAISLER_GEFFE     : devid_t := 16#086#;
+  constant GAISLER_GPREG     : devid_t := 16#087#;
+  constant GAISLER_GRTMPAHB  : devid_t := 16#088#;
+  constant GAISLER_SPWCUC    : devid_t := 16#089#;
+  constant GAISLER_SPW2_DMA  : devid_t := 16#08A#;
+  constant GAISLER_SPWROUTER : devid_t := 16#08B#;
+  constant GAISLER_EDCLMST   : devid_t := 16#08C#;
+  constant GAISLER_GRPWTX    : devid_t := 16#08D#;
+  constant GAISLER_GRPWRX    : devid_t := 16#08E#;
+  constant GAISLER_GPREGBANK : devid_t := 16#08F#;
+  constant GAISLER_MIG_7SERIES   : devid_t := 16#090#;
+  constant GAISLER_GRSPW2_SIST   : devid_t := 16#091#;
+  constant GAISLER_SGMII     : devid_t := 16#092#;
+  constant GAISLER_RGMII     : devid_t := 16#093#;
+  constant GAISLER_IRQGEN    : devid_t := 16#094#;
+  constant GAISLER_GRDMAC    : devid_t := 16#095#;
+  constant GAISLER_AHB2AVLA  : devid_t := 16#096#;
+  constant GAISLER_SPWTDP    : devid_t := 16#097#;
+  constant GAISLER_L3STAT    : devid_t := 16#098#;
+  constant GAISLER_GR740THS  : devid_t := 16#099#;
+  constant GAISLER_GRRM      : devid_t := 16#09A#;
+  constant GAISLER_CMAP      : devid_t := 16#09B#;
+  constant GAISLER_CPGEN     : devid_t := 16#09C#;
+  constant GAISLER_AMBAPROT  : devid_t := 16#09D#;
+  constant GAISLER_IGLOO2_BRIDGE : devid_t := 16#09E#;
+  constant GAISLER_AHB2AXI   : devid_t := 16#09F#;
+  constant GAISLER_AXI2AHB   : devid_t := 16#0A0#;
+  constant GAISLER_FDIR_RSTCTRL : devid_t := 16#0A1#;
+  constant GAISLER_APB3MST   : devid_t := 16#0A2#;
+  constant GAISLER_LRAM      : devid_t := 16#0A3#;
+  constant GAISLER_BOOTSEQ   : devid_t := 16#0A4#;
 
 -- Sun Microsystems
 
-  constant SUN_T1             : amba_device_type := 16#001#;
-  constant SUN_S1             : amba_device_type := 16#011#;
+  constant SUN_T1             : devid_t := 16#001#;
+  constant SUN_S1             : devid_t := 16#011#;
 
 -- Caltech
 
-  constant CAL_DDRCTRL        : amba_device_type := 16#188#;
+  constant CAL_DDRCTRL        : devid_t := 16#188#;
 
 -- CBK PAN
-  constant CBKPAN_FTNANDCTRL    : amba_device_type := 16#001#;
-  constant CBKPAN_FTEEPROMCTRL  : amba_device_type := 16#002#;
-  constant CBKPAN_FTSDCTRL16    : amba_device_type := 16#003#;
-  constant CBKPAN_STIXCTRL      : amba_device_type := 16#300#;
+  constant CBKPAN_FTNANDCTRL    : devid_t := 16#001#;
+  constant CBKPAN_FTEEPROMCTRL  : devid_t := 16#002#;
+  constant CBKPAN_FTSDCTRL16    : devid_t := 16#003#;
+  constant CBKPAN_STIXCTRL      : devid_t := 16#300#;
 
 -- European Space Agency device ids
 
-  constant ESA_LEON2        : amba_device_type := 16#002#;
-  constant ESA_LEON2APB     : amba_device_type := 16#003#;
-  constant ESA_IRQ          : amba_device_type := 16#005#;
-  constant ESA_TIMER        : amba_device_type := 16#006#;
-  constant ESA_UART         : amba_device_type := 16#007#;
-  constant ESA_CFG          : amba_device_type := 16#008#;
-  constant ESA_IO           : amba_device_type := 16#009#;
-  constant ESA_MCTRL        : amba_device_type := 16#00F#;
-  constant ESA_PCIARB       : amba_device_type := 16#010#;
-  constant ESA_HURRICANE    : amba_device_type := 16#011#;
-  constant ESA_SPW_RMAP     : amba_device_type := 16#012#;
-  constant ESA_AHBUART      : amba_device_type := 16#013#;
-  constant ESA_SPWA         : amba_device_type := 16#014#;
-  constant ESA_BOSCHCAN     : amba_device_type := 16#015#;
-  constant ESA_IRQ2         : amba_device_type := 16#016#;
-  constant ESA_AHBSTAT      : amba_device_type := 16#017#;
-  constant ESA_WPROT        : amba_device_type := 16#018#;
-  constant ESA_WPROT2       : amba_device_type := 16#019#;
+  constant ESA_LEON2        : devid_t := 16#002#;
+  constant ESA_LEON2APB     : devid_t := 16#003#;
+  constant ESA_IRQ          : devid_t := 16#005#;
+  constant ESA_TIMER        : devid_t := 16#006#;
+  constant ESA_UART         : devid_t := 16#007#;
+  constant ESA_CFG          : devid_t := 16#008#;
+  constant ESA_IO           : devid_t := 16#009#;
+  constant ESA_MCTRL        : devid_t := 16#00F#;
+  constant ESA_PCIARB       : devid_t := 16#010#;
+  constant ESA_HURRICANE    : devid_t := 16#011#;
+  constant ESA_SPW_RMAP     : devid_t := 16#012#;
+  constant ESA_AHBUART      : devid_t := 16#013#;
+  constant ESA_SPWA         : devid_t := 16#014#;
+  constant ESA_BOSCHCAN     : devid_t := 16#015#;
+  constant ESA_IRQ2         : devid_t := 16#016#;
+  constant ESA_AHBSTAT      : devid_t := 16#017#;
+  constant ESA_WPROT        : devid_t := 16#018#;
+  constant ESA_WPROT2       : devid_t := 16#019#;
 
-  constant ESA_PDEC3AMBA    : amba_device_type := 16#020#;
-  constant ESA_PTME3AMBA    : amba_device_type := 16#021#;
+  constant ESA_PDEC3AMBA    : devid_t := 16#020#;
+  constant ESA_PTME3AMBA    : devid_t := 16#021#;
 
 -- OpenChip IDs
 
-  constant OPENCHIP_APBGPIO     : amba_device_type := 16#001#;
-  constant OPENCHIP_APBI2C      : amba_device_type := 16#002#;
-  constant OPENCHIP_APBSPI      : amba_device_type := 16#003#;
-  constant OPENCHIP_APBCHARLCD  : amba_device_type := 16#004#;
-  constant OPENCHIP_APBPWM      : amba_device_type := 16#005#;
-  constant OPENCHIP_APBPS2      : amba_device_type := 16#006#;
-  constant OPENCHIP_APBMMCSD    : amba_device_type := 16#007#;
-  constant OPENCHIP_APBNAND     : amba_device_type := 16#008#;
-  constant OPENCHIP_APBLPC      : amba_device_type := 16#009#;
-  constant OPENCHIP_APBCF       : amba_device_type := 16#00A#;
-  constant OPENCHIP_APBSYSACE   : amba_device_type := 16#00B#;
-  constant OPENCHIP_APB1WIRE    : amba_device_type := 16#00C#;
-  constant OPENCHIP_APBJTAG     : amba_device_type := 16#00D#;
-  constant OPENCHIP_APBSUI      : amba_device_type := 16#00E#;
+  constant OPENCHIP_APBGPIO     : devid_t := 16#001#;
+  constant OPENCHIP_APBI2C      : devid_t := 16#002#;
+  constant OPENCHIP_APBSPI      : devid_t := 16#003#;
+  constant OPENCHIP_APBCHARLCD  : devid_t := 16#004#;
+  constant OPENCHIP_APBPWM      : devid_t := 16#005#;
+  constant OPENCHIP_APBPS2      : devid_t := 16#006#;
+  constant OPENCHIP_APBMMCSD    : devid_t := 16#007#;
+  constant OPENCHIP_APBNAND     : devid_t := 16#008#;
+  constant OPENCHIP_APBLPC      : devid_t := 16#009#;
+  constant OPENCHIP_APBCF       : devid_t := 16#00A#;
+  constant OPENCHIP_APBSYSACE   : devid_t := 16#00B#;
+  constant OPENCHIP_APB1WIRE    : devid_t := 16#00C#;
+  constant OPENCHIP_APBJTAG     : devid_t := 16#00D#;
+  constant OPENCHIP_APBSUI      : devid_t := 16#00E#;
 
 
 -- Gleichmann's device ids
 
-  constant GLEICHMANN_CUSTOM   : amba_device_type := 16#001#;
-  constant GLEICHMANN_GEOLCD01 : amba_device_type := 16#002#;
-  constant GLEICHMANN_DAC      : amba_device_type := 16#003#;
-  constant GLEICHMANN_HPI      : amba_device_type := 16#004#;
-  constant GLEICHMANN_SPI      : amba_device_type := 16#005#;
-  constant GLEICHMANN_HIFC     : amba_device_type := 16#006#;
-  constant GLEICHMANN_ADCDAC   : amba_device_type := 16#007#;
-  constant GLEICHMANN_SPIOC    : amba_device_type := 16#008#;
-  constant GLEICHMANN_AC97     : amba_device_type := 16#009#;
+  constant GLEICHMANN_CUSTOM   : devid_t := 16#001#;
+  constant GLEICHMANN_GEOLCD01 : devid_t := 16#002#;
+  constant GLEICHMANN_DAC      : devid_t := 16#003#;
+  constant GLEICHMANN_HPI      : devid_t := 16#004#;
+  constant GLEICHMANN_SPI      : devid_t := 16#005#;
+  constant GLEICHMANN_HIFC     : devid_t := 16#006#;
+  constant GLEICHMANN_ADCDAC   : devid_t := 16#007#;
+  constant GLEICHMANN_SPIOC    : devid_t := 16#008#;
+  constant GLEICHMANN_AC97     : devid_t := 16#009#;
 
 -- MENTA device ids
 
-  constant MENTA_EFPGA_IP       : amba_device_type := 16#002#;
+  constant MENTA_EFPGA_IP       : devid_t := 16#002#;
   
 -- DTU device ids
 
-  constant DTU_IV              : amba_device_type := 16#001#;
-  constant DTU_RBMMTRANS       : amba_device_type := 16#002#;
-  constant DTU_FTMCTRL         : amba_device_type := 16#054#;
+  constant DTU_IV              : devid_t := 16#001#;
+  constant DTU_RBMMTRANS       : devid_t := 16#002#;
+  constant DTU_FTMCTRL         : devid_t := 16#054#;
 
 -- BSC device ids
 
-  constant BSC_CORE1           : amba_device_type := 16#001#;
-  constant BSC_CORE2           : amba_device_type := 16#002#;
+  constant BSC_CORE1           : devid_t := 16#001#;
+  constant BSC_CORE2           : devid_t := 16#002#;
   
 -- Orbita device ids
 
-  constant ORBITA_1553B        : amba_device_type := 16#001#;
-  constant ORBITA_429          : amba_device_type := 16#002#;
-  constant ORBITA_SPI          : amba_device_type := 16#003#;
-  constant ORBITA_I2C          : amba_device_type := 16#004#;
-  constant ORBITA_SMARTCARD    : amba_device_type := 16#064#;
-  constant ORBITA_SDCARD       : amba_device_type := 16#065#;
-  constant ORBITA_UART16550    : amba_device_type := 16#066#;
-  constant ORBITA_CRYPTO       : amba_device_type := 16#067#;
-  constant ORBITA_SYSIF        : amba_device_type := 16#068#;
-  constant ORBITA_PIO          : amba_device_type := 16#069#;
-  constant ORBITA_RTC          : amba_device_type := 16#0C8#;
-  constant ORBITA_COLORLCD     : amba_device_type := 16#12C#;
-  constant ORBITA_PCI          : amba_device_type := 16#190#;
-  constant ORBITA_DSP          : amba_device_type := 16#1F4#;
-  constant ORBITA_USBHOST      : amba_device_type := 16#258#;
-  constant ORBITA_USBDEV       : amba_device_type := 16#2BC#;
+  constant ORBITA_1553B        : devid_t := 16#001#;
+  constant ORBITA_429          : devid_t := 16#002#;
+  constant ORBITA_SPI          : devid_t := 16#003#;
+  constant ORBITA_I2C          : devid_t := 16#004#;
+  constant ORBITA_SMARTCARD    : devid_t := 16#064#;
+  constant ORBITA_SDCARD       : devid_t := 16#065#;
+  constant ORBITA_UART16550    : devid_t := 16#066#;
+  constant ORBITA_CRYPTO       : devid_t := 16#067#;
+  constant ORBITA_SYSIF        : devid_t := 16#068#;
+  constant ORBITA_PIO          : devid_t := 16#069#;
+  constant ORBITA_RTC          : devid_t := 16#0C8#;
+  constant ORBITA_COLORLCD     : devid_t := 16#12C#;
+  constant ORBITA_PCI          : devid_t := 16#190#;
+  constant ORBITA_DSP          : devid_t := 16#1F4#;
+  constant ORBITA_USBHOST      : devid_t := 16#258#;
+  constant ORBITA_USBDEV       : devid_t := 16#2BC#;
 
   
 -- Actel device ids
 
-  constant ACTEL_COREMP7       : amba_device_type := 16#001#;
+  constant ACTEL_COREMP7       : devid_t := 16#001#;
 
 -- NASA device ids
 
-  constant NASA_EP32           : amba_device_type := 16#001#;
+  constant NASA_EP32           : devid_t := 16#001#;
 
 -- AppleCore device ids
 
-  constant APPLECORE_UTLEON3    : amba_device_type := 16#001#;
-  constant APPLECORE_UTLEON3DSU : amba_device_type := 16#002#;
-  constant APPLECORE_APBPERFCNT : amba_device_type := 16#003#;
+  constant APPLECORE_UTLEON3    : devid_t := 16#001#;
+  constant APPLECORE_UTLEON3DSU : devid_t := 16#002#;
+  constant APPLECORE_APBPERFCNT : devid_t := 16#003#;
 
 -- Contribution library IDs
 
-  constant CONTRIB_CORE1        : amba_device_type := 16#001#;
-  constant CONTRIB_CORE2        : amba_device_type := 16#002#;
+  constant CONTRIB_CORE1        : devid_t := 16#001#;
+  constant CONTRIB_CORE2        : devid_t := 16#002#;
 
 -- grlib system device ids
 
@@ -387,9 +387,9 @@ package devices is
   constant ESA_SSDP             : system_device_type := 16#ADA2#;
 -- pragma translate_off
 
-  constant GAISLER_DESC : vendor_description :=  "Cobham Gaisler          ";
+  constant GAISLER_DESC : vdesc_t :=  "Cobham Gaisler          ";
 
-  constant gaisler_device_table : device_table_type := (
+  constant gaisler_device_table : dtable_t := (
    GAISLER_LEON2DSU  => "LEON2 Debug Support Unit       ",
    GAISLER_LEON3     => "LEON3 SPARC V8 Processor       ",
    GAISLER_LEON3DSU  => "LEON3 Debug Support Unit       ",
@@ -554,15 +554,15 @@ package devices is
    GAISLER_BOOTSEQ   => "Custom AHB sequencer           ",
    others            => "Unknown Device                 ");
 
-   constant gaisler_lib : vendor_library_type := (
+   constant gaisler_lib : vlib_t := (
      vendorid        => VENDOR_GAISLER,
      vendordesc      => GAISLER_DESC,
      device_table    => gaisler_device_table
    );
 
-  constant ESA_DESC : vendor_description := "European Space Agency   ";
+  constant ESA_DESC : vdesc_t := "European Space Agency   ";
 
-  constant esa_device_table : device_table_type := (
+  constant esa_device_table : dtable_t := (
    ESA_LEON2        => "LEON2 SPARC V8 Processor       ",
    ESA_LEON2APB     => "LEON2 Peripheral Bus           ",
    ESA_IRQ          => "LEON2 Interrupt Controller     ",
@@ -585,15 +585,15 @@ package devices is
    ESA_PTME3AMBA    => "ESA CCSDS PTME3AMBA TM Encoder ",
    others           => "Unknown Device                 ");
 
-   constant esa_lib : vendor_library_type := (
+   constant esa_lib : vlib_t := (
      vendorid       => VENDOR_ESA,
      vendordesc     => ESA_DESC,
      device_table   => esa_device_table
    );
 
-  constant OPENCHIP_DESC : vendor_description := "OpenChip                ";
+  constant OPENCHIP_DESC : vdesc_t := "OpenChip                ";
 
-  constant openchip_device_table : device_table_type := (
+  constant openchip_device_table : dtable_t := (
     OPENCHIP_APBGPIO    => "APB General Purpose IO         ",
     OPENCHIP_APBI2C     => "APB I2C Interface              ",
     OPENCHIP_APBSPI     => "APB SPI Interface              ",
@@ -611,15 +611,15 @@ package devices is
 
     others              => "Unknown Device                 ");
 
-  constant openchip_lib : vendor_library_type := (
+  constant openchip_lib : vlib_t := (
     vendorid            => VENDOR_OPENCHIP,
     vendordesc          => OPENCHIP_DESC,
     device_table        => openchip_device_table
   );
 
-  constant GLEICHMANN_DESC : vendor_description := "Gleichmann Electronics  ";
+  constant GLEICHMANN_DESC : vdesc_t := "Gleichmann Electronics  ";
 
-  constant gleichmann_device_table : device_table_type := (
+  constant gleichmann_device_table : dtable_t := (
     GLEICHMANN_CUSTOM   => "Custom device                  ",
     GLEICHMANN_GEOLCD01 => "GEOLCD01 graphics system       ",
     GLEICHMANN_DAC      => "Sigma delta DAC                ",
@@ -631,182 +631,182 @@ package devices is
     GLEICHMANN_AC97     => "AC97 Controller                ",
     others              => "Unknown Device                 ");
 
-  constant gleichmann_lib : vendor_library_type := (
+  constant gleichmann_lib : vlib_t := (
     vendorid     => VENDOR_GLEICHMANN,
     vendordesc   => GLEICHMANN_DESC,
     device_table => gleichmann_device_table
     );
 
-  constant CONTRIB_DESC : vendor_description := "Various contributions   ";
+  constant CONTRIB_DESC : vdesc_t := "Various contributions   ";
 
-  constant contrib_device_table : device_table_type := (
+  constant contrib_device_table : dtable_t := (
    CONTRIB_CORE1    => "Contributed core 1             ",
    CONTRIB_CORE2    => "Contributed core 2             ",
    others           => "Unknown Device                 ");
 
-   constant contrib_lib : vendor_library_type := (
+   constant contrib_lib : vlib_t := (
      vendorid        => VENDOR_CONTRIB,
      vendordesc      => CONTRIB_DESC,
      device_table    => contrib_device_table
    );
 
-  constant MENTA_DESC : vendor_description :=  "Menta                   ";
+  constant MENTA_DESC : vdesc_t :=  "Menta                   ";
 
-  constant menta_device_table : device_table_type := (
+  constant menta_device_table : dtable_t := (
    MENTA_EFPGA_IP      => "eFPGA Core IP                  ",
    others              => "Unknown Device                 ");
 
-   constant menta_lib : vendor_library_type := (
+   constant menta_lib : vlib_t := (
      vendorid          => VENDOR_MENTA,
      vendordesc        => MENTA_DESC,
      device_table      => menta_device_table
    );
 
-  constant SUN_DESC : vendor_description := "Sun Microsystems        ";
+  constant SUN_DESC : vdesc_t := "Sun Microsystems        ";
 
-  constant sun_device_table : device_table_type := (
+  constant sun_device_table : dtable_t := (
    SUN_T1           => "Niagara T1 SPARC V9 Processor  ",
    SUN_S1           => "Niagara S1 SPARC V9 Processor  ",
    others           => "Unknown Device                 ");
 
-   constant sun_lib : vendor_library_type := (
+   constant sun_lib : vlib_t := (
      vendorid          => VENDOR_SUN,
      vendordesc        => SUN_DESC,
      device_table      => sun_device_table
    );
 
-  constant OPENCORES_DESC : vendor_description :=  "OpenCores               ";
+  constant OPENCORES_DESC : vdesc_t :=  "OpenCores               ";
 
-  constant opencores_device_table : device_table_type := (
+  constant opencores_device_table : dtable_t := (
    others              => "Unknown Device                 ");
 
-   constant opencores_lib : vendor_library_type := (
+   constant opencores_lib : vlib_t := (
      vendorid          => VENDOR_OPENCORES,
      vendordesc        => OPENCORES_DESC,
      device_table      => opencores_device_table
    );
 
-  constant CBKPAN_DESC : vendor_description := "CBK PAN                 ";
+  constant CBKPAN_DESC : vdesc_t := "CBK PAN                 ";
   
-  constant cbkpan_device_table : device_table_type := (
+  constant cbkpan_device_table : dtable_t := (
     CBKPAN_FTNANDCTRL       => "NAND FLASH controller w/DMA    ",
     CBKPAN_FTEEPROMCTRL     => "Fault Toler. EEPROM Controller ",
     CBKPAN_FTSDCTRL16       => "Fault Toler. 16-bit SDRAM Ctrl.",
     CBKPAN_STIXCTRL         => "SolO/STIX IDPU dedicated ctrl. ",
     others                  => "Unknown Device                 ");
    
-  constant cbkpan_lib : vendor_library_type := (
+  constant cbkpan_lib : vlib_t := (
     vendorid       => VENDOR_CBKPAN,
     vendordesc     => CBKPAN_DESC,
     device_table   => cbkpan_device_table
    );
   
-  constant CETON_DESC : vendor_description :=  "Ceton Corporation       ";
+  constant CETON_DESC : vdesc_t :=  "Ceton Corporation       ";
 
-  constant ceton_device_table : device_table_type := (
+  constant ceton_device_table : dtable_t := (
    others              => "Unknown Device                 ");
 
-   constant ceton_lib : vendor_library_type := (
+   constant ceton_lib : vlib_t := (
      vendorid          => VENDOR_CETON,
      vendordesc        => CETON_DESC,
      device_table      => ceton_device_table
    );
 
-  constant SYNOPSYS_DESC : vendor_description :=  "Synopsys Inc.           ";
+  constant SYNOPSYS_DESC : vdesc_t :=  "Synopsys Inc.           ";
 
-  constant synopsys_device_table : device_table_type := (
+  constant synopsys_device_table : dtable_t := (
    others              => "Unknown Device                 ");
 
-   constant synopsys_lib : vendor_library_type := (
+   constant synopsys_lib : vlib_t := (
      vendorid          => VENDOR_SYNOPSYS,
      vendordesc        => SYNOPSYS_DESC,
      device_table      => synopsys_device_table
    );
 
-  constant EMBEDDIT_DESC : vendor_description :=  "Embedd.it               ";
+  constant EMBEDDIT_DESC : vdesc_t :=  "Embedd.it               ";
 
-  constant embeddit_device_table : device_table_type := (
+  constant embeddit_device_table : dtable_t := (
    others              => "Unknown Device                 ");
 
-   constant embeddit_lib : vendor_library_type := (
+   constant embeddit_lib : vlib_t := (
      vendorid          => VENDOR_EMBEDDIT,
      vendordesc        => EMBEDDIT_DESC,
      device_table      => embeddit_device_table
    );
 
-  constant dlr_device_table : device_table_type := (
+  constant dlr_device_table : dtable_t := (
    others              => "Unknown Device                 ");
 
-  constant DLR_DESC : vendor_description :=  "German Aerospace Center ";
+  constant DLR_DESC : vdesc_t :=  "German Aerospace Center ";
 
-  constant dlr_lib : vendor_library_type := (
+  constant dlr_lib : vlib_t := (
      vendorid          => VENDOR_DLR,
      vendordesc        => DLR_DESC,
      device_table      => dlr_device_table
    );
 
-  constant eonic_device_table : device_table_type := (
+  constant eonic_device_table : dtable_t := (
    others              => "Unknown Device                 ");
 
-  constant EONIC_DESC : vendor_description :=  "Eonic BV                ";
+  constant EONIC_DESC : vdesc_t :=  "Eonic BV                ";
 
-  constant eonic_lib : vendor_library_type := (
+  constant eonic_lib : vlib_t := (
      vendorid          => VENDOR_EONIC,
      vendordesc        => EONIC_DESC,
      device_table      => eonic_device_table
    );
 
-  constant telecompt_device_table : device_table_type := (
+  constant telecompt_device_table : dtable_t := (
    others              => "Unknown Device                 ");
 
-  constant TELECOMPT_DESC : vendor_description :=  "Telecom ParisTech       ";
+  constant TELECOMPT_DESC : vdesc_t :=  "Telecom ParisTech       ";
 
-  constant telecompt_lib : vendor_library_type := (
+  constant telecompt_lib : vlib_t := (
      vendorid          => VENDOR_TELECOMPT,
      vendordesc        => TELECOMPT_DESC,
      device_table      => telecompt_device_table
    );
   
-  constant radionor_device_table : device_table_type := (
+  constant radionor_device_table : dtable_t := (
    others              => "Unknown Device                 ");
 
-  constant RADIONOR_DESC : vendor_description :=  "Radionor Communications ";
+  constant RADIONOR_DESC : vdesc_t :=  "Radionor Communications ";
 
-  constant radionor_lib : vendor_library_type := (
+  constant radionor_lib : vlib_t := (
      vendorid          => VENDOR_RADIONOR,
      vendordesc        => RADIONOR_DESC,
      device_table      => radionor_device_table
    );
 
-  constant bsc_device_table : device_table_type := (
+  constant bsc_device_table : dtable_t := (
    BSC_CORE1           => "Core 1                         ",
    BSC_CORE2           => "Core 2                         ",
    others              => "Unknown Device                 ");
 
-  constant BSC_DESC : vendor_description :=  "BSC                     ";
+  constant BSC_DESC : vdesc_t :=  "BSC                     ";
 
-  constant bsc_lib : vendor_library_type := (
+  constant bsc_lib : vlib_t := (
      vendorid          => VENDOR_BSC,
      vendordesc        => BSC_DESC,
      device_table      => bsc_device_table
    );
   
-  constant dtu_device_table : device_table_type := (
+  constant dtu_device_table : dtable_t := (
    DTU_IV              => "Instrument Virtualizer         ",
    DTU_RBMMTRANS       => "RB/MM Transfer                 ",
    DTU_FTMCTRL         => "Memory controller with 8CS     ",
    others              => "Unknown Device                 ");
 
-  constant DTU_DESC : vendor_description :=  "DTU Space               ";
+  constant DTU_DESC : vdesc_t :=  "DTU Space               ";
 
-   constant dtu_lib : vendor_library_type := (
+   constant dtu_lib : vlib_t := (
      vendorid          => VENDOR_DTU,
      vendordesc        => DTU_DESC,
      device_table      => dtu_device_table
    );
 
   
-  constant orbita_device_table : device_table_type := (
+  constant orbita_device_table : dtable_t := (
    ORBITA_1553B       => "MIL-STD-1553B Controller       ",
    ORBITA_429         => "429 Interface                  ",
    ORBITA_SPI         => "SPI Interface                  ",
@@ -825,86 +825,86 @@ package devices is
    ORBITA_USBDEV      => "USB Device                     ",
    others              => "Unknown Device                 ");
 
-  constant ORBITA_DESC : vendor_description :=  "Orbita                  ";
+  constant ORBITA_DESC : vdesc_t :=  "Orbita                  ";
 
-  constant orbita_lib : vendor_library_type := (
+  constant orbita_lib : vlib_t := (
      vendorid          => VENDOR_ORBITA,
      vendordesc        => ORBITA_DESC,
      device_table      => orbita_device_table
    );
 
-  constant ACTEL_DESC : vendor_description :=   "Actel Corporation       ";
+  constant ACTEL_DESC : vdesc_t :=   "Actel Corporation       ";
 
-  constant actel_device_table : device_table_type := (
+  constant actel_device_table : dtable_t := (
    ACTEL_COREMP7      => "CoreMP7 Processor              ",
    others             => "Unknown Device                 ");
 
-  constant actel_lib : vendor_library_type := (
+  constant actel_lib : vlib_t := (
      vendorid          => VENDOR_ACTEL,
      vendordesc        => ACTEL_DESC,
      device_table      => actel_device_table
    );
 
-  constant NASA_DESC : vendor_description :=   "NASA                    ";
+  constant NASA_DESC : vdesc_t :=   "NASA                    ";
 
-  constant nasa_device_table : device_table_type := (
+  constant nasa_device_table : dtable_t := (
    NASA_EP32         => "EP32 Forth processor           ",
    others             => "Unknown Device                 ");
 
-  constant nasa_lib : vendor_library_type := (
+  constant nasa_lib : vlib_t := (
      vendorid          => VENDOR_NASA,
      vendordesc        => NASA_DESC,
      device_table      => nasa_device_table
    );
 
-  constant NASA_GSFC_DESC : vendor_description :=   "NASA GSFC               ";
+  constant NASA_GSFC_DESC : vdesc_t :=   "NASA GSFC               ";
 
-  constant nasa_gsfc_device_table : device_table_type := (
+  constant nasa_gsfc_device_table : dtable_t := (
    others             => "Unknown Device                 ");
 
-  constant nasa_gsfc_lib : vendor_library_type := (
+  constant nasa_gsfc_lib : vlib_t := (
      vendorid          => VENDOR_NASA_GSFC,
      vendordesc        => NASA_GSFC_DESC,
      device_table      => nasa_gsfc_device_table
    );
   
-  constant S3_DESC : vendor_description :=   "S3 Group                ";
+  constant S3_DESC : vdesc_t :=   "S3 Group                ";
 
-  constant s3_device_table : device_table_type := (
+  constant s3_device_table : dtable_t := (
    others             => "Unknown Device                 ");
 
-  constant s3_lib : vendor_library_type := (
+  constant s3_lib : vlib_t := (
      vendorid          => VENDOR_S3,
      vendordesc        => S3_DESC,
      device_table      => s3_device_table
    );
 
-  constant APPLECORE_DESC : vendor_description :=   "AppleCore               ";
-  constant applecore_device_table : device_table_type := (
+  constant APPLECORE_DESC : vdesc_t :=   "AppleCore               ";
+  constant applecore_device_table : dtable_t := (
       APPLECORE_UTLEON3     => "AppleCore uT-LEON3 Processor   ",
       APPLECORE_UTLEON3DSU  => "AppleCore uT-LEON3 DSU         ",
       others                => "Unknown Device                 ");
-  constant applecore_lib : vendor_library_type := (
+  constant applecore_lib : vlib_t := (
       vendorid         => VENDOR_APPLECORE,
       vendordesc        => APPLECORE_DESC,
       device_table      => applecore_device_table
       );
 
-  constant C3E_DESC : vendor_description :=   "TU Braunschweig C3E     ";
-  constant c3e_device_table : device_table_type := (
+  constant C3E_DESC : vdesc_t :=   "TU Braunschweig C3E     ";
+  constant c3e_device_table : dtable_t := (
       others                => "Unknown Device                 ");
-  constant c3e_lib : vendor_library_type := (
+  constant c3e_lib : vlib_t := (
       vendorid          => VENDOR_C3E,
       vendordesc        => C3E_DESC,
       device_table      => c3e_device_table
       );
   
-  constant UNKNOWN_DESC : vendor_description :=  "Unknown vendor          ";
+  constant UNKNOWN_DESC : vdesc_t :=  "Unknown vendor          ";
 
-  constant unknown_device_table : device_table_type := (
+  constant unknown_device_table : dtable_t := (
    others              => "Unknown Device                 ");
 
-   constant unknown_lib : vendor_library_type := (
+   constant unknown_lib : vlib_t := (
      vendorid          => 0,
      vendordesc        => UNKNOWN_DESC,
      device_table      => unknown_device_table
@@ -934,7 +934,7 @@ package devices is
     VENDOR_SLD         => sld_lib,
     others             => unknown_lib);
 
-  type system_table_type is array (0 to 65535) of device_description;
+  type system_table_type is array (0 to 65535) of ddesc_t;
 
   constant system_table : system_table_type := (
    LEON3_ACT_FUSION   => "LEON3 Actel Fusion Dev. board  ",

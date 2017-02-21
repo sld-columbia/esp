@@ -12,6 +12,7 @@ use ieee.std_logic_1164.all;
 
 use work.amba.all;
 use work.stdlib.all;
+use work.sld_devices.all;
 use work.devices.all;
 
 use work.gencomp.all;
@@ -52,8 +53,8 @@ end;
 architecture rtl of bus_sort is
 
   -- Device ID and revision numner
-  constant vendorid : amba_vendor_type := VENDOR_SLD;
-  constant devid : amba_device_type := SLD_SORT;
+  constant vendorid : vendor_t := VENDOR_SLD;
+  constant devid : devid_t := SLD_SORT;
   constant revision : integer := 0;
   constant exp_registers : integer range 0 to 1 := 0;
   constant tlb_entries : integer := 4;  -- assuming 1MB chunks and largest input

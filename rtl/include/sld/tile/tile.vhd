@@ -29,6 +29,7 @@ use ieee.std_logic_1164.all;
 
 use work.amba.all;
 use work.stdlib.all;
+use work.sld_devices.all;
 use work.devices.all;
 
 use work.gencomp.all;
@@ -569,7 +570,7 @@ package tile is
       pmask                : integer;
       pirq                 : integer;
       revision             : integer;
-      devid                : amba_device_type;
+      devid                : devid_t;
       available_reg_mask  : std_logic_vector(0 to 31);
       rdonly_reg_mask     : std_logic_vector(0 to 31);
       exp_registers       : integer range 0 to 1;
@@ -712,7 +713,7 @@ package tile is
       paddr    : integer;
       pmask    : integer;
       revision : integer;
-      devid    : amba_device_type);
+      devid    : devid_t);
     port (
       rst       : in  std_ulogic;
       clk       : in  std_ulogic;

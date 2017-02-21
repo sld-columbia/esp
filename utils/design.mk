@@ -18,6 +18,10 @@ ifeq ("$(PROFPGA)","")
 $(error proFPGA path not specified)
 endif
 
+ifeq ("$(VIVADO)","")
+$(error VIVADO path not specified)
+endif
+
 PROFPGA_REQUIRED_VER = proFPGA-2016B
 PROFPGA_CURRENT_VER = $(shell basename $(PROFPGA))
 ifneq ("$(PROFPGA_REQUIRED_VER)", "$(PROFPGA_CURRENT_VER)")
@@ -94,6 +98,8 @@ VSIMOPT += $(SIMTOP)
 
 
 ### Common design files ###
+SLDGEN_VHDL_RTL_PKGS  = $(DESIGN_PATH)/sldgen/sld_devices.vhd
+
 TOP_VHDL_RTL_PKGS  = $(DESIGN_PATH)/grlib_config.vhd
 TOP_VHDL_RTL_PKGS += $(DESIGN_PATH)/socmap.vhd
 TOP_VHDL_RTL_PKGS += $(ESP_ROOT)/socs/common/soctiles.vhd

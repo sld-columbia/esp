@@ -51,8 +51,7 @@ clean: 		soft-clean		\
 		sim-clean		\
 		esp-config-clean	\
 		grlib-config-clean	\
-		vivado-clean		\
-		$(ACCELERATORS)-clean
+		vivado-clean
 
 distclean:	check_all_srcs-distclean 	\
 		check_all_rtl_srcs-distclean	\
@@ -62,8 +61,7 @@ distclean:	check_all_srcs-distclean 	\
 		sim-distclean			\
 		esp-config-distclean		\
 		grlib-config-distclean		\
-		vivado-distclean		\
-		$(ACCELERATORS-distclean)
+		vivado-distclean
 
 .PHONY: help clean distclean
 
@@ -318,7 +316,7 @@ check_all_rtl_srcs-distclean:
 ### Xilinx Simulation libs targets ###
 
 ifeq ("$(TECHLIB)", "virtex7")
-modelsim/xilinx_lib: $(XILINX)
+modelsim/xilinx_lib: $(VIVADO)
 	$(QUIET_MKDIR)mkdir -p $@
 	@echo "compile_simlib -directory xilinx_lib -simulator modelsim -no_ip_compile" > $@/simlib.tcl; \
 	cd modelsim; \
@@ -422,6 +420,11 @@ modelsim/vsim.mk: modelsim/xilinx_lib check_all_srcs.old $(PKG_LIST)
 	done; \
 	vlib -type directory work; \
 	echo $(SPACES)"### Compile VHDL packages ###"; \
+	for vhd in $(SLDGEN_VHDL_RTL_PKGS); do \
+		rtl=$$vhd; \
+		echo $(SPACES)"$(VCOM) $$rtl"; \
+		$(VCOM) $$rtl || exit; \
+	done; \
 	for lib in $$(cat $(ESP_ROOT)/rtl/include/libs.txt); do \
 		for dir in $$(cat $(ESP_ROOT)/rtl/include/$$lib/dirs.txt); do \
 			for vhd in $$(cat $(ESP_ROOT)/rtl/include/$$lib/$$dir/pkgs.txt); do \
@@ -458,8 +461,9 @@ modelsim/vsim.mk: modelsim/xilinx_lib check_all_srcs.old $(PKG_LIST)
 		echo $(SPACES)"$(VLOG) ./mig/mig/user_design/rtl/mig.v"; \
 		$(VLOG) ./mig/mig/user_design/rtl/mig.v; \
 		$(VLOG) ./mig/mig/user_design/rtl/*/*.v; \
-		$(VLOG) $(XILINX)/verilog/src/glbl.v; \
 	fi; \
+	echo $(SPACES)"$(VLOG) $(VIVADO)/data/verilog/src/glbl.v"; \
+	$(VLOG) $(VIVADO)/data/verilog/src/glbl.v; \
 	if test -r ./sgmii/sgmii.xci; then \
 		vlib -type directory gig_ethernet_pcs_pma_v16_0_0; \
 		vmap gig_ethernet_pcs_pma_v16_0_0 gig_ethernet_pcs_pma_v16_0_0; \

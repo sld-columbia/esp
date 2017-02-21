@@ -29,6 +29,7 @@ use ieee.std_logic_1164.all;
 
 use work.amba.all;
 use work.stdlib.all;
+use work.sld_devices.all;
 use work.devices.all;
 
 use work.gencomp.all;
@@ -107,8 +108,8 @@ end;
 architecture rtl of noc_fft2d is
 
   -- Device ID and revision numner
-  constant vendorid : amba_vendor_type := VENDOR_SLD;
-  constant devid : amba_device_type := SLD_FFT2D;
+  constant vendorid : vendor_t := VENDOR_SLD;
+  constant devid : devid_t := SLD_FFT2D;
   constant revision : integer := 0;
   constant exp_registers : integer range 0 to 1 := 0;
   constant tlb_entries : integer := 256;  -- assuming 1MB chunks, 1<<12 input
