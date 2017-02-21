@@ -56,6 +56,13 @@ set_attr inline_partial_constants true
 set_attr output_style_reset_all   true
 set_attr lsb_trimming             true
 
+#
+# Speedup scheduling for high-perf design (disable most area-minimization techniques)
+#
+set_attr sched_effort low
+set_attr sharing_effort_parts low
+set_attr sharing_effort_regs low
+
 set PRINT on
 set SCHED_ASAP no
 set COMMON_HLS_FLAGS "--prints=$PRINT --sched_asap=$SCHED_ASAP -DCLOCK_PERIOD=$CLOCK_PERIOD"
