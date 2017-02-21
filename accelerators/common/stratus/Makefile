@@ -58,6 +58,13 @@ install: Makefile.prj hls_all
 		fi; \
 	done
 
+nimbus.csv: Makefile.prj sim_all
+	@bdw_shell ../../common/stratus/nimbus.tcl
+	@sed -i 's/_/\\_/g' $@
+
+plot: nimbus.csv
+	@octave -qf ../../common/stratus/plot_results_octave.m $<
+
 # Clean out undesirable junk files from the project directory
 # Uses the automatically created clean_all target from Makefile.prj
 clean: clean_all clean_libs
@@ -89,4 +96,4 @@ distclean: clean
 distclean-all: distclean
 	@rm -rf cachelib
 
-.PHONY: install clean CLEAN distclean distclean-all
+.PHONY: install plot  clean CLEAN distclean distclean-all
