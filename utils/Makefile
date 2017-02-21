@@ -51,7 +51,8 @@ clean: 		soft-clean		\
 		sim-clean		\
 		esp-config-clean	\
 		grlib-config-clean	\
-		vivado-clean
+		vivado-clean		\
+		$(ACCELERATORS)-clean
 
 distclean:	check_all_srcs-distclean 	\
 		check_all_rtl_srcs-distclean	\
@@ -61,7 +62,8 @@ distclean:	check_all_srcs-distclean 	\
 		sim-distclean			\
 		esp-config-distclean		\
 		grlib-config-distclean		\
-		vivado-distclean
+		vivado-distclean		\
+		$(ACCELERATORS-distclean)
 
 .PHONY: help clean distclean
 
