@@ -41,3 +41,11 @@ $(ACCELERATORS-distclean):
 	@$(RM) $(ESP_ROOT)/tech/$(TECHLIB)/acc/$(@:-distclean=)
 
 .PHONY: print-available-accelerators $(ACCELERATORS) $(ACCELERATORS-sim) $(ACCELERATORS-plot) $(ACCELERATORS-clean) $(ACCELERATORS-distclean)
+
+accelerators: $(ACCELERATORS)
+
+accelerators-clean: $(ACCELERATORS)-clean
+
+accelerators-distclean: $(ACCELERATORS)-distclean
+
+.PHONY: accelerators accelerators-clean accelerators-distclean
