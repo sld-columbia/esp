@@ -19,6 +19,6 @@ for i = 2:r
    ylabel('area');
 
    plot(latency, area,'marker',"*",'color','r','markersize',10);
-   text (latency, area, uarch, 'VerticalAlignment','bottom', 'HorizontalAlignment','left')
+   text (latency, area, uarch, 'VerticalAlignment','bottom', 'HorizontalAlignment','center')
 end
 pause()

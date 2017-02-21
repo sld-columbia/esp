@@ -37,9 +37,8 @@ foreach mod [$project cynthModules] {
 	    set hls_conf_name [$hls_conf name]
 	    # Extract the synthesis log
 	    set hls_log [$hls_conf cynthHLLog]
-	    if { $hls_log == "NULL" } {
-		puts "INFO: Skipping [$hls_conf name]"
-	    } else {
+	    if { $hls_log != "NULL" } {
+		puts "INFO: Gathering HLS results for [$hls_conf name]"
 		# Synthesis results
 		set total_area [$hls_log totalArea]
 		set memory_area [$hls_log memoryArea]
