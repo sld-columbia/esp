@@ -423,24 +423,9 @@ constant has_transceivers : tech_ability_type := (
     others => 0
   );
 
-
 constant has_pll : tech_ability_type := (
   virtex7 => 1, others => 0
   );
-
--- ESP Accelerators
-constant has_sort : tech_ability_type := (
-  virtex7 => 1, others => 0
-  );
-
-constant has_fft : tech_ability_type := (
-  virtex7 => 1, others => 0
-  );
-
-constant has_fft2d : tech_ability_type := (
-  virtex7 => 1, others => 0
-  );
-
 
 -- pragma translate_off
 
