@@ -1,6 +1,7 @@
 /* Copyright 2017 Columbia University, SLD Group */
 
 #include "sort.hpp"
+#include "sort_directives.hpp"
 
 // Functions
 
@@ -47,10 +48,9 @@ void sort::load_input()
 
 	// Load
 	{
-	LOAD_INPUT_BATCH_LOOP:
 		for (uint16_t b = 0; b < bursts; b++)
 		{
-			HLS_UNROLL_LOOP(OFF); // disabled by default
+			HLS_LOAD_INPUT_BATCH_LOOP;
 
 			{
 				HLS_DEFINE_PROTOCOL("load-dma-conf");
@@ -59,33 +59,38 @@ void sort::load_input()
 				index += len;
 				this->dma_read_ctrl.put(dma_info);
 			}
-		LOAD_INPUT_LOOP:
 #if (DMA_WIDTH == 32)
 			for (uint16_t i = 0; i < len; i++)
 			{
-				HLS_UNROLL_LOOP(OFF); // disabled by default
+				HLS_LOAD_INPUT_LOOP;
 
 				uint32_t data = this->dma_read_chnl.get().to_uint();
-				if (ping)
-					A0.port1[0][i] = data;
-				else
-					A1.port1[0][i] = data;
+				{
+					HLS_LOAD_INPUT_PLM_WRITE;
+					if (ping)
+						A0.port1[0][i] = data;
+					else
+						A1.port1[0][i] = data;
+				}
 #elif (DMA_WIDTH == 64)
 			for (uint16_t i = 0; i < len; i += 2)
 			{
-				HLS_UNROLL_LOOP(OFF); // disabled by default
+				HLS_LOAD_INPUT_LOOP;
 
 				sc_dt::sc_bv<64> data_bv = this->dma_read_chnl.get();
-				uint32_t data_1 = data_bv.range(31, 0).to_uint();
-				uint32_t data_2 = data_bv.range(63, 32).to_uint();
-				if (ping) {
-					A0.port1[0][i]     = data_1;
-					A0.port2[0][i + 1] = data_2;
-				} else {
-					A1.port1[0][i]     = data_1;
-					A1.port2[0][i + 1] = data_2;
+				{
+					HLS_LOAD_INPUT_PLM_WRITE;
+					uint32_t data_1 = data_bv.range(31, 0).to_uint();
+					uint32_t data_2 = data_bv.range(63, 32).to_uint();
+					const uint16_t j = i + 1;
+					if (ping) {
+						A0.port1[0][i] = data_1;
+						A0.port2[0][j] = data_2;
+					} else {
+						A1.port1[0][i] = data_1;
+						A1.port2[0][j] = data_2;
+					}
 				}
-
 #endif
 			}
 			ping = !ping;
@@ -140,10 +145,9 @@ void sort::store_output()
 
 	// Store
 	{
-	STORE_INPUT_BATCH_LOOP:
 		for (uint16_t b = 0; b < bursts; b++)
 		{
-			HLS_UNROLL_LOOP(OFF); // disabled by default
+			HLS_STORE_OUTPUT_BATCH_LOOP;
 
 			this->store_compute_handshake();
 
@@ -154,15 +158,14 @@ void sort::store_output()
 				index += len;
 				this->dma_write_ctrl.put(dma_info);
 			}
-		STORE_INPUT_LOOP:
 #if (DMA_WIDTH == 32)
 			for (uint16_t i = 0; i < len; i++)
 			{
-				HLS_UNROLL_LOOP(OFF); // disabled by default
+				HLS_STORE_OUTPUT_LOOP;
 
 				uint32_t data;
 				{
-					HLS_CONSTRAIN_LATENCY(0, 1, "constraint-store-mem-access");
+					HLS_STORE_OUTPUT_PLM_READ;
 					if (ping)
 						data = B0.port2[0][i];
 					else
@@ -172,17 +175,18 @@ void sort::store_output()
 #elif (DMA_WIDTH == 64)
 			for (uint16_t i = 0; i < len; i += 2)
 			{
-				HLS_UNROLL_LOOP(OFF); // disabled by default
+				HLS_STORE_OUTPUT_LOOP;
 
 				sc_dt::sc_bv<64> data_bv;
 				{
-					HLS_CONSTRAIN_LATENCY(0, 1, "constraint-store-mem-access");
+					HLS_STORE_OUTPUT_PLM_READ;
+					const uint16_t j = i + 1;
 					if (ping) {
 						data_bv.range(31, 0)  = B0.port2[0][i];
-						data_bv.range(63, 32) = B0.port3[0][i + 1];
+						data_bv.range(63, 32) = B0.port3[0][j];
 					} else {
 						data_bv.range(31, 0)  = B1.port2[0][i];
-						data_bv.range(63, 32) = B1.port3[0][i + 1];
+						data_bv.range(63, 32) = B1.port3[0][j];
 					}
 				}
 				this->dma_write_chnl.put(data_bv);
@@ -243,41 +247,39 @@ void sort::compute_kernel()
 
 	// Compute
 	{
-BITONIC_SORT:
 	for (uint16_t b = 0; b < bursts; b++)
 	{
-		HLS_UNROLL_LOOP(OFF);
+		HLS_RB_SORT_LOOP;
+
 		this->compute_load_handshake();
 
 		// Flatten array
 		unsigned regs[2][NUM];
-		HLS_FLATTEN_ARRAY(regs);
+		HLS_RB_MAP_REGS;
+
 		bool pipe_full = false;
 		unsigned wchunk = 0;
 
 		// Break the following
-	RB_MAIN:
 		for (int chunk = 0; chunk < LEN / NUM; )
 		{
-			HLS_UNROLL_LOOP(OFF);
+			HLS_RB_MAIN;
 
 			if ((unsigned) chunk * NUM == len)
 				break;
 
 			// Unroll the following
-		RB_CHAIN_SELECT:
 			for (int idx = 0; idx < 2; idx++, chunk++)
 			{
-				HLS_UNROLL_LOOP(ON);
+				HLS_RB_CHAIN_SELECT;
 
 				if ((unsigned) chunk * NUM == len)
 					break;
 
 				//Break the following
-			RB_RW_CHUNK:
 				for (int i = 0; i < NUM; i++)
 				{
-					HLS_UNROLL_LOOP(OFF);
+					HLS_RB_RW_CHUNK;
 
 					unsigned elem;
 					if (ping)
@@ -306,15 +308,14 @@ BITONIC_SORT:
 					wchunk++;
 
 				//Break the following
-			RB_INSERTION_OUTER:
 				for (int k = 0; k < NUM; k++)
 				{
-					HLS_UNROLL_LOOP(OFF);
+					HLS_RB_INSERTION_OUTER;
 					//Unroll the following
-				RB_INSERTION_EVEN:
 					for (int i = 0; i < NUM; i += 2)
 					{
-						HLS_UNROLL_LOOP(ON);
+						HLS_RB_INSERTION_EVEN;
+
 						if (!lt_float(regs[idx][i], regs[idx][i + 1]))
 						{
 							unsigned tmp   = regs[idx][i];
@@ -324,10 +325,9 @@ BITONIC_SORT:
 					}
 
 					//Unroll the following
-				RB_INSERTION_ODD:
 					for (int i = 1; i < NUM - 1; i += 2)
 					{
-						HLS_UNROLL_LOOP(ON);
+						HLS_RB_INSERTION_ODD;
 						if (!lt_float(regs[idx][i], regs[idx][i + 1]))
 						{
 							unsigned tmp   = regs[idx][i];
@@ -345,15 +345,15 @@ BITONIC_SORT:
 		// cout << pipe_full << " " << wchunk << endl;
 
 		//Break the following
-	RB_W_LAST_CHUNKS_OUTER:
 		for (int idx = 0; idx < 2; idx++)
 		{
+			HLS_RB_W_LAST_CHUNKS_OUTER;
 			if ((unsigned) idx * NUM == len)
 				break;
 
-		RB_W_LAST_CHUNKS_INNER:
 			for (int i = 0; i < NUM; i++)
 			{
+				HLS_RB_W_LAST_CHUNKS_INNER;
 				if (ping)
 					C0.port1[0][wchunk * NUM + i] = regs[idx][i];
 				else
@@ -414,27 +414,21 @@ void sort::compute_2_kernel()
 	// Compute
 	const unsigned chunk_max = (len >> lgNUM);
 	{
-MERGE_SORT:
 	for (uint16_t b = 0; b < bursts; b++)
 	{
+		HLS_MERGE_SORT_LOOP;
 		unsigned head[LEN / NUM];  // Fifo output
 		unsigned fidx[LEN / NUM];  // Fifo index
 		bool     pop[LEN / NUM];   // pop from ith fifo
 		bool     shift[LEN / NUM];   // shift from ith fifo
 		unsigned regs[LEN / NUM];  // State
 		unsigned regs_in[LEN / NUM]; // Next state
-		HLS_FLATTEN_ARRAY(head);
-		HLS_FLATTEN_ARRAY(fidx);
-		HLS_FLATTEN_ARRAY(pop);
-		HLS_FLATTEN_ARRAY(shift);
-		HLS_FLATTEN_ARRAY(regs);
-		HLS_FLATTEN_ARRAY(regs_in);
+		HLS_MERGE_SORT_MAP_REGS;
 
 		//Should not be a combinational loop. BTW unroll.
-	INIT_ZERO_FIDX:
 		for (int i = 0; i < LEN / NUM; i++)
 		{
-			HLS_UNROLL_LOOP(ON);
+			HLS_MERGE_INIT_ZERO_FIDX;
 
 			fidx[i] = 0;
 			pop[i] = false;
@@ -460,9 +454,10 @@ MERGE_SORT:
 			// }
 
 			//Break the following
-		MERGE_RD_FIRST_ELEMENTS:
 			for (int chunk = 0; chunk < LEN / NUM; chunk++)
 			{
+				HLS_MERGE_RD_FIRST_ELEMENTS;
+
 				if ((unsigned) chunk == chunk_max)
 					break;
 				if (ping)
@@ -492,15 +487,13 @@ MERGE_SORT:
 			unsigned cur = 2;
 			unsigned cnt = 0;
 			//Break the following
-		MERGE_MAIN:
 			while(true)
 			{
-				HLS_UNROLL_LOOP(OFF);
+				HLS_MERGE_MAIN;
 				//Unroll the following
-			MERGE_COMPARE:
 				for (int chunk = 1; chunk < LEN / NUM; chunk++)
 				{
-					HLS_UNROLL_LOOP(ON);
+					HLS_MERGE_COMPARE;
 
 					if ((unsigned) chunk == cur)
 						break;
@@ -512,10 +505,9 @@ MERGE_SORT:
 
 				regs_in[0] = regs[0];
 				//Unroll the following
-			MERGE_SHIFT:
 				for (int chunk = LEN / NUM - 1; chunk > 0; chunk--)
 				{
-					HLS_UNROLL_LOOP(ON);
+					HLS_MERGE_SHIFT;
 
 					if ((unsigned) chunk >= cur)
 						continue;
@@ -547,10 +539,9 @@ MERGE_SORT:
 				// cout << endl;
 
 				//Unroll the following
-			MERGE_SEQ:
 				for (int chunk = 0; chunk < LEN / NUM; chunk++)
 				{
-					HLS_UNROLL_LOOP(ON);
+					HLS_MERGE_SEQ;
 
 					if ((unsigned) chunk == cur)
 						break;
@@ -575,6 +566,7 @@ MERGE_SORT:
 
 				if (cur == chunk_max)
 				{
+					HLS_MERGE_WR_LAST_ELEMENTS;
 					// write output
 					if (ping)
 						B0.port1[0][cnt] = regs[chunk_max - 1];
@@ -586,10 +578,9 @@ MERGE_SORT:
 				int pop_idx = -1;
 				//Unroll the following
 				//Notice that only one pop[i] will be true at any time
-			MERGE_DO_POP:
 				for (int chunk = 0; chunk < LEN / NUM; chunk++)
 				{
-					HLS_UNROLL_LOOP(ON);
+					HLS_MERGE_SET_POP;
 
 					if ((unsigned) chunk == cur)
 						break;
@@ -610,6 +601,7 @@ MERGE_SORT:
 
 				if (pop_idx != -1)
 				{
+					HLS_MERGE_DO_POP;
 					if (ping)
 						head[pop_idx] = C0.port2[0][pop_idx * NUM + fidx[pop_idx]];
 					else
@@ -617,10 +609,9 @@ MERGE_SORT:
 					fidx[pop_idx]++;
 				}
 
-			RESTORE_ZERO_POP:
 				for (int i = 0; i < LEN / NUM; i++)
 				{
-					HLS_UNROLL_LOOP(ON);
+					HLS_MERGE_RESTORE_ZERO_POP;
 
 					pop[i] = false;
 					shift[i] = false;
@@ -651,6 +642,8 @@ MERGE_SORT:
 
 				for (int i = 0; i < NUM; i++)
 				{
+					HLS_MERGE_NO_MERGE;
+
 					unsigned elem;
 					if (ping)
 						elem = C0.port2[0][chunk * NUM + i];
