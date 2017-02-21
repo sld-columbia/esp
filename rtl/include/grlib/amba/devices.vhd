@@ -27,6 +27,7 @@
 library ieee;
 use ieee.std_logic_1164.all;
 use work.amba.all;
+use work.sld_devices.all
 -- pragma translate_off
 use std.textio.all;
 -- pragma translate_on
@@ -65,45 +66,6 @@ package devices is
   constant VENDOR_CETON      : amba_vendor_type := 16#CB#;
   constant VENDOR_EMBEDDIT   : amba_vendor_type := 16#EA#;
   constant VENDOR_NASA_GSFC  : amba_vendor_type := 16#FC#;
-  constant VENDOR_SLD        : amba_vendor_type := 16#EB#;
-
--- Columbia University SLD  device id's
-
-  constant SLD_RATE_TRACE       : amba_device_type := 16#001#;
-  constant SLD_COUNTER          : amba_device_type := 16#002#;
-  constant SLD_DMACTRL          : amba_device_type := 16#003#;
-  constant SLD_FFT              : amba_device_type := 16#004#;
-  --TAV
-  constant SLD_DEBAYER          : amba_device_type := 16#005#;
-  constant SLD_CHANGE_DETECTION : amba_device_type := 16#006#;
-  constant SLD_LUCAS_KANADE     : amba_device_type := 16#007#;
-  constant SLD_PFA_INTERP1      : amba_device_type := 16#008#;
-  constant SLD_PFA_INTERP2      : amba_device_type := 16#009#;
-  constant SLD_BACKPROJECTION   : amba_device_type := 16#00A#;
-  constant SLD_SORT             : amba_device_type := 16#00B#;
-  constant SLD_FFT2D            : amba_device_type := 16#00C#;
-  --power controller
-  constant SLD_POWERCTRL        : amba_device_type := 16#00F#;
-  --black scholes
-  constant SLD_BLACK_SCHOLES    : amba_device_type := 16#010#;
-  --wami app
-  constant SLD_WAMI_APP_DEBAYER             : amba_device_type := 16#011#;
-  constant SLD_WAMI_APP_GRAYSCALE           : amba_device_type := 16#012#;
-  constant SLD_WAMI_APP_GRADIENT            : amba_device_type := 16#013#;
-  constant SLD_WAMI_APP_WARP                : amba_device_type := 16#014#;
-  constant SLD_WAMI_APP_SUBTRACT            : amba_device_type := 16#015#;
-  constant SLD_WAMI_APP_STEEPEST_DESCENT    : amba_device_type := 16#016#;
-  constant SLD_WAMI_APP_HESSIAN             : amba_device_type := 16#017#;
-  constant SLD_WAMI_APP_INVERT_GAUSS_JORDAN : amba_device_type := 16#018#;
-  constant SLD_WAMI_APP_SD_UPDATE           : amba_device_type := 16#019#;
-  constant SLD_WAMI_APP_MULT                : amba_device_type := 16#01a#;
-  constant SLD_WAMI_APP_RESHAPE             : amba_device_type := 16#01b#;
-  constant SLD_WAMI_APP_ADD                 : amba_device_type := 16#01c#;
-  constant SLD_WAMI_APP_CHANGE_DETECTION    : amba_device_type := 16#01d#;
-  --CortexSuite
-  constant SLD_RBM              : amba_device_type := 16#01e#;
-  --Miscellaneous
-  constant SLD_AHBRAM_DP        : amba_device_type := 16#01f#;
 
 -- Cobham Gaisler device ids
 
@@ -424,45 +386,6 @@ package devices is
   constant XILINX_VC707         : system_device_type := 16#A707#;
   constant ESA_SSDP             : system_device_type := 16#ADA2#;
 -- pragma translate_off
-
-  constant SLD_DESC : vendor_description := "Columbia University SLD ";
-
-  constant sld_device_table : device_table_type := (
-    SLD_RATE_TRACE       => "Dram access tracing            ",
-    SLD_COUNTER          => "Dummy Counter                  ",
-    SLD_DMACTRL          => "DMA controller                 ",
-    SLD_FFT              => "FFT with DMA                   ",
-    SLD_DEBAYER          => "DEBAYER with DMA               ",
-    SLD_CHANGE_DETECTION => "CHANGE DETECTION with DMA      ",
-    SLD_LUCAS_KANADE     => "LUCAS KANADE with DMA          ",
-    SLD_PFA_INTERP1      => "SAR Interpolation 1 with DMA   ",
-    SLD_PFA_INTERP2      => "SAR Interpolation 2 with DMA   ",
-    SLD_BACKPROJECTION   => "SAR Backprojection with DMA    ",
-    SLD_SORT             => "SORT [1:1024] float[32:1024]   ",
-    SLD_FFT2D            => "FFT2D with write transpose     ",
-    SLD_POWERCTRL        => "Voltage and Frequency Scaling  ",
-    SLD_BLACK_SCHOLES    => "Black Scholes                  ",
-    SLD_WAMI_APP_DEBAYER             => "WAMI-app Debayer               ",
-    SLD_WAMI_APP_GRAYSCALE           => "WAMI-app Grayscale             ",
-    SLD_WAMI_APP_GRADIENT            => "WAMI-app gradient              ",
-    SLD_WAMI_APP_WARP                => "WAMI-app warp                  ",
-    SLD_WAMI_APP_SUBTRACT            => "WAMI-app subtract              ",
-    SLD_WAMI_APP_STEEPEST_DESCENT    => "WAMI-app steepest_descent      ",
-    SLD_WAMI_APP_HESSIAN             => "WAMI-app hessian               ",
-    SLD_WAMI_APP_INVERT_GAUSS_JORDAN => "WAMI-app invert_gauss_jordan   ",
-    SLD_WAMI_APP_SD_UPDATE           => "WAMI-app sd_update             ",
-    SLD_WAMI_APP_MULT                => "WAMI-app mult                  ",
-    SLD_WAMI_APP_RESHAPE             => "WAMI-app reshape               ",
-    SLD_WAMI_APP_ADD                 => "WAMI-app add                   ",
-    SLD_WAMI_APP_CHANGE_DETECTION    => "WAMI-app change_detection      ",
-    SLD_RBM              => "Restricted Boltzmann Machines  ",
-    others               => "Unknown Device                 ");
-
-  constant sld_lib : vendor_library_type := (
-    vendorid       => VENDOR_SLD,
-    vendordesc      => SLD_DESC,
-    device_table    => sld_device_table
-    );
 
   constant GAISLER_DESC : vendor_description :=  "Cobham Gaisler          ";
 
