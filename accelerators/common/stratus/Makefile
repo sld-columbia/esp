@@ -50,6 +50,7 @@ Makefile.prj : memlib project.tcl ../../common/stratus/project.tcl
 
 install: Makefile.prj hls_all
 	@mkdir -p $(RTL_OUT)
+	@cp ../$(ACCELERATOR).xml $(RTL_OUT)
 	@for dir in $$(ls bdw_work/modules/$(ACCELERATOR)); do \
 		if test -e bdw_work/modules/$(ACCELERATOR)/$$dir/$(ACCELERATOR)_rtl.v; then \
 			cfg=$${dir,,}; \
