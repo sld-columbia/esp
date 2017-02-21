@@ -81,12 +81,12 @@ clean: clean_all clean_libs
 
 CLEAN: clean
 
-# WARNING: this target will delete generated resources for HLS
 distclean: clean
 	@rm -rf $(MEMGEN_OUT)
 	@rm -rf $(RTL_OUT)
 
+# WARNING: this target will delete generated resources for HLS
 distclean-all: distclean
 	@rm -rf cachelib
 
-.PHONY: clean CLEAN distclean install
+.PHONY: install clean CLEAN distclean distclean-all
