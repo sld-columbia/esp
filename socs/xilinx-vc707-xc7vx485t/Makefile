@@ -17,6 +17,10 @@ DESIGN   = esp-$(BOARD)
 include $(ESP_ROOT)/utils/design.mk
 
 
+### Include targets to generate accelerators RTL with HLS ###
+include $(ESP_ROOT)/utils/accelerators.mk
+
+
 ### Design top level and testbench ###
 TOP    = top
 SIMTOP = testbench
