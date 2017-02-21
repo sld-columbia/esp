@@ -11,6 +11,10 @@ ifeq ("$(TECH)","")
 $(error target technology TECH is not specified)
 endif
 
+ifeq ("$(ACCELERATOR)","")
+$(error ACCELERATOR not set)
+endif
+
 
 # list subdirectories that contain memory libraries
 # (must be in subdirectories of the current directory)
@@ -34,7 +38,8 @@ BDW_VLOGSIM_ARGS = -NOTIMINGCHECKS
 # Memory wrappers
 MEMGEN = $(ESP_ROOT)/utils/memgen/memgen.py
 MEMTECH = $(ESP_ROOT)/tech/$(TECH)/mem
-MEMGEN_OUT = $(ESP_ROOT)/tech/$(TECH)/memgen
+MEMGEN_OUT = $(ESP_ROOT)/tech/$(TECH)/memgen/$(ACCELERATOR)
+RTL_OUT = $(ESP_ROOT)/tech/$(TECH)/acc/$(ACCELERATOR)
 
 memlib: ../memlist.txt
 	@$(MEMGEN) $(MEMTECH) $< $(MEMGEN_OUT) | tee memgen.log
@@ -42,6 +47,16 @@ memlib: ../memlist.txt
 
 Makefile.prj : memlib project.tcl ../../common/stratus/project.tcl
 	@bdw_makegen
+
+install: Makefile.prj hls_all
+	@mkdir -p $(RTL_OUT)
+	@for dir in $$(ls bdw_work/modules/$(ACCELERATOR)); do \
+		if test -e bdw_work/modules/$(ACCELERATOR)/$$dir/$(ACCELERATOR)_rtl.v; then \
+			cfg=$${dir,,}; \
+			cp bdw_work/modules/$(ACCELERATOR)/$$dir/$(ACCELERATOR)_rtl.v $(RTL_OUT)/$(ACCELERATOR)_$$cfg\.v; \
+			sed -i "s/module $(ACCELERATOR)/module $(ACCELERATOR)_$$cfg/g" $(RTL_OUT)/$(ACCELERATOR)_$$cfg.v; \
+		fi; \
+	done
 
 # Clean out undesirable junk files from the project directory
 # Uses the automatically created clean_all target from Makefile.prj
@@ -62,11 +77,16 @@ clean: clean_all clean_libs
 	@rm -rf *.diag
 	@rm -rf *.key
 	@rm -rf memlib
+	@rm -rf *.csv
 
 CLEAN: clean
 
 # WARNING: this target will delete generated resources for HLS
 distclean: clean
+	@rm -rf $(MEMGEN_OUT)
+	@rm -rf $(RTL_OUT)
+
+distclean-all: distclean
 	@rm -rf cachelib
 
-.PHONY: clean CLEAN distclean
+.PHONY: clean CLEAN distclean install
