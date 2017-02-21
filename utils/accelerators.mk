@@ -14,8 +14,8 @@ print-available-accelerators:
 
 
 $(ACCELERATORS-wdir):
-	$(QUIET_MKDIR)mkdir -p $(ACCELERATORS_PATH)/$@/hls-work-$(TECHLIB)
-	@cd $(ACCELERATORS_PATH)/$@/hls-work-$(TECHLIB); \
+	$(QUIET_MKDIR)mkdir -p $(ACCELERATORS_PATH)/$(@:-wdir=)/hls-work-$(TECHLIB)
+	@cd $(ACCELERATORS_PATH)/$(@:-wdir=)/hls-work-$(TECHLIB); \
 	if test ! -e project.tcl; then \
 		ln -s ../stratus/project.tcl; \
 	fi; \
@@ -24,14 +24,14 @@ $(ACCELERATORS-wdir):
 	fi;
 
 $(ACCELERATORS-hls): %-hls : %-wdir
-	$(QUIET_MAKE)ACCELERATOR=$@ TECH=$(TECHLIB) ESP_ROOT=$(ESP_ROOT) make -C $(ACCELERATORS_PATH)/$@/hls-work-$(TECHLIB) memlib | tee $@_memgen.log
-	$(QUIET_INFO)echo "Running HLS for available implementations of $@"
-	$(QUIET_MAKE)ACCELERATOR=$@ TECH=$(TECHLIB) ESP_ROOT=$(ESP_ROOT) make -C $(ACCELERATORS_PATH)/$@/hls-work-$(TECHLIB) hls_all | tee $@_hls.log
-	$(QUIET_INFO)echo "Installing available implementations for $@ to $(ESP_ROOT)/tech/$(TECHLIB)/acc/$@"
-	$(QUIET_MAKE)ACCELERATOR=$@ TECH=$(TECHLIB) ESP_ROOT=$(ESP_ROOT) make -C $(ACCELERATORS_PATH)/$@/hls-work-$(TECHLIB) install
+	$(QUIET_MAKE)ACCELERATOR=$(@:-hls=) TECH=$(TECHLIB) ESP_ROOT=$(ESP_ROOT) make -C $(ACCELERATORS_PATH)/$(@:-hls=)/hls-work-$(TECHLIB) memlib | tee $(@:-hls=)_memgen.log
+	$(QUIET_INFO)echo "Running HLS for available implementations of $(@:-hls=)"
+	$(QUIET_MAKE)ACCELERATOR=$(@:-hls=) TECH=$(TECHLIB) ESP_ROOT=$(ESP_ROOT) make -C $(ACCELERATORS_PATH)/$(@:-hls=)/hls-work-$(TECHLIB) hls_all | tee $(@:-hls=)_hls.log
+	$(QUIET_INFO)echo "Installing available implementations for $(@:-hls=) to $(ESP_ROOT)/tech/$(TECHLIB)/acc/$(@:-hls=)"
+	$(QUIET_MAKE)ACCELERATOR=$(@:-hls=) TECH=$(TECHLIB) ESP_ROOT=$(ESP_ROOT) make -C $(ACCELERATORS_PATH)/$(@:-hls=)/hls-work-$(TECHLIB) install
 
 $(ACCELERATORS-sim): %-sim : %-wdir
-	@$(QUIET_RUN)ACCELERATOR=$(@:-sim=) TECH=$(TECHLIB) ESP_ROOT=$(ESP_ROOT) make -C $(ACCELERATORS_PATH)/$(@:-sim=)/hls-work-$(TECHLIB) sim_all | tee $@_sim.log
+	@$(QUIET_RUN)ACCELERATOR=$(@:-sim=) TECH=$(TECHLIB) ESP_ROOT=$(ESP_ROOT) make -C $(ACCELERATORS_PATH)/$(@:-sim=)/hls-work-$(TECHLIB) sim_all | tee $(@:-sim=)_sim.log
 
 $(ACCELERATORS-plot): %-plot : %-wdir
 	@$(QUIET_RUN)ACCELERATOR=$(@:-plot=) TECH=$(TECHLIB) ESP_ROOT=$(ESP_ROOT) make -C $(ACCELERATORS_PATH)/$(@:-plot=)/hls-work-$(TECHLIB) plot
