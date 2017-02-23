@@ -38,10 +38,11 @@ $(ACCELERATORS-plot): %-plot : %-wdir
 
 $(ACCELERATORS-clean): %-clean : %-wdir
 	@$(QUIET_CLEAN)ACCELERATOR=$(@:-clean=) TECH=$(TECHLIB) ESP_ROOT=$(ESP_ROOT) make -C $(ACCELERATORS_PATH)/$(@:-clean=)/hls-work-$(TECHLIB) clean
+	@$(RM) $(@:-clean=)*.log
 
 $(ACCELERATORS-distclean): %-distclean : %-wdir
 	@$(QUIET_CLEAN)ACCELERATOR=$(@:-distclean=) TECH=$(TECHLIB) ESP_ROOT=$(ESP_ROOT) make -C $(ACCELERATORS_PATH)/$(@:-distclean=)/hls-work-$(TECHLIB) distclean
-	@$(RM) $(ESP_ROOT)/tech/$(TECHLIB)/acc/$(@:-distclean=)
+	@$(RM) $(@:-distclean=)*.log
 
 .PHONY: print-available-accelerators $(ACCELERATORS-wdir) $(ACCELERATORS-hls) $(ACCELERATORS-sim) $(ACCELERATORS-plot) $(ACCELERATORS-clean) $(ACCELERATORS-distclean)
 
