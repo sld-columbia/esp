@@ -3,8 +3,14 @@
 from tkinter import *
 from tkinter import messagebox
 import os.path
+import glob
+import sys
 
 from NoCConfiguration import *
+
+def get_immediate_subdirectories(a_dir):
+  return [name for name in os.listdir(a_dir)
+        if os.path.isdir(os.path.join(a_dir, name))]
 
 class Components():
 
@@ -24,14 +30,34 @@ class Components():
   ACCELERATORS = [
   ]
 
-  def __init__(self):
-    with open("../common/tile_acc.vhd") as fp:
-      for line in fp:
-        if line.find("if device") != -1:
-           line = line[line.find("SLD_")+4:]
-           line = line[:line.find("generate")]
-           line = line.strip()
-           self.ACCELERATORS.append(line)
+  POINTS = {}
+
+  def __init__(self, TECH, DMA_WIDTH):
+    tech_dir = TECH
+    acc_dir = "../../tech/" + tech_dir + "/acc"
+    dirs = get_immediate_subdirectories(acc_dir)
+    dirs = sorted(dirs, key=str.upper)
+    for acc in dirs:
+      print(acc)
+      self.POINTS[acc.upper()] = []
+      acc_dp = glob.glob(acc_dir + '/' + acc + '/*.v')
+      for dp_str in acc_dp:
+        dp = dp_str.replace(acc_dir + "/" + acc + "/" + acc + "_", "")
+        dp = dp.replace(".v", "")
+        dp_info = dp.split("_")
+        skip = False
+        for item in dp_info:
+          if re.match(r'dma[1-9]+', item, re.M|re.I):
+            dp_dma_width = int(item.replace("dma", ""))
+            if dp_dma_width != DMA_WIDTH:
+              skip = True
+              break;
+        if skip:
+          continue
+        print(dp)
+        self.POINTS[acc.upper()].append(dp)
+        if len(self.POINTS[acc.upper()]) != 0:
+          self.ACCELERATORS.append(acc.upper())
 
 #board configuration
 class SoC_Config():
@@ -42,7 +68,8 @@ class SoC_Config():
   HAS_SGMII = True
   HAS_SVGA = False
   IP_ADDR = ""
-  IPs = Components()
+  TECH = "virtex7"
+  DMA_WIDTH = 32
 
   def read_config(self, temporary):
     filename = ".esp_config"
@@ -229,7 +256,8 @@ class SoC_Config():
   def set_IP(self):
     self.IP_ADDR = str(int('0x' + self.IPM[:2], 16)) + "." + str(int('0x' + self.IPM[2:], 16)) + "." + str(int('0x' + self.IPL[:2], 16)) + "." + str(int('0x' + self.IPL[2:], 16))
 
-  def __init__(self):
+  def __init__(self, DMA_WIDTH):
+    self.DMA_WIDTH = DMA_WIDTH
     #define whether SGMII has to be used or not: it is not used for PROFPGA boards
     with open("Makefile") as fp:
       for line in fp:
@@ -240,6 +268,9 @@ class SoC_Config():
     #determine other parameters
     with open("grlib_config.vhd") as fp:
       for line in fp:
+        #check target technology
+        if line.find("CFG_FABTECH : integer") != -1:
+          self.TECH = self.check_cfg(line, "integer := ", ";")
         #check if the CPU is configured to used the CPU
         if line.find("CFG_FPU : integer") != -1:
           self.HAS_FPU = self.check_cfg(line, "integer := ", " ")
@@ -257,6 +288,7 @@ class SoC_Config():
         #check if the SoC uses SVGA
         if line.find("CFG_SVGA_ENABLE ") != -1:
           self.HAS_SVGA = int(self.check_cfg(line, "integer := ", ";"))
+    self.IPs = Components(self.TECH, self.DMA_WIDTH)
     #post process configuration
     self.set_IP()
     #0 = Bigphysical area ; 1 = Scatter/Gather

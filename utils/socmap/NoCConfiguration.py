@@ -28,6 +28,8 @@ class Tile():
   def update_tile(self, soc):
     selection = self.ip_type.get()
     self.label.config(text=selection)
+    self.point_label.forget()
+    self.point_select.forget()
     if soc.IPs.PROCESSORS.count(selection):
        self.label.config(bg='deep pink')
     elif soc.IPs.MISC.count(selection):
@@ -36,6 +38,14 @@ class Tile():
        self.label.config(bg='green')
     elif soc.IPs.ACCELERATORS.count(selection):
        self.label.config(bg='orange')
+       self.point_label.pack(side=LEFT)
+       self.point_select.setitems(soc.IPs.POINTS[selection])
+       point = self.point.get()
+       if isInt(point) == False or int(point) not in soc.IPs.POINTS[selection]:
+         self.point_select.setvalue(str(soc.IPs.POINTS[selection][0]))
+       else:
+         self.point_select.setvalue(point)
+       self.point_select.pack(side=LEFT)
     else:
        self.label.config(bg='white')
 
@@ -164,6 +174,7 @@ class Tile():
     self.row = x
     self.col = y
     self.ip_type = StringVar()
+    self.point = StringVar()
     self.clk_region = IntVar()
     self.has_pll = IntVar()
     self.has_clkbuf = IntVar()
@@ -301,21 +312,37 @@ class NoCFrame(Pmw.ScrolledFrame):
       if len(list_items[x]) > width: 
         width = len(list_items[x])
     #creating tile
-    Pmw.OptionMenu(frame, menubutton_font="TkDefaultFont 8", 
+    select_frame = Frame(frame)
+    select_frame.pack(side=TOP)
+
+    display_frame = Frame(frame)
+    display_frame.pack(side=TOP)
+
+    config_frame = Frame(frame)
+    config_frame.pack(side=TOP)
+
+    Pmw.OptionMenu(select_frame, menubutton_font="TkDefaultFont 8",
                    menubutton_textvariable=tile.ip_type, 
                    menubutton_width = width+2,
                    items=list_items
-                  ).pack()
-    tile.label = Label(frame, text=tile.ip_type.get()) 
-    tile.label.config(height=4,bg='white', width=30)
+                  ).pack(side=LEFT)
+    tile.point_label = Label(select_frame, text="Impl.: ", width=5)
+    tile.point_select = Pmw.OptionMenu(select_frame, menubutton_font="TkDefaultFont 8",
+                   menubutton_textvariable=tile.point,
+                   menubutton_width = 10,
+                   items=[]
+                  )
+
+    tile.label = Label(display_frame, text=tile.ip_type.get())
+    tile.label.config(height=4,bg='white', width=width+25)
     tile.label.pack()
     tile.label.bind("<Double-Button-1>", lambda event:tile.power_window(event, self.soc, self))
-    Label(frame, text="Clk Reg: ").pack(side=LEFT)
-    tile.clk_reg_selection = Spinbox(frame, from_=0, to=len(self.soc.IPs.PROCESSORS)+len(self.soc.IPs.ACCELERATORS),wrap=True,textvariable=tile.clk_region,width=3);
+    Label(config_frame, text="Clk Reg: ").pack(side=LEFT)
+    tile.clk_reg_selection = Spinbox(config_frame, from_=0, to=len(self.soc.IPs.PROCESSORS)+len(self.soc.IPs.ACCELERATORS),wrap=True,textvariable=tile.clk_region,width=3);
     tile.clk_reg_selection.pack(side=LEFT)
-    tile.pll_selection = Checkbutton(frame, text="Has PLL", variable=tile.has_pll, onvalue = 1, offvalue = 0, command=self.changed);
+    tile.pll_selection = Checkbutton(config_frame, text="Has PLL", variable=tile.has_pll, onvalue = 1, offvalue = 0, command=self.changed);
     tile.pll_selection.pack(side=LEFT)
-    tile.clkbuf_selection = Checkbutton(frame, text="CLK BUF", variable=tile.has_clkbuf, onvalue = 1, offvalue = 0, command=self.changed);
+    tile.clkbuf_selection = Checkbutton(config_frame, text="CLK BUF", variable=tile.has_clkbuf, onvalue = 1, offvalue = 0, command=self.changed);
     tile.clkbuf_selection.pack(side=LEFT)
     try:
       int(self.vf_points_entry.get())

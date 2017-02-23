@@ -92,6 +92,7 @@ class soc_config:
         self.tiles[t].row = x
         self.tiles[t].col = y
         self.tiles[t].clk_region = soc.noc.topology[x][y].get_clk_region()
+        self.tiles[t].design_point = soc.noc.topology[x][y].point.get()
         self.tiles[t].has_pll = soc.noc.topology[x][y].has_pll.get()
         self.tiles[t].has_clkbuf = soc.noc.topology[x][y].has_clkbuf.get()
         if selection == "cpu":
@@ -150,6 +151,7 @@ def print_libs(fp):
   fp.write("use work.stdlib.all;\n")
   fp.write("use work.grlib_config.all;\n")
   fp.write("use work.amba.all;\n")
+  fp.write("use work.sld_devices.all;\n")
   fp.write("use work.devices.all;\n")
   fp.write("use work.leon3.all;\n")
   fp.write("use work.nocpackage.all;\n")
@@ -620,6 +622,14 @@ def print_tiles(fp, esp_config, soc):
     fp.write("    " + str(i) + " => " + str(type) + ",\n")
   fp.write("    others => 0);\n\n")
 
+  fp.write("  type tile_hlscfg_array is array (0 to CFG_TILES_NUM-1) of hlscfg_t;\n")
+  fp.write("  constant tile_design_point : tile_hlscfg_array := (\n")
+  for i in range(0, esp_config.ntiles):
+    if str(esp_config.tiles[i].design_point) != "":
+      acc = esp_config.accelerators[esp_config.tiles[i].idx]
+      fp.write("    " + str(i) + " => HLSCFG_" + acc.uppercase_name + "_" + esp_config.tiles[i].design_point.upper() + ",\n")
+  fp.write("    others => 0);\n\n")
+
   fp.write("  constant domains_num : integer := " + str(len(soc.noc.get_clk_regions()))+";\n\n")
 
   fp.write("  constant tile_has_dvfs : tile_type_array := (\n")
@@ -667,7 +677,7 @@ def print_tiles(fp, esp_config, soc):
       fp.write("    " + str(i) + " => " + str(esp_config.tiles[i].has_clkbuf) + ",\n")
   fp.write("    others => 0);\n\n")
 
-  fp.write("  type tile_device_array is array (0 to CFG_TILES_NUM-1) of amba_device_type;\n")
+  fp.write("  type tile_device_array is array (0 to CFG_TILES_NUM-1) of devid_t;\n")
   fp.write("  constant tile_device : tile_device_array := (\n")
   for i in range(0, esp_config.ntiles):
     if esp_config.tiles[i].type == "acc":

@@ -1,5 +1,16 @@
 #!/usr/bin/python3
 
+###############################################################################
+#
+# ESP Wrapper Generator for Accelerators
+#
+# Copyright (c) 2014-2017, Columbia University
+#
+# @authors: Christian Pilato <pilato@cs.columbia.edu>
+#           Paolo Mantovani <paolo@cs.columbia.edu>
+#
+###############################################################################
+
 from tkinter import *
 from tkinter import messagebox
 import Pmw
@@ -13,6 +24,13 @@ from socmap_gen import *
 from mmi64_gen import *
 from power_gen import *
 
+def print_usage():
+  print("Usage                    : ./esp_creator.py <dma_width>")
+  print("")
+  print("")
+  print("      <dma_width>        : Bit-width for the DMA channel (currently supporting 32 bits only)")
+  print("")
+
 #Configuration Frame (top-left)
 class ConfigFrame(Frame):
 
@@ -20,6 +38,8 @@ class ConfigFrame(Frame):
     Frame.__init__(self, top_frame, width=75, borderwidth=2, relief=RIDGE) 
     self.pack(side=LEFT, expand=NO, fill=Y)
     Label(self, text="General SoC configuration:", font="TkDefaultFont 11 bold").pack(side=TOP)
+    self.tech_label = Label(self, text=soc.TECH, fg="green")
+    self.tech_label.pack(side=TOP)      
     self.fpu_label = Label(self, text="No FPU",fg="red")
     self.fpu_label.pack(side=TOP)      
     self.jtag_label = Label(self, text="No JTAG",fg="red")
@@ -122,10 +142,16 @@ class EspCreator(Frame):
 
   def generate_mmi64_regs(self):
       create_mmi64_regs(soc)
- 
+
+if len(sys.argv) != 2:
+    print_usage()
+    sys.exit(1)
+
+DMA_WIDTH = int(sys.argv[1])
+
 root = Tk()
 root.title("ESP SoC Generator")
-soc = SoC_Config()
+soc = SoC_Config(DMA_WIDTH)
 
 root.geometry("1024x768")
 w, h = root.winfo_screenwidth(), root.winfo_screenheight()
