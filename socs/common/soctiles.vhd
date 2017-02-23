@@ -177,6 +177,7 @@ package soctiles is
       fabtech        : integer;
       memtech        : integer;
       padtech        : integer;
+      hls_conf       : hlscfg_t;
       local_y        : local_yx;
       local_x        : local_yx;
       io_y           : local_yx;

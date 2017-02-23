@@ -322,6 +322,7 @@ begin
           fabtech  => fabtech,
           memtech  => memtech,
           padtech  => padtech,
+          hls_conf => tile_design_point(i),
           local_y  => tile_y(i),
           local_x  => tile_x(i),
           io_y     => tile_y(io_tile_id),
