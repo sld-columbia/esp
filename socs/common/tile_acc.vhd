@@ -80,8 +80,6 @@ entity tile_acc is
     noc6_output_port   : in  noc_flit_type;
     noc6_data_void_out : in  std_ulogic;
     noc6_stop_out      : in  std_ulogic;
-    vdd_ivr            : in  std_ulogic;
-    vref               : out std_ulogic;
     mon_dvfs_in        : in  monitor_dvfs_type;
     --Monitor signals
     mon_acc            : out monitor_acc_type;
@@ -160,8 +158,6 @@ begin
         apb_rcv_rdreq     => apb_rcv_rdreq,
         apb_rcv_data_out  => apb_rcv_data_out,
         apb_rcv_empty     => apb_rcv_empty,
-        vdd_ivr           => vdd_ivr,
-        vref              => vref,
         mon_dvfs_in       => mon_dvfs_in,
         -- Monitor signals
         mon_acc           => mon_acc,
@@ -209,8 +205,6 @@ begin
         apb_rcv_rdreq     => apb_rcv_rdreq,
         apb_rcv_data_out  => apb_rcv_data_out,
         apb_rcv_empty     => apb_rcv_empty,
-        vdd_ivr           => vdd_ivr,
-        vref              => vref,
         mon_dvfs_in       => mon_dvfs_in,
         -- Monitor signals
         mon_acc           => mon_acc,
@@ -258,8 +252,6 @@ begin
         apb_rcv_rdreq     => apb_rcv_rdreq,
         apb_rcv_data_out  => apb_rcv_data_out,
         apb_rcv_empty     => apb_rcv_empty,
-        vdd_ivr           => vdd_ivr,
-        vref              => vref,
         mon_dvfs_in       => mon_dvfs_in,
         -- Monitor signals
         mon_acc           => mon_acc,

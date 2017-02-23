@@ -53,9 +53,7 @@ entity dvfs_fsm is
     traffic       : in  std_ulogic;
     burst         : in  std_ulogic;
     --Monitor signals
-    mon_dvfs      : out monitor_dvfs_type;
-    vdd_ivr       : in  std_ulogic;
-    vref          : out std_ulogic);
+    mon_dvfs      : out monitor_dvfs_type);
 
 end dvfs_fsm;
 
@@ -630,7 +628,5 @@ begin  -- rtl
   voltage(4 downto 0) <= ddac;
   -- Feedback current not implemented
   qadc <= (others => '1');
-  -- IVR not available
-  vref <= '0';
 
 end rtl;

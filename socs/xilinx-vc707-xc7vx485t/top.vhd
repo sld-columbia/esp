@@ -265,8 +265,6 @@ signal chip_pllbypass : std_logic_vector(CFG_TILES_NUM-1 downto 0);
 signal chip_pllclk : std_ulogic;
 
 
-signal vdd_ivr : std_logic_vector(CFG_TILES_NUM-1 downto 0);
-signal vref : std_logic_vector(CFG_TILES_NUM-1 downto 0);
 attribute keep : boolean;
 attribute syn_keep : string;
 attribute keep of clkm : signal is true;
@@ -624,9 +622,7 @@ begin
       dvi_apbi       => dvi_apbi,
       dvi_apbo       => dvi_apbo,
       dvi_ahbmi      => dvi_ahbmi,
-      dvi_ahbmo      => dvi_ahbmo,
-      VDD_IVR   => VDD_IVR,
-      VREF      => VREF);
+      dvi_ahbmo      => dvi_ahbmo);
 
  end;
 

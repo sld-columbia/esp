@@ -615,9 +615,7 @@ package tile is
       dma_snd_full      : in  std_ulogic;
       interrupt_wrreq   : out std_ulogic;
       interrupt_data_in : out noc_flit_type;
-      interrupt_full    : in  std_ulogic;
-      vdd_ivr           : in  std_ulogic;
-      vref              : out std_ulogic);
+      interrupt_full    : in  std_ulogic);
   end component;
 
   component mem_q2bus
@@ -698,9 +696,7 @@ package tile is
       acc_idle      : in  std_ulogic;
       traffic       : in  std_ulogic;
       burst         : in  std_ulogic;
-      mon_dvfs      : out monitor_dvfs_type;
-      vdd_ivr       : in std_ulogic;
-      vref          : out std_ulogic
+      mon_dvfs      : out monitor_dvfs_type
       );
 
   end component;
@@ -725,9 +721,7 @@ package tile is
       acc_idle  : in  std_ulogic;
       traffic   : in  std_ulogic;
       burst     : in  std_ulogic;
-      mon_dvfs  : out monitor_dvfs_type;
-      vdd_ivr   : in std_ulogic;
-      vref      : out std_ulogic);
+      mon_dvfs  : out monitor_dvfs_type);
   end component;
 
 end tile;

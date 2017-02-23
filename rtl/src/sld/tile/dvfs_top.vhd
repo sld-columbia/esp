@@ -68,9 +68,7 @@ entity dvfs_top is
     traffic   : in  std_ulogic;
     burst     : in  std_ulogic;
     --Monitor signals
-    mon_dvfs  : out monitor_dvfs_type;
-    vdd_ivr   : in std_ulogic;
-    vref      : out std_ulogic);
+    mon_dvfs  : out monitor_dvfs_type);
 
 end dvfs_top;
 
@@ -105,9 +103,7 @@ begin  -- rtl
       acc_idle      => acc_idle,
       traffic       => traffic,
       burst         => burst,
-      mon_dvfs      => mon_dvfs,
-      vdd_ivr       => VDD_IVR,
-      vref          => VREF);
+      mon_dvfs      => mon_dvfs);
 
   tile_dvfs_1: tile_dvfs
     generic map (

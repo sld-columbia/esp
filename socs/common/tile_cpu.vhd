@@ -102,9 +102,8 @@ entity tile_cpu is
     noc6_data_void_out : in  std_ulogic;
     noc6_stop_out      : in  std_ulogic;
     mon_dvfs_in        : in  monitor_dvfs_type;
-    mon_dvfs           : out monitor_dvfs_type;
-    vdd_ivr            : in std_ulogic;
-    vref               : out std_ulogic);
+    mon_dvfs           : out monitor_dvfs_type
+  );
 
 end;
 
@@ -310,9 +309,8 @@ pllclk <= clk_feedthru;
         acc_idle  => mon_dvfs_in.acc_idle,
         traffic   => mon_dvfs_in.traffic,
         burst     => mon_dvfs_in.burst,
-        mon_dvfs  => mon_dvfs_ctrl,
-        VDD_IVR   => VDD_IVR,
-        VREF      => VREF);
+        mon_dvfs  => mon_dvfs_ctrl
+      );
 
     mon_dvfs.clk <= mon_dvfs_ctrl.clk;
     mon_dvfs.vf  <= mon_dvfs_ctrl.vf;
@@ -321,7 +319,6 @@ pllclk <= clk_feedthru;
 
   dvfs_no_master_or_no_dvfs: if has_dvfs = 0 or has_pll = 0 generate
     clk_feedthru <= refclk;
-    vref <= '0';
     apbo(powerctrl_pindex) <= apb_none;
     process (clk_feedthru, rst)
     begin  -- process

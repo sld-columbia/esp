@@ -97,9 +97,7 @@ entity acc_dma2noc is
     -- tile->NoC5
     interrupt_wrreq                     : out std_ulogic;
     interrupt_data_in                   : out noc_flit_type;
-    interrupt_full                      : in  std_ulogic;
-    vdd_ivr   : in std_ulogic;
-    vref      : out std_ulogic);
+    interrupt_full                      : in  std_ulogic);
 
 end acc_dma2noc;
 
@@ -686,7 +684,6 @@ begin  -- rtl
 
   no_dvfs: if has_dvfs = 0 generate
     pllclk <= refclk;
-    vref <= '0';
     dvfs_apbo <= apb_none;
     mon_dvfs.clk <= refclk;
     mon_dvfs.vf <= "1000";
@@ -696,7 +693,6 @@ begin  -- rtl
 
   dvfs_no_master: if has_dvfs /= 0 and has_pll = 0 generate
     pllclk <= refclk;
-    vref <= '0';
     dvfs_apbo <= apb_none;
     mon_dvfs.clk <= refclk;
     mon_dvfs.vf <= mon_dvfs_in.vf;
@@ -732,9 +728,7 @@ begin  -- rtl
       acc_idle  => mon_dvfs_in.acc_idle,
       traffic   => mon_dvfs_in.traffic,
       burst     => mon_dvfs_in.burst,
-      mon_dvfs  => mon_dvfs_ctrl,
-      VDD_IVR   => VDD_IVR,
-      VREF      => VREF);
+      mon_dvfs  => mon_dvfs_ctrl);
   mon_dvfs.clk <= mon_dvfs_ctrl.clk;
   mon_dvfs.vf  <= mon_dvfs_ctrl.vf;
   mon_dvfs.transient <= mon_dvfs_ctrl.transient;

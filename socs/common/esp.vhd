@@ -73,8 +73,6 @@ entity esp is
     dvi_apbo        : in  apb_slv_out_type;
     dvi_ahbmi       : out ahb_mst_in_type;
     dvi_ahbmo       : in  ahb_mst_out_type;
-    vdd_ivr         : in std_logic_vector(TILES_NUM-1 downto 0);
-    vref            : out std_logic_vector(TILES_NUM-1 downto 0);
     -- Monitor signals
     mon_noc         : out monitor_noc_matrix(1 to 6, 0 to TILES_NUM-1);
     mon_acc         : out monitor_acc_vector(0 to accelerators_num-1);
@@ -242,7 +240,6 @@ begin
       mon_dvfs_out(i).traffic <= '0';
       mon_dvfs_out(i).burst <= '0';
       clk_tile(i) <= noc_clk_int;
-      VREF(i) <= '0';
     end generate empty_tile;
 
     cpu_tile: if tile_type(i) = 1 generate
@@ -315,9 +312,7 @@ begin
           noc6_data_void_out => noc_data_void_out(6)(i),
           noc6_stop_out      => noc_stop_out(6)(i),
           mon_dvfs_in        => mon_dvfs_domain(i),
-          mon_dvfs           => mon_dvfs_out(i),
-          VDD_IVR            => VDD_IVR(i),
-          VREF               => VREF(i));
+          mon_dvfs           => mon_dvfs_out(i));
     end generate cpu_tile;
 
     accelerator_tile: if tile_type(i) = 2 generate
@@ -383,8 +378,6 @@ begin
           noc6_output_port   => noc_output_port(6)(i),
           noc6_data_void_out => noc_data_void_out(6)(i),
           noc6_stop_out      => noc_stop_out(6)(i),
-          VDD_IVR            => VDD_IVR(i),
-          VREF               => VREF(i),
           mon_dvfs_in        => mon_dvfs_domain(i),
           --Monitor signals
           mon_acc            => mon_acc(accelerators_tile2number(i)),
@@ -456,7 +449,6 @@ begin
           noc6_stop_out      => noc_stop_out(6)(i),
           mon_dvfs           => mon_dvfs_out(i));
       clk_tile(i) <= noc_clk_int;
-      vref(i) <= '0';
     end generate io_tile;
 
     mem_tile: if tile_type(i) = 4 generate
@@ -519,7 +511,6 @@ begin
           noc6_stop_out      => noc_stop_out(6)(i),
           mon_dvfs           => mon_dvfs_out(i));
       clk_tile(i) <= noc_clk_int;
-      vref(i) <= '0';
     end generate mem_tile;
 
     multi_mem_ctrl: if CFG_MIG_DUAL /= 0 generate
@@ -577,7 +568,6 @@ begin
             noc6_stop_out      => noc_stop_out(6)(i),
             mon_dvfs           => mon_dvfs_out(i));
         clk_tile(i) <= mem_clk_int;
-        vref(i) <= '0';
       end generate mem_lite_tile;
     end generate multi_mem_ctrl;
 

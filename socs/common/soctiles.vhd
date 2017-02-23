@@ -94,8 +94,6 @@ package soctiles is
       dvi_apbo      : in  apb_slv_out_type;
       dvi_ahbmi     : out ahb_mst_in_type;
       dvi_ahbmo     : in  ahb_mst_out_type;
-      vdd_ivr       : in  std_logic_vector(TILES_NUM-1 downto 0);
-      vref          : out std_logic_vector(TILES_NUM-1 downto 0);
       -- Monitor signals
       mon_noc       : out monitor_noc_matrix(1 to 6, 0 to TILES_NUM-1);
       mon_acc       : out monitor_acc_vector(0 to accelerators_num-1);
@@ -171,9 +169,7 @@ package soctiles is
       noc6_data_void_out : in  std_ulogic;
       noc6_stop_out      : in  std_ulogic;
       mon_dvfs_in        : in  monitor_dvfs_type;
-      mon_dvfs           : out monitor_dvfs_type;
-      vdd_ivr            : in  std_ulogic;
-      vref               : out std_ulogic);
+      mon_dvfs           : out monitor_dvfs_type);
   end component;
 
   component tile_acc
@@ -237,8 +233,6 @@ package soctiles is
       noc6_output_port   : in  noc_flit_type;
       noc6_data_void_out : in  std_ulogic;
       noc6_stop_out      : in  std_ulogic;
-      vdd_ivr            : in  std_ulogic;
-      vref               : out std_ulogic;
       mon_dvfs_in        : in  monitor_dvfs_type;
       --Monitor signals
       mon_acc            : out monitor_acc_type;
