@@ -12,6 +12,8 @@ TECHLIB  = virtex7
 BOARD    = profpga-xc7v2000t
 DESIGN   = esp-$(BOARD)
 
+### NoC flit-width (not including head and tail bits)
+NOC_WIDTH = 32
 
 ### Include common Makefile for desing configuration ###
 include $(ESP_ROOT)/utils/design.mk
