@@ -51,7 +51,8 @@ clean: 		soft-clean		\
 		sim-clean		\
 		esp-config-clean	\
 		grlib-config-clean	\
-		vivado-clean
+		vivado-clean		\
+		sldgen-clean
 
 distclean:	check_all_srcs-distclean 	\
 		check_all_rtl_srcs-distclean	\
@@ -61,7 +62,8 @@ distclean:	check_all_srcs-distclean 	\
 		sim-distclean			\
 		esp-config-distclean		\
 		grlib-config-distclean		\
-		vivado-distclean
+		vivado-distclean		\
+		sldgen-distclean
 
 .PHONY: help clean distclean
 
@@ -77,14 +79,14 @@ esp-defconfig: ../defconfig/esp_$(BOARD)_defconfig
 socmap.vhd: .esp_config grlib_config.vhd
 	@echo ""
 	@echo "Generating ESP configuration..."
-	@python3 $(ESP_ROOT)/utils/socmap/esp_creator_batch.py
+	@python3 $(ESP_ROOT)/utils/socmap/esp_creator_batch.py $(NOC_WIDTH)
 
 esp-config: socmap.vhd
 
 esp-xconfig: grlib_config.vhd
 	@echo ""
 	@echo "Running interactive ESP configuration..."
-	@python3 $(ESP_ROOT)/utils/socmap/esp_creator.py
+	@python3 $(ESP_ROOT)/utils/socmap/esp_creator.py $(NOC_WIDTH)
 
 esp-config-clean:
 	$(QUIET_CLEAN)$(RM) \
@@ -259,7 +261,9 @@ VHDL_RTL_SRCS  = $(shell (find $(ESP_ROOT)/rtl/src -name "*.vhd" ))
 else
 VHDL_RTL_SRCS  = $(shell (find $(ESP_ROOT)/rtl/src -name "*.vhd" | grep -v "sld/sldcommon/monitor.vhd"))
 endif
+
 VLOG_RTL_SRCS  = $(shell (find $(ESP_ROOT)/rtl/src -name "*.v" ))
+VLOG_RTL_SRCS += $(shell (find $(ESP_ROOT)/tech/$(TECHLIB) -name "*.v" ))
 
 VHDL_SIM_PKGS  = $(shell (find $(ESP_ROOT)/sim/include -name "*.vhd" ))
 VHDL_SIM_SRCS  = $(shell (find $(ESP_ROOT)/sim/src -name "*.vhd" ))
@@ -328,6 +332,7 @@ modelsim/xilinx_lib: $(VIVADO)
 	sed -i 's/; Show_Warning5 = 0/Show_Warning5 = 0/g' modelsim.ini; \
 	sed -i 's/; StdArithNoWarnings = 1/StdArithNoWarnings = 1/g' modelsim.ini; \
 	sed -i 's/; NumericStdNoWarnings = 1/NumericStdNoWarnings = 1/g' modelsim.ini; \
+	sed -i 's/\(suppress = [0-9]\+\)/\1,1491/g' modelsim.ini; \
 	cd ../;
 
 xilinx_lib-clean:
@@ -480,7 +485,7 @@ modelsim/vsim.mk: modelsim/xilinx_lib check_all_srcs.old $(PKG_LIST)
 	ln -s ../ram.srec; \
 	cd ../;
 
-sim-compile: check_all_srcs modelsim/mig modelsim/sgmii modelsim/vsim.mk soft
+sim-compile: sldgen check_all_srcs modelsim/mig modelsim/sgmii modelsim/vsim.mk soft
 	$(QUIET_MAKE)make -C modelsim -f vsim.mk
 
 sim: sim-compile
@@ -519,6 +524,9 @@ vivado/srcs.tcl: vivado check_all_rtl_srcs.old
 	@for ver in $(VERILOG_PROFPGA); do \
 		rtl=$(PROFPGA)/hdl/$$ver; \
 		echo "read_verilog -library profpga $$rtl" >> $@; \
+	done;
+	@for rtl in $(SLDGEN_VHDL_RTL_PKGS); do \
+		echo "read_vhdl $$rtl" >> $@; \
 	done;
 	@for rtl in $(VHDL_ALL_RTL); do \
 		echo "read_vhdl $$rtl" >> $@; \
