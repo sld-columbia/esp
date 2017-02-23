@@ -29,6 +29,7 @@ $(ACCELERATORS-hls): %-hls : %-wdir
 	$(QUIET_MAKE)ACCELERATOR=$(@:-hls=) TECH=$(TECHLIB) ESP_ROOT=$(ESP_ROOT) make -C $(ACCELERATORS_PATH)/$(@:-hls=)/hls-work-$(TECHLIB) hls_all | tee $(@:-hls=)_hls.log
 	$(QUIET_INFO)echo "Installing available implementations for $(@:-hls=) to $(ESP_ROOT)/tech/$(TECHLIB)/acc/$(@:-hls=)"
 	$(QUIET_MAKE)ACCELERATOR=$(@:-hls=) TECH=$(TECHLIB) ESP_ROOT=$(ESP_ROOT) make -C $(ACCELERATORS_PATH)/$(@:-hls=)/hls-work-$(TECHLIB) install
+	@echo "$(@:-hls=)" >> $(ESP_ROOT)/tech/$(TECHLIB)/acc/installed.log
 
 $(ACCELERATORS-sim): %-sim : %-wdir
 	@$(QUIET_RUN)ACCELERATOR=$(@:-sim=) TECH=$(TECHLIB) ESP_ROOT=$(ESP_ROOT) make -C $(ACCELERATORS_PATH)/$(@:-sim=)/hls-work-$(TECHLIB) sim_all | tee $(@:-sim=)_sim.log
@@ -43,8 +44,23 @@ $(ACCELERATORS-clean): %-clean : %-wdir
 $(ACCELERATORS-distclean): %-distclean : %-wdir
 	@$(QUIET_CLEAN)ACCELERATOR=$(@:-distclean=) TECH=$(TECHLIB) ESP_ROOT=$(ESP_ROOT) make -C $(ACCELERATORS_PATH)/$(@:-distclean=)/hls-work-$(TECHLIB) distclean
 	@$(RM) $(@:-distclean=)*.log
+	@sed -i '/$(@:-distclean=)/d' $(ESP_ROOT)/tech/$(TECHLIB)/acc/installed.log
 
 .PHONY: print-available-accelerators $(ACCELERATORS-wdir) $(ACCELERATORS-hls) $(ACCELERATORS-sim) $(ACCELERATORS-plot) $(ACCELERATORS-clean) $(ACCELERATORS-distclean)
+
+SLDGEN_DEPS  = $(ESP_ROOT)/tech/$(TECHLIB)/acc/installed.log
+SLDGEN_DEPS += $(ESP_ROOT)/utils/sldgen/sld_generate.py
+SLDGEN_DEPS += $(wildcard $(ESP_ROOT)/utils/sldgen/templates/*.vhd)
+
+sldgen: $(SLDGEN_DEPS)
+	$(QUIET_MKDIR)mkdir -p sldgen
+	$(QUIET_RUN)$(ESP_ROOT)/utils/sldgen/sld_generate.py $(NOC_WIDTH) $(ESP_ROOT)/tech/$(TECHLIB)/acc $(ESP_ROOT)/utils/sldgen/templates ./sldgen
+	@touch $@
+
+sldgen-clean:
+
+sldgen-distclean: sldgen-clean
+	$(QUIET_CLEAN)$(RM) sldgen
 
 accelerators: $(ACCELERATORS-hls)
 
@@ -52,4 +68,4 @@ accelerators-clean: $(ACCELERATORS-clean)
 
 accelerators-distclean: $(ACCELERATORS-distclean)
 
-.PHONY: accelerators accelerators-clean accelerators-distclean
+.PHONY: sldgen-clean sldgen-distclean accelerators accelerators-clean accelerators-distclean
