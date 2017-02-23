@@ -16,6 +16,10 @@ use std.textio.all;
 
 package sld_devices is
 
+  subtype hlscfg_t is integer range 0 to 1024;
+
+  -- <<hlscfg>>
+
   subtype vendor_t is integer range 0 to 16#ff#;
   subtype devid_t is integer range 0 to 16#3ff#;
   subtype vdesc_t is string(1 to 24);
@@ -30,8 +34,8 @@ package sld_devices is
 
   constant VENDOR_SLD : vendor_t := 16#EB#;
 
-  constant SLD_POWERCTRL                    : devid_t := 16#00F#;
-  constant SLD_AHBRAM_DP                    : devid_t := 16#01f#;
+  constant SLD_POWERCTRL : devid_t := 16#00F#;
+  constant SLD_AHBRAM_DP : devid_t := 16#01f#;
 
   -- <<devid>>
 
@@ -40,10 +44,10 @@ package sld_devices is
   constant SLD_DESC : vdesc_t := "Columbia University SLD ";
 
   constant sld_device_table : dtable_t := (
-    SLD_POWERCTRL                    => "Voltage and Frequency Scaling  ",
-    SLD_AHBRAM_DP                    => "On-chip RAM with dual AHB iface",
+    SLD_POWERCTRL => "Voltage and Frequency Scaling  ",
+    SLD_AHBRAM_DP => "On-chip RAM with dual AHB iface",
     -- <<ddesc>>
-    others                           => "Unknown Device                 ");
+    others => "Unknown Device                 ");
 
   constant sld_lib : vlib_t := (
     vendorid     => VENDOR_SLD,

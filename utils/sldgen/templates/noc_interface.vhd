@@ -136,7 +136,7 @@ end;
   signal dma_write_chnl_valid       :  std_ulogic;
   signal dma_write_chnl_ready       :  std_ulogic;
   signal dma_write_chnl_data        :  std_logic_vector(31 downto 0);
-  signal acc_done                   :  std_ulogic
+  signal acc_done                   :  std_ulogic;
   -- Register control, interrupt and monitor signals
   signal pllclk_int        : std_ulogic;
   signal apbi              : apb_slv_in_type;

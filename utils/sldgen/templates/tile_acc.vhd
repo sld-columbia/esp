@@ -23,12 +23,12 @@ entity tile_acc is
     fabtech        : integer              := virtex7;
     memtech        : integer              := virtex7;
     padtech        : integer              := virtex7;
-    hls_conf       : hlscfg_t             := "basic_dma32";
+    hls_conf       : hlscfg_t             := 0;
     local_y        : local_yx             := "000";
     local_x        : local_yx             := "011";
     io_y           : local_yx             := "001";
     io_x           : local_yx             := "010";
-    device         : devid_t              := SLD_SORT;
+    device         : devid_t              := 0;
     pindex         : integer              := 5;
     paddr          : integer              := 16#105#;
     pmask          : integer              := 16#fff#;

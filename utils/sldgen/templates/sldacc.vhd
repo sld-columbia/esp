@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --  Copyright (C) 2015-2017, System Level Design (SLD) @ Columbia University
 -----------------------------------------------------------------------------
--- Entity: 	sldacc
+-- Package: 	sldacc
 -- File:	sldacc.vhd
 -- Author:	Paolo Mantovani
 --              Christian Pilato

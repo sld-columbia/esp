@@ -45,7 +45,7 @@ class Parameter():
     self.value = 0
 
   def __str__(self):
-    return "          " + self.name + ", " + self.desc + ", " + str(self.size) + "bits, register " + str(self.reg) + ", def. value " + str(self.value) + "\n"
+    return "            " + self.name + ", " + self.desc + ", " + str(self.size) + "bits, register " + str(self.reg) + ", def. value " + str(self.value) + "\n"
 
 class Implementation():
   def __init__(self):
@@ -65,16 +65,16 @@ class Accelerator():
     self.param = []
 
   def __str__(self):
-    params = "\n        {\n"
+    params = "\n          {\n"
     for i in range(0, len(self.param)):
       params = params + str(self.param[i])
-    params = params + "        }"
+    params = params + "          }"
     cfgs = "["
     for i in range(0, len(self.hlscfg) - 1):
       cfgs = cfgs + str(self.hlscfg[i]) + " | "
     cfgs = cfgs + str(self.hlscfg[len(self.hlscfg) - 1])
     cfgs = cfgs + "]"
-    return "        " + self.name + "_" + cfgs + ": " + self.desc + ", " + str(self.data) + "MB, ID " + self.device_id + str(params)
+    return "          " + self.name + "_" + cfgs + ": " + self.desc + ", " + str(self.data) + "MB, ID " + self.device_id + str(params)
 
 
 #
@@ -85,9 +85,15 @@ def gen_device_id(accelerator_list, template_dir, out_dir):
   f = open(out_dir + '/sld_devices.vhd', 'w')
   with open(template_dir + '/sld_devices.vhd', 'r') as ftemplate:
     for tline in ftemplate:
-      if tline.find("-- <<devid>>") >= 0:
+      if tline.find("-- <<hlscfg>>") >= 0:
+        conf_id = 1
         for acc in accelerator_list:
-          f.write("  constant SLD_" + acc.name.upper() + (29 - len(acc.name))*" " + ": devid_t := 16#" + acc.device_id + "#;\n")
+          for cfg in acc.hlscfg:
+            f.write("  constant HLSCFG_" + acc.name.upper() + "_" + cfg.name.upper() + " " + ": hlscfg_t := " + str(conf_id) + ";\n")
+            conf_id = conf_id + 1
+      elif tline.find("-- <<devid>>") >= 0:
+        for acc in accelerator_list:
+          f.write("  constant SLD_" + acc.name.upper() + " " + ": devid_t := 16#" + acc.device_id + "#;\n")
       elif tline.find("-- <<ddesc>>") >= 0:
         for acc in accelerator_list:
           desc = acc.desc
@@ -95,7 +101,7 @@ def gen_device_id(accelerator_list, template_dir, out_dir):
             desc = acc.desc + (31 - len(acc.desc))*" "
           elif len(acc.desc) > 31:
             desc = acc.desc[0:30]
-          f.write("    SLD_" + acc.name.upper() + (29 - len(acc.name))*" " + "=> \"" + desc + "\",\n")
+          f.write("    SLD_" + acc.name.upper() + " " + "=> \"" + desc + "\",\n")
       else:
         f.write(tline)
 
@@ -128,14 +134,17 @@ def write_acc_interface(f, acc, dma_width, rst):
   f.write("      dma_write_chnl_data        : out std_logic_vector(" + str(dma_width - 1) + " downto 0);\n")
   f.write("      acc_done                   : out std_ulogic\n")
 
-def write_acc_port_map(f, acc, dma_width, rst):
+def write_acc_port_map(f, acc, dma_width, rst, is_noc_interface):
   f.write("    port map(\n")
   for param in acc.param:
     if not param.readonly:
       spacing = " "
       if 16 - len(param.name) > 0:
         spacing = (16-len(param.name))*" "
-      f.write("      conf_info_" + param.name + spacing + " => " + "conf_info_" + param.name +",\n")
+      if is_noc_interface:
+        f.write("      conf_info_" + param.name + spacing + " => " + "bank(" + acc.name.upper() + "_" + param.name.upper() + "_REG),\n")
+      else:
+        f.write("      conf_info_" + param.name + spacing + " => " + "conf_info_" + param.name +",\n")
   f.write("      clk                        => clk,\n")
   spacing = (27-len(rst))*" "
   f.write("      " + rst + spacing       + "=> acc_rst,\n")
@@ -232,9 +241,9 @@ def gen_tech_indep_impl(accelerator_list, dma_width, template_dir, out_dir):
         f.write("begin  -- mapping\n\n")
         for impl in acc.hlscfg:
           f.write("\n")
-          f.write("  " + impl.name + "_gen: if hls_conf = \"" + impl.name + "\" generate\n")
+          f.write("  " + impl.name + "_gen: if hls_conf = HLSCFG_" + acc.name.upper() + "_" + impl.name.upper() + " generate\n")
           f.write("    " + acc.name + "_" + impl.name + "_i: " + acc.name + "_" + impl.name + "\n")
-          write_acc_port_map(f, acc, dma_width, "rst")
+          write_acc_port_map(f, acc, dma_width, "rst", False)
           f.write("  end generate " +  impl.name + "_gen;\n\n")
         f.write("end mapping;\n\n")
   f.close()
@@ -251,9 +260,10 @@ def gen_interfaces(accelerator_list, dma_width, template_dir, out_dir):
         continue
       for acc in accelerator_list:
         f.write("\n")
-        f.write("  component noc_" + acc.name + "_rtl\n")
+        f.write("  component noc_" + acc.name + "\n")
         f.write("    generic (\n")
         f.write("      hls_conf       : hlscfg_t;\n")
+        f.write("      tech           : integer;\n")
         f.write("      local_y        : local_yx;\n")
         f.write("      local_x        : local_yx;\n")
         f.write("      mem_num        : integer;\n")
@@ -292,14 +302,12 @@ def gen_interfaces(accelerator_list, dma_width, template_dir, out_dir):
         f.write("      apb_rcv_rdreq     : out std_ulogic;\n")
         f.write("      apb_rcv_data_out  : in  noc_flit_type;\n")
         f.write("      apb_rcv_empty     : in  std_ulogic;\n")
-        f.write("      vdd_ivr           : in  std_ulogic;\n")
-        f.write("      vref              : out std_ulogic;\n")
         f.write("      mon_dvfs_in       : in  monitor_dvfs_type;\n")
         f.write("      mon_acc           : out monitor_acc_type;\n")
         f.write("      mon_dvfs          : out monitor_dvfs_type\n")
         f.write("    );\n")
-      f.write("  end component;\n\n")
-      f.write("\n")
+        f.write("  end component;\n\n")
+        f.write("\n")
   f.close()
   ftemplate.close()
 
@@ -333,13 +341,13 @@ def gen_noc_interface(acc, dma_width, template_dir, out_dir):
       elif tline.find("-- <<user_read_only_default>>") >= 0:
         for param in acc.param:
           if param.readonly:
-            f.write("    " + acc.name.upper() + param.name.upper() + "_REG" + (31 - len(acc.name) - len(param.name))*" " + "=> X\"" + format(param.value, '08x') + "\",\n")
+            f.write("    " + acc.name.upper() + "_" + param.name.upper() + "_REG" + (31 - len(acc.name) - len(param.name))*" " + "=> X\"" + format(param.value, '08x') + "\",\n")
       elif tline.find("-- <<accelerator_instance>>") >= 0:
         f.write("  " + acc.name + "_rlt_i: " + acc.name + "_rtl\n")
         f.write("    generic map (\n")
         f.write("      hls_conf => hls_conf\n")
         f.write("    )\n")
-        write_acc_port_map(f, acc, dma_width, "acc_rst")
+        write_acc_port_map(f, acc, dma_width, "acc_rst", True)
       else:
         f.write(tline)
 
@@ -417,6 +425,11 @@ accelerator_list = [ ]
 # Get scheduled accelerators
 accelerators = next(os.walk(rtl_dir))[1]
 
+if (len(accelerators) == 0):
+  print("    WARNING: No accelerators found in " + rtl_dir + ".")
+  print("             Please run 'make accelerators' or make <accelerator>-hls.")
+  print("             Get available accelerators with 'make print-available-accelerators'")
+
 for acc in accelerators:
   accd = Accelerator()
   accd.name = acc
@@ -436,9 +449,9 @@ for acc in accelerators:
           skip = True
           break;
     if skip:
-      print("  INFO: System DMA_WIDTH is " + str(dma_width) + "; skipping " + acc + "_" + dp)
+      print("    INFO: System DMA_WIDTH is " + str(dma_width) + "; skipping " + acc + "_" + dp)
       continue
-    print("  INFO: Found implementation " + dp + " for " + acc)
+    print("    INFO: Found implementation " + dp + " for " + acc)
     impl = Implementation()
     impl.name = dp
     impl.dma_width = dma_width
@@ -446,7 +459,7 @@ for acc in accelerators:
 
   # Read accelerator parameters and info
   if len(accd.hlscfg) == 0:
-    print("  WARNING: No valid HLS configuration found for " + acc)
+    print("    WARNING: No valid HLS configuration found for " + acc)
     continue
 
   elem = xml.etree.ElementTree.parse(acc_dir + "/" + acc + ".xml")
@@ -456,21 +469,21 @@ for acc in accelerators:
     if acc_name != acc:
       continue
 
-    print("  INFO: Retrieving information for " + acc)
+    print("    INFO: Retrieving information for " + acc)
     if "desc" in xmlacc.attrib:
       accd.desc = xmlacc.get('desc')
     else:
-      print("  ERROR: Missing description for " + acc)
+      print("    ERROR: Missing description for " + acc)
       sys.exit(1)
     if "data_size" in xmlacc.attrib:
       accd.data = int(xmlacc.get('data_size'))
     else:
-      print("  ERROR: Missing memory footprint (MB) for " + acc)
+      print("    ERROR: Missing memory footprint (MB) for " + acc)
       sys.exit(1)
     if "device_id" in xmlacc.attrib:
       accd.device_id = xmlacc.get('device_id')
     else:
-      print("  ERROR: Missing device ID for " + acc)
+      print("    ERROR: Missing device ID for " + acc)
       sys.exit(1)
 
     reg = 16
@@ -494,7 +507,7 @@ for acc in accelerators:
     break
 
 # Generate RTL
-print("  INFO: Generating RTL wrappers for all accelerators to " + out_dir)
+print("    INFO: Generating RTL to " + out_dir)
 gen_device_id(accelerator_list, template_dir, out_dir)
 gen_tech_dep(accelerator_list, dma_width, template_dir, out_dir)
 gen_tech_indep(accelerator_list, dma_width, template_dir, out_dir)
