@@ -70,7 +70,7 @@ help:
 	@echo "                                     and generate the corresponding SoC map."
 	@echo " make esp-config                   : read the current configuration from .esp_config and"
 	@echo "                                     generate the corresponding SoC map (may run as dependency)."
-	@echo " make esp-config                   : open a GUI to configure and generate the SoC map."
+	@echo " make esp-xconig                   : open a GUI to configure and generate the SoC map."
 	@echo " make sim                          : compile all source files and run an RTL simulation of ESP"
 	@echo "                                     (requires Modelsim 10.5c)."
 	@echo " make vivado-syn                   : generate a bitstream of ESP (requires Vivado 2016.3)."
