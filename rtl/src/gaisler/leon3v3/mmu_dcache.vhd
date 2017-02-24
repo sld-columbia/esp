@@ -1570,6 +1570,8 @@ begin
     dcrami.twrite    <= ctwrite;        -- virtual tag ram write (port 1)
     dcrami.tpwrite   <= ctpwrite;       -- virtual tag ram write (port 2)
     dcrami.flush    <= flushlv;
+    dcrami.flushc   <= r.flush;
+    dcrami.flushl   <= flushl;
     dcrami.senable <= senable;          -- physical tag ram enable
     dcrami.swrite  <= csnoopwe;         -- physical tag ram write
     dcrami.saddress(19 downto (OFFSET_HIGH - OFFSET_LOW +1)) <= 

@@ -229,6 +229,8 @@ package libcache is
      tpwrite       : std_logic_vector(0 to 3);
      tenable       : std_logic_vector(0 to 3);
      flush         : std_logic_vector(0 to 3);
+     flushl        : std_ulogic;
+     flushc        : std_ulogic;
      data          : cdatatype;
      denable       : std_logic_vector(0 to 3);
      dwrite        : std_logic_vector(0 to 3);

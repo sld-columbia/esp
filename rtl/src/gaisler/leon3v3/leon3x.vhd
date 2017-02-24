@@ -116,6 +116,7 @@ entity leon3x is
     dbgo       : out l3_debug_out_type;
     fpui       : out grfpu_in_type;
     fpuo       : in  grfpu_out_type;
+    dflush     : out std_ulogic;                     -- data-cache flush
     clken      : in  std_ulogic
     );
 
@@ -181,7 +182,11 @@ begin
        port map (gclk2, rst, holdn, ahbi, ahbo, ahbsi, ahbso, rfi, rfo, crami, cramo, 
                  tbi, tbo, tbi_2p, tbo_2p, fpi, fpo, cpi, cpo, irqi, irqo, dbgi, dbgo, clk, clk2, clken
                  );
-  
+
+     -- Export data-cache flush signal and forward it to L2 private caches
+     dflush <= crami.dcramin.flushc;
+
+
      -- IU register file
      rf0 : regfile_3p_l3 generic map (MEMTECH_MOD*(1-IURF_INFER), IRFBITS, 32, IRFWT, IREGNUM,
                                       scantest)
