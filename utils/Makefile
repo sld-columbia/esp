@@ -36,8 +36,6 @@ RM  = rm -rf
 
 ### Common targets ###
 
-all: help
-
 help:
 	@echo
 	@echo " ========================="
@@ -121,7 +119,7 @@ distclean:	check_all_srcs-distclean 	\
 		vivado-distclean		\
 		sldgen-distclean
 
-.PHONY: help clean distclean
+.PHONY: all help clean distclean
 
 ### SoC configuration for ESP ###
 

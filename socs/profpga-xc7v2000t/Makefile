@@ -2,6 +2,7 @@
 ### ESP Local Makefile ###
 ##########################
 
+all: help
 
 ### Global design variables ###
 
