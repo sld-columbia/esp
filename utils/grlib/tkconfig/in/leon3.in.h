@@ -144,8 +144,10 @@
 
 #ifdef CONFIG_ICACHE_LZ16
 #define CFG_ILINE_SZ 4
-#else
+#elif  CONFIG_ICACHE_LZ32
 #define CFG_ILINE_SZ 8
+#else
+#define CFG_ILINE_SZ 4
 #endif
 
 #if defined CONFIG_ICACHE_ALGODIR
@@ -231,8 +233,10 @@
 
 #ifdef CONFIG_DCACHE_LZ16
 #define CFG_DLINE_SZ 4
-#else
+#elif  CONFIG_DCACHE_LZ32
 #define CFG_DLINE_SZ 8
+#else
+#define CFG_DLINE_SZ 4
 #endif
 
 #if defined CONFIG_DCACHE_ALGODIR
