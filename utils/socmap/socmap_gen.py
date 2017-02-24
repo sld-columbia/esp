@@ -161,6 +161,11 @@ def print_constants(fp, esp_config, soc):
   fp.write("  -- CFG_CPU processors\n")
   fp.write("  constant CFG_NCPU_TILE : integer := " + str(soc.noc.get_cpu_num(soc)) + ";\n\n")
 
+  # Cache memory enable 
+  fp.write("  -- Cache memory enable\n")
+  fp.write("  constant CFG_L2_ENABLE  : integer := 1;\n")
+  fp.write("  constant CFG_LLC_ENABLE : integer := 1;\n\n")
+
   fp.write("-- NoC settings\n")
   fp.write("  constant CFG_FIXED_ADDR : integer := 1;\n")
   fp.write("  constant CFG_USE_NOC : integer := 1;\n")
@@ -279,6 +284,9 @@ def print_constants(fp, esp_config, soc):
   fp.write("    0 => ahb_device_reg ( VENDOR_GAISLER, GAISLER_LEON3DSU, 0, 1, 0),\n")
   fp.write("    4 => ahb_membar(dsu_haddr, '0', '0', dsu_hmask),\n")
   fp.write("    others => zero32);\n\n")
+
+  fp.write("  -- SLV 3: Reserved for JTAG/ETH to remote AHBS\n")
+  fp.write("  constant dbg_remote_ahb_hindex : integer := 3;\n\n")
 
   if esp_config.nmem_ctrl == 1:
     fp.write("  -- SLV 4: 0x40000000 - 0x7FFFFFFF (1GB DDR supported)\n")
@@ -593,16 +601,12 @@ def print_tiles(fp, esp_config, soc):
   fp.write("    others => tile_mem_info_none);\n\n")
   
   fp.write("  constant jtag_target_list : tile_mem_info_vector := (\n")
-  fp.write("    0 => tile_cpu_0")
   idx = 1
   if esp_config.nmem_ctrl == 2:
-    fp.write(",\n")
-    fp.write("    " + str(idx) + " => tile_mem_1")
+    fp.write("    " + str(idx) + " => tile_mem_1,\n")
     idx += 1
   if soc.HAS_SVGA == True:
-    fp.write(",\n")
-    fp.write("    " + str(idx) + " => tile_fb")
-  fp.write(",\n")
+    fp.write("    " + str(idx) + " => tile_fb,\n")
   fp.write("    others => tile_mem_info_none);\n\n")
   
   fp.write("  type tile_type_array is array (0 to CFG_TILES_NUM-1) of integer;\n")
@@ -726,9 +730,9 @@ def print_tiles(fp, esp_config, soc):
   fp.write("  subtype tile_cpu_id_type is integer range -1 to " + str(esp_config.NCPU_MAX - 1) + ";\n")
   fp.write("  type tile_cpu_id_array is array (0 to CFG_TILES_NUM-1) of tile_cpu_id_type;\n")
   fp.write("  constant tile_cpu_id : tile_cpu_id_array := (\n")
-  for i in range(0, esp_config.ntiles - 1):
+  for i in range(0, esp_config.ntiles):
     fp.write("    " + str(i) + " => " + str(esp_config.tiles[i].cpuid) + ",\n")
-  fp.write("    " + str(esp_config.ntiles - 1) + " => " + str(esp_config.tiles[esp_config.ntiles - 1].cpuid) + ");\n\n")
+  fp.write("    others => 0);\n\n")
     
   fp.write("  type apb_tile_id_array is array (NAPBSLV-1 downto 0) of integer;\n")
   fp.write("  constant apb_tile_id : apb_tile_id_array := (\n")
