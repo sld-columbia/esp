@@ -148,6 +148,7 @@ def print_libs(fp):
   fp.write("use ieee.std_logic_1164.all;\n")
   fp.write("use ieee.numeric_std.all;\n")
 
+  fp.write("use work.socmap_types.all;\n")
   fp.write("use work.stdlib.all;\n")
   fp.write("use work.grlib_config.all;\n")
   fp.write("use work.amba.all;\n")
