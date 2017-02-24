@@ -38,7 +38,6 @@ class Components():
     dirs = get_immediate_subdirectories(acc_dir)
     dirs = sorted(dirs, key=str.upper)
     for acc in dirs:
-      print(acc)
       self.POINTS[acc.upper()] = []
       acc_dp = glob.glob(acc_dir + '/' + acc + '/*.v')
       for dp_str in acc_dp:
@@ -54,7 +53,6 @@ class Components():
               break;
         if skip:
           continue
-        print(dp)
         self.POINTS[acc.upper()].append(dp)
         if len(self.POINTS[acc.upper()]) != 0:
           self.ACCELERATORS.append(acc.upper())
@@ -139,6 +137,8 @@ class SoC_Config():
           tile.clk_region.set(int(tokens[5]))
           tile.has_pll.set(int(tokens[6]))
           tile.has_clkbuf.set(int(tokens[7]))
+          if tokens[3] == "acc":
+            tile.point.set(tokens[8])
     # DVFS (skip whether it has it or not; we know that already)
     line = fp.readline()
     line = fp.readline()
@@ -196,6 +196,7 @@ class SoC_Config():
       for x in range(0, self.noc.cols):
         tile = self.noc.topology[y][x]
         selection = tile.ip_type.get()
+        is_accelerator = False
         fp.write("TILE_" + str(y) + "_" + str(x) + " = ")
 		# Tile number
         fp.write(str(i) + " ")
@@ -210,6 +211,7 @@ class SoC_Config():
           else:
             fp.write("mem_lite")
         elif self.IPs.ACCELERATORS.count(selection):
+          is_accelerator = True
           fp.write("acc")
         else:
           fp.write("empty")
@@ -225,6 +227,8 @@ class SoC_Config():
           fp.write(" " + str(0))
         fp.write(" " + str(tile.has_pll.get()))
         fp.write(" " + str(tile.has_clkbuf.get()))
+        if is_accelerator:
+          fp.write(" " + str(tile.point.get()))
         fp.write("\n")
         i += 1
     if has_dvfs:

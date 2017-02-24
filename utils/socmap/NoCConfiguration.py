@@ -41,10 +41,12 @@ class Tile():
        self.point_label.pack(side=LEFT)
        self.point_select.setitems(soc.IPs.POINTS[selection])
        point = self.point.get()
-       if isInt(point) == False or int(point) not in soc.IPs.POINTS[selection]:
-         self.point_select.setvalue(str(soc.IPs.POINTS[selection][0]))
-       else:
-         self.point_select.setvalue(point)
+       for p in soc.IPs.POINTS[selection]:
+         if point == p:
+           self.point_select.setvalue(point)
+           break;
+         else:
+           self.point_select.setvalue(str(soc.IPs.POINTS[selection][0]))
        self.point_select.pack(side=LEFT)
     else:
        self.label.config(bg='white')
@@ -204,6 +206,7 @@ class NoC():
           new_topology[y][x].clk_region.set(self.topology[y][x].clk_region.get())
           new_topology[y][x].has_pll.set(self.topology[y][x].has_pll.get())
           new_topology[y][x].has_clkbuf.set(self.topology[y][x].has_clkbuf.get())
+          new_topology[y][x].point.set(self.topology[y][x].point.get())
           new_topology[y][x].energy_values = self.topology[y][x].energy_values
     self.topology = new_topology
     self.rows = _R

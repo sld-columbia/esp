@@ -2,7 +2,7 @@
 
 ###############################################################################
 #
-# ESP Wrapper Generator for Accelerators
+# Graphic User Interface for ESP SoC-map
 #
 # Copyright (c) 2014-2017, Columbia University
 #
