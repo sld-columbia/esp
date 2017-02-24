@@ -40,8 +40,64 @@ all: help
 
 help:
 	@echo
-	@echo " ESP Targets:"
-	@echo "   make BLA BLA         : TODO"
+	@echo " ========================="
+	@echo " ==== ::ESP Targets:: ===="
+	@echo " ========================="
+	@echo
+	@echo " === Accelerators Flow ==="
+	@echo
+	@echo " make print-available-accelerators  : print a list of accelerators available for HLS."
+	@echo " make <accelerator>-hls             : run HLS for all configuration available for <accelerator>"
+	@echo "                                      and generate corresponding RTL files."
+	@echo " make <accelerator>-sim             : run all simulations defined for <accelerator> using the"
+	@echo "                                      SystemC testbench; HLS may start if the RTL is out-of-date."
+	@echo " make <accelerator>-plot            : run all simulations defined for <accelerator> and plot"
+	@echo "                                      results on a latency vs area chard; HLS may start if the"
+	@echo "                                      RTL is out-of-date."
+	@echo " make <accelerator>-clean           : clean HLS working directory, but keep the generated RTL"
+	@echo "                                      for <accelerator>; HLS cache is not deleted."
+	@echo " make <accelerator>-distclean       : clean HLS working directory and remove the generated RTL"
+	@echo "                                      for <accelerator>; HLS cache is not deleted."
+	@echo " make accelerators                  : make <accelerator>-hls for all available accelerators."
+	@echo " make accelerators-clean            : make <accelerator>-clean for all available accelerators."
+	@echo " make accelerators-distclean        : make <accelerator>-distclean for all available accelerators."
+	@echo " make sldgen                        : generate RTL wrappers for scheduled accelerators; this"
+	@echo "                                      target is always called as a dependency before ESP"
+	@echo "                                      simulaiton and synthesis."
+	@echo
+	@echo " === SoC Flow ==="
+	@echo
+	@echo " make esp-defconfig                : read the default configuration for the current SoC folder"
+	@echo "                                     and generate the corresponding SoC map."
+	@echo " make esp-config                   : read the current configuration from .esp_config and"
+	@echo "                                     generate the corresponding SoC map (may run as dependency)."
+	@echo " make esp-config                   : open a GUI to configure and generate the SoC map."
+	@echo " make sim                          : compile all source files and run an RTL simulation of ESP"
+	@echo "                                     (requires Modelsim 10.5c)."
+	@echo " make vivado-syn                   : generate a bitstream of ESP (requires Vivado 2016.3)."
+	@echo " make vivado-prog-fpga             : load the generated bitstream to FPGA. This target requires"
+	@echo "                                     the environment variable FPGA_HOST set to the network ip of"
+	@echo "                                     the machine with FTDI or JTAG link to the FPGA. The FPGA_HOST"
+	@echo "                                     must run the hw_server deamon from Vivado 2016.3. The variable"
+	@echo "                                     XIL_HW_SERVER_PORT must be set to the port chosen for the"
+	@echo "                                     hw_server communication."
+	@echo " make profpga-prog-fpga            : load the generated bitstream to proFPGA system. The profpga.cfg"
+	@echo "                                     configuration file in the current SoC folder must match the"
+	@echo "                                     board setup, including network, USB, or PCIe link information."
+	@echo " make profpga-close-fpga           : turn off the proFPGA system."
+	@echo
+	@echo " === Cobham open-source IPs (GRLIB) ==="
+	@echo
+	@echo " make grlib-defconfig              : read the default configuration for grlib IPs."
+	@echo
+	@echo " make grlib-config                 : read the configuration for grlib IPs from .grlib_config"
+	@echo "                                     (may run as dependency)."
+	@echo " make grlib-config                 : open grlib configuration GUI; useful when using the LEON-3"
+	@echo "                                     embedded processor."
+	@echo " make soft                         : compile the bare-metal program systest.c for LEON-3; the"
+	@echo "                                     executable is used for RTL simulation, but can also run on"
+	@echo "                                     LEON-3 after loading the bistream to FPGA (requires LEON-3"
+	@echo "                                     tool-chain and optionally grmon if running of FPGA)."
 	@echo
 
 
@@ -514,7 +570,7 @@ sim-distclean: sim-clean
 vivado:
 	$(QUIET_MKDIR)mkdir -p vivado
 
-vivado/srcs.tcl: vivado check_all_rtl_srcs.old
+vivado/srcs.tcl: sldgen vivado check_all_rtl_srcs.old
 	$(QUIET_INFO)echo "generating source list for Vivado"
 	@$(RM) $@
 	@for vhd in $(VHDL_PROFPGA); do \
