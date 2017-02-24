@@ -36,6 +36,8 @@ package sld_devices is
 
   constant SLD_POWERCTRL : devid_t := 16#00F#;
   constant SLD_AHBRAM_DP : devid_t := 16#01f#;
+  constant SLD_L2_CACHE  : amba_device_type := 16#020#;
+  constant SLD_L3_CACHE  : amba_device_type := 16#021#;
 
   -- <<devid>>
 
@@ -46,6 +48,8 @@ package sld_devices is
   constant sld_device_table : dtable_t := (
     SLD_POWERCTRL => "Voltage and Frequency Scaling  ",
     SLD_AHBRAM_DP => "On-chip RAM with dual AHB iface",
+    SLD_L2_CACHE  => "L2 cache                       ",
+    SLD_L3_CACHE  => "L3 cache                       ",
     -- <<ddesc>>
     others => "Unknown Device                 ");
 
