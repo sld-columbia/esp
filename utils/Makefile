@@ -63,6 +63,7 @@ help:
 	@echo "                                      target is always called as a dependency before ESP"
 	@echo "                                      simulaiton and synthesis."
 	@echo
+	@echo
 	@echo " === SoC Flow ==="
 	@echo
 	@echo " make esp-defconfig                : read the default configuration for the current SoC folder"
@@ -84,10 +85,10 @@ help:
 	@echo "                                     board setup, including network, USB, or PCIe link information."
 	@echo " make profpga-close-fpga           : turn off the proFPGA system."
 	@echo
+	@echo
 	@echo " === Cobham open-source IPs (GRLIB) ==="
 	@echo
 	@echo " make grlib-defconfig              : read the default configuration for grlib IPs."
-	@echo
 	@echo " make grlib-config                 : read the configuration for grlib IPs from .grlib_config"
 	@echo "                                     (may run as dependency)."
 	@echo " make grlib-config                 : open grlib configuration GUI; useful when using the LEON-3"
