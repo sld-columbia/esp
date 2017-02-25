@@ -51,6 +51,7 @@ entity mem_noc2ahbm is
     local_y     : local_yx;
     local_x     : local_yx;
     cacheline   : integer;
+    l2_cache_en : integer := 0;
     destination : integer := 0);        -- 0: mem
                                         -- 1: DSU
   port (
@@ -64,17 +65,13 @@ entity mem_noc2ahbm is
     coherence_req_data_out              : in  noc_flit_type;
     coherence_req_empty                 : in  std_ulogic;
     -- tile->NoC2
-    coherence_fwd_inv_wrreq             : out std_ulogic;
-    coherence_fwd_inv_data_in           : out noc_flit_type;
-    coherence_fwd_inv_full              : in  std_ulogic;
-    -- tile->NoC2
-    coherence_fwd_put_ack_wrreq         : out std_ulogic;
-    coherence_fwd_put_ack_data_in       : out noc_flit_type;
-    coherence_fwd_put_ack_full          : in  std_ulogic;
+    coherence_fwd_wrreq             : out std_ulogic;
+    coherence_fwd_data_in           : out noc_flit_type;
+    coherence_fwd_full              : in  std_ulogic;
     -- tile->NoC3
-    coherence_rsp_line_wrreq            : out std_ulogic;
-    coherence_rsp_line_data_in          : out noc_flit_type;
-    coherence_rsp_line_full             : in  std_ulogic;
+    coherence_rsp_line_snd_wrreq            : out std_ulogic;
+    coherence_rsp_line_snd_data_in          : out noc_flit_type;
+    coherence_rsp_line_snd_full             : in  std_ulogic;
     -- NoC4->tile
     dma_rcv_rdreq                       : out std_ulogic;
     dma_rcv_data_out                    : in  noc_flit_type;
@@ -102,7 +99,7 @@ architecture rtl of mem_noc2ahbm is
                     dma_receive_address, dma_rd_request, dma_send_header,
                     dma_send_data, dma_wr_request, dma_write_data,
                     dma_receive_rdlength, dma_send_busy, dma_wait_busy,
-                    dma_write_busy, write_busy);
+                    dma_write_busy, write_busy, send_fwd_ack);
 
   -- RSP_DATA
   signal header : noc_flit_type;
@@ -156,33 +153,46 @@ architecture rtl of mem_noc2ahbm is
 
 begin  -- rtl
 
-  -- TODO: cache coherence!
-  coherence_fwd_inv_wrreq <= '0';
-  coherence_fwd_inv_data_in <= (others => '0');
-  coherence_fwd_put_ack_wrreq <= '0';
-  coherence_fwd_put_ack_data_in <= (others => '0');
-
   -----------------------------------------------------------------------------
   -- Create packet for response messages to GETS
   -----------------------------------------------------------------------------
-  make_rsp_line_packet: process (coherence_req_data_out)
+  make_rsp_line_snd_packet: process (coherence_req_data_out)
+    variable input_msg_type : noc_msg_type;
+    variable preamble : noc_preamble_type;
     variable msg_type : noc_msg_type;
     variable header_v : noc_flit_type;
     variable reserved : reserved_field_type;
     variable origin_y, origin_x : local_yx;
   begin  -- process make_packet
+    input_msg_type := get_msg_type(coherence_req_data_out);
     if destination /= 0 then
       msg_type := AHB_RD;
+      preamble := PREAMBLE_HEADER;
     else
-      msg_type := RSP_DATA;
+      if l2_cache_en = 1 then
+        -- L2 cache enabled, but no LLC present
+        if input_msg_type = REQ_PUTS or input_msg_type = REQ_PUTM then
+          msg_type := FWD_PUT_ACK;
+          preamble := PREAMBLE_1FLIT;
+        else
+          -- TODO: why RSP_EDATA doesn't work?
+          msg_type := RSP_DATA;
+          preamble := PREAMBLE_HEADER;
+        end if;
+      else
+        -- no L2 cache
+        msg_type := RSP_DATA;
+        preamble := PREAMBLE_HEADER;
+      end if;
     end if;
     reserved := (others => '0');
     header_v := (others => '0');
     origin_y := get_origin_y(coherence_req_data_out);
     origin_x := get_origin_x(coherence_req_data_out);
     header_v := create_header(local_y, local_x, origin_y, origin_x, msg_type, reserved);
+    header_v(NOC_FLIT_SIZE - 1 downto NOC_FLIT_SIZE - PREAMBLE_WIDTH) := preamble;
     header <= header_v;
-  end process make_rsp_line_packet;
+  end process make_rsp_line_snd_packet;
   -----------------------------------------------------------------------------
   -- Create packet for DMA response message
   -----------------------------------------------------------------------------
@@ -223,13 +233,14 @@ begin  -- rtl
   -----------------------------------------------------------------------------
 
   --TODO: handle other services
-  -- so far coherence_req_, coherence_rsp_line_full are handled
+  -- so far coherence_req_, coherence_rsp_line_snd_full are handled
   ahb_roundtrip: process (ahbmi, r,
                           coherence_req_empty, coherence_req_data_out,
-                          coherence_rsp_line_full,
+                          coherence_rsp_line_snd_full,
                           header_reg,
                           dma_rcv_empty, dma_rcv_data_out,
-                          dma_snd_full, dma_snd_atleast_4slots, dma_snd_exactly_3slots)
+                          dma_snd_full, dma_snd_atleast_4slots, dma_snd_exactly_3slots,
+                          coherence_fwd_full)
     variable v : reg_type;
     variable reserved : reserved_field_type;
     variable preamble, dma_preamble : noc_preamble_type;
@@ -248,8 +259,11 @@ begin  -- rtl
     sample_dma_header <= '0';
 
     coherence_req_rdreq <= '0';
-    coherence_rsp_line_data_in <= (others => '0');
-    coherence_rsp_line_wrreq <= '0';
+    coherence_rsp_line_snd_data_in <= (others => '0');
+    coherence_rsp_line_snd_wrreq <= '0';
+
+    coherence_fwd_data_in <= (others => '0');
+    coherence_fwd_wrreq <= '0';
 
     dma_rcv_rdreq <= '0';
     dma_snd_data_in <= (others => '0');
@@ -277,14 +291,17 @@ begin  -- rtl
       when receive_address => if coherence_req_empty = '0' then
                                 coherence_req_rdreq <= '1';
                                 v.addr := coherence_req_data_out(31 downto 0);
-                                if r.msg = REQ_GETS_W or r.msg = REQ_GETS_HW or r.msg = REQ_GETS_B then
+                                if r.msg = REQ_GETS_W or r.msg = REQ_GETS_HW or r.msg = REQ_GETS_B
+                                  or ((r.msg = REQ_GETM_W or r.msg = REQ_GETM_HW or r.msg = REQ_GETM_B) and (l2_cache_en /= 0)) then
                                   -- Use default size: cacheline
                                   v.count := cacheline;
                                   v.state := cacheable_rd_request;
-                                elsif r.msg = REQ_GETM_W or r.msg = REQ_GETM_HW or r.msg = REQ_GETM_B then
+                                elsif (r.msg = REQ_GETM_W or r.msg = REQ_GETM_HW or r.msg = REQ_GETM_B) and (l2_cache_en = 0) then
                                   -- Writes don't need size. Stop when tail appears.
                                   v.state := cacheable_wr_request;
                                   -- TODO: add other requests handling!
+                                elsif r.msg = REQ_PUTS or r.msg = REQ_PUTM then
+                                  v.state := send_fwd_ack;
                                 else
                                   v.state := receive_header;
                                 end if;
@@ -314,7 +331,7 @@ begin  -- rtl
                                    else
                                      v.hsize := HSIZE_WORD;
                                    end if;
-                                   if coherence_rsp_line_full = '0' then
+                                   if coherence_rsp_line_snd_full = '0' then
                                      if ((r.count = 1) and (v.grant = '1')
                                          and (v.ready  = '1')) then
                                        -- Owning already address
@@ -376,8 +393,8 @@ begin  -- rtl
       when send_header => if (v.ready = '1') then
                             -- Data bus granted
                             -- Send header
-                            coherence_rsp_line_data_in <= header_reg;
-                            coherence_rsp_line_wrreq <= '1';
+                            coherence_rsp_line_snd_data_in <= header_reg;
+                            coherence_rsp_line_snd_wrreq <= '1';
                             -- Updated address and control bus
                             v.addr := r.addr + 4;
                             v.count := r.count - 1;
@@ -392,6 +409,16 @@ begin  -- rtl
                             end if;
                             v.state := send_data;
                           end if;
+
+      when send_fwd_ack => if (coherence_fwd_full = '0') then
+                             coherence_fwd_data_in <= header_reg;
+                             coherence_fwd_wrreq <= '1';
+                             if r.msg = REQ_PUTM then
+                               v.state := cacheable_wr_request;
+                             else
+                               v.state := receive_header;
+                             end if;
+                           end if;
 
       when dma_send_header => if (v.ready = '1') then
                             -- Data bus granted
@@ -414,12 +441,12 @@ begin  -- rtl
                           end if;
 
       when send_data => if (v.ready = '1') then
-                          if coherence_rsp_line_full = '1' then
+                          if coherence_rsp_line_snd_full = '1' then
                             v.htrans := HTRANS_BUSY;
                           else
                             -- Send data to noc
-                            coherence_rsp_line_wrreq <= '1';
-                            coherence_rsp_line_data_in <= PREAMBLE_BODY & ahbreadword(ahbmi.hrdata, r.hsize);
+                            coherence_rsp_line_snd_wrreq <= '1';
+                            coherence_rsp_line_snd_data_in <= PREAMBLE_BODY & ahbreadword(ahbmi.hrdata, r.hsize);
                             -- Update address and control bus
                             v.addr := r.addr + 4;
                             v.count := r.count - 1;
@@ -430,7 +457,7 @@ begin  -- rtl
                               v.hbusreq := '0';
                               v.htrans := HTRANS_IDLE;
                             elsif r.count = 0 then
-                              coherence_rsp_line_data_in <= PREAMBLE_TAIL & ahbreadword(ahbmi.hrdata, r.hsize);
+                              coherence_rsp_line_snd_data_in <= PREAMBLE_TAIL & ahbreadword(ahbmi.hrdata, r.hsize);
                               v.state := receive_header;
                             else
                               v.htrans := HTRANS_SEQ;

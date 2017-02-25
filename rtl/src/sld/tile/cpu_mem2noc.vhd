@@ -67,17 +67,13 @@ entity cpu_ahbs2noc is
     coherence_req_data_in               : out noc_flit_type;
     coherence_req_full                  : in  std_ulogic;
     -- NoC2->tile
-    coherence_fwd_inv_rdreq             : out std_ulogic;
-    coherence_fwd_inv_data_out          : in  noc_flit_type;
-    coherence_fwd_inv_empty             : in  std_ulogic;
-    -- NoC2->tile
-    coherence_fwd_put_ack_rdreq         : out std_ulogic;
-    coherence_fwd_put_ack_data_out      : in  noc_flit_type;
-    coherence_fwd_put_ack_empty         : in  std_ulogic;
+    coherence_fwd_rdreq             : out std_ulogic;
+    coherence_fwd_data_out          : in  noc_flit_type;
+    coherence_fwd_empty             : in  std_ulogic;
     -- Noc3->tile
-    coherence_rsp_line_rdreq            : out std_ulogic;
-    coherence_rsp_line_data_out         : in  noc_flit_type;
-    coherence_rsp_line_empty            : in  std_ulogic;
+    coherence_rsp_line_rcv_rdreq            : out std_ulogic;
+    coherence_rsp_line_rcv_data_out         : in  noc_flit_type;
+    coherence_rsp_line_rcv_empty            : in  std_ulogic;
     -- Noc3->tile
     coherence_rsp_inv_ack_rcv_rdreq     : out std_ulogic;
     coherence_rsp_inv_ack_rcv_data_out  : in  noc_flit_type;
@@ -108,8 +104,7 @@ architecture rtl of cpu_ahbs2noc is
 begin  -- rtl
 
   -- TODO: cache coherency!
-  coherence_fwd_inv_rdreq <= '0';
-  coherence_fwd_put_ack_rdreq <= '0';
+  coherence_fwd_rdreq <= '0';
   coherence_rsp_inv_ack_rcv_rdreq <= '0';
   coherence_rsp_inv_ack_snd_wrreq <= '0';
   coherence_rsp_inv_ack_snd_data_in <= (others => '0');
@@ -200,7 +195,7 @@ begin  -- rtl
 
   ahb_roundtrip: process (ahbs_state, ahbsi, load_transaction_active,
                           coherence_req_full,
-                          coherence_rsp_line_data_out, coherence_rsp_line_empty,
+                          coherence_rsp_line_rcv_data_out, coherence_rsp_line_rcv_empty,
                           header_reg, payload_address_reg, hwrite_reg)
     variable payload_data : noc_flit_type;
     variable sequential : std_ulogic;
@@ -211,7 +206,7 @@ begin  -- rtl
     sample_flits <= '0';
     coherence_req_data_in <= (others => '0');
     coherence_req_wrreq <= '0';
-    coherence_rsp_line_rdreq <= '0';
+    coherence_rsp_line_rcv_rdreq <= '0';
 
     selected := '0';
     for i in 0 to nslaves-1 loop
@@ -229,7 +224,7 @@ begin  -- rtl
     end if;
     payload_data(31 downto 0) := ahbreadword(ahbsi.hwdata);
 
-    rsp_preamble := get_preamble(coherence_rsp_line_data_out);
+    rsp_preamble := get_preamble(coherence_rsp_line_rcv_data_out);
 
     -- Default ahbso assignment
     ahbso <= ahbs_none;
@@ -244,8 +239,8 @@ begin  -- rtl
       when idle =>
         ahbso.hready <= '1';
         if load_transaction_active = '1' then
-          if coherence_rsp_line_empty = '0' then
-            coherence_rsp_line_rdreq <= '1';
+          if coherence_rsp_line_rcv_empty = '0' then
+            coherence_rsp_line_rcv_rdreq <= '1';
             if rsp_preamble = PREAMBLE_TAIL then
               load_done <= '1';
             end if;
@@ -257,8 +252,8 @@ begin  -- rtl
         end if;
 
       when request_header => if load_transaction_active = '1' then
-                               if coherence_rsp_line_empty = '0' then
-                                 coherence_rsp_line_rdreq <= '1';
+                               if coherence_rsp_line_rcv_empty = '0' then
+                                 coherence_rsp_line_rcv_rdreq <= '1';
                                  if rsp_preamble = PREAMBLE_TAIL then
                                    load_done <= '1';
                                  end if;
@@ -293,18 +288,18 @@ begin  -- rtl
                              end if;
                            end if;
 
-      when reply_header => if coherence_rsp_line_empty = '0' then
+      when reply_header => if coherence_rsp_line_rcv_empty = '0' then
                              load_start <= '1';
-                             coherence_rsp_line_rdreq <= '1';
+                             coherence_rsp_line_rcv_rdreq <= '1';
                              ahbs_next <= reply_data;
                            end if;
 
-      when reply_data => if coherence_rsp_line_empty = '0' then
+      when reply_data => if coherence_rsp_line_rcv_empty = '0' then
                            if rsp_preamble = PREAMBLE_TAIL then
                              load_done <= '1';
                            end if;
-                           coherence_rsp_line_rdreq <= '1';
-                           ahbso.hrdata <= ahbdrivedata(coherence_rsp_line_data_out(31 downto 0));
+                           coherence_rsp_line_rcv_rdreq <= '1';
+                           ahbso.hrdata <= ahbdrivedata(coherence_rsp_line_rcv_data_out(31 downto 0));
                            ahbso.hready <= '1';
                            if selected = '0' or ahbsi.htrans = HTRANS_IDLE then
                              ahbs_next <= idle;

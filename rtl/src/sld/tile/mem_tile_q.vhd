@@ -49,17 +49,17 @@ entity mem_tile_q is
     coherence_req_data_out              : out noc_flit_type;
     coherence_req_empty                 : out std_ulogic;
     -- tile->NoC2
-    coherence_fwd_inv_wrreq             : in  std_ulogic;
-    coherence_fwd_inv_data_in           : in  noc_flit_type;
-    coherence_fwd_inv_full              : out std_ulogic;
-    -- tile->NoC2
-    coherence_fwd_put_ack_wrreq         : in  std_ulogic;
-    coherence_fwd_put_ack_data_in       : in  noc_flit_type;
-    coherence_fwd_put_ack_full          : out std_ulogic;
+    coherence_fwd_wrreq             : in  std_ulogic;
+    coherence_fwd_data_in           : in  noc_flit_type;
+    coherence_fwd_full              : out std_ulogic;
     -- tile->NoC3
-    coherence_rsp_line_wrreq            : in  std_ulogic;
-    coherence_rsp_line_data_in          : in  noc_flit_type;
-    coherence_rsp_line_full             : out std_ulogic;
+    coherence_rsp_line_snd_wrreq            : in  std_ulogic;
+    coherence_rsp_line_snd_data_in          : in  noc_flit_type;
+    coherence_rsp_line_snd_full             : out std_ulogic;
+    -- Noc3->tile
+    coherence_rsp_line_rcv_rdreq                       : in  std_ulogic;
+    coherence_rsp_line_rcv_data_out                    : out noc_flit_type;
+    coherence_rsp_line_rcv_empty                       : out std_ulogic;
     -- NoC6->tile
     dma_rcv_rdreq                       : in  std_ulogic;
     dma_rcv_data_out                    : out noc_flit_type;
@@ -149,17 +149,17 @@ architecture rtl of mem_tile_q is
   signal coherence_req_data_in               : noc_flit_type;
   signal coherence_req_full                  : std_ulogic;
   -- tile->NoC2
-  signal coherence_fwd_inv_rdreq             : std_ulogic;
-  signal coherence_fwd_inv_data_out          : noc_flit_type;
-  signal coherence_fwd_inv_empty             : std_ulogic;
-  -- tile->NoC2
-  signal coherence_fwd_put_ack_rdreq         : std_ulogic;
-  signal coherence_fwd_put_ack_data_out      : noc_flit_type;
-  signal coherence_fwd_put_ack_empty         : std_ulogic;
+  signal coherence_fwd_rdreq             : std_ulogic;
+  signal coherence_fwd_data_out          : noc_flit_type;
+  signal coherence_fwd_empty             : std_ulogic;
   -- tile->NoC3
-  signal coherence_rsp_line_rdreq            : std_ulogic;
-  signal coherence_rsp_line_data_out         : noc_flit_type;
-  signal coherence_rsp_line_empty            : std_ulogic;
+  signal coherence_rsp_line_snd_rdreq            : std_ulogic;
+  signal coherence_rsp_line_snd_data_out         : noc_flit_type;
+  signal coherence_rsp_line_snd_empty            : std_ulogic;
+  -- NoC3->tile
+  signal coherence_rsp_line_rcv_wrreq                       : std_ulogic;
+  signal coherence_rsp_line_rcv_data_in                     : noc_flit_type;
+  signal coherence_rsp_line_rcv_full                        : std_ulogic;
   -- NoC6->tile
   signal dma_rcv_wrreq                       : std_ulogic;
   signal dma_rcv_data_in                     : noc_flit_type;
@@ -209,14 +209,9 @@ architecture rtl of mem_tile_q is
   signal local_apb_rcv_empty                : std_ulogic;
 
 
-  type to_noc2_packet_fsm is (none, packet_inv_snd, packet_put_ack_snd);
-  signal to_noc2_fifos_current, to_noc2_fifos_next : to_noc2_packet_fsm;
-
   signal noc1_dummy_in_stop   : std_ulogic;
   signal noc2_dummy_out_data  : noc_flit_type;
   signal noc2_dummy_out_void  : std_ulogic;
-  signal noc3_dummy_out_data  : noc_flit_type;
-  signal noc3_dummy_out_void  : std_ulogic;
   signal noc4_dummy_out_data  : noc_flit_type;
   signal noc4_dummy_out_void  : std_ulogic;
   signal noc6_dummy_in_stop   : std_ulogic;
@@ -264,106 +259,50 @@ begin  -- rtl
 
   -- To noc2: coherence forwarded messages to CPU (INV)
   -- To noc2: coherence forwarded messages to CPU (PUT_ACK)
+  noc2_out_stop <= '0';
   noc2_dummy_out_data <= noc2_out_data;
   noc2_dummy_out_void <= noc2_out_void;
-  noc2_out_stop <= '0';
-  process (clk, rst)
-  begin  -- process
-    if rst = '0' then                   -- asynchronous reset (active low)
-      to_noc2_fifos_current <= none;
-    elsif clk'event and clk = '1' then  -- rising clock edge
-      to_noc2_fifos_current <= to_noc2_fifos_next;
-    end if;
-  end process;
-  noc2_fifos_put_packet: process (noc2_in_stop, to_noc2_fifos_current,
-                                  coherence_fwd_inv_data_out, coherence_fwd_inv_empty,
-                                  coherence_fwd_put_ack_data_out, coherence_fwd_put_ack_empty)
-    variable to_noc2_preamble : noc_preamble_type;
-  begin  -- process noc2_get_packet
-    noc2_in_data <= (others => '0');
-    noc2_in_void <= '1';
-    coherence_fwd_inv_rdreq <= '0';
-    coherence_fwd_put_ack_rdreq <= '0';
-    to_noc2_fifos_next <= to_noc2_fifos_current;
-    to_noc2_preamble := "00";
-
-    case to_noc2_fifos_current is
-      when none => if coherence_fwd_inv_empty = '0' then
-                     if noc2_in_stop = '0' then
-                        noc2_in_data <= coherence_fwd_inv_data_out;
-                        noc2_in_void <= coherence_fwd_inv_empty;
-                        coherence_fwd_inv_rdreq <= '1';
-                        to_noc2_fifos_next <= packet_inv_snd;
-                      end if;
-                    elsif coherence_fwd_put_ack_empty = '0' then
-                      if noc2_in_stop = '0' then
-                        noc2_in_data <= coherence_fwd_put_ack_data_out;
-                        noc2_in_void <= coherence_fwd_put_ack_empty;
-                        coherence_fwd_put_ack_rdreq <= '1';
-                        to_noc2_fifos_next <= packet_put_ack_snd;
-                      end if;
-                    end if;
-
-      when packet_inv_snd => to_noc2_preamble := get_preamble(coherence_fwd_inv_data_out);
-                             if (noc2_in_stop = '0' and coherence_fwd_inv_empty = '0') then
-                               noc2_in_data <= coherence_fwd_inv_data_out;
-                               noc2_in_void <= coherence_fwd_inv_empty;
-                               coherence_fwd_inv_rdreq <= not noc2_in_stop;
-                               if to_noc2_preamble = PREAMBLE_TAIL then
-                                 to_noc2_fifos_next <= none;
-                               end if;
-                             end if;
-
-      when packet_put_ack_snd => to_noc2_preamble := get_preamble(coherence_fwd_put_ack_data_out);
-                             if (noc2_in_stop = '0' and coherence_fwd_put_ack_empty = '0') then
-                               noc2_in_data <= coherence_fwd_put_ack_data_out;
-                               noc2_in_void <= coherence_fwd_put_ack_empty;
-                               coherence_fwd_put_ack_rdreq <= not noc2_in_stop;
-                               if to_noc2_preamble = PREAMBLE_TAIL then
-                                 to_noc2_fifos_next <= none;
-                               end if;
-                             end if;
-
-      when others => to_noc2_fifos_next <= none;
-    end case;
-  end process noc2_fifos_put_packet;
+  noc2_in_data <= coherence_fwd_data_out;
+  noc2_in_void <= coherence_fwd_empty or noc2_in_stop;
+  coherence_fwd_rdreq <= (not coherence_fwd_empty) and (not noc2_in_stop);
 
   fifo_2: fifo
     generic map (
-      depth => 6,                       --Header, address x possible sharers
+      depth => 4,                       --Header, address (x2)
       width => NOC_FLIT_SIZE)
     port map (
       clk      => clk,
       rst      => fifo_rst,
-      rdreq    => coherence_fwd_inv_rdreq,
-      wrreq    => coherence_fwd_inv_wrreq,
-      data_in  => coherence_fwd_inv_data_in,
-      empty    => coherence_fwd_inv_empty,
-      full     => coherence_fwd_inv_full,
-      data_out => coherence_fwd_inv_data_out);
+      rdreq    => coherence_fwd_rdreq,
+      wrreq    => coherence_fwd_wrreq,
+      data_in  => coherence_fwd_data_in,
+      empty    => coherence_fwd_empty,
+      full     => coherence_fwd_full,
+      data_out => coherence_fwd_data_out);
 
+  -- From noc3: coherence response messages from CPU (LINE on a GETS while
+  -- owining the line in modified state)
+  noc3_out_stop   <= coherence_rsp_line_rcv_full and (not noc3_out_void);
+  coherence_rsp_line_rcv_data_in <= noc3_out_data;
+  coherence_rsp_line_rcv_wrreq   <= (not noc3_out_void) and (not coherence_rsp_line_rcv_full);
   fifo_3: fifo
     generic map (
-      depth => 3,                       --Header only x possible sharers
+      depth => 18,                      --Header, address, [data]
       width => NOC_FLIT_SIZE)
     port map (
       clk      => clk,
       rst      => fifo_rst,
-      rdreq    => coherence_fwd_put_ack_rdreq,
-      wrreq    => coherence_fwd_put_ack_wrreq,
-      data_in  => coherence_fwd_put_ack_data_in,
-      empty    => coherence_fwd_put_ack_empty,
-      full     => coherence_fwd_put_ack_full,
-      data_out => coherence_fwd_put_ack_data_out);
-
+      rdreq    => coherence_rsp_line_rcv_rdreq,
+      wrreq    => coherence_rsp_line_rcv_wrreq,
+      data_in  => coherence_rsp_line_rcv_data_in,
+      empty    => coherence_rsp_line_rcv_empty,
+      full     => coherence_rsp_line_rcv_full,
+      data_out => coherence_rsp_line_rcv_data_out);
 
   -- to noc3: coherence response messages to CPU (LINE)
-  noc3_out_stop <= '0';
-  noc3_dummy_out_data <= noc3_out_data;
-  noc3_dummy_out_void <= noc3_out_void;
-  noc3_in_data <= coherence_rsp_line_data_out;
-  noc3_in_void <= coherence_rsp_line_empty or noc3_in_stop;
-  coherence_rsp_line_rdreq <= (not coherence_rsp_line_empty) and (not noc3_in_stop);
+  noc3_in_data <= coherence_rsp_line_snd_data_out;
+  noc3_in_void <= coherence_rsp_line_snd_empty or noc3_in_stop;
+  coherence_rsp_line_snd_rdreq <= (not coherence_rsp_line_snd_empty) and (not noc3_in_stop);
   fifo_4: fifo
     generic map (
       depth => 5,                       --Header, cache line
@@ -371,12 +310,12 @@ begin  -- rtl
     port map (
       clk      => clk,
       rst      => fifo_rst,
-      rdreq    => coherence_rsp_line_rdreq,
-      wrreq    => coherence_rsp_line_wrreq,
-      data_in  => coherence_rsp_line_data_in,
-      empty    => coherence_rsp_line_empty,
-      full     => coherence_rsp_line_full,
-      data_out => coherence_rsp_line_data_out);
+      rdreq    => coherence_rsp_line_snd_rdreq,
+      wrreq    => coherence_rsp_line_snd_wrreq,
+      data_in  => coherence_rsp_line_snd_data_in,
+      empty    => coherence_rsp_line_snd_empty,
+      full     => coherence_rsp_line_snd_full,
+      data_out => coherence_rsp_line_snd_data_out);
 
 
 
