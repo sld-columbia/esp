@@ -81,13 +81,13 @@ package sldcommon is
       mon_acc_en             : integer;
       mon_dvfs_en            : integer);
     port (
-      profpga_clk0_p   : in  std_ulogic;
-      profpga_clk0_n   : in  std_ulogic;
-      profpga_sync0_p  : in  std_ulogic;
-      profpga_sync0_n  : in  std_ulogic;
-      dmbi_h2f         : in  std_ulogic_vector(19 downto 0);
-      dmbi_f2h         : out std_ulogic_vector(19 downto 0);
-      user_rstn        : in  std_ulogic;
+      profpga_clk0_p   : in  std_logic;
+      profpga_clk0_n   : in  std_logic;
+      profpga_sync0_p  : in  std_logic;
+      profpga_sync0_n  : in  std_logic;
+      dmbi_h2f         : in  std_logic_vector(19 downto 0);
+      dmbi_f2h         : out std_logic_vector(19 downto 0);
+      user_rstn        : in  std_logic;
       mon_ddr          : in  monitor_ddr_vector(0 to ddrs_num-1);
       mon_noc          : in  monitor_noc_matrix(0 to nocs_num-1, 0 to tiles_num-1);
       mon_acc          : in  monitor_acc_vector(0 to accelerators_num-1);

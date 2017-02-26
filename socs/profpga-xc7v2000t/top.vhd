@@ -53,8 +53,8 @@ entity top is
     profpga_clk0_n        : in  std_ulogic;  -- 100 MHz clock
     profpga_sync0_p       : in  std_ulogic;
     profpga_sync0_n       : in  std_ulogic;
-    dmbi_h2f              : in  std_ulogic_vector(19 downto 0);
-    dmbi_f2h              : out std_ulogic_vector(19 downto 0);
+    dmbi_h2f              : in  std_logic_vector(19 downto 0);
+    dmbi_f2h              : out std_logic_vector(19 downto 0);
     --
     reset           : in    std_ulogic;
     c0_main_clk_p   : in    std_ulogic;  -- 160 MHz clock

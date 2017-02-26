@@ -159,5 +159,5 @@ set_clock_groups -asynchronous -group [get_clocks *clk_mmi64] -group [get_clocks
 
 set_input_delay  -clock profpga_clk0_p 0 [get_ports profpga_sync0_p ]
 
-set_property IODELAY_GROUP IODELAY_MMI64 [get_cells */U_PROFPGA_CTRL/PHY/G_MUXDEMUX[*].u_demux/*I_idelay/U_IDELAYE2]
+set_property IODELAY_GROUP IODELAY_MMI64 [get_cells */U_PROFPGA_CTRL/PHY/G_MUXDEMUX[*].u_demux/*I_idelay]
 set_property IODELAY_GROUP IODELAY_MMI64 [get_cells */U_PROFPGA_CTRL/*IDEALAYCTRL_INST]

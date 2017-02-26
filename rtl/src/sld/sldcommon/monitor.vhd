@@ -26,10 +26,6 @@ use unisim.vcomponents.all;
 --pragma translate_on
 
 library profpga;
-use profpga.afifo_core_pkg.all;
-use profpga.mmi64_pkg.all;
-use profpga.profpga_pkg.all;
-use profpga.mmi64_m_regif_comp.all;
 
 use work.sldcommon.all;
 
@@ -48,13 +44,13 @@ entity monitor is
     mon_acc_en             : integer;
     mon_dvfs_en            : integer);
   port (
-    profpga_clk0_p  : in  std_ulogic; -- 100 MHz clock
-    profpga_clk0_n  : in  std_ulogic; -- 100 MHz clock
-    profpga_sync0_p : in  std_ulogic;
-    profpga_sync0_n : in  std_ulogic;
-    dmbi_h2f        : in  std_ulogic_vector(19 downto 0);
-    dmbi_f2h        : out std_ulogic_vector(19 downto 0);
-    user_rstn       : in  std_ulogic;
+    profpga_clk0_p  : in  std_logic; -- 100 MHz clock
+    profpga_clk0_n  : in  std_logic; -- 100 MHz clock
+    profpga_sync0_p : in  std_logic;
+    profpga_sync0_n : in  std_logic;
+    dmbi_h2f        : in  std_logic_vector(19 downto 0);
+    dmbi_f2h        : out std_logic_vector(19 downto 0);
+    user_rstn       : in  std_logic;
     mon_ddr         : in  monitor_ddr_vector(0 to ddrs_num-1);
     mon_noc         : in  monitor_noc_matrix(0 to nocs_num-1, 0 to tiles_num-1);
     mon_acc         : in  monitor_acc_vector(0 to accelerators_num-1);
@@ -64,6 +60,125 @@ entity monitor is
 end monitor;
 
 architecture rtl of monitor is
+
+  component synchronizer is
+    generic (
+      DATA_WIDTH : integer
+      );
+    port (
+      clk     : in  std_logic;
+      reset_n : in  std_logic;
+      data_i  : in  std_logic_vector(DATA_WIDTH-1 downto 0);
+      data_o  : out std_logic_vector(DATA_WIDTH-1 downto 0));
+    end component;
+
+    component profpga_ctrl is
+    generic (
+      DEVICE             : string := "XV7S"  --! "XV7S"- Xilinx Virtex 7series; "XVUS"- Xilinx Virtex UltraScale
+    );
+    port (
+      -- access to FPGA pins
+      clk0_p    : in  std_logic;
+      clk0_n    : in  std_logic;
+      sync0_p   : in  std_logic;
+      sync0_n   : in  std_logic;
+      srcclk_p  : out std_logic_vector(3 downto 0);
+      srcclk_n  : out std_logic_vector(3 downto 0);
+      srcsync_p : out std_logic_vector(3 downto 0);
+      srcsync_n : out std_logic_vector(3 downto 0);
+      dmbi_h2f  : in  std_logic_vector(19 downto 0);
+      dmbi_f2h  : out std_logic_vector(19 downto 0);
+
+      -- 200 MHz clock (useful for IDELAYCTRL calibration)
+      clk_200mhz_o : out std_logic;
+
+      -- source clock/sync input
+      src_clk_i           : in  std_logic_vector(3 downto 0) := "0000";
+      -- the following signals are synchronous to the associated src_clk_i(i)
+      src_clk_locked_i    : in  std_logic_vector(3 downto 0) := "0000";
+      src_event_id_i      : in  std_logic_vector(3*8+7 downto 0) := (others => '0');
+      src_event_en_i      : in  std_logic_vector(3 downto 0) := "0000";
+      src_event_busy_o    : out std_logic_vector(3 downto 0);
+      src_event_reset_i   : in  std_logic_vector(3 downto 0) := "1111";
+      src_event_strobe1_i : in  std_logic_vector(3 downto 0) := "0000";
+      src_event_strobe2_i : in  std_logic_vector(3 downto 0) := "0000";
+
+      -- clk0 sync events (synchronous to mmi64_clk)
+      clk0_event_id_o      : out std_logic_vector(7 downto 0);
+      clk0_event_en_o      : out std_logic;
+      clk0_event_strobe1_o : out std_logic;
+      clk0_event_strobe2_o : out std_logic;
+
+      -- MMI-64 access (synchronous to mmi64_clk)
+      mmi64_present_i : in  std_logic := '0';
+      mmi64_clk_o     : out std_logic;
+      mmi64_reset_o   : out std_logic;
+
+      mmi64_m_dn_d_o      : out std_logic_vector(63 downto 0);
+      mmi64_m_dn_valid_o  : out std_logic;
+      mmi64_m_dn_accept_i : in  std_logic   := '0';
+      mmi64_m_dn_start_o  : out std_logic;
+      mmi64_m_dn_stop_o   : out std_logic;
+      mmi64_m_up_d_i      : in  std_logic_vector(63 downto 0);
+      mmi64_m_up_valid_i  : in  std_logic   := '0';
+      mmi64_m_up_accept_o : out std_logic;
+      mmi64_m_up_start_i  : in  std_logic   := '0';
+      mmi64_m_up_stop_i   : in  std_logic   := '0';
+
+      -- clock configuration ports (synchronous to mmi64_clk)
+      clk1_cfg_dn_o : out std_logic_vector(19 downto 0);
+      clk1_cfg_up_i : in  std_logic_vector(19 downto 0) := (others => '0');
+      clk2_cfg_dn_o : out std_logic_vector(19 downto 0);
+      clk2_cfg_up_i : in  std_logic_vector(19 downto 0) := (others => '0');
+      clk3_cfg_dn_o : out std_logic_vector(19 downto 0);
+      clk3_cfg_up_i : in  std_logic_vector(19 downto 0) := (others => '0');
+      clk4_cfg_dn_o : out std_logic_vector(19 downto 0);
+      clk4_cfg_up_i : in  std_logic_vector(19 downto 0) := (others => '0');
+      clk5_cfg_dn_o : out std_logic_vector(19 downto 0);
+      clk5_cfg_up_i : in  std_logic_vector(19 downto 0) := (others => '0');
+      clk6_cfg_dn_o : out std_logic_vector(19 downto 0);
+      clk6_cfg_up_i : in  std_logic_vector(19 downto 0) := (others => '0');
+      clk7_cfg_dn_o : out std_logic_vector(19 downto 0);
+      clk7_cfg_up_i : in  std_logic_vector(19 downto 0) := (others => '0')
+    );
+  end component profpga_ctrl;
+
+  component mmi64_m_regif
+    generic (
+      MODULE_ID         : integer := 16#00000000#;  --! unique id of the module instance
+      REGISTER_COUNT    : integer := 16;  --! number of registers in register file
+      REGISTER_WIDTH    : integer := 16;  --! register data width in bit
+      READ_BUFFER_DEPTH : integer := 4  --! number of entries in read data buffer
+      );
+    port (
+      -- clock and reset
+      mmi64_clk   : in std_logic;      --! clock of mmi64 domain
+      mmi64_reset : in std_logic;      --! reset of mmi64 domain
+
+      -- connections to mmi64 router
+      mmi64_h_dn_d_i      : in  std_logic_vector(63 downto 0);  --! downstream data from router
+      mmi64_h_dn_valid_i  : in  std_logic;  --! downstream data valid from router
+      mmi64_h_dn_accept_o : out std_logic;  --! downstream data accept to router
+      mmi64_h_dn_start_i  : in  std_logic;  --! downstream data start (first byte of transfer) from router
+      mmi64_h_dn_stop_i   : in  std_logic;  --! downstream data end (last byte of transfer) from router
+
+      mmi64_h_up_d_o      : out std_logic_vector(63 downto 0);  --! upstream data output to router
+      mmi64_h_up_valid_o  : out std_logic;  --! upstream data valid to router
+      mmi64_h_up_accept_i : in  std_logic;  --! upstream data accept from router
+      mmi64_h_up_start_o  : out std_logic;  --! upstream data start (first byte of transfer) to router
+      mmi64_h_up_stop_o   : out std_logic;  --! upstream data end (last byte of transfer) to router
+
+      -- connections to register interface
+      reg_en_o     : out std_logic;    --! register access enable
+      reg_we_o     : out std_logic;    --! register write enable
+      reg_addr_o   : out std_logic_vector(log2(REGISTER_COUNT)-1 downto 0);  --! register read/write address
+      reg_wdata_o  : out std_logic_vector(REGISTER_WIDTH-1 downto 0);  --! register data output
+      reg_accept_i : in  std_logic;    --! register data command accepted
+      reg_rdata_i  : in  std_logic_vector(REGISTER_WIDTH-1 downto 0);  --! register input data
+      reg_rvalid_i : in  std_logic     --! register input data valid
+      );
+  end component;
+
 
   -- X = ddrs_num
   --
@@ -174,30 +289,30 @@ architecture rtl of monitor is
   -- Counters must be updated using user_clk.
   constant DEFAULT_WINDOW : std_logic_vector(REGISTER_WIDTH-1 downto 0) := conv_std_logic_vector(65536, REGISTER_WIDTH);
 
-  signal mmi64_clk                                     : std_ulogic;
-  signal mmi64_reset                                   : std_ulogic;
-  signal mmi64_resetn                                  : std_ulogic;
-  signal mmi64_dn_d                                    : mmi64_data_t;
-  signal mmi64_dn_valid                                : std_ulogic;
-  signal mmi64_dn_accept : std_ulogic;
-  signal mmi64_dn_start                                : std_ulogic;
-  signal mmi64_dn_stop                                 : std_ulogic;
-  signal mmi64_up_d                                    : mmi64_data_t;
-  signal mmi64_up_valid                                : std_ulogic;
-  signal mmi64_up_accept : std_ulogic;
-  signal mmi64_up_start                                : std_ulogic;
-  signal mmi64_up_stop                                 : std_ulogic;
+  signal mmi64_clk                                     : std_logic;
+  signal mmi64_reset                                   : std_logic;
+  signal mmi64_resetn                                  : std_logic;
+  signal mmi64_dn_d                                    : std_logic_vector(63 downto 0);
+  signal mmi64_dn_valid                                : std_logic;
+  signal mmi64_dn_accept : std_logic;
+  signal mmi64_dn_start                                : std_logic;
+  signal mmi64_dn_stop                                 : std_logic;
+  signal mmi64_up_d                                    : std_logic_vector(63 downto 0);
+  signal mmi64_up_valid                                : std_logic;
+  signal mmi64_up_accept : std_logic;
+  signal mmi64_up_start                                : std_logic;
+  signal mmi64_up_stop                                 : std_logic;
 
-  signal reg_en     : std_ulogic;
-  signal reg_we     : std_ulogic;
-  signal reg_addr   : std_ulogic_vector(log2(REGISTER_COUNT)-1 downto 0);
-  signal reg_wdata  : std_ulogic_vector(REGISTER_WIDTH-1 downto 0);
-  signal reg_accept : std_ulogic;
-  signal reg_rdata  : std_ulogic_vector(REGISTER_WIDTH-1 downto 0);
-  signal reg_rvalid : std_ulogic;
+  signal reg_en     : std_logic;
+  signal reg_we     : std_logic;
+  signal reg_addr   : std_logic_vector(log2(REGISTER_COUNT)-1 downto 0);
+  signal reg_wdata  : std_logic_vector(REGISTER_WIDTH-1 downto 0);
+  signal reg_accept : std_logic;
+  signal reg_rdata  : std_logic_vector(REGISTER_WIDTH-1 downto 0);
+  signal reg_rvalid : std_logic;
 
   type counter_type is array (0 to MONITOR_REG_COUNT-1) of std_logic_vector(REGISTER_WIDTH-1 downto 0);
-  type counter_u_type is array (0 to MONITOR_REG_COUNT-1) of std_ulogic_vector(REGISTER_WIDTH-1 downto 0);
+  type counter_u_type is array (0 to MONITOR_REG_COUNT-1) of std_logic_vector(REGISTER_WIDTH-1 downto 0);
   signal count : counter_type;
   signal count_value, count_value_sync : counter_type;
   signal count_value_tmp : counter_u_type;
@@ -205,9 +320,9 @@ architecture rtl of monitor is
 
   signal window_size            : std_logic_vector(REGISTER_WIDTH-1 downto 0);
   signal time_counter           : std_logic_vector(REGISTER_WIDTH-1 downto 0);
-  signal window_reset           : std_ulogic;
-  signal new_window             : std_ulogic;
-  signal new_window_delayed     : std_ulogic;
+  signal window_reset           : std_logic;
+  signal new_window             : std_logic;
+  signal new_window_delayed     : std_logic;
   signal new_window_sync_ddr    : std_logic_vector(0 to ddrs_num-1);
   signal new_window_sync_noc    : std_logic_vector(0 to nocs_num-1);
   signal new_window_sync_acc    : std_logic_vector(0 to accelerators_num-1);
@@ -254,7 +369,7 @@ begin
       -- source clock/sync input, not used
       src_clk_i           => (others => '0'),
       src_clk_locked_i    => (others => '1'),
-      src_event_id_i      => (others => (others => '0')),
+      src_event_id_i      => (others => '0'),
       src_event_en_i      => (others => '0'),
       src_event_busy_o    => open,
       src_event_reset_i   => (others => '1'),
@@ -300,7 +415,7 @@ begin
 
   USER_REGIF : mmi64_m_regif
     generic map (
-      MODULE_ID         => X"FEEDBACC",
+      MODULE_ID         => 16#00000E5F#,
       REGISTER_COUNT    => REGISTER_COUNT,
       REGISTER_WIDTH    => REGISTER_WIDTH,
       READ_BUFFER_DEPTH => 4      --! number of entries in read data buffer
@@ -334,9 +449,9 @@ begin
       port map (
         clk    => mmi64_clk,
         reset_n => mmi64_resetn,
-        data_i => to_stdULogicVector(count_value(i)),
+        data_i => count_value(i),
         data_o => count_value_tmp(i));
-    count_value_sync(i) <= to_stdLogicVector(count_value_tmp(i));
+    count_value_sync(i) <= count_value_tmp(i);
   end generate synchronizer_input;
 
   reg_read_write: process (mmi64_clk, mmi64_resetn)
@@ -354,8 +469,8 @@ begin
       addr := 0;
       wdata := 0;
     elsif mmi64_clk'event and mmi64_clk = '1' then -- rising clock edge
-      addr := conv_integer(to_stdLogicVector(reg_addr));
-      wdata := conv_integer(to_stdLogicVector(reg_wdata));
+      addr := conv_integer(reg_addr);
+      wdata := conv_integer(reg_wdata);
       if addr < MONITOR_REG_COUNT then
         counters_addr := addr;
       else
@@ -380,29 +495,29 @@ begin
             count_reset(counters_wdata) <= '1';
           elsif addr = ctrl_offset(CTRL_WINDOW_SIZE) then -- Set window size
             window_reset <= '1';
-            window_size <= to_stdLogicVector(reg_wdata);
+            window_size <= reg_wdata;
           end if;
         else
           if addr = ctrl_offset(CTRL_WINDOW_COUNT_LO) then
             -- read time stamp LO
             reg_rvalid <= '1';
             reg_accept <= '1';
-            reg_rdata <= to_stdULogicVector(window_count(REGISTER_WIDTH-1 downto 0));
+            reg_rdata <= window_count(REGISTER_WIDTH-1 downto 0);
           elsif addr = ctrl_offset(CTRL_WINDOW_COUNT_HI) then
             -- read time stamp HI
             reg_rvalid <= '1';
             reg_accept <= '1';
-            reg_rdata <= to_stdULogicVector(window_count(2*REGISTER_WIDTH-1 downto REGISTER_WIDTH));
+            reg_rdata <= window_count(2*REGISTER_WIDTH-1 downto REGISTER_WIDTH);
           elsif addr = ctrl_offset(CTRL_WINDOW_SIZE) then
             -- read current window size
             reg_rvalid <= '1';
             reg_accept <= '1';
-            reg_rdata <= to_stdULogicVector(window_size);
+            reg_rdata <= window_size;
           else
             -- read counters only on new window after hold time
             reg_rvalid <= new_window_delayed;
             reg_accept <= new_window_delayed;
-            reg_rdata <= to_stdULogicVector(count_value_sync(counters_addr));
+            reg_rdata <= count_value_sync(counters_addr);
           end if;
         end if;
       end if;

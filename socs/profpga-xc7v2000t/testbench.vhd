@@ -201,8 +201,8 @@ signal    profpga_clk0_p        : std_ulogic := '0';  -- 100 MHz clock
 signal    profpga_clk0_n        : std_ulogic := '1';  -- 100 MHz clock
 signal    profpga_sync0_p       : std_ulogic;
 signal    profpga_sync0_n       : std_ulogic;
-signal    dmbi_h2f              : std_ulogic_vector(19 downto 0);
-signal    dmbi_f2h              : std_ulogic_vector(19 downto 0);
+signal    dmbi_h2f              : std_logic_vector(19 downto 0);
+signal    dmbi_f2h              : std_logic_vector(19 downto 0);
 
 component top
   generic (
@@ -223,8 +223,8 @@ component top
     profpga_clk0_n        : in  std_ulogic;  -- 100 MHz clock
     profpga_sync0_p       : in  std_ulogic;
     profpga_sync0_n       : in  std_ulogic;
-    dmbi_h2f              : in  std_ulogic_vector(19 downto 0);
-    dmbi_f2h              : out std_ulogic_vector(19 downto 0);
+    dmbi_h2f              : in  std_logic_vector(19 downto 0);
+    dmbi_f2h              : out std_logic_vector(19 downto 0);
     --
     reset          : in    std_ulogic;
     c0_main_clk_p          : in    std_ulogic;  -- 160 MHz clock
