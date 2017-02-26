@@ -85,6 +85,8 @@ help:
 	@echo "                                     board setup, including network, USB, or PCIe link information."
 	@echo " make profpga-close-fpga           : turn off the proFPGA system."
 	@echo
+	@echo " make espmon-run                   : open ESP monitor GUI interface (requires proFPGA system)"
+	@echo
 	@echo
 	@echo " === Cobham open-source IPs (GRLIB) ==="
 	@echo
@@ -96,7 +98,7 @@ help:
 	@echo " make soft                         : compile the bare-metal program systest.c for LEON-3; the"
 	@echo "                                     executable is used for RTL simulation, but can also run on"
 	@echo "                                     LEON-3 after loading the bistream to FPGA (requires LEON-3"
-	@echo "                                     tool-chain and optionally grmon if running of FPGA)."
+	@echo "                                     tool-chain and optionally grmon if running on FPGA)."
 	@echo
 
 
@@ -132,6 +134,13 @@ esp-defconfig: ../defconfig/esp_$(BOARD)_defconfig
 	$(QUIET_MAKE)$(MAKE) esp-config
 
 socmap.vhd: .esp_config grlib_config.vhd
+	$(QUIET_DIFF)echo "checking .esp_config..."
+	@/usr/bin/diff .esp_config ../defconfig/esp_$(BOARD)_defconfig -q > /dev/null; \
+	if test $$? = "0"; then \
+		echo $(SPACES)"INFO Using default configuration file for ESP"; \
+	else \
+		echo $(SPACES)"INFO Using custom configuration found in \".esp_config\" for ESP"; \
+	fi
 	@echo ""
 	@echo "Generating ESP configuration..."
 	@python3 $(ESP_ROOT)/utils/socmap/esp_creator_batch.py $(NOC_WIDTH)
@@ -751,7 +760,7 @@ vivado-distclean: vivado-clean
 .PHONY: vivado-clean vivado-distclean vivado-syn vivado-prog-fpga vivado/$(DESIGN) vivado-setup vivado-gui
 
 
-### TODO: PROFPGA targets ###
+### PROFPGA targets ###
 
 profpga-prog-fpga:
 	profpga_run profpga.cfg --up
@@ -761,3 +770,30 @@ profpga-close-fpga:
 
 
 .PHONY: profpga-prog-fpga profpga-close-fpga
+
+
+### ESP Monitor targets ###
+
+ESPMON_DEPS  = $(ESP_ROOT)/utils/espmon/espmonmain.ui
+ESPMON_DEPS += $(ESP_ROOT)/utils/espmon/espmonmain.h  $(ESP_ROOT)/utils/espmon/mmi64_mon.h
+ESPMON_DEPS += $(ESP_ROOT)/utils/espmon/espmonmain.cpp  $(ESP_ROOT)/utils/espmon/main.cpp  $(ESP_ROOT)/utils/espmon/mmi64_mon.cpp
+
+mmi64_regs.h: esp-config
+
+power.h: esp-config
+
+espmon.mk: $(ESP_ROOT)/utils/espmon/espmon.pro
+	@DESIGN_DIR=$(DESIGN_PATH) qmake -o $@ $<
+
+espmon: $(ESPMON_DEPS) mmi64_regs.h power.h espmon.mk
+	$(QUIET_MAKE)DESIGN_DIR=$(DESIGN_PATH) make --quiet -f espmon.mk
+
+espmon-run: espmon
+	$(QIOET_RUN)./$<
+
+espmon-clean:
+	$(QUIET_CLEAN)$(RM) espmon.mk espmon moc_espmonmain.cpp ui_espmonmain.h
+
+espmon-distclean: espmon-cleam
+
+.PHONY: espmon-clean espmon-distclean espmon-run

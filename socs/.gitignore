@@ -35,3 +35,9 @@ sldgen
 
 *.bit
 
+espmon
+espmon.mk
+espmon*.rpt
+espmon*.rpt
+moc_espmonmain.cpp
+ui_espmonmain.h
