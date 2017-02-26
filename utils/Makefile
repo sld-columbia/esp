@@ -109,10 +109,12 @@ clean: 		soft-clean		\
 		esp-config-clean	\
 		grlib-config-clean	\
 		vivado-clean		\
-		sldgen-clean
+		sldgen-clean		\
+		espmon-clean
 
 distclean:	check_all_srcs-distclean 	\
 		check_all_rtl_srcs-distclean	\
+		profpga-distclean		\
 		soft-distclean 			\
 		ahbrom-distclean		\
 		xilinx_lib-distclean 		\
@@ -120,7 +122,8 @@ distclean:	check_all_srcs-distclean 	\
 		esp-config-distclean		\
 		grlib-config-distclean		\
 		vivado-distclean		\
-		sldgen-distclean
+		sldgen-distclean		\
+		espmon-distclean
 
 .PHONY: all help clean distclean
 
@@ -762,14 +765,19 @@ vivado-distclean: vivado-clean
 
 ### PROFPGA targets ###
 
-profpga-prog-fpga:
-	profpga_run profpga.cfg --up
+boards:
+	$(QUIET_MKDIR)ln -s $(PROFPGA)/boards
 
-profpga-close-fpga:
-	profpga_run profpga.cfg --down
+profpga-prog-fpga: boards
+	$(QUIET_RUN)profpga_run profpga.cfg --up
 
+profpga-close-fpga: boards
+	$(QUIET_RUN)profpga_run profpga.cfg --down
 
-.PHONY: profpga-prog-fpga profpga-close-fpga
+profpga-distclean:
+	$(QUIET_CLEAN)$(RM) boards
+
+.PHONY: profpga-distclean profpga-prog-fpga profpga-close-fpga
 
 
 ### ESP Monitor targets ###
@@ -788,12 +796,22 @@ espmon.mk: $(ESP_ROOT)/utils/espmon/espmon.pro
 espmon: $(ESPMON_DEPS) mmi64_regs.h power.h espmon.mk
 	$(QUIET_MAKE)DESIGN_DIR=$(DESIGN_PATH) make --quiet -f espmon.mk
 
-espmon-run: espmon
+espmon-run: boards espmon
 	$(QUIET_RUN)./$<
 
 espmon-clean:
-	$(QUIET_CLEAN)$(RM) espmon.mk espmon moc_espmonmain.cpp ui_espmonmain.h
+	$(QUIET_CLEAN)$(RM) 		\
+		espmonmain.o		\
+		main.o			\
+		mmi64_mon.o		\
+		moc_espmonmain.o	\
+		espmon.mk		\
+		moc_espmonmain.cpp	\
+		ui_espmonmain.h
 
-espmon-distclean: espmon-cleam
+espmon-distclean: espmon-clean
+	$(QUIET_CLEAN)$(RM) 	\
+		espmon 		\
+		espmon*.rpt
 
 .PHONY: espmon-clean espmon-distclean espmon-run
