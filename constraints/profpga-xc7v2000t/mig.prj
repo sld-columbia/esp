@@ -164,7 +164,7 @@
             <Pin PADName="AA38/AA39(CC_P/N)" Bank="15" name="clk_ref_p/n" />
         </Reference_Clock>
         <System_Clock>
-            <Pin PADName="AD41/AE41(CC_P/N)" Bank="14" name="c0_sys_clk_p/n" />
+            <Pin PADName="AF39/AG40(CC_P/N)" Bank="14" name="c0_sys_clk_p/n" />
         </System_Clock>
         <System_Control>
             <Pin PADName="No connect" Bank="Select Bank" name="sys_rst" />

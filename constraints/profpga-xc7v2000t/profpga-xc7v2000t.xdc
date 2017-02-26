@@ -10,13 +10,22 @@ set_property BITSTREAM.GENERAL.COMPRESS True [current_design]
 #              Clock Pins                                  -
 #-----------------------------------------------------------
 
-# {CLK_P_1}
-set_property IOSTANDARD LVDS [get_ports c0_main_clk_p]
-set_property PACKAGE_PIN AD41 [get_ports c0_main_clk_p]
+# # {CLK_P_1}
+# set_property IOSTANDARD LVDS [get_ports c0_main_clk_p]
+# set_property PACKAGE_PIN AD41 [get_ports c0_main_clk_p]
 
-# {CLK_N_1}
+# # {CLK_N_1}
+# set_property IOSTANDARD LVDS [get_ports c0_main_clk_n]
+# set_property PACKAGE_PIN AE41 [get_ports c0_main_clk_n]
+
+# {CLK_P_4}
+set_property IOSTANDARD LVDS [get_ports c0_main_clk_p]
+set_property PACKAGE_PIN AF39 [get_ports c0_main_clk_p]
+
+# {CLK_N_4}
 set_property IOSTANDARD LVDS [get_ports c0_main_clk_n]
-set_property PACKAGE_PIN AE41 [get_ports c0_main_clk_n]
+set_property PACKAGE_PIN AG40 [get_ports c0_main_clk_n]
+
 
 # {CLK_P_3}
 set_property IOSTANDARD LVDS [get_ports c1_main_clk_p]
