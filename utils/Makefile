@@ -789,7 +789,7 @@ espmon: $(ESPMON_DEPS) mmi64_regs.h power.h espmon.mk
 	$(QUIET_MAKE)DESIGN_DIR=$(DESIGN_PATH) make --quiet -f espmon.mk
 
 espmon-run: espmon
-	$(QIOET_RUN)./$<
+	$(QUIET_RUN)./$<
 
 espmon-clean:
 	$(QUIET_CLEAN)$(RM) espmon.mk espmon moc_espmonmain.cpp ui_espmonmain.h
