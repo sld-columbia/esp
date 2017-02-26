@@ -1,9 +1,0 @@
-<BOARD>
-  <NAME value="MB-4M-R2"/>
-  <TYPE value="MB"/>
-  <REV_HIGH value="1"/>
-  <REV_LOW value="3"/>
-  <VENDOR value="ProDesign"/>
-  <SERIAL_NO value="n.a."/>
-  <DESCRIPTION value="proFPGA quad Motherboard"/>
-</BOARD>
