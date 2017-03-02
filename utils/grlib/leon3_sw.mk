@@ -33,7 +33,7 @@ FPROGS=$(shell for i in $(PROGS); do \
 		done; \
 		if [ -r $(UTILS_GRLIB)/software/greth/greth_api.c ]; then \
 			echo greth_api; \
-		fi; \)
+		fi; )
 FPROGS+=$(EXTRA_PROGS)
 
 OFILES = $(FPROGS:%=%.o)
