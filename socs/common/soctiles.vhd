@@ -121,17 +121,11 @@ package soctiles is
       refclk             : in  std_ulogic;
       pllbypass          : in  std_ulogic;
       pllclk             : out std_ulogic;
-      --pragma translate_off
-      mctrl_ahbsi        : out ahb_slv_in_type;
-      mctrl_ahbso        : in  ahb_slv_out_type;
-      mctrl_apbi         : out apb_slv_in_type;
-      mctrl_apbo         : in  apb_slv_out_type;
-      --pragma translate_on
-      ndsuact            : out std_ulogic;
-      dsuerr             : out std_ulogic;
       -- TODO: REMOVE!
-      irqi_i  : in  irq_in_vector(0 to CFG_NCPU-1);
-      irqo_o  : out irq_out_vector(0 to CFG_NCPU-1);
+      irqi_i             : in  l3_irq_in_type;
+      irqo_o             : out l3_irq_out_type;
+      dbgi               : in l3_debug_in_type;
+      dbgo               : out l3_debug_out_type;
       noc1_input_port    : out noc_flit_type;
       noc1_data_void_in  : out std_ulogic;
       noc1_stop_in       : out std_ulogic;
@@ -256,16 +250,16 @@ package soctiles is
       uart_txd           : out std_ulogic;
       uart_ctsn          : in  std_ulogic;
       uart_rtsn          : out std_ulogic;
-      dvi_apbi      : out apb_slv_in_type;
-      dvi_apbo      : in  apb_slv_out_type;
-      dvi_ahbmi     : out ahb_mst_in_type;
-      dvi_ahbmo     : in  ahb_mst_out_type;
+      dvi_apbi           : out apb_slv_in_type;
+      dvi_apbo           : in  apb_slv_out_type;
+      dvi_ahbmi          : out ahb_mst_in_type;
+      dvi_ahbmo          : in  ahb_mst_out_type;
       --TODO: REMOVE and use proxy for eth irq!
-      eth0_pirq      : in  std_logic_vector(NAHBIRQ-1 downto 0);
-      sgmii0_pirq    : in  std_logic_vector(NAHBIRQ-1 downto 0);
+      eth0_pirq          : in  std_logic_vector(NAHBIRQ-1 downto 0);
+      sgmii0_pirq        : in  std_logic_vector(NAHBIRQ-1 downto 0);
       -- TODO: REMOVE!
-      irqi_o  : out irq_in_vector(0 to CFG_NCPU-1);
-      irqo_i  : in  irq_out_vector(0 to CFG_NCPU-1);
+      irqi_o             : out irq_in_vector(0 to CFG_NCPU_TILE-1);
+      irqo_i             : in  irq_out_vector(0 to CFG_NCPU_TILE-1);
       noc1_input_port    : out noc_flit_type;
       noc1_data_void_in  : out std_ulogic;
       noc1_stop_in       : out  std_ulogic;
@@ -327,6 +321,16 @@ package soctiles is
       sgmii0_apbo        : in  apb_slv_out_type;
       eth0_ahbmi         : out ahb_mst_in_type;
       eth0_ahbmo         : in  ahb_mst_out_type;
+      --pragma translate_off
+      mctrl_ahbsi        : out   ahb_slv_in_type;
+      mctrl_ahbso        : in    ahb_slv_out_type;
+      mctrl_apbi         : out   apb_slv_in_type;
+      mctrl_apbo         : in    apb_slv_out_type;
+      --pragma translate_on
+      ndsuact            : out std_ulogic; -- to chip_led(0)
+      dsuerr             : out std_ulogic;
+      dbgi               : out l3_debug_in_vector(0 to CFG_NCPU_TILE-1);
+      dbgo               : in l3_debug_out_vector(0 to CFG_NCPU_TILE-1);
       noc1_input_port    : out noc_flit_type;
       noc1_data_void_in  : out std_ulogic;
       noc1_stop_in       : out std_ulogic;

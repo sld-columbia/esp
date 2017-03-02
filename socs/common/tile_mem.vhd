@@ -22,6 +22,7 @@ use work.sldcommon.all;
 use work.sldacc.all;
 use work.nocpackage.all;
 use work.tile.all;
+use work.cachepackage.all;
 use work.memoryctrl.all;
 use work.coretypes.all;
 
@@ -50,6 +51,19 @@ entity tile_mem is
     sgmii0_apbo        : in  apb_slv_out_type;
     eth0_ahbmi         : out ahb_mst_in_type;
     eth0_ahbmo         : in  ahb_mst_out_type;
+    --pragma translate_off
+    mctrl_ahbsi        : out   ahb_slv_in_type;
+    mctrl_ahbso        : in    ahb_slv_out_type;
+    mctrl_apbi         : out   apb_slv_in_type;
+    mctrl_apbo         : in    apb_slv_out_type;
+    --pragma translate_on
+
+    -- DSU: To led
+    ndsuact            : out std_ulogic;            -- to chip_led(0)
+    dsuerr             : out std_ulogic;
+    --TODO: REMOVE THIS!
+    dbgi : out l3_debug_in_vector(0 to CFG_NCPU_TILE-1);
+    dbgo : in l3_debug_out_vector(0 to CFG_NCPU_TILE-1);
 
     -- NOC
     noc1_input_port    : out noc_flit_type;
@@ -107,15 +121,15 @@ signal tck, tckn, tms, tdi, tdo : std_ulogic;
 signal coherence_req_rdreq           : std_ulogic;
 signal coherence_req_data_out        : noc_flit_type;
 signal coherence_req_empty           : std_ulogic;
-signal coherence_fwd_inv_wrreq       : std_ulogic;
-signal coherence_fwd_inv_data_in     : noc_flit_type;
-signal coherence_fwd_inv_full        : std_ulogic;
-signal coherence_fwd_put_ack_wrreq   : std_ulogic;
-signal coherence_fwd_put_ack_data_in : noc_flit_type;
-signal coherence_fwd_put_ack_full    : std_ulogic;
-signal coherence_rsp_line_wrreq      : std_ulogic;
-signal coherence_rsp_line_data_in    : noc_flit_type;
-signal coherence_rsp_line_full       : std_ulogic;
+signal coherence_fwd_wrreq       : std_ulogic;
+signal coherence_fwd_data_in     : noc_flit_type;
+signal coherence_fwd_full        : std_ulogic;
+signal coherence_rsp_line_snd_wrreq      : std_ulogic;
+signal coherence_rsp_line_snd_data_in    : noc_flit_type;
+signal coherence_rsp_line_snd_full       : std_ulogic;
+signal coherence_rsp_line_rcv_rdreq      : std_ulogic;
+signal coherence_rsp_line_rcv_data_out   : noc_flit_type;
+signal coherence_rsp_line_rcv_empty      : std_ulogic;
 signal dma_rcv_rdreq                 : std_ulogic;
 signal dma_rcv_data_out              : noc_flit_type;
 signal dma_rcv_empty                 : std_ulogic;
@@ -188,15 +202,18 @@ signal apb_req, apb_ack : std_ulogic;
 
 constant local_y : local_yx := tile_mem_0.y;
 constant local_x : local_yx := tile_mem_0.x;
-constant bridge_nslaves : integer := 2;
+constant bridge_nslaves : integer := 4;
 constant ahbslv_bridge_hindex : hindex_vector(0 to NAHBSLV-1) := (
   0 => ddr0_hindex,
+  2 => dsu_hindex,
+-- pragma translate_off
+  3 => mctrl_hindex,
+-- pragma translate_on
   others => 0);
 
 -- JTAG has no access to frame-buffer (would require additional proxy...)
-constant proxy_nslaves : integer := 1 + CFG_MIG_DUAL;
+constant proxy_nslaves : integer := CFG_MIG_DUAL;
 constant ahbslv_proxy_hindex : hindex_vector(0 to NAHBSLV-1) := (
-  0 => dsu_hindex,
   1 => ddr1_hindex,
   others => 0);
 
@@ -204,6 +221,23 @@ constant local_apb_en : std_logic_vector(NAPBSLV-1 downto 0) := (
   14 => to_std_logic(CFG_GRETH),
   15 => to_std_logic(CFG_SGMII * CFG_GRETH),
   others => '0');
+
+-- Debug Support Unit
+signal dsui : dsu_in_type;
+signal dsuo : dsu_out_type;
+
+-- Attributes for hardware debug with Vivado ILA
+attribute mark_debug : string;
+attribute keep : string;
+
+attribute mark_debug of coherence_req_empty : signal is "true";
+attribute mark_debug of coherence_req_rdreq : signal is "true";
+attribute mark_debug of coherence_fwd_full : signal is "true";
+attribute mark_debug of coherence_fwd_wrreq : signal is "true";
+attribute mark_debug of coherence_rsp_line_snd_full : signal is "true";
+attribute mark_debug of coherence_rsp_line_snd_wrreq : signal is "true";
+attribute mark_debug of coherence_rsp_line_rcv_empty : signal is "true";
+attribute mark_debug of coherence_rsp_line_rcv_rdreq : signal is "true";
 
 begin
 
@@ -215,7 +249,6 @@ begin
       port map(rst, clk, tck, tms, tdi, tdo, ahbmi, ahbmo(CFG_NCPU),
                open, open, open, open, open, open, open, gnd(0));
   end generate;
-
 
   -----------------------------------------------------------------------------
   -- ETH0 Master
@@ -238,6 +271,9 @@ begin
 
   assign_bus_ctrl_sig: process (ctrl_ahbmi, ctrl_ahbsi, ctrl_apbi,
                                 ahbmo, ahbso, apbo,
+                                --pragma translate_off
+                                mctrl_apbo, mctrl_ahbso,
+                                --pragma translate_on
                                 noc_apbo)
   begin  -- process assign_bus_ctrl_sig
     ahbmi <= ctrl_ahbmi;
@@ -246,16 +282,23 @@ begin
     ctrl_ahbmo <= ahbmo;
     ctrl_ahbso <= ahbso;
 
+    ctrl_apbo <= apbo;
+    --pragma translate_off
+    ctrl_apbo(mctrl_hindex) <= mctrl_apbo;
+    mctrl_apbi <= ctrl_apbi;
+    --pragma translate_on
+
+    ctrl_ahbso(dsu_hindex) <= ahbso(ddr0_hindex);
+    ctrl_ahbso(dsu_hindex).hindex <= dsu_hindex;
+   
     if CFG_MIG_DUAL /= 0 then
-      ctrl_ahbso(ddr1_hindex) <= ahbso(dsu_hindex);
+      ctrl_ahbso(ddr1_hindex) <= ahbso(dbg_remote_ahb_hindex);
       ctrl_ahbso(ddr1_hindex).hindex <= ddr1_hindex;
     end if;
     if CFG_MIG_DUAL = 0 then
       ctrl_ahbso(ddr1_hindex) <= ahbs_none;
       ctrl_ahbso(ddr1_hindex).hindex <= 0;
     end if;
-
-    ctrl_apbo <= apbo;
 
     noc_apbi <= ctrl_apbi;
     for i in 0 to NAPBSLV-1 loop
@@ -283,6 +326,7 @@ begin
       --pragma translate_off
       ctrl_ahbso(ddr0_hindex).hconfig <= ahbram_sim0_hconfig;
       ctrl_ahbso(ddr1_hindex).hconfig <= ahbram_sim1_hconfig;
+      ctrl_ahbso(mctrl_hindex).hconfig <= mctrl_hconfig;
       --pragma translate_on
       for i in 0 to NAPBSLV-1 loop
         ctrl_apbo(i).pconfig <= fixed_apbo_pconfig(i);
@@ -300,7 +344,7 @@ begin
   apb0 : patient_apbctrl            -- AHB/APB bridge
   generic map (hindex => 1, haddr => CFG_APBADDR, hmask => 16#F00#, nslaves => NAPBSLV,
                remote_apb => remote_apb_slv_en)
-  port map (rst, clk, ahbsi, ahbso(1), ctrl_apbi, ctrl_apbo, apb_req, apb_ack);
+  port map (rst, clk, ahbsi, ahbso(ahb2apb_hindex), ctrl_apbi, ctrl_apbo, apb_req, apb_ack);
 
   -----------------------------------------------------------------------------
   -- AMBA2 MST: cpu (remote), JTAG (other bus)
@@ -308,13 +352,21 @@ begin
   -----------------------------------------------------------------------------
 
   assign_bus_ctrl_sig2: process (ctrl_ahbmi2, ctrl_ahbsi2,
-                                ahbmo2, ahbso2,
+                                 ahbmo2, ahbso2,
+                                 --pragma translate_off
+                                 mctrl_ahbso,
+                                 --pragma translate_on
                                  ddr_ahbso)
   begin  -- process assign_bus_ctrl_sig
     ahbmi2 <= ctrl_ahbmi2;
     ahbsi2 <= ctrl_ahbsi2;
     ctrl_ahbmo2 <= ahbmo2;
     ctrl_ahbso2 <= ahbso2;
+
+    --pragma translate_off
+    ctrl_ahbso2(mctrl_hindex) <= mctrl_ahbso;
+    mctrl_ahbsi <= ctrl_ahbsi2;
+    --pragma translate_on
 
     ctrl_ahbso2(ddr0_hindex) <= ddr_ahbso;
     ddr_ahbsi <= ctrl_ahbsi2;
@@ -336,8 +388,8 @@ begin
       end loop;  -- i
       --pragma translate_off
       ctrl_ahbso2(ddr0_hindex).hconfig <= ahbram_sim0_hconfig;
+      ctrl_ahbso2(mctrl_hindex).hconfig <= mctrl_hconfig;
       --pragma translate_on
-      ctrl_ahbso2(dsu_hindex).hindex <= dsu_hindex;
       ctrl_ahbso2(ahb2apb_hindex).hindex <= ahb2apb_hindex;
     end if;
   end process assign_bus_ctrl_sig2;
@@ -348,6 +400,24 @@ begin
      nahbm => maxahbm, nahbs => maxahbs)
   port map (rst, clk, ctrl_ahbmi2, ctrl_ahbmo2, ctrl_ahbsi2, ctrl_ahbso2);
 
+  -----------------------------------------------------------------------------
+  -- DSU
+  -----------------------------------------------------------------------------
+  dsugeni_0 : if CFG_DSU = 1 generate
+    dsu0 : dsu3         -- LEON3 Debug Support Unit
+      generic map (hindex => dsu_hindex, haddr => dsu_haddr, hmask => dsu_hmask,
+                   ncpu => CFG_NCPU_TILE, tbits => 30, tech => memtech, irq => 0, kbytes => CFG_ATBSZ)
+      port map (rst, clk, ahbmi, ahbsi2, ahbso2(dsu_hindex), dbgo, dbgi, dsui, dsuo);
+    dsui.enable <= '1';
+    dsui.break <= '0';
+  end generate;
+
+  nodsu : if CFG_DSU = 0 generate
+    dsuo.tstop <= '0'; dsuo.active <= '0'; ahbso(dsu_hindex) <= ahbs_none;
+  end generate;
+
+  ndsuact <= not dsuo.active;
+  dsuerr <= not dbgo(0).error;
 
  -----------------------------------------------------------------------
  ---  Drive unused bus elements  ---------------------------------------
@@ -404,19 +474,19 @@ begin
       rst                                => rst,
       clk                                => clk,
       ahbsi                              => ahbsi,
-      ahbso                              => ahbso(dsu_hindex),
+      ahbso                              => ahbso(dbg_remote_ahb_hindex),
       coherence_req_wrreq                => remote_ahbs_snd_wrreq,
       coherence_req_data_in              => remote_ahbs_snd_data_in,
       coherence_req_full                 => remote_ahbs_snd_full,
-      coherence_fwd_inv_rdreq            => open,
-      coherence_fwd_inv_data_out         => (others => '0'),
-      coherence_fwd_inv_empty            => '1',
-      coherence_fwd_put_ack_rdreq        => open,
-      coherence_fwd_put_ack_data_out     => (others => '0'),
-      coherence_fwd_put_ack_empty        => '1',
-      coherence_rsp_line_rdreq           => remote_ahbs_rcv_rdreq,
-      coherence_rsp_line_data_out        => remote_ahbs_rcv_data_out,
-      coherence_rsp_line_empty           => remote_ahbs_rcv_empty,
+      coherence_fwd_rdreq                => open,
+      coherence_fwd_data_out             => (others => '0'),
+      coherence_fwd_empty                => '1',
+      coherence_rsp_line_rcv_rdreq       => remote_ahbs_rcv_rdreq,
+      coherence_rsp_line_rcv_data_out    => remote_ahbs_rcv_data_out,
+      coherence_rsp_line_rcv_empty       => remote_ahbs_rcv_empty,
+      coherence_rsp_inv_ack_rcv_rdreq    => open,
+      coherence_rsp_inv_ack_rcv_data_out => (others => '0'),
+      coherence_rsp_inv_ack_rcv_empty    => '1',
       coherence_rsp_inv_ack_rcv_rdreq    => open,
       coherence_rsp_inv_ack_rcv_data_out => (others => '0'),
       coherence_rsp_inv_ack_rcv_empty    => '1',
@@ -444,15 +514,12 @@ begin
       coherence_req_wrreq                => ddr_snd_wrreq,
       coherence_req_data_in              => ddr_snd_data_in,
       coherence_req_full                 => ddr_snd_full,
-      coherence_fwd_inv_rdreq            => open,
-      coherence_fwd_inv_data_out         => (others => '0'),
-      coherence_fwd_inv_empty            => '1',
-      coherence_fwd_put_ack_rdreq        => open,
-      coherence_fwd_put_ack_data_out     => (others => '0'),
-      coherence_fwd_put_ack_empty        => '1',
-      coherence_rsp_line_rdreq           => ddr_rcv_rdreq,
-      coherence_rsp_line_data_out        => ddr_rcv_data_out,
-      coherence_rsp_line_empty           => ddr_rcv_empty,
+      coherence_fwd_rdreq                => open,
+      coherence_fwd_data_out             => (others => '0'),
+      coherence_fwd_empty                => '1',
+      coherence_rsp_line_rcv_rdreq       => ddr_rcv_rdreq,
+      coherence_rsp_line_rcv_data_out    => ddr_rcv_data_out,
+      coherence_rsp_line_rcv_empty       => ddr_rcv_empty,
       coherence_rsp_inv_ack_rcv_rdreq    => open,
       coherence_rsp_inv_ack_rcv_data_out => (others => '0'),
       coherence_rsp_inv_ack_rcv_empty    => '1',
@@ -464,40 +531,85 @@ begin
   -- AMBA2 proxies
   -----------------------------------------------------------------------------
   -- FROM CPU
-  mem_noc2ahbm_1: mem_noc2ahbm
-    generic map (
-      tech      => fabtech,
-      ncpu      => CFG_NCPU,
-      hindex    => 0,
-      local_y   => local_y,
-      local_x   => local_x,
-      cacheline => CFG_DLINE,
-      destination => 0)
-    port map (
-      rst                           => rst,
-      clk                           => clk,
-      ahbmi                         => ahbmi2,
-      ahbmo                         => ahbmo2(0),
-      coherence_req_rdreq           => coherence_req_rdreq,
-      coherence_req_data_out        => coherence_req_data_out,
-      coherence_req_empty           => coherence_req_empty,
-      coherence_fwd_inv_wrreq       => open,
-      coherence_fwd_inv_data_in     => open,
-      coherence_fwd_inv_full        => '0',
-      coherence_fwd_put_ack_wrreq   => open,
-      coherence_fwd_put_ack_data_in => open,
-      coherence_fwd_put_ack_full    => '0',
-      coherence_rsp_line_wrreq      => coherence_rsp_line_wrreq,
-      coherence_rsp_line_data_in    => coherence_rsp_line_data_in,
-      coherence_rsp_line_full       => coherence_rsp_line_full,
-      dma_rcv_rdreq                 => dma_rcv_rdreq,
-      dma_rcv_data_out              => dma_rcv_data_out,
-      dma_rcv_empty                 => dma_rcv_empty,
-      dma_snd_wrreq                 => dma_snd_wrreq,
-      dma_snd_data_in               => dma_snd_data_in,
-      dma_snd_full                  => dma_snd_full,
-      dma_snd_atleast_4slots        => dma_snd_atleast_4slots,
-      dma_snd_exactly_3slots        => dma_snd_exactly_3slots);
+  no_cache_coherence : if CFG_LLC_ENABLE = 0 generate
+    coherence_rsp_line_rcv_rdreq <= '0';
+    mem_noc2ahbm_1: mem_noc2ahbm
+      generic map (
+        tech      => fabtech,
+        ncpu      => CFG_NCPU_TILE, --unused
+        hindex    => 0,
+        local_y   => local_y,
+        local_x   => local_x,
+        cacheline => CFG_DLINE,
+        l2_cache_en => CFG_L2_ENABLE,
+        destination => 0)
+      port map (
+        rst                           => rst,
+        clk                           => clk,
+        ahbmi                         => ahbmi2,
+        ahbmo                         => ahbmo2(0),
+        coherence_req_rdreq           => coherence_req_rdreq,
+        coherence_req_data_out        => coherence_req_data_out,
+        coherence_req_empty           => coherence_req_empty,
+        coherence_fwd_wrreq       => coherence_fwd_wrreq,
+        coherence_fwd_data_in     => coherence_fwd_data_in,
+        coherence_fwd_full        => coherence_fwd_full,
+        coherence_rsp_line_snd_wrreq      => coherence_rsp_line_snd_wrreq,
+        coherence_rsp_line_snd_data_in    => coherence_rsp_line_snd_data_in,
+        coherence_rsp_line_snd_full       => coherence_rsp_line_snd_full,
+        dma_rcv_rdreq                 => dma_rcv_rdreq,
+        dma_rcv_data_out              => dma_rcv_data_out,
+        dma_rcv_empty                 => dma_rcv_empty,
+        dma_snd_wrreq                 => dma_snd_wrreq,
+        dma_snd_data_in               => dma_snd_data_in,
+        dma_snd_full                  => dma_snd_full,
+        dma_snd_atleast_4slots        => dma_snd_atleast_4slots,
+        dma_snd_exactly_3slots        => dma_snd_exactly_3slots);
+  end generate no_cache_coherence;
+
+  with_cache_coherence : if CFG_LLC_ENABLE /= 0 generate
+
+    dma_rcv_rdreq <= '0';
+    dma_snd_wrreq <= '0';
+
+    l3_wrapper_1: l3_wrapper
+      generic map (
+        tech        => fabtech,
+        ncpu        => CFG_NCPU_TILE,
+        noc_xlen    => CFG_XLEN,
+        hindex      => 0,
+        local_y     => local_y,
+        local_x     => local_x,
+        cacheline   => CFG_DLINE,
+        l2_cache_en => CFG_L2_ENABLE,
+        cpu_tile_id => cpu_tile_id,
+        tile_cpu_id => tile_cpu_id,
+        destination => 0)
+
+      port map (
+        rst   => rst,
+        clk   => clk,
+        ahbmi => ahbmi2,
+        ahbmo => ahbmo2(0),
+
+        -- NoC1->tile
+        coherence_req_rdreq             => coherence_req_rdreq,
+        coherence_req_data_out          => coherence_req_data_out,
+        coherence_req_empty             => coherence_req_empty,
+        -- tile->NoC2
+        coherence_fwd_wrreq             => coherence_fwd_wrreq,
+        coherence_fwd_data_in           => coherence_fwd_data_in,
+        coherence_fwd_full              => coherence_fwd_full,
+        -- tile->NoC3
+        coherence_rsp_line_snd_wrreq    => coherence_rsp_line_snd_wrreq,
+        coherence_rsp_line_snd_data_in  => coherence_rsp_line_snd_data_in,
+        coherence_rsp_line_snd_full     => coherence_rsp_line_snd_full,
+        -- NoC3->tile
+        coherence_rsp_line_rcv_rdreq    => coherence_rsp_line_rcv_rdreq,
+        coherence_rsp_line_rcv_data_out => coherence_rsp_line_rcv_data_out,
+        coherence_rsp_line_rcv_empty    => coherence_rsp_line_rcv_empty);
+
+  end generate with_cache_coherence;
 
   -- FROM JTAG on AMBA1
     mem_noc2ahbm_2: mem_noc2ahbm
@@ -507,33 +619,31 @@ begin
       hindex    => CFG_NCPU,
       local_y   => local_y,
       local_x   => local_x,
+      l2_cache_en => 0,
       cacheline => CFG_DLINE,
       destination => 0)
     port map (
-      rst                           => rst,
-      clk                           => clk,
-      ahbmi                         => ahbmi2,
-      ahbmo                         => ahbmo2(1),
-      coherence_req_rdreq           => ddr_snd_rdreq,
-      coherence_req_data_out        => ddr_snd_data_out,
-      coherence_req_empty           => ddr_snd_empty,
-      coherence_fwd_inv_wrreq       => open,
-      coherence_fwd_inv_data_in     => open,
-      coherence_fwd_inv_full        => '0',
-      coherence_fwd_put_ack_wrreq   => open,
-      coherence_fwd_put_ack_data_in => open,
-      coherence_fwd_put_ack_full    => '0',
-      coherence_rsp_line_wrreq      => ddr_rcv_wrreq,
-      coherence_rsp_line_data_in    => ddr_rcv_data_in,
-      coherence_rsp_line_full       => ddr_rcv_full,
-      dma_rcv_rdreq                 => open,
-      dma_rcv_data_out              => (others => '0'),
-      dma_rcv_empty                 => '1',
-      dma_snd_wrreq                 => open,
-      dma_snd_data_in               => open,
-      dma_snd_full                  => '0',
-      dma_snd_atleast_4slots        => '1',
-      dma_snd_exactly_3slots        => '0');
+      rst                            => rst,
+      clk                            => clk,
+      ahbmi                          => ahbmi2,
+      ahbmo                          => ahbmo2(1),
+      coherence_req_rdreq            => ddr_snd_rdreq,
+      coherence_req_data_out         => ddr_snd_data_out,
+      coherence_req_empty            => ddr_snd_empty,
+      coherence_fwd_wrreq            => open,
+      coherence_fwd_data_in          => open,
+      coherence_fwd_full             => '0',
+      coherence_rsp_line_snd_wrreq   => ddr_rcv_wrreq,
+      coherence_rsp_line_snd_data_in => ddr_rcv_data_in,
+      coherence_rsp_line_snd_full    => ddr_rcv_full,
+      dma_rcv_rdreq                  => open,
+      dma_rcv_data_out               => (others => '0'),
+      dma_rcv_empty                  => '1',
+      dma_snd_wrreq                  => open,
+      dma_snd_data_in                => open,
+      dma_snd_full                   => '0',
+      dma_snd_atleast_4slots         => '1',
+      dma_snd_exactly_3slots         => '0');
 
 
   misc_noc2apb_1: misc_noc2apb
@@ -626,81 +736,81 @@ begin
     generic map (
       tech => fabtech)
     port map (
-      rst                           => rst,
-      clk                           => clk,
-      coherence_req_rdreq           => coherence_req_rdreq,
-      coherence_req_data_out        => coherence_req_data_out,
-      coherence_req_empty           => coherence_req_empty,
-      coherence_fwd_inv_wrreq       => coherence_fwd_inv_wrreq,
-      coherence_fwd_inv_data_in     => coherence_fwd_inv_data_in,
-      coherence_fwd_inv_full        => coherence_fwd_inv_full,
-      coherence_fwd_put_ack_wrreq   => coherence_fwd_put_ack_wrreq,
-      coherence_fwd_put_ack_data_in => coherence_fwd_put_ack_data_in,
-      coherence_fwd_put_ack_full    => coherence_fwd_put_ack_full,
-      coherence_rsp_line_wrreq      => coherence_rsp_line_wrreq,
-      coherence_rsp_line_data_in    => coherence_rsp_line_data_in,
-      coherence_rsp_line_full       => coherence_rsp_line_full,
-      dma_rcv_rdreq                 => dma_rcv_rdreq,
-      dma_rcv_data_out              => dma_rcv_data_out,
-      dma_rcv_empty                 => dma_rcv_empty,
-      dma_snd_wrreq                 => dma_snd_wrreq,
-      dma_snd_data_in               => dma_snd_data_in,
-      dma_snd_full                  => dma_snd_full,
-      dma_snd_atleast_4slots        => dma_snd_atleast_4slots,
-      dma_snd_exactly_3slots        => dma_snd_exactly_3slots,
-      remote_ahbs_rcv_rdreq    => remote_ahbs_rcv_rdreq,
-      remote_ahbs_rcv_data_out => remote_ahbs_rcv_data_out,
-      remote_ahbs_rcv_empty    => remote_ahbs_rcv_empty,
-      remote_ahbs_snd_wrreq    => remote_ahbs_snd_wrreq,
-      remote_ahbs_snd_data_in  => remote_ahbs_snd_data_in,
-      remote_ahbs_snd_full     => remote_ahbs_snd_full,
-      remote_apb_rcv_rdreq       => remote_apb_rcv_rdreq,
-      remote_apb_rcv_data_out    => remote_apb_rcv_data_out,
-      remote_apb_rcv_empty       => remote_apb_rcv_empty,
-      remote_apb_snd_wrreq       => remote_apb_snd_wrreq,
-      remote_apb_snd_data_in     => remote_apb_snd_data_in,
-      remote_apb_snd_full        => remote_apb_snd_full,
-      apb_rcv_rdreq            => apb_rcv_rdreq,
-      apb_rcv_data_out         => apb_rcv_data_out,
-      apb_rcv_empty            => apb_rcv_empty,
-      apb_snd_wrreq            => apb_snd_wrreq,
-      apb_snd_data_in          => apb_snd_data_in,
-      apb_snd_full             => apb_snd_full,
-      noc1_out_data            => noc1_output_port,
-      noc1_out_void            => noc1_data_void_out,
-      noc1_out_stop            => noc1_stop_in,
-      noc1_in_data             => noc1_input_port,
-      noc1_in_void             => noc1_data_void_in,
-      noc1_in_stop             => noc1_stop_out,
-      noc2_out_data            => noc2_output_port,
-      noc2_out_void            => noc2_data_void_out,
-      noc2_out_stop            => noc2_stop_in,
-      noc2_in_data             => noc2_input_port,
-      noc2_in_void             => noc2_data_void_in,
-      noc2_in_stop             => noc1_stop_out,
-      noc3_out_data            => noc3_output_port,
-      noc3_out_void            => noc3_data_void_out,
-      noc3_out_stop            => noc3_stop_in,
-      noc3_in_data             => noc3_input_port,
-      noc3_in_void             => noc3_data_void_in,
-      noc3_in_stop             => noc3_stop_out,
-      noc4_out_data            => noc4_output_port,
-      noc4_out_void            => noc4_data_void_out,
-      noc4_out_stop            => noc4_stop_in,
-      noc4_in_data             => noc4_input_port,
-      noc4_in_void             => noc4_data_void_in,
-      noc4_in_stop             => noc4_stop_out,
-      noc5_out_data            => noc5_output_port,
-      noc5_out_void            => noc5_data_void_out,
-      noc5_out_stop            => noc5_stop_in,
-      noc5_in_data             => noc5_input_port,
-      noc5_in_void             => noc5_data_void_in,
-      noc5_in_stop             => noc5_stop_out,
-      noc6_out_data            => noc6_output_port,
-      noc6_out_void            => noc6_data_void_out,
-      noc6_out_stop            => noc6_stop_in,
-      noc6_in_data             => noc6_input_port,
-      noc6_in_void             => noc6_data_void_in,
-      noc6_in_stop             => noc6_stop_out);
+      rst                             => rst,
+      clk                             => clk,
+      coherence_req_rdreq             => coherence_req_rdreq,
+      coherence_req_data_out          => coherence_req_data_out,
+      coherence_req_empty             => coherence_req_empty,
+      coherence_fwd_wrreq             => coherence_fwd_wrreq,
+      coherence_fwd_data_in           => coherence_fwd_data_in,
+      coherence_fwd_full              => coherence_fwd_full,
+      coherence_rsp_line_snd_wrreq    => coherence_rsp_line_snd_wrreq,
+      coherence_rsp_line_snd_data_in  => coherence_rsp_line_snd_data_in,
+      coherence_rsp_line_snd_full     => coherence_rsp_line_snd_full,
+      coherence_rsp_line_rcv_rdreq    => coherence_rsp_line_rcv_rdreq,
+      coherence_rsp_line_rcv_data_out => coherence_rsp_line_rcv_data_out,
+      coherence_rsp_line_rcv_empty    => coherence_rsp_line_rcv_empty,
+      dma_rcv_rdreq                   => dma_rcv_rdreq,
+      dma_rcv_data_out                => dma_rcv_data_out,
+      dma_rcv_empty                   => dma_rcv_empty,
+      dma_snd_wrreq                   => dma_snd_wrreq,
+      dma_snd_data_in                 => dma_snd_data_in,
+      dma_snd_full                    => dma_snd_full,
+      dma_snd_atleast_4slots          => dma_snd_atleast_4slots,
+      dma_snd_exactly_3slots          => dma_snd_exactly_3slots,
+      remote_ahbs_rcv_rdreq           => remote_ahbs_rcv_rdreq,
+      remote_ahbs_rcv_data_out        => remote_ahbs_rcv_data_out,
+      remote_ahbs_rcv_empty           => remote_ahbs_rcv_empty,
+      remote_ahbs_snd_wrreq           => remote_ahbs_snd_wrreq,
+      remote_ahbs_snd_data_in         => remote_ahbs_snd_data_in,
+      remote_ahbs_snd_full            => remote_ahbs_snd_full,
+      remote_apb_rcv_rdreq            => remote_apb_rcv_rdreq,
+      remote_apb_rcv_data_out         => remote_apb_rcv_data_out,
+      remote_apb_rcv_empty            => remote_apb_rcv_empty,
+      remote_apb_snd_wrreq            => remote_apb_snd_wrreq,
+      remote_apb_snd_data_in          => remote_apb_snd_data_in,
+      remote_apb_snd_full             => remote_apb_snd_full,
+      apb_rcv_rdreq                   => apb_rcv_rdreq,
+      apb_rcv_data_out                => apb_rcv_data_out,
+      apb_rcv_empty                   => apb_rcv_empty,
+      apb_snd_wrreq                   => apb_snd_wrreq,
+      apb_snd_data_in                 => apb_snd_data_in,
+      apb_snd_full                    => apb_snd_full,
+      noc1_out_data                   => noc1_output_port,
+      noc1_out_void                   => noc1_data_void_out,
+      noc1_out_stop                   => noc1_stop_in,
+      noc1_in_data                    => noc1_input_port,
+      noc1_in_void                    => noc1_data_void_in,
+      noc1_in_stop                    => noc1_stop_out,
+      noc2_out_data                   => noc2_output_port,
+      noc2_out_void                   => noc2_data_void_out,
+      noc2_out_stop                   => noc2_stop_in,
+      noc2_in_data                    => noc2_input_port,
+      noc2_in_void                    => noc2_data_void_in,
+      noc2_in_stop                    => noc1_stop_out,
+      noc3_out_data                   => noc3_output_port,
+      noc3_out_void                   => noc3_data_void_out,
+      noc3_out_stop                   => noc3_stop_in,
+      noc3_in_data                    => noc3_input_port,
+      noc3_in_void                    => noc3_data_void_in,
+      noc3_in_stop                    => noc3_stop_out,
+      noc4_out_data                   => noc4_output_port,
+      noc4_out_void                   => noc4_data_void_out,
+      noc4_out_stop                   => noc4_stop_in,
+      noc4_in_data                    => noc4_input_port,
+      noc4_in_void                    => noc4_data_void_in,
+      noc4_in_stop                    => noc4_stop_out,
+      noc5_out_data                   => noc5_output_port,
+      noc5_out_void                   => noc5_data_void_out,
+      noc5_out_stop                   => noc5_stop_in,
+      noc5_in_data                    => noc5_input_port,
+      noc5_in_void                    => noc5_data_void_in,
+      noc5_in_stop                    => noc5_stop_out,
+      noc6_out_data                   => noc6_output_port,
+      noc6_out_void                   => noc6_data_void_out,
+      noc6_out_stop                   => noc6_stop_in,
+      noc6_in_data                    => noc6_input_port,
+      noc6_in_void                    => noc6_data_void_in,
+      noc6_in_stop                    => noc6_stop_out);
 end;
 

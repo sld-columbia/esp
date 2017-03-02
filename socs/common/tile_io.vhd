@@ -48,8 +48,8 @@ entity tile_io is
     eth0_pirq    : in  std_logic_vector(NAHBIRQ-1 downto 0);
     sgmii0_pirq    : in  std_logic_vector(NAHBIRQ-1 downto 0);
     -- TODO: REMOVE!
-    irqi_o  : out irq_in_vector(0 to CFG_NCPU-1);
-    irqo_i  : in  irq_out_vector(0 to CFG_NCPU-1);
+    irqi_o  : out irq_in_vector(0 to CFG_NCPU_TILE-1);
+    irqo_i  : in  irq_out_vector(0 to CFG_NCPU_TILE-1);
     -- NOC
     noc1_input_port    : out noc_flit_type;
     noc1_data_void_in  : out std_ulogic;
@@ -100,8 +100,8 @@ signal apbo  : apb_slv_out_vector;
 signal noc_pirq  : std_logic_vector(NAHBIRQ-1 downto 0); -- interrupt result bus
                                                          -- from noc
 -- Interrupt controller
-signal irqi : irq_in_vector(0 to CFG_NCPU-1);
-signal irqo : irq_out_vector(0 to CFG_NCPU-1);
+signal irqi : irq_in_vector(0 to CFG_NCPU_TILE-1);
+signal irqo : irq_out_vector(0 to CFG_NCPU_TILE-1);
 
 signal ctrl_apbi  : apb_slv_in_type;
 signal ctrl_apbo  : apb_slv_out_vector := (others => apb_none);
@@ -195,11 +195,11 @@ begin
 
   irqctrl : if CFG_IRQ3_ENABLE /= 0 generate
     irqctrl0 : irqmp         -- interrupt controller
-    generic map (pindex => 2, paddr => 2, ncpu => CFG_NCPU)
+    generic map (pindex => 2, paddr => 2, ncpu => CFG_NCPU_TILE)
     port map (rst, clk, apbi, apbo(2), irqo_i, irqi_o);
   end generate;
   irq3 : if CFG_IRQ3_ENABLE = 0 generate
-    x : for i in 0 to CFG_NCPU-1 generate
+    x : for i in 0 to CFG_NCPU_TILE-1 generate
       irqi(i).irl <= "0000";
     end generate;
     apbo(2) <= apb_none;
@@ -318,7 +318,7 @@ begin
       apb_rcv_empty    => apb_rcv_empty);
 
   --TODO: make the following broadcast the irq for all CPUs
-  no_irqi_cpu: for i in 1 to CFG_NCPU-1 generate
+  no_irqi_cpu: for i in 1 to CFG_NCPU_TILE-1 generate
     --REMOVE THE FOLLOWING!
     irqo(i) <= irq_out_none;
   end generate no_irqi_cpu;
@@ -360,37 +360,35 @@ begin
   mem_noc2ahbm_1: mem_noc2ahbm
     generic map (
       tech      => fabtech,
-      ncpu      => CFG_NCPU,
+      ncpu      => CFG_NCPU_TILE,
       hindex    => 0,
       local_y   => local_y,
       local_x   => local_x,
       cacheline => CFG_DLINE,
+      l2_cache_en => CFG_L2_ENABLE,
       destination => 0)
     port map (
-      rst                           => rst,
-      clk                           => clk,
-      ahbmi                         => ahbmi1,
-      ahbmo                         => ahbmo1(0),
-      coherence_req_rdreq           => ahbs_req_rdreq,
-      coherence_req_data_out        => ahbs_req_data_out,
-      coherence_req_empty           => ahbs_req_empty,
-      coherence_fwd_inv_wrreq       => open,
-      coherence_fwd_inv_data_in     => open,
-      coherence_fwd_inv_full        => '0',
-      coherence_fwd_put_ack_wrreq   => open,
-      coherence_fwd_put_ack_data_in => open,
-      coherence_fwd_put_ack_full    => '0',
-      coherence_rsp_line_wrreq      => ahbs_rsp_line_wrreq,
-      coherence_rsp_line_data_in    => ahbs_rsp_line_data_in,
-      coherence_rsp_line_full       => ahbs_rsp_line_full,
-      dma_rcv_rdreq                 => dma_rcv_rdreq,
-      dma_rcv_data_out              => dma_rcv_data_out,
-      dma_rcv_empty                 => dma_rcv_empty,
-      dma_snd_wrreq                 => dma_snd_wrreq,
-      dma_snd_data_in               => dma_snd_data_in,
-      dma_snd_full                  => dma_snd_full,
-      dma_snd_atleast_4slots        => dma_snd_atleast_4slots,
-      dma_snd_exactly_3slots        => dma_snd_exactly_3slots);
+      rst                            => rst,
+      clk                            => clk,
+      ahbmi                          => ahbmi1,
+      ahbmo                          => ahbmo1(0),
+      coherence_req_rdreq            => ahbs_req_rdreq,
+      coherence_req_data_out         => ahbs_req_data_out,
+      coherence_req_empty            => ahbs_req_empty,
+      coherence_fwd_wrreq            => open,
+      coherence_fwd_data_in          => open,
+      coherence_fwd_full             => '0',
+      coherence_rsp_line_snd_wrreq   => ahbs_rsp_line_wrreq,
+      coherence_rsp_line_snd_data_in => ahbs_rsp_line_data_in,
+      coherence_rsp_line_snd_full    => ahbs_rsp_line_full,
+      dma_rcv_rdreq                  => dma_rcv_rdreq,
+      dma_rcv_data_out               => dma_rcv_data_out,
+      dma_rcv_empty                  => dma_rcv_empty,
+      dma_snd_wrreq                  => dma_snd_wrreq,
+      dma_snd_data_in                => dma_snd_data_in,
+      dma_snd_full                   => dma_snd_full,
+      dma_snd_atleast_4slots         => dma_snd_atleast_4slots,
+      dma_snd_exactly_3slots         => dma_snd_exactly_3slots);
 
   -----------------------------------------------------------------------------
   -- Monitor for DVFS. (IO tile has no dvfs)

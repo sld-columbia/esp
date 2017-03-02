@@ -37,8 +37,8 @@ entity tile_mem_lite is
     USE_MIG_INTERFACE_MODEL : boolean := false
   );
   port (
-    rst             : in    std_ulogic;
-    clk             : in    std_ulogic;
+    rst                : in    std_ulogic;
+    clk                : in    std_ulogic;
     ddr_ahbsi          : out ahb_slv_in_type;
     ddr_ahbso          : in  ahb_slv_out_type;
     -- NOC
@@ -91,33 +91,33 @@ constant gnd : std_logic_vector(31 downto 0) := (others => '0');
 
 
 -- Queues
-signal coherence_req_rdreq           : std_ulogic;
-signal coherence_req_data_out        : noc_flit_type;
-signal coherence_req_empty           : std_ulogic;
-signal coherence_fwd_inv_wrreq       : std_ulogic;
-signal coherence_fwd_inv_data_in     : noc_flit_type;
-signal coherence_fwd_inv_full        : std_ulogic;
-signal coherence_fwd_put_ack_wrreq   : std_ulogic;
-signal coherence_fwd_put_ack_data_in : noc_flit_type;
-signal coherence_fwd_put_ack_full    : std_ulogic;
-signal coherence_rsp_line_wrreq      : std_ulogic;
-signal coherence_rsp_line_data_in    : noc_flit_type;
-signal coherence_rsp_line_full       : std_ulogic;
-signal dma_rcv_rdreq                 : std_ulogic;
-signal dma_rcv_data_out              : noc_flit_type;
-signal dma_rcv_empty                 : std_ulogic;
-signal dma_snd_wrreq                 : std_ulogic;
-signal dma_snd_data_in               : noc_flit_type;
-signal dma_snd_full                  : std_ulogic;
-signal dma_snd_atleast_4slots        : std_ulogic;
-signal dma_snd_exactly_3slots        : std_ulogic;
+signal coherence_req_rdreq             : std_ulogic;
+signal coherence_req_data_out          : noc_flit_type;
+signal coherence_req_empty             : std_ulogic;
+signal coherence_fwd_wrreq             : std_ulogic;
+signal coherence_fwd_data_in           : noc_flit_type;
+signal coherence_fwd_full              : std_ulogic;
+signal coherence_rsp_line_snd_wrreq    : std_ulogic;
+signal coherence_rsp_line_snd_data_in  : noc_flit_type;
+signal coherence_rsp_line_snd_full     : std_ulogic;
+signal coherence_rsp_line_rcv_rdreq    : std_ulogic;
+signal coherence_rsp_line_rcv_data_out : noc_flit_type;
+signal coherence_rsp_line_rcv_empty    : std_ulogic;
+signal dma_rcv_rdreq                   : std_ulogic;
+signal dma_rcv_data_out                : noc_flit_type;
+signal dma_rcv_empty                   : std_ulogic;
+signal dma_snd_wrreq                   : std_ulogic;
+signal dma_snd_data_in                 : noc_flit_type;
+signal dma_snd_full                    : std_ulogic;
+signal dma_snd_atleast_4slots          : std_ulogic;
+signal dma_snd_exactly_3slots          : std_ulogic;  
 
-signal remote_ahbm_rcv_rdreq              : std_ulogic;
-signal remote_ahbm_rcv_data_out           : noc_flit_type;
-signal remote_ahbm_rcv_empty              : std_ulogic;
-signal remote_ahbm_snd_wrreq              : std_ulogic;
-signal remote_ahbm_snd_data_in            : noc_flit_type;
-signal remote_ahbm_snd_full               : std_ulogic;
+signal remote_ahbm_rcv_rdreq           : std_ulogic;
+signal remote_ahbm_rcv_data_out        : noc_flit_type;
+signal remote_ahbm_rcv_empty           : std_ulogic;
+signal remote_ahbm_snd_wrreq           : std_ulogic;
+signal remote_ahbm_snd_data_in         : noc_flit_type;
+signal remote_ahbm_snd_full            : std_ulogic;
 
 signal ahbsi2 : ahb_slv_in_type;
 signal ahbso2 : ahb_slv_out_vector := (others => ahbs_none);
@@ -210,47 +210,46 @@ begin
   mem_noc2ahbm_1: mem_noc2ahbm
     generic map (
       tech      => fabtech,
-      ncpu      => CFG_NCPU,
+      ncpu      => CFG_NCPU, --unused
       hindex    => 0,
       local_y   => local_y,
       local_x   => local_x,
       cacheline => CFG_DLINE,
+      l2_cache_en => CFG_L2_ENABLE,
       destination => 0)
     port map (
-      rst                           => rst,
-      clk                           => clk,
-      ahbmi                         => ahbmi2,
-      ahbmo                         => ahbmo2(0),
-      coherence_req_rdreq           => coherence_req_rdreq,
-      coherence_req_data_out        => coherence_req_data_out,
-      coherence_req_empty           => coherence_req_empty,
-      coherence_fwd_inv_wrreq       => open,
-      coherence_fwd_inv_data_in     => open,
-      coherence_fwd_inv_full        => '0',
-      coherence_fwd_put_ack_wrreq   => open,
-      coherence_fwd_put_ack_data_in => open,
-      coherence_fwd_put_ack_full    => '0',
-      coherence_rsp_line_wrreq      => coherence_rsp_line_wrreq,
-      coherence_rsp_line_data_in    => coherence_rsp_line_data_in,
-      coherence_rsp_line_full       => coherence_rsp_line_full,
-      dma_rcv_rdreq                 => dma_rcv_rdreq,
-      dma_rcv_data_out              => dma_rcv_data_out,
-      dma_rcv_empty                 => dma_rcv_empty,
-      dma_snd_wrreq                 => dma_snd_wrreq,
-      dma_snd_data_in               => dma_snd_data_in,
-      dma_snd_full                  => dma_snd_full,
-      dma_snd_atleast_4slots        => dma_snd_atleast_4slots,
-      dma_snd_exactly_3slots        => dma_snd_exactly_3slots);
+      rst                            => rst,
+      clk                            => clk,
+      ahbmi                          => ahbmi2,
+      ahbmo                          => ahbmo2(0),
+      coherence_req_rdreq            => coherence_req_rdreq,
+      coherence_req_data_out         => coherence_req_data_out,
+      coherence_req_empty            => coherence_req_empty,
+      coherence_fwd_wrreq            => open,
+      coherence_fwd_data_in          => open,
+      coherence_fwd_full             => '0',
+      coherence_rsp_line_snd_wrreq   => coherence_rsp_line_snd_wrreq,
+      coherence_rsp_line_snd_data_in => coherence_rsp_line_snd_data_in,
+      coherence_rsp_line_snd_full    => coherence_rsp_line_snd_full,
+      dma_rcv_rdreq                  => dma_rcv_rdreq,
+      dma_rcv_data_out               => dma_rcv_data_out,
+      dma_rcv_empty                  => dma_rcv_empty,
+      dma_snd_wrreq                  => dma_snd_wrreq,
+      dma_snd_data_in                => dma_snd_data_in,
+      dma_snd_full                   => dma_snd_full,
+      dma_snd_atleast_4slots         => dma_snd_atleast_4slots,
+      dma_snd_exactly_3slots         => dma_snd_exactly_3slots);
 
   -- FROM JTAG to DDR1
     mem_noc2ahbm_2: mem_noc2ahbm
     generic map (
       tech      => fabtech,
-      ncpu      => CFG_NCPU,
+      ncpu      => CFG_NCPU, -- unused
       hindex    => 1,
       local_y   => local_y,
       local_x   => local_x,
       cacheline => CFG_DLINE,
+      l2_cache_en => 0,
       destination => 1)
     port map (
       rst                           => rst,
@@ -260,15 +259,12 @@ begin
       coherence_req_rdreq           => remote_ahbm_rcv_rdreq,
       coherence_req_data_out        => remote_ahbm_rcv_data_out,
       coherence_req_empty           => remote_ahbm_rcv_empty,
-      coherence_fwd_inv_wrreq       => open,
-      coherence_fwd_inv_data_in     => open,
-      coherence_fwd_inv_full        => '0',
-      coherence_fwd_put_ack_wrreq   => open,
-      coherence_fwd_put_ack_data_in => open,
-      coherence_fwd_put_ack_full    => '0',
-      coherence_rsp_line_wrreq      => remote_ahbm_snd_wrreq,
-      coherence_rsp_line_data_in    => remote_ahbm_snd_data_in,
-      coherence_rsp_line_full       => remote_ahbm_snd_full,
+      coherence_fwd_wrreq       => open,
+      coherence_fwd_data_in     => open,
+      coherence_fwd_full        => '0',
+      coherence_rsp_line_snd_wrreq      => remote_ahbm_snd_wrreq,
+      coherence_rsp_line_snd_data_in    => remote_ahbm_snd_data_in,
+      coherence_rsp_line_snd_full       => remote_ahbm_snd_full,
       dma_rcv_rdreq                 => open,
       dma_rcv_data_out              => (others => '0'),
       dma_rcv_empty                 => '1',
@@ -277,8 +273,6 @@ begin
       dma_snd_full                  => '0',
       dma_snd_atleast_4slots        => '1',
       dma_snd_exactly_3slots        => '0');
-
-
 
   --TODO: directory
 
@@ -291,81 +285,81 @@ begin
     generic map (
       tech => fabtech)
     port map (
-      rst                           => rst,
-      clk                           => clk,
-      coherence_req_rdreq           => coherence_req_rdreq,
-      coherence_req_data_out        => coherence_req_data_out,
-      coherence_req_empty           => coherence_req_empty,
-      coherence_fwd_inv_wrreq       => coherence_fwd_inv_wrreq,
-      coherence_fwd_inv_data_in     => coherence_fwd_inv_data_in,
-      coherence_fwd_inv_full        => coherence_fwd_inv_full,
-      coherence_fwd_put_ack_wrreq   => coherence_fwd_put_ack_wrreq,
-      coherence_fwd_put_ack_data_in => coherence_fwd_put_ack_data_in,
-      coherence_fwd_put_ack_full    => coherence_fwd_put_ack_full,
-      coherence_rsp_line_wrreq      => coherence_rsp_line_wrreq,
-      coherence_rsp_line_data_in    => coherence_rsp_line_data_in,
-      coherence_rsp_line_full       => coherence_rsp_line_full,
-      dma_rcv_rdreq                 => dma_rcv_rdreq,
-      dma_rcv_data_out              => dma_rcv_data_out,
-      dma_rcv_empty                 => dma_rcv_empty,
-      dma_snd_wrreq                 => dma_snd_wrreq,
-      dma_snd_data_in               => dma_snd_data_in,
-      dma_snd_full                  => dma_snd_full,
-      dma_snd_atleast_4slots        => dma_snd_atleast_4slots,
-      dma_snd_exactly_3slots        => dma_snd_exactly_3slots,
-      remote_ahbs_rcv_rdreq    => remote_ahbm_rcv_rdreq,
-      remote_ahbs_rcv_data_out => remote_ahbm_rcv_data_out,
-      remote_ahbs_rcv_empty    => remote_ahbm_rcv_empty,
-      remote_ahbs_snd_wrreq    => remote_ahbm_snd_wrreq,
-      remote_ahbs_snd_data_in  => remote_ahbm_snd_data_in,
-      remote_ahbs_snd_full     => remote_ahbm_snd_full,
-      remote_apb_rcv_rdreq       => '0',
-      remote_apb_rcv_data_out    => open,
-      remote_apb_rcv_empty       => open,
-      remote_apb_snd_wrreq       => '0',
-      remote_apb_snd_data_in     => (others => '0'),
-      remote_apb_snd_full        => open,
-      apb_rcv_rdreq            => '0',
-      apb_rcv_data_out         => open,
-      apb_rcv_empty            => open,
-      apb_snd_wrreq            => '0',
-      apb_snd_data_in          => (others => '0'),
-      apb_snd_full             => open,
-      noc1_out_data            => noc1_output_port,
-      noc1_out_void            => noc1_data_void_out,
-      noc1_out_stop            => noc1_stop_in,
-      noc1_in_data             => noc1_input_port,
-      noc1_in_void             => noc1_data_void_in,
-      noc1_in_stop             => noc1_stop_out,
-      noc2_out_data            => noc2_output_port,
-      noc2_out_void            => noc2_data_void_out,
-      noc2_out_stop            => noc2_stop_in,
-      noc2_in_data             => noc2_input_port,
-      noc2_in_void             => noc2_data_void_in,
-      noc2_in_stop             => noc1_stop_out,
-      noc3_out_data            => noc3_output_port,
-      noc3_out_void            => noc3_data_void_out,
-      noc3_out_stop            => noc3_stop_in,
-      noc3_in_data             => noc3_input_port,
-      noc3_in_void             => noc3_data_void_in,
-      noc3_in_stop             => noc3_stop_out,
-      noc4_out_data            => noc4_output_port,
-      noc4_out_void            => noc4_data_void_out,
-      noc4_out_stop            => noc4_stop_in,
-      noc4_in_data             => noc4_input_port,
-      noc4_in_void             => noc4_data_void_in,
-      noc4_in_stop             => noc4_stop_out,
-      noc5_out_data            => noc5_output_port,
-      noc5_out_void            => noc5_data_void_out,
-      noc5_out_stop            => noc5_stop_in,
-      noc5_in_data             => noc5_input_port,
-      noc5_in_void             => noc5_data_void_in,
-      noc5_in_stop             => noc5_stop_out,
-      noc6_out_data            => noc6_output_port,
-      noc6_out_void            => noc6_data_void_out,
-      noc6_out_stop            => noc6_stop_in,
-      noc6_in_data             => noc6_input_port,
-      noc6_in_void             => noc6_data_void_in,
-      noc6_in_stop             => noc6_stop_out);
+      rst                             => rst,
+      clk                             => clk,
+      coherence_req_rdreq             => coherence_req_rdreq,
+      coherence_req_data_out          => coherence_req_data_out,
+      coherence_req_empty             => coherence_req_empty,
+      coherence_fwd_wrreq             => coherence_fwd_wrreq,
+      coherence_fwd_data_in           => coherence_fwd_data_in,
+      coherence_fwd_full              => coherence_fwd_full,
+      coherence_rsp_line_snd_wrreq    => coherence_rsp_line_snd_wrreq,
+      coherence_rsp_line_snd_data_in  => coherence_rsp_line_snd_data_in,
+      coherence_rsp_line_snd_full     => coherence_rsp_line_snd_full,
+      coherence_rsp_line_rcv_rdreq    => coherence_rsp_line_rcv_rdreq,
+      coherence_rsp_line_rcv_data_out => coherence_rsp_line_rcv_data_out,
+      coherence_rsp_line_rcv_empty    => coherence_rsp_line_rcv_empty,
+      dma_rcv_rdreq                   => dma_rcv_rdreq,
+      dma_rcv_data_out                => dma_rcv_data_out,
+      dma_rcv_empty                   => dma_rcv_empty,
+      dma_snd_wrreq                   => dma_snd_wrreq,
+      dma_snd_data_in                 => dma_snd_data_in,
+      dma_snd_full                    => dma_snd_full,
+      dma_snd_atleast_4slots          => dma_snd_atleast_4slots,
+      dma_snd_exactly_3slots          => dma_snd_exactly_3slots,
+      remote_ahbs_rcv_rdreq           => remote_ahbm_rcv_rdreq,
+      remote_ahbs_rcv_data_out        => remote_ahbm_rcv_data_out,
+      remote_ahbs_rcv_empty           => remote_ahbm_rcv_empty,
+      remote_ahbs_snd_wrreq           => remote_ahbm_snd_wrreq,
+      remote_ahbs_snd_data_in         => remote_ahbm_snd_data_in,
+      remote_ahbs_snd_full            => remote_ahbm_snd_full,
+      remote_apb_rcv_rdreq            => '0',
+      remote_apb_rcv_data_out         => open,
+      remote_apb_rcv_empty            => open,
+      remote_apb_snd_wrreq            => '0',
+      remote_apb_snd_data_in          => (others => '0'),
+      remote_apb_snd_full             => open,
+      apb_rcv_rdreq                   => '0',
+      apb_rcv_data_out                => open,
+      apb_rcv_empty                   => open,
+      apb_snd_wrreq                   => '0',
+      apb_snd_data_in                 => (others => '0'),
+      apb_snd_full                    => open,
+      noc1_out_data                   => noc1_output_port,
+      noc1_out_void                   => noc1_data_void_out,
+      noc1_out_stop                   => noc1_stop_in,
+      noc1_in_data                    => noc1_input_port,
+      noc1_in_void                    => noc1_data_void_in,
+      noc1_in_stop                    => noc1_stop_out,
+      noc2_out_data                   => noc2_output_port,
+      noc2_out_void                   => noc2_data_void_out,
+      noc2_out_stop                   => noc2_stop_in,
+      noc2_in_data                    => noc2_input_port,
+      noc2_in_void                    => noc2_data_void_in,
+      noc2_in_stop                    => noc1_stop_out,
+      noc3_out_data                   => noc3_output_port,
+      noc3_out_void                   => noc3_data_void_out,
+      noc3_out_stop                   => noc3_stop_in,
+      noc3_in_data                    => noc3_input_port,
+      noc3_in_void                    => noc3_data_void_in,
+      noc3_in_stop                    => noc3_stop_out,
+      noc4_out_data                   => noc4_output_port,
+      noc4_out_void                   => noc4_data_void_out,
+      noc4_out_stop                   => noc4_stop_in,
+      noc4_in_data                    => noc4_input_port,
+      noc4_in_void                    => noc4_data_void_in,
+      noc4_in_stop                    => noc4_stop_out,
+      noc5_out_data                   => noc5_output_port,
+      noc5_out_void                   => noc5_data_void_out,
+      noc5_out_stop                   => noc5_stop_in,
+      noc5_in_data                    => noc5_input_port,
+      noc5_in_void                    => noc5_data_void_in,
+      noc5_in_stop                    => noc5_stop_out,
+      noc6_out_data                   => noc6_output_port,
+      noc6_out_void                   => noc6_data_void_out,
+      noc6_out_stop                   => noc6_stop_in,
+      noc6_in_data                    => noc6_input_port,
+      noc6_in_void                    => noc6_data_void_in,
+      noc6_in_stop                    => noc6_stop_out);
 end;
 

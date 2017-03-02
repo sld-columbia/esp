@@ -119,12 +119,9 @@ signal noc_output_port   : noc_flit_matrix;
 signal noc_data_void_out : noc_ctrl_matrix;
 signal noc_stop_out      : noc_ctrl_matrix;
 
-signal dsuerr_cpu            : std_logic_vector(CFG_NCPU_TILE-1 downto 0);
-signal ndsuact_cpu           : std_logic_vector(CFG_NCPU_TILE-1 downto 0);
-
 --pragma translate_off
-signal mctrl_ahbsi_cpu       : ahb_slv_in_type_vec;
-signal mctrl_apbi_cpu        : apb_slv_in_type_vec;
+signal mctrl_ahbsi_mem : ahb_slv_in_type_vec;
+signal mctrl_apbi_mem  : apb_slv_in_type_vec;
 --pragma translate_on
 
 signal rst_int       : std_logic;
@@ -136,8 +133,6 @@ signal uart_rxd_int  : std_logic;       -- UART1_RX (u1i.rxd)
 signal uart_txd_int  : std_logic;       -- UART1_TX (u1o.txd)
 signal uart_ctsn_int : std_logic;       -- UART1_RTSN (u1i.ctsn)
 signal uart_rtsn_int : std_logic;       -- UART1_RTSN (u1o.rtsn)
-signal ndsuact_int   : std_logic;
-signal dsuerr_int    : std_logic;
 
 type monitor_noc_cast_vector is array (1 to nocs_num) of monitor_noc_vector(0 to TILES_NUM-1);
 signal mon_noc_vec : monitor_noc_cast_vector;
@@ -145,8 +140,11 @@ signal mon_dvfs_out : monitor_dvfs_vector(0 to TILES_NUM-1);
 signal mon_dvfs_domain  : monitor_dvfs_vector(0 to TILES_NUM-1);
 
 -- TODO: REMOVE!!! Interrupt controller
-signal irqi : irq_in_vector(0 to CFG_NCPU-1);
-signal irqo : irq_out_vector(0 to CFG_NCPU-1);
+signal irqi : irq_in_vector(0 to CFG_NCPU_TILE-1);
+signal irqo : irq_out_vector(0 to CFG_NCPU_TILE-1);
+  
+signal dbgi : l3_debug_in_vector(0 to CFG_NCPU_TILE-1);
+signal dbgo : l3_debug_out_vector(0 to CFG_NCPU_TILE-1);
 
 begin
 
@@ -154,8 +152,6 @@ begin
   noc_clk_int <= noc_clk;
   mem_clk_int <= mem_clk;
   pllbypass_int <= pllbypass;
-  ndsuact <= ndsuact_int;
-  dsuerr <= dsuerr_int;
 
   -----------------------------------------------------------------------------
   -- UART pads
@@ -264,17 +260,11 @@ begin
           refclk             => refclk_int(i),
           pllbypass          => pllbypass_int(i),
           pllclk             => clk_tile(i),
-          --pragma translate_off
-          mctrl_ahbsi        => mctrl_ahbsi_cpu(tile_cpu_id(i)),
-          mctrl_ahbso        => mctrl_ahbso,
-          mctrl_apbi         => mctrl_apbi_cpu(tile_cpu_id(i)),
-          mctrl_apbo         => mctrl_apbo,
-          --pragma translate_on
-          ndsuact            => ndsuact_cpu(tile_cpu_id(i)),
-          dsuerr             => dsuerr_cpu(tile_cpu_id(i)),
           --TODO: REMOVE!
-          irqi_i => irqi,
-          irqo_o => irqo,
+          irqi_i => irqi(tile_cpu_id(i)),
+          irqo_o => irqo(tile_cpu_id(i)),
+          dbgi   => dbgi(tile_cpu_id(i)),
+          dbgo   => dbgo(tile_cpu_id(i)),
           noc1_input_port    => noc_input_port(1)(i),
           noc1_data_void_in  => noc_data_void_in(1)(i),
           noc1_stop_in       => noc_stop_in(1)(i),
@@ -474,6 +464,16 @@ begin
           sgmii0_apbo        => sgmii0_apbo,
           eth0_ahbmi         => eth0_ahbmi,
           eth0_ahbmo         => eth0_ahbmo,
+          --pragma translate_off
+          mctrl_ahbsi        => mctrl_ahbsi_mem(0),
+          mctrl_ahbso        => mctrl_ahbso,
+          mctrl_apbi         => mctrl_apbi_mem(0),
+          mctrl_apbo         => mctrl_apbo,
+          --pragma translate_on
+          ndsuact            => ndsuact,
+          dsuerr             => dsuerr,
+          dbgi   => dbgi,
+          dbgo   => dbgo,
           noc1_input_port    => noc_input_port(1)(i),
           noc1_data_void_in  => noc_data_void_in(1)(i),
           noc1_stop_in       => noc_stop_in(1)(i),
@@ -585,12 +585,10 @@ begin
   no_multi_mem_ctrl: if CFG_MIG_DUAL = 0 generate
     ddr1_ahbsi <= ahbs_in_none;
   end generate no_multi_mem_ctrl;
-
-  dsuerr_int <= dsuerr_cpu(0);
-  ndsuact_int <= ndsuact_cpu(0);
+  
   --pragma translate_off
-  mctrl_ahbsi <= mctrl_ahbsi_cpu(0);
-  mctrl_apbi <= mctrl_apbi_cpu(0);
+  mctrl_ahbsi <= mctrl_ahbsi_mem(0);
+  mctrl_apbi <= mctrl_apbi_mem(0);
   mctrl_clk <= clk_tile(cpu_tile_id(0));
   --pragma translate_on
 
@@ -618,29 +616,29 @@ begin
       mon_noc         => mon_noc_vec(1)
       );
 
-  noc_output_port(2) <= (others => (others => '0'));
-  noc_data_void_out(2) <= (others => '1');
-  noc_stop_out(2) <= (others => '0');
-  mon_noc_vec(2) <= (others => monitor_noc_none);
-  --sync_noc_xy_2: sync_noc_xy
-  --  generic map (
-  --    flit_size => NOC_FLIT_SIZE,
-  --    XLEN      => XLEN,
-  --    YLEN      => YLEN,
-  --    TILES_NUM => TILES_NUM,
-  --    has_sync  => has_sync)
-  --  port map (
-  --    clk             => noc_clk_int,
-  --    clk_tile        => clk_tile,
-  --    rst             => rst_int,
-  --    input_port      => noc_input_port(2),
-  --    data_void_in    => noc_data_void_in(2),
-  --    stop_in         => noc_stop_in(2),
-  --    output_port     => noc_output_port(2),
-  --    data_void_out   => noc_data_void_out(2),
-  --    stop_out        => noc_stop_out(2),
-  --    mon_noc         => mon_noc_vec(2)
-  --    );
+  --noc_output_port(2) <= (others => (others => '0'));
+  --noc_data_void_out(2) <= (others => '1');
+  --noc_stop_out(2) <= (others => '0');
+  --mon_noc_vec(2) <= (others => monitor_noc_none);
+  sync_noc_xy_2: sync_noc_xy
+    generic map (
+      flit_size => NOC_FLIT_SIZE,
+      XLEN      => XLEN,
+      YLEN      => YLEN,
+      TILES_NUM => TILES_NUM,
+      has_sync  => has_sync)
+    port map (
+      clk             => noc_clk_int,
+      clk_tile        => clk_tile,
+      rst             => rst_int,
+      input_port      => noc_input_port(2),
+      data_void_in    => noc_data_void_in(2),
+      stop_in         => noc_stop_in(2),
+      output_port     => noc_output_port(2),
+      data_void_out   => noc_data_void_out(2),
+      stop_out        => noc_stop_out(2),
+      mon_noc         => mon_noc_vec(2)
+      );
 
   sync_noc_xy_3: sync_noc_xy
     generic map (
