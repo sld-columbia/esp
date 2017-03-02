@@ -49,6 +49,9 @@ $(ACCELERATORS-distclean): %-distclean : %-wdir
 
 .PHONY: print-available-accelerators $(ACCELERATORS-wdir) $(ACCELERATORS-hls) $(ACCELERATORS-sim) $(ACCELERATORS-plot) $(ACCELERATORS-clean) $(ACCELERATORS-distclean)
 
+$(ESP_ROOT)/tech/$(TECHLIB)/acc/installed.log:
+	touch $@
+
 SLDGEN_DEPS  = $(ESP_ROOT)/tech/$(TECHLIB)/acc/installed.log
 SLDGEN_DEPS += $(ESP_ROOT)/utils/sldgen/sld_generate.py
 SLDGEN_DEPS += $(wildcard $(ESP_ROOT)/utils/sldgen/templates/*.vhd)
