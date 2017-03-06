@@ -675,9 +675,6 @@ vivado/program.tcl: vivado
 	@echo "puts \"Searching for \$$part...\"" >> $@
 	@echo "" >> $@
 	@echo "foreach cable [get_hw_targets ] {" >> $@
-ifneq ($(findstring profpga, $(BOARD)),)
-	@echo "    set_property PARAM.FREQUENCY 3000000 [get_hw_targets \$$cable]" >> $@
-endif
 	@echo "    open_hw_target \$$cable" >> $@
 	@echo "    set dev [get_hw_devices]" >> $@
 	@echo "    if [string match -nocase \"\$$part*\" \$$dev] {" >> $@
