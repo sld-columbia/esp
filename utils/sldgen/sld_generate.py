@@ -142,7 +142,7 @@ def write_acc_port_map(f, acc, dma_width, rst, is_noc_interface):
       if 16 - len(param.name) > 0:
         spacing = (16-len(param.name))*" "
       if is_noc_interface:
-        f.write("      conf_info_" + param.name + spacing + " => " + "bank(" + acc.name.upper() + "_" + param.name.upper() + "_REG),\n")
+        f.write("      conf_info_" + param.name + spacing + " => " + "bank(" + acc.name.upper() + "_" + param.name.upper() + "_REG)(" + str(param.size - 1) + " downto 0),\n")
       else:
         f.write("      conf_info_" + param.name + spacing + " => " + "conf_info_" + param.name +",\n")
   f.write("      clk                        => clk,\n")
@@ -501,6 +501,9 @@ for acc in accelerators:
         param.size = int(xmlparam.get('size'))
       else:
         param.size = 32
+      if param.size > 32:
+        print("    ERROR: configuration parameter " + param.name + " of " + acc + " has bit-width larger than 32")
+        sys.exit(1)
       accd.param.append(param)
     accelerator_list.append(accd)
     print(str(accd))
