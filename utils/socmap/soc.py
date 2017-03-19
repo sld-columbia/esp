@@ -54,8 +54,8 @@ class Components():
         if skip:
           continue
         self.POINTS[acc.upper()].append(dp)
-        if len(self.POINTS[acc.upper()]) != 0:
-          self.ACCELERATORS.append(acc.upper())
+      if len(self.POINTS[acc.upper()]) != 0:
+        self.ACCELERATORS.append(acc.upper())
 
 #board configuration
 class SoC_Config():
