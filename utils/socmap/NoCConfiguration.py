@@ -50,10 +50,12 @@ class Tile():
        self.point_select.pack(side=LEFT)
     else:
        self.label.config(bg='white')
+    self.clk_reg_selection.config(to=soc.noc.get_clk_regions_max())
+
 
     try:
       if soc.IPs.PROCESSORS.count(selection) or soc.IPs.ACCELERATORS.count(selection):
-         self.clk_reg_selection.config(state=NORMAL)
+         self.clk_reg_selection.config(state='readonly')
          if self.clk_region.get() != 0:
            self.pll_selection.config(state=NORMAL)
          else:
@@ -221,6 +223,23 @@ class NoC():
            regions.append(tile.clk_region.get())
     return regions
 
+  def get_clk_regions_max(self):
+    region_max = 0
+    max_count = 0
+    for y in range(0, self.rows): 
+      for x in range(0, self.cols): 
+        tile = self.topology[y][x]
+        if tile.clk_region is not None and tile.clk_region.get() > region_max:
+          region_max = tile.clk_region.get()
+    for y in range(0, self.rows): 
+      for x in range(0, self.cols): 
+        tile = self.topology[y][x]
+        if tile.clk_region is not None and tile.clk_region.get() == region_max:
+          max_count = max_count + 1
+    if max_count > 1:
+      region_max = region_max + 1
+    return region_max
+
   def get_clkbuf_num(self, soc):
     tot_clkbuf = 0
     for y in range(0, self.rows): 
@@ -341,7 +360,7 @@ class NoCFrame(Pmw.ScrolledFrame):
     tile.label.pack()
     tile.label.bind("<Double-Button-1>", lambda event:tile.power_window(event, self.soc, self))
     Label(config_frame, text="Clk Reg: ").pack(side=LEFT)
-    tile.clk_reg_selection = Spinbox(config_frame, from_=0, to=len(self.soc.IPs.PROCESSORS)+len(self.soc.IPs.ACCELERATORS),wrap=True,textvariable=tile.clk_region,width=3);
+    tile.clk_reg_selection = Spinbox(config_frame, state='readonly', from_=0, to=len(self.soc.noc.get_clk_regions()), wrap=True, textvariable=tile.clk_region,width=3);
     tile.clk_reg_selection.pack(side=LEFT)
     tile.pll_selection = Checkbutton(config_frame, text="Has PLL", variable=tile.has_pll, onvalue = 1, offvalue = 0, command=self.changed);
     tile.pll_selection.pack(side=LEFT)
@@ -479,13 +498,23 @@ class NoCFrame(Pmw.ScrolledFrame):
           pll_ok = False
           pll_string += "Region \"" + str(x) + "\" cannot have more than one PLL\n"
 
+      clk_region_skip = 0
+      regions = self.noc.get_clk_regions()
+      regions = sorted(regions, key=int)
+      current_region = regions[0]
+      for r in regions:
+        if r > current_region + 1:
+          clk_region_skip = current_region + 1
+          break
+        current_region = r
+
       #update message box
       self.message.delete(0.0, END)
       if tot_mem >= 2 or len(regions) >= 1:
         self.cfg_frame.sync_label.config(text="With synchronizers",fg="green")
       else:
         self.cfg_frame.sync_label.config(text="No synchronizers", fg="black")
-      if tot_cpu == 1 and tot_mem_debug == 1 and tot_mem <= 2 and tot_io == 1 and pll_ok == True and clkbuf_ok == True:
+      if tot_cpu == 1 and tot_mem_debug == 1 and tot_mem <= 2 and tot_io == 1 and pll_ok == True and clkbuf_ok == True and clk_region_skip == 0:
          self.done.config(state=NORMAL)
       else:
          string = ""
@@ -506,6 +535,8 @@ class NoCFrame(Pmw.ScrolledFrame):
          if (tot_clkbuf > 9):
             string += "The FPGA board supports no more than 9 CLKBUF's.\n"
          string += pll_string
+         if (clk_region_skip > 0):
+           string += "Clock-region IDs must be consecutive; skipping region " + str(clk_region_skip) +" intead\n"
          self.message.insert(0.0, string)
     except:
       pass
