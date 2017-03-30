@@ -70,7 +70,7 @@ grspwtdp.o : grspwtdp.c grspwtdp.h grspwtdp-regs.h
 lib3tests.a: $(OFILES)
 	$(QUIET_AR)$(XAR) -cr lib3tests.a $(OFILES)
 
-soft: prom.srec ram.srec
+leon3-soft: prom.srec ram.srec
 
 prom.o: prom.S ../common/prom.h
 	$(QUIET_AS)$(XAS) $<
@@ -86,10 +86,10 @@ systest.exe: systest.c lib3tests.a
 ram.srec: systest.exe
 	$(QUIET_OBJCP)$(CROSS_COMPILE)objcopy -O srec --gap-fill 0 systest.exe ram.srec
 
-soft-clean:
+leon3-soft-clean:
 	$(QUIET_CLEAN)$(RM) $(OFILES) lib3tests.a prom.o
 
-soft-distclean: soft-clean
+leon3-soft-distclean: soft-clean
 	$(QUIET_CLEAN)$(RM) prom.exe systest.exe standalone.exe prom.srec ram.srec
 
 standalone.exe: systest.c standalone.c lib3tests.a

@@ -95,7 +95,9 @@ help:
 	@echo "                                     (may run as dependency)."
 	@echo " make grlib-config                 : open grlib configuration GUI; useful when using the LEON-3"
 	@echo "                                     embedded processor."
-	@echo " make soft                         : compile the bare-metal program systest.c for LEON-3; the"
+	@echo " make soft                         : compile the bare-metal program systest.c. The target architecutre"
+	@echo "                                     is selected based on the varialble CPU_ARCH."
+	@echo " make leon3-soft                   : compile the bare-metal program for LEON-3; The resulting"
 	@echo "                                     executable is used for RTL simulation, but can also run on"
 	@echo "                                     LEON-3 after loading the bistream to FPGA (requires LEON-3"
 	@echo "                                     tool-chain and optionally grmon if running on FPGA)."
@@ -103,7 +105,6 @@ help:
 
 
 clean: 		soft-clean		\
-		ahbrom-clean 		\
 		xilinx_lib-clean 	\
 		sim-clean		\
 		esp-config-clean	\
@@ -116,7 +117,6 @@ distclean:	check_all_srcs-distclean 	\
 		check_all_rtl_srcs-distclean	\
 		profpga-distclean		\
 		soft-distclean 			\
-		ahbrom-distclean		\
 		xilinx_lib-distclean 		\
 		sim-distclean			\
 		esp-config-distclean		\
@@ -188,18 +188,18 @@ TKCONFIG   = $(UTILS_GRLIB)/tkconfig
 ### Board files ###
 BOARD_FILES = $(wildcard $(ESP_ROOT)/constraints/$(BOARD)/*)
 
-### Software targets ###
+
 ifeq ("$(CPU_ARCH)", "leon3")
-  include $(UTILS_GRLIB)/leon3_sw.mk
-else
-soft-clean:
+### Leon3 Software targets ###
+include $(UTILS_GRLIB)/leon3_sw.mk
 
-soft-distclean:
+soft: leon3-soft ahbrom.vhd
 
-endif
+soft-clean: leon3-soft-clean ahbrom-clean
 
-.PHONY: soft-clean soft-distclean
+soft-distclean: leon3-soft-distclean ahbrom-distclean
 
+.PHONY: leon3-soft-clean leon3-soft-distclean
 
 ### Leon3 prom ###
 
@@ -219,6 +219,19 @@ ahbrom-distclean: ahbrom-clean
 	$(QUIET_CLEAN)$(RM) ahbrom.vhd
 
 .PHONY: ahbrom-clean ahbrom-distclean
+
+else
+### Other architectures if avalable ###
+
+soft:
+
+soft-clean:
+
+soft-distclean:
+
+endif
+
+.PHONY: soft soft-clean soft-distclean
 
 
 ### GRLIB config targets ###
@@ -793,7 +806,7 @@ espmon.mk: $(ESP_ROOT)/utils/espmon/espmon.pro
 espmon: $(ESPMON_DEPS) mmi64_regs.h power.h espmon.mk
 	$(QUIET_MAKE)DESIGN_DIR=$(DESIGN_PATH) make --quiet -f espmon.mk
 
-espmon-run: boards espmon
+espmon-run: espmon boards 
 	$(QUIET_RUN)./$<
 
 espmon-clean:
