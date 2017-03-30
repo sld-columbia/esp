@@ -1,0 +1,80 @@
+#!/bin/ash
+
+# System Startup Script
+# Based on Cross-Compiled Linux From Scratch bootscripts
+
+PATH=/bin:/sbin:/usr/bin:/usr/sbin
+
+/bin/mount -t proc proc /proc
+/bin/mount -t sysfs sysfs /sys
+/bin/mount -t tmpfs /tmp /tmp
+/bin/mount -t tmpfs -o mode=0755 /dev /dev
+/bin/mkdir /dev/shm
+
+/bin/mount -t tmpfs -o mode=0755 /var /var
+for x in cache lib lib/misc lib/locate local lock log mail opt run spool; do mkdir /var/$x; done
+ln -s ../tmp /var/tmp
+
+echo "/sbin/mdev" > /proc/sys/kernel/hotplug
+
+echo "Starting mdev ... "
+/sbin/mdev -s
+
+echo "Mounting devpts ... "
+mkdir --mode=755 /dev/pts
+mount -t devpts -o gid=4,mode=620 devpts /dev/pts
+
+if [ -x /sbin/hwclock ] && [ -e /dev/rtc ]; then
+	echo "Setting system clock ... "
+	hwclock --hctosys --utc
+fi
+
+if [ -x /sbin/fsck ]; then
+	echo "Starting fsck for local filesystems ... "
+	fsck -A -C -R -T -t nonfs,nosmbfs
+	if [ "$?" -gt 2 ]; then
+		echo "WARNING: Errors found while checking filesystems."
+		echo "You can login as root now, the system will reboot after logout."
+		sulogin
+		reboot
+	elif [ "$?" = "2" ]; then
+		echo "NOTICE: System needs to be rebooted now."
+		sleep 1
+		reboot
+	fi
+fi
+
+
+if [ -x /sbin/swapon ]; then
+	echo "Enabling swap space ... "
+	swapon -a
+fi
+
+echo "Remounting root rw ... "
+mount -o remount,rw /
+
+echo "Setting hostname ... "
+hostname -F /etc/hostname
+
+echo "Cleaning up system ... "
+> /var/run/utmp
+touch /var/log/wtmp
+touch /var/log/messages
+touch /var/log/lastlog
+chmod 0664 /var/run/utmp
+chmod 0664 /var/log/wtmp
+chmod 0660 /var/log/messages
+
+echo "Setting up interface lo ... "
+ifconfig lo up 127.0.0.1
+
+echo "Running start scripts."
+
+for i in /etc/rc.d/start/*
+do
+	if [ -x $i ]; then
+		$i start
+	fi
+done
+
+exit 0

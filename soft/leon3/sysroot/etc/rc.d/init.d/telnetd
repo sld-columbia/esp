@@ -1,0 +1,30 @@
+#!/bin/sh
+#
+
+# Do not start telnetd in default configuration.
+# Remove the following line if you want telnetd to start during boot.
+exit 0
+
+case "$1" in
+
+start)
+    echo "Starting telnetd ... "
+    start-stop-daemon -S -x /sbin/telnetd -p /var/run/telnetd.pid -m 
+    ;;
+
+stop)
+    echo "Stopping telnetd ..."
+    start-stop-daemon -K -x /sbin/telnetd -p /var/run/telnetd.pid
+    ;;
+
+restart)
+    $0 stop
+    $0 start
+    ;;
+
+*)
+    echo "Usage: $0 {start|stop|restart}"
+    exit 1
+
+esac
+

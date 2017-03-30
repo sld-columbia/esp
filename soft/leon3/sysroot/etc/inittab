@@ -1,0 +1,10 @@
+# /etc/inittab
+
+::sysinit:/etc/rc.d/startup
+
+tty1::respawn:/sbin/getty 38400 tty1
+tty2::respawn:/sbin/getty 38400 tty2
+ttyS0::respawn:/sbin/getty -L 38400 ttyS0
+
+::shutdown:/etc/rc.d/shutdown
+::ctrlaltdel:/sbin/reboot

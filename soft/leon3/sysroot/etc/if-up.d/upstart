@@ -1,0 +1,43 @@
+#!/bin/sh
+MARK_DEV_PREFIX="/run/network/ifup."
+MARK_STATIC_NETWORK_EMITTED="/run/network/static-network-up-emitted"
+
+set -e
+
+# lo emission handled by /etc/init/network-interface.conf
+if [ "$IFACE" != lo ]; then
+    initctl emit -n net-device-up \
+        "IFACE=$IFACE" \
+        "LOGICAL=$LOGICAL" \
+        "ADDRFAM=$ADDRFAM" \
+        "METHOD=$METHOD"
+fi
+
+get_auto_interfaces() {
+	# write to stdout a list of interfaces configured as 'auto' in interfaces(5)
+	local found=""
+	# stderr redirected as it outputs things like:
+	# Ignoring unknown interface eth0=eth0.
+	found=$(ifquery --list --allow auto 2>/dev/null) || return
+	set -- ${found}
+	echo "$@"
+}
+
+all_interfaces_up() {
+	# return true if all interfaces listed in /etc/network/interfaces as 'auto'
+	# are up.  if no interfaces are found there, then "all [given] were up"
+	local prefix="$1" iface=""
+	for iface in $(get_auto_interfaces); do
+		# if cur interface does is not up, then all have not been brought up
+		[ -f "${prefix}${iface}" ] || return 1
+	done
+	return 0
+}
+
+# touch our own "marker" indicating that this interface has been brought up.
+: > "${MARK_DEV_PREFIX}$IFACE"
+
+if all_interfaces_up "${MARK_DEV_PREFIX}" &&
+	mkdir "${MARK_STATIC_NETWORK_EMITTED}" 2>/dev/null; then
+	initctl emit --no-wait static-network-up
+fi

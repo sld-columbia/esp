@@ -1,0 +1,53 @@
+#!/bin/ash
+#
+# Network interface(s) init script
+# Based on Cross-Compiled Linux From Scratch bootscripts
+#
+
+case "$1" in
+start)
+
+    echo "Starting network interface eth0 ... "
+    ifconfig eth0 192.168.0.80 up
+
+    # route add default gw 192.168.0.1
+
+    # ifconfig eth0 up
+    # udhcpc -b -i eth0 -s /etc/udhcpc.conf -p /var/run/udhcpc.eth0.pid
+
+    ;;
+
+stop)
+
+    # route del -net 0.0.0.0
+
+    echo "Shutting down network interface eth0 ... "
+    ifconfig eth0 down
+
+    # kill `cat /var/run/udhcpc.eth0.pid` || true
+
+    ;;
+
+restart)
+    $0 stop
+    $0 start
+    ;;
+
+status)
+    ifconfig
+    route
+    ;;
+
+*)
+    echo "Usage: $0 {start|stop|restart|status}"
+    exit 1
+
+esac
+
+export IP=`ifup eth0 | grep Lease | awk '{print $3}'`
+export PASSWORD=openesp
+ifconfig eth0 $IP
+echo root:$PASSWORD | chpasswd
+
+echo "IP = $IP"
+echo "root password = $PASSWORD"

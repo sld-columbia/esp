@@ -1,0 +1,59 @@
+#!/bin/sh
+
+set -e
+
+PATH=/sbin:/bin:/usr/sbin:/usr/bin
+
+# This is a heuristic:  The idea is that if a static interface is brought
+# up, that is a major event, and we can put in some extra effort to fix
+# the system time.  Feel free to change this, especially if you regularly
+# bring up new network interfaces.
+if [ "$METHOD" = static ]; then
+	OPTS="-b"
+fi
+
+if [ "$METHOD" = loopback ]; then
+	exit 0
+fi
+
+# Check whether ntpdate was removed but not purged; it's useless to wait for 
+# it in that case.
+if [ ! -x /usr/sbin/ntpdate-debian ] && [ -d /usr/sbin ]; then
+	exit 0
+fi
+
+(
+
+# This is for the case that /usr will be mounted later.
+if [ -r /lib/udev/hotplug.functions ]; then
+	. /lib/udev/hotplug.functions
+	wait_for_file /usr/sbin/ntpdate-debian
+fi
+
+LOCKFILE=/var/lock/ntpdate-ifup
+
+# Avoid running more than one at a time
+if [ -x /usr/bin/lockfile-create ]; then
+	lockfile-create $LOCKFILE
+	lockfile-touch $LOCKFILE &
+	LOCKTOUCHPID="$!"
+fi
+
+if [ -e /usr/sbin/openntpd ]; then
+    service='openntpd'
+else
+    service='ntp'
+fi
+
+invoke-rc.d --quiet $service stop >/dev/null 2>&1 || true
+
+/usr/sbin/ntpdate-debian -s $OPTS 2>/dev/null || :
+
+invoke-rc.d --quiet $service start >/dev/null 2>&1 || true
+
+if [ -x /usr/bin/lockfile-create ] ; then
+	kill $LOCKTOUCHPID
+	lockfile-remove $LOCKFILE
+fi
+
+) &

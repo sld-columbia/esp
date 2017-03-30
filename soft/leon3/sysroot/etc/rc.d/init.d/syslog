@@ -1,0 +1,34 @@
+#!/bin/ash
+
+# Syslog Startup Script
+#
+
+. /etc/rc.d/init.d/functions
+
+SYSLOG_ROTATE_SIZE=65536
+
+case "$1" in
+start)
+	echo -n "Starting syslogd: "
+	syslogd -m 0 -s $SYSLOG_ROTATE_SIZE -L
+	check_status
+	echo -n "Starting klogd: "
+	klogd
+	check_status
+	;;
+stop)
+	echo -n "Stopping klogd: "
+	killall klogd
+	check_status
+	echo -n "Stopping syslogd: "
+	killall syslogd
+	check_status
+	;;
+restart)
+	$0 stop
+	$0 start
+	;;
+*)
+	echo "Usage: $0 {start|stop|restart}"
+	exit 1
+esac

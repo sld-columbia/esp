@@ -1,0 +1,19 @@
+#!/bin/sh
+mkdir -p /lib/modules/$(uname -r)
+echo 8 > /proc/sys/kernel/printk
+mount -t openpromfs none /proc/openprom
+
+# start: DRAM controller start addresses
+# size: DDR0, DDR1 (total - DDR0 = OS)
+
+cd /opt/drivers-esp
+insmod contig_alloc.ko start=0x5c000000,0x60000000 size=0x4000000,0x20000000
+insmod esp.ko
+
+cd /opt/drivers
+for K in `ls *.ko`; do
+   insmod $K;
+done
+
+lsmod
+
