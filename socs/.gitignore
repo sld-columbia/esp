@@ -43,3 +43,9 @@ moc_espmonmain.cpp
 ui_espmonmain.h
 
 boards
+
+linux-build/
+linux.dsu
+sysroot.cpio
+sysroot.files
+sysroot/

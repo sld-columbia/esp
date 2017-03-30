@@ -105,6 +105,8 @@ help:
 
 
 clean: 		soft-clean		\
+		linux-clean		\
+		sysroot-clean		\
 		xilinx_lib-clean 	\
 		sim-clean		\
 		esp-config-clean	\
@@ -117,6 +119,8 @@ distclean:	check_all_srcs-distclean 	\
 		check_all_rtl_srcs-distclean	\
 		profpga-distclean		\
 		soft-distclean 			\
+		linux-distclean			\
+		sysroot-distclean		\
 		xilinx_lib-distclean 		\
 		sim-distclean			\
 		esp-config-distclean		\
@@ -220,6 +224,68 @@ ahbrom-distclean: ahbrom-clean
 
 .PHONY: ahbrom-clean ahbrom-distclean
 
+### Leon3 Linux ###
+
+SOFT = $(ESP_ROOT)/soft/leon3
+LINUXSRC = $(SOFT)/linux
+
+sysroot:
+	$(QUIET_CP)cp -r $(ESP_ROOT)/soft/leon3/sysroot .
+
+sysroot.files: sysroot
+	$(QUIET_MAKE)$(MAKE) -C ${LINUXSRC}/usr gen_init_cpio
+	$(QUIET_INFO)echo "Generating root file-system list..."
+	@sh ${LINUXSRC}/scripts/gen_initramfs_list.sh -u `id -u` -g `id -g` $< \
+	    | sed -e 's/^file \(\/bin\/busybox .*\) 755 0 0/file \1 4755 0 0/' \
+	    > $@;
+	@echo  "dir /dev 755 0 0" >> $@
+	@echo "dir /proc 755 0 0" >> $@
+	@echo "dir /sys 755 0 0" >> $@
+	@echo "dir /tmp 755 0 0" >> $@
+	@echo "dir /var 755 0 0" >> $@
+	@echo "dir /root 700 0 0" >> $@
+	@echo "nod /dev/null 666 0 0 c 1 3" >> $@
+	@echo "nod /dev/tty1 600 0 0 c 4 1" >> $@
+	@echo "nod /dev/ttyS0 600 0 0 c 4 64" >> $@
+	@echo "nod /dev/tty 666 0 0 c 5 0" >> $@
+	@echo "nod /dev/console 600 0 0 c 5 1" >> $@
+	@touch $@
+
+sysroot.cpio: sysroot.files
+	$(QUIET_BUILD)${LINUXSRC}/usr/gen_init_cpio $< > $@
+
+
+linux-build/.config: $(LINUXSRC)/arch/sparc/configs/$(LINUX_CONFIG)
+	@$(MAKE) linux-build
+	$(QUIET_MAKE)ARCH=sparc CROSS_COMPILE=sparc-leon3-linux- $(MAKE)  O=${PWD}/linux-build -C ${LINUXSRC} $(LINUX_CONFIG)
+
+linux-build/vmlinux: sysroot.cpio linux-build/.config
+	$(QUIET_MAKE)ARCH=sparc CROSS_COMPILE=sparc-leon3-linux- $(MAKE) -C linux-build
+
+linux.dsu: linux-build/vmlinux
+	$(QUIET_BUILD)mklinuximg $< $@
+
+linux: linux.dsu
+
+linux-clean:
+	$(QUIET_MAKE)ARCH=sparc CROSS_COMPILE=sparc-leon3-linux- $(MAKE) -C linux-build clean
+
+linux-distclean:
+	$(QUIET_CLEAN)$(RM) linux-build linux.dsu
+	$(QUIET_MAKE)ARCH=sparc CROSS_COMPILE=sparc-leon3-linux- $(MAKE) -C ${LINUXSRC} mrproper
+
+sysroot-update: sysroot
+	@touch $<
+	$(QUIET_MAKE)$(MAKE) linux
+
+sysroot-clean:
+	$(QUIET_CLEAN)$(RM) sysroot.files sysroot.cpio
+
+sysroot-distclean: sysroot-clean
+	$(QUIET_CLEAN)$(RM) sysroot
+
+.PHONY: sysroot-update sysroot-clean sysroot-distclean
+
 else
 ### Other architectures if avalable ###
 
@@ -229,9 +295,22 @@ soft-clean:
 
 soft-distclean:
 
+linux:
+
+linux-clean:
+
+linux-distclean:
+
+sysroot-clean:
+
+sysroot-distclean:
+
 endif
 
-.PHONY: soft soft-clean soft-distclean
+linux-build:
+	$(QUIET_MKDIR)mkdir -p $@
+
+.PHONY: soft soft-clean soft-distclean linux linux-clean linux-distclean
 
 
 ### GRLIB config targets ###

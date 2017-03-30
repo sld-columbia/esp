@@ -13,6 +13,7 @@ TECHLIB  = virtex7
 BOARD    = xilinx-vc707-xc7vx485t
 DESIGN   = esp-$(BOARD)
 
+LINUX_CONFIG = leon3_defconfig
 
 ### NoC flit-width (not including head and tail bits)
 NOC_WIDTH = 32
