@@ -49,3 +49,7 @@ linux.dsu
 sysroot.cpio
 sysroot.files
 sysroot/
+
+ahbrom
+ahbrom.bin
+ahbrom.vhd
