@@ -1,0 +1,4 @@
+EXTRA_CFLAGS += \
+	     -I$(M)/../include
+
+obj-m := contig_alloc.o
