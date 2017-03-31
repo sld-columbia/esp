@@ -69,9 +69,9 @@ endif
 
 ### Modelsim common options ###
 
-VCOMOPT  =
-VLOGOPT  =
-VSIMOPT  =
+VCOMOPT  +=
+VLOGOPT  +=
+VSIMOPT  +=
 
 # Include unisim verilog librayr
 ifneq ($(filter $(TECHLIB),$(FPGALIBS)),)
@@ -98,26 +98,26 @@ VSIMOPT += $(SIMTOP)
 
 
 ### Common design files ###
-SLDGEN_VHDL_RTL_PKGS  = $(DESIGN_PATH)/sldgen/sld_devices.vhd
+SLDGEN_VHDL_RTL_PKGS += $(DESIGN_PATH)/sldgen/sld_devices.vhd
 SLDGEN_VHDL_RTL_PKGS += $(DESIGN_PATH)/sldgen/allacc.vhd
 SLDGEN_VHDL_RTL_PKGS += $(DESIGN_PATH)/sldgen/genacc.vhd
 
-TOP_VHDL_RTL_PKGS  = $(DESIGN_PATH)/grlib_config.vhd
+TOP_VHDL_RTL_PKGS += $(DESIGN_PATH)/grlib_config.vhd
 TOP_VHDL_RTL_PKGS += $(DESIGN_PATH)/socmap.vhd
 TOP_VHDL_RTL_PKGS += $(DESIGN_PATH)/sldgen/sldacc.vhd
 TOP_VHDL_RTL_PKGS += $(ESP_ROOT)/socs/common/soctiles.vhd
 
-TOP_VHDL_RTL_SRCS  = $(DESIGN_PATH)/sldgen/accelerators.vhd
+TOP_VHDL_RTL_SRCS += $(DESIGN_PATH)/sldgen/accelerators.vhd
 TOP_VHDL_RTL_SRCS += $(wildcard $(DESIGN_PATH)/sldgen/noc_*.vhd)
 TOP_VHDL_RTL_SRCS += $(DESIGN_PATH)/sldgen/tile_acc.vhd
 TOP_VHDL_RTL_SRCS += $(wildcard $(ESP_ROOT)/socs/common/tile_*.vhd)
 TOP_VHDL_RTL_SRCS += $(ESP_ROOT)/socs/common/esp.vhd
 TOP_VHDL_RTL_SRCS += $(DESIGN_PATH)/$(TOP).vhd
 
-TOP_VLOG_RTL_SRCS  =
+TOP_VLOG_RTL_SRCS +=
 
-TOP_VHDL_SIM_PKGS  =
+TOP_VHDL_SIM_PKGS +=
 
-TOP_VHDL_SIM_SRCS  = $(DESIGN_PATH)/$(SIMTOP).vhd
+TOP_VHDL_SIM_SRCS += $(DESIGN_PATH)/$(SIMTOP).vhd
 
-TOP_VLOG_SIM_SRCS  =
+TOP_VLOG_SIM_SRCS +=
