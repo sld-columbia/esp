@@ -88,6 +88,24 @@ help:
 	@echo " make espmon-run                   : open ESP monitor GUI interface (requires proFPGA system)"
 	@echo
 	@echo
+	@echo " === Software Flow ==="
+	@echo
+	@echo " make soft                         : compile the bare-metal program systest.c. The target architecutre"
+	@echo "                                     is selected based on the varialble CPU_ARCH."
+	@echo " make barec-all                    : compile the bare-metal device drivers for available accelerators and"
+	@echo "                                     for the digital-video interface (DVI). Executables (.exe) are placed to"
+	@echo "                                     \"barec\" and can be used in simulation by replacing \"systest.c\""
+	@echo " make linux                        : compile Linux, create root file-system and compile all ESP core drivers,"
+	@echo "                                     drivers for accelerators, and test applications."
+	@echo " make <accelerator>-barec          : compile the bare-metal device driver for the specified accelerator."
+	@echo "                                     Executables (.exe) are placed to \"barec\" and can be used in simulation"
+	@echo "                                     by replacing \"systest.c\""
+	@echo " make <accelerator>-driver         : compile the Linux device driver for the specified accelerator. Drivers"
+	@echo "                                     are placed to \"sysroot/opt/drivers\" and load automatically during OS boot"
+	@echo " make <accelerator>-app            : compile the Linux test application for the specified accelerator."
+	@echo "                                     Executables are placed to \"sysroot/applications/test\""
+	@echo
+	@echo
 	@echo " === Cobham open-source IPs (GRLIB) ==="
 	@echo
 	@echo " make grlib-defconfig              : read the default configuration for grlib IPs."
@@ -95,13 +113,15 @@ help:
 	@echo "                                     (may run as dependency)."
 	@echo " make grlib-config                 : open grlib configuration GUI; useful when using the LEON-3"
 	@echo "                                     embedded processor."
-	@echo " make soft                         : compile the bare-metal program systest.c. The target architecutre"
-	@echo "                                     is selected based on the varialble CPU_ARCH."
 	@echo " make leon3-soft                   : compile the bare-metal program for LEON-3; The resulting"
 	@echo "                                     executable is used for RTL simulation, but can also run on"
 	@echo "                                     LEON-3 after loading the bistream to FPGA (requires LEON-3"
 	@echo "                                     tool-chain and optionally grmon if running on FPGA)."
+	@echo " make linux.dsu                    : package Linux image for LEON-3. This target is called by the"
+	@echo "                                     generic \"linux\" target when the variable CPU_ARCH is set to"
+	@echo "                                     leon3 (see \"make linux\")."
 	@echo
+
 
 
 ### Include common Makefile for desing configuration ###
