@@ -112,10 +112,23 @@ end;
     -- <<user_mask>>
     others             => '0');
 
+  function check_scatter_gather (
+    constant entries : integer)
+    return integer is
+    variable ret : integer;
+  begin  -- mem_offset
+    if scatter_gather = 1 then
+      ret := entries;
+    else
+      ret := 0;
+    end if;
+    return ret;
+  end check_scatter_gather;
+
   signal bank : bank_type(0 to MAXREGNUM - 1);
   constant bankdef : bank_type(0 to MAXREGNUM - 1) := (
     DEVID_REG          => conv_std_logic_vector(vendorid, 16) & conv_std_logic_vector(devid, 16),
-    PT_NCHUNK_MAX_REG  => conv_std_logic_vector(tlb_entries, 32),
+    PT_NCHUNK_MAX_REG  => conv_std_logic_vector(check_scatter_gather(tlb_entries), 32),
     -- <<user_read_only_default>>
     others             => (others => '0'));
 
