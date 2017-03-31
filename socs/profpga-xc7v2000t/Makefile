@@ -18,14 +18,6 @@ LINUX_CONFIG = leon3_defconfig
 ### NoC flit-width (not including head and tail bits)
 NOC_WIDTH = 32
 
-### Include common Makefile for desing configuration ###
-include $(ESP_ROOT)/utils/design.mk
-
-
-### Include targets to generate accelerators RTL with HLS ###
-include $(ESP_ROOT)/utils/accelerators.mk
-
-
 ### Design top level and testbench ###
 TOP    = top
 SIMTOP = testbench
@@ -41,9 +33,6 @@ VCOMOPT += -93
 #VSIMOPT += -gdisas=1
 VSIMOPT +=
 
-### Include global Makefile ###
-include $(ESP_ROOT)/utils/Makefile
-
 
 ### Additional design files ###
 TOP_VHDL_RTL_PKGS +=
@@ -52,3 +41,7 @@ TOP_VLOG_RTL_SRCS +=
 TOP_VHDL_SIM_PKGS +=
 TOP_VHDL_SIM_SRCS +=
 TOP_VLOG_SIM_SRCS +=
+
+
+### Include global Makefile ###
+include $(ESP_ROOT)/utils/Makefile

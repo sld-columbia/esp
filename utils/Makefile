@@ -104,32 +104,23 @@ help:
 	@echo
 
 
-clean: 		soft-clean		\
-		linux-clean		\
-		sysroot-clean		\
-		xilinx_lib-clean 	\
-		sim-clean		\
-		esp-config-clean	\
-		grlib-config-clean	\
-		vivado-clean		\
-		sldgen-clean		\
-		espmon-clean
+### Include common Makefile for desing configuration ###
+include $(ESP_ROOT)/utils/design.mk
 
-distclean:	check_all_srcs-distclean 	\
-		check_all_rtl_srcs-distclean	\
-		profpga-distclean		\
-		soft-distclean 			\
-		linux-distclean			\
-		sysroot-distclean		\
-		xilinx_lib-distclean 		\
-		sim-distclean			\
-		esp-config-distclean		\
-		grlib-config-distclean		\
-		vivado-distclean		\
-		sldgen-distclean		\
-		espmon-distclean
 
-.PHONY: all help clean distclean
+### Set variables needed before including accelerators.mk
+SOFT              = $(ESP_ROOT)/soft/$(CPU_ARCH)
+LINUXSRC          = $(SOFT)/linux
+DRIVERS           = $(SOFT)/drivers
+CONTIG_ALLOC_PATH = $(DRIVERS)/contig_alloc
+ESP_CORE_PATH     = $(DRIVERS)/esp
+
+
+### Include targets to generate accelerators RTL with HLS ###
+include $(ESP_ROOT)/utils/accelerators.mk
+
+
+.PHONY: all help
 
 ### SoC configuration for ESP ###
 
@@ -205,6 +196,7 @@ soft-distclean: leon3-soft-distclean ahbrom-distclean
 
 .PHONY: leon3-soft-clean leon3-soft-distclean
 
+
 ### Leon3 prom ###
 
 ahbrom: $(UTILS_GRLIB)/ahbrom.c
@@ -224,10 +216,8 @@ ahbrom-distclean: ahbrom-clean
 
 .PHONY: ahbrom-clean ahbrom-distclean
 
-### Leon3 Linux ###
 
-SOFT = $(ESP_ROOT)/soft/leon3
-LINUXSRC = $(SOFT)/linux
+### Leon3 Linux ###
 
 sysroot:
 	$(QUIET_CP)cp -r $(ESP_ROOT)/soft/leon3/sysroot .
@@ -262,29 +252,50 @@ linux-build/.config: $(LINUXSRC)/arch/sparc/configs/$(LINUX_CONFIG)
 linux-build/vmlinux: sysroot.cpio linux-build/.config
 	$(QUIET_MAKE)ARCH=sparc CROSS_COMPILE=sparc-leon3-linux- $(MAKE) -C linux-build
 
-linux.dsu: linux-build/vmlinux
-	$(QUIET_BUILD)mklinuximg $< $@
+sysroot/opt/drivers-esp/contig_alloc.ko: linux-build/vmlinux $(wildcard $(CONTIG_ALLOC_PATH)/*.c) $(wildcard $(CONTIG_ALLOC_PATH)/*.h) $(wildcard $(DRIVERS)/include/*.h)
+	$(QUIET_MAKE)ARCH=sparc CROSS_COMPILE=sparc-leon3-linux- KSRC=$(PWD)/linux-build $(MAKE) -C $(CONTIG_ALLOC_PATH)
+	$(QUIET_CP)cp $(CONTIG_ALLOC_PATH)/contig_alloc.ko $@
+
+sysroot/opt/drivers-esp/esp.ko: linux-build/vmlinux $(wildcard $(ESP_CORE_PATH)/*.c) $(wildcard $(ESP_CORE_PATH)/*.h) $(wildcard $(DRIVERS)/include/*.h)
+	$(QUIET_MAKE)ARCH=sparc CROSS_COMPILE=sparc-leon3-linux- KSRC=$(PWD)/linux-build CONTIG_ALLOC_PATH=$(CONTIG_ALLOC_PATH) $(MAKE) -C $(ESP_CORE_PATH)
+	$(QUIET_CP)cp $(ESP_CORE_PATH)/esp.ko $@
+
+# This is a PHONY to guarantee sysroot is always updated when apps or drivers change
+# Most targets won't actually do anything if their dependencies have not changed.
+# Linux is compiled twice if necessary to ensure drivers are compiled against the most recent kernel
+sysroot-update: linux-build/vmlinux
+	@touch sysroot
+	@$(MAKE) sysroot/opt/drivers-esp/contig_alloc.ko
+	@$(MAKE) sysroot/opt/drivers-esp/esp.ko
+	@CROSS_COMPILE=sparc-leon3-linux- $(MAKE) -C $(DRIVERS)/dvi/app
+	@cp $(DRIVERS)/dvi/app/*.exe sysroot/applications/dvi
+	@$(MAKE) accelerators-driver
+	@$(MAKE) accelerators-app
+	$(QUIET_MAKE)$(MAKE) linux-build/vmlinux
+
+
+linux.dsu: sysroot-update
+	$(QUIET_BUILD)mklinuximg linux-build/vmlinux $@
 
 linux: linux.dsu
 
-linux-clean:
+linux-clean: sysroot-clean
 	$(QUIET_MAKE)ARCH=sparc CROSS_COMPILE=sparc-leon3-linux- $(MAKE) -C linux-build clean
 
-linux-distclean:
+linux-distclean: sysroot-distclean
 	$(QUIET_CLEAN)$(RM) linux-build linux.dsu
 	$(QUIET_MAKE)ARCH=sparc CROSS_COMPILE=sparc-leon3-linux- $(MAKE) -C ${LINUXSRC} mrproper
 
-sysroot-update: sysroot
-	@touch $<
-	$(QUIET_MAKE)$(MAKE) linux
-
 sysroot-clean:
 	$(QUIET_CLEAN)$(RM) sysroot.files sysroot.cpio
+	@CROSS_COMPILE=sparc-leon3-linux- $(MAKE) -C $(DRIVERS)/dvi/app clean
+	@ARCH=sparc CROSS_COMPILE=sparc-leon3-linux- KSRC=$(PWD)/linux-build CONTIG_ALLOC_PATH=$(CONTIG_ALLOC_PATH) $(MAKE) -C $(ESP_CORE_PATH) clean
+	@ARCH=sparc CROSS_COMPILE=sparc-leon3-linux- KSRC=$(PWD)/linux-build $(MAKE) -C $(CONTIG_ALLOC_PATH) clean
+	@$(MAKE) accelerators-driver-clean
+	@$(MAKE) accelerators-app-clean
 
 sysroot-distclean: sysroot-clean
 	$(QUIET_CLEAN)$(RM) sysroot
-
-.PHONY: sysroot-update sysroot-clean sysroot-distclean
 
 else
 ### Other architectures if avalable ###
@@ -301,6 +312,8 @@ linux-clean:
 
 linux-distclean:
 
+sysroot-update:
+
 sysroot-clean:
 
 sysroot-distclean:
@@ -311,6 +324,25 @@ linux-build:
 	$(QUIET_MKDIR)mkdir -p $@
 
 .PHONY: soft soft-clean soft-distclean linux linux-clean linux-distclean
+
+.PHONY: sysroot-update sysroot-clean sysroot-distclean
+
+barec:
+	$(QUIET_MKDIR)mkdir -p $@
+
+barec-all: barec
+	@mkdir -p barec/dvi
+	@CROSS_COMPILE=sparc-elf- $(MAKE) -C $(DRIVERS)/dvi/barec
+	@cp $(DRIVERS)/dvi/barec/*.exe barec/dvi
+	@$(MAKE) accelerators-barec
+
+
+barec-distclean:
+	$(QUIET_CLEAN)$(RM) barec
+	@CROSS_COMPILE=sparc-elf- $(MAKE) -C $(DRIVERS)/dvi/barec clean
+	@$(MAKE) accelerators-barec-clean
+
+.PHONY: barec-distclean barec-all
 
 
 ### GRLIB config targets ###
@@ -885,7 +917,7 @@ espmon.mk: $(ESP_ROOT)/utils/espmon/espmon.pro
 espmon: $(ESPMON_DEPS) mmi64_regs.h power.h espmon.mk
 	$(QUIET_MAKE)DESIGN_DIR=$(DESIGN_PATH) make --quiet -f espmon.mk
 
-espmon-run: espmon boards 
+espmon-run: espmon boards
 	$(QUIET_RUN)./$<
 
 espmon-clean:
@@ -904,3 +936,33 @@ espmon-distclean: espmon-clean
 		espmon*.rpt
 
 .PHONY: espmon-clean espmon-distclean espmon-run
+
+
+
+### Clean all ###
+clean: 		soft-clean		\
+		linux-clean		\
+		xilinx_lib-clean 	\
+		sim-clean		\
+		esp-config-clean	\
+		grlib-config-clean	\
+		vivado-clean		\
+		sldgen-clean		\
+		espmon-clean
+
+distclean:	check_all_srcs-distclean 	\
+		check_all_rtl_srcs-distclean	\
+		profpga-distclean		\
+		soft-distclean 			\
+		linux-distclean			\
+		barec-distclean			\
+		xilinx_lib-distclean 		\
+		sim-distclean			\
+		esp-config-distclean		\
+		grlib-config-distclean		\
+		vivado-distclean		\
+		sldgen-distclean		\
+		espmon-distclean
+
+
+.PHONY: clean distclean
