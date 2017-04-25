@@ -36,11 +36,6 @@ VCOMOPT += -93
 # VSIMOPT += -gdisas=1
 VSIMOPT +=
 
-ifeq ($(CONFIG_GRETH_ENABLE),y)
-VSIMOPT += -L gig_ethernet_pcs_pma_v16_0_0
-endif
-
-
 ### Additional design files ###
 TOP_VHDL_RTL_PKGS +=
 TOP_VHDL_RTL_SRCS += $(ESP_ROOT)/socs/common/sgmii_vc707.vhd
@@ -52,3 +47,6 @@ TOP_VLOG_SIM_SRCS +=
 
 ### Include global Makefile ###
 include $(ESP_ROOT)/utils/Makefile
+
+print:
+	@echo $(VSIMOPT)

@@ -90,6 +90,11 @@ ifneq ($(filter $(TECHLIB),$(FPGALIBS)),)
 VSIMOPT  += glbl
 endif
 
+# Xilinx SGMII
+ifeq ($(CONFIG_GRETH_ENABLE),y)
+VSIMOPT += -L gig_ethernet_pcs_pma_v16_0_0
+endif
+
 # Simulator switches
 VSIMOPT += -novopt +notimingchecks
 
