@@ -48,5 +48,3 @@ TOP_VLOG_SIM_SRCS +=
 ### Include global Makefile ###
 include $(ESP_ROOT)/utils/Makefile
 
-print:
-	@echo $(VSIMOPT)
