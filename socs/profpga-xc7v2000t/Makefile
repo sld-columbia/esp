@@ -5,18 +5,18 @@
 all: help
 
 ### Global design variables ###
-
 DESIGN_PATH = $(PWD)
 ESP_ROOT = $(shell realpath ../../)
 CPU_ARCH = leon3
 TECHLIB  = virtex7
 BOARD    = profpga-xc7v2000t
 DESIGN   = esp-$(BOARD)
-
 LINUX_CONFIG = leon3_defconfig
+
 
 ### NoC flit-width (not including head and tail bits)
 NOC_WIDTH = 32
+
 
 ### Design top level and testbench ###
 TOP    = top
@@ -41,6 +41,11 @@ TOP_VLOG_RTL_SRCS +=
 TOP_VHDL_SIM_PKGS +=
 TOP_VHDL_SIM_SRCS +=
 TOP_VLOG_SIM_SRCS +=
+
+
+### Xilinx Vivado hw_server ###
+FPGA_HOST ?= espdev
+XIL_HW_SERVER_PORT ?= 3125
 
 
 ### Include global Makefile ###

@@ -20,7 +20,7 @@ use_hls_lib "./memlib"
 # Setup technology and include behavioral models and/or libraries
 #
 if {$TECH eq "virtex7"} {
-    set VIVADO $::env(VIVADO)
+    set VIVADO $::env(XILINX_VIVADO)
     set_attr verilog_files "$TECH_PATH/mem/*.v"
     set_attr verilog_files "$VIVADO/ids_lite/ISE/verilog/src/glbl.v"
     set_attr verilog_files "$VIVADO/ids_lite/ISE/verilog/src/unisims/RAMB16_S*.v"

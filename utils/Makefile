@@ -538,7 +538,7 @@ check_all_rtl_srcs-distclean:
 ### Xilinx Simulation libs targets ###
 
 ifeq ("$(TECHLIB)", "virtex7")
-modelsim/xilinx_lib: $(VIVADO)
+modelsim/xilinx_lib: $(XILINX_VIVADO)
 	$(QUIET_MKDIR)mkdir -p $@
 	@echo "compile_simlib -directory xilinx_lib -simulator modelsim -no_ip_compile" > $@/simlib.tcl; \
 	cd modelsim; \
@@ -685,8 +685,8 @@ modelsim/vsim.mk: modelsim/xilinx_lib check_all_srcs.old $(PKG_LIST)
 		$(VLOG) ./mig/mig/user_design/rtl/mig.v; \
 		$(VLOG) ./mig/mig/user_design/rtl/*/*.v; \
 	fi; \
-	echo $(SPACES)"$(VLOG) $(VIVADO)/data/verilog/src/glbl.v"; \
-	$(VLOG) $(VIVADO)/data/verilog/src/glbl.v; \
+	echo $(SPACES)"$(VLOG) $(XILINX_VIVADO)/data/verilog/src/glbl.v"; \
+	$(VLOG) $(XILINX_VIVADO)/data/verilog/src/glbl.v; \
 	if test -r ./sgmii/sgmii.xci; then \
 		vlib -type directory gig_ethernet_pcs_pma_v16_0_0; \
 		vmap gig_ethernet_pcs_pma_v16_0_0 gig_ethernet_pcs_pma_v16_0_0; \

@@ -1,7 +1,3 @@
-### Global variables ###
-FPGA_HOST ?= espdev
-XIL_HW_SERVER_PORT ?= 3125
-
 ### Supported technology libraries ###
 ASICLIBS =
 FPGALIBS = virtex7
@@ -18,8 +14,8 @@ ifeq ("$(PROFPGA)","")
 $(error proFPGA path not specified)
 endif
 
-ifeq ("$(VIVADO)","")
-$(error VIVADO path not specified)
+ifeq ("$(XILINX_VIVADO)","")
+$(error XILINX_VIVADO path not specified)
 endif
 
 PROFPGA_REQUIRED_VER = proFPGA-2016B
