@@ -73,6 +73,8 @@ help:
 	@echo " make esp-xconig                   : open a GUI to configure and generate the SoC map."
 	@echo " make sim                          : compile all source files and run an RTL simulation of ESP"
 	@echo "                                     (requires Modelsim 10.5c)."
+	@echo " make sim-gui                      : compile all source files and run an RTL simulation of ESP"
+	@echo "                                     with graphic user interface (requires Modelsim 10.5c)."
 	@echo " make vivado-syn                   : generate a bitstream of ESP (requires Vivado 2016.3)."
 	@echo " make vivado-prog-fpga             : load the generated bitstream to FPGA. This target requires"
 	@echo "                                     the environment variable FPGA_HOST set to the network ip of"
