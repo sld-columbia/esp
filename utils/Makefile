@@ -111,7 +111,7 @@ help:
 	@echo " make grlib-defconfig              : read the default configuration for grlib IPs."
 	@echo " make grlib-config                 : read the configuration for grlib IPs from .grlib_config"
 	@echo "                                     (may run as dependency)."
-	@echo " make grlib-config                 : open grlib configuration GUI; useful when using the LEON-3"
+	@echo " make grlib-xconfig                : open grlib configuration GUI; useful when using the LEON-3"
 	@echo "                                     embedded processor."
 	@echo " make leon3-soft                   : compile the bare-metal program for LEON-3; The resulting"
 	@echo "                                     executable is used for RTL simulation, but can also run on"
