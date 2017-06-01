@@ -38,7 +38,7 @@ class ConfigFrame(Frame):
     Frame.__init__(self, top_frame, width=75, borderwidth=2, relief=RIDGE) 
     self.pack(side=LEFT, expand=NO, fill=Y)
     Label(self, text="General SoC configuration:", font="TkDefaultFont 11 bold").pack(side=TOP)
-    self.tech_label = Label(self, text=soc.TECH, fg="green")
+    self.tech_label = Label(self, text=soc.TECH, fg="darkgreen")
     self.tech_label.pack(side=TOP)      
     self.fpu_label = Label(self, text="No FPU",fg="red")
     self.fpu_label.pack(side=TOP)      
@@ -47,21 +47,21 @@ class ConfigFrame(Frame):
     self.eth_label = Label(self, text="No Ethernet",fg="red")
     self.eth_label.pack(side=TOP)      
     if soc.HAS_FPU == "7":
-       self.fpu_label.config(text="SLD FPU",fg="green")
+       self.fpu_label.config(text="SLD FPU",fg="darkgreen")
     elif soc.HAS_FPU == "(1+0)":
-       self.fpu_label.config(text="GRFPU",fg="green")
+       self.fpu_label.config(text="GRFPU",fg="darkgreen")
     if soc.HAS_JTAG == 1:
-       self.jtag_label.config(text="JTAG support",fg="green")
+       self.jtag_label.config(text="JTAG support",fg="darkgreen")
     if soc.HAS_ETH == 1:
-       self.eth_label.config(text="Eth (" + soc.IP_ADDR + ")",fg="green")
+       self.eth_label.config(text="Eth (" + soc.IP_ADDR + ")",fg="darkgreen")
        if soc.HAS_SGMII == 1:    
-         Label(self, text="Use SGMII",fg="green").pack(side=TOP)
+         Label(self, text="Use SGMII",fg="darkgreen").pack(side=TOP)
        else:
          Label(self, text="No SGMII",fg="red").pack(side=TOP)
     self.svga_label = Label(self, text="No SVGA",fg="red")
     self.svga_label.pack(side=TOP)      
     if soc.HAS_SVGA == True:
-       self.svga_label.config(text="SVGA+FB",fg="green")
+       self.svga_label.config(text="SVGA+FB",fg="darkgreen")
     self.sync_label = Label(self, text="No synchronizers")
     self.sync_label.pack(side=TOP)    
 

@@ -511,7 +511,7 @@ class NoCFrame(Pmw.ScrolledFrame):
       #update message box
       self.message.delete(0.0, END)
       if tot_mem >= 2 or len(regions) >= 1:
-        self.cfg_frame.sync_label.config(text="With synchronizers",fg="green")
+        self.cfg_frame.sync_label.config(text="With synchronizers",fg="darkgreen")
       else:
         self.cfg_frame.sync_label.config(text="No synchronizers", fg="black")
       if tot_cpu == 1 and tot_mem_debug == 1 and tot_mem <= 2 and tot_io == 1 and pll_ok == True and clkbuf_ok == True and clk_region_skip == 0:
