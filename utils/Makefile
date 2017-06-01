@@ -300,19 +300,24 @@ linux.dsu: sysroot-update
 linux: linux.dsu
 
 linux-clean: sysroot-clean
-	$(QUIET_MAKE)ARCH=sparc CROSS_COMPILE=sparc-leon3-linux- $(MAKE) -C linux-build clean
+	$(QUIET_CLEAN)
+	@if test -e linux-build; then \
+		ARCH=sparc CROSS_COMPILE=sparc-leon3-linux- $(MAKE) --quiet -C linux-build clean; \
+	fi;
 
 linux-distclean: sysroot-distclean
 	$(QUIET_CLEAN)$(RM) linux-build linux.dsu
-	$(QUIET_MAKE)ARCH=sparc CROSS_COMPILE=sparc-leon3-linux- $(MAKE) -C ${LINUXSRC} mrproper
+	@ARCH=sparc CROSS_COMPILE=sparc-leon3-linux- $(MAKE) --quiet -C ${LINUXSRC} mrproper
 
 sysroot-clean:
 	$(QUIET_CLEAN)$(RM) sysroot.files sysroot.cpio
-	@CROSS_COMPILE=sparc-leon3-linux- $(MAKE) -C $(DRIVERS)/dvi/app clean
-	@ARCH=sparc CROSS_COMPILE=sparc-leon3-linux- KSRC=$(PWD)/linux-build CONTIG_ALLOC_PATH=$(CONTIG_ALLOC_PATH) $(MAKE) -C $(ESP_CORE_PATH) clean
-	@ARCH=sparc CROSS_COMPILE=sparc-leon3-linux- KSRC=$(PWD)/linux-build $(MAKE) -C $(CONTIG_ALLOC_PATH) clean
-	@$(MAKE) accelerators-driver-clean
-	@$(MAKE) accelerators-app-clean
+	@CROSS_COMPILE=sparc-leon3-linux- $(MAKE) --quiet -C $(DRIVERS)/dvi/app clean
+	@if test -e linux-build; then \
+		ARCH=sparc CROSS_COMPILE=sparc-leon3-linux- KSRC=$(PWD)/linux-build CONTIG_ALLOC_PATH=$(CONTIG_ALLOC_PATH) $(MAKE) --quiet -C $(ESP_CORE_PATH) clean; \
+		ARCH=sparc CROSS_COMPILE=sparc-leon3-linux- KSRC=$(PWD)/linux-build $(MAKE) -C $(CONTIG_ALLOC_PATH) clean; \
+		$(MAKE) --quiet accelerators-driver-clean; \
+	fi;
+	@$(MAKE) --quiet accelerators-app-clean
 
 sysroot-distclean: sysroot-clean
 	$(QUIET_CLEAN)$(RM) sysroot
@@ -359,8 +364,8 @@ barec-all: barec
 
 barec-distclean:
 	$(QUIET_CLEAN)$(RM) barec
-	@CROSS_COMPILE=sparc-elf- $(MAKE) -C $(DRIVERS)/dvi/barec clean
-	@$(MAKE) accelerators-barec-clean
+	@CROSS_COMPILE=sparc-elf- $(MAKE) --quiet -C $(DRIVERS)/dvi/barec clean
+	@$(MAKE) --quiet accelerators-barec-clean
 
 .PHONY: barec-distclean barec-all
 
