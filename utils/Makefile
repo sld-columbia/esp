@@ -688,10 +688,10 @@ modelsim/vsim.mk: modelsim/xilinx_lib check_all_srcs.old $(PKG_LIST)
 	echo $(SPACES)"$(VLOG) $(XILINX_VIVADO)/data/verilog/src/glbl.v"; \
 	$(VLOG) $(XILINX_VIVADO)/data/verilog/src/glbl.v; \
 	if test -r ./sgmii/sgmii.xci; then \
-		vlib -type directory gig_ethernet_pcs_pma_v16_0_0; \
-		vmap gig_ethernet_pcs_pma_v16_0_0 gig_ethernet_pcs_pma_v16_0_0; \
+		vlib -type directory gig_ethernet_pcs_pma_v16_0_2; \
+		vmap gig_ethernet_pcs_pma_v16_0_2 gig_ethernet_pcs_pma_v16_0_2; \
 		echo $(SPACES)"$(VCOM) ./sgmii/hdl/gig_ethernet_pcs_pma_v16_0_rfs.vhd"; \
-		$(VCOM) -work gig_ethernet_pcs_pma_v16_0_0 ./sgmii/hdl/gig_ethernet_pcs_pma_v16_0_rfs.vhd; \
+		$(VCOM) -work gig_ethernet_pcs_pma_v16_0_2 ./sgmii/hdl/gig_ethernet_pcs_pma_v16_0_rfs.vhd; \
 		$(VLOG) ./sgmii/synth/*.v; \
 		$(VLOG) ./sgmii/synth/*/*.v ;\
         fi; \
