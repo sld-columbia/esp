@@ -46,8 +46,8 @@ TOP_VLOG_SIM_SRCS +=
 
 
 ### Xilinx Vivado hw_server ###
-FPGA_HOST ?= espdev
-XIL_HW_SERVER_PORT ?= 3125
+FPGA_HOST ?= espdev.cs.columbia.edu
+XIL_HW_SERVER_PORT ?= 3129
 
 
 ### Include global Makefile ###
