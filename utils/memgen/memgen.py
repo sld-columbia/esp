@@ -252,7 +252,7 @@ class memory():
 
 
 
-    def __write_ctrl_assignment(self, fd, bank_addr_range_str, hh_range_str, duplicated_bank_set, port, iface, is_write, parallelism):
+    def __write_ctrl_assignment(self, fd, bank_addr_range_str, hh_range_str, last_hh_range_str, duplicated_bank_set, port, iface, is_write, parallelism):
         ce_str = [ ]
         a_str = [ ]
         d_str = [ ]
@@ -265,11 +265,11 @@ class memory():
             we_str_i = [ ]
             wem_str_i = [ ]
             for p in range(0, self.bank_type.ports):
-                ce_str_i.append ("              bank_CE["  + str(d) + "][h][v][hh]["  + str(p) + "]  = CE")
-                a_str_i.append  ("              bank_A["   + str(d) + "][h][v][hh]["  + str(p) + "]   = A")
-                d_str_i.append  ("              bank_D["   + str(d) + "][h][v][hh]["  + str(p) + "]   = D")
-                we_str_i.append ("              bank_WE["  + str(d) + "][h][v][hh]["  + str(p) + "]  = WE")
-                wem_str_i.append("              bank_WEM[" + str(d) + "][h][v][hh]["  + str(p) + "] = WEM")
+                ce_str_i.append ("                bank_CE["  + str(d) + "][h][v][hh]["  + str(p) + "]  = CE")
+                a_str_i.append  ("                bank_A["   + str(d) + "][h][v][hh]["  + str(p) + "]   = A")
+                d_str_i.append  ("                bank_D["   + str(d) + "][h][v][hh]["  + str(p) + "]   = D")
+                we_str_i.append ("                bank_WE["  + str(d) + "][h][v][hh]["  + str(p) + "]  = WE")
+                wem_str_i.append("                bank_WEM[" + str(d) + "][h][v][hh]["  + str(p) + "] = WEM")
             ce_str.append(ce_str_i)
             a_str.append(a_str_i)
             d_str.append(d_str_i)
@@ -294,9 +294,15 @@ class memory():
         fd.write(ce_str[duplicated_bank_set][port]  + str(iface)                       + ";\n")
         fd.write(a_str[duplicated_bank_set][port]   + str(iface) + bank_addr_range_str + ";\n")
         if is_write:
+            fd.write("              if (hh != " + str(self.hhbanks - 1) + ") begin\n")
             fd.write(d_str[duplicated_bank_set][port]   + str(iface) + hh_range_str        + ";\n")
-            fd.write(we_str[duplicated_bank_set][port]  + str(iface)                       + ";\n")
             fd.write(wem_str[duplicated_bank_set][port] + str(iface) + hh_range_str        + ";\n")
+            fd.write("              end\n")
+            fd.write("              else begin\n")
+            fd.write(d_str[duplicated_bank_set][port]   + str(iface) + last_hh_range_str   + ";\n")
+            fd.write(wem_str[duplicated_bank_set][port] + str(iface) + last_hh_range_str   + ";\n")
+            fd.write("              end\n")
+            fd.write(we_str[duplicated_bank_set][port]  + str(iface)                       + ";\n")
         fd.write("            end\n")
         if parallelism != 0:
             fd.write("          end\n")
@@ -424,6 +430,9 @@ class memory():
         hh_msb_str = str(bank_wire_data_width) + " * (hh + 1) - 1"
         hh_lsb_str = str(bank_wire_data_width) + " * hh"
         hh_range_str = "[" + hh_msb_str + ":" + hh_lsb_str + "]"
+        last_hh_msb_str = str((self.width - 1) % bank_wire_data_width)
+        last_hh_lsb_str = "0"
+        last_hh_range_str = "[" + last_hh_msb_str + ":" + last_hh_lsb_str + "]"
         bank_addr_msb_str = str(min(int(math.ceil(math.log(self.words, 2))) - 1, bank_wire_addr_width + sel_hbank_reg_width - 1))
         bank_addr_lsb_str = str(sel_hbank_reg_width)
         bank_addr_range_str = "[" + bank_addr_msb_str + ":" + bank_addr_lsb_str + "]"
@@ -461,7 +470,7 @@ class memory():
                     fd.write("          // Duplicated bank set " + str(d) + "\n")
                     for wi in range(0, op.wn):
                         p = self.write_ports[wi]
-                        self.__write_ctrl_assignment(fd, bank_addr_range_str, hh_range_str, d, p, wi, True, 0)
+                        self.__write_ctrl_assignment(fd, bank_addr_range_str, hh_range_str, last_hh_range_str, d, p, wi, True, 0)
             # Handle <N>w:0r with N power of 2
             if op.rn == 0 and op.wp == "modulo":
                 # Write to all duplicated sets
@@ -469,7 +478,7 @@ class memory():
                     fd.write("          // Duplicated bank set " + str(d) + "\n")
                     for wi in range(0, op.wn):
                         p = self.write_ports[wi]
-                        self.__write_ctrl_assignment(fd, bank_addr_range_str, hh_range_str, d, p, wi, True, op.wn)
+                        self.__write_ctrl_assignment(fd, bank_addr_range_str, hh_range_str, last_hh_range_str, d, p, wi, True, op.wn)
             # Handle 0w:<N>r with N power of 2
             if op.wn == 0 and op.rp == "modulo":
                 # All duplicated sets would return the same data. 0 is correct even with no duplication
@@ -477,7 +486,7 @@ class memory():
                 fd.write("          // Always choose duplicated bank set " + str(d) + "\n")
                 for ri in range(0, op.rn):
                     p = self.read_ports[ri]
-                    self.__write_ctrl_assignment(fd, bank_addr_range_str, hh_range_str, d, p, ri + self.write_interfaces, False, op.rn)
+                    self.__write_ctrl_assignment(fd, bank_addr_range_str, hh_range_str, last_hh_range_str, d, p, ri + self.write_interfaces, False, op.rn)
 
             # Handle <N>w:<M>r with N and M power of 2. In this case hbanks matches max(op.rn, op.wn) foreach op in the list of operations
             if op.wn > 0 and op.rn > 0 and op.wp == "modulo" and op.rp == "modulo":
@@ -486,20 +495,20 @@ class memory():
                     fd.write("          // Duplicated bank set " + str(d) + "\n")
                     for wi in range(0, op.wn):
                         p = self.write_ports[wi]
-                        self.__write_ctrl_assignment(fd, bank_addr_range_str, hh_range_str, d, p, wi, True, op.wn)
+                        self.__write_ctrl_assignment(fd, bank_addr_range_str, hh_range_str, last_hh_range_str, d, p, wi, True, op.wn)
                 # All duplicated sets would return the same data. 0 is correct even with no duplication
                 d = 0
                 fd.write("          // Always choose duplicated bank set " + str(d) + "\n")
                 for ri in range(0, op.rn):
                     p = self.read_ports[ri]
-                    self.__write_ctrl_assignment(fd, bank_addr_range_str, hh_range_str, d, p, ri + self.write_interfaces, False, op.rn)
+                    self.__write_ctrl_assignment(fd, bank_addr_range_str, hh_range_str, last_hh_range_str, d, p, ri + self.write_interfaces, False, op.rn)
             # Handle <N>ru:0w with N > 1
             if op.rn > 1 and op.wn == 0 and op.rp == "unknown":
                 # Duplicated set matches the read interface number
                 for ri in range(0, op.rn):
                     p = self.read_ports[ri]
                     d = (ri + self.write_interfaces) % self.dbanks
-                    self.__write_ctrl_assignment(fd, bank_addr_range_str, hh_range_str, d, p, ri + self.write_interfaces, False, 0)
+                    self.__write_ctrl_assignment(fd, bank_addr_range_str, hh_range_str, last_hh_range_str, d, p, ri + self.write_interfaces, False, 0)
             # Handle <N>ru:<M>w with N > 1 and M power of 2
             if op.rn > 1 and op.wn > 0 and op.rp == "unknown" and op.wp == "modulo":
                 # Write to all duplicated sets
@@ -507,12 +516,12 @@ class memory():
                     fd.write("          // Duplicated bank set " + str(d) + "\n")
                     for wi in range(0, op.wn):
                         p = self.write_ports[wi]
-                        self.__write_ctrl_assignment(fd, bank_addr_range_str, hh_range_str, d, p, wi, True, op.wn)
+                        self.__write_ctrl_assignment(fd, bank_addr_range_str, hh_range_str, last_hh_range_str, d, p, wi, True, op.wn)
                 # Duplicated set matches the read interface number
                 for ri in range(0, op.rn):
                     p = self.read_ports[ri]
                     d = (ri + self.write_interfaces) % self.dbanks
-                    self.__write_ctrl_assignment(fd, bank_addr_range_str, hh_range_str, d, p, ri + self.write_interfaces, False, 0)
+                    self.__write_ctrl_assignment(fd, bank_addr_range_str, hh_range_str, last_hh_range_str, d, p, ri + self.write_interfaces, False, 0)
             fd.write("\n")
         fd.write("        end\n")
         fd.write("\n")
@@ -527,13 +536,13 @@ class memory():
         # Otherwise, modulo is applied to choose which port should be used.
         fd.write("  generate\n")
         fd.write("  for (hh = 0; hh < " + str(self.hhbanks) + "; hh = hh + 1) begin : gen_q_assign_hhbanks\n")
-        hh_last_msb_str = str(int(min(self.width - 1, self.hhbanks * self.bank_type.width - 1)))
-        hh_last_range_str = "[" + hh_last_msb_str + ":" + hh_lsb_str + "]"
+        q_last_hh_msb_str = str(int(min(self.width - 1, self.hhbanks * self.bank_type.width - 1)))
+        q_last_hh_range_str = "[" + q_last_hh_msb_str + ":" + hh_lsb_str + "]"
 
         for ri in range(self.write_interfaces, self.write_interfaces + self.read_interfaces):
             p = self.read_ports[ri - self.write_interfaces]
             fd.write("    if (hh == " + str(self.hhbanks - 1) + " && (hh + 1) * " + str(self.bank_type.width) + " > " + str(self.width) + ")\n")
-            fd.write("      assign Q" + str(ri) + hh_last_range_str + " = bank_Q" + "[seld[" + str(ri) +"]]" + "[selh[" + str(ri) +"]]" + "[selv[" + str(ri) +"]]" + "[hh]" + "[" + str(p) + "][" + str((self.width - 1) % self.bank_type.width) + ":0];\n")
+            fd.write("      assign Q" + str(ri) + q_last_hh_range_str + " = bank_Q" + "[seld[" + str(ri) +"]]" + "[selh[" + str(ri) +"]]" + "[selv[" + str(ri) +"]]" + "[hh]" + "[" + str(p) + "][" + str((self.width - 1) % self.bank_type.width) + ":0];\n")
             fd.write("    else\n")
             fd.write("      assign Q" + str(ri) + hh_range_str + " = bank_Q" + "[seld[" + str(ri) +"]]" + "[selh[" + str(ri) +"]]" + "[selv[" + str(ri) +"]]" + "[hh]" + "[" + str(p) + "];\n")
         fd.write("  end\n")
@@ -917,8 +926,8 @@ class memory():
         fd.write("setArea " + str(self.area) + "\n")
         fd.write("setLatency 1\n")
         # TODO: these delays are arbitrary, but should be taken from lib
-        fd.write("setDelay 600.0000\n")
-        fd.write("setSetup 200.0000\n")
+        fd.write("setDelay 0.6000\n")
+        fd.write("setSetup 0.2000\n")
         fd.write("setInputDataFormat 1\n")
         fd.write("setFileSuffix 0\n")
         fd.write("setHasReset 0\n")
