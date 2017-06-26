@@ -430,8 +430,8 @@ class memory():
         hh_msb_str = str(bank_wire_data_width) + " * (hh + 1) - 1"
         hh_lsb_str = str(bank_wire_data_width) + " * hh"
         hh_range_str = "[" + hh_msb_str + ":" + hh_lsb_str + "]"
-        last_hh_msb_str = str((self.width - 1) % bank_wire_data_width)
-        last_hh_lsb_str = "0"
+        last_hh_msb_str = str((self.width - 1) % bank_wire_data_width) + " + " + hh_lsb_str
+        last_hh_lsb_str = hh_lsb_str
         last_hh_range_str = "[" + last_hh_msb_str + ":" + last_hh_lsb_str + "]"
         bank_addr_msb_str = str(min(int(math.ceil(math.log(self.words, 2))) - 1, bank_wire_addr_width + sel_hbank_reg_width - 1))
         bank_addr_lsb_str = str(sel_hbank_reg_width)
