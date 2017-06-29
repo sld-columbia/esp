@@ -1106,6 +1106,10 @@ if not os.path.exists("memlib"):
 
 print("  INFO: Memory list file: " + infile)
 read_infile(infile, mem_list)
+if len(mem_list) == 0:
+    print("  INFO: Memory list is empty")
+    sys.exit(0)
+
 for mem in mem_list:
     mem.print()
     mem.gen(sram_list)
