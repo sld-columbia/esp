@@ -1,0 +1,1 @@
+../../../accelerators/common/stratus/project.tcl
