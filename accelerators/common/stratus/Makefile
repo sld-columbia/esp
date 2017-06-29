@@ -12,9 +12,25 @@ $(error target technology TECH is not specified)
 endif
 
 ifeq ("$(ACCELERATOR)","")
-$(error ACCELERATOR not set)
+# ACCELERATOR is not set
+ifeq ("$(COMPONENT)","")
+$(error Either COMPONENT or ACCELERATOR must be set)
 endif
 
+else
+# ACCELERATOR is set
+ifneq ("$(COMPONENT)","")
+$(error Either COMPONENT or ACCELERATOR must be set)
+endif
+
+endif
+
+
+ifneq ("$(ACCELERATOR)","")
+TARGET_NAME = $(ACCELERATOR)
+else
+TARGET_NAME = $(COMPONENT)
+endif
 
 # list subdirectories that contain memory libraries
 # (must be in subdirectories of the current directory)
@@ -27,35 +43,46 @@ IFLIBS =
 # Uncomment this line to use the Insight debugger
 BDW_DEBUG = 1
 
+
 saySimPassed:
 	@bdw_sim_pass
 
 # Disable timing checks
 BDW_VLOGSIM_ARGS = -NOTIMINGCHECKS
 
--include Makefile.prj
 
 # Memory wrappers
 MEMGEN = $(ESP_ROOT)/utils/memgen/memgen.py
 MEMTECH = $(ESP_ROOT)/tech/$(TECH)/mem
-MEMGEN_OUT = $(ESP_ROOT)/tech/$(TECH)/memgen/$(ACCELERATOR)
+MEMGEN_OUT = $(ESP_ROOT)/tech/$(TECH)/memgen/$(TARGET_NAME)
+
+ifneq ("$(ACCELERATOR)","")
 RTL_OUT = $(ESP_ROOT)/tech/$(TECH)/acc/$(ACCELERATOR)
+else
+RTL_OUT = $(ESP_ROOT)/tech/$(TECH)/sc_components
+endif
 
 memlib: ../memlist.txt
 	@$(MEMGEN) $(MEMTECH) $< $(MEMGEN_OUT) | tee memgen.log
-	@bdw_memgen ./memlib/*.bdm
+	@if test -e ./memlib/*.bdm; then \
+		bdw_memgen ./memlib/*.bdm; \
+	fi;
 
-Makefile.prj : memlib project.tcl ../../common/stratus/project.tcl
+Makefile.prj: memlib project.tcl $(ESP_ROOT)/accelerators/common/stratus/project.tcl
 	@bdw_makegen
+
+-include Makefile.prj
 
 install: Makefile.prj hls_all
 	@mkdir -p $(RTL_OUT)
+ifneq ("$(ACCELERATOR)","")
 	@cp ../$(ACCELERATOR).xml $(RTL_OUT)
-	@for dir in $$(ls bdw_work/modules/$(ACCELERATOR)); do \
-		if test -e bdw_work/modules/$(ACCELERATOR)/$$dir/$(ACCELERATOR)_rtl.v; then \
+endif
+	@for dir in $$(ls bdw_work/modules/$(TARGET_NAME)); do \
+		if test -e bdw_work/modules/$(TARGET_NAME)/$$dir/$(TARGET_NAME)_rtl.v; then \
 			cfg=$${dir,,}; \
-			cp bdw_work/modules/$(ACCELERATOR)/$$dir/$(ACCELERATOR)_rtl.v $(RTL_OUT)/$(ACCELERATOR)_$$cfg\.v; \
-			sed -i "s/module $(ACCELERATOR)/module $(ACCELERATOR)_$$cfg/g" $(RTL_OUT)/$(ACCELERATOR)_$$cfg.v; \
+			cp bdw_work/modules/$(TARGET_NAME)/$$dir/$(TARGET_NAME)_rtl.v $(RTL_OUT)/$(TARGET_NAME)_$$cfg\.v; \
+			sed -i "s/module $(TARGET_NAME)/module $(TARGET_NAME)_$$cfg/g" $(RTL_OUT)/$(TARGET_NAME)_$$cfg.v; \
 		fi; \
 	done
 
@@ -86,6 +113,9 @@ clean: clean_all clean_libs
 	@rm -rf *.key
 	@rm -rf memlib
 	@rm -rf *.csv
+	@rm -rf .simvision
+	@rm -rf .Xil
+	@rm -rf .fail*
 
 CLEAN: clean
 
