@@ -135,5 +135,9 @@
     bookmark_tmp |= BM_PUT_REQS
     // CACHE_REPORT_TIME(sc_time_stamp(), "Put reqs.")
 
+// Asserts
+#define WRONG_HSIZE \
+    asserts_tmp |= AS_WRONG_HSIZE
+
 
 #endif /* __L2_CACHE_DIRECTIVES_HPP_ */

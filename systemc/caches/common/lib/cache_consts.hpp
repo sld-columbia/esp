@@ -36,20 +36,21 @@
 #define B_OFF_RANGE_HI	(ADDR_BITS - TAG_BITS - SET_BITS - WORD_BITS - 1)
 #define B_OFF_RANGE_LO	0
 
-#define TAG_OFFSET (1 << TAG_RANGE_LO)
-#define SET_OFFSET (1 << SET_RANGE_LO)
-#define WORD_OFFSET (1 << W_OFF_RANGE_LO)
+#define TAG_OFFSET	(1 << TAG_RANGE_LO)
+#define SET_OFFSET	(1 << SET_RANGE_LO)
+#define WORD_OFFSET	(1 << W_OFF_RANGE_LO)
 
 // Cache sizes
-#define BYTES_PER_WORD	(1 << BYTE_BITS)
-#define BITS_PER_WORD	(BYTES_PER_WORD << 3)
-#define BITS_PER_LINE   (BITS_PER_WORD * WORDS_PER_LINE)
-#define WORDS_PER_LINE	(1 << WORD_BITS)
-#define SETS		(1 << SET_BITS)
-#define L2_WAY_BITS	3
-#define L2_WAYS		(1 << L2_WAY_BITS)
-#define L3_WAYS		(N_CPU * L2_WAYS)
-#define L2_LINES        (SETS*L2_WAYS)
+#define BYTES_PER_WORD		(1 << BYTE_BITS)
+#define BITS_PER_WORD		(BYTES_PER_WORD << 3)
+#define BITS_PER_HALFWORD	(BITS_PER_WORD >> 1)
+#define BITS_PER_LINE		(BITS_PER_WORD * WORDS_PER_LINE)
+#define WORDS_PER_LINE		(1 << WORD_BITS)
+#define SETS			(1 << SET_BITS)
+#define L2_WAY_BITS		3
+#define L2_WAYS			(1 << L2_WAY_BITS)
+#define L3_WAYS			(N_CPU * L2_WAYS)
+#define L2_LINES		(SETS*L2_WAYS)
 
 // Cache data types width
 #define CPU_MSG_TYPE_WIDTH	2
@@ -149,7 +150,7 @@
  */
 
 // debug
-#define ASSERT_WIDTH	7
+#define ASSERT_WIDTH	8
 #define BOOKMARK_WIDTH	18
 
 #define AS_REQS_MISS		(1 << 0)
@@ -159,6 +160,7 @@
 #define AS_HIT_DEFAULT		(1 << 4)
 #define AS_MISS_DEFAULT		(1 << 5)
 #define AS_EVICT_DEFAULT	(1 << 6)
+#define AS_WRONG_HSIZE    	(1 << 7)
 
 #define BM_GET_RSP_IN		(1 << 0)
 #define BM_GET_CPU_REQ		(1 << 1)
@@ -182,6 +184,6 @@
 // report
 #define RPT_OFF 0
 #define RPT_ON  1
-#define RPT     RPT_OFF
+#define RPT     RPT_ON
 
 #endif // __CACHES_CONSTS_HPP__

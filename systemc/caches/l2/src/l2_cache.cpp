@@ -101,7 +101,7 @@ void l2_cache::ctrl()
 	    	is_rsp_to_get = true;
 	    } else if (evict_done) {
 		is_evict_done = true;
-	    } else if (l2_cpu_req.nb_can_get()) { // assuming READ or WRITE, hsize WORD, HPROT cacheable
+	    } else if (l2_cpu_req.nb_can_get()) { // assuming READ or WRITE, HPROT cacheable
 		is_req_to_get = true;
 	    } else {
 	     	wait();
@@ -205,7 +205,8 @@ void l2_cache::ctrl()
 			send_wr_rsp(reqs[reqs_hit_i].set);
 
 			// write word and resolve unstable state
-			write_word(rsp_in.line, reqs[reqs_hit_i].word, reqs[reqs_hit_i].w_off);
+			write_word(rsp_in.line, reqs[reqs_hit_i].word, reqs[reqs_hit_i].w_off, 
+				   reqs[reqs_hit_i].b_off, reqs[reqs_hit_i].hsize);
 			reqs[reqs_hit_i].state = INVALID;
 			put_reqs(addr_br.set, reqs[reqs_hit_i].way, addr_br.tag, 
 				 rsp_in.line, reqs[reqs_hit_i].hprot, MODIFIED);
@@ -240,7 +241,7 @@ void l2_cache::ctrl()
 		RSP_DEFAULT;
 	    }
 
-	} else if (is_req_to_get || is_evict_done) { // assuming READ or WRITE, hsize WORD, HPROT cacheable
+	} else if (is_req_to_get || is_evict_done) { // assuming READ or WRITE, HPROT cacheable
 
 	    // if (is_evict_done) {
 	    // 	cpu_req = estall_cpu_req;
@@ -277,7 +278,7 @@ void l2_cache::ctrl()
 			    HIT_WRITE_S;
 
 			    // save request in intermediate state
-			    fill_reqs(addr_br, way_hit, SMAD, cpu_req.hprot,
+			    fill_reqs(addr_br, way_hit, cpu_req.hsize, SMAD, cpu_req.hprot,
 				      max_invack_cnt, cpu_req.word,
 				      lines_buf[way_hit], reqs_i);
 
@@ -297,7 +298,8 @@ void l2_cache::ctrl()
 			    send_wr_rsp(addr_br.set);
 
 			    // write word
-			    write_word(lines_buf[way_hit], cpu_req.word, addr_br.w_off);
+			    write_word(lines_buf[way_hit], cpu_req.word, addr_br.w_off, 
+				       addr_br.b_off, cpu_req.hsize);
 			    lines.port1[0][(addr_br.set << L2_WAY_BITS) + way_hit] = lines_buf[way_hit];
 			}
 			break;
@@ -319,7 +321,7 @@ void l2_cache::ctrl()
 			MISS_READ;
 
 			// save request in intermediate state
-			fill_reqs(addr_br, empty_way, ISD, cpu_req.hprot,
+			fill_reqs(addr_br, empty_way, cpu_req.hsize, ISD, cpu_req.hprot,
 				  max_invack_cnt, empty_word, empty_line, reqs_i);
 
 			// send request to directory
@@ -333,7 +335,7 @@ void l2_cache::ctrl()
 			MISS_WRITE;
 
 			// save request in intermediate state
-			fill_reqs(addr_br, empty_way, IMAD, cpu_req.hprot,
+			fill_reqs(addr_br, empty_way, cpu_req.hsize, IMAD, cpu_req.hprot,
 				  max_invack_cnt, cpu_req.word, empty_line, reqs_i);
 
 			// send request to directory
@@ -556,7 +558,7 @@ void l2_cache::reqs_lookup(addr_breakdown_t addr_br, bool &reqs_hit, sc_uint<REQ
     }
 }
 
-void l2_cache::fill_reqs(addr_breakdown_t addr_br, l2_way_t way_hit,
+void l2_cache::fill_reqs(addr_breakdown_t addr_br, l2_way_t way_hit, hsize_t hsize,
 				unstable_state_t state, hprot_t hprot, 
 				invack_cnt_t invack_cnt, word_t word, 
 				line_t line, sc_uint<REQS_BITS> reqs_i)
@@ -564,6 +566,7 @@ void l2_cache::fill_reqs(addr_breakdown_t addr_br, l2_way_t way_hit,
     reqs[reqs_i].tag	     = addr_br.tag;
     reqs[reqs_i].set	     = addr_br.set;
     reqs[reqs_i].way	     = way_hit;
+    reqs[reqs_i].hsize	     = hsize;
     reqs[reqs_i].w_off       = addr_br.w_off;
     reqs[reqs_i].b_off       = addr_br.b_off;
     reqs[reqs_i].state	     = state;

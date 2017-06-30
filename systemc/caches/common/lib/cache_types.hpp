@@ -314,6 +314,7 @@ public:
     tag_t		tag;
     set_t		set;
     l2_way_t            way;
+    hsize_t             hsize;
     word_offset_t	w_off;
     byte_offset_t	b_off;
     unstable_state_t	state;
@@ -326,6 +327,7 @@ public:
 	tag(0),
 	set(0),
 	way(0),
+	hsize(0),
 	w_off(0),
 	b_off(0),
 	state(0),
@@ -339,6 +341,7 @@ public:
 	tag	       = x.tag;
 	set	       = x.set;
 	way	       = x.way;
+	hsize	       = x.hsize;
 	w_off	       = x.w_off;
 	b_off	   = x.b_off;
 	state	   = x.state;
@@ -352,6 +355,7 @@ public:
 	return (x.tag	     == tag		&& 
 		x.set	     == set		&& 
 		x.way	     == way		&& 
+		x.hsize	     == hsize		&& 
 		x.w_off	     == w_off		&& 
 		x.b_off	     == b_off		&&
 		x.state	     == state		&&
@@ -365,6 +369,7 @@ public:
 	   << "tag: " << x.tag         
 	   << ", set: "<< x.set         
 	   << ", way: " << x.way         
+	   << ", hsize: " << x.hsize         
 	   << ", w_off: " << x.w_off       
 	   << ", b_off: " << x.b_off       
 	   << ", state: " << x.state       

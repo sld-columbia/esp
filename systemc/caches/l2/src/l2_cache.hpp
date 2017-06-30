@@ -102,7 +102,7 @@ public:
     void reqs_lookup(addr_breakdown_t addr_br, bool &reqs_hit, 
 		     sc_uint<REQS_BITS> &reqs_hit_i);
     void read_set(set_t set);
-    void fill_reqs(addr_breakdown_t addr_br, l2_way_t way_hit,
+    void fill_reqs(addr_breakdown_t addr_br, l2_way_t way_hit, hsize_t hsize,
 		   unstable_state_t state, hprot_t hprot, 
 		   invack_cnt_t invack_cnt, word_t word, 
 		   line_t line, sc_uint<REQS_BITS> reqs_i);

@@ -73,6 +73,7 @@ public:
     inline void rand_wait();
     addr_t rand_addr(addr_t &word_addr, addr_t &line_addr);
     word_t rand_word();
+    tag_t rand_tag();
     void put_cpu_req(l2_cpu_req_t &cpu_req, cpu_msg_t cpu_msg, hsize_t hsize,
 		     addr_t addr, bool cacheable, word_t word, bool rpt);
     void get_req_out(l2_req_out_t &req_out, coh_msg_t coh_msg, addr_t addr, hprot_t hprot, bool rpt);
