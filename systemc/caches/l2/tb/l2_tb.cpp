@@ -89,17 +89,17 @@ void l2_tb::l2_test()
 
     // Read misses
     for (int i = 0; i < L2_WAYS; ++i) {
-    	put_cpu_req(cpu_req, READ, WORD, word_addr + (i*TAG_OFFSET), CACHEABLE, empty_word, RPT_OFF);
-    	get_req_out(req_out, REQ_GETS, cpu_req.addr, cpu_req.hprot, RPT_OFF);
-    	put_rsp_in(rsp_in, RSP_EDATA, req_out.addr, empty_line, RPT_OFF);
-    	get_rd_rsp(rd_rsp, addr, word_addr + (i*TAG_OFFSET), RPT_OFF);
+    	put_cpu_req(cpu_req, READ, WORD, word_addr + (i*TAG_OFFSET), CACHEABLE, empty_word, RPT);
+    	get_req_out(req_out, REQ_GETS, cpu_req.addr, cpu_req.hprot, RPT);
+    	put_rsp_in(rsp_in, RSP_EDATA, req_out.addr, empty_line, RPT);
+    	get_rd_rsp(rd_rsp, addr, word_addr + (i*TAG_OFFSET), RPT);
     	wait();
     }
 
     // Read hits
     for (int i = 0; i < L2_WAYS; ++i) {
-    	put_cpu_req(cpu_req, READ, WORD, word_addr + (i*TAG_OFFSET), CACHEABLE, empty_word, RPT_OFF);
-    	get_rd_rsp(rd_rsp, addr, word_addr + (i*TAG_OFFSET), RPT_OFF);
+    	put_cpu_req(cpu_req, READ, WORD, word_addr + (i*TAG_OFFSET), CACHEABLE, empty_word, RPT);
+    	get_rd_rsp(rd_rsp, addr, word_addr + (i*TAG_OFFSET), RPT);
     	wait();
     }
 
@@ -118,17 +118,17 @@ void l2_tb::l2_test()
     	// Write misses
     	if (j) {
     	    for (int i = 0; i < L2_WAYS; ++i) {
-    		put_cpu_req(cpu_req, WRITE, WORD, word_addr + (i*TAG_OFFSET), CACHEABLE, word + i + j*L2_WAYS, RPT_OFF);
-    		get_req_out(req_out, REQ_GETM, cpu_req.addr, cpu_req.hprot, RPT_OFF);
-    		put_rsp_in(rsp_in, RSP_DATA, req_out.addr, empty_line, RPT_OFF);
-    		get_wr_rsp(wr_rsp, addr, RPT_OFF);
+    		put_cpu_req(cpu_req, WRITE, WORD, word_addr + (i*TAG_OFFSET), CACHEABLE, word + i + j*L2_WAYS, RPT);
+    		get_req_out(req_out, REQ_GETM, cpu_req.addr, cpu_req.hprot, RPT);
+    		put_rsp_in(rsp_in, RSP_DATA, req_out.addr, empty_line, RPT);
+    		get_wr_rsp(wr_rsp, addr, RPT);
     		wait();
     	    }
     	}
     	// Write hits
     	for (int i = 0; i < L2_WAYS; ++i) {
-    	    put_cpu_req(cpu_req, WRITE, WORD, word_addr + (i*TAG_OFFSET), CACHEABLE, word + i + j*L2_WAYS, RPT_OFF);
-    	    get_wr_rsp(wr_rsp, addr, RPT_OFF);
+    	    put_cpu_req(cpu_req, WRITE, WORD, word_addr + (i*TAG_OFFSET), CACHEABLE, word + i + j*L2_WAYS, RPT);
+    	    get_wr_rsp(wr_rsp, addr, RPT);
     	    wait();
     	}
 
@@ -143,8 +143,8 @@ void l2_tb::l2_test()
     // verify writes correctness (read hits)
     for (int j = 0; j < sets_j; ++j) {
     	for (int i = 0; i < L2_WAYS; ++i) {
-    	    put_cpu_req(cpu_req, READ, WORD, word_addr + (i*TAG_OFFSET), CACHEABLE, empty_word, RPT_OFF);
-    	    get_rd_rsp(rd_rsp, addr, word + i + j*L2_WAYS, RPT_OFF);
+    	    put_cpu_req(cpu_req, READ, WORD, word_addr + (i*TAG_OFFSET), CACHEABLE, empty_word, RPT);
+    	    get_rd_rsp(rd_rsp, addr, word + i + j*L2_WAYS, RPT);
     	    wait();
     	}
 
@@ -159,26 +159,26 @@ void l2_tb::l2_test()
 
     // receive and answer PutM
     for (int k = 0; k < sets_j*L2_WAYS/2; ++k) {
-	    get_req_out(req_out, REQ_PUTM, empty_addr, empty_hprot, RPT_OFF);
+	    get_req_out(req_out, REQ_PUTM, empty_addr, empty_hprot, RPT);
 	    wait();
 
-	    get_req_out(req_out, REQ_PUTM, empty_addr, empty_hprot, RPT_OFF);
+	    get_req_out(req_out, REQ_PUTM, empty_addr, empty_hprot, RPT);
 	    wait();
 
-	    put_rsp_in(rsp_in, RSP_PUTACK, req_out.addr, empty_line, RPT_OFF);
+	    put_rsp_in(rsp_in, RSP_PUTACK, req_out.addr, empty_line, RPT);
 	    wait();
 
-	    put_rsp_in(rsp_in, RSP_PUTACK, req_out.addr, empty_line, RPT_OFF);
+	    put_rsp_in(rsp_in, RSP_PUTACK, req_out.addr, empty_line, RPT);
 	    wait();
     }
 
     // confirm that the flush happened correctly (read hits)
     for (int j = 0; j < sets_j; ++j) {
     	for (int i = 0; i < L2_WAYS; ++i) {
-    	    put_cpu_req(cpu_req, READ, WORD, word_addr + (i*TAG_OFFSET), CACHEABLE, empty_word, RPT_OFF);
-	    get_req_out(req_out, REQ_GETS, cpu_req.addr, cpu_req.hprot, RPT_OFF);
-	    put_rsp_in(rsp_in, RSP_EDATA, req_out.addr, empty_line, RPT_OFF);
-    	    get_rd_rsp(rd_rsp, addr, word_addr + (i*TAG_OFFSET), RPT_OFF);
+    	    put_cpu_req(cpu_req, READ, WORD, word_addr + (i*TAG_OFFSET), CACHEABLE, empty_word, RPT);
+	    get_req_out(req_out, REQ_GETS, cpu_req.addr, cpu_req.hprot, RPT);
+	    put_rsp_in(rsp_in, RSP_EDATA, req_out.addr, empty_line, RPT);
+    	    get_rd_rsp(rd_rsp, addr, word_addr + (i*TAG_OFFSET), RPT);
     	    wait();
     	}
 
@@ -191,12 +191,12 @@ void l2_tb::l2_test()
 
     // receive and answer PutM
     for (int k = 0; k < sets_j*L2_WAYS; ++k) {
-	get_req_out(req_out, REQ_PUTM, empty_addr, empty_hprot, RPT_OFF);
+	get_req_out(req_out, REQ_PUTM, empty_addr, empty_hprot, RPT);
 	wait();
     }
 
     for (int k = 0; k < sets_j*L2_WAYS; ++k) {
-	put_rsp_in(rsp_in, RSP_PUTACK, req_out.addr, empty_line, RPT_OFF);
+	put_rsp_in(rsp_in, RSP_PUTACK, req_out.addr, empty_line, RPT);
 	wait();
     }
 
@@ -209,10 +209,10 @@ void l2_tb::l2_test()
     	    word_addr = (wa << TAG_RANGE_LO) + (s << SET_RANGE_LO);
     	    word = word_addr;
 
-    	    put_cpu_req(cpu_req, READ, WORD, word_addr, CACHEABLE, empty_word, RPT_OFF);
-    	    get_req_out(req_out, REQ_GETS, cpu_req.addr, cpu_req.hprot, RPT_OFF);
-    	    put_rsp_in(rsp_in, RSP_EDATA, req_out.addr, empty_line, RPT_OFF);
-    	    get_rd_rsp(rd_rsp, word_addr, word, RPT_OFF);
+    	    put_cpu_req(cpu_req, READ, WORD, word_addr, CACHEABLE, empty_word, RPT);
+    	    get_req_out(req_out, REQ_GETS, cpu_req.addr, cpu_req.hprot, RPT);
+    	    put_rsp_in(rsp_in, RSP_EDATA, req_out.addr, empty_line, RPT);
+    	    get_rd_rsp(rd_rsp, word_addr, word, RPT);
     	    wait();
     	}
     }
@@ -224,12 +224,12 @@ void l2_tb::l2_test()
     		word_addr = (wo << W_OFF_RANGE_LO) + (wa << TAG_RANGE_LO) + (s << SET_RANGE_LO);
     		word = word_addr;
 
-    		put_cpu_req(cpu_req, WRITE, WORD, word_addr, CACHEABLE, word, RPT_OFF);
+    		put_cpu_req(cpu_req, WRITE, WORD, word_addr, CACHEABLE, word, RPT);
     		if (s >= SETS/2 && wo == 0) {
-    		    get_req_out(req_out, REQ_GETM, cpu_req.addr, cpu_req.hprot, RPT_OFF);
-    		    put_rsp_in(rsp_in, RSP_DATA, req_out.addr, empty_line, RPT_OFF);
+    		    get_req_out(req_out, REQ_GETM, cpu_req.addr, cpu_req.hprot, RPT);
+    		    put_rsp_in(rsp_in, RSP_DATA, req_out.addr, empty_line, RPT);
     		}
-    		get_wr_rsp(wr_rsp, word_addr, RPT_OFF);
+    		get_wr_rsp(wr_rsp, word_addr, RPT);
     		wait();
     	    }
     	}
@@ -243,8 +243,8 @@ void l2_tb::l2_test()
     		word_addr = (wo << W_OFF_RANGE_LO) + (wa << TAG_RANGE_LO) + (s << SET_RANGE_LO);
     		word = word_addr + 1;
 
-    		put_cpu_req(cpu_req, WRITE, WORD, word_addr, CACHEABLE, word, RPT_OFF);
-    		get_wr_rsp(wr_rsp, word_addr, RPT_OFF);
+    		put_cpu_req(cpu_req, WRITE, WORD, word_addr, CACHEABLE, word, RPT);
+    		get_wr_rsp(wr_rsp, word_addr, RPT);
     		wait();
     	    }
     	}
@@ -261,8 +261,8 @@ void l2_tb::l2_test()
     		else 
     		    word = word_addr;
 
-    		put_cpu_req(cpu_req, READ, WORD, word_addr, CACHEABLE, empty_word, RPT_OFF);
-    		get_rd_rsp(rd_rsp, word_addr, word, RPT_OFF);
+    		put_cpu_req(cpu_req, READ, WORD, word_addr, CACHEABLE, empty_word, RPT);
+    		get_rd_rsp(rd_rsp, word_addr, word, RPT);
     		wait();
     	    }
     	}
@@ -276,10 +276,10 @@ void l2_tb::l2_test()
     
     // receive and answer PutM
     for (int k = 0; k < SETS * L2_WAYS; ++k) {
-	    get_req_out(req_out, REQ_PUTM, empty_addr, empty_hprot, RPT_OFF);
+	    get_req_out(req_out, REQ_PUTM, empty_addr, empty_hprot, RPT);
 	    wait();
 
-	    put_rsp_in(rsp_in, RSP_PUTACK, req_out.addr, empty_line, RPT_OFF);
+	    put_rsp_in(rsp_in, RSP_PUTACK, req_out.addr, empty_line, RPT);
 	    wait();
 
 	    cnt++;

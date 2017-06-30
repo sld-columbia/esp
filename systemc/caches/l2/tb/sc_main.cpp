@@ -15,7 +15,7 @@ int sc_main(int argc, char *argv[])
 
     system_t tb_system("tb_system");
 
-    sc_clock	    clk("clk", CLOCK_PERIOD, SC_PS);
+    sc_clock	    clk("clk", CLOCK_PERIOD, SC_NS);
     sc_signal<bool> rst("rst");
 
     tb_system.clk(clk);
@@ -23,7 +23,7 @@ int sc_main(int argc, char *argv[])
 
     rst.write(false);
 
-    sc_start(RESET_PERIOD, SC_PS);
+    sc_start(RESET_PERIOD, SC_NS);
 
     rst.write(true);
 

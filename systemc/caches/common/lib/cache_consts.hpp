@@ -182,5 +182,6 @@
 // report
 #define RPT_OFF 0
 #define RPT_ON  1
+#define RPT     RPT_OFF
 
 #endif // __CACHES_CONSTS_HPP__
