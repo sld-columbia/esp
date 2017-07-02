@@ -8,25 +8,13 @@
 
 void l2_cache::ctrl()
 {
-    /*
-     * Constant variables
-     */
-
-    // empty
+    // empty variables
     const invack_cnt_t empty_invack_cnt = 0;
     const invack_cnt_t max_invack_cnt = MAX_INVACK_CNT;
     const word_t empty_word = 0;
     const line_t empty_line = 0;
     const hprot_t empty_hprot = 0;
-
-    /*
-     * End of constant variables
-     */
-
-
-    /*
-     * Reset
-     */
+    const tag_t empty_tag = 0;
 
     // Reset all signals and channels
     this->reset_io();
@@ -34,15 +22,8 @@ void l2_cache::ctrl()
     // Reset state memory
     this->reset_states();
 
-    /*
-     * End of reset
-     */
-
-
+    // Main loop
     while(true) {
-	/*
-	 * Local variables
-	 */
 
 	// input
 	l2_cpu_req_t	cpu_req;
@@ -50,12 +31,12 @@ void l2_cache::ctrl()
 	l2_rsp_in_t	rsp_in;
 
 	// output
-	l2_req_out_t req_out;
-	l2_rd_rsp_t rd_rsp;
-	l2_wr_rsp_t wr_rsp;
+	l2_req_out_t	req_out;
+	l2_rd_rsp_t	rd_rsp;
+	l2_wr_rsp_t	wr_rsp;
 
 	// input address breakdown
-	addr_breakdown_t	addr_br;
+	addr_breakdown_t addr_br;
 
 	// tag lookup
 	bool		tag_hit;
@@ -71,37 +52,32 @@ void l2_cache::ctrl()
 
 	// transaction select flags
 	bool    is_flush_to_get = false;
-	bool	is_rsp_to_get = false;
-	bool	is_evict_done = false;
-	bool	is_req_to_get = false;
+	bool	is_rsp_to_get	= false;
+	bool	is_req_to_get	= false;
     
-	// others
-	state_t state;
-	unstable_state_t unstable_state;
-	line_t line;
-	tag_t tag;
-	uint32_t put_cnt;
-	
-	/*
-	 * End of local variables
-	 */
+	// utilities
+	uint32_t	put_cnt;
 
+	// tmp
+	unstable_state_t	state_tmp;
+	addr_t			addr_evict;
+	coh_msg_t		coh_msg_tmp;
+	tag_t			tag_tmp;
+	set_t                   set_tmp;
+	
 
 	{
 	    NB_GET;
 
 	    is_flush_to_get = false;
 	    is_rsp_to_get = false;
-	    is_evict_done = false;
 	    is_req_to_get = false;
 
 	    if (l2_flush.nb_can_get()) {
 		is_flush_to_get = true;
 	    } else if (l2_rsp_in.nb_can_get()) { // put ack and inv ack not managed yet
 	    	is_rsp_to_get = true;
-	    } else if (evict_done) {
-		is_evict_done = true;
-	    } else if (l2_cpu_req.nb_can_get()) { // assuming READ or WRITE, HPROT cacheable
+	    } else if (l2_cpu_req.nb_can_get() && !evict_stall) { // assuming READ or WRITE, HPROT cacheable
 		is_req_to_get = true;
 	    } else {
 	     	wait();
@@ -142,7 +118,7 @@ void l2_cache::ctrl()
 			    addr_br.line = (tag_buf[w] << TAG_RANGE_LO) | (s << SET_RANGE_LO);
 			    ++put_cnt;
 
-			    if (state_buf[w] == SHARED) {
+			    if (state_buf[w] == SHARED || state_buf[w] == EXCLUSIVE) {
 				send_req_out(REQ_PUTS, empty_hprot, addr_br.line, empty_line);
 			    } else {
 				send_req_out(REQ_PUTM, empty_hprot, addr_br.line, lines_buf[w]);
@@ -165,20 +141,19 @@ void l2_cache::ctrl()
 		wait();
 	    }
 
-	} else if (is_rsp_to_get) { // put ack and inv ack not managed yet
+	} else if (is_rsp_to_get) { // inv ack not managed yet
 	    get_rsp_in(rsp_in);
 	    
 	    wait(); // for SystemC simulation only
 
-	    addr_breakdown(rsp_in.addr, addr_br);
+	    addr_br.breakdown(rsp_in.addr);
 
 	    reqs_lookup(addr_br, reqs_hit, reqs_hit_i);
-
-	    // evicts_lookup(addr_br, evicts_hit, evicts_hit_i);
 
 	    switch (rsp_in.coh_msg) {
 		
 	    case RSP_DATA :
+	    case RSP_EDATA :
 
 		switch (reqs[reqs_hit_i].state) {
 		
@@ -188,11 +163,11 @@ void l2_cache::ctrl()
 
 			// read response
 			send_rd_rsp(rsp_in.line);
-
-			// resolve unstable state
-			reqs[reqs_hit_i].state = INVALID;
-			put_reqs(addr_br.set, reqs[reqs_hit_i].way, addr_br.tag,
-				 rsp_in.line, reqs[reqs_hit_i].hprot, SHARED);
+			
+			if (rsp_in.coh_msg == RSP_DATA)
+			    state_tmp = SHARED;
+			else
+			    state_tmp = EXCLUSIVE;
 		    }
 		    break;
 
@@ -207,9 +182,8 @@ void l2_cache::ctrl()
 			// write word and resolve unstable state
 			write_word(rsp_in.line, reqs[reqs_hit_i].word, reqs[reqs_hit_i].w_off, 
 				   reqs[reqs_hit_i].b_off, reqs[reqs_hit_i].hsize);
-			reqs[reqs_hit_i].state = INVALID;
-			put_reqs(addr_br.set, reqs[reqs_hit_i].way, addr_br.tag, 
-				 rsp_in.line, reqs[reqs_hit_i].hprot, MODIFIED);
+
+			state_tmp = MODIFIED;
 		    }
 
 		    break;
@@ -218,41 +192,60 @@ void l2_cache::ctrl()
 		    RSP_DATA_DEFAULT;
 		}
 
-		break;
+		// resolve unstable state
+		reqs[reqs_hit_i].state = INVALID;
+		put_reqs(addr_br.set, reqs[reqs_hit_i].way, addr_br.tag,
+			 rsp_in.line, reqs[reqs_hit_i].hprot, state_tmp);
 
-	    case RSP_EDATA :
-		{
-		    RSP_EDATA_ALL;
-
-		    // read response
-		    send_rd_rsp(rsp_in.line);
-
-		    // resolve unstable state
-		    reqs[reqs_hit_i].state = INVALID;
-		    put_reqs(addr_br.set, reqs[reqs_hit_i].way, addr_br.tag,
-			     rsp_in.line, reqs[reqs_hit_i].hprot, EXCLUSIVE);
-		}
 		break;
 
 	    case RSP_INVACK : // not implemented yet
+		break;
+
+	    case RSP_PUTACK :
+
+		switch (reqs[reqs_hit_i].cpu_msg) {
+
+		case READ : 
+		    state_tmp = ISD;
+		    coh_msg_tmp = REQ_GETS;
+		    break;
+
+		case WRITE :
+		    state_tmp = IMAD;
+		    coh_msg_tmp = REQ_GETM;
+		    break;
+
+		default :
+		    PUTACK_DEFAULT;
+		}
+
+		set_tmp = reqs[reqs_hit_i].set;
+		evict_ways.port1[0][set_tmp] = reqs[reqs_hit_i].way + 1;
+		evict_stall = false;
+
+		reqs[reqs_hit_i].state = state_tmp;
+		reqs[reqs_hit_i].tag = reqs[reqs_hit_i].tag_estall;
+
+		addr_br.line = (reqs[reqs_hit_i].tag_estall << TAG_RANGE_LO) | 
+		    (addr_br.set << SET_RANGE_LO);
+
+		// send request to directory
+		send_req_out(coh_msg_tmp, reqs[reqs_hit_i].hprot, addr_br.line, empty_line);
+
 		break;
 
 	    default :
 		RSP_DEFAULT;
 	    }
 
-	} else if (is_req_to_get || is_evict_done) { // assuming READ or WRITE, HPROT cacheable
+	} else if (is_req_to_get) { // assuming READ or WRITE, HPROT cacheable
 
-	    // if (is_evict_done) {
-	    // 	cpu_req = estall_cpu_req;
-	    // 	is_evict_done = false;
-	    // } else {
-		get_cpu_req(cpu_req);
-	    // }
+	    get_cpu_req(cpu_req);
 
 	    wait(); // for SystemC simulation only
 
-	    addr_breakdown(cpu_req.addr, addr_br);
+	    addr_br.breakdown(cpu_req.addr);
 
 	    tag_lookup(addr_br, tag_hit, way_hit, 
 		       empty_way_found, empty_way, reqs_i);
@@ -278,7 +271,7 @@ void l2_cache::ctrl()
 			    HIT_WRITE_S;
 
 			    // save request in intermediate state
-			    fill_reqs(addr_br, way_hit, cpu_req.hsize, SMAD, cpu_req.hprot,
+			    fill_reqs(cpu_req.cpu_msg, addr_br, empty_tag, way_hit, cpu_req.hsize, SMAD, cpu_req.hprot,
 				      max_invack_cnt, cpu_req.word,
 				      lines_buf[way_hit], reqs_i);
 
@@ -314,19 +307,16 @@ void l2_cache::ctrl()
 		}
 
 	    } else if (empty_way_found) {
+
 		switch (cpu_req.cpu_msg) {
 		    
 		case READ :
 		    {
 			MISS_READ;
 
-			// save request in intermediate state
-			fill_reqs(addr_br, empty_way, cpu_req.hsize, ISD, cpu_req.hprot,
-				  max_invack_cnt, empty_word, empty_line, reqs_i);
+			state_tmp = ISD;
+			coh_msg_tmp = REQ_GETS;
 
-			// send request to directory
-			send_req_out(REQ_GETS, cpu_req.hprot, 
-				     addr_br.line, empty_line);
 		    }
 		    break;
 
@@ -334,23 +324,56 @@ void l2_cache::ctrl()
 		    {
 			MISS_WRITE;
 
-			// save request in intermediate state
-			fill_reqs(addr_br, empty_way, cpu_req.hsize, IMAD, cpu_req.hprot,
-				  max_invack_cnt, cpu_req.word, empty_line, reqs_i);
+			state_tmp = IMAD;
+			coh_msg_tmp = REQ_GETM;
 
-			// send request to directory
-			send_req_out(REQ_GETM, cpu_req.hprot,
-				     addr_br.line, empty_line);
 		    }
 		    break;
-		    
+
 		default:
 		    MISS_DEFAULT;
 		}
 
+		// save request in intermediate state
+		fill_reqs(cpu_req.cpu_msg, addr_br, empty_tag, empty_way, cpu_req.hsize, 
+			  state_tmp, cpu_req.hprot, max_invack_cnt, cpu_req.word, empty_line, reqs_i);
+
+		// send request to directory
+		send_req_out(coh_msg_tmp, cpu_req.hprot, addr_br.line, empty_line);
+
 	    } else {
-		EVICT_DEFAULT;
-		// TODO implement eviction
+
+		addr_evict = (tag_buf[evict_way] << TAG_RANGE_LO) | (addr_br.set << SET_RANGE_LO);
+		tag_tmp = addr_br.tag;
+		addr_br.tag = tag_buf[evict_way];
+		
+		switch (state_buf[evict_way]) {
+
+		case SHARED :
+		    coh_msg_tmp = REQ_PUTS;
+		    state_tmp = SIA;
+		    break;
+
+		case EXCLUSIVE :
+		    coh_msg_tmp = REQ_PUTS;
+		    state_tmp = MIA;
+		    break;
+
+		case MODIFIED :
+		    coh_msg_tmp = REQ_PUTM;
+		    state_tmp = MIA;
+		    break;
+
+		default :
+		    EVICT_DEFAULT;
+
+		}
+
+		send_inval(addr_evict);
+		send_req_out(coh_msg_tmp, empty_hprot, addr_evict, lines_buf[evict_way]);
+		fill_reqs(cpu_req.cpu_msg, addr_br, tag_tmp, evict_way, cpu_req.hsize, state_tmp, cpu_req.hprot,
+			  max_invack_cnt, cpu_req.word,
+			  empty_line, reqs_i);
 	    }
 	}
 	
@@ -430,8 +453,8 @@ inline void l2_cache::reset_io()
     evict_ways.port1.reset();
     evict_ways.port2.reset();
 
-    evict_done = 0;
-    
+    evict_stall = false;
+
     wait();
 }
 
@@ -450,17 +473,6 @@ inline void l2_cache::reset_states()
     }
 }
 
-void l2_cache::addr_breakdown(addr_t addr, addr_breakdown_t &addr_br)
-{
-    addr_br.line = addr;
-    addr_br.line.range(OFF_RANGE_HI, OFF_RANGE_LO) = 0;
-    addr_br.tag	  = addr.range(TAG_RANGE_HI, TAG_RANGE_LO);
-    addr_br.set	  = addr.range(SET_RANGE_HI, SET_RANGE_LO);
-    addr_br.off	  = addr.range(OFF_RANGE_HI, OFF_RANGE_LO);
-    addr_br.w_off = addr.range(W_OFF_RANGE_HI, W_OFF_RANGE_LO);
-    addr_br.b_off = addr.range(B_OFF_RANGE_HI, B_OFF_RANGE_LO);
-}
-
 void l2_cache::tag_lookup(addr_breakdown_t addr_br, bool &tag_hit,
 			  l2_way_t &way_hit, bool &empty_way_found, 
 			  l2_way_t &empty_way, sc_uint<REQS_BITS> &reqs_i)
@@ -473,7 +485,7 @@ void l2_cache::tag_lookup(addr_breakdown_t addr_br, bool &tag_hit,
     read_set(addr_br.set);
     evict_way = evict_ways.port2[0][addr_br.set];
 
-    for (unsigned int i = 0; i < L2_WAYS; ++i) {
+    for (int i = L2_WAYS-1; i >=0; --i) {
 	TAG_LOOKUP_LOOP;
 
 	// tag_buf[i]   = tags[uint_set][i];
@@ -558,12 +570,14 @@ void l2_cache::reqs_lookup(addr_breakdown_t addr_br, bool &reqs_hit, sc_uint<REQ
     }
 }
 
-void l2_cache::fill_reqs(addr_breakdown_t addr_br, l2_way_t way_hit, hsize_t hsize,
+void l2_cache::fill_reqs(cpu_msg_t cpu_msg, addr_breakdown_t addr_br, tag_t tag_estall, l2_way_t way_hit, hsize_t hsize,
 				unstable_state_t state, hprot_t hprot, 
 				invack_cnt_t invack_cnt, word_t word, 
 				line_t line, sc_uint<REQS_BITS> reqs_i)
 {
+    reqs[reqs_i].cpu_msg     = cpu_msg;
     reqs[reqs_i].tag	     = addr_br.tag;
+    reqs[reqs_i].tag_estall  = tag_estall;
     reqs[reqs_i].set	     = addr_br.set;
     reqs[reqs_i].way	     = way_hit;
     reqs[reqs_i].hsize	     = hsize;
@@ -575,15 +589,6 @@ void l2_cache::fill_reqs(addr_breakdown_t addr_br, l2_way_t way_hit, hsize_t hsi
     reqs[reqs_i].word	     = word;
     reqs[reqs_i].line	     = line;
 }
-
-void l2_cache::fill_evicts(addr_breakdown_t addr_br, evict_state_t state, l2_way_t way, sc_uint<EVICTS_BITS> evicts_i)
-{
-    evicts[evicts_i].tag	     = addr_br.tag;
-    evicts[evicts_i].set	     = addr_br.set;
-    evicts[evicts_i].way	     = way;
-    evicts[evicts_i].state	     = state;
-}
-
 
 void l2_cache::get_cpu_req(l2_cpu_req_t &cpu_req)
 {
@@ -646,6 +651,13 @@ void l2_cache::send_wr_rsp(set_t set)
     l2_wr_rsp.put(wr_rsp);
 }
 
+void l2_cache::send_inval(addr_t addr_inval)
+{
+    SEND_INVAL;
+
+    l2_inval.put(addr_inval);
+}
+
 void l2_cache::put_reqs(set_t set, l2_way_t way, tag_t tag,
 			       line_t line, hprot_t hprot, state_t state)
 {
@@ -657,4 +669,5 @@ void l2_cache::put_reqs(set_t set, l2_way_t way, tag_t tag,
     hprots.port1[0][base + way] = hprot;
     states.port1[0][base + way] = state;
     tags.port1[0][base + way]   = tag;
+
 }

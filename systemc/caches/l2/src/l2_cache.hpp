@@ -3,9 +3,6 @@
 #ifndef __L2_CACHE_HPP__
 #define __L2_CACHE_HPP__
 
-
-#include "cache_consts.hpp"
-#include "cache_types.hpp"
 #include "cache_utils.hpp"
 #include "l2_cache_directives.hpp"
 #include "l2_tags.hpp"
@@ -51,7 +48,6 @@ public:
 
     // Local registers
     reqs_buf_t	 reqs[N_REQS];
-    evicts_buf_t evicts[N_EVICTS];
 
     tag_t	 tag_buf[L2_WAYS];
     state_t	 state_buf[L2_WAYS];
@@ -95,19 +91,16 @@ public:
     // Functions
     inline void reset_io();
     inline void reset_states();
-    void addr_breakdown(addr_t addr, addr_breakdown_t &addr_br);
     void tag_lookup(addr_breakdown_t addr_br, bool &tag_hit,
 		    l2_way_t &way_hit, bool &empty_way_found,
 		    l2_way_t &empty_way, sc_uint<REQS_BITS> &reqs_i);
     void reqs_lookup(addr_breakdown_t addr_br, bool &reqs_hit, 
 		     sc_uint<REQS_BITS> &reqs_hit_i);
     void read_set(set_t set);
-    void fill_reqs(addr_breakdown_t addr_br, l2_way_t way_hit, hsize_t hsize,
+    void fill_reqs(cpu_msg_t cpu_msg, addr_breakdown_t addr_br, tag_t tag_estall, l2_way_t way_hit, hsize_t hsize,
 		   unstable_state_t state, hprot_t hprot, 
 		   invack_cnt_t invack_cnt, word_t word, 
 		   line_t line, sc_uint<REQS_BITS> reqs_i);
-    void fill_evicts(addr_breakdown_t addr_br, evict_state_t state, 
-		     l2_way_t way, sc_uint<EVICTS_BITS> evicts_i);
     void get_cpu_req(l2_cpu_req_t &cpu_req);
     void get_rsp_in(l2_rsp_in_t &rsp_in);
     void get_flush();
@@ -115,14 +108,16 @@ public:
 		      addr_t line_addr, line_t lines);
     void send_rd_rsp(line_t lines);
     void send_wr_rsp(set_t set);
+    void send_inval(addr_t addr_inval);
     void put_reqs(set_t set, l2_way_t way, tag_t tag,
 		  line_t lines, hprot_t hprot, state_t state);
+    line_t make_line_of_addr(addr_t addr);
 
 private:
     // debug
     sc_bv<ASSERT_WIDTH>   asserts_tmp;
     sc_bv<BOOKMARK_WIDTH> bookmark_tmp;
-    bool evict_done;
+    bool evict_stall;
 };
 
 

@@ -311,7 +311,9 @@ class reqs_buf_t
 
 public:
 
+    cpu_msg_t           cpu_msg;
     tag_t		tag;
+    tag_t               tag_estall;
     set_t		set;
     l2_way_t            way;
     hsize_t             hsize;
@@ -324,7 +326,9 @@ public:
     line_t		line;
 
     reqs_buf_t() :
+	cpu_msg(0),
 	tag(0),
+	tag_estall(0),
 	set(0),
 	way(0),
 	hsize(0),
@@ -338,21 +342,25 @@ public:
     {}	
 
     inline reqs_buf_t& operator = (const reqs_buf_t& x) {
-	tag	       = x.tag;
-	set	       = x.set;
-	way	       = x.way;
-	hsize	       = x.hsize;
-	w_off	       = x.w_off;
-	b_off	   = x.b_off;
-	state	   = x.state;
-	hprot	   = x.hprot;
-	invack_cnt = x.invack_cnt;
-	word	       = x.word;
-	line	       = x.line;
+	cpu_msg			= x.cpu_msg;
+	tag			= x.tag;
+	tag_estall		= x.tag_estall;
+	set			= x.set;
+	way			= x.way;
+	hsize			= x.hsize;
+	w_off			= x.w_off;
+	b_off			= x.b_off;
+	state			= x.state;
+	hprot			= x.hprot;
+	invack_cnt		= x.invack_cnt;
+	word			= x.word;
+	line			= x.line;
 	return *this;
     }
-    inline bool operator      == (const reqs_buf_t& x) const {
-	return (x.tag	     == tag		&& 
+    inline bool operator     == (const reqs_buf_t& x) const {
+	return (x.cpu_msg    == cpu_msg		&& 
+		x.tag	     == tag		&& 
+		x.tag_estall == tag_estall	&& 
 		x.set	     == set		&& 
 		x.way	     == way		&& 
 		x.hsize	     == hsize		&& 
@@ -366,7 +374,9 @@ public:
     }
     inline friend ostream & operator<<(ostream& os, const reqs_buf_t& x) {
 	os << hex << "(" 
+	   << "cpu_msg: " << x.cpu_msg         
 	   << "tag: " << x.tag         
+	   << "tag_estall: " << x.tag_estall         
 	   << ", set: "<< x.set         
 	   << ", way: " << x.way         
 	   << ", hsize: " << x.hsize         
@@ -382,48 +392,6 @@ public:
 	    os << x.line.range(base + BITS_PER_WORD - 1, base) << " ";
 	}
 	os << ")";        
-	return os;
-    }
-};
-
-
-// ongoing eviction buffer
-class evicts_buf_t 
-{
-
-public:
-
-    tag_t		tag;
-    set_t		set;
-    l2_way_t		way;
-    evict_state_t	state;
-
-    evicts_buf_t() :
-	tag(0),
-	set(0),
-	way(0),
-	state(0)
-    {}
-
-    inline evicts_buf_t& operator = (const evicts_buf_t& x) {
-	tag   = x.tag;
-	set   = x.set;
-	way   = x.way;
-	state = x.state;
-	return *this;
-    }
-    inline bool operator == (const evicts_buf_t& x) const {
-	return (x.tag	== tag	&& 
-		x.set	== set	&& 
-		x.way	== way	&& 
-		x.state	== state);
-    }
-    inline friend ostream & operator<<(ostream& os, const evicts_buf_t& x) {
-	os << hex << "(" 
-	   << "tag: " << x.tag   
-	   << ", set: " << x.set   
-	   << ", way: " << x.way   
-	   << ", state: " << x.state << ")";
 	return os;
     }
 };
@@ -466,6 +434,9 @@ class addr_breakdown_t
 public:
 
     addr_t              line;
+    addr_t              word;
+    addr_t              hword;
+    addr_t              byte;
     tag_t               tag;
     set_t               set;
     offset_t            off;
@@ -474,6 +445,9 @@ public:
 
     addr_breakdown_t() :
 	line(0),
+	word(0),
+	hword(0),
+	byte(0),
 	tag(0),
 	set(0),
 	off(0),
@@ -483,6 +457,9 @@ public:
 
     inline addr_breakdown_t& operator = (const addr_breakdown_t& x) {
 	line   = x.line;
+	word   = x.word;
+	hword  = x.hword;
+	byte   = x.byte;
 	tag    = x.tag;
 	set    = x.set;
 	off    = x.off;
@@ -492,6 +469,9 @@ public:
     }
     inline bool operator == (const addr_breakdown_t& x) const {
 	return (x.line	== line		&& 
+		x.word	== word		&& 
+		x.hword == hword	&& 
+		x.byte	== byte		&& 
 		x.tag	== tag		&& 
 		x.set	== set		&& 
 		x.off	== off		&& 
@@ -500,14 +480,59 @@ public:
     }
     inline friend ostream & operator<<(ostream& os, const addr_breakdown_t& x) {
 	os << hex << "(" 
-	   << "line: " << x.line 
-	   << ", tag: " << x.tag 
-	   << ", set: " << x.set 
-	   << ", off: " << x.off 
+	   << "line: "    << x.line 
+	   << ", word: "  << x.word
+	   << ", hword: " << x.hword 
+	   << ", byte: "  << x.byte 
+	   << ", tag: "   << x.tag 
+	   << ", set: "   << x.set 
+	   << ", off: "   << x.off 
 	   << ", w_off: " << x.w_off 
 	   << ", b_off: " << x.b_off << ")";
 	return os;
     }
+    
+    void tag_incr(int a) {
+	line += a * TAG_OFFSET;
+	word += a * TAG_OFFSET;
+	hword += a * TAG_OFFSET;
+	byte += a * TAG_OFFSET;
+	tag += a;
+    }
+
+    void set_incr(int a) {
+	line += a * SET_OFFSET;
+	word += a * SET_OFFSET;
+	hword += a * SET_OFFSET;
+	byte += a * SET_OFFSET;
+	set += a;
+    }
+
+    void tag_decr(int a) {
+    	line -= a * TAG_OFFSET;
+    	word -= a * TAG_OFFSET;
+    	hword -= a * TAG_OFFSET;
+    	byte -= a * TAG_OFFSET;
+    	tag -= a;
+    }
+
+    void breakdown(addr_t addr)
+    {
+	line  = addr;
+	word  = addr;
+	hword = addr;
+	byte  = addr;
+	tag   = addr.range(TAG_RANGE_HI, TAG_RANGE_LO);
+	set   = addr.range(SET_RANGE_HI, SET_RANGE_LO);
+	off   = addr.range(OFF_RANGE_HI, OFF_RANGE_LO);
+	w_off = addr.range(W_OFF_RANGE_HI, W_OFF_RANGE_LO);
+	b_off = addr.range(B_OFF_RANGE_HI, B_OFF_RANGE_LO);
+
+	line.range(OFF_RANGE_HI, OFF_RANGE_LO)		= 0;
+	word.range(B_OFF_RANGE_HI, B_OFF_RANGE_LO)	= 0;
+	hword.range(B_OFF_RANGE_HI - 1, B_OFF_RANGE_LO) = 0;
+    }
+
 };
 
 

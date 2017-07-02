@@ -4,8 +4,6 @@
 #define __L2_TB_HPP__
 
 
-#include "cache_consts.hpp"
-#include "cache_types.hpp"
 #include "cache_utils.hpp"
 
 class l2_tb : public sc_module
@@ -71,16 +69,23 @@ public:
     // inline void write_word(line_t &line, word_t word, word_offset_t w_off);
     // inline word_t read_word(line_t line, word_offset_t w_off);
     inline void rand_wait();
-    addr_t rand_addr(addr_t &word_addr, addr_t &line_addr);
+    addr_breakdown_t rand_addr();
     word_t rand_word();
     tag_t rand_tag();
     void put_cpu_req(l2_cpu_req_t &cpu_req, cpu_msg_t cpu_msg, hsize_t hsize,
-		     addr_t addr, bool cacheable, word_t word, bool rpt);
-    void get_req_out(l2_req_out_t &req_out, coh_msg_t coh_msg, addr_t addr, hprot_t hprot, bool rpt);
-    void put_rsp_in(l2_rsp_in_t &rsp_in, coh_msg_t coh_msg, addr_t addr, line_t line, bool rpt);
-    void get_rd_rsp(l2_rd_rsp_t &rd_rsp, addr_t addr, word_t word, bool rpt);
-    void get_wr_rsp(l2_wr_rsp_t &wr_rsp, addr_t addr, bool rpt);
+		     bool cacheable, addr_t addr, word_t word, bool rpt);
+    void get_req_out(coh_msg_t coh_msg, addr_t addr, hprot_t hprot, bool rpt);
+    void put_rsp_in(coh_msg_t coh_msg, addr_t addr, line_t line, bool rpt);
+    void get_rd_rsp(addr_breakdown_t addr, line_t line, bool rpt);
+    void get_wr_rsp(set_t set, bool rpt);
+    void get_inval(addr_t addr, bool rpt);
+    void op(cpu_msg_t cpu_msg, sc_uint<2> beh, coh_msg_t put_msg, hsize_t hsize, bool cacheable, 
+	    addr_breakdown_t req_addr, word_t req_word, line_t rsp_line, bool rpt);
+    void op_flush(coh_msg_t coh_msg, addr_t addr_line, bool rpt);
+    line_t make_line_of_addr(addr_t addr);
 };
 
 
 #endif /* __L2_TB_HPP__ */
+
+

@@ -66,6 +66,11 @@
 #define N_EVICTS	4	// affects N_EVICTS
 #define EVICTS_BITS	2	// depends on EVICTS_BITS
 
+// L2 operation behavior
+#define HIT		0
+#define MISS		1
+#define MISS_EVICT	2
+
 /*
  * Coherence
  */
@@ -150,8 +155,8 @@
  */
 
 // debug
-#define ASSERT_WIDTH	8
-#define BOOKMARK_WIDTH	18
+#define ASSERT_WIDTH	9
+#define BOOKMARK_WIDTH	19
 
 #define AS_REQS_MISS		(1 << 0)
 #define AS_RSP_DATA_DEFAULT     (1 << 1)
@@ -161,6 +166,7 @@
 #define AS_MISS_DEFAULT		(1 << 5)
 #define AS_EVICT_DEFAULT	(1 << 6)
 #define AS_WRONG_HSIZE    	(1 << 7)
+#define AS_PUTACK_DEFAULT       (1 << 8)
 
 #define BM_GET_RSP_IN		(1 << 0)
 #define BM_GET_CPU_REQ		(1 << 1)
@@ -180,10 +186,13 @@
 #define BM_PUT_REQS		(1 << 15)
 #define BM_GET_FLUSH		(1 << 16)
 #define BM_FLUSH_READ_SET	(1 << 17)
+#define BM_SEND_INVAL		(1 << 18)
 
 // report
 #define RPT_OFF 0
 #define RPT_ON  1
-#define RPT     RPT_ON
+#define RPT_TB  RPT_ON
+#define RPT_RTL RPT_OFF
+#define RPT_BM  RPT_OFF
 
 #endif // __CACHES_CONSTS_HPP__
