@@ -510,7 +510,7 @@ def print_tiles(fp, esp_config, soc):
   fp.write(");\n")
   fp.write("\n")
 
-  fp.write("  type cpu_info_array is array (" + str(esp_config.NCPU_MAX - 1) + " downto 0) of integer;\n")
+#  fp.write("  type cpu_info_array is array (" + str(esp_config.NCPU_MAX - 1) + " downto 0) of integer;\n")
 
   fp.write("  constant cpu_tile_id : cpu_info_array := (\n")
   for i in range(0, esp_config.ntiles):
@@ -728,8 +728,8 @@ def print_tiles(fp, esp_config, soc):
       fp.write("    " + str(i) + " => CFG_SLD_" + acc.uppercase_name + "_SG,\n")
   fp.write("    others => 0);\n\n")
 
-  fp.write("  subtype tile_cpu_id_type is integer range -1 to " + str(esp_config.NCPU_MAX - 1) + ";\n")
-  fp.write("  type tile_cpu_id_array is array (0 to CFG_TILES_NUM-1) of tile_cpu_id_type;\n")
+#  fp.write("  subtype tile_cpu_id_type is integer range -1 to " + str(esp_config.NCPU_MAX - 1) + ";\n")
+#  fp.write("  type tile_cpu_id_array is array (0 to CFG_TILES_NUM-1) of tile_cpu_id_type;\n")
   fp.write("  constant tile_cpu_id : tile_cpu_id_array := (\n")
   for i in range(0, esp_config.ntiles):
     fp.write("    " + str(i) + " => " + str(esp_config.tiles[i].cpuid) + ",\n")

@@ -65,9 +65,9 @@ entity mem_q2bus is
     coherence_req_data_out           : in  noc_flit_type;
     coherence_req_empty              : in  std_ulogic;
     -- FPGA->chip
-    coherence_rsp_line_wrreq         : out std_ulogic;
-    coherence_rsp_line_data_in       : out noc_flit_type;
-    coherence_rsp_line_full          : in  std_ulogic;
+    coherence_rsp_wrreq         : out std_ulogic;
+    coherence_rsp_data_in       : out noc_flit_type;
+    coherence_rsp_full          : in  std_ulogic;
     -- chip->FPGA
     dma_rcv_rdreq             : out std_ulogic;
     dma_rcv_data_out          : in  noc_flit_type;
@@ -118,12 +118,12 @@ begin  -- rtl
   end process;
   bus_fifos_get_packet: process (bus_in_data, bus_in_void, bus_msg_type,
                                  bus_preamble, remote_apb_snd_full,
-                                 coherence_rsp_line_full, dma_snd_full,
+                                 coherence_rsp_full, dma_snd_full,
                                  remote_ahbs_snd_full, bus_fifos_current,
                                  noc_id_in)
   begin  -- process bus_get_packet
     remote_apb_snd_wrreq <= '0';
-    coherence_rsp_line_wrreq <= '0';
+    coherence_rsp_wrreq <= '0';
     dma_snd_wrreq <= '0';
     remote_ahbs_snd_wrreq <= '0';
     bus_fifos_next <= bus_fifos_current;
@@ -143,8 +143,8 @@ begin  -- rtl
                      elsif ((noc_id_in = ROUTE_NOC3 and
                              (is_gets(bus_msg_type) or is_getm(bus_msg_type)))
                             and bus_preamble = PREAMBLE_HEADER) then
-                       coherence_rsp_line_wrreq <= not coherence_rsp_line_full;
-                       if coherence_rsp_line_full = '0' then
+                       coherence_rsp_wrreq <= not coherence_rsp_full;
+                       if coherence_rsp_full = '0' then
                          bus_fifos_next <= packet_coherence_rsp_line;
                        else
                          bus_in_stop <= '1';
@@ -177,10 +177,10 @@ begin  -- rtl
                                bus_fifos_next <= none;
                              end if;
 
-      when packet_coherence_rsp_line => coherence_rsp_line_wrreq <= (not bus_in_void) and (not coherence_rsp_line_full);
-                             bus_in_stop <= coherence_rsp_line_full and (not bus_in_void);
+      when packet_coherence_rsp_line => coherence_rsp_wrreq <= (not bus_in_void) and (not coherence_rsp_full);
+                             bus_in_stop <= coherence_rsp_full and (not bus_in_void);
                              if (bus_preamble = PREAMBLE_TAIL and bus_in_void = '0' and
-                                 coherence_rsp_line_full = '0') then
+                                 coherence_rsp_full = '0') then
                                bus_fifos_next <= none;
                              end if;
 
@@ -204,7 +204,7 @@ begin  -- rtl
 
   remote_apb_snd_data_in <= bus_in_data;
 
-  coherence_rsp_line_data_in <= bus_in_data;
+  coherence_rsp_data_in <= bus_in_data;
 
   dma_snd_data_in <= bus_in_data;
 

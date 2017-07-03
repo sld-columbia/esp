@@ -225,6 +225,7 @@ package leon3 is
     ahbo   : out ahb_mst_out_type;
     ahbsi  : in  ahb_slv_in_type;
     ahbso  : in  ahb_slv_out_vector;
+    dflush : out std_ulogic;
     irqi   : in  l3_irq_in_type;
     irqo   : out l3_irq_out_type;
     dbgi   : in  l3_debug_in_type;
@@ -1099,6 +1100,7 @@ component leon3x
     dbgo   : out l3_debug_out_type;
     fpui   : out grfpu_in_type;
     fpuo   : in  grfpu_out_type;
+    dflush : out std_ulogic;
     clken  : in  std_ulogic
   );
 end component;

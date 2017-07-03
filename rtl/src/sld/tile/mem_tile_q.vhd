@@ -53,13 +53,13 @@ entity mem_tile_q is
     coherence_fwd_data_in           : in  noc_flit_type;
     coherence_fwd_full              : out std_ulogic;
     -- tile->NoC3
-    coherence_rsp_line_snd_wrreq            : in  std_ulogic;
-    coherence_rsp_line_snd_data_in          : in  noc_flit_type;
-    coherence_rsp_line_snd_full             : out std_ulogic;
+    coherence_rsp_snd_wrreq            : in  std_ulogic;
+    coherence_rsp_snd_data_in          : in  noc_flit_type;
+    coherence_rsp_snd_full             : out std_ulogic;
     -- Noc3->tile
-    coherence_rsp_line_rcv_rdreq                       : in  std_ulogic;
-    coherence_rsp_line_rcv_data_out                    : out noc_flit_type;
-    coherence_rsp_line_rcv_empty                       : out std_ulogic;
+    coherence_rsp_rcv_rdreq                       : in  std_ulogic;
+    coherence_rsp_rcv_data_out                    : out noc_flit_type;
+    coherence_rsp_rcv_empty                       : out std_ulogic;
     -- NoC6->tile
     dma_rcv_rdreq                       : in  std_ulogic;
     dma_rcv_data_out                    : out noc_flit_type;
@@ -153,13 +153,13 @@ architecture rtl of mem_tile_q is
   signal coherence_fwd_data_out          : noc_flit_type;
   signal coherence_fwd_empty             : std_ulogic;
   -- tile->NoC3
-  signal coherence_rsp_line_snd_rdreq            : std_ulogic;
-  signal coherence_rsp_line_snd_data_out         : noc_flit_type;
-  signal coherence_rsp_line_snd_empty            : std_ulogic;
+  signal coherence_rsp_snd_rdreq            : std_ulogic;
+  signal coherence_rsp_snd_data_out         : noc_flit_type;
+  signal coherence_rsp_snd_empty            : std_ulogic;
   -- NoC3->tile
-  signal coherence_rsp_line_rcv_wrreq                       : std_ulogic;
-  signal coherence_rsp_line_rcv_data_in                     : noc_flit_type;
-  signal coherence_rsp_line_rcv_full                        : std_ulogic;
+  signal coherence_rsp_rcv_wrreq                       : std_ulogic;
+  signal coherence_rsp_rcv_data_in                     : noc_flit_type;
+  signal coherence_rsp_rcv_full                        : std_ulogic;
   -- NoC6->tile
   signal dma_rcv_wrreq                       : std_ulogic;
   signal dma_rcv_data_in                     : noc_flit_type;
@@ -282,9 +282,9 @@ begin  -- rtl
 
   -- From noc3: coherence response messages from CPU (LINE on a GETS while
   -- owining the line in modified state)
-  noc3_out_stop   <= coherence_rsp_line_rcv_full and (not noc3_out_void);
-  coherence_rsp_line_rcv_data_in <= noc3_out_data;
-  coherence_rsp_line_rcv_wrreq   <= (not noc3_out_void) and (not coherence_rsp_line_rcv_full);
+  noc3_out_stop   <= coherence_rsp_rcv_full and (not noc3_out_void);
+  coherence_rsp_rcv_data_in <= noc3_out_data;
+  coherence_rsp_rcv_wrreq   <= (not noc3_out_void) and (not coherence_rsp_rcv_full);
   fifo_3: fifo
     generic map (
       depth => 18,                      --Header, address, [data]
@@ -292,17 +292,17 @@ begin  -- rtl
     port map (
       clk      => clk,
       rst      => fifo_rst,
-      rdreq    => coherence_rsp_line_rcv_rdreq,
-      wrreq    => coherence_rsp_line_rcv_wrreq,
-      data_in  => coherence_rsp_line_rcv_data_in,
-      empty    => coherence_rsp_line_rcv_empty,
-      full     => coherence_rsp_line_rcv_full,
-      data_out => coherence_rsp_line_rcv_data_out);
+      rdreq    => coherence_rsp_rcv_rdreq,
+      wrreq    => coherence_rsp_rcv_wrreq,
+      data_in  => coherence_rsp_rcv_data_in,
+      empty    => coherence_rsp_rcv_empty,
+      full     => coherence_rsp_rcv_full,
+      data_out => coherence_rsp_rcv_data_out);
 
   -- to noc3: coherence response messages to CPU (LINE)
-  noc3_in_data <= coherence_rsp_line_snd_data_out;
-  noc3_in_void <= coherence_rsp_line_snd_empty or noc3_in_stop;
-  coherence_rsp_line_snd_rdreq <= (not coherence_rsp_line_snd_empty) and (not noc3_in_stop);
+  noc3_in_data <= coherence_rsp_snd_data_out;
+  noc3_in_void <= coherence_rsp_snd_empty or noc3_in_stop;
+  coherence_rsp_snd_rdreq <= (not coherence_rsp_snd_empty) and (not noc3_in_stop);
   fifo_4: fifo
     generic map (
       depth => 5,                       --Header, cache line
@@ -310,12 +310,12 @@ begin  -- rtl
     port map (
       clk      => clk,
       rst      => fifo_rst,
-      rdreq    => coherence_rsp_line_snd_rdreq,
-      wrreq    => coherence_rsp_line_snd_wrreq,
-      data_in  => coherence_rsp_line_snd_data_in,
-      empty    => coherence_rsp_line_snd_empty,
-      full     => coherence_rsp_line_snd_full,
-      data_out => coherence_rsp_line_snd_data_out);
+      rdreq    => coherence_rsp_snd_rdreq,
+      wrreq    => coherence_rsp_snd_wrreq,
+      data_in  => coherence_rsp_snd_data_in,
+      empty    => coherence_rsp_snd_empty,
+      full     => coherence_rsp_snd_full,
+      data_out => coherence_rsp_snd_data_out);
 
 
 

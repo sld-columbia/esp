@@ -65,9 +65,9 @@ entity fpga_q is
     coherence_req_data_out           : out noc_flit_type;
     coherence_req_empty              : out std_ulogic;
     -- FPGA->chip
-    coherence_rsp_line_wrreq         : in  std_ulogic;
-    coherence_rsp_line_data_in       : in  noc_flit_type;
-    coherence_rsp_line_full           : out std_ulogic;
+    coherence_rsp_wrreq         : in  std_ulogic;
+    coherence_rsp_data_in       : in  noc_flit_type;
+    coherence_rsp_full           : out std_ulogic;
     -- chip->FPGA
     dma_rcv_rdreq             : in  std_ulogic;
     dma_rcv_data_out          : out noc_flit_type;
@@ -110,9 +110,9 @@ architecture rtl of fpga_q is
   signal coherence_req_wrreq               : std_ulogic;
   signal coherence_req_data_in             : noc_flit_type;
   signal coherence_req_full                : std_ulogic;
-  signal coherence_rsp_line_rdreq               : std_ulogic;
-  signal coherence_rsp_line_data_out            : noc_flit_type;
-  signal coherence_rsp_line_empty               : std_ulogic;
+  signal coherence_rsp_rdreq               : std_ulogic;
+  signal coherence_rsp_data_out            : noc_flit_type;
+  signal coherence_rsp_empty               : std_ulogic;
   signal dma_rcv_wrreq                : std_ulogic;
   signal dma_rcv_data_in              : noc_flit_type;
   signal dma_rcv_full                 : std_ulogic;
@@ -298,7 +298,7 @@ begin  -- rtl
 
   to_bus_select_packet: process (bus_in_stop, to_bus_fifos_current,
                                  remote_apb_snd_data_out, remote_apb_snd_empty,
-                                 coherence_rsp_line_data_out, coherence_rsp_line_empty,
+                                 coherence_rsp_data_out, coherence_rsp_empty,
                                  dma_snd_data_out, dma_snd_empty,
                                  remote_ahbs_snd_data_out, remote_ahbs_snd_empty)
     variable to_bus_preamble : noc_preamble_type;
@@ -307,7 +307,7 @@ begin  -- rtl
     bus_in_data <= (others => '0');
     bus_in_void <= '1';
     remote_apb_snd_rdreq <= '0';
-    coherence_rsp_line_rdreq <= '0';
+    coherence_rsp_rdreq <= '0';
     dma_snd_rdreq <= '0';
     remote_ahbs_snd_rdreq <= '0';
     to_bus_fifos_next <= to_bus_fifos_current;
@@ -322,12 +322,12 @@ begin  -- rtl
                         remote_apb_snd_rdreq <= '1';
                         to_bus_fifos_next <= packet_apb_snd;
                       end if;
-                    elsif coherence_rsp_line_empty = '0' then
+                    elsif coherence_rsp_empty = '0' then
                       if bus_in_stop = '0' then
                         noc_id_in <= ROUTE_NOC3;
-                        bus_in_data <= coherence_rsp_line_data_out;
-                        bus_in_void <= coherence_rsp_line_empty;
-                        coherence_rsp_line_rdreq <= '1';
+                        bus_in_data <= coherence_rsp_data_out;
+                        bus_in_void <= coherence_rsp_empty;
+                        coherence_rsp_rdreq <= '1';
                         to_bus_fifos_next <= packet_coherence_rsp_line;
                       end if;
                     elsif dma_snd_empty = '0' then
@@ -359,12 +359,12 @@ begin  -- rtl
                                end if;
                              end if;
 
-      when packet_coherence_rsp_line => to_bus_preamble := get_preamble(coherence_rsp_line_data_out);
+      when packet_coherence_rsp_line => to_bus_preamble := get_preamble(coherence_rsp_data_out);
                                         noc_id_in <= ROUTE_NOC3;
-                                        if (bus_in_stop = '0' and coherence_rsp_line_empty = '0') then
-                                          bus_in_data <= coherence_rsp_line_data_out;
-                                          bus_in_void <= coherence_rsp_line_empty;
-                                          coherence_rsp_line_rdreq <= not bus_in_stop;
+                                        if (bus_in_stop = '0' and coherence_rsp_empty = '0') then
+                                          bus_in_data <= coherence_rsp_data_out;
+                                          bus_in_void <= coherence_rsp_empty;
+                                          coherence_rsp_rdreq <= not bus_in_stop;
                                           if to_bus_preamble = PREAMBLE_TAIL then
                                             to_bus_fifos_next <= none;
                                           end if;
@@ -417,12 +417,12 @@ begin  -- rtl
     port map (
       clk      => clk,
       rst      => fifo_rst,
-      rdreq    => coherence_rsp_line_rdreq,
-      wrreq    => coherence_rsp_line_wrreq,
-      data_in  => coherence_rsp_line_data_in,
-      empty    => coherence_rsp_line_empty,
-      full     => coherence_rsp_line_full,
-      data_out => coherence_rsp_line_data_out);
+      rdreq    => coherence_rsp_rdreq,
+      wrreq    => coherence_rsp_wrreq,
+      data_in  => coherence_rsp_data_in,
+      empty    => coherence_rsp_empty,
+      full     => coherence_rsp_full,
+      data_out => coherence_rsp_data_out);
 
   fifo_12: fifo2
     generic map (

@@ -23,7 +23,7 @@ package socmap_types is
   constant TILES_MAX_NUM : integer := 16;
   subtype tile_cpu_id_type is integer range -1 to CPU_MAX_NUM;
   type tile_cpu_id_array is array (0 to TILES_MAX_NUM-1) of tile_cpu_id_type;
-  type tile_mem_id_array is array (0 to TILES_MAX_NUM-1) of tile_mem_id_type;
+  --type tile_mem_id_array is array (0 to TILES_MAX_NUM-1) of tile_mem_id_type;
 
   type cpu_info_array is array (CPU_MAX_NUM-1 downto 0) of integer;
 

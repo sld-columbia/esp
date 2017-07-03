@@ -36,8 +36,8 @@ package sld_devices is
 
   constant SLD_POWERCTRL : devid_t := 16#00F#;
   constant SLD_AHBRAM_DP : devid_t := 16#01f#;
-  constant SLD_L2_CACHE  : amba_device_type := 16#020#;
-  constant SLD_L3_CACHE  : amba_device_type := 16#021#;
+  constant SLD_L2_CACHE  : devid_t := 16#020#;
+  constant SLD_L3_CACHE  : devid_t := 16#021#;
 
   -- <<devid>>
 

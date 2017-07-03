@@ -53,21 +53,13 @@ entity cpu_tile_q is
     coherence_fwd_data_out          : out noc_flit_type;
     coherence_fwd_empty             : out std_ulogic;
     -- Noc3->tile
-    coherence_rsp_line_rcv_rdreq            : in  std_ulogic;
-    coherence_rsp_line_rcv_data_out         : out noc_flit_type;
-    coherence_rsp_line_rcv_empty            : out std_ulogic;
+    coherence_rsp_rcv_rdreq            : in  std_ulogic;
+    coherence_rsp_rcv_data_out         : out noc_flit_type;
+    coherence_rsp_rcv_empty            : out std_ulogic;
     -- tile->Noc3
-    coherence_rsp_line_snd_wrreq        : in  std_ulogic;
-    coherence_rsp_line_snd_data_in      : in  noc_flit_type;
-    coherence_rsp_line_snd_full         : out std_ulogic;
-    -- Noc3->tile
-    coherence_rsp_inv_ack_rcv_rdreq     : in  std_ulogic;
-    coherence_rsp_inv_ack_rcv_data_out  : out noc_flit_type;
-    coherence_rsp_inv_ack_rcv_empty     : out std_ulogic;
-    -- tile->NoC3
-    coherence_rsp_inv_ack_snd_wrreq     : in  std_ulogic;
-    coherence_rsp_inv_ack_snd_data_in   : in  noc_flit_type;
-    coherence_rsp_inv_ack_snd_full      : out std_ulogic;
+    coherence_rsp_snd_wrreq        : in  std_ulogic;
+    coherence_rsp_snd_data_in      : in  noc_flit_type;
+    coherence_rsp_snd_full         : out std_ulogic;
     -- NoC5->tile
     remote_apb_rcv_rdreq                : in  std_ulogic;
     remote_apb_rcv_data_out             : out noc_flit_type;
@@ -151,21 +143,13 @@ architecture rtl of cpu_tile_q is
   signal coherence_fwd_data_in           : noc_flit_type;
   signal coherence_fwd_full              : std_ulogic;
   -- NoC3->tile
-  signal coherence_rsp_line_rcv_wrreq            : std_ulogic;
-  signal coherence_rsp_line_rcv_data_in          : noc_flit_type;
-  signal coherence_rsp_line_rcv_full             : std_ulogic;
+  signal coherence_rsp_rcv_wrreq            : std_ulogic;
+  signal coherence_rsp_rcv_data_in          : noc_flit_type;
+  signal coherence_rsp_rcv_full             : std_ulogic;
   -- tile->NoC3
-  signal coherence_rsp_line_snd_rdreq     : std_ulogic;
-  signal coherence_rsp_line_snd_data_out  : noc_flit_type;
-  signal coherence_rsp_line_snd_empty     : std_ulogic;
-  -- NoC3->tile
-  signal coherence_rsp_inv_ack_rcv_wrreq     : std_ulogic;
-  signal coherence_rsp_inv_ack_rcv_data_in   : noc_flit_type;
-  signal coherence_rsp_inv_ack_rcv_full      : std_ulogic;
-  -- tile->NoC3
-  signal coherence_rsp_inv_ack_snd_rdreq     : std_ulogic;
-  signal coherence_rsp_inv_ack_snd_data_out  : noc_flit_type;
-  signal coherence_rsp_inv_ack_snd_empty     : std_ulogic;
+  signal coherence_rsp_snd_rdreq     : std_ulogic;
+  signal coherence_rsp_snd_data_out  : noc_flit_type;
+  signal coherence_rsp_snd_empty     : std_ulogic;
   -- NoC5->tile
   signal remote_apb_rcv_wrreq                : std_ulogic;
   signal remote_apb_rcv_data_in              : noc_flit_type;
@@ -195,7 +179,7 @@ architecture rtl of cpu_tile_q is
   signal noc2_fifos_current, noc2_fifos_next : noc2_packet_fsm;
   type noc3_packet_fsm is (none, packet_line);
   signal noc3_fifos_current, noc3_fifos_next : noc3_packet_fsm;
-  type to_noc3_packet_fsm is (none, packet_coherence_rsp_line_snd);
+  type to_noc3_packet_fsm is (none, packet_coherence_rsp_snd);
   signal to_noc3_fifos_current, to_noc3_fifos_next : to_noc3_packet_fsm;
   type noc5_packet_fsm is (none, packet_apb_rcv, packet_ahbm_rcv, packet_irq);
   signal noc5_fifos_current, noc5_fifos_next : noc5_packet_fsm;
@@ -240,7 +224,7 @@ begin  -- rtl
       data_out => coherence_req_data_out);
 
 
-  -- From noc2: coherence forwarded messages to CPU (INV, PUT_ACK, GETS/M)
+  -- From noc2: coherence forwarded messages to CPU (INV, GETS/M)
   noc2_out_stop <= coherence_fwd_full and (not noc2_out_void);
   coherence_fwd_data_in <= noc2_out_data;
   coherence_fwd_wrreq <= (not noc2_out_void) and (not coherence_fwd_full);
@@ -262,55 +246,14 @@ begin  -- rtl
       full     => coherence_fwd_full,
       data_out => coherence_fwd_data_out);
 
-  -- From noc3: coherence response messages to CPU (LINE)
-  -- From noc3: coherence response messages to CPU (INV_ACK rcv)
-  noc3_msg_type <= get_msg_type(noc3_out_data);
-  noc3_preamble <= get_preamble(noc3_out_data);
-  process (clk, rst)
-  begin  -- process
-    if rst = '0' then                   -- asynchronous reset (active low)
-      noc3_fifos_current <= none;
-    elsif clk'event and clk = '1' then  -- rising clock edge
-      noc3_fifos_current <= noc3_fifos_next;
-    end if;
-  end process;
-  noc3_fifos_get_packet: process (noc3_out_data, noc3_out_void, noc3_msg_type,
-                                  noc3_preamble, coherence_rsp_inv_ack_rcv_full,
-                                  coherence_rsp_line_rcv_full, noc3_fifos_current)
-  begin  -- process noc3_get_packet
-    coherence_rsp_line_rcv_wrreq <= '0';
-    coherence_rsp_inv_ack_rcv_wrreq <= '0';
-    noc3_fifos_next <= noc3_fifos_current;
-    noc3_out_stop <= '0';
 
-    case noc3_fifos_current is
-      when none => if noc3_out_void = '0' then
-                     if ((noc3_msg_type = RSP_DATA or noc3_msg_type = RSP_EDATA) and noc3_preamble = PREAMBLE_HEADER) then
-                       coherence_rsp_line_rcv_wrreq <= not coherence_rsp_line_rcv_full;
-                       if coherence_rsp_line_rcv_full = '0' then
-                         noc3_fifos_next <= packet_line;
-                       else
-                         noc3_out_stop <= '1';
-                       end if;
-                     elsif (noc3_msg_type = RSP_INV_ACK and noc3_preamble = PREAMBLE_1FLIT) then
-                       coherence_rsp_inv_ack_rcv_wrreq <= not coherence_rsp_inv_ack_rcv_full;
-                       noc3_out_stop <= coherence_rsp_inv_ack_rcv_full;
-                     end if;
-                   end if;
+  
+  -- From noc3: coherence response messages to CPU (DATA, INVACK, PUTACK)
+  noc3_out_stop <= coherence_rsp_rcv_full and (not noc3_out_void);
+  coherence_rsp_rcv_data_in <= noc3_out_data;
+  coherence_rsp_rcv_wrreq <= (not noc3_out_void) and (not coherence_rsp_rcv_full);
 
-      when packet_line => coherence_rsp_line_rcv_wrreq <= (not noc3_out_void) and (not coherence_rsp_line_rcv_full);
-                          noc3_out_stop <= coherence_rsp_line_rcv_full and (not noc3_out_void);
-                          if noc3_preamble = PREAMBLE_TAIL and noc3_out_void = '0' and
-                             coherence_rsp_line_rcv_full = '0' then
-                            noc3_fifos_next <= none;
-                          end if;
-
-      when others => noc3_fifos_next <= none;
-    end case;
-  end process noc3_fifos_get_packet;
-
-  coherence_rsp_line_rcv_data_in <= noc3_out_data;
-  fifo_4: fifo
+  fifo_3: fifo
     generic map (
       depth => 5,                       --Header (use RESERVED field to
                                         --determine  ACK number), cache line
@@ -318,110 +261,31 @@ begin  -- rtl
     port map (
       clk      => clk,
       rst      => fifo_rst,
-      rdreq    => coherence_rsp_line_rcv_rdreq,
-      wrreq    => coherence_rsp_line_rcv_wrreq,
-      data_in  => coherence_rsp_line_rcv_data_in,
-      empty    => coherence_rsp_line_rcv_empty,
-      full     => coherence_rsp_line_rcv_full,
-      data_out => coherence_rsp_line_rcv_data_out);
+      rdreq    => coherence_rsp_rcv_rdreq,
+      wrreq    => coherence_rsp_rcv_wrreq,
+      data_in  => coherence_rsp_rcv_data_in,
+      empty    => coherence_rsp_rcv_empty,
+      full     => coherence_rsp_rcv_full,
+      data_out => coherence_rsp_rcv_data_out);
 
-  coherence_rsp_inv_ack_rcv_data_in <= noc3_out_data;
-  fifo_5: fifo
+
+  -- To noc3: coherence response messages from CPU (DATA, EDATA, INVACK)
+  noc3_in_data          <= coherence_rsp_snd_data_out;
+  noc3_in_void          <= coherence_rsp_snd_empty or noc3_in_stop;
+  coherence_rsp_snd_rdreq   <= (not coherence_rsp_snd_empty) and (not noc3_in_stop);
+  fifo_4: fifo
     generic map (
-      depth => 1,                       --Header only
+      depth => 5,                       --Header
       width => NOC_FLIT_SIZE)
     port map (
       clk      => clk,
       rst      => fifo_rst,
-      rdreq    => coherence_rsp_inv_ack_rcv_rdreq,
-      wrreq    => coherence_rsp_inv_ack_rcv_wrreq,
-      data_in  => coherence_rsp_inv_ack_rcv_data_in,
-      empty    => coherence_rsp_inv_ack_rcv_empty,
-      full     => coherence_rsp_inv_ack_rcv_full,
-      data_out => coherence_rsp_inv_ack_rcv_data_out);
-
-
-  -- To noc3: coherence response messages from CPU (RSP_LINE snd)
-  -- To noc3: coherence response messages from CPU (INV_ACK snd)
-  process (clk, rst)
-  begin  -- process
-    if rst = '0' then                   -- asynchronous reset (active low)
-      to_noc3_fifos_current <= none;
-    elsif clk'event and clk = '1' then  -- rising clock edge
-      to_noc3_fifos_current <= to_noc3_fifos_next;
-    end if;
-  end process;
-
-  to_noc3_select_packet: process (noc3_in_stop, to_noc3_fifos_current,
-                                  coherence_rsp_line_snd_data_out, coherence_rsp_line_snd_empty,
-                                  coherence_rsp_inv_ack_snd_data_out, coherence_rsp_inv_ack_snd_empty)
-    variable to_noc3_preamble : noc_preamble_type;
-  begin  -- process to_noc3_select_packet
-    noc3_in_data <= (others => '0');
-    noc3_in_void <= '1';
-    coherence_rsp_line_snd_rdreq <= '0';
-    coherence_rsp_inv_ack_snd_rdreq <= '0';
-    to_noc3_fifos_next <= to_noc3_fifos_current;
-    to_noc3_preamble := "00";
-
-    case to_noc3_fifos_current is
-      when none  => if coherence_rsp_inv_ack_snd_empty = '0' then
-                      if noc3_in_stop = '0' then
-                        noc3_in_Data <= coherence_rsp_inv_ack_snd_data_out;
-                        noc3_in_void <= coherence_rsp_inv_ack_snd_empty;
-                        coherence_rsp_inv_ack_snd_rdreq <= '1';
-                        to_noc3_fifos_next <= none;
-                      end if;
-                    elsif coherence_rsp_line_snd_empty = '0' then
-                      if noc3_in_stop = '0' then
-                        noc3_in_data <= coherence_rsp_line_snd_data_out;
-                        noc3_in_void <= coherence_rsp_line_snd_empty;
-                        coherence_rsp_line_snd_rdreq <= '1';
-                        to_noc3_fifos_next <= packet_coherence_rsp_line_snd;
-                      end if;
-                    end if;
-
-      when packet_coherence_rsp_line_snd => to_noc3_preamble := get_preamble(coherence_rsp_line_snd_data_out);
-                                            if (noc3_in_stop = '0' and coherence_rsp_line_snd_empty = '0') then
-                                              noc3_in_data <= coherence_rsp_line_snd_data_out;
-                                              noc3_in_void <= coherence_rsp_line_snd_empty;
-                                              coherence_rsp_line_snd_rdreq <= not noc3_in_stop;
-                                              if to_noc3_preamble = PREAMBLE_TAIL then
-                                                to_noc3_fifos_next <= none;
-                                              end if;
-                                            end if;
-
-      when others => to_noc3_fifos_next <= none;
-    end case;
-  end process to_noc3_select_packet;
-
-  fifo_6: fifo
-    generic map (
-      depth => 1,                       --Header only
-      width => NOC_FLIT_SIZE)
-    port map (
-      clk      => clk,
-      rst      => fifo_rst,
-      rdreq    => coherence_rsp_inv_ack_snd_rdreq,
-      wrreq    => coherence_rsp_inv_ack_snd_wrreq,
-      data_in  => coherence_rsp_inv_ack_snd_data_in,
-      empty    => coherence_rsp_inv_ack_snd_empty,
-      full     => coherence_rsp_inv_ack_snd_full,
-      data_out => coherence_rsp_inv_ack_snd_data_out);
-
-  fifo_13: fifo
-    generic map (
-      depth => 5,                       --Header, cache line
-      width => NOC_FLIT_SIZE)
-    port map (
-      clk      => clk,
-      rst      => fifo_rst,
-      rdreq    => coherence_rsp_line_snd_rdreq,
-      wrreq    => coherence_rsp_line_snd_wrreq,
-      data_in  => coherence_rsp_line_snd_data_in,
-      empty    => coherence_rsp_line_snd_empty,
-      full     => coherence_rsp_line_snd_full,
-      data_out => coherence_rsp_line_snd_data_out);
+      rdreq    => coherence_rsp_snd_rdreq,
+      wrreq    => coherence_rsp_snd_wrreq,
+      data_in  => coherence_rsp_snd_data_in,
+      empty    => coherence_rsp_snd_empty,
+      full     => coherence_rsp_snd_full,
+      data_out => coherence_rsp_snd_data_out);
 
 
   -- From noc5: remote APB response to core (APB rcv)

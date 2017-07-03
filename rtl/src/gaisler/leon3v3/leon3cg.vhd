@@ -105,12 +105,12 @@ architecture rtl of leon3cg is
 
   signal gnd, vcc : std_logic;
   signal fpuo : grfpu_out_type;
-
+  
 begin
 
   gnd <= '0'; vcc <= '1';
   fpuo <= grfpu_out_none;
-
+  
   leon3x0 : leon3x
     generic map (
       hindex     => hindex,
@@ -186,8 +186,8 @@ begin
       dbgi       => dbgi,
       dbgo       => dbgo,
       fpui       => open,
-      dflush     => dflush,
       fpuo       => fpuo,
+      dflush     => dflush,
       clken      => vcc
       );
 

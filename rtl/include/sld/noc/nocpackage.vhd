@@ -93,7 +93,7 @@ package nocpackage is
   constant FWD_PUT_ACK  : noc_msg_type := "011";  --Put Acknowledge
   -- Cachable data plane 3 -> response messages
   constant RSP_DATA     : noc_msg_type := "000";  --CacheLine
-  --constant RSP_EDATA    : noc_msg_type := "001";  --Cache Line (Exclusive)
+  constant RSP_EDATA    : noc_msg_type := "001";  --Cache Line (Exclusive)
   constant RSP_INV_ACK  : noc_msg_type := "010";  --Invalidation Acknowledge
   -- Non cachable data data plane 4 -> DMA transfers
   constant DMA_TO_DEV   : noc_msg_type := "001";
