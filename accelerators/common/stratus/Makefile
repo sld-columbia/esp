@@ -59,7 +59,7 @@ MEMGEN_OUT = $(ESP_ROOT)/tech/$(TECH)/memgen/$(TARGET_NAME)
 ifneq ("$(ACCELERATOR)","")
 RTL_OUT = $(ESP_ROOT)/tech/$(TECH)/acc/$(ACCELERATOR)
 else
-RTL_OUT = $(ESP_ROOT)/tech/$(TECH)/sc_components
+RTL_OUT = $(ESP_ROOT)/tech/$(TECH)/caches/$(COMPONENT)
 endif
 
 memlib: ../memlist.txt

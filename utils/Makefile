@@ -141,6 +141,8 @@ ESP_CORE_PATH     = $(DRIVERS)/esp
 ### Include targets to generate accelerators RTL with HLS ###
 include $(ESP_ROOT)/utils/accelerators.mk
 
+### Include targets to generate caches RTL with HLS ###
+include $(ESP_ROOT)/utils/caches.mk
 
 .PHONY: all help
 
