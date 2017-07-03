@@ -1,12 +1,12 @@
 /* Copyright 2017 Columbia University, SLD Group */
 
-#include "l2_cache.hpp"
+#include "l2.hpp"
 
 /*
  * Processes
  */
 
-void l2_cache::ctrl()
+void l2::ctrl()
 {
     // empty variables
     const invack_cnt_t empty_invack_cnt = 0;
@@ -393,7 +393,7 @@ void l2_cache::ctrl()
  * Functions
  */
 
-inline void l2_cache::reset_io()
+inline void l2::reset_io()
 {
     RESET_IO;
 
@@ -458,7 +458,7 @@ inline void l2_cache::reset_io()
     wait();
 }
 
-inline void l2_cache::reset_states()
+inline void l2::reset_states()
 {
     RESET_STATES;
 
@@ -473,7 +473,7 @@ inline void l2_cache::reset_states()
     }
 }
 
-void l2_cache::tag_lookup(addr_breakdown_t addr_br, bool &tag_hit,
+void l2::tag_lookup(addr_breakdown_t addr_br, bool &tag_hit,
 			  l2_way_t &way_hit, bool &empty_way_found, 
 			  l2_way_t &empty_way, sc_uint<REQS_BITS> &reqs_i)
 {
@@ -513,7 +513,7 @@ void l2_cache::tag_lookup(addr_breakdown_t addr_br, bool &tag_hit,
     }
 }
 
-void l2_cache::read_set(set_t set)
+void l2::read_set(set_t set)
 {
 
     //Manual unroll because these are explicit memories, see commented code 
@@ -554,7 +554,7 @@ void l2_cache::read_set(set_t set)
     lines_buf[7] = lines.port9[0][base + 7];
 }
 
-void l2_cache::reqs_lookup(addr_breakdown_t addr_br, bool &reqs_hit, sc_uint<REQS_BITS> &reqs_hit_i)
+void l2::reqs_lookup(addr_breakdown_t addr_br, bool &reqs_hit, sc_uint<REQS_BITS> &reqs_hit_i)
 {
     REQS_LOOKUP;
 
@@ -570,7 +570,7 @@ void l2_cache::reqs_lookup(addr_breakdown_t addr_br, bool &reqs_hit, sc_uint<REQ
     }
 }
 
-void l2_cache::fill_reqs(cpu_msg_t cpu_msg, addr_breakdown_t addr_br, tag_t tag_estall, l2_way_t way_hit, hsize_t hsize,
+void l2::fill_reqs(cpu_msg_t cpu_msg, addr_breakdown_t addr_br, tag_t tag_estall, l2_way_t way_hit, hsize_t hsize,
 				unstable_state_t state, hprot_t hprot, 
 				invack_cnt_t invack_cnt, word_t word, 
 				line_t line, sc_uint<REQS_BITS> reqs_i)
@@ -590,21 +590,21 @@ void l2_cache::fill_reqs(cpu_msg_t cpu_msg, addr_breakdown_t addr_br, tag_t tag_
     reqs[reqs_i].line	     = line;
 }
 
-void l2_cache::get_cpu_req(l2_cpu_req_t &cpu_req)
+void l2::get_cpu_req(l2_cpu_req_t &cpu_req)
 {
     GET_CPU_REQ;
 
     l2_cpu_req.nb_get(cpu_req);
 }
 
-void l2_cache::get_rsp_in(l2_rsp_in_t &rsp_in)
+void l2::get_rsp_in(l2_rsp_in_t &rsp_in)
 {
     GET_RSP_IN;
 
     l2_rsp_in.nb_get(rsp_in); // invack_cnt not handled yet
 }
 
-void l2_cache::get_flush()
+void l2::get_flush()
 {
     GET_FLUSH;
     
@@ -612,7 +612,7 @@ void l2_cache::get_flush()
     l2_flush.nb_get(flush_tmp);
 }
 
-void l2_cache::send_req_out(coh_msg_t coh_msg, hprot_t hprot, 
+void l2::send_req_out(coh_msg_t coh_msg, hprot_t hprot, 
 				   addr_t line_addr, line_t line)
 {
     SEND_REQ_OUT;
@@ -629,7 +629,7 @@ void l2_cache::send_req_out(coh_msg_t coh_msg, hprot_t hprot,
     l2_req_out.nb_put(req_out);
 }
 
-void l2_cache::send_rd_rsp(line_t line)
+void l2::send_rd_rsp(line_t line)
 {
     SEND_RD_RSP;
 
@@ -640,7 +640,7 @@ void l2_cache::send_rd_rsp(line_t line)
     l2_rd_rsp.put(rd_rsp);
 }
 
-void l2_cache::send_wr_rsp(set_t set)
+void l2::send_wr_rsp(set_t set)
 {
     SEND_WR_RSP;
 
@@ -651,14 +651,14 @@ void l2_cache::send_wr_rsp(set_t set)
     l2_wr_rsp.put(wr_rsp);
 }
 
-void l2_cache::send_inval(addr_t addr_inval)
+void l2::send_inval(addr_t addr_inval)
 {
     SEND_INVAL;
 
     l2_inval.put(addr_inval);
 }
 
-void l2_cache::put_reqs(set_t set, l2_way_t way, tag_t tag,
+void l2::put_reqs(set_t set, l2_way_t way, tag_t tag,
 			       line_t line, hprot_t hprot, state_t state)
 {
     PUT_REQS;

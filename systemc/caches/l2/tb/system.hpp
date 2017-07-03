@@ -4,8 +4,8 @@
 #define __SYSTEM_HPP__
 
 
-#include "l2_cache.hpp"
-#include "l2_cache_wrap.h"
+#include "l2.hpp"
+#include "l2_wrap.h"
 #include "l2_tb.hpp"
 
 
@@ -39,7 +39,7 @@ public:
 
     // Modules
     // L2 cache instance
-    l2_cache_wrapper	*dut;
+    l2_wrapper	*dut;
     // L2 testbench module
     l2_tb        	*tb;
 
@@ -47,7 +47,7 @@ public:
     SC_CTOR(system_t)
     {
 	// Modules
-	dut = new l2_cache_wrapper("l2_cache_wrapper");
+	dut = new l2_wrapper("l2_wrapper");
 	tb  = new l2_tb("l2_tb");
 
 	// Binding L2 cache

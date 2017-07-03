@@ -1,7 +1,7 @@
 /* Copyright 2017 Columbia University, SLD Group */
 
-#ifndef __L2_CACHE_DIRECTIVES_HPP__
-#define __L2_CACHE_DIRECTIVES_HPP__
+#ifndef __L2_DIRECTIVES_HPP__
+#define __L2_DIRECTIVES_HPP__
 
 
 #define FLATTEN_REGS				\
@@ -147,4 +147,4 @@
 	asserts_tmp |= AS_WRONG_HSIZE
 
 
-#endif /* __L2_CACHE_DIRECTIVES_HPP_ */
+#endif /* __L2_DIRECTIVES_HPP_ */

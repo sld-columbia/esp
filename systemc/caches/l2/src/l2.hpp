@@ -1,17 +1,17 @@
 /* Copyright 2017 Columbia University, SLD Group */
 
-#ifndef __L2_CACHE_HPP__
-#define __L2_CACHE_HPP__
+#ifndef __L2_HPP__
+#define __L2_HPP__
 
 #include "cache_utils.hpp"
-#include "l2_cache_directives.hpp"
+#include "l2_directives.hpp"
 #include "l2_tags.hpp"
 #include "l2_states.hpp"
 #include "l2_hprots.hpp"
 #include "l2_lines.hpp"
 #include "l2_evict_ways.hpp"
 
-class l2_cache : public sc_module
+class l2 : public sc_module
 {
 
 public:
@@ -56,7 +56,7 @@ public:
     l2_way_t	 evict_way;
 
     // Constructor
-    SC_CTOR(l2_cache)
+    SC_CTOR(l2)
     {
         // Cache controller process
 	SC_CTHREAD(ctrl, clk.pos());
@@ -121,4 +121,4 @@ private:
 };
 
 
-#endif /* __L2_CACHE_HPP__ */
+#endif /* __L2_HPP__ */
