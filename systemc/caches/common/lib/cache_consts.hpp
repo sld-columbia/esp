@@ -156,7 +156,7 @@
 
 // debug
 #define ASSERT_WIDTH	9
-#define BOOKMARK_WIDTH	19
+#define BOOKMARK_WIDTH	18
 
 #define AS_REQS_MISS		(1 << 0)
 #define AS_RSP_DATA_DEFAULT     (1 << 1)
@@ -182,11 +182,10 @@
 #define BM_MISS_WRITE		(1 << 11)
 #define BM_SEND_REQ_OUT		(1 << 12)
 #define BM_SEND_RD_RSP		(1 << 13)
-#define BM_SEND_WR_RSP		(1 << 14)
-#define BM_PUT_REQS		(1 << 15)
-#define BM_GET_FLUSH		(1 << 16)
-#define BM_FLUSH_READ_SET	(1 << 17)
-#define BM_SEND_INVAL		(1 << 18)
+#define BM_PUT_REQS		(1 << 14)
+#define BM_GET_FLUSH		(1 << 15)
+#define BM_FLUSH_READ_SET	(1 << 16)
+#define BM_SEND_INVAL		(1 << 17)
 
 // report
 #define RPT_OFF 0

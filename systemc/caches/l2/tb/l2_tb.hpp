@@ -29,7 +29,6 @@ public:
 
     // Output ports
     get_initiator<l2_rd_rsp_t>	l2_rd_rsp_tb;
-    get_initiator<l2_wr_rsp_t>	l2_wr_rsp_tb;
     get_initiator<l2_inval_t>   l2_inval_tb;
     get_initiator<l2_req_out_t> l2_req_out_tb;
     get_initiator<l2_rsp_out_t> l2_rsp_out_tb;
@@ -53,7 +52,6 @@ public:
 	l2_rsp_in_tb.clk_rst (clk, rst);
 	l2_flush_tb.clk_rst (clk, rst);
 	l2_rd_rsp_tb.clk_rst(clk, rst);
-	l2_wr_rsp_tb.clk_rst(clk, rst);
 	l2_inval_tb.clk_rst(clk, rst);
 	l2_req_out_tb.clk_rst(clk, rst);
 	l2_rsp_out_tb.clk_rst(clk, rst);
@@ -77,7 +75,6 @@ public:
     void get_req_out(coh_msg_t coh_msg, addr_t addr, hprot_t hprot, bool rpt);
     void put_rsp_in(coh_msg_t coh_msg, addr_t addr, line_t line, bool rpt);
     void get_rd_rsp(addr_breakdown_t addr, line_t line, bool rpt);
-    void get_wr_rsp(set_t set, bool rpt);
     void get_inval(addr_t addr, bool rpt);
     void op(cpu_msg_t cpu_msg, sc_uint<2> beh, coh_msg_t put_msg, hsize_t hsize, bool cacheable, 
 	    addr_breakdown_t req_addr, word_t req_word, line_t rsp_line, bool rpt);

@@ -127,32 +127,6 @@ public:
     }
 };
 
-class l2_wr_rsp_t
-{
-public:
-    set_t set;
-    
-    l2_wr_rsp_t() :
-	set(0)
-    {}
-
-    inline l2_wr_rsp_t& operator  = (const l2_wr_rsp_t& x) {
-	set    = x.set;
-	return *this;
-    }
-    inline bool operator == (const l2_wr_rsp_t& x) const {
-	return (x.set == set);
-    }
-    inline friend void sc_trace(sc_trace_file *tf, const l2_wr_rsp_t& x, const std::string & name) {
-	sc_trace(tf, x.set , name + ".set ");
-    }
-    inline friend ostream & operator<<(ostream& os, const l2_wr_rsp_t& x) {
-	os << hex << "("
-	   << "set: " << x.set << ")";
-	return os;
-    }
-};
-
 // invalidate address
 typedef addr_t l2_inval_t;
 

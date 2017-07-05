@@ -34,7 +34,6 @@ public:
 
     // Output ports
     put_initiator<l2_rd_rsp_t>	l2_rd_rsp;
-    put_initiator<l2_wr_rsp_t>	l2_wr_rsp;
     put_initiator<l2_inval_t>	l2_inval;
     nb_put_initiator<l2_req_out_t> l2_req_out;
     put_initiator<l2_rsp_out_t> l2_rsp_out;
@@ -69,7 +68,6 @@ public:
 	l2_rsp_in.clk_rst (clk, rst);
 	l2_flush.clk_rst (clk, rst);
 	l2_rd_rsp.clk_rst(clk, rst);
-	l2_wr_rsp.clk_rst(clk, rst);
 	l2_inval.clk_rst(clk, rst);
 	l2_req_out.clk_rst(clk, rst);
 	l2_rsp_out.clk_rst(clk, rst);
@@ -107,7 +105,6 @@ public:
     void send_req_out(coh_msg_t coh_msg, hprot_t hprot, 
 		      addr_t line_addr, line_t lines);
     void send_rd_rsp(line_t lines);
-    void send_wr_rsp(set_t set);
     void send_inval(addr_t addr_inval);
     void put_reqs(set_t set, l2_way_t way, tag_t tag,
 		  line_t lines, hprot_t hprot, state_t state);

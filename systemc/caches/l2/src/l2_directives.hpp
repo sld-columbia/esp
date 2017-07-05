@@ -126,11 +126,6 @@
 		     bookmark_tmp |= BM_SEND_RD_RSP;			\
 		     if (RPT_RTL) CACHE_REPORT_TIME(sc_time_stamp(), "Send rd rsp.")
 
-#define SEND_WR_RSP							\
-		     HLS_DEFINE_PROTOCOL("l2-send-wr-rsp-protocol");	\
-		     bookmark_tmp |= BM_SEND_WR_RSP;			\
-		     if (RPT_RTL) CACHE_REPORT_TIME(sc_time_stamp(), "Send wr rsp.")
-
 #define SEND_INVAL							\
 		     HLS_DEFINE_PROTOCOL("l2-send-inval-protocol");	\
 		     bookmark_tmp |= BM_SEND_INVAL;			\

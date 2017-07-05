@@ -33,7 +33,6 @@ void l2::ctrl()
 	// output
 	l2_req_out_t	req_out;
 	l2_rd_rsp_t	rd_rsp;
-	l2_wr_rsp_t	wr_rsp;
 
 	// input address breakdown
 	addr_breakdown_t addr_br;
@@ -176,9 +175,6 @@ void l2::ctrl()
 		    {
 			RSP_DATA_XMAD;
 
-			// write response
-			send_wr_rsp(reqs[reqs_hit_i].set);
-
 			// write word and resolve unstable state
 			write_word(rsp_in.line, reqs[reqs_hit_i].word, reqs[reqs_hit_i].w_off, 
 				   reqs[reqs_hit_i].b_off, reqs[reqs_hit_i].hsize);
@@ -286,9 +282,6 @@ void l2::ctrl()
 		    case MODIFIED : // write hit
 			{
 			    HIT_WRITE_EM;
-
-			    // write response
-			    send_wr_rsp(addr_br.set);
 
 			    // write word
 			    write_word(lines_buf[way_hit], cpu_req.word, addr_br.w_off, 
@@ -402,7 +395,6 @@ inline void l2::reset_io()
     l2_rsp_in.reset_get();
     l2_flush.reset_get();
     l2_rd_rsp.reset_put();
-    l2_wr_rsp.reset_put();
     l2_inval.reset_put();
     l2_req_out.reset_put();
     l2_rsp_out.reset_put();
@@ -638,17 +630,6 @@ void l2::send_rd_rsp(line_t line)
     rd_rsp.line = line;
     
     l2_rd_rsp.put(rd_rsp);
-}
-
-void l2::send_wr_rsp(set_t set)
-{
-    SEND_WR_RSP;
-
-    l2_wr_rsp_t wr_rsp;
-
-    wr_rsp.set = set;
-    
-    l2_wr_rsp.put(wr_rsp);
 }
 
 void l2::send_inval(addr_t addr_inval)

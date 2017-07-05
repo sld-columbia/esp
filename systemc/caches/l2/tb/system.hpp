@@ -32,7 +32,6 @@ public:
     put_get_channel<bool>		l2_flush_chnl;
     // From L2 cache
     put_get_channel<l2_rd_rsp_t>	l2_rd_rsp_chnl;
-    put_get_channel<l2_wr_rsp_t>	l2_wr_rsp_chnl;
     put_get_channel<l2_inval_t>	        l2_inval_chnl;
     put_get_channel<l2_req_out_t>	l2_req_out_chnl;
     put_get_channel<l2_rsp_out_t>	l2_rsp_out_chnl;
@@ -60,7 +59,6 @@ public:
 	dut->l2_rsp_in(l2_rsp_in_chnl);
 	dut->l2_flush(l2_flush_chnl);
 	dut->l2_rd_rsp(l2_rd_rsp_chnl);
-	dut->l2_wr_rsp(l2_wr_rsp_chnl);
 	dut->l2_inval(l2_inval_chnl);
 	dut->l2_req_out(l2_req_out_chnl);
 	dut->l2_rsp_out(l2_rsp_out_chnl);
@@ -75,7 +73,6 @@ public:
 	tb->l2_rsp_in_tb(l2_rsp_in_chnl); 
 	tb->l2_flush_tb(l2_flush_chnl); 
 	tb->l2_rd_rsp_tb(l2_rd_rsp_chnl);
-	tb->l2_wr_rsp_tb(l2_wr_rsp_chnl);
 	tb->l2_inval_tb(l2_inval_chnl);
 	tb->l2_req_out_tb(l2_req_out_chnl);
 	tb->l2_rsp_out_tb(l2_rsp_out_chnl);

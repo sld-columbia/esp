@@ -304,33 +304,27 @@ void l2_tb::l2_test()
     // CACHE_REPORT_INFO("S4: Byte and Halfword Write Miss");
 
     // put_cpu_req(cpu_req, WRITE, WORD, word_addr, CACHEABLE, addr, RPT);
-    // get_wr_rsp(wr_rsp, word_addr, RPT);
     // wait();
 
     // put_cpu_req(cpu_req, WRITE, WORD, word_addr + TAG_OFFSET, CACHEABLE, addr + TAG_OFFSET, RPT);
-    // get_wr_rsp(wr_rsp, word_addr + TAG_OFFSET, RPT);
     // wait();
 
     // put_cpu_req(cpu_req, WRITE, BYTE, addr + 2*TAG_OFFSET, CACHEABLE, empty_word, RPT);
     // get_req_out(req_out, REQ_GETM, word_addr + 2*TAG_OFFSET, cpu_req.hprot, RPT);
     // put_rsp_in(rsp_in, RSP_DATA, word_addr + 2*TAG_OFFSET, empty_line, RPT);
-    // get_wr_rsp(wr_rsp, word_addr + 2*TAG_OFFSET, RPT);
     // wait();
 
     // put_cpu_req(cpu_req, WRITE, HALFWORD, hword_addr + 3*TAG_OFFSET, CACHEABLE, empty_word, RPT);
     // get_req_out(req_out, REQ_GETM, word_addr + 3*TAG_OFFSET, cpu_req.hprot, RPT);
     // put_rsp_in(rsp_in, RSP_DATA, word_addr + 3*TAG_OFFSET, empty_line, RPT);
-    // get_wr_rsp(wr_rsp, word_addr + 3*TAG_OFFSET, RPT);
     // wait();
 
     // CACHE_REPORT_INFO("S4: Byte and Halfword Write Hit");
 
     // put_cpu_req(cpu_req, WRITE, BYTE, addr, CACHEABLE, empty_word, RPT);
-    // get_wr_rsp(wr_rsp, word_addr, RPT);
     // wait();
 
     // put_cpu_req(cpu_req, WRITE, HALFWORD, hword_addr + TAG_OFFSET, CACHEABLE, empty_word, RPT);
-    // get_wr_rsp(wr_rsp, word_addr + TAG_OFFSET, RPT);
     // wait();
 
     // CACHE_REPORT_INFO("S4: Verify writes.");
@@ -423,7 +417,6 @@ inline void l2_tb::reset_l2_test()
     l2_rsp_in_tb.reset_put();
     l2_flush_tb.reset_put();
     l2_rd_rsp_tb.reset_get();
-    l2_wr_rsp_tb.reset_get();
     l2_inval_tb.reset_get();
     l2_req_out_tb.reset_get();
     l2_rsp_out_tb.reset_get();
@@ -530,21 +523,6 @@ void l2_tb::get_rd_rsp(addr_breakdown_t addr, line_t line, bool rpt)
 	CACHE_REPORT_VAR(sc_time_stamp(), "RD_RSP", rd_rsp);
 }
 
-void l2_tb::get_wr_rsp(set_t set, bool rpt)
-{
-    l2_wr_rsp_t wr_rsp;
-    
-    l2_wr_rsp_tb.get(wr_rsp);
-
-    if (wr_rsp.set != set) {
-	CACHE_REPORT_ERROR("get wr rsp", wr_rsp.set);
-	CACHE_REPORT_ERROR("get wr rsp gold", set);
-    }
-
-    if (rpt)
-	CACHE_REPORT_VAR(sc_time_stamp(), "WR_RSP", wr_rsp);
-}
-
 void l2_tb::get_inval(addr_t addr, bool rpt)
 {
     l2_inval_t inval;
@@ -616,11 +594,7 @@ void l2_tb::op(cpu_msg_t cpu_msg, sc_uint<2> beh, coh_msg_t put_msg, hsize_t hsi
     }
 
     if (cpu_msg == READ)
-	// RD RSP
 	get_rd_rsp(req_addr, rsp_line, rpt);
-    else if (cpu_msg == WRITE)
-	// WR RSP
-	get_wr_rsp(req_addr.set, rpt);
     
     wait();
 }
