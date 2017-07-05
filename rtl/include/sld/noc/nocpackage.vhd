@@ -76,25 +76,25 @@ package nocpackage is
   constant PREAMBLE_BODY   : noc_preamble_type := "00";
   constant PREAMBLE_1FLIT  : noc_preamble_type := "11";
 
-  -- Message type encoding
-  -- Cachable data plane 1 -> request messages
-  constant REQ_GETS_B   : noc_msg_type := "000";  --Get Shared (Byte)
-  constant REQ_GETS_HW  : noc_msg_type := "001";  --Get Shared (Half Word)
-  constant REQ_GETS_W   : noc_msg_type := "010";  --Get Shared (word)
-  constant REQ_GETM_B   : noc_msg_type := "011";  --Get Modified (Byte)
-  constant REQ_GETM_HW  : noc_msg_type := "100";  --Get Modified (Half word)
-  constant REQ_GETM_W   : noc_msg_type := "101";  --Get Modified (word)
-  constant REQ_PUTS     : noc_msg_type := "110";  --Put Shared/Exclusive
-  constant REQ_PUTM     : noc_msg_type := "111";  --Put Modified
+  -- -- Message type encoding
+  -- -- Cachable data plane 1 -> request messages
+  constant REQ_GETS_W   : noc_msg_type := "000";  --Get Shared (word)
+  constant REQ_GETM_W   : noc_msg_type := "001";  --Get Modified (word)
+  constant REQ_PUTS     : noc_msg_type := "010";  --Put Shared/Exclusive
+  constant REQ_PUTM     : noc_msg_type := "011";  --Put Modified
+  constant REQ_GETS_B   : noc_msg_type := "100";  --Get Shared (Byte)
+  constant REQ_GETS_HW  : noc_msg_type := "101";  --Get Shared (Half Word)
+  constant REQ_GETM_B   : noc_msg_type := "110";  --Get Modified (Byte)
+  constant REQ_GETM_HW  : noc_msg_type := "111";  --Get Modified (Half word)
   -- Cachable data plane 2 -> forwarded messages
   constant FWD_GETS     : noc_msg_type := "000";
   constant FWD_GETM     : noc_msg_type := "001";
   constant FWD_INV      : noc_msg_type := "010";  --Invalidation
-  constant FWD_PUT_ACK  : noc_msg_type := "011";  --Put Acknowledge
   -- Cachable data plane 3 -> response messages
   constant RSP_DATA     : noc_msg_type := "000";  --CacheLine
   constant RSP_EDATA    : noc_msg_type := "001";  --Cache Line (Exclusive)
   constant RSP_INV_ACK  : noc_msg_type := "010";  --Invalidation Acknowledge
+  constant RSP_PUT_ACK  : noc_msg_type := "011";  -- Put Acknowledge
   -- Non cachable data data plane 4 -> DMA transfers
   constant DMA_TO_DEV   : noc_msg_type := "001";
   constant DMA_FROM_DEV : noc_msg_type := "010";

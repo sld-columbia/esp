@@ -41,7 +41,7 @@ use work.gencomp.all;
 use work.genacc.all;
 
 use work.nocpackage.all;
-
+use work.cachepackage.all;
 
 entity mem_noc2ahbm is
   generic (
@@ -94,12 +94,12 @@ architecture rtl of mem_noc2ahbm is
   -- x and y info
   type ahbm_fsm is (receive_header,
                     receive_address, cacheable_rd_request, send_header,
-                    send_data, cacheable_wr_request, write_data,
+                    send_address, send_data, cacheable_wr_request, write_data,
                     write_last_data, write_complete,
                     dma_receive_address, dma_rd_request, dma_send_header,
                     dma_send_data, dma_wr_request, dma_write_data,
                     dma_receive_rdlength, dma_send_busy, dma_wait_busy,
-                    dma_write_busy, write_busy, send_fwd_ack);
+                    dma_write_busy, write_busy, send_put_ack, send_put_ack_address);
 
   -- RSP_DATA
   signal header : noc_flit_type;
@@ -172,8 +172,8 @@ begin  -- rtl
       if l2_cache_en = 1 then
         -- L2 cache enabled, but no LLC present
         if input_msg_type = REQ_PUTS or input_msg_type = REQ_PUTM then
-          msg_type := FWD_PUT_ACK;
-          preamble := PREAMBLE_1FLIT;
+          msg_type := RSP_PUT_ACK;
+          preamble := PREAMBLE_HEADER;
         else
           -- TODO: why RSP_EDATA doesn't work?
           msg_type := RSP_DATA;
@@ -291,8 +291,8 @@ begin  -- rtl
       when receive_address => if coherence_req_empty = '0' then
                                 coherence_req_rdreq <= '1';
                                 v.addr := coherence_req_data_out(31 downto 0);
-                                if r.msg = REQ_GETS_W or r.msg = REQ_GETS_HW or r.msg = REQ_GETS_B
-                                  or ((r.msg = REQ_GETM_W or r.msg = REQ_GETM_HW or r.msg = REQ_GETM_B) and (l2_cache_en /= 0)) then
+                                if (r.msg = REQ_GETS_W or r.msg = REQ_GETS_HW or r.msg = REQ_GETS_B)
+                                  or ((r.msg = REQ_GETM_W) and (l2_cache_en /= 0)) then
                                   -- Use default size: cacheline
                                   v.count := cacheline;
                                   v.state := cacheable_rd_request;
@@ -301,7 +301,7 @@ begin  -- rtl
                                   v.state := cacheable_wr_request;
                                   -- TODO: add other requests handling!
                                 elsif r.msg = REQ_PUTS or r.msg = REQ_PUTM then
-                                  v.state := send_fwd_ack;
+                                  v.state := send_put_ack;
                                 else
                                   v.state := receive_header;
                                 end if;
@@ -407,19 +407,30 @@ begin  -- rtl
                               end if;
                               v.htrans := HTRANS_SEQ;
                             end if;
-                            v.state := send_data;
+
+                            if l2_cache_en = 0 then
+                              v.state := send_data;
+                            else
+                              v.state := send_address;
+                            end if;
                           end if;
 
-      when send_fwd_ack => if (coherence_fwd_full = '0') then
-                             coherence_fwd_data_in <= header_reg;
-                             coherence_fwd_wrreq <= '1';
-                             if r.msg = REQ_PUTM then
-                               v.state := cacheable_wr_request;
-                             else
-                               v.state := receive_header;
-                             end if;
+      when send_put_ack => if (coherence_rsp_snd_full = '0') then
+                             coherence_rsp_snd_data_in <= header_reg;
+                             coherence_rsp_snd_wrreq <= '1';
+                             v.state := send_put_ack_address;
                            end if;
 
+      when send_put_ack_address => if (coherence_rsp_snd_full = '0') then
+                                     coherence_rsp_snd_data_in <= PREAMBLE_TAIL & r.addr;
+                                     coherence_rsp_snd_wrreq <= '1';
+                                     if r.msg = REQ_PUTM then
+                                       v.state := cacheable_wr_request;
+                                     else
+                                       v.state := receive_header;
+                                     end if;
+                                   end if;
+    
       when dma_send_header => if (v.ready = '1') then
                             -- Data bus granted
                             -- Send header
@@ -440,6 +451,14 @@ begin  -- rtl
                             v.state := dma_send_data;
                           end if;
 
+      when send_address => v.htrans := HTRANS_BUSY;
+                           if (coherence_rsp_snd_full = '0') then
+                             coherence_rsp_snd_data_in <= PREAMBLE_BODY & r.addr;
+                             coherence_rsp_snd_wrreq <= '1';
+
+                             v.state := send_data;
+                           end if;
+                              
       when send_data => if (v.ready = '1') then
                           if coherence_rsp_snd_full = '1' then
                             v.htrans := HTRANS_BUSY;
