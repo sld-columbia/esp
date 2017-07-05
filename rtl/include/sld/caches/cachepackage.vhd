@@ -18,6 +18,10 @@ use work.socmap_types.all;
 
 package cachepackage is
 
+  -----------------------------------------------------------------------------
+  -- Constants
+  -----------------------------------------------------------------------------
+
   -- NoC-L2cache planes encoding
   constant MSG_REQ_PLANE : std_logic_vector(1 downto 0) := "00";
   constant MSG_FWD_PLANE : std_logic_vector(1 downto 0) := "01";
@@ -25,16 +29,31 @@ package cachepackage is
   constant MSG_DMA_PLANE : std_logic_vector(1 downto 0) := "11";
 
   -- Cache size (256 sets, 16bytes/line, 32KB L2 cache)
-  constant WORDS_PER_LINE     : std_logic_vector(7 downto 0) := "00000100";
-  constant WORDS_PER_LINE_INT : integer                      := 4;
-  constant BYTES_PER_WORD_LG2 : integer                      := 2;
-  constant WORDS_PER_LINE_LG2 : integer                      := 2;
-  constant ADDR_BITS          : integer                      := 32;
-  constant OFFSET_BITS        : integer                      := WORDS_PER_LINE_LG2 + BYTES_PER_WORD_LG2;
-  constant L2_SET_BITS        : integer                      := 8;
-  constant L2_WAY_BITS        : integer                      := 3;
-  constant TAG_BITS           : integer                      := ADDR_BITS - OFFSET_BITS - L2_SET_BITS;
-  constant L2_CACHE_LINES     : integer                      := (2**L2_SET_BITS) * (2**L2_WAY_BITS);
+  constant WORDS_PER_LINE : std_logic_vector(7 downto 0) := "00000100";
+
+  constant WORDS_PER_LINE_INT : integer := 4;
+  constant BYTES_PER_WORD     : integer := 4;
+  constant BITS_PER_WORD      : integer := (BYTES_PER_WORD << 3);
+  constant BITS_PER_LINE      : integer := (BITS_PER_WORD * WORDS_PER_LINE);
+  constant BYTES_PER_WORD_LG2 : integer := 2;
+  constant WORDS_PER_LINE_LG2 : integer := 2;
+  constant ADDR_BITS          : integer := 32;
+  constant OFFSET_BITS        : integer := WORDS_PER_LINE_LG2 + BYTES_PER_WORD_LG2;
+  constant L2_SET_BITS        : integer := 8;
+  constant L2_WAY_BITS        : integer := 3;
+  constant TAG_BITS           : integer := ADDR_BITS - OFFSET_BITS - L2_SET_BITS;
+  constant L2_CACHE_LINES     : integer := (2**L2_SET_BITS) * (2**L2_WAY_BITS);
+  constant SET_BITS           : integer := 8;
+
+  -- Cache data types width
+  constant CPU_MSG_TYPE_WIDTH : 2;
+  constant COH_MSG_TYPE_WIDTH : 2;
+  constant HSIZE_WIDTH        : 3;
+  constant HPROT_WIDTH        : 4;
+  constant INVACK_CNT_WIDTH   : 3;
+
+  -- hprot
+  constant DEFAULT_HPROT : 4;
 
   -- L2 cache encoding of coherency message types
   constant REQ_GETS : std_logic_vector(1 downto 0) := "00";
@@ -59,6 +78,62 @@ package cachepackage is
   constant READ_ATOM  : std_logic_vector(1 downto 0) := "01";
   constant WRITE      : std_logic_vector(1 downto 0) := "10";
   constant WRITE_ATOM : std_logic_vector(1 downto 0) := "11";
+
+  constant ASSERTS_WIDTH         : integer := 9;
+  constant BOOKMARK_WIDTH        : integer := 19;
+  constant ASSERTS_AHBS_WIDTH    : integer := 1;
+  constant ASSERTS_AHBM_WIDTH    : integer := 1;
+  constant ASSERTS_REQ_WIDTH     : integer := 1;
+  constant ASSERTS_RSP_IN_WIDTH  : integer := 1;
+  constant ASSERTS_FWD_WIDTH     : integer := 1;
+  constant ASSERTS_RSP_OUT_WIDTH : integer := 1;
+
+  -- Ongoing transaction buffers
+  constant N_REQS    : integer := 4;
+  constant REQS_BITS : integer := 2;
+
+  constant LINE_RANGE_HI  : integer := (ADDR_BITS - 1);
+  constant LINE_RANGE_LO  : integer := (ADDR_BITS - TAG_BITS - SET_BITS);
+  constant TAG_RANGE_HI   : integer := (ADDR_BITS - 1);
+  constant TAG_RANGE_LO   : integer := (ADDR_BITS - TAG_BITS);
+  constant SET_RANGE_HI   : integer := (ADDR_BITS - TAG_BITS - 1);
+  constant SET_RANGE_LO   : integer := (ADDR_BITS - TAG_BITS - SET_BITS);
+  constant OFF_RANGE_HI   : integer := (ADDR_BITS - TAG_BITS - SET_BITS - 1);
+  constant OFF_RANGE_LO   : integer := 0;
+  constant W_OFF_RANGE_HI : integer := (ADDR_BITS - TAG_BITS - SET_BITS - 1);
+  constant W_OFF_RANGE_LO : integer := (ADDR_BITS - TAG_BITS - SET_BITS - WORD_BITS);
+  constant B_OFF_RANGE_HI : integer := (ADDR_BITS - TAG_BITS - SET_BITS - WORD_BITS - 1);
+  constant B_OFF_RANGE_LO : integer := 0;
+
+  -----------------------------------------------------------------------------
+  -- Types
+  -----------------------------------------------------------------------------
+  type addr_t is std_logic_vector(ADDR_BITS - 1 downto 0);
+  type cpu_msg_t is std_logic_vector(CPU_MSG_WIDTH - 1 downto 0);
+  type hsize_t is std_logic_vector(HSIZE_WIDTH - 1 downto 0);
+  type hprot_t is std_logic_vector(HPROT_WIDTH - 1 downto 0);
+  type word_t is std_logic_vector(BITS_PER_WORD - 1 downto 0);
+  type line_t is std_logic_vector(BITS_PER_LINE - 1 downto 0);
+  type coh_msg_t is std_logic_vector(COH_MSG_WIDTH - 1 downto 0);
+  type set_t is std_logic_vector(SET_BITS - 1 downto 0);
+  type invack_cnt_t is std_logic_vector(INVACK_CNT_WIDTH - 1 downto 0);
+  type asserts_t is std_logic_vector(ASSERTS_WIDTH - 1 downto 0);
+  type asserts_ahbs_t is std_logic_vector(ASSERTS_AHBS_WIDTH - 1 downto 0);
+  type asserts_ahbm_t is std_logic_vector(ASSERTS_AHBM_WIDTH - 1 downto 0);
+  type asserts_req_t is std_logic_vector(ASSERTS_REQ_WIDTH - 1 downto 0);
+  type asserts_rsp_in_t is std_logic_vector(ASSERTS_RSP_IN_WIDTH - 1 downto 0);
+  type asserts_fwd_t is std_logic_vector(ASSERTS_FWD_WIDTH - 1 downto 0);
+  type asserts_rsp_out_t is std_logic_vector(ASSERTS_RSP_OUT_WIDTH - 1 downto 0);
+
+  type bookmark_t is std_logic_vector(BOOKMARK_WIDTH - 1 downto 0);
+
+  -----------------------------------------------------------------------------
+  -- Functions
+  -----------------------------------------------------------------------------
+  function read_from_line (hsize_t hsize; addr_t addr; line_t line) return word_t;
+
+  function make_header (coh_msg_t coh_msg, tile_mem_info_vector mem_info,
+                        integer mem_num, hprot_t hprot) return noc_flit_type;
 
   -----------------------------------------------------------------------------
   -- l2_wrapper component
@@ -85,11 +160,11 @@ package cachepackage is
       clk : in std_ulogic;
 
       -- frontend (cache - AMBA)
-      ahbsi     : in  ahb_slv_in_type;
-      ahbso     : out ahb_slv_out_type;
-      ahbmi     : in  ahb_mst_in_type;
-      ahbmo     : out ahb_mst_out_type;
-      flush_req : in  std_ulogic;       -- flush request from CPU
+      ahbsi : in  ahb_slv_in_type;
+      ahbso : out ahb_slv_out_type;
+      ahbmi : in  ahb_mst_in_type;
+      ahbmo : out ahb_mst_out_type;
+      flush : in  std_ulogic;           -- flush request from CPU
 
       -- backend (cache - NoC)
       -- tile->NoC1
@@ -120,49 +195,46 @@ package cachepackage is
       rst : in std_ulogic;
 
       l2_cpu_req_valid          : in std_ulogic;
-      l2_cpu_req_data_cpu_msg   : in std_logic_vector(1 downto 0);
-      l2_cpu_req_data_hsize     : in std_logic_vector(2 downto 0);
-      l2_cpu_req_data_hprot     : in std_logic_vector(3 downto 0);
-      l2_cpu_req_data_addr      : in std_logic_vector(31 downto 0);
-      l2_cpu_req_data_word      : in std_logic_vector(31 downto 0);
+      l2_cpu_req_data_cpu_msg   : in cpu_msg_t;
+      l2_cpu_req_data_hsize     : in hsize_t;
+      l2_cpu_req_data_hprot     : in hprot_t;
+      l2_cpu_req_data_addr      : in addr_t;
+      l2_cpu_req_data_word      : in word_t;
       l2_fwd_in_valid           : in std_ulogic;
-      l2_fwd_in_data_coh_msg    : in std_logic_vector(1 downto 0);
-      l2_fwd_in_data_addr       : in std_logic_vector(31 downto 0);
+      l2_fwd_in_data_coh_msg    : in coh_msg_t;
+      l2_fwd_in_data_addr       : in addr_t;
       l2_rsp_in_valid           : in std_ulogic;
-      l2_rsp_in_data_coh_msg    : in std_logic_vector(1 downto 0);
-      l2_rsp_in_data_addr       : in std_logic_vector(31 downto 0);
-      l2_rsp_in_data_line       : in std_logic_vector(127 downto 0);
-      l2_rsp_in_data_invack_cnt : in std_logic_vector(2 downto 0);
+      l2_rsp_in_data_coh_msg    : in coh_msg_t;
+      l2_rsp_in_data_addr       : in addr_t;
+      l2_rsp_in_data_line       : in line_t;
+      l2_rsp_in_data_invack_cnt : in invack_cnt_t;
       l2_flush_valid            : in std_ulogic;
       l2_flush_data             : in std_ulogic;
       l2_rd_rsp_ready           : in std_ulogic;
-      l2_wr_rsp_ready           : in std_ulogic;
       l2_inval_ready            : in std_ulogic;
       l2_req_out_ready          : in std_ulogic;
       l2_rsp_out_ready          : in std_ulogic;
 
-      asserts                 : out std_logic_vector(8 downto 0);
-      bookmark                : out std_logic_vector(18 downto 0);
+      asserts                 : out asserts_t;
+      bookmark                : out bookmark_t;
       l2_cpu_req_ready        : out std_ulogic;
       l2_fwd_in_ready         : out std_ulogic;
       l2_rsp_in_ready         : out std_ulogic;
       l2_flush_ready          : out std_ulogic;
       l2_rd_rsp_valid         : out std_ulogic;
-      l2_rd_rsp_data_line     : out std_logic_vector(127 downto 0);
-      l2_wr_rsp_valid         : out std_ulogic;
-      l2_wr_rsp_data_set      : out std_logic_vector(7 downto 0);
+      l2_rd_rsp_data_line     : out line_t;
       l2_inval_valid          : out std_ulogic;
-      l2_inval_data           : out std_logic_vector(31 downto 0);
+      l2_inval_data           : out addr_t;
       l2_req_out_valid        : out std_ulogic;
-      l2_req_out_data_coh_msg : out std_logic_vector(1 downto 0);
-      l2_req_out_data_hprot   : out std_logic_vector(3 downto 0);
-      l2_req_out_data_addr    : out std_logic_vector(31 downto 0);
-      l2_req_out_data_line    : out std_logic_vector(127 downto 0);
+      l2_req_out_data_coh_msg : out coh_msg;
+      l2_req_out_data_hprot   : out hprot_t;
+      l2_req_out_data_addr    : out addr_t;
+      l2_req_out_data_line    : out line_t;
       l2_rsp_out_valid        : out std_ulogic;
-      l2_rsp_out_data_coh_msg : out std_logic_vector(1 downto 0);
-      l2_rsp_out_data_hprot   : out std_logic_vector(3 downto 0);
-      l2_rsp_out_data_addr    : out std_logic_vector(31 downto 0);
-      l2_rsp_out_data_line    : out std_logic_vector(127 downto 0)
+      l2_rsp_out_data_coh_msg : out coh_msg_t;
+      l2_rsp_out_data_hprot   : out hprot_t;
+      l2_rsp_out_data_addr    : out addr_t;
+      l2_rsp_out_data_line    : out line_t;
       );
   end component;
 
@@ -312,3 +384,78 @@ package cachepackage is
   end component;
 
 end cachepackage;
+
+package body cachepackage is
+
+  function read_from_line (hsize_t hsize; addr_t addr; line_t line) return word_t is
+    variable off    : std_logic_vector(OFFSET_BITS);
+    variable w_off  : std_logic_vector(WORD_BITS);
+    variable hw_off : std_logic_vector(WORD_BITS + 1);
+    variable word   : word_t;
+
+  begin
+
+    if hsize = BYTE then
+
+      off = addr(OFF_RANGE_HI downto OFF_RANGE_LO);
+      for i in 0 to BYTES_PER_WORD - 1 loop
+        word(i * 8 + 7 downto i * 8) =
+          line(off * 8 + 7 downto off * 8);
+      end loop;  -- i
+
+    elsif hsize = HALFWORD then
+
+      hw_off = addr(W_OFF_RANGE_HI downto W_OFF_RANGE_LO - 1);
+      word(BITS_PER_HWORD - 1 downto 0) :=
+        line((hw_off * BITS_PER_HWORD) + BITS_PER_HWORD - 1 downto hw_off * BITS_PER_HWORD);
+      word(BITS_PER_WORD - 1 downto BITS_PER_HWORD) :=
+        line((hw_off * BITS_PER_HWORD) + BITS_PER_HWORD - 1 downto hw_off * BITS_PER_HWORD);
+
+    elsif hsize = WORD then
+
+      w_off = addr(W_OFF_RANGE_HI downto W_OFF_RANGE_LO);
+      word := line((w_off * BITS_PER_WORD) + BITS_PER_WORD - 1 downto w_off * BITS_PER_WORD);
+
+    end if;
+
+    return word;
+
+  end function read_from_line;
+
+  function make_header (coh_msg_t coh_msg, tile_mem_info_vector mem_info,
+                        integer mem_num, hprot_t hprot)
+    return noc_flit_type is
+
+    variable header : noc_flit_type;
+    variable reserved : reserved_field_type;
+    variable dest_x, dest_y : local_yx;
+    
+  begin
+
+    -- HEADER
+    
+    -- coh_msg
+    packet.msg_type := '0' & req_out_data_coh_msg;
+
+    -- hprot
+    reserved := hprot;
+
+    -- dest_x dest_y
+    dest_x := mem_info(0).x;
+    dest_y := mem_info(0).y;
+    if mem_num /= 1 then
+      for i in 0 to mem_num - 1 loop
+        if ((b_addr_out_data(31 downto 20) xor conv_std_logic_vector(mem_info(i).haddr, 12))
+            and conv_std_logic_vector(mem_info(i).hmask, 12)) = x"000" then
+          dest_x := mem_info(i).x;
+          dest_y := mem_info(i).y;
+        end if;
+      end loop;
+    end if;
+
+    -- compose header
+    header := create_header(local_y, local_x, dest_y, dest_x, packet.msg_type, reserved);
+    
+  end function make_packet;
+
+end package body cachepackage;

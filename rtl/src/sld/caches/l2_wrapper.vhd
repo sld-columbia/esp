@@ -8,21 +8,6 @@
 -- Backend: L2 cache to Network on Chip wrapper.
 -------------------------------------------------------------------------------
 
--------------------------------------------------------------------------------
--- TODO:
--- + Substitute numbers with constants wherever possible
--- + Modify the way the cache is loading/storing less-than-word-size
--- loads/writes.
--- + Improve loads management. Pre-ask to the cache words until the end of the
--- line and store them until the asks for them. Discard them if the CPU asks
--- for different data.
--- + Investigate why EDATA is not received correctly by the cache.
--- + Check the correctness of non cacheable data flow through the wrapper and
--- cache. Maybe modify on backend the way data is sent to the NoC changing the
--- fixed size of 4 words to a dynamic quantity.
--- + Send RSP first to directory and then to the requestors
--------------------------------------------------------------------------------
-
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
@@ -65,12 +50,12 @@ entity l2_wrapper is
     rst : in std_ulogic;
     clk : in std_ulogic;
 
-    -- frontend (cache - AMBA)
-    ahbsi     : in  ahb_slv_in_type;
-    ahbso     : out ahb_slv_out_type;
-    ahbmi     : in  ahb_mst_in_type;
-    ahbmo     : out ahb_mst_out_type;
-    flush_req : in  std_ulogic;         -- flush request from CPU
+    -- frontend (cache - AHB/CPU)
+    ahbsi : in  ahb_slv_in_type;
+    ahbso : out ahb_slv_out_type;
+    ahbmi : in  ahb_mst_in_type;
+    ahbmo : out ahb_mst_out_type;
+    flush : in  std_ulogic;             -- flush request from CPU
 
     -- backend (cache - NoC)
     -- tile->NoC1
@@ -96,60 +81,238 @@ end l2_wrapper;
 
 architecture rtl of l2_wrapper is
 
+  -- Interface with L2 cache
+
   -- AHB to cache
   signal cpu_req_ready          : std_ulogic;
   signal cpu_req_valid          : std_ulogic;
-  signal cpu_req_data_cpu_msg   : std_logic_vector(1 downto 0);
-  signal cpu_req_data_hsize     : std_logic_vector(2 downto 0);
-  signal cpu_req_data_hprot     : std_logic_vector(3 downto 0);
-  signal cpu_req_data_addr      : std_logic_vector(31 downto 0);
-  signal cpu_req_data_word      : std_logic_vector(31 downto 0);
+  signal cpu_req_data_cpu_msg   : cpu_req_t;
+  signal cpu_req_data_hsize     : hsize_t;
+  signal cpu_req_data_hprot     : hprot_t;
+  signal cpu_req_data_addr      : addr_t;
+  signal cpu_req_data_word      : word_t;
   signal flush_ready            : std_ulogic;
   signal flush_valid            : std_ulogic;
   signal flush_data             : std_ulogic;
   -- cache to AHB
   signal rd_rsp_ready           : std_ulogic;
   signal rd_rsp_valid           : std_ulogic;
-  signal rd_rsp_data_line       : std_logic_vector(127 downto 0);
-  signal wr_rsp_ready           : std_ulogic;
-  signal wr_rsp_valid           : std_ulogic;
-  signal wr_rsp_data_set        : std_logic_vector(7 downto 0);
+  signal rd_rsp_data_line       : line_t;
   signal inval_ready            : std_ulogic;
   signal inval_valid            : std_ulogic;
-  signal inval_data             : std_logic_vector(31 downto 0);
+  signal inval_data             : addr_t;
   -- cache to NoC
   signal req_out_ready          : std_ulogic;
   signal req_out_valid          : std_ulogic;
-  signal req_out_data_coh_msg   : std_logic_vector(1 downto 0);
-  signal req_out_data_hprot     : std_logic_vector(3 downto 0);
-  signal req_out_data_addr      : std_logic_vector(31 downto 0);
-  signal req_out_data_line      : std_logic_vector(127 downto 0);
+  signal req_out_data_coh_msg   : coh_msg_t;
+  signal req_out_data_hprot     : hprot_t;
+  signal req_out_data_addr      : addr_t;
+  signal req_out_data_line      : line_t;
   signal rsp_out_ready          : std_ulogic;
   signal rsp_out_valid          : std_ulogic;
-  signal rsp_out_data_coh_msg   : std_logic_vector(1 downto 0);
-  signal rsp_out_data_hprot     : std_logic_vector(3 downto 0);
-  signal rsp_out_data_addr      : std_logic_vector(31 downto 0);
-  signal rsp_out_data_line      : std_logic_vector(127 downto 0);
+  signal rsp_out_data_coh_msg   : coh_msg_t;
+  signal rsp_out_data_hprot     : hprot_t;
+  signal rsp_out_data_addr      : addr_t;
+  signal rsp_out_data_line      : line_t;
   -- NoC to cache
   signal fwd_in_ready           : std_ulogic;
   signal fwd_in_valid           : std_ulogic;
-  signal fwd_in_data_coh_msg    : std_logic_vector(1 downto 0);
-  signal fwd_in_data_addr       : std_logic_vector(31 downto 0);
+  signal fwd_in_data_coh_msg    : coh_msg_t;
+  signal fwd_in_data_addr       : addr_t;
   signal rsp_in_valid           : std_ulogic;
   signal rsp_in_ready           : std_ulogic;
-  signal rsp_in_data_coh_msg    : std_logic_vector(1 downto 0);
-  signal rsp_in_data_addr       : std_logic_vector(31 downto 0);
-  signal rsp_in_data_line       : std_logic_vector(127 downto 0);
-  signal rsp_in_data_invack_cnt : std_logic_vector(2 downto 0);
+  signal rsp_in_data_coh_msg    : coh_msg_t;
+  signal rsp_in_data_addr       : addr_t;
+  signal rsp_in_data_line       : line_t;
+  signal rsp_in_data_invack_cnt : invack_cnt_t;
   -- debug
-  signal asserts                   : std_logic_vector(8 downto 0);
-  signal bookmark                  : std_logic_vector(18 downto 0);
+  signal asserts                : asserts_t;
+  signal bookmark               : bookmark_t;
+
+  -------------------------------------------------------------------------------
+  -- AHB slave FSM signals
+  -------------------------------------------------------------------------------
+  type ahbs_fsm is (idle, load_req, load_rsp, load_alloc, store_req);
+
+  type ahbs_reg_type is record
+    state         : ahbs_fsm;
+    cpu_msg       : cpu_msg_t;
+    hsize         : hsize_t;
+    hprot         : hprot_t;
+    haddr         : addr_t;
+    flush_ongoing : std_ulogic;
+    req_memorized : std_ulogic;
+    -- count   : integer;
+    asserts       : asserts_ahbs_t;
+  end record;
+
+  constant AHBS_REG_DEFAULT : ahbs_reg_type := (
+    state         => reset,
+    cpu_msg       => READ,              -- read
+    hsize         => WORD,              -- 1 word
+    hprot         => DEFAULT_HPROT,     -- bufferable, non cacheable
+    haddr         => (others => '0'),
+    flush_ongoing => '0',
+    req_memorized => '0',
+    -- count   => 0,
+    asserts       => (others => '0'));
+
+  signal ahbs_reg      : ahbs_reg_type := AHBS_REG_DEFAULT;
+  signal ahbs_reg_next : ahbs_reg_type := AHBS_REG_DEFAULT;
+
+  -----------------------------------------------------------------------------
+  -- AHB master FSM signals
+  -----------------------------------------------------------------------------
+  constant hconfig : ahb_config_type := (
+    0      => ahb_device_reg (VENDOR_SLD, SLD_L2_CACHE, 0, 0, 0),
+    others => zero32);
+
+  type ahbm_fsm is (idle, grant_wait, store_req, store_rsp);
+
+  type ahbm_reg_type is record
+    state        : ahbm_fsm;
+    assert_array : asserts_ahbm_t;
+  end record;
+
+  constant AHBM_REG_DEFAULT : ahbm_reg_type := (
+    state        => reset,
+    assert_array => (others => '0'));
+
+  signal ahbm_reg      : ahbm_reg_type := AHBM_REG_DEFAULT;
+  signal ahbm_reg_next : ahbm_reg_type := AHBM_REG_DEFAULT;
+
+  -- FIFO for invalidation addresses
+  signal inv_fifo_rdreq        : std_ulogic;
+  signal inv_fifo_wrreq        : std_ulogic;
+  signal inv_fifo_data_in      : addr_t;
+  signal inv_fifo_empty        : std_ulogic;
+  signal inv_fifo_almost_empty : std_ulogic;
+  signal inv_fifo_full         : std_ulogic;
+  signal inv_fifo_data_out     : addr_t;
+
+  -------------------------------------------------------------------------------
+  -- FSM: Request to NoC
+  -------------------------------------------------------------------------------
+  type req_fsm is (send_header, send_addr, send_data);
+
+  type req_reg_type is record
+    state        : req_fsm;
+    addr         : addr_t;
+    line         : line_t;
+    word_cnt     : natural in range 0 to 3;
+    assert_array : assert_req_t;
+  end record req_reg_type;
+
+  constant REQ_REG_DEFAULT : req_reg_type := (
+    state        => send_header,
+    addr         => (others => '0'),
+    line         => (others => '0'),
+    word_cnt     => 0,
+    assert_array => (others => '0'));
+
+  signal req_reg      : req_reg_type := REQ_REG_DEFAULT;
+  signal req_reg_next : req_reg_type := REQ_REG_DEFAULT;
+
+  -------------------------------------------------------------------------------
+  -- FSM: Response from  NoC
+  -------------------------------------------------------------------------------
+
+  type rsp_in_fsm is (rcv_header, rcv_addr, rcv_data);
+
+  type rsp_in_reg_type is record
+    state        : rsp_in_fsm;
+    coh_msg      : coh_msg_t;
+    invack_cnt   : invack_cnt_t;
+    addr         : addr_t;
+    line         : line_t;
+    word_cnt     : natural in range 0 to 3;
+    assert_array : asserts_rsp_in_t;
+  end record rsp_in_reg_type;
+
+  constant RSP_IN_REG_DEFAULT : rsp_in_reg_type := (
+    state        => rcv_header,
+    coh_msg      => (others => '0'),
+    invack_cnt   => (others => '0'),
+    addr         => (others => '0'),
+    line         => (others => '0'),
+    word_cnt     => 0,
+    assert_array => (others => '0'));
+
+  signal rsp_in_reg      : rsp_in_reg_type := RSP_IN_REG_DEFAULT;
+  signal rsp_in_reg_next : rsp_in_reg_type := RSP_IN_REG_DEFAULT;
+
+  -------------------------------------------------------------------------------
+  -- Flush FSM signals
+  -------------------------------------------------------------------------------
+  type flush_fsm is (idle, flush_wait, flush_release);
+  signal flush_state      : flush_fsm := idle;
+  signal flush_state_next : flush_fsm := idle;
+  signal flush_due        : std_ulogic;
+
+  -----------------------------------------------------------------------------
+  -- Read allocate
+  -----------------------------------------------------------------------------
+  type load_alloc_type is record
+    addr : std_logic_vector(ADDR_BITS-1-OFFSET_BITS downto 0);
+    line : line_t;
+  end record;
+
+  constant LOAD_ALLOC_DEFAULT : load_alloc_type := (
+    addr => (others => '0'),
+    line => (others => '0'));
+
+  signal load_alloc_reg : load_alloc_type := LOAD_ALLOC_DEFAULT;
+
+  -------------------------------------------------------------------------------
+  -- Debug
+  -------------------------------------------------------------------------------
+
+  -- Debug signals
+  signal ahbs_reg_state   : ahbs_fsm;
+  signal ahbm_reg_state   : ahbm_fsm;
+  signal req_reg_state    : req_fsm;
+  signal req_rsp_in_state : rsp_in_fsm;
+  signal ahbs_asserts     : asserts_ahbs_t;
+  signal ahbm_asserts     : asserts_ahbm_t;
+  signal req_asserts      : asserts_req_t;
+  signal rsp_in_asserts   : asserts_rsp_in_t;
+
+  -- Debug LEDs
+  signal led_bookmarks       : std_ulogic;
+  signal led_cache_asserts   : std_ulogic;
+  signal led_wrapper_asserts : std_ulogic;
+
+  attribute mark_debug : string;
+
+  attribute mark_debug of ahbs_reg_state   : signal is "true";
+  attribute mark_debug of ahbm_reg_state   : signal is "true";
+  attribute mark_debug of req_reg_state    : signal is "true";
+  attribute mark_debug of rsp_in_reg_state : signal is "true";
+
+  attribute mark_debug of flush_due   : signal is "true";
+  attribute mark_debug of flush_state : signal is "true";
+
+  attribute mark_debug of inv_fifo_empty        : signal is "true";
+  attribute mark_debug of inv_fifo_almost_empty : signal is "true";
+  attribute mark_debug of inv_fifo_full         : signal is "true";
+  attribute mark_debug of inv_fifo_rdreq        : signal is "true";
+  attribute mark_debug of inv_fifo_wrreq        : signal is "true";
+  --attribute mark_debug of inv_fifo_data_in        : signal is "true";
+  --attribute mark_debug of inv_fifo_data_out       : signal is "true";
+
+  attribute mark_debug of ahbs_asserts   : signal is "true";
+  attribute mark_debug of ahbm_asserts   : signal is "true";
+  attribute mark_debug of req_asserts    : signal is "true";
+  attribute mark_debug of rsp_in_asserts : signal is "true";
+
+  attribute mark_debug of bookmarks : signal is "true";
+  attribute mark_debug of asserts   : signal is "true";
 
 begin  -- architecture rtl of l2_wrapper
 
------------------------------------------------------------------------------
--- instantiations
------------------------------------------------------------------------------
+  -----------------------------------------------------------------------------
+  -- Instantiations
+  -----------------------------------------------------------------------------
 
   -- instantiation of l2 cache on cpu tile
   l2_cache_0 : l2_basic
@@ -172,9 +335,6 @@ begin  -- architecture rtl of l2_wrapper
       l2_rd_rsp_ready           => rd_rsp_ready,
       l2_rd_rsp_valid           => rd_rsp_valid,
       l2_rd_rsp_data_line       => rd_rsp_data_line,
-      l2_wr_rsp_ready           => wr_rsp_ready,
-      l2_wr_rsp_valid           => wr_rsp_valid,
-      l2_wr_rsp_data_set        => wr_rsp_data_set,
       l2_inval_ready            => inval_ready,
       l2_inval_valid            => inval_valid,
       l2_inval_data             => inval_data,
@@ -206,5 +366,716 @@ begin  -- architecture rtl of l2_wrapper
       asserts                   => asserts,
       bookmark                  => bookmark
       );
+
+  Invalidate_fifo : fifo_custom
+    generic map (
+      depth => N_REQS + 1,
+      width => ADDR_BITS)
+    port map (
+      clk          => clk,
+      rst          => rst,
+      rdreq        => inv_fifo_rdreq,
+      wrreq        => inv_fifo_wrreq,
+      data_in      => inv_fifo_data_in,
+      empty        => inv_fifo_empty,
+      almost_empty => inv_fifo_almost_empty,
+      full         => inv_fifo_full,
+      data_out     => inv_fifo_data_out);
+
+-------------------------------------------------------------------------------
+-- Static outputs: AHB slave, AHB master 
+-------------------------------------------------------------------------------
+  ahbso.hresp   <= HRESP_OKAY;
+  ahbso.hsplit  <= (others => '0');
+  ahbso.hirq    <= (others => '0');
+  ahbso.hconfig <= hconfig_none;
+  ahbso.hindex  <= hindex_slv(0);
+
+  ahbmo.hlock   <= '0';
+  ahbmo.hwrite  <= '1';
+  ahbmo.hsize   <= HSIZE_WORD;
+  ahbmo.hburst  <= HBURST_SINGLE;
+  ahbmo.hprot   <= REGULAR_CACHEABLE;
+  ahbmo.hwdata  <= (others => '0');
+  ahbmo.hirq    <= (others => '0');
+  ahbmo.hconfig <= hconfig;
+  ahbmo.hindex  <= hindex_mst;
+
+-------------------------------------------------------------------------------
+-- State update for all the FSMs
+-------------------------------------------------------------------------------
+  fsms_state_update : process (clk, rst)
+  begin
+    if rst = '0' then
+
+      ahbs_reg    <= AHBS_REG_DEFAULT;
+      ahbm_reg    <= AHBM_REG_DEFAULT;
+      flush_state <= idle;
+      req_reg     <= REQ_REG_DEFAULT;
+      rsp_in_reg  <= RSP_IN_REG_DEFAULT;
+
+    elsif clk'event and clk = '1' then
+
+      ahbs_reg    <= ahbs_reg_next;
+      ahbm_reg    <= ahbm_reg_next;
+      flush_state <= flush_state_next;
+      req_reg     <= req_reg_next;
+      rsp_in_reg  <= rsp_in_reg_next;
+
+    end if;
+  end process fsms_state_update;
+
+-------------------------------------------------------------------------------
+-- FSM: L2 flush management
+-------------------------------------------------------------------------------
+  fsm_flush : process (flush_state, flush, ahbs_reg.flush_ongoing)
+
+  begin
+
+    case flush_state is
+
+      when idle =>
+        flush_due <= '0';
+        if flush = '1' then
+          flush_state_next <= flush_wait;
+        else
+          flush_state_next <= idle;
+        end if;
+
+      when flush_wait =>
+        flush_due <= '1';
+        if ahbs_reg.flush_ongoing = '1' then
+          flush_state_next <= flush_release;
+        else
+          flush_state_next <= flush_wait;
+        end if;
+
+      when flush_release =>
+        flush_due <= '0';
+        if flush = '0' and ahbs_reg.flush_ongoing = '0' then
+          flush_state_next <= idle;
+        else
+          flush_state_next <= flush_release;
+        end if;
+
+    end case;
+
+  end process fsm_flush;
+
+-------------------------------------------------------------------------------
+-- FSM: Bridge from AHB slave to L2 cache frontend input
+-------------------------------------------------------------------------------
+  fsm_ahbs : process (ahbsi, flush_req, ahbs_reg
+                      cpu_req_ready, flush_ready,
+                      rd_rsp_valid, rd_rsp_data_line,
+                      load_alloc_reg)
+
+    variable reg           : ahbs_reg_type;
+    variable selected      : std_ulogic;
+    variable valid_ahb_req : std_ulogic;
+
+  begin
+    -- copy current state into a variable
+    reg := ahbs_reg;
+
+    -- default values of output signals
+    ahbso.hready <= '0';
+    ahbso.hrdata <= (others => '0');
+
+    cpu_req_valid        <= '0';
+    cpu_req_data_cpu_msg <= (others => '0');
+    cpu_req_data_hsize   <= (others => '0');
+    cpu_req_data_hprot   <= (others => '0');
+    cpu_req_data_addr    <= (others => '0');
+    cpu_req_data_word    <= (others => '0');
+
+    flush_valid <= '0';
+    flush_data  <= '0';
+
+    rd_rsp_ready <= '0';
+
+    -- check if any AHB slave has been selected
+    -- (this wrapper handles requests toward all the slaves)
+    selected := '0';
+    for i in 0 to nslaves-1 loop
+      if ahbsi.hsel(hindex_slv(i)) = '1' then
+        selected := '1';
+      end if;
+    end loop;
+
+    -- check for valid requests on AHB bus
+    if (selected = '1' and ahbsi.hready = '1' and ahbsi.htrans /= HTRANS_IDLE) then
+      valid_ahb_req := '1';
+    else
+      valid_ahb_req := '0';
+    end if;
+
+
+    case ahbs_reg.state is
+
+      -- IDLE
+      when idle =>
+        -- always acknowledge transaction requests as soon as they appear on the bus 
+        ahbso.hready <= '1';
+
+        cpu_req_data_cpu_msg <= ahbsi.hwrite & ahbsi.hmastlock;
+        cpu_req_data_hsize   <= ahbsi.hsize;
+        cpu_req_data_hprot   <= ahbsi.hprot;
+        cpu_req_data_addr    <= ahbsi.haddr;
+
+        if flush_due = '1' then
+
+          flush_valid <= '1';
+          if flush_ready = '1' then
+            reg.flush_ongoing = '1';
+          end if;
+
+          if valid_ahb_req = '1' then
+            reg.req_memorized = '1';
+
+            reg.cpu_msg := ahbsi.hwrite & ahbsi.hmastlock;
+            reg.hsize   := ahbsi.hsize;
+            reg.hprot   := ahbsi.hprot;
+            reg.haddr   := ahbsi.haddr;
+          end if;
+
+        elsif reg.req_memorized = '1' then
+          reg.req_memorized = '0';
+          if reg.cpu_msg = READ or reg.cpu_msg = READ_ATOM then
+            load_alloc_reg.addr := reg.haddr(TAG_RANGE_HI, SET_RANGE_LO);
+            reg.state           := load_req;
+          else
+            reg.state := store_req;
+          end if;
+
+        elsif valid_ahb_req = '1' then
+          reg.cpu_msg := ahbsi.hwrite & ahbsi.hmastlock;
+          reg.hsize   := ahbsi.hsize;
+          reg.hprot   := ahbsi.hprot;
+          reg.haddr   := ahbsi.haddr;
+
+          if ahbsi.hwrite = '0' then
+
+            cpu_req_valid <= '1';
+            if cpu_req_ready = '1' then
+              reg.state           := load_rsp;
+              reg.flush_ongoing   := '0';
+              load_alloc_reg.addr := ahbsi.haddr(TAG_RANGE_HI, SET_RANGE_LO);
+            else
+              reg.state           := load_req;
+              load_alloc_reg.addr := ahbsi.haddr(TAG_RANGE_HI, SET_RANGE_LO);
+            end if;
+
+          else
+
+            reg.state := store_req;
+
+          end if;
+        end if;
+
+
+      -- LOAD REQUEST
+      when load_req =>
+        cpu_req_data_cpu_msg <= reg.cpu_msg;
+        cpu_req_data_hsize   <= reg.hsize;
+        cpu_req_data_hprot   <= reg.hprot;
+        cpu_req_data_addr    <= reg.haddr;
+
+        cpu_req_valid <= '1';
+        if cpu_req_ready = '1' then
+          reg.state         := load_rsp;
+          reg.flush_ongoing := '0';
+        end if;
+
+      -- LOAD RESPONSE
+      when load_rsp =>
+        rd_rsp_ready <= '1';
+
+        cpu_req_data_cpu_msg <= ahbsi.hwrite & ahbsi.hmastlock;
+        cpu_req_data_hsize   <= ahbsi.hsize;
+        cpu_req_data_hprot   <= ahbsi.hprot;
+        cpu_req_data_addr    <= ahbsi.haddr;
+
+        reg.cpu_msg := ahbsi.hwrite & ahbsi.hmastlock;
+        reg.hsize   := ahbsi.hsize;
+        reg.hprot   := ahbsi.hprot;
+        reg.haddr   := ahbsi.haddr;
+
+        load_alloc_reg.line = rd_rsp_data_line;
+
+        if rd_rsp_valid = '1' then
+
+          ahbso.hrdata <= ahb_drive_data(read_from_line(rd_rsp_data_line));
+          ahbso.hready <= '1';
+
+          if flush_due = '1' and not (ahbsi.hprot(0) = '0' and valid_ahb_req = '1') then
+
+            reg.state := idle;
+
+            flush_valid <= '1';
+            if flush_ready = '1' then
+              reg.flush_ongoing = '1';
+            end if;
+
+            if valid_ahb_req = '1' then
+              reg.req_memorized = '1';
+            end if;
+
+          elsif valid_ahb_req = '1' then
+            if ahbsi.hwrite = '0' then
+
+              if load_alloc_reg.addr = ahbsi.haddr(TAG_RANGE_HI, SET_RANGE_LO) then
+
+                reg.state := load_alloc;
+
+              else
+
+                cpu_req_valid <= '1';
+                if cpu_req_ready = '1' then
+                  load_alloc_reg.addr := ahbsi.haddr(TAG_RANGE_HI, SET_RANGE_LO);
+                  reg.state           := load_rsp;
+                else
+                  load_alloc_reg.addr := ahbsi.haddr(TAG_RANGE_HI, SET_RANGE_LO);
+                  reg.state           := load_req;
+                end if;
+              end if;
+
+            else
+
+              reg.state := store_req;
+
+            end if;
+
+          else
+
+            reg.state := idle;
+
+          end if;
+        end if;
+
+
+      -- LOAD_ALLOC
+      when load_alloc =>
+
+        ahbso.hrdata = read_from_line(reg.hsize, reg.haddr, load_alloc_reg.line);
+        ahbso.hready <= '1';
+
+        cpu_req_data_cpu_msg <= ahbsi.hwrite & ahbsi.hmastlock;
+        cpu_req_data_hsize   <= ahbsi.hsize;
+        cpu_req_data_hprot   <= ahbsi.hprot;
+        cpu_req_data_addr    <= ahbsi.haddr;
+
+        reg.cpu_msg := ahbsi.hwrite & ahbsi.hmastlock;
+        reg.hsize   := ahbsi.hsize;
+        reg.hprot   := ahbsi.hprot;
+        reg.haddr   := ahbsi.haddr;
+
+        if flush_due = '1' and not (ahbsi.hprot(0) = '0' and valid_ahb_req = '1') then
+
+          reg.state := idle;
+
+          flush_valid <= '1';
+          if flush_ready = '1' then
+            reg.flush_ongoing = '1';
+          end if;
+
+          if valid_ahb_req = '1' then
+            reg.req_memorized = '1';
+          end if;
+
+        elsif valid_ahb_req = '1' then
+          if ahbsi.hwrite = '0' then
+
+            if load_alloc_reg.addr = ahbsi.haddr(TAG_RANGE_HI, SET_RANGE_LO) then
+
+              reg.state := load_alloc;
+
+            else
+
+              cpu_req_valid <= '1';
+              if cpu_req_ready = '1' then
+                load_alloc_reg.addr := ahbsi.haddr(TAG_RANGE_HI, SET_RANGE_LO);
+                reg.state           := load_rsp;
+              else
+                load_alloc_reg.addr := ahbsi.haddr(TAG_RANGE_HI, SET_RANGE_LO);
+                reg.state           := load_req;
+              end if;
+            end if;
+
+          else
+
+            reg.state := store_req;
+
+          end if;
+
+        else
+
+          reg.state := idle;
+
+        end if;
+
+      -- STORE REQUEST
+      when store_req =>
+
+        cpu_req_data_cpu_msg <= reg.cpu_msg;
+        cpu_req_data_hsize   <= reg.hsize;
+        cpu_req_data_hprot   <= reg.hprot;
+        cpu_req_data_addr    <= reg.haddr;
+        cpu_req_data_word    <= ahbreadword(ahbsi.hwdata);
+
+        reg.cpu_msg <= ahbsi.hwrite & ahbsi.hmastlock;
+        reg.hsize   <= ahbsi.hsize;
+        reg.hprot   <= ahbsi.hprot;
+        reg.addr    <= ahbsi.haddr;
+
+        cpu_req_valid <= '1';
+
+        if cpu_req_ready = '1' then
+          ahbso.hready = '1';
+
+          if flush_due = '1' and not (ahbsi.hprot(0) = '0' and valid_ahb_req = '1') then
+
+            reg.state := idle;
+
+            flush_valid <= '1';
+            if flush_ready = '1' then
+              reg.flush_ongoing = '1';
+            end if;
+
+            if valid_ahb_req = '1' then
+              reg.req_memorized = '1';
+            end if;
+
+          elsif valid_ahb_req = '1' then
+            if ahbsi.hwrite = '0' then
+
+              load_alloc_reg.addr := ahbsi.haddr(TAG_RANGE_HI, SET_RANGE_LO);
+              reg.state           := load_req;
+
+            else
+
+              reg.state := store_req;
+
+            end if;
+
+          else
+
+            reg.state := idle;
+
+          end if;
+
+        end if;
+
+
+    end case;
+
+    ahbs_reg_next <= reg;
+
+  end process fsm_ahbs;
+
+-------------------------------------------------------------------------------
+-- FSM: Bridge from L2 cache frontend output to AHB master (L1 invalidation)
+-------------------------------------------------------------------------------
+  -- put writes of invalidate addresses coming from the L2 cache into a FIFO
+  inval_ready      <= inval_valid when inv_fifo_full = '0' else '0';
+  inv_fifo_wrreq   <= inval_valid when inv_fifo_full = '0' else '0';
+  inv_fifo_data_in <= inval_data;
+
+  fsm_ahbm : process (ahbm_reg, ahbmi,
+                      inv_fifo_empty, inv_fifo_almost_empty, inv_fifo_data_out)
+
+    variable granted : std_ulogic;
+    variable reg     : ahbm_reg_type;
+
+  begin
+
+    -- save current state into a variable
+    reg := ahbm_reg;
+
+    -- default output signals
+    ahbmo.hbusreq  <= '0';
+    ahbmo.htrans   <= HTRANS_IDLE;
+    ahbmo.haddr    <= (others => '0');
+    inv_fifo_rdreq <= '0';
+
+    -- check if bus has been granted
+    granted := ahbmi.hgrant(hindex_mst);
+
+    -- select next state and set outputs
+    case ahbm_reg.state is
+
+      -- IDLE
+      when idle =>
+        if inv_fifo_empty = '0' then
+          ahbmo.hbusreq <= '1';
+          if (granted = '1' and ahbmi.hready = '1') then
+            reg.state := store_req;
+          else
+            reg.state := grant_wait;
+          end if;
+        end if;
+
+      -- GRANT WAIT
+      when grant_wait =>
+        ahbmo.hbusreq <= '1';
+        if (granted = '1' and ahbmi.hready = '1') then
+          reg.state := store_req;
+        end if;
+
+      -- STORE REQUEST
+      when store_req =>
+        ahbmo.haddr   <= inv_fifo_data_out;
+        ahbmo.hbusreq <= '1';
+        ahbmo.htrans  <= HTRANS_NONSEQ;
+
+        if (ahbmi.hready = '1') then
+          inv_fifo_rdreq <= '1';
+          if granted = '1' and inv_fifo_almost_empty = '0' then
+            reg.state := store_req;
+          else
+            reg.state := store_rsp;
+          end if;
+        end if;
+
+      -- STORE RESPONSE
+      when store_rsp =>
+        reg.state := idle;
+
+    end case;
+
+    ahbm_reg_next <= reg;
+
+  end process fsm_ahbm;
+
+-------------------------------------------------------------------------------
+-- FSM: Requests to NoC
+-------------------------------------------------------------------------------
+  fsm_req : process (req_reg, coherence_req_full,
+                     req_out_valid, req_out_data_coh_msg, req_out_data_hprot,
+                     req_out_data_addr, req_out_data_line) is
+
+    variable reg : req_reg_type;
+
+  begin  -- process fsm_cache2noc
+
+    -- initialize variables
+    reg := req_reg;
+
+    -- initialize signals toward cache (receive from cache)
+    req_out_ready <= '0';
+
+    -- initialize signals toward noc
+    coherence_req_wrreq   <= '0';
+    coherence_req_data_in <= (others => '0');
+
+
+    case reg.state is
+
+      -- SEND HEADER
+      when send_header =>
+
+        if coherence_req_full = '0' then
+
+          req_out_ready <= '1';
+
+          if req_out_valid = '1' then
+
+            reg.coh_msg = req_out_data_coh_msg;
+            reg.addr = req_out_data_addr;
+            reg.line = req_out_data_line;
+
+            coherence_req_wrreq <= '1';
+            coherence_req_data_in <= make_header(req_out_data_coh_msg, mem_info,
+                                                 mem_num, req_out_data_hprot);
+
+            reg.state := send_addr;
+
+          end if;
+        end if;
+
+      -- SEND ADDRESS
+      when send_addr =>
+
+        if coherence_req_full = '0' then
+
+          coherence_req_wrreq <= '1';
+
+          if make_packet_reg.msg_type = REQ_PUTM then
+
+            coherence_req_data_in <= PREAMBLE_BODY & reg.addr;
+            reg.state             := send_data;
+            reg.word_cnt          := 0;
+
+          else
+
+            coherence_req_data_in <= PREAMBLE_TAIL & reg.addr;
+            reg.state             := send_header;
+
+          end if;
+        end if;
+
+      -- SEND DATA
+      when send_data =>
+
+        if coherence_req_full = '0' then
+
+          coherence_req_wrreq <= '1';
+
+          coherence_req_data_in <= PREAMBLE_TAIL & reg.line((BITS_PER_WORD << reg.word_cnt) - 1 downto
+                                                            (BITS_PER_WORD << reg.word_cnt) - BITS_PER_WORD);
+
+          if reg.word_cnt = WORDS_PER_LINE - 1 then
+
+            reg.state := send_header;
+
+          else
+
+            reg.word_cnt := reg.word_cnt + 1;
+
+          end if;
+
+        end if;
+
+    end case;
+
+    req_reg_next <= reg;
+
+  end process fsm_req;
+
+-----------------------------------------------------------------------------
+-- FSM: Responses from NoC
+-----------------------------------------------------------------------------
+  fsm_rsp_in : process (rsp_in_reg, rsp_in_ready,
+                        coherence_rsp_rcv_empty, coherence_rsp_rcv_data_out) is
+
+    variable reg          : rsp_in_reg_type;
+    variable rsp_preamble : noc_preamble_type;
+    variable msg_type     : noc_msg_type;
+
+  begin  -- process fsm_rsp_in
+
+    -- initialize variables
+    reg := rsp_in_reg;
+
+    -- initialize signals toward cache (send to cache)
+    rsp_in_valid           <= '0';
+    rsp_in_data_coh_msg    <= (others => '0');
+    rsp_in_data_addr       <= (others => '0');
+    rsp_in_data_line       <= (others => '0');
+    rsp_in_data_hprot      <= (others => '0');
+    rsp_in_data_invack_cnt <= (others => '0');
+
+    -- initialize signals toward noc (receive from noc)
+    coherence_rsp_rcv_rdreq <= '0';
+
+    -- get preambles
+    rsp_preamble := get_preamble(coherence_rsp_rcv_data_out);
+
+    -- fsm states
+    case reg.state is
+
+      -- RECEIVE HEADER
+      when rcv_header =>
+
+        if coherence_rsp_rcv_empty = '0' then
+
+          msg_type       := coherence_rsp_rcv_rdreq <= '1';
+          reg.coh_msg    := msg_type(COH_MSG_WIDTH - 1 downto 0);
+          reg.invack_cnt := get_reserved_field(coherence_rsp_rcv_data_out);
+
+          reg.state := rcv_addr;
+
+        end if;
+
+      -- RECEIVE ADDRESS
+      when rcv_addr =>
+        if coherence_rsp_rcv_empty = '0' then
+
+          if reg.coh_msg = RSP_PUTACK then
+
+            if rsp_in_ready = '1' then
+
+              coherence_rsp_rcv_rdreq <= '1';
+              rsp_in_valid            <= '1';
+              rsp_in_data_coh_msg     <= reg.coh_msg;
+              rsp_in_data_addr        <= coherence_rsp_rcv_data_out(ADDR_BITS - 1 downto 0);
+              reg.state               := rcv_header;
+
+            end if;
+
+          else
+            -- RSP_DATA, RSP_EDATA
+
+            coherence_rsp_rcv_rdreq <= '1';
+            reg.addr                := coherence_rsp_rcv_data_out(ADDR_BITS - 1 downto 0);
+            reg.word_cnt            := 0;
+            reg.state               := rcv_data;
+
+          end if;
+
+        end if;
+
+      -- RECEIVE FIRST DATA
+      when rcv_data =>
+        if coherence_rsp_rcv_empty = '0' then
+
+          if reg.word_cnt = WORDS_PER_LINE - 1 then
+
+            if rsp_in_ready = '1' then
+
+              coherence_rsp_rcv_rdreq <= '1';
+
+              reg.line((BITS_PER_WORD << reg.word_cnt) - 1 downto
+                       (BITS_PER_WORD << reg.word_cnt) - BITS_PER_WORD)
+                := coherence_rsp_rcv_data_out(BITS_PER_WORD - 1 downto 0);
+
+              reg.state := rcv_data;
+
+              rsp_in_valid           <= '1';
+              rsp_in_data_coh_msg    <= reg.coh_msg;
+              rsp_in_data_invack_cnt <= reg.invack_cnt;
+              rsp_in_data_addr       <= reg.addr;
+              rsp_in_data_line       <= reg.line;
+            end if;
+
+          else
+
+            coherence_rsp_rcv_rdreq <= '1';
+
+            reg.line((BITS_PER_WORD << reg.word_cnt) - 1 downto
+                     (BITS_PER_WORD << reg.word_cnt) - BITS_PER_WORD)
+              := coherence_rsp_rcv_data_out(BITS_PER_WORD - 1 downto 0);
+
+            reg.word_cnt := reg.word_cnt + 1;
+
+          end if;
+
+        end if;
+
+    end case;
+
+    rsp_in_reg_next <= reg;
+
+  end process fsm_rsp_in;
+
+
+-------------------------------------------------------------------------------
+-- Debug
+-------------------------------------------------------------------------------
+
+  ahbs_reg_state   <= ahbs_reg.state;
+  ahbm_reg_state   <= ahbm_reg.state;
+  req_reg_state    <= req_reg.state;
+  rsp_in_reg_state <= rsp_in_reg.state;
+
+  ahbs_asserts   <= ahbs_reg.asserts;
+  ahbm_asserts   <= ahbm_reg.asserts;
+  req_asserts    <= req_reg.asserts;
+  rsp_in_asserts <= rsp_in_reg.asserts;
+
+  led_wrapper_asserts <= or_reduce(ahbs_reg.asserts) or or_reduce(ahbm_reg.asserts) or
+                         or_reduce(req_reg.asserts) or or_reduce(rsp_in_reg.asserts);
+
+  debug_led <= or_reduce(bookmark) or or_reduce(asserts) or led_wrapper_asserts;
 
 end rtl;
