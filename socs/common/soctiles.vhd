@@ -97,7 +97,9 @@ package soctiles is
       -- Monitor signals
       mon_noc       : out monitor_noc_matrix(1 to 6, 0 to TILES_NUM-1);
       mon_acc       : out monitor_acc_vector(0 to accelerators_num-1);
-      mon_dvfs      : out monitor_dvfs_vector(0 to TILES_NUM-1)
+      mon_dvfs      : out monitor_dvfs_vector(0 to TILES_NUM-1);
+      -- Debug
+      debug_led     : out std_ulogic
       );
   end component;
 
@@ -163,7 +165,8 @@ package soctiles is
       noc6_data_void_out : in  std_ulogic;
       noc6_stop_out      : in  std_ulogic;
       mon_dvfs_in        : in  monitor_dvfs_type;
-      mon_dvfs           : out monitor_dvfs_type);
+      mon_dvfs           : out monitor_dvfs_type;
+      debug_led          : out std_ulogic);
   end component;
 
   component tile_acc

@@ -452,6 +452,8 @@ signal mon_noc_actual   : monitor_noc_matrix(0 to 1, 0 to CFG_TILES_NUM-1);
 signal mon_acc          : monitor_acc_vector(0 to accelerators_num-1);
 signal mon_dvfs         : monitor_dvfs_vector(0 to CFG_TILES_NUM-1);
 
+signal debug_led : std_ulogic;
+
 begin
 
   c0_diagnostic: process (clkm, clkm_sync_rst)
@@ -500,7 +502,7 @@ begin
 
   led3_pad : outpad generic map (tech => padtech, level => cmos, voltage => x18v) port map (LED_BLUE, lock);
 
-  led4_pad : outpad generic map (tech => padtech, level => cmos, voltage => x18v) port map (LED_YELLOW, '0');
+  led4_pad : outpad generic map (tech => padtech, level => cmos, voltage => x18v) port map (LED_YELLOW, debug_led);
 
 -------------------------------------------------------------------------------
 -- Switches -------------------------------------------------------------------
@@ -1091,7 +1093,8 @@ begin
       -- Monitor signals
       mon_noc       => mon_noc,
       mon_acc       => mon_acc,
-      mon_dvfs      => mon_dvfs
+      mon_dvfs      => mon_dvfs,
+      debug_led     => debug_led
       );
 
 

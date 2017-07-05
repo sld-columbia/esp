@@ -1,5 +1,6 @@
 library ieee;
 use ieee.std_logic_1164.all;
+use ieee.std_logic_misc.all;
 use work.amba.all;
 use work.stdlib.all;
 use work.sld_devices.all;
@@ -76,9 +77,8 @@ entity esp is
     -- Monitor signals
     mon_noc         : out monitor_noc_matrix(1 to 6, 0 to TILES_NUM-1);
     mon_acc         : out monitor_acc_vector(0 to accelerators_num-1);
-    mon_dvfs        : out monitor_dvfs_vector(0 to TILES_NUM-1)
-    );
-
+    mon_dvfs        : out monitor_dvfs_vector(0 to TILES_NUM-1);
+    debug_led       : out std_ulogic);
 end;
 
 
@@ -145,6 +145,10 @@ signal irqo : irq_out_vector(0 to CFG_NCPU_TILE-1);
   
 signal dbgi : l3_debug_in_vector(0 to CFG_NCPU_TILE-1);
 signal dbgo : l3_debug_out_vector(0 to CFG_NCPU_TILE-1);
+
+-- type debug_led_vector_type is array (1 to CFG_NCPU_TILE) of std_ulogic;
+-- signal debug_led_vector : debug_led_vector_type;
+signal debug_led_vector : std_logic_vector(0 to CFG_NCPU_TILE-1);
 
 begin
 
@@ -302,7 +306,8 @@ begin
           noc6_data_void_out => noc_data_void_out(6)(i),
           noc6_stop_out      => noc_stop_out(6)(i),
           mon_dvfs_in        => mon_dvfs_domain(i),
-          mon_dvfs           => mon_dvfs_out(i));
+          mon_dvfs           => mon_dvfs_out(i),
+          debug_led          => debug_led_vector(tile_cpu_id(i)));
     end generate cpu_tile;
 
     accelerator_tile: if tile_type(i) = 2 generate
@@ -726,5 +731,7 @@ begin
     end generate monitor_noc_tiles_gen;
   end generate monitor_noc_gen;
 
+  debug_led <= or_reduce(debug_led_vector);
+  
  end;
 

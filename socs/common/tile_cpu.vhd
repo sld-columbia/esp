@@ -601,7 +601,7 @@ begin
         ahbso                      => ahbso(ddr0_hindex),
         ahbmi                      => ahbmi,
         ahbmo                      => ahbmo(CFG_NCPU_TILE + 1),
-        flush_req                  => dflush,
+        flush                      => dflush,
         coherence_req_wrreq        => coherence_req_wrreq,
         coherence_req_data_in      => coherence_req_data_in,
         coherence_req_full         => coherence_req_full,
@@ -613,7 +613,9 @@ begin
         coherence_rsp_rcv_empty    => coherence_rsp_rcv_empty,
         coherence_rsp_snd_wrreq    => coherence_rsp_snd_wrreq,
         coherence_rsp_snd_data_in  => coherence_rsp_snd_data_in,
-        coherence_rsp_snd_full     => coherence_rsp_snd_full);
+        coherence_rsp_snd_full     => coherence_rsp_snd_full,
+        debug_led                  => debug_led
+        );
   end generate with_cache_coherence;
 
   mem_noc2ahbm_1 : mem_noc2ahbm
