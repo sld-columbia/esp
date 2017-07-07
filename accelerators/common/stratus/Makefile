@@ -79,10 +79,22 @@ ifneq ("$(ACCELERATOR)","")
 	@cp ../$(ACCELERATOR).xml $(RTL_OUT)
 endif
 	@for dir in $$(ls bdw_work/modules/$(TARGET_NAME)); do \
-		if test -e bdw_work/modules/$(TARGET_NAME)/$$dir/$(TARGET_NAME)_rtl.v; then \
+		indir=bdw_work/modules/$(TARGET_NAME)/$$dir; \
+		infile=$$indir/$(TARGET_NAME)_rtl.v; \
+		if test -e $$infile; then \
 			cfg=$${dir,,}; \
-			cp bdw_work/modules/$(TARGET_NAME)/$$dir/$(TARGET_NAME)_rtl.v $(RTL_OUT)/$(TARGET_NAME)_$$cfg\.v; \
-			sed -i "s/module $(TARGET_NAME)/module $(TARGET_NAME)_$$cfg/g" $(RTL_OUT)/$(TARGET_NAME)_$$cfg.v; \
+			outdir=$(RTL_OUT)/$(TARGET_NAME)_$$cfg; \
+			outfile=$$outdir/$(TARGET_NAME)_$$cfg.v; \
+			mkdir -p $$outdir; \
+			cp $$infile $$outfile; \
+			rtl_parts=$$(rm -rf tmp-vsim; vlib tmp-vsim; vlog -work tmp-vsim -quiet $$infile; vsim -quiet -c tmp-vsim.$(TARGET_NAME) > log 2> /dev/null; cat log | grep Error | grep "not defined" | cut -f 6 -d " " | sed "s/'//g" | uniq; rm -rf tmp-vsim); \
+			for p in $$rtl_parts; do \
+				pfile=$$indir/v_rtl/$$p\.v; \
+				if test -e $$pfile; then \
+					cp $$pfile $$outdir; \
+				fi; \
+			done; \
+			sed -i "s/module $(TARGET_NAME)/module $(TARGET_NAME)_$$cfg/g" $$outfile; \
 		fi; \
 	done
 
