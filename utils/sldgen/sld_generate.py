@@ -18,6 +18,10 @@ import glob
 import sys
 import re
 
+def get_immediate_subdirectories(a_dir):
+  return [name for name in os.listdir(a_dir)
+        if os.path.isdir(os.path.join(a_dir, name))]
+
 def print_usage():
   print("Usage                    : ./sld_generate.py <dma_width> <rtl_path> <template_path> <out_path>")
   print("")
@@ -436,7 +440,7 @@ for acc in accelerators:
 
   # Get scheduled HLS configurations
   acc_dir = rtl_dir + "/" + acc
-  acc_dp = glob.glob(acc_dir + '/*.v')
+  acc_dp = get_immediate_subdirectories(acc_dir)
   for dp_str in acc_dp:
     dp = dp_str.replace(acc_dir + "/" + acc + "_", "")
     dp = dp.replace(".v", "")
