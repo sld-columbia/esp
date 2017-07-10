@@ -442,8 +442,7 @@ for acc in accelerators:
   acc_dir = rtl_dir + "/" + acc
   acc_dp = get_immediate_subdirectories(acc_dir)
   for dp_str in acc_dp:
-    dp = dp_str.replace(acc_dir + "/" + acc + "_", "")
-    dp = dp.replace(".v", "")
+    dp = dp_str.replace(acc + "_", "")
     dp_info = dp.split("_")
     skip = False
     for item in dp_info:
