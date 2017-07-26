@@ -788,8 +788,8 @@ ifeq ($(CONFIG_GRETH_ENABLE),y)
 		echo $(SPACES)"WARNING: no SGMII IP was found"; \
 	fi;
 endif
-	@if test -r $(UTILS_GRLIB)/netlists/xilinx/$(TECHNOLOGY); then \
-		echo "import_files $(UTILS_GRLIB)/netlists/xilinx/$(TECHNOLOGY)" >> $@; \
+	@if test -r $(UTILS_GRLIB)/netlists/$(TECHNOLOGY); then \
+		echo "import_files $(UTILS_GRLIB)/netlists/$(TECHNOLOGY)" >> $@; \
 	fi;
 	@for i in $(XDC); do \
 	  echo "read_xdc $$i" >> $@; \
