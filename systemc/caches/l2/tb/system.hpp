@@ -23,6 +23,7 @@ public:
     // Signals
     sc_signal< sc_bv<ASSERT_WIDTH> > asserts;
     sc_signal< sc_bv<BOOKMARK_WIDTH> > bookmark;
+    sc_signal<uint32_t> custom_dbg;
 
     // Channels
     // To L2 cache
@@ -54,6 +55,7 @@ public:
 	dut->rst(rst);
         dut->asserts(asserts);
         dut->bookmark(bookmark);
+        dut->custom_dbg(custom_dbg);
 	dut->l2_cpu_req(l2_cpu_req_chnl);
 	dut->l2_fwd_in(l2_fwd_in_chnl);
 	dut->l2_rsp_in(l2_rsp_in_chnl);
@@ -68,6 +70,7 @@ public:
 	tb->rst(rst);
         tb->asserts(asserts);
         tb->bookmark(bookmark);
+        tb->custom_dbg(custom_dbg);
 	tb->l2_cpu_req_tb(l2_cpu_req_chnl);
 	tb->l2_fwd_in_tb(l2_fwd_in_chnl);
 	tb->l2_rsp_in_tb(l2_rsp_in_chnl); 

@@ -40,8 +40,10 @@
     HLS_CONSTRAIN_LATENCY(0, HLS_ACHIEVABLE, "l2-tag-lookup-latency")
 #define TAG_LOOKUP_LOOP					\
     HLS_UNROLL_LOOP(ON, "l2-tag-lookup-loop-unroll")
-#define REQS_LOOKUP_SPACE				\
-    HLS_UNROLL_LOOP(ON, "l2-reqs-lookup-space-unroll")
+#define REQS_PEEK							\
+    HLS_CONSTRAIN_LATENCY(0, HLS_ACHIEVABLE, "l2-reqs-peek-latency")
+#define REQS_PEEK_LOOP				\
+    HLS_UNROLL_LOOP(ON, "l2-reqs-peek-loop-unroll")
 #define REQS_LOOKUP							\
     bookmark_tmp |= BM_REQS_LOOKUP;					\
     HLS_CONSTRAIN_LATENCY(0, HLS_ACHIEVABLE, "l2-reqs-lookup-latency")

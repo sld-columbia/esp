@@ -16,10 +16,13 @@ void l2_tb::l2_debug()
     sc_bv<ASSERT_WIDTH>   new_asserts  = 0;
     sc_bv<BOOKMARK_WIDTH> old_bookmark = 0;
     sc_bv<BOOKMARK_WIDTH> new_bookmark = 0;
+    uint32_t old_custom_dbg = 0;
+    uint32_t new_custom_dbg = 0;
 
     while(true) {
 	new_asserts = asserts.read();
 	new_bookmark = bookmark.read();
+	new_custom_dbg = custom_dbg.read();
 
 	if (old_asserts != new_asserts) {
 	    old_asserts = new_asserts;
@@ -29,6 +32,11 @@ void l2_tb::l2_debug()
 	if (old_bookmark != new_bookmark) {
 	    old_bookmark = new_bookmark;
 	    if (RPT_BM) CACHE_REPORT_DEBUG(sc_time_stamp(), "bookmark", new_bookmark);
+	}
+
+	if (old_custom_dbg != new_custom_dbg) {
+	    old_custom_dbg = new_custom_dbg;
+	    if (RPT_BM) CACHE_REPORT_DEBUG(sc_time_stamp(), "custom_dbg", new_custom_dbg);
 	}
 	
 	wait();

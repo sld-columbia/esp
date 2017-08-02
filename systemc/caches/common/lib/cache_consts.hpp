@@ -190,7 +190,7 @@
 // report
 #define RPT_OFF 0
 #define RPT_ON  1
-#define RPT_TB  RPT_ON
+#define RPT_TB  RPT_OFF
 #define RPT_RTL RPT_OFF
 #define RPT_BM  RPT_OFF
 

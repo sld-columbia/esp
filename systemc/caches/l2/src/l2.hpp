@@ -25,6 +25,7 @@ public:
     // Debug signals
     sc_out< sc_bv<ASSERT_WIDTH> >   asserts;
     sc_out< sc_bv<BOOKMARK_WIDTH> > bookmark;
+    sc_out<uint32_t>                custom_dbg;
 
     // Input ports
     nb_get_initiator<l2_cpu_req_t>	l2_cpu_req;
@@ -91,9 +92,10 @@ public:
     inline void reset_states();
     void tag_lookup(addr_breakdown_t addr_br, bool &tag_hit,
 		    l2_way_t &way_hit, bool &empty_way_found,
-		    l2_way_t &empty_way, sc_uint<REQS_BITS> &reqs_i);
+		    l2_way_t &empty_way);
     void reqs_lookup(addr_breakdown_t addr_br, bool &reqs_hit, 
 		     sc_uint<REQS_BITS> &reqs_hit_i);
+    bool reqs_peek(set_t set, sc_uint<REQS_BITS> &reqs_i);
     void read_set(set_t set);
     void fill_reqs(cpu_msg_t cpu_msg, addr_breakdown_t addr_br, tag_t tag_estall, l2_way_t way_hit, hsize_t hsize,
 		   unstable_state_t state, hprot_t hprot, 
@@ -114,7 +116,10 @@ private:
     // debug
     sc_bv<ASSERT_WIDTH>   asserts_tmp;
     sc_bv<BOOKMARK_WIDTH> bookmark_tmp;
+    uint64_t custom_dbg_tmp;
     bool evict_stall;
+    bool set_conflict;
+    sc_uint<REQS_BITS> reqs_cnt;
 };
 
 

@@ -20,6 +20,7 @@ public:
     // Debug signals
     sc_in< sc_bv<ASSERT_WIDTH> >   asserts;
     sc_in< sc_bv<BOOKMARK_WIDTH> > bookmark;
+    sc_in<uint32_t>                custom_dbg;
 
     // Input ports
     put_initiator<l2_cpu_req_t> l2_cpu_req_tb;
