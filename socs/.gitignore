@@ -53,3 +53,5 @@ sysroot/
 ahbrom
 ahbrom.bin
 ahbrom.vhd
+
+*.lst
