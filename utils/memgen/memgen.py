@@ -950,7 +950,7 @@ class memory():
         fd.write("setModelWrapper \"" + out_path + "/" + self.name + ".v\"\n")
         fd.write("setExtraPortsInWrapper 0\n")
         port_count = 0;
-        for wi in range(self.write_interfaces - 1, -1, -1):
+        for wi in range(self.write_interfaces):
             fd.write("setPortData " + str(port_count) + " setType 1\n")
             fd.write("setPortData " + str(port_count) + " setAddr \"A" + str(wi) + "\"\n")
             fd.write("setPortData " + str(port_count) + " setClk \"CLK\"\n")
@@ -966,7 +966,7 @@ class memory():
             fd.write("setPortData " + str(port_count) + " setCEName \"CE" + str(wi) + "\"\n")
             fd.write("setPortData " + str(port_count) + " setCEActive 1\n")
             port_count = port_count + 1;
-        for ri in range(self.read_interfaces + self.write_interfaces - 1, self.write_interfaces - 1, -1):
+        for ri in range(self.write_interfaces, self.read_interfaces + self.write_interfaces):
             fd.write("setPortData " + str(port_count) + " setType 0\n")
             fd.write("setPortData " + str(port_count) + " setAddr \"A" + str(ri) + "\"\n")
             fd.write("setPortData " + str(port_count) + " setClk \"CLK\"\n")
@@ -979,6 +979,36 @@ class memory():
             fd.write("setPortData " + str(port_count) + " setCEActive 1\n")
             port_count = port_count + 1;
         fd.close()
+
+        # for wi in range(self.write_interfaces - 1, -1, -1):
+        #     fd.write("setPortData " + str(port_count) + " setType 1\n")
+        #     fd.write("setPortData " + str(port_count) + " setAddr \"A" + str(wi) + "\"\n")
+        #     fd.write("setPortData " + str(port_count) + " setClk \"CLK\"\n")
+        #     fd.write("setPortData " + str(port_count) + " setReqName \"REQ" + str(wi) + "\"\n")
+        #     fd.write("setPortData " + str(port_count) + " setDin \"D" + str(wi) + "\"\n")
+        #     fd.write("setPortData " + str(port_count) + " setHasRW 1\n")
+        #     fd.write("setPortData " + str(port_count) + " setRwName \"WE" + str(wi) + "\"\n")
+        #     fd.write("setPortData " + str(port_count) + " setRwActive 1\n")
+        #     fd.write("setPortData " + str(port_count) + " setWMWord 1\n")
+        #     fd.write("setPortData " + str(port_count) + " setWMName \"WEM" + str(wi) + "\"\n")
+        #     fd.write("setPortData " + str(port_count) + " setWMActive 1\n")
+        #     fd.write("setPortData " + str(port_count) + " setHasCE 1\n")
+        #     fd.write("setPortData " + str(port_count) + " setCEName \"CE" + str(wi) + "\"\n")
+        #     fd.write("setPortData " + str(port_count) + " setCEActive 1\n")
+        #     port_count = port_count + 1;
+        # for ri in range(self.read_interfaces + self.write_interfaces - 1, self.write_interfaces - 1, -1):
+        #     fd.write("setPortData " + str(port_count) + " setType 0\n")
+        #     fd.write("setPortData " + str(port_count) + " setAddr \"A" + str(ri) + "\"\n")
+        #     fd.write("setPortData " + str(port_count) + " setClk \"CLK\"\n")
+        #     fd.write("setPortData " + str(port_count) + " setReqName \"REQ" + str(ri) + "\"\n")
+        #     fd.write("setPortData " + str(port_count) + " setDout \"Q" + str(ri) + "\"\n")
+        #     fd.write("setPortData " + str(port_count) + " setHasOE 0\n")
+        #     fd.write("setPortData " + str(port_count) + " setHasRE 0\n")
+        #     fd.write("setPortData " + str(port_count) + " setHasCE 1\n")
+        #     fd.write("setPortData " + str(port_count) + " setCEName \"CE" + str(ri) + "\"\n")
+        #     fd.write("setPortData " + str(port_count) + " setCEActive 1\n")
+        #     port_count = port_count + 1;
+        # fd.close()
 
 
 ### Input parsing ###
@@ -1106,10 +1136,6 @@ if not os.path.exists("memlib"):
 
 print("  INFO: Memory list file: " + infile)
 read_infile(infile, mem_list)
-if len(mem_list) == 0:
-    print("  INFO: Memory list is empty")
-    sys.exit(0)
-
 for mem in mem_list:
     mem.print()
     mem.gen(sram_list)
