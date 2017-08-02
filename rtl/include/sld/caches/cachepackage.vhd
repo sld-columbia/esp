@@ -110,9 +110,9 @@ package cachepackage is
   constant DEFAULT_HPROT : hprot_t := "0100";
 
   -- hsize
-  constant BYTE     : hsize_t := "000";
-  constant HALFWORD : hsize_t := "001";
-  constant WORD     : hsize_t := "010";
+  constant HSIZE_B  : hsize_t := "000";
+  constant HSIZE_HW : hsize_t := "001";
+  constant HSIZE_W  : hsize_t := "010";
   
   -----------------------------------------------------------------------------
   -- Functions
@@ -379,14 +379,14 @@ end cachepackage;
 package body cachepackage is
 
   function read_from_line (hsize : hsize_t; addr : addr_t; line : line_t) return word_t is
-    variable off    : integer;  --std_logic_vector(OFFSET_BITS - 1 downto 0);
-    variable w_off  : integer;  --std_logic_vector(WORD_BITS - 1 downto 0);
-    variable hw_off : integer;          --std_logic_vector(WORD_BITS downto 0);
+    variable off    : integer;
+    variable w_off  : integer;
+    variable hw_off : integer;
     variable word   : word_t;
 
   begin
 
-    if hsize = BYTE then
+    if hsize = HSIZE_B then
 
       off := to_integer(unsigned(addr(OFF_RANGE_HI downto OFF_RANGE_LO)));
       for i in 0 to BYTES_PER_WORD - 1 loop
@@ -394,15 +394,15 @@ package body cachepackage is
           line((off * 8) + 7 downto (off * 8));
       end loop;  -- i
 
-    elsif hsize = HALFWORD then
+    elsif hsize = HSIZE_HW then
 
       hw_off := to_integer(unsigned(addr(W_OFF_RANGE_HI downto W_OFF_RANGE_LO - 1)));
       word(BITS_PER_HWORD - 1 downto 0) :=
         line((hw_off * BITS_PER_HWORD) + BITS_PER_HWORD - 1 downto hw_off * BITS_PER_HWORD);
-      word(BITS_PER_HWORD - 1 downto BITS_PER_HWORD) :=
+      word(BITS_PER_WORD - 1 downto BITS_PER_HWORD) :=
         line((hw_off * BITS_PER_HWORD) + BITS_PER_HWORD - 1 downto hw_off * BITS_PER_HWORD);
 
-    elsif hsize = WORD then
+    elsif hsize = HSIZE_W then
 
       w_off := to_integer(unsigned(addr(W_OFF_RANGE_HI downto W_OFF_RANGE_LO)));
       word  := line((w_off * BITS_PER_WORD) + BITS_PER_WORD - 1 downto w_off * BITS_PER_WORD);

@@ -150,7 +150,7 @@ architecture rtl of l2_wrapper is
   constant AHBS_REG_DEFAULT : ahbs_reg_type := (
     state         => idle,
     cpu_msg       => CPU_READ,          -- read
-    hsize         => WORD,              -- 1 word
+    hsize         => HSIZE_W,              -- 1 word
     hprot         => DEFAULT_HPROT,     -- bufferable, non cacheable
     haddr         => (others => '0'),
     flush_ongoing => '0',
@@ -396,7 +396,7 @@ begin  -- architecture rtl of l2_wrapper
 
   ahbmo.hlock   <= '0';
   ahbmo.hwrite  <= '1';
-  ahbmo.hsize   <= HSIZE_WORD;
+  ahbmo.hsize   <= HSIZE_W;
   ahbmo.hburst  <= HBURST_SINGLE;
   ahbmo.hprot   <= "1101";
   ahbmo.hwdata  <= (others => '0');
@@ -473,7 +473,7 @@ begin  -- architecture rtl of l2_wrapper
 -- FSM: Bridge from AHB slave to L2 cache frontend input
 -------------------------------------------------------------------------------
   fsm_ahbs : process (ahbsi, flush, ahbs_reg,
-                      cpu_req_ready, flush_ready,
+                      cpu_req_ready, flush_ready, flush_due,
                       rd_rsp_valid, rd_rsp_data_line,
                       load_alloc_reg)
 
@@ -589,6 +589,7 @@ begin  -- architecture rtl of l2_wrapper
         cpu_req_data_addr    <= reg.haddr;
 
         cpu_req_valid <= '1';
+
         if cpu_req_ready = '1' then
           reg.state         := load_rsp;
           reg.flush_ongoing := '0';
@@ -607,7 +608,7 @@ begin  -- architecture rtl of l2_wrapper
 
         if rd_rsp_valid = '1' then
 
-          ahbso.hrdata <= ahbdrivedata(read_from_line(WORD, reg.haddr, rd_rsp_data_line));
+          ahbso.hrdata <= read_from_line(HSIZE_W, reg.haddr, rd_rsp_data_line);
           ahbso.hready <= '1';
 
           reg.cpu_msg := ahbsi.hwrite & ahbsi.hmastlock;
@@ -730,14 +731,14 @@ begin  -- architecture rtl of l2_wrapper
         cpu_req_data_addr    <= reg.haddr;
         cpu_req_data_word    <= ahbreadword(ahbsi.hwdata);
 
-        reg.cpu_msg := ahbsi.hwrite & ahbsi.hmastlock;
-        reg.hsize   := ahbsi.hsize;
-        reg.hprot   := ahbsi.hprot;
-        reg.haddr   := ahbsi.haddr;
-
         cpu_req_valid <= '1';
 
         if cpu_req_ready = '1' then
+          reg.cpu_msg := ahbsi.hwrite & ahbsi.hmastlock;
+          reg.hsize   := ahbsi.hsize;
+          reg.hprot   := ahbsi.hprot;
+          reg.haddr   := ahbsi.haddr;
+
           ahbso.hready <= '1';
 
           if flush_due = '1' and not (ahbsi.hprot(0) = '0' and valid_ahb_req = '1') then
@@ -930,8 +931,8 @@ begin  -- architecture rtl of l2_wrapper
 
           coherence_req_wrreq <= '1';
 
-          coherence_req_data_in <= PREAMBLE_TAIL & reg.line((BITS_PER_WORD * reg.word_cnt) - 1 downto
-                                                            (BITS_PER_WORD * reg.word_cnt) - BITS_PER_WORD);
+          coherence_req_data_in <= PREAMBLE_TAIL & reg.line((BITS_PER_WORD * reg.word_cnt) + BITS_PER_WORD - 1 downto
+                                                            (BITS_PER_WORD * reg.word_cnt));
 
           if reg.word_cnt = WORDS_PER_LINE - 1 then
 
@@ -1027,7 +1028,7 @@ begin  -- architecture rtl of l2_wrapper
 
         end if;
 
-      -- RECEIVE FIRST DATA
+      -- RECEIVE DATA
       when rcv_data =>
         if coherence_rsp_rcv_empty = '0' then
 
@@ -1037,11 +1038,11 @@ begin  -- architecture rtl of l2_wrapper
 
               coherence_rsp_rcv_rdreq <= '1';
 
-              reg.line((BITS_PER_WORD * reg.word_cnt) - 1 downto
-                       (BITS_PER_WORD * reg.word_cnt) - BITS_PER_WORD)
+              reg.line((BITS_PER_WORD * reg.word_cnt) + BITS_PER_WORD - 1 downto
+                       BITS_PER_WORD * reg.word_cnt)
                 := coherence_rsp_rcv_data_out(BITS_PER_WORD - 1 downto 0);
 
-              reg.state := rcv_data;
+              reg.state := rcv_header;
 
               rsp_in_valid           <= '1';
               rsp_in_data_coh_msg    <= reg.coh_msg;

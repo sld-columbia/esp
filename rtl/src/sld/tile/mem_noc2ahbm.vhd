@@ -338,7 +338,11 @@ begin  -- rtl
                                        -- Single word transfer: no request
                                        -- Send header
                                        v.hburst := HBURST_SINGLE;
-                                       v.htrans := HTRANS_NONSEQ;
+                                       if l2_cache_en = 0 then
+                                         v.htrans := HTRANS_NONSEQ;
+                                       else
+                                         v.htrans := HTRANS_BUSY;
+                                       end if;
                                        v.state := send_header;
                                      elsif ((v.grant = '1') and (v.ready = '1')) then
                                        -- Owning already address
@@ -346,7 +350,11 @@ begin  -- rtl
                                        -- Send header
                                        v.hbusreq := '1';
                                        v.hburst := HBURST_INCR;
-                                       v.htrans := HTRANS_NONSEQ;
+                                       if l2_cache_en = 0 then
+                                         v.htrans := HTRANS_NONSEQ;
+                                       else
+                                         v.htrans := HTRANS_BUSY;
+                                       end if;
                                        v.state := send_header;
                                      else
                                        -- Need to get ownership of the bus
@@ -396,7 +404,6 @@ begin  -- rtl
                             coherence_rsp_snd_data_in <= header_reg;
                             coherence_rsp_snd_wrreq <= '1';
                             -- Updated address and control bus
-                            v.addr := r.addr + 4;
                             v.count := r.count - 1;
                             if r.count = 1 then
                               v.hbusreq := '0';
@@ -405,7 +412,12 @@ begin  -- rtl
                               if r.count = 2 then
                                 v.hbusreq := '0';
                               end if;
-                              v.htrans := HTRANS_SEQ;
+
+                              if l2_cache_en = 0 then
+                                v.htrans := HTRANS_SEQ;
+                              else
+                                v.htrans := HTRANS_NONSEQ;
+                              end if;
                             end if;
 
                             if l2_cache_en = 0 then
@@ -451,12 +463,15 @@ begin  -- rtl
                             v.state := dma_send_data;
                           end if;
 
-      when send_address => v.htrans := HTRANS_BUSY;
-                           if (coherence_rsp_snd_full = '0') then
+      when send_address => if (coherence_rsp_snd_full = '0') then
                              coherence_rsp_snd_data_in <= PREAMBLE_BODY & r.addr;
                              coherence_rsp_snd_wrreq <= '1';
 
+                             v.addr := r.addr + 4;
+                             
                              v.state := send_data;
+
+                             v.htrans := HTRANS_SEQ;
                            end if;
                               
       when send_data => if (v.ready = '1') then
