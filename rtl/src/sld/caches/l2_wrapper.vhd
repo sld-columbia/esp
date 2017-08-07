@@ -129,6 +129,8 @@ architecture rtl of l2_wrapper is
   -- debug
   signal asserts                : asserts_t;
   signal bookmark               : bookmark_t;
+  signal custom_dbg             : custom_dbg_t;
+  signal flush_done          : std_ulogic;
 
   -------------------------------------------------------------------------------
   -- AHB slave FSM signals
@@ -141,7 +143,6 @@ architecture rtl of l2_wrapper is
     hsize         : hsize_t;
     hprot         : hprot_t;
     haddr         : addr_t;
-    flush_ongoing : std_ulogic;
     req_memorized : std_ulogic;
     -- count   : integer;
     asserts       : asserts_ahbs_t;
@@ -153,7 +154,6 @@ architecture rtl of l2_wrapper is
     hsize         => HSIZE_W,              -- 1 word
     hprot         => DEFAULT_HPROT,     -- bufferable, non cacheable
     haddr         => (others => '0'),
-    flush_ongoing => '0',
     req_memorized => '0',
     -- count   => 0,
     asserts       => (others => '0'));
@@ -247,7 +247,7 @@ architecture rtl of l2_wrapper is
   -------------------------------------------------------------------------------
   -- Flush FSM signals
   -------------------------------------------------------------------------------
-  type flush_fsm is (idle, flush_wait, flush_release);
+  type flush_fsm is (idle, flush_issue, flush_wait, flush_release);
   signal flush_state      : flush_fsm := idle;
   signal flush_state_next : flush_fsm := idle;
   signal flush_due        : std_ulogic;
@@ -367,7 +367,9 @@ begin  -- architecture rtl of l2_wrapper
       l2_rsp_in_data_invack_cnt => rsp_in_data_invack_cnt,
       -- debug
       asserts                   => asserts,
-      bookmark                  => bookmark
+      bookmark                  => bookmark,
+      custom_dbg                => custom_dbg,
+      flush_done             => flush_done
       );
 
   Invalidate_fifo : fifo_custom
@@ -435,7 +437,7 @@ begin  -- architecture rtl of l2_wrapper
 -------------------------------------------------------------------------------
 -- FSM: L2 flush management
 -------------------------------------------------------------------------------
-  fsm_flush : process (flush_state, flush, ahbs_reg.flush_ongoing)
+  fsm_flush : process (flush_state, flush, flush_done, flush_ready, flush_valid)
 
   begin
 
@@ -444,14 +446,22 @@ begin  -- architecture rtl of l2_wrapper
       when idle =>
         flush_due <= '0';
         if flush = '1' then
-          flush_state_next <= flush_wait;
+          flush_state_next <= flush_issue;
         else
           flush_state_next <= idle;
         end if;
 
-      when flush_wait =>
+      when flush_issue =>
         flush_due <= '1';
-        if ahbs_reg.flush_ongoing = '1' then
+        if flush_valid = '1' and flush_ready = '1' then
+          flush_state_next <= flush_wait;
+        else
+          flush_state_next <= flush_issue;
+        end if;
+        
+      when flush_wait =>
+        flush_due <= '0';
+        if flush_done = '1' then
           flush_state_next <= flush_release;
         else
           flush_state_next <= flush_wait;
@@ -459,7 +469,7 @@ begin  -- architecture rtl of l2_wrapper
 
       when flush_release =>
         flush_due <= '0';
-        if flush = '0' and ahbs_reg.flush_ongoing = '0' then
+        if flush = '0' then
           flush_state_next <= idle;
         else
           flush_state_next <= flush_release;
@@ -533,9 +543,6 @@ begin  -- architecture rtl of l2_wrapper
         if flush_due = '1' then
 
           flush_valid <= '1';
-          if flush_ready = '1' then
-            reg.flush_ongoing := '1';
-          end if;
 
           if valid_ahb_req = '1' then
             reg.req_memorized := '1';
@@ -566,7 +573,6 @@ begin  -- architecture rtl of l2_wrapper
             cpu_req_valid <= '1';
             if cpu_req_ready = '1' then
               reg.state           := load_rsp;
-              reg.flush_ongoing   := '0';
               load_alloc_reg.addr <= ahbsi.haddr(TAG_RANGE_HI downto SET_RANGE_LO);
             else
               reg.state           := load_req;
@@ -592,7 +598,6 @@ begin  -- architecture rtl of l2_wrapper
 
         if cpu_req_ready = '1' then
           reg.state         := load_rsp;
-          reg.flush_ongoing := '0';
         end if;
 
       -- LOAD RESPONSE
@@ -621,9 +626,6 @@ begin  -- architecture rtl of l2_wrapper
             reg.state := idle;
 
             flush_valid <= '1';
-            if flush_ready = '1' then
-              reg.flush_ongoing := '1';
-            end if;
 
             if valid_ahb_req = '1' then
               reg.req_memorized := '1';
@@ -683,9 +685,6 @@ begin  -- architecture rtl of l2_wrapper
           reg.state := idle;
 
           flush_valid <= '1';
-          if flush_ready = '1' then
-            reg.flush_ongoing := '1';
-          end if;
 
           if valid_ahb_req = '1' then
             reg.req_memorized := '1';
@@ -746,9 +745,6 @@ begin  -- architecture rtl of l2_wrapper
             reg.state := idle;
 
             flush_valid <= '1';
-            if flush_ready = '1' then
-              reg.flush_ongoing := '1';
-            end if;
 
             if valid_ahb_req = '1' then
               reg.req_memorized := '1';
@@ -931,14 +927,17 @@ begin  -- architecture rtl of l2_wrapper
 
           coherence_req_wrreq <= '1';
 
+          if reg.word_cnt = WORDS_PER_LINE - 1 then
+
           coherence_req_data_in <= PREAMBLE_TAIL & reg.line((BITS_PER_WORD * reg.word_cnt) + BITS_PER_WORD - 1 downto
                                                             (BITS_PER_WORD * reg.word_cnt));
-
-          if reg.word_cnt = WORDS_PER_LINE - 1 then
 
             reg.state := send_header;
 
           else
+
+          coherence_req_data_in <= PREAMBLE_BODY & reg.line((BITS_PER_WORD * reg.word_cnt) + BITS_PER_WORD - 1 downto
+                                                            (BITS_PER_WORD * reg.word_cnt));
 
             reg.word_cnt := reg.word_cnt + 1;
 

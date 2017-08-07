@@ -105,7 +105,7 @@ package cachepackage is
   subtype asserts_fwd_t is std_logic_vector(ASSERTS_FWD_WIDTH - 1 downto 0);
   subtype asserts_rsp_out_t is std_logic_vector(ASSERTS_RSP_OUT_WIDTH - 1 downto 0);
   subtype bookmark_t is std_logic_vector(BOOKMARK_WIDTH - 1 downto 0);
-
+  subtype custom_dbg_t is std_logic_vector(31 downto 0);
   -- hprot
   constant DEFAULT_HPROT : hprot_t := "0100";
 
@@ -209,6 +209,8 @@ package cachepackage is
 
       asserts                 : out asserts_t;
       bookmark                : out bookmark_t;
+      custom_dbg              : out custom_dbg_t;
+      flush_done           : out std_ulogic;
       l2_cpu_req_ready        : out std_ulogic;
       l2_fwd_in_ready         : out std_ulogic;
       l2_rsp_in_ready         : out std_ulogic;
