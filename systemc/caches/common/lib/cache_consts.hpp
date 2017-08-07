@@ -155,7 +155,7 @@
  */
 
 // debug
-#define ASSERT_WIDTH	9
+#define ASSERT_WIDTH 12
 #define BOOKMARK_WIDTH	18
 
 #define AS_REQS_MISS		(1 << 0)
@@ -167,6 +167,9 @@
 #define AS_EVICT_DEFAULT	(1 << 6)
 #define AS_WRONG_HSIZE    	(1 << 7)
 #define AS_PUTACK_DEFAULT       (1 << 8)
+#define AS_REQS_LOOKUP          (1 << 9)
+#define AS_REQS_LOOKUP2         (1 << 10)
+#define AS_INVACK_DEFAULT       (1 << 11)
 
 #define BM_GET_RSP_IN		(1 << 0)
 #define BM_GET_CPU_REQ		(1 << 1)

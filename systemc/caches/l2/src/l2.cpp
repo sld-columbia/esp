@@ -150,7 +150,6 @@ void l2::ctrl()
 		    }
 		    wait();
 		}
-		wait();
 		flush_done.write(true);
 		wait();
 		flush_done.write(false);
@@ -215,6 +214,7 @@ void l2::ctrl()
 		break;
 
 	    case RSP_INVACK : // not implemented yet
+		RSP_INVACK_DEFAULT;
 		break;
 
 	    case RSP_PUTACK :
@@ -575,6 +575,8 @@ void l2::reqs_lookup(addr_breakdown_t addr_br, bool &reqs_hit, sc_uint<REQS_BITS
 	    reqs_hit_i = i;
 	}
     }
+
+    REQS_LOOKUP_ASSERT;
 }
 
 
