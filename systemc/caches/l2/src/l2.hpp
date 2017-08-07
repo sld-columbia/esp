@@ -27,6 +27,9 @@ public:
     sc_out< sc_bv<BOOKMARK_WIDTH> > bookmark;
     sc_out<uint32_t>                custom_dbg;
 
+    // Other signals
+    sc_out<bool> flush_done;
+
     // Input ports
     nb_get_initiator<l2_cpu_req_t>	l2_cpu_req;
     nb_get_initiator<l2_fwd_in_t>	l2_fwd_in;
@@ -119,7 +122,8 @@ private:
     uint64_t custom_dbg_tmp;
     bool evict_stall;
     bool set_conflict;
-    sc_uint<REQS_BITS> reqs_cnt;
+    l2_cpu_req_t	cpu_req_conflict;
+    sc_uint<REQS_BITS+1> reqs_cnt;
 };
 
 

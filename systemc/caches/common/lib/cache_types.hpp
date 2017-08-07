@@ -490,6 +490,14 @@ public:
     	tag -= a;
     }
 
+    void set_decr(int a) {
+	line -= a * SET_OFFSET;
+	word -= a * SET_OFFSET;
+	hword -= a * SET_OFFSET;
+	byte -= a * SET_OFFSET;
+	set -= a;
+    }
+
     void breakdown(addr_t addr)
     {
 	line  = addr;

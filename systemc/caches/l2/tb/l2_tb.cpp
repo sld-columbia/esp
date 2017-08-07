@@ -63,10 +63,12 @@ void l2_tb::l2_test()
     const addr_t empty_addr = 0;
 
     // preparation variables
-    addr_breakdown_t addr, addr_tmp;
+    addr_breakdown_t addr, addr_tmp, addr1, addr2, addr3, addr4, addr5;
     word_t word, word_tmp;
     line_t line;
 
+    l2_cpu_req_t cpu_req, cpu_req1, cpu_req2, cpu_req3, cpu_req4, cpu_req5;
+    l2_req_out_t req_out;
     /*
      * Reset
      */
@@ -162,6 +164,8 @@ void l2_tb::l2_test()
 	addr_tmp.tag_incr(1);
     }
 
+    while(!flush_done) wait();
+
     // verify writes correctness (read misses)
     addr_tmp = addr;
     for (int i = 0; i < (2 * L2_WAYS); ++i) {
@@ -197,6 +201,7 @@ void l2_tb::l2_test()
 	addr_tmp.tag_incr(1);
     }
 
+    while(!flush_done) wait();
 
     /*
      * T2) Reads and writes. Fill whole cache.
@@ -279,114 +284,100 @@ void l2_tb::l2_test()
 	}
     }
 
-    // CACHE_REPORT_INFO("S4: LESS-THAN-WORD READS AND WRITES. OPERATIONS ON A SINGLE SET.");
-
-    // CACHE_REPORT_INFO("S4: Byte and Halfword Read Miss");
-    // addr = rand_addr(word_addr, line_addr, hword_addr);
-    // tag = rand_tag();
-
-    // // Read misses
-    // put_cpu_req(cpu_req, READ, BYTE, addr, CACHEABLE, empty_word, RPT);
-    // get_req_out(req_out, REQ_GETS, word_addr, cpu_req.hprot, RPT);
-    // put_rsp_in(rsp_in, RSP_EDATA, word_addr, empty_line, RPT);
-    // get_rd_rsp(rd_rsp, word_addr, word_addr, RPT);
-    // wait();
-
-    // put_cpu_req(cpu_req, READ, HALFWORD, addr + TAG_OFFSET, CACHEABLE, empty_word, RPT);
-    // get_req_out(req_out, REQ_GETS, word_addr + TAG_OFFSET, cpu_req.hprot, RPT);
-    // put_rsp_in(rsp_in, RSP_EDATA, word_addr + TAG_OFFSET, empty_line, RPT);
-    // get_rd_rsp(rd_rsp, word_addr + TAG_OFFSET, word_addr + TAG_OFFSET, RPT);
-    // wait();
-
-    // CACHE_REPORT_INFO("S4: Byte and Halfword Read Hit");
-
-    // // Read hits
-    // put_cpu_req(cpu_req, READ, BYTE, addr, CACHEABLE, empty_word, RPT);
-    // get_rd_rsp(rd_rsp, word_addr, word_addr, RPT);
-    // wait();
-
-    // put_cpu_req(cpu_req, READ, HALFWORD, addr + TAG_OFFSET, CACHEABLE, empty_word, RPT);
-    // get_rd_rsp(rd_rsp, word_addr + TAG_OFFSET, word_addr + TAG_OFFSET, RPT);
-    // wait();
-
-    // CACHE_REPORT_INFO("S4: Byte and Halfword Write Miss");
-
-    // put_cpu_req(cpu_req, WRITE, WORD, word_addr, CACHEABLE, addr, RPT);
-    // wait();
-
-    // put_cpu_req(cpu_req, WRITE, WORD, word_addr + TAG_OFFSET, CACHEABLE, addr + TAG_OFFSET, RPT);
-    // wait();
-
-    // put_cpu_req(cpu_req, WRITE, BYTE, addr + 2*TAG_OFFSET, CACHEABLE, empty_word, RPT);
-    // get_req_out(req_out, REQ_GETM, word_addr + 2*TAG_OFFSET, cpu_req.hprot, RPT);
-    // put_rsp_in(rsp_in, RSP_DATA, word_addr + 2*TAG_OFFSET, empty_line, RPT);
-    // wait();
-
-    // put_cpu_req(cpu_req, WRITE, HALFWORD, hword_addr + 3*TAG_OFFSET, CACHEABLE, empty_word, RPT);
-    // get_req_out(req_out, REQ_GETM, word_addr + 3*TAG_OFFSET, cpu_req.hprot, RPT);
-    // put_rsp_in(rsp_in, RSP_DATA, word_addr + 3*TAG_OFFSET, empty_line, RPT);
-    // wait();
-
-    // CACHE_REPORT_INFO("S4: Byte and Halfword Write Hit");
-
-    // put_cpu_req(cpu_req, WRITE, BYTE, addr, CACHEABLE, empty_word, RPT);
-    // wait();
-
-    // put_cpu_req(cpu_req, WRITE, HALFWORD, hword_addr + TAG_OFFSET, CACHEABLE, empty_word, RPT);
-    // wait();
-
-    // CACHE_REPORT_INFO("S4: Verify writes.");
-
-    // put_cpu_req(cpu_req, READ, WORD, word_addr, CACHEABLE, empty_word, RPT);
-    // b_off = addr.range(B_OFF_RANGE_HI, B_OFF_RANGE_LO);
-    // word = addr;
-    // word.range(b_off*8 + 7, b_off*8) = 0;
-    // get_rd_rsp(rd_rsp, word_addr, word, RPT);
-    // wait();
-
-    // word_addr += TAG_OFFSET; addr += TAG_OFFSET;
-
-    // put_cpu_req(cpu_req, READ, WORD, word_addr, CACHEABLE, empty_word, RPT);
-    // tmp_addr = addr;
-    // tmp_addr[0] = 0;
-    // b_off = tmp_addr.range(B_OFF_RANGE_HI, B_OFF_RANGE_LO);
-    // word = addr;
-    // word.range(b_off*8 + 15, b_off*8) = 0;
-    // get_rd_rsp(rd_rsp, word_addr, word, RPT);
-    // wait();
-
-    // word_addr += TAG_OFFSET; addr += TAG_OFFSET;
-
-    // put_cpu_req(cpu_req, READ, WORD, word_addr, CACHEABLE, empty_word, RPT);
-    // b_off = addr.range(B_OFF_RANGE_HI, B_OFF_RANGE_LO);
-    // word = word_addr;
-    // word.range(b_off*8 + 7, b_off*8) = 0;
-    // get_rd_rsp(rd_rsp, word_addr, word, RPT);
-    // wait();
-
-    // word_addr += TAG_OFFSET; addr += TAG_OFFSET;
-
-    // put_cpu_req(cpu_req, READ, WORD, word_addr, CACHEABLE, empty_word, RPT);
-    // tmp_addr = addr;
-    // tmp_addr[0] = 0;
-    // b_off = tmp_addr.range(B_OFF_RANGE_HI, B_OFF_RANGE_LO);
-    // word = word_addr;
-    // word.range(b_off*8 + 15, b_off*8) = 0;
-    // get_rd_rsp(rd_rsp, word_addr, word, RPT);
-    // wait();
+    while(!flush_done) wait();
 
     /*
-     * T5) Simple evictions.
+     * T4) Less-than-word operations.
      */
-    CACHE_REPORT_INFO("T5) SIMPLE EVICTIONS.");
+    CACHE_REPORT_INFO("T4) Less-than-word reads and writes. Operations on a single set.");
+
+    addr = rand_addr();
+
+    CACHE_REPORT_INFO("T4.0) Byte and Halfword Read Miss.");
+
+    addr_tmp = addr;
+    op(READ, MISS, 0, BYTE, CACHEABLE, addr_tmp, empty_word, make_line_of_addr(addr_tmp.line), RPT_TB);
+
+    addr_tmp.tag_incr(1);
+    op(READ, MISS, 0, HALFWORD, CACHEABLE, addr_tmp, empty_word, make_line_of_addr(addr_tmp.line), RPT_TB);
+
+
+    CACHE_REPORT_INFO("T4.1) Byte and Halfword Read Hit.");
+
+    addr_tmp = addr;
+    op(READ, HIT, 0, BYTE, CACHEABLE, addr_tmp, empty_word, make_line_of_addr(addr_tmp.line), RPT_TB);
+
+    addr_tmp.tag_incr(1);
+    op(READ, HIT, 0, HALFWORD, CACHEABLE, addr_tmp, empty_word, make_line_of_addr(addr_tmp.line), RPT_TB);
+
+
+    CACHE_REPORT_INFO("T4.2) Byte and Halfword Write Hit.");
+
+    addr_tmp = addr;
+    op(WRITE, HIT, 0, BYTE, CACHEABLE, addr_tmp, empty_word, empty_line, RPT_TB);
+
+    addr_tmp.tag_incr(1);
+    op(WRITE, HIT, 0, HALFWORD, CACHEABLE, addr_tmp, empty_word, empty_line, RPT_TB);
+
+
+    CACHE_REPORT_INFO("T4.3) Byte and Halfword Write Miss.");
+
+    addr_tmp.tag_incr(1);
+    op(WRITE, MISS, 0, BYTE, CACHEABLE, addr_tmp, empty_word, make_line_of_addr(addr_tmp.line), RPT_TB);
+
+    addr_tmp.tag_incr(1);
+    op(WRITE, MISS, 0, HALFWORD, CACHEABLE, addr_tmp, empty_word, make_line_of_addr(addr_tmp.line), RPT_TB);
+
+
+    CACHE_REPORT_INFO("T4.4) Verify writes.");
+
+    addr_tmp = addr;
+    line = make_line_of_addr(addr_tmp.line);
+    line.range(addr_tmp.off*8 + 7, addr_tmp.off*8) = 0;
+    op(READ, HIT, 0, WORD, CACHEABLE, addr_tmp, empty_word, line, RPT_TB);
+
+    addr_tmp.tag_incr(1);
+    addr_tmp.off.range(0,0) = 0;
+    line = make_line_of_addr(addr_tmp.line);
+    line.range(addr_tmp.off*8 + BITS_PER_HALFWORD - 1, addr_tmp.off*8) = 0;
+    op(READ, HIT, 0, WORD, CACHEABLE, addr_tmp, empty_word, line, RPT_TB);
+
+    addr_tmp = addr;
+    addr_tmp.tag_incr(2);
+    line = make_line_of_addr(addr_tmp.line);
+    line.range(addr_tmp.off*8 + 7, addr_tmp.off*8) = 0;
+    op(READ, HIT, 0, WORD, CACHEABLE, addr_tmp, empty_word, line, RPT_TB);
+
+    addr_tmp.tag_incr(1);
+    addr_tmp.off.range(0,0) = 0;
+    line = make_line_of_addr(addr_tmp.line);
+    line.range(addr_tmp.off*8 + BITS_PER_HALFWORD - 1, addr_tmp.off*8) = 0;
+    op(READ, HIT, 0, WORD, CACHEABLE, addr_tmp, empty_word, line, RPT_TB);
+
+    CACHE_REPORT_INFO("T4.5) Flush.");    
+
+    // issue flush
+    l2_flush_tb.put(1);
+
+    for (int i = 0; i < 4; ++i) {
+	l2_req_out_t req_out = l2_req_out_tb.get();
+	put_rsp_in(RSP_PUTACK, req_out.addr, empty_line, RPT_TB);
+	wait();
+    }
+
+    while(!flush_done) wait();
+
+    /*
+     * T5) Evictions.
+     */
+    CACHE_REPORT_INFO("T5) EVICTIONS.");
 
     CACHE_REPORT_INFO("T5.0) Evict twice a whole set.");
 
     // preparation
     addr = rand_addr();
-
-    // read misses
     addr_tmp = addr;
+
     for (int i = 0; i < L2_WAYS; ++i) {
 	op(READ, MISS, 0, WORD, CACHEABLE, addr_tmp, empty_word, make_line_of_addr(addr_tmp.line), RPT_TB);
 
@@ -408,7 +399,121 @@ void l2_tb::l2_test()
     }
 
 
+    CACHE_REPORT_INFO("T5.1) Evict stalls.");
 
+    addr1 = addr_tmp;
+    addr_tmp.tag_decr(L2_WAYS);
+    addr_breakdown_t addr_evict1 = addr_tmp;
+    addr_tmp.set_incr(1);
+    addr2 = addr_tmp;
+
+    put_cpu_req(cpu_req1, READ, WORD, CACHEABLE, addr1.word, empty_word, RPT_TB);
+    get_inval(addr_evict1.line, RPT_TB);
+    get_req_out(REQ_PUTS, addr_evict1.line, 0, RPT_TB);
+
+    wait();
+
+    put_cpu_req(cpu_req2, READ, WORD, CACHEABLE, addr2.word, empty_word, RPT_TB);
+
+    put_rsp_in(RSP_PUTACK, addr_evict1.line, 0, RPT_TB);
+    get_req_out(REQ_GETS, addr1.line, cpu_req1.hprot, RPT_TB);
+
+    wait();
+
+    put_rsp_in(RSP_EDATA, addr1.line, make_line_of_addr(addr1.line), RPT_TB);
+    get_rd_rsp(addr1, make_line_of_addr(addr1.line), RPT_TB);
+
+    get_req_out(REQ_GETS, addr2.line, cpu_req2.hprot, RPT_TB);
+
+    wait();
+
+    put_rsp_in(RSP_EDATA, addr2.line, make_line_of_addr(addr2.line), RPT_TB);
+    get_rd_rsp(addr2, make_line_of_addr(addr2.line), RPT_TB);
+
+    CACHE_REPORT_INFO("T5.2) Flush.");    
+
+    // issue flush
+    l2_flush_tb.put(1);
+
+    for (int i = 0; i < L2_WAYS + 1; ++i) {
+	l2_req_out_t req_out = l2_req_out_tb.get();
+	put_rsp_in(RSP_PUTACK, req_out.addr, empty_line, RPT_TB);
+	wait();
+    }
+
+    while(!flush_done) wait();
+
+    /*
+     * T6) Pipelined requests.
+     */
+
+    CACHE_REPORT_INFO("T6) PIPELINED REQUESTS.");
+
+    CACHE_REPORT_INFO("T6.0) One read and multiple writes pipelined. Max requests stall.");
+
+    addr = rand_addr();
+    addr_tmp = addr;
+
+    // Issue N_REQS + 1 requests
+
+    put_cpu_req(cpu_req, READ, WORD, CACHEABLE, addr_tmp.word, empty_word, RPT_TB);
+    get_req_out(REQ_GETS, addr_tmp.line, cpu_req.hprot, RPT_TB);
+    wait();
+
+    for (int i = 0; i < N_REQS - 1; i++) {
+	addr_tmp.set_incr(1);
+	put_cpu_req(cpu_req, WRITE, WORD, CACHEABLE, addr_tmp.word, empty_word, RPT_TB);
+	get_req_out(REQ_GETM, addr_tmp.line, cpu_req.hprot, RPT_TB);
+	wait();
+    }
+
+    addr_tmp.set_incr(1);
+    put_cpu_req(cpu_req, WRITE, WORD, CACHEABLE, addr_tmp.word, empty_word, RPT_TB);
+    wait();
+
+    // Respond to N_REQS requests
+    addr_tmp.set_decr(N_REQS);
+    put_rsp_in(RSP_EDATA, addr_tmp.line, make_line_of_addr(addr_tmp.line), RPT_TB);
+    get_rd_rsp(addr_tmp, make_line_of_addr(addr_tmp.line), RPT_TB);
+    wait();
+
+    for (int i = 0; i < N_REQS - 1; i++) {
+	addr_tmp.set_incr(1);
+	put_rsp_in(RSP_DATA, addr_tmp.line, make_line_of_addr(addr_tmp.line), RPT_TB);
+	wait();
+    }
+
+    // Manage the N_REQS + 1 request
+    addr_tmp.set_incr(1);
+    get_req_out(REQ_GETM, addr_tmp.line, cpu_req.hprot, RPT_TB);
+    put_rsp_in(RSP_DATA, addr_tmp.line, make_line_of_addr(addr_tmp.line), RPT_TB);
+    wait();
+
+    CACHE_REPORT_INFO("T6.1) Verify writes.");
+
+    addr_tmp = addr;
+    for (int i = 0; i < N_REQS; i++) {
+	addr_tmp.set_incr(1);
+
+	put_cpu_req(cpu_req, READ, WORD, CACHEABLE, addr_tmp.word, empty_word, RPT_TB);
+	line = make_line_of_addr(addr_tmp.line);
+	line.range(addr_tmp.w_off*ADDR_BITS + ADDR_BITS - 1, addr_tmp.w_off*ADDR_BITS) = 0;
+	get_rd_rsp(addr_tmp, line, RPT_TB);
+	wait();
+    }
+
+    CACHE_REPORT_INFO("T6.2) Flush.");
+
+    // issue flush
+    l2_flush_tb.put(1);
+
+    for (int i = 0; i < N_REQS + 1; ++i) {
+	req_out = l2_req_out_tb.get();
+	put_rsp_in(RSP_PUTACK, req_out.addr, empty_line, RPT_TB);
+	wait();
+    }
+
+    while(!flush_done) wait();
 
     // End simulation
     sc_stop();
@@ -453,14 +558,6 @@ word_t l2_tb::rand_word()
 
     return word;
 }
-
-tag_t l2_tb::rand_tag()
-{
-    tag_t tag = (rand() % (1 << TAG_BITS-1));
-
-    return tag;
-}
-
 
 void l2_tb::put_cpu_req(l2_cpu_req_t &cpu_req, cpu_msg_t cpu_msg, hsize_t hsize, 
 			bool cacheable, addr_t addr, word_t word, bool rpt)
@@ -579,7 +676,7 @@ void l2_tb::op(cpu_msg_t cpu_msg, sc_uint<2> beh, coh_msg_t put_msg, hsize_t hsi
 
     if (beh == MISS_EVICT) {
 	addr_breakdown_t req_addr_tmp = req_addr;
-	req_addr_tmp.tag_decr(L2_WAYS);
+	req_addr_tmp.tag_decr(L2_WAYS); 
 
 	// INVAL
 	get_inval(req_addr_tmp.line, rpt);

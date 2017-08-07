@@ -22,6 +22,9 @@ public:
     sc_in< sc_bv<BOOKMARK_WIDTH> > bookmark;
     sc_in<uint32_t>                custom_dbg;
 
+    // Other signals
+    sc_in<bool> flush_done;
+
     // Input ports
     put_initiator<l2_cpu_req_t> l2_cpu_req_tb;
     put_initiator<l2_fwd_in_t>	l2_fwd_in_tb;

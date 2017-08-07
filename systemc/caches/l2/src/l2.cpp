@@ -73,10 +73,13 @@ void l2::ctrl()
 	    is_req_to_get = false;
 
 	    if (l2_flush.nb_can_get()) {
-		is_flush_to_get = true;
+		if (reqs_cnt == N_REQS)
+		    is_flush_to_get = true;
+		else if (l2_rsp_in.nb_can_get())
+		    is_rsp_to_get = true;
 	    } else if (l2_rsp_in.nb_can_get()) { // inv ack not managed yet
 	    	is_rsp_to_get = true;
-	    } else if ((l2_cpu_req.nb_can_get() && !reqs_cnt && !evict_stall) || set_conflict) { // assuming READ or WRITE, HPROT cacheable
+	    } else if ((l2_cpu_req.nb_can_get() && reqs_cnt != 0 && !evict_stall) || set_conflict) { // assuming READ or WRITE, HPROT cacheable
 		is_req_to_get = true;
 	    } else {
 	     	wait();
@@ -85,9 +88,10 @@ void l2::ctrl()
 
 	bookmark_tmp = 0;
 	asserts_tmp = 0;
-	custom_dbg_tmp = 0;
+	// custom_dbg_tmp = 0;
 
 	if (is_flush_to_get) {
+
 	    get_flush();
 
 	    wait();
@@ -103,20 +107,25 @@ void l2::ctrl()
 
 		for (int w = 0; w < L2_WAYS; ++w) {
 		    if (state_buf[w] != INVALID) {
-
 			{
 			    FLUSH_LOOP;
 
-			    while (!l2_req_out.nb_can_put()) {
+			    while (l2_rsp_in.nb_can_get()) {
+				get_rsp_in(rsp_in); // it must be a put ack
+				put_cnt--;
+				wait();
+			    }
+
+			    while (!l2_req_out.nb_can_put()){ 
 				if (l2_rsp_in.nb_can_get()) {
 				    get_rsp_in(rsp_in); // it must be a put ack
-				    --put_cnt;
+				    put_cnt--;
 				}
 				wait();
 			    }
 
 			    addr_br.line = (tag_buf[w] << TAG_RANGE_LO) | (s << SET_RANGE_LO);
-			    ++put_cnt;
+			    put_cnt++;
 
 			    if (state_buf[w] == SHARED || state_buf[w] == EXCLUSIVE) {
 				send_req_out(REQ_PUTS, empty_hprot, addr_br.line, empty_line);
@@ -128,17 +137,24 @@ void l2::ctrl()
 			    wait();
 			}
 		    }
+		    wait();
 		}
 	    }
 
-	    while (put_cnt) {
+	    {
 		FLUSH_END;
-
-		if (l2_rsp_in.nb_can_get()) {
-		    get_rsp_in(rsp_in); // it must be a put ack
-		    --put_cnt;
+		while (put_cnt > 0) {
+		    if (l2_rsp_in.nb_can_get()) {
+			get_rsp_in(rsp_in); // it must be a put ack
+			put_cnt--;
+		    }
+		    wait();
 		}
 		wait();
+		flush_done.write(true);
+		wait();
+		flush_done.write(false);
+
 	    }
 
 	} else if (is_rsp_to_get) { // inv ack not managed yet
@@ -193,8 +209,6 @@ void l2::ctrl()
 		reqs[reqs_hit_i].state = INVALID;
 		reqs_cnt++;
 
-		custom_dbg_tmp = reqs[reqs_hit_i].way;
-
 		put_reqs(addr_br.set, reqs[reqs_hit_i].way, addr_br.tag,
 			 rsp_in.line, reqs[reqs_hit_i].hprot, state_tmp);
 
@@ -244,6 +258,8 @@ void l2::ctrl()
 
  	    if (!set_conflict) {
 		get_cpu_req(cpu_req);
+	    } else {
+		cpu_req = cpu_req_conflict;
 	    }
 
 	    wait(); // for SystemC simulation only
@@ -251,15 +267,18 @@ void l2::ctrl()
 	    addr_br.breakdown(cpu_req.addr);
 
 	    set_conflict = reqs_peek(addr_br.set, reqs_i);
+	    custom_dbg.write(set_conflict);
 
-	    if (!set_conflict) {
+	    if (set_conflict) {
+		cpu_req_conflict = cpu_req;
+	    }
+	    else {
 
 		tag_lookup(addr_br, tag_hit, way_hit, 
 			   empty_way_found, empty_way);
 
-		// custom_dbg_tmp = empty_way; // TOREMOVE, debug purposes
-
 		if (tag_hit) {
+
 		    switch (cpu_req.cpu_msg) {
 		    
 		    case READ : // read hit
@@ -388,7 +407,7 @@ void l2::ctrl()
 	// update debug vectors
 	asserts.write(asserts_tmp);
 	bookmark.write(bookmark_tmp);
-	custom_dbg.write(custom_dbg_tmp);
+	// custom_dbg.write(custom_dbg_tmp);
 
     }
 
@@ -464,6 +483,9 @@ inline void l2::reset_io()
     evict_stall = false;
     set_conflict = false;
     reqs_cnt = N_REQS;
+    custom_dbg.write(0);
+
+    flush_done.write(0);
 
     wait();
 }
@@ -521,6 +543,7 @@ bool l2::reqs_peek(set_t set, sc_uint<REQS_BITS> &reqs_i)
     REQS_PEEK;
 
     set_conflict = false;
+    custom_dbg = set_conflict;
 
     for (unsigned int i = 0; i < N_REQS; ++i) {
 	REQS_PEEK_LOOP;
@@ -531,6 +554,7 @@ bool l2::reqs_peek(set_t set, sc_uint<REQS_BITS> &reqs_i)
 
 	if (reqs[i].set == set && reqs[i].state != INVALID) {
 	    set_conflict = true;
+	    custom_dbg = set_conflict;
 	}
     }
 

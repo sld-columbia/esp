@@ -21,6 +21,7 @@ public:
     sc_in<bool> rst;
 
     // Signals
+    sc_signal<bool> flush_done;
     sc_signal< sc_bv<ASSERT_WIDTH> > asserts;
     sc_signal< sc_bv<BOOKMARK_WIDTH> > bookmark;
     sc_signal<uint32_t> custom_dbg;
@@ -53,6 +54,7 @@ public:
 	// Binding L2 cache
 	dut->clk(clk);
 	dut->rst(rst);
+	dut->flush_done(flush_done);
         dut->asserts(asserts);
         dut->bookmark(bookmark);
         dut->custom_dbg(custom_dbg);
@@ -68,6 +70,7 @@ public:
 	// Binding testbench
 	tb->clk(clk);
 	tb->rst(rst);
+        tb->flush_done(flush_done);
         tb->asserts(asserts);
         tb->bookmark(bookmark);
         tb->custom_dbg(custom_dbg);
