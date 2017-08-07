@@ -24,7 +24,8 @@ PROGS = report_device apbuart divtest multest regtest \
 	grpwm grhcan brm grusbhc leon4_test base_test4 griommu l34stat ftddr2spa \
 	router greth_throughput grpci2 gr1553b_test spwrouter \
 	cgtest privtest privtest_asm mmudmap leon4_tsc mem_test grspwtdp \
-	rextest rextest_asm awptest
+	rextest rextest_asm awptest \
+	l2_cache_test
 
 FPROGS=$(shell for i in $(PROGS); do \
 			if [ -r $(UTILS_GRLIB)/software/leon3/$$i.c -o -r $(UTILS_GRLIB)/software/leon3/$$i.S ]; then \
