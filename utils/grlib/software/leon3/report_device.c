@@ -75,3 +75,12 @@ void report_mem_test(void)
 	grtestmod_write(7,1);
 }
 
+void read_report() {
+    int i;
+    int array_tmp[32] = {0};
+
+    for (i = 0; i < 32; i++) { 
+	array_tmp[i] = grtestmod[i];
+    }
+}
+
