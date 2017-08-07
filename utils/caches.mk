@@ -30,7 +30,7 @@ $(CACHES-hls): %-hls : %-wdir
 	@sed -i '/$(@:-hls=)/d' $(ESP_ROOT)/tech/$(TECHLIB)/caches/installed.log
 	@echo "$(@:-hls=)" >> $(ESP_ROOT)/tech/$(TECHLIB)/caches/installed.log
 
-$(CACHES-sim): %-sim : %-wdir3
+$(CACHES-sim): %-sim : %-wdir
 	$(QUIET_RUN)COMPONENT=$(@:-sim=) TECH=$(TECHLIB) ESP_ROOT=$(ESP_ROOT) make -C $(CACHES_PATH)/$(@:-sim=)/hls-work-$(TECHLIB) sim_all | tee $(@:-sim=)_sim.log
 
 $(CACHES-clean): %-clean : %-wdir
