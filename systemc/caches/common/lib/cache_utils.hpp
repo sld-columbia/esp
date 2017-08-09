@@ -31,18 +31,21 @@
 
 inline void write_word(line_t &line, word_t word, word_offset_t w_off, byte_offset_t b_off, hsize_t hsize)
 {
-    uint32_t size;
+    uint32_t size, b_off_tmp;
     
     if (hsize == BYTE) {
+	b_off_tmp = BYTES_PER_WORD - 1 - b_off;
 	size = 8;
     } else if (hsize == HALFWORD) {
+	b_off_tmp = BYTES_PER_WORD - 2 - b_off;
 	size = BITS_PER_HALFWORD;
     } else if (hsize == WORD) {
+	b_off_tmp = b_off;
 	size = BITS_PER_WORD;
     }
 
     uint32_t w_off_bits = BITS_PER_WORD * w_off;
-    uint32_t b_off_bits = 8 * b_off;
+    uint32_t b_off_bits = 8 * b_off_tmp;
     uint32_t off_bits = w_off_bits + b_off_bits;
 
     line.range(off_bits + size - 1, off_bits) = word.range(b_off_bits + size - 1, b_off_bits);
