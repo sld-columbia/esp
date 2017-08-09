@@ -167,22 +167,18 @@ begin  -- rtl
     input_msg_type := get_msg_type(coherence_req_data_out);
     if destination /= 0 then
       msg_type := AHB_RD;
-      preamble := PREAMBLE_HEADER;
     else
       if l2_cache_en = 1 then
         -- L2 cache enabled, but no LLC present
         if input_msg_type = REQ_PUTS or input_msg_type = REQ_PUTM then
           msg_type := RSP_PUT_ACK;
-          preamble := PREAMBLE_HEADER;
         else
           -- TODO: why RSP_EDATA doesn't work?
           msg_type := RSP_DATA;
-          preamble := PREAMBLE_HEADER;
         end if;
       else
         -- no L2 cache
         msg_type := RSP_DATA;
-        preamble := PREAMBLE_HEADER;
       end if;
     end if;
     reserved := (others => '0');
@@ -190,7 +186,6 @@ begin  -- rtl
     origin_y := get_origin_y(coherence_req_data_out);
     origin_x := get_origin_x(coherence_req_data_out);
     header_v := create_header(local_y, local_x, origin_y, origin_x, msg_type, reserved);
-    header_v(NOC_FLIT_SIZE - 1 downto NOC_FLIT_SIZE - PREAMBLE_WIDTH) := preamble;
     header <= header_v;
   end process make_rsp_snd_packet;
   -----------------------------------------------------------------------------
@@ -299,7 +294,7 @@ begin  -- rtl
                                 elsif (r.msg = REQ_GETM_W or r.msg = REQ_GETM_HW or r.msg = REQ_GETM_B) and (l2_cache_en = 0) then
                                   -- Writes don't need size. Stop when tail appears.
                                   v.state := cacheable_wr_request;
-                                  -- TODO: add other requests handling!
+                                -- TODO: add other requests handling!
                                 elsif r.msg = REQ_PUTS or r.msg = REQ_PUTM then
                                   v.state := send_put_ack;
                                 else
@@ -404,6 +399,9 @@ begin  -- rtl
                             coherence_rsp_snd_data_in <= header_reg;
                             coherence_rsp_snd_wrreq <= '1';
                             -- Updated address and control bus
+                            if l2_cache_en = 0 then
+                              v.addr := r.addr + 4;
+                            end if;
                             v.count := r.count - 1;
                             if r.count = 1 then
                               v.hbusreq := '0';
