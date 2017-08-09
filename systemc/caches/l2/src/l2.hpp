@@ -27,6 +27,16 @@ public:
     sc_out< sc_bv<BOOKMARK_WIDTH> > bookmark;
     sc_out<uint32_t>                custom_dbg;
 
+    sc_out<reqs_buf_t>          reqs_out[N_REQS];
+    sc_out<bool>		evict_stall_out;
+    sc_out<bool>		set_conflict_out;
+    sc_out<l2_cpu_req_t>	cpu_req_conflict_out;
+    sc_out<bool>		tag_hit_out;
+    sc_out<l2_way_t>		way_hit_out;
+    sc_out<bool>		empty_way_found_out;
+    sc_out<l2_way_t>		empty_way_out;
+    sc_out<l2_way_t>		way_evict_out;
+
     // Other signals
     sc_out<bool> flush_done;
 

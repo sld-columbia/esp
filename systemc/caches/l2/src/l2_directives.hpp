@@ -148,5 +148,9 @@
 #define WRONG_HSIZE				\
 	asserts_tmp |= AS_WRONG_HSIZE
 
+// Debug
+#define REQS_OUTPUT					\
+	HLS_UNROLL_LOOP(ON, "l2-reqs-output-unroll")	
+
 
 #endif /* __L2_DIRECTIVES_HPP_ */

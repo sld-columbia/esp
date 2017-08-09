@@ -346,6 +346,21 @@ public:
 		x.word	     == word		&&
 		x.line	     == line);
     }
+    inline friend void sc_trace(sc_trace_file *tf, const reqs_buf_t& x, const std::string & name) {
+	sc_trace(tf, x.cpu_msg , name + ".cpu_msg ");
+	sc_trace(tf, x.tag , name + ".tag");
+	sc_trace(tf, x.tag_estall , name + ".tag_estall");
+	sc_trace(tf, x.set , name + ".set");
+	sc_trace(tf, x.way , name + ".way");
+	sc_trace(tf, x.hsize , name + ".hsize");
+	sc_trace(tf, x.w_off , name + ".w_off");
+	sc_trace(tf, x.b_off , name + ".b_off");
+	sc_trace(tf, x.state , name + ".state");
+	sc_trace(tf, x.hprot , name + ".hprot");
+	sc_trace(tf, x.invack_cnt , name + ".invack_cnt");
+	sc_trace(tf, x.word , name + ".word");
+	sc_trace(tf, x.line , name + ".line");
+    }
     inline friend ostream & operator<<(ostream& os, const reqs_buf_t& x) {
 	os << hex << "(" 
 	   << "cpu_msg: " << x.cpu_msg         

@@ -155,7 +155,7 @@
  */
 
 // debug
-#define ASSERT_WIDTH 12
+#define ASSERT_WIDTH 13
 #define BOOKMARK_WIDTH	18
 
 #define AS_REQS_MISS		(1 << 0)
@@ -170,6 +170,7 @@
 #define AS_REQS_LOOKUP          (1 << 9)
 #define AS_REQS_LOOKUP2         (1 << 10)
 #define AS_INVACK_DEFAULT       (1 << 11)
+#define AS_RSP_DATA_XMAD        (1 << 12)
 
 #define BM_GET_RSP_IN		(1 << 0)
 #define BM_GET_CPU_REQ		(1 << 1)
@@ -196,5 +197,6 @@
 #define RPT_TB  RPT_OFF
 #define RPT_RTL RPT_OFF
 #define RPT_BM  RPT_OFF
+#define RPT_CU  RPT_OFF
 
 #endif // __CACHES_CONSTS_HPP__

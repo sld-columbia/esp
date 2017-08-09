@@ -25,6 +25,15 @@ public:
     sc_signal< sc_bv<ASSERT_WIDTH> > asserts;
     sc_signal< sc_bv<BOOKMARK_WIDTH> > bookmark;
     sc_signal<uint32_t> custom_dbg;
+    sc_signal<reqs_buf_t> reqs_out[N_REQS];
+    sc_signal<bool>		evict_stall_out;
+    sc_signal<bool>		set_conflict_out;
+    sc_signal<l2_cpu_req_t>	cpu_req_conflict_out;
+    sc_signal<bool>		tag_hit_out;
+    sc_signal<l2_way_t>		way_hit_out;
+    sc_signal<bool>		empty_way_found_out;
+    sc_signal<l2_way_t>		empty_way_out;
+    sc_signal<l2_way_t>		way_evict_out;
 
     // Channels
     // To L2 cache
@@ -58,6 +67,15 @@ public:
         dut->asserts(asserts);
         dut->bookmark(bookmark);
         dut->custom_dbg(custom_dbg);
+	dut->reqs_out(reqs_out);
+	dut->evict_stall_out(evict_stall_out);
+	dut->set_conflict_out(set_conflict_out);
+	dut->cpu_req_conflict_out(cpu_req_conflict_out);
+	dut->tag_hit_out(tag_hit_out);
+	dut->way_hit_out(way_hit_out);
+	dut->empty_way_found_out(empty_way_found_out);
+	dut->empty_way_out(empty_way_out);
+	dut->way_evict_out(way_evict_out);
 	dut->l2_cpu_req(l2_cpu_req_chnl);
 	dut->l2_fwd_in(l2_fwd_in_chnl);
 	dut->l2_rsp_in(l2_rsp_in_chnl);
@@ -74,6 +92,15 @@ public:
         tb->asserts(asserts);
         tb->bookmark(bookmark);
         tb->custom_dbg(custom_dbg);
+	tb->reqs_out(reqs_out);
+	tb->evict_stall_out(evict_stall_out);
+	tb->set_conflict_out(set_conflict_out);
+	tb->cpu_req_conflict_out(cpu_req_conflict_out);
+	tb->tag_hit_out(tag_hit_out);
+	tb->way_hit_out(way_hit_out);
+	tb->empty_way_found_out(empty_way_found_out);
+	tb->empty_way_out(empty_way_out);
+	tb->way_evict_out(way_evict_out);
 	tb->l2_cpu_req_tb(l2_cpu_req_chnl);
 	tb->l2_fwd_in_tb(l2_fwd_in_chnl);
 	tb->l2_rsp_in_tb(l2_rsp_in_chnl); 

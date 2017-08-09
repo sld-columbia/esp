@@ -214,7 +214,7 @@ void l2::ctrl()
 		break;
 
 	    case RSP_INVACK : // not implemented yet
-		RSP_INVACK_DEFAULT;
+		INVACK_DEFAULT;
 		break;
 
 	    case RSP_PUTACK :
@@ -408,7 +408,19 @@ void l2::ctrl()
 	asserts.write(asserts_tmp);
 	bookmark.write(bookmark_tmp);
 	// custom_dbg.write(custom_dbg_tmp);
+	evict_stall_out.write(evict_stall);
+	set_conflict_out.write(set_conflict);
+	cpu_req_conflict_out.write(cpu_req_conflict);
+	tag_hit_out.write(tag_hit);
+	way_hit_out.write(way_hit);
+	empty_way_found_out.write(empty_way_found);
+	empty_way_out.write(empty_way);
+	way_evict_out.write(way_evict);
 
+	for (int i = 0; i < N_REQS; i++) {
+	    REQS_OUTPUT;
+	    reqs_out[i] = reqs[i];
+	}
     }
 
     /* 
@@ -484,6 +496,13 @@ inline void l2::reset_io()
     set_conflict = false;
     reqs_cnt = N_REQS;
     custom_dbg.write(0);
+    evict_stall_out.write(0);
+    set_conflict_out.write(0);
+    tag_hit_out.write(0);
+    way_hit_out.write(0);
+    empty_way_found_out.write(0);
+    empty_way_out.write(0);
+    way_evict_out.write(0);
 
     flush_done.write(0);
 

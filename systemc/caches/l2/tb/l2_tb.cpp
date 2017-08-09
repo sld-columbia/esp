@@ -36,7 +36,7 @@ void l2_tb::l2_debug()
 
 	if (old_custom_dbg != new_custom_dbg) {
 	    old_custom_dbg = new_custom_dbg;
-	    if (RPT_BM) CACHE_REPORT_DEBUG(sc_time_stamp(), "custom_dbg", new_custom_dbg);
+	    if (RPT_CU) CACHE_REPORT_DEBUG(sc_time_stamp(), "custom_dbg", new_custom_dbg);
 	}
 	
 	wait();
