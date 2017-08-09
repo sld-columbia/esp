@@ -41,6 +41,7 @@ extern int report_subtest();
 extern int fail();
 extern int irqmp_addr;
 extern void (*mpfunc[16])(int index);
+extern void init_report();
 extern void read_report();
 
 #endif

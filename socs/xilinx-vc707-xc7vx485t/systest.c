@@ -2,6 +2,9 @@
 
 int main(int argc, char **argv)
 {
-	printf("Hello from ESP!\n");
-	return 0;
+    l2_cache_test();
+
+    printf("Hello ESP!\n");
+
+    return 0;
 }

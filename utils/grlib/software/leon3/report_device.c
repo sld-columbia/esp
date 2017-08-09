@@ -17,7 +17,7 @@ typedef short testmod_type;
 #endif
 
 #ifndef GRLIB_REPORTDEV_BASE
-#define GRLIB_REPORTDEV_BASE 0x20000000
+#define GRLIB_REPORTDEV_BASE 0x60000000
 #endif
 
 
@@ -73,6 +73,14 @@ void chkp(int n)
 void report_mem_test(void)
 {
 	grtestmod_write(7,1);
+}
+
+void init_report() {
+    int i;
+
+    for (i = 0; i < 32; i++) { 
+	grtestmod[i] = 0;
+    }
 }
 
 void read_report() {
