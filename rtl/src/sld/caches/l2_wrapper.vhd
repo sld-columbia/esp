@@ -321,17 +321,17 @@ architecture rtl of l2_wrapper is
   -----------------------------------------------------------------------------
   -- Read allocate
   -----------------------------------------------------------------------------
-  type load_alloc_type is record
+  type load_alloc_reg_type is record
     addr : std_logic_vector(ADDR_BITS-1-OFFSET_BITS downto 0);
     line : line_t;
   end record;
 
-  constant LOAD_ALLOC_REG_DEFAULT : load_alloc_type := (
+  constant LOAD_ALLOC_REG_DEFAULT : load_alloc_reg_type := (
     addr => (others => '0'),
     line => (others => '0'));
 
-  signal load_alloc_reg : load_alloc_type := LOAD_ALLOC_REG_DEFAULT;
-  signal load_alloc_reg_next : load_alloc_type := LOAD_ALLOC_REG_DEFAULT;
+  signal load_alloc_reg : load_alloc_reg_type := LOAD_ALLOC_REG_DEFAULT;
+  signal load_alloc_reg_next : load_alloc_reg_type := LOAD_ALLOC_REG_DEFAULT;
   
   -------------------------------------------------------------------------------
   -- Debug
@@ -622,12 +622,14 @@ begin  -- architecture rtl of l2_wrapper
                       load_alloc_reg)
 
     variable reg           : ahbs_reg_type;
+    variable alloc_reg     : load_alloc_reg_type;
     variable selected      : std_ulogic;
     variable valid_ahb_req : std_ulogic;
 
   begin
     -- copy current state into a variable
     reg := ahbs_reg;
+    alloc_reg := load_alloc_reg;
 
     -- default values of output signals
     ahbso.hready <= '0';
@@ -690,7 +692,7 @@ begin  -- architecture rtl of l2_wrapper
         elsif reg.req_memorized = '1' then
           reg.req_memorized := '0';
           if reg.cpu_msg = CPU_READ or reg.cpu_msg = CPU_READ_ATOM then
-            load_alloc_reg_next.addr <= reg.haddr(TAG_RANGE_HI downto SET_RANGE_LO);
+            alloc_reg.addr := reg.haddr(TAG_RANGE_HI downto SET_RANGE_LO);
             reg.state           := load_req;
           else
             reg.state := store_req;
@@ -707,10 +709,10 @@ begin  -- architecture rtl of l2_wrapper
             cpu_req_valid <= '1';
             if cpu_req_ready = '1' then
               reg.state           := load_rsp;
-              load_alloc_reg_next.addr <= ahbsi.haddr(TAG_RANGE_HI downto SET_RANGE_LO);
+              alloc_reg.addr := ahbsi.haddr(TAG_RANGE_HI downto SET_RANGE_LO);
             else
               reg.state           := load_req;
-              load_alloc_reg_next.addr <= ahbsi.haddr(TAG_RANGE_HI downto SET_RANGE_LO);
+              alloc_reg.addr := ahbsi.haddr(TAG_RANGE_HI downto SET_RANGE_LO);
             end if;
 
           else
@@ -743,7 +745,7 @@ begin  -- architecture rtl of l2_wrapper
         cpu_req_data_hprot   <= ahbsi.hprot;
         cpu_req_data_addr    <= ahbsi.haddr;
 
-        load_alloc_reg_next.line <= rd_rsp_data_line;
+        alloc_reg.line := rd_rsp_data_line;
 
         if rd_rsp_valid = '1' then
 
@@ -776,10 +778,10 @@ begin  -- architecture rtl of l2_wrapper
 
                 cpu_req_valid <= '1';
                 if cpu_req_ready = '1' then
-                  load_alloc_reg_next.addr <= ahbsi.haddr(TAG_RANGE_HI downto SET_RANGE_LO);
+                  alloc_reg.addr := ahbsi.haddr(TAG_RANGE_HI downto SET_RANGE_LO);
                   reg.state           := load_rsp;
                 else
-                  load_alloc_reg_next.addr <= ahbsi.haddr(TAG_RANGE_HI downto SET_RANGE_LO);
+                  alloc_reg.addr := ahbsi.haddr(TAG_RANGE_HI downto SET_RANGE_LO);
                   reg.state           := load_req;
                 end if;
               end if;
@@ -835,10 +837,10 @@ begin  -- architecture rtl of l2_wrapper
 
               cpu_req_valid <= '1';
               if cpu_req_ready = '1' then
-                load_alloc_reg_next.addr <= ahbsi.haddr(TAG_RANGE_HI downto SET_RANGE_LO);
+                alloc_reg.addr := ahbsi.haddr(TAG_RANGE_HI downto SET_RANGE_LO);
                 reg.state           := load_rsp;
               else
-                load_alloc_reg_next.addr <= ahbsi.haddr(TAG_RANGE_HI downto SET_RANGE_LO);
+                alloc_reg.addr := ahbsi.haddr(TAG_RANGE_HI downto SET_RANGE_LO);
                 reg.state           := load_req;
               end if;
             end if;
@@ -887,7 +889,7 @@ begin  -- architecture rtl of l2_wrapper
           elsif valid_ahb_req = '1' then
             if ahbsi.hwrite = '0' then
 
-              load_alloc_reg_next.addr <= ahbsi.haddr(TAG_RANGE_HI downto SET_RANGE_LO);
+              alloc_reg.addr := ahbsi.haddr(TAG_RANGE_HI downto SET_RANGE_LO);
               reg.state           := load_req;
 
             else
@@ -908,6 +910,7 @@ begin  -- architecture rtl of l2_wrapper
     end case;
 
     ahbs_reg_next <= reg;
+    load_alloc_reg_next <= alloc_reg;
 
   end process fsm_ahbs;
 
