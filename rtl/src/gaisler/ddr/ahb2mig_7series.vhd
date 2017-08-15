@@ -223,7 +223,7 @@ signal size_to_watch : std_logic_vector(2 downto 0) := HSIZE_4WORD;
 
 begin
 
-  comb: process( rst_n_syn, r, rin, ahbsi, migout )
+  comb: process( rst_n_syn, r, rin, ahbsi, migout, rnxt )
 
   -- Design temp variables
   variable v,vnxt                : reg_type;
@@ -245,7 +245,7 @@ begin
     v := r; vnxt := rnxt;
 
     -- workout the start address in AHB2MIG buffer based upon
-    startaddress := resize(unsigned(unsigned(ahbsi.haddr(ahbsi.haddr'left-3 downto 8)) & "00000"),startaddress'length);
+    startaddress := resize(unsigned(unsigned(ahbsi.haddr(ahbsi.haddr'left-2 downto 8)) & "00000"),startaddress'length);
 
     -- Adjust offset in memory buffer
     startaddress := resize(startaddress + unsigned(unsigned(ahbsi.haddr(7 downto 6))&"000"),startaddress'length);
