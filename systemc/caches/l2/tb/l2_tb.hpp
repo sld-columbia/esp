@@ -30,6 +30,8 @@ public:
     sc_in<bool>		empty_way_found_out;
     sc_in<l2_way_t>	empty_way_out;
     sc_in<l2_way_t>	way_evict_out;
+    sc_in<bool>			reqs_hit_out;
+    sc_in< sc_uint<REQS_BITS> >	reqs_hit_i_out;
 
     // Other signals
     sc_in<bool> flush_done;

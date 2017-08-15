@@ -42,7 +42,6 @@ void l2::ctrl()
 	l2_way_t	way_hit;
 	bool		empty_way_found;
 	l2_way_t	empty_way;
-	l2_way_t	way_evict;
 
 	// ongoing trans buffers
 	bool			reqs_hit;
@@ -392,14 +391,12 @@ void l2::ctrl()
 
 		    default :
 			EVICT_DEFAULT;
-
 		    }
 
 		    send_inval(addr_evict);
 		    send_req_out(coh_msg_tmp, empty_hprot, addr_evict, lines_buf[evict_way]);
-		    fill_reqs(cpu_req.cpu_msg, addr_br, tag_tmp, evict_way, cpu_req.hsize, state_tmp, cpu_req.hprot,
-			      max_invack_cnt, cpu_req.word,
-			      empty_line, reqs_i);
+		    fill_reqs(cpu_req.cpu_msg, addr_br, tag_tmp, evict_way, cpu_req.hsize, state_tmp, 
+			      cpu_req.hprot, max_invack_cnt, cpu_req.word, empty_line, reqs_i);
 		}
 	    }
 	}
@@ -415,7 +412,9 @@ void l2::ctrl()
 	way_hit_out.write(way_hit);
 	empty_way_found_out.write(empty_way_found);
 	empty_way_out.write(empty_way);
-	way_evict_out.write(way_evict);
+	way_evict_out.write(evict_way);
+	reqs_hit_out.write(reqs_hit);
+	reqs_hit_i_out.write(reqs_hit_i);
 
 	for (int i = 0; i < N_REQS; i++) {
 	    REQS_OUTPUT;
@@ -503,6 +502,8 @@ inline void l2::reset_io()
     empty_way_found_out.write(0);
     empty_way_out.write(0);
     way_evict_out.write(0);
+    reqs_hit_out.write(0);
+    reqs_hit_i_out.write(0);
 
     flush_done.write(0);
 

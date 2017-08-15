@@ -34,6 +34,8 @@ public:
     sc_signal<bool>		empty_way_found_out;
     sc_signal<l2_way_t>		empty_way_out;
     sc_signal<l2_way_t>		way_evict_out;
+    sc_signal<bool>			reqs_hit_out;
+    sc_signal< sc_uint<REQS_BITS> >	reqs_hit_i_out;
 
     // Channels
     // To L2 cache
@@ -75,6 +77,8 @@ public:
 	dut->way_hit_out(way_hit_out);
 	dut->empty_way_found_out(empty_way_found_out);
 	dut->empty_way_out(empty_way_out);
+	dut->reqs_hit_out(reqs_hit_out);
+	dut->reqs_hit_i_out(reqs_hit_i_out);
 	dut->way_evict_out(way_evict_out);
 	dut->l2_cpu_req(l2_cpu_req_chnl);
 	dut->l2_fwd_in(l2_fwd_in_chnl);
@@ -100,6 +104,8 @@ public:
 	tb->way_hit_out(way_hit_out);
 	tb->empty_way_found_out(empty_way_found_out);
 	tb->empty_way_out(empty_way_out);
+	tb->reqs_hit_out(reqs_hit_out);
+	tb->reqs_hit_i_out(reqs_hit_i_out);
 	tb->way_evict_out(way_evict_out);
 	tb->l2_cpu_req_tb(l2_cpu_req_chnl);
 	tb->l2_fwd_in_tb(l2_fwd_in_chnl);

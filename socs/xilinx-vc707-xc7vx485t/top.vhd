@@ -223,6 +223,21 @@ signal mctrl_clk   : std_ulogic;
 signal ddr_ahbsi   : ahb_slv_in_type;
 signal ddr_ahbso   : ahb_slv_out_type;
 
+signal ddr_ahbsi_hsel        : std_logic_vector(0 to NAHBSLV-1);     -- slave select
+signal ddr_ahbsi_haddr       : std_logic_vector(31 downto 0);        -- address bus (byte)
+signal ddr_ahbsi_hwrite      : std_ulogic;                           -- read/write
+signal ddr_ahbsi_htrans      : std_logic_vector(1 downto 0);         -- transfer type
+signal ddr_ahbsi_hsize       : std_logic_vector(2 downto 0);         -- transfer size
+signal ddr_ahbsi_hburst      : std_logic_vector(2 downto 0);         -- burst type
+signal ddr_ahbsi_hwdata      : std_logic_vector(AHBDW-1 downto 0);   -- write data bus
+signal ddr_ahbsi_hprot       : std_logic_vector(3 downto 0);         -- protection control
+signal ddr_ahbsi_hready      : std_ulogic;                           -- transfer done
+signal ddr_ahbsi_hmaster     : std_logic_vector(3 downto 0);         -- current master
+
+signal ddr_ahbso_hready      : std_ulogic;                           -- transfer done
+signal ddr_ahbso_hresp       : std_logic_vector(1 downto 0);         -- response type
+signal ddr_ahbso_hrdata      : std_logic_vector(AHBDW-1 downto 0);   -- read data bus
+
 -- DVI (unused on this board)
 signal dvi_apbi  : apb_slv_in_type;
 signal dvi_apbo  : apb_slv_out_type;
@@ -270,8 +285,40 @@ attribute keep : boolean;
 attribute syn_keep : string;
 attribute keep of clkm : signal is true;
 
+attribute mark_debug : string;
+
+attribute mark_debug of ddr_ahbsi_hsel        : signal is "true";
+attribute mark_debug of ddr_ahbsi_haddr       : signal is "true";
+attribute mark_debug of ddr_ahbsi_hwrite      : signal is "true";
+attribute mark_debug of ddr_ahbsi_htrans      : signal is "true";
+attribute mark_debug of ddr_ahbsi_hsize       : signal is "true";
+attribute mark_debug of ddr_ahbsi_hburst      : signal is "true";
+attribute mark_debug of ddr_ahbsi_hwdata      : signal is "true";
+attribute mark_debug of ddr_ahbsi_hprot       : signal is "true";
+attribute mark_debug of ddr_ahbsi_hready      : signal is "true";
+attribute mark_debug of ddr_ahbsi_hmaster     : signal is "true";
+
+attribute mark_debug of ddr_ahbso_hready      : signal is "true";
+attribute mark_debug of ddr_ahbso_hresp       : signal is "true";
+attribute mark_debug of ddr_ahbso_hrdata      : signal is "true";
+
 begin
 
+ddr_ahbsi_hsel        <= ddr_ahbsi.hsel;
+ddr_ahbsi_haddr       <= ddr_ahbsi.haddr;
+ddr_ahbsi_hwrite      <= ddr_ahbsi.hwrite;
+ddr_ahbsi_htrans      <= ddr_ahbsi.htrans;
+ddr_ahbsi_hsize       <= ddr_ahbsi.hsize;
+ddr_ahbsi_hburst      <= ddr_ahbsi.hburst;
+ddr_ahbsi_hwdata      <= ddr_ahbsi.hwdata;
+ddr_ahbsi_hprot       <= ddr_ahbsi.hprot;
+ddr_ahbsi_hready      <= ddr_ahbsi.hready;
+ddr_ahbsi_hmaster     <= ddr_ahbsi.hmaster;
+
+ddr_ahbso_hready      <= ddr_ahbso.hready;
+ddr_ahbso_hresp       <= ddr_ahbso.hresp;
+ddr_ahbso_hrdata      <= ddr_ahbso.hrdata;
+ 
 -------------------------------------------------------------------------------
 -- Leds -----------------------------------------------------------------------
 -------------------------------------------------------------------------------

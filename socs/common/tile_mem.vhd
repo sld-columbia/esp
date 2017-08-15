@@ -226,21 +226,55 @@ architecture rtl of tile_mem is
   signal dsui : dsu_in_type;
   signal dsuo : dsu_out_type;
 
+  signal ahbmi2_hgrant : std_logic_vector(0 to NAHBMST-1);
+  signal ahbmi2_hready : std_ulogic;
+  signal ahbmi2_hrdata : std_logic_vector(31 downto 0);
+  signal ahbmo2_hbusreq : std_ulogic; 
+  signal ahbmo2_htrans : std_logic_vector(1 downto 0);
+  signal ahbmo2_haddr : std_logic_vector(31 downto 0);
+  signal ahbmo2_hwrite : std_ulogic;
+  signal ahbmo2_hsize : std_logic_vector(2 downto 0);
+  signal ahbmo2_hprot : std_logic_vector(3 downto 0);
+  
 -- Attributes for hardware debug with Vivado ILA
   attribute mark_debug : string;
   attribute keep       : string;
 
-  attribute mark_debug of coherence_req_empty     : signal is "true";
-  attribute mark_debug of coherence_req_rdreq     : signal is "true";
-  attribute mark_debug of coherence_fwd_full      : signal is "true";
-  attribute mark_debug of coherence_fwd_wrreq     : signal is "true";
-  attribute mark_debug of coherence_rsp_snd_full  : signal is "true";
-  attribute mark_debug of coherence_rsp_snd_wrreq : signal is "true";
-  attribute mark_debug of coherence_rsp_rcv_empty : signal is "true";
-  attribute mark_debug of coherence_rsp_rcv_rdreq : signal is "true";
+  attribute mark_debug of coherence_req_empty        : signal is "true";
+  attribute mark_debug of coherence_req_rdreq        : signal is "true";
+  attribute mark_debug of coherence_req_data_out     : signal is "true";
+  -- attribute mark_debug of coherence_fwd_full         : signal is "true";
+  -- attribute mark_debug of coherence_fwd_wrreq        : signal is "true";
+  -- attribute mark_debug of coherence_fwd_data_in      : signal is "true";
+  attribute mark_debug of coherence_rsp_snd_full     : signal is "true";
+  attribute mark_debug of coherence_rsp_snd_wrreq    : signal is "true";
+  attribute mark_debug of coherence_rsp_snd_data_in  : signal is "true";
+  -- attribute mark_debug of coherence_rsp_rcv_empty    : signal is "true";
+  -- attribute mark_debug of coherence_rsp_rcv_rdreq    : signal is "true";
+  -- attribute mark_debug of coherence_rsp_rcv_data_out : signal is "true";
 
+  attribute mark_debug of ahbmi2_hgrant : signal is "true";
+  attribute mark_debug of ahbmi2_hready : signal is "true";
+  attribute mark_debug of ahbmi2_hrdata : signal is "true";
+
+  attribute mark_debug of ahbmo2_hbusreq : signal is "true";
+  attribute mark_debug of ahbmo2_htrans : signal is "true";
+  attribute mark_debug of ahbmo2_haddr : signal is "true";
+  attribute mark_debug of ahbmo2_hwrite : signal is "true";
+  attribute mark_debug of ahbmo2_hsize : signal is "true";
+  attribute mark_debug of ahbmo2_hprot : signal is "true";
+  
 begin
 
+  ahbmi2_hgrant <= ahbmi2.hgrant;
+  ahbmi2_hready <= ahbmi2.hready; 
+  ahbmi2_hrdata <= ahbmi2.hrdata;
+  ahbmo2_hbusreq <= ahbmo2(0).hbusreq;
+  ahbmo2_htrans <= ahbmo2(0).htrans;
+  ahbmo2_haddr <= ahbmo2(0).haddr;
+  ahbmo2_hwrite <= ahbmo2(0).hwrite;
+  ahbmo2_hsize <= ahbmo2(0).hsize;
+  ahbmo2_hprot <= ahbmo2(0).hprot;  
   -----------------------------------------------------------------------------
   -- JTAG
   -----------------------------------------------------------------------------

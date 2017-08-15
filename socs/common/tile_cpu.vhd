@@ -214,27 +214,27 @@ architecture rtl of tile_cpu is
   attribute mark_debug : string;
   attribute keep       : string;
 
-  attribute mark_debug of dflush : signal is "true";
+  -- attribute mark_debug of dflush : signal is "true";
 
   attribute mark_debug of ahbsi_hsel      : signal is "true";
   attribute mark_debug of ahbsi_htrans    : signal is "true";
-  attribute mark_debug of ahbsi_hwrite    : signal is "true";
-  attribute mark_debug of ahbsi_hsize     : signal is "true";
-  attribute mark_debug of ahbsi_hprot     : signal is "true";
+  -- attribute mark_debug of ahbsi_hwrite    : signal is "true";
+  -- attribute mark_debug of ahbsi_hsize     : signal is "true";
+  -- attribute mark_debug of ahbsi_hprot     : signal is "true";
   attribute mark_debug of ahbsi_haddr     : signal is "true";
---attribute mark_debug of ahbsi_hwdata                : signal is "true";
-  attribute mark_debug of ahbsi_hmastlock : signal is "true";
-  attribute mark_debug of ahbsi_hmaster   : signal is "true";
---attribute mark_debug of ahbso_hrdata                : signal is "true";
+  attribute mark_debug of ahbsi_hwdata                : signal is "true";
+  -- attribute mark_debug of ahbsi_hmastlock : signal is "true";
+  -- attribute mark_debug of ahbsi_hmaster   : signal is "true";
+  -- attribute mark_debug of ahbso_hrdata                : signal is "true";
 
 --attribute mark_debug of ahbmi_hgrant0               : signal is "true";
 --attribute mark_debug of ahbmi_hgrant2               : signal is "true";
-  attribute mark_debug of ahbmi_hready  : signal is "true";
-  attribute mark_debug of ahbmo_hbusreq : signal is "true";
---attribute mark_debug of ahbmo_htrans                : signal is "true";
---attribute mark_debug of ahbmo_hwrite                : signal is "true";
---attribute mark_debug of ahbmo_cpu_hbusreq           : signal is "true";
---attribute mark_debug of ahbmo_cpu_htrans            : signal is "true";
+  -- attribute mark_debug of ahbmi_hready  : signal is "true";
+  -- attribute mark_debug of ahbmo_hbusreq : signal is "true";
+  -- attribute mark_debug of ahbmo_htrans                : signal is "true";
+  -- attribute mark_debug of ahbmo_hwrite                : signal is "true";
+  -- attribute mark_debug of ahbmo_cpu_hbusreq           : signal is "true";
+  -- attribute mark_debug of ahbmo_cpu_htrans            : signal is "true";
 
 --attribute mark_debug of remote_apb_rcv_rdreq        : signal is "true";
 --attribute mark_debug of remote_apb_rcv_empty        : signal is "true";
@@ -251,6 +251,17 @@ architecture rtl of tile_cpu is
 --attribute mark_debug of irqo_irl                    : signal is "true";
 --attribute mark_debug of irqo_pwd                    : signal is "true";
 --attribute mark_debug of irqo_idle                   : signal is "true";
+
+  attribute mark_debug of coherence_req_wrreq        : signal is "true";
+  attribute mark_debug of coherence_req_data_in      : signal is "true";
+  attribute mark_debug of coherence_req_full         : signal is "true";
+  attribute mark_debug of coherence_rsp_rcv_rdreq    : signal is "true";
+  attribute mark_debug of coherence_rsp_rcv_data_out : signal is "true";
+  attribute mark_debug of coherence_rsp_rcv_empty    : signal is "true";
+  -- attribute mark_debug of coherence_rsp_snd_wrreq    : signal is "true";
+  -- attribute mark_debug of coherence_rsp_snd_data_in  : signal is "true";
+  -- attribute mark_debug of coherence_rsp_snd_full     : signal is "true";
+
 -------------------------------------------------------------------------------
 
 begin
