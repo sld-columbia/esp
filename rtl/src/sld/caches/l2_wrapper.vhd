@@ -136,10 +136,10 @@ architecture rtl of l2_wrapper is
   signal reqs_out_cpu_msg_1    : std_logic_vector(1 downto 0);
   signal reqs_out_cpu_msg_2    : std_logic_vector(1 downto 0);
   signal reqs_out_cpu_msg_3    : std_logic_vector(1 downto 0);
-signal reqs_out_tag_0        : std_logic_vector(19 downto 0);
+  signal reqs_out_tag_0        : std_logic_vector(19 downto 0);
   signal reqs_out_tag_1        : std_logic_vector(19 downto 0);
-  signal reqs_out_tag_2    : std_logic_vector(19 downto 0);
-  signal reqs_out_tag_3        :   std_logic_vector(19 downto 0);
+  signal reqs_out_tag_2        : std_logic_vector(19 downto 0);
+  signal reqs_out_tag_3        : std_logic_vector(19 downto 0);
   signal reqs_out_tag_estall_0 : std_logic_vector(19 downto 0);
   signal reqs_out_tag_estall_1 : std_logic_vector(19 downto 0);
   signal reqs_out_tag_estall_2 : std_logic_vector(19 downto 0);
@@ -197,8 +197,8 @@ signal reqs_out_tag_0        : std_logic_vector(19 downto 0);
   signal empty_way_found_out          : std_ulogic;
   signal empty_way_out                : std_logic_vector(2 downto 0);
   signal way_evict_out                : std_logic_vector(2 downto 0);
-  signal reqs_hit_out : std_ulogic;
-  signal reqs_hit_i_out : std_logic_vector(1 downto 0);
+  signal reqs_hit_out                 : std_ulogic;
+  signal reqs_hit_i_out               : std_logic_vector(1 downto 0);
 
   -------------------------------------------------------------------------------
   -- AHB slave FSM signals
@@ -212,7 +212,6 @@ signal reqs_out_tag_0        : std_logic_vector(19 downto 0);
     hprot         : hprot_t;
     haddr         : addr_t;
     req_memorized : std_ulogic;
-    -- count   : integer;
     asserts       : asserts_ahbs_t;
   end record;
 
@@ -223,7 +222,6 @@ signal reqs_out_tag_0        : std_logic_vector(19 downto 0);
     hprot         => DEFAULT_HPROT,     -- bufferable, non cacheable
     haddr         => (others => '0'),
     req_memorized => '0',
-    -- count   => 0,
     asserts       => (others => '0'));
 
   signal ahbs_reg      : ahbs_reg_type := AHBS_REG_DEFAULT;
@@ -361,69 +359,84 @@ signal reqs_out_tag_0        : std_logic_vector(19 downto 0);
   attribute mark_debug of req_reg_state    : signal is "true";
   attribute mark_debug of rsp_in_reg_state : signal is "true";
 
-  -- attribute mark_debug of flush_due   : signal is "true";
-  -- attribute mark_debug of flush_state : signal is "true";
+  attribute mark_debug of flush_due   : signal is "true";
+  attribute mark_debug of flush_state : signal is "true";
 
-  -- attribute mark_debug of inv_fifo_empty        : signal is "true";
-  -- attribute mark_debug of inv_fifo_almost_empty : signal is "true";
-  -- attribute mark_debug of inv_fifo_full         : signal is "true";
-  -- attribute mark_debug of inv_fifo_rdreq        : signal is "true";
-  -- attribute mark_debug of inv_fifo_wrreq        : signal is "true";
-  --attribute mark_debug of inv_fifo_data_in        : signal is "true";
-  --attribute mark_debug of inv_fifo_data_out       : signal is "true";
+  attribute mark_debug of inv_fifo_empty        : signal is "true";
+  attribute mark_debug of inv_fifo_almost_empty : signal is "true";
+  attribute mark_debug of inv_fifo_full         : signal is "true";
+  attribute mark_debug of inv_fifo_rdreq        : signal is "true";
+  attribute mark_debug of inv_fifo_wrreq        : signal is "true";
+  attribute mark_debug of inv_fifo_data_in      : signal is "true";
+  attribute mark_debug of inv_fifo_data_out     : signal is "true";
 
-  -- attribute mark_debug of ahbs_asserts   : signal is "true";
-  -- attribute mark_debug of ahbm_asserts   : signal is "true";
-  -- attribute mark_debug of req_asserts    : signal is "true";
-  -- attribute mark_debug of rsp_in_asserts : signal is "true";
+  attribute mark_debug of ahbs_asserts   : signal is "true";
+  attribute mark_debug of ahbm_asserts   : signal is "true";
+  attribute mark_debug of req_asserts    : signal is "true";
+  attribute mark_debug of rsp_in_asserts : signal is "true";
 
-  -- -- AHB to cache
-  -- attribute mark_debug of cpu_req_ready          : signal is "true";
-  -- attribute mark_debug of cpu_req_valid          : signal is "true";
-  -- attribute mark_debug of cpu_req_data_cpu_msg   : signal is "true";
-  -- attribute mark_debug of cpu_req_data_hsize     : signal is "true";
-  -- attribute mark_debug of cpu_req_data_hprot     : signal is "true";
-  -- attribute mark_debug of cpu_req_data_addr      : signal is "true";
-  -- attribute mark_debug of cpu_req_data_word      : signal is "true";
-  -- attribute mark_debug of flush_ready            : signal is "true";
-  -- attribute mark_debug of flush_valid            : signal is "true";
-  -- attribute mark_debug of flush_data             : signal is "true";
-  -- -- cache to AHB
-  -- attribute mark_debug of rd_rsp_ready           : signal is "true";
-  -- attribute mark_debug of rd_rsp_valid           : signal is "true";
-  -- attribute mark_debug of rd_rsp_data_line       : signal is "true";
-  -- attribute mark_debug of inval_ready            : signal is "true";
-  -- attribute mark_debug of inval_valid            : signal is "true";
-  -- attribute mark_debug of inval_data             : signal is "true";
-  -- -- cache to NoC
-  -- attribute mark_debug of req_out_ready          : signal is "true";
-  -- attribute mark_debug of req_out_valid          : signal is "true";
-  -- attribute mark_debug of req_out_data_coh_msg   : signal is "true";
-  -- attribute mark_debug of req_out_data_hprot     : signal is "true";
-  -- attribute mark_debug of req_out_data_addr      : signal is "true";
-  -- attribute mark_debug of req_out_data_line      : signal is "true";
+  -- AHB to cache
+  attribute mark_debug of cpu_req_ready          : signal is "true";
+  attribute mark_debug of cpu_req_valid          : signal is "true";
+  attribute mark_debug of cpu_req_data_cpu_msg   : signal is "true";
+  attribute mark_debug of cpu_req_data_hsize     : signal is "true";
+  attribute mark_debug of cpu_req_data_hprot     : signal is "true";
+  attribute mark_debug of cpu_req_data_addr      : signal is "true";
+  attribute mark_debug of cpu_req_data_word      : signal is "true";
+  attribute mark_debug of flush_ready            : signal is "true";
+  attribute mark_debug of flush_valid            : signal is "true";
+  attribute mark_debug of flush_data             : signal is "true";
+  -- cache to AHB
+  attribute mark_debug of rd_rsp_ready           : signal is "true";
+  attribute mark_debug of rd_rsp_valid           : signal is "true";
+  attribute mark_debug of rd_rsp_data_line       : signal is "true";
+  attribute mark_debug of inval_ready            : signal is "true";
+  attribute mark_debug of inval_valid            : signal is "true";
+  attribute mark_debug of inval_data             : signal is "true";
+  -- cache to NoC
+  attribute mark_debug of req_out_ready          : signal is "true";
+  attribute mark_debug of req_out_valid          : signal is "true";
+  attribute mark_debug of req_out_data_coh_msg   : signal is "true";
+  attribute mark_debug of req_out_data_hprot     : signal is "true";
+  attribute mark_debug of req_out_data_addr      : signal is "true";
+  attribute mark_debug of req_out_data_line      : signal is "true";
   -- attribute mark_debug of rsp_out_ready          : signal is "true";
   -- attribute mark_debug of rsp_out_valid          : signal is "true";
   -- attribute mark_debug of rsp_out_data_coh_msg   : signal is "true";
   -- attribute mark_debug of rsp_out_data_hprot     : signal is "true";
   -- attribute mark_debug of rsp_out_data_addr      : signal is "true";
   -- attribute mark_debug of rsp_out_data_line      : signal is "true";
-  -- -- NoC to cache
+  -- NoC to cache
   -- attribute mark_debug of fwd_in_ready           : signal is "true";
   -- attribute mark_debug of fwd_in_valid           : signal is "true";
   -- attribute mark_debug of fwd_in_data_coh_msg    : signal is "true";
   -- attribute mark_debug of fwd_in_data_addr       : signal is "true";
-  -- attribute mark_debug of rsp_in_valid           : signal is "true";
-  -- attribute mark_debug of rsp_in_ready           : signal is "true";
-  -- attribute mark_debug of rsp_in_data_coh_msg    : signal is "true";
-  -- attribute mark_debug of rsp_in_data_addr       : signal is "true";
-  -- attribute mark_debug of rsp_in_data_line       : signal is "true";
-  -- attribute mark_debug of rsp_in_data_invack_cnt : signal is "true";
-  -- -- debug
-  -- attribute mark_debug of asserts                : signal is "true";
-  -- attribute mark_debug of bookmark               : signal is "true";
-  -- attribute mark_debug of custom_dbg             : signal is "true";
-  -- attribute mark_debug of flush_done             : signal is "true";
+  attribute mark_debug of rsp_in_valid           : signal is "true";
+  attribute mark_debug of rsp_in_ready           : signal is "true";
+  attribute mark_debug of rsp_in_data_coh_msg    : signal is "true";
+  attribute mark_debug of rsp_in_data_addr       : signal is "true";
+  attribute mark_debug of rsp_in_data_line       : signal is "true";
+  attribute mark_debug of rsp_in_data_invack_cnt : signal is "true";
+  -- debug
+  attribute mark_debug of asserts                : signal is "true";
+  attribute mark_debug of bookmark               : signal is "true";
+  attribute mark_debug of custom_dbg             : signal is "true";
+  attribute mark_debug of flush_done             : signal is "true";
+
+  attribute mark_debug of evict_stall_out              : signal is "true";
+  attribute mark_debug of set_conflict_out             : signal is "true";
+  attribute mark_debug of cpu_req_conflict_out_cpu_msg : signal is "true";
+  attribute mark_debug of cpu_req_conflict_out_hsize   : signal is "true";
+  attribute mark_debug of cpu_req_conflict_out_hprot   : signal is "true";
+  attribute mark_debug of cpu_req_conflict_out_addr    : signal is "true";
+  attribute mark_debug of cpu_req_conflict_out_word    : signal is "true";
+  attribute mark_debug of tag_hit_out                  : signal is "true";
+  attribute mark_debug of way_hit_out                  : signal is "true";
+  attribute mark_debug of empty_way_found_out          : signal is "true";
+  attribute mark_debug of empty_way_out                : signal is "true";
+  attribute mark_debug of way_evict_out                : signal is "true";
+  attribute mark_debug of reqs_hit_out                 : signal is "true";
+  attribute mark_debug of reqs_hit_i_out               : signal is "true";
 
 begin  -- architecture rtl of l2_wrapper
 
@@ -550,8 +563,8 @@ begin  -- architecture rtl of l2_wrapper
       empty_way_found_out          => empty_way_found_out,
       empty_way_out                => empty_way_out,
       way_evict_out                => way_evict_out,
-      reqs_hit_out => reqs_hit_out,
-      reqs_hit_i_out => reqs_hit_i_out);
+      reqs_hit_out                 => reqs_hit_out,
+      reqs_hit_i_out               => reqs_hit_i_out);
 
   Invalidate_fifo : fifo_custom
     generic map (
@@ -721,25 +734,25 @@ begin  -- architecture rtl of l2_wrapper
         -- always acknowledge transaction requests as soon as they appear on the bus 
         ahbso.hready <= '1';
 
-        cpu_req_data_cpu_msg <= ahbsi.hwrite & ahbsi.hmastlock;
+        cpu_req_data_cpu_msg <= ahbsi.hwrite & '0'; -- TODO ahbsi.hmastlock;
         cpu_req_data_hsize   <= ahbsi.hsize;
         cpu_req_data_hprot   <= ahbsi.hprot;
         cpu_req_data_addr    <= ahbsi.haddr;
 
         if flush_due = '1' then
-
           flush_valid <= '1';
 
           if valid_ahb_req = '1' then
             reg.req_memorized := '1';
 
-            reg.cpu_msg := ahbsi.hwrite & ahbsi.hmastlock;
+            reg.cpu_msg := ahbsi.hwrite & '0'; -- TODO ahbsi.hmastlock;
             reg.hsize   := ahbsi.hsize;
             reg.hprot   := ahbsi.hprot;
             reg.haddr   := ahbsi.haddr;
           end if;
 
         elsif reg.req_memorized = '1' then
+
           reg.req_memorized := '0';
           if reg.cpu_msg = CPU_READ or reg.cpu_msg = CPU_READ_ATOM then
             alloc_reg.addr := reg.haddr(TAG_RANGE_HI downto SET_RANGE_LO);
@@ -749,7 +762,7 @@ begin  -- architecture rtl of l2_wrapper
           end if;
 
         elsif valid_ahb_req = '1' then
-          reg.cpu_msg := ahbsi.hwrite & ahbsi.hmastlock;
+          reg.cpu_msg := ahbsi.hwrite & '0'; -- TODO ahbsi.hmastlock;
           reg.hsize   := ahbsi.hsize;
           reg.hprot   := ahbsi.hprot;
           reg.haddr   := ahbsi.haddr;
@@ -790,7 +803,7 @@ begin  -- architecture rtl of l2_wrapper
       when load_rsp =>
         rd_rsp_ready <= '1';
 
-        cpu_req_data_cpu_msg <= ahbsi.hwrite & ahbsi.hmastlock;
+        cpu_req_data_cpu_msg <= ahbsi.hwrite & '0'; -- TODO & ahbsi.hmastlock;
         cpu_req_data_hsize   <= ahbsi.hsize;
         cpu_req_data_hprot   <= ahbsi.hprot;
         cpu_req_data_addr    <= ahbsi.haddr;
@@ -802,7 +815,7 @@ begin  -- architecture rtl of l2_wrapper
           ahbso.hrdata <= read_from_line(HSIZE_W, reg.haddr, rd_rsp_data_line);
           ahbso.hready <= '1';
 
-          reg.cpu_msg := ahbsi.hwrite & ahbsi.hmastlock;
+          reg.cpu_msg := ahbsi.hwrite & '0'; -- TODO & ahbsi.hmastlock;
           reg.hsize   := ahbsi.hsize;
           reg.hprot   := ahbsi.hprot;
           reg.haddr   := ahbsi.haddr;
@@ -856,12 +869,12 @@ begin  -- architecture rtl of l2_wrapper
         ahbso.hrdata <= read_from_line(HSIZE_W, reg.haddr, load_alloc_reg.line);
         ahbso.hready <= '1';
 
-        cpu_req_data_cpu_msg <= ahbsi.hwrite & ahbsi.hmastlock;
+        cpu_req_data_cpu_msg <= ahbsi.hwrite & '0'; -- TODO & ahbsi.hmastlock;
         cpu_req_data_hsize   <= ahbsi.hsize;
         cpu_req_data_hprot   <= ahbsi.hprot;
         cpu_req_data_addr    <= ahbsi.haddr;
 
-        reg.cpu_msg := ahbsi.hwrite & ahbsi.hmastlock;
+        reg.cpu_msg := ahbsi.hwrite & '0'; -- TODO & ahbsi.hmastlock;
         reg.hsize   := ahbsi.hsize;
         reg.hprot   := ahbsi.hprot;
         reg.haddr   := ahbsi.haddr;
@@ -919,7 +932,7 @@ begin  -- architecture rtl of l2_wrapper
         cpu_req_valid <= '1';
 
         if cpu_req_ready = '1' then
-          reg.cpu_msg := ahbsi.hwrite & ahbsi.hmastlock;
+          reg.cpu_msg := ahbsi.hwrite & '0'; -- TODO & ahbsi.hmastlock;
           reg.hsize   := ahbsi.hsize;
           reg.hprot   := ahbsi.hprot;
           reg.haddr   := ahbsi.haddr;
