@@ -85,9 +85,6 @@
 #define PUTACK_DEFAULT							\
     asserts_tmp |= AS_PUTACK_DEFAULT;					\
     if (RPT_RTL) CACHE_REPORT_TIME(sc_time_stamp(), "Put ack default.")
-#define RSP_DEFAULT							\
-    asserts_tmp |= AS_RSP_DEFAULT;					\
-    if (RPT_RTL) CACHE_REPORT_TIME(sc_time_stamp(), "Rsp default.")
 
 // Manage cpu req
 #define HIT_READ							\
@@ -143,10 +140,6 @@
 	HLS_CONSTRAIN_LATENCY("l2-put-reqs-latency");			\
 	bookmark_tmp |= BM_PUT_REQS;					\
 	if (RPT_RTL) CACHE_REPORT_TIME(sc_time_stamp(), "Put reqs.")
-
-// Asserts
-#define WRONG_HSIZE				\
-	asserts_tmp |= AS_WRONG_HSIZE
 
 // Debug
 #define REQS_OUTPUT					\

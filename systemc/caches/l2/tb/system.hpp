@@ -36,6 +36,7 @@ public:
     sc_signal<l2_way_t>		way_evict_out;
     sc_signal<bool>			reqs_hit_out;
     sc_signal< sc_uint<REQS_BITS> >	reqs_hit_i_out;
+    sc_signal< sc_uint<REQS_BITS_P1> > reqs_cnt_out;    
 
     // Channels
     // To L2 cache
@@ -69,7 +70,8 @@ public:
         dut->asserts(asserts);
         dut->bookmark(bookmark);
         dut->custom_dbg(custom_dbg);
-	dut->reqs_out(reqs_out);
+	for (int i = 0; i < N_REQS; ++i)
+	    dut->reqs_out[i](reqs_out[i]);
 	dut->evict_stall_out(evict_stall_out);
 	dut->set_conflict_out(set_conflict_out);
 	dut->cpu_req_conflict_out(cpu_req_conflict_out);
@@ -80,6 +82,7 @@ public:
 	dut->reqs_hit_out(reqs_hit_out);
 	dut->reqs_hit_i_out(reqs_hit_i_out);
 	dut->way_evict_out(way_evict_out);
+	dut->reqs_cnt_out(reqs_cnt_out);
 	dut->l2_cpu_req(l2_cpu_req_chnl);
 	dut->l2_fwd_in(l2_fwd_in_chnl);
 	dut->l2_rsp_in(l2_rsp_in_chnl);
@@ -96,7 +99,8 @@ public:
         tb->asserts(asserts);
         tb->bookmark(bookmark);
         tb->custom_dbg(custom_dbg);
-	tb->reqs_out(reqs_out);
+	for (int i = 0; i < N_REQS; ++i)
+	    tb->reqs_out[i](reqs_out[i]);
 	tb->evict_stall_out(evict_stall_out);
 	tb->set_conflict_out(set_conflict_out);
 	tb->cpu_req_conflict_out(cpu_req_conflict_out);
@@ -107,6 +111,7 @@ public:
 	tb->reqs_hit_out(reqs_hit_out);
 	tb->reqs_hit_i_out(reqs_hit_i_out);
 	tb->way_evict_out(way_evict_out);
+	tb->reqs_cnt_out(reqs_cnt_out);
 	tb->l2_cpu_req_tb(l2_cpu_req_chnl);
 	tb->l2_fwd_in_tb(l2_fwd_in_chnl);
 	tb->l2_rsp_in_tb(l2_rsp_in_chnl); 

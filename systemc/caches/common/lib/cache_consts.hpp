@@ -61,8 +61,9 @@
 #define MAX_INVACK_CNT          7
 
 // Ongoing transaction buffers
-#define N_REQS		4	// affects REQS_BITS
-#define REQS_BITS	2	// depends on N_REQS
+#define N_REQS		1	// affects REQS_BITS
+#define REQS_BITS	1	// depends on N_REQS
+#define REQS_BITS_P1	1	// depends on N_REQS + 1
 #define N_EVICTS	4	// affects N_EVICTS
 #define EVICTS_BITS	2	// depends on EVICTS_BITS
 
@@ -158,19 +159,19 @@
 #define ASSERT_WIDTH 13
 #define BOOKMARK_WIDTH	18
 
-#define AS_REQS_MISS		(1 << 0)
-#define AS_RSP_DATA_DEFAULT     (1 << 1)
-#define	AS_RSP_DEFAULT		(1 << 2)
-#define AS_HIT_WRITE_DEFAULT	(1 << 3)
-#define AS_HIT_DEFAULT		(1 << 4)
-#define AS_MISS_DEFAULT		(1 << 5)
-#define AS_EVICT_DEFAULT	(1 << 6)
-#define AS_WRONG_HSIZE    	(1 << 7)
-#define AS_PUTACK_DEFAULT       (1 << 8)
-#define AS_REQS_LOOKUP          (1 << 9)
-#define AS_REQS_LOOKUP2         (1 << 10)
-#define AS_INVACK_DEFAULT       (1 << 11)
-#define AS_RSP_DATA_XMAD        (1 << 12)
+#define AS_RSP_DATA_DEFAULT     (1 << 0)
+#define AS_HIT_WRITE_DEFAULT	(1 << 1)
+#define AS_HIT_DEFAULT		(1 << 2)
+#define AS_MISS_DEFAULT		(1 << 3)
+#define AS_EVICT_DEFAULT	(1 << 4)
+#define AS_PUTACK_DEFAULT       (1 << 5)
+#define AS_REQS_LOOKUP          (1 << 6)
+#define AS_REQS_LOOKUP2         (1 << 7)
+#define AS_INVACK_DEFAULT       (1 << 8)
+#define AS_RSP_DATA_XMAD        (1 << 9)
+#define AS_FLUSH_CHECK          (1 << 10)
+#define AS_FLUSH_NOPUTACK       (1 << 11)
+#define AS_RSP_NOHIT            (1 << 12)
 
 #define BM_GET_RSP_IN		(1 << 0)
 #define BM_GET_CPU_REQ		(1 << 1)

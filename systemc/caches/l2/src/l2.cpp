@@ -30,10 +30,6 @@ void l2::ctrl()
 	l2_fwd_in_t	fwd_in;
 	l2_rsp_in_t	rsp_in;
 
-	// output
-	l2_req_out_t	req_out;
-	l2_rd_rsp_t	rd_rsp;
-
 	// input address breakdown
 	addr_breakdown_t addr_br;
 
@@ -63,7 +59,6 @@ void l2::ctrl()
 	tag_t			tag_tmp;
 	set_t                   set_tmp;
 	
-
 	{
 	    NB_GET;
 
@@ -87,11 +82,17 @@ void l2::ctrl()
 
 	bookmark_tmp = 0;
 	asserts_tmp = 0;
-	// custom_dbg_tmp = 0;
 
 	if (is_flush_to_get) {
 
 	    get_flush();
+
+	    for (unsigned int i = 0; i < N_REQS; ++i) {
+	    	HLS_UNROLL_LOOP(ON, "flush-check");
+
+	    	if (reqs[i].state != INVALID)
+	    	    asserts_tmp |= AS_FLUSH_CHECK;
+	    }
 
 	    wait();
 
@@ -111,6 +112,10 @@ void l2::ctrl()
 
 			    while (l2_rsp_in.nb_can_get()) {
 				get_rsp_in(rsp_in); // it must be a put ack
+
+				if (rsp_in.coh_msg != RSP_PUTACK)
+				    asserts_tmp |= AS_FLUSH_NOPUTACK;
+
 				put_cnt--;
 				wait();
 			    }
@@ -118,6 +123,10 @@ void l2::ctrl()
 			    while (!l2_req_out.nb_can_put()){ 
 				if (l2_rsp_in.nb_can_get()) {
 				    get_rsp_in(rsp_in); // it must be a put ack
+
+				    if (rsp_in.coh_msg != RSP_PUTACK)
+				    	asserts_tmp |= AS_FLUSH_NOPUTACK;
+
 				    put_cnt--;
 				}
 				wait();
@@ -142,9 +151,16 @@ void l2::ctrl()
 
 	    {
 		FLUSH_END;
+		
+		int tmp_flag = 0;
+
 		while (put_cnt > 0) {
 		    if (l2_rsp_in.nb_can_get()) {
 			get_rsp_in(rsp_in); // it must be a put ack
+
+			if (rsp_in.coh_msg != RSP_PUTACK)
+			    tmp_flag = 1;
+
 			put_cnt--;
 		    }
 		    wait();
@@ -152,6 +168,9 @@ void l2::ctrl()
 		flush_done.write(true);
 		wait();
 		flush_done.write(false);
+
+		if (tmp_flag == 1)
+		    asserts_tmp |= AS_FLUSH_NOPUTACK;
 
 	    }
 
@@ -163,6 +182,9 @@ void l2::ctrl()
 	    addr_br.breakdown(rsp_in.addr);
 
 	    reqs_lookup(addr_br, reqs_hit, reqs_hit_i);
+
+	    if (!reqs_hit)
+	    	asserts_tmp |= AS_RSP_NOHIT;
 
 	    switch (rsp_in.coh_msg) {
 		
@@ -248,9 +270,6 @@ void l2::ctrl()
 		send_req_out(coh_msg_tmp, reqs[reqs_hit_i].hprot, addr_br.line, empty_line);
 
 		break;
-
-	    default :
-		RSP_DEFAULT;
 	    }
 
 	} else if (is_req_to_get) { // assuming READ or WRITE, HPROT cacheable
@@ -266,7 +285,6 @@ void l2::ctrl()
 	    addr_br.breakdown(cpu_req.addr);
 
 	    set_conflict = reqs_peek(addr_br.set, reqs_i);
-	    custom_dbg.write(set_conflict);
 
 	    if (set_conflict) {
 		cpu_req_conflict = cpu_req;
@@ -402,24 +420,28 @@ void l2::ctrl()
 	}
 	
 	// update debug vectors
-	asserts.write(asserts_tmp);
-	bookmark.write(bookmark_tmp);
-	// custom_dbg.write(custom_dbg_tmp);
-	evict_stall_out.write(evict_stall);
-	set_conflict_out.write(set_conflict);
-	cpu_req_conflict_out.write(cpu_req_conflict);
-	tag_hit_out.write(tag_hit);
-	way_hit_out.write(way_hit);
-	empty_way_found_out.write(empty_way_found);
-	empty_way_out.write(empty_way);
-	way_evict_out.write(evict_way);
-	reqs_hit_out.write(reqs_hit);
-	reqs_hit_i_out.write(reqs_hit_i);
+	// {
+	//     HLS_DEFINE_PROTOCOL("debug-outputs");
+	    asserts.write(asserts_tmp);
+	    bookmark.write(bookmark_tmp);
+	    evict_stall_out.write(evict_stall);
+	    set_conflict_out.write(set_conflict);
+	    cpu_req_conflict_out.write(cpu_req_conflict);
+	    reqs_cnt_out.write(reqs_cnt);
+	    tag_hit_out.write(tag_hit);
+	    way_hit_out.write(way_hit);
+	    empty_way_found_out.write(empty_way_found);
+	    empty_way_out.write(empty_way);
+	    way_evict_out.write(evict_way);
+	    reqs_hit_out.write(reqs_hit);
+	    reqs_hit_i_out.write(reqs_hit_i);
 
-	for (int i = 0; i < N_REQS; i++) {
-	    REQS_OUTPUT;
-	    reqs_out[i] = reqs[i];
-	}
+	    for (int i = 0; i < N_REQS; i++) {
+	    	REQS_OUTPUT;
+	    	reqs_out[i] = reqs[i];
+	    }
+	//     wait();
+	// }
     }
 
     /* 
@@ -497,6 +519,7 @@ inline void l2::reset_io()
     custom_dbg.write(0);
     evict_stall_out.write(0);
     set_conflict_out.write(0);
+    reqs_cnt_out = N_REQS;
     tag_hit_out.write(0);
     way_hit_out.write(0);
     empty_way_found_out.write(0);
@@ -563,7 +586,6 @@ bool l2::reqs_peek(set_t set, sc_uint<REQS_BITS> &reqs_i)
     REQS_PEEK;
 
     set_conflict = false;
-    custom_dbg = set_conflict;
 
     for (unsigned int i = 0; i < N_REQS; ++i) {
 	REQS_PEEK_LOOP;
@@ -574,7 +596,6 @@ bool l2::reqs_peek(set_t set, sc_uint<REQS_BITS> &reqs_i)
 
 	if (reqs[i].set == set && reqs[i].state != INVALID) {
 	    set_conflict = true;
-	    custom_dbg = set_conflict;
 	}
     }
 
@@ -731,5 +752,4 @@ void l2::put_reqs(set_t set, l2_way_t way, tag_t tag,
     hprots.port1[0][base + way] = hprot;
     states.port1[0][base + way] = state;
     tags.port1[0][base + way]   = tag;
-
 }

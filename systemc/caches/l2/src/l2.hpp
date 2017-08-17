@@ -38,6 +38,7 @@ public:
     sc_out<l2_way_t>		way_evict_out;
     sc_out<bool>			reqs_hit_out;
     sc_out< sc_uint<REQS_BITS> >	reqs_hit_i_out;
+    sc_out< sc_uint<REQS_BITS_P1> > reqs_cnt_out;   
 
     // Other signals
     sc_out<bool> flush_done;
@@ -135,7 +136,7 @@ private:
     bool evict_stall;
     bool set_conflict;
     l2_cpu_req_t	cpu_req_conflict;
-    sc_uint<REQS_BITS+1> reqs_cnt;
+    sc_uint<REQS_BITS_P1> reqs_cnt;
 };
 
 
