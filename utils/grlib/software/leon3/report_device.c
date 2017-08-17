@@ -1,5 +1,7 @@
 #ifndef GRLIB_REPORTDEV_CUSTOM
 
+#include <stdio.h>
+
 #ifndef GRLIB_REPORTDEV_WIDTH
 /* Use 32 for AHBREP or GRTESTMOD with 32-bit width */
 #define GRLIB_REPORTDEV_WIDTH 32
@@ -17,11 +19,12 @@ typedef short testmod_type;
 #endif
 
 #ifndef GRLIB_REPORTDEV_BASE
-#define GRLIB_REPORTDEV_BASE 0x60000000
+//#define GRLIB_REPORTDEV_BASE 0x60000000
 #endif
 
 
-volatile testmod_type *grtestmod = (volatile testmod_type *) GRLIB_REPORTDEV_BASE;
+volatile testmod_type grtestmod[GRLIB_REPORTDEV_WIDTH];
+
 static void grtestmod_write(r,v)
 {
 	grtestmod[r*REPORTDEV_OFFSET] = v;
@@ -62,6 +65,13 @@ report_subtest(int dev)
 fail(int dev)
 {
 	grtestmod_write(1,dev);
+	/* printf("fail %d\n",dev); */
+	return(0);
+}
+
+my_fail(int dev)
+{
+	grtestmod_write(8,dev);
 	return(0);
 }
 
@@ -78,17 +88,26 @@ void report_mem_test(void)
 void init_report() {
     int i;
 
-    for (i = 0; i < 32; i++) { 
+    for (i = 0; i < GRLIB_REPORTDEV_WIDTH; i++) { 
 	grtestmod[i] = 0;
     }
 }
 
 void read_report() {
     int i;
-    int array_tmp[32] = {0};
+    int array_tmp[GRLIB_REPORTDEV_WIDTH] = {0};
 
-    for (i = 0; i < 32; i++) { 
+    for (i = 0; i < GRLIB_REPORTDEV_WIDTH; i++) { 
 	array_tmp[i] = grtestmod[i];
     }
-}
 
+    if (array_tmp[8]) 
+	printf("My error!\n");
+    else 
+	printf("No my error!\n");
+
+    if (array_tmp[1]) 
+	printf("Gaisler error!\n");
+    else 
+	printf("No gaisler error!\n");
+}
