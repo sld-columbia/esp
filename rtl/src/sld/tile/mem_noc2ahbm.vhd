@@ -172,8 +172,9 @@ begin  -- rtl
         -- L2 cache enabled, but no LLC present
         if input_msg_type = REQ_PUTS or input_msg_type = REQ_PUTM then
           msg_type := RSP_PUT_ACK;
+        elsif input_msg_type = REQ_GETS_W then
+          msg_type := RSP_EDATA;
         else
-          -- TODO: why RSP_EDATA doesn't work?
           msg_type := RSP_DATA;
         end if;
       else
