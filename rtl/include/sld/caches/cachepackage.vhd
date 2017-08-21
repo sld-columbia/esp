@@ -97,7 +97,7 @@ package cachepackage is
   constant AS_AHBS_LDREQ_HREADY : integer := 8;
   constant AS_AHBS_LDRSP_HREADY : integer := 9;
   constant AS_AHBS_STRSP_HREADY : integer := 10;
-  
+
   -- constant AS_AHBM_ : integer := 0;
 
   -- constant AS_REQ_ : integer := 0;
@@ -248,76 +248,77 @@ package cachepackage is
       l2_rsp_out_data_coh_msg : out coh_msg_t;
       l2_rsp_out_data_hprot   : out hprot_t;
       l2_rsp_out_data_addr    : out addr_t;
-      l2_rsp_out_data_line    : out line_t;
+      l2_rsp_out_data_line    : out line_t
 
-      reqs_out_cpu_msg_0    : out std_logic_vector(1 downto 0);
+--      reqs_out_cpu_msg_0    : out std_logic_vector(1 downto 0);
 --      reqs_out_cpu_msg_1    : out std_logic_vector(1 downto 0);
 --      reqs_out_cpu_msg_2    : out std_logic_vector(1 downto 0);
 --      reqs_out_cpu_msg_3    : out std_logic_vector(1 downto 0);
-      reqs_out_tag_0        : out std_logic_vector(19 downto 0);
+--      reqs_out_tag_0        : out std_logic_vector(19 downto 0);
 --      reqs_out_tag_1        : out std_logic_vector(19 downto 0);
 --      reqs_out_tag_2        : out std_logic_vector(19 downto 0);
 --      reqs_out_tag_3        : out std_logic_vector(19 downto 0);
-      reqs_out_tag_estall_0 : out std_logic_vector(19 downto 0);
+--     reqs_out_tag_estall_0 : out std_logic_vector(19 downto 0);
 --      reqs_out_tag_estall_1 : out std_logic_vector(19 downto 0);
 --      reqs_out_tag_estall_2 : out std_logic_vector(19 downto 0);
 --      reqs_out_tag_estall_3 : out std_logic_vector(19 downto 0);
-      reqs_out_set_0        : out std_logic_vector(7 downto 0);
+--      reqs_out_set_0        : out std_logic_vector(7 downto 0);
 --      reqs_out_set_1        : out std_logic_vector(7 downto 0);
 --      reqs_out_set_2        : out std_logic_vector(7 downto 0);
 --      reqs_out_set_3        : out std_logic_vector(7 downto 0);
-      reqs_out_way_0        : out std_logic_vector(2 downto 0);
+--      reqs_out_way_0        : out std_logic_vector(2 downto 0);
 --      reqs_out_way_1        : out std_logic_vector(2 downto 0);
 --      reqs_out_way_2        : out std_logic_vector(2 downto 0);
 --      reqs_out_way_3        : out std_logic_vector(2 downto 0);
-      reqs_out_hsize_0      : out std_logic_vector(2 downto 0);
+--     reqs_out_hsize_0      : out std_logic_vector(2 downto 0);
 --      reqs_out_hsize_1      : out std_logic_vector(2 downto 0);
 --      reqs_out_hsize_2      : out std_logic_vector(2 downto 0);
 --      reqs_out_hsize_3      : out std_logic_vector(2 downto 0);
-      reqs_out_w_off_0      : out std_logic_vector(1 downto 0);
+--      reqs_out_w_off_0      : out std_logic_vector(1 downto 0);
 --      reqs_out_w_off_1      : out std_logic_vector(1 downto 0);
 --      reqs_out_w_off_2      : out std_logic_vector(1 downto 0);
 --      reqs_out_w_off_3      : out std_logic_vector(1 downto 0);
-      reqs_out_b_off_0      : out std_logic_vector(1 downto 0);
+--      reqs_out_b_off_0      : out std_logic_vector(1 downto 0);
 --      reqs_out_b_off_1      : out std_logic_vector(1 downto 0);
 --      reqs_out_b_off_2      : out std_logic_vector(1 downto 0);
 --      reqs_out_b_off_3      : out std_logic_vector(1 downto 0);
-      reqs_out_state_0      : out std_logic_vector(3 downto 0);
+--      reqs_out_state_0      : out std_logic_vector(3 downto 0);
 --      reqs_out_state_1      : out std_logic_vector(3 downto 0);
 --      reqs_out_state_2      : out std_logic_vector(3 downto 0);
 --      reqs_out_state_3      : out std_logic_vector(3 downto 0);
-      reqs_out_hprot_0      : out std_logic_vector(3 downto 0);
+--      reqs_out_hprot_0      : out std_logic_vector(3 downto 0);
 --      reqs_out_hprot_1      : out std_logic_vector(3 downto 0);
 --      reqs_out_hprot_2      : out std_logic_vector(3 downto 0);
 --      reqs_out_hprot_3      : out std_logic_vector(3 downto 0);
-      reqs_out_invack_cnt_0 : out std_logic_vector(2 downto 0);
+--      reqs_out_invack_cnt_0 : out std_logic_vector(2 downto 0);
 --      reqs_out_invack_cnt_1 : out std_logic_vector(2 downto 0);
 --      reqs_out_invack_cnt_2 : out std_logic_vector(2 downto 0);
 --      reqs_out_invack_cnt_3 : out std_logic_vector(2 downto 0);
-      reqs_out_word_0       : out std_logic_vector(31 downto 0);
+--      reqs_out_word_0       : out std_logic_vector(31 downto 0);
 --      reqs_out_word_1       : out std_logic_vector(31 downto 0);
 --      reqs_out_word_2       : out std_logic_vector(31 downto 0);
 --      reqs_out_word_3       : out std_logic_vector(31 downto 0);
-      reqs_out_line_0       : out std_logic_vector(127 downto 0);
+--      reqs_out_line_0       : out std_logic_vector(127 downto 0);
 --      reqs_out_line_1       : out std_logic_vector(127 downto 0);
 --      reqs_out_line_2       : out std_logic_vector(127 downto 0);
 --      reqs_out_line_3       : out std_logic_vector(127 downto 0);
 
-      evict_stall_out              : out std_ulogic;
-      set_conflict_out             : out std_ulogic;
-      cpu_req_conflict_out_cpu_msg : out std_logic_vector(1 downto 0);
-      cpu_req_conflict_out_hsize   : out std_logic_vector(2 downto 0);
-      cpu_req_conflict_out_hprot   : out std_logic_vector(3 downto 0);
-      cpu_req_conflict_out_addr    : out std_logic_vector(31 downto 0);
-      cpu_req_conflict_out_word    : out std_logic_vector(31 downto 0);
-      tag_hit_out                  : out std_ulogic;
-      way_hit_out                  : out std_logic_vector(2 downto 0);
-      empty_way_found_out          : out std_ulogic;
-      empty_way_out                : out std_logic_vector(2 downto 0);
-      way_evict_out                : out std_logic_vector(2 downto 0);
-      reqs_hit_out                 : out std_ulogic;
-      reqs_hit_i_out               : out std_logic_vector(REQS_BITS-1 downto 0);
-      reqs_cnt_out                 : out std_logic_vector(REQS_BITS-1 downto 0));
+--      evict_stall_out              : out std_ulogic;
+--      set_conflict_out             : out std_ulogic;
+--      cpu_req_conflict_out_cpu_msg : out std_logic_vector(1 downto 0);
+--      cpu_req_conflict_out_hsize   : out std_logic_vector(2 downto 0);
+--      cpu_req_conflict_out_hprot   : out std_logic_vector(3 downto 0);
+--      cpu_req_conflict_out_addr    : out std_logic_vector(31 downto 0);
+--      cpu_req_conflict_out_word    : out std_logic_vector(31 downto 0);
+--      tag_hit_out                  : out std_ulogic;
+--      way_hit_out                  : out std_logic_vector(2 downto 0);
+--      empty_way_found_out          : out std_ulogic;
+--      empty_way_out                : out std_logic_vector(2 downto 0);
+--      way_evict_out                : out std_logic_vector(2 downto 0);
+--      reqs_hit_out                 : out std_ulogic;
+--      reqs_hit_i_out               : out std_logic_vector(REQS_BITS-1 downto 0);
+--      reqs_cnt_out                 : out std_logic_vector(REQS_BITS-1 downto 0)
+      );
 
   end component;
 
