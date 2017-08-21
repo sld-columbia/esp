@@ -419,29 +419,29 @@ void l2::ctrl()
 	    }
 	}
 	
-	// update debug vectors
-	// {
-	//     HLS_DEFINE_PROTOCOL("debug-outputs");
-	    asserts.write(asserts_tmp);
-	    bookmark.write(bookmark_tmp);
-	    evict_stall_out.write(evict_stall);
-	    set_conflict_out.write(set_conflict);
-	    cpu_req_conflict_out.write(cpu_req_conflict);
-	    reqs_cnt_out.write(reqs_cnt);
-	    tag_hit_out.write(tag_hit);
-	    way_hit_out.write(way_hit);
-	    empty_way_found_out.write(empty_way_found);
-	    empty_way_out.write(empty_way);
-	    way_evict_out.write(evict_way);
-	    reqs_hit_out.write(reqs_hit);
-	    reqs_hit_i_out.write(reqs_hit_i);
+	// // update debug vectors
+	// // {
+	// //     HLS_DEFINE_PROTOCOL("debug-outputs");
+	//     asserts.write(asserts_tmp);
+	//     bookmark.write(bookmark_tmp);
+	//     evict_stall_out.write(evict_stall);
+	//     set_conflict_out.write(set_conflict);
+	//     cpu_req_conflict_out.write(cpu_req_conflict);
+	//     reqs_cnt_out.write(reqs_cnt);
+	//     tag_hit_out.write(tag_hit);
+	//     way_hit_out.write(way_hit);
+	//     empty_way_found_out.write(empty_way_found);
+	//     empty_way_out.write(empty_way);
+	//     way_evict_out.write(evict_way);
+	//     reqs_hit_out.write(reqs_hit);
+	//     reqs_hit_i_out.write(reqs_hit_i);
 
-	    for (int i = 0; i < N_REQS; i++) {
-	    	REQS_OUTPUT;
-	    	reqs_out[i] = reqs[i];
-	    }
-	//     wait();
-	// }
+	//     for (int i = 0; i < N_REQS; i++) {
+	//     	REQS_OUTPUT;
+	//     	reqs_out[i] = reqs[i];
+	//     }
+	// //     wait();
+	// // }
     }
 
     /* 
@@ -513,20 +513,20 @@ inline void l2::reset_io()
     evict_ways.port1.reset();
     evict_ways.port2.reset();
 
-    evict_stall = false;
-    set_conflict = false;
-    reqs_cnt = N_REQS;
-    custom_dbg.write(0);
-    evict_stall_out.write(0);
-    set_conflict_out.write(0);
-    reqs_cnt_out = N_REQS;
-    tag_hit_out.write(0);
-    way_hit_out.write(0);
-    empty_way_found_out.write(0);
-    empty_way_out.write(0);
-    way_evict_out.write(0);
-    reqs_hit_out.write(0);
-    reqs_hit_i_out.write(0);
+    // evict_stall = false;
+    // set_conflict = false;
+    // reqs_cnt = N_REQS;
+    // custom_dbg.write(0);
+    // evict_stall_out.write(0);
+    // set_conflict_out.write(0);
+    // reqs_cnt_out = N_REQS;
+    // tag_hit_out.write(0);
+    // way_hit_out.write(0);
+    // empty_way_found_out.write(0);
+    // empty_way_out.write(0);
+    // way_evict_out.write(0);
+    // reqs_hit_out.write(0);
+    // reqs_hit_i_out.write(0);
 
     flush_done.write(0);
 

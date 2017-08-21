@@ -21,18 +21,18 @@ public:
     sc_in< sc_bv<ASSERT_WIDTH> >   asserts;
     sc_in< sc_bv<BOOKMARK_WIDTH> > bookmark;
     sc_in<uint32_t>     custom_dbg;
-    sc_in<reqs_buf_t>   reqs_out[N_REQS];
-    sc_in<bool>		evict_stall_out;
-    sc_in<bool>		set_conflict_out;
-    sc_in<l2_cpu_req_t>	cpu_req_conflict_out;
-    sc_in<bool>		tag_hit_out;
-    sc_in<l2_way_t>	way_hit_out;
-    sc_in<bool>		empty_way_found_out;
-    sc_in<l2_way_t>	empty_way_out;
-    sc_in<l2_way_t>	way_evict_out;
-    sc_in<bool>			reqs_hit_out;
-    sc_in< sc_uint<REQS_BITS> >	reqs_hit_i_out;
-    sc_in< sc_uint<REQS_BITS_P1> > reqs_cnt_out;    
+    // sc_in<reqs_buf_t>   reqs_out[N_REQS];
+    // sc_in<bool>		evict_stall_out;
+    // sc_in<bool>		set_conflict_out;
+    // sc_in<l2_cpu_req_t>	cpu_req_conflict_out;
+    // sc_in<bool>		tag_hit_out;
+    // sc_in<l2_way_t>	way_hit_out;
+    // sc_in<bool>		empty_way_found_out;
+    // sc_in<l2_way_t>	empty_way_out;
+    // sc_in<l2_way_t>	way_evict_out;
+    // sc_in<bool>			reqs_hit_out;
+    // sc_in< sc_uint<REQS_BITS> >	reqs_hit_i_out;
+    // sc_in< sc_uint<REQS_BITS_P1> > reqs_cnt_out;    
 
     // Other signals
     sc_in<bool> flush_done;
