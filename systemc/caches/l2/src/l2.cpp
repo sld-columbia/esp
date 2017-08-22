@@ -87,12 +87,12 @@ void l2::ctrl()
 
 	    get_flush();
 
-	    for (unsigned int i = 0; i < N_REQS; ++i) {
-	    	HLS_UNROLL_LOOP(ON, "flush-check");
+	    // for (unsigned int i = 0; i < N_REQS; ++i) {
+	    // 	HLS_UNROLL_LOOP(ON, "flush-check");
 
-	    	if (reqs[i].state != INVALID)
-	    	    asserts_tmp |= AS_FLUSH_CHECK;
-	    }
+	    // 	if (reqs[i].state != INVALID)
+	    // 	    asserts_tmp |= AS_FLUSH_CHECK;
+	    // }
 
 	    wait();
 
@@ -102,7 +102,22 @@ void l2::ctrl()
 
 		{
 		    FLUSH_READ_SET;
-		    read_set(s);
+
+		    sc_uint<SET_BITS+L2_WAY_BITS> base = s << L2_WAY_BITS;
+
+		    for (int i = L2_WAYS-1; i >=0; --i) {
+			HLS_UNROLL_LOOP(ON, "flus-read-loop");
+
+			HLS_BREAK_ARRAY_DEPENDENCY(tags);
+			HLS_BREAK_ARRAY_DEPENDENCY(states);
+			HLS_BREAK_ARRAY_DEPENDENCY(hprots);
+			HLS_BREAK_ARRAY_DEPENDENCY(lines);
+
+			tag_buf[i]   = tags[base + i];
+			state_buf[i] = states[base + i];
+			hprot_buf[i] = hprots[base + i];
+			lines_buf[i] = lines[base + i];
+		    }
 		}
 
 		for (int w = 0; w < L2_WAYS; ++w) {
@@ -113,8 +128,8 @@ void l2::ctrl()
 			    while (l2_rsp_in.nb_can_get()) {
 				get_rsp_in(rsp_in); // it must be a put ack
 
-				if (rsp_in.coh_msg != RSP_PUTACK)
-				    asserts_tmp |= AS_FLUSH_NOPUTACK;
+				// if (rsp_in.coh_msg != RSP_PUTACK)
+				//     asserts_tmp |= AS_FLUSH_NOPUTACK;
 
 				put_cnt--;
 				wait();
@@ -124,8 +139,8 @@ void l2::ctrl()
 				if (l2_rsp_in.nb_can_get()) {
 				    get_rsp_in(rsp_in); // it must be a put ack
 
-				    if (rsp_in.coh_msg != RSP_PUTACK)
-				    	asserts_tmp |= AS_FLUSH_NOPUTACK;
+				    // if (rsp_in.coh_msg != RSP_PUTACK)
+				    // 	asserts_tmp |= AS_FLUSH_NOPUTACK;
 
 				    put_cnt--;
 				}
@@ -141,7 +156,7 @@ void l2::ctrl()
 				send_req_out(REQ_PUTM, empty_hprot, addr_br.line, lines_buf[w]);
 			    }
 
-			    states.port1[0][(s << L2_WAY_BITS) + w] = INVALID;
+			    states[(s << L2_WAY_BITS) + w] = INVALID;
 			    wait();
 			}
 		    }
@@ -152,14 +167,14 @@ void l2::ctrl()
 	    {
 		FLUSH_END;
 		
-		int tmp_flag = 0;
+		// int tmp_flag = 0;
 
 		while (put_cnt > 0) {
 		    if (l2_rsp_in.nb_can_get()) {
 			get_rsp_in(rsp_in); // it must be a put ack
 
-			if (rsp_in.coh_msg != RSP_PUTACK)
-			    tmp_flag = 1;
+			// if (rsp_in.coh_msg != RSP_PUTACK)
+			//     tmp_flag = 1;
 
 			put_cnt--;
 		    }
@@ -169,8 +184,8 @@ void l2::ctrl()
 		wait();
 		flush_done.write(false);
 
-		if (tmp_flag == 1)
-		    asserts_tmp |= AS_FLUSH_NOPUTACK;
+		// if (tmp_flag == 1)
+		//     asserts_tmp |= AS_FLUSH_NOPUTACK;
 
 	    }
 
@@ -257,7 +272,7 @@ void l2::ctrl()
 		}
 
 		set_tmp = reqs[reqs_hit_i].set;
-		evict_ways.port1[0][set_tmp] = reqs[reqs_hit_i].way + 1;
+		evict_ways[set_tmp] = reqs[reqs_hit_i].way + 1;
 		evict_stall = false;
 
 		reqs[reqs_hit_i].state = state_tmp;
@@ -326,7 +341,7 @@ void l2::ctrl()
 			    break;
 
 			case EXCLUSIVE : // write hit
-			    states.port1[0][(addr_br.set << L2_WAY_BITS) + way_hit] = MODIFIED;
+			    states[(addr_br.set << L2_WAY_BITS) + way_hit] = MODIFIED;
 			case MODIFIED : // write hit
 			    {
 				HIT_WRITE_EM;
@@ -334,7 +349,7 @@ void l2::ctrl()
 				// write word
 				write_word(lines_buf[way_hit], cpu_req.word, addr_br.w_off, 
 					   addr_br.b_off, cpu_req.hsize);
-				lines.port1[0][(addr_br.set << L2_WAY_BITS) + way_hit] = lines_buf[way_hit];
+				lines[(addr_br.set << L2_WAY_BITS) + way_hit] = lines_buf[way_hit];
 			    }
 			    break;
 
@@ -422,8 +437,8 @@ void l2::ctrl()
 	// // update debug vectors
 	// // {
 	// //     HLS_DEFINE_PROTOCOL("debug-outputs");
-	//     asserts.write(asserts_tmp);
-	//     bookmark.write(bookmark_tmp);
+	asserts.write(asserts_tmp);
+	bookmark.write(bookmark_tmp);
 	//     evict_stall_out.write(evict_stall);
 	//     set_conflict_out.write(set_conflict);
 	//     cpu_req_conflict_out.write(cpu_req_conflict);
@@ -470,52 +485,9 @@ inline void l2::reset_io()
     asserts.write(0);
     bookmark.write(0);
 
-    tags.port1.reset();
-    tags.port2.reset();
-    tags.port3.reset();
-    tags.port4.reset();
-    tags.port5.reset();
-    tags.port6.reset();
-    tags.port7.reset();
-    tags.port8.reset();
-    tags.port9.reset();
-
-    states.port1.reset();
-    states.port2.reset();
-    states.port3.reset();
-    states.port4.reset();
-    states.port5.reset();
-    states.port6.reset();
-    states.port7.reset();
-    states.port8.reset();
-    states.port9.reset();
-
-    hprots.port1.reset();
-    hprots.port2.reset();
-    hprots.port3.reset();
-    hprots.port4.reset();
-    hprots.port5.reset();
-    hprots.port6.reset();
-    hprots.port7.reset();
-    hprots.port8.reset();
-    hprots.port9.reset();
-
-    lines.port1.reset();
-    lines.port2.reset();
-    lines.port3.reset();
-    lines.port4.reset();
-    lines.port5.reset();
-    lines.port6.reset();
-    lines.port7.reset();
-    lines.port8.reset();
-    lines.port9.reset();
-
-    evict_ways.port1.reset();
-    evict_ways.port2.reset();
-
-    // evict_stall = false;
-    // set_conflict = false;
-    // reqs_cnt = N_REQS;
+    evict_stall = false;
+    set_conflict = false;
+    reqs_cnt = N_REQS;
     // custom_dbg.write(0);
     // evict_stall_out.write(0);
     // set_conflict_out.write(0);
@@ -541,7 +513,7 @@ inline void l2::reset_states()
 	for (int j=0; j<L2_WAYS; j++) { // do not unroll
 	    {
 		RESET_STATES_LOOP;
-		states.port1[0][(i << L2_WAY_BITS) + j] = INVALID;
+		states[(i << L2_WAY_BITS) + j] = INVALID;
 		wait();
 	    }
 	}
@@ -557,16 +529,22 @@ void l2::tag_lookup(addr_breakdown_t addr_br, bool &tag_hit,
     tag_hit = false;
     empty_way_found = false;
 
-    read_set(addr_br.set);
-    evict_way = evict_ways.port2[0][addr_br.set];
+    sc_uint<SET_BITS+L2_WAY_BITS> base = addr_br.set << L2_WAY_BITS;
+
+    evict_way = evict_ways[addr_br.set];
 
     for (int i = L2_WAYS-1; i >=0; --i) {
 	TAG_LOOKUP_LOOP;
 
-	// tag_buf[i]   = tags[uint_set][i];
-	// state_buf[i] = states[uint_set][i];
-	// hprot_buf[i] = hprots[uint_set][i];
-	// lines_buf[i] = lines[uint_set][i];
+	HLS_BREAK_ARRAY_DEPENDENCY(tags);
+	HLS_BREAK_ARRAY_DEPENDENCY(states);
+	HLS_BREAK_ARRAY_DEPENDENCY(hprots);
+	HLS_BREAK_ARRAY_DEPENDENCY(lines);
+
+	tag_buf[i]   = tags[base + i];
+	state_buf[i] = states[base + i];
+	hprot_buf[i] = hprots[base + i];
+	lines_buf[i] = lines[base + i];
 		
 	if (tag_buf[i] == addr_br.tag && state_buf[i] != INVALID) {
 	    tag_hit = true;
@@ -618,48 +596,6 @@ void l2::reqs_lookup(addr_breakdown_t addr_br, bool &reqs_hit, sc_uint<REQS_BITS
     }
 
     REQS_LOOKUP_ASSERT;
-}
-
-
-void l2::read_set(set_t set)
-{
-
-    //Manual unroll because these are explicit memories, see commented code 
-    // below for implicit memories usage
-    sc_uint<SET_BITS+L2_WAY_BITS> base = set << L2_WAY_BITS;
-
-    tag_buf[0]   = tags.port2[0][base + 0];
-    state_buf[0] = states.port2[0][base + 0];
-    hprot_buf[0] = hprots.port2[0][base + 0];
-    lines_buf[0] = lines.port2[0][base + 0];
-    tag_buf[1]   = tags.port3[0][base + 1];
-    state_buf[1] = states.port3[0][base + 1];
-    hprot_buf[1] = hprots.port3[0][base + 1];
-    lines_buf[1] = lines.port3[0][base + 1];
-    tag_buf[2]   = tags.port4[0][base + 2];
-    state_buf[2] = states.port4[0][base + 2];
-    hprot_buf[2] = hprots.port4[0][base + 2];
-    lines_buf[2] = lines.port4[0][base + 2];
-    tag_buf[3]   = tags.port5[0][base + 3];
-    state_buf[3] = states.port5[0][base + 3];
-    hprot_buf[3] = hprots.port5[0][base + 3];
-    lines_buf[3] = lines.port5[0][base + 3];
-    tag_buf[4]   = tags.port6[0][base + 4];
-    state_buf[4] = states.port6[0][base + 4];
-    hprot_buf[4] = hprots.port6[0][base + 4];
-    lines_buf[4] = lines.port6[0][base + 4];
-    tag_buf[5]   = tags.port7[0][base + 5];
-    state_buf[5] = states.port7[0][base + 5];
-    hprot_buf[5] = hprots.port7[0][base + 5];
-    lines_buf[5] = lines.port7[0][base + 5];
-    tag_buf[6]   = tags.port8[0][base + 6];
-    state_buf[6] = states.port8[0][base + 6];
-    hprot_buf[6] = hprots.port8[0][base + 6];
-    lines_buf[6] = lines.port8[0][base + 6];
-    tag_buf[7]   = tags.port9[0][base + 7];
-    state_buf[7] = states.port9[0][base + 7];
-    hprot_buf[7] = hprots.port9[0][base + 7];
-    lines_buf[7] = lines.port9[0][base + 7];
 }
 
 void l2::fill_reqs(cpu_msg_t cpu_msg, addr_breakdown_t addr_br, tag_t tag_estall, l2_way_t way_hit, hsize_t hsize,
@@ -748,8 +684,8 @@ void l2::put_reqs(set_t set, l2_way_t way, tag_t tag,
 
     sc_uint<SET_BITS+L2_WAY_BITS> base = set << L2_WAY_BITS;
 
-    lines.port1[0][base + way]  = line;
-    hprots.port1[0][base + way] = hprot;
-    states.port1[0][base + way] = state;
-    tags.port1[0][base + way]   = tag;
+    lines[base + way]  = line;
+    hprots[base + way] = hprot;
+    states[base + way] = state;
+    tags[base + way]   = tag;
 }

@@ -64,9 +64,9 @@
 #define MAX_INVACK_CNT          7
 
 // Ongoing transaction buffers
-#define N_REQS		1	// affects REQS_BITS
-#define REQS_BITS	1	// depends on N_REQS
-#define REQS_BITS_P1	1	// depends on N_REQS + 1
+#define N_REQS		4	// affects REQS_BITS
+#define REQS_BITS	2	// depends on N_REQS
+#define REQS_BITS_P1	3	// depends on N_REQS + 1
 #define N_EVICTS	4	// affects N_EVICTS
 #define EVICTS_BITS	2	// depends on EVICTS_BITS
 
@@ -201,8 +201,8 @@
 // report
 #define RPT_OFF 0
 #define RPT_ON  1
-#define RPT_TB  RPT_OFF
-#define RPT_RTL RPT_OFF
+#define RPT_TB  RPT_ON
+#define RPT_RTL RPT_ON
 #define RPT_BM  RPT_OFF
 #define RPT_CU  RPT_OFF
 

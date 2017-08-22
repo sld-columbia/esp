@@ -56,11 +56,11 @@ public:
     put_initiator<l2_rsp_out_t> l2_rsp_out;
 
     // Local memory (explicit, TODO: make implicit)
-    l2_tags_t<tag_t, L2_LINES>		tags;
-    l2_states_t<state_t, L2_LINES>	states;
-    l2_hprots_t<hprot_t, L2_LINES>	hprots;
-    l2_lines_t<line_t, L2_LINES>	lines;
-    l2_evict_ways_t<l2_way_t, SETS>	evict_ways;
+    tag_t tags[L2_LINES];
+    state_t states[L2_LINES];
+    hprot_t hprots[L2_LINES];
+    line_t lines[L2_LINES];
+    l2_way_t evict_ways[SETS];
 
     // Local registers
     reqs_buf_t	 reqs[N_REQS];
@@ -93,11 +93,11 @@ public:
 	FLATTEN_REGS;
 
 	// Clock binding for memories
-	tags.clk(this->clk);
-	states.clk(this->clk);
-	hprots.clk(this->clk);
-	lines.clk(this->clk);
-	evict_ways.clk(this->clk);
+	HLS_MAP_TO_MEMORY(tags);
+	HLS_MAP_TO_MEMORY(states);
+	HLS_MAP_TO_MEMORY(hprots);
+	HLS_MAP_TO_MEMORY(lines);
+	HLS_MAP_TO_MEMORY(evict_ways);
     }
 
     // Processes
@@ -112,7 +112,6 @@ public:
     void reqs_lookup(addr_breakdown_t addr_br, bool &reqs_hit, 
 		     sc_uint<REQS_BITS> &reqs_hit_i);
     bool reqs_peek(set_t set, sc_uint<REQS_BITS> &reqs_i);
-    void read_set(set_t set);
     void fill_reqs(cpu_msg_t cpu_msg, addr_breakdown_t addr_br, tag_t tag_estall, l2_way_t way_hit, hsize_t hsize,
 		   unstable_state_t state, hprot_t hprot, 
 		   invack_cnt_t invack_cnt, word_t word, 
