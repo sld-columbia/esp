@@ -25,14 +25,17 @@ typedef sc_biguint<BITS_PER_LINE>	line_t;
 typedef sc_uint<TAG_BITS>		tag_t;
 typedef sc_uint<SET_BITS>		set_t;
 typedef sc_uint<L2_WAY_BITS>		l2_way_t;
+typedef sc_uint<LLC_WAY_BITS>		llc_way_t;
 typedef sc_uint<OFFSET_BITS>		offset_t;
 typedef sc_uint<WORD_BITS>		word_offset_t;
 typedef sc_uint<BYTE_BITS>		byte_offset_t;
 typedef sc_uint<STABLE_STATE_BITS>	state_t;
+typedef sc_uint<LLC_STATE_BITS>	        llc_state_t;
 typedef sc_uint<UNSTABLE_STATE_BITS>	unstable_state_t;
 typedef sc_uint<EVICT_STATE_BITS>	evict_state_t;
-typedef sc_uint<EVICT_STATE_BITS>	evict_state_t;
-
+typedef sc_uint<N_CPU_BITS>             owner_t;
+typedef sc_bv<N_CPU>                    sharers_t;
+typedef sc_uint<N_CPU_BITS>             cache_id_t;
 
 /*
  * L2 cache coherence channels types
@@ -218,6 +221,68 @@ public:
     }
 };
 
+class llc_rsp_out_t 
+{
+
+public:
+
+    coh_msg_t		coh_msg;	// data, e-data, inv-ack, put-ack
+    addr_t		addr;
+    line_t		line;
+    invack_cnt_t	invack_cnt;
+    cache_id_t          req_id;
+    cache_id_t          dest_id;
+
+    llc_rsp_out_t() :
+	coh_msg(0),
+	addr(0),
+	line(0),
+	invack_cnt(0),
+	req_id(0),
+	dest_id(0)
+    {}
+
+    inline llc_rsp_out_t& operator  = (const llc_rsp_out_t& x) {
+	coh_msg    = x.coh_msg;
+	addr       = x.addr;	 
+	line       = x.line;
+	invack_cnt = x.invack_cnt;
+	req_id     = x.req_id;
+	dest_id    = x.dest_id;
+	return *this;
+    }
+    inline bool operator     == (const llc_rsp_out_t& x) const {
+	return (x.coh_msg    == coh_msg && 
+		x.addr       == addr    && 
+		x.line      == line   &&
+		x.invack_cnt == invack_cnt &&
+		x.req_id     == req_id &&
+		x.dest_id    == dest_id);
+    }
+    inline friend void sc_trace(sc_trace_file	*tf, const llc_rsp_out_t& x, const std::string & name) {
+	sc_trace(tf, x.coh_msg ,   name + ".cpu_msg ");
+	sc_trace(tf, x.addr,       name + ".addr");
+	sc_trace(tf, x.line,      name + ".line");
+	sc_trace(tf, x.invack_cnt, name + ".invack_cnt");
+	sc_trace(tf, x.req_id, name + ".req_id");
+	sc_trace(tf, x.dest_id, name + ".dest_id");
+    }
+    inline friend ostream & operator<<(ostream& os, const llc_rsp_out_t& x) {
+	os << hex << "(" 
+	   << "coh_msg: "    << x.coh_msg    
+	   << ", addr: "       << x.addr       
+	   << ", line: ";
+	for (int i = WORDS_PER_LINE-1; i >= 0; --i) {
+	    int base = i*BITS_PER_WORD;
+		os << x.line.range(base + BITS_PER_WORD - 1, base) << " ";
+	}
+	os << ", req_id: " << x.req_id << ")";
+	os << ", dest_id: " << x.dest_id << ")";
+	return os;
+    }
+};
+
+
 /* L2 to L2/LLC */
 
 // requests
@@ -272,8 +337,125 @@ public:
     }
 };
 
+class llc_req_in_t 
+{
+
+public:
+
+    coh_msg_t	coh_msg;	// gets, getm, puts, putm
+    hprot_t	hprot;
+    addr_t	addr;
+    line_t	line;
+    cache_id_t  req_id;
+
+    llc_req_in_t() :
+	coh_msg(coh_msg_t(0)),
+	hprot(0),
+	addr(0),
+	line(0),
+	req_id(0)
+    {}
+
+    inline llc_req_in_t& operator  = (const llc_req_in_t& x) {
+	coh_msg = x.coh_msg;	
+	hprot   = x.hprot;	 
+	addr    = x.addr;	 
+	line    = x.line;
+	req_id  = x.req_id;
+	return *this;
+    }
+    inline bool operator  == (const llc_req_in_t& x) const {
+	return (x.coh_msg == coh_msg	&& 
+		x.hprot   == hprot	&& 
+		x.addr    == addr	&& 
+		x.line	  == line       &&
+		x.req_id  == req_id);
+    }
+    inline friend void sc_trace(sc_trace_file *tf, const llc_req_in_t& x, const std::string & name) {
+	sc_trace(tf, x.coh_msg , name + ".coh_msg ");
+	sc_trace(tf, x.hprot,    name + ".hprot");
+	sc_trace(tf, x.addr,     name + ".addr");
+	sc_trace(tf, x.line,    name + ".line");
+	sc_trace(tf, x.req_id,    name + ".req_id");
+    }
+    inline friend ostream & operator<<(ostream& os, const llc_req_in_t& x) {
+	os << hex << "(" 
+	   << "coh_msg: " << x.coh_msg 
+	   << ", hprot: " << x.hprot   
+	   << ", addr: " << x.addr    
+	   << ", req_id: " << x.req_id    
+	   << ", line: ";
+	for (int i = WORDS_PER_LINE-1; i >= 0; --i) {
+	    int base = i*BITS_PER_WORD;
+	    os << x.line.range(base + BITS_PER_WORD - 1, base) << " ";
+	}
+	os << ")";
+	return os;
+    }
+};
+
+
 // responses
 typedef l2_req_out_t l2_rsp_out_t; // coh_msg: data, inv_ack
+
+/* LLC to Memory */
+
+// requests
+class llc_mem_req_t 
+{
+
+public:
+
+    bool	hwrite;	// r, w, r atom., w atom., flush
+    hsize_t	hsize;
+    hprot_t	hprot;
+    addr_t	addr;
+    line_t	line;
+
+    llc_mem_req_t() :
+	hwrite(0),
+	hsize(0),
+	hprot(0),
+	addr(0),
+	line(0)
+    {}
+
+    inline llc_mem_req_t& operator  = (const llc_mem_req_t& x) {
+	hwrite = x.hwrite;	
+	hsize   = x.hsize;	
+	hprot   = x.hprot;	 
+	addr    = x.addr;	 
+	line    = x.line;
+	return *this;
+    }
+    inline bool operator  == (const llc_mem_req_t& x) const {
+	return (x.hwrite == hwrite	&& 
+		x.hsize   == hsize	&& 
+		x.hprot   == hprot	&& 
+		x.addr    == addr	&& 
+		x.line    == line);
+    }
+    inline friend void sc_trace(sc_trace_file *tf, const llc_mem_req_t& x, const std::string & name) {
+	sc_trace(tf, x.hwrite , name + ".hwrite ");
+	sc_trace(tf, x.hsize,    name + ".hsize");
+	sc_trace(tf, x.hprot,    name + ".hprot");
+	sc_trace(tf, x.addr,     name + ".addr");
+	sc_trace(tf, x.line,     name + ".line");
+    }
+    inline friend ostream & operator<<(ostream& os, const llc_mem_req_t& x) {
+	os << hex << "(" 
+	   << "hwrite: "   << x.hwrite 
+	   << ", hsize: "   << x.hsize
+	   << ", hprot: "   << x.hprot
+	   << ", addr: "    << x.addr
+	   << ", line: "    << x.line << ")";
+	return os;
+    }
+};
+
+// responses
+
+typedef l2_rd_rsp_t llc_mem_rsp_t;
 
 /*
  * Ongoing transaction buffer tuypes

@@ -10,6 +10,7 @@
 
 // System configuration
 #define N_CPU	2
+#define N_CPU_BITS 1
 
 /*
  * Caches
@@ -49,8 +50,10 @@
 #define SETS			(1 << SET_BITS)
 #define L2_WAY_BITS		3
 #define L2_WAYS			(1 << L2_WAY_BITS)
-#define L3_WAYS			(N_CPU * L2_WAYS)
+#define LLC_WAY_BITS            (L2_WAY_BITS + N_CPU_BITS)
+#define LLC_WAYS		(N_CPU * L2_WAYS)
 #define L2_LINES		(SETS*L2_WAYS)
+#define LLC_LINES		(L2_LINES * N_CPU)
 
 // Cache data types width
 #define CPU_MSG_TYPE_WIDTH	2
@@ -80,6 +83,7 @@
 
 // N bits to indicate the state
 #define STABLE_STATE_BITS	2	// depends on # of stable states
+#define LLC_STATE_BITS	        3 	// M, E, S, I, S^D
 #define UNSTABLE_STATE_BITS	4	// depends on # of unstable states
 #define EVICT_STATE_BITS        2
 // Stable states
@@ -158,6 +162,8 @@
 // debug
 #define ASSERT_WIDTH 13
 #define BOOKMARK_WIDTH	18
+#define LLC_ASSERT_WIDTH 1
+#define LLC_BOOKMARK_WIDTH	1
 
 #define AS_RSP_DATA_DEFAULT     (1 << 0)
 #define AS_HIT_WRITE_DEFAULT	(1 << 1)
