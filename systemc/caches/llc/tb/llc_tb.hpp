@@ -24,12 +24,12 @@ public:
 
     // Input ports
     put_initiator<llc_req_in_t> llc_req_in_tb;
-    // put_initiator<llc_rsp_in_t> llc_rsp_in_tb;
+    put_initiator<llc_rsp_in_t> llc_rsp_in_tb;
     put_initiator<llc_mem_rsp_t> llc_mem_rsp_tb; 
 
     // Output ports
     put_initiator<llc_rsp_out_t> llc_rsp_out_tb;
-    // put_initiator<llc_fwd_out_t> llc_fwd_out_tb;
+    put_initiator<llc_fwd_out_t> llc_fwd_out_tb;
     put_initiator<llc_mem_req_t> llc_mem_req_tb;
 
     // Constructor
@@ -47,10 +47,10 @@ public:
 
 	// Assign clock and reset to put_get ports
 	llc_req_in_tb.clk_rst (clk, rst);
-	// llc_rsp_in_tb.clk_rst (clk, rst);
+	llc_rsp_in_tb.clk_rst (clk, rst);
 	llc_mem_rsp_tb.clk_rst (clk, rst);
 	llc_rsp_out_tb.clk_rst(clk, rst);
-	// llc_fwd_out_tb.clk_rst(clk, rst);
+	llc_fwd_out_tb.clk_rst(clk, rst);
 	llc_mem_req_tb.clk_rst(clk, rst);
     }
 

@@ -54,6 +54,8 @@
 #define LLC_WAYS		(N_CPU * L2_WAYS)
 #define L2_LINES		(SETS*L2_WAYS)
 #define LLC_LINES		(L2_LINES * N_CPU)
+#define L2_ADDR_BITS            (SET_BITS+L2_WAY_BITS)
+#define LLC_ADDR_BITS           (SET_BITS+LLC_WAY_BITS)
 
 // Cache data types width
 #define CPU_MSG_TYPE_WIDTH	2
@@ -91,6 +93,8 @@
 #define SHARED			1
 #define EXCLUSIVE		2
 #define MODIFIED		3
+#define SD                      4
+#define INVALID_NOT_EMPTY       5
 // Request unstable states
 #define ISD			1
 #define IMAD			2
@@ -160,10 +164,10 @@
  */
 
 // debug
+
+// l2
 #define ASSERT_WIDTH 13
 #define BOOKMARK_WIDTH	18
-#define LLC_ASSERT_WIDTH 1
-#define LLC_BOOKMARK_WIDTH	1
 
 #define AS_RSP_DATA_DEFAULT     (1 << 0)
 #define AS_HIT_WRITE_DEFAULT	(1 << 1)
@@ -197,6 +201,15 @@
 #define BM_GET_FLUSH		(1 << 15)
 #define BM_FLUSH_READ_SET	(1 << 16)
 #define BM_SEND_INVAL		(1 << 17)
+
+// llc
+#define LLC_ASSERT_WIDTH    1
+#define LLC_BOOKMARK_WIDTH  4
+
+#define BM_LLC_SEND_MEM_REQ (1 << 0)
+#define BM_LLC_GET_MEM_RSP  (1 << 1)
+#define BM_LLC_GET_REQ_IN   (1 << 2)
+#define BM_LLC_SEND_RSP_OUT (1 << 3)
 
 // report
 #define RPT_OFF 0
