@@ -59,4 +59,26 @@ inline word_t read_word(line_t line, word_offset_t w_off)
     return word;
 }
 
+inline void rand_wait()
+{
+    int waits = rand() % 5;
+    
+    for (int i=0; i < waits; i++) wait();
+}
+
+inline addr_breakdown_t rand_addr()
+{
+    addr_t addr = (rand() % (1 << ADDR_BITS-1)); // MSB always set to 0
+    addr_breakdown_t addr_br;
+    addr_br.breakdown(addr);
+    return addr_br;
+}
+
+inline word_t rand_word()
+{
+    word_t word = (rand() % (1 << BITS_PER_WORD-1));
+
+    return word;
+}
+
 #endif /* __CACHE_UTILS_HPP__ */

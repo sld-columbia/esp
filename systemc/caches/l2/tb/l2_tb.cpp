@@ -537,27 +537,27 @@ inline void l2_tb::reset_l2_test()
     wait();
 }
 
-inline void l2_tb::rand_wait()
-{
-    int waits = rand() % 5;
+// inline void l2_tb::rand_wait()
+// {
+//     int waits = rand() % 5;
     
-    for (int i=0; i < waits; i++) wait();
-}
+//     for (int i=0; i < waits; i++) wait();
+// }
 
-addr_breakdown_t l2_tb::rand_addr()
-{
-    addr_t addr = (rand() % (1 << ADDR_BITS-1)); // MSB always set to 0
-    addr_breakdown_t addr_br;
-    addr_br.breakdown(addr);
-    return addr_br;
-}
+// addr_breakdown_t l2_tb::rand_addr()
+// {
+//     addr_t addr = (rand() % (1 << ADDR_BITS-1)); // MSB always set to 0
+//     addr_breakdown_t addr_br;
+//     addr_br.breakdown(addr);
+//     return addr_br;
+// }
 
-word_t l2_tb::rand_word()
-{
-    word_t word = (rand() % (1 << BITS_PER_WORD-1));
+// word_t l2_tb::rand_word()
+// {
+//     word_t word = (rand() % (1 << BITS_PER_WORD-1));
 
-    return word;
-}
+//     return word;
+// }
 
 void l2_tb::put_cpu_req(l2_cpu_req_t &cpu_req, cpu_msg_t cpu_msg, hsize_t hsize, 
 			bool cacheable, addr_t addr, word_t word, bool rpt)
