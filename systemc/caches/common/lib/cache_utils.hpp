@@ -81,4 +81,14 @@ inline word_t rand_word()
     return word;
 }
 
+inline line_t make_line_of_addr(addr_t addr) 
+{
+    line_t line;
+
+    for (int i = 0; i < WORDS_PER_LINE; ++i)
+	write_word(line, addr + (i * WORD_OFFSET), i, 0, WORD);
+
+    return line;
+}
+
 #endif /* __CACHE_UTILS_HPP__ */
