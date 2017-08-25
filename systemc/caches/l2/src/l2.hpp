@@ -93,11 +93,11 @@ public:
 	FLATTEN_REGS;
 
 	// Clock binding for memories
-	HLS_MAP_TO_MEMORY(tags);
-	HLS_MAP_TO_MEMORY(states);
-	HLS_MAP_TO_MEMORY(hprots);
-	HLS_MAP_TO_MEMORY(lines);
-	HLS_MAP_TO_MEMORY(evict_ways);
+	HLS_MAP_TO_MEMORY(tags, "l2_tags");
+	HLS_MAP_TO_MEMORY(states, "l2_states");
+	HLS_MAP_TO_MEMORY(hprots, "l2_hprots");
+	HLS_MAP_TO_MEMORY(lines, "l2_lines");
+	HLS_MAP_TO_MEMORY(evict_ways, "l2_evict_ways");
     }
 
     // Processes
