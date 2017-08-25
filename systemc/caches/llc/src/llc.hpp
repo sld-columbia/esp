@@ -7,11 +7,11 @@
 #include "llc_directives.hpp"
 #include "llc_tags.hpp"
 #include "llc_states.hpp"
-#include "llc_hprots.hpp"
+// #include "llc_hprots.hpp"
 #include "llc_lines.hpp"
-#include "llc_sharers.hpp"
-#include "llc_owners.hpp"
-#include "llc_evict_ways.hpp"
+// #include "llc_sharers.hpp"
+// #include "llc_owners.hpp"
+// #include "llc_evict_ways.hpp"
 
 class llc : public sc_module
 {
@@ -39,23 +39,31 @@ public:
     put_initiator<llc_fwd_out_t>	llc_fwd_out;
     put_initiator<llc_mem_req_t>        llc_mem_req;
 
-    // Local memory (explicit, TODO: make implicit)
-    tag_t tags[LLC_LINES];
-    state_t states[LLC_LINES];
-    hprot_t hprots[LLC_LINES];
-    line_t lines[LLC_LINES];
-    sharers_t sharers[LLC_LINES];
-    owner_t owners[LLC_LINES];
-    l2_way_t evict_ways[SETS];
+    // Local memory
+    llc_tags_t<tag_t, LLC_LINES> tags;
+    llc_states_t<llc_state_t, LLC_LINES> states;
+    // llc_hprot_t<hprot_t, LLC_LINES> hprots;
+    llc_lines_t<line_t, LLC_LINES> lines;
+    // llc_sharers_t<sharers_t, LLC_LINES> sharers;
+    // llc_owners_t<owner_t, LLC_LINES> owners;
+    // llc_evict_states_t<llc_way_t, SETS> evict_ways;
+
+    // tag_t tags[LLC_LINES];
+    // llc_state_t states[LLC_LINES];
+    // // hprot_t hprots[LLC_LINES];
+    // line_t lines[LLC_LINES];
+    // // sharers_t sharers[LLC_LINES];
+    // // owner_t owners[LLC_LINES];
+    // // llc_way_t evict_ways[SETS];
 
     // Local registers
-    tag_t	 tag_buf[L2_WAYS];
-    state_t	 state_buf[L2_WAYS];
-    hprot_t	 hprot_buf[L2_WAYS];
-    line_t	 line_buf[L2_WAYS];
-    sharers_t	 sharers_buf[L2_WAYS];
-    owner_t      owner_buf[L2_WAYS];
-    llc_way_t	 evict_way_buf;
+    tag_t	 tag_buf[LLC_WAYS];
+    state_t	 state_buf[LLC_WAYS];
+    // hprot_t	 hprot_buf[LLC_WAYS];
+    line_t	 line_buf[LLC_WAYS];
+    // sharers_t	 sharers_buf[LLC_WAYS];
+    // owner_t      owner_buf[LLC_WAYS];
+    // llc_way_t	 evict_way_buf;
 
     // Constructor
     SC_CTOR(llc)
@@ -77,13 +85,21 @@ public:
 	FLATTEN_REGS;
 
 	// Clock binding for memories
-	HLS_MAP_TO_MEMORY(tags);
-	HLS_MAP_TO_MEMORY(states);
-	HLS_MAP_TO_MEMORY(hprots);
-	HLS_MAP_TO_MEMORY(lines);
-	HLS_MAP_TO_MEMORY(sharers);
-	HLS_MAP_TO_MEMORY(owners);
-	HLS_MAP_TO_MEMORY(evict_ways);
+	tags.clk(this->clk);
+	states.clk(this->clk);
+	// hprots.clk(this->clk);
+	lines.clk(this->clk);
+	// sharers.clk(this->clk);
+	// owners.clk(this->clk);
+	// evict_ways.clk(this->clk);
+
+	// HLS_MAP_TO_MEMORY(tags, "llc_tags");
+	// HLS_MAP_TO_MEMORY(states, "llc_states");
+	// // HLS_MAP_TO_MEMORY(hprots, "llc_hprots");
+	// HLS_MAP_TO_MEMORY(lines, "llc_lines");
+	// // HLS_MAP_TO_MEMORY(sharers, "llc_sharers");
+	// // HLS_MAP_TO_MEMORY(owners, "llc_owners");
+	// // HLS_MAP_TO_MEMORY(evict_ways, "llc_evict_ways");
     }
 
     // Processes
@@ -92,6 +108,7 @@ public:
     // Functions
     inline void reset_io();
     inline void reset_states();
+    void read_set(llc_addr_t base);
     void lookup(tag_t tag, set_t set, llc_way_t &way, bool &evict, llc_addr_t &llc_addr);
     void send_mem_req(bool hwrite, addr_t line_addr, hprot_t hprot, line_t line);
     void get_mem_rsp(line_t &line);

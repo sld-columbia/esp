@@ -8,10 +8,11 @@
 #define FLATTEN_REGS				\
     HLS_FLATTEN_ARRAY(tag_buf);			\
     HLS_FLATTEN_ARRAY(state_buf);		\
-    HLS_FLATTEN_ARRAY(hprot_buf);		\
-    HLS_FLATTEN_ARRAY(line_buf);		\
-    HLS_FLATTEN_ARRAY(sharers_buf);		\
-    HLS_FLATTEN_ARRAY(owner_buf)
+    HLS_FLATTEN_ARRAY(line_buf)
+
+//    HLS_FLATTEN_ARRAY(hprot_buf);		\
+//    HLS_FLATTEN_ARRAY(sharers_buf);		\
+//    HLS_FLATTEN_ARRAY(owner_buf)
 
 // Reset functions
 #define RESET_IO				\
@@ -21,7 +22,7 @@
     HLS_DEFINE_PROTOCOL("llc-nb-get-protocol")
 
 #define SEND_MEM_REQ							\
-    HLS_DEFINE_PROTOCOL("l2-send-mem-req-protocol");			\
+    HLS_DEFINE_PROTOCOL("llc-send-mem-req-protocol");			\
     bookmark_tmp |= BM_LLC_SEND_MEM_REQ;					\
     if (RPT_RTL) CACHE_REPORT_TIME(sc_time_stamp(), "Send mem req.")
 
@@ -36,7 +37,7 @@
     if (RPT_RTL) CACHE_REPORT_TIME(sc_time_stamp(), "Get req in.")
 
 #define SEND_RSP_OUT							\
-    HLS_DEFINE_PROTOCOL("l2-send-rsp-out-protocol");			\
+    HLS_DEFINE_PROTOCOL("llc-send-rsp-out-protocol");			\
     bookmark_tmp |= BM_LLC_SEND_RSP_OUT;					\
     if (RPT_RTL) CACHE_REPORT_TIME(sc_time_stamp(), "Send rsp out.")
 
