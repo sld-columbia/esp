@@ -9,8 +9,9 @@
  */
 
 // System configuration
-#define N_CPU	2
+#define N_CPU	1
 #define N_CPU_BITS 1
+#define N_CPU_LG2 0
 
 /*
  * Caches
@@ -50,10 +51,10 @@
 #define SETS			(1 << SET_BITS)
 #define L2_WAY_BITS		3
 #define L2_WAYS			(1 << L2_WAY_BITS)
-#define LLC_WAY_BITS            (L2_WAY_BITS + N_CPU_BITS)
-#define LLC_WAYS		(N_CPU * L2_WAYS)
+#define LLC_WAY_BITS            (L2_WAY_BITS + N_CPU_LOG2)
+#define LLC_WAYS		(1 << LLC_WAYS_BITS)
 #define L2_LINES		(SETS*L2_WAYS)
-#define LLC_LINES		(L2_LINES * N_CPU)
+#define LLC_LINES		(SETS * LLC_WAYS)
 #define L2_ADDR_BITS            (SET_BITS+L2_WAY_BITS)
 #define LLC_ADDR_BITS           (SET_BITS+LLC_WAY_BITS)
 
@@ -119,6 +120,10 @@
 #define READ_ATOMIC	1
 #define WRITE		2
 #define WRITE_ATOMIC	3
+
+// LLC requests (LLC to mem)
+#define LLC_READ  0
+#define LLC_WRITE 1
 
 // requests (L2 to L3)
 #define REQ_GETS	0
