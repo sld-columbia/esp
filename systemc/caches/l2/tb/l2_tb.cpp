@@ -712,13 +712,3 @@ void l2_tb::op_flush(coh_msg_t coh_msg, addr_t addr_line, bool rpt)
 
     wait();
 }
-
-line_t l2_tb::make_line_of_addr(addr_t addr) 
-{
-    line_t line;
-
-    for (int i = 0; i < WORDS_PER_LINE; ++i)
-	write_word(line, addr + (i * WORD_OFFSET), i, 0, WORD);
-
-    return line;
-}

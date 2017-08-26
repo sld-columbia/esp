@@ -94,7 +94,6 @@ public:
     void op(cpu_msg_t cpu_msg, sc_uint<2> beh, coh_msg_t put_msg, hsize_t hsize, bool cacheable, 
 	    addr_breakdown_t req_addr, word_t req_word, line_t rsp_line, bool rpt);
     void op_flush(coh_msg_t coh_msg, addr_t addr_line, bool rpt);
-    line_t make_line_of_addr(addr_t addr);
 };
 
 
