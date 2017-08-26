@@ -209,18 +209,22 @@
 
 // llc
 #define LLC_ASSERT_WIDTH    1
-#define LLC_BOOKMARK_WIDTH  4
+#define LLC_BOOKMARK_WIDTH  8
 
 #define BM_LLC_SEND_MEM_REQ (1 << 0)
 #define BM_LLC_GET_MEM_RSP  (1 << 1)
 #define BM_LLC_GET_REQ_IN   (1 << 2)
 #define BM_LLC_SEND_RSP_OUT (1 << 3)
+#define BM_LLC_GETS         (1 << 4)
+#define BM_LLC_GETM         (1 << 5)
+#define BM_LLC_PUTS         (1 << 6)
+#define BM_LLC_PUTM         (1 << 7)
 
 // report
 #define RPT_OFF 0
 #define RPT_ON  1
-#define RPT_TB  RPT_ON
-#define RPT_RTL RPT_ON
+#define RPT_TB  RPT_OFF
+#define RPT_RTL RPT_OFF
 #define RPT_BM  RPT_OFF
 #define RPT_CU  RPT_OFF
 

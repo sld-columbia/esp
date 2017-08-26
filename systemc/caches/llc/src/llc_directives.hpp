@@ -41,4 +41,13 @@
     bookmark_tmp |= BM_LLC_SEND_RSP_OUT;					\
     if (RPT_RTL) CACHE_REPORT_TIME(sc_time_stamp(), "Send rsp out.")
 
+#define LLC_GETS \
+    bookmark_tmp |= BM_LLC_GETS
+#define LLC_GETM \
+    bookmark_tmp |= BM_LLC_GETM
+#define LLC_PUTS \
+    bookmark_tmp |= BM_LLC_PUTS
+#define LLC_PUTM \
+    bookmark_tmp |= BM_LLC_PUTM
+
 #endif /* __LLC_DIRECTIVES_HPP_ */
