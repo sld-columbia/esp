@@ -7,7 +7,7 @@
 #include "llc_directives.hpp"
 #include "llc_tags.hpp"
 #include "llc_states.hpp"
-// #include "llc_hprots.hpp"
+#include "llc_hprots.hpp"
 #include "llc_lines.hpp"
 // #include "llc_sharers.hpp"
 // #include "llc_owners.hpp"
@@ -42,7 +42,7 @@ public:
     // Local memory
     llc_tags_t<tag_t, LLC_LINES> tags;
     llc_states_t<llc_state_t, LLC_LINES> states;
-    // llc_hprot_t<hprot_t, LLC_LINES> hprots;
+    llc_hprots_t<hprot_t, LLC_LINES> hprots;
     llc_lines_t<line_t, LLC_LINES> lines;
     // llc_sharers_t<sharers_t, LLC_LINES> sharers;
     // llc_owners_t<owner_t, LLC_LINES> owners;
@@ -50,7 +50,7 @@ public:
 
     // tag_t tags[LLC_LINES];
     // llc_state_t states[LLC_LINES];
-    // // hprot_t hprots[LLC_LINES];
+    // hprot_t hprots[LLC_LINES];
     // line_t lines[LLC_LINES];
     // // sharers_t sharers[LLC_LINES];
     // // owner_t owners[LLC_LINES];
@@ -58,8 +58,8 @@ public:
 
     // Local registers
     tag_t	 tag_buf[LLC_WAYS];
-    state_t	 state_buf[LLC_WAYS];
-    // hprot_t	 hprot_buf[LLC_WAYS];
+    llc_state_t	 state_buf[LLC_WAYS];
+    hprot_t	 hprot_buf[LLC_WAYS];
     line_t	 line_buf[LLC_WAYS];
     // sharers_t	 sharers_buf[LLC_WAYS];
     // owner_t      owner_buf[LLC_WAYS];
@@ -87,7 +87,7 @@ public:
 	// Clock binding for memories
 	tags.clk(this->clk);
 	states.clk(this->clk);
-	// hprots.clk(this->clk);
+	hprots.clk(this->clk);
 	lines.clk(this->clk);
 	// sharers.clk(this->clk);
 	// owners.clk(this->clk);
@@ -95,7 +95,7 @@ public:
 
 	// HLS_MAP_TO_MEMORY(tags, "llc_tags");
 	// HLS_MAP_TO_MEMORY(states, "llc_states");
-	// // HLS_MAP_TO_MEMORY(hprots, "llc_hprots");
+	// HLS_MAP_TO_MEMORY(hprots, "llc_hprots");
 	// HLS_MAP_TO_MEMORY(lines, "llc_lines");
 	// // HLS_MAP_TO_MEMORY(sharers, "llc_sharers");
 	// // HLS_MAP_TO_MEMORY(owners, "llc_owners");
