@@ -591,7 +591,7 @@ begin
     dma_rcv_rdreq <= '0';
     dma_snd_wrreq <= '0';
 
-    l3_wrapper_1 : l3_wrapper
+    llc_wrapper_1 : llc_wrapper
       generic map (
         tech        => fabtech,
         ncpu        => CFG_NCPU_TILE,

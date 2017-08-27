@@ -1,10 +1,10 @@
 -------------------------------------------------------------------------------
--- Entity: l3_wrapper
--- File: l3_wrapper.vhd
+-- Entity: llc_wrapper
+-- File: llc_wrapper.vhd
 -- Author: Davide Giri - SLD @ Columbia University
--- Description: RTL wrapper for a Last Level Cache (LLC or L3) with directory
+-- Description: RTL wrapper for a Last Level Cache (LLC) with directory
 -- to be included on a memory tile on an Embedded Scalable Platform.
--- Frontend: Network on Chip to L3 cache wrapper.
+-- Frontend: Network on Chip to LLC cache wrapper.
 -- Backend: LLC cache wrapper to Amba 2.0 AHB.
 -------------------------------------------------------------------------------
 
@@ -33,10 +33,10 @@ use work.genacc.all;
 
 use work.socmap_types.all;
 use work.nocpackage.all;
-use work.cachepackage.all; -- contains l3 cache component
+use work.cachepackage.all; -- contains llc cache component
 
 
-entity l3_wrapper is
+entity llc_wrapper is
   generic (
     tech        : integer                      := virtex7;
     ncpu        : integer                      := 4;
@@ -83,10 +83,19 @@ entity l3_wrapper is
     -- dma_snd_atleast_4slots              : in  std_ulogic;
     -- dma_snd_exactly_3slots              : in  std_ulogic);
 
-end l3_wrapper;
+end llc_wrapper;
 
-architecture rtl of l3_wrapper is
+architecture rtl of llc_wrapper is
 
+  -- Interface with LLC cache
+
+  -- NoC to cache
+
+  -- cache to NoC
+
+  -- AHB to cache
+  
+  -- cache to AHB
 
 begin  -- architecture rtl
 
