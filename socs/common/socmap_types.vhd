@@ -10,8 +10,8 @@
 
 library ieee;
 use ieee.std_logic_1164.all;
-use ieee.math_real.all;
-use ieee.numeric_std.all;
+-- use ieee.math_real.all;
+-- use ieee.numeric_std.all;
 -- pragma translate_off
 use std.textio.all;
 -- pragma translate_on
@@ -20,9 +20,9 @@ package socmap_types is
 
   -- TODO: find more elegant way of passing CPU_MAX and TILES_MAX
   -- NoC tiles layout information.
-  constant CPU_MAX_NUM   : integer := 1;     -- Also defined in bin/socmap/socmap_gen.py
-  constant CPU_MAX_NUM_LOG2 : integer := integer(ceil(log2(real(CPU_MAX_NUM))));
-  constant CPU_MAX_NUM_BITS : integer := 1;
+  constant CPU_MAX_NUM   : integer := 4;     -- Also defined in bin/socmap/socmap_gen.py
+--  constant CPU_MAX_NUM_LOG2 : integer := integer(ceil(log2(real(CPU_MAX_NUM))));
+--  constant CPU_MAX_NUM_BITS : integer := 1;
   constant CPU_MAX_NUM_STD : std_logic_vector(3 downto 0) := "0100";     -- Also defined in bin/socmap/socmap_gen.py
   constant TILES_MAX_NUM : integer := 16;
   subtype tile_cpu_id_type is integer range -1 to CPU_MAX_NUM;
