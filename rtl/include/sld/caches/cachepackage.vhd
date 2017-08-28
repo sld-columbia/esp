@@ -41,10 +41,10 @@ package cachepackage is
   constant OFFSET_BITS        : integer := WORDS_PER_LINE_LG2 + BYTES_PER_WORD_LG2;
   constant L2_SET_BITS        : integer := 8;
   constant L2_WAY_BITS        : integer := 3;
-  constant LLC_WAY_BITS       : integer := L2_WAY_BITS + CPU_MAX_NUM_LOG2;
+  constant LLC_WAY_BITS       : integer := L2_WAY_BITS + 0;  -- + CPU_MAX_LOG2
   constant TAG_BITS           : integer := ADDR_BITS - OFFSET_BITS - L2_SET_BITS;
   constant L2_CACHE_LINES     : integer := (2**L2_SET_BITS) * (2**L2_WAY_BITS);
-  constant LLC_CACHE_LINES    : integer := L2_CACHE_LINES * CPU_MAX_NUM;
+  constant LLC_CACHE_LINES    : integer := L2_CACHE_LINES * 1; -- CPU_MAX_NUM
   constant SET_BITS           : integer := 8;
 
   -- Cache data types width
@@ -59,8 +59,8 @@ package cachepackage is
   constant CPU_WRITE      : std_logic_vector(1 downto 0) := "10";
   constant CPU_WRITE_ATOM : std_logic_vector(1 downto 0) := "11";
 
-  constant LLC_READ : std_ulogic := 0;
-  constant LLC_WRITE : std_ulogic := 1;
+  constant LLC_READ : std_ulogic := '0';
+  constant LLC_WRITE : std_ulogic := '1';
   
   constant ASSERTS_WIDTH         : integer := 13;
   constant BOOKMARK_WIDTH        : integer := 18;
@@ -133,7 +133,7 @@ package cachepackage is
   subtype bookmark_t is std_logic_vector(BOOKMARK_WIDTH - 1 downto 0);
   subtype llc_bookmark_t is std_logic_vector(LLC_BOOKMARK_WIDTH - 1 downto 0);
   subtype custom_dbg_t is std_logic_vector(31 downto 0);
-  subtype cache_id_t is std_logic_vector(CPU_MAX_NUM_BITS downto 0);
+  subtype cache_id_t is std_logic_vector(0 downto 0);
   -- hprot
   constant DEFAULT_HPROT : hprot_t := "0100";
 
@@ -331,9 +331,9 @@ package cachepackage is
   end component;
 
   -----------------------------------------------------------------------------
-  -- l2_cache component
+  -- llc cache component
   -----------------------------------------------------------------------------
-  component l2_basic
+  component llc_basic
     port (
       clk : in std_ulogic;
       rst : in std_ulogic;
@@ -350,7 +350,7 @@ package cachepackage is
       llc_rsp_in_valid : in std_ulogic;
       llc_rsp_in_data_coh_msg : in coh_msg_t;
       llc_rsp_in_data_addr : in addr_t;
-      llc_rsp_in_data_line : in line_t
+      llc_rsp_in_data_line : in line_t;
       llc_rsp_in_data_req_id : in cache_id_t;
 
       llc_mem_rsp_ready : out std_ulogic;
@@ -383,7 +383,7 @@ package cachepackage is
 
       asserts                 : out llc_asserts_t;
       bookmark                : out llc_bookmark_t;
-      custom_dbg              : out custom_dbg_t;
+      custom_dbg              : out custom_dbg_t
       );
 
   end component;
