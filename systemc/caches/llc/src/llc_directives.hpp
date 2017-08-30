@@ -8,9 +8,8 @@
 #define FLATTEN_REGS				\
     HLS_FLATTEN_ARRAY(tag_buf);			\
     HLS_FLATTEN_ARRAY(state_buf);		\
-    HLS_FLATTEN_ARRAY(line_buf)
-
-//    HLS_FLATTEN_ARRAY(hprot_buf);		\
+    HLS_FLATTEN_ARRAY(line_buf); \
+    HLS_FLATTEN_ARRAY(hprot_buf)
 //    HLS_FLATTEN_ARRAY(sharers_buf);		\
 //    HLS_FLATTEN_ARRAY(owner_buf)
 
@@ -49,5 +48,8 @@
     bookmark_tmp |= BM_LLC_PUTS
 #define LLC_PUTM \
     bookmark_tmp |= BM_LLC_PUTM
+
+#define GENERIC_ASSERT \
+    asserts_tmp |= AS_GENERIC
 
 #endif /* __LLC_DIRECTIVES_HPP_ */
