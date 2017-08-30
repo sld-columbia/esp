@@ -29,6 +29,14 @@ public:
     sc_out< sc_bv<LLC_BOOKMARK_WIDTH> > bookmark;
     sc_out<uint32_t>                    custom_dbg;
 
+    sc_out<bool> tag_hit_out;
+    sc_out<llc_way_t> hit_way_out;
+    sc_out<bool> empty_way_found_out;
+    sc_out<llc_way_t> empty_way_out;
+    sc_out<bool> evict_out;
+    sc_out<llc_way_t> way_out;
+    sc_out<llc_addr_t> llc_addr_out;
+
     // Input ports
     nb_get_initiator<llc_req_in_t>	llc_req_in;
     nb_get_initiator<llc_rsp_in_t>	llc_rsp_in;
