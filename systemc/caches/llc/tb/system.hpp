@@ -25,6 +25,14 @@ public:
     sc_signal< sc_bv<LLC_BOOKMARK_WIDTH> > bookmark;
     sc_signal<uint32_t> custom_dbg;
 
+    sc_signal<bool> tag_hit_out;
+    sc_signal<llc_way_t> hit_way_out;
+    sc_signal<bool> empty_way_found_out;
+    sc_signal<llc_way_t> empty_way_out;
+    sc_signal<bool> evict_out;
+    sc_signal<llc_way_t> way_out;
+    sc_signal<llc_addr_t> llc_addr_out;
+
     // Channels
     // To LLC cache
     put_get_channel<llc_req_in_t>  llc_req_in_chnl;
@@ -54,6 +62,13 @@ public:
         dut->asserts(asserts);
         dut->bookmark(bookmark);
         dut->custom_dbg(custom_dbg);
+	dut->tag_hit_out(tag_hit_out);
+	dut->hit_way_out(hit_way_out);
+	dut->empty_way_found_out(empty_way_found_out);
+	dut->empty_way_out(empty_way_out);
+	dut->evict_out(evict_out);
+	dut->way_out(way_out);
+	dut->llc_addr_out(llc_addr_out);
 	dut->llc_req_in(llc_req_in_chnl);
 	dut->llc_rsp_in(llc_rsp_in_chnl);
 	dut->llc_mem_rsp(llc_mem_rsp_chnl);
@@ -67,6 +82,13 @@ public:
         tb->asserts(asserts);
         tb->bookmark(bookmark);
         tb->custom_dbg(custom_dbg);
+	tb->tag_hit_out(tag_hit_out);
+	tb->hit_way_out(hit_way_out);
+	tb->empty_way_found_out(empty_way_found_out);
+	tb->empty_way_out(empty_way_out);
+	tb->evict_out(evict_out);
+	tb->way_out(way_out);
+	tb->llc_addr_out(llc_addr_out);
 	tb->llc_req_in_tb(llc_req_in_chnl);
 	tb->llc_rsp_in_tb(llc_rsp_in_chnl);
 	tb->llc_mem_rsp_tb(llc_mem_rsp_chnl); 
