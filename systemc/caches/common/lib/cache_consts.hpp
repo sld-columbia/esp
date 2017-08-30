@@ -220,6 +220,8 @@
 #define BM_LLC_PUTS         (1 << 6)
 #define BM_LLC_PUTM         (1 << 7)
 
+#define AS_GENERIC (1 << 0)
+
 // report
 #define RPT_OFF 0
 #define RPT_ON  1
