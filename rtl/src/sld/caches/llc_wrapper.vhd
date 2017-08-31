@@ -94,7 +94,6 @@ architecture rtl of llc_wrapper is
 
   signal llc_rsp_in_ready        : std_ulogic;
   signal llc_rsp_in_valid        : std_ulogic;
-  signal llc_rsp_in_data_coh_msg : coh_msg_t;
   signal llc_rsp_in_data_addr    : addr_t;
   signal llc_rsp_in_data_line    : line_t;
   signal llc_rsp_in_data_req_id  : cache_id_t;
@@ -242,7 +241,6 @@ begin  -- architecture rtl
   coherence_rsp_rcv_rdreq <= '0';
 
   llc_rsp_in_valid        <= '0';
-  llc_rsp_in_data_coh_msg <= (others => '0');
   llc_rsp_in_data_addr    <= (others => '0');
   llc_rsp_in_data_line    <= (others => '0');
   llc_rsp_in_data_req_id  <= (others => '0');
@@ -640,7 +638,6 @@ begin  -- architecture rtl
 
       llc_rsp_in_ready        => llc_rsp_in_ready,
       llc_rsp_in_valid        => llc_rsp_in_valid,
-      llc_rsp_in_data_coh_msg => llc_rsp_in_data_coh_msg,
       llc_rsp_in_data_addr    => llc_rsp_in_data_addr,
       llc_rsp_in_data_line    => llc_rsp_in_data_line,
       llc_rsp_in_data_req_id  => llc_rsp_in_data_req_id,

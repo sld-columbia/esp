@@ -65,7 +65,7 @@ package cachepackage is
   constant ASSERTS_WIDTH         : integer := 13;
   constant BOOKMARK_WIDTH        : integer := 18;
   constant LLC_ASSERTS_WIDTH     : integer := 1;
-  constant LLC_BOOKMARK_WIDTH    : integer := 8;
+  constant LLC_BOOKMARK_WIDTH    : integer := 10;
   constant ASSERTS_AHBS_WIDTH    : integer := 11;
   constant ASSERTS_AHBM_WIDTH    : integer := 1;
   constant ASSERTS_REQ_WIDTH     : integer := 1;
@@ -348,7 +348,6 @@ package cachepackage is
 
       llc_rsp_in_ready : out std_ulogic;
       llc_rsp_in_valid : in std_ulogic;
-      llc_rsp_in_data_coh_msg : in coh_msg_t;
       llc_rsp_in_data_addr : in addr_t;
       llc_rsp_in_data_line : in line_t;
       llc_rsp_in_data_req_id : in cache_id_t;
