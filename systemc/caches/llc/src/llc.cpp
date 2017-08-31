@@ -46,9 +46,9 @@ void llc::ctrl()
 	    is_rsp_to_get = false;
 	    is_req_to_get = false;
 
-	    // if (llc_rsp_in.nb_can_get()) { // rsp_data
-	    // 	is_rsp_to_get = true;
-	    if (llc_req_in.nb_can_get() == 1 && evict_stall == 0) { // req_gets, req_getm, req_puts, req_putm
+	    if (llc_rsp_in.nb_can_get()) { // rsp_data
+	    	is_rsp_to_get = true;
+	    } else if (llc_req_in.nb_can_get() == 1) { // req_gets, req_getm, req_puts, req_putm
 		is_req_to_get = true;
 	    }
 	}
@@ -56,10 +56,10 @@ void llc::ctrl()
 	bookmark_tmp = 0;
 	asserts_tmp = 0;
 
-	// if (is_rsp_to_get) {
+	if (is_rsp_to_get) {
 
 
-	if (is_req_to_get == true) {
+	} else if (is_req_to_get == true) {
 	    get_req_in(req_in);
 
 	    // wait(); // for SystemC simulation only
@@ -223,8 +223,6 @@ inline void llc::reset_io()
     llc_fwd_out.reset();
     llc_mem_req.reset();
 
-    evict_stall = 0;
-
     asserts.write(0);
     bookmark.write(0);
     custom_dbg.write(0);
@@ -277,25 +275,25 @@ inline void llc::reset_io()
     lines.port8.reset();
     lines.port9.reset();
 
-    // sharers.port1.reset();
-    // sharers.port2.reset();
-    // sharers.port3.reset();
-    // sharers.port4.reset();
-    // sharers.port5.reset();
-    // sharers.port6.reset();
-    // sharers.port7.reset();
-    // sharers.port8.reset();
-    // sharers.port9.reset();
+    sharers.port1.reset();
+    sharers.port2.reset();
+    sharers.port3.reset();
+    sharers.port4.reset();
+    sharers.port5.reset();
+    sharers.port6.reset();
+    sharers.port7.reset();
+    sharers.port8.reset();
+    sharers.port9.reset();
 
-    // owners.port1.reset();
-    // owners.port2.reset();
-    // owners.port3.reset();
-    // owners.port4.reset();
-    // owners.port5.reset();
-    // owners.port6.reset();
-    // owners.port7.reset();
-    // owners.port8.reset();
-    // owners.port9.reset();
+    owners.port1.reset();
+    owners.port2.reset();
+    owners.port3.reset();
+    owners.port4.reset();
+    owners.port5.reset();
+    owners.port6.reset();
+    owners.port7.reset();
+    owners.port8.reset();
+    owners.port9.reset();
 
     // evict_ways.port1.reset();
     // evict_ways.port2.reset();
@@ -322,52 +320,53 @@ void llc::read_set(llc_addr_t base, llc_way_t way_base)
     state_buf[way_base + 0]   = states.port2[0][base + 0];
     hprot_buf[way_base + 0]   = hprots.port2[0][base + 0];
     line_buf[way_base + 0]   = lines.port2[0][base + 0];
-    //    sharers_buf[way_base + 0] = sharers.port2[0][base + 0];
-    //    owners_buf[way_base + 0]  = owners.port2[0][base + 0];
+    sharers_buf[way_base + 0] = sharers.port2[0][base + 0];
+    owner_buf[way_base + 0]  = owners.port2[0][base + 0];
     tag_buf[way_base + 1]	   = tags.port3[0][base + 1];
     state_buf[way_base + 1]   = states.port3[0][base + 1];
     hprot_buf[way_base + 1]   = hprots.port3[0][base + 1];
     line_buf[way_base + 1]   = lines.port3[0][base + 1];
-    //    sharers_buf[way_base + 1] = sharers.port3[0][base + 1];
-    //    owners_buf[way_base + 1]  = owners.port3[0][base + 1];
+    sharers_buf[way_base + 1] = sharers.port3[0][base + 1];
+    owner_buf[way_base + 1]  = owners.port3[0][base + 1];
     tag_buf[way_base + 2]	   = tags.port4[0][base + 2];
     state_buf[way_base + 2]   = states.port4[0][base + 2];
     hprot_buf[way_base + 2]   = hprots.port4[0][base + 2];
     line_buf[way_base + 2]   = lines.port4[0][base + 2];
-    //    sharers_buf[way_base + 2] = sharers.port4[0][base + 2];
-    //    owners_buf[way_base + 2]  = owners.port4[0][base + 2];
+    sharers_buf[way_base + 2] = sharers.port4[0][base + 2];
+    owner_buf[way_base + 2]  = owners.port4[0][base + 2];
     tag_buf[way_base + 3]	   = tags.port5[0][base + 3];
     state_buf[way_base + 3]   = states.port5[0][base + 3];
     hprot_buf[way_base + 3]   = hprots.port5[0][base + 3];
     line_buf[way_base + 3]   = lines.port5[0][base + 3];
-    //    sharers_buf[way_base + 3] = sharers.port5[0][base + 3];
-    //    owners_buf[way_base + 3]  = owners.port5[0][base + 3];
+    sharers_buf[way_base + 3] = sharers.port5[0][base + 3];
+    owner_buf[way_base + 3]  = owners.port5[0][base + 3];
     tag_buf[way_base + 4]	   = tags.port6[0][base + 4];
     state_buf[way_base + 4]   = states.port6[0][base + 4];
     hprot_buf[way_base + 4]   = hprots.port6[0][base + 4];
     line_buf[way_base + 4]   = lines.port6[0][base + 4];
-    //    sharers_buf[way_base + 4] = sharers.port6[0][base + 4];
-    //    owners_buf[way_base + 4]  = owners.port6[0][base + 4];
+    sharers_buf[way_base + 4] = sharers.port6[0][base + 4];
+    owner_buf[way_base + 4]  = owners.port6[0][base + 4];
     tag_buf[way_base + 5]	   = tags.port7[0][base + 5];
     state_buf[way_base + 5]   = states.port7[0][base + 5];
     hprot_buf[way_base + 5]   = hprots.port7[0][base + 5];
     line_buf[way_base + 5]   = lines.port7[0][base + 5];
-    //    sharers_buf[way_base + 5] = sharers.port7[0][base + 5];
-    //    owners_buf[way_base + 5]  = owners.port7[0][base + 5];
+    sharers_buf[way_base + 5] = sharers.port7[0][base + 5];
+    owner_buf[way_base + 5]  = owners.port7[0][base + 5];
     tag_buf[way_base + 6]	   = tags.port8[0][base + 6];
     state_buf[way_base + 6]   = states.port8[0][base + 6];
     hprot_buf[way_base + 6]   = hprots.port8[0][base + 6];
     line_buf[way_base + 6]   = lines.port8[0][base + 6];
-    //    sharers_buf[way_base + 6] = sharers.port8[0][base + 6];
-    //    owners_buf[way_base + 6]  = owners.port8[0][base + 6];
+    sharers_buf[way_base + 6] = sharers.port8[0][base + 6];
+    owner_buf[way_base + 6]  = owners.port8[0][base + 6];
     tag_buf[way_base + 7]	   = tags.port9[0][base + 7];
     state_buf[way_base + 7]   = states.port9[0][base + 7];
     hprot_buf[way_base + 7]   = hprots.port9[0][base + 7];
     line_buf[way_base + 7]   = lines.port9[0][base + 7];
-    //    sharers_buf[way_base + 7] = sharers.port9[0][base + 7];
-    //    owners_buf[way_base + 7]  = owners.port9[0][base + 7];
+    sharers_buf[way_base + 7] = sharers.port9[0][base + 7];
+    owner_buf[way_base + 7]  = owners.port9[0][base + 7];
 }
 
+// TODO make *_buf only with L2_WAYS positions to save area
 void llc::lookup(tag_t tag, set_t set, llc_way_t &way, bool &evict, llc_addr_t &llc_addr)
 {
     HLS_CONSTRAIN_LATENCY(0, HLS_ACHIEVABLE, "llc-tag-lookup-latency");
@@ -391,8 +390,8 @@ void llc::lookup(tag_t tag, set_t set, llc_way_t &way, bool &evict, llc_addr_t &
     	// state_buf[i] = states[base + i];
     	// hprot_buf[i] = hprots[base + i];
     	// line_buf[i] = lines[base + i];
-    	// // sharers_buf[i] = sharers[base + i];
-    	// // owner_buf[i] = owners[base + i];
+    	// sharers_buf[i] = sharers[base + i];
+    	// owner_buf[i] = owners[base + i];
 
     	if (tag_buf[i] == tag && state_buf[i] != INVALID) {
     	    tag_hit = true;
@@ -420,6 +419,7 @@ void llc::lookup(tag_t tag, set_t set, llc_way_t &way, bool &evict, llc_addr_t &
 
     llc_addr = base + way;
 
+    // TODO REMOVE
     tag_hit_out = tag_hit;
     hit_way_out = hit_way;
     empty_way_found_out = empty_way_found;

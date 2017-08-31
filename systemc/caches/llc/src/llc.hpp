@@ -9,8 +9,8 @@
 #include "llc_states.hpp"
 #include "llc_hprots.hpp"
 #include "llc_lines.hpp"
-// #include "llc_sharers.hpp"
-// #include "llc_owners.hpp"
+#include "llc_sharers.hpp"
+#include "llc_owners.hpp"
 // #include "llc_evict_ways.hpp"
 
 class llc : public sc_module
@@ -52,16 +52,16 @@ public:
     llc_states_t<llc_state_t, LLC_LINES> states;
     llc_hprots_t<hprot_t, LLC_LINES> hprots;
     llc_lines_t<line_t, LLC_LINES> lines;
-    // llc_sharers_t<sharers_t, LLC_LINES> sharers;
-    // llc_owners_t<owner_t, LLC_LINES> owners;
+    llc_sharers_t<sharers_t, LLC_LINES> sharers;
+    llc_owners_t<owner_t, LLC_LINES> owners;
     // llc_evict_states_t<llc_way_t, SETS> evict_ways;
 
     // tag_t tags[LLC_LINES];
     // llc_state_t states[LLC_LINES];
     // hprot_t hprots[LLC_LINES];
     // line_t lines[LLC_LINES];
-    // // sharers_t sharers[LLC_LINES];
-    // // owner_t owners[LLC_LINES];
+    // sharers_t sharers[LLC_LINES];
+    // owner_t owners[LLC_LINES];
     // // llc_way_t evict_ways[SETS];
 
     // Local registers
@@ -69,8 +69,8 @@ public:
     llc_state_t	 state_buf[LLC_WAYS];
     hprot_t	 hprot_buf[LLC_WAYS];
     line_t	 line_buf[LLC_WAYS];
-    // sharers_t	 sharers_buf[LLC_WAYS];
-    // owner_t      owner_buf[LLC_WAYS];
+    sharers_t	 sharers_buf[LLC_WAYS];
+    owner_t      owner_buf[LLC_WAYS];
     // llc_way_t	 evict_way_buf;
 
     // Constructor
@@ -97,16 +97,16 @@ public:
 	states.clk(this->clk);
 	hprots.clk(this->clk);
 	lines.clk(this->clk);
-	// sharers.clk(this->clk);
-	// owners.clk(this->clk);
+	sharers.clk(this->clk);
+	owners.clk(this->clk);
 	// evict_ways.clk(this->clk);
 
 	// HLS_MAP_TO_MEMORY(tags, "llc_tags");
 	// HLS_MAP_TO_MEMORY(states, "llc_states");
 	// HLS_MAP_TO_MEMORY(hprots, "llc_hprots");
 	// HLS_MAP_TO_MEMORY(lines, "llc_lines");
-	// // HLS_MAP_TO_MEMORY(sharers, "llc_sharers");
-	// // HLS_MAP_TO_MEMORY(owners, "llc_owners");
+	// HLS_MAP_TO_MEMORY(sharers, "llc_sharers");
+	// HLS_MAP_TO_MEMORY(owners, "llc_owners");
 	// // HLS_MAP_TO_MEMORY(evict_ways, "llc_evict_ways");
     }
 
@@ -129,7 +129,6 @@ private:
     sc_bv<LLC_ASSERT_WIDTH>   asserts_tmp;
     sc_bv<LLC_BOOKMARK_WIDTH> bookmark_tmp;
     uint64_t custom_dbg_tmp;
-    bool evict_stall;
 };
 
 #endif /* __LLC_HPP__ */
