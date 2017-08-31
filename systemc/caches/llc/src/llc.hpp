@@ -116,7 +116,7 @@ public:
     // Functions
     inline void reset_io();
     inline void reset_states();
-    void read_set(llc_addr_t base);
+    void read_set(llc_addr_t base, llc_way_t way_base);
     void lookup(tag_t tag, set_t set, llc_way_t &way, bool &evict, llc_addr_t &llc_addr);
     void send_mem_req(bool hwrite, addr_t line_addr, hprot_t hprot, line_t line);
     void get_mem_rsp(line_t &line);

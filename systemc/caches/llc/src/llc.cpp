@@ -41,6 +41,8 @@ void llc::ctrl()
 	{
 	    NB_GET;
 
+	    wait();
+
 	    is_rsp_to_get = false;
 	    is_req_to_get = false;
 
@@ -49,7 +51,6 @@ void llc::ctrl()
 	    if (llc_req_in.nb_can_get() == 1 && evict_stall == 0) { // req_gets, req_getm, req_puts, req_putm
 		is_req_to_get = true;
 	    }
-	    wait();
 	}
 
 	bookmark_tmp = 0;
@@ -71,7 +72,6 @@ void llc::ctrl()
 
 	    if (evict == 1) {
 		HLS_DEFINE_PROTOCOL("llc-eviction");
-		GENERIC_ASSERT;
 		// evict_ways.port1[0][addr_br.set] = evict_way_buf + 1;
 		addr_t addr_evict = (tag_buf[way]<<TAG_RANGE_LO) + addr_br.line.range(SET_RANGE_HI,0);
 		send_mem_req(WRITE, addr_evict, hprot_buf[way], line_buf[way]);
@@ -316,56 +316,56 @@ inline void llc::reset_states()
     }
 }
 
-void llc::read_set(llc_addr_t base)
+void llc::read_set(llc_addr_t base, llc_way_t way_base)
 {
-    tag_buf[0]	   = tags.port2[0][base + 0];
-    state_buf[0]   = states.port2[0][base + 0];
-    hprot_buf[0]   = hprots.port2[0][base + 0];
-    line_buf[0]   = lines.port2[0][base + 0];
-    //    sharers_buf[0] = sharers.port2[0][base + 0];
-    //    owners_buf[0]  = owners.port2[0][base + 0];
-    tag_buf[1]	   = tags.port3[0][base + 1];
-    state_buf[1]   = states.port3[0][base + 1];
-    hprot_buf[1]   = hprots.port3[0][base + 1];
-    line_buf[1]   = lines.port3[0][base + 1];
-    //    sharers_buf[1] = sharers.port3[0][base + 1];
-    //    owners_buf[1]  = owners.port3[0][base + 1];
-    tag_buf[2]	   = tags.port4[0][base + 2];
-    state_buf[2]   = states.port4[0][base + 2];
-    hprot_buf[2]   = hprots.port4[0][base + 2];
-    line_buf[2]   = lines.port4[0][base + 2];
-    //    sharers_buf[2] = sharers.port4[0][base + 2];
-    //    owners_buf[2]  = owners.port4[0][base + 2];
-    tag_buf[3]	   = tags.port5[0][base + 3];
-    state_buf[3]   = states.port5[0][base + 3];
-    hprot_buf[3]   = hprots.port5[0][base + 3];
-    line_buf[3]   = lines.port5[0][base + 3];
-    //    sharers_buf[3] = sharers.port5[0][base + 3];
-    //    owners_buf[3]  = owners.port5[0][base + 3];
-    tag_buf[4]	   = tags.port6[0][base + 4];
-    state_buf[4]   = states.port6[0][base + 4];
-    hprot_buf[4]   = hprots.port6[0][base + 4];
-    line_buf[4]   = lines.port6[0][base + 4];
-    //    sharers_buf[4] = sharers.port6[0][base + 4];
-    //    owners_buf[4]  = owners.port6[0][base + 4];
-    tag_buf[5]	   = tags.port7[0][base + 5];
-    state_buf[5]   = states.port7[0][base + 5];
-    hprot_buf[5]   = hprots.port7[0][base + 5];
-    line_buf[5]   = lines.port7[0][base + 5];
-    //    sharers_buf[5] = sharers.port7[0][base + 5];
-    //    owners_buf[5]  = owners.port7[0][base + 5];
-    tag_buf[6]	   = tags.port8[0][base + 6];
-    state_buf[6]   = states.port8[0][base + 6];
-    hprot_buf[6]   = hprots.port8[0][base + 6];
-    line_buf[6]   = lines.port8[0][base + 6];
-    //    sharers_buf[6] = sharers.port8[0][base + 6];
-    //    owners_buf[6]  = owners.port8[0][base + 6];
-    tag_buf[7]	   = tags.port9[0][base + 7];
-    state_buf[7]   = states.port9[0][base + 7];
-    hprot_buf[7]   = hprots.port9[0][base + 7];
-    line_buf[7]   = lines.port9[0][base + 7];
-    //    sharers_buf[7] = sharers.port9[0][base + 7];
-    //    owners_buf[7]  = owners.port9[0][base + 7];
+    tag_buf[way_base + 0]	   = tags.port2[0][base + 0];
+    state_buf[way_base + 0]   = states.port2[0][base + 0];
+    hprot_buf[way_base + 0]   = hprots.port2[0][base + 0];
+    line_buf[way_base + 0]   = lines.port2[0][base + 0];
+    //    sharers_buf[way_base + 0] = sharers.port2[0][base + 0];
+    //    owners_buf[way_base + 0]  = owners.port2[0][base + 0];
+    tag_buf[way_base + 1]	   = tags.port3[0][base + 1];
+    state_buf[way_base + 1]   = states.port3[0][base + 1];
+    hprot_buf[way_base + 1]   = hprots.port3[0][base + 1];
+    line_buf[way_base + 1]   = lines.port3[0][base + 1];
+    //    sharers_buf[way_base + 1] = sharers.port3[0][base + 1];
+    //    owners_buf[way_base + 1]  = owners.port3[0][base + 1];
+    tag_buf[way_base + 2]	   = tags.port4[0][base + 2];
+    state_buf[way_base + 2]   = states.port4[0][base + 2];
+    hprot_buf[way_base + 2]   = hprots.port4[0][base + 2];
+    line_buf[way_base + 2]   = lines.port4[0][base + 2];
+    //    sharers_buf[way_base + 2] = sharers.port4[0][base + 2];
+    //    owners_buf[way_base + 2]  = owners.port4[0][base + 2];
+    tag_buf[way_base + 3]	   = tags.port5[0][base + 3];
+    state_buf[way_base + 3]   = states.port5[0][base + 3];
+    hprot_buf[way_base + 3]   = hprots.port5[0][base + 3];
+    line_buf[way_base + 3]   = lines.port5[0][base + 3];
+    //    sharers_buf[way_base + 3] = sharers.port5[0][base + 3];
+    //    owners_buf[way_base + 3]  = owners.port5[0][base + 3];
+    tag_buf[way_base + 4]	   = tags.port6[0][base + 4];
+    state_buf[way_base + 4]   = states.port6[0][base + 4];
+    hprot_buf[way_base + 4]   = hprots.port6[0][base + 4];
+    line_buf[way_base + 4]   = lines.port6[0][base + 4];
+    //    sharers_buf[way_base + 4] = sharers.port6[0][base + 4];
+    //    owners_buf[way_base + 4]  = owners.port6[0][base + 4];
+    tag_buf[way_base + 5]	   = tags.port7[0][base + 5];
+    state_buf[way_base + 5]   = states.port7[0][base + 5];
+    hprot_buf[way_base + 5]   = hprots.port7[0][base + 5];
+    line_buf[way_base + 5]   = lines.port7[0][base + 5];
+    //    sharers_buf[way_base + 5] = sharers.port7[0][base + 5];
+    //    owners_buf[way_base + 5]  = owners.port7[0][base + 5];
+    tag_buf[way_base + 6]	   = tags.port8[0][base + 6];
+    state_buf[way_base + 6]   = states.port8[0][base + 6];
+    hprot_buf[way_base + 6]   = hprots.port8[0][base + 6];
+    line_buf[way_base + 6]   = lines.port8[0][base + 6];
+    //    sharers_buf[way_base + 6] = sharers.port8[0][base + 6];
+    //    owners_buf[way_base + 6]  = owners.port8[0][base + 6];
+    tag_buf[way_base + 7]	   = tags.port9[0][base + 7];
+    state_buf[way_base + 7]   = states.port9[0][base + 7];
+    hprot_buf[way_base + 7]   = hprots.port9[0][base + 7];
+    line_buf[way_base + 7]   = lines.port9[0][base + 7];
+    //    sharers_buf[way_base + 7] = sharers.port9[0][base + 7];
+    //    owners_buf[way_base + 7]  = owners.port9[0][base + 7];
 }
 
 void llc::lookup(tag_t tag, set_t set, llc_way_t &way, bool &evict, llc_addr_t &llc_addr)
@@ -380,7 +380,9 @@ void llc::lookup(tag_t tag, set_t set, llc_way_t &way, bool &evict, llc_addr_t &
 
     // evict_way_buf = evict_ways.port2[0][set];
 
-    read_set(base);
+    for (int i = 0; i < LLC_WAYS/L2_WAYS; i++) {
+	read_set(base + L2_WAYS*i, i*L2_WAYS);
+    }
 
     for (int i = 0; i < LLC_WAYS; i++) {
     	HLS_UNROLL_LOOP(ON, "llc-lookup-unroll");

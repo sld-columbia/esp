@@ -9,9 +9,9 @@
  */
 
 // System configuration
-#define N_CPU	1
+#define N_CPU	2
 #define N_CPU_BITS 1
-#define N_CPU_LG2 0
+#define N_CPU_LG2 1
 
 /*
  * Caches
