@@ -30,15 +30,25 @@
     bookmark_tmp |= BM_LLC_GET_MEM_RSP;					\
     if (RPT_RTL) CACHE_REPORT_TIME(sc_time_stamp(), "Get mem rsp.")
 
-#define GET_REQ_IN \
-    HLS_DEFINE_PROTOCOL("llc-req-in-protocol");			\
+#define GET_REQ_IN							\
+    HLS_DEFINE_PROTOCOL("llc-req-in-protocol");				\
     bookmark_tmp |= BM_LLC_GET_REQ_IN;					\
     if (RPT_RTL) CACHE_REPORT_TIME(sc_time_stamp(), "Get req in.")
+
+#define GET_RSP_IN							\
+    HLS_DEFINE_PROTOCOL("llc-rsp-in-protocol");				\
+    bookmark_tmp |= BM_LLC_GET_RSP_IN;					\
+    if (RPT_RTL) CACHE_REPORT_TIME(sc_time_stamp(), "Get rsp in.")
 
 #define SEND_RSP_OUT							\
     HLS_DEFINE_PROTOCOL("llc-send-rsp-out-protocol");			\
     bookmark_tmp |= BM_LLC_SEND_RSP_OUT;					\
     if (RPT_RTL) CACHE_REPORT_TIME(sc_time_stamp(), "Send rsp out.")
+
+#define SEND_FWD_OUT							\
+    HLS_DEFINE_PROTOCOL("llc-send-fwd-out-protocol");			\
+    bookmark_tmp |= BM_LLC_SEND_FWD_OUT;				\
+    if (RPT_RTL) CACHE_REPORT_TIME(sc_time_stamp(), "Send fwd out.")
 
 #define LLC_GETS \
     bookmark_tmp |= BM_LLC_GETS

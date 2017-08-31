@@ -121,14 +121,19 @@ public:
     void send_mem_req(bool hwrite, addr_t line_addr, hprot_t hprot, line_t line);
     void get_mem_rsp(line_t &line);
     void get_req_in(llc_req_in_t &req_in);
+    void get_rsp_in(llc_rsp_in_t &rsp_in);
     void send_rsp_out(coh_msg_t coh_msg, addr_t addr, line_t line, cache_id_t req_id,
 		      cache_id_t dest_id, invack_cnt_t invack_cnt);
+    void send_fwd_out(coh_msg_t coh_msg, addr_t addr, cache_id_t req_id, cache_id_t dest_id);
 
 private:
     // debug
     sc_bv<LLC_ASSERT_WIDTH>   asserts_tmp;
     sc_bv<LLC_BOOKMARK_WIDTH> bookmark_tmp;
     uint64_t custom_dbg_tmp;
+    bool req_stall;
+    bool req_in_stalled_valid;
+    llc_req_in_t req_in_stalled;
 };
 
 #endif /* __LLC_HPP__ */

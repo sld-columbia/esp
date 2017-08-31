@@ -48,7 +48,7 @@ void llc::ctrl()
 
 	    if (llc_rsp_in.nb_can_get()) { // rsp_data
 	    	is_rsp_to_get = true;
-	    } else if (llc_req_in.nb_can_get() == 1) { // req_gets, req_getm, req_puts, req_putm
+	    } else if (llc_req_in.nb_can_get() == 1 && !req_stall) { // req_gets, req_getm, req_puts, req_putm
 		is_req_to_get = true;
 	    }
 	}
@@ -57,16 +57,28 @@ void llc::ctrl()
 	asserts_tmp = 0;
 
 	if (is_rsp_to_get) {
+	    get_rsp_in(rsp_in);
 
+	    addr_br.breakdown(rsp_in.addr);
+
+	    lookup(addr_br.tag, addr_br.set, way, evict, llc_addr);
+
+	    states.port1[0][llc_addr] = SHARED;
+	    lines.port1[0][llc_addr] = rsp_in.line;
+
+	    if (req_stall = true & rsp_in.addr == req_in_stalled.addr) {
+		req_stall = false;
+	    }
 
 	} else if (is_req_to_get == true) {
-	    get_req_in(req_in);
-
-	    // wait(); // for SystemC simulation only
+	    if (!req_in_stalled_valid) {
+		get_req_in(req_in);
+	    } else {
+		req_in_stalled_valid = false;
+		req_in = req_in_stalled;
+	    }
 
 	    addr_br.breakdown(req_in.addr);
-
-	    // CACHE_REPORT_TIME(sc_time_stamp(), "After addr br.");
 
 	    lookup(addr_br.tag, addr_br.set, way, evict, llc_addr);
 
@@ -83,13 +95,12 @@ void llc::ctrl()
 		tags.port1[0][llc_addr] = addr_br.tag;
 	    }
 
-	    // CACHE_REPORT_TIME(sc_time_stamp(), "After lookup.");
-
 	    switch (req_in.coh_msg) {
 
 	    case REQ_GETS :
 		LLC_GETS;
 		switch (state_buf[way]) {
+
 		case INVALID :
 		case INVALID_NOT_EMPTY :
 		    if (state_buf[way] == INVALID) {
@@ -99,17 +110,29 @@ void llc::ctrl()
 			lines.port1[0][llc_addr] = line_buf[way];
 			tags.port1[0][llc_addr] = addr_br.tag;
 		    }
-		    // owners.port1[0][llc_addr] = req_in.req_id;
+		    owners.port1[0][llc_addr] = req_in.req_id;
 		    states.port1[0][llc_addr] = EXCLUSIVE;
 		    send_rsp_out(RSP_EDATA, req_in.addr, line_buf[way], req_in.req_id, 0, 0);
 		    break;
 
 		case SHARED :
+		    sharers.port1[0][llc_addr] = sharers_buf[way] | (1 << req_in.req_id);
+		    send_rsp_out(RSP_DATA, req_in.addr, line_buf[way], req_in.req_id, 0, 0);
+		    break;
+
 		case EXCLUSIVE :
 		case MODIFIED :
-		case SD :
-		    GENERIC_ASSERT;
+		    sharers.port1[0][llc_addr] = (1 << req_in.req_id) | (1 << owner_buf[way]);
+		    states.port1[0][llc_addr] = SD;
+		    send_fwd_out(FWD_GETS, req_in.addr, req_in.req_id, owner_buf[way]);
 		    break;
+
+		case SD :
+		    req_stall = true;
+		    req_in_stalled_valid = true;
+		    req_in_stalled = req_in;
+		    break;
+
 		default :
 		    GENERIC_ASSERT;
 		}
@@ -119,6 +142,7 @@ void llc::ctrl()
 	    case REQ_GETM :
 		LLC_GETM;
 		switch (state_buf[way]) {
+
 		case INVALID :
 		case INVALID_NOT_EMPTY :
 		    if (state_buf[way] == INVALID) {
@@ -128,17 +152,43 @@ void llc::ctrl()
 			lines.port1[0][llc_addr] = line_buf[way];
 			tags.port1[0][llc_addr] = addr_br.tag;
 		    }
-		    // owners.port1[0][llc_addr] = req_in.req_id;
+		    owners.port1[0][llc_addr] = req_in.req_id;
 		    states.port1[0][llc_addr] = MODIFIED;
 		    send_rsp_out(RSP_DATA, req_in.addr, line_buf[way], req_in.req_id, 0, 0);
 		    break;
 
 		case SHARED :
-		case EXCLUSIVE :
-		case MODIFIED :
-		case SD :
-		    GENERIC_ASSERT;
+		    states.port1[0][llc_addr] = MODIFIED;
+		    owners.port1[0][llc_addr] = req_in.req_id;
+		    sharers.port1[0][llc_addr] = 0;
+		    {
+			HLS_DEFINE_PROTOCOL("llc-getm-shared-protocol");
+			
+			send_rsp_out(RSP_DATA, req_in.addr, line_buf[way], req_in.req_id, 0, 0);
+			wait();
+
+			for (int i = 0; i < N_CPU; i++) {
+			    if ((sharers_buf[way] & ~(1 << i)) != 0) {
+				send_fwd_out(FWD_INV, req_in.addr, req_in.req_id, i);
+			    }
+			    wait();
+			}
+		    }
 		    break;
+		    
+		case EXCLUSIVE :
+		    states.port1[0][llc_addr] = MODIFIED;
+		case MODIFIED :
+		    owners.port1[0][llc_addr] = req_in.req_id;
+		    send_fwd_out(FWD_GETM, req_in.addr, req_in.req_id, owner_buf[way]);
+		    break;
+
+		case SD :
+		    req_stall = true;
+		    req_in_stalled_valid = true;
+		    req_in_stalled = req_in;
+		    break;
+
 		default :
 		    GENERIC_ASSERT;
 		}
@@ -226,6 +276,9 @@ inline void llc::reset_io()
     asserts.write(0);
     bookmark.write(0);
     custom_dbg.write(0);
+    
+    req_stall = false;
+    req_in_stalled_valid = false;
 
     tag_hit_out.write(0);
     hit_way_out.write(0);
@@ -455,6 +508,12 @@ void llc::get_req_in(llc_req_in_t &req_in)
     llc_req_in.nb_get(req_in);
 }
 
+void llc::get_rsp_in(llc_rsp_in_t &rsp_in)
+{
+    GET_RSP_IN;
+    llc_rsp_in.nb_get(rsp_in);
+}
+
 void llc::send_rsp_out(coh_msg_t coh_msg, addr_t addr, line_t line, cache_id_t req_id,
 		       cache_id_t dest_id, invack_cnt_t invack_cnt)
 {
@@ -467,4 +526,16 @@ void llc::send_rsp_out(coh_msg_t coh_msg, addr_t addr, line_t line, cache_id_t r
     rsp_out.dest_id = dest_id;
     rsp_out.invack_cnt = invack_cnt;
     llc_rsp_out.put(rsp_out);
+}
+
+void llc::send_fwd_out(coh_msg_t coh_msg, addr_t addr, cache_id_t req_id,
+		       cache_id_t dest_id)
+{
+    SEND_FWD_OUT;
+    llc_fwd_out_t fwd_out;
+    fwd_out.coh_msg = coh_msg;
+    fwd_out.addr = addr;
+    fwd_out.req_id = req_id;
+    fwd_out.dest_id = dest_id;
+    llc_fwd_out.put(fwd_out);
 }
