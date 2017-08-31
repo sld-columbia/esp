@@ -36,7 +36,7 @@ typedef sc_uint<LLC_STATE_BITS>	        llc_state_t;
 typedef sc_uint<UNSTABLE_STATE_BITS>	unstable_state_t;
 typedef sc_uint<EVICT_STATE_BITS>	evict_state_t;
 typedef sc_uint<N_CPU_BITS>             owner_t;
-typedef sc_bv<N_CPU>                    sharers_t;
+typedef sc_uint<N_CPU>                  sharers_t;
 typedef sc_uint<N_CPU_BITS>             cache_id_t;
 
 /*
@@ -451,40 +451,34 @@ class llc_rsp_in_t
 
 public:
 
-    coh_msg_t	coh_msg;	// rsp_data
     addr_t	addr;
     line_t	line;
     cache_id_t  req_id;
 
     llc_rsp_in_t() :
-	coh_msg(coh_msg_t(0)),
 	addr(0),
 	line(0),
 	req_id(0)
     {}
 
     inline llc_rsp_in_t& operator  = (const llc_rsp_in_t& x) {
-	coh_msg = x.coh_msg;	
 	addr    = x.addr;	 
 	line    = x.line;
 	req_id  = x.req_id;
 	return *this;
     }
     inline bool operator  == (const llc_rsp_in_t& x) const {
-	return (x.coh_msg == coh_msg	&& 
-		x.addr    == addr	&& 
+	return (x.addr    == addr	&& 
 		x.line	  == line       &&
 		x.req_id  == req_id);
     }
     inline friend void sc_trace(sc_trace_file *tf, const llc_rsp_in_t& x, const std::string & name) {
-	sc_trace(tf, x.coh_msg , name + ".coh_msg ");
 	sc_trace(tf, x.addr,     name + ".addr");
 	sc_trace(tf, x.line,    name + ".line");
 	sc_trace(tf, x.req_id,    name + ".req_id");
     }
     inline friend ostream & operator<<(ostream& os, const llc_rsp_in_t& x) {
 	os << hex << "(" 
-	   << "coh_msg: " << x.coh_msg 
 	   << ", addr: " << x.addr    
 	   << ", req_id: " << x.req_id    
 	   << ", line: ";
