@@ -173,16 +173,16 @@ void llc::ctrl()
 		    sharers.port1[0][llc_addr] = 0;
 		    {
 			HLS_DEFINE_PROTOCOL("llc-getm-shared-protocol");
-			
-			send_rsp_out(RSP_DATA, req_in.addr, line_buf[way], req_in.req_id, 0, 0);
-			wait();
-
+			invack_cnt_t invack_cnt = 0;
 			for (int i = 0; i < N_CPU; i++) {
 			    if ((sharers_buf[way] & ~(1 << i)) != 0) {
 				send_fwd_out(FWD_INV, req_in.addr, req_in.req_id, i);
+				invack_cnt++;
 			    }
 			    wait();
 			}
+			send_rsp_out(RSP_DATA, req_in.addr, line_buf[way], req_in.req_id, 0, invack_cnt);
+			wait();
 		    }
 		    break;
 		    
