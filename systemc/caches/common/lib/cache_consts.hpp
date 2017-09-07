@@ -125,6 +125,11 @@
 #define LLC_READ  0
 #define LLC_WRITE 1
 
+// Coherence planes
+#define REQ_PLANE 0
+#define FWD_PLANE 1
+#define RSP_PLANE 2
+
 // requests (L2 to L3)
 #define REQ_GETS	0
 #define REQ_GETM	1
