@@ -355,21 +355,21 @@ architecture rtl of l2_wrapper is
 
   attribute mark_debug : string;
 
-  attribute mark_debug of ahbs_reg_state   : signal is "true";
-  attribute mark_debug of ahbm_reg_state   : signal is "true";
-  attribute mark_debug of req_reg_state    : signal is "true";
-  attribute mark_debug of rsp_in_reg_state : signal is "true";
+  -- attribute mark_debug of ahbs_reg_state   : signal is "true";
+  -- attribute mark_debug of ahbm_reg_state   : signal is "true";
+  -- attribute mark_debug of req_reg_state    : signal is "true";
+  -- attribute mark_debug of rsp_in_reg_state : signal is "true";
 
   attribute mark_debug of flush_due   : signal is "true";
   attribute mark_debug of flush_state : signal is "true";
 
-  attribute mark_debug of inv_fifo_empty        : signal is "true";
-  attribute mark_debug of inv_fifo_almost_empty : signal is "true";
-  attribute mark_debug of inv_fifo_full         : signal is "true";
-  attribute mark_debug of inv_fifo_rdreq        : signal is "true";
-  attribute mark_debug of inv_fifo_wrreq        : signal is "true";
-  attribute mark_debug of inv_fifo_data_in      : signal is "true";
-  attribute mark_debug of inv_fifo_data_out     : signal is "true";
+  -- attribute mark_debug of inv_fifo_empty        : signal is "true";
+  -- attribute mark_debug of inv_fifo_almost_empty : signal is "true";
+  -- attribute mark_debug of inv_fifo_full         : signal is "true";
+  -- attribute mark_debug of inv_fifo_rdreq        : signal is "true";
+  -- attribute mark_debug of inv_fifo_wrreq        : signal is "true";
+  -- attribute mark_debug of inv_fifo_data_in      : signal is "true";
+  -- attribute mark_debug of inv_fifo_data_out     : signal is "true";
 
   attribute mark_debug of ahbs_asserts : signal is "true";
   -- attribute mark_debug of ahbm_asserts   : signal is "true";
@@ -421,7 +421,7 @@ architecture rtl of l2_wrapper is
   -- debug
   attribute mark_debug of asserts                : signal is "true";
   attribute mark_debug of bookmark               : signal is "true";
-  attribute mark_debug of custom_dbg             : signal is "true";
+  -- attribute mark_debug of custom_dbg             : signal is "true";
   attribute mark_debug of flush_done             : signal is "true";
 
   -- attribute mark_debug of evict_stall_out              : signal is "true";

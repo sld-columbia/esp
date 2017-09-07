@@ -196,15 +196,15 @@ architecture rtl of tile_cpu is
   signal ahbsi_hmastlock   : std_ulogic;
   signal ahbsi_hmaster     : std_logic_vector(3 downto 0);
   signal ahbso_hrdata      : std_logic_vector(31 downto 0);
-  signal ahbmi_hgrant0     : std_ulogic;
-  signal ahbmi_hgrant2     : std_ulogic;
+  signal ahbmi_hgrant      : std_logic_vector(0 to NAHBMST-1);
   signal ahbmi_hready      : std_ulogic;
   signal ahbmo_hbusreq     : std_ulogic;
   signal ahbmo_htrans      : std_logic_vector(1 downto 0);
-  signal ahbmo_hwrite      : std_ulogic;
+  signal ahbmo_cpu_hwrite  : std_ulogic;
   signal ahbmo_cpu_hbusreq : std_ulogic;
   signal ahbmo_cpu_htrans  : std_logic_vector(1 downto 0);
-
+  signal ahbmo_cpu_hlock   : std_ulogic;
+  
 --signal irqi_rst        : std_ulogic;
 --signal irqi_run        : std_ulogic;
 --signal irqo_irl        : std_logic_vector(3 downto 0);
@@ -218,23 +218,23 @@ architecture rtl of tile_cpu is
 
   attribute mark_debug of ahbsi_hsel      : signal is "true";
   attribute mark_debug of ahbsi_htrans    : signal is "true";
-  -- attribute mark_debug of ahbsi_hwrite    : signal is "true";
-  -- attribute mark_debug of ahbsi_hsize     : signal is "true";
-  -- attribute mark_debug of ahbsi_hprot     : signal is "true";
+  attribute mark_debug of ahbsi_hwrite    : signal is "true";
+  attribute mark_debug of ahbsi_hsize     : signal is "true";
+  attribute mark_debug of ahbsi_hprot     : signal is "true";
   attribute mark_debug of ahbsi_haddr     : signal is "true";
-  attribute mark_debug of ahbsi_hwdata                : signal is "true";
-  -- attribute mark_debug of ahbsi_hmastlock : signal is "true";
-  -- attribute mark_debug of ahbsi_hmaster   : signal is "true";
-  -- attribute mark_debug of ahbso_hrdata                : signal is "true";
+  attribute mark_debug of ahbsi_hwdata    : signal is "true";
+  attribute mark_debug of ahbsi_hmastlock : signal is "true";
+  attribute mark_debug of ahbsi_hmaster   : signal is "true";
+  attribute mark_debug of ahbso_hrdata    : signal is "true";
 
---attribute mark_debug of ahbmi_hgrant0               : signal is "true";
---attribute mark_debug of ahbmi_hgrant2               : signal is "true";
-  -- attribute mark_debug of ahbmi_hready  : signal is "true";
-  -- attribute mark_debug of ahbmo_hbusreq : signal is "true";
-  -- attribute mark_debug of ahbmo_htrans                : signal is "true";
-  -- attribute mark_debug of ahbmo_hwrite                : signal is "true";
-  -- attribute mark_debug of ahbmo_cpu_hbusreq           : signal is "true";
-  -- attribute mark_debug of ahbmo_cpu_htrans            : signal is "true";
+  attribute mark_debug of ahbmi_hgrant      : signal is "true";
+  attribute mark_debug of ahbmi_hready      : signal is "true";
+  attribute mark_debug of ahbmo_hbusreq     : signal is "true";
+  attribute mark_debug of ahbmo_htrans      : signal is "true";
+  attribute mark_debug of ahbmo_cpu_hwrite  : signal is "true";
+  attribute mark_debug of ahbmo_cpu_hbusreq : signal is "true";
+  attribute mark_debug of ahbmo_cpu_htrans  : signal is "true";
+  attribute mark_debug of ahbmo_cpu_hlock   : signal is "true";
 
 --attribute mark_debug of remote_apb_rcv_rdreq        : signal is "true";
 --attribute mark_debug of remote_apb_rcv_empty        : signal is "true";
@@ -279,14 +279,14 @@ begin
   ahbsi_hmastlock   <= ahbsi.hmastlock;
   ahbsi_hmaster     <= ahbsi.hmaster;
   ahbso_hrdata      <= ahbso(ddr0_hindex).hrdata;
-  ahbmi_hgrant0     <= ahbmi.hgrant(0);
-  ahbmi_hgrant2     <= ahbmi.hgrant(CFG_NCPU_TILE+1);
+  ahbmi_hgrant      <= ahbmi.hgrant;
   ahbmi_hready      <= ahbmi.hready;
   ahbmo_hbusreq     <= ahbmo(CFG_NCPU_TILE+1).hbusreq;
   ahbmo_htrans      <= ahbmo(CFG_NCPU_TILE+1).htrans;
-  ahbmo_hwrite      <= ahbmo(CFG_NCPU_TILE+1).hwrite;
+  ahbmo_cpu_hwrite  <= ahbmo(cpu_id).hwrite;
   ahbmo_cpu_hbusreq <= ahbmo(cpu_id).hbusreq;
   ahbmo_cpu_htrans  <= ahbmo(cpu_id).htrans;
+  ahbmo_cpu_hlock   <= ahbmo(cpu_id).hlock;
 
 --irqi_irl  <= irqi_i.irl;
 --irqi_rst  <= irqi_i.rst;

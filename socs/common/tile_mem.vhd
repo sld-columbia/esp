@@ -274,7 +274,8 @@ begin
   ahbmo2_haddr <= ahbmo2(0).haddr;
   ahbmo2_hwrite <= ahbmo2(0).hwrite;
   ahbmo2_hsize <= ahbmo2(0).hsize;
-  ahbmo2_hprot <= ahbmo2(0).hprot;  
+  ahbmo2_hprot <= ahbmo2(0).hprot;
+  
   -----------------------------------------------------------------------------
   -- JTAG
   -----------------------------------------------------------------------------
