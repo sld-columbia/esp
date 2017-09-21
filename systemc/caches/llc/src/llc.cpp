@@ -58,11 +58,11 @@ void llc::ctrl()
 	    lookup(addr_br.tag, addr_br.set, way, evict, llc_addr);
 
 	    if (sharers_buf[way] != 0) {
-		states.port1[0][llc_addr] = SHARED;
+		states[llc_addr] = SHARED;
 	    } else {
-		states.port1[0][llc_addr] = INVALID_NOT_EMPTY;
+		states[llc_addr] = INVALID_NOT_EMPTY;
 	    }
-	    lines.port1[0][llc_addr] = rsp_in.line;
+	    lines[llc_addr] = rsp_in.line;
 
 	    if (state_buf[way] != SD) {
 		GENERIC_ASSERT;
@@ -92,15 +92,15 @@ void llc::ctrl()
 
 	    if (evict) {
 		HLS_DEFINE_PROTOCOL("llc-eviction");
-		// evict_ways.port1[0][addr_br.set] = evict_way_buf + 1;
+		// evict_ways[addr_br.set] = evict_way_buf + 1;
 		addr_t addr_evict = (tag_buf[way]<<TAG_RANGE_LO) + addr_br.line.range(SET_RANGE_HI,0);
 		send_mem_req(WRITE, addr_evict, hprot_buf[way], line_buf[way]);
 		wait();
 		send_mem_req(READ, req_in.addr, req_in.hprot, 0);
 		get_mem_rsp(line_buf[way]);
-		hprots.port1[0][llc_addr] = req_in.hprot;
-		lines.port1[0][llc_addr] = line_buf[way];
-		tags.port1[0][llc_addr] = addr_br.tag;
+		hprots[llc_addr] = req_in.hprot;
+		lines[llc_addr] = line_buf[way];
+		tags[llc_addr] = addr_br.tag;
 	    }
 
 	    switch (req_in.coh_msg) {
@@ -114,25 +114,25 @@ void llc::ctrl()
 		    if (state_buf[way] == INVALID) {
 			send_mem_req(READ, req_in.addr, req_in.hprot, 0);
 			get_mem_rsp(line_buf[way]);
-			hprots.port1[0][llc_addr] = req_in.hprot;
-			lines.port1[0][llc_addr] = line_buf[way];
-			tags.port1[0][llc_addr] = addr_br.tag;
+			hprots[llc_addr] = req_in.hprot;
+			lines[llc_addr] = line_buf[way];
+			tags[llc_addr] = addr_br.tag;
 		    }
-		    owners.port1[0][llc_addr] = req_in.req_id;
-		    sharers.port1[0][llc_addr] = 0; // TODO REMOVE: It's redundant.
-		    states.port1[0][llc_addr] = EXCLUSIVE;
+		    owners[llc_addr] = req_in.req_id;
+		    sharers[llc_addr] = 0; // TODO REMOVE: It's redundant.
+		    states[llc_addr] = EXCLUSIVE;
 		    send_rsp_out(RSP_EDATA, req_in.addr, line_buf[way], req_in.req_id, 0, 0);
 		    break;
 
 		case SHARED :
-		    sharers.port1[0][llc_addr] = sharers_buf[way] | (1 << req_in.req_id);
+		    sharers[llc_addr] = sharers_buf[way] | (1 << req_in.req_id);
 		    send_rsp_out(RSP_DATA, req_in.addr, line_buf[way], req_in.req_id, 0, 0);
 		    break;
 
 		case EXCLUSIVE :
 		case MODIFIED :
-		    sharers.port1[0][llc_addr] = (1 << req_in.req_id) | (1 << owner_buf[way]);
-		    states.port1[0][llc_addr] = SD;
+		    sharers[llc_addr] = (1 << req_in.req_id) | (1 << owner_buf[way]);
+		    states[llc_addr] = SD;
 		    send_fwd_out(FWD_GETS, req_in.addr, req_in.req_id, owner_buf[way]);
 		    break;
 
@@ -157,20 +157,20 @@ void llc::ctrl()
 		    if (state_buf[way] == INVALID) {
 			send_mem_req(READ, req_in.addr, req_in.hprot, 0);
 			get_mem_rsp(line_buf[way]);
-			hprots.port1[0][llc_addr] = req_in.hprot;
-			lines.port1[0][llc_addr] = line_buf[way];
-			tags.port1[0][llc_addr] = addr_br.tag;
+			hprots[llc_addr] = req_in.hprot;
+			lines[llc_addr] = line_buf[way];
+			tags[llc_addr] = addr_br.tag;
 		    }
-		    owners.port1[0][llc_addr] = req_in.req_id;
-		    sharers.port1[0][llc_addr] = 0; // TODO REMOVE: It's redundant.
-		    states.port1[0][llc_addr] = MODIFIED;
+		    owners[llc_addr] = req_in.req_id;
+		    sharers[llc_addr] = 0; // TODO REMOVE: It's redundant.
+		    states[llc_addr] = MODIFIED;
 		    send_rsp_out(RSP_DATA, req_in.addr, line_buf[way], req_in.req_id, 0, 0);
 		    break;
 
 		case SHARED :
-		    states.port1[0][llc_addr] = MODIFIED;
-		    owners.port1[0][llc_addr] = req_in.req_id;
-		    sharers.port1[0][llc_addr] = 0;
+		    states[llc_addr] = MODIFIED;
+		    owners[llc_addr] = req_in.req_id;
+		    sharers[llc_addr] = 0;
 		    {
 			HLS_DEFINE_PROTOCOL("llc-getm-shared-protocol");
 			invack_cnt_t invack_cnt = 0;
@@ -187,10 +187,10 @@ void llc::ctrl()
 		    break;
 		    
 		case EXCLUSIVE :
-		    states.port1[0][llc_addr] = MODIFIED;
+		    states[llc_addr] = MODIFIED;
 		case MODIFIED :
-		    owners.port1[0][llc_addr] = req_in.req_id;
-		    sharers.port1[0][llc_addr] = 0; // TODO REMOVE: It's redundant.
+		    owners[llc_addr] = req_in.req_id;
+		    sharers[llc_addr] = 0; // TODO REMOVE: It's redundant.
 		    send_fwd_out(FWD_GETM, req_in.addr, req_in.req_id, owner_buf[way]);
 		    break;
 
@@ -218,16 +218,16 @@ void llc::ctrl()
 
 		case SHARED :
 		    sharers_buf[way] = sharers_buf[way] & ~ (1 << req_in.req_id);
-		    sharers.port1[0][llc_addr] = sharers_buf[way];
+		    sharers[llc_addr] = sharers_buf[way];
 		    if (sharers_buf[way] == 0) {
-			states.port1[0][llc_addr] = INVALID_NOT_EMPTY;
+			states[llc_addr] = INVALID_NOT_EMPTY;
 		    }
 		    break;
 
 		case EXCLUSIVE :
 		    if (owner_buf[way] == req_in.req_id) {
-			states.port1[0][llc_addr] = INVALID_NOT_EMPTY;
-			owners.port1[0][llc_addr] = 0;
+			states[llc_addr] = INVALID_NOT_EMPTY;
+			owners[llc_addr] = 0;
 		    }
 		    break;
 
@@ -235,7 +235,7 @@ void llc::ctrl()
 		    break;
 
 		case SD :
-		    sharers.port1[0][llc_addr] = sharers_buf[way] & ~ (1 << req_in.req_id);
+		    sharers[llc_addr] = sharers_buf[way] & ~ (1 << req_in.req_id);
 		    break;
 
 		default :
@@ -255,23 +255,23 @@ void llc::ctrl()
 		    break;
 
 		case SHARED :
-		    sharers.port1[0][llc_addr] = sharers_buf[way] & ~ (1 << req_in.req_id);
+		    sharers[llc_addr] = sharers_buf[way] & ~ (1 << req_in.req_id);
 		    if (sharers_buf[way] == 0) {
-			states.port1[0][llc_addr] = INVALID_NOT_EMPTY;
+			states[llc_addr] = INVALID_NOT_EMPTY;
 		    }
 		    break;
 
 		case EXCLUSIVE :
 		case MODIFIED :
 		    if (owner_buf[way] == req_in.req_id) {
-			states.port1[0][llc_addr] = INVALID_NOT_EMPTY;
-			owners.port1[0][llc_addr] = 0;
-			lines.port1[0][llc_addr] = req_in.line;
+			states[llc_addr] = INVALID_NOT_EMPTY;
+			owners[llc_addr] = 0;
+			lines[llc_addr] = req_in.line;
 		    }
 		    break;
 
 		case SD :
-		    sharers.port1[0][llc_addr] = sharers_buf[way] & ~ (1 << req_in.req_id);
+		    sharers[llc_addr] = sharers_buf[way] & ~ (1 << req_in.req_id);
 		    break;
 
 		default :
@@ -313,7 +313,7 @@ inline void llc::reset_io()
     asserts.write(0);
     bookmark.write(0);
     custom_dbg.write(0);
-    
+
     req_stall = false;
     req_in_stalled_valid = false;
 
@@ -325,69 +325,6 @@ inline void llc::reset_io()
     way_out.write(0);
     llc_addr_out.write(0);
 
-    tags.port1.reset();
-    tags.port2.reset();
-    tags.port3.reset();
-    tags.port4.reset();
-    tags.port5.reset();
-    tags.port6.reset();
-    tags.port7.reset();
-    tags.port8.reset();
-    tags.port9.reset();
-
-    states.port1.reset();
-    states.port2.reset();
-    states.port3.reset();
-    states.port4.reset();
-    states.port5.reset();
-    states.port6.reset();
-    states.port7.reset();
-    states.port8.reset();
-    states.port9.reset();
-
-    hprots.port1.reset();
-    hprots.port2.reset();
-    hprots.port3.reset();
-    hprots.port4.reset();
-    hprots.port5.reset();
-    hprots.port6.reset();
-    hprots.port7.reset();
-    hprots.port8.reset();
-    hprots.port9.reset();
-
-    lines.port1.reset();
-    lines.port2.reset();
-    lines.port3.reset();
-    lines.port4.reset();
-    lines.port5.reset();
-    lines.port6.reset();
-    lines.port7.reset();
-    lines.port8.reset();
-    lines.port9.reset();
-
-    sharers.port1.reset();
-    sharers.port2.reset();
-    sharers.port3.reset();
-    sharers.port4.reset();
-    sharers.port5.reset();
-    sharers.port6.reset();
-    sharers.port7.reset();
-    sharers.port8.reset();
-    sharers.port9.reset();
-
-    owners.port1.reset();
-    owners.port2.reset();
-    owners.port3.reset();
-    owners.port4.reset();
-    owners.port5.reset();
-    owners.port6.reset();
-    owners.port7.reset();
-    owners.port8.reset();
-    owners.port9.reset();
-
-    // evict_ways.port1.reset();
-    // evict_ways.port2.reset();
-
     wait();
 }
 
@@ -397,7 +334,7 @@ inline void llc::reset_states()
 	for (int j=0; j<LLC_WAYS; j++) { // do not unroll
 	    {
 		HLS_DEFINE_PROTOCOL("llc-reset-states-protocol");
-		states.port1[0][(i << LLC_WAY_BITS) + j] = INVALID;
+		states[(i << LLC_WAY_BITS) + j] = INVALID;
 		wait();
 	    }
 	}
@@ -406,54 +343,15 @@ inline void llc::reset_states()
 
 void llc::read_set(llc_addr_t base, llc_way_t way_base)
 {
-    tag_buf[way_base + 0]	   = tags.port2[0][base + 0];
-    state_buf[way_base + 0]   = states.port2[0][base + 0];
-    hprot_buf[way_base + 0]   = hprots.port2[0][base + 0];
-    line_buf[way_base + 0]   = lines.port2[0][base + 0];
-    sharers_buf[way_base + 0] = sharers.port2[0][base + 0];
-    owner_buf[way_base + 0]  = owners.port2[0][base + 0];
-    tag_buf[way_base + 1]	   = tags.port3[0][base + 1];
-    state_buf[way_base + 1]   = states.port3[0][base + 1];
-    hprot_buf[way_base + 1]   = hprots.port3[0][base + 1];
-    line_buf[way_base + 1]   = lines.port3[0][base + 1];
-    sharers_buf[way_base + 1] = sharers.port3[0][base + 1];
-    owner_buf[way_base + 1]  = owners.port3[0][base + 1];
-    tag_buf[way_base + 2]	   = tags.port4[0][base + 2];
-    state_buf[way_base + 2]   = states.port4[0][base + 2];
-    hprot_buf[way_base + 2]   = hprots.port4[0][base + 2];
-    line_buf[way_base + 2]   = lines.port4[0][base + 2];
-    sharers_buf[way_base + 2] = sharers.port4[0][base + 2];
-    owner_buf[way_base + 2]  = owners.port4[0][base + 2];
-    tag_buf[way_base + 3]	   = tags.port5[0][base + 3];
-    state_buf[way_base + 3]   = states.port5[0][base + 3];
-    hprot_buf[way_base + 3]   = hprots.port5[0][base + 3];
-    line_buf[way_base + 3]   = lines.port5[0][base + 3];
-    sharers_buf[way_base + 3] = sharers.port5[0][base + 3];
-    owner_buf[way_base + 3]  = owners.port5[0][base + 3];
-    tag_buf[way_base + 4]	   = tags.port6[0][base + 4];
-    state_buf[way_base + 4]   = states.port6[0][base + 4];
-    hprot_buf[way_base + 4]   = hprots.port6[0][base + 4];
-    line_buf[way_base + 4]   = lines.port6[0][base + 4];
-    sharers_buf[way_base + 4] = sharers.port6[0][base + 4];
-    owner_buf[way_base + 4]  = owners.port6[0][base + 4];
-    tag_buf[way_base + 5]	   = tags.port7[0][base + 5];
-    state_buf[way_base + 5]   = states.port7[0][base + 5];
-    hprot_buf[way_base + 5]   = hprots.port7[0][base + 5];
-    line_buf[way_base + 5]   = lines.port7[0][base + 5];
-    sharers_buf[way_base + 5] = sharers.port7[0][base + 5];
-    owner_buf[way_base + 5]  = owners.port7[0][base + 5];
-    tag_buf[way_base + 6]	   = tags.port8[0][base + 6];
-    state_buf[way_base + 6]   = states.port8[0][base + 6];
-    hprot_buf[way_base + 6]   = hprots.port8[0][base + 6];
-    line_buf[way_base + 6]   = lines.port8[0][base + 6];
-    sharers_buf[way_base + 6] = sharers.port8[0][base + 6];
-    owner_buf[way_base + 6]  = owners.port8[0][base + 6];
-    tag_buf[way_base + 7]	   = tags.port9[0][base + 7];
-    state_buf[way_base + 7]   = states.port9[0][base + 7];
-    hprot_buf[way_base + 7]   = hprots.port9[0][base + 7];
-    line_buf[way_base + 7]   = lines.port9[0][base + 7];
-    sharers_buf[way_base + 7] = sharers.port9[0][base + 7];
-    owner_buf[way_base + 7]  = owners.port9[0][base + 7];
+	for (int i = L2_WAYS - 1; i >= 0; i--) {
+		HLS_UNROLL_LOOP(ON, "llc-read-set");
+		tag_buf[way_base + i]	  = tags[base + i];
+		state_buf[way_base + i]   = states[base + i];
+		hprot_buf[way_base + i]   = hprots[base + i];
+		line_buf[way_base + i]	  = lines[base + i];
+		sharers_buf[way_base + i] = sharers[base + i];
+		owner_buf[way_base + i]	  = owners[base + i];
+	}
 }
 
 // TODO make *_buf only with L2_WAYS positions to save area
@@ -467,7 +365,7 @@ void llc::lookup(tag_t tag, set_t set, llc_way_t &way, bool &evict, llc_addr_t &
 
     const llc_addr_t base = (set << LLC_WAY_BITS);
 
-    // evict_way_buf = evict_ways.port2[0][set];
+    // evict_way_buf = evict_ways[set];
 
     for (int i = 0; i < LLC_WAYS/L2_WAYS; i++) {
 	read_set(base + L2_WAYS*i, i*L2_WAYS);
@@ -476,12 +374,6 @@ void llc::lookup(tag_t tag, set_t set, llc_way_t &way, bool &evict, llc_addr_t &
     for (int i = 0; i < LLC_WAYS; i++) {
     	HLS_UNROLL_LOOP(ON, "llc-lookup-unroll");
 
-    	// tag_buf[i]   = tags[base + i];
-    	// state_buf[i] = states[base + i];
-    	// hprot_buf[i] = hprots[base + i];
-    	// line_buf[i] = lines[base + i];
-    	// sharers_buf[i] = sharers[base + i];
-    	// owner_buf[i] = owners[base + i];
 
     	if (tag_buf[i] == tag && state_buf[i] != INVALID) {
     	    tag_hit = true;
