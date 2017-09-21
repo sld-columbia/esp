@@ -290,7 +290,7 @@ class llc_fwd_out_t
 
 public:
 
-    coh_msg_t		coh_msg;	// data, e-data, inv-ack, put-ack
+    coh_msg_t		coh_msg;	// fwd_gets, fwd_getm, fwd_inv
     addr_t		addr;
     cache_id_t          req_id;
     cache_id_t          dest_id;

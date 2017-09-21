@@ -69,12 +69,16 @@ public:
     // Functions
     inline void reset_llc_test();
     void op(coh_msg_t coh_msg, llc_state_t state, bool evict, addr_breakdown_t req_addr, 
-	    addr_breakdown_t evict_addr, line_t req_line, line_t rsp_line,  line_t evict_line, bool rpt);
+	    addr_breakdown_t evict_addr, line_t req_line, line_t rsp_line, line_t evict_line,
+	    invack_cnt_t invack_cnt, cache_id_t req_id, cache_id_t dest_id, bool rpt);
+    void op_rsp(addr_breakdown_t req_addr, line_t req_line, cache_id_t req_id, bool rpt);
     void get_rsp_out(coh_msg_t coh_msg, addr_t addr, line_t line, invack_cnt_t invack_cnt,
 			     cache_id_t req_id, cache_id_t dest_id, bool rpt);
+    void get_fwd_out(coh_msg_t coh_msg, addr_t addr, cache_id_t req_id, cache_id_t dest_id, bool rpt);
     void get_mem_req(bool hwrite, addr_t addr, line_t line, bool rpt);
     void put_mem_rsp(line_t line, bool rpt);
     void put_req_in(coh_msg_t coh_msg, addr_t addr, line_t line, cache_id_t cache_id, bool rpt);
+    void put_rsp_in(addr_t addr, line_t line, cache_id_t req_id, bool rpt);
 };
 
 

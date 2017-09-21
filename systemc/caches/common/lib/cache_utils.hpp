@@ -14,7 +14,7 @@
     cerr << "Info:  " << sc_object::basename() << ".\t " << text << endl;
 
 #define CACHE_REPORT_ERROR(text, var)					\
-    cerr << "ERROR: " << sc_object::basename() << ".\t " << text << " : " \
+    cerr << hex << "ERROR: " << sc_object::basename() << ".\t " << text << " : " \
     << var << endl;
 
 #define CACHE_REPORT_TIME(time, text)					\
