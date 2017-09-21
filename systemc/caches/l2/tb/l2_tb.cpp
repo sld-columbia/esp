@@ -331,13 +331,20 @@ void l2_tb::l2_test()
 
     CACHE_REPORT_INFO("T4.4) Verify writes.");
 
+    offset_t off_tmp;
+
     addr_tmp = addr;
     line = make_line_of_addr(addr_tmp.line);
-    line.range(addr_tmp.off*8 + 7, addr_tmp.off*8) = 0;
+    off_tmp = addr_tmp.off + BYTES_PER_WORD - 2 * addr_tmp.b_off - 1;
+    line.range(off_tmp*8 + 7, off_tmp*8) = 0;
     op(READ, HIT, 0, WORD, CACHEABLE, addr_tmp, empty_word, line, RPT_TB);
 
     addr_tmp.tag_incr(1);
     addr_tmp.off.range(0,0) = 0;
+    if (addr_tmp.off.range(B_OFF_RANGE_HI,B_OFF_RANGE_HI) == 0)
+	addr_tmp.off.range(B_OFF_RANGE_HI,B_OFF_RANGE_HI) = 1;
+    else
+	addr_tmp.off.range(B_OFF_RANGE_HI,B_OFF_RANGE_HI) = 0;
     line = make_line_of_addr(addr_tmp.line);
     line.range(addr_tmp.off*8 + BITS_PER_HALFWORD - 1, addr_tmp.off*8) = 0;
     op(READ, HIT, 0, WORD, CACHEABLE, addr_tmp, empty_word, line, RPT_TB);
@@ -345,12 +352,17 @@ void l2_tb::l2_test()
     addr_tmp = addr;
     addr_tmp.tag_incr(2);
     line = make_line_of_addr(addr_tmp.line);
-    line.range(addr_tmp.off*8 + 7, addr_tmp.off*8) = 0;
+    off_tmp = addr_tmp.off + BYTES_PER_WORD - 2 * addr_tmp.b_off - 1;
+    line.range(off_tmp*8 + 7, off_tmp*8) = 0;
     op(READ, HIT, 0, WORD, CACHEABLE, addr_tmp, empty_word, line, RPT_TB);
 
     addr_tmp.tag_incr(1);
     addr_tmp.off.range(0,0) = 0;
-    line = make_line_of_addr(addr_tmp.line);
+    if (addr_tmp.off.range(B_OFF_RANGE_HI,B_OFF_RANGE_HI) == 0)
+	addr_tmp.off.range(B_OFF_RANGE_HI,B_OFF_RANGE_HI) = 1;
+    else
+	addr_tmp.off.range(B_OFF_RANGE_HI,B_OFF_RANGE_HI) = 0;
+    line = make_line_of_addr(addr_tmp.line);   
     line.range(addr_tmp.off*8 + BITS_PER_HALFWORD - 1, addr_tmp.off*8) = 0;
     op(READ, HIT, 0, WORD, CACHEABLE, addr_tmp, empty_word, line, RPT_TB);
 
