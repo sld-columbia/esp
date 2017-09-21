@@ -176,6 +176,9 @@ void llc_tb::llc_test()
 	addr.tag_incr(1); addr_evict.tag_incr(1);
     }
 
+    // The remaining tests will work only with at least 2 CPUs
+    if (N_CPU < 2)
+	sc_stop();
 
     /*
      * T2) Multiple CPUs.
