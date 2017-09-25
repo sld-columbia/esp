@@ -24,3 +24,9 @@ Repo Structure
 	- src/
 	- tb/
 	- memlist.txt
+
+-----------
+memlist.txt
+-----------
+
+There is a default memlist.txt pushed for both l2 and llc caches. It accounts for 2 CPUs, 256 sets and 8 ways in the l2 cache. If any of these parameters are changes in caches/common/lib/cache_consts.hpp memlist.txt must be updated. N_CPU (together with N_CPU_BITS and N_CPU_LOG2), SET_BITS and L2_WAYS_BITS are the only parameters to be modified. BEWARE: the minimum is N_CPU=2, SET_BITS=1 and L2_WAYS_BITS=1. After cache_consts.hpp has been modified memlist.txt can be updated by running 2 scripts: caches/l2/memlist_gen.sh, caches/llc/memlist_gen.sh.
