@@ -1,10 +1,6 @@
 /* Copyright 2017 Columbia University, SLD Group */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <time.h>
 #include "l2_tb.hpp"
-
 
 /*
  * Processes
@@ -322,7 +318,8 @@ void l2_tb::l2_test()
 
     CACHE_REPORT_INFO("T4.3) Byte and Halfword Write Miss.");
 
-    addr_tmp.tag_incr(1);
+    addr_tmp = addr;
+    addr_tmp.set_incr(1);
     op(WRITE, MISS, 0, BYTE, CACHEABLE, addr_tmp, empty_word, make_line_of_addr(addr_tmp.line), RPT_TB);
 
     addr_tmp.tag_incr(1);
@@ -350,7 +347,7 @@ void l2_tb::l2_test()
     op(READ, HIT, 0, WORD, CACHEABLE, addr_tmp, empty_word, line, RPT_TB);
 
     addr_tmp = addr;
-    addr_tmp.tag_incr(2);
+    addr_tmp.set_incr(1);
     line = make_line_of_addr(addr_tmp.line);
     off_tmp = addr_tmp.off + BYTES_PER_WORD - 2 * addr_tmp.b_off - 1;
     line.range(off_tmp*8 + 7, off_tmp*8) = 0;
@@ -465,14 +462,15 @@ void l2_tb::l2_test()
 
     addr = rand_addr();
     addr_tmp = addr;
+    int n_reqs = std::min(N_REQS, SETS);
 
-    // Issue N_REQS + 1 requests
+    // Issue n_reqs + 1 requests
 
     put_cpu_req(cpu_req, READ, WORD, CACHEABLE, addr_tmp.word, empty_word, RPT_TB);
     get_req_out(REQ_GETS, addr_tmp.line, cpu_req.hprot, RPT_TB);
     wait();
 
-    for (int i = 0; i < N_REQS - 1; i++) {
+    for (int i = 0; i < n_reqs - 1; i++) {
 	addr_tmp.set_incr(1);
 	put_cpu_req(cpu_req, WRITE, WORD, CACHEABLE, addr_tmp.word, empty_word, RPT_TB);
 	get_req_out(REQ_GETM, addr_tmp.line, cpu_req.hprot, RPT_TB);
@@ -483,19 +481,19 @@ void l2_tb::l2_test()
     put_cpu_req(cpu_req, WRITE, WORD, CACHEABLE, addr_tmp.word, empty_word, RPT_TB);
     wait();
 
-    // Respond to N_REQS requests
-    addr_tmp.set_decr(N_REQS);
+    // Respond to n_reqs requests
+    addr_tmp.set_decr(n_reqs);
     put_rsp_in(RSP_EDATA, addr_tmp.line, make_line_of_addr(addr_tmp.line), RPT_TB);
     get_rd_rsp(addr_tmp, make_line_of_addr(addr_tmp.line), RPT_TB);
     wait();
 
-    for (int i = 0; i < N_REQS - 1; i++) {
+    for (int i = 0; i < n_reqs - 1; i++) {
 	addr_tmp.set_incr(1);
 	put_rsp_in(RSP_DATA, addr_tmp.line, make_line_of_addr(addr_tmp.line), RPT_TB);
 	wait();
     }
 
-    // Manage the N_REQS + 1 request
+    // Manage the n_reqs + 1 request
     addr_tmp.set_incr(1);
     get_req_out(REQ_GETM, addr_tmp.line, cpu_req.hprot, RPT_TB);
     put_rsp_in(RSP_DATA, addr_tmp.line, make_line_of_addr(addr_tmp.line), RPT_TB);
@@ -504,7 +502,7 @@ void l2_tb::l2_test()
     CACHE_REPORT_INFO("T6.1) Verify writes.");
 
     addr_tmp = addr;
-    for (int i = 0; i < N_REQS; i++) {
+    for (int i = 0; i < n_reqs; i++) {
 	addr_tmp.set_incr(1);
 
 	put_cpu_req(cpu_req, READ, WORD, CACHEABLE, addr_tmp.word, empty_word, RPT_TB);
@@ -519,7 +517,7 @@ void l2_tb::l2_test()
     // issue flush
     l2_flush_tb.put(1);
 
-    for (int i = 0; i < N_REQS + 1; ++i) {
+    for (int i = 0; i < n_reqs + 1; ++i) {
 	req_out = l2_req_out_tb.get();
 	put_rsp_in(RSP_PUTACK, req_out.addr, empty_line, RPT_TB);
 	wait();

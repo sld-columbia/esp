@@ -3,7 +3,10 @@
 #ifndef __L2_TB_HPP__
 #define __L2_TB_HPP__
 
-
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+#include <algorithm>
 #include "cache_utils.hpp"
 
 class l2_tb : public sc_module

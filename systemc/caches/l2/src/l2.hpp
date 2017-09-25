@@ -5,11 +5,11 @@
 
 #include "cache_utils.hpp"
 #include "l2_directives.hpp"
-#include "l2_tags.hpp"
-#include "l2_states.hpp"
-#include "l2_hprots.hpp"
-#include "l2_lines.hpp"
-#include "l2_evict_ways.hpp"
+// #include "l2_tags.hpp"
+// #include "l2_states.hpp"
+// #include "l2_hprots.hpp"
+// #include "l2_lines.hpp"
+// #include "l2_evict_ways.hpp"
 
 class l2 : public sc_module
 {
