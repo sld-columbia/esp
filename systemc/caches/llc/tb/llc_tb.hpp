@@ -20,7 +20,7 @@ public:
     // Debug signals
     sc_in< sc_bv<LLC_ASSERT_WIDTH> >   asserts;
     sc_in< sc_bv<LLC_BOOKMARK_WIDTH> > bookmark;
-    sc_in<uint32_t>     custom_dbg;
+    sc_in<uint32_t>                    custom_dbg;
 
     sc_in<bool> tag_hit_out;
     sc_in<llc_way_t> hit_way_out;
@@ -31,14 +31,16 @@ public:
     sc_in<llc_addr_t> llc_addr_out;
 
     // Input ports
-    put_initiator<llc_req_in_t> llc_req_in_tb;
-    put_initiator<llc_rsp_in_t> llc_rsp_in_tb;
+    put_initiator<llc_req_in_t>  llc_req_in_tb;
+    put_initiator<llc_rsp_in_t>  llc_rsp_in_tb;
     put_initiator<llc_mem_rsp_t> llc_mem_rsp_tb; 
+    put_initiator<bool>          llc_rst_tb_tb; 
 
     // Output ports
     get_initiator<llc_rsp_out_t> llc_rsp_out_tb;
     get_initiator<llc_fwd_out_t> llc_fwd_out_tb;
     get_initiator<llc_mem_req_t> llc_mem_req_tb;
+    get_initiator<bool>          llc_rst_tb_done_tb;
 
     // Constructor
     SC_CTOR(llc_tb)
@@ -56,10 +58,12 @@ public:
 	// Assign clock and reset to put_get ports
 	llc_req_in_tb.clk_rst (clk, rst);
 	llc_rsp_in_tb.clk_rst (clk, rst);
-	llc_mem_rsp_tb.clk_rst (clk, rst);
+	llc_mem_rsp_tb.clk_rst(clk, rst);
+	llc_rst_tb_tb.clk_rst(clk, rst);
 	llc_rsp_out_tb.clk_rst(clk, rst);
 	llc_fwd_out_tb.clk_rst(clk, rst);
 	llc_mem_req_tb.clk_rst(clk, rst);
+	llc_rst_tb_done_tb.clk_rst(clk, rst);
     }
 
     // Processes
@@ -67,6 +71,7 @@ public:
     void llc_debug();
 
     // Functions
+    void reset_dut();
     inline void reset_llc_test();
     void op(coh_msg_t coh_msg, llc_state_t state, bool evict, addr_breakdown_t req_addr, 
 	    addr_breakdown_t evict_addr, line_t req_line, line_t rsp_line, line_t evict_line,

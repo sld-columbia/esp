@@ -31,8 +31,17 @@ void llc::ctrl()
 	llc_addr_t llc_addr = 0;
 	bool evict = false;
 
+	// dummy variables
+	bool rst_tmp;
+
 	{
 	    NB_GET;
+
+	    if (llc_rst_tb.nb_can_get()) {
+		llc_rst_tb.nb_get(rst_tmp);
+		this->reset_states();
+		llc_rst_tb_done.put(1);
+	    }
 
 	    wait();
 
@@ -82,6 +91,7 @@ void llc::ctrl()
 	    }
 
 	    addr_br.breakdown(req_in.addr);
+	    CACHE_REPORT_VAR(sc_time_stamp(), "req_get addr: ", req_in.addr);
 
 	    lookup(addr_br.tag, addr_br.set, way, evict, llc_addr);
 
@@ -112,6 +122,7 @@ void llc::ctrl()
 		case INVALID :
 		case INVALID_NOT_EMPTY :
 		    if (state_buf[way] == INVALID) {
+			CACHE_REPORT_VAR(sc_time_stamp(), "gets-invalid-mem-req: ", req_in.addr);
 			send_mem_req(READ, req_in.addr, req_in.hprot, 0);
 			get_mem_rsp(line_buf[way]);
 			hprots[llc_addr] = req_in.hprot;
@@ -303,12 +314,16 @@ inline void llc::reset_io()
 {
     RESET_IO;
 
-    llc_req_in.reset();
-    llc_rsp_in.reset();
-    llc_mem_rsp.reset();
-    llc_rsp_out.reset();
-    llc_fwd_out.reset();
-    llc_mem_req.reset();
+    wait();
+
+    llc_req_in.reset_get();
+    llc_rsp_in.reset_get();
+    llc_mem_rsp.reset_get();
+    llc_rst_tb.reset_get();
+    llc_rsp_out.reset_put();
+    llc_fwd_out.reset_put();
+    llc_mem_req.reset_put();
+    llc_rst_tb_done.reset_put();
 
     asserts.write(0);
     bookmark.write(0);
@@ -330,10 +345,11 @@ inline void llc::reset_io()
 
 inline void llc::reset_states()
 {
+    HLS_DEFINE_PROTOCOL("llc-reset-states-protocol");
+    wait();
     for (int i=0; i<SETS; i++) { // do not unroll
 	for (int j=0; j<LLC_WAYS; j++) { // do not unroll
 	    {
-		HLS_DEFINE_PROTOCOL("llc-reset-states-protocol");
 		states[(i << LLC_WAY_BITS) + j] = INVALID;
 		wait();
 	    }

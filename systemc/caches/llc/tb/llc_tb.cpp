@@ -71,6 +71,64 @@ void llc_tb::llc_test()
      */
 
     reset_llc_test();
+    reset_dut();
+
+    addr_base = rand_addr();
+    addr = addr_base; addr_evict = addr_base;
+
+
+    CACHE_REPORT_INFO("T0) 1 CPU. NO EVICTION. TEST ALL POSSIBLE INTERNAL STATES OF LLC.");
+
+    addr = addr_base; addr_evict = addr_base;
+
+    CACHE_REPORT_INFO("T0.0)");
+    // fill a set with exclusive and modified states with GetS and GetM
+    for (int i = 0; i < LLC_WAYS; ++i) {
+    	op(REQ_GETS, INVALID, 0, addr, addr_evict, 0, make_line_of_addr(addr.line), 0, 0, 0, 0, RPT_TB);
+	addr.tag_incr(1);
+    }
+    
+    CACHE_REPORT_INFO("T0.2)");
+    // put back all of the ways in the first set with PutS and PutM
+    for (int i = 0; i < LLC_WAYS; ++i) {
+	addr.tag_decr(1);
+    	op(REQ_PUTM, MODIFIED, 0, addr, addr_evict, 0xcace, 0, 0, 0, 0, 0, RPT_TB);
+    }
+
+    CACHE_REPORT_INFO("T0.5)");
+    // get all INVALID_NOT_EMPTY from the first set
+    for (int i = 0; i < LLC_WAYS; ++i) {
+    	op(REQ_GETM, INVALID_NOT_EMPTY, 0, addr, addr_evict, 0, 0xcace, 0, 0, 0, 0, RPT_TB);
+	addr.tag_incr(1);
+    }
+
+    reset_dut();    
+
+    ////////////////////////////
+
+    CACHE_REPORT_INFO("T1) 1 CPU. EVICTION.");
+
+    CACHE_REPORT_INFO("T1.0)");
+
+    // cause LLC_WAYS + 2 invalidations on a new set
+    addr_evict = addr;
+    for (int i = 0; i < LLC_WAYS; ++i) {
+    	op(REQ_GETS, INVALID, 0, addr, addr_evict, 0, make_line_of_addr(addr.line), 0, 0, 0, 0, RPT_TB);
+	addr.tag_incr(1);
+    }
+
+    CACHE_REPORT_INFO("T1.1)");
+    for (int i = 0; i < LLC_WAYS; ++i) {
+	op(REQ_PUTS, EXCLUSIVE, 0, addr_evict, addr_evict, 0, 0, 0, 0, 0, 0, RPT_TB);
+    	op(REQ_GETS, INVALID, 1, addr, addr_evict, 0, make_line_of_addr(addr.line), 
+	   make_line_of_addr(addr_evict.line), 0, 0, 0, RPT_TB);
+	addr.tag_incr(1); addr_evict.tag_incr(1);
+    }
+
+    if (LLC_WAYS < 8)
+	sc_stop();
+
+    reset_dut(); 
 
     /*
      * T0) 1 CPU. No eviction. Test all possible internal states of LLC. 
@@ -78,7 +136,6 @@ void llc_tb::llc_test()
 
     CACHE_REPORT_INFO("T0) 1 CPU. NO EVICTION. TEST ALL POSSIBLE INTERNAL STATES OF LLC.");
 
-    addr_base = rand_addr();
     addr = addr_base; addr_evict = addr_base;
 
     CACHE_REPORT_INFO("T0.0)");
@@ -94,9 +151,9 @@ void llc_tb::llc_test()
     // fill half of a different set with exclusive and modified states
     addr.set_incr(1);
     for (int i = 0; i < LLC_WAYS/4; ++i) {
-    	op(REQ_GETS, INVALID, 0, addr, addr_evict, 0, make_line_of_addr(addr.line), 0, 0, 0, 0, RPT_TB);
+	op(REQ_GETS, INVALID, 0, addr, addr_evict, 0, make_line_of_addr(addr.line), 0, 0, 0, 0, RPT_TB);
 	addr.tag_incr(1);
-    	op(REQ_GETM, INVALID, 0, addr, addr_evict, 0, make_line_of_addr(addr.line), 0, 0, 0, 0, RPT_TB);
+	op(REQ_GETM, INVALID, 0, addr, addr_evict, 0, make_line_of_addr(addr.line), 0, 0, 0, 0, RPT_TB);
 	addr.tag_incr(1);
     }
 
@@ -148,6 +205,8 @@ void llc_tb::llc_test()
 	addr.tag_incr(1);
     }
 
+    reset_dut();
+
     /*
      * T1) 1 CPU. Eviction.
      */
@@ -157,7 +216,7 @@ void llc_tb::llc_test()
     CACHE_REPORT_INFO("T1.0)");
 
     // cause LLC_WAYS + 2 invalidations on a new set
-    addr.set_incr(2);
+    // addr.set_incr(2);
     addr_evict = addr;
     for (int i = 0; i < LLC_WAYS; ++i) {
     	op(REQ_GETS, INVALID, 0, addr, addr_evict, 0, make_line_of_addr(addr.line), 0, 0, 0, 0, RPT_TB);
@@ -179,6 +238,8 @@ void llc_tb::llc_test()
     // The remaining tests will work only with at least 2 CPUs
     if (N_CPU < 2)
 	sc_stop();
+
+    reset_dut();
 
     /*
      * T2) Multiple CPUs.
@@ -348,14 +409,25 @@ void llc_tb::llc_test()
  * Functions
  */
 
+void llc_tb::reset_dut()
+{
+    bool tmp_rst_tb;
+
+    llc_rst_tb_tb.put(1);
+    llc_rst_tb_done_tb.get(tmp_rst_tb);
+    wait();
+}
+
 inline void llc_tb::reset_llc_test()
 {
-    llc_req_in_tb.reset();
-    llc_rsp_in_tb.reset();
-    llc_mem_rsp_tb.reset();
-    llc_rsp_out_tb.reset();
-    llc_fwd_out_tb.reset();
-    llc_mem_req_tb.reset();
+    llc_req_in_tb.reset_put();
+    llc_rsp_in_tb.reset_put();
+    llc_mem_rsp_tb.reset_put();
+    llc_rst_tb_tb.reset_put();
+    llc_rsp_out_tb.reset_get();
+    llc_fwd_out_tb.reset_get();
+    llc_mem_req_tb.reset_get();
+    llc_rst_tb_done_tb.reset_get();
 
     wait();
 }

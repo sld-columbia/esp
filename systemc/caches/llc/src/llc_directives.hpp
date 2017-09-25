@@ -22,7 +22,7 @@
 
 #define SEND_MEM_REQ							\
     HLS_DEFINE_PROTOCOL("llc-send-mem-req-protocol");			\
-    bookmark_tmp |= BM_LLC_SEND_MEM_REQ;					\
+    bookmark_tmp |= BM_LLC_SEND_MEM_REQ;				\
     if (RPT_RTL) CACHE_REPORT_TIME(sc_time_stamp(), "Send mem req.")
 
 #define GET_MEM_RSP \

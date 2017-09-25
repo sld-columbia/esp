@@ -21,9 +21,9 @@ public:
     sc_in<bool> rst;
 
     // Signals
-    sc_signal< sc_bv<LLC_ASSERT_WIDTH> > asserts;
+    sc_signal< sc_bv<LLC_ASSERT_WIDTH> >   asserts;
     sc_signal< sc_bv<LLC_BOOKMARK_WIDTH> > bookmark;
-    sc_signal<uint32_t> custom_dbg;
+    sc_signal<uint32_t>                    custom_dbg;
 
     sc_signal<bool> tag_hit_out;
     sc_signal<llc_way_t> hit_way_out;
@@ -38,16 +38,19 @@ public:
     put_get_channel<llc_req_in_t>  llc_req_in_chnl;
     put_get_channel<llc_rsp_in_t>  llc_rsp_in_chnl;
     put_get_channel<llc_mem_rsp_t> llc_mem_rsp_chnl;
+    put_get_channel<bool>          llc_rst_tb_chnl;
+
     // From LLC cache
     put_get_channel<llc_rsp_out_t> llc_rsp_out_chnl;
     put_get_channel<llc_fwd_out_t> llc_fwd_out_chnl;
     put_get_channel<llc_mem_req_t> llc_mem_req_chnl;
+    put_get_channel<bool>          llc_rst_tb_done_chnl;
 
     // Modules
     // LLC cache instance
     llc_wrapper	*dut;
     // LLC testbench module
-    llc_tb        	*tb;
+    llc_tb      *tb;
 
     // Constructor
     SC_CTOR(system_t)
@@ -72,14 +75,16 @@ public:
 	dut->llc_req_in(llc_req_in_chnl);
 	dut->llc_rsp_in(llc_rsp_in_chnl);
 	dut->llc_mem_rsp(llc_mem_rsp_chnl);
+	dut->llc_rst_tb(llc_rst_tb_chnl);
 	dut->llc_rsp_out(llc_rsp_out_chnl);
 	dut->llc_fwd_out(llc_fwd_out_chnl);
 	dut->llc_mem_req(llc_mem_req_chnl);
+	dut->llc_rst_tb_done(llc_rst_tb_done_chnl);
 
 	// Binding testbench
 	tb->clk(clk);
 	tb->rst(rst);
-        tb->asserts(asserts);
+	tb->asserts(asserts);
         tb->bookmark(bookmark);
         tb->custom_dbg(custom_dbg);
 	tb->tag_hit_out(tag_hit_out);
@@ -92,9 +97,11 @@ public:
 	tb->llc_req_in_tb(llc_req_in_chnl);
 	tb->llc_rsp_in_tb(llc_rsp_in_chnl);
 	tb->llc_mem_rsp_tb(llc_mem_rsp_chnl); 
+	tb->llc_rst_tb_tb(llc_rst_tb_chnl);
 	tb->llc_rsp_out_tb(llc_rsp_out_chnl);
 	tb->llc_fwd_out_tb(llc_fwd_out_chnl);
 	tb->llc_mem_req_tb(llc_mem_req_chnl);
+	tb->llc_rst_tb_done_tb(llc_rst_tb_done_chnl);
     }
 };
 

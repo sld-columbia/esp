@@ -5,6 +5,13 @@
 
 #include "cache_utils.hpp"
 #include "llc_directives.hpp"
+// #include "llc_tags.hpp"
+// #include "llc_states.hpp"
+// #include "llc_hprots.hpp"
+// #include "llc_lines.hpp"
+// #include "llc_sharers.hpp"
+// #include "llc_owners.hpp"
+// #include "llc_evict_ways.hpp"
 
 class llc : public sc_module
 {
@@ -34,11 +41,13 @@ public:
     nb_get_initiator<llc_req_in_t>	llc_req_in;
     nb_get_initiator<llc_rsp_in_t>	llc_rsp_in;
     get_initiator<llc_mem_rsp_t>	llc_mem_rsp;
+    nb_get_initiator<bool>              llc_rst_tb;
 
     // Output ports
     put_initiator<llc_rsp_out_t>	llc_rsp_out;
     put_initiator<llc_fwd_out_t>	llc_fwd_out;
     put_initiator<llc_mem_req_t>        llc_mem_req;
+    put_initiator<bool>                 llc_rst_tb_done;
 
     // Local memory
     tag_t tags[LLC_LINES];
@@ -70,9 +79,11 @@ public:
 	llc_req_in.clk_rst (clk, rst);
 	llc_rsp_in.clk_rst (clk, rst);
 	llc_mem_rsp.clk_rst (clk, rst);
+	llc_rst_tb.clk_rst(clk, rst);
 	llc_rsp_out.clk_rst (clk, rst);
 	llc_fwd_out.clk_rst(clk, rst);
 	llc_mem_req.clk_rst(clk, rst);
+	llc_rst_tb_done.clk_rst(clk, rst);
 
 	// Flatten arrays
 	FLATTEN_REGS;
