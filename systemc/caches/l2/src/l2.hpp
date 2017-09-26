@@ -73,6 +73,20 @@ public:
 
     // Constructor
     SC_CTOR(l2)
+	    : clk("clk")
+	    , rst("rst")
+	    , asserts("asserts")
+	    , bookmark("bookmark")
+	    , custom_dbg("custom_dbg")
+	    , flush_done("flush_done")
+	    , l2_cpu_req("l2_cpu_req")
+	    , l2_fwd_in("l2_fwd_in")
+	    , l2_rsp_in("l2_rsp_in")
+	    , l2_flush("l2_flush")
+	    , l2_rd_rsp("l2_rd_rsp")
+	    , l2_inval("l2_inval")
+	    , l2_req_out("l2_req_out")
+	    , l2_rsp_out("l2_rsp_out")
     {
         // Cache controller process
 	SC_CTHREAD(ctrl, clk.pos());

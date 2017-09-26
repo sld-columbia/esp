@@ -69,6 +69,26 @@ public:
 
     // Constructor
     SC_CTOR(llc)
+	    : clk("clk")
+	    , rst("rst")
+	    , asserts("asserts")
+	    , bookmark("bookmark")
+	    , custom_dbg("custom_dbg")
+	    , tag_hit_out("tag_hit_out")
+	    , hit_way_out("hit_way_out")
+	    , empty_way_found_out("empty_way_found_out")
+	    , empty_way_out("empty_way_out")
+	    , evict_out("evict_out")
+	    , way_out("way_out")
+	    , llc_addr_out("llc_addr_out")
+	    , llc_req_in("llc_req_in")
+	    , llc_rsp_in("llc_rsp_in")
+	    , llc_mem_rsp("llc_mem_rsp")
+	    , llc_rst_tb("llc_rst_tb")
+	    , llc_rsp_out("llc_rsp_out")
+	    , llc_fwd_out("llc_fwd_out")
+	    , llc_mem_req("llc_mem_req")
+	    , llc_rst_tb_done("llc_rst_tb_done")
     {
         // Cache controller process
 	SC_CTHREAD(ctrl, clk.pos());

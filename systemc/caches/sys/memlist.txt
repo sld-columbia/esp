@@ -1,0 +1,12 @@
+l2_tags 2048 20 1w:0r 0w:8r
+l2_states 2048 2 1w:0r 0w:8r
+l2_hprots 2048 4 1w:0r 0w:8r
+l2_lines 2048 128 1w:0r 0w:8r
+l2_evict_ways 256 3 1w:0r 0w:1r
+llc_tags 4096 20 1w:0r 0w:8r
+llc_states 4096 3 1w:0r 0w:8r
+llc_hprots 4096 4 1w:0r 0w:8r
+llc_lines 4096 128 1w:0r 0w:8r
+llc_sharers 4096 2 1w:0r 0w:8r
+llc_owners 4096 1 1w:0r 0w:8r
+llc_evict_ways 256 5 1w:0r 0w:1r
