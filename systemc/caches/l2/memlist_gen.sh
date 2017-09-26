@@ -11,12 +11,12 @@ echo "[INFO] Extract information from header files."
 CACHE_LIB=../../common/lib
 CACHE_CONSTS=$CACHE_LIB/cache_consts.hpp
 
-SET_BITS_LINE="$(grep "#define SET_BITS " $CACHE_CONSTS)"
-L2_WAY_BITS_LINE="$(grep "#define L2_WAY_BITS " $CACHE_CONSTS)"
-ADDR_BITS_LINE="$(grep "#define ADDR_BITS " $CACHE_CONSTS)"
-BYTE_BITS_LINE="$(grep "#define BYTE_BITS " $CACHE_CONSTS)"
-WORD_BITS_LINE="$(grep "#define WORD_BITS " $CACHE_CONSTS)"
-STATE_BITS_LINE="$(grep "#define STABLE_STATE_BITS " $CACHE_CONSTS)"
+SET_BITS_LINE="$(grep "#define SET_BITS" $CACHE_CONSTS)"
+L2_WAY_BITS_LINE="$(grep "#define L2_WAY_BITS" $CACHE_CONSTS)"
+ADDR_BITS_LINE="$(grep "#define ADDR_BITS" $CACHE_CONSTS)"
+BYTE_BITS_LINE="$(grep "#define BYTE_BITS" $CACHE_CONSTS)"
+WORD_BITS_LINE="$(grep "#define WORD_BITS" $CACHE_CONSTS)"
+STATE_BITS_LINE="$(grep "#define STABLE_STATE_BITS" $CACHE_CONSTS)"
 
 echo $SET_BITS_LINE
 echo $L2_WAY_BITS_LINE
