@@ -74,8 +74,8 @@ package cachepackage is
   constant ASSERTS_RSP_OUT_WIDTH : integer := 1;
 
   -- Ongoing transaction buffers
-  constant N_REQS    : integer := 1;
-  constant REQS_BITS : integer := 1;
+  constant N_REQS    : integer := 4;
+  constant REQS_BITS : integer := 2;
 
   constant LINE_RANGE_HI  : integer := (ADDR_BITS - 1);
   constant LINE_RANGE_LO  : integer := (ADDR_BITS - TAG_BITS - SET_BITS);
@@ -338,6 +338,13 @@ package cachepackage is
       clk : in std_ulogic;
       rst : in std_ulogic;
 
+      llc_rst_tb_valid : in std_ulogic;
+      llc_rst_tb_data : in std_ulogic;
+      llc_rst_tb_done_ready : in std_ulogic;
+      llc_rst_tb_ready : out std_ulogic;
+      llc_rst_tb_done_valid : out std_ulogic;
+      llc_rst_tb_done_data : out std_ulogic;
+      
       llc_req_in_ready : out std_ulogic;
       llc_req_in_valid : in std_ulogic;
       llc_req_in_data_coh_msg : in coh_msg_t;

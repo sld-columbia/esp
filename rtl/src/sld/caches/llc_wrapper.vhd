@@ -675,6 +675,13 @@ begin  -- architecture rtl
       clk => clk,
       rst => rst,
 
+      llc_rst_tb_valid => '0',
+      llc_rst_tb_data => '0',
+      llc_rst_tb_done_ready => '0',
+      llc_rst_tb_ready => open,
+      llc_rst_tb_done_valid => open,
+      llc_rst_tb_done_data => open,
+      
       -- NoC to cache
       llc_req_in_ready        => llc_req_in_ready,
       llc_req_in_valid        => llc_req_in_valid,

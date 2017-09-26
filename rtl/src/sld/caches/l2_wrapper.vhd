@@ -848,7 +848,7 @@ begin  -- architecture rtl of l2_wrapper
         cpu_req_data_hprot   <= ahbsi.hprot;
         cpu_req_data_addr    <= ahbsi.haddr;
 
-        -- alloc_reg.line := rd_rsp_data_line;
+        alloc_reg.line := rd_rsp_data_line;
 
         if rd_rsp_valid = '1' then
 
@@ -1065,7 +1065,7 @@ begin  -- architecture rtl of l2_wrapper
     end case;
 
     ahbs_reg_next <= reg;
-    -- load_alloc_reg_next <= alloc_reg;
+    load_alloc_reg_next <= alloc_reg;
 
   end process fsm_ahbs;
 
