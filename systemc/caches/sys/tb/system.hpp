@@ -232,10 +232,10 @@ public:
 				(*n->l2_rsp_out[i])(*l2_rsp_out_chnl[i]);
 
 				// Binding testbench
-				tb->l2_flush_done[i](*l2_flush_done[i]);
-				tb->l2_asserts[i](*l2_asserts[i]);
-				tb->l2_bookmark[i](*l2_bookmark[i]);
-				tb->l2_custom_dbg[i](*l2_custom_dbg[i]);
+				(*tb->l2_flush_done[i])(*l2_flush_done[i]);
+				(*tb->l2_asserts[i])(*l2_asserts[i]);
+				(*tb->l2_bookmark[i])(*l2_bookmark[i]);
+				(*tb->l2_custom_dbg[i])(*l2_custom_dbg[i]);
 				(*tb->l2_cpu_req_tb[i])(*l2_cpu_req_chnl[i]);
 				(*tb->l2_flush_tb[i])(*l2_flush_chnl[i]);
 				(*tb->l2_rd_rsp_tb[i])(*l2_rd_rsp_chnl[i]);

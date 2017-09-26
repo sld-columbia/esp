@@ -22,10 +22,10 @@ public:
 	//
 
 	// L2 Debug
-	sc_in< sc_bv<ASSERT_WIDTH> >    l2_asserts[N_CPU];
-	sc_in< sc_bv<BOOKMARK_WIDTH> >  l2_bookmark[N_CPU];
-	sc_in<uint32_t>                 l2_custom_dbg[N_CPU];
-	sc_in<bool>                     l2_flush_done[N_CPU];
+	sc_in< sc_bv<ASSERT_WIDTH> >    *l2_asserts[N_CPU];
+	sc_in< sc_bv<BOOKMARK_WIDTH> >  *l2_bookmark[N_CPU];
+	sc_in<uint32_t>                 *l2_custom_dbg[N_CPU];
+	sc_in<bool>                     *l2_flush_done[N_CPU];
 	// To L2 cache
 	put_initiator<l2_cpu_req_t>     *l2_cpu_req_tb[N_CPU];
 	put_initiator<bool>		*l2_flush_tb[N_CPU];
@@ -50,6 +50,20 @@ public:
 
 	// Constructor
 	SC_CTOR(sys_tb)
+		: clk("clk")
+		, rst("rst")
+		, llc_asserts("llc_asserts")
+		, llc_bookmark("llc_bookmark")
+		, llc_custom_dbg("llc_custom_dbg")
+		, llc_tag_hit_out("llc_tag_hit_out")
+		, llc_hit_way_out("llc_hit_way_out")
+		, llc_empty_way_found_out("llc_empty_way_found_out")
+		, llc_empty_way_out("llc_empty_way_out")
+		, llc_evict_out("llc_evict_out")
+		, llc_way_out("llc_way_out")
+		, llc_addr_out("llc_addr_out")
+		, llc_rst_tb("llc_rst_tb")
+		, llc_rst_tb_done("llc_rst_tb_done")
 		{
 			// Process performing the test
 			SC_CTHREAD(sys_test, clk.pos());
@@ -58,6 +72,18 @@ public:
 			// Assign clock and reset to put_get ports
 			for (int i = 0; i < N_CPU; i++) {
 				std::stringstream stm;
+				stm.str("");
+				stm << "l2_asserts_" << i;
+				l2_asserts[i] = new sc_in< sc_bv<ASSERT_WIDTH> >(stm.str().c_str());
+				stm.str("");
+				stm << "l2_bookmark_" << i;
+				l2_bookmark[i] = new sc_in< sc_bv<BOOKMARK_WIDTH> >(stm.str().c_str());
+				stm.str("");
+				stm << "l2_custom_dbg_" << i;
+				l2_custom_dbg[i] = new sc_in<uint32_t>(stm.str().c_str());
+				stm.str("");
+				stm << "l2_flush_done_" << i;
+				l2_flush_done[i] = new sc_in<bool>(stm.str().c_str());
 				stm.str("");
 				stm << "l2_cpu_req_tb_" << i;
 				l2_cpu_req_tb[i] = new put_initiator<l2_cpu_req_t>(stm.str().c_str());

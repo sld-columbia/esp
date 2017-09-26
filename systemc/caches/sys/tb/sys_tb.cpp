@@ -80,7 +80,7 @@ inline void sys_tb::reset_sys_test()
 	llc_rst_tb.put(true);
 
 	for (int i = 0; i < N_CPU; i++)
-		while (!l2_flush_done[i].read())
+		while (!l2_flush_done[i]->read())
 			wait();
 	bool dummy;
 	llc_rst_tb_done.get(dummy);
