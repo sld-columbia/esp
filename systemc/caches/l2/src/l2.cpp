@@ -60,7 +60,7 @@ void l2::ctrl()
 	set_t                   set_tmp;
 	
 	{
-	    NB_GET;
+	    L2_NB_GET;
 
 	    is_flush_to_get = false;
 	    is_rsp_to_get = false;
@@ -471,7 +471,7 @@ void l2::ctrl()
 
 inline void l2::reset_io()
 {
-    RESET_IO;
+    L2_RESET_IO;
 
     l2_cpu_req.reset_get();
     l2_fwd_in.reset_get();
@@ -629,7 +629,7 @@ void l2::get_cpu_req(l2_cpu_req_t &cpu_req)
 
 void l2::get_rsp_in(l2_rsp_in_t &rsp_in)
 {
-    GET_RSP_IN;
+    L2_GET_RSP_IN;
 
     l2_rsp_in.nb_get(rsp_in); // invack_cnt not handled yet
 }

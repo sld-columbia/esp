@@ -5,7 +5,7 @@
 
 #define LLC_WAYS_UNROLL (LLC_WAYS/8)
 
-#define FLATTEN_REGS				\
+#define LLC_FLATTEN_REGS			\
     HLS_FLATTEN_ARRAY(tag_buf);			\
     HLS_FLATTEN_ARRAY(state_buf);		\
     HLS_FLATTEN_ARRAY(line_buf);		\
@@ -14,10 +14,10 @@
     HLS_FLATTEN_ARRAY(owner_buf)
 
 // Reset functions
-#define RESET_IO				\
+#define LLC_RESET_IO				\
     HLS_DEFINE_PROTOCOL("llc-reset-io-protocol")
 
-#define NB_GET					\
+#define LLC_NB_GET				\
     HLS_DEFINE_PROTOCOL("llc-nb-get-protocol")
 
 #define SEND_MEM_REQ							\
@@ -35,7 +35,7 @@
     bookmark_tmp |= BM_LLC_GET_REQ_IN;					\
     if (RPT_RTL) CACHE_REPORT_TIME(sc_time_stamp(), "Get req in.")
 
-#define GET_RSP_IN							\
+#define LLC_GET_RSP_IN							\
     HLS_DEFINE_PROTOCOL("llc-rsp-in-protocol");				\
     bookmark_tmp |= BM_LLC_GET_RSP_IN;					\
     if (RPT_RTL) CACHE_REPORT_TIME(sc_time_stamp(), "Get rsp in.")

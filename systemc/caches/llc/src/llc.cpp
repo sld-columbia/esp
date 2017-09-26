@@ -35,7 +35,7 @@ void llc::ctrl()
 	bool rst_tmp;
 
 	{
-	    NB_GET;
+	    LLC_NB_GET;
 
 	    if (llc_rst_tb.nb_can_get()) {
 		llc_rst_tb.nb_get(rst_tmp);
@@ -312,7 +312,7 @@ void llc::ctrl()
 
 inline void llc::reset_io()
 {
-    RESET_IO;
+    LLC_RESET_IO;
 
     wait();
 
@@ -455,7 +455,7 @@ void llc::get_req_in(llc_req_in_t &req_in)
 
 void llc::get_rsp_in(llc_rsp_in_t &rsp_in)
 {
-    GET_RSP_IN;
+    LLC_GET_RSP_IN;
     llc_rsp_in.nb_get(rsp_in);
 }
 

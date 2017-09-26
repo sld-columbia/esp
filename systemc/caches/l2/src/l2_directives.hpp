@@ -4,7 +4,7 @@
 #define __L2_DIRECTIVES_HPP__
 
 
-#define FLATTEN_REGS				\
+#define L2_FLATTEN_REGS				\
     HLS_FLATTEN_ARRAY(reqs);			\
     HLS_FLATTEN_ARRAY(tag_buf);			\
     HLS_FLATTEN_ARRAY(state_buf);		\
@@ -12,7 +12,7 @@
     HLS_FLATTEN_ARRAY(lines_buf);
 
 // Reset functions
-#define RESET_IO				\
+#define L2_RESET_IO				\
     HLS_DEFINE_PROTOCOL("l2-reset-io-protocol")
 #define RESET_STATES
 
@@ -20,9 +20,9 @@
     HLS_DEFINE_PROTOCOL("l2-reset-states-protocol")
 
 // Request selection and acquisition
-#define NB_GET					\
+#define L2_NB_GET					\
     HLS_DEFINE_PROTOCOL("l2-nb-get-protocol")
-#define GET_RSP_IN					\
+#define L2_GET_RSP_IN					\
     HLS_DEFINE_PROTOCOL("l2-get-rsp-in-protocol");	\
     bookmark_tmp |= BM_GET_RSP_IN
 #define GET_CPU_REQ							\

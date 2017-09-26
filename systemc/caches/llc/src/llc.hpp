@@ -86,7 +86,7 @@ public:
 	llc_rst_tb_done.clk_rst(clk, rst);
 
 	// Flatten arrays
-	FLATTEN_REGS;
+	LLC_FLATTEN_REGS;
 
 	// Map arrays to memory
 	HLS_MAP_TO_MEMORY(tags, "llc_tags");

@@ -90,7 +90,7 @@ public:
 	l2_rsp_out.clk_rst(clk, rst);
 
 	// Flatten arrays
-	FLATTEN_REGS;
+	L2_FLATTEN_REGS;
 
 	// Clock binding for memories
 	HLS_MAP_TO_MEMORY(tags, "l2_tags");
