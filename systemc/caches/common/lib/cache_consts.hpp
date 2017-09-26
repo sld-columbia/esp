@@ -1,8 +1,9 @@
 /* Copyright 2017 Columbia University, SLD Group */
 
+#include "log2.h"
+
 #ifndef __CACHES_CONSTS_HPP__
 #define __CACHES_CONSTS_HPP__
-
 
 /*
  * System
@@ -10,8 +11,7 @@
 
 // System configuration
 #define N_CPU	2
-#define N_CPU_BITS 1
-#define N_CPU_LG2 1
+#define N_CPU_BITS ilog2(N_CPU)
 
 /*
  * Caches
@@ -51,7 +51,7 @@
 #define SETS			(1 << SET_BITS)
 #define L2_WAY_BITS		3
 #define L2_WAYS			(1 << L2_WAY_BITS)
-#define LLC_WAY_BITS            (L2_WAY_BITS + N_CPU_LG2)
+#define LLC_WAY_BITS            (L2_WAY_BITS + N_CPU_BITS)
 #define LLC_WAYS		(1 << LLC_WAY_BITS)
 #define L2_LINES		(SETS*L2_WAYS)
 #define LLC_LINES		(SETS * LLC_WAYS)
