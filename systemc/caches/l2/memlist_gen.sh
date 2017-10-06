@@ -69,5 +69,5 @@ echo "l2_tags $LINES $TAG_BITS 1w:0r 0w:${WAYS}r"
 echo "l2_states $LINES $STATE_BITS 1w:0r 0w:${WAYS}r"
 echo "l2_hprots $LINES $HPROT_BITS 1w:0r 0w:${WAYS}r"
 echo "l2_lines $LINES $LINE_BITS 1w:0r 0w:${WAYS}r"
-echo "l2_evict_ways $SETS $EVICT_WAY_BITS 1w:0r 0w:${WAYS}r"
+echo "l2_evict_ways $SETS $EVICT_WAY_BITS 1w:0r 0w:1r"
 
