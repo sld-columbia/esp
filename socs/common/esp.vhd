@@ -148,7 +148,7 @@ signal dbgo : l3_debug_out_vector(0 to CFG_NCPU_TILE-1);
 
 -- type debug_led_vector_type is array (1 to CFG_NCPU_TILE) of std_ulogic;
 -- signal debug_led_vector : debug_led_vector_type;
-signal debug_led_vector : std_logic_vector(0 to CFG_NCPU_TILE-1);
+signal debug_led_vector : std_logic_vector(0 to CFG_NCPU_TILE);
 
 begin
 
@@ -515,7 +515,8 @@ begin
           noc6_output_port   => noc_output_port(6)(i),
           noc6_data_void_out => noc_data_void_out(6)(i),
           noc6_stop_out      => noc_stop_out(6)(i),
-          mon_dvfs           => mon_dvfs_out(i));
+          mon_dvfs           => mon_dvfs_out(i),
+          debug_led          => debug_led_vector(CFG_NCPU_TILE));
       clk_tile(i) <= noc_clk_int;
     end generate mem_tile;
 

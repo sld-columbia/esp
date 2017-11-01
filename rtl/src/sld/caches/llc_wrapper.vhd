@@ -11,6 +11,7 @@
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
+use ieee.std_logic_misc.all;
 
 --pragma translate_off
 use STD.textio.all;
@@ -65,7 +66,7 @@ entity llc_wrapper is
     -- NoC3->tile
     coherence_rsp_rcv_rdreq    : out std_ulogic;
     coherence_rsp_rcv_data_out : in  noc_flit_type;
-    coherence_rsp_rcv_empty    : in  std_ulogic);
+    coherence_rsp_rcv_empty    : in  std_ulogic;
   -- -- NoC4->tile
   -- dma_rcv_rdreq                       : out std_ulogic;
   -- dma_rcv_data_out                    : in  noc_flit_type;
@@ -77,6 +78,8 @@ entity llc_wrapper is
   -- dma_snd_atleast_4slots              : in  std_ulogic;
   -- dma_snd_exactly_3slots              : in  std_ulogic);
 
+    debug_led : out std_ulogic);
+    
 end llc_wrapper;
 
 architecture rtl of llc_wrapper is
@@ -134,6 +137,8 @@ architecture rtl of llc_wrapper is
   signal bookmark   : llc_bookmark_t;
   signal custom_dbg : custom_dbg_t;
 
+  signal led_wrapper_asserts : std_ulogic;
+  
 -----------------------------------------------------------------------------
 -- AHB master FSM signals
 -----------------------------------------------------------------------------
@@ -150,6 +155,7 @@ architecture rtl of llc_wrapper is
     hprot    : hprot_t;
     line     : line_t;
     word_cnt : integer;
+    asserts  : asserts_llc_ahbm_t;
   end record;
 
   constant AHBM_REG_DEFAULT : ahbm_reg_type := (
@@ -158,7 +164,8 @@ architecture rtl of llc_wrapper is
     haddr    => (others => '0'),
     hprot    => (others => '0'),
     line     => (others => '0'),
-    word_cnt => 0
+    word_cnt => 0,
+    asserts  => (others => '0')
     );
 
   signal ahbm_reg      : ahbm_reg_type := AHBM_REG_DEFAULT;
@@ -224,6 +231,8 @@ architecture rtl of llc_wrapper is
   signal req_in_reg      : req_in_reg_type := REQ_IN_REG_DEFAULT;
   signal req_in_reg_next : req_in_reg_type := REQ_IN_REG_DEFAULT;
 
+  signal ahbm_asserts : asserts_llc_ahbm_t;
+  
   attribute mark_debug : string;
 
   attribute mark_debug of llc_req_in_ready        : signal is "true";
@@ -271,6 +280,8 @@ architecture rtl of llc_wrapper is
   attribute mark_debug of asserts    : signal is "true";
   attribute mark_debug of bookmark   : signal is "true";
   attribute mark_debug of custom_dbg : signal is "true";
+
+  attribute mark_debug of ahbm_asserts : signal is "true";
   
 begin  -- architecture rtl
 -------------------------------------------------------------------------------
@@ -294,7 +305,7 @@ begin  -- architecture rtl
   llc_rsp_in_data_req_id  <= (others => '0');
 
   llc_fwd_out_ready <= '0';
-  
+
 -------------------------------------------------------------------------------
 -- State update for all the FSMs
 -------------------------------------------------------------------------------
@@ -326,6 +337,7 @@ begin  -- architecture rtl
 
     -- save current state into a variable
     reg := ahbm_reg;
+    reg.asserts := (others => '0');
 
     -- default values for output signals
     llc_mem_req_ready     <= '0';
@@ -382,6 +394,11 @@ begin  -- architecture rtl
       -- LOAD LINE
       when load_line =>
         if reg.word_cnt = 0 then
+
+          if granted = '0' then
+            reg.asserts(AS_AHBM_LOAD_NOT_GRANTED) := '1';
+          end if;
+
           ahbmo.hbusreq <= '1';
           ahbmo.htrans  <= HTRANS_NONSEQ;
           ahbmo.hwrite  <= '0';
@@ -391,7 +408,9 @@ begin  -- architecture rtl
             reg.word_cnt := reg.word_cnt + 1;
             reg.haddr    := reg.haddr + 4;
           end if;
+
         elsif reg.word_cnt = WORDS_PER_LINE then
+
           if ahbmi.hready = '1' then
             reg.line(WORDS_PER_LINE*BITS_PER_WORD-1 downto (WORDS_PER_LINE-1)*BITS_PER_WORD) := ahbmi.hrdata;
 
@@ -403,8 +422,14 @@ begin  -- architecture rtl
               reg.state := send_mem_rsp;
             end if;
           end if;
+
         else
-          ahbmo.hbusreq <= '1';
+
+          if granted = '0' then
+            reg.asserts(AS_AHBM_LOAD_NOT_GRANTED) := '1';
+          end if;
+
+          ahbmo.hbusreq <= '1';         -- put to 0 when WORDS_PER_LINE - 1
           ahbmo.htrans  <= HTRANS_SEQ;
           ahbmo.hwrite  <= '0';
           ahbmo.haddr   <= reg.haddr;
@@ -421,12 +446,18 @@ begin  -- architecture rtl
         llc_mem_rsp_valid <= '1';
         if llc_mem_rsp_ready = '1' then
           llc_mem_rsp_data_line <= reg.line;
-          reg.state             := idle;
+
+          reg.state := idle;
         end if;
 
       -- STORE LINE
       when store_line =>
         if reg.word_cnt = 0 then
+
+          if granted = '0' then
+            reg.asserts(AS_AHBM_STORE_NOT_GRANTED) := '1';
+          end if;
+
           ahbmo.hbusreq <= '1';
           ahbmo.htrans  <= HTRANS_NONSEQ;
           ahbmo.hwrite  <= '1';
@@ -436,12 +467,20 @@ begin  -- architecture rtl
             reg.word_cnt := reg.word_cnt + 1;
             reg.haddr    := reg.haddr + 4;
           end if;
+
         elsif reg.word_cnt = WORDS_PER_LINE then
+
           ahbmo.hwdata <= reg.line(WORDS_PER_LINE*BITS_PER_WORD-1 downto (WORDS_PER_LINE-1)*BITS_PER_WORD);
           if ahbmi.hready = '1' then
             reg.state := idle;
           end if;
+
         else
+
+          if granted = '0' then
+            reg.asserts(AS_AHBM_STORE_NOT_GRANTED) := '1';
+          end if;
+
           ahbmo.hwdata <= reg.line(reg.word_cnt*BITS_PER_WORD-1 downto (reg.word_cnt-1)*BITS_PER_WORD);
 
           ahbmo.hbusreq <= '1';
@@ -453,6 +492,7 @@ begin  -- architecture rtl
             reg.word_cnt := reg.word_cnt + 1;
             reg.haddr    := reg.haddr + 4;
           end if;
+
         end if;
 
     end case;
@@ -733,5 +773,15 @@ begin  -- architecture rtl
       bookmark   => bookmark,
       custom_dbg => custom_dbg
       );
+
+-------------------------------------------------------------------------------
+-- Debug
+-------------------------------------------------------------------------------
+
+  ahbm_asserts <= ahbm_reg.asserts;
+
+  led_wrapper_asserts <= or_reduce(ahbm_reg.asserts);
+
+  debug_led <= or_reduce(bookmark) or or_reduce(asserts) or led_wrapper_asserts;
 
 end architecture rtl;

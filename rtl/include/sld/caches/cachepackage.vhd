@@ -44,7 +44,7 @@ package cachepackage is
   constant LLC_WAY_BITS       : integer := L2_WAY_BITS + 0;  -- + CPU_MAX_LOG2
   constant TAG_BITS           : integer := ADDR_BITS - OFFSET_BITS - L2_SET_BITS;
   constant L2_CACHE_LINES     : integer := (2**L2_SET_BITS) * (2**L2_WAY_BITS);
-  constant LLC_CACHE_LINES    : integer := L2_CACHE_LINES * 1; -- CPU_MAX_NUM
+  constant LLC_CACHE_LINES    : integer := L2_CACHE_LINES * 1;  -- CPU_MAX_NUM
   constant SET_BITS           : integer := 8;
 
   -- Cache data types width
@@ -59,19 +59,20 @@ package cachepackage is
   constant CPU_WRITE      : std_logic_vector(1 downto 0) := "10";
   constant CPU_WRITE_ATOM : std_logic_vector(1 downto 0) := "11";
 
-  constant LLC_READ : std_ulogic := '0';
+  constant LLC_READ  : std_ulogic := '0';
   constant LLC_WRITE : std_ulogic := '1';
-  
-  constant ASSERTS_WIDTH         : integer := 13;
-  constant BOOKMARK_WIDTH        : integer := 18;
-  constant LLC_ASSERTS_WIDTH     : integer := 1;
-  constant LLC_BOOKMARK_WIDTH    : integer := 10;
-  constant ASSERTS_AHBS_WIDTH    : integer := 11;
-  constant ASSERTS_AHBM_WIDTH    : integer := 1;
-  constant ASSERTS_REQ_WIDTH     : integer := 1;
-  constant ASSERTS_RSP_IN_WIDTH  : integer := 1;
-  constant ASSERTS_FWD_WIDTH     : integer := 1;
-  constant ASSERTS_RSP_OUT_WIDTH : integer := 1;
+
+  constant ASSERTS_WIDTH          : integer := 13;
+  constant BOOKMARK_WIDTH         : integer := 18;
+  constant LLC_ASSERTS_WIDTH      : integer := 1;
+  constant LLC_BOOKMARK_WIDTH     : integer := 10;
+  constant ASSERTS_AHBS_WIDTH     : integer := 11;
+  constant ASSERTS_AHBM_WIDTH     : integer := 1;
+  constant ASSERTS_REQ_WIDTH      : integer := 1;
+  constant ASSERTS_RSP_IN_WIDTH   : integer := 1;
+  constant ASSERTS_FWD_WIDTH      : integer := 1;
+  constant ASSERTS_RSP_OUT_WIDTH  : integer := 1;
+  constant ASSERTS_LLC_AHBM_WIDTH : integer := 2;
 
   -- Ongoing transaction buffers
   constant N_REQS    : integer := 4;
@@ -109,6 +110,9 @@ package cachepackage is
 
   -- constant AS_RSPIN_ : integer := 0;
 
+  --
+  constant AS_AHBM_LOAD_NOT_GRANTED : integer := 0;
+  constant AS_AHBM_STORE_NOT_GRANTED : integer := 1;
 
   -----------------------------------------------------------------------------
   -- Types
@@ -130,6 +134,7 @@ package cachepackage is
   subtype asserts_rsp_in_t is std_logic_vector(ASSERTS_RSP_IN_WIDTH - 1 downto 0);
   subtype asserts_fwd_t is std_logic_vector(ASSERTS_FWD_WIDTH - 1 downto 0);
   subtype asserts_rsp_out_t is std_logic_vector(ASSERTS_RSP_OUT_WIDTH - 1 downto 0);
+  subtype asserts_llc_ahbm_t is std_logic_vector(ASSERTS_LLC_AHBM_WIDTH - 1 downto 0);
   subtype bookmark_t is std_logic_vector(BOOKMARK_WIDTH - 1 downto 0);
   subtype llc_bookmark_t is std_logic_vector(LLC_BOOKMARK_WIDTH - 1 downto 0);
   subtype custom_dbg_t is std_logic_vector(31 downto 0);
@@ -338,58 +343,58 @@ package cachepackage is
       clk : in std_ulogic;
       rst : in std_ulogic;
 
-      llc_rst_tb_valid : in std_ulogic;
-      llc_rst_tb_data : in std_ulogic;
-      llc_rst_tb_done_ready : in std_ulogic;
-      llc_rst_tb_ready : out std_ulogic;
+      llc_rst_tb_valid      : in  std_ulogic;
+      llc_rst_tb_data       : in  std_ulogic;
+      llc_rst_tb_done_ready : in  std_ulogic;
+      llc_rst_tb_ready      : out std_ulogic;
       llc_rst_tb_done_valid : out std_ulogic;
-      llc_rst_tb_done_data : out std_ulogic;
-      
-      llc_req_in_ready : out std_ulogic;
-      llc_req_in_valid : in std_ulogic;
-      llc_req_in_data_coh_msg : in coh_msg_t;
-      llc_req_in_data_hprot : in hprot_t;
-      llc_req_in_data_addr : in addr_t;
-      llc_req_in_data_line : in line_t;
-      llc_req_in_data_req_id : in cache_id_t;
+      llc_rst_tb_done_data  : out std_ulogic;
 
-      llc_rsp_in_ready : out std_ulogic;
-      llc_rsp_in_valid : in std_ulogic;
-      llc_rsp_in_data_addr : in addr_t;
-      llc_rsp_in_data_line : in line_t;
-      llc_rsp_in_data_req_id : in cache_id_t;
+      llc_req_in_ready        : out std_ulogic;
+      llc_req_in_valid        : in  std_ulogic;
+      llc_req_in_data_coh_msg : in  coh_msg_t;
+      llc_req_in_data_hprot   : in  hprot_t;
+      llc_req_in_data_addr    : in  addr_t;
+      llc_req_in_data_line    : in  line_t;
+      llc_req_in_data_req_id  : in  cache_id_t;
 
-      llc_mem_rsp_ready : out std_ulogic;
-      llc_mem_rsp_valid : in std_ulogic;
-      llc_mem_rsp_data_line : in line_t;
+      llc_rsp_in_ready       : out std_ulogic;
+      llc_rsp_in_valid       : in  std_ulogic;
+      llc_rsp_in_data_addr   : in  addr_t;
+      llc_rsp_in_data_line   : in  line_t;
+      llc_rsp_in_data_req_id : in  cache_id_t;
 
-      llc_rsp_out_ready : in std_ulogic;
-      llc_rsp_out_valid : out std_ulogic;
-      llc_rsp_out_data_coh_msg : out coh_msg_t;
-      llc_rsp_out_data_addr : out addr_t;
-      llc_rsp_out_data_line : out line_t;
+      llc_mem_rsp_ready     : out std_ulogic;
+      llc_mem_rsp_valid     : in  std_ulogic;
+      llc_mem_rsp_data_line : in  line_t;
+
+      llc_rsp_out_ready           : in  std_ulogic;
+      llc_rsp_out_valid           : out std_ulogic;
+      llc_rsp_out_data_coh_msg    : out coh_msg_t;
+      llc_rsp_out_data_addr       : out addr_t;
+      llc_rsp_out_data_line       : out line_t;
       llc_rsp_out_data_invack_cnt : out invack_cnt_t;
-      llc_rsp_out_data_req_id : out cache_id_t;
-      llc_rsp_out_data_dest_id : out cache_id_t;
+      llc_rsp_out_data_req_id     : out cache_id_t;
+      llc_rsp_out_data_dest_id    : out cache_id_t;
 
-      llc_fwd_out_ready : in std_ulogic;
-      llc_fwd_out_valid : out std_ulogic;
+      llc_fwd_out_ready        : in  std_ulogic;
+      llc_fwd_out_valid        : out std_ulogic;
       llc_fwd_out_data_coh_msg : out coh_msg_t;
-      llc_fwd_out_data_addr : out addr_t;
-      llc_fwd_out_data_req_id : out cache_id_t;
+      llc_fwd_out_data_addr    : out addr_t;
+      llc_fwd_out_data_req_id  : out cache_id_t;
       llc_fwd_out_data_dest_id : out cache_id_t;
 
-      llc_mem_req_ready : in std_ulogic;
-      llc_mem_req_valid : out std_ulogic;
+      llc_mem_req_ready       : in  std_ulogic;
+      llc_mem_req_valid       : out std_ulogic;
       llc_mem_req_data_hwrite : out std_ulogic;
-      llc_mem_req_data_hsize : out hsize_t;
-      llc_mem_req_data_hprot : out hprot_t;
-      llc_mem_req_data_addr : out addr_t;
-      llc_mem_req_data_line : out line_t;
+      llc_mem_req_data_hsize  : out hsize_t;
+      llc_mem_req_data_hprot  : out hprot_t;
+      llc_mem_req_data_addr   : out addr_t;
+      llc_mem_req_data_line   : out line_t;
 
-      asserts                 : out llc_asserts_t;
-      bookmark                : out llc_bookmark_t;
-      custom_dbg              : out custom_dbg_t
+      asserts    : out llc_asserts_t;
+      bookmark   : out llc_bookmark_t;
+      custom_dbg : out custom_dbg_t
       );
 
   end component;
@@ -429,7 +434,7 @@ package cachepackage is
       -- NoC3->tile
       coherence_rsp_rcv_rdreq    : out std_ulogic;
       coherence_rsp_rcv_data_out : in  noc_flit_type;
-      coherence_rsp_rcv_empty    : in  std_ulogic);
+      coherence_rsp_rcv_empty    : in  std_ulogic;
   -- -- NoC4->tile
   -- dma_rcv_rdreq                       : out std_ulogic;
   -- dma_rcv_data_out                    : in  noc_flit_type;
@@ -440,6 +445,7 @@ package cachepackage is
   -- dma_snd_full                        : in  std_ulogic;
   -- dma_snd_atleast_4slots              : in  std_ulogic;
   -- dma_snd_exactly_3slots              : in  std_ulogic);
+      debug_led : out std_ulogic);
   end component;
 
   component fifo_custom is

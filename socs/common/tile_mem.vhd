@@ -102,7 +102,8 @@ entity tile_mem is
     noc6_output_port   : in  noc_flit_type;
     noc6_data_void_out : in  std_ulogic;
     noc6_stop_out      : in  std_ulogic;
-    mon_dvfs           : out monitor_dvfs_type
+    mon_dvfs           : out monitor_dvfs_type;
+    debug_led          : out std_ulogic
     );
 
 end;
@@ -627,8 +628,10 @@ begin
         -- NoC3->tile
         coherence_rsp_rcv_rdreq    => coherence_rsp_rcv_rdreq,
         coherence_rsp_rcv_data_out => coherence_rsp_rcv_data_out,
-        coherence_rsp_rcv_empty    => coherence_rsp_rcv_empty);
+        coherence_rsp_rcv_empty    => coherence_rsp_rcv_empty,
 
+        debug_led                  => debug_led
+        );
   end generate with_cache_coherence;
 
   -- FROM JTAG on AMBA1
