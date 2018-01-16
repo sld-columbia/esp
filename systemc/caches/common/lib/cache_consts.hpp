@@ -63,7 +63,8 @@
 #define COH_MSG_TYPE_WIDTH	2
 #define HSIZE_WIDTH		3
 #define HPROT_WIDTH		4
-#define INVACK_CNT_WIDTH	3	// TODO determines max CPUs
+// log2(N_CPU) + 1
+#define INVACK_CNT_WIDTH	2
 #define MAX_INVACK_CNT          7
 
 // Ongoing transaction buffers
@@ -176,8 +177,8 @@
 // debug
 
 // l2
-#define ASSERT_WIDTH 13
-#define BOOKMARK_WIDTH	18
+#define ASSERT_WIDTH 14
+#define BOOKMARK_WIDTH	21
 
 #define AS_RSP_DATA_DEFAULT     (1 << 0)
 #define AS_HIT_WRITE_DEFAULT	(1 << 1)
@@ -192,12 +193,13 @@
 #define AS_FLUSH_CHECK          (1 << 10)
 #define AS_FLUSH_NOPUTACK       (1 << 11)
 #define AS_RSP_NOHIT            (1 << 12)
+#define AS_RSP_DATA_XMADW       (1 << 13)
 
 #define BM_GET_RSP_IN		(1 << 0)
 #define BM_GET_CPU_REQ		(1 << 1)
 #define BM_TAG_LOOKUP		(1 << 2)
 #define BM_REQS_LOOKUP		(1 << 3)
-#define BM_RSP_DATA_ISD		(1 << 4)
+#define BM_RSP_EDATA_ISD	(1 << 4)
 #define BM_RSP_DATA_XMAD	(1 << 5)
 #define BM_RSP_EDATA		(1 << 6)
 #define BM_HIT_READ		(1 << 7)
@@ -211,6 +213,9 @@
 #define BM_GET_FLUSH		(1 << 15)
 #define BM_FLUSH_READ_SET	(1 << 16)
 #define BM_SEND_INVAL		(1 << 17)
+#define BM_RSP_DATA_ISD 	(1 << 18)
+#define BM_RSP_DATA_XMADW	(1 << 19)
+#define BM_RSP_INVACK		(1 << 20)
 
 // llc
 #define LLC_ASSERT_WIDTH    1

@@ -20,7 +20,7 @@
     HLS_DEFINE_PROTOCOL("l2-reset-states-protocol")
 
 // Request selection and acquisition
-#define L2_NB_GET					\
+#define L2_NB_GET				\
     HLS_DEFINE_PROTOCOL("l2-nb-get-protocol")
 #define L2_GET_RSP_IN					\
     HLS_DEFINE_PROTOCOL("l2-get-rsp-in-protocol");	\
@@ -42,7 +42,7 @@
     HLS_UNROLL_LOOP(ON, "l2-tag-lookup-loop-unroll")
 #define REQS_PEEK							\
     HLS_CONSTRAIN_LATENCY(0, HLS_ACHIEVABLE, "l2-reqs-peek-latency")
-#define REQS_PEEK_LOOP				\
+#define REQS_PEEK_LOOP					\
     HLS_UNROLL_LOOP(ON, "l2-reqs-peek-loop-unroll")
 #define REQS_LOOKUP							\
     bookmark_tmp |= BM_REQS_LOOKUP;					\
@@ -50,7 +50,7 @@
 #define REQS_LOOKUP_LOOP				\
     HLS_UNROLL_LOOP(ON, "l2-reqs-lookup-loop-unroll")
 #define REQS_LOOKUP_ASSERT						\
-    if (!reqs_hit) asserts_tmp |= AS_REQS_LOOKUP; \
+    if (!reqs_hit) asserts_tmp |= AS_REQS_LOOKUP;			\
     if (reqs[reqs_hit_i].state == INVALID) asserts_tmp |= AS_REQS_LOOKUP2
 
 // Manage flush
@@ -64,6 +64,10 @@
     HLS_DEFINE_PROTOCOL("l2-flush-end-protocol")
 
 // Manage rsp in
+#define RSP_EDATA_ISD							\
+    HLS_CONSTRAIN_LATENCY("l2-rsp-edata-isd-latency");			\
+    bookmark_tmp |= BM_RSP_EDATA_ISD;					\
+    if (RPT_RTL) CACHE_REPORT_TIME(sc_time_stamp(), "Rsp edata isd.")
 #define RSP_DATA_ISD							\
     HLS_CONSTRAIN_LATENCY("l2-rsp-data-isd-latency");			\
     bookmark_tmp |= BM_RSP_DATA_ISD;					\
@@ -73,14 +77,23 @@
     bookmark_tmp |= BM_RSP_DATA_XMAD;					\
     if (rsp_in.coh_msg == RSP_EDATA) asserts_tmp |= AS_RSP_DATA_XMAD;	\
     if (RPT_RTL) CACHE_REPORT_TIME(sc_time_stamp(), "Rsp data xmad.")
+#define RSP_DATA_XMADW							\
+    HLS_CONSTRAIN_LATENCY("l2-rsp-data-xmadw-latency");			\
+    bookmark_tmp |= BM_RSP_DATA_XMADW;					\
+    if (rsp_in.coh_msg == RSP_EDATA) asserts_tmp |= AS_RSP_DATA_XMADW;	\
+    if (RPT_RTL) CACHE_REPORT_TIME(sc_time_stamp(), "Rsp data xmadw.")
 #define RSP_DATA_DEFAULT						\
-    asserts_tmp |= AS_RSP_DATA_DEFAULT;					\
-    if (RPT_RTL) CACHE_REPORT_TIME(sc_time_stamp(), "Rsp data default.")
+		     asserts_tmp |= AS_RSP_DATA_DEFAULT;		\
+		     if (RPT_RTL) CACHE_REPORT_TIME(sc_time_stamp(), "Rsp data default.")
 #define RSP_EDATA_ALL							\
-    HLS_CONSTRAIN_LATENCY("l2-rsp-edata-latency");			\
-    bookmark_tmp |= BM_RSP_EDATA;					\
-    if (RPT_RTL) CACHE_REPORT_TIME(sc_time_stamp(), "Rsp edata all.")
-#define INVACK_DEFAULT \
+	HLS_CONSTRAIN_LATENCY("l2-rsp-edata-latency");			\
+	bookmark_tmp |= BM_RSP_EDATA;					\
+	if (RPT_RTL) CACHE_REPORT_TIME(sc_time_stamp(), "Rsp edata all.")
+#define RSP_INVACK_ALL							\
+	HLS_CONSTRAIN_LATENCY("l2-rsp-invack-latency");			\
+	bookmark_tmp |= BM_RSP_INVACK;					\
+	if (RPT_RTL) CACHE_REPORT_TIME(sc_time_stamp(), "Rsp invack all.")
+#define INVACK_DEFAULT				\
     asserts_tmp |= AS_INVACK_DEFAULT
 #define PUTACK_DEFAULT							\
     asserts_tmp |= AS_PUTACK_DEFAULT;					\
@@ -92,32 +105,32 @@
     bookmark_tmp |= BM_HIT_READ;					\
     if (RPT_RTL) CACHE_REPORT_TIME(sc_time_stamp(), "Hit read.")
 #define HIT_WRITE_S							\
-    HLS_CONSTRAIN_LATENCY(0, HLS_ACHIEVABLE, "l2-hit-write-latency");	\
-    bookmark_tmp |= BM_HIT_WRITE_S
+					       HLS_CONSTRAIN_LATENCY(0, HLS_ACHIEVABLE, "l2-hit-write-latency"); \
+					       bookmark_tmp |= BM_HIT_WRITE_S
 #define HIT_WRITE_EM						\
-    bookmark_tmp |= BM_HIT_WRITE_EM;				\
-    HLS_CONSTRAIN_LATENCY("l2-hit-write-em-latency")
+	bookmark_tmp |= BM_HIT_WRITE_EM;			\
+	HLS_CONSTRAIN_LATENCY("l2-hit-write-em-latency")
 #define HIT_WRITE_DEFAULT						\
-    asserts_tmp |= AS_HIT_WRITE_DEFAULT;				\
-    if (RPT_RTL) CACHE_REPORT_TIME(sc_time_stamp(), "Hit write default.")
+		     asserts_tmp |= AS_HIT_WRITE_DEFAULT;		\
+		     if (RPT_RTL) CACHE_REPORT_TIME(sc_time_stamp(), "Hit write default.")
 #define HIT_DEFAULT							\
     asserts_tmp |= AS_HIT_DEFAULT;					\
     if (RPT_RTL) CACHE_REPORT_TIME(sc_time_stamp(), "Hit default.")
 
 #define MISS_READ							\
-    HLS_CONSTRAIN_LATENCY("l2-miss-read-latency");			\
-    bookmark_tmp |= BM_MISS_READ;					\
-    if (RPT_RTL) CACHE_REPORT_TIME(sc_time_stamp(), "Miss read.")
+		     HLS_CONSTRAIN_LATENCY("l2-miss-read-latency");	\
+		     bookmark_tmp |= BM_MISS_READ;			\
+		     if (RPT_RTL) CACHE_REPORT_TIME(sc_time_stamp(), "Miss read.")
 #define MISS_WRITE							\
-    HLS_CONSTRAIN_LATENCY("l2-miss-write-latency");			\
-    bookmark_tmp |= BM_MISS_WRITE;					\
-    if (RPT_RTL) CACHE_REPORT_TIME(sc_time_stamp(), "Miss write.")
+		     HLS_CONSTRAIN_LATENCY("l2-miss-write-latency");	\
+		     bookmark_tmp |= BM_MISS_WRITE;			\
+		     if (RPT_RTL) CACHE_REPORT_TIME(sc_time_stamp(), "Miss write.")
 #define MISS_DEFAULT							\
-    asserts_tmp |= AS_MISS_DEFAULT;					\
-    if (RPT_RTL) CACHE_REPORT_TIME(sc_time_stamp(), "Miss default.")
+		     asserts_tmp |= AS_MISS_DEFAULT;			\
+		     if (RPT_RTL) CACHE_REPORT_TIME(sc_time_stamp(), "Miss default.")
 #define EVICT_DEFAULT							\
-		     asserts_tmp |= AS_EVICT_DEFAULT;			\
-		     if (RPT_RTL) CACHE_REPORT_TIME(sc_time_stamp(), "Evict default.")
+	asserts_tmp |= AS_EVICT_DEFAULT;				\
+	if (RPT_RTL) CACHE_REPORT_TIME(sc_time_stamp(), "Evict default.")
 
 // Output messages 
 #define SEND_REQ_OUT							\
@@ -126,24 +139,24 @@
 		     if (RPT_RTL) CACHE_REPORT_TIME(sc_time_stamp(), "Send req out.")
 
 #define SEND_RD_RSP							\
-	HLS_DEFINE_PROTOCOL("l2-send-rd-rsp-protocol");			\
-	bookmark_tmp |= BM_SEND_RD_RSP;					\
-	if (RPT_RTL) CACHE_REPORT_TIME(sc_time_stamp(), "Send rd rsp.")
+				      HLS_DEFINE_PROTOCOL("l2-send-rd-rsp-protocol"); \
+				      bookmark_tmp |= BM_SEND_RD_RSP;	\
+				      if (RPT_RTL) CACHE_REPORT_TIME(sc_time_stamp(), "Send rd rsp.")
 
 #define SEND_INVAL							\
-	HLS_DEFINE_PROTOCOL("l2-send-inval-protocol");			\
-	bookmark_tmp |= BM_SEND_INVAL;					\
-	if (RPT_RTL) CACHE_REPORT_TIME(sc_time_stamp(), "Send inval.")
+			 HLS_DEFINE_PROTOCOL("l2-send-inval-protocol");	\
+			 bookmark_tmp |= BM_SEND_INVAL;			\
+			 if (RPT_RTL) CACHE_REPORT_TIME(sc_time_stamp(), "Send inval.")
 
 // Memory
 #define PUT_REQS							\
-	HLS_CONSTRAIN_LATENCY("l2-put-reqs-latency");			\
-	bookmark_tmp |= BM_PUT_REQS;					\
-	if (RPT_RTL) CACHE_REPORT_TIME(sc_time_stamp(), "Put reqs.")
+			 HLS_CONSTRAIN_LATENCY("l2-put-reqs-latency");	\
+			 bookmark_tmp |= BM_PUT_REQS;			\
+			 if (RPT_RTL) CACHE_REPORT_TIME(sc_time_stamp(), "Put reqs.")
 
 // Debug
 #define REQS_OUTPUT					\
-	HLS_UNROLL_LOOP(ON, "l2-reqs-output-unroll")	
+    HLS_UNROLL_LOOP(ON, "l2-reqs-output-unroll")	
 
 
 #endif /* __L2_DIRECTIVES_HPP_ */

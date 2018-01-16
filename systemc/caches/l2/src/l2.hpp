@@ -73,46 +73,46 @@ public:
 
     // Constructor
     SC_CTOR(l2)
-	    : clk("clk")
-	    , rst("rst")
-	    , asserts("asserts")
-	    , bookmark("bookmark")
-	    , custom_dbg("custom_dbg")
-	    , flush_done("flush_done")
-	    , l2_cpu_req("l2_cpu_req")
-	    , l2_fwd_in("l2_fwd_in")
-	    , l2_rsp_in("l2_rsp_in")
-	    , l2_flush("l2_flush")
-	    , l2_rd_rsp("l2_rd_rsp")
-	    , l2_inval("l2_inval")
-	    , l2_req_out("l2_req_out")
-	    , l2_rsp_out("l2_rsp_out")
-    {
-        // Cache controller process
-	SC_CTHREAD(ctrl, clk.pos());
-	reset_signal_is(rst, false);
-	// set_stack_size(0x400000);
+	: clk("clk")
+	, rst("rst")
+	, asserts("asserts")
+	, bookmark("bookmark")
+	, custom_dbg("custom_dbg")
+	, flush_done("flush_done")
+	, l2_cpu_req("l2_cpu_req")
+	, l2_fwd_in("l2_fwd_in")
+	, l2_rsp_in("l2_rsp_in")
+	, l2_flush("l2_flush")
+	, l2_rd_rsp("l2_rd_rsp")
+	, l2_inval("l2_inval")
+	, l2_req_out("l2_req_out")
+	, l2_rsp_out("l2_rsp_out")
+	{
+	    // Cache controller process
+	    SC_CTHREAD(ctrl, clk.pos());
+	    reset_signal_is(rst, false);
+	    // set_stack_size(0x400000);
 
-	// Assign clock and reset to put_get ports
-	l2_cpu_req.clk_rst (clk, rst);
-	l2_fwd_in.clk_rst (clk, rst);
-	l2_rsp_in.clk_rst (clk, rst);
-	l2_flush.clk_rst (clk, rst);
-	l2_rd_rsp.clk_rst(clk, rst);
-	l2_inval.clk_rst(clk, rst);
-	l2_req_out.clk_rst(clk, rst);
-	l2_rsp_out.clk_rst(clk, rst);
+	    // Assign clock and reset to put_get ports
+	    l2_cpu_req.clk_rst (clk, rst);
+	    l2_fwd_in.clk_rst (clk, rst);
+	    l2_rsp_in.clk_rst (clk, rst);
+	    l2_flush.clk_rst (clk, rst);
+	    l2_rd_rsp.clk_rst(clk, rst);
+	    l2_inval.clk_rst(clk, rst);
+	    l2_req_out.clk_rst(clk, rst);
+	    l2_rsp_out.clk_rst(clk, rst);
 
-	// Flatten arrays
-	L2_FLATTEN_REGS;
+	    // Flatten arrays
+	    L2_FLATTEN_REGS;
 
-	// Clock binding for memories
-	HLS_MAP_TO_MEMORY(tags, "l2_tags");
-	HLS_MAP_TO_MEMORY(states, "l2_states");
-	HLS_MAP_TO_MEMORY(hprots, "l2_hprots");
-	HLS_MAP_TO_MEMORY(lines, "l2_lines");
-	HLS_MAP_TO_MEMORY(evict_ways, "l2_evict_ways");
-    }
+	    // Clock binding for memories
+	    HLS_MAP_TO_MEMORY(tags, "l2_tags");
+	    HLS_MAP_TO_MEMORY(states, "l2_states");
+	    HLS_MAP_TO_MEMORY(hprots, "l2_hprots");
+	    HLS_MAP_TO_MEMORY(lines, "l2_lines");
+	    HLS_MAP_TO_MEMORY(evict_ways, "l2_evict_ways");
+	}
 
     // Processes
     void ctrl(); // cache controller
@@ -127,8 +127,7 @@ public:
 		     sc_uint<REQS_BITS> &reqs_hit_i);
     bool reqs_peek(set_t set, sc_uint<REQS_BITS> &reqs_i);
     void fill_reqs(cpu_msg_t cpu_msg, addr_breakdown_t addr_br, tag_t tag_estall, l2_way_t way_hit, hsize_t hsize,
-		   unstable_state_t state, hprot_t hprot, 
-		   invack_cnt_t invack_cnt, word_t word, 
+		   unstable_state_t state, hprot_t hprot, word_t word, 
 		   line_t line, sc_uint<REQS_BITS> reqs_i);
     void get_cpu_req(l2_cpu_req_t &cpu_req);
     void get_rsp_in(l2_rsp_in_t &rsp_in);
