@@ -58,7 +58,7 @@ void l2::ctrl()
 	coh_msg_t		coh_msg_tmp;
 	tag_t			tag_tmp;
 	set_t                   set_tmp;
-	
+
 	{
 	    L2_NB_GET;
 
@@ -71,9 +71,11 @@ void l2::ctrl()
 		    is_flush_to_get = true;
 		else if (l2_rsp_in.nb_can_get())
 		    is_rsp_to_get = true;
-	    } else if (l2_rsp_in.nb_can_get()) { // inv ack not managed yet
+	    } else if (l2_rsp_in.nb_can_get()) {
 	    	is_rsp_to_get = true;
-	    } else if ((l2_cpu_req.nb_can_get() && reqs_cnt != 0 && !evict_stall) || set_conflict) { // assuming READ or WRITE, HPROT cacheable
+	    } else if ((l2_cpu_req.nb_can_get() && !evict_stall && 
+			(reqs_cnt != 0 || ongoing_atomic)) || 
+		       set_conflict) { // assuming HPROT cacheable
 		is_req_to_get = true;
 	    } else {
 	     	wait();
@@ -189,7 +191,7 @@ void l2::ctrl()
 
 	    }
 
-	} else if (is_rsp_to_get) { // inv ack not managed yet
+	} else if (is_rsp_to_get) {
 	    get_rsp_in(rsp_in);
 	    
 	    wait(); // for SystemC simulation only
@@ -384,10 +386,63 @@ void l2::ctrl()
 
 	    set_conflict = reqs_peek(addr_br.set, reqs_i);
 
-	    if (set_conflict) {
-		cpu_req_conflict = cpu_req;
+	    if (ongoing_atomic) {
+
+		if (atomic_line_addr != addr_br.line) {
+
+		    put_reqs(reqs[reqs_atomic_i].set, reqs[reqs_atomic_i].way, reqs[reqs_atomic_i].tag,
+			     reqs[reqs_atomic_i].line, reqs[reqs_atomic_i].hprot, MODIFIED);
+
+		    ongoing_atomic = false;
+
+		    reqs_i = reqs_atomic_i;
+
+		} else {
+
+		    set_conflict = false;
+
+		    switch (cpu_req.cpu_msg) {
+
+		    case READ :
+
+			send_rd_rsp(reqs[reqs_atomic_i].line);
+
+			put_reqs(reqs[reqs_atomic_i].set, reqs[reqs_atomic_i].way, reqs[reqs_atomic_i].tag,
+				 reqs[reqs_atomic_i].line, reqs[reqs_atomic_i].hprot, MODIFIED);
+
+			ongoing_atomic = false;
+
+			break;
+
+		    case READ_ATOM :
+
+			send_rd_rsp(reqs[reqs_atomic_i].line);
+			
+			break;
+
+		    case WRITE :
+		    case WRITE_ATOM :
+
+			write_word(reqs[reqs_atomic_i], cpu_req.word, addr_br.w_off, 
+				   addr_br.b_off, cpu_req.hsize);
+
+			put_reqs(reqs[reqs_atomic_i].set, reqs[reqs_atomic_i].way, reqs[reqs_atomic_i].tag,
+				 reqs[reqs_atomic_i].line, reqs[reqs_atomic_i].hprot, MODIFIED);
+
+			ongoing_atomic = false;
+
+			break;
+		    }
+
+		    continue;
+		}
 	    }
-	    else {
+
+	    if (set_conflict) {
+
+		cpu_req_conflict = cpu_req;
+
+	    } else {
 
 		tag_lookup(addr_br, tag_hit, way_hit, 
 			   empty_way_found, empty_way);
@@ -403,6 +458,48 @@ void l2::ctrl()
 			// read response
 			send_rd_rsp(lines_buf[way_hit]);
 		    }
+		    break;
+
+		    case READ_ATOMIC : // read atomic hit
+
+			ongoing_atomic = true;
+			reqs_atomic_i = reqs_i;
+			atomic_line_addr = addr_br.line;
+
+			switch (state_buf[way_hit]) {
+
+			case SHARED :
+			{
+			    HIT_READ_ATOMIC_S;
+
+			    // save request in intermediate state
+			    fill_reqs(cpu_req.cpu_msg, addr_br, empty_tag, way_hit, cpu_req.hsize, SMADW, 
+				      cpu_req.hprot, cpu_req.word, lines_buf[way_hit], reqs_i);
+
+			    // send request to directory
+			    send_req_out(REQ_GETM, cpu_req.hprot,
+					 addr_br.line, empty_line);
+			}
+			break;
+
+			case EXCLUSIVE : // write hit
+			case MODIFIED : // write hit
+			{
+			    HIT_READ_ATOMIC_EM;
+
+			    // save request in intermediate state
+			    fill_reqs(cpu_req.cpu_msg, addr_br, empty_tag, way_hit, cpu_req.hsize, XMW, 
+				      cpu_req.hprot, cpu_req.word, lines_buf[way_hit], reqs_i);
+
+                            // read response 
+			    send_rd_rsp(lines_buf[way_hit]);
+			}
+			break;
+
+			default:
+			    HIT_WRITE_DEFAULT;
+			}
+
 		    break;
 
 		    case WRITE :
@@ -582,6 +679,7 @@ inline void l2::reset_io()
     // way_evict_out.write(0);
     // reqs_hit_out.write(0);
     // reqs_hit_i_out.write(0);
+    ongoing_atomic = false;
 
     flush_done.write(0);
 
@@ -655,7 +753,7 @@ bool l2::reqs_peek(set_t set, sc_uint<REQS_BITS> &reqs_i)
 	    reqs_i = i;
 	}
 
-	if (reqs[i].set == set && reqs[i].state != INVALID) {
+	if (reqs[i].set == set && reqs[i].state !=    INVALID) {
 	    set_conflict = true;
 	}
     }

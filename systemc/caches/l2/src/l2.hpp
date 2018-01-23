@@ -147,8 +147,11 @@ private:
     uint64_t custom_dbg_tmp;
     bool evict_stall;
     bool set_conflict;
-    l2_cpu_req_t	cpu_req_conflict;
+    l2_cpu_req_t cpu_req_conflict;
     sc_uint<REQS_BITS_P1> reqs_cnt;
+    bool ongoing_atomic;
+    addr_t atomic_line_addr;
+    sc_uint<REQS_BITS> reqs_atomic_i
 };
 
 
