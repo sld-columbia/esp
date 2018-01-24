@@ -126,18 +126,22 @@ public:
     void reqs_lookup(addr_breakdown_t addr_br, bool &reqs_hit, 
 		     sc_uint<REQS_BITS> &reqs_hit_i);
     bool reqs_peek(set_t set, sc_uint<REQS_BITS> &reqs_i);
+    bool reqs_peek_fwd(addr_breakdown_t addr_br, sc_uint<REQS_BITS> &reqs_i,
+		       bool &reqs_hit, coh_msg_t coh_msg);
     void fill_reqs(cpu_msg_t cpu_msg, addr_breakdown_t addr_br, tag_t tag_estall, l2_way_t way_hit, hsize_t hsize,
 		   unstable_state_t state, hprot_t hprot, word_t word, 
 		   line_t line, sc_uint<REQS_BITS> reqs_i);
     void get_cpu_req(l2_cpu_req_t &cpu_req);
+    void get_fwd_in(l2_fwd_in_t &fwd_in);
     void get_rsp_in(l2_rsp_in_t &rsp_in);
     void get_flush();
     void send_req_out(coh_msg_t coh_msg, hprot_t hprot, 
 		      addr_t line_addr, line_t lines);
+    void send_rsp_out(coh_msg_t coh_msg, cache_id_t req_id, bool to_req, addr_t line_addr, line_t line);
     void send_rd_rsp(line_t lines);
     void send_inval(addr_t addr_inval);
     void put_reqs(set_t set, l2_way_t way, tag_t tag,
-		  line_t lines, hprot_t hprot, state_t state);
+		  line_t lines, hprot_t hprot, state_t state, sc_uint<REQS_BITS> reqs_i);
     line_t make_line_of_addr(addr_t addr);
 
 private:
@@ -148,6 +152,10 @@ private:
     bool evict_stall;
     bool set_conflict;
     l2_cpu_req_t cpu_req_conflict;
+    bool fwd_stall;
+    l2_fwd_in_t fwd_in_stalled;
+    sc_uint<REQS_BITS> reqs_fwd_stall_i;
+    bool reqs_fwd_stalling;
     sc_uint<REQS_BITS_P1> reqs_cnt;
     bool ongoing_atomic;
     addr_t atomic_line_addr;
