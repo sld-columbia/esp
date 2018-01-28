@@ -36,9 +36,9 @@ public:
     // sc_out<bool>		empty_way_found_out;
     // sc_out<l2_way_t>		empty_way_out;
     // sc_out<l2_way_t>		way_evict_out;
-    // sc_out<bool>			reqs_hit_out;
-    // sc_out< sc_uint<REQS_BITS> >	reqs_hit_i_out;
-    // sc_out< sc_uint<REQS_BITS_P1> > reqs_cnt_out;   
+    // sc_out<bool>		reqs_hit_out;
+    // sc_out<sc_uint<REQS_BITS> >	reqs_hit_i_out;
+    // sc_out<sc_uint<REQS_BITS_P1> > reqs_cnt_out;   
 
     // Other signals
     sc_out<bool> flush_done;
@@ -53,7 +53,7 @@ public:
     put_initiator<l2_rd_rsp_t>	l2_rd_rsp;
     put_initiator<l2_inval_t>	l2_inval;
     nb_put_initiator<l2_req_out_t> l2_req_out;
-    put_initiator<l2_rsp_out_t> l2_rsp_out;
+    nb_put_initiator<l2_rsp_out_t> l2_rsp_out;
 
     // Local memory (explicit, TODO: make implicit)
     tag_t tags[L2_LINES];
@@ -117,49 +117,56 @@ public:
     // Processes
     void ctrl(); // cache controller
 
-    // Functions
+    /* Functions for the reset phase */
     inline void reset_io();
     inline void reset_states();
-    void tag_lookup(addr_breakdown_t addr_br, bool &tag_hit,
-		    l2_way_t &way_hit, bool &empty_way_found,
-		    l2_way_t &empty_way);
-    void reqs_lookup(addr_breakdown_t addr_br, bool &reqs_hit, 
-		     sc_uint<REQS_BITS> &reqs_hit_i);
-    bool reqs_peek(set_t set, sc_uint<REQS_BITS> &reqs_i);
-    bool reqs_peek_fwd(addr_breakdown_t addr_br, sc_uint<REQS_BITS> &reqs_i,
-		       bool &reqs_hit, coh_msg_t coh_msg);
-    void fill_reqs(cpu_msg_t cpu_msg, addr_breakdown_t addr_br, tag_t tag_estall, l2_way_t way_hit, hsize_t hsize,
-		   unstable_state_t state, hprot_t hprot, word_t word, 
-		   line_t line, sc_uint<REQS_BITS> reqs_i);
+
+    /* Functions to receive input messages */
     void get_cpu_req(l2_cpu_req_t &cpu_req);
     void get_fwd_in(l2_fwd_in_t &fwd_in);
     void get_rsp_in(l2_rsp_in_t &rsp_in);
     void get_flush();
-    void send_req_out(coh_msg_t coh_msg, hprot_t hprot, 
-		      addr_t line_addr, line_t lines);
-    void send_rsp_out(coh_msg_t coh_msg, cache_id_t req_id, bool to_req, addr_t line_addr, line_t line);
+
+    /* Functions to send output messages */
     void send_rd_rsp(line_t lines);
     void send_inval(addr_t addr_inval);
-    void put_reqs(set_t set, l2_way_t way, tag_t tag,
-		  line_t lines, hprot_t hprot, state_t state, sc_uint<REQS_BITS> reqs_i);
-    line_t make_line_of_addr(addr_t addr);
+    void send_req_out(coh_msg_t coh_msg, hprot_t hprot, addr_t line_addr, line_t lines);
+    void send_rsp_out(coh_msg_t coh_msg, cache_id_t req_id, bool to_req, addr_t line_addr, line_t line);
+
+    /* Functions to move around buffered lines */
+    void fill_reqs(cpu_msg_t cpu_msg, addr_breakdown_t addr_br, tag_t tag_estall, l2_way_t way_hit, 
+		   hsize_t hsize, unstable_state_t state, hprot_t hprot, word_t word, line_t line,
+		   sc_uint<REQS_BITS> reqs_i);
+    void put_reqs(set_t set, l2_way_t way, tag_t tag, line_t lines, hprot_t hprot, state_t state,
+		  sc_uint<REQS_BITS> reqs_i);
+
+    /* Functions to search for cache lines either in memory or buffered */
+    void tag_lookup(addr_breakdown_t addr_br, bool &tag_hit, l2_way_t &way_hit, bool &empty_way_found,
+		    l2_way_t &empty_way);
+    void reqs_lookup(addr_breakdown_t addr_br, sc_uint<REQS_BITS> &reqs_hit_i);
+    bool reqs_peek_req(set_t set, sc_uint<REQS_BITS> &reqs_i);
+    bool reqs_peek_fwd(addr_breakdown_t addr_br, sc_uint<REQS_BITS> &reqs_i, bool &reqs_hit, coh_msg_t coh_msg);
+
+    // line_t make_line_of_addr(addr_t addr); // is this needed here? not called by l2.cpp
 
 private:
-    // debug
+    /* Variables for debug*/ 
     sc_bv<ASSERT_WIDTH>   asserts_tmp;
     sc_bv<BOOKMARK_WIDTH> bookmark_tmp;
     uint64_t custom_dbg_tmp;
-    bool evict_stall;
+
+    /* Variables for stalls, conflicts and atomic operations */
+    sc_uint<REQS_BITS_P1> reqs_cnt;
     bool set_conflict;
     l2_cpu_req_t cpu_req_conflict;
+    bool evict_stall;
     bool fwd_stall;
+    bool reqs_fwd_stalling;
     l2_fwd_in_t fwd_in_stalled;
     sc_uint<REQS_BITS> reqs_fwd_stall_i;
-    bool reqs_fwd_stalling;
-    sc_uint<REQS_BITS_P1> reqs_cnt;
     bool ongoing_atomic;
     addr_t atomic_line_addr;
-    sc_uint<REQS_BITS> reqs_atomic_i
+    sc_uint<REQS_BITS> reqs_atomic_i;
 };
 
 
