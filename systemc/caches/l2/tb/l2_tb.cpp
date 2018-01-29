@@ -71,9 +71,8 @@ void l2_tb::l2_test()
 
     reset_l2_test();
 
-
     /*
-     * T0) Simple word reads and writes. No eviction. No pipelining.
+     * T0) Simple word reads and writes. No eviction. No pipelining. 1 CPU.
      */
     CACHE_REPORT_INFO("T0) SIMPLE WORD READS AND WRITES.");
 
@@ -86,7 +85,8 @@ void l2_tb::l2_test()
     // read misses
     addr_tmp = addr;
     for (int i = 0; i < L2_WAYS; ++i) {
-	op(READ, MISS, 0, WORD, CACHEABLE, addr_tmp, empty_word, make_line_of_addr(addr_tmp.line), RPT_TB);
+	op(READ, MISS, 0, WORD, CACHEABLE, addr_tmp, empty_word, 
+	   make_line_of_addr(addr_tmp.line), RPT_TB);
 
 	addr_tmp.tag_incr(1);
     }
@@ -94,7 +94,8 @@ void l2_tb::l2_test()
     // read hits
     addr_tmp = addr;
     for (int i = 0; i < L2_WAYS; ++i) {
-	op(READ, HIT, 0, WORD, CACHEABLE, addr_tmp, empty_word, make_line_of_addr(addr_tmp.line), RPT_TB);
+	op(READ, HIT, 0, WORD, CACHEABLE, addr_tmp, empty_word, 
+	   make_line_of_addr(addr_tmp.line), RPT_TB);
 
 	addr_tmp.tag_incr(1);
     }
@@ -106,7 +107,17 @@ void l2_tb::l2_test()
     // addr =  same as before
     word = rand_word();
 
-    // write hits
+    // write hits (E)
+    addr_tmp = addr;
+    word_tmp = word;
+    for (int i = 0; i < L2_WAYS; ++i) {
+	op(WRITE, HIT, 0, WORD, CACHEABLE, addr_tmp, word_tmp, empty_line, RPT_TB);
+
+	addr_tmp.tag_incr(1);
+	word_tmp++;
+    }
+
+    // write hits (M)
     addr_tmp = addr;
     word_tmp = word;
     for (int i = 0; i < L2_WAYS; ++i) {
@@ -210,7 +221,8 @@ void l2_tb::l2_test()
     	for (int s = 0; s < SETS/2; ++s) {
     	    addr_tmp.breakdown((wa << TAG_RANGE_LO) + (s << SET_RANGE_LO));
 
-	    op(READ, MISS, 0, WORD, CACHEABLE, addr_tmp, empty_word, make_line_of_addr(addr_tmp.line), RPT_TB);
+	    op(READ, MISS, 0, WORD, CACHEABLE, addr_tmp, empty_word,
+	       make_line_of_addr(addr_tmp.line), RPT_TB);
     	}
     }
 
@@ -219,11 +231,13 @@ void l2_tb::l2_test()
     for (int wo = 0; wo < WORDS_PER_LINE; ++wo) {
     	for (int wa = 0; wa < L2_WAYS; ++wa) {
     	    for (int s = 0; s < SETS; ++s) {
-    		addr_tmp.breakdown((wo << W_OFF_RANGE_LO) + (wa << TAG_RANGE_LO) + (s << SET_RANGE_LO));
+    		addr_tmp.breakdown((wo << W_OFF_RANGE_LO) + (wa << TAG_RANGE_LO) + 
+				   (s << SET_RANGE_LO));
 		word_tmp = addr_tmp.word;
 
     		if (s >= SETS/2 && wo == 0) {
-		    op(WRITE, MISS, 0, WORD, CACHEABLE, addr_tmp, word_tmp, make_line_of_addr(addr_tmp.line), RPT_TB);
+		    op(WRITE, MISS, 0, WORD, CACHEABLE, addr_tmp, word_tmp, 
+		       make_line_of_addr(addr_tmp.line), RPT_TB);
     		} else {
 		    op(WRITE, HIT, 0, WORD, CACHEABLE, addr_tmp, word_tmp, empty_line, RPT_TB);
 		}
@@ -524,6 +538,178 @@ void l2_tb::l2_test()
     }
 
     while(!flush_done) wait();
+
+/*
+ * Test every case of the Cache Coherence protocol
+ */
+
+/****************/
+/* from INVALID */
+/****************/
+
+    /*
+     * READ(INVALID) -> RSP_EDATA(ISD) or RSP_DATA(ISD)
+     */
+
+    /*
+     * WRITE(INVALID) -> RSP_DATA(IMAD) (and RSP_INVACK(IMAD))  -> (RSP_INVACK(IMA))
+     */
+
+    /*
+     * READ_ATOM(INVALID) -> RSP_DATA(IMADW) (and RSP_INVACK(IMADW)) -> (RSP_INVACK(IMAW)) -> WRITE_ATOM(XMW)
+     */
+   
+    /*
+     * READ(ISD), WRITE(ISD), READ_ATOM(ISD), FWD_INV(ISD) -> stall
+     */
+
+    /*
+     * READ(IMAD), WRITE(IMAD), READ_ATOM(IMAD), FWD_GETS(IMAD), FWD_GETM(IMAD) -> stall
+     */
+
+    /*
+     * READ(IMADW), WRITE(IMADW), READ_ATOM(IMADW), FWD_GETS(IMADW), FWD_GETM(IMADW) -> stall
+     */
+
+    /*
+     * READ(IMA), WRITE(IMA), READ_ATOM(IMA), FWD_GETS(IMA), FWD_GETM(IMA) -> stall
+     */
+
+    /*
+     * READ(IMAW), WRITE(IMAW), READ_ATOM(IMAW), FWD_GETS(IMAW), FWD_GETM(IMAW) -> stall
+     */
+
+/***************/
+/* from SHARED */
+/***************/
+
+    /*
+     * READ(SHARED), READ(SMAD), READ(SMADW), READ(SMA), READ(SMAW) 
+     */
+
+    /*
+     * WRITE(SHARED) -> RSP_DATA(SMAD) (and RSP_INVACK(SMAD))  -> (RSP_INVACK(SMA))
+     */
+
+    /*
+     * READ_ATOM(SHARED) -> RSP_DATA(SMADW) (and RSP_INVACK(SMADW)) -> (RSP_INVACK(SMAW)) -> READ_ATOM(XMW) -> WRITE_ATOM(XMW)
+     */
+
+    /*
+     * EVICT(SHARED) -> RSP_PUTACK(SIA)
+     */
+
+    /*
+     * FLUSH(SHARED) -> FWD_INV(SIA) -> RSP_PUTACK(IIA)
+     */
+
+    /*
+     * FWD_INV(SHARED)
+     */
+
+    /*
+     * FWD_INV(SMAD)
+     */
+
+    /*
+     * FWD_INV(SMADW)
+     */
+
+    /*
+     * WRITE(SMAD), READ_ATOM(SMAD), FWD_GETS(SMAD), FWD_GETM(SMAD) -> stall
+     */
+
+    /*
+     * WRITE(SMADW), READ_ATOM(SMADW), FWD_GETS(SMADW), FWD_GETM(SMADW) -> stall
+     */
+
+    /*
+     * WRITE(SMA), READ_ATOM(SMA), FWD_GETS(SMA), FWD_GETM(SMA) -> stall
+     */
+
+    /*
+     * WRITE(SMAW), READ_ATOM(SMAW), FWD_GETS(SMAW), FWD_GETM(SMAW) -> stall
+     */
+
+/************/
+/* MODIFIED */
+/************/
+
+    /*
+     * READ(MODIFIED)
+     */
+
+    /*
+     * WRITE(MODIFIED)
+     */
+
+    /*
+     * READ_ATOM(MODIFIED)
+     */
+
+    /*
+     * EVICT(MODIFIED) -> RSP_PUTACK(MIA)
+     */
+
+    /*
+     * FLUSH(MODIFIED) -> FWD_GETS(MIA) or FWD_GETM(MIA) -> RSP_PUTACK(SIA or IIA)
+     */
+
+    /*
+     * FWD_GETS(MODIFIED)
+     */
+
+    /*
+     * FWD_GETM(MODIFIED)
+     */
+
+/*************/
+/* EXCLUSIVE */
+/*************/
+
+    /*
+     * READ(EXCLUSIVE)
+     */
+
+    /*
+     * WRITE(EXCLUSIVE)
+     */
+
+    /*
+     * READ_ATOM(EXCLUSIVE)
+     */
+
+    /*
+     * EVICT(EXCLUSIVE)
+     */
+
+    /*
+     * FLUSH(EXCLUSIVE)
+     */
+
+    /*
+     * FWD_GETS(EXCLUSIVE)
+     */
+
+    /*
+     * FWD_GETM(EXCLUSIVE)
+     */
+
+/**********/
+/* ATOMIC */
+/**********/
+
+    /*
+     * READ(XMW)
+     */
+
+    /*
+     * WRITE(XMW)
+     */
+
+    /*
+     * FWD_GETS(XMW) or FWD_GETM(XMW) -> stall
+     */
 
     // End simulation
     sc_stop();
