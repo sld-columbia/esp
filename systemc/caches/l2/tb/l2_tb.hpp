@@ -88,15 +88,24 @@ public:
     // inline void rand_wait();
     // addr_breakdown_t rand_addr();
     // word_t rand_word();
-    void put_cpu_req(l2_cpu_req_t &cpu_req, cpu_msg_t cpu_msg, hsize_t hsize,
-		     bool cacheable, addr_t addr, word_t word, bool rpt);
-    void get_req_out(coh_msg_t coh_msg, addr_t addr, hprot_t hprot, bool rpt);
-    void put_rsp_in(coh_msg_t coh_msg, addr_t addr, line_t line, bool rpt);
-    void get_rd_rsp(addr_breakdown_t addr, line_t line, bool rpt);
-    void get_inval(addr_t addr, bool rpt);
-    void op(cpu_msg_t cpu_msg, sc_uint<2> beh, coh_msg_t put_msg, hsize_t hsize, bool cacheable, 
-	    addr_breakdown_t req_addr, word_t req_word, line_t rsp_line, bool rpt);
-    void op_flush(coh_msg_t coh_msg, addr_t addr_line, bool rpt);
+    void put_cpu_req(l2_cpu_req_t &cpu_req, cpu_msg_t cpu_msg, hsize_t hsize, 
+		     addr_t addr, word_t word);
+    void get_req_out(coh_msg_t coh_msg, addr_t addr, hprot_t hprot);
+    void get_rsp_out(coh_msg_t coh_msg, cache_id_t req_id, bool to_req, addr_t addr, 
+		     line_t line);
+    void put_fwd_in(coh_msg_t coh_msg, addr_t addr, cache_id_t req_id);
+    void put_rsp_in(coh_msg_t coh_msg, addr_t addr, line_t line, invack_cnt_t invack_cnt);
+    void get_rd_rsp(addr_breakdown_t addr, line_t line);
+    void get_inval(addr_t addr);
+    void op(cpu_msg_t cpu_msg, int beh, int rsp_beh, coh_msg_t rsp_msg, invack_cnt_t invack_cnt, 
+	    coh_msg_t put_msg, hsize_t hsize, addr_breakdown_t req_addr, word_t req_word, 
+	    line_t rsp_line, int fwd_beh, coh_msg_t fwd_msg, cache_id_t fwd_id, line_t fwd_line);
+    void op_flush(coh_msg_t coh_msg, addr_t addr_line);
+    void flush(int n_lines);
+
+private:
+
+    bool rpt;
 };
 
 

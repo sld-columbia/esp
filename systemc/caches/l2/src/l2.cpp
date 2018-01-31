@@ -283,6 +283,7 @@ void l2::ctrl()
 		    reqs[reqs_hit_i].invack_cnt += rsp_in.invack_cnt;
 
 		    if (reqs[reqs_hit_i].invack_cnt == N_CPU) {
+			ongoing_atomic = true;
 			// update unstable state
 			reqs[reqs_hit_i].state = XMW;
 		    } else {
@@ -320,6 +321,7 @@ void l2::ctrl()
 		    case IMAW :
 		    case SMAW :
 		    {
+			ongoing_atomic = true;
 			reqs[reqs_hit_i].state = XMW;
 		    }
 		    break;
@@ -473,6 +475,8 @@ void l2::ctrl()
 		{
 		    FWD_NOHIT_GETM;
 
+		    send_inval(addr_br.word);
+
 		    send_rsp_out(RSP_DATA, fwd_in.req_id, 1, fwd_in.addr, reqs[reqs_i].line);
 
 		    states[(addr_br.set << L2_WAY_BITS) + way_hit] = INVALID;
@@ -596,7 +600,6 @@ void l2::ctrl()
 
 		    case READ_ATOMIC : // read atomic hit
 
-			ongoing_atomic = true;
 			reqs_atomic_i = reqs_i;
 			atomic_line_addr = addr_br.line;
 
@@ -620,6 +623,8 @@ void l2::ctrl()
 			case MODIFIED : // write hit
 			{
 			    HIT_READ_ATOMIC_EM;
+
+			    ongoing_atomic = true;
 
 			    // save request in intermediate state
 			    fill_reqs(cpu_req.cpu_msg, addr_br, empty_tag, way_hit, cpu_req.hsize, XMW, 

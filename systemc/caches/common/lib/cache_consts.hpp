@@ -79,6 +79,17 @@
 #define MISS		1
 #define MISS_EVICT	2
 
+// Invalidation acknowledges order
+#define DATA_FIRST	0
+#define DATA_HALFWAY	1
+#define DATA_LAST	2
+
+// Fwd testing case
+#define FWD_NONE	0
+#define FWD_NOSTALL	1
+#define FWD_STALL	2
+#define FWD_STALL_XMW	3
+
 /*
  * Coherence
  */

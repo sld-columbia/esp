@@ -81,7 +81,7 @@ inline word_t rand_word()
     return word;
 }
 
-inline line_t make_line_of_addr(addr_t addr) 
+inline line_t line_of_addr(addr_t addr) 
 {
     line_t line;
 
