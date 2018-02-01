@@ -642,8 +642,8 @@ void l2_tb::l2_test()
 
     // FWD_GETM(IMAD), FWD_GETM(M)
     fwd_line = req_line;
-    CACHE_REPORT_VAR(sc_time_stamp(), "addr.w_off: ", addr.w_off);
-    CACHE_REPORT_VAR(sc_time_stamp(), "addr.b_off: ", addr.b_off);
+    // CACHE_REPORT_VAR(sc_time_stamp(), "addr.w_off: ", addr.w_off);
+    // CACHE_REPORT_VAR(sc_time_stamp(), "addr.b_off: ", addr.b_off);
     write_word(fwd_line, word, addr.w_off, addr.b_off, WORD);
     op(WRITE, MISS, 0, RSP_DATA, 0, 0, WORD, addr, word++, req_line, FWD_STALL, FWD_GETM, id++, fwd_line);
 
@@ -895,7 +895,11 @@ void l2_tb::put_rsp_in(coh_msg_t coh_msg, addr_t addr, line_t line, invack_cnt_t
     rsp_in.invack_cnt = invack_cnt;
     rsp_in.line = line;
 
+    // CACHE_REPORT_INFO("before put rsp in");
+
     l2_rsp_in_tb.put(rsp_in);
+
+    // CACHE_REPORT_INFO("after put rsp in");
 
     if (rpt) CACHE_REPORT_VAR(sc_time_stamp(), "RSP_IN", rsp_in);
 }
@@ -996,6 +1000,9 @@ void l2_tb::op(cpu_msg_t cpu_msg, int beh, int rsp_beh, coh_msg_t rsp_msg, invac
 		wait();
 	    }
 	}
+
+	wait();
+
 	// RSP IN (data)
 	put_rsp_in(rsp_msg, req_addr.line, rsp_line, invack_cnt);
 

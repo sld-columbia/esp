@@ -5,11 +5,11 @@
 
 #include "cache_utils.hpp"
 #include "l2_directives.hpp"
-// #include "l2_tags.hpp"
-// #include "l2_states.hpp"
-// #include "l2_hprots.hpp"
-// #include "l2_lines.hpp"
-// #include "l2_evict_ways.hpp"
+#include "l2_tags.hpp"
+#include "l2_states.hpp"
+#include "l2_hprots.hpp"
+#include "l2_lines.hpp"
+#include "l2_evict_ways.hpp"
 
 class l2 : public sc_module
 {
@@ -55,12 +55,12 @@ public:
     nb_put_initiator<l2_req_out_t> l2_req_out;
     nb_put_initiator<l2_rsp_out_t> l2_rsp_out;
 
-    // Local memory (explicit, TODO: make implicit)
-    tag_t tags[L2_LINES];
-    state_t states[L2_LINES];
-    hprot_t hprots[L2_LINES];
-    line_t lines[L2_LINES];
-    l2_way_t evict_ways[SETS];
+    // Local memory
+    l2_tags_t<tag_t, L2_LINES>		tags;
+    l2_states_t<state_t, L2_LINES>	states;
+    l2_hprots_t<hprot_t, L2_LINES>	hprots;
+    l2_lines_t<line_t, L2_LINES>	lines;
+    l2_evict_ways_t<l2_way_t, SETS>	evict_ways;
 
     // Local registers
     reqs_buf_t	 reqs[N_REQS];
@@ -107,11 +107,11 @@ public:
 	    L2_FLATTEN_REGS;
 
 	    // Clock binding for memories
-	    HLS_MAP_TO_MEMORY(tags, "l2_tags");
-	    HLS_MAP_TO_MEMORY(states, "l2_states");
-	    HLS_MAP_TO_MEMORY(hprots, "l2_hprots");
-	    HLS_MAP_TO_MEMORY(lines, "l2_lines");
-	    HLS_MAP_TO_MEMORY(evict_ways, "l2_evict_ways");
+	    tags.clk(this->clk);
+	    states.clk(this->clk);
+	    hprots.clk(this->clk);
+	    lines.clk(this->clk);
+	    evict_ways.clk(this->clk);
 	}
 
     // Processes
@@ -141,6 +141,7 @@ public:
 		  sc_uint<REQS_BITS> reqs_i);
 
     /* Functions to search for cache lines either in memory or buffered */
+    void read_set(set_t set);
     void tag_lookup(addr_breakdown_t addr_br, bool &tag_hit, l2_way_t &way_hit, bool &empty_way_found,
 		    l2_way_t &empty_way);
     void reqs_lookup(addr_breakdown_t addr_br, sc_uint<REQS_BITS> &reqs_hit_i);

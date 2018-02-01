@@ -163,7 +163,7 @@
     asserts_tmp |= AS_FWD_HIT_DEFAULT;					\
     if (RPT_RTL) CACHE_REPORT_TIME(sc_time_stamp(), "Fwd hit default.")
 #define FWD_NOHIT_GETS							\
-    HLS_CONSTRAIN_LATENCY("l2-fwd-nohit-gets-latency");			\
+    HLS_DEFINE_PROTOCOL("l2-fwd-nohit-gets-protocol");			\
     bookmark_tmp |= BM_FWD_NOHIT_GETS;					\
     if (RPT_RTL) CACHE_REPORT_TIME(sc_time_stamp(), "Fwd nohit gets.")
 #define FWD_NOHIT_GETM							\
@@ -183,7 +183,7 @@
     bookmark_tmp |= BM_SET_CONFLICT;					\
     if (RPT_RTL) CACHE_REPORT_TIME(sc_time_stamp(), "Set conflict.")
 #define ATOMIC_OVERRIDE \
-    HLS_CONSTRAIN_LATENCY(0, HLS_ACHIEVABLE, "l2-atom-override-latency");	\
+    HLS_DEFINE_PROTOCOL("l2-atom-override-protocol");	\
     bookmark_tmp |= BM_ATOMIC_OVERRIDE;					\
     if (RPT_RTL) CACHE_REPORT_TIME(sc_time_stamp(), "Atomic override.")
 #define ATOMIC_CONTINUE \
