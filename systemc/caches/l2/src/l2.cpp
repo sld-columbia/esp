@@ -403,8 +403,6 @@ void l2::ctrl()
 		{
 		    FWD_HIT_EMIA;
 
-		    send_inval(addr_br.word);
-
 		    if (fwd_in.coh_msg == FWD_GETS) {
 			HLS_DEFINE_PROTOCOL("fwd-hit-emia-protocol");
 
@@ -430,8 +428,6 @@ void l2::ctrl()
 		case SIA :
 		{
 		    FWD_HIT_SIA;
-
-		    send_inval(addr_br.word);
 
 		    send_rsp_out(RSP_INVACK, fwd_in.req_id, 1, fwd_in.addr, empty_line);
 
@@ -774,7 +770,7 @@ void l2::ctrl()
 		    send_inval(addr_evict);
 		    send_req_out(coh_msg_tmp, empty_hprot, addr_evict, lines_buf[evict_way]);
 		    fill_reqs(cpu_req.cpu_msg, addr_br, tag_tmp, evict_way, cpu_req.hsize, state_tmp, 
-			      cpu_req.hprot, cpu_req.word, empty_line, reqs_i);
+			      cpu_req.hprot, cpu_req.word, lines_buf[evict_way], reqs_i);
 		}
 	    }
 	}

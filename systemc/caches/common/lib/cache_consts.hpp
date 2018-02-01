@@ -89,6 +89,7 @@
 #define FWD_NOSTALL	1
 #define FWD_STALL	2
 #define FWD_STALL_XMW	3
+#define FWD_STALL_EVICT	4
 
 /*
  * Coherence

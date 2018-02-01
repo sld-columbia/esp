@@ -53,7 +53,7 @@ void l2_tb::l2_test()
      */
 
     // preparation variables
-    addr_breakdown_t addr, addr1, addr2, addr3, addr4;
+    addr_breakdown_t addr, addr1, addr2, addr3, addr4, addr_evict;
     word_t word, word1, word2, word3, word4;
     line_t line, req_line, fwd_line;
     l2_cpu_req_t cpu_req, cpu_req1, cpu_req2, cpu_req3, cpu_req4;
@@ -392,7 +392,13 @@ void l2_tb::l2_test()
     addr = addr1;
 
     for (int i = 0; i < L2_WAYS; ++i) {
-	op(READ, MISS, 0, RSP_EDATA, 0, 0, WORD, addr, 0, line_of_addr(addr.line), 0, 0, 0, 0);
+	op(READ, MISS, 0, RSP_DATA, 0, 0, WORD, addr, 0, line_of_addr(addr.line), 0, 0, 0, 0);
+
+	addr.tag_incr(1);
+    }
+
+    for (int i = 0; i < L2_WAYS; ++i) {
+	op(READ, MISS_EVICT, 0, RSP_EDATA, 0, REQ_PUTS, WORD, addr, 0, line_of_addr(addr.line), 0, 0, 0, 0);
 
 	addr.tag_incr(1);
     }
@@ -408,7 +414,6 @@ void l2_tb::l2_test()
 
 	addr.tag_incr(1);
     }
-
 
     CACHE_REPORT_INFO("T5.1) Evict stalls.");
 
@@ -774,12 +779,51 @@ void l2_tb::l2_test()
 
     flush(30); // 7 (addr1 set) + 8 (addr2 set) + 8 (addr3 set) + 7 (addr4 set)
 
-/**********************/
-/* Eviction and flush */
-/**********************/    
+/************/
+/* Eviction */
+/************/    
 
     // evict(S), evict(E), evict(M), flush(S), flush(E), flush(M) 
     // are already tested in the first part.
+
+    CACHE_REPORT_INFO("FWD_INV(SIA), PUTACK(IIA), FWD_GETS(MIA), FWD_GETM(MIA)");
+
+    addr = addr1;
+
+    // fill a set
+    for (int i = 0; i < L2_WAYS; ++i) {
+	op(READ, MISS, 0, RSP_DATA, 0, 0, WORD, addr, 0, line_of_addr(addr.line), 0, 0, 0, 0);
+
+	addr.tag_incr(1);
+    }
+
+    op(READ, MISS_EVICT, 0, RSP_DATA, 0, REQ_PUTS, WORD, addr, 0, line_of_addr(addr.line), FWD_STALL_EVICT, FWD_INV, 0, 0);
+
+    addr.set_incr(1);
+
+    // fill a set
+    for (int i = 0; i < L2_WAYS; ++i) {
+	op(WRITE, MISS, 0, RSP_DATA, 0, 0, WORD, addr, addr.word, line_of_addr(addr.line), 0, 0, 0, 0);
+
+	addr.tag_incr(1);
+    }
+
+    addr_evict = addr;
+    addr_evict.tag_decr(L2_WAYS);
+
+    op(READ, MISS_EVICT, 0, RSP_DATA, 0, REQ_PUTM, WORD, addr, addr.word, line_of_addr(addr.line),
+       FWD_STALL_EVICT, FWD_GETS, 1, line_of_addr(addr_evict.line));
+
+    addr.tag_incr(1);
+    addr_evict.tag_incr(1);
+
+    op(READ, MISS_EVICT, 0, RSP_DATA, 0, REQ_PUTM, WORD, addr, addr.word, line_of_addr(addr.line),
+       FWD_STALL_EVICT, FWD_GETM, 0, line_of_addr(addr_evict.line));
+
+    CACHE_REPORT_INFO("Flush all cache");
+
+    flush(16); // 7 (addr1 set) + 8 (addr2 set) + 8 (addr3 set) + 7 (addr4 set)
+
 
     // End simulation
     sc_stop();
@@ -959,36 +1003,45 @@ void l2_tb::op(cpu_msg_t cpu_msg, int beh, int rsp_beh, coh_msg_t rsp_msg, invac
 	wait(); wait();
     }
 
-    // CPU REQ
     put_cpu_req(cpu_req, cpu_msg, hsize, cpu_addr, req_word);
 
     if (beh == MISS_EVICT) {
 	addr_breakdown_t req_addr_tmp = req_addr;
 	req_addr_tmp.tag_decr(L2_WAYS); 
 
-	// INVAL
 	get_inval(req_addr_tmp.line);
 
-	// REQ OUT (put)
 	get_req_out(put_msg, req_addr_tmp.line, 0);
 
-	// RSP IN (put ack)
+	if (fwd_beh == FWD_STALL_EVICT) {
+
+	    put_fwd_in(fwd_msg, req_addr_tmp.line, fwd_id);
+
+	    if (fwd_msg == FWD_INV) {
+		get_rsp_out(RSP_INVACK, fwd_id, 1, req_addr_tmp.line, 0);
+	    } else if (fwd_msg == FWD_GETS) {
+		get_rsp_out(RSP_DATA, fwd_id, 1, req_addr_tmp.line, fwd_line);
+		wait();
+		get_rsp_out(RSP_DATA, 0, 0, req_addr_tmp.line, fwd_line);
+	    } else { // fwd_msg == FWD_GETM
+		get_rsp_out(RSP_DATA, fwd_id, 1, req_addr_tmp.line, fwd_line);
+	    }
+	}
+
 	put_rsp_in(RSP_PUTACK, req_addr_tmp.line, 0, 0);
 
 	wait();
     }
 
     if (beh == MISS || beh == MISS_EVICT) {
-	// REQ OUT (get)
+
 	get_req_out(coh_req, req_addr.line, cpu_req.hprot);
 
-	// FWD IN (stall)
 	if (fwd_beh == FWD_STALL) {
 	    put_fwd_in(fwd_msg, req_addr.line, fwd_id);
 	    wait(); wait();
 	}
 	
-	// RSP IN (inv ack)
 	if (invack_cnt && rsp_beh == DATA_FIRST) {
 	    for (int i = 0; i < invack_cnt; i++) {
 		put_rsp_in(RSP_INVACK, req_addr.line, 0, 0);
@@ -1003,10 +1056,8 @@ void l2_tb::op(cpu_msg_t cpu_msg, int beh, int rsp_beh, coh_msg_t rsp_msg, invac
 
 	wait();
 
-	// RSP IN (data)
 	put_rsp_in(rsp_msg, req_addr.line, rsp_line, invack_cnt);
 
-	// RSP IN (inv ack)
 	if (invack_cnt && rsp_beh == DATA_LAST) {
 	    wait();
 	    for (int i = 0; i < invack_cnt; i++) {
@@ -1022,16 +1073,13 @@ void l2_tb::op(cpu_msg_t cpu_msg, int beh, int rsp_beh, coh_msg_t rsp_msg, invac
 	}
     }
 
-    // RD RSP
     if (cpu_msg == READ || cpu_msg == READ_ATOMIC)
 	get_rd_rsp(req_addr, rsp_line);
 
-    // FWD IN
     if (fwd_beh == FWD_NOSTALL)
 	    put_fwd_in(fwd_msg, req_addr.line, fwd_id);
 
-    // RSP OUT, INVAL
-    if (fwd_beh != FWD_NONE) {
+    if (fwd_beh != FWD_NONE && fwd_beh != FWD_STALL_EVICT) {
 	
 	if (fwd_msg == FWD_INV) {
 	    if (cpu_msg == READ) {
