@@ -124,7 +124,7 @@ void l2_tb::l2_test()
 
     // write misses
     for (int i = 0; i < L2_WAYS; ++i) {
-	op(WRITE, MISS, 0, RSP_EDATA, 0, 0, WORD, addr, word, line_of_addr(addr.line), 0, 0, 0, 0);
+	op(WRITE, MISS, 0, RSP_DATA, 0, 0, WORD, addr, word, line_of_addr(addr.line), 0, 0, 0, 0);
 
 	addr.tag_incr(1);
 	word++;
@@ -227,7 +227,7 @@ void l2_tb::l2_test()
 		word = addr.word;
 
     		if (s >= SETS/2 && wo == 0) {
-		    op(WRITE, MISS, 0, RSP_EDATA, 0, 0, WORD, addr, word, line_of_addr(addr.line), 0, 0, 0, 0);
+		    op(WRITE, MISS, 0, RSP_DATA, 0, 0, WORD, addr, word, line_of_addr(addr.line), 0, 0, 0, 0);
     		} else {
 		    op(WRITE, HIT, 0, 0, 0, 0, WORD, addr, word, 0, 0, 0, 0, 0);
 		}
@@ -324,10 +324,10 @@ void l2_tb::l2_test()
 
     addr = addr1;
     addr.set_incr(1);
-    op(WRITE, MISS, 0, RSP_EDATA, 0, 0, BYTE, addr, 0, line_of_addr(addr.line), 0, 0, 0, 0);
+    op(WRITE, MISS, 0, RSP_DATA, 0, 0, BYTE, addr, 0, line_of_addr(addr.line), 0, 0, 0, 0);
 
     addr.tag_incr(1);
-    op(WRITE, MISS, 0, RSP_EDATA, 0, 0, HALFWORD, addr, 0, line_of_addr(addr.line), 0, 0, 0, 0);
+    op(WRITE, MISS, 0, RSP_DATA, 0, 0, HALFWORD, addr, 0, line_of_addr(addr.line), 0, 0, 0, 0);
 
 
     CACHE_REPORT_INFO("T4.4) Verify writes.");
@@ -398,7 +398,7 @@ void l2_tb::l2_test()
     }
 
     for (int i = 0; i < L2_WAYS; ++i) {
-	op(WRITE, MISS_EVICT, 0, RSP_EDATA, 0, REQ_PUTS, WORD, addr, addr.word, line_of_addr(addr.line), 0, 0, 0, 0);
+	op(WRITE, MISS_EVICT, 0, RSP_DATA, 0, REQ_PUTS, WORD, addr, addr.word, line_of_addr(addr.line), 0, 0, 0, 0);
 
 	addr.tag_incr(1);
     }
@@ -537,7 +537,7 @@ void l2_tb::l2_test()
 	addr2 = rand_addr();
 	addr3 = rand_addr();
 	addr4 = rand_addr();
-    } while (addr1.set != addr2.set && addr1.set != addr3.set && addr1.set != addr4.set);
+    } while (addr1.set == addr2.set || addr1.set == addr3.set || addr1.set == addr4.set);
 
     word1 = rand_word();
     word2 = rand_word();
@@ -606,7 +606,7 @@ void l2_tb::l2_test()
 	// READ_ATOMIC(I), RSP_DATA(IMADW)
 	op(READ_ATOMIC, MISS, 0, RSP_DATA, 0, 0, WORD, addr, 0, line_of_addr(addr.line), 0, 0, 0, 0);
 	// READ_ATOMIC(XMW)
-	op(READ_ATOMIC, HIT, 0, 0, 0, 0, WORD, addr, 0, 0, 0, 0, 0, 0);
+	op(READ_ATOMIC, HIT, 0, 0, 0, 0, WORD, addr, 0, line_of_addr(addr.line), 0, 0, 0, 0);
 	// WRITE_ATOM(XMW)
 	op(WRITE_ATOMIC, HIT, 0, 0, 0, 0, WORD, addr, word++, 0, 0, 0, 0, 0);
 	addr.tag_incr(1);
@@ -619,7 +619,7 @@ void l2_tb::l2_test()
 	// READ_ATOMIC with != address and ongoing atomic.
 	op(READ_ATOMIC, MISS, DATA_HALFWAY, RSP_DATA, N_CPU-1, 0, WORD, addr, 0, line_of_addr(addr.line), 0, 0, 0, 0);
 	// READ(XMW)
-	op(READ, HIT, 0, 0, 0, 0, WORD, addr, 0, 0, 0, 0, 0, 0);
+	op(READ, HIT, 0, 0, 0, 0, WORD, addr, 0, line_of_addr(addr.line), 0, 0, 0, 0);
 	addr.tag_incr(1);
 
 	// READ_ATOMIC(I), RSP_INVACK(IMADW), RSP_DATA(IMADW)
@@ -642,6 +642,8 @@ void l2_tb::l2_test()
 
     // FWD_GETM(IMAD), FWD_GETM(M)
     fwd_line = req_line;
+    CACHE_REPORT_VAR(sc_time_stamp(), "addr.w_off: ", addr.w_off);
+    CACHE_REPORT_VAR(sc_time_stamp(), "addr.b_off: ", addr.b_off);
     write_word(fwd_line, word, addr.w_off, addr.b_off, WORD);
     op(WRITE, MISS, 0, RSP_DATA, 0, 0, WORD, addr, word++, req_line, FWD_STALL, FWD_GETM, id++, fwd_line);
 
@@ -750,7 +752,7 @@ void l2_tb::l2_test()
     op(READ_ATOMIC, HIT, 0, 0, 0, 0, WORD, addr, 0, req_line, 0, 0, 0, 0);
     op(WRITE_ATOMIC, HIT, 0, 0, 0, 0, WORD, addr, word++, 0, 0, 0, 0, 0);
     write_word(req_line, word-1, addr.w_off, addr.b_off, WORD);
-    op(READ, HIT, 0, 0, 0, 0, WORD, addr, 0, fwd_line, 0, 0, 0, 0);
+    op(READ, HIT, 0, 0, 0, 0, WORD, addr, 0, req_line, 0, 0, 0, 0);
 
     addr.tag_incr(2);
     req_line = line_of_addr(addr.line);
@@ -762,14 +764,15 @@ void l2_tb::l2_test()
 
     addr.tag_incr(1);
     req_line = line_of_addr(addr.line);
+    write_word(req_line, word1 + 2, addr.w_off, addr.b_off, WORD);
     op(READ_ATOMIC, HIT, 0, 0, 0, 0, WORD, addr, 0, req_line, 0, 0, 0, 0);
     op(WRITE_ATOMIC, HIT, 0, 0, 0, 0, WORD, addr, word++, 0, 0, 0, 0, 0);
     write_word(req_line, word-1, addr.w_off, addr.b_off, WORD);
-    op(READ, HIT, 0, 0, 0, 0, WORD, addr, 0, fwd_line, 0, 0, 0, 0);
+    op(READ, HIT, 0, 0, 0, 0, WORD, addr, 0, req_line, 0, 0, 0, 0);
 
     CACHE_REPORT_INFO("Flush all cache");
 
-    flush(28); // count how many valid lines are left in the cache
+    flush(30); // 7 (addr1 set) + 8 (addr2 set) + 8 (addr3 set) + 7 (addr4 set)
 
 /**********************/
 /* Eviction and flush */
@@ -945,8 +948,6 @@ void l2_tb::op(cpu_msg_t cpu_msg, int beh, int rsp_beh, coh_msg_t rsp_msg, invac
 	coh_req = REQ_GETS;
     } else if (cpu_msg == WRITE || cpu_msg ==  READ_ATOMIC) {
 	coh_req = REQ_GETM;
-    } else {
-	CACHE_REPORT_ERROR("Wrong cpu_msg.", cpu_msg);
     }
 
     if (fwd_beh == FWD_STALL_XMW) {
@@ -984,23 +985,34 @@ void l2_tb::op(cpu_msg_t cpu_msg, int beh, int rsp_beh, coh_msg_t rsp_msg, invac
 	}
 	
 	// RSP IN (inv ack)
-	if (invack_cnt && rsp_beh == DATA_FIRST)
-	    for (int i = 0; i < invack_cnt; i++)
+	if (invack_cnt && rsp_beh == DATA_FIRST) {
+	    for (int i = 0; i < invack_cnt; i++) {
 		put_rsp_in(RSP_INVACK, req_addr.line, 0, 0);
-	else if (invack_cnt && rsp_beh == DATA_HALFWAY)
-	    for (int i = 0; i < invack_cnt / 2; i++)
+		wait();
+	    }
+	} else if (invack_cnt && rsp_beh == DATA_HALFWAY) {
+	    for (int i = 0; i < invack_cnt / 2; i++) {
 		put_rsp_in(RSP_INVACK, req_addr.line, 0, 0);
-
+		wait();
+	    }
+	}
 	// RSP IN (data)
 	put_rsp_in(rsp_msg, req_addr.line, rsp_line, invack_cnt);
 
 	// RSP IN (inv ack)
-	if (invack_cnt && rsp_beh == DATA_LAST)
-	    for (int i = 0; i < invack_cnt; i++)
+	if (invack_cnt && rsp_beh == DATA_LAST) {
+	    wait();
+	    for (int i = 0; i < invack_cnt; i++) {
 		put_rsp_in(RSP_INVACK, req_addr.line, 0, 0);
-	else if (invack_cnt && rsp_beh == DATA_HALFWAY)
-	    for (int i = invack_cnt / 2; i < invack_cnt; i++)
+		wait();
+	    }
+	} else if (invack_cnt && rsp_beh == DATA_HALFWAY) {
+	    wait();
+	    for (int i = invack_cnt / 2; i < invack_cnt; i++) {
 		put_rsp_in(RSP_INVACK, req_addr.line, 0, 0);
+		wait();
+	    }
+	}
     }
 
     // RD RSP
@@ -1017,8 +1029,8 @@ void l2_tb::op(cpu_msg_t cpu_msg, int beh, int rsp_beh, coh_msg_t rsp_msg, invac
 	if (fwd_msg == FWD_INV) {
 	    if (cpu_msg == READ) {
 		get_inval(req_addr.line);
-		get_rsp_out(RSP_INVACK, fwd_id, 1, req_addr.line, 0);
 	    }
+	    get_rsp_out(RSP_INVACK, fwd_id, 1, req_addr.line, 0);
 	} else if (fwd_msg == FWD_GETS) {
 
 	    get_rsp_out(RSP_DATA, fwd_id, 1, req_addr.line, fwd_line);

@@ -155,26 +155,31 @@ public:
 
     l2_fwd_in_t() :
 	coh_msg(0),
-	addr(0)
+	addr(0),
+	req_id(0)
     { }
 
     inline l2_fwd_in_t& operator  = (const l2_fwd_in_t& x) {
 	coh_msg = x.coh_msg;	
-	addr    = x.addr;	 
+	addr    = x.addr;
+	req_id  = x.req_id;
 	return *this;
     }
     inline bool operator  == (const l2_fwd_in_t& x) const {
 	return (x.coh_msg == coh_msg	&& 
-		x.addr    == addr);
+		x.addr    == addr       &&
+		x.req_id  == req_id);
     }
     inline friend void sc_trace(sc_trace_file *tf, const l2_fwd_in_t& x, const std::string & name) {
 	sc_trace(tf, x.coh_msg , name + ".coh_msg ");
 	sc_trace(tf, x.addr,     name + ".addr");
+	sc_trace(tf, x.req_id,     name + ".req_id");
     }
     inline friend ostream & operator<<(ostream& os, const l2_fwd_in_t& x) {
 	os << hex << "(" 
 	   << "coh_msg: " << x.coh_msg
-	   << ", addr: "  << x.addr << ")";
+	   << ", addr: "  << x.addr
+	   << ", req_id: "  << x.req_id << ")";
 	return os;
     }
 };

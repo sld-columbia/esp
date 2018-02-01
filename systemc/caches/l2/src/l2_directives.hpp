@@ -65,7 +65,7 @@
 #define PUT_REQS					\
     HLS_CONSTRAIN_LATENCY("l2-put-reqs-latency");	\
     bookmark_tmp |= BM_PUT_REQS;			\
-
+    if (RPT_RTL) CACHE_REPORT_TIME(sc_time_stamp(), "Put reqs.")
 // Search for cache lines
 #define TAG_LOOKUP						       \
     HLS_CONSTRAIN_LATENCY(0, HLS_ACHIEVABLE, "l2-tag-lookup-latency"); \
@@ -142,7 +142,8 @@
 
 // Manage fwd in
 #define FWD_STALL_BEGIN				\
-    bookmark_tmp |= BM_FWD_STALL_BEGIN
+    bookmark_tmp |= BM_FWD_STALL_BEGIN;					\
+    if (RPT_RTL) CACHE_REPORT_TIME(sc_time_stamp(), "Fwd stall begin.")
 #define FWD_HIT_SMADX							\
     HLS_CONSTRAIN_LATENCY("l2-fwd-hit-smadx-latency");			\
     bookmark_tmp |= BM_FWD_HIT_SMADX;					\

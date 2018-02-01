@@ -75,7 +75,8 @@ void l2::ctrl()
 		    is_rsp_to_get = true;
 	    } else if (l2_rsp_in.nb_can_get()) {
 	    	is_rsp_to_get = true;
-	    } else if (l2_fwd_in.nb_can_get() && !reqs_fwd_stalling) {
+	    } else if (l2_fwd_in.nb_can_get() || fwd_stall_ended) {
+		fwd_stall_ended = false;
 		is_fwd_to_get = true;
 	    } else if ((l2_cpu_req.nb_can_get() && !evict_stall && 
 			(reqs_cnt != 0 || ongoing_atomic)) || 
@@ -380,6 +381,7 @@ void l2::ctrl()
 	    if (!fwd_stall) {
 		get_fwd_in(fwd_in);
 	    } else {
+		CACHE_REPORT_INFO("End of fwd stall.");
 		fwd_in = fwd_in_stalled;
 	    }
 
@@ -418,10 +420,12 @@ void l2::ctrl()
 		    send_inval(addr_br.word);
 
 		    if (fwd_in.coh_msg == FWD_GETS) {
-
+			// {
+			//     HLS_DEFINE_PROTOCOL("fwd-hit-emia-protocol");
 			send_rsp_out(RSP_DATA, fwd_in.req_id, 1, fwd_in.addr, reqs[reqs_i].line); // to requestor
+			wait();
 			send_rsp_out(RSP_DATA, 0, 0, fwd_in.addr, reqs[reqs_i].line); // to directory
-
+                        // }
 			reqs[reqs_i].state = SIA;
 
 		    } else {
@@ -463,9 +467,12 @@ void l2::ctrl()
 		{
 		    FWD_NOHIT_GETS;
 
-		    send_rsp_out(RSP_DATA, fwd_in.req_id, 1, fwd_in.addr, reqs[reqs_i].line); // to requestor
-		    send_rsp_out(RSP_DATA, fwd_in.req_id, 0, fwd_in.addr, reqs[reqs_i].line); // to directory
-
+		    // {
+		    // 	HLS_DEFINE_PROTOCOL("fwd-nohit-gets-protocol");
+		    send_rsp_out(RSP_DATA, fwd_in.req_id, 1, fwd_in.addr, lines_buf[way_hit]); // to requestor
+		    wait();
+		    send_rsp_out(RSP_DATA, fwd_in.req_id, 0, fwd_in.addr, lines_buf[way_hit]); // to directory
+		    // }
 		    states[(addr_br.set << L2_WAY_BITS) + way_hit] = SHARED;
 
 		    break;
@@ -477,7 +484,7 @@ void l2::ctrl()
 
 		    send_inval(addr_br.word);
 
-		    send_rsp_out(RSP_DATA, fwd_in.req_id, 1, fwd_in.addr, reqs[reqs_i].line);
+		    send_rsp_out(RSP_DATA, fwd_in.req_id, 1, fwd_in.addr, lines_buf[way_hit]);
 
 		    states[(addr_br.set << L2_WAY_BITS) + way_hit] = INVALID;
 
@@ -524,6 +531,9 @@ void l2::ctrl()
 
 		    ATOMIC_OVERRIDE;
 
+		    reqs[reqs_atomic_i].state = INVALID;
+		    reqs_cnt++;
+
 		    put_reqs(reqs[reqs_atomic_i].set, reqs[reqs_atomic_i].way, reqs[reqs_atomic_i].tag,
 			     reqs[reqs_atomic_i].line, reqs[reqs_atomic_i].hprot, MODIFIED, reqs_atomic_i);
 
@@ -543,6 +553,9 @@ void l2::ctrl()
 
 			send_rd_rsp(reqs[reqs_atomic_i].line);
 
+			reqs[reqs_atomic_i].state = INVALID;
+			reqs_cnt++;
+
 			put_reqs(reqs[reqs_atomic_i].set, reqs[reqs_atomic_i].way, reqs[reqs_atomic_i].tag,
 				 reqs[reqs_atomic_i].line, reqs[reqs_atomic_i].hprot, MODIFIED, reqs_atomic_i);
 
@@ -561,6 +574,9 @@ void l2::ctrl()
 
 			write_word(reqs[reqs_atomic_i].line, cpu_req.word, addr_br.w_off, 
 				   addr_br.b_off, cpu_req.hsize);
+
+			reqs[reqs_atomic_i].state = INVALID;
+			reqs_cnt++;
 
 			put_reqs(reqs[reqs_atomic_i].set, reqs[reqs_atomic_i].way, reqs[reqs_atomic_i].tag,
 				 reqs[reqs_atomic_i].line, reqs[reqs_atomic_i].hprot, MODIFIED, reqs_atomic_i);
@@ -600,14 +616,14 @@ void l2::ctrl()
 
 		    case READ_ATOMIC : // read atomic hit
 
-			reqs_atomic_i = reqs_i;
-			atomic_line_addr = addr_br.line;
-
 			switch (state_buf[way_hit]) {
 
 			case SHARED :
 			{
 			    HIT_READ_ATOMIC_S;
+
+			    reqs_atomic_i = reqs_i;
+			    atomic_line_addr = addr_br.line;
 
 			    // save request in intermediate state
 			    fill_reqs(cpu_req.cpu_msg, addr_br, empty_tag, way_hit, cpu_req.hsize, SMADW, 
@@ -625,6 +641,8 @@ void l2::ctrl()
 			    HIT_READ_ATOMIC_EM;
 
 			    ongoing_atomic = true;
+			    reqs_atomic_i = reqs_i;
+			    atomic_line_addr = addr_br.line;
 
 			    // save request in intermediate state
 			    fill_reqs(cpu_req.cpu_msg, addr_br, empty_tag, way_hit, cpu_req.hsize, XMW, 
@@ -698,6 +716,9 @@ void l2::ctrl()
 		    case READ_ATOMIC :
 		    {
 			MISS_READ_ATOMIC;
+
+			reqs_atomic_i = reqs_i;
+			atomic_line_addr = addr_br.line;
 
 			state_tmp = IMADW;
 			coh_msg_tmp = REQ_GETM;
@@ -839,7 +860,7 @@ inline void l2::reset_io()
     // cpu_req_conflict = 
     evict_stall = false;
     fwd_stall = false;
-    reqs_fwd_stalling = false;
+    fwd_stall_ended = false;
     // fwd_in_stalled = 
     reqs_fwd_stall_i = 0;
     ongoing_atomic = false;
@@ -985,8 +1006,10 @@ void l2::put_reqs(set_t set, l2_way_t way, tag_t tag, line_t line, hprot_t hprot
     tags[base + way]   = tag;
 
     // if necessary end the forward messages stall
-    if (reqs_fwd_stalling && reqs_fwd_stall_i == reqs_i)
-	reqs_fwd_stalling = false;
+    if (fwd_stall && reqs_fwd_stall_i == reqs_i) {
+	CACHE_REPORT_INFO("In put reqs terminate fwd stalling.");
+	fwd_stall_ended = true;
+    }
 }
 
 /* Functions to search for cache lines either in memory or buffered */
@@ -1096,7 +1119,6 @@ bool l2::reqs_peek_fwd(addr_breakdown_t addr_br, sc_uint<REQS_BITS> &reqs_i, boo
 	}
     }
 
-    reqs_fwd_stalling = fwd_stall_tmp;
     reqs_fwd_stall_i = reqs_i;
 
     return fwd_stall_tmp;

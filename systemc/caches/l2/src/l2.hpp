@@ -161,7 +161,7 @@ private:
     l2_cpu_req_t cpu_req_conflict;
     bool evict_stall;
     bool fwd_stall;
-    bool reqs_fwd_stalling;
+    bool fwd_stall_ended;
     l2_fwd_in_t fwd_in_stalled;
     sc_uint<REQS_BITS> reqs_fwd_stall_i;
     bool ongoing_atomic;

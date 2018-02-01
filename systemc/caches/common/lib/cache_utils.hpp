@@ -40,7 +40,7 @@ inline void write_word(line_t &line, word_t word, word_offset_t w_off, byte_offs
 	b_off_tmp = BYTES_PER_WORD - 2 - b_off;
 	size = BITS_PER_HALFWORD;
     } else if (hsize == WORD) {
-	b_off_tmp = b_off;
+	b_off_tmp = 0;
 	size = BITS_PER_WORD;
     }
 
@@ -48,7 +48,12 @@ inline void write_word(line_t &line, word_t word, word_offset_t w_off, byte_offs
     uint32_t b_off_bits = 8 * b_off_tmp;
     uint32_t off_bits = w_off_bits + b_off_bits;
 
-    line.range(off_bits + size - 1, off_bits) = word.range(b_off_bits + size - 1, b_off_bits);
+    uint32_t word_range_hi = b_off_bits + size - 1;
+    uint32_t line_range_hi = off_bits + size - 1;
+
+    // cerr << "line_range_hi: " << line_range_hi << ", word_range_hi: " << word_range_hi << endl;
+    // cerr << "off_bits: " << off_bits << ", b_off_bits: " << b_off_bits << endl;
+    line.range(line_range_hi, off_bits) = word.range(word_range_hi, b_off_bits);
 }
 
 inline word_t read_word(line_t line, word_offset_t w_off)
