@@ -112,7 +112,8 @@ architecture rtl of l2_wrapper is
   signal rsp_out_ready          : std_ulogic;
   signal rsp_out_valid          : std_ulogic;
   signal rsp_out_data_coh_msg   : coh_msg_t;
-  signal rsp_out_data_hprot     : hprot_t;
+  signal rsp_out_data_req_id    : cache_id_t;
+  signal rsp_out_data_to_req    : std_ulogic;
   signal rsp_out_data_addr      : addr_t;
   signal rsp_out_data_line      : line_t;
   -- NoC to cache
@@ -120,6 +121,7 @@ architecture rtl of l2_wrapper is
   signal fwd_in_valid           : std_ulogic;
   signal fwd_in_data_coh_msg    : coh_msg_t;
   signal fwd_in_data_addr       : addr_t;
+  signal fwd_in_data_req_id     : cache_id_t;
   signal rsp_in_valid           : std_ulogic;
   signal rsp_in_ready           : std_ulogic;
   signal rsp_in_data_coh_msg    : coh_msg_t;
@@ -284,6 +286,53 @@ architecture rtl of l2_wrapper is
   signal req_reg_next : req_reg_type := REQ_REG_DEFAULT;
 
   -------------------------------------------------------------------------------
+  -- FSM: Response to NoC
+  -------------------------------------------------------------------------------
+  type rsp_out_fsm is (send_header, send_addr, send_data);
+
+  type rsp_out_reg_type is record
+    state    : rsp_out_fsm;
+    coh_msg  : coh_msg_t;
+    addr     : addr_t;
+    line     : line_t;
+    word_cnt : natural range 0 to 3;
+    asserts  : asserts_rsp_out_t;
+  end record rsp_out_reg_type;
+
+  constant RSP_OUT_REG_DEFAULT : rsp_out_reg_type := (
+    state    => send_header,
+    coh_msg  => (others => '0'),
+    addr     => (others => '0'),
+    line     => (others => '0'),
+    word_cnt => 0,
+    asserts  => (others => '0'));
+
+  signal rsp_out_reg      : rsp_out_reg_type := RSP_OUT_REG_DEFAULT;
+  signal rsp_out_reg_next : rsp_out_reg_type := RSP_OUT_REG_DEFAULT;
+
+  -------------------------------------------------------------------------------
+  -- FSM: Forward from  NoC
+  -------------------------------------------------------------------------------
+
+  type fwd_in_fsm is (rcv_header, rcv_addr);
+
+  type fwd_in_reg_type is record
+    state      : fwd_in_fsm;
+    coh_msg    : coh_msg_t;
+    req_id     : cache_id_t;
+    asserts    : asserts_fwd_t;
+  end record fwd_in_reg_type;
+
+  constant FWD_IN_REG_DEFAULT : fwd_in_reg_type := (
+    state      => rcv_header,
+    coh_msg    => (others => '0'),
+    req_id     => (others => '0'),
+    asserts    => (others => '0'));
+
+  signal fwd_in_reg      : fwd_in_reg_type := FWD_IN_REG_DEFAULT;
+  signal fwd_in_reg_next : fwd_in_reg_type := FWD_IN_REG_DEFAULT;
+  
+  -------------------------------------------------------------------------------
   -- FSM: Response from  NoC
   -------------------------------------------------------------------------------
 
@@ -339,14 +388,15 @@ architecture rtl of l2_wrapper is
   -------------------------------------------------------------------------------
 
   -- Debug signals
-  signal ahbs_reg_state   : ahbs_fsm;
-  signal ahbm_reg_state   : ahbm_fsm;
-  signal req_reg_state    : req_fsm;
-  signal rsp_in_reg_state : rsp_in_fsm;
-  signal ahbs_asserts     : asserts_ahbs_t;
-  signal ahbm_asserts     : asserts_ahbm_t;
-  signal req_asserts      : asserts_req_t;
-  signal rsp_in_asserts   : asserts_rsp_in_t;
+  signal ahbs_reg_state    : ahbs_fsm;
+  signal ahbm_reg_state    : ahbm_fsm;
+  signal req_reg_state     : req_fsm;
+  signal rsp_out_reg_state : req_fsm;
+  signal rsp_in_reg_state  : rsp_in_fsm;
+  signal ahbs_asserts      : asserts_ahbs_t;
+  signal ahbm_asserts      : asserts_ahbm_t;
+  signal req_asserts       : asserts_req_t;
+  signal rsp_in_asserts    : asserts_rsp_in_t;
 
   -- Debug LEDs
   signal led_bookmarks       : std_ulogic;
@@ -358,6 +408,7 @@ architecture rtl of l2_wrapper is
   -- attribute mark_debug of ahbs_reg_state   : signal is "true";
   -- attribute mark_debug of ahbm_reg_state   : signal is "true";
   -- attribute mark_debug of req_reg_state    : signal is "true";
+  -- attribute mark_debug of rsp_out_reg_state    : signal is "true";
   -- attribute mark_debug of rsp_in_reg_state : signal is "true";
 
   attribute mark_debug of flush_due   : signal is "true";
@@ -374,6 +425,7 @@ architecture rtl of l2_wrapper is
   attribute mark_debug of ahbs_asserts : signal is "true";
   -- attribute mark_debug of ahbm_asserts   : signal is "true";
   -- attribute mark_debug of req_asserts    : signal is "true";
+  -- attribute mark_debug of rsp_out_asserts    : signal is "true";
   -- attribute mark_debug of rsp_in_asserts : signal is "true";
 
   -- AHB to cache
@@ -401,17 +453,19 @@ architecture rtl of l2_wrapper is
   attribute mark_debug of req_out_data_hprot     : signal is "true";
   attribute mark_debug of req_out_data_addr      : signal is "true";
   attribute mark_debug of req_out_data_line      : signal is "true";
-  -- attribute mark_debug of rsp_out_ready          : signal is "true";
-  -- attribute mark_debug of rsp_out_valid          : signal is "true";
-  -- attribute mark_debug of rsp_out_data_coh_msg   : signal is "true";
-  -- attribute mark_debug of rsp_out_data_hprot     : signal is "true";
-  -- attribute mark_debug of rsp_out_data_addr      : signal is "true";
-  -- attribute mark_debug of rsp_out_data_line      : signal is "true";
+  attribute mark_debug of rsp_out_ready          : signal is "true";
+  attribute mark_debug of rsp_out_valid          : signal is "true";
+  attribute mark_debug of rsp_out_data_coh_msg   : signal is "true";
+  attribute mark_debug of rsp_out_data_req_id    : signal is "true";
+  attribute mark_debug of rsp_out_data_to_req    : signal is "true";
+  attribute mark_debug of rsp_out_data_addr      : signal is "true";
+  attribute mark_debug of rsp_out_data_line      : signal is "true";
   -- NoC to cache
-  -- attribute mark_debug of fwd_in_ready           : signal is "true";
-  -- attribute mark_debug of fwd_in_valid           : signal is "true";
-  -- attribute mark_debug of fwd_in_data_coh_msg    : signal is "true";
-  -- attribute mark_debug of fwd_in_data_addr       : signal is "true";
+  attribute mark_debug of fwd_in_ready           : signal is "true";
+  attribute mark_debug of fwd_in_valid           : signal is "true";
+  attribute mark_debug of fwd_in_data_coh_msg    : signal is "true";
+  attribute mark_debug of fwd_in_data_addr       : signal is "true";
+  attribute mark_debug of fwd_in_data_req_id     : signal is "true";
   attribute mark_debug of rsp_in_valid           : signal is "true";
   attribute mark_debug of rsp_in_ready           : signal is "true";
   attribute mark_debug of rsp_in_data_coh_msg    : signal is "true";
@@ -502,7 +556,8 @@ begin  -- architecture rtl of l2_wrapper
       l2_rsp_out_ready          => rsp_out_ready,
       l2_rsp_out_valid          => rsp_out_valid,
       l2_rsp_out_data_coh_msg   => rsp_out_data_coh_msg,
-      l2_rsp_out_data_hprot     => rsp_out_data_hprot,
+      l2_rsp_out_data_req_id    => rsp_out_data_req_id,
+      l2_rsp_out_data_to_req    => rsp_out_data_to_req,
       l2_rsp_out_data_addr      => rsp_out_data_addr,
       l2_rsp_out_data_line      => rsp_out_data_line,
       -- NoC to cache
@@ -510,6 +565,7 @@ begin  -- architecture rtl of l2_wrapper
       l2_fwd_in_valid           => fwd_in_valid,
       l2_fwd_in_data_coh_msg    => fwd_in_data_coh_msg,
       l2_fwd_in_data_addr       => fwd_in_data_addr,
+      l2_fwd_in_data_req_id     => fwd_in_data_req_id,
       l2_rsp_in_ready           => rsp_in_ready,
       l2_rsp_in_valid           => rsp_in_valid,
       l2_rsp_in_data_coh_msg    => rsp_in_data_coh_msg,
@@ -626,10 +682,6 @@ begin  -- architecture rtl of l2_wrapper
   ahbmo.hconfig <= hconfig;
   ahbmo.hindex  <= hindex_mst;
 
-  coherence_fwd_rdreq       <= '0';
-  coherence_rsp_snd_wrreq   <= '0';
-  coherence_rsp_snd_data_in <= (others => '0');
-
   flush_data <= '0';
 
 -------------------------------------------------------------------------------
@@ -643,6 +695,7 @@ begin  -- architecture rtl of l2_wrapper
       ahbm_reg       <= AHBM_REG_DEFAULT;
       flush_state    <= idle;
       req_reg        <= REQ_REG_DEFAULT;
+      rsp_out_reg    <= RSP_OUT_REG_DEFAULT;
       rsp_in_reg     <= RSP_IN_REG_DEFAULT;
       load_alloc_reg <= LOAD_ALLOC_REG_DEFAULT;
 
@@ -652,6 +705,7 @@ begin  -- architecture rtl of l2_wrapper
       ahbm_reg       <= ahbm_reg_next;
       flush_state    <= flush_state_next;
       req_reg        <= req_reg_next;
+      rsp_out_reg    <= rsp_out_reg_next;
       rsp_in_reg     <= rsp_in_reg_next;
       load_alloc_reg <= load_alloc_reg_next;
 
@@ -773,16 +827,16 @@ begin  -- architecture rtl of l2_wrapper
         -- always acknowledge transaction requests as soon as they appear on the bus 
         ahbso.hready <= '1';
 
-        cpu_req_data_cpu_msg <= ahbsi.hwrite & '0';  -- TODO ahbsi.hmastlock;
+        cpu_req_data_cpu_msg <= ahbsi.hwrite & ahbsi.hmastlock;
         cpu_req_data_hsize   <= ahbsi.hsize;
         cpu_req_data_hprot   <= ahbsi.hprot;
         cpu_req_data_addr    <= ahbsi.haddr;
 
-        if flush_due = '1' then
+        if flush_due = '1' and ahbsi.hmastlock = '0' then
           flush_valid <= '1';
 
           if valid_ahb_req = '1' then
-            reg.cpu_msg := ahbsi.hwrite & '0';  -- TODO ahbsi.hmastlock;
+            reg.cpu_msg := ahbsi.hwrite & ahbsi.hmastlock;
             reg.hsize   := ahbsi.hsize;
             reg.hprot   := ahbsi.hprot;
             reg.haddr   := ahbsi.haddr;
@@ -795,7 +849,7 @@ begin  -- architecture rtl of l2_wrapper
           end if;
 
         elsif valid_ahb_req = '1' then
-          reg.cpu_msg := ahbsi.hwrite & '0';  -- TODO ahbsi.hmastlock;
+          reg.cpu_msg := ahbsi.hwrite & ahbsi.hmastlock;
           reg.hsize   := ahbsi.hsize;
           reg.hprot   := ahbsi.hprot;
           reg.haddr   := ahbsi.haddr;
@@ -843,7 +897,7 @@ begin  -- architecture rtl of l2_wrapper
       when load_rsp =>
         rd_rsp_ready <= '1';
 
-        cpu_req_data_cpu_msg <= ahbsi.hwrite & '0';  -- TODO & ahbsi.hmastlock;
+        cpu_req_data_cpu_msg <= ahbsi.hwrite & ahbsi.hmastlock;
         cpu_req_data_hsize   <= ahbsi.hsize;
         cpu_req_data_hprot   <= ahbsi.hprot;
         cpu_req_data_addr    <= ahbsi.haddr;
@@ -855,12 +909,13 @@ begin  -- architecture rtl of l2_wrapper
           ahbso.hrdata <= read_from_line(reg.haddr, rd_rsp_data_line);
           ahbso.hready <= '1';
 
-          reg.cpu_msg := ahbsi.hwrite & '0';  -- TODO & ahbsi.hmastlock;
+          reg.cpu_msg := ahbsi.hwrite & ahbsi.hmastlock;
           reg.hsize   := ahbsi.hsize;
           reg.hprot   := ahbsi.hprot;
           reg.haddr   := ahbsi.haddr;
 
-          if flush_due = '1' and not (ahbsi.hprot(0) = '0' and valid_ahb_req = '1') then
+          if (flush_due = '1' and not (ahbsi.hprot(0) = '0' and valid_ahb_req = '1') and
+              ahbsi.hmastlock = '0') then
 
             flush_valid <= '1';
 
@@ -915,31 +970,36 @@ begin  -- architecture rtl of l2_wrapper
         ahbso.hrdata <= read_from_line(reg.haddr, load_alloc_reg.line);
         ahbso.hready <= '1';
 
-        cpu_req_data_cpu_msg <= ahbsi.hwrite & '0';  -- TODO & ahbsi.hmastlock;
+        cpu_req_data_cpu_msg <= ahbsi.hwrite & ahbsi.hmastlock;
         cpu_req_data_hsize   <= ahbsi.hsize;
         cpu_req_data_hprot   <= ahbsi.hprot;
         cpu_req_data_addr    <= ahbsi.haddr;
 
-        reg.cpu_msg := ahbsi.hwrite & '0';  -- TODO & ahbsi.hmastlock;
+        reg.cpu_msg := ahbsi.hwrite & ahbsi.hmastlock;
         reg.hsize   := ahbsi.hsize;
         reg.hprot   := ahbsi.hprot;
         reg.haddr   := ahbsi.haddr;
 
-        if flush_due = '1' and not (ahbsi.hprot(0) = '0' and valid_ahb_req = '1') then
+        if (flush_due = '1' and not (ahbsi.hprot(0) = '0' and valid_ahb_req = '1') and ahbsi.hmastlock = '0') then
 
           flush_valid <= '1';
 
           if valid_ahb_req = '1' then
+
             if flush_ready = '0' then
               reg.state := flush_req;
             else
               reg.state := mem_req;
             end if;
+
           else
+
             reg.state := idle;
+
           end if;
 
         elsif valid_ahb_req = '1' then
+
           if ahbsi.hwrite = '0' then
 
             if load_alloc_reg.addr = ahbsi.haddr(TAG_RANGE_HI downto SET_RANGE_LO) then
@@ -970,6 +1030,7 @@ begin  -- architecture rtl of l2_wrapper
 
         end if;
 
+
       -- STORE REQUEST
       when store_req =>
 
@@ -982,14 +1043,14 @@ begin  -- architecture rtl of l2_wrapper
         cpu_req_valid <= '1';
 
         if cpu_req_ready = '1' then
-          reg.cpu_msg := ahbsi.hwrite & '0';  -- TODO & ahbsi.hmastlock;
+          reg.cpu_msg := ahbsi.hwrite & ahbsi.hmastlock;
           reg.hsize   := ahbsi.hsize;
           reg.hprot   := ahbsi.hprot;
           reg.haddr   := ahbsi.haddr;
 
           ahbso.hready <= '1';
 
-          if flush_due = '1' and not (ahbsi.hprot(0) = '0' and valid_ahb_req = '1') then
+          if (flush_due = '1' and not (ahbsi.hprot(0) = '0' and valid_ahb_req = '1') and ahbsi.hmastlock = '0') then
 
             flush_valid <= '1';
 
@@ -1064,7 +1125,7 @@ begin  -- architecture rtl of l2_wrapper
 
     end case;
 
-    ahbs_reg_next <= reg;
+    ahbs_reg_next       <= reg;
     load_alloc_reg_next <= alloc_reg;
 
   end process fsm_ahbs;
@@ -1151,6 +1212,7 @@ begin  -- architecture rtl of l2_wrapper
                      req_out_data_addr, req_out_data_line) is
 
     variable reg : req_reg_type;
+    variable req_id : cache_id_t := (others => '0');
 
   begin  -- process fsm_cache2noc
 
@@ -1184,8 +1246,8 @@ begin  -- architecture rtl of l2_wrapper
             coherence_req_wrreq <= '1';
             coherence_req_data_in <= make_header(req_out_data_coh_msg, mem_info,
                                                  mem_num, req_out_data_hprot,
-                                                 req_out_data_addr, local_x,
-                                                 local_y);
+                                                 req_out_data_addr, local_x, local_y,
+                                                 '0' , req_id, cpu_tile_id, noc_xlen);
 
             reg.state := send_addr;
 
@@ -1244,6 +1306,182 @@ begin  -- architecture rtl of l2_wrapper
 
   end process fsm_req;
 
+-------------------------------------------------------------------------------
+-- FSM: Responses to NoC
+-------------------------------------------------------------------------------
+  fsm_rsp_out : process (rsp_out_reg, coherence_rsp_snd_full,
+                     rsp_out_valid, rsp_out_data_coh_msg, rsp_out_data_req_id,
+                     rsp_out_data_to_req, rsp_out_data_addr, rsp_out_data_line) is
+
+    variable reg : rsp_out_reg_type;
+    variable hprot : hprot_t := (others => '0');
+
+  begin  -- process fsm_cache2noc
+
+    -- initialize variables
+    reg         := rsp_out_reg;
+    reg.asserts := (others => '0');
+
+    -- initialize signals toward cache (receive from cache)
+    rsp_out_ready <= '0';
+
+    -- initialize signals toward noc
+    coherence_rsp_snd_wrreq   <= '0';
+    coherence_rsp_snd_data_in <= (others => '0');
+
+
+    case reg.state is
+
+      -- SEND HEADER
+      when send_header =>
+
+        if coherence_rsp_snd_full = '0' then
+
+          rsp_out_ready <= '1';
+
+          if rsp_out_valid = '1' then
+
+            reg.coh_msg := rsp_out_data_coh_msg;
+            reg.addr    := rsp_out_data_addr;
+            reg.line    := rsp_out_data_line;
+
+            coherence_rsp_snd_wrreq <= '1';
+
+            
+            
+            coherence_rsp_snd_data_in <= make_header(rsp_out_data_coh_msg, mem_info,
+                                                     mem_num, hprot, rsp_out_data_addr, local_x,
+                                                     local_y, rsp_out_data_to_req,
+                                                     rsp_out_data_req_id, cpu_tile_id, noc_xlen);
+
+            reg.state := send_addr;
+
+          end if;
+        end if;
+
+      -- SEND ADDRESS
+      when send_addr =>
+
+        if coherence_rsp_snd_full = '0' then
+
+          coherence_rsp_snd_wrreq <= '1';
+
+          if '0' & reg.coh_msg = RSP_DATA then
+
+            coherence_rsp_snd_data_in <= PREAMBLE_BODY & reg.addr;
+            reg.state             := send_data;
+            reg.word_cnt          := 0;
+
+          else
+
+            coherence_rsp_snd_data_in <= PREAMBLE_TAIL & reg.addr;
+            reg.state             := send_header;
+
+          end if;
+        end if;
+
+      -- SEND DATA
+      when send_data =>
+
+        if coherence_rsp_snd_full = '0' then
+
+          coherence_rsp_snd_wrreq <= '1';
+
+          if reg.word_cnt = WORDS_PER_LINE - 1 then
+
+            coherence_rsp_snd_data_in <=
+              PREAMBLE_TAIL & reg.line((BITS_PER_WORD * reg.word_cnt) + BITS_PER_WORD - 1
+                                       downto (BITS_PER_WORD * reg.word_cnt));
+
+            reg.state := send_header;
+
+          else
+
+            coherence_rsp_snd_data_in <=
+              PREAMBLE_BODY & reg.line((BITS_PER_WORD * reg.word_cnt) + BITS_PER_WORD - 1
+                                       downto (BITS_PER_WORD * reg.word_cnt));
+
+            reg.word_cnt := reg.word_cnt + 1;
+
+          end if;
+
+        end if;
+
+    end case;
+
+    rsp_out_reg_next <= reg;
+
+  end process fsm_rsp_out;
+
+-----------------------------------------------------------------------------
+-- FSM: Forwards from NoC
+-----------------------------------------------------------------------------
+  fsm_fwd_in : process (fwd_in_reg, fwd_in_ready,
+                        coherence_fwd_empty, coherence_fwd_data_out) is
+
+    variable reg          : fwd_in_reg_type;
+    variable rsp_preamble : noc_preamble_type;
+    variable msg_type     : noc_msg_type;
+    variable reserved     : reserved_field_type;
+
+  begin  -- process fsm_fwd_in
+
+    -- initialize variables
+    reg         := fwd_in_reg;
+    reg.asserts := (others => '0');
+
+    -- initialize signals toward cache (send to cache)
+    fwd_in_valid           <= '0';
+    fwd_in_data_coh_msg    <= (others => '0');
+    fwd_in_data_addr       <= (others => '0');
+    fwd_in_data_req_id     <= (others => '0');
+
+    -- initialize signals toward noc (receive from noc)
+    coherence_fwd_rdreq <= '0';
+
+    -- get preambles
+    rsp_preamble := get_preamble(coherence_fwd_data_out);
+
+    -- fsm states
+    case reg.state is
+
+      -- RECEIVE HEADER
+      when rcv_header =>
+
+        if coherence_fwd_empty = '0' then
+
+          coherence_fwd_rdreq <= '1';
+
+          msg_type       := get_msg_type(coherence_fwd_data_out);
+          reg.coh_msg    := msg_type(COH_MSG_TYPE_WIDTH - 1 downto 0);
+          reserved       := get_reserved_field(coherence_fwd_data_out);
+          reg.req_id     := reserved(reg.req_id'length - 1 downto 0);
+
+          reg.state := rcv_addr;
+
+        end if;
+
+      -- RECEIVE ADDRESS
+      when rcv_addr =>
+        if coherence_fwd_empty = '0' and fwd_in_ready = '1' then
+
+            coherence_fwd_rdreq <= '1';
+
+            fwd_in_valid            <= '1';
+            fwd_in_data_coh_msg     <= reg.coh_msg;
+            fwd_in_data_addr        <= coherence_fwd_data_out(ADDR_BITS - 1 downto 0);
+            fwd_in_data_req_id      <= reg.req_id;
+
+            reg.state               := rcv_header;
+
+        end if;
+
+    end case;
+
+    fwd_in_reg_next <= reg;
+
+  end process fsm_fwd_in;
+  
 -----------------------------------------------------------------------------
 -- FSM: Responses from NoC
 -----------------------------------------------------------------------------
@@ -1297,7 +1535,7 @@ begin  -- architecture rtl of l2_wrapper
       when rcv_addr =>
         if coherence_rsp_rcv_empty = '0' then
 
-          if '0' & reg.coh_msg = RSP_PUT_ACK then
+          if ('0' & reg.coh_msg = RSP_PUT_ACK) or ('0' & reg.coh_msg = RSP_INV_ACK) then
 
             if rsp_in_ready = '1' then
 

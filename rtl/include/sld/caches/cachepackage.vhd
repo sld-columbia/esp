@@ -1,4 +1,4 @@
--------------------------------------------------------------------------------
+------------------------------------------------------------------------------
 -- Design Name: cachepackage
 -- File: cachepackage.vhd
 -- Author: Davide Giri - SLD @ Columbia University
@@ -52,7 +52,7 @@ package cachepackage is
   constant COH_MSG_TYPE_WIDTH : integer := 2;
   constant HSIZE_WIDTH        : integer := 3;
   constant HPROT_WIDTH        : integer := 4;
-  constant INVACK_CNT_WIDTH   : integer := 3;
+  constant INVACK_CNT_WIDTH   : integer := 2;
 
   constant CPU_READ       : std_logic_vector(1 downto 0) := "00";
   constant CPU_READ_ATOM  : std_logic_vector(1 downto 0) := "01";
@@ -62,8 +62,8 @@ package cachepackage is
   constant LLC_READ  : std_ulogic := '0';
   constant LLC_WRITE : std_ulogic := '1';
 
-  constant ASSERTS_WIDTH          : integer := 13;
-  constant BOOKMARK_WIDTH         : integer := 18;
+  constant ASSERTS_WIDTH          : integer := 17;
+  constant BOOKMARK_WIDTH         : integer := 32;
   constant LLC_ASSERTS_WIDTH      : integer := 1;
   constant LLC_BOOKMARK_WIDTH     : integer := 10;
   constant ASSERTS_AHBS_WIDTH     : integer := 11;
@@ -138,7 +138,7 @@ package cachepackage is
   subtype bookmark_t is std_logic_vector(BOOKMARK_WIDTH - 1 downto 0);
   subtype llc_bookmark_t is std_logic_vector(LLC_BOOKMARK_WIDTH - 1 downto 0);
   subtype custom_dbg_t is std_logic_vector(31 downto 0);
-  subtype cache_id_t is std_logic_vector(0 downto 0);
+  subtype cache_id_t is std_logic_vector(0 downto 0); -- TODO it's hardcoded
   -- hprot
   constant DEFAULT_HPROT : hprot_t := "0100";
 
@@ -155,7 +155,9 @@ package cachepackage is
 
   function make_header (coh_msg : coh_msg_t; mem_info : tile_mem_info_vector;
                         mem_num : integer; hprot : hprot_t; addr : addr_t;
-                        local_x : local_yx; local_y : local_yx)
+                        local_x : local_yx; local_y : local_yx;
+                        to_req : std_ulogic; req_id : cache_id_t;
+                        cpu_tile_id : cpu_info_array; noc_xlen : integer)
     return noc_flit_type;
 
   -----------------------------------------------------------------------------
@@ -228,6 +230,7 @@ package cachepackage is
       l2_fwd_in_valid           : in std_ulogic;
       l2_fwd_in_data_coh_msg    : in coh_msg_t;
       l2_fwd_in_data_addr       : in addr_t;
+      l2_fwd_in_data_req_id     : in cache_id_t;
       l2_rsp_in_valid           : in std_ulogic;
       l2_rsp_in_data_coh_msg    : in coh_msg_t;
       l2_rsp_in_data_addr       : in addr_t;
@@ -259,7 +262,8 @@ package cachepackage is
       l2_req_out_data_line    : out line_t;
       l2_rsp_out_valid        : out std_ulogic;
       l2_rsp_out_data_coh_msg : out coh_msg_t;
-      l2_rsp_out_data_hprot   : out hprot_t;
+      l2_rsp_out_data_req_id  : out cache_id_t;
+      l2_rsp_out_data_to_req  : out std_ulogic;
       l2_rsp_out_data_addr    : out addr_t;
       l2_rsp_out_data_line    : out line_t
 
@@ -487,27 +491,43 @@ package body cachepackage is
 
   function make_header (coh_msg : coh_msg_t; mem_info : tile_mem_info_vector;
                         mem_num : integer; hprot : hprot_t; addr : addr_t;
-                        local_x : local_yx; local_y : local_yx)
+                        local_x : local_yx; local_y : local_yx;
+                        to_req : std_ulogic; req_id : cache_id_t;
+                        cpu_tile_id : cpu_info_array; noc_xlen : integer)
     return noc_flit_type is
 
     variable header         : noc_flit_type;
     variable dest_x, dest_y : local_yx;
+    variable dest_init : integer;
 
   begin
 
-    -- dest_x dest_y
-    dest_x := mem_info(0).x;
-    dest_y := mem_info(0).y;
-    if mem_num /= 1 then
-      for i in 0 to mem_num - 1 loop
-        if ((addr(31 downto 20) xor conv_std_logic_vector(mem_info(i).haddr, 12))
-            and conv_std_logic_vector(mem_info(i).hmask, 12)) = x"000" then
-          dest_x := mem_info(i).x;
-          dest_y := mem_info(i).y;
-        end if;
-      end loop;
-    end if;
+    if to_req = '0' then
+      
+      dest_x := mem_info(0).x;
+      dest_y := mem_info(0).y;
+      if mem_num /= 1 then
+        for i in 0 to mem_num - 1 loop
+          if ((addr(31 downto 20) xor conv_std_logic_vector(mem_info(i).haddr, 12))
+              and conv_std_logic_vector(mem_info(i).hmask, 12)) = x"000" then
+            dest_x := mem_info(i).x;
+            dest_y := mem_info(i).y;
+          end if;
+        end loop;
+      end if;
 
+    else
+
+      if req_id >= "0" then
+        dest_init := cpu_tile_id(to_integer(unsigned(req_id)));
+        if dest_init >= 0 then
+          dest_x := std_logic_vector(to_unsigned((dest_init mod noc_xlen), 3));
+          dest_y := std_logic_vector(to_unsigned((dest_init / noc_xlen), 3));
+        end if;
+      end if;
+
+    end if;
+    
     -- compose header
     header := create_header(local_y, local_x, dest_y, dest_x, '0' & coh_msg, hprot);
 
