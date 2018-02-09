@@ -1,11 +1,13 @@
 #ifndef __SYSTEM_HPP__
 #define __SYSTEM_HPP__
 
-#include "utils/esp_systemc.hpp"
 
 #include "sort_conf_info.hpp"
 #include "sort_debug_info.hpp"
 #include "sort.hpp"
+#include "sort_directives.hpp"
+
+#include "esp_templates.hpp"
 
 const size_t MEM_SIZE = LEN * LEN * (DMA_WIDTH / 32);
 
