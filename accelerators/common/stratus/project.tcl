@@ -16,7 +16,7 @@ set TECH_PATH "$ESP_ROOT/tech/$TECH"
 #
 # Setup technology and include behavioral models and/or libraries
 #
-set fpga_techs [list "virtex7" "zynq"]
+set fpga_techs [list "virtex7" "zynq7000"]
 set asic_techs [list "cmos32soi"]
 
 if {[lsearch $fpga_techs $TECH] >= 0} {
@@ -24,7 +24,7 @@ if {[lsearch $fpga_techs $TECH] >= 0} {
     set_attr verilog_files "$TECH_PATH/mem/*.v"
     set_attr verilog_files "$VIVADO/ids_lite/ISE/verilog/src/glbl.v"
     set_attr verilog_files "$VIVADO/ids_lite/ISE/verilog/src/unisims/RAMB16_S*.v"
-    set_attr fpga_use_dsp on
+    set_attr fpga_use_dsp off
     set_attr fpga_tool "vivado"
 
     if {$TECH eq "virtex7"} {
@@ -40,7 +40,7 @@ if {[lsearch $fpga_techs $TECH] >= 0} {
 if {[lsearch $asic_techs $TECH] >= 0} {
     set_attr verilog_files "$TECH_PATH/verilog/*v $TECH_PATH/mem/*v"
     set LIB_PATH "$TECH_PATH/lib"
-    set LIB_NAME "ibm32soi_hvt_1p0v.lib"
+    set LIB_NAME "1p0v/ibm32soi_hvt_1p0v.lib"
     use_tech_lib "$LIB_PATH/$LIB_NAME"
 
     set TECH_IS_XILINX 0
@@ -63,8 +63,7 @@ set_attr lsb_trimming             true
 #
 #set_attr sched_effort to get lowest possible latency
 set_attr sched_asap on
-set_attr sched_aggressive_1 on
-set_attr sched_effort low
+# set_attr sched_effort low
 set_attr sharing_effort_parts low
 set_attr sharing_effort_regs low
 

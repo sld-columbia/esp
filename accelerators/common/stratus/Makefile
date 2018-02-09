@@ -64,7 +64,8 @@ endif
 
 memlib: ../memlist.txt
 	@$(MEMGEN) $(MEMTECH) $< $(MEMGEN_OUT) | tee memgen.log
-	@if test -e ./memlib/*.bdm; then \
+	@count=`ls -1 memlib/*.bdm 2>/dev/null | wc -l`; \
+	if [ $count != 0 ]; then \
 		bdw_memgen ./memlib/*.bdm; \
 	fi;
 
