@@ -41,8 +41,7 @@ class Components():
       self.POINTS[acc.upper()] = []
       acc_dp = get_immediate_subdirectories(acc_dir + '/' + acc)
       for dp_str in acc_dp:
-        dp = dp_str.replace(acc_dir + "/" + acc + "/" + acc + "_", "")
-        dp = dp.replace(".v", "")
+        dp = dp_str.replace(acc + "_", "")
         dp_info = dp.split("_")
         skip = False
         for item in dp_info:
