@@ -6,22 +6,9 @@
 #include "sort_conf_info.hpp"
 #include "sort_debug_info.hpp"
 
-#include "utils/esp_utils.hpp"
-#include "utils/esp_systemc.hpp"
-#include "utils/configs/esp_config_proc.hpp"
+#include "esp_templates.hpp"
 
-#include "core/accelerators/esp_accelerator_3P.hpp"
-
-#include "sort_plm_block_1w1r.hpp"
-#include "sort_plm_block_2w1r.hpp"
-#include "sort_plm_block_1w2r.hpp"
-
-// Local memory size: number of elements
-#define lgLEN 10
-#define LEN (1<<lgLEN)
-// Number of comparators per computational chain
-#define lgNUM 5
-#define NUM (1<<lgNUM)
+#include "sort_directives.hpp"
 
 class sort : public esp_accelerator_3P<DMA_WIDTH>
 {
@@ -32,20 +19,12 @@ class sort : public esp_accelerator_3P<DMA_WIDTH>
         // Ack and req channel
         handshake_t compute_2_ready;
 
-        // Req channel binding
-        handshake_req_t compute_2_ready_req;
-
-        // Ack channel binding
-        handshake_ack_t compute_2_ready_ack;
-
         // Constructor
         SC_HAS_PROCESS(sort);
         sort(const sc_module_name& name)
           : esp_accelerator_3P<DMA_WIDTH>(name)
           , cfg("config")
 	  , compute_2_ready("compute_2_ready")
-          , compute_2_ready_req("compute_2_ready_req")
-          , compute_2_ready_ack("compute_2_ready_ack")
         {
             // Signal binding
             cfg.bind_with(*this);
@@ -54,21 +33,16 @@ class sort : public esp_accelerator_3P<DMA_WIDTH>
             reset_signal_is(this->rst, false);
             // set_stack_size(0x400000);
 
-            // Clock and reset binding
-            compute_2_ready_req.clk_rst(this->clk, this->rst);
-            compute_2_ready_ack.clk_rst(this->clk, this->rst);
+            // Clock and reset binding for additional handshake
+            compute_2_ready.bind_with(*this);
 
-            // Request and ack binding
-            compute_2_ready_req(compute_2_ready);
-            compute_2_ready_ack(compute_2_ready);
-
-	    // Clock binding for memories
-	    A0.clk(this->clk);
-	    A1.clk(this->clk);
-	    C0.clk(this->clk);
-	    C1.clk(this->clk);
-	    B0.clk(this->clk);
-	    B1.clk(this->clk);
+	    // Binding for memories
+	    HLS_MAP_A0;
+	    HLS_MAP_A1;
+	    HLS_MAP_B0;
+	    HLS_MAP_B1;
+	    HLS_MAP_C0;
+	    HLS_MAP_C1;
         }
 
         // Processes
@@ -101,47 +75,39 @@ class sort : public esp_accelerator_3P<DMA_WIDTH>
         inline void compute_2_compute_handshake();
 
         // Private local memories
-#if (DMA_WIDTH == 32)
-	sort_plm_block_1w1r_t<uint32_t, LEN> A0;
-	sort_plm_block_1w1r_t<uint32_t, LEN> A1;
+	uint32_t A0[LEN];
+	uint32_t A1[LEN];
 
-	sort_plm_block_1w1r_t<uint32_t, LEN> B0;
-	sort_plm_block_1w1r_t<uint32_t, LEN> B1;
-#elif (DMA_WIDTH == 64)
-	sort_plm_block_2w1r_t<uint32_t, LEN> A0;
-	sort_plm_block_2w1r_t<uint32_t, LEN> A1;
-
-	sort_plm_block_1w2r_t<uint32_t, LEN> B0;
-	sort_plm_block_1w2r_t<uint32_t, LEN> B1;
-#endif
-	sort_plm_block_1w1r_t<uint32_t, ((LEN / NUM) * NUM)> C0;
-	sort_plm_block_1w1r_t<uint32_t, ((LEN / NUM) * NUM)> C1;
+	uint32_t B0[LEN];
+	uint32_t B1[LEN];
+	uint32_t C0[LEN / NUM][NUM];
+	uint32_t C1[LEN / NUM][NUM];
 };
 
 inline void sort::reset_compute_1_kernel()
 {
-    this->input_ready_ack.reset_ack();
-    this->compute_2_ready_req.reset_req();
+    this->input_ready.ack.reset_ack();
+    this->compute_2_ready.req.reset_req();
 }
 
 inline void sort::reset_compute_2_kernel()
 {
-    this->compute_2_ready_ack.reset_ack();
-    this->output_ready_req.reset_req();
+    this->compute_2_ready.ack.reset_ack();
+    this->output_ready.req.reset_req();
 }
 
 inline void sort::compute_compute_2_handshake()
 {
 	HLS_DEFINE_PROTOCOL("compute-compute_2-handshake");
 
-	this->compute_2_ready_req.req();
+	this->compute_2_ready.req.req();
 }
 
 inline void sort::compute_2_compute_handshake()
 {
 	HLS_DEFINE_PROTOCOL("compute_2-compute-handshake");
 
-	this->compute_2_ready_ack.ack();
+	this->compute_2_ready.ack.ack();
 }
 
 

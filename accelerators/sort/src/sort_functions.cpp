@@ -1,7 +1,7 @@
 #include "sort.hpp"
 
 /* TODO: handle exceptions and NaN */
-inline bool lt_float(const unsigned &in0, const unsigned &in1)
+inline bool lt_float(const unsigned in0, const unsigned in1)
 {
 
 	sc_uint<32> op0  = in0;
@@ -13,38 +13,24 @@ inline bool lt_float(const unsigned &in0, const unsigned &in1)
 	sc_uint<23> man0 = op0.range(22, 0);
 	sc_uint<23> man1 = op1.range(22, 0);
 
-	bool zero0 = false;
-	bool zero1 = false;
+	bool zero0 = (exp0 == 0 && man0 == 0);
+	bool zero1 = (exp1 == 0 && man1 == 0);
+	bool one_zero = (zero0 || zero1);
+	bool both_zero = (zero0 && zero1);
+	bool discordant = (s0 != s1);
+	bool exp0_lt_exp1 = (exp0 < exp1);
+	bool exp0_gt_exp1 = (exp0 > exp1);
+	bool exp0_eq_exp1 = (exp0 == exp1);
+	bool man0_lt_man1 = (man0 < man1);
+	bool man0_gt_man1 = (man0 > man1);
 
-	if (exp0 == 0 && man0 == 0)
-		zero0 = true;
-
-	if (exp1 == 0 && man1 == 0)
-		zero1 = true;
-
-	if (zero0 && zero1)
-		return false;
-
-	if (zero0)
-		return !s1;
-
-	if (zero1)
-		return s0;
-
-	if (s0 != s1)
-		return s0;
-
-	if (exp0 < exp1)
-		return !s0;
-
-	if (exp0 > exp1)
-		return s0;
-
-	if (man0 < man1)
-		return !s0;
-
-	if (man0 > man1)
-		return s0;
-
-	return false;
+	return ((both_zero) ||
+		(zero0 && !s1) ||
+		(zero1 && s0) ||
+		(discordant && s0) ||
+		((!discordant && exp0_lt_exp1) && !s0) ||
+		((!discordant && exp0_gt_exp1) && s0) ||
+		((!discordant && exp0_eq_exp1 && man0_lt_man1) && !s0) ||
+		((!discordant && exp0_eq_exp1 && man0_gt_man1) && s0)
+		);
 }
