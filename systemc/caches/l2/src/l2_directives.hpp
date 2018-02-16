@@ -3,7 +3,6 @@
 #ifndef __L2_DIRECTIVES_HPP__
 #define __L2_DIRECTIVES_HPP__
 
-
 #define L2_FLATTEN_REGS				\
     HLS_FLATTEN_ARRAY(reqs);			\
     HLS_FLATTEN_ARRAY(tag_buf);			\
@@ -20,6 +19,8 @@
 // Debug
 #define REQS_OUTPUT					\
     HLS_UNROLL_LOOP(ON, "l2-reqs-output-unroll")	
+#define BUFS_OUTPUT					\
+    HLS_UNROLL_LOOP(ON, "l2-bufs-output-unroll")	
 
 // Input messages
 #define L2_NB_GET				\

@@ -27,18 +27,37 @@ public:
     sc_out< sc_bv<BOOKMARK_WIDTH> > bookmark;
     sc_out<uint32_t>                custom_dbg;
 
-    // sc_out<reqs_buf_t>          reqs_out[N_REQS];
-    // sc_out<bool>		evict_stall_out;
-    // sc_out<bool>		set_conflict_out;
-    // sc_out<l2_cpu_req_t>	cpu_req_conflict_out;
-    // sc_out<bool>		tag_hit_out;
-    // sc_out<l2_way_t>		way_hit_out;
-    // sc_out<bool>		empty_way_found_out;
-    // sc_out<l2_way_t>		empty_way_out;
-    // sc_out<l2_way_t>		way_evict_out;
-    // sc_out<bool>		reqs_hit_out;
-    // sc_out<sc_uint<REQS_BITS> >	reqs_hit_i_out;
-    // sc_out<sc_uint<REQS_BITS_P1> > reqs_cnt_out;   
+#ifdef L2_DEBUG
+    sc_out<sc_uint<REQS_BITS_P1> > reqs_cnt_out;   
+    sc_out<bool>		set_conflict_out;
+    sc_out<l2_cpu_req_t>	cpu_req_conflict_out;
+    sc_out<bool>		evict_stall_out;
+    sc_out<bool>		fwd_stall_out;
+    sc_out<bool>		fwd_stall_ended_out;
+    sc_out<l2_fwd_in_t>         fwd_in_stalled_out;
+    sc_out<sc_uint<REQS_BITS> > reqs_fwd_stall_i_out;
+    sc_out<bool>		ongoing_atomic_out;
+    sc_out<addr_t>		atomic_line_addr_out;
+    sc_out<sc_uint<REQS_BITS> > reqs_atomic_i_out;
+
+    sc_out<bool>	tag_hit_out;
+    sc_out<l2_way_t>	way_hit_out;
+    sc_out<bool>	empty_way_found_out;
+    sc_out<l2_way_t>	empty_way_out;
+    sc_out<bool>	reqs_hit_out;
+    sc_out<sc_uint<REQS_BITS> >	reqs_hit_i_out;
+    sc_out<sc_uint<REQS_BITS> >	reqs_i_out;
+    sc_out<bool>	is_flush_to_get_out;
+    sc_out<bool>	is_rsp_to_get_out;
+    sc_out<bool>	is_fwd_to_get_out;
+    sc_out<bool>	is_req_to_get_out;
+    sc_out<uint32_t>	put_cnt_out;
+
+    sc_out<reqs_buf_t>	reqs_out[N_REQS];
+    sc_out<tag_t>	tag_buf_out[L2_WAYS];
+    sc_out<state_t>	state_buf_out[L2_WAYS];
+    sc_out<l2_way_t>	evict_way_out;
+#endif
 
     // Other signals
     sc_out<bool> flush_done;

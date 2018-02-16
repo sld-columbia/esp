@@ -186,7 +186,10 @@
  * Debug and report
  */
 
+#define L2_DEBUG 1
+
 // debug
+// #define L2_DEBUG 1
 
 // l2
 #define ASSERT_WIDTH	17
@@ -229,7 +232,7 @@
 #define BM_RSP_DATA_XMAD		(1 << 16)
 #define BM_RSP_DATA_XMADW		(1 << 17)
 #define BM_RSP_INVACK			(1 << 18)
-#define BM_RSP_PUTACK			(1 << 19)
+#define BM_FWD_PUTACK			(1 << 19)
 #define BM_FWD_STALL_BEGIN		(1 << 20)
 #define BM_FWD_HIT_SMADX		(1 << 21)
 #define BM_FWD_HIT_EMIA			(1 << 22)
