@@ -39,6 +39,9 @@
     HLS_DEFINE_PROTOCOL("l2-get-flush-protocol");			\
     bookmark_tmp |= BM_GET_FLUSH;					\
     if (RPT_RTL) CACHE_REPORT_TIME(sc_time_stamp(), "Get flush.")
+#define RSP_WHILE_FLUSHING						\
+    if (RPT_RTL) CACHE_REPORT_TIME(sc_time_stamp(), "ERROR: Rsp while flushing."); \
+    asserts_tmp |= AS_RSP_WHILE_FLUSHING
 
 // Output messages 
 #define SEND_REQ_OUT					\
@@ -133,13 +136,8 @@
     if (RPT_RTL) CACHE_REPORT_TIME(sc_time_stamp(), "Rsp invack all.")
 #define RSP_INVACK_DEFAULT				\
     asserts_tmp |= AS_RSP_INVACK_DEFAULT
-#define RSP_PUTACK_ALL							\
-    HLS_CONSTRAIN_LATENCY("l2-rsp-putack-latency");			\
-    bookmark_tmp |= BM_RSP_PUTACK;					\
-    if (RPT_RTL) CACHE_REPORT_TIME(sc_time_stamp(), "Rsp putack all.")
-#define PUTACK_DEFAULT							\
-    asserts_tmp |= AS_PUTACK_DEFAULT;					\
-    if (RPT_RTL) CACHE_REPORT_TIME(sc_time_stamp(), "Put ack default.")
+#define RSP_DEFAULT				\
+    asserts_tmp |= AS_RSP_DEFAULT
 
 // Manage fwd in
 #define FWD_STALL_BEGIN				\
@@ -178,6 +176,13 @@
 #define FWD_NOHIT_DEFAULT						\
     asserts_tmp |= AS_FWD_NOHIT_DEFAULT;				\
     if (RPT_RTL) CACHE_REPORT_TIME(sc_time_stamp(), "Fwd nohit default.")
+#define FWD_PUTACK_ALL							\
+    HLS_CONSTRAIN_LATENCY("l2-fwd-putack-latency");			\
+    bookmark_tmp |= BM_FWD_PUTACK;					\
+    if (RPT_RTL) CACHE_REPORT_TIME(sc_time_stamp(), "Fwd putack all.")
+#define PUTACK_DEFAULT							\
+    asserts_tmp |= AS_PUTACK_DEFAULT;					\
+    if (RPT_RTL) CACHE_REPORT_TIME(sc_time_stamp(), "Put ack default.")
 
 // Manage cpu req
 #define SET_CONFLICT \

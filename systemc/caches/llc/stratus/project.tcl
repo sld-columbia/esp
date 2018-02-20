@@ -24,17 +24,26 @@ define_system_module tb  ../tb/llc_tb.cpp ../tb/system.cpp ../tb/sc_main.cpp
 # HLS and Simulation configurations
 ######################################################################
 
-define_system_config tb TESTBENCH
+foreach ncpu [list 2 4] {
 
-define_sim_config "BEHAV" "llc BEH" "tb TESTBENCH"
+    set iocfg "IOCFG\_NCPU\_$ncpu"
 
-foreach cfg [list BASIC] {
-    set cname $cfg
-    define_hls_config llc $cname --clock_period=$CLOCK_PERIOD $COMMON_HLS_FLAGS -DHLS_DIRECTIVES_$cfg
-    if {$TECH_IS_XILINX == 1} {
-	define_sim_config "$cname\_V" "llc RTL_V $cname" "tb TESTBENCH" -verilog_top_modules glbl
-    } else {
-	define_sim_config "$cname\_V" "llc RTL_V $cname" "tb TESTBENCH"
+    define_io_config * $iocfg -DN_CPU=$ncpu
+
+    define_system_config tb "TESTBENCH\_$ncpu" -io_config $iocfg
+
+    define_sim_config "BEHAV\_$ncpu" "llc BEH" "tb TESTBENCH\_$ncpu" -io_config $iocfg
+
+    foreach cfg [list BASIC] {
+	set cname "$cfg\_$ncpu"
+	define_hls_config llc $cname --clock_period=$CLOCK_PERIOD $COMMON_HLS_FLAGS -DHLS_DIRECTIVES_$cfg \
+	    -io_config $iocfg
+	if {$TECH_IS_XILINX == 1} {
+	    define_sim_config "$cname\_V" "llc RTL_V $cname" "tb TESTBENCH\_$ncpu" -verilog_top_modules glbl \
+		-io_config $iocfg
+	} else {
+	    define_sim_config "$cname\_V" "llc RTL_V $cname" "tb TESTBENCH\_$ncpu" -io_config $iocfg
+	}
     }
 }
 

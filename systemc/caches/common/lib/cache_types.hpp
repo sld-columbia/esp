@@ -19,6 +19,7 @@ typedef sc_uint<COH_MSG_TYPE_WIDTH>	coh_msg_t;	// CPU bus requests
 typedef sc_uint<HSIZE_WIDTH>		hsize_t;
 typedef sc_uint<HPROT_WIDTH>		hprot_t;
 typedef sc_uint<INVACK_CNT_WIDTH>	invack_cnt_t;
+typedef sc_uint<INVACK_CNT_CALC_WIDTH>	invack_cnt_calc_t;
 typedef sc_uint<ADDR_BITS>		addr_t;
 typedef sc_uint<L2_ADDR_BITS>           l2_addr_t;
 typedef sc_uint<LLC_ADDR_BITS>          llc_addr_t;
@@ -35,14 +36,13 @@ typedef sc_uint<STABLE_STATE_BITS>	state_t;
 typedef sc_uint<LLC_STATE_BITS>	        llc_state_t;
 typedef sc_uint<UNSTABLE_STATE_BITS>	unstable_state_t;
 typedef sc_uint<EVICT_STATE_BITS>	evict_state_t;
+typedef sc_uint<N_CPU_MAX_BITS>         cache_id_t;
 #if (N_CPU_BITS != 0)
 typedef sc_uint<N_CPU_BITS>             owner_t;
 typedef sc_uint<N_CPU>                  sharers_t;
-typedef sc_uint<N_CPU_BITS>             cache_id_t;
 #else
 typedef sc_uint<1>                      owner_t;
 typedef sc_uint<1>                      sharers_t;
-typedef sc_uint<1>                      cache_id_t;
 #endif
 
 /*
@@ -636,7 +636,7 @@ public:
     byte_offset_t	b_off;
     unstable_state_t	state;
     hprot_t		hprot;
-    invack_cnt_t	invack_cnt;
+    invack_cnt_calc_t	invack_cnt;
     word_t		word;
     line_t		line;
 

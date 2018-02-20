@@ -163,7 +163,8 @@ void l2_tb::l2_test()
 	addr.tag_incr(1);
     }
 
-    while(!flush_done) wait();
+    // while(!flush_done) wait();
+    wait();
 
     // verify writes correctness (read misses)
     addr = addr1;
@@ -178,29 +179,28 @@ void l2_tb::l2_test()
     // flush again
     l2_flush_tb.put(1);
 
-    // receive all PutS
+    // receive N_REQS PutM, send N_REQS PutAck
     addr = addr1;
-    for (int i = 0; i < (2*L2_WAYS); ++i) {
-	if (i == L2_WAYS) addr.set_incr(1);
+    for (int i = 0; i < (2 * L2_WAYS) / N_REQS; ++i) {
+	if (i == L2_WAYS / N_REQS) addr.set_incr(1);
 
-    	get_req_out(REQ_PUTS, addr.line, 0);
-    	wait();
+	for (int j = 0; j < N_REQS; j++) {
+	    get_req_out(REQ_PUTS, addr.line, 0);
+	    wait();
+	    addr.tag_incr(1);
+	}
 
-	addr.tag_incr(1);
+	addr.tag_decr(N_REQS);
+
+	for (int j = 0; j < N_REQS; j++) {
+	    put_fwd_in(FWD_PUTACK, addr.line, 0);
+	    wait();
+	    addr.tag_incr(1);
+	}
     }
 
-    // send all PutAck
-    addr = addr1;
-    for (int i = 0; i < (2*L2_WAYS); ++i) {
-	if (i == L2_WAYS) addr.set_incr(1);
-
-    	put_rsp_in(RSP_PUTACK, addr.line, 0, 0);
-    	wait();
-
-	addr.tag_incr(1);
-    }
-
-    while(!flush_done) wait();
+    // while(!flush_done) wait();
+    wait();
 
     /*
      * T2) Reads and writes. Fill whole cache.
@@ -284,7 +284,8 @@ void l2_tb::l2_test()
 	}
     }
 
-    while(!flush_done) wait();
+    // while(!flush_done) wait();
+    wait();
 
     /*
      * T4) Less-than-word operations.
@@ -374,11 +375,12 @@ void l2_tb::l2_test()
 
     for (int i = 0; i < 4; ++i) {
 	l2_req_out_t req_out = l2_req_out_tb.get();
-	put_rsp_in(RSP_PUTACK, req_out.addr, 0, 0);
+	put_fwd_in(FWD_PUTACK, req_out.addr, 0);
 	wait();
     }
 
-    while(!flush_done) wait();
+    // while(!flush_done) wait();
+    wait();
 
     /*
      * T5) Evictions.
@@ -431,7 +433,7 @@ void l2_tb::l2_test()
 
     put_cpu_req(cpu_req2, READ, WORD, addr2.word, 0);
 
-    put_rsp_in(RSP_PUTACK, addr_evict1.line, 0, 0);
+    put_fwd_in(FWD_PUTACK, addr_evict1.line, 0);
     get_req_out(REQ_GETS, addr1.line, cpu_req1.hprot);
 
     wait();
@@ -453,11 +455,12 @@ void l2_tb::l2_test()
 
     for (int i = 0; i < L2_WAYS + 1; ++i) {
 	l2_req_out_t req_out = l2_req_out_tb.get();
-	put_rsp_in(RSP_PUTACK, req_out.addr, 0, 0);
+	put_fwd_in(FWD_PUTACK, req_out.addr, 0);
 	wait();
     }
 
-    while(!flush_done) wait();
+    // while(!flush_done) wait();
+    wait();
 
     /*
      * T6) Pipelined requests.
@@ -526,11 +529,12 @@ void l2_tb::l2_test()
 
     for (int i = 0; i < n_reqs + 1; ++i) {
 	req_out = l2_req_out_tb.get();
-	put_rsp_in(RSP_PUTACK, req_out.addr, 0, 0);
+	put_fwd_in(FWD_PUTACK, req_out.addr, 0);
 	wait();
     }
 
-    while(!flush_done) wait();
+    // while(!flush_done) wait();
+    wait();
 
 /*
  * Test every case of the Cache Coherence protocol
@@ -1028,7 +1032,7 @@ void l2_tb::op(cpu_msg_t cpu_msg, int beh, int rsp_beh, coh_msg_t rsp_msg, invac
 	    }
 	}
 
-	put_rsp_in(RSP_PUTACK, req_addr_tmp.line, 0, 0);
+	put_fwd_in(FWD_PUTACK, req_addr_tmp.line, 0);
 
 	wait();
     }
@@ -1109,7 +1113,7 @@ void l2_tb::op_flush(coh_msg_t coh_msg, addr_t addr_line)
 {
     get_req_out(coh_msg, addr_line, 0);
 
-    put_rsp_in(RSP_PUTACK, addr_line, 0, 0);
+    put_fwd_in(FWD_PUTACK, addr_line, 0);
 
     wait();
 }
@@ -1124,11 +1128,12 @@ void l2_tb::flush(int n_lines)
 
     for (int i = 0; i < n_lines; ++i) {
 	l2_req_out_t req_out = l2_req_out_tb.get();
-	put_rsp_in(RSP_PUTACK, req_out.addr, 0, 0);
+	put_fwd_in(FWD_PUTACK, req_out.addr, 0);
 	wait();
     }
 
-    while(!flush_done) wait();
+    // while(!flush_done) wait();
+    wait();
 
     if (rpt)
 	CACHE_REPORT_INFO("Flush done.");

@@ -51,7 +51,8 @@ public:
     sc_out<bool>	is_rsp_to_get_out;
     sc_out<bool>	is_fwd_to_get_out;
     sc_out<bool>	is_req_to_get_out;
-    sc_out<uint32_t>	put_cnt_out;
+    sc_out<uint32_t>	flush_way_out;
+    sc_out<uint32_t>	flush_set_out;
 
     sc_out<reqs_buf_t>	reqs_out[N_REQS];
     sc_out<tag_t>	tag_buf_out[L2_WAYS];
@@ -165,6 +166,7 @@ public:
 		    l2_way_t &empty_way);
     void reqs_lookup(addr_breakdown_t addr_br, sc_uint<REQS_BITS> &reqs_hit_i);
     bool reqs_peek_req(set_t set, sc_uint<REQS_BITS> &reqs_i);
+    void reqs_peek_flush(set_t set, sc_uint<REQS_BITS> &reqs_i);
     bool reqs_peek_fwd(addr_breakdown_t addr_br, sc_uint<REQS_BITS> &reqs_i, bool &reqs_hit, coh_msg_t coh_msg);
 
     // line_t make_line_of_addr(addr_t addr); // is this needed here? not called by l2.cpp
@@ -187,6 +189,8 @@ private:
     bool ongoing_atomic;
     addr_t atomic_line_addr;
     sc_uint<REQS_BITS> reqs_atomic_i;
+    bool ongoing_flush;
+    uint32_t flush_way, flush_set;
 };
 
 

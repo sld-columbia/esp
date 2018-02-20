@@ -50,7 +50,7 @@ void llc::ctrl()
 
 	    if (llc_rsp_in.nb_can_get()) { // rsp_data
 	    	is_rsp_to_get = true;
-	    } else if (llc_req_in.nb_can_get() == 1 && !req_stall) { // req_gets, req_getm, req_puts, req_putm
+	    } else if (llc_req_in.nb_can_get() && !req_stall) { // req_gets, req_getm, req_puts, req_putm
 		is_req_to_get = true;
 	    }
 	}
@@ -136,18 +136,27 @@ void llc::ctrl()
 		    break;
 
 		case SHARED :
+		    
+		    GETS_S;
+
 		    sharers[llc_addr] = sharers_buf[way] | (1 << req_in.req_id);
 		    send_rsp_out(RSP_DATA, req_in.addr, line_buf[way], req_in.req_id, 0, 0);
 		    break;
 
 		case EXCLUSIVE :
 		case MODIFIED :
+
+		    GETS_EM;
+
 		    sharers[llc_addr] = (1 << req_in.req_id) | (1 << owner_buf[way]);
 		    states[llc_addr] = SD;
 		    send_fwd_out(FWD_GETS, req_in.addr, req_in.req_id, owner_buf[way]);
 		    break;
 
 		case SD :
+
+		    GETS_SD;
+
 		    req_stall = true;
 		    req_in_stalled_valid = true;
 		    req_in_stalled = req_in;
@@ -186,7 +195,7 @@ void llc::ctrl()
 			HLS_DEFINE_PROTOCOL("llc-getm-shared-protocol");
 			invack_cnt_t invack_cnt = 0;
 			for (int i = 0; i < N_CPU; i++) {
-			    if ((sharers_buf[way] & ~(1 << i)) != 0) {
+			    if ((sharers_buf[way] & ~(1 << i)) != 0 && i != req_in.req_id) {
 				send_fwd_out(FWD_INV, req_in.addr, req_in.req_id, i);
 				invack_cnt++;
 			    }
@@ -200,6 +209,9 @@ void llc::ctrl()
 		case EXCLUSIVE :
 		    states[llc_addr] = MODIFIED;
 		case MODIFIED :
+
+		    GETM_EM;
+
 		    owners[llc_addr] = req_in.req_id;
 		    sharers[llc_addr] = 0; // TODO REMOVE: It's redundant.
 		    send_fwd_out(FWD_GETM, req_in.addr, req_in.req_id, owner_buf[way]);
@@ -219,7 +231,43 @@ void llc::ctrl()
 
 	    case REQ_PUTS :
 		LLC_PUTS;
-		send_rsp_out(RSP_PUTACK, req_in.addr, 0, req_in.req_id, 0, 0);
+		send_fwd_out(FWD_PUTACK, req_in.addr, req_in.req_id, req_in.req_id);
+
+		switch (state_buf[way]) {
+
+		case INVALID :
+		case INVALID_NOT_EMPTY :
+		case MODIFIED :
+		    break;
+
+		case SHARED :
+		    sharers_buf[way] = sharers_buf[way] & ~ (1 << req_in.req_id);
+		    sharers[llc_addr] = sharers_buf[way];
+		    if (sharers_buf[way] == 0) {
+			states[llc_addr] = INVALID_NOT_EMPTY;
+		    }
+		    break;
+
+		case EXCLUSIVE :
+		    if (owner_buf[way] == req_in.req_id) {
+			states[llc_addr] = INVALID_NOT_EMPTY;
+			owners[llc_addr] = 0; // TODO REMOVE: redundant
+		    }
+		    break;
+
+		case SD :
+		    sharers[llc_addr] = sharers_buf[way] & ~ (1 << req_in.req_id);
+		    break;
+
+		default :
+		    GENERIC_ASSERT;
+		}
+
+		break;
+
+	    case REQ_PUTM :
+		LLC_PUTM;
+		send_fwd_out(FWD_PUTACK, req_in.addr, req_in.req_id, req_in.req_id);
 
 		switch (state_buf[way]) {
 
@@ -236,47 +284,10 @@ void llc::ctrl()
 		    break;
 
 		case EXCLUSIVE :
-		    if (owner_buf[way] == req_in.req_id) {
-			states[llc_addr] = INVALID_NOT_EMPTY;
-			owners[llc_addr] = 0;
-		    }
-		    break;
-
-		case MODIFIED :
-		    break;
-
-		case SD :
-		    sharers[llc_addr] = sharers_buf[way] & ~ (1 << req_in.req_id);
-		    break;
-
-		default :
-		    GENERIC_ASSERT;
-		}
-
-		break;
-
-	    case REQ_PUTM :
-		LLC_PUTM;
-		send_rsp_out(RSP_PUTACK, req_in.addr, 0, req_in.req_id, 0, 0);
-
-		switch (state_buf[way]) {
-
-		case INVALID :
-		case INVALID_NOT_EMPTY :
-		    break;
-
-		case SHARED :
-		    sharers[llc_addr] = sharers_buf[way] & ~ (1 << req_in.req_id);
-		    if (sharers_buf[way] == 0) {
-			states[llc_addr] = INVALID_NOT_EMPTY;
-		    }
-		    break;
-
-		case EXCLUSIVE :
 		case MODIFIED :
 		    if (owner_buf[way] == req_in.req_id) {
 			states[llc_addr] = INVALID_NOT_EMPTY;
-			owners[llc_addr] = 0;
+			owners[llc_addr] = 0; // TODO REMOVE: redundant
 			lines[llc_addr] = req_in.line;
 		    }
 		    break;

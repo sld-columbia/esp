@@ -109,12 +109,21 @@ public:
 	LLC_FLATTEN_REGS;
 
 	// Map arrays to memory
-	HLS_MAP_TO_MEMORY(tags, "llc_tags");
-	HLS_MAP_TO_MEMORY(states, "llc_states");
-	HLS_MAP_TO_MEMORY(hprots, "llc_hprots");
-	HLS_MAP_TO_MEMORY(lines, "llc_lines");
-	HLS_MAP_TO_MEMORY(sharers, "llc_sharers");
-	HLS_MAP_TO_MEMORY(owners, "llc_owners");
+#if (N_CPU == 2)
+	HLS_MAP_TO_MEMORY(tags, "llc_tags_2cpus");
+	HLS_MAP_TO_MEMORY(states, "llc_states_2cpus");
+	HLS_MAP_TO_MEMORY(hprots, "llc_hprots_2cpus");
+	HLS_MAP_TO_MEMORY(lines, "llc_lines_2cpus");
+	HLS_MAP_TO_MEMORY(sharers, "llc_sharers_2cpus");
+	HLS_MAP_TO_MEMORY(owners, "llc_owners_2cpus");
+#else
+	HLS_MAP_TO_MEMORY(tags, "llc_tags_4cpus");
+	HLS_MAP_TO_MEMORY(states, "llc_states_4cpus");
+	HLS_MAP_TO_MEMORY(hprots, "llc_hprots_4cpus");
+	HLS_MAP_TO_MEMORY(lines, "llc_lines_4cpus");
+	HLS_MAP_TO_MEMORY(sharers, "llc_sharers_4cpus");
+	HLS_MAP_TO_MEMORY(owners, "llc_owners_4cpus");
+#endif
 	// HLS_MAP_TO_MEMORY(evict_ways, "llc_evict_ways");
     }
 

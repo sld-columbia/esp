@@ -50,7 +50,8 @@ public:
     sc_signal<bool>	is_rsp_to_get_out;
     sc_signal<bool>	is_fwd_to_get_out;
     sc_signal<bool>	is_req_to_get_out;
-    sc_signal<uint32_t>	put_cnt_out;
+    sc_signal<uint32_t>	flush_way_out;
+    sc_signal<uint32_t>	flush_set_out;
 
     sc_signal<reqs_buf_t>	reqs_out[N_REQS];
     sc_signal<tag_t>	tag_buf_out[L2_WAYS];
@@ -121,7 +122,8 @@ public:
 	dut->is_rsp_to_get_out(is_rsp_to_get_out);
 	dut->is_fwd_to_get_out(is_fwd_to_get_out);
 	dut->is_req_to_get_out(is_req_to_get_out);
-	dut->put_cnt_out(put_cnt_out);
+	dut->flush_way_out(flush_way_out);
+	dut->flush_set_out(flush_set_out);
 	for (int i = 0; i < N_REQS; ++i)
 	    dut->reqs_out[i](reqs_out[i]);
 	for (int i = 0; i < L2_WAYS; i++) {
@@ -169,7 +171,8 @@ public:
 	tb->is_rsp_to_get_out(is_rsp_to_get_out);
 	tb->is_fwd_to_get_out(is_fwd_to_get_out);
 	tb->is_req_to_get_out(is_req_to_get_out);
-	tb->put_cnt_out(put_cnt_out);
+	tb->flush_way_out(flush_way_out);
+	tb->flush_set_out(flush_set_out);
 	for (int i = 0; i < N_REQS; ++i)
 	    tb->reqs_out[i](reqs_out[i]);
 	for (int i = 0; i < L2_WAYS; i++) {

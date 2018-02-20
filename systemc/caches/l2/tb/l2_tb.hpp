@@ -49,7 +49,8 @@ public:
     sc_in<bool>	is_rsp_to_get_out;
     sc_in<bool>	is_fwd_to_get_out;
     sc_in<bool>	is_req_to_get_out;
-    sc_in<uint32_t>	put_cnt_out;
+    sc_in<uint32_t>	flush_way_out;
+    sc_in<uint32_t>	flush_set_out;
 
     sc_in<reqs_buf_t>	reqs_out[N_REQS];
     sc_in<tag_t>	tag_buf_out[L2_WAYS];

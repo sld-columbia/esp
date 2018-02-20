@@ -1,17 +1,17 @@
 /* Copyright 2017 Columbia University, SLD Group */
 
-#include "log2.h"
-
 #ifndef __CACHES_CONSTS_HPP__
 #define __CACHES_CONSTS_HPP__
+
+#include "log2.h"
 
 /*
  * System
  */
 
 // System configuration
-#define N_CPU	2
 #define N_CPU_BITS ilog2(N_CPU)
+#define N_CPU_MAX_BITS 2
 
 /*
  * Caches
@@ -51,12 +51,13 @@
 #define SETS			(1 << SET_BITS)
 #define L2_WAY_BITS		3
 #define L2_WAYS			(1 << L2_WAY_BITS)
+#define L2_LINES		(SETS * L2_WAYS)
+#define L2_ADDR_BITS            (SET_BITS+L2_WAY_BITS)
 #define LLC_WAY_BITS            (L2_WAY_BITS + N_CPU_BITS)
 #define LLC_WAYS		(1 << LLC_WAY_BITS)
-#define L2_LINES		(SETS*L2_WAYS)
 #define LLC_LINES		(SETS * LLC_WAYS)
-#define L2_ADDR_BITS            (SET_BITS+L2_WAY_BITS)
 #define LLC_ADDR_BITS           (SET_BITS+LLC_WAY_BITS)
+
 
 // Cache data types width
 #define CPU_MSG_TYPE_WIDTH	2
@@ -65,6 +66,7 @@
 #define HPROT_WIDTH		4
 // log2(N_CPU) + 1
 #define INVACK_CNT_WIDTH	2
+#define INVACK_CNT_CALC_WIDTH   3
 #define MAX_INVACK_CNT          7
 
 // Ongoing transaction buffers
@@ -153,12 +155,12 @@
 #define FWD_GETS	0
 #define FWD_GETM	1
 #define FWD_INV		2
+#define FWD_PUTACK	3
 
 // response (L2 to L2, L2 to L3, L3 to L2)
 #define RSP_DATA	0
 #define RSP_EDATA	1
 #define RSP_INVACK	2
-#define RSP_PUTACK	3
 
 /*
  * AMBA Bus
@@ -192,7 +194,7 @@
 // #define L2_DEBUG 1
 
 // l2
-#define ASSERT_WIDTH	17
+#define ASSERT_WIDTH	19
 #define BOOKMARK_WIDTH	32
 
 #define AS_REQS_LOOKUP   		(1 << 0)
@@ -212,6 +214,8 @@
 #define AS_EVICT_DEFAULT		(1 << 14)
 #define AS_FLUSH_CHECK			(1 << 15)
 #define AS_FLUSH_NOPUTACK		(1 << 16)
+#define AS_RSP_WHILE_FLUSHING           (1 << 17)
+#define AS_RSP_DEFAULT                  (1 << 18)
 
 #define BM_GET_CPU_REQ			(1 << 0)
 #define BM_GET_FWD_IN			(1 << 1)
@@ -255,7 +259,7 @@
 #define BM_FLUSH_READ_SET		(1 << 7)
 
 // llc
-#define LLC_ASSERT_WIDTH    1
+#define LLC_ASSERT_WIDTH    6
 #define LLC_BOOKMARK_WIDTH  10
 
 #define BM_LLC_SEND_MEM_REQ (1 << 0)
@@ -269,7 +273,12 @@
 #define BM_LLC_PUTS         (1 << 8)
 #define BM_LLC_PUTM         (1 << 9)
 
-#define AS_GENERIC (1 << 0)
+#define AS_GENERIC		(1 << 0)
+#define AS_GETS_S_NOSHARE	(1 << 1)
+#define AS_GETS_S_ALREADYSHARE	(1 << 2)
+#define AS_GETS_EM_ALREADYOWN	(1 << 3)
+#define AS_GETS_SD_ALREADYSHARE (1 << 4)
+#define AS_GETM_EM_ALREADYOWN	(1 << 5)
 
 // report
 #define RPT_OFF 0
