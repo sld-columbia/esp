@@ -2,6 +2,7 @@
 #ifdef LEON2
 #include "leon2.h"
 #endif
+#include "defines.h"
 
 struct mulcase {
 	int	fac1;
@@ -22,8 +23,8 @@ multest()
 #endif
 	int i = 0;
 
-	report_subtest(MUL_TEST+(get_pid()<<4));
-	if (mulscc_test() != 0x123) fail(1);
+	/* report_subtest(MUL_TEST+(get_pid()<<4)); */
+	if (mulscc_test() != 0x123) report_fail(FAIL_MUL);
 
 	/* skip test if multiplier disabled */
 #ifdef LEON2
@@ -33,18 +34,18 @@ multest()
 #endif
 	
 	while (mula[i].res != 9) {
-	    if ((mula[i].fac1 * mula[i].fac2) - mula[i].res) fail(2);
+	    if ((mula[i].fac1 * mula[i].fac2) - mula[i].res) report_fail(FAIL_MUL);
 	    i++;
 	}
-	if (!mulpipe()) fail(3);
-	if (!mulpipe()) fail(3); // run twice, second time with cache hit
+	if (!mulpipe()) report_fail(FAIL_MUL);
+	if (!mulpipe()) report_fail(FAIL_MUL); // run twice, second time with cache hit
 #ifdef LEON2
 	if (!((lr->leonconf >> MAC_CONF_BIT) & 1)) return(0);	
 #else
 	if (!((get_asr17() >> 9) & 1)) return(0);	
 #endif
-	if (!macpipe()) fail(4);
-	if (!macpipe()) fail(4); // run twice, second time with cache hit
+	if (!macpipe()) report_fail(FAIL_MUL);
+	if (!macpipe()) report_fail(FAIL_MUL); // run twice, second time with cache hit
 	return(0);
 }
 

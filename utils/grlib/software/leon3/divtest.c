@@ -2,6 +2,7 @@
 #ifdef LEON2
 #include "leon2.h"
 #endif
+#include "defines.h"
 
 struct divcase {
 	int	num;
@@ -46,16 +47,16 @@ divtest()
 	if (!((get_asr17() >> 8) & 1)) return(0);	
 #endif
 	
-	report_subtest(DIV_TEST+(get_pid()<<4));
+	/* report_subtest(DIV_TEST+(get_pid()<<4)); */
 	while (diva[i].denom != 0) {
-	    if ((diva[i].num / diva[i].denom) != diva[i].res) fail(1);
+	    if ((diva[i].num / diva[i].denom) != diva[i].res) report_fail(FAIL_DIV);
 	    i++;
 	}
 	i = 0;
 	while (udiva[i].denom != 0) {
-	    if ((udiva[i].num / udiva[i].denom) != udiva[i].res) fail(2);
+	    if ((udiva[i].num / udiva[i].denom) != udiva[i].res) report_fail(FAIL_DIV);
 	    i++;
 	}
-	if (!divpipe()) fail(3);
+	if (!divpipe()) report_fail(FAIL_DIV);
 	return(0);
 }

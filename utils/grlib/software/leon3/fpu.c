@@ -1,6 +1,7 @@
 #include "leon3.h"
 #include "testmod.h" 
 #include <math.h> 
+#include "defines.h"
 
 int __errno;
 fputest()
@@ -13,7 +14,7 @@ fputest()
 	if (!(tmp & (1 <<12))) return(0);
 	set_fsr(0);
 
-	report_subtest(FPU_TEST+(get_pid()<<4));
+	/* report_subtest(FPU_TEST+(get_pid()<<4)); */
 
 	fpu_main();
 
@@ -33,16 +34,16 @@ fpu_main()
 	d = 3.0;
 	e = d;
 	a = *(double *)&a1 - *(double *)&b1;
-	if (a != c1) fail(1);
+	if (a != c1) report_fail(FAIL_FPU);
 	a = sqrt(e);
-	if (fabs((a * a) - d) > 1E-15) fail(2);
+	if (fabs((a * a) - d) > 1E-15) report_fail(FAIL_FPU);
 	b = sqrt(e);
-	if (fabs((b * b) - d) > 1E-7) fail(3);
+	if (fabs((b * b) - d) > 1E-7) report_fail(FAIL_FPU);
 	initfpreg();
 	tmp = fpu_pipe();
-	if (tmp) fail(tmp);
+	if (tmp) report_fail(FAIL_FPU);
 	tmp = fpu_chkft();
-	if (tmp) fail(5);
+	if (tmp) report_fail(FAIL_FPU);
 //	if (((get_asr17() >> 10) & 0x3C0003) == 1) grfpu_test();
 }
 

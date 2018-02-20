@@ -324,7 +324,7 @@ maintest()
 	if (mr[0] != 5) fail(6);
 
 	/* check that line was allocated */
-   	/* if (chkdtag((int) mr) != 0) fail(7);   */
+   	if (chkdtag((int) mr) != 0) fail(7);  
 
 	/* check that data is in cache */
 	for (i=0;i<DSETS;i++) { 
@@ -334,7 +334,7 @@ maintest()
 	getudata((int) &mr[16]); getudata((int) &mr[24]); 
 	tmp = 0;
 	for (i=0;i<DSETS;i++) { if (getddata((int) mr, i) == 5) tmp++; }
-	/* if (tmp == 0) fail(8); */
+	if (tmp == 0) fail(8);
 
 	*ll = mrl[0];
 	if ((mrx[0] != 5) || (mrx[1] != 1)) fail(9);
@@ -342,7 +342,7 @@ maintest()
 	for (i=0;i<DSETS;i++) {
 	  if (getddata((int) &mr[1], i) == 1) tmp++;
 	}
-	/* if (tmp != 1) fail(10); */
+	if (tmp != 1) fail(10);
 	
 	/* dcache parity */ 							 
 	if ((cachectrl >> CPP_CONF_BIT) & CPP_CONF_MASK) {
@@ -387,7 +387,7 @@ maintest()
 	mr[DTAGS*DLINESZ] = 0xbbbbbbbb;
 
 	/* check that tag is not evicted on write miss */
-	/* if (chkdtag((int) mr) != 0) fail(17); */
+	if (chkdtag((int) mr) != 0) fail(17);
 
 	/* check that write update memory ok */	
 	if (mr[DTAGS*DLINESZ] != 0xbbbbbbbb) fail(18);
