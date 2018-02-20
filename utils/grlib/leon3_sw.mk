@@ -6,7 +6,7 @@ XINC   +=-I$(UTILS_GRLIB)/software/leon3 -I../common
 XCC     = $(CROSS_COMPILE)gcc $(XINC) $(BOPT)
 XAS     = $(CROSS_COMPILE)gcc -c -I. $(XINC) $(BOPT)
 XAR     = $(CROSS_COMPILE)ar
-XCFLAGS = -O0 -g
+XCFLAGS = -O2 -g -msoft-float
 
 LDFLAGS = -lm
 #LDFLAGS=-qnoambapp
@@ -25,7 +25,8 @@ PROGS = report_device apbuart divtest multest regtest \
 	router greth_throughput grpci2 gr1553b_test spwrouter \
 	cgtest privtest privtest_asm mmudmap leon4_tsc mem_test grspwtdp \
 	rextest rextest_asm awptest \
-	l2_cache_test
+	cache_fill false_sharing rand_rw cache_evict assembly \
+        lock mesi_test combined_test report data_structs	
 
 FPROGS=$(shell for i in $(PROGS); do \
 			if [ -r $(UTILS_GRLIB)/software/leon3/$$i.c -o -r $(UTILS_GRLIB)/software/leon3/$$i.S ]; then \
