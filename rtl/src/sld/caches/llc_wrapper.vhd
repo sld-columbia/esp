@@ -591,7 +591,7 @@ begin  -- architecture rtl
           then
             reg.tile_id := to_integer(unsigned(reg.origin_x)) + to_integer(unsigned(reg.origin_y)) * noc_xlen;
             if tile_cpu_id(reg.tile_id) >= 0 then
-              reg.req_id := std_logic_vector(to_unsigned(tile_cpu_id(reg.tile_id), 1));
+              reg.req_id := std_logic_vector(to_unsigned(tile_cpu_id(reg.tile_id), NCPU_MAX_LOG2));
             end if;
           end if;
 
@@ -696,7 +696,7 @@ begin  -- architecture rtl
           then
             reg.tile_id := to_integer(unsigned(reg.origin_x)) + to_integer(unsigned(reg.origin_y)) * noc_xlen;
             if tile_cpu_id(reg.tile_id) >= 0 then
-              reg.req_id := std_logic_vector(to_unsigned(tile_cpu_id(reg.tile_id), 1));
+              reg.req_id := std_logic_vector(to_unsigned(tile_cpu_id(reg.tile_id), NCPU_MAX_LOG2));
             end if;
           end if;
 
@@ -859,7 +859,9 @@ begin  -- architecture rtl
         if coherence_rsp_snd_full = '0' then
 
           llc_rsp_out_ready <= '1';
+
           if llc_rsp_out_valid = '1' then
+
             reg.coh_msg := llc_rsp_out_data_coh_msg;
             reg.addr    := llc_rsp_out_data_addr;
             reg.line    := llc_rsp_out_data_line;
@@ -884,16 +886,12 @@ begin  -- architecture rtl
       -- SEND ADDRESS
       when send_addr =>
         if coherence_rsp_snd_full = '0' then
-          coherence_rsp_snd_wrreq <= '1';
 
-          if '0' & reg.coh_msg = RSP_PUT_ACK then
-            coherence_rsp_snd_data_in <= PREAMBLE_TAIL & reg.addr;
-            reg.state                 := send_header;
-          else
-            coherence_rsp_snd_data_in <= PREAMBLE_BODY & reg.addr;
-            reg.state                 := send_data;
-            reg.word_cnt              := 0;
-          end if;
+          coherence_rsp_snd_wrreq <= '1';
+          coherence_rsp_snd_data_in <= PREAMBLE_BODY & reg.addr;
+          reg.state                 := send_data;
+          reg.word_cnt              := 0;
+
         end if;
 
       -- SEND DATA
@@ -924,8 +922,10 @@ begin  -- architecture rtl
 -- Instantiations
 -------------------------------------------------------------------------------
 
+  llc_cpus_2 : if ncpu = 2 generate
+  
   -- instantiation of llc cache on cpu tile
-  llc_cache_0 : llc_basic
+  llc_cache_2cpus : llc_basic_2
     port map (
       clk => clk,
       rst => rst,
@@ -989,6 +989,77 @@ begin  -- architecture rtl
       custom_dbg => custom_dbg
       );
 
+  end generate llc_cpus_2;
+
+  llc_cpus_4 : if ncpu = 4 generate
+  
+  -- instantiation of llc cache on cpu tile
+  llc_cache_4cpus : llc_basic_4
+    port map (
+      clk => clk,
+      rst => rst,
+
+      llc_rst_tb_valid      => '0',
+      llc_rst_tb_data       => '0',
+      llc_rst_tb_done_ready => '0',
+      llc_rst_tb_ready      => open,
+      llc_rst_tb_done_valid => open,
+      llc_rst_tb_done_data  => open,
+
+      -- NoC to cache
+      llc_req_in_ready        => llc_req_in_ready,
+      llc_req_in_valid        => llc_req_in_valid,
+      llc_req_in_data_coh_msg => llc_req_in_data_coh_msg,
+      llc_req_in_data_hprot   => llc_req_in_data_hprot,
+      llc_req_in_data_addr    => llc_req_in_data_addr,
+      llc_req_in_data_line    => llc_req_in_data_line,
+      llc_req_in_data_req_id  => llc_req_in_data_req_id,
+
+      llc_rsp_in_ready       => llc_rsp_in_ready,
+      llc_rsp_in_valid       => llc_rsp_in_valid,
+      llc_rsp_in_data_addr   => llc_rsp_in_data_addr,
+      llc_rsp_in_data_line   => llc_rsp_in_data_line,
+      llc_rsp_in_data_req_id => llc_rsp_in_data_req_id,
+
+      -- cache to NoC
+      llc_rsp_out_ready           => llc_rsp_out_ready,
+      llc_rsp_out_valid           => llc_rsp_out_valid,
+      llc_rsp_out_data_coh_msg    => llc_rsp_out_data_coh_msg,
+      llc_rsp_out_data_addr       => llc_rsp_out_data_addr,
+      llc_rsp_out_data_line       => llc_rsp_out_data_line,
+      llc_rsp_out_data_invack_cnt => llc_rsp_out_data_invack_cnt,
+      llc_rsp_out_data_req_id     => llc_rsp_out_data_req_id,
+      llc_rsp_out_data_dest_id    => llc_rsp_out_data_dest_id,
+
+      llc_fwd_out_ready        => llc_fwd_out_ready,
+      llc_fwd_out_valid        => llc_fwd_out_valid,
+      llc_fwd_out_data_coh_msg => llc_fwd_out_data_coh_msg,
+      llc_fwd_out_data_addr    => llc_fwd_out_data_addr,
+      llc_fwd_out_data_req_id  => llc_fwd_out_data_req_id,
+      llc_fwd_out_data_dest_id => llc_fwd_out_data_dest_id,
+
+      -- AHB to cache
+      llc_mem_rsp_ready     => llc_mem_rsp_ready,
+      llc_mem_rsp_valid     => llc_mem_rsp_valid,
+      llc_mem_rsp_data_line => llc_mem_rsp_data_line,
+
+      -- cache to AHB
+      llc_mem_req_ready       => llc_mem_req_ready,
+      llc_mem_req_valid       => llc_mem_req_valid,
+      llc_mem_req_data_hwrite => llc_mem_req_data_hwrite,
+      llc_mem_req_data_hsize  => llc_mem_req_data_hsize,
+      llc_mem_req_data_hprot  => llc_mem_req_data_hprot,
+      llc_mem_req_data_addr   => llc_mem_req_data_addr,
+      llc_mem_req_data_line   => llc_mem_req_data_line,
+
+      -- debug
+      asserts    => asserts,
+      bookmark   => bookmark,
+      custom_dbg => custom_dbg
+      );
+
+  end generate llc_cpus_4;
+  
 -------------------------------------------------------------------------------
 -- Debug
 -------------------------------------------------------------------------------

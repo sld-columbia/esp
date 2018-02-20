@@ -10,6 +10,7 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.std_logic_unsigned.all;
 use ieee.numeric_std.all;
+use ieee.math_real.all;
 use work.amba.all;
 use work.stdlib.all;
 use work.gencomp.all;
@@ -22,6 +23,8 @@ package cachepackage is
   -- Constants
   -----------------------------------------------------------------------------
 
+  constant NCPU_MAX_LOG2 : integer := 2;
+  
   -- NoC-L2cache planes encoding
   constant MSG_REQ_PLANE : std_logic_vector(1 downto 0) := "00";
   constant MSG_FWD_PLANE : std_logic_vector(1 downto 0) := "01";
@@ -41,10 +44,10 @@ package cachepackage is
   constant OFFSET_BITS        : integer := WORDS_PER_LINE_LG2 + BYTES_PER_WORD_LG2;
   constant L2_SET_BITS        : integer := 8;
   constant L2_WAY_BITS        : integer := 3;
-  constant LLC_WAY_BITS       : integer := L2_WAY_BITS + 0;  -- + CPU_MAX_LOG2
+  -- constant LLC_WAY_BITS       : integer := L2_WAY_BITS + 0;  -- + CPU_MAX_LOG2
   constant TAG_BITS           : integer := ADDR_BITS - OFFSET_BITS - L2_SET_BITS;
   constant L2_CACHE_LINES     : integer := (2**L2_SET_BITS) * (2**L2_WAY_BITS);
-  constant LLC_CACHE_LINES    : integer := L2_CACHE_LINES * 1;  -- CPU_MAX_NUM
+  -- constant LLC_CACHE_LINES    : integer := L2_CACHE_LINES * 1;  -- CPU_MAX_NUM
   constant SET_BITS           : integer := 8;
 
   -- Cache data types width
@@ -53,6 +56,7 @@ package cachepackage is
   constant HSIZE_WIDTH        : integer := 3;
   constant HPROT_WIDTH        : integer := 4;
   constant INVACK_CNT_WIDTH   : integer := 2;
+  constant INVACK_CNT_CALC_WIDTH : integer := 3;
 
   constant CPU_READ       : std_logic_vector(1 downto 0) := "00";
   constant CPU_READ_ATOM  : std_logic_vector(1 downto 0) := "01";
@@ -62,11 +66,11 @@ package cachepackage is
   constant LLC_READ  : std_ulogic := '0';
   constant LLC_WRITE : std_ulogic := '1';
 
-  constant ASSERTS_WIDTH          : integer := 17;
+  constant ASSERTS_WIDTH          : integer := 19;
   constant BOOKMARK_WIDTH         : integer := 32;
-  constant LLC_ASSERTS_WIDTH      : integer := 1;
+  constant LLC_ASSERTS_WIDTH      : integer := 6;
   constant LLC_BOOKMARK_WIDTH     : integer := 10;
-  constant ASSERTS_AHBS_WIDTH     : integer := 11;
+  constant ASSERTS_AHBS_WIDTH     : integer := 12;
   constant ASSERTS_AHBM_WIDTH     : integer := 1;
   constant ASSERTS_REQ_WIDTH      : integer := 1;
   constant ASSERTS_RSP_IN_WIDTH   : integer := 1;
@@ -103,6 +107,7 @@ package cachepackage is
   constant AS_AHBS_LDREQ_HREADY : integer := 8;
   constant AS_AHBS_LDRSP_HREADY : integer := 9;
   constant AS_AHBS_STRSP_HREADY : integer := 10;
+  constant AS_AHBS_INV_FIFO     : integer := 11;
 
   -- constant AS_AHBM_ : integer := 0;
 
@@ -111,7 +116,7 @@ package cachepackage is
   -- constant AS_RSPIN_ : integer := 0;
 
   --
-  constant AS_AHBM_LOAD_NOT_GRANTED : integer := 0;
+  constant AS_AHBM_LOAD_NOT_GRANTED  : integer := 0;
   constant AS_AHBM_STORE_NOT_GRANTED : integer := 1;
 
   -----------------------------------------------------------------------------
@@ -126,6 +131,7 @@ package cachepackage is
   subtype coh_msg_t is std_logic_vector(COH_MSG_TYPE_WIDTH - 1 downto 0);
   subtype set_t is std_logic_vector(SET_BITS - 1 downto 0);
   subtype invack_cnt_t is std_logic_vector(INVACK_CNT_WIDTH - 1 downto 0);
+  subtype invack_cnt_calc_t is std_logic_vector(INVACK_CNT_CALC_WIDTH - 1 downto 0);
   subtype asserts_t is std_logic_vector(ASSERTS_WIDTH - 1 downto 0);
   subtype llc_asserts_t is std_logic_vector(LLC_ASSERTS_WIDTH - 1 downto 0);
   subtype asserts_ahbs_t is std_logic_vector(ASSERTS_AHBS_WIDTH - 1 downto 0);
@@ -138,7 +144,8 @@ package cachepackage is
   subtype bookmark_t is std_logic_vector(BOOKMARK_WIDTH - 1 downto 0);
   subtype llc_bookmark_t is std_logic_vector(LLC_BOOKMARK_WIDTH - 1 downto 0);
   subtype custom_dbg_t is std_logic_vector(31 downto 0);
-  subtype cache_id_t is std_logic_vector(0 downto 0); -- TODO it's hardcoded
+  subtype cache_id_t is std_logic_vector(NCPU_MAX_LOG2 - 1 downto 0);
+
   -- hprot
   constant DEFAULT_HPROT : hprot_t := "0100";
 
@@ -153,10 +160,10 @@ package cachepackage is
   function read_from_line (addr : addr_t; line : line_t)
     return word_t;
 
-  function make_header (coh_msg : coh_msg_t; mem_info : tile_mem_info_vector;
-                        mem_num : integer; hprot : hprot_t; addr : addr_t;
-                        local_x : local_yx; local_y : local_yx;
-                        to_req : std_ulogic; req_id : cache_id_t;
+  function make_header (coh_msg     : coh_msg_t; mem_info : tile_mem_info_vector;
+                        mem_num     : integer; hprot : hprot_t; addr : addr_t;
+                        local_x     : local_yx; local_y : local_yx;
+                        to_req      : std_ulogic; req_id : cache_id_t;
                         cpu_tile_id : cpu_info_array; noc_xlen : integer)
     return noc_flit_type;
 
@@ -216,7 +223,7 @@ package cachepackage is
   -----------------------------------------------------------------------------
   -- l2_cache component
   -----------------------------------------------------------------------------
-  component l2_basic
+  component l2_basic_2
     port (
       clk : in std_ulogic;
       rst : in std_ulogic;
@@ -265,84 +272,265 @@ package cachepackage is
       l2_rsp_out_data_req_id  : out cache_id_t;
       l2_rsp_out_data_to_req  : out std_ulogic;
       l2_rsp_out_data_addr    : out addr_t;
-      l2_rsp_out_data_line    : out line_t
+      l2_rsp_out_data_line    : out line_t;
 
---      reqs_out_cpu_msg_0    : out std_logic_vector(1 downto 0);
---      reqs_out_cpu_msg_1    : out std_logic_vector(1 downto 0);
---      reqs_out_cpu_msg_2    : out std_logic_vector(1 downto 0);
---      reqs_out_cpu_msg_3    : out std_logic_vector(1 downto 0);
---      reqs_out_tag_0        : out std_logic_vector(19 downto 0);
---      reqs_out_tag_1        : out std_logic_vector(19 downto 0);
---      reqs_out_tag_2        : out std_logic_vector(19 downto 0);
---      reqs_out_tag_3        : out std_logic_vector(19 downto 0);
---     reqs_out_tag_estall_0 : out std_logic_vector(19 downto 0);
---      reqs_out_tag_estall_1 : out std_logic_vector(19 downto 0);
---      reqs_out_tag_estall_2 : out std_logic_vector(19 downto 0);
---      reqs_out_tag_estall_3 : out std_logic_vector(19 downto 0);
---      reqs_out_set_0        : out std_logic_vector(7 downto 0);
---      reqs_out_set_1        : out std_logic_vector(7 downto 0);
---      reqs_out_set_2        : out std_logic_vector(7 downto 0);
---      reqs_out_set_3        : out std_logic_vector(7 downto 0);
---      reqs_out_way_0        : out std_logic_vector(2 downto 0);
---      reqs_out_way_1        : out std_logic_vector(2 downto 0);
---      reqs_out_way_2        : out std_logic_vector(2 downto 0);
---      reqs_out_way_3        : out std_logic_vector(2 downto 0);
---     reqs_out_hsize_0      : out std_logic_vector(2 downto 0);
---      reqs_out_hsize_1      : out std_logic_vector(2 downto 0);
---      reqs_out_hsize_2      : out std_logic_vector(2 downto 0);
---      reqs_out_hsize_3      : out std_logic_vector(2 downto 0);
---      reqs_out_w_off_0      : out std_logic_vector(1 downto 0);
---      reqs_out_w_off_1      : out std_logic_vector(1 downto 0);
---      reqs_out_w_off_2      : out std_logic_vector(1 downto 0);
---      reqs_out_w_off_3      : out std_logic_vector(1 downto 0);
---      reqs_out_b_off_0      : out std_logic_vector(1 downto 0);
---      reqs_out_b_off_1      : out std_logic_vector(1 downto 0);
---      reqs_out_b_off_2      : out std_logic_vector(1 downto 0);
---      reqs_out_b_off_3      : out std_logic_vector(1 downto 0);
---      reqs_out_state_0      : out std_logic_vector(3 downto 0);
---      reqs_out_state_1      : out std_logic_vector(3 downto 0);
---      reqs_out_state_2      : out std_logic_vector(3 downto 0);
---      reqs_out_state_3      : out std_logic_vector(3 downto 0);
---      reqs_out_hprot_0      : out std_logic_vector(3 downto 0);
---      reqs_out_hprot_1      : out std_logic_vector(3 downto 0);
---      reqs_out_hprot_2      : out std_logic_vector(3 downto 0);
---      reqs_out_hprot_3      : out std_logic_vector(3 downto 0);
---      reqs_out_invack_cnt_0 : out std_logic_vector(2 downto 0);
---      reqs_out_invack_cnt_1 : out std_logic_vector(2 downto 0);
---      reqs_out_invack_cnt_2 : out std_logic_vector(2 downto 0);
---      reqs_out_invack_cnt_3 : out std_logic_vector(2 downto 0);
---      reqs_out_word_0       : out std_logic_vector(31 downto 0);
---      reqs_out_word_1       : out std_logic_vector(31 downto 0);
---      reqs_out_word_2       : out std_logic_vector(31 downto 0);
---      reqs_out_word_3       : out std_logic_vector(31 downto 0);
---      reqs_out_line_0       : out std_logic_vector(127 downto 0);
---      reqs_out_line_1       : out std_logic_vector(127 downto 0);
---      reqs_out_line_2       : out std_logic_vector(127 downto 0);
---      reqs_out_line_3       : out std_logic_vector(127 downto 0);
-
---      evict_stall_out              : out std_ulogic;
---      set_conflict_out             : out std_ulogic;
---      cpu_req_conflict_out_cpu_msg : out std_logic_vector(1 downto 0);
---      cpu_req_conflict_out_hsize   : out std_logic_vector(2 downto 0);
---      cpu_req_conflict_out_hprot   : out std_logic_vector(3 downto 0);
---      cpu_req_conflict_out_addr    : out std_logic_vector(31 downto 0);
---      cpu_req_conflict_out_word    : out std_logic_vector(31 downto 0);
---      tag_hit_out                  : out std_ulogic;
---      way_hit_out                  : out std_logic_vector(2 downto 0);
---      empty_way_found_out          : out std_ulogic;
---      empty_way_out                : out std_logic_vector(2 downto 0);
---      way_evict_out                : out std_logic_vector(2 downto 0);
---      reqs_hit_out                 : out std_ulogic;
---      reqs_hit_i_out               : out std_logic_vector(REQS_BITS-1 downto 0);
---      reqs_cnt_out                 : out std_logic_vector(REQS_BITS-1 downto 0)
+      reqs_cnt_out                 : out std_logic_vector(2 downto 0);
+      set_conflict_out             : out std_ulogic;
+      cpu_req_conflict_out_cpu_msg : out std_logic_vector(1 downto 0);
+      cpu_req_conflict_out_hsize   : out std_logic_vector(2 downto 0);
+      cpu_req_conflict_out_hprot   : out std_logic_vector(3 downto 0);
+      cpu_req_conflict_out_addr    : out std_logic_vector(31 downto 0);
+      cpu_req_conflict_out_word    : out std_logic_vector(31 downto 0);
+      evict_stall_out              : out std_ulogic;
+      fwd_stall_out                : out std_ulogic;
+      fwd_stall_ended_out          : out std_ulogic;
+      fwd_in_stalled_out_coh_msg   : out std_logic_vector(1 downto 0);
+      fwd_in_stalled_out_addr      : out std_logic_vector(31 downto 0);
+      fwd_in_stalled_out_req_id    : out cache_id_t;
+      reqs_fwd_stall_i_out         : out std_logic_vector(1 downto 0);
+      ongoing_atomic_out           : out std_ulogic;
+      atomic_line_addr_out         : out std_logic_vector(31 downto 0);
+      reqs_atomic_i_out            : out std_logic_vector(1 downto 0);
+      tag_hit_out                  : out std_ulogic;
+      way_hit_out                  : out std_logic_vector(2 downto 0);
+      empty_way_found_out          : out std_ulogic;
+      empty_way_out                : out std_logic_vector(2 downto 0);
+      reqs_hit_out                 : out std_ulogic;
+      reqs_hit_i_out               : out std_logic_vector(1 downto 0);
+      reqs_i_out                   : out std_logic_vector(1 downto 0);
+      is_flush_to_get_out          : out std_ulogic;
+      is_rsp_to_get_out            : out std_ulogic;
+      is_fwd_to_get_out            : out std_ulogic;
+      is_req_to_get_out            : out std_ulogic;
+      reqs_out_cpu_msg_0           : out std_logic_vector(1 downto 0);
+      reqs_out_cpu_msg_1           : out std_logic_vector(1 downto 0);
+      reqs_out_cpu_msg_2           : out std_logic_vector(1 downto 0);
+      reqs_out_cpu_msg_3           : out std_logic_vector(1 downto 0);
+      reqs_out_tag_0               : out std_logic_vector(19 downto 0);
+      reqs_out_tag_1               : out std_logic_vector(19 downto 0);
+      reqs_out_tag_2               : out std_logic_vector(19 downto 0);
+      reqs_out_tag_3               : out std_logic_vector(19 downto 0);
+      reqs_out_tag_estall_0        : out std_logic_vector(19 downto 0);
+      reqs_out_tag_estall_1        : out std_logic_vector(19 downto 0);
+      reqs_out_tag_estall_2        : out std_logic_vector(19 downto 0);
+      reqs_out_tag_estall_3        : out std_logic_vector(19 downto 0);
+      reqs_out_set_0               : out std_logic_vector(7 downto 0);
+      reqs_out_set_1               : out std_logic_vector(7 downto 0);
+      reqs_out_set_2               : out std_logic_vector(7 downto 0);
+      reqs_out_set_3               : out std_logic_vector(7 downto 0);
+      reqs_out_way_0               : out std_logic_vector(2 downto 0);
+      reqs_out_way_1               : out std_logic_vector(2 downto 0);
+      reqs_out_way_2               : out std_logic_vector(2 downto 0);
+      reqs_out_way_3               : out std_logic_vector(2 downto 0);
+      reqs_out_hsize_0             : out std_logic_vector(2 downto 0);
+      reqs_out_hsize_1             : out std_logic_vector(2 downto 0);
+      reqs_out_hsize_2             : out std_logic_vector(2 downto 0);
+      reqs_out_hsize_3             : out std_logic_vector(2 downto 0);
+      reqs_out_w_off_0             : out std_logic_vector(1 downto 0);
+      reqs_out_w_off_1             : out std_logic_vector(1 downto 0);
+      reqs_out_w_off_2             : out std_logic_vector(1 downto 0);
+      reqs_out_w_off_3             : out std_logic_vector(1 downto 0);
+      reqs_out_b_off_0             : out std_logic_vector(1 downto 0);
+      reqs_out_b_off_1             : out std_logic_vector(1 downto 0);
+      reqs_out_b_off_2             : out std_logic_vector(1 downto 0);
+      reqs_out_b_off_3             : out std_logic_vector(1 downto 0);
+      reqs_out_state_0             : out std_logic_vector(3 downto 0);
+      reqs_out_state_1             : out std_logic_vector(3 downto 0);
+      reqs_out_state_2             : out std_logic_vector(3 downto 0);
+      reqs_out_state_3             : out std_logic_vector(3 downto 0);
+      reqs_out_hprot_0             : out std_logic_vector(3 downto 0);
+      reqs_out_hprot_1             : out std_logic_vector(3 downto 0);
+      reqs_out_hprot_2             : out std_logic_vector(3 downto 0);
+      reqs_out_hprot_3             : out std_logic_vector(3 downto 0);
+      reqs_out_invack_cnt_0        : out std_logic_vector(2 downto 0);
+      reqs_out_invack_cnt_1        : out std_logic_vector(2 downto 0);
+      reqs_out_invack_cnt_2        : out std_logic_vector(2 downto 0);
+      reqs_out_invack_cnt_3        : out std_logic_vector(2 downto 0);
+      reqs_out_word_0              : out std_logic_vector(31 downto 0);
+      reqs_out_word_1              : out std_logic_vector(31 downto 0);
+      reqs_out_word_2              : out std_logic_vector(31 downto 0);
+      reqs_out_word_3              : out std_logic_vector(31 downto 0);
+      reqs_out_line_0              : out std_logic_vector(127 downto 0);
+      reqs_out_line_1              : out std_logic_vector(127 downto 0);
+      reqs_out_line_2              : out std_logic_vector(127 downto 0);
+      reqs_out_line_3              : out std_logic_vector(127 downto 0);
+      tag_buf_out_0                : out std_logic_vector(19 downto 0);
+      tag_buf_out_1                : out std_logic_vector(19 downto 0);
+      tag_buf_out_2                : out std_logic_vector(19 downto 0);
+      tag_buf_out_3                : out std_logic_vector(19 downto 0);
+      tag_buf_out_4                : out std_logic_vector(19 downto 0);
+      tag_buf_out_5                : out std_logic_vector(19 downto 0);
+      tag_buf_out_6                : out std_logic_vector(19 downto 0);
+      tag_buf_out_7                : out std_logic_vector(19 downto 0);
+      state_buf_out_0              : out std_logic_vector(1 downto 0);
+      state_buf_out_1              : out std_logic_vector(1 downto 0);
+      state_buf_out_2              : out std_logic_vector(1 downto 0);
+      state_buf_out_3              : out std_logic_vector(1 downto 0);
+      state_buf_out_4              : out std_logic_vector(1 downto 0);
+      state_buf_out_5              : out std_logic_vector(1 downto 0);
+      state_buf_out_6              : out std_logic_vector(1 downto 0);
+      state_buf_out_7              : out std_logic_vector(1 downto 0);
+      evict_way_out                : out std_logic_vector(2 downto 0)
       );
 
   end component;
 
+  component l2_basic_4
+    port (
+      clk : in std_ulogic;
+      rst : in std_ulogic;
+
+      l2_cpu_req_valid          : in std_ulogic;
+      l2_cpu_req_data_cpu_msg   : in cpu_msg_t;
+      l2_cpu_req_data_hsize     : in hsize_t;
+      l2_cpu_req_data_hprot     : in hprot_t;
+      l2_cpu_req_data_addr      : in addr_t;
+      l2_cpu_req_data_word      : in word_t;
+      l2_fwd_in_valid           : in std_ulogic;
+      l2_fwd_in_data_coh_msg    : in coh_msg_t;
+      l2_fwd_in_data_addr       : in addr_t;
+      l2_fwd_in_data_req_id     : in cache_id_t;
+      l2_rsp_in_valid           : in std_ulogic;
+      l2_rsp_in_data_coh_msg    : in coh_msg_t;
+      l2_rsp_in_data_addr       : in addr_t;
+      l2_rsp_in_data_line       : in line_t;
+      l2_rsp_in_data_invack_cnt : in invack_cnt_t;
+      l2_flush_valid            : in std_ulogic;
+      l2_flush_data             : in std_ulogic;
+      l2_rd_rsp_ready           : in std_ulogic;
+      l2_inval_ready            : in std_ulogic;
+      l2_req_out_ready          : in std_ulogic;
+      l2_rsp_out_ready          : in std_ulogic;
+
+      asserts                 : out asserts_t;
+      bookmark                : out bookmark_t;
+      custom_dbg              : out custom_dbg_t;
+      flush_done              : out std_ulogic;
+      l2_cpu_req_ready        : out std_ulogic;
+      l2_fwd_in_ready         : out std_ulogic;
+      l2_rsp_in_ready         : out std_ulogic;
+      l2_flush_ready          : out std_ulogic;
+      l2_rd_rsp_valid         : out std_ulogic;
+      l2_rd_rsp_data_line     : out line_t;
+      l2_inval_valid          : out std_ulogic;
+      l2_inval_data           : out addr_t;
+      l2_req_out_valid        : out std_ulogic;
+      l2_req_out_data_coh_msg : out coh_msg_t;
+      l2_req_out_data_hprot   : out hprot_t;
+      l2_req_out_data_addr    : out addr_t;
+      l2_req_out_data_line    : out line_t;
+      l2_rsp_out_valid        : out std_ulogic;
+      l2_rsp_out_data_coh_msg : out coh_msg_t;
+      l2_rsp_out_data_req_id  : out cache_id_t;
+      l2_rsp_out_data_to_req  : out std_ulogic;
+      l2_rsp_out_data_addr    : out addr_t;
+      l2_rsp_out_data_line    : out line_t;
+
+      reqs_cnt_out                 : out std_logic_vector(2 downto 0);
+      set_conflict_out             : out std_ulogic;
+      cpu_req_conflict_out_cpu_msg : out std_logic_vector(1 downto 0);
+      cpu_req_conflict_out_hsize   : out std_logic_vector(2 downto 0);
+      cpu_req_conflict_out_hprot   : out std_logic_vector(3 downto 0);
+      cpu_req_conflict_out_addr    : out std_logic_vector(31 downto 0);
+      cpu_req_conflict_out_word    : out std_logic_vector(31 downto 0);
+      evict_stall_out              : out std_ulogic;
+      fwd_stall_out                : out std_ulogic;
+      fwd_stall_ended_out          : out std_ulogic;
+      fwd_in_stalled_out_coh_msg   : out std_logic_vector(1 downto 0);
+      fwd_in_stalled_out_addr      : out std_logic_vector(31 downto 0);
+      fwd_in_stalled_out_req_id    : out cache_id_t;
+      reqs_fwd_stall_i_out         : out std_logic_vector(1 downto 0);
+      ongoing_atomic_out           : out std_ulogic;
+      atomic_line_addr_out         : out std_logic_vector(31 downto 0);
+      reqs_atomic_i_out            : out std_logic_vector(1 downto 0);
+      tag_hit_out                  : out std_ulogic;
+      way_hit_out                  : out std_logic_vector(2 downto 0);
+      empty_way_found_out          : out std_ulogic;
+      empty_way_out                : out std_logic_vector(2 downto 0);
+      reqs_hit_out                 : out std_ulogic;
+      reqs_hit_i_out               : out std_logic_vector(1 downto 0);
+      reqs_i_out                   : out std_logic_vector(1 downto 0);
+      is_flush_to_get_out          : out std_ulogic;
+      is_rsp_to_get_out            : out std_ulogic;
+      is_fwd_to_get_out            : out std_ulogic;
+      is_req_to_get_out            : out std_ulogic;
+      reqs_out_cpu_msg_0           : out std_logic_vector(1 downto 0);
+      reqs_out_cpu_msg_1           : out std_logic_vector(1 downto 0);
+      reqs_out_cpu_msg_2           : out std_logic_vector(1 downto 0);
+      reqs_out_cpu_msg_3           : out std_logic_vector(1 downto 0);
+      reqs_out_tag_0               : out std_logic_vector(19 downto 0);
+      reqs_out_tag_1               : out std_logic_vector(19 downto 0);
+      reqs_out_tag_2               : out std_logic_vector(19 downto 0);
+      reqs_out_tag_3               : out std_logic_vector(19 downto 0);
+      reqs_out_tag_estall_0        : out std_logic_vector(19 downto 0);
+      reqs_out_tag_estall_1        : out std_logic_vector(19 downto 0);
+      reqs_out_tag_estall_2        : out std_logic_vector(19 downto 0);
+      reqs_out_tag_estall_3        : out std_logic_vector(19 downto 0);
+      reqs_out_set_0               : out std_logic_vector(7 downto 0);
+      reqs_out_set_1               : out std_logic_vector(7 downto 0);
+      reqs_out_set_2               : out std_logic_vector(7 downto 0);
+      reqs_out_set_3               : out std_logic_vector(7 downto 0);
+      reqs_out_way_0               : out std_logic_vector(2 downto 0);
+      reqs_out_way_1               : out std_logic_vector(2 downto 0);
+      reqs_out_way_2               : out std_logic_vector(2 downto 0);
+      reqs_out_way_3               : out std_logic_vector(2 downto 0);
+      reqs_out_hsize_0             : out std_logic_vector(2 downto 0);
+      reqs_out_hsize_1             : out std_logic_vector(2 downto 0);
+      reqs_out_hsize_2             : out std_logic_vector(2 downto 0);
+      reqs_out_hsize_3             : out std_logic_vector(2 downto 0);
+      reqs_out_w_off_0             : out std_logic_vector(1 downto 0);
+      reqs_out_w_off_1             : out std_logic_vector(1 downto 0);
+      reqs_out_w_off_2             : out std_logic_vector(1 downto 0);
+      reqs_out_w_off_3             : out std_logic_vector(1 downto 0);
+      reqs_out_b_off_0             : out std_logic_vector(1 downto 0);
+      reqs_out_b_off_1             : out std_logic_vector(1 downto 0);
+      reqs_out_b_off_2             : out std_logic_vector(1 downto 0);
+      reqs_out_b_off_3             : out std_logic_vector(1 downto 0);
+      reqs_out_state_0             : out std_logic_vector(3 downto 0);
+      reqs_out_state_1             : out std_logic_vector(3 downto 0);
+      reqs_out_state_2             : out std_logic_vector(3 downto 0);
+      reqs_out_state_3             : out std_logic_vector(3 downto 0);
+      reqs_out_hprot_0             : out std_logic_vector(3 downto 0);
+      reqs_out_hprot_1             : out std_logic_vector(3 downto 0);
+      reqs_out_hprot_2             : out std_logic_vector(3 downto 0);
+      reqs_out_hprot_3             : out std_logic_vector(3 downto 0);
+      reqs_out_invack_cnt_0        : out std_logic_vector(2 downto 0);
+      reqs_out_invack_cnt_1        : out std_logic_vector(2 downto 0);
+      reqs_out_invack_cnt_2        : out std_logic_vector(2 downto 0);
+      reqs_out_invack_cnt_3        : out std_logic_vector(2 downto 0);
+      reqs_out_word_0              : out std_logic_vector(31 downto 0);
+      reqs_out_word_1              : out std_logic_vector(31 downto 0);
+      reqs_out_word_2              : out std_logic_vector(31 downto 0);
+      reqs_out_word_3              : out std_logic_vector(31 downto 0);
+      reqs_out_line_0              : out std_logic_vector(127 downto 0);
+      reqs_out_line_1              : out std_logic_vector(127 downto 0);
+      reqs_out_line_2              : out std_logic_vector(127 downto 0);
+      reqs_out_line_3              : out std_logic_vector(127 downto 0);
+      tag_buf_out_0                : out std_logic_vector(19 downto 0);
+      tag_buf_out_1                : out std_logic_vector(19 downto 0);
+      tag_buf_out_2                : out std_logic_vector(19 downto 0);
+      tag_buf_out_3                : out std_logic_vector(19 downto 0);
+      tag_buf_out_4                : out std_logic_vector(19 downto 0);
+      tag_buf_out_5                : out std_logic_vector(19 downto 0);
+      tag_buf_out_6                : out std_logic_vector(19 downto 0);
+      tag_buf_out_7                : out std_logic_vector(19 downto 0);
+      state_buf_out_0              : out std_logic_vector(1 downto 0);
+      state_buf_out_1              : out std_logic_vector(1 downto 0);
+      state_buf_out_2              : out std_logic_vector(1 downto 0);
+      state_buf_out_3              : out std_logic_vector(1 downto 0);
+      state_buf_out_4              : out std_logic_vector(1 downto 0);
+      state_buf_out_5              : out std_logic_vector(1 downto 0);
+      state_buf_out_6              : out std_logic_vector(1 downto 0);
+      state_buf_out_7              : out std_logic_vector(1 downto 0);
+      evict_way_out                : out std_logic_vector(2 downto 0)
+      );
+
+  end component;
+  
   -----------------------------------------------------------------------------
   -- llc cache component
   -----------------------------------------------------------------------------
-  component llc_basic
+  component llc_basic_2
     port (
       clk : in std_ulogic;
       rst : in std_ulogic;
@@ -403,6 +591,67 @@ package cachepackage is
 
   end component;
 
+  component llc_basic_4
+    port (
+      clk : in std_ulogic;
+      rst : in std_ulogic;
+
+      llc_rst_tb_valid      : in  std_ulogic;
+      llc_rst_tb_data       : in  std_ulogic;
+      llc_rst_tb_done_ready : in  std_ulogic;
+      llc_rst_tb_ready      : out std_ulogic;
+      llc_rst_tb_done_valid : out std_ulogic;
+      llc_rst_tb_done_data  : out std_ulogic;
+
+      llc_req_in_ready        : out std_ulogic;
+      llc_req_in_valid        : in  std_ulogic;
+      llc_req_in_data_coh_msg : in  coh_msg_t;
+      llc_req_in_data_hprot   : in  hprot_t;
+      llc_req_in_data_addr    : in  addr_t;
+      llc_req_in_data_line    : in  line_t;
+      llc_req_in_data_req_id  : in  cache_id_t;
+
+      llc_rsp_in_ready       : out std_ulogic;
+      llc_rsp_in_valid       : in  std_ulogic;
+      llc_rsp_in_data_addr   : in  addr_t;
+      llc_rsp_in_data_line   : in  line_t;
+      llc_rsp_in_data_req_id : in  cache_id_t;
+
+      llc_mem_rsp_ready     : out std_ulogic;
+      llc_mem_rsp_valid     : in  std_ulogic;
+      llc_mem_rsp_data_line : in  line_t;
+
+      llc_rsp_out_ready           : in  std_ulogic;
+      llc_rsp_out_valid           : out std_ulogic;
+      llc_rsp_out_data_coh_msg    : out coh_msg_t;
+      llc_rsp_out_data_addr       : out addr_t;
+      llc_rsp_out_data_line       : out line_t;
+      llc_rsp_out_data_invack_cnt : out invack_cnt_t;
+      llc_rsp_out_data_req_id     : out cache_id_t;
+      llc_rsp_out_data_dest_id    : out cache_id_t;
+
+      llc_fwd_out_ready        : in  std_ulogic;
+      llc_fwd_out_valid        : out std_ulogic;
+      llc_fwd_out_data_coh_msg : out coh_msg_t;
+      llc_fwd_out_data_addr    : out addr_t;
+      llc_fwd_out_data_req_id  : out cache_id_t;
+      llc_fwd_out_data_dest_id : out cache_id_t;
+
+      llc_mem_req_ready       : in  std_ulogic;
+      llc_mem_req_valid       : out std_ulogic;
+      llc_mem_req_data_hwrite : out std_ulogic;
+      llc_mem_req_data_hsize  : out hsize_t;
+      llc_mem_req_data_hprot  : out hprot_t;
+      llc_mem_req_data_addr   : out addr_t;
+      llc_mem_req_data_line   : out line_t;
+
+      asserts    : out llc_asserts_t;
+      bookmark   : out llc_bookmark_t;
+      custom_dbg : out custom_dbg_t
+      );
+
+  end component;
+  
   component llc_wrapper is
     generic (
       tech        : integer                      := virtex7;
@@ -439,17 +688,17 @@ package cachepackage is
       coherence_rsp_rcv_rdreq    : out std_ulogic;
       coherence_rsp_rcv_data_out : in  noc_flit_type;
       coherence_rsp_rcv_empty    : in  std_ulogic;
-  -- -- NoC4->tile
-  -- dma_rcv_rdreq                       : out std_ulogic;
-  -- dma_rcv_data_out                    : in  noc_flit_type;
-  -- dma_rcv_empty                       : in  std_ulogic;
-  -- -- tile->NoC4
-  -- dma_snd_wrreq                       : out std_ulogic;
-  -- dma_snd_data_in                     : out noc_flit_type;
-  -- dma_snd_full                        : in  std_ulogic;
-  -- dma_snd_atleast_4slots              : in  std_ulogic;
-  -- dma_snd_exactly_3slots              : in  std_ulogic);
-      debug_led : out std_ulogic);
+      -- -- NoC4->tile
+      -- dma_rcv_rdreq                       : out std_ulogic;
+      -- dma_rcv_data_out                    : in  noc_flit_type;
+      -- dma_rcv_empty                       : in  std_ulogic;
+      -- -- tile->NoC4
+      -- dma_snd_wrreq                       : out std_ulogic;
+      -- dma_snd_data_in                     : out noc_flit_type;
+      -- dma_snd_full                        : in  std_ulogic;
+      -- dma_snd_atleast_4slots              : in  std_ulogic;
+      -- dma_snd_exactly_3slots              : in  std_ulogic);
+      debug_led                  : out std_ulogic);
   end component;
 
   component fifo_custom is
@@ -489,21 +738,21 @@ package body cachepackage is
 
   end function read_from_line;
 
-  function make_header (coh_msg : coh_msg_t; mem_info : tile_mem_info_vector;
-                        mem_num : integer; hprot : hprot_t; addr : addr_t;
-                        local_x : local_yx; local_y : local_yx;
-                        to_req : std_ulogic; req_id : cache_id_t;
+  function make_header (coh_msg     : coh_msg_t; mem_info : tile_mem_info_vector;
+                        mem_num     : integer; hprot : hprot_t; addr : addr_t;
+                        local_x     : local_yx; local_y : local_yx;
+                        to_req      : std_ulogic; req_id : cache_id_t;
                         cpu_tile_id : cpu_info_array; noc_xlen : integer)
     return noc_flit_type is
 
     variable header         : noc_flit_type;
     variable dest_x, dest_y : local_yx;
-    variable dest_init : integer;
+    variable dest_init      : integer;
 
   begin
 
     if to_req = '0' then
-      
+
       dest_x := mem_info(0).x;
       dest_y := mem_info(0).y;
       if mem_num /= 1 then
@@ -527,7 +776,7 @@ package body cachepackage is
       end if;
 
     end if;
-    
+
     -- compose header
     header := create_header(local_y, local_x, dest_y, dest_x, '0' & coh_msg, hprot);
 
