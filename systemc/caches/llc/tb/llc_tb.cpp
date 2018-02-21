@@ -84,7 +84,7 @@ void llc_tb::llc_test()
     CACHE_REPORT_INFO("T0.0)");
     // fill a set with exclusive and modified states with GetS and GetM
     for (int i = 0; i < LLC_WAYS; ++i) {
-    	op(REQ_GETS, INVALID, 0, addr, addr_evict, 0, make_line_of_addr(addr.line), 0, 0, 0, 0, RPT_TB);
+    	op(REQ_GETS, INVALID, 0, addr, addr_evict, 0, line_of_addr(addr.line), 0, 0, 0, 0, RPT_TB);
 	addr.tag_incr(1);
     }
     
@@ -113,15 +113,15 @@ void llc_tb::llc_test()
     // cause LLC_WAYS + 2 invalidations on a new set
     addr_evict = addr;
     for (int i = 0; i < LLC_WAYS; ++i) {
-    	op(REQ_GETS, INVALID, 0, addr, addr_evict, 0, make_line_of_addr(addr.line), 0, 0, 0, 0, RPT_TB);
+    	op(REQ_GETS, INVALID, 0, addr, addr_evict, 0, line_of_addr(addr.line), 0, 0, 0, 0, RPT_TB);
 	addr.tag_incr(1);
     }
 
     CACHE_REPORT_INFO("T1.1)");
     for (int i = 0; i < LLC_WAYS; ++i) {
 	op(REQ_PUTS, EXCLUSIVE, 0, addr_evict, addr_evict, 0, 0, 0, 0, 0, 0, RPT_TB);
-    	op(REQ_GETS, INVALID, 1, addr, addr_evict, 0, make_line_of_addr(addr.line), 
-	   make_line_of_addr(addr_evict.line), 0, 0, 0, RPT_TB);
+    	op(REQ_GETS, INVALID, 1, addr, addr_evict, 0, line_of_addr(addr.line), 
+	   line_of_addr(addr_evict.line), 0, 0, 0, RPT_TB);
 	addr.tag_incr(1); addr_evict.tag_incr(1);
     }
 
@@ -141,9 +141,9 @@ void llc_tb::llc_test()
     CACHE_REPORT_INFO("T0.0)");
     // fill a set with exclusive and modified states with GetS and GetM
     for (int i = 0; i < LLC_WAYS/2; ++i) {
-    	op(REQ_GETS, INVALID, 0, addr, addr_evict, 0, make_line_of_addr(addr.line), 0, 0, 0, 0, RPT_TB);
+    	op(REQ_GETS, INVALID, 0, addr, addr_evict, 0, line_of_addr(addr.line), 0, 0, 0, 0, RPT_TB);
 	addr.tag_incr(1);
-    	op(REQ_GETM, INVALID, 0, addr, addr_evict, 0, make_line_of_addr(addr.line), 0, 0, 0, 0, RPT_TB);
+    	op(REQ_GETM, INVALID, 0, addr, addr_evict, 0, line_of_addr(addr.line), 0, 0, 0, 0, RPT_TB);
 	addr.tag_incr(1);
     }
     
@@ -151,9 +151,9 @@ void llc_tb::llc_test()
     // fill half of a different set with exclusive and modified states
     addr.set_incr(1);
     for (int i = 0; i < LLC_WAYS/4; ++i) {
-	op(REQ_GETS, INVALID, 0, addr, addr_evict, 0, make_line_of_addr(addr.line), 0, 0, 0, 0, RPT_TB);
+	op(REQ_GETS, INVALID, 0, addr, addr_evict, 0, line_of_addr(addr.line), 0, 0, 0, 0, RPT_TB);
 	addr.tag_incr(1);
-	op(REQ_GETM, INVALID, 0, addr, addr_evict, 0, make_line_of_addr(addr.line), 0, 0, 0, 0, RPT_TB);
+	op(REQ_GETM, INVALID, 0, addr, addr_evict, 0, line_of_addr(addr.line), 0, 0, 0, 0, RPT_TB);
 	addr.tag_incr(1);
     }
 
@@ -186,7 +186,7 @@ void llc_tb::llc_test()
     // from the same set get 1 INVALID and 1 INVALID_NOT_EMPTY
     op(REQ_GETS, INVALID_NOT_EMPTY, 0, addr, addr_evict, 0, 0xcace, 0, 0, 0, 0, RPT_TB);
     addr.tag_incr(LLC_WAYS/2);
-    op(REQ_GETM, INVALID, 0, addr, addr_evict, 0, make_line_of_addr(addr.line), 0, 0, 0, 0, RPT_TB);
+    op(REQ_GETM, INVALID, 0, addr, addr_evict, 0, line_of_addr(addr.line), 0, 0, 0, 0, RPT_TB);
 
     CACHE_REPORT_INFO("T0.5)");
     // get all INVALID_NOT_EMPTY from the first set
@@ -199,7 +199,7 @@ void llc_tb::llc_test()
 	addr.tag_incr(1);
     }
     for (int i = 0; i < LLC_WAYS/4; ++i) {
-    	op(REQ_GETM, INVALID_NOT_EMPTY, 0, addr, addr_evict, 0, make_line_of_addr(addr.line), 0, 0, 0, 0, RPT_TB);
+    	op(REQ_GETM, INVALID_NOT_EMPTY, 0, addr, addr_evict, 0, line_of_addr(addr.line), 0, 0, 0, 0, RPT_TB);
 	addr.tag_incr(1);
     	op(REQ_GETS, INVALID_NOT_EMPTY, 0, addr, addr_evict, 0, 0xcace, 0, 0, 0, 0, RPT_TB);
 	addr.tag_incr(1);
@@ -219,19 +219,19 @@ void llc_tb::llc_test()
     // addr.set_incr(2);
     addr_evict = addr;
     for (int i = 0; i < LLC_WAYS; ++i) {
-    	op(REQ_GETS, INVALID, 0, addr, addr_evict, 0, make_line_of_addr(addr.line), 0, 0, 0, 0, RPT_TB);
+    	op(REQ_GETS, INVALID, 0, addr, addr_evict, 0, line_of_addr(addr.line), 0, 0, 0, 0, RPT_TB);
 	addr.tag_incr(1);
     }
 
     CACHE_REPORT_INFO("T1.1)");
     for (int i = 0; i < LLC_WAYS/2; ++i) {
 	op(REQ_PUTS, EXCLUSIVE, 0, addr_evict, addr_evict, 0, 0, 0, 0, 0, 0, RPT_TB);
-    	op(REQ_GETS, INVALID, 1, addr, addr_evict, 0, make_line_of_addr(addr.line), 
-	   make_line_of_addr(addr_evict.line), 0, 0, 0, RPT_TB);
+    	op(REQ_GETS, INVALID, 1, addr, addr_evict, 0, line_of_addr(addr.line), 
+	   line_of_addr(addr_evict.line), 0, 0, 0, RPT_TB);
 	addr.tag_incr(1); addr_evict.tag_incr(1);
 	op(REQ_PUTS, EXCLUSIVE, 0, addr_evict, addr_evict, 0, 0, 0, 0, 0, 0, RPT_TB);
-    	op(REQ_GETM, INVALID, 1, addr, addr_evict, 0, make_line_of_addr(addr.line), 
-	   make_line_of_addr(addr_evict.line), 0, 0, 0, RPT_TB);
+    	op(REQ_GETM, INVALID, 1, addr, addr_evict, 0, line_of_addr(addr.line), 
+	   line_of_addr(addr_evict.line), 0, 0, 0, RPT_TB);
 	addr.tag_incr(1); addr_evict.tag_incr(1);
     }
 
@@ -253,7 +253,7 @@ void llc_tb::llc_test()
     addr.set_incr(10); addr_evict = addr;
     for (int j = 0; j < N_CPU; j++) {
 	for (int i = 0; i < L2_WAYS; i++) {
-	    op(REQ_GETS, INVALID, 0, addr, addr_evict, 0, make_line_of_addr(addr.line), 0, 0, j, 0, RPT_TB);
+	    op(REQ_GETS, INVALID, 0, addr, addr_evict, 0, line_of_addr(addr.line), 0, 0, j, 0, RPT_TB);
 	    addr.tag_incr(1);
 	}
     }
@@ -271,7 +271,7 @@ void llc_tb::llc_test()
     addr.tag_decr(N_CPU*L2_WAYS);
     for (int j = 0; j < N_CPU; j++) {
 	for (int i = 0; i < L2_WAYS; i++) {
-	    op(REQ_GETS, INVALID_NOT_EMPTY, 0, addr, addr_evict, 0, make_line_of_addr(addr.line), 0, 0, j, 0, RPT_TB);
+	    op(REQ_GETS, INVALID_NOT_EMPTY, 0, addr, addr_evict, 0, line_of_addr(addr.line), 0, 0, j, 0, RPT_TB);
 	    addr.tag_incr(1);
 	}
     }
@@ -280,14 +280,14 @@ void llc_tb::llc_test()
     addr.tag_decr(N_CPU*L2_WAYS);
     for (int j = 1; j < N_CPU; j++) {
 	for (int i = 0; i < L2_WAYS; i++) {
-	    op(REQ_GETS, EXCLUSIVE, 0, addr, addr_evict, 0, make_line_of_addr(addr.line), 0, 0, j, j-1, RPT_TB);
-	    op_rsp(addr, make_line_of_addr(addr.line), j-1, RPT_TB);
+	    op(REQ_GETS, EXCLUSIVE, 0, addr, addr_evict, 0, line_of_addr(addr.line), 0, 0, j, j-1, RPT_TB);
+	    op_rsp(addr, line_of_addr(addr.line), j-1, RPT_TB);
 	    addr.tag_incr(1);
 	}
     }
     for (int i = 0; i < L2_WAYS; i++) {
-	op(REQ_GETS, EXCLUSIVE, 0, addr, addr_evict, 0, make_line_of_addr(addr.line), 0, 0, 0, N_CPU-1, RPT_TB);
-	op_rsp(addr, make_line_of_addr(addr.line), N_CPU-1, RPT_TB);
+	op(REQ_GETS, EXCLUSIVE, 0, addr, addr_evict, 0, line_of_addr(addr.line), 0, 0, 0, N_CPU-1, RPT_TB);
+	op_rsp(addr, line_of_addr(addr.line), N_CPU-1, RPT_TB);
 	addr.tag_incr(1);
     }
 
@@ -304,7 +304,7 @@ void llc_tb::llc_test()
     addr.tag_decr(N_CPU*L2_WAYS);
     for (int j = 0; j < N_CPU; j++) {
 	for (int i = 0; i < L2_WAYS; i++) {
-	    op(REQ_GETS, SHARED, 0, addr, addr_evict, 0, make_line_of_addr(addr.line), 0, 0, j, 0, RPT_TB);
+	    op(REQ_GETS, SHARED, 0, addr, addr_evict, 0, line_of_addr(addr.line), 0, 0, j, 0, RPT_TB);
 	    addr.tag_incr(1);
 	}
     }
@@ -335,7 +335,7 @@ void llc_tb::llc_test()
     addr.tag_decr(N_CPU*L2_WAYS);
     for (int j = 0; j < N_CPU; j++) {
 	for (int i = 0; i < L2_WAYS; i++) {
-	    op(REQ_GETS, INVALID_NOT_EMPTY, 0, addr, addr_evict, 0, make_line_of_addr(addr.line), 0, 0, j, 0, RPT_TB);
+	    op(REQ_GETS, INVALID_NOT_EMPTY, 0, addr, addr_evict, 0, line_of_addr(addr.line), 0, 0, j, 0, RPT_TB);
 	    addr.tag_incr(1);
 	}
     }
@@ -344,17 +344,17 @@ void llc_tb::llc_test()
     addr.tag_decr(N_CPU*L2_WAYS);
     for (int j = 1; j < N_CPU; j++) {
 	for (int i = 0; i < L2_WAYS; i++) {
-	    op(REQ_GETS, EXCLUSIVE, 0, addr, addr_evict, 0, make_line_of_addr(addr.line), 0, 0, j, j-1, RPT_TB);
+	    op(REQ_GETS, EXCLUSIVE, 0, addr, addr_evict, 0, line_of_addr(addr.line), 0, 0, j, j-1, RPT_TB);
 	    op(REQ_PUTS, SD, 0, addr, addr_evict, 0, 0, 0, 0, j-1, 0, RPT_TB);
-	    op_rsp(addr, make_line_of_addr(addr.line), j-1, RPT_TB);
+	    op_rsp(addr, line_of_addr(addr.line), j-1, RPT_TB);
 	    addr.tag_incr(1);
 	}
     }
 
     for (int i = 0; i < L2_WAYS; i++) {
-	op(REQ_GETS, EXCLUSIVE, 0, addr, addr_evict, 0, make_line_of_addr(addr.line), 0, 0, 0, N_CPU-1, RPT_TB);
+	op(REQ_GETS, EXCLUSIVE, 0, addr, addr_evict, 0, line_of_addr(addr.line), 0, 0, 0, N_CPU-1, RPT_TB);
 	op(REQ_PUTS, SD, 0, addr, addr_evict, 0, 0, 0, 0, N_CPU-1, 0, RPT_TB);
-	op_rsp(addr, make_line_of_addr(addr.line), N_CPU-1, RPT_TB);
+	op_rsp(addr, line_of_addr(addr.line), N_CPU-1, RPT_TB);
 	addr.tag_incr(1);
     }
 
@@ -378,8 +378,8 @@ void llc_tb::llc_test()
     addr_evict.tag_decr(N_CPU*L2_WAYS);
     for (int j = 0; j < N_CPU; j++) {
 	for (int i = 0; i < L2_WAYS; i++) {
-	    op(REQ_GETS, INVALID, 1, addr, addr_evict, 0, make_line_of_addr(addr.line), 
-	       make_line_of_addr(addr_evict.line), 0, j, 0, RPT_TB);
+	    op(REQ_GETS, INVALID, 1, addr, addr_evict, 0, line_of_addr(addr.line), 
+	       line_of_addr(addr_evict.line), 0, j, 0, RPT_TB);
 	    addr.tag_incr(1); addr_evict.tag_incr(1);
 	}
     }
@@ -389,7 +389,7 @@ void llc_tb::llc_test()
     addr.set_incr(1);
     for (int j = 0; j < N_CPU; j++) {
 	for (int i = 0; i < L2_WAYS; i++) {
-	    op(REQ_GETM, INVALID, 0, addr, addr_evict, 0, make_line_of_addr(addr.line), 0, 0, j, 0, RPT_TB);
+	    op(REQ_GETM, INVALID, 0, addr, addr_evict, 0, line_of_addr(addr.line), 0, 0, j, 0, RPT_TB);
 	    addr.tag_incr(1);
 	}
     }
@@ -473,11 +473,11 @@ void llc_tb::op(coh_msg_t coh_msg, llc_state_t state, bool evict, addr_breakdown
 	break;
     case REQ_PUTS :
 	out_plane = RSP_PLANE;
-	out_msg = RSP_PUTACK;
+	out_msg = FWD_PUTACK;
 	break;
     case REQ_PUTM :
 	out_plane = RSP_PLANE;
-	out_msg = RSP_PUTACK;
+	out_msg = FWD_PUTACK;
 	break;
     }
 

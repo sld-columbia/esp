@@ -63,17 +63,16 @@
     asserts_tmp |= AS_GENERIC
 #define GETS_S \
     if (sharers_buf[way] == 0) asserts_tmp |= AS_GETS_S_NOSHARE; \
-    if (sharers_buf[way] & (1 << req_in.req_id) != 0) \
+    if ((sharers_buf[way] & (1 << req_in.req_id)) != 0)		 \
 	asserts_tmp |= AS_GETS_S_ALREADYSHARE
 #define GETS_EM \
     if (owner_buf[way] == req_in.req_id)  \
 	asserts_tmp |= AS_GETS_EM_ALREADYOWN
 #define GETS_SD \
-    if (sharers_buf[way] & (1 << req_in.req_id) != 0) \
+    if ((sharers_buf[way] & (1 << req_in.req_id)) != 0)	\
 	asserts_tmp |= AS_GETS_SD_ALREADYSHARE
 #define GETM_EM \
     if (owner_buf[way] == req_in.req_id)  \
 	asserts_tmp |= AS_GETM_EM_ALREADYOWN
-
 
 #endif /* __LLC_DIRECTIVES_HPP_ */

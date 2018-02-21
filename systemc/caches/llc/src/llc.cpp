@@ -77,7 +77,7 @@ void llc::ctrl()
 		GENERIC_ASSERT;
 	    }
 
-	    if (req_stall = true & rsp_in.addr == req_in_stalled.addr) {
+	    if ((req_stall == true) && (rsp_in.addr == req_in_stalled.addr)) {
 		req_stall = false;
 	    }
 
@@ -103,7 +103,7 @@ void llc::ctrl()
 	    if (evict) {
 		HLS_DEFINE_PROTOCOL("llc-eviction");
 		// evict_ways[addr_br.set] = evict_way_buf + 1;
-		addr_t addr_evict = (tag_buf[way]<<TAG_RANGE_LO) + addr_br.line.range(SET_RANGE_HI,0);
+		addr_t addr_evict = (tag_buf[way] << TAG_RANGE_LO) + addr_br.line.range(SET_RANGE_HI,0);
 		send_mem_req(WRITE, addr_evict, hprot_buf[way], line_buf[way]);
 		wait();
 		send_mem_req(READ, req_in.addr, req_in.hprot, 0);
@@ -195,7 +195,7 @@ void llc::ctrl()
 			HLS_DEFINE_PROTOCOL("llc-getm-shared-protocol");
 			invack_cnt_t invack_cnt = 0;
 			for (int i = 0; i < N_CPU; i++) {
-			    if ((sharers_buf[way] & ~(1 << i)) != 0 && i != req_in.req_id) {
+			    if (((sharers_buf[way] & (1 << i)) != 0) && (i != req_in.req_id)) {
 				send_fwd_out(FWD_INV, req_in.addr, req_in.req_id, i);
 				invack_cnt++;
 			    }
@@ -309,6 +309,25 @@ void llc::ctrl()
 	asserts.write(asserts_tmp);
 	bookmark.write(bookmark_tmp);
 	custom_dbg.write(evict);
+
+#ifdef LLC_DEBUG
+
+	req_stall_out.write(req_stall);
+	req_in_stalled_valid_out.write(req_in_stalled_valid);
+	req_in_stalled_out.write(req_in_stalled);
+
+	is_rsp_to_get_out.write(is_rsp_to_get);
+	is_req_to_get_out.write(is_req_to_get);
+
+	for (int i = 0; i < LLC_WAYS; i++) {
+	    HLS_UNROLL_LOOP(ON, "buf-output-unroll");
+	    tag_buf_out[i] = tag_buf[i];
+	    state_buf_out[i] = state_buf[i];
+	    sharers_buf_out[i] = sharers_buf[i];
+	    owner_buf_out[i] = owner_buf[i];
+	}
+#endif
+
     }
 
 /* 
@@ -343,6 +362,8 @@ inline void llc::reset_io()
     req_stall = false;
     req_in_stalled_valid = false;
 
+#ifdef LLC_DEBUG
+
     tag_hit_out.write(0);
     hit_way_out.write(0);
     empty_way_found_out.write(0);
@@ -350,6 +371,13 @@ inline void llc::reset_io()
     evict_out.write(0);
     way_out.write(0);
     llc_addr_out.write(0);
+
+    req_stall_out.write(0);
+    req_in_stalled_valid_out.write(0);
+    is_rsp_to_get_out.write(0);
+    is_req_to_get_out.write(0);
+
+#endif
 
     wait();
 }
@@ -428,7 +456,7 @@ void llc::lookup(tag_t tag, set_t set, llc_way_t &way, bool &evict, llc_addr_t &
 
     llc_addr = base + way;
 
-    // TODO REMOVE
+#if LLC_DEBUG
     tag_hit_out = tag_hit;
     hit_way_out = hit_way;
     empty_way_found_out = empty_way_found;
@@ -436,6 +464,7 @@ void llc::lookup(tag_t tag, set_t set, llc_way_t &way, bool &evict, llc_addr_t &
     evict_out = evict;
     way_out = way;
     llc_addr_out = llc_addr;
+#endif
 }
 
 void llc::send_mem_req(bool hwrite, addr_t addr, hprot_t hprot, line_t line)

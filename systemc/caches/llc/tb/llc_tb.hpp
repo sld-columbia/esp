@@ -22,6 +22,8 @@ public:
     sc_in< sc_bv<LLC_BOOKMARK_WIDTH> > bookmark;
     sc_in<uint32_t>                    custom_dbg;
 
+#if LLC_DEBUG
+
     sc_in<bool> tag_hit_out;
     sc_in<llc_way_t> hit_way_out;
     sc_in<bool> empty_way_found_out;
@@ -29,6 +31,20 @@ public:
     sc_in<bool> evict_out;
     sc_in<llc_way_t> way_out;
     sc_in<llc_addr_t> llc_addr_out;
+
+    sc_in<bool> req_stall_out;
+    sc_in<bool> req_in_stalled_valid_out;
+    sc_in<llc_req_in_t> req_in_stalled_out;
+
+    sc_in<bool> is_rsp_to_get_out;
+    sc_in<bool> is_req_to_get_out;
+
+    sc_in<tag_t> tag_buf_out[LLC_WAYS];
+    sc_in<llc_state_t> state_buf_out[LLC_WAYS];
+    sc_in<sharers_t> sharers_buf_out[LLC_WAYS];
+    sc_in<owner_t> owner_buf_out[LLC_WAYS];
+
+#endif
 
     // Input ports
     put_initiator<llc_req_in_t>  llc_req_in_tb;

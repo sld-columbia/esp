@@ -123,9 +123,9 @@
 #define SMAW			9
 #define XMW			10
 // Evict unstable states
-#define IIA			1
-#define SIA			2
-#define MIA			3
+#define IIA			11
+#define SIA			12
+#define MIA			13
 
 
 /* Protocol messages */
@@ -189,9 +189,7 @@
  */
 
 #define L2_DEBUG 1
-
-// debug
-// #define L2_DEBUG 1
+#define LLC_DEBUG 1
 
 // l2
 #define ASSERT_WIDTH	19
