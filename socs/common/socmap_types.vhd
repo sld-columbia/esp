@@ -10,8 +10,6 @@
 
 library ieee;
 use ieee.std_logic_1164.all;
--- use ieee.math_real.all;
--- use ieee.numeric_std.all;
 -- pragma translate_off
 use std.textio.all;
 -- pragma translate_on
@@ -26,10 +24,11 @@ package socmap_types is
   constant CPU_MAX_NUM_STD : std_logic_vector(3 downto 0) := "0100";     -- Also defined in bin/socmap/socmap_gen.py
   constant TILES_MAX_NUM : integer := 16;
   subtype tile_cpu_id_type is integer range -1 to CPU_MAX_NUM;
+  subtype tile_mem_id_type is integer range -1 to CPU_MAX_NUM;
   type tile_cpu_id_array is array (0 to TILES_MAX_NUM-1) of tile_cpu_id_type;
-  --type tile_mem_id_array is array (0 to TILES_MAX_NUM-1) of tile_mem_id_type;
+  type tile_mem_id_array is array (0 to TILES_MAX_NUM-1) of tile_mem_id_type;
 
   type cpu_info_array is array (CPU_MAX_NUM-1 downto 0) of integer;
-
+  type mem_info_array is array (0 downto 0) of integer;
 
 end;
