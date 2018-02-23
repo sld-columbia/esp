@@ -165,19 +165,22 @@ void l2::ctrl()
 		    write_word(rsp_in.line, reqs[reqs_hit_i].word, reqs[reqs_hit_i].w_off, 
 			       reqs[reqs_hit_i].b_off, reqs[reqs_hit_i].hsize);
 
-		    put_reqs(addr_br.set, reqs[reqs_hit_i].way, addr_br.tag,
-			     rsp_in.line, reqs[reqs_hit_i].hprot, MODIFIED, reqs_hit_i);
-
 		    // update invack_cnt
 		    reqs[reqs_hit_i].invack_cnt += rsp_in.invack_cnt;
 
 		    if (reqs[reqs_hit_i].invack_cnt == N_CPU) {
+
+			put_reqs(addr_br.set, reqs[reqs_hit_i].way, addr_br.tag,
+				 rsp_in.line, reqs[reqs_hit_i].hprot, MODIFIED, reqs_hit_i);
+
 			// resolve unstable state
 			reqs[reqs_hit_i].state = INVALID;
 			reqs_cnt++;
 		    } else {
 			// update unstable state (+=2 is an optimization)
 			reqs[reqs_hit_i].state += 2;
+
+			reqs[reqs_hit_i].line = rsp_in.line;
 		    }
 		}
 
@@ -227,6 +230,9 @@ void l2::ctrl()
 		    case IMA :
 		    case SMA :
 		    {
+			put_reqs(addr_br.set, reqs[reqs_hit_i].way, addr_br.tag, reqs[reqs_hit_i].line, 
+				 reqs[reqs_hit_i].hprot, MODIFIED, reqs_hit_i);
+
 			reqs[reqs_hit_i].state = INVALID;
 			reqs_cnt++;
 		    }
