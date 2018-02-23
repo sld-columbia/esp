@@ -438,20 +438,20 @@ architecture rtl of llc_wrapper is
   attribute mark_debug of llc_req_in_data_coh_msg : signal is "true";
   attribute mark_debug of llc_req_in_data_hprot   : signal is "true";
   attribute mark_debug of llc_req_in_data_addr    : signal is "true";
-  attribute mark_debug of llc_req_in_data_line    : signal is "true";
+  -- attribute mark_debug of llc_req_in_data_line    : signal is "true";
   attribute mark_debug of llc_req_in_data_req_id  : signal is "true";
 
   attribute mark_debug of llc_rsp_in_ready       : signal is "true";
   attribute mark_debug of llc_rsp_in_valid       : signal is "true";
   attribute mark_debug of llc_rsp_in_data_addr   : signal is "true";
-  attribute mark_debug of llc_rsp_in_data_line   : signal is "true";
+  -- attribute mark_debug of llc_rsp_in_data_line   : signal is "true";
   attribute mark_debug of llc_rsp_in_data_req_id : signal is "true";
 
   attribute mark_debug of llc_rsp_out_ready           : signal is "true";
   attribute mark_debug of llc_rsp_out_valid           : signal is "true";
   attribute mark_debug of llc_rsp_out_data_coh_msg    : signal is "true";
   attribute mark_debug of llc_rsp_out_data_addr       : signal is "true";
-  attribute mark_debug of llc_rsp_out_data_line       : signal is "true";
+  -- attribute mark_debug of llc_rsp_out_data_line       : signal is "true";
   attribute mark_debug of llc_rsp_out_data_invack_cnt : signal is "true";
   attribute mark_debug of llc_rsp_out_data_req_id     : signal is "true";
   attribute mark_debug of llc_rsp_out_data_dest_id    : signal is "true";
@@ -465,7 +465,7 @@ architecture rtl of llc_wrapper is
 
   attribute mark_debug of llc_mem_rsp_ready     : signal is "true";
   attribute mark_debug of llc_mem_rsp_valid     : signal is "true";
-  attribute mark_debug of llc_mem_rsp_data_line : signal is "true";
+  -- attribute mark_debug of llc_mem_rsp_data_line : signal is "true";
 
   attribute mark_debug of llc_mem_req_ready       : signal is "true";
   attribute mark_debug of llc_mem_req_valid       : signal is "true";

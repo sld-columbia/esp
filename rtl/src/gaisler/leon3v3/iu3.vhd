@@ -1215,6 +1215,26 @@ architecture rtl of iu3 is
   signal ir, irin : irestart_register;
   signal rp, rpin : pwd_register_type;
 
+  signal program_counter : pctype;
+  signal pv : std_ulogic;
+  signal inst0 : word;
+  signal inst1 : word;
+  signal m_addr : word;
+  
+  attribute mark_debug : string;
+  attribute keep       : string;
+
+  attribute mark_debug of program_counter : signal is "true";
+  attribute keep of program_counter : signal is "true";
+  attribute mark_debug of pv : signal is "true";
+  attribute keep of pv : signal is "true";
+  -- attribute mark_debug of inst0 : signal is "true";
+  -- attribute keep of inst0 : signal is "true";
+  -- attribute mark_debug of inst1 : signal is "true";
+  -- attribute keep of inst1 : signal is "true";
+  attribute mark_debug of m_addr : signal is "true";
+  attribute keep of m_addr : signal is "true";
+
 -- execute stage operations
 
   constant EXE_AND   : std_logic_vector(2 downto 0) := "000";
@@ -4809,5 +4829,11 @@ begin
         r.x.ctrl.pv, r.x.ctrl.trap, disasen);
   end generate;
 
+  program_counter <= r.d.pc;
+  pv <= r.d.pv;
+  inst0 <= r.d.inst(0);
+  inst1 <= r.d.inst(1);
+  m_addr <= r.m.result;
+  
 end;
 

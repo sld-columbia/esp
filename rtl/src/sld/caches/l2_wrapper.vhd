@@ -471,7 +471,7 @@ architecture rtl of l2_wrapper is
   -- cache to AHB
   attribute mark_debug of rd_rsp_ready           : signal is "true";
   attribute mark_debug of rd_rsp_valid           : signal is "true";
-  attribute mark_debug of rd_rsp_data_line       : signal is "true";
+  -- attribute mark_debug of rd_rsp_data_line       : signal is "true";
   attribute mark_debug of inval_ready            : signal is "true";
   attribute mark_debug of inval_valid            : signal is "true";
   attribute mark_debug of inval_data             : signal is "true";
@@ -481,14 +481,14 @@ architecture rtl of l2_wrapper is
   attribute mark_debug of req_out_data_coh_msg   : signal is "true";
   attribute mark_debug of req_out_data_hprot     : signal is "true";
   attribute mark_debug of req_out_data_addr      : signal is "true";
-  attribute mark_debug of req_out_data_line      : signal is "true";
+  -- attribute mark_debug of req_out_data_line      : signal is "true";
   attribute mark_debug of rsp_out_ready          : signal is "true";
   attribute mark_debug of rsp_out_valid          : signal is "true";
   attribute mark_debug of rsp_out_data_coh_msg   : signal is "true";
   attribute mark_debug of rsp_out_data_req_id    : signal is "true";
   attribute mark_debug of rsp_out_data_to_req    : signal is "true";
   attribute mark_debug of rsp_out_data_addr      : signal is "true";
-  attribute mark_debug of rsp_out_data_line      : signal is "true";
+  -- attribute mark_debug of rsp_out_data_line      : signal is "true";
   -- NoC to cache
   attribute mark_debug of fwd_in_ready           : signal is "true";
   attribute mark_debug of fwd_in_valid           : signal is "true";
@@ -499,7 +499,7 @@ architecture rtl of l2_wrapper is
   attribute mark_debug of rsp_in_ready           : signal is "true";
   attribute mark_debug of rsp_in_data_coh_msg    : signal is "true";
   attribute mark_debug of rsp_in_data_addr       : signal is "true";
-  attribute mark_debug of rsp_in_data_line       : signal is "true";
+  -- attribute mark_debug of rsp_in_data_line       : signal is "true";
   attribute mark_debug of rsp_in_data_invack_cnt : signal is "true";
   -- debug
   attribute mark_debug of asserts                : signal is "true";

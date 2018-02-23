@@ -270,30 +270,8 @@ attribute keep : boolean;
 attribute syn_keep : string;
 attribute keep of clkm : signal is true;
 
-signal eth0_ahbmi_hready : std_ulogic;
-signal eth0_ahbmi_hrdata : std_logic_vector(AHBDW-1 downto 0);
-signal eth0_ahbmo_haddr : std_logic_vector(31 downto 0);
-signal eth0_ahbmo_htrans : std_logic_vector(1 downto 0);
-signal eth0_ahbmo_hwrite : std_ulogic;
-signal eth0_ahbmo_hwdata : std_logic_vector(AHBDW-1 downto 0);
-
-attribute mark_debug : string;
-attribute mark_debug of eth0_ahbmi_hready : signal is "true";
-attribute mark_debug of eth0_ahbmi_hrdata : signal is "true";
-attribute mark_debug of eth0_ahbmo_haddr : signal is "true";
-attribute mark_debug of eth0_ahbmo_htrans : signal is "true";
-attribute mark_debug of eth0_ahbmo_hwrite : signal is "true";
-attribute mark_debug of eth0_ahbmo_hwdata : signal is "true";
-
 begin
 
-eth0_ahbmi_hready <= eth0_ahbmi.hready;
-eth0_ahbmi_hrdata <= eth0_ahbmi.hrdata;
-eth0_ahbmo_haddr <= eth0_ahbmo.haddr;
-eth0_ahbmo_htrans <= eth0_ahbmo.htrans;
-eth0_ahbmo_hwrite <= eth0_ahbmo.hwrite;
-eth0_ahbmo_hwdata <= eth0_ahbmo.hwdata;
-  
 -------------------------------------------------------------------------------
 -- Leds -----------------------------------------------------------------------
 -------------------------------------------------------------------------------
@@ -498,7 +476,7 @@ eth0_ahbmo_hwdata <= eth0_ahbmo.hwdata;
   eth0 : if CFG_GRETH = 1 generate -- Gaisler ethernet MAC
     e1 : grethm
       generic map(
-        hindex => CFG_NCPU+CFG_AHB_UART+CFG_AHB_JTAG,
+        hindex => 1+CFG_AHB_UART+CFG_AHB_JTAG,
         pindex => 14,
         paddr => 16#800#,
         pmask => 16#f00#,

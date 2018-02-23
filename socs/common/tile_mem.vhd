@@ -242,28 +242,28 @@ architecture rtl of tile_mem is
   attribute keep       : string;
 
   attribute mark_debug of coherence_req_empty        : signal is "true";
-  attribute mark_debug of coherence_req_rdreq        : signal is "true";
-  attribute mark_debug of coherence_req_data_out     : signal is "true";
-  -- attribute mark_debug of coherence_fwd_full         : signal is "true";
+  -- attribute mark_debug of coherence_req_rdreq        : signal is "true";
+  -- attribute mark_debug of coherence_req_data_out     : signal is "true";
+  attribute mark_debug of coherence_fwd_full         : signal is "true";
   -- attribute mark_debug of coherence_fwd_wrreq        : signal is "true";
   -- attribute mark_debug of coherence_fwd_data_in      : signal is "true";
   attribute mark_debug of coherence_rsp_snd_full     : signal is "true";
-  attribute mark_debug of coherence_rsp_snd_wrreq    : signal is "true";
-  attribute mark_debug of coherence_rsp_snd_data_in  : signal is "true";
-  -- attribute mark_debug of coherence_rsp_rcv_empty    : signal is "true";
+  -- attribute mark_debug of coherence_rsp_snd_wrreq    : signal is "true";
+  -- attribute mark_debug of coherence_rsp_snd_data_in  : signal is "true";
+  attribute mark_debug of coherence_rsp_rcv_empty    : signal is "true";
   -- attribute mark_debug of coherence_rsp_rcv_rdreq    : signal is "true";
   -- attribute mark_debug of coherence_rsp_rcv_data_out : signal is "true";
 
-  attribute mark_debug of ahbmi2_hgrant : signal is "true";
-  attribute mark_debug of ahbmi2_hready : signal is "true";
-  attribute mark_debug of ahbmi2_hrdata : signal is "true";
+  -- attribute mark_debug of ahbmi2_hgrant : signal is "true";
+  -- attribute mark_debug of ahbmi2_hready : signal is "true";
+  -- attribute mark_debug of ahbmi2_hrdata : signal is "true";
 
-  attribute mark_debug of ahbmo2_hbusreq : signal is "true";
-  attribute mark_debug of ahbmo2_htrans : signal is "true";
-  attribute mark_debug of ahbmo2_haddr : signal is "true";
-  attribute mark_debug of ahbmo2_hwrite : signal is "true";
-  attribute mark_debug of ahbmo2_hsize : signal is "true";
-  attribute mark_debug of ahbmo2_hprot : signal is "true";
+  -- attribute mark_debug of ahbmo2_hbusreq : signal is "true";
+  -- attribute mark_debug of ahbmo2_htrans : signal is "true";
+  -- attribute mark_debug of ahbmo2_haddr : signal is "true";
+  -- attribute mark_debug of ahbmo2_hwrite : signal is "true";
+  -- attribute mark_debug of ahbmo2_hsize : signal is "true";
+  -- attribute mark_debug of ahbmo2_hprot : signal is "true";
   
 begin
 
