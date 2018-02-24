@@ -687,8 +687,8 @@ modelsim/vsim.mk: modelsim/xilinx_lib check_all_srcs.old $(PKG_LIST)
 	fi; \
 	echo $(SPACES)"$(VLOG) $(XILINX_VIVADO)/data/verilog/src/glbl.v"; \
 	$(VLOG) $(XILINX_VIVADO)/data/verilog/src/glbl.v; \
+	vlib -type directory gig_ethernet_pcs_pma_v16_1_2; \
 	if test -r ./sgmii/sgmii.xci; then \
-		vlib -type directory gig_ethernet_pcs_pma_v16_1_2; \
 		vmap gig_ethernet_pcs_pma_v16_1_2 gig_ethernet_pcs_pma_v16_1_2; \
 		echo $(SPACES)"$(VCOM) ./sgmii/hdl/gig_ethernet_pcs_pma_v16_1_rfs.vhd"; \
 		$(VCOM) -work gig_ethernet_pcs_pma_v16_1_2 ./sgmii/hdl/gig_ethernet_pcs_pma_v16_1_rfs.vhd; \
