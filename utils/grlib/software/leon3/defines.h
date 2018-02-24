@@ -55,8 +55,8 @@
 #define TEST_FILL 6
 #define TEST_SHARING 7
 #define TEST_RAND_RW 8
-#define TEST_LOCK 9
-#define TEST_MESI 10
+#define TEST_MESI 9
+#define TEST_LOCK 10
 #define TEST_MP_END 11
 #define TEST_END 12
 
@@ -68,8 +68,8 @@
 #define FAIL_FILL 4
 #define FAIL_SHARING 5
 #define FAIL_RAND_RW 6
-#define FAIL_LOCK 7
-#define FAIL_MESI 8
+#define FAIL_MESI 7
+#define FAIL_LOCK 8
 #define FAIL_MPTEST 9
 
 /* Report functions */
@@ -77,12 +77,27 @@ extern void report_init();
 extern void report_test();
 extern void report_fail();
 extern void report_parse();
-
+extern void test_loop_start();
+extern void test_loop_end();
 /* Data structures */
 int *cache_fill_matrix[MAX_N_CPU];
 
 typedef volatile unsigned int arch_spinlock_t;
 arch_spinlock_t lock;
+
+/* Sync arrays */
+volatile int sync_loop_start[MAX_N_CPU]; // = {0, 0, 0, 0};
+volatile int sync_loop_end[MAX_N_CPU]; // = {0, 0, 0, 0};
+volatile int sync_leon3_test[MAX_N_CPU]; // = {0, 0, 0, 0};
+volatile int sync_cache_fill[MAX_N_CPU]; // = {0, 0, 0, 0};
+volatile int sync_false_sharing1[MAX_N_CPU]; // = {0, 0, 0, 0};
+volatile int sync_false_sharing2[MAX_N_CPU]; // = {0, 0, 0, 0};
+volatile int sync_rand_rw[MAX_N_CPU]; // = {0, 0, 0, 0};
+volatile int sync_mesi1[MAX_N_CPU]; // = {0, 0, 0, 0};
+volatile int sync_mesi2[MAX_N_CPU]; // = {0, 0, 0, 0};
+volatile int sync_mesi3[MAX_N_CPU]; // = {0, 0, 0, 0};
+volatile int sync_lock1[MAX_N_CPU]; // = {0, 0, 0, 0};
+volatile int sync_lock2[MAX_N_CPU]; // = {0, 0, 0, 0};
 
 /* Leon3 constants */
 #define ASI_LEON_DFLUSH 0x11

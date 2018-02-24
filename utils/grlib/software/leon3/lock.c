@@ -2,9 +2,6 @@
 #include "defines.h"
 
 int spinlock_cnt, sem_cnt;
-volatile int sync_lock1[MAX_N_CPU] = {0, 0, 0, 0};
-volatile int sync_lock2[MAX_N_CPU] = {0, 0, 0, 0};
-volatile int sync_lock3[MAX_N_CPU] = {0, 0, 0, 0};
 
 inline void arch_spin_lock(arch_spinlock_t *lock)
 {
@@ -195,8 +192,6 @@ int test_lock(int loops, int ncpu)
 	    return 1;
 	}
     }
-
-    psync(sync_lock3, pid, ncpu);
 
     return 0;
 }

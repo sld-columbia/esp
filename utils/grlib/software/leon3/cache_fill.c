@@ -2,16 +2,13 @@
 #include <stdio.h>
 #include <defines.h>
 
-volatile int sync_cache_fill1[MAX_N_CPU] = {0, 0, 0, 0};
-volatile int sync_cache_fill2[MAX_N_CPU] = {0, 0, 0, 0};
-
 int cache_fill(int ways, int ncpu)
 {
     int i, sem;
     int cache_size, no_of_ints;
     int pid = get_pid();
 
-    psync(sync_cache_fill1, pid, ncpu);
+    psync(sync_cache_fill, pid, ncpu);
 
     cache_size = SETS * ways * LINE_SIZE;
 
@@ -57,8 +54,6 @@ int cache_fill(int ways, int ncpu)
 	    /* return 1; */
 	}
     }
-
-    psync(sync_cache_fill2, pid, ncpu);
 
     return 0;
 }

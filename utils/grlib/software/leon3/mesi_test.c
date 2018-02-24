@@ -1,9 +1,6 @@
 #include <stdio.h>
 #include "defines.h"
 #include <math.h>
-volatile int sync_mesi1[MAX_N_CPU] = {0, 0, 0, 0};
-volatile int sync_mesi2[MAX_N_CPU] = {0, 0, 0, 0};
-volatile int sync_mesi3[MAX_N_CPU] = {0, 0, 0, 0};
 
 #if SPINLOCK
 

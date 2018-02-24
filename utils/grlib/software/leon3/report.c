@@ -14,8 +14,8 @@ char report_test_string[N_IDS_TEST][MAX_REPORT_STRING] = {"Test     start : ",
 							  "Fill     test  : ",
 							  "Sharing  test  : ",
 							  "Rand RW  test  : ",
-							  "Lock     test  : ",
 							  "MESI     test  : ",
+							  "Lock     test  : ",
 							  "MP end   test  : ",
 							  "Test     end   : "};
 
@@ -26,8 +26,8 @@ char report_fail_string[N_IDS_FAIL][MAX_REPORT_STRING] = {"Reg      fail  : ",
 							  "Fill     fail  : ",
 							  "Sharing  fail  : ",
 							  "Rand RW  fail  : ",
-							  "Lock     fail  : ",
 							  "MESI     fail  : ",
+							  "Lock     fail  : ",
 							  "MP       fail  : "};
 
 void report_init()
@@ -97,4 +97,46 @@ void report_parse(int ncpu)
     }
 
     printf("\nSimulation terminated with %d fails.\n\n", error_cnt);
+}
+
+void test_loop_start()
+{
+    int i;
+    int * irqmp_ptr = (int *) 0x80000200;
+    int ncpu = (((*(irqmp_ptr + 0x10/4)) >> 28) & 0x0f) + 1;
+    int pid = get_pid();
+
+    if (!pid) {
+	for (i = 0; i < MAX_N_CPU; i++) {
+	    sync_leon3_test[i] = 0;
+	    sync_cache_fill[i] = 0;
+	    sync_false_sharing1[i] = 0;
+	    sync_false_sharing2[i] = 0;
+	    sync_rand_rw[i] = 0;
+	    sync_mesi1[i] = 0;
+	    sync_mesi2[i] = 0;
+	    sync_mesi3[i] = 0;
+	    sync_lock1[i] = 0;
+	    sync_lock2[i] = 0;
+	    sync_loop_end[i] = 0;
+	}
+    }
+
+    psync(sync_loop_start, pid, ncpu);
+}
+
+void test_loop_end()
+{
+    int i;
+    int * irqmp_ptr = (int *) 0x80000200;
+    int ncpu = (((*(irqmp_ptr + 0x10/4)) >> 28) & 0x0f) + 1;
+    int pid = get_pid();
+
+    if (!pid) {
+	for (i = 0; i < MAX_N_CPU; i++) {
+	    sync_loop_start[i] = 0;
+	}
+    }
+
+    psync(sync_loop_end, pid, ncpu);
 }

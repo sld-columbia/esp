@@ -3,9 +3,12 @@
 
 /* void (*mpfunc[16])(int index); */
 
-leon3_test(int domp, int *irqmp, int mtest)
+leon3_test(int domp, int *irqmp, int mtest, int ncpu)
 {
     int tmp, i;
+    int pid = get_pid();
+
+    psync(sync_leon3_test, pid, ncpu);
 
     /* if (domp) */
     /*     mptest_start(irqmp); */

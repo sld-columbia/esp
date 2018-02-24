@@ -9,6 +9,8 @@ int rand_rw(int words, int ncpu) // words < 256
     int i, sem, offset, cnt = 0;
     int pid = get_pid();
 
+    psync(sync_rand_rw, pid, ncpu);
+
     /* srand(1); */
 
 /* #if INT */

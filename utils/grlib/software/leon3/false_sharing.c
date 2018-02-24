@@ -2,10 +2,6 @@
 #include <defines.h>
 #include <math.h>
 
-volatile int sync_false_sharing1[MAX_N_CPU] = {0, 0, 0, 0};
-volatile int sync_false_sharing2[MAX_N_CPU] = {0, 0, 0, 0};
-volatile int sync_false_sharing3[MAX_N_CPU] = {0, 0, 0, 0};
-
 int false_sharing(int lines, int ncpu)
 {
     int i, j, sem;
@@ -33,8 +29,6 @@ int false_sharing(int lines, int ncpu)
 	    return 1;
 	}
     }
-
-    psync(sync_false_sharing3, pid, ncpu);
 
     return 0;
 }
