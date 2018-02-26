@@ -16,7 +16,7 @@ void evict(int *ptr, int offset, int ways, int max_range, int hsize)
     short *ptr_short;
     char *ptr_char;
 
-    /* if (hsize == INT) { */
+    /* if (hsize == WORD) { */
     tag_offset = 256 * 4;
     /* } else if (hsize == HALFWORD) { */
     /* 	tag_offset = 1 << (int) log2(SETS * WORDS_PER_LINE * 2); */
@@ -31,7 +31,7 @@ void evict(int *ptr, int offset, int ways, int max_range, int hsize)
 	curr_offset += tag_offset;
 	/* curr_offset = curr_offset % max_range; */
 
-	/* if (hsize == INT) */
+	/* if (hsize == WORD) */
 	ptr[curr_offset] = 0xEEEEEEEE;
 	/* else if (hsize == HALFWORD) */
 	/*     ptr_short[curr_offset] = 0xEEEE; */

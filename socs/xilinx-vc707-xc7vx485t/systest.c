@@ -43,9 +43,9 @@ int main()
 	report_test(TEST_LEON3);
 	leon3_test(1, 0x80000200, 0, ncpu);
 
-	/* Completely fill and evict all caches */
-	report_test(TEST_FILL);
-	cache_fill(L2_WAYS, ncpu); // select INT, HALFWORD and BYTE in defines.h
+	/* Completely fill and evict all caches (bytes) */
+	report_test(TEST_FILL_B);
+	cache_fill(L2_WAYS, ncpu, BYTE);
 
 	/* Test false sharing */
 	report_test(TEST_SHARING);
@@ -54,6 +54,10 @@ int main()
 	/* Test some random read and write operations */
 	report_test(TEST_RAND_RW);
 	rand_rw(SETS, ncpu); // select INT, HALFWORD and BYTE in defines.h
+
+	/* Completely fill and evict all caches (halfwords) */
+	report_test(TEST_FILL_HW);
+	cache_fill(L2_WAYS, ncpu, HALFWORD);
 
 	/* Test MESI protocol */
 	report_test(TEST_MESI);
@@ -64,10 +68,9 @@ int main()
 	report_test(TEST_LOCK);
 	test_lock(10, ncpu); // select INT, HALFWORD and BYTE in defines.h
 
-	/* if (!get_pid()) { */
-	/*     /\* Printout results *\/ */
-	/*     report_parse(ncpu); */
-	/* } */
+	/* Completely fill and evict all caches (words) */
+	report_test(TEST_FILL_W);
+	cache_fill(L2_WAYS, ncpu, WORD);
 
 	test_loop_end();
     }

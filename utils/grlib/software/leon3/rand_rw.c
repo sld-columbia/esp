@@ -39,7 +39,7 @@ int rand_rw(int words, int ncpu) // words < 256
 
 	ptr[offset] = i + pid + (int) &ptr[offset];
 
-	evict(ptr, offset, L2_WAYS, 0, INT);
+	evict(ptr, offset, L2_WAYS, 0, WORD);
 
 	if (ptr[offset] != i + pid + (int) &ptr[offset]) {
 

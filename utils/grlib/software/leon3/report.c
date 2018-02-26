@@ -11,11 +11,13 @@ char report_test_string[N_IDS_TEST][MAX_REPORT_STRING] = {"Test     start : ",
 							  "Mul      test  : ",
 							  "Div      test  : ",
 							  "FPU      test  : ",
-							  "Fill     test  : ",
+							  "Fill B   test  : ",
 							  "Sharing  test  : ",
 							  "Rand RW  test  : ",
+							  "Fill HW  test  : ",
 							  "MESI     test  : ",
 							  "Lock     test  : ",
+							  "Fill W   test  : ",
 							  "MP end   test  : ",
 							  "Test     end   : "};
 
@@ -23,11 +25,13 @@ char report_fail_string[N_IDS_FAIL][MAX_REPORT_STRING] = {"Reg      fail  : ",
 							  "Mul      fail  : ",
 							  "Div      fail  : ",
 							  "FPU      fail  : ",
-							  "Fill     fail  : ",
+							  "Fill B   fail  : ",
 							  "Sharing  fail  : ",
 							  "Rand RW  fail  : ",
+							  "Fill HW  fail  : ",
 							  "MESI     fail  : ",
 							  "Lock     fail  : ",
+							  "Fill W   fail  : ",
 							  "MP       fail  : "};
 
 void report_init()
@@ -109,7 +113,9 @@ void test_loop_start()
     if (!pid) {
 	for (i = 0; i < MAX_N_CPU; i++) {
 	    sync_leon3_test[i] = 0;
-	    sync_cache_fill[i] = 0;
+	    sync_cache_fill_bytes[i] = 0;
+	    sync_cache_fill_halfwords[i] = 0;
+	    sync_cache_fill_words[i] = 0;
 	    sync_false_sharing1[i] = 0;
 	    sync_false_sharing2[i] = 0;
 	    sync_rand_rw[i] = 0;

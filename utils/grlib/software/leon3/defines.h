@@ -25,7 +25,7 @@
 #define SPINLOCK 0
 #define SEMAPHORE 1
 
-#define INT 0
+#define WORD 0
 #define HALFWORD 1
 #define BYTE 2
 
@@ -39,8 +39,8 @@
 #define TEST 0
 #define FAIL 1
 
-#define N_IDS_TEST 13
-#define N_IDS_FAIL 10
+#define N_IDS_TEST 15
+#define N_IDS_FAIL 12
 #define N_IDS (N_IDS_TEST > N_IDS_FAIL ? N_IDS_TEST : N_IDS_FAIL)
 
 #define MAX_REPORT_STRING 18
@@ -52,25 +52,29 @@
 #define TEST_MUL 3
 #define TEST_DIV 4
 #define TEST_FPU 5
-#define TEST_FILL 6
+#define TEST_FILL_B 6
 #define TEST_SHARING 7
 #define TEST_RAND_RW 8
-#define TEST_MESI 9
-#define TEST_LOCK 10
-#define TEST_MP_END 11
-#define TEST_END 12
+#define TEST_FILL_HW 9
+#define TEST_MESI 10
+#define TEST_LOCK 11
+#define TEST_FILL_W 12
+#define TEST_MP_END 13
+#define TEST_END 14
 
 /* Fail IDs (max 32, which is the word size) */
 #define FAIL_REG 0
 #define FAIL_MUL 1
 #define FAIL_DIV 2
 #define FAIL_FPU 3
-#define FAIL_FILL 4
+#define FAIL_FILL_B 4
 #define FAIL_SHARING 5
 #define FAIL_RAND_RW 6
-#define FAIL_MESI 7
-#define FAIL_LOCK 8
-#define FAIL_MPTEST 9
+#define FAIL_FILL_HW 7
+#define FAIL_MESI 8
+#define FAIL_LOCK 9
+#define FAIL_FILL_W 10
+#define FAIL_MPTEST 11
 
 /* Report functions */
 extern void report_init();
@@ -89,7 +93,9 @@ arch_spinlock_t lock;
 volatile int sync_loop_start[MAX_N_CPU]; // = {0, 0, 0, 0};
 volatile int sync_loop_end[MAX_N_CPU]; // = {0, 0, 0, 0};
 volatile int sync_leon3_test[MAX_N_CPU]; // = {0, 0, 0, 0};
-volatile int sync_cache_fill[MAX_N_CPU]; // = {0, 0, 0, 0};
+volatile int sync_cache_fill_bytes[MAX_N_CPU]; // = {0, 0, 0, 0};
+volatile int sync_cache_fill_halfwords[MAX_N_CPU]; // = {0, 0, 0, 0};
+volatile int sync_cache_fill_words[MAX_N_CPU]; // = {0, 0, 0, 0};
 volatile int sync_false_sharing1[MAX_N_CPU]; // = {0, 0, 0, 0};
 volatile int sync_false_sharing2[MAX_N_CPU]; // = {0, 0, 0, 0};
 volatile int sync_rand_rw[MAX_N_CPU]; // = {0, 0, 0, 0};
