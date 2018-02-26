@@ -50,7 +50,8 @@ void llc::ctrl()
 
 	    if (llc_rsp_in.nb_can_get()) { // rsp_data
 	    	is_rsp_to_get = true;
-	    } else if (llc_req_in.nb_can_get() && !req_stall) { // req_gets, req_getm, req_puts, req_putm
+	    } else if ((llc_req_in.nb_can_get() && !req_stall) || 
+		       (!req_stall && req_in_stalled_valid)) { // req_gets, req_getm, req_puts, req_putm
 		is_req_to_get = true;
 	    }
 	}
