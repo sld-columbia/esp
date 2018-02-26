@@ -17,6 +17,8 @@ int main()
     int ncpu = (((*(irqmp_ptr + 0x10/4)) >> 28) & 0x0f) + 1;
     int pid = get_pid();
 
+    int sem_casa, sem_casa_cnt = 0;
+
     /* Start all CPUs */
     if (!pid)
 	mptest_start(0x80000200);

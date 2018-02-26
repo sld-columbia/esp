@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include "defines.h"
 
-int spinlock_cnt, sem_cnt;
+int spinlock_cnt, sem_casa_cnt, sem_cnt;
 
 inline void arch_spin_lock(arch_spinlock_t *lock)
 {
@@ -116,11 +116,12 @@ inline void arch_spin_unlock_and_flush(arch_spinlock_t *lock)
 
 int test_lock(int loops, int ncpu)
 {
-    int i, sem, cnt;
+    int i, sem, sem_casa, cnt;
     int pid = get_pid();
 
     if (!pid) {
 	spinlock_cnt = 0;
+	sem_casa_cnt = 0;
 	sem_cnt = 0;
     }
 
@@ -154,6 +155,14 @@ int test_lock(int loops, int ncpu)
 
 	arch_spin_unlock_and_flush(&lock);
 
+	/* Casa lock */
+
+	do {sem_casa = get_sem_casa();} while (sem_casa);
+
+	sem_casa_cnt++;
+
+	ret_sem_casa();
+
 	/* Regular semaphore */
 
 	do {sem = get_sem();} while (sem);
@@ -181,7 +190,9 @@ int test_lock(int loops, int ncpu)
 
     /* Check correctness of counters */
     if (!pid) {
-	if ((spinlock_cnt != 3 * loops * ncpu) || (sem_cnt != 2 * loops * ncpu)) {
+	if ((spinlock_cnt != 3 * loops * ncpu) ||
+	    (sem_cnt != 2 * loops * ncpu) ||
+	    (sem_casa_cnt != loops * ncpu)) {
 
 	    report_fail(FAIL_LOCK);
 

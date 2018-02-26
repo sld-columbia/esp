@@ -7,6 +7,8 @@ asm(
     "	.global get_pid\n"
     "	.global get_sem\n"
     "	.global ret_sem\n"
+    "	.global get_sem_casa\n"
+    "	.global ret_sem_casa\n"
 
     "get_sem:\n"
     "	set  mpsem, %o1\n"
@@ -19,6 +21,19 @@ asm(
 /*"	set 1, %o0 \n" */
     "	set 0, %o0 \n"
     "	set mpsem, %o1\n"
+    "	retl\n"
+    "	st  %o0, [%o1]		\n"
+
+    "get_sem_casa:\n"
+    "	set  mpsem_casa, %o1\n"
+    "	set  0, %o2\n"
+    "	set  0xFFFFFFFF, %o0\n"
+    "	retl\n"
+    "	casa [%o1] 0xB, %o2, %o0\n"
+
+    "ret_sem_casa:\n"
+    "	set 0, %o0 \n"
+    "	set mpsem_casa, %o1\n"
     "	retl\n"
     "	st  %o0, [%o1]		\n"
 
@@ -39,6 +54,9 @@ asm(
     "	.align 4\n"
     "	.global mpsem\n"
     "mpsem:	.word 0\n"
+    "	.global mpsem_casa\n"
+
+    "mpsem_casa:	.word 0\n"
     "	.text \n"
     "	.align 4\n"
     );
