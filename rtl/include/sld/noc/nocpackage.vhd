@@ -289,6 +289,38 @@ package nocpackage is
     reserved          : reserved_field_type)
     return noc_flit_type;
 
+
+  -- IRQ snd packet (Header + 2 flits):
+  -- Payload 1
+  -- |31    12|11    8|7          7|6        6|5      5|4      4|3   0|
+  -- | unused | index | pwdsetaddr | forceerr | rstrun | resume | irl |
+  -- Payload 2
+  -- |31         2|1      0|
+  -- | pwdnewaddr | unused |
+
+  -- IRQ ack packet (Header + 1 flit):
+  -- Payload 1
+  -- |31    12|11    8|7   7|6    6|5   5|4      4|3   0|
+  -- | unused | index | err | fpen | pwd | intack | irl |
+
+  constant IRQ_IRL_MSB        : integer := 3;
+  constant IRQ_IRL_LSB        : integer := 0;
+  constant IRQ_RESUME_BIT     : integer := 4;
+  constant IRQ_RSTRUN_BIT     : integer := 5;
+  constant IRQ_FORCEERR_BIT   : integer := 6;
+  constant IRQ_PWDSETADDR_BIT : integer := 7;
+  constant IRQ_INDEX_LSB      : integer := 8;
+  constant IRQ_INDEX_MSB      : integer := 11;
+
+  constant IRQ_PWDNEWADDR_MSB : integer := 31;
+  constant IRQ_PWDNEWADDR_LSB : integer := 2;
+
+  constant IRQ_INTACK_BIT : integer := 4;
+  constant IRQ_PWD_BIT    : integer := 5;
+  constant IRQ_FPEN_BIT   : integer := 6;
+  constant IRQ_ERR_BIT    : integer := 7;
+
+
 end nocpackage;
 
 package body nocpackage is
