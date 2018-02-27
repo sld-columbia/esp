@@ -57,13 +57,12 @@ entity tile_cpu is
     mctrl_apbo         : in    apb_slv_out_type;
     --pragma translate_on
 
-    -- DSU: To led
+    -- DSU LED
     ndsuact            : out std_ulogic;            -- to chip_led(0)
     dsuerr             : out std_ulogic;
+    -- IRQ overflow LED
+    irqo_fifo_overflow : out std_ulogic;
 
-    -- TODO: REMOVE!
-    irqi_i  : in  irq_in_vector(0 to CFG_NCPU-1);
-    irqo_o  : out irq_out_vector(0 to CFG_NCPU-1);
     -- NOC
     noc1_input_port    : out noc_flit_type;
     noc1_data_void_in  : out std_ulogic;
@@ -137,8 +136,8 @@ signal ctrl_ahbmo : ahb_mst_out_vector;
 signal apb_req, apb_ack, noc_apb_ack, local_apb_ack : std_ulogic;
 
 -- Interrupt controller
-signal irqi : irq_in_vector(0 to CFG_NCPU-1);
-signal irqo : irq_out_vector(0 to CFG_NCPU-1);
+signal irqi : l3_irq_in_type;
+signal irqo : l3_irq_out_type;
 
 -- Queues
 signal coherence_req_wrreq                : std_ulogic;
@@ -193,7 +192,7 @@ signal dsui : dsu_in_type;
 signal dsuo : dsu_out_type;
 
 -- Monitor CPU idle
-signal irqo_int : irq_out_vector(0 to CFG_NCPU-1);
+signal irqo_int : l3_irq_out_type;
 signal mon_dvfs_ctrl : monitor_dvfs_type;
 
 begin
@@ -341,7 +340,7 @@ pllclk <= clk_feedthru;
     mon_dvfs.clk <= clk_feedthru;
   end generate dvfs_no_master_or_no_dvfs;
 
-  mon_dvfs.acc_idle <= irqo_int(cpu_id).pwd;
+  mon_dvfs.acc_idle <= irqo_int.pwd;
   mon_dvfs.traffic <= '0';
   mon_dvfs.burst <= '0';
 
@@ -358,14 +357,9 @@ pllclk <= clk_feedthru;
                  CFG_LDDEL, disas, CFG_ITBSZ, CFG_PWD, CFG_SVT, CFG_RSTADDR, CFG_NCPU_TILE-1,
                  CFG_DFIXED, CFG_SCAN, CFG_MMU_PAGE, CFG_BP)
     port map (clk_feedthru, rst, ahbmi, ahbmo(cpu_id), ahbsi, ahbso,
-              irqi_i(cpu_id), irqo_int(cpu_id), dbgi(cpu_id)(0), dbgo(cpu_id)(0));
+              irqi, irqo_int, dbgi(cpu_id)(0), dbgo(cpu_id)(0));
 
-  irq_none_gen: for i in 0 to CFG_NCPU-1 generate
-    no_irq_gen: if i /= cpu_id generate
-      irqo_int(i) <= irq_out_none;
-    end generate no_irq_gen;
-  end generate irq_none_gen;
-  irqo_o <= irqo_int;
+  irqo <= irqo_int;
 
 
   dsugeni_0 : if CFG_DSU = 1 generate
@@ -435,25 +429,26 @@ pllclk <= clk_feedthru;
       remote_apb_rcv_data_out => remote_apb_rcv_data_out,
       remote_apb_rcv_empty    => remote_apb_rcv_empty);
 
-  -- cpu_irq2noc_1: cpu_irq2noc
-  --   generic map (
-  --     tech    => fabtech,
-  --     cpu_id  => cpu_id,
-  --     local_y => local_y,
-  --     local_x => local_x,
-  --     irq_y   => tile_y(io_tile_id),
-  --     irq_x   => tile_x(io_tile_id))
-  --   port map (
-  --     rst                    => rst,
-  --     clk                    => clk_feedthru,
-  --     irqi                   => irqi(cpu_id),
-  --     irqo                   => irqo(cpu_id),
-  --     remote_irq_rdreq       => remote_irq_rdreq,
-  --     remote_irq_data_out    => remote_irq_data_out,
-  --     remote_irq_empty       => remote_irq_empty,
-  --     remote_irq_ack_wrreq   => remote_irq_ack_wrreq,
-  --     remote_irq_ack_data_in => remote_irq_ack_data_in,
-  --     remote_irq_ack_full    => remote_irq_ack_full);
+  cpu_irq2noc_1: cpu_irq2noc
+    generic map (
+      tech    => fabtech,
+      cpu_id  => cpu_id,
+      local_y => local_y,
+      local_x => local_x,
+      irq_y   => tile_y(io_tile_id),
+      irq_x   => tile_x(io_tile_id))
+    port map (
+      rst                    => rst,
+      clk                    => clk_feedthru,
+      irqi                   => irqi,
+      irqo                   => irqo,
+      irqo_fifo_overflow     => irqo_fifo_overflow,
+      remote_irq_rdreq       => remote_irq_rdreq,
+      remote_irq_data_out    => remote_irq_data_out,
+      remote_irq_empty       => remote_irq_empty,
+      remote_irq_ack_wrreq   => remote_irq_ack_wrreq,
+      remote_irq_ack_data_in => remote_irq_ack_data_in,
+      remote_irq_ack_full    => remote_irq_ack_full);
 
 
   frame_buffer: if CFG_SVGA_ENABLE /= 0 generate

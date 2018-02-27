@@ -47,9 +47,8 @@ entity tile_io is
     --TODO: REMOVE and use proxy for eth irq!
     eth0_pirq    : in  std_logic_vector(NAHBIRQ-1 downto 0);
     sgmii0_pirq    : in  std_logic_vector(NAHBIRQ-1 downto 0);
-    -- TODO: REMOVE!
-    irqi_o  : out irq_in_vector(0 to CFG_NCPU-1);
-    irqo_i  : in  irq_out_vector(0 to CFG_NCPU-1);
+    -- IRQ FIFO overflow LEDs
+    irqi_fifo_overflow : out std_logic;
     -- NOC
     noc1_input_port    : out noc_flit_type;
     noc1_data_void_in  : out std_ulogic;
@@ -100,8 +99,8 @@ signal apbo  : apb_slv_out_vector;
 signal noc_pirq  : std_logic_vector(NAHBIRQ-1 downto 0); -- interrupt result bus
                                                          -- from noc
 -- Interrupt controller
-signal irqi : irq_in_vector(0 to CFG_NCPU-1);
-signal irqo : irq_out_vector(0 to CFG_NCPU-1);
+signal irqi : irq_in_vector(0 to CFG_NCPU_TILE-1);
+signal irqo : irq_out_vector(0 to CFG_NCPU_TILE-1);
 
 signal ctrl_apbi  : apb_slv_in_type;
 signal ctrl_apbo  : apb_slv_out_vector := (others => apb_none);
@@ -190,17 +189,14 @@ begin
 ---  APB 2: Interrupt Controller -------------------------------------
 ----------------------------------------------------------------------
 
-  --TODO remove. Temporary hack to test ethernet irq
-  irqi <= (others => irq_in_none);
-
   irqctrl : if CFG_IRQ3_ENABLE /= 0 generate
     irqctrl0 : irqmp         -- interrupt controller
-    generic map (pindex => 2, paddr => 2, ncpu => CFG_NCPU)
-    port map (rst, clk, apbi, apbo(2), irqo_i, irqi_o);
+    generic map (pindex => 2, paddr => 2, ncpu => CFG_NCPU_TILE)
+    port map (rst, clk, apbi, apbo(2), irqo, irqi);
   end generate;
   irq3 : if CFG_IRQ3_ENABLE = 0 generate
-    x : for i in 0 to CFG_NCPU-1 generate
-      irqi(i).irl <= "0000";
+    x : for i in 0 to CFG_NCPU_TILE-1 generate
+      irqi(i).irl <= (others => '0');
     end generate;
     apbo(2) <= apb_none;
   end generate;
@@ -318,30 +314,31 @@ begin
       apb_rcv_empty    => apb_rcv_empty);
 
   --TODO: make the following broadcast the irq for all CPUs
-  no_irqi_cpu: for i in 1 to CFG_NCPU-1 generate
+  no_irqi_cpu: for i in 1 to CFG_NCPU_TILE-1 generate
     --REMOVE THE FOLLOWING!
     irqo(i) <= irq_out_none;
   end generate no_irqi_cpu;
 
-  -- misc_irq2noc_1: misc_irq2noc
-  --   generic map (
-  --     tech    => fabtech,
-  --     cpu_id  => 0,
-  --     local_y => local_y,
-  --     local_x => local_x,
-  --     cpu_y   => cpu_y,
-  --     cpu_x   => cpu_x)
-  --   port map (
-  --     rst              => rst,
-  --     clk              => clk,
-  --     irqi             => irqi(0),
-  --     irqo             => irqo(0),
-  --     irq_ack_rdreq    => irq_ack_rdreq,
-  --     irq_ack_data_out => irq_ack_data_out,
-  --     irq_ack_empty    => irq_ack_empty,
-  --     irq_wrreq        => irq_wrreq,
-  --     irq_data_in      => irq_data_in,
-  --     irq_full         => irq_full);
+  misc_irq2noc_1: misc_irq2noc
+     generic map (
+       tech    => fabtech,
+       ncpu    => CFG_NCPU_TILE,
+       local_y => local_y,
+       local_x => local_x,
+       cpu_y   => cpu_y,
+       cpu_x   => cpu_x)
+     port map (
+       rst                => rst,
+       clk                => clk,
+       irqi               => irqi,
+       irqo               => irqo,
+       irqi_fifo_overflow => irqi_fifo_overflow,
+       irq_ack_rdreq      => irq_ack_rdreq,
+       irq_ack_data_out   => irq_ack_data_out,
+       irq_ack_empty      => irq_ack_empty,
+       irq_wrreq          => irq_wrreq,
+       irq_data_in        => irq_data_in,
+       irq_full           => irq_full);
 
   misc_noc2interrupt_1: misc_noc2interrupt
     generic map (
@@ -360,7 +357,7 @@ begin
   mem_noc2ahbm_1: mem_noc2ahbm
     generic map (
       tech      => fabtech,
-      ncpu      => CFG_NCPU,
+      ncpu      => CFG_NCPU_TILE,
       hindex    => 0,
       local_y   => local_y,
       local_x   => local_x,

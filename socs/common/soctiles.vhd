@@ -80,6 +80,8 @@ package soctiles is
       uart_rtsn     : out   std_ulogic;
       ndsuact       : out   std_ulogic;
       dsuerr        : out   std_ulogic;
+      irqi_fifo_overflow : out std_logic;
+      irqo_fifo_overflow : out std_logic;
       ddr0_ahbsi    : out ahb_slv_in_type;
       ddr0_ahbso    : in  ahb_slv_out_type;
       ddr1_ahbsi    : out ahb_slv_in_type;
@@ -129,9 +131,7 @@ package soctiles is
       --pragma translate_on
       ndsuact            : out std_ulogic;
       dsuerr             : out std_ulogic;
-      -- TODO: REMOVE!
-      irqi_i  : in  irq_in_vector(0 to CFG_NCPU-1);
-      irqo_o  : out irq_out_vector(0 to CFG_NCPU-1);
+      irqo_fifo_overflow : out std_ulogic;
       noc1_input_port    : out noc_flit_type;
       noc1_data_void_in  : out std_ulogic;
       noc1_stop_in       : out std_ulogic;
@@ -263,9 +263,7 @@ package soctiles is
       --TODO: REMOVE and use proxy for eth irq!
       eth0_pirq      : in  std_logic_vector(NAHBIRQ-1 downto 0);
       sgmii0_pirq    : in  std_logic_vector(NAHBIRQ-1 downto 0);
-      -- TODO: REMOVE!
-      irqi_o  : out irq_in_vector(0 to CFG_NCPU-1);
-      irqo_i  : in  irq_out_vector(0 to CFG_NCPU-1);
+      irqi_fifo_overflow : out std_ulogic;
       noc1_input_port    : out noc_flit_type;
       noc1_data_void_in  : out std_ulogic;
       noc1_stop_in       : out  std_ulogic;

@@ -210,7 +210,7 @@ begin
   mem_noc2ahbm_1: mem_noc2ahbm
     generic map (
       tech      => fabtech,
-      ncpu      => CFG_NCPU,
+      ncpu      => CFG_NCPU_TILE,
       hindex    => 0,
       local_y   => local_y,
       local_x   => local_x,
@@ -246,7 +246,7 @@ begin
     mem_noc2ahbm_2: mem_noc2ahbm
     generic map (
       tech      => fabtech,
-      ncpu      => CFG_NCPU,
+      ncpu      => CFG_NCPU_TILE,
       hindex    => 1,
       local_y   => local_y,
       local_x   => local_x,

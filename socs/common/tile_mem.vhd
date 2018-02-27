@@ -211,8 +211,8 @@ begin
   -- JTAG
   -----------------------------------------------------------------------------
   ahbjtaggen0 :if CFG_AHB_JTAG = 1 generate
-    ahbjtag0 : ahbjtag generic map(tech => fabtech, hindex => CFG_NCPU)
-      port map(rst, clk, tck, tms, tdi, tdo, ahbmi, ahbmo(CFG_NCPU),
+    ahbjtag0 : ahbjtag generic map(tech => fabtech, hindex => CFG_NCPU_TILE)
+      port map(rst, clk, tck, tms, tdi, tdo, ahbmi, ahbmo(CFG_NCPU_TILE),
                open, open, open, open, open, open, open, gnd(0));
   end generate;
 
@@ -222,7 +222,7 @@ begin
   -----------------------------------------------------------------------------
 
   eth0_gen: if CFG_GRETH = 1 generate
-    ahbmo(CFG_NCPU+CFG_AHB_JTAG) <= eth0_ahbmo;
+    ahbmo(CFG_NCPU_TILE+CFG_AHB_JTAG) <= eth0_ahbmo;
     eth0_ahbmi <= ahbmi;
   end generate eth0_gen;
 
@@ -368,7 +368,7 @@ begin
   apb2noc_1: apb2noc
     generic map (
       tech       => fabtech,
-      ncpu       => CFG_NCPU,
+      ncpu       => CFG_NCPU_TILE,
       local_y    => local_y,
       local_x    => local_x,
       apb_slv_en => remote_apb_slv_en,
@@ -392,7 +392,7 @@ begin
   cpu_ahbs2noc_1: cpu_ahbs2noc
     generic map (
       tech    => fabtech,
-      ncpu    => CFG_NCPU,
+      ncpu    => CFG_NCPU_TILE,
       nslaves => proxy_nslaves,
       hindex  => ahbslv_proxy_hindex,
       local_y => local_y,
@@ -428,7 +428,7 @@ begin
   cpu_ahbs2noc_2: cpu_ahbs2noc
     generic map (
       tech    => fabtech,
-      ncpu    => CFG_NCPU,
+      ncpu    => CFG_NCPU_TILE,
       nslaves => bridge_nslaves,
       hindex  => ahbslv_bridge_hindex,
       local_y => local_y,
@@ -467,7 +467,7 @@ begin
   mem_noc2ahbm_1: mem_noc2ahbm
     generic map (
       tech      => fabtech,
-      ncpu      => CFG_NCPU,
+      ncpu      => CFG_NCPU_TILE,
       hindex    => 0,
       local_y   => local_y,
       local_x   => local_x,
@@ -503,8 +503,8 @@ begin
     mem_noc2ahbm_2: mem_noc2ahbm
     generic map (
       tech      => fabtech,
-      ncpu      => CFG_NCPU,
-      hindex    => CFG_NCPU,
+      ncpu      => CFG_NCPU_TILE,
+      hindex    => CFG_NCPU_TILE,
       local_y   => local_y,
       local_x   => local_x,
       cacheline => CFG_DLINE,
