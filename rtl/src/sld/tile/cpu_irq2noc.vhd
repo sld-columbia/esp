@@ -71,7 +71,7 @@ end cpu_irq2noc;
 
 architecture rtl of cpu_irq2noc is
 
-  constant IRQ_FIFO_DEPTH : integer := 2;
+  constant IRQ_FIFO_DEPTH : integer := 8;
 
   type irq_snd_fsm is (idle, irq_snd_header, irq_snd_payload_1);
   type irq_rcv_fsm is (idle, irq_rcv_req_1, irq_rcv_req_2);
@@ -99,6 +99,38 @@ architecture rtl of cpu_irq2noc is
 
   signal sample_irq_1 : std_ulogic;
   signal sample_irq_2 : std_ulogic;
+
+  -- attribute mark_debug : string;
+  -- attribute keep       : string;
+
+  -- attribute mark_debug of irqi                   : signal is "true";
+  -- attribute keep of irqi                         : signal is "true";
+  -- attribute mark_debug of irqo                   : signal is "true";
+  -- attribute keep of irqo                         : signal is "true";
+  -- attribute mark_debug of remote_irq_rdreq       : signal is "true";
+  -- attribute keep of remote_irq_rdreq             : signal is "true";
+  -- attribute mark_debug of remote_irq_data_out    : signal is "true";
+  -- attribute keep of remote_irq_data_out          : signal is "true";
+  -- attribute mark_debug of remote_irq_empty       : signal is "true";
+  -- attribute keep of remote_irq_empty             : signal is "true";
+  -- attribute mark_debug of remote_irq_ack_wrreq   : signal is "true";
+  -- attribute keep of remote_irq_ack_wrreq         : signal is "true";
+  -- attribute mark_debug of remote_irq_ack_data_in : signal is "true";
+  -- attribute keep of remote_irq_ack_data_in       : signal is "true";
+  -- attribute mark_debug of remote_irq_ack_full    : signal is "true";
+  -- attribute keep of remote_irq_ack_full          : signal is "true";
+  -- attribute mark_debug of irqo_changed           : signal is "true";
+  -- attribute keep of irqo_changed                 : signal is "true";
+  -- attribute mark_debug of fifo_full              : signal is "true";
+  -- attribute keep of fifo_full                    : signal is "true";
+  -- attribute mark_debug of fifo_empty             : signal is "true";
+  -- attribute keep of fifo_empty                   : signal is "true";
+  -- attribute mark_debug of overflow               : signal is "true";
+  -- attribute keep of overflow                     : signal is "true";
+  -- attribute mark_debug of irq_snd_state          : signal is "true";
+  -- attribute keep of irq_snd_state                : signal is "true";
+  -- attribute mark_debug of irq_rcv_state          : signal is "true";
+  -- attribute keep of irq_rcv_state                : signal is "true";
 
 begin  -- rtl
 
@@ -310,12 +342,7 @@ begin  -- rtl
           remote_irq_rdreq    <= '1';
           irqi_noc.pwdnewaddr <= remote_irq_data_out(IRQ_PWDNEWADDR_MSB downto IRQ_PWDNEWADDR_LSB);
           sample_irq_2        <= '1';
-          if remote_irq_empty = '0' then
-            remote_irq_rdreq <= '1';
-            irq_rcv_next     <= irq_rcv_req_1;
-          else
-            irq_rcv_next <= idle;
-          end if;
+          irq_rcv_next        <= idle;
         end if;
 
       when others => irq_rcv_next <= idle;

@@ -85,6 +85,10 @@ architecture rtl of misc_irq2noc is
   signal irqo_noc : l3_irq_out_type;
   signal irqo_reg : irq_out_vector(ncpu-1 downto 0);
 
+  signal intack_delay_1   : std_logic_vector(ncpu-1 downto 0);
+  signal intack_delay_2   : std_logic_vector(ncpu-1 downto 0);
+  signal same_irl_pending : std_logic_vector(ncpu-1 downto 0);
+
   signal header    : noc_flit_vector(ncpu-1 downto 0);
   signal payload_1 : noc_flit_vector(ncpu-1 downto 0);
   signal payload_2 : noc_flit_vector(ncpu-1 downto 0);
@@ -107,6 +111,45 @@ architecture rtl of misc_irq2noc is
   signal sample_forwarding : std_ulogic;
 
   signal sample_irq : std_logic_vector(ncpu-1 downto 0);
+
+  -- attribute mark_debug : string;
+  -- attribute keep       : string;
+
+  -- attribute mark_debug of irqi             : signal is "true";
+  -- attribute keep of irqi                   : signal is "true";
+  -- attribute mark_debug of irqo             : signal is "true";
+  -- attribute keep of irqo                   : signal is "true";
+  -- attribute mark_debug of irq_ack_rdreq    : signal is "true";
+  -- attribute keep of irq_ack_rdreq          : signal is "true";
+  -- attribute mark_debug of irq_ack_data_out : signal is "true";
+  -- attribute keep of irq_ack_data_out       : signal is "true";
+  -- attribute mark_debug of irq_ack_empty    : signal is "true";
+  -- attribute keep of irq_ack_empty          : signal is "true";
+  -- attribute mark_debug of irq_wrreq        : signal is "true";
+  -- attribute keep of irq_wrreq              : signal is "true";
+  -- attribute mark_debug of irq_data_in      : signal is "true";
+  -- attribute keep of irq_data_in            : signal is "true";
+  -- attribute mark_debug of irq_full         : signal is "true";
+  -- attribute keep of irq_full               : signal is "true";
+  -- attribute mark_debug of irqi_changed     : signal is "true";
+  -- attribute keep of irqi_changed           : signal is "true";
+  -- attribute mark_debug of fifo_full        : signal is "true";
+  -- attribute keep of fifo_full              : signal is "true";
+  -- attribute mark_debug of fifo_empty       : signal is "true";
+  -- attribute keep of fifo_empty             : signal is "true";
+  -- attribute mark_debug of overflow         : signal is "true";
+  -- attribute keep of overflow               : signal is "true";
+  -- attribute mark_debug of irq_snd_state    : signal is "true";
+  -- attribute keep of irq_snd_state          : signal is "true";
+  -- attribute mark_debug of irq_rcv_state    : signal is "true";
+  -- attribute keep of irq_rcv_state          : signal is "true";
+  -- attribute mark_debug of intack_delay_1   : signal is "true";
+  -- attribute keep of intack_delay_1         : signal is "true";
+  -- attribute mark_debug of intack_delay_2   : signal is "true";
+  -- attribute keep of intack_delay_2         : signal is "true";
+  -- attribute mark_debug of same_irl_pending : signal is "true";
+  -- attribute keep of same_irl_pending       : signal is "true";
+
 
   component gp_arbiter is
     generic (
@@ -184,15 +227,35 @@ begin  -- rtl
     -- Sample interrupt output from IRQMP and determine if it changed
     irqi_sample : process (clk)
     begin  -- process
-      if clk'event and clk = '1' then  -- rising clock edge
+      if clk'event and clk = '1' then   -- rising clock edge
         irqi_reg(cpuid) <= irqi(cpuid);
       end if;
     end process irqi_sample;
 
+    -- Check if fast IRQ arrived after clear from CPU, but before intack
+    -- reached the interrupt controller
+    same_irl_pending_detect : process (clk, rst) is
+    begin  -- process same_irl_pending_detect
+      if rst = '0' then                   -- asynchronous reset (active low)
+        same_irl_pending(cpuid) <= '0';
+        intack_delay_1(cpuid)   <= '0';
+        intack_delay_2(cpuid)   <= '0';
+      elsif clk'event and clk = '1' then  -- rising clock edge
+        intack_delay_1(cpuid) <= irqo_reg(cpuid).intack;
+        intack_delay_2(cpuid) <= intack_delay_1(cpuid);
+        if intack_delay_2(cpuid) = '1' and
+          irqi(cpuid).irl /= "0000" then
+          same_irl_pending(cpuid) <= '1';
+        else
+          same_irl_pending(cpuid) <= '0';
+        end if;
+      end if;
+    end process same_irl_pending_detect;
+
     irqi_diff : process (irqi(cpuid), irqi_reg(cpuid))
     begin  -- process irqi_diff
       irqi_changed(cpuid) <= '0';
-      if irqi(cpuid) /= irqi_reg(cpuid) then
+      if irqi(cpuid) /= irqi_reg(cpuid) or same_irl_pending(cpuid) = '1' then
         irqi_changed(cpuid) <= '1';
       else
         irqi_changed(cpuid) <= '0';
@@ -261,7 +324,7 @@ begin  -- rtl
   end generate ncpu_irq_proxy_gen;
 
 
-  arbitration_gen: if ncpu > 1 generate
+  arbitration_gen : if ncpu > 1 generate
     -- Sample CPUID of IRQ being currenlty forwarded
     sample_current_cpuid : process (clk, rst) is
     begin  -- process update_priority
@@ -339,12 +402,7 @@ begin  -- rtl
           irqi_send_payload_2(cpuid) <= '1';
           irq_wrreq                  <= '1';
           irq_data_in                <= fifo_payload_2(cpuid);
-          if fifo_empty /= ones then
-            sample_forwarding <= '1';
-            irq_snd_next      <= irq_snd_header;
-          else
-            irq_snd_next <= idle;
-          end if;
+          irq_snd_next               <= idle;
         end if;
 
       when others => irq_snd_next <= idle;
