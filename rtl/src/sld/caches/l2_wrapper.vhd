@@ -1044,7 +1044,8 @@ begin  -- architecture rtl of l2_wrapper
 -------------------------------------------------------------------------------
   fsm_ahbs : process (ahbsi, flush, ahbs_reg,
                       cpu_req_ready, flush_ready, flush_due,
-                      rd_rsp_valid, rd_rsp_data_line, load_alloc_reg)
+                      rd_rsp_valid, rd_rsp_data_line, load_alloc_reg,
+                      inv_fifo_full)
 
     variable reg           : ahbs_reg_type;
     variable alloc_reg     : load_alloc_reg_type;
@@ -1450,9 +1451,10 @@ begin  -- architecture rtl of l2_wrapper
     case ahbm_reg.state is
 
       -- IDLE
-      -- TODO: loosing a clock cycle if I already have the grant
       when idle =>
+
         if inv_fifo_empty = '0' then
+
           ahbmo.hbusreq <= '1';
           ahbmo.hlock   <= '1';
           ahbmo.htrans  <= HTRANS_NONSEQ;
@@ -1460,17 +1462,13 @@ begin  -- architecture rtl of l2_wrapper
           ahbmo.haddr(OFFSET_BITS - 1 downto 0) <= (others => '0');
           
           if granted = '1' and ahbmi.hready = '1' then
-            inv_fifo_rdreq <= '1';
-            if inv_fifo_almost_empty = '0' then
-              reg.state := store_req;
-            else
-              reg.state := store_rsp;
-            end if;
+            reg.state := store_req;
           else
             reg.state := grant_wait;
           end if;
-        end if;
 
+        end if;
+       
       -- GRANT WAIT
       when grant_wait =>
         ahbmo.hbusreq <= '1';
@@ -1502,7 +1500,7 @@ begin  -- architecture rtl of l2_wrapper
 
       -- STORE RESPONSE
       when store_rsp =>
-        reg.state := idle;
+        reg.state := idle;            
 
     end case;
 
