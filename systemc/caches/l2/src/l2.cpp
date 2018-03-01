@@ -84,9 +84,9 @@ void l2::ctrl()
 		CACHE_REPORT_TIME(sc_time_stamp(), "ongoing: ");
 		if (reqs_cnt != 0)
 		    is_ongoing_flush = true;
-	    } else if ((l2_cpu_req.nb_can_get() && !evict_stall && 
-			(reqs_cnt != 0 || ongoing_atomic)) || 
-		       set_conflict) { // assuming HPROT cacheable
+	    } else if ((l2_cpu_req.nb_can_get() || set_conflict) && 
+		       !evict_stall && 
+		       (reqs_cnt != 0 || ongoing_atomic)) { // assuming HPROT cacheable
 		CACHE_REPORT_TIME(sc_time_stamp(), "req: ");
 		is_req_to_get = true;
 	    } else {
