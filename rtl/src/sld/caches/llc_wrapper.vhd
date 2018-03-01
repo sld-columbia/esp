@@ -918,6 +918,11 @@ begin  -- architecture rtl
     reg         := fwd_out_reg;
     reg.asserts := (others => '0');
 
+    dest_init := 0;
+    dest_x := (others => '0');
+    dest_y := (others => '0');
+    req_id := (others => '0');
+
     -- initialize signals toward cache (receive from cache)
     llc_fwd_out_ready <= '0';
 
@@ -991,6 +996,10 @@ begin  -- architecture rtl
     reg         := rsp_out_reg;
     reg.asserts := (others => '0');
 
+    dest_init := 0;
+    dest_x := (others => '0');
+    dest_y := (others => '0');
+    
     -- initialize signals toward cache (receive from cache)
     llc_rsp_out_ready <= '0';
 
