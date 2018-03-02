@@ -537,7 +537,6 @@ check_all_rtl_srcs-distclean:
 
 ### Xilinx Simulation libs targets ###
 
-ifeq ("$(TECHLIB)", "virtex7")
 modelsim/xilinx_lib: $(XILINX_VIVADO)
 	$(QUIET_MKDIR)mkdir -p $@
 	@echo "compile_simlib -directory xilinx_lib -simulator modelsim -no_ip_compile" > $@/simlib.tcl; \
@@ -567,19 +566,12 @@ xilinx_lib-distclean: xilinx_lib-clean
 	$(QUIET_CLEAN)$(RM) \
 		modelsim/xilinx_lib \
 
-else
-modelsim/xilinx_lib:
-
-xilinx_lib-clean:
-
-xilinx_lib-distclean:
-
-endif
-
 .PHONY: xilinx_lib-clean xilinx_lib-distclean
+
 
 ### Modelsim targets ###
 
+ifeq ("$(TECHLIB)", "virtex7")
 modelsim/mig:
 	$(QUIET_MKDIR)mkdir -p $@
 	@if test -r $(ESP_ROOT)/constraints/$(BOARD)/mig.xci; then \
@@ -619,6 +611,15 @@ modelsim/sgmii:
 		echo $(SPACES)"WARNING: no SGMII IP was found"; \
 	fi;
 else
+
+modelsim/sgmii:
+
+endif
+
+else
+
+modelsim/mig:
+
 modelsim/sgmii:
 
 endif
