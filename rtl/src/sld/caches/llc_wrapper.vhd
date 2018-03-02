@@ -139,6 +139,8 @@ architecture rtl of llc_wrapper is
   signal led_wrapper_asserts : std_ulogic;
 
   constant ncpu_bits : integer := log2(ncpu);
+  subtype sharers_t is std_logic_vector(ncpu - 1 downto 0);
+  subtype owner_t is std_logic_vector(get_owner_bits(ncpu_bits) - 1 downto 0);
   
   signal tag_hit_out : std_ulogic;
   signal hit_way_out : std_logic_vector(ncpu_bits + 2 downto 0);
@@ -220,70 +222,70 @@ architecture rtl of llc_wrapper is
   signal state_buf_out_29 : std_logic_vector(2 downto 0);
   signal state_buf_out_30 : std_logic_vector(2 downto 0);
   signal state_buf_out_31 : std_logic_vector(2 downto 0);
-  signal sharers_buf_out_0 : std_logic_vector(ncpu - 1 downto 0);
-  signal sharers_buf_out_1 : std_logic_vector(ncpu - 1 downto 0);
-  signal sharers_buf_out_2 : std_logic_vector(ncpu - 1 downto 0);
-  signal sharers_buf_out_3 : std_logic_vector(ncpu - 1 downto 0);
-  signal sharers_buf_out_4 : std_logic_vector(ncpu - 1 downto 0);
-  signal sharers_buf_out_5 : std_logic_vector(ncpu - 1 downto 0);
-  signal sharers_buf_out_6 : std_logic_vector(ncpu - 1 downto 0);
-  signal sharers_buf_out_7 : std_logic_vector(ncpu - 1 downto 0);
-  signal sharers_buf_out_8 : std_logic_vector(ncpu - 1 downto 0);
-  signal sharers_buf_out_9 : std_logic_vector(ncpu - 1 downto 0);
-  signal sharers_buf_out_10 : std_logic_vector(ncpu - 1 downto 0);
-  signal sharers_buf_out_11 : std_logic_vector(ncpu - 1 downto 0);
-  signal sharers_buf_out_12 : std_logic_vector(ncpu - 1 downto 0);
-  signal sharers_buf_out_13 : std_logic_vector(ncpu - 1 downto 0);
-  signal sharers_buf_out_14 : std_logic_vector(ncpu - 1 downto 0);
-  signal sharers_buf_out_15 : std_logic_vector(ncpu - 1 downto 0);
-  signal sharers_buf_out_16 : std_logic_vector(ncpu - 1 downto 0);
-  signal sharers_buf_out_17 : std_logic_vector(ncpu - 1 downto 0);
-  signal sharers_buf_out_18 : std_logic_vector(ncpu - 1 downto 0);
-  signal sharers_buf_out_19 : std_logic_vector(ncpu - 1 downto 0);
-  signal sharers_buf_out_20 : std_logic_vector(ncpu - 1 downto 0);
-  signal sharers_buf_out_21 : std_logic_vector(ncpu - 1 downto 0);
-  signal sharers_buf_out_22 : std_logic_vector(ncpu - 1 downto 0);
-  signal sharers_buf_out_23 : std_logic_vector(ncpu - 1 downto 0);
-  signal sharers_buf_out_24 : std_logic_vector(ncpu - 1 downto 0);
-  signal sharers_buf_out_25 : std_logic_vector(ncpu - 1 downto 0);
-  signal sharers_buf_out_26 : std_logic_vector(ncpu - 1 downto 0);
-  signal sharers_buf_out_27 : std_logic_vector(ncpu - 1 downto 0);
-  signal sharers_buf_out_28 : std_logic_vector(ncpu - 1 downto 0);
-  signal sharers_buf_out_29 : std_logic_vector(ncpu - 1 downto 0);
-  signal sharers_buf_out_30 : std_logic_vector(ncpu - 1 downto 0);
-  signal sharers_buf_out_31 : std_logic_vector(ncpu - 1 downto 0);
-  signal owner_buf_out_0 : std_logic_vector(ncpu_bits - 1 downto 0);
-  signal owner_buf_out_1 : std_logic_vector(ncpu_bits - 1 downto 0);
-  signal owner_buf_out_2 : std_logic_vector(ncpu_bits - 1 downto 0);
-  signal owner_buf_out_3 : std_logic_vector(ncpu_bits - 1 downto 0);
-  signal owner_buf_out_4 : std_logic_vector(ncpu_bits - 1 downto 0);
-  signal owner_buf_out_5 : std_logic_vector(ncpu_bits - 1 downto 0);
-  signal owner_buf_out_6 : std_logic_vector(ncpu_bits - 1 downto 0);
-  signal owner_buf_out_7 : std_logic_vector(ncpu_bits - 1 downto 0);
-  signal owner_buf_out_8 : std_logic_vector(ncpu_bits - 1 downto 0);
-  signal owner_buf_out_9 : std_logic_vector(ncpu_bits - 1 downto 0);
-  signal owner_buf_out_10 : std_logic_vector(ncpu_bits - 1 downto 0);
-  signal owner_buf_out_11 : std_logic_vector(ncpu_bits - 1 downto 0);
-  signal owner_buf_out_12 : std_logic_vector(ncpu_bits - 1 downto 0);
-  signal owner_buf_out_13 : std_logic_vector(ncpu_bits - 1 downto 0);
-  signal owner_buf_out_14 : std_logic_vector(ncpu_bits - 1 downto 0);
-  signal owner_buf_out_15 : std_logic_vector(ncpu_bits - 1 downto 0);
-  signal owner_buf_out_16 : std_logic_vector(ncpu_bits - 1 downto 0);
-  signal owner_buf_out_17 : std_logic_vector(ncpu_bits - 1 downto 0);
-  signal owner_buf_out_18 : std_logic_vector(ncpu_bits - 1 downto 0);
-  signal owner_buf_out_19 : std_logic_vector(ncpu_bits - 1 downto 0);
-  signal owner_buf_out_20 : std_logic_vector(ncpu_bits - 1 downto 0);
-  signal owner_buf_out_21 : std_logic_vector(ncpu_bits - 1 downto 0);
-  signal owner_buf_out_22 : std_logic_vector(ncpu_bits - 1 downto 0);
-  signal owner_buf_out_23 : std_logic_vector(ncpu_bits - 1 downto 0);
-  signal owner_buf_out_24 : std_logic_vector(ncpu_bits - 1 downto 0);
-  signal owner_buf_out_25 : std_logic_vector(ncpu_bits - 1 downto 0);
-  signal owner_buf_out_26 : std_logic_vector(ncpu_bits - 1 downto 0);
-  signal owner_buf_out_27 : std_logic_vector(ncpu_bits - 1 downto 0);
-  signal owner_buf_out_28 : std_logic_vector(ncpu_bits - 1 downto 0);
-  signal owner_buf_out_29 : std_logic_vector(ncpu_bits - 1 downto 0);
-  signal owner_buf_out_30 : std_logic_vector(ncpu_bits - 1 downto 0);
-  signal owner_buf_out_31 : std_logic_vector(ncpu_bits - 1 downto 0);
+  signal sharers_buf_out_0 : sharers_t;
+  signal sharers_buf_out_1 : sharers_t;
+  signal sharers_buf_out_2 : sharers_t;
+  signal sharers_buf_out_3 : sharers_t;
+  signal sharers_buf_out_4 : sharers_t;
+  signal sharers_buf_out_5 : sharers_t;
+  signal sharers_buf_out_6 : sharers_t;
+  signal sharers_buf_out_7 : sharers_t;
+  signal sharers_buf_out_8 : sharers_t;
+  signal sharers_buf_out_9 : sharers_t;
+  signal sharers_buf_out_10 : sharers_t;
+  signal sharers_buf_out_11 : sharers_t;
+  signal sharers_buf_out_12 : sharers_t;
+  signal sharers_buf_out_13 : sharers_t;
+  signal sharers_buf_out_14 : sharers_t;
+  signal sharers_buf_out_15 : sharers_t;
+  signal sharers_buf_out_16 : sharers_t;
+  signal sharers_buf_out_17 : sharers_t;
+  signal sharers_buf_out_18 : sharers_t;
+  signal sharers_buf_out_19 : sharers_t;
+  signal sharers_buf_out_20 : sharers_t;
+  signal sharers_buf_out_21 : sharers_t;
+  signal sharers_buf_out_22 : sharers_t;
+  signal sharers_buf_out_23 : sharers_t;
+  signal sharers_buf_out_24 : sharers_t;
+  signal sharers_buf_out_25 : sharers_t;
+  signal sharers_buf_out_26 : sharers_t;
+  signal sharers_buf_out_27 : sharers_t;
+  signal sharers_buf_out_28 : sharers_t;
+  signal sharers_buf_out_29 : sharers_t;
+  signal sharers_buf_out_30 : sharers_t;
+  signal sharers_buf_out_31 : sharers_t;
+  signal owner_buf_out_0 : owner_t;
+  signal owner_buf_out_1 : owner_t;
+  signal owner_buf_out_2 : owner_t;
+  signal owner_buf_out_3 : owner_t;
+  signal owner_buf_out_4 : owner_t;
+  signal owner_buf_out_5 : owner_t;
+  signal owner_buf_out_6 : owner_t;
+  signal owner_buf_out_7 : owner_t;
+  signal owner_buf_out_8 : owner_t;
+  signal owner_buf_out_9 : owner_t;
+  signal owner_buf_out_10 : owner_t;
+  signal owner_buf_out_11 : owner_t;
+  signal owner_buf_out_12 : owner_t;
+  signal owner_buf_out_13 : owner_t;
+  signal owner_buf_out_14 : owner_t;
+  signal owner_buf_out_15 : owner_t;
+  signal owner_buf_out_16 : owner_t;
+  signal owner_buf_out_17 : owner_t;
+  signal owner_buf_out_18 : owner_t;
+  signal owner_buf_out_19 : owner_t;
+  signal owner_buf_out_20 : owner_t;
+  signal owner_buf_out_21 : owner_t;
+  signal owner_buf_out_22 : owner_t;
+  signal owner_buf_out_23 : owner_t;
+  signal owner_buf_out_24 : owner_t;
+  signal owner_buf_out_25 : owner_t;
+  signal owner_buf_out_26 : owner_t;
+  signal owner_buf_out_27 : owner_t;
+  signal owner_buf_out_28 : owner_t;
+  signal owner_buf_out_29 : owner_t;
+  signal owner_buf_out_30 : owner_t;
+  signal owner_buf_out_31 : owner_t;
   
 -----------------------------------------------------------------------------
 -- AHB master FSM signals
@@ -1077,6 +1079,124 @@ begin  -- architecture rtl
 -- Instantiations
 -------------------------------------------------------------------------------
 
+  llc_cpus_1 : if ncpu = 1 generate
+  
+  -- instantiation of llc cache on cpu tile
+  llc_cache_1cpus : llc_basic_1
+    port map (
+      clk => clk,
+      rst => rst,
+
+      llc_rst_tb_valid      => '0',
+      llc_rst_tb_data       => '0',
+      llc_rst_tb_done_ready => '0',
+      llc_rst_tb_ready      => open,
+      llc_rst_tb_done_valid => open,
+      llc_rst_tb_done_data  => open,
+
+      -- NoC to cache
+      llc_req_in_ready        => llc_req_in_ready,
+      llc_req_in_valid        => llc_req_in_valid,
+      llc_req_in_data_coh_msg => llc_req_in_data_coh_msg,
+      llc_req_in_data_hprot   => llc_req_in_data_hprot,
+      llc_req_in_data_addr    => llc_req_in_data_addr,
+      llc_req_in_data_line    => llc_req_in_data_line,
+      llc_req_in_data_req_id  => llc_req_in_data_req_id,
+
+      llc_rsp_in_ready       => llc_rsp_in_ready,
+      llc_rsp_in_valid       => llc_rsp_in_valid,
+      llc_rsp_in_data_addr   => llc_rsp_in_data_addr,
+      llc_rsp_in_data_line   => llc_rsp_in_data_line,
+      llc_rsp_in_data_req_id => llc_rsp_in_data_req_id,
+
+      -- cache to NoC
+      llc_rsp_out_ready           => llc_rsp_out_ready,
+      llc_rsp_out_valid           => llc_rsp_out_valid,
+      llc_rsp_out_data_coh_msg    => llc_rsp_out_data_coh_msg,
+      llc_rsp_out_data_addr       => llc_rsp_out_data_addr,
+      llc_rsp_out_data_line       => llc_rsp_out_data_line,
+      llc_rsp_out_data_invack_cnt => llc_rsp_out_data_invack_cnt,
+      llc_rsp_out_data_req_id     => llc_rsp_out_data_req_id,
+      llc_rsp_out_data_dest_id    => llc_rsp_out_data_dest_id,
+
+      llc_fwd_out_ready        => llc_fwd_out_ready,
+      llc_fwd_out_valid        => llc_fwd_out_valid,
+      llc_fwd_out_data_coh_msg => llc_fwd_out_data_coh_msg,
+      llc_fwd_out_data_addr    => llc_fwd_out_data_addr,
+      llc_fwd_out_data_req_id  => llc_fwd_out_data_req_id,
+      llc_fwd_out_data_dest_id => llc_fwd_out_data_dest_id,
+
+      -- AHB to cache
+      llc_mem_rsp_ready     => llc_mem_rsp_ready,
+      llc_mem_rsp_valid     => llc_mem_rsp_valid,
+      llc_mem_rsp_data_line => llc_mem_rsp_data_line,
+
+      -- cache to AHB
+      llc_mem_req_ready       => llc_mem_req_ready,
+      llc_mem_req_valid       => llc_mem_req_valid,
+      llc_mem_req_data_hwrite => llc_mem_req_data_hwrite,
+      llc_mem_req_data_hsize  => llc_mem_req_data_hsize,
+      llc_mem_req_data_hprot  => llc_mem_req_data_hprot,
+      llc_mem_req_data_addr   => llc_mem_req_data_addr,
+      llc_mem_req_data_line   => llc_mem_req_data_line,
+
+      -- debug
+      asserts    => asserts,
+      bookmark   => bookmark,
+      custom_dbg => custom_dbg,
+
+      tag_hit_out => tag_hit_out,
+      hit_way_out => hit_way_out,
+      empty_way_found_out => empty_way_found_out,
+      empty_way_out => empty_way_out,
+      evict_out => evict_out,
+      way_out => way_out,
+      llc_addr_out => llc_addr_out,
+      req_stall_out => req_stall_out,
+      req_in_stalled_valid_out => req_in_stalled_valid_out,
+      req_in_stalled_out_coh_msg => req_in_stalled_out_coh_msg,
+      req_in_stalled_out_hprot => req_in_stalled_out_hprot,
+      req_in_stalled_out_addr => req_in_stalled_out_addr,
+      req_in_stalled_out_line => req_in_stalled_out_line,
+      req_in_stalled_out_req_id => req_in_stalled_out_req_id,
+      is_rsp_to_get_out => is_rsp_to_get_out,
+      is_req_to_get_out => is_req_to_get_out,
+      tag_buf_out_0 => tag_buf_out_0,
+      tag_buf_out_1 => tag_buf_out_1,
+      tag_buf_out_2 => tag_buf_out_2,
+      tag_buf_out_3 => tag_buf_out_3,
+      tag_buf_out_4 => tag_buf_out_4,
+      tag_buf_out_5 => tag_buf_out_5,
+      tag_buf_out_6 => tag_buf_out_6,
+      tag_buf_out_7 => tag_buf_out_7,
+      state_buf_out_0 => state_buf_out_0,
+      state_buf_out_1 => state_buf_out_1,
+      state_buf_out_2 => state_buf_out_2,
+      state_buf_out_3 => state_buf_out_3,
+      state_buf_out_4 => state_buf_out_4,
+      state_buf_out_5 => state_buf_out_5,
+      state_buf_out_6 => state_buf_out_6,
+      state_buf_out_7 => state_buf_out_7,
+      sharers_buf_out_0 => sharers_buf_out_0,
+      sharers_buf_out_1 => sharers_buf_out_1,
+      sharers_buf_out_2 => sharers_buf_out_2,
+      sharers_buf_out_3 => sharers_buf_out_3,
+      sharers_buf_out_4 => sharers_buf_out_4,
+      sharers_buf_out_5 => sharers_buf_out_5,
+      sharers_buf_out_6 => sharers_buf_out_6,
+      sharers_buf_out_7 => sharers_buf_out_7,
+      owner_buf_out_0 => owner_buf_out_0,
+      owner_buf_out_1 => owner_buf_out_1,
+      owner_buf_out_2 => owner_buf_out_2,
+      owner_buf_out_3 => owner_buf_out_3,
+      owner_buf_out_4 => owner_buf_out_4,
+      owner_buf_out_5 => owner_buf_out_5,
+      owner_buf_out_6 => owner_buf_out_6,
+      owner_buf_out_7 => owner_buf_out_7
+      );
+
+  end generate llc_cpus_1;
+  
   llc_cpus_2 : if ncpu = 2 generate
   
   -- instantiation of llc cache on cpu tile

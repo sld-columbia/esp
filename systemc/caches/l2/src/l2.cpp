@@ -168,7 +168,7 @@ void l2::ctrl()
 		    // update invack_cnt
 		    reqs[reqs_hit_i].invack_cnt += rsp_in.invack_cnt;
 
-		    if (reqs[reqs_hit_i].invack_cnt == N_CPU) {
+		    if (reqs[reqs_hit_i].invack_cnt == MAX_N_CPU) {
 
 			put_reqs(addr_br.set, reqs[reqs_hit_i].way, addr_br.tag,
 				 rsp_in.line, reqs[reqs_hit_i].hprot, MODIFIED, reqs_hit_i);
@@ -199,7 +199,7 @@ void l2::ctrl()
 		    // update invack_cnt
 		    reqs[reqs_hit_i].invack_cnt += rsp_in.invack_cnt;
 
-		    if (reqs[reqs_hit_i].invack_cnt == N_CPU) {
+		    if (reqs[reqs_hit_i].invack_cnt == MAX_N_CPU) {
 			ongoing_atomic = true;
 			// update unstable state
 			reqs[reqs_hit_i].state = XMW;
@@ -223,7 +223,7 @@ void l2::ctrl()
 
 		reqs[reqs_hit_i].invack_cnt--;
 
-		if (reqs[reqs_hit_i].invack_cnt == N_CPU) {
+		if (reqs[reqs_hit_i].invack_cnt == MAX_N_CPU) {
 
 		    switch (reqs[reqs_hit_i].state) {
 		
@@ -1138,7 +1138,7 @@ void l2::fill_reqs(cpu_msg_t cpu_msg, addr_breakdown_t addr_br, tag_t tag_estall
     reqs[reqs_i].b_off       = addr_br.b_off;
     reqs[reqs_i].state	     = state;
     reqs[reqs_i].hprot	     = hprot;
-    reqs[reqs_i].invack_cnt  = N_CPU;
+    reqs[reqs_i].invack_cnt  = MAX_N_CPU;
     reqs[reqs_i].word	     = word;
     reqs[reqs_i].line	     = line;
 

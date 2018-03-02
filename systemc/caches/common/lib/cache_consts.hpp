@@ -11,7 +11,8 @@
 
 // System configuration
 #define N_CPU_BITS ilog2(N_CPU)
-#define N_CPU_MAX_BITS 2
+#define MAX_N_CPU 4
+#define MAX_N_CPU_BITS ilog2(MAX_N_CPU)
 
 /*
  * Caches
@@ -65,9 +66,8 @@
 #define HSIZE_WIDTH		3
 #define HPROT_WIDTH		4
 // log2(N_CPU) + 1
-#define INVACK_CNT_WIDTH	2
-#define INVACK_CNT_CALC_WIDTH   3
-#define MAX_INVACK_CNT          7
+#define INVACK_CNT_WIDTH	MAX_N_CPU_BITS
+#define INVACK_CNT_CALC_WIDTH   INVACK_CNT_WIDTH + 1
 
 // Ongoing transaction buffers
 #define N_REQS		4	// affects REQS_BITS

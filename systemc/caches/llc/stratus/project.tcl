@@ -24,7 +24,7 @@ define_system_module tb  ../tb/llc_tb.cpp ../tb/system.cpp ../tb/sc_main.cpp
 # HLS and Simulation configurations
 ######################################################################
 
-foreach ncpu [list 2 4] {
+foreach ncpu [list 1 2 4] {
 
     set iocfg "IOCFG\_NCPU\_$ncpu"
 

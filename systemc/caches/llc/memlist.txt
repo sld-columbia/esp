@@ -1,3 +1,9 @@
+llc_tags_1cpus 2048 20 1w:0r 0w:8r
+llc_states_1cpus 2048 3 1w:0r 0w:8r
+llc_hprots_1cpus 2048 4 1w:0r 0w:8r
+llc_lines_1cpus 2048 128 1w:0r 0w:8r
+llc_sharers_1cpus 2048 2 1w:0r 0w:8r
+llc_owners_1cpus 2048 1 1w:0r 0w:8r
 llc_tags_2cpus 4096 20 1w:0r 0w:8r
 llc_states_2cpus 4096 3 1w:0r 0w:8r
 llc_hprots_2cpus 4096 4 1w:0r 0w:8r

@@ -24,7 +24,9 @@ define_system_module tb  ../tb/l2_tb.cpp ../tb/system.cpp ../tb/sc_main.cpp
 # HLS and Simulation configurations
 ######################################################################
 
-foreach ncpu [list 2 4] {
+# N_CPU's value doesn't matter for this cache but it needs to be defined.
+# We choose the max number of CPUs, also specified in cache_consts.hpp.
+foreach ncpu [list 4] {
 
     set iocfg "IOCFG\_NCPU\_$ncpu"
 

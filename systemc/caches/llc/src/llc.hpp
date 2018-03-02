@@ -125,7 +125,14 @@ public:
 	LLC_FLATTEN_REGS;
 
 	// Map arrays to memory
-#if (N_CPU == 2)
+#if (N_CPU == 1)
+	HLS_MAP_TO_MEMORY(tags, "llc_tags_1cpus");
+	HLS_MAP_TO_MEMORY(states, "llc_states_1cpus");
+	HLS_MAP_TO_MEMORY(hprots, "llc_hprots_1cpus");
+	HLS_MAP_TO_MEMORY(lines, "llc_lines_1cpus");
+	HLS_MAP_TO_MEMORY(sharers, "llc_sharers_1cpus");
+	HLS_MAP_TO_MEMORY(owners, "llc_owners_1cpus");
+#elif (N_CPU == 2)
 	HLS_MAP_TO_MEMORY(tags, "llc_tags_2cpus");
 	HLS_MAP_TO_MEMORY(states, "llc_states_2cpus");
 	HLS_MAP_TO_MEMORY(hprots, "llc_hprots_2cpus");

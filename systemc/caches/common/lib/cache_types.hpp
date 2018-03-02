@@ -36,7 +36,7 @@ typedef sc_uint<STABLE_STATE_BITS>	state_t;
 typedef sc_uint<LLC_STATE_BITS>	        llc_state_t;
 typedef sc_uint<UNSTABLE_STATE_BITS>	unstable_state_t;
 typedef sc_uint<EVICT_STATE_BITS>	evict_state_t;
-typedef sc_uint<N_CPU_MAX_BITS>         cache_id_t;
+typedef sc_uint<MAX_N_CPU_BITS>         cache_id_t;
 #if (N_CPU_BITS != 0)
 typedef sc_uint<N_CPU_BITS>             owner_t;
 typedef sc_uint<N_CPU>                  sharers_t;
