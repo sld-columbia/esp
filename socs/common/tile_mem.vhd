@@ -686,7 +686,7 @@ begin
     sgmii0_apbi    <= ctrl_apbi2;
   end generate with_sgmii_gen;
 
-  no_sgmii_gen : if (CFG_SGMII * CFG_SGMII) = 0 generate
+  no_sgmii_gen: if (CFG_GRETH * CFG_SGMII) = 0 generate
     sgmii0_apbi <= apb_slv_in_none;
   end generate no_sgmii_gen;
 
