@@ -460,14 +460,6 @@ package cachepackage is
       tag_buf_out_5 : out std_logic_vector(19 downto 0);
       tag_buf_out_6 : out std_logic_vector(19 downto 0);
       tag_buf_out_7 : out std_logic_vector(19 downto 0);
-      tag_buf_out_8 : out std_logic_vector(19 downto 0);
-      tag_buf_out_9 : out std_logic_vector(19 downto 0);
-      tag_buf_out_10 : out std_logic_vector(19 downto 0);
-      tag_buf_out_11 : out std_logic_vector(19 downto 0);
-      tag_buf_out_12 : out std_logic_vector(19 downto 0);
-      tag_buf_out_13 : out std_logic_vector(19 downto 0);
-      tag_buf_out_14 : out std_logic_vector(19 downto 0);
-      tag_buf_out_15 : out std_logic_vector(19 downto 0);
       state_buf_out_0 : out std_logic_vector(2 downto 0);
       state_buf_out_1 : out std_logic_vector(2 downto 0);
       state_buf_out_2 : out std_logic_vector(2 downto 0);
@@ -476,14 +468,6 @@ package cachepackage is
       state_buf_out_5 : out std_logic_vector(2 downto 0);
       state_buf_out_6 : out std_logic_vector(2 downto 0);
       state_buf_out_7 : out std_logic_vector(2 downto 0);
-      state_buf_out_8 : out std_logic_vector(2 downto 0);
-      state_buf_out_9 : out std_logic_vector(2 downto 0);
-      state_buf_out_10 : out std_logic_vector(2 downto 0);
-      state_buf_out_11 : out std_logic_vector(2 downto 0);
-      state_buf_out_12 : out std_logic_vector(2 downto 0);
-      state_buf_out_13 : out std_logic_vector(2 downto 0);
-      state_buf_out_14 : out std_logic_vector(2 downto 0);
-      state_buf_out_15 : out std_logic_vector(2 downto 0);
       sharers_buf_out_0 : out std_logic_vector(0 downto 0);
       sharers_buf_out_1 : out std_logic_vector(0 downto 0);
       sharers_buf_out_2 : out std_logic_vector(0 downto 0);
@@ -492,14 +476,6 @@ package cachepackage is
       sharers_buf_out_5 : out std_logic_vector(0 downto 0);
       sharers_buf_out_6 : out std_logic_vector(0 downto 0);
       sharers_buf_out_7 : out std_logic_vector(0 downto 0);
-      sharers_buf_out_8 : out std_logic_vector(0 downto 0);
-      sharers_buf_out_9 : out std_logic_vector(0 downto 0);
-      sharers_buf_out_10 : out std_logic_vector(0 downto 0);
-      sharers_buf_out_11 : out std_logic_vector(0 downto 0);
-      sharers_buf_out_12 : out std_logic_vector(0 downto 0);
-      sharers_buf_out_13 : out std_logic_vector(0 downto 0);
-      sharers_buf_out_14 : out std_logic_vector(0 downto 0);
-      sharers_buf_out_15 : out std_logic_vector(0 downto 0);
       owner_buf_out_0 : out std_logic_vector(0 downto 0);
       owner_buf_out_1 : out std_logic_vector(0 downto 0);
       owner_buf_out_2 : out std_logic_vector(0 downto 0);
@@ -507,15 +483,7 @@ package cachepackage is
       owner_buf_out_4 : out std_logic_vector(0 downto 0);
       owner_buf_out_5 : out std_logic_vector(0 downto 0);
       owner_buf_out_6 : out std_logic_vector(0 downto 0);
-      owner_buf_out_7 : out std_logic_vector(0 downto 0);
-      owner_buf_out_8 : out std_logic_vector(0 downto 0);
-      owner_buf_out_9 : out std_logic_vector(0 downto 0);
-      owner_buf_out_10 : out std_logic_vector(0 downto 0);
-      owner_buf_out_11 : out std_logic_vector(0 downto 0);
-      owner_buf_out_12 : out std_logic_vector(0 downto 0);
-      owner_buf_out_13 : out std_logic_vector(0 downto 0);
-      owner_buf_out_14 : out std_logic_vector(0 downto 0);
-      owner_buf_out_15 : out std_logic_vector(0 downto 0)
+      owner_buf_out_7 : out std_logic_vector(0 downto 0)
       );
 
   end component;
