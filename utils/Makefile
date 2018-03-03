@@ -500,7 +500,7 @@ VLOG_ALL_RTL = $(VLOG_RTL_PKGS) $(TOP_VLOG_RTL_PKGS)  $(VLOG_RTL_SRCS) $(TOP_VLO
 
 ALL_RTL_SRCS  = $(VHDL_ALL_RTL) $(VLOG_ALL_RTL)
 
-check_all_srcs: grlib_config.vhd socmap.vhd
+check_all_srcs: grlib_config.vhd socmap.vhd sldgen
 	@echo $(ALL_SRCS) > $@.new; \
 	if test -f $@.old; then \
 		/usr/bin/diff -q $@.old $@.new > /dev/null; \
@@ -518,7 +518,7 @@ check_all_srcs-distclean:
 
 .PHONY: check_all_srcs check_all_srcs-distclean
 
-check_all_rtl_srcs: grlib_config.vhd socmap.vhd
+check_all_rtl_srcs: grlib_config.vhd socmap.vhd sldgen
 	@echo $(ALL_RTL_SRCS) > $@.new; \
 	if test -f $@.old; then \
 		/usr/bin/diff -q $@.old $@.new > /dev/null; \
@@ -735,7 +735,7 @@ sim-distclean: sim-clean
 vivado:
 	$(QUIET_MKDIR)mkdir -p vivado
 
-vivado/srcs.tcl: sldgen vivado check_all_rtl_srcs.old
+vivado/srcs.tcl: vivado check_all_rtl_srcs.old
 	$(QUIET_INFO)echo "generating source list for Vivado"
 	@$(RM) $@
 	@for vhd in $(VHDL_PROFPGA); do \
