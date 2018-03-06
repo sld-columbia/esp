@@ -226,8 +226,48 @@ begin
 
   -- SVGA component interface
   svga_on_apb: if CFG_SVGA_ENABLE /= 0 generate
-      apbo(13) <= dvi_apbo;
-      ahbmo2(0) <= dvi_ahbmo;
+    apbo(13) <= dvi_apbo;
+    ahbmo2(0) <= dvi_ahbmo;
+
+    -- Dedicated Video Memory with dual-port interface.
+
+    -- SLV 7: 0xB0100000 - 0xB01FFFFF
+    ahbmo1(NAHBMST-1 downto 1) <= (others => ahbm_none);
+    ahbmo2(NAHBMST-1 downto 1) <= (others => ahbm_none);
+    ahbso1(NAHBSLV-1 downto 1) <= (others => ahbs_none);
+    ahbso2(NAHBSLV-1 downto 1) <= (others => ahbs_none);
+    ahbram_dp_1: ahbram_dp
+      generic map (
+        hindex1 => 0,
+        haddr1  => CFG_SVGA_MEMORY_HADDR,
+        hindex2 => 0,
+        haddr2  => CFG_SVGA_MEMORY_HADDR,
+        hmask   => fb_hmask,
+        tech    => memtech,
+        kbytes  => 512,
+        wordsz  => 32)
+      port map (
+        rst    => rst,
+        clk    => clk,
+        ahbsi1 => ahbsi1,
+        ahbso1 => ahbso1(0),
+        ahbsi2 => ahbsi2,
+        ahbso2 => ahbso2(0));
+
+    -- AHB1: Proxy noc to AHB master and R/W AHBRAM slave
+    ahb1 : ahbctrl       -- AHB arbiter/multiplexer
+      generic map (defmast => CFG_DEFMST, split => CFG_SPLIT,
+                   rrobin => CFG_RROBIN, ioaddr => CFG_AHBIO, fpnpen => CFG_FPNPEN,
+                   nahbm => 1, nahbs => 1)
+      port map (rst, clk, ahbmi1, ahbmo1, ahbsi1, ahbso1);
+
+    -- AHB2: SVGA master and R AHBRAM slave
+    ahb2 : ahbctrl       -- AHB arbiter/multiplexer
+      generic map (defmast => CFG_DEFMST, split => CFG_SPLIT,
+                   rrobin => CFG_RROBIN, ioaddr => CFG_AHBIO, fpnpen => CFG_FPNPEN,
+                   nahbm => 1, nahbs => 1)
+      port map (rst, clk, ahbmi2, ahbmo2, ahbsi2, ahbso2);
+
   end generate svga_on_apb;
 
   no_svga_on_apb: if CFG_SVGA_ENABLE = 0 generate
@@ -236,45 +276,6 @@ begin
 
   dvi_apbi <= apbi;
   dvi_ahbmi <= ahbmi2;
-
-  -- Dedicated Vide Memory with dual-port interface.
-
-  -- SLV 7: 0xB0100000 - 0xB01FFFFF
-  ahbmo1(NAHBMST-1 downto 1) <= (others => ahbm_none);
-  ahbmo2(NAHBMST-1 downto 1) <= (others => ahbm_none);
-  ahbso1(NAHBSLV-1 downto 1) <= (others => ahbs_none);
-  ahbso2(NAHBSLV-1 downto 1) <= (others => ahbs_none);
-  ahbram_dp_1: ahbram_dp
-    generic map (
-      hindex1 => 0,
-      haddr1  => CFG_SVGA_MEMORY_HADDR,
-      hindex2 => 0,
-      haddr2  => CFG_SVGA_MEMORY_HADDR,
-      hmask   => fb_hmask,
-      tech    => memtech,
-      kbytes  => 512,
-      wordsz  => 32)
-    port map (
-      rst    => rst,
-      clk    => clk,
-      ahbsi1 => ahbsi1,
-      ahbso1 => ahbso1(0),
-      ahbsi2 => ahbsi2,
-      ahbso2 => ahbso2(0));
-
-  -- AHB1: Proxy noc to AHB master and R/W AHBRAM slave
-  ahb1 : ahbctrl       -- AHB arbiter/multiplexer
-  generic map (defmast => CFG_DEFMST, split => CFG_SPLIT,
-   rrobin => CFG_RROBIN, ioaddr => CFG_AHBIO, fpnpen => CFG_FPNPEN,
-     nahbm => 1, nahbs => 1)
-  port map (rst, clk, ahbmi1, ahbmo1, ahbsi1, ahbso1);
-
-  -- AHB2: SVGA master and R AHBRAM slave
-  ahb2 : ahbctrl       -- AHB arbiter/multiplexer
-  generic map (defmast => CFG_DEFMST, split => CFG_SPLIT,
-   rrobin => CFG_RROBIN, ioaddr => CFG_AHBIO, fpnpen => CFG_FPNPEN,
-     nahbm => 1, nahbs => 1)
-  port map (rst, clk, ahbmi2, ahbmo2, ahbsi2, ahbso2);
 
 
   -----------------------------------------------------------------------------
@@ -356,39 +357,53 @@ begin
       interrupt_data_out => interrupt_data_out,
       interrupt_empty    => interrupt_empty);
 
-  -- FROM CPU to AMBA1 for frame buffer
-  mem_noc2ahbm_1: mem_noc2ahbm
-    generic map (
-      tech      => fabtech,
-      ncpu      => CFG_NCPU_TILE,
-      hindex    => 0,
-      local_y   => local_y,
-      local_x   => local_x,
-      cacheline => CFG_DLINE,
-      l2_cache_en => CFG_L2_ENABLE,
-      destination => 0)
-    port map (
-      rst                            => rst,
-      clk                            => clk,
-      ahbmi                          => ahbmi1,
-      ahbmo                          => ahbmo1(0),
-      coherence_req_rdreq            => ahbs_req_rdreq,
-      coherence_req_data_out         => ahbs_req_data_out,
-      coherence_req_empty            => ahbs_req_empty,
-      coherence_fwd_wrreq            => open,
-      coherence_fwd_data_in          => open,
-      coherence_fwd_full             => '0',
-      coherence_rsp_snd_wrreq   => ahbs_rsp_line_wrreq,
-      coherence_rsp_snd_data_in => ahbs_rsp_line_data_in,
-      coherence_rsp_snd_full    => ahbs_rsp_line_full,
-      dma_rcv_rdreq                  => dma_rcv_rdreq,
-      dma_rcv_data_out               => dma_rcv_data_out,
-      dma_rcv_empty                  => dma_rcv_empty,
-      dma_snd_wrreq                  => dma_snd_wrreq,
-      dma_snd_data_in                => dma_snd_data_in,
-      dma_snd_full                   => dma_snd_full,
-      dma_snd_atleast_4slots         => dma_snd_atleast_4slots,
-      dma_snd_exactly_3slots         => dma_snd_exactly_3slots);
+  svga_on_apb_proxy: if CFG_SVGA_ENABLE /= 0 generate
+    -- FROM CPU to AMBA1 for frame buffer
+    mem_noc2ahbm_1: mem_noc2ahbm
+      generic map (
+        tech      => fabtech,
+        ncpu      => CFG_NCPU_TILE,
+        hindex    => 0,
+        local_y   => local_y,
+        local_x   => local_x,
+        cacheline => CFG_DLINE,
+        destination => 0)
+      port map (
+        rst                           => rst,
+        clk                           => clk,
+        ahbmi                         => ahbmi1,
+        ahbmo                         => ahbmo1(0),
+        coherence_req_rdreq           => ahbs_req_rdreq,
+        coherence_req_data_out        => ahbs_req_data_out,
+        coherence_req_empty           => ahbs_req_empty,
+        coherence_fwd_inv_wrreq       => open,
+        coherence_fwd_inv_data_in     => open,
+        coherence_fwd_inv_full        => '0',
+        coherence_fwd_put_ack_wrreq   => open,
+        coherence_fwd_put_ack_data_in => open,
+        coherence_fwd_put_ack_full    => '0',
+        coherence_rsp_line_wrreq      => ahbs_rsp_line_wrreq,
+        coherence_rsp_line_data_in    => ahbs_rsp_line_data_in,
+        coherence_rsp_line_full       => ahbs_rsp_line_full,
+        dma_rcv_rdreq                 => dma_rcv_rdreq,
+        dma_rcv_data_out              => dma_rcv_data_out,
+        dma_rcv_empty                 => dma_rcv_empty,
+        dma_snd_wrreq                 => dma_snd_wrreq,
+        dma_snd_data_in               => dma_snd_data_in,
+        dma_snd_full                  => dma_snd_full,
+        dma_snd_atleast_4slots        => dma_snd_atleast_4slots,
+        dma_snd_exactly_3slots        => dma_snd_exactly_3slots);
+  end generate svga_on_apb_proxy;
+
+  no_svga_on_apb_proxy: if CFG_SVGA_ENABLE = 0 generate
+    ahbs_req_rdreq <= '0';
+    ahbs_rsp_line_wrreq <= '0';
+    ahbs_rsp_line_data_in <= (others => '0');
+    dma_rcv_rdreq <= '0';
+    dma_snd_wrreq <= '0';
+    dma_snd_data_in <= (others => '0');
+  end generate no_svga_on_apb_proxy;
+
 
   -----------------------------------------------------------------------------
   -- Monitor for DVFS. (IO tile has no dvfs)
