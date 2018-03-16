@@ -765,22 +765,16 @@ public:
 
     addr_t              line;
     addr_t              word;
-    addr_t              hword;
-    addr_t              byte;
     tag_t               tag;
     set_t               set;
-    offset_t            off;
     word_offset_t       w_off;
     byte_offset_t       b_off;
 
     addr_breakdown_t() :
 	line(0),
 	word(0),
-	hword(0),
-	byte(0),
 	tag(0),
 	set(0),
-	off(0),
 	w_off(0),
 	b_off(0)
     {}
@@ -788,11 +782,8 @@ public:
     inline addr_breakdown_t& operator = (const addr_breakdown_t& x) {
 	line   = x.line;
 	word   = x.word;
-	hword  = x.hword;
-	byte   = x.byte;
 	tag    = x.tag;
 	set    = x.set;
-	off    = x.off;
 	w_off  = x.w_off;
 	b_off  = x.b_off;
 	return *this;
@@ -800,11 +791,8 @@ public:
     inline bool operator == (const addr_breakdown_t& x) const {
 	return (x.line	== line		&& 
 		x.word	== word		&& 
-		x.hword == hword	&& 
-		x.byte	== byte		&& 
 		x.tag	== tag		&& 
 		x.set	== set		&& 
-		x.off	== off		&& 
 		x.w_off == w_off	&& 
 		x.b_off == b_off);
     }
@@ -812,11 +800,8 @@ public:
 	os << hex << "(" 
 	   << "line: "    << x.line 
 	   << ", word: "  << x.word
-	   << ", hword: " << x.hword 
-	   << ", byte: "  << x.byte 
 	   << ", tag: "   << x.tag 
 	   << ", set: "   << x.set 
-	   << ", off: "   << x.off 
 	   << ", w_off: " << x.w_off 
 	   << ", b_off: " << x.b_off << ")";
 	return os;
@@ -825,32 +810,24 @@ public:
     void tag_incr(int a) {
 	line += a * TAG_OFFSET;
 	word += a * TAG_OFFSET;
-	hword += a * TAG_OFFSET;
-	byte += a * TAG_OFFSET;
 	tag += a;
     }
 
     void set_incr(int a) {
 	line += a * SET_OFFSET;
 	word += a * SET_OFFSET;
-	hword += a * SET_OFFSET;
-	byte += a * SET_OFFSET;
 	set += a;
     }
 
     void tag_decr(int a) {
     	line -= a * TAG_OFFSET;
     	word -= a * TAG_OFFSET;
-    	hword -= a * TAG_OFFSET;
-    	byte -= a * TAG_OFFSET;
     	tag -= a;
     }
 
     void set_decr(int a) {
 	line -= a * SET_OFFSET;
 	word -= a * SET_OFFSET;
-	hword -= a * SET_OFFSET;
-	byte -= a * SET_OFFSET;
 	set -= a;
     }
 
@@ -858,19 +835,14 @@ public:
     {
 	line  = addr;
 	word  = addr;
-	hword = addr;
-	byte  = addr;
 	tag   = addr.range(TAG_RANGE_HI, TAG_RANGE_LO);
 	set   = addr.range(SET_RANGE_HI, SET_RANGE_LO);
-	off   = addr.range(OFF_RANGE_HI, OFF_RANGE_LO);
 	w_off = addr.range(W_OFF_RANGE_HI, W_OFF_RANGE_LO);
 	b_off = addr.range(B_OFF_RANGE_HI, B_OFF_RANGE_LO);
 
 	line.range(OFF_RANGE_HI, OFF_RANGE_LO)		= 0;
 	word.range(B_OFF_RANGE_HI, B_OFF_RANGE_LO)	= 0;
-	hword.range(B_OFF_RANGE_HI - 1, B_OFF_RANGE_LO) = 0;
     }
-
 };
 
 

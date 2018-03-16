@@ -337,39 +337,43 @@ void l2_tb::l2_test()
 
     CACHE_REPORT_INFO("T4.4) Verify writes.");
 
-    offset_t off_tmp;
+    offset_t off_tmp0, off_tmp1;
 
     addr = addr1;
     line = line_of_addr(addr.line);
-    off_tmp = addr.off + BYTES_PER_WORD - 2 * addr.b_off - 1;
-    line.range(off_tmp*8 + 7, off_tmp*8) = 0;
+    off_tmp0 = addr.w_off * BYTES_PER_WORD + addr.b_off;
+    off_tmp1 = off_tmp0 + BYTES_PER_WORD - 2 * addr.b_off - 1;
+    line.range(off_tmp1 * 8 + 7, off_tmp1 * 8) = 0;
     op(READ, HIT, 0, 0, 0, 0, WORD, addr, 0, line, 0, 0, 0, 0);
 
     addr.tag_incr(1);
-    addr.off.range(0,0) = 0;
-    if (addr.off.range(B_OFF_RANGE_HI,B_OFF_RANGE_HI) == 0)
-	addr.off.range(B_OFF_RANGE_HI,B_OFF_RANGE_HI) = 1;
+    off_tmp0 = addr.w_off * BYTES_PER_WORD + addr.b_off;
+    off_tmp0.range(0,0) = 0;
+    if (off_tmp0.range(B_OFF_RANGE_HI,B_OFF_RANGE_HI) == 0)
+	off_tmp0.range(B_OFF_RANGE_HI,B_OFF_RANGE_HI) = 1;
     else
-	addr.off.range(B_OFF_RANGE_HI,B_OFF_RANGE_HI) = 0;
+	off_tmp0.range(B_OFF_RANGE_HI,B_OFF_RANGE_HI) = 0;
     line = line_of_addr(addr.line);
-    line.range(addr.off*8 + BITS_PER_HALFWORD - 1, addr.off*8) = 0;
+    line.range(off_tmp0 * 8 + BITS_PER_HALFWORD - 1, off_tmp0 * 8) = 0;
     op(READ, HIT, 0, 0, 0, 0, WORD, addr, 0, line, 0, 0, 0, 0);
 
     addr = addr1;
     addr.set_incr(1);
     line = line_of_addr(addr.line);
-    off_tmp = addr.off + BYTES_PER_WORD - 2 * addr.b_off - 1;
-    line.range(off_tmp*8 + 7, off_tmp*8) = 0;
+    off_tmp0 = addr.w_off * BYTES_PER_WORD + addr.b_off;
+    off_tmp1 = off_tmp0 + BYTES_PER_WORD - 2 * addr.b_off - 1;
+    line.range(off_tmp1 * 8 + 7, off_tmp1 * 8) = 0;
     op(READ, HIT, 0, 0, 0, 0, WORD, addr, 0, line, 0, 0, 0, 0);
 
     addr.tag_incr(1);
-    addr.off.range(0,0) = 0;
-    if (addr.off.range(B_OFF_RANGE_HI,B_OFF_RANGE_HI) == 0)
-	addr.off.range(B_OFF_RANGE_HI,B_OFF_RANGE_HI) = 1;
+    off_tmp0 = addr.w_off * BYTES_PER_WORD + addr.b_off;
+    off_tmp0.range(0,0) = 0;
+    if (off_tmp0.range(B_OFF_RANGE_HI,B_OFF_RANGE_HI) == 0)
+	off_tmp0.range(B_OFF_RANGE_HI,B_OFF_RANGE_HI) = 1;
     else
-	addr.off.range(B_OFF_RANGE_HI,B_OFF_RANGE_HI) = 0;
+	off_tmp0.range(B_OFF_RANGE_HI,B_OFF_RANGE_HI) = 0;
     line = line_of_addr(addr.line);   
-    line.range(addr.off*8 + BITS_PER_HALFWORD - 1, addr.off*8) = 0;
+    line.range(off_tmp0 * 8 + BITS_PER_HALFWORD - 1, off_tmp0 * 8) = 0;
     op(READ, HIT, 0, 0, 0, 0, WORD, addr, 0, line, 0, 0, 0, 0);
 
     CACHE_REPORT_INFO("T4.5) Flush.");    
@@ -995,9 +999,11 @@ void l2_tb::op(cpu_msg_t cpu_msg, int beh, int rsp_beh, coh_msg_t rsp_msg, invac
     addr_t cpu_addr;
     coh_msg_t coh_req, coh_rsp;
     
-    if      (hsize == BYTE)     cpu_addr = req_addr.byte;
-    else if (hsize == HALFWORD)	cpu_addr = req_addr.hword;
-    else if (hsize == WORD)	cpu_addr = req_addr.word;
+    cpu_addr = req_addr.word;
+
+    if (hsize == BYTE) cpu_addr += req_addr.w_off * BYTES_PER_WORD + req_addr.b_off;
+    else if (hsize == HALFWORD)	cpu_addr += req_addr.w_off * BYTES_PER_WORD;
+    else if (hsize == WORD)	;// nothing
     else CACHE_REPORT_ERROR("Wrong hsize.", hsize);
 
     if (cpu_msg == READ) {
