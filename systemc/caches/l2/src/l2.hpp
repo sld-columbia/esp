@@ -22,12 +22,12 @@ public:
     // Reset signal
     sc_in<bool> rst;
 
+#ifdef L2_DEBUG
     // Debug signals
     sc_out< sc_bv<ASSERT_WIDTH> >   asserts;
     sc_out< sc_bv<BOOKMARK_WIDTH> > bookmark;
     sc_out<uint32_t>                custom_dbg;
 
-#ifdef L2_DEBUG
     sc_out<sc_uint<REQS_BITS_P1> > reqs_cnt_out;   
     sc_out<bool>		set_conflict_out;
     sc_out<l2_cpu_req_t>	cpu_req_conflict_out;
@@ -95,9 +95,11 @@ public:
     SC_CTOR(l2)
 	: clk("clk")
 	, rst("rst")
+#ifdef L2_DEBUG
 	, asserts("asserts")
 	, bookmark("bookmark")
 	, custom_dbg("custom_dbg")
+#endif
 	, flush_done("flush_done")
 	, l2_cpu_req("l2_cpu_req")
 	, l2_fwd_in("l2_fwd_in")
@@ -172,10 +174,13 @@ public:
     // line_t make_line_of_addr(addr_t addr); // is this needed here? not called by l2.cpp
 
 private:
+
     /* Variables for debug*/ 
     sc_bv<ASSERT_WIDTH>   asserts_tmp;
     sc_bv<BOOKMARK_WIDTH> bookmark_tmp;
+#ifdef L2_DEBUG
     uint64_t custom_dbg_tmp;
+#endif
 
     /* Variables for stalls, conflicts and atomic operations */
     sc_uint<REQS_BITS_P1> reqs_cnt;

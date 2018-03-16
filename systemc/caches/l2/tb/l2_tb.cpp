@@ -6,6 +6,8 @@
  * Processes
  */
 
+#ifdef L2_DEBUG
+
 void l2_tb::l2_debug()
 {
     sc_bv<ASSERT_WIDTH>   old_asserts  = 0;
@@ -38,6 +40,8 @@ void l2_tb::l2_debug()
 	wait();
     }
 }
+
+#endif
 
 void l2_tb::l2_test()
 {

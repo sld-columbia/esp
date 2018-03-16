@@ -188,8 +188,8 @@
  * Debug and report
  */
 
-#define L2_DEBUG 1
-#define LLC_DEBUG 1
+//#define L2_DEBUG 1
+//#define LLC_DEBUG 1
 
 // l2
 #define ASSERT_WIDTH	19

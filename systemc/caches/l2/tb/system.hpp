@@ -22,11 +22,12 @@ public:
 
     // Signals
     sc_signal<bool> flush_done;
+
+#ifdef L2_DEBUG
     sc_signal< sc_bv<ASSERT_WIDTH> > asserts;
     sc_signal< sc_bv<BOOKMARK_WIDTH> > bookmark;
     sc_signal<uint32_t> custom_dbg;
 
-#ifdef L2_DEBUG
     sc_signal<sc_uint<REQS_BITS_P1> > reqs_cnt_out;   
     sc_signal<bool>		set_conflict_out;
     sc_signal<l2_cpu_req_t>	cpu_req_conflict_out;
@@ -88,9 +89,6 @@ public:
 	dut->clk(clk);
 	dut->rst(rst);
 	dut->flush_done(flush_done);
-        dut->asserts(asserts);
-        dut->bookmark(bookmark);
-        dut->custom_dbg(custom_dbg);
 	dut->l2_cpu_req(l2_cpu_req_chnl);
 	dut->l2_fwd_in(l2_fwd_in_chnl);
 	dut->l2_rsp_in(l2_rsp_in_chnl);
@@ -100,6 +98,9 @@ public:
 	dut->l2_req_out(l2_req_out_chnl);
 	dut->l2_rsp_out(l2_rsp_out_chnl);
 #ifdef L2_DEBUG
+        dut->asserts(asserts);
+        dut->bookmark(bookmark);
+        dut->custom_dbg(custom_dbg);
 	dut->reqs_cnt_out(reqs_cnt_out);
 	dut->set_conflict_out(set_conflict_out);
 	dut->cpu_req_conflict_out(cpu_req_conflict_out);
@@ -137,9 +138,6 @@ public:
 	tb->clk(clk);
 	tb->rst(rst);
         tb->flush_done(flush_done);
-        tb->asserts(asserts);
-        tb->bookmark(bookmark);
-        tb->custom_dbg(custom_dbg);
 	tb->l2_cpu_req_tb(l2_cpu_req_chnl);
 	tb->l2_fwd_in_tb(l2_fwd_in_chnl);
 	tb->l2_rsp_in_tb(l2_rsp_in_chnl); 
@@ -149,6 +147,9 @@ public:
 	tb->l2_req_out_tb(l2_req_out_chnl);
 	tb->l2_rsp_out_tb(l2_rsp_out_chnl);
 #ifdef L2_DEBUG
+        tb->asserts(asserts);
+        tb->bookmark(bookmark);
+        tb->custom_dbg(custom_dbg);
 	tb->reqs_cnt_out(reqs_cnt_out);
 	tb->set_conflict_out(set_conflict_out);
 	tb->cpu_req_conflict_out(cpu_req_conflict_out);

@@ -20,12 +20,12 @@ public:
     // Reset signal
     sc_in<bool> rst;
 
+#ifdef L2_DEBUG
     // Debug signals
     sc_in< sc_bv<ASSERT_WIDTH> >   asserts;
     sc_in< sc_bv<BOOKMARK_WIDTH> > bookmark;
     sc_in<uint32_t>     custom_dbg;
 
-#ifdef L2_DEBUG
     sc_in<sc_uint<REQS_BITS_P1> > reqs_cnt_out;   
     sc_in<bool>		set_conflict_out;
     sc_in<l2_cpu_req_t>	cpu_req_conflict_out;
@@ -81,10 +81,12 @@ public:
 	reset_signal_is(rst, false);
 	// set_stack_size(0x400000);
 
+#ifdef L2_DEBUG
 	// Debug process
 	SC_CTHREAD(l2_debug, clk.pos());
 	reset_signal_is(rst, false);
 	// set_stack_size(0x400000);
+#endif
 
 	// Assign clock and reset to put_get ports
 	l2_cpu_req_tb.clk_rst (clk, rst);
@@ -99,7 +101,9 @@ public:
 
     // Processes
     void l2_test();
+#ifdef L2_DEBUG
     void l2_debug();
+#endif
 
     // Functions
     inline void reset_l2_test();
