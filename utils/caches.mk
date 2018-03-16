@@ -1,6 +1,6 @@
 
 CACHES_PATH		= $(ESP_ROOT)/systemc/caches
-CACHES			= $(filter-out common, $(shell ls -d $(CACHES_PATH)/*/ | awk -F/ '{print $$(NF-1)}'))
+CACHES			= l2 llc # $(filter-out common, $(shell ls -d $(CACHES_PATH)/*/ | awk -F/ '{print $$(NF-1)}'))
 CACHES-wdir		= $(addsuffix -wdir, $(CACHES))
 CACHES-hls		= $(addsuffix -hls, $(CACHES))
 CACHES-clean		= $(addsuffix -clean, $(CACHES))
