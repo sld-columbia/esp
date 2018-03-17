@@ -37,7 +37,7 @@ public:
     sc_signal<l2_fwd_in_t>         fwd_in_stalled_out;
     sc_signal<sc_uint<REQS_BITS> > reqs_fwd_stall_i_out;
     sc_signal<bool>		ongoing_atomic_out;
-    sc_signal<addr_t>		atomic_line_addr_out;
+    sc_signal<line_addr_t>	atomic_line_addr_out;
     sc_signal<sc_uint<REQS_BITS> > reqs_atomic_i_out;
 
     sc_signal<bool>	tag_hit_out;

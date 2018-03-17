@@ -158,13 +158,13 @@ public:
     inline void reset_states();
     void read_set(llc_addr_t base, llc_way_t way_base);
     void lookup(tag_t tag, set_t set, llc_way_t &way, bool &evict, llc_addr_t &llc_addr);
-    void send_mem_req(bool hwrite, addr_t line_addr, hprot_t hprot, line_t line);
+    void send_mem_req(bool hwrite, line_addr_t line_addr, hprot_t hprot, line_t line);
     void get_mem_rsp(line_t &line);
     void get_req_in(llc_req_in_t &req_in);
     void get_rsp_in(llc_rsp_in_t &rsp_in);
-    void send_rsp_out(coh_msg_t coh_msg, addr_t addr, line_t line, cache_id_t req_id,
+    void send_rsp_out(coh_msg_t coh_msg, line_addr_t addr, line_t line, cache_id_t req_id,
 		      cache_id_t dest_id, invack_cnt_t invack_cnt);
-    void send_fwd_out(coh_msg_t coh_msg, addr_t addr, cache_id_t req_id, cache_id_t dest_id);
+    void send_fwd_out(coh_msg_t coh_msg, line_addr_t addr, cache_id_t req_id, cache_id_t dest_id);
 
 private:
 

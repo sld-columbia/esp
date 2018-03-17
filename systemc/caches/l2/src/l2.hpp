@@ -37,7 +37,7 @@ public:
     sc_out<l2_fwd_in_t>         fwd_in_stalled_out;
     sc_out<sc_uint<REQS_BITS> > reqs_fwd_stall_i_out;
     sc_out<bool>		ongoing_atomic_out;
-    sc_out<addr_t>		atomic_line_addr_out;
+    sc_out<line_addr_t>		atomic_line_addr_out;
     sc_out<sc_uint<REQS_BITS> > reqs_atomic_i_out;
 
     sc_out<bool>	tag_hit_out;
@@ -151,9 +151,9 @@ public:
 
     /* Functions to send output messages */
     void send_rd_rsp(line_t lines);
-    void send_inval(addr_t addr_inval);
-    void send_req_out(coh_msg_t coh_msg, hprot_t hprot, addr_t line_addr, line_t lines);
-    void send_rsp_out(coh_msg_t coh_msg, cache_id_t req_id, bool to_req, addr_t line_addr, line_t line);
+    void send_inval(line_addr_t addr_inval);
+    void send_req_out(coh_msg_t coh_msg, hprot_t hprot, line_addr_t line_addr, line_t lines);
+    void send_rsp_out(coh_msg_t coh_msg, cache_id_t req_id, bool to_req, line_addr_t line_addr, line_t line);
 
     /* Functions to move around buffered lines */
     void fill_reqs(cpu_msg_t cpu_msg, addr_breakdown_t addr_br, tag_t tag_estall, l2_way_t way_hit, 
@@ -166,10 +166,11 @@ public:
     void read_set(set_t set);
     void tag_lookup(addr_breakdown_t addr_br, bool &tag_hit, l2_way_t &way_hit, bool &empty_way_found,
 		    l2_way_t &empty_way);
-    void reqs_lookup(addr_breakdown_t addr_br, sc_uint<REQS_BITS> &reqs_hit_i);
+    void tag_lookup_fwd(line_breakdown_t line_br, l2_way_t &way_hit);
+    void reqs_lookup(line_breakdown_t line_addr_br, sc_uint<REQS_BITS> &reqs_hit_i);
     bool reqs_peek_req(set_t set, sc_uint<REQS_BITS> &reqs_i);
     void reqs_peek_flush(set_t set, sc_uint<REQS_BITS> &reqs_i);
-    bool reqs_peek_fwd(addr_breakdown_t addr_br, sc_uint<REQS_BITS> &reqs_i, bool &reqs_hit, coh_msg_t coh_msg);
+    bool reqs_peek_fwd(line_breakdown_t line_br, sc_uint<REQS_BITS> &reqs_i, bool &reqs_hit, coh_msg_t coh_msg);
 
     // line_t make_line_of_addr(addr_t addr); // is this needed here? not called by l2.cpp
 
@@ -192,7 +193,7 @@ private:
     l2_fwd_in_t fwd_in_stalled;
     sc_uint<REQS_BITS> reqs_fwd_stall_i;
     bool ongoing_atomic;
-    addr_t atomic_line_addr;
+    line_addr_t atomic_line_addr;
     sc_uint<REQS_BITS> reqs_atomic_i;
     bool ongoing_flush;
     uint32_t flush_way, flush_set;

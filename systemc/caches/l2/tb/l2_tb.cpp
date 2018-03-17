@@ -383,7 +383,8 @@ void l2_tb::l2_test()
 
     for (int i = 0; i < 4; ++i) {
 	l2_req_out_t req_out = l2_req_out_tb.get();
-	put_fwd_in(FWD_PUTACK, req_out.addr, 0);
+	addr_t tmp_addr = req_out.addr << OFFSET_BITS;
+	put_fwd_in(FWD_PUTACK, tmp_addr, 0);
 	wait();
     }
 
@@ -447,14 +448,14 @@ void l2_tb::l2_test()
     wait();
 
     put_rsp_in(RSP_EDATA, addr1.line, line_of_addr(addr1.line), 0);
-    get_rd_rsp(addr1, line_of_addr(addr1.line));
+    get_rd_rsp(line_of_addr(addr1.line));
 
     get_req_out(REQ_GETS, addr2.line, cpu_req2.hprot);
 
     wait();
 
     put_rsp_in(RSP_EDATA, addr2.line, line_of_addr(addr2.line), 0);
-    get_rd_rsp(addr2, line_of_addr(addr2.line));
+    get_rd_rsp(line_of_addr(addr2.line));
 
     CACHE_REPORT_INFO("T5.2) Flush.");    
 
@@ -463,7 +464,8 @@ void l2_tb::l2_test()
 
     for (int i = 0; i < L2_WAYS + 1; ++i) {
 	l2_req_out_t req_out = l2_req_out_tb.get();
-	put_fwd_in(FWD_PUTACK, req_out.addr, 0);
+	addr_t tmp_addr = req_out.addr << OFFSET_BITS;
+	put_fwd_in(FWD_PUTACK, tmp_addr, 0);
 	wait();
     }
 
@@ -502,7 +504,7 @@ void l2_tb::l2_test()
     // Respond to n_reqs requests
     addr.set_decr(n_reqs);
     put_rsp_in(RSP_EDATA, addr.line, line_of_addr(addr.line), 0);
-    get_rd_rsp(addr, line_of_addr(addr.line));
+    get_rd_rsp(line_of_addr(addr.line));
     wait();
 
     for (int i = 0; i < n_reqs - 1; i++) {
@@ -526,7 +528,7 @@ void l2_tb::l2_test()
 	put_cpu_req(cpu_req, READ, WORD, addr.word, 0);
 	line = line_of_addr(addr.line);
 	line.range(addr.w_off*ADDR_BITS + ADDR_BITS - 1, addr.w_off*ADDR_BITS) = 0;
-	get_rd_rsp(addr, line);
+	get_rd_rsp(line);
 	wait();
     }
 
@@ -536,8 +538,9 @@ void l2_tb::l2_test()
     l2_flush_tb.put(1);
 
     for (int i = 0; i < n_reqs + 1; ++i) {
-	req_out = l2_req_out_tb.get();
-	put_fwd_in(FWD_PUTACK, req_out.addr, 0);
+	l2_req_out_t req_out = l2_req_out_tb.get();
+	addr_t tmp_addr = req_out.addr << OFFSET_BITS;
+	put_fwd_in(FWD_PUTACK, tmp_addr, 0);
 	wait();
     }
 
@@ -887,10 +890,10 @@ void l2_tb::get_req_out(coh_msg_t coh_msg, addr_t addr, hprot_t hprot)
 
     if (req_out.coh_msg != coh_msg ||
 	req_out.hprot   != hprot ||
-	req_out.addr != addr) {
+	req_out.addr != addr.range(TAG_RANGE_HI, SET_RANGE_LO)) {
 
 	CACHE_REPORT_ERROR("get req out", req_out.addr);
-	CACHE_REPORT_ERROR("get req out gold", addr);
+	CACHE_REPORT_ERROR("get req out gold", addr.range(TAG_RANGE_HI, SET_RANGE_LO));
 	CACHE_REPORT_ERROR("get req out", req_out.coh_msg);
 	CACHE_REPORT_ERROR("get req out gold", coh_msg);
 	CACHE_REPORT_ERROR("get req out", req_out.hprot);
@@ -910,11 +913,11 @@ void l2_tb::get_rsp_out(coh_msg_t coh_msg, cache_id_t req_id, bool to_req, addr_
 
     if (rsp_out.coh_msg != coh_msg ||
 	(rsp_out.req_id != req_id && to_req) ||
-	rsp_out.addr != addr ||
+	rsp_out.addr != addr.range(TAG_RANGE_HI, SET_RANGE_LO) ||
 	(rsp_out.line != line && rsp_out.coh_msg == RSP_DATA)) {
 
 	CACHE_REPORT_ERROR("get rsp out", rsp_out.addr);
-	CACHE_REPORT_ERROR("get rsp out gold", addr);
+	CACHE_REPORT_ERROR("get rsp out gold", addr.range(TAG_RANGE_HI, SET_RANGE_LO));
 	CACHE_REPORT_ERROR("get rsp out", rsp_out.coh_msg);
 	CACHE_REPORT_ERROR("get rsp out gold", coh_msg);
 	CACHE_REPORT_ERROR("get rsp out", rsp_out.req_id);
@@ -934,7 +937,7 @@ void l2_tb::put_fwd_in(coh_msg_t coh_msg, addr_t addr, cache_id_t req_id)
     l2_fwd_in_t fwd_in;
     
     fwd_in.coh_msg = coh_msg;
-    fwd_in.addr = addr;
+    fwd_in.addr = addr.range(TAG_RANGE_HI, SET_RANGE_LO);
     fwd_in.req_id = req_id;
 
     l2_fwd_in_tb.put(fwd_in);
@@ -947,7 +950,7 @@ void l2_tb::put_rsp_in(coh_msg_t coh_msg, addr_t addr, line_t line, invack_cnt_t
     l2_rsp_in_t rsp_in;
     
     rsp_in.coh_msg = coh_msg;
-    rsp_in.addr = addr;
+    rsp_in.addr = addr.range(TAG_RANGE_HI, SET_RANGE_LO);
     rsp_in.invack_cnt = invack_cnt;
     rsp_in.line = line;
 
@@ -960,7 +963,7 @@ void l2_tb::put_rsp_in(coh_msg_t coh_msg, addr_t addr, line_t line, invack_cnt_t
     if (rpt) CACHE_REPORT_VAR(sc_time_stamp(), "RSP_IN", rsp_in);
 }
 
-void l2_tb::get_rd_rsp(addr_breakdown_t addr, line_t line)
+void l2_tb::get_rd_rsp(line_t line)
 {
     l2_rd_rsp_t rd_rsp;
 
@@ -981,9 +984,9 @@ void l2_tb::get_inval(addr_t addr)
     
     l2_inval_tb.get(inval);
 
-    if (inval != addr) {
+    if (inval != addr.range(TAG_RANGE_HI, SET_RANGE_LO)) {
 	CACHE_REPORT_ERROR("get inval", inval);
-	CACHE_REPORT_ERROR("get inval gold", addr);
+	CACHE_REPORT_ERROR("get inval gold", addr.range(TAG_RANGE_HI, SET_RANGE_LO));
     }
 
     if (rpt)
@@ -1088,7 +1091,7 @@ void l2_tb::op(cpu_msg_t cpu_msg, int beh, int rsp_beh, coh_msg_t rsp_msg, invac
     }
 
     if (cpu_msg == READ || cpu_msg == READ_ATOMIC)
-	get_rd_rsp(req_addr, rsp_line);
+	get_rd_rsp(rsp_line);
 
     if (fwd_beh == FWD_NOSTALL)
 	    put_fwd_in(fwd_msg, req_addr.line, fwd_id);
@@ -1119,11 +1122,11 @@ void l2_tb::op(cpu_msg_t cpu_msg, int beh, int rsp_beh, coh_msg_t rsp_msg, invac
     wait();
 }
 
-void l2_tb::op_flush(coh_msg_t coh_msg, addr_t addr_line)
+void l2_tb::op_flush(coh_msg_t coh_msg, addr_t addr)
 {
-    get_req_out(coh_msg, addr_line, 0);
+    get_req_out(coh_msg, addr, 0);
 
-    put_fwd_in(FWD_PUTACK, addr_line, 0);
+    put_fwd_in(FWD_PUTACK, addr, 0);
 
     wait();
 }
@@ -1138,7 +1141,8 @@ void l2_tb::flush(int n_lines)
 
     for (int i = 0; i < n_lines; ++i) {
 	l2_req_out_t req_out = l2_req_out_tb.get();
-	put_fwd_in(FWD_PUTACK, req_out.addr, 0);
+	addr_t tmp_addr = req_out.addr << OFFSET_BITS;
+	put_fwd_in(FWD_PUTACK, tmp_addr, 0);
 	wait();
     }
 

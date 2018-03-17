@@ -35,7 +35,7 @@ public:
     sc_in<l2_fwd_in_t>         fwd_in_stalled_out;
     sc_in<sc_uint<REQS_BITS> > reqs_fwd_stall_i_out;
     sc_in<bool>		ongoing_atomic_out;
-    sc_in<addr_t>		atomic_line_addr_out;
+    sc_in<line_addr_t>		atomic_line_addr_out;
     sc_in<sc_uint<REQS_BITS> > reqs_atomic_i_out;
 
     sc_in<bool>	tag_hit_out;
@@ -120,12 +120,12 @@ public:
 		     line_t line);
     void put_fwd_in(coh_msg_t coh_msg, addr_t addr, cache_id_t req_id);
     void put_rsp_in(coh_msg_t coh_msg, addr_t addr, line_t line, invack_cnt_t invack_cnt);
-    void get_rd_rsp(addr_breakdown_t addr, line_t line);
+    void get_rd_rsp(line_t line);
     void get_inval(addr_t addr);
     void op(cpu_msg_t cpu_msg, int beh, int rsp_beh, coh_msg_t rsp_msg, invack_cnt_t invack_cnt, 
 	    coh_msg_t put_msg, hsize_t hsize, addr_breakdown_t req_addr, word_t req_word, 
 	    line_t rsp_line, int fwd_beh, coh_msg_t fwd_msg, cache_id_t fwd_id, line_t fwd_line);
-    void op_flush(coh_msg_t coh_msg, addr_t addr_line);
+    void op_flush(coh_msg_t coh_msg, addr_t addr);
     void flush(int n_lines);
 
 private:

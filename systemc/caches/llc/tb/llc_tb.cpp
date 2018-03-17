@@ -514,7 +514,7 @@ void llc_tb::get_rsp_out(coh_msg_t coh_msg, addr_t addr, line_t line, invack_cnt
     llc_rsp_out_tb.get(rsp_out);
 
     if (rsp_out.coh_msg != coh_msg       ||
-	rsp_out.addr   != addr           ||
+	rsp_out.addr   != addr.range(TAG_RANGE_HI, SET_RANGE_LO) ||
 	rsp_out.line   != line           ||
 	rsp_out.invack_cnt != invack_cnt ||
 	rsp_out.req_id != req_id         ||
@@ -524,7 +524,7 @@ void llc_tb::get_rsp_out(coh_msg_t coh_msg, addr_t addr, line_t line, invack_cnt
 	CACHE_REPORT_ERROR("coh_msg get rsp out", rsp_out.coh_msg);
 	CACHE_REPORT_ERROR("coh_msg get rsp out gold", coh_msg);
 	CACHE_REPORT_ERROR("addr get rsp out", rsp_out.addr);
-	CACHE_REPORT_ERROR("addr get rsp out gold", addr);
+	CACHE_REPORT_ERROR("addr get rsp out gold", addr.range(TAG_RANGE_HI, SET_RANGE_LO));
 	CACHE_REPORT_ERROR("line get rsp out", rsp_out.line);
 	CACHE_REPORT_ERROR("line get rsp out gold", line);
 	CACHE_REPORT_ERROR("invack_cnt get rsp out", rsp_out.invack_cnt);
@@ -544,7 +544,7 @@ void llc_tb::get_fwd_out(coh_msg_t coh_msg, addr_t addr, cache_id_t req_id, cach
     llc_fwd_out_tb.get(fwd_out);
 
     if (fwd_out.coh_msg != coh_msg       ||
-	fwd_out.addr   != addr           ||
+	fwd_out.addr   != addr.range(TAG_RANGE_HI, SET_RANGE_LO) ||
 	fwd_out.req_id != req_id         ||
 	fwd_out.dest_id != dest_id
 	) {
@@ -552,7 +552,7 @@ void llc_tb::get_fwd_out(coh_msg_t coh_msg, addr_t addr, cache_id_t req_id, cach
 	CACHE_REPORT_ERROR("coh_msg get fwd out", fwd_out.coh_msg);
 	CACHE_REPORT_ERROR("coh_msg get fwd out gold", coh_msg);
 	CACHE_REPORT_ERROR("addr get fwd out", fwd_out.addr);
-	CACHE_REPORT_ERROR("addr get fwd out gold", addr);
+	CACHE_REPORT_ERROR("addr get fwd out gold", addr.range(TAG_RANGE_HI, SET_RANGE_LO));
 	CACHE_REPORT_ERROR("req_id get fwd out", fwd_out.req_id);
 	CACHE_REPORT_ERROR("req_id get fwd out gold", req_id);
 	CACHE_REPORT_ERROR("dest_id get fwd out", fwd_out.dest_id);
@@ -568,13 +568,13 @@ void llc_tb::get_mem_req(bool hwrite, addr_t addr, line_t line, bool rpt)
     mem_req = llc_mem_req_tb.get();
 
     if (mem_req.hwrite != hwrite ||
-	mem_req.addr   != addr   ||
+	mem_req.addr   != addr.range(TAG_RANGE_HI, SET_RANGE_LO)   ||
 	mem_req.line   != line) {
 	
 	CACHE_REPORT_ERROR("get mem req", mem_req.hwrite);
 	CACHE_REPORT_ERROR("get mem req gold", hwrite);
 	CACHE_REPORT_ERROR("get mem req", mem_req.addr);
-	CACHE_REPORT_ERROR("get mem req gold", addr);
+	CACHE_REPORT_ERROR("get mem req gold", addr.range(TAG_RANGE_HI, SET_RANGE_LO));
 	CACHE_REPORT_ERROR("get mem req", mem_req.line);
 	CACHE_REPORT_ERROR("get mem req gold", line);
     }
@@ -600,7 +600,7 @@ void llc_tb::put_req_in(coh_msg_t coh_msg, addr_t addr, line_t line, cache_id_t 
     llc_req_in_t req_in;
     req_in.coh_msg = coh_msg;
     req_in.hprot = HPROT_DATA;
-    req_in.addr = addr;
+    req_in.addr = addr.range(TAG_RANGE_HI, SET_RANGE_LO);
     req_in.line = line;
     req_in.req_id = req_id;
 
@@ -615,7 +615,7 @@ void llc_tb::put_req_in(coh_msg_t coh_msg, addr_t addr, line_t line, cache_id_t 
 void llc_tb::put_rsp_in(addr_t addr, line_t line, cache_id_t req_id, bool rpt)
 {
     llc_rsp_in_t rsp_in;
-    rsp_in.addr = addr;
+    rsp_in.addr = addr.range(TAG_RANGE_HI, SET_RANGE_LO);
     rsp_in.line = line;
     rsp_in.req_id = req_id;
 

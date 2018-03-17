@@ -30,6 +30,7 @@ void l2::ctrl()
 
 	// input address breakdown
 	addr_breakdown_t addr_br;
+	line_breakdown_t line_br;
 
 	// tag lookup
 	bool		tag_hit;
@@ -53,9 +54,7 @@ void l2::ctrl()
 
 	// tmp
 	unstable_state_t	state_tmp;
-	addr_t			addr_evict;
 	coh_msg_t		coh_msg_tmp;
-	tag_t			tag_tmp;
 	set_t                   set_tmp;
 
 	{
@@ -114,9 +113,9 @@ void l2::ctrl()
 	    
 	    wait(); // for SystemC simulation only
 
-	    addr_br.breakdown(rsp_in.addr);
+	    line_br.line_breakdown(rsp_in.addr);
 
-	    reqs_lookup(addr_br, reqs_hit_i);
+	    reqs_lookup(line_br, reqs_hit_i);
 
 	    switch (rsp_in.coh_msg) {
 		
@@ -129,7 +128,7 @@ void l2::ctrl()
 		reqs[reqs_hit_i].state = INVALID;
 		reqs_cnt++;
 
-		put_reqs(addr_br.set, reqs[reqs_hit_i].way, addr_br.tag, rsp_in.line, 
+		put_reqs(line_br.set, reqs[reqs_hit_i].way, line_br.tag, rsp_in.line, 
 			 reqs[reqs_hit_i].hprot, EXCLUSIVE, reqs_hit_i);
 	    }
 	    break;
@@ -149,7 +148,7 @@ void l2::ctrl()
 		    reqs[reqs_hit_i].state = INVALID;
 		    reqs_cnt++;
 
-		    put_reqs(addr_br.set, reqs[reqs_hit_i].way, addr_br.tag,
+		    put_reqs(line_br.set, reqs[reqs_hit_i].way, line_br.tag,
 			     rsp_in.line, reqs[reqs_hit_i].hprot, SHARED,
 			     reqs_hit_i);
 		}
@@ -170,7 +169,7 @@ void l2::ctrl()
 
 		    if (reqs[reqs_hit_i].invack_cnt == MAX_N_CPU) {
 
-			put_reqs(addr_br.set, reqs[reqs_hit_i].way, addr_br.tag,
+			put_reqs(line_br.set, reqs[reqs_hit_i].way, line_br.tag,
 				 rsp_in.line, reqs[reqs_hit_i].hprot, MODIFIED, reqs_hit_i);
 
 			// resolve unstable state
@@ -213,6 +212,10 @@ void l2::ctrl()
 
 		default :
 		    RSP_DATA_DEFAULT;
+
+		    CACHE_REPORT_VAR(sc_time_stamp(), "DEFAULT: state ", reqs[reqs_hit_i].state);
+		    CACHE_REPORT_VAR(sc_time_stamp(), "DEFAULT: tag ", reqs[reqs_hit_i].tag);
+		    CACHE_REPORT_VAR(sc_time_stamp(), "DEFAULT: set ", reqs[reqs_hit_i].set);
 		}
 
 		break;
@@ -230,8 +233,8 @@ void l2::ctrl()
 		    case IMA :
 		    case SMA :
 		    {
-			put_reqs(addr_br.set, reqs[reqs_hit_i].way, addr_br.tag, reqs[reqs_hit_i].line, 
-				 reqs[reqs_hit_i].hprot, MODIFIED, reqs_hit_i);
+			put_reqs(line_br.set, reqs[reqs_hit_i].way, line_br.tag, 
+				 reqs[reqs_hit_i].line, reqs[reqs_hit_i].hprot, MODIFIED, reqs_hit_i);
 
 			reqs[reqs_hit_i].state = INVALID;
 			reqs_cnt++;
@@ -275,9 +278,9 @@ void l2::ctrl()
 
 	    wait(); // for SystemC simulation only
 
-	    addr_br.breakdown(fwd_in.addr);
+	    line_br.line_breakdown(fwd_in.addr);
 
-	    fwd_stall = reqs_peek_fwd(addr_br, reqs_i, reqs_hit, fwd_in.coh_msg);
+	    fwd_stall = reqs_peek_fwd(line_br, reqs_i, reqs_hit, fwd_in.coh_msg);
 
 	    if (fwd_in.coh_msg == FWD_PUTACK) {
 		
@@ -319,11 +322,10 @@ void l2::ctrl()
 		    reqs[reqs_i].state = state_tmp;
 		    reqs[reqs_i].tag = reqs[reqs_i].tag_estall;
 
-		    addr_br.line = (reqs[reqs_i].tag_estall << TAG_RANGE_LO) | 
-			(addr_br.set << SET_RANGE_LO);
+		    line_addr_t line_addr_tmp = (reqs[reqs_i].tag_estall << SET_BITS) | (line_br.set);
 
 		    // send request to directory
-		    send_req_out(coh_msg_tmp, reqs[reqs_i].hprot, addr_br.line, empty_line);
+		    send_req_out(coh_msg_tmp, reqs[reqs_i].hprot, line_addr_tmp, empty_line);
 
 		} else {
 
@@ -397,8 +399,7 @@ void l2::ctrl()
 
 	    } else {
 
-		// TODO maybe make lighter as there is no miss
-		tag_lookup(addr_br, tag_hit, way_hit, empty_way_found, empty_way); 
+		tag_lookup_fwd(line_br, way_hit); 
 
 		switch (fwd_in.coh_msg) {
 
@@ -412,7 +413,7 @@ void l2::ctrl()
 		    wait();
 		    send_rsp_out(RSP_DATA, fwd_in.req_id, 0, fwd_in.addr, lines_buf[way_hit]); // to directory
 		    // }
-		    states.port1[0][(addr_br.set << L2_WAY_BITS) + way_hit] = SHARED;
+		    states.port1[0][(line_br.set << L2_WAY_BITS) + way_hit] = SHARED;
 
 		    break;
 		}
@@ -422,11 +423,11 @@ void l2::ctrl()
 		    FWD_NOHIT_GETM;
 
 		    if (!ongoing_flush)
-			send_inval(addr_br.word);
+			send_inval(fwd_in.addr);
 
 		    send_rsp_out(RSP_DATA, fwd_in.req_id, 1, fwd_in.addr, lines_buf[way_hit]);
 
-		    states.port1[0][(addr_br.set << L2_WAY_BITS) + way_hit] = INVALID;
+		    states.port1[0][(line_br.set << L2_WAY_BITS) + way_hit] = INVALID;
 
 		    break;
 		}
@@ -436,11 +437,11 @@ void l2::ctrl()
 		    FWD_NOHIT_INV;
 
 		    if (!ongoing_flush)
-			send_inval(addr_br.word);
+			send_inval(fwd_in.addr);
 
 		    send_rsp_out(RSP_INVACK, fwd_in.req_id, 1, fwd_in.addr, empty_line);
 
-		    states.port1[0][(addr_br.set << L2_WAY_BITS) + way_hit] = INVALID;
+		    states.port1[0][(line_br.set << L2_WAY_BITS) + way_hit] = INVALID;
 
 		    break;
 		}
@@ -487,10 +488,12 @@ void l2::ctrl()
 
 			    reqs_peek_flush(flush_set, reqs_i);
 
-			    addr_br.line = (tag_buf[flush_way] << TAG_RANGE_LO) | 
+			    addr_t addr_tmp = (tag_buf[flush_way] << TAG_RANGE_LO) | 
 				(flush_set << SET_RANGE_LO);
+			    addr_br.breakdown(addr_tmp);
 
-			    addr_br.breakdown(addr_br.line);
+			    line_addr_t line_addr_tmp = (tag_buf[flush_way] << SET_BITS) | 
+				(flush_set);
 
 			    states.port1[0][(flush_set << L2_WAY_BITS) + flush_way] = INVALID;
 
@@ -518,8 +521,8 @@ void l2::ctrl()
 			    fill_reqs(0, addr_br, 0, flush_way, 0, state_tmp, 
 				      0, 0, lines_buf[flush_way], reqs_i);
 
-
-			    send_req_out(coh_msg_tmp, empty_hprot, addr_br.line, lines_buf[flush_way]);
+			    send_req_out(coh_msg_tmp, empty_hprot, line_addr_tmp, 
+					 lines_buf[flush_way]);
 
 			    wait();
 			}
@@ -569,15 +572,16 @@ void l2::ctrl()
 
 		// assuming there can only be 1 atomic operation in flight at a time
 
-		if (atomic_line_addr != addr_br.line) {
+		if (atomic_line_addr != addr_br.line_addr) {
 
 		    ATOMIC_OVERRIDE;
 
 		    reqs[reqs_atomic_i].state = INVALID;
 		    reqs_cnt++;
 
-		    put_reqs(reqs[reqs_atomic_i].set, reqs[reqs_atomic_i].way, reqs[reqs_atomic_i].tag,
-			     reqs[reqs_atomic_i].line, reqs[reqs_atomic_i].hprot, MODIFIED, reqs_atomic_i);
+		    put_reqs(reqs[reqs_atomic_i].set, reqs[reqs_atomic_i].way, 
+			     reqs[reqs_atomic_i].tag, reqs[reqs_atomic_i].line, 
+			     reqs[reqs_atomic_i].hprot, MODIFIED, reqs_atomic_i);
 
 		    ongoing_atomic = false;
 
@@ -652,7 +656,7 @@ void l2::ctrl()
 
 		if (cpu_req.cpu_msg == READ_ATOMIC) {
 		    reqs_atomic_i = reqs_i;
-		    atomic_line_addr = addr_br.line;
+		    atomic_line_addr = addr_br.line_addr;
 		}
 
 		if (tag_hit) {
@@ -682,7 +686,7 @@ void l2::ctrl()
 
 			    // send request to directory
 			    send_req_out(REQ_GETM, cpu_req.hprot,
-					 addr_br.line, empty_line);
+					 addr_br.line_addr, empty_line);
 			}
 			break;
 
@@ -722,7 +726,7 @@ void l2::ctrl()
 
 			    // send request to directory
 			    send_req_out(REQ_GETM, cpu_req.hprot,
-					 addr_br.line, empty_line);
+					 addr_br.line_addr, empty_line);
 			}
 			break;
 
@@ -793,14 +797,13 @@ void l2::ctrl()
 			      state_tmp, cpu_req.hprot, cpu_req.word, empty_line, reqs_i);
 
 		    // send request to directory
-		    send_req_out(coh_msg_tmp, cpu_req.hprot, addr_br.line, empty_line);
+		    send_req_out(coh_msg_tmp, cpu_req.hprot, addr_br.line_addr, empty_line);
 
 		} else {
 
 		    evict_stall = true;
-
-		    addr_evict = (tag_buf[evict_way] << TAG_RANGE_LO) | (addr_br.set << SET_RANGE_LO);
-		    tag_tmp = addr_br.tag;
+		    line_addr_t line_addr_evict = (tag_buf[evict_way] << SET_BITS) | (addr_br.set);
+		    tag_t tag_tmp = addr_br.tag;
 		    addr_br.tag = tag_buf[evict_way];
 		
 		    switch (state_buf[evict_way]) {
@@ -824,8 +827,8 @@ void l2::ctrl()
 			EVICT_DEFAULT;
 		    }
 
-		    send_inval(addr_evict);
-		    send_req_out(coh_msg_tmp, empty_hprot, addr_evict, lines_buf[evict_way]);
+		    send_inval(line_addr_evict);
+		    send_req_out(coh_msg_tmp, empty_hprot, line_addr_evict, lines_buf[evict_way]);
 		    fill_reqs(cpu_req.cpu_msg, addr_br, tag_tmp, evict_way, cpu_req.hsize, state_tmp, 
 			      cpu_req.hprot, cpu_req.word, lines_buf[evict_way], reqs_i);
 		}
@@ -1077,14 +1080,14 @@ void l2::send_rd_rsp(line_t line)
     l2_rd_rsp.put(rd_rsp);
 }
 
-void l2::send_inval(addr_t addr_inval)
+void l2::send_inval(line_addr_t addr_inval)
 {
     SEND_INVAL;
 
     l2_inval.put(addr_inval);
 }
 
-void l2::send_req_out(coh_msg_t coh_msg, hprot_t hprot, addr_t line_addr, line_t line)
+void l2::send_req_out(coh_msg_t coh_msg, hprot_t hprot, line_addr_t line_addr, line_t line)
 {
     SEND_REQ_OUT;
 
@@ -1100,7 +1103,7 @@ void l2::send_req_out(coh_msg_t coh_msg, hprot_t hprot, addr_t line_addr, line_t
     l2_req_out.nb_put(req_out);
 }
 
-void l2::send_rsp_out(coh_msg_t coh_msg, cache_id_t req_id, bool to_req, addr_t line_addr, line_t line)
+void l2::send_rsp_out(coh_msg_t coh_msg, cache_id_t req_id, bool to_req, line_addr_t line_addr, line_t line)
 {
     SEND_RSP_OUT;
 
@@ -1125,6 +1128,23 @@ void l2::fill_reqs(cpu_msg_t cpu_msg, addr_breakdown_t addr_br, tag_t tag_estall
 {
     FILL_REQS;
 
+    CACHE_REPORT_INFO("FILL REQS: 0 ");
+    CACHE_REPORT_VAR(sc_time_stamp(), "state ", reqs[0].state);
+    CACHE_REPORT_VAR(sc_time_stamp(), "tag ", reqs[0].tag);
+    CACHE_REPORT_VAR(sc_time_stamp(), "set ", reqs[0].set);
+    CACHE_REPORT_INFO("FILL REQS: 1 ");
+    CACHE_REPORT_VAR(sc_time_stamp(), "state ", reqs[1].state);
+    CACHE_REPORT_VAR(sc_time_stamp(), "tag ", reqs[1].tag);
+    CACHE_REPORT_VAR(sc_time_stamp(), "set ", reqs[1].set);
+    CACHE_REPORT_INFO("FILL REQS: 2 ");
+    CACHE_REPORT_VAR(sc_time_stamp(), "state ", reqs[2].state);
+    CACHE_REPORT_VAR(sc_time_stamp(), "tag ", reqs[2].tag);
+    CACHE_REPORT_VAR(sc_time_stamp(), "set ", reqs[2].set);
+    CACHE_REPORT_INFO("FILL REQS: 3 ");
+    CACHE_REPORT_VAR(sc_time_stamp(), "state ", reqs[3].state);
+    CACHE_REPORT_VAR(sc_time_stamp(), "tag ", reqs[3].tag);
+    CACHE_REPORT_VAR(sc_time_stamp(), "set ", reqs[3].set);
+
     reqs[reqs_i].cpu_msg     = cpu_msg;
     reqs[reqs_i].tag	     = addr_br.tag;
     reqs[reqs_i].tag_estall  = tag_estall;
@@ -1138,6 +1158,11 @@ void l2::fill_reqs(cpu_msg_t cpu_msg, addr_breakdown_t addr_br, tag_t tag_estall
     reqs[reqs_i].invack_cnt  = MAX_N_CPU;
     reqs[reqs_i].word	     = word;
     reqs[reqs_i].line	     = line;
+
+    CACHE_REPORT_VAR(sc_time_stamp(), "FILL REQS: i ", reqs_i);
+    CACHE_REPORT_VAR(sc_time_stamp(), "state ", reqs[reqs_i].state);
+    CACHE_REPORT_VAR(sc_time_stamp(), "tag ", reqs[reqs_i].tag);
+    CACHE_REPORT_VAR(sc_time_stamp(), "set ", reqs[reqs_i].set);
 
     reqs_cnt--;
 }
@@ -1238,7 +1263,32 @@ void l2::tag_lookup(addr_breakdown_t addr_br, bool &tag_hit, l2_way_t &way_hit, 
     }
 }
 
-void l2::reqs_lookup(addr_breakdown_t addr_br, sc_uint<REQS_BITS> &reqs_hit_i)
+void l2::tag_lookup_fwd(line_breakdown_t line_br, l2_way_t &way_hit)
+{
+    TAG_LOOKUP;
+
+    read_set(line_br.set);
+
+    for (int i = L2_WAYS-1; i >=0; --i) {
+	TAG_LOOKUP_LOOP;
+
+	// HLS_BREAK_ARRAY_DEPENDENCY(tags); // TODO are these needed?
+	// HLS_BREAK_ARRAY_DEPENDENCY(states);
+	// HLS_BREAK_ARRAY_DEPENDENCY(hprots);
+	// HLS_BREAK_ARRAY_DEPENDENCY(lines);
+
+	// tag_buf[i]   = tags[base + i];
+	// state_buf[i] = states[base + i];
+	// hprot_buf[i] = hprots[base + i];
+	// lines_buf[i] = lines[base + i];
+
+	if (tag_buf[i] == line_br.tag && state_buf[i] != INVALID) {
+	    way_hit = i;
+	}
+    }
+}
+
+void l2::reqs_lookup(line_breakdown_t line_br, sc_uint<REQS_BITS> &reqs_hit_i)
 {
     REQS_LOOKUP;
 
@@ -1246,8 +1296,13 @@ void l2::reqs_lookup(addr_breakdown_t addr_br, sc_uint<REQS_BITS> &reqs_hit_i)
 
     for (unsigned int i = 0; i < N_REQS; ++i) {
 	REQS_LOOKUP_LOOP;
+
+	CACHE_REPORT_VAR(sc_time_stamp(), "REQS LOOKUP: i ", i);
+	CACHE_REPORT_VAR(sc_time_stamp(), "state ", reqs[i].state);
+	CACHE_REPORT_VAR(sc_time_stamp(), "tag ", reqs[i].tag);
+	CACHE_REPORT_VAR(sc_time_stamp(), "set ", reqs[i].set);
 	
-	if (reqs[i].tag == addr_br.tag && reqs[i].set == addr_br.set && reqs[i].state != INVALID) {
+	if (reqs[i].tag == line_br.tag && reqs[i].set == line_br.set && reqs[i].state != INVALID) {
 	    reqs_hit = true;
 	    reqs_hit_i = i;
 	}
@@ -1288,7 +1343,7 @@ void l2::reqs_peek_flush(set_t set, sc_uint<REQS_BITS> &reqs_i)
 }
 
 
-bool l2::reqs_peek_fwd(addr_breakdown_t addr_br, sc_uint<REQS_BITS> &reqs_i, bool &reqs_hit, coh_msg_t coh_msg)
+bool l2::reqs_peek_fwd(line_breakdown_t line_br, sc_uint<REQS_BITS> &reqs_i, bool &reqs_hit, coh_msg_t coh_msg)
 {
     REQS_PEEK_FWD;
 
@@ -1301,8 +1356,8 @@ bool l2::reqs_peek_fwd(addr_breakdown_t addr_br, sc_uint<REQS_BITS> &reqs_i, boo
 	REQS_PEEK_FWD_LOOP;
 	
 	if (reqs[i].state != INVALID && 
-	    reqs[i].tag == addr_br.tag && 
-	    reqs[i].set == addr_br.set) {
+	    reqs[i].tag == line_br.tag && 
+	    reqs[i].set == line_br.set) {
 
 	    reqs_hit = true;
 	    reqs_i = i;

@@ -21,6 +21,7 @@ typedef sc_uint<HPROT_WIDTH>		hprot_t;
 typedef sc_uint<INVACK_CNT_WIDTH>	invack_cnt_t;
 typedef sc_uint<INVACK_CNT_CALC_WIDTH>	invack_cnt_calc_t;
 typedef sc_uint<ADDR_BITS>		addr_t;
+typedef sc_uint<LINE_ADDR_BITS>		line_addr_t;
 typedef sc_uint<L2_ADDR_BITS>           l2_addr_t;
 typedef sc_uint<LLC_ADDR_BITS>          llc_addr_t;
 typedef sc_uint<BITS_PER_WORD>		word_t;
@@ -139,7 +140,7 @@ public:
 };
 
 // invalidate address
-typedef addr_t l2_inval_t;
+typedef line_addr_t l2_inval_t;
 
 /* L2/LLC to L2 */
 
@@ -150,7 +151,7 @@ class l2_fwd_in_t
 public:
 
     coh_msg_t	coh_msg;	// fwd-gets, fwd-getm, fwd-invalidate
-    addr_t	addr;
+    line_addr_t	addr;
     cache_id_t  req_id;
 
     l2_fwd_in_t() :
@@ -191,7 +192,7 @@ class l2_rsp_in_t
 public:
 
     coh_msg_t		coh_msg;	// data, e-data, inv-ack, put-ack
-    addr_t		addr;
+    line_addr_t		addr;
     line_t		line;
     invack_cnt_t	invack_cnt;
 
@@ -241,7 +242,7 @@ class llc_rsp_out_t
 public:
 
     coh_msg_t		coh_msg;	// data, e-data, inv-ack, put-ack
-    addr_t		addr;
+    line_addr_t		addr;
     line_t		line;
     invack_cnt_t	invack_cnt;
     cache_id_t          req_id;
@@ -303,7 +304,7 @@ class llc_fwd_out_t
 public:
 
     coh_msg_t		coh_msg;	// fwd_gets, fwd_getm, fwd_inv
-    addr_t		addr;
+    line_addr_t		addr;
     cache_id_t          req_id;
     cache_id_t          dest_id;
 
@@ -353,7 +354,7 @@ public:
 
     coh_msg_t	coh_msg;	// gets, getm, puts, putm
     hprot_t	hprot;
-    addr_t	addr;
+    line_addr_t	addr;
     line_t	line;
 
     l2_req_out_t() :
@@ -404,7 +405,7 @@ public:
 
     coh_msg_t	coh_msg;	// gets, getm, puts, putm
     hprot_t	hprot;
-    addr_t	addr;
+    line_addr_t	addr;
     line_t	line;
     cache_id_t  req_id;
 
@@ -463,7 +464,7 @@ public:
     coh_msg_t	coh_msg;	// gets, getm, puts, putm
     cache_id_t  req_id;
     bool        to_req;
-    addr_t	addr;
+    line_addr_t	addr;
     line_t	line;
 
     l2_rsp_out_t() :
@@ -517,7 +518,7 @@ class llc_rsp_in_t
 
 public:
 
-    addr_t	addr;
+    line_addr_t	addr;
     line_t	line;
     cache_id_t  req_id;
 
@@ -568,7 +569,7 @@ public:
     bool	hwrite;	// r, w, r atom., w atom., flush
     hsize_t	hsize;
     hprot_t	hprot;
-    addr_t	addr;
+    line_addr_t	addr;
     line_t	line;
 
     llc_mem_req_t() :
@@ -733,7 +734,7 @@ class fwd_stall_backup_t
 public:
 
     coh_msg_t coh_msg;
-    addr_t addr; 
+    line_addr_t addr; 
 
     fwd_stall_backup_t() :
 	coh_msg(0),
@@ -757,13 +758,14 @@ public:
     }
 };
 
-// forward stall backup
+// addr breakdown
 class addr_breakdown_t
 {
 
 public:
 
     addr_t              line;
+    line_addr_t         line_addr;
     addr_t              word;
     tag_t               tag;
     set_t               set;
@@ -772,6 +774,7 @@ public:
 
     addr_breakdown_t() :
 	line(0),
+	line_addr(0),
 	word(0),
 	tag(0),
 	set(0),
@@ -780,71 +783,130 @@ public:
     {}
 
     inline addr_breakdown_t& operator = (const addr_breakdown_t& x) {
-	line   = x.line;
-	word   = x.word;
-	tag    = x.tag;
-	set    = x.set;
-	w_off  = x.w_off;
-	b_off  = x.b_off;
+	line	  = x.line;
+	line_addr = x.line_addr;
+	word	  = x.word;
+	tag	  = x.tag;
+	set	  = x.set;
+	w_off	  = x.w_off;
+	b_off	  = x.b_off;
 	return *this;
     }
     inline bool operator == (const addr_breakdown_t& x) const {
-	return (x.line	== line		&& 
-		x.word	== word		&& 
-		x.tag	== tag		&& 
-		x.set	== set		&& 
-		x.w_off == w_off	&& 
-		x.b_off == b_off);
+	return (x.line	    == line		&& 
+		x.line_addr == line_addr	&& 
+		x.word	    == word		&& 
+		x.tag	    == tag		&& 
+		x.set	    == set		&& 
+		x.w_off	    == w_off		&& 
+		x.b_off	    == b_off);
     }
     inline friend ostream & operator<<(ostream& os, const addr_breakdown_t& x) {
 	os << hex << "(" 
-	   << "line: "    << x.line 
-	   << ", word: "  << x.word
-	   << ", tag: "   << x.tag 
-	   << ", set: "   << x.set 
-	   << ", w_off: " << x.w_off 
-	   << ", b_off: " << x.b_off << ")";
+	   << "line: "      << x.line 
+	   << "line_addr: " << x.line_addr 
+	   << ", word: "    << x.word
+	   << ", tag: "     << x.tag 
+	   << ", set: "     << x.set 
+	   << ", w_off: "   << x.w_off 
+	   << ", b_off: "   << x.b_off << ")";
 	return os;
     }
     
     void tag_incr(int a) {
-	line += a * TAG_OFFSET;
-	word += a * TAG_OFFSET;
-	tag += a;
+	line	  += a * TAG_OFFSET;
+	line_addr += a * (1 << SET_BITS);
+	word	  += a * TAG_OFFSET;
+	tag	  += a;
     }
 
     void set_incr(int a) {
 	line += a * SET_OFFSET;
+	line_addr += a;
 	word += a * SET_OFFSET;
-	set += a;
+	set  += a;
     }
 
     void tag_decr(int a) {
-    	line -= a * TAG_OFFSET;
-    	word -= a * TAG_OFFSET;
-    	tag -= a;
+    	line	  -= a * TAG_OFFSET;
+    	line_addr -= a * (1 << SET_BITS);
+    	word	  -= a * TAG_OFFSET;
+    	tag	  -= a;
     }
 
     void set_decr(int a) {
 	line -= a * SET_OFFSET;
+	line_addr -= a;
 	word -= a * SET_OFFSET;
-	set -= a;
+	set  -= a;
     }
 
     void breakdown(addr_t addr)
     {
-	line  = addr;
+	line = addr;
+	line_addr = addr.range(TAG_RANGE_HI, SET_RANGE_LO);
 	word  = addr;
 	tag   = addr.range(TAG_RANGE_HI, TAG_RANGE_LO);
 	set   = addr.range(SET_RANGE_HI, SET_RANGE_LO);
 	w_off = addr.range(W_OFF_RANGE_HI, W_OFF_RANGE_LO);
 	b_off = addr.range(B_OFF_RANGE_HI, B_OFF_RANGE_LO);
 
-	line.range(OFF_RANGE_HI, OFF_RANGE_LO)		= 0;
-	word.range(B_OFF_RANGE_HI, B_OFF_RANGE_LO)	= 0;
+	line.range(OFF_RANGE_HI, OFF_RANGE_LO)	   = 0;
+	word.range(B_OFF_RANGE_HI, B_OFF_RANGE_LO) = 0;
     }
 };
 
+// line breakdown
+class line_breakdown_t
+{
 
+public:
+
+    tag_t       tag;
+    set_t       set;
+
+    line_breakdown_t() :
+	tag(0),
+	set(0)
+    {}
+
+    inline line_breakdown_t& operator = (const line_breakdown_t& x) {
+	tag    = x.tag;
+	set    = x.set;
+	return *this;
+    }
+    inline bool operator == (const line_breakdown_t& x) const {
+	return (x.tag	== tag		&& 
+		x.set	== set);
+    }
+    inline friend ostream & operator<<(ostream& os, const line_breakdown_t& x) {
+	os << hex << "(" 
+	   << ", tag: "   << x.tag 
+	   << ", set: "   << x.set << ")"; 
+	return os;
+    }
+    
+    void tag_incr(int a) {
+	tag += a;
+    }
+
+    void set_incr(int a) {
+	set += a;
+    }
+
+    void tag_decr(int a) {
+    	tag -= a;
+    }
+
+    void set_decr(int a) {
+	set -= a;
+    }
+
+    void line_breakdown(line_addr_t addr)
+    {
+	tag   = addr.range(TAG_BITS + SET_BITS - 1, SET_BITS);
+	set   = addr.range(SET_BITS - 1, 0);
+    }
+};
 
 #endif // __CACHE_TYPES_HPP__

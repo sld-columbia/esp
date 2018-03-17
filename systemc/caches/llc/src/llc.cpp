@@ -26,7 +26,7 @@ void llc::ctrl()
 	llc_req_in_t  req_in;
 
 	// input address breakdown
-	addr_breakdown_t addr_br;
+	line_breakdown_t line_br;
 	llc_way_t way = 0;
 	llc_addr_t llc_addr = 0;
 	bool evict = false;
@@ -65,9 +65,9 @@ void llc::ctrl()
 
 	    get_rsp_in(rsp_in);
 
-	    addr_br.breakdown(rsp_in.addr);
+	    line_br.line_breakdown(rsp_in.addr);
 
-	    lookup(addr_br.tag, addr_br.set, way, evict, llc_addr);
+	    lookup(line_br.tag, line_br.set, way, evict, llc_addr);
 
 	    if (sharers_buf[way] != 0) {
 		states[llc_addr] = SHARED;
@@ -93,10 +93,10 @@ void llc::ctrl()
 		req_in = req_in_stalled;
 	    }
 
-	    addr_br.breakdown(req_in.addr);
+	    line_br.line_breakdown(req_in.addr);
 	    CACHE_REPORT_VAR(sc_time_stamp(), "req_get addr: ", req_in.addr);
 
-	    lookup(addr_br.tag, addr_br.set, way, evict, llc_addr);
+	    lookup(line_br.tag, line_br.set, way, evict, llc_addr);
 
 	    if (evict && ((req_in.coh_msg != REQ_GETS && req_in.coh_msg != REQ_GETM) ||
 			  (state_buf[way] != INVALID_NOT_EMPTY))) {
@@ -105,15 +105,15 @@ void llc::ctrl()
 
 	    if (evict) {
 		HLS_DEFINE_PROTOCOL("llc-eviction");
-		// evict_ways[addr_br.set] = evict_way_buf + 1;
-		addr_t addr_evict = (tag_buf[way] << TAG_RANGE_LO) + addr_br.line.range(SET_RANGE_HI,0);
+		// evict_ways[line_br.set] = evict_way_buf + 1;
+		line_addr_t addr_evict = (tag_buf[way] << SET_BITS) + line_br.set;
 		send_mem_req(WRITE, addr_evict, hprot_buf[way], line_buf[way]);
 		wait();
 		send_mem_req(READ, req_in.addr, req_in.hprot, 0);
 		get_mem_rsp(line_buf[way]);
 		hprots[llc_addr] = req_in.hprot;
 		lines[llc_addr] = line_buf[way];
-		tags[llc_addr] = addr_br.tag;
+		tags[llc_addr] = line_br.tag;
 	    }
 
 	    switch (req_in.coh_msg) {
@@ -130,7 +130,7 @@ void llc::ctrl()
 			get_mem_rsp(line_buf[way]);
 			hprots[llc_addr] = req_in.hprot;
 			lines[llc_addr] = line_buf[way];
-			tags[llc_addr] = addr_br.tag;
+			tags[llc_addr] = line_br.tag;
 		    }
 		    owners[llc_addr] = req_in.req_id;
 		    sharers[llc_addr] = 0; // TODO REMOVE: It's redundant.
@@ -182,7 +182,7 @@ void llc::ctrl()
 			get_mem_rsp(line_buf[way]);
 			hprots[llc_addr] = req_in.hprot;
 			lines[llc_addr] = line_buf[way];
-			tags[llc_addr] = addr_br.tag;
+			tags[llc_addr] = line_br.tag;
 		    }
 		    owners[llc_addr] = req_in.req_id;
 		    sharers[llc_addr] = 0; // TODO REMOVE: It's redundant.
@@ -468,7 +468,7 @@ void llc::lookup(tag_t tag, set_t set, llc_way_t &way, bool &evict, llc_addr_t &
 #endif
 }
 
-void llc::send_mem_req(bool hwrite, addr_t addr, hprot_t hprot, line_t line)
+void llc::send_mem_req(bool hwrite, line_addr_t addr, hprot_t hprot, line_t line)
 {
     SEND_MEM_REQ;
     llc_mem_req_t mem_req;
@@ -500,7 +500,7 @@ void llc::get_rsp_in(llc_rsp_in_t &rsp_in)
     llc_rsp_in.nb_get(rsp_in);
 }
 
-void llc::send_rsp_out(coh_msg_t coh_msg, addr_t addr, line_t line, cache_id_t req_id,
+void llc::send_rsp_out(coh_msg_t coh_msg, line_addr_t addr, line_t line, cache_id_t req_id,
 		       cache_id_t dest_id, invack_cnt_t invack_cnt)
 {
     SEND_RSP_OUT;
@@ -514,7 +514,7 @@ void llc::send_rsp_out(coh_msg_t coh_msg, addr_t addr, line_t line, cache_id_t r
     llc_rsp_out.put(rsp_out);
 }
 
-void llc::send_fwd_out(coh_msg_t coh_msg, addr_t addr, cache_id_t req_id,
+void llc::send_fwd_out(coh_msg_t coh_msg, line_addr_t addr, cache_id_t req_id,
 		       cache_id_t dest_id)
 {
     SEND_FWD_OUT;
