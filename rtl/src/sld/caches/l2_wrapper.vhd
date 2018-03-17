@@ -101,31 +101,31 @@ architecture rtl of l2_wrapper is
   signal rd_rsp_data_line       : line_t;
   signal inval_ready            : std_ulogic;
   signal inval_valid            : std_ulogic;
-  signal inval_data             : addr_t;
+  signal inval_data             : line_addr_t;
   -- cache to NoC
   signal req_out_ready          : std_ulogic;
   signal req_out_valid          : std_ulogic;
   signal req_out_data_coh_msg   : coh_msg_t;
   signal req_out_data_hprot     : hprot_t;
-  signal req_out_data_addr      : addr_t;
+  signal req_out_data_addr      : line_addr_t;
   signal req_out_data_line      : line_t;
   signal rsp_out_ready          : std_ulogic;
   signal rsp_out_valid          : std_ulogic;
   signal rsp_out_data_coh_msg   : coh_msg_t;
   signal rsp_out_data_req_id    : cache_id_t;
   signal rsp_out_data_to_req    : std_ulogic;
-  signal rsp_out_data_addr      : addr_t;
+  signal rsp_out_data_addr      : line_addr_t;
   signal rsp_out_data_line      : line_t;
   -- NoC to cache
   signal fwd_in_ready           : std_ulogic;
   signal fwd_in_valid           : std_ulogic;
   signal fwd_in_data_coh_msg    : coh_msg_t;
-  signal fwd_in_data_addr       : addr_t;
+  signal fwd_in_data_addr       : line_addr_t;
   signal fwd_in_data_req_id     : cache_id_t;
   signal rsp_in_valid           : std_ulogic;
   signal rsp_in_ready           : std_ulogic;
   signal rsp_in_data_coh_msg    : coh_msg_t;
-  signal rsp_in_data_addr       : addr_t;
+  signal rsp_in_data_addr       : line_addr_t;
   signal rsp_in_data_line       : line_t;
   signal rsp_in_data_invack_cnt : invack_cnt_t;
   -- debug
@@ -283,11 +283,11 @@ architecture rtl of l2_wrapper is
   -- FIFO for invalidation addresses
   signal inv_fifo_rdreq        : std_ulogic;
   signal inv_fifo_wrreq        : std_ulogic;
-  signal inv_fifo_data_in      : addr_t;
+  signal inv_fifo_data_in      : line_addr_t;
   signal inv_fifo_empty        : std_ulogic;
   signal inv_fifo_almost_empty : std_ulogic;
   signal inv_fifo_full         : std_ulogic;
-  signal inv_fifo_data_out     : addr_t;
+  signal inv_fifo_data_out     : line_addr_t;
 
   -------------------------------------------------------------------------------
   -- FSM: Request to NoC
@@ -297,7 +297,7 @@ architecture rtl of l2_wrapper is
   type req_reg_type is record
     state    : req_fsm;
     coh_msg  : coh_msg_t;
-    addr     : addr_t;
+    addr     : line_addr_t;
     line     : line_t;
     word_cnt : natural range 0 to 3;
     asserts  : asserts_req_t;
@@ -322,7 +322,7 @@ architecture rtl of l2_wrapper is
   type rsp_out_reg_type is record
     state    : rsp_out_fsm;
     coh_msg  : coh_msg_t;
-    addr     : addr_t;
+    addr     : line_addr_t;
     line     : line_t;
     word_cnt : natural range 0 to 3;
     asserts  : asserts_rsp_out_t;
@@ -371,7 +371,7 @@ architecture rtl of l2_wrapper is
     state      : rsp_in_fsm;
     coh_msg    : coh_msg_t;
     invack_cnt : invack_cnt_t;
-    addr       : addr_t;
+    addr       : line_addr_t;
     line       : line_t;
     word_cnt   : natural range 0 to 3;
     asserts    : asserts_rsp_in_t;
@@ -412,6 +412,13 @@ architecture rtl of l2_wrapper is
   signal load_alloc_reg      : load_alloc_reg_type := LOAD_ALLOC_REG_DEFAULT;
   signal load_alloc_reg_next : load_alloc_reg_type := LOAD_ALLOC_REG_DEFAULT;
 
+       
+  -------------------------------------------------------------------------------
+  -- Others
+  -------------------------------------------------------------------------------
+       
+  signal empty_offset : std_logic_vector(OFFSET_BITS - 1 downto 0) := (others => '0');
+ 
   -------------------------------------------------------------------------------
   -- Debug
   -------------------------------------------------------------------------------
@@ -771,7 +778,7 @@ begin  -- architecture rtl of l2_wrapper
   Invalidate_fifo : fifo_custom
     generic map (
       depth => N_REQS + 12,             -- TODO: what size here?
-      width => ADDR_BITS)
+      width => ADDR_BITS - OFFSET_BITS)
     port map (
       clk          => clk,
       rst          => rst,
@@ -1297,7 +1304,7 @@ begin  -- architecture rtl of l2_wrapper
           ahbmo.hbusreq <= '1';
           ahbmo.hlock   <= '1';
           ahbmo.htrans  <= HTRANS_NONSEQ;
-          ahbmo.haddr   <= inv_fifo_data_out;
+          ahbmo.haddr(TAG_RANGE_HI downto SET_RANGE_LO) <= inv_fifo_data_out;
           ahbmo.haddr(OFFSET_BITS - 1 downto 0) <= (others => '0');
           
           if granted = '1' and ahbmi.hready = '1' then
@@ -1313,7 +1320,7 @@ begin  -- architecture rtl of l2_wrapper
         ahbmo.hbusreq <= '1';
         ahbmo.hlock   <= '1';
         ahbmo.htrans  <= HTRANS_NONSEQ;
-        ahbmo.haddr   <= inv_fifo_data_out;
+        ahbmo.haddr(TAG_RANGE_HI downto SET_RANGE_LO) <= inv_fifo_data_out;
         ahbmo.haddr(OFFSET_BITS - 1 downto 0) <= (others => '0');
 
         if (granted = '1' and ahbmi.hready = '1') then
@@ -1325,7 +1332,7 @@ begin  -- architecture rtl of l2_wrapper
         ahbmo.hbusreq <= '1';
         ahbmo.hlock   <= '1';
         ahbmo.htrans  <= HTRANS_NONSEQ;
-        ahbmo.haddr   <= inv_fifo_data_out;
+        ahbmo.haddr(TAG_RANGE_HI downto SET_RANGE_LO)   <= inv_fifo_data_out;
         ahbmo.haddr(OFFSET_BITS - 1 downto 0) <= (others => '0');
 
         if (ahbmi.hready = '1') then
@@ -1356,7 +1363,7 @@ begin  -- architecture rtl of l2_wrapper
 
     variable reg    : req_reg_type;
     variable req_id : cache_id_t := (others => '0');
-
+    
   begin  -- process fsm_cache2noc
 
     -- initialize variables
@@ -1386,6 +1393,8 @@ begin  -- architecture rtl of l2_wrapper
             reg.addr    := req_out_data_addr;
             reg.line    := req_out_data_line;
 
+            
+            
             coherence_req_wrreq <= '1';
             coherence_req_data_in <= make_header(req_out_data_coh_msg, mem_info,
                                                  mem_num, req_out_data_hprot,
@@ -1406,13 +1415,13 @@ begin  -- architecture rtl of l2_wrapper
 
           if '0' & reg.coh_msg = REQ_PUTM then
 
-            coherence_req_data_in <= PREAMBLE_BODY & reg.addr;
+            coherence_req_data_in <= PREAMBLE_BODY & reg.addr & empty_offset;
             reg.state             := send_data;
             reg.word_cnt          := 0;
 
           else
 
-            coherence_req_data_in <= PREAMBLE_TAIL & reg.addr;
+            coherence_req_data_in <= PREAMBLE_TAIL & reg.addr & empty_offset;
             reg.state             := send_header;
 
           end if;
@@ -1511,13 +1520,13 @@ begin  -- architecture rtl of l2_wrapper
 
           if '0' & reg.coh_msg = RSP_DATA then
 
-            coherence_rsp_snd_data_in <= PREAMBLE_BODY & reg.addr;
+            coherence_rsp_snd_data_in <= PREAMBLE_BODY & reg.addr & empty_offset;
             reg.state                 := send_data;
             reg.word_cnt              := 0;
 
           else
 
-            coherence_rsp_snd_data_in <= PREAMBLE_TAIL & reg.addr;
+            coherence_rsp_snd_data_in <= PREAMBLE_TAIL & reg.addr & empty_offset;
             reg.state                 := send_header;
 
           end if;
@@ -1612,7 +1621,7 @@ begin  -- architecture rtl of l2_wrapper
 
           fwd_in_valid        <= '1';
           fwd_in_data_coh_msg <= reg.coh_msg;
-          fwd_in_data_addr    <= coherence_fwd_data_out(ADDR_BITS - 1 downto 0);
+          fwd_in_data_addr    <= coherence_fwd_data_out(ADDR_BITS - 1 downto SET_RANGE_LO);
           fwd_in_data_req_id  <= reg.req_id;
 
           reg.state := rcv_header;
@@ -1685,7 +1694,7 @@ begin  -- architecture rtl of l2_wrapper
               coherence_rsp_rcv_rdreq <= '1';
               rsp_in_valid            <= '1';
               rsp_in_data_coh_msg     <= reg.coh_msg;
-              rsp_in_data_addr        <= coherence_rsp_rcv_data_out(ADDR_BITS - 1 downto 0);
+              rsp_in_data_addr        <= coherence_rsp_rcv_data_out(ADDR_BITS - 1 downto SET_RANGE_LO);
               reg.state               := rcv_header;
 
             end if;
@@ -1694,7 +1703,7 @@ begin  -- architecture rtl of l2_wrapper
             -- RSP_DATA, RSP_EDATA
 
             coherence_rsp_rcv_rdreq <= '1';
-            reg.addr                := coherence_rsp_rcv_data_out(ADDR_BITS - 1 downto 0);
+            reg.addr                := coherence_rsp_rcv_data_out(ADDR_BITS - 1 downto SET_RANGE_LO);
             reg.word_cnt            := 0;
             reg.state               := rcv_data;
 

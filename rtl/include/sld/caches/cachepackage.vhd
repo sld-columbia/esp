@@ -121,6 +121,7 @@ package cachepackage is
   -- Types
   -----------------------------------------------------------------------------
   subtype addr_t is std_logic_vector(ADDR_BITS - 1 downto 0);
+  subtype line_addr_t is std_logic_vector(ADDR_BITS - OFFSET_BITS - 1 downto 0);
   subtype cpu_msg_t is std_logic_vector(CPU_MSG_TYPE_WIDTH - 1 downto 0);
   subtype hsize_t is std_logic_vector(HSIZE_WIDTH - 1 downto 0);
   subtype hprot_t is std_logic_vector(HPROT_WIDTH - 1 downto 0);
@@ -158,7 +159,7 @@ package cachepackage is
     return word_t;
 
   function make_header (coh_msg     : coh_msg_t; mem_info : tile_mem_info_vector;
-                        mem_num     : integer; hprot : hprot_t; addr : addr_t;
+                        mem_num     : integer; hprot : hprot_t; addr : line_addr_t;
                         local_x     : local_yx; local_y : local_yx;
                         to_req      : std_ulogic; req_id : cache_id_t;
                         cpu_tile_id : cpu_info_array; noc_xlen : integer)
@@ -236,11 +237,11 @@ package cachepackage is
       l2_cpu_req_data_word      : in word_t;
       l2_fwd_in_valid           : in std_ulogic;
       l2_fwd_in_data_coh_msg    : in coh_msg_t;
-      l2_fwd_in_data_addr       : in addr_t;
+      l2_fwd_in_data_addr       : in line_addr_t;
       l2_fwd_in_data_req_id     : in cache_id_t;
       l2_rsp_in_valid           : in std_ulogic;
       l2_rsp_in_data_coh_msg    : in coh_msg_t;
-      l2_rsp_in_data_addr       : in addr_t;
+      l2_rsp_in_data_addr       : in line_addr_t;
       l2_rsp_in_data_line       : in line_t;
       l2_rsp_in_data_invack_cnt : in invack_cnt_t;
       l2_flush_valid            : in std_ulogic;
@@ -261,17 +262,17 @@ package cachepackage is
       l2_rd_rsp_valid         : out std_ulogic;
       l2_rd_rsp_data_line     : out line_t;
       l2_inval_valid          : out std_ulogic;
-      l2_inval_data           : out addr_t;
+      l2_inval_data           : out line_addr_t;
       l2_req_out_valid        : out std_ulogic;
       l2_req_out_data_coh_msg : out coh_msg_t;
       l2_req_out_data_hprot   : out hprot_t;
-      l2_req_out_data_addr    : out addr_t;
+      l2_req_out_data_addr    : out line_addr_t;
       l2_req_out_data_line    : out line_t;
       l2_rsp_out_valid        : out std_ulogic;
       l2_rsp_out_data_coh_msg : out coh_msg_t;
       l2_rsp_out_data_req_id  : out cache_id_t;
       l2_rsp_out_data_to_req  : out std_ulogic;
-      l2_rsp_out_data_addr    : out addr_t;
+      l2_rsp_out_data_addr    : out line_addr_t;
       l2_rsp_out_data_line    : out line_t
 
       --reqs_cnt_out                 : out std_logic_vector(2 downto 0);
@@ -394,13 +395,13 @@ package cachepackage is
       llc_req_in_valid        : in  std_ulogic;
       llc_req_in_data_coh_msg : in  coh_msg_t;
       llc_req_in_data_hprot   : in  hprot_t;
-      llc_req_in_data_addr    : in  addr_t;
+      llc_req_in_data_addr    : in  line_addr_t;
       llc_req_in_data_line    : in  line_t;
       llc_req_in_data_req_id  : in  cache_id_t;
 
       llc_rsp_in_ready       : out std_ulogic;
       llc_rsp_in_valid       : in  std_ulogic;
-      llc_rsp_in_data_addr   : in  addr_t;
+      llc_rsp_in_data_addr   : in  line_addr_t;
       llc_rsp_in_data_line   : in  line_t;
       llc_rsp_in_data_req_id : in  cache_id_t;
 
@@ -411,7 +412,7 @@ package cachepackage is
       llc_rsp_out_ready           : in  std_ulogic;
       llc_rsp_out_valid           : out std_ulogic;
       llc_rsp_out_data_coh_msg    : out coh_msg_t;
-      llc_rsp_out_data_addr       : out addr_t;
+      llc_rsp_out_data_addr       : out line_addr_t;
       llc_rsp_out_data_line       : out line_t;
       llc_rsp_out_data_invack_cnt : out invack_cnt_t;
       llc_rsp_out_data_req_id     : out cache_id_t;
@@ -420,7 +421,7 @@ package cachepackage is
       llc_fwd_out_ready        : in  std_ulogic;
       llc_fwd_out_valid        : out std_ulogic;
       llc_fwd_out_data_coh_msg : out coh_msg_t;
-      llc_fwd_out_data_addr    : out addr_t;
+      llc_fwd_out_data_addr    : out line_addr_t;
       llc_fwd_out_data_req_id  : out cache_id_t;
       llc_fwd_out_data_dest_id : out cache_id_t;
 
@@ -429,7 +430,7 @@ package cachepackage is
       llc_mem_req_data_hwrite : out std_ulogic;
       llc_mem_req_data_hsize  : out hsize_t;
       llc_mem_req_data_hprot  : out hprot_t;
-      llc_mem_req_data_addr   : out addr_t;
+      llc_mem_req_data_addr   : out line_addr_t;
       llc_mem_req_data_line   : out line_t
 
       --asserts    : out llc_asserts_t;
@@ -504,13 +505,13 @@ package cachepackage is
       llc_req_in_valid        : in  std_ulogic;
       llc_req_in_data_coh_msg : in  coh_msg_t;
       llc_req_in_data_hprot   : in  hprot_t;
-      llc_req_in_data_addr    : in  addr_t;
+      llc_req_in_data_addr    : in  line_addr_t;
       llc_req_in_data_line    : in  line_t;
       llc_req_in_data_req_id  : in  cache_id_t;
 
       llc_rsp_in_ready       : out std_ulogic;
       llc_rsp_in_valid       : in  std_ulogic;
-      llc_rsp_in_data_addr   : in  addr_t;
+      llc_rsp_in_data_addr   : in  line_addr_t;
       llc_rsp_in_data_line   : in  line_t;
       llc_rsp_in_data_req_id : in  cache_id_t;
 
@@ -521,7 +522,7 @@ package cachepackage is
       llc_rsp_out_ready           : in  std_ulogic;
       llc_rsp_out_valid           : out std_ulogic;
       llc_rsp_out_data_coh_msg    : out coh_msg_t;
-      llc_rsp_out_data_addr       : out addr_t;
+      llc_rsp_out_data_addr       : out line_addr_t;
       llc_rsp_out_data_line       : out line_t;
       llc_rsp_out_data_invack_cnt : out invack_cnt_t;
       llc_rsp_out_data_req_id     : out cache_id_t;
@@ -530,7 +531,7 @@ package cachepackage is
       llc_fwd_out_ready        : in  std_ulogic;
       llc_fwd_out_valid        : out std_ulogic;
       llc_fwd_out_data_coh_msg : out coh_msg_t;
-      llc_fwd_out_data_addr    : out addr_t;
+      llc_fwd_out_data_addr    : out line_addr_t;
       llc_fwd_out_data_req_id  : out cache_id_t;
       llc_fwd_out_data_dest_id : out cache_id_t;
 
@@ -539,7 +540,7 @@ package cachepackage is
       llc_mem_req_data_hwrite : out std_ulogic;
       llc_mem_req_data_hsize  : out hsize_t;
       llc_mem_req_data_hprot  : out hprot_t;
-      llc_mem_req_data_addr   : out addr_t;
+      llc_mem_req_data_addr   : out line_addr_t;
       llc_mem_req_data_line   : out line_t
 
       --asserts    : out llc_asserts_t;
@@ -646,13 +647,13 @@ package cachepackage is
       llc_req_in_valid        : in  std_ulogic;
       llc_req_in_data_coh_msg : in  coh_msg_t;
       llc_req_in_data_hprot   : in  hprot_t;
-      llc_req_in_data_addr    : in  addr_t;
+      llc_req_in_data_addr    : in  line_addr_t;
       llc_req_in_data_line    : in  line_t;
       llc_req_in_data_req_id  : in  cache_id_t;
 
       llc_rsp_in_ready       : out std_ulogic;
       llc_rsp_in_valid       : in  std_ulogic;
-      llc_rsp_in_data_addr   : in  addr_t;
+      llc_rsp_in_data_addr   : in  line_addr_t;
       llc_rsp_in_data_line   : in  line_t;
       llc_rsp_in_data_req_id : in  cache_id_t;
 
@@ -663,7 +664,7 @@ package cachepackage is
       llc_rsp_out_ready           : in  std_ulogic;
       llc_rsp_out_valid           : out std_ulogic;
       llc_rsp_out_data_coh_msg    : out coh_msg_t;
-      llc_rsp_out_data_addr       : out addr_t;
+      llc_rsp_out_data_addr       : out line_addr_t;
       llc_rsp_out_data_line       : out line_t;
       llc_rsp_out_data_invack_cnt : out invack_cnt_t;
       llc_rsp_out_data_req_id     : out cache_id_t;
@@ -672,7 +673,7 @@ package cachepackage is
       llc_fwd_out_ready        : in  std_ulogic;
       llc_fwd_out_valid        : out std_ulogic;
       llc_fwd_out_data_coh_msg : out coh_msg_t;
-      llc_fwd_out_data_addr    : out addr_t;
+      llc_fwd_out_data_addr    : out line_addr_t;
       llc_fwd_out_data_req_id  : out cache_id_t;
       llc_fwd_out_data_dest_id : out cache_id_t;
 
@@ -681,7 +682,7 @@ package cachepackage is
       llc_mem_req_data_hwrite : out std_ulogic;
       llc_mem_req_data_hsize  : out hsize_t;
       llc_mem_req_data_hprot  : out hprot_t;
-      llc_mem_req_data_addr   : out addr_t;
+      llc_mem_req_data_addr   : out line_addr_t;
       llc_mem_req_data_line   : out line_t
 
       --asserts    : out llc_asserts_t;
@@ -924,7 +925,7 @@ package body cachepackage is
   end function read_from_line;
 
   function make_header (coh_msg     : coh_msg_t; mem_info : tile_mem_info_vector;
-                        mem_num     : integer; hprot : hprot_t; addr : addr_t;
+                        mem_num     : integer; hprot : hprot_t; addr : line_addr_t;
                         local_x     : local_yx; local_y : local_yx;
                         to_req      : std_ulogic; req_id : cache_id_t;
                         cpu_tile_id : cpu_info_array; noc_xlen : integer)
@@ -942,7 +943,8 @@ package body cachepackage is
       dest_y := mem_info(0).y;
       if mem_num /= 1 then
         for i in 0 to mem_num - 1 loop
-          if ((addr(31 downto 20) xor conv_std_logic_vector(mem_info(i).haddr, 12))
+          if ((addr(TAG_BITS + SET_BITS - 1  downto TAG_BITS + SET_BITS - 12)
+               xor conv_std_logic_vector(mem_info(i).haddr, 12))
               and conv_std_logic_vector(mem_info(i).hmask, 12)) = x"000" then
             dest_x := mem_info(i).x;
             dest_y := mem_info(i).y;

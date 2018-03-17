@@ -90,13 +90,13 @@ architecture rtl of llc_wrapper is
   signal llc_req_in_valid        : std_ulogic;
   signal llc_req_in_data_coh_msg : coh_msg_t;
   signal llc_req_in_data_hprot   : hprot_t;
-  signal llc_req_in_data_addr    : addr_t;
+  signal llc_req_in_data_addr    : line_addr_t;
   signal llc_req_in_data_line    : line_t;
   signal llc_req_in_data_req_id  : cache_id_t;
 
   signal llc_rsp_in_ready       : std_ulogic;
   signal llc_rsp_in_valid       : std_ulogic;
-  signal llc_rsp_in_data_addr   : addr_t;
+  signal llc_rsp_in_data_addr   : line_addr_t;
   signal llc_rsp_in_data_line   : line_t;
   signal llc_rsp_in_data_req_id : cache_id_t;
 
@@ -104,7 +104,7 @@ architecture rtl of llc_wrapper is
   signal llc_rsp_out_ready           : std_ulogic;
   signal llc_rsp_out_valid           : std_ulogic;
   signal llc_rsp_out_data_coh_msg    : coh_msg_t;
-  signal llc_rsp_out_data_addr       : addr_t;
+  signal llc_rsp_out_data_addr       : line_addr_t;
   signal llc_rsp_out_data_line       : line_t;
   signal llc_rsp_out_data_invack_cnt : invack_cnt_t;
   signal llc_rsp_out_data_req_id     : cache_id_t;
@@ -113,7 +113,7 @@ architecture rtl of llc_wrapper is
   signal llc_fwd_out_ready        : std_ulogic;
   signal llc_fwd_out_valid        : std_ulogic;
   signal llc_fwd_out_data_coh_msg : coh_msg_t;
-  signal llc_fwd_out_data_addr    : addr_t;
+  signal llc_fwd_out_data_addr    : line_addr_t;
   signal llc_fwd_out_data_req_id  : cache_id_t;
   signal llc_fwd_out_data_dest_id : cache_id_t;
 
@@ -128,7 +128,7 @@ architecture rtl of llc_wrapper is
   signal llc_mem_req_data_hwrite : std_ulogic;
   signal llc_mem_req_data_hsize  : hsize_t;
   signal llc_mem_req_data_hprot  : hprot_t;
-  signal llc_mem_req_data_addr   : addr_t;
+  signal llc_mem_req_data_addr   : line_addr_t;
   signal llc_mem_req_data_line   : line_t;
 
   -- debug
@@ -326,7 +326,7 @@ architecture rtl of llc_wrapper is
 
   type fwd_out_reg_type is record
     state   : fwd_out_fsm;
-    addr    : addr_t;
+    addr    : line_addr_t;
     asserts : asserts_fwd_t;
   end record fwd_out_reg_type;
 
@@ -346,7 +346,7 @@ architecture rtl of llc_wrapper is
   type rsp_out_reg_type is record
     state    : rsp_out_fsm;
     coh_msg  : coh_msg_t;
-    addr     : addr_t;
+    addr     : line_addr_t;
     line     : line_t;
     word_cnt : natural range 0 to 3;
     asserts  : asserts_rsp_out_t;
@@ -372,7 +372,7 @@ architecture rtl of llc_wrapper is
     state    : req_in_fsm;
     coh_msg  : coh_msg_t;
     hprot    : hprot_t;
-    addr     : addr_t;
+    addr     : line_addr_t;
     line     : line_t;
     req_id   : cache_id_t;
     word_cnt : natural range 0 to 3;
@@ -405,7 +405,7 @@ architecture rtl of llc_wrapper is
 
   type rsp_in_reg_type is record
     state    : rsp_in_fsm;
-    addr     : addr_t;
+    addr     : line_addr_t;
     line     : line_t;
     req_id   : cache_id_t;
     word_cnt : natural range 0 to 3;
@@ -429,8 +429,16 @@ architecture rtl of llc_wrapper is
   signal rsp_in_reg      : rsp_in_reg_type := RSP_IN_REG_DEFAULT;
   signal rsp_in_reg_next : rsp_in_reg_type := RSP_IN_REG_DEFAULT;
 
-
-
+  -------------------------------------------------------------------------------
+  -- Others
+  -------------------------------------------------------------------------------
+       
+  signal empty_offset : std_logic_vector(OFFSET_BITS - 1 downto 0) := (others => '0');
+ 
+  -------------------------------------------------------------------------------
+  -- Debug
+  -------------------------------------------------------------------------------
+       
   signal ahbm_asserts : asserts_llc_ahbm_t;
 
   attribute mark_debug : string;
@@ -557,7 +565,7 @@ begin  -- architecture rtl
         if llc_mem_req_valid = '1' then
           reg.hwrite   := llc_mem_req_data_hwrite;
           reg.hprot    := llc_mem_req_data_hprot;
-          reg.haddr    := llc_mem_req_data_addr;
+          reg.haddr    := llc_mem_req_data_addr & empty_offset;
           reg.line     := llc_mem_req_data_line;
           reg.word_cnt := 0;
 
@@ -629,8 +637,8 @@ begin  -- architecture rtl
           ahbmo.hprot(HPROT_WIDTH - 1 downto 0) <= reg.hprot;
           if ahbmi.hready = '1' then
             reg.line(reg.word_cnt*BITS_PER_WORD-1 downto (reg.word_cnt-1)*BITS_PER_WORD) := ahbmi.hrdata;
-            reg.word_cnt                                                                 := reg.word_cnt + 1;
-            reg.haddr                                                                    := reg.haddr + 4;
+            reg.word_cnt := reg.word_cnt + 1;
+            reg.haddr := reg.haddr + 4;
           end if;
         end if;
 
@@ -754,7 +762,7 @@ begin  -- architecture rtl
           if '0' & reg.coh_msg = REQ_PUTM then
 
             coherence_req_rdreq <= '1';
-            reg.addr            := coherence_req_data_out(ADDR_BITS - 1 downto 0);
+            reg.addr            := coherence_req_data_out(ADDR_BITS - 1 downto SET_RANGE_LO);
             reg.word_cnt        := 0;
             reg.state           := rcv_data;
 
@@ -762,7 +770,7 @@ begin  -- architecture rtl
             coherence_req_rdreq     <= '1';
             llc_req_in_valid        <= '1';
             llc_req_in_data_coh_msg <= reg.coh_msg;
-            llc_req_in_data_addr    <= coherence_req_data_out(ADDR_BITS - 1 downto 0);
+            llc_req_in_data_addr    <= coherence_req_data_out(ADDR_BITS - 1 downto SET_RANGE_LO);
             llc_req_in_data_hprot   <= reg.hprot;
             llc_req_in_data_req_id  <= reg.req_id;
             reg.state               := rcv_header;
@@ -859,7 +867,7 @@ begin  -- architecture rtl
 
           coherence_rsp_rcv_rdreq <= '1';
 
-          reg.addr     := coherence_rsp_rcv_data_out(ADDR_BITS - 1 downto 0);
+          reg.addr     := coherence_rsp_rcv_data_out(ADDR_BITS - 1 downto SET_RANGE_LO);
           reg.word_cnt := 0;
           reg.state    := rcv_data;
 
@@ -970,7 +978,7 @@ begin  -- architecture rtl
         if coherence_fwd_full = '0' then
 
           coherence_fwd_wrreq   <= '1';
-          coherence_fwd_data_in <= PREAMBLE_TAIL & reg.addr;
+          coherence_fwd_data_in <= PREAMBLE_TAIL & reg.addr & empty_offset;
           reg.state                 := send_header;
 
         end if;
@@ -1046,7 +1054,7 @@ begin  -- architecture rtl
         if coherence_rsp_snd_full = '0' then
 
           coherence_rsp_snd_wrreq <= '1';
-          coherence_rsp_snd_data_in <= PREAMBLE_BODY & reg.addr;
+          coherence_rsp_snd_data_in <= PREAMBLE_BODY & reg.addr & empty_offset;
           reg.state                 := send_data;
           reg.word_cnt              := 0;
 
