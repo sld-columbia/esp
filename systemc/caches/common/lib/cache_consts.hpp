@@ -43,6 +43,8 @@
 #define SET_OFFSET	(1 << SET_RANGE_LO)
 #define WORD_OFFSET	(1 << W_OFF_RANGE_LO)
 
+#define LINE_ADDR_BITS  (ADDR_BITS - SET_RANGE_LO)
+
 // Cache sizes
 #define BYTES_PER_WORD		(1 << BYTE_BITS)
 #define BITS_PER_WORD		(BYTES_PER_WORD << 3)
