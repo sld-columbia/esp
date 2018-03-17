@@ -992,6 +992,15 @@ begin
     dvi_hsync  <= '0';
     dvi_vsync  <= '0';
     dvi_de     <= '0';
+    dvi_dken   <= '0';
+    dvi_ctl1_a1_dk1 <= '0';
+    dvi_ctl2_a2_dk2 <= '0';
+    dvi_a3_dk3 <= '0';
+    dvi_isel   <= '0';
+    dvi_bsel   <= '0';
+    dvi_dsel   <= '0';
+    dvi_edge  <= '0';
+    dvi_npd    <= '0';
   end generate;
 
   tft_nhpd_pad : inpad generic map (tech => padtech, level => cmos, voltage => x18v)
