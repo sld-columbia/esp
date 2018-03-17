@@ -9,6 +9,8 @@
  * Processes
  */
 
+#ifdef LLC_DEBUG
+
 void llc_tb::llc_debug()
 {
     sc_bv<LLC_ASSERT_WIDTH>   old_asserts  = 0;
@@ -41,6 +43,8 @@ void llc_tb::llc_debug()
 	wait();
     }
 }
+
+#endif
 
 void llc_tb::llc_test()
 {
@@ -262,7 +266,7 @@ void llc_tb::llc_test()
     addr.tag_decr(N_CPU*L2_WAYS);
     for (int j = 0; j < N_CPU; j++) {
 	for (int i = 0; i < L2_WAYS; i++) {
-	    op(REQ_PUTS, EXCLUSIVE, 0, addr, addr_evict, 0, 0, 0, 0, j, 0, RPT_TB);
+	    op(REQ_PUTS, EXCLUSIVE, 0, addr, addr_evict, 0, 0, 0, 0, j, j, RPT_TB);
 	    addr.tag_incr(1);
 	}
     }
@@ -295,7 +299,7 @@ void llc_tb::llc_test()
     addr.tag_decr(N_CPU*L2_WAYS);
     for (int j = 0; j < N_CPU; j++) {
 	for (int i = 0; i < L2_WAYS; i++) {
-	    op(REQ_PUTS, SHARED, 0, addr, addr_evict, 0, 0, 0, 0, j, 0, RPT_TB);
+	    op(REQ_PUTS, SHARED, 0, addr, addr_evict, 0, 0, 0, 0, j, j, RPT_TB);
 	    addr.tag_incr(1);
 	}
     }
@@ -313,7 +317,7 @@ void llc_tb::llc_test()
     addr.tag_decr(N_CPU*L2_WAYS);
     for (int j = 0; j < N_CPU; j++) {
 	for (int i = 0; i < L2_WAYS; i++) {
-	    op(REQ_PUTS, SHARED, 0, addr, addr_evict, 0, 0, 0, 0, j, 0, RPT_TB);
+	    op(REQ_PUTS, SHARED, 0, addr, addr_evict, 0, 0, 0, 0, j, j, RPT_TB);
 	    addr.tag_incr(1);
 	}
     }
@@ -322,7 +326,7 @@ void llc_tb::llc_test()
     addr.tag_decr(N_CPU*L2_WAYS);
     for (int j = 1; j < N_CPU; j++) {
 	for (int i = 0; i < L2_WAYS; i++) {
-	    op(REQ_PUTS, SHARED, 0, addr, addr_evict, 0, 0, 0, 0, j, 0, RPT_TB);
+	    op(REQ_PUTS, SHARED, 0, addr, addr_evict, 0, 0, 0, 0, j, j, RPT_TB);
 	    addr.tag_incr(1);
 	}
     }
@@ -345,7 +349,7 @@ void llc_tb::llc_test()
     for (int j = 1; j < N_CPU; j++) {
 	for (int i = 0; i < L2_WAYS; i++) {
 	    op(REQ_GETS, EXCLUSIVE, 0, addr, addr_evict, 0, line_of_addr(addr.line), 0, 0, j, j-1, RPT_TB);
-	    op(REQ_PUTS, SD, 0, addr, addr_evict, 0, 0, 0, 0, j-1, 0, RPT_TB);
+	    op(REQ_PUTS, SD, 0, addr, addr_evict, 0, 0, 0, 0, j-1, j-1, RPT_TB);
 	    op_rsp(addr, line_of_addr(addr.line), j-1, RPT_TB);
 	    addr.tag_incr(1);
 	}
@@ -353,7 +357,7 @@ void llc_tb::llc_test()
 
     for (int i = 0; i < L2_WAYS; i++) {
 	op(REQ_GETS, EXCLUSIVE, 0, addr, addr_evict, 0, line_of_addr(addr.line), 0, 0, 0, N_CPU-1, RPT_TB);
-	op(REQ_PUTS, SD, 0, addr, addr_evict, 0, 0, 0, 0, N_CPU-1, 0, RPT_TB);
+	op(REQ_PUTS, SD, 0, addr, addr_evict, 0, 0, 0, 0, N_CPU-1, N_CPU-1, RPT_TB);
 	op_rsp(addr, line_of_addr(addr.line), N_CPU-1, RPT_TB);
 	addr.tag_incr(1);
     }
@@ -362,7 +366,7 @@ void llc_tb::llc_test()
     addr.tag_decr(N_CPU*L2_WAYS);
     for (int j = 1; j < N_CPU; j++) {
 	for (int i = 0; i < L2_WAYS; i++) {
-	    op(REQ_PUTS, SHARED, 0, addr, addr_evict, 0, 0, 0, 0, j, 0, RPT_TB);
+	    op(REQ_PUTS, SHARED, 0, addr, addr_evict, 0, 0, 0, 0, j, j, RPT_TB);
 	    addr.tag_incr(1);
 	}
     }
@@ -472,11 +476,11 @@ void llc_tb::op(coh_msg_t coh_msg, llc_state_t state, bool evict, addr_breakdown
 	}
 	break;
     case REQ_PUTS :
-	out_plane = RSP_PLANE;
+	out_plane = FWD_PLANE;
 	out_msg = FWD_PUTACK;
 	break;
     case REQ_PUTM :
-	out_plane = RSP_PLANE;
+	out_plane = FWD_PLANE;
 	out_msg = FWD_PUTACK;
 	break;
     }
@@ -595,7 +599,7 @@ void llc_tb::put_req_in(coh_msg_t coh_msg, addr_t addr, line_t line, cache_id_t 
 {
     llc_req_in_t req_in;
     req_in.coh_msg = coh_msg;
-    req_in.hprot = DEFAULT_HPROT | CACHEABLE_MASK;
+    req_in.hprot = HPROT_DATA;
     req_in.addr = addr;
     req_in.line = line;
     req_in.req_id = req_id;

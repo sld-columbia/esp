@@ -867,7 +867,7 @@ void l2_tb::put_cpu_req(l2_cpu_req_t &cpu_req, cpu_msg_t cpu_msg, hsize_t hsize,
     cpu_req.cpu_msg = cpu_msg;
     cpu_req.hsize = hsize;
     // TODO: vary data/opcode field
-    cpu_req.hprot = DEFAULT_HPROT | CACHEABLE_MASK;
+    cpu_req.hprot = HPROT_DATA;
     cpu_req.addr = addr;
     cpu_req.word = word;
 
@@ -999,11 +999,11 @@ void l2_tb::op(cpu_msg_t cpu_msg, int beh, int rsp_beh, coh_msg_t rsp_msg, invac
     addr_t cpu_addr;
     coh_msg_t coh_req, coh_rsp;
     
-    cpu_addr = req_addr.word;
+    cpu_addr = req_addr.word + req_addr.b_off;
 
-    if (hsize == BYTE) cpu_addr += req_addr.w_off * BYTES_PER_WORD + req_addr.b_off;
-    else if (hsize == HALFWORD)	cpu_addr += req_addr.w_off * BYTES_PER_WORD;
-    else if (hsize == WORD)	;// nothing
+    if (hsize == BYTE) ;
+    else if (hsize == HALFWORD)	cpu_addr.range(0, 0) = 0;
+    else if (hsize == WORD)	cpu_addr.range(1, 0) = 0;
     else CACHE_REPORT_ERROR("Wrong hsize.", hsize);
 
     if (cpu_msg == READ) {

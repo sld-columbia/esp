@@ -20,6 +20,8 @@
 #define LLC_NB_GET				\
     HLS_DEFINE_PROTOCOL("llc-nb-get-protocol")
 
+#ifdef LLC_DEBUG
+
 #define SEND_MEM_REQ							\
     HLS_DEFINE_PROTOCOL("llc-send-mem-req-protocol");			\
     bookmark_tmp |= BM_LLC_SEND_MEM_REQ;				\
@@ -74,5 +76,44 @@
 #define GETM_EM \
     if (owner_buf[way] == req_in.req_id)  \
 	asserts_tmp |= AS_GETM_EM_ALREADYOWN
+
+#else
+
+#define SEND_MEM_REQ							\
+    HLS_DEFINE_PROTOCOL("llc-send-mem-req-protocol");			\
+    if (RPT_RTL) CACHE_REPORT_TIME(sc_time_stamp(), "Send mem req.")
+
+#define GET_MEM_RSP \
+    HLS_DEFINE_PROTOCOL("llc-mem-rsp-protocol");			\
+    if (RPT_RTL) CACHE_REPORT_TIME(sc_time_stamp(), "Get mem rsp.")
+
+#define GET_REQ_IN							\
+    HLS_DEFINE_PROTOCOL("llc-req-in-protocol");				\
+    if (RPT_RTL) CACHE_REPORT_TIME(sc_time_stamp(), "Get req in.")
+
+#define LLC_GET_RSP_IN							\
+    HLS_DEFINE_PROTOCOL("llc-rsp-in-protocol");				\
+    if (RPT_RTL) CACHE_REPORT_TIME(sc_time_stamp(), "Get rsp in.")
+
+#define SEND_RSP_OUT							\
+    HLS_DEFINE_PROTOCOL("llc-send-rsp-out-protocol");			\
+    if (RPT_RTL) CACHE_REPORT_TIME(sc_time_stamp(), "Send rsp out.")
+
+#define SEND_FWD_OUT							\
+    HLS_DEFINE_PROTOCOL("llc-send-fwd-out-protocol");			\
+    if (RPT_RTL) CACHE_REPORT_TIME(sc_time_stamp(), "Send fwd out.")
+
+#define LLC_GETS
+#define LLC_GETM
+#define LLC_PUTS
+#define LLC_PUTM
+
+#define GENERIC_ASSERT
+#define GETS_S
+#define GETS_EM
+#define GETS_SD
+#define GETM_EM
+
+#endif
 
 #endif /* __LLC_DIRECTIVES_HPP_ */

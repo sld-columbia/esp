@@ -17,12 +17,12 @@ public:
     // Reset signal
     sc_in<bool> rst;
 
+#if LLC_DEBUG
+
     // Debug signals
     sc_in< sc_bv<LLC_ASSERT_WIDTH> >   asserts;
     sc_in< sc_bv<LLC_BOOKMARK_WIDTH> > bookmark;
     sc_in<uint32_t>                    custom_dbg;
-
-#if LLC_DEBUG
 
     sc_in<bool> tag_hit_out;
     sc_in<llc_way_t> hit_way_out;
@@ -66,10 +66,12 @@ public:
 	reset_signal_is(rst, false);
 	// set_stack_size(0x400000);
 
+#ifdef LLC_DEBUG
 	// Debug process
 	SC_CTHREAD(llc_debug, clk.pos());
 	reset_signal_is(rst, false);
 	// set_stack_size(0x400000);
+#endif
 
 	// Assign clock and reset to put_get ports
 	llc_req_in_tb.clk_rst (clk, rst);
@@ -84,7 +86,9 @@ public:
 
     // Processes
     void llc_test();
+#ifdef LLC_DEBUG
     void llc_debug();
+#endif
 
     // Functions
     void reset_dut();

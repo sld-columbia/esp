@@ -1,5 +1,5 @@
 l2_tags 2048 20 1w:0r 0w:8r
 l2_states 2048 2 1w:0r 0w:8r
-l2_hprots 2048 4 1w:0r 0w:8r
+l2_hprots 2048 1 1w:0r 0w:8r
 l2_lines 2048 128 1w:0r 0w:8r
 l2_evict_ways 256 3 1w:0r 0w:1r

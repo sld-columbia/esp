@@ -56,8 +56,10 @@ void llc::ctrl()
 	    }
 	}
 
+#ifdef LLC_DEBUG
 	bookmark_tmp = 0;
 	asserts_tmp = 0;
+#endif
 
 	if (is_rsp_to_get) {
 
@@ -307,11 +309,11 @@ void llc::ctrl()
 	    }
 	    
 	}
+
+#ifdef LLC_DEBUG
 	asserts.write(asserts_tmp);
 	bookmark.write(bookmark_tmp);
 	custom_dbg.write(evict);
-
-#ifdef LLC_DEBUG
 
 	req_stall_out.write(req_stall);
 	req_in_stalled_valid_out.write(req_in_stalled_valid);
@@ -356,14 +358,13 @@ inline void llc::reset_io()
     llc_mem_req.reset_put();
     llc_rst_tb_done.reset_put();
 
-    asserts.write(0);
-    bookmark.write(0);
-    custom_dbg.write(0);
-
     req_stall = false;
     req_in_stalled_valid = false;
 
 #ifdef LLC_DEBUG
+    asserts.write(0);
+    bookmark.write(0);
+    custom_dbg.write(0);
 
     tag_hit_out.write(0);
     hit_way_out.write(0);
@@ -377,7 +378,6 @@ inline void llc::reset_io()
     req_in_stalled_valid_out.write(0);
     is_rsp_to_get_out.write(0);
     is_req_to_get_out.write(0);
-
 #endif
 
     wait();

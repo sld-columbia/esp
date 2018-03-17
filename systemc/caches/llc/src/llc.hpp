@@ -24,12 +24,11 @@ public:
     // Reset signal
     sc_in<bool> rst;
 
+#ifdef LLC_DEBUG
     // Debug signals
     sc_out< sc_bv<LLC_ASSERT_WIDTH> >   asserts;
     sc_out< sc_bv<LLC_BOOKMARK_WIDTH> > bookmark;
     sc_out<uint32_t>                    custom_dbg;
-
-#ifdef LLC_DEBUG
 
     sc_out<bool> tag_hit_out;
     sc_out<llc_way_t> hit_way_out;
@@ -50,7 +49,6 @@ public:
     sc_out<llc_state_t> state_buf_out[LLC_WAYS];
     sc_out<sharers_t> sharers_buf_out[LLC_WAYS];
     sc_out<owner_t> owner_buf_out[LLC_WAYS];
-
 #endif
 
     // Input ports
@@ -87,6 +85,7 @@ public:
     SC_CTOR(llc)
 	    : clk("clk")
 	    , rst("rst")
+#ifdef LLC_DEBUG
 	    , asserts("asserts")
 	    , bookmark("bookmark")
 	    , custom_dbg("custom_dbg")
@@ -97,6 +96,7 @@ public:
 	    , evict_out("evict_out")
 	    , way_out("way_out")
 	    , llc_addr_out("llc_addr_out")
+#endif
 	    , llc_req_in("llc_req_in")
 	    , llc_rsp_in("llc_rsp_in")
 	    , llc_mem_rsp("llc_mem_rsp")
@@ -167,10 +167,14 @@ public:
     void send_fwd_out(coh_msg_t coh_msg, addr_t addr, cache_id_t req_id, cache_id_t dest_id);
 
 private:
+
+#ifdef LLC_DEBUG
     // debug
     sc_bv<LLC_ASSERT_WIDTH>   asserts_tmp;
     sc_bv<LLC_BOOKMARK_WIDTH> bookmark_tmp;
     uint64_t custom_dbg_tmp;
+#endif
+
     bool req_stall;
     bool req_in_stalled_valid;
     llc_req_in_t req_in_stalled;

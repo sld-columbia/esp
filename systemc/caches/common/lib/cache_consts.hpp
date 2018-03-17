@@ -64,7 +64,7 @@
 #define CPU_MSG_TYPE_WIDTH	2
 #define COH_MSG_TYPE_WIDTH	2
 #define HSIZE_WIDTH		3
-#define HPROT_WIDTH		4
+#define HPROT_WIDTH		1
 // log2(N_CPU) + 1
 #define INVACK_CNT_WIDTH	MAX_N_CPU_BITS
 #define INVACK_CNT_CALC_WIDTH   INVACK_CNT_WIDTH + 1
@@ -174,13 +174,16 @@
 #define WORDS_8		5
 
 // hprot
-#define DATA_OPCODE_MASK	1
-#define PRIVILEGED_MASK		2
-#define BUFFERABLE_MASK		4
-#define CACHEABLE_MASK		8
+// #define DATA_OPCODE_MASK	1
+// #define PRIVILEGED_MASK	2
+// #define BUFFERABLE_MASK	4
+// #define CACHEABLE_MASK	8
 
-#define NOT_CACHEABLE	0
-#define CACHEABLE	1
+// #define CACHEABLE	0
+// #define NOT_CACHEABLE	1
+
+#define HPROT_OPCODE	0
+#define HPROT_DATA	1
 
 #define DEFAULT_HPROT	4
 

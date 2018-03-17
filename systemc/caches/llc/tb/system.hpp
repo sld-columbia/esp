@@ -20,12 +20,11 @@ public:
     // Reset signal
     sc_in<bool> rst;
 
+#if LLC_DEBUG
     // Signals
     sc_signal< sc_bv<LLC_ASSERT_WIDTH> >   asserts;
     sc_signal< sc_bv<LLC_BOOKMARK_WIDTH> > bookmark;
     sc_signal<uint32_t>                    custom_dbg;
-
-#if LLC_DEBUG
 
     sc_signal<bool> tag_hit_out;
     sc_signal<llc_way_t> hit_way_out;
@@ -46,7 +45,6 @@ public:
     sc_signal<llc_state_t> state_buf_out[LLC_WAYS];
     sc_signal<sharers_t> sharers_buf_out[LLC_WAYS];
     sc_signal<owner_t> owner_buf_out[LLC_WAYS];
-
 #endif
 
     // Channels
@@ -78,10 +76,10 @@ public:
 	// Binding LLC cache
 	dut->clk(clk);
 	dut->rst(rst);
+#if LLC_DEBUG
         dut->asserts(asserts);
         dut->bookmark(bookmark);
         dut->custom_dbg(custom_dbg);
-#if LLC_DEBUG
 	dut->tag_hit_out(tag_hit_out);
 	dut->hit_way_out(hit_way_out);
 	dut->empty_way_found_out(empty_way_found_out);
@@ -97,8 +95,8 @@ public:
 	dut->state_buf_out(state_buf_out);
 	dut->sharers_buf_out(sharers_buf_out);
 	dut->owner_buf_out(owner_buf_out);
-#endif
 	dut->llc_addr_out(llc_addr_out);
+#endif
 	dut->llc_req_in(llc_req_in_chnl);
 	dut->llc_rsp_in(llc_rsp_in_chnl);
 	dut->llc_mem_rsp(llc_mem_rsp_chnl);
@@ -111,10 +109,10 @@ public:
 	// Binding testbench
 	tb->clk(clk);
 	tb->rst(rst);
+#if LLC_DEBUG
 	tb->asserts(asserts);
         tb->bookmark(bookmark);
         tb->custom_dbg(custom_dbg);
-#if LLC_DEBUG
 	tb->tag_hit_out(tag_hit_out);
 	tb->hit_way_out(hit_way_out);
 	tb->empty_way_found_out(empty_way_found_out);
@@ -130,8 +128,8 @@ public:
 	tb->state_buf_out(state_buf_out);
 	tb->sharers_buf_out(sharers_buf_out);
 	tb->owner_buf_out(owner_buf_out);
-#endif
 	tb->llc_addr_out(llc_addr_out);
+#endif
 	tb->llc_req_in_tb(llc_req_in_chnl);
 	tb->llc_rsp_in_tb(llc_rsp_in_chnl);
 	tb->llc_mem_rsp_tb(llc_mem_rsp_chnl); 
