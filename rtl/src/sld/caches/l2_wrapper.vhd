@@ -129,108 +129,108 @@ architecture rtl of l2_wrapper is
   signal rsp_in_data_line       : line_t;
   signal rsp_in_data_invack_cnt : invack_cnt_t;
   -- debug
-  signal asserts                : asserts_t;
-  signal bookmark               : bookmark_t;
-  signal custom_dbg             : custom_dbg_t;
+  --signal asserts                : asserts_t;
+  --signal bookmark               : bookmark_t;
+  --signal custom_dbg             : custom_dbg_t;
   signal flush_done             : std_ulogic;
 
-  signal reqs_cnt_out                 : std_logic_vector(2 downto 0);
-  signal set_conflict_out             : std_ulogic;
-  signal cpu_req_conflict_out_cpu_msg : std_logic_vector(1 downto 0);
-  signal cpu_req_conflict_out_hsize   : std_logic_vector(2 downto 0);
-  signal cpu_req_conflict_out_hprot   : std_logic_vector(3 downto 0);
-  signal cpu_req_conflict_out_addr    : std_logic_vector(31 downto 0);
-  signal cpu_req_conflict_out_word    : std_logic_vector(31 downto 0);
-  signal evict_stall_out              : std_ulogic;
-  signal fwd_stall_out                : std_ulogic;
-  signal fwd_stall_ended_out          : std_ulogic;
-  signal fwd_in_stalled_out_coh_msg   : std_logic_vector(1 downto 0);
-  signal fwd_in_stalled_out_addr      : std_logic_vector(31 downto 0);
-  signal fwd_in_stalled_out_req_id    : cache_id_t;
-  signal reqs_fwd_stall_i_out         : std_logic_vector(1 downto 0);
-  signal ongoing_atomic_out           : std_ulogic;
-  signal atomic_line_addr_out         : std_logic_vector(31 downto 0);
-  signal reqs_atomic_i_out            : std_logic_vector(1 downto 0);
-  signal tag_hit_out                  : std_ulogic;
-  signal way_hit_out                  : std_logic_vector(2 downto 0);
-  signal empty_way_found_out          : std_ulogic;
-  signal empty_way_out                : std_logic_vector(2 downto 0);
-  signal reqs_hit_out                 : std_ulogic;
-  signal reqs_hit_i_out               : std_logic_vector(1 downto 0);
-  signal reqs_i_out                   : std_logic_vector(1 downto 0);
-  signal is_flush_to_get_out          : std_ulogic;
-  signal is_rsp_to_get_out            : std_ulogic;
-  signal is_fwd_to_get_out            : std_ulogic;
-  signal is_req_to_get_out            : std_ulogic;
-  signal reqs_out_cpu_msg_0           : std_logic_vector(1 downto 0);
-  signal reqs_out_cpu_msg_1           : std_logic_vector(1 downto 0);
-  signal reqs_out_cpu_msg_2           : std_logic_vector(1 downto 0);
-  signal reqs_out_cpu_msg_3           : std_logic_vector(1 downto 0);
-  signal reqs_out_tag_0               : std_logic_vector(19 downto 0);
-  signal reqs_out_tag_1               : std_logic_vector(19 downto 0);
-  signal reqs_out_tag_2               : std_logic_vector(19 downto 0);
-  signal reqs_out_tag_3               : std_logic_vector(19 downto 0);
-  signal reqs_out_tag_estall_0        : std_logic_vector(19 downto 0);
-  signal reqs_out_tag_estall_1        : std_logic_vector(19 downto 0);
-  signal reqs_out_tag_estall_2        : std_logic_vector(19 downto 0);
-  signal reqs_out_tag_estall_3        : std_logic_vector(19 downto 0);
-  signal reqs_out_set_0               : std_logic_vector(7 downto 0);
-  signal reqs_out_set_1               : std_logic_vector(7 downto 0);
-  signal reqs_out_set_2               : std_logic_vector(7 downto 0);
-  signal reqs_out_set_3               : std_logic_vector(7 downto 0);
-  signal reqs_out_way_0               : std_logic_vector(2 downto 0);
-  signal reqs_out_way_1               : std_logic_vector(2 downto 0);
-  signal reqs_out_way_2               : std_logic_vector(2 downto 0);
-  signal reqs_out_way_3               : std_logic_vector(2 downto 0);
-  signal reqs_out_hsize_0             : std_logic_vector(2 downto 0);
-  signal reqs_out_hsize_1             : std_logic_vector(2 downto 0);
-  signal reqs_out_hsize_2             : std_logic_vector(2 downto 0);
-  signal reqs_out_hsize_3             : std_logic_vector(2 downto 0);
-  signal reqs_out_w_off_0             : std_logic_vector(1 downto 0);
-  signal reqs_out_w_off_1             : std_logic_vector(1 downto 0);
-  signal reqs_out_w_off_2             : std_logic_vector(1 downto 0);
-  signal reqs_out_w_off_3             : std_logic_vector(1 downto 0);
-  signal reqs_out_b_off_0             : std_logic_vector(1 downto 0);
-  signal reqs_out_b_off_1             : std_logic_vector(1 downto 0);
-  signal reqs_out_b_off_2             : std_logic_vector(1 downto 0);
-  signal reqs_out_b_off_3             : std_logic_vector(1 downto 0);
-  signal reqs_out_state_0             : std_logic_vector(3 downto 0);
-  signal reqs_out_state_1             : std_logic_vector(3 downto 0);
-  signal reqs_out_state_2             : std_logic_vector(3 downto 0);
-  signal reqs_out_state_3             : std_logic_vector(3 downto 0);
-  signal reqs_out_hprot_0             : std_logic_vector(3 downto 0);
-  signal reqs_out_hprot_1             : std_logic_vector(3 downto 0);
-  signal reqs_out_hprot_2             : std_logic_vector(3 downto 0);
-  signal reqs_out_hprot_3             : std_logic_vector(3 downto 0);
-  signal reqs_out_invack_cnt_0        : std_logic_vector(2 downto 0);
-  signal reqs_out_invack_cnt_1        : std_logic_vector(2 downto 0);
-  signal reqs_out_invack_cnt_2        : std_logic_vector(2 downto 0);
-  signal reqs_out_invack_cnt_3        : std_logic_vector(2 downto 0);
-  signal reqs_out_word_0              : std_logic_vector(31 downto 0);
-  signal reqs_out_word_1              : std_logic_vector(31 downto 0);
-  signal reqs_out_word_2              : std_logic_vector(31 downto 0);
-  signal reqs_out_word_3              : std_logic_vector(31 downto 0);
-  signal reqs_out_line_0              : std_logic_vector(127 downto 0);
-  signal reqs_out_line_1              : std_logic_vector(127 downto 0);
-  signal reqs_out_line_2              : std_logic_vector(127 downto 0);
-  signal reqs_out_line_3              : std_logic_vector(127 downto 0);
-  signal tag_buf_out_0                : std_logic_vector(19 downto 0);
-  signal tag_buf_out_1                : std_logic_vector(19 downto 0);
-  signal tag_buf_out_2                : std_logic_vector(19 downto 0);
-  signal tag_buf_out_3                : std_logic_vector(19 downto 0);
-  signal tag_buf_out_4                : std_logic_vector(19 downto 0);
-  signal tag_buf_out_5                : std_logic_vector(19 downto 0);
-  signal tag_buf_out_6                : std_logic_vector(19 downto 0);
-  signal tag_buf_out_7                : std_logic_vector(19 downto 0);
-  signal state_buf_out_0              : std_logic_vector(1 downto 0);
-  signal state_buf_out_1              : std_logic_vector(1 downto 0);
-  signal state_buf_out_2              : std_logic_vector(1 downto 0);
-  signal state_buf_out_3              : std_logic_vector(1 downto 0);
-  signal state_buf_out_4              : std_logic_vector(1 downto 0);
-  signal state_buf_out_5              : std_logic_vector(1 downto 0);
-  signal state_buf_out_6              : std_logic_vector(1 downto 0);
-  signal state_buf_out_7              : std_logic_vector(1 downto 0);
-  signal evict_way_out                : std_logic_vector(2 downto 0);
+  --signal reqs_cnt_out                 : std_logic_vector(2 downto 0);
+  --signal set_conflict_out             : std_ulogic;
+  --signal cpu_req_conflict_out_cpu_msg : std_logic_vector(1 downto 0);
+  --signal cpu_req_conflict_out_hsize   : std_logic_vector(2 downto 0);
+  --signal cpu_req_conflict_out_hprot   : hprot_t;
+  --signal cpu_req_conflict_out_addr    : std_logic_vector(31 downto 0);
+  --signal cpu_req_conflict_out_word    : std_logic_vector(31 downto 0);
+  --signal evict_stall_out              : std_ulogic;
+  --signal fwd_stall_out                : std_ulogic;
+  --signal fwd_stall_ended_out          : std_ulogic;
+  --signal fwd_in_stalled_out_coh_msg   : std_logic_vector(1 downto 0);
+  --signal fwd_in_stalled_out_addr      : std_logic_vector(31 downto 0);
+  --signal fwd_in_stalled_out_req_id    : cache_id_t;
+  --signal reqs_fwd_stall_i_out         : std_logic_vector(1 downto 0);
+  --signal ongoing_atomic_out           : std_ulogic;
+  --signal atomic_line_addr_out         : std_logic_vector(31 downto 0);
+  --signal reqs_atomic_i_out            : std_logic_vector(1 downto 0);
+  --signal tag_hit_out                  : std_ulogic;
+  --signal way_hit_out                  : std_logic_vector(2 downto 0);
+  --signal empty_way_found_out          : std_ulogic;
+  --signal empty_way_out                : std_logic_vector(2 downto 0);
+  --signal reqs_hit_out                 : std_ulogic;
+  --signal reqs_hit_i_out               : std_logic_vector(1 downto 0);
+  --signal reqs_i_out                   : std_logic_vector(1 downto 0);
+  --signal is_flush_to_get_out          : std_ulogic;
+  --signal is_rsp_to_get_out            : std_ulogic;
+  --signal is_fwd_to_get_out            : std_ulogic;
+  --signal is_req_to_get_out            : std_ulogic;
+  --signal reqs_out_cpu_msg_0           : std_logic_vector(1 downto 0);
+  --signal reqs_out_cpu_msg_1           : std_logic_vector(1 downto 0);
+  --signal reqs_out_cpu_msg_2           : std_logic_vector(1 downto 0);
+  --signal reqs_out_cpu_msg_3           : std_logic_vector(1 downto 0);
+  --signal reqs_out_tag_0               : std_logic_vector(19 downto 0);
+  --signal reqs_out_tag_1               : std_logic_vector(19 downto 0);
+  --signal reqs_out_tag_2               : std_logic_vector(19 downto 0);
+  --signal reqs_out_tag_3               : std_logic_vector(19 downto 0);
+  --signal reqs_out_tag_estall_0        : std_logic_vector(19 downto 0);
+  --signal reqs_out_tag_estall_1        : std_logic_vector(19 downto 0);
+  --signal reqs_out_tag_estall_2        : std_logic_vector(19 downto 0);
+  --signal reqs_out_tag_estall_3        : std_logic_vector(19 downto 0);
+  --signal reqs_out_set_0               : std_logic_vector(7 downto 0);
+  --signal reqs_out_set_1               : std_logic_vector(7 downto 0);
+  --signal reqs_out_set_2               : std_logic_vector(7 downto 0);
+  --signal reqs_out_set_3               : std_logic_vector(7 downto 0);
+  --signal reqs_out_way_0               : std_logic_vector(2 downto 0);
+  --signal reqs_out_way_1               : std_logic_vector(2 downto 0);
+  --signal reqs_out_way_2               : std_logic_vector(2 downto 0);
+  --signal reqs_out_way_3               : std_logic_vector(2 downto 0);
+  --signal reqs_out_hsize_0             : std_logic_vector(2 downto 0);
+  --signal reqs_out_hsize_1             : std_logic_vector(2 downto 0);
+  --signal reqs_out_hsize_2             : std_logic_vector(2 downto 0);
+  --signal reqs_out_hsize_3             : std_logic_vector(2 downto 0);
+  --signal reqs_out_w_off_0             : std_logic_vector(1 downto 0);
+  --signal reqs_out_w_off_1             : std_logic_vector(1 downto 0);
+  --signal reqs_out_w_off_2             : std_logic_vector(1 downto 0);
+  --signal reqs_out_w_off_3             : std_logic_vector(1 downto 0);
+  --signal reqs_out_b_off_0             : std_logic_vector(1 downto 0);
+  --signal reqs_out_b_off_1             : std_logic_vector(1 downto 0);
+  --signal reqs_out_b_off_2             : std_logic_vector(1 downto 0);
+  --signal reqs_out_b_off_3             : std_logic_vector(1 downto 0);
+  --signal reqs_out_state_0             : std_logic_vector(3 downto 0);
+  --signal reqs_out_state_1             : std_logic_vector(3 downto 0);
+  --signal reqs_out_state_2             : std_logic_vector(3 downto 0);
+  --signal reqs_out_state_3             : std_logic_vector(3 downto 0);
+  --signal reqs_out_hprot_0             : hprot_t;
+  --signal reqs_out_hprot_1             : hprot_t;
+  --signal reqs_out_hprot_2             : hprot_t;
+  --signal reqs_out_hprot_3             : hprot_t;
+  --signal reqs_out_invack_cnt_0        : std_logic_vector(2 downto 0);
+  --signal reqs_out_invack_cnt_1        : std_logic_vector(2 downto 0);
+  --signal reqs_out_invack_cnt_2        : std_logic_vector(2 downto 0);
+  --signal reqs_out_invack_cnt_3        : std_logic_vector(2 downto 0);
+  --signal reqs_out_word_0              : std_logic_vector(31 downto 0);
+  --signal reqs_out_word_1              : std_logic_vector(31 downto 0);
+  --signal reqs_out_word_2              : std_logic_vector(31 downto 0);
+  --signal reqs_out_word_3              : std_logic_vector(31 downto 0);
+  --signal reqs_out_line_0              : std_logic_vector(127 downto 0);
+  --signal reqs_out_line_1              : std_logic_vector(127 downto 0);
+  --signal reqs_out_line_2              : std_logic_vector(127 downto 0);
+  --signal reqs_out_line_3              : std_logic_vector(127 downto 0);
+  --signal tag_buf_out_0                : std_logic_vector(19 downto 0);
+  --signal tag_buf_out_1                : std_logic_vector(19 downto 0);
+  --signal tag_buf_out_2                : std_logic_vector(19 downto 0);
+  --signal tag_buf_out_3                : std_logic_vector(19 downto 0);
+  --signal tag_buf_out_4                : std_logic_vector(19 downto 0);
+  --signal tag_buf_out_5                : std_logic_vector(19 downto 0);
+  --signal tag_buf_out_6                : std_logic_vector(19 downto 0);
+  --signal tag_buf_out_7                : std_logic_vector(19 downto 0);
+  --signal state_buf_out_0              : std_logic_vector(1 downto 0);
+  --signal state_buf_out_1              : std_logic_vector(1 downto 0);
+  --signal state_buf_out_2              : std_logic_vector(1 downto 0);
+  --signal state_buf_out_3              : std_logic_vector(1 downto 0);
+  --signal state_buf_out_4              : std_logic_vector(1 downto 0);
+  --signal state_buf_out_5              : std_logic_vector(1 downto 0);
+  --signal state_buf_out_6              : std_logic_vector(1 downto 0);
+  --signal state_buf_out_7              : std_logic_vector(1 downto 0);
+  --signal evict_way_out                : std_logic_vector(2 downto 0);
 
   -------------------------------------------------------------------------------
   -- AHB slave FSM signals
@@ -428,9 +428,9 @@ architecture rtl of l2_wrapper is
   signal rsp_in_asserts    : asserts_rsp_in_t;
 
   -- Debug LEDs
-  signal led_bookmarks       : std_ulogic;
-  signal led_cache_asserts   : std_ulogic;
-  signal led_wrapper_asserts : std_ulogic;
+  --signal led_bookmarks       : std_ulogic;
+  --signal led_cache_asserts   : std_ulogic;
+  --signal led_wrapper_asserts : std_ulogic;
 
   attribute mark_debug : string;
 
@@ -502,59 +502,59 @@ architecture rtl of l2_wrapper is
   -- attribute mark_debug of rsp_in_data_line       : signal is "true";
   attribute mark_debug of rsp_in_data_invack_cnt : signal is "true";
   -- debug
-  attribute mark_debug of asserts                : signal is "true";
-  attribute mark_debug of bookmark               : signal is "true";
+  --attribute mark_debug of asserts                : signal is "true";
+  --attribute mark_debug of bookmark               : signal is "true";
   -- attribute mark_debug of custom_dbg             : signal is "true";
   attribute mark_debug of flush_done             : signal is "true";
 
-  attribute mark_debug of reqs_cnt_out                 : signal is "true";
-  attribute mark_debug of set_conflict_out             : signal is "true";
-  attribute mark_debug of cpu_req_conflict_out_cpu_msg : signal is "true";
-  attribute mark_debug of cpu_req_conflict_out_hsize   : signal is "true";
-  attribute mark_debug of cpu_req_conflict_out_hprot   : signal is "true";
-  attribute mark_debug of cpu_req_conflict_out_addr    : signal is "true";
-  attribute mark_debug of cpu_req_conflict_out_word    : signal is "true";
-  attribute mark_debug of evict_stall_out              : signal is "true";
-  attribute mark_debug of fwd_stall_out                : signal is "true";
-  attribute mark_debug of fwd_stall_ended_out          : signal is "true";
-  attribute mark_debug of fwd_in_stalled_out_coh_msg   : signal is "true";
-  attribute mark_debug of fwd_in_stalled_out_addr      : signal is "true";
-  attribute mark_debug of fwd_in_stalled_out_req_id    : signal is "true";
-  attribute mark_debug of reqs_fwd_stall_i_out         : signal is "true";
-  attribute mark_debug of ongoing_atomic_out           : signal is "true";
-  attribute mark_debug of atomic_line_addr_out         : signal is "true";
-  attribute mark_debug of reqs_atomic_i_out            : signal is "true";
-  attribute mark_debug of tag_hit_out                  : signal is "true";
-  attribute mark_debug of way_hit_out                  : signal is "true";
-  attribute mark_debug of empty_way_found_out          : signal is "true";
-  attribute mark_debug of empty_way_out                : signal is "true";
-  attribute mark_debug of reqs_hit_out                 : signal is "true";
-  attribute mark_debug of reqs_hit_i_out               : signal is "true";
-  attribute mark_debug of reqs_i_out                   : signal is "true";
-  attribute mark_debug of is_flush_to_get_out          : signal is "true";
-  attribute mark_debug of is_rsp_to_get_out            : signal is "true";
-  attribute mark_debug of is_fwd_to_get_out            : signal is "true";
-  attribute mark_debug of is_req_to_get_out            : signal is "true";
+  --attribute mark_debug of reqs_cnt_out                 : signal is "true";
+  --attribute mark_debug of set_conflict_out             : signal is "true";
+  --attribute mark_debug of cpu_req_conflict_out_cpu_msg : signal is "true";
+  --attribute mark_debug of cpu_req_conflict_out_hsize   : signal is "true";
+  --attribute mark_debug of cpu_req_conflict_out_hprot   : signal is "true";
+  --attribute mark_debug of cpu_req_conflict_out_addr    : signal is "true";
+  --attribute mark_debug of cpu_req_conflict_out_word    : signal is "true";
+  --attribute mark_debug of evict_stall_out              : signal is "true";
+  --attribute mark_debug of fwd_stall_out                : signal is "true";
+  --attribute mark_debug of fwd_stall_ended_out          : signal is "true";
+  --attribute mark_debug of fwd_in_stalled_out_coh_msg   : signal is "true";
+  --attribute mark_debug of fwd_in_stalled_out_addr      : signal is "true";
+  --attribute mark_debug of fwd_in_stalled_out_req_id    : signal is "true";
+  --attribute mark_debug of reqs_fwd_stall_i_out         : signal is "true";
+  --attribute mark_debug of ongoing_atomic_out           : signal is "true";
+  --attribute mark_debug of atomic_line_addr_out         : signal is "true";
+  --attribute mark_debug of reqs_atomic_i_out            : signal is "true";
+  --attribute mark_debug of tag_hit_out                  : signal is "true";
+  --attribute mark_debug of way_hit_out                  : signal is "true";
+  --attribute mark_debug of empty_way_found_out          : signal is "true";
+  --attribute mark_debug of empty_way_out                : signal is "true";
+  --attribute mark_debug of reqs_hit_out                 : signal is "true";
+  --attribute mark_debug of reqs_hit_i_out               : signal is "true";
+  --attribute mark_debug of reqs_i_out                   : signal is "true";
+  --attribute mark_debug of is_flush_to_get_out          : signal is "true";
+  --attribute mark_debug of is_rsp_to_get_out            : signal is "true";
+  --attribute mark_debug of is_fwd_to_get_out            : signal is "true";
+  --attribute mark_debug of is_req_to_get_out            : signal is "true";
   -- attribute mark_debug of reqs_out_cpu_msg_0           : signal is "true";
   -- attribute mark_debug of reqs_out_cpu_msg_1           : signal is "true";
   -- attribute mark_debug of reqs_out_cpu_msg_2           : signal is "true";
   -- attribute mark_debug of reqs_out_cpu_msg_3           : signal is "true";
-  attribute mark_debug of reqs_out_tag_0               : signal is "true";
-  attribute mark_debug of reqs_out_tag_1               : signal is "true";
-  attribute mark_debug of reqs_out_tag_2               : signal is "true";
-  attribute mark_debug of reqs_out_tag_3               : signal is "true";
-  attribute mark_debug of reqs_out_tag_estall_0        : signal is "true";
-  attribute mark_debug of reqs_out_tag_estall_1        : signal is "true";
-  attribute mark_debug of reqs_out_tag_estall_2        : signal is "true";
-  attribute mark_debug of reqs_out_tag_estall_3        : signal is "true";
-  attribute mark_debug of reqs_out_set_0               : signal is "true";
-  attribute mark_debug of reqs_out_set_1               : signal is "true";
-  attribute mark_debug of reqs_out_set_2               : signal is "true";
-  attribute mark_debug of reqs_out_set_3               : signal is "true";
-  attribute mark_debug of reqs_out_way_0               : signal is "true";
-  attribute mark_debug of reqs_out_way_1               : signal is "true";
-  attribute mark_debug of reqs_out_way_2               : signal is "true";
-  attribute mark_debug of reqs_out_way_3               : signal is "true";
+  --attribute mark_debug of reqs_out_tag_0               : signal is "true";
+  --attribute mark_debug of reqs_out_tag_1               : signal is "true";
+  --attribute mark_debug of reqs_out_tag_2               : signal is "true";
+  --attribute mark_debug of reqs_out_tag_3               : signal is "true";
+  --attribute mark_debug of reqs_out_tag_estall_0        : signal is "true";
+  --attribute mark_debug of reqs_out_tag_estall_1        : signal is "true";
+  --attribute mark_debug of reqs_out_tag_estall_2        : signal is "true";
+  --attribute mark_debug of reqs_out_tag_estall_3        : signal is "true";
+  --attribute mark_debug of reqs_out_set_0               : signal is "true";
+  --attribute mark_debug of reqs_out_set_1               : signal is "true";
+  --attribute mark_debug of reqs_out_set_2               : signal is "true";
+  --attribute mark_debug of reqs_out_set_3               : signal is "true";
+  --attribute mark_debug of reqs_out_way_0               : signal is "true";
+  --attribute mark_debug of reqs_out_way_1               : signal is "true";
+  --attribute mark_debug of reqs_out_way_2               : signal is "true";
+  --attribute mark_debug of reqs_out_way_3               : signal is "true";
   -- attribute mark_debug of reqs_out_hsize_0             : signal is "true";
   -- attribute mark_debug of reqs_out_hsize_1             : signal is "true";
   -- attribute mark_debug of reqs_out_hsize_2             : signal is "true";
@@ -567,10 +567,10 @@ architecture rtl of l2_wrapper is
   -- attribute mark_debug of reqs_out_b_off_1             : signal is "true";
   -- attribute mark_debug of reqs_out_b_off_2             : signal is "true";
   -- attribute mark_debug of reqs_out_b_off_3             : signal is "true";
-  attribute mark_debug of reqs_out_state_0             : signal is "true";
-  attribute mark_debug of reqs_out_state_1             : signal is "true";
-  attribute mark_debug of reqs_out_state_2             : signal is "true";
-  attribute mark_debug of reqs_out_state_3             : signal is "true";
+  --attribute mark_debug of reqs_out_state_0             : signal is "true";
+  --attribute mark_debug of reqs_out_state_1             : signal is "true";
+  --attribute mark_debug of reqs_out_state_2             : signal is "true";
+  --attribute mark_debug of reqs_out_state_3             : signal is "true";
   -- attribute mark_debug of reqs_out_hprot_0             : signal is "true";
   -- attribute mark_debug of reqs_out_hprot_1             : signal is "true";
   -- attribute mark_debug of reqs_out_hprot_2             : signal is "true";
@@ -587,23 +587,23 @@ architecture rtl of l2_wrapper is
   -- attribute mark_debug of reqs_out_line_1              : signal is "true";
   -- attribute mark_debug of reqs_out_line_2              : signal is "true";
   -- attribute mark_debug of reqs_out_line_3              : signal is "true";
-  attribute mark_debug of tag_buf_out_0                : signal is "true";
-  attribute mark_debug of tag_buf_out_1                : signal is "true";
-  attribute mark_debug of tag_buf_out_2                : signal is "true";
-  attribute mark_debug of tag_buf_out_3                : signal is "true";
-  attribute mark_debug of tag_buf_out_4                : signal is "true";
-  attribute mark_debug of tag_buf_out_5                : signal is "true";
-  attribute mark_debug of tag_buf_out_6                : signal is "true";
-  attribute mark_debug of tag_buf_out_7                : signal is "true";
-  attribute mark_debug of state_buf_out_0              : signal is "true";
-  attribute mark_debug of state_buf_out_1              : signal is "true";
-  attribute mark_debug of state_buf_out_2              : signal is "true";
-  attribute mark_debug of state_buf_out_3              : signal is "true";
-  attribute mark_debug of state_buf_out_4              : signal is "true";
-  attribute mark_debug of state_buf_out_5              : signal is "true";
-  attribute mark_debug of state_buf_out_6              : signal is "true";
-  attribute mark_debug of state_buf_out_7              : signal is "true";
-  attribute mark_debug of evict_way_out                : signal is "true";
+  --attribute mark_debug of tag_buf_out_0                : signal is "true";
+  --attribute mark_debug of tag_buf_out_1                : signal is "true";
+  --attribute mark_debug of tag_buf_out_2                : signal is "true";
+  --attribute mark_debug of tag_buf_out_3                : signal is "true";
+  --attribute mark_debug of tag_buf_out_4                : signal is "true";
+  --attribute mark_debug of tag_buf_out_5                : signal is "true";
+  --attribute mark_debug of tag_buf_out_6                : signal is "true";
+  --attribute mark_debug of tag_buf_out_7                : signal is "true";
+  --attribute mark_debug of state_buf_out_0              : signal is "true";
+  --attribute mark_debug of state_buf_out_1              : signal is "true";
+  --attribute mark_debug of state_buf_out_2              : signal is "true";
+  --attribute mark_debug of state_buf_out_3              : signal is "true";
+  --attribute mark_debug of state_buf_out_4              : signal is "true";
+  --attribute mark_debug of state_buf_out_5              : signal is "true";
+  --attribute mark_debug of state_buf_out_6              : signal is "true";
+  --attribute mark_debug of state_buf_out_7              : signal is "true";
+  --attribute mark_debug of evict_way_out                : signal is "true";
   
 begin  -- architecture rtl of l2_wrapper
 
@@ -661,109 +661,111 @@ begin  -- architecture rtl of l2_wrapper
       l2_rsp_in_data_addr       => rsp_in_data_addr,
       l2_rsp_in_data_line       => rsp_in_data_line,
       l2_rsp_in_data_invack_cnt => rsp_in_data_invack_cnt,
-      -- debug
-      asserts                   => asserts,
-      bookmark                  => bookmark,
-      custom_dbg                => custom_dbg,
-      flush_done                => flush_done,
+      flush_done                => flush_done
 
-      reqs_cnt_out                 => reqs_cnt_out,
-      set_conflict_out             => set_conflict_out,
-      cpu_req_conflict_out_cpu_msg => cpu_req_conflict_out_cpu_msg,
-      cpu_req_conflict_out_hsize   => cpu_req_conflict_out_hsize,
-      cpu_req_conflict_out_hprot   => cpu_req_conflict_out_hprot,
-      cpu_req_conflict_out_addr    => cpu_req_conflict_out_addr,
-      cpu_req_conflict_out_word    => cpu_req_conflict_out_word,
-      evict_stall_out              => evict_stall_out,
-      fwd_stall_out                => fwd_stall_out,
-      fwd_stall_ended_out          => fwd_stall_ended_out,
-      fwd_in_stalled_out_coh_msg   => fwd_in_stalled_out_coh_msg,
-      fwd_in_stalled_out_addr      => fwd_in_stalled_out_addr,
-      fwd_in_stalled_out_req_id    => fwd_in_stalled_out_req_id,
-      reqs_fwd_stall_i_out         => reqs_fwd_stall_i_out,
-      ongoing_atomic_out           => ongoing_atomic_out,
-      atomic_line_addr_out         => atomic_line_addr_out,
-      reqs_atomic_i_out            => reqs_atomic_i_out,
-      tag_hit_out                  => tag_hit_out,
-      way_hit_out                  => way_hit_out,
-      empty_way_found_out          => empty_way_found_out,
-      empty_way_out                => empty_way_out,
-      reqs_hit_out                 => reqs_hit_out,
-      reqs_hit_i_out               => reqs_hit_i_out,
-      reqs_i_out                   => reqs_i_out,
-      is_flush_to_get_out          => is_flush_to_get_out,
-      is_rsp_to_get_out            => is_rsp_to_get_out,
-      is_fwd_to_get_out            => is_fwd_to_get_out,
-      is_req_to_get_out            => is_req_to_get_out,
-      reqs_out_cpu_msg_0           => reqs_out_cpu_msg_0,
-      reqs_out_cpu_msg_1           => reqs_out_cpu_msg_1,
-      reqs_out_cpu_msg_2           => reqs_out_cpu_msg_2,
-      reqs_out_cpu_msg_3           => reqs_out_cpu_msg_3,
-      reqs_out_tag_0               => reqs_out_tag_0,
-      reqs_out_tag_1               => reqs_out_tag_1,
-      reqs_out_tag_2               => reqs_out_tag_2,
-      reqs_out_tag_3               => reqs_out_tag_3,
-      reqs_out_tag_estall_0        => reqs_out_tag_estall_0,
-      reqs_out_tag_estall_1        => reqs_out_tag_estall_1,
-      reqs_out_tag_estall_2        => reqs_out_tag_estall_2,
-      reqs_out_tag_estall_3        => reqs_out_tag_estall_3,
-      reqs_out_set_0               => reqs_out_set_0,
-      reqs_out_set_1               => reqs_out_set_1,
-      reqs_out_set_2               => reqs_out_set_2,
-      reqs_out_set_3               => reqs_out_set_3,
-      reqs_out_way_0               => reqs_out_way_0,
-      reqs_out_way_1               => reqs_out_way_1,
-      reqs_out_way_2               => reqs_out_way_2,
-      reqs_out_way_3               => reqs_out_way_3,
-      reqs_out_hsize_0             => reqs_out_hsize_0,
-      reqs_out_hsize_1             => reqs_out_hsize_1,
-      reqs_out_hsize_2             => reqs_out_hsize_2,
-      reqs_out_hsize_3             => reqs_out_hsize_3,
-      reqs_out_w_off_0             => reqs_out_w_off_0,
-      reqs_out_w_off_1             => reqs_out_w_off_1,
-      reqs_out_w_off_2             => reqs_out_w_off_2,
-      reqs_out_w_off_3             => reqs_out_w_off_3,
-      reqs_out_b_off_0             => reqs_out_b_off_0,
-      reqs_out_b_off_1             => reqs_out_b_off_1,
-      reqs_out_b_off_2             => reqs_out_b_off_2,
-      reqs_out_b_off_3             => reqs_out_b_off_3,
-      reqs_out_state_0             => reqs_out_state_0,
-      reqs_out_state_1             => reqs_out_state_1,
-      reqs_out_state_2             => reqs_out_state_2,
-      reqs_out_state_3             => reqs_out_state_3,
-      reqs_out_hprot_0             => reqs_out_hprot_0,
-      reqs_out_hprot_1             => reqs_out_hprot_1,
-      reqs_out_hprot_2             => reqs_out_hprot_2,
-      reqs_out_hprot_3             => reqs_out_hprot_3,
-      reqs_out_invack_cnt_0        => reqs_out_invack_cnt_0,
-      reqs_out_invack_cnt_1        => reqs_out_invack_cnt_1,
-      reqs_out_invack_cnt_2        => reqs_out_invack_cnt_2,
-      reqs_out_invack_cnt_3        => reqs_out_invack_cnt_3,
-      reqs_out_word_0              => reqs_out_word_0,
-      reqs_out_word_1              => reqs_out_word_1,
-      reqs_out_word_2              => reqs_out_word_2,
-      reqs_out_word_3              => reqs_out_word_3,
-      reqs_out_line_0              => reqs_out_line_0,
-      reqs_out_line_1              => reqs_out_line_1,
-      reqs_out_line_2              => reqs_out_line_2,
-      reqs_out_line_3              => reqs_out_line_3,
-      tag_buf_out_0                => tag_buf_out_0,
-      tag_buf_out_1                => tag_buf_out_1,
-      tag_buf_out_2                => tag_buf_out_2,
-      tag_buf_out_3                => tag_buf_out_3,
-      tag_buf_out_4                => tag_buf_out_4,
-      tag_buf_out_5                => tag_buf_out_5,
-      tag_buf_out_6                => tag_buf_out_6,
-      tag_buf_out_7                => tag_buf_out_7,
-      state_buf_out_0              => state_buf_out_0,
-      state_buf_out_1              => state_buf_out_1,
-      state_buf_out_2              => state_buf_out_2,
-      state_buf_out_3              => state_buf_out_3,
-      state_buf_out_4              => state_buf_out_4,
-      state_buf_out_5              => state_buf_out_5,
-      state_buf_out_6              => state_buf_out_6,
-      state_buf_out_7              => state_buf_out_7,
-      evict_way_out                => evict_way_out
+      -- debug
+      --asserts                   => asserts,
+      --bookmark                  => bookmark,
+      --custom_dbg                => custom_dbg,
+
+
+      --reqs_cnt_out                 => reqs_cnt_out,
+      --set_conflict_out             => set_conflict_out,
+      --cpu_req_conflict_out_cpu_msg => cpu_req_conflict_out_cpu_msg,
+      --cpu_req_conflict_out_hsize   => cpu_req_conflict_out_hsize,
+      --cpu_req_conflict_out_hprot   => cpu_req_conflict_out_hprot,
+      --cpu_req_conflict_out_addr    => cpu_req_conflict_out_addr,
+      --cpu_req_conflict_out_word    => cpu_req_conflict_out_word,
+      --evict_stall_out              => evict_stall_out,
+      --fwd_stall_out                => fwd_stall_out,
+      --fwd_stall_ended_out          => fwd_stall_ended_out,
+      --fwd_in_stalled_out_coh_msg   => fwd_in_stalled_out_coh_msg,
+      --fwd_in_stalled_out_addr      => fwd_in_stalled_out_addr,
+      --fwd_in_stalled_out_req_id    => fwd_in_stalled_out_req_id,
+      --reqs_fwd_stall_i_out         => reqs_fwd_stall_i_out,
+      --ongoing_atomic_out           => ongoing_atomic_out,
+      --atomic_line_addr_out         => atomic_line_addr_out,
+      --reqs_atomic_i_out            => reqs_atomic_i_out,
+      --tag_hit_out                  => tag_hit_out,
+      --way_hit_out                  => way_hit_out,
+      --empty_way_found_out          => empty_way_found_out,
+      --empty_way_out                => empty_way_out,
+      --reqs_hit_out                 => reqs_hit_out,
+      --reqs_hit_i_out               => reqs_hit_i_out,
+      --reqs_i_out                   => reqs_i_out,
+      --is_flush_to_get_out          => is_flush_to_get_out,
+      --is_rsp_to_get_out            => is_rsp_to_get_out,
+      --is_fwd_to_get_out            => is_fwd_to_get_out,
+      --is_req_to_get_out            => is_req_to_get_out,
+      --reqs_out_cpu_msg_0           => reqs_out_cpu_msg_0,
+      --reqs_out_cpu_msg_1           => reqs_out_cpu_msg_1,
+      --reqs_out_cpu_msg_2           => reqs_out_cpu_msg_2,
+      --reqs_out_cpu_msg_3           => reqs_out_cpu_msg_3,
+      --reqs_out_tag_0               => reqs_out_tag_0,
+      --reqs_out_tag_1               => reqs_out_tag_1,
+      --reqs_out_tag_2               => reqs_out_tag_2,
+      --reqs_out_tag_3               => reqs_out_tag_3,
+      --reqs_out_tag_estall_0        => reqs_out_tag_estall_0,
+      --reqs_out_tag_estall_1        => reqs_out_tag_estall_1,
+      --reqs_out_tag_estall_2        => reqs_out_tag_estall_2,
+      --reqs_out_tag_estall_3        => reqs_out_tag_estall_3,
+      --reqs_out_set_0               => reqs_out_set_0,
+      --reqs_out_set_1               => reqs_out_set_1,
+      --reqs_out_set_2               => reqs_out_set_2,
+      --reqs_out_set_3               => reqs_out_set_3,
+      --reqs_out_way_0               => reqs_out_way_0,
+      --reqs_out_way_1               => reqs_out_way_1,
+      --reqs_out_way_2               => reqs_out_way_2,
+      --reqs_out_way_3               => reqs_out_way_3,
+      --reqs_out_hsize_0             => reqs_out_hsize_0,
+      --reqs_out_hsize_1             => reqs_out_hsize_1,
+      --reqs_out_hsize_2             => reqs_out_hsize_2,
+      --reqs_out_hsize_3             => reqs_out_hsize_3,
+      --reqs_out_w_off_0             => reqs_out_w_off_0,
+      --reqs_out_w_off_1             => reqs_out_w_off_1,
+      --reqs_out_w_off_2             => reqs_out_w_off_2,
+      --reqs_out_w_off_3             => reqs_out_w_off_3,
+      --reqs_out_b_off_0             => reqs_out_b_off_0,
+      --reqs_out_b_off_1             => reqs_out_b_off_1,
+      --reqs_out_b_off_2             => reqs_out_b_off_2,
+      --reqs_out_b_off_3             => reqs_out_b_off_3,
+      --reqs_out_state_0             => reqs_out_state_0,
+      --reqs_out_state_1             => reqs_out_state_1,
+      --reqs_out_state_2             => reqs_out_state_2,
+      --reqs_out_state_3             => reqs_out_state_3,
+      --reqs_out_hprot_0             => reqs_out_hprot_0,
+      --reqs_out_hprot_1             => reqs_out_hprot_1,
+      --reqs_out_hprot_2             => reqs_out_hprot_2,
+      --reqs_out_hprot_3             => reqs_out_hprot_3,
+      --reqs_out_invack_cnt_0        => reqs_out_invack_cnt_0,
+      --reqs_out_invack_cnt_1        => reqs_out_invack_cnt_1,
+      --reqs_out_invack_cnt_2        => reqs_out_invack_cnt_2,
+      --reqs_out_invack_cnt_3        => reqs_out_invack_cnt_3,
+      --reqs_out_word_0              => reqs_out_word_0,
+      --reqs_out_word_1              => reqs_out_word_1,
+      --reqs_out_word_2              => reqs_out_word_2,
+      --reqs_out_word_3              => reqs_out_word_3,
+      --reqs_out_line_0              => reqs_out_line_0,
+      --reqs_out_line_1              => reqs_out_line_1,
+      --reqs_out_line_2              => reqs_out_line_2,
+      --reqs_out_line_3              => reqs_out_line_3,
+      --tag_buf_out_0                => tag_buf_out_0,
+      --tag_buf_out_1                => tag_buf_out_1,
+      --tag_buf_out_2                => tag_buf_out_2,
+      --tag_buf_out_3                => tag_buf_out_3,
+      --tag_buf_out_4                => tag_buf_out_4,
+      --tag_buf_out_5                => tag_buf_out_5,
+      --tag_buf_out_6                => tag_buf_out_6,
+      --tag_buf_out_7                => tag_buf_out_7,
+      --state_buf_out_0              => state_buf_out_0,
+      --state_buf_out_1              => state_buf_out_1,
+      --state_buf_out_2              => state_buf_out_2,
+      --state_buf_out_3              => state_buf_out_3,
+      --state_buf_out_4              => state_buf_out_4,
+      --state_buf_out_5              => state_buf_out_5,
+      --state_buf_out_6              => state_buf_out_6,
+      --state_buf_out_7              => state_buf_out_7,
+      --evict_way_out                => evict_way_out
       );
     
   Invalidate_fifo : fifo_custom
@@ -953,7 +955,7 @@ begin  -- architecture rtl of l2_wrapper
 
         cpu_req_data_cpu_msg <= ahbsi.hwrite & ahbsi.hmastlock;
         cpu_req_data_hsize   <= ahbsi.hsize;
-        cpu_req_data_hprot   <= ahbsi.hprot;
+        cpu_req_data_hprot   <= ahbsi.hprot(HPROT_WIDTH - 1 downto 0);
         cpu_req_data_addr    <= ahbsi.haddr;
 
         if flush_due = '1' and ahbsi.hmastlock = '0' then
@@ -962,7 +964,7 @@ begin  -- architecture rtl of l2_wrapper
           if valid_ahb_req = '1' then
             reg.cpu_msg := ahbsi.hwrite & ahbsi.hmastlock;
             reg.hsize   := ahbsi.hsize;
-            reg.hprot   := ahbsi.hprot;
+            reg.hprot   := ahbsi.hprot(HPROT_WIDTH - 1 downto 0);
             reg.haddr   := ahbsi.haddr;
 
             if flush_ready = '0' then
@@ -975,7 +977,7 @@ begin  -- architecture rtl of l2_wrapper
         elsif valid_ahb_req = '1' then
           reg.cpu_msg := ahbsi.hwrite & ahbsi.hmastlock;
           reg.hsize   := ahbsi.hsize;
-          reg.hprot   := ahbsi.hprot;
+          reg.hprot   := ahbsi.hprot(HPROT_WIDTH - 1 downto 0);
           reg.haddr   := ahbsi.haddr;
 
           if ahbsi.hwrite = '0' then
@@ -1023,7 +1025,7 @@ begin  -- architecture rtl of l2_wrapper
 
         cpu_req_data_cpu_msg <= ahbsi.hwrite & ahbsi.hmastlock;
         cpu_req_data_hsize   <= ahbsi.hsize;
-        cpu_req_data_hprot   <= ahbsi.hprot;
+        cpu_req_data_hprot   <= ahbsi.hprot(HPROT_WIDTH - 1 downto 0);
         cpu_req_data_addr    <= ahbsi.haddr;
 
         alloc_reg.line := rd_rsp_data_line;
@@ -1035,7 +1037,7 @@ begin  -- architecture rtl of l2_wrapper
 
           reg.cpu_msg := ahbsi.hwrite & ahbsi.hmastlock;
           reg.hsize   := ahbsi.hsize;
-          reg.hprot   := ahbsi.hprot;
+          reg.hprot   := ahbsi.hprot(HPROT_WIDTH - 1 downto 0);
           reg.haddr   := ahbsi.haddr;
 
           if (flush_due = '1' and not (ahbsi.hprot(0) = '0' and valid_ahb_req = '1') and
@@ -1096,12 +1098,12 @@ begin  -- architecture rtl of l2_wrapper
 
         cpu_req_data_cpu_msg <= ahbsi.hwrite & ahbsi.hmastlock;
         cpu_req_data_hsize   <= ahbsi.hsize;
-        cpu_req_data_hprot   <= ahbsi.hprot;
+        cpu_req_data_hprot   <= ahbsi.hprot(HPROT_WIDTH - 1 downto 0);
         cpu_req_data_addr    <= ahbsi.haddr;
 
         reg.cpu_msg := ahbsi.hwrite & ahbsi.hmastlock;
         reg.hsize   := ahbsi.hsize;
-        reg.hprot   := ahbsi.hprot;
+        reg.hprot   := ahbsi.hprot(HPROT_WIDTH - 1 downto 0);
         reg.haddr   := ahbsi.haddr;
 
         if (flush_due = '1' and not (ahbsi.hprot(0) = '0' and valid_ahb_req = '1') and ahbsi.hmastlock = '0') then
@@ -1169,7 +1171,7 @@ begin  -- architecture rtl of l2_wrapper
         if cpu_req_ready = '1' then
           reg.cpu_msg := ahbsi.hwrite & ahbsi.hmastlock;
           reg.hsize   := ahbsi.hsize;
-          reg.hprot   := ahbsi.hprot;
+          reg.hprot   := ahbsi.hprot(HPROT_WIDTH - 1 downto 0);
           reg.haddr   := ahbsi.haddr;
 
           ahbso.hready <= '1';
@@ -1753,14 +1755,14 @@ begin  -- architecture rtl of l2_wrapper
   req_reg_state    <= req_reg.state;
   rsp_in_reg_state <= rsp_in_reg.state;
 
-  ahbs_asserts   <= ahbs_reg.asserts;
-  ahbm_asserts   <= ahbm_reg.asserts;
-  req_asserts    <= req_reg.asserts;
-  rsp_in_asserts <= rsp_in_reg.asserts;
+  --ahbs_asserts   <= ahbs_reg.asserts;
+  --ahbm_asserts   <= ahbm_reg.asserts;
+  --req_asserts    <= req_reg.asserts;
+  --rsp_in_asserts <= rsp_in_reg.asserts;
 
-  led_wrapper_asserts <= or_reduce(ahbs_reg.asserts) or or_reduce(ahbm_reg.asserts) or
-                         or_reduce(req_reg.asserts) or or_reduce(rsp_in_reg.asserts);
+  --led_wrapper_asserts <= or_reduce(ahbs_reg.asserts) or or_reduce(ahbm_reg.asserts) or
+  --                       or_reduce(req_reg.asserts) or or_reduce(rsp_in_reg.asserts);
 
-  debug_led <= or_reduce(bookmark) or or_reduce(asserts) or led_wrapper_asserts;
+  --debug_led <= or_reduce(bookmark) or or_reduce(asserts) or led_wrapper_asserts;
 
 end rtl;

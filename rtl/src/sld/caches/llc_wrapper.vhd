@@ -132,160 +132,160 @@ architecture rtl of llc_wrapper is
   signal llc_mem_req_data_line   : line_t;
 
   -- debug
-  signal asserts    : llc_asserts_t;
-  signal bookmark   : llc_bookmark_t;
-  signal custom_dbg : custom_dbg_t;
+  --signal asserts    : llc_asserts_t;
+  --signal bookmark   : llc_bookmark_t;
+  --signal custom_dbg : custom_dbg_t;
 
-  signal led_wrapper_asserts : std_ulogic;
+  --signal led_wrapper_asserts : std_ulogic;
 
   constant ncpu_bits : integer := log2(ncpu);
   subtype sharers_t is std_logic_vector(ncpu - 1 downto 0);
   subtype owner_t is std_logic_vector(get_owner_bits(ncpu_bits) - 1 downto 0);
   
-  signal tag_hit_out : std_ulogic;
-  signal hit_way_out : std_logic_vector(ncpu_bits + 2 downto 0);
-  signal empty_way_found_out : std_ulogic;
-  signal empty_way_out : std_logic_vector(ncpu_bits + 2 downto 0);
-  signal evict_out : std_ulogic;
-  signal way_out : std_logic_vector(ncpu_bits + 2 downto 0);
-  signal llc_addr_out : std_logic_vector(ncpu_bits + 10 downto 0);
-  signal req_stall_out : std_ulogic;
-  signal req_in_stalled_valid_out : std_ulogic;
-  signal req_in_stalled_out_coh_msg : std_logic_vector(1 downto 0);
-  signal req_in_stalled_out_hprot : std_logic_vector(3 downto 0);
-  signal req_in_stalled_out_addr : std_logic_vector(31 downto 0);
-  signal req_in_stalled_out_line : std_logic_vector(127 downto 0);
-  signal req_in_stalled_out_req_id : std_logic_vector(1 downto 0);
-  signal is_rsp_to_get_out : std_ulogic;
-  signal is_req_to_get_out : std_ulogic;
-  signal tag_buf_out_0 : std_logic_vector(19 downto 0);
-  signal tag_buf_out_1 : std_logic_vector(19 downto 0);
-  signal tag_buf_out_2 : std_logic_vector(19 downto 0);
-  signal tag_buf_out_3 : std_logic_vector(19 downto 0);
-  signal tag_buf_out_4 : std_logic_vector(19 downto 0);
-  signal tag_buf_out_5 : std_logic_vector(19 downto 0);
-  signal tag_buf_out_6 : std_logic_vector(19 downto 0);
-  signal tag_buf_out_7 : std_logic_vector(19 downto 0);
-  signal tag_buf_out_8 : std_logic_vector(19 downto 0);
-  signal tag_buf_out_9 : std_logic_vector(19 downto 0);
-  signal tag_buf_out_10 : std_logic_vector(19 downto 0);
-  signal tag_buf_out_11 : std_logic_vector(19 downto 0);
-  signal tag_buf_out_12 : std_logic_vector(19 downto 0);
-  signal tag_buf_out_13 : std_logic_vector(19 downto 0);
-  signal tag_buf_out_14 : std_logic_vector(19 downto 0);
-  signal tag_buf_out_15 : std_logic_vector(19 downto 0);
-  signal tag_buf_out_16 : std_logic_vector(19 downto 0);
-  signal tag_buf_out_17 : std_logic_vector(19 downto 0);
-  signal tag_buf_out_18 : std_logic_vector(19 downto 0);
-  signal tag_buf_out_19 : std_logic_vector(19 downto 0);
-  signal tag_buf_out_20 : std_logic_vector(19 downto 0);
-  signal tag_buf_out_21 : std_logic_vector(19 downto 0);
-  signal tag_buf_out_22 : std_logic_vector(19 downto 0);
-  signal tag_buf_out_23 : std_logic_vector(19 downto 0);
-  signal tag_buf_out_24 : std_logic_vector(19 downto 0);
-  signal tag_buf_out_25 : std_logic_vector(19 downto 0);
-  signal tag_buf_out_26 : std_logic_vector(19 downto 0);
-  signal tag_buf_out_27 : std_logic_vector(19 downto 0);
-  signal tag_buf_out_28 : std_logic_vector(19 downto 0);
-  signal tag_buf_out_29 : std_logic_vector(19 downto 0);
-  signal tag_buf_out_30 : std_logic_vector(19 downto 0);
-  signal tag_buf_out_31 : std_logic_vector(19 downto 0);
-  signal state_buf_out_0 : std_logic_vector(2 downto 0);
-  signal state_buf_out_1 : std_logic_vector(2 downto 0);
-  signal state_buf_out_2 : std_logic_vector(2 downto 0);
-  signal state_buf_out_3 : std_logic_vector(2 downto 0);
-  signal state_buf_out_4 : std_logic_vector(2 downto 0);
-  signal state_buf_out_5 : std_logic_vector(2 downto 0);
-  signal state_buf_out_6 : std_logic_vector(2 downto 0);
-  signal state_buf_out_7 : std_logic_vector(2 downto 0);
-  signal state_buf_out_8 : std_logic_vector(2 downto 0);
-  signal state_buf_out_9 : std_logic_vector(2 downto 0);
-  signal state_buf_out_10 : std_logic_vector(2 downto 0);
-  signal state_buf_out_11 : std_logic_vector(2 downto 0);
-  signal state_buf_out_12 : std_logic_vector(2 downto 0);
-  signal state_buf_out_13 : std_logic_vector(2 downto 0);
-  signal state_buf_out_14 : std_logic_vector(2 downto 0);
-  signal state_buf_out_15 : std_logic_vector(2 downto 0);
-  signal state_buf_out_16 : std_logic_vector(2 downto 0);
-  signal state_buf_out_17 : std_logic_vector(2 downto 0);
-  signal state_buf_out_18 : std_logic_vector(2 downto 0);
-  signal state_buf_out_19 : std_logic_vector(2 downto 0);
-  signal state_buf_out_20 : std_logic_vector(2 downto 0);
-  signal state_buf_out_21 : std_logic_vector(2 downto 0);
-  signal state_buf_out_22 : std_logic_vector(2 downto 0);
-  signal state_buf_out_23 : std_logic_vector(2 downto 0);
-  signal state_buf_out_24 : std_logic_vector(2 downto 0);
-  signal state_buf_out_25 : std_logic_vector(2 downto 0);
-  signal state_buf_out_26 : std_logic_vector(2 downto 0);
-  signal state_buf_out_27 : std_logic_vector(2 downto 0);
-  signal state_buf_out_28 : std_logic_vector(2 downto 0);
-  signal state_buf_out_29 : std_logic_vector(2 downto 0);
-  signal state_buf_out_30 : std_logic_vector(2 downto 0);
-  signal state_buf_out_31 : std_logic_vector(2 downto 0);
-  signal sharers_buf_out_0 : sharers_t;
-  signal sharers_buf_out_1 : sharers_t;
-  signal sharers_buf_out_2 : sharers_t;
-  signal sharers_buf_out_3 : sharers_t;
-  signal sharers_buf_out_4 : sharers_t;
-  signal sharers_buf_out_5 : sharers_t;
-  signal sharers_buf_out_6 : sharers_t;
-  signal sharers_buf_out_7 : sharers_t;
-  signal sharers_buf_out_8 : sharers_t;
-  signal sharers_buf_out_9 : sharers_t;
-  signal sharers_buf_out_10 : sharers_t;
-  signal sharers_buf_out_11 : sharers_t;
-  signal sharers_buf_out_12 : sharers_t;
-  signal sharers_buf_out_13 : sharers_t;
-  signal sharers_buf_out_14 : sharers_t;
-  signal sharers_buf_out_15 : sharers_t;
-  signal sharers_buf_out_16 : sharers_t;
-  signal sharers_buf_out_17 : sharers_t;
-  signal sharers_buf_out_18 : sharers_t;
-  signal sharers_buf_out_19 : sharers_t;
-  signal sharers_buf_out_20 : sharers_t;
-  signal sharers_buf_out_21 : sharers_t;
-  signal sharers_buf_out_22 : sharers_t;
-  signal sharers_buf_out_23 : sharers_t;
-  signal sharers_buf_out_24 : sharers_t;
-  signal sharers_buf_out_25 : sharers_t;
-  signal sharers_buf_out_26 : sharers_t;
-  signal sharers_buf_out_27 : sharers_t;
-  signal sharers_buf_out_28 : sharers_t;
-  signal sharers_buf_out_29 : sharers_t;
-  signal sharers_buf_out_30 : sharers_t;
-  signal sharers_buf_out_31 : sharers_t;
-  signal owner_buf_out_0 : owner_t;
-  signal owner_buf_out_1 : owner_t;
-  signal owner_buf_out_2 : owner_t;
-  signal owner_buf_out_3 : owner_t;
-  signal owner_buf_out_4 : owner_t;
-  signal owner_buf_out_5 : owner_t;
-  signal owner_buf_out_6 : owner_t;
-  signal owner_buf_out_7 : owner_t;
-  signal owner_buf_out_8 : owner_t;
-  signal owner_buf_out_9 : owner_t;
-  signal owner_buf_out_10 : owner_t;
-  signal owner_buf_out_11 : owner_t;
-  signal owner_buf_out_12 : owner_t;
-  signal owner_buf_out_13 : owner_t;
-  signal owner_buf_out_14 : owner_t;
-  signal owner_buf_out_15 : owner_t;
-  signal owner_buf_out_16 : owner_t;
-  signal owner_buf_out_17 : owner_t;
-  signal owner_buf_out_18 : owner_t;
-  signal owner_buf_out_19 : owner_t;
-  signal owner_buf_out_20 : owner_t;
-  signal owner_buf_out_21 : owner_t;
-  signal owner_buf_out_22 : owner_t;
-  signal owner_buf_out_23 : owner_t;
-  signal owner_buf_out_24 : owner_t;
-  signal owner_buf_out_25 : owner_t;
-  signal owner_buf_out_26 : owner_t;
-  signal owner_buf_out_27 : owner_t;
-  signal owner_buf_out_28 : owner_t;
-  signal owner_buf_out_29 : owner_t;
-  signal owner_buf_out_30 : owner_t;
-  signal owner_buf_out_31 : owner_t;
+  --signal tag_hit_out : std_ulogic;
+  --signal hit_way_out : std_logic_vector(ncpu_bits + 2 downto 0);
+  --signal empty_way_found_out : std_ulogic;
+  --signal empty_way_out : std_logic_vector(ncpu_bits + 2 downto 0);
+  --signal evict_out : std_ulogic;
+  --signal way_out : std_logic_vector(ncpu_bits + 2 downto 0);
+  --signal llc_addr_out : std_logic_vector(ncpu_bits + 10 downto 0);
+  --signal req_stall_out : std_ulogic;
+  --signal req_in_stalled_valid_out : std_ulogic;
+  --signal req_in_stalled_out_coh_msg : std_logic_vector(1 downto 0);
+  --signal req_in_stalled_out_hprot : hprot_t;
+  --signal req_in_stalled_out_addr : std_logic_vector(31 downto 0);
+  --signal req_in_stalled_out_line : std_logic_vector(127 downto 0);
+  --signal req_in_stalled_out_req_id : std_logic_vector(1 downto 0);
+  --signal is_rsp_to_get_out : std_ulogic;
+  --signal is_req_to_get_out : std_ulogic;
+  --signal tag_buf_out_0 : std_logic_vector(19 downto 0);
+  --signal tag_buf_out_1 : std_logic_vector(19 downto 0);
+  --signal tag_buf_out_2 : std_logic_vector(19 downto 0);
+  --signal tag_buf_out_3 : std_logic_vector(19 downto 0);
+  --signal tag_buf_out_4 : std_logic_vector(19 downto 0);
+  --signal tag_buf_out_5 : std_logic_vector(19 downto 0);
+  --signal tag_buf_out_6 : std_logic_vector(19 downto 0);
+  --signal tag_buf_out_7 : std_logic_vector(19 downto 0);
+  --signal tag_buf_out_8 : std_logic_vector(19 downto 0);
+  --signal tag_buf_out_9 : std_logic_vector(19 downto 0);
+  --signal tag_buf_out_10 : std_logic_vector(19 downto 0);
+  --signal tag_buf_out_11 : std_logic_vector(19 downto 0);
+  --signal tag_buf_out_12 : std_logic_vector(19 downto 0);
+  --signal tag_buf_out_13 : std_logic_vector(19 downto 0);
+  --signal tag_buf_out_14 : std_logic_vector(19 downto 0);
+  --signal tag_buf_out_15 : std_logic_vector(19 downto 0);
+  --signal tag_buf_out_16 : std_logic_vector(19 downto 0);
+  --signal tag_buf_out_17 : std_logic_vector(19 downto 0);
+  --signal tag_buf_out_18 : std_logic_vector(19 downto 0);
+  --signal tag_buf_out_19 : std_logic_vector(19 downto 0);
+  --signal tag_buf_out_20 : std_logic_vector(19 downto 0);
+  --signal tag_buf_out_21 : std_logic_vector(19 downto 0);
+  --signal tag_buf_out_22 : std_logic_vector(19 downto 0);
+  --signal tag_buf_out_23 : std_logic_vector(19 downto 0);
+  --signal tag_buf_out_24 : std_logic_vector(19 downto 0);
+  --signal tag_buf_out_25 : std_logic_vector(19 downto 0);
+  --signal tag_buf_out_26 : std_logic_vector(19 downto 0);
+  --signal tag_buf_out_27 : std_logic_vector(19 downto 0);
+  --signal tag_buf_out_28 : std_logic_vector(19 downto 0);
+  --signal tag_buf_out_29 : std_logic_vector(19 downto 0);
+  --signal tag_buf_out_30 : std_logic_vector(19 downto 0);
+  --signal tag_buf_out_31 : std_logic_vector(19 downto 0);
+  --signal state_buf_out_0 : std_logic_vector(2 downto 0);
+  --signal state_buf_out_1 : std_logic_vector(2 downto 0);
+  --signal state_buf_out_2 : std_logic_vector(2 downto 0);
+  --signal state_buf_out_3 : std_logic_vector(2 downto 0);
+  --signal state_buf_out_4 : std_logic_vector(2 downto 0);
+  --signal state_buf_out_5 : std_logic_vector(2 downto 0);
+  --signal state_buf_out_6 : std_logic_vector(2 downto 0);
+  --signal state_buf_out_7 : std_logic_vector(2 downto 0);
+  --signal state_buf_out_8 : std_logic_vector(2 downto 0);
+  --signal state_buf_out_9 : std_logic_vector(2 downto 0);
+  --signal state_buf_out_10 : std_logic_vector(2 downto 0);
+  --signal state_buf_out_11 : std_logic_vector(2 downto 0);
+  --signal state_buf_out_12 : std_logic_vector(2 downto 0);
+  --signal state_buf_out_13 : std_logic_vector(2 downto 0);
+  --signal state_buf_out_14 : std_logic_vector(2 downto 0);
+  --signal state_buf_out_15 : std_logic_vector(2 downto 0);
+  --signal state_buf_out_16 : std_logic_vector(2 downto 0);
+  --signal state_buf_out_17 : std_logic_vector(2 downto 0);
+  --signal state_buf_out_18 : std_logic_vector(2 downto 0);
+  --signal state_buf_out_19 : std_logic_vector(2 downto 0);
+  --signal state_buf_out_20 : std_logic_vector(2 downto 0);
+  --signal state_buf_out_21 : std_logic_vector(2 downto 0);
+  --signal state_buf_out_22 : std_logic_vector(2 downto 0);
+  --signal state_buf_out_23 : std_logic_vector(2 downto 0);
+  --signal state_buf_out_24 : std_logic_vector(2 downto 0);
+  --signal state_buf_out_25 : std_logic_vector(2 downto 0);
+  --signal state_buf_out_26 : std_logic_vector(2 downto 0);
+  --signal state_buf_out_27 : std_logic_vector(2 downto 0);
+  --signal state_buf_out_28 : std_logic_vector(2 downto 0);
+  --signal state_buf_out_29 : std_logic_vector(2 downto 0);
+  --signal state_buf_out_30 : std_logic_vector(2 downto 0);
+  --signal state_buf_out_31 : std_logic_vector(2 downto 0);
+  --signal sharers_buf_out_0 : sharers_t;
+  --signal sharers_buf_out_1 : sharers_t;
+  --signal sharers_buf_out_2 : sharers_t;
+  --signal sharers_buf_out_3 : sharers_t;
+  --signal sharers_buf_out_4 : sharers_t;
+  --signal sharers_buf_out_5 : sharers_t;
+  --signal sharers_buf_out_6 : sharers_t;
+  --signal sharers_buf_out_7 : sharers_t;
+  --signal sharers_buf_out_8 : sharers_t;
+  --signal sharers_buf_out_9 : sharers_t;
+  --signal sharers_buf_out_10 : sharers_t;
+  --signal sharers_buf_out_11 : sharers_t;
+  --signal sharers_buf_out_12 : sharers_t;
+  --signal sharers_buf_out_13 : sharers_t;
+  --signal sharers_buf_out_14 : sharers_t;
+  --signal sharers_buf_out_15 : sharers_t;
+  --signal sharers_buf_out_16 : sharers_t;
+  --signal sharers_buf_out_17 : sharers_t;
+  --signal sharers_buf_out_18 : sharers_t;
+  --signal sharers_buf_out_19 : sharers_t;
+  --signal sharers_buf_out_20 : sharers_t;
+  --signal sharers_buf_out_21 : sharers_t;
+  --signal sharers_buf_out_22 : sharers_t;
+  --signal sharers_buf_out_23 : sharers_t;
+  --signal sharers_buf_out_24 : sharers_t;
+  --signal sharers_buf_out_25 : sharers_t;
+  --signal sharers_buf_out_26 : sharers_t;
+  --signal sharers_buf_out_27 : sharers_t;
+  --signal sharers_buf_out_28 : sharers_t;
+  --signal sharers_buf_out_29 : sharers_t;
+  --signal sharers_buf_out_30 : sharers_t;
+  --signal sharers_buf_out_31 : sharers_t;
+  --signal owner_buf_out_0 : owner_t;
+  --signal owner_buf_out_1 : owner_t;
+  --signal owner_buf_out_2 : owner_t;
+  --signal owner_buf_out_3 : owner_t;
+  --signal owner_buf_out_4 : owner_t;
+  --signal owner_buf_out_5 : owner_t;
+  --signal owner_buf_out_6 : owner_t;
+  --signal owner_buf_out_7 : owner_t;
+  --signal owner_buf_out_8 : owner_t;
+  --signal owner_buf_out_9 : owner_t;
+  --signal owner_buf_out_10 : owner_t;
+  --signal owner_buf_out_11 : owner_t;
+  --signal owner_buf_out_12 : owner_t;
+  --signal owner_buf_out_13 : owner_t;
+  --signal owner_buf_out_14 : owner_t;
+  --signal owner_buf_out_15 : owner_t;
+  --signal owner_buf_out_16 : owner_t;
+  --signal owner_buf_out_17 : owner_t;
+  --signal owner_buf_out_18 : owner_t;
+  --signal owner_buf_out_19 : owner_t;
+  --signal owner_buf_out_20 : owner_t;
+  --signal owner_buf_out_21 : owner_t;
+  --signal owner_buf_out_22 : owner_t;
+  --signal owner_buf_out_23 : owner_t;
+  --signal owner_buf_out_24 : owner_t;
+  --signal owner_buf_out_25 : owner_t;
+  --signal owner_buf_out_26 : owner_t;
+  --signal owner_buf_out_27 : owner_t;
+  --signal owner_buf_out_28 : owner_t;
+  --signal owner_buf_out_29 : owner_t;
+  --signal owner_buf_out_30 : owner_t;
+  --signal owner_buf_out_31 : owner_t;
   
 -----------------------------------------------------------------------------
 -- AHB master FSM signals
@@ -477,9 +477,9 @@ architecture rtl of llc_wrapper is
   attribute mark_debug of llc_mem_req_data_addr   : signal is "true";
   attribute mark_debug of llc_mem_req_data_line   : signal is "true";
 
-  attribute mark_debug of asserts    : signal is "true";
-  attribute mark_debug of bookmark   : signal is "true";
-  attribute mark_debug of custom_dbg : signal is "true";
+  --attribute mark_debug of asserts    : signal is "true";
+  --attribute mark_debug of bookmark   : signal is "true";
+  --attribute mark_debug of custom_dbg : signal is "true";
 
   attribute mark_debug of ahbm_asserts : signal is "true";
 
@@ -541,7 +541,7 @@ begin  -- architecture rtl
     ahbmo.htrans  <= HTRANS_IDLE;
     ahbmo.hwrite  <= '0';
     ahbmo.haddr   <= (others => '0');
-    ahbmo.hprot   <= (others => '0');
+    ahbmo.hprot   <= "1100";
     ahbmo.hwdata  <= (others => '0');
 
     -- check if the bus has been granted
@@ -596,7 +596,7 @@ begin  -- architecture rtl
           ahbmo.htrans  <= HTRANS_NONSEQ;
           ahbmo.hwrite  <= '0';
           ahbmo.haddr   <= reg.haddr;
-          ahbmo.hprot   <= reg.hprot;
+          ahbmo.hprot(HPROT_WIDTH - 1 downto 0)   <= reg.hprot;
           if ahbmi.hready = '1' then
             reg.word_cnt := reg.word_cnt + 1;
             reg.haddr    := reg.haddr + 4;
@@ -626,7 +626,7 @@ begin  -- architecture rtl
           ahbmo.htrans  <= HTRANS_SEQ;
           ahbmo.hwrite  <= '0';
           ahbmo.haddr   <= reg.haddr;
-          ahbmo.hprot   <= reg.hprot;
+          ahbmo.hprot(HPROT_WIDTH - 1 downto 0) <= reg.hprot;
           if ahbmi.hready = '1' then
             reg.line(reg.word_cnt*BITS_PER_WORD-1 downto (reg.word_cnt-1)*BITS_PER_WORD) := ahbmi.hrdata;
             reg.word_cnt                                                                 := reg.word_cnt + 1;
@@ -655,7 +655,7 @@ begin  -- architecture rtl
           ahbmo.htrans  <= HTRANS_NONSEQ;
           ahbmo.hwrite  <= '1';
           ahbmo.haddr   <= reg.haddr;
-          ahbmo.hprot   <= reg.hprot;
+          ahbmo.hprot(HPROT_WIDTH - 1 downto 0) <= reg.hprot;
           if ahbmi.hready = '1' then
             reg.word_cnt := reg.word_cnt + 1;
             reg.haddr    := reg.haddr + 4;
@@ -680,7 +680,7 @@ begin  -- architecture rtl
           ahbmo.htrans  <= HTRANS_SEQ;
           ahbmo.hwrite  <= '1';
           ahbmo.haddr   <= reg.haddr;
-          ahbmo.hprot   <= reg.hprot;
+          ahbmo.hprot(HPROT_WIDTH - 1 downto 0) <= reg.hprot;
           if ahbmi.hready = '1' then
             reg.word_cnt := reg.word_cnt + 1;
             reg.haddr    := reg.haddr + 4;
@@ -730,10 +730,11 @@ begin  -- architecture rtl
 
           msg_type    := get_msg_type(coherence_req_data_out);
           reg.coh_msg := msg_type(COH_MSG_TYPE_WIDTH - 1 downto 0);
-          reg.hprot   := get_reserved_field(coherence_req_data_out);
-
-          reg.origin_x                                              := get_origin_x(coherence_req_data_out);
-          reg.origin_y                                              := get_origin_y(coherence_req_data_out);
+          reserved    := get_reserved_field(coherence_req_data_out);
+          reg.hprot   := reserved(HPROT_WIDTH - 1 downto 0);
+          
+          reg.origin_x := get_origin_x(coherence_req_data_out);
+          reg.origin_y := get_origin_y(coherence_req_data_out);
           if unsigned(reg.origin_x) >= 0 and unsigned(reg.origin_x) <= noc_xlen and
              unsigned(reg.origin_y) >= 0 and unsigned(reg.origin_y) <= noc_xlen
           then
@@ -1138,61 +1139,61 @@ begin  -- architecture rtl
       llc_mem_req_data_hsize  => llc_mem_req_data_hsize,
       llc_mem_req_data_hprot  => llc_mem_req_data_hprot,
       llc_mem_req_data_addr   => llc_mem_req_data_addr,
-      llc_mem_req_data_line   => llc_mem_req_data_line,
+      llc_mem_req_data_line   => llc_mem_req_data_line
 
       -- debug
-      asserts    => asserts,
-      bookmark   => bookmark,
-      custom_dbg => custom_dbg,
+      --asserts    => asserts,
+      --bookmark   => bookmark,
+      --custom_dbg => custom_dbg,
 
-      tag_hit_out => tag_hit_out,
-      hit_way_out => hit_way_out,
-      empty_way_found_out => empty_way_found_out,
-      empty_way_out => empty_way_out,
-      evict_out => evict_out,
-      way_out => way_out,
-      llc_addr_out => llc_addr_out,
-      req_stall_out => req_stall_out,
-      req_in_stalled_valid_out => req_in_stalled_valid_out,
-      req_in_stalled_out_coh_msg => req_in_stalled_out_coh_msg,
-      req_in_stalled_out_hprot => req_in_stalled_out_hprot,
-      req_in_stalled_out_addr => req_in_stalled_out_addr,
-      req_in_stalled_out_line => req_in_stalled_out_line,
-      req_in_stalled_out_req_id => req_in_stalled_out_req_id,
-      is_rsp_to_get_out => is_rsp_to_get_out,
-      is_req_to_get_out => is_req_to_get_out,
-      tag_buf_out_0 => tag_buf_out_0,
-      tag_buf_out_1 => tag_buf_out_1,
-      tag_buf_out_2 => tag_buf_out_2,
-      tag_buf_out_3 => tag_buf_out_3,
-      tag_buf_out_4 => tag_buf_out_4,
-      tag_buf_out_5 => tag_buf_out_5,
-      tag_buf_out_6 => tag_buf_out_6,
-      tag_buf_out_7 => tag_buf_out_7,
-      state_buf_out_0 => state_buf_out_0,
-      state_buf_out_1 => state_buf_out_1,
-      state_buf_out_2 => state_buf_out_2,
-      state_buf_out_3 => state_buf_out_3,
-      state_buf_out_4 => state_buf_out_4,
-      state_buf_out_5 => state_buf_out_5,
-      state_buf_out_6 => state_buf_out_6,
-      state_buf_out_7 => state_buf_out_7,
-      sharers_buf_out_0 => sharers_buf_out_0,
-      sharers_buf_out_1 => sharers_buf_out_1,
-      sharers_buf_out_2 => sharers_buf_out_2,
-      sharers_buf_out_3 => sharers_buf_out_3,
-      sharers_buf_out_4 => sharers_buf_out_4,
-      sharers_buf_out_5 => sharers_buf_out_5,
-      sharers_buf_out_6 => sharers_buf_out_6,
-      sharers_buf_out_7 => sharers_buf_out_7,
-      owner_buf_out_0 => owner_buf_out_0,
-      owner_buf_out_1 => owner_buf_out_1,
-      owner_buf_out_2 => owner_buf_out_2,
-      owner_buf_out_3 => owner_buf_out_3,
-      owner_buf_out_4 => owner_buf_out_4,
-      owner_buf_out_5 => owner_buf_out_5,
-      owner_buf_out_6 => owner_buf_out_6,
-      owner_buf_out_7 => owner_buf_out_7
+      --tag_hit_out => tag_hit_out,
+      --hit_way_out => hit_way_out,
+      --empty_way_found_out => empty_way_found_out,
+      --empty_way_out => empty_way_out,
+      --evict_out => evict_out,
+      --way_out => way_out,
+      --llc_addr_out => llc_addr_out,
+      --req_stall_out => req_stall_out,
+      --req_in_stalled_valid_out => req_in_stalled_valid_out,
+      --req_in_stalled_out_coh_msg => req_in_stalled_out_coh_msg,
+      --req_in_stalled_out_hprot => req_in_stalled_out_hprot,
+      --req_in_stalled_out_addr => req_in_stalled_out_addr,
+      --req_in_stalled_out_line => req_in_stalled_out_line,
+      --req_in_stalled_out_req_id => req_in_stalled_out_req_id,
+      --is_rsp_to_get_out => is_rsp_to_get_out,
+      --is_req_to_get_out => is_req_to_get_out,
+      --tag_buf_out_0 => tag_buf_out_0,
+      --tag_buf_out_1 => tag_buf_out_1,
+      --tag_buf_out_2 => tag_buf_out_2,
+      --tag_buf_out_3 => tag_buf_out_3,
+      --tag_buf_out_4 => tag_buf_out_4,
+      --tag_buf_out_5 => tag_buf_out_5,
+      --tag_buf_out_6 => tag_buf_out_6,
+      --tag_buf_out_7 => tag_buf_out_7,
+      --state_buf_out_0 => state_buf_out_0,
+      --state_buf_out_1 => state_buf_out_1,
+      --state_buf_out_2 => state_buf_out_2,
+      --state_buf_out_3 => state_buf_out_3,
+      --state_buf_out_4 => state_buf_out_4,
+      --state_buf_out_5 => state_buf_out_5,
+      --state_buf_out_6 => state_buf_out_6,
+      --state_buf_out_7 => state_buf_out_7,
+      --sharers_buf_out_0 => sharers_buf_out_0,
+      --sharers_buf_out_1 => sharers_buf_out_1,
+      --sharers_buf_out_2 => sharers_buf_out_2,
+      --sharers_buf_out_3 => sharers_buf_out_3,
+      --sharers_buf_out_4 => sharers_buf_out_4,
+      --sharers_buf_out_5 => sharers_buf_out_5,
+      --sharers_buf_out_6 => sharers_buf_out_6,
+      --sharers_buf_out_7 => sharers_buf_out_7,
+      --owner_buf_out_0 => owner_buf_out_0,
+      --owner_buf_out_1 => owner_buf_out_1,
+      --owner_buf_out_2 => owner_buf_out_2,
+      --owner_buf_out_3 => owner_buf_out_3,
+      --owner_buf_out_4 => owner_buf_out_4,
+      --owner_buf_out_5 => owner_buf_out_5,
+      --owner_buf_out_6 => owner_buf_out_6,
+      --owner_buf_out_7 => owner_buf_out_7
       );
 
   end generate llc_cpus_1;
@@ -1256,93 +1257,93 @@ begin  -- architecture rtl
       llc_mem_req_data_hsize  => llc_mem_req_data_hsize,
       llc_mem_req_data_hprot  => llc_mem_req_data_hprot,
       llc_mem_req_data_addr   => llc_mem_req_data_addr,
-      llc_mem_req_data_line   => llc_mem_req_data_line,
+      llc_mem_req_data_line   => llc_mem_req_data_line
 
       -- debug
-      asserts    => asserts,
-      bookmark   => bookmark,
-      custom_dbg => custom_dbg,
+      --asserts    => asserts,
+      --bookmark   => bookmark,
+      --custom_dbg => custom_dbg,
 
-      tag_hit_out => tag_hit_out,
-      hit_way_out => hit_way_out,
-      empty_way_found_out => empty_way_found_out,
-      empty_way_out => empty_way_out,
-      evict_out => evict_out,
-      way_out => way_out,
-      llc_addr_out => llc_addr_out,
-      req_stall_out => req_stall_out,
-      req_in_stalled_valid_out => req_in_stalled_valid_out,
-      req_in_stalled_out_coh_msg => req_in_stalled_out_coh_msg,
-      req_in_stalled_out_hprot => req_in_stalled_out_hprot,
-      req_in_stalled_out_addr => req_in_stalled_out_addr,
-      req_in_stalled_out_line => req_in_stalled_out_line,
-      req_in_stalled_out_req_id => req_in_stalled_out_req_id,
-      is_rsp_to_get_out => is_rsp_to_get_out,
-      is_req_to_get_out => is_req_to_get_out,
-      tag_buf_out_0 => tag_buf_out_0,
-      tag_buf_out_1 => tag_buf_out_1,
-      tag_buf_out_2 => tag_buf_out_2,
-      tag_buf_out_3 => tag_buf_out_3,
-      tag_buf_out_4 => tag_buf_out_4,
-      tag_buf_out_5 => tag_buf_out_5,
-      tag_buf_out_6 => tag_buf_out_6,
-      tag_buf_out_7 => tag_buf_out_7,
-      tag_buf_out_8 => tag_buf_out_8,
-      tag_buf_out_9 => tag_buf_out_9,
-      tag_buf_out_10 => tag_buf_out_10,
-      tag_buf_out_11 => tag_buf_out_11,
-      tag_buf_out_12 => tag_buf_out_12,
-      tag_buf_out_13 => tag_buf_out_13,
-      tag_buf_out_14 => tag_buf_out_14,
-      tag_buf_out_15 => tag_buf_out_15,
-      state_buf_out_0 => state_buf_out_0,
-      state_buf_out_1 => state_buf_out_1,
-      state_buf_out_2 => state_buf_out_2,
-      state_buf_out_3 => state_buf_out_3,
-      state_buf_out_4 => state_buf_out_4,
-      state_buf_out_5 => state_buf_out_5,
-      state_buf_out_6 => state_buf_out_6,
-      state_buf_out_7 => state_buf_out_7,
-      state_buf_out_8 => state_buf_out_8,
-      state_buf_out_9 => state_buf_out_9,
-      state_buf_out_10 => state_buf_out_10,
-      state_buf_out_11 => state_buf_out_11,
-      state_buf_out_12 => state_buf_out_12,
-      state_buf_out_13 => state_buf_out_13,
-      state_buf_out_14 => state_buf_out_14,
-      state_buf_out_15 => state_buf_out_15,
-      sharers_buf_out_0 => sharers_buf_out_0,
-      sharers_buf_out_1 => sharers_buf_out_1,
-      sharers_buf_out_2 => sharers_buf_out_2,
-      sharers_buf_out_3 => sharers_buf_out_3,
-      sharers_buf_out_4 => sharers_buf_out_4,
-      sharers_buf_out_5 => sharers_buf_out_5,
-      sharers_buf_out_6 => sharers_buf_out_6,
-      sharers_buf_out_7 => sharers_buf_out_7,
-      sharers_buf_out_8 => sharers_buf_out_8,
-      sharers_buf_out_9 => sharers_buf_out_9,
-      sharers_buf_out_10 => sharers_buf_out_10,
-      sharers_buf_out_11 => sharers_buf_out_11,
-      sharers_buf_out_12 => sharers_buf_out_12,
-      sharers_buf_out_13 => sharers_buf_out_13,
-      sharers_buf_out_14 => sharers_buf_out_14,
-      sharers_buf_out_15 => sharers_buf_out_15,
-      owner_buf_out_0 => owner_buf_out_0,
-      owner_buf_out_1 => owner_buf_out_1,
-      owner_buf_out_2 => owner_buf_out_2,
-      owner_buf_out_3 => owner_buf_out_3,
-      owner_buf_out_4 => owner_buf_out_4,
-      owner_buf_out_5 => owner_buf_out_5,
-      owner_buf_out_6 => owner_buf_out_6,
-      owner_buf_out_7 => owner_buf_out_7,
-      owner_buf_out_8 => owner_buf_out_8,
-      owner_buf_out_9 => owner_buf_out_9,
-      owner_buf_out_10 => owner_buf_out_10,
-      owner_buf_out_11 => owner_buf_out_11,
-      owner_buf_out_12 => owner_buf_out_12,
-      owner_buf_out_13 => owner_buf_out_13,
-      owner_buf_out_14 => owner_buf_out_14,
-      owner_buf_out_15 => owner_buf_out_15
+      --tag_hit_out => tag_hit_out,
+      --hit_way_out => hit_way_out,
+      --empty_way_found_out => empty_way_found_out,
+      --empty_way_out => empty_way_out,
+      --evict_out => evict_out,
+      --way_out => way_out,
+      --llc_addr_out => llc_addr_out,
+      --req_stall_out => req_stall_out,
+      --req_in_stalled_valid_out => req_in_stalled_valid_out,
+      --req_in_stalled_out_coh_msg => req_in_stalled_out_coh_msg,
+      --req_in_stalled_out_hprot => req_in_stalled_out_hprot,
+      --req_in_stalled_out_addr => req_in_stalled_out_addr,
+      --req_in_stalled_out_line => req_in_stalled_out_line,
+      --req_in_stalled_out_req_id => req_in_stalled_out_req_id,
+      --is_rsp_to_get_out => is_rsp_to_get_out,
+      --is_req_to_get_out => is_req_to_get_out,
+      --tag_buf_out_0 => tag_buf_out_0,
+      --tag_buf_out_1 => tag_buf_out_1,
+      --tag_buf_out_2 => tag_buf_out_2,
+      --tag_buf_out_3 => tag_buf_out_3,
+      --tag_buf_out_4 => tag_buf_out_4,
+      --tag_buf_out_5 => tag_buf_out_5,
+      --tag_buf_out_6 => tag_buf_out_6,
+      --tag_buf_out_7 => tag_buf_out_7,
+      --tag_buf_out_8 => tag_buf_out_8,
+      --tag_buf_out_9 => tag_buf_out_9,
+      --tag_buf_out_10 => tag_buf_out_10,
+      --tag_buf_out_11 => tag_buf_out_11,
+      --tag_buf_out_12 => tag_buf_out_12,
+      --tag_buf_out_13 => tag_buf_out_13,
+      --tag_buf_out_14 => tag_buf_out_14,
+      --tag_buf_out_15 => tag_buf_out_15,
+      --state_buf_out_0 => state_buf_out_0,
+      --state_buf_out_1 => state_buf_out_1,
+      --state_buf_out_2 => state_buf_out_2,
+      --state_buf_out_3 => state_buf_out_3,
+      --state_buf_out_4 => state_buf_out_4,
+      --state_buf_out_5 => state_buf_out_5,
+      --state_buf_out_6 => state_buf_out_6,
+      --state_buf_out_7 => state_buf_out_7,
+      --state_buf_out_8 => state_buf_out_8,
+      --state_buf_out_9 => state_buf_out_9,
+      --state_buf_out_10 => state_buf_out_10,
+      --state_buf_out_11 => state_buf_out_11,
+      --state_buf_out_12 => state_buf_out_12,
+      --state_buf_out_13 => state_buf_out_13,
+      --state_buf_out_14 => state_buf_out_14,
+      --state_buf_out_15 => state_buf_out_15,
+      --sharers_buf_out_0 => sharers_buf_out_0,
+      --sharers_buf_out_1 => sharers_buf_out_1,
+      --sharers_buf_out_2 => sharers_buf_out_2,
+      --sharers_buf_out_3 => sharers_buf_out_3,
+      --sharers_buf_out_4 => sharers_buf_out_4,
+      --sharers_buf_out_5 => sharers_buf_out_5,
+      --sharers_buf_out_6 => sharers_buf_out_6,
+      --sharers_buf_out_7 => sharers_buf_out_7,
+      --sharers_buf_out_8 => sharers_buf_out_8,
+      --sharers_buf_out_9 => sharers_buf_out_9,
+      --sharers_buf_out_10 => sharers_buf_out_10,
+      --sharers_buf_out_11 => sharers_buf_out_11,
+      --sharers_buf_out_12 => sharers_buf_out_12,
+      --sharers_buf_out_13 => sharers_buf_out_13,
+      --sharers_buf_out_14 => sharers_buf_out_14,
+      --sharers_buf_out_15 => sharers_buf_out_15,
+      --owner_buf_out_0 => owner_buf_out_0,
+      --owner_buf_out_1 => owner_buf_out_1,
+      --owner_buf_out_2 => owner_buf_out_2,
+      --owner_buf_out_3 => owner_buf_out_3,
+      --owner_buf_out_4 => owner_buf_out_4,
+      --owner_buf_out_5 => owner_buf_out_5,
+      --owner_buf_out_6 => owner_buf_out_6,
+      --owner_buf_out_7 => owner_buf_out_7,
+      --owner_buf_out_8 => owner_buf_out_8,
+      --owner_buf_out_9 => owner_buf_out_9,
+      --owner_buf_out_10 => owner_buf_out_10,
+      --owner_buf_out_11 => owner_buf_out_11,
+      --owner_buf_out_12 => owner_buf_out_12,
+      --owner_buf_out_13 => owner_buf_out_13,
+      --owner_buf_out_14 => owner_buf_out_14,
+      --owner_buf_out_15 => owner_buf_out_15
       );
 
   end generate llc_cpus_2;
@@ -1406,157 +1407,157 @@ begin  -- architecture rtl
       llc_mem_req_data_hsize  => llc_mem_req_data_hsize,
       llc_mem_req_data_hprot  => llc_mem_req_data_hprot,
       llc_mem_req_data_addr   => llc_mem_req_data_addr,
-      llc_mem_req_data_line   => llc_mem_req_data_line,
+      llc_mem_req_data_line   => llc_mem_req_data_line
 
       -- debug
-      asserts    => asserts,
-      bookmark   => bookmark,
-      custom_dbg => custom_dbg,
+      --asserts    => asserts,
+      --bookmark   => bookmark,
+      --custom_dbg => custom_dbg,
 
-      tag_hit_out => tag_hit_out,
-      hit_way_out => hit_way_out,
-      empty_way_found_out => empty_way_found_out,
-      empty_way_out => empty_way_out,
-      evict_out => evict_out,
-      way_out => way_out,
-      llc_addr_out => llc_addr_out,
-      req_stall_out => req_stall_out,
-      req_in_stalled_valid_out => req_in_stalled_valid_out,
-      req_in_stalled_out_coh_msg => req_in_stalled_out_coh_msg,
-      req_in_stalled_out_hprot => req_in_stalled_out_hprot,
-      req_in_stalled_out_addr => req_in_stalled_out_addr,
-      req_in_stalled_out_line => req_in_stalled_out_line,
-      req_in_stalled_out_req_id => req_in_stalled_out_req_id,
-      is_rsp_to_get_out => is_rsp_to_get_out,
-      is_req_to_get_out => is_req_to_get_out,
-      tag_buf_out_0 => tag_buf_out_0,
-      tag_buf_out_1 => tag_buf_out_1,
-      tag_buf_out_2 => tag_buf_out_2,
-      tag_buf_out_3 => tag_buf_out_3,
-      tag_buf_out_4 => tag_buf_out_4,
-      tag_buf_out_5 => tag_buf_out_5,
-      tag_buf_out_6 => tag_buf_out_6,
-      tag_buf_out_7 => tag_buf_out_7,
-      tag_buf_out_8 => tag_buf_out_8,
-      tag_buf_out_9 => tag_buf_out_9,
-      tag_buf_out_10 => tag_buf_out_10,
-      tag_buf_out_11 => tag_buf_out_11,
-      tag_buf_out_12 => tag_buf_out_12,
-      tag_buf_out_13 => tag_buf_out_13,
-      tag_buf_out_14 => tag_buf_out_14,
-      tag_buf_out_15 => tag_buf_out_15,
-      tag_buf_out_16 => tag_buf_out_16,
-      tag_buf_out_17 => tag_buf_out_17,
-      tag_buf_out_18 => tag_buf_out_18,
-      tag_buf_out_19 => tag_buf_out_19,
-      tag_buf_out_20 => tag_buf_out_20,
-      tag_buf_out_21 => tag_buf_out_21,
-      tag_buf_out_22 => tag_buf_out_22,
-      tag_buf_out_23 => tag_buf_out_23,
-      tag_buf_out_24 => tag_buf_out_24,
-      tag_buf_out_25 => tag_buf_out_25,
-      tag_buf_out_26 => tag_buf_out_26,
-      tag_buf_out_27 => tag_buf_out_27,
-      tag_buf_out_28 => tag_buf_out_28,
-      tag_buf_out_29 => tag_buf_out_29,
-      tag_buf_out_30 => tag_buf_out_30,
-      tag_buf_out_31 => tag_buf_out_31,
-      state_buf_out_0 => state_buf_out_0,
-      state_buf_out_1 => state_buf_out_1,
-      state_buf_out_2 => state_buf_out_2,
-      state_buf_out_3 => state_buf_out_3,
-      state_buf_out_4 => state_buf_out_4,
-      state_buf_out_5 => state_buf_out_5,
-      state_buf_out_6 => state_buf_out_6,
-      state_buf_out_7 => state_buf_out_7,
-      state_buf_out_8 => state_buf_out_8,
-      state_buf_out_9 => state_buf_out_9,
-      state_buf_out_10 => state_buf_out_10,
-      state_buf_out_11 => state_buf_out_11,
-      state_buf_out_12 => state_buf_out_12,
-      state_buf_out_13 => state_buf_out_13,
-      state_buf_out_14 => state_buf_out_14,
-      state_buf_out_15 => state_buf_out_15,
-      state_buf_out_16 => state_buf_out_16,
-      state_buf_out_17 => state_buf_out_17,
-      state_buf_out_18 => state_buf_out_18,
-      state_buf_out_19 => state_buf_out_19,
-      state_buf_out_20 => state_buf_out_20,
-      state_buf_out_21 => state_buf_out_21,
-      state_buf_out_22 => state_buf_out_22,
-      state_buf_out_23 => state_buf_out_23,
-      state_buf_out_24 => state_buf_out_24,
-      state_buf_out_25 => state_buf_out_25,
-      state_buf_out_26 => state_buf_out_26,
-      state_buf_out_27 => state_buf_out_27,
-      state_buf_out_28 => state_buf_out_28,
-      state_buf_out_29 => state_buf_out_29,
-      state_buf_out_30 => state_buf_out_30,
-      state_buf_out_31 => state_buf_out_31,
-      sharers_buf_out_0 => sharers_buf_out_0,
-      sharers_buf_out_1 => sharers_buf_out_1,
-      sharers_buf_out_2 => sharers_buf_out_2,
-      sharers_buf_out_3 => sharers_buf_out_3,
-      sharers_buf_out_4 => sharers_buf_out_4,
-      sharers_buf_out_5 => sharers_buf_out_5,
-      sharers_buf_out_6 => sharers_buf_out_6,
-      sharers_buf_out_7 => sharers_buf_out_7,
-      sharers_buf_out_8 => sharers_buf_out_8,
-      sharers_buf_out_9 => sharers_buf_out_9,
-      sharers_buf_out_10 => sharers_buf_out_10,
-      sharers_buf_out_11 => sharers_buf_out_11,
-      sharers_buf_out_12 => sharers_buf_out_12,
-      sharers_buf_out_13 => sharers_buf_out_13,
-      sharers_buf_out_14 => sharers_buf_out_14,
-      sharers_buf_out_15 => sharers_buf_out_15,
-      sharers_buf_out_16 => sharers_buf_out_16,
-      sharers_buf_out_17 => sharers_buf_out_17,
-      sharers_buf_out_18 => sharers_buf_out_18,
-      sharers_buf_out_19 => sharers_buf_out_19,
-      sharers_buf_out_20 => sharers_buf_out_20,
-      sharers_buf_out_21 => sharers_buf_out_21,
-      sharers_buf_out_22 => sharers_buf_out_22,
-      sharers_buf_out_23 => sharers_buf_out_23,
-      sharers_buf_out_24 => sharers_buf_out_24,
-      sharers_buf_out_25 => sharers_buf_out_25,
-      sharers_buf_out_26 => sharers_buf_out_26,
-      sharers_buf_out_27 => sharers_buf_out_27,
-      sharers_buf_out_28 => sharers_buf_out_28,
-      sharers_buf_out_29 => sharers_buf_out_29,
-      sharers_buf_out_30 => sharers_buf_out_30,
-      sharers_buf_out_31 => sharers_buf_out_31,
-      owner_buf_out_0 => owner_buf_out_0,
-      owner_buf_out_1 => owner_buf_out_1,
-      owner_buf_out_2 => owner_buf_out_2,
-      owner_buf_out_3 => owner_buf_out_3,
-      owner_buf_out_4 => owner_buf_out_4,
-      owner_buf_out_5 => owner_buf_out_5,
-      owner_buf_out_6 => owner_buf_out_6,
-      owner_buf_out_7 => owner_buf_out_7,
-      owner_buf_out_8 => owner_buf_out_8,
-      owner_buf_out_9 => owner_buf_out_9,
-      owner_buf_out_10 => owner_buf_out_10,
-      owner_buf_out_11 => owner_buf_out_11,
-      owner_buf_out_12 => owner_buf_out_12,
-      owner_buf_out_13 => owner_buf_out_13,
-      owner_buf_out_14 => owner_buf_out_14,
-      owner_buf_out_15 => owner_buf_out_15,
-      owner_buf_out_16 => owner_buf_out_16,
-      owner_buf_out_17 => owner_buf_out_17,
-      owner_buf_out_18 => owner_buf_out_18,
-      owner_buf_out_19 => owner_buf_out_19,
-      owner_buf_out_20 => owner_buf_out_20,
-      owner_buf_out_21 => owner_buf_out_21,
-      owner_buf_out_22 => owner_buf_out_22,
-      owner_buf_out_23 => owner_buf_out_23,
-      owner_buf_out_24 => owner_buf_out_24,
-      owner_buf_out_25 => owner_buf_out_25,
-      owner_buf_out_26 => owner_buf_out_26,
-      owner_buf_out_27 => owner_buf_out_27,
-      owner_buf_out_28 => owner_buf_out_28,
-      owner_buf_out_29 => owner_buf_out_29,
-      owner_buf_out_30 => owner_buf_out_30,
-      owner_buf_out_31 => owner_buf_out_31
+      --tag_hit_out => tag_hit_out,
+      --hit_way_out => hit_way_out,
+      --empty_way_found_out => empty_way_found_out,
+      --empty_way_out => empty_way_out,
+      --evict_out => evict_out,
+      --way_out => way_out,
+      --llc_addr_out => llc_addr_out,
+      --req_stall_out => req_stall_out,
+      --req_in_stalled_valid_out => req_in_stalled_valid_out,
+      --req_in_stalled_out_coh_msg => req_in_stalled_out_coh_msg,
+      --req_in_stalled_out_hprot => req_in_stalled_out_hprot,
+      --req_in_stalled_out_addr => req_in_stalled_out_addr,
+      --req_in_stalled_out_line => req_in_stalled_out_line,
+      --req_in_stalled_out_req_id => req_in_stalled_out_req_id,
+      --is_rsp_to_get_out => is_rsp_to_get_out,
+      --is_req_to_get_out => is_req_to_get_out,
+      --tag_buf_out_0 => tag_buf_out_0,
+      --tag_buf_out_1 => tag_buf_out_1,
+      --tag_buf_out_2 => tag_buf_out_2,
+      --tag_buf_out_3 => tag_buf_out_3,
+      --tag_buf_out_4 => tag_buf_out_4,
+      --tag_buf_out_5 => tag_buf_out_5,
+      --tag_buf_out_6 => tag_buf_out_6,
+      --tag_buf_out_7 => tag_buf_out_7,
+      --tag_buf_out_8 => tag_buf_out_8,
+      --tag_buf_out_9 => tag_buf_out_9,
+      --tag_buf_out_10 => tag_buf_out_10,
+      --tag_buf_out_11 => tag_buf_out_11,
+      --tag_buf_out_12 => tag_buf_out_12,
+      --tag_buf_out_13 => tag_buf_out_13,
+      --tag_buf_out_14 => tag_buf_out_14,
+      --tag_buf_out_15 => tag_buf_out_15,
+      --tag_buf_out_16 => tag_buf_out_16,
+      --tag_buf_out_17 => tag_buf_out_17,
+      --tag_buf_out_18 => tag_buf_out_18,
+      --tag_buf_out_19 => tag_buf_out_19,
+      --tag_buf_out_20 => tag_buf_out_20,
+      --tag_buf_out_21 => tag_buf_out_21,
+      --tag_buf_out_22 => tag_buf_out_22,
+      --tag_buf_out_23 => tag_buf_out_23,
+      --tag_buf_out_24 => tag_buf_out_24,
+      --tag_buf_out_25 => tag_buf_out_25,
+      --tag_buf_out_26 => tag_buf_out_26,
+      --tag_buf_out_27 => tag_buf_out_27,
+      --tag_buf_out_28 => tag_buf_out_28,
+      --tag_buf_out_29 => tag_buf_out_29,
+      --tag_buf_out_30 => tag_buf_out_30,
+      --tag_buf_out_31 => tag_buf_out_31,
+      --state_buf_out_0 => state_buf_out_0,
+      --state_buf_out_1 => state_buf_out_1,
+      --state_buf_out_2 => state_buf_out_2,
+      --state_buf_out_3 => state_buf_out_3,
+      --state_buf_out_4 => state_buf_out_4,
+      --state_buf_out_5 => state_buf_out_5,
+      --state_buf_out_6 => state_buf_out_6,
+      --state_buf_out_7 => state_buf_out_7,
+      --state_buf_out_8 => state_buf_out_8,
+      --state_buf_out_9 => state_buf_out_9,
+      --state_buf_out_10 => state_buf_out_10,
+      --state_buf_out_11 => state_buf_out_11,
+      --state_buf_out_12 => state_buf_out_12,
+      --state_buf_out_13 => state_buf_out_13,
+      --state_buf_out_14 => state_buf_out_14,
+      --state_buf_out_15 => state_buf_out_15,
+      --state_buf_out_16 => state_buf_out_16,
+      --state_buf_out_17 => state_buf_out_17,
+      --state_buf_out_18 => state_buf_out_18,
+      --state_buf_out_19 => state_buf_out_19,
+      --state_buf_out_20 => state_buf_out_20,
+      --state_buf_out_21 => state_buf_out_21,
+      --state_buf_out_22 => state_buf_out_22,
+      --state_buf_out_23 => state_buf_out_23,
+      --state_buf_out_24 => state_buf_out_24,
+      --state_buf_out_25 => state_buf_out_25,
+      --state_buf_out_26 => state_buf_out_26,
+      --state_buf_out_27 => state_buf_out_27,
+      --state_buf_out_28 => state_buf_out_28,
+      --state_buf_out_29 => state_buf_out_29,
+      --state_buf_out_30 => state_buf_out_30,
+      --state_buf_out_31 => state_buf_out_31,
+      --sharers_buf_out_0 => sharers_buf_out_0,
+      --sharers_buf_out_1 => sharers_buf_out_1,
+      --sharers_buf_out_2 => sharers_buf_out_2,
+      --sharers_buf_out_3 => sharers_buf_out_3,
+      --sharers_buf_out_4 => sharers_buf_out_4,
+      --sharers_buf_out_5 => sharers_buf_out_5,
+      --sharers_buf_out_6 => sharers_buf_out_6,
+      --sharers_buf_out_7 => sharers_buf_out_7,
+      --sharers_buf_out_8 => sharers_buf_out_8,
+      --sharers_buf_out_9 => sharers_buf_out_9,
+      --sharers_buf_out_10 => sharers_buf_out_10,
+      --sharers_buf_out_11 => sharers_buf_out_11,
+      --sharers_buf_out_12 => sharers_buf_out_12,
+      --sharers_buf_out_13 => sharers_buf_out_13,
+      --sharers_buf_out_14 => sharers_buf_out_14,
+      --sharers_buf_out_15 => sharers_buf_out_15,
+      --sharers_buf_out_16 => sharers_buf_out_16,
+      --sharers_buf_out_17 => sharers_buf_out_17,
+      --sharers_buf_out_18 => sharers_buf_out_18,
+      --sharers_buf_out_19 => sharers_buf_out_19,
+      --sharers_buf_out_20 => sharers_buf_out_20,
+      --sharers_buf_out_21 => sharers_buf_out_21,
+      --sharers_buf_out_22 => sharers_buf_out_22,
+      --sharers_buf_out_23 => sharers_buf_out_23,
+      --sharers_buf_out_24 => sharers_buf_out_24,
+      --sharers_buf_out_25 => sharers_buf_out_25,
+      --sharers_buf_out_26 => sharers_buf_out_26,
+      --sharers_buf_out_27 => sharers_buf_out_27,
+      --sharers_buf_out_28 => sharers_buf_out_28,
+      --sharers_buf_out_29 => sharers_buf_out_29,
+      --sharers_buf_out_30 => sharers_buf_out_30,
+      --sharers_buf_out_31 => sharers_buf_out_31,
+      --owner_buf_out_0 => owner_buf_out_0,
+      --owner_buf_out_1 => owner_buf_out_1,
+      --owner_buf_out_2 => owner_buf_out_2,
+      --owner_buf_out_3 => owner_buf_out_3,
+      --owner_buf_out_4 => owner_buf_out_4,
+      --owner_buf_out_5 => owner_buf_out_5,
+      --owner_buf_out_6 => owner_buf_out_6,
+      --owner_buf_out_7 => owner_buf_out_7,
+      --owner_buf_out_8 => owner_buf_out_8,
+      --owner_buf_out_9 => owner_buf_out_9,
+      --owner_buf_out_10 => owner_buf_out_10,
+      --owner_buf_out_11 => owner_buf_out_11,
+      --owner_buf_out_12 => owner_buf_out_12,
+      --owner_buf_out_13 => owner_buf_out_13,
+      --owner_buf_out_14 => owner_buf_out_14,
+      --owner_buf_out_15 => owner_buf_out_15,
+      --owner_buf_out_16 => owner_buf_out_16,
+      --owner_buf_out_17 => owner_buf_out_17,
+      --owner_buf_out_18 => owner_buf_out_18,
+      --owner_buf_out_19 => owner_buf_out_19,
+      --owner_buf_out_20 => owner_buf_out_20,
+      --owner_buf_out_21 => owner_buf_out_21,
+      --owner_buf_out_22 => owner_buf_out_22,
+      --owner_buf_out_23 => owner_buf_out_23,
+      --owner_buf_out_24 => owner_buf_out_24,
+      --owner_buf_out_25 => owner_buf_out_25,
+      --owner_buf_out_26 => owner_buf_out_26,
+      --owner_buf_out_27 => owner_buf_out_27,
+      --owner_buf_out_28 => owner_buf_out_28,
+      --owner_buf_out_29 => owner_buf_out_29,
+      --owner_buf_out_30 => owner_buf_out_30,
+      --owner_buf_out_31 => owner_buf_out_31
       );
 
   end generate llc_cpus_4;
@@ -1567,8 +1568,8 @@ begin  -- architecture rtl
 
   ahbm_asserts <= ahbm_reg.asserts;
 
-  led_wrapper_asserts <= or_reduce(ahbm_reg.asserts);
+  --led_wrapper_asserts <= or_reduce(ahbm_reg.asserts);
 
-  debug_led <= or_reduce(bookmark) or or_reduce(asserts) or led_wrapper_asserts;
+  --debug_led <= or_reduce(bookmark) or or_reduce(asserts) or led_wrapper_asserts;
 
 end architecture rtl;
