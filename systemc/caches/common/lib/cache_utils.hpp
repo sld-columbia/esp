@@ -31,7 +31,7 @@
 
 inline void write_word(line_t &line, word_t word, word_offset_t w_off, byte_offset_t b_off, hsize_t hsize)
 {
-    uint32_t size, b_off_tmp;
+    uint32_t size = BITS_PER_WORD, b_off_tmp = 0;
     
     if (hsize == BYTE) {
 	b_off_tmp = BYTES_PER_WORD - 1 - b_off;

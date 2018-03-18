@@ -72,7 +72,7 @@
     if (RPT_RTL) CACHE_REPORT_TIME(sc_time_stamp(), "Put reqs.")
 // Search for cache lines
 #define TAG_LOOKUP						       \
-    HLS_CONSTRAIN_LATENCY(0, HLS_ACHIEVABLE, "l2-tag-lookup-latency"); \
+    HLS_CONSTRAIN_LATENCY(0, 1, "l2-tag-lookup-latency"); \
     bookmark_tmp |= BM_TAG_LOOKUP;				       \
     if (RPT_RTL) CACHE_REPORT_TIME(sc_time_stamp(), "Tag lookup.")
 #define TAG_LOOKUP_LOOP					\

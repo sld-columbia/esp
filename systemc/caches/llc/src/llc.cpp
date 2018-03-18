@@ -21,16 +21,6 @@ void llc::ctrl()
 	bool is_rsp_to_get = false;
 	bool is_req_to_get = false;
 
-	// input
-	llc_rsp_in_t  rsp_in;
-	llc_req_in_t  req_in;
-
-	// input address breakdown
-	line_breakdown_t line_br;
-	llc_way_t way = 0;
-	llc_addr_t llc_addr = 0;
-	bool evict = false;
-
 	// dummy variables
 	bool rst_tmp;
 
@@ -51,7 +41,8 @@ void llc::ctrl()
 	    if (llc_rsp_in.nb_can_get()) { // rsp_data
 	    	is_rsp_to_get = true;
 	    } else if ((llc_req_in.nb_can_get() && !req_stall) || 
-		       (!req_stall && req_in_stalled_valid)) { // req_gets, req_getm, req_puts, req_putm
+		       (!req_stall && req_in_stalled_valid)) { 
+                // req_gets, req_getm, req_puts, req_putm
 		is_req_to_get = true;
 	    }
 	}
@@ -62,6 +53,12 @@ void llc::ctrl()
 #endif
 
 	if (is_rsp_to_get) {
+
+	    llc_rsp_in_t rsp_in;
+	    line_breakdown_t line_br;
+	    llc_way_t way;
+	    llc_addr_t llc_addr;
+	    bool evict;
 
 	    get_rsp_in(rsp_in);
 
@@ -85,6 +82,12 @@ void llc::ctrl()
 	    }
 
 	} else if (is_req_to_get == true) {
+
+	    llc_req_in_t req_in;
+	    line_breakdown_t line_br;
+	    llc_way_t way;
+	    llc_addr_t llc_addr;
+	    bool evict;
 
 	    if (!req_in_stalled_valid) {
 		get_req_in(req_in);
