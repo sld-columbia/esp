@@ -8,6 +8,8 @@
 
 void l2::ctrl()
 {
+    bool is_to_req[2] = {1, 0};
+
     // Reset all signals and channels
     this->reset_io();
 
@@ -17,66 +19,11 @@ void l2::ctrl()
     // Main loop
     while(true) {
 
-	// transaction select flags
-	bool    is_flush_to_get = false;
-	bool	is_rsp_to_get	= false;
-	bool	is_fwd_to_get	= false;
-	bool    is_ongoing_flush = false;
-	bool	is_req_to_get	= false;
-    
-	{
-	    L2_NB_GET;
-
-	    is_flush_to_get = false;
-	    is_rsp_to_get = false;
-	    is_fwd_to_get = false;
-	    is_ongoing_flush = false;
-	    is_req_to_get = false;
-
-	    if (l2_flush.nb_can_get() && reqs_cnt == N_REQS) {
-
-		CACHE_REPORT_TIME(sc_time_stamp(), "flush: ");
-		is_flush_to_get = true;
-
-	    } else if (l2_rsp_in.nb_can_get()) {
-
-		CACHE_REPORT_TIME(sc_time_stamp(), "rsp: ");
-		if (ongoing_flush)
-		    RSP_WHILE_FLUSHING;
-	    	is_rsp_to_get = true;
-
-	    } else if (((l2_fwd_in.nb_can_get() && !fwd_stall) || fwd_stall_ended)
-		       && !l2_flush.nb_can_get()) {
-
-		CACHE_REPORT_TIME(sc_time_stamp(), "fwd: ");
-		fwd_stall_ended = false;
-		is_fwd_to_get = true;
-
-	    } else if (ongoing_flush) {
-
-		CACHE_REPORT_TIME(sc_time_stamp(), "ongoing: ");
-		if (reqs_cnt != 0)
-		    is_ongoing_flush = true;
-
-	    } else if ((l2_cpu_req.nb_can_get() || set_conflict) && 
-		       !evict_stall && 
-		       (reqs_cnt != 0 || ongoing_atomic)) { // assuming HPROT cacheable
-
-		CACHE_REPORT_TIME(sc_time_stamp(), "req: ");
-		is_req_to_get = true;
-
-	    } else {
-
-		CACHE_REPORT_TIME(sc_time_stamp(), "other: ");
-	     	wait();
-
-	    }
-	}
-
+#ifdef L2_DEBUG
 	bookmark_tmp = 0;
 	asserts_tmp = 0;
-
-	if (is_flush_to_get) {
+#endif
+	if (l2_flush.nb_can_get() && reqs_cnt == N_REQS) {
 
 	    get_flush();
 
@@ -86,7 +33,10 @@ void l2::ctrl()
 
 	    CACHE_REPORT_VAR(sc_time_stamp(), "post ongoing flush: ", ongoing_flush);
 
-	} else if (is_rsp_to_get) {
+	} else if (l2_rsp_in.nb_can_get()) {
+
+	    // if (ongoing_flush)
+	    //     RSP_WHILE_FLUSHING;
 
 	    l2_rsp_in_t rsp_in;
 	    line_breakdown_t line_br;
@@ -250,12 +200,15 @@ void l2::ctrl()
 
 	    }
 
-	} else if (is_fwd_to_get) {
+	} else if (((l2_fwd_in.nb_can_get() && !fwd_stall) || fwd_stall_ended)
+		   && !l2_flush.nb_can_get()) {
 
 	    l2_fwd_in_t fwd_in;
 	    line_breakdown_t line_br;
 	    bool reqs_hit;
 	    sc_uint<REQS_BITS> reqs_hit_i;
+
+	    fwd_stall_ended = false;
 
 	    if (!fwd_stall) {
 		get_fwd_in(fwd_in);
@@ -306,11 +259,11 @@ void l2::ctrl()
 
 		    set_t set_tmp = reqs[reqs_hit_i].set;
 
-		    {
-			HLS_DEFINE_PROTOCOL("l2-evict-ways");
-			wait();
+		    // {
+		    // 	HLS_DEFINE_PROTOCOL("l2-evict-ways");
+		    // 	wait();
 			evict_ways.port1[0][set_tmp] = reqs[reqs_hit_i].way + 1;
-		    }
+		    // }
 		    
 		    reqs[reqs_hit_i].state = state_tmp;
 		    reqs[reqs_hit_i].tag = reqs[reqs_hit_i].tag_estall;
@@ -354,13 +307,12 @@ void l2::ctrl()
 		    FWD_HIT_EMIA;
 
 		    if (fwd_in.coh_msg == FWD_GETS) {
-			HLS_DEFINE_PROTOCOL("fwd-hit-emia-protocol");
 
-			send_rsp_out(RSP_DATA, fwd_in.req_id, 1, fwd_in.addr, reqs[reqs_hit_i].line); // to requestor
-
-			wait();
-
-			send_rsp_out(RSP_DATA, 0, 0, fwd_in.addr, reqs[reqs_hit_i].line); // to directory
+			for (int i = 0; i < 2; i++) {
+			    send_rsp_out(RSP_DATA, fwd_in.req_id, is_to_req[i], 
+					 fwd_in.addr, reqs[reqs_hit_i].line);
+			    wait();
+			}
 
 			reqs[reqs_hit_i].state = SIA;
 
@@ -396,14 +348,14 @@ void l2::ctrl()
 
 		case FWD_GETS :
 		{
-		    FWD_NOHIT_GETS;
+		    // FWD_NOHIT_GETS;
 
-		    // {
-		    // 	HLS_DEFINE_PROTOCOL("fwd-nohit-gets-protocol");
-		    send_rsp_out(RSP_DATA, fwd_in.req_id, 1, fwd_in.addr, lines_buf[way_hit]); // to requestor
-		    wait();
-		    send_rsp_out(RSP_DATA, fwd_in.req_id, 0, fwd_in.addr, lines_buf[way_hit]); // to directory
-		    // }
+		    for (int i = 0; i < 2; i++) {
+			send_rsp_out(RSP_DATA, fwd_in.req_id, is_to_req[i], 
+				     fwd_in.addr, lines_buf[way_hit]);
+			wait();
+		    }
+
 		    states.port1[0][(line_br.set << L2_WAY_BITS) + way_hit] = SHARED;
 
 		    break;
@@ -442,115 +394,119 @@ void l2::ctrl()
 		}
 	    }
 
-	} else if (is_ongoing_flush) {
+	} else if (ongoing_flush) {
 
-	    bool incoming_fwd = false;
-	    sc_uint<REQS_BITS> reqs_hit_i;
+	    if (reqs_cnt != 0) {
 
-	    wait();
+		bool incoming_fwd = false;
+		sc_uint<REQS_BITS> reqs_hit_i;
 
-	    while (flush_set < SETS) {
+		wait();
 
-		CACHE_REPORT_VAR(sc_time_stamp(), "Flush set: ", flush_set);
+		while (flush_set < SETS) {
 
-		{
-		    FLUSH_READ_SET;
+		    CACHE_REPORT_VAR(sc_time_stamp(), "Flush set: ", flush_set);
 
-		    read_set(flush_set);
-		}
+		    {
+			FLUSH_READ_SET;
 
-		while (flush_way < L2_WAYS) {
-		    
-		    CACHE_REPORT_VAR(sc_time_stamp(), "Flush way: ", flush_way);		    
-		    
-		    if (l2_fwd_in.nb_can_get() || reqs_cnt == 0) {
-
-			CACHE_REPORT_TIME(sc_time_stamp(), "Flush: incoming rsp break.");
-
-			incoming_fwd = true;
-
-			break;
-
-		    } else if (state_buf[flush_way] != INVALID) {
-
-			CACHE_REPORT_TIME(sc_time_stamp(), "Flush: found something.");
-
-			reqs_peek_flush(flush_set, reqs_hit_i);
-
-			addr_t addr_tmp = (tag_buf[flush_way] << TAG_RANGE_LO) | 
-			    (flush_set << SET_RANGE_LO);
-			    
-			addr_breakdown_t addr_br;
-			addr_br.breakdown(addr_tmp);
-
-			line_addr_t line_addr_tmp = (tag_buf[flush_way] << SET_BITS) | 
-			    (flush_set);
-
-			states.port1[0][(flush_set << L2_WAY_BITS) + flush_way] = INVALID;
-
-			unstable_state_t state_tmp;
-			coh_msg_t coh_msg_tmp;
-
-			switch (state_buf[flush_way]) {
-
-			case SHARED :
-			    coh_msg_tmp = REQ_PUTS;
-			    state_tmp = SIA;
-			    break;
-
-			case EXCLUSIVE :
-			    coh_msg_tmp = REQ_PUTS;
-			    state_tmp = MIA;
-			    break;
-
-			case MODIFIED :
-			    coh_msg_tmp = REQ_PUTM;
-			    state_tmp = MIA;
-			    break;
-
-			default :
-			    EVICT_DEFAULT;
-			}
-
-			fill_reqs(0, addr_br, 0, flush_way, 0, state_tmp, 
-				  0, 0, lines_buf[flush_way], reqs_hit_i);
-
-			send_req_out(coh_msg_tmp, 0, line_addr_tmp, 
-				     lines_buf[flush_way]);
+			read_set(flush_set);
 		    }
 
-		    flush_way++;
+		    while (flush_way < L2_WAYS) {
+		    
+			CACHE_REPORT_VAR(sc_time_stamp(), "Flush way: ", flush_way);		    
+		    
+			if (l2_fwd_in.nb_can_get() || reqs_cnt == 0) {
 
-		    wait();
+			    CACHE_REPORT_TIME(sc_time_stamp(), "Flush: incoming rsp break.");
+
+			    incoming_fwd = true;
+
+			    break;
+
+			} else if (state_buf[flush_way] != INVALID) {
+
+			    CACHE_REPORT_TIME(sc_time_stamp(), "Flush: found something.");
+
+			    reqs_peek_flush(flush_set, reqs_hit_i);
+
+			    addr_t addr_tmp = (tag_buf[flush_way] << TAG_RANGE_LO) | 
+				(flush_set << SET_RANGE_LO);
+			    
+			    addr_breakdown_t addr_br;
+			    addr_br.breakdown(addr_tmp);
+
+			    line_addr_t line_addr_tmp = (tag_buf[flush_way] << SET_BITS) | 
+				(flush_set);
+
+			    states.port1[0][(flush_set << L2_WAY_BITS) + flush_way] = INVALID;
+
+			    unstable_state_t state_tmp;
+			    coh_msg_t coh_msg_tmp;
+
+			    switch (state_buf[flush_way]) {
+
+			    case SHARED :
+				coh_msg_tmp = REQ_PUTS;
+				state_tmp = SIA;
+				break;
+
+			    case EXCLUSIVE :
+				coh_msg_tmp = REQ_PUTS;
+				state_tmp = MIA;
+				break;
+
+			    case MODIFIED :
+				coh_msg_tmp = REQ_PUTM;
+				state_tmp = MIA;
+				break;
+
+			    default :
+				EVICT_DEFAULT;
+			    }
+
+			    fill_reqs(0, addr_br, 0, flush_way, 0, state_tmp, 
+				      0, 0, lines_buf[flush_way], reqs_hit_i);
+
+			    send_req_out(coh_msg_tmp, 0, line_addr_tmp, 
+					 lines_buf[flush_way]);
+			}
+
+			flush_way++;
+
+			wait();
+		    }
+
+		    if (incoming_fwd)
+			break;
+
+		    flush_set++;
+		    flush_way = 0;
 		}
 
-		if (incoming_fwd)
-		    break;
-
-		flush_set++;
-		flush_way = 0;
-	    }
-
-	    if (flush_set == SETS){
-		FLUSH_END;
+		if (flush_set == SETS){
+		    FLUSH_END;
 		
-		flush_set = 0;
-		flush_way = 0;
+		    flush_set = 0;
+		    flush_way = 0;
 
-		ongoing_flush = false;
+		    ongoing_flush = false;
 
-		flush_done.write(true);
-		wait();
-		flush_done.write(false);
+		    flush_done.write(true);
+		    wait();
+		    flush_done.write(false);
+		}
 	    }
-
-	} else if (is_req_to_get) { // assuming HPROT cacheable
+	} else if ((l2_cpu_req.nb_can_get() || set_conflict) && 
+		   !evict_stall && 
+		   (reqs_cnt != 0 || ongoing_atomic)) { // assuming HPROT cacheable
 
 	    l2_cpu_req_t cpu_req;
 	    addr_breakdown_t addr_br;
 	    sc_uint<REQS_BITS> reqs_hit_i;
 
- 	    if (!set_conflict) {
+	    if (!set_conflict) {
 		get_cpu_req(cpu_req);
 	    } else {
 		CACHE_REPORT_TIME(sc_time_stamp(), "START WITH CONFLICT: ");
@@ -563,12 +519,6 @@ void l2::ctrl()
 
 	    set_conflict = reqs_peek_req(addr_br.set, reqs_hit_i);
 
-	    bool tag_hit;
-	    l2_way_t way_hit;
-	    bool empty_way_found;
-	    l2_way_t empty_way;
-	    tag_lookup(addr_br, tag_hit, way_hit, empty_way_found, empty_way);
-
 	    if (ongoing_atomic) {
 
 		// assuming there can only be 1 atomic operation in flight at a time
@@ -576,6 +526,10 @@ void l2::ctrl()
 		if (atomic_line_addr != addr_br.line_addr) {
 
 		    ATOMIC_OVERRIDE;
+
+		    // atomic_conflict actually, but reuse variables
+		    set_conflict = true;
+		    cpu_req_conflict = cpu_req;
 
 		    reqs[reqs_atomic_i].state = INVALID;
 		    reqs_cnt++;
@@ -585,10 +539,6 @@ void l2::ctrl()
 			     reqs[reqs_atomic_i].hprot, MODIFIED, reqs_atomic_i);
 
 		    ongoing_atomic = false;
-
-		    reqs_hit_i = reqs_atomic_i;
-
-		    wait();
 
 		} else {
 
@@ -620,8 +570,8 @@ void l2::ctrl()
 
 		    case WRITE :
 		    case WRITE_ATOMIC :
-		    {
-			HLS_DEFINE_PROTOCOL();
+		    // {
+			// HLS_DEFINE_PROTOCOL();
 
 			write_word(reqs[reqs_atomic_i].line, cpu_req.word, addr_br.w_off, 
 				   addr_br.b_off, cpu_req.hsize);
@@ -633,24 +583,25 @@ void l2::ctrl()
 				 reqs[reqs_atomic_i].line, reqs[reqs_atomic_i].hprot, MODIFIED, reqs_atomic_i);
 
 			ongoing_atomic = false;
-
-			wait();
-		    }
+		    // }
 		    break;
 
 		    }
-
-		    continue;
 		}
-	    }
 
-	    if (set_conflict) {
+	    } else if (set_conflict) {
 
 		SET_CONFLICT;
 
 		cpu_req_conflict = cpu_req;
 
 	    } else {
+
+		bool tag_hit;
+		l2_way_t way_hit;
+		bool empty_way_found;
+		l2_way_t empty_way;
+		tag_lookup(addr_br, tag_hit, way_hit, empty_way_found, empty_way);
 
 		if (cpu_req.cpu_msg == READ_ATOMIC) {
 		    reqs_atomic_i = reqs_hit_i;
@@ -863,10 +814,6 @@ void l2::ctrl()
 	empty_way_out.write(empty_way);
 	reqs_hit_out.write(reqs_hit);
 	reqs_hit_i_out.write(reqs_hit_i);
-	is_flush_to_get_out.write(is_flush_to_get);
-	is_rsp_to_get_out.write(is_rsp_to_get);
-	is_fwd_to_get_out.write(is_fwd_to_get);
-	is_req_to_get_out.write(is_req_to_get);
 	flush_way_out.write(flush_way);
 	flush_set_out.write(flush_set);
 
@@ -979,10 +926,6 @@ inline void l2::reset_io()
     empty_way_out.write(0);
     reqs_hit_out.write(0);
     reqs_hit_i_out.write(0);
-    is_flush_to_get_out.write(0);
-    is_rsp_to_get_out.write(0);
-    is_fwd_to_get_out.write(0);
-    is_req_to_get_out.write(0);
     flush_way_out.write(0);
     flush_set_out.write(0);
 
@@ -1001,10 +944,9 @@ inline void l2::reset_io()
 
     /* Reset variables */
     custom_dbg_tmp = 0;
-#endif
-
     asserts_tmp = 0;
     bookmark_tmp = 0;
+#endif
 
     reqs_cnt = N_REQS;
     set_conflict = false;
@@ -1310,7 +1252,7 @@ void l2::reqs_lookup(line_breakdown_t line_br, sc_uint<REQS_BITS> &reqs_hit_i)
 	}
     }
 
-    REQS_LOOKUP_ASSERT;
+    // REQS_LOOKUP_ASSERT;
 }
 
 bool l2::reqs_peek_req(set_t set, sc_uint<REQS_BITS> &reqs_i)

@@ -177,9 +177,9 @@ public:
 private:
 
     /* Variables for debug*/ 
+#ifdef L2_DEBUG
     sc_bv<ASSERT_WIDTH>   asserts_tmp;
     sc_bv<BOOKMARK_WIDTH> bookmark_tmp;
-#ifdef L2_DEBUG
     uint64_t custom_dbg_tmp;
 #endif
 
