@@ -35,22 +35,20 @@ void l2::ctrl()
 
 	} else if (l2_rsp_in.nb_can_get()) {
 
+	    // if (ongoing_flush)
+	    //     RSP_WHILE_FLUSHING;
+
 	    l2_rsp_in_t rsp_in;
 	    line_breakdown_t line_br;
 	    sc_uint<REQS_BITS> reqs_hit_i;
 
-	    // if (ongoing_flush)
-	    //     RSP_WHILE_FLUSHING;
-
-	    {
-		RSP_IN;
-
-		get_rsp_in(rsp_in);
+	    get_rsp_in(rsp_in);
 	    
-		line_br.line_breakdown(rsp_in.addr);
+	    wait(); // for SystemC simulation only
 
-		reqs_lookup(line_br, reqs_hit_i);
-	    }
+	    line_br.line_breakdown(rsp_in.addr);
+
+	    reqs_lookup(line_br, reqs_hit_i);
 
 	    switch (rsp_in.coh_msg) {
 		
@@ -209,26 +207,23 @@ void l2::ctrl()
 	    line_breakdown_t line_br;
 	    bool reqs_hit;
 	    sc_uint<REQS_BITS> reqs_hit_i;
-	    l2_way_t way_hit;
 
-	    {
-		FWD_IN;
+	    fwd_stall_ended = false;
 
-		fwd_stall_ended = false;
-
-		if (!fwd_stall) {
-		    get_fwd_in(fwd_in);
-		} else {
-		    CACHE_REPORT_INFO("End of fwd stall.");
-		    fwd_in = fwd_in_stalled;
-		}
-
-		line_br.line_breakdown(fwd_in.addr);
-
-		tag_lookup_fwd(line_br, way_hit); 
-		fwd_stall = reqs_peek_fwd(line_br, reqs_hit_i, reqs_hit, fwd_in.coh_msg);
-
+	    if (!fwd_stall) {
+		get_fwd_in(fwd_in);
+	    } else {
+		CACHE_REPORT_INFO("End of fwd stall.");
+		fwd_in = fwd_in_stalled;
 	    }
+
+	    wait(); // for SystemC simulation only
+
+	    line_br.line_breakdown(fwd_in.addr);
+
+	    l2_way_t way_hit;
+	    tag_lookup_fwd(line_br, way_hit); 
+	    fwd_stall = reqs_peek_fwd(line_br, reqs_hit_i, reqs_hit, fwd_in.coh_msg);
 
 	    if (fwd_in.coh_msg == FWD_PUTACK) {
 		
@@ -264,7 +259,11 @@ void l2::ctrl()
 
 		    set_t set_tmp = reqs[reqs_hit_i].set;
 
-		    evict_ways.port1[0][set_tmp] = reqs[reqs_hit_i].way + 1;
+		    // {
+		    // 	HLS_DEFINE_PROTOCOL("l2-evict-ways");
+		    // 	wait();
+			evict_ways.port1[0][set_tmp] = reqs[reqs_hit_i].way + 1;
+		    // }
 		    
 		    reqs[reqs_hit_i].state = state_tmp;
 		    reqs[reqs_hit_i].tag = reqs[reqs_hit_i].tag_estall;
@@ -318,9 +317,8 @@ void l2::ctrl()
 			reqs[reqs_hit_i].state = SIA;
 
 		    } else {
-
-			// to requestor
-			send_rsp_out(RSP_DATA, fwd_in.req_id, 1, fwd_in.addr, reqs[reqs_hit_i].line);
+			
+			send_rsp_out(RSP_DATA, fwd_in.req_id, 1, fwd_in.addr, reqs[reqs_hit_i].line); // to requestor
 
 			reqs[reqs_hit_i].state = IIA;
 
@@ -350,7 +348,7 @@ void l2::ctrl()
 
 		case FWD_GETS :
 		{
-		    FWD_NOHIT_GETS;
+		    // FWD_NOHIT_GETS;
 
 		    for (int i = 0; i < 2; i++) {
 			send_rsp_out(RSP_DATA, fwd_in.req_id, is_to_req[i], 
@@ -429,8 +427,6 @@ void l2::ctrl()
 
 			} else if (state_buf[flush_way] != INVALID) {
 
-			    FLUSH_LOOP;
-
 			    CACHE_REPORT_TIME(sc_time_stamp(), "Flush: found something.");
 
 			    reqs_peek_flush(flush_set, reqs_hit_i);
@@ -502,25 +498,28 @@ void l2::ctrl()
 		    flush_done.write(false);
 		}
 	    }
-
 	} else if ((l2_cpu_req.nb_can_get() || set_conflict) && 
-		   !evict_stall) { // assuming HPROT cacheable
+		   !evict_stall && 
+		   (reqs_cnt != 0 || ongoing_atomic)) { // assuming HPROT cacheable
+
+	    l2_cpu_req_t cpu_req;
+	    addr_breakdown_t addr_br;
+	    sc_uint<REQS_BITS> reqs_hit_i;
+
+	    if (!set_conflict) {
+		get_cpu_req(cpu_req);
+	    } else {
+		CACHE_REPORT_TIME(sc_time_stamp(), "START WITH CONFLICT: ");
+		cpu_req = cpu_req_conflict;
+	    }
+
+	    wait(); // for SystemC simulation only
+
+	    addr_br.breakdown(cpu_req.addr);
+
+	    set_conflict = reqs_peek_req(addr_br.set, reqs_hit_i);
 
 	    if (ongoing_atomic) {
-
-		HLS_CONSTRAIN_LATENCY(0, HLS_ACHIEVABLE, "l2-atom-latency");
-
-		l2_cpu_req_t cpu_req;
-		addr_breakdown_t addr_br;
-
-		if (!set_conflict) {
-		    get_cpu_req(cpu_req);
-		} else {
-		    CACHE_REPORT_TIME(sc_time_stamp(), "START WITH CONFLICT: ");
-		    cpu_req = cpu_req_conflict;
-		}
-
-		addr_br.breakdown(cpu_req.addr);
 
 		// assuming there can only be 1 atomic operation in flight at a time
 
@@ -571,6 +570,8 @@ void l2::ctrl()
 
 		    case WRITE :
 		    case WRITE_ATOMIC :
+		    // {
+			// HLS_DEFINE_PROTOCOL();
 
 			write_word(reqs[reqs_atomic_i].line, cpu_req.word, addr_br.w_off, 
 				   addr_br.b_off, cpu_req.hsize);
@@ -582,280 +583,209 @@ void l2::ctrl()
 				 reqs[reqs_atomic_i].line, reqs[reqs_atomic_i].hprot, MODIFIED, reqs_atomic_i);
 
 			ongoing_atomic = false;
-
-			break;
+		    // }
+		    break;
 
 		    }
 		}
 
-	    } else if (reqs_cnt != 0) {
+	    } else if (set_conflict) {
 
-		l2_cpu_req_t cpu_req;
-		addr_breakdown_t addr_br;
-		sc_uint<REQS_BITS> reqs_hit_i;
+		SET_CONFLICT;
+
+		cpu_req_conflict = cpu_req;
+
+	    } else {
 
 		bool tag_hit;
 		l2_way_t way_hit;
 		bool empty_way_found;
 		l2_way_t empty_way;
+		tag_lookup(addr_br, tag_hit, way_hit, empty_way_found, empty_way);
 
-		{
-		    HLS_CONSTRAIN_LATENCY(0, 1, "l2-cpu-req-latency");
-
-		    if (!set_conflict) {
-			get_cpu_req(cpu_req);
-		    } else {
-			CACHE_REPORT_TIME(sc_time_stamp(), "START WITH CONFLICT: ");
-			cpu_req = cpu_req_conflict;
-		    }
-
-		    addr_br.breakdown(cpu_req.addr);
-
-		    set_conflict = reqs_peek_req(addr_br.set, reqs_hit_i);
-
-		    evict_way = evict_ways.port2[0][addr_br.set];
+		if (cpu_req.cpu_msg == READ_ATOMIC) {
+		    reqs_atomic_i = reqs_hit_i;
+		    atomic_line_addr = addr_br.line_addr;
 		}
 
-		if (set_conflict) {
+		if (tag_hit) {
 
-		    SET_CONFLICT;
+		    switch (cpu_req.cpu_msg) {
+		    
+		    case READ : // read hit
+		    {
+			HIT_READ;
 
-		    cpu_req_conflict = cpu_req;
+			// read response
+			send_rd_rsp(lines_buf[way_hit]);
+		    }
+		    break;
+
+		    case READ_ATOMIC : // read atomic hit
+
+			switch (state_buf[way_hit]) {
+
+			case SHARED :
+			{
+			    HIT_READ_ATOMIC_S;
+
+			    // save request in intermediate state
+			    fill_reqs(cpu_req.cpu_msg, addr_br, 0, way_hit, cpu_req.hsize, SMADW, 
+				      cpu_req.hprot, cpu_req.word, lines_buf[way_hit], reqs_hit_i);
+
+			    // send request to directory
+			    send_req_out(REQ_GETM, cpu_req.hprot,
+					 addr_br.line_addr, 0);
+			}
+			break;
+
+			case EXCLUSIVE : // write hit
+			case MODIFIED : // write hit
+			{
+			    HIT_READ_ATOMIC_EM;
+
+			    ongoing_atomic = true;
+
+			    // save request in intermediate state
+			    fill_reqs(cpu_req.cpu_msg, addr_br, 0, way_hit, cpu_req.hsize, XMW, 
+				      cpu_req.hprot, cpu_req.word, lines_buf[way_hit], reqs_hit_i);
+
+                            // read response 
+			    send_rd_rsp(lines_buf[way_hit]);
+			}
+			break;
+
+			default:
+			    HIT_READ_ATOMIC_DEFAULT;
+			}
+
+			break;
+
+		    case WRITE :
+
+			switch (state_buf[way_hit]) {
+
+			case SHARED :
+			{
+			    HIT_WRITE_S;
+
+			    // save request in intermediate state
+			    fill_reqs(cpu_req.cpu_msg, addr_br, 0, way_hit, cpu_req.hsize, SMAD, cpu_req.hprot,
+				      cpu_req.word, lines_buf[way_hit], reqs_hit_i);
+
+			    // send request to directory
+			    send_req_out(REQ_GETM, cpu_req.hprot,
+					 addr_br.line_addr, 0);
+			}
+			break;
+
+			case EXCLUSIVE : // write hit
+			    states.port1[0][(addr_br.set << L2_WAY_BITS) + way_hit] = MODIFIED;
+			case MODIFIED : // write hit
+			{
+			    HIT_WRITE_EM;
+
+			    // write word
+			    write_word(lines_buf[way_hit], cpu_req.word, addr_br.w_off, 
+				       addr_br.b_off, cpu_req.hsize);
+			    lines.port1[0][(addr_br.set << L2_WAY_BITS) + way_hit] = lines_buf[way_hit];
+			}
+			break;
+
+			default:
+			    HIT_WRITE_DEFAULT;
+			}
+			break;
+
+		    default:
+			HIT_DEFAULT;
+		    }
+
+		} else if (empty_way_found) {
+
+		    unstable_state_t state_tmp;
+		    coh_msg_t coh_msg_tmp;
+
+		    switch (cpu_req.cpu_msg) {
+		    
+		    case READ :
+		    {
+			MISS_READ;
+
+			state_tmp = ISD;
+			coh_msg_tmp = REQ_GETS;
+
+		    }
+		    break;
+
+		    case READ_ATOMIC :
+		    {
+			MISS_READ_ATOMIC;
+
+			state_tmp = IMADW;
+			coh_msg_tmp = REQ_GETM;
+
+		    }
+		    break;
+
+		    case WRITE :
+		    {
+			MISS_WRITE;
+
+			state_tmp = IMAD;
+			coh_msg_tmp = REQ_GETM;
+
+		    }
+		    break;
+
+		    default:
+			MISS_DEFAULT;
+		    }
+
+		    CACHE_REPORT_VAR(sc_time_stamp(), "RIGHT PLACE: ", cpu_req.hprot);
+
+		    // save request in intermediate state
+		    fill_reqs(cpu_req.cpu_msg, addr_br, 0, empty_way, cpu_req.hsize, 
+			      state_tmp, cpu_req.hprot, cpu_req.word, 0, reqs_hit_i);
+
+		    // send request to directory
+		    send_req_out(coh_msg_tmp, cpu_req.hprot, addr_br.line_addr, 0);
 
 		} else {
 
-		    {
-
-			HLS_CONSTRAIN_LATENCY(0, 2, "l2-tag-lookup-latency");
-
-			if (cpu_req.cpu_msg == READ_ATOMIC) {
-			    reqs_atomic_i = reqs_hit_i;
-			    atomic_line_addr = addr_br.line_addr;
-			}
-
-			tag_lookup(addr_br, tag_hit, way_hit, empty_way_found, empty_way);
-
-			if (tag_hit) {
-
-			    HLS_CONSTRAIN_LATENCY(0, 1, "l2-hit-latency");
-
-			    switch (cpu_req.cpu_msg) {
-		    
-			    case READ : // read hit
-			    {
-				HIT_READ;
-
-				// read response
-				send_rd_rsp(lines_buf[way_hit]);
-			    }
-			    break;
-
-			    case READ_ATOMIC : // read atomic hit
-
-				switch (state_buf[way_hit]) {
-
-				case EXCLUSIVE : // write hit
-				case MODIFIED : // write hit
-				{
-				    HIT_READ_ATOMIC_EM;
-
-				    ongoing_atomic = true;
-
-				    // save request in intermediate state
-				    fill_reqs(cpu_req.cpu_msg, addr_br, 0, way_hit, cpu_req.hsize, 
-					      XMW, cpu_req.hprot, cpu_req.word, lines_buf[way_hit], 
-					      reqs_hit_i);
-
-				    // read response 
-				    send_rd_rsp(lines_buf[way_hit]);
-				}
-				break;
-
-				default:
-				    HIT_READ_ATOMIC_DEFAULT;
-				}
-
-				break;
-
-			    case WRITE :
-
-				switch (state_buf[way_hit]) {
-
-				case EXCLUSIVE : // write hit
-				case MODIFIED : // write hit
-				{
-				    HIT_WRITE_EM;
-
-				    states.port1[0][(addr_br.set << L2_WAY_BITS) + way_hit] = MODIFIED;
-
-				    // write word
-				    write_word(lines_buf[way_hit], cpu_req.word, addr_br.w_off, 
-					       addr_br.b_off, cpu_req.hsize);
-				    lines.port1[0][(addr_br.set << L2_WAY_BITS) + way_hit] = 
-					lines_buf[way_hit];
-				}
-				break;
-
-				default:
-				    HIT_WRITE_DEFAULT;
-				}
-				break;
-
-			    default:
-				HIT_DEFAULT;
-			    }
-
-			} 
-
-		    }
-
-		    if (tag_hit) {
-
-			HLS_CONSTRAIN_LATENCY(0, HLS_ACHIEVABLE, "l2-hit2-latency");
-
-			switch (cpu_req.cpu_msg) {
-		    
-			case READ_ATOMIC : // read atomic hit
-
-			    switch (state_buf[way_hit]) {
-
-			    case SHARED :
-			    {
-				HIT_READ_ATOMIC_S;
-
-				// save request in intermediate state
-				fill_reqs(cpu_req.cpu_msg, addr_br, 0, way_hit, cpu_req.hsize, SMADW, 
-					  cpu_req.hprot, cpu_req.word, lines_buf[way_hit], reqs_hit_i);
-
-				// send request to directory
-				send_req_out(REQ_GETM, cpu_req.hprot,
-					     addr_br.line_addr, 0);
-			    }
-			    break;
-
-			    default:
-				HIT_READ_ATOMIC_DEFAULT;
-			    }
-
-			    break;
-
-			case WRITE :
-
-			    switch (state_buf[way_hit]) {
-
-			    case SHARED :
-			    {
-				HIT_WRITE_S;
-
-				// save request in intermediate state
-				fill_reqs(cpu_req.cpu_msg, addr_br, 0, way_hit, cpu_req.hsize, SMAD, 
-					  cpu_req.hprot, cpu_req.word, lines_buf[way_hit], reqs_hit_i);
-
-				// send request to directory
-				send_req_out(REQ_GETM, cpu_req.hprot,
-					     addr_br.line_addr, 0);
-			    }
-			    break;
-
-			    default:
-				HIT_WRITE_DEFAULT;
-			    }
-			    break;
-
-			default:
-			    HIT_DEFAULT;
-			}
-
-		    } else if (empty_way_found) {
-
-			HLS_CONSTRAIN_LATENCY(0, HLS_ACHIEVABLE, "l2-miss-latency");
-
-			unstable_state_t state_tmp;
-			coh_msg_t coh_msg_tmp;
-
-			switch (cpu_req.cpu_msg) {
-		    
-			case READ :
-			{
-			    MISS_READ;
-
-			    state_tmp = ISD;
-			    coh_msg_tmp = REQ_GETS;
-
-			}
-			break;
-
-			case READ_ATOMIC :
-			{
-			    MISS_READ_ATOMIC;
-
-			    state_tmp = IMADW;
-			    coh_msg_tmp = REQ_GETM;
-
-			}
-			break;
-
-			case WRITE :
-			{
-			    MISS_WRITE;
-
-			    state_tmp = IMAD;
-			    coh_msg_tmp = REQ_GETM;
-
-			}
-			break;
-
-			default:
-			    MISS_DEFAULT;
-			}
-
-			CACHE_REPORT_VAR(sc_time_stamp(), "RIGHT PLACE: ", cpu_req.hprot);
-
-			// save request in intermediate state
-			fill_reqs(cpu_req.cpu_msg, addr_br, 0, empty_way, cpu_req.hsize, 
-				  state_tmp, cpu_req.hprot, cpu_req.word, 0, reqs_hit_i);
-
-			// send request to directory
-			send_req_out(coh_msg_tmp, cpu_req.hprot, addr_br.line_addr, 0);
-
-		    } else {
-
-			HLS_CONSTRAIN_LATENCY(0, HLS_ACHIEVABLE, "l2-evict-latency");
-
-			evict_stall = true;
-			line_addr_t line_addr_evict = (tag_buf[evict_way] << SET_BITS) | (addr_br.set);
-			tag_t tag_tmp = addr_br.tag;
-			addr_br.tag = tag_buf[evict_way];
+		    evict_stall = true;
+		    line_addr_t line_addr_evict = (tag_buf[evict_way] << SET_BITS) | (addr_br.set);
+		    tag_t tag_tmp = addr_br.tag;
+		    addr_br.tag = tag_buf[evict_way];
 		
-			unstable_state_t state_tmp;
-			coh_msg_t coh_msg_tmp;
+		    unstable_state_t state_tmp;
+		    coh_msg_t coh_msg_tmp;
 
-			switch (state_buf[evict_way]) {
+		    switch (state_buf[evict_way]) {
 
-			case SHARED :
-			    coh_msg_tmp = REQ_PUTS;
-			    state_tmp = SIA;
-			    break;
+		    case SHARED :
+			coh_msg_tmp = REQ_PUTS;
+			state_tmp = SIA;
+			break;
 
-			case EXCLUSIVE :
-			    coh_msg_tmp = REQ_PUTS;
-			    state_tmp = MIA;
-			    break;
+		    case EXCLUSIVE :
+			coh_msg_tmp = REQ_PUTS;
+			state_tmp = MIA;
+			break;
 
-			case MODIFIED :
-			    coh_msg_tmp = REQ_PUTM;
-			    state_tmp = MIA;
-			    break;
+		    case MODIFIED :
+			coh_msg_tmp = REQ_PUTM;
+			state_tmp = MIA;
+			break;
 
-			default :
-			    EVICT_DEFAULT;
-			}
-
-			send_inval(line_addr_evict);
-			send_req_out(coh_msg_tmp, 0, line_addr_evict, lines_buf[evict_way]);
-			fill_reqs(cpu_req.cpu_msg, addr_br, tag_tmp, evict_way, cpu_req.hsize, state_tmp, 
-				  cpu_req.hprot, cpu_req.word, lines_buf[evict_way], reqs_hit_i);
+		    default :
+			EVICT_DEFAULT;
 		    }
+
+		    send_inval(line_addr_evict);
+		    send_req_out(coh_msg_tmp, 0, line_addr_evict, lines_buf[evict_way]);
+		    fill_reqs(cpu_req.cpu_msg, addr_br, tag_tmp, evict_way, cpu_req.hsize, state_tmp, 
+			      cpu_req.hprot, cpu_req.word, lines_buf[evict_way], reqs_hit_i);
 		}
 	    }
 	}
@@ -1250,7 +1180,7 @@ void l2::tag_lookup(addr_breakdown_t addr_br, bool &tag_hit, l2_way_t &way_hit, 
     empty_way_found = false;
 
     read_set(addr_br.set);
-    // evict_way = evict_ways.port2[0][addr_br.set];
+    evict_way = evict_ways.port2[0][addr_br.set];
 
     for (int i = L2_WAYS-1; i >=0; --i) {
 	TAG_LOOKUP_LOOP;
@@ -1306,7 +1236,7 @@ void l2::reqs_lookup(line_breakdown_t line_br, sc_uint<REQS_BITS> &reqs_hit_i)
 {
     REQS_LOOKUP;
 
-    // bool reqs_hit = false;
+    bool reqs_hit = false;
 
     for (unsigned int i = 0; i < N_REQS; ++i) {
 	REQS_LOOKUP_LOOP;
@@ -1317,7 +1247,7 @@ void l2::reqs_lookup(line_breakdown_t line_br, sc_uint<REQS_BITS> &reqs_hit_i)
 	CACHE_REPORT_VAR(sc_time_stamp(), "set ", reqs[i].set);
 	
 	if (reqs[i].tag == line_br.tag && reqs[i].set == line_br.set && reqs[i].state != INVALID) {
-	    // reqs_hit = true;
+	    reqs_hit = true;
 	    reqs_hit_i = i;
 	}
     }
