@@ -35,7 +35,7 @@ set_attr sched_aggressive_2 on
 
 
 if {$TECH eq "virtex7"} {
-    set CLOCK_PERIOD 10.0
+    set CLOCK_PERIOD 12.5
     set_attr default_input_delay      0.1
 }
 if {$TECH eq "zynq"} {
