@@ -27,11 +27,7 @@ void l2::ctrl()
 
 	    get_flush();
 
-	    CACHE_REPORT_VAR(sc_time_stamp(), "pre ongoing flush: ", ongoing_flush);
-
 	    ongoing_flush = true;
-
-	    CACHE_REPORT_VAR(sc_time_stamp(), "post ongoing flush: ", ongoing_flush);
 
 	} else if (l2_rsp_in.nb_can_get()) {
 
@@ -44,8 +40,6 @@ void l2::ctrl()
 
 	    get_rsp_in(rsp_in);
 	    
-	    wait(); // for SystemC simulation only
-
 	    line_br.line_breakdown(rsp_in.addr);
 
 	    reqs_lookup(line_br, reqs_hit_i);
@@ -145,10 +139,6 @@ void l2::ctrl()
 
 		default :
 		    RSP_DATA_DEFAULT;
-
-		    CACHE_REPORT_VAR(sc_time_stamp(), "DEFAULT: state ", reqs[reqs_hit_i].state);
-		    CACHE_REPORT_VAR(sc_time_stamp(), "DEFAULT: tag ", reqs[reqs_hit_i].tag);
-		    CACHE_REPORT_VAR(sc_time_stamp(), "DEFAULT: set ", reqs[reqs_hit_i].set);
 		}
 
 		break;
@@ -213,11 +203,8 @@ void l2::ctrl()
 	    if (!fwd_stall) {
 		get_fwd_in(fwd_in);
 	    } else {
-		CACHE_REPORT_INFO("End of fwd stall.");
 		fwd_in = fwd_in_stalled;
 	    }
-
-	    wait(); // for SystemC simulation only
 
 	    line_br.line_breakdown(fwd_in.addr);
 
@@ -405,8 +392,6 @@ void l2::ctrl()
 
 		while (flush_set < SETS) {
 
-		    CACHE_REPORT_VAR(sc_time_stamp(), "Flush set: ", flush_set);
-
 		    {
 			FLUSH_READ_SET;
 
@@ -415,19 +400,15 @@ void l2::ctrl()
 
 		    while (flush_way < L2_WAYS) {
 		    
-			CACHE_REPORT_VAR(sc_time_stamp(), "Flush way: ", flush_way);		    
-		    
+			FLUSH_LOOP;
+	    
 			if (l2_fwd_in.nb_can_get() || reqs_cnt == 0) {
-
-			    CACHE_REPORT_TIME(sc_time_stamp(), "Flush: incoming rsp break.");
 
 			    incoming_fwd = true;
 
 			    break;
 
 			} else if (state_buf[flush_way] != INVALID) {
-
-			    CACHE_REPORT_TIME(sc_time_stamp(), "Flush: found something.");
 
 			    reqs_peek_flush(flush_set, reqs_hit_i);
 
@@ -498,9 +479,9 @@ void l2::ctrl()
 		    flush_done.write(false);
 		}
 	    }
+
 	} else if ((l2_cpu_req.nb_can_get() || set_conflict) && 
-		   !evict_stall && 
-		   (reqs_cnt != 0 || ongoing_atomic)) { // assuming HPROT cacheable
+		   !evict_stall && (reqs_cnt != 0 || ongoing_atomic)) { // assuming HPROT cacheable
 
 	    l2_cpu_req_t cpu_req;
 	    addr_breakdown_t addr_br;
@@ -509,11 +490,8 @@ void l2::ctrl()
 	    if (!set_conflict) {
 		get_cpu_req(cpu_req);
 	    } else {
-		CACHE_REPORT_TIME(sc_time_stamp(), "START WITH CONFLICT: ");
 		cpu_req = cpu_req_conflict;
 	    }
-
-	    wait(); // for SystemC simulation only
 
 	    addr_br.breakdown(cpu_req.addr);
 
@@ -534,6 +512,8 @@ void l2::ctrl()
 		    reqs[reqs_atomic_i].state = INVALID;
 		    reqs_cnt++;
 
+		    wait();
+
 		    put_reqs(reqs[reqs_atomic_i].set, reqs[reqs_atomic_i].way, 
 			     reqs[reqs_atomic_i].tag, reqs[reqs_atomic_i].line, 
 			     reqs[reqs_atomic_i].hprot, MODIFIED, reqs_atomic_i);
@@ -550,10 +530,14 @@ void l2::ctrl()
 
 		    case READ :
 
+			ATOMIC_CONTINUE_READ;
+
 			send_rd_rsp(reqs[reqs_atomic_i].line);
 
 			reqs[reqs_atomic_i].state = INVALID;
 			reqs_cnt++;
+
+			wait();
 
 			put_reqs(reqs[reqs_atomic_i].set, reqs[reqs_atomic_i].way, reqs[reqs_atomic_i].tag,
 				 reqs[reqs_atomic_i].line, reqs[reqs_atomic_i].hprot, MODIFIED, reqs_atomic_i);
@@ -570,8 +554,8 @@ void l2::ctrl()
 
 		    case WRITE :
 		    case WRITE_ATOMIC :
-		    // {
-			// HLS_DEFINE_PROTOCOL();
+
+			ATOMIC_CONTINUE_WRITE;
 
 			write_word(reqs[reqs_atomic_i].line, cpu_req.word, addr_br.w_off, 
 				   addr_br.b_off, cpu_req.hsize);
@@ -579,11 +563,13 @@ void l2::ctrl()
 			reqs[reqs_atomic_i].state = INVALID;
 			reqs_cnt++;
 
+			wait();
+
 			put_reqs(reqs[reqs_atomic_i].set, reqs[reqs_atomic_i].way, reqs[reqs_atomic_i].tag,
 				 reqs[reqs_atomic_i].line, reqs[reqs_atomic_i].hprot, MODIFIED, reqs_atomic_i);
 
 			ongoing_atomic = false;
-		    // }
+
 		    break;
 
 		    }
@@ -741,8 +727,6 @@ void l2::ctrl()
 		    default:
 			MISS_DEFAULT;
 		    }
-
-		    CACHE_REPORT_VAR(sc_time_stamp(), "RIGHT PLACE: ", cpu_req.hprot);
 
 		    // save request in intermediate state
 		    fill_reqs(cpu_req.cpu_msg, addr_br, 0, empty_way, cpu_req.hsize, 
@@ -1072,23 +1056,6 @@ void l2::fill_reqs(cpu_msg_t cpu_msg, addr_breakdown_t addr_br, tag_t tag_estall
 {
     FILL_REQS;
 
-    CACHE_REPORT_INFO("FILL REQS: 0 ");
-    CACHE_REPORT_VAR(sc_time_stamp(), "state ", reqs[0].state);
-    CACHE_REPORT_VAR(sc_time_stamp(), "tag ", reqs[0].tag);
-    CACHE_REPORT_VAR(sc_time_stamp(), "set ", reqs[0].set);
-    CACHE_REPORT_INFO("FILL REQS: 1 ");
-    CACHE_REPORT_VAR(sc_time_stamp(), "state ", reqs[1].state);
-    CACHE_REPORT_VAR(sc_time_stamp(), "tag ", reqs[1].tag);
-    CACHE_REPORT_VAR(sc_time_stamp(), "set ", reqs[1].set);
-    CACHE_REPORT_INFO("FILL REQS: 2 ");
-    CACHE_REPORT_VAR(sc_time_stamp(), "state ", reqs[2].state);
-    CACHE_REPORT_VAR(sc_time_stamp(), "tag ", reqs[2].tag);
-    CACHE_REPORT_VAR(sc_time_stamp(), "set ", reqs[2].set);
-    CACHE_REPORT_INFO("FILL REQS: 3 ");
-    CACHE_REPORT_VAR(sc_time_stamp(), "state ", reqs[3].state);
-    CACHE_REPORT_VAR(sc_time_stamp(), "tag ", reqs[3].tag);
-    CACHE_REPORT_VAR(sc_time_stamp(), "set ", reqs[3].set);
-
     reqs[reqs_i].cpu_msg     = cpu_msg;
     reqs[reqs_i].tag	     = addr_br.tag;
     reqs[reqs_i].tag_estall  = tag_estall;
@@ -1102,11 +1069,6 @@ void l2::fill_reqs(cpu_msg_t cpu_msg, addr_breakdown_t addr_br, tag_t tag_estall
     reqs[reqs_i].invack_cnt  = MAX_N_CPU;
     reqs[reqs_i].word	     = word;
     reqs[reqs_i].line	     = line;
-
-    CACHE_REPORT_VAR(sc_time_stamp(), "FILL REQS: i ", reqs_i);
-    CACHE_REPORT_VAR(sc_time_stamp(), "state ", reqs[reqs_i].state);
-    CACHE_REPORT_VAR(sc_time_stamp(), "tag ", reqs[reqs_i].tag);
-    CACHE_REPORT_VAR(sc_time_stamp(), "set ", reqs[reqs_i].set);
 
     reqs_cnt--;
 }
@@ -1125,7 +1087,6 @@ void l2::put_reqs(set_t set, l2_way_t way, tag_t tag, line_t line, hprot_t hprot
 
     // if necessary end the forward messages stall
     if (fwd_stall && reqs_fwd_stall_i == reqs_i) {
-	CACHE_REPORT_INFO("In put reqs terminate fwd stalling.");
 	fwd_stall_ended = true;
     }
 }
@@ -1241,11 +1202,6 @@ void l2::reqs_lookup(line_breakdown_t line_br, sc_uint<REQS_BITS> &reqs_hit_i)
     for (unsigned int i = 0; i < N_REQS; ++i) {
 	REQS_LOOKUP_LOOP;
 
-	CACHE_REPORT_VAR(sc_time_stamp(), "REQS LOOKUP: i ", i);
-	CACHE_REPORT_VAR(sc_time_stamp(), "state ", reqs[i].state);
-	CACHE_REPORT_VAR(sc_time_stamp(), "tag ", reqs[i].tag);
-	CACHE_REPORT_VAR(sc_time_stamp(), "set ", reqs[i].set);
-	
 	if (reqs[i].tag == line_br.tag && reqs[i].set == line_br.set && reqs[i].state != INVALID) {
 	    reqs_hit = true;
 	    reqs_hit_i = i;
