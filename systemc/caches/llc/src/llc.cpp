@@ -97,6 +97,7 @@ void llc::ctrl()
 	    }
 
 	    line_br.line_breakdown(req_in.addr);
+
 	    CACHE_REPORT_VAR(sc_time_stamp(), "req_get addr: ", req_in.addr);
 
 	    lookup(line_br.tag, line_br.set, way, evict, llc_addr);
@@ -138,7 +139,11 @@ void llc::ctrl()
 		    owners[llc_addr] = req_in.req_id;
 		    sharers[llc_addr] = 0; // TODO REMOVE: It's redundant.
 		    states[llc_addr] = EXCLUSIVE;
-		    send_rsp_out(RSP_EDATA, req_in.addr, line_buf[way], req_in.req_id, 0, 0);
+		    if (req_in.hprot == 0)
+			send_rsp_out(RSP_DATA, req_in.addr, line_buf[way], req_in.req_id, 0, 0);
+		    else
+			send_rsp_out(RSP_EDATA, req_in.addr, line_buf[way], req_in.req_id, 0, 0);
+
 		    break;
 
 		case SHARED :

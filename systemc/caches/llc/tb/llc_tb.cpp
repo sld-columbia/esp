@@ -62,7 +62,7 @@ void llc_tb::llc_test()
     // constants
     const word_t empty_word = 0;
     const line_t empty_line = 0;
-    const hprot_t empty_hprot = 0;
+    const hprot_t empty_hprot = 1;
     const addr_t empty_addr = 0;
 
     // preparation variables
