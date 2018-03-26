@@ -24,27 +24,41 @@ define_system_module tb  ../tb/l2_tb.cpp ../tb/system.cpp ../tb/sc_main.cpp
 # HLS and Simulation configurations
 ######################################################################
 
-# N_CPU's value doesn't matter for this cache but it needs to be defined.
-# We choose the max number of CPUs, also specified in cache_consts.hpp.
-foreach ncpu [list 4] {
+# foreach sets [list 256 512 1024 2048 4096] {
 
-    set iocfg "IOCFG\_NCPU\_$ncpu"
+#     foreach ways [list 1 2 4 8] {
 
-    define_io_config * $iocfg -DN_CPU=$ncpu
+foreach sets [list 256] {
 
-    define_system_config tb "TESTBENCH\_$ncpu" -io_config $iocfg
+    foreach ways [list 8] {
 
-    define_sim_config "BEHAV\_$ncpu" "l2 BEH" "tb TESTBENCH\_$ncpu" -io_config $iocfg
+	set pars "_$sets\SETS_$ways\WAYS"
 
-    foreach cfg [list BASIC] {
-	set cname "$cfg\_$ncpu"
-	define_hls_config l2 $cname --clock_period=$CLOCK_PERIOD $COMMON_HLS_FLAGS \
-	    -DHLS_DIRECTIVES_$cfg -io_config $iocfg
-	if {$TECH_IS_XILINX == 1} {
-	    define_sim_config "$cname\_V" "l2 RTL_V $cname" "tb TESTBENCH\_$ncpu" \
-		-verilog_top_modules glbl -io_config $iocfg
-	} else {
-	    define_sim_config "$cname\_V" "l2 RTL_V $cname" "tb TESTBENCH\_$ncpu" -io_config $iocfg
+	set iocfg "IOCFG$pars"
+
+	define_io_config * $iocfg -DL2_SETS=$sets -DL2_WAYS=$ways
+
+	define_system_config tb "TESTBENCH$pars" -io_config $iocfg
+
+	define_sim_config "BEHAV$pars" "l2 BEH" \
+	    "tb TESTBENCH$pars" -io_config $iocfg
+
+	foreach cfg [list BASIC] {
+
+	    set cname "$cfg$pars"
+
+	    define_hls_config l2 $cname --clock_period=$CLOCK_PERIOD $COMMON_HLS_FLAGS \
+		-DHLS_DIRECTIVES_$cfg -io_config $iocfg
+
+	    if {$TECH_IS_XILINX == 1} {
+
+		define_sim_config "$cname\_V" "l2 RTL_V $cname" "tb TESTBENCH$pars" \
+		    -verilog_top_modules glbl -io_config $iocfg
+	    } else {
+
+		define_sim_config "$cname\_V" "l2 RTL_V $cname" "tb TESTBENCH$pars" \
+		    -io_config $iocfg
+	    }
 	}
     }
 }

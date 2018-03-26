@@ -214,8 +214,8 @@ void l2_tb::l2_test()
     CACHE_REPORT_INFO("T2.0) Fill 1/2 of sets by reading 1 word per line.");
 
     for (int wa = 0; wa < L2_WAYS; ++wa) {
-    	for (int s = 0; s < SETS/2; ++s) {
-    	    addr.breakdown((wa << TAG_RANGE_LO) + (s << SET_RANGE_LO));
+    	for (int s = 0; s < L2_SETS/2; ++s) {
+    	    addr.breakdown((wa << L2_TAG_RANGE_LO) + (s << SET_RANGE_LO));
 
 	    op(READ, MISS, 0, RSP_EDATA, 0, 0, WORD, addr, 0, line_of_addr(addr.line), 0, 0, 0, 0);
     	}
@@ -225,12 +225,12 @@ void l2_tb::l2_test()
 
     for (int wo = 0; wo < WORDS_PER_LINE; ++wo) {
     	for (int wa = 0; wa < L2_WAYS; ++wa) {
-    	    for (int s = 0; s < SETS; ++s) {
-    		addr.breakdown((wo << W_OFF_RANGE_LO) + (wa << TAG_RANGE_LO) + 
+    	    for (int s = 0; s < L2_SETS; ++s) {
+    		addr.breakdown((wo << W_OFF_RANGE_LO) + (wa << L2_TAG_RANGE_LO) + 
 				   (s << SET_RANGE_LO));
 		word = addr.word;
 
-    		if (s >= SETS/2 && wo == 0) {
+    		if (s >= L2_SETS/2 && wo == 0) {
 		    op(WRITE, MISS, 0, RSP_DATA, 0, 0, WORD, addr, word, line_of_addr(addr.line), 0, 0, 0, 0);
     		} else {
 		    op(WRITE, HIT, 0, 0, 0, 0, WORD, addr, word, 0, 0, 0, 0, 0);
@@ -243,8 +243,8 @@ void l2_tb::l2_test()
 
     for (int wo = 0; wo < WORDS_PER_LINE/2; ++wo) {
     	for (int wa = 0; wa < L2_WAYS; ++wa) {
-    	    for (int s = 0; s < SETS/2; ++s) {
-    		addr.breakdown((wo << W_OFF_RANGE_LO) + (wa << TAG_RANGE_LO) + (s << SET_RANGE_LO));
+    	    for (int s = 0; s < L2_SETS/2; ++s) {
+    		addr.breakdown((wo << W_OFF_RANGE_LO) + (wa << L2_TAG_RANGE_LO) + (s << SET_RANGE_LO));
 		word = addr.word + 1;
 
 		op(WRITE, HIT, 0, 0, 0, 0, WORD, addr, word, 0, 0, 0, 0, 0);
@@ -255,12 +255,12 @@ void l2_tb::l2_test()
     CACHE_REPORT_INFO("T2.3) Read and check all words.");
 
     for (int wa = 0; wa < L2_WAYS; ++wa) {
-	for (int s = 0; s < SETS; ++s) {
-	    addr.breakdown((wa << TAG_RANGE_LO) + (s << SET_RANGE_LO));
+	for (int s = 0; s < L2_SETS; ++s) {
+	    addr.breakdown((wa << L2_TAG_RANGE_LO) + (s << SET_RANGE_LO));
 	    line = line_of_addr(addr.line);
 
 	    int wo;
-	    if (s < SETS/2) {
+	    if (s < L2_SETS/2) {
 		for (wo = 0; wo < WORDS_PER_LINE/2; ++wo) {
 		    write_word(line, addr.line + (wo << W_OFF_RANGE_LO) + 1, wo, 0, WORD);
 		}
@@ -269,7 +269,6 @@ void l2_tb::l2_test()
 	    op(READ, HIT, 0, 0, 0, 0, WORD, addr, 0, line, 0, 0, 0, 0);
 	}
     }
-
 
     /*
      * T3) Flush whole cache.
@@ -280,9 +279,9 @@ void l2_tb::l2_test()
     l2_flush_tb.put(1);
 
     // receive 1 PutM, send 1 PutAck
-    for (int s = 0; s < SETS; ++s) {
+    for (int s = 0; s < L2_SETS; ++s) {
 	for (int wa = 0; wa < L2_WAYS; ++wa) {
-	    addr.breakdown((wa << TAG_RANGE_LO) + (s << SET_RANGE_LO));
+	    addr.breakdown((wa << L2_TAG_RANGE_LO) + (s << SET_RANGE_LO));
 
 	    op_flush(REQ_PUTM, addr.line);
 	}
@@ -482,7 +481,7 @@ void l2_tb::l2_test()
 
     addr1 = rand_addr();
     addr = addr1;
-    int n_reqs = std::min(N_REQS, SETS);
+    int n_reqs = std::min(N_REQS, L2_SETS);
 
     // Issue n_reqs + 1 requests
 
@@ -601,15 +600,15 @@ void l2_tb::l2_test()
 	addr.tag_incr(1);
 
 	// WRITE(I), RSP_DATA(IMAD), RSP_INVACK(IMA)
-	op(WRITE, MISS, DATA_FIRST, RSP_DATA, N_CPU-1, 0, WORD, addr, word++, line_of_addr(addr.line), 0, 0, 0, 0);
+	op(WRITE, MISS, DATA_FIRST, RSP_DATA, MAX_N_L2-1, 0, WORD, addr, word++, line_of_addr(addr.line), 0, 0, 0, 0);
 	addr.tag_incr(1);
 
 	// WRITE(I), RSP_INVACK(IMAD), RSP_DATA(IMAD), RSP_INVACK(IMA)
-	op(WRITE, MISS, DATA_HALFWAY, RSP_DATA, N_CPU-1, 0, WORD, addr, word++, line_of_addr(addr.line), 0, 0, 0, 0);
+	op(WRITE, MISS, DATA_HALFWAY, RSP_DATA, MAX_N_L2-1, 0, WORD, addr, word++, line_of_addr(addr.line), 0, 0, 0, 0);
 	addr.tag_incr(1);
 
 	// WRITE(I), RSP_INVACK(IMAD), RSP_DATA(IMAD)
-	op(WRITE, MISS, DATA_LAST, RSP_DATA, N_CPU-1, 0, WORD, addr, word++, line_of_addr(addr.line), 0, 0, 0, 0);
+	op(WRITE, MISS, DATA_LAST, RSP_DATA, MAX_N_L2-1, 0, WORD, addr, word++, line_of_addr(addr.line), 0, 0, 0, 0);
 	addr.tag_incr(1);
     }
 
@@ -632,18 +631,18 @@ void l2_tb::l2_test()
 	addr.tag_incr(1);
 
 	// READ_ATOMIC(I), RSP_DATA(IMADW), RSP_INVACK(IMAW)
-	op(READ_ATOMIC, MISS, DATA_FIRST, RSP_DATA, N_CPU-1, 0, WORD, addr, 0, line_of_addr(addr.line), 0, 0, 0, 0);
+	op(READ_ATOMIC, MISS, DATA_FIRST, RSP_DATA, MAX_N_L2-1, 0, WORD, addr, 0, line_of_addr(addr.line), 0, 0, 0, 0);
 	addr.tag_incr(1);
 
 	// READ_ATOMIC(I), RSP_INVACK(IMADW), RSP_DATA(IMADW), RSP_INVACK(IMAW)
 	// READ_ATOMIC with != address and ongoing atomic.
-	op(READ_ATOMIC, MISS, DATA_HALFWAY, RSP_DATA, N_CPU-1, 0, WORD, addr, 0, line_of_addr(addr.line), 0, 0, 0, 0);
+	op(READ_ATOMIC, MISS, DATA_HALFWAY, RSP_DATA, MAX_N_L2-1, 0, WORD, addr, 0, line_of_addr(addr.line), 0, 0, 0, 0);
 	// READ(XMW)
 	op(READ, HIT, 0, 0, 0, 0, WORD, addr, 0, line_of_addr(addr.line), 0, 0, 0, 0);
 	addr.tag_incr(1);
 
 	// READ_ATOMIC(I), RSP_INVACK(IMADW), RSP_DATA(IMADW)
-	op(READ_ATOMIC, MISS, DATA_LAST, RSP_DATA, N_CPU-1, 0, WORD, addr, 0, line_of_addr(addr.line), 0, 0, 0, 0);
+	op(READ_ATOMIC, MISS, DATA_LAST, RSP_DATA, MAX_N_L2-1, 0, WORD, addr, 0, line_of_addr(addr.line), 0, 0, 0, 0);
 	// WRITE(XMW)
 	op(WRITE, HIT, 0, 0, 0, 0, WORD, addr, word++, 0, 0, 0, 0, 0);
 	addr.tag_incr(1);
@@ -654,7 +653,7 @@ void l2_tb::l2_test()
 
     addr = addr4;
     word = word4;
-    id = N_CPU-1;
+    id = MAX_N_L2-1;
     req_line = line_of_addr(addr.line);
 
     // FWD_INV(ISD), FWD_INV(S)
@@ -704,15 +703,15 @@ void l2_tb::l2_test()
     // this starts from 4 lines in shared state and leaves them in modified state
     addr.tag_incr(1);
     req_line = line_of_addr(addr.line);
-    op(WRITE, MISS, DATA_FIRST, RSP_DATA, N_CPU-2, 0, WORD, addr, word++, req_line, 0, 0, 0, 0);
+    op(WRITE, MISS, DATA_FIRST, RSP_DATA, MAX_N_L2-2, 0, WORD, addr, word++, req_line, 0, 0, 0, 0);
 
     addr.tag_incr(2);
     req_line = line_of_addr(addr.line);
-    op(WRITE, MISS, DATA_HALFWAY, RSP_DATA, N_CPU-1, 0, WORD, addr, word++, req_line, 0, 0, 0, 0);
+    op(WRITE, MISS, DATA_HALFWAY, RSP_DATA, MAX_N_L2-1, 0, WORD, addr, word++, req_line, 0, 0, 0, 0);
 
     addr.tag_incr(2);
     req_line = line_of_addr(addr.line);
-    op(WRITE, MISS, DATA_LAST, RSP_DATA, N_CPU-2, 0, WORD, addr, word++, req_line, 0, 0, 0, 0);
+    op(WRITE, MISS, DATA_LAST, RSP_DATA, MAX_N_L2-2, 0, WORD, addr, word++, req_line, 0, 0, 0, 0);
 
     addr.tag_incr(2);
     req_line = line_of_addr(addr.line);
@@ -723,7 +722,7 @@ void l2_tb::l2_test()
 
     addr = addr4;
     word = word4;
-    invack = N_CPU-1;
+    invack = MAX_N_L2-1;
 
     // this starts from an empty set
     for (int i = 0; i < 8; i++) {

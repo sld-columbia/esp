@@ -5,11 +5,12 @@
 
 #include "cache_utils.hpp"
 #include "l2_directives.hpp"
-#include "l2_tags.hpp"
-#include "l2_states.hpp"
-#include "l2_hprots.hpp"
-#include "l2_lines.hpp"
-#include "l2_evict_ways.hpp"
+
+#include EXP_MEM_INCLUDE_STRING(l2, tags, L2_SETS, L2_WAYS)
+#include EXP_MEM_INCLUDE_STRING(l2, states, L2_SETS, L2_WAYS)
+#include EXP_MEM_INCLUDE_STRING(l2, lines, L2_SETS, L2_WAYS)
+#include EXP_MEM_INCLUDE_STRING(l2, hprots, L2_SETS, L2_WAYS)
+#include EXP_MEM_INCLUDE_STRING(l2, evict_ways, L2_SETS, L2_WAYS)
 
 class l2 : public sc_module
 {
@@ -55,7 +56,7 @@ public:
     sc_out<uint32_t>	flush_set_out;
 
     sc_out<reqs_buf_t>	reqs_out[N_REQS];
-    sc_out<tag_t>	tag_buf_out[L2_WAYS];
+    sc_out<l2_tag_t>	tag_buf_out[L2_WAYS];
     sc_out<state_t>	state_buf_out[L2_WAYS];
     sc_out<l2_way_t>	evict_way_out;
 #endif
@@ -76,16 +77,16 @@ public:
     nb_put_initiator<l2_rsp_out_t> l2_rsp_out;
 
     // Local memory
-    l2_tags_t<tag_t, L2_LINES>		tags;
-    l2_states_t<state_t, L2_LINES>	states;
-    l2_hprots_t<hprot_t, L2_LINES>	hprots;
-    l2_lines_t<line_t, L2_LINES>	lines;
-    l2_evict_ways_t<l2_way_t, SETS>	evict_ways;
+    EXP_MEM_TYPE_STRING(l2, tags, L2_SETS, L2_WAYS)<l2_tag_t, L2_LINES> tags;
+    EXP_MEM_TYPE_STRING(l2, states, L2_SETS, L2_WAYS)<state_t, L2_LINES> states;
+    EXP_MEM_TYPE_STRING(l2, lines, L2_SETS, L2_WAYS)<line_t, L2_LINES> lines;
+    EXP_MEM_TYPE_STRING(l2, hprots, L2_SETS, L2_WAYS)<hprot_t, L2_LINES> hprots;
+    EXP_MEM_TYPE_STRING(l2, evict_ways, L2_SETS, L2_WAYS)<l2_way_t, L2_SETS> evict_ways;
 
     // Local registers
     reqs_buf_t	 reqs[N_REQS];
 
-    tag_t	 tag_buf[L2_WAYS];
+    l2_tag_t	 tag_buf[L2_WAYS];
     state_t	 state_buf[L2_WAYS];
     hprot_t	 hprot_buf[L2_WAYS];
     line_t	 lines_buf[L2_WAYS];
@@ -156,21 +157,23 @@ public:
     void send_rsp_out(coh_msg_t coh_msg, cache_id_t req_id, bool to_req, line_addr_t line_addr, line_t line);
 
     /* Functions to move around buffered lines */
-    void fill_reqs(cpu_msg_t cpu_msg, addr_breakdown_t addr_br, tag_t tag_estall, l2_way_t way_hit, 
+    void fill_reqs(cpu_msg_t cpu_msg, addr_breakdown_t addr_br, l2_tag_t tag_estall, l2_way_t way_hit, 
 		   hsize_t hsize, unstable_state_t state, hprot_t hprot, word_t word, line_t line,
 		   sc_uint<REQS_BITS> reqs_i);
-    void put_reqs(set_t set, l2_way_t way, tag_t tag, line_t lines, hprot_t hprot, state_t state,
+    void put_reqs(l2_set_t set, l2_way_t way, l2_tag_t tag, line_t lines, hprot_t hprot, state_t state,
 		  sc_uint<REQS_BITS> reqs_i);
 
     /* Functions to search for cache lines either in memory or buffered */
-    void read_set(set_t set);
+    void read_set(l2_set_t set);
     void tag_lookup(addr_breakdown_t addr_br, bool &tag_hit, l2_way_t &way_hit, bool &empty_way_found,
 		    l2_way_t &empty_way);
-    void tag_lookup_fwd(line_breakdown_t line_br, l2_way_t &way_hit);
-    void reqs_lookup(line_breakdown_t line_addr_br, sc_uint<REQS_BITS> &reqs_hit_i);
-    bool reqs_peek_req(set_t set, sc_uint<REQS_BITS> &reqs_i);
-    void reqs_peek_flush(set_t set, sc_uint<REQS_BITS> &reqs_i);
-    bool reqs_peek_fwd(line_breakdown_t line_br, sc_uint<REQS_BITS> &reqs_i, bool &reqs_hit, coh_msg_t coh_msg);
+    void tag_lookup_fwd(line_breakdown_t<l2_tag_t, l2_set_t> line_br, l2_way_t &way_hit);
+    void reqs_lookup(line_breakdown_t<l2_tag_t, l2_set_t> line_addr_br,
+		     sc_uint<REQS_BITS> &reqs_hit_i);
+    bool reqs_peek_req(l2_set_t set, sc_uint<REQS_BITS> &reqs_i);
+    void reqs_peek_flush(l2_set_t set, sc_uint<REQS_BITS> &reqs_i);
+    bool reqs_peek_fwd(line_breakdown_t<l2_tag_t, l2_set_t> line_br, sc_uint<REQS_BITS> &reqs_i,
+		       bool &reqs_hit, coh_msg_t coh_msg);
 
     // line_t make_line_of_addr(addr_t addr); // is this needed here? not called by l2.cpp
 

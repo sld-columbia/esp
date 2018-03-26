@@ -4,45 +4,40 @@
 #define __CACHES_CONSTS_HPP__
 
 #include "log2.h"
+#include <algorithm>
 
 /*
  * System
  */
 
 // System configuration
-#define N_CPU_BITS ilog2(N_CPU)
-#define MAX_N_CPU 4
-#define MAX_N_CPU_BITS ilog2(MAX_N_CPU)
+#define MAX_N_L2 8
+#define MAX_N_L2_BITS ilog2(MAX_N_L2)
 
 /*
  * Caches
  */
 
-// Address bits breakdown: LSB to MSB
+// Common
+
 #define ADDR_BITS	32
 #define BYTE_BITS	2
 #define WORD_BITS	2
 #define OFFSET_BITS	(BYTE_BITS + WORD_BITS)
-#define SET_BITS	8
-#define TAG_BITS	(ADDR_BITS - OFFSET_BITS - SET_BITS)
 
 #define LINE_RANGE_HI	(ADDR_BITS - 1)
-#define LINE_RANGE_LO	(ADDR_BITS - TAG_BITS - SET_BITS)
-#define TAG_RANGE_HI	(ADDR_BITS - 1)
-#define TAG_RANGE_LO	(ADDR_BITS - TAG_BITS)
-#define SET_RANGE_HI	(ADDR_BITS - TAG_BITS - 1)
-#define SET_RANGE_LO	(ADDR_BITS - TAG_BITS - SET_BITS)
-#define OFF_RANGE_HI	(ADDR_BITS - TAG_BITS - SET_BITS - 1)
+#define LINE_RANGE_LO	OFFSET_BITS
+#define TAG_RANGE_HI	LINE_RANGE_HI
+#define SET_RANGE_LO	LINE_RANGE_LO
+#define OFF_RANGE_HI	(OFFSET_BITS - 1)
 #define OFF_RANGE_LO	0
-#define W_OFF_RANGE_HI	(ADDR_BITS - TAG_BITS - SET_BITS - 1)
-#define W_OFF_RANGE_LO	(ADDR_BITS - TAG_BITS - SET_BITS - WORD_BITS)
-#define B_OFF_RANGE_HI	(ADDR_BITS - TAG_BITS - SET_BITS - WORD_BITS - 1)
-#define B_OFF_RANGE_LO	0
+#define W_OFF_RANGE_HI	OFF_RANGE_HI
+#define W_OFF_RANGE_LO	(OFFSET_BITS - WORD_BITS)
+#define B_OFF_RANGE_HI	(W_OFF_RANGE_LO - 1)
+#define B_OFF_RANGE_LO	OFF_RANGE_LO
 
-#define TAG_OFFSET	(1 << TAG_RANGE_LO)
 #define SET_OFFSET	(1 << SET_RANGE_LO)
 #define WORD_OFFSET	(1 << W_OFF_RANGE_LO)
-
 #define LINE_ADDR_BITS  (ADDR_BITS - SET_RANGE_LO)
 
 // Cache sizes
@@ -51,32 +46,69 @@
 #define BITS_PER_HALFWORD	(BITS_PER_WORD >> 1)
 #define BITS_PER_LINE		(BITS_PER_WORD * WORDS_PER_LINE)
 #define WORDS_PER_LINE		(1 << WORD_BITS)
-#define SETS			(1 << SET_BITS)
-#define L2_WAY_BITS		3
-#define L2_WAYS			(1 << L2_WAY_BITS)
-#define L2_LINES		(SETS * L2_WAYS)
-#define L2_ADDR_BITS            (SET_BITS+L2_WAY_BITS)
-#define LLC_WAY_BITS            (L2_WAY_BITS + N_CPU_BITS)
-#define LLC_WAYS		(1 << LLC_WAY_BITS)
-#define LLC_LINES		(SETS * LLC_WAYS)
-#define LLC_ADDR_BITS           (SET_BITS+LLC_WAY_BITS)
-
 
 // Cache data types width
 #define CPU_MSG_TYPE_WIDTH	2
 #define COH_MSG_TYPE_WIDTH	2
+#define DMA_MSG_TYPE_WIDTH      1
+#define LLCREQ_MSG_TYPE_WIDTH	(COH_MSG_TYPE_WIDTH + DMA_MSG_TYPE_WIDTH)
 #define HSIZE_WIDTH		3
 #define HPROT_WIDTH		1
-// log2(N_CPU) + 1
-#define INVACK_CNT_WIDTH	MAX_N_CPU_BITS
-#define INVACK_CNT_CALC_WIDTH   INVACK_CNT_WIDTH + 1
+#define INVACK_CNT_WIDTH	MAX_N_L2_BITS
+#define INVACK_CNT_CALC_WIDTH   (INVACK_CNT_WIDTH + 1)
+#define CACHE_ID_WIDTH          MAX_N_L2_BITS
+
+//
+// L2
+//
+
+#ifndef L2_WAYS
+#define L2_WAYS      8 // defined in l2/stratus/project.tcl
+#endif
+
+#ifndef L2_SETS
+#define L2_SETS      256  // defined in l2/stratus/project.tcl
+#endif
+
+#define L2_WAY_BITS	ilog2(L2_WAYS)
+#define L2_SET_BITS	ilog2(L2_SETS)
+#define L2_LINES	(L2_SETS * L2_WAYS)
+#define L2_ADDR_BITS    (L2_SET_BITS+L2_WAY_BITS)
+#define L2_TAG_BITS	(ADDR_BITS - OFFSET_BITS - L2_SET_BITS)
+#define L2_TAG_RANGE_LO	(ADDR_BITS - L2_TAG_BITS)
+#define L2_SET_RANGE_HI	(L2_TAG_RANGE_LO - 1)
+#define L2_TAG_OFFSET	(1 << L2_TAG_RANGE_LO)
 
 // Ongoing transaction buffers
 #define N_REQS		4	// affects REQS_BITS
 #define REQS_BITS	2	// depends on N_REQS
 #define REQS_BITS_P1	3	// depends on N_REQS + 1
-#define N_EVICTS	4	// affects N_EVICTS
-#define EVICTS_BITS	2	// depends on EVICTS_BITS
+
+//
+// LLC
+//
+
+#ifndef LLC_WAYS
+#define LLC_WAYS      32 // defined in l2/stratus/project.tcl
+#endif
+
+#ifndef LLC_SETS
+#define LLC_SETS      256  // defined in l2/stratus/project.tcl
+#endif
+
+#define LLC_WAY_BITS		ilog2(LLC_WAYS)
+#define LLC_SET_BITS		ilog2(LLC_SETS)
+#define LLC_LINES		(LLC_SETS * LLC_WAYS)
+#define LLC_ADDR_BITS           (LLC_SET_BITS+LLC_WAY_BITS)
+#define LLC_TAG_BITS		(ADDR_BITS - OFFSET_BITS - LLC_SET_BITS)
+#define LLC_TAG_RANGE_LO	(ADDR_BITS - LLC_TAG_BITS)
+#define LLC_SET_RANGE_HI	(LLC_TAG_RANGE_LO - 1)
+#define LLC_TAG_OFFSET		(1 << LLC_TAG_RANGE_LO)
+#define LLC_LOOKUP_WAYS         std::min(LLC_WAYS, 8)
+
+/*
+ * Testbench 
+ */
 
 // L2 operation behavior
 #define HIT		0
@@ -103,16 +135,19 @@
 
 // N bits to indicate the state
 #define STABLE_STATE_BITS	2	// depends on # of stable states
-#define LLC_STATE_BITS	        3 	// M, E, S, I, S^D
+#define LLC_STATE_BITS	        3 	// M, E, S, I, S^D, VALID, EID
 #define UNSTABLE_STATE_BITS	4	// depends on # of unstable states
-#define EVICT_STATE_BITS        2
-// Stable states
+
+// Stable states (last 3 for LLC only)
 #define INVALID			0
 #define SHARED			1
 #define EXCLUSIVE		2
 #define MODIFIED		3
 #define SD                      4
-#define INVALID_NOT_EMPTY       5
+#define VALID                   5
+#define EID                     6
+// #define MID merged with EID
+
 // Request unstable states
 #define ISD			1
 #define IMAD			2
@@ -152,6 +187,8 @@
 #define REQ_GETM	1
 #define REQ_PUTS	2
 #define REQ_PUTM	3
+#define REQ_DMA_READ    4
+#define REQ_DMA_WRITE   5
 
 // forwards (L3 to L2)
 #define FWD_GETS	0

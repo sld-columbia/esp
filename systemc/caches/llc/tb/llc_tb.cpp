@@ -70,6 +70,44 @@ void llc_tb::llc_test()
     word_t word, word_tmp;
     line_t line;
 
+    unsigned int n_l2 = 1;
+    unsigned int l2_ways = 1;
+
+    /*
+     * Configuration
+     */
+
+    switch (LLC_WAYS) {
+
+    case 4:
+
+	n_l2 = 1;
+	l2_ways = 4;
+	break;
+
+    case 8:
+
+	n_l2 = 2;
+	l2_ways = 4;
+	break;
+
+    case 16:
+
+	n_l2 = 4;
+	l2_ways = 4;
+	break;
+
+    case 32:
+
+	n_l2 = 8;
+	l2_ways = 4;
+	break;
+
+    default:
+
+	CACHE_REPORT_INFO("ERROR: LLC_WAYS not supported.");
+    }
+
     /*
      * Reset
      */
@@ -100,9 +138,9 @@ void llc_tb::llc_test()
     }
 
     CACHE_REPORT_INFO("T0.5)");
-    // get all INVALID_NOT_EMPTY from the first set
+    // get all VALID from the first set
     for (int i = 0; i < LLC_WAYS; ++i) {
-    	op(REQ_GETM, INVALID_NOT_EMPTY, 0, addr, addr_evict, 0, 0xcace, 0, 0, 0, 0, RPT_TB);
+    	op(REQ_GETM, VALID, 0, addr, addr_evict, 0, 0xcace, 0, 0, 0, 0, RPT_TB);
 	addr.tag_incr(1);
     }
 
@@ -187,25 +225,25 @@ void llc_tb::llc_test()
     op(REQ_PUTM, MODIFIED, 0, addr, addr_evict, 0xcace, 0, 0, 0, 0, 0, RPT_TB);
 
     CACHE_REPORT_INFO("T0.4)");
-    // from the same set get 1 INVALID and 1 INVALID_NOT_EMPTY
-    op(REQ_GETS, INVALID_NOT_EMPTY, 0, addr, addr_evict, 0, 0xcace, 0, 0, 0, 0, RPT_TB);
+    // from the same set get 1 INVALID and 1 VALID
+    op(REQ_GETS, VALID, 0, addr, addr_evict, 0, 0xcace, 0, 0, 0, 0, RPT_TB);
     addr.tag_incr(LLC_WAYS/2);
     op(REQ_GETM, INVALID, 0, addr, addr_evict, 0, line_of_addr(addr.line), 0, 0, 0, 0, RPT_TB);
 
     CACHE_REPORT_INFO("T0.5)");
-    // get all INVALID_NOT_EMPTY from the first set
+    // get all VALID from the first set
     addr.set_decr(1);
     addr.tag_decr(LLC_WAYS + 1 + LLC_WAYS/2);
     for (int i = 0; i < LLC_WAYS/4; ++i) {
-    	op(REQ_GETM, INVALID_NOT_EMPTY, 0, addr, addr_evict, 0, 0xcace, 0, 0, 0, 0, RPT_TB);
+    	op(REQ_GETM, VALID, 0, addr, addr_evict, 0, 0xcace, 0, 0, 0, 0, RPT_TB);
 	addr.tag_incr(1);
-    	op(REQ_GETS, INVALID_NOT_EMPTY, 0, addr, addr_evict, 0, 0xcace, 0, 0, 0, 0, RPT_TB);
+    	op(REQ_GETS, VALID, 0, addr, addr_evict, 0, 0xcace, 0, 0, 0, 0, RPT_TB);
 	addr.tag_incr(1);
     }
     for (int i = 0; i < LLC_WAYS/4; ++i) {
-    	op(REQ_GETM, INVALID_NOT_EMPTY, 0, addr, addr_evict, 0, line_of_addr(addr.line), 0, 0, 0, 0, RPT_TB);
+    	op(REQ_GETM, VALID, 0, addr, addr_evict, 0, line_of_addr(addr.line), 0, 0, 0, 0, RPT_TB);
 	addr.tag_incr(1);
-    	op(REQ_GETS, INVALID_NOT_EMPTY, 0, addr, addr_evict, 0, 0xcace, 0, 0, 0, 0, RPT_TB);
+    	op(REQ_GETS, VALID, 0, addr, addr_evict, 0, 0xcace, 0, 0, 0, 0, RPT_TB);
 	addr.tag_incr(1);
     }
 
@@ -239,10 +277,6 @@ void llc_tb::llc_test()
 	addr.tag_incr(1); addr_evict.tag_incr(1);
     }
 
-    // The remaining tests will work only with at least 2 CPUs
-    if (N_CPU < 2)
-	sc_stop();
-
     reset_dut();
 
     /*
@@ -255,99 +289,99 @@ void llc_tb::llc_test()
 
     // GetS by all CPUs on all the ways of a set. No overlapping.
     addr.set_incr(10); addr_evict = addr;
-    for (int j = 0; j < N_CPU; j++) {
-	for (int i = 0; i < L2_WAYS; i++) {
+    for (int j = 0; j < n_l2; j++) {
+	for (int i = 0; i < l2_ways; i++) {
 	    op(REQ_GETS, INVALID, 0, addr, addr_evict, 0, line_of_addr(addr.line), 0, 0, j, 0, RPT_TB);
 	    addr.tag_incr(1);
 	}
     }
 
     // PutS of one sharer for each way
-    addr.tag_decr(N_CPU*L2_WAYS);
-    for (int j = 0; j < N_CPU; j++) {
-	for (int i = 0; i < L2_WAYS; i++) {
+    addr.tag_decr(n_l2*l2_ways);
+    for (int j = 0; j < n_l2; j++) {
+	for (int i = 0; i < l2_ways; i++) {
 	    op(REQ_PUTS, EXCLUSIVE, 0, addr, addr_evict, 0, 0, 0, 0, j, j, RPT_TB);
 	    addr.tag_incr(1);
 	}
     }
 
     // GetS by all CPUs on all the ways of a set. No overlapping.
-    addr.tag_decr(N_CPU*L2_WAYS);
-    for (int j = 0; j < N_CPU; j++) {
-	for (int i = 0; i < L2_WAYS; i++) {
-	    op(REQ_GETS, INVALID_NOT_EMPTY, 0, addr, addr_evict, 0, line_of_addr(addr.line), 0, 0, j, 0, RPT_TB);
+    addr.tag_decr(n_l2*l2_ways);
+    for (int j = 0; j < n_l2; j++) {
+	for (int i = 0; i < l2_ways; i++) {
+	    op(REQ_GETS, VALID, 0, addr, addr_evict, 0, line_of_addr(addr.line), 0, 0, j, 0, RPT_TB);
 	    addr.tag_incr(1);
 	}
     }
 
     // GetS by all CPUs to have all the ways with 2 sharers
-    addr.tag_decr(N_CPU*L2_WAYS);
-    for (int j = 1; j < N_CPU; j++) {
-	for (int i = 0; i < L2_WAYS; i++) {
+    addr.tag_decr(n_l2*l2_ways);
+    for (int j = 1; j < n_l2; j++) {
+	for (int i = 0; i < l2_ways; i++) {
 	    op(REQ_GETS, EXCLUSIVE, 0, addr, addr_evict, 0, line_of_addr(addr.line), 0, 0, j, j-1, RPT_TB);
 	    op_rsp(addr, line_of_addr(addr.line), j-1, RPT_TB);
 	    addr.tag_incr(1);
 	}
     }
-    for (int i = 0; i < L2_WAYS; i++) {
-	op(REQ_GETS, EXCLUSIVE, 0, addr, addr_evict, 0, line_of_addr(addr.line), 0, 0, 0, N_CPU-1, RPT_TB);
-	op_rsp(addr, line_of_addr(addr.line), N_CPU-1, RPT_TB);
+    for (int i = 0; i < l2_ways; i++) {
+	op(REQ_GETS, EXCLUSIVE, 0, addr, addr_evict, 0, line_of_addr(addr.line), 0, 0, 0, n_l2-1, RPT_TB);
+	op_rsp(addr, line_of_addr(addr.line), n_l2-1, RPT_TB);
 	addr.tag_incr(1);
     }
 
     // PutS of one sharer for each way
-    addr.tag_decr(N_CPU*L2_WAYS);
-    for (int j = 0; j < N_CPU; j++) {
-	for (int i = 0; i < L2_WAYS; i++) {
+    addr.tag_decr(n_l2*l2_ways);
+    for (int j = 0; j < n_l2; j++) {
+	for (int i = 0; i < l2_ways; i++) {
 	    op(REQ_PUTS, SHARED, 0, addr, addr_evict, 0, 0, 0, 0, j, j, RPT_TB);
 	    addr.tag_incr(1);
 	}
     }
 
     // GetS again all the ways to make sure data is still in the LLC
-    addr.tag_decr(N_CPU*L2_WAYS);
-    for (int j = 0; j < N_CPU; j++) {
-	for (int i = 0; i < L2_WAYS; i++) {
+    addr.tag_decr(n_l2*l2_ways);
+    for (int j = 0; j < n_l2; j++) {
+	for (int i = 0; i < l2_ways; i++) {
 	    op(REQ_GETS, SHARED, 0, addr, addr_evict, 0, line_of_addr(addr.line), 0, 0, j, 0, RPT_TB);
 	    addr.tag_incr(1);
 	}
     }
 
     // PutS of one sharer for each way
-    addr.tag_decr(N_CPU*L2_WAYS);
-    for (int j = 0; j < N_CPU; j++) {
-	for (int i = 0; i < L2_WAYS; i++) {
+    addr.tag_decr(n_l2*l2_ways);
+    for (int j = 0; j < n_l2; j++) {
+	for (int i = 0; i < l2_ways; i++) {
 	    op(REQ_PUTS, SHARED, 0, addr, addr_evict, 0, 0, 0, 0, j, j, RPT_TB);
 	    addr.tag_incr(1);
 	}
     }
 
     // PutS of the last sharer for each way
-    addr.tag_decr(N_CPU*L2_WAYS);
-    for (int j = 1; j < N_CPU; j++) {
-	for (int i = 0; i < L2_WAYS; i++) {
+    addr.tag_decr(n_l2*l2_ways);
+    for (int j = 1; j < n_l2; j++) {
+	for (int i = 0; i < l2_ways; i++) {
 	    op(REQ_PUTS, SHARED, 0, addr, addr_evict, 0, 0, 0, 0, j, j, RPT_TB);
 	    addr.tag_incr(1);
 	}
     }
-    for (int i = 0; i < L2_WAYS; i++) {
+    for (int i = 0; i < l2_ways; i++) {
 	op(REQ_PUTS, SHARED, 0, addr, addr_evict, 0, 0, 0, 0, 0, 0, RPT_TB);
 	addr.tag_incr(1);
     }
 
     // GetS again all the ways to make sure data is still in the LLC
-    addr.tag_decr(N_CPU*L2_WAYS);
-    for (int j = 0; j < N_CPU; j++) {
-	for (int i = 0; i < L2_WAYS; i++) {
-	    op(REQ_GETS, INVALID_NOT_EMPTY, 0, addr, addr_evict, 0, line_of_addr(addr.line), 0, 0, j, 0, RPT_TB);
+    addr.tag_decr(n_l2*l2_ways);
+    for (int j = 0; j < n_l2; j++) {
+	for (int i = 0; i < l2_ways; i++) {
+	    op(REQ_GETS, VALID, 0, addr, addr_evict, 0, line_of_addr(addr.line), 0, 0, j, 0, RPT_TB);
 	    addr.tag_incr(1);
 	}
     }
 
     // GetS by all CPUs to have all the ways with 2 sharers
-    addr.tag_decr(N_CPU*L2_WAYS);
-    for (int j = 1; j < N_CPU; j++) {
-	for (int i = 0; i < L2_WAYS; i++) {
+    addr.tag_decr(n_l2*l2_ways);
+    for (int j = 1; j < n_l2; j++) {
+	for (int i = 0; i < l2_ways; i++) {
 	    op(REQ_GETS, EXCLUSIVE, 0, addr, addr_evict, 0, line_of_addr(addr.line), 0, 0, j, j-1, RPT_TB);
 	    op(REQ_PUTS, SD, 0, addr, addr_evict, 0, 0, 0, 0, j-1, j-1, RPT_TB);
 	    op_rsp(addr, line_of_addr(addr.line), j-1, RPT_TB);
@@ -355,22 +389,22 @@ void llc_tb::llc_test()
 	}
     }
 
-    for (int i = 0; i < L2_WAYS; i++) {
-	op(REQ_GETS, EXCLUSIVE, 0, addr, addr_evict, 0, line_of_addr(addr.line), 0, 0, 0, N_CPU-1, RPT_TB);
-	op(REQ_PUTS, SD, 0, addr, addr_evict, 0, 0, 0, 0, N_CPU-1, N_CPU-1, RPT_TB);
-	op_rsp(addr, line_of_addr(addr.line), N_CPU-1, RPT_TB);
+    for (int i = 0; i < l2_ways; i++) {
+	op(REQ_GETS, EXCLUSIVE, 0, addr, addr_evict, 0, line_of_addr(addr.line), 0, 0, 0, n_l2-1, RPT_TB);
+	op(REQ_PUTS, SD, 0, addr, addr_evict, 0, 0, 0, 0, n_l2-1, n_l2-1, RPT_TB);
+	op_rsp(addr, line_of_addr(addr.line), n_l2-1, RPT_TB);
 	addr.tag_incr(1);
     }
 
     // PutS of the last sharer for each way
-    addr.tag_decr(N_CPU*L2_WAYS);
-    for (int j = 1; j < N_CPU; j++) {
-	for (int i = 0; i < L2_WAYS; i++) {
+    addr.tag_decr(n_l2*l2_ways);
+    for (int j = 1; j < n_l2; j++) {
+	for (int i = 0; i < l2_ways; i++) {
 	    op(REQ_PUTS, SHARED, 0, addr, addr_evict, 0, 0, 0, 0, j, j, RPT_TB);
 	    addr.tag_incr(1);
 	}
     }
-    for (int i = 0; i < L2_WAYS; i++) {
+    for (int i = 0; i < l2_ways; i++) {
 	op(REQ_PUTS, SHARED, 0, addr, addr_evict, 0, 0, 0, 0, 0, 0, RPT_TB);
 	addr.tag_incr(1);
     }
@@ -379,9 +413,9 @@ void llc_tb::llc_test()
 
     // GetS by all CPUs on all the ways of a set. No overlapping.
     addr_evict = addr;
-    addr_evict.tag_decr(N_CPU*L2_WAYS);
-    for (int j = 0; j < N_CPU; j++) {
-	for (int i = 0; i < L2_WAYS; i++) {
+    addr_evict.tag_decr(n_l2*l2_ways);
+    for (int j = 0; j < n_l2; j++) {
+	for (int i = 0; i < l2_ways; i++) {
 	    op(REQ_GETS, INVALID, 1, addr, addr_evict, 0, line_of_addr(addr.line), 
 	       line_of_addr(addr_evict.line), 0, j, 0, RPT_TB);
 	    addr.tag_incr(1); addr_evict.tag_incr(1);
@@ -391,8 +425,8 @@ void llc_tb::llc_test()
     CACHE_REPORT_INFO("T2.2) GetM - PutM. No eviction.");
 
     addr.set_incr(1);
-    for (int j = 0; j < N_CPU; j++) {
-	for (int i = 0; i < L2_WAYS; i++) {
+    for (int j = 0; j < n_l2; j++) {
+	for (int i = 0; i < l2_ways; i++) {
 	    op(REQ_GETM, INVALID, 0, addr, addr_evict, 0, line_of_addr(addr.line), 0, 0, j, 0, RPT_TB);
 	    addr.tag_incr(1);
 	}
@@ -452,7 +486,7 @@ void llc_tb::op(coh_msg_t coh_msg, llc_state_t state, bool evict, addr_breakdown
     case REQ_GETS :
 	switch (state) {
 	case INVALID :
-	case INVALID_NOT_EMPTY :
+	case VALID :
 	    out_plane = RSP_PLANE;
 	    out_msg = RSP_EDATA;
 	    break;
@@ -469,7 +503,7 @@ void llc_tb::op(coh_msg_t coh_msg, llc_state_t state, bool evict, addr_breakdown
     case REQ_GETM :
 	switch (state) {
 	case INVALID :
-	case INVALID_NOT_EMPTY :
+	case VALID :
 	    out_plane = RSP_PLANE;
 	    out_msg = RSP_DATA;
 	    break;

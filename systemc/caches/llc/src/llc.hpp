@@ -45,7 +45,7 @@ public:
     sc_out<bool> is_rsp_to_get_out;
     sc_out<bool> is_req_to_get_out;
 
-    sc_out<tag_t> tag_buf_out[LLC_WAYS];
+    sc_out<llc_tag_t> tag_buf_out[LLC_WAYS];
     sc_out<llc_state_t> state_buf_out[LLC_WAYS];
     sc_out<sharers_t> sharers_buf_out[LLC_WAYS];
     sc_out<owner_t> owner_buf_out[LLC_WAYS];
@@ -64,7 +64,7 @@ public:
     put_initiator<bool>                 llc_rst_tb_done;
 
     // Local memory
-    tag_t tags[LLC_LINES];
+    llc_tag_t tags[LLC_LINES];
     llc_state_t states[LLC_LINES];
     hprot_t hprots[LLC_LINES];
     line_t lines[LLC_LINES];
@@ -73,7 +73,7 @@ public:
     // llc_way_t evict_ways[SETS];
 
     // Local registers
-    tag_t	 tag_buf[LLC_WAYS];
+    llc_tag_t	 tag_buf[LLC_WAYS];
     llc_state_t	 state_buf[LLC_WAYS];
     hprot_t	 hprot_buf[LLC_WAYS];
     line_t	 line_buf[LLC_WAYS];
@@ -125,29 +125,13 @@ public:
 	LLC_FLATTEN_REGS;
 
 	// Map arrays to memory
-#if (N_CPU == 1)
-	HLS_MAP_TO_MEMORY(tags, "llc_tags_1cpus");
-	HLS_MAP_TO_MEMORY(states, "llc_states_1cpus");
-	HLS_MAP_TO_MEMORY(hprots, "llc_hprots_1cpus");
-	HLS_MAP_TO_MEMORY(lines, "llc_lines_1cpus");
-	HLS_MAP_TO_MEMORY(sharers, "llc_sharers_1cpus");
-	HLS_MAP_TO_MEMORY(owners, "llc_owners_1cpus");
-#elif (N_CPU == 2)
-	HLS_MAP_TO_MEMORY(tags, "llc_tags_2cpus");
-	HLS_MAP_TO_MEMORY(states, "llc_states_2cpus");
-	HLS_MAP_TO_MEMORY(hprots, "llc_hprots_2cpus");
-	HLS_MAP_TO_MEMORY(lines, "llc_lines_2cpus");
-	HLS_MAP_TO_MEMORY(sharers, "llc_sharers_2cpus");
-	HLS_MAP_TO_MEMORY(owners, "llc_owners_2cpus");
-#else
-	HLS_MAP_TO_MEMORY(tags, "llc_tags_4cpus");
-	HLS_MAP_TO_MEMORY(states, "llc_states_4cpus");
-	HLS_MAP_TO_MEMORY(hprots, "llc_hprots_4cpus");
-	HLS_MAP_TO_MEMORY(lines, "llc_lines_4cpus");
-	HLS_MAP_TO_MEMORY(sharers, "llc_sharers_4cpus");
-	HLS_MAP_TO_MEMORY(owners, "llc_owners_4cpus");
-#endif
-	// HLS_MAP_TO_MEMORY(evict_ways, "llc_evict_ways");
+	HLS_MAP_TO_MEMORY(tags, IMP_MEM_NAME_STRING(llc, tags, LLC_SETS, LLC_WAYS));
+	HLS_MAP_TO_MEMORY(states, IMP_MEM_NAME_STRING(llc, states, LLC_SETS, LLC_WAYS));
+	HLS_MAP_TO_MEMORY(lines, IMP_MEM_NAME_STRING(llc, lines, LLC_SETS, LLC_WAYS));
+	HLS_MAP_TO_MEMORY(hprots, IMP_MEM_NAME_STRING(llc, hprots, LLC_SETS, LLC_WAYS));
+	// HLS_MAP_TO_MEMORY(evict_ways, IMP_MEM_NAME_STRING(llc, evict_ways, LLC_SETS, LLC_WAYS));
+	HLS_MAP_TO_MEMORY(sharers, IMP_MEM_NAME_STRING(llc, sharers, LLC_SETS, LLC_WAYS));
+	HLS_MAP_TO_MEMORY(owners, IMP_MEM_NAME_STRING(llc, owners, LLC_SETS, LLC_WAYS));
     }
 
     // Processes
@@ -157,7 +141,7 @@ public:
     inline void reset_io();
     inline void reset_states();
     void read_set(llc_addr_t base, llc_way_t way_base);
-    void lookup(tag_t tag, set_t set, llc_way_t &way, bool &evict, llc_addr_t &llc_addr);
+    void lookup(llc_tag_t tag, llc_set_t set, llc_way_t &way, bool &evict, llc_addr_t &llc_addr);
     void send_mem_req(bool hwrite, line_addr_t line_addr, hprot_t hprot, line_t line);
     void get_mem_rsp(line_t &line);
     void get_req_in(llc_req_in_t &req_in);

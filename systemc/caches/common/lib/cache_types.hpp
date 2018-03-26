@@ -14,8 +14,9 @@
  * Cache data types
  */
 
-typedef sc_uint<CPU_MSG_TYPE_WIDTH>	cpu_msg_t;	// MESI protocol messages
-typedef sc_uint<COH_MSG_TYPE_WIDTH>	coh_msg_t;	// CPU bus requests
+typedef sc_uint<CPU_MSG_TYPE_WIDTH>	cpu_msg_t; // CPU bus requests
+typedef sc_uint<COH_MSG_TYPE_WIDTH>	coh_msg_t; // Requests without DMA, Forwards, Responses
+typedef sc_uint<LLCREQ_MSG_TYPE_WIDTH>	req_msg_t; // Requests if including DMA 
 typedef sc_uint<HSIZE_WIDTH>		hsize_t;
 typedef sc_uint<HPROT_WIDTH>		hprot_t;
 typedef sc_uint<INVACK_CNT_WIDTH>	invack_cnt_t;
@@ -26,8 +27,10 @@ typedef sc_uint<L2_ADDR_BITS>           l2_addr_t;
 typedef sc_uint<LLC_ADDR_BITS>          llc_addr_t;
 typedef sc_uint<BITS_PER_WORD>		word_t;
 typedef sc_biguint<BITS_PER_LINE>	line_t;
-typedef sc_uint<TAG_BITS>		tag_t;
-typedef sc_uint<SET_BITS>		set_t;
+typedef sc_uint<L2_TAG_BITS>		l2_tag_t;
+typedef sc_uint<LLC_TAG_BITS>		llc_tag_t;
+typedef sc_uint<L2_SET_BITS>		l2_set_t;
+typedef sc_uint<LLC_SET_BITS>		llc_set_t;
 typedef sc_uint<L2_WAY_BITS>		l2_way_t;
 typedef sc_uint<LLC_WAY_BITS>		llc_way_t;
 typedef sc_uint<OFFSET_BITS>		offset_t;
@@ -36,15 +39,9 @@ typedef sc_uint<BYTE_BITS>		byte_offset_t;
 typedef sc_uint<STABLE_STATE_BITS>	state_t;
 typedef sc_uint<LLC_STATE_BITS>	        llc_state_t;
 typedef sc_uint<UNSTABLE_STATE_BITS>	unstable_state_t;
-typedef sc_uint<EVICT_STATE_BITS>	evict_state_t;
-typedef sc_uint<MAX_N_CPU_BITS>         cache_id_t;
-#if (N_CPU_BITS != 0)
-typedef sc_uint<N_CPU_BITS>             owner_t;
-typedef sc_uint<N_CPU>                  sharers_t;
-#else
-typedef sc_uint<1>                      owner_t;
-typedef sc_uint<1>                      sharers_t;
-#endif
+typedef sc_uint<CACHE_ID_WIDTH>         cache_id_t;
+typedef sc_uint<MAX_N_L2_BITS>		owner_t;
+typedef sc_uint<MAX_N_L2>		sharers_t;
 
 /*
  * L2 cache coherence channels types
@@ -628,9 +625,9 @@ class reqs_buf_t
 public:
 
     cpu_msg_t           cpu_msg;
-    tag_t		tag;
-    tag_t               tag_estall;
-    set_t		set;
+    l2_tag_t		tag;
+    l2_tag_t            tag_estall;
+    l2_set_t		set;
     l2_way_t            way;
     hsize_t             hsize;
     word_offset_t	w_off;
@@ -767,8 +764,8 @@ public:
     addr_t              line;
     line_addr_t         line_addr;
     addr_t              word;
-    tag_t               tag;
-    set_t               set;
+    l2_tag_t            tag;
+    l2_set_t            set;
     word_offset_t       w_off;
     byte_offset_t       b_off;
 
@@ -814,9 +811,9 @@ public:
     }
     
     void tag_incr(int a) {
-	line	  += a * TAG_OFFSET;
-	line_addr += a * (1 << SET_BITS);
-	word	  += a * TAG_OFFSET;
+	line	  += a * L2_TAG_OFFSET;
+	line_addr += a * L2_SETS;
+	word	  += a * L2_TAG_OFFSET;
 	tag	  += a;
     }
 
@@ -828,9 +825,9 @@ public:
     }
 
     void tag_decr(int a) {
-    	line	  -= a * TAG_OFFSET;
-    	line_addr -= a * (1 << SET_BITS);
-    	word	  -= a * TAG_OFFSET;
+    	line	  -= a * L2_TAG_OFFSET;
+    	line_addr -= a * L2_SETS;
+    	word	  -= a * L2_TAG_OFFSET;
     	tag	  -= a;
     }
 
@@ -846,8 +843,8 @@ public:
 	line = addr;
 	line_addr = addr.range(TAG_RANGE_HI, SET_RANGE_LO);
 	word  = addr;
-	tag   = addr.range(TAG_RANGE_HI, TAG_RANGE_LO);
-	set   = addr.range(SET_RANGE_HI, SET_RANGE_LO);
+	tag   = addr.range(TAG_RANGE_HI, L2_TAG_RANGE_LO);
+	set   = addr.range(L2_SET_RANGE_HI, SET_RANGE_LO);
 	w_off = addr.range(W_OFF_RANGE_HI, W_OFF_RANGE_LO);
 	b_off = addr.range(B_OFF_RANGE_HI, B_OFF_RANGE_LO);
 
@@ -857,6 +854,7 @@ public:
 };
 
 // line breakdown
+template <class tag_t, class set_t>
 class line_breakdown_t
 {
 
@@ -902,10 +900,16 @@ public:
 	set -= a;
     }
 
-    void line_breakdown(line_addr_t addr)
+    void l2_line_breakdown(line_addr_t addr)
     {
-	tag   = addr.range(TAG_BITS + SET_BITS - 1, SET_BITS);
-	set   = addr.range(SET_BITS - 1, 0);
+	tag   = addr.range(ADDR_BITS - OFFSET_BITS - 1, L2_SET_BITS);
+	set   = addr.range(L2_SET_BITS - 1, 0);
+    }
+
+    void llc_line_breakdown(line_addr_t addr)
+    {
+	tag   = addr.range(ADDR_BITS - OFFSET_BITS - 1, LLC_SET_BITS);
+	set   = addr.range(LLC_SET_BITS - 1, 0);
     }
 };
 

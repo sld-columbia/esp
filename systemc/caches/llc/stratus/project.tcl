@@ -24,25 +24,41 @@ define_system_module tb  ../tb/llc_tb.cpp ../tb/system.cpp ../tb/sc_main.cpp
 # HLS and Simulation configurations
 ######################################################################
 
-foreach ncpu [list 1 2 4] {
+# foreach sets [list 256 512 1024 2048 4096 8092] {
 
-    set iocfg "IOCFG\_NCPU\_$ncpu"
+#     foreach ways [list 4 8 16 32] {
 
-    define_io_config * $iocfg -DN_CPU=$ncpu
+foreach sets [list 256] {
 
-    define_system_config tb "TESTBENCH\_$ncpu" -io_config $iocfg
+    foreach ways [list 16 32] {
 
-    define_sim_config "BEHAV\_$ncpu" "llc BEH" "tb TESTBENCH\_$ncpu" -io_config $iocfg
+	set pars "_$sets\SETS_$ways\WAYS"
 
-    foreach cfg [list BASIC] {
-	set cname "$cfg\_$ncpu"
-	define_hls_config llc $cname --clock_period=$CLOCK_PERIOD $COMMON_HLS_FLAGS -DHLS_DIRECTIVES_$cfg \
-	    -io_config $iocfg
-	if {$TECH_IS_XILINX == 1} {
-	    define_sim_config "$cname\_V" "llc RTL_V $cname" "tb TESTBENCH\_$ncpu" -verilog_top_modules glbl \
-		-io_config $iocfg
-	} else {
-	    define_sim_config "$cname\_V" "llc RTL_V $cname" "tb TESTBENCH\_$ncpu" -io_config $iocfg
+	set iocfg "IOCFG$pars"
+
+	define_io_config * $iocfg -DLLC_SETS=$sets -DLLC_WAYS=$ways
+
+	define_system_config tb "TESTBENCH$pars" -io_config $iocfg
+
+	define_sim_config "BEHAV$pars" "llc BEH" "tb TESTBENCH$pars" -io_config $iocfg
+
+	foreach cfg [list BASIC] {
+
+	    set cname "$cfg$pars"
+
+	    define_hls_config llc $cname --clock_period=$CLOCK_PERIOD $COMMON_HLS_FLAGS \
+		-DHLS_DIRECTIVES_$cfg -io_config $iocfg
+
+	    if {$TECH_IS_XILINX == 1} {
+
+		define_sim_config "$cname\_V" "llc RTL_V $cname" "tb TESTBENCH$pars" \
+		    -verilog_top_modules glbl -io_config $iocfg
+
+	    } else {
+
+		define_sim_config "$cname\_V" "llc RTL_V $cname" "tb TESTBENCH$pars" \
+		    -io_config $iocfg
+	    }
 	}
     }
 }

@@ -29,6 +29,27 @@
     cerr << "Debug:  " << sc_object::basename() << ".\t @" << time << " : " \
     << text << " : " << var << endl;
 
+#define IMP_MEM_NAME(A, B, C, D)			\
+    A ## _ ## B ## _ ## C ## sets_ ## D ## ways
+
+#define IMP_MEM_NAME_STRING(a, b, c, d)		\
+    __xstr(IMP_MEM_NAME(a, b, c, d))
+
+#define __str(s) #s
+#define __xstr(s) __str(s)
+
+#define EXP_MEM_TYPE(A, B, C, D)			\
+    A ## _ ## B ## _ ## C ## sets_ ## D ## ways_t
+
+#define EXP_MEM_TYPE_STRING(a, b, c, d)		\
+    EXP_MEM_TYPE(a, b, c, d)
+
+#define EXP_MEM_INCLUDE(A, B, C, D)			\
+    A ## _ ## B ## _ ## C ## sets_ ## D ## ways.hpp
+
+#define EXP_MEM_INCLUDE_STRING(a, b, c, d)	\
+    __xstr(EXP_MEM_INCLUDE(a, b, c, d))
+
 inline void write_word(line_t &line, word_t word, word_offset_t w_off, byte_offset_t b_off, hsize_t hsize)
 {
     uint32_t size = BITS_PER_WORD, b_off_tmp = 0;

@@ -35,12 +35,12 @@ void l2::ctrl()
 	    //     RSP_WHILE_FLUSHING;
 
 	    l2_rsp_in_t rsp_in;
-	    line_breakdown_t line_br;
+	    line_breakdown_t<l2_tag_t, l2_set_t> line_br;
 	    sc_uint<REQS_BITS> reqs_hit_i;
 
 	    get_rsp_in(rsp_in);
 	    
-	    line_br.line_breakdown(rsp_in.addr);
+	    line_br.l2_line_breakdown(rsp_in.addr);
 
 	    reqs_lookup(line_br, reqs_hit_i);
 
@@ -94,7 +94,7 @@ void l2::ctrl()
 		    // update invack_cnt
 		    reqs[reqs_hit_i].invack_cnt += rsp_in.invack_cnt;
 
-		    if (reqs[reqs_hit_i].invack_cnt == MAX_N_CPU) {
+		    if (reqs[reqs_hit_i].invack_cnt == MAX_N_L2) {
 
 			put_reqs(line_br.set, reqs[reqs_hit_i].way, line_br.tag,
 				 rsp_in.line, reqs[reqs_hit_i].hprot, MODIFIED, reqs_hit_i);
@@ -125,7 +125,7 @@ void l2::ctrl()
 		    // update invack_cnt
 		    reqs[reqs_hit_i].invack_cnt += rsp_in.invack_cnt;
 
-		    if (reqs[reqs_hit_i].invack_cnt == MAX_N_CPU) {
+		    if (reqs[reqs_hit_i].invack_cnt == MAX_N_L2) {
 			ongoing_atomic = true;
 			// update unstable state
 			reqs[reqs_hit_i].state = XMW;
@@ -149,7 +149,7 @@ void l2::ctrl()
 
 		reqs[reqs_hit_i].invack_cnt--;
 
-		if (reqs[reqs_hit_i].invack_cnt == MAX_N_CPU) {
+		if (reqs[reqs_hit_i].invack_cnt == MAX_N_L2) {
 
 		    switch (reqs[reqs_hit_i].state) {
 		
@@ -194,7 +194,7 @@ void l2::ctrl()
 		   && !l2_flush.nb_can_get()) {
 
 	    l2_fwd_in_t fwd_in;
-	    line_breakdown_t line_br;
+	    line_breakdown_t<l2_tag_t, l2_set_t> line_br;
 	    bool reqs_hit;
 	    sc_uint<REQS_BITS> reqs_hit_i;
 
@@ -206,7 +206,7 @@ void l2::ctrl()
 		fwd_in = fwd_in_stalled;
 	    }
 
-	    line_br.line_breakdown(fwd_in.addr);
+	    line_br.l2_line_breakdown(fwd_in.addr);
 
 	    l2_way_t way_hit;
 	    tag_lookup_fwd(line_br, way_hit); 
@@ -244,7 +244,7 @@ void l2::ctrl()
 			PUTACK_DEFAULT;
 		    }
 
-		    set_t set_tmp = reqs[reqs_hit_i].set;
+		    l2_set_t set_tmp = reqs[reqs_hit_i].set;
 
 		    // {
 		    // 	HLS_DEFINE_PROTOCOL("l2-evict-ways");
@@ -255,7 +255,7 @@ void l2::ctrl()
 		    reqs[reqs_hit_i].state = state_tmp;
 		    reqs[reqs_hit_i].tag = reqs[reqs_hit_i].tag_estall;
 
-		    line_addr_t line_addr_tmp = (reqs[reqs_hit_i].tag_estall << SET_BITS) | (line_br.set);
+		    line_addr_t line_addr_tmp = (reqs[reqs_hit_i].tag_estall << L2_SET_BITS) | (line_br.set);
 
 		    // send request to directory
 		    send_req_out(coh_msg_tmp, reqs[reqs_hit_i].hprot, line_addr_tmp, 0);
@@ -390,7 +390,7 @@ void l2::ctrl()
 
 		wait();
 
-		while (flush_set < SETS) {
+		while (flush_set < L2_SETS) {
 
 		    {
 			FLUSH_READ_SET;
@@ -412,13 +412,13 @@ void l2::ctrl()
 
 			    reqs_peek_flush(flush_set, reqs_hit_i);
 
-			    addr_t addr_tmp = (tag_buf[flush_way] << TAG_RANGE_LO) | 
+			    addr_t addr_tmp = (tag_buf[flush_way] << L2_TAG_RANGE_LO) | 
 				(flush_set << SET_RANGE_LO);
 			    
 			    addr_breakdown_t addr_br;
 			    addr_br.breakdown(addr_tmp);
 
-			    line_addr_t line_addr_tmp = (tag_buf[flush_way] << SET_BITS) | 
+			    line_addr_t line_addr_tmp = (tag_buf[flush_way] << L2_SET_BITS) | 
 				(flush_set);
 
 			    states.port1[0][(flush_set << L2_WAY_BITS) + flush_way] = INVALID;
@@ -466,7 +466,7 @@ void l2::ctrl()
 		    flush_way = 0;
 		}
 
-		if (flush_set == SETS){
+		if (flush_set == L2_SETS){
 		    FLUSH_END;
 		
 		    flush_set = 0;
@@ -738,8 +738,8 @@ void l2::ctrl()
 		} else {
 
 		    evict_stall = true;
-		    line_addr_t line_addr_evict = (tag_buf[evict_way] << SET_BITS) | (addr_br.set);
-		    tag_t tag_tmp = addr_br.tag;
+		    line_addr_t line_addr_evict = (tag_buf[evict_way] << L2_SET_BITS) | (addr_br.set);
+		    l2_tag_t tag_tmp = addr_br.tag;
 		    addr_br.tag = tag_buf[evict_way];
 		
 		    unstable_state_t state_tmp;
@@ -952,7 +952,7 @@ inline void l2::reset_io()
 
 inline void l2::reset_states()
 {
-    for (int i=0; i<SETS; i++) { // do not unroll
+    for (int i=0; i<L2_SETS; i++) { // do not unroll
 	for (int j=0; j<L2_WAYS; j++) { // do not unroll
 	    {
 		RESET_STATES_LOOP;
@@ -1050,7 +1050,7 @@ void l2::send_rsp_out(coh_msg_t coh_msg, cache_id_t req_id, bool to_req, line_ad
 
 /* Functions to move around buffered lines */
 
-void l2::fill_reqs(cpu_msg_t cpu_msg, addr_breakdown_t addr_br, tag_t tag_estall, l2_way_t way_hit, 
+void l2::fill_reqs(cpu_msg_t cpu_msg, addr_breakdown_t addr_br, l2_tag_t tag_estall, l2_way_t way_hit, 
 		   hsize_t hsize, unstable_state_t state, hprot_t hprot, word_t word, line_t line,
 		   sc_uint<REQS_BITS> reqs_i)
 {
@@ -1066,19 +1066,19 @@ void l2::fill_reqs(cpu_msg_t cpu_msg, addr_breakdown_t addr_br, tag_t tag_estall
     reqs[reqs_i].b_off       = addr_br.b_off;
     reqs[reqs_i].state	     = state;
     reqs[reqs_i].hprot	     = hprot;
-    reqs[reqs_i].invack_cnt  = MAX_N_CPU;
+    reqs[reqs_i].invack_cnt  = MAX_N_L2;
     reqs[reqs_i].word	     = word;
     reqs[reqs_i].line	     = line;
 
     reqs_cnt--;
 }
 
-void l2::put_reqs(set_t set, l2_way_t way, tag_t tag, line_t line, hprot_t hprot, state_t state, 
+void l2::put_reqs(l2_set_t set, l2_way_t way, l2_tag_t tag, line_t line, hprot_t hprot, state_t state, 
 		  sc_uint<REQS_BITS> reqs_i)
 {
     PUT_REQS;
 
-    sc_uint<SET_BITS+L2_WAY_BITS> base = set << L2_WAY_BITS;
+    sc_uint<L2_SET_BITS+L2_WAY_BITS> base = set << L2_WAY_BITS;
 
     lines.port1[0][base + way]  = line;
     hprots.port1[0][base + way] = hprot;
@@ -1092,11 +1092,11 @@ void l2::put_reqs(set_t set, l2_way_t way, tag_t tag, line_t line, hprot_t hprot
 }
 
 /* Functions to search for cache lines either in memory or buffered */
-inline void l2::read_set(set_t set)
+inline void l2::read_set(l2_set_t set)
 {
     //Manual unroll because these are explicit memories, see commented code 
     // below for implicit memories usage
-    sc_uint<SET_BITS+L2_WAY_BITS> base = set << L2_WAY_BITS;
+    sc_uint<L2_SET_BITS+L2_WAY_BITS> base = set << L2_WAY_BITS;
  
     tag_buf[0]   = tags.port2[0][base + 0];
     state_buf[0] = states.port2[0][base + 0];
@@ -1168,7 +1168,7 @@ void l2::tag_lookup(addr_breakdown_t addr_br, bool &tag_hit, l2_way_t &way_hit, 
     }
 }
 
-void l2::tag_lookup_fwd(line_breakdown_t line_br, l2_way_t &way_hit)
+void l2::tag_lookup_fwd(line_breakdown_t<l2_tag_t, l2_set_t> line_br, l2_way_t &way_hit)
 {
     TAG_LOOKUP;
 
@@ -1193,7 +1193,7 @@ void l2::tag_lookup_fwd(line_breakdown_t line_br, l2_way_t &way_hit)
     }
 }
 
-void l2::reqs_lookup(line_breakdown_t line_br, sc_uint<REQS_BITS> &reqs_hit_i)
+void l2::reqs_lookup(line_breakdown_t<l2_tag_t, l2_set_t> line_br, sc_uint<REQS_BITS> &reqs_hit_i)
 {
     REQS_LOOKUP;
 
@@ -1211,7 +1211,7 @@ void l2::reqs_lookup(line_breakdown_t line_br, sc_uint<REQS_BITS> &reqs_hit_i)
     // REQS_LOOKUP_ASSERT;
 }
 
-bool l2::reqs_peek_req(set_t set, sc_uint<REQS_BITS> &reqs_i)
+bool l2::reqs_peek_req(l2_set_t set, sc_uint<REQS_BITS> &reqs_i)
 {
     REQS_PEEK_REQ;
 
@@ -1230,7 +1230,7 @@ bool l2::reqs_peek_req(set_t set, sc_uint<REQS_BITS> &reqs_i)
     return set_conflict;
 }
 
-void l2::reqs_peek_flush(set_t set, sc_uint<REQS_BITS> &reqs_i)
+void l2::reqs_peek_flush(l2_set_t set, sc_uint<REQS_BITS> &reqs_i)
 {
     REQS_PEEK_REQ;
 
@@ -1243,7 +1243,8 @@ void l2::reqs_peek_flush(set_t set, sc_uint<REQS_BITS> &reqs_i)
 }
 
 
-bool l2::reqs_peek_fwd(line_breakdown_t line_br, sc_uint<REQS_BITS> &reqs_i, bool &reqs_hit, coh_msg_t coh_msg)
+bool l2::reqs_peek_fwd(line_breakdown_t<l2_tag_t, l2_set_t> line_br,
+		       sc_uint<REQS_BITS> &reqs_i, bool &reqs_hit, coh_msg_t coh_msg)
 {
     REQS_PEEK_FWD;
 

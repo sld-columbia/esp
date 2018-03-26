@@ -55,21 +55,21 @@ void llc::ctrl()
 	if (is_rsp_to_get) {
 
 	    llc_rsp_in_t rsp_in;
-	    line_breakdown_t line_br;
+	    line_breakdown_t<llc_tag_t, llc_set_t> line_br;
 	    llc_way_t way;
 	    llc_addr_t llc_addr;
 	    bool evict;
 
 	    get_rsp_in(rsp_in);
 
-	    line_br.line_breakdown(rsp_in.addr);
+	    line_br.llc_line_breakdown(rsp_in.addr);
 
 	    lookup(line_br.tag, line_br.set, way, evict, llc_addr);
 
 	    if (sharers_buf[way] != 0) {
 		states[llc_addr] = SHARED;
 	    } else {
-		states[llc_addr] = INVALID_NOT_EMPTY;
+		states[llc_addr] = VALID;
 	    }
 	    lines[llc_addr] = rsp_in.line;
 
@@ -84,7 +84,7 @@ void llc::ctrl()
 	} else if (is_req_to_get == true) {
 
 	    llc_req_in_t req_in;
-	    line_breakdown_t line_br;
+	    line_breakdown_t<llc_tag_t, llc_set_t> line_br;
 	    llc_way_t way;
 	    llc_addr_t llc_addr;
 	    bool evict;
@@ -96,21 +96,21 @@ void llc::ctrl()
 		req_in = req_in_stalled;
 	    }
 
-	    line_br.line_breakdown(req_in.addr);
+	    line_br.llc_line_breakdown(req_in.addr);
 
 	    CACHE_REPORT_VAR(sc_time_stamp(), "req_get addr: ", req_in.addr);
 
 	    lookup(line_br.tag, line_br.set, way, evict, llc_addr);
 
 	    if (evict && ((req_in.coh_msg != REQ_GETS && req_in.coh_msg != REQ_GETM) ||
-			  (state_buf[way] != INVALID_NOT_EMPTY))) {
+			  (state_buf[way] != VALID))) {
 		GENERIC_ASSERT;
 	    }
 
 	    if (evict) {
 		HLS_DEFINE_PROTOCOL("llc-eviction");
 		// evict_ways[line_br.set] = evict_way_buf + 1;
-		line_addr_t addr_evict = (tag_buf[way] << SET_BITS) + line_br.set;
+		line_addr_t addr_evict = (tag_buf[way] << LLC_SET_BITS) + line_br.set;
 		send_mem_req(WRITE, addr_evict, hprot_buf[way], line_buf[way]);
 		wait();
 		send_mem_req(READ, req_in.addr, req_in.hprot, 0);
@@ -127,7 +127,7 @@ void llc::ctrl()
 		switch (state_buf[way]) {
 
 		case INVALID :
-		case INVALID_NOT_EMPTY :
+		case VALID :
 		    if (state_buf[way] == INVALID) {
 			CACHE_REPORT_VAR(sc_time_stamp(), "gets-invalid-mem-req: ", req_in.addr);
 			send_mem_req(READ, req_in.addr, req_in.hprot, 0);
@@ -184,7 +184,7 @@ void llc::ctrl()
 		switch (state_buf[way]) {
 
 		case INVALID :
-		case INVALID_NOT_EMPTY :
+		case VALID :
 		    if (state_buf[way] == INVALID) {
 			send_mem_req(READ, req_in.addr, req_in.hprot, 0);
 			get_mem_rsp(line_buf[way]);
@@ -205,7 +205,7 @@ void llc::ctrl()
 		    {
 			HLS_DEFINE_PROTOCOL("llc-getm-shared-protocol");
 			invack_cnt_t invack_cnt = 0;
-			for (int i = 0; i < N_CPU; i++) {
+			for (int i = 0; i < MAX_N_L2; i++) {
 			    if (((sharers_buf[way] & (1 << i)) != 0) && (i != req_in.req_id)) {
 				send_fwd_out(FWD_INV, req_in.addr, req_in.req_id, i);
 				invack_cnt++;
@@ -247,7 +247,7 @@ void llc::ctrl()
 		switch (state_buf[way]) {
 
 		case INVALID :
-		case INVALID_NOT_EMPTY :
+		case VALID :
 		case MODIFIED :
 		    break;
 
@@ -255,13 +255,13 @@ void llc::ctrl()
 		    sharers_buf[way] = sharers_buf[way] & ~ (1 << req_in.req_id);
 		    sharers[llc_addr] = sharers_buf[way];
 		    if (sharers_buf[way] == 0) {
-			states[llc_addr] = INVALID_NOT_EMPTY;
+			states[llc_addr] = VALID;
 		    }
 		    break;
 
 		case EXCLUSIVE :
 		    if (owner_buf[way] == req_in.req_id) {
-			states[llc_addr] = INVALID_NOT_EMPTY;
+			states[llc_addr] = VALID;
 			owners[llc_addr] = 0; // TODO REMOVE: redundant
 		    }
 		    break;
@@ -283,21 +283,21 @@ void llc::ctrl()
 		switch (state_buf[way]) {
 
 		case INVALID :
-		case INVALID_NOT_EMPTY :
+		case VALID :
 		    break;
 
 		case SHARED :
 		    sharers_buf[way] = sharers_buf[way] & ~ (1 << req_in.req_id);
 		    sharers[llc_addr] = sharers_buf[way];
 		    if (sharers_buf[way] == 0) {
-			states[llc_addr] = INVALID_NOT_EMPTY;
+			states[llc_addr] = VALID;
 		    }
 		    break;
 
 		case EXCLUSIVE :
 		case MODIFIED :
 		    if (owner_buf[way] == req_in.req_id) {
-			states[llc_addr] = INVALID_NOT_EMPTY;
+			states[llc_addr] = VALID;
 			owners[llc_addr] = 0; // TODO REMOVE: redundant
 			lines[llc_addr] = req_in.line;
 		    }
@@ -395,7 +395,7 @@ inline void llc::reset_states()
 {
     HLS_DEFINE_PROTOCOL("llc-reset-states-protocol");
     wait();
-    for (int i=0; i<SETS; i++) { // do not unroll
+    for (int i=0; i<LLC_SETS; i++) { // do not unroll
 	for (int j=0; j<LLC_WAYS; j++) { // do not unroll
 	    {
 		states[(i << LLC_WAY_BITS) + j] = INVALID;
@@ -407,7 +407,7 @@ inline void llc::reset_states()
 
 void llc::read_set(llc_addr_t base, llc_way_t way_base)
 {
-	for (int i = L2_WAYS - 1; i >= 0; i--) {
+	for (int i = LLC_LOOKUP_WAYS - 1; i >= 0; i--) {
 		HLS_UNROLL_LOOP(ON, "llc-read-set");
 		tag_buf[way_base + i]	  = tags[base + i];
 		state_buf[way_base + i]   = states[base + i];
@@ -418,8 +418,8 @@ void llc::read_set(llc_addr_t base, llc_way_t way_base)
 	}
 }
 
-// TODO make *_buf only with L2_WAYS positions to save area
-void llc::lookup(tag_t tag, set_t set, llc_way_t &way, bool &evict, llc_addr_t &llc_addr)
+// TODO make *_buf only with LLC_LOOKUP_WAYS positions to save area
+void llc::lookup(llc_tag_t tag, llc_set_t set, llc_way_t &way, bool &evict, llc_addr_t &llc_addr)
 {
     HLS_CONSTRAIN_LATENCY(0, HLS_ACHIEVABLE, "llc-tag-lookup-latency");
 
@@ -431,8 +431,8 @@ void llc::lookup(tag_t tag, set_t set, llc_way_t &way, bool &evict, llc_addr_t &
 
     // evict_way_buf = evict_ways[set];
 
-    for (int i = 0; i < LLC_WAYS/L2_WAYS; i++) {
-	read_set(base + L2_WAYS*i, i*L2_WAYS);
+    for (int i = 0; i < LLC_WAYS/LLC_LOOKUP_WAYS; i++) {
+	read_set(base + LLC_LOOKUP_WAYS*i, i*LLC_LOOKUP_WAYS);
     }
 
     for (int i = 0; i < LLC_WAYS; i++) {
@@ -449,7 +449,7 @@ void llc::lookup(tag_t tag, set_t set, llc_way_t &way, bool &evict, llc_addr_t &
     	    empty_way = i;
     	}
 	
-    	if (state_buf[i] == INVALID_NOT_EMPTY) {
+    	if (state_buf[i] == VALID) {
     	    evict_way = i;
     	}
     }
