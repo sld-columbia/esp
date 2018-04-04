@@ -51,7 +51,7 @@
 #define CPU_MSG_TYPE_WIDTH	2
 #define COH_MSG_TYPE_WIDTH	2
 #define DMA_MSG_TYPE_WIDTH      1
-#define LLCREQ_MSG_TYPE_WIDTH	(COH_MSG_TYPE_WIDTH + DMA_MSG_TYPE_WIDTH)
+#define MIX_MSG_TYPE_WIDTH	(COH_MSG_TYPE_WIDTH + DMA_MSG_TYPE_WIDTH)
 #define HSIZE_WIDTH		3
 #define HPROT_WIDTH		1
 #define INVACK_CNT_WIDTH	MAX_N_L2_BITS
@@ -127,6 +127,12 @@
 #define FWD_STALL_XMW	3
 #define FWD_STALL_EVICT	4
 
+// DMA operations testbench
+#define NO_DIRTY 0
+#define DIRTY 1
+#define NO_EVICT 0
+#define EVICT 1
+
 /*
  * Coherence
  */
@@ -195,6 +201,8 @@
 #define FWD_GETM	1
 #define FWD_INV		2
 #define FWD_PUTACK	3
+#define FWD_GETM_LLC    4
+#define FWD_INV_LLC     5
 
 // response (L2 to L2, L2 to L3, L3 to L2)
 #define RSP_DATA	0
@@ -213,16 +221,8 @@
 #define WORDS_8		5
 
 // hprot
-// #define DATA_OPCODE_MASK	1
-// #define PRIVILEGED_MASK	2
-// #define BUFFERABLE_MASK	4
-// #define CACHEABLE_MASK	8
-
-// #define CACHEABLE	0
-// #define NOT_CACHEABLE	1
-
-#define HPROT_OPCODE	0
-#define HPROT_DATA	1
+#define INSTR 0
+#define DATA  1
 
 #define DEFAULT_HPROT	4
 

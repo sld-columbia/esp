@@ -5,13 +5,6 @@
 
 #include "cache_utils.hpp"
 #include "llc_directives.hpp"
-// #include "llc_tags.hpp"
-// #include "llc_states.hpp"
-// #include "llc_hprots.hpp"
-// #include "llc_lines.hpp"
-// #include "llc_sharers.hpp"
-// #include "llc_owners.hpp"
-// #include "llc_evict_ways.hpp"
 
 class llc : public sc_module
 {
@@ -70,7 +63,8 @@ public:
     line_t lines[LLC_LINES];
     sharers_t sharers[LLC_LINES];
     owner_t owners[LLC_LINES];
-    // llc_way_t evict_ways[SETS];
+    bool dirty_bits[LLC_LINES];
+    llc_way_t evict_ways[LLC_SETS];
 
     // Local registers
     llc_tag_t	 tag_buf[LLC_WAYS];
@@ -79,7 +73,8 @@ public:
     line_t	 line_buf[LLC_WAYS];
     sharers_t	 sharers_buf[LLC_WAYS];
     owner_t      owner_buf[LLC_WAYS];
-    // llc_way_t	 evict_way_buf;
+    bool         dirty_bit_buf[LLC_WAYS];
+    llc_way_t	 evict_way_buf;
 
     // Constructor
     SC_CTOR(llc)
@@ -129,9 +124,10 @@ public:
 	HLS_MAP_TO_MEMORY(states, IMP_MEM_NAME_STRING(llc, states, LLC_SETS, LLC_WAYS));
 	HLS_MAP_TO_MEMORY(lines, IMP_MEM_NAME_STRING(llc, lines, LLC_SETS, LLC_WAYS));
 	HLS_MAP_TO_MEMORY(hprots, IMP_MEM_NAME_STRING(llc, hprots, LLC_SETS, LLC_WAYS));
-	// HLS_MAP_TO_MEMORY(evict_ways, IMP_MEM_NAME_STRING(llc, evict_ways, LLC_SETS, LLC_WAYS));
 	HLS_MAP_TO_MEMORY(sharers, IMP_MEM_NAME_STRING(llc, sharers, LLC_SETS, LLC_WAYS));
 	HLS_MAP_TO_MEMORY(owners, IMP_MEM_NAME_STRING(llc, owners, LLC_SETS, LLC_WAYS));
+	HLS_MAP_TO_MEMORY(dirty_bits, IMP_MEM_NAME_STRING(llc, dirty_bits, LLC_SETS, LLC_WAYS));
+	HLS_MAP_TO_MEMORY(evict_ways, IMP_MEM_NAME_STRING(llc, evict_ways, LLC_SETS, LLC_WAYS));
     }
 
     // Processes
@@ -140,7 +136,7 @@ public:
     // Functions
     inline void reset_io();
     inline void reset_states();
-    void read_set(llc_addr_t base, llc_way_t way_base);
+    void read_set(llc_addr_t base);
     void lookup(llc_tag_t tag, llc_set_t set, llc_way_t &way, bool &evict, llc_addr_t &llc_addr);
     void send_mem_req(bool hwrite, line_addr_t line_addr, hprot_t hprot, line_t line);
     void get_mem_rsp(line_t &line);
@@ -162,6 +158,8 @@ private:
     bool req_stall;
     bool req_in_stalled_valid;
     llc_req_in_t req_in_stalled;
+    llc_tag_t req_in_stalled_tag;
+    llc_set_t req_in_stalled_set;
 };
 
 #endif /* __LLC_HPP__ */

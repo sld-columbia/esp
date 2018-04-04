@@ -17,9 +17,6 @@
 #define LLC_RESET_IO				\
     HLS_DEFINE_PROTOCOL("llc-reset-io-protocol")
 
-#define LLC_NB_GET				\
-    HLS_DEFINE_PROTOCOL("llc-nb-get-protocol")
-
 #ifdef LLC_DEBUG
 
 #define SEND_MEM_REQ							\

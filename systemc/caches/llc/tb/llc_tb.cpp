@@ -62,16 +62,25 @@ void llc_tb::llc_test()
     // constants
     const word_t empty_word = 0;
     const line_t empty_line = 0;
-    const hprot_t empty_hprot = 1;
-    const addr_t empty_addr = 0;
+    const hprot_t empty_hprot = INSTR;
+
+    // constant
+    const bool is_flush = true;
+    const bool is_reset = false;
 
     // preparation variables
-    addr_breakdown_t addr_base, addr, addr_evict;
+    addr_breakdown_t addr_base, addr, addr_evict, null;
+    null.breakdown(0);
     word_t word, word_tmp;
     line_t line;
 
     unsigned int n_l2 = 1;
     unsigned int l2_ways = 1;
+
+    const unsigned int MIN_L2 = 4;
+    const unsigned int MIN_WAYS = 4;
+
+    bool tmp_rst_tb;
 
     /*
      * Configuration
@@ -81,14 +90,14 @@ void llc_tb::llc_test()
 
     case 4:
 
-	n_l2 = 1;
-	l2_ways = 4;
+	n_l2 = 4;
+	l2_ways = 1;
 	break;
 
     case 8:
 
-	n_l2 = 2;
-	l2_ways = 4;
+	n_l2 = 4;
+	l2_ways = 2;
 	break;
 
     case 16:
@@ -99,8 +108,8 @@ void llc_tb::llc_test()
 
     case 32:
 
-	n_l2 = 8;
-	l2_ways = 4;
+	n_l2 = 4;
+	l2_ways = 8;
 	break;
 
     default:
@@ -112,332 +121,769 @@ void llc_tb::llc_test()
      * Reset
      */
 
+    CACHE_REPORT_INFO("Reset LLC.");
+
     reset_llc_test();
-    reset_dut();
+    reset_dut(is_reset);
 
     addr_base = rand_addr();
-    addr = addr_base; addr_evict = addr_base;
-
-
-    CACHE_REPORT_INFO("T0) 1 CPU. NO EVICTION. TEST ALL POSSIBLE INTERNAL STATES OF LLC.");
-
-    addr = addr_base; addr_evict = addr_base;
-
-    CACHE_REPORT_INFO("T0.0)");
-    // fill a set with exclusive and modified states with GetS and GetM
-    for (int i = 0; i < LLC_WAYS; ++i) {
-    	op(REQ_GETS, INVALID, 0, addr, addr_evict, 0, line_of_addr(addr.line), 0, 0, 0, 0, RPT_TB);
-	addr.tag_incr(1);
-    }
-    
-    CACHE_REPORT_INFO("T0.2)");
-    // put back all of the ways in the first set with PutS and PutM
-    for (int i = 0; i < LLC_WAYS; ++i) {
-	addr.tag_decr(1);
-    	op(REQ_PUTM, MODIFIED, 0, addr, addr_evict, 0xcace, 0, 0, 0, 0, 0, RPT_TB);
-    }
-
-    CACHE_REPORT_INFO("T0.5)");
-    // get all VALID from the first set
-    for (int i = 0; i < LLC_WAYS; ++i) {
-    	op(REQ_GETM, VALID, 0, addr, addr_evict, 0, 0xcace, 0, 0, 0, 0, RPT_TB);
-	addr.tag_incr(1);
-    }
-
-    reset_dut();    
-
-    ////////////////////////////
-
-    CACHE_REPORT_INFO("T1) 1 CPU. EVICTION.");
-
-    CACHE_REPORT_INFO("T1.0)");
-
-    // cause LLC_WAYS + 2 invalidations on a new set
-    addr_evict = addr;
-    for (int i = 0; i < LLC_WAYS; ++i) {
-    	op(REQ_GETS, INVALID, 0, addr, addr_evict, 0, line_of_addr(addr.line), 0, 0, 0, 0, RPT_TB);
-	addr.tag_incr(1);
-    }
-
-    CACHE_REPORT_INFO("T1.1)");
-    for (int i = 0; i < LLC_WAYS; ++i) {
-	op(REQ_PUTS, EXCLUSIVE, 0, addr_evict, addr_evict, 0, 0, 0, 0, 0, 0, RPT_TB);
-    	op(REQ_GETS, INVALID, 1, addr, addr_evict, 0, line_of_addr(addr.line), 
-	   line_of_addr(addr_evict.line), 0, 0, 0, RPT_TB);
-	addr.tag_incr(1); addr_evict.tag_incr(1);
-    }
-
-    if (LLC_WAYS < 8)
-	sc_stop();
-
-    reset_dut(); 
 
     /*
-     * T0) 1 CPU. No eviction. Test all possible internal states of LLC. 
+     * Test all corners of our version of the MESI protocol
+     */
+    CACHE_REPORT_INFO("T0) FULL TEST OF COHERENCE PROTOCOL.");
+
+
+    /* Invalid state. No eviction. */
+
+    /* Results:
+     * - set x,   way 0:    S, sharers = l2#0, line_of_addr, instr
+     * - set x,   way 1:    E, owner   = l2#1, line_of_addr, data
+     * - set x,   way 2:    M, owner   = l2#2, line_of_addr, data
+     * - set x,   way 3:    V,                 line_of_addr, data
+     * - set x+1, way 0123: V,                 line_of_addr, data, dirty
      */
 
-    CACHE_REPORT_INFO("T0) 1 CPU. NO EVICTION. TEST ALL POSSIBLE INTERNAL STATES OF LLC.");
+    CACHE_REPORT_INFO("T0.0) Invalid state. No eviction.");
 
-    addr = addr_base; addr_evict = addr_base;
+    addr = addr_base;
 
-    CACHE_REPORT_INFO("T0.0)");
-    // fill a set with exclusive and modified states with GetS and GetM
-    for (int i = 0; i < LLC_WAYS/2; ++i) {
-    	op(REQ_GETS, INVALID, 0, addr, addr_evict, 0, line_of_addr(addr.line), 0, 0, 0, 0, RPT_TB);
-	addr.tag_incr(1);
-    	op(REQ_GETM, INVALID, 0, addr, addr_evict, 0, line_of_addr(addr.line), 0, 0, 0, 0, RPT_TB);
-	addr.tag_incr(1);
-    }
-    
-    CACHE_REPORT_INFO("T0.1)");
-    // fill half of a different set with exclusive and modified states
-    addr.set_incr(1);
-    for (int i = 0; i < LLC_WAYS/4; ++i) {
-	op(REQ_GETS, INVALID, 0, addr, addr_evict, 0, line_of_addr(addr.line), 0, 0, 0, 0, RPT_TB);
-	addr.tag_incr(1);
-	op(REQ_GETM, INVALID, 0, addr, addr_evict, 0, line_of_addr(addr.line), 0, 0, 0, 0, RPT_TB);
-	addr.tag_incr(1);
-    }
+    // PutS. I -> I. l2#0.
+    op(REQ_PUTS, INVALID, 0, addr, null, 0, 0, 0, 0, 0, 0, INSTR);
 
-    CACHE_REPORT_INFO("T0.2)");
-    // put back all of the ways in the first set with PutS and PutM
-    addr.set_decr(1);
-    addr.tag_decr(LLC_WAYS/2);
-    for (int i = 0; i < LLC_WAYS/4; ++i) {
-	addr.tag_decr(1);
-    	op(REQ_PUTM, MODIFIED, 0, addr, addr_evict, 0xcace, 0, 0, 0, 0, 0, RPT_TB);
-	addr.tag_decr(1);
-    	op(REQ_PUTS, EXCLUSIVE, 0, addr, addr_evict, 0, 0, 0, 0, 0, 0, RPT_TB);
-    }
-    for (int i = 0; i < LLC_WAYS/4; ++i) {
-	addr.tag_decr(1);
-    	op(REQ_PUTM, MODIFIED, 0, addr, addr_evict, 0xcace, 0, 0, 0, 0, 0, RPT_TB);
-	addr.tag_decr(1);
-    	op(REQ_PUTM, EXCLUSIVE, 0, addr, addr_evict, 0xcace, 0, 0, 0, 0, 0, RPT_TB);
-    }
+    // PutM. I -> I. l2#1.
+    op(REQ_PUTM, INVALID, 0, addr, null, line_of_addr(addr.line), 0, 0, 0, 1, 0, DATA);
 
-    CACHE_REPORT_INFO("T0.3)");
-    // put back 2 lines of the second set
-    addr.set_incr(1);
-    addr.tag_incr(LLC_WAYS);
-    op(REQ_PUTS, EXCLUSIVE, 0, addr, addr_evict, 0, 0, 0, 0, 0, 0, RPT_TB);
+    // GetS, opcode. I -> S. l2#0. No evict.
+    op(REQ_GETS, INVALID, 0, addr, null, 0, line_of_addr(addr.line), 0, 0, 0, 0, INSTR);
     addr.tag_incr(1);
-    op(REQ_PUTM, MODIFIED, 0, addr, addr_evict, 0xcace, 0, 0, 0, 0, 0, RPT_TB);
 
-    CACHE_REPORT_INFO("T0.4)");
-    // from the same set get 1 INVALID and 1 VALID
-    op(REQ_GETS, VALID, 0, addr, addr_evict, 0, 0xcace, 0, 0, 0, 0, RPT_TB);
-    addr.tag_incr(LLC_WAYS/2);
-    op(REQ_GETM, INVALID, 0, addr, addr_evict, 0, line_of_addr(addr.line), 0, 0, 0, 0, RPT_TB);
+    // GetS, data. I -> E. l2#1. No evict.
+    op(REQ_GETS, INVALID, 0, addr, null, 0, line_of_addr(addr.line), 0, 0, 1, 0, DATA);
+    addr.tag_incr(1);
 
-    CACHE_REPORT_INFO("T0.5)");
-    // get all VALID from the first set
-    addr.set_decr(1);
-    addr.tag_decr(LLC_WAYS + 1 + LLC_WAYS/2);
-    for (int i = 0; i < LLC_WAYS/4; ++i) {
-    	op(REQ_GETM, VALID, 0, addr, addr_evict, 0, 0xcace, 0, 0, 0, 0, RPT_TB);
-	addr.tag_incr(1);
-    	op(REQ_GETS, VALID, 0, addr, addr_evict, 0, 0xcace, 0, 0, 0, 0, RPT_TB);
-	addr.tag_incr(1);
+    // GetM, opcode. Not possible.
+
+    // GetM, data. I -> M. l2#2. No evict.
+    op(REQ_GETM, INVALID, 0, addr, null, 0, line_of_addr(addr.line), 0, 0, 2, 0, DATA);
+    addr.tag_incr(1);
+
+    // DMAread, opcode. Not possible
+
+    // DMAread, data. I -> V. l2#3. No evict.
+    op_dma(REQ_DMA_READ, INVALID, 0, 0, addr, null, 0, line_of_addr(addr.line), 0, 0, 0, 0);
+    addr.set_incr(1);
+
+    // DMAwrite, opcode. Not possible
+
+    // DMAwrite, data. I -> V. l2#0123. No evict.
+    for (int i = 0; i < MIN_L2; i++) {
+	op_dma(REQ_DMA_WRITE, INVALID, 0, 0, addr, null, line_of_addr(addr.line), 0, 0, 0, 0, 0);
+        addr.tag_incr(1);
     }
-    for (int i = 0; i < LLC_WAYS/4; ++i) {
-    	op(REQ_GETM, VALID, 0, addr, addr_evict, 0, line_of_addr(addr.line), 0, 0, 0, 0, RPT_TB);
-	addr.tag_incr(1);
-    	op(REQ_GETS, VALID, 0, addr, addr_evict, 0, 0xcace, 0, 0, 0, 0, RPT_TB);
-	addr.tag_incr(1);
-    }
 
-    reset_dut();
+    /* Valid state. */
 
-    /*
-     * T1) 1 CPU. Eviction.
+    /* Results:
+     * - set x,   way 3: S, sharers = l2#0, line_of_addr, data
+     * - set x+1, way 0: E, sharers = l2#1, line_of_addr, data, dirty 
+     * - set x+1, way 1: M, owner   = l2#2, line_of_addr, data, dirty
+     * - set x+1, way 2: V,                 line_of_addr, data, dirty
+     * - set x+1, way 3: V,                 0xabcd0e0f0 , data, dirty
      */
 
-    CACHE_REPORT_INFO("T1) 1 CPU. EVICTION.");
+    CACHE_REPORT_INFO("T0.1) Valid state.");
 
-    CACHE_REPORT_INFO("T1.0)");
+    addr = addr_base;
+    addr.tag_incr(3);
 
-    // cause LLC_WAYS + 2 invalidations on a new set
-    // addr.set_incr(2);
-    addr_evict = addr;
-    for (int i = 0; i < LLC_WAYS; ++i) {
-    	op(REQ_GETS, INVALID, 0, addr, addr_evict, 0, line_of_addr(addr.line), 0, 0, 0, 0, RPT_TB);
-	addr.tag_incr(1);
-    }
+    // PutS. V -> V. l2#0.
+    op(REQ_PUTS, VALID, 0, addr, null, 0, 0, 0, 0, 0, 0, INSTR);
 
-    CACHE_REPORT_INFO("T1.1)");
-    for (int i = 0; i < LLC_WAYS/2; ++i) {
-	op(REQ_PUTS, EXCLUSIVE, 0, addr_evict, addr_evict, 0, 0, 0, 0, 0, 0, RPT_TB);
-    	op(REQ_GETS, INVALID, 1, addr, addr_evict, 0, line_of_addr(addr.line), 
-	   line_of_addr(addr_evict.line), 0, 0, 0, RPT_TB);
-	addr.tag_incr(1); addr_evict.tag_incr(1);
-	op(REQ_PUTS, EXCLUSIVE, 0, addr_evict, addr_evict, 0, 0, 0, 0, 0, 0, RPT_TB);
-    	op(REQ_GETM, INVALID, 1, addr, addr_evict, 0, line_of_addr(addr.line), 
-	   line_of_addr(addr_evict.line), 0, 0, 0, RPT_TB);
-	addr.tag_incr(1); addr_evict.tag_incr(1);
-    }
+    // PutM. V -> V. l2#1.
+    op(REQ_PUTM, VALID, 0, addr, null, 0xabcd0e0f0, 0, 0, 0, 1, 0, DATA);
 
-    reset_dut();
+    // GetS, opcode. V -> S. l2#0. No evict.
+    op(REQ_GETS, VALID, 0, addr, null, 0, line_of_addr(addr.line), 0, 0, 0, 0, INSTR);
+    addr.set_incr(1);
 
-    /*
-     * T2) Multiple CPUs.
+    // GetS, data. V -> E. l2#1. No evict.
+    op(REQ_GETS, VALID, 0, addr, null, 0, line_of_addr(addr.line), 0, 0, 1, 0, DATA);
+    addr.tag_incr(1);
+
+    // GetM, opcode. Not possible.
+
+    // GetM, data. V -> M. l2#2. No evict.
+    op(REQ_GETM, VALID, 0, addr, null, 0, line_of_addr(addr.line), 0, 0, 2, 0, DATA);
+    addr.tag_incr(1);
+
+    // DMAread, opcode. Not possible
+
+    // DMAread, data. V -> V. l2#3. No evict.
+    op_dma(REQ_DMA_READ, VALID, 0, 0, addr, null, 0, line_of_addr(addr.line), 0, 0, 0, 0);
+    addr.tag_incr(1);
+
+    // DMAwrite, opcode. Not possible
+
+    // DMAwrite, data. V -> V. l2#0. No evict.
+    op_dma(REQ_DMA_WRITE, VALID, 0, 0, addr, null, 0xabcd0e0f0, 0, 0, 0, 0, 0);
+
+
+    /* Shared state. */
+
+    /* Results:
+     * - set x,   way 0: V,                 line_of_addr
+     * - set x,   way 3: S, sharers = cpu0, line_of_addr
+     * - set x+1, way 0: V,                 line_of_addr, dirty
      */
 
-    CACHE_REPORT_INFO("T2) MULTIPLE CPUs.");
+    CACHE_REPORT_INFO("T0.2) Shared state.");
 
-    CACHE_REPORT_INFO("T2.0) GetS - PutS. No eviction.");
+    addr = addr_base;
 
-    // GetS by all CPUs on all the ways of a set. No overlapping.
-    addr.set_incr(10); addr_evict = addr;
-    for (int j = 0; j < n_l2; j++) {
-	for (int i = 0; i < l2_ways; i++) {
-	    op(REQ_GETS, INVALID, 0, addr, addr_evict, 0, line_of_addr(addr.line), 0, 0, j, 0, RPT_TB);
-	    addr.tag_incr(1);
-	}
+    // GetS, opcode. S -> S. Sharers l2#0123
+    for (int j = 1; j < MIN_L2; j++) {
+	op(REQ_GETS, SHARED, 0, addr, null, 0, line_of_addr(addr.line), 0, 0, j, 0, INSTR);
     }
 
-    // PutS of one sharer for each way
-    addr.tag_decr(n_l2*l2_ways);
-    for (int j = 0; j < n_l2; j++) {
-	for (int i = 0; i < l2_ways; i++) {
-	    op(REQ_PUTS, EXCLUSIVE, 0, addr, addr_evict, 0, 0, 0, 0, j, j, RPT_TB);
-	    addr.tag_incr(1);
-	}
+    // PutS, opcode. S -> V. 
+    for (int j = MIN_L2 - 1; j >= 0; j--) {
+	op(REQ_PUTS, SHARED, 0, addr, null, 0, 0, 0, 0, j, 0, INSTR);
     }
 
-    // GetS by all CPUs on all the ways of a set. No overlapping.
-    addr.tag_decr(n_l2*l2_ways);
-    for (int j = 0; j < n_l2; j++) {
-	for (int i = 0; i < l2_ways; i++) {
-	    op(REQ_GETS, VALID, 0, addr, addr_evict, 0, line_of_addr(addr.line), 0, 0, j, 0, RPT_TB);
-	    addr.tag_incr(1);
-	}
+    addr.tag_incr(3);
+
+    // GetS, data. S -> S. Sharers l2#0123
+    for (int j = 1; j < MIN_L2; j++) {
+	op(REQ_GETS, SHARED, 0, addr, null, 0, line_of_addr(addr.line), 0, 0, j, 0, DATA);
     }
 
-    // GetS by all CPUs to have all the ways with 2 sharers
-    addr.tag_decr(n_l2*l2_ways);
-    for (int j = 1; j < n_l2; j++) {
-	for (int i = 0; i < l2_ways; i++) {
-	    op(REQ_GETS, EXCLUSIVE, 0, addr, addr_evict, 0, line_of_addr(addr.line), 0, 0, j, j-1, RPT_TB);
-	    op_rsp(addr, line_of_addr(addr.line), j-1, RPT_TB);
-	    addr.tag_incr(1);
-	}
-    }
-    for (int i = 0; i < l2_ways; i++) {
-	op(REQ_GETS, EXCLUSIVE, 0, addr, addr_evict, 0, line_of_addr(addr.line), 0, 0, 0, n_l2-1, RPT_TB);
-	op_rsp(addr, line_of_addr(addr.line), n_l2-1, RPT_TB);
-	addr.tag_incr(1);
-    }
-
-    // PutS of one sharer for each way
-    addr.tag_decr(n_l2*l2_ways);
-    for (int j = 0; j < n_l2; j++) {
-	for (int i = 0; i < l2_ways; i++) {
-	    op(REQ_PUTS, SHARED, 0, addr, addr_evict, 0, 0, 0, 0, j, j, RPT_TB);
-	    addr.tag_incr(1);
-	}
-    }
-
-    // GetS again all the ways to make sure data is still in the LLC
-    addr.tag_decr(n_l2*l2_ways);
-    for (int j = 0; j < n_l2; j++) {
-	for (int i = 0; i < l2_ways; i++) {
-	    op(REQ_GETS, SHARED, 0, addr, addr_evict, 0, line_of_addr(addr.line), 0, 0, j, 0, RPT_TB);
-	    addr.tag_incr(1);
-	}
-    }
-
-    // PutS of one sharer for each way
-    addr.tag_decr(n_l2*l2_ways);
-    for (int j = 0; j < n_l2; j++) {
-	for (int i = 0; i < l2_ways; i++) {
-	    op(REQ_PUTS, SHARED, 0, addr, addr_evict, 0, 0, 0, 0, j, j, RPT_TB);
-	    addr.tag_incr(1);
-	}
-    }
-
-    // PutS of the last sharer for each way
-    addr.tag_decr(n_l2*l2_ways);
-    for (int j = 1; j < n_l2; j++) {
-	for (int i = 0; i < l2_ways; i++) {
-	    op(REQ_PUTS, SHARED, 0, addr, addr_evict, 0, 0, 0, 0, j, j, RPT_TB);
-	    addr.tag_incr(1);
-	}
-    }
-    for (int i = 0; i < l2_ways; i++) {
-	op(REQ_PUTS, SHARED, 0, addr, addr_evict, 0, 0, 0, 0, 0, 0, RPT_TB);
-	addr.tag_incr(1);
-    }
-
-    // GetS again all the ways to make sure data is still in the LLC
-    addr.tag_decr(n_l2*l2_ways);
-    for (int j = 0; j < n_l2; j++) {
-	for (int i = 0; i < l2_ways; i++) {
-	    op(REQ_GETS, VALID, 0, addr, addr_evict, 0, line_of_addr(addr.line), 0, 0, j, 0, RPT_TB);
-	    addr.tag_incr(1);
-	}
-    }
-
-    // GetS by all CPUs to have all the ways with 2 sharers
-    addr.tag_decr(n_l2*l2_ways);
-    for (int j = 1; j < n_l2; j++) {
-	for (int i = 0; i < l2_ways; i++) {
-	    op(REQ_GETS, EXCLUSIVE, 0, addr, addr_evict, 0, line_of_addr(addr.line), 0, 0, j, j-1, RPT_TB);
-	    op(REQ_PUTS, SD, 0, addr, addr_evict, 0, 0, 0, 0, j-1, j-1, RPT_TB);
-	    op_rsp(addr, line_of_addr(addr.line), j-1, RPT_TB);
-	    addr.tag_incr(1);
-	}
-    }
-
-    for (int i = 0; i < l2_ways; i++) {
-	op(REQ_GETS, EXCLUSIVE, 0, addr, addr_evict, 0, line_of_addr(addr.line), 0, 0, 0, n_l2-1, RPT_TB);
-	op(REQ_PUTS, SD, 0, addr, addr_evict, 0, 0, 0, 0, n_l2-1, n_l2-1, RPT_TB);
-	op_rsp(addr, line_of_addr(addr.line), n_l2-1, RPT_TB);
-	addr.tag_incr(1);
-    }
-
-    // PutS of the last sharer for each way
-    addr.tag_decr(n_l2*l2_ways);
-    for (int j = 1; j < n_l2; j++) {
-	for (int i = 0; i < l2_ways; i++) {
-	    op(REQ_PUTS, SHARED, 0, addr, addr_evict, 0, 0, 0, 0, j, j, RPT_TB);
-	    addr.tag_incr(1);
-	}
-    }
-    for (int i = 0; i < l2_ways; i++) {
-	op(REQ_PUTS, SHARED, 0, addr, addr_evict, 0, 0, 0, 0, 0, 0, RPT_TB);
-	addr.tag_incr(1);
-    }
-
-    CACHE_REPORT_INFO("T2.1) GetS - PutS. Eviction.");
-
-    // GetS by all CPUs on all the ways of a set. No overlapping.
-    addr_evict = addr;
-    addr_evict.tag_decr(n_l2*l2_ways);
-    for (int j = 0; j < n_l2; j++) {
-	for (int i = 0; i < l2_ways; i++) {
-	    op(REQ_GETS, INVALID, 1, addr, addr_evict, 0, line_of_addr(addr.line), 
-	       line_of_addr(addr_evict.line), 0, j, 0, RPT_TB);
-	    addr.tag_incr(1); addr_evict.tag_incr(1);
-	}
-    }
-
-    CACHE_REPORT_INFO("T2.2) GetM - PutM. No eviction.");
+    // GetM, data. S -> M. l2#0.
+    op(REQ_GETM, SHARED, 0, addr, null, 0, line_of_addr(addr.line), 0, MIN_L2-1, MIN_L2-1, 0, DATA);
 
     addr.set_incr(1);
-    for (int j = 0; j < n_l2; j++) {
-	for (int i = 0; i < l2_ways; i++) {
-	    op(REQ_GETM, INVALID, 0, addr, addr_evict, 0, line_of_addr(addr.line), 0, 0, j, 0, RPT_TB);
-	    addr.tag_incr(1);
-	}
+
+    // GetS, data. S -> S. Sharers l2#123
+    op(REQ_GETS, EXCLUSIVE, 0, addr, null, 0, line_of_addr(addr.line), 0, 0, 2, 1, DATA);
+    op_rsp(RSP_DATA, addr, line_of_addr(addr.line), 1);
+    for (int j = 3; j < MIN_L2; j++) {
+	op(REQ_GETS, SHARED, 0, addr, null, 0, line_of_addr(addr.line), 0, 0, j, 0, DATA);
     }
 
-    CACHE_REPORT_INFO("T2.2) GetM - PutM. Eviction.");
+    // PutM, data. S -> V. 
+    for (int j = 1; j < MIN_L2; j++) {
+	op(REQ_PUTM, SHARED, 0, addr, null, 0, 0, 0, 0, j, 0, DATA);
+    }
 
-    CACHE_REPORT_INFO("T2.3) All requests. Eviction.");
 
-    CACHE_REPORT_INFO("T2.4) Arrival of Put requests misaligned.");
+    /* Modified state. */
 
+    /* Results:
+     * - set x,   way 2: SD, sharers = l2#23, line_of_addr  , data
+     * - set x,   way 3: V ,                  line_of_addr*2, data, dirty
+     * - set x+1, way 1: M , owner   = l2#2,  line_of_addr  , data, dirty
+     */
+
+    CACHE_REPORT_INFO("T0.3) Modified state.");
+
+    addr = addr_base;
+
+    addr.tag_incr(2);
+
+    // GetS, data. M -> SD. Sharers l2#23
+    op(REQ_GETS, MODIFIED, 0, addr, null, 0, line_of_addr(addr.line), 0, 0, 3, 2, DATA);
+    addr.tag_incr(1);
+
+    // GetM, data. M -> M. Owner l2#0. 
+    op(REQ_GETM, MODIFIED, 0, addr, null, 0, 0, 0, 0, 0, 3, DATA);
+
+    // PutM, data. M -> M. Non owner
+    op(REQ_PUTM, MODIFIED, 0, addr, null, 0xeeeeeeeee, 0, 0, 0, 2, 0, DATA);
+
+    // PutM, data. M -> V. Owner
+    op(REQ_PUTM, MODIFIED, 0, addr, null, line_of_addr(addr.line)*2, 0, 0, 0, 0, 0, DATA);
+
+    addr.set_incr(1);
+
+    // PutS, data. M -> S.
+    op(REQ_PUTS, SHARED, 0, addr, null, 0, 0, 0, 0, 1, 0, DATA);
+
+
+    /* Exclusive state. */
+
+    /* Results:
+     * - set x,   way 0: SD, sharers = l2#02, line_of_addr, data
+     * - set x,   way 1: M , owner   = l2#3 , line_of_addr, data
+     * - set x,   way 3: V ,                  line_of_addr*2, data, dirty
+     * - set x+1, way 0: V ,                  line_of_addr*2, data, dirty
+     */
+
+    CACHE_REPORT_INFO("T0.4) Exclusive state.");
+
+    addr = addr_base;
+
+    // GetS, data. V -> E. Owner l2#0. line_of_addr
+    op(REQ_GETS, VALID, 0, addr, null, 0, line_of_addr(addr.line), 0, 0, 0, 0, DATA);
+
+    // GetS, data. E -> SD. Sharers l2#02. line_of_addr
+    op(REQ_GETS, EXCLUSIVE, 0, addr, null, 0, line_of_addr(addr.line), 0, 0, 2, 0, DATA);
+
+    addr.tag_incr(1);
+
+    // GetM, data. M -> M. Owner l2#1 -> l2#3. 
+    op(REQ_GETM, EXCLUSIVE, 0, addr, null, 0, line_of_addr(addr.line), 0, 0, 3, 1, DATA);
+  
+    addr.tag_incr(2);
+
+    // GetS, data. V -> E. Owner l2#2. line_of_addr
+    op(REQ_GETS, VALID, 0, addr, null, 0, line_of_addr(addr.line)*2, 0, 0, 2, 0, DATA);
+
+    // PutS, data. E -> E. Not owner, owner is 2.
+    op(REQ_PUTS, EXCLUSIVE, 0, addr, null, 0, 0, 0, 0, 0, 0, DATA);
+
+    // PutS, data. E -> V. Owner (2).
+    op(REQ_PUTS, EXCLUSIVE, 0, addr, null, 0, 0, 0, 0, 2, 0, DATA);
+
+    addr.set_incr(1);
+
+    // GetS, data. V -> E. Owner l2#3. line_of_addr
+    op(REQ_GETS, VALID, 0, addr, null, 0, line_of_addr(addr.line), 0, 0, 3, 0, DATA);
+
+    // PutM, data. M -> M. Non owner, owner is 3.
+    op(REQ_PUTM, MODIFIED, 0, addr, null, 0xeeeeeeeee, 0, 0, 0, 2, 0, DATA);
+
+    // PutM, data. M -> V. Owner (3).
+    op(REQ_PUTM, MODIFIED, 0, addr, null, line_of_addr(addr.line)*2, 0, 0, 0, 3, 0, DATA);
+
+
+    /* SD state. */
+
+    /* Results:
+     * - set x,   way 0: S, sharers = l2#1, 0xabcd0e0f0, instr
+     * - set x,   way 2: M, owner   = l2#0, 0xabcd0e0f0, data
+     */
+
+    CACHE_REPORT_INFO("T0.5) SD state.");
+
+    addr = addr_base;
+
+    // PutS, data. SD -> SD. Sharers 02 -> 0
+    op(REQ_PUTS, SD, 0, addr, null, 0, 0, 0, 0, 2, 0, DATA);
+
+    addr.tag_incr(2);
+
+    // PutM, data. SD -> SD. Sharers 23 -> 3
+    op(REQ_PUTM, SD, 0, addr, null, 0xeeeeeeeee, 0, 0, 0, 2, 0, DATA);
+
+    // PutM, data. SD -> SD. Sharers 3 -> none
+    op(REQ_PUTM, SD, 0, addr, null, 0xeeeeeeeee, 0, 0, 0, 3, 0, DATA);
+
+    addr.tag_decr(2);
+
+    // GetS stall
+    // GetS + Data. SD -> S -> S. Sharers 01. Instr
+    put_req_in(FWD_GETS, addr.line, 0, 1, INSTR);
+
+    op_rsp(RSP_DATA, addr, 0xabcd0e0f0, 1);
+
+    get_rsp_out(RSP_DATA, addr.line, 0xabcd0e0f0, 0, 1, 0);
+
+    addr.tag_incr(2);
+
+    wait();
+
+    // Get stall operation
+    // GetM + Data. SD -> V -> M. Owner 0.
+    put_req_in(FWD_GETM, addr.line, 0, 0, DATA);
+
+    op_rsp(RSP_DATA, addr, 0xabcd0e0f0, 0);
+
+    get_rsp_out(RSP_DATA, addr.line, 0xabcd0e0f0, 0, 0, 0);
+
+    wait();
+
+
+    CACHE_REPORT_INFO("T0.6) Flush.");
+
+    /* Flush */
+
+    /* Current status:
+     * - set x,   way 0: S, sharers = l2#1, 0xabcd0e0f0 , instr
+     * - set x,   way 1: M, owner   = l2#3, line_of_addr, data
+     * - set x,   way 2: M, owner   = l2#0, 0xabcd0e0f0 , data
+     * - set x,   way 3: V,                 line_of_addr*2, data, dirty
+     * - set x+1, way 0: V,                 line_of_addr*2, data, dirty
+     * - set x+1, way 1: M, owner   = l2#2, line_of_addr, data, dirty
+     * - set x+1, way 2: V,                 line_of_addr, data, dirty
+     * - set x+1, way 3: V,                 0xabcd0e0f0 , data, dirty
+     *
+     * Flush only acts on VALID lines containing data, updating them to 
+     * INVALID and writing to main memory if the line is dirty.
+     */
+
+    addr = addr_base;
+
+    // reset_dut(is_flush);
+
+    // start partial flush
+    llc_rst_tb_tb.put(is_flush);
+
+    // only 4 lines are written back
+    addr.tag_incr(3);
+
+    get_mem_req(LLC_WRITE, addr.line, line_of_addr(addr.line)*2);
+
+    addr.set_incr(1); wait();
+
+    get_mem_req(LLC_WRITE, addr.line, line_of_addr(addr.line)*2);
+
+    addr.tag_incr(2); wait();
+
+    get_mem_req(LLC_WRITE, addr.line, line_of_addr(addr.line));
+
+    addr.tag_incr(1); wait();
+
+    get_mem_req(LLC_WRITE, addr.line, 0xabcd0e0f0);
+
+    llc_rst_tb_done_tb.get(tmp_rst_tb);
+
+    CACHE_REPORT_INFO("T0.7) Verify status of remaining lines.");
+
+    /* Changed lines
+     * - set x,   way 3: I
+     * - set x+1, way 0: I
+     * - set x+1, way 2: I
+     * - set x+1, way 3: I
+     */
+
+    // check that the remaining lines are still in place
+    addr = addr_base;
+
+    // GetM, only sharer l2#1. No invack_cnt. S -> M
+    op(REQ_PUTS, SHARED, 0, addr, null, 0, 0, 0, 0, 0, 0, DATA);
+
+    op(REQ_GETM, SHARED, 0, addr, null, 0, 0xabcd0e0f0, 0, 0, 1, 0, DATA);
+    
+    // PutM, data. M -> V. Owner
+    op(REQ_PUTM, MODIFIED, 0, addr, null, line_of_addr(addr.line)*2, 0, 0, 0, 1, 0, DATA);
+
+    addr.tag_incr(1);    
+
+    // PutM, data. M -> V. Owner
+    op(REQ_PUTM, MODIFIED, 0, addr, null, line_of_addr(addr.line)*2, 0, 0, 0, 3, 0, DATA);
+
+    addr.tag_incr(1);    
+
+    // PutM, data. M -> V. Owner
+    op(REQ_PUTM, MODIFIED, 0, addr, null, line_of_addr(addr.line)*2, 0, 0, 0, 0, 0, DATA);
+
+    addr.tag_incr(2);
+    addr.set_incr(1);
+
+    // PutM, data. M -> V. Owner
+    op(REQ_PUTM, MODIFIED, 0, addr, null, line_of_addr(addr.line)*2, 0, 0, 0, 2, 0, DATA);
+
+    /* Changed lines:
+     * - set x,   way 0: V, line_of_addr(addr.line)*2, instr
+     * - set x,   way 1: V, line_of_addr(addr.line)*2, data, dirty
+     * - set x,   way 2: V, line_of_addr(addr.line)*2, data, dirty
+     * - set x+1, way 1: V, line_of_addr(addr.line)*2, data, dirty
+     * - set x+1, way 2: V, line_of_addr(addr.line)*2, data, dirty
+     */
+
+    addr = addr_base;
+
+    // start partial flush
+    llc_rst_tb_tb.put(is_flush);
+
+    // get_mem_req(LLC_WRITE, addr.line, 0xabcd0e0f0);
+
+    addr.tag_incr(1); wait();
+
+    get_mem_req(LLC_WRITE, addr.line, line_of_addr(addr.line)*2);
+
+    addr.tag_incr(1); wait();
+
+    get_mem_req(LLC_WRITE, addr.line, line_of_addr(addr.line)*2);
+
+    addr.tag_incr(2);
+    addr.set_incr(1); wait();
+
+    get_mem_req(LLC_WRITE, addr.line, line_of_addr(addr.line)*2);
+
+    llc_rst_tb_done_tb.get(tmp_rst_tb);
+    
+    /* Changed lines:
+     * - set x,   way 1: I
+     * - set x,   way 2: I
+     * - set x+1, way 1: I
+     * - set x+1, way 2: I
+     */
+
+    // Now all lines in the cache are INVALID.
+    
+    llc_rst_tb_tb.put(is_reset); // there's one line that cannot be flushed, it's opcode.
+
+    llc_rst_tb_done_tb.get(tmp_rst_tb);
+
+    /* Eviction */    
+
+    CACHE_REPORT_INFO("T0.8) Eviction.");
+
+    addr_breakdown_t addr1 = addr_base;
+    addr_breakdown_t addr2 = addr_base;
+    addr_breakdown_t addr_new = addr_base;
+    addr_evict = addr_base;
+    llc_way_t evict_way = 0;
+
+    // GetS evicts VALID line, not dirty
+    for (int i = 0; i < LLC_WAYS; i++) {
+	op(REQ_GETS, INVALID, 0, addr1, null, 0, line_of_addr(addr1.line), 0, 0, 0, 0, DATA);
+	addr1.tag_incr(1);
+    }
+
+    addr2.tag_incr(3);
+    op(REQ_PUTS, SHARED, 0, addr2, null, 0, 0, 0, 0, 0, 0, DATA);
+
+    op(REQ_GETS, INVALID, 0, addr1, null, 0, line_of_addr(addr1.line), 0, 0, 0, 0, DATA); // evict
+    
+    // GetS evicts VALID line, dirty
+    op(REQ_PUTM, EXCLUSIVE, 0, addr1, null, line_of_addr(addr1.line)*2, 0, 0, 0, 0, 0, DATA);
+
+    op(REQ_GETS, INVALID, EVICT, addr2, addr1, 0, line_of_addr(addr2.line), 
+       line_of_addr(addr1.line)*2, 0, 0, 0, DATA);
+
+    // GetM evicts VALID line, not dirty
+    op(REQ_PUTS, EXCLUSIVE, 0, addr2, null, 0, 0, 0, 0, 0, 0, DATA);
+
+    op(REQ_GETM, INVALID, 0, addr1, null, 0, line_of_addr(addr1.line), 0, 0, 0, 0, DATA); // evict
+
+    // GetM evicts VALID line, dirty
+    op(REQ_PUTM, EXCLUSIVE, 0, addr1, null, line_of_addr(addr1.line)*2, 0, 0, 0, 0, 0, DATA);
+
+    op(REQ_GETS, INVALID, EVICT, addr2, addr1, 0, line_of_addr(addr2.line), 
+       line_of_addr(addr1.line)*2, 0, 0, 0, DATA);
+
+    // DMA_Read evicts VALID line, not dirty
+    op(REQ_PUTS, EXCLUSIVE, 0, addr2, null, 0, 0, 0, 0, 0, 0, DATA);
+
+    op_dma(REQ_DMA_READ, VALID, EVICT, 0, addr1, addr2, 0, line_of_addr(addr1.line), 0, 0, 0, 0);
+
+    // DMA_Read evicts VALID line, dirty
+    op_dma(REQ_DMA_WRITE, VALID, 0, 0, addr1, null, line_of_addr(addr1.line)*2, 0, 0, 0, 0, 0);
+
+    op_dma(REQ_DMA_READ, VALID, EVICT, DIRTY, addr2, addr1, 0, line_of_addr(addr2.line), 
+       line_of_addr(addr1.line)*2, 0, 0, 0);
+
+    op(REQ_GETS, VALID, 0, addr2, null, 0, line_of_addr(addr2.line), 0, 0, 0, 0, DATA);
+
+    // DMA_Write evicts VALID line, not dirty
+    op(REQ_PUTS, EXCLUSIVE, 0, addr2, null, 0, 0, 0, 0, 0, 0, DATA);
+
+    op_dma(REQ_DMA_WRITE, VALID, EVICT, 0, addr1, addr2, line_of_addr(addr1.line)*2, 0, 0, 0, 0, 0);
+
+    // DMA_Write evicts VALID line, dirty
+    op_dma(REQ_DMA_WRITE, VALID, EVICT, DIRTY, addr2, addr1, line_of_addr(addr2.line), 0,
+       line_of_addr(addr1.line)*2, 0, 0, 0);
+
+    op(REQ_GETS, VALID, 0, addr2, null, 0, line_of_addr(addr2.line), 0, 0, 0, 0, INSTR);
+
+    // all lines in this set are shared and not dirty
+
+    // DMA_Read evicts SHARED line, not dirty
+    regular_evict_prep(addr_base, addr1, addr2, evict_way);
+
+    op(REQ_PUTS, EXCLUSIVE, 0, addr2, null, 0, 0, 0, 0, 0, 0, DATA);
+
+    op(REQ_GETS, VALID, 0, addr2, null, 0, line_of_addr(addr2.line), 0, 0, 0, 0, INSTR);
+
+    op_dma(REQ_DMA_READ, SHARED, EVICT, 0, addr1, addr2, 0, line_of_addr(addr1.line), 
+	   0, 1, 0, 0);
+
+    op(REQ_GETS, VALID, 0, addr1, null, 0, line_of_addr(addr1.line), 0, 0, 0, 0, INSTR);
+
+    // DMA_Read evicts SHARED line, dirty
+    regular_evict_prep(addr_base, addr1, addr2, evict_way);
+
+    op(REQ_PUTS, EXCLUSIVE, 0, addr2, null, 0, 0, 0, 0, 0, 0, DATA);
+
+    op_dma(REQ_DMA_WRITE, VALID, 0, 0, addr2, null, line_of_addr(addr2.line)*2, 0, 0, 0, 0, 0);
+
+    op(REQ_GETS, VALID, 0, addr2, null, 0, line_of_addr(addr2.line)*2, 0, 0, 0, 0, INSTR);
+
+    op_dma(REQ_DMA_READ, SHARED, EVICT, DIRTY, addr1, addr2, 0, line_of_addr(addr1.line),
+       line_of_addr(addr2.line)*2, 1, 0, 0);
+
+    op(REQ_GETS, VALID, 0, addr1, null, 0, line_of_addr(addr1.line), 0, 0, 0, 0, INSTR);
+
+    // DMA_Read evicts EXCLUSIVE line, not dirty
+    regular_evict_prep(addr_base, addr1, addr2, evict_way);
+
+    op_dma(REQ_DMA_READ, EXCLUSIVE, EVICT, 0, addr1, addr2, 0, line_of_addr(addr1.line), 0, 1, 0, 0);
+
+    op(REQ_GETS, VALID, 0, addr1, null, 0, line_of_addr(addr1.line), 0, 0, 0, 0, INSTR);
+
+    // DMA_Read evicts EXCLUSIVE line, dirty
+    regular_evict_prep(addr_base, addr1, addr2, evict_way);
+
+    op(REQ_PUTS, SHARED, 0, addr2, null, 0, 0, 0, 0, 0, 0, DATA);
+
+    op_dma(REQ_DMA_WRITE, VALID, 0, 0, addr2, null, line_of_addr(addr2.line)*2, 0, 0, 0, 0, 0);
+
+    op(REQ_GETS, VALID, 0, addr2, null, 0, line_of_addr(addr2.line)*2, 0, 0, 0, 0, DATA);
+
+    op_dma(REQ_DMA_READ, EXCLUSIVE, EVICT, DIRTY, addr1, addr2, 0, line_of_addr(addr1.line),
+       line_of_addr(addr2.line)*2, 1, 0, 0);
+
+    op(REQ_GETS, VALID, 0, addr1, null, 0, line_of_addr(addr1.line), 0, 0, 0, 0, INSTR);
+
+    // DMA_Read evicts MODIFIED line, not dirty
+    regular_evict_prep(addr_base, addr1, addr2, evict_way);
+
+    op(REQ_PUTS, EXCLUSIVE, 0, addr2, null, 0, 0, 0, 0, 0, 0, DATA);
+
+    op(REQ_GETM, VALID, 0, addr2, null, 0, line_of_addr(addr2.line), 0, 0, 0, 0, DATA);
+
+    op_dma(REQ_DMA_READ, MODIFIED, EVICT, DIRTY, addr1, addr2, 0, line_of_addr(addr1.line),
+	   0, 1, 0, 0);
+
+    op(REQ_GETS, VALID, 0, addr1, null, 0, line_of_addr(addr1.line), 0, 0, 0, 0, INSTR);
+
+    // DMA_Read evicts MODIFIED line, dirty
+    regular_evict_prep(addr_base, addr1, addr2, evict_way);
+
+    op(REQ_PUTS, EXCLUSIVE, 0, addr2, null, 0, 0, 0, 0, 0, 0, DATA);
+
+    op_dma(REQ_DMA_WRITE, VALID, 0, 0, addr2, null, line_of_addr(addr2.line)*2, 0, 0, 0, 0, 0);
+
+    op(REQ_GETS, VALID, 0, addr2, null, 0, line_of_addr(addr2.line)*2, 0, 0, 0, 0, DATA);
+
+    op_dma(REQ_DMA_READ, MODIFIED, EVICT, DIRTY, addr1, addr2, 0, line_of_addr(addr1.line),
+       line_of_addr(addr2.line)*2, 1, 0, 0);
+
+    op(REQ_GETS, VALID, 0, addr1, null, 0, line_of_addr(addr1.line), 0, 0, 0, 0, INSTR);
+
+    // DMA_Write evicts SHARED line, not dirty
+    regular_evict_prep(addr_base, addr1, addr2, evict_way);
+
+    op(REQ_PUTS, EXCLUSIVE, 0, addr2, null, 0, 0, 0, 0, 0, 0, DATA);
+
+    op(REQ_GETS, VALID, 0, addr2, null, 0, line_of_addr(addr2.line), 0, 0, 0, 0, INSTR);
+
+    op_dma(REQ_DMA_WRITE, SHARED, EVICT, 0, addr1, addr2, line_of_addr(addr1.line)*2, 
+       0, 0, 1, 0, 0);
+
+    op(REQ_GETS, VALID, 0, addr1, null, 0, line_of_addr(addr1.line)*2, 0, 0, 0, 0, INSTR);
+
+    // DMA_Write evicts SHARED line, dirty
+    regular_evict_prep(addr_base, addr1, addr2, evict_way);
+
+    op(REQ_PUTS, EXCLUSIVE, 0, addr2, null, 0, 0, 0, 0, 0, 0, DATA);
+
+    op_dma(REQ_DMA_WRITE, VALID, 0, 0, addr2, null, line_of_addr(addr2.line)*2, 
+       0, 0, 0, 0, 0);
+
+    op(REQ_GETS, VALID, 0, addr2, null, 0, line_of_addr(addr2.line)*2, 0, 0, 0, 0, INSTR);
+
+    op_dma(REQ_DMA_WRITE, SHARED, EVICT, DIRTY, addr1, addr2, line_of_addr(addr1.line),
+       0, line_of_addr(addr2.line)*2, 1, 0, 0);
+
+    op(REQ_GETS, VALID, 0, addr1, null, 0, line_of_addr(addr1.line), 0, 0, 0, 0, INSTR);
+
+    // DMA_Write evicts EXCLUSIVE line, not dirty
+    regular_evict_prep(addr_base, addr1, addr2, evict_way);
+
+    op_dma(REQ_DMA_WRITE, EXCLUSIVE, EVICT, 0, addr1, addr2, line_of_addr(addr1.line)*2, 0, 0, 1, 0, 0);
+
+    op(REQ_GETS, VALID, 0, addr1, null, 0, line_of_addr(addr1.line)*2, 0, 0, 0, 0, INSTR);
+
+    // DMA_Write evicts EXCLUSIVE line, dirty
+    regular_evict_prep(addr_base, addr1, addr2, evict_way);
+
+    op(REQ_PUTS, EXCLUSIVE, 0, addr2, null, 0, 0, 0, 0, 0, 0, DATA);
+
+    op_dma(REQ_DMA_WRITE, VALID, 0, 0, addr2, null, line_of_addr(addr2.line)*2, 
+       0, 0, 0, 0, 0);
+
+    op(REQ_GETS, VALID, 0, addr2, null, 0, line_of_addr(addr2.line)*2, 0, 0, 0, 0, DATA);
+
+    op_dma(REQ_DMA_WRITE, EXCLUSIVE, EVICT, DIRTY, addr1, addr2, line_of_addr(addr1.line),
+       0, line_of_addr(addr2.line)*2, 0, 0, 0);
+
+    op(REQ_GETS, VALID, 0, addr1, null, 0, line_of_addr(addr1.line), 0, 0, 0, 0, INSTR);
+
+    // DMA_Write evicts MODIFIED line, not dirty
+    regular_evict_prep(addr_base, addr1, addr2, evict_way);
+
+    op(REQ_PUTS, EXCLUSIVE, 0, addr2, null, 0, 0, 0, 0, 0, 0, DATA);
+
+    op(REQ_GETM, VALID, 0, addr2, null, 0, line_of_addr(addr2.line), 0, 0, 0, 0, DATA);
+
+    op_dma(REQ_DMA_WRITE, MODIFIED, EVICT, DIRTY, addr1, addr2, line_of_addr(addr1.line)*2, 0, 
+	   line_of_addr(addr2.line), 1, 0, 0);
+
+    op(REQ_GETS, VALID, 0, addr1, null, 0, line_of_addr(addr1.line)*2, 0, 0, 0, 0, INSTR);
+
+    // DMA_Write evicts MODIFIED line, dirty
+    regular_evict_prep(addr_base, addr1, addr2, evict_way);
+
+    op(REQ_PUTS, EXCLUSIVE, 0, addr2, null, 0, 0, 0, 0, 0, 0, DATA);
+
+    op_dma(REQ_DMA_WRITE, VALID, 0, 0, addr2, null, line_of_addr(addr2.line)*2, 
+       0, 0, 0, 0, 0);
+
+    op(REQ_GETM, VALID, 0, addr2, null, 0, line_of_addr(addr2.line)*2, 0, 0, 0, 0, DATA);
+
+    op_dma(REQ_DMA_WRITE, MODIFIED, EVICT, DIRTY, addr1, addr2, line_of_addr(addr1.line),
+       0, line_of_addr(addr2.line)*2, 1, 0, 0);
+
+    op(REQ_GETS, VALID, 0, addr1, null, 0, line_of_addr(addr1.line), 0, 0, 0, 0, INSTR);
+
+    // go to an empty set and fill with SD states, sharers l2#12
+
+    CACHE_REPORT_INFO("Evict SD states");
+
+    addr_base.set_incr(1);
+    addr1 = addr_base;
+    evict_way = 0;
+
+    for (int i = 0; i < LLC_WAYS; i++) {
+	op(REQ_GETS, INVALID, 0, addr1, null, 0, line_of_addr(addr1.line), 0, 0, 1, 0, DATA);
+	op(REQ_GETS, EXCLUSIVE, 0, addr1, null, 0, line_of_addr(addr1.line), 0, 0, 2, 1, DATA);
+	addr1.tag_incr(1);
+    }
+
+
+    CACHE_REPORT_INFO("Evict SD states again");
+
+    // DMA_Read evicts SD line, dirty (can't be not dirty)
+    regular_evict_prep(addr_base, addr1, addr2, evict_way);
+
+    op_dma(REQ_DMA_READ, SHARED, EVICT, DIRTY, addr1, addr2, 0, line_of_addr(addr1.line), 
+       line_of_addr(addr2.line), 6, 1, 1);
+
+    op(REQ_GETS, VALID, 0, addr1, null, 0, line_of_addr(addr1.line), 0, 0, 1, 0, DATA);
+    op(REQ_GETS, EXCLUSIVE, 0, addr1, null, 0, line_of_addr(addr1.line), 0, 0, 2, 1, DATA);
+ 
+    // DMA_Write evicts SD line, dirty (can't be not dirty)
+    regular_evict_prep(addr_base, addr1, addr2, evict_way);
+
+    op_dma(REQ_DMA_WRITE, SHARED, EVICT, DIRTY, addr1, addr2, line_of_addr(addr1.line)*2, 
+       0, line_of_addr(addr2.line)*2, 6, 1, 1);
+
+    // TODO test SD -> DMA_* -> V (with some put) -> evict V -> execute DMA_*
+
+
+    /* Fill whole cache */
+
+    CACHE_REPORT_INFO("T0.9) Fill whole cache.");
+
+    reset_dut(is_reset);
+
+    // Make every entry in the cache dirty with REQ_DMA_WRITE requests
+    CACHE_REPORT_INFO("Whole cache dirty.");
+
+    addr = null;
+
+    for (int i = 0; i < LLC_SETS; i++) {
+
+	for (int j = 0; j < LLC_WAYS; j++) {
+
+	    op_dma(REQ_DMA_WRITE, INVALID, 0, 0, addr, null, line_of_addr(addr.line), 0, 0, 0, 0, 0);
+
+	    addr.tag_incr(1);
+	}
+
+	addr.set_incr(1);
+    }
+
+
+    // Fill a quarter of each set with SHARED, a quarter with EXCLUSIVE, 
+    // a quarter with MODIFIED, a quarter with VALID.
+    CACHE_REPORT_INFO("Whole cache in various states.");
+
+    addr = null;
+
+    for (int i = 0; i < LLC_SETS; i++) {
+
+	for (int j = 0; j < LLC_WAYS; j++) {
+
+	    if ((j % 4) == 0) {
+		op(REQ_GETS, VALID, 0, addr, null, 0, line_of_addr(addr.line), 0, 0, 0, 0, DATA);
+		op(REQ_GETS, EXCLUSIVE, 0, addr, null, 0, line_of_addr(addr.line), 0, 0, 1, 0, DATA);
+		op_rsp(RSP_DATA, addr, line_of_addr(addr.line), 0);
+
+	    } else if ((j % 4) == 1) {
+		op(REQ_GETS, VALID, 0, addr, null, 0, line_of_addr(addr.line), 0, 0, 2, 0, DATA);
+
+	    } else if ((j % 4) == 2) {
+		op(REQ_GETM, VALID, 0, addr, null, 0, line_of_addr(addr.line), 0, 0, 3, 0, DATA);
+	    } else if ((j % 4) == 3) {
+		op_dma(REQ_DMA_READ, VALID, 0, 0, addr, null, 0, line_of_addr(addr.line), 0, 0, 0, 0);
+	    }
+
+	    addr.tag_incr(1);
+	}
+
+	addr.set_incr(1);
+    }
+
+    // Put back all lines
+    CACHE_REPORT_INFO("Whole cache put back.");
+
+    addr = null;
+
+    CACHE_REPORT_VAR(sc_time_stamp(), "flush addr ", addr.line);
+
+    for (int i = 0; i < LLC_SETS; i++) {
+
+	for (int j = 0; j < LLC_WAYS; j++) {
+
+	    if ((j % 4) == 0) {
+		op(REQ_PUTS, SHARED, 0, addr, null, 0, 0, 0, 0, 0, 0, DATA);
+		op(REQ_PUTS, SHARED, 0, addr, null, 0, 0, 0, 0, 1, 0, DATA);
+
+	    } else if ((j % 4) == 1) {
+		op(REQ_PUTS, EXCLUSIVE, 0, addr, null, 0, 0, 0, 0, 2, 0, DATA);
+
+	    } else if ((j % 4) == 2) {
+		op(REQ_PUTM, MODIFIED, 0, addr, null, line_of_addr(addr.line), 0, 0, 0, 3, 0, DATA);
+
+	    }
+
+	    addr.tag_incr(1);
+	}
+
+	addr.set_incr(1);
+    }
+
+
+    // Flush out all dirty lines
+    CACHE_REPORT_INFO("Whole cache flush dirty.");
+
+    llc_rst_tb_tb.put(is_flush);
+
+    addr = null;
+
+    CACHE_REPORT_VAR(sc_time_stamp(), "flush addr ", addr.line);
+
+    for (int i = 0; i < LLC_SETS; i++) {
+
+	for (int j = 0; j < LLC_WAYS; j++) {
+	    
+            CACHE_REPORT_VAR(sc_time_stamp(), "flush addr ", addr.line);
+	    
+	    get_mem_req(LLC_WRITE, addr.line, line_of_addr(addr.line));
+
+	    addr.tag_incr(1);
+
+	    wait();
+	}
+
+	addr.set_incr(1);
+    }
+
+    llc_rst_tb_done_tb.get(tmp_rst_tb);
 
     // End simulation
     sc_stop();
@@ -447,11 +893,11 @@ void llc_tb::llc_test()
  * Functions
  */
 
-void llc_tb::reset_dut()
+void llc_tb::reset_dut(bool is_flush)
 {
     bool tmp_rst_tb;
 
-    llc_rst_tb_tb.put(1);
+    llc_rst_tb_tb.put(is_flush);
     llc_rst_tb_done_tb.get(tmp_rst_tb);
     wait();
 }
@@ -470,81 +916,237 @@ inline void llc_tb::reset_llc_test()
     wait();
 }
 
-void llc_tb::op_rsp(addr_breakdown_t req_addr, line_t req_line, cache_id_t req_id, bool rpt)
+/*
+ * Generic function to setup eviction addresses and update evict_way
+ */
+void llc_tb::evict_prep(addr_breakdown_t addr_base, addr_breakdown_t &addr1, addr_breakdown_t &addr2,
+			int tag_incr1, int tag_incr2, llc_way_t &evict_way, bool update_way)
 {
-    put_rsp_in(req_addr.line, req_line, req_id, rpt);
+    addr1 = addr_base;
+    addr1.tag_incr(tag_incr1);
+    addr2 = addr_base;
+    addr2.tag_incr(tag_incr2);
+
+    evict_way += update_way;
 }
 
-void llc_tb::op(coh_msg_t coh_msg, llc_state_t state, bool evict, addr_breakdown_t req_addr, 
-		addr_breakdown_t evict_addr, line_t req_line, line_t rsp_line, line_t evict_line,
-		invack_cnt_t invack_cnt, cache_id_t req_id, cache_id_t dest_id, bool rpt)
+/*
+ * Way to evict is evict_way. New way is evict_way + LLC_WAYS.
+ * This calls a generic function to setup eviction addresses.
+ */
+void llc_tb::regular_evict_prep(addr_breakdown_t addr_base, addr_breakdown_t &addr1,
+				addr_breakdown_t &addr2, llc_way_t &evict_way)
 {
-    int out_plane = FWD_PLANE;
-    coh_msg_t out_msg = 0;
+    int tag_incr1 = (int) evict_way + LLC_WAYS;
+    int tag_incr2 = (int) evict_way;
 
+    evict_prep(addr_base, addr1, addr2, tag_incr1, tag_incr2, evict_way, 1);
+
+    CACHE_REPORT_VAR(sc_time_stamp(), "evict way", evict_way);
+    CACHE_REPORT_VAR(sc_time_stamp(), "addr1", addr1);
+    CACHE_REPORT_VAR(sc_time_stamp(), "addr2", addr2);
+}
+
+void llc_tb::op_rsp(coh_msg_t rsp_msg, addr_breakdown_t req_addr, line_t req_line, cache_id_t req_id)
+{
+    put_rsp_in(rsp_msg, req_addr.line, req_line, req_id);
+}
+
+void llc_tb::op(mix_msg_t coh_msg, llc_state_t state, bool evict, addr_breakdown_t req_addr, 
+		addr_breakdown_t evict_addr, line_t req_line, line_t rsp_line, line_t evict_line,
+		invack_cnt_t invack_cnt, cache_id_t req_id, cache_id_t dest_id, hprot_t hprot)
+{
+    int out_plane = REQ_PLANE;
+    coh_msg_t out_msg = 0;
+    bool out_plane_2 = false;
+
+    // incoming request
+    put_req_in(coh_msg, req_addr.line, req_line, req_id, hprot);
+
+    // CACHE_REPORT_VAR(sc_time_stamp(), "msg", coh_msg);
+    // CACHE_REPORT_VAR(sc_time_stamp(), "state", state);
+
+    // evict line
+    if (evict) {
+	get_mem_req(LLC_WRITE, evict_addr.line, evict_line);
+	wait();
+    }
+
+    // read from main memory
+    if ((state == INVALID || evict) && coh_msg != REQ_PUTS &&
+	coh_msg != REQ_PUTM) {
+
+	get_mem_req(LLC_READ, req_addr.line, 0);
+	wait();
+	put_mem_rsp(rsp_line);
+    }
+
+    // outgoing responses and forwards
     switch (coh_msg) {
+
     case REQ_GETS :
+
 	switch (state) {
+
 	case INVALID :
 	case VALID :
 	    out_plane = RSP_PLANE;
-	    out_msg = RSP_EDATA;
+	    if (hprot == INSTR)
+		out_msg = RSP_DATA;
+	    else // hprot ==  DATA
+		out_msg = RSP_EDATA;
 	    break;
+
 	case SHARED :
 	    out_plane = RSP_PLANE;
 	    out_msg = RSP_DATA;
 	    break;
-	case EXCLUSIVE :
+
+	case EXCLUSIVE:
+	case MODIFIED:
 	    out_plane = FWD_PLANE;
 	    out_msg = FWD_GETS;
 	    break;
 	}
 	break;
-    case REQ_GETM :
+
+    case REQ_GETM:
+
 	switch (state) {
-	case INVALID :
-	case VALID :
+
+	case INVALID:
+	case VALID:
 	    out_plane = RSP_PLANE;
 	    out_msg = RSP_DATA;
 	    break;
+
+	case SHARED:
+	    out_plane = RSP_PLANE;
+	    out_msg = RSP_DATA;
+	    out_plane_2 = true;
+	    break;
+
+	case EXCLUSIVE:
+	case MODIFIED:
+	    out_plane = FWD_PLANE;
+	    out_msg = FWD_GETM;
+
+	    break;
 	}
 	break;
+
     case REQ_PUTS :
 	out_plane = FWD_PLANE;
 	out_msg = FWD_PUTACK;
 	break;
+
     case REQ_PUTM :
 	out_plane = FWD_PLANE;
 	out_msg = FWD_PUTACK;
 	break;
+
+    default:
+	CACHE_REPORT_INFO("ERROR: This request type is undefined.");
     }
 
-    put_req_in(coh_msg, req_addr.line, req_line, req_id, rpt);
+    // CACHE_REPORT_VAR(sc_time_stamp(), "OUT_PLANE: ", out_plane);
+    // CACHE_REPORT_VAR(sc_time_stamp(), "OUT_PLANE2: ", out_plane_2);
 
-    if (evict) {
-	get_mem_req(LLC_WRITE, evict_addr.line, evict_line, rpt);
-	wait();
+    if (out_plane_2) { // fwd_inv
+
+	for (int i = 0; i < invack_cnt; i++) {
+	    get_fwd_out(FWD_INV, req_addr.line, req_id, i);
+	    wait();
+	}
+
+    } else if (out_plane == FWD_PLANE) { // fwd_getm, fwd_gets, fwd_putack
+
+	get_fwd_out(out_msg, req_addr.line, req_id, dest_id);
     }
 
-    if (state == INVALID || evict) {
-	get_mem_req(LLC_READ, req_addr.line, 0, rpt);
-	wait();
-	put_mem_rsp(rsp_line, rpt);
-    }
+    if (out_plane == RSP_PLANE) { // rsp_edata, rsp_data
 
-    if (out_plane == RSP_PLANE) {
-	get_rsp_out(out_msg, req_addr.line, rsp_line, invack_cnt, req_id, dest_id, rpt);
-    } else {
-	get_fwd_out(out_msg, req_addr.line, req_id, dest_id, rpt);
+	get_rsp_out(out_msg, req_addr.line, rsp_line, invack_cnt, req_id, dest_id);
+
     }
 
     wait();
 }
 
+void llc_tb::op_dma(mix_msg_t coh_msg, llc_state_t state, bool evict, bool dirty, 
+		    addr_breakdown_t req_addr, addr_breakdown_t evict_addr, 
+		    line_t req_line, line_t rsp_line, line_t evict_line,
+		    sharers_t sharers, owner_t owner, bool stall)
+{
+    // req in
+    put_req_in(coh_msg, req_addr.line, req_line, 0, DATA);
+
+    // end of stall
+    if (stall) {
+	wait(); wait();
+	op_rsp(RSP_DATA, evict_addr, evict_line, owner);
+    }
+
+    // eviction
+    if (evict) {
+	switch (state) {
+
+	case SHARED:
+	    // inv to sharers
+	    for (int i = 0; i < MAX_N_L2; i++) {
+		if ((sharers & (1 << i)) != 0) {
+		    get_fwd_out(FWD_INV, evict_addr.line, i, i);
+		    wait();
+		}
+	    }
+	    break;
+
+	case EXCLUSIVE:
+	    // inv to owner
+	    get_fwd_out(FWD_GETM, evict_addr.line, owner, owner);
+
+	    // rsp from owner, no data
+	    op_rsp(RSP_INVACK, evict_addr, 0, owner);
+	    break;
+	    
+	case MODIFIED:
+	    // inv to owner
+	    get_fwd_out(FWD_GETM, evict_addr.line, owner, owner);
+
+	    // rsp from owner, with data
+	    op_rsp(RSP_DATA, evict_addr, evict_line, owner);
+
+	    break;
+	}
+    }
+
+    // write back to memory
+    if (evict && dirty) {
+	get_mem_req(LLC_WRITE, evict_addr.line, evict_line);
+	wait();
+    }
+
+    // read mem
+    if (coh_msg == REQ_DMA_READ && (state == INVALID || evict)) {
+	get_mem_req(LLC_READ, req_addr.line, 0);
+	wait();
+	put_mem_rsp(rsp_line);
+    }
+
+    // rsp data to accelerator
+    if (coh_msg == REQ_DMA_READ)
+	get_rsp_out(RSP_DATA, req_addr.line, rsp_line, 0, 0, 0);
+    
+    wait();
+}
+
 void llc_tb::get_rsp_out(coh_msg_t coh_msg, addr_t addr, line_t line, invack_cnt_t invack_cnt,
-			 cache_id_t req_id, cache_id_t dest_id, bool rpt)
+			 cache_id_t req_id, cache_id_t dest_id)
 {
     llc_rsp_out_t rsp_out;
+
+    CACHE_REPORT_INFO("About to get rsp out");
+
     llc_rsp_out_tb.get(rsp_out);
 
     if (rsp_out.coh_msg != coh_msg       ||
@@ -568,13 +1170,16 @@ void llc_tb::get_rsp_out(coh_msg_t coh_msg, addr_t addr, line_t line, invack_cnt
 	CACHE_REPORT_ERROR("dest_id get rsp out", rsp_out.dest_id);
 	CACHE_REPORT_ERROR("dest_id get rsp out gold", dest_id);
     }
-    if (rpt)
+    if (RPT_TB)
 	CACHE_REPORT_VAR(sc_time_stamp(), "RSP_OUT", rsp_out);
 }
 
-void llc_tb::get_fwd_out(coh_msg_t coh_msg, addr_t addr, cache_id_t req_id, cache_id_t dest_id, bool rpt)
+void llc_tb::get_fwd_out(coh_msg_t coh_msg, addr_t addr, cache_id_t req_id, cache_id_t dest_id)
 {
     llc_fwd_out_t fwd_out;
+
+    CACHE_REPORT_INFO("About to get fwd out");
+
     llc_fwd_out_tb.get(fwd_out);
 
     if (fwd_out.coh_msg != coh_msg       ||
@@ -592,13 +1197,16 @@ void llc_tb::get_fwd_out(coh_msg_t coh_msg, addr_t addr, cache_id_t req_id, cach
 	CACHE_REPORT_ERROR("dest_id get fwd out", fwd_out.dest_id);
 	CACHE_REPORT_ERROR("dest_id get fwd out gold", dest_id);
     }
-    if (rpt)
+    if (RPT_TB)
 	CACHE_REPORT_VAR(sc_time_stamp(), "FWD_OUT", fwd_out);
 }
 
-void llc_tb::get_mem_req(bool hwrite, addr_t addr, line_t line, bool rpt)
+void llc_tb::get_mem_req(bool hwrite, addr_t addr, line_t line)
 {
     llc_mem_req_t mem_req;
+
+    CACHE_REPORT_INFO("About to get mem req");
+
     mem_req = llc_mem_req_tb.get();
 
     if (mem_req.hwrite != hwrite ||
@@ -612,51 +1220,58 @@ void llc_tb::get_mem_req(bool hwrite, addr_t addr, line_t line, bool rpt)
 	CACHE_REPORT_ERROR("get mem req", mem_req.line);
 	CACHE_REPORT_ERROR("get mem req gold", line);
     }
-    if (rpt)
+    if (RPT_TB)
 	CACHE_REPORT_VAR(sc_time_stamp(), "MEM_REQ", mem_req);
 }
 
-void llc_tb::put_mem_rsp(line_t line, bool rpt)
+void llc_tb::put_mem_rsp(line_t line)
 {
     llc_mem_rsp_t mem_rsp;
     mem_rsp.line = line;
 
     rand_wait();
 
+    CACHE_REPORT_INFO("About to put mem rsp");
+
     llc_mem_rsp_tb.put(mem_rsp);
 
-    if (rpt)
+    if (RPT_TB)
 	CACHE_REPORT_VAR(sc_time_stamp(), "MEM_RSP", mem_rsp);
 }
 
-void llc_tb::put_req_in(coh_msg_t coh_msg, addr_t addr, line_t line, cache_id_t req_id, bool rpt)
+void llc_tb::put_req_in(mix_msg_t coh_msg, addr_t addr, line_t line, cache_id_t req_id, hprot_t hprot)
 {
     llc_req_in_t req_in;
     req_in.coh_msg = coh_msg;
-    req_in.hprot = HPROT_DATA;
+    req_in.hprot = hprot;
     req_in.addr = addr.range(TAG_RANGE_HI, SET_RANGE_LO);
     req_in.line = line;
     req_in.req_id = req_id;
 
     rand_wait();
 
+    CACHE_REPORT_INFO("About to put req in");
+
     llc_req_in_tb.put(req_in);
 
-    if (rpt)
+    if (RPT_TB)
 	CACHE_REPORT_VAR(sc_time_stamp(), "REQ_IN", req_in);
 }
 
-void llc_tb::put_rsp_in(addr_t addr, line_t line, cache_id_t req_id, bool rpt)
+void llc_tb::put_rsp_in(coh_msg_t rsp_msg, addr_t addr, line_t line, cache_id_t req_id)
 {
     llc_rsp_in_t rsp_in;
+    rsp_in.coh_msg = rsp_msg;
     rsp_in.addr = addr.range(TAG_RANGE_HI, SET_RANGE_LO);
     rsp_in.line = line;
     rsp_in.req_id = req_id;
 
     rand_wait();
 
+    CACHE_REPORT_INFO("About to put rsp in");
+
     llc_rsp_in_tb.put(rsp_in);
 
-    if (rpt)
+    if (RPT_TB)
 	CACHE_REPORT_VAR(sc_time_stamp(), "RSP_IN", rsp_in);
 }

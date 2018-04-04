@@ -16,7 +16,7 @@
 
 typedef sc_uint<CPU_MSG_TYPE_WIDTH>	cpu_msg_t; // CPU bus requests
 typedef sc_uint<COH_MSG_TYPE_WIDTH>	coh_msg_t; // Requests without DMA, Forwards, Responses
-typedef sc_uint<LLCREQ_MSG_TYPE_WIDTH>	req_msg_t; // Requests if including DMA 
+typedef sc_uint<MIX_MSG_TYPE_WIDTH>	mix_msg_t; // Requests if including DMA 
 typedef sc_uint<HSIZE_WIDTH>		hsize_t;
 typedef sc_uint<HPROT_WIDTH>		hprot_t;
 typedef sc_uint<INVACK_CNT_WIDTH>	invack_cnt_t;
@@ -147,7 +147,7 @@ class l2_fwd_in_t
 
 public:
 
-    coh_msg_t	coh_msg;	// fwd-gets, fwd-getm, fwd-invalidate
+    mix_msg_t	coh_msg; // fwd-gets, fwd-getm, fwd-invalidate
     line_addr_t	addr;
     cache_id_t  req_id;
 
@@ -400,7 +400,7 @@ class llc_req_in_t
 
 public:
 
-    coh_msg_t	coh_msg;	// gets, getm, puts, putm
+    mix_msg_t	coh_msg;	// gets, getm, puts, putm, dma_read, dma_write
     hprot_t	hprot;
     line_addr_t	addr;
     line_t	line;
@@ -460,7 +460,7 @@ public:
 
     coh_msg_t	coh_msg;	// gets, getm, puts, putm
     cache_id_t  req_id;
-    bool        to_req;
+    sc_uint<2>  to_req;
     line_addr_t	addr;
     line_t	line;
 
@@ -515,34 +515,40 @@ class llc_rsp_in_t
 
 public:
 
+    coh_msg_t coh_msg;
     line_addr_t	addr;
     line_t	line;
     cache_id_t  req_id;
 
     llc_rsp_in_t() :
+	coh_msg(0),
 	addr(0),
 	line(0),
 	req_id(0)
     {}
 
     inline llc_rsp_in_t& operator  = (const llc_rsp_in_t& x) {
+	coh_msg = x.coh_msg;
 	addr    = x.addr;	 
 	line    = x.line;
 	req_id  = x.req_id;
 	return *this;
     }
     inline bool operator  == (const llc_rsp_in_t& x) const {
-	return (x.addr    == addr	&& 
+	return (x.coh_msg == coh_msg	&& 
+		x.addr    == addr	&& 
 		x.line	  == line       &&
 		x.req_id  == req_id);
     }
     inline friend void sc_trace(sc_trace_file *tf, const llc_rsp_in_t& x, const std::string & name) {
+	sc_trace(tf, x.coh_msg,  name + ".coh_msg");
 	sc_trace(tf, x.addr,     name + ".addr");
-	sc_trace(tf, x.line,    name + ".line");
-	sc_trace(tf, x.req_id,    name + ".req_id");
+	sc_trace(tf, x.line,     name + ".line");
+	sc_trace(tf, x.req_id,   name + ".req_id");
     }
     inline friend ostream & operator<<(ostream& os, const llc_rsp_in_t& x) {
 	os << hex << "(" 
+	   << ", coh_msg: " << x.coh_msg
 	   << ", addr: " << x.addr    
 	   << ", req_id: " << x.req_id    
 	   << ", line: ";

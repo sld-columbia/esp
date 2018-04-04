@@ -220,10 +220,20 @@
     if (RPT_RTL) CACHE_REPORT_TIME(sc_time_stamp(), "Fwd nohit getm.")
     // bookmark_tmp |= BM_FWD_NOHIT_GETM;					
 
+#define FWD_NOHIT_GETM_LLC						\
+    HLS_CONSTRAIN_LATENCY(0, HLS_ACHIEVABLE, "l2-fwd-nohit-getm-llc-latency"); \
+    if (RPT_RTL) CACHE_REPORT_TIME(sc_time_stamp(), "Fwd nohit getm-llc.")
+    // bookmark_tmp |= BM_FWD_NOHIT_GETM_LLC;					
+
 #define FWD_NOHIT_INV							\
     HLS_CONSTRAIN_LATENCY(0, HLS_ACHIEVABLE, "l2-fwd-nohit-inv-latency");			\
     if (RPT_RTL) CACHE_REPORT_TIME(sc_time_stamp(), "Fwd nohit inv.")
     // bookmark_tmp |= BM_FWD_NOHIT_INV;					
+
+#define FWD_NOHIT_INV_LLC						\
+    HLS_CONSTRAIN_LATENCY(0, HLS_ACHIEVABLE, "l2-fwd-nohit-inv-llc-latency"); \
+    if (RPT_RTL) CACHE_REPORT_TIME(sc_time_stamp(), "Fwd nohit inv-llc.")
+    // bookmark_tmp |= BM_FWD_NOHIT_INV_LLC;
 
 #define FWD_NOHIT_DEFAULT						\
     if (RPT_RTL) CACHE_REPORT_TIME(sc_time_stamp(), "Fwd nohit default.")
