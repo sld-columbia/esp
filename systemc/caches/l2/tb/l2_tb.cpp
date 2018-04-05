@@ -708,8 +708,6 @@ void l2_tb::l2_test()
 
     // FWD_GETM(IMAD), FWD_GETM(M)
     fwd_line = req_line;
-    // CACHE_REPORT_VAR(sc_time_stamp(), "addr.w_off: ", addr.w_off);
-    // CACHE_REPORT_VAR(sc_time_stamp(), "addr.b_off: ", addr.b_off);
     write_word(fwd_line, word, addr.w_off, addr.b_off, WORD);
     op(WRITE, MISS, 0, RSP_DATA, 0, 0, WORD, addr, word++, req_line, FWD_STALL, FWD_GETM, 0, 
        id++, fwd_line, DATA);
@@ -1022,8 +1020,6 @@ void l2_tb::l2_test()
        0, id--, 0, DATA);
 
     // FWD_GETM_LLC(IMAD), FWD_GETM_LLC(M)
-    CACHE_REPORT_INFO("Hereherehere");
-
     fwd_line = req_line;
     write_word(fwd_line, word, addr.w_off, addr.b_off, WORD);
     op(WRITE, MISS, 0, RSP_DATA, 0, 0, WORD, addr, word++, req_line, FWD_STALL, FWD_GETM_LLC,
@@ -1330,11 +1326,7 @@ void l2_tb::put_rsp_in(coh_msg_t coh_msg, addr_t addr, line_t line, invack_cnt_t
     rsp_in.invack_cnt = invack_cnt;
     rsp_in.line = line;
 
-    // CACHE_REPORT_INFO("before put rsp in");
-
     l2_rsp_in_tb.put(rsp_in);
-
-    // CACHE_REPORT_INFO("after put rsp in");
 
     if (rpt) CACHE_REPORT_VAR(sc_time_stamp(), "RSP_IN", rsp_in);
 }
@@ -1358,8 +1350,6 @@ void l2_tb::get_inval(addr_t addr)
 {
     l2_inval_t inval;
     
-    CACHE_REPORT_INFO("Get invalidation");
-
     l2_inval_tb.get(inval);
 
     if (inval != addr.range(TAG_RANGE_HI, SET_RANGE_LO)) {
@@ -1421,13 +1411,9 @@ void l2_tb::op(cpu_msg_t cpu_msg, int beh, int rsp_beh, coh_msg_t rsp_msg, invac
 
 	    } else if (fwd_msg == FWD_GETS) {
 		
-		CACHE_REPORT_INFO("get rsp out 1");
-
 		get_rsp_out(RSP_DATA, fwd_id, 1, req_addr_tmp.line, fwd_line);
 
 		wait();
-
-		CACHE_REPORT_INFO("get rsp out 2");
 
 		get_rsp_out(RSP_DATA, 0, 0, req_addr_tmp.line, fwd_line);
 
@@ -1436,9 +1422,8 @@ void l2_tb::op(cpu_msg_t cpu_msg, int beh, int rsp_beh, coh_msg_t rsp_msg, invac
 		get_rsp_out(RSP_DATA, fwd_id, 1, req_addr_tmp.line, fwd_line);
 
 	    } else if (fwd_msg == FWD_INV_LLC) {
-		
-		CACHE_REPORT_INFO("PREZZI PAZZI");
 		// nothing to do
+
 	    } else if (fwd_msg == FWD_GETM_LLC) {
 
 		if (fwd_state == EXCLUSIVE) 
@@ -1459,8 +1444,6 @@ void l2_tb::op(cpu_msg_t cpu_msg, int beh, int rsp_beh, coh_msg_t rsp_msg, invac
 	get_req_out(coh_req, req_addr.line, cpu_req.hprot);
 
 	if (fwd_beh == FWD_STALL) {
-	    CACHE_REPORT_VAR(sc_time_stamp(), "Herehereher put the fwd in", fwd_msg);
-
 	    put_fwd_in(fwd_msg, req_addr.line, fwd_id);
 	    wait();
 	}
@@ -1515,13 +1498,9 @@ void l2_tb::op(cpu_msg_t cpu_msg, int beh, int rsp_beh, coh_msg_t rsp_msg, invac
 
 	} else if (fwd_msg == FWD_GETS) {
 
-	    CACHE_REPORT_INFO("get rsp out 3");
-
 	    get_rsp_out(RSP_DATA, fwd_id, 1, req_addr.line, fwd_line);
 
 	    wait();
-
-	    CACHE_REPORT_INFO("get rsp out 4");
 
 	    get_rsp_out(RSP_DATA, 0, 0, req_addr.line, fwd_line);
 
@@ -1565,14 +1544,9 @@ void l2_tb::flush(int n_lines, bool is_flush_all)
     // issue flush
     l2_flush_tb.put(is_flush_all);
 
-    if (rpt)
-	CACHE_REPORT_INFO("Flush put.");
-
     for (int i = 0; i < n_lines; ++i) {
-	CACHE_REPORT_INFO("Get req from flush.");
 	l2_req_out_t req_out = l2_req_out_tb.get();
 	addr_t tmp_addr = req_out.addr << OFFSET_BITS;
-	CACHE_REPORT_INFO("Put ack for flush.");
 	put_fwd_in(FWD_PUTACK, tmp_addr, 0);
 	wait();
     }

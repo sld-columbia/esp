@@ -24,10 +24,9 @@ void l2::ctrl()
 	bookmark_tmp = 0;
 	asserts_tmp = 0;
 #endif
+	if (l2_flush.nb_can_get() && reqs_cnt == N_REQS) {
 
-	if (l2_flush.nb_can_get() && reqs_cnt == N_REQS && !ongoing_flush) {
-
-	    get_flush(is_flush_all);
+	    is_flush_all = get_flush();
 
 	    ongoing_flush = true;
 
@@ -307,13 +306,13 @@ void l2::ctrl()
 			reqs[reqs_hit_i].state = SIA;
 
 		    } else {
-
-			if (fwd_in.coh_msg == FWD_GETM)
-			    send_rsp_out(RSP_DATA, fwd_in.req_id, 1, fwd_in.addr, 
-					 reqs[reqs_hit_i].line); // to requestor
-			else 
-			    send_rsp_out(RSP_DATA, 0, 0, fwd_in.addr, 
-					 reqs[reqs_hit_i].line); // to LLC
+			
+ 			if (fwd_in.coh_msg == FWD_GETM)
+ 			    send_rsp_out(RSP_DATA, fwd_in.req_id, 1, fwd_in.addr, 
+ 					 reqs[reqs_hit_i].line); // to requestor
+ 			else 
+ 			    send_rsp_out(RSP_DATA, 0, 0, fwd_in.addr, 
+ 					 reqs[reqs_hit_i].line); // to LLC
 
 			reqs[reqs_hit_i].state = IIA;
 
@@ -371,23 +370,6 @@ void l2::ctrl()
 		    break;
 		}
 
-		case FWD_GETM_LLC: // send rsp data to LLC (invack if exclusive)
-		{
-		    FWD_NOHIT_GETM_LLC;
-
-		    if (!ongoing_flush)
-			send_inval(fwd_in.addr);
-
-		    if (state_buf[way_hit] == EXCLUSIVE)
-			send_rsp_out(RSP_INVACK, 0, 0, fwd_in.addr, 0);
-		    else
-			send_rsp_out(RSP_DATA, 0, 0, fwd_in.addr, lines_buf[way_hit]);
-
-		    states.port1[0][(line_br.set << L2_WAY_BITS) + way_hit] = INVALID;
-
-		    break;
-		}
-
 		case FWD_INV :
 		{
 		    FWD_NOHIT_INV;
@@ -402,17 +384,34 @@ void l2::ctrl()
 		    break;
 		}
 
-		case FWD_INV_LLC : // same as FWD_INV but don't send invack
-		{
-		    FWD_NOHIT_INV_LLC;
+ 		case FWD_GETM_LLC: // send rsp data to LLC (invack if exclusive)
+ 		{
+ 		    FWD_NOHIT_GETM_LLC;
+ 
+ 		    if (!ongoing_flush)
+ 			send_inval(fwd_in.addr);
+ 
+ 		    if (state_buf[way_hit] == EXCLUSIVE)
+ 			send_rsp_out(RSP_INVACK, 0, 0, fwd_in.addr, 0);
+ 		    else
+ 			send_rsp_out(RSP_DATA, 0, 0, fwd_in.addr, lines_buf[way_hit]);
+ 
+ 		    states.port1[0][(line_br.set << L2_WAY_BITS) + way_hit] = INVALID;
+ 
+ 		    break;
+ 		}
 
-		    if (!ongoing_flush)
-			send_inval(fwd_in.addr);
-
-		    states.port1[0][(line_br.set << L2_WAY_BITS) + way_hit] = INVALID;
-
-		    break;
-		}
+ 		case FWD_INV_LLC : // same as FWD_INV but don't send invack
+ 		{
+ 		    FWD_NOHIT_INV_LLC;
+ 
+ 		    if (!ongoing_flush)
+ 			send_inval(fwd_in.addr);
+ 
+ 		    states.port1[0][(line_br.set << L2_WAY_BITS) + way_hit] = INVALID;
+ 
+ 		    break;
+ 		}
 
 		default :
 		    FWD_NOHIT_DEFAULT;
@@ -430,30 +429,24 @@ void l2::ctrl()
 
 		while (flush_set < L2_SETS) {
 
-		    {
-			FLUSH_READ_SET;
+		    // {
+		    // 	FLUSH_READ_SET;
 
-			read_set(flush_set);
-		    }
-
-		    CACHE_REPORT_VAR(sc_time_stamp(), "Incoming fwd", incoming_fwd);
-		    CACHE_REPORT_VAR(sc_time_stamp(), "flush_way", flush_way);
-		    CACHE_REPORT_VAR(sc_time_stamp(), "reqs_cnt", reqs_cnt);
+		    read_set(flush_set);
+		    // }
 
 		    while (flush_way < L2_WAYS) {
 		    
-			FLUSH_LOOP;
-	    
+			// FLUSH_LOOP;
+
 			if (l2_fwd_in.nb_can_get() || reqs_cnt == 0) {
 
 			    incoming_fwd = true;
 
-			    CACHE_REPORT_VAR(sc_time_stamp(), "Incoming fwd 2nd", incoming_fwd);
-
 			    break;
 
-			} else if (state_buf[flush_way] != INVALID && 
-				   (hprot_buf[flush_way] == DATA || is_flush_all)) {
+ 			} else if ((state_buf[flush_way] != INVALID) && 
+			    (is_flush_all || hprot_buf[flush_way])) {
 
 			    reqs_peek_flush(flush_set, reqs_hit_i);
 
@@ -501,8 +494,6 @@ void l2::ctrl()
 
 			flush_way++;
 
-			CACHE_REPORT_VAR(sc_time_stamp(), "flush_way 2nd", flush_way);
-
 			wait();
 		    }
 
@@ -511,8 +502,6 @@ void l2::ctrl()
 
 		    flush_set++;
 		    flush_way = 0;
-
-		    CACHE_REPORT_VAR(sc_time_stamp(), "end of set loop", flush_set);
 		}
 
 		if (flush_set == L2_SETS){
@@ -1035,13 +1024,17 @@ void l2::get_rsp_in(l2_rsp_in_t &rsp_in)
     l2_rsp_in.nb_get(rsp_in);
 }
 
-void l2::get_flush(bool &is_flush_all)
+bool l2::get_flush()
 {
     GET_FLUSH;
     
+    bool flush_tmp;
+
     // is_flush_all == 0 -> flush data, not instructions
     // is_flush_all == 1 -> flush data and instructions
-    l2_flush.nb_get(is_flush_all); 
+    l2_flush.nb_get(flush_tmp);
+
+    return flush_tmp;
 }
 
 /* Functions to send output messages */
@@ -1080,8 +1073,7 @@ void l2::send_req_out(coh_msg_t coh_msg, hprot_t hprot, line_addr_t line_addr, l
     l2_req_out.nb_put(req_out);
 }
 
-void l2::send_rsp_out(coh_msg_t coh_msg, cache_id_t req_id, sc_uint<2> to_req, 
-		      line_addr_t line_addr, line_t line)
+void l2::send_rsp_out(coh_msg_t coh_msg, cache_id_t req_id, bool to_req, line_addr_t line_addr, line_t line)
 {
     SEND_RSP_OUT;
 

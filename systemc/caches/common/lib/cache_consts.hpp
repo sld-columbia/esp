@@ -18,7 +18,9 @@
  * Caches
  */
 
+//
 // Common
+//
 
 #define ADDR_BITS	32
 #define BYTE_BITS	2
@@ -53,7 +55,8 @@
 #define DMA_MSG_TYPE_WIDTH      1
 #define MIX_MSG_TYPE_WIDTH	(COH_MSG_TYPE_WIDTH + DMA_MSG_TYPE_WIDTH)
 #define HSIZE_WIDTH		3
-#define HPROT_WIDTH		1
+// TODO: HPROT_WIDTH should be 1, but that triggers a bug of the memory generator
+#define HPROT_WIDTH		2
 #define INVACK_CNT_WIDTH	MAX_N_L2_BITS
 #define INVACK_CNT_CALC_WIDTH   (INVACK_CNT_WIDTH + 1)
 #define CACHE_ID_WIDTH          MAX_N_L2_BITS
@@ -128,10 +131,10 @@
 #define FWD_STALL_EVICT	4
 
 // DMA operations testbench
-#define NO_DIRTY 0
-#define DIRTY 1
-#define NO_EVICT 0
-#define EVICT 1
+#define NO_DIRTY	0
+#define DIRTY		1
+#define NO_EVICT	0
+#define EVICT		1
 
 /*
  * Coherence
@@ -154,7 +157,7 @@
 #define EID                     6
 // #define MID merged with EID
 
-// Request unstable states
+// Unstable states
 #define ISD			1
 #define IMAD			2
 #define IMADW			3
@@ -165,13 +168,13 @@
 #define SMA			8
 #define SMAW			9
 #define XMW			10
-// Evict unstable states
 #define IIA			11
 #define SIA			12
 #define MIA			13
 
-
-/* Protocol messages */
+/*
+ * Protocol messages
+ */
 
 // CPU requests (L1 to L2)
 #define READ		0
@@ -224,103 +227,112 @@
 #define INSTR 0
 #define DATA  1
 
-#define DEFAULT_HPROT	4
-
 /* 
- * Debug and report
+ * Debug and report (currently not in use)
  */
 
+// If enabled there might be some fixes needed.
+// Instead it would be better to use Stratus command to keep signals.
 //#define L2_DEBUG 1
 //#define LLC_DEBUG 1
 
-// l2
-#define ASSERT_WIDTH	19
-#define BOOKMARK_WIDTH	32
+//
+// L2
+//
 
-#define AS_REQS_LOOKUP   		(1 << 0)
-#define AS_RSP_DATA_XMAD		(1 << 1)
-#define AS_RSP_DATA_XMADW		(1 << 2)
-#define AS_RSP_DATA_DEFAULT		(1 << 3)
-#define AS_RSP_INVACK_DEFAULT		(1 << 4)
-#define AS_FWD_HIT_DEFAULT              (1 << 5)
-#define AS_FWD_NOHIT_DEFAULT            (1 << 6)
-#define AS_PUTACK_DEFAULT		(1 << 7)
-#define AS_HIT_SMADX			(1 << 8)
-#define AS_HIT_EMIA			(1 << 9)
-#define AS_HIT_READ_ATOMIC_DEFAULT	(1 << 10)
-#define AS_HIT_WRITE_DEFAULT		(1 << 11)
-#define AS_HIT_DEFAULT			(1 << 12)
-#define AS_MISS_DEFAULT			(1 << 13)
-#define AS_EVICT_DEFAULT		(1 << 14)
-#define AS_FLUSH_CHECK			(1 << 15)
-#define AS_FLUSH_NOPUTACK		(1 << 16)
-#define AS_RSP_WHILE_FLUSHING           (1 << 17)
-#define AS_RSP_DEFAULT                  (1 << 18)
+// // #define ASSERT_WIDTH	19
+// // #define BOOKMARK_WIDTH	32
 
-#define BM_GET_CPU_REQ			(1 << 0)
-#define BM_GET_FWD_IN			(1 << 1)
-#define BM_GET_RSP_IN			(1 << 2)
-#define BM_GET_FLUSH			(1 << 3)
-#define BM_SEND_RD_RSP			(1 << 4)
-#define BM_SEND_INVAL			(1 << 5)
-#define BM_SEND_REQ_OUT			(1 << 6)
-#define BM_SEND_RSP_OUT			(1 << 7)
-#define BM_FILL_REQS			(1 << 8)
-#define BM_PUT_REQS			(1 << 9)
-#define BM_TAG_LOOKUP			(1 << 10)
-#define BM_REQS_LOOKUP			(1 << 11)
-#define BM_REQS_PEEK_REQ		(1 << 12)
-#define BM_REQS_PEEK_FWD		(1 << 13)
-#define BM_RSP_EDATA_ISD		(1 << 14)
-#define BM_RSP_DATA_ISD			(1 << 15)
-#define BM_RSP_DATA_XMAD		(1 << 16)
-#define BM_RSP_DATA_XMADW		(1 << 17)
-#define BM_RSP_INVACK			(1 << 18)
-#define BM_FWD_PUTACK			(1 << 19)
-#define BM_FWD_STALL_BEGIN		(1 << 20)
-#define BM_FWD_HIT_SMADX		(1 << 21)
-#define BM_FWD_HIT_EMIA			(1 << 22)
-#define BM_FWD_HIT_SIA			(1 << 23)
-#define BM_FWD_NOHIT_GETS		(1 << 24)
-#define BM_FWD_NOHIT_GETM		(1 << 25)
-#define BM_FWD_NOHIT_INV		(1 << 26)
-#define BM_FWD_NOHIT_DEFAULT		(1 << 27)
-#define BM_SET_CONFLICT			(1 << 28)
-#define BM_ATOMIC_OVERRIDE		(1 << 29)
-#define BM_ATOMIC_CONTINUE		(1 << 30)
-#define BM_HIT_READ			(1 << 31)
-#define BM_HIT_READ_ATOMIC_S		(1 << 0)
-#define BM_HIT_READ_ATOMIC_EM		(1 << 1)
-#define BM_HIT_WRITE_S			(1 << 2)
-#define BM_HIT_WRITE_EM			(1 << 3)
-#define BM_MISS_READ			(1 << 4)
-#define BM_MISS_READ_ATOMIC		(1 << 5)
-#define BM_MISS_WRITE			(1 << 6)
-#define BM_FLUSH_READ_SET		(1 << 7)
+// #define AS_REQS_LOOKUP   		(1 << 0)
+// #define AS_RSP_DATA_XMAD		(1 << 1)
+// #define AS_RSP_DATA_XMADW		(1 << 2)
+// #define AS_RSP_DATA_DEFAULT		(1 << 3)
+// #define AS_RSP_INVACK_DEFAULT		(1 << 4)
+// #define AS_FWD_HIT_DEFAULT              (1 << 5)
+// #define AS_FWD_NOHIT_DEFAULT            (1 << 6)
+// #define AS_PUTACK_DEFAULT		(1 << 7)
+// #define AS_HIT_SMADX			(1 << 8)
+// #define AS_HIT_EMIA			(1 << 9)
+// #define AS_HIT_READ_ATOMIC_DEFAULT	(1 << 10)
+// #define AS_HIT_WRITE_DEFAULT		(1 << 11)
+// #define AS_HIT_DEFAULT			(1 << 12)
+// #define AS_MISS_DEFAULT			(1 << 13)
+// #define AS_EVICT_DEFAULT		(1 << 14)
+// #define AS_FLUSH_CHECK			(1 << 15)
+// #define AS_FLUSH_NOPUTACK		(1 << 16)
+// #define AS_RSP_WHILE_FLUSHING           (1 << 17)
+// #define AS_RSP_DEFAULT                  (1 << 18)
 
-// llc
-#define LLC_ASSERT_WIDTH    6
-#define LLC_BOOKMARK_WIDTH  10
+// #define BM_GET_CPU_REQ			(1 << 0)
+// #define BM_GET_FWD_IN			(1 << 1)
+// #define BM_GET_RSP_IN			(1 << 2)
+// #define BM_GET_FLUSH			(1 << 3)
+// #define BM_SEND_RD_RSP			(1 << 4)
+// #define BM_SEND_INVAL			(1 << 5)
+// #define BM_SEND_REQ_OUT			(1 << 6)
+// #define BM_SEND_RSP_OUT			(1 << 7)
+// #define BM_FILL_REQS			(1 << 8)
+// #define BM_PUT_REQS			(1 << 9)
+// #define BM_TAG_LOOKUP			(1 << 10)
+// #define BM_REQS_LOOKUP			(1 << 11)
+// #define BM_REQS_PEEK_REQ		(1 << 12)
+// #define BM_REQS_PEEK_FWD		(1 << 13)
+// #define BM_RSP_EDATA_ISD		(1 << 14)
+// #define BM_RSP_DATA_ISD			(1 << 15)
+// #define BM_RSP_DATA_XMAD		(1 << 16)
+// #define BM_RSP_DATA_XMADW		(1 << 17)
+// #define BM_RSP_INVACK			(1 << 18)
+// #define BM_FWD_PUTACK			(1 << 19)
+// #define BM_FWD_STALL_BEGIN		(1 << 20)
+// #define BM_FWD_HIT_SMADX		(1 << 21)
+// #define BM_FWD_HIT_EMIA			(1 << 22)
+// #define BM_FWD_HIT_SIA			(1 << 23)
+// #define BM_FWD_NOHIT_GETS		(1 << 24)
+// #define BM_FWD_NOHIT_GETM		(1 << 25)
+// #define BM_FWD_NOHIT_INV		(1 << 26)
+// #define BM_FWD_NOHIT_DEFAULT		(1 << 27)
+// #define BM_SET_CONFLICT			(1 << 28)
+// #define BM_ATOMIC_OVERRIDE		(1 << 29)
+// #define BM_ATOMIC_CONTINUE		(1 << 30)
+// #define BM_HIT_READ			(1 << 31)
+// #define BM_HIT_READ_ATOMIC_S		(1 << 0)
+// #define BM_HIT_READ_ATOMIC_EM		(1 << 1)
+// #define BM_HIT_WRITE_S			(1 << 2)
+// #define BM_HIT_WRITE_EM			(1 << 3)
+// #define BM_MISS_READ			(1 << 4)
+// #define BM_MISS_READ_ATOMIC		(1 << 5)
+// #define BM_MISS_WRITE			(1 << 6)
+// #define BM_FLUSH_READ_SET		(1 << 7)
 
-#define BM_LLC_SEND_MEM_REQ (1 << 0)
-#define BM_LLC_GET_MEM_RSP  (1 << 1)
-#define BM_LLC_GET_REQ_IN   (1 << 2)
-#define BM_LLC_GET_RSP_IN   (1 << 3)
-#define BM_LLC_SEND_RSP_OUT (1 << 4)
-#define BM_LLC_SEND_FWD_OUT (1 << 5)
-#define BM_LLC_GETS         (1 << 6)
-#define BM_LLC_GETM         (1 << 7)
-#define BM_LLC_PUTS         (1 << 8)
-#define BM_LLC_PUTM         (1 << 9)
+//
+// LLC
+//
 
-#define AS_GENERIC		(1 << 0)
-#define AS_GETS_S_NOSHARE	(1 << 1)
-#define AS_GETS_S_ALREADYSHARE	(1 << 2)
-#define AS_GETS_EM_ALREADYOWN	(1 << 3)
-#define AS_GETS_SD_ALREADYSHARE (1 << 4)
-#define AS_GETM_EM_ALREADYOWN	(1 << 5)
+// #define LLC_ASSERT_WIDTH    6
+// #define LLC_BOOKMARK_WIDTH  10
 
-// report
+// #define BM_LLC_SEND_MEM_REQ (1 << 0)
+// #define BM_LLC_GET_MEM_RSP  (1 << 1)
+// #define BM_LLC_GET_REQ_IN   (1 << 2)
+// #define BM_LLC_GET_RSP_IN   (1 << 3)
+// #define BM_LLC_SEND_RSP_OUT (1 << 4)
+// #define BM_LLC_SEND_FWD_OUT (1 << 5)
+// #define BM_LLC_GETS         (1 << 6)
+// #define BM_LLC_GETM         (1 << 7)
+// #define BM_LLC_PUTS         (1 << 8)
+// #define BM_LLC_PUTM         (1 << 9)
+
+// #define AS_GENERIC		(1 << 0)
+// #define AS_GETS_S_NOSHARE	(1 << 1)
+// #define AS_GETS_S_ALREADYSHARE	(1 << 2)
+// #define AS_GETS_EM_ALREADYOWN	(1 << 3)
+// #define AS_GETS_SD_ALREADYSHARE (1 << 4)
+// #define AS_GETM_EM_ALREADYOWN	(1 << 5)
+
+//
+// Reporting
+//
+
 #define RPT_OFF 0
 #define RPT_ON  1
 #define RPT_TB  RPT_ON

@@ -18,7 +18,7 @@ typedef sc_uint<CPU_MSG_TYPE_WIDTH>	cpu_msg_t; // CPU bus requests
 typedef sc_uint<COH_MSG_TYPE_WIDTH>	coh_msg_t; // Requests without DMA, Forwards, Responses
 typedef sc_uint<MIX_MSG_TYPE_WIDTH>	mix_msg_t; // Requests if including DMA 
 typedef sc_uint<HSIZE_WIDTH>		hsize_t;
-typedef sc_uint<HPROT_WIDTH>		hprot_t;
+typedef sc_uint<HPROT_WIDTH>    	hprot_t;
 typedef sc_uint<INVACK_CNT_WIDTH>	invack_cnt_t;
 typedef sc_uint<INVACK_CNT_CALC_WIDTH>	invack_cnt_calc_t;
 typedef sc_uint<ADDR_BITS>		addr_t;

@@ -148,14 +148,13 @@ public:
     void get_cpu_req(l2_cpu_req_t &cpu_req);
     void get_fwd_in(l2_fwd_in_t &fwd_in);
     void get_rsp_in(l2_rsp_in_t &rsp_in);
-    void get_flush(bool &is_flush_all);
+    bool get_flush();
 
     /* Functions to send output messages */
     void send_rd_rsp(line_t lines);
     void send_inval(line_addr_t addr_inval);
     void send_req_out(coh_msg_t coh_msg, hprot_t hprot, line_addr_t line_addr, line_t lines);
-    void send_rsp_out(coh_msg_t coh_msg, cache_id_t req_id, sc_uint<2> to_req, 
-		      line_addr_t line_addr, line_t line);
+    void send_rsp_out(coh_msg_t coh_msg, cache_id_t req_id, bool to_req, line_addr_t line_addr, line_t line);
 
     /* Functions to move around buffered lines */
     void fill_reqs(cpu_msg_t cpu_msg, addr_breakdown_t addr_br, l2_tag_t tag_estall, l2_way_t way_hit, 

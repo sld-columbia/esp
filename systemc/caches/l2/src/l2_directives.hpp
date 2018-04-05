@@ -8,7 +8,7 @@
     HLS_FLATTEN_ARRAY(tag_buf);			\
     HLS_FLATTEN_ARRAY(state_buf);		\
     HLS_FLATTEN_ARRAY(hprot_buf);		\
-    HLS_FLATTEN_ARRAY(lines_buf);
+    HLS_FLATTEN_ARRAY(lines_buf)
 
 /* Reset */
 
@@ -61,12 +61,12 @@
 
 #define SEND_RD_RSP							\
     if (RPT_RTL) CACHE_REPORT_TIME(sc_time_stamp(), "Send rd rsp.")
-    // HLS_DEFINE_PROTOCOL("l2-send-rd-rsp-protocol");
+    // HLS_DEFINE_PROTOCOL("l2-send-rd-rsp-protocol")
     // bookmark_tmp |= BM_SEND_RD_RSP;      	    
 
 #define SEND_INVAL							\
     if (RPT_RTL) CACHE_REPORT_TIME(sc_time_stamp(), "Send inval.")
-    // HLS_DEFINE_PROTOCOL("l2-send-inval-protocol");
+    // HLS_DEFINE_PROTOCOL("l2-send-inval-protocol")
     // bookmark_tmp |= BM_SEND_INVAL;			
 
 #define SEND_RSP_OUT							\
