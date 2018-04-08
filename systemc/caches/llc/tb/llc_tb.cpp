@@ -1,5 +1,5 @@
 /* Copyright 2017 Columbia University, SLD Group */
-
+ 
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
@@ -741,8 +741,6 @@ void llc_tb::llc_test()
 
     // go to an empty set and fill with SD states, sharers l2#12
 
-    CACHE_REPORT_INFO("Evict SD states");
-
     addr_base.set_incr(1);
     addr1 = addr_base;
     evict_way = 0;
@@ -752,9 +750,6 @@ void llc_tb::llc_test()
 	op(REQ_GETS, EXCLUSIVE, 0, addr1, null, 0, line_of_addr(addr1.line), 0, 0, 2, 1, DATA);
 	addr1.tag_incr(1);
     }
-
-
-    CACHE_REPORT_INFO("Evict SD states again");
 
     // DMA_Read evicts SD line, dirty (can't be not dirty)
     regular_evict_prep(addr_base, addr1, addr2, evict_way);
@@ -833,8 +828,6 @@ void llc_tb::llc_test()
 
     addr = null;
 
-    CACHE_REPORT_VAR(sc_time_stamp(), "flush addr ", addr.line);
-
     for (int i = 0; i < LLC_SETS; i++) {
 
 	for (int j = 0; j < LLC_WAYS; j++) {
@@ -865,14 +858,10 @@ void llc_tb::llc_test()
 
     addr = null;
 
-    CACHE_REPORT_VAR(sc_time_stamp(), "flush addr ", addr.line);
-
     for (int i = 0; i < LLC_SETS; i++) {
 
 	for (int j = 0; j < LLC_WAYS; j++) {
-	    
-            CACHE_REPORT_VAR(sc_time_stamp(), "flush addr ", addr.line);
-	    
+    
 	    get_mem_req(LLC_WRITE, addr.line, line_of_addr(addr.line));
 
 	    addr.tag_incr(1);
@@ -941,10 +930,6 @@ void llc_tb::regular_evict_prep(addr_breakdown_t addr_base, addr_breakdown_t &ad
     int tag_incr2 = (int) evict_way;
 
     evict_prep(addr_base, addr1, addr2, tag_incr1, tag_incr2, evict_way, 1);
-
-    CACHE_REPORT_VAR(sc_time_stamp(), "evict way", evict_way);
-    CACHE_REPORT_VAR(sc_time_stamp(), "addr1", addr1);
-    CACHE_REPORT_VAR(sc_time_stamp(), "addr2", addr2);
 }
 
 void llc_tb::op_rsp(coh_msg_t rsp_msg, addr_breakdown_t req_addr, line_t req_line, cache_id_t req_id)
@@ -962,9 +947,6 @@ void llc_tb::op(mix_msg_t coh_msg, llc_state_t state, bool evict, addr_breakdown
 
     // incoming request
     put_req_in(coh_msg, req_addr.line, req_line, req_id, hprot);
-
-    // CACHE_REPORT_VAR(sc_time_stamp(), "msg", coh_msg);
-    // CACHE_REPORT_VAR(sc_time_stamp(), "state", state);
 
     // evict line
     if (evict) {
@@ -1048,9 +1030,6 @@ void llc_tb::op(mix_msg_t coh_msg, llc_state_t state, bool evict, addr_breakdown
     default:
 	CACHE_REPORT_INFO("ERROR: This request type is undefined.");
     }
-
-    // CACHE_REPORT_VAR(sc_time_stamp(), "OUT_PLANE: ", out_plane);
-    // CACHE_REPORT_VAR(sc_time_stamp(), "OUT_PLANE2: ", out_plane_2);
 
     if (out_plane_2) { // fwd_inv
 
@@ -1145,8 +1124,6 @@ void llc_tb::get_rsp_out(coh_msg_t coh_msg, addr_t addr, line_t line, invack_cnt
 {
     llc_rsp_out_t rsp_out;
 
-    CACHE_REPORT_INFO("About to get rsp out");
-
     llc_rsp_out_tb.get(rsp_out);
 
     if (rsp_out.coh_msg != coh_msg       ||
@@ -1178,8 +1155,6 @@ void llc_tb::get_fwd_out(coh_msg_t coh_msg, addr_t addr, cache_id_t req_id, cach
 {
     llc_fwd_out_t fwd_out;
 
-    CACHE_REPORT_INFO("About to get fwd out");
-
     llc_fwd_out_tb.get(fwd_out);
 
     if (fwd_out.coh_msg != coh_msg       ||
@@ -1205,8 +1180,6 @@ void llc_tb::get_mem_req(bool hwrite, addr_t addr, line_t line)
 {
     llc_mem_req_t mem_req;
 
-    CACHE_REPORT_INFO("About to get mem req");
-
     mem_req = llc_mem_req_tb.get();
 
     if (mem_req.hwrite != hwrite ||
@@ -1231,8 +1204,6 @@ void llc_tb::put_mem_rsp(line_t line)
 
     rand_wait();
 
-    CACHE_REPORT_INFO("About to put mem rsp");
-
     llc_mem_rsp_tb.put(mem_rsp);
 
     if (RPT_TB)
@@ -1250,8 +1221,6 @@ void llc_tb::put_req_in(mix_msg_t coh_msg, addr_t addr, line_t line, cache_id_t 
 
     rand_wait();
 
-    CACHE_REPORT_INFO("About to put req in");
-
     llc_req_in_tb.put(req_in);
 
     if (RPT_TB)
@@ -1267,8 +1236,6 @@ void llc_tb::put_rsp_in(coh_msg_t rsp_msg, addr_t addr, line_t line, cache_id_t 
     rsp_in.req_id = req_id;
 
     rand_wait();
-
-    CACHE_REPORT_INFO("About to put rsp in");
 
     llc_rsp_in_tb.put(rsp_in);
 

@@ -233,15 +233,15 @@
 
 // If enabled there might be some fixes needed.
 // Instead it would be better to use Stratus command to keep signals.
-//#define L2_DEBUG 1
-//#define LLC_DEBUG 1
+// #define L2_DEBUG 1
+// #define LLC_DEBUG 1
 
 //
 // L2
 //
 
-// // #define ASSERT_WIDTH	19
-// // #define BOOKMARK_WIDTH	32
+// #define ASSERT_WIDTH	19
+// #define BOOKMARK_WIDTH	32
 
 // #define AS_REQS_LOOKUP   		(1 << 0)
 // #define AS_RSP_DATA_XMAD		(1 << 1)
@@ -308,26 +308,58 @@
 // LLC
 //
 
-// #define LLC_ASSERT_WIDTH    6
-// #define LLC_BOOKMARK_WIDTH  10
+#define LLC_ASSERT_WIDTH    6
+#define LLC_BOOKMARK_WIDTH  41
 
-// #define BM_LLC_SEND_MEM_REQ (1 << 0)
-// #define BM_LLC_GET_MEM_RSP  (1 << 1)
-// #define BM_LLC_GET_REQ_IN   (1 << 2)
-// #define BM_LLC_GET_RSP_IN   (1 << 3)
-// #define BM_LLC_SEND_RSP_OUT (1 << 4)
-// #define BM_LLC_SEND_FWD_OUT (1 << 5)
-// #define BM_LLC_GETS         (1 << 6)
-// #define BM_LLC_GETM         (1 << 7)
-// #define BM_LLC_PUTS         (1 << 8)
-// #define BM_LLC_PUTM         (1 << 9)
+#define BM_LLC_SEND_MEM_REQ	(1 <<  0)
+#define BM_LLC_GET_MEM_RSP	(1 <<  1)
+#define BM_LLC_GET_REQ_IN	(1 <<  2)
+#define BM_LLC_GET_RSP_IN	(1 <<  3)
+#define BM_LLC_SEND_RSP_OUT	(1 <<  4)
+#define BM_LLC_SEND_FWD_OUT	(1 <<  5)
+#define BM_LLC_GETS		(1 <<  6)
+#define BM_LLC_GETM		(1 <<  7)
+#define BM_LLC_PUTS		(1 <<  8)
+#define BM_LLC_PUTM		(1 <<  9)
+#define BM_LLC_DMA_READ         (1 << 10)
+#define BM_LLC_DMA_WRITE	(1 << 11)
+#define BM_LLC_RESET_STATES	(1 << 12)
+#define BM_LLC_FLUSH		(1 << 13)
+#define BM_FLUSH_DIRTY_LINE	(1 << 14)
+#define BM_LLC_EVICT		(1 << 15)
+#define BM_EVICT_EM		(1 << 16)
+#define BM_EVICT_S		(1 << 17)
+#define BM_EVICT_V		(1 << 18)
+#define BM_GETS_IV		(1 << 19)
+#define BM_GETS_S		(1 << 20)
+#define BM_GETS_EM		(1 << 21)
+#define BM_GETS_SD		(1 << 22)
+#define BM_GETM_IV		(1 << 23)
+#define BM_GETM_S		(1 << 24)
+#define BM_GETM_E		(1 << 25)
+#define BM_GETM_M		(1 << 26)
+#define BM_GETM_SD		(1 << 27)
+#define BM_PUTS_IVM		(1 << 28)
+#define BM_PUTS_S		(1 << 29)
+#define BM_PUTS_E		(1 << 30)
+#define BM_PUTS_SD		(1 << 31)
+#define BM_PUTM_IV		((1 << 31) <<  1)
+#define BM_PUTM_S		((1 << 31) <<  2)
+#define BM_PUTM_EM		((1 << 31) <<  3)
+#define BM_PUTM_SD		((1 << 31) <<  4)
+#define BM_DMA_READ_SD		((1 << 31) <<  5)
+#define BM_DMA_READ_I		((1 << 31) <<  6)
+#define BM_DMA_READ_NOTSD	((1 << 31) <<  7)
+#define BM_DMA_WRITE_SD		((1 << 31) <<  8)
+#define BM_DMA_WRITE_I		((1 << 31) <<  9)
+#define BM_DMA_WRITE_NOTSD	((1 << 31) << 10)
 
-// #define AS_GENERIC		(1 << 0)
-// #define AS_GETS_S_NOSHARE	(1 << 1)
-// #define AS_GETS_S_ALREADYSHARE	(1 << 2)
-// #define AS_GETS_EM_ALREADYOWN	(1 << 3)
-// #define AS_GETS_SD_ALREADYSHARE (1 << 4)
-// #define AS_GETM_EM_ALREADYOWN	(1 << 5)
+#define AS_GENERIC		(1 << 0)
+#define AS_GETS_S_NOSHARE	(1 << 1)
+#define AS_GETS_S_ALREADYSHARE	(1 << 2)
+#define AS_GETS_EM_ALREADYOWN	(1 << 3)
+#define AS_GETS_SD_ALREADYSHARE (1 << 4)
+#define AS_GETM_EM_ALREADYOWN	(1 << 5)
 
 //
 // Reporting

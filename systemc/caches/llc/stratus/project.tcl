@@ -30,7 +30,7 @@ define_system_module tb  ../tb/llc_tb.cpp ../tb/system.cpp ../tb/sc_main.cpp
 
 foreach sets [list 256] {
 
-    foreach ways [list 16 32] {
+    foreach ways [list 16] {
 
 	set pars "_$sets\SETS_$ways\WAYS"
 
