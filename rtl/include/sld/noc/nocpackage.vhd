@@ -87,14 +87,17 @@ package nocpackage is
   constant REQ_GETM_B   : noc_msg_type := "110";  --Get Modified (Byte)
   constant REQ_GETM_HW  : noc_msg_type := "111";  --Get Modified (Half word)
   -- Cachable data plane 2 -> forwarded messages
-  constant FWD_GETS     : noc_msg_type := "000";
-  constant FWD_GETM     : noc_msg_type := "001";
-  constant FWD_INV      : noc_msg_type := "010";  --Invalidation
+  constant FWD_GETS       : noc_msg_type := "000";
+  constant FWD_GETM       : noc_msg_type := "001";
+  constant FWD_INV        : noc_msg_type := "010";  --Invalidation
+  constant FWD_PUT_ACK    : noc_msg_type := "011";  --Put Acknowledge
+  constant FWD_GETM_NOCOH : noc_msg_type := "100";  --Not coherent
+  constant FWD_INV_NOCOH  : noc_msg_type := "101";  --Not coherent
   -- Cachable data plane 3 -> response messages
   constant RSP_DATA     : noc_msg_type := "000";  --CacheLine
   constant RSP_EDATA    : noc_msg_type := "001";  --Cache Line (Exclusive)
   constant RSP_INV_ACK  : noc_msg_type := "010";  --Invalidation Acknowledge
-  constant RSP_PUT_ACK  : noc_msg_type := "011";  -- Put Acknowledge
+  constant RSP_DATA_DMA : noc_msg_type := "011";  --CacheLine (DMA)
   -- Non cachable data data plane 4 -> DMA transfers
   constant DMA_TO_DEV   : noc_msg_type := "001";
   constant DMA_FROM_DEV : noc_msg_type := "010";
