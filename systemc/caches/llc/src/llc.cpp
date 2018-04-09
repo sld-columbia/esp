@@ -21,12 +21,6 @@ void llc::ctrl()
 	bool is_rsp_to_get = false;
 	bool is_req_to_get = false;
 
-	{
-	    HLS_DEFINE_PROTOCOL("nbget-protocol");
-
-	    wait();
-	}
-
 	if (llc_rst_tb.nb_can_get()) {
 
 	    is_rst_to_get = true;
@@ -649,11 +643,16 @@ void llc::ctrl()
 	    dirty_bit_buf_out[i] = dirty_bit_buf[i];
 	}
 #endif
+
+	{
+	    HLS_DEFINE_PROTOCOL("nbget-protocol");
+	    wait();
+	}
     }
 
 /* 
  * End of main loop
-     */
+ */
 
 }
 
