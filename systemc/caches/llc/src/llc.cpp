@@ -22,25 +22,23 @@ void llc::ctrl()
 	bool is_req_to_get = false;
 
 	{
-
 	    HLS_DEFINE_PROTOCOL("nbget-protocol");
 
-	    if (llc_rst_tb.nb_can_get()) {
-
-		is_rst_to_get = true;
-
-	    } else if (llc_rsp_in.nb_can_get()) {
-
-		is_rsp_to_get = true;
-
-	    } else if ((llc_req_in.nb_can_get() && !req_stall) || 
-		       (!req_stall && req_in_stalled_valid)) {
-
-		is_req_to_get = true;
-	    }
-
 	    wait();
+	}
 
+	if (llc_rst_tb.nb_can_get()) {
+
+	    is_rst_to_get = true;
+
+	} else if (llc_rsp_in.nb_can_get()) {
+
+	    is_rsp_to_get = true;
+
+	} else if ((llc_req_in.nb_can_get() && !req_stall) || 
+		   (!req_stall && req_in_stalled_valid)) {
+
+	    is_req_to_get = true;
 	}
 
 #ifdef LLC_DEBUG
@@ -129,10 +127,10 @@ void llc::ctrl()
 
 	    lookup(line_br.tag, line_br.set, way, evict, llc_addr);
 
-	    {
-		HLS_DEFINE_PROTOCOL("llc-rsp-in-after-lookup");
-		wait();
-	    }
+	    // {
+	    // 	HLS_DEFINE_PROTOCOL("llc-rsp-in-after-lookup");
+	    // 	wait();
+	    // }
 
 	    if (sharers_buf[way] != 0) {
 		states.port1[0][llc_addr] = SHARED;
@@ -164,11 +162,6 @@ void llc::ctrl()
 
 	    lookup(line_br.tag, line_br.set, way, evict, llc_addr);
 
-	    {
-		HLS_DEFINE_PROTOCOL("llc-req-in-after-lookup");
-		wait();
-	    }
-
 	    // if (evict && ((req_in.coh_msg != REQ_GETS && req_in.coh_msg != REQ_GETM) ||
 	    // 		  (state_buf[way] != VALID))) {
 	    // 	GENERIC_ASSERT;
@@ -183,6 +176,11 @@ void llc::ctrl()
 #ifdef LLC_DEBUG
 		evict_addr_out.write(addr_evict);
 #endif
+
+		{
+		    HLS_DEFINE_PROTOCOL("llc-req-in-after-lookup");
+		    wait();
+		}
 
 		if (way == evict_way_buf)
 		    evict_ways.port1[0][line_br.set] = evict_way_buf + 1;
@@ -243,14 +241,8 @@ void llc::ctrl()
 	    llc_state_t state;
 	    mix_msg_t msg;
 
-	    {
-		HLS_DEFINE_PROTOCOL("remove-please");
-
-		state = state_buf[way];
-		msg = req_in.coh_msg;
-
-		wait();
-	    }
+	    state = state_buf[way];
+	    msg = req_in.coh_msg;
 
 	    switch (msg) {
 
@@ -267,29 +259,30 @@ void llc::ctrl()
 
 		    if (state == INVALID) {
 			send_mem_req(READ, req_in.addr, req_in.hprot, 0);
-
-			wait();
-
 			get_mem_rsp(line_buf[way]);
+		    }
+
+		    if (req_in.hprot == 0) {
+			send_rsp_out(RSP_DATA, req_in.addr, line_buf[way], req_in.req_id, 0, 0);
 
 			wait();
 
+			states.port1[0][llc_addr] = SHARED;
+			sharers.port1[0][llc_addr] = 1 << req_in.req_id;
+		    } else {
+			send_rsp_out(RSP_EDATA, req_in.addr, line_buf[way], req_in.req_id, 0, 0);
+
+			wait();
+
+			states.port1[0][llc_addr] = EXCLUSIVE;
+			owners.port1[0][llc_addr] = req_in.req_id;
+		    }
+
+		    if (state == INVALID) {
 			hprots.port1[0][llc_addr] = req_in.hprot;
 			lines.port1[0][llc_addr] = line_buf[way];
 			tags.port1[0][llc_addr] = line_br.tag;
 			dirty_bits.port1[0][llc_addr] = 0;
-		    } else {
-			wait();
-		    }
-
-		    if (req_in.hprot == 0) {
-			states.port1[0][llc_addr] = SHARED;
-			send_rsp_out(RSP_DATA, req_in.addr, line_buf[way], req_in.req_id, 0, 0);
-			sharers.port1[0][llc_addr] = 1 << req_in.req_id;
-		    } else {
-			states.port1[0][llc_addr] = EXCLUSIVE;
-			owners.port1[0][llc_addr] = req_in.req_id;
-			send_rsp_out(RSP_EDATA, req_in.addr, line_buf[way], req_in.req_id, 0, 0);
 		    }
 		}
 		break;
@@ -298,10 +291,11 @@ void llc::ctrl()
 		{
 		    GETS_S;
 
+		    send_rsp_out(RSP_DATA, req_in.addr, line_buf[way], req_in.req_id, 0, 0);
+
 		    wait();
 
 		    sharers.port1[0][llc_addr] = sharers_buf[way] | (1 << req_in.req_id);
-		    send_rsp_out(RSP_DATA, req_in.addr, line_buf[way], req_in.req_id, 0, 0);
 		}
 		break;
 
@@ -310,13 +304,12 @@ void llc::ctrl()
 		{
 		    GETS_EM;
 
+		    send_fwd_out(FWD_GETS, req_in.addr, req_in.req_id, owner_buf[way]);
+
 		    wait();
 
 		    sharers.port1[0][llc_addr] = (1 << req_in.req_id) | (1 << owner_buf[way]);
 		    states.port1[0][llc_addr] = SD;
-
-		    send_fwd_out(FWD_GETS, req_in.addr, req_in.req_id, owner_buf[way]);
-
 		}
 		break;
 
@@ -351,26 +344,22 @@ void llc::ctrl()
 
 		    if (state == INVALID) {
 			send_mem_req(READ, req_in.addr, req_in.hprot, 0);
-
-			wait();
-
 			get_mem_rsp(line_buf[way]);
+		    }
 
-			wait();
+		    send_rsp_out(RSP_DATA, req_in.addr, line_buf[way], req_in.req_id, 0, 0);
 
+		    wait();
+		
+		    owners.port1[0][llc_addr] = req_in.req_id;
+		    states.port1[0][llc_addr] = MODIFIED;
+
+		    if (state == INVALID) {
 			hprots.port1[0][llc_addr] = req_in.hprot;
 			lines.port1[0][llc_addr] = line_buf[way];
 			tags.port1[0][llc_addr] = line_br.tag;
 			dirty_bits.port1[0][llc_addr] = 0;
-
-		    } else {
-
-			wait();
 		    }
-		
-		    owners.port1[0][llc_addr] = req_in.req_id;
-		    states.port1[0][llc_addr] = MODIFIED;
-		    send_rsp_out(RSP_DATA, req_in.addr, line_buf[way], req_in.req_id, 0, 0);
 		}
 		break;
 
@@ -380,14 +369,6 @@ void llc::ctrl()
 
 		    invack_cnt_t invack_cnt = 0;
 
-		    wait();
-
-		    states.port1[0][llc_addr] = MODIFIED;
-		    owners.port1[0][llc_addr] = req_in.req_id;
-		    sharers.port1[0][llc_addr] = 0;
-
-		    // {
-			// HLS_DEFINE_PROTOCOL("llc-getm-shared-protocol");
 		    for (int i = 0; i < MAX_N_L2; i++) {
 			if (((sharers_buf[way] & (1 << i)) != 0) && (i != req_in.req_id)) {
 			    send_fwd_out(FWD_INV, req_in.addr, req_in.req_id, i);
@@ -397,7 +378,10 @@ void llc::ctrl()
 		    }
 
 		    send_rsp_out(RSP_DATA, req_in.addr, line_buf[way], req_in.req_id, 0, invack_cnt);
-		    // }
+
+		    states.port1[0][llc_addr] = MODIFIED;
+		    owners.port1[0][llc_addr] = req_in.req_id;
+		    sharers.port1[0][llc_addr] = 0;
 		}
 		break;
 		    
@@ -405,11 +389,12 @@ void llc::ctrl()
 		{
 		    GETM_E;
 
+		    send_fwd_out(FWD_GETM, req_in.addr, req_in.req_id, owner_buf[way]);
+
 		    wait();
 
 		    states.port1[0][llc_addr] = MODIFIED;
 		    owners.port1[0][llc_addr] = req_in.req_id;
-		    send_fwd_out(FWD_GETM, req_in.addr, req_in.req_id, owner_buf[way]);
 		}
 		break;
 
@@ -417,10 +402,11 @@ void llc::ctrl()
 		{
 		    GETM_M;
 
+		    send_fwd_out(FWD_GETM, req_in.addr, req_in.req_id, owner_buf[way]);
+
 		    wait();
 
 		    owners.port1[0][llc_addr] = req_in.req_id;
-		    send_fwd_out(FWD_GETM, req_in.addr, req_in.req_id, owner_buf[way]);
 		}
 		break;
 
@@ -583,11 +569,12 @@ void llc::ctrl()
 			DMA_READ_I;
 
 			send_mem_req(READ, req_in.addr, req_in.hprot, 0);
-
-			wait();
-
 			get_mem_rsp(line_buf[way]);
+		    }
 
+		    send_rsp_out(RSP_DATA, req_in.addr, line_buf[way], req_in.req_id, 0, 0);
+
+		    if (state == INVALID) {
 			wait();
 
 			hprots.port1[0][llc_addr] = DATA;
@@ -595,12 +582,7 @@ void llc::ctrl()
 			tags.port1[0][llc_addr] = line_br.tag;
 			states.port1[0][llc_addr] = VALID;
 			dirty_bits.port1[0][llc_addr] = 0;
-		    } else {
-
-			wait();
 		    }
-
-		    send_rsp_out(RSP_DATA, req_in.addr, line_buf[way], req_in.req_id, 0, 0);
 		}
 
 		break;
@@ -667,11 +649,6 @@ void llc::ctrl()
 	    dirty_bit_buf_out[i] = dirty_bit_buf[i];
 	}
 #endif
-
-	{
-	    HLS_DEFINE_PROTOCOL("llc-end-of-main-loop");
-	    wait();
-	}
     }
 
 /* 
@@ -831,62 +808,174 @@ inline void llc::reset_states()
 
 void llc::read_set(llc_addr_t base, llc_way_t way_offset)
 {
-    tag_buf[0 + way_offset]	  = tags.port2[0][base + 0 + way_offset];
-    state_buf[0 + way_offset]     = states.port2[0][base + 0 + way_offset];
-    hprot_buf[0 + way_offset]     = hprots.port2[0][base + 0 + way_offset];
-    line_buf[0 + way_offset]	  = lines.port2[0][base + 0 + way_offset];
-    owner_buf[0 + way_offset]	  = owners.port2[0][base + 0 + way_offset];
-    sharers_buf[0 + way_offset]	  = sharers.port2[0][base + 0 + way_offset];
-    dirty_bit_buf[0 + way_offset] = dirty_bits.port2[0][base + 0 + way_offset];
-    tag_buf[1 + way_offset]	  = tags.port3[0][base + 1 + way_offset];
-    state_buf[1 + way_offset]     = states.port3[0][base + 1 + way_offset];
-    hprot_buf[1 + way_offset]     = hprots.port3[0][base + 1 + way_offset];
-    line_buf[1 + way_offset]	  = lines.port3[0][base + 1 + way_offset];
-    owner_buf[1 + way_offset]	  = owners.port3[0][base + 1 + way_offset];
-    sharers_buf[1 + way_offset]	  = sharers.port3[0][base + 1 + way_offset];
-    dirty_bit_buf[1 + way_offset] = dirty_bits.port3[0][base + 1 + way_offset];
-    tag_buf[2 + way_offset]	  = tags.port4[0][base + 2 + way_offset];
-    state_buf[2 + way_offset]     = states.port4[0][base + 2 + way_offset];
-    hprot_buf[2 + way_offset]     = hprots.port4[0][base + 2 + way_offset];
-    line_buf[2 + way_offset]	  = lines.port4[0][base + 2 + way_offset];
-    owner_buf[2 + way_offset]	  = owners.port4[0][base + 2 + way_offset];
-    sharers_buf[2 + way_offset]	  = sharers.port4[0][base + 2 + way_offset];
-    dirty_bit_buf[2 + way_offset] = dirty_bits.port4[0][base + 2 + way_offset];
-    tag_buf[3 + way_offset]	  = tags.port5[0][base + 3 + way_offset];
-    state_buf[3 + way_offset]     = states.port5[0][base + 3 + way_offset];
-    hprot_buf[3 + way_offset]     = hprots.port5[0][base + 3 + way_offset];
-    line_buf[3 + way_offset]	  = lines.port5[0][base + 3 + way_offset];
-    owner_buf[3 + way_offset]	  = owners.port5[0][base + 3 + way_offset];
-    sharers_buf[3 + way_offset]	  = sharers.port5[0][base + 3 + way_offset];
-    dirty_bit_buf[3 + way_offset] = dirty_bits.port5[0][base + 3 + way_offset];
-    tag_buf[4 + way_offset]	  = tags.port6[0][base + 4 + way_offset];
-    state_buf[4 + way_offset]     = states.port6[0][base + 4 + way_offset];
-    hprot_buf[4 + way_offset]     = hprots.port6[0][base + 4 + way_offset];
-    line_buf[4 + way_offset]	  = lines.port6[0][base + 4 + way_offset];
-    owner_buf[4 + way_offset]	  = owners.port6[0][base + 4 + way_offset];
-    sharers_buf[4 + way_offset]	  = sharers.port6[0][base + 4 + way_offset];
-    dirty_bit_buf[4 + way_offset] = dirty_bits.port6[0][base + 4 + way_offset];
-    tag_buf[5 + way_offset]	  = tags.port7[0][base + 5 + way_offset];
-    state_buf[5 + way_offset]     = states.port7[0][base + 5 + way_offset];
-    hprot_buf[5 + way_offset]     = hprots.port7[0][base + 5 + way_offset];
-    line_buf[5 + way_offset]	  = lines.port7[0][base + 5 + way_offset];
-    owner_buf[5 + way_offset]     = owners.port7[0][base + 5 + way_offset];
-    sharers_buf[5 + way_offset]	  = sharers.port7[0][base + 5 + way_offset];
-    dirty_bit_buf[5 + way_offset] = dirty_bits.port7[0][base + 5 + way_offset];
-    tag_buf[6 + way_offset]	  = tags.port8[0][base + 6 + way_offset];
-    state_buf[6 + way_offset]     = states.port8[0][base + 6 + way_offset];
-    hprot_buf[6 + way_offset]     = hprots.port8[0][base + 6 + way_offset];
-    line_buf[6 + way_offset]      = lines.port8[0][base + 6 + way_offset];
-    owner_buf[6 + way_offset]     = owners.port8[0][base + 6 + way_offset];
-    sharers_buf[6 + way_offset]	  = sharers.port8[0][base + 6 + way_offset];
-    dirty_bit_buf[6 + way_offset] = dirty_bits.port8[0][base + 6 + way_offset];
-    tag_buf[7 + way_offset]	  = tags.port9[0][base + 7 + way_offset];
-    state_buf[7 + way_offset]     = states.port9[0][base + 7 + way_offset];
-    hprot_buf[7 + way_offset]     = hprots.port9[0][base + 7 + way_offset];
-    line_buf[7 + way_offset]      = lines.port9[0][base + 7 + way_offset];
-    owner_buf[7 + way_offset]	  = owners.port9[0][base + 7 + way_offset];
-    sharers_buf[7 + way_offset]	  = sharers.port9[0][base + 7 + way_offset];
-    dirty_bit_buf[7 + way_offset] = dirty_bits.port9[0][base + 7 + way_offset];
+    // tag_buf[0 + way_offset]	   = tags.port2[0][base + 0 + way_offset];
+    // state_buf[0 + way_offset]	   = states.port2[0][base + 0 + way_offset];
+    // hprot_buf[0 + way_offset]	   = hprots.port2[0][base + 0 + way_offset];
+    // line_buf[0 + way_offset]	   = lines.port2[0][base + 0 + way_offset];
+    // owner_buf[0 + way_offset]	   = owners.port2[0][base + 0 + way_offset];
+    // sharers_buf[0 + way_offset]	   = sharers.port2[0][base + 0 + way_offset];
+    // dirty_bit_buf[0 + way_offset]  = dirty_bits.port2[0][base + 0 + way_offset];
+    // tag_buf[1 + way_offset]	   = tags.port3[0][base + 1 + way_offset];
+    // state_buf[1 + way_offset]	   = states.port3[0][base + 1 + way_offset];
+    // hprot_buf[1 + way_offset]	   = hprots.port3[0][base + 1 + way_offset];
+    // line_buf[1 + way_offset]	   = lines.port3[0][base + 1 + way_offset];
+    // owner_buf[1 + way_offset]	   = owners.port3[0][base + 1 + way_offset];
+    // sharers_buf[1 + way_offset]	   = sharers.port3[0][base + 1 + way_offset];
+    // dirty_bit_buf[1 + way_offset]  = dirty_bits.port3[0][base + 1 + way_offset];
+    // tag_buf[2 + way_offset]	   = tags.port4[0][base + 2 + way_offset];
+    // state_buf[2 + way_offset]	   = states.port4[0][base + 2 + way_offset];
+    // hprot_buf[2 + way_offset]	   = hprots.port4[0][base + 2 + way_offset];
+    // line_buf[2 + way_offset]	   = lines.port4[0][base + 2 + way_offset];
+    // owner_buf[2 + way_offset]	   = owners.port4[0][base + 2 + way_offset];
+    // sharers_buf[2 + way_offset]	   = sharers.port4[0][base + 2 + way_offset];
+    // dirty_bit_buf[2 + way_offset]  = dirty_bits.port4[0][base + 2 + way_offset];
+    // tag_buf[3 + way_offset]	   = tags.port5[0][base + 3 + way_offset];
+    // state_buf[3 + way_offset]	   = states.port5[0][base + 3 + way_offset];
+    // hprot_buf[3 + way_offset]	   = hprots.port5[0][base + 3 + way_offset];
+    // line_buf[3 + way_offset]	   = lines.port5[0][base + 3 + way_offset];
+    // owner_buf[3 + way_offset]	   = owners.port5[0][base + 3 + way_offset];
+    // sharers_buf[3 + way_offset]	   = sharers.port5[0][base + 3 + way_offset];
+    // dirty_bit_buf[3 + way_offset]  = dirty_bits.port5[0][base + 3 + way_offset];
+    // tag_buf[4 + way_offset]	   = tags.port6[0][base + 4 + way_offset];
+    // state_buf[4 + way_offset]	   = states.port6[0][base + 4 + way_offset];
+    // hprot_buf[4 + way_offset]	   = hprots.port6[0][base + 4 + way_offset];
+    // line_buf[4 + way_offset]	   = lines.port6[0][base + 4 + way_offset];
+    // owner_buf[4 + way_offset]	   = owners.port6[0][base + 4 + way_offset];
+    // sharers_buf[4 + way_offset]	   = sharers.port6[0][base + 4 + way_offset];
+    // dirty_bit_buf[4 + way_offset]  = dirty_bits.port6[0][base + 4 + way_offset];
+    // tag_buf[5 + way_offset]	   = tags.port7[0][base + 5 + way_offset];
+    // state_buf[5 + way_offset]	   = states.port7[0][base + 5 + way_offset];
+    // hprot_buf[5 + way_offset]	   = hprots.port7[0][base + 5 + way_offset];
+    // line_buf[5 + way_offset]	   = lines.port7[0][base + 5 + way_offset];
+    // owner_buf[5 + way_offset]	   = owners.port7[0][base + 5 + way_offset];
+    // sharers_buf[5 + way_offset]	   = sharers.port7[0][base + 5 + way_offset];
+    // dirty_bit_buf[5 + way_offset]  = dirty_bits.port7[0][base + 5 + way_offset];
+    // tag_buf[6 + way_offset]	   = tags.port8[0][base + 6 + way_offset];
+    // state_buf[6 + way_offset]	   = states.port8[0][base + 6 + way_offset];
+    // hprot_buf[6 + way_offset]	   = hprots.port8[0][base + 6 + way_offset];
+    // line_buf[6 + way_offset]	   = lines.port8[0][base + 6 + way_offset];
+    // owner_buf[6 + way_offset]	   = owners.port8[0][base + 6 + way_offset];
+    // sharers_buf[6 + way_offset]	   = sharers.port8[0][base + 6 + way_offset];
+    // dirty_bit_buf[6 + way_offset]  = dirty_bits.port8[0][base + 6 + way_offset];
+    // tag_buf[7 + way_offset]	   = tags.port9[0][base + 7 + way_offset];
+    // state_buf[7 + way_offset]	   = states.port9[0][base + 7 + way_offset];
+    // hprot_buf[7 + way_offset]	   = hprots.port9[0][base + 7 + way_offset];
+    // line_buf[7 + way_offset]	   = lines.port9[0][base + 7 + way_offset];
+    // owner_buf[7 + way_offset]	   = owners.port9[0][base + 7 + way_offset];
+    // sharers_buf[7 + way_offset]	   = sharers.port9[0][base + 7 + way_offset];
+    // dirty_bit_buf[7 + way_offset]  = dirty_bits.port9[0][base + 7 + way_offset];
+    tag_buf[0 + way_offset]	   = tags.port2[0][base + 0 + way_offset];
+    state_buf[0 + way_offset]	   = states.port2[0][base + 0 + way_offset];
+    hprot_buf[0 + way_offset]	   = hprots.port2[0][base + 0 + way_offset];
+    line_buf[0 + way_offset]	   = lines.port2[0][base + 0 + way_offset];
+    owner_buf[0 + way_offset]	   = owners.port2[0][base + 0 + way_offset];
+    sharers_buf[0 + way_offset]	   = sharers.port2[0][base + 0 + way_offset];
+    dirty_bit_buf[0 + way_offset]  = dirty_bits.port2[0][base + 0 + way_offset];
+    tag_buf[1 + way_offset]	   = tags.port3[0][base + 1 + way_offset];
+    state_buf[1 + way_offset]	   = states.port3[0][base + 1 + way_offset];
+    hprot_buf[1 + way_offset]	   = hprots.port3[0][base + 1 + way_offset];
+    line_buf[1 + way_offset]	   = lines.port3[0][base + 1 + way_offset];
+    owner_buf[1 + way_offset]	   = owners.port3[0][base + 1 + way_offset];
+    sharers_buf[1 + way_offset]	   = sharers.port3[0][base + 1 + way_offset];
+    dirty_bit_buf[1 + way_offset]  = dirty_bits.port3[0][base + 1 + way_offset];
+    tag_buf[2 + way_offset]	   = tags.port4[0][base + 2 + way_offset];
+    state_buf[2 + way_offset]	   = states.port4[0][base + 2 + way_offset];
+    hprot_buf[2 + way_offset]	   = hprots.port4[0][base + 2 + way_offset];
+    line_buf[2 + way_offset]	   = lines.port4[0][base + 2 + way_offset];
+    owner_buf[2 + way_offset]	   = owners.port4[0][base + 2 + way_offset];
+    sharers_buf[2 + way_offset]	   = sharers.port4[0][base + 2 + way_offset];
+    dirty_bit_buf[2 + way_offset]  = dirty_bits.port4[0][base + 2 + way_offset];
+    tag_buf[3 + way_offset]	   = tags.port5[0][base + 3 + way_offset];
+    state_buf[3 + way_offset]	   = states.port5[0][base + 3 + way_offset];
+    hprot_buf[3 + way_offset]	   = hprots.port5[0][base + 3 + way_offset];
+    line_buf[3 + way_offset]	   = lines.port5[0][base + 3 + way_offset];
+    owner_buf[3 + way_offset]	   = owners.port5[0][base + 3 + way_offset];
+    sharers_buf[3 + way_offset]	   = sharers.port5[0][base + 3 + way_offset];
+    dirty_bit_buf[3 + way_offset]  = dirty_bits.port5[0][base + 3 + way_offset];
+    tag_buf[4 + way_offset]	   = tags.port6[0][base + 4 + way_offset];
+    state_buf[4 + way_offset]	   = states.port6[0][base + 4 + way_offset];
+    hprot_buf[4 + way_offset]	   = hprots.port6[0][base + 4 + way_offset];
+    line_buf[4 + way_offset]	   = lines.port6[0][base + 4 + way_offset];
+    owner_buf[4 + way_offset]	   = owners.port6[0][base + 4 + way_offset];
+    sharers_buf[4 + way_offset]	   = sharers.port6[0][base + 4 + way_offset];
+    dirty_bit_buf[4 + way_offset]  = dirty_bits.port6[0][base + 4 + way_offset];
+    tag_buf[5 + way_offset]	   = tags.port7[0][base + 5 + way_offset];
+    state_buf[5 + way_offset]	   = states.port7[0][base + 5 + way_offset];
+    hprot_buf[5 + way_offset]	   = hprots.port7[0][base + 5 + way_offset];
+    line_buf[5 + way_offset]	   = lines.port7[0][base + 5 + way_offset];
+    owner_buf[5 + way_offset]	   = owners.port7[0][base + 5 + way_offset];
+    sharers_buf[5 + way_offset]	   = sharers.port7[0][base + 5 + way_offset];
+    dirty_bit_buf[5 + way_offset]  = dirty_bits.port7[0][base + 5 + way_offset];
+    tag_buf[6 + way_offset]	   = tags.port8[0][base + 6 + way_offset];
+    state_buf[6 + way_offset]	   = states.port8[0][base + 6 + way_offset];
+    hprot_buf[6 + way_offset]	   = hprots.port8[0][base + 6 + way_offset];
+    line_buf[6 + way_offset]	   = lines.port8[0][base + 6 + way_offset];
+    owner_buf[6 + way_offset]	   = owners.port8[0][base + 6 + way_offset];
+    sharers_buf[6 + way_offset]	   = sharers.port8[0][base + 6 + way_offset];
+    dirty_bit_buf[6 + way_offset]  = dirty_bits.port8[0][base + 6 + way_offset];
+    tag_buf[7 + way_offset]	   = tags.port9[0][base + 7 + way_offset];
+    state_buf[7 + way_offset]	   = states.port9[0][base + 7 + way_offset];
+    hprot_buf[7 + way_offset]	   = hprots.port9[0][base + 7 + way_offset];
+    line_buf[7 + way_offset]	   = lines.port9[0][base + 7 + way_offset];
+    owner_buf[7 + way_offset]	   = owners.port9[0][base + 7 + way_offset];
+    sharers_buf[7 + way_offset]	   = sharers.port9[0][base + 7 + way_offset];
+    dirty_bit_buf[7 + way_offset]  = dirty_bits.port9[0][base + 7 + way_offset];
+    tag_buf[8 + way_offset]	   = tags.port10[8][base + 8 + way_offset];
+    state_buf[8 + way_offset]	   = states.port10[8][base + 8 + way_offset];
+    hprot_buf[8 + way_offset]	   = hprots.port10[8][base + 8 + way_offset];
+    line_buf[8 + way_offset]	   = lines.port10[8][base + 8 + way_offset];
+    owner_buf[8 + way_offset]	   = owners.port10[8][base + 8 + way_offset];
+    sharers_buf[8 + way_offset]	   = sharers.port10[8][base + 8 + way_offset];
+    dirty_bit_buf[8 + way_offset]  = dirty_bits.port10[8][base + 8 + way_offset];
+    tag_buf[9 + way_offset]	   = tags.port11[0][base + 9 + way_offset];
+    state_buf[9 + way_offset]	   = states.port11[0][base + 9 + way_offset];
+    hprot_buf[9 + way_offset]	   = hprots.port11[0][base + 9 + way_offset];
+    line_buf[9 + way_offset]	   = lines.port11[0][base + 9 + way_offset];
+    owner_buf[9 + way_offset]	   = owners.port11[0][base + 9 + way_offset];
+    sharers_buf[9 + way_offset]	   = sharers.port11[0][base + 9 + way_offset];
+    dirty_bit_buf[9 + way_offset]  = dirty_bits.port11[0][base + 9 + way_offset];
+    tag_buf[10 + way_offset]	   = tags.port12[0][base + 10 + way_offset];
+    state_buf[10 + way_offset]	   = states.port12[0][base + 10 + way_offset];
+    hprot_buf[10 + way_offset]	   = hprots.port12[0][base + 10 + way_offset];
+    line_buf[10 + way_offset]	   = lines.port12[0][base + 10 + way_offset];
+    owner_buf[10 + way_offset]	   = owners.port12[0][base + 10 + way_offset];
+    sharers_buf[10 + way_offset]   = sharers.port12[0][base + 10 + way_offset];
+    dirty_bit_buf[10 + way_offset] = dirty_bits.port12[0][base + 10 + way_offset];
+    tag_buf[11 + way_offset]	   = tags.port13[0][base + 11 + way_offset];
+    state_buf[11 + way_offset]	   = states.port13[0][base + 11 + way_offset];
+    hprot_buf[11 + way_offset]	   = hprots.port13[0][base + 11 + way_offset];
+    line_buf[11 + way_offset]	   = lines.port13[0][base + 11 + way_offset];
+    owner_buf[11 + way_offset]	   = owners.port13[0][base + 11 + way_offset];
+    sharers_buf[11 + way_offset]   = sharers.port13[0][base + 11 + way_offset];
+    dirty_bit_buf[11 + way_offset] = dirty_bits.port13[0][base + 11 + way_offset];
+    tag_buf[12 + way_offset]	   = tags.port14[0][base + 12 + way_offset];
+    state_buf[12 + way_offset]	   = states.port14[0][base + 12 + way_offset];
+    hprot_buf[12 + way_offset]	   = hprots.port14[0][base + 12 + way_offset];
+    line_buf[12 + way_offset]	   = lines.port14[0][base + 12 + way_offset];
+    owner_buf[12 + way_offset]	   = owners.port14[0][base + 12 + way_offset];
+    sharers_buf[12 + way_offset]   = sharers.port14[0][base + 12 + way_offset];
+    dirty_bit_buf[12 + way_offset] = dirty_bits.port14[0][base + 12 + way_offset];
+    tag_buf[13 + way_offset]	   = tags.port15[0][base + 13 + way_offset];
+    state_buf[13 + way_offset]	   = states.port15[0][base + 13 + way_offset];
+    hprot_buf[13 + way_offset]	   = hprots.port15[0][base + 13 + way_offset];
+    line_buf[13 + way_offset]	   = lines.port15[0][base + 13 + way_offset];
+    owner_buf[13 + way_offset]	   = owners.port15[0][base + 13 + way_offset];
+    sharers_buf[13 + way_offset]   = sharers.port15[0][base + 13 + way_offset];
+    dirty_bit_buf[13 + way_offset] = dirty_bits.port15[0][base + 13 + way_offset];
+    tag_buf[14 + way_offset]	   = tags.port16[0][base + 14 + way_offset];
+    state_buf[14 + way_offset]	   = states.port16[0][base + 14 + way_offset];
+    hprot_buf[14 + way_offset]	   = hprots.port16[0][base + 14 + way_offset];
+    line_buf[14 + way_offset]	   = lines.port16[0][base + 14 + way_offset];
+    owner_buf[14 + way_offset]	   = owners.port16[0][base + 14 + way_offset];
+    sharers_buf[14 + way_offset]   = sharers.port16[0][base + 14 + way_offset];
+    dirty_bit_buf[14 + way_offset] = dirty_bits.port16[0][base + 14 + way_offset];
+    tag_buf[15 + way_offset]	   = tags.port17[0][base + 15 + way_offset];
+    state_buf[15 + way_offset]	   = states.port17[0][base + 15 + way_offset];
+    hprot_buf[15 + way_offset]	   = hprots.port17[0][base + 15 + way_offset];
+    line_buf[15 + way_offset]	   = lines.port17[0][base + 15 + way_offset];
+    owner_buf[15 + way_offset]	   = owners.port17[0][base + 15 + way_offset];
+    sharers_buf[15 + way_offset]   = sharers.port17[0][base + 15 + way_offset];
+    dirty_bit_buf[15 + way_offset] = dirty_bits.port17[0][base + 15 + way_offset];
 
 #ifdef LLC_DEBUG
     evict_way_buf_out = evict_way_buf;
@@ -914,7 +1003,7 @@ void llc::lookup(llc_tag_t tag, llc_set_t set, llc_way_t &way, bool &evict, llc_
     const llc_addr_t base = (set << LLC_WAY_BITS);
 
     for (int i = LLC_WAYS/LLC_LOOKUP_WAYS - 1; i >= 0 ; i--) {
-	read_set(base, i * LLC_LOOKUP_WAYS);
+    	read_set(base, i * LLC_LOOKUP_WAYS);
     }
 
     /*
@@ -934,7 +1023,6 @@ void llc::lookup(llc_tag_t tag, llc_set_t set, llc_way_t &way, bool &evict, llc_
     	    empty_way = i;
     	}
     }
-
 
     /*
      * Eviction policy: FIFO like.

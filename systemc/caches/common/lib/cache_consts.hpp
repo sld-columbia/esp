@@ -107,7 +107,7 @@
 #define LLC_TAG_RANGE_LO	(ADDR_BITS - LLC_TAG_BITS)
 #define LLC_SET_RANGE_HI	(LLC_TAG_RANGE_LO - 1)
 #define LLC_TAG_OFFSET		(1 << LLC_TAG_RANGE_LO)
-#define LLC_LOOKUP_WAYS         std::min(LLC_WAYS, 8)
+#define LLC_LOOKUP_WAYS         std::min(LLC_WAYS, 16)
 
 /*
  * Testbench 

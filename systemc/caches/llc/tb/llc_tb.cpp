@@ -1202,7 +1202,7 @@ void llc_tb::put_mem_rsp(line_t line)
     llc_mem_rsp_t mem_rsp;
     mem_rsp.line = line;
 
-    rand_wait();
+    // rand_wait();
 
     llc_mem_rsp_tb.put(mem_rsp);
 
@@ -1219,7 +1219,7 @@ void llc_tb::put_req_in(mix_msg_t coh_msg, addr_t addr, line_t line, cache_id_t 
     req_in.line = line;
     req_in.req_id = req_id;
 
-    rand_wait();
+    // rand_wait();
 
     llc_req_in_tb.put(req_in);
 
@@ -1235,7 +1235,7 @@ void llc_tb::put_rsp_in(coh_msg_t rsp_msg, addr_t addr, line_t line, cache_id_t 
     rsp_in.line = line;
     rsp_in.req_id = req_id;
 
-    rand_wait();
+    // rand_wait();
 
     llc_rsp_in_tb.put(rsp_in);
 
