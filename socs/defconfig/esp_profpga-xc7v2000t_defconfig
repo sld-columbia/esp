@@ -1,6 +1,8 @@
 CONFIG_HAS_SG = y
 CONFIG_NOC_ROWS = 2
-CONFIG_NOC_COLS = 2
+CONFIG_NOC_COLS = 3
+CONFIG_CPU_CACHES =  256 8 512 16
+CONFIG_ACC_CACHES =  128 4
 CONFIG_MON_DDR = y
 #CONFIG_MON_INJ is not set
 CONFIG_MON_ROUTERS = y
@@ -8,11 +10,15 @@ CONFIG_MON_ROUTERS = y
 #CONFIG_MON_DVFS is not set
 TILE_0_0 = 0 mem_dbg mem_dbg 0 0 0
 TILE_0_1 = 1 misc IO 0 0 0
-TILE_1_0 = 2 cpu cpu 0 0 0
-TILE_1_1 = 3 mem_lite mem_lite 0 0 0
+TILE_0_2 = 2 acc SORT 0 0 0 basic_dma32 0
+TILE_1_0 = 3 cpu cpu 0 0 0
+TILE_1_1 = 4 mem_lite mem_lite 0 0 0
+TILE_1_2 = 5 acc SORT 0 0 0 basic_dma32 1
 #CONFIG_HAS_DVFS is not set
 CONFIG_VF_POINTS = 4
 POWER_0_0 = mem_dbg 0 0 0 0 0 0 0 0 0 0 0 0 
 POWER_0_1 = IO 0 0 0 0 0 0 0 0 0 0 0 0 
+POWER_0_2 = SORT 1.0 1000.0 75.194 0.9 900.0 64.9284 0.8 800.0 56.7607 0.75 600.0 55.8396 
 POWER_1_0 = cpu 0 0 0 0 0 0 0 0 0 0 0 0 
 POWER_1_1 = mem_lite 0 0 0 0 0 0 0 0 0 0 0 0 
+POWER_1_2 = SORT 1.0 1000.0 75.194 0.9 900.0 64.9284 0.8 800.0 56.7607 0.75 600.0 55.8396 
