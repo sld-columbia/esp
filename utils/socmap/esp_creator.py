@@ -76,6 +76,40 @@ class OptionFrame(Frame):
     Radiobutton(self, text = "Scatter/Gather  ", variable = soc.transfers, value = 1).pack(side = TOP)
     soc.transfers.set(1)
 
+class CacheFrame(Frame):
+
+  def __init__(self, soc, top_frame):
+    self.soc = soc
+    Frame.__init__(self, top_frame, width=50, borderwidth=2, relief=RIDGE)
+    self.pack(side=LEFT, expand=NO, fill=Y)
+    Label(self, text = "Cache Configuration: ", font="TkDefaultFont 11 bold").pack(side = TOP)
+
+    cache_config_frame = Frame(self)
+    cache_config_frame.pack(side=TOP)
+
+    sets_choices = [32, 64, 128, 256, 512, 1024, 2048]
+    ways_choices = [2, 4, 8, 16, 32]
+
+    Label(cache_config_frame, text = "L2 SETS: ").grid(row=1, column=1)
+    OptionMenu(cache_config_frame, soc.l2_sets, *sets_choices).grid(row=1, column=2)
+    Label(cache_config_frame, text = "L2 WAYS: ").grid(row=2, column=1)
+    OptionMenu(cache_config_frame, soc.l2_ways, *ways_choices).grid(row=2, column=2)
+    Label(cache_config_frame, text = "LLC SETS: ").grid(row=3, column=1)
+    OptionMenu(cache_config_frame, soc.llc_sets, *sets_choices).grid(row=3, column=2)
+    Label(cache_config_frame, text = "LLC WAYS: ").grid(row=4, column=1)
+    OptionMenu(cache_config_frame, soc.llc_ways, *ways_choices).grid(row=4, column=2)
+    Label(cache_config_frame, text = "ACC L2 SETS: ").grid(row=5, column=1)
+    OptionMenu(cache_config_frame, soc.acc_l2_sets, *sets_choices).grid(row=5, column=2)
+    Label(cache_config_frame, text = "ACC L2 WAYS: ").grid(row=6, column=1)
+    OptionMenu(cache_config_frame, soc.acc_l2_ways, *ways_choices).grid(row=6, column=2)
+
+    soc.l2_sets.set(256)
+    soc.l2_ways.set(8)
+    soc.llc_sets.set(256)
+    soc.llc_ways.set(16)
+    soc.acc_l2_sets.set(256)
+    soc.acc_l2_ways.set(8)
+
 class EspCreator(Frame):
 
   def __init__(self, master, _soc):
@@ -105,6 +139,8 @@ class EspCreator(Frame):
     cfg_frame = ConfigFrame(self.soc, self.top_frame) 
     #.:: creating the selection frame
     self.select_frame = OptionFrame(self.soc, self.top_frame)
+    #.:: creating the cache frame
+    self.cache_frame = CacheFrame(self.soc, self.top_frame)
 
     #noc frame
     self.bottom_frame_noccfg = NoCFrame(self.soc, self.bottom_frame) 

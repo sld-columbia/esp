@@ -110,6 +110,18 @@ class SoC_Config():
     item = line.split()
     cols = int(item[2])
     self.noc.create_topology(self.noc.top, rows, cols)
+    # CONFIG_CPU_CACHES = L2_SETS L2_WAYS LLC_SETS LLC_WAYS
+    line = fp.readline()
+    item = line.split()
+    self.l2_sets.set(int(item[2]))
+    self.l2_ways.set(int(item[3]))
+    self.llc_sets.set(int(item[4]))
+    self.llc_ways.set(int(item[5]))
+    # CONFIG_ACC_CACHES = ACC_L2_SETS ACC_L2_WAYS
+    line = fp.readline()
+    item = line.split()
+    self.acc_l2_sets.set(int(item[2]))
+    self.acc_l2_ways.set(int(item[3]))
     # Monitors
     line = fp.readline()
     if line.find("CONFIG_MON_DDR = y") != -1:
@@ -139,6 +151,7 @@ class SoC_Config():
           tile.has_clkbuf.set(int(tokens[7]))
           if tokens[3] == "acc":
             tile.point.set(tokens[8])
+            tile.coherence.set(tokens[9])
     # DVFS (skip whether it has it or not; we know that already)
     line = fp.readline()
     line = fp.readline()
@@ -171,6 +184,8 @@ class SoC_Config():
       fp.write("#CONFIG_HAS_SG is not set\n")
     fp.write("CONFIG_NOC_ROWS = " + str(self.noc.rows) + "\n")
     fp.write("CONFIG_NOC_COLS = " + str(self.noc.cols) + "\n")
+    fp.write("CONFIG_CPU_CACHES = " + " " + str(self.l2_sets.get()) + " " + str(self.l2_ways.get()) + " " + str(self.llc_sets.get()) + " " + str(self.llc_ways.get()) + "\n")
+    fp.write("CONFIG_ACC_CACHES = " + " " + str(self.acc_l2_sets.get()) + " " + str(self.acc_l2_ways.get()) + "\n")
     if self.noc.monitor_ddr.get() == 1:
       fp.write("CONFIG_MON_DDR = y\n")
     else:
@@ -229,6 +244,7 @@ class SoC_Config():
         fp.write(" " + str(tile.has_clkbuf.get()))
         if is_accelerator:
           fp.write(" " + str(tile.point.get()))
+          fp.write(" " + str(tile.coherence.get()))
         fp.write("\n")
         i += 1
     if has_dvfs:
@@ -297,3 +313,10 @@ class SoC_Config():
     self.set_IP()
     #0 = Bigphysical area ; 1 = Scatter/Gather
     self.transfers = IntVar()
+    self.l2_sets = IntVar()
+    self.l2_ways = IntVar()
+    self.llc_sets = IntVar()
+    self.llc_ways = IntVar()
+    self.acc_l2_sets = IntVar()
+    self.acc_l2_ways = IntVar()
+

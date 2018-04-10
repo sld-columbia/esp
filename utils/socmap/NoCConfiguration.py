@@ -30,6 +30,10 @@ class Tile():
     self.label.config(text=selection)
     self.point_label.forget()
     self.point_select.forget()
+    self.coherence_label.forget()
+    self.coherence_selection_none.forget()
+    self.coherence_selection_llc.forget()
+    self.coherence_selection_full.forget()
     if soc.IPs.PROCESSORS.count(selection):
        self.label.config(bg='deep pink')
     elif soc.IPs.MISC.count(selection):
@@ -48,6 +52,10 @@ class Tile():
          else:
            self.point_select.setvalue(str(soc.IPs.POINTS[selection][0]))
        self.point_select.pack(side=LEFT)
+       self.coherence_label.pack(side = TOP)
+       self.coherence_selection_none.pack(side = LEFT)
+       self.coherence_selection_llc.pack(side = LEFT)
+       self.coherence_selection_full.pack(side = LEFT)
     else:
        self.label.config(bg='white')
     self.clk_reg_selection.config(to=soc.noc.get_clk_regions_max())
@@ -185,6 +193,7 @@ class Tile():
     self.clk_reg_active = StringVar()
     self.label = Label(top)
     self.energy_values = None
+    self.coherence = IntVar(0)
 
 class NoC():
   
@@ -205,6 +214,7 @@ class NoC():
         new_topology[y].append(Tile(top, y, x))
         if x < self.cols and y < self.rows:
           new_topology[y][x].ip_type.set(self.topology[y][x].ip_type.get())
+          new_topology[y][x].coherence.set(self.topology[y][x].coherence.get())
           new_topology[y][x].clk_region.set(self.topology[y][x].clk_region.get())
           new_topology[y][x].has_pll.set(self.topology[y][x].has_pll.get())
           new_topology[y][x].has_clkbuf.set(self.topology[y][x].has_clkbuf.get())
@@ -340,6 +350,9 @@ class NoCFrame(Pmw.ScrolledFrame):
     display_frame = Frame(frame)
     display_frame.pack(side=TOP)
 
+    coherence_frame = Frame(frame, bg='tomato')
+    coherence_frame.pack(side=TOP)
+
     config_frame = Frame(frame)
     config_frame.pack(side=TOP)
 
@@ -358,6 +371,20 @@ class NoCFrame(Pmw.ScrolledFrame):
     tile.label = Label(display_frame, text=tile.ip_type.get())
     tile.label.config(height=4,bg='white', width=width+25)
     tile.label.pack()
+
+    tile.coherence_label = Label(coherence_frame, text="Coherence: ", width=10)
+    tile.coherence_label.config(bg='tomato', width=width+25)
+    tile.coherence_label.pack(side = TOP)
+    tile.coherence_selection_none = Radiobutton(coherence_frame, text = "None", variable = tile.coherence, value = 0)
+    tile.coherence_selection_none.config(bg='tomato', width=width)
+    tile.coherence_selection_none.pack(side = LEFT)
+    tile.coherence_selection_llc = Radiobutton(coherence_frame, text = "LLC", variable = tile.coherence, value = 1)
+    tile.coherence_selection_llc.config(bg='tomato', width=width-1)
+    tile.coherence_selection_llc.pack(side = LEFT)
+    tile.coherence_selection_full = Radiobutton(coherence_frame, text = "Full", variable = tile.coherence, value = 2)
+    tile.coherence_selection_full.config(bg='tomato', width=width)
+    tile.coherence_selection_full.pack(side = LEFT)
+
     tile.label.bind("<Double-Button-1>", lambda event:tile.power_window(event, self.soc, self))
     Label(config_frame, text="Clk Reg: ").pack(side=LEFT)
     tile.clk_reg_selection = Spinbox(config_frame, state='readonly', from_=0, to=len(self.soc.noc.get_clk_regions()), wrap=True, textvariable=tile.clk_region,width=3);
