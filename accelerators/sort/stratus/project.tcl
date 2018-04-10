@@ -9,6 +9,35 @@
 #
 source ../../common/stratus/project.tcl
 
+#
+# Set the private memory library
+#
+use_hls_lib "./memlib"
+
+#
+# Local synthesis attributes
+#
+if {$TECH eq "virtex7"} {
+    # Library is in ns, but simulation uses ps!
+    set CLOCK_PERIOD 10.0
+    set SIM_CLOCK_PERIOD 10000.0
+    set_attr default_input_delay      0.1
+}
+if {$TECH eq "zynq7000"} {
+    # Library is in ns, but simulation uses ps!
+    set CLOCK_PERIOD 10.0
+    set SIM_CLOCK_PERIOD 10000.0
+    set_attr default_input_delay      0.1
+}
+if {$TECH eq "cmos32soi"} {
+    set CLOCK_PERIOD 1000.0
+    set SIM_CLOCK_PERIOD 1000.0
+    set_attr default_input_delay      100.0
+}
+set_attr clock_period $CLOCK_PERIOD
+# set_attr dpopt_auto all
+# set_attr dpopt_effort high
+
 
 #
 # System level modules to be synthesized
@@ -24,7 +53,7 @@ define_system_module tb ../tb/system.cpp ../tb/sc_main.cpp
 ######################################################################
 # HLS and Simulation configurations
 ######################################################################
-set DEFAULT_ARGV "128 4"
+set DEFAULT_ARGV "1024 16"
 
 foreach dma [list 32 64] {
     define_io_config * IOCFG_DMA$dma -DDMA_WIDTH=$dma
@@ -53,6 +82,6 @@ set_attr hls_cc_options "$INCLUDES"
 # Simulation Options
 #
 use_systemc_simulator incisive
-set_attr cc_options "$INCLUDES -DCLOCK_PERIOD=$CLOCK_PERIOD"
+set_attr cc_options "$INCLUDES -DCLOCK_PERIOD=$SIM_CLOCK_PERIOD"
 # enable_waveform_logging -vcd
 set_attr end_of_sim_command "make saySimPassed"
