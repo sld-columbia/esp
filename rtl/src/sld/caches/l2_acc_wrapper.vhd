@@ -1,6 +1,6 @@
 -------------------------------------------------------------------------------
--- Entity: l2_wrapper
--- File: l2_wrapper.vhd
+-- Entity: l2_acc_wrapper
+-- File: l2_acc_wrapper.vhd
 -- Author: Davide Giri - SLD @ Columbia University
 -- Description: RTL wrapper for a private L2 cache to be included on a CPU tile
 -- on a Embedded Scalable Platform.
@@ -31,7 +31,7 @@ use work.nocpackage.all;
 use work.cachepackage.all;              -- contains l2 cache component
 
 
-entity l2_wrapper is
+entity l2_acc_wrapper is
   generic (
     tech        : integer := virtex7;
     sets        : integer := 256;
@@ -47,18 +47,27 @@ entity l2_wrapper is
     mem_info    : tile_mem_info_vector;
     destination : integer := 0;         -- 0: mem, 1: DSU
     l1_cache_en : integer := 0;
-    cache_tile_id : cache_attribute_array);
+    cache_tile_id : cpu_info_array);
 
   port (
     rst : in std_ulogic;
     clk : in std_ulogic;
 
-    -- frontend (cache - AHB/CPU)
-    ahbsi : in  ahb_slv_in_type;
-    ahbso : out ahb_slv_out_type;
-    ahbmi : in  ahb_mst_in_type;
-    ahbmo : out ahb_mst_out_type;
-    flush : in  std_ulogic;             -- flush request from CPU
+    -- frontend (cache - Accelerator DMA)
+    -- header / lenght parallel ports
+    dma_write                 : in std_logic_vector;
+    dma_length                : in addr_t;
+    dma_address               : in addr_t;
+    -- cache->acc (data only)
+    dma_rcv_ready             : in  std_ulogic;
+    dma_rcv_data              : out noc_flit_type;
+    dma_rcv_valid             : out std_ulogic;
+    -- acc->cache (data only)
+    dma_snd_valid             : in  std_ulogic;
+    dma_snd_data              : in  noc_flit_type;
+    dma_snd_read              : out std_ulogic;
+    -- Accelerator done causes a flush
+    flush                     : in  std_ulogic;
 
     -- backend (cache - NoC)
     -- tile->NoC1
@@ -80,11 +89,13 @@ entity l2_wrapper is
 
     debug_led : out std_ulogic);
 
-end l2_wrapper;
+end l2_acc_wrapper;
 
-architecture rtl of l2_wrapper is
+architecture rtl of l2_acc_wrapper is
 
   -- Interface with L2 cache
+
+  -- TODO: Replace AHB with DMA handling
 
   -- AHB to cache
   signal cpu_req_ready          : std_ulogic;
@@ -316,13 +327,13 @@ architecture rtl of l2_wrapper is
   signal load_alloc_reg      : load_alloc_reg_type := LOAD_ALLOC_REG_DEFAULT;
   signal load_alloc_reg_next : load_alloc_reg_type := LOAD_ALLOC_REG_DEFAULT;
 
-
+       
   -------------------------------------------------------------------------------
   -- Others
   -------------------------------------------------------------------------------
-
+       
   signal empty_offset : std_logic_vector(OFFSET_BITS - 1 downto 0) := (others => '0');
-
+ 
   -------------------------------------------------------------------------------
   -- Debug
   -------------------------------------------------------------------------------
@@ -417,18 +428,15 @@ architecture rtl of l2_wrapper is
   --attribute mark_debug of bookmark               : signal is "true";
   -- attribute mark_debug of custom_dbg             : signal is "true";
   attribute mark_debug of flush_done             : signal is "true";
-
-begin  -- architecture rtl of l2_wrapper
+  
+begin  -- architecture rtl of l2_acc_wrapper
 
   -----------------------------------------------------------------------------
   -- Instantiations
   -----------------------------------------------------------------------------
 
-  l2_cache_i : l2
-    generic map (
-      tech => tech,
-      sets => sets,
-      ways => ways)
+  -- instantiation of l2 cache on cpu tile
+  l2_cache_4cpus : l2_basic_4
     port map (
       clk => clk,
       rst => rst,
@@ -478,8 +486,13 @@ begin  -- architecture rtl of l2_wrapper
       l2_rsp_in_data_line       => rsp_in_data_line,
       l2_rsp_in_data_invack_cnt => rsp_in_data_invack_cnt,
       flush_done                => flush_done
-      );
 
+      -- debug
+      --asserts                   => asserts,
+      --bookmark                  => bookmark,
+      --custom_dbg                => custom_dbg,
+      );
+    
   Invalidate_fifo : fifo_custom
     generic map (
       depth => N_REQS + 12,             -- TODO: what size here?
@@ -657,12 +670,12 @@ begin  -- architecture rtl of l2_wrapper
     if inv_fifo_full = '1' then
       reg.asserts(AS_AHBS_INV_FIFO) := '1';
     end if;
-
+    
     case ahbs_reg.state is
 
       -- IDLE
       when idle =>
-        -- always acknowledge transaction requests as soon as they appear on the bus
+        -- always acknowledge transaction requests as soon as they appear on the bus 
         ahbso.hready <= '1';
 
         cpu_req_data_cpu_msg <= ahbsi.hwrite & ahbsi.hmastlock;
@@ -1011,7 +1024,7 @@ begin  -- architecture rtl of l2_wrapper
           ahbmo.htrans  <= HTRANS_NONSEQ;
           ahbmo.haddr(TAG_RANGE_HI downto SET_RANGE_LO) <= inv_fifo_data_out;
           ahbmo.haddr(OFFSET_BITS - 1 downto 0) <= (others => '0');
-
+          
           if granted = '1' and ahbmi.hready = '1' then
             reg.state := store_req;
           else
@@ -1019,7 +1032,7 @@ begin  -- architecture rtl of l2_wrapper
           end if;
 
         end if;
-
+       
       -- GRANT WAIT
       when grant_wait =>
         ahbmo.hbusreq <= '1';
@@ -1051,7 +1064,7 @@ begin  -- architecture rtl of l2_wrapper
 
       -- STORE RESPONSE
       when store_rsp =>
-        reg.state := idle;
+        reg.state := idle;            
 
     end case;
 
@@ -1068,7 +1081,7 @@ begin  -- architecture rtl of l2_wrapper
 
     variable reg    : req_reg_type;
     variable req_id : cache_id_t := (others => '0');
-
+    
   begin  -- process fsm_cache2noc
 
     -- initialize variables

@@ -142,8 +142,16 @@ package nocpackage is
     hmask => 16#000#
     );
 
-  -- TODO: For now we only support 2 memory controllers and one frame buffer
-  type tile_mem_info_vector is array (2 downto 0) of tile_mem_info;
+  -- WARNING: The following constants and types must be changed to scale up;
+  --          We need to hardcode this value because of VHDL limitations, but
+  --          the *_MAX and *_NUM values are not limited in practice.
+  --          These values should match those set in utils/socmap/
+  constant MEM_DEV_NUM : integer := 3;
+  constant CPU_MAX_NUM : integer := 4;
+  constant TILES_MAX_NUM : integer := 32;
+  type tile_mem_info_vector is array (MEM_DEV_NUM - 1 downto 0) of tile_mem_info;
+  type cpu_attribute_array is array (0 to CPU_MAX_NUM - 1) of integer;
+  type tile_attribute_array is array (0 to TILES_MAX_NUM - 1) of integer;
 
   -- Components
   component fifo
