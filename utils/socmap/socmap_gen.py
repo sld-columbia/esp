@@ -1,6 +1,25 @@
 #!/usr/bin/python3
 
 from collections import defaultdict
+import math
+
+#constants
+MCTRL_HINDEX = 0
+AHB2APB_HINDEX = 1
+DSU_HINDEX = 2
+DDR0_HINDEX = 4
+DDR1_HINDEX = 5
+FB_HINDEX = 6
+POWERCTRL_PINDEX = 4
+SLD_APB_ADDR_ADJ = 0x100
+SLD_APB_ADDR_MSK = 0xfff
+NCPU_MAX = 4
+NMEM_MAX = 2
+NFULL_COHERENT_MAX = 8
+NLLC_COHERENT_MAX = 8
+NTILE_MAX = 32
+NAPBS = 32
+NAHBS = 16
 
 class acc_info:
   uppercase_name = ""
@@ -17,6 +36,8 @@ class tile_info:
   x = 0
   y = 0
   cpuid = -1
+  cid = -1
+  did = -1
   clk_region = 0
   def __init__(self):
     return
@@ -33,19 +54,6 @@ def uint_to_bin(x, bits):
   return b
 
 class soc_config:
-  #constants
-  MCTRL_HINDEX = 0
-  AHB2APB_HINDEX = 1
-  DSU_HINDEX = 2
-  DDR0_HINDEX = 4
-  DDR1_HINDEX = 5
-  FB_HINDEX = 6
-  POWERCTRL_PINDEX = 4
-  SLD_APB_ADDR_ADJ = 0x100
-  SLD_APB_ADDR_MSK = 0xfff
-  NCPU_MAX = 4
-  NAPBS = 32
-  NAHBS = 16
   #components
   ncpu = 0
   nacc = 0
@@ -81,12 +89,17 @@ class soc_config:
     self.acc_irq = defaultdict(lambda: 0)
 
     t = 0
+    # CPU/CACHE ID assigned dynamically to CPUs
     cpuid = 0
+    # CACHE ID assigned dynamically to fully-coherent accelerators
+    acc_cid = 0
+    # DMA ID assigned dynamically to LLC-coherent accelerators
+    acc_did = 0
     acc_tile_idx = 0
     acc_idx = 5 #first available line
     acc_irq = 3
-    for x in range(soc.noc.rows): 
-      for y in range(soc.noc.cols): 
+    for x in range(soc.noc.rows):
+      for y in range(soc.noc.cols):
         selection = soc.noc.topology[x][y].ip_type.get()
         t = y + x * soc.noc.cols
         self.tiles[t].row = x
@@ -97,7 +110,8 @@ class soc_config:
         self.tiles[t].has_clkbuf = soc.noc.topology[x][y].has_clkbuf.get()
         if selection == "cpu":
           self.tiles[t].type = "cpu"
-          self.tiles[t].cpuid = 0
+          self.tiles[t].cpuid = cpuid
+          self.tiles[t].cid = cpuid
           cpuid += 1
         if selection == "mem_dbg":
           self.tiles[t].type = "mem_dbg"
@@ -108,6 +122,12 @@ class soc_config:
         if soc.IPs.ACCELERATORS.count(selection):
           self.tiles[t].type = "acc"
           self.tiles[t].idx = acc_tile_idx
+          if soc.noc.topology[x][y].coherence.get() == 2:
+            self.tiles[t].cid = soc.noc.get_cpu_num(soc) + acc_cid
+            acc_cid += 1
+          if soc.noc.topology[x][y].coherence.get() == 1:
+            self.tiles[t].did = acc_did
+            acc_did += 1
           for i in range(0, len(self.acc_types)):
             if self.acc_types[i] == selection:
               self.acc_num[i] += 1
@@ -134,7 +154,7 @@ class soc_config:
 def print_header(fp):
   fp.write("------------------------------------------------------------------------------\n")
   fp.write("--  This file is a configuration file for the ESP NoC-based architecture\n")
-  fp.write("--  Copyright (C) 2014-2016, System Level Design (SLD) group @ Columbia University\n")
+  fp.write("--  Copyright (C) 2014-2018, System Level Design (SLD) group @ Columbia University\n")
   fp.write("-----------------------------------------------------------------------------\n")
   fp.write("-- Entity:      socmap\n")
   fp.write("-- File:        socmap.vhd\n")
@@ -148,7 +168,6 @@ def print_libs(fp):
   fp.write("use ieee.std_logic_1164.all;\n")
   fp.write("use ieee.numeric_std.all;\n")
 
-  fp.write("use work.socmap_types.all;\n")
   fp.write("use work.stdlib.all;\n")
   fp.write("use work.grlib_config.all;\n")
   fp.write("use work.amba.all;\n")
@@ -156,20 +175,25 @@ def print_libs(fp):
   fp.write("use work.devices.all;\n")
   fp.write("use work.leon3.all;\n")
   fp.write("use work.nocpackage.all;\n")
+  fp.write("use work.cachepackage.all;\n")
 
 def print_constants(fp, esp_config, soc):
   fp.write("  -- number of CPU tiles. Each has\n")
   fp.write("  -- CFG_CPU processors\n")
   fp.write("  constant CFG_NCPU_TILE : integer := " + str(soc.noc.get_cpu_num(soc)) + ";\n\n")
 
-  # Cache memory enable 
+  # Cache memory enable
   fp.write("  -- Cache memory enable\n")
-  fp.write("  constant CFG_L2_ENABLE  : integer := 1;\n")
-  fp.write("  constant CFG_LLC_ENABLE : integer := 1;\n\n")
+  fp.write("  constant CFG_L2_ENABLE   : integer := 1;\n")
+  fp.write("  constant CFG_LLC_ENABLE  : integer := 1;\n\n")
+  fp.write("  constant CFG_L2_SETS     : integer := " + str(soc.l2_sets.get()      ) +  ";\n")
+  fp.write("  constant CFG_L2_WAYS     : integer := " + str(soc.l2_ways.get()      ) +  ";\n")
+  fp.write("  constant CFG_LLC_SETS    : integer := " + str(soc.llc_sets.get()     ) +  ";\n")
+  fp.write("  constant CFG_LLC_WAYS    : integer := " + str(soc.llc_ways.get()     ) +  ";\n")
+  fp.write("  constant CFG_ACC_L2_SETS : integer := " + str(soc.acc_l2_sets.get()  ) +  ";\n")
+  fp.write("  constant CFG_ACC_L2_WAYS : integer := " + str(soc.acc_l2_ways.get()  ) +  ";\n")
 
   fp.write("-- NoC settings\n")
-  fp.write("  constant CFG_FIXED_ADDR : integer := 1;\n")
-  fp.write("  constant CFG_USE_NOC : integer := 1;\n")
   fp.write("  constant CFG_XLEN : integer := " + str(soc.noc.cols) + ";\n")
   fp.write("  constant CFG_YLEN : integer := " + str(soc.noc.rows) + ";\n")
   fp.write("  constant CFG_TILES_NUM : integer := CFG_XLEN * CFG_YLEN;\n")
@@ -200,7 +224,7 @@ def print_constants(fp, esp_config, soc):
     fp.write("  constant CFG_SLD_" + esp_config.acc_types[x] + "_ENABLE : integer := " + str(acc_enable) + ";\n")
     fp.write("  constant CFG_SLD_" + esp_config.acc_types[x] + "_NUM : integer := " + str(esp_config.acc_num[x]) + ";\n")
     fp.write("  constant CFG_SLD_" + esp_config.acc_types[x] + "_IRQ : integer := " + str(esp_config.acc_irq[esp_config.acc_types[x]]) + ";\n")
-    fp.write("  constant CFG_SLD_" + esp_config.acc_types[x] + "_SG : integer := " + str(int(soc.HAS_SG)) + ";\n") 
+    fp.write("  constant CFG_SLD_" + esp_config.acc_types[x] + "_SG : integer := " + str(int(soc.HAS_SG)) + ";\n")
 
   fp.write("-- Memory controllers\n")
   if esp_config.nmem_ctrl == 2:
@@ -211,7 +235,6 @@ def print_constants(fp, esp_config, soc):
 
   fp.write("  constant maxahbm : integer := NAHBMST;\n")
   fp.write("  constant maxahbs : integer := NAHBSLV;\n")
-  fp.write("  constant sldidx : integer := CFG_NCPU_TILE+CFG_AHB_JTAG+CFG_GRETH;\n")
 
   fp.write("  --pragma translate_off\n")
   fp.write("  type ahb_slv_in_type_vec is array (0 to CFG_NCPU_TILE-1) of ahb_slv_in_type;\n")
@@ -253,7 +276,7 @@ def print_constants(fp, esp_config, soc):
   fp.write("  -- AHB Slaves\n")
   fp.write("  -- SLV 0: 0x00000000 - 0x1FFFFFFF\n")
   fp.write("  --pragma translate_off\n")
-  fp.write("  constant mctrl_hindex  : integer := " + str(esp_config.MCTRL_HINDEX) + ";\n")
+  fp.write("  constant mctrl_hindex  : integer := " + str(MCTRL_HINDEX) + ";\n")
   fp.write("  constant romaddr   : integer := 16#000#;\n")
   fp.write("  constant rommask   : integer := 16#E00#;\n")
   fp.write("  constant ioaddr    : integer := 16#200#;\n")
@@ -269,16 +292,16 @@ def print_constants(fp, esp_config, soc):
   fp.write("  --pragma translate_on\n\n")
 
   fp.write("  -- SLV 1: 0x80000000 - 0x8FFFFFFF\n")
-  fp.write("  constant ahb2apb_hindex : integer := " + str(esp_config.AHB2APB_HINDEX) + ";\n")
+  fp.write("  constant ahb2apb_hindex : integer := " + str(AHB2APB_HINDEX) + ";\n")
   fp.write("  constant ahb2apb_haddr : integer := CFG_APBADDR;\n")
   fp.write("  constant ahb2apb_hmask : integer := 16#F00#;\n")
   fp.write("  constant ahb2apb_hconfig : ahb_config_type := (\n")
   fp.write("    0 => ahb_device_reg ( 1, 6, 0, 0, 0),\n")
   fp.write("    4 => ahb_membar(CFG_APBADDR, '0', '0', ahb2apb_hmask),\n")
   fp.write("    others => zero32);\n\n")
-  
+
   fp.write("  -- SLV 2: 0x90000000 - 0x9FFFFFFF\n")
-  fp.write("  constant dsu_hindex : integer := " + str(esp_config.DSU_HINDEX) + ";\n")
+  fp.write("  constant dsu_hindex : integer := " + str(DSU_HINDEX) + ";\n")
   fp.write("  constant dsu_haddr : integer := 16#900#;\n")
   fp.write("  constant dsu_hmask : integer := 16#F00#;\n")
   fp.write("  constant dsu_hconfig : ahb_config_type := (\n")
@@ -291,7 +314,7 @@ def print_constants(fp, esp_config, soc):
 
   if esp_config.nmem_ctrl == 1:
     fp.write("  -- SLV 4: 0x40000000 - 0x7FFFFFFF (1GB DDR supported)\n")
-    fp.write("  constant ddr0_hindex : integer := " + str(esp_config.DDR0_HINDEX) + ";\n")
+    fp.write("  constant ddr0_hindex : integer := " + str(DDR0_HINDEX) + ";\n")
     fp.write("  constant ddr0_haddr : integer := 16#400#;\n")
     fp.write("  constant ddr0_hmask : integer := 16#C00#;\n")
     fp.write("  constant mig70_hconfig : ahb_config_type := (\n")
@@ -316,7 +339,7 @@ def print_constants(fp, esp_config, soc):
     fp.write("  --pragma translate_on\n\n")
   if esp_config.nmem_ctrl == 2:
     fp.write("  -- SLV 4: 0x40000000 - 0x7FFFFFFF (1GB DDR supported)\n")
-    fp.write("  constant ddr0_hindex : integer := " + str(esp_config.DDR0_HINDEX) + ";\n")
+    fp.write("  constant ddr0_hindex : integer := " + str(DDR0_HINDEX) + ";\n")
     fp.write("  constant ddr0_haddr : integer := 16#400#;\n")
     fp.write("  constant ddr0_hmask : integer := 16#E00#;\n")
     fp.write("  constant ddr_full_hmask : integer := 16#C00#;\n")
@@ -328,7 +351,7 @@ def print_constants(fp, esp_config, soc):
     fp.write("    0 => ahb_device_reg ( VENDOR_GAISLER, GAISLER_MIG_7SERIES, 0, 0, 0),\n")
     fp.write("    4 => ahb_membar(ddr0_haddr, '1', '1', ddr0_hmask),\n")
     fp.write("    others => zero32);\n")
-    fp.write("  constant ddr1_hindex : integer := " + str(esp_config.DDR1_HINDEX) + ";\n")
+    fp.write("  constant ddr1_hindex : integer := " + str(DDR1_HINDEX) + ";\n")
     fp.write("  constant ddr1_haddr : integer := 16#600#;\n")
     fp.write("  constant ddr1_hmask : integer := 16#E00#;\n")
     fp.write("  constant mig71_hconfig : ahb_config_type := (\n")
@@ -351,7 +374,7 @@ def print_constants(fp, esp_config, soc):
     fp.write("  --pragma translate_on\n\n")
 
   fp.write("  -- SLV 6: 0xB0100000 - 0xB01FFFFF\n")
-  fp.write("  constant fb_hindex : integer := " + str(esp_config.FB_HINDEX) + ";\n")
+  fp.write("  constant fb_hindex : integer := " + str(FB_HINDEX) + ";\n")
   fp.write("  constant fb_hmask : integer := 16#FFF#;\n")
   fp.write("  constant fb_haddr : integer := CFG_SVGA_MEMORY_HADDR;\n")
   if soc.HAS_SVGA == True:
@@ -369,19 +392,19 @@ def print_constants(fp, esp_config, soc):
   fp.write("  0 => ahb_device_reg ( VENDOR_ESA, ESA_MCTRL, 0, 1, 0),\n")
   fp.write("  1 => apb_iobar(0, 16#fff#));\n")
   fp.write("  --pragma translate_on\n\n")
-  
+
   fp.write("  -- APB 1: 0x80000100 - 0x800001FF\n")
   fp.write("  -- irq 2\n")
   fp.write("  constant uart_pconfig : apb_config_type := (\n")
   fp.write("  0 => ahb_device_reg ( VENDOR_GAISLER, GAISLER_APBUART, 0, 1, CFG_UART1_IRQ),\n")
   fp.write("  1 => apb_iobar(1, 16#fff#));\n\n")
-  
+
   fp.write("  -- APB 2: 0x80000200 - 0x800002FF\n")
   fp.write("  -- irq 13 is reserved to wake CPUs\n")
   fp.write("  constant irqmp_pconfig : apb_config_type := (\n")
   fp.write("  0 => ahb_device_reg ( VENDOR_GAISLER, GAISLER_IRQMP, 0, 3, 0),\n")
   fp.write("  1 => apb_iobar(2, 16#fff#));\n\n")
-  
+
   fp.write("  -- APB 3: 0x80000300 - 0x800003FF\n")
   fp.write("  -- irq 8\n")
   fp.write("  constant gptimer_pconfig : apb_config_type := (\n")
@@ -406,53 +429,40 @@ def print_constants(fp, esp_config, soc):
     fp.write("  0 => ahb_device_reg (VENDOR_GAISLER, GAISLER_SGMII, 0, 1, 11),\n")
     fp.write("  1 => apb_iobar(16#010#, 16#ff0#));\n\n")
 
-  fp.write("  -- APB " + str(esp_config.POWERCTRL_PINDEX) + ": 0x80000400 - 0x800004FF\n")
+  fp.write("  -- APB " + str(POWERCTRL_PINDEX) + ": 0x80000400 - 0x800004FF\n")
   fp.write("  -- power management registers. This requires special handling, because there\n")
   fp.write("  -- is one set of registers to control power per each tile.\n")
   if soc.noc.has_dvfs():
-    fp.write("  constant powerctrl_pindex : integer := " + str(esp_config.POWERCTRL_PINDEX) + ";\n")
+    fp.write("  constant powerctrl_pindex : integer := " + str(POWERCTRL_PINDEX) + ";\n")
     fp.write("  constant powerctrl_pconfig : apb_config_type := (\n")
     fp.write("  0 => ahb_device_reg (VENDOR_SLD, SLD_POWERCTRL, 0, 0, 0),\n")
-    fp.write("  1 => apb_iobar(" + str(esp_config.POWERCTRL_PINDEX) + ", 16#fff#));\n\n")
+    fp.write("  1 => apb_iobar(" + str(POWERCTRL_PINDEX) + ", 16#fff#));\n\n")
   else:
-    fp.write("  constant powerctrl_pindex : integer := " + str(esp_config.POWERCTRL_PINDEX) + ";\n")
+    fp.write("  constant powerctrl_pindex : integer := " + str(POWERCTRL_PINDEX) + ";\n")
     fp.write("  constant powerctrl_pconfig : apb_config_type := pconfig_none;\n")
-
-  fp.write("  constant fixed_ahbmo_hconfig : ahb_mst_hconfig_vector := (\n")
-  numcpu = soc.noc.get_cpu_num(soc)
-  for i in range(numcpu):
-    fp.write("    " + str(i) + " => leon3_hconfig,\n")
-  idx = numcpu
-  if soc.HAS_JTAG:
-    fp.write("    " + str(idx) + " => jtag_hconfig,\n")
-    idx += 1
-  if soc.HAS_ETH:
-    fp.write("    " + str(idx) + " => eth0_hconfig,\n")
-    idx += 1
-  fp.write("    others => hconfig_none);\n\n")
 
   fp.write("  constant fixed_ahbso_hconfig : ahb_slv_hconfig_vector := (\n")
   fp.write("    --pragma translate_off\n")
-  fp.write("    " + str(esp_config.MCTRL_HINDEX) + " => mctrl_hconfig,\n")
+  fp.write("    " + str(MCTRL_HINDEX) + " => mctrl_hconfig,\n")
   fp.write("    --pragma translate_on\n")
-  fp.write("    " + str(esp_config.AHB2APB_HINDEX) + " => ahb2apb_hconfig,\n")
-  fp.write("    " + str(esp_config.DSU_HINDEX) + " => dsu_hconfig,\n")
-  fp.write("    " + str(esp_config.DDR0_HINDEX) + " => mig70_hconfig,\n")
-  fp.write("    " + str(esp_config.DDR1_HINDEX) + " => mig71_hconfig,\n")
-  fp.write("    " + str(esp_config.FB_HINDEX) + " => fb_hconfig,\n")
+  fp.write("    " + str(AHB2APB_HINDEX) + " => ahb2apb_hconfig,\n")
+  fp.write("    " + str(DSU_HINDEX) + " => dsu_hconfig,\n")
+  fp.write("    " + str(DDR0_HINDEX) + " => mig70_hconfig,\n")
+  fp.write("    " + str(DDR1_HINDEX) + " => mig71_hconfig,\n")
+  fp.write("    " + str(FB_HINDEX) + " => fb_hconfig,\n")
   fp.write("    others => hconfig_none);\n\n")
 
   fp.write("  constant accelerators_num : integer := " + str(soc.noc.get_acc_num(soc)) + ";\n\n")
   for i in range(soc.noc.get_acc_num(soc)):
     acc = esp_config.accelerators[i]
     fp.write("  -- Accelerator " + str(acc.number) + "\n")
-    address_hex = hex(int(esp_config.SLD_APB_ADDR_ADJ) + acc.idx)
+    address_hex = hex(int(SLD_APB_ADDR_ADJ) + acc.idx)
     address = str(address_hex).replace("0x", "")
     fp.write("  -- APB " + str(acc.idx) + ": 0x800" + str(address) + "00 - 0x800" + str(address) + "FF\n")
     fp.write("  -- irq " + str(acc.irq) + "\n")
     fp.write("  -- " + acc.uppercase_name + "\n")
     fp.write("  -- " + acc.lowercase_name + "_paddr   = 16#" + str(address) + "#;\n")
-    fp.write("  -- " + acc.lowercase_name + "_pmask   = 16#" + str(hex(esp_config.SLD_APB_ADDR_MSK)).replace("0x","") + "#;\n")
+    fp.write("  -- " + acc.lowercase_name + "_pmask   = 16#" + str(hex(SLD_APB_ADDR_MSK)).replace("0x","") + "#;\n")
     fp.write("  -- " + acc.lowercase_name + "_hindex  = CFG_NCPU+CFG_AHB_JTAG+CFG_GRETH+" + str(acc.number) + ";\n")
     fp.write("\n")
   fp.write("\n")
@@ -460,7 +470,7 @@ def print_constants(fp, esp_config, soc):
   nacc_print = soc.noc.get_acc_num(soc)
   if nacc_print > 0:
     nacc_print -= 1
-  fp.write("  type accelerators_number_array is array (0 to " + str(esp_config.ntiles) + ") of integer range 0 to " + str(nacc_print) + ";\n")
+  fp.write("  type accelerators_number_array is array (0 to " + str(esp_config.ntiles - 1) + ") of integer range 0 to " + str(nacc_print) + ";\n")
   fp.write("  constant accelerators_tile2number : accelerators_number_array := (\n")
   for i in range(0, esp_config.ntiles):
     if esp_config.tiles[i].type == "acc":
@@ -469,11 +479,11 @@ def print_constants(fp, esp_config, soc):
   fp.write("    others => 0);\n\n")
   for i in range(0, esp_config.nacc):
     acc = esp_config.accelerators[i]
-    address_hex = hex(int(esp_config.SLD_APB_ADDR_ADJ) + acc.idx)
+    address_hex = hex(int(SLD_APB_ADDR_ADJ) + acc.idx)
     address = str(address_hex).replace("0x", "")
     fp.write("  constant " + acc.lowercase_name + "_" + str(acc.number) + "_pconfig : apb_config_type := (\n")
     fp.write("  0 => ahb_device_reg (VENDOR_SLD, SLD_" + acc.uppercase_name + ", 0, 0, CFG_SLD_" + acc.uppercase_name + "_IRQ),\n")
-    fp.write("  1 => apb_iobar(16#" + address + "#, 16#" + str(hex(esp_config.SLD_APB_ADDR_MSK)).replace("0x","") + "#));\n\n")
+    fp.write("  1 => apb_iobar(16#" + address + "#, 16#" + str(hex(SLD_APB_ADDR_MSK)).replace("0x","") + "#));\n\n")
 
   fp.write("  constant fixed_apbo_pconfig : apb_slv_pconfig_vector := (\n")
   fp.write("    --pragma translate_off\n")
@@ -488,7 +498,7 @@ def print_constants(fp, esp_config, soc):
     fp.write("    14 => eth0_pconfig,\n")
     if soc.HAS_SGMII == True:
       fp.write("    15 => sgmii0_pconfig,\n")
-  fp.write("    " + str(esp_config.POWERCTRL_PINDEX) + " => powerctrl_pconfig,\n")
+  fp.write("    " + str(POWERCTRL_PINDEX) + " => powerctrl_pconfig,\n")
   for i in range(0, esp_config.nacc):
     acc = esp_config.accelerators[i]
     fp.write("    " + str(acc.idx) + " => " + str(acc.lowercase_name) + "_" + str(acc.number) + "_pconfig,\n")
@@ -499,35 +509,66 @@ def print_tiles(fp, esp_config, soc):
   for i in range(0, esp_config.ntiles):
     if i > 0:
        fp.write(",\n")
-    fp.write("    " + str(i) + " => \"" + uint_to_bin(esp_config.tiles[i].col,3) + "\"") 
+    fp.write("    " + str(i) + " => \"" + uint_to_bin(esp_config.tiles[i].col,3) + "\"")
   fp.write(");\n")
 
   fp.write("  constant tile_y : yx_vec(0 to CFG_TILES_NUM-1) := (\n")
   for i in range(0, esp_config.ntiles):
     if i > 0:
       fp.write(",\n")
-    fp.write("    " + str(i) + " => \"" + uint_to_bin(esp_config.tiles[i].row,3) + "\"") 
+    fp.write("    " + str(i) + " => \"" + uint_to_bin(esp_config.tiles[i].row,3) + "\"")
   fp.write(");\n")
   fp.write("\n")
 
-#  fp.write("  type cpu_info_array is array (" + str(esp_config.NCPU_MAX - 1) + " downto 0) of integer;\n")
-
-  fp.write("  constant cpu_tile_id : cpu_info_array := (\n")
+  fp.write("  constant cpu_tile_id : cpu_attribute_array := (\n")
   for i in range(0, esp_config.ntiles):
     if esp_config.tiles[i].type == "cpu":
       fp.write("    " + str(esp_config.tiles[i].cpuid) + " => " + str(i) + ",\n")
-      fp.write("    others => 0);\n")
+  fp.write("    others => 0);\n")
 
-  fp.write("  constant cpu_y : yx_vec(" + str(esp_config.NCPU_MAX - 1) + " downto 0) := (\n")
-  for i in range(0, esp_config.NCPU_MAX - 1):
+  fp.write("  constant cpu_y : yx_vec(" + str(NCPU_MAX - 1) + " downto 0) := (\n")
+  for i in range(0, NCPU_MAX - 1):
     fp.write("   " + str(i) + " => tile_y(cpu_tile_id(" + str(i) + ")),\n")
-  fp.write("   " + str(esp_config.NCPU_MAX - 1) + " => tile_y(cpu_tile_id(" + str(esp_config.NCPU_MAX - 1) + ")));\n")
-    
-  fp.write("  constant cpu_x : yx_vec(" + str(esp_config.NCPU_MAX - 1) + " downto 0) := (\n")
-  for i in range(0, esp_config.NCPU_MAX - 1):
+  fp.write("   " + str(NCPU_MAX - 1) + " => tile_y(cpu_tile_id(" + str(NCPU_MAX - 1) + ")));\n")
+
+  fp.write("  constant cpu_x : yx_vec(" + str(NCPU_MAX - 1) + " downto 0) := (\n")
+  for i in range(0, NCPU_MAX - 1):
     fp.write("   " + str(i) + " => tile_x(cpu_tile_id(" + str(i) + ")),\n")
-  fp.write("   " + str(esp_config.NCPU_MAX - 1) + " => tile_x(cpu_tile_id(" + str(esp_config.NCPU_MAX - 1) + ")));\n\n")
-    
+  fp.write("   " + str(NCPU_MAX - 1) + " => tile_x(cpu_tile_id(" + str(NCPU_MAX - 1) + ")));\n\n")
+
+  fp.write("  constant cache_tile_id : cache_attribute_array := (\n")
+  for i in range(0, esp_config.ntiles):
+    if esp_config.tiles[i].cid != -1:
+      fp.write("    " + str(esp_config.tiles[i].cid) + " => " + str(i) + ",\n")
+  fp.write("    others => 0);\n")
+
+  fp.write("  constant cache_y : yx_vec(" + str(NFULL_COHERENT_MAX - 1) + " downto 0) := (\n")
+  for i in range(0, NFULL_COHERENT_MAX - 1):
+    fp.write("   " + str(i) + " => tile_y(cache_tile_id(" + str(i) + ")),\n")
+  fp.write("   " + str(NFULL_COHERENT_MAX - 1) + " => tile_y(cache_tile_id(" + str(NFULL_COHERENT_MAX - 1) + ")));\n")
+
+  fp.write("  constant cache_x : yx_vec(" + str(NFULL_COHERENT_MAX - 1) + " downto 0) := (\n")
+  for i in range(0, NFULL_COHERENT_MAX - 1):
+    fp.write("   " + str(i) + " => tile_x(cache_tile_id(" + str(i) + ")),\n")
+  fp.write("   " + str(NFULL_COHERENT_MAX - 1) + " => tile_x(cache_tile_id(" + str(NFULL_COHERENT_MAX - 1) + ")));\n\n")
+
+  fp.write("  constant dma_tile_id : cache_attribute_array := (\n")
+  for i in range(0, esp_config.ntiles):
+    if esp_config.tiles[i].did != -1:
+      fp.write("    " + str(esp_config.tiles[i].did) + " => " + str(i) + ",\n")
+  fp.write("    others => 0);\n")
+
+  fp.write("  constant dma_y : yx_vec(" + str(NLLC_COHERENT_MAX - 1) + " downto 0) := (\n")
+  for i in range(0, NLLC_COHERENT_MAX - 1):
+    fp.write("   " + str(i) + " => tile_y(dma_tile_id(" + str(i) + ")),\n")
+  fp.write("   " + str(NLLC_COHERENT_MAX - 1) + " => tile_y(dma_tile_id(" + str(NLLC_COHERENT_MAX - 1) + ")));\n")
+
+  fp.write("  constant dma_x : yx_vec(" + str(NLLC_COHERENT_MAX - 1) + " downto 0) := (\n")
+  for i in range(0, NLLC_COHERENT_MAX - 1):
+    fp.write("   " + str(i) + " => tile_x(dma_tile_id(" + str(i) + ")),\n")
+  fp.write("   " + str(NLLC_COHERENT_MAX - 1) + " => tile_x(dma_tile_id(" + str(NLLC_COHERENT_MAX - 1) + ")));\n\n")
+
+
   fp.write("  constant NMIG : integer := 1 + CFG_MIG_DUAL;\n")
 
   for i in range(0, esp_config.ntiles):
@@ -600,7 +641,7 @@ def print_tiles(fp, esp_config, soc):
     fp.write("    " + str(idx) + " => tile_fb")
   fp.write(",\n")
   fp.write("    others => tile_mem_info_none);\n\n")
-  
+
   fp.write("  constant jtag_target_list : tile_mem_info_vector := (\n")
   idx = 1
   if esp_config.nmem_ctrl == 2:
@@ -609,7 +650,7 @@ def print_tiles(fp, esp_config, soc):
   if soc.HAS_SVGA == True:
     fp.write("    " + str(idx) + " => tile_fb,\n")
   fp.write("    others => tile_mem_info_none);\n\n")
-  
+
   fp.write("  type tile_type_array is array (0 to CFG_TILES_NUM-1) of integer;\n")
   fp.write("  constant tile_type : tile_type_array := (\n")
   for i in range(0, esp_config.ntiles):
@@ -702,25 +743,25 @@ def print_tiles(fp, esp_config, soc):
   for i in range(0, esp_config.ntiles):
     if esp_config.tiles[i].type == "acc":
       acc = esp_config.accelerators[esp_config.tiles[i].idx]
-      address_hex = hex(int(esp_config.SLD_APB_ADDR_ADJ) + acc.idx)
+      address_hex = hex(int(SLD_APB_ADDR_ADJ) + acc.idx)
       address = str(address_hex).replace("0x", "")
       fp.write("    " + str(i) + " => 16#" + address + "#,\n")
   fp.write("    others => 0);\n\n")
-    
+
   fp.write("  constant tile_apb_pmask : tile_idx_irq_array := (\n")
   for i in range(0, esp_config.ntiles):
     if esp_config.tiles[i].type == "acc":
       acc = esp_config.accelerators[esp_config.tiles[i].idx]
-      fp.write("    " + str(i) + " => 16#" + str(hex(esp_config.SLD_APB_ADDR_MSK)).replace("0x","") + "#,\n")
+      fp.write("    " + str(i) + " => 16#" + str(hex(SLD_APB_ADDR_MSK)).replace("0x","") + "#,\n")
   fp.write("    others => 0);\n\n")
-    
+
   fp.write("  constant tile_apb_irq : tile_idx_irq_array := (\n")
   for i in range(0, esp_config.ntiles):
     if esp_config.tiles[i].type == "acc":
       acc = esp_config.accelerators[esp_config.tiles[i].idx]
       fp.write("    " + str(i) + " => CFG_SLD_" + acc.uppercase_name + "_IRQ,\n")
   fp.write("    others => 0);\n\n")
-    
+
   fp.write("  constant tile_scatter_gather : tile_idx_irq_array := (\n")
   for i in range(0, esp_config.ntiles):
     if esp_config.tiles[i].type == "acc":
@@ -728,13 +769,21 @@ def print_tiles(fp, esp_config, soc):
       fp.write("    " + str(i) + " => CFG_SLD_" + acc.uppercase_name + "_SG,\n")
   fp.write("    others => 0);\n\n")
 
-#  fp.write("  subtype tile_cpu_id_type is integer range -1 to " + str(esp_config.NCPU_MAX - 1) + ";\n")
-#  fp.write("  type tile_cpu_id_array is array (0 to CFG_TILES_NUM-1) of tile_cpu_id_type;\n")
-  fp.write("  constant tile_cpu_id : tile_cpu_id_array := (\n")
+  fp.write("  constant tile_cpu_id : tile_attribute_array := (\n")
   for i in range(0, esp_config.ntiles):
     fp.write("    " + str(i) + " => " + str(esp_config.tiles[i].cpuid) + ",\n")
   fp.write("    others => 0);\n\n")
-    
+
+  fp.write("  constant tile_cache_id : tile_attribute_array := (\n")
+  for i in range(0, esp_config.ntiles):
+    fp.write("    " + str(i) + " => " + str(esp_config.tiles[i].cid) + ",\n")
+  fp.write("    others => 0);\n\n")
+
+  fp.write("  constant tile_dma_id : tile_attribute_array := (\n")
+  for i in range(0, esp_config.ntiles):
+    fp.write("    " + str(i) + " => " + str(esp_config.tiles[i].did) + ",\n")
+  fp.write("    others => 0);\n\n")
+
   fp.write("  type apb_tile_id_array is array (NAPBSLV-1 downto 0) of integer;\n")
   fp.write("  constant apb_tile_id : apb_tile_id_array := (\n")
   misc_id = 0
@@ -760,51 +809,19 @@ def print_tiles(fp, esp_config, soc):
   fp.write("    others => 0);\n\n")
 
   fp.write("  constant apb_slv_y : yx_vec(NAPBSLV-1 downto 0) := (\n")
-  for i in range(0, esp_config.NAPBS-1):
+  for i in range(0, NAPBS-1):
     fp.write("    " + str(i) + " => tile_y(apb_tile_id(" + str(i) + ")),\n")
-  fp.write("    " + str(esp_config.NAPBS-1) + " => tile_y(apb_tile_id(" + str(esp_config.NAPBS-1) + ")));\n")
-    
+  fp.write("    " + str(NAPBS-1) + " => tile_y(apb_tile_id(" + str(NAPBS-1) + ")));\n")
+
   fp.write("  constant apb_slv_x : yx_vec(NAPBSLV-1 downto 0) := (\n")
-  for i in range(0, esp_config.NAPBS-1):
+  for i in range(0, NAPBS-1):
     fp.write("    " + str(i) + " => tile_x(apb_tile_id(" + str(i) + ")),\n")
-  fp.write("    " + str(esp_config.NAPBS-1) + " => tile_x(apb_tile_id(" + str(esp_config.NAPBS-1) + ")));\n\n")
-
-  fp.write("  -- ETH0 (MST2), JTAG (MST1) and CPUs/accelerators proxy (MST0) are the only masters off chip.\n")
-  fp.write("  constant ahb_mst_offchip : std_logic_vector(NAHBSLV-1 downto 0) := \"")
-  i = esp_config.NAHBS-1
-  total = esp_config.ncpu
-  if soc.HAS_JTAG:
-    total += 1
-  if soc.HAS_ETH:
-    total += 1
-
-  while i >= total:
-    fp.write("0")
-    i -= 1
-  while i >= esp_config.ncpu:
-    fp.write("1")
-    i -= 1
-  while i >= 0:
-    fp.write("0")
-    i -= 1
-  fp.write("\";\n\n")
-  
-  fp.write("  -- CPUs, JTAG, ETH0 are masters\n")
-  fp.write("  constant ahb_mst_en : std_logic_vector(NAHBSLV-1 downto 0) := \"")
-
-  i = esp_config.NAHBS - 1
-  while i >= 0:
-    if (i >= total):
-      fp.write("0")
-    else:
-      fp.write("1")
-    i -= 1
-  fp.write("\";\n\n")
+  fp.write("    " + str(NAPBS-1) + " => tile_x(apb_tile_id(" + str(NAPBS-1) + ")));\n\n")
 
   fp.write("  constant ahb_slv_en : std_logic_vector(NAHBSLV-1 downto 0) := \"")
-  i = esp_config.NAHBS - 1
+  i = NAHBS - 1
   while i >= 0:
-    if i != esp_config.AHB2APB_HINDEX and i != esp_config.DSU_HINDEX and i != esp_config.FB_HINDEX:
+    if i != AHB2APB_HINDEX and i != DSU_HINDEX and i != FB_HINDEX:
       fp.write("0")
     else:
       fp.write("1")
@@ -860,4 +877,3 @@ def create_socmap(esp_config, soc):
   fp.write("end socmap;\n")
   fp.close()
   print("Created configuration into 'socmap.vhd'")
-

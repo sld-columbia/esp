@@ -4,10 +4,18 @@ import Pmw
 import xml.etree.ElementTree
 
 import functools
+
 from soc import *
+from socmap_gen import NCPU_MAX
+from socmap_gen import NMEM_MAX
+from socmap_gen import NTILE_MAX
+from socmap_gen import NFULL_COHERENT_MAX
+from socmap_gen import NLLC_COHERENT_MAX
+
+
 
 def isInt(s):
-  try: 
+  try:
     int(s)
     return True
   except ValueError:
@@ -30,10 +38,9 @@ class Tile():
     self.label.config(text=selection)
     self.point_label.forget()
     self.point_select.forget()
-    self.coherence_label.forget()
-    self.coherence_selection_none.forget()
-    self.coherence_selection_llc.forget()
-    self.coherence_selection_full.forget()
+    self.coherence_selection_none.config(state=DISABLED)
+    self.coherence_selection_llc.config(state=DISABLED)
+    self.coherence_selection_full.config(state=DISABLED)
     if soc.IPs.PROCESSORS.count(selection):
        self.label.config(bg='deep pink')
     elif soc.IPs.MISC.count(selection):
@@ -52,10 +59,9 @@ class Tile():
          else:
            self.point_select.setvalue(str(soc.IPs.POINTS[selection][0]))
        self.point_select.pack(side=LEFT)
-       self.coherence_label.pack(side = TOP)
-       self.coherence_selection_none.pack(side = LEFT)
-       self.coherence_selection_llc.pack(side = LEFT)
-       self.coherence_selection_full.pack(side = LEFT)
+       self.coherence_selection_none.config(state=NORMAL)
+       self.coherence_selection_llc.config(state=NORMAL)
+       self.coherence_selection_full.config(state=NORMAL)
     else:
        self.label.config(bg='white')
     self.clk_reg_selection.config(to=soc.noc.get_clk_regions_max())
@@ -158,10 +164,10 @@ class Tile():
       entry[x].e1 = Entry(entry[x], width=10)
       entry[x].e1.pack(side=TOP)
       Label(entry[x], text="Frequency ("+str(x)+") (MHz)", height=0, width=20).pack(side=TOP)
-      entry[x].e2 = Entry(entry[x], width=10) 
+      entry[x].e2 = Entry(entry[x], width=10)
       entry[x].e2.pack(side=TOP)
       Label(entry[x], text="Tot Energy ("+str(x)+") (pJ)", height=0, width=20).pack(side=TOP)
-      entry[x].e3 = Entry(entry[x], width=10) 
+      entry[x].e3 = Entry(entry[x], width=10)
       entry[x].e3.pack(side=TOP)
       entry[x].e1.delete(0, END)
       entry[x].e2.delete(0, END)
@@ -196,7 +202,7 @@ class Tile():
     self.coherence = IntVar(0)
 
 class NoC():
-  
+
   rows = 0
   cols = 0
   top = ""
@@ -205,7 +211,7 @@ class NoC():
 
   topology = []
 
-  def create_topology(self, top, _R, _C): 
+  def create_topology(self, top, _R, _C):
     self.top = top
     new_topology = []
     for y in range(_R):
@@ -226,8 +232,8 @@ class NoC():
 
   def get_clk_regions(self):
     regions = []
-    for y in range(0, self.rows): 
-      for x in range(0, self.cols): 
+    for y in range(0, self.rows):
+      for x in range(0, self.cols):
          tile = self.topology[y][x]
          if tile.clk_region is not None and regions.count(tile.clk_region.get()) == 0:
            regions.append(tile.clk_region.get())
@@ -236,13 +242,13 @@ class NoC():
   def get_clk_regions_max(self):
     region_max = 0
     max_count = 0
-    for y in range(0, self.rows): 
-      for x in range(0, self.cols): 
+    for y in range(0, self.rows):
+      for x in range(0, self.cols):
         tile = self.topology[y][x]
         if tile.clk_region is not None and tile.clk_region.get() > region_max:
           region_max = tile.clk_region.get()
-    for y in range(0, self.rows): 
-      for x in range(0, self.cols): 
+    for y in range(0, self.rows):
+      for x in range(0, self.cols):
         tile = self.topology[y][x]
         if tile.clk_region is not None and tile.clk_region.get() == region_max:
           max_count = max_count + 1
@@ -252,8 +258,8 @@ class NoC():
 
   def get_clkbuf_num(self, soc):
     tot_clkbuf = 0
-    for y in range(0, self.rows): 
-      for x in range(0, self.cols): 
+    for y in range(0, self.rows):
+      for x in range(0, self.cols):
          tile = self.topology[y][x]
          selection = tile.ip_type.get()
          if soc.IPs.ACCELERATORS.count(selection) and tile.has_clkbuf.get() == 1:
@@ -262,8 +268,8 @@ class NoC():
 
   def has_dvfs(self):
     regions = []
-    for y in range(0, self.rows): 
-      for x in range(0, self.cols): 
+    for y in range(0, self.rows):
+      for x in range(0, self.cols):
          tile = self.topology[y][x]
          if tile.clk_region is not None and tile.clk_region.get() != 0:
            return True
@@ -271,8 +277,8 @@ class NoC():
 
   def get_cpu_num(self, soc):
     tot_cpu = 0
-    for y in range(0, self.rows): 
-      for x in range(0, self.cols): 
+    for y in range(0, self.rows):
+      for x in range(0, self.cols):
          tile = self.topology[y][x]
          selection = tile.ip_type.get()
          if soc.IPs.PROCESSORS.count(selection):
@@ -281,8 +287,8 @@ class NoC():
 
   def get_acc_num(self, soc):
     tot_acc = 0
-    for y in range(0, self.rows): 
-      for x in range(0, self.cols): 
+    for y in range(0, self.rows):
+      for x in range(0, self.cols):
          tile = self.topology[y][x]
          selection = tile.ip_type.get()
          if soc.IPs.ACCELERATORS.count(selection):
@@ -292,8 +298,8 @@ class NoC():
   def get_mem_num(self, soc):
     tot_mem = 0
     tot_mem_debug = 0
-    for y in range(0, self.rows): 
-      for x in range(0, self.cols): 
+    for y in range(0, self.rows):
+      for x in range(0, self.cols):
          tile = self.topology[y][x]
          selection = tile.ip_type.get()
          if soc.IPs.MEM.count(selection):
@@ -301,6 +307,26 @@ class NoC():
             if selection == "mem_dbg":
               tot_mem_debug += 1
     return (tot_mem, tot_mem_debug)
+
+  def get_full_coherent_num(self, soc):
+    tot_full_coherent = 0
+    tot_mem_debug = 0
+    for y in range(0, self.rows):
+      for x in range(0, self.cols):
+         tile = self.topology[y][x]
+         if tile.coherence == 2:
+           tot_full_coherent += 1
+    return tot_full_coherent
+
+  def get_llc_coherent_num(self, soc):
+    tot_llc_coherent = 0
+    tot_mem_debug = 0
+    for y in range(0, self.rows):
+      for x in range(0, self.cols):
+         tile = self.topology[y][x]
+         if tile.coherence == 1:
+           tot_llc_coherent += 1
+    return tot_llc_coherent
 
   # WARNING: Geometry in this class only uses x=rows, y=cols, but socmap uses y=row, x=cols!
   def __init__(self):
@@ -324,7 +350,7 @@ class NoCFrame(Pmw.ScrolledFrame):
   def changed(self,*args):
     if isInt(self.ROWS.get()) == False or isInt(self.COLS.get()) == False:
        return
-    for y in range(0, int(self.ROWS.get())): 
+    for y in range(0, int(self.ROWS.get())):
       for x in range(0, int(self.COLS.get())):
          self.noc.topology[y][x].update_tile(self.soc)
     self.update_msg()
@@ -341,7 +367,7 @@ class NoCFrame(Pmw.ScrolledFrame):
     list_items = tuple(self.soc.IPs.EMPTY) + tuple(self.soc.IPs.PROCESSORS) + tuple(self.soc.IPs.MISC) + tuple(self.soc.IPs.MEM) + tuple(self.soc.IPs.ACCELERATORS)
     width = 0
     for x in range(0, len(list_items)):
-      if len(list_items[x]) > width: 
+      if len(list_items[x]) > width:
         width = len(list_items[x])
     #creating tile
     select_frame = Frame(frame)
@@ -350,14 +376,14 @@ class NoCFrame(Pmw.ScrolledFrame):
     display_frame = Frame(frame)
     display_frame.pack(side=TOP)
 
-    coherence_frame = Frame(frame, bg='tomato')
+    coherence_frame = Frame(frame, bg='light goldenrod')
     coherence_frame.pack(side=TOP)
 
     config_frame = Frame(frame)
     config_frame.pack(side=TOP)
 
     Pmw.OptionMenu(select_frame, menubutton_font="TkDefaultFont 8",
-                   menubutton_textvariable=tile.ip_type, 
+                   menubutton_textvariable=tile.ip_type,
                    menubutton_width = width+2,
                    items=list_items
                   ).pack(side=LEFT)
@@ -372,17 +398,17 @@ class NoCFrame(Pmw.ScrolledFrame):
     tile.label.config(height=4,bg='white', width=width+25)
     tile.label.pack()
 
-    tile.coherence_label = Label(coherence_frame, text="Coherence: ", width=10)
-    tile.coherence_label.config(bg='tomato', width=width+25)
+    tile.coherence_label = Label(coherence_frame, text="Accelerator Coherence: ", width=10)
+    tile.coherence_label.config(bg='light goldenrod', width=width+25)
     tile.coherence_label.pack(side = TOP)
     tile.coherence_selection_none = Radiobutton(coherence_frame, text = "None", variable = tile.coherence, value = 0)
-    tile.coherence_selection_none.config(bg='tomato', width=width)
+    tile.coherence_selection_none.config(bg='light goldenrod', width=width)
     tile.coherence_selection_none.pack(side = LEFT)
     tile.coherence_selection_llc = Radiobutton(coherence_frame, text = "LLC", variable = tile.coherence, value = 1)
-    tile.coherence_selection_llc.config(bg='tomato', width=width-1)
+    tile.coherence_selection_llc.config(bg='light goldenrod', width=width-1)
     tile.coherence_selection_llc.pack(side = LEFT)
     tile.coherence_selection_full = Radiobutton(coherence_frame, text = "Full", variable = tile.coherence, value = 2)
-    tile.coherence_selection_full.config(bg='tomato', width=width)
+    tile.coherence_selection_full.config(bg='light goldenrod', width=width)
     tile.coherence_selection_full.pack(side = LEFT)
 
     tile.label.bind("<Double-Button-1>", lambda event:tile.power_window(event, self.soc, self))
@@ -464,109 +490,116 @@ class NoCFrame(Pmw.ScrolledFrame):
 
   def update_msg(self):
     self.done.config(state=DISABLED)
-    try:
-      tot_cpu = self.noc.get_cpu_num(self.soc)
-      tot_io = 0
-      tot_clkbuf = self.noc.get_clkbuf_num(self.soc)
-      (tot_mem, tot_mem_debug) = self.noc.get_mem_num(self.soc)
-      tot_acc = self.noc.get_acc_num(self.soc)
-      regions = self.noc.get_clk_regions()
-      for y in range(0, self.noc.rows): 
-        for x in range(0, self.noc.cols): 
-           tile = self.noc.topology[y][x]
-           selection = tile.ip_type.get()
-           if self.soc.IPs.MISC.count(selection):
-              tot_io += 1
-      #update statistics
-      self.TOT_CPU.config(text=" Num CPUs: " + str(tot_cpu))
-      self.TOT_MEM.config(text=" Num memory controllers: " + str(tot_mem))
-      self.TOT_MISC.config(text=" Num I/O tiles: " + str(tot_io))
-      self.TOT_ACC.config(text=" Num accelerators: " + str(tot_acc))
-      self.TOT_IVR.config(text=" Num CLK regions: " + str(len(regions)))
-      self.TOT_CLKBUF.config(text=" Num CLKBUF: " + str(tot_clkbuf))
-      clkbuf_ok = True
-      if tot_clkbuf <= 9:
-         self.TOT_CLKBUF.config(fg="black")
-      else:
-         clkbuf_ok = False
-         self.TOT_CLKBUF.config(fg="red")
+    tot_tiles = self.noc.rows * self.noc.cols
+    tot_cpu = self.noc.get_cpu_num(self.soc)
+    tot_full_coherent = self.noc.get_full_coherent_num(self.soc)
+    tot_llc_coherent = self.noc.get_llc_coherent_num(self.soc)
+    tot_io = 0
+    tot_clkbuf = self.noc.get_clkbuf_num(self.soc)
+    (tot_mem, tot_mem_debug) = self.noc.get_mem_num(self.soc)
+    tot_acc = self.noc.get_acc_num(self.soc)
+    regions = self.noc.get_clk_regions()
+    for y in range(0, self.noc.rows):
+      for x in range(0, self.noc.cols):
+        tile = self.noc.topology[y][x]
+        selection = tile.ip_type.get()
+        if self.soc.IPs.MISC.count(selection):
+          tot_io += 1
+    #update statistics
+    self.TOT_CPU.config(text=" Num CPUs: " + str(tot_cpu))
+    self.TOT_MEM.config(text=" Num memory controllers: " + str(tot_mem))
+    self.TOT_MISC.config(text=" Num I/O tiles: " + str(tot_io))
+    self.TOT_ACC.config(text=" Num accelerators: " + str(tot_acc))
+    self.TOT_IVR.config(text=" Num CLK regions: " + str(len(regions)))
+    self.TOT_CLKBUF.config(text=" Num CLKBUF: " + str(tot_clkbuf))
+    clkbuf_ok = True
+    if tot_clkbuf <= 9:
+      self.TOT_CLKBUF.config(fg="black")
+    else:
+      clkbuf_ok = False
+      self.TOT_CLKBUF.config(fg="red")
 
-      if self.soc.noc.get_acc_num(self.soc) > 0:
-        self.monitor_acc_selection.config(state=NORMAL)
-      else:
-        self.monitor_acc_selection.config(state=DISABLED)
-        self.noc.monitor_accelerators.set(0)
+    if self.soc.noc.get_acc_num(self.soc) > 0:
+      self.monitor_acc_selection.config(state=NORMAL)
+    else:
+      self.monitor_acc_selection.config(state=DISABLED)
+      self.noc.monitor_accelerators.set(0)
 
-      if self.soc.noc.has_dvfs():
-        self.monitor_dvfs_selection.config(state=NORMAL)
-        self.vf_points_entry.config(state=NORMAL)
-      else:
-        self.monitor_dvfs_selection.config(state=DISABLED)
-        self.vf_points_entry.config(state=DISABLED)
-        self.noc.monitor_dvfs.set(0)
+    if self.soc.noc.has_dvfs():
+      self.monitor_dvfs_selection.config(state=NORMAL)
+      self.vf_points_entry.config(state=NORMAL)
+    else:
+      self.monitor_dvfs_selection.config(state=DISABLED)
+      self.vf_points_entry.config(state=DISABLED)
+      self.noc.monitor_dvfs.set(0)
 
-      pll_string = ""
-      num_pll = [0 for x in range(self.noc.cols * self.noc.rows)]
-      num_components = [0 for x in range(self.noc.cols * self.noc.rows)]
-      for y in range(0, self.noc.rows): 
-        for x in range(0, self.noc.cols): 
-           tile = self.noc.topology[y][x]
-           selection = tile.ip_type.get()
-           if self.soc.IPs.EMPTY.count(selection) == 0:
-             num_components[tile.clk_region.get()] += 1
-           if tile.has_pll.get() == 1:
-             num_pll[tile.clk_region.get()] += 1
-      pll_ok = True
-      for x in range(len(regions)):
-        if num_pll[x] == 0 and x > 0 and num_components[x] > 0:
-          pll_ok = False
-          pll_string += "Region \"" + str(x) + "\" requires at least one PLL\n"
-        if num_pll[x] > 1 and x > 0:
-          pll_ok = False
-          pll_string += "Region \"" + str(x) + "\" cannot have more than one PLL\n"
+    pll_string = ""
+    num_pll = [0 for x in range(self.noc.cols * self.noc.rows)]
+    num_components = [0 for x in range(self.noc.cols * self.noc.rows)]
+    for y in range(0, self.noc.rows):
+      for x in range(0, self.noc.cols):
+        tile = self.noc.topology[y][x]
+        selection = tile.ip_type.get()
+        if self.soc.IPs.EMPTY.count(selection) == 0:
+          num_components[tile.clk_region.get()] += 1
+        if tile.has_pll.get() == 1:
+          num_pll[tile.clk_region.get()] += 1
+    pll_ok = True
+    for x in range(len(regions)):
+      if num_pll[x] == 0 and x > 0 and num_components[x] > 0:
+        pll_ok = False
+        pll_string += "Region \"" + str(x) + "\" requires at least one PLL\n"
+      if num_pll[x] > 1 and x > 0:
+        pll_ok = False
+        pll_string += "Region \"" + str(x) + "\" cannot have more than one PLL\n"
 
-      clk_region_skip = 0
-      regions = self.noc.get_clk_regions()
-      regions = sorted(regions, key=int)
-      current_region = regions[0]
-      for r in regions:
-        if r > current_region + 1:
-          clk_region_skip = current_region + 1
-          break
-        current_region = r
+    clk_region_skip = 0
+    regions = self.noc.get_clk_regions()
+    regions = sorted(regions, key=int)
+    current_region = regions[0]
+    for r in regions:
+      if r > current_region + 1:
+        clk_region_skip = current_region + 1
+        break
+      current_region = r
 
-      #update message box
-      self.message.delete(0.0, END)
-      if tot_mem >= 2 or len(regions) >= 2:
-        self.cfg_frame.sync_label.config(text="With synchronizers",fg="darkgreen")
-      else:
-        self.cfg_frame.sync_label.config(text="No synchronizers", fg="red")
-      if tot_cpu == 1 and tot_mem_debug == 1 and tot_mem <= 2 and tot_io == 1 and pll_ok == True and clkbuf_ok == True and clk_region_skip == 0:
-         self.done.config(state=NORMAL)
-      else:
-         string = ""
-         if (tot_cpu == 0):
-            string += "At least one CPU is required\n"
-         if (tot_io == 0):
-            string += "At least I/O tile is required\n"
-         if (tot_mem_debug == 0):
-            string += "At least one \"mem_dbg\" tile is required.\n"
-         if (tot_cpu > 1):
-            string += "Multiple CPUs are currently not supported\n"
-         if (tot_io > 1):
-            string += "Multiple I/O tiles are not supported\n"
-         if (tot_mem_debug > 1):
-            string += "Multiple \"mem_dbg\" tiles are not supported.\n"
-         if (tot_mem > 2):
-            string += "Maximum number of supported memory controllers is 2.\n"
-         if (tot_clkbuf > 9):
-            string += "The FPGA board supports no more than 9 CLKBUF's.\n"
-         string += pll_string
-         if (clk_region_skip > 0):
-           string += "Clock-region IDs must be consecutive; skipping region " + str(clk_region_skip) +" intead\n"
-         self.message.insert(0.0, string)
-    except:
-      pass
+    #update message box
+    self.message.delete(0.0, END)
+    if tot_mem >= 2 or len(regions) >= 2:
+      self.cfg_frame.sync_label.config(text="With synchronizers",fg="darkgreen")
+    else:
+      self.cfg_frame.sync_label.config(text="No synchronizers", fg="red")
+    if tot_cpu <= NCPU_MAX and tot_mem_debug == 1 and tot_mem <= NMEM_MAX and tot_io == 1 and pll_ok == True and clkbuf_ok == True and clk_region_skip == 0 and tot_tiles <= NTILE_MAX and tot_full_coherent <= NFULL_COHERENT_MAX and tot_llc_coherent <= NLLC_COHERENT_MAX:
+      self.done.config(state=NORMAL)
+    else:
+      string = ""
+      if (tot_cpu == 0):
+        string += "At least one CPU is required\n"
+      if (tot_io == 0):
+        string += "At least I/O tile is required\n"
+      if (tot_mem_debug == 0):
+        string += "At least one \"mem_dbg\" tile is required.\n"
+      if (tot_cpu > NCPU_MAX):
+        new_err = "Maximum number of supported CPUs is " + str(NCPU_MAX) + ".\n"
+        string += new_err
+      if (tot_io > 1):
+        string += "Multiple I/O tiles are not supported\n"
+      if (tot_mem_debug > 1):
+        string += "Multiple \"mem_dbg\" tiles are not supported.\n"
+      if (tot_mem > NMEM_MAX):
+        string += "Maximum number of supported memory controllers is " + NMEM_MAX + ".\n"
+      if (tot_tiles > NTILE_MAX):
+        string += "Maximum number of supported tiles is " + str(NTILE_MAX) + ".\n"
+      if (tot_full_coherent > NFULL_COHERENT_MAX):
+        string += "Maximum number of supported fully-coherent devices is " + str(NFULL_COHERENT_MAX) + ".\n"
+      if (tot_llc_coherent > NLLC_COHERENT_MAX):
+        string += "Maximum number of supported LLC-coherent devices is " + str(NLLC_COHERENT_MAX) + ".\n"
+      if (tot_clkbuf > 9):
+        string += "The FPGA board supports no more than 9 CLKBUF's.\n"
+      string += pll_string
+      if (clk_region_skip > 0):
+        string += "Clock-region IDs must be consecutive; skipping region " + str(clk_region_skip) +" intead\n"
+      self.message.insert(0.0, string)
 
   def set_message(self, message, cfg_frame, done):
     self.message = message
@@ -579,13 +612,13 @@ class NoCFrame(Pmw.ScrolledFrame):
        return
     #destroy current topology
     if len(self.row_frames) > 0:
-      for x in range(0, len(self.row_frames)): 
+      for x in range(0, len(self.row_frames)):
         self.row_frames[x].destroy()
       self.noc_tiles = []
       self.row_frames = []
     #create new topology
     self.noc.create_topology(self.noc_frame, int(self.ROWS.get()), int(self.COLS.get()))
-    for y in range(0, int(self.ROWS.get())): 
+    for y in range(0, int(self.ROWS.get())):
       self.row_frames.append(Frame(self.noc_frame, borderwidth=2, relief=RIDGE))
       self.row_frames[y].pack(side=TOP)
       self.noc_tiles.append([])
@@ -597,10 +630,9 @@ class NoCFrame(Pmw.ScrolledFrame):
         if len(self.noc.topology[y][x].ip_type.get()) == 0:
           self.noc.topology[y][x].ip_type.set("empty") # default value
     #set call-backs and default value
-    for y in range(0, int(self.ROWS.get())): 
+    for y in range(0, int(self.ROWS.get())):
       for x in range(0, int(self.COLS.get())):
         tile = self.noc.topology[y][x]
         tile.ip_type.trace('w', self.changed)
         tile.clk_region.trace('w', self.changed)
     self.changed()
-
