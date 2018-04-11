@@ -152,28 +152,19 @@ begin
     ctrl_ahbso2(ddr1_hindex) <= ddr_ahbso;
     ddr_ahbsi                <= ctrl_ahbsi2;
 
-    if CFG_FIXED_ADDR /= 0 then
-      for i in 0 to NAHBMST-1 loop
-        if ahb_mst_en(i) = '1' and ahb_mst_offchip(i) = '0' then
-          ctrl_ahbmo2(i).hconfig <= fixed_ahbmo_hconfig(i);
-          ctrl_ahbmo2(i).hindex  <= i;
-        end if;
-      end loop;  -- i
-      ctrl_ahbmo2(1).hindex <= 1;
-      for i in 0 to NAHBSLV-1 loop
-        if i /= ddr0_hindex and i /= fb_hindex then
-          ctrl_ahbso2(i).hconfig <= fixed_ahbso_hconfig(i);
-        end if;
-        if i = ddr0_hindex or i = fb_hindex then
-          ctrl_ahbso2(i).hconfig <= hconfig_none;
-        end if;
-      end loop;  -- i
-      --pragma translate_off
-      ctrl_ahbso2(ddr1_hindex).hconfig   <= ahbram_sim1_hconfig;
-      --pragma translate_on
-      ctrl_ahbso2(dsu_hindex).hindex     <= dsu_hindex;
-      ctrl_ahbso2(ahb2apb_hindex).hindex <= ahb2apb_hindex;
-    end if;
+    for i in 0 to NAHBSLV-1 loop
+      if i /= ddr0_hindex and i /= fb_hindex then
+        ctrl_ahbso2(i).hconfig <= fixed_ahbso_hconfig(i);
+      end if;
+      if i = ddr0_hindex or i = fb_hindex then
+        ctrl_ahbso2(i).hconfig <= hconfig_none;
+      end if;
+    end loop;  -- i
+    --pragma translate_off
+    ctrl_ahbso2(ddr1_hindex).hconfig   <= ahbram_sim1_hconfig;
+    --pragma translate_on
+    ctrl_ahbso2(dsu_hindex).hindex     <= dsu_hindex;
+    ctrl_ahbso2(ahb2apb_hindex).hindex <= ahb2apb_hindex;
   end process assign_bus_ctrl_sig2;
 
   ahb2 : ahbctrl                        -- AHB arbiter/multiplexer
@@ -210,7 +201,7 @@ begin
   mem_noc2ahbm_1 : mem_noc2ahbm
     generic map (
       tech        => fabtech,
-      ncpu        => CFG_NCPU,          --unused
+      ncpu        => CFG_NCPU_TILE,          --unused
       hindex      => 0,
       local_y     => local_y,
       local_x     => local_x,
@@ -244,7 +235,7 @@ begin
   mem_noc2ahbm_2 : mem_noc2ahbm
     generic map (
       tech        => fabtech,
-      ncpu        => CFG_NCPU,          -- unused
+      ncpu        => CFG_NCPU_TILE,          -- unused
       hindex      => 1,
       local_y     => local_y,
       local_x     => local_x,

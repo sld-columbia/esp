@@ -476,7 +476,7 @@ begin
   eth0 : if CFG_GRETH = 1 generate -- Gaisler ethernet MAC
     e1 : grethm
       generic map(
-        hindex => 1+CFG_AHB_UART+CFG_AHB_JTAG,
+        hindex => 1+CFG_AHB_JTAG,
         pindex => 14,
         paddr => 16#800#,
         pmask => 16#f00#,
@@ -502,9 +502,9 @@ begin
         rst => rstn,
         clk => clkm,
         ahbmi => eth0_ahbmi,
-        ahbmo => eth0_ahbmo,            -- ahbmo(CFG_NCPU+CFG_AHB_UART+CFG_AHB_JTAG)
+        ahbmo => eth0_ahbmo,
         apbi => eth0_apbi,
-        apbo => eth0_apbo,              -- Connect to apbo(14) on socmap for cpu_tile
+        apbo => eth0_apbo,
         ethi => gmiii,
         etho => gmiio);
 
@@ -530,7 +530,7 @@ begin
         apb_clk  => clkm,
         apb_rstn => rstn,
         apbi     => sgmii0_apbi,
-        apbo     => sgmii0_apbo          -- Connect to apbo(15) on socmap for cpu_tile
+        apbo     => sgmii0_apbo
         );
 
     emdio_pad : iopad generic map (tech => padtech, level => cmos, voltage => x18v)
