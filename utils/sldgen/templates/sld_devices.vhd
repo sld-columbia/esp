@@ -38,6 +38,7 @@ package sld_devices is
   constant SLD_AHBRAM_DP : devid_t := 16#01f#;
   constant SLD_L2_CACHE  : devid_t := 16#020#;
   constant SLD_L3_CACHE  : devid_t := 16#021#;
+  constant SLD_MST_PROXY : devid_t := 16#022#;
 
   -- <<devid>>
 
@@ -50,6 +51,7 @@ package sld_devices is
     SLD_AHBRAM_DP => "On-chip RAM with dual AHB iface",
     SLD_L2_CACHE  => "L2 cache                       ",
     SLD_L3_CACHE  => "L3 cache                       ",
+    SLD_MST_PROXY => "bus-master proxy               ",
     -- <<ddesc>>
     others => "Unknown Device                 ");
 

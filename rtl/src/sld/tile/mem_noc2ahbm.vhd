@@ -87,6 +87,10 @@ end mem_noc2ahbm;
 
 architecture rtl of mem_noc2ahbm is
 
+  constant hconfig : ahb_config_type := (
+    0      => ahb_device_reg (VENDOR_SLD, SLD_MST_PROXY, 0, 0, 0),
+    others => zero32);
+
   -- If length is not received, then use fix length of 4 words.
   -- The accelerators will always provide a length.
   -- Protection info is in the reserved field of the header
@@ -723,7 +727,7 @@ begin  -- rtl
     ahbmo.hprot   <= r.hprot;
     ahbmo.hwdata  <= ahbdrivedata(r.hwdata);
     ahbmo.hirq    <= (others => '0');
-    ahbmo.hconfig <= hconfig_none;
+    ahbmo.hconfig <= hconfig;
     ahbmo.hindex  <= hindex;
 
   end process ahb_roundtrip;

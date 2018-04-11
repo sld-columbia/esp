@@ -90,7 +90,7 @@ entity acc_dma2noc is
     dma_rcv_rdreq                       : out std_ulogic;
     dma_rcv_data_out                    : in  noc_flit_type;
     dma_rcv_empty                       : in  std_ulogic;
-    -- tile->NoC4
+    -- tile->NoC6
     dma_snd_wrreq                       : out std_ulogic;
     dma_snd_data_in                     : out noc_flit_type;
     dma_snd_full                        : in  std_ulogic;
