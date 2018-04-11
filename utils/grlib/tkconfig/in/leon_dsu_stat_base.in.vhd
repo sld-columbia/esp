@@ -1,6 +1,5 @@
 -- LEON processor core
   constant CFG_LEON  	: integer := CONFIG_LEON;
-  constant CFG_NCPU 	: integer := CONFIG_PROC_NUM;
   constant CFG_NWIN 	: integer := CONFIG_IU_NWINDOWS;
   constant CFG_V8   	: integer := CFG_IU_V8 + 4*CFG_IU_MUL_STRUCT;
   constant CFG_MAC  	: integer := CONFIG_IU_MUL_MAC;

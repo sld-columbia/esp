@@ -23,7 +23,6 @@ source amba.in
 
 mainmenu_option next_comment
   comment 'Debug Link           '
-  source dcom.in
   source jtag.in
   source edcl.in
 endmenu

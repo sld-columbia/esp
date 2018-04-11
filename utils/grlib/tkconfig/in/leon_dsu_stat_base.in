@@ -3,9 +3,7 @@
 mainmenu_option next_comment
 comment 'Processor            '
   choice 'Select processor type' \
-    "LEON3	CONFIG_LEON3 \
-     LEON4	CONFIG_LEON4" LEON3
-  int 'Number of processors' CONFIG_PROC_NUM 1
+    "LEON3	CONFIG_LEON3" LEON3
   choice 'Force values from example configuration (see help)' \
     "Minimal-configuration	CONFIG_LEON_MIN \
      General-purpose-cfg	CONFIG_LEON_GP \

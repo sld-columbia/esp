@@ -3,7 +3,6 @@ mainmenu_option next_comment
 comment 'Processor            '
 bool 'Enable LEON3 SPARC V8 Processor' CONFIG_LEON3
 if [ "$CONFIG_LEON3" = "y" ]; then
-  int 'Number of processors' CONFIG_PROC_NUM 1
   choice 'Force values from example configuration (see help)' \
     "Minimal-configuration	CONFIG_LEON3_MIN \
      General-purpose-cfg	CONFIG_LEON3_GP \

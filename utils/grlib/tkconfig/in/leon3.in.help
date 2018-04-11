@@ -1,10 +1,4 @@
 
-Number of processors
-CONFIG_PROC_NUM
-  The number of processor cores. The LEON3MP design can accomodate
-  up to 4 LEON3 processor cores. Use 1 unless you know what you are
-  doing ...
-
 Force values from example configuration
 CONFIG_LEON3_MIN
   If you select any other value than Custom-configuration then the

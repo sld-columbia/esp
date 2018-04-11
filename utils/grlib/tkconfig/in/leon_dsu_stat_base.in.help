@@ -1,8 +1,4 @@
 
-Number of processors
-CONFIG_PROC_NUM
-  The number of processor cores.
-
 Force values from example configuration
 CONFIG_LEON_MIN
   If you select any other value than Custom-configuration then the

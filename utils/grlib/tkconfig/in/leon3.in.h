@@ -2,10 +2,6 @@
 #define CONFIG_LEON3 0
 #endif
 
-#ifndef CONFIG_PROC_NUM
-#define CONFIG_PROC_NUM 1
-#endif
-
 #ifndef CONFIG_IU_NWINDOWS
 #define CONFIG_IU_NWINDOWS 8
 #endif
