@@ -246,7 +246,8 @@ package cachepackage is
 
       -- frontend (cache - Accelerator DMA)
       -- header / lenght parallel ports
-      dma_write                 : in std_logic_vector;
+      dma_read                  : in std_ulogic;
+      dma_write                 : in std_ulogic;
       dma_length                : in addr_t;
       dma_address               : in addr_t;
       -- cahce->acc (data only)
@@ -256,7 +257,7 @@ package cachepackage is
       -- acc->cache (data only)
       dma_snd_valid             : in  std_ulogic;
       dma_snd_data              : in  noc_flit_type;
-      dma_snd_read              : out std_ulogic;
+      dma_snd_ready             : out std_ulogic;
       -- Accelerator done causes a flush
       flush                     : in  std_ulogic;
 
