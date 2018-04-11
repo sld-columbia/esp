@@ -281,8 +281,8 @@ begin
   -- JTAG
   -----------------------------------------------------------------------------
   ahbjtaggen0 : if CFG_AHB_JTAG = 1 generate
-    ahbjtag0 : ahbjtag generic map(tech => fabtech, hindex => CFG_NCPU)
-      port map(rst, clk, tck, tms, tdi, tdo, ahbmi, ahbmo(CFG_NCPU),
+    ahbjtag0 : ahbjtag generic map(tech => fabtech, hindex => 0)
+      port map(rst, clk, tck, tms, tdi, tdo, ahbmi, ahbmo(0),
                open, open, open, open, open, open, open, gnd(0));
   end generate;
 
@@ -291,8 +291,8 @@ begin
   -----------------------------------------------------------------------------
 
   eth0_gen : if CFG_GRETH = 1 generate
-    ahbmo(CFG_NCPU+CFG_AHB_JTAG) <= eth0_ahbmo;
-    eth0_ahbmi                   <= ahbmi;
+    ahbmo(CFG_AHB_JTAG) <= eth0_ahbmo;
+    eth0_ahbmi          <= ahbmi;
   end generate eth0_gen;
 
   no_ethernet : if CFG_GRETH = 0 generate
@@ -344,31 +344,23 @@ begin
       ctrl_apbo(i).pirq <= (others => '0');
     end loop;  -- i
 
-    if CFG_FIXED_ADDR /= 0 then
-      for i in 0 to NAHBMST-1 loop
-        ctrl_ahbmo(i).hconfig <= fixed_ahbmo_hconfig(i);
-        if ahb_mst_en(i) = '1' then
-          ctrl_ahbmo(i).hindex <= i;
-        end if;
-      end loop;  -- i
-      for i in 0 to NAHBSLV-1 loop
-        if i /= fb_hindex then
-          ctrl_ahbso(i).hconfig <= fixed_ahbso_hconfig(i);
-        end if;
-        if i = fb_hindex then
-          ctrl_ahbso(i).hconfig <= hconfig_none;
-        end if;
-      end loop;  -- i
-      --pragma translate_off
-      ctrl_ahbso(ddr0_hindex).hconfig  <= ahbram_sim0_hconfig;
-      ctrl_ahbso(ddr1_hindex).hconfig  <= ahbram_sim1_hconfig;
-      ctrl_ahbso(mctrl_hindex).hconfig <= mctrl_hconfig;
-      --pragma translate_on
-      for i in 0 to NAPBSLV-1 loop
-        ctrl_apbo(i).pconfig <= fixed_apbo_pconfig(i);
-        ctrl_apbo(i).pindex  <= i;
-      end loop;  -- i
-    end if;
+    for i in 0 to NAHBSLV-1 loop
+      if i /= fb_hindex then
+        ctrl_ahbso(i).hconfig <= fixed_ahbso_hconfig(i);
+      end if;
+      if i = fb_hindex then
+        ctrl_ahbso(i).hconfig <= hconfig_none;
+      end if;
+    end loop;  -- i
+    --pragma translate_off
+    ctrl_ahbso(ddr0_hindex).hconfig  <= ahbram_sim0_hconfig;
+    ctrl_ahbso(ddr1_hindex).hconfig  <= ahbram_sim1_hconfig;
+    ctrl_ahbso(mctrl_hindex).hconfig <= mctrl_hconfig;
+    --pragma translate_on
+    for i in 0 to NAPBSLV-1 loop
+      ctrl_apbo(i).pconfig <= fixed_apbo_pconfig(i);
+      ctrl_apbo(i).pindex  <= i;
+    end loop;  -- i
   end process assign_bus_ctrl_sig;
 
   ahb1 : ahbctrl                        -- AHB arbiter/multiplexer
@@ -407,27 +399,19 @@ begin
     ctrl_ahbso2(ddr0_hindex) <= ddr_ahbso;
     ddr_ahbsi                <= ctrl_ahbsi2;
 
-    if CFG_FIXED_ADDR /= 0 then
-      for i in 0 to NAHBMST-1 loop
-        ctrl_ahbmo2(i).hconfig <= fixed_ahbmo_hconfig(i);
-        if ahb_mst_en(i) = '1' then
-          ctrl_ahbmo2(i).hindex <= i;
-        end if;
-      end loop;  -- i
-      for i in 0 to NAHBSLV-1 loop
-        if i /= ddr1_hindex and i /= fb_hindex then
-          ctrl_ahbso2(i).hconfig <= fixed_ahbso_hconfig(i);
-        end if;
-        if i = ddr1_hindex or i = fb_hindex then
-          ctrl_ahbso2(i).hconfig <= hconfig_none;
-        end if;
-      end loop;  -- i
-      --pragma translate_off
-      ctrl_ahbso2(ddr0_hindex).hconfig   <= ahbram_sim0_hconfig;
-      ctrl_ahbso2(mctrl_hindex).hconfig  <= mctrl_hconfig;
-      --pragma translate_on
-      ctrl_ahbso2(ahb2apb_hindex).hindex <= ahb2apb_hindex;
-    end if;
+    for i in 0 to NAHBSLV-1 loop
+      if i /= ddr1_hindex and i /= fb_hindex then
+        ctrl_ahbso2(i).hconfig <= fixed_ahbso_hconfig(i);
+      end if;
+      if i = ddr1_hindex or i = fb_hindex then
+        ctrl_ahbso2(i).hconfig <= hconfig_none;
+      end if;
+    end loop;  -- i
+    --pragma translate_off
+    ctrl_ahbso2(ddr0_hindex).hconfig   <= ahbram_sim0_hconfig;
+    ctrl_ahbso2(mctrl_hindex).hconfig  <= mctrl_hconfig;
+    --pragma translate_on
+    ctrl_ahbso2(ahb2apb_hindex).hindex <= ahb2apb_hindex;
   end process assign_bus_ctrl_sig2;
 
   ahb2 : ahbctrl                        -- AHB arbiter/multiplexer
@@ -459,7 +443,7 @@ begin
   ---  Drive unused bus elements  ---------------------------------------
   -----------------------------------------------------------------------
 
-  nam1 : for i in (sldidx) to NAHBMST-1 generate
+  nam1 : for i in (CFG_AHB_JTAG + CFG_GRETH) to NAHBMST-1 generate
     ahbmo(i) <= ahbm_none;
   end generate;
 
@@ -474,7 +458,7 @@ begin
   apb2noc_1 : apb2noc
     generic map (
       tech       => fabtech,
-      ncpu       => CFG_NCPU,
+      ncpu       => CFG_NCPU_TILE,
       local_y    => local_y,
       local_x    => local_x,
       apb_slv_en => remote_apb_slv_en,
@@ -498,7 +482,7 @@ begin
   cpu_ahbs2noc_1 : cpu_ahbs2noc
     generic map (
       tech        => fabtech,
-      ncpu        => CFG_NCPU,
+      ncpu        => CFG_NCPU_TILE,
       nslaves     => proxy_nslaves,
       hindex      => ahbslv_proxy_hindex,
       local_y     => local_y,
@@ -525,7 +509,7 @@ begin
   cpu_ahbs2noc_2 : cpu_ahbs2noc
     generic map (
       tech        => fabtech,
-      ncpu        => CFG_NCPU,
+      ncpu        => CFG_NCPU_TILE,
       nslaves     => bridge_nslaves,
       hindex      => ahbslv_bridge_hindex,
       local_y     => local_y,
@@ -638,8 +622,8 @@ begin
   mem_noc2ahbm_2 : mem_noc2ahbm
     generic map (
       tech        => fabtech,
-      ncpu        => CFG_NCPU,
-      hindex      => CFG_NCPU,
+      ncpu        => CFG_NCPU_TILE,
+      hindex      => CFG_NCPU_TILE,
       local_y     => local_y,
       local_x     => local_x,
       l2_cache_en => 0,
