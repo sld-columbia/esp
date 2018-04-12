@@ -164,6 +164,7 @@ architecture rtl of l2_acc_wrapper is
     state         : req_acc_fsm;
     addr          : addr_t;
     length        : addr_t;
+    length_addr   : addr_t;
     asserts       : asserts_req_acc_t;
   end record;
 
@@ -171,6 +172,7 @@ architecture rtl of l2_acc_wrapper is
     state         => idle,
     addr          => (others => '0'),
     length        => (others => '0'),
+    length_addr   => (others => '0'),
     asserts       => (others => '0'));
 
   signal req_acc_reg      : req_acc_reg_type := REQ_ACC_REG_DEFAULT;
@@ -185,6 +187,7 @@ architecture rtl of l2_acc_wrapper is
     state         : rsp_acc_fsm;
     line          : line_t;
     word_index    : integer;
+    cnt           : addr_t;
     asserts       : asserts_rsp_acc_t;
   end record;
 
@@ -192,6 +195,7 @@ architecture rtl of l2_acc_wrapper is
     state         => idle,
     line          => (others => '0'),
     word_index    => 0,
+    cnt           => (others => '0'),
     asserts       => (others => '0'));
 
   signal rsp_acc_reg      : rsp_acc_reg_type := RSP_ACC_REG_DEFAULT;
@@ -595,7 +599,8 @@ begin  -- architecture rtl of l2_acc_wrapper
             
             reg.addr   := dma_address + BYTES_PER_LINE;
             reg.length := dma_length - WORDS_PER_LINE;
-
+            reg.length_rsp := dma_length;
+            
             if reg.length /= 0 then
 
               reg.state := load;
@@ -632,6 +637,7 @@ begin  -- architecture rtl of l2_acc_wrapper
             
           reg.addr   := dma_address + BYTES_PER_LINE;
           reg.length := dma_length - WORDS_PER_LINE;
+          reg.length_rsp := dma_length;
 
           if reg.length = 0 then
 
@@ -676,7 +682,8 @@ begin  -- architecture rtl of l2_acc_wrapper
 -------------------------------------------------------------------------------
 -- FSM: Bridge from L2 cache frontend output to accelerator wrapper
 -------------------------------------------------------------------------------
-  fsm_rsp_acc : process (rsp_acc_reg, dma_snd_ready, rd_rsp_valid, rd_rsp_data_line)
+  fsm_rsp_acc : process (rsp_acc_reg, req_add_reg, dma_snd_ready,
+                         rd_rsp_valid, rd_rsp_data_line)
 
     variable reg : rsp_acc_reg_type;
 
@@ -685,7 +692,7 @@ begin  -- architecture rtl of l2_acc_wrapper
     -- copy current state into a variable
     reg         := rsp_acc_reg;
     reg.asserts := (others => '0');
-
+    
     -- default values of output signals
     dma_snd_valid <= '0';
     dma_snd_data <= (others => '0');
@@ -708,9 +715,20 @@ begin  -- architecture rtl of l2_acc_wrapper
 
             dma_snd_valid <= '1';
 
-            dma_snd_data <= PREAMBLE_BODY &
-                            read_word(reg.line, 0);
+            reg.cnt := reg.cnt + 1;
 
+            if (reg.cnt = req_add_reg.length_rsp) then
+
+              reg.cnt := 0;
+
+              dma_snd_data <= PREAMBLE_TAIL &
+                              read_word(reg.line, 0);
+            else
+
+              dma_snd_data <= PREAMBLE_BODY &
+                              read_word(reg.line, 0);
+            end if;
+            
             reg.word_index := 1;
 
           else
@@ -725,11 +743,23 @@ begin  -- architecture rtl of l2_acc_wrapper
       when rsp =>
 
         dma_snd_valid <= '1';
-        dma_snd_data <= PREAMBLE_BODY &
-                        read_word(reg.line, reg.word_index);
         
         if dma_snd_ready <= '1' then 
 
+          reg.cnt := reg.cnt + 1;
+
+          if (reg.cnt = req_add_reg.length_rsp) then
+
+            reg.cnt := 0;
+
+            dma_snd_data <= PREAMBLE_TAIL &
+                            read_word(reg.line, reg.word_index);
+          else
+
+            dma_snd_data <= PREAMBLE_BODY &
+                            read_word(reg.line, reg.word_index);
+          end if;
+          
           if reg.word_index /= WORDS_PER_LINE - 1 then
             
             reg.word_index := reg.word_index + 1;
