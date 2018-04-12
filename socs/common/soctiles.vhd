@@ -186,6 +186,10 @@ package soctiles is
       pirq           : integer;
       scatter_gather : integer range 0 to 1;
       local_apb_mask : std_logic_vector(NAPBSLV-1 downto 0);
+      sets           : integer;
+      ways           : integer;
+      coherence      : integer;
+      espcache_tile_id  : cache_attribute_array;
       has_dvfs       : integer;
       has_pll        : integer;
       extra_clk_buf  : integer;

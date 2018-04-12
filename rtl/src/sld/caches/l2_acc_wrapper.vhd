@@ -36,7 +36,7 @@ entity l2_acc_wrapper is
     tech        : integer := virtex7;
     sets        : integer := 256;
     ways        : integer := 8;
-    nl2         : integer := 4;
+    coherence   : integer := ACC_COH_NONE;
     nslaves     : integer := 1;
     noc_xlen    : integer := 3;
     hindex_slv  : hindex_vector(0 to NAHBSLV-1);
@@ -47,7 +47,7 @@ entity l2_acc_wrapper is
     mem_info    : tile_mem_info_vector;
     destination : integer := 0;         -- 0: mem, 1: DSU
     l1_cache_en : integer := 0;
-    cache_tile_id : cpu_info_array);
+    cache_tile_id : cache_attribute_array);
 
   port (
     rst : in std_ulogic;

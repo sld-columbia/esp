@@ -36,7 +36,6 @@ entity l2_wrapper is
     tech        : integer := virtex7;
     sets        : integer := 256;
     ways        : integer := 8;
-    nl2         : integer := 4;
     nslaves     : integer := 1;
     noc_xlen    : integer := 3;
     hindex_slv  : hindex_vector(0 to NAHBSLV-1);

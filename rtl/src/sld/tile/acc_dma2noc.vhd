@@ -26,6 +26,7 @@ use work.genacc.all;
 
 use work.sldcommon.all;
 use work.nocpackage.all;
+use work.cachepackage.all;
 use work.tile.all;
 
 use work.acctypes.all;
@@ -51,6 +52,7 @@ entity acc_dma2noc is
     exp_registers         : integer range 0 to 1               := 0;  -- Not implemented
     scatter_gather        : integer range 0 to 1               := 1;
     tlb_entries           : integer                            := 256;
+    coherence             : integer                            := ACC_COH_NONE;
     has_dvfs              : integer                            := 1;
     has_pll               : integer);
   port (
@@ -86,6 +88,19 @@ entity acc_dma2noc is
     --Monitor signals
     mon_dvfs      : out monitor_dvfs_type;
 
+    -- Coherent requests parallel control
+    coherent_dma_read    : out std_ulogic;
+    coherent_dma_write   : out std_ulogic;
+    coherent_dma_length  : out addr_t;
+    coherent_dma_address : out addr_t;
+    -- NoC1->tile
+    llc_coherent_dma_rcv_rdreq          : out std_ulogic;
+    llc_coherent_dma_rcv_data_out       : in  noc_flit_type;
+    llc_coherent_dma_rcv_empty          : in  std_ulogic;
+    -- tile->NoC2
+    llc_coherent_dma_snd_wrreq          : out std_ulogic;
+    llc_coherent_dma_snd_data_in        : out noc_flit_type;
+    llc_coherent_dma_snd_full           : in  std_ulogic;
     -- NoC4->tile
     dma_rcv_rdreq                       : out std_ulogic;
     dma_rcv_data_out                    : in  noc_flit_type;

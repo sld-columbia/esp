@@ -39,8 +39,8 @@ package cachepackage is
 
   -- TODO: The following are predefined by processor architecture and should
   --       not be set here
-  constant WORD_OFFSET_BITS   : integer := 2;
-  constant BYTE_OFFSET_BITS   : integer := 2;
+  constant WORD_OFFSET_BITS   : integer := 2;  -- CFG_ILINE = CFG_DLINE from grlib_config must match!
+  constant BYTE_OFFSET_BITS   : integer := 2;  -- Must be 2 for leon3 (32 bits)
   constant ADDR_BITS          : integer := 32;
   --
 
@@ -177,7 +177,6 @@ package cachepackage is
       tech        : integer := virtex7;
       sets        : integer := 256;
       ways        : integer := 8;
-      nl2         : integer := 4;
       nslaves     : integer := 1;
       noc_xlen    : integer := 3;
       hindex_slv  : hindex_vector(0 to NAHBSLV-1);
@@ -228,7 +227,7 @@ package cachepackage is
       tech        : integer := virtex7;
       sets        : integer := 256;
       ways        : integer := 8;
-      nl2         : integer := 4;
+      coherence   : integer := ACC_COH_NONE;
       nslaves     : integer := 1;
       noc_xlen    : integer := 3;
       hindex_slv  : hindex_vector(0 to NAHBSLV-1);

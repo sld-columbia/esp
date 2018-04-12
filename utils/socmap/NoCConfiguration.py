@@ -199,7 +199,7 @@ class Tile():
     self.clk_reg_active = StringVar()
     self.label = Label(top)
     self.energy_values = None
-    self.coherence = IntVar(0)
+    self.coherence = StringVar()
 
 class NoC():
 
@@ -314,7 +314,7 @@ class NoC():
     for y in range(0, self.rows):
       for x in range(0, self.cols):
          tile = self.topology[y][x]
-         if tile.coherence == 2:
+         if tile.coherence == "ACC_COH_FULL":
            tot_full_coherent += 1
     return tot_full_coherent
 
@@ -324,7 +324,7 @@ class NoC():
     for y in range(0, self.rows):
       for x in range(0, self.cols):
          tile = self.topology[y][x]
-         if tile.coherence == 1:
+         if tile.coherence == "ACC_COH_LLC":
            tot_llc_coherent += 1
     return tot_llc_coherent
 
@@ -401,13 +401,13 @@ class NoCFrame(Pmw.ScrolledFrame):
     tile.coherence_label = Label(coherence_frame, text="Accelerator Coherence: ", width=10)
     tile.coherence_label.config(bg='light goldenrod', width=width+25)
     tile.coherence_label.pack(side = TOP)
-    tile.coherence_selection_none = Radiobutton(coherence_frame, text = "None", variable = tile.coherence, value = 0)
+    tile.coherence_selection_none = Radiobutton(coherence_frame, text = "None", variable = tile.coherence, value = "ACC_COH_NONE")
     tile.coherence_selection_none.config(bg='light goldenrod', width=width)
     tile.coherence_selection_none.pack(side = LEFT)
-    tile.coherence_selection_llc = Radiobutton(coherence_frame, text = "LLC", variable = tile.coherence, value = 1)
+    tile.coherence_selection_llc = Radiobutton(coherence_frame, text = "LLC", variable = tile.coherence, value = "ACC_COH_LLC")
     tile.coherence_selection_llc.config(bg='light goldenrod', width=width-1)
     tile.coherence_selection_llc.pack(side = LEFT)
-    tile.coherence_selection_full = Radiobutton(coherence_frame, text = "Full", variable = tile.coherence, value = 2)
+    tile.coherence_selection_full = Radiobutton(coherence_frame, text = "Full", variable = tile.coherence, value = "ACC_COH_FULL")
     tile.coherence_selection_full.config(bg='light goldenrod', width=width)
     tile.coherence_selection_full.pack(side = LEFT)
 
