@@ -28,7 +28,7 @@ define_system_module tb  ../tb/llc_tb.cpp ../tb/system.cpp ../tb/sc_main.cpp
 
 #     foreach ways [list 4 8 16 32] {
 
-foreach sets [list 256] {
+foreach sets [list 256 512 1024] {
 
     foreach ways [list 16] {
 

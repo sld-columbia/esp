@@ -242,11 +242,11 @@ void llc::ctrl()
 
 			    DMA_READ_I;
 
-			    send_mem_req(READ, req_in.addr, req_in.hprot, 0);
+			    send_mem_req(READ, addr, req_in.hprot, 0);
 			    get_mem_rsp(line_buf[way]);
 			}
 
-			send_rsp_out(RSP_DATA_DMA, req_in.addr, line_buf[way], 
+			send_rsp_out(RSP_DATA_DMA, addr, line_buf[way], 
 				     req_in.req_id, 0, dma_done);
 
 			if (state_buf[way] == INVALID) {

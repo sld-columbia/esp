@@ -38,8 +38,8 @@
 #define B_OFF_RANGE_HI	(W_OFF_RANGE_LO - 1)
 #define B_OFF_RANGE_LO	OFF_RANGE_LO
 
-#define SET_OFFSET	(1 << SET_RANGE_LO)
-#define WORD_OFFSET	(1 << W_OFF_RANGE_LO)
+#define SET_OFFSET	(1 << OFFSET_BITS)
+#define WORD_OFFSET	(1 << WORD_BITS)
 #define LINE_ADDR_BITS  (ADDR_BITS - SET_RANGE_LO)
 
 // Cache sizes
