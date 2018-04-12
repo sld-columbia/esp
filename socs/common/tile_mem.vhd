@@ -118,6 +118,10 @@ architecture rtl of tile_mem is
 -- JTAG (Connected internally through tap and bscan components
   signal tck, tckn, tms, tdi, tdo : std_ulogic;
 
+-- DSU
+  signal dbgi_int : l3_debug_in_vector(0 to CFG_NCPU_TILE-1);
+  signal llc_rstn : std_ulogic;
+  
 -- Queues
   signal coherence_req_rdreq        : std_ulogic;
   signal coherence_req_data_out     : noc_flit_type;
@@ -423,11 +427,13 @@ begin
   -----------------------------------------------------------------------------
   -- DSU
   -----------------------------------------------------------------------------
+  dbgi <= dbgi_int;
+
   dsugeni_0 : if CFG_DSU = 1 generate
     dsu0 : dsu3                         -- LEON3 Debug Support Unit
       generic map (hindex => dsu_hindex, haddr => dsu_haddr, hmask => dsu_hmask,
                    ncpu   => CFG_NCPU_TILE, tbits => 30, tech => memtech, irq => 0, kbytes => CFG_ATBSZ)
-      port map (rst, clk, ahbmi, ahbsi2, ahbso2(dsu_hindex), dbgo, dbgi, dsui, dsuo);
+      port map (rst, clk, ahbmi, ahbsi2, ahbso2(dsu_hindex), dbgo, dbgi_int, dsui, dsuo);
     dsui.enable <= '1';
     dsui.break  <= '0';
   end generate;
@@ -577,6 +583,8 @@ begin
     dma_rcv_rdreq <= '0';
     dma_snd_wrreq <= '0';
 
+    llc_rstn <= not dbgi_int(0).reset and rst;
+    
     llc_wrapper_1 : llc_wrapper
       generic map (
         tech        => fabtech,
@@ -592,7 +600,7 @@ begin
         destination => 0)
 
       port map (
-        rst   => rst,
+        rst   => llc_rstn,
         clk   => clk,
         ahbmi => ahbmi2,
         ahbmo => ahbmo2(0),
