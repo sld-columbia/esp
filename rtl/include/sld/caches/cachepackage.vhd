@@ -289,7 +289,6 @@ package cachepackage is
 
   component l2
     generic (
-      tech : integer := virtex7;
       sets : integer := 256;
       ways : integer := 8);
     port (
@@ -405,7 +404,6 @@ package cachepackage is
   -----------------------------------------------------------------------------
   component llc
     generic (
-      tech : integer := virtex7;
       sets : integer := 256;
       ways : integer := 8);
     port (

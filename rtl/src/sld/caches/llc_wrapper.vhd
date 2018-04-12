@@ -1269,7 +1269,6 @@ begin  -- architecture rtl
   -- instantiation of llc cache on cpu tile
   llc_cache_i : llc
     generic map (
-      tech => tech,
       sets => sets,
       ways => ways)
     port map (

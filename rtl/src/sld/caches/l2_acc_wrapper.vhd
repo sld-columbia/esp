@@ -405,7 +405,6 @@ begin  -- architecture rtl of l2_acc_wrapper
   l2_i : l2
 
     generic map (
-      tech => tech
       sets => sets,
       ways => ways)
 
