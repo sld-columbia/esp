@@ -37,7 +37,8 @@
 
 /* bank(8)        : RESERVED */
 
-/* bank(9)        : RESERVED */
+/* bank(9)        : Type of coherence (None, LLC, Full) - Read only */
+#define COHERENCE_REG 0x24
 
 /* bank(10)       : RESERVED */
 

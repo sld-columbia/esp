@@ -582,7 +582,8 @@ begin
     l2_wrapper_1 : l2_wrapper
       generic map (
         tech        => fabtech,
-        ncpu        => CFG_NCPU_TILE,
+        sets        => CFG_L2_SETS,
+        ways        => CFG_L2_WAYS,
         nslaves     => nslaves,
         noc_xlen    => CFG_XLEN,
         hindex_slv  => ahbslv_proxy_hindex,
@@ -593,7 +594,7 @@ begin
         mem_info    => tile_mem_list,
         destination => 0,
         l1_cache_en => CFG_DCEN,
-        cpu_tile_id => cpu_tile_id)
+        cache_tile_id => cache_tile_id)
       port map (
         rst                        => l2_rstn,
         clk                        => clk_feedthru,

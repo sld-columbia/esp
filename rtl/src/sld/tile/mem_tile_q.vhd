@@ -64,12 +64,20 @@ entity mem_tile_q is
     dma_rcv_rdreq                       : in  std_ulogic;
     dma_rcv_data_out                    : out noc_flit_type;
     dma_rcv_empty                       : out std_ulogic;
+    -- tile->NoC6
+    coherent_dma_snd_wrreq              : in  std_ulogic;
+    coherent_dma_snd_data_in            : in  noc_flit_type;
+    coherent_dma_snd_full               : out std_ulogic;
     -- tile->NoC4
     dma_snd_wrreq                       : in  std_ulogic;
     dma_snd_data_in                     : in  noc_flit_type;
     dma_snd_full                        : out std_ulogic;
     dma_snd_atleast_4slots              : out std_ulogic;
     dma_snd_exactly_3slots              : out std_ulogic;
+    -- NoC4->tile
+    coherent_dma_rcv_rdreq              : in  std_ulogic;
+    coherent_dma_rcv_data_out           : out noc_flit_type;
+    coherent_dma_rcv_empty              : out std_ulogic;
     -- NoC5->tile
     remote_ahbs_rcv_rdreq               : in  std_ulogic;
     remote_ahbs_rcv_data_out            : out noc_flit_type;
@@ -164,10 +172,18 @@ architecture rtl of mem_tile_q is
   signal dma_rcv_wrreq                       : std_ulogic;
   signal dma_rcv_data_in                     : noc_flit_type;
   signal dma_rcv_full                        : std_ulogic;
+  -- tile->NoC6
+  signal coherent_dma_snd_rdreq              : std_ulogic;
+  signal coherent_dma_snd_data_out           : noc_flit_type;
+  signal coherent_dma_snd_empty              : std_ulogic;
   -- tile->NoC4
   signal dma_snd_rdreq                       : std_ulogic;
   signal dma_snd_data_out                    : noc_flit_type;
   signal dma_snd_empty                       : std_ulogic;
+  -- NoC4->tile
+  signal coherent_dma_rcv_wrreq              : std_ulogic;
+  signal coherent_dma_rcv_data_in            : noc_flit_type;
+  signal coherent_dma_rcv_full               : std_ulogic;
   -- NoC5->tile
   signal remote_ahbs_rcv_wrreq        : std_ulogic;
   signal remote_ahbs_rcv_data_in      : noc_flit_type;
@@ -209,12 +225,9 @@ architecture rtl of mem_tile_q is
   signal local_apb_rcv_empty                : std_ulogic;
 
 
-  signal noc1_dummy_in_stop   : std_ulogic;
   signal noc2_dummy_out_data  : noc_flit_type;
   signal noc2_dummy_out_void  : std_ulogic;
-  signal noc4_dummy_out_data  : noc_flit_type;
-  signal noc4_dummy_out_void  : std_ulogic;
-  signal noc6_dummy_in_stop   : std_ulogic;
+  signal noc1_dummy_in_stop   : std_ulogic;
 
   type noc5_packet_fsm is (none, packet_remote_apb_rcv,
                            packet_remote_ahbs_rcv, packet_apb_rcv,
@@ -235,12 +248,12 @@ begin  -- rtl
   fifo_rst <= rst;                  --FIFO rst active low
 
   -- From noc1: coherence requests from CPU to directory (GET/PUT)
-  noc1_out_stop         <= coherence_req_full and (not noc1_out_void);
-  coherence_req_data_in <= noc1_out_data;
-  coherence_req_wrreq   <= (not noc1_out_void) and (not coherence_req_full);
   noc1_in_data          <= (others => '0');
   noc1_in_void          <= '1';
   noc1_dummy_in_stop    <= noc1_in_stop;
+  noc1_out_stop         <= coherence_req_full and (not noc1_out_void);
+  coherence_req_data_in <= noc1_out_data;
+  coherence_req_wrreq   <= (not noc1_out_void) and (not coherence_req_full);
 
   fifo_1: fifo
     generic map (
@@ -318,11 +331,7 @@ begin  -- rtl
       data_out => coherence_rsp_snd_data_out);
 
 
-
   -- From noc6: DMA requests from accelerators
-  noc6_in_data          <= (others => '0');
-  noc6_in_void          <= '1';
-  noc6_dummy_in_stop    <= noc6_in_stop;
   noc6_out_stop   <= dma_rcv_full and (not noc6_out_void);
   dma_rcv_data_in <= noc6_out_data;
   dma_rcv_wrreq   <= (not noc6_out_void) and (not dma_rcv_full);
@@ -340,10 +349,25 @@ begin  -- rtl
       full     => dma_rcv_full,
       data_out => dma_rcv_data_out);
 
+  -- From noc4: Coherent DMA requests from accelerators
+  noc4_out_stop            <= coherent_dma_rcv_full and (not noc4_out_void);
+  coherent_dma_rcv_data_in <= noc4_out_data;
+  coherent_dma_rcv_wrreq   <= (not noc4_out_void) and (not coherent_dma_rcv_full);
+  fifo_13c: fifo
+    generic map (
+      depth => 18,                      --Header, address, [data]
+      width => NOC_FLIT_SIZE)
+    port map (
+      clk      => clk,
+      rst      => fifo_rst,
+      rdreq    => coherent_dma_rcv_rdreq,
+      wrreq    => coherent_dma_rcv_wrreq,
+      data_in  => coherent_dma_rcv_data_in,
+      empty    => coherent_dma_rcv_empty,
+      full     => coherent_dma_rcv_full,
+      data_out => coherent_dma_rcv_data_out);
+
   -- To noc4: DMA response to accelerators
-  noc4_out_stop <= '0';
-  noc4_dummy_out_data <= noc4_out_data;
-  noc4_dummy_out_void <= noc4_out_void;
   noc4_in_data <= dma_snd_data_out;
   noc4_in_void <= dma_snd_empty or noc4_in_stop;
   dma_snd_rdreq <= (not dma_snd_empty) and (not noc4_in_stop);
@@ -362,6 +386,24 @@ begin  -- rtl
       atleast_4slots => dma_snd_atleast_4slots,
       exactly_3slots => dma_snd_exactly_3slots,
       data_out => dma_snd_data_out);
+
+  -- To noc6: Coherent DMA response to accelerators
+  noc6_in_data <= coherent_dma_snd_data_out;
+  noc6_in_void <= coherent_dma_snd_empty or noc6_in_stop;
+  coherent_dma_snd_rdreq <= (not coherent_dma_snd_empty) and (not noc6_in_stop);
+  fifo_14c: fifo
+    generic map (
+      depth => 18,                      --Header, address, [data]
+      width => NOC_FLIT_SIZE)
+    port map (
+      clk      => clk,
+      rst      => fifo_rst,
+      rdreq    => coherent_dma_snd_rdreq,
+      wrreq    => coherent_dma_snd_wrreq,
+      data_in  => coherent_dma_snd_data_in,
+      empty    => coherent_dma_snd_empty,
+      full     => coherent_dma_snd_full,
+      data_out => coherent_dma_snd_data_out);
 
   -- From noc5: APB slave response (APBs rcv)
   -- From noc5: AHB slave response from remote DSU (AHBs rcv)

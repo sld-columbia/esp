@@ -12,6 +12,7 @@ use work.gencomp.all;
 use work.sldcommon.all;
 use work.sldacc.all;
 use work.nocpackage.all;
+use work.cachepackage.all;
 use work.tile.all;
 use work.coretypes.all;
 use work.acctypes.all;
@@ -35,6 +36,10 @@ entity tile_acc is
     pirq           : integer              := 3;
     scatter_gather : integer range 0 to 1 := 1;
     local_apb_mask : std_logic_vector(NAPBSLV-1 downto 0);
+    sets           : integer              := 256;
+    ways           : integer              := 8;
+    coherence      : integer              := ACC_COH_NONE;
+    cache_tile_id  : cache_attribute_array;
     has_dvfs       : integer;
     has_pll        : integer;
     extra_clk_buf  : integer;
@@ -93,12 +98,30 @@ architecture rtl of tile_acc is
 
   signal clk_feedthru : std_ulogic;
 
+  signal coherence_req_wrreq        : std_ulogic;
+  signal coherence_req_data_in      : noc_flit_type;
+  signal coherence_req_full         : std_ulogic;
+  signal coherence_fwd_rdreq        : std_ulogic;
+  signal coherence_fwd_data_out     : noc_flit_type;
+  signal coherence_fwd_empty        : std_ulogic;
+  signal coherence_rsp_rcv_rdreq    : std_ulogic;
+  signal coherence_rsp_rcv_data_out : noc_flit_type;
+  signal coherence_rsp_rcv_empty    : std_ulogic;
+  signal coherence_rsp_snd_wrreq    : std_ulogic;
+  signal coherence_rsp_snd_data_in  : noc_flit_type;
+  signal coherence_rsp_snd_full     : std_ulogic;
   signal dma_rcv_rdreq     : std_ulogic;
   signal dma_rcv_data_out  : noc_flit_type;
   signal dma_rcv_empty     : std_ulogic;
   signal dma_snd_wrreq     : std_ulogic;
   signal dma_snd_data_in   : noc_flit_type;
   signal dma_snd_full      : std_ulogic;
+  signal coherent_dma_rcv_rdreq     : std_ulogic;
+  signal coherent_dma_rcv_data_out  : noc_flit_type;
+  signal coherent_dma_rcv_empty     : std_ulogic;
+  signal coherent_dma_snd_wrreq     : std_ulogic;
+  signal coherent_dma_snd_data_in   : noc_flit_type;
+  signal coherent_dma_snd_full      : std_ulogic;
   signal interrupt_wrreq   : std_ulogic;
   signal interrupt_data_in : noc_flit_type;
   signal interrupt_full    : std_ulogic;
@@ -130,12 +153,30 @@ begin
     port map (
       rst               => rst,
       clk               => clk_feedthru,
+      coherence_req_wrreq        => coherence_req_wrreq,
+      coherence_req_data_in      => coherence_req_data_in,
+      coherence_req_full         => coherence_req_full,
+      coherence_fwd_rdreq        => coherence_fwd_rdreq,
+      coherence_fwd_data_out     => coherence_fwd_data_out,
+      coherence_fwd_empty        => coherence_fwd_empty,
+      coherence_rsp_rcv_rdreq    => coherence_rsp_rcv_rdreq,
+      coherence_rsp_rcv_data_out => coherence_rsp_rcv_data_out,
+      coherence_rsp_rcv_empty    => coherence_rsp_rcv_empty,
+      coherence_rsp_snd_wrreq    => coherence_rsp_snd_wrreq,
+      coherence_rsp_snd_data_in  => coherence_rsp_snd_data_in,
+      coherence_rsp_snd_full     => coherence_rsp_snd_full,
       dma_rcv_rdreq     => dma_rcv_rdreq,
       dma_rcv_data_out  => dma_rcv_data_out,
       dma_rcv_empty     => dma_rcv_empty,
+      coherent_dma_snd_wrreq     => coherent_dma_snd_wrreq,
+      coherent_dma_snd_data_in   => coherent_dma_snd_data_in,
+      coherent_dma_snd_full      => coherent_dma_snd_full,
       dma_snd_wrreq     => dma_snd_wrreq,
       dma_snd_data_in   => dma_snd_data_in,
       dma_snd_full      => dma_snd_full,
+      coherent_dma_rcv_rdreq     => coherent_dma_rcv_rdreq,
+      coherent_dma_rcv_data_out  => coherent_dma_rcv_data_out,
+      coherent_dma_rcv_empty     => coherent_dma_rcv_empty,
       apb_rcv_rdreq     => apb_rcv_rdreq,
       apb_rcv_data_out  => apb_rcv_data_out,
       apb_rcv_empty     => apb_rcv_empty,

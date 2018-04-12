@@ -36,6 +36,7 @@ entity llc_wrapper is
     sets        : integer                      := 256;
     ways        : integer                      := 16;
     nl2         : integer                      := 4;
+    nllcc       : integer                      := 0;
     noc_xlen    : integer                      := 3;
     hindex      : integer range 0 to NAHBSLV-1 := 4;
     local_y     : local_yx;
