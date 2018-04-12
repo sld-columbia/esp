@@ -76,6 +76,19 @@ class Accelerator():
     cfgs = cfgs + "]"
     return "          " + self.name + "_" + cfgs + ": " + self.desc + ", " + str(self.data) + "MB, ID " + self.device_id + str(params)
 
+class Component():
+  def __init__(self):
+    self.name = ""
+    self.hlscfg = []
+
+  def __str__(self):
+    cfgs = "["
+    for i in range(0, len(self.hlscfg) - 1):
+      cfgs = cfgs + str(self.hlscfg[i]) + " | "
+    cfgs = cfgs + str(self.hlscfg[len(self.hlscfg) - 1])
+    cfgs = cfgs + "]"
+    return "          " + self.name + "_" + cfgs
+
 
 #
 ### VHDL writer ###
@@ -167,8 +180,102 @@ def write_acc_port_map(f, acc, dma_width, rst, is_noc_interface):
   f.write("    );\n")
 
 
+def write_cache_interface(f, cac):
+  f.write("      clk                       : in  std_ulogic;\n")
+  f.write("      rst                       : in  std_ulogic;\n")
+  f.write("      l2_cpu_req_valid          : in  std_ulogic;\n")
+  f.write("      l2_cpu_req_data_cpu_msg   : in  std_logic_vector(1 downto 0);\n")
+  f.write("      l2_cpu_req_data_hsize     : in  std_logic_vector(2 downto 0);\n")
+  f.write("      l2_cpu_req_data_hprot     : in  std_logic_vector(1 downto 0);\n")
+  f.write("      l2_cpu_req_data_addr      : in  std_logic_vector(31 downto 0);\n")
+  f.write("      l2_cpu_req_data_word      : in  std_logic_vector(31 downto 0);\n")
+  f.write("      l2_fwd_in_valid           : in  std_ulogic;\n")
+  f.write("      l2_fwd_in_data_coh_msg    : in  std_logic_vector(2 downto 0);\n")
+  f.write("      l2_fwd_in_data_addr       : in  std_logic_vector(27 downto 0);\n")
+  f.write("      l2_fwd_in_data_req_id     : in  std_logic_vector(2 downto 0);\n")
+  f.write("      l2_rsp_in_valid           : in  std_ulogic;\n")
+  f.write("      l2_rsp_in_data_coh_msg    : in  std_logic_vector(1 downto 0);\n")
+  f.write("      l2_rsp_in_data_addr       : in  std_logic_vector(27 downto 0);\n")
+  f.write("      l2_rsp_in_data_line       : in  std_logic_vector(127 downto 0);\n")
+  f.write("      l2_rsp_in_data_invack_cnt : in  std_logic_vector(2 downto 0);\n")
+  f.write("      l2_flush_valid            : in  std_ulogic;\n")
+  f.write("      l2_flush_data             : in  std_ulogic;\n")
+  f.write("      l2_rd_rsp_ready           : in  std_ulogic;\n")
+  f.write("      l2_inval_ready            : in  std_ulogic;\n")
+  f.write("      l2_req_out_ready          : in  std_ulogic;\n")
+  f.write("      l2_rsp_out_ready          : in  std_ulogic;\n")
+  f.write("      flush_done                : out std_ulogic;\n")
+  f.write("      l2_cpu_req_ready          : out std_ulogic;\n")
+  f.write("      l2_fwd_in_ready           : out std_ulogic;\n")
+  f.write("      l2_rsp_in_ready           : out std_ulogic;\n")
+  f.write("      l2_flush_ready            : out std_ulogic;\n")
+  f.write("      l2_rd_rsp_valid           : out std_ulogic;\n")
+  f.write("      l2_rd_rsp_data_line       : out std_logic_vector(127 downto 0);\n")
+  f.write("      l2_inval_valid            : out std_ulogic;\n")
+  f.write("      l2_inval_data             : out std_logic_vector(27 downto 0);\n")
+  f.write("      l2_req_out_valid          : out std_ulogic;\n")
+  f.write("      l2_req_out_data_coh_msg   : out std_logic_vector(1 downto 0);\n")
+  f.write("      l2_req_out_data_hprot     : out std_logic_vector(1 downto 0);\n")
+  f.write("      l2_req_out_data_addr      : out std_logic_vector(27 downto 0);\n")
+  f.write("      l2_req_out_data_line      : out std_logic_vector(127 downto 0);\n")
+  f.write("      l2_rsp_out_valid          : out std_ulogic;\n")
+  f.write("      l2_rsp_out_data_coh_msg   : out std_logic_vector(1 downto 0);\n")
+  f.write("      l2_rsp_out_data_req_id    : out std_logic_vector(2 downto 0);\n")
+  f.write("      l2_rsp_out_data_to_req    : out std_logic_vector(1 downto 0);\n")
+  f.write("      l2_rsp_out_data_addr      : out std_logic_vector(27 downto 0);\n")
+  f.write("      l2_rsp_out_data_line      : out std_logic_vector(127 downto 0);\n")
+
+
+def write_cache_port_map(f, cac):
+  f.write("    port map(\n")
+  f.write("      clk                       => clk,\n")
+  f.write("      rst                       => rst,\n")
+  f.write("      l2_cpu_req_valid          => l2_cpu_req_valid,\n")
+  f.write("      l2_cpu_req_data_cpu_msg   => l2_cpu_req_data_cpu_msg,\n")
+  f.write("      l2_cpu_req_data_hsize     => l2_cpu_req_data_hsize,\n")
+  f.write("      l2_cpu_req_data_hprot     => l2_cpu_req_data_hprot,\n")
+  f.write("      l2_cpu_req_data_addr      => l2_cpu_req_data_addr,\n")
+  f.write("      l2_cpu_req_data_word      => l2_cpu_req_data_word,\n")
+  f.write("      l2_fwd_in_valid           => l2_fwd_in_valid,\n")
+  f.write("      l2_fwd_in_data_coh_msg    => l2_fwd_in_data_coh_msg,\n")
+  f.write("      l2_fwd_in_data_addr       => l2_fwd_in_data_addr,\n")
+  f.write("      l2_fwd_in_data_req_id     => l2_fwd_in_data_req_id,\n")
+  f.write("      l2_rsp_in_valid           => l2_rsp_in_valid,\n")
+  f.write("      l2_rsp_in_data_coh_msg    => l2_rsp_in_data_coh_msg,\n")
+  f.write("      l2_rsp_in_data_addr       => l2_rsp_in_data_addr,\n")
+  f.write("      l2_rsp_in_data_line       => l2_rsp_in_data_line,\n")
+  f.write("      l2_rsp_in_data_invack_cnt => l2_rsp_in_data_invack_cnt,\n")
+  f.write("      l2_flush_valid            => l2_flush_valid,\n")
+  f.write("      l2_flush_data             => l2_flush_data,\n")
+  f.write("      l2_rd_rsp_ready           => l2_rd_rsp_ready,\n")
+  f.write("      l2_inval_ready            => l2_inval_ready,\n")
+  f.write("      l2_req_out_ready          => l2_req_out_ready,\n")
+  f.write("      l2_rsp_out_ready          => l2_rsp_out_ready,\n")
+  f.write("      flush_done                => flush_done,\n")
+  f.write("      l2_cpu_req_ready          => l2_cpu_req_ready,\n")
+  f.write("      l2_fwd_in_ready           => l2_fwd_in_ready,\n")
+  f.write("      l2_rsp_in_ready           => l2_rsp_in_ready,\n")
+  f.write("      l2_flush_ready            => l2_flush_ready,\n")
+  f.write("      l2_rd_rsp_valid           => l2_rd_rsp_valid,\n")
+  f.write("      l2_rd_rsp_data_line       => l2_rd_rsp_data_line,\n")
+  f.write("      l2_inval_valid            => l2_inval_valid,\n")
+  f.write("      l2_inval_data             => l2_inval_data,\n")
+  f.write("      l2_req_out_valid          => l2_req_out_valid,\n")
+  f.write("      l2_req_out_data_coh_msg   => l2_req_out_data_coh_msg,\n")
+  f.write("      l2_req_out_data_hprot     => l2_req_out_data_hprot,\n")
+  f.write("      l2_req_out_data_addr      => l2_req_out_data_addr,\n")
+  f.write("      l2_req_out_data_line      => l2_req_out_data_line,\n")
+  f.write("      l2_rsp_out_valid          => l2_rsp_out_valid,\n")
+  f.write("      l2_rsp_out_data_coh_msg   => l2_rsp_out_data_coh_msg,\n")
+  f.write("      l2_rsp_out_data_req_id    => l2_rsp_out_data_req_id,\n")
+  f.write("      l2_rsp_out_data_to_req    => l2_rsp_out_data_to_req,\n")
+  f.write("      l2_rsp_out_data_addr      => l2_rsp_out_data_addr,\n")
+  f.write("      l2_rsp_out_data_line      => l2_rsp_out_data_line\n")
+  f.write("    );\n")
+
+
 # Component declaration matching HLS-generated verilog
-def gen_tech_dep(accelerator_list, dma_width, template_dir, out_dir):
+def gen_tech_dep(accelerator_list, cache_list, dma_width, template_dir, out_dir):
   f = open(out_dir + '/allacc.vhd', 'w')
   with open(template_dir + '/allacc.vhd', 'r') as ftemplate:
     for tline in ftemplate:
@@ -186,10 +293,27 @@ def gen_tech_dep(accelerator_list, dma_width, template_dir, out_dir):
           f.write("\n")
   f.close()
   ftemplate.close()
+  f = open(out_dir + '/allcaches.vhd', 'w')
+  with open(template_dir + '/allcaches.vhd', 'r') as ftemplate:
+    for tline in ftemplate:
+      if tline.find("-- <<caches-components>>") < 0:
+        f.write(tline)
+        continue
+      for cac in cache_list:
+        for impl in cac.hlscfg:
+          f.write("\n")
+          f.write("  component " + cac.name + "_" + impl + "\n")
+          f.write("    port (\n")
+          write_cache_interface(f, cac)
+          f.write("    );\n")
+          f.write("  end component;\n\n")
+          f.write("\n")
+  f.close()
+  ftemplate.close()
 
 
 # Component declaration independent from technology and implementation
-def gen_tech_indep(accelerator_list, dma_width, template_dir, out_dir):
+def gen_tech_indep(accelerator_list, cache_list, dma_width, template_dir, out_dir):
   f = open(out_dir + '/genacc.vhd', 'w')
   with open(template_dir + '/genacc.vhd', 'r') as ftemplate:
     for tline in ftemplate:
@@ -210,10 +334,31 @@ def gen_tech_indep(accelerator_list, dma_width, template_dir, out_dir):
         f.write("\n")
   f.close()
   ftemplate.close()
+  f = open(out_dir + '/gencaches.vhd', 'w')
+  with open(template_dir + '/gencaches.vhd', 'r') as ftemplate:
+    for tline in ftemplate:
+      if tline.find("-- <<caches-components>>") < 0:
+        f.write(tline)
+        continue
+      for cac in cache_list:
+        f.write("\n")
+        f.write("  component " + cac.name + "\n")
+        f.write("    generic (\n")
+        f.write("      sets  : integer;\n")
+        f.write("      ways  : integer\n")
+        f.write("    );\n")
+        f.write("\n")
+        f.write("    port (\n")
+        write_cache_interface(f, cac)
+        f.write("    );\n")
+        f.write("  end component;\n\n")
+        f.write("\n")
+  f.close()
+  ftemplate.close()
 
 
 # Mapping from generic components to technology and implementation dependent ones
-def gen_tech_indep_impl(accelerator_list, dma_width, template_dir, out_dir):
+def gen_tech_indep_impl(accelerator_list, cache_list, dma_width, template_dir, out_dir):
   f = open(out_dir + '/accelerators.vhd', 'w')
   with open(template_dir + '/accelerators.vhd', 'r') as ftemplate:
     for tline in ftemplate:
@@ -245,6 +390,52 @@ def gen_tech_indep_impl(accelerator_list, dma_width, template_dir, out_dir):
           f.write("    " + acc.name + "_" + impl.name + "_i: " + acc.name + "_" + impl.name + "\n")
           write_acc_port_map(f, acc, dma_width, "rst", False)
           f.write("  end generate " +  impl.name + "_gen;\n\n")
+        f.write("end mapping;\n\n")
+  f.close()
+  ftemplate.close()
+  f = open(out_dir + '/caches.vhd', 'w')
+  with open(template_dir + '/caches.vhd', 'r') as ftemplate:
+    for tline in ftemplate:
+      if tline.find("-- <<caches-entities>>") < 0:
+        f.write(tline)
+        continue
+      for cac in cache_list:
+        f.write("library ieee;\n")
+        f.write("use ieee.std_logic_1164.all;\n")
+        f.write("use work.sld_devices.all;\n")
+        f.write("use work.allcaches.all;\n")
+        f.write("\n")
+        f.write("entity " + cac.name + " is\n\n")
+        f.write("    generic (\n")
+        f.write("      sets  : integer;\n")
+        f.write("      ways  : integer\n")
+        f.write("    );\n")
+        f.write("\n")
+        f.write("    port (\n")
+        write_cache_interface(f, cac)
+        f.write("    );\n")
+        f.write("\n")
+        f.write("end entity " + cac.name + ";\n\n")
+        f.write("\n")
+        f.write("architecture mapping of " + cac.name + " is\n\n")
+        f.write("begin  -- mapping\n\n")
+        for impl in cac.hlscfg:
+          info = impl.split("_")
+          sets = 0
+          ways = 0
+          for item in info:
+            if re.match(r'[1-9]+sets', item, re.M|re.I):
+              sets = int(item.replace("sets", ""))
+            if re.match(r'[1-9]+ways', item, re.M|re.I):
+              ways = int(item.replace("ways", ""))
+          if sets * ways == 0:
+            print("    ERROR: hls config must report number of sets and ways, both different from zero")
+            sys.exit(1)
+          f.write("\n")
+          f.write("  " + impl + "_gen: if sets = " + str(sets) + " and ways = " + str(ways) + " generate\n")
+          f.write("    " + cac.name + "_" + impl + "_i: " + cac.name + "_" + impl + "\n")
+          write_cache_port_map(f, cac)
+          f.write("  end generate " +  impl + "_gen;\n\n")
         f.write("end mapping;\n\n")
   f.close()
   ftemplate.close()
@@ -461,25 +652,32 @@ if len(sys.argv) != 5:
     sys.exit(1)
 
 dma_width = int(sys.argv[1])
-rtl_dir = sys.argv[2]
+acc_rtl_dir = sys.argv[2] + "/acc"
+caches_rtl_dir = sys.argv[2] + "/caches"
 template_dir = sys.argv[3]
 out_dir = sys.argv[4]
 accelerator_list = [ ]
+cache_list = [ ]
 
 # Get scheduled accelerators
-accelerators = next(os.walk(rtl_dir))[1]
+accelerators = next(os.walk(acc_rtl_dir))[1]
+caches = next(os.walk(caches_rtl_dir))[1]
 
 if (len(accelerators) == 0):
-  print("    WARNING: No accelerators found in " + rtl_dir + ".")
+  print("    WARNING: No accelerators found in " + acc_rtl_dir + ".")
   print("             Please run 'make accelerators' or make <accelerator>-hls.")
   print("             Get available accelerators with 'make print-available-accelerators'")
+
+if (len(caches) == 0):
+  print("    WARNING: No caches found in " + caches_rtl_dir + ".")
+  print("             Please run 'make caches'.")
 
 for acc in accelerators:
   accd = Accelerator()
   accd.name = acc
 
   # Get scheduled HLS configurations
-  acc_dir = rtl_dir + "/" + acc
+  acc_dir = acc_rtl_dir + "/" + acc
   acc_dp = glob.glob(acc_dir + '/*.v')
   for dp_str in acc_dp:
     dp = dp_str.replace(acc_dir + "/" + acc + "_", "")
@@ -553,12 +751,31 @@ for acc in accelerators:
     print(str(accd))
     break
 
+
+for cac in caches:
+  cacd = Component()
+  cacd.name = cac
+
+  # Get scheduled HLS configurations
+  cac_dir = caches_rtl_dir + "/" + cac
+  cac_dp = glob.glob(cac_dir + '/*.v')
+  for dp_str in cac_dp:
+    dp = dp_str.replace(cac_dir + "/" + cac + "_", "")
+    dp = dp.replace(".v", "")
+    cacd.hlscfg.append(dp)
+  if len(cacd.hlscfg) == 0:
+    print("    WARNING: No valid HLS configuration found for " + cac)
+    continue
+  print("    INFO: Found implementation " + dp + " for " + cac)
+  cache_list.append(cacd)
+
+
 # Generate RTL
 print("    INFO: Generating RTL to " + out_dir)
 gen_device_id(accelerator_list, template_dir, out_dir)
-gen_tech_dep(accelerator_list, dma_width, template_dir, out_dir)
-gen_tech_indep(accelerator_list, dma_width, template_dir, out_dir)
-gen_tech_indep_impl(accelerator_list, dma_width, template_dir, out_dir)
+gen_tech_dep(accelerator_list, cache_list, dma_width, template_dir, out_dir)
+gen_tech_indep(accelerator_list, cache_list, dma_width, template_dir, out_dir)
+gen_tech_indep_impl(accelerator_list, cache_list, dma_width, template_dir, out_dir)
 gen_interfaces(accelerator_list, dma_width, template_dir, out_dir)
 for acc in accelerator_list:
   gen_noc_interface(acc, dma_width, template_dir, out_dir)

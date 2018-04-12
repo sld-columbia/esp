@@ -1,0 +1,11 @@
+------------------------------------------------------------------------------
+--  Copyright (C) 2015-2017, System Level Design (SLD) @ Columbia University
+-----------------------------------------------------------------------------
+-- Entities:    <cache>_rtl
+-- File:        caches.vhd
+-- Authors:     Paolo Mantovani
+--              Christian Pilato
+-- Description: SLD caches instance based on HLS configuration
+------------------------------------------------------------------------------
+
+-- <<caches-entities>>
