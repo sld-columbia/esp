@@ -47,6 +47,7 @@ package cachepackage is
   constant OFFSET_BITS        : integer := WORD_OFFSET_BITS + BYTE_OFFSET_BITS;
   constant WORDS_PER_LINE     : integer := 2**WORD_OFFSET_BITS;
   constant BYTES_PER_WORD     : integer := 2**BYTE_OFFSET_BITS;
+  constant BYTES_PER_LINE     : integer := WORDS_PER_LINE * BYTES_PER_WORD;
   constant BITS_PER_WORD      : integer := (BYTES_PER_WORD * 8);
   constant BITS_PER_HWORD     : integer := BITS_PER_WORD/2;
   constant BITS_PER_LINE      : integer := (BITS_PER_WORD * WORDS_PER_LINE);
