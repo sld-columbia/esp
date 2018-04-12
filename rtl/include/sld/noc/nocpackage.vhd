@@ -101,6 +101,8 @@ package nocpackage is
   -- Non cachable data data plane 4 -> DMA transfers
   constant DMA_TO_DEV   : noc_msg_type := "001";
   constant DMA_FROM_DEV : noc_msg_type := "010";
+  constant REQ_DMA_READ : noc_msg_type := "110"; -- Read coherent with LLC
+  constant REQ_DMA_WRITE: noc_msg_type := "111"; -- Write coherent with LLC
   -- Configuration plane 5 -> RD/WR registers
   constant REQ_REG_RD   : noc_msg_type := "000";
   constant REQ_REG_WR   : noc_msg_type := "001";
