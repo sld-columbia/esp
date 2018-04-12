@@ -34,9 +34,9 @@
     if (RPT_RTL) CACHE_REPORT_TIME(sc_time_stamp(), "Flush dirty line.")
     
 #define LLC_EVICT						\
-    HLS_DEFINE_PROTOCOL("llc-evict");				\
     bookmark_tmp |= BM_LLC_EVICT;				\
     if (RPT_RTL) CACHE_REPORT_TIME(sc_time_stamp(), "Evict.")
+    // HLS_DEFINE_PROTOCOL("llc-evict");
 
 #define EVICT_EM							\
     bookmark_tmp |= BM_EVICT_EM;					\
@@ -92,11 +92,24 @@
 #define LLC_PUTM \
     bookmark_tmp |= BM_LLC_PUTM
 
-#define LLC_DMA_READ \
-    bookmark_tmp |= BM_LLC_DMA_READ
+#define DMA_BURST \
+    if (RPT_RTL) CACHE_REPORT_TIME(sc_time_stamp(), "LLC DMA burst.")
 
-#define LLC_DMA_WRITE \
-    bookmark_tmp |= BM_LLC_DMA_WRITE
+#define LLC_DMA_READ					\
+    bookmark_tmp |= BM_LLC_DMA_READ;			\
+    if (RPT_RTL) CACHE_REPORT_TIME(sc_time_stamp(), "LLC DMA read.")
+
+#define LLC_DMA_READ_BURST				\
+    bookmark_tmp |= BM_LLC_DMA_READ;			\
+    if (RPT_RTL) CACHE_REPORT_TIME(sc_time_stamp(), "LLC DMA read burst.")
+
+#define LLC_DMA_WRITE						\
+    bookmark_tmp |= BM_LLC_DMA_WRITE;				\
+    if (RPT_RTL) CACHE_REPORT_TIME(sc_time_stamp(), "LLC DMA write.")
+
+#define LLC_DMA_WRITE_BURST					\
+    bookmark_tmp |= BM_LLC_DMA_WRITE;				\
+    if (RPT_RTL) CACHE_REPORT_TIME(sc_time_stamp(), "LLC DMA write burst.")
 
 #define GENERIC_ASSERT \
     asserts_tmp |= AS_GENERIC
@@ -215,8 +228,8 @@
     if (RPT_RTL) CACHE_REPORT_TIME(sc_time_stamp(), "Flush dirty line.")
 
 #define LLC_EVICT						\
-    HLS_DEFINE_PROTOCOL("llc-evict");				\
     if (RPT_RTL) CACHE_REPORT_TIME(sc_time_stamp(), "Evict.")
+    // HLS_DEFINE_PROTOCOL("llc-evict");
 
 #define EVICT_EM							\
     if (RPT_RTL) CACHE_REPORT_TIME(sc_time_stamp(), "Evict EM.")
@@ -255,8 +268,21 @@
 #define LLC_GETM
 #define LLC_PUTS
 #define LLC_PUTM
-#define LLC_DMA_READ
-#define LLC_DMA_WRITE
+
+#define DMA_BURST \
+    if (RPT_RTL) CACHE_REPORT_TIME(sc_time_stamp(), "LLC DMA burst.")
+
+#define LLC_DMA_READ \
+    if (RPT_RTL) CACHE_REPORT_TIME(sc_time_stamp(), "LLC DMA read.")
+
+#define LLC_DMA_READ_BURST \
+    if (RPT_RTL) CACHE_REPORT_TIME(sc_time_stamp(), "LLC DMA read burst.")
+
+#define LLC_DMA_WRITE \
+    if (RPT_RTL) CACHE_REPORT_TIME(sc_time_stamp(), "LLC DMA write.")
+
+#define LLC_DMA_WRITE_BURST \
+    if (RPT_RTL) CACHE_REPORT_TIME(sc_time_stamp(), "LLC DMA write burst.")
 
 #define GENERIC_ASSERT
 

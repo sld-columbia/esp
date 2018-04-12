@@ -171,14 +171,14 @@ void llc_tb::llc_test()
     // DMAread, opcode. Not possible
 
     // DMAread, data. I -> V. l2#3. No evict.
-    op_dma(REQ_DMA_READ, INVALID, 0, 0, addr, null, 0, line_of_addr(addr.line), 0, 0, 0, 0);
+    op_dma(DMA_READ, INVALID, 0, 0, addr, null, 1, line_of_addr(addr.line), 0, 0, 0, 0, 0);
     addr.set_incr(1);
 
     // DMAwrite, opcode. Not possible
 
     // DMAwrite, data. I -> V. l2#0123. No evict.
     for (int i = 0; i < MIN_L2; i++) {
-	op_dma(REQ_DMA_WRITE, INVALID, 0, 0, addr, null, line_of_addr(addr.line), 0, 0, 0, 0, 0);
+	op_dma(DMA_WRITE, INVALID, 0, 0, addr, null, line_of_addr(addr.line), 0, 0, 0, 0, 0, 1);
         addr.tag_incr(1);
     }
 
@@ -220,13 +220,13 @@ void llc_tb::llc_test()
     // DMAread, opcode. Not possible
 
     // DMAread, data. V -> V. l2#3. No evict.
-    op_dma(REQ_DMA_READ, VALID, 0, 0, addr, null, 0, line_of_addr(addr.line), 0, 0, 0, 0);
+    op_dma(DMA_READ, VALID, 0, 0, addr, null, 1, line_of_addr(addr.line), 0, 0, 0, 0, 0);
     addr.tag_incr(1);
 
     // DMAwrite, opcode. Not possible
 
     // DMAwrite, data. V -> V. l2#0. No evict.
-    op_dma(REQ_DMA_WRITE, VALID, 0, 0, addr, null, 0xabcd0e0f0, 0, 0, 0, 0, 0);
+    op_dma(DMA_WRITE, VALID, 0, 0, addr, null, 0xabcd0e0f0, 0, 0, 0, 0, 0, 1);
 
 
     /* Shared state. */
@@ -567,24 +567,24 @@ void llc_tb::llc_test()
     // DMA_Read evicts VALID line, not dirty
     op(REQ_PUTS, EXCLUSIVE, 0, addr2, null, 0, 0, 0, 0, 0, 0, DATA);
 
-    op_dma(REQ_DMA_READ, VALID, EVICT, 0, addr1, addr2, 0, line_of_addr(addr1.line), 0, 0, 0, 0);
-
+    op_dma(DMA_READ, VALID, EVICT, 0, addr1, addr2, 1, line_of_addr(addr1.line), 0, 0, 0, 0, 0);
+    
     // DMA_Read evicts VALID line, dirty
-    op_dma(REQ_DMA_WRITE, VALID, 0, 0, addr1, null, line_of_addr(addr1.line)*2, 0, 0, 0, 0, 0);
+    op_dma(DMA_WRITE, VALID, 0, 0, addr1, null, line_of_addr(addr1.line)*2, 0, 0, 0, 0, 0, 1);
 
-    op_dma(REQ_DMA_READ, VALID, EVICT, DIRTY, addr2, addr1, 0, line_of_addr(addr2.line), 
-       line_of_addr(addr1.line)*2, 0, 0, 0);
+    op_dma(DMA_READ, VALID, EVICT, DIRTY, addr2, addr1, 1, line_of_addr(addr2.line), 
+	   line_of_addr(addr1.line)*2, 0, 0, 0, 0);
 
     op(REQ_GETS, VALID, 0, addr2, null, 0, line_of_addr(addr2.line), 0, 0, 0, 0, DATA);
 
     // DMA_Write evicts VALID line, not dirty
     op(REQ_PUTS, EXCLUSIVE, 0, addr2, null, 0, 0, 0, 0, 0, 0, DATA);
 
-    op_dma(REQ_DMA_WRITE, VALID, EVICT, 0, addr1, addr2, line_of_addr(addr1.line)*2, 0, 0, 0, 0, 0);
+    op_dma(DMA_WRITE, VALID, EVICT, 0, addr1, addr2, line_of_addr(addr1.line)*2, 0, 0, 0, 0, 0, 1);
 
     // DMA_Write evicts VALID line, dirty
-    op_dma(REQ_DMA_WRITE, VALID, EVICT, DIRTY, addr2, addr1, line_of_addr(addr2.line), 0,
-       line_of_addr(addr1.line)*2, 0, 0, 0);
+    op_dma(DMA_WRITE, VALID, EVICT, DIRTY, addr2, addr1, line_of_addr(addr2.line), 0,
+	   line_of_addr(addr1.line)*2, 0, 0, 0, 1);
 
     op(REQ_GETS, VALID, 0, addr2, null, 0, line_of_addr(addr2.line), 0, 0, 0, 0, INSTR);
 
@@ -597,8 +597,8 @@ void llc_tb::llc_test()
 
     op(REQ_GETS, VALID, 0, addr2, null, 0, line_of_addr(addr2.line), 0, 0, 0, 0, INSTR);
 
-    op_dma(REQ_DMA_READ, SHARED, EVICT, 0, addr1, addr2, 0, line_of_addr(addr1.line), 
-	   0, 1, 0, 0);
+    op_dma(DMA_READ, SHARED, EVICT, 0, addr1, addr2, 1, line_of_addr(addr1.line), 
+	   0, 1, 0, 0, 0);
 
     op(REQ_GETS, VALID, 0, addr1, null, 0, line_of_addr(addr1.line), 0, 0, 0, 0, INSTR);
 
@@ -607,19 +607,19 @@ void llc_tb::llc_test()
 
     op(REQ_PUTS, EXCLUSIVE, 0, addr2, null, 0, 0, 0, 0, 0, 0, DATA);
 
-    op_dma(REQ_DMA_WRITE, VALID, 0, 0, addr2, null, line_of_addr(addr2.line)*2, 0, 0, 0, 0, 0);
+    op_dma(DMA_WRITE, VALID, 0, 0, addr2, null, line_of_addr(addr2.line)*2, 0, 0, 0, 0, 0, 1);
 
     op(REQ_GETS, VALID, 0, addr2, null, 0, line_of_addr(addr2.line)*2, 0, 0, 0, 0, INSTR);
 
-    op_dma(REQ_DMA_READ, SHARED, EVICT, DIRTY, addr1, addr2, 0, line_of_addr(addr1.line),
-       line_of_addr(addr2.line)*2, 1, 0, 0);
+    op_dma(DMA_READ, SHARED, EVICT, DIRTY, addr1, addr2, 1, line_of_addr(addr1.line),
+	   line_of_addr(addr2.line)*2, 1, 0, 0, 0);
 
     op(REQ_GETS, VALID, 0, addr1, null, 0, line_of_addr(addr1.line), 0, 0, 0, 0, INSTR);
 
     // DMA_Read evicts EXCLUSIVE line, not dirty
     regular_evict_prep(addr_base, addr1, addr2, evict_way);
 
-    op_dma(REQ_DMA_READ, EXCLUSIVE, EVICT, 0, addr1, addr2, 0, line_of_addr(addr1.line), 0, 1, 0, 0);
+    op_dma(DMA_READ, EXCLUSIVE, EVICT, 0, addr1, addr2, 1, line_of_addr(addr1.line), 0, 1, 0, 0, 0);
 
     op(REQ_GETS, VALID, 0, addr1, null, 0, line_of_addr(addr1.line), 0, 0, 0, 0, INSTR);
 
@@ -628,12 +628,12 @@ void llc_tb::llc_test()
 
     op(REQ_PUTS, SHARED, 0, addr2, null, 0, 0, 0, 0, 0, 0, DATA);
 
-    op_dma(REQ_DMA_WRITE, VALID, 0, 0, addr2, null, line_of_addr(addr2.line)*2, 0, 0, 0, 0, 0);
+    op_dma(DMA_WRITE, VALID, 0, 0, addr2, null, line_of_addr(addr2.line)*2, 0, 0, 0, 0, 0, 1);
 
     op(REQ_GETS, VALID, 0, addr2, null, 0, line_of_addr(addr2.line)*2, 0, 0, 0, 0, DATA);
 
-    op_dma(REQ_DMA_READ, EXCLUSIVE, EVICT, DIRTY, addr1, addr2, 0, line_of_addr(addr1.line),
-       line_of_addr(addr2.line)*2, 1, 0, 0);
+    op_dma(DMA_READ, EXCLUSIVE, EVICT, DIRTY, addr1, addr2, 1, line_of_addr(addr1.line),
+	   line_of_addr(addr2.line)*2, 1, 0, 0, 0);
 
     op(REQ_GETS, VALID, 0, addr1, null, 0, line_of_addr(addr1.line), 0, 0, 0, 0, INSTR);
 
@@ -644,8 +644,8 @@ void llc_tb::llc_test()
 
     op(REQ_GETM, VALID, 0, addr2, null, 0, line_of_addr(addr2.line), 0, 0, 0, 0, DATA);
 
-    op_dma(REQ_DMA_READ, MODIFIED, EVICT, DIRTY, addr1, addr2, 0, line_of_addr(addr1.line),
-	   0, 1, 0, 0);
+    op_dma(DMA_READ, MODIFIED, EVICT, DIRTY, addr1, addr2, 1, line_of_addr(addr1.line),
+	   0, 1, 0, 0, 0);
 
     op(REQ_GETS, VALID, 0, addr1, null, 0, line_of_addr(addr1.line), 0, 0, 0, 0, INSTR);
 
@@ -654,12 +654,12 @@ void llc_tb::llc_test()
 
     op(REQ_PUTS, EXCLUSIVE, 0, addr2, null, 0, 0, 0, 0, 0, 0, DATA);
 
-    op_dma(REQ_DMA_WRITE, VALID, 0, 0, addr2, null, line_of_addr(addr2.line)*2, 0, 0, 0, 0, 0);
+    op_dma(DMA_WRITE, VALID, 0, 0, addr2, null, line_of_addr(addr2.line)*2, 0, 0, 0, 0, 0, 1);
 
     op(REQ_GETS, VALID, 0, addr2, null, 0, line_of_addr(addr2.line)*2, 0, 0, 0, 0, DATA);
 
-    op_dma(REQ_DMA_READ, MODIFIED, EVICT, DIRTY, addr1, addr2, 0, line_of_addr(addr1.line),
-       line_of_addr(addr2.line)*2, 1, 0, 0);
+    op_dma(DMA_READ, MODIFIED, EVICT, DIRTY, addr1, addr2, 1, line_of_addr(addr1.line),
+	   line_of_addr(addr2.line)*2, 1, 0, 0, 0);
 
     op(REQ_GETS, VALID, 0, addr1, null, 0, line_of_addr(addr1.line), 0, 0, 0, 0, INSTR);
 
@@ -670,8 +670,8 @@ void llc_tb::llc_test()
 
     op(REQ_GETS, VALID, 0, addr2, null, 0, line_of_addr(addr2.line), 0, 0, 0, 0, INSTR);
 
-    op_dma(REQ_DMA_WRITE, SHARED, EVICT, 0, addr1, addr2, line_of_addr(addr1.line)*2, 
-       0, 0, 1, 0, 0);
+    op_dma(DMA_WRITE, SHARED, EVICT, 0, addr1, addr2, line_of_addr(addr1.line)*2, 
+	   0, 0, 1, 0, 0, 1);
 
     op(REQ_GETS, VALID, 0, addr1, null, 0, line_of_addr(addr1.line)*2, 0, 0, 0, 0, INSTR);
 
@@ -680,20 +680,21 @@ void llc_tb::llc_test()
 
     op(REQ_PUTS, EXCLUSIVE, 0, addr2, null, 0, 0, 0, 0, 0, 0, DATA);
 
-    op_dma(REQ_DMA_WRITE, VALID, 0, 0, addr2, null, line_of_addr(addr2.line)*2, 
-       0, 0, 0, 0, 0);
+    op_dma(DMA_WRITE, VALID, 0, 0, addr2, null, line_of_addr(addr2.line)*2,
+	   0, 0, 0, 0, 0, 1);
 
     op(REQ_GETS, VALID, 0, addr2, null, 0, line_of_addr(addr2.line)*2, 0, 0, 0, 0, INSTR);
 
-    op_dma(REQ_DMA_WRITE, SHARED, EVICT, DIRTY, addr1, addr2, line_of_addr(addr1.line),
-       0, line_of_addr(addr2.line)*2, 1, 0, 0);
+    op_dma(DMA_WRITE, SHARED, EVICT, DIRTY, addr1, addr2, line_of_addr(addr1.line),
+	   0, line_of_addr(addr2.line)*2, 1, 0, 0, 1);
 
     op(REQ_GETS, VALID, 0, addr1, null, 0, line_of_addr(addr1.line), 0, 0, 0, 0, INSTR);
 
     // DMA_Write evicts EXCLUSIVE line, not dirty
     regular_evict_prep(addr_base, addr1, addr2, evict_way);
 
-    op_dma(REQ_DMA_WRITE, EXCLUSIVE, EVICT, 0, addr1, addr2, line_of_addr(addr1.line)*2, 0, 0, 1, 0, 0);
+    op_dma(DMA_WRITE, EXCLUSIVE, EVICT, 0, addr1, addr2, line_of_addr(addr1.line)*2,
+	   0, 0, 1, 0, 0, 1);
 
     op(REQ_GETS, VALID, 0, addr1, null, 0, line_of_addr(addr1.line)*2, 0, 0, 0, 0, INSTR);
 
@@ -702,13 +703,13 @@ void llc_tb::llc_test()
 
     op(REQ_PUTS, EXCLUSIVE, 0, addr2, null, 0, 0, 0, 0, 0, 0, DATA);
 
-    op_dma(REQ_DMA_WRITE, VALID, 0, 0, addr2, null, line_of_addr(addr2.line)*2, 
-       0, 0, 0, 0, 0);
+    op_dma(DMA_WRITE, VALID, 0, 0, addr2, null, line_of_addr(addr2.line)*2, 
+	   0, 0, 0, 0, 0, 1);
 
     op(REQ_GETS, VALID, 0, addr2, null, 0, line_of_addr(addr2.line)*2, 0, 0, 0, 0, DATA);
 
-    op_dma(REQ_DMA_WRITE, EXCLUSIVE, EVICT, DIRTY, addr1, addr2, line_of_addr(addr1.line),
-       0, line_of_addr(addr2.line)*2, 0, 0, 0);
+    op_dma(DMA_WRITE, EXCLUSIVE, EVICT, DIRTY, addr1, addr2, line_of_addr(addr1.line),
+	   0, line_of_addr(addr2.line)*2, 0, 0, 0, 1);
 
     op(REQ_GETS, VALID, 0, addr1, null, 0, line_of_addr(addr1.line), 0, 0, 0, 0, INSTR);
 
@@ -719,8 +720,8 @@ void llc_tb::llc_test()
 
     op(REQ_GETM, VALID, 0, addr2, null, 0, line_of_addr(addr2.line), 0, 0, 0, 0, DATA);
 
-    op_dma(REQ_DMA_WRITE, MODIFIED, EVICT, DIRTY, addr1, addr2, line_of_addr(addr1.line)*2, 0, 
-	   line_of_addr(addr2.line), 1, 0, 0);
+    op_dma(DMA_WRITE, MODIFIED, EVICT, DIRTY, addr1, addr2, line_of_addr(addr1.line)*2, 0, 
+	   line_of_addr(addr2.line), 1, 0, 0, 1);
 
     op(REQ_GETS, VALID, 0, addr1, null, 0, line_of_addr(addr1.line)*2, 0, 0, 0, 0, INSTR);
 
@@ -729,13 +730,13 @@ void llc_tb::llc_test()
 
     op(REQ_PUTS, EXCLUSIVE, 0, addr2, null, 0, 0, 0, 0, 0, 0, DATA);
 
-    op_dma(REQ_DMA_WRITE, VALID, 0, 0, addr2, null, line_of_addr(addr2.line)*2, 
-       0, 0, 0, 0, 0);
+    op_dma(DMA_WRITE, VALID, 0, 0, addr2, null, line_of_addr(addr2.line)*2, 
+	   0, 0, 0, 0, 0, 1);
 
     op(REQ_GETM, VALID, 0, addr2, null, 0, line_of_addr(addr2.line)*2, 0, 0, 0, 0, DATA);
 
-    op_dma(REQ_DMA_WRITE, MODIFIED, EVICT, DIRTY, addr1, addr2, line_of_addr(addr1.line),
-       0, line_of_addr(addr2.line)*2, 1, 0, 0);
+    op_dma(DMA_WRITE, MODIFIED, EVICT, DIRTY, addr1, addr2, line_of_addr(addr1.line),
+	   0, line_of_addr(addr2.line)*2, 1, 0, 0, 1);
 
     op(REQ_GETS, VALID, 0, addr1, null, 0, line_of_addr(addr1.line), 0, 0, 0, 0, INSTR);
 
@@ -754,8 +755,8 @@ void llc_tb::llc_test()
     // DMA_Read evicts SD line, dirty (can't be not dirty)
     regular_evict_prep(addr_base, addr1, addr2, evict_way);
 
-    op_dma(REQ_DMA_READ, SHARED, EVICT, DIRTY, addr1, addr2, 0, line_of_addr(addr1.line), 
-       line_of_addr(addr2.line), 6, 1, 1);
+    op_dma(DMA_READ, SHARED, EVICT, DIRTY, addr1, addr2, 1, line_of_addr(addr1.line), 
+	   line_of_addr(addr2.line), 6, 1, 1, 0);
 
     op(REQ_GETS, VALID, 0, addr1, null, 0, line_of_addr(addr1.line), 0, 0, 1, 0, DATA);
     op(REQ_GETS, EXCLUSIVE, 0, addr1, null, 0, line_of_addr(addr1.line), 0, 0, 2, 1, DATA);
@@ -763,8 +764,8 @@ void llc_tb::llc_test()
     // DMA_Write evicts SD line, dirty (can't be not dirty)
     regular_evict_prep(addr_base, addr1, addr2, evict_way);
 
-    op_dma(REQ_DMA_WRITE, SHARED, EVICT, DIRTY, addr1, addr2, line_of_addr(addr1.line)*2, 
-       0, line_of_addr(addr2.line)*2, 6, 1, 1);
+    op_dma(DMA_WRITE, SHARED, EVICT, DIRTY, addr1, addr2, line_of_addr(addr1.line)*2, 
+	   0, line_of_addr(addr2.line)*2, 6, 1, 1, 1);
 
     // TODO test SD -> DMA_* -> V (with some put) -> evict V -> execute DMA_*
 
@@ -775,7 +776,7 @@ void llc_tb::llc_test()
 
     reset_dut(is_reset);
 
-    // Make every entry in the cache dirty with REQ_DMA_WRITE requests
+    // Make every entry in the cache dirty with DMA_WRITE requests
     CACHE_REPORT_INFO("Whole cache dirty.");
 
     addr = null;
@@ -784,7 +785,7 @@ void llc_tb::llc_test()
 
 	for (int j = 0; j < LLC_WAYS; j++) {
 
-	    op_dma(REQ_DMA_WRITE, INVALID, 0, 0, addr, null, line_of_addr(addr.line), 0, 0, 0, 0, 0);
+	    op_dma(DMA_WRITE, INVALID, 0, 0, addr, null, line_of_addr(addr.line), 0, 0, 0, 0, 0, 1);
 
 	    addr.tag_incr(1);
 	}
@@ -814,7 +815,7 @@ void llc_tb::llc_test()
 	    } else if ((j % 4) == 2) {
 		op(REQ_GETM, VALID, 0, addr, null, 0, line_of_addr(addr.line), 0, 0, 3, 0, DATA);
 	    } else if ((j % 4) == 3) {
-		op_dma(REQ_DMA_READ, VALID, 0, 0, addr, null, 0, line_of_addr(addr.line), 0, 0, 0, 0);
+		op_dma(DMA_READ, VALID, 0, 0, addr, null, 1, line_of_addr(addr.line), 0, 0, 0, 0, 0);
 	    }
 
 	    addr.tag_incr(1);
@@ -1055,10 +1056,10 @@ void llc_tb::op(mix_msg_t coh_msg, llc_state_t state, bool evict, addr_breakdown
 void llc_tb::op_dma(mix_msg_t coh_msg, llc_state_t state, bool evict, bool dirty, 
 		    addr_breakdown_t req_addr, addr_breakdown_t evict_addr, 
 		    line_t req_line, line_t rsp_line, line_t evict_line,
-		    sharers_t sharers, owner_t owner, bool stall)
+		    sharers_t sharers, owner_t owner, bool stall, bool done)
 {
     // req in
-    put_req_in(coh_msg, req_addr.line, req_line, 0, DATA);
+    put_req_in(coh_msg, req_addr.line, req_line, 0, done);
 
     // end of stall
     if (stall) {
@@ -1106,15 +1107,15 @@ void llc_tb::op_dma(mix_msg_t coh_msg, llc_state_t state, bool evict, bool dirty
     }
 
     // read mem
-    if (coh_msg == REQ_DMA_READ && (state == INVALID || evict)) {
+    if (coh_msg == DMA_READ && (state == INVALID || evict)) {
 	get_mem_req(LLC_READ, req_addr.line, 0);
 	wait();
 	put_mem_rsp(rsp_line);
     }
 
     // rsp data to accelerator
-    if (coh_msg == REQ_DMA_READ)
-	get_rsp_out(RSP_DATA, req_addr.line, rsp_line, 0, 0, 0);
+    if (coh_msg == DMA_READ)
+	get_rsp_out(RSP_DATA_DMA, req_addr.line, rsp_line, 1, 0, 0);
     
     wait();
 }

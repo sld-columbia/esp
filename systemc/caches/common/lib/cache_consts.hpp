@@ -192,12 +192,14 @@
 #define RSP_PLANE 2
 
 // requests (L2 to L3)
-#define REQ_GETS	0
-#define REQ_GETM	1
-#define REQ_PUTS	2
-#define REQ_PUTM	3
-#define REQ_DMA_READ    4
-#define REQ_DMA_WRITE   5
+#define REQ_GETS		0
+#define REQ_GETM		1
+#define REQ_PUTS		2
+#define REQ_PUTM		3
+#define REQ_DMA_READ		4
+#define REQ_DMA_WRITE		5
+#define REQ_DMA_READ_BURST	6
+#define REQ_DMA_WRITE_BURST	7
 
 // forwards (L3 to L2)
 #define FWD_GETS	0
@@ -211,6 +213,10 @@
 #define RSP_DATA	0
 #define RSP_EDATA	1
 #define RSP_INVACK	2
+#define RSP_DATA_DMA    3
+
+// DMA burst
+#define DMA_BURST_LENGTH_BITS 32
 
 /*
  * AMBA Bus
@@ -235,6 +241,25 @@
 // Instead it would be better to use Stratus command to keep signals.
 // #define L2_DEBUG 1
 // #define LLC_DEBUG 1
+
+// Decide whether to send to LLC regular DMA transaction or to send the unrolled 
+// DMA transaction one cache line at a time
+
+#define INTERNAL 0
+#define EXTERNAL 1
+#define DMA_UNROLL INTERNAL
+
+#if (DMA_UNROLL == EXTERNAL)
+
+#define DMA_READ REQ_DMA_READ
+#define DMA_WRITE REQ_DMA_WRITE
+
+#elif (DMA_UNROLL == INTERNAL)
+
+#define DMA_READ REQ_DMA_READ_BURST
+#define DMA_WRITE REQ_DMA_WRITE_BURST
+
+#endif
 
 //
 // L2

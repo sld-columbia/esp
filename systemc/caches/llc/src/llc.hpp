@@ -170,6 +170,8 @@ public:
     void send_rsp_out(coh_msg_t coh_msg, line_addr_t addr, line_t line, cache_id_t req_id,
 		      cache_id_t dest_id, invack_cnt_t invack_cnt);
     void send_fwd_out(coh_msg_t coh_msg, line_addr_t addr, cache_id_t req_id, cache_id_t dest_id);
+    llc_rsp_in_t wait_rsp_in(addr_t addr_evict);
+    void process_rsp_in(llc_rsp_in_t rsp_in);
 
 private:
 

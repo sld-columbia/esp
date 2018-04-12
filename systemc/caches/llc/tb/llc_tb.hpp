@@ -140,7 +140,7 @@ public:
     void op_dma(mix_msg_t coh_msg, llc_state_t state, bool evict, bool dirty, 
 		addr_breakdown_t req_addr, addr_breakdown_t evict_addr, 
 		line_t req_line, line_t rsp_line, line_t evict_line,
-		sharers_t sharers, owner_t owner, bool stall);
+		sharers_t sharers, owner_t owner, bool stall, bool done);
     void get_rsp_out(coh_msg_t coh_msg, addr_t addr, line_t line, invack_cnt_t invack_cnt,
 		     cache_id_t req_id, cache_id_t dest_id);
     void get_fwd_out(coh_msg_t coh_msg, addr_t addr, cache_id_t req_id, cache_id_t dest_id);
