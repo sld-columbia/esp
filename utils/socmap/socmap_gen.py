@@ -12,6 +12,7 @@ DDR1_HINDEX = 5
 FB_HINDEX = 6
 POWERCTRL_PINDEX = 4
 L3_CACHE_PINDEX = 5
+L3_CACHE_PIRQ = 4
 SLD_APB_ADDR_ADJ = 0x100
 SLD_APB_ADDR_MSK = 0xfff
 NCPU_MAX = 4
@@ -232,6 +233,9 @@ def print_constants(fp, esp_config, soc):
     fp.write("  constant CFG_SLD_" + esp_config.acc_types[x] + "_IRQ : integer := " + str(esp_config.acc_irq[esp_config.acc_types[x]]) + ";\n")
     fp.write("  constant CFG_SLD_" + esp_config.acc_types[x] + "_SG : integer := " + str(int(soc.HAS_SG)) + ";\n")
 
+  fp.write("\n")
+  fp.write("  constant CFG_SLD_L3_CACHE_IRQ : integer := " + str(L3_CACHE_PIRQ) + ";\n\n")
+
   fp.write("-- Memory controllers\n")
   if esp_config.nmem_ctrl == 2:
     fp.write("  constant CFG_MIG_DUAL : integer := 1;\n")
@@ -451,7 +455,7 @@ def print_constants(fp, esp_config, soc):
   fp.write("  -- Last-level cache control registers (force flush and soft reset)\n")
   fp.write("  constant l3_cache_pindex : integer := " + str(L3_CACHE_PINDEX) + ";\n")
   fp.write("  constant l3_cache_pconfig : apb_config_type := (\n")
-  fp.write("  0 => ahb_device_reg (VENDOR_SLD, SLD_L3_CACHE, 0, 0, 0),\n")
+  fp.write("  0 => ahb_device_reg (VENDOR_SLD, SLD_L3_CACHE, 0, 0, CFG_SLD_L3_CACHE_IRQ),\n")
   fp.write("  1 => apb_iobar(" + str(L3_CACHE_PINDEX) + ", 16#fff#));\n\n")
 
 
