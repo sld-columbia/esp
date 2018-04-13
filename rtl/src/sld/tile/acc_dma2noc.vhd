@@ -93,11 +93,12 @@ entity acc_dma2noc is
     coherent_dma_write   : out std_ulogic;
     coherent_dma_length  : out addr_t;
     coherent_dma_address : out addr_t;
-    -- NoC1->tile
+    coherent_dma_ready   : in  std_ulogic;
+    -- NoC6->tile
     llc_coherent_dma_rcv_rdreq          : out std_ulogic;
     llc_coherent_dma_rcv_data_out       : in  noc_flit_type;
     llc_coherent_dma_rcv_empty          : in  std_ulogic;
-    -- tile->NoC2
+    -- tile->NoC4
     llc_coherent_dma_snd_wrreq          : out std_ulogic;
     llc_coherent_dma_snd_data_in        : out noc_flit_type;
     llc_coherent_dma_snd_full           : in  std_ulogic;
@@ -149,10 +150,18 @@ architecture rtl of acc_dma2noc is
   type dma_fsm is (idle, request_header, request_address, request_length,
                    request_data, reply_header, reply_data, config,
                    send_header, rd_handshake, wr_handshake,
-                   running, reset, wait_for_completion);
+                   running, reset, wait_for_completion, fully_coherent_request);
   signal dma_state, dma_next : dma_fsm;
   signal status : std_logic_vector(31 downto 0);
   signal sample_status : std_ulogic;
+
+  -- Internal signals muxed to output queues depending on coherence configuration
+  signal dma_rcv_rdreq_int    :  std_ulogic;
+  signal dma_rcv_data_out_int :  noc_flit_type;
+  signal dma_rcv_empty_int    :  std_ulogic;
+  signal dma_snd_wrreq_int    :  std_ulogic;
+  signal dma_snd_data_in_int  :  noc_flit_type;
+  signal dma_snd_full_int     :  std_ulogic;
 
   -- DMA word count
   signal count                : std_logic_vector(31 downto 0);
@@ -196,7 +205,8 @@ begin  -- rtl
   -----------------------------------------------------------------------------
   -- TLB
   -----------------------------------------------------------------------------
-  acc_tlb_1: acc_tlb
+
+  acc_tlb_1 : acc_tlb
     generic map (
       tech           => tech,
       scatter_gather => scatter_gather,
@@ -221,13 +231,38 @@ begin  -- rtl
       tlb_valid            => tlb_valid,
       tlb_write            => tlb_write,
       tlb_wr_address       => tlb_wr_address,
-      tlb_datain           => dma_rcv_data_out(31 downto 0),
+      tlb_datain           => dma_rcv_data_out_int(31 downto 0),
       dma_address          => dma_address,
       dma_length           => dma_length);
 
   -----------------------------------------------------------------------------
   -- DMA packet
   -----------------------------------------------------------------------------
+
+  lcc_coherent_dma_gen: if coherence = ACC_COH_LLC generate
+    llc_coherent_dma_rcv_rdreq   <= dma_rcv_rdreq_int;
+    dma_rcv_data_out_int         <= llc_coherent_dma_rcv_data_out;
+    dma_rcv_empty_int            <= llc_coherent_dma_rcv_empty;
+    llc_coherent_dma_snd_wrreq   <= dma_snd_wrreq_int;
+    llc_coherent_dma_snd_data_in <= dma_snd_data_in_int;
+    dma_snd_full_int             <= llc_coherent_dma_snd_full;
+    dma_rcv_rdreq                <= '0';
+    dma_snd_wrreq                <= '0';
+    dma_snd_data_in              <= (others => '0');
+  end generate lcc_coherent_dma_gen;
+
+  non_llc_coherent_dma_gen: if coherence /= ACC_COH_LLC generate
+    dma_rcv_rdreq                <= dma_rcv_rdreq_int;
+    dma_rcv_data_out_int         <= dma_rcv_data_out;
+    dma_rcv_empty_int            <= dma_rcv_empty;
+    dma_snd_wrreq                <= dma_snd_wrreq_int;
+    dma_snd_data_in              <= dma_snd_data_in_int;
+    dma_snd_full_int             <= dma_snd_full;
+    llc_coherent_dma_rcv_rdreq   <= '0';
+    llc_coherent_dma_snd_wrreq   <= '0';
+    llc_coherent_dma_snd_data_in <= (others => '0');
+  end generate non_llc_coherent_dma_gen;
+
   make_packet: process (bankreg, pending_dma_write, tlb_empty, dma_address, dma_length)
     variable msg_type : noc_msg_type;
     variable header_v : noc_flit_type;
@@ -298,6 +333,9 @@ begin  -- rtl
     end if;
   end process;
 
+  coherent_dma_address <= payload_address_r(ADDR_BITS - 1 downto 0);
+  coherent_dma_length  <= payload_length_r(ADDR_BITS - 1 downto 0);
+
   -----------------------------------------------------------------------------
   -- DMA
   -----------------------------------------------------------------------------
@@ -317,10 +355,10 @@ begin  -- rtl
 
   dma_roundtrip: process (dma_state, rst, count, rd_request, bufdin_ready,
                           wr_request, bufdout_valid, bufdout_data, bankreg,
-                          pending_acc_done, dma_snd_full, dma_rcv_empty, dma_rcv_data_out,
+                          pending_acc_done, dma_snd_full_int, dma_rcv_empty_int, dma_rcv_data_out_int,
                           header_r, payload_address_r, payload_length_r,
                           dma_tran_start, tlb_empty, pending_dma_write,
-                          pending_dma_read, dvfs_transient)
+                          pending_dma_read, coherent_dma_ready, dvfs_transient)
     variable payload_data : noc_flit_type;
     variable preamble : noc_preamble_type;
     variable msg : noc_msg_type;
@@ -343,11 +381,11 @@ begin  -- rtl
     dma_tran_done <= '0';
     dma_tran_header_sent <= '0';
 
-    dma_snd_data_in <= (others => '0');
-    dma_snd_wrreq <= '0';
-    dma_rcv_rdreq <= '0';
+    dma_snd_data_in_int <= (others => '0');
+    dma_snd_wrreq_int <= '0';
+    dma_rcv_rdreq_int <= '0';
 
-    preamble := get_preamble(dma_rcv_data_out);
+    preamble := get_preamble(dma_rcv_data_out_int);
     msg := get_msg_type(header_r);
     len := payload_length_r(31 downto 0);
     if count /= len then
@@ -357,11 +395,15 @@ begin  -- rtl
     end if;
     payload_data(31 downto 0) := bufdout_data;
 
+    -- Default private cache inputs
+    coherent_dma_read  <= '0';
+    coherent_dma_write <= '0';
+
     -- Default accelerator inputs
     acc_rst <= rst;
     conf_done <= '0';
     rd_grant <= '0';
-    bufdin_data <= dma_rcv_data_out(31 downto 0);
+    bufdin_data <= dma_rcv_data_out_int(31 downto 0);
     bufdin_valid <= '0';
     wr_grant <= '0';
     bufdout_ready <= '0';
@@ -384,12 +426,29 @@ begin  -- rtl
         clear_acc_done <= '1';
         if bankreg(CMD_REG)(CMD_BIT_START) = '1' and tlb_empty = '1' and scatter_gather /= 0 then
           sample_flits <= '1';
-          dma_next <= send_header;
+          if coherence /= ACC_COH_FULL then
+            dma_next <= send_header;
+          else
+            dma_next <= fully_coherent_request;
+          end if;
         elsif bankreg(CMD_REG)(CMD_BIT_START) = '1' and (tlb_empty = '0' or scatter_gather = 0) then
           dma_next <= config;
           status <= (others => '0');
           status(STATUS_BIT_RUN) <= '1';
           sample_status <= '1';
+        end if;
+
+      when fully_coherent_request =>
+        if msg = DMA_TO_DEV then
+          coherent_dma_read <= '1';
+          if coherent_dma_ready = '1' then
+            dma_next <= reply_data;
+          end if;
+        else
+          coherent_dma_write <= '1';
+          if coherent_dma_ready = '1' then
+            dma_next <= request_data;
+          end if;
         end if;
 
       when running =>
@@ -410,7 +469,11 @@ begin  -- rtl
         if (pending_dma_read or pending_dma_write) = '1' and scatter_gather /= 0 then
           if dma_tran_start = '1' then
             sample_flits <= '1';
-            dma_next <= send_header;
+            if coherence /= ACC_COH_FULL then
+              dma_next <= send_header;
+            else
+              dma_next <= fully_coherent_request;
+            end if;
           end if;
         elsif bankreg(CMD_REG)(CMD_BIT_LAST downto 0) = zero(CMD_BIT_LAST downto 0) then
           dma_next <= reset;
@@ -454,41 +517,57 @@ begin  -- rtl
         dma_next <= running;
 
       when rd_handshake =>
-        if dma_snd_full = '0' then
+        if dma_snd_full_int = '0' then
           if rd_request = '1' then
             rd_grant <= '1';
           elsif dma_tran_start = '1' and scatter_gather /= 0 then
             sample_flits <= '1';
-            dma_next <= send_header;
+            if coherence /= ACC_COH_FULL then
+              dma_next <= send_header;
+            else
+              dma_next <= fully_coherent_request;
+            end if;
           elsif scatter_gather = 0 then
-            dma_next <= send_header;
+            if coherence /= ACC_COH_FULL then
+              dma_next <= send_header;
+            else
+              dma_next <= fully_coherent_request;
+            end if;
           end if;
         end if;
 
       when wr_handshake =>
-        if dma_snd_full = '0' then
+        if dma_snd_full_int = '0' then
           if wr_request = '1' then
             wr_grant <= '1';
           elsif dma_tran_start = '1' and scatter_gather /= 0 then
             sample_flits <= '1';
-            dma_next <= send_header;
+            if coherence /= ACC_COH_FULL then
+              dma_next <= send_header;
+            else
+              dma_next <= fully_coherent_request;
+            end if;
           elsif scatter_gather = 0 then
-            dma_next <= send_header;
+            if coherence /= ACC_COH_FULL then
+              dma_next <= send_header;
+            else
+              dma_next <= fully_coherent_request;
+            end if;
           end if;
         end if;
 
       when send_header =>
-        if dma_snd_full = '0' and dvfs_transient = '0' then
-          dma_snd_data_in <= header_r;
-          dma_snd_wrreq <= '1';
+        if dma_snd_full_int = '0' and dvfs_transient = '0' then
+          dma_snd_data_in_int <= header_r;
+          dma_snd_wrreq_int <= '1';
           dma_tran_header_sent <= '1';
           dma_next <= request_address;
         end if;
 
       when request_address =>
-        if dma_snd_full = '0' and dvfs_transient = '0' then
-          dma_snd_data_in <= payload_address_r;
-          dma_snd_wrreq <= '1';
+        if dma_snd_full_int = '0' and dvfs_transient = '0' then
+          dma_snd_data_in_int <= payload_address_r;
+          dma_snd_wrreq_int <= '1';
           if msg = DMA_TO_DEV then
             dma_next <= request_length;
           else
@@ -497,18 +576,18 @@ begin  -- rtl
         end if;
 
       when request_length =>
-        if dma_snd_full = '0' and dvfs_transient = '0' then
-          dma_snd_data_in <= payload_length_r;
-          dma_snd_wrreq <= '1';
+        if dma_snd_full_int = '0' and dvfs_transient = '0' then
+          dma_snd_data_in_int <= payload_length_r;
+          dma_snd_wrreq_int <= '1';
           dma_next <= reply_header;
         end if;
 
       when request_data =>
-        dma_snd_delay <= dma_snd_full;       -- for DVFS TRAFFIC policy
-        if bufdout_valid = '1' and dma_snd_full = '0' and dvfs_transient = '0' then
+        dma_snd_delay <= dma_snd_full_int;       -- for DVFS TRAFFIC policy
+        if bufdout_valid = '1' and dma_snd_full_int = '0' and dvfs_transient = '0' then
           write_burst <= '1';
-            dma_snd_data_in <= payload_data;
-            dma_snd_wrreq <= '1';
+            dma_snd_data_in_int <= payload_data;
+            dma_snd_wrreq_int <= '1';
             bufdout_ready <= '1';
             if count = len then
               clear_count <= '1';
@@ -520,16 +599,16 @@ begin  -- rtl
         end if;
 
       when reply_header =>
-        dma_rcv_delay <= dma_rcv_empty;       -- for DVFS TRAFFIC policy
-        if dma_rcv_empty = '0' and dvfs_transient = '0' then
-          dma_rcv_rdreq <= '1';
+        dma_rcv_delay <= dma_rcv_empty_int;       -- for DVFS TRAFFIC policy
+        if dma_rcv_empty_int = '0' and dvfs_transient = '0' then
+          dma_rcv_rdreq_int <= '1';
           dma_next <= reply_data;
         end if;
 
       when reply_data =>
-        dma_rcv_delay <= dma_rcv_empty;       -- for DVFS TRAFFIC policy
-        if dma_rcv_empty = '0' and tlb_empty = '1' and dvfs_transient = '0' then
-          dma_rcv_rdreq <= '1';
+        dma_rcv_delay <= dma_rcv_empty_int;       -- for DVFS TRAFFIC policy
+        if dma_rcv_empty_int = '0' and tlb_empty = '1' and dvfs_transient = '0' then
+          dma_rcv_rdreq_int <= '1';
           tlb_write <= '1';
           increment_count <= '1';
           if preamble = PREAMBLE_TAIL then
@@ -537,9 +616,9 @@ begin  -- rtl
             tlb_valid <= '1';
             dma_next <= idle;
           end if;
-        elsif dma_rcv_empty = '0' and bufdin_ready = '1' and dvfs_transient = '0' then
+        elsif dma_rcv_empty_int = '0' and bufdin_ready = '1' and dvfs_transient = '0' then
           read_burst <= '1';
-          dma_rcv_rdreq <= '1';
+          dma_rcv_rdreq_int <= '1';
           bufdin_valid <= '1';
           if preamble = PREAMBLE_TAIL then
             dma_tran_done <= '1';

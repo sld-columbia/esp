@@ -55,10 +55,11 @@ entity l2_acc_wrapper is
 
     -- frontend (cache - Accelerator DMA)
     -- header / lenght parallel ports
-    dma_read                  : in std_ulogic;
-    dma_write                 : in std_ulogic;
-    dma_length                : in addr_t;
-    dma_address               : in addr_t;
+    dma_read                  : in  std_ulogic;
+    dma_write                 : in  std_ulogic;
+    dma_length                : in  addr_t;
+    dma_address               : in  addr_t;
+    dma_ready                 : out std_ulogic;
     -- cache->acc (data only)
     dma_rcv_ready             : in  std_ulogic;
     dma_rcv_data              : out noc_flit_type;

@@ -623,6 +623,7 @@ package tile is
       coherent_dma_write   : out std_ulogic;
       coherent_dma_length  : out addr_t;
       coherent_dma_address : out addr_t;
+      coherent_dma_ready   : in  std_ulogic;
       dma_rcv_rdreq     : out std_ulogic;
       dma_rcv_data_out  : in  noc_flit_type;
       dma_rcv_empty     : in  std_ulogic;

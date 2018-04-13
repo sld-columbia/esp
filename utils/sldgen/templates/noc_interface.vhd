@@ -168,6 +168,7 @@ end;
   signal dma_write            : std_ulogic;
   signal dma_length           : addr_t;
   signal dma_address          : addr_t;
+  signal dma_ready            : std_ulogic;
   signal dma_rcv_rdreq_int    : std_ulogic;
   signal dma_rcv_data_out_int : noc_flit_type;
   signal dma_rcv_empty_int    : std_ulogic;
@@ -235,6 +236,7 @@ begin
         dma_write                  => dma_write,
         dma_length                 => dma_length,
         dma_address                => dma_address,
+        dma_ready                  => dma_ready,
         dma_rcv_ready              => dma_rcv_ready,
         dma_rcv_data               => dma_rcv_data,
         dma_rcv_valid              => dma_rcv_valid,
@@ -285,6 +287,7 @@ begin
         exp_registers      => exp_registers,
         scatter_gather     => scatter_gather,
         tlb_entries        => tlb_entries,
+        coherence          => coherence,
         has_dvfs           => has_dvfs,
         has_pll            => has_pll)
       port map (
@@ -316,10 +319,17 @@ begin
         acc_done             => acc_done,
         mon_dvfs_in          => mon_dvfs_in,
         mon_dvfs             => mon_dvfs_feedthru,
+        llc_coherent_dma_rcv_rdreq    => coherent_dma_rcv_rdreq,
+        llc_coherent_dma_rcv_data_out => coherent_dma_rcv_data_out,
+        llc_coherent_dma_rcv_empty    => coherent_dma_rcv_empty,
+        llc_coherent_dma_snd_wrreq    => coherent_dma_snd_wrreq,
+        llc_coherent_dma_snd_data_in  => coherent_dma_snd_data_in,
+        llc_coherent_dma_snd_full     => coherent_dma_snd_full,
         coherent_dma_read    => dma_read,
         coherent_dma_write   => dma_write,
         coherent_dma_length  => dma_length,
         coherent_dma_address => dma_address,
+        coherent_dma_ready   => dma_ready,
         dma_rcv_rdreq        => dma_rcv_rdreq_int,
         dma_rcv_data_out     => dma_rcv_data_out_int,
         dma_rcv_empty        => dma_rcv_empty_int,
@@ -402,6 +412,7 @@ begin
         coherent_dma_write   => dma_write,
         coherent_dma_length  => dma_length,
         coherent_dma_address => dma_address,
+        coherent_dma_ready   => dma_ready,
         dma_rcv_rdreq        => dma_rcv_rdreq_int,
         dma_rcv_data_out     => dma_rcv_data_out_int,
         dma_rcv_empty        => dma_rcv_empty_int,
@@ -420,6 +431,8 @@ begin
     dma_snd_wrreq <= dma_snd_wrreq_int;
     dma_snd_data_in <= dma_snd_data_in_int;
     dma_snd_full_int <= dma_snd_full;
+
+    dma_ready <= '0';
 
   end generate non_fully_coherent_gen;
 
