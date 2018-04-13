@@ -274,17 +274,29 @@ begin  -- rtl
       -- fetch page table
       address := bankreg(PT_ADDRESS_REG);
       length  := bankreg(PT_NCHUNK_REG);
-      msg_type := DMA_TO_DEV;
+      if coherence = ACC_COH_LLC then
+        mst_type := REQ_DMA_READ;
+      else
+        msg_type := DMA_TO_DEV;
+      end if;
     elsif pending_dma_write = '1' then
       -- accelerator write burst
       address := dma_address;
       length  := "00" & dma_length(31 downto 2);
-      msg_type := DMA_FROM_DEV;
+      if coherence = ACC_COH_LLC then
+        mst_type := REQ_DMA_WRITE;
+      else
+        msg_type := DMA_FROM_DEV;
+      end if;
     else
       -- accelerator read burst
       address := dma_address;
       length  := "00" & dma_length(31 downto 2);
-      msg_type := DMA_TO_DEV;
+      if coherence = ACC_COH_LLC then
+        mst_type := REQ_DMA_READ;
+      else
+        msg_type := DMA_TO_DEV;
+      end if;
     end if;
 
     mem_x := mem_info(0).x;
