@@ -11,6 +11,7 @@ DDR0_HINDEX = 4
 DDR1_HINDEX = 5
 FB_HINDEX = 6
 POWERCTRL_PINDEX = 4
+L3_CACHE_PINDEX = 5
 SLD_APB_ADDR_ADJ = 0x100
 SLD_APB_ADDR_MSK = 0xfff
 NCPU_MAX = 4
@@ -97,7 +98,7 @@ class soc_config:
     # DMA ID assigned dynamically to LLC-coherent accelerators
     acc_did = 0
     acc_tile_idx = 0
-    acc_idx = 5 #first available line
+    acc_idx = 6 #first available line
     acc_irq = 3
     for x in range(soc.noc.rows):
       for y in range(soc.noc.cols):
@@ -434,7 +435,7 @@ def print_constants(fp, esp_config, soc):
     fp.write("  0 => ahb_device_reg (VENDOR_GAISLER, GAISLER_SGMII, 0, 1, 11),\n")
     fp.write("  1 => apb_iobar(16#010#, 16#ff0#));\n\n")
 
-  fp.write("  -- APB " + str(POWERCTRL_PINDEX) + ": 0x80000400 - 0x800004FF\n")
+  fp.write("  -- APB " + str(POWERCTRL_PINDEX) + ": 0x80000" + str(POWERCTRL_PINDEX) + "00 - 0x80000" + str(POWERCTRL_PINDEX) + "FF\n")
   fp.write("  -- power management registers. This requires special handling, because there\n")
   fp.write("  -- is one set of registers to control power per each tile.\n")
   if soc.noc.has_dvfs():
@@ -445,6 +446,14 @@ def print_constants(fp, esp_config, soc):
   else:
     fp.write("  constant powerctrl_pindex : integer := " + str(POWERCTRL_PINDEX) + ";\n")
     fp.write("  constant powerctrl_pconfig : apb_config_type := pconfig_none;\n")
+
+  fp.write("  -- APB " + str(L3_CACHE_PINDEX) + ": 0x80000" + str(L3_CACHE_PINDEX) + "00 - 0x80000" + str(L3_CACHE_PINDEX) + "FF\n")
+  fp.write("  -- Last-level cache control registers (force flush and soft reset)\n")
+  fp.write("  constant l3_cache_pindex : integer := " + str(L3_CACHE_PINDEX) + ";\n")
+  fp.write("  constant l3_cache_pconfig : apb_config_type := (\n")
+  fp.write("  0 => ahb_device_reg (VENDOR_SLD, SLD_L3_CACHE, 0, 0, 0),\n")
+  fp.write("  1 => apb_iobar(" + str(L3_CACHE_PINDEX) + ", 16#fff#));\n\n")
+
 
   fp.write("  constant fixed_ahbso_hconfig : ahb_slv_hconfig_vector := (\n")
   fp.write("    --pragma translate_off\n")
@@ -504,6 +513,7 @@ def print_constants(fp, esp_config, soc):
     if soc.HAS_SGMII == True:
       fp.write("    15 => sgmii0_pconfig,\n")
   fp.write("    " + str(POWERCTRL_PINDEX) + " => powerctrl_pconfig,\n")
+  fp.write("    " + str(L3_CACHE_PINDEX) + " => l3_cache_pconfig,\n")
   for i in range(0, esp_config.nacc):
     acc = esp_config.accelerators[i]
     fp.write("    " + str(acc.idx) + " => " + str(acc.lowercase_name) + "_" + str(acc.number) + "_pconfig,\n")
