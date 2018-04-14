@@ -7,6 +7,7 @@
 #include <linux/ioctl.h>
 
 #include <asm/uaccess.h>
+#include <asm/cacheflush.h>
 
 #include <esp_accelerator.h>
 #include <esp.h>
@@ -48,10 +49,17 @@ static irqreturn_t esp_irq(int irq, void *dev)
  * The leon3 code flushes the entire cache even if we just want to flush a
  * single line, so we call the flush function below only once.
  */
-static void esp_flush(void)
+static int esp_flush(struct esp_device *esp)
 {
-	__asm__ __volatile__("sta %%g0, [%%g0] %0\n\t" : :
-			"i"(ASI_LEON_DFLUSH) : "memory");
+	int rc = 0;
+
+	if (esp->coherence < ACC_COH_FULL)
+		flush_page_for_dma(0);
+
+	if (esp->coherence < ACC_COH_LLC)
+		rc = esp_cache_flush();
+
+	return rc;
 }
 
 static int esp_open(struct inode *inode, struct file *file)
@@ -76,7 +84,6 @@ static int esp_release(struct inode *inode, struct file *file)
 
 static void esp_transfer(struct esp_device *esp, const struct contig_desc *contig)
 {
-	esp_flush();
 	esp->err = 0;
 	INIT_COMPLETION(esp->completion);
 
@@ -145,6 +152,11 @@ static int esp_access_ioctl(struct esp_device *esp, void __user *argp)
 	}
 	if (esp->driver->xfer_input_ok && !esp->driver->xfer_input_ok(esp, arg)) {
 		rc = -EINVAL;
+		goto out;
+	}
+
+	if (esp_flush(esp)) {
+		rc = -EINTR;
 		goto out;
 	}
 
@@ -268,6 +280,9 @@ int esp_device_register(struct esp_device *esp, struct platform_device *pdev)
 	iowrite32be(0x0, esp->iomem + CMD_REG);
 	while (ioread32be(esp->iomem + CMD_REG))
 		cpu_relax();
+
+	/* get type of coherence selected for the device */
+	esp->coherence = ioread32be(esp->iomem + COHERENCE_REG);
 
 	dev_info(esp->pdev, "device registered.\n");
 	platform_set_drvdata(pdev, esp);
