@@ -100,6 +100,14 @@ inline addr_breakdown_t rand_addr()
     return addr_br;
 }
 
+inline addr_breakdown_llc_t rand_addr_llc()
+{
+    addr_t addr = (rand() % (1 << ADDR_BITS-1)); // MSB always set to 0
+    addr_breakdown_llc_t addr_br;
+    addr_br.breakdown(addr);
+    return addr_br;
+}
+
 inline word_t rand_word()
 {
     word_t word = (rand() % (1 << BITS_PER_WORD-1));
