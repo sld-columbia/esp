@@ -636,7 +636,7 @@ begin
         nl2         => CFG_NL2,
         nllcc       => CFG_NLLC_COHERENT,
         noc_xlen    => CFG_XLEN,
-        hindex      => 0,
+        hindex      => 2,
         local_y     => local_y,
         local_x     => local_x,
         cacheline   => CFG_DLINE,
@@ -687,7 +687,7 @@ begin
     generic map (
       tech        => fabtech,
       ncpu        => CFG_NCPU_TILE,
-      hindex      => CFG_NCPU_TILE,
+      hindex      => 1,
       local_y     => local_y,
       local_x     => local_x,
       l2_cache_en => 0,
