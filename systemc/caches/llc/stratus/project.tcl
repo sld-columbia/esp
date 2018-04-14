@@ -28,9 +28,9 @@ define_system_module tb  ../tb/llc_tb.cpp ../tb/system.cpp ../tb/sc_main.cpp
 
 #     foreach ways [list 4 8 16 32] {
 
-foreach sets [list 256 512 1024] {
+foreach sets [list 256 512] {
 
-    foreach ways [list 16] {
+    foreach ways [list 16 32] {
 
 	set pars "_$sets\SETS_$ways\WAYS"
 

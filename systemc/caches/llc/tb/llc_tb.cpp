@@ -5,6 +5,8 @@
 #include <time.h>
 #include "llc_tb.hpp"
 
+#define L2_SETS LLC_SETS
+
 /*
  * Processes
  */
@@ -69,7 +71,7 @@ void llc_tb::llc_test()
     const bool is_reset = false;
 
     // preparation variables
-    addr_breakdown_t addr_base, addr, addr_evict, null;
+    addr_breakdown_llc_t addr_base, addr, addr_evict, null;
     null.breakdown(0);
     word_t word, word_tmp;
     line_t line;
@@ -126,7 +128,7 @@ void llc_tb::llc_test()
     reset_llc_test();
     reset_dut(is_reset);
 
-    addr_base = rand_addr();
+    addr_base = rand_addr_llc();
 
     /*
      * Test all corners of our version of the MESI protocol
@@ -530,9 +532,9 @@ void llc_tb::llc_test()
 
     CACHE_REPORT_INFO("T0.8) Eviction.");
 
-    addr_breakdown_t addr1 = addr_base;
-    addr_breakdown_t addr2 = addr_base;
-    addr_breakdown_t addr_new = addr_base;
+    addr_breakdown_llc_t addr1 = addr_base;
+    addr_breakdown_llc_t addr2 = addr_base;
+    addr_breakdown_llc_t addr_new = addr_base;
     addr_evict = addr_base;
     llc_way_t evict_way = 0;
 
@@ -941,8 +943,9 @@ inline void llc_tb::reset_llc_test()
 /*
  * Generic function to setup eviction addresses and update evict_way
  */
-void llc_tb::evict_prep(addr_breakdown_t addr_base, addr_breakdown_t &addr1, addr_breakdown_t &addr2,
-			int tag_incr1, int tag_incr2, llc_way_t &evict_way, bool update_way)
+void llc_tb::evict_prep(addr_breakdown_llc_t addr_base, addr_breakdown_llc_t &addr1, 
+			addr_breakdown_llc_t &addr2, int tag_incr1, int tag_incr2, 
+			llc_way_t &evict_way, bool update_way)
 {
     addr1 = addr_base;
     addr1.tag_incr(tag_incr1);
@@ -956,8 +959,8 @@ void llc_tb::evict_prep(addr_breakdown_t addr_base, addr_breakdown_t &addr1, add
  * Way to evict is evict_way. New way is evict_way + LLC_WAYS.
  * This calls a generic function to setup eviction addresses.
  */
-void llc_tb::regular_evict_prep(addr_breakdown_t addr_base, addr_breakdown_t &addr1,
-				addr_breakdown_t &addr2, llc_way_t &evict_way)
+void llc_tb::regular_evict_prep(addr_breakdown_llc_t addr_base, addr_breakdown_llc_t &addr1,
+				addr_breakdown_llc_t &addr2, llc_way_t &evict_way)
 {
     int tag_incr1 = (int) evict_way + LLC_WAYS;
     int tag_incr2 = (int) evict_way;
@@ -965,13 +968,13 @@ void llc_tb::regular_evict_prep(addr_breakdown_t addr_base, addr_breakdown_t &ad
     evict_prep(addr_base, addr1, addr2, tag_incr1, tag_incr2, evict_way, 1);
 }
 
-void llc_tb::op_rsp(coh_msg_t rsp_msg, addr_breakdown_t req_addr, line_t req_line, cache_id_t req_id)
+void llc_tb::op_rsp(coh_msg_t rsp_msg, addr_breakdown_llc_t req_addr, line_t req_line, cache_id_t req_id)
 {
     put_rsp_in(rsp_msg, req_addr.line, req_line, req_id);
 }
 
-void llc_tb::op(mix_msg_t coh_msg, llc_state_t state, bool evict, addr_breakdown_t req_addr, 
-		addr_breakdown_t evict_addr, line_t req_line, line_t rsp_line, line_t evict_line,
+void llc_tb::op(mix_msg_t coh_msg, llc_state_t state, bool evict, addr_breakdown_llc_t req_addr, 
+		addr_breakdown_llc_t evict_addr, line_t req_line, line_t rsp_line, line_t evict_line,
 		invack_cnt_t invack_cnt, cache_id_t req_id, cache_id_t dest_id, hprot_t hprot)
 {
     int out_plane = REQ_PLANE;
@@ -1086,7 +1089,7 @@ void llc_tb::op(mix_msg_t coh_msg, llc_state_t state, bool evict, addr_breakdown
 }
 
 void llc_tb::op_dma(mix_msg_t coh_msg, llc_state_t state, bool evict, bool dirty, 
-		    addr_breakdown_t req_addr, addr_breakdown_t evict_addr, 
+		    addr_breakdown_llc_t req_addr, addr_breakdown_llc_t evict_addr, 
 		    line_t req_line, line_t rsp_line, line_t evict_line,
 		    sharers_t sharers, owner_t owner, bool stall)
 {

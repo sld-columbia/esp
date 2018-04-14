@@ -843,135 +843,153 @@ inline void llc::reset_io()
     llc_rst_tb_done.reset_put();
 
     /* Reset memories */
+
     tags.port1.reset();
-    tags.port2.reset();
-    tags.port3.reset();
-    tags.port4.reset();
-    tags.port5.reset();
-    tags.port6.reset();
-    tags.port7.reset();
-    tags.port8.reset();
-    tags.port9.reset();
-    tags.port10.reset();
-    tags.port11.reset();
-    tags.port12.reset();
-    tags.port13.reset();
-    tags.port14.reset();
-    tags.port15.reset();
-    tags.port16.reset();
-    tags.port17.reset();
-
     states.port1.reset();
-    states.port2.reset();
-    states.port3.reset();
-    states.port4.reset();
-    states.port5.reset();
-    states.port6.reset();
-    states.port7.reset();
-    states.port8.reset();
-    states.port9.reset();
-    states.port10.reset();
-    states.port11.reset();
-    states.port12.reset();
-    states.port13.reset();
-    states.port14.reset();
-    states.port15.reset();
-    states.port16.reset();
-    states.port17.reset();
-
     hprots.port1.reset();
-    hprots.port2.reset();
-    hprots.port3.reset();
-    hprots.port4.reset();
-    hprots.port5.reset();
-    hprots.port6.reset();
-    hprots.port7.reset();
-    hprots.port8.reset();
-    hprots.port9.reset();
-    hprots.port10.reset();
-    hprots.port11.reset();
-    hprots.port12.reset();
-    hprots.port13.reset();
-    hprots.port14.reset();
-    hprots.port15.reset();
-    hprots.port16.reset();
-    hprots.port17.reset();
-
     lines.port1.reset();
-    lines.port2.reset();
-    lines.port3.reset();
-    lines.port4.reset();
-    lines.port5.reset();
-    lines.port6.reset();
-    lines.port7.reset();
-    lines.port8.reset();
-    lines.port9.reset();
-    lines.port10.reset();
-    lines.port11.reset();
-    lines.port12.reset();
-    lines.port13.reset();
-    lines.port14.reset();
-    lines.port15.reset();
-    lines.port16.reset();
-    lines.port17.reset();
-
-    sharers.port1.reset();
-    sharers.port2.reset();
-    sharers.port3.reset();
-    sharers.port4.reset();
-    sharers.port5.reset();
-    sharers.port6.reset();
-    sharers.port7.reset();
-    sharers.port8.reset();
-    sharers.port9.reset();
-    sharers.port10.reset();
-    sharers.port11.reset();
-    sharers.port12.reset();
-    sharers.port13.reset();
-    sharers.port14.reset();
-    sharers.port15.reset();
-    sharers.port16.reset();
-    sharers.port17.reset();
-
     owners.port1.reset();
-    owners.port2.reset();
-    owners.port3.reset();
-    owners.port4.reset();
-    owners.port5.reset();
-    owners.port6.reset();
-    owners.port7.reset();
-    owners.port8.reset();
-    owners.port9.reset();
-    owners.port10.reset();
-    owners.port11.reset();
-    owners.port12.reset();
-    owners.port13.reset();
-    owners.port14.reset();
-    owners.port15.reset();
-    owners.port16.reset();
-    owners.port17.reset();
-
+    sharers.port1.reset();
     dirty_bits.port1.reset();
+
+    tags.port2.reset();
+    states.port2.reset();
+    hprots.port2.reset();
+    lines.port2.reset();
+    owners.port2.reset();
+    sharers.port2.reset();
     dirty_bits.port2.reset();
+
+    tags.port3.reset();
+    states.port3.reset();
+    hprots.port3.reset();
+    lines.port3.reset();
+    owners.port3.reset();
+    sharers.port3.reset();
     dirty_bits.port3.reset();
+
+    tags.port4.reset();
+    states.port4.reset();
+    hprots.port4.reset();
+    lines.port4.reset();
+    owners.port4.reset();
+    sharers.port4.reset();
     dirty_bits.port4.reset();
+
+    tags.port5.reset();
+    states.port5.reset();
+    hprots.port5.reset();
+    lines.port5.reset();
+    owners.port5.reset();
+    sharers.port5.reset();
     dirty_bits.port5.reset();
+
+#if (LLC_WAYS >= 8)
+
+    tags.port6.reset();
+    states.port6.reset();
+    hprots.port6.reset();
+    lines.port6.reset();
+    owners.port6.reset();
+    sharers.port6.reset();
     dirty_bits.port6.reset();
+
+    tags.port7.reset();
+    states.port7.reset();
+    hprots.port7.reset();
+    lines.port7.reset();
+    owners.port7.reset();
+    sharers.port7.reset();
     dirty_bits.port7.reset();
+
+    tags.port8.reset();
+    states.port8.reset();
+    hprots.port8.reset();
+    lines.port8.reset();
+    owners.port8.reset();
+    sharers.port8.reset();
     dirty_bits.port8.reset();
+
+    tags.port9.reset();
+    states.port9.reset();
+    hprots.port9.reset();
+    lines.port9.reset();
+    owners.port9.reset();
+    sharers.port9.reset();
     dirty_bits.port9.reset();
+
+#if (LLC_WAYS >= 16)
+
+    tags.port10.reset();
+    states.port10.reset();
+    hprots.port10.reset();
+    lines.port10.reset();
+    owners.port10.reset();
+    sharers.port10.reset();
     dirty_bits.port10.reset();
+
+    tags.port11.reset();
+    states.port11.reset();
+    hprots.port11.reset();
+    lines.port11.reset();
+    owners.port11.reset();
+    sharers.port11.reset();
     dirty_bits.port11.reset();
+
+    tags.port12.reset();
+    states.port12.reset();
+    hprots.port12.reset();
+    lines.port12.reset();
+    owners.port12.reset();
+    sharers.port12.reset();
     dirty_bits.port12.reset();
+
+    tags.port13.reset();
+    states.port13.reset();
+    hprots.port13.reset();
+    lines.port13.reset();
+    owners.port13.reset();
+    sharers.port13.reset();
     dirty_bits.port13.reset();
+
+    tags.port14.reset();
+    states.port14.reset();
+    hprots.port14.reset();
+    lines.port14.reset();
+    owners.port14.reset();
+    sharers.port14.reset();
     dirty_bits.port14.reset();
+
+    tags.port15.reset();
+    states.port15.reset();
+    hprots.port15.reset();
+    lines.port15.reset();
+    owners.port15.reset();
+    sharers.port15.reset();
     dirty_bits.port15.reset();
+
+    tags.port16.reset();
+    states.port16.reset();
+    hprots.port16.reset();
+    lines.port16.reset();
+    owners.port16.reset();
+    sharers.port16.reset();
     dirty_bits.port16.reset();
+
+    tags.port17.reset();
+    states.port17.reset();
+    hprots.port17.reset();
+    lines.port17.reset();
+    owners.port17.reset();
+    sharers.port17.reset();
     dirty_bits.port17.reset();
+
+#endif
+#endif
 
     evict_ways.port1.reset();
     evict_ways.port2.reset();
-
+		   
     req_stall = false;
     req_in_stalled_valid = false;
     req_in_stalled_tag = 0;
@@ -1031,118 +1049,141 @@ inline void llc::reset_states()
 
 void llc::read_set(llc_addr_t base, llc_way_t way_offset)
 {
-    tag_buf[0 + way_offset]	   = tags.port2[0][base + 0 + way_offset];
-    state_buf[0 + way_offset]	   = states.port2[0][base + 0 + way_offset];
-    hprot_buf[0 + way_offset]	   = hprots.port2[0][base + 0 + way_offset];
-    line_buf[0 + way_offset]	   = lines.port2[0][base + 0 + way_offset];
-    owner_buf[0 + way_offset]	   = owners.port2[0][base + 0 + way_offset];
-    sharers_buf[0 + way_offset]	   = sharers.port2[0][base + 0 + way_offset];
-    dirty_bit_buf[0 + way_offset]  = dirty_bits.port2[0][base + 0 + way_offset];
-    tag_buf[1 + way_offset]	   = tags.port3[0][base + 1 + way_offset];
-    state_buf[1 + way_offset]	   = states.port3[0][base + 1 + way_offset];
-    hprot_buf[1 + way_offset]	   = hprots.port3[0][base + 1 + way_offset];
-    line_buf[1 + way_offset]	   = lines.port3[0][base + 1 + way_offset];
-    owner_buf[1 + way_offset]	   = owners.port3[0][base + 1 + way_offset];
-    sharers_buf[1 + way_offset]	   = sharers.port3[0][base + 1 + way_offset];
-    dirty_bit_buf[1 + way_offset]  = dirty_bits.port3[0][base + 1 + way_offset];
-    tag_buf[2 + way_offset]	   = tags.port4[0][base + 2 + way_offset];
-    state_buf[2 + way_offset]	   = states.port4[0][base + 2 + way_offset];
-    hprot_buf[2 + way_offset]	   = hprots.port4[0][base + 2 + way_offset];
-    line_buf[2 + way_offset]	   = lines.port4[0][base + 2 + way_offset];
-    owner_buf[2 + way_offset]	   = owners.port4[0][base + 2 + way_offset];
-    sharers_buf[2 + way_offset]	   = sharers.port4[0][base + 2 + way_offset];
-    dirty_bit_buf[2 + way_offset]  = dirty_bits.port4[0][base + 2 + way_offset];
-    tag_buf[3 + way_offset]	   = tags.port5[0][base + 3 + way_offset];
-    state_buf[3 + way_offset]	   = states.port5[0][base + 3 + way_offset];
-    hprot_buf[3 + way_offset]	   = hprots.port5[0][base + 3 + way_offset];
-    line_buf[3 + way_offset]	   = lines.port5[0][base + 3 + way_offset];
-    owner_buf[3 + way_offset]	   = owners.port5[0][base + 3 + way_offset];
-    sharers_buf[3 + way_offset]	   = sharers.port5[0][base + 3 + way_offset];
-    dirty_bit_buf[3 + way_offset]  = dirty_bits.port5[0][base + 3 + way_offset];
-    tag_buf[4 + way_offset]	   = tags.port6[0][base + 4 + way_offset];
-    state_buf[4 + way_offset]	   = states.port6[0][base + 4 + way_offset];
-    hprot_buf[4 + way_offset]	   = hprots.port6[0][base + 4 + way_offset];
-    line_buf[4 + way_offset]	   = lines.port6[0][base + 4 + way_offset];
-    owner_buf[4 + way_offset]	   = owners.port6[0][base + 4 + way_offset];
-    sharers_buf[4 + way_offset]	   = sharers.port6[0][base + 4 + way_offset];
-    dirty_bit_buf[4 + way_offset]  = dirty_bits.port6[0][base + 4 + way_offset];
-    tag_buf[5 + way_offset]	   = tags.port7[0][base + 5 + way_offset];
-    state_buf[5 + way_offset]	   = states.port7[0][base + 5 + way_offset];
-    hprot_buf[5 + way_offset]	   = hprots.port7[0][base + 5 + way_offset];
-    line_buf[5 + way_offset]	   = lines.port7[0][base + 5 + way_offset];
-    owner_buf[5 + way_offset]	   = owners.port7[0][base + 5 + way_offset];
-    sharers_buf[5 + way_offset]	   = sharers.port7[0][base + 5 + way_offset];
-    dirty_bit_buf[5 + way_offset]  = dirty_bits.port7[0][base + 5 + way_offset];
-    tag_buf[6 + way_offset]	   = tags.port8[0][base + 6 + way_offset];
-    state_buf[6 + way_offset]	   = states.port8[0][base + 6 + way_offset];
-    hprot_buf[6 + way_offset]	   = hprots.port8[0][base + 6 + way_offset];
-    line_buf[6 + way_offset]	   = lines.port8[0][base + 6 + way_offset];
-    owner_buf[6 + way_offset]	   = owners.port8[0][base + 6 + way_offset];
-    sharers_buf[6 + way_offset]	   = sharers.port8[0][base + 6 + way_offset];
-    dirty_bit_buf[6 + way_offset]  = dirty_bits.port8[0][base + 6 + way_offset];
-    tag_buf[7 + way_offset]	   = tags.port9[0][base + 7 + way_offset];
-    state_buf[7 + way_offset]	   = states.port9[0][base + 7 + way_offset];
-    hprot_buf[7 + way_offset]	   = hprots.port9[0][base + 7 + way_offset];
-    line_buf[7 + way_offset]	   = lines.port9[0][base + 7 + way_offset];
-    owner_buf[7 + way_offset]	   = owners.port9[0][base + 7 + way_offset];
-    sharers_buf[7 + way_offset]	   = sharers.port9[0][base + 7 + way_offset];
-    dirty_bit_buf[7 + way_offset]  = dirty_bits.port9[0][base + 7 + way_offset];
-    tag_buf[8 + way_offset]	   = tags.port10[8][base + 8 + way_offset];
-    state_buf[8 + way_offset]	   = states.port10[8][base + 8 + way_offset];
-    hprot_buf[8 + way_offset]	   = hprots.port10[8][base + 8 + way_offset];
-    line_buf[8 + way_offset]	   = lines.port10[8][base + 8 + way_offset];
-    owner_buf[8 + way_offset]	   = owners.port10[8][base + 8 + way_offset];
-    sharers_buf[8 + way_offset]	   = sharers.port10[8][base + 8 + way_offset];
-    dirty_bit_buf[8 + way_offset]  = dirty_bits.port10[8][base + 8 + way_offset];
-    tag_buf[9 + way_offset]	   = tags.port11[0][base + 9 + way_offset];
-    state_buf[9 + way_offset]	   = states.port11[0][base + 9 + way_offset];
-    hprot_buf[9 + way_offset]	   = hprots.port11[0][base + 9 + way_offset];
-    line_buf[9 + way_offset]	   = lines.port11[0][base + 9 + way_offset];
-    owner_buf[9 + way_offset]	   = owners.port11[0][base + 9 + way_offset];
-    sharers_buf[9 + way_offset]	   = sharers.port11[0][base + 9 + way_offset];
-    dirty_bit_buf[9 + way_offset]  = dirty_bits.port11[0][base + 9 + way_offset];
-    tag_buf[10 + way_offset]	   = tags.port12[0][base + 10 + way_offset];
-    state_buf[10 + way_offset]	   = states.port12[0][base + 10 + way_offset];
-    hprot_buf[10 + way_offset]	   = hprots.port12[0][base + 10 + way_offset];
-    line_buf[10 + way_offset]	   = lines.port12[0][base + 10 + way_offset];
-    owner_buf[10 + way_offset]	   = owners.port12[0][base + 10 + way_offset];
-    sharers_buf[10 + way_offset]   = sharers.port12[0][base + 10 + way_offset];
+
+    tag_buf[0 + way_offset] = tags.port2[0][base + 0 + way_offset];
+    state_buf[0 + way_offset] = states.port2[0][base + 0 + way_offset];
+    hprot_buf[0 + way_offset] = hprots.port2[0][base + 0 + way_offset];
+    line_buf[0 + way_offset] = lines.port2[0][base + 0 + way_offset];
+    owner_buf[0 + way_offset] = owners.port2[0][base + 0 + way_offset];
+    sharers_buf[0 + way_offset] = sharers.port2[0][base + 0 + way_offset];
+    dirty_bit_buf[0 + way_offset] = dirty_bits.port2[0][base + 0 + way_offset];
+
+    tag_buf[1 + way_offset] = tags.port3[0][base + 1 + way_offset];
+    state_buf[1 + way_offset] = states.port3[0][base + 1 + way_offset];
+    hprot_buf[1 + way_offset] = hprots.port3[0][base + 1 + way_offset];
+    line_buf[1 + way_offset] = lines.port3[0][base + 1 + way_offset];
+    owner_buf[1 + way_offset] = owners.port3[0][base + 1 + way_offset];
+    sharers_buf[1 + way_offset] = sharers.port3[0][base + 1 + way_offset];
+    dirty_bit_buf[1 + way_offset] = dirty_bits.port3[0][base + 1 + way_offset];
+
+    tag_buf[2 + way_offset] = tags.port4[0][base + 2 + way_offset];
+    state_buf[2 + way_offset] = states.port4[0][base + 2 + way_offset];
+    hprot_buf[2 + way_offset] = hprots.port4[0][base + 2 + way_offset];
+    line_buf[2 + way_offset] = lines.port4[0][base + 2 + way_offset];
+    owner_buf[2 + way_offset] = owners.port4[0][base + 2 + way_offset];
+    sharers_buf[2 + way_offset] = sharers.port4[0][base + 2 + way_offset];
+    dirty_bit_buf[2 + way_offset] = dirty_bits.port4[0][base + 2 + way_offset];
+
+    tag_buf[3 + way_offset] = tags.port5[0][base + 3 + way_offset];
+    state_buf[3 + way_offset] = states.port5[0][base + 3 + way_offset];
+    hprot_buf[3 + way_offset] = hprots.port5[0][base + 3 + way_offset];
+    line_buf[3 + way_offset] = lines.port5[0][base + 3 + way_offset];
+    owner_buf[3 + way_offset] = owners.port5[0][base + 3 + way_offset];
+    sharers_buf[3 + way_offset] = sharers.port5[0][base + 3 + way_offset];
+    dirty_bit_buf[3 + way_offset] = dirty_bits.port5[0][base + 3 + way_offset];
+
+#if (LLC_WAYS >= 8)
+
+    tag_buf[4 + way_offset] = tags.port6[0][base + 4 + way_offset];
+    state_buf[4 + way_offset] = states.port6[0][base + 4 + way_offset];
+    hprot_buf[4 + way_offset] = hprots.port6[0][base + 4 + way_offset];
+    line_buf[4 + way_offset] = lines.port6[0][base + 4 + way_offset];
+    owner_buf[4 + way_offset] = owners.port6[0][base + 4 + way_offset];
+    sharers_buf[4 + way_offset] = sharers.port6[0][base + 4 + way_offset];
+    dirty_bit_buf[4 + way_offset] = dirty_bits.port6[0][base + 4 + way_offset];
+
+    tag_buf[5 + way_offset] = tags.port7[0][base + 5 + way_offset];
+    state_buf[5 + way_offset] = states.port7[0][base + 5 + way_offset];
+    hprot_buf[5 + way_offset] = hprots.port7[0][base + 5 + way_offset];
+    line_buf[5 + way_offset] = lines.port7[0][base + 5 + way_offset];
+    owner_buf[5 + way_offset] = owners.port7[0][base + 5 + way_offset];
+    sharers_buf[5 + way_offset] = sharers.port7[0][base + 5 + way_offset];
+    dirty_bit_buf[5 + way_offset] = dirty_bits.port7[0][base + 5 + way_offset];
+
+    tag_buf[6 + way_offset] = tags.port8[0][base + 6 + way_offset];
+    state_buf[6 + way_offset] = states.port8[0][base + 6 + way_offset];
+    hprot_buf[6 + way_offset] = hprots.port8[0][base + 6 + way_offset];
+    line_buf[6 + way_offset] = lines.port8[0][base + 6 + way_offset];
+    owner_buf[6 + way_offset] = owners.port8[0][base + 6 + way_offset];
+    sharers_buf[6 + way_offset] = sharers.port8[0][base + 6 + way_offset];
+    dirty_bit_buf[6 + way_offset] = dirty_bits.port8[0][base + 6 + way_offset];
+
+    tag_buf[7 + way_offset] = tags.port9[0][base + 7 + way_offset];
+    state_buf[7 + way_offset] = states.port9[0][base + 7 + way_offset];
+    hprot_buf[7 + way_offset] = hprots.port9[0][base + 7 + way_offset];
+    line_buf[7 + way_offset] = lines.port9[0][base + 7 + way_offset];
+    owner_buf[7 + way_offset] = owners.port9[0][base + 7 + way_offset];
+    sharers_buf[7 + way_offset] = sharers.port9[0][base + 7 + way_offset];
+    dirty_bit_buf[7 + way_offset] = dirty_bits.port9[0][base + 7 + way_offset];
+
+#if (LLC_WAYS >= 16)
+
+    tag_buf[8 + way_offset] = tags.port10[0][base + 8 + way_offset];
+    state_buf[8 + way_offset] = states.port10[0][base + 8 + way_offset];
+    hprot_buf[8 + way_offset] = hprots.port10[0][base + 8 + way_offset];
+    line_buf[8 + way_offset] = lines.port10[0][base + 8 + way_offset];
+    owner_buf[8 + way_offset] = owners.port10[0][base + 8 + way_offset];
+    sharers_buf[8 + way_offset] = sharers.port10[0][base + 8 + way_offset];
+    dirty_bit_buf[8 + way_offset] = dirty_bits.port10[0][base + 8 + way_offset];
+
+    tag_buf[9 + way_offset] = tags.port11[0][base + 9 + way_offset];
+    state_buf[9 + way_offset] = states.port11[0][base + 9 + way_offset];
+    hprot_buf[9 + way_offset] = hprots.port11[0][base + 9 + way_offset];
+    line_buf[9 + way_offset] = lines.port11[0][base + 9 + way_offset];
+    owner_buf[9 + way_offset] = owners.port11[0][base + 9 + way_offset];
+    sharers_buf[9 + way_offset] = sharers.port11[0][base + 9 + way_offset];
+    dirty_bit_buf[9 + way_offset] = dirty_bits.port11[0][base + 9 + way_offset];
+
+    tag_buf[10 + way_offset] = tags.port12[0][base + 10 + way_offset];
+    state_buf[10 + way_offset] = states.port12[0][base + 10 + way_offset];
+    hprot_buf[10 + way_offset] = hprots.port12[0][base + 10 + way_offset];
+    line_buf[10 + way_offset] = lines.port12[0][base + 10 + way_offset];
+    owner_buf[10 + way_offset] = owners.port12[0][base + 10 + way_offset];
+    sharers_buf[10 + way_offset] = sharers.port12[0][base + 10 + way_offset];
     dirty_bit_buf[10 + way_offset] = dirty_bits.port12[0][base + 10 + way_offset];
-    tag_buf[11 + way_offset]	   = tags.port13[0][base + 11 + way_offset];
-    state_buf[11 + way_offset]	   = states.port13[0][base + 11 + way_offset];
-    hprot_buf[11 + way_offset]	   = hprots.port13[0][base + 11 + way_offset];
-    line_buf[11 + way_offset]	   = lines.port13[0][base + 11 + way_offset];
-    owner_buf[11 + way_offset]	   = owners.port13[0][base + 11 + way_offset];
-    sharers_buf[11 + way_offset]   = sharers.port13[0][base + 11 + way_offset];
+
+    tag_buf[11 + way_offset] = tags.port13[0][base + 11 + way_offset];
+    state_buf[11 + way_offset] = states.port13[0][base + 11 + way_offset];
+    hprot_buf[11 + way_offset] = hprots.port13[0][base + 11 + way_offset];
+    line_buf[11 + way_offset] = lines.port13[0][base + 11 + way_offset];
+    owner_buf[11 + way_offset] = owners.port13[0][base + 11 + way_offset];
+    sharers_buf[11 + way_offset] = sharers.port13[0][base + 11 + way_offset];
     dirty_bit_buf[11 + way_offset] = dirty_bits.port13[0][base + 11 + way_offset];
-    tag_buf[12 + way_offset]	   = tags.port14[0][base + 12 + way_offset];
-    state_buf[12 + way_offset]	   = states.port14[0][base + 12 + way_offset];
-    hprot_buf[12 + way_offset]	   = hprots.port14[0][base + 12 + way_offset];
-    line_buf[12 + way_offset]	   = lines.port14[0][base + 12 + way_offset];
-    owner_buf[12 + way_offset]	   = owners.port14[0][base + 12 + way_offset];
-    sharers_buf[12 + way_offset]   = sharers.port14[0][base + 12 + way_offset];
+
+    tag_buf[12 + way_offset] = tags.port14[0][base + 12 + way_offset];
+    state_buf[12 + way_offset] = states.port14[0][base + 12 + way_offset];
+    hprot_buf[12 + way_offset] = hprots.port14[0][base + 12 + way_offset];
+    line_buf[12 + way_offset] = lines.port14[0][base + 12 + way_offset];
+    owner_buf[12 + way_offset] = owners.port14[0][base + 12 + way_offset];
+    sharers_buf[12 + way_offset] = sharers.port14[0][base + 12 + way_offset];
     dirty_bit_buf[12 + way_offset] = dirty_bits.port14[0][base + 12 + way_offset];
-    tag_buf[13 + way_offset]	   = tags.port15[0][base + 13 + way_offset];
-    state_buf[13 + way_offset]	   = states.port15[0][base + 13 + way_offset];
-    hprot_buf[13 + way_offset]	   = hprots.port15[0][base + 13 + way_offset];
-    line_buf[13 + way_offset]	   = lines.port15[0][base + 13 + way_offset];
-    owner_buf[13 + way_offset]	   = owners.port15[0][base + 13 + way_offset];
-    sharers_buf[13 + way_offset]   = sharers.port15[0][base + 13 + way_offset];
+
+    tag_buf[13 + way_offset] = tags.port15[0][base + 13 + way_offset];
+    state_buf[13 + way_offset] = states.port15[0][base + 13 + way_offset];
+    hprot_buf[13 + way_offset] = hprots.port15[0][base + 13 + way_offset];
+    line_buf[13 + way_offset] = lines.port15[0][base + 13 + way_offset];
+    owner_buf[13 + way_offset] = owners.port15[0][base + 13 + way_offset];
+    sharers_buf[13 + way_offset] = sharers.port15[0][base + 13 + way_offset];
     dirty_bit_buf[13 + way_offset] = dirty_bits.port15[0][base + 13 + way_offset];
-    tag_buf[14 + way_offset]	   = tags.port16[0][base + 14 + way_offset];
-    state_buf[14 + way_offset]	   = states.port16[0][base + 14 + way_offset];
-    hprot_buf[14 + way_offset]	   = hprots.port16[0][base + 14 + way_offset];
-    line_buf[14 + way_offset]	   = lines.port16[0][base + 14 + way_offset];
-    owner_buf[14 + way_offset]	   = owners.port16[0][base + 14 + way_offset];
-    sharers_buf[14 + way_offset]   = sharers.port16[0][base + 14 + way_offset];
+
+    tag_buf[14 + way_offset] = tags.port16[0][base + 14 + way_offset];
+    state_buf[14 + way_offset] = states.port16[0][base + 14 + way_offset];
+    hprot_buf[14 + way_offset] = hprots.port16[0][base + 14 + way_offset];
+    line_buf[14 + way_offset] = lines.port16[0][base + 14 + way_offset];
+    owner_buf[14 + way_offset] = owners.port16[0][base + 14 + way_offset];
+    sharers_buf[14 + way_offset] = sharers.port16[0][base + 14 + way_offset];
     dirty_bit_buf[14 + way_offset] = dirty_bits.port16[0][base + 14 + way_offset];
-    tag_buf[15 + way_offset]	   = tags.port17[0][base + 15 + way_offset];
-    state_buf[15 + way_offset]	   = states.port17[0][base + 15 + way_offset];
-    hprot_buf[15 + way_offset]	   = hprots.port17[0][base + 15 + way_offset];
-    line_buf[15 + way_offset]	   = lines.port17[0][base + 15 + way_offset];
-    owner_buf[15 + way_offset]	   = owners.port17[0][base + 15 + way_offset];
-    sharers_buf[15 + way_offset]   = sharers.port17[0][base + 15 + way_offset];
+
+    tag_buf[15 + way_offset] = tags.port17[0][base + 15 + way_offset];
+    state_buf[15 + way_offset] = states.port17[0][base + 15 + way_offset];
+    hprot_buf[15 + way_offset] = hprots.port17[0][base + 15 + way_offset];
+    line_buf[15 + way_offset] = lines.port17[0][base + 15 + way_offset];
+    owner_buf[15 + way_offset] = owners.port17[0][base + 15 + way_offset];
+    sharers_buf[15 + way_offset] = sharers.port17[0][base + 15 + way_offset];
     dirty_bit_buf[15 + way_offset] = dirty_bits.port17[0][base + 15 + way_offset];
+
+#endif
+#endif
 
 #ifdef LLC_DEBUG
     evict_way_buf_out = evict_way_buf;
