@@ -476,7 +476,7 @@ begin
   eth0 : if CFG_GRETH = 1 generate -- Gaisler ethernet MAC
     e1 : grethm
       generic map(
-        hindex => 1+CFG_AHB_JTAG,
+        hindex => CFG_AHB_JTAG,
         pindex => 14,
         paddr => 16#800#,
         pmask => 16#f00#,
