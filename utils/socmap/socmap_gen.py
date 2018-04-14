@@ -571,7 +571,7 @@ def print_tiles(fp, esp_config, soc):
     fp.write("   " + str(i) + " => tile_x(cache_tile_id(" + str(i) + ")),\n")
   fp.write("   " + str(NFULL_COHERENT_MAX - 1) + " => tile_x(cache_tile_id(" + str(NFULL_COHERENT_MAX - 1) + ")));\n\n")
 
-  fp.write("  constant dma_tile_id : cache_attribute_array := (\n")
+  fp.write("  constant dma_tile_id : dma_attribute_array := (\n")
   for i in range(0, esp_config.ntiles):
     if esp_config.tiles[i].did != -1:
       fp.write("    " + str(esp_config.tiles[i].did) + " => " + str(i) + ",\n")
