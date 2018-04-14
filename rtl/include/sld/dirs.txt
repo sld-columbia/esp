@@ -2,5 +2,6 @@ sldcommon
 fpu
 bus
 noc
-tile
 caches
+tile
+
