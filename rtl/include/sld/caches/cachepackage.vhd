@@ -24,7 +24,9 @@ package cachepackage is
   -- of LLC-coherent devices to 8. This is due to VHDL limitation, but the
   -- following constant can be changed arbitrarily.
   constant NL2_MAX_LOG2 : integer := 3;
+  constant NLLCC_MAX_LOG2 : integer := 3;
   type cache_attribute_array is array (0 to 2**NL2_MAX_LOG2 - 1) of integer;
+  type dma_attribute_array is array (0 to 2**NLLCC_MAX_LOG2 - 1) of integer;
 
   -- NoC-L2cache planes encoding
   constant MSG_REQ_PLANE : std_logic_vector(1 downto 0) := "00";
@@ -45,6 +47,7 @@ package cachepackage is
   --
 
   constant OFFSET_BITS        : integer := WORD_OFFSET_BITS + BYTE_OFFSET_BITS;
+  constant LINE_ADDR_BITS     : integer := ADDR_BITS - OFFSET_BITS;
   constant WORDS_PER_LINE     : integer := 2**WORD_OFFSET_BITS;
   constant BYTES_PER_WORD     : integer := 2**BYTE_OFFSET_BITS;
   constant BYTES_PER_LINE     : integer := WORDS_PER_LINE * BYTES_PER_WORD;
@@ -58,9 +61,9 @@ package cachepackage is
   constant MIX_MSG_TYPE_WIDTH : integer := 3;
 
   constant HSIZE_WIDTH           : integer := 3;
-  constant HPROT_WIDTH           : integer := 1;
-  constant INVACK_CNT_WIDTH      : integer := 2;
-  constant INVACK_CNT_CALC_WIDTH : integer := 3;
+  constant HPROT_WIDTH           : integer := 2;
+  constant INVACK_CNT_WIDTH      : integer := 3;
+  constant INVACK_CNT_CALC_WIDTH : integer := 4;
 
   constant CPU_READ       : std_logic_vector(1 downto 0) := "00";
   constant CPU_READ_ATOM  : std_logic_vector(1 downto 0) := "01";
@@ -145,7 +148,7 @@ package cachepackage is
   --subtype custom_dbg_t is std_logic_vector(31 downto 0);
   subtype cache_id_t is std_logic_vector(NL2_MAX_LOG2 - 1 downto 0);
   -- hprot
-  constant DEFAULT_HPROT : hprot_t := "0";
+  constant DEFAULT_HPROT : hprot_t := "00";
 
   -- hsize
   constant HSIZE_B  : hsize_t := "000";
@@ -156,6 +159,9 @@ package cachepackage is
   -- Functions
   -----------------------------------------------------------------------------
   function read_from_line (addr : addr_t; line : line_t)
+    return word_t;
+
+  function read_word (line : line_t; w_off : integer)
     return word_t;
 
   function make_header (coh_msg     : coh_msg_t; mem_info : tile_mem_info_vector;
@@ -238,7 +244,7 @@ package cachepackage is
       mem_info    : tile_mem_info_vector;
       destination : integer := 0;       -- 0: mem, 1: DSU
       l1_cache_en : integer := 0;
-      cahce_tile_id : cache_attribute_array);
+      cache_tile_id : cache_attribute_array);
 
     port (
       rst : in std_ulogic;
@@ -303,7 +309,7 @@ package cachepackage is
       l2_cpu_req_data_addr      : in addr_t;
       l2_cpu_req_data_word      : in word_t;
       l2_fwd_in_valid           : in std_ulogic;
-      l2_fwd_in_data_coh_msg    : in coh_msg_t;
+      l2_fwd_in_data_coh_msg    : in mix_msg_t;
       l2_fwd_in_data_addr       : in line_addr_t;
       l2_fwd_in_data_req_id     : in cache_id_t;
       l2_rsp_in_valid           : in std_ulogic;
@@ -334,7 +340,7 @@ package cachepackage is
       l2_rsp_out_valid        : out std_ulogic;
       l2_rsp_out_data_coh_msg : out coh_msg_t;
       l2_rsp_out_data_req_id  : out cache_id_t;
-      l2_rsp_out_data_to_req  : out std_ulogic;
+      l2_rsp_out_data_to_req  : out std_logic_vector(1 downto 0);
       l2_rsp_out_data_addr    : out line_addr_t;
       l2_rsp_out_data_line    : out line_t
 
@@ -352,6 +358,7 @@ package cachepackage is
       sets        : integer                      := 256;
       ways        : integer                      := 16;
       nl2         : integer                      := 4;
+      nllcc       : integer                      := 1;
       noc_xlen    : integer                      := 2;
       hindex      : integer range 0 to NAHBSLV-1 := 4;
       local_y     : local_yx;
@@ -360,7 +367,7 @@ package cachepackage is
       l2_cache_en : integer                      := 0;
       cache_tile_id : cache_attribute_array;
       dma_tile_id   : dma_attribute_array;
-      tile_cahce_id : tile_attribute_array;
+      tile_cache_id : tile_attribute_array;
       tile_dma_id   : tile_attribute_array;
       destination : integer                      := 0);  -- 0: mem
                                                          -- 1: DSU
@@ -387,16 +394,14 @@ package cachepackage is
       coherence_rsp_rcv_data_out : in  noc_flit_type;
       coherence_rsp_rcv_empty    : in  std_ulogic;
       -- -- NoC4->tile
-      -- dma_rcv_rdreq                       : out std_ulogic;
-      -- dma_rcv_data_out                    : in  noc_flit_type;
-      -- dma_rcv_empty                       : in  std_ulogic;
+      dma_rcv_rdreq              : out std_ulogic;
+      dma_rcv_data_out       : in  noc_flit_type;
+      dma_rcv_empty          : in  std_ulogic;
       -- -- tile->NoC4
-      -- dma_snd_wrreq                       : out std_ulogic;
-      -- dma_snd_data_in                     : out noc_flit_type;
-      -- dma_snd_full                        : in  std_ulogic;
-      -- dma_snd_atleast_4slots              : in  std_ulogic;
-      -- dma_snd_exactly_3slots              : in  std_ulogic);
-      debug_led                  : out std_ulogic);
+      dma_snd_wrreq          : out std_ulogic;
+      dma_snd_data_in        : out noc_flit_type;
+      dma_snd_full           : in  std_ulogic;
+      debug_led              : out std_ulogic);
   end component;
 
 
@@ -420,17 +425,18 @@ package cachepackage is
 
       llc_req_in_ready        : out std_ulogic;
       llc_req_in_valid        : in  std_ulogic;
-      llc_req_in_data_coh_msg : in  coh_msg_t;
+      llc_req_in_data_coh_msg : in  mix_msg_t;
       llc_req_in_data_hprot   : in  hprot_t;
       llc_req_in_data_addr    : in  line_addr_t;
       llc_req_in_data_line    : in  line_t;
       llc_req_in_data_req_id  : in  cache_id_t;
 
-      llc_rsp_in_ready       : out std_ulogic;
-      llc_rsp_in_valid       : in  std_ulogic;
-      llc_rsp_in_data_addr   : in  line_addr_t;
-      llc_rsp_in_data_line   : in  line_t;
-      llc_rsp_in_data_req_id : in  cache_id_t;
+      llc_rsp_in_ready        : out std_ulogic;
+      llc_rsp_in_valid        : in  std_ulogic;
+      llc_rsp_in_data_coh_msg : in  coh_msg_t;
+      llc_rsp_in_data_addr    : in  line_addr_t;
+      llc_rsp_in_data_line    : in  line_t;
+      llc_rsp_in_data_req_id  : in  cache_id_t;
 
       llc_mem_rsp_ready     : out std_ulogic;
       llc_mem_rsp_valid     : in  std_ulogic;
@@ -447,7 +453,7 @@ package cachepackage is
 
       llc_fwd_out_ready        : in  std_ulogic;
       llc_fwd_out_valid        : out std_ulogic;
-      llc_fwd_out_data_coh_msg : out coh_msg_t;
+      llc_fwd_out_data_coh_msg : out mix_msg_t;
       llc_fwd_out_data_addr    : out line_addr_t;
       llc_fwd_out_data_req_id  : out cache_id_t;
       llc_fwd_out_data_dest_id : out cache_id_t;
@@ -489,18 +495,31 @@ end cachepackage;
 package body cachepackage is
 
   function read_from_line (addr : addr_t; line : line_t) return word_t is
+
     variable w_off : integer;
     variable word  : word_t;
 
   begin
 
     w_off := to_integer(unsigned(addr(W_OFF_RANGE_HI downto W_OFF_RANGE_LO)));
-    word  := line((w_off * BITS_PER_WORD) + BITS_PER_WORD - 1 downto w_off * BITS_PER_WORD);
+    word := read_word(line, w_off);
 
     return word;
 
   end function read_from_line;
 
+  function read_word (line : line_t; w_off : integer) return word_t is
+
+    variable word  : word_t;
+    
+  begin
+
+    word := line((w_off * BITS_PER_WORD) + BITS_PER_WORD - 1 downto w_off * BITS_PER_WORD);
+
+    return word;
+
+  end function read_word;
+  
   function make_header (coh_msg     : coh_msg_t; mem_info : tile_mem_info_vector;
                         mem_num     : integer; hprot : hprot_t; addr : line_addr_t;
                         local_x     : local_yx; local_y : local_yx;
@@ -520,7 +539,7 @@ package body cachepackage is
       dest_y := mem_info(0).y;
       if mem_num /= 1 then
         for i in 0 to mem_num - 1 loop
-          if ((addr(TAG_BITS + SET_BITS - 1 downto TAG_BITS + SET_BITS - 12)
+          if ((addr(LINE_ADDR_BITS - 1 downto LINE_ADDR_BITS - 12)
                xor conv_std_logic_vector(mem_info(i).haddr, 12))
               and conv_std_logic_vector(mem_info(i).hmask, 12)) = x"000" then
             dest_x := mem_info(i).x;
@@ -532,7 +551,7 @@ package body cachepackage is
     else
 
       if req_id >= "0" then
-        dest_init := conv_std_logic_vector(cache_tile_id(to_integer(unsigned(req_id))), 3);
+        dest_init := cache_tile_id(to_integer(unsigned(req_id)));
         if dest_init >= 0 then
           dest_x := std_logic_vector(to_unsigned((dest_init mod noc_xlen), 3));
           dest_y := std_logic_vector(to_unsigned((dest_init / noc_xlen), 3));
