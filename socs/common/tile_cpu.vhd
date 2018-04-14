@@ -311,6 +311,7 @@ begin
     ahbsi      <= ctrl_ahbsi;
     apbi       <= ctrl_apbi;
     ctrl_ahbmo <= ahbmo;
+    ctrl_ahbmo(0).hindex <= 0;
     ctrl_ahbso <= ahbso;
     ctrl_apbo  <= apbo;
 
@@ -601,7 +602,7 @@ begin
         ahbsi                      => ahbsi,
         ahbso                      => ahbso(ddr0_hindex),
         ahbmi                      => ahbmi,
-        ahbmo                      => ahbmo(hindex_mst),
+        ahbmo                      => ahbmo(2),
         flush                      => dflush,
         coherence_req_wrreq        => coherence_req_wrreq,
         coherence_req_data_in      => coherence_req_data_in,
@@ -632,7 +633,7 @@ begin
       rst                       => rst,
       clk                       => clk_feedthru,
       ahbmi                     => ahbmi,
-      ahbmo                     => ahbmo(hindex),
+      ahbmo                     => ahbmo(1),
       coherence_req_rdreq       => remote_ahbm_rcv_rdreq,
       coherence_req_data_out    => remote_ahbm_rcv_data_out,
       coherence_req_empty       => remote_ahbm_rcv_empty,

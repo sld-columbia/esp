@@ -8,7 +8,8 @@
     HLS_FLATTEN_ARRAY(tag_buf);			\
     HLS_FLATTEN_ARRAY(state_buf);		\
     HLS_FLATTEN_ARRAY(hprot_buf);		\
-    HLS_FLATTEN_ARRAY(lines_buf)
+    HLS_FLATTEN_ARRAY(line_buf);                \
+    HLS_FLATTEN_ARRAY(is_to_req)
 
 /* Reset */
 

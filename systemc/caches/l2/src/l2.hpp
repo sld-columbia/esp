@@ -89,7 +89,7 @@ public:
     l2_tag_t	 tag_buf[L2_WAYS];
     state_t	 state_buf[L2_WAYS];
     hprot_t	 hprot_buf[L2_WAYS];
-    line_t	 lines_buf[L2_WAYS];
+    line_t	 line_buf[L2_WAYS];
     l2_way_t	 evict_way;
 
     // Constructor
@@ -187,6 +187,7 @@ private:
 #endif
 
     /* Variables for stalls, conflicts and atomic operations */
+    bool is_to_req[2];
     sc_uint<REQS_BITS_P1> reqs_cnt;
     bool set_conflict;
     l2_cpu_req_t cpu_req_conflict;

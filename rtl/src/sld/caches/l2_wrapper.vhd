@@ -26,7 +26,6 @@ use work.devices.all;
 use work.gencomp.all;
 use work.genacc.all;
 
-use work.socmap_types.all;
 use work.nocpackage.all;
 use work.cachepackage.all;              -- contains l2 cache component
 
@@ -114,13 +113,13 @@ architecture rtl of l2_wrapper is
   signal rsp_out_valid          : std_ulogic;
   signal rsp_out_data_coh_msg   : coh_msg_t;
   signal rsp_out_data_req_id    : cache_id_t;
-  signal rsp_out_data_to_req    : std_ulogic;
+  signal rsp_out_data_to_req    : std_logic_vector(1 downto 0);
   signal rsp_out_data_addr      : line_addr_t;
   signal rsp_out_data_line      : line_t;
   -- NoC to cache
   signal fwd_in_ready           : std_ulogic;
   signal fwd_in_valid           : std_ulogic;
-  signal fwd_in_data_coh_msg    : coh_msg_t;
+  signal fwd_in_data_coh_msg    : mix_msg_t;
   signal fwd_in_data_addr       : line_addr_t;
   signal fwd_in_data_req_id     : cache_id_t;
   signal rsp_in_valid           : std_ulogic;
@@ -633,7 +632,7 @@ begin  -- architecture rtl of l2_wrapper
 
     -- check for valid requests on AHB bus
     if (selected = '1' and ahbsi.hready = '1' and ahbsi.htrans /= HTRANS_IDLE and
-        (to_integer(unsigned(ahbsi.hmaster)) = 0) then
+        (to_integer(unsigned(ahbsi.hmaster)) = 0)) then
       valid_ahb_req := '1';
     else
       valid_ahb_req := '0';
@@ -665,7 +664,7 @@ begin  -- architecture rtl of l2_wrapper
 
         cpu_req_data_cpu_msg <= ahbsi.hwrite & ahbsi.hmastlock;
         cpu_req_data_hsize   <= ahbsi.hsize;
-        cpu_req_data_hprot   <= ahbsi.hprot(HPROT_WIDTH - 1 downto 0);
+        cpu_req_data_hprot   <= '0' & ahbsi.hprot(0);
         cpu_req_data_addr    <= ahbsi.haddr;
 
         if flush_due = '1' and ahbsi.hmastlock = '0' then
@@ -674,7 +673,7 @@ begin  -- architecture rtl of l2_wrapper
           if valid_ahb_req = '1' then
             reg.cpu_msg := ahbsi.hwrite & ahbsi.hmastlock;
             reg.hsize   := ahbsi.hsize;
-            reg.hprot   := ahbsi.hprot(HPROT_WIDTH - 1 downto 0);
+            reg.hprot   := '0' & ahbsi.hprot(0);
             reg.haddr   := ahbsi.haddr;
 
             if flush_ready = '0' then
@@ -687,13 +686,13 @@ begin  -- architecture rtl of l2_wrapper
         elsif valid_ahb_req = '1' then
           reg.cpu_msg := ahbsi.hwrite & ahbsi.hmastlock;
           reg.hsize   := ahbsi.hsize;
-          reg.hprot   := ahbsi.hprot(HPROT_WIDTH - 1 downto 0);
+          reg.hprot   := '0' & ahbsi.hprot(0);
           reg.haddr   := ahbsi.haddr;
 
           if ahbsi.hwrite = '0' then
 
             cpu_req_valid  <= '1';
-            alloc_reg.addr := ahbsi.haddr(TAG_RANGE_HI downto SET_RANGE_LO);
+            alloc_reg.addr := ahbsi.haddr(LINE_RANGE_HI downto LINE_RANGE_LO);
 
             if cpu_req_ready = '1' then
               reg.state := load_rsp;
@@ -735,7 +734,7 @@ begin  -- architecture rtl of l2_wrapper
 
         cpu_req_data_cpu_msg <= ahbsi.hwrite & ahbsi.hmastlock;
         cpu_req_data_hsize   <= ahbsi.hsize;
-        cpu_req_data_hprot   <= ahbsi.hprot(HPROT_WIDTH - 1 downto 0);
+        cpu_req_data_hprot   <= '0' & ahbsi.hprot(0);
         cpu_req_data_addr    <= ahbsi.haddr;
 
         alloc_reg.line := rd_rsp_data_line;
@@ -747,7 +746,7 @@ begin  -- architecture rtl of l2_wrapper
 
           reg.cpu_msg := ahbsi.hwrite & ahbsi.hmastlock;
           reg.hsize   := ahbsi.hsize;
-          reg.hprot   := ahbsi.hprot(HPROT_WIDTH - 1 downto 0);
+          reg.hprot   := '0' & ahbsi.hprot(0);
           reg.haddr   := ahbsi.haddr;
 
           if (flush_due = '1' and not (ahbsi.hprot(0) = '0' and valid_ahb_req = '1') and
@@ -768,14 +767,14 @@ begin  -- architecture rtl of l2_wrapper
           elsif valid_ahb_req = '1' then
             if ahbsi.hwrite = '0' then
 
-              if load_alloc_reg.addr = ahbsi.haddr(TAG_RANGE_HI downto SET_RANGE_LO) then
+              if load_alloc_reg.addr = ahbsi.haddr(LINE_RANGE_HI downto LINE_RANGE_LO) then
 
                 reg.state := load_alloc;
 
               else
 
                 cpu_req_valid  <= '1';
-                alloc_reg.addr := ahbsi.haddr(TAG_RANGE_HI downto SET_RANGE_LO);
+                alloc_reg.addr := ahbsi.haddr(LINE_RANGE_HI downto LINE_RANGE_LO);
 
                 if cpu_req_ready = '1' then
                   reg.state := load_rsp;
@@ -813,7 +812,7 @@ begin  -- architecture rtl of l2_wrapper
 
         reg.cpu_msg := ahbsi.hwrite & ahbsi.hmastlock;
         reg.hsize   := ahbsi.hsize;
-        reg.hprot   := ahbsi.hprot(HPROT_WIDTH - 1 downto 0);
+        reg.hprot   := '0' & ahbsi.hprot(0);
         reg.haddr   := ahbsi.haddr;
 
         if (flush_due = '1' and not (ahbsi.hprot(0) = '0' and valid_ahb_req = '1') and ahbsi.hmastlock = '0') then
@@ -838,14 +837,14 @@ begin  -- architecture rtl of l2_wrapper
 
           if ahbsi.hwrite = '0' then
 
-            if load_alloc_reg.addr = ahbsi.haddr(TAG_RANGE_HI downto SET_RANGE_LO) then
+            if load_alloc_reg.addr = ahbsi.haddr(LINE_RANGE_HI downto LINE_RANGE_LO) then
 
               reg.state := load_alloc;
 
             else
 
               cpu_req_valid  <= '1';
-              alloc_reg.addr := ahbsi.haddr(TAG_RANGE_HI downto SET_RANGE_LO);
+              alloc_reg.addr := ahbsi.haddr(LINE_RANGE_HI downto LINE_RANGE_LO);
 
               if cpu_req_ready = '1' then
                 reg.state := load_rsp;
@@ -881,7 +880,7 @@ begin  -- architecture rtl of l2_wrapper
         if cpu_req_ready = '1' then
           reg.cpu_msg := ahbsi.hwrite & ahbsi.hmastlock;
           reg.hsize   := ahbsi.hsize;
-          reg.hprot   := ahbsi.hprot(HPROT_WIDTH - 1 downto 0);
+          reg.hprot   := '0' & ahbsi.hprot(0);
           reg.haddr   := ahbsi.haddr;
 
           ahbso.hready <= '1';
@@ -903,7 +902,7 @@ begin  -- architecture rtl of l2_wrapper
           elsif valid_ahb_req = '1' then
             if ahbsi.hwrite = '0' then
 
-              alloc_reg.addr := ahbsi.haddr(TAG_RANGE_HI downto SET_RANGE_LO);
+              alloc_reg.addr := ahbsi.haddr(LINE_RANGE_HI downto LINE_RANGE_LO);
               reg.state      := load_req;
 
             else
@@ -945,7 +944,7 @@ begin  -- architecture rtl of l2_wrapper
         ahbso.hready <= '0';
 
         if reg.cpu_msg = CPU_READ or reg.cpu_msg = CPU_READ_ATOM then
-          alloc_reg.addr := reg.haddr(TAG_RANGE_HI downto SET_RANGE_LO);
+          alloc_reg.addr := reg.haddr(LINE_RANGE_HI downto LINE_RANGE_LO);
           reg.state      := load_req;
         else
           reg.state := store_req;
@@ -1007,7 +1006,7 @@ begin  -- architecture rtl of l2_wrapper
           ahbmo.hbusreq <= '1';
           ahbmo.hlock   <= '1';
           ahbmo.htrans  <= HTRANS_NONSEQ;
-          ahbmo.haddr(TAG_RANGE_HI downto SET_RANGE_LO) <= inv_fifo_data_out;
+          ahbmo.haddr(LINE_RANGE_HI downto LINE_RANGE_LO) <= inv_fifo_data_out;
           ahbmo.haddr(OFFSET_BITS - 1 downto 0) <= (others => '0');
 
           if granted = '1' and ahbmi.hready = '1' then
@@ -1023,7 +1022,7 @@ begin  -- architecture rtl of l2_wrapper
         ahbmo.hbusreq <= '1';
         ahbmo.hlock   <= '1';
         ahbmo.htrans  <= HTRANS_NONSEQ;
-        ahbmo.haddr(TAG_RANGE_HI downto SET_RANGE_LO) <= inv_fifo_data_out;
+        ahbmo.haddr(LINE_RANGE_HI downto LINE_RANGE_LO) <= inv_fifo_data_out;
         ahbmo.haddr(OFFSET_BITS - 1 downto 0) <= (others => '0');
 
         if (granted = '1' and ahbmi.hready = '1') then
@@ -1035,7 +1034,7 @@ begin  -- architecture rtl of l2_wrapper
         ahbmo.hbusreq <= '1';
         ahbmo.hlock   <= '1';
         ahbmo.htrans  <= HTRANS_NONSEQ;
-        ahbmo.haddr(TAG_RANGE_HI downto SET_RANGE_LO)   <= inv_fifo_data_out;
+        ahbmo.haddr(LINE_RANGE_HI downto LINE_RANGE_LO)   <= inv_fifo_data_out;
         ahbmo.haddr(OFFSET_BITS - 1 downto 0) <= (others => '0');
 
         if (ahbmi.hready = '1') then
@@ -1200,13 +1199,10 @@ begin  -- architecture rtl of l2_wrapper
 
             coherence_rsp_snd_wrreq <= '1';
 
-
-
             coherence_rsp_snd_data_in <= make_header(rsp_out_data_coh_msg, mem_info,
                                                      mem_num, hprot, rsp_out_data_addr, local_x,
-                                                     local_y, rsp_out_data_to_req,
+                                                     local_y, rsp_out_data_to_req(0),
                                                      rsp_out_data_req_id, cache_tile_id, noc_xlen);
-
             reg.state := send_addr;
 
           end if;
@@ -1322,7 +1318,7 @@ begin  -- architecture rtl of l2_wrapper
 
           fwd_in_valid        <= '1';
           fwd_in_data_coh_msg <= reg.coh_msg;
-          fwd_in_data_addr    <= coherence_fwd_data_out(ADDR_BITS - 1 downto SET_RANGE_LO);
+          fwd_in_data_addr    <= coherence_fwd_data_out(ADDR_BITS - 1 downto LINE_RANGE_LO);
           fwd_in_data_req_id  <= reg.req_id;
 
           reg.state := rcv_header;
@@ -1395,7 +1391,7 @@ begin  -- architecture rtl of l2_wrapper
               coherence_rsp_rcv_rdreq <= '1';
               rsp_in_valid            <= '1';
               rsp_in_data_coh_msg     <= reg.coh_msg;
-              rsp_in_data_addr        <= coherence_rsp_rcv_data_out(ADDR_BITS - 1 downto SET_RANGE_LO);
+              rsp_in_data_addr        <= coherence_rsp_rcv_data_out(ADDR_BITS - 1 downto LINE_RANGE_LO);
               reg.state               := rcv_header;
 
             end if;
@@ -1404,7 +1400,7 @@ begin  -- architecture rtl of l2_wrapper
             -- RSP_DATA, RSP_EDATA
 
             coherence_rsp_rcv_rdreq <= '1';
-            reg.addr                := coherence_rsp_rcv_data_out(ADDR_BITS - 1 downto SET_RANGE_LO);
+            reg.addr                := coherence_rsp_rcv_data_out(ADDR_BITS - 1 downto LINE_RANGE_LO);
             reg.word_cnt            := 0;
             reg.state               := rcv_data;
 

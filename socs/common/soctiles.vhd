@@ -36,6 +36,7 @@ use work.leon3.all;
 use work.gencomp.all;
 use work.sldcommon.all;
 use work.nocpackage.all;
+use work.cachepackage.all;
 use work.tile.all;
 use work.coretypes.all;
 use work.grlib_config.all;
@@ -189,7 +190,7 @@ package soctiles is
       sets           : integer;
       ways           : integer;
       coherence      : integer;
-      espcache_tile_id  : cache_attribute_array;
+      cache_tile_id  : cache_attribute_array;
       has_dvfs       : integer;
       has_pll        : integer;
       extra_clk_buf  : integer;
