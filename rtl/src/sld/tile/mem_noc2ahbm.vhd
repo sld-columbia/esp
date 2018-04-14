@@ -175,7 +175,7 @@ begin  -- rtl
       if l2_cache_en = 1 then
         -- L2 cache enabled, but no LLC present
         if input_msg_type = REQ_PUTS or input_msg_type = REQ_PUTM then
-          msg_type := RSP_PUT_ACK;
+          msg_type := FWD_PUT_ACK; -- TODO: send on FWD plane
         elsif input_msg_type = REQ_GETS_W then
           msg_type := RSP_EDATA;
         else

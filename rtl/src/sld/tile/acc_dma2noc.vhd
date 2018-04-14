@@ -275,7 +275,7 @@ begin  -- rtl
       address := bankreg(PT_ADDRESS_REG);
       length  := bankreg(PT_NCHUNK_REG);
       if coherence = ACC_COH_LLC then
-        mst_type := REQ_DMA_READ;
+        msg_type := REQ_DMA_READ;
       else
         msg_type := DMA_TO_DEV;
       end if;
@@ -284,7 +284,7 @@ begin  -- rtl
       address := dma_address;
       length  := "00" & dma_length(31 downto 2);
       if coherence = ACC_COH_LLC then
-        mst_type := REQ_DMA_WRITE;
+        msg_type := REQ_DMA_WRITE;
       else
         msg_type := DMA_FROM_DEV;
       end if;
@@ -293,7 +293,7 @@ begin  -- rtl
       address := dma_address;
       length  := "00" & dma_length(31 downto 2);
       if coherence = ACC_COH_LLC then
-        mst_type := REQ_DMA_READ;
+        msg_type := REQ_DMA_READ;
       else
         msg_type := DMA_TO_DEV;
       end if;

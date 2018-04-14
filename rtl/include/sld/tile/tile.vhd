@@ -37,6 +37,7 @@ use work.genacc.all;
 
 use work.sldcommon.all;
 use work.nocpackage.all;
+use work.cachepackage.all;
 
 use work.coretypes.all;
 use work.acctypes.all;
