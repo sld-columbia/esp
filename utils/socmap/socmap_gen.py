@@ -858,6 +858,7 @@ def print_tiles(fp, esp_config, soc):
   fp.write("    1 => to_std_logic(CFG_UART1_ENABLE),\n")
   fp.write("    2 => to_std_logic(CFG_IRQ3_ENABLE),\n")
   fp.write("    3 => to_std_logic(CFG_GPT_ENABLE),\n")
+  fp.write("    " + str(L3_CACHE_PINDEX) + " => to_std_logic(CFG_LLC_ENABLE),\n")
   fp.write("    13 => to_std_logic(CFG_SVGA_ENABLE),\n")
   fp.write("    14 => to_std_logic(CFG_GRETH),\n")
   if soc.HAS_SGMII:
