@@ -44,6 +44,7 @@ static irqreturn_t esp_cache_irq(int irq, void *dev)
 	satus_reg &= ESP_CACHE_STATUS_DONE_BIT;
 
 	if (satus_reg) {
+		iowrite32be(0x0, esp_cache->iomem + ESP_CACHE_REG_CMD);
 		complete_all(&esp_cache->completion);
 		return IRQ_HANDLED;
 	}
