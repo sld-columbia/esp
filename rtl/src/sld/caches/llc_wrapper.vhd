@@ -82,9 +82,7 @@ entity llc_wrapper is
     -- tile->NoC4
     dma_snd_wrreq              : out std_ulogic;
     dma_snd_data_in            : out noc_flit_type;
-    dma_snd_full               : in  std_ulogic;
-
-    debug_led : out std_ulogic);
+    dma_snd_full               : in  std_ulogic);
 
 end llc_wrapper;
 
@@ -434,7 +432,7 @@ begin  -- architecture rtl
   begin
 
     cmd_in     <= apbi.pwdata;
-    cmd_sample <= apbi.psel(pindex) and apbi.penable and apbi.pwrite and (not apbi.paddr(2))
+    cmd_sample <= apbi.psel(pindex) and apbi.penable and apbi.pwrite and (not apbi.paddr(2));
 
     case apbi.paddr(2) is
       when '0' =>
@@ -1534,7 +1532,5 @@ begin  -- architecture rtl
   ahbm_asserts <= ahbm_reg.asserts;
 
   --led_wrapper_asserts <= or_reduce(ahbm_reg.asserts);
-
-  --debug_led <= or_reduce(bookmark) or or_reduce(asserts) or led_wrapper_asserts;
 
 end architecture rtl;

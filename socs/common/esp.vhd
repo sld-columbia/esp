@@ -77,8 +77,7 @@ entity esp is
     -- Monitor signals
     mon_noc         : out monitor_noc_matrix(1 to 6, 0 to TILES_NUM-1);
     mon_acc         : out monitor_acc_vector(0 to accelerators_num-1);
-    mon_dvfs        : out monitor_dvfs_vector(0 to TILES_NUM-1);
-    debug_led       : out std_ulogic);
+    mon_dvfs        : out monitor_dvfs_vector(0 to TILES_NUM-1));
 end;
 
 
@@ -145,10 +144,6 @@ signal irqo : irq_out_vector(0 to CFG_NCPU_TILE-1);
   
 signal dbgi : l3_debug_in_vector(0 to CFG_NCPU_TILE-1);
 signal dbgo : l3_debug_out_vector(0 to CFG_NCPU_TILE-1);
-
--- type debug_led_vector_type is array (1 to CFG_NCPU_TILE) of std_ulogic;
--- signal debug_led_vector : debug_led_vector_type;
-signal debug_led_vector : std_logic_vector(0 to CFG_NCPU_TILE);
 
 begin
 
@@ -306,8 +301,7 @@ begin
           noc6_data_void_out => noc_data_void_out(6)(i),
           noc6_stop_out      => noc_stop_out(6)(i),
           mon_dvfs_in        => mon_dvfs_domain(i),
-          mon_dvfs           => mon_dvfs_out(i),
-          debug_led          => debug_led_vector(tile_cpu_id(i)));
+          mon_dvfs           => mon_dvfs_out(i));
     end generate cpu_tile;
 
     accelerator_tile: if tile_type(i) = 2 generate
@@ -322,6 +316,7 @@ begin
           local_x  => tile_x(i),
           io_y     => tile_y(io_tile_id),
           io_x     => tile_x(io_tile_id),
+          noc_xlen => CFG_XLEN,
           device   => tile_device(i),
           pindex   => tile_apb_idx(i),
           paddr    => tile_apb_paddr(i),
@@ -519,8 +514,7 @@ begin
           noc6_output_port   => noc_output_port(6)(i),
           noc6_data_void_out => noc_data_void_out(6)(i),
           noc6_stop_out      => noc_stop_out(6)(i),
-          mon_dvfs           => mon_dvfs_out(i),
-          debug_led          => debug_led_vector(CFG_NCPU_TILE));
+          mon_dvfs           => mon_dvfs_out(i));
       clk_tile(i) <= noc_clk_int;
     end generate mem_tile;
 
@@ -541,6 +535,8 @@ begin
             clk                => clk_tile(i),
             ddr_ahbsi          => ddr1_ahbsi,
             ddr_ahbso          => ddr1_ahbso,
+            -- TODO: remove from here
+            dbgi   => dbgi(0),
             noc1_input_port    => noc_input_port(1)(i),
             noc1_data_void_in  => noc_data_void_in(1)(i),
             noc1_stop_in       => noc_stop_in(1)(i),
@@ -736,7 +732,5 @@ begin
     end generate monitor_noc_tiles_gen;
   end generate monitor_noc_gen;
 
-  debug_led <= or_reduce(debug_led_vector);
-  
  end;
 

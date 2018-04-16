@@ -42,6 +42,8 @@ entity tile_mem_lite is
     clk                : in  std_ulogic;
     ddr_ahbsi          : out ahb_slv_in_type;
     ddr_ahbso          : in  ahb_slv_out_type;
+    --TODO: REMOVE THIS!
+    dbgi               : in  l3_debug_in_type;
     -- NOC
     noc1_input_port    : out noc_flit_type;
     noc1_data_void_in  : out std_ulogic;
@@ -90,6 +92,10 @@ architecture rtl of tile_mem_lite is
   constant vcc : std_logic_vector(31 downto 0) := (others => '1');
   constant gnd : std_logic_vector(31 downto 0) := (others => '0');
 
+-- LLC
+  signal llc_rstn : std_ulogic;
+  signal llc_apbi : apb_slv_in_type;
+  signal llc_apbo : apb_slv_out_type;
 
 -- Queues
   signal coherence_req_rdreq        : std_ulogic;
@@ -124,6 +130,12 @@ architecture rtl of tile_mem_lite is
   signal remote_ahbm_snd_wrreq    : std_ulogic;
   signal remote_ahbm_snd_data_in  : noc_flit_type;
   signal remote_ahbm_snd_full     : std_ulogic;
+  signal apb_rcv_rdreq              : std_ulogic;
+  signal apb_rcv_data_out           : noc_flit_type;
+  signal apb_rcv_empty              : std_ulogic;
+  signal apb_snd_wrreq              : std_ulogic;
+  signal apb_snd_data_in            : noc_flit_type;
+  signal apb_snd_full               : std_ulogic;
 
   signal ahbsi2 : ahb_slv_in_type;
   signal ahbso2 : ahb_slv_out_vector := (others => ahbs_none);
@@ -134,9 +146,15 @@ architecture rtl of tile_mem_lite is
   signal ctrl_ahbso2 : ahb_slv_out_vector := (others => ahbs_none);
   signal ctrl_ahbmi2 : ahb_mst_in_type;
   signal ctrl_ahbmo2 : ahb_mst_out_vector := (others => ahbm_none);
+  signal ctrl_apbi2  : apb_slv_in_type;
+  signal ctrl_apbo2  : apb_slv_out_vector := (others => apb_none);
 
   constant local_y : local_yx := tile_mem_1.y;
   constant local_x : local_yx := tile_mem_1.x;
+
+  constant local_apb_en : std_logic_vector(NAPBSLV-1 downto 0) := (
+    l3_cache_pindex => to_std_logic(CFG_LLC_ENABLE),
+    others => '0');
 
 begin
 
@@ -184,7 +202,7 @@ begin
   ---  Drive unused bus elements  ---------------------------------------
   -----------------------------------------------------------------------
 
-  nam1 : for i in 2 to NAHBMST-1 generate
+  nam1 : for i in 3 to NAHBMST-1 generate
     ahbmo2(i) <= ahbm_none;
   end generate;
 
@@ -246,6 +264,8 @@ begin
     coherent_dma_snd_wrreq <= '0';
     coherent_dma_snd_data_in <= (others => '0');
 
+    ctrl_apbo2(l3_cache_pindex) <= apb_none;
+
   end generate no_cache_coherence;
 
   with_cache_coherence : if CFG_LLC_ENABLE /= 0 generate
@@ -283,6 +303,8 @@ begin
         dma_snd_atleast_4slots    => dma_snd_atleast_4slots,
         dma_snd_exactly_3slots    => dma_snd_exactly_3slots);
 
+    llc_rstn <= not dbgi.reset and rst;
+
     llc_wrapper_1 : llc_wrapper
       generic map (
         tech        => memtech,
@@ -291,7 +313,9 @@ begin
         nl2         => CFG_NL2,
         nllcc       => CFG_NLLC_COHERENT,
         noc_xlen    => CFG_XLEN,
-        hindex      => 0,
+        hindex      => 2,
+        pindex      => l3_cache_pindex,
+        pirq        => CFG_SLD_L3_CACHE_IRQ,
         local_y     => local_y,
         local_x     => local_x,
         cacheline   => CFG_DLINE,
@@ -302,10 +326,12 @@ begin
         tile_dma_id => tile_dma_id,
         destination => 0)
       port map (
-        rst   => rst,
+        rst   => llc_rstn,
         clk   => clk,
         ahbmi => ahbmi2,
         ahbmo => ahbmo2(2),
+        apbi  => llc_apbi,
+        apbo  => llc_apbo,
         -- NoC1->tile
         coherence_req_rdreq        => coherence_req_rdreq,
         coherence_req_data_out     => coherence_req_data_out,
@@ -329,10 +355,12 @@ begin
         -- tile->NoC6
         dma_snd_wrreq              => coherent_dma_snd_wrreq,
         dma_snd_data_in            => coherent_dma_snd_data_in,
-        dma_snd_full               => coherent_dma_snd_full,
-
-        debug_led                  => open
+        dma_snd_full               => coherent_dma_snd_full
         );
+
+    ctrl_apbo2(l3_cache_pindex) <= llc_apbo;
+    llc_apbi                    <= ctrl_apbi2;
+
 
   end generate with_cache_coherence;
   
@@ -370,7 +398,25 @@ begin
       dma_snd_atleast_4slots    => '1',
       dma_snd_exactly_3slots    => '0');
 
-  --TODO: directory
+  -- APB to LLC cache
+  misc_noc2apb_1 : misc_noc2apb
+    generic map (
+      tech         => fabtech,
+      local_y      => local_y,
+      local_x      => local_x,
+      local_apb_en => local_apb_en)
+    port map (
+      rst              => rst,
+      clk              => clk,
+      apbi             => ctrl_apbi2,
+      apbo             => ctrl_apbo2,
+      dvfs_transient   => '0',
+      apb_snd_wrreq    => apb_snd_wrreq,
+      apb_snd_data_in  => apb_snd_data_in,
+      apb_snd_full     => apb_snd_full,
+      apb_rcv_rdreq    => apb_rcv_rdreq,
+      apb_rcv_data_out => apb_rcv_data_out,
+      apb_rcv_empty    => apb_rcv_empty);
 
   -----------------------------------------------------------------------------
   -- Tile queues
@@ -421,12 +467,12 @@ begin
       remote_apb_snd_wrreq       => '0',
       remote_apb_snd_data_in     => (others => '0'),
       remote_apb_snd_full        => open,
-      apb_rcv_rdreq              => '0',
-      apb_rcv_data_out           => open,
-      apb_rcv_empty              => open,
-      apb_snd_wrreq              => '0',
-      apb_snd_data_in            => (others => '0'),
-      apb_snd_full               => open,
+      apb_rcv_rdreq              => apb_rcv_rdreq,
+      apb_rcv_data_out           => apb_rcv_data_out,
+      apb_rcv_empty              => apb_rcv_empty,
+      apb_snd_wrreq              => apb_snd_wrreq,
+      apb_snd_data_in            => apb_snd_data_in,
+      apb_snd_full               => apb_snd_full,
       noc1_out_data              => noc1_output_port,
       noc1_out_void              => noc1_data_void_out,
       noc1_out_stop              => noc1_stop_in,

@@ -102,8 +102,7 @@ entity tile_mem is
     noc6_output_port   : in  noc_flit_type;
     noc6_data_void_out : in  std_ulogic;
     noc6_stop_out      : in  std_ulogic;
-    mon_dvfs           : out monitor_dvfs_type;
-    debug_led          : out std_ulogic
+    mon_dvfs           : out monitor_dvfs_type
     );
 
 end;
@@ -594,7 +593,7 @@ begin
     coherent_dma_snd_wrreq <= '0';
     coherent_dma_snd_data_in <= (others => '0');
 
-    ctrl_apbo2(l3_cache_pindex) <= apb_none;;
+    ctrl_apbo2(l3_cache_pindex) <= apb_none;
 
   end generate no_cache_coherence;
 
@@ -685,9 +684,7 @@ begin
         -- tile->NoC6
         dma_snd_wrreq              => coherent_dma_snd_wrreq,
         dma_snd_data_in            => coherent_dma_snd_data_in,
-        dma_snd_full               => coherent_dma_snd_full,
-
-        debug_led                  => debug_led
+        dma_snd_full               => coherent_dma_snd_full
         );
 
     ctrl_apbo2(l3_cache_pindex) <= llc_apbo;

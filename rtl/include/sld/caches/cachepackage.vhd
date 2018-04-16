@@ -222,9 +222,7 @@ package cachepackage is
       -- tile->Noc3
       coherence_rsp_snd_wrreq    : out std_ulogic;
       coherence_rsp_snd_data_in  : out noc_flit_type;
-      coherence_rsp_snd_full     : in  std_ulogic;
-
-      debug_led : out std_ulogic
+      coherence_rsp_snd_full     : in  std_ulogic
       );
   end component;
 
@@ -284,9 +282,7 @@ package cachepackage is
       -- tile->Noc3
       coherence_rsp_snd_wrreq    : out std_ulogic;
       coherence_rsp_snd_data_in  : out noc_flit_type;
-      coherence_rsp_snd_full     : in  std_ulogic;
-
-      debug_led : out std_ulogic
+      coherence_rsp_snd_full     : in  std_ulogic
       );
   end component;
 
@@ -404,8 +400,7 @@ package cachepackage is
       -- -- tile->NoC4
       dma_snd_wrreq          : out std_ulogic;
       dma_snd_data_in        : out noc_flit_type;
-      dma_snd_full           : in  std_ulogic;
-      debug_led              : out std_ulogic);
+      dma_snd_full           : in  std_ulogic);
   end component;
 
 

@@ -94,8 +94,7 @@ entity tile_cpu is
     noc6_data_void_out : in  std_ulogic;
     noc6_stop_out      : in  std_ulogic;
     mon_dvfs_in        : in  monitor_dvfs_type;
-    mon_dvfs           : out monitor_dvfs_type;
-    debug_led          : out std_ulogic
+    mon_dvfs           : out monitor_dvfs_type
     );
 
 end;
@@ -622,8 +621,7 @@ begin
         coherence_rsp_rcv_empty    => coherence_rsp_rcv_empty,
         coherence_rsp_snd_wrreq    => coherence_rsp_snd_wrreq,
         coherence_rsp_snd_data_in  => coherence_rsp_snd_data_in,
-        coherence_rsp_snd_full     => coherence_rsp_snd_full,
-        debug_led                  => debug_led
+        coherence_rsp_snd_full     => coherence_rsp_snd_full
         );
   end generate with_cache_coherence;
 

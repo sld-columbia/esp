@@ -86,9 +86,8 @@ entity l2_acc_wrapper is
     -- tile->Noc3
     coherence_rsp_snd_wrreq    : out std_ulogic;
     coherence_rsp_snd_data_in  : out noc_flit_type;
-    coherence_rsp_snd_full     : in  std_ulogic;
-
-    debug_led : out std_ulogic);
+    coherence_rsp_snd_full     : in  std_ulogic
+    );
 
 end l2_acc_wrapper;
 
@@ -1176,6 +1175,5 @@ begin  -- architecture rtl of l2_acc_wrapper
 
   --led_wrapper_asserts <= or_reduce(req_reg.asserts) or or_reduce(rsp_in_reg.asserts);
 
-  --debug_led <= or_reduce(bookmark) or or_reduce(asserts) or led_wrapper_asserts;
 
 end rtl;
