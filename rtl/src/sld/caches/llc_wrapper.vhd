@@ -24,6 +24,7 @@ use work.devices.all;
 
 use work.gencomp.all;
 use work.genacc.all;
+use work.gencaches.all;
 
 use work.nocpackage.all;
 use work.cachepackage.all;              -- contains llc cache component
