@@ -154,7 +154,7 @@ void llc_tb::llc_test()
     op(REQ_PUTS, INVALID, 0, addr, null, 0, 0, 0, 0, 0, 0, INSTR);
 
     // PutM. I -> I. l2#1.
-    op(REQ_PUTM, INVALID, 0, addr, null, line_of_addr(addr.line), 0, 0, 0, 1, 0, DATA);
+    op(REQ_PUTM, INVALID, 0, addr, null, line_of_addr(addr.line), 0, 0, 0, 1, 1, DATA);
 
     // GetS, opcode. I -> S. l2#0. No evict.
     op(REQ_GETS, INVALID, 0, addr, null, 0, line_of_addr(addr.line), 0, 0, 0, 0, INSTR);
@@ -203,7 +203,7 @@ void llc_tb::llc_test()
     op(REQ_PUTS, VALID, 0, addr, null, 0, 0, 0, 0, 0, 0, INSTR);
 
     // PutM. V -> V. l2#1.
-    op(REQ_PUTM, VALID, 0, addr, null, 0xabcd0e0f0, 0, 0, 0, 1, 0, DATA);
+    op(REQ_PUTM, VALID, 0, addr, null, 0xabcd0e0f0, 0, 0, 0, 1, 1, DATA);
 
     // GetS, opcode. V -> S. l2#0. No evict.
     op(REQ_GETS, VALID, 0, addr, null, 0, line_of_addr(addr.line), 0, 0, 0, 0, INSTR);
@@ -250,7 +250,7 @@ void llc_tb::llc_test()
 
     // PutS, opcode. S -> V. 
     for (int j = MIN_L2 - 1; j >= 0; j--) {
-	op(REQ_PUTS, SHARED, 0, addr, null, 0, 0, 0, 0, j, 0, INSTR);
+	op(REQ_PUTS, SHARED, 0, addr, null, 0, 0, 0, 0, j, j, INSTR);
     }
 
     addr.tag_incr(3);
@@ -274,7 +274,7 @@ void llc_tb::llc_test()
 
     // PutM, data. S -> V. 
     for (int j = 1; j < MIN_L2; j++) {
-	op(REQ_PUTM, SHARED, 0, addr, null, 0, 0, 0, 0, j, 0, DATA);
+	op(REQ_PUTM, SHARED, 0, addr, null, 0, 0, 0, 0, j, j, DATA);
     }
 
 
@@ -300,7 +300,7 @@ void llc_tb::llc_test()
     op(REQ_GETM, MODIFIED, 0, addr, null, 0, 0, 0, 0, 0, 3, DATA);
 
     // PutM, data. M -> M. Non owner
-    op(REQ_PUTM, MODIFIED, 0, addr, null, 0xeeeeeeeee, 0, 0, 0, 2, 0, DATA);
+    op(REQ_PUTM, MODIFIED, 0, addr, null, 0xeeeeeeeee, 0, 0, 0, 2, 2, DATA);
 
     // PutM, data. M -> V. Owner
     op(REQ_PUTM, MODIFIED, 0, addr, null, line_of_addr(addr.line)*2, 0, 0, 0, 0, 0, DATA);
@@ -308,7 +308,7 @@ void llc_tb::llc_test()
     addr.set_incr(1);
 
     // PutS, data. M -> S.
-    op(REQ_PUTS, SHARED, 0, addr, null, 0, 0, 0, 0, 1, 0, DATA);
+    op(REQ_PUTS, SHARED, 0, addr, null, 0, 0, 0, 0, 1, 1, DATA);
 
 
     /* Exclusive state. */
@@ -344,7 +344,7 @@ void llc_tb::llc_test()
     op(REQ_PUTS, EXCLUSIVE, 0, addr, null, 0, 0, 0, 0, 0, 0, DATA);
 
     // PutS, data. E -> V. Owner (2).
-    op(REQ_PUTS, EXCLUSIVE, 0, addr, null, 0, 0, 0, 0, 2, 0, DATA);
+    op(REQ_PUTS, EXCLUSIVE, 0, addr, null, 0, 0, 0, 0, 2, 2, DATA);
 
     addr.set_incr(1);
 
@@ -352,10 +352,10 @@ void llc_tb::llc_test()
     op(REQ_GETS, VALID, 0, addr, null, 0, line_of_addr(addr.line), 0, 0, 3, 0, DATA);
 
     // PutM, data. M -> M. Non owner, owner is 3.
-    op(REQ_PUTM, MODIFIED, 0, addr, null, 0xeeeeeeeee, 0, 0, 0, 2, 0, DATA);
+    op(REQ_PUTM, MODIFIED, 0, addr, null, 0xeeeeeeeee, 0, 0, 0, 2, 2, DATA);
 
     // PutM, data. M -> V. Owner (3).
-    op(REQ_PUTM, MODIFIED, 0, addr, null, line_of_addr(addr.line)*2, 0, 0, 0, 3, 0, DATA);
+    op(REQ_PUTM, MODIFIED, 0, addr, null, line_of_addr(addr.line)*2, 0, 0, 0, 3, 3, DATA);
 
 
     /* SD state. */
@@ -370,15 +370,15 @@ void llc_tb::llc_test()
     addr = addr_base;
 
     // PutS, data. SD -> SD. Sharers 02 -> 0
-    op(REQ_PUTS, SD, 0, addr, null, 0, 0, 0, 0, 2, 0, DATA);
+    op(REQ_PUTS, SD, 0, addr, null, 0, 0, 0, 0, 2, 2, DATA);
 
     addr.tag_incr(2);
 
     // PutM, data. SD -> SD. Sharers 23 -> 3
-    op(REQ_PUTM, SD, 0, addr, null, 0xeeeeeeeee, 0, 0, 0, 2, 0, DATA);
+    op(REQ_PUTM, SD, 0, addr, null, 0xeeeeeeeee, 0, 0, 0, 2, 2, DATA);
 
     // PutM, data. SD -> SD. Sharers 3 -> none
-    op(REQ_PUTM, SD, 0, addr, null, 0xeeeeeeeee, 0, 0, 0, 3, 0, DATA);
+    op(REQ_PUTM, SD, 0, addr, null, 0xeeeeeeeee, 0, 0, 0, 3, 3, DATA);
 
     addr.tag_decr(2);
 
@@ -467,12 +467,12 @@ void llc_tb::llc_test()
     op(REQ_GETM, SHARED, 0, addr, null, 0, 0xabcd0e0f0, 0, 0, 1, 0, DATA);
     
     // PutM, data. M -> V. Owner
-    op(REQ_PUTM, MODIFIED, 0, addr, null, line_of_addr(addr.line)*2, 0, 0, 0, 1, 0, DATA);
+    op(REQ_PUTM, MODIFIED, 0, addr, null, line_of_addr(addr.line)*2, 0, 0, 0, 1, 1, DATA);
 
     addr.tag_incr(1);    
 
     // PutM, data. M -> V. Owner
-    op(REQ_PUTM, MODIFIED, 0, addr, null, line_of_addr(addr.line)*2, 0, 0, 0, 3, 0, DATA);
+    op(REQ_PUTM, MODIFIED, 0, addr, null, line_of_addr(addr.line)*2, 0, 0, 0, 3, 3, DATA);
 
     addr.tag_incr(1);    
 
@@ -483,7 +483,7 @@ void llc_tb::llc_test()
     addr.set_incr(1);
 
     // PutM, data. M -> V. Owner
-    op(REQ_PUTM, MODIFIED, 0, addr, null, line_of_addr(addr.line)*2, 0, 0, 0, 2, 0, DATA);
+    op(REQ_PUTM, MODIFIED, 0, addr, null, line_of_addr(addr.line)*2, 0, 0, 0, 2, 2, DATA);
 
     /* Changed lines:
      * - set x,   way 0: V, line_of_addr(addr.line)*2, instr
@@ -837,13 +837,13 @@ void llc_tb::llc_test()
 
 	    if ((j % 4) == 0) {
 		op(REQ_PUTS, SHARED, 0, addr, null, 0, 0, 0, 0, 0, 0, DATA);
-		op(REQ_PUTS, SHARED, 0, addr, null, 0, 0, 0, 0, 1, 0, DATA);
+		op(REQ_PUTS, SHARED, 0, addr, null, 0, 0, 0, 0, 1, 1, DATA);
 
 	    } else if ((j % 4) == 1) {
-		op(REQ_PUTS, EXCLUSIVE, 0, addr, null, 0, 0, 0, 0, 2, 0, DATA);
+		op(REQ_PUTS, EXCLUSIVE, 0, addr, null, 0, 0, 0, 0, 2, 2, DATA);
 
 	    } else if ((j % 4) == 2) {
-		op(REQ_PUTM, MODIFIED, 0, addr, null, line_of_addr(addr.line), 0, 0, 0, 3, 0, DATA);
+		op(REQ_PUTM, MODIFIED, 0, addr, null, line_of_addr(addr.line), 0, 0, 0, 3, 3, DATA);
 
 	    }
 

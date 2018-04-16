@@ -594,7 +594,7 @@ void llc::ctrl()
 
 		    LLC_PUTS;
 
-		    send_fwd_out(FWD_PUTACK, req_in.addr, req_in.req_id, 0);
+		    send_fwd_out(FWD_PUTACK, req_in.addr, req_in.req_id, req_in.req_id);
 
 		    switch (state_buf[way]) {
 
@@ -653,7 +653,7 @@ void llc::ctrl()
 
 		    LLC_PUTM;
 
-		    send_fwd_out(FWD_PUTACK, req_in.addr, req_in.req_id, 0);
+		    send_fwd_out(FWD_PUTACK, req_in.addr, req_in.req_id, req_in.req_id);
 
 		    switch (state_buf[way]) {
 
