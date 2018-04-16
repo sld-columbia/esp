@@ -281,12 +281,12 @@ begin
   ahbso_hrdata      <= ahbso(ddr0_hindex).hrdata;
   ahbmi_hgrant      <= ahbmi.hgrant;
   ahbmi_hready      <= ahbmi.hready;
-  ahbmo_hbusreq     <= ahbmo(2).hbusreq;
-  ahbmo_htrans      <= ahbmo(2).htrans;
-  ahbmo_cpu_hwrite  <= ahbmo(0).hwrite;
-  ahbmo_cpu_hbusreq <= ahbmo(0).hbusreq;
-  ahbmo_cpu_htrans  <= ahbmo(0).htrans;
-  ahbmo_cpu_hlock   <= ahbmo(0).hlock;
+  ahbmo_hbusreq     <= ahbmo(CFG_NCPU_TILE + 1).hbusreq;
+  ahbmo_htrans      <= ahbmo(CFG_NCPU_TILE + 1).htrans;
+  ahbmo_cpu_hwrite  <= ahbmo(cpu_id).hwrite;
+  ahbmo_cpu_hbusreq <= ahbmo(cpu_id).hbusreq;
+  ahbmo_cpu_htrans  <= ahbmo(cpu_id).htrans;
+  ahbmo_cpu_hlock   <= ahbmo(cpu_id).hlock;
 
 --irqi_irl  <= irqi_i.irl;
 --irqi_rst  <= irqi_i.rst;
@@ -311,7 +311,6 @@ begin
     ahbsi      <= ctrl_ahbsi;
     apbi       <= ctrl_apbi;
     ctrl_ahbmo <= ahbmo;
-    ctrl_ahbmo(0).hindex <= 0;
     ctrl_ahbso <= ahbso;
     ctrl_apbo  <= apbo;
 
@@ -441,7 +440,7 @@ begin
                  CFG_DLRAMSZ, CFG_DLRAMADDR, CFG_MMUEN, CFG_ITLBNUM, CFG_DTLBNUM, CFG_TLB_TYPE, CFG_TLB_REP,
                  CFG_LDDEL, disas, CFG_ITBSZ, CFG_PWD, CFG_SVT, CFG_RSTADDR, CFG_NCPU_TILE-1,
                  CFG_DFIXED, CFG_SCAN, CFG_MMU_PAGE, CFG_BP)
-    port map (clk_feedthru, rst, ahbmi, ahbmo(0), ahbsi, ahbso, dflush,
+    port map (clk_feedthru, rst, ahbmi, ahbmo(cpu_id), ahbsi, ahbso, dflush,
               irqi_i, irqo_int, dbgi, dbgo);
 
   irqo_o <= irqo_int;
@@ -449,9 +448,17 @@ begin
   -----------------------------------------------------------------------
   ---  AHB Masters unconnected  -----------------------------------------
   -----------------------------------------------------------------------
-  -- Masters here are CPU on ahbmo(0) and noc2ahbm proxy on abmo(1) and
-  -- optionally the L2 cache controller on ahbmo(2) for L1 invalidation
-  nam : for i in (2 + CFG_L2_ENABLE) to NAHBMST-1 generate
+  -- Masters here are CPU on ahbmo(cpu_id) and noc2ahbm proxy on abmo(CFG_NCPU_TILE) and
+  -- optionally the L2 cache controller on ahbmo(CFG_NCPU_TILE + 1) for L1 invalidation
+  nam0 : for i in 0 to cpu_id - 1 generate
+    ahbmo(i) <= ahbm_none;
+  end generate;
+
+  nam1 : for i in cpu_id + 1 to CFG_NCPU_TILE - 1 generate
+    ahbmo(i) <= ahbm_none;
+  end generate;
+
+  nam2 : for i in CFG_NCPU_TILE + 1 + CFG_L2_ENABLE to NAHBMST-1 generate
     ahbmo(i) <= ahbm_none;
   end generate;
 
@@ -588,7 +595,7 @@ begin
         nslaves     => nslaves,
         noc_xlen    => CFG_XLEN,
         hindex_slv  => ahbslv_proxy_hindex,
-        hindex_mst  => 2,
+        hindex_mst  => CFG_NCPU_TILE + 1,
         local_y     => local_y,
         local_x     => local_x,
         mem_num     => NMIG + CFG_SVGA_ENABLE,
@@ -602,7 +609,7 @@ begin
         ahbsi                      => ahbsi,
         ahbso                      => ahbso(ddr0_hindex),
         ahbmi                      => ahbmi,
-        ahbmo                      => ahbmo(2),
+        ahbmo                      => ahbmo(CFG_NCPU_TILE + 1),
         flush                      => dflush,
         coherence_req_wrreq        => coherence_req_wrreq,
         coherence_req_data_in      => coherence_req_data_in,
@@ -624,7 +631,7 @@ begin
     generic map (
       tech        => fabtech,
       ncpu        => CFG_NCPU_TILE,
-      hindex      => 1,
+      hindex      => CFG_NCPU_TILE,
       local_y     => local_y,
       local_x     => local_x,
       cacheline   => CFG_DLINE,
@@ -633,7 +640,7 @@ begin
       rst                       => rst,
       clk                       => clk_feedthru,
       ahbmi                     => ahbmi,
-      ahbmo                     => ahbmo(1),
+      ahbmo                     => ahbmo(CFG_NCPU_TILE),
       coherence_req_rdreq       => remote_ahbm_rcv_rdreq,
       coherence_req_data_out    => remote_ahbm_rcv_data_out,
       coherence_req_empty       => remote_ahbm_rcv_empty,
