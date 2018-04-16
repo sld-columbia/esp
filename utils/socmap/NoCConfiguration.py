@@ -314,7 +314,10 @@ class NoC():
     for y in range(0, self.rows):
       for x in range(0, self.cols):
          tile = self.topology[y][x]
-         if tile.coherence == "ACC_COH_FULL":
+         selection = tile.ip_type.get()
+         if soc.IPs.PROCESSORS.count(selection):
+           tot_full_coherent += 1
+         elif tile.coherence == "ACC_COH_FULL":
            tot_full_coherent += 1
     return tot_full_coherent
 
