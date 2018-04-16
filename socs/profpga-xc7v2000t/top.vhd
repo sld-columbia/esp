@@ -1111,71 +1111,78 @@ begin
       );
 
 
-  -- MMI64
-  user_rstn <= rstn;
+  profpga_mmi64_gen: if CFG_MON_DDR_EN + CFG_MON_NOC_INJECT_EN + CFG_MON_NOC_QUEUES_EN + CFG_MON_ACC_EN + CFG_MON_DVFS_EN /= 0 generate
+    -- MMI64
+    user_rstn <= rstn;
 
-  mon_ddr(0).clk <= clkm;
-  detect_ddr_access: process (ddr0_ahbsi, ddr1_ahbsi)
-  begin  -- process detect_mem_access
-    mon_ddr(0).word_transfer <= '0';
-
-    if ((ddr0_ahbsi.haddr(31 downto 20) xor conv_std_logic_vector(ddr0_haddr, 12))
-        and conv_std_logic_vector(ddr0_hmask, 12)) = zero32(31 downto 20) then
-      if ddr0_ahbsi.hready = '1' and ddr0_ahbsi.htrans /= HTRANS_IDLE then
-        mon_ddr(0).word_transfer <= '1';
-      end if;
-    end if;
-  end process detect_ddr_access;
-
-  dual_mig_monitor: if CFG_MIG_DUAL = 1 generate
-    mon_ddr(1).clk <= clkm_2;
-    detect_ddr1_access: process (ddr1_ahbsi)
+    mon_ddr(0).clk <= clkm;
+    detect_ddr_access: process (ddr0_ahbsi, ddr1_ahbsi)
     begin  -- process detect_mem_access
-      mon_ddr(1).word_transfer <= '0';
+      mon_ddr(0).word_transfer <= '0';
 
-      if ((ddr1_ahbsi.haddr(31 downto 20) xor conv_std_logic_vector(ddr1_haddr, 12))
-          and conv_std_logic_vector(ddr1_hmask, 12)) = zero32(31 downto 20) then
-        if ddr1_ahbsi.hready = '1' and ddr1_ahbsi.htrans /= HTRANS_IDLE then
-          mon_ddr(1).word_transfer <= '1';
+      if ((ddr0_ahbsi.haddr(31 downto 20) xor conv_std_logic_vector(ddr0_haddr, 12))
+          and conv_std_logic_vector(ddr0_hmask, 12)) = zero32(31 downto 20) then
+        if ddr0_ahbsi.hready = '1' and ddr0_ahbsi.htrans /= HTRANS_IDLE then
+          mon_ddr(0).word_transfer <= '1';
         end if;
       end if;
-    end process detect_ddr1_access;
-  end generate dual_mig_monitor;
+    end process detect_ddr_access;
+
+    dual_mig_monitor: if CFG_MIG_DUAL = 1 generate
+      mon_ddr(1).clk <= clkm_2;
+      detect_ddr1_access: process (ddr1_ahbsi)
+      begin  -- process detect_mem_access
+        mon_ddr(1).word_transfer <= '0';
+
+        if ((ddr1_ahbsi.haddr(31 downto 20) xor conv_std_logic_vector(ddr1_haddr, 12))
+            and conv_std_logic_vector(ddr1_hmask, 12)) = zero32(31 downto 20) then
+          if ddr1_ahbsi.hready = '1' and ddr1_ahbsi.htrans /= HTRANS_IDLE then
+            mon_ddr(1).word_transfer <= '1';
+          end if;
+        end if;
+      end process detect_ddr1_access;
+    end generate dual_mig_monitor;
 
 
-  mon_noc_map_gen: for i in 0 to CFG_TILES_NUM-1 generate
-    --mon_noc_actual(0,i) <= mon_noc(1,i);
-    --mon_noc_actual(1,i) <= mon_noc(3,i);
-    mon_noc_actual(0,i) <= mon_noc(4,i);
-    --mon_noc_actual(3,i) <= mon_noc(5,i);
-    mon_noc_actual(1,i) <= mon_noc(6,i);
-  end generate mon_noc_map_gen;
+    mon_noc_map_gen: for i in 0 to CFG_TILES_NUM-1 generate
+      --mon_noc_actual(0,i) <= mon_noc(1,i);
+      --mon_noc_actual(1,i) <= mon_noc(3,i);
+      mon_noc_actual(0,i) <= mon_noc(4,i);
+      --mon_noc_actual(3,i) <= mon_noc(5,i);
+      mon_noc_actual(1,i) <= mon_noc(6,i);
+    end generate mon_noc_map_gen;
 
-  monitor_1: monitor
-    generic map (
-      memtech                => CFG_MEMTECH,
-      mmi64_width            => 32,
-      ddrs_num               => 1 + CFG_MIG_DUAL,
-      nocs_num               => 2,
-      tiles_num              => CFG_TILES_NUM,
-      accelerators_num       => accelerators_num,
-      mon_ddr_en             => CFG_MON_DDR_EN,
-      mon_noc_tile_inject_en => CFG_MON_NOC_INJECT_EN,
-      mon_noc_queues_full_en => CFG_MON_NOC_QUEUES_EN,
-      mon_acc_en             => CFG_MON_ACC_EN,
-      mon_dvfs_en            => CFG_MON_DVFS_EN)
-    port map (
-      profpga_clk0_p  => profpga_clk0_p,
-      profpga_clk0_n  => profpga_clk0_n,
-      profpga_sync0_p => profpga_sync0_p,
-      profpga_sync0_n => profpga_sync0_n,
-      dmbi_h2f        => dmbi_h2f,
-      dmbi_f2h        => dmbi_f2h,
-      user_rstn       => user_rstn,
-      mon_ddr         => mon_ddr,
-      mon_noc         => mon_noc_actual,
-      mon_acc         => mon_acc,
-      mon_dvfs        => mon_dvfs);
+    monitor_1: monitor
+      generic map (
+        memtech                => CFG_MEMTECH,
+        mmi64_width            => 32,
+        ddrs_num               => 1 + CFG_MIG_DUAL,
+        nocs_num               => 2,
+        tiles_num              => CFG_TILES_NUM,
+        accelerators_num       => accelerators_num,
+        mon_ddr_en             => CFG_MON_DDR_EN,
+        mon_noc_tile_inject_en => CFG_MON_NOC_INJECT_EN,
+        mon_noc_queues_full_en => CFG_MON_NOC_QUEUES_EN,
+        mon_acc_en             => CFG_MON_ACC_EN,
+        mon_dvfs_en            => CFG_MON_DVFS_EN)
+      port map (
+        profpga_clk0_p  => profpga_clk0_p,
+        profpga_clk0_n  => profpga_clk0_n,
+        profpga_sync0_p => profpga_sync0_p,
+        profpga_sync0_n => profpga_sync0_n,
+        dmbi_h2f        => dmbi_h2f,
+        dmbi_f2h        => dmbi_f2h,
+        user_rstn       => user_rstn,
+        mon_ddr         => mon_ddr,
+        mon_noc         => mon_noc_actual,
+        mon_acc         => mon_acc,
+        mon_dvfs        => mon_dvfs);
+
+  end generate profpga_mmi64_gen;
+
+  no_profpga_mmi64_gen: if CFG_MON_DDR_EN + CFG_MON_NOC_INJECT_EN + CFG_MON_NOC_QUEUES_EN + CFG_MON_ACC_EN + CFG_MON_DVFS_EN = 0 generate
+    dmbi_f2h <= (others => '0');
+  end generate no_profpga_mmi64_gen;
 
 end;
 
