@@ -34,6 +34,7 @@ use std.textio.all;
     mem_info       : tile_mem_info_vector;
     io_y           : local_yx;
     io_x           : local_yx;
+    noc_xlen       : integer := 3;
     pindex         : integer := 0;
     paddr          : integer := 0;
     pmask          : integer := 16#fff#;
@@ -206,12 +207,15 @@ end;
   signal apbo              : apb_slv_out_vector;
   signal mon_dvfs_feedthru : monitor_dvfs_type;
 
+  constant ahbslv_proxy_hindex : hindex_vector(0 to NAHBSLV-1) := (
+    others => 0);
+
 begin
 
   -- <<accelerator_instance>>
 
   -- Private cache
-  fully_coherent_gen : if coherence = ACC_COH_FULL then
+  fully_coherent_gen : if coherence = ACC_COH_FULL generate
     l2_acc_wrapper_1: entity work.l2_acc_wrapper
       generic map (
         tech          => tech,
@@ -220,7 +224,7 @@ begin
         coherence     => coherence,
         nslaves       => 1,
         noc_xlen      => noc_xlen,
-        hindex_slv    => 0,
+        hindex_slv    => ahbslv_proxy_hindex,
         hindex_mst    => 0,
         local_y       => local_y,
         local_x       => local_x,
@@ -255,8 +259,7 @@ begin
         coherence_rsp_rcv_empty    => coherence_rsp_rcv_empty,
         coherence_rsp_snd_wrreq    => coherence_rsp_snd_wrreq,
         coherence_rsp_snd_data_in  => coherence_rsp_snd_data_in,
-        coherence_rsp_snd_full     => coherence_rsp_snd_full,
-        debug_led                  => debug_led);
+        coherence_rsp_snd_full     => coherence_rsp_snd_full);
 
     dma_rcv_ready <= dma_rcv_rdreq_int;
     dma_rcv_data_out_int <= dma_rcv_data;
@@ -347,7 +350,7 @@ begin
 
   end generate fully_coherent_gen;
 
-  non_fully_coherent_gen : if coherence_rsp_snd_full /= ACC_COH_FULL then
+  non_fully_coherent_gen : if coherence /= ACC_COH_FULL generate
     -- DMA controller for NoC
     acc_dma2noc_1 : acc_dma2noc
       generic map (
@@ -433,6 +436,13 @@ begin
     dma_snd_full_int <= dma_snd_full;
 
     dma_ready <= '0';
+
+    coherence_req_wrreq        <= '0';
+    coherence_req_data_in      <= (others => '0');
+    coherence_fwd_rdreq        <= '0';
+    coherence_rsp_rcv_rdreq    <= '0';
+    coherence_rsp_snd_wrreq    <= '0';
+    coherence_rsp_snd_data_in  <= (others => '0');
 
   end generate non_fully_coherent_gen;
 

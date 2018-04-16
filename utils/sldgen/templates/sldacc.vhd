@@ -16,6 +16,7 @@ use work.sld_devices.all;
 use work.devices.all;
 use work.sldcommon.all;
 use work.nocpackage.all;
+use work.cachepackage.all;
 
 package sldacc is
 

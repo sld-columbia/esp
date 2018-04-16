@@ -29,6 +29,7 @@ entity tile_acc is
     local_x        : local_yx             := "011";
     io_y           : local_yx             := "001";
     io_x           : local_yx             := "010";
+    noc_xlen       : integer              := 3;
     device         : devid_t              := 0;
     pindex         : integer              := 5;
     paddr          : integer              := 16#105#;
