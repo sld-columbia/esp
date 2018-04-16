@@ -264,8 +264,6 @@ signal chip_refclk : std_ulogic;
 signal chip_pllbypass : std_logic_vector(CFG_TILES_NUM-1 downto 0);
 signal chip_pllclk : std_ulogic;
 
-signal debug_led : std_ulogic;
-
 attribute keep : boolean;
 attribute syn_keep : string;
 attribute keep of clkm : signal is true;
@@ -301,7 +299,7 @@ begin
 
   -- Unused
   led5_pad : outpad generic map (tech => padtech, level => cmos, voltage => x18v)
-    port map (led(5), debug_led);
+    port map (led(5), '0');
   led6_pad : outpad generic map (tech => padtech, level => cmos, voltage => x18v)
     port map (led(6), '0');
 
@@ -623,8 +621,7 @@ begin
       dvi_apbi       => dvi_apbi,
       dvi_apbo       => dvi_apbo,
       dvi_ahbmi      => dvi_ahbmi,
-      dvi_ahbmo      => dvi_ahbmo,
-      debug_led      => debug_led);
+      dvi_ahbmo      => dvi_ahbmo);
 
  end;
 

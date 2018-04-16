@@ -452,8 +452,6 @@ signal mon_noc_actual   : monitor_noc_matrix(0 to 1, 0 to CFG_TILES_NUM-1);
 signal mon_acc          : monitor_acc_vector(0 to accelerators_num-1);
 signal mon_dvfs         : monitor_dvfs_vector(0 to CFG_TILES_NUM-1);
 
-signal debug_led : std_ulogic;
-
 begin
 
   c0_diagnostic: process (clkm, clkm_sync_rst)
@@ -502,7 +500,7 @@ begin
 
   led3_pad : outpad generic map (tech => padtech, level => cmos, voltage => x18v) port map (LED_BLUE, lock);
 
-  led4_pad : outpad generic map (tech => padtech, level => cmos, voltage => x18v) port map (LED_YELLOW, debug_led);
+  led4_pad : outpad generic map (tech => padtech, level => cmos, voltage => x18v) port map (LED_YELLOW, '0');
 
 -------------------------------------------------------------------------------
 -- Switches -------------------------------------------------------------------
@@ -895,12 +893,11 @@ begin
         etho => etho);
   end generate;
 
-  ethpads : if (CFG_GRETH = 1) generate -- eth pads
-    emdio_pad : iopad generic map (tech => padtech, level => cmos, voltage => x18v)
-      port map (emdio, etho.mdio_o, etho.mdio_oe, ethi.mdio_i);
-    etxc_pad : clkpad generic map (tech => padtech, level => cmos, voltage => x18v, arch => 2) 
+  -- eth pads
+  eth0_inpads : if (CFG_GRETH = 1) generate
+    etxc_pad : clkpad generic map (tech => padtech, level => cmos, voltage => x18v, arch => 2)
       port map (etx_clk, ethi.tx_clk);
-    erxc_pad : clkpad generic map (tech => padtech, level => cmos, voltage => x18v, arch => 2) 
+    erxc_pad : clkpad generic map (tech => padtech, level => cmos, voltage => x18v, arch => 2)
       port map (erx_clk, ethi.rx_clk);
     erxd_pad : inpadv generic map (tech => padtech, level => cmos, voltage => x18v, width => 4)
       port map (erxd, ethi.rxd(3 downto 0));
@@ -912,19 +909,27 @@ begin
       port map (erx_col, ethi.rx_col);
     erxcr_pad : inpad generic map (tech => padtech, level => cmos, voltage => x18v)
       port map (erx_crs, ethi.rx_crs);
+  end generate eth0_inpads;
 
-    etxd_pad : outpadv generic map (tech => padtech, level => cmos, voltage => x18v, width => 4)
-      port map (etxd, etho.txd(3 downto 0));
-    etxen_pad : outpad generic map (tech => padtech, level => cmos, voltage => x18v)
-      port map (etx_en, etho.tx_en);
-    etxer_pad : outpad generic map (tech => padtech, level => cmos, voltage => x18v)
-      port map (etx_er, etho.tx_er);
-    emdc_pad : outpad generic map (tech => padtech, level => cmos, voltage => x18v)
-      port map (emdc, etho.mdc);
-  end generate;
+  emdio_pad : iopad generic map (tech => padtech, level => cmos, voltage => x18v)
+    port map (emdio, etho.mdio_o, etho.mdio_oe, ethi.mdio_i);
+  etxd_pad : outpadv generic map (tech => padtech, level => cmos, voltage => x18v, width => 4)
+    port map (etxd, etho.txd(3 downto 0));
+  etxen_pad : outpad generic map (tech => padtech, level => cmos, voltage => x18v)
+    port map (etx_en, etho.tx_en);
+  etxer_pad : outpad generic map (tech => padtech, level => cmos, voltage => x18v)
+    port map (etx_er, etho.tx_er);
+  emdc_pad : outpad generic map (tech => padtech, level => cmos, voltage => x18v)
+    port map (emdc, etho.mdc);
 
   no_eth0: if CFG_GRETH = 0 generate
     eth0_apbo <= apb_none;
+    etho.mdio_o <= '0';
+    etho.mdio_oe <= '0';
+    etho.txd <= (others => '0');
+    etho.tx_en <= '0';
+    etho.tx_er <= '0';
+    etho.mdc <= '0';
   end generate no_eth0;
 
   sgmii0_apbo <= apb_none;
@@ -1102,8 +1107,7 @@ begin
       -- Monitor signals
       mon_noc       => mon_noc,
       mon_acc       => mon_acc,
-      mon_dvfs      => mon_dvfs,
-      debug_led     => debug_led
+      mon_dvfs      => mon_dvfs
       );
 
 
