@@ -121,7 +121,11 @@ architecture rtl of tile_mem is
 -- DSU
   signal dbgi_int : l3_debug_in_vector(0 to CFG_NCPU_TILE-1);
   signal llc_rstn : std_ulogic;
-  
+
+-- LLC
+  signal llc_apbi : apb_slv_in_type;
+  signal llc_apbo : apb_slv_out_type;
+
 -- Queues
   signal coherence_req_rdreq        : std_ulogic;
   signal coherence_req_data_out     : noc_flit_type;
@@ -229,6 +233,7 @@ architecture rtl of tile_mem is
     others => 0);
 
   constant local_apb_en : std_logic_vector(NAPBSLV-1 downto 0) := (
+    l3_cache_pindex => to_std_logic(CFG_LLC_ENABLE),
     14     => to_std_logic(CFG_GRETH),
     15     => to_std_logic(CFG_SGMII * CFG_GRETH),
     others => '0');
@@ -312,7 +317,7 @@ begin
   -----------------------------------------------------------------------------
   -- AMBA1 MST: JTAG (local), ETH0 (local)
   -- AMBA1 SLV: APB (local bridge, remote devices), DSU (remote),
-  --            DDR0 (other bus), ETH0 Slave (other bus)
+  --            DDR0 (other bus), ETH0 Slave (other bus), LLC Slave (other bus)
   -----------------------------------------------------------------------------
 
   assign_bus_ctrl_sig : process (ctrl_ahbmi, ctrl_ahbsi, ctrl_apbi,
@@ -589,6 +594,8 @@ begin
     coherent_dma_snd_wrreq <= '0';
     coherent_dma_snd_data_in <= (others => '0');
 
+    ctrl_apbo2(l3_cache_pindex) <= apb_none;;
+
   end generate no_cache_coherence;
 
   with_cache_coherence : if CFG_LLC_ENABLE /= 0 generate
@@ -637,6 +644,8 @@ begin
         nllcc       => CFG_NLLC_COHERENT,
         noc_xlen    => CFG_XLEN,
         hindex      => 2,
+        pindex      => l3_cache_pindex,
+        pirq        => CFG_SLD_L3_CACHE_IRQ,
         local_y     => local_y,
         local_x     => local_x,
         cacheline   => CFG_DLINE,
@@ -651,6 +660,8 @@ begin
         clk   => clk,
         ahbmi => ahbmi2,
         ahbmo => ahbmo2(2),
+        apbi  => llc_apbi,
+        apbo  => llc_apbo,
         -- NoC1->tile
         coherence_req_rdreq        => coherence_req_rdreq,
         coherence_req_data_out     => coherence_req_data_out,
@@ -678,6 +689,9 @@ begin
 
         debug_led                  => debug_led
         );
+
+    ctrl_apbo2(l3_cache_pindex) <= llc_apbo;
+    llc_apbi                    <= ctrl_apbi2;
 
   end generate with_cache_coherence;
 

@@ -38,6 +38,8 @@ entity llc_wrapper is
     nllcc         : integer                      := 0;
     noc_xlen      : integer                      := 3;
     hindex        : integer range 0 to NAHBSLV-1 := 4;
+    pindex        : integer range 0 to NAPBSLV-1 := 5;
+    pirq          : integer                      := 4;
     local_y       : local_yx;
     local_x       : local_yx;
     cacheline     : integer;
@@ -54,6 +56,8 @@ entity llc_wrapper is
     clk   : in  std_ulogic;
     ahbmi : in  ahb_mst_in_type;
     ahbmo : out ahb_mst_out_type;
+    apbi  : in  apb_slv_in_type;
+    apbo  : out apb_slv_out_type;
 
     -- NoC1->tile
     coherence_req_rdreq        : out std_ulogic;
@@ -145,6 +149,36 @@ architecture rtl of llc_wrapper is
   constant nl2_bits : integer := log2(nl2);
   subtype sharers_t is std_logic_vector(nl2 - 1 downto 0);
   subtype owner_t is std_logic_vector(get_owner_bits(nl2_bits) - 1 downto 0);
+
+  -- cache flush and soft reset
+  signal llc_flush_resetn_req     : std_ulogic;
+  signal llc_flush_resetn         : std_ulogic;
+  signal llc_flush_resetn_ack     : std_ulogic;
+  signal llc_flush_resetn_done    : std_ulogic;
+  type llc_cmd_state_t is (idle, do_cmd, pending_cmd);
+  signal llc_cmd_state, llc_cmd_next : llc_cmd_state_t;
+
+-----------------------------------------------------------------------------
+-- APB slave signals
+-----------------------------------------------------------------------------
+
+  -- plug & play info
+  constant pconfig : apb_config_type := (
+    0 => ahb_device_reg (VENDOR_SLD, SLD_L3_CACHE, 0, 0, pirq),
+    1 => apb_iobar(pindex, 16#fff#));
+
+  -- Register bank
+  signal cmd_reg       : std_logic_vector(31 downto 0);
+  signal status_reg    : std_logic_vector(31 downto 0);
+  signal cmd_in        : std_logic_vector(31 downto 0);
+  signal cmd_sample    : std_ulogic;
+  signal readdata      : std_logic_vector(31 downto 0);
+
+  -- IRQ
+  signal irq      : std_logic_vector(NAHBIRQ - 1 downto 0);
+  signal irqset   : std_ulogic;
+  type irq_fsm is (idle, pending);
+  signal irq_state, irq_next : irq_fsm;
 
 -----------------------------------------------------------------------------
 -- AHB master FSM signals
@@ -366,6 +400,118 @@ architecture rtl of llc_wrapper is
   attribute mark_debug of ahbm_asserts : signal is "true";
 
 begin  -- architecture rtl
+-------------------------------------------------------------------------------
+-- APB slave interface (flush, soft reset)
+-------------------------------------------------------------------------------
+
+  -- APB Interface
+  apbo.prdata  <= readdata;
+  apbo.pirq    <= irq;
+  apbo.pindex  <= pindex;
+  apbo.pconfig <= pconfig;
+
+  drive_irq: process (clk, rst)
+  begin  -- process drive_irq
+    if rst = '0' then                   -- asynchronous reset (active low)
+      irq <= (others => '0');
+      irqset <= '0';
+    elsif clk'event and clk = '1' then  -- rising clock edge
+      if irqset = '1' then
+        irq(pirq) <= '0';
+      elsif (status_reg(0) = '1' and irqset = '0') then
+        irq(pirq) <= '1';
+        irqset <=  '1';
+      end if;
+      if (status_reg(0) = '0') then
+        -- Equivalent to clear IRQ
+        irqset <= '0';
+      end if;
+    end if;
+  end process drive_irq;
+
+  -- rd/wr registers
+  process(apbi, status_reg, cmd_reg)
+  begin
+
+    cmd_in     <= apbi.pwdata;
+    cmd_sample <= apbi.psel(pindex) and apbi.penable and apbi.pwrite and (not apbi.paddr(2))
+
+    case apbi.paddr(2) is
+      when '0' =>
+        readdata <= cmd_reg;
+      when others =>
+        readdata <= status_reg;
+    end case;
+
+  end process;
+
+  -- Command and status register
+  cmd_status: process (clk, rst)
+  begin  -- process cmd_status
+    if rst = '0' then                   -- asynchronous reset (active low)
+      cmd_reg    <= (others => '0');
+      status_reg <= (others => '0');
+    elsif clk'event and clk = '1' then  -- rising clock edge
+      if llc_flush_resetn_done = '1' then
+        status_reg(0) <= '1';
+      end if;
+      if cmd_reg(1 downto 0) = "00" then
+        status_reg(0) <= '0';
+      end if;
+      if cmd_sample = '1' then
+        cmd_reg(1 downto 0) <= cmd_in(1 downto 0);
+      end if;
+    end if;
+  end process cmd_status;
+
+  -- Do flush/resetn
+  llc_cmd_state_update: process (clk, rst) is
+  begin  -- process llc_cmd_state_update
+    if rst = '0' then                   -- asynchronous reset (active low)
+      llc_cmd_state <= idle;
+    elsif clk'event and clk = '1' then  -- rising clock edge
+      llc_cmd_state <= llc_cmd_next;
+    end if;
+  end process llc_cmd_state_update;
+
+  llc_cmd_state_fsm: process (llc_cmd_state, llc_flush_resetn_ack, llc_flush_resetn_done, cmd_reg) is
+  begin  -- process llc_cmd_state_fsm
+    llc_cmd_next <= llc_cmd_state;
+    llc_flush_resetn_req <= '0';
+    llc_flush_resetn     <= '0';
+
+    case llc_cmd_state is
+      when idle =>
+        if cmd_reg(1 downto 0) /= "00" then
+          -- Reset has priority over flush
+          llc_flush_resetn <= (cmd_reg(1) and (not cmd_reg(0)));
+          llc_flush_resetn_req <= '1';
+          if llc_flush_resetn_ack = '1' then
+            llc_cmd_next <= pending_cmd;
+          else
+            llc_cmd_next <= do_cmd;
+          end if;
+        end if;
+
+      when do_cmd =>
+        llc_flush_resetn <= (cmd_reg(1) and (not cmd_reg(0)));
+        llc_flush_resetn_req <= '1';
+        if llc_flush_resetn_ack = '1' then
+          llc_cmd_next <= pending_cmd;
+        end if;
+
+      when pending_cmd =>
+        if llc_flush_resetn_done = '1' then
+          llc_cmd_next <= idle;
+        end if;
+
+      when others =>
+        llc_cmd_next <= idle;
+    end case;
+
+  end process llc_cmd_state_fsm;
+
+
 -------------------------------------------------------------------------------
 -- Static outputs: AHB master, NoC
 -------------------------------------------------------------------------------
@@ -1325,12 +1471,12 @@ begin  -- architecture rtl
       clk => clk,
       rst => rst,
 
-      llc_rst_tb_valid      => '0',
-      llc_rst_tb_data       => '0',
-      llc_rst_tb_done_ready => '0',
-      llc_rst_tb_ready      => open,
-      llc_rst_tb_done_valid => open,
+      llc_rst_tb_valid      => llc_flush_resetn_req,
+      llc_rst_tb_data       => llc_flush_resetn,
+      llc_rst_tb_ready      => llc_flush_resetn_ack,
+      llc_rst_tb_done_valid => llc_flush_resetn_done,
       llc_rst_tb_done_data  => open,
+      llc_rst_tb_done_ready => '1',
 
       -- NoC to cache
       llc_req_in_ready        => llc_req_in_ready,
