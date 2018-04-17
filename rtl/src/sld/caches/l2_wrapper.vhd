@@ -632,7 +632,7 @@ begin  -- architecture rtl of l2_wrapper
 
     -- check for valid requests on AHB bus
     if (selected = '1' and ahbsi.hready = '1' and ahbsi.htrans /= HTRANS_IDLE and
-        (to_integer(unsigned(ahbsi.hmaster)) = 0)) then
+        (to_integer(unsigned(ahbsi.hmaster)) /= hindex_mst)) then
       valid_ahb_req := '1';
     else
       valid_ahb_req := '0';
