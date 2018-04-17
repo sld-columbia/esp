@@ -193,8 +193,7 @@ void l2::ctrl()
 
 	    }
 
-	} else if (((l2_fwd_in.nb_can_get() && !fwd_stall) || fwd_stall_ended)
-		   && (!l2_flush.nb_can_get() || ongoing_flush)) {
+	} else if (((l2_fwd_in.nb_can_get() && !fwd_stall) || fwd_stall_ended)) {
 
 	    l2_fwd_in_t fwd_in;
 	    line_breakdown_t<l2_tag_t, l2_set_t> line_br;
@@ -212,7 +211,9 @@ void l2::ctrl()
 	    line_br.l2_line_breakdown(fwd_in.addr);
 
 	    l2_way_t way_hit;
+
 	    tag_lookup_fwd(line_br, way_hit); 
+
 	    fwd_stall = reqs_peek_fwd(line_br, reqs_hit_i, reqs_hit, fwd_in.coh_msg);
 
 	    if (fwd_in.coh_msg == FWD_PUTACK) {
@@ -288,7 +289,7 @@ void l2::ctrl()
 		    if (fwd_in.coh_msg == FWD_INV)
 			send_rsp_out(RSP_INVACK, fwd_in.req_id, 1, fwd_in.addr, 0);
 
-		    reqs[reqs_hit_i].state -= 4; // optimization
+		    reqs[reqs_hit_i].state -= 4; // TODO remove hardcoding, also in other places
 
 		    break;
 		}
@@ -1345,11 +1346,15 @@ bool l2::reqs_peek_fwd(line_breakdown_t<l2_tag_t, l2_set_t> line_br,
 	    fwd_stall_tmp = true;
 
 	    if (coh_msg == FWD_PUTACK) {
+
 		fwd_stall_tmp = false;		
+
 	    } else if (coh_msg == FWD_INV || coh_msg == FWD_INV_LLC) {
+
 		if (reqs[i].state != ISD)
 		    fwd_stall_tmp = false;
 	    } else {
+
 		if (reqs[i].state == MIA)
 		    fwd_stall_tmp = false;
 	    }
