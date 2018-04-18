@@ -1124,7 +1124,7 @@ void llc_tb::op_dma(mix_msg_t coh_msg, llc_state_t state, bool evict, bool dirty
 		// inv to sharers
 		for (int i = 0; i < MAX_N_L2; i++) {
 		    if ((sharers & (1 << i)) != 0) {
-			get_fwd_out(FWD_INV, evict_addr.line, i, i);
+			get_fwd_out(FWD_INV_LLC, evict_addr.line, i, i);
 			wait();
 		    }
 		}
@@ -1132,7 +1132,7 @@ void llc_tb::op_dma(mix_msg_t coh_msg, llc_state_t state, bool evict, bool dirty
 
 	    case EXCLUSIVE:
 		// inv to owner
-		get_fwd_out(FWD_GETM, evict_addr.line, owner, owner);
+		get_fwd_out(FWD_GETM_LLC, evict_addr.line, owner, owner);
 
 		// rsp from owner, no data
 		op_rsp(RSP_INVACK, evict_addr, 0, owner);
@@ -1140,7 +1140,7 @@ void llc_tb::op_dma(mix_msg_t coh_msg, llc_state_t state, bool evict, bool dirty
 	    
 	    case MODIFIED:
 		// inv to owner
-		get_fwd_out(FWD_GETM, evict_addr.line, owner, owner);
+		get_fwd_out(FWD_GETM_LLC, evict_addr.line, owner, owner);
 
 		// rsp from owner, with data
 		op_rsp(RSP_DATA, evict_addr, evict_line, owner);

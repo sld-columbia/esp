@@ -180,7 +180,7 @@ void llc::ctrl()
 			    EVICT_EM;
 
 			    // set requestor same as owner, it means requestor = LLC
-			    send_fwd_out(FWD_GETM, addr_evict, owner_buf[way], owner_buf[way]);
+			    send_fwd_out(FWD_GETM_LLC, addr_evict, owner_buf[way], owner_buf[way]);
 
 			    owners.port1[0][llc_addr] = 0;
 
@@ -204,7 +204,7 @@ void llc::ctrl()
 
 			    for (int i = 0; i < MAX_N_L2; i++) {
 				if (sharers_buf[way] & (1 << i))
-				    send_fwd_out(FWD_INV, addr_evict, i, i);
+				    send_fwd_out(FWD_INV_LLC, addr_evict, i, i);
 				wait();
 			    }
 
@@ -335,7 +335,7 @@ void llc::ctrl()
 			    EVICT_EM;
 
 			    // set requestor same as owner, it means requestor = LLC
-			    send_fwd_out(FWD_GETM, addr_evict, owner_buf[way], owner_buf[way]);
+			    send_fwd_out(FWD_GETM_LLC, addr_evict, owner_buf[way], owner_buf[way]);
 
 			    owners.port1[0][llc_addr] = 0;
 
@@ -354,7 +354,7 @@ void llc::ctrl()
 
 			    for (int i = 0; i < MAX_N_L2; i++) {
 				if (sharers_buf[way] & (1 << i))
-				    send_fwd_out(FWD_INV, addr_evict, i, i);
+				    send_fwd_out(FWD_INV_LLC, addr_evict, i, i);
 				wait();
 			    }
 
