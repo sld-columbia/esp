@@ -1032,6 +1032,7 @@ inline void llc::reset_states()
 {
     LLC_RESET_STATES;
 
+    wait();
     for (int i=0; i<LLC_SETS; i++) { // do not unroll
 
 	evict_ways.port1[0][i] = 0;
