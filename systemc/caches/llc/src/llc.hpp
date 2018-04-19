@@ -28,35 +28,45 @@ public:
 
 #ifdef LLC_DEBUG
     // Debug signals
-    sc_out< sc_bv<LLC_ASSERT_WIDTH> >   asserts;
-    sc_out< sc_bv<LLC_BOOKMARK_WIDTH> > bookmark;
-    sc_out<uint32_t>    custom_dbg;
+    sc_signal< sc_bv<LLC_ASSERT_WIDTH> > dbg_asserts;
+    sc_signal< sc_bv<LLC_BOOKMARK_WIDTH> > dbg_bookmark;
 
-    sc_out<bool>	tag_hit_out;
-    sc_out<llc_way_t>	hit_way_out;
-    sc_out<bool>	empty_way_found_out;
-    sc_out<llc_way_t>	empty_way_out;
-    sc_out<llc_way_t>	way_out;
-    sc_out<llc_addr_t>	llc_addr_out;
-    sc_out<bool>	evict_out;
-    sc_out<bool>	evict_valid_out;
-    sc_out<bool>	evict_way_not_sd_out;
-    sc_out<line_addr_t> evict_addr_out;
-    sc_out<llc_set_t>	flush_set_out;
-    sc_out<llc_way_t>	flush_way_out;    
+    sc_signal<bool>	dbg_is_rst_to_get;
+    sc_signal<bool>	dbg_is_rsp_to_get;
+    sc_signal<bool>	dbg_is_req_to_get;
 
-    sc_out<bool>		req_stall_out;
-    sc_out<bool>		req_in_stalled_valid_out;
-    sc_out<llc_req_in_t>	req_in_stalled_out;
+    sc_signal<bool>		dbg_tag_hit;
+    sc_signal<llc_way_t>	dbg_hit_way;
+    sc_signal<bool>		dbg_empty_way_found;
+    sc_signal<llc_way_t>	dbg_empty_way;
+    sc_signal<llc_way_t>	dbg_way;
+    sc_signal<llc_addr_t>	dbg_llc_addr;
+    sc_signal<bool>		dbg_evict;
+    sc_signal<bool>		dbg_evict_valid;
+    sc_signal<bool>		dbg_evict_way_not_sd;
+    sc_signal<line_addr_t>	dbg_evict_addr;
+    sc_signal<llc_set_t>	dbg_flush_set;
+    sc_signal<llc_way_t>	dbg_flush_way;    
 
-    sc_out<llc_tag_t>	tag_buf_out[LLC_WAYS];
-    sc_out<llc_state_t> state_buf_out[LLC_WAYS];
-    sc_out<hprot_t>	hprot_buf_out[LLC_WAYS];
-    sc_out<line_t>	line_buf_out[LLC_WAYS];
-    sc_out<sharers_t>	sharers_buf_out[LLC_WAYS];
-    sc_out<owner_t>	owner_buf_out[LLC_WAYS];
-    sc_out<sc_uint<2> >	dirty_bit_buf_out[LLC_WAYS];
-    sc_out<llc_way_t>	evict_way_buf_out;
+    sc_signal<bool>		dbg_req_stall;
+    sc_signal<bool>		dbg_req_in_stalled_valid;
+    sc_signal<llc_req_in_t>	dbg_req_in_stalled;
+    sc_signal<llc_tag_t>	dbg_req_in_stalled_tag;
+    sc_signal<llc_set_t>	dbg_req_in_stalled_set;
+
+    sc_signal<dma_length_t>	dbg_length;
+    sc_signal<dma_length_t>	dbg_dma_length;
+    sc_signal<bool>		dbg_dma_done;
+    sc_signal<addr_t>		dbg_dma_addr;
+
+    sc_signal<llc_tag_t>	dbg_tag_buf[LLC_WAYS];
+    sc_signal<llc_state_t>	dbg_state_buf[LLC_WAYS];
+    sc_signal<hprot_t>		dbg_hprot_buf[LLC_WAYS];
+    sc_signal<line_t>		dbg_line_buf[LLC_WAYS];
+    sc_signal<sharers_t>	dbg_sharers_buf[LLC_WAYS];
+    sc_signal<owner_t>		dbg_owner_buf[LLC_WAYS];
+    sc_signal<sc_uint<2> >      dbg_dirty_bit_buf[LLC_WAYS];
+    sc_signal<llc_way_t>	dbg_evict_way_buf;
 #endif
 
     // Input ports
@@ -96,27 +106,6 @@ public:
     SC_CTOR(llc)
 	    : clk("clk")
 	    , rst("rst")
-#ifdef LLC_DEBUG
-	    , asserts("asserts")
-	    , bookmark("bookmark")
-	    , custom_dbg("custom_dbg")
-	    , tag_hit_out("tag_hit_out")
-	    , hit_way_out("hit_way_out")
-	    , empty_way_found_out("empty_way_found_out")
-	    , empty_way_out("empty_way_out")
-	    , way_out("way_out")
-	    , llc_addr_out("llc_addr_out")
-	    , evict_out("evict_out")
-	    , evict_valid_out("evict_valid_out")
-	    , evict_way_not_sd_out("evict_way_not_sd_out")
-	    , evict_addr_out("evict_addr_out")
-	    , flush_set_out("flush_set_out")
-	    , flush_way_out("flush_way_out")
-	    , evict_way_buf_out("evict_way_buf_out")
-	    , req_stall_out("req_stall_out")
-	    , req_in_stalled_valid_out("req_in_stalled_valid_out")
-	    , req_in_stalled_out("req_in_stalled_out")
-#endif
 	    , llc_req_in("llc_req_in")
 	    , llc_rsp_in("llc_rsp_in")
 	    , llc_mem_rsp("llc_mem_rsp")
@@ -179,7 +168,6 @@ private:
     // debug
     sc_bv<LLC_ASSERT_WIDTH>   asserts_tmp;
     sc_bv<LLC_BOOKMARK_WIDTH> bookmark_tmp;
-    uint64_t custom_dbg_tmp;
 #endif
 
     bool req_stall;

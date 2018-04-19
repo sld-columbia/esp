@@ -20,39 +20,6 @@ public:
     // Reset signal
     sc_in<bool> rst;
 
-#ifdef LLC_DEBUG
-    // Signals
-    sc_signal< sc_bv<LLC_ASSERT_WIDTH> >   asserts;
-    sc_signal< sc_bv<LLC_BOOKMARK_WIDTH> > bookmark;
-    sc_signal<uint32_t> custom_dbg;
-
-    sc_signal<bool>		tag_hit_out;
-    sc_signal<llc_way_t>	hit_way_out;
-    sc_signal<bool>		empty_way_found_out;
-    sc_signal<llc_way_t>	empty_way_out;
-    sc_signal<llc_way_t>	way_out;
-    sc_signal<llc_addr_t>	llc_addr_out;
-    sc_signal<bool>		evict_out;
-    sc_signal<bool>		evict_valid_out;
-    sc_signal<bool>		evict_way_not_sd_out;
-    sc_signal<line_addr_t>	evict_addr_out;
-    sc_signal<llc_set_t>	flush_set_out;
-    sc_signal<llc_way_t>	flush_way_out;
-
-    sc_signal<bool>		req_stall_out;
-    sc_signal<bool>		req_in_stalled_valid_out;
-    sc_signal<llc_req_in_t>	req_in_stalled_out;
-
-    sc_signal<llc_tag_t>	tag_buf_out[LLC_WAYS];
-    sc_signal<llc_state_t>	state_buf_out[LLC_WAYS];
-    sc_signal<hprot_t>		hprot_buf_out[LLC_WAYS];
-    sc_signal<line_t>		line_buf_out[LLC_WAYS];
-    sc_signal<sharers_t>	sharers_buf_out[LLC_WAYS];
-    sc_signal<owner_t>		owner_buf_out[LLC_WAYS];
-    sc_signal<sc_uint<2> >	dirty_bit_buf_out[LLC_WAYS];
-    sc_signal<llc_way_t>	evict_way_buf_out;
-#endif
-
     // Channels
     // To LLC cache
     put_get_channel<llc_req_in_t>  llc_req_in_chnl;
@@ -82,36 +49,6 @@ public:
 	// Binding LLC cache
 	dut->clk(clk);
 	dut->rst(rst);
-#ifdef LLC_DEBUG
-        dut->asserts(asserts);
-        dut->bookmark(bookmark);
-        dut->custom_dbg(custom_dbg);
-	dut->tag_hit_out(tag_hit_out);
-	dut->hit_way_out(hit_way_out);
-	dut->empty_way_found_out(empty_way_found_out);
-	dut->empty_way_out(empty_way_out);
-	dut->way_out(way_out);
-	dut->llc_addr_out(llc_addr_out);
-	dut->evict_out(evict_out);
-	dut->evict_valid_out(evict_valid_out);
-	dut->evict_way_not_sd_out(evict_way_not_sd_out);
-	dut->evict_addr_out(evict_addr_out);
-	dut->flush_set_out(flush_set_out);
-	dut->flush_way_out(flush_way_out);
-	dut->req_stall_out(req_stall_out);
-	dut->req_in_stalled_valid_out(req_in_stalled_valid_out);
-	dut->req_in_stalled_out(req_in_stalled_out);
-	dut->evict_way_buf_out(evict_way_buf_out);
-	for (int i = 0; i < LLC_WAYS; ++i) {
-	    dut->tag_buf_out[i](tag_buf_out[i]);
-	    dut->state_buf_out[i](state_buf_out[i]);
-	    dut->hprot_buf_out[i](hprot_buf_out[i]);
-	    dut->line_buf_out[i](line_buf_out[i]);
-	    dut->sharers_buf_out[i](sharers_buf_out[i]);
-	    dut->owner_buf_out[i](owner_buf_out[i]);
-	    dut->dirty_bit_buf_out[i](dirty_bit_buf_out[i]);
-	}
-#endif
 	dut->llc_req_in(llc_req_in_chnl);
 	dut->llc_rsp_in(llc_rsp_in_chnl);
 	dut->llc_mem_rsp(llc_mem_rsp_chnl);
@@ -124,36 +61,6 @@ public:
 	// Binding testbench
 	tb->clk(clk);
 	tb->rst(rst);
-#ifdef LLC_DEBUG
-	tb->asserts(asserts);
-        tb->bookmark(bookmark);
-        tb->custom_dbg(custom_dbg);
-	tb->tag_hit_out(tag_hit_out);
-	tb->hit_way_out(hit_way_out);
-	tb->empty_way_found_out(empty_way_found_out);
-	tb->empty_way_out(empty_way_out);
-	tb->way_out(way_out);
-	tb->llc_addr_out(llc_addr_out);
-	tb->evict_out(evict_out);
-	tb->evict_valid_out(evict_valid_out);
-	tb->evict_way_not_sd_out(evict_way_not_sd_out);
-	tb->evict_addr_out(evict_addr_out);
-	tb->flush_set_out(flush_set_out);
-	tb->flush_way_out(flush_way_out);
-	tb->req_stall_out(req_stall_out);
-	tb->req_in_stalled_valid_out(req_in_stalled_valid_out);
-	tb->req_in_stalled_out(req_in_stalled_out);
-	tb->evict_way_buf_out(evict_way_buf_out);
-	for (int i = 0; i < LLC_WAYS; ++i) {
-	    tb->tag_buf_out[i](tag_buf_out[i]);
-	    tb->state_buf_out[i](state_buf_out[i]);
-	    tb->hprot_buf_out[i](hprot_buf_out[i]);
-	    tb->line_buf_out[i](line_buf_out[i]);
-	    tb->sharers_buf_out[i](sharers_buf_out[i]);
-	    tb->owner_buf_out[i](owner_buf_out[i]);
-	    tb->dirty_bit_buf_out[i](dirty_bit_buf_out[i]);
-	}
-#endif
 	tb->llc_req_in_tb(llc_req_in_chnl);
 	tb->llc_rsp_in_tb(llc_rsp_in_chnl);
 	tb->llc_mem_rsp_tb(llc_mem_rsp_chnl); 

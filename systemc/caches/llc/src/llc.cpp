@@ -36,6 +36,10 @@ void llc::ctrl()
 	}
 
 #ifdef LLC_DEBUG
+	dbg_is_rst_to_get.write(is_rst_to_get);
+	dbg_is_rsp_to_get.write(is_rsp_to_get);
+	dbg_is_req_to_get.write(is_req_to_get);
+
 	bookmark_tmp = 0;
 	asserts_tmp = 0;
 #endif
@@ -69,8 +73,8 @@ void llc::ctrl()
 		    for (int way = 0; way < LLC_WAYS; way++) {
 
 #ifdef LLC_DEBUG
-			flush_set_out.write(set);
-			flush_way_out.write(way);
+			dbg_flush_set.write(set);
+			dbg_flush_way.write(way);
 #endif			
 
 			line_addr_t line_addr = (tag_buf[way] << LLC_SET_BITS) | (set);
@@ -145,7 +149,7 @@ void llc::ctrl()
 		    line_addr_t addr_evict = (tag_buf[way] << LLC_SET_BITS) + line_br.set;
 
 #ifdef LLC_DEBUG
-		    evict_addr_out.write(addr_evict);
+		    dbg_evict_addr.write(addr_evict);
 #endif
 
 		    if (evict) {
@@ -289,6 +293,13 @@ void llc::ctrl()
 			}
 		    }
 
+#ifdef LLC_DEBUG
+		    dbg_length.write(length);
+		    dbg_dma_length.write(dma_length);
+		    dbg_dma_done.write(dma_done);
+		    dbg_dma_addr.write(addr);
+#endif
+
 		    addr++;
 		}
 
@@ -306,7 +317,7 @@ void llc::ctrl()
 		    line_addr_t addr_evict = (tag_buf[way] << LLC_SET_BITS) + line_br.set;
 
 #ifdef LLC_DEBUG
-		    evict_addr_out.write(addr_evict);
+		    dbg_evict_addr.write(addr_evict);
 #endif
 
 		    if (evict) {
@@ -791,25 +802,27 @@ void llc::ctrl()
 	}
 
 #ifdef LLC_DEBUG
-	asserts.write(asserts_tmp);
-	bookmark.write(bookmark_tmp);
+	dbg_asserts.write(asserts_tmp);
+	dbg_bookmark.write(bookmark_tmp);
 
-	req_stall_out.write(req_stall);
-	req_in_stalled_valid_out.write(req_in_stalled_valid);
-	req_in_stalled_out.write(req_in_stalled);
+	dbg_req_stall.write(req_stall);
+	dbg_req_in_stalled_valid.write(req_in_stalled_valid);
+	dbg_req_in_stalled.write(req_in_stalled);
+	dbg_req_in_stalled_tag.write(req_in_stalled_tag);
+	dbg_req_in_stalled_set.write(req_in_stalled_set);
 
-	evict_way_buf_out = evict_way_buf;
+	// dbg_evict_way_buf = evict_way_buf;
 	
-	for (int i = 0; i < LLC_WAYS; i++) {
-	    HLS_UNROLL_LOOP(ON, "buf-output-unroll");
-	    tag_buf_out[i] = tag_buf[i];
-	    state_buf_out[i] = state_buf[i];
-	    hprot_buf_out[i] = hprot_buf[i];
-	    line_buf_out[i] = line_buf[i];
-	    sharers_buf_out[i] = sharers_buf[i];
-	    owner_buf_out[i] = owner_buf[i];
-	    dirty_bit_buf_out[i] = dirty_bit_buf[i];
-	}
+	// for (int i = 0; i < LLC_WAYS; i++) {
+	//     HLS_UNROLL_LOOP(ON, "buf-output-unroll");
+	//     dbg_tag_buf[i]	 = tag_buf[i];
+	//     dbg_state_buf[i]	 = state_buf[i];
+	//     dbg_hprot_buf[i]	 = hprot_buf[i];
+	//     dbg_line_buf[i]	 = line_buf[i];
+	//     dbg_sharers_buf[i]	 = sharers_buf[i];
+	//     dbg_owner_buf[i]	 = owner_buf[i];
+	//     dbg_dirty_bit_buf[i] = dirty_bit_buf[i];
+	// }
 #endif
 
 	{
@@ -1010,19 +1023,36 @@ inline void llc::reset_io()
     evict_way_buf = 0;
 
 #ifdef LLC_DEBUG
-    asserts.write(0);
-    bookmark.write(0);
-    custom_dbg.write(0);
+    dbg_asserts.write(0);
+    dbg_bookmark.write(0);
 
-    tag_hit_out.write(0);
-    hit_way_out.write(0);
-    empty_way_found_out.write(0);
-    empty_way_out.write(0);
-    way_out.write(0);
-    llc_addr_out.write(0);
+    dbg_is_rst_to_get.write(0);
+    dbg_is_rsp_to_get.write(0);
+    dbg_is_req_to_get.write(0);
 
-    req_stall_out.write(0);
-    req_in_stalled_valid_out.write(0);
+    dbg_tag_hit.write(0);
+    dbg_hit_way.write(0);
+    dbg_empty_way_found.write(0);
+    dbg_empty_way.write(0);
+    dbg_way.write(0);
+    dbg_llc_addr.write(0);
+    dbg_evict.write(0);
+    dbg_evict_valid.write(0);
+    dbg_evict_way_not_sd.write(0);
+    dbg_evict_addr.write(0);
+    dbg_flush_set.write(0);
+    dbg_flush_way.write(0); 
+
+    dbg_req_stall.write(0);
+    dbg_req_in_stalled_valid.write(0);
+    // dbg_req_in_stalled.write(0);
+    dbg_req_in_stalled_tag.write(0);
+    dbg_req_in_stalled_set.write(0);
+
+    dbg_length.write(0);
+    dbg_dma_length.write(0);
+    dbg_dma_done.write(0);
+    dbg_dma_addr.write(0);
 #endif
 
     wait();
@@ -1187,17 +1217,16 @@ void llc::read_set(llc_addr_t base, llc_way_t way_offset)
 #endif
 
 #ifdef LLC_DEBUG
-    evict_way_buf_out = evict_way_buf;
-	
+    dbg_evict_way_buf = evict_way_buf;
     for (int i = 0; i < LLC_WAYS; i++) {
 	HLS_UNROLL_LOOP(ON, "buf-output-unroll");
-	tag_buf_out[i] = tag_buf[i];
-	state_buf_out[i] = state_buf[i];
-	hprot_buf_out[i] = hprot_buf[i];
-	line_buf_out[i] = line_buf[i];
-	sharers_buf_out[i] = sharers_buf[i];
-	owner_buf_out[i] = owner_buf[i];
-	dirty_bit_buf_out[i] = dirty_bit_buf[i];
+	dbg_tag_buf[i]	     = tag_buf[i];
+	dbg_state_buf[i]     = state_buf[i];
+	dbg_hprot_buf[i]     = hprot_buf[i];
+	dbg_line_buf[i]	     = line_buf[i];
+	dbg_sharers_buf[i]   = sharers_buf[i];
+	dbg_owner_buf[i]     = owner_buf[i];
+	dbg_dirty_bit_buf[i] = dirty_bit_buf[i];
     }
 #endif
 }
@@ -1277,15 +1306,15 @@ void llc::lookup(llc_tag_t tag, llc_set_t set, llc_way_t &way, bool &evict, llc_
     llc_addr = base + way;
 
 #ifdef LLC_DEBUG
-    tag_hit_out = tag_hit;
-    hit_way_out = hit_way;
-    empty_way_found_out = empty_way_found;
-    empty_way_out = empty_way;
-    way_out = way;
-    llc_addr_out = llc_addr;
-    evict_out = evict;
-    evict_valid_out = evict_valid;
-    evict_way_not_sd_out = evict_way_not_sd;
+    dbg_tag_hit.write(tag_hit);
+    dbg_hit_way.write(hit_way);
+    dbg_empty_way_found.write(empty_way_found);
+    dbg_empty_way.write(empty_way);
+    dbg_way.write(way);
+    dbg_llc_addr.write(llc_addr);
+    dbg_evict.write(evict);
+    dbg_evict_valid.write(evict_valid);
+    dbg_evict_way_not_sd.write(evict_way_not_sd);
 #endif
 }
 

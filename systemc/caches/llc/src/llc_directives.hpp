@@ -215,6 +215,42 @@
     HLS_DEFINE_PROTOCOL("dma-write-notsd-protocol"); \
     bookmark_tmp |= BM_DMA_WRITE_NOTSD
 
+#define PRESERVE_SIGNALS						\
+    HLS_PRESERVE_SIGNAL(dbg_asserts, true);                             \
+    HLS_PRESERVE_SIGNAL(dbg_bookmark, true);				\
+    HLS_PRESERVE_SIGNAL(dbg_is_rst_to_get, true);			\
+    HLS_PRESERVE_SIGNAL(dbg_is_rsp_to_get, true);			\
+    HLS_PRESERVE_SIGNAL(dbg_is_req_to_get, true);			\
+    HLS_PRESERVE_SIGNAL(dbg_tag_hit, true);				\
+    HLS_PRESERVE_SIGNAL(dbg_hit_way, true);				\
+    HLS_PRESERVE_SIGNAL(dbg_empty_way_found, true);			\
+    HLS_PRESERVE_SIGNAL(dbg_empty_way, true);				\
+    HLS_PRESERVE_SIGNAL(dbg_way, true);					\
+    HLS_PRESERVE_SIGNAL(dbg_llc_addr, true);				\
+    HLS_PRESERVE_SIGNAL(dbg_evict, true);				\
+    HLS_PRESERVE_SIGNAL(dbg_evict_valid, true);				\
+    HLS_PRESERVE_SIGNAL(dbg_evict_way_not_sd, true);			\
+    HLS_PRESERVE_SIGNAL(dbg_evict_addr, true);				\
+    HLS_PRESERVE_SIGNAL(dbg_flush_set, true);				\
+    HLS_PRESERVE_SIGNAL(dbg_flush_way;   , true)			\
+    HLS_PRESERVE_SIGNAL(dbg_req_stall, true);				\
+    HLS_PRESERVE_SIGNAL(dbg_req_in_stalled_valid, true);		\
+    HLS_PRESERVE_SIGNAL(dbg_req_in_stalled, true);			\
+    HLS_PRESERVE_SIGNAL(dbg_req_in_stalled_tag, true);			\
+    HLS_PRESERVE_SIGNAL(dbg_req_in_stalled_set, true);			\
+    HLS_PRESERVE_SIGNAL(dbg_length, true);				\
+    HLS_PRESERVE_SIGNAL(dbg_dma_length, true);				\
+    HLS_PRESERVE_SIGNAL(dbg_dma_done, true);				\
+    HLS_PRESERVE_SIGNAL(dbg_dma_addr, true);				\
+    HLS_PRESERVE_SIGNAL(dbg_tag_buf[LLC_WAYS], true);			\
+    HLS_PRESERVE_SIGNAL(dbg_state_buf[LLC_WAYS], true);			\
+    HLS_PRESERVE_SIGNAL(dbg_hprot_buf[LLC_WAYS], true);			\
+    HLS_PRESERVE_SIGNAL(dbg_line_buf[LLC_WAYS], true);			\
+    HLS_PRESERVE_SIGNAL(dbg_sharers_buf[LLC_WAYS], true);		\
+    HLS_PRESERVE_SIGNAL(dbg_owner_buf[LLC_WAYS], true);			\
+    HLS_PRESERVE_SIGNAL(dbg_dirty_bit_buf[LLC_WAYS], true);		\
+    HLS_PRESERVE_SIGNAL(dbg_evict_way_buf, true)
+
 #else
 
 #define LLC_RESET_STATES						\
@@ -352,6 +388,8 @@
 
 #define DMA_WRITE_NOTSD \
     HLS_DEFINE_PROTOCOL("dma-write-notsd-protocol")
+
+#define PRESERVE_SIGNALS
 
 #endif
 
