@@ -438,7 +438,12 @@ void l2::ctrl()
 		    // }
 
 		    while (flush_way < L2_WAYS) {
-		    
+
+			{
+			    HLS_DEFINE_PROTOCOL("flush-way-protocol");
+			    wait();
+			}
+			    
 #ifdef L2_DEBUG
 			flush_way_dbg.write(flush_way);
 			flush_set_dbg.write(flush_set);
@@ -454,11 +459,6 @@ void l2::ctrl()
 
  			} else if ((state_buf[flush_way] != INVALID) && 
 			    (is_flush_all || hprot_buf[flush_way])) {
-
-			    {
-				HLS_DEFINE_PROTOCOL("flush-way-protocol");
-				wait();
-			    }
 
 			    reqs_peek_flush(flush_set, reqs_hit_i);
 
