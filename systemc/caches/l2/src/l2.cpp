@@ -250,11 +250,8 @@ void l2::ctrl()
 
 		    l2_set_t set_tmp = reqs[reqs_hit_i].set;
 
-		    // {
-		    // 	HLS_DEFINE_PROTOCOL("l2-evict-ways");
-		    // 	wait();
-			evict_ways.port1[0][set_tmp] = reqs[reqs_hit_i].way + 1;
-		    // }
+		    // TODO ADD?
+		    evict_ways.port1[0][set_tmp] = reqs[reqs_hit_i].way + 1;
 		    
 		    reqs[reqs_hit_i].state = state_tmp;
 		    reqs[reqs_hit_i].tag = reqs[reqs_hit_i].tag_estall;
@@ -428,18 +425,25 @@ void l2::ctrl()
 		bool incoming_fwd = false;
 		sc_uint<REQS_BITS> reqs_hit_i;
 
-		wait();
-
 		while (flush_set < L2_SETS) {
+
+		    {
+			HLS_DEFINE_PROTOCOL("flush-way-protocol");
+			wait();
+		    }
 
 		    // {
 		    // 	FLUSH_READ_SET;
-
 		    read_set(flush_set);
 		    // }
 
 		    while (flush_way < L2_WAYS) {
 		    
+#ifdef L2_DEBUG
+			flush_way_dbg.write(flush_way);
+			flush_set_dbg.write(flush_set);
+#endif
+
 			// FLUSH_LOOP;
 
 			if (l2_fwd_in.nb_can_get() || reqs_cnt == 0) {
@@ -450,6 +454,11 @@ void l2::ctrl()
 
  			} else if ((state_buf[flush_way] != INVALID) && 
 			    (is_flush_all || hprot_buf[flush_way])) {
+
+			    {
+				HLS_DEFINE_PROTOCOL("flush-way-protocol");
+				wait();
+			    }
 
 			    reqs_peek_flush(flush_set, reqs_hit_i);
 
@@ -494,10 +503,7 @@ void l2::ctrl()
 			    send_req_out(coh_msg_tmp, 0, line_addr_tmp, 
 					 line_buf[flush_way]);
 			}
-
 			flush_way++;
-
-			wait();
 		    }
 
 		    if (incoming_fwd)
@@ -628,6 +634,7 @@ void l2::ctrl()
 		l2_way_t way_hit;
 		bool empty_way_found;
 		l2_way_t empty_way;
+
 		tag_lookup(addr_br, tag_hit, way_hit, empty_way_found, empty_way);
 
 		if (cpu_req.cpu_msg == READ_ATOMIC) {
@@ -819,43 +826,38 @@ void l2::ctrl()
 	// update debug vectors
 	asserts.write(asserts_tmp);
 	bookmark.write(bookmark_tmp);
-	custom_dbg.write(custom_dbg_tmp);
 
-	reqs_cnt_out.write(reqs_cnt);
-	set_conflict_out.write(set_conflict);
-	cpu_req_conflict_out.write(cpu_req_conflict);
-	evict_stall_out.write(evict_stall);
-	fwd_stall_out.write(fwd_stall);
-	fwd_stall_ended_out.write(fwd_stall_ended);
-	fwd_in_stalled_out.write(fwd_in_stalled);
-	reqs_fwd_stall_i_out.write(reqs_fwd_stall_i);
-	ongoing_atomic_out.write(ongoing_atomic);
-	atomic_line_addr_out.write(atomic_line_addr);
-	reqs_atomic_i_out.write(reqs_atomic_i);
-
-	tag_hit_out.write(tag_hit);
-	way_hit_out.write(way_hit);
-	empty_way_found_out.write(empty_way_found);
-	empty_way_out.write(empty_way);
-	reqs_hit_out.write(reqs_hit);
-	reqs_hit_i_out.write(reqs_hit_i);
-	flush_way_out.write(flush_way);
-	flush_set_out.write(flush_set);
+	reqs_cnt_dbg.write(reqs_cnt);
+	set_conflict_dbg.write(set_conflict);
+	cpu_req_conflict_dbg.write(cpu_req_conflict);
+	evict_stall_dbg.write(evict_stall);
+	fwd_stall_dbg.write(fwd_stall);
+	fwd_stall_ended_dbg.write(fwd_stall_ended);
+	fwd_in_stalled_dbg.write(fwd_in_stalled);
+	reqs_fwd_stall_i_dbg.write(reqs_fwd_stall_i);
+	ongoing_atomic_dbg.write(ongoing_atomic);
+	atomic_line_addr_dbg.write(atomic_line_addr);
+	reqs_atomic_i_dbg.write(reqs_atomic_i);
+	ongoing_flush_dbg.write(ongoing_flush);
 
 	for (int i = 0; i < N_REQS; i++) {
-	    REQS_OUTPUT;
-	    reqs_out[i] = reqs[i];
+	    REQS_DBG;
+	    reqs_dbg[i] = reqs[i];
 	}
 
 	for (int i = 0; i < L2_WAYS; i++) {
-	    BUFS_OUTPUT;
-	    tag_buf_out[i] = tag_buf[i];
-	    state_buf_out[i] = state_buf[i];
+	    BUFS_DBG;
+	    tag_buf_dbg[i] = tag_buf[i];
+	    state_buf_dbg[i] = state_buf[i];
 	}
 
-	evict_way_out.write(evict_way);
+	evict_way_dbg.write(evict_way);
 #endif
-	wait();
+
+	// {
+	//     HLS_DEFINE_PROTOCOL("end-of-main-protocol");
+	    wait();
+	// }
     }
     /* 
      * End of main loop
@@ -944,49 +946,52 @@ inline void l2::reset_io()
 
     /* Reset signals */
 
+    flush_done.write(0);
+
 #ifdef L2_DEBUG
     asserts.write(0);
     bookmark.write(0);
-    custom_dbg.write(0);
-    flush_done.write(0);
 
     /* Reset signals exported to output ports */
-    reqs_cnt_out.write(0);
-    set_conflict_out.write(0);
-    // cpu_req_conflict_out.write(0);
-    evict_stall_out.write(0);
-    fwd_stall_out.write(0);
-    fwd_stall_ended_out.write(0);
-    // fwd_in_stalled_out.write(0);
-    reqs_fwd_stall_i_out.write(0);
-    ongoing_atomic_out.write(0);
-    atomic_line_addr_out.write(0);
-    reqs_atomic_i_out.write(0);
-
-    tag_hit_out.write(0);
-    way_hit_out.write(0);
-    empty_way_found_out.write(0);
-    empty_way_out.write(0);
-    reqs_hit_out.write(0);
-    reqs_hit_i_out.write(0);
-    flush_way_out.write(0);
-    flush_set_out.write(0);
+    reqs_cnt_dbg.write(0);
+    set_conflict_dbg.write(0);
+    // cpu_req_conflict_dbg.write(0);
+    evict_stall_dbg.write(0);
+    fwd_stall_dbg.write(0);
+    fwd_stall_ended_dbg.write(0);
+    // fwd_in_stalled_dbg.write(0);
+    reqs_fwd_stall_i_dbg.write(0);
+    ongoing_atomic_dbg.write(0);
+    atomic_line_addr_dbg.write(0);
+    reqs_atomic_i_dbg.write(0);
+    ongoing_flush_dbg.write(0);
+    flush_way_dbg.write(0);
+    flush_set_dbg.write(0);
+    tag_hit_req_dbg.write(0);
+    way_hit_req_dbg.write(0);
+    empty_found_req_dbg.write(0);
+    empty_way_req_dbg.write(0);
+    reqs_hit_req_dbg.write(0);
+    reqs_hit_i_req_dbg.write(0);
+    way_hit_fwd_dbg.write(0);
+    peek_reqs_i_dbg.write(0);
+    peek_reqs_i_flush_dbg.write(0);
+    peek_reqs_hit_fwd_dbg.write(0);
 
     // for (int i = 0; i < N_REQS; i++) {
-    // 	REQS_OUTPUT;
-    // 	reqs_out[i] = 0;
+    // 	REQS_DBGPUT;
+    // 	reqs_dbg[i] = 0;
     // }
 
     for (int i = 0; i < L2_WAYS; i++) {
-    	BUFS_OUTPUT;
-    	tag_buf_out[i] = 0;
-    	state_buf_out[i] = 0;
+    	BUFS_DBG;
+    	tag_buf_dbg[i] = 0;
+    	state_buf_dbg[i] = 0;
     }
 
-    evict_way_out.write(0);
+    evict_way_dbg.write(0);
 
     /* Reset variables */
-    custom_dbg_tmp = 0;
     asserts_tmp = 0;
     bookmark_tmp = 0;
 #endif
@@ -1246,6 +1251,13 @@ void l2::tag_lookup(addr_breakdown_t addr_br, bool &tag_hit, l2_way_t &way_hit, 
 	    empty_way = i;
 	}
     }
+
+#ifdef L2_DEBUG
+    tag_hit_req_dbg.write(tag_hit);
+    way_hit_req_dbg.write(way_hit);
+    empty_found_req_dbg.write(empty_way_found);
+    empty_way_req_dbg.write(empty_way);
+#endif
 }
 
 void l2::tag_lookup_fwd(line_breakdown_t<l2_tag_t, l2_set_t> line_br, l2_way_t &way_hit)
@@ -1271,6 +1283,10 @@ void l2::tag_lookup_fwd(line_breakdown_t<l2_tag_t, l2_set_t> line_br, l2_way_t &
 	    way_hit = i;
 	}
     }
+
+#ifdef L2_DEBUG
+    way_hit_fwd_dbg.write(way_hit);
+#endif
 }
 
 void l2::reqs_lookup(line_breakdown_t<l2_tag_t, l2_set_t> line_br, sc_uint<REQS_BITS> &reqs_hit_i)
@@ -1288,6 +1304,10 @@ void l2::reqs_lookup(line_breakdown_t<l2_tag_t, l2_set_t> line_br, sc_uint<REQS_
 	}
     }
 
+#ifdef L2_DEBUG
+    reqs_hit_req_dbg.write(reqs_hit);
+    reqs_hit_i_req_dbg.write(reqs_hit_i);
+#endif
     // REQS_LOOKUP_ASSERT;
 }
 
@@ -1307,6 +1327,10 @@ bool l2::reqs_peek_req(l2_set_t set, sc_uint<REQS_BITS> &reqs_i)
 	    set_conflict = true;
     }
 
+#ifdef L2_DEBUG
+    peek_reqs_i_dbg.write(reqs_i);
+#endif
+
     return set_conflict;
 }
 
@@ -1320,6 +1344,10 @@ void l2::reqs_peek_flush(l2_set_t set, sc_uint<REQS_BITS> &reqs_i)
 	if (reqs[i].state == INVALID)
 	    reqs_i = i;
     }
+
+#ifdef L2_DEBUG
+    peek_reqs_i_flush_dbg.write(reqs_i);
+#endif
 }
 
 
@@ -1362,6 +1390,10 @@ bool l2::reqs_peek_fwd(line_breakdown_t<l2_tag_t, l2_set_t> line_br,
     }
 
     reqs_fwd_stall_i = reqs_i;
+
+#ifdef L2_DEBUG
+    peek_reqs_hit_fwd_dbg.write(reqs_hit);
+#endif
 
     return fwd_stall_tmp;
 }

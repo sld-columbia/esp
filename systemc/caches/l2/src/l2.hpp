@@ -25,40 +25,39 @@ public:
 
 #ifdef L2_DEBUG
     // Debug signals
-    sc_out< sc_bv<ASSERT_WIDTH> >   asserts;
-    sc_out< sc_bv<BOOKMARK_WIDTH> > bookmark;
-    sc_out<uint32_t>                custom_dbg;
+    sc_signal< sc_bv<ASSERT_WIDTH> >   asserts;
+    sc_signal< sc_bv<BOOKMARK_WIDTH> > bookmark;
 
-    sc_out<sc_uint<REQS_BITS_P1> > reqs_cnt_out;   
-    sc_out<bool>		set_conflict_out;
-    sc_out<l2_cpu_req_t>	cpu_req_conflict_out;
-    sc_out<bool>		evict_stall_out;
-    sc_out<bool>		fwd_stall_out;
-    sc_out<bool>		fwd_stall_ended_out;
-    sc_out<l2_fwd_in_t>         fwd_in_stalled_out;
-    sc_out<sc_uint<REQS_BITS> > reqs_fwd_stall_i_out;
-    sc_out<bool>		ongoing_atomic_out;
-    sc_out<line_addr_t>		atomic_line_addr_out;
-    sc_out<sc_uint<REQS_BITS> > reqs_atomic_i_out;
+    sc_signal< sc_uint<REQS_BITS_P1> > reqs_cnt_dbg;
+    sc_signal< bool > set_conflict_dbg;
+    sc_signal< l2_cpu_req_t > cpu_req_conflict_dbg;
+    sc_signal< bool > evict_stall_dbg;
+    sc_signal< bool > fwd_stall_dbg;
+    sc_signal< bool > fwd_stall_ended_dbg;
+    sc_signal< l2_fwd_in_t > fwd_in_stalled_dbg;
+    sc_signal< sc_uint<REQS_BITS> > reqs_fwd_stall_i_dbg;
+    sc_signal< bool > ongoing_atomic_dbg;
+    sc_signal< line_addr_t > atomic_line_addr_dbg;
+    sc_signal< sc_uint<REQS_BITS> > reqs_atomic_i_dbg;
+    sc_signal< bool > ongoing_flush_dbg;
+    sc_signal< uint32_t > flush_way_dbg;
+    sc_signal< uint32_t > flush_set_dbg;
 
-    sc_out<bool>	tag_hit_out;
-    sc_out<l2_way_t>	way_hit_out;
-    sc_out<bool>	empty_way_found_out;
-    sc_out<l2_way_t>	empty_way_out;
-    sc_out<bool>	reqs_hit_out;
-    sc_out<sc_uint<REQS_BITS> >	reqs_hit_i_out;
-    sc_out<sc_uint<REQS_BITS> >	reqs_i_out;
-    sc_out<bool>	is_flush_to_get_out;
-    sc_out<bool>	is_rsp_to_get_out;
-    sc_out<bool>	is_fwd_to_get_out;
-    sc_out<bool>	is_req_to_get_out;
-    sc_out<uint32_t>	flush_way_out;
-    sc_out<uint32_t>	flush_set_out;
+    sc_signal<bool> tag_hit_req_dbg;
+    sc_signal<l2_way_t> way_hit_req_dbg;
+    sc_signal<bool> empty_found_req_dbg;
+    sc_signal<l2_way_t> empty_way_req_dbg;
+    sc_signal<bool> reqs_hit_req_dbg;
+    sc_signal<sc_uint<REQS_BITS> > reqs_hit_i_req_dbg;
+    sc_signal<l2_way_t> way_hit_fwd_dbg;
+    sc_signal<l2_way_t> peek_reqs_i_dbg;
+    sc_signal<l2_way_t> peek_reqs_i_flush_dbg;
+    sc_signal<bool> peek_reqs_hit_fwd_dbg;
 
-    sc_out<reqs_buf_t>	reqs_out[N_REQS];
-    sc_out<l2_tag_t>	tag_buf_out[L2_WAYS];
-    sc_out<state_t>	state_buf_out[L2_WAYS];
-    sc_out<l2_way_t>	evict_way_out;
+    sc_signal<reqs_buf_t> reqs_dbg[N_REQS];
+    sc_signal<l2_tag_t> tag_buf_dbg[L2_WAYS];
+    sc_signal<state_t> state_buf_dbg[L2_WAYS];
+    sc_signal<l2_way_t>	evict_way_dbg;
 #endif
 
     // Other signals
@@ -99,7 +98,6 @@ public:
 #ifdef L2_DEBUG
 	, asserts("asserts")
 	, bookmark("bookmark")
-	, custom_dbg("custom_dbg")
 #endif
 	, flush_done("flush_done")
 	, l2_cpu_req("l2_cpu_req")
@@ -128,6 +126,9 @@ public:
 
 	    // Flatten arrays
 	    L2_FLATTEN_REGS;
+
+	    // Preserve signals
+	    PRESERVE_SIGNALS;
 
 	    // Clock binding for memories
 	    tags.clk(this->clk);
@@ -183,7 +184,6 @@ private:
 #ifdef L2_DEBUG
     sc_bv<ASSERT_WIDTH>   asserts_tmp;
     sc_bv<BOOKMARK_WIDTH> bookmark_tmp;
-    uint64_t custom_dbg_tmp;
 #endif
 
     /* Variables for stalls, conflicts and atomic operations */

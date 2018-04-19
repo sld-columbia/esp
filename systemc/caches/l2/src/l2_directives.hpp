@@ -21,10 +21,10 @@
 
 /* Debug */
 
-#define REQS_OUTPUT					\
+#define REQS_DBG					\
     HLS_UNROLL_LOOP(ON, "l2-reqs-output-unroll")	
 
-#define BUFS_OUTPUT					\
+#define BUFS_DBG					\
     HLS_UNROLL_LOOP(ON, "l2-bufs-output-unroll")	
 
 /* Input messages */
@@ -327,5 +327,45 @@
 #define EVICT_DEFAULT						\
     if (RPT_RTL) CACHE_REPORT_TIME(sc_time_stamp(), "Evict default.")
     // asserts_tmp |= AS_EVICT_DEFAULT;				
+
+#ifdef L2_DEBUG
+
+#define PRESERVE_SIGNALS				\
+    HLS_PRESERVE_SIGNAL(asserts, true);	                \
+    HLS_PRESERVE_SIGNAL(bookmark, true);		\
+    HLS_PRESERVE_SIGNAL(reqs_cnt_dbg, true);		\
+    HLS_PRESERVE_SIGNAL(set_conflict_dbg, true);	\
+    HLS_PRESERVE_SIGNAL(cpu_req_conflict_dbg, true);	\
+    HLS_PRESERVE_SIGNAL(evict_stall_dbg, true);		\
+    HLS_PRESERVE_SIGNAL(fwd_stall_dbg, true);		\
+    HLS_PRESERVE_SIGNAL(fwd_stall_ended_dbg, true);	\
+    HLS_PRESERVE_SIGNAL(fwd_in_stalled_dbg, true);	\
+    HLS_PRESERVE_SIGNAL(reqs_fwd_stall_i_dbg, true);	\
+    HLS_PRESERVE_SIGNAL(ongoing_atomic_dbg, true);	\
+    HLS_PRESERVE_SIGNAL(atomic_line_addr_dbg, true);	\
+    HLS_PRESERVE_SIGNAL(reqs_atomic_i_dbg, true);	\
+    HLS_PRESERVE_SIGNAL(ongoing_flush_dbg, true);	\
+    HLS_PRESERVE_SIGNAL(flush_way_dbg, true);		\
+    HLS_PRESERVE_SIGNAL(flush_set_dbg, true);		\
+    HLS_PRESERVE_SIGNAL(tag_hit_req_dbg, true);		\
+    HLS_PRESERVE_SIGNAL(way_hit_req_dbg, true);		\
+    HLS_PRESERVE_SIGNAL(empty_found_req_dbg, true);	\
+    HLS_PRESERVE_SIGNAL(empty_way_req_dbg, true);	\
+    HLS_PRESERVE_SIGNAL(reqs_hit_req_dbg, true);	\
+    HLS_PRESERVE_SIGNAL(reqs_hit_i_req_dbg, true);	\
+    HLS_PRESERVE_SIGNAL(way_hit_fwd_dbg, true);		\
+    HLS_PRESERVE_SIGNAL(peek_reqs_i_dbg, true);		\
+    HLS_PRESERVE_SIGNAL(peek_reqs_i_flush_dbg, true);	\
+    HLS_PRESERVE_SIGNAL(peek_reqs_hit_fwd_dbg, true);	\
+    HLS_PRESERVE_SIGNAL(reqs_dbg, true);		\
+    HLS_PRESERVE_SIGNAL(tag_buf_dbg, true);		\
+    HLS_PRESERVE_SIGNAL(state_buf_dbg, true);		\
+    HLS_PRESERVE_SIGNAL(evict_way_dbg, true)
+
+#else
+
+#define PRESERVE_SIGNALS
+
+#endif
 
 #endif /* __L2_DIRECTIVES_HPP_ */

@@ -20,44 +20,6 @@ public:
     // Reset signal
     sc_in<bool> rst;
 
-#ifdef L2_DEBUG
-    // Debug signals
-    sc_in< sc_bv<ASSERT_WIDTH> >   asserts;
-    sc_in< sc_bv<BOOKMARK_WIDTH> > bookmark;
-    sc_in<uint32_t>     custom_dbg;
-
-    sc_in<sc_uint<REQS_BITS_P1> > reqs_cnt_out;   
-    sc_in<bool>		set_conflict_out;
-    sc_in<l2_cpu_req_t>	cpu_req_conflict_out;
-    sc_in<bool>		evict_stall_out;
-    sc_in<bool>		fwd_stall_out;
-    sc_in<bool>		fwd_stall_ended_out;
-    sc_in<l2_fwd_in_t>         fwd_in_stalled_out;
-    sc_in<sc_uint<REQS_BITS> > reqs_fwd_stall_i_out;
-    sc_in<bool>		ongoing_atomic_out;
-    sc_in<line_addr_t>		atomic_line_addr_out;
-    sc_in<sc_uint<REQS_BITS> > reqs_atomic_i_out;
-
-    sc_in<bool>	tag_hit_out;
-    sc_in<l2_way_t>	way_hit_out;
-    sc_in<bool>	empty_way_found_out;
-    sc_in<l2_way_t>	empty_way_out;
-    sc_in<bool>	reqs_hit_out;
-    sc_in<sc_uint<REQS_BITS> >	reqs_hit_i_out;
-    sc_in<sc_uint<REQS_BITS> >	reqs_i_out;
-    sc_in<bool>	is_flush_to_get_out;
-    sc_in<bool>	is_rsp_to_get_out;
-    sc_in<bool>	is_fwd_to_get_out;
-    sc_in<bool>	is_req_to_get_out;
-    sc_in<uint32_t>	flush_way_out;
-    sc_in<uint32_t>	flush_set_out;
-
-    sc_in<reqs_buf_t>	reqs_out[N_REQS];
-    sc_in<tag_t>	tag_buf_out[L2_WAYS];
-    sc_in<state_t>	state_buf_out[L2_WAYS];
-    sc_in<l2_way_t>	evict_way_out;
-#endif
-
     // Other signals
     sc_in<bool> flush_done;
 
@@ -81,12 +43,12 @@ public:
 	reset_signal_is(rst, false);
 	// set_stack_size(0x400000);
 
-#ifdef L2_DEBUG
-	// Debug process
-	SC_CTHREAD(l2_debug, clk.pos());
-	reset_signal_is(rst, false);
-	// set_stack_size(0x400000);
-#endif
+// #ifdef L2_DEBUG
+// 	// Debug process
+// 	SC_CTHREAD(l2_debug, clk.pos());
+// 	reset_signal_is(rst, false);
+// 	// set_stack_size(0x400000);
+// #endif
 
 	// Assign clock and reset to put_get ports
 	l2_cpu_req_tb.clk_rst (clk, rst);
@@ -101,9 +63,9 @@ public:
 
     // Processes
     void l2_test();
-#ifdef L2_DEBUG
-    void l2_debug();
-#endif
+// #ifdef L2_DEBUG
+//     void l2_debug();
+// #endif
 
     // Functions
     inline void reset_l2_test();
