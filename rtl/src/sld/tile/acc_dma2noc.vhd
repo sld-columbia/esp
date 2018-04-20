@@ -580,7 +580,7 @@ begin  -- rtl
         if dma_snd_full_int = '0' and dvfs_transient = '0' then
           dma_snd_data_in_int <= payload_address_r;
           dma_snd_wrreq_int <= '1';
-          if msg = DMA_TO_DEV then
+          if msg = DMA_TO_DEV or msg = REQ_DMA_READ then
             dma_next <= request_length;
           else
             dma_next <= request_data;

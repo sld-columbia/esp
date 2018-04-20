@@ -136,15 +136,26 @@ void llc::ctrl()
 		DMA_BURST;
 
 		addr_t addr = req_in.addr;
-		dma_length_t length = req_in.line;
+                hprot_t hprot = req_in.hprot;
+                bool misaligned = (hprot[1] == 1);
+                // Set hprot[1] to 0 before writing to memory
+                req_in.hprot[1] = 0;
+                sc_dt::sc_uint<WORD_BITS> dma_woffset = req_in.line.range(WORD_BITS - 1, 0).to_uint();
+		dma_length_t dma_read_length = req_in.line.range(BITS_PER_LINE - 1, BITS_PER_LINE - ADDR_BITS).to_uint();
 		dma_length_t dma_length = 0;
 		bool dma_done = false;
+                bool dma_start = true;
 
 		while (!dma_done) {
 
 		    line_br.llc_line_breakdown(addr);
 
 		    lookup(line_br.tag, line_br.set, way, evict, llc_addr);
+
+                    {
+                        HLS_DEFINE_PROTOCOL("dma-loop");
+                        wait();
+                    }
 
 		    line_addr_t addr_evict = (tag_buf[way] << LLC_SET_BITS) + line_br.set;
 
@@ -155,11 +166,6 @@ void llc::ctrl()
 		    if (evict) {
 
 			LLC_EVICT;
-
-			{
-			    HLS_DEFINE_PROTOCOL("evict-start-protocol");
-			    wait();
-			}
 
 			llc_rsp_in_t rsp_in;
 
@@ -239,7 +245,7 @@ void llc::ctrl()
 
 			dma_length++;
 
-			if (dma_length == length)
+			if (dma_length == dma_read_length)
 			    dma_done = true;
 
 			if (state_buf[way] == INVALID) {
@@ -250,11 +256,23 @@ void llc::ctrl()
 			    get_mem_rsp(line_buf[way]);
 			}
 
-			send_rsp_out(RSP_DATA_DMA, addr, line_buf[way], 
-				     req_in.req_id, 0, dma_done);
+                        invack_cnt_t dma_info;
+
+                        dma_info[0] = dma_done;
+
+                        if (misaligned && dma_start) {
+                            dma_info.range(WORD_BITS, 1) = WORDS_PER_LINE - dma_woffset - 1;
+                            line_buf[way].range(WORD_BITS - 1, 0) = dma_woffset;
+                        } else if (misaligned && dma_done) {
+                            dma_info.range(WORD_BITS, 1) = dma_woffset - 1;
+                        } else {
+                            dma_info.range(WORD_BITS, 1) = WORDS_PER_LINE - 1;
+                        }
+
+			send_rsp_out(RSP_DATA_DMA, addr, line_buf[way],
+				     req_in.req_id, 0, dma_info);
 
 			if (state_buf[way] == INVALID) {
-
 			    hprots.port1[0][llc_addr] = DATA;
 			    lines.port1[0][llc_addr] = line_buf[way];
 			    tags.port1[0][llc_addr] = line_br.tag;
@@ -270,13 +288,35 @@ void llc::ctrl()
 
 			    DMA_WRITE_I;
 
-			    states.port1[0][llc_addr] = VALID;
-			    hprots.port1[0][llc_addr] = DATA;
-			    tags.port1[0][llc_addr] = line_br.tag;
+                            if (misaligned && (dma_done || dma_start)) {
+                                send_mem_req(READ, addr, req_in.hprot, 0);
+                                get_mem_rsp(line_buf[way]);
+                            }
+
 			}
 
-			lines.port1[0][llc_addr] = req_in.line;
-			dirty_bits.port1[0][llc_addr] = 1;
+                        if (misaligned && dma_start)
+                            for (int i = dma_woffset; i < WORDS_PER_LINE; i++) {
+                                HLS_UNROLL_LOOP(ON, "misaligned-dma-start-unroll");
+                                write_word(line_buf[way], read_word(req_in.line, i), i, 0, WORD);
+                            }
+                        else if (misaligned && dma_done)
+                            for (int i = WORDS_PER_LINE - dma_woffset - 1; i > 0; i--) {
+                                HLS_UNROLL_LOOP(ON, "misaligned-dma-done-unroll");
+                                write_word(line_buf[way], read_word(req_in.line, i), i, 0, WORD);
+                            }
+                        else
+                            line_buf[way] = req_in.line;
+
+                        lines.port1[0][llc_addr] = line_buf[way];
+                        dirty_bits.port1[0][llc_addr] = 1;
+
+                        if (state_buf[way] == INVALID) {
+                            states.port1[0][llc_addr] = VALID;
+                            hprots.port1[0][llc_addr] = DATA;
+                            tags.port1[0][llc_addr] = line_br.tag;
+                        }
+
 
 			if (req_in.hprot) {
 
@@ -285,7 +325,7 @@ void llc::ctrl()
 			} else {
 
 			    while (!llc_req_in.nb_can_get()) {
-				HLS_DEFINE_PROTOCOL("evict-wait-for-rsp");
+				HLS_DEFINE_PROTOCOL("dma-write-wait-for-data");
 				wait();
 			    }
 
@@ -301,6 +341,13 @@ void llc::ctrl()
 #endif
 
 		    addr++;
+                    dma_start = false;
+
+                    {
+                        HLS_DEFINE_PROTOCOL("dma-loop-end");
+                        wait();
+                    }
+
 		}
 
 	    } else {

@@ -27,11 +27,8 @@ set_attr unroll_loops             off
 #
 # Speedup scheduling for high-perf design (disable most area-minimization techniques)
 #
-set_attr sched_effort high
 set_attr sharing_effort_parts low
 set_attr sharing_effort_regs low
-set_attr sched_aggressive_1 on
-set_attr sched_aggressive_2 on
 
 
 if {$TECH eq "virtex7"} {

@@ -402,7 +402,7 @@ class llc_req_in_t
 public:
 
     mix_msg_t	coh_msg;	// gets, getm, puts, putm, dma_read, dma_write
-    hprot_t	hprot; // used for dma write burst end!
+    hprot_t	hprot; // used for dma write burst end (0) and non-aligned addr (1)
     line_addr_t	addr;
     line_t	line; // used for dma burst length too
     cache_id_t  req_id;
