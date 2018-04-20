@@ -26,23 +26,78 @@ void l2::ctrl()
 	bookmark_tmp = 0;
 	asserts_tmp = 0;
 #endif
-	if (l2_flush.nb_can_get() && reqs_cnt == N_REQS) {
 
-	    is_flush_all = get_flush();
+        bool do_flush = false;
+        bool do_rsp = false;
+        bool do_fwd = false;
+        bool do_ongoing_flush = false;
+        bool do_cpu_req = false;
 
-	    ongoing_flush = true;
+        l2_rsp_in_t rsp_in;
+        l2_fwd_in_t fwd_in;
+        l2_cpu_req_t cpu_req;
 
-	} else if (l2_rsp_in.nb_can_get()) {
+        {
+            HLS_DEFINE_PROTOCOL("llc-io-check");
+            if (l2_flush.nb_can_get() && reqs_cnt == N_REQS) {
+                is_flush_all = get_flush();
+                ongoing_flush = true;
+                do_flush = true;
+            } else if (l2_rsp_in.nb_can_get()) {
+                get_rsp_in(rsp_in);
+                do_rsp = true;
+            } else if (((l2_fwd_in.nb_can_get() && !fwd_stall) || fwd_stall_ended)) {
+                if (!fwd_stall) {
+                    get_fwd_in(fwd_in);
+                } else {
+                    fwd_in = fwd_in_stalled;
+                }
+                do_fwd = true;
+            } else if (ongoing_flush) {
+                if (flush_set < L2_SETS) {
+                    if (!l2_fwd_in.nb_can_get() && reqs_cnt != 0)
+                        do_ongoing_flush = true;
+
+                    if (flush_way == L2_WAYS) {
+                        flush_set++;
+                        flush_way = 0;
+                    }
+                } else {
+		    flush_set = 0;
+                    flush_way = 0;
+                    ongoing_flush = false;
+
+		    flush_done.write(true);
+		    wait();
+		    flush_done.write(false);
+                }
+            } else if ((l2_cpu_req.nb_can_get() || set_conflict) &&
+                       !evict_stall && (reqs_cnt != 0 || ongoing_atomic)) { // assuming
+                                                                            // HPROT
+                                                                            // cacheable
+                if (!set_conflict) {
+                    get_cpu_req(cpu_req);
+                } else {
+                    cpu_req = cpu_req_conflict;
+                }
+
+                do_cpu_req = true;
+            }
+        }
+
+
+
+	if (do_flush) {
+
+
+	} else if (do_rsp) {
 
 	    // if (ongoing_flush)
 	    //     RSP_WHILE_FLUSHING;
 
-	    l2_rsp_in_t rsp_in;
 	    line_breakdown_t<l2_tag_t, l2_set_t> line_br;
 	    sc_uint<REQS_BITS> reqs_hit_i;
 
-	    get_rsp_in(rsp_in);
-	    
 	    line_br.l2_line_breakdown(rsp_in.addr);
 
 	    reqs_lookup(line_br, reqs_hit_i);
@@ -193,20 +248,13 @@ void l2::ctrl()
 
 	    }
 
-	} else if (((l2_fwd_in.nb_can_get() && !fwd_stall) || fwd_stall_ended)) {
+	} else if (do_fwd) {
 
-	    l2_fwd_in_t fwd_in;
 	    line_breakdown_t<l2_tag_t, l2_set_t> line_br;
 	    bool reqs_hit;
 	    sc_uint<REQS_BITS> reqs_hit_i;
 
 	    fwd_stall_ended = false;
-
-	    if (!fwd_stall) {
-		get_fwd_in(fwd_in);
-	    } else {
-		fwd_in = fwd_in_stalled;
-	    }
 
 	    line_br.l2_line_breakdown(fwd_in.addr);
 
@@ -418,132 +466,66 @@ void l2::ctrl()
 		}
 	    }
 
-	} else if (ongoing_flush) {
+	} else if (do_ongoing_flush) {
 
-	    if (reqs_cnt != 0) {
+            sc_uint<REQS_BITS> reqs_hit_i;
 
-		bool incoming_fwd = false;
-		sc_uint<REQS_BITS> reqs_hit_i;
+            read_set(flush_set);
 
-		while (flush_set < L2_SETS) {
-
-		    {
-			HLS_DEFINE_PROTOCOL("flush-way-protocol");
-			wait();
-		    }
-
-		    // {
-		    // 	FLUSH_READ_SET;
-		    read_set(flush_set);
-		    // }
-
-		    {
-			HLS_DEFINE_PROTOCOL("flush-way-protocol");
-			wait();
-		    }
-
-		    while (flush_way < L2_WAYS) {
-		    
 #ifdef L2_DEBUG
-			flush_way_dbg.write(flush_way);
-			flush_set_dbg.write(flush_set);
+            flush_way_dbg.write(flush_way);
+            flush_set_dbg.write(flush_set);
 #endif
+            if ((state_buf[flush_way] != INVALID) &&
+                (is_flush_all || hprot_buf[flush_way])) {
 
-			// FLUSH_LOOP;
+                reqs_peek_flush(flush_set, reqs_hit_i);
 
-			if (l2_fwd_in.nb_can_get() || reqs_cnt == 0) {
+                addr_t addr_tmp = (tag_buf[flush_way] << L2_TAG_RANGE_LO) | (flush_set << SET_RANGE_LO);
 
-			    incoming_fwd = true;
+                addr_breakdown_t addr_br;
+                addr_br.breakdown(addr_tmp);
 
-			    break;
+                line_addr_t line_addr_tmp = (tag_buf[flush_way] << L2_SET_BITS) | (flush_set);
 
- 			} else if ((state_buf[flush_way] != INVALID) && 
-			    (is_flush_all || hprot_buf[flush_way])) {
+                states.port1[0][(flush_set << L2_WAY_BITS) + flush_way] = INVALID;
 
-			    // {
-			    // 	HLS_DEFINE_PROTOCOL("flush-way-protocol");
-			    // 	wait();
-			    // }
+                unstable_state_t state_tmp;
+                coh_msg_t coh_msg_tmp;
 
-			    reqs_peek_flush(flush_set, reqs_hit_i);
+                switch (state_buf[flush_way]) {
 
-			    addr_t addr_tmp = (tag_buf[flush_way] << L2_TAG_RANGE_LO) | 
-				(flush_set << SET_RANGE_LO);
-			    
-			    addr_breakdown_t addr_br;
-			    addr_br.breakdown(addr_tmp);
+                case SHARED :
+                    coh_msg_tmp = REQ_PUTS;
+                    state_tmp = SIA;
+                    break;
 
-			    line_addr_t line_addr_tmp = (tag_buf[flush_way] << L2_SET_BITS) | 
-				(flush_set);
+                case EXCLUSIVE :
+                    coh_msg_tmp = REQ_PUTS;
+                    state_tmp = MIA;
+                    break;
 
-			    states.port1[0][(flush_set << L2_WAY_BITS) + flush_way] = INVALID;
+                case MODIFIED :
+                    coh_msg_tmp = REQ_PUTM;
+                    state_tmp = MIA;
+                    break;
 
-			    unstable_state_t state_tmp;
-			    coh_msg_t coh_msg_tmp;
+                default :
+                    EVICT_DEFAULT;
+                }
 
-			    switch (state_buf[flush_way]) {
+                fill_reqs(0, addr_br, 0, flush_way, 0, state_tmp,
+                          0, 0, line_buf[flush_way], reqs_hit_i);
 
-			    case SHARED :
-				coh_msg_tmp = REQ_PUTS;
-				state_tmp = SIA;
-				break;
+                send_req_out(coh_msg_tmp, 0, line_addr_tmp,
+                             line_buf[flush_way]);
+            }
+            flush_way++;
 
-			    case EXCLUSIVE :
-				coh_msg_tmp = REQ_PUTS;
-				state_tmp = MIA;
-				break;
+	} else if (do_cpu_req) { // assuming HPROT cacheable
 
-			    case MODIFIED :
-				coh_msg_tmp = REQ_PUTM;
-				state_tmp = MIA;
-				break;
-
-			    default :
-				EVICT_DEFAULT;
-			    }
-
-			    fill_reqs(0, addr_br, 0, flush_way, 0, state_tmp, 
-				      0, 0, line_buf[flush_way], reqs_hit_i);
-
-			    send_req_out(coh_msg_tmp, 0, line_addr_tmp, 
-					 line_buf[flush_way]);
-			}
-			flush_way++;
-		    }
-
-		    if (incoming_fwd)
-			break;
-
-		    flush_set++;
-		    flush_way = 0;
-		}
-
-		if (flush_set == L2_SETS){
-		    FLUSH_END;
-		
-		    flush_set = 0;
-		    flush_way = 0;
-
-		    ongoing_flush = false;
-
-		    flush_done.write(true);
-		    wait();
-		    flush_done.write(false);
-		}
-	    }
-
-	} else if ((l2_cpu_req.nb_can_get() || set_conflict) && 
-		   !evict_stall && (reqs_cnt != 0 || ongoing_atomic)) { // assuming HPROT cacheable
-
-	    l2_cpu_req_t cpu_req;
 	    addr_breakdown_t addr_br;
 	    sc_uint<REQS_BITS> reqs_hit_i;
-
-	    if (!set_conflict) {
-		get_cpu_req(cpu_req);
-	    } else {
-		cpu_req = cpu_req_conflict;
-	    }
 
 	    addr_br.breakdown(cpu_req.addr);
 
@@ -859,10 +841,7 @@ void l2::ctrl()
 	evict_way_dbg.write(evict_way);
 #endif
 
-	// {
-	//     HLS_DEFINE_PROTOCOL("end-of-main-protocol");
-	    wait();
-	// }
+        wait();
     }
     /* 
      * End of main loop
@@ -1059,7 +1038,7 @@ bool l2::get_flush()
 {
     GET_FLUSH;
     
-    bool flush_tmp;
+    bool flush_tmp = false;
 
     // is_flush_all == 0 -> flush data, not instructions
     // is_flush_all == 1 -> flush data and instructions

@@ -46,7 +46,7 @@
 
 #define GET_FLUSH							\
     if (RPT_RTL) CACHE_REPORT_TIME(sc_time_stamp(), "Get flush.")
-    // HLS_DEFINE_PROTOCOL("l2-get-flush-protocol");
+    // HLS_DEFINE_PROTOCOL("l2-get-flush-protocol")
     // bookmark_tmp |= BM_GET_FLUSH;			
 
 // #define RSP_WHILE_FLUSHING						
@@ -56,8 +56,8 @@
 /* Output messages */
 
 #define SEND_REQ_OUT							\
-    if (RPT_RTL) CACHE_REPORT_TIME(sc_time_stamp(), "Send req out.")
-    // HLS_DEFINE_PROTOCOL("l2-send-req-out-protocol");
+    if (RPT_RTL) CACHE_REPORT_TIME(sc_time_stamp(), "Send req out.");   \
+    HLS_DEFINE_PROTOCOL("l2-send-req-out-protocol")
     // bookmark_tmp |= BM_SEND_REQ_OUT;			
 
 #define SEND_RD_RSP							\
@@ -71,8 +71,8 @@
     // bookmark_tmp |= BM_SEND_INVAL;			
 
 #define SEND_RSP_OUT							\
-    if (RPT_RTL) CACHE_REPORT_TIME(sc_time_stamp(), "Send rsp out.")
-    // HLS_DEFINE_PROTOCOL("l2-send-rsp-out-protocol");
+    if (RPT_RTL) CACHE_REPORT_TIME(sc_time_stamp(), "Send rsp out.");   \
+    HLS_DEFINE_PROTOCOL("l2-send-rsp-out-protocol")
     // bookmark_tmp |= BM_SEND_RSP_OUT;			
 
 /* Buffered lines */
