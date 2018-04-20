@@ -2,14 +2,6 @@
 
 #define DRV_NAME	"esp_cache"
 
-#define ESP_CACHE_REG_CMD	0x00
-#define ESP_CACHE_REG_STATUS	0x04
-
-#define ESP_CACHE_CMD_RESET_BIT	0
-#define ESP_CACHE_CMD_FLUSH_BIT	1
-
-#define ESP_CACHE_STATUS_DONE_BIT 0
-
 static DEFINE_SPINLOCK(esp_cache_list_lock);
 static LIST_HEAD(esp_cache_list);
 
@@ -41,7 +33,7 @@ static irqreturn_t esp_cache_irq(int irq, void *dev)
 	u32 satus_reg;
 
 	satus_reg = ioread32be(esp_cache->iomem + ESP_CACHE_REG_STATUS);
-	satus_reg &= ESP_CACHE_STATUS_DONE_BIT;
+	satus_reg &= ESP_CACHE_STATUS_DONE_MASK;
 
 	if (satus_reg) {
 		iowrite32be(0x0, esp_cache->iomem + ESP_CACHE_REG_CMD);
