@@ -39,7 +39,7 @@ if {[lsearch $fpga_techs $TECH] >= 0} {
 }
 if {[lsearch $asic_techs $TECH] >= 0} {
     set_attr verilog_files "$TECH_PATH/verilog/*v $TECH_PATH/mem/*v"
-    set LIB_PATH "$TECH_PATH/lib"
+    set LIB_PATH "$TECH_PATH/lib/1p0v/"
     set LIB_NAME "ibm32soi_hvt_1p0v.lib"
     use_tech_lib "$LIB_PATH/$LIB_NAME"
 
@@ -63,8 +63,6 @@ set_attr lsb_trimming             true
 #
 #set_attr sched_effort to get lowest possible latency
 set_attr sched_asap on
-set_attr sched_aggressive_1 on
-set_attr sched_effort low
 set_attr sharing_effort_parts low
 set_attr sharing_effort_regs low
 
