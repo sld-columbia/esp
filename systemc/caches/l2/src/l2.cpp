@@ -8,16 +8,31 @@
 
 void l2::ctrl()
 {
-    bool is_flush_all = true;
 
-    is_to_req[0] = 1;
-    is_to_req[1] = 0;
+    bool is_flush_all;
+    {
+        L2_RESET;
 
-    // Reset all signals and channels
-    this->reset_io();
+        is_flush_all = true;
+        is_to_req[0] = 1;
+        is_to_req[1] = 0;
 
-    // Reset state memory
-    this->reset_states();
+        // Reset all signals and channels
+        reset_io();
+
+        // Reset state memory
+        wait();
+        for (int i=0; i<L2_SETS; i++) { // do not unroll
+            for (int j=0; j<L2_WAYS; j++) { // do not unroll
+                {
+                    wait();
+                    states.port1[0][(i << L2_WAY_BITS) + j] = INVALID;
+                }
+            }
+        }
+
+        wait();
+    }
 
     // Main loop
     while(true) {
@@ -348,7 +363,6 @@ void l2::ctrl()
 			for (int i = 0; i < 2; i++) {
 			    send_rsp_out(RSP_DATA, fwd_in.req_id, is_to_req[i], 
 					 fwd_in.addr, reqs[reqs_hit_i].line);
-			    wait();
 			}
 
 			reqs[reqs_hit_i].state = SIA;
@@ -396,7 +410,6 @@ void l2::ctrl()
 		    for (int i = 0; i < 2; i++) {
 			send_rsp_out(RSP_DATA, fwd_in.req_id, is_to_req[i], 
 				     fwd_in.addr, line_buf[way_hit]);
-			wait();
 		    }
 
 		    states.port1[0][(line_br.set << L2_WAY_BITS) + way_hit] = SHARED;
@@ -841,7 +854,9 @@ void l2::ctrl()
 	evict_way_dbg.write(evict_way);
 #endif
 
+#ifndef STRATUS_HLS
         wait();
+#endif
     }
     /* 
      * End of main loop
@@ -854,7 +869,6 @@ void l2::ctrl()
 
 inline void l2::reset_io()
 {
-    L2_RESET_IO;
 
     /* Reset put-get channels */
     l2_cpu_req.reset_get();
@@ -994,22 +1008,8 @@ inline void l2::reset_io()
     ongoing_flush = false;
     flush_set = 0;
     flush_way = 0;
-
-    wait();
 }
 
-inline void l2::reset_states()
-{
-    for (int i=0; i<L2_SETS; i++) { // do not unroll
-	for (int j=0; j<L2_WAYS; j++) { // do not unroll
-	    {
-		RESET_STATES_LOOP;
-		states.port1[0][(i << L2_WAY_BITS) + j] = INVALID;
-		wait();
-	    }
-	}
-    }
-}
 
 /* Functions to receive input messages */
 

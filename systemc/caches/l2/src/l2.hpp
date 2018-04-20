@@ -143,7 +143,6 @@ public:
 
     /* Functions for the reset phase */
     inline void reset_io();
-    inline void reset_states();
 
     /* Functions to receive input messages */
     void get_cpu_req(l2_cpu_req_t &cpu_req);

@@ -13,11 +13,8 @@
 
 /* Reset */
 
-#define L2_RESET_IO				\
-    HLS_DEFINE_PROTOCOL("l2-reset-io-protocol")
-
-#define RESET_STATES_LOOP				\
-    HLS_DEFINE_PROTOCOL("l2-reset-states-protocol")
+#define L2_RESET				\
+    HLS_DEFINE_PROTOCOL("l2-reset")
 
 /* Debug */
 
