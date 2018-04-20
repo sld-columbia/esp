@@ -67,6 +67,10 @@ int main(int argc, char * argv[])
 		unsigned *mem;
 		unsigned errors = 0;
 		int scatter_gather = 1;
+		int coherence;
+
+		// Get coherence type
+		coherence = ioread32(dev, COHERENCE_REG);
 
 		sort_batch_max = ioread32(dev, SORT_BATCH_MAX_REG);
 		sort_len_min = ioread32(dev, SORT_LEN_MIN_REG);
@@ -194,6 +198,9 @@ int main(int argc, char * argv[])
 		}
 		iowrite32(dev, SORT_LEN_REG, SORT_LEN);
 		iowrite32(dev, SORT_BATCH_REG, SORT_BATCH);
+
+		// Flush for non-coherent DMA
+		esp_flush(coherence);
 
 		// Start accelerator
 		printf("  Start..\n");
