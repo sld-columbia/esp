@@ -2,6 +2,7 @@
 #define ESP_H
 
 #include <contig_alloc.h>
+#include <esp_accelerator.h>
 #include <esp_cache.h>
 #ifdef __KERNEL__
 #include <linux/ioctl.h>
@@ -27,8 +28,6 @@ struct esp_access {
 #include <linux/module.h>
 #include <linux/mutex.h>
 #include <linux/cdev.h>
-
-enum accelerator_coherence {ACC_COH_NONE = 0, ACC_COH_LLC, ACC_COH_FULL};
 
 struct esp_device;
 

@@ -9,7 +9,6 @@
 #include <asm/uaccess.h>
 #include <asm/cacheflush.h>
 
-#include <esp_accelerator.h>
 #include <esp.h>
 
 #define PFX "esp: "
