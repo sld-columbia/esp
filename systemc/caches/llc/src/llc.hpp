@@ -133,6 +133,9 @@ public:
 	// Flatten arrays
 	LLC_FLATTEN_REGS;
 
+	// Debug signals
+	PRESERVE_SIGNALS;
+
 	// Clock binding for memories
 	tags.clk(this->clk);
 	states.clk(this->clk);

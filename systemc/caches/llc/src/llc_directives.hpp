@@ -232,7 +232,7 @@
     HLS_PRESERVE_SIGNAL(dbg_evict_way_not_sd, true);			\
     HLS_PRESERVE_SIGNAL(dbg_evict_addr, true);				\
     HLS_PRESERVE_SIGNAL(dbg_flush_set, true);				\
-    HLS_PRESERVE_SIGNAL(dbg_flush_way;   , true)			\
+    HLS_PRESERVE_SIGNAL(dbg_flush_way, true);				\
     HLS_PRESERVE_SIGNAL(dbg_req_stall, true);				\
     HLS_PRESERVE_SIGNAL(dbg_req_in_stalled_valid, true);		\
     HLS_PRESERVE_SIGNAL(dbg_req_in_stalled, true);			\
@@ -242,13 +242,13 @@
     HLS_PRESERVE_SIGNAL(dbg_dma_length, true);				\
     HLS_PRESERVE_SIGNAL(dbg_dma_done, true);				\
     HLS_PRESERVE_SIGNAL(dbg_dma_addr, true);				\
-    HLS_PRESERVE_SIGNAL(dbg_tag_buf[LLC_WAYS], true);			\
-    HLS_PRESERVE_SIGNAL(dbg_state_buf[LLC_WAYS], true);			\
-    HLS_PRESERVE_SIGNAL(dbg_hprot_buf[LLC_WAYS], true);			\
-    HLS_PRESERVE_SIGNAL(dbg_line_buf[LLC_WAYS], true);			\
-    HLS_PRESERVE_SIGNAL(dbg_sharers_buf[LLC_WAYS], true);		\
-    HLS_PRESERVE_SIGNAL(dbg_owner_buf[LLC_WAYS], true);			\
-    HLS_PRESERVE_SIGNAL(dbg_dirty_bit_buf[LLC_WAYS], true);		\
+    HLS_PRESERVE_SIGNAL(dbg_tag_buf, true);				\
+    HLS_PRESERVE_SIGNAL(dbg_state_buf, true);				\
+    HLS_PRESERVE_SIGNAL(dbg_hprot_buf, true);				\
+    HLS_PRESERVE_SIGNAL(dbg_line_buf, true);				\
+    HLS_PRESERVE_SIGNAL(dbg_sharers_buf, true);				\
+    HLS_PRESERVE_SIGNAL(dbg_owner_buf, true);				\
+    HLS_PRESERVE_SIGNAL(dbg_dirty_bit_buf, true);			\
     HLS_PRESERVE_SIGNAL(dbg_evict_way_buf, true)
 
 #else

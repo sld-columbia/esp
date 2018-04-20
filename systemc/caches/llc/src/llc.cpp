@@ -384,10 +384,10 @@ void llc::ctrl()
 
 			state_buf[way] = INVALID;
 
-			// {
-			//     HLS_DEFINE_PROTOCOL("llc-req-in-after-evict");
-			//     wait();
-			// }
+			{
+			    HLS_DEFINE_PROTOCOL("llc-req-in-after-evict");
+			    wait();
+			}
 		    }
 
 // 		if (evict) {
