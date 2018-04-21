@@ -742,32 +742,32 @@ void llc_tb::llc_test()
 
     op(REQ_GETS, VALID, 0, addr1, null, 0, line_of_addr(addr1.line), 0, 0, 0, 0, INSTR);
 
-    // go to an empty set and fill with SD states, sharers l2#12
+    // // go to an empty set and fill with SD states, sharers l2#12
 
-    addr_base.set_incr(1);
-    addr1 = addr_base;
-    evict_way = 0;
+    // addr_base.set_incr(1);
+    // addr1 = addr_base;
+    // evict_way = 0;
 
-    for (int i = 0; i < LLC_WAYS; i++) {
-	op(REQ_GETS, INVALID, 0, addr1, null, 0, line_of_addr(addr1.line), 0, 0, 1, 0, DATA);
-	op(REQ_GETS, EXCLUSIVE, 0, addr1, null, 0, line_of_addr(addr1.line), 0, 0, 2, 1, DATA);
-	addr1.tag_incr(1);
-    }
+    // for (int i = 0; i < LLC_WAYS; i++) {
+    //     op(REQ_GETS, INVALID, 0, addr1, null, 0, line_of_addr(addr1.line), 0, 0, 1, 0, DATA);
+    //     op(REQ_GETS, EXCLUSIVE, 0, addr1, null, 0, line_of_addr(addr1.line), 0, 0, 2, 1, DATA);
+    //     addr1.tag_incr(1);
+    // }
 
-    // DMA_Read evicts SD line, dirty (can't be not dirty)
-    regular_evict_prep(addr_base, addr1, addr2, evict_way);
+    // // DMA_Read evicts SD line, dirty (can't be not dirty)
+    // regular_evict_prep(addr_base, addr1, addr2, evict_way);
 
-    op_dma(DMA_READ, SHARED, EVICT, DIRTY, addr1, addr2, 1, line_of_addr(addr1.line), 
-	   line_of_addr(addr2.line), 6, 1, 1);
+    // op_dma(DMA_READ, SHARED, EVICT, DIRTY, addr1, addr2, 1, line_of_addr(addr1.line), 
+    //        line_of_addr(addr2.line), 6, 1, 1);
 
-    op(REQ_GETS, VALID, 0, addr1, null, 0, line_of_addr(addr1.line), 0, 0, 1, 0, DATA);
-    op(REQ_GETS, EXCLUSIVE, 0, addr1, null, 0, line_of_addr(addr1.line), 0, 0, 2, 1, DATA);
+    // op(REQ_GETS, VALID, 0, addr1, null, 0, line_of_addr(addr1.line), 0, 0, 1, 0, DATA);
+    // op(REQ_GETS, EXCLUSIVE, 0, addr1, null, 0, line_of_addr(addr1.line), 0, 0, 2, 1, DATA);
  
-    // DMA_Write evicts SD line, dirty (can't be not dirty)
-    regular_evict_prep(addr_base, addr1, addr2, evict_way);
+    // // DMA_Write evicts SD line, dirty (can't be not dirty)
+    // regular_evict_prep(addr_base, addr1, addr2, evict_way);
 
-    op_dma(DMA_WRITE, SHARED, EVICT, DIRTY, addr1, addr2, line_of_addr(addr1.line)*2, 
-	   1, line_of_addr(addr2.line)*2, 6, 1, 1);
+    // op_dma(DMA_WRITE, SHARED, EVICT, DIRTY, addr1, addr2, line_of_addr(addr1.line)*2, 
+    //        1, line_of_addr(addr2.line)*2, 6, 1, 1);
 
     // TODO test SD -> DMA_* -> V (with some put) -> evict V -> execute DMA_*
 
@@ -1096,10 +1096,15 @@ void llc_tb::op_dma(mix_msg_t coh_msg, llc_state_t state, bool evict, bool dirty
     line_t length;
     bool done = false;
 
-    if (coh_msg == REQ_DMA_READ_BURST)
-	length = req_line;
-    else if (coh_msg == REQ_DMA_WRITE_BURST)
+
+    if (coh_msg == REQ_DMA_READ_BURST) {
+        word_t word = req_line.range(ADDR_BITS - 1, 0).to_uint();
+        req_line = 0;
+        req_line.range(BITS_PER_LINE - 1, BITS_PER_LINE - ADDR_BITS) = word;
+	length = word;
+    } else if (coh_msg == REQ_DMA_WRITE_BURST) {
 	length = rsp_line;
+    }
 
     for (int i = 0; i < length; i++) {
 
@@ -1162,9 +1167,12 @@ void llc_tb::op_dma(mix_msg_t coh_msg, llc_state_t state, bool evict, bool dirty
 	    put_mem_rsp(rsp_line);
 	}
 
+	invack_cnt_t invack_cnt = 6;
+	invack_cnt[0] = done;
+
 	// rsp data to accelerator
 	if (coh_msg == DMA_READ)
-	    get_rsp_out(RSP_DATA_DMA, req_addr.line, rsp_line, done, 0, 0);
+	    get_rsp_out(RSP_DATA_DMA, req_addr.line, rsp_line, invack_cnt, 0, 0);
     
 	// update address to the next line (add 16 bytes)
 	req_addr.set_incr(1);
