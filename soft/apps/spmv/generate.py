@@ -23,9 +23,9 @@ n_mtx = 4
 mtx_m_file = ['inputs/in1.mtx', 'inputs/in2.mtx', 'inputs/in3.mtx', 'inputs/in4.mtx']
 mtx_data_file = ['inputs/in1.data', 'inputs/in2.data', 'inputs/in3.data', 'inputs/in4.data']
 mtx_chk_file = ['outputs/chk1.data', 'outputs/chk2.data', 'outputs/chk3.data', 'outputs/chk4.data']
-mtx_n_rows = [100, 1000, 10000, 100000]
-mtx_n_cols = [100, 1000, 10000, 100000]
-mtx_max_val = 126
+mtx_n_rows = [128, 1024, 16384, 65536]
+mtx_n_cols = [128, 1024, 16384, 65536]
+mtx_max_val = 15
 mtx_max_non_null = [4, 8, 16, 32]
 
 # Write list of matrices to create
@@ -94,7 +94,7 @@ for m in range(0, n_mtx):
   input_size = 4 * (n_rows + len(all_cols)) + 8 * (n_cols + len(all_vals))
 
   fp.write("%% Rectangular sparse real valued matrix: row col value.\n")
-  fp.write("%d %d %d %d\n" % (n_rows, n_cols, len(all_vals), input_size))
+  fp.write("%d %d %d %d\n" % (n_rows, n_cols, max_non_null, len(all_vals)))
 
   for i in range(0, len(all_rows)):
 
@@ -106,6 +106,8 @@ for m in range(0, n_mtx):
 
   fp = open(data_file, "w+")
   
+  fp.write("%d %d %d %d\n" % (n_rows, n_cols, max_non_null, len(all_vals)))
+
   # Write array of sparse matrix values
 
   fp.write("%%\n")

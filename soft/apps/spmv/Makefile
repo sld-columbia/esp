@@ -10,10 +10,10 @@ $(KERN): $(FILES) harness.c
 	$(CC) $(CFLAGS) -o $(KERN) $(SRCS) harness.c
 
 run: $(KERN)
-	./$(KERN) 1 256 100 100; \
-	./$(KERN) 2 4609 1000 1000; \
-	./$(KERN) 3 84718 10000 10000; \
-	./$(KERN) 4 1654146 100000 100000
+	./$(KERN) 1 315 128 128; \
+	./$(KERN) 2 4701 1024 1024; \
+	./$(KERN) 3 138848 16384 16384; \
+	./$(KERN) 4 1077480 65536 65536
 
 generate:
 	python3.6 generate.py
