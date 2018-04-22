@@ -334,7 +334,7 @@ void llc::ctrl()
 		    }
 
 #ifdef LLC_DEBUG
-		    dbg_length.write(length);
+		    dbg_length.write(dma_read_length);
 		    dbg_dma_length.write(dma_length);
 		    dbg_dma_done.write(dma_done);
 		    dbg_dma_addr.write(addr);
