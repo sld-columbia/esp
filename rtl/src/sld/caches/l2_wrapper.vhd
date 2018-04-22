@@ -553,11 +553,11 @@ begin  -- architecture rtl of l2_wrapper
 
       when idle =>
         flush_due <= '0';
-        if flush = '1' then
-          flush_state_next <= flush_issue;
-        else
-          flush_state_next <= idle;
-        end if;
+        --if flush = '1' then
+        --  flush_state_next <= flush_issue;
+        --else
+        flush_state_next <= idle;
+        --end if;
 
       when flush_issue =>
         flush_due <= '1';
