@@ -343,11 +343,11 @@ architecture rtl of l2_wrapper is
 
   attribute mark_debug : string;
 
-  -- attribute mark_debug of ahbs_reg_state   : signal is "true";
-  -- attribute mark_debug of ahbm_reg_state   : signal is "true";
-  -- attribute mark_debug of req_reg_state    : signal is "true";
-  -- attribute mark_debug of rsp_out_reg_state    : signal is "true";
-  -- attribute mark_debug of rsp_in_reg_state : signal is "true";
+   attribute mark_debug of ahbs_reg_state   : signal is "true";
+   attribute mark_debug of ahbm_reg_state   : signal is "true";
+   attribute mark_debug of req_reg_state    : signal is "true";
+   attribute mark_debug of rsp_out_reg_state    : signal is "true";
+   attribute mark_debug of rsp_in_reg_state : signal is "true";
 
   attribute mark_debug of flush_due   : signal is "true";
   attribute mark_debug of flush_state : signal is "true";
@@ -360,7 +360,7 @@ architecture rtl of l2_wrapper is
   -- attribute mark_debug of inv_fifo_data_in      : signal is "true";
   -- attribute mark_debug of inv_fifo_data_out     : signal is "true";
 
-  attribute mark_debug of ahbs_asserts : signal is "true";
+  --attribute mark_debug of ahbs_asserts : signal is "true";
   -- attribute mark_debug of ahbm_asserts   : signal is "true";
   -- attribute mark_debug of req_asserts    : signal is "true";
   -- attribute mark_debug of rsp_out_asserts    : signal is "true";
@@ -807,7 +807,7 @@ begin  -- architecture rtl of l2_wrapper
 
         cpu_req_data_cpu_msg <= ahbsi.hwrite & ahbsi.hmastlock;
         cpu_req_data_hsize   <= ahbsi.hsize;
-        cpu_req_data_hprot   <= ahbsi.hprot(HPROT_WIDTH - 1 downto 0);
+        cpu_req_data_hprot   <= '0' & ahbsi.hprot(0);
         cpu_req_data_addr    <= ahbsi.haddr;
 
         reg.cpu_msg := ahbsi.hwrite & ahbsi.hmastlock;
