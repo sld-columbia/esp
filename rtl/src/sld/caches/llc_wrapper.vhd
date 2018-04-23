@@ -143,6 +143,11 @@ architecture rtl of llc_wrapper is
   --signal bookmark   : llc_bookmark_t;
   --signal custom_dbg : custom_dbg_t;
 
+  -- statistics
+  signal llc_stats_ready : std_ulogic;
+  signal llc_stats_valid : std_ulogic;
+  signal llc_stats_data  : std_ulogic;
+  
   --signal led_wrapper_asserts : std_ulogic;
 
   constant nl2_bits : integer := log2(nl2);
@@ -395,6 +400,10 @@ architecture rtl of llc_wrapper is
   attribute mark_debug of llc_mem_req_data_addr   : signal is "true";
   attribute mark_debug of llc_mem_req_data_line   : signal is "true";
 
+  attribute mark_debug of llc_stats_ready         : signal is "true";
+  attribute mark_debug of llc_stats_valid         : signal is "true";
+  attribute mark_debug of llc_stats_data          : signal is "true";
+
   --attribute mark_debug of asserts    : signal is "true";
   --attribute mark_debug of bookmark   : signal is "true";
   --attribute mark_debug of custom_dbg : signal is "true";
@@ -530,6 +539,8 @@ begin  -- architecture rtl
   ahbmo.hindex  <= hindex;
   ahbmo.hburst  <= HBURST_INCR;
 
+  llc_stats_ready <= '1';
+  
 -------------------------------------------------------------------------------
 -- State update for all the FSMs
 -------------------------------------------------------------------------------
@@ -1551,8 +1562,12 @@ begin  -- architecture rtl
       llc_mem_req_data_hsize  => llc_mem_req_data_hsize,
       llc_mem_req_data_hprot  => llc_mem_req_data_hprot,
       llc_mem_req_data_addr   => llc_mem_req_data_addr,
-      llc_mem_req_data_line   => llc_mem_req_data_line
+      llc_mem_req_data_line   => llc_mem_req_data_line,
 
+      -- statistics
+      llc_stats_ready         => llc_stats_ready,
+      llc_stats_valid         => llc_stats_valid,
+      llc_stats_data          => llc_stats_data
       );
 
 -------------------------------------------------------------------------------

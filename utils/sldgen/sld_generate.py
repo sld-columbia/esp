@@ -203,6 +203,7 @@ def write_cache_interface(f, cac, is_llc):
     f.write("      llc_fwd_out_ready           : in std_ulogic;\n")
     f.write("      llc_mem_req_ready           : in std_ulogic;\n")
     f.write("      llc_rst_tb_done_ready       : in std_ulogic;\n")
+    f.write("      llc_stats_ready             : in std_ulogic;\n")
     f.write("      llc_req_in_ready            : out std_ulogic;\n")
     f.write("      llc_rsp_in_ready            : out std_ulogic;\n")
     f.write("      llc_mem_rsp_ready           : out std_ulogic;\n")
@@ -225,6 +226,8 @@ def write_cache_interface(f, cac, is_llc):
     f.write("      llc_mem_req_data_hprot      : out std_logic_vector(1 downto 0);\n")
     f.write("      llc_mem_req_data_addr       : out std_logic_vector(27 downto 0);\n")
     f.write("      llc_mem_req_data_line       : out std_logic_vector(127 downto 0);\n")
+    f.write("      llc_stats_valid             : out std_ulogic;\n")
+    f.write("      llc_stats_data              : out std_ulogic;\n")
     f.write("      llc_rst_tb_done_valid       : out std_ulogic;\n")
     f.write("      llc_rst_tb_done_data        : out std_ulogic\n")
   else:
@@ -251,6 +254,7 @@ def write_cache_interface(f, cac, is_llc):
     f.write("      l2_inval_ready            : in  std_ulogic;\n")
     f.write("      l2_req_out_ready          : in  std_ulogic;\n")
     f.write("      l2_rsp_out_ready          : in  std_ulogic;\n")
+    f.write("      l2_stats_ready            : in  std_ulogic;\n")
     f.write("      flush_done                : out std_ulogic;\n")
     f.write("      l2_cpu_req_ready          : out std_ulogic;\n")
     f.write("      l2_fwd_in_ready           : out std_ulogic;\n")
@@ -270,7 +274,9 @@ def write_cache_interface(f, cac, is_llc):
     f.write("      l2_rsp_out_data_req_id    : out std_logic_vector(2 downto 0);\n")
     f.write("      l2_rsp_out_data_to_req    : out std_logic_vector(1 downto 0);\n")
     f.write("      l2_rsp_out_data_addr      : out std_logic_vector(27 downto 0);\n")
-    f.write("      l2_rsp_out_data_line      : out std_logic_vector(127 downto 0)\n")
+    f.write("      l2_rsp_out_data_line      : out std_logic_vector(127 downto 0);\n")
+    f.write("      l2_stats_valid            : out std_ulogic;\n")
+    f.write("      l2_stats_data             : out std_ulogic\n")
 
 
 def write_cache_port_map(f, cac, is_llc):
@@ -297,6 +303,7 @@ def write_cache_port_map(f, cac, is_llc):
     f.write("      llc_fwd_out_ready           => llc_fwd_out_ready,\n")
     f.write("      llc_mem_req_ready           => llc_mem_req_ready,\n")
     f.write("      llc_rst_tb_done_ready       => llc_rst_tb_done_ready,\n")
+    f.write("      llc_stats_ready             => llc_stats_ready,\n")
     f.write("      llc_req_in_ready            => llc_req_in_ready,\n")
     f.write("      llc_rsp_in_ready            => llc_rsp_in_ready,\n")
     f.write("      llc_mem_rsp_ready           => llc_mem_rsp_ready,\n")
@@ -319,6 +326,8 @@ def write_cache_port_map(f, cac, is_llc):
     f.write("      llc_mem_req_data_hprot      => llc_mem_req_data_hprot,\n")
     f.write("      llc_mem_req_data_addr       => llc_mem_req_data_addr,\n")
     f.write("      llc_mem_req_data_line       => llc_mem_req_data_line,\n")
+    f.write("      llc_stats_valid             => llc_stats_valid,\n")
+    f.write("      llc_stats_data              => llc_stats_data,\n")    
     f.write("      llc_rst_tb_done_valid       => llc_rst_tb_done_valid,\n")
     f.write("      llc_rst_tb_done_data        => llc_rst_tb_done_data\n")
   else:
@@ -345,6 +354,7 @@ def write_cache_port_map(f, cac, is_llc):
     f.write("      l2_inval_ready            => l2_inval_ready,\n")
     f.write("      l2_req_out_ready          => l2_req_out_ready,\n")
     f.write("      l2_rsp_out_ready          => l2_rsp_out_ready,\n")
+    f.write("      l2_stats_ready            => l2_stats_ready,\n")
     f.write("      flush_done                => flush_done,\n")
     f.write("      l2_cpu_req_ready          => l2_cpu_req_ready,\n")
     f.write("      l2_fwd_in_ready           => l2_fwd_in_ready,\n")

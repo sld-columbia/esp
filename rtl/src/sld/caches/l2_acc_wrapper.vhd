@@ -147,6 +147,10 @@ architecture rtl of l2_acc_wrapper is
   --signal bookmark               : bookmark_t;
   --signal custom_dbg             : custom_dbg_t;
   signal flush_done             : std_ulogic;
+  -- statistics
+  signal stats_ready            : std_ulogic;
+  signal stats_valid            : std_ulogic;
+  signal stats_data             : std_ulogic;
 
   -------------------------------------------------------------------------------
   -- Flush FSM signals
@@ -379,7 +383,11 @@ architecture rtl of l2_acc_wrapper is
   --attribute mark_debug of bookmark               : signal is "true";
   -- attribute mark_debug of custom_dbg             : signal is "true";
   attribute mark_debug of flush_done             : signal is "true";
-  
+  -- statistics
+  attribute mark_debug of stats_ready            : signal is "true";
+  attribute mark_debug of stats_valid            : signal is "true";
+  attribute mark_debug of stats_data             : signal is "true";
+
 begin  -- architecture rtl of l2_acc_wrapper
 
   -----------------------------------------------------------------------------
@@ -441,12 +449,14 @@ begin  -- architecture rtl of l2_acc_wrapper
       l2_rsp_in_data_addr       => rsp_in_data_addr,
       l2_rsp_in_data_line       => rsp_in_data_line,
       l2_rsp_in_data_invack_cnt => rsp_in_data_invack_cnt,
-      flush_done                => flush_done
-
+      flush_done                => flush_done,
       -- debug
       --asserts                   => asserts,
       --bookmark                  => bookmark,
       --custom_dbg                => custom_dbg,
+      l2_stats_ready            => stats_ready,
+      l2_stats_valid            => stats_valid,
+      l2_stats_data             => stats_data
       );
     
 -------------------------------------------------------------------------------
@@ -457,7 +467,8 @@ begin  -- architecture rtl of l2_acc_wrapper
   inval_ready          <= '1'; -- inval not used by accelerators
   cpu_req_data_hsize   <= "010";
   cpu_req_data_hprot   <= "01";
-  
+  stats_ready          <= '1';
+
 -------------------------------------------------------------------------------
 -- State update for all the FSMs
 -------------------------------------------------------------------------------
