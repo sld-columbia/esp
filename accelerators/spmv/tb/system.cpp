@@ -218,15 +218,21 @@ bool system_t::check_error_threshold(float out, float gold)
 
     // return an error if out is Infinite or NaN
     
-    if (isinf(out) || isnan(out)) { return true; }
+    if (isinf(out) || isnan(out)) { 
+	ESP_REPORT_INFO("Something wrong");
+	return true;
+    }
 
     if (gold != 0)
         error = fabs((gold - out) / gold);
-    else
+    else if (out != 0)
         error = fabs((out - gold) / out);
-
-    if (gold >= 1)
-	return (error > MAX_REL_ERROR);
     else
-	return (error > MAX_ABS_ERROR);
+	error = 0;
+
+    if (fabs(gold) >= 1) {
+	return (error > MAX_REL_ERROR);
+    } else {
+	return (fabs(gold - out) > MAX_ABS_ERROR);
+    }
 }
