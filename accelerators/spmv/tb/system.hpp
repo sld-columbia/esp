@@ -14,7 +14,7 @@
 #include "spmv_wrap.h"
 
 #define REPORT_THRESHOLD 10
-#define MAX_REL_ERROR 0.001
+#define MAX_REL_ERROR 0.003
 #define MAX_ABS_ERROR 0.05
 #define IN_FILE "../tb/inputs/in.data"
 #define CHK_FILE "../tb/outputs/chk.data"
