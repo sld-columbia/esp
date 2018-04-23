@@ -75,6 +75,10 @@ public:
     nb_put_initiator<l2_req_out_t> l2_req_out;
     nb_put_initiator<l2_rsp_out_t> l2_rsp_out;
 
+#ifdef STATS_ENABLE
+    put_initiator<bool> l2_stats;
+#endif
+
     // Local memory
     EXP_MEM_TYPE_STRING(l2, tags, L2_SETS, L2_WAYS)<l2_tag_t, L2_LINES> tags;
     EXP_MEM_TYPE_STRING(l2, states, L2_SETS, L2_WAYS)<state_t, L2_LINES> states;
@@ -108,6 +112,9 @@ public:
 	, l2_inval("l2_inval")
 	, l2_req_out("l2_req_out")
 	, l2_rsp_out("l2_rsp_out")
+#ifdef STATS_ENABLE
+	, l2_stats("l2_stats")  
+#endif
 	{
 	    // Cache controller process
 	    SC_CTHREAD(ctrl, clk.pos());
@@ -123,6 +130,9 @@ public:
 	    l2_inval.clk_rst(clk, rst);
 	    l2_req_out.clk_rst(clk, rst);
 	    l2_rsp_out.clk_rst(clk, rst);
+#ifdef STATS_ENABLE
+	    l2_stats.clk_rst(clk, rst);
+#endif
 
 	    // Flatten arrays
 	    L2_FLATTEN_REGS;
@@ -174,6 +184,9 @@ public:
     void reqs_peek_flush(l2_set_t set, sc_uint<REQS_BITS> &reqs_i);
     bool reqs_peek_fwd(line_breakdown_t<l2_tag_t, l2_set_t> line_br, sc_uint<REQS_BITS> &reqs_i,
 		       bool &reqs_hit, mix_msg_t coh_msg);
+#ifdef STATS_ENABLE
+    void send_stats(bool stats);
+#endif
 
     // line_t make_line_of_addr(addr_t addr); // is this needed here? not called by l2.cpp
 

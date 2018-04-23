@@ -43,6 +43,25 @@
 
 // #endif
 
+#ifdef STATS_ENABLE
+void l2_tb::get_stats()
+{
+    l2_stats_tb.reset_get();
+
+    wait();
+
+    while(true) {
+	
+	bool tmp;
+
+	l2_stats_tb.get(tmp);
+
+	wait();
+    }
+}
+#endif
+
+
 void l2_tb::l2_test()
 {
     const bool flush_partial = false;

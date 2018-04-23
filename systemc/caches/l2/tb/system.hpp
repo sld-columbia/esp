@@ -35,6 +35,10 @@ public:
     put_get_channel<l2_req_out_t>	l2_req_out_chnl;
     put_get_channel<l2_rsp_out_t>	l2_rsp_out_chnl;
 
+#ifdef STATS_ENABLE
+    put_get_channel<bool> l2_stats_chnl;
+#endif
+
     // Modules
     // L2 cache instance
     l2_wrapper	*dut;
@@ -60,6 +64,9 @@ public:
 	dut->l2_inval(l2_inval_chnl);
 	dut->l2_req_out(l2_req_out_chnl);
 	dut->l2_rsp_out(l2_rsp_out_chnl);
+#ifdef STATS_ENABLE
+	dut->l2_stats(l2_stats_chnl);
+#endif
 
 	// Binding testbench
 	tb->clk(clk);
@@ -73,6 +80,10 @@ public:
 	tb->l2_inval_tb(l2_inval_chnl);
 	tb->l2_req_out_tb(l2_req_out_chnl);
 	tb->l2_rsp_out_tb(l2_rsp_out_chnl);
+#ifdef STATS_ENABLE
+	tb->l2_stats_tb(l2_stats_chnl);
+#endif
+
     }
 };
 

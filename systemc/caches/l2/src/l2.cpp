@@ -363,6 +363,7 @@ void l2::ctrl()
 			for (int i = 0; i < 2; i++) {
 			    send_rsp_out(RSP_DATA, fwd_in.req_id, is_to_req[i], 
 					 fwd_in.addr, reqs[reqs_hit_i].line);
+			    wait();
 			}
 
 			reqs[reqs_hit_i].state = SIA;
@@ -410,6 +411,7 @@ void l2::ctrl()
 		    for (int i = 0; i < 2; i++) {
 			send_rsp_out(RSP_DATA, fwd_in.req_id, is_to_req[i], 
 				     fwd_in.addr, line_buf[way_hit]);
+			wait();
 		    }
 
 		    states.port1[0][(line_br.set << L2_WAY_BITS) + way_hit] = SHARED;
@@ -641,6 +643,11 @@ void l2::ctrl()
 		    reqs_atomic_i = reqs_hit_i;
 		    atomic_line_addr = addr_br.line_addr;
 		}
+
+
+#ifdef STATS_ENABLE
+		send_stats(tag_hit);
+#endif
 
 		if (tag_hit) {
 
@@ -879,6 +886,9 @@ inline void l2::reset_io()
     l2_inval.reset_put();
     l2_req_out.reset_put();
     l2_rsp_out.reset_put();
+#ifdef STATS_ENABLE
+    l2_stats.reset_put();
+#endif
 
     /* Reset memories */
     tags.port1.reset();
@@ -1099,6 +1109,16 @@ void l2::send_rsp_out(coh_msg_t coh_msg, cache_id_t req_id, bool to_req, line_ad
     
     l2_rsp_out.nb_put(rsp_out);
 }
+
+#ifdef STATS_ENABLE
+void l2::send_stats(bool stats)
+{
+    SEND_STATS;
+
+    l2_stats.put(stats);
+}
+#endif
+
 
 /* Functions to move around buffered lines */
 

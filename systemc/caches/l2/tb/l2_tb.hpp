@@ -35,6 +35,11 @@ public:
     get_initiator<l2_req_out_t> l2_req_out_tb;
     get_initiator<l2_rsp_out_t> l2_rsp_out_tb;
 
+#ifdef STATS_ENABLE
+    get_initiator<bool> l2_stats_tb;
+#endif
+
+
     // Constructor
     SC_CTOR(l2_tb)
     {
@@ -49,7 +54,11 @@ public:
 // 	reset_signal_is(rst, false);
 // 	// set_stack_size(0x400000);
 // #endif
-
+#ifdef STATS_ENABLE
+	SC_CTHREAD(get_stats, clk.pos());
+	reset_signal_is(rst, false);
+	// set_stack_size(0x400000);
+#endif
 	// Assign clock and reset to put_get ports
 	l2_cpu_req_tb.clk_rst (clk, rst);
 	l2_fwd_in_tb.clk_rst (clk, rst);
@@ -59,6 +68,9 @@ public:
 	l2_inval_tb.clk_rst(clk, rst);
 	l2_req_out_tb.clk_rst(clk, rst);
 	l2_rsp_out_tb.clk_rst(clk, rst);
+#ifdef STATS_ENABLE
+	l2_stats_tb.clk_rst(clk, rst);
+#endif
     }
 
     // Processes
@@ -66,6 +78,9 @@ public:
 // #ifdef L2_DEBUG
 //     void l2_debug();
 // #endif
+#ifdef STATS_ENABLE
+    void get_stats();
+#endif
 
     // Functions
     inline void reset_l2_test();
