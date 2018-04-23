@@ -187,6 +187,8 @@ package cachepackage is
       noc_xlen    : integer := 3;
       hindex_slv  : hindex_vector(0 to NAHBSLV-1);
       hindex_mst  : integer := 0;
+      pindex      : integer range 0 to NAPBSLV-1 := 6;
+      pirq        : integer                      := 4;
       local_y     : local_yx;
       local_x     : local_yx;
       mem_num     : integer := 1;
@@ -204,6 +206,8 @@ package cachepackage is
       ahbso : out ahb_slv_out_type;
       ahbmi : in  ahb_mst_in_type;
       ahbmo : out ahb_mst_out_type;
+      apbi  : in  apb_slv_in_type;
+      apbo  : out apb_slv_out_type;
       flush : in  std_ulogic;           -- flush request from CPU
 
       -- backend (cache - NoC)

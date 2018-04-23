@@ -9,6 +9,7 @@
 #define APB_PLUGNPLAY (APB_BASE_ADDR + 0xff000)
 #define NAPBSLV 32
 
+#define SLD_L2_CACHE 0x020
 #define SLD_L3_CACHE 0x021
 
 struct esp_device {

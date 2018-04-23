@@ -5,22 +5,41 @@
 void esp_flush(int coherence)
 {
 	int i;
-	int cmd;
+	const int cmd = 1 << ESP_CACHE_CMD_FLUSH_BIT;
 	struct esp_device *llcs = NULL;
+	struct esp_device *l2s = NULL;
 	int nllc = 0;
+	int nl2 = 0;
 
-	if (coherence == ACC_COH_NONE) {
+	if (coherence == ACC_COH_NONE)
 		/* Look for LLC controller */
-		cmd = 1 << ESP_CACHE_CMD_FLUSH_BIT;
 		nllc = probe(&llcs, SLD_L3_CACHE, "llc_cache");
-	}
 
 	if (coherence != ACC_COH_FULL)
-		/* Flush L2 */
+		/* Look for L2 controller */
+		nl2 = probe(&l2s, SLD_L2_CACHE, "l2_cache");
+
+	if (coherence != ACC_COH_FULL) {
+
+		/* Set L2 flush (waits for L1 to flush first) */
+		for (i = 0; i < nl2; i++) {
+			struct esp_device *l2 = &l2s[i];
+			iowrite32(l2, ESP_CACHE_REG_CMD, cmd);
+		}
+
+		/* Flush L1 - also execute L2 flush */
 		__asm__ __volatile__("sta %%g0, [%%g0] %0\n\t" : :
 				"i"(ASI_LEON_DFLUSH) : "memory");
 
-	if (coherence == ACC_COH_NONE) {
+		/* Wait for L2 flush to complete */
+		for (i = 0; i < nl2; i++) {
+			struct esp_device *l2 = &l2s[i];
+			/* Poll for completion */
+			while (!(ioread32(l2, ESP_CACHE_REG_STATUS) & ESP_CACHE_STATUS_DONE_MASK));
+			/* Clear IRQ */
+			iowrite32(l2, ESP_CACHE_REG_CMD, 0);
+		}
+
 		/* Flus LLC */
 		for (i = 0; i < nllc; i++) {
 			struct esp_device *llc = &llcs[i];
@@ -35,8 +54,15 @@ void esp_flush(int coherence)
 			/* Clear IRQ */
 			iowrite32(llc, ESP_CACHE_REG_CMD, 0);
 		}
+
+
 	}
 
+
+	if (llcs)
+		free(llcs);
+	if (l2s)
+		free(l2s);
 }
 
 int probe(struct esp_device **espdevs, unsigned devid, const char *name)

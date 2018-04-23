@@ -40,6 +40,8 @@ entity l2_wrapper is
     noc_xlen    : integer := 3;
     hindex_slv  : hindex_vector(0 to NAHBSLV-1);
     hindex_mst  : integer := 0;
+    pindex      : integer range 0 to NAPBSLV-1 := 6;
+    pirq        : integer                      := 4;
     local_y     : local_yx;
     local_x     : local_yx;
     mem_num     : integer := 1;
@@ -57,6 +59,8 @@ entity l2_wrapper is
     ahbso : out ahb_slv_out_type;
     ahbmi : in  ahb_mst_in_type;
     ahbmo : out ahb_mst_out_type;
+    apbi  : in  apb_slv_in_type;
+    apbo  : out apb_slv_out_type;
     flush : in  std_ulogic;             -- flush request from CPU
 
     -- backend (cache - NoC)
@@ -137,6 +141,34 @@ architecture rtl of l2_wrapper is
   signal stats_ready            : std_ulogic;
   signal stats_valid            : std_ulogic;
   signal stats_data             : std_ulogic;
+
+----------------------------------------------------------------------------
+-- APB slave signals
+-----------------------------------------------------------------------------
+
+  signal flush_due : std_ulogic;
+
+  -- plug & play info
+  constant pconfig : apb_config_type := (
+    0 => ahb_device_reg (VENDOR_SLD, SLD_L2_CACHE, 0, 0, pirq),
+    1 => apb_iobar(pindex, 16#fff#));
+
+  -- Command register
+  type cmd_state_t is (idle, do_cmd, pending_cmd, wait_irq_clear, wait_l1_flush);
+  signal cmd_state, cmd_next : cmd_state_t;
+
+  -- Register bank
+  signal cmd_reg       : std_logic_vector(31 downto 0);
+  signal status_reg    : std_logic_vector(31 downto 0);
+  signal cmd_in        : std_logic_vector(31 downto 0);
+  signal cmd_sample    : std_ulogic;
+  signal readdata      : std_logic_vector(31 downto 0);
+
+  -- IRQ
+  signal irq      : std_logic_vector(NAHBIRQ - 1 downto 0);
+  signal irqset   : std_ulogic;
+  type irq_fsm is (idle, pending);
+  signal irq_state, irq_next : irq_fsm;
 
   -------------------------------------------------------------------------------
   -- AHB slave FSM signals
@@ -295,14 +327,6 @@ architecture rtl of l2_wrapper is
   signal rsp_in_reg      : rsp_in_reg_type := RSP_IN_REG_DEFAULT;
   signal rsp_in_reg_next : rsp_in_reg_type := RSP_IN_REG_DEFAULT;
 
-  -------------------------------------------------------------------------------
-  -- Flush FSM signals
-  -------------------------------------------------------------------------------
-  type flush_fsm is (idle, flush_issue, flush_wait, flush_release);
-  signal flush_state      : flush_fsm := idle;
-  signal flush_state_next : flush_fsm := idle;
-  signal flush_due        : std_ulogic;
-
   -----------------------------------------------------------------------------
   -- Read allocate
   -----------------------------------------------------------------------------
@@ -354,7 +378,6 @@ architecture rtl of l2_wrapper is
    attribute mark_debug of rsp_in_reg_state : signal is "true";
 
   attribute mark_debug of flush_due   : signal is "true";
-  attribute mark_debug of flush_state : signal is "true";
 
   -- attribute mark_debug of inv_fifo_empty        : signal is "true";
   -- attribute mark_debug of inv_fifo_almost_empty : signal is "true";
@@ -504,6 +527,123 @@ begin  -- architecture rtl of l2_wrapper
       data_out     => inv_fifo_data_out);
 
 -------------------------------------------------------------------------------
+-- APB slave interface (flush)
+-------------------------------------------------------------------------------
+
+  -- APB Interface
+  apbo.prdata  <= readdata;
+  apbo.pirq    <= irq;
+  apbo.pindex  <= pindex;
+  apbo.pconfig <= pconfig;
+
+  drive_irq: process (clk, rst)
+  begin  -- process drive_irq
+    if rst = '0' then                   -- asynchronous reset (active low)
+      irq <= (others => '0');
+      irqset <= '0';
+    elsif clk'event and clk = '1' then  -- rising clock edge
+      if irqset = '1' then
+        irq(pirq) <= '0';
+      elsif (status_reg(0) = '1' and irqset = '0') then
+        irq(pirq) <= '1';
+        irqset <=  '1';
+      end if;
+      if (status_reg(0) = '0') then
+        -- Equivalent to clear IRQ
+        irqset <= '0';
+      end if;
+    end if;
+  end process drive_irq;
+
+  -- rd/wr registers
+  process(apbi, status_reg, cmd_reg)
+  begin
+
+    cmd_in     <= apbi.pwdata;
+    cmd_sample <= apbi.psel(pindex) and apbi.penable and apbi.pwrite and (not apbi.paddr(2));
+
+    case apbi.paddr(2) is
+      when '0' =>
+        readdata <= cmd_reg;
+      when others =>
+        readdata <= status_reg;
+    end case;
+
+  end process;
+
+  -- Command and status register
+  cmd_status: process (clk, rst)
+  begin  -- process cmd_status
+    if rst = '0' then                   -- asynchronous reset (active low)
+      cmd_reg    <= (others => '0');
+      status_reg <= (others => '0');
+    elsif clk'event and clk = '1' then  -- rising clock edge
+      if flush_done = '1' then
+        status_reg(0) <= '1';
+      end if;
+      if cmd_reg(1 downto 0) = "00" then
+        status_reg(0) <= '0';
+      end if;
+      if cmd_sample = '1' then
+        cmd_reg(1 downto 0) <= cmd_in(1 downto 0);
+      end if;
+    end if;
+  end process cmd_status;
+
+  -- Do flush
+  cmd_state_update: process (clk, rst) is
+  begin  -- process cmd_state_update
+    if rst = '0' then                   -- asynchronous reset (active low)
+      cmd_state <= idle;
+    elsif clk'event and clk = '1' then  -- rising clock edge
+      cmd_state <= cmd_next;
+    end if;
+  end process cmd_state_update;
+
+  cmd_state_fsm: process (cmd_state, flush_valid, flush_ready, flush_done, flush, cmd_reg) is
+  begin  -- process cmd_state_fsm
+    cmd_next <= cmd_state;
+    flush_due <= '0';
+
+    case cmd_state is
+      when idle =>
+        if cmd_reg(1 downto 0) = "10" then
+          cmd_next <= wait_l1_flush;
+        end if;
+
+      when wait_l1_flush =>
+        if flush = '1' then
+          flush_due <= '1';
+          if (flush_valid and flush_ready) = '1' then
+            cmd_next <= pending_cmd;
+          else
+            cmd_next <= do_cmd;
+          end if;
+        end if;
+
+      when do_cmd =>
+        flush_due <= '1';
+        if (flush_valid and flush_ready) = '1' then
+          cmd_next <= pending_cmd;
+        end if;
+
+      when pending_cmd =>
+        if flush_done = '1' then
+          cmd_next <= wait_irq_clear;
+        end if;
+
+      when wait_irq_clear =>
+        if cmd_reg(1 downto 0) = "00" then
+          cmd_next <= idle;
+        end if;
+
+      when others =>
+        cmd_next <= idle;
+    end case;
+
+  end process cmd_state_fsm;
+
+-------------------------------------------------------------------------------
 -- Static outputs: AHB slave, AHB master, NoC
 -------------------------------------------------------------------------------
   ahbso.hresp   <= HRESP_OKAY;
@@ -521,7 +661,6 @@ begin  -- architecture rtl of l2_wrapper
   ahbmo.hconfig <= hconfig;
   ahbmo.hindex  <= hindex_mst;
 
-  flush_data <= '0';
   stats_ready <= '1';
 
 -------------------------------------------------------------------------------
@@ -533,7 +672,6 @@ begin  -- architecture rtl of l2_wrapper
 
       ahbs_reg       <= AHBS_REG_DEFAULT;
       ahbm_reg       <= AHBM_REG_DEFAULT;
-      flush_state    <= idle;
       req_reg        <= REQ_REG_DEFAULT;
       rsp_out_reg    <= RSP_OUT_REG_DEFAULT;
       fwd_in_reg     <= FWD_IN_REG_DEFAULT;
@@ -544,7 +682,6 @@ begin  -- architecture rtl of l2_wrapper
 
       ahbs_reg       <= ahbs_reg_next;
       ahbm_reg       <= ahbm_reg_next;
-      flush_state    <= flush_state_next;
       req_reg        <= req_reg_next;
       fwd_in_reg     <= fwd_in_reg_next;
       rsp_out_reg    <= rsp_out_reg_next;
@@ -555,53 +692,10 @@ begin  -- architecture rtl of l2_wrapper
   end process fsms_state_update;
 
 -------------------------------------------------------------------------------
--- FSM: L2 flush management
--------------------------------------------------------------------------------
-  fsm_flush : process (flush_state, flush, flush_done, flush_ready, flush_valid)
-
-  begin
-
-    case flush_state is
-
-      when idle =>
-        flush_due <= '0';
-        --if flush = '1' then
-        --  flush_state_next <= flush_issue;
-        --else
-        flush_state_next <= idle;
-        --end if;
-
-      when flush_issue =>
-        flush_due <= '1';
-        if flush_valid = '1' and flush_ready = '1' then
-          flush_state_next <= flush_wait;
-        else
-          flush_state_next <= flush_issue;
-        end if;
-
-      when flush_wait =>
-        flush_due <= '0';
-        if flush_done = '1' then
-          flush_state_next <= flush_release;
-        else
-          flush_state_next <= flush_wait;
-        end if;
-
-      when flush_release =>
-        flush_due <= '0';
-        if flush = '0' then
-          flush_state_next <= idle;
-        else
-          flush_state_next <= flush_release;
-        end if;
-
-    end case;
-
-  end process fsm_flush;
-
--------------------------------------------------------------------------------
 -- FSM: Bridge from AHB slave to L2 cache frontend input
 -------------------------------------------------------------------------------
+  flush_data  <= '0';                   -- Flush data (keep instructions)
+
   fsm_ahbs : process (ahbsi, flush, ahbs_reg,
                       cpu_req_ready, flush_ready, flush_due,
                       rd_rsp_valid, rd_rsp_data_line, load_alloc_reg,
