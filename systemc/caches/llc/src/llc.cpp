@@ -163,6 +163,12 @@ void llc::ctrl()
 		    dbg_evict_addr.write(addr_evict);
 #endif
 
+#ifdef STATS_ENABLE
+		    if (state_buf[way] == INVALID || evict)
+			send_stats(false); // miss
+		    else
+			send_stats(true); // hit
+#endif
 		    if (evict) {
 
 			LLC_EVICT;
@@ -365,6 +371,13 @@ void llc::ctrl()
 
 #ifdef LLC_DEBUG
 		    dbg_evict_addr.write(addr_evict);
+#endif
+
+#ifdef STATS_ENABLE
+		    if (state_buf[way] == INVALID || evict)
+			send_stats(false); // miss
+		    else
+			send_stats(true); // hit
 #endif
 
 		    if (evict) {
@@ -901,6 +914,9 @@ inline void llc::reset_io()
     llc_fwd_out.reset_put();
     llc_mem_req.reset_put();
     llc_rst_tb_done.reset_put();
+#ifdef STATS_ENABLE
+    llc_stats.reset_put();
+#endif
 
     /* Reset memories */
 
@@ -1424,6 +1440,15 @@ void llc::send_fwd_out(coh_msg_t coh_msg, line_addr_t addr, cache_id_t req_id,
     fwd_out.dest_id = dest_id;
     llc_fwd_out.put(fwd_out);
 }
+
+#ifdef STATS_ENABLE
+void llc::send_stats(bool stats)
+{
+    SEND_STATS;
+
+    llc_stats.put(stats);
+}
+#endif
 
 void llc::process_rsp_in(llc_rsp_in_t rsp_in)
 {

@@ -33,6 +33,10 @@ public:
     put_get_channel<llc_mem_req_t> llc_mem_req_chnl;
     put_get_channel<bool>          llc_rst_tb_done_chnl;
 
+#ifdef STATS_ENABLE
+    put_get_channel<bool> llc_stats_chnl;
+#endif
+
     // Modules
     // LLC cache instance
     llc_wrapper	*dut;
@@ -57,7 +61,9 @@ public:
 	dut->llc_fwd_out(llc_fwd_out_chnl);
 	dut->llc_mem_req(llc_mem_req_chnl);
 	dut->llc_rst_tb_done(llc_rst_tb_done_chnl);
-
+#ifdef STATS_ENABLE
+	dut->llc_stats(llc_stats_chnl);
+#endif
 	// Binding testbench
 	tb->clk(clk);
 	tb->rst(rst);
@@ -69,6 +75,9 @@ public:
 	tb->llc_fwd_out_tb(llc_fwd_out_chnl);
 	tb->llc_mem_req_tb(llc_mem_req_chnl);
 	tb->llc_rst_tb_done_tb(llc_rst_tb_done_chnl);
+#ifdef STATS_ENABLE
+	tb->llc_stats_tb(llc_stats_chnl);
+#endif
     }
 };
 

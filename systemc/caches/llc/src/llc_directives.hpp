@@ -80,6 +80,11 @@
     bookmark_tmp |= BM_LLC_SEND_FWD_OUT;				\
     if (RPT_RTL) CACHE_REPORT_TIME(sc_time_stamp(), "Send fwd out.")
 
+#define SEND_STATS							\
+    if (RPT_RTL) CACHE_REPORT_TIME(sc_time_stamp(), "Send stats.");   \
+    HLS_DEFINE_PROTOCOL("send-stats-protocol")
+    // bookmark_tmp |= BM_SEND_STATS;			
+
 #define LLC_GETS \
     bookmark_tmp |= BM_LLC_GETS
 
@@ -299,6 +304,11 @@
 #define SEND_FWD_OUT							\
     HLS_DEFINE_PROTOCOL("llc-send-fwd-out-protocol");			\
     if (RPT_RTL) CACHE_REPORT_TIME(sc_time_stamp(), "Send fwd out.")
+
+#define SEND_STATS							\
+    if (RPT_RTL) CACHE_REPORT_TIME(sc_time_stamp(), "Send stats.");	\
+    HLS_DEFINE_PROTOCOL("send-stats-protocol")
+    // bookmark_tmp |= BM_SEND_STATS;			
 
 #define LLC_GETS
 #define LLC_GETM

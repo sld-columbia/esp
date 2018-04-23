@@ -48,6 +48,24 @@
 
 // #endif
 
+#ifdef STATS_ENABLE
+void llc_tb::get_stats()
+{
+    llc_stats_tb.reset_get();
+
+    wait();
+
+    while(true) {
+	
+	bool tmp;
+
+	llc_stats_tb.get(tmp);
+
+	wait();
+    }
+}
+#endif
+
 void llc_tb::llc_test()
 {
     /*

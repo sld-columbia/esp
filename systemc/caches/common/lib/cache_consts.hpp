@@ -237,10 +237,10 @@
  * Debug and report (currently not in use)
  */
 
-// If enabled there might be some fixes needed.
-// Instead it would be better to use Stratus command to keep signals.
 // #define L2_DEBUG 1
 // #define LLC_DEBUG 1
+
+#define STATS_ENABLE 1
 
 // Decide whether to send to LLC regular DMA transaction or to send the unrolled 
 // DMA transaction one cache line at a time

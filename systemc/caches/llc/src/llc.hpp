@@ -81,6 +81,10 @@ public:
     put_initiator<llc_mem_req_t>        llc_mem_req;
     put_initiator<bool>                 llc_rst_tb_done;
 
+#ifdef STATS_ENABLE
+    put_initiator<bool>                 llc_stats;
+#endif
+
     // Local memory
     // Local memory
     EXP_MEM_TYPE_STRING(llc, tags, LLC_SETS, LLC_WAYS)<llc_tag_t, LLC_LINES> tags;
@@ -114,6 +118,9 @@ public:
 	    , llc_fwd_out("llc_fwd_out")
 	    , llc_mem_req("llc_mem_req")
 	    , llc_rst_tb_done("llc_rst_tb_done")
+#ifdef STATS_ENABLE
+	    , llc_stats("llc_stats")
+#endif
     {
         // Cache controller process
 	SC_CTHREAD(ctrl, clk.pos());
@@ -129,6 +136,10 @@ public:
 	llc_fwd_out.clk_rst(clk, rst);
 	llc_mem_req.clk_rst(clk, rst);
 	llc_rst_tb_done.clk_rst(clk, rst);
+#ifdef STATS_ENABLE
+	llc_stats.clk_rst(clk, rst);
+#endif
+
 
 	// Flatten arrays
 	LLC_FLATTEN_REGS;
@@ -164,6 +175,9 @@ public:
     void send_fwd_out(coh_msg_t coh_msg, line_addr_t addr, cache_id_t req_id, cache_id_t dest_id);
     llc_rsp_in_t wait_rsp_in(addr_t addr_evict);
     void process_rsp_in(llc_rsp_in_t rsp_in);
+#ifdef STATS_ENABLE
+    void send_stats(bool stats);
+#endif
 
 private:
 

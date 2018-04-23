@@ -29,6 +29,10 @@ public:
     get_initiator<llc_mem_req_t> llc_mem_req_tb;
     get_initiator<bool>          llc_rst_tb_done_tb;
 
+#ifdef STATS_ENABLE
+    get_initiator<bool> llc_stats_tb;
+#endif
+
     // Constructor
     SC_CTOR(llc_tb)
 	: clk("clk")
@@ -41,12 +45,19 @@ public:
 	, llc_fwd_out_tb("llc_fwd_out_tb")
 	, llc_mem_req_tb("llc_mem_req_tb")
 	, llc_rst_tb_done_tb("llc_rst_tb_done_tb")
+#ifdef STATS_ENABLE
+	, llc_stats_tb("llc_stats_tb")
+#endif
     {
 	// Process performing the test
 	SC_CTHREAD(llc_test, clk.pos());
 	reset_signal_is(rst, false);
 	// set_stack_size(0x400000);
-
+#ifdef STATS_ENABLE
+	SC_CTHREAD(get_stats, clk.pos());
+	reset_signal_is(rst, false);
+	// set_stack_size(0x400000);
+#endif
 	// Assign clock and reset to put_get ports
 	llc_req_in_tb.clk_rst (clk, rst);
 	llc_rsp_in_tb.clk_rst (clk, rst);
@@ -56,10 +67,16 @@ public:
 	llc_fwd_out_tb.clk_rst(clk, rst);
 	llc_mem_req_tb.clk_rst(clk, rst);
 	llc_rst_tb_done_tb.clk_rst(clk, rst);
+#ifdef STATS_ENABLE
+	llc_stats_tb.clk_rst(clk, rst);
+#endif
     }
 
     // Processes
     void llc_test();
+#ifdef STATS_ENABLE
+    void get_stats();
+#endif
 
     // Functions
     void reset_dut(bool is_flush);
