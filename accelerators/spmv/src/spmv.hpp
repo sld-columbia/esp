@@ -9,11 +9,11 @@
 #include "esp_templates.hpp"
 #include "spmv_directives.hpp"
 
-#define PLM_ROWS_SIZE 16
-#define PLM_COLS_SIZE 256
-#define PLM_VALS_SIZE 256
-#define PLM_VECT_SIZE 256
-#define PLM_OUT_SIZE 16
+#define PLM_ROWS_SIZE 256
+#define PLM_COLS_SIZE 1024
+#define PLM_VALS_SIZE 1024
+#define PLM_VECT_SIZE 8192
+#define PLM_OUT_SIZE 256
 
 class spmv : public esp_accelerator_3P<DMA_WIDTH>
 {
@@ -33,7 +33,8 @@ class spmv : public esp_accelerator_3P<DMA_WIDTH>
 	    // Binding for memories
             HLS_MAP_ROWS0;
             HLS_MAP_ROWS1;
-            HLS_MAP_COLS;
+            HLS_MAP_COLS0;
+            HLS_MAP_COLS1;
             HLS_MAP_VALS0;
             HLS_MAP_VALS1;
             HLS_MAP_VECT0;
@@ -61,11 +62,12 @@ class spmv : public esp_accelerator_3P<DMA_WIDTH>
     // Private local memories
     uint32_t ROWS0[PLM_ROWS_SIZE];
     uint32_t ROWS1[PLM_ROWS_SIZE];
-    uint32_t COLS[PLM_COLS_SIZE];
+    uint32_t COLS0[PLM_COLS_SIZE];
+    uint32_t COLS1[PLM_COLS_SIZE];
     FPDATA_WORD VALS0[PLM_VALS_SIZE];
     FPDATA_WORD VALS1[PLM_VALS_SIZE];
     FPDATA_WORD VECT0[PLM_VECT_SIZE];
-    FPDATA_WORD VECT1[PLM_VECT_SIZE];
+    FPDATA_WORD VECT1[PLM_VALS_SIZE]; // not a mistake
     FPDATA_WORD OUT0[PLM_OUT_SIZE];
     FPDATA_WORD OUT1[PLM_OUT_SIZE];
 };
