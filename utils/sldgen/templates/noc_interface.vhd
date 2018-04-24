@@ -201,6 +201,7 @@ end;
   signal dma_write_chnl_ready       : std_ulogic;
   signal dma_write_chnl_data        : std_logic_vector(31 downto 0);
   signal acc_done                   : std_ulogic;
+  signal flush                      : std_ulogic;
   -- Register control, interrupt and monitor signals
   signal pllclk_int        : std_ulogic;
   signal apbi              : apb_slv_in_type;
@@ -247,7 +248,7 @@ begin
         dma_snd_valid              => dma_snd_valid,
         dma_snd_data               => dma_snd_data,
         dma_snd_ready              => dma_snd_ready,
-        flush                      => acc_done,
+        flush                      => flush,
         coherence_req_wrreq        => coherence_req_wrreq,
         coherence_req_data_in      => coherence_req_data_in,
         coherence_req_full         => coherence_req_full,
@@ -320,6 +321,7 @@ begin
         bufdout_data         => dma_write_chnl_data,
         bufdout_valid        => dma_write_chnl_valid,
         acc_done             => acc_done,
+        flush                => flush,
         mon_dvfs_in          => mon_dvfs_in,
         mon_dvfs             => mon_dvfs_feedthru,
         llc_coherent_dma_rcv_rdreq    => coherent_dma_rcv_rdreq,

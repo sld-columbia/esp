@@ -84,6 +84,7 @@ entity acc_dma2noc is
     bufdout_data  : in  std_logic_vector(31 downto 0);
     bufdout_valid : in  std_ulogic;
     acc_done      : in  std_ulogic;
+    flush         : out std_ulogic;
     mon_dvfs_in   : in  monitor_dvfs_type;
     --Monitor signals
     mon_dvfs      : out monitor_dvfs_type;
@@ -421,6 +422,7 @@ begin  -- rtl
     bufdout_ready <= '0';
 
     clear_acc_done <= '0';
+    flush <= '1';
 
     -- Default DVFS controller info
     dma_snd_delay <= '0';
@@ -496,6 +498,7 @@ begin  -- rtl
           status(STATUS_BIT_DONE) <= '1';
           sample_status <= '1';
           clear_acc_done <= '1';
+          flush <= '1';
           dma_next <= wait_for_completion;
         elsif rd_request = '1' then
           if scatter_gather = 0 then
