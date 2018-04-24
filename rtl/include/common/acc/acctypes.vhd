@@ -65,7 +65,7 @@ package acctypes is
   
   -- bank(8)        : RESERVED
 
-  -- bank(9)        : Type of coherence (None, LLC, Full) - Read only
+  -- bank(9)        : Type of coherence (None, LLC, Full)
   constant COHERENCE_REG : integer range 0 to MAXREGNUM - 1 := 9;
 
   -- bank(10)       : RESERVED

@@ -327,7 +327,6 @@ begin
           local_apb_mask => local_apb_mask(i),
           sets           => CFG_ACC_L2_SETS,
           ways           => CFG_ACC_L2_WAYS,
-          coherence      => tile_acc_coherence(i),
           cache_tile_id  => cache_tile_id,
           has_dvfs       => tile_has_dvfs(i),
           has_pll        => tile_has_pll(i),

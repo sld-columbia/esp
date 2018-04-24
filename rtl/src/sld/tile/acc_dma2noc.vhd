@@ -52,7 +52,6 @@ entity acc_dma2noc is
     exp_registers         : integer range 0 to 1               := 0;  -- Not implemented
     scatter_gather        : integer range 0 to 1               := 1;
     tlb_entries           : integer                            := 256;
-    coherence             : integer                            := ACC_COH_NONE;
     has_dvfs              : integer                            := 1;
     has_pll               : integer);
   port (
@@ -240,29 +239,36 @@ begin  -- rtl
   -- DMA packet
   -----------------------------------------------------------------------------
 
-  lcc_coherent_dma_gen: if coherence = ACC_COH_LLC generate
-    llc_coherent_dma_rcv_rdreq   <= dma_rcv_rdreq_int;
-    dma_rcv_data_out_int         <= llc_coherent_dma_rcv_data_out;
-    dma_rcv_empty_int            <= llc_coherent_dma_rcv_empty;
-    llc_coherent_dma_snd_wrreq   <= dma_snd_wrreq_int;
-    llc_coherent_dma_snd_data_in <= dma_snd_data_in_int;
-    dma_snd_full_int             <= llc_coherent_dma_snd_full;
-    dma_rcv_rdreq                <= '0';
-    dma_snd_wrreq                <= '0';
-    dma_snd_data_in              <= (others => '0');
-  end generate lcc_coherent_dma_gen;
+  coherence_model_select: process (bankreg, dma_rcv_rdreq_int, dma_rcv_data_out, dma_rcv_empty,
+                                   dma_snd_wrreq_int, dma_snd_data_in_int, dma_snd_full,
+                                   llc_coherent_dma_rcv_data_out, llc_coherent_dma_rcv_empty,
+                                   llc_coherent_dma_snd_full) is
+    variable coherence : integer range 0 to 2;
+  begin  -- process coherence_model_select
+    coherence := conv_integer(bankreg(COHERENCE_REG)(1 downto 0));
 
-  non_llc_coherent_dma_gen: if coherence /= ACC_COH_LLC generate
-    dma_rcv_rdreq                <= dma_rcv_rdreq_int;
-    dma_rcv_data_out_int         <= dma_rcv_data_out;
-    dma_rcv_empty_int            <= dma_rcv_empty;
-    dma_snd_wrreq                <= dma_snd_wrreq_int;
-    dma_snd_data_in              <= dma_snd_data_in_int;
-    dma_snd_full_int             <= dma_snd_full;
-    llc_coherent_dma_rcv_rdreq   <= '0';
-    llc_coherent_dma_snd_wrreq   <= '0';
-    llc_coherent_dma_snd_data_in <= (others => '0');
-  end generate non_llc_coherent_dma_gen;
+    if coherence = ACC_COH_LLC then
+      llc_coherent_dma_rcv_rdreq   <= dma_rcv_rdreq_int;
+      dma_rcv_data_out_int         <= llc_coherent_dma_rcv_data_out;
+      dma_rcv_empty_int            <= llc_coherent_dma_rcv_empty;
+      llc_coherent_dma_snd_wrreq   <= dma_snd_wrreq_int;
+      llc_coherent_dma_snd_data_in <= dma_snd_data_in_int;
+      dma_snd_full_int             <= llc_coherent_dma_snd_full;
+      dma_rcv_rdreq                <= '0';
+      dma_snd_wrreq                <= '0';
+      dma_snd_data_in              <= (others => '0');
+    else
+      dma_rcv_rdreq                <= dma_rcv_rdreq_int;
+      dma_rcv_data_out_int         <= dma_rcv_data_out;
+      dma_rcv_empty_int            <= dma_rcv_empty;
+      dma_snd_wrreq                <= dma_snd_wrreq_int;
+      dma_snd_data_in              <= dma_snd_data_in_int;
+      dma_snd_full_int             <= dma_snd_full;
+      llc_coherent_dma_rcv_rdreq   <= '0';
+      llc_coherent_dma_snd_wrreq   <= '0';
+      llc_coherent_dma_snd_data_in <= (others => '0');
+    end if;
+  end process coherence_model_select;
 
   make_packet: process (bankreg, pending_dma_write, tlb_empty, dma_address, dma_length)
     variable msg_type : noc_msg_type;
@@ -270,7 +276,12 @@ begin  -- rtl
     variable address : std_logic_vector(31 downto 0);
     variable length : std_logic_vector(31 downto 0);
     variable mem_x, mem_y : local_yx;
+    variable coherence : integer range 0 to 2;
   begin  -- process make_packet
+
+    -- Get coherence model from configuration registers
+    coherence := conv_integer(bankreg(COHERENCE_REG)(1 downto 0));
+
     if tlb_empty = '1' then
       -- fetch page table
       address := bankreg(PT_ADDRESS_REG);
@@ -377,7 +388,12 @@ begin  -- rtl
     variable msg : noc_msg_type;
     variable len : std_logic_vector(31 downto 0);
     variable tlb_wr_address_next : std_logic_vector(31 downto 0);
+    variable coherence : integer range 0 to 2;
   begin  -- process dma_roundtrip
+
+    -- Get coherence model from configuration registers
+    coherence := conv_integer(bankreg(COHERENCE_REG)(1 downto 0));
+
     dma_next <= dma_state;
     sample_flits <= '0';
     increment_count <= '0';
@@ -498,7 +514,9 @@ begin  -- rtl
           status(STATUS_BIT_DONE) <= '1';
           sample_status <= '1';
           clear_acc_done <= '1';
-          flush <= '1';
+          if coherence = ACC_COH_FULL then
+            flush <= '1';
+          end if;
           dma_next <= wait_for_completion;
         elsif rd_request = '1' then
           if scatter_gather = 0 then

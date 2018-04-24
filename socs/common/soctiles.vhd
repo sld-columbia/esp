@@ -188,7 +188,6 @@ package soctiles is
       local_apb_mask : std_logic_vector(NAPBSLV-1 downto 0);
       sets           : integer;
       ways           : integer;
-      coherence      : integer;
       cache_tile_id  : cache_attribute_array;
       has_dvfs       : integer;
       has_pll        : integer;

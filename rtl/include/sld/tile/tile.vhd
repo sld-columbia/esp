@@ -582,7 +582,6 @@ package tile is
       exp_registers      : integer range 0 to 1;
       scatter_gather     : integer range 0 to 1;
       tlb_entries        : integer;
-      coherence          : integer;
       has_dvfs           : integer := 1;
       has_pll            : integer);
     port (
