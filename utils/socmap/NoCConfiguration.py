@@ -38,9 +38,6 @@ class Tile():
     self.label.config(text=selection)
     self.point_label.forget()
     self.point_select.forget()
-    self.coherence_selection_none.config(state=DISABLED)
-    self.coherence_selection_llc.config(state=DISABLED)
-    self.coherence_selection_full.config(state=DISABLED)
     if soc.IPs.PROCESSORS.count(selection):
        self.label.config(bg='deep pink')
     elif soc.IPs.MISC.count(selection):
@@ -59,9 +56,6 @@ class Tile():
          else:
            self.point_select.setvalue(str(soc.IPs.POINTS[selection][0]))
        self.point_select.pack(side=LEFT)
-       self.coherence_selection_none.config(state=NORMAL)
-       self.coherence_selection_llc.config(state=NORMAL)
-       self.coherence_selection_full.config(state=NORMAL)
     else:
        self.label.config(bg='white')
     self.clk_reg_selection.config(to=soc.noc.get_clk_regions_max())
@@ -199,7 +193,6 @@ class Tile():
     self.clk_reg_active = StringVar()
     self.label = Label(top)
     self.energy_values = None
-    self.coherence = StringVar()
 
 class NoC():
 
@@ -220,7 +213,6 @@ class NoC():
         new_topology[y].append(Tile(top, y, x))
         if x < self.cols and y < self.rows:
           new_topology[y][x].ip_type.set(self.topology[y][x].ip_type.get())
-          new_topology[y][x].coherence.set(self.topology[y][x].coherence.get())
           new_topology[y][x].clk_region.set(self.topology[y][x].clk_region.get())
           new_topology[y][x].has_pll.set(self.topology[y][x].has_pll.get())
           new_topology[y][x].has_clkbuf.set(self.topology[y][x].has_clkbuf.get())
@@ -308,29 +300,6 @@ class NoC():
               tot_mem_debug += 1
     return (tot_mem, tot_mem_debug)
 
-  def get_full_coherent_num(self, soc):
-    tot_full_coherent = 0
-    tot_mem_debug = 0
-    for y in range(0, self.rows):
-      for x in range(0, self.cols):
-         tile = self.topology[y][x]
-         selection = tile.ip_type.get()
-         if soc.IPs.PROCESSORS.count(selection):
-           tot_full_coherent += 1
-         elif tile.coherence == "ACC_COH_FULL":
-           tot_full_coherent += 1
-    return tot_full_coherent
-
-  def get_llc_coherent_num(self, soc):
-    tot_llc_coherent = 0
-    tot_mem_debug = 0
-    for y in range(0, self.rows):
-      for x in range(0, self.cols):
-         tile = self.topology[y][x]
-         if tile.coherence == "ACC_COH_LLC":
-           tot_llc_coherent += 1
-    return tot_llc_coherent
-
   # WARNING: Geometry in this class only uses x=rows, y=cols, but socmap uses y=row, x=cols!
   def __init__(self):
     self.cols = 0
@@ -379,9 +348,6 @@ class NoCFrame(Pmw.ScrolledFrame):
     display_frame = Frame(frame)
     display_frame.pack(side=TOP)
 
-    coherence_frame = Frame(frame, bg='light goldenrod')
-    coherence_frame.pack(side=TOP)
-
     config_frame = Frame(frame)
     config_frame.pack(side=TOP)
 
@@ -400,19 +366,6 @@ class NoCFrame(Pmw.ScrolledFrame):
     tile.label = Label(display_frame, text=tile.ip_type.get())
     tile.label.config(height=4,bg='white', width=width+25)
     tile.label.pack()
-
-    tile.coherence_label = Label(coherence_frame, text="Accelerator Coherence: ", width=10)
-    tile.coherence_label.config(bg='light goldenrod', width=width+25)
-    tile.coherence_label.pack(side = TOP)
-    tile.coherence_selection_none = Radiobutton(coherence_frame, text = "None", variable = tile.coherence, value = "ACC_COH_NONE")
-    tile.coherence_selection_none.config(bg='light goldenrod', width=width)
-    tile.coherence_selection_none.pack(side = LEFT)
-    tile.coherence_selection_llc = Radiobutton(coherence_frame, text = "LLC", variable = tile.coherence, value = "ACC_COH_LLC")
-    tile.coherence_selection_llc.config(bg='light goldenrod', width=width-1)
-    tile.coherence_selection_llc.pack(side = LEFT)
-    tile.coherence_selection_full = Radiobutton(coherence_frame, text = "Full", variable = tile.coherence, value = "ACC_COH_FULL")
-    tile.coherence_selection_full.config(bg='light goldenrod', width=width)
-    tile.coherence_selection_full.pack(side = LEFT)
 
     tile.label.bind("<Double-Button-1>", lambda event:tile.power_window(event, self.soc, self))
     Label(config_frame, text="Clk Reg: ").pack(side=LEFT)
@@ -495,8 +448,8 @@ class NoCFrame(Pmw.ScrolledFrame):
     self.done.config(state=DISABLED)
     tot_tiles = self.noc.rows * self.noc.cols
     tot_cpu = self.noc.get_cpu_num(self.soc)
-    tot_full_coherent = self.noc.get_full_coherent_num(self.soc)
-    tot_llc_coherent = self.noc.get_llc_coherent_num(self.soc)
+    tot_full_coherent = self.noc.get_acc_num(self.soc) + self.noc.get_cpu_num(self.soc)
+    tot_llc_coherent = self.noc.get_acc_num(self.soc)
     tot_io = 0
     tot_clkbuf = self.noc.get_clkbuf_num(self.soc)
     (tot_mem, tot_mem_debug) = self.noc.get_mem_num(self.soc)

@@ -42,7 +42,6 @@ class tile_info:
   cpuid = -1
   cid = -1
   did = -1
-  coherence = "ACC_COH_NONE"
   clk_region = 0
   def __init__(self):
     return
@@ -128,13 +127,10 @@ class soc_config:
         if soc.IPs.ACCELERATORS.count(selection):
           self.tiles[t].type = "acc"
           self.tiles[t].idx = acc_tile_idx
-          self.tiles[t].coherence = soc.noc.topology[x][y].coherence.get()
-          if soc.noc.topology[x][y].coherence.get() == "ACC_COH_FULL":
-            self.tiles[t].cid = soc.noc.get_cpu_num(soc) + acc_cid
-            acc_cid += 1
-          if soc.noc.topology[x][y].coherence.get() == "ACC_COH_LLC":
-            self.tiles[t].did = acc_did
-            acc_did += 1
+          self.tiles[t].cid = soc.noc.get_cpu_num(soc) + acc_cid
+          acc_cid += 1
+          self.tiles[t].did = acc_did
+          acc_did += 1
           for i in range(0, len(self.acc_types)):
             if self.acc_types[i] == selection:
               self.acc_num[i] += 1
@@ -188,9 +184,9 @@ def print_constants(fp, esp_config, soc):
   fp.write("  -- number of CPU tiles. Each has 1 processor\n")
   fp.write("  constant CFG_NCPU_TILE : integer := " + str(soc.noc.get_cpu_num(soc)) + ";\n")
   fp.write("  -- number of tiles with private caches (CPUs + Fully-coherent accelerators)\n")
-  fp.write("  constant CFG_NL2 : integer := " + str(soc.noc.get_full_coherent_num(soc)) + ";\n")
+  fp.write("  constant CFG_NL2 : integer := " + str(soc.noc.get_cpu_num(soc) + soc.noc.get_acc_num(soc)) + ";\n")
   fp.write("  -- number of acclerator tiles LLC-coherent accelerators\n")
-  fp.write("  constant CFG_NLLC_COHERENT : integer := " + str(soc.noc.get_llc_coherent_num(soc)) + ";\n\n")
+  fp.write("  constant CFG_NLLC_COHERENT : integer := " + str(soc.noc.get_acc_num(soc)) + ";\n\n")
 
   # Cache memory enable
   fp.write("  -- Cache memory enable\n")
@@ -715,12 +711,6 @@ def print_tiles(fp, esp_config, soc):
     if str(esp_config.tiles[i].design_point) != "":
       acc = esp_config.accelerators[esp_config.tiles[i].idx]
       fp.write("    " + str(i) + " => HLSCFG_" + acc.uppercase_name + "_" + esp_config.tiles[i].design_point.upper() + ",\n")
-  fp.write("    others => 0);\n\n")
-
-  fp.write("  constant tile_acc_coherence : tile_type_array := (\n")
-  for i in range(0, esp_config.ntiles):
-    if esp_config.tiles[i].type == "acc":
-      fp.write("    " + str(i) + " => " + esp_config.tiles[i].coherence + ",\n")
   fp.write("    others => 0);\n\n")
 
   fp.write("  constant domains_num : integer := " + str(len(soc.noc.get_clk_regions()))+";\n\n")
