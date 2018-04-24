@@ -113,6 +113,7 @@ package soctiles is
       local_y                 : local_yx;
       local_x                 : local_yx;
       remote_apb_slv_en       : std_logic_vector(NAPBSLV-1 downto 0);
+      l2_pindex               : integer;
       has_dvfs                : integer;
       has_pll                 : integer;
       domain                  : integer;

@@ -374,7 +374,9 @@ def write_cache_port_map(f, cac, is_llc):
     f.write("      l2_rsp_out_data_req_id    => l2_rsp_out_data_req_id,\n")
     f.write("      l2_rsp_out_data_to_req    => l2_rsp_out_data_to_req,\n")
     f.write("      l2_rsp_out_data_addr      => l2_rsp_out_data_addr,\n")
-    f.write("      l2_rsp_out_data_line      => l2_rsp_out_data_line\n")
+    f.write("      l2_rsp_out_data_line      => l2_rsp_out_data_line,\n")
+    f.write("      l2_stats_valid            => l2_stats_valid,\n")
+    f.write("      l2_stats_data             => l2_stats_data\n")
   f.write("    );\n")
 
 

@@ -11,6 +11,8 @@ DDR0_HINDEX = 4
 DDR1_HINDEX = 5
 FB_HINDEX = 6
 POWERCTRL_PINDEX = 4
+L2_CACHE_PINDEX_FIRST = 6
+L2_CACHE_PIRQ = 4
 L3_CACHE_PINDEX = 5
 L3_CACHE_PIRQ = 4
 SLD_APB_ADDR_ADJ = 0x100
@@ -99,7 +101,8 @@ class soc_config:
     # DMA ID assigned dynamically to LLC-coherent accelerators
     acc_did = 0
     acc_tile_idx = 0
-    acc_idx = 6 #first available line
+    # 5 -> LLC; 6-6+ncpu->L2 then accelerators
+    acc_idx = L2_CACHE_PINDEX_FIRST + soc.noc.get_cpu_num(soc) #first available line for accelerators
     acc_irq = 3
     for x in range(soc.noc.rows):
       for y in range(soc.noc.cols):
@@ -235,6 +238,7 @@ def print_constants(fp, esp_config, soc):
 
   fp.write("\n")
   fp.write("  constant CFG_SLD_L3_CACHE_IRQ : integer := " + str(L3_CACHE_PIRQ) + ";\n\n")
+  fp.write("  constant CFG_SLD_L2_CACHE_IRQ : integer := " + str(L2_CACHE_PIRQ) + ";\n\n")
 
   fp.write("-- Memory controllers\n")
   if esp_config.nmem_ctrl == 2:
@@ -458,6 +462,20 @@ def print_constants(fp, esp_config, soc):
   fp.write("  0 => ahb_device_reg (VENDOR_SLD, SLD_L3_CACHE, 0, 0, CFG_SLD_L3_CACHE_IRQ),\n")
   fp.write("  1 => apb_iobar(" + str(L3_CACHE_PINDEX) + ", 16#fff#));\n\n")
 
+  fp.write("  constant l2_cache_pindex : tile_attribute_array := (\n")
+  for i in range(0, esp_config.ntiles):
+    if esp_config.tiles[i].type == "cpu":
+      fp.write("    " + str(i) + " => " + str(L2_CACHE_PINDEX_FIRST + esp_config.tiles[i].cpuid) + ",\n")
+  fp.write("    others => 0);\n\n")
+
+  fp.write("  constant l2_cache_pconfig : apb_slv_pconfig_vector := (\n")
+  for i in range(0, esp_config.ntiles):
+    if esp_config.tiles[i].type == "cpu":
+      idx = L2_CACHE_PINDEX_FIRST + esp_config.tiles[i].cpuid
+      fp.write("    " + str(i) + " => (\n")
+      fp.write("      0 => ahb_device_reg (VENDOR_SLD, SLD_L2_CACHE, 0, 0, CFG_SLD_L2_CACHE_IRQ),\n")
+      fp.write("      1 => apb_iobar(16#" + str(idx) + "#, 16#fff#)),\n")
+  fp.write("    others => pconfig_none);\n\n")
 
   fp.write("  constant fixed_ahbso_hconfig : ahb_slv_hconfig_vector := (\n")
   fp.write("    --pragma translate_off\n")
@@ -510,6 +528,10 @@ def print_constants(fp, esp_config, soc):
   fp.write("    1 => uart_pconfig,\n")
   fp.write("    2 => irqmp_pconfig,\n")
   fp.write("    3 => gptimer_pconfig,\n")
+  for i in range(0, esp_config.ntiles):
+    if esp_config.tiles[i].type == "cpu":
+      idx = L2_CACHE_PINDEX_FIRST + esp_config.tiles[i].cpuid
+      fp.write("    " + str(idx) + " => l2_cache_pconfig(" + str(i) + "),\n")
   if soc.HAS_SVGA == True:
     fp.write("    13 => svga_pconfig,\n")
   if soc.HAS_ETH == True:

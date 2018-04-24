@@ -40,6 +40,7 @@ entity tile_cpu is
     local_y                 : local_yx                             := "001";
     local_x                 : local_yx                             := "001";
     remote_apb_slv_en       : std_logic_vector(NAPBSLV-1 downto 0) := (others => '0');
+    l2_pindex               : integer                              := 6;
     has_dvfs                : integer;
     has_pll                 : integer;
     domain                  : integer;
@@ -361,7 +362,7 @@ begin
 
 
   no_init_apbo : for i in 0 to NAPBSLV - 1 generate
-    no_powerctrl : if i /= powerctrl_pindex generate
+    no_powerctrl : if i /= powerctrl_pindex and i /= l2_pindex generate
       apbo(i) <= apb_none;
     end generate no_powerctrl;
   end generate no_init_apbo;
@@ -595,6 +596,8 @@ begin
         noc_xlen    => CFG_XLEN,
         hindex_slv  => ahbslv_proxy_hindex,
         hindex_mst  => CFG_NCPU_TILE + 1,
+        pindex      => l2_pindex,
+        pirq        => CFG_SLD_L2_CACHE_IRQ,
         local_y     => local_y,
         local_x     => local_x,
         mem_num     => NMIG + CFG_SVGA_ENABLE,
@@ -609,6 +612,8 @@ begin
         ahbso                      => ahbso(ddr0_hindex),
         ahbmi                      => ahbmi,
         ahbmo                      => ahbmo(CFG_NCPU_TILE + 1),
+        apbi                       => apbi,
+        apbo                       => apbo(l2_pindex),
         flush                      => dflush,
         coherence_req_wrreq        => coherence_req_wrreq,
         coherence_req_data_in      => coherence_req_data_in,
