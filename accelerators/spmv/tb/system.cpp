@@ -20,7 +20,7 @@ void system_t::config_proc()
 
     // Config
     {
-	conf_info_t config(nrows, ncols, max_nonzero, mtx_len);
+	conf_info_t config(nrows, ncols, max_nonzero, mtx_len, 1024, true);
 	wait();
 	conf_info.write(config);
 	conf_done.write(true);

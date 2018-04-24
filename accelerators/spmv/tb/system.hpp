@@ -73,6 +73,8 @@ public:
     uint32_t ncols;
     uint32_t max_nonzero;
     uint32_t mtx_len;
+    uint32_t vals_plm_size;
+    bool     vect_fits_plm;
 
     // Memory position
     uint32_t rows_addr;

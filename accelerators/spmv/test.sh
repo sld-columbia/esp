@@ -11,7 +11,7 @@ cd hls-work-virtex7
 
 rm -rf test.log
 
-for name in '1' '2' '3' '4' '_d1' '_d2' '_d3' '_d4' '_t1' '_t2' '_t3' '_t4'; do
+for name in '2' '_d2' '_t2'; do
 
     source=$INPUTS
     source+=$name

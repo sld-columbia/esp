@@ -21,6 +21,8 @@ void spmv::load_input()
     uint32_t ncols;
     uint32_t max_nonzero;
     uint32_t mtx_len;
+    uint32_t vals_plm_size;
+    bool     vect_fits_plm;
 
     // for derived configuration
     uint32_t index_rows;
@@ -50,6 +52,8 @@ void spmv::load_input()
 	ncols = 0;
 	max_nonzero = 0;
 	mtx_len = 0;
+	vals_plm_size = 0;
+	vect_fits_plm = 0;
 
 	index_rows = 0;
 	index_cols = 0;
@@ -72,6 +76,7 @@ void spmv::load_input()
     {
     	HLS_LOAD_CONFIG;
 
+	// Acquire config parameters
     	cfg.wait_for_config(); // config process
     	conf_info_t config = this->conf_info.read();
 
@@ -79,6 +84,8 @@ void spmv::load_input()
     	ncols = config.ncols;
     	max_nonzero = config.max_nonzero;
     	mtx_len = config.mtx_len;
+	vals_plm_size = config.vals_plm_size;
+	vect_fits_plm = config.vect_fits_plm;
 
     	// DMA index evaluation
     	index_rows = 2 * mtx_len;
@@ -87,12 +94,36 @@ void spmv::load_input()
     	index_vect = nrows + 2 * mtx_len;
 
     	// DMA length evaluation
-    	len_rows = (uint32_t) (PLM_COLS_SIZE / max_nonzero);
-    	if (len_rows > PLM_ROWS_SIZE)
-    	    len_rows = PLM_ROWS_SIZE;
+    	len_rows = (uint32_t) (vals_plm_size / max_nonzero);
 
     	// # of bursts evaluation
     	bursts = (uint32_t) ((nrows - 1) / len_rows) + 1;
+    }
+
+    // Load the whole vector if it fits the PLM
+    if (vect_fits_plm) {
+
+	{
+	    HLS_LOAD_DMA;
+
+	    dma_info_t dma_info(index_vect, ncols);
+	    this->dma_read_ctrl.put(dma_info);
+	}
+
+    	for (int i = 0; i < ncols; i++) {
+
+    	    HLS_LOAD_VECT_PLM_READ;
+
+    	    sc_bv<WORD_SIZE> data = this->dma_read_chnl.get();
+
+    	    {
+    		HLS_LOAD_VECT_PLM_WRITE;
+
+		VECT0[i] = data.to_int();
+
+    		wait();
+    	    }
+    	}
     }
 
     // Load bursts
@@ -178,40 +209,47 @@ void spmv::load_input()
 
     	    {
     		HLS_LOAD_COLS_PLM_WRITE;
-    		COLS[i] = data.to_int();
+
+		if (ping | !vect_fits_plm)
+		    COLS0[i] = data.to_int();
+		else
+		    COLS1[i] = data.to_int();
+
     		wait();
     	    }
     	}
-	
-        // Load vector values based on column values
-    	len_vect = rows_last_diff;
 
-    	for (int i = 0; i < len_vect; i++) {
+	if (!vect_fits_plm) {
+	    // Load vector values based on column values
+	    len_vect = rows_last_diff;
 
-    	    HLS_LOAD_VECT_PLM_READ;
+	    for (int i = 0; i < len_vect; i++) {
 
-    	    uint32_t local_index_vect;
+		HLS_LOAD_VECT_PLM_READ;
 
-    	    local_index_vect = index_vect + COLS[i];
+		uint32_t local_index_vect;
 
-    	    {
-    		HLS_LOAD_DMA;
+		local_index_vect = index_vect + COLS0[i];
 
-    		dma_info_t dma_info(local_index_vect, 1);
-    		this->dma_read_ctrl.put(dma_info);
-    	    }
+		{
+		    HLS_LOAD_DMA;
 
-    	    sc_bv<WORD_SIZE> data = this->dma_read_chnl.get();
+		    dma_info_t dma_info(local_index_vect, 1);
+		    this->dma_read_ctrl.put(dma_info);
+		}
 
-    	    {
-    		HLS_LOAD_VECT_PLM_WRITE;
-    		if (ping)
-    		    VECT0[i] = data.to_int();
-    		else
-    		    VECT1[i] = data.to_int();
-    		wait();
-    	    }
-    	}
+		sc_bv<WORD_SIZE> data = this->dma_read_chnl.get();
+
+		{
+		    HLS_LOAD_VECT_PLM_WRITE;
+		    if (ping)
+			VECT0[i] = data.to_int();
+		    else
+			VECT1[i] = data.to_int();
+		    wait();
+		}
+	    }
+	}
 
     	ping = !ping;
     	this->load_compute_handshake();
@@ -234,6 +272,8 @@ void spmv::store_output()
     uint32_t ncols;
     uint32_t max_nonzero;
     uint32_t mtx_len;
+    uint32_t vals_plm_size;
+    bool     vect_fits_plm;
 
     // for derived configuration
     uint32_t index_out;
@@ -254,6 +294,8 @@ void spmv::store_output()
 	ncols = 0;
 	max_nonzero = 0;
 	mtx_len = 0;
+	vals_plm_size = 0;
+	vect_fits_plm = 0;
 
 	index_out = 0;
 	len_out = 0;
@@ -274,14 +316,14 @@ void spmv::store_output()
     	ncols = config.ncols;
     	max_nonzero = config.max_nonzero;
     	mtx_len = config.mtx_len;
+	vals_plm_size = config.vals_plm_size;
+	vect_fits_plm = config.vect_fits_plm;
 
     	// DMA index evaluation
     	index_out = nrows + ncols + 2 * mtx_len;
 
     	// DMA length evaluation
-    	len_out = (uint32_t) (PLM_COLS_SIZE / max_nonzero);
-    	if (len_out > PLM_OUT_SIZE)
-    	    len_out = PLM_OUT_SIZE;
+    	len_out = (uint32_t) (vals_plm_size / max_nonzero);
 
     	// # of bursts evaluation
     	bursts = (uint32_t) ((nrows - 1) / len_out) + 1;
@@ -345,6 +387,8 @@ void spmv::compute_kernel()
     uint32_t ncols;
     uint32_t max_nonzero;
     uint32_t mtx_len;
+    uint32_t vals_plm_size;
+    bool     vect_fits_plm;
 
     // for derived configuration
     uint32_t index_rows;
@@ -377,6 +421,8 @@ void spmv::compute_kernel()
 	ncols = 0;
 	max_nonzero = 0;
 	mtx_len = 0;
+	vals_plm_size = 0;
+	vect_fits_plm = 0;
 
 	index_rows = 0;
 	index_cols = 0;
@@ -408,6 +454,8 @@ void spmv::compute_kernel()
     	ncols = config.ncols;
     	max_nonzero = config.max_nonzero;
     	mtx_len = config.mtx_len;
+	vals_plm_size = config.vals_plm_size;
+	vect_fits_plm = config.vect_fits_plm;
 
     	// DMA index evaluation
     	index_rows = 2 * mtx_len;
@@ -417,9 +465,7 @@ void spmv::compute_kernel()
     	index_out = nrows + ncols + 2 * mtx_len;
 
     	// DMA length evaluation
-    	len_rows = (uint32_t) (PLM_COLS_SIZE / max_nonzero);
-    	if (len_rows > PLM_ROWS_SIZE)
-    	    len_rows = PLM_ROWS_SIZE;
+    	len_rows = (uint32_t) (vals_plm_size / max_nonzero);
     	len_out = len_rows;
 
     	// # of bursts evaluation
@@ -454,13 +500,27 @@ void spmv::compute_kernel()
     		FPDATA val = FPDATA(0.0);
     		FPDATA vect = FPDATA(0.0);
     		FPDATA dot = FPDATA(0.0);
+		uint32_t col;
 
     		if (ping) {
     		    val = int2fp<FPDATA, WORD_SIZE>(VALS0[c]);
-    		    vect = int2fp<FPDATA, WORD_SIZE>(VECT0[c]);
+
+		    if (vect_fits_plm) {
+			col = COLS0[c];
+			vect = int2fp<FPDATA, WORD_SIZE>(VECT0[col]);
+		    } else {
+			vect = int2fp<FPDATA, WORD_SIZE>(VECT0[c]);
+		    }
+
     		} else {
     		    val = int2fp<FPDATA, WORD_SIZE>(VALS1[c]);
-    		    vect = int2fp<FPDATA, WORD_SIZE>(VECT1[c]);
+
+		    if (vect_fits_plm) {
+			col = COLS1[c];
+			vect = int2fp<FPDATA, WORD_SIZE>(VECT0[col]);
+		    } else {
+			vect = int2fp<FPDATA, WORD_SIZE>(VECT1[c]);
+		    }
     		}
 		
     		dot = val * vect;
