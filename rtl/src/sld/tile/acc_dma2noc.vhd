@@ -422,7 +422,7 @@ begin  -- rtl
     bufdout_ready <= '0';
 
     clear_acc_done <= '0';
-    flush <= '1';
+    flush <= '0';
 
     -- Default DVFS controller info
     dma_snd_delay <= '0';
