@@ -158,48 +158,38 @@ architecture rtl of l2_acc_wrapper is
   type flush_fsm is (idle, issue);
   signal flush_state      : flush_fsm := idle;
   signal flush_state_next : flush_fsm := idle;
-  
+
   -------------------------------------------------------------------------------
-  -- FSM: Requests from accelerator
+  -- FSM: Requests/Responses from/to accelerator (handled one at a time)
   -------------------------------------------------------------------------------
-  type req_acc_fsm is (idle, load, store);
+  type req_acc_fsm is (idle, load, store, wait_rsp);
 
   type req_acc_reg_type is record
-    state         : req_acc_fsm;
-    addr          : addr_t;
-    length        : addr_t;
-    length_rsp    : addr_t;
+    state           : req_acc_fsm;
+    -- req
+    addr            : addr_t;
+    offset          : integer range 0 to WORDS_PER_LINE - 1;
+    valid_words_cnt : integer range 0 to WORDS_PER_LINE;
+    msw             : integer range 0 to WORDS_PER_LINE - 1;
+    length          : addr_t;
+    -- rsp
+    line            : line_t;
+    cnt             : integer range 0 to WORDS_PER_LINE - 1;
   end record;
 
   constant REQ_ACC_REG_DEFAULT : req_acc_reg_type := (
-    state         => idle,
-    addr          => (others => '0'),
-    length        => (others => '0'),
-    length_rsp    => (others => '0'));
+    state           => idle,
+    addr            => (others => '0'),
+    offset          => 0,
+    valid_words_cnt => 0,
+    msw             => 0,
+    length          => (others => '0'),
+    line            => (others => '0'),
+    cnt             => 0);
 
   signal req_acc_reg      : req_acc_reg_type := REQ_ACC_REG_DEFAULT;
   signal req_acc_reg_next : req_acc_reg_type := REQ_ACC_REG_DEFAULT;
 
-  -------------------------------------------------------------------------------
-  -- FSM: Responses to accelerator
-  -------------------------------------------------------------------------------
-  type rsp_acc_fsm is (idle, rsp);
-
-  type rsp_acc_reg_type is record
-    state         : rsp_acc_fsm;
-    line          : line_t;
-    word_index    : integer;
-    cnt           : addr_t;
-  end record;
-
-  constant RSP_ACC_REG_DEFAULT : rsp_acc_reg_type := (
-    state         => idle,
-    line          => (others => '0'),
-    word_index    => 0,
-    cnt           => (others => '0'));
-
-  signal rsp_acc_reg      : rsp_acc_reg_type := RSP_ACC_REG_DEFAULT;
-  signal rsp_acc_reg_next : rsp_acc_reg_type := RSP_ACC_REG_DEFAULT;
 
   -------------------------------------------------------------------------------
   -- FSM: Request to NoC
@@ -304,9 +294,9 @@ architecture rtl of l2_acc_wrapper is
   -------------------------------------------------------------------------------
   -- Others
   -------------------------------------------------------------------------------
-       
+
   signal empty_offset : std_logic_vector(OFFSET_BITS - 1 downto 0) := (others => '0');
- 
+
   -------------------------------------------------------------------------------
   -- Debug
   -------------------------------------------------------------------------------
@@ -332,7 +322,7 @@ architecture rtl of l2_acc_wrapper is
   -- attribute mark_debug of rsp_in_reg_state : signal is "true";
 
   attribute mark_debug of flush_state : signal is "true";
-  
+
   -- attribute mark_debug of req_asserts    : signal is "true";
   -- attribute mark_debug of rsp_out_asserts    : signal is "true";
   -- attribute mark_debug of rsp_in_asserts : signal is "true";
@@ -458,7 +448,7 @@ begin  -- architecture rtl of l2_acc_wrapper
       l2_stats_valid            => stats_valid,
       l2_stats_data             => stats_data
       );
-    
+
 -------------------------------------------------------------------------------
 -- Static signals
 -------------------------------------------------------------------------------
@@ -479,7 +469,6 @@ begin  -- architecture rtl of l2_acc_wrapper
 
       flush_state    <= idle;
       req_acc_reg    <= REQ_ACC_REG_DEFAULT;
-      rsp_acc_reg    <= RSP_ACC_REG_DEFAULT;
       req_reg        <= REQ_REG_DEFAULT;
       rsp_out_reg    <= RSP_OUT_REG_DEFAULT;
       fwd_in_reg     <= FWD_IN_REG_DEFAULT;
@@ -489,7 +478,6 @@ begin  -- architecture rtl of l2_acc_wrapper
 
       flush_state    <= flush_state_next;
       req_acc_reg    <= req_acc_reg_next;
-      rsp_acc_reg    <= rsp_acc_reg_next;
       req_reg        <= req_reg_next;
       rsp_out_reg    <= rsp_out_reg_next;
       fwd_in_reg     <= fwd_in_reg_next;
@@ -505,7 +493,7 @@ begin  -- architecture rtl of l2_acc_wrapper
   fsm_flush : process (flush_state, flush, flush_ready)
 
   begin
-    
+
     case flush_state is
 
       -- IDLE
@@ -522,9 +510,9 @@ begin  -- architecture rtl of l2_acc_wrapper
           else
 
             flush_state_next <= idle;
-            
+
           end if;
-          
+
         else
 
           flush_valid <= '0';
@@ -545,19 +533,20 @@ begin  -- architecture rtl of l2_acc_wrapper
         else
 
           flush_state_next <= idle;
-          
+
         end if;
-        
+
     end case;
 
   end process fsm_flush;
-  
+
 -------------------------------------------------------------------------------
 -- FSM: Bridge from accelerator wrapper to L2 cache frontend input
 -------------------------------------------------------------------------------
   fsm_req_acc : process (req_acc_reg, cpu_req_ready,
                          dma_read, dma_write, dma_length, dma_address,
-                         dma_snd_valid, dma_snd_data)
+                         dma_snd_valid, dma_snd_data, dma_rcv_ready,
+                         rd_rsp_valid, rd_rsp_data_line)
 
     variable reg : req_acc_reg_type;
 
@@ -567,13 +556,18 @@ begin  -- architecture rtl of l2_acc_wrapper
     reg := req_acc_reg;
 
     -- default values of output signals
-    dma_ready <= '0'; 
+    dma_ready <= '0';
     dma_snd_ready <= '0';
-    
+
+    dma_rcv_valid <= '0';
+    dma_rcv_data <= (others => '0');
+
     cpu_req_valid        <= '0';
     cpu_req_data_cpu_msg <= (others => '0');
     cpu_req_data_addr    <= (others => '0');
     cpu_req_data_word    <= (others => '0');
+
+    rd_rsp_ready <= '0';
 
     case req_acc_reg.state is
 
@@ -589,48 +583,112 @@ begin  -- architecture rtl of l2_acc_wrapper
             cpu_req_valid        <= '1';
             cpu_req_data_cpu_msg <= CPU_READ;
             cpu_req_data_addr    <= dma_address;
-            
-            reg.addr   := dma_address + BYTES_PER_LINE;
-            reg.length := dma_length - WORDS_PER_LINE;
-            reg.length_rsp := dma_length;
-            
-            if to_integer(unsigned(reg.length)) /= 0 then
 
-              reg.state := load;
+            reg.offset := to_integer(unsigned(dma_address(W_OFF_RANGE_HI downto W_OFF_RANGE_LO)));
 
+            if to_integer(unsigned(dma_length)) < (WORDS_PER_LINE - reg.offset) then
+              reg.valid_words_cnt := to_integer(unsigned(dma_length));
+              reg.msw := to_integer(unsigned(dma_length)) + (reg.offset - 1);
+            else
+              reg.valid_words_cnt := WORDS_PER_LINE - reg.offset;
+              reg.msw := WORDS_PER_LINE - 1;
             end if;
+
+            reg.addr       := dma_address + (reg.valid_words_cnt * BYTES_PER_WORD);
+            reg.length     := dma_length - std_logic_vector(to_unsigned(reg.valid_words_cnt, ADDR_BITS));
+
+            reg.state := wait_rsp;
 
           elsif dma_write = '1' then
 
             reg.addr := dma_address;
-            
+
             reg.state := store;
 
           end if;
 
         end if;
-          
-      -- LOAD
-      when load =>
 
-        if cpu_req_ready = '1' then
 
-          cpu_req_valid        <= '1';
-          cpu_req_data_cpu_msg <= CPU_READ;
-          cpu_req_data_addr    <= reg.addr;
-            
-          reg.addr   := dma_address + BYTES_PER_LINE;
-          reg.length := dma_length - WORDS_PER_LINE;
-          reg.length_rsp := dma_length;
+      -- LOAD (wait response and make next request)
+      when wait_rsp =>
 
-          if to_integer(unsigned(reg.length)) = 0 then
+        reg.cnt := reg.offset;
 
-            reg.state := idle;
+        if rd_rsp_valid = '1' then
+
+          if cpu_req_ready = '1' and to_integer(unsigned(reg.length)) /= 0 then
+
+            cpu_req_valid        <= '1';
+            cpu_req_data_cpu_msg <= CPU_READ;
+            cpu_req_data_addr    <= reg.addr;
+
+            reg.line   := rd_rsp_data_line;
+            reg.offset := 0;
+
+            if to_integer(unsigned(reg.length)) < WORDS_PER_LINE then
+              reg.valid_words_cnt := to_integer(unsigned(reg.length));
+            else
+              reg.valid_words_cnt := WORDS_PER_LINE;
+            end if;
+
+            reg.state := load;
+
+            rd_rsp_ready <= '1';
+
+          elsif to_integer(unsigned(reg.length)) = 0 then
+
+            reg.line   := rd_rsp_data_line;
+            reg.offset := 0;
+
+            reg.state := load;
+
+            rd_rsp_ready <= '1';
 
           end if;
 
         end if;
-        
+
+
+      -- LOAD (handle response)
+      when load =>
+
+        dma_rcv_valid <= '1';
+
+        if dma_rcv_ready = '1' then
+
+          dma_rcv_data <= PREAMBLE_BODY &
+                          read_word(reg.line, reg.cnt);
+
+          if reg.cnt = reg.msw and to_integer(unsigned(reg.length)) = 0 then
+
+            dma_rcv_data(NOC_FLIT_SIZE - 1 downto NOC_FLIT_SIZE - PREAMBLE_WIDTH) <= PREAMBLE_TAIL;
+
+            reg.state := idle;
+
+          elsif reg.cnt = reg.msw then
+
+            if to_integer(unsigned(reg.length)) < WORDS_PER_LINE then
+              reg.msw := to_integer(unsigned(reg.length)) - 1;
+            else
+              reg.msw := WORDS_PER_LINE - 1;
+            end if;
+
+            reg.addr   := reg.addr + (reg.valid_words_cnt * BYTES_PER_WORD);
+            reg.length := reg.length - reg.valid_words_cnt;
+
+            reg.state := wait_rsp;
+
+          else
+
+            reg.cnt := reg.cnt + 1;
+
+          end if;
+
+        end if;
+
+
+
       -- STORE
       when store =>
 
@@ -664,116 +722,6 @@ begin  -- architecture rtl of l2_acc_wrapper
   end process fsm_req_acc;
 
 -------------------------------------------------------------------------------
--- FSM: Bridge from L2 cache frontend output to accelerator wrapper
--------------------------------------------------------------------------------
-  fsm_rsp_acc : process (rsp_acc_reg, req_acc_reg, dma_rcv_ready,
-                         rd_rsp_valid, rd_rsp_data_line)
-
-    variable reg : rsp_acc_reg_type;
-
-  begin
-
-    -- copy current state into a variable
-    reg         := rsp_acc_reg;
-    
-    -- default values of output signals
-    dma_rcv_valid <= '0';
-    dma_rcv_data <= (others => '0');
-
-    rd_rsp_ready <= '1';
-
-    case rsp_acc_reg.state is
-
-      -- IDLE
-      when idle =>
-
-        rd_rsp_ready <= '1';
-        
-        if rd_rsp_valid = '1' then
-
-          reg.line := rd_rsp_data_line;
-          reg.state := rsp;
-          
-          if dma_rcv_ready <= '1' then 
-
-            dma_rcv_valid <= '1';
-
-            reg.cnt := reg.cnt + 1;
-
-            if (reg.cnt = req_acc_reg.length_rsp) then
-
-              reg.cnt := (others => '0');
-
-              dma_rcv_data <= PREAMBLE_TAIL &
-                              read_word(reg.line, 0);
-            else
-
-              dma_rcv_data <= PREAMBLE_BODY &
-                              read_word(reg.line, 0);
-            end if;
-            
-            reg.word_index := 1;
-
-          else
-
-            reg.word_index := 0;
-
-          end if;
-
-        end if;
-
-      -- RESPOND
-      when rsp =>
-
-        dma_rcv_valid <= '1';
-        
-        if dma_rcv_ready <= '1' then 
-
-          reg.cnt := reg.cnt + 1;
-
-          if (reg.cnt = req_acc_reg.length_rsp) then
-
-            reg.cnt := (others => '0');
-
-            dma_rcv_data <= PREAMBLE_TAIL &
-                            read_word(reg.line, reg.word_index);
-          else
-
-            dma_rcv_data <= PREAMBLE_BODY &
-                            read_word(reg.line, reg.word_index);
-          end if;
-          
-          if reg.word_index /= WORDS_PER_LINE - 1 then
-            
-            reg.word_index := reg.word_index + 1;
-
-          end if;
-          
-        else
-
-          rd_rsp_ready <= '1';
-
-          if rd_rsp_valid = '1' then
-
-            reg.line := rd_rsp_data_line;
-
-            reg.word_index := 0;
-
-          else
-
-            reg.state := idle;
-            
-          end if;
-
-        end if;
-
-    end case;
-
-    rsp_acc_reg_next <= reg;
-
-  end process fsm_rsp_acc;
-  
--------------------------------------------------------------------------------
 -- FSM: Requests to NoC
 -------------------------------------------------------------------------------
   fsm_req : process (req_reg, coherence_req_full,
@@ -782,7 +730,7 @@ begin  -- architecture rtl of l2_acc_wrapper
 
     variable reg    : req_reg_type;
     variable req_id : cache_id_t := (others => '0');
-    
+
   begin  -- process fsm_cache2noc
 
     -- initialize variables

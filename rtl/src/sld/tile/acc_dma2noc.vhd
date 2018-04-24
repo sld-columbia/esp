@@ -454,11 +454,13 @@ begin  -- rtl
         if msg = DMA_TO_DEV then
           coherent_dma_read <= '1';
           if coherent_dma_ready = '1' then
+            dma_tran_header_sent <= '1';
             dma_next <= reply_data;
           end if;
         else
           coherent_dma_write <= '1';
           if coherent_dma_ready = '1' then
+            dma_tran_header_sent <= '1';
             dma_next <= request_data;
           end if;
         end if;
@@ -529,7 +531,7 @@ begin  -- rtl
         dma_next <= running;
 
       when rd_handshake =>
-        if dma_snd_full_int = '0' then
+        if dma_snd_full_int = '0' or coherence = ACC_COH_FULL then
           if rd_request = '1' then
             rd_grant <= '1';
           elsif dma_tran_start = '1' and scatter_gather /= 0 then
@@ -549,7 +551,7 @@ begin  -- rtl
         end if;
 
       when wr_handshake =>
-        if dma_snd_full_int = '0' then
+        if dma_snd_full_int = '0' or coherence = ACC_COH_FULL then
           if wr_request = '1' then
             wr_grant <= '1';
           elsif dma_tran_start = '1' and scatter_gather /= 0 then
