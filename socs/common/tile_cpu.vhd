@@ -40,6 +40,7 @@ entity tile_cpu is
     local_y                 : local_yx                             := "001";
     local_x                 : local_yx                             := "001";
     remote_apb_slv_en       : std_logic_vector(NAPBSLV-1 downto 0) := (others => '0');
+    local_apb_en            : std_logic_vector(NAPBSLV-1 downto 0) := (others => '0');
     l2_pindex               : integer                              := 6;
     has_dvfs                : integer;
     has_pll                 : integer;
@@ -110,8 +111,6 @@ architecture rtl of tile_cpu is
   signal clk_feedthru : std_ulogic;
 
 -- Amba bus signals and configuration
-  signal apbi     : apb_slv_in_type;
-  signal apbo     : apb_slv_out_vector;
   signal ahbsi    : ahb_slv_in_type;
   signal ahbso    : ahb_slv_out_vector;
   signal ahbmi    : ahb_mst_in_type;
@@ -126,8 +125,10 @@ architecture rtl of tile_cpu is
   signal ctrl_ahbso : ahb_slv_out_vector;
   signal ctrl_ahbmi : ahb_mst_in_type;
   signal ctrl_ahbmo : ahb_mst_out_vector;
+  signal ctrl_apbi2  : apb_slv_in_type;
+  signal ctrl_apbo2  : apb_slv_out_vector;
 
-  signal apb_req, apb_ack, noc_apb_ack, local_apb_ack : std_ulogic;
+  signal apb_req, apb_ack : std_ulogic;
 
 -- L1 data-cache flush
   signal dflush : std_ulogic;
@@ -152,6 +153,12 @@ architecture rtl of tile_cpu is
   signal coherence_rsp_snd_wrreq    : std_ulogic;
   signal coherence_rsp_snd_data_in  : noc_flit_type;
   signal coherence_rsp_snd_full     : std_ulogic;
+  signal apb_rcv_rdreq              : std_ulogic;
+  signal apb_rcv_data_out           : noc_flit_type;
+  signal apb_rcv_empty              : std_ulogic;
+  signal apb_snd_wrreq              : std_ulogic;
+  signal apb_snd_data_in            : noc_flit_type;
+  signal apb_snd_full               : std_ulogic;
   signal remote_apb_rcv_rdreq       : std_ulogic;
   signal remote_apb_rcv_data_out    : noc_flit_type;
   signal remote_apb_rcv_empty       : std_ulogic;
@@ -180,6 +187,7 @@ architecture rtl of tile_cpu is
     3      => mctrl_hindex,
 -- pragma translate_on
     others => 0);
+
 
 -- Monitor CPU idle
   signal irqo_int      : l3_irq_out_type;
@@ -304,22 +312,19 @@ begin
   ----------------------------------------------------------------------
 
   assign_bus_ctrl_sig : process (ctrl_ahbmi, ctrl_ahbsi, ctrl_apbi,
-                                 ahbmo, ahbso, apbo,
-                                 noc_apbo, noc_apb_ack, local_apb_ack)
+                                 ahbmo, ahbso, noc_apbo)
   begin  -- process assign_bus_ctrl_sig
     ahbmi      <= ctrl_ahbmi;
     ahbsi      <= ctrl_ahbsi;
-    apbi       <= ctrl_apbi;
     ctrl_ahbmo <= ahbmo;
     ctrl_ahbso <= ahbso;
-    ctrl_apbo  <= apbo;
 
     noc_apbi <= ctrl_apbi;
     for i in 0 to NAPBSLV-1 loop
       if remote_apb_slv_en(i) = '1' then
         ctrl_apbo(i) <= noc_apbo(i);
       else
-        ctrl_apbo(i) <= apbo(i);
+        ctrl_apbo(i) <= apb_none;
       end if;
       ctrl_apbo(i).pirq <= (others => '0');
     end loop;  -- i
@@ -336,12 +341,6 @@ begin
       ctrl_apbo(i).pconfig <= fixed_apbo_pconfig(i);
       ctrl_apbo(i).pindex  <= i;
     end loop;  -- i
-    -- local power controller is always ready.
-    if ctrl_apbi.psel(powerctrl_pindex) = '1' then
-      apb_ack <= local_apb_ack;
-    else
-      apb_ack <= noc_apb_ack;
-    end if;
   end process assign_bus_ctrl_sig;
 
   ahb0 : ahbctrl                        -- AHB arbiter/multiplexer
@@ -354,7 +353,6 @@ begin
   -- APB
   -------------------------------------------------------------------------------
 
-  local_apb_ack <= '1';
   apb0 : patient_apbctrl                -- AHB/APB bridge
     generic map (hindex     => ahb2apb_hindex, haddr => CFG_APBADDR, hmask => ahb2apb_hmask, nslaves => NAPBSLV,
                  remote_apb => remote_apb_slv_en)
@@ -363,7 +361,7 @@ begin
 
   no_init_apbo : for i in 0 to NAPBSLV - 1 generate
     no_powerctrl : if i /= powerctrl_pindex and i /= l2_pindex generate
-      apbo(i) <= apb_none;
+      ctrl_apbo2(i) <= apb_none;
     end generate no_powerctrl;
   end generate no_init_apbo;
 
@@ -387,8 +385,8 @@ begin
         refclk    => refclk,
         pllbypass => pllbypass,
         pllclk    => clk_feedthru,
-        apbi      => apbi,
-        apbo      => apbo(powerctrl_pindex),
+        apbi      => ctrl_apbi2,
+        apbo      => ctrl_apbo2(powerctrl_pindex),
         acc_idle  => mon_dvfs_in.acc_idle,
         traffic   => mon_dvfs_in.traffic,
         burst     => mon_dvfs_in.burst,
@@ -402,7 +400,7 @@ begin
 
   dvfs_no_master_or_no_dvfs : if has_dvfs = 0 or has_pll = 0 generate
     clk_feedthru           <= refclk;
-    apbo(powerctrl_pindex) <= apb_none;
+    ctrl_apbo2(powerctrl_pindex) <= apb_none;
     process (clk_feedthru, rst)
     begin  -- process
       if rst = '0' then                 -- asynchronous reset (active low)
@@ -494,7 +492,7 @@ begin
       apbi                    => noc_apbi,
       apbo                    => noc_apbo,
       apb_req                 => apb_req,
-      apb_ack                 => noc_apb_ack,
+      apb_ack                 => apb_ack,
       remote_apb_snd_wrreq    => remote_apb_snd_wrreq,
       remote_apb_snd_data_in  => remote_apb_snd_data_in,
       remote_apb_snd_full     => remote_apb_snd_full,
@@ -582,6 +580,8 @@ begin
         coherence_rsp_rcv_rdreq    => coherence_rsp_rcv_rdreq,
         coherence_rsp_rcv_data_out => coherence_rsp_rcv_data_out,
         coherence_rsp_rcv_empty    => coherence_rsp_rcv_empty);
+
+    ctrl_apbo2(l2_pindex) <= apb_none;
   end generate no_cache_coherence;
 
   with_cache_coherence : if CFG_L2_ENABLE /= 0 generate
@@ -604,6 +604,7 @@ begin
         mem_info    => tile_mem_list,
         destination => 0,
         l1_cache_en => CFG_DCEN,
+        cpu_id      => cpu_id,
         cache_tile_id => cache_tile_id)
       port map (
         rst                        => l2_rstn,
@@ -612,8 +613,8 @@ begin
         ahbso                      => ahbso(ddr0_hindex),
         ahbmi                      => ahbmi,
         ahbmo                      => ahbmo(CFG_NCPU_TILE + 1),
-        apbi                       => apbi,
-        apbo                       => apbo(l2_pindex),
+        apbi                       => ctrl_apbi2,
+        apbo                       => ctrl_apbo2(l2_pindex),
         flush                      => dflush,
         coherence_req_wrreq        => coherence_req_wrreq,
         coherence_req_data_in      => coherence_req_data_in,
@@ -662,6 +663,25 @@ begin
       dma_snd_atleast_4slots    => '1',
       dma_snd_exactly_3slots    => '0');
 
+  misc_noc2apb_1 : misc_noc2apb
+    generic map (
+      tech         => fabtech,
+      local_y      => local_y,
+      local_x      => local_x,
+      local_apb_en => local_apb_en)
+    port map (
+      rst              => rst,
+      clk              => clk_feedthru,
+      apbi             => ctrl_apbi2,
+      apbo             => ctrl_apbo2,
+      dvfs_transient   => '0',
+      apb_snd_wrreq    => apb_snd_wrreq,
+      apb_snd_data_in  => apb_snd_data_in,
+      apb_snd_full     => apb_snd_full,
+      apb_rcv_rdreq    => apb_rcv_rdreq,
+      apb_rcv_data_out => apb_rcv_data_out,
+      apb_rcv_empty    => apb_rcv_empty);
+
   -----------------------------------------------------------------------------
   -- Tile queues
   -----------------------------------------------------------------------------
@@ -684,6 +704,12 @@ begin
       coherence_rsp_snd_wrreq    => coherence_rsp_snd_wrreq,
       coherence_rsp_snd_data_in  => coherence_rsp_snd_data_in,
       coherence_rsp_snd_full     => coherence_rsp_snd_full,
+      apb_rcv_rdreq              => apb_rcv_rdreq,
+      apb_rcv_data_out           => apb_rcv_data_out,
+      apb_rcv_empty              => apb_rcv_empty,
+      apb_snd_wrreq              => apb_snd_wrreq,
+      apb_snd_data_in            => apb_snd_data_in,
+      apb_snd_full               => apb_snd_full,
       remote_apb_rcv_rdreq       => remote_apb_rcv_rdreq,
       remote_apb_rcv_data_out    => remote_apb_rcv_data_out,
       remote_apb_rcv_empty       => remote_apb_rcv_empty,

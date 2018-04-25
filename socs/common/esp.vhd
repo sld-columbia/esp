@@ -250,6 +250,7 @@ begin
           local_y                 => tile_y(i),
           local_x                 => tile_x(i),
           remote_apb_slv_en       => remote_apb_slv_en,
+          local_apb_en            => local_apb_mask(i),
           l2_pindex               => l2_cache_pindex(i),
           has_dvfs                => tile_has_dvfs(i),
           has_pll                 => tile_has_pll(i),

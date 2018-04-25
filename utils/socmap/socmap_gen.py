@@ -843,6 +843,9 @@ def print_tiles(fp, esp_config, soc):
     if esp_config.tiles[i].type == "acc":
       acc = esp_config.accelerators[esp_config.tiles[i].idx]
       fp.write("    " + str(acc.idx) + " => " + str(i) + ",\n")
+    if esp_config.tiles[i].type == "cpu":
+      l2_pindex = L2_CACHE_PINDEX_FIRST + esp_config.tiles[i].cpuid
+      fp.write("    " + str(l2_pindex) + " => " + str(i) + ",\n")
   fp.write("    others => 0);\n\n")
 
   fp.write("  constant apb_slv_y : yx_vec(NAPBSLV-1 downto 0) := (\n")
@@ -871,6 +874,9 @@ def print_tiles(fp, esp_config, soc):
   fp.write("    2 => to_std_logic(CFG_IRQ3_ENABLE),\n")
   fp.write("    3 => to_std_logic(CFG_GPT_ENABLE),\n")
   fp.write("    " + str(L3_CACHE_PINDEX) + " => to_std_logic(CFG_LLC_ENABLE),\n")
+  for i in range(0, esp_config.ntiles):
+    if esp_config.tiles[i].type == "cpu":
+      fp.write("    " + str(L2_CACHE_PINDEX_FIRST + esp_config.tiles[i].cpuid) + " => to_std_logic(CFG_L2_ENABLE),\n")
   fp.write("    13 => to_std_logic(CFG_SVGA_ENABLE),\n")
   fp.write("    14 => to_std_logic(CFG_GRETH),\n")
   if soc.HAS_SGMII:
@@ -894,6 +900,13 @@ def print_tiles(fp, esp_config, soc):
     if esp_config.tiles[i].type == "acc":
       acc = esp_config.accelerators[esp_config.tiles[i].idx]
       fp.write("    " + str(i) + " => " + acc.lowercase_name + "_" + str(acc.number) + "_apb_mask,\n")
+    if esp_config.tiles[i].type == "cpu":
+      fp.write("    " + str(i) + " => (\n")
+      if esp_config.tiles[i].has_pll == 1:
+        fp.write("      powerctrl_pindex => '1',\n")
+      l2_pindex = L2_CACHE_PINDEX_FIRST + esp_config.tiles[i].cpuid
+      fp.write("      " + str(l2_pindex) + " => '1',\n")
+      fp.write("      others => '0'),\n")
   fp.write("    others => (others => '0'));\n\n")
 
 def print_accelerators_constants(fp):

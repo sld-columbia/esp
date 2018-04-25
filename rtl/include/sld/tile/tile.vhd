@@ -62,6 +62,12 @@ package tile is
       coherence_rsp_snd_wrreq      : in  std_ulogic;
       coherence_rsp_snd_data_in    : in  noc_flit_type;
       coherence_rsp_snd_full       : out std_ulogic;
+      apb_rcv_rdreq            : in  std_ulogic;
+      apb_rcv_data_out         : out noc_flit_type;
+      apb_rcv_empty            : out std_ulogic;
+      apb_snd_wrreq            : in  std_ulogic;
+      apb_snd_data_in          : in  noc_flit_type;
+      apb_snd_full             : out std_ulogic;
       remote_apb_rcv_rdreq     : in  std_ulogic;
       remote_apb_rcv_data_out  : out noc_flit_type;
       remote_apb_rcv_empty     : out std_ulogic;

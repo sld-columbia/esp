@@ -88,7 +88,7 @@ architecture rtl of tile_dvfs is
     POLICY_BALANCE_TH_REG  => '1',
     others => '0');
 
-  constant bankdef : bank_type(0 to MAXREGNUM-11) := (
+  constant bankdef : bank_type(0 to MAXREGNUM-1) := (
     DVFS_CMD_REG           => x"00000000",              -- no command
     VOLTAGE_STATUS_REG     => x"00000008",              -- V0: highest (status)
     FREQUENCY_STATUS_REG   => x"00000008",              -- F0: highest (status)

@@ -20,6 +20,9 @@ struct esp_device {
 	unsigned addr;
 };
 
+int get_pid();
+void *aligned_malloc(int size);
+void aligned_free(void *ptr);
 int probe(struct esp_device **espdevs, unsigned devid, const char *name);
 unsigned ioread32(struct esp_device *dev, unsigned offset);
 void iowrite32(struct esp_device *dev, unsigned offset, unsigned payload);

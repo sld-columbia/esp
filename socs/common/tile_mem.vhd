@@ -186,8 +186,6 @@ architecture rtl of tile_mem is
   signal ddr_snd_full     : std_ulogic;
 
 
-  signal apbi     : apb_slv_in_type;
-  signal apbo     : apb_slv_out_vector := (others => apb_none);
   signal ahbsi    : ahb_slv_in_type;
   signal ahbso    : ahb_slv_out_vector := (others => ahbs_none);
   signal ahbmi    : ahb_mst_in_type;
@@ -236,7 +234,7 @@ architecture rtl of tile_mem is
     14     => to_std_logic(CFG_GRETH),
     15     => to_std_logic(CFG_SGMII * CFG_GRETH),
     others => '0');
-
+  
 -- Debug Support Unit
   signal dsui : dsu_in_type;
   signal dsuo : dsu_out_type;
@@ -320,7 +318,7 @@ begin
   -----------------------------------------------------------------------------
 
   assign_bus_ctrl_sig : process (ctrl_ahbmi, ctrl_ahbsi, ctrl_apbi,
-                                 ahbmo, ahbso, apbo,
+                                 ahbmo, ahbso,
                                  --pragma translate_off
                                  mctrl_apbo, mctrl_ahbso,
                                  --pragma translate_on
@@ -328,11 +326,9 @@ begin
   begin  -- process assign_bus_ctrl_sig
     ahbmi      <= ctrl_ahbmi;
     ahbsi      <= ctrl_ahbsi;
-    apbi       <= ctrl_apbi;
     ctrl_ahbmo <= ahbmo;
     ctrl_ahbso <= ahbso;
 
-    ctrl_apbo               <= apbo;
     --pragma translate_off
     ctrl_apbo(mctrl_hindex) <= mctrl_apbo;
     mctrl_apbi              <= ctrl_apbi;
@@ -354,6 +350,8 @@ begin
     for i in 0 to NAPBSLV-1 loop
       if remote_apb_slv_en(i) = '1' then
         ctrl_apbo(i) <= noc_apbo(i);
+      else
+        ctrl_apbo(i) <= apb_none;
       end if;
       ctrl_apbo(i).pirq <= (others => '0');
     end loop;  -- i

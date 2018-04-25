@@ -8,12 +8,15 @@
 #define ESP_CACHE_CMD_FLUSH_BIT	1
 
 #define ESP_CACHE_STATUS_DONE_MASK 0x1
+#define ESP_CACHE_CPUID_MASK       0xf0000000
+#define ESP_CACHE_CPUID_SHIFT      28
 
 #ifdef __KERNEL__
 #include <linux/types.h>
 #else
 #include <stdint.h>
 #define ASI_LEON_DFLUSH 0x11
+#define CACHELINE_SIZE 0x10
 #endif /* __KERNEL__ */
 
 

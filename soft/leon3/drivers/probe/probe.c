@@ -2,6 +2,31 @@
 #include <stdlib.h>
 #include <esp_probe.h>
 
+asm(
+    "	.text\n"
+    "	.align 4\n"
+    "	.global get_pid\n"
+
+    "get_pid:\n"
+    "        mov  %asr17, %o0\n"
+    "        srl  %o0, 28, %o0\n"
+    "        retl\n"
+    "        and %o0, 0xf, %o0\n"
+    );
+
+
+void *aligned_malloc(int size) {
+	void *mem = malloc(size + CACHELINE_SIZE + sizeof(void*));
+	void **ptr = (void**) ((uintptr_t) (mem + CACHELINE_SIZE + sizeof(void*)) & ~(CACHELINE_SIZE-1));
+	ptr[-1] = mem;
+	return ptr;
+}
+
+void aligned_free(void *ptr) {
+	free(((void**)ptr)[-1]);
+}
+
+
 void esp_flush(int coherence)
 {
 	int i;
@@ -10,6 +35,7 @@ void esp_flush(int coherence)
 	struct esp_device *l2s = NULL;
 	int nllc = 0;
 	int nl2 = 0;
+	int pid = get_pid();
 
 	if (coherence == ACC_COH_NONE)
 		/* Look for LLC controller */
@@ -24,7 +50,11 @@ void esp_flush(int coherence)
 		/* Set L2 flush (waits for L1 to flush first) */
 		for (i = 0; i < nl2; i++) {
 			struct esp_device *l2 = &l2s[i];
-			iowrite32(l2, ESP_CACHE_REG_CMD, cmd);
+			int cpuid = (ioread32(l2, ESP_CACHE_REG_STATUS) & ESP_CACHE_CPUID_MASK) >> ESP_CACHE_CPUID_SHIFT;
+			if (cpuid == pid) {
+				iowrite32(l2, ESP_CACHE_REG_CMD, cmd);
+				break;
+			}
 		}
 
 		/* Flush L1 - also execute L2 flush */
@@ -32,13 +62,11 @@ void esp_flush(int coherence)
 				"i"(ASI_LEON_DFLUSH) : "memory");
 
 		/* Wait for L2 flush to complete */
-		for (i = 0; i < nl2; i++) {
-			struct esp_device *l2 = &l2s[i];
-			/* Poll for completion */
-			while (!(ioread32(l2, ESP_CACHE_REG_STATUS) & ESP_CACHE_STATUS_DONE_MASK));
-			/* Clear IRQ */
-			iowrite32(l2, ESP_CACHE_REG_CMD, 0);
-		}
+		struct esp_device *l2 = &l2s[i];
+		/* Poll for completion */
+		while (!(ioread32(l2, ESP_CACHE_REG_STATUS) & ESP_CACHE_STATUS_DONE_MASK));
+		/* Clear IRQ */
+		iowrite32(l2, ESP_CACHE_REG_CMD, 0);
 
 		/* Flus LLC */
 		for (i = 0; i < nllc; i++) {

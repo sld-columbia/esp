@@ -195,6 +195,7 @@ package cachepackage is
       mem_info    : tile_mem_info_vector;
       destination : integer := 0;       -- 0: mem, 1: DSU
       l1_cache_en : integer := 0;
+      cpu_id      : integer := 0;
       cache_tile_id : cache_attribute_array);
 
     port (
