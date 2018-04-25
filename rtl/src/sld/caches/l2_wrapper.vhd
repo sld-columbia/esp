@@ -48,6 +48,7 @@ entity l2_wrapper is
     mem_info    : tile_mem_info_vector;
     destination : integer := 0;         -- 0: mem, 1: DSU
     l1_cache_en : integer := 0;
+    cpu_id      : integer := 0;
     cache_tile_id : cache_attribute_array);
 
   port (
@@ -575,8 +576,9 @@ begin  -- architecture rtl of l2_wrapper
   cmd_status: process (clk, rst)
   begin  -- process cmd_status
     if rst = '0' then                   -- asynchronous reset (active low)
-      cmd_reg    <= (others => '0');
-      status_reg <= (others => '0');
+      cmd_reg                  <= (others => '0');
+      status_reg(27 downto 0)  <= (others => '0');
+      status_reg(31 downto 28) <= std_logic_vector(to_unsigned(cpu_id, 4));
     elsif clk'event and clk = '1' then  -- rising clock edge
       if flush_done = '1' then
         status_reg(0) <= '1';
