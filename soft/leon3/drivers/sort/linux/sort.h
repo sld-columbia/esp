@@ -13,6 +13,7 @@
 #endif /* __KERNEL__ */
 
 #include <esp.h>
+#include <esp_accelerator.h>
 
 struct sort_access {
 	struct esp_access esp;

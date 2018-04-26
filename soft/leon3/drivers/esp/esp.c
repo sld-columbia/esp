@@ -7,7 +7,6 @@
 #include <linux/ioctl.h>
 
 #include <asm/uaccess.h>
-#include <asm/cacheflush.h>
 
 #include <esp.h>
 
@@ -53,7 +52,7 @@ static int esp_flush(struct esp_device *esp)
 	int rc = 0;
 
 	if (esp->coherence < ACC_COH_FULL)
-		flush_page_for_dma(0);
+		rc = esp_private_cache_flush();
 
 	if (esp->coherence < ACC_COH_LLC)
 		rc = esp_cache_flush();
@@ -89,6 +88,7 @@ static void esp_transfer(struct esp_device *esp, const struct contig_desc *conti
 	iowrite32be(contig->arr_dma_addr, esp->iomem + PT_ADDRESS_REG);
 	iowrite32be(contig_chunk_size_log, esp->iomem + PT_SHIFT_REG);
 	iowrite32be(contig->n, esp->iomem + PT_NCHUNK_REG);
+	iowrite32be(esp->coherence, esp->iomem + COHERENCE_REG);
 	iowrite32be(0x0, esp->iomem + SRC_OFFSET_REG);
 	iowrite32be(0x0, esp->iomem + DST_OFFSET_REG);
 }
@@ -280,8 +280,8 @@ int esp_device_register(struct esp_device *esp, struct platform_device *pdev)
 	while (ioread32be(esp->iomem + CMD_REG))
 		cpu_relax();
 
-	/* get type of coherence selected for the device */
-	esp->coherence = ioread32be(esp->iomem + COHERENCE_REG);
+	/* set type of coherence to no coherence by default */
+	esp->coherence = ACC_COH_NONE;
 
 	dev_info(esp->pdev, "device registered.\n");
 	platform_set_drvdata(pdev, esp);

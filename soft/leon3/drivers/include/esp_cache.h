@@ -7,9 +7,9 @@
 #define ESP_CACHE_CMD_RESET_BIT	0
 #define ESP_CACHE_CMD_FLUSH_BIT	1
 
-#define ESP_CACHE_STATUS_DONE_MASK 0x1
-#define ESP_CACHE_CPUID_MASK       0xf0000000
-#define ESP_CACHE_CPUID_SHIFT      28
+#define ESP_CACHE_STATUS_DONE_MASK   0x1
+#define ESP_CACHE_STATUS_CPUID_MASK  0xf0000000
+#define ESP_CACHE_STATUS_CPUID_SHIFT 28
 
 #ifdef __KERNEL__
 #include <linux/types.h>
@@ -34,6 +34,7 @@
 #include <asm/uaccess.h>
 
 int esp_cache_flush(void);
+int esp_private_cache_flush(void);
 
 #endif /* __KERNEL__ */
 

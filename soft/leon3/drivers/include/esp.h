@@ -16,6 +16,7 @@
 struct esp_access {
 	contig_khandle_t contig;
 	uint8_t run;
+	enum accelerator_coherence coherence;
 };
 
 #define ESP_IOC_RUN _IO('E', 0)

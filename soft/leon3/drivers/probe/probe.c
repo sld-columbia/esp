@@ -50,7 +50,7 @@ void esp_flush(int coherence)
 		/* Set L2 flush (waits for L1 to flush first) */
 		for (i = 0; i < nl2; i++) {
 			struct esp_device *l2 = &l2s[i];
-			int cpuid = (ioread32(l2, ESP_CACHE_REG_STATUS) & ESP_CACHE_CPUID_MASK) >> ESP_CACHE_CPUID_SHIFT;
+			int cpuid = (ioread32(l2, ESP_CACHE_REG_STATUS) & ESP_CACHE_STATUS_CPUID_MASK) >> ESP_CACHE_STATUS_CPUID_SHIFT;
 			if (cpuid == pid) {
 				iowrite32(l2, ESP_CACHE_REG_CMD, cmd);
 				break;

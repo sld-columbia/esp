@@ -218,9 +218,18 @@ static int cmd_config(struct test_info *info)
 	return 0;
 }
 
-int test_main(struct test_info *info, const char *cmd)
+int test_main(struct test_info *info, const char *coh, const char *cmd)
 {
+	enum accelerator_coherence coherence;
+	if (!strcmp(coh, "full"))
+		coherence = ACC_COH_FULL;
+	else if (!strcmp(coh, "llc"))
+		coherence = ACC_COH_LLC;
+	else
+		coherence = ACC_COH_NONE;
+
 	info->cmd = cmd;
+	info->esp->coherence = coherence;
 
 	if (!strcmp(cmd, "config"))
 		return cmd_config(info);

@@ -13,7 +13,8 @@
 #define DEVNAME "/dev/sort.0"
 #define NAME "sort"
 
-static const char usage_str[] = "usage: sort cmd [n_elems] [n_batches] [-v]\n"
+static const char usage_str[] = "usage: sort coherence cmd [n_elems] [n_batches] [-v]\n"
+	"  coherence: none|llc|full\n"
 	"  cmd: config|test|run|hw\n"
 	"\n"
 	"Optional arguments: n_elems and batch apply to 'config', 'hw' and 'test':\n"
@@ -272,25 +273,27 @@ int main(int argc, char *argv[])
 {
 	int n_argc;
 
-	if (argc < 2)
+	if (argc < 3)
 		usage();
-	if (!strcmp(argv[1], "run"))
-		n_argc = 2;
+
+	if (!strcmp(argv[2], "run"))
+		n_argc = 3;
 	else
-		n_argc = 4;
+		n_argc = 5;
+
 	if (argc < n_argc)
 		usage();
 
-	if (n_argc > 2) {
-		sort_test.n_elems = strtoul(argv[2], NULL, 0);
-		sort_test.n_batches = strtoul(argv[3], NULL, 0);
-		if (argc == 5) {
-			if (strcmp(argv[4], "-v"))
+	if (n_argc > 3) {
+		sort_test.n_elems = strtoul(argv[3], NULL, 0);
+		sort_test.n_batches = strtoul(argv[4], NULL, 0);
+		if (argc == 6) {
+			if (strcmp(argv[5], "-v"))
 				usage();
 			sort_test.verbose = true;
 		}
 	}
-	return test_main(&sort_test.info, argv[1]);
+	return test_main(&sort_test.info, argv[1], argv[2]);
 }
 
 

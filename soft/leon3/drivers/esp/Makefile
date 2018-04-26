@@ -7,10 +7,10 @@ all: check Module.symvers
 	ARCH=$(ARCH) CROSS_COMPILE=$(CROSS_COMPILE) $(MAKE) -C $(KSRC) M=`pwd`
 
 Module.symvers:
-	$(MAKE) -C $(CONTIG_ALLOC_PATH)
 	$(MAKE) -C ../esp_cache
-	cat $(CONTIG_ALLOC_PATH)/$@ >> $@
+	$(MAKE) -C $(CONTIG_ALLOC_PATH)
 	cat ../esp_cache/$@ > $@
+	cat $(CONTIG_ALLOC_PATH)/$@ >> $@
 
 check:
 ifeq ($(KSRC),)

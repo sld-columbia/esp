@@ -47,6 +47,7 @@ static void sort_prep_xfer(struct esp_device *esp, void *arg)
 {
 	struct sort_access *a = arg;
 
+	esp->coherence = a->esp.coherence;
 	iowrite32be(a->size, esp->iomem + SORT_LEN_REG);
 	iowrite32be(a->batch, esp->iomem + SORT_BATCH_REG);
 }

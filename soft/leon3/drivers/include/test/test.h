@@ -6,6 +6,7 @@
 
 #include <contig.h>
 #include <esp.h>
+#include <esp_accelerator.h>
 
 #ifndef offsetof
 #define offsetof(TYPE, MEMBER) ((size_t) &((TYPE *)0)->MEMBER)
@@ -43,7 +44,7 @@ struct test_info {
 	int fd; /* filled in by the library */
 };
 
-int test_main(struct test_info *info, const char *cmd);
+int test_main(struct test_info *info, const char * coh, const char *cmd);
 void NORETURN die(const char *fmt, ...);
 void NORETURN die_errno(const char *fmt, ...);
 
