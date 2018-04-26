@@ -12,10 +12,15 @@ def create_mmi64_regs(soc):
   num_nocs = 2
   num_acc = soc.noc.get_acc_num(soc)
   num_tiles = soc.noc.rows * soc.noc.cols
+  num_cpu = soc.noc.get_cpu_num(soc)
 
   vf_points = soc.noc.vf_points
   directions = 5
   acc_mon_regs = 5
+  cache_mon_regs = 2
+
+  num_l2 = num_cpu + num_acc
+  num_llc = 1
 
   fp.write("#define DDRS_NUM " + str(soc.noc.get_mem_num(soc)[0]) + "\n") 
   fp.write("#define NOCS_NUM " + str(num_nocs) + "\n") 
@@ -25,12 +30,16 @@ def create_mmi64_regs(soc):
   fp.write("#define ACCS_NUM " + str(num_acc) + "\n") 
   fp.write("#define VF_OP_POINTS " + str(vf_points) + "\n") 
   fp.write("#define DIRECTIONS " + str(directions) + "\n") 
+  fp.write("#define L2S_NUM " + str(num_l2) + "\n") 
+  fp.write("#define LLCS_NUM " + str(num_llc) + "\n") 
 
   ddr_offset = 0
   inj_offset = 0
   routers_offset = 0
   accelerators_offset = 0
   dvfs_offset = 0
+  l2_offset = 0
+  llc_offset = 0
   if soc.noc.monitor_ddr.get() == 1:
     fp.write("#define DDR_offset 0\n") 
   ddr_offset = soc.noc.get_mem_num(soc)[0] * soc.noc.monitor_ddr.get()
@@ -43,9 +52,15 @@ def create_mmi64_regs(soc):
   if soc.noc.monitor_accelerators.get() == 1:
     fp.write("#define ACC_offset " + str(routers_offset) + "\n")
   accelerators_offset = routers_offset + ((num_acc-1) * acc_mon_regs + acc_mon_regs) * soc.noc.monitor_accelerators.get()
+  if soc.noc.monitor_l2.get() == 1:
+    fp.write("#define L2_offset " + str(accelerators_offset) + "\n") 
+  l2_offset = accelerators_offset + ((num_l2-1) * cache_mon_regs + cache_mon_regs) * soc.noc.monitor_l2.get()
+  if soc.noc.monitor_llc.get() == 1:
+    fp.write("#define LLC_offset " + str(l2_offset) + "\n") 
+  llc_offset = l2_offset + ((num_llc-1) * cache_mon_regs + cache_mon_regs) * soc.noc.monitor_llc.get()
   if soc.noc.monitor_dvfs.get() == 1:
-    fp.write("#define DVFS_offset " + str(accelerators_offset) + "\n") 
-  dvfs_offset = accelerators_offset + ((num_tiles-1) * vf_points + vf_points) * soc.noc.monitor_dvfs.get()
+    fp.write("#define DVFS_offset " + str(llc_offset) + "\n") 
+  dvfs_offset = llc_offset + ((num_tiles-1) * vf_points + vf_points) * soc.noc.monitor_dvfs.get()
 
   fp.write("#define MONITOR_REG_COUNT " + str(dvfs_offset) + "\n") 
   fp.write("#define MONITOR_RESET_offset " + str(dvfs_offset) + "\n") 

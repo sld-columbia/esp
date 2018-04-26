@@ -29,7 +29,7 @@ use work.gencaches.all;
 
 use work.nocpackage.all;
 use work.cachepackage.all;              -- contains l2 cache component
-
+use work.sldcommon.all;
 
 entity l2_wrapper is
   generic (
@@ -80,7 +80,9 @@ entity l2_wrapper is
     -- tile->Noc3
     coherence_rsp_snd_wrreq    : out std_ulogic;
     coherence_rsp_snd_data_in  : out noc_flit_type;
-    coherence_rsp_snd_full     : in  std_ulogic
+    coherence_rsp_snd_full     : in  std_ulogic;
+
+    mon_cache                  : out monitor_cache_type
     );
 
 end l2_wrapper;
@@ -663,7 +665,10 @@ begin  -- architecture rtl of l2_wrapper
   ahbmo.hconfig <= hconfig;
   ahbmo.hindex  <= hindex_mst;
 
-  stats_ready <= '1';
+  stats_ready    <= '1';
+  mon_cache.clk  <= clk;
+  mon_cache.miss <= stats_valid and (not stats_data);
+  mon_cache.hit  <= stats_valid and stats_data;
 
 -------------------------------------------------------------------------------
 -- State update for all the FSMs

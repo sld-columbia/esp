@@ -28,6 +28,7 @@ use work.gencaches.all;
 
 use work.nocpackage.all;
 use work.cachepackage.all;              -- contains llc cache component
+use work.sldcommon.all;
 
 
 entity llc_wrapper is
@@ -83,7 +84,10 @@ entity llc_wrapper is
     -- tile->NoC4
     dma_snd_wrreq              : out std_ulogic;
     dma_snd_data_in            : out noc_flit_type;
-    dma_snd_full               : in  std_ulogic);
+    dma_snd_full               : in  std_ulogic;
+
+    mon_cache                  : out monitor_cache_type
+    );
 
 end llc_wrapper;
 
@@ -540,7 +544,10 @@ begin  -- architecture rtl
   ahbmo.hburst  <= HBURST_INCR;
 
   llc_stats_ready <= '1';
-  
+  mon_cache.clk  <= clk;
+  mon_cache.miss <= llc_stats_valid and (not llc_stats_data);
+  mon_cache.hit  <= llc_stats_valid and llc_stats_data;
+
 -------------------------------------------------------------------------------
 -- State update for all the FSMs
 -------------------------------------------------------------------------------

@@ -95,6 +95,7 @@ entity tile_cpu is
     noc6_output_port   : in  noc_flit_type;
     noc6_data_void_out : in  std_ulogic;
     noc6_stop_out      : in  std_ulogic;
+    mon_cache          : out monitor_cache_type;
     mon_dvfs_in        : in  monitor_dvfs_type;
     mon_dvfs           : out monitor_dvfs_type
     );
@@ -582,6 +583,7 @@ begin
         coherence_rsp_rcv_empty    => coherence_rsp_rcv_empty);
 
     ctrl_apbo2(l2_pindex) <= apb_none;
+    mon_cache <= monitor_cache_none;
   end generate no_cache_coherence;
 
   with_cache_coherence : if CFG_L2_ENABLE /= 0 generate
@@ -627,7 +629,8 @@ begin
         coherence_rsp_rcv_empty    => coherence_rsp_rcv_empty,
         coherence_rsp_snd_wrreq    => coherence_rsp_snd_wrreq,
         coherence_rsp_snd_data_in  => coherence_rsp_snd_data_in,
-        coherence_rsp_snd_full     => coherence_rsp_snd_full
+        coherence_rsp_snd_full     => coherence_rsp_snd_full,
+        mon_cache                  => mon_cache
         );
   end generate with_cache_coherence;
 

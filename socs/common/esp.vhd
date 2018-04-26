@@ -77,6 +77,8 @@ entity esp is
     -- Monitor signals
     mon_noc         : out monitor_noc_matrix(1 to 6, 0 to TILES_NUM-1);
     mon_acc         : out monitor_acc_vector(0 to accelerators_num-1);
+    mon_l2          : out monitor_cache_vector(0 to CFG_NL2 - 1);
+    mon_llc         : out monitor_cache_vector(0 to 0);  -- TODO: support split LLC
     mon_dvfs        : out monitor_dvfs_vector(0 to TILES_NUM-1));
 end;
 
@@ -302,6 +304,7 @@ begin
           noc6_output_port   => noc_output_port(6)(i),
           noc6_data_void_out => noc_data_void_out(6)(i),
           noc6_stop_out      => noc_stop_out(6)(i),
+          mon_cache          => mon_l2(tile_cache_id(i)),
           mon_dvfs_in        => mon_dvfs_domain(i),
           mon_dvfs           => mon_dvfs_out(i));
     end generate cpu_tile;
@@ -377,6 +380,7 @@ begin
           mon_dvfs_in        => mon_dvfs_domain(i),
           --Monitor signals
           mon_acc            => mon_acc(accelerators_tile2number(i)),
+          mon_cache          => mon_l2(tile_cache_id(i)),
           mon_dvfs           => mon_dvfs_out(i)
           );
     end generate accelerator_tile;
@@ -515,6 +519,7 @@ begin
           noc6_output_port   => noc_output_port(6)(i),
           noc6_data_void_out => noc_data_void_out(6)(i),
           noc6_stop_out      => noc_stop_out(6)(i),
+          mon_cache          => mon_llc(0),  -- TODO: support split LLC
           mon_dvfs           => mon_dvfs_out(i));
       clk_tile(i) <= noc_clk_int;
     end generate mem_tile;

@@ -308,6 +308,8 @@ class NoC():
     self.monitor_inj = IntVar()
     self.monitor_routers = IntVar()
     self.monitor_accelerators = IntVar()
+    self.monitor_l2 = IntVar()
+    self.monitor_llc = IntVar()
     self.monitor_dvfs = IntVar()
 
 #NoC configuration frame (middle)
@@ -403,6 +405,8 @@ class NoCFrame(Pmw.ScrolledFrame):
     Checkbutton(self.noc_config_frame, text="Monitor router ports", variable=self.noc.monitor_routers, anchor=W, width=20).pack()
     self.monitor_acc_selection = Checkbutton(self.noc_config_frame, text="Monitor accelerator status", variable=self.noc.monitor_accelerators, anchor=W, width=20)
     self.monitor_acc_selection.pack()
+    Checkbutton(self.noc_config_frame, text="Monitor L2 Hit/Miss", variable=self.noc.monitor_l2, anchor=W, width=20).pack()
+    Checkbutton(self.noc_config_frame, text="Monitor LLC Hit/Miss", variable=self.noc.monitor_llc, anchor=W, width=20).pack()
     self.monitor_dvfs_selection = Checkbutton(self.noc_config_frame, text="Monitor DVFS", variable=self.noc.monitor_dvfs, width=20, anchor=W)
     self.monitor_dvfs_selection.pack()
 

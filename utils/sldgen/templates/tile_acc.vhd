@@ -89,6 +89,7 @@ entity tile_acc is
     mon_dvfs_in        : in  monitor_dvfs_type;
     --Monitor signals
     mon_acc            : out monitor_acc_type;
+    mon_cache          : out monitor_cache_type;
     mon_dvfs           : out monitor_dvfs_type
     );
 

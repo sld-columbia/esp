@@ -135,6 +135,10 @@ class SoC_Config():
     line = fp.readline()
     if line.find("CONFIG_MON_ACCELERATORS = y") != -1:
         self.noc.monitor_accelerators.set(1)
+    if line.find("CONFIG_MON_L2 = y") != -1:
+        self.noc.monitor_l2.set(1)
+    if line.find("CONFIG_MON_LLC = y") != -1:
+        self.noc.monitor_llc.set(1)
     line = fp.readline()
     if line.find("CONFIG_MON_DVFS = y") != -1:
         self.noc.monitor_dvfs.set(1)
@@ -201,6 +205,10 @@ class SoC_Config():
       fp.write("CONFIG_MON_ACCELERATORS = y\n")
     else:
       fp.write("#CONFIG_MON_ACCELERATORS is not set\n")
+    if self.noc.monitor_llc.get() == 1:
+      fp.write("CONFIG_MON_LLC = y\n")
+    else:
+      fp.write("#CONFIG_MON_LLC is not set\n")
     if self.noc.monitor_dvfs.get() == 1:
       fp.write("CONFIG_MON_DVFS = y\n")
     else:

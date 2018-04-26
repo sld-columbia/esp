@@ -100,6 +100,7 @@ use std.textio.all;
     mon_dvfs_in       : in  monitor_dvfs_type;
     --Monitor signals
     mon_acc           : out monitor_acc_type;
+    mon_cache         : out monitor_cache_type;
     mon_dvfs          : out monitor_dvfs_type
     );
 
@@ -255,7 +256,8 @@ begin
       coherence_rsp_rcv_empty    => coherence_rsp_rcv_empty,
       coherence_rsp_snd_wrreq    => coherence_rsp_snd_wrreq,
       coherence_rsp_snd_data_in  => coherence_rsp_snd_data_in,
-      coherence_rsp_snd_full     => coherence_rsp_snd_full);
+      coherence_rsp_snd_full     => coherence_rsp_snd_full,
+      mon_cache                  => mon_cache);
 
 
   -- DMA controller for NoC

@@ -449,6 +449,8 @@ signal user_rstn        : std_ulogic;
 signal mon_ddr          : monitor_ddr_vector(0 to CFG_MIG_DUAL);
 signal mon_noc          : monitor_noc_matrix(1 to 6, 0 to CFG_TILES_NUM-1);
 signal mon_noc_actual   : monitor_noc_matrix(0 to 1, 0 to CFG_TILES_NUM-1);
+signal mon_l2           : monitor_cache_vector(0 to CFG_NL2 - 1);
+signal mon_llc          : monitor_cache_vector(0 to 0);  -- TODO: support split LLC
 signal mon_acc          : monitor_acc_vector(0 to accelerators_num-1);
 signal mon_dvfs         : monitor_dvfs_vector(0 to CFG_TILES_NUM-1);
 
@@ -1107,6 +1109,8 @@ begin
       -- Monitor signals
       mon_noc       => mon_noc,
       mon_acc       => mon_acc,
+      mon_l2        => mon_l2,
+      mon_llc       => mon_llc,
       mon_dvfs      => mon_dvfs
       );
 
@@ -1160,10 +1164,14 @@ begin
         nocs_num               => 2,
         tiles_num              => CFG_TILES_NUM,
         accelerators_num       => accelerators_num,
+        l2_num                 => CFG_NL2,
+        llc_num                => 1,    --TODO: support split llc
         mon_ddr_en             => CFG_MON_DDR_EN,
         mon_noc_tile_inject_en => CFG_MON_NOC_INJECT_EN,
         mon_noc_queues_full_en => CFG_MON_NOC_QUEUES_EN,
         mon_acc_en             => CFG_MON_ACC_EN,
+        mon_l2_en              => CFG_MON_L2_EN,
+        mon_llc_en             => CFG_MON_LLC_EN,
         mon_dvfs_en            => CFG_MON_DVFS_EN)
       port map (
         profpga_clk0_p  => profpga_clk0_p,
@@ -1176,6 +1184,8 @@ begin
         mon_ddr         => mon_ddr,
         mon_noc         => mon_noc_actual,
         mon_acc         => mon_acc,
+        mon_l2          => mon_l2,
+        mon_llc         => mon_llc,
         mon_dvfs        => mon_dvfs);
 
   end generate profpga_mmi64_gen;

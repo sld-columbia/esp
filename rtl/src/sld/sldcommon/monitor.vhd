@@ -38,10 +38,14 @@ entity monitor is
     nocs_num               : integer;
     tiles_num              : integer;
     accelerators_num       : integer;
+    l2_num                 : integer;
+    llc_num                : integer;
     mon_ddr_en             : integer;
     mon_noc_tile_inject_en : integer;
     mon_noc_queues_full_en : integer;
     mon_acc_en             : integer;
+    mon_l2_en              : integer;
+    mon_llc_en             : integer;
     mon_dvfs_en            : integer);
   port (
     profpga_clk0_p  : in  std_logic; -- 100 MHz clock
@@ -54,6 +58,8 @@ entity monitor is
     mon_ddr         : in  monitor_ddr_vector(0 to ddrs_num-1);
     mon_noc         : in  monitor_noc_matrix(0 to nocs_num-1, 0 to tiles_num-1);
     mon_acc         : in  monitor_acc_vector(0 to accelerators_num-1);
+    mon_l2          : in  monitor_cache_vector(0 to l2_num-1);
+    mon_llc         : in  monitor_cache_vector(0 to llc_num-1);
     mon_dvfs        : in  monitor_dvfs_vector(0 to tiles_num-1)
     );
 
@@ -258,6 +264,45 @@ architecture rtl of monitor is
   constant ACC_TOT_LO : integer range 0 to 4 := 3;
   constant ACC_TOT_HI : integer range 0 to 4 := 4;
 
+  -- X = l2_num
+  -- r = hit|miss
+  --
+  -- hit0,miss0,
+  --      ...
+  --      ...
+  -- hitX,missX,
+  function l2_offset (
+    constant l2 : integer range 0 to l2_num;
+    constant reg : integer range 0 to 2)
+    return integer is
+    variable offset : integer;
+  begin
+    offset := (l2 * 2) + reg;
+    return acc_offset(accelerators_num-1, 5) + (offset * mon_l2_en);
+  end l2_offset;
+  constant L2_HIT  : integer range 0 to 1 := 0;
+  constant L2_MISS : integer range 0 to 1 := 1;
+
+  -- X = llc_num
+  -- r = hit|miss
+  --
+  -- hit0,miss0,
+  --      ...
+  --      ...
+  -- hitX,missX,
+  function llc_offset (
+    constant llc : integer range 0 to llc_num;
+    constant reg : integer range 0 to 2)
+    return integer is
+    variable offset : integer;
+  begin
+    offset := (llc * 2) + reg;
+    return l2_offset(l2_num-1, 2) + (offset * mon_llc_en);
+  end llc_offset;
+  constant LLC_HIT  : integer range 0 to 1 := 0;
+  constant LLC_MISS : integer range 0 to 1 := 1;
+
+
   constant VF_OP_POINTS : integer := 4;
   function dvfs_offset (
     constant tile : integer range 0 to tiles_num;
@@ -266,7 +311,7 @@ architecture rtl of monitor is
     variable offset : integer;
   begin
     offset := (tile * VF_OP_POINTS) + pair;
-    return acc_offset(accelerators_num-1, 5) + (offset * mon_dvfs_en);
+    return llc_offset(llc_num-1, 2) + (offset * mon_dvfs_en);
   end dvfs_offset;
 
   constant CTRL_REG_COUNT              : integer := 4;
@@ -326,10 +371,14 @@ architecture rtl of monitor is
   signal new_window_sync_ddr    : std_logic_vector(0 to ddrs_num-1);
   signal new_window_sync_noc    : std_logic_vector(0 to nocs_num-1);
   signal new_window_sync_acc    : std_logic_vector(0 to accelerators_num-1);
+  signal new_window_sync_l2     : std_logic_vector(0 to l2_num-1);
+  signal new_window_sync_llc    : std_logic_vector(0 to llc_num-1);
   signal new_window_sync_dvfs   : std_logic_vector(0 to tiles_num-1);
   signal updated_ddr    : std_logic_vector(0 to ddrs_num-1);
   signal updated_noc    : std_logic_vector(0 to nocs_num-1);
   signal updated_acc    : std_logic_vector(0 to accelerators_num-1);
+  signal updated_l2     : std_logic_vector(0 to l2_num-1);
+  signal updated_llc    : std_logic_vector(0 to llc_num-1);
   signal updated_dvfs   : std_logic_vector(0 to tiles_num-1);
 
   signal window_count : std_logic_vector(63 downto 0);
@@ -790,6 +839,138 @@ begin
 
   end generate mon_acc_gen;
 
+
+  l2_monitor_enabled_gen: if mon_l2_en /= 0 generate
+    l2_gen: for i in 0 to l2_num-1 generate
+      synchronizer_2: synchronizer
+        generic map (
+          DATA_WIDTH => 1)
+        port map (
+          clk => mon_l2(i).clk,
+          reset_n => user_rstn,
+          data_i(0) => new_window,
+          data_o(0) => new_window_sync_l2(i));
+
+      process (mon_l2(i).clk, user_rstn)
+      begin  -- process
+        if user_rstn = '0' then         -- asynchronous reset (active low)
+          updated_l2(i) <= '0';
+        elsif mon_l2(i).clk'event and mon_l2(i).clk = '1' then  -- rising clock edge
+          if new_window_sync_l2(i) = '1' and updated_l2(i) = '0' then
+            updated_l2(i) <= '1';
+          elsif new_window_sync_l2(i) = '0' then
+            updated_l2(i) <= '0';
+          end if;
+        end if;
+      end process;
+
+      l2_counter: process (mon_l2(i).clk, user_rstn)
+        constant hit_index : integer  := l2_offset(i, L2_HIT);
+        constant miss_index : integer := l2_offset(i, L2_MISS);
+      begin -- process l20_counter
+        if user_rstn = '0' then -- asynchronous reset (active low)
+          count_value(hit_index)  <= (others => '0');
+          count_value(miss_index) <= (others => '0');
+          count(hit_index)        <= (others => '0');
+          count(miss_index)       <= (others => '0');
+        elsif mon_l2(i).clk'event and mon_l2(i).clk = '1' then -- rising clock edge
+          if mon_l2(i).hit = '1' then
+            count(hit_index) <= count(hit_index) + 1;
+          end if;
+          if mon_l2(i).miss = '1' then
+            count(miss_index) <= count(miss_index) + 1;
+          end if;
+
+          if new_window_sync_l2(i) = '1' and updated_l2(i) = '0' then
+            count(hit_index)        <= (others => '0');
+            count(miss_index)       <= (others => '0');
+            count_value(hit_index)  <= count(hit_index);
+            count_value(miss_index) <= count(miss_index);
+          end if;
+
+          if count_reset(hit_index) = '1' then
+            count(hit_index)        <= (others => '0');
+            count_value(hit_index)  <= (others => '0');
+          end if;
+
+          if count_reset(miss_index) = '1' then
+            count(miss_index)       <= (others => '0');
+            count_value(miss_index) <= (others => '0');
+          end if;
+        end if;
+      end process l2_counter;
+
+    end generate l2_gen;
+
+  end generate l2_monitor_enabled_gen;
+
+
+  llc_monitor_enabled_gen: if mon_llc_en /= 0 generate
+    llc_gen: for i in 0 to llc_num-1 generate
+      synchronizer_2: synchronizer
+        generic map (
+          DATA_WIDTH => 1)
+        port map (
+          clk => mon_llc(i).clk,
+          reset_n => user_rstn,
+          data_i(0) => new_window,
+          data_o(0) => new_window_sync_llc(i));
+
+      process (mon_llc(i).clk, user_rstn)
+      begin  -- process
+        if user_rstn = '0' then         -- asynchronous reset (active low)
+          updated_llc(i) <= '0';
+        elsif mon_llc(i).clk'event and mon_llc(i).clk = '1' then  -- rising clock edge
+          if new_window_sync_llc(i) = '1' and updated_llc(i) = '0' then
+            updated_llc(i) <= '1';
+          elsif new_window_sync_llc(i) = '0' then
+            updated_llc(i) <= '0';
+          end if;
+        end if;
+      end process;
+
+      llc_counter: process (mon_llc(i).clk, user_rstn)
+        constant hit_index : integer  := llc_offset(i, LLC_HIT);
+        constant miss_index : integer := llc_offset(i, LLC_MISS);
+      begin -- process llc0_counter
+        if user_rstn = '0' then -- asynchronous reset (active low)
+          count_value(hit_index)  <= (others => '0');
+          count_value(miss_index) <= (others => '0');
+          count(hit_index)        <= (others => '0');
+          count(miss_index)       <= (others => '0');
+        elsif mon_llc(i).clk'event and mon_llc(i).clk = '1' then -- rising clock edge
+          if mon_llc(i).hit = '1' then
+            count(hit_index) <= count(hit_index) + 1;
+          end if;
+          if mon_llc(i).miss = '1' then
+            count(miss_index) <= count(miss_index) + 1;
+          end if;
+
+          if new_window_sync_llc(i) = '1' and updated_llc(i) = '0' then
+            count(hit_index)        <= (others => '0');
+            count(miss_index)       <= (others => '0');
+            count_value(hit_index)  <= count(hit_index);
+            count_value(miss_index) <= count(miss_index);
+          end if;
+
+          if count_reset(hit_index) = '1' then
+            count(hit_index)        <= (others => '0');
+            count_value(hit_index)  <= (others => '0');
+          end if;
+
+          if count_reset(miss_index) = '1' then
+            count(miss_index)       <= (others => '0');
+            count_value(miss_index) <= (others => '0');
+          end if;
+        end if;
+      end process llc_counter;
+
+    end generate llc_gen;
+
+  end generate llc_monitor_enabled_gen;
+
+
+
   mon_dvfs_gen: if mon_dvfs_en /= 0 generate
 
     mon_dvfs_tiles_gen: for i in 0 to tiles_num-1 generate
@@ -922,6 +1103,24 @@ begin
           writeline(output, s);
         end loop;  -- z
       end loop; --k
+    end if;
+
+    if mon_l2_en /= 0 then
+      for i in 0 to l2_num-1 loop
+        write(s, "L2-" & integer'image(i) & ".hit : " & integer'image(l2_offset(i, L2_HIT)) & LF);
+        writeline(output,s);
+        write(s, "L2-" & integer'image(i) & ".miss: " & integer'image(l2_offset(i, L2_MISS)) & LF);
+        writeline(output,s);
+      end loop;  -- i
+    end if;
+
+    if mon_llc_en /= 0 then
+      for i in 0 to llc_num-1 loop
+        write(s, "LLC-" & integer'image(i) & ".hit : " & integer'image(llc_offset(i, LLC_HIT)) & LF);
+        writeline(output,s);
+        write(s, "LLC-" & integer'image(i) & ".miss: " & integer'image(llc_offset(i, LLC_MISS)) & LF);
+        writeline(output,s);
+      end loop;  -- i
     end if;
 
     if mon_dvfs_en /= 0 then

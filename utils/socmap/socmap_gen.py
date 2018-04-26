@@ -209,6 +209,8 @@ def print_constants(fp, esp_config, soc):
   fp.write("  constant CFG_MON_NOC_INJECT_EN : integer := " + str(soc.noc.monitor_inj.get()) + ";\n")
   fp.write("  constant CFG_MON_NOC_QUEUES_EN : integer := " + str(soc.noc.monitor_routers.get()) + ";\n")
   fp.write("  constant CFG_MON_ACC_EN : integer := " + str(soc.noc.monitor_accelerators.get()) + ";\n")
+  fp.write("  constant CFG_MON_L2_EN : integer := " + str(soc.noc.monitor_l2.get()) + ";\n")
+  fp.write("  constant CFG_MON_LLC_EN : integer := " + str(soc.noc.monitor_llc.get()) + ";\n")
   fp.write("  constant CFG_MON_DVFS_EN : integer := " + str(soc.noc.monitor_dvfs.get()) + ";\n")
 
   fp.write("-- Other settings\n")
