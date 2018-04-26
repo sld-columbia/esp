@@ -284,6 +284,9 @@ sysroot/opt/drivers-esp/esp_cache.ko: linux-build/vmlinux $(wildcard $(ESP_CORE_
 	$(QUIET_MAKE)ARCH=sparc CROSS_COMPILE=sparc-leon3-linux- KSRC=$(PWD)/linux-build $(MAKE) -C $(ESP_CORE_PATH)/../esp_cache
 	$(QUIET_CP)cp $(ESP_CORE_PATH)/../esp_cache/esp_cache.ko $@
 
+sysroot/opt/drivers-esp/esp_private_cache.ko: sysroot/opt/drivers-esp/esp_cache.ko
+	$(QUIET_CP)cp $(ESP_CORE_PATH)/../esp_cache/esp_private_cache.ko $@
+
 sysroot/opt/drivers-esp/esp.ko: linux-build/vmlinux $(wildcard $(ESP_CORE_PATH)/*.c) $(wildcard $(ESP_CORE_PATH)/*.h) $(wildcard $(DRIVERS)/include/*.h)
 	$(QUIET_MAKE)ARCH=sparc CROSS_COMPILE=sparc-leon3-linux- KSRC=$(PWD)/linux-build CONTIG_ALLOC_PATH=$(CONTIG_ALLOC_PATH) $(MAKE) -C $(ESP_CORE_PATH)
 	$(QUIET_CP)cp $(ESP_CORE_PATH)/esp.ko $@
@@ -295,6 +298,7 @@ sysroot-update: linux-build/vmlinux
 	@touch sysroot
 	@$(MAKE) sysroot/opt/drivers-esp/contig_alloc.ko
 	@$(MAKE) sysroot/opt/drivers-esp/esp_cache.ko
+	@$(MAKE) sysroot/opt/drivers-esp/esp_private_cache.ko
 	@$(MAKE) sysroot/opt/drivers-esp/esp.ko
 	@CROSS_COMPILE=sparc-leon3-linux- $(MAKE) -C $(DRIVERS)/dvi/app
 	@cp $(DRIVERS)/dvi/app/*.exe sysroot/applications/dvi
@@ -323,6 +327,7 @@ sysroot-clean:
 	@CROSS_COMPILE=sparc-leon3-linux- $(MAKE) --quiet -C $(DRIVERS)/dvi/app clean
 	@if test -e linux-build; then \
 		ARCH=sparc CROSS_COMPILE=sparc-leon3-linux- KSRC=$(PWD)/linux-build CONTIG_ALLOC_PATH=$(CONTIG_ALLOC_PATH) $(MAKE) --quiet -C $(ESP_CORE_PATH) clean; \
+		ARCH=sparc CROSS_COMPILE=sparc-leon3-linux- KSRC=$(PWD)/linux-build CONTIG_ALLOC_PATH=$(CONTIG_ALLOC_PATH) $(MAKE) --quiet -C $(ESP_CORE_PATH)/../esp_cache clean; \
 		ARCH=sparc CROSS_COMPILE=sparc-leon3-linux- KSRC=$(PWD)/linux-build $(MAKE) -C $(CONTIG_ALLOC_PATH) clean; \
 		$(MAKE) --quiet accelerators-driver-clean; \
 	fi;
