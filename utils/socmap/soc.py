@@ -135,8 +135,10 @@ class SoC_Config():
     line = fp.readline()
     if line.find("CONFIG_MON_ACCELERATORS = y") != -1:
         self.noc.monitor_accelerators.set(1)
+    line = fp.readline()
     if line.find("CONFIG_MON_L2 = y") != -1:
         self.noc.monitor_l2.set(1)
+    line = fp.readline()
     if line.find("CONFIG_MON_LLC = y") != -1:
         self.noc.monitor_llc.set(1)
     line = fp.readline()
@@ -187,8 +189,8 @@ class SoC_Config():
       fp.write("#CONFIG_HAS_SG is not set\n")
     fp.write("CONFIG_NOC_ROWS = " + str(self.noc.rows) + "\n")
     fp.write("CONFIG_NOC_COLS = " + str(self.noc.cols) + "\n")
-    fp.write("CONFIG_CPU_CACHES = " + " " + str(self.l2_sets.get()) + " " + str(self.l2_ways.get()) + " " + str(self.llc_sets.get()) + " " + str(self.llc_ways.get()) + "\n")
-    fp.write("CONFIG_ACC_CACHES = " + " " + str(self.acc_l2_sets.get()) + " " + str(self.acc_l2_ways.get()) + "\n")
+    fp.write("CONFIG_CPU_CACHES = " + str(self.l2_sets.get()) + " " + str(self.l2_ways.get()) + " " + str(self.llc_sets.get()) + " " + str(self.llc_ways.get()) + "\n")
+    fp.write("CONFIG_ACC_CACHES = " + str(self.acc_l2_sets.get()) + " " + str(self.acc_l2_ways.get()) + "\n")
     if self.noc.monitor_ddr.get() == 1:
       fp.write("CONFIG_MON_DDR = y\n")
     else:
@@ -205,6 +207,10 @@ class SoC_Config():
       fp.write("CONFIG_MON_ACCELERATORS = y\n")
     else:
       fp.write("#CONFIG_MON_ACCELERATORS is not set\n")
+    if self.noc.monitor_l2.get() == 1:
+      fp.write("CONFIG_MON_L2 = y\n")
+    else:
+      fp.write("#CONFIG_MON_L2 is not set\n")
     if self.noc.monitor_llc.get() == 1:
       fp.write("CONFIG_MON_LLC = y\n")
     else:

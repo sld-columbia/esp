@@ -710,9 +710,10 @@ def print_tiles(fp, esp_config, soc):
   fp.write("  type tile_hlscfg_array is array (0 to CFG_TILES_NUM-1) of hlscfg_t;\n")
   fp.write("  constant tile_design_point : tile_hlscfg_array := (\n")
   for i in range(0, esp_config.ntiles):
-    if str(esp_config.tiles[i].design_point) != "":
-      acc = esp_config.accelerators[esp_config.tiles[i].idx]
-      fp.write("    " + str(i) + " => HLSCFG_" + acc.uppercase_name + "_" + esp_config.tiles[i].design_point.upper() + ",\n")
+    if esp_config.tiles[i].type == "acc":
+      if str(esp_config.tiles[i].design_point) != "":
+        acc = esp_config.accelerators[esp_config.tiles[i].idx]
+        fp.write("    " + str(i) + " => HLSCFG_" + acc.uppercase_name + "_" + esp_config.tiles[i].design_point.upper() + ",\n")
   fp.write("    others => 0);\n\n")
 
   fp.write("  constant domains_num : integer := " + str(len(soc.noc.get_clk_regions()))+";\n\n")
