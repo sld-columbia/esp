@@ -15,7 +15,6 @@ CONFIG_SYN_VIRTEX7=y
 # Processor            
 #
 CONFIG_LEON3=y
-CONFIG_PROC_NUM=1
 # CONFIG_LEON3_MIN is not set
 # CONFIG_LEON3_GP is not set
 # CONFIG_LEON3_HP is not set
@@ -165,7 +164,6 @@ CONFIG_APB_HADDR=800
 #
 # Debug Link           
 #
-# CONFIG_DSU_UART is not set
 # CONFIG_DSU_JTAG is not set
 CONFIG_DSU_ETH=y
 # CONFIG_DSU_ETHSZ1 is not set
