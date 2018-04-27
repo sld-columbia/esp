@@ -304,6 +304,7 @@ sysroot-update: linux-build/vmlinux
 	@cp $(DRIVERS)/dvi/app/*.exe sysroot/applications/dvi
 	@$(MAKE) accelerators-driver
 	@$(MAKE) accelerators-app
+	@touch sysroot
 	$(QUIET_MAKE)$(MAKE) linux-build/vmlinux
 
 
