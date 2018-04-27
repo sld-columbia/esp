@@ -1,5 +1,6 @@
 #define _GNU_SOURCE /* asprintf */
 
+#include <sys/syscall.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <stdarg.h>
@@ -9,6 +10,8 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include <time.h>
+#include <sched.h>
+#include <unistd.h>
 
 #include <test/test.h>
 #include <test/time.h>
@@ -218,9 +221,26 @@ static int cmd_config(struct test_info *info)
 	return 0;
 }
 
+static int sched_setaffinity_syscl(pid_t pid, size_t cpusetsize, const cpu_set_t *cpuset)
+{
+	errno = syscall(__NR_sched_setaffinity, pid, cpusetsize, cpuset);
+	return errno;
+}
+
 int test_main(struct test_info *info, const char *coh, const char *cmd)
 {
+	cpu_set_t set;
 	enum accelerator_coherence coherence;
+
+	CPU_ZERO(&set);
+	CPU_SET(0, &set);
+
+	if (sched_setaffinity_syscl(getpid(), sizeof(set), &set)) {
+		perror("sched_setaffinity: %d");
+		exit(EXIT_FAILURE);
+	}
+
+
 	if (!strcmp(coh, "full"))
 		coherence = ACC_COH_FULL;
 	else if (!strcmp(coh, "llc"))
