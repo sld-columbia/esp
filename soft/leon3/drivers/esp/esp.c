@@ -38,15 +38,6 @@ static irqreturn_t esp_irq(int irq, void *dev)
 	return IRQ_NONE;
 }
 
-#define ASI_LEON_DFLUSH         0x11
-/*
- * Note: we know the leon3 has write-through caches, so this may not seem like
- * it's needed. However, I cannot find a way to flush the write buffers, so I'm
- * hoping flushing the cache does flush the write buffers too.
- *
- * The leon3 code flushes the entire cache even if we just want to flush a
- * single line, so we call the flush function below only once.
- */
 static int esp_flush(struct esp_device *esp)
 {
 	int rc = 0;
@@ -154,19 +145,18 @@ static int esp_access_ioctl(struct esp_device *esp, void __user *argp)
 		goto out;
 	}
 
-	if (esp_flush(esp)) {
-		rc = -EINTR;
+	rc = esp_flush(esp);
+	if (rc)
 		goto out;
-	}
 
 	if (mutex_lock_interruptible(&esp->lock)) {
 		rc = -EINTR;
 		goto out;
 	}
 
-	esp_transfer(esp, contig);
 	if (esp->driver->prep_xfer)
 		esp->driver->prep_xfer(esp, arg);
+	esp_transfer(esp, contig);
 	if (access->run)
 		esp_run(esp);
 	rc = esp_wait(esp);

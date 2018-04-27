@@ -19,8 +19,6 @@ struct esp_private_cache_device {
 	struct device *pdev; /* platform device */
 	struct module *module;
 	struct mutex lock;
-	struct completion completion;
-	int irq;
 	void __iomem *iomem; /* mmapped registers */
 	struct list_head list;
 };
@@ -37,27 +35,18 @@ static struct of_device_id esp_private_cache_device_ids[] = {
 };
 
 
-static void leon3_flush_dcache_all()
+/*
+ * Note: we know the leon3 has write-through caches, so this may not seem like
+ * it's needed. However, I cannot find a way to flush the write buffers, so I'm
+ * hoping flushing the cache does flush the write buffers too.
+ *
+ * The leon3 code flushes the entire cache even if we just want to flush a
+ * single line, so we call the flush function below only once.
+ */
+static void leon3_flush_dcache_all(void)
 {
 	__asm__ __volatile__("sta %%g0, [%%g0] %0\n\t" : :
 			"i"(ASI_LEON_DFLUSH) : "memory");
-}
-
-static irqreturn_t esp_private_cache_irq(int irq, void *dev)
-{
-	struct esp_private_cache_device *esp_private_cache = dev_get_drvdata(dev);
-	u32 status_reg;
-
-	status_reg = ioread32be(esp_private_cache->iomem + ESP_CACHE_REG_STATUS);
-	status_reg &= ESP_CACHE_STATUS_DONE_MASK;
-
-	if (status_reg) {
-		iowrite32be(0x0, esp_private_cache->iomem + ESP_CACHE_REG_CMD);
-		complete_all(&esp_private_cache->completion);
-		return IRQ_HANDLED;
-	}
-
-	return IRQ_NONE;
 }
 
 int esp_private_cache_flush(void)
@@ -73,6 +62,7 @@ int esp_private_cache_flush(void)
 
 	/* Search for private L2 cache with matching CPU ID */
 	list_for_each_entry(esp_private_cache, &esp_private_cache_list, list) {
+
 		if (mutex_lock_interruptible(&esp_private_cache->lock))
 			return -EINTR;
 
@@ -80,25 +70,38 @@ int esp_private_cache_flush(void)
 		status_reg   &= ESP_CACHE_STATUS_CPUID_MASK;
 		status_reg >>= ESP_CACHE_STATUS_CPUID_SHIFT;
 
-		if (status_reg == cpuid) {
+		/* pr_info("cpuid is %d, cache id is %d\n", cpuid, status_reg); */
 
-			INIT_COMPLETION(esp_private_cache->completion);
+		if (status_reg == cpuid) {
 
 			/* Set flush due for L2 private cache */
 			iowrite32be(cmd, esp_private_cache->iomem + ESP_CACHE_REG_CMD);
 
+			/* Wait for L2 flush to be set (may loose synch flush with L1 otherwise) */
+			do {
+				status_reg = ioread32be(esp_private_cache->iomem + ESP_CACHE_REG_CMD);
+			} while (status_reg != cmd);
+
+			/* pr_info("L2 flush ready...\n"); */
+
+			match = 1;
+
 			/* Flush L1 cache: starts synchronized L2 flush as well */
 			leon3_flush_dcache_all();
 
-			/* Enable preemption */
-			put_cpu();
+			/* pr_info("L1/L2 flush issued...\n"); */
 
-			/* Wait for L2 flush to complete */
-			rc = wait_for_completion_interruptible(&esp_private_cache->completion);
-			if (rc < 0)
-				rc = -EINTR;
+			/* Wait for flush completion */
+			do {
+				status_reg = ioread32be(esp_private_cache->iomem + ESP_CACHE_REG_STATUS);
+				status_reg &= ESP_CACHE_STATUS_DONE_MASK;
+			} while (!status_reg);
 
-			match = 1;
+
+			/* pr_info("L1/L2 flush done...\n"); */
+
+			/* Clear command register */
+			iowrite32be(0x0, esp_private_cache->iomem + ESP_CACHE_REG_CMD);
 		}
 
 		mutex_unlock(&esp_private_cache->lock);
@@ -106,6 +109,9 @@ int esp_private_cache_flush(void)
 		if (match)
 			break;
 	}
+
+	/* Enable preemption */
+	put_cpu();
 
 	if (!match)
 		rc = -ENODEV;
@@ -118,7 +124,7 @@ EXPORT_SYMBOL_GPL(esp_private_cache_flush);
 static int esp_private_cache_probe(struct platform_device *pdev)
 {
 	struct esp_private_cache_device *esp_private_cache;
-	int rc;
+	int rc = 0;
 
 	esp_private_cache = kzalloc(sizeof(*esp_private_cache), GFP_KERNEL);
 	if (esp_private_cache == NULL)
@@ -130,18 +136,10 @@ static int esp_private_cache_probe(struct platform_device *pdev)
 
 	mutex_init(&esp_private_cache->lock);
 
-	init_completion(&esp_private_cache->completion);
-
-	esp_private_cache->irq = pdev->archdata.irqs[0];
-	rc = request_irq(esp_private_cache->irq, esp_private_cache_irq, IRQF_SHARED, "esp_private_cache", esp_private_cache->pdev);
-	if (rc) {
-		dev_info(esp_private_cache->pdev, "cannot request IRQ number %d\n", esp_private_cache->irq);
-		goto out_irq;
-	}
-
 	esp_private_cache->iomem = of_ioremap(&pdev->resource[0], 0, resource_size(&pdev->resource[0]), "esp_private_cache regs");
 	if (esp_private_cache->iomem == NULL) {
 		dev_info(esp_private_cache->pdev, "cannot map registers for I/O\n");
+		rc = -ENODEV;
 		goto out_iomem;
 	}
 
@@ -156,8 +154,6 @@ static int esp_private_cache_probe(struct platform_device *pdev)
 	return 0;
 
  out_iomem:
-	free_irq(esp_private_cache->irq, esp_private_cache->pdev);
- out_irq:
 	kfree(esp_private_cache);
 	return rc;
 }
@@ -172,7 +168,6 @@ static int __exit esp_private_cache_remove(struct platform_device *pdev)
 
 	dev_info(esp_private_cache->pdev, "device unregistered.\n");
 
-	free_irq(esp_private_cache->irq, esp_private_cache->pdev);
 	iounmap(esp_private_cache->iomem);
 	kfree(esp_private_cache);
 
