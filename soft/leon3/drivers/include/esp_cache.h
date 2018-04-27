@@ -35,6 +35,7 @@
 
 int esp_cache_flush(void);
 int esp_private_cache_flush(void);
+int esp_private_cache_flush_smp(void);
 
 #endif /* __KERNEL__ */
 

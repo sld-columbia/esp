@@ -43,11 +43,59 @@ static struct of_device_id esp_private_cache_device_ids[] = {
  * The leon3 code flushes the entire cache even if we just want to flush a
  * single line, so we call the flush function below only once.
  */
-static void leon3_flush_dcache_all(void)
+static void leon3_flush_dcache_all(void *info)
 {
 	__asm__ __volatile__("sta %%g0, [%%g0] %0\n\t" : :
 			"i"(ASI_LEON_DFLUSH) : "memory");
 }
+
+int esp_private_cache_flush_smp(void)
+{
+	struct esp_private_cache_device *esp_private_cache = NULL;
+	const int cmd = 1 << ESP_CACHE_CMD_FLUSH_BIT;
+	u32 status_reg;
+
+	list_for_each_entry(esp_private_cache, &esp_private_cache_list, list) {
+
+		if (mutex_lock_interruptible(&esp_private_cache->lock))
+			return -EINTR;
+
+		/* Set flush due for L2 private cache */
+		iowrite32be(cmd, esp_private_cache->iomem + ESP_CACHE_REG_CMD);
+
+		/* Wait for L2 flush to be set (may loose synch flush with L1 otherwise) */
+		do {
+			status_reg = ioread32be(esp_private_cache->iomem + ESP_CACHE_REG_CMD);
+		} while (status_reg != cmd);
+
+		mutex_unlock(&esp_private_cache->lock);
+
+	}
+
+	/* Flush all L1 caches: start synchronized L2 flush as well */
+	on_each_cpu(leon3_flush_dcache_all, NULL, 1);
+
+	list_for_each_entry(esp_private_cache, &esp_private_cache_list, list) {
+
+		if (mutex_lock_interruptible(&esp_private_cache->lock))
+			return -EINTR;
+
+		/* Wait for L2 caches to complete flush */
+		do {
+			status_reg = ioread32be(esp_private_cache->iomem + ESP_CACHE_REG_STATUS);
+			status_reg &= ESP_CACHE_STATUS_DONE_MASK;
+		} while (!status_reg);
+
+
+		/* Clear command register */
+		iowrite32be(0x0, esp_private_cache->iomem + ESP_CACHE_REG_CMD);
+
+		mutex_unlock(&esp_private_cache->lock);
+	}
+
+	return 0;
+}
+EXPORT_SYMBOL_GPL(esp_private_cache_flush_smp);
 
 int esp_private_cache_flush(void)
 {
@@ -87,7 +135,7 @@ int esp_private_cache_flush(void)
 			match = 1;
 
 			/* Flush L1 cache: starts synchronized L2 flush as well */
-			leon3_flush_dcache_all();
+			leon3_flush_dcache_all(NULL);
 
 			/* pr_info("L1/L2 flush issued...\n"); */
 
