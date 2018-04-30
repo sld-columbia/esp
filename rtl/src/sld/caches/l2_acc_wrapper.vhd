@@ -318,10 +318,10 @@ architecture rtl of l2_acc_wrapper is
 
   attribute mark_debug : string;
 
-  -- attribute mark_debug of req_acc_reg_state   : signal is "true";
-  -- attribute mark_debug of req_reg_state    : signal is "true";
-  -- attribute mark_debug of rsp_out_reg_state    : signal is "true";
-  -- attribute mark_debug of rsp_in_reg_state : signal is "true";
+  attribute mark_debug of req_acc_reg_state   : signal is "true";
+  attribute mark_debug of req_reg_state    : signal is "true";
+  attribute mark_debug of rsp_out_reg_state    : signal is "true";
+  attribute mark_debug of rsp_in_reg_state : signal is "true";
 
   attribute mark_debug of flush_state : signal is "true";
 

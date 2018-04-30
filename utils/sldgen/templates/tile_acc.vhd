@@ -133,6 +133,42 @@ architecture rtl of tile_acc is
   signal apb_rcv_data_out  : noc_flit_type;
   signal apb_rcv_empty     : std_ulogic;
 
+  attribute mark_debug : string;
+
+  attribute mark_debug of coherence_req_wrreq        : signal is "true";
+  attribute mark_debug of coherence_req_data_in      : signal is "true";
+  attribute mark_debug of coherence_req_full         : signal is "true";
+  attribute mark_debug of coherence_fwd_rdreq        : signal is "true";
+  attribute mark_debug of coherence_fwd_data_out     : signal is "true";
+  attribute mark_debug of coherence_fwd_empty        : signal is "true";
+  attribute mark_debug of coherence_rsp_rcv_rdreq    : signal is "true";
+  attribute mark_debug of coherence_rsp_rcv_data_out : signal is "true";
+  attribute mark_debug of coherence_rsp_rcv_empty    : signal is "true";
+  attribute mark_debug of coherence_rsp_snd_wrreq    : signal is "true";
+  attribute mark_debug of coherence_rsp_snd_data_in  : signal is "true";
+  attribute mark_debug of coherence_rsp_snd_full     : signal is "true";
+  attribute mark_debug of dma_rcv_rdreq     : signal is "true";
+  attribute mark_debug of dma_rcv_data_out  : signal is "true";
+  attribute mark_debug of dma_rcv_empty     : signal is "true";
+  attribute mark_debug of dma_snd_wrreq     : signal is "true";
+  attribute mark_debug of dma_snd_data_in   : signal is "true";
+  attribute mark_debug of dma_snd_full      : signal is "true";
+  attribute mark_debug of coherent_dma_rcv_rdreq     : signal is "true";
+  attribute mark_debug of coherent_dma_rcv_data_out  : signal is "true";
+  attribute mark_debug of coherent_dma_rcv_empty     : signal is "true";
+  attribute mark_debug of coherent_dma_snd_wrreq     : signal is "true";
+  attribute mark_debug of coherent_dma_snd_data_in   : signal is "true";
+  attribute mark_debug of coherent_dma_snd_full      : signal is "true";
+  attribute mark_debug of interrupt_wrreq   : signal is "true";
+  attribute mark_debug of interrupt_data_in : signal is "true";
+  attribute mark_debug of interrupt_full    : signal is "true";
+  attribute mark_debug of apb_snd_wrreq     : signal is "true";
+  attribute mark_debug of apb_snd_data_in   : signal is "true";
+  attribute mark_debug of apb_snd_full      : signal is "true";
+  attribute mark_debug of apb_rcv_rdreq     : signal is "true";
+  attribute mark_debug of apb_rcv_data_out  : signal is "true";
+  attribute mark_debug of apb_rcv_empty     : signal is "true";
+  
 begin
 
   pllclk <= clk_feedthru;

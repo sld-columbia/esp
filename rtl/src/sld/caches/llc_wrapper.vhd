@@ -359,6 +359,12 @@ architecture rtl of llc_wrapper is
 
   signal ahbm_asserts : asserts_llc_ahbm_t;
 
+  signal ahbm_reg_state : ahbm_fsm;
+  signal fwd_out_state  : fwd_out_fsm;
+  signal rsp_out_state  : rsp_out_fsm;
+  signal req_in_state   : req_in_fsm;
+  signal rsp_in_state   : rsp_in_fsm;
+
   attribute mark_debug : string;
 
   attribute mark_debug of llc_req_in_ready        : signal is "true";
@@ -366,7 +372,7 @@ architecture rtl of llc_wrapper is
   attribute mark_debug of llc_req_in_data_coh_msg : signal is "true";
   attribute mark_debug of llc_req_in_data_hprot   : signal is "true";
   attribute mark_debug of llc_req_in_data_addr    : signal is "true";
-  -- attribute mark_debug of llc_req_in_data_line    : signal is "true";
+  attribute mark_debug of llc_req_in_data_line    : signal is "true";
   attribute mark_debug of llc_req_in_data_req_id  : signal is "true";
 
   attribute mark_debug of llc_rsp_in_ready        : signal is "true";
@@ -380,7 +386,7 @@ architecture rtl of llc_wrapper is
   attribute mark_debug of llc_rsp_out_valid           : signal is "true";
   attribute mark_debug of llc_rsp_out_data_coh_msg    : signal is "true";
   attribute mark_debug of llc_rsp_out_data_addr       : signal is "true";
-  -- attribute mark_debug of llc_rsp_out_data_line       : signal is "true";
+  attribute mark_debug of llc_rsp_out_data_line       : signal is "true";
   attribute mark_debug of llc_rsp_out_data_invack_cnt : signal is "true";
   attribute mark_debug of llc_rsp_out_data_req_id     : signal is "true";
   attribute mark_debug of llc_rsp_out_data_dest_id    : signal is "true";
@@ -404,15 +410,33 @@ architecture rtl of llc_wrapper is
   attribute mark_debug of llc_mem_req_data_addr   : signal is "true";
   attribute mark_debug of llc_mem_req_data_line   : signal is "true";
 
-  attribute mark_debug of llc_stats_ready         : signal is "true";
-  attribute mark_debug of llc_stats_valid         : signal is "true";
-  attribute mark_debug of llc_stats_data          : signal is "true";
+  -- attribute mark_debug of llc_stats_ready         : signal is "true";
+  -- attribute mark_debug of llc_stats_valid         : signal is "true";
+  -- attribute mark_debug of llc_stats_data          : signal is "true";
 
   --attribute mark_debug of asserts    : signal is "true";
   --attribute mark_debug of bookmark   : signal is "true";
   --attribute mark_debug of custom_dbg : signal is "true";
 
-  attribute mark_debug of ahbm_asserts : signal is "true";
+  -- attribute mark_debug of ahbm_asserts : signal is "true";
+
+  attribute mark_debug of llc_cmd_state : signal is "true";
+  attribute mark_debug of llc_cmd_next  : signal is "true";
+  attribute mark_debug of cmd_reg       : signal is "true";
+  attribute mark_debug of status_reg    : signal is "true";
+  attribute mark_debug of cmd_in        : signal is "true";
+  attribute mark_debug of cmd_sample    : signal is "true";
+  attribute mark_debug of readdata      : signal is "true";
+  attribute mark_debug of irq           : signal is "true";
+  attribute mark_debug of irqset        : signal is "true";
+  attribute mark_debug of irq_state     : signal is "true";
+  attribute mark_debug of irq_next      : signal is "true";
+
+  attribute mark_debug of ahbm_reg_state : signal is "true";
+  attribute mark_debug of fwd_out_state  : signal is "true";
+  attribute mark_debug of rsp_out_state  : signal is "true";
+  attribute mark_debug of req_in_state   : signal is "true";
+  attribute mark_debug of rsp_in_state   : signal is "true";
 
 begin  -- architecture rtl
 -------------------------------------------------------------------------------
@@ -926,7 +950,7 @@ begin  -- architecture rtl
             llc_req_in_data_addr     <= reg.addr;
             llc_req_in_data_req_id   <= reg.req_id;
             -- Save DMA read length to most significant word in line field
-            -- Increment lenght by one if read is not aligned
+            -- Increment length by one if read is not aligned
             reg.line(BITS_PER_LINE - 1 downto BITS_PER_LINE - ADDR_BITS) :=
               ("00" & dma_rcv_data_out(ADDR_BITS - 1 downto 2)) + reg.align;
             llc_req_in_data_line <= reg.line;
@@ -1581,6 +1605,12 @@ begin  -- architecture rtl
 -- Debug
 -------------------------------------------------------------------------------
 
+  ahbm_reg_state   <= ahbm_reg.state;
+  fwd_out_state    <= fwd_out_reg.state;
+  rsp_out_state    <= rsp_out_reg.state;
+  req_in_state     <= req_in_reg.state;
+  rsp_in_state     <= rsp_in_reg.state;
+  
   ahbm_asserts <= ahbm_reg.asserts;
 
   --led_wrapper_asserts <= or_reduce(ahbm_reg.asserts);
