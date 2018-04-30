@@ -86,14 +86,16 @@ void l2::ctrl()
 		    wait();
 		    flush_done.write(false);
                 }
-            } else if ((l2_cpu_req.nb_can_get() || set_conflict) &&
+            } else if ((l2_cpu_req.nb_can_get() || set_conflict || read_conflict) &&
                        !evict_stall && (reqs_cnt != 0 || ongoing_atomic)) { // assuming
                                                                             // HPROT
                                                                             // cacheable
-                if (!set_conflict) {
+                if (!set_conflict && !read_conflict) {
                     get_cpu_req(cpu_req);
-                } else {
+                } else if (set_conflict) {
                     cpu_req = cpu_req_conflict;
+		} else {
+		    cpu_req = cpu_req_read_conflict;
                 }
 
                 do_cpu_req = true;
@@ -544,7 +546,7 @@ void l2::ctrl()
 
 	    addr_br.breakdown(cpu_req.addr);
 
-	    set_conflict = reqs_peek_req(addr_br.set, reqs_hit_i);
+	    set_conflict = reqs_peek_req(addr_br.set, reqs_hit_i, cpu_req.cpu_msg, read_conflict);
 
 	    if (ongoing_atomic) {
 
@@ -629,6 +631,12 @@ void l2::ctrl()
 		SET_CONFLICT;
 
 		cpu_req_conflict = cpu_req;
+
+	    } else if (read_conflict) {
+
+		READ_CONFLICT;
+
+		cpu_req_read_conflict = cpu_req;
 
 	    } else {
 
@@ -837,6 +845,8 @@ void l2::ctrl()
 	reqs_cnt_dbg.write(reqs_cnt);
 	set_conflict_dbg.write(set_conflict);
 	cpu_req_conflict_dbg.write(cpu_req_conflict);
+	read_conflict_dbg.write(read_conflict);
+	cpu_req_read_conflict_dbg.write(cpu_req_read_conflict);
 	evict_stall_dbg.write(evict_stall);
 	fwd_stall_dbg.write(fwd_stall);
 	fwd_stall_ended_dbg.write(fwd_stall_ended);
@@ -963,7 +973,9 @@ inline void l2::reset_io()
     /* Reset signals exported to output ports */
     reqs_cnt_dbg.write(0);
     set_conflict_dbg.write(0);
-    // cpu_req_conflict_dbg.write(0);
+    read_conflict_dbg.write(0);
+    // cpu_req_conflict_dbg.write(0); 
+    // cpu_req_read_conflict_dbg.write(0); 
     evict_stall_dbg.write(0);
     fwd_stall_dbg.write(0);
     fwd_stall_ended_dbg.write(0);
@@ -1006,7 +1018,9 @@ inline void l2::reset_io()
 
     reqs_cnt = N_REQS;
     set_conflict = false;
+    read_conflict = false;
     // cpu_req_conflict = 
+    // cpu_req_read_conflict = 
     evict_stall = false;
     fwd_stall = false;
     fwd_stall_ended = false;
@@ -1315,11 +1329,13 @@ void l2::reqs_lookup(line_breakdown_t<l2_tag_t, l2_set_t> line_br, sc_uint<REQS_
     // REQS_LOOKUP_ASSERT;
 }
 
-bool l2::reqs_peek_req(l2_set_t set, sc_uint<REQS_BITS> &reqs_i)
+bool l2::reqs_peek_req(l2_set_t set, sc_uint<REQS_BITS> &reqs_i, cpu_msg_t msg,
+		       bool &read_conflict)
 {
     REQS_PEEK_REQ;
 
     set_conflict = false;
+    read_conflict = false;
 
     for (unsigned int i = 0; i < N_REQS; ++i) {
 	REQS_PEEK_REQ_LOOP;
@@ -1329,6 +1345,12 @@ bool l2::reqs_peek_req(l2_set_t set, sc_uint<REQS_BITS> &reqs_i)
 
 	if (reqs[i].set == set && reqs[i].state != INVALID)
 	    set_conflict = true;
+
+	// TODO: the case of an atomic requests causing a read conflict is not handled.
+	// That's because with the Leon3 it's not possible to have read conflicts and 
+	// coherent accelerators don't send atomic requests.
+	if (msg == READ && reqs[i].cpu_msg == READ && reqs[i].state != INVALID)
+	    read_conflict = true;
     }
 
 #ifdef L2_DEBUG
