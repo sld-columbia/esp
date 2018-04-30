@@ -137,12 +137,8 @@ void llc::ctrl()
 
 		addr_t addr = req_in.addr;
                 hprot_t hprot = req_in.hprot;
-                bool misaligned = (hprot[1] == 1);
-                // Set hprot[1] to 0 before writing to memory
-                req_in.hprot[1] = 0;
-                sc_dt::sc_uint<WORD_BITS> dma_woffset = req_in.line.range(WORD_BITS - 1, 0).to_uint();
 		dma_length_t dma_read_length = req_in.line.range(BITS_PER_LINE - 1, BITS_PER_LINE - ADDR_BITS).to_uint();
-		dma_length_t dma_length = 0;
+                dma_length_t dma_length = 0;
 		bool dma_done = false;
                 bool dma_start = true;
 
@@ -249,10 +245,28 @@ void llc::ctrl()
 
 			LLC_DMA_READ_BURST;
 
-			dma_length++;
+                        dma_length_t valid_words;
+                        word_offset_t dma_read_woffset;
+                        invack_cnt_t dma_info;
 
-			if (dma_length == dma_read_length)
+                        if (dma_start)
+                            dma_read_woffset = req_in.word_offset;
+                        else
+                            dma_read_woffset = 0;
+
+                        dma_length += WORDS_PER_LINE - dma_read_woffset;
+
+			if (dma_length >= dma_read_length)
 			    dma_done = true;
+
+                        if (dma_start & dma_done)
+                            valid_words = dma_read_length;
+                        else if (dma_start)
+                            valid_words = dma_length;
+                        else if (dma_length > dma_read_length)
+                            valid_words = WORDS_PER_LINE - (dma_length - dma_read_length);
+                        else
+                            valid_words = WORDS_PER_LINE;
 
 			if (state_buf[way] == INVALID) {
 
@@ -262,21 +276,11 @@ void llc::ctrl()
 			    get_mem_rsp(line_buf[way]);
 			}
 
-                        invack_cnt_t dma_info;
-
                         dma_info[0] = dma_done;
-
-                        if (misaligned && dma_start) {
-                            dma_info.range(WORD_BITS, 1) = WORDS_PER_LINE - dma_woffset - 1;
-                            line_buf[way].range(WORD_BITS - 1, 0) = dma_woffset;
-                        } else if (misaligned && dma_done) {
-                            dma_info.range(WORD_BITS, 1) = dma_woffset - 1;
-                        } else {
-                            dma_info.range(WORD_BITS, 1) = WORDS_PER_LINE - 1;
-                        }
+                        dma_info.range(WORD_BITS, 1) = (valid_words - 1);
 
 			send_rsp_out(RSP_DATA_DMA, addr, line_buf[way],
-				     req_in.req_id, 0, dma_info);
+				     req_in.req_id, 0, dma_info, dma_read_woffset);
 
 			if (state_buf[way] == INVALID) {
 			    hprots.port1[0][llc_addr] = DATA;
@@ -290,29 +294,42 @@ void llc::ctrl()
 
 			LLC_DMA_WRITE_BURST;
 
+                        word_offset_t dma_write_woffset = req_in.word_offset;
+                        dma_length_t valid_words = req_in.valid_words + 1;
+                        bool misaligned;
+
+                        misaligned = (dma_write_woffset != 0 || valid_words != WORDS_PER_LINE);
+
 			if (state_buf[way] == INVALID) {
 
 			    DMA_WRITE_I;
 
-                            if (misaligned && (dma_done || dma_start)) {
+                            if (misaligned) {
                                 send_mem_req(READ, addr, req_in.hprot, 0);
                                 get_mem_rsp(line_buf[way]);
                             }
 
 			}
 
-                        if (misaligned && dma_start)
-                            for (int i = dma_woffset; i < WORDS_PER_LINE; i++) {
+                        if (misaligned) {
+                            int word_cnt = 0;
+
+                            for (int i = 0; i < WORDS_PER_LINE; i++) {
+
                                 HLS_UNROLL_LOOP(ON, "misaligned-dma-start-unroll");
-                                write_word(line_buf[way], read_word(req_in.line, i), i, 0, WORD);
+
+                                if (word_cnt < valid_words && i >= dma_write_woffset) {
+                                    write_word(line_buf[way], read_word(req_in.line, i), i, 0, WORD);
+                                    word_cnt++;
+                                }
+
                             }
-                        else if (misaligned && dma_done)
-                            for (int i = WORDS_PER_LINE - dma_woffset - 1; i > 0; i--) {
-                                HLS_UNROLL_LOOP(ON, "misaligned-dma-done-unroll");
-                                write_word(line_buf[way], read_word(req_in.line, i), i, 0, WORD);
-                            }
-                        else
+
+                        } else {
+
                             line_buf[way] = req_in.line;
+
+                        }
 
                         lines.port1[0][llc_addr] = line_buf[way];
                         dirty_bits.port1[0][llc_addr] = 1;
@@ -337,6 +354,7 @@ void llc::ctrl()
 
 			    get_req_in(req_in);
 			}
+
 		    }
 
 #ifdef LLC_DEBUG
@@ -347,7 +365,7 @@ void llc::ctrl()
 #endif
 
 		    addr++;
-                    dma_start = false;
+                    dma_start   = false;
 
                     {
                         HLS_DEFINE_PROTOCOL("dma-loop-end");
@@ -496,14 +514,14 @@ void llc::ctrl()
 			}
 
 			if (req_in.hprot == 0) {
-			    send_rsp_out(RSP_DATA, req_in.addr, line_buf[way], req_in.req_id, 0, 0);
+			    send_rsp_out(RSP_DATA, req_in.addr, line_buf[way], req_in.req_id, 0, 0, 0);
 
 			    wait();
 
 			    states.port1[0][llc_addr] = SHARED;
 			    sharers.port1[0][llc_addr] = 1 << req_in.req_id;
 			} else {
-			    send_rsp_out(RSP_EDATA, req_in.addr, line_buf[way], req_in.req_id, 0, 0);
+			    send_rsp_out(RSP_EDATA, req_in.addr, line_buf[way], req_in.req_id, 0, 0, 0);
 
 			    wait();
 
@@ -524,7 +542,7 @@ void llc::ctrl()
 		    {
 			GETS_S;
 
-			send_rsp_out(RSP_DATA, req_in.addr, line_buf[way], req_in.req_id, 0, 0);
+			send_rsp_out(RSP_DATA, req_in.addr, line_buf[way], req_in.req_id, 0, 0, 0);
 
 			wait();
 
@@ -580,7 +598,7 @@ void llc::ctrl()
 			    get_mem_rsp(line_buf[way]);
 			}
 
-			send_rsp_out(RSP_DATA, req_in.addr, line_buf[way], req_in.req_id, 0, 0);
+			send_rsp_out(RSP_DATA, req_in.addr, line_buf[way], req_in.req_id, 0, 0, 0);
 
 			wait();
 		
@@ -610,7 +628,7 @@ void llc::ctrl()
 			    wait();
 			}
 
-			send_rsp_out(RSP_DATA, req_in.addr, line_buf[way], req_in.req_id, 0, invack_cnt);
+			send_rsp_out(RSP_DATA, req_in.addr, line_buf[way], req_in.req_id, 0, invack_cnt, 0);
 
 			states.port1[0][llc_addr] = MODIFIED;
 			owners.port1[0][llc_addr] = req_in.req_id;
@@ -805,7 +823,7 @@ void llc::ctrl()
 		// 	    get_mem_rsp(line_buf[way]);
 		// 	}
 
-		// 	send_rsp_out(RSP_DATA, req_in.addr, line_buf[way], req_in.req_id, 0, 0);
+		// 	send_rsp_out(RSP_DATA, req_in.addr, line_buf[way], req_in.req_id, 0, 0, 0);
 
 		// 	if (state_buf[way] == INVALID) {
 		// 	    wait();
@@ -1415,7 +1433,7 @@ void llc::get_rsp_in(llc_rsp_in_t &rsp_in)
 }
 
 void llc::send_rsp_out(coh_msg_t coh_msg, line_addr_t addr, line_t line, cache_id_t req_id,
-		       cache_id_t dest_id, invack_cnt_t invack_cnt)
+		       cache_id_t dest_id, invack_cnt_t invack_cnt, word_offset_t word_offset)
 {
     SEND_RSP_OUT;
     llc_rsp_out_t rsp_out;
@@ -1425,6 +1443,7 @@ void llc::send_rsp_out(coh_msg_t coh_msg, line_addr_t addr, line_t line, cache_i
     rsp_out.req_id = req_id;
     rsp_out.dest_id = dest_id;
     rsp_out.invack_cnt = invack_cnt;
+    rsp_out.word_offset = word_offset;
     llc_rsp_out.put(rsp_out);
 }
 

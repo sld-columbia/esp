@@ -245,6 +245,7 @@ public:
     invack_cnt_t	invack_cnt; // used to mark last line of RSP_DATA_DMA
     cache_id_t          req_id;
     cache_id_t          dest_id;
+    word_offset_t       word_offset;
 
     llc_rsp_out_t() :
 	coh_msg(0),
@@ -252,33 +253,37 @@ public:
 	line(0),
 	invack_cnt(0),
 	req_id(0),
-	dest_id(0)
+	dest_id(0),
+        word_offset(0)
     {}
 
     inline llc_rsp_out_t& operator  = (const llc_rsp_out_t& x) {
-	coh_msg    = x.coh_msg;
-	addr       = x.addr;	 
-	line       = x.line;
-	invack_cnt = x.invack_cnt;
-	req_id     = x.req_id;
-	dest_id    = x.dest_id;
+	coh_msg     = x.coh_msg;
+	addr        = x.addr;
+	line        = x.line;
+	invack_cnt  = x.invack_cnt;
+	req_id      = x.req_id;
+	dest_id     = x.dest_id;
+        word_offset = x.word_offset;
 	return *this;
     }
     inline bool operator     == (const llc_rsp_out_t& x) const {
-	return (x.coh_msg    == coh_msg && 
-		x.addr       == addr    && 
-		x.line      == line   &&
-		x.invack_cnt == invack_cnt &&
-		x.req_id     == req_id &&
-		x.dest_id    == dest_id);
+	return (x.coh_msg     == coh_msg    &&
+		x.addr        == addr       &&
+		x.line        == line       &&
+		x.invack_cnt  == invack_cnt &&
+		x.req_id      == req_id     &&
+		x.dest_id     == dest_id    &&
+		x.word_offset == word_offset);
     }
     inline friend void sc_trace(sc_trace_file	*tf, const llc_rsp_out_t& x, const std::string & name) {
-	sc_trace(tf, x.coh_msg ,   name + ".cpu_msg ");
-	sc_trace(tf, x.addr,       name + ".addr");
-	sc_trace(tf, x.line,      name + ".line");
-	sc_trace(tf, x.invack_cnt, name + ".invack_cnt");
-	sc_trace(tf, x.req_id, name + ".req_id");
-	sc_trace(tf, x.dest_id, name + ".dest_id");
+	sc_trace(tf, x.coh_msg ,    name + ".cpu_msg ");
+	sc_trace(tf, x.addr,        name + ".addr");
+	sc_trace(tf, x.line,        name + ".line");
+	sc_trace(tf, x.invack_cnt,  name + ".invack_cnt");
+	sc_trace(tf, x.req_id,      name + ".req_id");
+	sc_trace(tf, x.dest_id,     name + ".dest_id");
+	sc_trace(tf, x.word_offset, name + ".word_offset");
     }
     inline friend ostream & operator<<(ostream& os, const llc_rsp_out_t& x) {
 	os << hex << "(" 
@@ -291,7 +296,8 @@ public:
 	}
 	os << ", invack_cnt: " << x.invack_cnt
 	   << ", req_id: " << x.req_id
-	   << ", dest_id: " << x.dest_id << ")";
+	   << ", dest_id: " << x.dest_id
+	   << ", word_offset: " << x.word_offset << ")";
 	return os;
     }
 };
@@ -401,48 +407,60 @@ class llc_req_in_t
 
 public:
 
-    mix_msg_t	coh_msg;	// gets, getm, puts, putm, dma_read, dma_write
-    hprot_t	hprot; // used for dma write burst end (0) and non-aligned addr (1)
-    line_addr_t	addr;
-    line_t	line; // used for dma burst length too
-    cache_id_t  req_id;
+    mix_msg_t	  coh_msg;	// gets, getm, puts, putm, dma_read, dma_write
+    hprot_t	  hprot; // used for dma write burst end (0) and non-aligned addr (1)
+    line_addr_t	  addr;
+    line_t	  line; // used for dma burst length too
+    cache_id_t    req_id;
+    word_offset_t word_offset;
+    word_offset_t valid_words;
 
     llc_req_in_t() :
 	coh_msg(coh_msg_t(0)),
 	hprot(0),
 	addr(0),
 	line(0),
-	req_id(0)
+	req_id(0),
+        word_offset(0),
+        valid_words(0)
     {}
 
     inline llc_req_in_t& operator  = (const llc_req_in_t& x) {
-	coh_msg = x.coh_msg;	
-	hprot   = x.hprot;	 
-	addr    = x.addr;	 
-	line    = x.line;
-	req_id  = x.req_id;
+	coh_msg     = x.coh_msg;
+	hprot       = x.hprot;
+	addr        = x.addr;
+	line        = x.line;
+	req_id      = x.req_id;
+        word_offset = x.word_offset;
+        valid_words = x.valid_words;
 	return *this;
     }
     inline bool operator  == (const llc_req_in_t& x) const {
-	return (x.coh_msg == coh_msg	&& 
-		x.hprot   == hprot	&& 
-		x.addr    == addr	&& 
-		x.line	  == line       &&
-		x.req_id  == req_id);
+	return (x.coh_msg     == coh_msg     &&
+		x.hprot       == hprot       &&
+		x.addr        == addr        &&
+		x.line        == line        &&
+		x.req_id      == req_id      &&
+		x.word_offset == word_offset &&
+		x.valid_words == valid_words);
     }
     inline friend void sc_trace(sc_trace_file *tf, const llc_req_in_t& x, const std::string & name) {
-	sc_trace(tf, x.coh_msg , name + ".coh_msg ");
-	sc_trace(tf, x.hprot,    name + ".hprot");
-	sc_trace(tf, x.addr,     name + ".addr");
-	sc_trace(tf, x.line,    name + ".line");
-	sc_trace(tf, x.req_id,    name + ".req_id");
+	sc_trace(tf, x.coh_msg,     name + ".coh_msg ");
+	sc_trace(tf, x.hprot,       name + ".hprot");
+	sc_trace(tf, x.addr,        name + ".addr");
+	sc_trace(tf, x.line,        name + ".line");
+	sc_trace(tf, x.req_id,      name + ".req_id");
+	sc_trace(tf, x.word_offset, name + ".word_offset");
+	sc_trace(tf, x.valid_words, name + ".valid_words");
     }
     inline friend ostream & operator<<(ostream& os, const llc_req_in_t& x) {
-	os << hex << "(" 
-	   << "coh_msg: " << x.coh_msg 
-	   << ", hprot: " << x.hprot   
-	   << ", addr: " << x.addr    
-	   << ", req_id: " << x.req_id    
+	os << hex << "("
+	   << "coh_msg: " << x.coh_msg
+	   << ", hprot: " << x.hprot
+	   << ", addr: " << x.addr
+	   << ", req_id: " << x.req_id
+	   << ", word_offset: " << x.word_offset
+	   << ", valid_words: " << x.valid_words
 	   << ", line: ";
 	for (int i = WORDS_PER_LINE-1; i >= 0; --i) {
 	    int base = i*BITS_PER_WORD;

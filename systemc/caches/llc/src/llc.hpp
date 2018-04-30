@@ -171,7 +171,7 @@ public:
     void get_req_in(llc_req_in_t &req_in);
     void get_rsp_in(llc_rsp_in_t &rsp_in);
     void send_rsp_out(coh_msg_t coh_msg, line_addr_t addr, line_t line, cache_id_t req_id,
-		      cache_id_t dest_id, invack_cnt_t invack_cnt);
+		      cache_id_t dest_id, invack_cnt_t invack_cnt, word_offset_t word_offset);
     void send_fwd_out(mix_msg_t coh_msg, line_addr_t addr, cache_id_t req_id, cache_id_t dest_id);
     llc_rsp_in_t wait_rsp_in(addr_t addr_evict);
     void process_rsp_in(llc_rsp_in_t rsp_in);
