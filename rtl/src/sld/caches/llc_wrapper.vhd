@@ -96,13 +96,15 @@ architecture rtl of llc_wrapper is
   -- Interface with LLC cache
 
   -- NoC to cache
-  signal llc_req_in_ready        : std_ulogic;
-  signal llc_req_in_valid        : std_ulogic;
-  signal llc_req_in_data_coh_msg : mix_msg_t;
-  signal llc_req_in_data_hprot   : hprot_t;
-  signal llc_req_in_data_addr    : line_addr_t;
-  signal llc_req_in_data_line    : line_t;
-  signal llc_req_in_data_req_id  : cache_id_t;
+  signal llc_req_in_ready            : std_ulogic;
+  signal llc_req_in_valid            : std_ulogic;
+  signal llc_req_in_data_coh_msg     : mix_msg_t;
+  signal llc_req_in_data_hprot       : hprot_t;
+  signal llc_req_in_data_addr        : line_addr_t;
+  signal llc_req_in_data_word_offset : word_offset_t;
+  signal llc_req_in_data_valid_words : word_offset_t;
+  signal llc_req_in_data_line        : line_t;
+  signal llc_req_in_data_req_id      : cache_id_t;
 
   signal llc_rsp_in_ready        : std_ulogic;
   signal llc_rsp_in_valid        : std_ulogic;
@@ -112,14 +114,15 @@ architecture rtl of llc_wrapper is
   signal llc_rsp_in_data_req_id  : cache_id_t;
 
   -- cache to NoC
-  signal llc_rsp_out_ready           : std_ulogic;
-  signal llc_rsp_out_valid           : std_ulogic;
-  signal llc_rsp_out_data_coh_msg    : coh_msg_t;
-  signal llc_rsp_out_data_addr       : line_addr_t;
-  signal llc_rsp_out_data_line       : line_t;
-  signal llc_rsp_out_data_invack_cnt : invack_cnt_t;
-  signal llc_rsp_out_data_req_id     : cache_id_t;
-  signal llc_rsp_out_data_dest_id    : cache_id_t;
+  signal llc_rsp_out_ready            : std_ulogic;
+  signal llc_rsp_out_valid            : std_ulogic;
+  signal llc_rsp_out_data_coh_msg     : coh_msg_t;
+  signal llc_rsp_out_data_addr        : line_addr_t;
+  signal llc_rsp_out_data_line        : line_t;
+  signal llc_rsp_out_data_invack_cnt  : invack_cnt_t;
+  signal llc_rsp_out_data_req_id      : cache_id_t;
+  signal llc_rsp_out_data_dest_id     : cache_id_t;
+  signal llc_rsp_out_data_word_offset : word_offset_t;
 
   signal llc_fwd_out_ready        : std_ulogic;
   signal llc_fwd_out_valid        : std_ulogic;
@@ -249,6 +252,7 @@ architecture rtl of llc_wrapper is
     state      : rsp_out_fsm;
     coh_msg    : coh_msg_t;
     addr       : line_addr_t;
+    woffset    : word_offset_t;
     line       : line_t;
     word_cnt   : natural range 0 to 3;
     invack_cnt : invack_cnt_t;
@@ -263,6 +267,7 @@ architecture rtl of llc_wrapper is
     state      => send_header,
     coh_msg    => (others => '0'),
     addr       => (others => '0'),
+    woffset    => (others => '0'),
     line       => (others => '0'),
     word_cnt   => 0,
     invack_cnt => (others => '0'),
@@ -286,7 +291,7 @@ architecture rtl of llc_wrapper is
     coh_msg  : mix_msg_t;
     hprot    : hprot_t;
     addr     : line_addr_t;
-    align    : line_addr_t;
+    woffset  : word_offset_t;
     line     : line_t;
     req_id   : cache_id_t;
     word_cnt : natural range 0 to 3;
@@ -301,7 +306,7 @@ architecture rtl of llc_wrapper is
     coh_msg  => (others => '0'),
     hprot    => (others => '0'),
     addr     => (others => '0'),
-    align    => (others => '0'),
+    woffset  => (others => '0'),
     line     => (others => '0'),
     req_id   => (others => '0'),
     word_cnt => 0,
@@ -351,7 +356,6 @@ architecture rtl of llc_wrapper is
   -------------------------------------------------------------------------------
 
   constant empty_offset : std_logic_vector(OFFSET_BITS - 1 downto 0) := (others => '0');
-  constant aligned_zero_mask : std_logic_vector(WORD_OFFSET_BITS - 1 downto 0) := (others => '0');
 
   -------------------------------------------------------------------------------
   -- Debug
@@ -367,13 +371,15 @@ architecture rtl of llc_wrapper is
 
   attribute mark_debug : string;
 
-  attribute mark_debug of llc_req_in_ready        : signal is "true";
-  attribute mark_debug of llc_req_in_valid        : signal is "true";
-  attribute mark_debug of llc_req_in_data_coh_msg : signal is "true";
-  attribute mark_debug of llc_req_in_data_hprot   : signal is "true";
-  attribute mark_debug of llc_req_in_data_addr    : signal is "true";
-  attribute mark_debug of llc_req_in_data_line    : signal is "true";
-  attribute mark_debug of llc_req_in_data_req_id  : signal is "true";
+  attribute mark_debug of llc_req_in_ready            : signal is "true";
+  attribute mark_debug of llc_req_in_valid            : signal is "true";
+  attribute mark_debug of llc_req_in_data_coh_msg     : signal is "true";
+  attribute mark_debug of llc_req_in_data_hprot       : signal is "true";
+  attribute mark_debug of llc_req_in_data_addr        : signal is "true";
+  attribute mark_debug of llc_req_in_data_word_offset : signal is "true";
+  attribute mark_debug of llc_req_in_data_valid_words : signal is "true";
+  attribute mark_debug of llc_req_in_data_line        : signal is "true";
+  attribute mark_debug of llc_req_in_data_req_id      : signal is "true";
 
   attribute mark_debug of llc_rsp_in_ready        : signal is "true";
   attribute mark_debug of llc_rsp_in_valid        : signal is "true";
@@ -382,14 +388,15 @@ architecture rtl of llc_wrapper is
   -- attribute mark_debug of llc_rsp_in_data_line   : signal is "true";
   attribute mark_debug of llc_rsp_in_data_req_id  : signal is "true";
 
-  attribute mark_debug of llc_rsp_out_ready           : signal is "true";
-  attribute mark_debug of llc_rsp_out_valid           : signal is "true";
-  attribute mark_debug of llc_rsp_out_data_coh_msg    : signal is "true";
-  attribute mark_debug of llc_rsp_out_data_addr       : signal is "true";
-  attribute mark_debug of llc_rsp_out_data_line       : signal is "true";
-  attribute mark_debug of llc_rsp_out_data_invack_cnt : signal is "true";
-  attribute mark_debug of llc_rsp_out_data_req_id     : signal is "true";
-  attribute mark_debug of llc_rsp_out_data_dest_id    : signal is "true";
+  attribute mark_debug of llc_rsp_out_ready            : signal is "true";
+  attribute mark_debug of llc_rsp_out_valid            : signal is "true";
+  attribute mark_debug of llc_rsp_out_data_coh_msg     : signal is "true";
+  attribute mark_debug of llc_rsp_out_data_addr        : signal is "true";
+  attribute mark_debug of llc_rsp_out_data_line        : signal is "true";
+  attribute mark_debug of llc_rsp_out_data_invack_cnt  : signal is "true";
+  attribute mark_debug of llc_rsp_out_data_req_id      : signal is "true";
+  attribute mark_debug of llc_rsp_out_data_dest_id     : signal is "true";
+  attribute mark_debug of llc_rsp_out_data_word_offset : signal is "true";
 
   attribute mark_debug of llc_fwd_out_ready        : signal is "true";
   attribute mark_debug of llc_fwd_out_valid        : signal is "true";
@@ -790,12 +797,14 @@ begin  -- architecture rtl
     reg.asserts := (others => '0');
 
     -- initialize signals toward cache (send to cache)
-    llc_req_in_valid        <= '0';
-    llc_req_in_data_coh_msg <= (others => '0');
-    llc_req_in_data_hprot   <= (others => '0');
-    llc_req_in_data_addr    <= (others => '0');
-    llc_req_in_data_line    <= (others => '0');
-    llc_req_in_data_req_id  <= (others => '0');
+    llc_req_in_valid            <= '0';
+    llc_req_in_data_coh_msg     <= (others => '0');
+    llc_req_in_data_hprot       <= (others => '0');
+    llc_req_in_data_addr        <= (others => '0');
+    llc_req_in_data_word_offset <= (others => '0');
+    llc_req_in_data_valid_words <= (others => '0');
+    llc_req_in_data_line        <= (others => '0');
+    llc_req_in_data_req_id      <= (others => '0');
 
     -- initialize signals toward noc (receive from noc)
     coherence_req_rdreq <= '0';
@@ -863,7 +872,7 @@ begin  -- architecture rtl
           then
             reg.tile_id := to_integer(unsigned(reg.origin_x)) +
                            to_integer(unsigned(reg.origin_y)) * noc_xlen;
-            
+
             if tile_dma_id(reg.tile_id) >= 0 then
               reg.req_id := std_logic_vector(to_unsigned(tile_dma_id(reg.tile_id), NL2_MAX_LOG2));
             end if;
@@ -910,17 +919,9 @@ begin  -- architecture rtl
 
           dma_rcv_rdreq <= '1';
 
-          reg.addr := dma_rcv_data_out(ADDR_BITS - 1 downto LINE_RANGE_LO);
-          reg.align    := (others => '0');
-          if dma_rcv_data_out(W_OFF_RANGE_HI downto W_OFF_RANGE_LO) = aligned_zero_mask then
-            reg.align(0) := '0';
-          else
-            reg.align(0) := '1';
-          end if;
-
-          -- Using least significant word from line field to save the word offset
-          reg.line(BITS_PER_LINE - 1 downto WORD_OFFSET_BITS) := (others => '0');
-          reg.line(WORD_OFFSET_BITS - 1 downto 0) := dma_rcv_data_out(W_OFF_RANGE_HI downto W_OFF_RANGE_LO);
+          reg.addr    := dma_rcv_data_out(ADDR_BITS - 1 downto LINE_RANGE_LO);
+          reg.woffset := dma_rcv_data_out(W_OFF_RANGE_HI downto W_OFF_RANGE_LO);
+          reg.line    := (others => '0');
 
           if reg.coh_msg = REQ_DMA_READ then
 
@@ -928,7 +929,7 @@ begin  -- architecture rtl
 
           else
 
-            reg.word_cnt := to_integer(unsigned(dma_rcv_data_out(W_OFF_RANGE_HI downto W_OFF_RANGE_LO)));
+            reg.word_cnt := to_integer(unsigned(reg.woffset));
             reg.state    := rcv_data_dma;
 
           end if;
@@ -944,15 +945,13 @@ begin  -- architecture rtl
 
             dma_rcv_rdreq <= '1';
 
-            llc_req_in_valid         <= '1';
-            llc_req_in_data_coh_msg  <= reg.coh_msg;
-            llc_req_in_data_hprot(1) <= reg.align(0);
-            llc_req_in_data_addr     <= reg.addr;
-            llc_req_in_data_req_id   <= reg.req_id;
+            llc_req_in_valid            <= '1';
+            llc_req_in_data_coh_msg     <= reg.coh_msg;
+            llc_req_in_data_addr        <= reg.addr;
+            llc_req_in_data_word_offset <= reg.woffset;
+            llc_req_in_data_req_id      <= reg.req_id;
             -- Save DMA read length to most significant word in line field
-            -- Increment length by one if read is not aligned
-            reg.line(BITS_PER_LINE - 1 downto BITS_PER_LINE - ADDR_BITS) :=
-              ("00" & dma_rcv_data_out(ADDR_BITS - 1 downto 2)) + reg.align;
+            reg.line(BITS_PER_LINE - 1 downto BITS_PER_LINE - ADDR_BITS) := dma_rcv_data_out(ADDR_BITS -1 downto 0);
             llc_req_in_data_line <= reg.line;
 
             reg.state := rcv_header;
@@ -1007,11 +1006,13 @@ begin  -- architecture rtl
                        BITS_PER_WORD * reg.word_cnt) :=
                 dma_rcv_data_out(BITS_PER_WORD - 1 downto 0);
 
-              llc_req_in_valid        <= '1';
-              llc_req_in_data_coh_msg <= reg.coh_msg;
-              llc_req_in_data_addr    <= reg.addr;
-              llc_req_in_data_line    <= reg.line;
-              llc_req_in_data_req_id  <= reg.req_id;
+              llc_req_in_valid            <= '1';
+              llc_req_in_data_coh_msg     <= reg.coh_msg;
+              llc_req_in_data_addr        <= reg.addr;
+              llc_req_in_data_word_offset <= reg.woffset;
+              llc_req_in_data_valid_words <= std_logic_vector(to_unsigned(reg.word_cnt, WORD_OFFSET_BITS)) - reg.woffset;
+              llc_req_in_data_line        <= reg.line;
+              llc_req_in_data_req_id      <= reg.req_id;
 
               -- Let LLC know it's the last line to be written
               if dma_preamble = PREAMBLE_TAIL then
@@ -1022,21 +1023,8 @@ begin  -- architecture rtl
 
               end if;
 
-              -- Let LLC know if the access is not aligned
-              -- First line (aling(0) is '1'); last line (word_cnt is not WORDS_PER_LINE - 1
-              if reg.align(0) = '1' or reg.word_cnt /= WORDS_PER_LINE - 1 then
-                llc_req_in_data_hprot(1) <= '1';
-                if reg.align(0) = '0' then
-                  -- On the first line the misalignement has been preset when
-                  -- address was received; On the last line the misalignment
-                  -- corresponds to 0 and word_cnt tells how many are valid
-                  reg.line(BITS_PER_WORD - 1 downto 0) :=
-                    std_logic_vector(to_unsigned(reg.word_cnt, BITS_PER_WORD));
-                end if;
-              end if;
-
-              reg.align(0) := '0';
               reg.word_cnt := 0;
+              reg.woffset  := (others => '0');
 
             end if;
 
@@ -1047,13 +1035,13 @@ begin  -- architecture rtl
             reg.line((BITS_PER_WORD * reg.word_cnt) + BITS_PER_WORD - 1 downto
                      (BITS_PER_WORD * reg.word_cnt)) :=
               dma_rcv_data_out(BITS_PER_WORD - 1 downto 0);
-            
+
             reg.word_cnt := reg.word_cnt + 1;
 
           end if;
 
         end if;
-        
+
     end case;
 
     req_in_reg_next <= reg;
@@ -1281,7 +1269,7 @@ begin  -- architecture rtl
 -------------------------------------------------------------------------------
   fsm_rsp_out : process (rsp_out_reg, coherence_rsp_snd_full, dma_snd_full,
                          llc_rsp_out_valid, llc_rsp_out_data_coh_msg, llc_rsp_out_data_addr,
-                         llc_rsp_out_data_line, llc_rsp_out_data_invack_cnt,
+                         llc_rsp_out_data_line, llc_rsp_out_data_invack_cnt, llc_rsp_out_data_word_offset,
                          llc_rsp_out_data_req_id, llc_rsp_out_data_dest_id) is
 
     variable reg       : rsp_out_reg_type;
@@ -1290,13 +1278,16 @@ begin  -- architecture rtl
     variable dest_y    : local_yx;
     variable reserved  : reserved_field_type;
     variable preamble  : noc_preamble_type;
-    variable valid_word_cnt : integer range 0 to WORDS_PER_LINE - 1;
+    variable last_lv   : std_logic_vector(WORD_OFFSET_BITS - 1 downto 0);
+    variable last      : integer range 0 to WORDS_PER_LINE - 1;
 
   begin  -- process fsm_cache2noc
     -- initialize variables
     reg         := rsp_out_reg;
     reg.asserts := (others => '0');
-    valid_word_cnt := 0;
+
+    last        := WORDS_PER_LINE - 1;
+    last_lv     := std_logic_vector(to_unsigned(last, WORD_OFFSET_BITS));
 
     dest_init := 0;
     dest_x    := (others => '0');
@@ -1345,7 +1336,7 @@ begin  -- architecture rtl
                               '0' & reg.coh_msg, reserved);
 
               reg.state := send_addr;
-              
+
             else
 
               reg.dest_x   := dest_x;
@@ -1362,8 +1353,10 @@ begin  -- architecture rtl
             reg.addr    := llc_rsp_out_data_addr;
             reg.line    := llc_rsp_out_data_line;
             -- invack_cnt(0) => DMA read last
-            -- invack_cnt(WORD_OFFSET_BITS downto 1) => valid word count for last DMA read
+            -- invack_cnt(WORD_OFFSET_BITS downto 1) => valid word count
             reg.invack_cnt := llc_rsp_out_data_invack_cnt;
+            reg.woffset    := llc_rsp_out_data_word_offset;
+            reg.word_cnt   := to_integer(unsigned(reg.woffset));
 
             if llc_rsp_out_data_req_id >= "0" then
               dest_init := dma_tile_id(to_integer(unsigned(llc_rsp_out_data_req_id)));
@@ -1375,15 +1368,6 @@ begin  -- architecture rtl
 
             --reserved := std_logic_vector(0, RESERVED_WIDTH);
 
-            -- Set word count based on misalignment (neglect least significant words
-            valid_word_cnt := to_integer(unsigned(reg.invack_cnt(WORD_OFFSET_BITS downto 1)));
-            if valid_word_cnt /= WORDS_PER_LINE - 1 then
-              reg.word_cnt := to_integer(unsigned(reg.line(WORD_OFFSET_BITS - 1 downto 0)));
-              reg.invack_cnt(WORD_OFFSET_BITS downto 1) :=
-                reg.invack_cnt(WORD_OFFSET_BITS downto 1) + reg.line(WORD_OFFSET_BITS - 1 downto 0);
-            else
-              reg.word_cnt := 0;
-            end if;
 
             if dma_snd_full = '0' then
 
@@ -1471,7 +1455,10 @@ begin  -- architecture rtl
       -- SEND DATA DMA
       when send_data_dma =>
 
-        if reg.invack_cnt(0) = '1' and reg.word_cnt = to_integer(unsigned(reg.invack_cnt(WORD_OFFSET_BITS downto 1))) then
+        last_lv := reg.woffset + reg.invack_cnt(WORD_OFFSET_BITS downto 1);
+        last    := to_integer(unsigned(last_lv));
+
+        if reg.invack_cnt(0) = '1' and reg.word_cnt = last then
           preamble := PREAMBLE_TAIL;
         else
           preamble := PREAMBLE_BODY;
@@ -1480,7 +1467,7 @@ begin  -- architecture rtl
 
         if dma_snd_full = '0' then
 
-          if reg.word_cnt = to_integer(unsigned(reg.invack_cnt(WORD_OFFSET_BITS downto 1))) then
+          if reg.word_cnt = last then
             dma_snd_wrreq <= '1';       -- send last word from this cache line
             reg.word_cnt := 0;
 
@@ -1490,6 +1477,7 @@ begin  -- architecture rtl
               if llc_rsp_out_valid = '1' then
                 reg.line       := llc_rsp_out_data_line;
                 reg.invack_cnt := llc_rsp_out_data_invack_cnt;
+                reg.woffset    := llc_rsp_out_data_word_offset;
                 reg.stall      := '0';
               else
                 reg.stall := '1';
@@ -1509,6 +1497,7 @@ begin  -- architecture rtl
               if llc_rsp_out_valid = '1' then
                 reg.line       := llc_rsp_out_data_line;
                 reg.invack_cnt := llc_rsp_out_data_invack_cnt;
+                reg.woffset    := llc_rsp_out_data_word_offset;
                 reg.stall      := '0';
               end if;
 
@@ -1556,6 +1545,8 @@ begin  -- architecture rtl
       llc_req_in_data_addr    => llc_req_in_data_addr,
       llc_req_in_data_line    => llc_req_in_data_line,
       llc_req_in_data_req_id  => llc_req_in_data_req_id,
+      llc_req_in_data_word_offset => llc_req_in_data_word_offset,
+      llc_req_in_data_valid_words => llc_req_in_data_valid_words,
 
       llc_rsp_in_ready        => llc_rsp_in_ready,
       llc_rsp_in_valid        => llc_rsp_in_valid,
@@ -1573,6 +1564,7 @@ begin  -- architecture rtl
       llc_rsp_out_data_invack_cnt => llc_rsp_out_data_invack_cnt,
       llc_rsp_out_data_req_id     => llc_rsp_out_data_req_id,
       llc_rsp_out_data_dest_id    => llc_rsp_out_data_dest_id,
+      llc_rsp_out_data_word_offset => llc_rsp_out_data_word_offset,
 
       llc_fwd_out_ready        => llc_fwd_out_ready,
       llc_fwd_out_valid        => llc_fwd_out_valid,

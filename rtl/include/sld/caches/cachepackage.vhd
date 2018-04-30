@@ -123,6 +123,7 @@ package cachepackage is
   -- Types
   -----------------------------------------------------------------------------
   subtype addr_t is std_logic_vector(ADDR_BITS - 1 downto 0);
+  subtype word_offset_t is std_logic_vector(WORD_OFFSET_BITS - 1 downto 0);
   subtype line_addr_t is std_logic_vector(ADDR_BITS - OFFSET_BITS - 1 downto 0);
   subtype cpu_msg_t is std_logic_vector(CPU_MSG_TYPE_WIDTH - 1 downto 0);
   subtype hsize_t is std_logic_vector(HSIZE_WIDTH - 1 downto 0);
