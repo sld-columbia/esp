@@ -1428,7 +1428,7 @@ void llc::send_rsp_out(coh_msg_t coh_msg, line_addr_t addr, line_t line, cache_i
     llc_rsp_out.put(rsp_out);
 }
 
-void llc::send_fwd_out(coh_msg_t coh_msg, line_addr_t addr, cache_id_t req_id,
+void llc::send_fwd_out(mix_msg_t coh_msg, line_addr_t addr, cache_id_t req_id,
 		       cache_id_t dest_id)
 {
     SEND_FWD_OUT;
