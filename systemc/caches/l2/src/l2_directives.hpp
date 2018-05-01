@@ -256,10 +256,6 @@
     if (RPT_RTL) CACHE_REPORT_TIME(sc_time_stamp(), "Set conflict.")
     // bookmark_tmp |= BM_SET_CONFLICT;					
 
-#define READ_CONFLICT \
-    if (RPT_RTL) CACHE_REPORT_TIME(sc_time_stamp(), "Read conflict.")
-    // bookmark_tmp |= BM_READ_CONFLICT;					
-
 #define ATOMIC_OVERRIDE \
     HLS_DEFINE_PROTOCOL("l2-atom-override-protocol");	\
     if (RPT_RTL) CACHE_REPORT_TIME(sc_time_stamp(), "Atomic override.")
@@ -341,9 +337,7 @@
     HLS_PRESERVE_SIGNAL(bookmark, true);		\
     HLS_PRESERVE_SIGNAL(reqs_cnt_dbg, true);		\
     HLS_PRESERVE_SIGNAL(set_conflict_dbg, true);	\
-    HLS_PRESERVE_SIGNAL(read_conflict_dbg, true);	\
     HLS_PRESERVE_SIGNAL(cpu_req_conflict_dbg, true);	\
-    HLS_PRESERVE_SIGNAL(cpu_req_read_conflict_dbg, true);	\
     HLS_PRESERVE_SIGNAL(evict_stall_dbg, true);		\
     HLS_PRESERVE_SIGNAL(fwd_stall_dbg, true);		\
     HLS_PRESERVE_SIGNAL(fwd_stall_ended_dbg, true);	\

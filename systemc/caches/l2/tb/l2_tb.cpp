@@ -482,48 +482,47 @@ void l2_tb::l2_test()
 	addr.tag_incr(1);
     }
 
-    // CACHE_REPORT_INFO("T5.1) Evict stalls.");
+    CACHE_REPORT_INFO("T5.1) Evict stalls.");
 
-    // addr1 = addr;
-    // addr.tag_decr(L2_WAYS);
-    // addr_breakdown_t addr_evict1 = addr;
-    // addr.set_incr(1);
-    // addr2 = addr;
+    addr1 = addr;
+    addr.tag_decr(L2_WAYS);
+    addr_breakdown_t addr_evict1 = addr;
+    addr.set_incr(1);
+    addr2 = addr;
 
-    // put_cpu_req(cpu_req1, READ, WORD, addr1.word, 0, DATA);
-    // get_inval(addr_evict1.line);
-    // get_req_out(REQ_PUTS, addr_evict1.line, 0);
+    put_cpu_req(cpu_req1, READ, WORD, addr1.word, 0, DATA);
+    get_inval(addr_evict1.line);
+    get_req_out(REQ_PUTS, addr_evict1.line, 0);
 
-    // wait();
+    wait();
 
-    // put_cpu_req(cpu_req2, READ, WORD, addr2.word, 0, DATA);
+    put_cpu_req(cpu_req2, READ, WORD, addr2.word, 0, DATA);
 
-    // put_fwd_in(FWD_PUTACK, addr_evict1.line, 0);
-    // get_req_out(REQ_GETS, addr1.line, cpu_req1.hprot);
+    put_fwd_in(FWD_PUTACK, addr_evict1.line, 0);
+    get_req_out(REQ_GETS, addr1.line, cpu_req1.hprot);
 
-    // wait();
+    wait();
 
-    // put_rsp_in(RSP_EDATA, addr1.line, line_of_addr(addr1.line), 0);
-    // get_rd_rsp(line_of_addr(addr1.line));
+    put_rsp_in(RSP_EDATA, addr1.line, line_of_addr(addr1.line), 0);
+    get_rd_rsp(line_of_addr(addr1.line));
 
-    // get_req_out(REQ_GETS, addr2.line, cpu_req2.hprot);
+    get_req_out(REQ_GETS, addr2.line, cpu_req2.hprot);
 
-    // wait();
+    wait();
 
-    // put_rsp_in(RSP_EDATA, addr2.line, line_of_addr(addr2.line), 0);
-    // get_rd_rsp(line_of_addr(addr2.line));
+    put_rsp_in(RSP_EDATA, addr2.line, line_of_addr(addr2.line), 0);
+    get_rd_rsp(line_of_addr(addr2.line));
 
     CACHE_REPORT_INFO("T5.2) Flush.");    
 
     // issue flush
     l2_flush_tb.put(flush_all);
 
-    // for (int i = 0; i < L2_WAYS + 1; ++i) {
-    for (int i = 0; i < L2_WAYS; ++i) {
-    	l2_req_out_t req_out = l2_req_out_tb.get();
-    	addr_t tmp_addr = req_out.addr << OFFSET_BITS;
-    	put_fwd_in(FWD_PUTACK, tmp_addr, 0);
-    	wait();
+    for (int i = 0; i < L2_WAYS + 1; ++i) {
+	l2_req_out_t req_out = l2_req_out_tb.get();
+	addr_t tmp_addr = req_out.addr << OFFSET_BITS;
+	put_fwd_in(FWD_PUTACK, tmp_addr, 0);
+	wait();
     }
 
     wait();

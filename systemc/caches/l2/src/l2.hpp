@@ -30,9 +30,7 @@ public:
 
     sc_signal< sc_uint<REQS_BITS_P1> > reqs_cnt_dbg;
     sc_signal< bool > set_conflict_dbg;
-    sc_signal< bool > read_conflict_dbg;
     sc_signal< l2_cpu_req_t > cpu_req_conflict_dbg;
-    sc_signal< l2_cpu_req_t > cpu_req_read_conflict_dbg;
     sc_signal< bool > evict_stall_dbg;
     sc_signal< bool > fwd_stall_dbg;
     sc_signal< bool > fwd_stall_ended_dbg;
@@ -182,8 +180,7 @@ public:
     void tag_lookup_fwd(line_breakdown_t<l2_tag_t, l2_set_t> line_br, l2_way_t &way_hit);
     void reqs_lookup(line_breakdown_t<l2_tag_t, l2_set_t> line_addr_br,
 		     sc_uint<REQS_BITS> &reqs_hit_i);
-    bool reqs_peek_req(l2_set_t set, sc_uint<REQS_BITS> &reqs_i, cpu_msg_t msg,
-		       bool &read_conflict);
+    bool reqs_peek_req(l2_set_t set, sc_uint<REQS_BITS> &reqs_i);
     void reqs_peek_flush(l2_set_t set, sc_uint<REQS_BITS> &reqs_i);
     bool reqs_peek_fwd(line_breakdown_t<l2_tag_t, l2_set_t> line_br, sc_uint<REQS_BITS> &reqs_i,
 		       bool &reqs_hit, mix_msg_t coh_msg);
@@ -205,9 +202,7 @@ private:
     bool is_to_req[2];
     sc_uint<REQS_BITS_P1> reqs_cnt;
     bool set_conflict;
-    bool read_conflict;
     l2_cpu_req_t cpu_req_conflict;
-    l2_cpu_req_t cpu_req_read_conflict;
     bool evict_stall;
     bool fwd_stall;
     bool fwd_stall_ended;
