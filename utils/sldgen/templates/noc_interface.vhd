@@ -337,18 +337,15 @@ begin
       );
 
   -- Fully coherent (to L2 wrapper)
-  dma_rcv_ready        <= dma_rcv_rdreq_int;
-  dma_snd_valid        <= dma_snd_wrreq_int;
   dma_snd_data         <= dma_snd_data_in_int;
 
   -- Non coherent (to NoC)
-  dma_rcv_rdreq        <= dma_rcv_rdreq_int;
-  dma_snd_wrreq        <= dma_snd_wrreq_int;
   dma_snd_data_in      <= dma_snd_data_in_int;
 
   -- From Noc or l2 wrapper to DMA
   coherence_model_select: process (bank, dma_rcv_data, dma_rcv_valid, dma_snd_ready,
-                                   dma_rcv_data_out, dma_rcv_empty, dma_snd_full) is
+                                   dma_rcv_data_out, dma_rcv_empty, dma_snd_full,
+                                   dma_rcv_rdreq_int, dma_snd_wrreq_int) is
     variable coherence : integer range 0 to 2;
   begin  -- process coherence_model_select
     coherence := conv_integer(bank(COHERENCE_REG)(1 downto 0));
@@ -356,11 +353,26 @@ begin
       dma_rcv_data_out_int <= dma_rcv_data;
       dma_rcv_empty_int    <= not dma_rcv_valid;
       dma_snd_full_int     <= not dma_snd_ready;
+
+      dma_rcv_ready        <= dma_rcv_rdreq_int;
+      dma_snd_valid        <= dma_snd_wrreq_int;
     else
       dma_rcv_data_out_int <= dma_rcv_data_out;
       dma_rcv_empty_int    <= dma_rcv_empty;
       dma_snd_full_int     <= dma_snd_full;
+
+      dma_rcv_ready        <= '0';
+      dma_snd_valid        <= '0';
     end if;
+
+    if coherence = ACC_COH_NONE then
+      dma_rcv_rdreq        <= dma_rcv_rdreq_int;
+      dma_snd_wrreq        <= dma_snd_wrreq_int;
+    else
+      dma_rcv_rdreq        <= '0';
+      dma_snd_wrreq        <= '0';
+    end if;
+
   end process coherence_model_select;
 
 
