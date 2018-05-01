@@ -539,9 +539,9 @@ def gen_tech_indep_impl(accelerator_list, cache_list, dma_width, template_dir, o
           sets = 0
           ways = 0
           for item in info:
-            if re.match(r'[1-9]+sets', item, re.M|re.I):
+            if re.match(r'[0-9]+sets', item, re.M|re.I):
               sets = int(item.replace("sets", ""))
-            if re.match(r'[1-9]+ways', item, re.M|re.I):
+            if re.match(r'[0-9]+ways', item, re.M|re.I):
               ways = int(item.replace("ways", ""))
           if sets * ways == 0:
             print("    ERROR: hls config must report number of sets and ways, both different from zero")
