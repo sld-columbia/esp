@@ -13,12 +13,12 @@
 #define DEV_NAME "sort"
 
 #define SORT_LEN 32
-#define SORT_BATCH 32
+#define SORT_BATCH 2
 
 #define SORT_BUF_SIZE (SORT_LEN * SORT_BATCH * sizeof(unsigned))
 
 /* Size of the contiguous chunks for scatter/gather */
-#define CHUNK_SHIFT 10
+#define CHUNK_SHIFT 6
 #define CHUNK_SIZE BIT(CHUNK_SHIFT)
 #define NCHUNK ((SORT_BUF_SIZE % CHUNK_SIZE == 0) ?			\
 			(SORT_BUF_SIZE / CHUNK_SIZE) :			\
