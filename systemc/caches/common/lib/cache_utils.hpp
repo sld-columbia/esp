@@ -103,6 +103,7 @@ inline addr_breakdown_t rand_addr()
 inline addr_breakdown_llc_t rand_addr_llc()
 {
     addr_t addr = (rand() % (1 << ADDR_BITS-1)); // MSB always set to 0
+    addr.range(OFFSET_BITS - 1, 0) = 0;
     addr_breakdown_llc_t addr_br;
     addr_br.breakdown(addr);
     return addr_br;
