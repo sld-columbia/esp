@@ -1,0 +1,14 @@
+To compile and execute run the following 2 commands in strict order:
+
+$ make generate
+
+$ make run
+
+To clean run:
+
+$ make clean
+
+To just compile run:
+
+$ make
+
