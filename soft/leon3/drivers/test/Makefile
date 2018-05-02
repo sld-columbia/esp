@@ -5,7 +5,7 @@ CFLAGS += -Wall -Werror
 CFLAGS += -I../include
 
 OUT := libtest.a
-OBJS := test.o le.o
+OBJS := test.o le.o wami.o
 
 all: $(OUT)
 
