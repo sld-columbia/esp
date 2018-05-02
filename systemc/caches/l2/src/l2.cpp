@@ -313,9 +313,12 @@ void l2::ctrl()
 
 		    l2_set_t set_tmp = reqs[reqs_hit_i].set;
 
-		    // TODO ADD?
+		    // TODO
+#if (L2_WAY_BITS == 1)
+		    evict_ways.port1[0][set_tmp] = (reqs[reqs_hit_i].way + 1) % 2;
+#else
 		    evict_ways.port1[0][set_tmp] = reqs[reqs_hit_i].way + 1;
-		    
+#endif		    
 		    reqs[reqs_hit_i].state = state_tmp;
 		    reqs[reqs_hit_i].tag = reqs[reqs_hit_i].tag_estall;
 

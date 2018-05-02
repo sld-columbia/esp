@@ -236,24 +236,38 @@ void l2_tb::l2_test()
     // flush again
     l2_flush_tb.put(flush_partial);
 
-    // receive N_REQS PutM, send N_REQS PutAck
+    // // receive N_REQS PutM, send N_REQS PutAck
+    // addr = addr1;
+    // for (int i = 0; i < (2 * L2_WAYS) / N_REQS; ++i) {
+    // 	if (i == L2_WAYS / N_REQS) addr.set_incr(1);
+
+    // 	for (int j = 0; j < N_REQS; j++) {
+    // 	    get_req_out(REQ_PUTS, addr.line, 0);
+    // 	    wait();
+    // 	    addr.tag_incr(1);
+    // 	}
+
+    // 	addr.tag_decr(N_REQS);
+
+    // 	for (int j = 0; j < N_REQS; j++) {
+    // 	    put_fwd_in(FWD_PUTACK, addr.line, 0);
+    // 	    wait();
+    // 	    addr.tag_incr(1);
+    // 	}
+    // }
+
+    // This works also with 2 ways, unlike the part commented above
     addr = addr1;
-    for (int i = 0; i < (2 * L2_WAYS) / N_REQS; ++i) {
-	if (i == L2_WAYS / N_REQS) addr.set_incr(1);
+    for (int i = 0; i < (2 * L2_WAYS); ++i) {
+	if (i == L2_WAYS) addr.set_incr(1);
 
-	for (int j = 0; j < N_REQS; j++) {
-	    get_req_out(REQ_PUTS, addr.line, 0);
-	    wait();
-	    addr.tag_incr(1);
-	}
+	get_req_out(REQ_PUTS, addr.line, 0);
+	wait();
 
-	addr.tag_decr(N_REQS);
-
-	for (int j = 0; j < N_REQS; j++) {
-	    put_fwd_in(FWD_PUTACK, addr.line, 0);
-	    wait();
-	    addr.tag_incr(1);
-	}
+	put_fwd_in(FWD_PUTACK, addr.line, 0);
+	wait();
+	
+	addr.tag_incr(1);
     }
 
     wait();

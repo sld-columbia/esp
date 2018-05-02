@@ -31,7 +31,11 @@ typedef sc_uint<L2_TAG_BITS>		l2_tag_t;
 typedef sc_uint<LLC_TAG_BITS>		llc_tag_t;
 typedef sc_uint<L2_SET_BITS>		l2_set_t;
 typedef sc_uint<LLC_SET_BITS>		llc_set_t;
-typedef sc_uint<L2_WAY_BITS>		l2_way_t;
+#if (L2_WAY_BITS == 1)
+typedef sc_uint<2> l2_way_t;
+#else
+typedef sc_uint<L2_WAY_BITS> l2_way_t;
+#endif
 typedef sc_uint<LLC_WAY_BITS>		llc_way_t;
 typedef sc_uint<OFFSET_BITS>		offset_t;
 typedef sc_uint<WORD_BITS>		word_offset_t;
