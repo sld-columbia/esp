@@ -41,11 +41,11 @@ mtx_chk_file = [['outputs/chk1.data'  , 'outputs/chk2.data',   \
                 ['outputs/chk_t1.data', 'outputs/chk_t2.data', \
                  'outputs/chk_t3.data', 'outputs/chk_t4.data']]
 
-mtx_n_rows = [128, 1024, 16384, 65536]
-mtx_n_cols = [128, 1024, 16384, 65536]
+mtx_n_rows = [512, 2048, 8192, 65536]
+mtx_n_cols = [512, 2048, 8192, 65536]
 mtx_max_val = 15
-mtx_max_non_null = [4, 8, 16, 32]
-mtx_diag_thickness = [8, 16, 32, 64]
+mtx_max_non_null = [8, 12, 16, 32]
+mtx_diag_thickness = [10, 16, 32, 64]
 mtx_n_types = 3
 
 # Write list of matrices to create
