@@ -40,7 +40,8 @@ struct chdet_test {
 	int cols;
 };
 
-static const char usage_str[] = "usage: change_detection cmd [len] [in_fx_file] [gold_file] [in_file]\n"
+static const char usage_str[] = "usage: coherence change_detection cmd [len] [in_fx_file] [gold_file] [in_file]\n"
+	"  coherence: none|llc|full\n"
 	"  cmd: config|test|run|hw\n"
 	"\n"
 	"Optional arguments: len and in_fx_file apply to 'config', 'hw' and 'test':\n"
