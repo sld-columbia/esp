@@ -846,6 +846,8 @@ def print_tiles(fp, esp_config, soc):
     if esp_config.tiles[i].type == "acc":
       acc = esp_config.accelerators[esp_config.tiles[i].idx]
       fp.write("    " + str(acc.idx) + " => " + str(i) + ",\n")
+    if esp_config.tiles[i].type == "mem_dbg":
+      fp.write("    " + str(L3_CACHE_PINDEX) + " => " + str(i) + ",\n")
     if esp_config.tiles[i].type == "cpu":
       l2_pindex = L2_CACHE_PINDEX_FIRST + esp_config.tiles[i].cpuid
       fp.write("    " + str(l2_pindex) + " => " + str(i) + ",\n")
