@@ -15,7 +15,7 @@
 #define DEVNAME "/dev/spmv.0"
 #define NAME "spmv"
 
-static const char usage_str[] = "usage: spmv coherence cmd [plm_size] [fit_plm] [in_file] [gold_file] [-v]\n"
+static const char usage_str[] = "usage: spmv coherence cmd [plm_size] [fit_plm] [in_file] [-v]\n"
 	"  coherence : none|llc|full\n"
 	"  cmd       : config|test|run|hw\n"
 	"\n"
@@ -25,7 +25,6 @@ static const char usage_str[] = "usage: spmv coherence cmd [plm_size] [fit_plm] 
 	"  in_file   : input matrix, input vector and configuration parameters\n"
 	"\n"
 	"Other optional arguments:\n"
-	"  gold_file : golden output file only required for 'test'\n"
 	"  -v        : 'test' prints mismatched values in case of errors above threshold\n";
 
 struct spmv_test {
@@ -40,7 +39,6 @@ struct spmv_test {
 	unsigned int vect_fits_plm;
 
 	const char *in_file;
-	const char *gold_file;
 
 	bool verbose;
 
@@ -118,6 +116,8 @@ static void spmv_alloc_buf(struct test_info *info)
 	// Read configuration
 	fscanf(fp, "%u %u %u %u\n", &test->nrows, &test->ncols, &test->max_nonzero, &test->mtx_len);
 
+	printf("config: %u %u %u %u\n", test->nrows, test->ncols, test->max_nonzero, test->mtx_len);
+
 	// Set data structure offsets (4B words)
 	test->vals_addr = 0;
 	test->vals_size = test->mtx_len;
@@ -181,17 +181,6 @@ static void spmv_alloc_buf(struct test_info *info)
 	// Gold
 	if (!strcmp(info->cmd, "test")) {
 		test->gold_buf = malloc0_check(sizeof(float) * test->out_size);
-		fp = fopen(test->gold_file, "r");
-		if (!fp)
-			die_errno("%s: cannot open file %s", __func__, test->gold_file);
-
-		for (i = 0; i < test->out_size; i++) {
-			float vect;
-			fscanf(fp, "%f\n", &vect);
-			test->gold_buf[i] = vect;  // FPDATA -> sc_bv and store it
-		}
-
-		fclose(fp);
 	}
 }
 
@@ -313,14 +302,45 @@ static bool spmv_diff_ok(struct test_info *info)
 
 	contig_copy_from(t->out_fx_buf, info->contig, spmv_out_addr(t), spmv_out_size(t));
 
-	for (i = 0; i < t->out_size; i++)
+	for (i = 0; i < t->out_size; i++) {
 		t->out_buf[i] = fixed32_to_float(t->out_fx_buf[i], 16);
+	}
 
 	total_err = check_gold(t->gold_buf, t->out_buf, t->nrows, t->verbose);
 	if (total_err)
 		printf("%d mismatches in total\n", total_err);
 	return !total_err;
 }
+
+void spmv_comp(struct test_info *info)
+{
+	struct spmv_test *t = to_spmv(info);
+	long i, j;
+	double sum, Si;
+
+	for(i = 0; i < t->nrows; i++) {
+		int tmp_begin;
+		int tmp_end;
+		sum = 0; Si = 0;
+
+		if (i == 0)
+			tmp_begin = 0;
+		else
+			tmp_begin= t->in_rows_buf[i - 1];
+
+		tmp_end = t->in_rows_buf[i];
+
+		for (j = tmp_begin; j < tmp_end; j++) {
+			Si = t->in_vals_buf[j] * t->in_vect_buf[t->in_cols_buf[j]];
+			sum = sum + Si;
+		}
+
+		t->gold_buf[i] = sum;
+	}
+
+
+}
+
 
 /*
  * Test operations assignment
@@ -334,6 +354,7 @@ static struct spmv_test spmv_test = {
 		.init_bufs	= spmv_init_bufs,
 		.set_access	= spmv_set_access,
 		.diff_ok	= spmv_diff_ok,
+		.comp           = spmv_comp,
 		.esp		= &spmv_test.desc.esp,
 		.cm		= SPMV_IOC_ACCESS,
 	},
@@ -358,9 +379,9 @@ int main(int argc, char *argv[])
 	if (!strcmp(argv[2], "run"))
 		n_argc = 3;
 	else if (!strcmp(argv[2], "test"))
-		n_argc = 7;
-	else
 		n_argc = 6;
+	else
+		n_argc = 5;
 
 	if (argc < n_argc)
 		usage();
@@ -370,10 +391,8 @@ int main(int argc, char *argv[])
 		spmv_test.vals_plm_size = strtoul(argv[3], NULL, 0);
 		spmv_test.vect_fits_plm = strtoul(argv[4], NULL, 0);
 		spmv_test.in_file = argv[5];
-		if (n_argc > 6)
-			spmv_test.gold_file = argv[6];
-		if (argc == 8) {
-			if (strcmp(argv[7], "-v"))
+		if (argc == 7) {
+			if (strcmp(argv[6], "-v"))
 				usage();
 			spmv_test.verbose = true;
 		}
