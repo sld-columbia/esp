@@ -44,7 +44,7 @@ mtx_chk_file = [['outputs/chk1.data'  , 'outputs/chk2.data',   \
 mtx_n_rows = [512, 2048, 8192, 65536]
 mtx_n_cols = [512, 2048, 8192, 65536]
 mtx_max_val = 15
-mtx_max_non_null = [8, 12, 16, 32]
+mtx_max_non_null = [8, 16, 16, 32]
 mtx_diag_thickness = [10, 16, 32, 64]
 mtx_n_types = 3
 
