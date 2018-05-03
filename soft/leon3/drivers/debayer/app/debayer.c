@@ -59,25 +59,27 @@ static int validation(int rows, int cols,
 	for (r = 0; success && r < rows - 2*PAD; r++) {
 		for (c = 0; c < cols - 2*PAD; c++) {
 			if (debayer[r][c].r != gold[r][c].r) {
-				fprintf(stderr, "Validation error: red pixel mismatch at row=%d, col=%d : "
-					"test value = %u, golden value = %u\n\n", r, c,
-					debayer[r][c].r, gold[r][c].r);
+				/* fprintf(stderr, "Validation error: red pixel mismatch at row=%d, col=%d : " */
+				/* 	"test value = %u, golden value = %u\n\n", r, c, */
+				/* 	debayer[r][c].r, gold[r][c].r); */
 				success = 0;
 			}
 
 			if (debayer[r][c].g != gold[r][c].g) {
-				fprintf(stderr, "Validation error: green pixel mismatch at row=%d, col=%d : "
-					"test value = %u, golden value = %u\n\n", r, c,
-					debayer[r][c].g, gold[r][c].g);
+				/* fprintf(stderr, "Validation error: green pixel mismatch at row=%d, col=%d : " */
+				/* 	"test value = %u, golden value = %u\n\n", r, c, */
+				/* 	debayer[r][c].g, gold[r][c].g); */
 				success = 0;
 			}
 
 			if (debayer[r][c].b != gold[r][c].b) {
-				fprintf(stderr, "Validation error: blue pixel mismatch at row=%d, col=%d : "
-					"test value = %u, golden value = %u\n\n", r, c,
-					debayer[r][c].b, gold[r][c].b);
+				/* fprintf(stderr, "Validation error: blue pixel mismatch at row=%d, col=%d : " */
+				/* 	"test value = %u, golden value = %u\n\n", r, c, */
+				/* 	debayer[r][c].b, gold[r][c].b); */
 				success = 0;
 			}
+			if (!success)
+				break;
 		}
 	}
 	return !success;
@@ -105,6 +107,7 @@ static void debayer_alloc_contig(struct test_info *info)
 	size_t size;
 
 	size = sizeof(uint16_t) * bayer_pix + sizeof(rgb_pixel) * debayer_pix;
+	printf("HW buf size: %zu\n", size);
 	if (contig_alloc(size, &info->contig))
 		die_errno(__func__);
 }
@@ -218,7 +221,7 @@ int main(int argc, char *argv[])
 	if (argc < n_argc)
 		usage();
 
-	if (n_argc > 2) {
+	if (n_argc > 3) {
 		wami_image_file_dimensions(argv[3], &debayer_test.rows, &debayer_test.cols);
 
 		debayer_test.in_file = argv[3];

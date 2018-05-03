@@ -185,6 +185,7 @@ static void sort_alloc_contig(struct test_info *info)
 {
 	struct sort_test *t = to_sort(info);
 
+	printf("HW buf size: %zu\n", sort_size(t));
 	if (contig_alloc(sort_size(t), &info->contig))
 		die_errno(__func__);
 }

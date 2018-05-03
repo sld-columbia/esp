@@ -195,6 +195,7 @@ static void spmv_alloc_contig(struct test_info *info)
 	struct spmv_test *test = to_spmv(info);
 	size_t size = spmv_size(test);
 
+	printf("HW buf size: %zu\n", size);
 	if (contig_alloc(size, &info->contig))
 		die_errno(__func__);
 }
