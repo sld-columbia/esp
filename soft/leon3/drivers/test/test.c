@@ -29,33 +29,33 @@ static void __dev_init(struct test_info *info, bool pr)
 {
 	if (!info->fd) {
 		if (pr) {
-			printf("Opening %s... ", info->devname);
+			printf("Opening %s... \n", info->devname);
 			fflush(NULL);
 		}
 		dev_open(info);
 	}
 
 	if (pr) {
-		printf("Allocating buffers... ");
+		printf("Allocating buffers... \n");
 		fflush(NULL);
 	}
 	info->alloc_buf(info);
 
 	if (pr) {
-		printf("Allocating hardware buffer... ");
+		printf("Allocating hardware buffer... \n");
 		fflush(NULL);
 	}
 	info->alloc_contig(info);
 
 	if (pr) {
-		printf("Initializing buffers... ");
+		printf("Initializing buffers... \n");
 		fflush(NULL);
 	}
 	info->init_bufs(info);
 
 	if (info->to_sc_fixed) {
 		if (pr) {
-			printf("Converting to fixed point... ");
+			printf("Converting to fixed point... \n");
 			fflush(NULL);
 		}
 		info->to_sc_fixed(info);
@@ -130,7 +130,7 @@ static int cmd_test(struct test_info *info)
 		die_errno("IOCTL on %s failed", info->devname);
 	printf("HW done");
 	if (info->to_float) {
-		printf("... Converting to float");
+		printf("... Converting to float\n");
 		fflush(NULL);
 		info->to_float(info);
 	}
