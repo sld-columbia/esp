@@ -941,6 +941,32 @@ profpga-distclean:
 
 .PHONY: profpga-distclean profpga-prog-fpga profpga-close-fpga
 
+mmi64_regs.h: socmap.vhd
+
+MMI64_DESP  = $(ESP_ROOT)/utils/mmi64/mmi64.c
+MMI64_DESP += mmi64_regs.h
+
+mmi64: $(MMI64_DESP)
+ifeq ("$(PROFPGA)","")
+	@echo "Path to proFPGA installation (\$PROFPGA) not set - terminating!"
+else
+	$(QUIET_CC)gcc -I ${PROFPGA}/include/ -I./ -fpic -rdynamic -o mmi64 \
+		$(ESP_ROOT)/utils/mmi64/mmi64.c -Wl,--whole-archive ${PROFPGA}/lib/linux_x86_64/libprofpga.a \
+		${PROFPGA}/lib/linux_x86_64/libmmi64.a \
+		${PROFPGA}/lib/linux_x86_64/libconfig.a -Wl,--no-whole-archive -lpthread \
+		-lrt -ldl
+endif
+
+mmi64-run: mmi64
+	$(QUIET_RUN) ./$< mmi64.cfg
+
+mmi64-clean:
+	$(QUIET_CLEAN) $(RM) mmi64
+
+mmi64-distclean: mmi64-clean
+	$(QUIET_CLEAN) $(RM) *.rpt
+
+.PHONY: mmi64-run mmi64-clean mmi64-distclean
 
 ### ESP Monitor targets ###
 
@@ -989,7 +1015,8 @@ clean: 		soft-clean		\
 		grlib-config-clean	\
 		vivado-clean		\
 		sldgen-clean		\
-		espmon-clean
+		espmon-clean		\
+		mmi64-clean
 
 distclean:	check_all_srcs-distclean 	\
 		check_all_rtl_srcs-distclean	\
@@ -1003,7 +1030,8 @@ distclean:	check_all_srcs-distclean 	\
 		grlib-config-distclean		\
 		vivado-distclean		\
 		sldgen-distclean		\
-		espmon-distclean
+		espmon-distclean		\
+		mmi64-distclean
 
 
 .PHONY: clean distclean
