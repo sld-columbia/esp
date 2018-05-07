@@ -55,3 +55,6 @@ ahbrom.bin
 ahbrom.vhd
 
 *.lst
+
+mmi64
+*.rpt
