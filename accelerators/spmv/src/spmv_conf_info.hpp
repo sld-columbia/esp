@@ -22,7 +22,7 @@ public:
     // PLM size to be used for values. All other sizes are derived
     uint32_t vals_plm_size; // Max is 1024
     // 'True' is the vector size fits the vector PLM and if it should be stored there
-    bool     vect_fits_plm; // Set to false is ncols > 8192
+    uint32_t vect_fits_plm; // Set to false if ncols < 8192
 
     //
     // constructors

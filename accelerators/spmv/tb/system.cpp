@@ -103,7 +103,7 @@ void system_t::load_memory()
     cols_addr = mtx_len;
     rows_addr = 2 * mtx_len;
     vect_addr = nrows + 2 * mtx_len;
-    out_addr  = nrows + ncols + 2 * mtx_len;;;
+    out_addr  = nrows + ncols + 2 * mtx_len;
 
     // Read and store input arrays
 
