@@ -57,6 +57,7 @@ static void spmv_prep_xfer(struct esp_device *esp, void *arg)
 static bool spmv_xfer_input_ok(struct esp_device *esp, void *arg)
 {
 	struct spmv_access *a = arg;
+	long long unsigned mtx_max = ((long long unsigned) a->nrows) * ((long long unsigned) a->ncols);
 
 	if (!is_power_of_2(a->nrows))
 		return false;
@@ -66,10 +67,11 @@ static bool spmv_xfer_input_ok(struct esp_device *esp, void *arg)
 
 	if (!is_power_of_2(a->max_nonzero))
 		return false;
+
 	if (a->max_nonzero > 32 || a->max_nonzero < 4)
 		return false;
 
-	if (a->mtx_len == 0 || a->mtx_len > a->nrows * a->ncols)
+	if (a->mtx_len == 0 || ((long long unsigned) a->mtx_len) > mtx_max)
 		return false;
 
 	if (!is_power_of_2(a->vals_plm_size))
