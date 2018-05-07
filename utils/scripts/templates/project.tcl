@@ -13,6 +13,35 @@ source ../../common/stratus/project.tcl
 
 
 #
+# Set the private memory library
+#
+use_hls_lib "./memlib"
+
+
+#
+# Local synthesis attributes
+#
+if {$TECH eq "virtex7"} {
+    # Library is in ns, but simulation uses ps!
+    set CLOCK_PERIOD 10.0
+    set SIM_CLOCK_PERIOD 10000.0
+    set_attr default_input_delay      0.1
+}
+if {$TECH eq "zynq7000"} {
+    # Library is in ns, but simulation uses ps!
+    set CLOCK_PERIOD 10.0
+    set SIM_CLOCK_PERIOD 10000.0
+    set_attr default_input_delay      0.1
+}
+if {$TECH eq "cmos32soi"} {
+    set CLOCK_PERIOD 1000.0
+    set SIM_CLOCK_PERIOD 1000.0
+    set_attr default_input_delay      100.0
+}
+set_attr clock_period $CLOCK_PERIOD
+
+
+#
 # System level modules to be synthesized
 #
 define_hls_module <accelerator_name> ../src/<accelerator_name>.cpp
@@ -28,7 +57,7 @@ define_system_module tb ../tb/system.cpp ../tb/sc_main.cpp
 ######################################################################
 set DEFAULT_ARGV ""
 
-foreach dma [list 32 64] {
+foreach dma [list 32] {
     define_io_config * IOCFG_DMA$dma -DDMA_WIDTH=$dma
 
     define_system_config tb TESTBENCH_DMA$dma -io_config IOCFG_DMA$dma

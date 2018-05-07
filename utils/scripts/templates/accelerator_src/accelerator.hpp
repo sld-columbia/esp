@@ -6,11 +6,9 @@
 #include "<accelerator_name>_conf_info.hpp"
 #include "<accelerator_name>_debug_info.hpp"
 
-#include "utils/esp_utils.hpp"
-#include "utils/esp_systemc.hpp"
-#include "utils/configs/esp_config_proc.hpp"
+#include "esp_templates.hpp"
 
-#include "core/accelerators/esp_accelerator_3P.hpp"
+#include "<accelerator_name>_directives.hpp"
 
 // Include generated header files for PLM here
 
@@ -46,11 +44,6 @@ class <accelerator_name> : public esp_accelerator_3P<DMA_WIDTH>
         // Functions
 
         // Private local memories
-#if (DMA_WIDTH == 32)
-
-#elif (DMA_WIDTH == 64)
-
-#endif
 
 };
 

@@ -1,11 +1,12 @@
 #ifndef __SYSTEM_HPP__
 #define __SYSTEM_HPP__
 
-#include "utils/esp_systemc.hpp"
-
 #include "<accelerator_name>_conf_info.hpp"
 #include "<accelerator_name>_debug_info.hpp"
 #include "<accelerator_name>.hpp"
+#include "<accelerator_name>_directives.hpp"
+
+#include "esp_templates.hpp"
 
 const size_t MEM_SIZE = /* Compute memory footprint */
 
