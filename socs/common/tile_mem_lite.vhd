@@ -31,6 +31,9 @@ entity tile_mem_lite is
     fabtech                 : integer := CFG_FABTECH;
     memtech                 : integer := CFG_MEMTECH;
     padtech                 : integer := CFG_PADTECH;
+    l3_pindex               : integer := 6;
+    l3_pconfig              : apb_config_type;
+    local_apb_en            : std_logic_vector(NAPBSLV-1 downto 0);
     disas                   : integer := CFG_DISAS;  -- Enable disassembly to console
     dbguart                 : integer := CFG_DUART;  -- Print UART on console
     pclow                   : integer := CFG_PCLOW;
@@ -152,10 +155,6 @@ architecture rtl of tile_mem_lite is
   constant local_y : local_yx := tile_mem_1.y;
   constant local_x : local_yx := tile_mem_1.x;
 
-  constant local_apb_en : std_logic_vector(NAPBSLV-1 downto 0) := (
-    l3_cache_pindex => to_std_logic(CFG_LLC_ENABLE),
-    others => '0');
-
 begin
 
 
@@ -264,7 +263,7 @@ begin
     coherent_dma_snd_wrreq <= '0';
     coherent_dma_snd_data_in <= (others => '0');
 
-    ctrl_apbo2(l3_cache_pindex) <= apb_none;
+    ctrl_apbo2(l3_pindex) <= apb_none;
 
   end generate no_cache_coherence;
 
@@ -314,8 +313,9 @@ begin
         nllcc       => CFG_NLLC_COHERENT,
         noc_xlen    => CFG_XLEN,
         hindex      => 2,
-        pindex      => l3_cache_pindex,
+        pindex      => l3_pindex,
         pirq        => CFG_SLD_L3_CACHE_IRQ,
+        pconfig     => l3_pconfig,
         local_y     => local_y,
         local_x     => local_x,
         cacheline   => CFG_DLINE,
@@ -358,7 +358,7 @@ begin
         dma_snd_full               => coherent_dma_snd_full
         );
 
-    ctrl_apbo2(l3_cache_pindex) <= llc_apbo;
+    ctrl_apbo2(l3_pindex) <= llc_apbo;
     llc_apbi                    <= ctrl_apbi2;
 
 

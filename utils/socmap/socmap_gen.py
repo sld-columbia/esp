@@ -11,9 +11,8 @@ DDR0_HINDEX = 4
 DDR1_HINDEX = 5
 FB_HINDEX = 6
 POWERCTRL_PINDEX = 4
-L2_CACHE_PINDEX_FIRST = 6
 L2_CACHE_PIRQ = 4
-L3_CACHE_PINDEX = 5
+L3_CACHE_PINDEX_FIRST = 5
 L3_CACHE_PIRQ = 4
 SLD_APB_ADDR_ADJ = 0x100
 SLD_APB_ADDR_MSK = 0xfff
@@ -42,6 +41,7 @@ class tile_info:
   cpuid = -1
   cid = -1
   did = -1
+  llc_idx = -1
   clk_region = 0
   def __init__(self):
     return
@@ -101,8 +101,9 @@ class soc_config:
     acc_did = 0
     acc_tile_idx = 0
     # 5 -> LLC; 6-6+ncpu->L2 then accelerators
-    acc_idx = L2_CACHE_PINDEX_FIRST + soc.noc.get_cpu_num(soc) #first available line for accelerators
+    acc_idx = l2_cache_pindex_first(soc) + soc.noc.get_cpu_num(soc) #first available line for accelerators
     acc_irq = 3
+    llc_idx = L3_CACHE_PINDEX_FIRST
     for x in range(soc.noc.rows):
       for y in range(soc.noc.cols):
         selection = soc.noc.topology[x][y].ip_type.get()
@@ -120,8 +121,12 @@ class soc_config:
           cpuid += 1
         if selection == "mem_dbg":
           self.tiles[t].type = "mem_dbg"
+          self.tiles[t].llc_idx = llc_idx
+          llc_idx = llc_idx + 1
         if selection == "mem_lite":
           self.tiles[t].type = "mem_lite"
+          self.tiles[t].llc_idx = llc_idx
+          llc_idx = llc_idx + 1
         if selection == "IO":
           self.tiles[t].type = "misc"
         if soc.IPs.ACCELERATORS.count(selection):
@@ -154,6 +159,11 @@ class soc_config:
             acc_idx = 16
           self.accelerators.append(acc)
 
+
+def l2_cache_pindex_first(soc):
+  return L3_CACHE_PINDEX_FIRST + soc.noc.get_mem_num(soc)[0]
+
+
 def print_header(fp):
   fp.write("------------------------------------------------------------------------------\n")
   fp.write("--  This file is a configuration file for the ESP NoC-based architecture\n")
@@ -185,6 +195,8 @@ def print_constants(fp, esp_config, soc):
   fp.write("  constant CFG_NCPU_TILE : integer := " + str(soc.noc.get_cpu_num(soc)) + ";\n")
   fp.write("  -- number of tiles with private caches (CPUs + Fully-coherent accelerators)\n")
   fp.write("  constant CFG_NL2 : integer := " + str(soc.noc.get_cpu_num(soc) + soc.noc.get_acc_num(soc)) + ";\n")
+  fp.write("  -- number of LLC partitions (equal to number of memory tiles)\n")
+  fp.write("  constant CFG_NLLC : integer := " + str(soc.noc.get_mem_num(soc)[0]) + ";\n")
   fp.write("  -- number of acclerator tiles LLC-coherent accelerators\n")
   fp.write("  constant CFG_NLLC_COHERENT : integer := " + str(soc.noc.get_acc_num(soc)) + ";\n\n")
 
@@ -451,28 +463,36 @@ def print_constants(fp, esp_config, soc):
     fp.write("  1 => apb_iobar(" + str(POWERCTRL_PINDEX) + ", 16#fff#));\n\n")
   else:
     fp.write("  constant powerctrl_pindex : integer := " + str(POWERCTRL_PINDEX) + ";\n")
-    fp.write("  constant powerctrl_pconfig : apb_config_type := pconfig_none;\n")
+    fp.write("  constant powerctrl_pconfig : apb_config_type := pconfig_none;\n\n")
 
-  fp.write("  -- APB " + str(L3_CACHE_PINDEX) + ": 0x80000" + str(L3_CACHE_PINDEX) + "00 - 0x80000" + str(L3_CACHE_PINDEX) + "FF\n")
-  fp.write("  -- Last-level cache control registers (force flush and soft reset)\n")
-  fp.write("  constant l3_cache_pindex : integer := " + str(L3_CACHE_PINDEX) + ";\n")
-  fp.write("  constant l3_cache_pconfig : apb_config_type := (\n")
-  fp.write("  0 => ahb_device_reg (VENDOR_SLD, SLD_L3_CACHE, 0, 0, CFG_SLD_L3_CACHE_IRQ),\n")
-  fp.write("  1 => apb_iobar(" + str(L3_CACHE_PINDEX) + ", 16#fff#));\n\n")
+  fp.write("  constant l3_cache_pindex : tile_attribute_array := (\n")
+  for i in range(0, esp_config.ntiles):
+    if esp_config.tiles[i].type == "mem_dbg" or esp_config.tiles[i].type == "mem_lite":
+      fp.write("    " + str(i) + " => " + str(esp_config.tiles[i].llc_idx) + ",\n")
+  fp.write("    others => -1);\n\n")
+
+  fp.write("  constant l3_cache_pconfig : apb_slv_pconfig_vector := (\n")
+  for i in range(0, esp_config.ntiles):
+    if esp_config.tiles[i].type == "mem_dbg" or esp_config.tiles[i].type == "mem_lite":
+      idx = esp_config.tiles[i].llc_idx
+      fp.write("    " + str(i) + " => (\n")
+      fp.write("      0 => ahb_device_reg (VENDOR_SLD, SLD_L3_CACHE, 0, 0, CFG_SLD_L3_CACHE_IRQ),\n")
+      fp.write("      1 => apb_iobar(16#D0" + str(idx) + "#, 16#fff#)),\n")
+  fp.write("    others => pconfig_none);\n\n")
 
   fp.write("  constant l2_cache_pindex : tile_attribute_array := (\n")
   for i in range(0, esp_config.ntiles):
     if esp_config.tiles[i].type == "cpu":
-      fp.write("    " + str(i) + " => " + str(L2_CACHE_PINDEX_FIRST + esp_config.tiles[i].cpuid) + ",\n")
-  fp.write("    others => 0);\n\n")
+      fp.write("    " + str(i) + " => " + str(l2_cache_pindex_first(soc) + esp_config.tiles[i].cpuid) + ",\n")
+  fp.write("    others => -1);\n\n")
 
   fp.write("  constant l2_cache_pconfig : apb_slv_pconfig_vector := (\n")
   for i in range(0, esp_config.ntiles):
     if esp_config.tiles[i].type == "cpu":
-      idx = L2_CACHE_PINDEX_FIRST + esp_config.tiles[i].cpuid
+      idx = l2_cache_pindex_first(soc) + esp_config.tiles[i].cpuid
       fp.write("    " + str(i) + " => (\n")
       fp.write("      0 => ahb_device_reg (VENDOR_SLD, SLD_L2_CACHE, 0, 0, CFG_SLD_L2_CACHE_IRQ),\n")
-      fp.write("      1 => apb_iobar(16#" + str(idx) + "#, 16#fff#)),\n")
+      fp.write("      1 => apb_iobar(16#D0" + str(idx) + "#, 16#fff#)),\n")
   fp.write("    others => pconfig_none);\n\n")
 
   fp.write("  constant fixed_ahbso_hconfig : ahb_slv_hconfig_vector := (\n")
@@ -528,8 +548,10 @@ def print_constants(fp, esp_config, soc):
   fp.write("    3 => gptimer_pconfig,\n")
   for i in range(0, esp_config.ntiles):
     if esp_config.tiles[i].type == "cpu":
-      idx = L2_CACHE_PINDEX_FIRST + esp_config.tiles[i].cpuid
+      idx = l2_cache_pindex_first(soc) + esp_config.tiles[i].cpuid
       fp.write("    " + str(idx) + " => l2_cache_pconfig(" + str(i) + "),\n")
+    if esp_config.tiles[i].type == "mem_dbg" or esp_config.tiles[i].type == "mem_lite":
+      fp.write("    " + str(esp_config.tiles[i].llc_idx) + " => l3_cache_pconfig(" + str(i) + "),\n")
   if soc.HAS_SVGA == True:
     fp.write("    13 => svga_pconfig,\n")
   if soc.HAS_ETH == True:
@@ -537,7 +559,6 @@ def print_constants(fp, esp_config, soc):
     if soc.HAS_SGMII == True:
       fp.write("    15 => sgmii0_pconfig,\n")
   fp.write("    " + str(POWERCTRL_PINDEX) + " => powerctrl_pconfig,\n")
-  fp.write("    " + str(L3_CACHE_PINDEX) + " => l3_cache_pconfig,\n")
   for i in range(0, esp_config.nacc):
     acc = esp_config.accelerators[i]
     fp.write("    " + str(acc.idx) + " => " + str(acc.lowercase_name) + "_" + str(acc.number) + "_pconfig,\n")
@@ -846,10 +867,11 @@ def print_tiles(fp, esp_config, soc):
     if esp_config.tiles[i].type == "acc":
       acc = esp_config.accelerators[esp_config.tiles[i].idx]
       fp.write("    " + str(acc.idx) + " => " + str(i) + ",\n")
-    if esp_config.tiles[i].type == "mem_dbg":
-      fp.write("    " + str(L3_CACHE_PINDEX) + " => " + str(i) + ",\n")
+    if esp_config.tiles[i].type == "mem_dbg" or esp_config.tiles[i].type == "mem_lite":
+      l3_pindex = esp_config.tiles[i].llc_idx
+      fp.write("    " + str(l3_pindex) + " => " + str(i) + ",\n")
     if esp_config.tiles[i].type == "cpu":
-      l2_pindex = L2_CACHE_PINDEX_FIRST + esp_config.tiles[i].cpuid
+      l2_pindex = l2_cache_pindex_first(soc) + esp_config.tiles[i].cpuid
       fp.write("    " + str(l2_pindex) + " => " + str(i) + ",\n")
   fp.write("    others => 0);\n\n")
 
@@ -878,10 +900,12 @@ def print_tiles(fp, esp_config, soc):
   fp.write("    1 => to_std_logic(CFG_UART1_ENABLE),\n")
   fp.write("    2 => to_std_logic(CFG_IRQ3_ENABLE),\n")
   fp.write("    3 => to_std_logic(CFG_GPT_ENABLE),\n")
-  fp.write("    " + str(L3_CACHE_PINDEX) + " => to_std_logic(CFG_LLC_ENABLE),\n")
+  for i in range(0, esp_config.ntiles):
+    if esp_config.tiles[i].type == "mem_dbg" or esp_config.tiles[i].type == "mem_lite":
+      fp.write("    " + str(esp_config.tiles[i].llc_idx) + " => to_std_logic(CFG_LLC_ENABLE),\n")
   for i in range(0, esp_config.ntiles):
     if esp_config.tiles[i].type == "cpu":
-      fp.write("    " + str(L2_CACHE_PINDEX_FIRST + esp_config.tiles[i].cpuid) + " => to_std_logic(CFG_L2_ENABLE),\n")
+      fp.write("    " + str(l2_cache_pindex_first(soc) + esp_config.tiles[i].cpuid) + " => to_std_logic(CFG_L2_ENABLE),\n")
   fp.write("    13 => to_std_logic(CFG_SVGA_ENABLE),\n")
   fp.write("    14 => to_std_logic(CFG_GRETH),\n")
   if soc.HAS_SGMII:
@@ -905,11 +929,21 @@ def print_tiles(fp, esp_config, soc):
     if esp_config.tiles[i].type == "acc":
       acc = esp_config.accelerators[esp_config.tiles[i].idx]
       fp.write("    " + str(i) + " => " + acc.lowercase_name + "_" + str(acc.number) + "_apb_mask,\n")
+    if esp_config.tiles[i].type == "mem_dbg":
+      fp.write("    " + str(i) + " => (\n")
+      fp.write("      " + str(esp_config.tiles[i].llc_idx) + " => '1',\n")
+      fp.write("      14 => to_std_logic(CFG_GRETH),\n")
+      fp.write("      15 => to_std_logic(CFG_SGMII * CFG_GRETH),\n")
+      fp.write("      others => '0'),\n")
+    if esp_config.tiles[i].type == "mem_lite":
+      fp.write("    " + str(i) + " => (\n")
+      fp.write("      " + str(esp_config.tiles[i].llc_idx) + " => '1',\n")
+      fp.write("      others => '0'),\n")
     if esp_config.tiles[i].type == "cpu":
       fp.write("    " + str(i) + " => (\n")
       if esp_config.tiles[i].has_pll == 1:
         fp.write("      powerctrl_pindex => '1',\n")
-      l2_pindex = L2_CACHE_PINDEX_FIRST + esp_config.tiles[i].cpuid
+      l2_pindex = l2_cache_pindex_first(soc) + esp_config.tiles[i].cpuid
       fp.write("      " + str(l2_pindex) + " => '1',\n")
       fp.write("      others => '0'),\n")
   fp.write("    others => (others => '0'));\n\n")

@@ -42,6 +42,7 @@ entity l2_wrapper is
     hindex_mst  : integer := 0;
     pindex      : integer range 0 to NAPBSLV-1 := 6;
     pirq        : integer                      := 4;
+    pconfig     : apb_config_type;
     local_y     : local_yx;
     local_x     : local_yx;
     mem_num     : integer := 1;
@@ -150,11 +151,6 @@ architecture rtl of l2_wrapper is
 -----------------------------------------------------------------------------
 
   signal flush_due : std_ulogic;
-
-  -- plug & play info
-  constant pconfig : apb_config_type := (
-    0 => ahb_device_reg (VENDOR_SLD, SLD_L2_CACHE, 0, 0, pirq),
-    1 => apb_iobar(pindex, 16#fff#));
 
   -- Command register
   type cmd_state_t is (idle, do_cmd, pending_cmd, wait_irq_clear, wait_l1_flush);

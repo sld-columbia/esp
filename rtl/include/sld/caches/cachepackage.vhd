@@ -191,6 +191,7 @@ package cachepackage is
       hindex_mst  : integer := 0;
       pindex      : integer range 0 to NAPBSLV-1 := 6;
       pirq        : integer                      := 4;
+      pconfig     : apb_config_type;
       local_y     : local_yx;
       local_x     : local_yx;
       mem_num     : integer := 1;
@@ -311,6 +312,7 @@ package cachepackage is
       hindex      : integer range 0 to NAHBSLV-1 := 4;
       pindex      : integer range 0 to NAPBSLV-1 := 5;
       pirq        : integer                      := 4;
+      pconfig     : apb_config_type;
       local_y     : local_yx;
       local_x     : local_yx;
       cacheline   : integer;

@@ -42,6 +42,7 @@ entity llc_wrapper is
     hindex        : integer range 0 to NAHBSLV-1 := 4;
     pindex        : integer range 0 to NAPBSLV-1 := 5;
     pirq          : integer                      := 4;
+    pconfig       : apb_config_type;
     local_y       : local_yx;
     local_x       : local_yx;
     cacheline     : integer;
@@ -172,11 +173,6 @@ architecture rtl of llc_wrapper is
 -----------------------------------------------------------------------------
 -- APB slave signals
 -----------------------------------------------------------------------------
-
-  -- plug & play info
-  constant pconfig : apb_config_type := (
-    0 => ahb_device_reg (VENDOR_SLD, SLD_L3_CACHE, 0, 0, pirq),
-    1 => apb_iobar(pindex, 16#fff#));
 
   -- Register bank
   signal cmd_reg       : std_logic_vector(31 downto 0);

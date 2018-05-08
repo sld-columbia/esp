@@ -117,6 +117,7 @@ package soctiles is
       remote_apb_slv_en       : std_logic_vector(NAPBSLV-1 downto 0);
       local_apb_en            : std_logic_vector(NAPBSLV-1 downto 0);
       l2_pindex               : integer;
+      l2_pconfig              : apb_config_type;
       has_dvfs                : integer;
       has_pll                 : integer;
       domain                  : integer;
@@ -316,6 +317,9 @@ package soctiles is
       fabtech                 : integer;
       memtech                 : integer;
       padtech                 : integer;
+      l3_pindex               : integer;
+      l3_pconfig              : apb_config_type;
+      local_apb_en            : std_logic_vector(NAPBSLV-1 downto 0);
       disas                   : integer;
       dbguart                 : integer;
       pclow                   : integer;
@@ -388,6 +392,9 @@ package soctiles is
       fabtech                 : integer;
       memtech                 : integer;
       padtech                 : integer;
+      l3_pindex               : integer;
+      l3_pconfig              : apb_config_type;
+      local_apb_en            : std_logic_vector(NAPBSLV-1 downto 0);
       disas                   : integer;
       dbguart                 : integer;
       pclow                   : integer;

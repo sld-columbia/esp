@@ -42,6 +42,7 @@ entity tile_cpu is
     remote_apb_slv_en       : std_logic_vector(NAPBSLV-1 downto 0) := (others => '0');
     local_apb_en            : std_logic_vector(NAPBSLV-1 downto 0) := (others => '0');
     l2_pindex               : integer                              := 6;
+    l2_pconfig              : apb_config_type;
     has_dvfs                : integer;
     has_pll                 : integer;
     domain                  : integer;
@@ -600,6 +601,7 @@ begin
         hindex_mst  => CFG_NCPU_TILE + 1,
         pindex      => l2_pindex,
         pirq        => CFG_SLD_L2_CACHE_IRQ,
+        pconfig     => l2_pconfig,
         local_y     => local_y,
         local_x     => local_x,
         mem_num     => NMIG + CFG_SVGA_ENABLE,
