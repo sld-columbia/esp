@@ -547,7 +547,7 @@ class NoCFrame(Pmw.ScrolledFrame):
       if (tot_mem_debug > 1):
         string += "Multiple \"mem_dbg\" tiles are not supported.\n"
       if (tot_mem > NMEM_MAX):
-        string += "Maximum number of supported memory controllers is " + NMEM_MAX + ".\n"
+        string += "Maximum number of supported memory controllers is " + str(NMEM_MAX) + ".\n"
       if (tot_tiles > NTILE_MAX):
         string += "Maximum number of supported tiles is " + str(NTILE_MAX) + ".\n"
       if (tot_full_coherent > NFULL_COHERENT_MAX):
