@@ -401,6 +401,7 @@ class NoCFrame(Pmw.ScrolledFrame):
 
     Label(self.noc_config_frame, height=1).pack()
     Checkbutton(self.noc_config_frame, text="Monitor DDR bandwidth", variable=self.noc.monitor_ddr, anchor=W, width=20).pack()
+    Checkbutton(self.noc_config_frame, text="Monitor memory access", variable=self.noc.monitor_mem, anchor=W, width=20).pack()
     Checkbutton(self.noc_config_frame, text="Monitor injection rate", variable=self.noc.monitor_inj, anchor=W, width=20).pack()
     Checkbutton(self.noc_config_frame, text="Monitor router ports", variable=self.noc.monitor_routers, anchor=W, width=20).pack()
     self.monitor_acc_selection = Checkbutton(self.noc_config_frame, text="Monitor accelerator status", variable=self.noc.monitor_accelerators, anchor=W, width=20)

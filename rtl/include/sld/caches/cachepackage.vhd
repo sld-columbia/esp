@@ -21,11 +21,11 @@ package cachepackage is
   -- Constants
   -----------------------------------------------------------------------------
 
-  -- Warning: setting max number of fully-coherent devices to 8 and max number
-  -- of LLC-coherent devices to 8. This is due to VHDL limitation, but the
+  -- Warning: setting max number of fully-coherent devices to 16 and max number
+  -- of LLC-coherent devices to 16. This is due to VHDL limitation, but the
   -- following constant can be changed arbitrarily.
-  constant NL2_MAX_LOG2 : integer := 3;
-  constant NLLCC_MAX_LOG2 : integer := 3;
+  constant NL2_MAX_LOG2 : integer := 4;
+  constant NLLCC_MAX_LOG2 : integer := NL2_MAX_LOG2;
   type cache_attribute_array is array (0 to 2**NL2_MAX_LOG2 - 1) of integer;
   type dma_attribute_array is array (0 to 2**NLLCC_MAX_LOG2 - 1) of integer;
 
@@ -63,8 +63,8 @@ package cachepackage is
 
   constant HSIZE_WIDTH           : integer := 3;
   constant HPROT_WIDTH           : integer := 2;
-  constant INVACK_CNT_WIDTH      : integer := 3;
-  constant INVACK_CNT_CALC_WIDTH : integer := 4;
+  constant INVACK_CNT_WIDTH      : integer := NL2_MAX_LOG2;
+  constant INVACK_CNT_CALC_WIDTH : integer := INVACK_CNT_WIDTH + 1;
 
   constant CPU_READ       : std_logic_vector(1 downto 0) := "00";
   constant CPU_READ_ATOM  : std_logic_vector(1 downto 0) := "01";
