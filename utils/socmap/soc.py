@@ -127,6 +127,9 @@ class SoC_Config():
     if line.find("CONFIG_MON_DDR = y") != -1:
         self.noc.monitor_ddr.set(1)
     line = fp.readline()
+    if line.find("CONFIG_MON_MEM = y") != -1:
+        self.noc.monitor_mem.set(1)
+    line = fp.readline()
     if line.find("CONFIG_MON_INJ = y") != -1:
         self.noc.monitor_inj.set(1)
     line = fp.readline()
@@ -195,6 +198,10 @@ class SoC_Config():
       fp.write("CONFIG_MON_DDR = y\n")
     else:
       fp.write("#CONFIG_MON_DDR is not set\n")
+    if self.noc.monitor_mem.get() == 1:
+      fp.write("CONFIG_MON_MEM = y\n")
+    else:
+      fp.write("#CONFIG_MON_MEM is not set\n")
     if self.noc.monitor_inj.get() == 1:
       fp.write("CONFIG_MON_INJ = y\n")
     else:

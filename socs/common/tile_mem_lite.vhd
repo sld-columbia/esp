@@ -84,6 +84,8 @@ entity tile_mem_lite is
     noc6_output_port   : in  noc_flit_type;
     noc6_data_void_out : in  std_ulogic;
     noc6_stop_out      : in  std_ulogic;
+    mon_mem            : out monitor_mem_type;
+    mon_cache          : out monitor_cache_type;
     mon_dvfs           : out monitor_dvfs_type
     );
 end;
@@ -217,6 +219,17 @@ begin
   mon_dvfs.traffic   <= '0';
   mon_dvfs.burst     <= '0';
 
+  -- Memory access monitor
+  mon_mem.clk              <= clk;
+  mon_mem.coherent_req     <= coherence_req_rdreq;
+  mon_mem.coherent_fwd     <= coherence_fwd_wrreq;
+  mon_mem.coherent_rsp_rcv <= coherence_rsp_rcv_rdreq;
+  mon_mem.coherent_rsp_snd <= coherence_rsp_snd_wrreq;
+  mon_mem.dma_req          <= dma_rcv_rdreq;
+  mon_mem.dma_rsp          <= dma_snd_wrreq;
+  mon_mem.coherent_dma_req <= coherent_dma_rcv_rdreq;
+  mon_mem.coherent_dma_rsp <= coherent_dma_snd_wrreq;
+
   -----------------------------------------------------------------------------
   -- AMBA2 proxies
   -----------------------------------------------------------------------------
@@ -264,6 +277,7 @@ begin
     coherent_dma_snd_data_in <= (others => '0');
 
     ctrl_apbo2(l3_pindex) <= apb_none;
+    mon_cache <= monitor_cache_none;
 
   end generate no_cache_coherence;
 
@@ -355,7 +369,9 @@ begin
         -- tile->NoC6
         dma_snd_wrreq              => coherent_dma_snd_wrreq,
         dma_snd_data_in            => coherent_dma_snd_data_in,
-        dma_snd_full               => coherent_dma_snd_full
+        dma_snd_full               => coherent_dma_snd_full,
+        -- Monitor
+        mon_cache                  => mon_cache
         );
 
     ctrl_apbo2(l3_pindex) <= llc_apbo;

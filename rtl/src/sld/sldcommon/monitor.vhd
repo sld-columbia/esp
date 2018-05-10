@@ -44,6 +44,7 @@ entity monitor is
     mon_noc_tile_inject_en : integer;
     mon_noc_queues_full_en : integer;
     mon_acc_en             : integer;
+    mon_mem_en             : integer;
     mon_l2_en              : integer;
     mon_llc_en             : integer;
     mon_dvfs_en            : integer);
@@ -58,6 +59,7 @@ entity monitor is
     mon_ddr         : in  monitor_ddr_vector(0 to ddrs_num-1);
     mon_noc         : in  monitor_noc_matrix(0 to nocs_num-1, 0 to tiles_num-1);
     mon_acc         : in  monitor_acc_vector(0 to accelerators_num-1);
+    mon_mem          : in  monitor_mem_vector(0 to llc_num-1);
     mon_l2          : in  monitor_cache_vector(0 to l2_num-1);
     mon_llc         : in  monitor_cache_vector(0 to llc_num-1);
     mon_dvfs        : in  monitor_dvfs_vector(0 to tiles_num-1)
@@ -192,14 +194,39 @@ architecture rtl of monitor is
   -- r1
   -- ...
   -- rX
-  function mem_offset (
+  function ddr_offset (
     constant ddr : integer range 0 to ddrs_num)
     return integer is
     variable offset : integer;
-  begin  -- mem_offset
+  begin  -- ddr_offset
     offset := ddr;
     return offset * mon_ddr_en;
+  end ddr_offset;
+
+  -- X = llc_num
+  -- r = coh_req, coh_fwd, coh_rsp_rcv, coh_rsp_snd, dma_req, dma_rsp, coh_dma_req, coh_dma_rsp
+  --
+  -- coh_req0, coh_fwd0, ...
+  --      ...
+  --      ...
+  -- coh_reqX, coh_fwdX, ...
+  function mem_offset (
+    constant mem : integer range 0 to llc_num;
+    constant reg : integer range 0 to 8)
+    return integer is
+    variable offset : integer;
+  begin
+    offset := (mem * 8) + reg;
+    return ddr_offset(ddrs_num) + (offset * mon_mem_en);
   end mem_offset;
+  constant MEM_COH_REQ     : integer range 0 to 7 := 0;
+  constant MEM_COH_FWD     : integer range 0 to 7 := 1;
+  constant MEM_COH_RSP_RCV : integer range 0 to 7 := 2;
+  constant MEM_COH_RSP_SND : integer range 0 to 7 := 3;
+  constant MEM_DMA_REQ     : integer range 0 to 7 := 4;
+  constant MEM_DMA_RSP     : integer range 0 to 7 := 5;
+  constant MEM_COH_DMA_REQ : integer range 0 to 7 := 6;
+  constant MEM_COH_DMA_RSP : integer range 0 to 7 := 7;
 
   -- X = nocs_num
   -- Y = tiles_num
@@ -215,7 +242,7 @@ architecture rtl of monitor is
     variable offset : integer;
   begin  -- noc_offset
     offset := (plane * tiles_num) + tile;
-    return mem_offset(ddrs_num) + (offset * mon_noc_tile_inject_en);
+    return mem_offset(llc_num - 1, 8) + (offset * mon_noc_tile_inject_en);
   end noc_tile_inject_offset;
 
   -- X = nocs_num
@@ -369,12 +396,14 @@ architecture rtl of monitor is
   signal new_window             : std_logic;
   signal new_window_delayed     : std_logic;
   signal new_window_sync_ddr    : std_logic_vector(0 to ddrs_num-1);
+  signal new_window_sync_mem    : std_logic_vector(0 to llc_num-1);
   signal new_window_sync_noc    : std_logic_vector(0 to nocs_num-1);
   signal new_window_sync_acc    : std_logic_vector(0 to accelerators_num-1);
   signal new_window_sync_l2     : std_logic_vector(0 to l2_num-1);
   signal new_window_sync_llc    : std_logic_vector(0 to llc_num-1);
   signal new_window_sync_dvfs   : std_logic_vector(0 to tiles_num-1);
   signal updated_ddr    : std_logic_vector(0 to ddrs_num-1);
+  signal updated_mem    : std_logic_vector(0 to llc_num-1);
   signal updated_noc    : std_logic_vector(0 to nocs_num-1);
   signal updated_acc    : std_logic_vector(0 to accelerators_num-1);
   signal updated_l2     : std_logic_vector(0 to l2_num-1);
@@ -642,7 +671,7 @@ begin
       end process;
 
       ddr_counter: process (mon_ddr(i).clk, user_rstn)
-        constant index : integer := mem_offset(i);
+        constant index : integer := ddr_offset(i);
       begin -- process ddr0_counter
         if user_rstn = '0' then -- asynchronous reset (active low)
           count_value(index) <= (others => '0');
@@ -667,6 +696,143 @@ begin
     end generate ddr_gen;
 
   end generate ddr_monitor_enabled_gen;
+
+  mem_monitor_enabled_gen: if mon_mem_en /= 0 generate
+    mem_gen: for i in 0 to llc_num-1 generate
+      synchronizer_mem: synchronizer
+        generic map (
+          DATA_WIDTH => 1)
+        port map (
+          clk => mon_mem(i).clk,
+          reset_n => user_rstn,
+          data_i(0) => new_window,
+          data_o(0) => new_window_sync_mem(i));
+
+      process (mon_mem(i).clk, user_rstn)
+      begin  -- process
+        if user_rstn = '0' then         -- asynchronous reset (active low)
+          updated_mem(i) <= '0';
+        elsif mon_mem(i).clk'event and mon_mem(i).clk = '1' then  -- rising clock edge
+          if new_window_sync_mem(i) = '1' and updated_mem(i) = '0' then
+            updated_mem(i) <= '1';
+          elsif new_window_sync_mem(i) = '0' then
+            updated_mem(i) <= '0';
+          end if;
+        end if;
+      end process;
+
+      mem_counter: process (mon_mem(i).clk, user_rstn)
+        constant coh_req_index : integer := mem_offset(i, MEM_COH_REQ);
+        constant coh_fwd_index : integer := mem_offset(i, MEM_COH_FWD);
+        constant coh_rsp_rcv_index : integer := mem_offset(i, MEM_COH_RSP_RCV);
+        constant coh_rsp_snd_index : integer := mem_offset(i, MEM_COH_RSP_SND);
+        constant dma_req_index : integer := mem_offset(i, MEM_DMA_REQ);
+        constant dma_rsp_index : integer := mem_offset(i, MEM_DMA_RSP);
+        constant coh_dma_req_index : integer := mem_offset(i, MEM_COH_DMA_REQ);
+        constant coh_dma_rsp_index : integer := mem_offset(i, MEM_COH_DMA_RSP);
+      begin -- process mem_counter
+        if user_rstn = '0' then -- asynchronous reset (active low)
+          count_value(coh_req_index) <= (others => '0');
+          count_value(coh_fwd_index) <= (others => '0');
+          count_value(coh_rsp_rcv_index) <= (others => '0');
+          count_value(coh_rsp_snd_index) <= (others => '0');
+          count_value(dma_req_index) <= (others => '0');
+          count_value(dma_rsp_index) <= (others => '0');
+          count_value(coh_dma_req_index) <= (others => '0');
+          count_value(coh_dma_rsp_index) <= (others => '0');
+          count(coh_req_index) <= (others => '0');
+          count(coh_fwd_index) <= (others => '0');
+          count(coh_rsp_rcv_index) <= (others => '0');
+          count(coh_rsp_snd_index) <= (others => '0');
+          count(dma_req_index) <= (others => '0');
+          count(dma_rsp_index) <= (others => '0');
+          count(coh_dma_req_index) <= (others => '0');
+          count(coh_dma_rsp_index) <= (others => '0');
+        elsif mon_mem(i).clk'event and mon_mem(i).clk = '1' then -- rising clock edge
+          if mon_mem(i).coherent_req = '1' then
+            count(coh_req_index) <= count(coh_req_index) + 1;
+          end if;
+          if mon_mem(i).coherent_fwd = '1' then
+            count(coh_fwd_index) <= count(coh_fwd_index) + 1;
+          end if;
+          if mon_mem(i).coherent_rsp_rcv = '1' then
+            count(coh_rsp_rcv_index) <= count(coh_rsp_rcv_index) + 1;
+          end if;
+          if mon_mem(i).coherent_rsp_snd = '1' then
+            count(coh_rsp_snd_index) <= count(coh_rsp_snd_index) + 1;
+          end if;
+          if mon_mem(i).dma_req = '1' then
+            count(dma_req_index) <= count(dma_req_index) + 1;
+          end if;
+          if mon_mem(i).dma_rsp = '1' then
+            count(dma_rsp_index) <= count(dma_rsp_index) + 1;
+          end if;
+          if mon_mem(i).coherent_dma_req = '1' then
+            count(coh_dma_req_index) <= count(coh_dma_req_index) + 1;
+          end if;
+          if mon_mem(i).coherent_dma_rsp = '1' then
+            count(coh_dma_rsp_index) <= count(coh_dma_rsp_index) + 1;
+          end if;
+
+          if new_window_sync_mem(i) = '1' and updated_mem(i) = '0' then
+            count(coh_req_index) <= (others => '0');
+            count(coh_fwd_index) <= (others => '0');
+            count(coh_rsp_rcv_index) <= (others => '0');
+            count(coh_rsp_snd_index) <= (others => '0');
+            count(dma_req_index) <= (others => '0');
+            count(dma_rsp_index) <= (others => '0');
+            count(coh_dma_req_index) <= (others => '0');
+            count(coh_dma_rsp_index) <= (others => '0');
+
+            count_value(coh_req_index) <= count(coh_req_index);
+            count_value(coh_fwd_index) <= count(coh_fwd_index);
+            count_value(coh_rsp_rcv_index) <= count(coh_rsp_rcv_index);
+            count_value(coh_rsp_snd_index) <= count(coh_rsp_snd_index);
+            count_value(dma_req_index) <= count(dma_req_index);
+            count_value(dma_rsp_index) <= count(dma_rsp_index);
+            count_value(coh_dma_req_index) <= count(coh_dma_req_index);
+            count_value(coh_dma_rsp_index) <= count(coh_dma_rsp_index);
+          end if;
+
+          if count_reset(coh_req_index) = '1' then
+            count(coh_req_index) <= (others => '0');
+            count_value(coh_req_index) <= (others => '0');
+          end if;
+          if count_reset(coh_fwd_index) = '1' then
+            count(coh_fwd_index) <= (others => '0');
+            count_value(coh_fwd_index) <= (others => '0');
+          end if;
+          if count_reset(coh_rsp_rcv_index) = '1' then
+            count(coh_rsp_rcv_index) <= (others => '0');
+            count_value(coh_rsp_rcv_index) <= (others => '0');
+          end if;
+          if count_reset(coh_rsp_snd_index) = '1' then
+            count(coh_rsp_snd_index) <= (others => '0');
+            count_value(coh_rsp_snd_index) <= (others => '0');
+          end if;
+          if count_reset(dma_req_index) = '1' then
+            count(dma_req_index) <= (others => '0');
+            count_value(dma_req_index) <= (others => '0');
+          end if;
+          if count_reset(dma_rsp_index) = '1' then
+            count(dma_rsp_index) <= (others => '0');
+            count_value(dma_rsp_index) <= (others => '0');
+          end if;
+          if count_reset(coh_dma_req_index) = '1' then
+            count(coh_dma_req_index) <= (others => '0');
+            count_value(coh_dma_req_index) <= (others => '0');
+          end if;
+          if count_reset(coh_dma_rsp_index) = '1' then
+            count(coh_dma_rsp_index) <= (others => '0');
+            count_value(coh_dma_rsp_index) <= (others => '0');
+          end if;
+
+        end if;
+      end process mem_counter;
+
+    end generate mem_gen;
+
+  end generate mem_monitor_enabled_gen;
 
 
   noc_monitor_enabled_gen: if (mon_noc_tile_inject_en + mon_noc_queues_full_en) /= 0 generate
@@ -1036,7 +1202,28 @@ begin
     writeline(output,s);
     if mon_ddr_en /= 0 then
       for i in 0 to ddrs_num-1 loop
-        write(s, "DDR" & integer'image(i) & ": " & integer'image(mem_offset(i)) & LF);
+        write(s, "DDR" & integer'image(i) & ": " & integer'image(ddr_offset(i)) & LF);
+        writeline(output,s);
+      end loop;  -- i
+    end if;
+
+    if mon_mem_en /= 0 then
+      for i in 0 to llc_num-1 loop
+        write(s, "MEM-" & integer'image(i) & ".coh_req : " & integer'image(mem_offset(i, MEM_COH_REQ)) & LF);
+        writeline(output,s);
+        write(s, "MEM-" & integer'image(i) & ".coh_fwd : " & integer'image(mem_offset(i, MEM_COH_FWD)) & LF);
+        writeline(output,s);
+        write(s, "MEM-" & integer'image(i) & ".coh_rsp_rcv : " & integer'image(mem_offset(i, MEM_COH_RSP_RCV)) & LF);
+        writeline(output,s);
+        write(s, "MEM-" & integer'image(i) & ".coh_rsp_snd : " & integer'image(mem_offset(i, MEM_COH_RSP_SND)) & LF);
+        writeline(output,s);
+        write(s, "MEM-" & integer'image(i) & ".dma_req : " & integer'image(mem_offset(i, MEM_DMA_REQ)) & LF);
+        writeline(output,s);
+        write(s, "MEM-" & integer'image(i) & ".dma_rsp : " & integer'image(mem_offset(i, MEM_DMA_RSP)) & LF);
+        writeline(output,s);
+        write(s, "MEM-" & integer'image(i) & ".coh_dma_req : " & integer'image(mem_offset(i, MEM_COH_DMA_REQ)) & LF);
+        writeline(output,s);
+        write(s, "MEM-" & integer'image(i) & ".coh_dma_rsp : " & integer'image(mem_offset(i, MEM_COH_DMA_RSP)) & LF);
         writeline(output,s);
       end loop;  -- i
     end if;

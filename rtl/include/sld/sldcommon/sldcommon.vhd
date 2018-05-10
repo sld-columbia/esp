@@ -25,8 +25,20 @@ use work.acctypes.all;
 package sldcommon is
 
   type monitor_ddr_type is record
-    clk           : std_ulogic;
-    word_transfer : std_ulogic;
+    clk              : std_ulogic;
+    word_transfer    : std_ulogic;
+  end record;
+
+  type monitor_mem_type is record
+    clk              : std_ulogic;
+    coherent_req     : std_ulogic;
+    coherent_fwd     : std_ulogic;
+    coherent_rsp_rcv : std_ulogic;
+    coherent_rsp_snd : std_ulogic;
+    dma_req          : std_ulogic;
+    dma_rsp          : std_ulogic;
+    coherent_dma_req : std_ulogic;
+    coherent_dma_rsp : std_ulogic;
   end record;
 
   type monitor_noc_type is record
@@ -63,6 +75,8 @@ package sldcommon is
   type monitor_noc_vector is array (natural range <>) of monitor_noc_type;
   type monitor_noc_matrix is array (natural range <>, natural range <>) of monitor_noc_type;
 
+  type monitor_mem_vector is array (natural range <>) of monitor_mem_type;
+
   type monitor_cache_vector is array (natural range <>) of monitor_cache_type;
 
   type monitor_acc_vector is array (natural range <>) of monitor_acc_type;
@@ -95,6 +109,7 @@ package sldcommon is
       mon_noc_tile_inject_en : integer;
       mon_noc_queues_full_en : integer;
       mon_acc_en             : integer;
+      mon_mem_en             : integer;
       mon_l2_en              : integer;
       mon_llc_en             : integer;
       mon_dvfs_en            : integer);
@@ -109,8 +124,9 @@ package sldcommon is
       mon_ddr          : in  monitor_ddr_vector(0 to ddrs_num-1);
       mon_noc          : in  monitor_noc_matrix(0 to nocs_num-1, 0 to tiles_num-1);
       mon_acc          : in  monitor_acc_vector(0 to accelerators_num-1);
+      mon_mem          : in  monitor_mem_vector(0 to llc_num-1);
       mon_l2           : in  monitor_cache_vector(0 to l2_num-1);
-      mon_llc          : in  monitor_cache_vector(0 to llc_num-1);  -- TODO: support split LLC
+      mon_llc          : in  monitor_cache_vector(0 to llc_num-1);
       mon_dvfs         : in  monitor_dvfs_vector(0 to tiles_num-1)
       );
 

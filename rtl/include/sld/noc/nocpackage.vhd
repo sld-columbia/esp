@@ -97,10 +97,10 @@ package nocpackage is
   constant RSP_DATA     : noc_msg_type := "000";  --CacheLine
   constant RSP_EDATA    : noc_msg_type := "001";  --Cache Line (Exclusive)
   constant RSP_INV_ACK  : noc_msg_type := "010";  --Invalidation Acknowledge
-  constant RSP_DATA_DMA : noc_msg_type := "011";  --CacheLine (DMA)
-  -- Non cachable data data plane 4 -> DMA transfers
+  -- [LLC|Non]-Coherent DMA request plane 6 and response plane 4
   constant DMA_TO_DEV   : noc_msg_type := "001";
   constant DMA_FROM_DEV : noc_msg_type := "010";
+  constant RSP_DATA_DMA : noc_msg_type := "011";  --CacheLine (DMA)
   constant REQ_DMA_READ : noc_msg_type := "110"; -- Read coherent with LLC
   constant REQ_DMA_WRITE: noc_msg_type := "111"; -- Write coherent with LLC
   -- Configuration plane 5 -> RD/WR registers

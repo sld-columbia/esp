@@ -78,7 +78,7 @@ entity llc_wrapper is
     coherence_rsp_rcv_rdreq    : out std_ulogic;
     coherence_rsp_rcv_data_out : in  noc_flit_type;
     coherence_rsp_rcv_empty    : in  std_ulogic;
-    -- NoC4->tile
+    -- NoC6->tile
     dma_rcv_rdreq              : out std_ulogic;
     dma_rcv_data_out           : in  noc_flit_type;
     dma_rcv_empty              : in  std_ulogic;

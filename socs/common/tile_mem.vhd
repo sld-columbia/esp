@@ -105,6 +105,7 @@ entity tile_mem is
     noc6_output_port   : in  noc_flit_type;
     noc6_data_void_out : in  std_ulogic;
     noc6_stop_out      : in  std_ulogic;
+    mon_mem            : out monitor_mem_type;
     mon_cache          : out monitor_cache_type;
     mon_dvfs           : out monitor_dvfs_type
     );
@@ -675,11 +676,11 @@ begin
         coherence_rsp_rcv_rdreq    => coherence_rsp_rcv_rdreq,
         coherence_rsp_rcv_data_out => coherence_rsp_rcv_data_out,
         coherence_rsp_rcv_empty    => coherence_rsp_rcv_empty,
-        -- NoC4->tile
+        -- NoC6->tile
         dma_rcv_rdreq              => coherent_dma_rcv_rdreq,
         dma_rcv_data_out           => coherent_dma_rcv_data_out,
         dma_rcv_empty              => coherent_dma_rcv_empty,
-        -- tile->NoC6
+        -- tile->NoC4
         dma_snd_wrreq              => coherent_dma_snd_wrreq,
         dma_snd_data_in            => coherent_dma_snd_data_in,
         dma_snd_full               => coherent_dma_snd_full,
@@ -773,6 +774,17 @@ begin
   mon_dvfs.acc_idle  <= '0';
   mon_dvfs.traffic   <= '0';
   mon_dvfs.burst     <= '0';
+
+  -- Memory access monitor
+  mon_mem.clk              <= clk;
+  mon_mem.coherent_req     <= coherence_req_rdreq;
+  mon_mem.coherent_fwd     <= coherence_fwd_wrreq;
+  mon_mem.coherent_rsp_rcv <= coherence_rsp_rcv_rdreq;
+  mon_mem.coherent_rsp_snd <= coherence_rsp_snd_wrreq;
+  mon_mem.dma_req          <= dma_rcv_rdreq;
+  mon_mem.dma_rsp          <= dma_snd_wrreq;
+  mon_mem.coherent_dma_req <= coherent_dma_rcv_rdreq;
+  mon_mem.coherent_dma_rsp <= coherent_dma_snd_wrreq;
 
   ------------------------------------------------------------------------------
   -- Queues

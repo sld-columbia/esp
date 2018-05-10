@@ -213,6 +213,60 @@ void read_ddr(mmi64_module_t *user_module)
 }
 #endif
 
+#ifdef MEM_offset
+void read_mem_stats(mmi64_module_t *user_module, int mem_id)
+{
+	profpga_error_t status;
+
+	int coh_req_regid = MEM_offset + mem_id * 8;
+	int coh_fwd_regid = MEM_offset + mem_id * 8 + 1;
+	int coh_rsp_rcv_regid = MEM_offset + mem_id * 8 + 2;
+	int coh_rsp_snd_regid = MEM_offset + mem_id * 8 + 3;
+	int dma_req_regid = MEM_offset + mem_id * 8 + 4;
+	int dma_rsp_regid = MEM_offset + mem_id * 8 + 5;
+	int coh_dma_req_regid = MEM_offset + mem_id * 8 + 6;
+	int coh_dma_rsp_regid = MEM_offset + mem_id * 8 + 7;
+
+	long long unsigned coh_req = 0;
+	long long unsigned coh_fwd = 0;
+	long long unsigned coh_rsp_rcv = 0;
+	long long unsigned coh_rsp_snd = 0;
+	long long unsigned dma_req = 0;
+	long long unsigned dma_rsp = 0;
+	long long unsigned coh_dma_req = 0;
+	long long unsigned coh_dma_rsp = 0;
+
+	unsigned rdata;
+
+	status = mmi64_regif_read_32(user_module, coh_req_regid, 1, &rdata);
+	coh_req = (long long unsigned) rdata;
+	status = mmi64_regif_read_32(user_module, coh_fwd_regid, 1, &rdata);
+	coh_fwd = (long long unsigned) rdata;
+	status = mmi64_regif_read_32(user_module, coh_rsp_rcv_regid, 1, &rdata);
+	coh_rsp_rcv = (long long unsigned) rdata;
+	status = mmi64_regif_read_32(user_module, coh_rsp_snd_regid, 1, &rdata);
+	coh_rsp_snd = (long long unsigned) rdata;
+	status = mmi64_regif_read_32(user_module, dma_req_regid, 1, &rdata);
+	dma_req = (long long unsigned) rdata;
+	status = mmi64_regif_read_32(user_module, dma_rsp_regid, 1, &rdata);
+	dma_rsp = (long long unsigned) rdata;
+	status = mmi64_regif_read_32(user_module, coh_dma_req_regid, 1, &rdata);
+	coh_dma_req = (long long unsigned) rdata;
+	status = mmi64_regif_read_32(user_module, coh_dma_rsp_regid, 1, &rdata);
+	coh_dma_rsp = (long long unsigned) rdata;
+
+	fprintf(fp, "%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t",
+		coh_req, coh_fwd, coh_rsp_rcv, coh_rsp_snd, dma_req, dma_rsp, coh_dma_req, coh_dma_rsp);
+}
+
+void read_mems_stats(mmi64_module_t *user_module)
+{
+	int i;
+	for (i = 0; i < MEMS_NUM; i++)
+		read_mem_stats(user_module, i);
+}
+#endif
+
 #ifdef NOC_INJECT_offset
 void read_injection_rate(mmi64_module_t *user_module)
 {
@@ -357,6 +411,12 @@ mmi64_error_t mmi64_main(int argc, char * argv[])
 	fprintf(fp, "ddr0\tddr1\t");
 #endif
 
+#ifdef LLC_offset
+	for (i = 0; i < LLCS_NUM; i++)
+		fprintf(fp, "coh-req-%d\tcoh-fwd-%d\tcoh_rsp_rcv-%d\tcoh_rsp_snd-%d\tdma_req-%d\tdma_rsp-%d\tcoh_dma_req-%d\tcoh_dma_rsp-%d\t",
+			i, i, i, i, i, i, i, i);
+#endif
+
 #ifdef NOC_INJECT_offset
 	for (k = 0; k < NOCS_NUM; k++)
 		for (i = 0; i < TILES_NUM; i++)
@@ -408,6 +468,9 @@ mmi64_error_t mmi64_main(int argc, char * argv[])
 			fprintf(fp, "%d\t", new_time);
 #ifdef DDR_offset
 			read_ddr(user_module);
+#endif
+#ifdef MEM_offset
+			read_mems_stats(user_module);
 #endif
 #ifdef NOC_INJECT_offset
 			read_injection_rate(user_module);

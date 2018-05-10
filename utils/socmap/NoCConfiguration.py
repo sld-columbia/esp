@@ -305,6 +305,7 @@ class NoC():
     self.cols = 0
     self.rows = 0
     self.monitor_ddr = IntVar()
+    self.monitor_mem = IntVar()
     self.monitor_inj = IntVar()
     self.monitor_routers = IntVar()
     self.monitor_accelerators = IntVar()

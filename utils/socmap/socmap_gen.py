@@ -18,8 +18,8 @@ SLD_APB_ADDR_ADJ = 0x100
 SLD_APB_ADDR_MSK = 0xfff
 NCPU_MAX = 4
 NMEM_MAX = 2
-NFULL_COHERENT_MAX = 8
-NLLC_COHERENT_MAX = 8
+NFULL_COHERENT_MAX = 16
+NLLC_COHERENT_MAX = 16
 NTILE_MAX = 32
 NAPBS = 32
 NAHBS = 16
@@ -41,6 +41,7 @@ class tile_info:
   cpuid = -1
   cid = -1
   did = -1
+  llc_id = -1
   llc_idx = -1
   clk_region = 0
   def __init__(self):
@@ -99,6 +100,8 @@ class soc_config:
     acc_cid = 0
     # DMA ID assigned dynamically to LLC-coherent accelerators
     acc_did = 0
+    # LLC ID assigned dynamically to each memory tile
+    llc_id = 0
     acc_tile_idx = 0
     # 5 -> LLC; 6-6+ncpu->L2 then accelerators
     acc_idx = l2_cache_pindex_first(soc) + soc.noc.get_cpu_num(soc) #first available line for accelerators
@@ -121,11 +124,19 @@ class soc_config:
           cpuid += 1
         if selection == "mem_dbg":
           self.tiles[t].type = "mem_dbg"
+          # LLC ID is a numeric identifier
+          # LLC IDX is the index used on the APB bus
+          self.tiles[t].llc_id = llc_id
           self.tiles[t].llc_idx = llc_idx
+          llc_id = llc_id + 1
           llc_idx = llc_idx + 1
         if selection == "mem_lite":
           self.tiles[t].type = "mem_lite"
+          # LLC ID is a numeric identifier
+          # LLC IDX is the index used on the APB bus
+          self.tiles[t].llc_id = llc_id
           self.tiles[t].llc_idx = llc_idx
+          llc_id = llc_id + 1
           llc_idx = llc_idx + 1
         if selection == "IO":
           self.tiles[t].type = "misc"
@@ -218,6 +229,7 @@ def print_constants(fp, esp_config, soc):
 
   fp.write("-- Monitor settings\n")
   fp.write("  constant CFG_MON_DDR_EN : integer := " + str(soc.noc.monitor_ddr.get()) + ";\n")
+  fp.write("  constant CFG_MON_MEM_EN : integer := " + str(soc.noc.monitor_mem.get()) + ";\n")
   fp.write("  constant CFG_MON_NOC_INJECT_EN : integer := " + str(soc.noc.monitor_inj.get()) + ";\n")
   fp.write("  constant CFG_MON_NOC_QUEUES_EN : integer := " + str(soc.noc.monitor_routers.get()) + ";\n")
   fp.write("  constant CFG_MON_ACC_EN : integer := " + str(soc.noc.monitor_accelerators.get()) + ";\n")
@@ -628,6 +640,11 @@ def print_tiles(fp, esp_config, soc):
     fp.write("   " + str(i) + " => tile_x(dma_tile_id(" + str(i) + ")),\n")
   fp.write("   " + str(NLLC_COHERENT_MAX - 1) + " => tile_x(dma_tile_id(" + str(NLLC_COHERENT_MAX - 1) + ")));\n\n")
 
+  fp.write("  constant llc_tile_id : dma_attribute_array := (\n")
+  for i in range(0, esp_config.ntiles):
+    if esp_config.tiles[i].llc_id != -1:
+      fp.write("    " + str(esp_config.tiles[i].llc_id) + " => " + str(i) + ",\n")
+  fp.write("    others => 0);\n")
 
   fp.write("  constant NMIG : integer := 1 + CFG_MIG_DUAL;\n")
 
@@ -843,6 +860,11 @@ def print_tiles(fp, esp_config, soc):
   fp.write("  constant tile_dma_id : tile_attribute_array := (\n")
   for i in range(0, esp_config.ntiles):
     fp.write("    " + str(i) + " => " + str(esp_config.tiles[i].did) + ",\n")
+  fp.write("    others => 0);\n\n")
+
+  fp.write("  constant tile_llc_id : tile_attribute_array := (\n")
+  for i in range(0, esp_config.ntiles):
+    fp.write("    " + str(i) + " => " + str(esp_config.tiles[i].llc_id) + ",\n")
   fp.write("    others => 0);\n\n")
 
   fp.write("  type apb_tile_id_array is array (NAPBSLV-1 downto 0) of integer;\n")

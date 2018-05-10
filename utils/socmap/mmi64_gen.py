@@ -16,13 +16,15 @@ def create_mmi64_regs(soc):
 
   vf_points = soc.noc.vf_points
   directions = 5
+  mem_mon_regs = 8
   acc_mon_regs = 5
   cache_mon_regs = 2
 
   num_l2 = num_cpu + num_acc
-  num_llc = 1
+  num_llc = soc.noc.get_mem_num(soc)[0]
 
   fp.write("#define DDRS_NUM " + str(soc.noc.get_mem_num(soc)[0]) + "\n") 
+  fp.write("#define MEMS_NUM " + str(num_llc) + "\n") 
   fp.write("#define NOCS_NUM " + str(num_nocs) + "\n") 
   fp.write("#define TILES_NUM " + str(num_tiles) + "\n") 
   fp.write("#define XLEN " + str(soc.noc.cols) + "\n") 
@@ -34,6 +36,7 @@ def create_mmi64_regs(soc):
   fp.write("#define LLCS_NUM " + str(num_llc) + "\n") 
 
   ddr_offset = 0
+  mem_offset = 0
   inj_offset = 0
   routers_offset = 0
   accelerators_offset = 0
@@ -43,9 +46,12 @@ def create_mmi64_regs(soc):
   if soc.noc.monitor_ddr.get() == 1:
     fp.write("#define DDR_offset 0\n") 
   ddr_offset = soc.noc.get_mem_num(soc)[0] * soc.noc.monitor_ddr.get()
+  if soc.noc.monitor_mem.get() == 1:
+    fp.write("#define MEM_offset " + str(ddr_offset) + "\n") 
+  mem_offset = ddr_offset + ((num_llc-1) * mem_mon_regs + mem_mon_regs) * soc.noc.monitor_mem.get()
   if soc.noc.monitor_inj.get() == 1:
-    fp.write("#define NOC_INJECT_offset " + str(ddr_offset) + "\n") 
-  inj_offset = ddr_offset + (((num_nocs-1) * num_tiles) + num_tiles) * soc.noc.monitor_inj.get()
+    fp.write("#define NOC_INJECT_offset " + str(mem_offset) + "\n") 
+  inj_offset = mem_offset + (((num_nocs-1) * num_tiles) + num_tiles) * soc.noc.monitor_inj.get()
   if soc.noc.monitor_routers.get() == 1:
     fp.write("#define NOC_QUEUES_offset " + str(inj_offset) + "\n") 
   routers_offset = inj_offset + ((num_nocs-1) * num_tiles * directions + ((num_tiles-1) * directions) + directions) * soc.noc.monitor_routers.get()
