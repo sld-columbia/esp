@@ -20,6 +20,8 @@ struct esp_device {
 	unsigned addr;
 };
 
+const char *coherence_label[3];
+
 int get_pid();
 void *aligned_malloc(int size);
 void aligned_free(void *ptr);

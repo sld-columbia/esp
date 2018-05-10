@@ -15,6 +15,9 @@ asm(
     );
 
 
+const char *coherence_label[3] = {"none", "llc", "full"};
+
+
 void *aligned_malloc(int size) {
 	void *mem = malloc(size + CACHELINE_SIZE + sizeof(void*));
 	void **ptr = (void**) ((uintptr_t) (mem + CACHELINE_SIZE + sizeof(void*)) & ~(CACHELINE_SIZE-1));
