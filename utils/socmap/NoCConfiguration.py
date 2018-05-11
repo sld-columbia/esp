@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 from tkinter import *
+from tkinter.ttk import Separator
 import Pmw
 import xml.etree.ElementTree
 
@@ -86,6 +87,11 @@ class Tile():
            self.has_pll.set(0)
          if self.has_clkbuf.get() == 1 :
            self.has_clkbuf.set(0)
+      if soc.IPs.ACCELERATORS.count(selection):
+        self.has_l2_selection.config(state=NORMAL)
+      else:
+        self.has_l2.set(0)
+        self.has_l2_selection.config(state=DISABLED)
     except:
       pass
 
@@ -188,6 +194,7 @@ class Tile():
     self.ip_type = StringVar()
     self.point = StringVar()
     self.clk_region = IntVar()
+    self.has_l2 = IntVar()
     self.has_pll = IntVar()
     self.has_clkbuf = IntVar()
     self.clk_reg_active = StringVar()
@@ -213,6 +220,7 @@ class NoC():
         new_topology[y].append(Tile(top, y, x))
         if x < self.cols and y < self.rows:
           new_topology[y][x].ip_type.set(self.topology[y][x].ip_type.get())
+          new_topology[y][x].has_l2.set(self.topology[y][x].has_l2.get())
           new_topology[y][x].clk_region.set(self.topology[y][x].clk_region.get())
           new_topology[y][x].has_pll.set(self.topology[y][x].has_pll.get())
           new_topology[y][x].has_clkbuf.set(self.topology[y][x].has_clkbuf.get())
@@ -286,6 +294,17 @@ class NoC():
          if soc.IPs.ACCELERATORS.count(selection):
             tot_acc += 1
     return tot_acc
+
+  def get_acc_l2_num(self, soc):
+    tot_acc_l2 = 0
+    for y in range(0, self.rows):
+      for x in range(0, self.cols):
+         tile = self.topology[y][x]
+         selection = tile.ip_type.get()
+         if soc.IPs.ACC_L2ELERATORS.count(selection):
+           if tile.has_l2.get() != 0:
+             tot_acc_l2 += 1
+    return tot_acc_l2
 
   def get_mem_num(self, soc):
     tot_mem = 0
@@ -369,6 +388,10 @@ class NoCFrame(Pmw.ScrolledFrame):
     tile.label = Label(display_frame, text=tile.ip_type.get())
     tile.label.config(height=4,bg='white', width=width+25)
     tile.label.pack()
+
+    tile.has_l2_selection = Checkbutton(config_frame, text="Has L2", variable=tile.has_l2, onvalue = 1, offvalue = 0, command=self.changed);
+    tile.has_l2_selection.pack(side=LEFT)
+    Separator(config_frame, orient="vertical").pack(side=LEFT, fill=Y, padx=6)
 
     tile.label.bind("<Double-Button-1>", lambda event:tile.power_window(event, self.soc, self))
     Label(config_frame, text="Clk Reg: ").pack(side=LEFT)

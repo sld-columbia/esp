@@ -40,6 +40,7 @@ entity tile_acc is
     sets           : integer              := 256;
     ways           : integer              := 8;
     cache_tile_id  : cache_attribute_array;
+    has_l2         : integer := 1;
     has_dvfs       : integer;
     has_pll        : integer;
     extra_clk_buf  : integer;

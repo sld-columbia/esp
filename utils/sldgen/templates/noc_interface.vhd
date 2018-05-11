@@ -43,6 +43,7 @@ use std.textio.all;
     sets           : integer := 256;
     ways           : integer := 8;
     cache_tile_id  : cache_attribute_array;
+    has_l2         : integer := 1;
     has_dvfs       : integer := 1;
     has_pll        : integer;
     extra_clk_buf  : integer;
@@ -213,51 +214,67 @@ begin
 
   -- <<accelerator_instance>>
 
-  -- Private cache
-  l2_acc_wrapper_1: entity work.l2_acc_wrapper
-    generic map (
-      tech          => tech,
-      sets          => sets,
-      ways          => ways,
-      nslaves       => 1,
-      noc_xlen      => noc_xlen,
-      hindex_slv    => ahbslv_proxy_hindex,
-      hindex_mst    => 0,
-      local_y       => local_y,
-      local_x       => local_x,
-      mem_num       => mem_num,
-      mem_info      => mem_info,
-      destination   => 0,
-      l1_cache_en   => 0,
-      cache_tile_id => cache_tile_id)
-    port map (
-      rst                        => rst,
-      clk                        => clk,
-      dma_read                   => dma_read,
-      dma_write                  => dma_write,
-      dma_length                 => dma_length,
-      dma_address                => dma_address,
-      dma_ready                  => dma_ready,
-      dma_rcv_ready              => dma_rcv_ready,
-      dma_rcv_data               => dma_rcv_data,
-      dma_rcv_valid              => dma_rcv_valid,
-      dma_snd_valid              => dma_snd_valid,
-      dma_snd_data               => dma_snd_data,
-      dma_snd_ready              => dma_snd_ready,
-      flush                      => flush,
-      coherence_req_wrreq        => coherence_req_wrreq,
-      coherence_req_data_in      => coherence_req_data_in,
-      coherence_req_full         => coherence_req_full,
-      coherence_fwd_rdreq        => coherence_fwd_rdreq,
-      coherence_fwd_data_out     => coherence_fwd_data_out,
-      coherence_fwd_empty        => coherence_fwd_empty,
-      coherence_rsp_rcv_rdreq    => coherence_rsp_rcv_rdreq,
-      coherence_rsp_rcv_data_out => coherence_rsp_rcv_data_out,
-      coherence_rsp_rcv_empty    => coherence_rsp_rcv_empty,
-      coherence_rsp_snd_wrreq    => coherence_rsp_snd_wrreq,
-      coherence_rsp_snd_data_in  => coherence_rsp_snd_data_in,
-      coherence_rsp_snd_full     => coherence_rsp_snd_full,
-      mon_cache                  => mon_cache);
+  l2_gen: if has_l2 /= 0 generate
+    -- Private cache
+    l2_acc_wrapper_1: entity work.l2_acc_wrapper
+      generic map (
+        tech          => tech,
+        sets          => sets,
+        ways          => ways,
+        nslaves       => 1,
+        noc_xlen      => noc_xlen,
+        hindex_slv    => ahbslv_proxy_hindex,
+        hindex_mst    => 0,
+        local_y       => local_y,
+        local_x       => local_x,
+        mem_num       => mem_num,
+        mem_info      => mem_info,
+        destination   => 0,
+        l1_cache_en   => 0,
+        cache_tile_id => cache_tile_id)
+      port map (
+        rst                        => rst,
+        clk                        => clk,
+        dma_read                   => dma_read,
+        dma_write                  => dma_write,
+        dma_length                 => dma_length,
+        dma_address                => dma_address,
+        dma_ready                  => dma_ready,
+        dma_rcv_ready              => dma_rcv_ready,
+        dma_rcv_data               => dma_rcv_data,
+        dma_rcv_valid              => dma_rcv_valid,
+        dma_snd_valid              => dma_snd_valid,
+        dma_snd_data               => dma_snd_data,
+        dma_snd_ready              => dma_snd_ready,
+        flush                      => flush,
+        coherence_req_wrreq        => coherence_req_wrreq,
+        coherence_req_data_in      => coherence_req_data_in,
+        coherence_req_full         => coherence_req_full,
+        coherence_fwd_rdreq        => coherence_fwd_rdreq,
+        coherence_fwd_data_out     => coherence_fwd_data_out,
+        coherence_fwd_empty        => coherence_fwd_empty,
+        coherence_rsp_rcv_rdreq    => coherence_rsp_rcv_rdreq,
+        coherence_rsp_rcv_data_out => coherence_rsp_rcv_data_out,
+        coherence_rsp_rcv_empty    => coherence_rsp_rcv_empty,
+        coherence_rsp_snd_wrreq    => coherence_rsp_snd_wrreq,
+        coherence_rsp_snd_data_in  => coherence_rsp_snd_data_in,
+        coherence_rsp_snd_full     => coherence_rsp_snd_full,
+        mon_cache                  => mon_cache);
+  end generate l2_gen;
+
+  no_l2_gen : if has_l2 = 0 generate
+    dma_ready <= '0';
+    dma_rcv_data <= (others => '0');
+    dma_rcv_valid <= '0';
+    dma_snd_ready <= '0';
+    coherence_req_wrreq <= '0';
+    coherence_req_data_in <= (others => '0');
+    coherence_fwd_rdreq <= '0';
+    coherence_rsp_rcv_rdreq <= '0';
+    coherence_rsp_snd_wrreq <= '0';
+    coherence_rsp_snd_data_in <= (others => '0');
+    mon_cache <= monitor_cache_none;
+  end generate no_l2_gen;
 
 
   -- DMA controller for NoC

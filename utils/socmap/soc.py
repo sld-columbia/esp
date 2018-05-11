@@ -160,6 +160,7 @@ class SoC_Config():
           tile.has_clkbuf.set(int(tokens[7]))
           if tokens[3] == "acc":
             tile.point.set(tokens[8])
+            tile.has_l2.set(tokens[9])
     # DVFS (skip whether it has it or not; we know that already)
     line = fp.readline()
     line = fp.readline()
@@ -264,6 +265,7 @@ class SoC_Config():
         fp.write(" " + str(tile.has_clkbuf.get()))
         if is_accelerator:
           fp.write(" " + str(tile.point.get()))
+          fp.write(" " + str(tile.has_l2.get()))
         fp.write("\n")
         i += 1
     if has_dvfs:

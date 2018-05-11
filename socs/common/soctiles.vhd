@@ -195,6 +195,7 @@ package soctiles is
       sets           : integer;
       ways           : integer;
       cache_tile_id  : cache_attribute_array;
+      has_l2         : integer;
       has_dvfs       : integer;
       has_pll        : integer;
       extra_clk_buf  : integer;

@@ -334,6 +334,7 @@ begin
           sets           => CFG_ACC_L2_SETS,
           ways           => CFG_ACC_L2_WAYS,
           cache_tile_id  => cache_tile_id,
+          has_l2         => tile_has_l2(i),
           has_dvfs       => tile_has_dvfs(i),
           has_pll        => tile_has_pll(i),
           extra_clk_buf  => extra_clk_buf(i),

@@ -44,6 +44,7 @@ class tile_info:
   llc_id = -1
   llc_idx = -1
   clk_region = 0
+  has_l2 = 0
   def __init__(self):
     return
 
@@ -144,6 +145,7 @@ class soc_config:
           self.tiles[t].type = "acc"
           self.tiles[t].idx = acc_tile_idx
           self.tiles[t].cid = soc.noc.get_cpu_num(soc) + acc_cid
+          self.tiles[t].has_l2 = soc.noc.topology[x][y].has_l2.get()
           acc_cid += 1
           self.tiles[t].did = acc_did
           acc_did += 1
@@ -855,6 +857,14 @@ def print_tiles(fp, esp_config, soc):
   fp.write("  constant tile_cache_id : tile_attribute_array := (\n")
   for i in range(0, esp_config.ntiles):
     fp.write("    " + str(i) + " => " + str(esp_config.tiles[i].cid) + ",\n")
+  fp.write("    others => 0);\n\n")
+
+  # Note that a cache ID is assigned to all accelerators, but the user can opt
+  # not to instantiate the L2 cache in order to reduce resource requirements.
+  fp.write("  constant tile_has_l2 : tile_attribute_array := (\n")
+  for i in range(0, esp_config.ntiles):
+    if esp_config.tiles[i].type == "acc":
+      fp.write("    " + str(i) + " => " + str(esp_config.tiles[i].has_l2) + ",\n")
   fp.write("    others => 0);\n\n")
 
   fp.write("  constant tile_dma_id : tile_attribute_array := (\n")

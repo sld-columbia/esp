@@ -87,7 +87,7 @@ class CacheFrame(Frame):
     cache_config_frame = Frame(self)
     cache_config_frame.pack(side=TOP)
 
-    sets_choices = [32, 64, 128, 256, 512, 1024, 2048]
+    sets_choices = [32, 64, 128, 256, 512, 1024, 2048, 4096]
     ways_choices = [2, 4, 8, 16, 32]
 
     Label(cache_config_frame, text = "L2 SETS: ").grid(row=1, column=1)
