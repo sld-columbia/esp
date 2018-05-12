@@ -149,10 +149,6 @@ static int esp_access_ioctl(struct esp_device *esp, void __user *argp)
 		goto out;
 	}
 
-	rc = esp_flush(esp);
-	if (rc)
-		goto out;
-
 	if (mutex_lock_interruptible(&esp->lock)) {
 		rc = -EINTR;
 		goto out;
@@ -160,6 +156,11 @@ static int esp_access_ioctl(struct esp_device *esp, void __user *argp)
 
 	if (esp->driver->prep_xfer)
 		esp->driver->prep_xfer(esp, arg);
+
+	rc = esp_flush(esp);
+	if (rc)
+		goto out;
+
 	esp_transfer(esp, contig);
 	if (access->run)
 		esp_run(esp);
