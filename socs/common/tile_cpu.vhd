@@ -49,16 +49,14 @@ entity tile_cpu is
     USE_MIG_INTERFACE_MODEL : boolean                              := false
     );
   port (
-    rst       : in  std_ulogic;
-    refclk    : in  std_ulogic;
-    pllbypass : in  std_ulogic;
-    pllclk    : out std_ulogic;
-
-    -- TODO: REMOVE!
-    irqi_i             : in  l3_irq_in_type;
-    irqo_o             : out l3_irq_out_type;
+    rst                : in  std_ulogic;
+    refclk             : in  std_ulogic;
+    pllbypass          : in  std_ulogic;
+    pllclk             : out std_ulogic;
+    -- TODO: remove this; should use proxy
     dbgi               : in  l3_debug_in_type;
     dbgo               : out l3_debug_out_type;
+    irqo_fifo_overflow : out std_ulogic;
     -- NOC
     noc1_input_port    : out noc_flit_type;
     noc1_data_void_in  : out std_ulogic;
@@ -214,12 +212,6 @@ architecture rtl of tile_cpu is
   signal ahbmo_cpu_hbusreq : std_ulogic;
   signal ahbmo_cpu_htrans  : std_logic_vector(1 downto 0);
   signal ahbmo_cpu_hlock   : std_ulogic;
-  
---signal irqi_rst        : std_ulogic;
---signal irqi_run        : std_ulogic;
---signal irqo_irl        : std_logic_vector(3 downto 0);
---signal irqo_pwd        : std_ulogic;
---signal irqo_idle       : std_ulogic;
 
   attribute mark_debug : string;
   attribute keep       : string;
@@ -241,36 +233,8 @@ architecture rtl of tile_cpu is
   attribute mark_debug of ahbmi_hready      : signal is "true";
   attribute mark_debug of ahbmo_hbusreq     : signal is "true";
   attribute mark_debug of ahbmo_htrans      : signal is "true";
-  -- attribute mark_debug of ahbmo_cpu_hwrite  : signal is "true";
-  -- attribute mark_debug of ahbmo_cpu_hbusreq : signal is "true";
-  -- attribute mark_debug of ahbmo_cpu_htrans  : signal is "true";
-  -- attribute mark_debug of ahbmo_cpu_hlock   : signal is "true";
-
---attribute mark_debug of remote_apb_rcv_rdreq        : signal is "true";
---attribute mark_debug of remote_apb_rcv_empty        : signal is "true";
---attribute mark_debug of remote_apb_snd_wrreq        : signal is "true";
---attribute mark_debug of remote_apb_snd_full         : signal is "true";
---attribute mark_debug of remote_ahbm_rcv_rdreq       : signal is "true";
---attribute mark_debug of remote_ahbm_rcv_empty       : signal is "true";
---attribute mark_debug of remote_ahbm_snd_wrreq       : signal is "true";
---attribute mark_debug of remote_ahbm_snd_full        : signal is "true";
-
---attribute mark_debug of irqi_irl                    : signal is "true";
---attribute mark_debug of irqi_rst                    : signal is "true";
---attribute mark_debug of irqi_run                    : signal is "true";
---attribute mark_debug of irqo_irl                    : signal is "true";
---attribute mark_debug of irqo_pwd                    : signal is "true";
---attribute mark_debug of irqo_idle                   : signal is "true";
-
-  -- attribute mark_debug of coherence_req_wrreq        : signal is "true";
-  -- attribute mark_debug of coherence_req_data_in      : signal is "true";
   attribute mark_debug of coherence_req_full         : signal is "true";
-  -- attribute mark_debug of coherence_rsp_rcv_rdreq    : signal is "true";
-  -- attribute mark_debug of coherence_rsp_rcv_data_out : signal is "true";
   attribute mark_debug of coherence_rsp_rcv_empty    : signal is "true";
-  -- attribute mark_debug of coherence_rsp_snd_wrreq    : signal is "true";
-  -- attribute mark_debug of coherence_rsp_snd_data_in  : signal is "true";
-  -- attribute mark_debug of coherence_rsp_snd_full     : signal is "true";
 
 -------------------------------------------------------------------------------
 
@@ -297,13 +261,6 @@ begin
   ahbmo_cpu_hbusreq <= ahbmo(cpu_id).hbusreq;
   ahbmo_cpu_htrans  <= ahbmo(cpu_id).htrans;
   ahbmo_cpu_hlock   <= ahbmo(cpu_id).hlock;
-
---irqi_irl  <= irqi_i.irl;
---irqi_rst  <= irqi_i.rst;
---irqi_run  <= irqi_i.run;
---irqo_irl  <= irqo_int.irl;
---irqo_pwd  <= irqo_int.pwd;
---irqo_idle <= irqo_int.idle;
 
 -------------------------------------------------------------------------------
 
@@ -441,9 +398,9 @@ begin
                  CFG_LDDEL, disas, CFG_ITBSZ, CFG_PWD, CFG_SVT, CFG_RSTADDR, CFG_NCPU_TILE-1,
                  CFG_DFIXED, CFG_SCAN, CFG_MMU_PAGE, CFG_BP)
     port map (clk_feedthru, rst, ahbmi, ahbmo(cpu_id), ahbsi, ahbso, dflush,
-              irqi_i, irqo_int, dbgi, dbgo);
+              irqi, irqo_int, dbgi, dbgo);
 
-  irqo_o <= irqo_int;
+  irqo <= irqo_int;
 
   -----------------------------------------------------------------------
   ---  AHB Masters unconnected  -----------------------------------------
@@ -502,25 +459,26 @@ begin
       remote_apb_rcv_data_out => remote_apb_rcv_data_out,
       remote_apb_rcv_empty    => remote_apb_rcv_empty);
 
-  -- cpu_irq2noc_1: cpu_irq2noc
-  --   generic map (
-  --     tech    => fabtech,
-  --     cpu_id  => cpu_id,
-  --     local_y => local_y,
-  --     local_x => local_x,
-  --     irq_y   => tile_y(io_tile_id),
-  --     irq_x   => tile_x(io_tile_id))
-  --   port map (
-  --     rst                    => rst,
-  --     clk                    => clk_feedthru,
-  --     irqi                   => irqi(cpu_id),
-  --     irqo                   => irqo(cpu_id),
-  --     remote_irq_rdreq       => remote_irq_rdreq,
-  --     remote_irq_data_out    => remote_irq_data_out,
-  --     remote_irq_empty       => remote_irq_empty,
-  --     remote_irq_ack_wrreq   => remote_irq_ack_wrreq,
-  --     remote_irq_ack_data_in => remote_irq_ack_data_in,
-  --     remote_irq_ack_full    => remote_irq_ack_full);
+  cpu_irq2noc_1: cpu_irq2noc
+    generic map (
+      tech    => fabtech,
+      cpu_id  => cpu_id,
+      local_y => local_y,
+      local_x => local_x,
+      irq_y   => tile_y(io_tile_id),
+      irq_x   => tile_x(io_tile_id))
+    port map (
+      rst                    => rst,
+      clk                    => clk_feedthru,
+      irqi                   => irqi,
+      irqo                   => irqo,
+      irqo_fifo_overflow     => irqo_fifo_overflow,
+      remote_irq_rdreq       => remote_irq_rdreq,
+      remote_irq_data_out    => remote_irq_data_out,
+      remote_irq_empty       => remote_irq_empty,
+      remote_irq_ack_wrreq   => remote_irq_ack_wrreq,
+      remote_irq_ack_data_in => remote_irq_ack_data_in,
+      remote_irq_ack_full    => remote_irq_ack_full);
 
 
   frame_buffer : if CFG_SVGA_ENABLE /= 0 generate

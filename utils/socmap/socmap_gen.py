@@ -531,7 +531,7 @@ def print_constants(fp, esp_config, soc):
     fp.write("  -- " + acc.uppercase_name + "\n")
     fp.write("  -- " + acc.lowercase_name + "_paddr   = 16#" + str(address) + "#;\n")
     fp.write("  -- " + acc.lowercase_name + "_pmask   = 16#" + str(hex(SLD_APB_ADDR_MSK)).replace("0x","") + "#;\n")
-    fp.write("  -- " + acc.lowercase_name + "_hindex  = CFG_NCPU+CFG_AHB_JTAG+CFG_GRETH+" + str(acc.number) + ";\n")
+    fp.write("  -- " + acc.lowercase_name + "_hindex  = CFG_NCPU_TILE+CFG_AHB_JTAG+CFG_GRETH+" + str(acc.number) + ";\n")
     fp.write("\n")
   fp.write("\n")
 

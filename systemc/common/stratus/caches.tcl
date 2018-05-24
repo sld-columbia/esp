@@ -7,7 +7,7 @@
 #
 # Source the common configurations
 #
-source ../../../common/stratus/project.tcl
+source ../../common/stratus/project.tcl
 
 #
 # Add generated memory library
@@ -35,7 +35,7 @@ if {$TECH eq "virtex7"} {
     set CLOCK_PERIOD 12.5
     set_attr default_input_delay      0.1
 }
-if {$TECH eq "zynq"} {
+if {$TECH eq "zynq7000"} {
     set CLOCK_PERIOD 10.0
     set_attr default_input_delay      0.1
 }
@@ -46,5 +46,5 @@ if {$TECH eq "cmos32soi"} {
 set_attr clock_period $CLOCK_PERIOD
 
 
-set CACHE_INCLUDES "-I../../common/lib"
+set CACHE_INCLUDES "-I../../common/caches"
 

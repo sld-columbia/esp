@@ -21,8 +21,8 @@
 -- Package: 	coretypes
 -- File:	coretypes.vhd
 -- Author:	Paolo Mantovani - SLD @ Columbia University
--- Description:	GRFPU types definition. These definition have been moved from
---              $GRLIB/lib/gaisler/leon3/leon3.vhd
+-- Description:	FPU and IRQ types and constants
+--              (partially moved from $GRLIB/lib/gaisler/leon3/leon3.vhd)
 ------------------------------------------------------------------------------
 
 library ieee;

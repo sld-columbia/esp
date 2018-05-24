@@ -18,6 +18,10 @@ import glob
 import sys
 import re
 
+def get_immediate_subdirectories(a_dir):
+  return [name for name in os.listdir(a_dir)
+        if os.path.isdir(os.path.join(a_dir, name))]
+
 def print_usage():
   print("Usage                    : ./sld_generate.py <dma_width> <rtl_path> <template_path> <out_path>")
   print("")
@@ -772,7 +776,7 @@ if len(sys.argv) != 5:
 
 dma_width = int(sys.argv[1])
 acc_rtl_dir = sys.argv[2] + "/acc"
-caches_rtl_dir = sys.argv[2] + "/caches"
+caches_rtl_dir = sys.argv[2] + "/sccs"
 template_dir = sys.argv[3]
 out_dir = sys.argv[4]
 accelerator_list = [ ]
@@ -780,7 +784,15 @@ cache_list = [ ]
 
 # Get scheduled accelerators
 accelerators = next(os.walk(acc_rtl_dir))[1]
-caches = next(os.walk(caches_rtl_dir))[1]
+
+caches = [ ]
+tmp_l2_dir = caches_rtl_dir + '/l2'
+tmp_llc_dir = caches_rtl_dir + '/llc'
+if os.path.exists(tmp_l2_dir):
+  caches.append('l2')
+if os.path.exists(tmp_llc_dir):
+  caches.append('llc')
+
 
 if (len(accelerators) == 0):
   print("    WARNING: No accelerators found in " + acc_rtl_dir + ".")
@@ -797,10 +809,9 @@ for acc in accelerators:
 
   # Get scheduled HLS configurations
   acc_dir = acc_rtl_dir + "/" + acc
-  acc_dp = glob.glob(acc_dir + '/*.v')
+  acc_dp = get_immediate_subdirectories(acc_dir)
   for dp_str in acc_dp:
-    dp = dp_str.replace(acc_dir + "/" + acc + "_", "")
-    dp = dp.replace(".v", "")
+    dp = dp_str.replace(acc + "_", "")
     dp_info = dp.split("_")
     skip = False
     for item in dp_info:
@@ -877,10 +888,9 @@ for cac in caches:
 
   # Get scheduled HLS configurations
   cac_dir = caches_rtl_dir + "/" + cac
-  cac_dp = glob.glob(cac_dir + '/*.v')
+  cac_dp = get_immediate_subdirectories(cac_dir)
   for dp_str in cac_dp:
-    dp = dp_str.replace(cac_dir + "/" + cac + "_", "")
-    dp = dp.replace(".v", "")
+    dp = dp_str.replace(cac + "_", "")
     cacd.hlscfg.append(dp)
     print("    INFO: Found implementation " + dp + " for " + cac)
   if len(cacd.hlscfg) == 0:

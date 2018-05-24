@@ -1,0 +1,1 @@
+../../accelerators/common/common.mk

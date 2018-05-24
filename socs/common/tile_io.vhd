@@ -47,9 +47,8 @@ entity tile_io is
     --TODO: REMOVE and use proxy for eth irq!
     eth0_pirq    : in  std_logic_vector(NAHBIRQ-1 downto 0);
     sgmii0_pirq    : in  std_logic_vector(NAHBIRQ-1 downto 0);
-    -- TODO: REMOVE!
-    irqi_o  : out irq_in_vector(0 to CFG_NCPU_TILE-1);
-    irqo_i  : in  irq_out_vector(0 to CFG_NCPU_TILE-1);
+    -- IRQ FIFO overflow LEDs
+    irqi_fifo_overflow : out std_logic;
     -- NOC
     noc1_input_port    : out noc_flit_type;
     noc1_data_void_in  : out std_ulogic;
@@ -190,17 +189,14 @@ begin
 ---  APB 2: Interrupt Controller -------------------------------------
 ----------------------------------------------------------------------
 
-  --TODO remove. Temporary hack to test ethernet irq
-  irqi <= (others => irq_in_none);
-
   irqctrl : if CFG_IRQ3_ENABLE /= 0 generate
     irqctrl0 : irqmp         -- interrupt controller
     generic map (pindex => 2, paddr => 2, ncpu => CFG_NCPU_TILE)
-    port map (rst, clk, apbi, apbo(2), irqo_i, irqi_o);
+    port map (rst, clk, apbi, apbo(2), irqo, irqi);
   end generate;
   irq3 : if CFG_IRQ3_ENABLE = 0 generate
     x : for i in 0 to CFG_NCPU_TILE-1 generate
-      irqi(i).irl <= "0000";
+      irqi(i).irl <= (others => '0');
     end generate;
     apbo(2) <= apb_none;
   end generate;
@@ -226,47 +222,47 @@ begin
 
   -- SVGA component interface
   svga_on_apb: if CFG_SVGA_ENABLE /= 0 generate
-    apbo(13) <= dvi_apbo;
-    ahbmo2(0) <= dvi_ahbmo;
+      apbo(13) <= dvi_apbo;
+      ahbmo2(0) <= dvi_ahbmo;
 
-    -- Dedicated Video Memory with dual-port interface.
+      -- Dedicated Video Memory with dual-port interface.
 
-    -- SLV 7: 0xB0100000 - 0xB01FFFFF
-    ahbmo1(NAHBMST-1 downto 1) <= (others => ahbm_none);
-    ahbmo2(NAHBMST-1 downto 1) <= (others => ahbm_none);
-    ahbso1(NAHBSLV-1 downto 1) <= (others => ahbs_none);
-    ahbso2(NAHBSLV-1 downto 1) <= (others => ahbs_none);
-    ahbram_dp_1: ahbram_dp
-      generic map (
-        hindex1 => 0,
-        haddr1  => CFG_SVGA_MEMORY_HADDR,
-        hindex2 => 0,
-        haddr2  => CFG_SVGA_MEMORY_HADDR,
-        hmask   => fb_hmask,
-        tech    => memtech,
-        kbytes  => 512,
-        wordsz  => 32)
-      port map (
-        rst    => rst,
-        clk    => clk,
-        ahbsi1 => ahbsi1,
-        ahbso1 => ahbso1(0),
-        ahbsi2 => ahbsi2,
-        ahbso2 => ahbso2(0));
+      -- SLV 7: 0xB0100000 - 0xB01FFFFF
+      ahbmo1(NAHBMST-1 downto 1) <= (others => ahbm_none);
+      ahbmo2(NAHBMST-1 downto 1) <= (others => ahbm_none);
+      ahbso1(NAHBSLV-1 downto 1) <= (others => ahbs_none);
+      ahbso2(NAHBSLV-1 downto 1) <= (others => ahbs_none);
+      ahbram_dp_1: ahbram_dp
+        generic map (
+          hindex1 => 0,
+          haddr1  => CFG_SVGA_MEMORY_HADDR,
+          hindex2 => 0,
+          haddr2  => CFG_SVGA_MEMORY_HADDR,
+          hmask   => fb_hmask,
+          tech    => memtech,
+          kbytes  => 512,
+          wordsz  => 32)
+        port map (
+          rst    => rst,
+          clk    => clk,
+          ahbsi1 => ahbsi1,
+          ahbso1 => ahbso1(0),
+          ahbsi2 => ahbsi2,
+          ahbso2 => ahbso2(0));
 
-    -- AHB1: Proxy noc to AHB master and R/W AHBRAM slave
-    ahb1 : ahbctrl       -- AHB arbiter/multiplexer
-      generic map (defmast => CFG_DEFMST, split => CFG_SPLIT,
-                   rrobin => CFG_RROBIN, ioaddr => CFG_AHBIO, fpnpen => CFG_FPNPEN,
-                   nahbm => 1, nahbs => 1)
-      port map (rst, clk, ahbmi1, ahbmo1, ahbsi1, ahbso1);
+      -- AHB1: Proxy noc to AHB master and R/W AHBRAM slave
+      ahb1 : ahbctrl       -- AHB arbiter/multiplexer
+        generic map (defmast => CFG_DEFMST, split => CFG_SPLIT,
+                     rrobin => CFG_RROBIN, ioaddr => CFG_AHBIO, fpnpen => CFG_FPNPEN,
+                     nahbm => 1, nahbs => 1)
+        port map (rst, clk, ahbmi1, ahbmo1, ahbsi1, ahbso1);
 
-    -- AHB2: SVGA master and R AHBRAM slave
-    ahb2 : ahbctrl       -- AHB arbiter/multiplexer
-      generic map (defmast => CFG_DEFMST, split => CFG_SPLIT,
-                   rrobin => CFG_RROBIN, ioaddr => CFG_AHBIO, fpnpen => CFG_FPNPEN,
-                   nahbm => 1, nahbs => 1)
-      port map (rst, clk, ahbmi2, ahbmo2, ahbsi2, ahbso2);
+      -- AHB2: SVGA master and R AHBRAM slave
+      ahb2 : ahbctrl       -- AHB arbiter/multiplexer
+        generic map (defmast => CFG_DEFMST, split => CFG_SPLIT,
+                     rrobin => CFG_RROBIN, ioaddr => CFG_AHBIO, fpnpen => CFG_FPNPEN,
+                     nahbm => 1, nahbs => 1)
+        port map (rst, clk, ahbmi2, ahbmo2, ahbsi2, ahbso2);
 
   end generate svga_on_apb;
 
@@ -318,31 +314,26 @@ begin
       apb_rcv_data_out => apb_rcv_data_out,
       apb_rcv_empty    => apb_rcv_empty);
 
-  --TODO: make the following broadcast the irq for all CPUs
-  no_irqi_cpu: for i in 1 to CFG_NCPU_TILE-1 generate
-    --REMOVE THE FOLLOWING!
-    irqo(i) <= irq_out_none;
-  end generate no_irqi_cpu;
-
-  -- misc_irq2noc_1: misc_irq2noc
-  --   generic map (
-  --     tech    => fabtech,
-  --     cpu_id  => 0,
-  --     local_y => local_y,
-  --     local_x => local_x,
-  --     cpu_y   => cpu_y,
-  --     cpu_x   => cpu_x)
-  --   port map (
-  --     rst              => rst,
-  --     clk              => clk,
-  --     irqi             => irqi(0),
-  --     irqo             => irqo(0),
-  --     irq_ack_rdreq    => irq_ack_rdreq,
-  --     irq_ack_data_out => irq_ack_data_out,
-  --     irq_ack_empty    => irq_ack_empty,
-  --     irq_wrreq        => irq_wrreq,
-  --     irq_data_in      => irq_data_in,
-  --     irq_full         => irq_full);
+  misc_irq2noc_1: misc_irq2noc
+     generic map (
+       tech    => fabtech,
+       ncpu    => CFG_NCPU_TILE,
+       local_y => local_y,
+       local_x => local_x,
+       cpu_y   => cpu_y,
+       cpu_x   => cpu_x)
+     port map (
+       rst                => rst,
+       clk                => clk,
+       irqi               => irqi,
+       irqo               => irqo,
+       irqi_fifo_overflow => irqi_fifo_overflow,
+       irq_ack_rdreq      => irq_ack_rdreq,
+       irq_ack_data_out   => irq_ack_data_out,
+       irq_ack_empty      => irq_ack_empty,
+       irq_wrreq          => irq_wrreq,
+       irq_data_in        => irq_data_in,
+       irq_full           => irq_full);
 
   misc_noc2interrupt_1: misc_noc2interrupt
     generic map (
@@ -400,7 +391,6 @@ begin
     dma_snd_wrreq <= '0';
     dma_snd_data_in <= (others => '0');
   end generate no_svga_on_apb_proxy;
-
 
   -----------------------------------------------------------------------------
   -- Monitor for DVFS. (IO tile has no dvfs)

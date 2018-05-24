@@ -429,26 +429,27 @@ package tile is
       remote_apb_rcv_empty    : in  std_ulogic);
   end component;
 
-  -- component cpu_irq2noc
-  --   generic (
-  --     tech    : integer;
-  --     cpu_id  : integer;
-  --     local_y : local_yx;
-  --     local_x : local_yx;
-  --     irq_y   : local_yx;
-  --     irq_x   : local_yx);
-  --   port (
-  --     rst                    : in  std_ulogic;
-  --     clk                    : in  std_ulogic;
-  --     irqi                   : out l3_irq_in_type;
-  --     irqo                   : in  l3_irq_out_type;
-  --     remote_irq_rdreq       : out std_ulogic;
-  --     remote_irq_data_out    : in  noc_flit_type;
-  --     remote_irq_empty       : in  std_ulogic;
-  --     remote_irq_ack_wrreq   : out std_ulogic;
-  --     remote_irq_ack_data_in : out noc_flit_type;
-  --     remote_irq_ack_full    : in  std_ulogic);
-  -- end component;
+  component cpu_irq2noc is
+    generic (
+      tech    : integer;
+      cpu_id  : integer;
+      local_y : local_yx;
+      local_x : local_yx;
+      irq_y   : local_yx;
+      irq_x   : local_yx);
+    port (
+      rst                    : in  std_ulogic;
+      clk                    : in  std_ulogic;
+      irqi                   : out l3_irq_in_type;
+      irqo                   : in  l3_irq_out_type;
+      irqo_fifo_overflow     : out std_ulogic;
+      remote_irq_rdreq       : out std_ulogic;
+      remote_irq_data_out    : in  noc_flit_type;
+      remote_irq_empty       : in  std_ulogic;
+      remote_irq_ack_wrreq   : out std_ulogic;
+      remote_irq_ack_data_in : out noc_flit_type;
+      remote_irq_ack_full    : in  std_ulogic);
+  end component cpu_irq2noc;
 
   component cpu_ahbs2noc
     generic (
@@ -498,26 +499,27 @@ package tile is
       apb_rcv_empty    : in  std_ulogic);
   end component;
 
-  -- component misc_irq2noc
-  --   generic (
-  --     tech    : integer;
-  --     cpu_id  : integer;
-  --     local_y : local_yx;
-  --     local_x : local_yx;
-  --     cpu_y   : yx_vec(3 downto 0);
-  --     cpu_x   : yx_vec(3 downto 0));
-  --   port (
-  --     rst              : in  std_ulogic;
-  --     clk              : in  std_ulogic;
-  --     irqi             : in  l3_irq_in_type;
-  --     irqo             : out l3_irq_out_type;
-  --     irq_ack_rdreq    : out std_ulogic;
-  --     irq_ack_data_out : in  noc_flit_type;
-  --     irq_ack_empty    : in  std_ulogic;
-  --     irq_wrreq        : out std_ulogic;
-  --     irq_data_in      : out noc_flit_type;
-  --     irq_full         : in  std_ulogic);
-  -- end component;
+  component misc_irq2noc is
+    generic (
+      tech    : integer;
+      ncpu    : integer;
+      local_y : local_yx;
+      local_x : local_yx;
+      cpu_y   : yx_vec(3 downto 0);
+      cpu_x   : yx_vec(3 downto 0));
+    port (
+          rst                : in  std_ulogic;
+          clk                : in  std_ulogic;
+          irqi               : in  irq_in_vector(ncpu-1 downto 0);
+          irqo               : out irq_out_vector(ncpu-1 downto 0);
+          irqi_fifo_overflow : out std_ulogic;
+          irq_ack_rdreq      : out std_ulogic;
+          irq_ack_data_out   : in  noc_flit_type;
+          irq_ack_empty      : in  std_ulogic;
+          irq_wrreq          : out std_ulogic;
+          irq_data_in        : out noc_flit_type;
+          irq_full           : in  std_ulogic);
+  end component misc_irq2noc;
 
   component misc_noc2interrupt
     generic (

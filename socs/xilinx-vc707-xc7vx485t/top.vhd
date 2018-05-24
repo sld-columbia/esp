@@ -257,6 +257,10 @@ signal eth0_ahbmo : ahb_mst_out_type;
 signal ndsuact     : std_ulogic;
 signal dsuerr      : std_ulogic;
 
+-- IRQ
+signal irqi_fifo_overflow : std_ulogic;
+signal irqo_fifo_overflow : std_ulogic;
+
 -- NOC
 signal chip_rst : std_ulogic;
 signal noc_clk : std_ulogic;
@@ -297,11 +301,11 @@ begin
   led4_pad : outpad generic map (tech => padtech, level => cmos, voltage => x18v)
     port map (led(4), ddr_ahbso.hready);
 
-  -- Unused
+  -- IRQ overflow
   led5_pad : outpad generic map (tech => padtech, level => cmos, voltage => x18v)
-    port map (led(5), '0');
+    port map (led(5), irqi_fifo_overflow);
   led6_pad : outpad generic map (tech => padtech, level => cmos, voltage => x18v)
-    port map (led(6), '0');
+    port map (led(6), irqo_fifo_overflow);
 
 -------------------------------------------------------------------------------
 -- Switches -------------------------------------------------------------------
@@ -608,6 +612,8 @@ begin
       uart_rtsn      => uart_rtsn,
       ndsuact        => ndsuact,
       dsuerr         => dsuerr,
+      irqi_fifo_overflow => irqi_fifo_overflow,
+      irqo_fifo_overflow => irqo_fifo_overflow,
       ddr0_ahbsi     => ddr_ahbsi,
       ddr0_ahbso     => ddr_ahbso,
       ddr1_ahbsi     => open,

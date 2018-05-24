@@ -145,7 +145,9 @@ entity top is
     LED_BLUE        : out   std_ulogic;
     LED_YELLOW      : out   std_ulogic;
     c0_diagnostic_led  : out   std_ulogic;
-    c1_diagnostic_led  : out   std_ulogic
+    c1_diagnostic_led  : out   std_ulogic;
+    irqi_overflow_led  : out   std_ulogic;
+    irqo_overflow_led  : out   std_ulogic
    );
 end;
 
@@ -428,6 +430,11 @@ attribute keep of clkvga : signal is true;
 signal ndsuact     : std_ulogic;
 signal dsuerr      : std_ulogic;
 
+-- IRQ FIFOs
+signal irqi_fifo_overflow : std_logic;
+signal irqo_fifo_overflow : std_logic;
+
+
 -- NOC
 signal chip_rst : std_ulogic;
 signal noc_clk : std_ulogic;
@@ -504,6 +511,10 @@ begin
   led3_pad : outpad generic map (tech => padtech, level => cmos, voltage => x18v) port map (LED_BLUE, lock);
 
   led4_pad : outpad generic map (tech => padtech, level => cmos, voltage => x18v) port map (LED_YELLOW, '0');
+
+  -- IRQ FIFOs overflow
+  irqi_fifo_overflow_pad : outpad generic map (tech => padtech, level => cmos, voltage => x15v) port map (irqi_overflow_led, irqi_fifo_overflow);
+  irqo_fifo_overflow_pad : outpad generic map (tech => padtech, level => cmos, voltage => x15v) port map (irqo_overflow_led, irqo_fifo_overflow);
 
 -------------------------------------------------------------------------------
 -- Switches -------------------------------------------------------------------
@@ -1093,6 +1104,8 @@ begin
       uart_rtsn     => uart_rtsn,
       ndsuact       => ndsuact,
       dsuerr        => dsuerr,
+      irqi_fifo_overflow => irqi_fifo_overflow,
+      irqo_fifo_overflow => irqo_fifo_overflow,
       ddr0_ahbsi    => ddr0_ahbsi,
       ddr0_ahbso    => ddr0_ahbso,
       ddr1_ahbsi    => ddr1_ahbsi,

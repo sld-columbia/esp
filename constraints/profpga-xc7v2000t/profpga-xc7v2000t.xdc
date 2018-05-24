@@ -102,6 +102,14 @@ set_property PACKAGE_PIN AM26 [get_ports c1_calib_complete]
 set_property IOSTANDARD LVCMOS15 [get_ports c1_diagnostic_led]
 set_property PACKAGE_PIN AL28 [get_ports c1_diagnostic_led]
 
+# {eb_ta1_1_LED15}
+set_property IOSTANDARD LVCMOS15 [get_ports irqi_overflow_led]
+set_property PACKAGE_PIN K41 [get_ports irqi_overflow_led]
+
+# {eb_ta2_1_LED16}
+set_property IOSTANDARD LVCMOS15 [get_ports irqo_overflow_led]
+set_property PACKAGE_PIN K42 [get_ports irqo_overflow_led]
+
 #-----------------------------------------------------------
 #              Reset                                       -
 #-----------------------------------------------------------

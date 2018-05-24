@@ -313,7 +313,10 @@ component top
     LED_BLUE       : out   std_ulogic;
     LED_YELLOW     : out   std_ulogic;
     c0_diagnostic_led  : out   std_ulogic;
-    c1_diagnostic_led  : out   std_ulogic);
+    c1_diagnostic_led  : out   std_ulogic;
+    irqi_overflow_led  : out   std_ulogic;
+    irqo_overflow_led  : out   std_ulogic);
+
 end component;
 
 begin
@@ -448,7 +451,9 @@ begin
        LED_BLUE        => open,
        LED_YELLOW      => open,
        c0_diagnostic_led => open,
-       c1_diagnostic_led => open
+       c1_diagnostic_led => open,
+       irqi_overflow_led => open,
+       irqo_overflow_led => open
       );
 
   phy0 : if (CFG_GRETH = 1) generate

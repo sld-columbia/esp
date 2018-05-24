@@ -16,7 +16,7 @@ set TECH_PATH "$ESP_ROOT/tech/$TECH"
 #
 # Setup technology and include behavioral models and/or libraries
 #
-set fpga_techs [list "virtex7" "zynq"]
+set fpga_techs [list "virtex7" "zynq7000"]
 set asic_techs [list "cmos32soi"]
 
 if {[lsearch $fpga_techs $TECH] >= 0} {
@@ -30,7 +30,7 @@ if {[lsearch $fpga_techs $TECH] >= 0} {
     if {$TECH eq "virtex7"} {
 	set_attr fpga_part "xc7v2000tflg1925-2"
     }
-    if {$TECH eq "zynq"} {
+    if {$TECH eq "zynq7000"} {
 	set_attr fpga_part "xc7z020clg484-1"
     }
 
@@ -39,8 +39,8 @@ if {[lsearch $fpga_techs $TECH] >= 0} {
 }
 if {[lsearch $asic_techs $TECH] >= 0} {
     set_attr verilog_files "$TECH_PATH/verilog/*v $TECH_PATH/mem/*v"
-    set LIB_PATH "$TECH_PATH/lib/1p0v/"
-    set LIB_NAME "ibm32soi_hvt_1p0v.lib"
+    set LIB_PATH "$TECH_PATH/lib"
+    set LIB_NAME "1p0v/ibm32soi_hvt_1p0v.lib"
     use_tech_lib "$LIB_PATH/$LIB_NAME"
 
     set TECH_IS_XILINX 0

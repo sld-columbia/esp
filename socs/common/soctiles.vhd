@@ -81,6 +81,8 @@ package soctiles is
       uart_rtsn     : out   std_ulogic;
       ndsuact       : out   std_ulogic;
       dsuerr        : out   std_ulogic;
+      irqi_fifo_overflow : out std_logic;
+      irqo_fifo_overflow : out std_logic;
       ddr0_ahbsi    : out ahb_slv_in_type;
       ddr0_ahbso    : in  ahb_slv_out_type;
       ddr1_ahbsi    : out ahb_slv_in_type;
@@ -129,10 +131,9 @@ package soctiles is
       pllbypass          : in  std_ulogic;
       pllclk             : out std_ulogic;
       -- TODO: REMOVE!
-      irqi_i             : in  l3_irq_in_type;
-      irqo_o             : out l3_irq_out_type;
       dbgi               : in l3_debug_in_type;
       dbgo               : out l3_debug_out_type;
+      irqo_fifo_overflow : out std_ulogic;
       noc1_input_port    : out noc_flit_type;
       noc1_data_void_in  : out std_ulogic;
       noc1_stop_in       : out std_ulogic;
@@ -268,12 +269,10 @@ package soctiles is
       dvi_apbo           : in  apb_slv_out_type;
       dvi_ahbmi          : out ahb_mst_in_type;
       dvi_ahbmo          : in  ahb_mst_out_type;
-      --TODO: REMOVE and use proxy for eth irq!
-      eth0_pirq          : in  std_logic_vector(NAHBIRQ-1 downto 0);
-      sgmii0_pirq        : in  std_logic_vector(NAHBIRQ-1 downto 0);
       -- TODO: REMOVE!
-      irqi_o             : out irq_in_vector(0 to CFG_NCPU_TILE-1);
-      irqo_i             : in  irq_out_vector(0 to CFG_NCPU_TILE-1);
+      eth0_pirq      : in  std_logic_vector(NAHBIRQ-1 downto 0);
+      sgmii0_pirq    : in  std_logic_vector(NAHBIRQ-1 downto 0);
+      irqi_fifo_overflow : out std_ulogic;
       noc1_input_port    : out noc_flit_type;
       noc1_data_void_in  : out std_ulogic;
       noc1_stop_in       : out  std_ulogic;

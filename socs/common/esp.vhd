@@ -60,6 +60,8 @@ entity esp is
     uart_rtsn       : out   std_logic;  -- UART1_RTSN (u1o.rtsn)
     ndsuact         : out   std_logic;
     dsuerr          : out   std_logic;
+    irqi_fifo_overflow : out std_logic;
+    irqo_fifo_overflow : out std_logic;
     ddr0_ahbsi      : out ahb_slv_in_type;
     ddr0_ahbso      : in  ahb_slv_out_type;
     ddr1_ahbsi      : out ahb_slv_in_type;
@@ -121,6 +123,8 @@ signal noc_output_port   : noc_flit_matrix;
 signal noc_data_void_out : noc_ctrl_matrix;
 signal noc_stop_out      : noc_ctrl_matrix;
 
+signal irqo_fifo_overflow_vec : std_logic_vector(0 to CFG_NCPU_TILE - 1);
+
 --pragma translate_off
 signal mctrl_ahbsi_mem : ahb_slv_in_type_vec;
 signal mctrl_apbi_mem  : apb_slv_in_type_vec;
@@ -142,9 +146,6 @@ signal mon_dvfs_out : monitor_dvfs_vector(0 to TILES_NUM-1);
 signal mon_dvfs_domain  : monitor_dvfs_vector(0 to TILES_NUM-1);
 
 -- TODO: REMOVE!!! Interrupt controller
-signal irqi : irq_in_vector(0 to CFG_NCPU_TILE-1);
-signal irqo : irq_out_vector(0 to CFG_NCPU_TILE-1);
-  
 signal dbgi : l3_debug_in_vector(0 to CFG_NCPU_TILE-1);
 signal dbgo : l3_debug_out_vector(0 to CFG_NCPU_TILE-1);
 
@@ -266,10 +267,9 @@ begin
           pllbypass          => pllbypass_int(i),
           pllclk             => clk_tile(i),
           --TODO: REMOVE!
-          irqi_i => irqi(tile_cpu_id(i)),
-          irqo_o => irqo(tile_cpu_id(i)),
           dbgi   => dbgi(tile_cpu_id(i)),
           dbgo   => dbgo(tile_cpu_id(i)),
+          irqo_fifo_overflow => irqo_fifo_overflow_vec(tile_cpu_id(i)),
           noc1_input_port    => noc_input_port(1)(i),
           noc1_data_void_in  => noc_data_void_in(1)(i),
           noc1_stop_in       => noc_stop_in(1)(i),
@@ -310,6 +310,15 @@ begin
           mon_dvfs_in        => mon_dvfs_domain(i),
           mon_dvfs           => mon_dvfs_out(i));
     end generate cpu_tile;
+    or_irqo_fifo_overflow: process (irqo_fifo_overflow_vec) is
+      variable or_gate : std_ulogic;
+    begin  -- process or_irqo_fifo_overflow
+      or_gate := '0';
+      for i in 0 to CFG_NCPU_TILE - 1 loop
+        or_gate := or_gate or irqo_fifo_overflow_vec(i);
+      end loop;  -- i
+      irqo_fifo_overflow <= or_gate;
+    end process or_irqo_fifo_overflow;
 
     accelerator_tile: if tile_type(i) = 2 generate
       assert tile_device(i) /= 0 report "Undefined device ID for accelerator tile" severity error;
@@ -411,9 +420,7 @@ begin
           --TODO: use proxy later for eth irq!!
           eth0_pirq          => eth0_apbo.pirq,
           sgmii0_pirq        => sgmii0_apbo.pirq,
-          --TODO: REMOVE!
-          irqi_o => irqi,
-          irqo_i => irqo,
+          irqi_fifo_overflow => irqi_fifo_overflow,
           noc1_input_port    => noc_input_port(1)(i),
           noc1_data_void_in  => noc_data_void_in(1)(i),
           noc1_stop_in       => noc_stop_in(1)(i),

@@ -7,56 +7,56 @@
 #
 # Source the common configurations
 #
-source ../../common/stratus/project.tcl
+source ../../common/stratus/caches.tcl
 
 
 #
 # System level modules to be synthesized
 #
-define_hls_module l2 ../src/l2.cpp
+define_hls_module llc ../src/llc.cpp
 
 #
 # Testbench or system level modules
 #
-define_system_module tb  ../tb/l2_tb.cpp ../tb/system.cpp ../tb/sc_main.cpp
+define_system_module tb  ../tb/llc_tb.cpp ../tb/system.cpp ../tb/sc_main.cpp
 
 ######################################################################
 # HLS and Simulation configurations
 ######################################################################
 
-# foreach sets [list 256 512 1024 2048 4096] {
+# foreach sets [list 256 512 1024 2048 4096 8092] {
 
-#     foreach ways [list 1 2 4 8] {
+#     foreach ways [list 4 8 16 32] {
 
-foreach sets [list 512 1024] {
+foreach sets [list 1024] {
 
-    foreach ways [list 2 4] {
+    foreach ways [list 16] {
 
 	set pars "_$sets\SETS_$ways\WAYS"
 
 	set iocfg "IOCFG$pars"
 
-	define_io_config * $iocfg -DL2_SETS=$sets -DL2_WAYS=$ways
+	define_io_config * $iocfg -DLLC_SETS=$sets -DLLC_WAYS=$ways
 
 	define_system_config tb "TESTBENCH$pars" -io_config $iocfg
 
-	define_sim_config "BEHAV$pars" "l2 BEH" \
-	    "tb TESTBENCH$pars" -io_config $iocfg
+	define_sim_config "BEHAV$pars" "llc BEH" "tb TESTBENCH$pars" -io_config $iocfg
 
 	foreach cfg [list BASIC] {
 
 	    set cname "$cfg$pars"
 
-	    define_hls_config l2 $cname --clock_period=$CLOCK_PERIOD $COMMON_HLS_FLAGS \
+	    define_hls_config llc $cname --clock_period=$CLOCK_PERIOD $COMMON_HLS_FLAGS \
 		-DHLS_DIRECTIVES_$cfg -io_config $iocfg
 
 	    if {$TECH_IS_XILINX == 1} {
 
-		define_sim_config "$cname\_V" "l2 RTL_V $cname" "tb TESTBENCH$pars" \
+		define_sim_config "$cname\_V" "llc RTL_V $cname" "tb TESTBENCH$pars" \
 		    -verilog_top_modules glbl -io_config $iocfg
+
 	    } else {
 
-		define_sim_config "$cname\_V" "l2 RTL_V $cname" "tb TESTBENCH$pars" \
+		define_sim_config "$cname\_V" "llc RTL_V $cname" "tb TESTBENCH$pars" \
 		    -io_config $iocfg
 	    }
 	}
