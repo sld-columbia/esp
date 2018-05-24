@@ -49,122 +49,76 @@ static void leon3_flush_dcache_all(void *info)
 			"i"(ASI_LEON_DFLUSH) : "memory");
 }
 
-int esp_private_cache_flush_smp(void)
-{
-	struct esp_private_cache_device *esp_private_cache = NULL;
-	const int cmd = 1 << ESP_CACHE_CMD_FLUSH_BIT;
-	u32 status_reg;
-
-	list_for_each_entry(esp_private_cache, &esp_private_cache_list, list) {
-
-		if (mutex_lock_interruptible(&esp_private_cache->lock))
-			return -EINTR;
-
-		/* Set flush due for L2 private cache */
-		iowrite32be(cmd, esp_private_cache->iomem + ESP_CACHE_REG_CMD);
-
-		/* Wait for L2 flush to be set (may loose synch flush with L1 otherwise) */
-		do {
-			status_reg = ioread32be(esp_private_cache->iomem + ESP_CACHE_REG_CMD);
-		} while (status_reg != cmd);
-
-		mutex_unlock(&esp_private_cache->lock);
-
-	}
-
-	/* Flush all L1 caches: start synchronized L2 flush as well */
-	on_each_cpu(leon3_flush_dcache_all, NULL, 1);
-
-	list_for_each_entry(esp_private_cache, &esp_private_cache_list, list) {
-
-		if (mutex_lock_interruptible(&esp_private_cache->lock))
-			return -EINTR;
-
-		/* Wait for L2 caches to complete flush */
-		do {
-			status_reg = ioread32be(esp_private_cache->iomem + ESP_CACHE_REG_STATUS);
-			status_reg &= ESP_CACHE_STATUS_DONE_MASK;
-		} while (!status_reg);
-
-
-		/* Clear command register */
-		iowrite32be(0x0, esp_private_cache->iomem + ESP_CACHE_REG_CMD);
-
-		mutex_unlock(&esp_private_cache->lock);
-	}
-
-	return 0;
-}
-EXPORT_SYMBOL_GPL(esp_private_cache_flush_smp);
-
 int esp_private_cache_flush(void)
 {
 	struct esp_private_cache_device *esp_private_cache = NULL;
 	const int cmd = 1 << ESP_CACHE_CMD_FLUSH_BIT;
-	int match = 0;
-	int rc = 0;
-	u32 status_reg;
+	u32 cmd_reg;
+	u32 status_reg = 0;
 
-	/* Disable preemption and get current CPU ID */
-	int cpuid = get_cpu();
+	if (spin_trylock(&esp_private_cache_list_lock)) {
 
-	/* Search for private L2 cache with matching CPU ID */
+		list_for_each_entry(esp_private_cache, &esp_private_cache_list, list) {
+
+			if (mutex_lock_interruptible(&esp_private_cache->lock))
+				return -EINTR;
+
+#ifndef CONFIG_SMP
+			/* Only CPU0 running whith no SMP */
+			status_reg    = ioread32be(esp_private_cache->iomem + ESP_CACHE_REG_STATUS);
+			status_reg   &= ESP_CACHE_STATUS_CPUID_MASK;
+			status_reg >>= ESP_CACHE_STATUS_CPUID_SHIFT;
+#endif
+
+			/* Check if flush is already in progress */
+			cmd_reg = ioread32be(esp_private_cache->iomem + ESP_CACHE_REG_CMD);
+
+			if (!cmd_reg && !status_reg) {
+
+				/* Set flush due for L2 private cache */
+				iowrite32be(cmd, esp_private_cache->iomem + ESP_CACHE_REG_CMD);
+
+				/* Wait for L2 flush to be set (may loose synch flush with L1 otherwise) */
+				do {
+					cmd_reg = ioread32be(esp_private_cache->iomem + ESP_CACHE_REG_CMD);
+				} while (cmd_reg != cmd);
+
+			}
+
+			mutex_unlock(&esp_private_cache->lock);
+
+		}
+
+		/* Flush all L1 caches: start synchronized L2 flush as well */
+		on_each_cpu(leon3_flush_dcache_all, NULL, 1);
+
+		spin_unlock(&esp_private_cache_list_lock);
+	}
+
 	list_for_each_entry(esp_private_cache, &esp_private_cache_list, list) {
 
 		if (mutex_lock_interruptible(&esp_private_cache->lock))
 			return -EINTR;
 
-		status_reg    = ioread32be(esp_private_cache->iomem + ESP_CACHE_REG_STATUS);
-		status_reg   &= ESP_CACHE_STATUS_CPUID_MASK;
-		status_reg >>= ESP_CACHE_STATUS_CPUID_SHIFT;
+		/* Check if cache command register has already been reset */
+		cmd_reg = ioread32be(esp_private_cache->iomem + ESP_CACHE_REG_CMD);
 
-		/* pr_info("cpuid is %d, cache id is %d\n", cpuid, status_reg); */
-
-		if (status_reg == cpuid) {
-
-			/* Set flush due for L2 private cache */
-			iowrite32be(cmd, esp_private_cache->iomem + ESP_CACHE_REG_CMD);
-
-			/* Wait for L2 flush to be set (may loose synch flush with L1 otherwise) */
-			do {
-				status_reg = ioread32be(esp_private_cache->iomem + ESP_CACHE_REG_CMD);
-			} while (status_reg != cmd);
-
-			/* pr_info("L2 flush ready...\n"); */
-
-			match = 1;
-
-			/* Flush L1 cache: starts synchronized L2 flush as well */
-			leon3_flush_dcache_all(NULL);
-
-			/* pr_info("L1/L2 flush issued...\n"); */
-
-			/* Wait for flush completion */
+		if (cmd_reg) {
+			/* Wait for L2 caches to complete flush */
 			do {
 				status_reg = ioread32be(esp_private_cache->iomem + ESP_CACHE_REG_STATUS);
 				status_reg &= ESP_CACHE_STATUS_DONE_MASK;
 			} while (!status_reg);
 
 
-			/* pr_info("L1/L2 flush done...\n"); */
-
 			/* Clear command register */
 			iowrite32be(0x0, esp_private_cache->iomem + ESP_CACHE_REG_CMD);
 		}
 
 		mutex_unlock(&esp_private_cache->lock);
-
-		if (match)
-			break;
 	}
 
-	/* Enable preemption */
-	put_cpu();
-
-	if (!match)
-		rc = -ENODEV;
-
-	return rc;
+	return 0;
 }
 EXPORT_SYMBOL_GPL(esp_private_cache_flush);
 

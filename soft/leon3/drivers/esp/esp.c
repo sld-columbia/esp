@@ -43,11 +43,7 @@ static int esp_flush(struct esp_device *esp)
 	int rc = 0;
 
 	if (esp->coherence < ACC_COH_FULL)
-#ifdef CONFIG_SMP
-		rc = esp_private_cache_flush_smp();
-#else
 		rc = esp_private_cache_flush();
-#endif
 
 	if (esp->coherence < ACC_COH_LLC)
 		rc = esp_cache_flush();
