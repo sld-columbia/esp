@@ -9,7 +9,7 @@
     <LowPower_En>ON</LowPower_En>
     <XADC_En>Enabled</XADC_En>
     <TargetFPGA>xc7vx485t-ffg1761/-2</TargetFPGA>
-    <Version>4.0</Version>
+    <Version>4.1</Version>
     <SystemClock>Differential</SystemClock>
     <ReferenceClock>No Buffer</ReferenceClock>
     <SysResetPolarity>ACTIVE LOW</SysResetPolarity>

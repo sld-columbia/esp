@@ -562,7 +562,7 @@ modelsim/xilinx_lib: $(XILINX_VIVADO)
 	sed -i 's/; Show_Warning5 = 0/Show_Warning5 = 0/g' modelsim.ini; \
 	sed -i 's/; StdArithNoWarnings = 1/StdArithNoWarnings = 1/g' modelsim.ini; \
 	sed -i 's/; NumericStdNoWarnings = 1/NumericStdNoWarnings = 1/g' modelsim.ini; \
-	sed -i 's/\(suppress = [0-9]\+\)/\1,1491/g' modelsim.ini; \
+	sed -i 's/\(suppress = [0-9]\+\)/\1,8891,1491,12110/g' modelsim.ini; \
 	cd ../;
 
 xilinx_lib-clean:
@@ -701,11 +701,11 @@ modelsim/vsim.mk: modelsim/xilinx_lib check_all_srcs.old $(PKG_LIST)
 	fi; \
 	echo $(SPACES)"$(VLOG) $(XILINX_VIVADO)/data/verilog/src/glbl.v"; \
 	$(VLOG) $(XILINX_VIVADO)/data/verilog/src/glbl.v; \
-	vlib -type directory gig_ethernet_pcs_pma_v16_1_2; \
+	vlib -type directory gig_ethernet_pcs_pma_v16_1_3; \
 	if test -r ./sgmii/sgmii.xci; then \
-		vmap gig_ethernet_pcs_pma_v16_1_2 gig_ethernet_pcs_pma_v16_1_2; \
+		vmap gig_ethernet_pcs_pma_v16_1_3 gig_ethernet_pcs_pma_v16_1_3; \
 		echo $(SPACES)"$(VCOM) ./sgmii/hdl/gig_ethernet_pcs_pma_v16_1_rfs.vhd"; \
-		$(VCOM) -work gig_ethernet_pcs_pma_v16_1_2 ./sgmii/hdl/gig_ethernet_pcs_pma_v16_1_rfs.vhd; \
+		$(VCOM) -work gig_ethernet_pcs_pma_v16_1_3 ./sgmii/hdl/gig_ethernet_pcs_pma_v16_1_rfs.vhd; \
 		$(VLOG) ./sgmii/synth/*.v; \
 		$(VLOG) ./sgmii/synth/*/*.v ;\
         fi; \

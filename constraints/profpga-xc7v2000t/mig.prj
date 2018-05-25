@@ -9,7 +9,7 @@
     <LowPower_En>OFF</LowPower_En>
     <XADC_En>Enabled</XADC_En>
     <TargetFPGA>xc7v2000t-flg1925/-2</TargetFPGA>
-    <Version>4.0</Version>
+    <Version>4.1</Version>
     <SystemClock>Differential</SystemClock>
     <ReferenceClock>Differential</ReferenceClock>
     <SysResetPolarity>ACTIVE LOW</SysResetPolarity>
