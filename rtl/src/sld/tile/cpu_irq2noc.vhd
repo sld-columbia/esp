@@ -183,11 +183,9 @@ begin  -- rtl
   end process make_packet;
 
   -- Sample interrupt output from CPU and determine if it changed
-  irqo_sample : process (clk, rst) is
+  irqo_sample : process (clk) is
   begin  -- process irqo_sample
-    if rst = '0' then                   -- asynchronous reset (active low)
-      irqo_reg <= irqo;
-    elsif clk'event and clk = '1' then  -- rising clock edge
+    if clk'event and clk = '1' then  -- rising clock edge
       irqo_reg <= irqo;
     end if;
   end process irqo_sample;
@@ -238,6 +236,7 @@ begin  -- rtl
       if cpu_id = 0 then
         irqi_v.rstrun := '1';
       end if;
+      irqi_v.index := std_logic_vector(to_unsigned(cpu_id, 4));
       irqi_reg <= irqi_v;
       irqi     <= irqi_v;
     elsif clk'event and clk = '1' then  -- rising clock edge

@@ -52,8 +52,8 @@ entity misc_irq2noc is
     rst : in std_ulogic;
     clk : in std_ulogic;
 
-    irqi : in  irq_in_vector(ncpu-1 downto 0);
-    irqo : out irq_out_vector(ncpu-1 downto 0);
+    irqi : in  irq_in_vector(0 to ncpu-1);
+    irqo : out irq_out_vector(0 to ncpu-1);
 
     irqi_fifo_overflow : out std_ulogic;  -- Increase queue if asserted
 
@@ -79,11 +79,11 @@ architecture rtl of misc_irq2noc is
   signal irq_snd_state, irq_snd_next : irq_snd_fsm;
   signal irq_rcv_state, irq_rcv_next : irq_rcv_fsm;
 
-  signal irqi_reg     : irq_in_vector(ncpu-1 downto 0);
+  signal irqi_reg     : irq_in_vector(0 to ncpu-1);
   signal irqi_changed : std_logic_vector(ncpu-1 downto 0);
 
   signal irqo_noc : l3_irq_out_type;
-  signal irqo_reg : irq_out_vector(ncpu-1 downto 0);
+  signal irqo_reg : irq_out_vector(0 to ncpu-1);
 
   signal intack_delay_1   : std_logic_vector(ncpu-1 downto 0);
   signal intack_delay_2   : std_logic_vector(ncpu-1 downto 0);
@@ -252,7 +252,7 @@ begin  -- rtl
       end if;
     end process same_irl_pending_detect;
 
-    irqi_diff : process (irqi(cpuid), irqi_reg(cpuid))
+    irqi_diff : process (irqi(cpuid), irqi_reg(cpuid), same_irl_pending(cpuid))
     begin  -- process irqi_diff
       irqi_changed(cpuid) <= '0';
       if irqi(cpuid) /= irqi_reg(cpuid) or same_irl_pending(cpuid) = '1' then
