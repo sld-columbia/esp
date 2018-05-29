@@ -346,7 +346,7 @@ architecture rtl of l2_wrapper is
   -- Others
   -------------------------------------------------------------------------------
 
-  signal empty_offset : std_logic_vector(OFFSET_BITS - 1 downto 0) := (others => '0');
+  constant empty_offset : std_logic_vector(OFFSET_BITS - 1 downto 0) := (others => '0');
 
   -------------------------------------------------------------------------------
   -- Debug

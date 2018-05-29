@@ -216,8 +216,8 @@ architecture rtl of llc_wrapper is
     asserts  => (others => '0')
     );
 
-  signal ahbm_reg      : ahbm_reg_type := AHBM_REG_DEFAULT;
-  signal ahbm_reg_next : ahbm_reg_type := AHBM_REG_DEFAULT;
+  signal ahbm_reg      : ahbm_reg_type;
+  signal ahbm_reg_next : ahbm_reg_type;
 
   -------------------------------------------------------------------------------
   -- FSM: Forward to NoC
@@ -311,8 +311,8 @@ architecture rtl of llc_wrapper is
     tile_id  => 0,
     asserts  => (others => '0'));
 
-  signal req_in_reg      : req_in_reg_type := REQ_IN_REG_DEFAULT;
-  signal req_in_reg_next : req_in_reg_type := REQ_IN_REG_DEFAULT;
+  signal req_in_reg      : req_in_reg_type;
+  signal req_in_reg_next : req_in_reg_type;
 
   -------------------------------------------------------------------------------
   -- FSM: Response from NoC
