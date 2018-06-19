@@ -67,7 +67,7 @@ SLDGEN_DEPS += $(ESP_ROOT)/utils/sldgen/sld_generate.py
 SLDGEN_DEPS += $(wildcard $(ESP_ROOT)/utils/sldgen/templates/*.vhd)
 
 sldgen: $(SLDGEN_DEPS)
-	$(QUIET_MKDIR)mkdir -p sldgen
+	$(QUIET_MKDIR) $(RM) $@; mkdir -p $@
 	$(QUIET_RUN)$(ESP_ROOT)/utils/sldgen/sld_generate.py $(NOC_WIDTH) $(ESP_ROOT)/tech/$(TECHLIB) $(ESP_ROOT)/utils/sldgen/templates ./sldgen
 	@touch $@
 
