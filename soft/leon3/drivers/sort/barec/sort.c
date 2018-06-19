@@ -42,6 +42,24 @@ static int validate_sorted(float *array, int len)
 	return rtn;
 }
 
+static void init_buf (float *buf, unsigned sort_size, unsigned sort_batch)
+{
+	int i, j;
+	printf("Generate random input...\n");
+	/* srand(time(NULL)); */
+	for (j = 0; j < sort_batch; j++)
+		for (i = 0; i < sort_size; i++) {
+			/* TAV rand between 0 and 1 */
+			buf[sort_size * j + i] = ((float) rand () / (float) RAND_MAX);
+			/* /\* More general testbench *\/ */
+			/* float M = 100000.0; */
+			/* buf[sort_size * j + i] =  M * ((float) rand() / (float) RAND_MAX) - M/2; */
+			/* /\* Easyto debug...! *\/ */
+			/* buf[sort_size * j + i] = (float) (sort_size - i);; */
+		}
+}
+
+
 int main(int argc, char * argv[])
 {
 	int n;
@@ -116,70 +134,7 @@ int main(int argc, char * argv[])
 
 			// Initialize input: write floating point hex values (simpler to debug)
 			printf("  Prepare input... ");
-			mem[0] = 0x42000000;
-			mem[1] = 0x41f80000;
-			mem[2] = 0x41f00000;
-			mem[3] = 0x41e80000;
-			mem[4] = 0x41e00000;
-			mem[5] = 0x41d80000;
-			mem[6] = 0x41d00000;
-			mem[7] = 0x41c80000;
-			mem[8] = 0x41c00000;
-			mem[9] = 0x41b80000;
-			mem[10] = 0x41b00000;
-			mem[11] = 0x41a80000;
-			mem[12] = 0x41a00000;
-			mem[13] = 0x41980000;
-			mem[14] = 0x41900000;
-			mem[15] = 0x41880000;
-			mem[16] = 0x41800000;
-			mem[17] = 0x41700000;
-			mem[18] = 0x41600000;
-			mem[19] = 0x41500000;
-			mem[20] = 0x41400000;
-			mem[21] = 0x41300000;
-			mem[22] = 0x41200000;
-			mem[23] = 0x41100000;
-			mem[24] = 0x41000000;
-			mem[25] = 0x40e00000;
-			mem[26] = 0x40c00000;
-			mem[27] = 0x40a00000;
-			mem[28] = 0x40800000;
-			mem[29] = 0x40400000;
-			mem[30] = 0x40000000;
-			mem[31] = 0x3f800000;
-			mem[32] = 0x42000000;
-			mem[33] = 0x41f80000;
-			mem[34] = 0x41f00000;
-			mem[35] = 0x41e80000;
-			mem[36] = 0x41e00000;
-			mem[37] = 0x41d80000;
-			mem[38] = 0x41d00000;
-			mem[39] = 0x41c80000;
-			mem[40] = 0x41c00000;
-			mem[41] = 0x41b80000;
-			mem[42] = 0x41b00000;
-			mem[43] = 0x41a80000;
-			mem[44] = 0x41a00000;
-			mem[45] = 0x41980000;
-			mem[46] = 0x41900000;
-			mem[47] = 0x41880000;
-			mem[48] = 0x41800000;
-			mem[49] = 0x41700000;
-			mem[50] = 0x41600000;
-			mem[51] = 0x41500000;
-			mem[52] = 0x41400000;
-			mem[53] = 0x41300000;
-			mem[54] = 0x41200000;
-			mem[55] = 0x41100000;
-			mem[56] = 0x41000000;
-			mem[57] = 0x40e00000;
-			mem[58] = 0x40c00000;
-			mem[59] = 0x40a00000;
-			mem[60] = 0x40800000;
-			mem[61] = 0x40400000;
-			mem[62] = 0x40000000;
-			mem[63] = 0x3f800000;
+			init_buf((float *) mem, SORT_LEN, SORT_BATCH);
 			printf("Input ready\n");
 
 			// Configure device
