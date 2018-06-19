@@ -1217,6 +1217,7 @@ architecture rtl of iu3 is
 
   signal program_counter : pctype;
   signal pv : std_ulogic;
+  signal psr : special_register_type;
   signal inst0 : word;
   signal inst1 : word;
   signal m_addr : word;
@@ -1228,6 +1229,8 @@ architecture rtl of iu3 is
   attribute keep of program_counter : signal is "true";
   attribute mark_debug of pv : signal is "true";
   attribute keep of pv : signal is "true";
+  attribute mark_debug of psr : signal is "true";
+  attribute keep of psr : signal is "true";
   -- attribute mark_debug of inst0 : signal is "true";
   -- attribute keep of inst0 : signal is "true";
   -- attribute mark_debug of inst1 : signal is "true";
@@ -4834,6 +4837,7 @@ begin
   inst0 <= r.d.inst(0);
   inst1 <= r.d.inst(1);
   m_addr <= r.m.result;
+  psr <= r.w.s;
   
 end;
 
