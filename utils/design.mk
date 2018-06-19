@@ -63,11 +63,15 @@ endif
 endif
 
 
-### Modelsim common options ###
+### Simnulation common options ###
 
 VCOMOPT  +=
 VLOGOPT  +=
 VSIMOPT  +=
+XMCOMOPT  +=
+XMLOGOPT  +=
+XMSIMOPT  +=
+
 
 # Include unisim verilog librayr
 ifneq ($(filter $(TECHLIB),$(FPGALIBS)),)
@@ -84,6 +88,7 @@ endif
 
 ifneq ($(filter $(TECHLIB),$(FPGALIBS)),)
 VSIMOPT  += glbl
+XSIMOPT  += glbl
 endif
 
 # Xilinx SGMII
@@ -96,7 +101,7 @@ VSIMOPT += -novopt +notimingchecks
 
 # Toplevel
 VSIMOPT += $(SIMTOP)
-
+XMSIMOPT += $(SIMTOP)
 
 ### Common design files ###
 SLDGEN_VHDL_RTL_PKGS += $(DESIGN_PATH)/sldgen/sld_devices.vhd

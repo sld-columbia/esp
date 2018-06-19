@@ -11,7 +11,7 @@ CPU_ARCH = leon3
 TECHLIB  = virtex7
 BOARD    = profpga-xc7v2000t
 DESIGN   = esp-$(BOARD)
-LINUX_CONFIG = leon3_defconfig
+LINUX_CONFIG = leon3_smp_defconfig
 
 
 ### NoC flit-width (not including head and tail bits)
@@ -28,6 +28,10 @@ SIMTOP = testbench
 # Compile flags
 # VHDL-93 is required by some GRLIB source files
 VCOMOPT += -93
+VLOGOPT +=
+
+XCOMOPT +=
+XLOGOPT +=
 
 # GRLIB options
 #VSIMOPT += -gdisas=1

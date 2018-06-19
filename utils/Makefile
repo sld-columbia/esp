@@ -193,12 +193,18 @@ VLIB = vlib
 VCOM = vcom -quiet $(VCOMOPT)
 VLOG = vlog -quiet $(VLOGOPT)
 
+XCOM = xmvhdl -NOVITALCHECK -linedebug -v93 -nocopyright $(XCOMOPT)
+XLOG = xmvlog -nocopyright -linedebug -sv $(XLOGOPT)
+XMELAB = xmelab -nowarn DLCPT -v93 -nocopyright -disable_sem2009 -nomxindr -timescale 10ps/10ps
+XMUPDATE = xmupdate
+
 ### Options for Vivado batch mode ###
 VIVADO_BATCH_OPT = -mode batch -quiet -notrace
 
 ### proFPGA include paths ###
-PROFPGA_INCDIR = $(PROFPGA)/hdl/generic_hdl $(PROFPGA)/hdl/mmi64 $(PROFPGA)/hdl/profpga_user
+PROFPGA_INCDIR = $(PROFPGA)/hdl/generic_hdl $(PROFPGA)/hdl/mmi64 $(PROFPGA)/hdl/profpga_user $(PROFPGA)/hdl/pd_muxdemux2
 PROFPGA_INCDIR_MODELSIM = $(foreach dir, $(PROFPGA_INCDIR), +incdir+$(dir))
+PROFPGA_INCDIR_XCELIUM = $(foreach dir, $(PROFPGA_INCDIR), -INCDIR $(dir))
 
 ### Patsh shortcuts ###
 UTILS_GRLIB = $(ESP_ROOT)/utils/grlib
@@ -552,7 +558,7 @@ check_all_rtl_srcs-distclean:
 
 modelsim/xilinx_lib: $(XILINX_VIVADO)
 	$(QUIET_MKDIR)mkdir -p $@
-	@echo "compile_simlib -directory xilinx_lib -simulator modelsim -no_ip_compile" > $@/simlib.tcl; \
+	@echo "compile_simlib -directory xilinx_lib -simulator modelsim -library unisim  -no_ip_compile" > $@/simlib.tcl; \
 	cd modelsim; \
 	vivado $(VIVADO_BATCH_OPT) -source xilinx_lib/simlib.tcl; \
 	lib_path=$$(cat modelsim.ini | grep secureip | cut -d " " -f 3); \
@@ -565,6 +571,13 @@ modelsim/xilinx_lib: $(XILINX_VIVADO)
 	sed -i '/suppress = [0-9]\+/d' modelsim.ini; \
 	sed -i '/\[msg_system\]/a suppress = 8780,8891,1491,12110\nwarning = 8891' modelsim.ini; \
 	cd ../;
+
+xcelium/xilinx_lib: $(XILINX_VIVADO)
+	$(QUIET_MKDIR)mkdir -p $@
+	@echo "compile_simlib -directory xilinx_lib -simulator xcelium -library unisim -no_ip_compile" > $@/simlib.tcl; \
+	cd xcelium; \
+	vivado $(VIVADO_BATCH_OPT) -source xilinx_lib/simlib.tcl; \
+
 
 xilinx_lib-clean:
 	$(QUIET_CLEAN)$(RM) \
@@ -579,11 +592,10 @@ xilinx_lib-clean:
 xilinx_lib-distclean: xilinx_lib-clean
 	$(QUIET_CLEAN)$(RM) \
 		modelsim/xilinx_lib \
+		xcelium/xilinx_lib
 
 .PHONY: xilinx_lib-clean xilinx_lib-distclean
 
-
-### Modelsim targets ###
 
 ifeq ("$(TECHLIB)", "virtex7")
 modelsim/mig:
@@ -605,6 +617,10 @@ modelsim/mig:
 		echo $(SPACES)"WARNING: no MIG IP was found"; \
 	fi;
 
+xcelium/mig: modelsim/mig
+	$(QUIET_MKDIR)mkdir -p xcelium
+	@cd xcelium; \
+	ln -s ../modelsim/mig;
 
 ifeq ($(CONFIG_GRETH_ENABLE),y)
 modelsim/sgmii:
@@ -624,9 +640,16 @@ modelsim/sgmii:
 	else \
 		echo $(SPACES)"WARNING: no SGMII IP was found"; \
 	fi;
+
+xcelium/sgmii: modelsim/sgmii
+	$(QUIET_MKDIR)mkdir -p xcelium
+	@cd xcelium; \
+	ln -s ../modelsim/sgmii;
 else
 
 modelsim/sgmii:
+
+xcelium/sgmii:
 
 endif
 
@@ -634,9 +657,139 @@ else
 
 modelsim/mig:
 
+xcelium/mig:
+
 modelsim/sgmii:
 
+xcelium/sgmii:
+
 endif
+
+
+### Xcelium targets ###
+
+VERILOG_XILINX_MIG_SIM = $(shell (find $(DESIGN_PATH)/xcelium/mig/mig/user_design/rtl/ -name "*.v" | grep -v "mig_mig.v"))
+
+xcelium/xmready: xcelium/xilinx_lib check_all_srcs.old $(PKG_LIST)
+	$(QUIET_MKDIR)mkdir -p xcelium
+	@cd xcelium; \
+	echo $(SPACES)"### Compile proFPGA source files ###"; \
+	grep --quiet "profpga" cds.lib; \
+	res=$$?; \
+	if [ $$res != 0 ]; then \
+		mkdir -p profpga; \
+		echo "DEFINE profpga $(DESIGN_PATH)/xcelium/profpga" >> cds.lib; \
+	fi; \
+	for vhd in $(VHDL_PROFPGA); do \
+		rtl=$(PROFPGA)/hdl/$$vhd; \
+		echo $(SPACES)"$(XCOM) -work profpga $$rtl"; \
+		$(XCOM) -work profpga $$rtl || exit; \
+	done; \
+	for ver in $(VERILOG_PROFPGA); do \
+		rtl=$(PROFPGA)/hdl/$$ver; \
+		echo $(SPACES)"$(XLOG) -work profpga -INCDIR ... $$rtl"; \
+		$(XLOG) -work profpga $(PROFPGA_INCDIR_XCELIUM) $$rtl || exit; \
+	done; \
+	echo $(SPACES)"### Compile VHDL packages ###"; \
+	grep --quiet "work" cds.lib; \
+	res=$$?; \
+	if [ $$res != 0 ]; then \
+		mkdir -p work; \
+		echo "DEFINE work $(DESIGN_PATH)/xcelium/work" >> cds.lib; \
+	fi; \
+	for vhd in $(SLDGEN_VHDL_RTL_PKGS); do \
+		rtl=$$vhd; \
+		echo $(SPACES)"$(XCOM) -work work $$rtl"; \
+		$(XCOM) -work work $$rtl || exit; \
+	done; \
+	for lib in $$(cat $(ESP_ROOT)/rtl/include/libs.txt); do \
+		for dir in $$(cat $(ESP_ROOT)/rtl/include/$$lib/dirs.txt); do \
+			for vhd in $$(cat $(ESP_ROOT)/rtl/include/$$lib/$$dir/pkgs.txt); do \
+				rtl=$(ESP_ROOT)/rtl/include/$$lib/$$dir/$$vhd; \
+				echo $(SPACES)"$(XCOM) -work work $$rtl"; \
+				$(XCOM) -work work $$rtl || exit; \
+			done; \
+			if test -d $(ESP_ROOT)/sim/include/$$lib/$$dir/; then \
+				for vhd in $$(cat $(ESP_ROOT)/sim/include/$$lib/$$dir/pkgs.txt); do \
+					rtl=$(ESP_ROOT)/sim/include/$$lib/$$dir/$$vhd; \
+					echo $(SPACES)"$(XCOM) -work work $$rtl"; \
+					$(XCOM) -work work $$rtl || exit; \
+				done; \
+			fi; \
+		done; \
+	done; \
+	for vhd in $(TOP_VHDL_RTL_PKGS); do \
+		rtl=$$vhd; \
+		echo $(SPACES)"$(XCOM) -work work $$rtl"; \
+		$(XCOM) -work work $$rtl || exit; \
+	done; \
+	echo $(SPACES)"### Compile VHDL source files ###"; \
+		for rtl in $(VHDL_SRCS); do \
+			echo $(SPACES)"$(XCOM) -work work $$rtl"; \
+			$(XCOM) -work work $$rtl || exit; \
+		done; \
+	echo $(SPACES)"### Compile Verilog source files ###"; \
+		for rtl in $(VLOG_SRCS); do \
+			echo $(SPACES)"$(XLOG) -work work -INCDIR ... $$rtl"; \
+			$(XLOG) -INCDIR $(ESP_ROOT)/rtl/src/opencores/ge_1000baseX -work work $$rtl || exit; \
+		done; \
+	echo $(SPACES)"### Compile IPs simulation files ###"; \
+	if test -r ./mig/mig.xci; then \
+		for rtl in $(VERILOG_XILINX_MIG_SIM); do \
+			echo $(SPACES)"$(XLOG) -work work $$rtl"; \
+			$(XLOG) -work work $$rtl || exit; \
+		done; \
+	fi; \
+	echo $(SPACES)"$(XLOG) -work work $(XILINX_VIVADO)/data/verilog/src/glbl.v"; \
+	$(XLOG) -work work $(XILINX_VIVADO)/data/verilog/src/glbl.v; \
+	grep --quiet "gig_ethernet_pcs_pma_v16_1_3" cds.lib; \
+	res=$$?; \
+	if [ $$res != 0 ]; then \
+		mkdir -p gig_ethernet_pcs_pma_v16_1_3; \
+		echo "DEFINE gig_ethernet_pcs_pma_v16_1_3 $(DESIGN_PATH)/xcelium/gig_ethernet_pcs_pma_v16_1_3" >> cds.lib; \
+	fi; \
+	if test -r ./sgmii/sgmii.xci; then \
+		echo $(SPACES)"$(XCOM) -wor gig_ethernet_pcs_pma_v16_1_3 ./sgmii/hdl/gig_ethernet_pcs_pma_v16_1_rfs.vhd"; \
+		$(XCOM) -work gig_ethernet_pcs_pma_v16_1_3 ./sgmii/hdl/gig_ethernet_pcs_pma_v16_1_rfs.vhd; \
+		$(XLOG) -work work ./sgmii/synth/*.v; \
+		$(XLOG) -work work ./sgmii/synth/*/*.v ;\
+        fi; \
+	ln -s ../prom.srec; \
+	ln -s ../ram.srec; \
+	echo $(SPACES)"$(XMELAB) $(SIMTOP):behav glbl"; \
+	$(XMELAB) $(SIMTOP):behav glbl && touch xmready; \
+	cd ../;
+
+
+xmsim-compile: sldgen check_all_srcs xcelium/mig xcelium/sgmii soft xcelium/xmready
+	$(QUIET_MAKE) \
+	cd xcelium; \
+	$(XMUPDATE) $(SIMTOP):behav glbl; \
+	cd ../;
+
+xmsim: xmsim-compile
+	@cd xcelium; \
+	echo $(SPACES)"xmsim $(XMSIMOPT)"; \
+	xmsim $(XMSIMOPT); \
+	cd ../
+
+xmsim-gui: xmsim-compile
+	@cd xcelium; \
+	echo $(SPACES)"xmsim -gui $(XMSIMOPT)"; \
+	xmsim -gui $(XMSIMOPT); \
+	cd ../
+
+xmsim-clean:
+	$(QUIET_CLEAN)
+
+xmsim-distclean: xmsim-clean
+	$(QUIET_CLEAN) $(RM) xcelium
+
+.PHONY: xmsim xmsim-gui xmsim-compile xmsim-clean xmsim-distclean
+
+
+
+### Modelsim targets ###
 
 # Note that vmake fails to find unisim.vcomponents, however produces the correct
 # makefile for future compilation and all components are properly bound in simulation.
