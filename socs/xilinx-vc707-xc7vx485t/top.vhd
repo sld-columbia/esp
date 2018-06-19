@@ -127,9 +127,6 @@ component ahb2mig_7series
     hindex     : integer := 0;
     haddr      : integer := 0;
     hmask      : integer := 16#f00#;
-    pindex     : integer := 0;
-    paddr      : integer := 0;
-    pmask      : integer := 16#fff#;
     SIM_BYPASS_INIT_CAL : string := "OFF";
     SIMULATION : string  := "FALSE";
     USE_MIG_INTERFACE_MODEL : boolean := false

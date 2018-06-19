@@ -158,8 +158,7 @@ component ahb2mig_7series_profpga
   generic(
     hindex     : integer := 0;
     haddr      : integer := 0;
-    hmask      : integer := 16#f00#;
-    pmask      : integer := 16#fff#
+    hmask      : integer := 16#f00#
   );
   port(
     app_addr          : out   std_logic_vector(28 downto 0);
@@ -258,10 +257,12 @@ component mig is
    c0_ui_clk               : out   std_logic;
    c0_ui_clk_sync_rst      : out   std_logic;
    c0_init_calib_complete  : out   std_logic;
+   c0_device_temp          : out   std_logic_vector(11 downto 0);
    c1_ui_clk               : out   std_logic;
    c1_ui_clk_sync_rst      : out   std_logic;
    c1_init_calib_complete  : out   std_logic;
-   sys_rst              : in    std_logic
+   c1_device_temp          : out   std_logic_vector(11 downto 0);
+   sys_rst                 : in    std_logic
    );
 end component mig;
 
@@ -735,6 +736,7 @@ begin
         c0_ui_clk               => clkm,
         c0_ui_clk_sync_rst      => clkm_sync_rst,
         c0_init_calib_complete  => c0_calib_done,
+        c0_device_temp          => open,
         c1_app_addr             => c1_app_addr,
         c1_app_cmd              => c1_app_cmd,
         c1_app_en               => c1_app_en,
@@ -756,6 +758,7 @@ begin
         c1_ui_clk               => clkm_2,
         c1_ui_clk_sync_rst      => clkm_2_sync_rst,
         c1_init_calib_complete  => c1_calib_done,
+        c1_device_temp          => open,
         sys_rst                 => rstraw
         );
 
