@@ -28,7 +28,6 @@ entity fifo2 is
 		--request registers
 		empty		: out std_logic;
 		full		: out std_logic;
-                almost_full     : out std_logic;
                 atleast_4slots  : out std_logic;
                 exactly_3slots  : out std_logic;
 		data_out 	: out std_logic_vector(width-1 downto 0));
