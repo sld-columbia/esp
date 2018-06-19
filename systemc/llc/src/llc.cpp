@@ -144,6 +144,11 @@ void llc::ctrl()
 
 		while (!dma_done) {
 
+                    bool evict_modified = false;
+                    bool evict_dirty = false;
+                    bool recall_modified = false;
+                    bool recall_shared = false;
+
 		    line_br.llc_line_breakdown(addr);
 
 		    lookup(line_br.tag, line_br.set, way, evict, llc_addr);
@@ -165,73 +170,79 @@ void llc::ctrl()
 		    else
 			send_stats(true); // hit
 #endif
+
+                    // Recall (may or may not evict depending on miss/hit)
+                    llc_rsp_in_t rsp_in;
+
+                    if (state_buf[way] == SD) {
+                        // receive and process RSP_IN until one matching the addr_evict arrives
+                        rsp_in = wait_rsp_in(addr_evict);
+                        // process the RSP_IN that matches the addr_evict
+                        process_rsp_in(rsp_in);
+
+                        {
+                            HLS_DEFINE_PROTOCOL("recall-start-protocol");
+                            wait();
+                        }
+                    }
+
+                    if (state_buf[way] == EXCLUSIVE || state_buf[way] == MODIFIED) {
+                        RECALL_EM;
+
+                        // set requestor same as owner, it means requestor = LLC
+                        send_fwd_out(FWD_GETM_LLC, addr_evict, owner_buf[way], owner_buf[way]);
+
+
+                        {
+                            HLS_DEFINE_PROTOCOL("recall-em-protocol");
+                            wait();
+                        }
+
+                        // receive and process RSP_IN until one matching the addr_evict arrives
+                        rsp_in = wait_rsp_in(addr_evict);
+
+                        if (rsp_in.coh_msg == RSP_DATA) {
+                            recall_modified = true;
+                            evict_modified = true;
+                        } else {
+                            recall_shared = true;
+                        }
+
+                    } else if (state_buf[way] == SHARED) {
+
+                        RECALL_S;
+
+                        for (int i = 0; i < MAX_N_L2; i++) {
+                            if (sharers_buf[way] & (1 << i))
+                                send_fwd_out(FWD_INV_LLC, addr_evict, i, i);
+                            wait();
+                        }
+
+                        recall_shared = true;
+                    }
+
+                    if (dirty_bit_buf[way])
+                        evict_dirty = true;
+
+                    if (evict || recall_modified || recall_shared) {
+                        owners.port1[0][llc_addr] = 0;
+                        sharers.port1[0][llc_addr] = 0;
+                    }
+
 		    if (evict) {
+                        // Eviction
 
 			LLC_EVICT;
-
-			llc_rsp_in_t rsp_in;
-
-			if (state_buf[way] == SD) {
-			    // receive and process RSP_IN until one matching the addr_evict arrives
-			    rsp_in = wait_rsp_in(addr_evict);
-			    // process the RSP_IN that matches the addr_evict
-			    process_rsp_in(rsp_in);
-
-			    {
-				HLS_DEFINE_PROTOCOL("evict-start-protocol");
-				wait();
-			    }
-			}
-
 
 			if (way == evict_way_buf)
 			    evict_ways.port1[0][line_br.set] = evict_way_buf + 1;
 
-			if (state_buf[way] == EXCLUSIVE || state_buf[way] == MODIFIED) {
 
-			    EVICT_EM;
-
-			    // set requestor same as owner, it means requestor = LLC
-			    send_fwd_out(FWD_GETM_LLC, addr_evict, owner_buf[way], owner_buf[way]);
-
-			    owners.port1[0][llc_addr] = 0;
-
-			    {
-				HLS_DEFINE_PROTOCOL("evict-em-protocol");
-				wait();
-			    }
-
-			    // receive and process RSP_IN until one matching the addr_evict arrives
-			    rsp_in = wait_rsp_in(addr_evict);
-
-			    if (rsp_in.coh_msg == RSP_DATA)
+                        if (evict_modified)
 				send_mem_req(WRITE, addr_evict, hprot_buf[way], rsp_in.line);
 
-			    else if (dirty_bit_buf[way]) // rsp_in.coh_msg == RSP_INVACK
-				send_mem_req(WRITE, addr_evict, hprot_buf[way], line_buf[way]);
-
-			} else if (state_buf[way] == SHARED) {
-
-			    EVICT_S;
-
-			    for (int i = 0; i < MAX_N_L2; i++) {
-				if (sharers_buf[way] & (1 << i))
-				    send_fwd_out(FWD_INV_LLC, addr_evict, i, i);
-				wait();
-			    }
-
-			    sharers.port1[0][llc_addr] = 0;
-
-			    if (dirty_bit_buf[way])
-				send_mem_req(WRITE, addr_evict, hprot_buf[way], line_buf[way]);
-
-			} else if (state_buf[way] == VALID) {
-
-			    EVICT_V;
-
-			    if (dirty_bit_buf[way])
-				send_mem_req(WRITE, addr_evict, hprot_buf[way], line_buf[way]);
-			}
+                        else if (evict_dirty)
+                            send_mem_req(WRITE, addr_evict, hprot_buf[way], line_buf[way]);
 
 			state_buf[way] = INVALID;
 
@@ -239,7 +250,19 @@ void llc::ctrl()
 			    HLS_DEFINE_PROTOCOL("llc-req-in-after-evict");
 			    wait();
 			}
-		    }
+		    } else if (recall_modified) {
+                        state_buf[way] = VALID;
+                        line_buf[way] = rsp_in.line;
+
+                        hprots.port1[0][llc_addr] = DATA;
+                        lines.port1[0][llc_addr] = rsp_in.line;
+                        states.port1[0][llc_addr] = VALID;
+                        dirty_bits.port1[0][llc_addr] = 1;
+                    } else if (recall_shared) {
+                        state_buf[way] = VALID;
+
+                        states.port1[0][llc_addr] = VALID;
+                    }
 
 		    if (req_in.coh_msg == REQ_DMA_READ_BURST) {
 

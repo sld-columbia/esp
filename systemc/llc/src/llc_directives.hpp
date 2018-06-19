@@ -38,6 +38,14 @@
     if (RPT_RTL) CACHE_REPORT_TIME(sc_time_stamp(), "Evict.")
     // HLS_DEFINE_PROTOCOL("llc-evict");
 
+#define RECALL_EM							\
+    bookmark_tmp |= BM_RECALL_EM;					\
+    if (RPT_RTL) CACHE_REPORT_TIME(sc_time_stamp(), "Recall EM.")
+
+#define RECALL_S							\
+    bookmark_tmp |= BM_RECALL_S;					\
+    if (RPT_RTL) CACHE_REPORT_TIME(sc_time_stamp(), "Recall S.")
+
 #define EVICT_EM							\
     bookmark_tmp |= BM_EVICT_EM;					\
     if (RPT_RTL) CACHE_REPORT_TIME(sc_time_stamp(), "Evict EM.")
@@ -271,6 +279,12 @@
 #define LLC_EVICT						\
     if (RPT_RTL) CACHE_REPORT_TIME(sc_time_stamp(), "Evict.")
     // HLS_DEFINE_PROTOCOL("llc-evict");
+
+#define RECALL_EM							\
+    if (RPT_RTL) CACHE_REPORT_TIME(sc_time_stamp(), "Recall EM.")
+
+#define RECALL_S							\
+    if (RPT_RTL) CACHE_REPORT_TIME(sc_time_stamp(), "Recall S.")
 
 #define EVICT_EM							\
     if (RPT_RTL) CACHE_REPORT_TIME(sc_time_stamp(), "Evict EM.")
