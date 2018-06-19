@@ -30,7 +30,6 @@ library ieee;
 use ieee.std_logic_1164.all;
 use work.config_types.all;
 use work.config.all;
---pragma translate_off
 library unisim;
 use unisim.vcomponents.RAMB16_S36_S36;
 use unisim.vcomponents.RAMB16_S36;
@@ -39,7 +38,6 @@ use unisim.vcomponents.RAMB16_S9;
 use unisim.vcomponents.RAMB16_S4;
 use unisim.vcomponents.RAMB16_S2;
 use unisim.vcomponents.RAMB16_S1;
---pragma translate_on
 
 entity unisim_syncram is
   generic ( abits : integer := 9; dbits : integer := 32);
@@ -54,107 +52,6 @@ entity unisim_syncram is
 end;
 
 architecture behav of unisim_syncram is
-  component RAMB16_S36_S36
-  generic (SIM_COLLISION_CHECK : string := "ALL");
-  port (
-    DOA : out std_logic_vector (31 downto 0);
-    DOB : out std_logic_vector (31 downto 0);
-    DOPA : out std_logic_vector (3 downto 0);
-    DOPB : out std_logic_vector (3 downto 0);
-    ADDRA : in std_logic_vector (8 downto 0);
-    ADDRB : in std_logic_vector (8 downto 0);
-    CLKA : in std_ulogic;
-    CLKB : in std_ulogic;
-    DIA : in std_logic_vector (31 downto 0);
-    DIB : in std_logic_vector (31 downto 0);
-    DIPA : in std_logic_vector (3 downto 0);
-    DIPB : in std_logic_vector (3 downto 0);
-    ENA : in std_ulogic;
-    ENB : in std_ulogic;
-    SSRA : in std_ulogic;
-    SSRB : in std_ulogic;
-    WEA : in std_ulogic;
-    WEB : in std_ulogic);
-  end component;
-
-  component RAMB16_S1
-  port (
-    DO : out std_logic_vector (0 downto 0);
-    ADDR : in std_logic_vector (13 downto 0);
-    CLK : in std_ulogic;
-    DI : in std_logic_vector (0 downto 0);
-    EN : in std_ulogic;
-    SSR : in std_ulogic;
-    WE : in std_ulogic
-  );
-end component;
-
-  component RAMB16_S2
- port (
-   DO : out std_logic_vector (1 downto 0);
-   ADDR : in std_logic_vector (12 downto 0);
-   CLK : in std_ulogic;
-   DI : in std_logic_vector (1 downto 0);
-   EN : in std_ulogic;
-   SSR : in std_ulogic;
-   WE : in std_ulogic
- );
-  end component;
-
-  component RAMB16_S4
- port (
-   DO : out std_logic_vector (3 downto 0);
-   ADDR : in std_logic_vector (11 downto 0);
-   CLK : in std_ulogic;
-   DI : in std_logic_vector (3 downto 0);
-   EN : in std_ulogic;
-   SSR : in std_ulogic;
-   WE : in std_ulogic
- );
-  end component;
-
-  component RAMB16_S9
- port (
-   DO : out std_logic_vector (7 downto 0);
-   DOP : out std_logic_vector (0 downto 0);
-   ADDR : in std_logic_vector (10 downto 0);
-   CLK : in std_ulogic;
-   DI : in std_logic_vector (7 downto 0);
-   DIP : in std_logic_vector (0 downto 0);
-   EN : in std_ulogic;
-   SSR : in std_ulogic;
-   WE : in std_ulogic
- );
-  end component;
-
-  component RAMB16_S18
-  port (
-    DO : out std_logic_vector (15 downto 0);
-    DOP : out std_logic_vector (1 downto 0);
-    ADDR : in std_logic_vector (9 downto 0);
-    CLK : in std_ulogic;
-    DI : in std_logic_vector (15 downto 0);
-    DIP : in std_logic_vector (1 downto 0);
-    EN : in std_ulogic;
-    SSR : in std_ulogic;
-    WE : in std_ulogic
-  );
-  end component;
-
- component RAMB16_S36
- port (
-   DO : out std_logic_vector (31 downto 0);
-   DOP : out std_logic_vector (3 downto 0);
-   ADDR : in std_logic_vector (8 downto 0);
-   CLK : in std_ulogic;
-   DI : in std_logic_vector (31 downto 0);
-   DIP : in std_logic_vector (3 downto 0);
-   EN : in std_ulogic;
-   SSR : in std_ulogic;
-   WE : in std_ulogic
- );
-end component;
-
   component generic_syncram
   generic ( abits : integer := 10; dbits : integer := 8 );
   port (
@@ -268,7 +165,6 @@ LIBRARY ieee;
 use ieee.std_logic_1164.all;
 use ieee.std_logic_arith.all;
 use ieee.std_logic_unsigned.all;
---pragma translate_off
 library unisim;
 use unisim.vcomponents.RAMB16_S36_S36;
 use unisim.vcomponents.RAMB16_S18_S18;
@@ -276,7 +172,6 @@ use unisim.vcomponents.RAMB16_S9_S9;
 use unisim.vcomponents.RAMB16_S4_S4;
 use unisim.vcomponents.RAMB16_S2_S2;
 use unisim.vcomponents.RAMB16_S1_S1;
---pragma translate_on
 
 entity unisim_syncram_dp is
   generic (
@@ -299,135 +194,6 @@ end;
 
 architecture behav of unisim_syncram_dp is
 
-  component RAMB16_S4_S4
- generic (SIM_COLLISION_CHECK : string := "ALL");
- port (
-   DOA : out std_logic_vector (3 downto 0);
-   DOB : out std_logic_vector (3 downto 0);
-   ADDRA : in std_logic_vector (11 downto 0);
-   ADDRB : in std_logic_vector (11 downto 0);
-   CLKA : in std_ulogic;
-   CLKB : in std_ulogic;
-   DIA : in std_logic_vector (3 downto 0);
-   DIB : in std_logic_vector (3 downto 0);
-   ENA : in std_ulogic;
-   ENB : in std_ulogic;
-   SSRA : in std_ulogic;
-   SSRB : in std_ulogic;
-   WEA : in std_ulogic;
-   WEB : in std_ulogic
- );
-  end component;
-
-  component RAMB16_S1_S1
- generic (SIM_COLLISION_CHECK : string := "ALL");
- port (
-   DOA : out std_logic_vector (0 downto 0);
-   DOB : out std_logic_vector (0 downto 0);
-   ADDRA : in std_logic_vector (13 downto 0);
-   ADDRB : in std_logic_vector (13 downto 0);
-   CLKA : in std_ulogic;
-   CLKB : in std_ulogic;
-   DIA : in std_logic_vector (0 downto 0);
-   DIB : in std_logic_vector (0 downto 0);
-   ENA : in std_ulogic;
-   ENB : in std_ulogic;
-   SSRA : in std_ulogic;
-   SSRB : in std_ulogic;
-   WEA : in std_ulogic;
-   WEB : in std_ulogic
- );
-  end component;
-
-  component RAMB16_S2_S2
- generic (SIM_COLLISION_CHECK : string := "ALL");
- port (
-   DOA : out std_logic_vector (1 downto 0);
-   DOB : out std_logic_vector (1 downto 0);
-   ADDRA : in std_logic_vector (12 downto 0);
-   ADDRB : in std_logic_vector (12 downto 0);
-   CLKA : in std_ulogic;
-   CLKB : in std_ulogic;
-   DIA : in std_logic_vector (1 downto 0);
-   DIB : in std_logic_vector (1 downto 0);
-   ENA : in std_ulogic;
-   ENB : in std_ulogic;
-   SSRA : in std_ulogic;
-   SSRB : in std_ulogic;
-   WEA : in std_ulogic;
-   WEB : in std_ulogic
- );
-  end component;
-
-  component RAMB16_S9_S9
- generic (SIM_COLLISION_CHECK : string := "ALL");
- port (
-   DOA : out std_logic_vector (7 downto 0);
-   DOB : out std_logic_vector (7 downto 0);
-   DOPA : out std_logic_vector (0 downto 0);
-   DOPB : out std_logic_vector (0 downto 0);
-   ADDRA : in std_logic_vector (10 downto 0);
-   ADDRB : in std_logic_vector (10 downto 0);
-   CLKA : in std_ulogic;
-   CLKB : in std_ulogic;
-   DIA : in std_logic_vector (7 downto 0);
-   DIB : in std_logic_vector (7 downto 0);
-   DIPA : in std_logic_vector (0 downto 0);
-   DIPB : in std_logic_vector (0 downto 0);
-   ENA : in std_ulogic;
-   ENB : in std_ulogic;
-   SSRA : in std_ulogic;
-   SSRB : in std_ulogic;
-   WEA : in std_ulogic;
-   WEB : in std_ulogic
- );
-end component;
-
-  component RAMB16_S18_S18
-  generic (SIM_COLLISION_CHECK : string := "ALL");
-  port (
-    DOA : out std_logic_vector (15 downto 0);
-    DOB : out std_logic_vector (15 downto 0);
-    DOPA : out std_logic_vector (1 downto 0);
-    DOPB : out std_logic_vector (1 downto 0);
-    ADDRA : in std_logic_vector (9 downto 0);
-    ADDRB : in std_logic_vector (9 downto 0);
-    CLKA : in std_ulogic;
-    CLKB : in std_ulogic;
-    DIA : in std_logic_vector (15 downto 0);
-    DIB : in std_logic_vector (15 downto 0);
-    DIPA : in std_logic_vector (1 downto 0);
-    DIPB : in std_logic_vector (1 downto 0);
-    ENA : in std_ulogic;
-    ENB : in std_ulogic;
-    SSRA : in std_ulogic;
-    SSRB : in std_ulogic;
-    WEA : in std_ulogic;
-    WEB : in std_ulogic);
-  end component;
-
-  component RAMB16_S36_S36
-  generic (SIM_COLLISION_CHECK : string := "ALL");
-  port (
-    DOA : out std_logic_vector (31 downto 0);
-    DOB : out std_logic_vector (31 downto 0);
-    DOPA : out std_logic_vector (3 downto 0);
-    DOPB : out std_logic_vector (3 downto 0);
-    ADDRA : in std_logic_vector (8 downto 0);
-    ADDRB : in std_logic_vector (8 downto 0);
-    CLKA : in std_ulogic;
-    CLKB : in std_ulogic;
-    DIA : in std_logic_vector (31 downto 0);
-    DIB : in std_logic_vector (31 downto 0);
-    DIPA : in std_logic_vector (3 downto 0);
-    DIPB : in std_logic_vector (3 downto 0);
-    ENA : in std_ulogic;
-    ENB : in std_ulogic;
-    SSRA : in std_ulogic;
-    SSRB : in std_ulogic;
-    WEA : in std_ulogic;
-    WEB : in std_ulogic);
-  end component;
 
 signal gnd, vcc : std_ulogic;
 signal do1, do2, di1, di2 : std_logic_vector(dbits+36 downto 0);
@@ -750,10 +516,8 @@ end;
 
 library ieee;
 use ieee.std_logic_1164.all;
---pragma translate_off
 library unisim;
 use unisim.vcomponents.RAMB16_S36_S36;
---pragma translate_on
 
 entity unisim_syncram64 is
   generic ( abits : integer := 9);
@@ -779,28 +543,6 @@ component unisim_syncram
     write   : in std_ulogic
   );
 end component;
-  component RAMB16_S36_S36
-  generic (SIM_COLLISION_CHECK : string := "ALL");
-  port (
-    DOA : out std_logic_vector (31 downto 0);
-    DOB : out std_logic_vector (31 downto 0);
-    DOPA : out std_logic_vector (3 downto 0);
-    DOPB : out std_logic_vector (3 downto 0);
-    ADDRA : in std_logic_vector (8 downto 0);
-    ADDRB : in std_logic_vector (8 downto 0);
-    CLKA : in std_ulogic;
-    CLKB : in std_ulogic;
-    DIA : in std_logic_vector (31 downto 0);
-    DIB : in std_logic_vector (31 downto 0);
-    DIPA : in std_logic_vector (3 downto 0);
-    DIPB : in std_logic_vector (3 downto 0);
-    ENA : in std_ulogic;
-    ENB : in std_ulogic;
-    SSRA : in std_ulogic;
-    SSRB : in std_ulogic;
-    WEA : in std_ulogic;
-    WEB : in std_ulogic);
-  end component;
 
 signal gnd : std_logic_vector(3 downto 0);
 signal xa, ya : std_logic_vector(19 downto 0);
@@ -866,10 +608,8 @@ end;
 
 library ieee;
 use ieee.std_logic_1164.all;
---pragma translate_off
 library unisim;
-use unisim.vcomponents.RAMB16_S36_S36;
---pragma translate_on
+use unisim.vcomponents.RAMB16_S9_S9;
 
 entity unisim_syncram128bw is
   generic ( abits : integer := 9);
@@ -894,29 +634,6 @@ component unisim_syncram
     enable  : in std_ulogic;
     write   : in std_ulogic
   );
-end component;
-  component RAMB16_S9_S9
- generic (SIM_COLLISION_CHECK : string := "ALL");
- port (
-   DOA : out std_logic_vector (7 downto 0);
-   DOB : out std_logic_vector (7 downto 0);
-   DOPA : out std_logic_vector (0 downto 0);
-   DOPB : out std_logic_vector (0 downto 0);
-   ADDRA : in std_logic_vector (10 downto 0);
-   ADDRB : in std_logic_vector (10 downto 0);
-   CLKA : in std_ulogic;
-   CLKB : in std_ulogic;
-   DIA : in std_logic_vector (7 downto 0);
-   DIB : in std_logic_vector (7 downto 0);
-   DIPA : in std_logic_vector (0 downto 0);
-   DIPB : in std_logic_vector (0 downto 0);
-   ENA : in std_ulogic;
-   ENB : in std_ulogic;
-   SSRA : in std_ulogic;
-   SSRB : in std_ulogic;
-   WEA : in std_ulogic;
-   WEB : in std_ulogic
- );
 end component;
 
 signal gnd : std_logic_vector(3 downto 0);
@@ -955,12 +672,10 @@ use ieee.std_logic_1164.all;
 use work.stdlib.orv;
 use work.config_types.all;
 use work.config.all;
---pragma translate_off
 library unisim;
 use unisim.vcomponents.RAMB36;
 use unisim.vcomponents.RAMB18;
 use unisim.vcomponents.RAMB18SDP;
---pragma translate_on
 
 entity unisim_syncram_be is
   generic ( abits : integer := 9; dbits : integer := 32; tech : integer := 0);
@@ -975,102 +690,6 @@ entity unisim_syncram_be is
 end;
 
 architecture behav of unisim_syncram_be is
-
-  -- Virtex5 primitives --
-  component RAMB36
-  generic (
-     READ_WIDTH_A : integer := 0;
-     READ_WIDTH_B : integer := 0;
-     SIM_COLLISION_CHECK : string := "ALL";
-     WRITE_WIDTH_A : integer := 0;
-     WRITE_WIDTH_B : integer := 0
-  );
-  port (
-     CASCADEOUTLATA : out std_ulogic;
-     CASCADEOUTLATB : out std_ulogic;
-     CASCADEOUTREGA : out std_ulogic;
-     CASCADEOUTREGB : out std_ulogic;
-     DOA : out std_logic_vector(31 downto 0);
-     DOB : out std_logic_vector(31 downto 0);
-     DOPA : out std_logic_vector(3 downto 0);
-     DOPB : out std_logic_vector(3 downto 0);
-     ADDRA : in std_logic_vector(15 downto 0);
-     ADDRB : in std_logic_vector(15 downto 0);
-     CASCADEINLATA : in std_ulogic;
-     CASCADEINLATB : in std_ulogic;
-     CASCADEINREGA : in std_ulogic;
-     CASCADEINREGB : in std_ulogic;
-     CLKA : in std_ulogic;
-     CLKB : in std_ulogic;
-     DIA : in std_logic_vector(31 downto 0);
-     DIB : in std_logic_vector(31 downto 0);
-     DIPA : in std_logic_vector(3 downto 0);
-     DIPB : in std_logic_vector(3 downto 0);
-     ENA : in std_ulogic;
-     ENB : in std_ulogic;
-     REGCEA : in std_ulogic;
-     REGCEB : in std_ulogic;
-     SSRA : in std_ulogic;
-     SSRB : in std_ulogic;
-     WEA : in std_logic_vector(3 downto 0);
-     WEB : in std_logic_vector(3 downto 0)
-  );
-  end component;
-
-  component RAMB18
-  generic (
-     READ_WIDTH_A : integer := 0;
-     READ_WIDTH_B : integer := 0;
-     SIM_COLLISION_CHECK : string := "ALL";
-     WRITE_WIDTH_A : integer := 0;
-     WRITE_WIDTH_B : integer := 0
-  );
-  port (
-     DOA : out std_logic_vector(15 downto 0);
-     DOB : out std_logic_vector(15 downto 0);
-     DOPA : out std_logic_vector(1 downto 0);
-     DOPB : out std_logic_vector(1 downto 0);
-     ADDRA : in std_logic_vector(13 downto 0);
-     ADDRB : in std_logic_vector(13 downto 0);
-     CLKA : in std_ulogic;
-     CLKB : in std_ulogic;
-     DIA : in std_logic_vector(15 downto 0);
-     DIB : in std_logic_vector(15 downto 0);
-     DIPA : in std_logic_vector(1 downto 0);
-     DIPB : in std_logic_vector(1 downto 0);
-     ENA : in std_ulogic;
-     ENB : in std_ulogic;
-     REGCEA : in std_ulogic;
-     REGCEB : in std_ulogic;
-     SSRA : in std_ulogic;
-     SSRB : in std_ulogic;
-     WEA : in std_logic_vector(1 downto 0);
-     WEB : in std_logic_vector(1 downto 0)
-  );
-  end component;
-
-  component RAMB18SDP
-  generic (
-     DO_REG : integer := 0;
-     SIM_COLLISION_CHECK : string := "ALL";
-     SIM_MODE : string := "SAFE");
-  port (
-     DO : out std_logic_vector(31 downto 0);
-     DOP : out std_logic_vector(3 downto 0);
-     DI : in std_logic_vector(31 downto 0);
-     DIP : in std_logic_vector(3 downto 0);
-     RDADDR : in std_logic_vector(8 downto 0);
-     RDCLK : in std_ulogic;
-     RDEN : in std_ulogic;
-     REGCE : in std_ulogic;
-     SSR : in std_ulogic;
-     WE : in std_logic_vector(3 downto 0);
-     WRADDR : in std_logic_vector(8 downto 0);
-     WRCLK : in std_ulogic;
-     WREN : in std_ulogic
-  );
-  end component;
-  -----------------------
 
   component generic_syncram
   generic ( abits : integer := 10; dbits : integer := 8 );
