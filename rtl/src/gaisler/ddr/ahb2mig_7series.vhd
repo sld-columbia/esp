@@ -44,9 +44,6 @@ entity ahb2mig_7series is
     hindex                  : integer := 0;
     haddr                   : integer := 0;
     hmask                   : integer := 16#f00#;
-    pindex                  : integer := 0;
-    paddr                   : integer := 0;
-    pmask                   : integer := 16#fff#;
     maxwriteburst           : integer := 8;
     maxreadburst            : integer := 8;
     SIM_BYPASS_INIT_CAL     : string  := "OFF";
@@ -96,10 +93,6 @@ constant hconfig : ahb_config_type := (
    0 => ahb_device_reg ( VENDOR_GAISLER, GAISLER_MIG_7SERIES, 0, 0, 0),
    4 => ahb_membar(haddr, '1', '1', hmask),
    others => zero32);
-
-constant pconfig : apb_config_type := (
-  0 => ahb_device_reg ( VENDOR_GAISLER, GAISLER_MIG_7SERIES, 0, 0, 0),
-  1 => apb_iobar(paddr, pmask));
 
 type reg_type is record
   bstate          : bstate_type;
@@ -196,6 +189,7 @@ signal size_to_watch : std_logic_vector(2 downto 0) := HSIZE_4WORD;
     ui_clk               : out   std_logic;
     ui_clk_sync_rst      : out   std_logic;
     init_calib_complete  : out   std_logic;
+    device_temp          : out   std_logic_vector(11 downto 0);
     sys_rst              : in    std_logic
     );
  end component mig;
@@ -700,6 +694,7 @@ begin
    ui_clk               => ui_clk,
    ui_clk_sync_rst      => ui_clk_sync_rst,
    init_calib_complete  => calib_done,
+   device_temp          => open,
    sys_rst              => rst_n_async
    );
  end generate gen_mig;
