@@ -47,7 +47,6 @@ static void fft2d_prep_xfer(struct esp_device *esp, void *arg)
 	struct fft2d_access *access = arg;
 	unsigned size = 1 << access->log2;
 
-	esp->coherence = access->esp.coherence;
 	iowrite32be(size, esp->iomem + FFT2D_REG_SIZE);
 	iowrite32be(access->log2, esp->iomem + FFT2D_REG_LOG2);
 	iowrite32be(size, esp->iomem + FFT2D_REG_BATCH);

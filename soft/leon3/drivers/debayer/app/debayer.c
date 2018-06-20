@@ -31,7 +31,7 @@ struct debayer_test {
 };
 
 static const char usage_str[] = "usage: debayer coherence cmd [in_file] [gold_file]\n"
-	"  coherence: none|llc|full\n"
+	"  coherence: none|llc|recall|full\n"
 	"  cmd: config|test|run|hw\n"
 	"\n"
 	"Optional arguments: in_file applies to 'config', 'hw' and 'test':\n"

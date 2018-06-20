@@ -16,7 +16,7 @@
 #define NAME "spmv"
 
 static const char usage_str[] = "usage: spmv coherence cmd [plm_size] [fit_plm] [in_file] [-v]\n"
-	"  coherence : none|llc|full\n"
+	"  coherence : none|llc|recall|full\n"
 	"  cmd       : config|test|run|hw\n"
 	"\n"
 	"Optional arguments: these are required for 'config', 'test' and 'hw'\n"

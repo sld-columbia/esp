@@ -49,7 +49,6 @@ static void debayer_prep_xfer(struct esp_device *esp, void *arg)
 	struct debayer_access *a = arg;
 	unsigned int dest = DEBAYER_INPUT_SIZE(a->rows, a->cols);
 
-	esp->coherence = a->esp.coherence;
 	iowrite32be(dest, esp->iomem + DST_OFFSET_REG);
 	iowrite32be(a->rows, esp->iomem + DEBAYER_ROWS_REG);
 	iowrite32be(a->cols, esp->iomem + DEBAYER_COLS_REG);

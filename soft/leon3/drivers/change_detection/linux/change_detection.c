@@ -74,7 +74,6 @@ static void chdet_prep_xfer(struct esp_device *esp, void *arg)
 {
 	struct change_detection_access *access = arg;
 
-	esp->coherence = access->esp.coherence;
 	iowrite32be(access->rows, esp->iomem + CHDET_REG_NUM_ROW);
 	iowrite32be(access->cols, esp->iomem + CHDET_REG_NUM_COL);
 }

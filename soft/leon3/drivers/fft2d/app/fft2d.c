@@ -16,7 +16,7 @@
 #define NAME "fft2d"
 
 static const char usage_str[] = "usage: coherence cmd len_log [-v]\n"
-	"  coherence: none|llc|full\n"
+	"  coherence: none|llc|recall|full\n"
 	"  cmd: config|test|run|hw\n"
 	"  len_log: log2 of the number of elements of the FFT2D\n"
 	"The remaining option is only optional for 'test':\n"

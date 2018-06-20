@@ -45,7 +45,6 @@ static void spmv_prep_xfer(struct esp_device *esp, void *arg)
 {
 	struct spmv_access *a = arg;
 
-	esp->coherence = a->esp.coherence;
 	iowrite32be(a->nrows, esp->iomem + SPMV_NROWS_REG);
 	iowrite32be(a->ncols, esp->iomem + SPMV_NCOLS_REG);
 	iowrite32be(a->max_nonzero, esp->iomem + SPMV_MAX_NONZERO_REG);

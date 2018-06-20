@@ -14,8 +14,8 @@
 #define NAME "sort"
 
 static const char usage_str[] = "usage: sort coherence cmd [n_elems] [n_batches] [-v]\n"
-	"  coherence: none|llc|full\n"
-	"  cmd: config|test|run|hw\n"
+	"  coherence: none|llc|recall|full\n"
+	"  cmd: config|test|run|hw|flush\n"
 	"\n"
 	"Optional arguments: n_elems and batch apply to 'config', 'hw' and 'test':\n"
 	"  n_elems: number of elements per batch to be sorted\n"
@@ -277,7 +277,7 @@ int main(int argc, char *argv[])
 	if (argc < 3)
 		usage();
 
-	if (!strcmp(argv[2], "run"))
+	if (!strcmp(argv[2], "run") || !strcmp(argv[2], "flush"))
 		n_argc = 3;
 	else
 		n_argc = 5;

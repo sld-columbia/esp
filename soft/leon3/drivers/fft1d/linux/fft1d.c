@@ -45,7 +45,6 @@ static void fft_prep_xfer(struct esp_device *esp, void *arg)
 	struct fft1d_access *access = arg;
 	unsigned size = 1 << access->log2;
 
-	esp->coherence = access->esp.coherence;
 	iowrite32be(size, esp->iomem + FFT_REG_LEN);
 	iowrite32be(access->log2, esp->iomem + FFT_REG_LOG_LEN);
 }
