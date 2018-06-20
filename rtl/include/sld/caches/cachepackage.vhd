@@ -36,9 +36,12 @@ package cachepackage is
   constant MSG_DMA_PLANE : std_logic_vector(1 downto 0) := "11";
 
   -- Accelerator coherence type encoding
-  constant ACC_COH_NONE : integer := 0;
-  constant ACC_COH_LLC : integer := 1;
-  constant ACC_COH_FULL : integer := 2;
+  constant ACC_COH_NONE   : integer := 0;
+  constant ACC_COH_LLC    : integer := 1;
+  constant ACC_COH_RECALL : integer := 2;
+  constant ACC_COH_FULL   : integer := 3;
+
+  constant COH_T_LOG2     : integer := 2;
 
   -- TODO: The following are predefined by processor architecture and should
   --       not be set here

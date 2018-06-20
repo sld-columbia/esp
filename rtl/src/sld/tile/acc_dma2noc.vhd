@@ -286,11 +286,11 @@ begin  -- rtl
                                    dma_snd_wrreq_int, dma_snd_data_in_int, dma_snd_full,
                                    llc_coherent_dma_rcv_data_out, llc_coherent_dma_rcv_empty,
                                    llc_coherent_dma_snd_full) is
-    variable coherence : integer range 0 to 2;
+    variable coherence : integer range 0 to ACC_COH_FULL;
   begin  -- process coherence_model_select
-    coherence := conv_integer(bankreg(COHERENCE_REG)(1 downto 0));
+    coherence := conv_integer(bankreg(COHERENCE_REG)(COH_T_LOG2 - 1 downto 0));
 
-    if coherence = ACC_COH_LLC then
+    if coherence = ACC_COH_LLC or coherence = ACC_COH_RECALL then
       llc_coherent_dma_rcv_rdreq   <= dma_rcv_rdreq_int;
       dma_rcv_data_out_int         <= llc_coherent_dma_rcv_data_out;
       dma_rcv_empty_int            <= llc_coherent_dma_rcv_empty;
@@ -319,17 +319,17 @@ begin  -- rtl
     variable address : std_logic_vector(31 downto 0);
     variable length : std_logic_vector(31 downto 0);
     variable mem_x, mem_y : local_yx;
-    variable coherence : integer range 0 to 2;
+    variable coherence : integer range 0 to ACC_COH_FULL;
   begin  -- process make_packet
 
     -- Get coherence model from configuration registers
-    coherence := conv_integer(bankreg(COHERENCE_REG)(1 downto 0));
+    coherence := conv_integer(bankreg(COHERENCE_REG)(COH_T_LOG2 - 1 downto 0));
 
     if tlb_empty = '1' then
       -- fetch page table
       address := bankreg(PT_ADDRESS_REG);
       length  := bankreg(PT_NCHUNK_REG);
-      if coherence = ACC_COH_LLC then
+      if coherence = ACC_COH_LLC or coherence = ACC_COH_RECALL then
         msg_type := REQ_DMA_READ;
       else
         msg_type := DMA_TO_DEV;
@@ -338,7 +338,7 @@ begin  -- rtl
       -- accelerator write burst
       address := dma_address;
       length  := "00" & dma_length(31 downto 2);
-      if coherence = ACC_COH_LLC then
+      if coherence = ACC_COH_LLC or coherence = ACC_COH_RECALL then
         msg_type := REQ_DMA_WRITE;
       else
         msg_type := DMA_FROM_DEV;
@@ -347,7 +347,7 @@ begin  -- rtl
       -- accelerator read burst
       address := dma_address;
       length  := "00" & dma_length(31 downto 2);
-      if coherence = ACC_COH_LLC then
+      if coherence = ACC_COH_LLC or coherence = ACC_COH_RECALL then
         msg_type := REQ_DMA_READ;
       else
         msg_type := DMA_TO_DEV;
@@ -431,11 +431,11 @@ begin  -- rtl
     variable msg : noc_msg_type;
     variable len : std_logic_vector(31 downto 0);
     variable tlb_wr_address_next : std_logic_vector(31 downto 0);
-    variable coherence : integer range 0 to 2;
+    variable coherence : integer range 0 to ACC_COH_FULL;
   begin  -- process dma_roundtrip
 
     -- Get coherence model from configuration registers
-    coherence := conv_integer(bankreg(COHERENCE_REG)(1 downto 0));
+    coherence := conv_integer(bankreg(COHERENCE_REG)(COH_T_LOG2 - 1 downto 0));
 
     dma_next <= dma_state;
     sample_flits <= '0';
