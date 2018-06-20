@@ -12,13 +12,13 @@
 #define SLD_SORT   0x0B
 #define DEV_NAME "sort"
 
-#define SORT_LEN 32
+#define SORT_LEN 64
 #define SORT_BATCH 2
 
 #define SORT_BUF_SIZE (SORT_LEN * SORT_BATCH * sizeof(unsigned))
 
 /* Size of the contiguous chunks for scatter/gather */
-#define CHUNK_SHIFT 6
+#define CHUNK_SHIFT 7
 #define CHUNK_SIZE BIT(CHUNK_SHIFT)
 #define NCHUNK ((SORT_BUF_SIZE % CHUNK_SIZE == 0) ?			\
 			(SORT_BUF_SIZE / CHUNK_SIZE) :			\
@@ -45,7 +45,7 @@ static int validate_sorted(float *array, int len)
 static void init_buf (float *buf, unsigned sort_size, unsigned sort_batch)
 {
 	int i, j;
-	printf("Generate random input...\n");
+	printf("  Generate random input...\n");
 	/* srand(time(NULL)); */
 	for (j = 0; j < sort_batch; j++)
 		for (i = 0; i < sort_size; i++) {
@@ -92,8 +92,7 @@ int main(int argc, char * argv[])
 			sort_len_min = ioread32(dev, SORT_LEN_MIN_REG);
 			sort_len_max = ioread32(dev, SORT_LEN_MAX_REG);
 
-			printf("Testing %s.%d \n  -> process up to %d fp-vectors of size [%d, %d]\n",
-				DEV_NAME, n, sort_batch_max, sort_len_min, sort_len_max);
+			printf("******************** %s.%d ********************\n", DEV_NAME, n);
 
 			// Check access ok
 			if (SORT_LEN < sort_len_min ||
@@ -101,6 +100,9 @@ int main(int argc, char * argv[])
 				SORT_BATCH < 1 ||
 				SORT_BATCH > sort_batch_max) {
 				fprintf(stderr, "  Error: unsopported configuration parameters for %s.%d\n", DEV_NAME, n);
+				fprintf(stderr, "         device can sort up to %d fp-vectors of size [%d, %d]\n",
+					sort_batch_max, sort_len_min, sort_len_max);
+
 				break;
 			}
 
@@ -133,9 +135,7 @@ int main(int argc, char * argv[])
 			}
 
 			// Initialize input: write floating point hex values (simpler to debug)
-			printf("  Prepare input... ");
 			init_buf((float *) mem, SORT_LEN, SORT_BATCH);
-			printf("Input ready\n");
 
 			// Configure device
 			iowrite32(dev, SELECT_REG, ioread32(dev, DEVID_REG));
@@ -179,19 +179,20 @@ int main(int argc, char * argv[])
 			printf("  validating...\n");
 			for (j = 0; j < SORT_BATCH; j++) {
 				int err = validate_sorted((float *) &mem[j * SORT_LEN], SORT_LEN);
-				if (err != 0)
-					fprintf(stderr, "  Error: %s.%d mismatch on batch %d\n", DEV_NAME, n, j);
+				/* if (err != 0) */
+				/* 	fprintf(stderr, "  Error: %s.%d mismatch on batch %d\n", DEV_NAME, n, j); */
 				errors += err;
 			}
 			if (errors)
 				printf("  ... FAIL\n");
 			else
 				printf("  ... PASS\n");
-			printf("\n");
 
 			if (scatter_gather)
 				aligned_free(ptable);
 			aligned_free(mem);
+
+			printf("**************************************************\n\n", DEV_NAME, n);
 		}
 	}
 	return 0;
