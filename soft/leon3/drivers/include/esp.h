@@ -20,6 +20,7 @@ struct esp_access {
 };
 
 #define ESP_IOC_RUN _IO('E', 0)
+#define ESP_IOC_FLUSH _IO('E', 1)
 
 #ifdef __KERNEL__
 

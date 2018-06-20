@@ -40,15 +40,23 @@ void esp_flush(int coherence)
 	int nl2 = 0;
 	int pid = get_pid();
 
+	switch (coherence) {
+	case ACC_COH_NONE   : printf("  -> Non-coherent DMA\n"); break;
+	case ACC_COH_LLC    : printf("  -> LLC-coherent DMA\n"); break;
+	case ACC_COH_RECALL : printf("  -> Coherent DMA\n"); break;
+	case ACC_COH_FULL   : printf("  -> Fully-coherent cache access\n"); break;
+	}
+
+
 	if (coherence == ACC_COH_NONE)
 		/* Look for LLC controller */
 		nllc = probe(&llcs, SLD_L3_CACHE, "llc_cache");
 
-	if (coherence != ACC_COH_FULL)
+	if (coherence < ACC_COH_RECALL)
 		/* Look for L2 controller */
 		nl2 = probe(&l2s, SLD_L2_CACHE, "l2_cache");
 
-	if (coherence != ACC_COH_FULL) {
+	if (coherence < ACC_COH_RECALL) {
 
 		/* Set L2 flush (waits for L1 to flush first) */
 		for (i = 0; i < nl2; i++) {
@@ -129,9 +137,9 @@ int probe(struct esp_device **espdevs, unsigned devid, const char *name)
 			(*espdevs)[ndev-1].number = number;
 			(*espdevs)[ndev-1].irq = irq;
 			(*espdevs)[ndev-1].addr = addr;
-			printf("Registered %s.%d:\n", name, (*espdevs)[ndev-1].number);
-			printf("  addr = 0x%08x\n", (*espdevs)[ndev-1].addr);
-			printf("  irq  = %d\n", (*espdevs)[ndev-1].irq);
+			printf("  Registered %s.%d:\n", name, (*espdevs)[ndev-1].number);
+			printf("    addr = 0x%08x\n", (*espdevs)[ndev-1].addr);
+			printf("    irq  = %d\n", (*espdevs)[ndev-1].irq);
 		}
 	}
 	printf("\n");

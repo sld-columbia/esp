@@ -39,7 +39,7 @@
 
 /* bank(9)        : Type of coherence (None, LLC, Full) - Read only */
 #define COHERENCE_REG 0x24
-enum accelerator_coherence {ACC_COH_NONE = 0, ACC_COH_LLC, ACC_COH_FULL};
+enum accelerator_coherence {ACC_COH_NONE = 0, ACC_COH_LLC, ACC_COH_RECALL, ACC_COH_FULL};
 
 /* bank(10)       : RESERVED */
 

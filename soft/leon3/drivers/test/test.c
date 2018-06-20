@@ -197,6 +197,19 @@ static int cmd_run(struct test_info *info)
 	return 0;
 }
 
+static int cmd_flush(struct test_info *info)
+{
+	int rc;
+
+	dev_open(info);
+
+	rc = ioctl(info->fd, ESP_IOC_FLUSH);
+	if (rc < 0)
+		die_errno("ESP_IOC_FLUSH on %s failed", info->devname);
+
+	return 0;
+}
+
 static int cmd_config(struct test_info *info)
 {
 	struct timespec th_end;
@@ -245,6 +258,8 @@ int test_main(struct test_info *info, const char *coh, const char *cmd)
 		coherence = ACC_COH_FULL;
 	else if (!strcmp(coh, "llc"))
 		coherence = ACC_COH_LLC;
+	else if (!strcmp(coh, "recall"))
+		coherence = ACC_COH_RECALL;
 	else
 		coherence = ACC_COH_NONE;
 
@@ -259,6 +274,8 @@ int test_main(struct test_info *info, const char *coh, const char *cmd)
 		return cmd_run(info);
 	else if (!strcmp(cmd, "hw"))
 		return cmd_hw(info);
+	else if (!strcmp(cmd, "flush"))
+		return cmd_flush(info);
 	fprintf(stderr, "unknown cmd '%s'\n", cmd);
 	return 1;
 }

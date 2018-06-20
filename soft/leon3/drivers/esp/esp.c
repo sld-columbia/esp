@@ -42,11 +42,11 @@ static int esp_flush(struct esp_device *esp)
 {
 	int rc = 0;
 
-	if (esp->coherence < ACC_COH_FULL)
-		rc = esp_private_cache_flush();
+	if (esp->coherence < ACC_COH_RECALL)
+		rc |= esp_private_cache_flush();
 
 	if (esp->coherence < ACC_COH_LLC)
-		rc = esp_cache_flush();
+		rc |= esp_cache_flush();
 
 	return rc;
 }
@@ -150,6 +150,7 @@ static int esp_access_ioctl(struct esp_device *esp, void __user *argp)
 		goto out;
 	}
 
+	esp->coherence = access->coherence;
 	if (esp->driver->prep_xfer)
 		esp->driver->prep_xfer(esp, arg);
 
@@ -175,6 +176,29 @@ static int esp_run_ioctl(struct esp_device *esp)
 	return 0;
 }
 
+static long esp_flush_ioctl(struct esp_device *esp, void __user *argp)
+{
+	struct esp_access *access;
+	void *arg;
+	int rc = 0;
+
+	arg = kmalloc(esp->driver->arg_size, GFP_KERNEL);
+	if (arg == NULL)
+		return -ENOMEM;
+
+	if (copy_from_user(arg, argp, esp->driver->arg_size)) {
+		rc = -EFAULT;
+		goto out;
+	}
+
+	access = arg;
+	esp->coherence = access->coherence;
+	rc = esp_flush(esp);
+ out:
+	kfree(arg);
+	return rc;
+}
+
 static long esp_do_ioctl(struct file *file, unsigned int cm, void __user *arg)
 {
 	struct esp_device *esp = file->private_data;
@@ -182,6 +206,8 @@ static long esp_do_ioctl(struct file *file, unsigned int cm, void __user *arg)
 	switch (cm) {
 	case ESP_IOC_RUN:
 		return esp_run_ioctl(esp);
+	case ESP_IOC_FLUSH:
+		return esp_flush_ioctl(esp, arg);
 	default:
 		if (cm == esp->driver->ioctl_cm)
 			return esp_access_ioctl(esp, arg);
