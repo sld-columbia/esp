@@ -28,16 +28,23 @@ static struct of_device_id esp_cache_device_ids[] = {
 static void esp_cache_do_flush(struct esp_cache_device *esp_cache)
 {
 	int cmd = 1 << ESP_CACHE_CMD_FLUSH_BIT;
+	u32 cmd_reg;
 	u32 satus_reg;
 
+	/* Check if flush is already in progress */
+	cmd_reg = ioread32be(esp_cache->iomem + ESP_CACHE_REG_CMD);
 
-	iowrite32be(cmd, esp_cache->iomem + ESP_CACHE_REG_CMD);
+	if (!cmd_reg) {
 
-	/* Wait for completion */
-	do {
-		satus_reg = ioread32be(esp_cache->iomem + ESP_CACHE_REG_STATUS);
-		satus_reg &= ESP_CACHE_STATUS_DONE_MASK;
-	} while (!satus_reg);
+		/* Set flush due for LLC cache */
+		iowrite32be(cmd, esp_cache->iomem + ESP_CACHE_REG_CMD);
+
+		/* Wait for completion */
+		do {
+			satus_reg = ioread32be(esp_cache->iomem + ESP_CACHE_REG_STATUS);
+			satus_reg &= ESP_CACHE_STATUS_DONE_MASK;
+		} while (!satus_reg);
+	}
 
 	/* Clear command register */
 	iowrite32be(0x0, esp_cache->iomem + ESP_CACHE_REG_CMD);
