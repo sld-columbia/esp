@@ -22,8 +22,9 @@ set asic_techs [list "cmos32soi"]
 if {[lsearch $fpga_techs $TECH] >= 0} {
     set VIVADO $::env(XILINX_VIVADO)
     set_attr verilog_files "$TECH_PATH/mem/*.v"
-    set_attr verilog_files "$VIVADO/ids_lite/ISE/verilog/src/glbl.v"
-    set_attr verilog_files "$VIVADO/ids_lite/ISE/verilog/src/unisims/RAMB16_S*.v"
+    set_attr verilog_files "$VIVADO/data/verilog/src/glbl.v"
+    set_attr verilog_files "$VIVADO/data/verilog/src/retarget/RAMB*.v"
+    set_attr verilog_files "$VIVADO/data/verilog/src/unisims/RAMB*.v"
     set_attr fpga_use_dsp off
     set_attr fpga_tool "vivado"
 

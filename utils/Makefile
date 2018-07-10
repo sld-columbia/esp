@@ -742,15 +742,15 @@ xcelium/xmready: xcelium/xilinx_lib check_all_srcs.old $(PKG_LIST)
 	fi; \
 	echo $(SPACES)"$(XLOG) -work work $(XILINX_VIVADO)/data/verilog/src/glbl.v"; \
 	$(XLOG) -work work $(XILINX_VIVADO)/data/verilog/src/glbl.v; \
-	grep --quiet "gig_ethernet_pcs_pma_v16_1_3" cds.lib; \
+	grep --quiet "gig_ethernet_pcs_pma_v16_1_4" cds.lib; \
 	res=$$?; \
 	if [ $$res != 0 ]; then \
-		mkdir -p gig_ethernet_pcs_pma_v16_1_3; \
-		echo "DEFINE gig_ethernet_pcs_pma_v16_1_3 $(DESIGN_PATH)/xcelium/gig_ethernet_pcs_pma_v16_1_3" >> cds.lib; \
+		mkdir -p gig_ethernet_pcs_pma_v16_1_4; \
+		echo "DEFINE gig_ethernet_pcs_pma_v16_1_4 $(DESIGN_PATH)/xcelium/gig_ethernet_pcs_pma_v16_1_4" >> cds.lib; \
 	fi; \
 	if test -r ./sgmii/sgmii.xci; then \
-		echo $(SPACES)"$(XCOM) -wor gig_ethernet_pcs_pma_v16_1_3 ./sgmii/hdl/gig_ethernet_pcs_pma_v16_1_rfs.vhd"; \
-		$(XCOM) -work gig_ethernet_pcs_pma_v16_1_3 ./sgmii/hdl/gig_ethernet_pcs_pma_v16_1_rfs.vhd; \
+		echo $(SPACES)"$(XCOM) -wor gig_ethernet_pcs_pma_v16_1_4 ./sgmii/hdl/gig_ethernet_pcs_pma_v16_1_rfs.vhd"; \
+		$(XCOM) -work gig_ethernet_pcs_pma_v16_1_4 ./sgmii/hdl/gig_ethernet_pcs_pma_v16_1_rfs.vhd; \
 		$(XLOG) -work work ./sgmii/synth/*.v; \
 		$(XLOG) -work work ./sgmii/synth/*/*.v ;\
         fi; \
@@ -855,11 +855,11 @@ modelsim/vsim.mk: modelsim/xilinx_lib check_all_srcs.old $(PKG_LIST)
 	fi; \
 	echo $(SPACES)"$(VLOG) $(XILINX_VIVADO)/data/verilog/src/glbl.v"; \
 	$(VLOG) $(XILINX_VIVADO)/data/verilog/src/glbl.v; \
-	vlib -type directory gig_ethernet_pcs_pma_v16_1_3; \
+	vlib -type directory gig_ethernet_pcs_pma_v16_1_4; \
 	if test -r ./sgmii/sgmii.xci; then \
-		vmap gig_ethernet_pcs_pma_v16_1_3 gig_ethernet_pcs_pma_v16_1_3; \
+		vmap gig_ethernet_pcs_pma_v16_1_4 gig_ethernet_pcs_pma_v16_1_4; \
 		echo $(SPACES)"$(VCOM) ./sgmii/hdl/gig_ethernet_pcs_pma_v16_1_rfs.vhd"; \
-		$(VCOM) -work gig_ethernet_pcs_pma_v16_1_3 ./sgmii/hdl/gig_ethernet_pcs_pma_v16_1_rfs.vhd; \
+		$(VCOM) -work gig_ethernet_pcs_pma_v16_1_4 ./sgmii/hdl/gig_ethernet_pcs_pma_v16_1_rfs.vhd; \
 		$(VLOG) ./sgmii/synth/*.v; \
 		$(VLOG) ./sgmii/synth/*/*.v ;\
         fi; \

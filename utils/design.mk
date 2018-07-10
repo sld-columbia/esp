@@ -93,7 +93,7 @@ endif
 
 # Xilinx SGMII
 ifeq ($(CONFIG_GRETH_ENABLE),y)
-VSIMOPT += -L gig_ethernet_pcs_pma_v16_1_3
+VSIMOPT += -L gig_ethernet_pcs_pma_v16_1_4
 endif
 
 # Simulator switches
