@@ -1,3 +1,7 @@
 [submodule "accelerators/common/syn-templates"]
 	path = accelerators/common/syn-templates
 	url = git@dev.sld.cs.columbia.edu:syn-templates-stratus.git
+[submodule "soft/leon3/linux"]
+	path = soft/leon3/linux
+	url = git@dev.sld.cs.columbia.edu:linux-esp.git
+	branch = leon3
