@@ -74,7 +74,7 @@ static int esp_release(struct inode *inode, struct file *file)
 static void esp_transfer(struct esp_device *esp, const struct contig_desc *contig)
 {
 	esp->err = 0;
-	INIT_COMPLETION(esp->completion);
+	reinit_completion(&esp->completion);
 
 	iowrite32be(contig->arr_dma_addr, esp->iomem + PT_ADDRESS_REG);
 	iowrite32be(contig_chunk_size_log, esp->iomem + PT_SHIFT_REG);
