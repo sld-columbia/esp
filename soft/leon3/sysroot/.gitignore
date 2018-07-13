@@ -1,0 +1,7 @@
+bin/
+init
+lib/
+linuxrc
+sbin/
+share/
+usr/
