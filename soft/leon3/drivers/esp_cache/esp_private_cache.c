@@ -43,10 +43,16 @@ static struct of_device_id esp_private_cache_device_ids[] = {
  * The leon3 code flushes the entire cache even if we just want to flush a
  * single line, so we call the flush function below only once.
  */
-static void leon3_flush_dcache_all(void *info)
+static void leon3_flush_dcache_all(void)
 {
-	__asm__ __volatile__("sta %%g0, [%%g0] %0\n\t" : :
-			"i"(ASI_LEON_DFLUSH) : "memory");
+        __asm__ __volatile__("sta %%g0, [%%g0] %0\n\t" : :
+                        "i"(ASI_LEON_DFLUSH) : "memory");
+}
+
+
+static void esp_flush_l1(void *info)
+{
+	leon3_flush_dcache_all();
 }
 
 int esp_private_cache_flush(void)
@@ -59,9 +65,6 @@ int esp_private_cache_flush(void)
 	if (spin_trylock(&esp_private_cache_list_lock)) {
 
 		list_for_each_entry(esp_private_cache, &esp_private_cache_list, list) {
-
-			if (mutex_lock_interruptible(&esp_private_cache->lock))
-				return -EINTR;
 
 #ifndef CONFIG_SMP
 			/* Only CPU0 running whith no SMP */
@@ -85,12 +88,10 @@ int esp_private_cache_flush(void)
 
 			}
 
-			mutex_unlock(&esp_private_cache->lock);
-
 		}
 
 		/* Flush all L1 caches: start synchronized L2 flush as well */
-		on_each_cpu(leon3_flush_dcache_all, NULL, 1);
+		on_each_cpu(esp_flush_l1, NULL, 1);
 
 		spin_unlock(&esp_private_cache_list_lock);
 	}
