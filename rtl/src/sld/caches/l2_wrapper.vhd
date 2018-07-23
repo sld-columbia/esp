@@ -163,12 +163,6 @@ architecture rtl of l2_wrapper is
   signal cmd_sample    : std_ulogic;
   signal readdata      : std_logic_vector(31 downto 0);
 
-  -- IRQ
-  signal irq      : std_logic_vector(NAHBIRQ - 1 downto 0);
-  signal irqset   : std_ulogic;
-  type irq_fsm is (idle, pending);
-  signal irq_state, irq_next : irq_fsm;
-
   -------------------------------------------------------------------------------
   -- AHB slave FSM signals
   -------------------------------------------------------------------------------
@@ -531,28 +525,9 @@ begin  -- architecture rtl of l2_wrapper
 
   -- APB Interface
   apbo.prdata  <= readdata;
-  apbo.pirq    <= irq;
+  apbo.pirq    <= (others => '0');
   apbo.pindex  <= pindex;
   apbo.pconfig <= pconfig;
-
-  drive_irq: process (clk, rst)
-  begin  -- process drive_irq
-    if rst = '0' then                   -- asynchronous reset (active low)
-      irq <= (others => '0');
-      irqset <= '0';
-    elsif clk'event and clk = '1' then  -- rising clock edge
-      if irqset = '1' then
-        irq(pirq) <= '0';
-      elsif (status_reg(0) = '1' and irqset = '0') then
-        irq(pirq) <= '1';
-        irqset <=  '1';
-      end if;
-      if (status_reg(0) = '0') then
-        -- Equivalent to clear IRQ
-        irqset <= '0';
-      end if;
-    end if;
-  end process drive_irq;
 
   -- rd/wr registers
   process(apbi, status_reg, cmd_reg)

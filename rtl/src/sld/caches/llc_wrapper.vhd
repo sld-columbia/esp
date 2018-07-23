@@ -181,12 +181,6 @@ architecture rtl of llc_wrapper is
   signal cmd_sample    : std_ulogic;
   signal readdata      : std_logic_vector(31 downto 0);
 
-  -- IRQ
-  signal irq      : std_logic_vector(NAHBIRQ - 1 downto 0);
-  signal irqset   : std_ulogic;
-  type irq_fsm is (idle, pending);
-  signal irq_state, irq_next : irq_fsm;
-
 -----------------------------------------------------------------------------
 -- AHB master FSM signals
 -----------------------------------------------------------------------------
@@ -430,10 +424,6 @@ architecture rtl of llc_wrapper is
   attribute mark_debug of cmd_in        : signal is "true";
   attribute mark_debug of cmd_sample    : signal is "true";
   attribute mark_debug of readdata      : signal is "true";
-  attribute mark_debug of irq           : signal is "true";
-  attribute mark_debug of irqset        : signal is "true";
-  attribute mark_debug of irq_state     : signal is "true";
-  attribute mark_debug of irq_next      : signal is "true";
 
   attribute mark_debug of ahbm_reg_state : signal is "true";
   attribute mark_debug of fwd_out_state  : signal is "true";
@@ -448,28 +438,9 @@ begin  -- architecture rtl
 
   -- APB Interface
   apbo.prdata  <= readdata;
-  apbo.pirq    <= irq;
+  apbo.pirq    <= (others => '0');
   apbo.pindex  <= pindex;
   apbo.pconfig <= pconfig;
-
-  drive_irq: process (clk, rst)
-  begin  -- process drive_irq
-    if rst = '0' then                   -- asynchronous reset (active low)
-      irq <= (others => '0');
-      irqset <= '0';
-    elsif clk'event and clk = '1' then  -- rising clock edge
-      if irqset = '1' then
-        irq(pirq) <= '0';
-      elsif (status_reg(0) = '1' and irqset = '0') then
-        irq(pirq) <= '1';
-        irqset <=  '1';
-      end if;
-      if (status_reg(0) = '0') then
-        -- Equivalent to clear IRQ
-        irqset <= '0';
-      end if;
-    end if;
-  end process drive_irq;
 
   -- rd/wr registers
   process(apbi, status_reg, cmd_reg)
