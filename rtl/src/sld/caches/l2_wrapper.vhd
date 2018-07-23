@@ -585,7 +585,7 @@ begin  -- architecture rtl of l2_wrapper
         status_reg(0) <= '0';
       end if;
       if cmd_sample = '1' then
-        cmd_reg(1 downto 0) <= cmd_in(1 downto 0);
+        cmd_reg(2 downto 0) <= cmd_in(2 downto 0);
       end if;
     end if;
   end process cmd_status;
@@ -697,7 +697,7 @@ begin  -- architecture rtl of l2_wrapper
 -------------------------------------------------------------------------------
 -- FSM: Bridge from AHB slave to L2 cache frontend input
 -------------------------------------------------------------------------------
-  flush_data  <= '0';                   -- Flush data (keep instructions)
+  flush_data  <= cmd_reg(2);           -- Flush data (0) / flush all (1)
 
   fsm_ahbs : process (ahbsi, flush, ahbs_reg,
                       cpu_req_ready, flush_ready, flush_due,
