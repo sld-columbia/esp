@@ -16,7 +16,7 @@ saySimPassed:
 	@bdw_sim_pass
 
 # Disable timing checks
-BDW_VLOGSIM_ARGS = -NOTIMINGCHECKS
+BDW_VLOGSIM_ARGS = -NOTIMINGCHECKS -UNBUFFERED
 
 memlib: ../memlist.txt $(MEMGEN)
 	@$(MEMGEN) $(MEMTECH) $< $(MEMGEN_OUT) | tee memgen.log
