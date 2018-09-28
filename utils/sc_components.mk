@@ -43,7 +43,7 @@ $(SCCS-distclean): %-distclean : %-wdir
 	$(QUIET_CLEAN)COMPONENT=$(@:-distclean=) TECH=$(TECHLIB) ESP_ROOT=$(ESP_ROOT) make -C $(SCCS_PATH)/$(@:-distclean=)/hls-work-$(TECHLIB) distclean
 	@$(RM) $(@:-distclean=)*.log
 	@if test -e $(ESP_ROOT)/tech/$(TECHLIB)/sccs/installed.log; then \
-		sed -i '/$(@:-hls=)/d' $(ESP_ROOT)/tech/$(TECHLIB)/sccs/installed.log; \
+		sed -i '/$(@:-distclean=)/d' $(ESP_ROOT)/tech/$(TECHLIB)/sccs/installed.log; \
 	fi;
 
 .PHONY: print-available-sccs $(SCCS-wdir) $(SCCS-hls) $(SCCS-sim) $(SCCS-plot) $(SCCS-clean) $(SCCS-distclean)
