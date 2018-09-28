@@ -293,7 +293,9 @@ class memory():
         # Check that no port is accessed by more than one interface
         if (ASSERT_ON):
             fd.write("// synthesis translate_off\n")
+            fd.write("// synopsys translate_off\n")
             fd.write("              check_access(" + str(iface) + ", " + str(duplicated_bank_set) + ", h, v, hh, " + str(port) + ");\n")
+            fd.write("// synopsys translate_on\n")
             fd.write("// synthesis translate_on\n")
         fd.write(ce_str[duplicated_bank_set][port]  + str(iface)                       + ";\n")
         fd.write(a_str[duplicated_bank_set][port]   + str(iface) + bank_addr_range_str + ";\n")
@@ -397,8 +399,10 @@ class memory():
         fd.write("  " + "reg  " + sel_vbank_reg_width_str  + " selv     " + sel_reg_dims_str   + ";\n")
         if (ASSERT_ON):
             fd.write("// synthesis translate_off\n")
+            fd.write("// synopsys translate_off\n")
             fd.write("  " + "integer check_bank_access " + bank_wire_dims_str + ";\n")
             self.__write_check_access_task(fd)
+            fd.write("// synopsys translate_on\n")
             fd.write("// synthesis translate_on\n")
         fd.write("\n")
 
@@ -447,13 +451,22 @@ class memory():
         fd.write("\n")
         fd.write("        always @(*) begin : handle_ops\n")
         fd.write("\n")
+        fd.write("// synthesis translate_off\n")
+        fd.write("// synopsys translate_off\n")
+        fd.write("          // Prevent assertions to trigger with false positive\n")
+        fd.write("          # 1\n")
+        fd.write("// synopsys translate_on\n")
+        fd.write("// synthesis translate_on\n")
+        fd.write("\n")
         fd.write("          /** Default **/\n")
         for d in range(0, self.dbanks):
             for p in range(0, self.bank_type.ports):
                 if (ASSERT_ON):
                     # Initialize variable for conflicts check
                     fd.write("// synthesis translate_off\n")
+                    fd.write("// synopsys translate_off\n")
                     fd.write("          check_bank_access["  + str(d) + "][h][v][hh]["  + str(p) + "] = -1;\n")
+                    fd.write("// synopsys translate_on\n")
                     fd.write("// synthesis translate_on\n")
                 # Dfault assignment
                 fd.write("          bank_CE["  + str(d) + "][h][v][hh][" + str(p) + "]  = 0;\n")
@@ -545,10 +558,11 @@ class memory():
 
         for ri in range(self.write_interfaces, self.write_interfaces + self.read_interfaces):
             p = self.read_ports[ri - self.write_interfaces]
-            fd.write("    if (hh == " + str(self.hhbanks - 1) + " && (hh + 1) * " + str(self.bank_type.width) + " > " + str(self.width) + ")\n")
+            fd.write("    if (hh == " + str(self.hhbanks - 1) + " && (hh + 1) * " + str(self.bank_type.width) + " > " + str(self.width) + ") begin : gen_q_assign_hhbanks_last_" + str(ri) + " \n ")
             fd.write("      assign Q" + str(ri) + q_last_hh_range_str + " = bank_Q" + "[seld[" + str(ri) +"]]" + "[selh[" + str(ri) +"]]" + "[selv[" + str(ri) +"]]" + "[hh]" + "[" + str(p) + "][" + str((self.width - 1) % self.bank_type.width) + ":0];\n")
-            fd.write("    else\n")
+            fd.write("    end else begin : gen_q_assign_hhbanks_others_" + str(ri) + " \n")
             fd.write("      assign Q" + str(ri) + hh_range_str + " = bank_Q" + "[seld[" + str(ri) +"]]" + "[selh[" + str(ri) +"]]" + "[selv[" + str(ri) +"]]" + "[hh]" + "[" + str(p) + "];\n")
+            fd.write("    end\n")
         fd.write("  end\n")
         fd.write("  endgenerate\n")
         fd.write("\n")
@@ -573,6 +587,7 @@ class memory():
         fd.write("\n")
         if (ASSERT_ON):
             fd.write("// synthesis translate_off\n")
+            fd.write("// synopsys translate_off\n")
             fd.write("            always @(posedge CLK) begin\n")
             for p0 in range(0, self.bank_type.ports):
                 for p1 in range(p0 + 1, self.bank_type.ports):
@@ -583,8 +598,9 @@ class memory():
                     fd.write("                $finish;\n")
                     fd.write("              end\n")
                     fd.write("            end\n")
-                    fd.write("// synthesis translate_on\n")
-                    fd.write("\n")
+            fd.write("// synopsys translate_on\n")
+            fd.write("// synthesis translate_on\n")
+            fd.write("\n")
         fd.write("        end\n")
         fd.write("      end\n")
         fd.write("    end\n")
@@ -1146,6 +1162,10 @@ if not os.path.exists("memlib"):
 
 print("  INFO: Memory list file: " + infile)
 read_infile(infile, mem_list)
+if len(mem_list) == 0:
+    print("  INFO: Memory list is empty")
+    sys.exit(0)
+
 for mem in mem_list:
     mem.print()
     mem.gen(sram_list)
