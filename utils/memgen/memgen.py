@@ -78,6 +78,10 @@ def is_power2z(n):
 
 ASSERT_ON = True
 
+### Default memory delay (must be included int he mem/lib.txt file"
+mem_delay = 0.2
+mem_setup = 0.06
+
 ### Data structures ###
 class sram():
 
@@ -925,9 +929,8 @@ class memory():
         fd.write("setNumWords " + str(self.words) + "\n")
         fd.write("setArea " + str(self.area) + "\n")
         fd.write("setLatency 1\n")
-        # TODO: these delays are arbitrary, but should be taken from lib
-        fd.write("setDelay 0.6000\n")
-        fd.write("setSetup 0.2000\n")
+        fd.write("setDelay " + str(mem_delay) + "\n")
+        fd.write("setSetup " + str(mem_setup) + "\n")
         fd.write("setInputDataFormat 1\n")
         fd.write("setFileSuffix 0\n")
         fd.write("setHasReset 0\n")
@@ -1068,13 +1071,20 @@ def parse_op(op, mem_words):
 
 
 def read_techfile(tech_path, sram_list):
+    global mem_delay
+    global mem_setup
     try:
         fd = open(tech_path + "/lib.txt", 'r')
     except IOError as e:
         die_werr(e)
     for line in fd:
         line.strip()
+        item = line.split()
         # Check for commented line
+        if re.match(r'# delay*', line, re.M|re.I):
+            mem_delay = float(item[2])
+        if re.match(r'# setup*', line, re.M|re.I):
+            mem_setup = float(item[2])
         if re.match(r'#\.*', line, re.M|re.I):
             continue
         ram = parse_sram(line)
