@@ -12,13 +12,12 @@
 
 #define DRV_NAME	"esp_private_cache"
 
-static DEFINE_SPINLOCK(esp_private_cache_list_lock);
+static DEFINE_MUTEX(esp_private_cache_list_lock);
 static LIST_HEAD(esp_private_cache_list);
 
 struct esp_private_cache_device {
 	struct device *pdev; /* platform device */
 	struct module *module;
-	struct mutex lock;
 	void __iomem *iomem; /* mmapped registers */
 	struct list_head list;
 };
@@ -45,8 +44,11 @@ static struct of_device_id esp_private_cache_device_ids[] = {
  */
 static void leon3_flush_dcache_all(void)
 {
-        __asm__ __volatile__("sta %%g0, [%%g0] %0\n\t" : :
-                        "i"(ASI_LEON_DFLUSH) : "memory");
+	__asm__ __volatile__(".align 32\nflush\n.align 32\n");	/*iflush*/
+	__asm__ __volatile__("sta %%g0, [%%g0] %0\n\t" : :
+			     "i"(ASI_LEON_DFLUSH) : "memory");
+        /* __asm__ __volatile__("sta %%g0, [%%g0] %0\n\t" : : */
+        /*                 "i"(ASI_LEON_DFLUSH) : "memory"); */
 }
 
 
@@ -58,48 +60,45 @@ static void esp_flush_l1(void *info)
 int esp_private_cache_flush(void)
 {
 	struct esp_private_cache_device *esp_private_cache = NULL;
-	const int cmd = 1 << ESP_CACHE_CMD_FLUSH_BIT;
+	const int cmd = (1 << ESP_CACHE_CMD_FLUSH_INST_BIT) | (1 << ESP_CACHE_CMD_FLUSH_BIT);
 	u32 cmd_reg;
 	u32 status_reg = 0;
 
-	if (spin_trylock(&esp_private_cache_list_lock)) {
-
-		list_for_each_entry(esp_private_cache, &esp_private_cache_list, list) {
-
-#ifndef CONFIG_SMP
-			/* Only CPU0 running whith no SMP */
-			status_reg    = ioread32be(esp_private_cache->iomem + ESP_CACHE_REG_STATUS);
-			status_reg   &= ESP_CACHE_STATUS_CPUID_MASK;
-			status_reg >>= ESP_CACHE_STATUS_CPUID_SHIFT;
-#endif
-
-			/* Check if flush is already in progress */
-			cmd_reg = ioread32be(esp_private_cache->iomem + ESP_CACHE_REG_CMD);
-
-			if (!cmd_reg && !status_reg) {
-
-				/* Set flush due for L2 private cache */
-				iowrite32be(cmd, esp_private_cache->iomem + ESP_CACHE_REG_CMD);
-
-				/* Wait for L2 flush to be set (may loose synch flush with L1 otherwise) */
-				do {
-					cmd_reg = ioread32be(esp_private_cache->iomem + ESP_CACHE_REG_CMD);
-				} while (cmd_reg != cmd);
-
-			}
-
-		}
-
-		/* Flush all L1 caches: start synchronized L2 flush as well */
-		on_each_cpu(esp_flush_l1, NULL, 1);
-
-		spin_unlock(&esp_private_cache_list_lock);
-	}
+	mutex_lock(&esp_private_cache_list_lock);
 
 	list_for_each_entry(esp_private_cache, &esp_private_cache_list, list) {
 
-		if (mutex_lock_interruptible(&esp_private_cache->lock))
-			return -EINTR;
+#ifndef CONFIG_SMP
+		/* Only CPU0 running whith no SMP */
+		status_reg    = ioread32be(esp_private_cache->iomem + ESP_CACHE_REG_STATUS);
+		status_reg   &= ESP_CACHE_STATUS_CPUID_MASK;
+		status_reg >>= ESP_CACHE_STATUS_CPUID_SHIFT;
+#endif
+
+		/* Check if flush is already in progress */
+		cmd_reg = ioread32be(esp_private_cache->iomem + ESP_CACHE_REG_CMD);
+
+		BUG_ON(cmd_reg);
+
+		/* if (!cmd_reg && !status_reg) { */
+		if (!status_reg) {
+
+			/* Set flush due for L2 private cache */
+			iowrite32be(cmd, esp_private_cache->iomem + ESP_CACHE_REG_CMD);
+
+			/* Wait for L2 flush to be set (may loose synch flush with L1 otherwise) */
+			do {
+				cmd_reg = ioread32be(esp_private_cache->iomem + ESP_CACHE_REG_CMD);
+			} while (cmd_reg != cmd);
+
+		}
+
+	}
+
+	/* Flush all L1 caches: start synchronized L2 flush as well */
+	on_each_cpu(esp_flush_l1, NULL, 1);
+
+	list_for_each_entry(esp_private_cache, &esp_private_cache_list, list) {
 
 		/* Check if cache command register has already been reset */
 		cmd_reg = ioread32be(esp_private_cache->iomem + ESP_CACHE_REG_CMD);
@@ -116,8 +115,9 @@ int esp_private_cache_flush(void)
 			iowrite32be(0x0, esp_private_cache->iomem + ESP_CACHE_REG_CMD);
 		}
 
-		mutex_unlock(&esp_private_cache->lock);
 	}
+
+	mutex_unlock(&esp_private_cache_list_lock);
 
 	return 0;
 }
@@ -137,8 +137,6 @@ static int esp_private_cache_probe(struct platform_device *pdev)
 
 	esp_private_cache->module = THIS_MODULE;
 
-	mutex_init(&esp_private_cache->lock);
-
 	esp_private_cache->iomem = of_ioremap(&pdev->resource[0], 0, resource_size(&pdev->resource[0]), "esp_private_cache regs");
 	if (esp_private_cache->iomem == NULL) {
 		dev_info(esp_private_cache->pdev, "cannot map registers for I/O\n");
@@ -150,9 +148,9 @@ static int esp_private_cache_probe(struct platform_device *pdev)
 
 	platform_set_drvdata(pdev, esp_private_cache);
 
-	spin_lock(&esp_private_cache_list_lock);
+	mutex_lock(&esp_private_cache_list_lock);
 	list_add(&esp_private_cache->list, &esp_private_cache_list);
-	spin_unlock(&esp_private_cache_list_lock);
+	mutex_unlock(&esp_private_cache_list_lock);
 
 	return 0;
 
@@ -165,9 +163,9 @@ static int __exit esp_private_cache_remove(struct platform_device *pdev)
 {
 	struct esp_private_cache_device *esp_private_cache = platform_get_drvdata(pdev);
 
-	spin_lock(&esp_private_cache_list_lock);
+	mutex_lock(&esp_private_cache_list_lock);
 	list_del(&esp_private_cache->list);
-	spin_unlock(&esp_private_cache_list_lock);
+	mutex_unlock(&esp_private_cache_list_lock);
 
 	dev_info(esp_private_cache->pdev, "device unregistered.\n");
 
