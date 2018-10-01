@@ -29,14 +29,14 @@
     cerr << "Debug:  " << sc_object::basename() << ".\t @" << time << " : " \
     << text << " : " << var << endl;
 
+#define __str(s) #s
+#define __xstr(s) __str(s)
+
 #define IMP_MEM_NAME(A, B, C, D)			\
     A ## _ ## B ## _ ## C ## sets_ ## D ## ways
 
 #define IMP_MEM_NAME_STRING(a, b, c, d)		\
     __xstr(IMP_MEM_NAME(a, b, c, d))
-
-#define __str(s) #s
-#define __xstr(s) __str(s)
 
 #define EXP_MEM_TYPE(A, B, C, D)			\
     A ## _ ## B ## _ ## C ## sets_ ## D ## ways_t

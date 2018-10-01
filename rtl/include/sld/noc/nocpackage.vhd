@@ -91,8 +91,8 @@ package nocpackage is
   constant FWD_GETM       : noc_msg_type := "001";
   constant FWD_INV        : noc_msg_type := "010";  --Invalidation
   constant FWD_PUT_ACK    : noc_msg_type := "011";  --Put Acknowledge
-  constant FWD_GETM_NOCOH : noc_msg_type := "100";  --Not coherent
-  constant FWD_INV_NOCOH  : noc_msg_type := "101";  --Not coherent
+  constant FWD_GETM_NOCOH : noc_msg_type := "100";  --Recall on exclusive/modified
+  constant FWD_INV_NOCOH  : noc_msg_type := "101";  --Recall on shared
   -- Cachable data plane 3 -> response messages
   constant RSP_DATA     : noc_msg_type := "000";  --CacheLine
   constant RSP_EDATA    : noc_msg_type := "001";  --Cache Line (Exclusive)

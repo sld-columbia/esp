@@ -144,6 +144,11 @@ void llc_tb::llc_test()
     CACHE_REPORT_INFO("Reset LLC.");
 
     reset_llc_test();
+
+    bool rst_tmp;
+    llc_rst_tb_done_tb.get(rst_tmp);
+    wait();
+
     reset_dut(is_reset);
 
     addr_base = rand_addr_llc();
@@ -517,6 +522,7 @@ void llc_tb::llc_test()
     llc_rst_tb_tb.put(is_flush);
 
     // get_mem_req(LLC_WRITE, addr.line, 0xabcd0e0f0);
+    get_mem_req(LLC_WRITE, addr.line, line_of_addr(addr.line)*2);
 
     addr.tag_incr(1); wait();
 
@@ -532,6 +538,8 @@ void llc_tb::llc_test()
     get_mem_req(LLC_WRITE, addr.line, line_of_addr(addr.line)*2);
 
     llc_rst_tb_done_tb.get(tmp_rst_tb);
+
+    wait();
     
     /* Changed lines:
      * - set x,   way 1: I
@@ -649,6 +657,7 @@ void llc_tb::llc_test()
     op(REQ_PUTS, SHARED, 0, addr2, null, 0, 0, 0, 0, 0, 0, DATA);
 
     op_dma(DMA_WRITE, VALID, 0, 0, addr2, null, line_of_addr(addr2.line)*2, 4, 0, 0, 0, 0);
+
 
     op(REQ_GETS, VALID, 0, addr2, null, 0, line_of_addr(addr2.line)*2, 0, 0, 0, 0, DATA);
 
@@ -908,9 +917,9 @@ void llc_tb::llc_test()
 
     line_t wlengths[wlength_size] = {1, 2, 3, 4, 64, 1019};
 
-    for (int k = 1; k < wlength_size; k++) { // select burst length
+    for (int k = 0; k < wlength_size; k++) { // select burst length
 
-	for (int i = 1; i < WORDS_PER_LINE; i++) {
+	for (int i = 0; i < WORDS_PER_LINE; i++) {
 
 	    reset_dut(is_reset);
 
@@ -941,8 +950,17 @@ void llc_tb::llc_test()
 
 	    op_dma(DMA_WRITE, VALID, 0, 0, addr, null, line_of_addr(addr.line),
 		   wlengths[k], 0, 0, 0, 0);
+
+            wait(100);
 	}
     }
+
+    CACHE_REPORT_INFO("=== Test completed ===");
+
+    /***************************************************************************/
+    /* TODO                                                                    */
+    /* DMA Bursts with Recalls Interrupted by GETS/GETM on different addresses */
+
 
     // /**************************************/
     // /* DMA Bursts Smaller Than Cache Line */
@@ -996,10 +1014,12 @@ void llc_tb::reset_dut(bool is_flush)
 inline void llc_tb::reset_llc_test()
 {
     llc_req_in_tb.reset_put();
+    llc_dma_req_in_tb.reset_put();
     llc_rsp_in_tb.reset_put();
     llc_mem_rsp_tb.reset_put();
     llc_rst_tb_tb.reset_put();
     llc_rsp_out_tb.reset_get();
+    llc_dma_rsp_out_tb.reset_get();
     llc_fwd_out_tb.reset_get();
     llc_mem_req_tb.reset_get();
     llc_rst_tb_done_tb.reset_get();
@@ -1200,8 +1220,8 @@ void llc_tb::op_dma(mix_msg_t coh_msg, llc_state_t state, bool evict, bool dirty
 	    else
 		wvalid = WORDS_PER_LINE - 1;
 
-	    put_req_in(coh_msg, req_addr.line, req_line, 0, done,
-		       req_addr.w_off, wvalid);
+	    put_dma_req_in(coh_msg, req_addr.line, req_line, 0, done,
+                           req_addr.w_off, wvalid);
 	}
 
 	// end of stall
@@ -1279,7 +1299,7 @@ void llc_tb::op_dma(mix_msg_t coh_msg, llc_state_t state, bool evict, bool dirty
 
 	// rsp data to accelerator
 	if (coh_msg == DMA_READ)
-	    get_rsp_out(RSP_DATA_DMA, req_addr.line, rsp_line, invack_cnt, 0, 0, req_addr.w_off);
+	    get_dma_rsp_out(RSP_DATA_DMA, req_addr.line, rsp_line, invack_cnt, 0, 0, req_addr.w_off);
     
 	// update address to the next line (add 16 bytes)
 	req_addr.set_incr(1);
@@ -1290,7 +1310,7 @@ void llc_tb::op_dma(mix_msg_t coh_msg, llc_state_t state, bool evict, bool dirty
 	rsp_line += 1;
 	evict_line += 1;
 
-	wait();
+	wait(100);
     }
 }
 
@@ -1300,6 +1320,41 @@ void llc_tb::get_rsp_out(coh_msg_t coh_msg, addr_t addr, line_t line, invack_cnt
     llc_rsp_out_t rsp_out;
 
     llc_rsp_out_tb.get(rsp_out);
+
+    if (rsp_out.coh_msg != coh_msg       ||
+	rsp_out.addr   != addr.range(TAG_RANGE_HI, SET_RANGE_LO) ||
+	rsp_out.line   != line           ||
+	rsp_out.invack_cnt != invack_cnt ||
+	rsp_out.req_id != req_id         ||
+	rsp_out.dest_id != dest_id ||
+	rsp_out.word_offset != woff
+	) {
+	
+	CACHE_REPORT_ERROR("coh_msg get rsp out", rsp_out.coh_msg);
+	CACHE_REPORT_ERROR("coh_msg get rsp out gold", coh_msg);
+	CACHE_REPORT_ERROR("addr get rsp out", rsp_out.addr);
+	CACHE_REPORT_ERROR("addr get rsp out gold", addr.range(TAG_RANGE_HI, SET_RANGE_LO));
+	CACHE_REPORT_ERROR("line get rsp out", rsp_out.line);
+	CACHE_REPORT_ERROR("line get rsp out gold", line);
+	CACHE_REPORT_ERROR("invack_cnt get rsp out", rsp_out.invack_cnt);
+	CACHE_REPORT_ERROR("invack_cnt get rsp out gold", invack_cnt);
+	CACHE_REPORT_ERROR("req_id get rsp out", rsp_out.req_id);
+	CACHE_REPORT_ERROR("req_id get rsp out gold", req_id);
+	CACHE_REPORT_ERROR("dest_id get rsp out", rsp_out.dest_id);
+	CACHE_REPORT_ERROR("dest_id get rsp out gold", dest_id);
+	CACHE_REPORT_ERROR("woff get rsp out", rsp_out.dest_id);
+	CACHE_REPORT_ERROR("woff get rsp out gold", dest_id);
+    }
+    if (RPT_TB)
+	CACHE_REPORT_VAR(sc_time_stamp(), "RSP_OUT", rsp_out);
+}
+
+void llc_tb::get_dma_rsp_out(coh_msg_t coh_msg, addr_t addr, line_t line, invack_cnt_t invack_cnt,
+			 cache_id_t req_id, cache_id_t dest_id, word_offset_t woff)
+{
+    llc_rsp_out_t rsp_out;
+
+    llc_dma_rsp_out_tb.get(rsp_out);
 
     if (rsp_out.coh_msg != coh_msg       ||
 	rsp_out.addr   != addr.range(TAG_RANGE_HI, SET_RANGE_LO) ||
@@ -1403,6 +1458,26 @@ void llc_tb::put_req_in(mix_msg_t coh_msg, addr_t addr, line_t line, cache_id_t 
     // rand_wait();
 
     llc_req_in_tb.put(req_in);
+
+    if (RPT_TB)
+	CACHE_REPORT_VAR(sc_time_stamp(), "REQ_IN", req_in);
+}
+
+void llc_tb::put_dma_req_in(mix_msg_t coh_msg, addr_t addr, line_t line, cache_id_t req_id,
+                            hprot_t hprot, word_offset_t woff, word_offset_t wvalid)
+{
+    llc_req_in_t req_in;
+    req_in.coh_msg = coh_msg;
+    req_in.hprot = hprot;
+    req_in.addr = addr.range(TAG_RANGE_HI, SET_RANGE_LO);
+    req_in.line = line;
+    req_in.req_id = req_id;
+    req_in.word_offset = woff;
+    req_in.valid_words = wvalid;
+
+    // rand_wait();
+
+    llc_dma_req_in_tb.put(req_in);
 
     if (RPT_TB)
 	CACHE_REPORT_VAR(sc_time_stamp(), "REQ_IN", req_in);

@@ -16,7 +16,7 @@
 
 typedef sc_uint<CPU_MSG_TYPE_WIDTH>	cpu_msg_t; // CPU bus requests
 typedef sc_uint<COH_MSG_TYPE_WIDTH>	coh_msg_t; // Requests without DMA, Forwards, Responses
-typedef sc_uint<MIX_MSG_TYPE_WIDTH>	mix_msg_t; // Requests if including DMA 
+typedef sc_uint<MIX_MSG_TYPE_WIDTH>	mix_msg_t; // Requests if including DMA
 typedef sc_uint<HSIZE_WIDTH>		hsize_t;
 typedef sc_uint<HPROT_WIDTH>    	hprot_t;
 typedef sc_uint<INVACK_CNT_WIDTH>	invack_cnt_t;
@@ -55,7 +55,7 @@ typedef sc_uint<DMA_BURST_LENGTH_BITS>  dma_length_t;
 /* L1 to L2 */
 
 // L1 request
-class l2_cpu_req_t 
+class l2_cpu_req_t
 {
 
 public:
@@ -75,18 +75,18 @@ public:
     {}
 
     inline l2_cpu_req_t& operator  = (const l2_cpu_req_t& x) {
-	cpu_msg = x.cpu_msg;	
-	hsize   = x.hsize;	
-	hprot   = x.hprot;	 
-	addr    = x.addr;	 
+	cpu_msg = x.cpu_msg;
+	hsize   = x.hsize;
+	hprot   = x.hprot;
+	addr    = x.addr;
 	word    = x.word;
 	return *this;
     }
     inline bool operator  == (const l2_cpu_req_t& x) const {
-	return (x.cpu_msg == cpu_msg	&& 
-		x.hsize   == hsize	&& 
-		x.hprot   == hprot	&& 
-		x.addr    == addr	&& 
+	return (x.cpu_msg == cpu_msg	&&
+		x.hsize   == hsize	&&
+		x.hprot   == hprot	&&
+		x.addr    == addr	&&
 		x.word    == word);
     }
     inline friend void sc_trace(sc_trace_file *tf, const l2_cpu_req_t& x, const std::string & name) {
@@ -97,8 +97,8 @@ public:
 	sc_trace(tf, x.word,     name + ".word");
     }
     inline friend ostream & operator<<(ostream& os, const l2_cpu_req_t& x) {
-	os << hex << "(" 
-	   << "cpu_msg: "   << x.cpu_msg 
+	os << hex << "("
+	   << "cpu_msg: "   << x.cpu_msg
 	   << ", hsize: "   << x.hsize
 	   << ", hprot: "   << x.hprot
 	   << ", addr: "    << x.addr
@@ -114,7 +114,7 @@ class l2_rd_rsp_t
 {
 public:
     line_t line;
-    
+
     l2_rd_rsp_t() :
 	line(0)
     {}
@@ -147,7 +147,7 @@ typedef line_addr_t l2_inval_t;
 /* L2/LLC to L2 */
 
 // forwards
-class l2_fwd_in_t 
+class l2_fwd_in_t
 {
 
 public:
@@ -163,13 +163,13 @@ public:
     { }
 
     inline l2_fwd_in_t& operator  = (const l2_fwd_in_t& x) {
-	coh_msg = x.coh_msg;	
+	coh_msg = x.coh_msg;
 	addr    = x.addr;
 	req_id  = x.req_id;
 	return *this;
     }
     inline bool operator  == (const l2_fwd_in_t& x) const {
-	return (x.coh_msg == coh_msg	&& 
+	return (x.coh_msg == coh_msg	&&
 		x.addr    == addr       &&
 		x.req_id  == req_id);
     }
@@ -179,7 +179,7 @@ public:
 	sc_trace(tf, x.req_id,     name + ".req_id");
     }
     inline friend ostream & operator<<(ostream& os, const l2_fwd_in_t& x) {
-	os << hex << "(" 
+	os << hex << "("
 	   << "coh_msg: " << x.coh_msg
 	   << ", addr: "  << x.addr
 	   << ", req_id: "  << x.req_id << ")";
@@ -188,7 +188,7 @@ public:
 };
 
 // responses
-class l2_rsp_in_t 
+class l2_rsp_in_t
 {
 
 public:
@@ -207,14 +207,14 @@ public:
 
     inline l2_rsp_in_t& operator  = (const l2_rsp_in_t& x) {
 	coh_msg    = x.coh_msg;
-	addr       = x.addr;	 
+	addr       = x.addr;
 	line       = x.line;
 	invack_cnt = x.invack_cnt;
 	return *this;
     }
     inline bool operator     == (const l2_rsp_in_t& x) const {
-	return (x.coh_msg    == coh_msg && 
-		x.addr       == addr    && 
+	return (x.coh_msg    == coh_msg &&
+		x.addr       == addr    &&
 		x.line      == line   &&
 		x.invack_cnt == invack_cnt);
     }
@@ -225,9 +225,9 @@ public:
 	sc_trace(tf, x.invack_cnt, name + ".invack_cnt");
     }
     inline friend ostream & operator<<(ostream& os, const l2_rsp_in_t& x) {
-	os << hex << "(" 
-	   << "coh_msg: "    << x.coh_msg    
-	   << ", addr: "       << x.addr       
+	os << hex << "("
+	   << "coh_msg: "    << x.coh_msg
+	   << ", addr: "       << x.addr
 	   << ", line: ";
 	for (int i = WORDS_PER_LINE-1; i >= 0; --i) {
 	    int base = i*BITS_PER_WORD;
@@ -238,7 +238,7 @@ public:
     }
 };
 
-class llc_rsp_out_t 
+class llc_rsp_out_t
 {
 
 public:
@@ -290,9 +290,15 @@ public:
 	sc_trace(tf, x.word_offset, name + ".word_offset");
     }
     inline friend ostream & operator<<(ostream& os, const llc_rsp_out_t& x) {
-	os << hex << "(" 
-	   << "coh_msg: "    << x.coh_msg    
-	   << ", addr: "       << x.addr       
+	os << hex << "(coh_msg: ";
+        switch (x.coh_msg) {
+        case RSP_DATA : os << "DATA"; break;
+        case RSP_EDATA : os << "EDATA"; break;
+        case RSP_INVACK : os << "INVACK"; break;
+        case RSP_DATA_DMA : os << "DATA_DMA"; break;
+        default: os << "UNKNOWN"; break;
+        }
+        os << ", addr: "       << x.addr
 	   << ", line: ";
 	for (int i = WORDS_PER_LINE-1; i >= 0; --i) {
 	    int base = i*BITS_PER_WORD;
@@ -306,7 +312,7 @@ public:
     }
 };
 
-class llc_fwd_out_t 
+class llc_fwd_out_t
 {
 
 public:
@@ -325,14 +331,14 @@ public:
 
     inline llc_fwd_out_t& operator  = (const llc_fwd_out_t& x) {
 	coh_msg    = x.coh_msg;
-	addr       = x.addr;	 
+	addr       = x.addr;
 	req_id     = x.req_id;
 	dest_id    = x.dest_id;
 	return *this;
     }
     inline bool operator     == (const llc_fwd_out_t& x) const {
-	return (x.coh_msg    == coh_msg && 
-		x.addr       == addr    && 
+	return (x.coh_msg    == coh_msg &&
+		x.addr       == addr    &&
 		x.req_id     == req_id &&
 		x.dest_id    == dest_id);
     }
@@ -343,9 +349,17 @@ public:
 	sc_trace(tf, x.dest_id, name + ".dest_id");
     }
     inline friend ostream & operator<<(ostream& os, const llc_fwd_out_t& x) {
-	os << hex << "(" 
-	   << "coh_msg: "    << x.coh_msg    
-	   << ", addr: "       << x.addr       
+	os << hex << "(coh_msg: ";
+        switch (x.coh_msg) {
+        case FWD_GETS : os << "GETS"; break;
+        case FWD_GETM : os << "GETM"; break;
+        case FWD_INV : os << "INV"; break;
+        case FWD_PUTACK : os << "PUTACK"; break;
+        case FWD_GETM_LLC : os << "RECALL_EM"; break;
+        case FWD_INV_LLC : os << "RECALL_S"; break;
+        default: os << "UNKNOWN"; break;
+        }
+        os << ", addr: "       << x.addr
 	   << ", req_id: " << x.req_id
 	   << ", dest_id: " << x.dest_id << ")";
 	return os;
@@ -355,7 +369,7 @@ public:
 /* L2 to L2/LLC */
 
 // requests
-class l2_req_out_t 
+class l2_req_out_t
 {
 
 public:
@@ -373,16 +387,16 @@ public:
     {}
 
     inline l2_req_out_t& operator  = (const l2_req_out_t& x) {
-	coh_msg = x.coh_msg;	
-	hprot   = x.hprot;	 
-	addr    = x.addr;	 
+	coh_msg = x.coh_msg;
+	hprot   = x.hprot;
+	addr    = x.addr;
 	line    = x.line;
 	return *this;
     }
     inline bool operator  == (const l2_req_out_t& x) const {
-	return (x.coh_msg == coh_msg	&& 
-		x.hprot   == hprot	&& 
-		x.addr    == addr	&& 
+	return (x.coh_msg == coh_msg	&&
+		x.hprot   == hprot	&&
+		x.addr    == addr	&&
 		x.line	  == line);
     }
     inline friend void sc_trace(sc_trace_file *tf, const l2_req_out_t& x, const std::string & name) {
@@ -392,10 +406,10 @@ public:
 	sc_trace(tf, x.line,    name + ".line");
     }
     inline friend ostream & operator<<(ostream& os, const l2_req_out_t& x) {
-	os << hex << "(" 
-	   << "coh_msg: " << x.coh_msg 
-	   << ", hprot: " << x.hprot   
-	   << ", addr: " << x.addr    
+	os << hex << "("
+	   << "coh_msg: " << x.coh_msg
+	   << ", hprot: " << x.hprot
+	   << ", addr: " << x.addr
 	   << ", line: ";
 	for (int i = WORDS_PER_LINE-1; i >= 0; --i) {
 	    int base = i*BITS_PER_WORD;
@@ -406,7 +420,7 @@ public:
     }
 };
 
-class llc_req_in_t 
+class llc_req_in_t
 {
 
 public:
@@ -458,9 +472,19 @@ public:
 	sc_trace(tf, x.valid_words, name + ".valid_words");
     }
     inline friend ostream & operator<<(ostream& os, const llc_req_in_t& x) {
-	os << hex << "("
-	   << "coh_msg: " << x.coh_msg
-	   << ", hprot: " << x.hprot
+	os << hex << "(coh_msg: ";
+        switch (x.coh_msg) {
+        case REQ_GETS : os << "GETS"; break;
+        case REQ_GETM : os << "GETM"; break;
+        case REQ_PUTS : os << "PUTS"; break;
+        case REQ_PUTM : os << "PUTM"; break;
+        case REQ_DMA_READ : os << "DMA_READ"; break;
+        case REQ_DMA_WRITE : os << "DMA_WRITE"; break;
+        case REQ_DMA_READ_BURST : os << "DMA_READ_BURST"; break;
+        case REQ_DMA_WRITE_BURST : os << "DMA_WRITE_BURST"; break;
+        default: os << "UNKNOWN"; break;
+        }
+        os << ", hprot: " << x.hprot
 	   << ", addr: " << x.addr
 	   << ", req_id: " << x.req_id
 	   << ", word_offset: " << x.word_offset
@@ -476,7 +500,7 @@ public:
 };
 
 // responses
-class l2_rsp_out_t 
+class l2_rsp_out_t
 {
 
 public:
@@ -496,18 +520,18 @@ public:
     {}
 
     inline l2_rsp_out_t& operator  = (const l2_rsp_out_t& x) {
-	coh_msg = x.coh_msg;	
-	req_id   = x.req_id;	 
+	coh_msg = x.coh_msg;
+	req_id   = x.req_id;
 	to_req   = x.to_req;
-	addr    = x.addr;	 
+	addr    = x.addr;
 	line    = x.line;
 	return *this;
     }
     inline bool operator  == (const l2_rsp_out_t& x) const {
-	return (x.coh_msg == coh_msg	&& 
-		x.req_id   == req_id	&& 
-		x.to_req   == to_req	&& 
-		x.addr    == addr	&& 
+	return (x.coh_msg == coh_msg	&&
+		x.req_id   == req_id	&&
+		x.to_req   == to_req	&&
+		x.addr    == addr	&&
 		x.line	  == line);
     }
     inline friend void sc_trace(sc_trace_file *tf, const l2_rsp_out_t& x, const std::string & name) {
@@ -518,11 +542,11 @@ public:
 	sc_trace(tf, x.line,    name + ".line");
     }
     inline friend ostream & operator<<(ostream& os, const l2_rsp_out_t& x) {
-	os << hex << "(" 
-	   << "coh_msg: " << x.coh_msg 
-	   << ", req_id: " << x.req_id   
-	   << ", to_req: " << x.to_req   
-	   << ", addr: " << x.addr    
+	os << hex << "("
+	   << "coh_msg: " << x.coh_msg
+	   << ", req_id: " << x.req_id
+	   << ", to_req: " << x.to_req
+	   << ", addr: " << x.addr
 	   << ", line: ";
 	for (int i = WORDS_PER_LINE-1; i >= 0; --i) {
 	    int base = i*BITS_PER_WORD;
@@ -533,7 +557,7 @@ public:
     }
 };
 
-class llc_rsp_in_t 
+class llc_rsp_in_t
 {
 
 public:
@@ -552,14 +576,14 @@ public:
 
     inline llc_rsp_in_t& operator  = (const llc_rsp_in_t& x) {
 	coh_msg = x.coh_msg;
-	addr    = x.addr;	 
+	addr    = x.addr;
 	line    = x.line;
 	req_id  = x.req_id;
 	return *this;
     }
     inline bool operator  == (const llc_rsp_in_t& x) const {
-	return (x.coh_msg == coh_msg	&& 
-		x.addr    == addr	&& 
+	return (x.coh_msg == coh_msg	&&
+		x.addr    == addr	&&
 		x.line	  == line       &&
 		x.req_id  == req_id);
     }
@@ -570,10 +594,10 @@ public:
 	sc_trace(tf, x.req_id,   name + ".req_id");
     }
     inline friend ostream & operator<<(ostream& os, const llc_rsp_in_t& x) {
-	os << hex << "(" 
-	   << ", coh_msg: " << x.coh_msg
-	   << ", addr: " << x.addr    
-	   << ", req_id: " << x.req_id    
+	os << hex << "("
+	   << "coh_msg: " << x.coh_msg
+	   << ", addr: " << x.addr
+	   << ", req_id: " << x.req_id
 	   << ", line: ";
 	for (int i = WORDS_PER_LINE-1; i >= 0; --i) {
 	    int base = i*BITS_PER_WORD;
@@ -587,7 +611,7 @@ public:
 /* LLC to Memory */
 
 // requests
-class llc_mem_req_t 
+class llc_mem_req_t
 {
 
 public:
@@ -607,18 +631,18 @@ public:
     {}
 
     inline llc_mem_req_t& operator  = (const llc_mem_req_t& x) {
-	hwrite = x.hwrite;	
-	hsize   = x.hsize;	
-	hprot   = x.hprot;	 
-	addr    = x.addr;	 
+	hwrite = x.hwrite;
+	hsize   = x.hsize;
+	hprot   = x.hprot;
+	addr    = x.addr;
 	line    = x.line;
 	return *this;
     }
     inline bool operator  == (const llc_mem_req_t& x) const {
-	return (x.hwrite == hwrite	&& 
-		x.hsize   == hsize	&& 
-		x.hprot   == hprot	&& 
-		x.addr    == addr	&& 
+	return (x.hwrite == hwrite	&&
+		x.hsize   == hsize	&&
+		x.hprot   == hprot	&&
+		x.addr    == addr	&&
 		x.line    == line);
     }
     inline friend void sc_trace(sc_trace_file *tf, const llc_mem_req_t& x, const std::string & name) {
@@ -629,8 +653,8 @@ public:
 	sc_trace(tf, x.line,     name + ".line");
     }
     inline friend ostream & operator<<(ostream& os, const llc_mem_req_t& x) {
-	os << hex << "(" 
-	   << "hwrite: "   << x.hwrite 
+	os << hex << "("
+	   << "hwrite: "   << x.hwrite
 	   << ", hsize: "   << x.hsize
 	   << ", hprot: "   << x.hprot
 	   << ", addr: "    << x.addr
@@ -648,7 +672,7 @@ typedef l2_rd_rsp_t llc_mem_rsp_t;
  */
 
 // ongoing request buffer
-class reqs_buf_t 
+class reqs_buf_t
 {
 
 public:
@@ -681,7 +705,7 @@ public:
 	invack_cnt(0),
     	word(0),
     	line(0)
-    {}	
+    {}
 
     inline reqs_buf_t& operator = (const reqs_buf_t& x) {
 	cpu_msg			= x.cpu_msg;
@@ -700,13 +724,13 @@ public:
 	return *this;
     }
     inline bool operator     == (const reqs_buf_t& x) const {
-	return (x.cpu_msg    == cpu_msg		&& 
-		x.tag	     == tag		&& 
-		x.tag_estall == tag_estall	&& 
-		x.set	     == set		&& 
-		x.way	     == way		&& 
-		x.hsize	     == hsize		&& 
-		x.w_off	     == w_off		&& 
+	return (x.cpu_msg    == cpu_msg		&&
+		x.tag	     == tag		&&
+		x.tag_estall == tag_estall	&&
+		x.set	     == set		&&
+		x.way	     == way		&&
+		x.hsize	     == hsize		&&
+		x.w_off	     == w_off		&&
 		x.b_off	     == b_off		&&
 		x.state	     == state		&&
 		x.hprot	     == hprot		&&
@@ -730,25 +754,25 @@ public:
 	sc_trace(tf, x.line , name + ".line");
     }
     inline friend ostream & operator<<(ostream& os, const reqs_buf_t& x) {
-	os << hex << "(" 
-	   << "cpu_msg: " << x.cpu_msg         
-	   << "tag: " << x.tag         
-	   << "tag_estall: " << x.tag_estall         
-	   << ", set: "<< x.set         
-	   << ", way: " << x.way         
-	   << ", hsize: " << x.hsize         
-	   << ", w_off: " << x.w_off       
-	   << ", b_off: " << x.b_off       
-	   << ", state: " << x.state       
-	   << ", hprot: " << x.hprot       
-	   << ", invack_cnt: " << x.invack_cnt  
-	   << ", word: " << x.word        
-	   << ", line: ";        
+	os << hex << "("
+	   << "cpu_msg: " << x.cpu_msg
+	   << "tag: " << x.tag
+	   << "tag_estall: " << x.tag_estall
+	   << ", set: "<< x.set
+	   << ", way: " << x.way
+	   << ", hsize: " << x.hsize
+	   << ", w_off: " << x.w_off
+	   << ", b_off: " << x.b_off
+	   << ", state: " << x.state
+	   << ", hprot: " << x.hprot
+	   << ", invack_cnt: " << x.invack_cnt
+	   << ", word: " << x.word
+	   << ", line: ";
 	for (int i = WORDS_PER_LINE-1; i >= 0; --i) {
 	    int base = i*BITS_PER_WORD;
 	    os << x.line.range(base + BITS_PER_WORD - 1, base) << " ";
 	}
-	os << ")";        
+	os << ")";
 	return os;
     }
 };
@@ -760,7 +784,7 @@ class fwd_stall_backup_t
 public:
 
     coh_msg_t coh_msg;
-    line_addr_t addr; 
+    line_addr_t addr;
 
     fwd_stall_backup_t() :
 	coh_msg(0),
@@ -773,12 +797,12 @@ public:
 	return *this;
     }
     inline bool operator == (const fwd_stall_backup_t& x) const {
-	return (x.coh_msg == coh_msg	&& 
+	return (x.coh_msg == coh_msg	&&
 		x.addr	  == addr);
     }
     inline friend ostream & operator<<(ostream& os, const fwd_stall_backup_t& x) {
-	os << hex << "(" 
-	   << "coh_msg: " << x.coh_msg 
+	os << hex << "("
+	   << "coh_msg: " << x.coh_msg
 	   << ", addr: " << x.addr    << ")";
 	return os;
     }
@@ -819,26 +843,26 @@ public:
 	return *this;
     }
     inline bool operator == (const addr_breakdown_t& x) const {
-	return (x.line	    == line		&& 
-		x.line_addr == line_addr	&& 
-		x.word	    == word		&& 
-		x.tag	    == tag		&& 
-		x.set	    == set		&& 
-		x.w_off	    == w_off		&& 
+	return (x.line	    == line		&&
+		x.line_addr == line_addr	&&
+		x.word	    == word		&&
+		x.tag	    == tag		&&
+		x.set	    == set		&&
+		x.w_off	    == w_off		&&
 		x.b_off	    == b_off);
     }
     inline friend ostream & operator<<(ostream& os, const addr_breakdown_t& x) {
-	os << hex << "(" 
-	   << "line: "      << x.line 
-	   << "line_addr: " << x.line_addr 
+	os << hex << "("
+	   << "line: "      << x.line
+	   << "line_addr: " << x.line_addr
 	   << ", word: "    << x.word
-	   << ", tag: "     << x.tag 
-	   << ", set: "     << x.set 
-	   << ", w_off: "   << x.w_off 
+	   << ", tag: "     << x.tag
+	   << ", set: "     << x.set
+	   << ", w_off: "   << x.w_off
 	   << ", b_off: "   << x.b_off << ")";
 	return os;
     }
-    
+
     void tag_incr(int a) {
 	line	  += a * L2_TAG_OFFSET;
 	line_addr += a * L2_SETS;
@@ -917,26 +941,26 @@ public:
 	return *this;
     }
     inline bool operator == (const addr_breakdown_llc_t& x) const {
-	return (x.line	    == line		&& 
-		x.line_addr == line_addr	&& 
-		x.word	    == word		&& 
-		x.tag	    == tag		&& 
-		x.set	    == set		&& 
-		x.w_off	    == w_off		&& 
+	return (x.line	    == line		&&
+		x.line_addr == line_addr	&&
+		x.word	    == word		&&
+		x.tag	    == tag		&&
+		x.set	    == set		&&
+		x.w_off	    == w_off		&&
 		x.b_off	    == b_off);
     }
     inline friend ostream & operator<<(ostream& os, const addr_breakdown_llc_t& x) {
-	os << hex << "(" 
-	   << "line: "      << x.line 
-	   << "line_addr: " << x.line_addr 
+	os << hex << "("
+	   << "line: "      << x.line
+	   << "line_addr: " << x.line_addr
 	   << ", word: "    << x.word
-	   << ", tag: "     << x.tag 
-	   << ", set: "     << x.set 
-	   << ", w_off: "   << x.w_off 
+	   << ", tag: "     << x.tag
+	   << ", set: "     << x.set
+	   << ", w_off: "   << x.w_off
 	   << ", b_off: "   << x.b_off << ")";
 	return os;
     }
-    
+
     void tag_incr(int a) {
 	line	  += a * LLC_TAG_OFFSET;
 	line_addr += a * LLC_SETS;
@@ -1001,16 +1025,16 @@ public:
 	return *this;
     }
     inline bool operator == (const line_breakdown_t& x) const {
-	return (x.tag	== tag		&& 
+	return (x.tag	== tag		&&
 		x.set	== set);
     }
     inline friend ostream & operator<<(ostream& os, const line_breakdown_t& x) {
-	os << hex << "(" 
-	   << ", tag: "   << x.tag 
-	   << ", set: "   << x.set << ")"; 
+	os << hex << "("
+	   << ", tag: "   << x.tag
+	   << ", set: "   << x.set << ")";
 	return os;
     }
-    
+
     void tag_incr(int a) {
 	tag += a;
     }

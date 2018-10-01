@@ -107,7 +107,7 @@
 #define LLC_TAG_RANGE_LO	(ADDR_BITS - LLC_TAG_BITS)
 #define LLC_SET_RANGE_HI	(LLC_TAG_RANGE_LO - 1)
 #define LLC_TAG_OFFSET		(1 << LLC_TAG_RANGE_LO)
-#define LLC_LOOKUP_WAYS         std::min(LLC_WAYS, 16)
+#define LLC_LOOKUP_WAYS         16
 
 /*
  * Testbench 
@@ -378,6 +378,8 @@
 #define BM_DMA_WRITE_SD		((1 << 31) <<  8)
 #define BM_DMA_WRITE_I		((1 << 31) <<  9)
 #define BM_DMA_WRITE_NOTSD	((1 << 31) << 10)
+#define BM_LLC_GET_DMA_REQ_IN	((1 << 31) << 11)
+#define BM_LLC_SEND_DMA_RSP_OUT	((1 << 31) << 12)
 
 #define AS_GENERIC		(1 << 0)
 #define AS_GETS_S_NOSHARE	(1 << 1)

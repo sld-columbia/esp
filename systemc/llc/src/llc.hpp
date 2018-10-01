@@ -34,6 +34,9 @@ public:
     sc_signal<bool>	dbg_is_rst_to_get;
     sc_signal<bool>	dbg_is_rsp_to_get;
     sc_signal<bool>	dbg_is_req_to_get;
+    sc_signal<bool>     dbg_is_dma_read_to_resume;
+    sc_signal<bool>     dbg_is_dma_write_to_resume;
+    sc_signal<bool>     dbg_is_dma_req_to_get;
 
     sc_signal<bool>		dbg_tag_hit;
     sc_signal<llc_way_t>	dbg_hit_way;
@@ -46,7 +49,7 @@ public:
     sc_signal<bool>		dbg_evict_way_not_sd;
     sc_signal<line_addr_t>	dbg_evict_addr;
     sc_signal<llc_set_t>	dbg_flush_set;
-    sc_signal<llc_way_t>	dbg_flush_way;    
+    sc_signal<llc_way_t>	dbg_flush_way;
 
     sc_signal<bool>		dbg_req_stall;
     sc_signal<bool>		dbg_req_in_stalled_valid;
@@ -71,21 +74,22 @@ public:
 
     // Input ports
     nb_get_initiator<llc_req_in_t>	llc_req_in;
+    nb_get_initiator<llc_req_in_t>	llc_dma_req_in;
     nb_get_initiator<llc_rsp_in_t>	llc_rsp_in;
-    get_initiator<llc_mem_rsp_t>	llc_mem_rsp;
+    nb_get_initiator<llc_mem_rsp_t>	llc_mem_rsp;
     nb_get_initiator<bool>              llc_rst_tb;
 
     // Output ports
-    put_initiator<llc_rsp_out_t>	llc_rsp_out;
-    put_initiator<llc_fwd_out_t>	llc_fwd_out;
-    put_initiator<llc_mem_req_t>        llc_mem_req;
-    put_initiator<bool>                 llc_rst_tb_done;
+    nb_put_initiator<llc_rsp_out_t>	llc_rsp_out;
+    nb_put_initiator<llc_rsp_out_t>	llc_dma_rsp_out;
+    nb_put_initiator<llc_fwd_out_t>	llc_fwd_out;
+    nb_put_initiator<llc_mem_req_t>     llc_mem_req;
+    nb_put_initiator<bool>              llc_rst_tb_done;
 
 #ifdef STATS_ENABLE
-    put_initiator<bool>                 llc_stats;
+    nb_put_initiator<bool>              llc_stats;
 #endif
 
-    // Local memory
     // Local memory
     EXP_MEM_TYPE_STRING(llc, tags, LLC_SETS, LLC_WAYS)<llc_tag_t, LLC_LINES> tags;
     EXP_MEM_TYPE_STRING(llc, states, LLC_SETS, LLC_WAYS)<llc_state_t, LLC_LINES> states;
@@ -95,31 +99,41 @@ public:
     EXP_MEM_TYPE_STRING(llc, sharers, LLC_SETS, LLC_WAYS)<sharers_t, LLC_LINES> sharers;
     EXP_MEM_TYPE_STRING(llc, dirty_bits, LLC_SETS, LLC_WAYS)<sc_uint<2>, LLC_LINES> dirty_bits;
     EXP_MEM_TYPE_STRING(llc, evict_ways, LLC_SETS, LLC_WAYS)<llc_way_t, LLC_SETS> evict_ways;
+    // llc_tag_t tags[LLC_LINES];
+    // llc_state_t states[LLC_LINES];
+    // line_t lines[LLC_LINES];
+    // hprot_t hprots[LLC_LINES];
+    // owner_t owners[LLC_LINES];
+    // sharers_t sharers[LLC_LINES];
+    // sc_uint<2> dirty_bits[LLC_LINES];
+    // llc_way_t evict_ways[LLC_SETS];
 
     // Local registers
-    llc_tag_t	 tag_buf[LLC_WAYS];
-    llc_state_t	 state_buf[LLC_WAYS];
-    hprot_t	 hprot_buf[LLC_WAYS];
-    line_t	 line_buf[LLC_WAYS];
+    llc_tag_t	 tags_buf[LLC_WAYS];
+    llc_state_t	 states_buf[LLC_WAYS];
+    hprot_t	 hprots_buf[LLC_WAYS];
+    line_t	 lines_buf[LLC_WAYS];
     sharers_t	 sharers_buf[LLC_WAYS];
-    owner_t      owner_buf[LLC_WAYS];
-    sc_uint<2>   dirty_bit_buf[LLC_WAYS];
-    llc_way_t	 evict_way_buf;
+    owner_t      owners_buf[LLC_WAYS];
+    sc_uint<2>   dirty_bits_buf[LLC_WAYS];
+    llc_way_t	 evict_ways_buf;
 
     // Constructor
     SC_CTOR(llc)
-	    : clk("clk")
-	    , rst("rst")
-	    , llc_req_in("llc_req_in")
-	    , llc_rsp_in("llc_rsp_in")
-	    , llc_mem_rsp("llc_mem_rsp")
-	    , llc_rst_tb("llc_rst_tb")
-	    , llc_rsp_out("llc_rsp_out")
-	    , llc_fwd_out("llc_fwd_out")
-	    , llc_mem_req("llc_mem_req")
-	    , llc_rst_tb_done("llc_rst_tb_done")
+        : clk("clk")
+        , rst("rst")
+        , llc_req_in("llc_req_in")
+        , llc_dma_req_in("llc_dma_req_in")
+        , llc_rsp_in("llc_rsp_in")
+        , llc_mem_rsp("llc_mem_rsp")
+        , llc_rst_tb("llc_rst_tb")
+        , llc_rsp_out("llc_rsp_out")
+        , llc_dma_rsp_out("llc_dma_rsp_out")
+        , llc_fwd_out("llc_fwd_out")
+        , llc_mem_req("llc_mem_req")
+        , llc_rst_tb_done("llc_rst_tb_done")
 #ifdef STATS_ENABLE
-	    , llc_stats("llc_stats")
+        , llc_stats("llc_stats")
 #endif
     {
         // Cache controller process
@@ -129,10 +143,12 @@ public:
 
 	// Assign clock and reset to put_get ports
 	llc_req_in.clk_rst (clk, rst);
+	llc_dma_req_in.clk_rst (clk, rst);
 	llc_rsp_in.clk_rst (clk, rst);
 	llc_mem_rsp.clk_rst (clk, rst);
 	llc_rst_tb.clk_rst(clk, rst);
 	llc_rsp_out.clk_rst (clk, rst);
+	llc_dma_rsp_out.clk_rst (clk, rst);
 	llc_fwd_out.clk_rst(clk, rst);
 	llc_mem_req.clk_rst(clk, rst);
 	llc_rst_tb_done.clk_rst(clk, rst);
@@ -156,6 +172,9 @@ public:
 	sharers.clk(this->clk);
 	dirty_bits.clk(this->clk);
 	evict_ways.clk(this->clk);
+
+	// // Mapping to memory resources
+        // LLC_MAP_MEMORY;
     }
 
     // Processes
@@ -163,21 +182,20 @@ public:
 
     // Functions
     inline void reset_io();
-    inline void reset_states();
-    void read_set(llc_addr_t base, llc_way_t offset);
-    void lookup(llc_tag_t tag, llc_set_t set, llc_way_t &way, bool &evict, llc_addr_t &llc_addr);
-    void send_mem_req(bool hwrite, line_addr_t line_addr, hprot_t hprot, line_t line);
-    void get_mem_rsp(line_t &line);
-    void get_req_in(llc_req_in_t &req_in);
-    void get_rsp_in(llc_rsp_in_t &rsp_in);
-    void send_rsp_out(coh_msg_t coh_msg, line_addr_t addr, line_t line, cache_id_t req_id,
-		      cache_id_t dest_id, invack_cnt_t invack_cnt, word_offset_t word_offset);
-    void send_fwd_out(mix_msg_t coh_msg, line_addr_t addr, cache_id_t req_id, cache_id_t dest_id);
-    llc_rsp_in_t wait_rsp_in(addr_t addr_evict);
-    void process_rsp_in(llc_rsp_in_t rsp_in);
+    inline void reset_state();
+    inline void read_set(llc_addr_t base, llc_way_t offset);
+    inline void lookup(llc_tag_t tag, llc_way_t &way, bool &evict);
+
+    inline void send_mem_req(bool hwrite, line_addr_t line_addr, hprot_t hprot, line_t line);
 #ifdef STATS_ENABLE
-    void send_stats(bool stats);
+    inline void send_stats(bool stats);
 #endif
+    inline void get_mem_rsp(line_t &line);
+    inline void send_rsp_out(coh_msg_t coh_msg, line_addr_t addr, line_t line, cache_id_t req_id,
+                             cache_id_t dest_id, invack_cnt_t invack_cnt, word_offset_t word_offset);
+    inline void send_fwd_out(mix_msg_t coh_msg, line_addr_t addr, cache_id_t req_id, cache_id_t dest_id);
+    inline void send_dma_rsp_out(coh_msg_t coh_msg, line_addr_t addr, line_t line, cache_id_t req_id,
+                                 cache_id_t dest_id, invack_cnt_t invack_cnt, word_offset_t word_offset);
 
 private:
 
@@ -187,11 +205,24 @@ private:
     sc_bv<LLC_BOOKMARK_WIDTH> bookmark_tmp;
 #endif
 
+    bool rst_stall;
+    bool flush_stall;
+    llc_set_t rst_flush_stalled_set;
     bool req_stall;
     bool req_in_stalled_valid;
     llc_req_in_t req_in_stalled;
     llc_tag_t req_in_stalled_tag;
     llc_set_t req_in_stalled_set;
+    llc_req_in_t dma_req_in;
+    bool dma_read_pending;
+    bool dma_write_pending;
+    addr_t dma_addr;
+    dma_length_t dma_read_length;
+    dma_length_t dma_length;
+    bool dma_done;
+    bool dma_start;
+    bool recall_pending;
+    bool recall_valid;
 };
 
 #endif /* __LLC_HPP__ */
