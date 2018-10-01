@@ -15,8 +15,12 @@ asm(
     );
 
 
-const char *coherence_label[3] = {"none", "llc", "full"};
-
+const char* const coherence_label[5] = {
+	"non-coherent DMA",
+	"LLC-coherent DMA",
+	"coherent-DMA",
+	"fully-coherent access",
+	0 };
 
 void *aligned_malloc(int size) {
 	void *mem = malloc(size + CACHELINE_SIZE + sizeof(void*));
