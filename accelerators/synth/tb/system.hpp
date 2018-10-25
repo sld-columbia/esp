@@ -1,0 +1,76 @@
+#ifndef __SYSTEM_HPP__
+#define __SYSTEM_HPP__
+
+#include "synth_conf_info.hpp"
+#include "synth_debug_info.hpp"
+#include "synth.hpp"
+#include "synth_directives.hpp"
+
+#include "esp_templates.hpp"
+
+const size_t MEM_SIZE = /* Compute memory footprint */
+const size_t N_ACC = 12
+
+#include "core/systems/esp_system.hpp"
+
+#include "synth_wrap.h"
+
+    class system_t : public esp_system<DMA_WIDTH, MEM_SIZE>
+    {
+    public:
+
+        // ACC instance
+	synth_wrapper *acc;
+
+        // Constructor
+        SC_HAS_PROCESS(system_t);
+        system_t(sc_module_name name)
+	    : esp_system<DMA_WIDTH, MEM_SIZE>(name)
+	    {
+		// ACC
+		acc = new synth_wrapper("synth_wrapper");
+
+		// Binding ACC
+		acc->clk(clk);
+		acc->rst(acc_rst);
+		acc->dma_read_ctrl(dma_read_ctrl);
+		acc->dma_write_ctrl(dma_write_ctrl);
+		acc->dma_read_chnl(dma_read_chnl);
+		acc->dma_write_chnl(dma_write_chnl);
+		acc->conf_info(conf_info);
+		acc->conf_done(conf_done);
+		acc->acc_done(acc_done);
+		acc->debug(debug);
+
+		// Define accelerators configurations
+		configs[0]();
+		configs[1]();
+	    }
+
+        // Processes
+
+        // Configure accelerator
+        void config_proc();
+
+        // Load internal memory
+        void load_memory();
+
+	// Send configuration
+	void send_config();
+
+        // Dump internal memory
+        void dump_memory();
+
+        // Validate accelerator results
+        int validate();
+
+        // Accelerator-specific data
+    
+
+	// Other Functions
+
+	// Variables
+	conf_info_t configs[N_ACC];
+    };
+
+#endif // __SYSTEM_HPP__
