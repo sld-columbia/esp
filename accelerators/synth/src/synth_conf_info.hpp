@@ -23,6 +23,7 @@ public:
     uint32_t irregular_seed;
     uint32_t ld_st_ratio;
     uint32_t stride_len;
+    uint32_t offset;
 
     //
     // constructors
@@ -39,6 +40,7 @@ public:
 	, irregular_seed(0)
 	, ld_st_ratio(0)
 	, stride_len(0)
+	, offset(0)
 	{}
 
     conf_info_t(
@@ -52,7 +54,8 @@ public:
 	uint32_t pattern,
 	uint32_t irregular_seed,
 	uint32_t ld_st_ratio,
-	uint32_t stride_len)
+	uint32_t stride_len,
+	uint32_t offset)
 	: in_size(in_size)
 	, out_size(out_size)
 	, access_factor(access_factor)
@@ -64,6 +67,7 @@ public:
 	, irregular_seed(irregular_seed)
 	, ld_st_ratio(ld_st_ratio)
 	, stride_len(stride_len)
+	, offset(offset)
 	{}
 
     // equals operator
@@ -79,7 +83,8 @@ public:
 		&& (rhs.pattern == pattern)
 		&& (rhs.irregular_seed == irregular_seed)
 		&& (rhs.ld_st_ratio == ld_st_ratio)
-		&& (rhs.stride_len == stride_len);
+		&& (rhs.stride_len == stride_len)
+		&& (rhs.offset == offset);
 	}
 
     // assignment operator
@@ -96,6 +101,7 @@ public:
 	    irregular_seed = other.irregular_seed;
 	    ld_st_ratio = other.ld_st_ratio;
 	    stride_len = other.stride_len;
+	    offset = other.offset;
 	    return *this;
 	}
 
@@ -113,10 +119,11 @@ public:
 	       << ", compute_bound_factor = " << conf_info.compute_bound_factor
 	       << ", reuse_factor = " << conf_info.reuse_factor
 	       << ", in_place = " << conf_info.in_place
-	       << ", pattern = " << conf_patternfo.pattern
-	       << ", irregular_seed = " << conf_irregular_seedfo.irregular_seed
-	       << ", ld_st_ratio = " << conf_ld_st_ratiofo.ld_st_ratio
-	       << ", stride_len = " << conf_stride_lenfo.stride_len
+	       << ", pattern = " << conf_info.pattern
+	       << ", irregular_seed = " << conf_info.irregular_seed
+	       << ", ld_st_ratio = " << conf_info.ld_st_ratio
+	       << ", stride_len = " << conf_info.stride_len
+	       << ", offset = " << conf_info.offset
 	       << "}";
 	    return os;
 	}

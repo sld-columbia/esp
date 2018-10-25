@@ -21,7 +21,8 @@ void synth::load_input()
     uint32_t reuse_factor;
     uint32_t ld_st_ratio;
     uint32_t stride_len;
-    uint32_t in_place;
+    uint32_t in_place; 
+    uint32_t offset;
 
     uint32_t nwords;
     uint32_t ntrans;
@@ -52,6 +53,7 @@ void synth::load_input()
 	ld_st_ratio = 0;
 	stride_len = 0;
 	in_place = 0;
+	offset = 0;
 
 	nwords = 0;
 	ntrans = 0;
@@ -83,6 +85,7 @@ void synth::load_input()
 	ld_st_ratio = config.ld_st_ratio;
 	stride_len = config.stride_len;
 	in_place = config.in_place;
+	offset = config.offset;
 
 	// Logarithms
 	burst_len_log = ilog2(burst_len);
@@ -130,7 +133,7 @@ void synth::load_input()
 		    HLS_DEFINE_PROTOCOL("load-dma-conf");
 
 		    // Configure DMA transaction
-		    dma_info_t dma_info(index, burst_len);
+		    dma_info_t dma_info(index + offset, burst_len);
 		    this->dma_read_ctrl.put(dma_info);
 		}
 
@@ -272,7 +275,7 @@ void synth::store_output()
 		    HLS_DEFINE_PROTOCOL("store-dma-conf");
 
 		    // Configure DMA transaction
-		    dma_info_t dma_info(index, burst_len);
+		    dma_info_t dma_info(index + offset, burst_len);
 		    this->dma_write_ctrl.put(dma_info);
 		}
 		for (uint16_t i = 0; i < burst_len; i++)

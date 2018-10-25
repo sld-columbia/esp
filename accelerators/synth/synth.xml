@@ -12,5 +12,6 @@
     <param name="stride_len" desc="stride length for strided pattern"/>
     <param name="out_size" desc="size of output dataset"/>
     <param name="in_place" desc="output stored in place of input"/>
+    <param name="offset" desc="base address of the input dataset"/>
   </accelerator>
 </sld>
