@@ -24,11 +24,11 @@ define_system_module tb  ../tb/llc_tb.cpp ../tb/system.cpp ../tb/sc_main.cpp
 # HLS and Simulation configurations
 ######################################################################
 
-# foreach sets [list 256 512 1024 2048 4096 8092] {
+# foreach sets [list 256 512 1024 2048 4096 8192] {
 
 #     foreach ways [list 4 8 16 32] {
 
-foreach sets [list 1024] {
+foreach sets [list 4096] {
 
     foreach ways [list 16] {
 
