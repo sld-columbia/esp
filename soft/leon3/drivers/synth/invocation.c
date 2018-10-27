@@ -15,7 +15,7 @@ coh_t invocation_choices(int acc_id, int in_size, int out_size,
     this_acc.alloc_mem_id = alloc_mem_id;
 
     // Evaluate the footprint
-    this_acc.footprint = (in_size >> access_factor) + this_acc.out_size;
+    this_acc.footprint = ((in_size >> access_factor) + this_acc.out_size) * 4;
     int footprint;
     int footprint_threshold;
 
