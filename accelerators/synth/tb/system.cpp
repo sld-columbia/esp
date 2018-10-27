@@ -14,12 +14,11 @@ void system_t::config_proc()
 
     ESP_REPORT_INFO("reset done");
 
-    for (int i = 0; i < N_ACC; i++) {
+    init_acc_params();
 
-	// Config
-	load_memory();
+    for (int acc_id = 0; acc_id < N_ACC; acc_id++) {
 
-	send_config(i);
+	send_config(acc_id);
 
         // Compute
 	{
@@ -60,18 +59,36 @@ void system_t::config_proc()
 }
 
 // Functions
+void system_t::init_acc_params()
+{
+    conf_info_t conf0( 1048576,  524288, 0, 8192, 1, 1, 1, 0, 0x12345678,    2,    0, 0); 
+    configs[0] = conf0;
+    conf_info_t conf1( 1048576,   32768, 0, 4096, 8, 2, 0, 0, 0x12345678,   32,    0, 0);
+    configs[1] = conf1;
+    conf_info_t conf2( 1048576,   65536, 0, 2048, 4, 4, 0, 0, 0x12345678,   16,    0, 0);
+    configs[2] = conf2;
+    conf_info_t conf3( 1048576, 1048576, 0, 1024, 2, 1, 0, 0, 0x12345678,    1,    0, 0);
+    configs[3] = conf3;
+    conf_info_t conf4( 1048576,  131072, 0,  512, 1, 2, 1, 0, 0x12345678,    8,    0, 0);
+    configs[4] = conf4;
+    conf_info_t conf5( 1048576,  262144, 0,  256, 1, 4, 0, 0, 0x12345678,    4,    0, 0);
+    configs[5] = conf5;
+    conf_info_t conf6( 1048576,     512, 0,    4, 1, 1, 0, 1, 0x12345678, 2048, 2048, 0);
+    configs[6] = conf6;
+    conf_info_t conf7( 1048576,    1024, 0,    4, 1, 2, 0, 1, 0x12345678, 1024, 1024, 0);
+    configs[7] = conf7;
+    conf_info_t conf8( 1048576,    2048, 0,    1, 1, 4, 0, 1, 0x12345678,  512,  512, 0);
+    configs[8] = conf8;
+    conf_info_t conf9( 1048576,   32768, 0,    4, 1, 1, 0, 2, 0x12345678,   32,    0, 0);
+    configs[9] = conf9;
+    conf_info_t conf10(1048576,   65536, 2,    1, 1, 2, 0, 2, 0x12345678,    4,    0, 0);
+    configs[10] = conf10;
+    conf_info_t conf11(1048576,   16384, 4,    1, 1, 4, 0, 2, 0x12345678,    1,    0, 0);
+    configs[11] = conf11;
+}
+
 void system_t::load_memory()
 {
-    // Optional usage check
-    if (esc_argc() != /* argc */)
-    {
-	ESP_REPORT_INFO("usage: %s <ARG1> <ARG2> ...\n", esc_argv()[0]);
-	sc_stop();
-    }
-
-    //  Memory initialization:
-
-    ESP_REPORT_INFO("load memory completed");
 }
 
 void system_t::send_config(int acc_id)

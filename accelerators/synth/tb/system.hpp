@@ -8,69 +8,69 @@
 
 #include "esp_templates.hpp"
 
-const size_t MEM_SIZE = /* Compute memory footprint */
-const size_t N_ACC = 12
-
 #include "core/systems/esp_system.hpp"
 
 #include "synth_wrap.h"
 
-    class system_t : public esp_system<DMA_WIDTH, MEM_SIZE>
-    {
-    public:
+const size_t MEM_SIZE = 3000000; /* Compute memory footprint */
+const size_t N_ACC = 12;
 
-        // ACC instance
-	synth_wrapper *acc;
+class system_t : public esp_system<DMA_WIDTH, MEM_SIZE>
+{
+public:
 
-        // Constructor
-        SC_HAS_PROCESS(system_t);
-        system_t(sc_module_name name)
-	    : esp_system<DMA_WIDTH, MEM_SIZE>(name)
-	    {
-		// ACC
-		acc = new synth_wrapper("synth_wrapper");
+    // ACC instance
+    synth_wrapper *acc;
 
-		// Binding ACC
-		acc->clk(clk);
-		acc->rst(acc_rst);
-		acc->dma_read_ctrl(dma_read_ctrl);
-		acc->dma_write_ctrl(dma_write_ctrl);
-		acc->dma_read_chnl(dma_read_chnl);
-		acc->dma_write_chnl(dma_write_chnl);
-		acc->conf_info(conf_info);
-		acc->conf_done(conf_done);
-		acc->acc_done(acc_done);
-		acc->debug(debug);
+    // Constructor
+    SC_HAS_PROCESS(system_t);
+    system_t(sc_module_name name)
+	: esp_system<DMA_WIDTH, MEM_SIZE>(name)
+	{
+	    // ACC
+	    acc = new synth_wrapper("synth_wrapper");
 
-		// Define accelerators configurations
-		configs[0]();
-		configs[1]();
-	    }
+	    // Binding ACC
+	    acc->clk(clk);
+	    acc->rst(acc_rst);
+	    acc->dma_read_ctrl(dma_read_ctrl);
+	    acc->dma_write_ctrl(dma_write_ctrl);
+	    acc->dma_read_chnl(dma_read_chnl);
+	    acc->dma_write_chnl(dma_write_chnl);
+	    acc->conf_info(conf_info);
+	    acc->conf_done(conf_done);
+	    acc->acc_done(acc_done);
+	    acc->debug(debug);
+	}
 
-        // Processes
+    // Processes
 
-        // Configure accelerator
-        void config_proc();
+    // Configure accelerator
+    void config_proc();
 
-        // Load internal memory
-        void load_memory();
+    // Init all the accelerator's parameters
+    void init_acc_params();
 
-	// Send configuration
-	void send_config();
+    // Load internal memory
+    void load_memory();
 
-        // Dump internal memory
-        void dump_memory();
+    // Send configuration
+    void send_config(int acc_id);
 
-        // Validate accelerator results
-        int validate();
+    // Dump internal memory
+    void dump_memory();
 
-        // Accelerator-specific data
+    // Validate accelerator results
+    int validate();
+
+    // Accelerator-specific data
     
 
-	// Other Functions
+    // Other Functions
 
-	// Variables
-	conf_info_t configs[N_ACC];
-    };
+    // Variables
+    conf_info_t conff;
+    conf_info_t configs[N_ACC];
+};
 
 #endif // __SYSTEM_HPP__

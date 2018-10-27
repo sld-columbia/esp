@@ -110,7 +110,7 @@ void synth::load_input()
     // Load
     {
 	// Reuse loop
-	for (uint16_t r = 0; r < reuse_factor; r++)
+	for (uint32_t r = 0; r < reuse_factor; r++)
 	{
 	    HLS_LOAD_INPUT_REUSE_LOOP;
 
@@ -125,7 +125,7 @@ void synth::load_input()
 	    }
 
 	    // Bursts loop
-	    for (uint16_t b = 0; b < ntrans; b++)
+	    for (uint32_t b = 0; b < ntrans; b++)
 	    {
 		HLS_LOAD_INPUT_BATCH_LOOP;
 
@@ -138,11 +138,12 @@ void synth::load_input()
 		}
 
 		// Words loop
-		for (uint16_t i = 0; i < burst_len; i++)
+		for (uint32_t i = 0; i < burst_len; i++)
 		{
 		    HLS_LOAD_INPUT_LOOP;
 
 		    uint32_t data = this->dma_read_chnl.get().to_uint();
+		    wait();
 		}
 
 		// Handshake to compute process
@@ -157,7 +158,7 @@ void synth::load_input()
 		}
 
 		// Compute-bound emulation
-		for (uint16_t i = 0; i < compute_bound_delay; i++)
+		for (uint32_t i = 0; i < compute_bound_delay; i++)
 		{
 		    HLS_LOAD_INPUT_LOOP;
 
@@ -198,10 +199,12 @@ void synth::store_output()
 {
 
     uint32_t burst_len;
+    uint32_t in_size;
     uint32_t out_size;
     uint32_t reuse_factor;
     uint32_t ld_st_ratio;
     uint32_t in_place;
+    uint32_t offset;
 
     uint32_t nwords;
     uint32_t ntrans;
@@ -218,10 +221,12 @@ void synth::store_output()
 
 	// User-defined reset code
 	burst_len = 0;
+	in_size = 0;
 	out_size = 0;
 	reuse_factor = 0;
 	ld_st_ratio = 0;
 	in_place = 0;
+	offset = 0;
 
 	nwords = 0;
 	ntrans = 0;
@@ -239,10 +244,12 @@ void synth::store_output()
 	conf_info_t config = this->conf_info.read();
 
 	burst_len = config.burst_len;
+	in_size = config.in_size;
 	out_size = config.out_size;
 	reuse_factor = config.reuse_factor;
 	ld_st_ratio = config.ld_st_ratio;
 	in_place = config.in_place;
+	offset = config.offset;
 
 	if (ld_st_ratio != 1 || in_place != 1)
 	    reuse_factor = 1;
@@ -257,7 +264,7 @@ void synth::store_output()
     // Store
     {
 	// Reuse loop
-	for (uint16_t r = 0; r < reuse_factor; r++)
+	for (uint32_t r = 0; r < reuse_factor; r++)
 	{
 
 	    if (!in_place)
@@ -265,7 +272,7 @@ void synth::store_output()
 	    else
 		index = 0;
 
-	    for (uint16_t b = 0; b < ntrans; b++)
+	    for (uint32_t b = 0; b < ntrans; b++)
 	    {
 		HLS_STORE_OUTPUT_BATCH_LOOP;
 
@@ -278,12 +285,13 @@ void synth::store_output()
 		    dma_info_t dma_info(index + offset, burst_len);
 		    this->dma_write_ctrl.put(dma_info);
 		}
-		for (uint16_t i = 0; i < burst_len; i++)
+		for (uint32_t i = 0; i < burst_len; i++)
 		{
 		    HLS_STORE_OUTPUT_LOOP;
 
 		    uint32_t data = 0xdade0123;
 		    this->dma_write_chnl.put(data);
+		    wait();
 		}
 
 		index += burst_len;
@@ -316,7 +324,7 @@ void synth::compute_kernel()
     {
 	HLS_DEFINE_PROTOCOL("compute-reset");
 
-	this->reset_compute_1_kernel();
+	this->reset_compute_kernel();
 
 	// PLM memories reset
 
@@ -363,12 +371,11 @@ void synth::compute_kernel()
     // Compute
     {
 	// Reuse loop
-	for (uint16_t r = 0; r < reuse_factor; r++)
+	for (uint32_t r = 0; r < reuse_factor; r++)
 	{
 
-	    for (uint16_t b = 0; b < ntrans; b++)
+	    for (uint32_t b = 0; b < ntrans; b++)
 	    {
-
 
 		this->compute_load_handshake();
 
