@@ -91,7 +91,7 @@ void synth::load_input()
 	burst_len_log = ilog2(burst_len);
 
 	// Number of words to be read
-	if (config.pattern = IRREGULAR)
+	if (config.pattern == IRREGULAR)
 	    nwords = in_size >> access_factor;
 	else
 	    nwords = in_size;

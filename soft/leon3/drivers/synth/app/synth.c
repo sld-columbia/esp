@@ -244,6 +244,14 @@ static void config_thread(accelerator_thread_info_t *info,
 			memsz += out_size[acc];
 			offset += in_size[acc];
 		}
+
+		unsigned int footprint = in_size[acc] >>
+		    info->chain[acc].desc.cfg.access_factor;
+
+		if (!(info->chain[acc].desc.cfg.in_place))
+		    footprint += out_size[acc];
+
+		info->chain[acc].desc.esp.footprint = footprint;
 	}
 
 	info->memsz = memsz;
@@ -270,7 +278,8 @@ static void alloc_phase(accelerator_thread_info_t **info, int nthreads)
                         info[i]->chain[acc].desc.esp.run       = true;
                         info[i]->chain[acc].desc.esp.coherence = ACC_COH_LLC; // TODO: better hint
                         info[i]->chain[acc].desc.esp.contig    = contig_to_khandle(info[i]->mem);
-
+			info[i]->chain[acc].desc.esp.alloc_policy = params.policy;
+			info[i]->chain[acc].desc.esp.ddr_node = params.pol.first.ddr_node;
 		}
 	}
 }

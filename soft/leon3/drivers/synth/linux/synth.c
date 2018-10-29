@@ -39,7 +39,7 @@ static struct of_device_id synth_device_ids[] = {
 	{ },
 };
 
-static int synth_devs;
+static int synth_devs; // TODO this is never initialized
 
 static inline struct synth_device *to_synth(struct esp_device *esp)
 {
@@ -121,6 +121,7 @@ static struct esp_driver synth_driver = {
 
 static int __init synth_init(void)
 {
+        esp_status_init();
 	return esp_driver_register(&synth_driver);
 }
 
