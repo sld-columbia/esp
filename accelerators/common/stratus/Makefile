@@ -45,7 +45,7 @@ endif
 			mkdir -p $$outdir; \
 			if [ $$infile -nt $$outfile ]; then \
 				cp $$infile $$outfile; \
-				rtl_parts=$$(rm -rf tmp-vsim; vlib tmp-vsim; vlog -work tmp-vsim -quiet $$infile; vsim -quiet -c tmp-vsim.$(TARGET_NAME) > log 2> /dev/null; cat log | grep Error | grep "not defined" | cut -f 6 -d " " | sed "s/'//g" | uniq; rm -rf tmp-vsim log); \
+				rtl_parts=$$(rm -rf tmp-vsim; vlib tmp-vsim; vlog -work tmp-vsim -quiet $$infile; vsim -quiet -do "quit -f" -c tmp-vsim.$(TARGET_NAME) > log 2> /dev/null; cat log | grep Error | grep "not defined" | cut -f 6 -d " " | sed "s/'//g" | uniq; rm -rf tmp-vsim log); \
 				for p in $$rtl_parts; do \
 					pfile=$$indir/v_rtl/$$p\.v; \
 					if test -e $$pfile; then \
