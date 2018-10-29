@@ -142,8 +142,11 @@ void synth::load_input()
 		{
 		    HLS_LOAD_INPUT_LOOP;
 
-		    uint32_t data = this->dma_read_chnl.get().to_uint();
-		    wait();
+		    {
+			HLS_LOAD_DMA;
+			uint32_t data = this->dma_read_chnl.get().to_uint();
+			wait();
+		    }
 		}
 
 		// Handshake to compute process
@@ -290,8 +293,11 @@ void synth::store_output()
 		    HLS_STORE_OUTPUT_LOOP;
 
 		    uint32_t data = 0xdade0123;
-		    this->dma_write_chnl.put(data);
-		    wait();
+		    {
+			HLS_STORE_DMA;
+			this->dma_write_chnl.put(data);
+			wait();
+		    }
 		}
 
 		index += burst_len;
