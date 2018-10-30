@@ -34,6 +34,7 @@ struct esp_access {
 #include <linux/mutex.h>
 #include <linux/cdev.h>
 
+// TO DO do not hard-code this values
 #define N_MEM 2
 #define PRIVATE_CACHE_SIZE 16384
 #define LLC_SIZE 524288
@@ -82,7 +83,6 @@ int esp_driver_register(struct esp_driver *driver);
 void esp_driver_unregister(struct esp_driver *driver);
 int esp_device_register(struct esp_device *esp, struct platform_device *pdev);
 void esp_device_unregister(struct esp_device *device);
-void esp_status_init(void);
 
 #endif /* __KERNEL__ */
 

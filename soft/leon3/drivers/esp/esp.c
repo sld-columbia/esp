@@ -118,11 +118,16 @@ static void esp_runtime_config(struct esp_device *esp)
 	// it depends on whether the accelerator has a cache or not
 	esp->coherence = ACC_COH_RECALL;
 
+    else if (esp_status.active_acc_cnt >= 6)
+	esp->coherence = ACC_COH_NONE;
+
     else if (footprint > footprint_llc_threshold)
 	esp->coherence = ACC_COH_NONE;
 
     else
 	esp->coherence = ACC_COH_LLC;
+
+    // TODO use location, pattern.
 }
 
 static void esp_transfer(struct esp_device *esp, const struct contig_desc *contig)
@@ -233,32 +238,38 @@ static int esp_access_ioctl(struct esp_device *esp, void __user *argp)
 	if (esp->driver->prep_xfer)
 		esp->driver->prep_xfer(esp, arg);
 
+	if (access->coherence == ACC_COH_AUTO) {
+	
+		if (mutex_lock_interruptible(&esp_status.lock)) {
+			rc = -EINTR;
+			goto out;
+		}
+
+		esp_runtime_config(esp);
+
+		mutex_unlock(&esp_status.lock);
+	}
+
 	rc = esp_flush(esp);
 	if (rc)
 		goto out;
-
-	if (mutex_lock_interruptible(&esp_status.lock)) {
-	    rc = -EINTR;
-	    goto out;
-	}
-
-	esp_runtime_config(esp);
-
-	mutex_unlock(&esp_status.lock);
 
 	esp_transfer(esp, contig);
 	if (access->run)
 		esp_run(esp);
 	rc = esp_wait(esp);
 
-	if (mutex_lock_interruptible(&esp_status.lock)) {
-	    rc = -EINTR;
-	    goto out;
+	if (access->coherence == ACC_COH_AUTO) {
+
+		if (mutex_lock_interruptible(&esp_status.lock)) {
+			rc = -EINTR;
+			goto out;
+		}
+
+		esp_update_status(esp);
+
+		mutex_unlock(&esp_status.lock);
 	}
-
-	esp_update_status(esp);
-
-	mutex_unlock(&esp_status.lock);
 
 	mutex_unlock(&esp->lock);
 
@@ -481,6 +492,7 @@ EXPORT_SYMBOL_GPL(esp_driver_unregister);
 
 static int __init esp_init(void)
 {
+        esp_status_init();
 	return 0;
 }
 

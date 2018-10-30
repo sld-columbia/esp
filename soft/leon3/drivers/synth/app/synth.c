@@ -257,7 +257,8 @@ static void config_thread(accelerator_thread_info_t *info,
 	info->memsz = memsz;
 }
 
-static void alloc_phase(accelerator_thread_info_t **info, int nthreads)
+static void alloc_phase(accelerator_thread_info_t **info, int nthreads,
+			enum accelerator_coherence coherence)
 {
 	int i;
 
@@ -276,9 +277,11 @@ static void alloc_phase(accelerator_thread_info_t **info, int nthreads)
 		for (acc = 0; acc < info[i]->ndev; acc++) {
 
                         info[i]->chain[acc].desc.esp.run       = true;
-                        info[i]->chain[acc].desc.esp.coherence = ACC_COH_LLC; // TODO: better hint
+                        info[i]->chain[acc].desc.esp.coherence = coherence; // TODO: better hint?
                         info[i]->chain[acc].desc.esp.contig    = contig_to_khandle(info[i]->mem);
+
 			info[i]->chain[acc].desc.esp.alloc_policy = params.policy;
+			// TO DO for now the policy is always set to PREFERRED, see above
 			info[i]->chain[acc].desc.esp.ddr_node = params.pol.first.ddr_node;
 		}
 	}
@@ -353,7 +356,23 @@ int main(int argc, char **argv)
 
 	pthread_t threads[NTHREADS_MAX];
 
+	enum accelerator_coherence coherence;
+
 	srand(time(NULL));
+
+	if (argc == 2) {
+		if (!strcmp(argv[1], "llc"))
+			coherence = ACC_COH_LLC;
+		else if (!strcmp(argv[1], "full"))
+			coherence = ACC_COH_FULL;
+		else if (!strcmp(argv[1], "auto"))
+			coherence = ACC_COH_AUTO;
+		else // if (!strcmp(argv[1], "none"))
+			coherence = ACC_COH_NONE;
+
+	} else {
+		coherence = ACC_COH_NONE;
+	}
 
 	/* Define Phases */
 	nphases = 2;
@@ -438,7 +457,7 @@ int main(int argc, char **argv)
 		}
 
 		// Allocate memory
-		alloc_phase(phases[phase], nthreads[phase]);
+		alloc_phase(phases[phase], nthreads[phase], coherence);
 
 		for (thread = 0; thread < nthreads[phase]; thread++)
 			prepare_thread(phases[phase][thread]);

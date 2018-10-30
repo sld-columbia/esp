@@ -121,7 +121,6 @@ static struct esp_driver synth_driver = {
 
 static int __init synth_init(void)
 {
-        esp_status_init();
 	return esp_driver_register(&synth_driver);
 }
 
