@@ -210,6 +210,14 @@ contig_khandle_t contig_to_khandle(contig_handle_t handle)
 	return req->khandle;
 }
 
+int contig_to_most_allocated(contig_handle_t handle)
+{
+	struct contig_alloc_req *req = (struct contig_alloc_req *)handle;
+
+	assert(req);
+	return req->most_allocated;
+}
+
 static inline unsigned long chunk_nr(unsigned long offset)
 {
 	return (offset & chunk_mask) >> chunk_log;

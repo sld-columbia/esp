@@ -44,6 +44,18 @@ void contig_free(contig_handle_t handle);
  */
 contig_khandle_t contig_to_khandle(contig_handle_t handle);
 
+
+/**
+ * contig_to_most_allocated - get on which ddr node most chunks have
+ * been allocated
+ * @handle: contig buffer handle to obtain the kernel handle from
+ *
+ * This function is relevant for policies PREFERRED and LEAST_LOADED
+ * while for BALANCED, the difference across ddr nodes is not relevant
+ *
+ */
+int contig_to_most_allocated(contig_handle_t handle);
+
 /**
  * contig_copy_to - copy data to a contig buffer
  * @handle: handle of the buffer to copy to

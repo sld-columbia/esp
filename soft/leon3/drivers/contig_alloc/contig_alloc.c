@@ -135,13 +135,31 @@ static int contig_alloc_preferred(struct contig_desc *desc, const struct contig_
 	int ddr_node;
 	int i;
 
+	unsigned int n_per_node_max;
+	unsigned int n_per_node[DDR_NODES];
+	for (i = 0; i < DDR_NODES; i++)
+		n_per_node[i] = 0;
+
 	ddr_node = params->pol.first.ddr_node;
 	for (i = 0; i < desc->n; i++) {
 		ddr_node = get_next_ddr_node(ddr_node, params->pol.first.ddr_node);
 		allocate_chunk(&desc, ddr_node, i);
 		allocated += chunk_size;
+		n_per_node[ddr_node]++;
 	}
 	BUG_ON(allocated != desc->n * chunk_size);
+
+	/* Compute which DDR holds most of the data */
+	ddr_node = 0;
+	n_per_node_max = n_per_node[0];
+
+	for (i = 1; i < DDR_NODES; i++)
+		if (n_per_node[i] > n_per_node_max) {
+			ddr_node = i;
+			n_per_node_max = n_per_node[i];
+		}
+	desc->most_allocated = ddr_node;
+
 	return 0;
 }
 
@@ -189,6 +207,9 @@ static int contig_alloc_least_loaded(struct contig_desc *desc, const struct cont
 		allocated += chunk_size;
 	}
 	BUG_ON(allocated != desc->n * chunk_size);
+
+	desc->most_allocated = ddr_node;
+
 	return 0;
 }
 
@@ -199,6 +220,11 @@ static int contig_alloc_balanced(struct contig_desc *desc, const struct contig_a
 	int cluster_chunk;
 	int ddr_node;
 	int i;
+
+	unsigned int n_per_node_max;
+	unsigned int n_per_node[DDR_NODES];
+	for (i = 0; i < DDR_NODES; i++)
+		n_per_node[i] = 0;
 
 	ddr_node = get_least_loaded_ddr_node(1,	params->pol.balanced.threshold);
 
@@ -220,8 +246,22 @@ static int contig_alloc_balanced(struct contig_desc *desc, const struct contig_a
 
 		allocate_chunk(&desc, ddr_node, i);
 		allocated += chunk_size;
+
+		n_per_node[ddr_node]++;
 	}
 	BUG_ON(allocated != desc->n * chunk_size);
+
+	/* Compute which DDR holds most of the data */
+	ddr_node = 0;
+	n_per_node_max = n_per_node[0];
+
+	for (i = 1; i < DDR_NODES; i++)
+		if (n_per_node[i] > n_per_node_max) {
+			ddr_node = i;
+			n_per_node_max = n_per_node[i];
+		}
+	desc->most_allocated = ddr_node;
+
 	return 0;
 }
 
@@ -484,6 +524,7 @@ static long contig_alloc_ioctl(struct file *file, void __user *arg)
 	}
 	req.n = desc->n;
 	req.khandle = (contig_khandle_t)desc;
+	req.most_allocated = desc->most_allocated;
 	if (copy_to_user(arg, &req, sizeof(req))) {
 		contig_free(desc);
 		return -EFAULT;
