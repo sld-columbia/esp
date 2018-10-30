@@ -260,16 +260,53 @@ static void config_thread(accelerator_thread_info_t *info,
 static void alloc_phase(accelerator_thread_info_t **info, int nthreads,
 			enum accelerator_coherence coherence)
 {
-	int i;
+	int i, j;
+	int largest_thread = 0;
+	int largest_thread_preferred = 0;
+	size_t largest_sz = 0;
+	int ddr_node_cost[NDDR];
+	int preferred_node_cost;
+
+	// Compute largest thread
+	for (i = 0; i < nthreads; i++)
+		if (info[i]->memsz > largest_sz) {
+			largest_sz = info[i]->memsz;
+			largest_thread = i;
+		}
+
+	// Compute largest thread's preferred ddr node
+	for (j = 0; j < NDDR; j++)
+		ddr_node_cost[j] = 0;
+
+	for (i = 0; i < info[largest_thread]->ndev; i++)
+		for (j = 0; j < NDDR; j++)
+			ddr_node_cost[j] += ddr_hops[info[largest_thread]->chain[i].devid][j];
+
+	preferred_node_cost = ddr_node_cost[0];
+	for (j = 1; j < NDDR; j++)
+		if (ddr_node_cost[j] < preferred_node_cost) {
+			preferred_node_cost = ddr_node_cost[j];
+			largest_thread_preferred = j;
+		}
+
 
 	for (i = 0; i < nthreads; i++) {
 		// Compute memory size
 		int acc;
 		struct contig_alloc_params params;
 
-		// TODO: choose policy; info[i]->memsz has been set by config_trhead
-		params.policy = CONTIG_ALLOC_PREFERRED;
-		params.pol.first.ddr_node = 1;
+		if (nthreads < 3) {
+			params.policy = CONTIG_ALLOC_BALANCED;
+			// TODO: tune params based on page size and profiling
+			params.pol.balanced.threshold = 4;
+			params.pol.balanced.cluster_size = 1;
+		} else if (i == largest_thread) {
+			params.policy = CONTIG_ALLOC_PREFERRED;
+			params.pol.first.ddr_node = largest_thread_preferred;
+		} else {
+			params.policy = CONTIG_ALLOC_LEAST_LOADED;
+			params.pol.lloaded.threshold = 4;
+		}
 
 		if (contig_alloc_policy(params, info[i]->memsz, &info[i]->mem))
 			die_errno("error: cannot allocate %zu contig bytes", info[i]->memsz);
@@ -281,8 +318,7 @@ static void alloc_phase(accelerator_thread_info_t **info, int nthreads,
                         info[i]->chain[acc].desc.esp.contig    = contig_to_khandle(info[i]->mem);
 
 			info[i]->chain[acc].desc.esp.alloc_policy = params.policy;
-			// TO DO for now the policy is always set to PREFERRED, see above
-			info[i]->chain[acc].desc.esp.ddr_node = params.pol.first.ddr_node;
+			info[i]->chain[acc].desc.esp.ddr_node = contig_to_most_allocated(info[i]->mem);
 		}
 	}
 }
