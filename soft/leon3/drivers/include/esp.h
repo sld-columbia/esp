@@ -20,6 +20,8 @@ struct esp_access {
         unsigned int footprint;
         enum contig_alloc_policy alloc_policy;
         unsigned int ddr_node;
+	unsigned int in_place;
+	unsigned int reuse_factor;
 };
 
 #define ESP_IOC_RUN _IO('E', 0)
@@ -70,13 +72,16 @@ struct esp_device {
         unsigned int footprint;
         enum contig_alloc_policy alloc_policy;
         unsigned int ddr_node;
+	unsigned int in_place;
+	unsigned int reuse_factor;
 };
 
 struct esp_status {
-    struct mutex lock;
-    unsigned int active_acc_cnt;
-    unsigned int active_footprint;
-    unsigned int active_footprint_split[N_MEM]; // 2 mem ctrl
+	struct mutex lock;
+	unsigned int active_acc_cnt;
+	unsigned int active_acc_cnt_full; 
+	unsigned int active_footprint;
+	unsigned int active_footprint_split[N_MEM]; // 2 mem ctrl
 };
 
 int esp_driver_register(struct esp_driver *driver);

@@ -179,20 +179,20 @@ static const unsigned int ddr_hops[NDEV][NDDR] = {
 /* Default descriptor including initial configuration parameters */
 /* Mutable parameters are offset, in_size, out_size and irregular_seed */
 static const struct synth_cfg synth_cfg_init[NDEV] = {
-     /* { offset, pattern          , in_size, access_factor, burst_len, compute_bound_factor, irregular_seed, reuse_factor, ld_st_ratio, stride_len, out_size, in_place } */
-	{ 0     , PATTERN_STREAMING, 0      , 0            , 8192     , 1                   , 0             , 1           , 2          , 0         , 0       , 1        }, // synth.0
-	{ 0     , PATTERN_STREAMING, 0      , 0            , 4096     , 8                   , 0             , 2           , 32         , 0         , 0       , 0        }, // synth.1
-	{ 0     , PATTERN_STREAMING, 0      , 0            , 2048     , 4                   , 0             , 4           , 16         , 0         , 0       , 0        }, // synth.2
-	{ 0     , PATTERN_STREAMING, 0      , 0            , 1024     , 2                   , 0             , 1           , 1          , 0         , 0       , 0        }, // synth.3
-	{ 0     , PATTERN_STREAMING, 0      , 0            , 512      , 1                   , 0             , 2           , 8          , 0         , 0       , 1        }, // synth.4
-	{ 0     , PATTERN_STREAMING, 0      , 0            , 256      , 1                   , 0             , 4           , 4          , 0         , 0       , 0        }, // synth.5
-	{ 0     , PATTERN_STRIDED  , 0      , 0            , 4        , 1                   , 0             , 1           , 2048       , 2048      , 0       , 0        }, // synth.6
-	{ 0     , PATTERN_STRIDED  , 0      , 0            , 4        , 1                   , 0             , 2           , 1024       , 1024      , 0       , 0        }, // synth.7
-	{ 0     , PATTERN_STRIDED  , 0      , 0            , 1        , 1                   , 0             , 4           , 512        , 512       , 0       , 0        }, // synth.8
-	{ 0     , PATTERN_IRREGULAR, 0      , 0            , 4        , 1                   , 0             , 1           , 32         , 0         , 0       , 0        }, // synth.9
-	{ 0     , PATTERN_IRREGULAR, 0      , 2            , 1        , 1                   , 0             , 2           , 4          , 0         , 0       , 0        }, // synth.10
-	{ 0     , PATTERN_IRREGULAR, 0      , 4            , 1        , 1                   , 0             , 4           , 1          , 0         , 0       , 0        }, // synth.11
-};
+     /* { offset, pattern, in_size, access_factor, burst_len, compute_bound_factor,
+	irregular_seed, reuse_factor, ld_st_ratio, stride_len, out_size, in_place } */
+	{0, PATTERN_STREAMING, 0, 0, 8192, 1, 0, 1,    2,    0, 0, 1},//synth.0
+	{0, PATTERN_STREAMING, 0, 0, 4096, 8, 0, 2,   32,    0, 0, 0},//synth.1
+	{0, PATTERN_STREAMING, 0, 0, 2048, 4, 0, 4,   16,    0, 0, 0},//synth.2
+	{0, PATTERN_STREAMING, 0, 0, 1024, 2, 0, 1,    1,    0, 0, 0},//synth.3
+	{0, PATTERN_STREAMING, 0, 0,  512, 1, 0, 2,    8,    0, 0, 1},//synth.4
+	{0, PATTERN_STREAMING, 0, 0,  256, 1, 0, 4,    4,    0, 0, 0},//synth.5
+	{0, PATTERN_STRIDED,   0, 0,    4, 1, 0, 1, 2048, 2048, 0, 0},//synth.6
+	{0, PATTERN_STRIDED,   0, 0,    4, 1, 0, 2, 1024, 1024, 0, 0},//synth.7
+	{0, PATTERN_STRIDED,   0, 0,    4, 1, 0, 4,  512,  512, 0, 0},//synth.8
+	{0, PATTERN_IRREGULAR, 0, 0,    4, 1, 0, 1,   32,    0, 0, 0},//synth.9
+	{0, PATTERN_IRREGULAR, 0, 2,    4, 1, 0, 2,    4,    0, 0, 0},//synth.10
+	{0, PATTERN_IRREGULAR, 0, 4,    4, 1, 0, 4,    1,    0, 0, 0}};//synth.11
 
 /* Accelerators chains per phase */
 /*   accelerator in one chain execute in sequence */
@@ -252,6 +252,9 @@ static void config_thread(accelerator_thread_info_t *info,
 		    footprint += out_size[acc];
 
 		info->chain[acc].desc.esp.footprint = footprint;
+
+		info->chain[acc].desc.esp.in_place = synth_cfg_init[devid].in_place;
+		info->chain[acc].desc.esp.reuse_factor = synth_cfg_init[devid].reuse_factor;
 	}
 
 	info->memsz = memsz;
@@ -355,9 +358,12 @@ void *accelerator_thread( void *ptr )
 
 	for (acc = 0; acc < info->ndev; acc++) {
 
+		printf("acc thread tid %d ioctl acc %d\n", info->tid, acc);
+
 		if (ioctl(info->chain[acc].fd, SYNTH_IOC_ACCESS, info->chain[acc].desc))
 			die_errno("ioctl: cannot run accelerator %d", acc);
 
+		printf("acc thread tid %d ioctl done acc %d\n", info->tid, acc);
 	}
 
 	gettime(&info->th_end);
@@ -418,9 +424,9 @@ int main(int argc, char **argv)
 
 	ndev[0][0] = 3;
 
-	devid[0][0][0] = 1;
-	devid[0][0][1] = 4;
-	devid[0][0][2] = 9;
+	devid[0][0][0] = 0;
+	devid[0][0][1] = 3;
+	devid[0][0][2] = 8;
 
 	in_size[0][0][0] = 1048576; // 1M;
 	in_size[0][0][1] = 524288;  // 512K;
@@ -437,17 +443,17 @@ int main(int argc, char **argv)
 	ndev[1][1] = 3;
 	ndev[1][2] = 2;
 
-	devid[1][0][0] = 6;
-	devid[1][0][1] = 5;
-	devid[1][0][2] = 3;
-	devid[1][0][3] = 8;
+	devid[1][0][0] = 5;
+	devid[1][0][1] = 4;
+	devid[1][0][2] = 2;
+	devid[1][0][3] = 7;
 
-	devid[1][1][0] = 11;
-	devid[1][1][1] = 10;
-	devid[1][1][2] = 9;
+	devid[1][1][0] = 10;
+	devid[1][1][1] = 9;
+	devid[1][1][2] = 8;
 
-	devid[1][2][0] = 12;
-	devid[1][2][1] = 2;
+	devid[1][2][0] = 11;
+	devid[1][2][1] = 1;
 
 	in_size[1][0][0] = 67108864; // 64M;
 	in_size[1][0][1] = 4194304;  // 4M;
@@ -466,13 +472,12 @@ int main(int argc, char **argv)
 	out_size[1][0][2] = 32768;    // 32K;
 	out_size[1][0][3] = 32;
 
-	out_size[1][1][0] = 4194304;  // 4M;
+	out_size[1][1][0] = 1048576;  // 1M;
 	out_size[1][1][1] = 131072;   // 128K;
 	out_size[1][1][2] = 256;
 
-	out_size[1][2][0] = 4194304;  // 4M;
+	out_size[1][2][0] = 262144;   // 256K;
 	out_size[1][2][1] = 131072;   // 128K;
-
 
 	for (phase = 0; phase < nphases; phase++) {
 
@@ -489,7 +494,8 @@ int main(int argc, char **argv)
 				phases[phase][thread]->chain[acc].devid = devid[phase][thread][acc];
 
 			// Configure in/out_size and compute memsz
-			config_thread(phases[phase][thread], in_size[phase][thread], out_size[phase][thread]);
+			config_thread(phases[phase][thread], in_size[phase][thread],
+				      out_size[phase][thread]);
 		}
 
 		// Allocate memory
@@ -498,19 +504,23 @@ int main(int argc, char **argv)
 		for (thread = 0; thread < nthreads[phase]; thread++)
 			prepare_thread(phases[phase][thread]);
 
-
 		// Global time
 		gettime(&th_start);
 
 		for (loop = 0; loop < NLOOP; loop++) {
-			for (thread = 0; thread < nthreads[phase]; thread++)
-				if (pthread_create( &threads[thread], NULL, accelerator_thread, (void*) phases[phase][thread]))
-					die_errno("pthread: cannot create thread %d", thread);
 
-			for (thread = 0; thread < nthreads[phase]; thread++)
+			for (thread = 0; thread < nthreads[phase]; thread++)  {
+				if (pthread_create( &threads[thread], NULL, accelerator_thread,
+						    (void*) phases[phase][thread]))
+					die_errno("pthread: cannot create thread %d", thread);
+				printf("thread created thread %d\n", thread);
+			}
+
+			for (thread = 0; thread < nthreads[phase]; thread++) {
 				if(pthread_join(threads[thread], NULL))
 					die_errno("pthread: cannot join thread %d", thread);
-
+				printf("thread joined thread %d\n", thread);
+			}
 		}
 
 		gettime(&th_end);

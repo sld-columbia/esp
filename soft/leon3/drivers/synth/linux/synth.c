@@ -50,6 +50,19 @@ static void synth_prep_xfer(struct esp_device *esp, void *arg)
 {
 	struct synth_access *a = arg;
 
+	printk(KERN_INFO "[[[DAVIDE]]] synth prep xfer a->cfg.offset %d\n", a->cfg.offset);
+	printk(KERN_INFO "[[[DAVIDE]]] synth prep xfer a->cfg.pattern %d\n", a->cfg.pattern);
+	printk(KERN_INFO "[[[DAVIDE]]] synth prep xfer a->cfg.in_size %d\n", a->cfg.in_size);
+	printk(KERN_INFO "[[[DAVIDE]]] synth prep xfer a->cfg.access_factor %d\n", a->cfg.access_factor);
+	printk(KERN_INFO "[[[DAVIDE]]] synth prep xfer a->cfg.burst_len %d\n", a->cfg.burst_len);
+	printk(KERN_INFO "[[[DAVIDE]]] synth prep xfer a->cfg.compute_bound_factor %d\n", a->cfg.compute_bound_factor);
+	printk(KERN_INFO "[[[DAVIDE]]] synth prep xfer a->cfg.irregular_seed %d\n", a->cfg.irregular_seed);
+	printk(KERN_INFO "[[[DAVIDE]]] synth prep xfer a->cfg.reuse_factor %d\n", a->cfg.reuse_factor);
+	printk(KERN_INFO "[[[DAVIDE]]] synth prep xfer a->cfg.ld_st_ratio %d\n", a->cfg.ld_st_ratio);
+	printk(KERN_INFO "[[[DAVIDE]]] synth prep xfer a->cfg.stride_len %d\n", a->cfg.stride_len);
+	printk(KERN_INFO "[[[DAVIDE]]] synth prep xfer a->cfg.out_size %d\n", a->cfg.out_size);
+	printk(KERN_INFO "[[[DAVIDE]]] synth prep xfer a->cfg.in_place %d\n", a->cfg.in_place);
+
 	iowrite32be(a->cfg.offset, esp->iomem + SYNTH_OFFSET_REG);
 	iowrite32be(a->cfg.pattern, esp->iomem + SYNTH_PATTERN_REG);
 	iowrite32be(a->cfg.in_size, esp->iomem + SYNTH_IN_SIZE_REG);
