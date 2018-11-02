@@ -195,7 +195,7 @@ static const unsigned int ddr_hops[NDEV][NDDR] = {
 /* { offset, pattern, in_size, access_factor, burst_len, compute_bound_factor,
    irregular_seed, reuse_factor, ld_st_ratio, stride_len, out_size, in_place } */
 static const struct synth_cfg synth_cfg_init[2][NDEV] = {
-	{{0, PATTERN_STREAMING, 0, 0, 8192,  1, 0, 2,  1,    0, 0, 0},//synth.0
+	{{0, PATTERN_STREAMING, 0, 0,  512,  1, 0, 2,  1,    0, 0, 0},//synth.0
 	 {0, PATTERN_STRIDED,   0, 0,    4,  1, 0, 4,  2,  256, 0, 0},//synth.1
 	 {0, PATTERN_STREAMING, 0, 0,  256,  2, 0, 1,  4,    0, 0, 1},//synth.2
 	 {0, PATTERN_IRREGULAR, 0, 0,    4,  4, 0, 1,  1,    0, 0, 1},//synth.3
@@ -203,12 +203,12 @@ static const struct synth_cfg synth_cfg_init[2][NDEV] = {
 	 {0, PATTERN_STRIDED,   0, 0,    8,  2, 0, 1,  4, 1024, 0, 1},//synth.5
 	 {0, PATTERN_STREAMING, 0, 0,  512,  8, 0, 1,  1,    0, 0, 0},//synth.6
 	 {0, PATTERN_IRREGULAR, 2, 0,    4,  2, 0, 4,  2,    0, 0, 0},//synth.7
-	 {0, PATTERN_STREAMING, 0, 0, 4096,  4, 0, 1,  4,    0, 0, 1},//synth.8
+	 {0, PATTERN_STREAMING, 0, 0,   64,  4, 0, 1,  4,    0, 0, 1},//synth.8
 	 {0, PATTERN_STRIDED,   0, 0,   16,  4, 0, 2,  1,  512, 0, 0},//synth.9
-	 {0, PATTERN_STREAMING, 0, 0, 1024,  2, 0, 4,  2,    0, 0, 0},//synth.10
+	 {0, PATTERN_STREAMING, 0, 0,  128,  2, 0, 4,  2,    0, 0, 0},//synth.10
 	 {0, PATTERN_IRREGULAR, 4, 0,    4,  1, 0, 1,  4,    0, 0, 1}},//synth.11
 
-	{{0, PATTERN_STREAMING, 0, 0, 8192,  1, 0, 2,  1,    0, 0, 0},//synth.0
+	{{0, PATTERN_STREAMING, 0, 0,  512,  1, 0, 2,  1,    0, 0, 0},//synth.0
 	 {0, PATTERN_STRIDED,   0, 0,    4,  1, 0, 4,  1,  256, 0, 0},//synth.1
 	 {0, PATTERN_STREAMING, 0, 0,  256,  2, 0, 1,  1,    0, 0, 1},//synth.2
 	 {0, PATTERN_IRREGULAR, 0, 0,    4,  4, 0, 1,  1,    0, 0, 1},//synth.3
@@ -216,9 +216,9 @@ static const struct synth_cfg synth_cfg_init[2][NDEV] = {
 	 {0, PATTERN_STRIDED,   0, 0,    8,  2, 0, 1,  1, 1024, 0, 1},//synth.5
 	 {0, PATTERN_STREAMING, 0, 0,  512,  8, 0, 1,  1,    0, 0, 0},//synth.6
 	 {0, PATTERN_IRREGULAR, 0, 0,    4,  2, 0, 4,  1,    0, 0, 0},//synth.7
-	 {0, PATTERN_STREAMING, 0, 0, 4096,  4, 0, 1,  1,    0, 0, 1},//synth.8
+	 {0, PATTERN_STREAMING, 0, 0,   64,  4, 0, 1,  1,    0, 0, 1},//synth.8
 	 {0, PATTERN_STRIDED,   0, 0,   16,  4, 0, 2,  1,  512, 0, 0},//synth.9
-	 {0, PATTERN_STREAMING, 0, 0, 1024,  2, 0, 4,  1,    0, 0, 0},//synth.10
+	 {0, PATTERN_STREAMING, 0, 0,  128,  2, 0, 4,  1,    0, 0, 0},//synth.10
 	 {0, PATTERN_IRREGULAR, 0, 0,    4,  1, 0, 1,  1,    0, 0, 1}}};//synth.11
 
 /* Accelerators chains per phase */
@@ -433,8 +433,8 @@ int main(int argc, char **argv)
 	int nthreads_s, nthreads_m, nthreads_l;
 
 	// accelerators configuration
-	//int cfgid[NPHASES_MAX] = {0, 1, 1, 0, 1, 1, 0, 1, 1};
-	int cfgid[NPHASES_MAX] = {0, 0, 0, 0, 0, 0, 0, 0, 0};
+	int cfgid[NPHASES_MAX] = {0, 1, 1, 0, 1, 1, 0, 1, 1};
+	//int cfgid[NPHASES_MAX] = {0, 0, 0, 0, 0, 0, 0, 0, 0};
 
 	srand(time(NULL));
 
