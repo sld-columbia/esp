@@ -261,7 +261,7 @@ static void config_thread(accelerator_thread_info_t *info,
 }
 
 static void alloc_phase(accelerator_thread_info_t **info, int nthreads,
-			enum accelerator_coherence coherence)
+			enum accelerator_coherence coherence, enum alloc_effort alloc)
 {
 	int i, j;
 	int largest_thread = 0;
@@ -298,7 +298,10 @@ static void alloc_phase(accelerator_thread_info_t **info, int nthreads,
 		int acc;
 		struct contig_alloc_params params;
 
-		if (nthreads < 3) {
+		if (alloc == ALLOC_NONE) {
+			params.policy = CONTIG_ALLOC_PREFERRED;
+			params.pol.first.ddr_node = 0;
+		} else if (nthreads < 3) {
 			params.policy = CONTIG_ALLOC_BALANCED;
 			// TODO: tune params based on page size and profiling
 			params.pol.balanced.threshold = 4;
@@ -399,22 +402,25 @@ int main(int argc, char **argv)
 	pthread_t threads[NTHREADS_MAX];
 
 	enum accelerator_coherence coherence;
+	enum alloc_effort alloc;
 
 	srand(time(NULL));
 
-	if (argc == 2) {
+
+	coherence = ACC_COH_NONE;
+	if (argc >= 2) {
 		if (!strcmp(argv[1], "llc"))
 			coherence = ACC_COH_LLC;
 		else if (!strcmp(argv[1], "full"))
 			coherence = ACC_COH_FULL;
 		else if (!strcmp(argv[1], "auto"))
 			coherence = ACC_COH_AUTO;
-		else // if (!strcmp(argv[1], "none"))
-			coherence = ACC_COH_NONE;
-
-	} else {
-		coherence = ACC_COH_NONE;
 	}
+
+	alloc = ALLOC_NONE;
+	if (argc == 3)
+		if (!strcmp(argv[1], "auto"))
+			alloc = ALLOC_AUTO;
 
 	/* Define Phases */
 	nphases = 2;
@@ -516,7 +522,7 @@ int main(int argc, char **argv)
 		}
 
 		// Allocate memory
-		alloc_phase(phases[phase], nthreads[phase], coherence);
+		alloc_phase(phases[phase], nthreads[phase], coherence, alloc);
 
 		for (thread = 0; thread < nthreads[phase]; thread++)
 			prepare_thread(phases[phase][thread]);

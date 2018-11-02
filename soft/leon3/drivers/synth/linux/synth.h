@@ -37,7 +37,7 @@ struct synth_access {
 	struct synth_cfg cfg;
 };
 
-
+enum alloc_effort {ALLOC_NONE, ALLOC_AUTO};
 
 
 #define SYNTH_IOC_ACCESS	_IOW ('S', 0, struct synth_access)

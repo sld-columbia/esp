@@ -123,7 +123,7 @@ static void esp_runtime_config(struct esp_device *esp)
 			esp_status.active_acc_cnt_full++;
 
 		} else {
-			esp->coherence = ACC_COH_RECALL;
+			esp->coherence = ACC_COH_LLC;
 		}
 
 	} else if (esp_status.active_acc_cnt >= 6) {
