@@ -25,12 +25,26 @@
 #include "synth.h"
 
 #define NLOOP 1
-#define NPHASES_MAX 8
+#define NPHASES_MAX 9
 #define NTHREADS_MAX 12
 
 #define NDEV 12
 #define NDDR 2
 
+#define M8    8388608
+#define M4    4194304
+#define M2    2097152
+#define M1    1048576
+#define K512   524288
+#define K256   262144
+#define K128   131072
+#define K64     65536
+#define K32     32768
+#define K16     16384
+#define K8       8192
+#define K4       4096
+#define K2       2048
+#define K1       1024
 
 /* Helper functions */
 #ifndef NORETURN
@@ -178,21 +192,34 @@ static const unsigned int ddr_hops[NDEV][NDDR] = {
 
 /* Default descriptor including initial configuration parameters */
 /* Mutable parameters are offset, in_size, out_size and irregular_seed */
-static const struct synth_cfg synth_cfg_init[NDEV] = {
-     /* { offset, pattern, in_size, access_factor, burst_len, compute_bound_factor,
-	irregular_seed, reuse_factor, ld_st_ratio, stride_len, out_size, in_place } */
-	{0, PATTERN_STREAMING, 0, 0, 8192,  1, 0, 1,  1,    0, 0, 0},//synth.0
-	{0, PATTERN_STRIDED,   0, 0,    4,  1, 0, 4, 16,  256, 0, 0},//synth.1
-	{0, PATTERN_STREAMING, 0, 0,  256,  2, 0, 2, 32,    0, 0, 1},//synth.2
-	{0, PATTERN_IRREGULAR, 0, 0,    4,  4, 0, 2,  8,    0, 0, 1},//synth.3
-	{0, PATTERN_STREAMING, 0, 0, 2048,  4, 0, 4,  2,    0, 0, 0},//synth.4
-	{0, PATTERN_STRIDED,   0, 0,    8,  2, 0, 1,  1, 1024, 0, 1},//synth.5
-	{0, PATTERN_STREAMING, 0, 0,  512,  8, 0, 1, 16,    0, 0, 0},//synth.6
-	{0, PATTERN_IRREGULAR, 0, 2,    4,  2, 0, 4,  2,    0, 0, 0},//synth.7
-	{0, PATTERN_STREAMING, 0, 0, 4096,  4, 0, 2,  4,    0, 0, 1},//synth.8
-	{0, PATTERN_STRIDED,   0, 0,   16,  4, 0, 2,  4,  512, 0, 0},//synth.9
-	{0, PATTERN_STREAMING, 0, 0, 1024,  2, 0, 4,  8,    0, 0, 0},//synth.10
-	{0, PATTERN_IRREGULAR, 0, 4,    4,  1, 0, 1, 32,    0, 0, 1}};//synth.11
+/* { offset, pattern, in_size, access_factor, burst_len, compute_bound_factor,
+   irregular_seed, reuse_factor, ld_st_ratio, stride_len, out_size, in_place } */
+static const struct synth_cfg synth_cfg_init[2][NDEV] = {
+	{{0, PATTERN_STREAMING, 0, 0, 8192,  1, 0, 1,  1,    0, 0, 0},//synth.0
+	 {0, PATTERN_STRIDED,   0, 0,    4,  1, 0, 4,  2,  256, 0, 0},//synth.1
+	 {0, PATTERN_STREAMING, 0, 0,  256,  2, 0, 2,  4,    0, 0, 1},//synth.2
+	 {0, PATTERN_IRREGULAR, 0, 0,    4,  4, 0, 2,  1,    0, 0, 1},//synth.3
+	 {0, PATTERN_STREAMING, 0, 0, 2048,  4, 0, 4,  2,    0, 0, 0},//synth.4
+	 {0, PATTERN_STRIDED,   0, 0,    8,  2, 0, 1,  4, 1024, 0, 1},//synth.5
+	 {0, PATTERN_STREAMING, 0, 0,  512,  8, 0, 1,  1,    0, 0, 0},//synth.6
+	 {0, PATTERN_IRREGULAR, 2, 0,    4,  2, 0, 4,  2,    0, 0, 0},//synth.7
+	 {0, PATTERN_STREAMING, 0, 0, 4096,  4, 0, 2,  4,    0, 0, 1},//synth.8
+	 {0, PATTERN_STRIDED,   0, 0,   16,  4, 0, 2,  1,  512, 0, 0},//synth.9
+	 {0, PATTERN_STREAMING, 0, 0, 1024,  2, 0, 4,  2,    0, 0, 0},//synth.10
+	 {0, PATTERN_IRREGULAR, 4, 0,    4,  1, 0, 1,  4,    0, 0, 1}},//synth.11
+
+	{{0, PATTERN_STREAMING, 0, 0, 8192,  1, 0, 1,  1,    0, 0, 0},//synth.0
+	 {0, PATTERN_STRIDED,   0, 0,    4,  1, 0, 4,  1,  256, 0, 0},//synth.1
+	 {0, PATTERN_STREAMING, 0, 0,  256,  2, 0, 2,  1,    0, 0, 1},//synth.2
+	 {0, PATTERN_IRREGULAR, 0, 0,    4,  4, 0, 2,  1,    0, 0, 1},//synth.3
+	 {0, PATTERN_STREAMING, 0, 0, 2048,  4, 0, 4,  1,    0, 0, 0},//synth.4
+	 {0, PATTERN_STRIDED,   0, 0,    8,  2, 0, 1,  1, 1024, 0, 1},//synth.5
+	 {0, PATTERN_STREAMING, 0, 0,  512,  8, 0, 1,  1,    0, 0, 0},//synth.6
+	 {0, PATTERN_IRREGULAR, 0, 0,    4,  2, 0, 4,  1,    0, 0, 0},//synth.7
+	 {0, PATTERN_STREAMING, 0, 0, 4096,  4, 0, 2,  1,    0, 0, 1},//synth.8
+	 {0, PATTERN_STRIDED,   0, 0,   16,  4, 0, 2,  1,  512, 0, 0},//synth.9
+	 {0, PATTERN_STREAMING, 0, 0, 1024,  2, 0, 4,  1,    0, 0, 0},//synth.10
+	 {0, PATTERN_IRREGULAR, 0, 0,    4,  1, 0, 1,  1,    0, 0, 1}}};//synth.11
 
 /* Accelerators chains per phase */
 /*   accelerator in one chain execute in sequence */
@@ -219,9 +246,8 @@ typedef struct accelerator_thread_info {
 
 
 /* Thread functions */
-static void config_thread(accelerator_thread_info_t *info,
-			unsigned int *in_size,
-			unsigned int *out_size)
+static void config_thread(accelerator_thread_info_t *info, unsigned int *in_size,
+			  unsigned int *out_size, int cfgid)
 {
 	int acc;
 	size_t memsz = in_size[0];
@@ -230,9 +256,9 @@ static void config_thread(accelerator_thread_info_t *info,
 	for (acc = 0; acc < info->ndev; acc++) {
 		int devid = info->chain[acc].devid;
 
-		info->chain[acc].desc.cfg = synth_cfg_init[devid];
+		info->chain[acc].desc.cfg = synth_cfg_init[cfgid][devid];
 
-		if (synth_cfg_init[devid].pattern == PATTERN_IRREGULAR)
+		if (synth_cfg_init[cfgid][devid].pattern == PATTERN_IRREGULAR)
 			info->chain[acc].desc.cfg.irregular_seed = rand() % IRREGULAR_SEED_MAX;
 
 		info->chain[acc].desc.cfg.in_size = in_size[acc];
@@ -240,7 +266,7 @@ static void config_thread(accelerator_thread_info_t *info,
 
 		info->chain[acc].desc.cfg.offset = offset;
 
-		if (synth_cfg_init[devid].in_place == 0) {
+		if (synth_cfg_init[cfgid][devid].in_place == 0) {
 			memsz += out_size[acc];
 			offset += in_size[acc];
 		}
@@ -253,8 +279,8 @@ static void config_thread(accelerator_thread_info_t *info,
 
 		info->chain[acc].desc.esp.footprint = footprint;
 
-		info->chain[acc].desc.esp.in_place = synth_cfg_init[devid].in_place;
-		info->chain[acc].desc.esp.reuse_factor = synth_cfg_init[devid].reuse_factor;
+		info->chain[acc].desc.esp.in_place = synth_cfg_init[cfgid][devid].in_place;
+		info->chain[acc].desc.esp.reuse_factor = synth_cfg_init[cfgid][devid].reuse_factor;
 	}
 
 	info->memsz = memsz * 4;
@@ -362,7 +388,7 @@ void *accelerator_thread( void *ptr )
 	for (acc = 0; acc < info->ndev; acc++) {
 
 		printf("acc thread tid %d ioctl acc %d\n", info->tid, acc);
-
+		
 		if (ioctl(info->chain[acc].fd, SYNTH_IOC_ACCESS, info->chain[acc].desc))
 			die_errno("ioctl: cannot run accelerator %d", acc);
 
@@ -386,7 +412,7 @@ int main(int argc, char **argv)
 	int phase;
 	int thread;
 	int acc;
-	int p, t, i;
+	int p, t, i, j;
 	int nphases;
 
 	int nthreads[NPHASES_MAX];
@@ -404,8 +430,13 @@ int main(int argc, char **argv)
 	enum accelerator_coherence coherence;
 	enum alloc_effort alloc;
 
-	srand(time(NULL));
+	int nthreads_s, nthreads_m, nthreads_l;
 
+	// accelerators configuration
+	//int cfgid[NPHASES_MAX] = {0, 1, 1, 0, 1, 1, 0, 1, 1};
+	int cfgid[NPHASES_MAX] = {0, 0, 0, 0, 0, 0, 0, 0, 0};
+
+	srand(time(NULL));
 
 	coherence = ACC_COH_NONE;
 	if (argc >= 2) {
@@ -422,41 +453,239 @@ int main(int argc, char **argv)
 		if (!strcmp(argv[1], "auto"))
 			alloc = ALLOC_AUTO;
 
+	/* Commented out are the phases of the toy app */
+
+	/* /\* Phase 0 *\/ */
+	/* nthreads[0] = 1; */
+
+	/* ndev[0][0] = 3; */
+
+	/* devid[0][0][0] = 0; */
+	/* devid[0][0][1] = 3; */
+	/* devid[0][0][2] = 8; */
+
+	/* in_size[0][0][0] = 1048576; // 1MB */
+
+	/* /\* Phase 1 *\/ */
+	/* nthreads[1] = 3; */
+
+	/* ndev[1][0] = 3; */
+	/* ndev[1][1] = 3; */
+	/* ndev[1][2] = 2; */
+
+	/* devid[1][0][0] = 4; */
+	/* devid[1][0][1] = 2; */
+	/* devid[1][0][2] = 7; */
+
+	/* devid[1][1][0] = 10; */
+	/* devid[1][1][1] = 9; */
+	/* devid[1][1][2] = 8; */
+
+	/* devid[1][2][0] = 11; */
+	/* devid[1][2][1] = 1; */
+
+	/* in_size[1][0][0] = 4194304;  // 4M; */
+	/* in_size[1][1][0] = 4194304;  // 4M; */
+	/* in_size[1][2][0] = 4194304;  // 4M; */
+
 	/* Define Phases */
-	nphases = 2;
-
-	/* Phase 0 */
+	/*   Phase 0: serial - mixed footprints */
+	/*   Phase 1: serial - small footprints */
+	/*   Phase 2: serial - large footprints */
+	/*   Phase 3: parallel - mixed footprints */
+	/*   Phase 4: parallel - small footprints */
+	/*   Phase 5: parallel - large footprints */
+	/*   Phase 6: highly parallel - mixed footprints */
+	/*   Phase 7: highly parallel - small footprints */
+	/*   Phase 8: highly parallel - large footprints */
+	nphases = 9;
+	
+	// number of threads per phase
+	nthreads_s = 1;
+	nthreads_m = 6;
+	nthreads_l = 12;
 	nthreads[0] = 1;
+	nthreads[1] = 1;
+	nthreads[2] = 1;
+	nthreads[3] = 6;
+	nthreads[4] = 6;
+	nthreads[5] = 6;
+	nthreads[6] = 12;
+	nthreads[7] = 12;
+	nthreads[8] = 12;
 
-	ndev[0][0] = 3;
+	// number of accelerators per thread
+	for (i = 0; i < nthreads_s; i++) {
+		ndev[0][i] = 4;
+		ndev[1][i] = 4;
+		ndev[2][i] = 4;
+	}
 
-	devid[0][0][0] = 0;
-	devid[0][0][1] = 3;
-	devid[0][0][2] = 8;
+	for (i = 0; i < nthreads_m; i++) {
+		ndev[3][i] = 4;
+		ndev[4][i] = 4;
+		ndev[5][i] = 4;
+	}
 
-	in_size[0][0][0] = 1048576; // 1MB
+	for (i = 0; i < nthreads_l; i++) {
+		ndev[6][i] = 4;
+		ndev[7][i] = 4;
+		ndev[8][i] = 4;
+	}
 
-	/* Phase 1 */
-	nthreads[1] = 3;
+	// accelerators IDs executed in a thread
+	for (i = 0; i < 3; i++) {
+		devid[i][0][0] = 6;
+		devid[i][0][1] = 10;
+		devid[i][0][2] = 1;
+		devid[i][0][3] = 11;
+	}
 
-	ndev[1][0] = 3;
-	ndev[1][1] = 3;
-	ndev[1][2] = 2;
+	for (i = 3; i < 6; i++) {
+		for (j = 0; j < 2; j++) {
+			devid[i][0][j*2]   =  0;
+			devid[i][0][j*2+1] =  1;
+		} 
 
-	devid[1][0][0] = 4;
-	devid[1][0][1] = 2;
-	devid[1][0][2] = 7;
+		for (j = 0; j < 2; j++) {
+			devid[i][1][j*2]   =  2;
+			devid[i][1][j*2+1] =  3;
+		} 
 
-	devid[1][1][0] = 10;
-	devid[1][1][1] = 9;
-	devid[1][1][2] = 8;
+		for (j = 0; j < 2; j++) {
+			devid[i][2][j*2]   =  4;
+			devid[i][2][j*2+1] =  6;
+		} 
 
-	devid[1][2][0] = 11;
-	devid[1][2][1] = 1;
+		for (j = 0; j < 2; j++) {
+			devid[i][3][j*2]   =  5;
+			devid[i][3][j*2+1] =  7;
+		} 
 
-	in_size[1][0][0] = 4194304;  // 4M;
-	in_size[1][1][0] = 4194304;  // 4M;
-	in_size[1][2][0] = 4194304;  // 4M;
+		for (j = 0; j < 2; j++) {
+			devid[i][4][j*2]   =  8;
+			devid[i][4][j*2+1] = 10;
+		} 
+
+		for (j = 0; j < 2; j++) {
+			devid[i][5][j*2]   =  9;
+			devid[i][5][j*2+1] = 11;
+		} 
+	}
+
+	for (i = 6; i < 9; i++) {
+		for (j = 0; j < 4; j++)
+			devid[i][0][j] =  0;
+
+		for (j = 0; j < 4; j++)
+			devid[i][1][j] =  1;
+
+		for (j = 0; j < 4; j++)
+			devid[i][2][j] =  2;
+
+		for (j = 0; j < 4; j++)
+			devid[i][3][j] =  3;
+
+		for (j = 0; j < 4; j++)
+			devid[i][4][j] =  4;
+
+		for (j = 0; j < 4; j++)
+			devid[i][5][j] =  5;
+
+		for (j = 0; j < 4; j++)
+			devid[i][6][j] =  6;
+
+		for (j = 0; j < 4; j++)
+			devid[i][7][j] =  7;
+
+		for (j = 0; j < 4; j++)
+			devid[i][8][j] =  8;
+
+		for (j = 0; j < 4; j++)
+			devid[i][9][j] =  9;
+
+		for (j = 0; j < 4; j++)
+			devid[i][10][j] = 10;
+
+		for (j = 0; j < 4; j++)
+			devid[i][11][j] = 11;
+	}
+
+	// input size of first accelerator of thread
+
+	in_size[0][0][0] = K512;
+
+	in_size[1][0][0] = M1;
+
+	in_size[2][0][0] = K8;
+
+	in_size[3][0][0] = M1;
+	in_size[3][1][0] = M1;
+	in_size[3][2][0] = K512;
+	in_size[3][3][0] = K128;
+	in_size[3][4][0] = K32;
+	in_size[3][5][0] = K8;
+
+	in_size[4][0][0] = M1;
+	in_size[4][1][0] = M1;
+	in_size[4][2][0] = M1;
+	in_size[4][3][0] = M1;
+	in_size[4][4][0] = M1;
+	in_size[4][5][0] = M1;
+
+	in_size[5][0][0] = K1;
+	in_size[5][1][0] = K4;
+	in_size[5][2][0] = K16;
+	in_size[5][3][0] = K2;
+	in_size[5][4][0] = K8;
+	in_size[5][5][0] = K4;
+
+	in_size[6][ 0][0] = M1;
+	in_size[6][ 1][0] = K64;
+	in_size[6][ 2][0] = M1;
+	in_size[6][ 3][0] = K128;
+	in_size[6][ 4][0] = M1;
+	in_size[6][ 5][0] = K256;
+	in_size[6][ 6][0] = K512;
+	in_size[6][ 7][0] = K512;
+	in_size[6][ 8][0] = K256;
+	in_size[6][ 9][0] = M1;
+	in_size[6][10][0] = K128;
+	in_size[6][11][0] = M1;
+
+	in_size[7][ 0][0] = K512;
+	in_size[7][ 1][0] = M1;
+	in_size[7][ 2][0] = M1;
+	in_size[7][ 3][0] = M1;
+	in_size[7][ 4][0] = K256;
+	in_size[7][ 5][0] = K512;
+	in_size[7][ 6][0] = M1;
+	in_size[7][ 7][0] = M1;
+	in_size[7][ 8][0] = K128;
+	in_size[7][ 9][0] = K256;
+	in_size[7][10][0] = K512;
+	in_size[7][11][0] = M1;
+
+	in_size[8][ 0][0] = K1;
+	in_size[8][ 1][0] = K2;
+	in_size[8][ 2][0] = K4;
+	in_size[8][ 3][0] = K8;
+	in_size[8][ 4][0] = K16;
+	in_size[8][ 5][0] = K1;
+	in_size[8][ 6][0] = K2;
+	in_size[8][ 7][0] = K4;
+	in_size[8][ 8][0] = K8;
+	in_size[8][ 9][0] = K16;
+	in_size[8][10][0] = K1;
+	in_size[8][11][0] = K2;
+
+	/* Print config */
+	for (i = 0; i < 2; i++) {
+		for (j = 0; j < NDEV; j++) {
+			printf("config %d %d %u\n", i, j, synth_cfg_init[i][j].ld_st_ratio);
+		}
+
+	}
 
 	/* Evaluate in_size and out_size for all accelerator invocation*/
 
@@ -471,11 +700,8 @@ int main(int argc, char **argv)
 			
 				out_size[p][t][i] =
 					(in_size[p][t][i] >>
-					 synth_cfg_init[devid[p][t][i]].access_factor) /
-					synth_cfg_init[devid[p][t][i]].ld_st_ratio;
-
-				printf("TEST %d %d %d %u %u\n",
-				       p, t, i, in_size[p][t][i], out_size[p][t][i]);
+					 synth_cfg_init[cfgid[p]][devid[p][t][i]].access_factor) /
+					synth_cfg_init[cfgid[p]][devid[p][t][i]].ld_st_ratio;
 			}
 		}
 	}
@@ -518,7 +744,7 @@ int main(int argc, char **argv)
 
 			// Configure in/out_size and compute memsz
 			config_thread(phases[phase][thread], in_size[phase][thread],
-				      out_size[phase][thread]);
+				      out_size[phase][thread], cfgid[phase]);
 		}
 
 		// Allocate memory
@@ -549,7 +775,10 @@ int main(int argc, char **argv)
 		gettime(&th_end);
 
 		hw_ns = ts_subtract(&th_start, &th_end);
+
+		sleep(1);
 		printf("PHASE.%d %llu ns\n", phase, hw_ns);
+		sleep(1);
 
 		// Free memory before starting next phase
 		free_phase(phases[phase], nthreads[phase]);
