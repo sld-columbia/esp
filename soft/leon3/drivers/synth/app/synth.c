@@ -181,18 +181,18 @@ static const unsigned int ddr_hops[NDEV][NDDR] = {
 static const struct synth_cfg synth_cfg_init[NDEV] = {
      /* { offset, pattern, in_size, access_factor, burst_len, compute_bound_factor,
 	irregular_seed, reuse_factor, ld_st_ratio, stride_len, out_size, in_place } */
-	{0, PATTERN_STREAMING, 0, 0, 8192, 1, 0, 1,    2,    0, 0, 1},//synth.0
-	{0, PATTERN_STREAMING, 0, 0, 4096, 8, 0, 2,    4,    0, 0, 0},//synth.1
-	{0, PATTERN_STREAMING, 0, 0, 2048, 4, 0, 4,    8,    0, 0, 0},//synth.2
-	{0, PATTERN_STREAMING, 0, 0, 1024, 2, 0, 1,    1,    0, 0, 0},//synth.3
-	{0, PATTERN_STREAMING, 0, 0,  512, 1, 0, 2,    8,    0, 0, 1},//synth.4
-	{0, PATTERN_STREAMING, 0, 0,  256, 1, 0, 4,    4,    0, 0, 0},//synth.5
-	{0, PATTERN_STRIDED,   0, 0,    4, 1, 0, 1,   32, 2048, 0, 0},//synth.6
-	{0, PATTERN_STRIDED,   0, 0,    4, 1, 0, 2,   64, 1024, 0, 0},//synth.7
-	{0, PATTERN_STRIDED,   0, 0,    4, 1, 0, 4,  128,  512, 0, 0},//synth.8
-	{0, PATTERN_IRREGULAR, 0, 0,    4, 1, 0, 1,    8,    0, 0, 0},//synth.9
-	{0, PATTERN_IRREGULAR, 0, 2,    4, 1, 0, 2,    4,    0, 0, 0},//synth.10
-	{0, PATTERN_IRREGULAR, 0, 4,    4, 1, 0, 4,    1,    0, 0, 0}};//synth.11
+	{0, PATTERN_STREAMING, 0, 0, 8192,  1, 0, 1,  1,    0, 0, 0},//synth.0
+	{0, PATTERN_STRIDED,   0, 0,    4,  1, 0, 4, 16,  256, 0, 0},//synth.1
+	{0, PATTERN_STREAMING, 0, 0,  256,  2, 0, 2, 32,    0, 0, 1},//synth.2
+	{0, PATTERN_IRREGULAR, 0, 0,    4,  4, 0, 2,  8,    0, 0, 1},//synth.3
+	{0, PATTERN_STREAMING, 0, 0, 2048,  4, 0, 4,  2,    0, 0, 0},//synth.4
+	{0, PATTERN_STRIDED,   0, 0,    8,  2, 0, 1,  1, 1024, 0, 1},//synth.5
+	{0, PATTERN_STREAMING, 0, 0,  512,  8, 0, 1, 16,    0, 0, 0},//synth.6
+	{0, PATTERN_IRREGULAR, 0, 2,    4,  2, 0, 4,  2,    0, 0, 0},//synth.7
+	{0, PATTERN_STREAMING, 0, 0, 4096,  4, 0, 2,  4,    0, 0, 1},//synth.8
+	{0, PATTERN_STRIDED,   0, 0,   16,  4, 0, 2,  4,  512, 0, 0},//synth.9
+	{0, PATTERN_STREAMING, 0, 0, 1024,  2, 0, 4,  8,    0, 0, 0},//synth.10
+	{0, PATTERN_IRREGULAR, 0, 4,    4,  1, 0, 1, 32,    0, 0, 1}};//synth.11
 
 /* Accelerators chains per phase */
 /*   accelerator in one chain execute in sequence */
