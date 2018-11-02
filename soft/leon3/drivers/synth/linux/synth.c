@@ -50,13 +50,13 @@ static void synth_prep_xfer(struct esp_device *esp, void *arg)
 {
 	struct synth_access *a = arg;
 
-	printk(KERN_INFO "*** PREP XFER ***");
-	printk(KERN_INFO "[[[DAVIDE]]] synth prep xfer a->cfg.offset %d\n", a->cfg.offset);
-	printk(KERN_INFO "[[[DAVIDE]]] synth prep xfer a->cfg.pattern %d\n", a->cfg.pattern);
-	printk(KERN_INFO "[[[DAVIDE]]] synth prep xfer a->cfg.in_size %d\n", a->cfg.in_size);
-	printk(KERN_INFO "[[[DAVIDE]]] synth prep xfer a->cfg.burst_len %d\n", a->cfg.burst_len);
-	printk(KERN_INFO "[[[DAVIDE]]] synth prep xfer a->cfg.reuse_factor %d\n", a->cfg.reuse_factor);
-	printk(KERN_INFO "[[[DAVIDE]]] synth prep xfer a->cfg.in_place %d\n", a->cfg.in_place);
+	/* printk(KERN_INFO "*** PREP XFER ***"); */
+	/* printk(KERN_INFO "[[[DAVIDE]]] synth prep xfer a->cfg.offset %d\n", a->cfg.offset); */
+	/* printk(KERN_INFO "[[[DAVIDE]]] synth prep xfer a->cfg.pattern %d\n", a->cfg.pattern); */
+	/* printk(KERN_INFO "[[[DAVIDE]]] synth prep xfer a->cfg.in_size %d\n", a->cfg.in_size); */
+	/* printk(KERN_INFO "[[[DAVIDE]]] synth prep xfer a->cfg.burst_len %d\n", a->cfg.burst_len); */
+	/* printk(KERN_INFO "[[[DAVIDE]]] synth prep xfer a->cfg.reuse_factor %d\n", a->cfg.reuse_factor); */
+	/* printk(KERN_INFO "[[[DAVIDE]]] synth prep xfer a->cfg.in_place %d\n", a->cfg.in_place); */
 
 	iowrite32be(a->cfg.offset, esp->iomem + SYNTH_OFFSET_REG);
 	iowrite32be(a->cfg.pattern, esp->iomem + SYNTH_PATTERN_REG);

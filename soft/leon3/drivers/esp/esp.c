@@ -166,7 +166,7 @@ static void esp_transfer(struct esp_device *esp, const struct contig_desc *conti
 	esp->err = 0;
 	reinit_completion(&esp->completion);
 
-	printk(KERN_INFO "[[[DAVIDE]]] esp_tranfer esp->coherence %d\n", esp->coherence);
+	/* printk(KERN_INFO "[[[DAVIDE]]] esp_tranfer esp->coherence %d\n", esp->coherence); */
 
 	iowrite32be(contig->arr_dma_addr, esp->iomem + PT_ADDRESS_REG);
 	iowrite32be(contig_chunk_size_log, esp->iomem + PT_SHIFT_REG);
@@ -200,7 +200,7 @@ static void esp_update_status(struct esp_device *esp, bool auto_)
 {
 	int i;
 
-	printk(KERN_INFO "[[[DAVIDE]]] esp_update_status\n");
+	/* printk(KERN_INFO "[[[DAVIDE]]] esp_update_status\n"); */
 
 	if (esp->coherence == ACC_COH_FULL)
 		esp_status.active_acc_cnt_full--;
@@ -231,14 +231,14 @@ static void esp_update_status(struct esp_device *esp, bool auto_)
 		}
 	}
 
-	printk(KERN_INFO "*** CURRENT ESP STATUS ***\n");
-	printk(KERN_INFO "acc cnt %u\n", esp_status.active_acc_cnt);
-	printk(KERN_INFO "acc cnt full%u\n", esp_status.active_acc_cnt_full);
-	printk(KERN_INFO "acc footprint %u\n", esp_status.active_footprint);
+	/* printk(KERN_INFO "*** CURRENT ESP STATUS ***\n"); */
+	/* printk(KERN_INFO "acc cnt %u\n", esp_status.active_acc_cnt); */
+	/* printk(KERN_INFO "acc cnt full%u\n", esp_status.active_acc_cnt_full); */
+	/* printk(KERN_INFO "acc footprint %u\n", esp_status.active_footprint); */
 
-	for (i = 0; i < N_MEM; i++)
-		printk(KERN_INFO "acc footprint mem %i %u\n", i,
-		       esp_status.active_footprint_split[i]);
+	/* for (i = 0; i < N_MEM; i++) */
+	/* 	printk(KERN_INFO "acc footprint mem %i %u\n", i, */
+	/* 	       esp_status.active_footprint_split[i]); */
 }
 
 static bool esp_xfer_input_ok(struct esp_device *esp, const struct contig_desc *contig)
