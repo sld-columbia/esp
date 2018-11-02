@@ -61,7 +61,7 @@ void system_t::config_proc()
 // Functions
 void system_t::init_acc_params()
 {
-    conf_info_t conf0( 1048576,  524288, 0, 8192, 1, 1, 1, 0, 0x12345678,    2,    0, 0); 
+    conf_info_t conf0( 1048576, 1048576, 0, 256, 2, 2, 1, 0, 0x12345678,    1,    0, 0); 
     configs[0] = conf0;
     conf_info_t conf1( 1048576,   32768, 0, 4096, 8, 2, 0, 0, 0x12345678,   32,    0, 0);
     configs[1] = conf1;
