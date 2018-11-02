@@ -348,7 +348,7 @@ mmi64_error_t mmi64_main(int argc, char * argv[])
 	profpga_handle_t * profpga;
 	profpga_error_t status;
 	uint32_t data[8];
-	const mmi64_addr_t user_addr[] = {2, 2, 0};
+	const mmi64_addr_t user_addr[] = {2, 1, 0};
 	mmi64_module_t * user_module;
 
 	int mh_status = profpga_set_message_handler(message_handler);
