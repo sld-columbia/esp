@@ -182,15 +182,15 @@ static const struct synth_cfg synth_cfg_init[NDEV] = {
      /* { offset, pattern, in_size, access_factor, burst_len, compute_bound_factor,
 	irregular_seed, reuse_factor, ld_st_ratio, stride_len, out_size, in_place } */
 	{0, PATTERN_STREAMING, 0, 0, 8192, 1, 0, 1,    2,    0, 0, 1},//synth.0
-	{0, PATTERN_STREAMING, 0, 0, 4096, 8, 0, 2,   32,    0, 0, 0},//synth.1
-	{0, PATTERN_STREAMING, 0, 0, 2048, 4, 0, 4,   16,    0, 0, 0},//synth.2
+	{0, PATTERN_STREAMING, 0, 0, 4096, 8, 0, 2,    4,    0, 0, 0},//synth.1
+	{0, PATTERN_STREAMING, 0, 0, 2048, 4, 0, 4,    8,    0, 0, 0},//synth.2
 	{0, PATTERN_STREAMING, 0, 0, 1024, 2, 0, 1,    1,    0, 0, 0},//synth.3
 	{0, PATTERN_STREAMING, 0, 0,  512, 1, 0, 2,    8,    0, 0, 1},//synth.4
 	{0, PATTERN_STREAMING, 0, 0,  256, 1, 0, 4,    4,    0, 0, 0},//synth.5
-	{0, PATTERN_STRIDED,   0, 0,    4, 1, 0, 1, 2048, 2048, 0, 0},//synth.6
-	{0, PATTERN_STRIDED,   0, 0,    4, 1, 0, 2, 1024, 1024, 0, 0},//synth.7
-	{0, PATTERN_STRIDED,   0, 0,    4, 1, 0, 4,  512,  512, 0, 0},//synth.8
-	{0, PATTERN_IRREGULAR, 0, 0,    4, 1, 0, 1,   32,    0, 0, 0},//synth.9
+	{0, PATTERN_STRIDED,   0, 0,    4, 1, 0, 1,   32, 2048, 0, 0},//synth.6
+	{0, PATTERN_STRIDED,   0, 0,    4, 1, 0, 2,   64, 1024, 0, 0},//synth.7
+	{0, PATTERN_STRIDED,   0, 0,    4, 1, 0, 4,  128,  512, 0, 0},//synth.8
+	{0, PATTERN_IRREGULAR, 0, 0,    4, 1, 0, 1,    8,    0, 0, 0},//synth.9
 	{0, PATTERN_IRREGULAR, 0, 2,    4, 1, 0, 2,    4,    0, 0, 0},//synth.10
 	{0, PATTERN_IRREGULAR, 0, 4,    4, 1, 0, 4,    1,    0, 0, 0}};//synth.11
 
@@ -257,7 +257,7 @@ static void config_thread(accelerator_thread_info_t *info,
 		info->chain[acc].desc.esp.reuse_factor = synth_cfg_init[devid].reuse_factor;
 	}
 
-	info->memsz = memsz;
+	info->memsz = memsz * 4;
 }
 
 static void alloc_phase(accelerator_thread_info_t **info, int nthreads,
@@ -383,7 +383,7 @@ int main(int argc, char **argv)
 	int phase;
 	int thread;
 	int acc;
-
+	int p, t, i;
 	int nphases;
 
 	int nthreads[NPHASES_MAX];
@@ -428,25 +428,18 @@ int main(int argc, char **argv)
 	devid[0][0][1] = 3;
 	devid[0][0][2] = 8;
 
-	in_size[0][0][0] = 1048576; // 1M;
-	in_size[0][0][1] = 524288;  // 512K;
-	in_size[0][0][2] = 524288;  // 512K;
-
-	out_size[0][0][0] = 524288;  // 512K;
-	out_size[0][0][1] = 524288;  // 512K;
-	out_size[0][0][2] = 1024;    // 1K;
+	in_size[0][0][0] = 1048576; // 1MB
 
 	/* Phase 1 */
 	nthreads[1] = 3;
 
-	ndev[1][0] = 4;
+	ndev[1][0] = 3;
 	ndev[1][1] = 3;
 	ndev[1][2] = 2;
 
-	devid[1][0][0] = 5;
-	devid[1][0][1] = 4;
-	devid[1][0][2] = 2;
-	devid[1][0][3] = 7;
+	devid[1][0][0] = 4;
+	devid[1][0][1] = 2;
+	devid[1][0][2] = 7;
 
 	devid[1][1][0] = 10;
 	devid[1][1][1] = 9;
@@ -455,29 +448,53 @@ int main(int argc, char **argv)
 	devid[1][2][0] = 11;
 	devid[1][2][1] = 1;
 
-	in_size[1][0][0] = 67108864; // 64M;
-	in_size[1][0][1] = 4194304;  // 4M;
-	in_size[1][0][2] = 524288;   // 512K;
-	in_size[1][0][3] = 32768;    // 32K
-
-	in_size[1][1][0] = 16777216; // 16M
-	in_size[1][1][1] = 4194304;  // 4M;
-	in_size[1][1][2] = 131072;   // 128K
-
+	in_size[1][0][0] = 4194304;  // 4M;
+	in_size[1][1][0] = 4194304;  // 4M;
 	in_size[1][2][0] = 4194304;  // 4M;
-	in_size[1][2][1] = 4194304;  // 4M;
 
-	out_size[1][0][0] = 4194304;  // 4M;
-	out_size[1][0][1] = 524288;   // 512K;
-	out_size[1][0][2] = 32768;    // 32K;
-	out_size[1][0][3] = 32;
+	/* Evaluate in_size and out_size for all accelerator invocation*/
 
-	out_size[1][1][0] = 1048576;  // 1M;
-	out_size[1][1][1] = 131072;   // 128K;
-	out_size[1][1][2] = 256;
+	for (p = 0; p < nphases; p++) {
 
-	out_size[1][2][0] = 262144;   // 256K;
-	out_size[1][2][1] = 131072;   // 128K;
+		for (t = 0; t < nthreads[p]; t++) {
+
+			for (i = 0; i < ndev[p][t]; i++) {
+
+				if (i != 0)
+					in_size[p][t][i] = out_size[p][t][i-1];
+			
+				out_size[p][t][i] =
+					(in_size[p][t][i] >>
+					 synth_cfg_init[devid[p][t][i]].access_factor) /
+					synth_cfg_init[devid[p][t][i]].ld_st_ratio;
+
+				printf("TEST %d %d %d %u %u\n",
+				       p, t, i, in_size[p][t][i], out_size[p][t][i]);
+			}
+		}
+	}
+
+	printf("\nDATASET SIZES\n\n");
+
+	for (p = 0; p < nphases; p++) {
+
+		printf("\tPHASE %d\n", p);
+
+		for (t = 0; t < nthreads[p]; t++) {
+
+			printf("\t\tTHREAD %d\n", t);
+
+			for (i = 0; i < ndev[p][t]; i++) {
+
+				printf("\t\t\tACC %d DEV %d\n", devid[p][t][i], i);
+				printf("\t\t\t\tin_size = %u\n", in_size[p][t][i]);
+				printf("\t\t\t\tout_size = %u\n", out_size[p][t][i]);
+			}
+		}
+	}
+
+	// give time to the prints to take place
+	sleep(2);
 
 	for (phase = 0; phase < nphases; phase++) {
 

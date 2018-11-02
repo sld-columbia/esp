@@ -198,6 +198,8 @@ static int esp_wait(struct esp_device *esp)
 
 static void esp_update_status(struct esp_device *esp, bool auto_)
 {
+	int i;
+
 	printk(KERN_INFO "[[[DAVIDE]]] esp_update_status\n");
 
 	if (esp->coherence == ACC_COH_FULL)
@@ -228,6 +230,15 @@ static void esp_update_status(struct esp_device *esp, bool auto_)
 			}
 		}
 	}
+
+	printk(KERN_INFO "*** CURRENT ESP STATUS ***\n");
+	printk(KERN_INFO "acc cnt %u\n", esp_status.active_acc_cnt);
+	printk(KERN_INFO "acc cnt full%u\n", esp_status.active_acc_cnt_full);
+	printk(KERN_INFO "acc footprint %u\n", esp_status.active_footprint);
+
+	for (i = 0; i < N_MEM; i++)
+		printk(KERN_INFO "acc footprint mem %i %u\n", i,
+		       esp_status.active_footprint_split[i]);
 }
 
 static bool esp_xfer_input_ok(struct esp_device *esp, const struct contig_desc *contig)
