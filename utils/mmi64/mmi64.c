@@ -19,6 +19,38 @@
 
 #include "mmi64_regs.h"
 
+#ifdef PRINT_COLORS
+#define KNRM  "\x1B[0m"
+#define KRED  "\x1B[31m"
+#define KGRN  "\x1B[32m"
+#define KYEL  "\x1B[33m"
+#define KBLU  "\x1B[34m"
+#define KMAG  "\x1B[35m"
+#define KCYN  "\x1B[36m"
+#define KWHT  "\x1B[37m"
+
+#define SET_RED(_fp) fprintf(_fp, "%s", KRED)
+#define SET_GRN(_fp) fprintf(_fp, "%s", KGRN)
+#define SET_YEL(_fp) fprintf(_fp, "%s", KYEL)
+#define SET_BLU(_fp) fprintf(_fp, "%s", KBLU)
+#define SET_MAG(_fp) fprintf(_fp, "%s", KMAG)
+#define SET_CYN(_fp) fprintf(_fp, "%s", KCYN)
+#define SET_WHT(_fp) fprintf(_fp, "%s", KWHT)
+#define SET_NRM(_fp) fprintf(_fp, "%s", KNRM)
+
+#else
+
+#define SET_RED(_fp)
+#define SET_GRN(_fp)
+#define SET_YEL(_fp)
+#define SET_BLU(_fp)
+#define SET_MAG(_fp)
+#define SET_CYN(_fp)
+#define SET_WHT(_fp)
+#define SET_NRM(_fp)
+
+#endif
+
 #ifdef NOC_QUEUES_offset
 static const char *direction[5] = {"n", "s", "w", "e", "l"};
 #endif
@@ -125,9 +157,15 @@ int read_accelerator_mon(mmi64_module_t *user_module, int accelerator)
 	status = mmi64_regif_read_32(user_module, tlb_regid, 1, &rdata);
 	tlb = (long long unsigned) rdata;
 
+	if (accelerator % 2)
+		SET_CYN(fp);
+	else
+		SET_WHT(fp);
 	fprintf(fp, "%d\t%d\t%d\t", tlb, mem, tot);
 	if (tot != 0)
 		relevant = 1;
+
+	SET_NRM(fp);
 
 	return relevant;
 }
@@ -160,7 +198,13 @@ void read_l2_stats(mmi64_module_t *user_module, int cache_id)
 	status = mmi64_regif_read_32(user_module, miss_regid, 1, &rdata);
 	miss = (long long unsigned) rdata;
 
+	if (cache_id % 2)
+		SET_MAG(fp);
+	else
+		SET_BLU(fp);
 	fprintf(fp, "%d\t%d\t", hit, miss);
+
+	SET_NRM(fp);
 }
 
 void read_l2s_stats(mmi64_module_t *user_module)
@@ -255,8 +299,19 @@ void read_mem_stats(mmi64_module_t *user_module, int mem_id)
 	status = mmi64_regif_read_32(user_module, coh_dma_rsp_regid, 1, &rdata);
 	coh_dma_rsp = (long long unsigned) rdata;
 
-	fprintf(fp, "%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t",
-		coh_req, coh_fwd, coh_rsp_rcv, coh_rsp_snd, dma_req, dma_rsp, coh_dma_req, coh_dma_rsp);
+	SET_GRN(fp);
+	fprintf(fp, "%d\t%d\t%d\t%d\t",
+		coh_req, coh_fwd, coh_rsp_rcv, coh_rsp_snd);
+
+	SET_RED(fp);
+	fprintf(fp, "%d\t%d\t",
+		dma_req, dma_rsp);
+
+	SET_YEL(fp);
+	fprintf(fp, "%d\t%d\t",
+		coh_dma_req, coh_dma_rsp);
+
+	SET_NRM(fp);
 }
 
 void read_mems_stats(mmi64_module_t *user_module)
