@@ -90,7 +90,7 @@ static void esp_runtime_config(struct esp_device *esp)
 
 	if (esp->coherence == ACC_COH_FULL) {
 
-		if (esp_status.active_acc_cnt_full >= 3)
+		if (esp_status.active_acc_cnt_full >= 1)
 			esp->coherence = ACC_COH_RECALL;
 		else
 			esp_status.active_acc_cnt_full++;
@@ -118,7 +118,7 @@ static void esp_runtime_config(struct esp_device *esp)
 	if (esp->footprint < PRIVATE_CACHE_SIZE &&
 	    (esp->in_place != 0 || esp->reuse_factor != 0)) {
 
-		if (esp_status.active_acc_cnt_full < 3) {
+		if (esp_status.active_acc_cnt_full < 1) {
 			esp->coherence = ACC_COH_FULL;
 			esp_status.active_acc_cnt_full++;
 
