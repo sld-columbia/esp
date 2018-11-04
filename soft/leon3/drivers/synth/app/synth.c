@@ -387,12 +387,12 @@ void *accelerator_thread( void *ptr )
 
 	for (acc = 0; acc < info->ndev; acc++) {
 
-		printf("acc thread tid %d ioctl acc %d\n", info->tid, acc);
+		/* printf("acc thread tid %d ioctl acc %d\n", info->tid, acc); */
 		
 		if (ioctl(info->chain[acc].fd, SYNTH_IOC_ACCESS, info->chain[acc].desc))
 			die_errno("ioctl: cannot run accelerator %d", acc);
 
-		printf("acc thread tid %d ioctl done acc %d\n", info->tid, acc);
+		/* printf("acc thread tid %d ioctl done acc %d\n", info->tid, acc); */
 	}
 
 	gettime(&info->th_end);
@@ -407,7 +407,7 @@ int main(int argc, char **argv)
 	int loop;
 	struct timespec th_start;
 	struct timespec th_end;
-	unsigned long long hw_ns = 0;
+	unsigned long long hw_ns = 0, hw_ns_total = 0;
 
 	int phase;
 	int thread;
@@ -682,7 +682,7 @@ int main(int argc, char **argv)
 	/* Print config */
 	for (i = 0; i < 2; i++) {
 		for (j = 0; j < NDEV; j++) {
-			printf("config %d %d %u\n", i, j, synth_cfg_init[i][j].ld_st_ratio);
+			/* printf("config %d %d %u\n", i, j, synth_cfg_init[i][j].ld_st_ratio); */
 		}
 
 	}
@@ -706,24 +706,24 @@ int main(int argc, char **argv)
 		}
 	}
 
-	printf("\nDATASET SIZES\n\n");
+	/* printf("\nDATASET SIZES\n\n"); */
 
-	for (p = 0; p < nphases; p++) {
+	/* for (p = 0; p < nphases; p++) { */
 
-		printf("\tPHASE %d\n", p);
+	/* 	printf("\tPHASE %d\n", p); */
 
-		for (t = 0; t < nthreads[p]; t++) {
+	/* 	for (t = 0; t < nthreads[p]; t++) { */
 
-			printf("\t\tTHREAD %d\n", t);
+	/* 		printf("\t\tTHREAD %d\n", t); */
 
-			for (i = 0; i < ndev[p][t]; i++) {
+	/* 		for (i = 0; i < ndev[p][t]; i++) { */
 
-				printf("\t\t\tACC %d DEV %d\n", devid[p][t][i], i);
-				printf("\t\t\t\tin_size = %u\n", in_size[p][t][i]);
-				printf("\t\t\t\tout_size = %u\n", out_size[p][t][i]);
-			}
-		}
-	}
+	/* 			printf("\t\t\tACC %d DEV %d\n", devid[p][t][i], i); */
+	/* 			printf("\t\t\t\tin_size = %u\n", in_size[p][t][i]); */
+	/* 			printf("\t\t\t\tout_size = %u\n", out_size[p][t][i]); */
+	/* 		} */
+	/* 	} */
+	/* } */
 
 	// give time to the prints to take place
 	sleep(2);
@@ -762,19 +762,20 @@ int main(int argc, char **argv)
 				if (pthread_create( &threads[thread], NULL, accelerator_thread,
 						    (void*) phases[phase][thread]))
 					die_errno("pthread: cannot create thread %d", thread);
-				printf("thread created thread %d\n", thread);
+				/* printf("thread created thread %d\n", thread); */
 			}
 
 			for (thread = 0; thread < nthreads[phase]; thread++) {
 				if(pthread_join(threads[thread], NULL))
 					die_errno("pthread: cannot join thread %d", thread);
-				printf("thread joined thread %d\n", thread);
+				/* printf("thread joined thread %d\n", thread); */
 			}
 		}
 
 		gettime(&th_end);
 
 		hw_ns = ts_subtract(&th_start, &th_end);
+		hw_ns_total += hw_ns;
 
 		sleep(1);
 		printf("PHASE.%d %llu ns\n", phase, hw_ns);
@@ -784,6 +785,8 @@ int main(int argc, char **argv)
 		free_phase(phases[phase], nthreads[phase]);
 
 	}
+
+	printf("TOTAL %llu ns\n", hw_ns_total);
 
 	// TODO: Free data structures..
 	return 0;
