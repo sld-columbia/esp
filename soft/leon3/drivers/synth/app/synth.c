@@ -201,23 +201,23 @@ static const struct synth_cfg synth_cfg_init[2][NDEV] = {
 	 {0, PATTERN_STREAMING, 0, 0,  128,  4, 0, 4,  2,    0, 0, 0},//synth.4
 	 {0, PATTERN_STRIDED,   0, 0,    8,  2, 0, 1,  4,   32, 0, 1},//synth.5
 	 {0, PATTERN_STREAMING, 0, 0,   64,  8, 0, 1,  1,    0, 0, 0},//synth.6
-	 {0, PATTERN_IRREGULAR, 2, 0,    4,  2, 0, 4,  2,    0, 0, 0},//synth.7
+	 {0, PATTERN_IRREGULAR, 0, 2,    4,  2, 0, 4,  2,    0, 0, 0},//synth.7
 	 {0, PATTERN_STREAMING, 0, 0,   16, 16, 0, 1,  4,    0, 0, 1},//synth.8
 	 {0, PATTERN_STRIDED,   0, 0,    4,  1, 0, 2,  1,  512, 0, 0},//synth.9
 	 {0, PATTERN_STREAMING, 0, 0,   32, 32, 0, 4,  2,    0, 0, 0},//synth.10
-	 {0, PATTERN_IRREGULAR, 4, 0,    4,  1, 0, 1,  1,    0, 0, 1}},//synth.11
+	 {0, PATTERN_IRREGULAR, 0, 4,    4,  1, 0, 1,  1,    0, 0, 1}},//synth.11
 
 	{{0, PATTERN_STREAMING, 0, 0,   64,  1, 0, 2,  1,    0, 0, 0},//synth.0
 	 {0, PATTERN_STRIDED,   0, 0,    4,  1, 0, 4,  1,  256, 0, 0},//synth.1
 	 {0, PATTERN_STREAMING, 0, 0,   32,  2, 0, 1,  1,    0, 0, 1},//synth.2
 	 {0, PATTERN_IRREGULAR, 0, 0,    4,  2, 0, 1,  1,    0, 0, 1},//synth.3
 	 {0, PATTERN_STREAMING, 0, 0,  128,  4, 0, 4,  1,    0, 0, 0},//synth.4
-	 {0, PATTERN_STRIDED,   0, 0,    8,  2, 0, 1,  1, 1024, 0, 1},//synth.5
+	 {0, PATTERN_STRIDED,   0, 0,    8,  2, 0, 1,  1,   32, 0, 1},//synth.5
 	 {0, PATTERN_STREAMING, 0, 0,   64,  8, 0, 1,  1,    0, 0, 0},//synth.6
 	 {0, PATTERN_IRREGULAR, 0, 0,    4,  2, 0, 4,  1,    0, 0, 0},//synth.7
-	 {0, PATTERN_STREAMING, 0, 0,   64, 16, 0, 1,  1,    0, 0, 1},//synth.8
-	 {0, PATTERN_STRIDED,   0, 0,   16,  1, 0, 2,  1,  512, 0, 0},//synth.9
-	 {0, PATTERN_STREAMING, 0, 0,  128, 32, 0, 4,  1,    0, 0, 0},//synth.10
+	 {0, PATTERN_STREAMING, 0, 0,   16, 16, 0, 1,  1,    0, 0, 1},//synth.8
+	 {0, PATTERN_STRIDED,   0, 0,    4,  1, 0, 2,  1,  512, 0, 0},//synth.9
+	 {0, PATTERN_STREAMING, 0, 0,   32, 32, 0, 4,  1,    0, 0, 0},//synth.10
 	 {0, PATTERN_IRREGULAR, 0, 0,    4,  1, 0, 1,  1,    0, 0, 1}}};//synth.11
 
 /* Accelerators chains per phase */
@@ -436,7 +436,7 @@ int main(int argc, char **argv)
 	int cfgid[NPHASES_MAX] = {0, 1, 1, 0, 1, 1, 0, 1, 1};
 	//int cfgid[NPHASES_MAX] = {0, 0, 0, 0, 0, 0, 0, 0, 0};
 
-	int nloop[NPHASES_MAX] = {5, 2, 100, 3, 1, 50, 2, 1, 25};
+	int nloop[NPHASES_MAX] = {1, 1, 1, 1, 1, 1, 1, 1, 1};
 
 	srand(time(NULL));
 
@@ -663,10 +663,10 @@ int main(int argc, char **argv)
 	in_size[7][ 5][0] = M1;
 	in_size[7][ 6][0] = M1;
 	in_size[7][ 7][0] = M1;
-	in_size[7][ 8][0] = K512;
-	in_size[7][ 9][0] = K512;
-	in_size[7][10][0] = K512;
-	in_size[7][11][0] = K512;
+	in_size[7][ 8][0] = M1;
+	in_size[7][ 9][0] = M1;
+	in_size[7][10][0] = M1;
+	in_size[7][11][0] = M1;
 
 	in_size[8][ 0][0] = K1;
 	in_size[8][ 1][0] = K2;

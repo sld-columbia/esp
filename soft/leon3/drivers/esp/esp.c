@@ -91,7 +91,8 @@ static void esp_runtime_config(struct esp_device *esp)
 	if (esp->coherence == ACC_COH_FULL) {
 
 		if (esp_status.active_acc_cnt_full >= 1)
-			esp->coherence = ACC_COH_RECALL;
+			/* esp->coherence = ACC_COH_RECALL; */
+			esp->coherence = ACC_COH_LLC;
 		else
 			esp_status.active_acc_cnt_full++;
 
@@ -125,8 +126,8 @@ static void esp_runtime_config(struct esp_device *esp)
 			esp->coherence = ACC_COH_LLC;
 		}
 
-	/* } else if (esp_status.active_acc_cnt >= 6) { */
-	/* 	esp->coherence = ACC_COH_NONE; */
+	} else if (esp_status.active_acc_cnt >= 6) {
+		esp->coherence = ACC_COH_NONE;
 
 	} else if (footprint > footprint_llc_threshold) {
 		esp->coherence = ACC_COH_NONE;
