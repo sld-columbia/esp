@@ -24,7 +24,6 @@
 
 #include "synth.h"
 
-#define NLOOP 1
 #define NPHASES_MAX 9
 #define NTHREADS_MAX 12
 
@@ -198,27 +197,27 @@ static const struct synth_cfg synth_cfg_init[2][NDEV] = {
 	{{0, PATTERN_STREAMING, 0, 0,   64,  1, 0, 2,  1,    0, 0, 0},//synth.0
 	 {0, PATTERN_STRIDED,   0, 0,    4,  1, 0, 4,  2,  256, 0, 0},//synth.1
 	 {0, PATTERN_STREAMING, 0, 0,   32,  2, 0, 1,  4,    0, 0, 1},//synth.2
-	 {0, PATTERN_IRREGULAR, 0, 0,    4,  4, 0, 1,  1,    0, 0, 1},//synth.3
+	 {0, PATTERN_IRREGULAR, 0, 0,    4,  2, 0, 1,  1,    0, 0, 1},//synth.3
 	 {0, PATTERN_STREAMING, 0, 0,  128,  4, 0, 4,  2,    0, 0, 0},//synth.4
 	 {0, PATTERN_STRIDED,   0, 0,    8,  2, 0, 1,  4,   32, 0, 1},//synth.5
 	 {0, PATTERN_STREAMING, 0, 0,   64,  8, 0, 1,  1,    0, 0, 0},//synth.6
 	 {0, PATTERN_IRREGULAR, 2, 0,    4,  2, 0, 4,  2,    0, 0, 0},//synth.7
-	 {0, PATTERN_STREAMING, 0, 0,   16,  4, 0, 1,  4,    0, 0, 1},//synth.8
-	 {0, PATTERN_STRIDED,   0, 0,    4,  4, 0, 2,  1,  512, 0, 0},//synth.9
-	 {0, PATTERN_STREAMING, 0, 0,   32,  2, 0, 4,  2,    0, 0, 0},//synth.10
-	 {0, PATTERN_IRREGULAR, 4, 0,    4,  1, 0, 1,  4,    0, 0, 1}},//synth.11
+	 {0, PATTERN_STREAMING, 0, 0,   16, 16, 0, 1,  4,    0, 0, 1},//synth.8
+	 {0, PATTERN_STRIDED,   0, 0,    4,  1, 0, 2,  1,  512, 0, 0},//synth.9
+	 {0, PATTERN_STREAMING, 0, 0,   32, 32, 0, 4,  2,    0, 0, 0},//synth.10
+	 {0, PATTERN_IRREGULAR, 4, 0,    4,  1, 0, 1,  1,    0, 0, 1}},//synth.11
 
-	{{0, PATTERN_STREAMING, 0, 0,  64,  1, 0, 2,  1,    0, 0, 0},//synth.0
+	{{0, PATTERN_STREAMING, 0, 0,   64,  1, 0, 2,  1,    0, 0, 0},//synth.0
 	 {0, PATTERN_STRIDED,   0, 0,    4,  1, 0, 4,  1,  256, 0, 0},//synth.1
-	 {0, PATTERN_STREAMING, 0, 0,  32,  2, 0, 1,  1,    0, 0, 1},//synth.2
-	 {0, PATTERN_IRREGULAR, 0, 0,    4,  4, 0, 1,  1,    0, 0, 1},//synth.3
-	 {0, PATTERN_STREAMING, 0, 0, 128,  4, 0, 4,  1,    0, 0, 0},//synth.4
+	 {0, PATTERN_STREAMING, 0, 0,   32,  2, 0, 1,  1,    0, 0, 1},//synth.2
+	 {0, PATTERN_IRREGULAR, 0, 0,    4,  2, 0, 1,  1,    0, 0, 1},//synth.3
+	 {0, PATTERN_STREAMING, 0, 0,  128,  4, 0, 4,  1,    0, 0, 0},//synth.4
 	 {0, PATTERN_STRIDED,   0, 0,    8,  2, 0, 1,  1, 1024, 0, 1},//synth.5
-	 {0, PATTERN_STREAMING, 0, 0, 64,  8, 0, 1,  1,    0, 0, 0},//synth.6
+	 {0, PATTERN_STREAMING, 0, 0,   64,  8, 0, 1,  1,    0, 0, 0},//synth.6
 	 {0, PATTERN_IRREGULAR, 0, 0,    4,  2, 0, 4,  1,    0, 0, 0},//synth.7
-	 {0, PATTERN_STREAMING, 0, 0,   64,  4, 0, 1,  1,    0, 0, 1},//synth.8
-	 {0, PATTERN_STRIDED,   0, 0,   16,  4, 0, 2,  1,  512, 0, 0},//synth.9
-	 {0, PATTERN_STREAMING, 0, 0,  128,  2, 0, 4,  1,    0, 0, 0},//synth.10
+	 {0, PATTERN_STREAMING, 0, 0,   64, 16, 0, 1,  1,    0, 0, 1},//synth.8
+	 {0, PATTERN_STRIDED,   0, 0,   16,  1, 0, 2,  1,  512, 0, 0},//synth.9
+	 {0, PATTERN_STREAMING, 0, 0,  128, 32, 0, 4,  1,    0, 0, 0},//synth.10
 	 {0, PATTERN_IRREGULAR, 0, 0,    4,  1, 0, 1,  1,    0, 0, 1}}};//synth.11
 
 /* Accelerators chains per phase */
@@ -437,6 +436,8 @@ int main(int argc, char **argv)
 	int cfgid[NPHASES_MAX] = {0, 1, 1, 0, 1, 1, 0, 1, 1};
 	//int cfgid[NPHASES_MAX] = {0, 0, 0, 0, 0, 0, 0, 0, 0};
 
+	int nloop[NPHASES_MAX] = {5, 2, 100, 3, 1, 50, 2, 1, 25};
+
 	srand(time(NULL));
 
 	coherence = ACC_COH_NONE;
@@ -555,11 +556,11 @@ int main(int argc, char **argv)
 
 		for (j = 0; j < 2; j++) {
 			devid[i][2][j*2]   =  4;
-			devid[i][2][j*2+1] =  6;
+			devid[i][2][j*2+1] =  5;
 		} 
 
 		for (j = 0; j < 2; j++) {
-			devid[i][3][j*2]   =  5;
+			devid[i][3][j*2]   =  6;
 			devid[i][3][j*2+1] =  7;
 		} 
 
@@ -614,17 +615,17 @@ int main(int argc, char **argv)
 
 	// input size of first accelerator of thread
 
-	in_size[0][0][0] = K512;
+	in_size[0][0][0] = K256;
 
-	in_size[1][0][0] = M1;
+	in_size[1][0][0] = M4;
 
-	in_size[2][0][0] = K8;
+	in_size[2][0][0] = K16;
 
-	in_size[3][0][0] = M1;
-	in_size[3][1][0] = M1;
+	in_size[3][0][0] = K256;
+	in_size[3][1][0] = K32;
 	in_size[3][2][0] = K512;
 	in_size[3][3][0] = K128;
-	in_size[3][4][0] = K32;
+	in_size[3][4][0] = K64;
 	in_size[3][5][0] = K8;
 
 	in_size[4][0][0] = M1;
@@ -641,31 +642,31 @@ int main(int argc, char **argv)
 	in_size[5][4][0] = K8;
 	in_size[5][5][0] = K4;
 
-	in_size[6][ 0][0] = M1;
+	in_size[6][ 0][0] = K128;
 	in_size[6][ 1][0] = K64;
-	in_size[6][ 2][0] = M1;
-	in_size[6][ 3][0] = K128;
-	in_size[6][ 4][0] = M1;
+	in_size[6][ 2][0] = K32;
+	in_size[6][ 3][0] = K16;
+	in_size[6][ 4][0] = K512;
 	in_size[6][ 5][0] = K256;
-	in_size[6][ 6][0] = K512;
+	in_size[6][ 6][0] = K16;
 	in_size[6][ 7][0] = K512;
-	in_size[6][ 8][0] = K256;
-	in_size[6][ 9][0] = M1;
+	in_size[6][ 8][0] = K16;
+	in_size[6][ 9][0] = K8;
 	in_size[6][10][0] = K128;
-	in_size[6][11][0] = M1;
+	in_size[6][11][0] = K256;
 
-	in_size[7][ 0][0] = K512;
+	in_size[7][ 0][0] = M1;
 	in_size[7][ 1][0] = M1;
 	in_size[7][ 2][0] = M1;
 	in_size[7][ 3][0] = M1;
-	in_size[7][ 4][0] = K256;
-	in_size[7][ 5][0] = K512;
+	in_size[7][ 4][0] = M1;
+	in_size[7][ 5][0] = M1;
 	in_size[7][ 6][0] = M1;
 	in_size[7][ 7][0] = M1;
-	in_size[7][ 8][0] = K128;
-	in_size[7][ 9][0] = K256;
+	in_size[7][ 8][0] = K512;
+	in_size[7][ 9][0] = K512;
 	in_size[7][10][0] = K512;
-	in_size[7][11][0] = M1;
+	in_size[7][11][0] = K512;
 
 	in_size[8][ 0][0] = K1;
 	in_size[8][ 1][0] = K2;
@@ -757,7 +758,7 @@ int main(int argc, char **argv)
 		// Global time
 		gettime(&th_start);
 
-		for (loop = 0; loop < NLOOP; loop++) {
+		for (loop = 0; loop < nloop[phase]; loop++) {
 
 			for (thread = 0; thread < nthreads[phase]; thread++)  {
 				if (pthread_create( &threads[thread], NULL, accelerator_thread,

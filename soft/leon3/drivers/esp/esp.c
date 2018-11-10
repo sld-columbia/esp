@@ -105,7 +105,8 @@ static void esp_runtime_config(struct esp_device *esp)
 	if (esp->alloc_policy == CONTIG_ALLOC_PREFERRED ||
 	    esp->alloc_policy == CONTIG_ALLOC_LEAST_LOADED) {
 
-		footprint = esp_status.active_footprint_split[esp->ddr_node] + esp->footprint;
+		footprint = esp_status.active_footprint_split[esp->ddr_node]
+			+ esp->footprint;
 		footprint_llc_threshold = LLC_SIZE_SPLIT;
 
 	} else { // CONTIG_ALLOC_BALANCED
@@ -115,9 +116,7 @@ static void esp_runtime_config(struct esp_device *esp)
 	}
 
 	// Cache coherence choice
-	if (esp->footprint < PRIVATE_CACHE_SIZE &&
-	    (esp->in_place != 0 || esp->reuse_factor != 0)) {
-
+	if (esp->footprint < PRIVATE_CACHE_SIZE) {
 		if (esp_status.active_acc_cnt_full < 1) {
 			esp->coherence = ACC_COH_FULL;
 			esp_status.active_acc_cnt_full++;
@@ -126,8 +125,8 @@ static void esp_runtime_config(struct esp_device *esp)
 			esp->coherence = ACC_COH_LLC;
 		}
 
-	} else if (esp_status.active_acc_cnt >= 6) {
-		esp->coherence = ACC_COH_NONE;
+	/* } else if (esp_status.active_acc_cnt >= 6) { */
+	/* 	esp->coherence = ACC_COH_NONE; */
 
 	} else if (footprint > footprint_llc_threshold) {
 		esp->coherence = ACC_COH_NONE;
@@ -145,15 +144,15 @@ static void esp_runtime_config(struct esp_device *esp)
 		if (esp->alloc_policy == CONTIG_ALLOC_PREFERRED ||
 		    esp->alloc_policy == CONTIG_ALLOC_LEAST_LOADED) {
 
-
-			esp_status.active_footprint_split[esp->ddr_node] += esp->footprint; 
+			esp_status.active_footprint_split[esp->ddr_node] +=
+				esp->footprint; 
 
 		} else { // CONTIG_ALLOC_BALANCED
 
 			int i;
-
 			for (i = 0; i < N_MEM; i++) {
-				esp_status.active_footprint_split[i] += (esp->footprint / N_MEM);
+				esp_status.active_footprint_split[i] +=
+					(esp->footprint / N_MEM);
 			}
 		}
 	}
