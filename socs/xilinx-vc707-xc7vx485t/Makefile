@@ -6,7 +6,7 @@ all: help
 
 ### Global design variables ###
 DESIGN_PATH = $(PWD)
-ESP_ROOT = $(shell realpath ../../)
+ESP_ROOT = $(realpath ../../)
 CPU_ARCH = leon3
 TECHLIB  = virtex7
 BOARD    = xilinx-vc707-xc7vx485t
