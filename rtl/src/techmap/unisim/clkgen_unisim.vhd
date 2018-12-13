@@ -566,6 +566,9 @@ component PLLE2_ADV
      CLKOUT5_PHASE : real := 0.0;
      COMPENSATION : string := "ZHOLD";
      DIVCLK_DIVIDE : integer := 1;
+     IS_CLKINSEL_INVERTED : std_logic := std_logic' ('0');
+     IS_PWRDWN_INVERTED : std_logic := std_logic' ('0');
+     IS_RST_INVERTED : std_logic := std_logic' ('0');
      REF_JITTER1 : real := 0.0;
      REF_JITTER2 : real := 0.0;
      STARTUP_WAIT : string := "FALSE"

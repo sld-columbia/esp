@@ -761,7 +761,11 @@ xcelium/xmready: xcelium/xilinx_lib check_all_srcs.old $(PKG_LIST)
 	cd ../;
 
 
-xmsim-compile: sldgen check_all_srcs xcelium/mig xcelium/sgmii soft xcelium/xmready
+xcelium/xmsim.in:
+	$(QUIET_BUILD)echo set severity_pack_assert_off {warning} > $@
+	@echo set pack_assert_off { std_logic_arith numeric_std } >> $@
+
+xmsim-compile: sldgen check_all_srcs xcelium/mig xcelium/sgmii soft xcelium/xmready xcelium/xmsim.in
 	$(QUIET_MAKE) \
 	cd xcelium; \
 	$(XMUPDATE) $(SIMTOP):behav glbl; \

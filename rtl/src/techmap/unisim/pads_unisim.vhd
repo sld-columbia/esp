@@ -38,7 +38,11 @@ entity unisim_inpad is
 end; 
 architecture rtl of unisim_inpad is
   component IBUF generic(
-      CAPACITANCE : string := "DONT_CARE"; IOSTANDARD : string := "LVCMOS25");
+      CAPACITANCE : string := "DONT_CARE";
+      IBUF_DELAY_VALUE : string := "0";
+      IBUF_LOW_PWR : string := "TRUE";
+      IFD_DELAY_VALUE : string := "AUTO";
+      IOSTANDARD : string := "LVCMOS25");
     port (O : out std_ulogic; I : in std_ulogic); end component;
 
   attribute syn_noprune : boolean;
@@ -98,6 +102,7 @@ end ;
 architecture rtl of unisim_iopad is
   component IOBUF generic (
       DRIVE : integer := 12;
+      IBUF_LOW_PWR : string := "TRUE";
       IOSTANDARD  : string := "LVCMOS25"; SLEW : string := "SLOW");
     port (O : out std_ulogic; IO : inout std_logic; I, T : in std_ulogic); end component;
   
@@ -531,7 +536,11 @@ architecture rtl of unisim_clkpad is
       CAPACITANCE : string := "DONT_CARE"; IOSTANDARD : string := "LVCMOS25");
     port (O : out std_logic; I : in std_logic); end component;
   component IBUF generic(
-      CAPACITANCE : string := "DONT_CARE"; IOSTANDARD : string := "LVCMOS25");
+      CAPACITANCE : string := "DONT_CARE";
+      IBUF_DELAY_VALUE : string := "0";
+      IBUF_LOW_PWR : string := "TRUE";
+      IFD_DELAY_VALUE : string := "AUTO";
+      IOSTANDARD : string := "LVCMOS25");
     port (O : out std_ulogic; I : in std_ulogic); end component;
   component BUFGMUX port (O : out std_logic; I0, I1, S : in std_logic); end component;
   component BUFG port (O : out std_logic; I : in std_logic); end component;

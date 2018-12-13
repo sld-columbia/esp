@@ -70,7 +70,7 @@ VLOGOPT  +=
 VSIMOPT  +=
 XMCOMOPT  +=
 XMLOGOPT  +=
-XMSIMOPT  +=
+XMSIMOPT  += -input xmsim.in
 
 
 # Include unisim verilog librayr

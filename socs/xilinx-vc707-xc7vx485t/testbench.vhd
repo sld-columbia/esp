@@ -41,7 +41,7 @@ entity testbench is
     dbguart   : integer := CFG_DUART;      -- Print UART on console
     pclow     : integer := CFG_PCLOW;
     testahb   : boolean := true;
-    USE_MIG_INTERFACE_MODEL : boolean := false
+    USE_MIG_INTERFACE_MODEL : boolean := true
 
   );
 end;
