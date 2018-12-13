@@ -198,6 +198,11 @@ XLOG = xmvlog -nocopyright -linedebug -sv $(XLOGOPT)
 XMELAB = xmelab -nowarn DLCPT -v93 -nocopyright -disable_sem2009 -nomxindr -timescale 10ps/10ps
 XMUPDATE = xmupdate
 
+NCCOM = ncvhdl -NOVITALCHECK -linedebug -v93 -nocopyright $(NCCOMOPT)
+NCLOG = ncvlog -nocopyright -linedebug -sv $(NCLOGOPT)
+NCELAB = ncelab -nowarn DLCPT -v93 -nocopyright -disable_sem2009 -nomxindr -timescale 10ps/10ps
+NCUPDATE = ncupdate
+
 ### Options for Vivado batch mode ###
 VIVADO_BATCH_OPT = -mode batch -quiet -notrace
 
@@ -205,6 +210,7 @@ VIVADO_BATCH_OPT = -mode batch -quiet -notrace
 PROFPGA_INCDIR = $(PROFPGA)/hdl/generic_hdl $(PROFPGA)/hdl/mmi64 $(PROFPGA)/hdl/profpga_user $(PROFPGA)/hdl/pd_muxdemux2
 PROFPGA_INCDIR_MODELSIM = $(foreach dir, $(PROFPGA_INCDIR), +incdir+$(dir))
 PROFPGA_INCDIR_XCELIUM = $(foreach dir, $(PROFPGA_INCDIR), -INCDIR $(dir))
+PROFPGA_INCDIR_INCISIVE = $(PROFPGA_INCDIR_XCELIUM)
 
 ### Patsh shortcuts ###
 UTILS_GRLIB = $(ESP_ROOT)/utils/grlib
@@ -578,6 +584,12 @@ xcelium/xilinx_lib: $(XILINX_VIVADO)
 	cd xcelium; \
 	vivado $(VIVADO_BATCH_OPT) -source xilinx_lib/simlib.tcl; \
 
+incisive/xilinx_lib: $(XILINX_VIVADO)
+	$(QUIET_MKDIR)mkdir -p $@
+	@echo "compile_simlib -directory xilinx_lib -simulator ies -library unisim -no_ip_compile" > $@/simlib.tcl; \
+	cd incisive; \
+	vivado $(VIVADO_BATCH_OPT) -source xilinx_lib/simlib.tcl; \
+
 
 xilinx_lib-clean:
 	$(QUIET_CLEAN)$(RM) \
@@ -592,7 +604,8 @@ xilinx_lib-clean:
 xilinx_lib-distclean: xilinx_lib-clean
 	$(QUIET_CLEAN)$(RM) \
 		modelsim/xilinx_lib \
-		xcelium/xilinx_lib
+		xcelium/xilinx_lib \
+		incisive/xilinx_lib
 
 .PHONY: xilinx_lib-clean xilinx_lib-distclean
 
@@ -622,6 +635,11 @@ xcelium/mig: modelsim/mig
 	@cd xcelium; \
 	ln -s ../modelsim/mig;
 
+incisive/mig: modelsim/mig
+	$(QUIET_MKDIR)mkdir -p incisive
+	@cd incisive; \
+	ln -s ../modelsim/mig;
+
 ifeq ($(CONFIG_GRETH_ENABLE),y)
 modelsim/sgmii:
 	$(QUIET_MKDIR)mkdir -p $@
@@ -645,11 +663,19 @@ xcelium/sgmii: modelsim/sgmii
 	$(QUIET_MKDIR)mkdir -p xcelium
 	@cd xcelium; \
 	ln -s ../modelsim/sgmii;
+
+
+incisive/sgmii: modelsim/sgmii
+	$(QUIET_MKDIR)mkdir -p incisive
+	@cd incisive; \
+	ln -s ../modelsim/sgmii;
 else
 
 modelsim/sgmii:
 
 xcelium/sgmii:
+
+incisive/sgmii:
 
 endif
 
@@ -659,16 +685,20 @@ modelsim/mig:
 
 xcelium/mig:
 
+incisive/mig:
+
 modelsim/sgmii:
 
 xcelium/sgmii:
+
+incisive/sgmii:
 
 endif
 
 
 ### Xcelium targets ###
 
-VERILOG_XILINX_MIG_SIM = $(shell (find $(DESIGN_PATH)/xcelium/mig/mig/user_design/rtl/ -name "*.v" | grep -v "mig_mig.v"))
+XCELIUM_VERILOG_XILINX_MIG_SIM = $(shell (find $(DESIGN_PATH)/xcelium/mig/mig/user_design/rtl/ -name "*.v" | grep -v "mig_mig.v"))
 
 xcelium/xmready: xcelium/xilinx_lib check_all_srcs.old $(PKG_LIST)
 	$(QUIET_MKDIR)mkdir -p xcelium
@@ -735,7 +765,7 @@ xcelium/xmready: xcelium/xilinx_lib check_all_srcs.old $(PKG_LIST)
 		done; \
 	echo $(SPACES)"### Compile IPs simulation files ###"; \
 	if test -r ./mig/mig.xci; then \
-		for rtl in $(VERILOG_XILINX_MIG_SIM); do \
+		for rtl in $(XCELIUM_VERILOG_XILINX_MIG_SIM); do \
 			echo $(SPACES)"$(XLOG) -work work $$rtl"; \
 			$(XLOG) -work work $$rtl || exit; \
 		done; \
@@ -790,6 +820,132 @@ xmsim-distclean: xmsim-clean
 	$(QUIET_CLEAN) $(RM) xcelium
 
 .PHONY: xmsim xmsim-gui xmsim-compile xmsim-clean xmsim-distclean
+
+
+### Incisive targets ###
+
+INCISIVE_VERILOG_XILINX_MIG_SIM = $(shell (find $(DESIGN_PATH)/incisive/mig/mig/user_design/rtl/ -name "*.v" | grep -v "mig_mig.v"))
+
+incisive/ncready: incisive/xilinx_lib check_all_srcs.old $(PKG_LIST)
+	$(QUIET_MKDIR)mkdir -p incisive
+	@cd incisive; \
+	echo $(SPACES)"### Compile proFPGA source files ###"; \
+	grep --quiet "profpga" cds.lib; \
+	res=$$?; \
+	if [ $$res != 0 ]; then \
+		mkdir -p profpga; \
+		echo "DEFINE profpga $(DESIGN_PATH)/incisive/profpga" >> cds.lib; \
+	fi; \
+	for vhd in $(VHDL_PROFPGA); do \
+		rtl=$(PROFPGA)/hdl/$$vhd; \
+		echo $(SPACES)"$(NCCOM) -work profpga $$rtl"; \
+		$(NCCOM) -work profpga $$rtl || exit; \
+	done; \
+	for ver in $(VERILOG_PROFPGA); do \
+		rtl=$(PROFPGA)/hdl/$$ver; \
+		echo $(SPACES)"$(NCLOG) -work profpga -INCDIR ... $$rtl"; \
+		$(NCLOG) -work profpga $(PROFPGA_INCDIR_INCISIVE) $$rtl || exit; \
+	done; \
+	echo $(SPACES)"### Compile VHDL packages ###"; \
+	grep --quiet "work" cds.lib; \
+	res=$$?; \
+	if [ $$res != 0 ]; then \
+		mkdir -p work; \
+		echo "DEFINE work $(DESIGN_PATH)/incisive/work" >> cds.lib; \
+	fi; \
+	for vhd in $(SLDGEN_VHDL_RTL_PKGS); do \
+		rtl=$$vhd; \
+		echo $(SPACES)"$(NCCOM) -work work $$rtl"; \
+		$(NCCOM) -work work $$rtl || exit; \
+	done; \
+	for lib in $$(cat $(ESP_ROOT)/rtl/include/libs.txt); do \
+		for dir in $$(cat $(ESP_ROOT)/rtl/include/$$lib/dirs.txt); do \
+			for vhd in $$(cat $(ESP_ROOT)/rtl/include/$$lib/$$dir/pkgs.txt); do \
+				rtl=$(ESP_ROOT)/rtl/include/$$lib/$$dir/$$vhd; \
+				echo $(SPACES)"$(NCCOM) -work work $$rtl"; \
+				$(NCCOM) -work work $$rtl || exit; \
+			done; \
+			if test -d $(ESP_ROOT)/sim/include/$$lib/$$dir/; then \
+				for vhd in $$(cat $(ESP_ROOT)/sim/include/$$lib/$$dir/pkgs.txt); do \
+					rtl=$(ESP_ROOT)/sim/include/$$lib/$$dir/$$vhd; \
+					echo $(SPACES)"$(NCCOM) -work work $$rtl"; \
+					$(NCCOM) -work work $$rtl || exit; \
+				done; \
+			fi; \
+		done; \
+	done; \
+	for vhd in $(TOP_VHDL_RTL_PKGS); do \
+		rtl=$$vhd; \
+		echo $(SPACES)"$(NCCOM) -work work $$rtl"; \
+		$(NCCOM) -work work $$rtl || exit; \
+	done; \
+	echo $(SPACES)"### Compile VHDL source files ###"; \
+		for rtl in $(VHDL_SRCS); do \
+			echo $(SPACES)"$(NCCOM) -work work $$rtl"; \
+			$(NCCOM) -work work $$rtl || exit; \
+		done; \
+	echo $(SPACES)"### Compile Verilog source files ###"; \
+		for rtl in $(VLOG_SRCS); do \
+			echo $(SPACES)"$(NCLOG) -work work -INCDIR ... $$rtl"; \
+			$(NCLOG) -INCDIR $(ESP_ROOT)/rtl/src/opencores/ge_1000baseX -work work $$rtl || exit; \
+		done; \
+	echo $(SPACES)"### Compile IPs simulation files ###"; \
+	if test -r ./mig/mig.xci; then \
+		for rtl in $(INCISIVE_VERILOG_XILINX_MIG_SIM); do \
+			echo $(SPACES)"$(NCLOG) -work work $$rtl"; \
+			$(NCLOG) -work work $$rtl || exit; \
+		done; \
+	fi; \
+	echo $(SPACES)"$(NCLOG) -work work $(XILINX_VIVADO)/data/verilog/src/glbl.v"; \
+	$(NCLOG) -work work $(XILINX_VIVADO)/data/verilog/src/glbl.v; \
+	grep --quiet "gig_ethernet_pcs_pma_v16_1_4" cds.lib; \
+	res=$$?; \
+	if [ $$res != 0 ]; then \
+		mkdir -p gig_ethernet_pcs_pma_v16_1_4; \
+		echo "DEFINE gig_ethernet_pcs_pma_v16_1_4 $(DESIGN_PATH)/incisive/gig_ethernet_pcs_pma_v16_1_4" >> cds.lib; \
+	fi; \
+	if test -r ./sgmii/sgmii.xci; then \
+		echo $(SPACES)"$(NCCOM) -wor gig_ethernet_pcs_pma_v16_1_4 ./sgmii/hdl/gig_ethernet_pcs_pma_v16_1_rfs.vhd"; \
+		$(NCCOM) -work gig_ethernet_pcs_pma_v16_1_4 ./sgmii/hdl/gig_ethernet_pcs_pma_v16_1_rfs.vhd; \
+		$(NCLOG) -work work ./sgmii/synth/*.v; \
+		$(NCLOG) -work work ./sgmii/synth/*/*.v ;\
+        fi; \
+	ln -s ../prom.srec; \
+	ln -s ../ram.srec; \
+	echo $(SPACES)"$(NCELAB) $(SIMTOP):behav glbl"; \
+	$(NCELAB) $(SIMTOP):behav glbl && touch ncready; \
+	cd ../;
+
+
+incisive/ncsim.in:
+	$(QUIET_BUILD)echo set severity_pack_assert_off {warning} > $@
+	@echo set pack_assert_off { std_logic_arith numeric_std } >> $@
+
+ncsim-compile: sldgen check_all_srcs incisive/mig incisive/sgmii soft incisive/ncready incisive/ncsim.in
+	$(QUIET_MAKE) \
+	cd incisive; \
+	$(NCUPDATE) $(SIMTOP):behav glbl; \
+	cd ../;
+
+ncsim: ncsim-compile
+	@cd incisive; \
+	echo $(SPACES)"ncsim $(NCSIMOPT)"; \
+	ncsim $(NCSIMOPT); \
+	cd ../
+
+ncsim-gui: ncsim-compile
+	@cd incisive; \
+	echo $(SPACES)"ncsim -gui $(NCSIMOPT)"; \
+	ncsim -gui $(NCSIMOPT); \
+	cd ../
+
+ncsim-clean:
+	$(QUIET_CLEAN)
+
+ncsim-distclean: ncsim-clean
+	$(QUIET_CLEAN) $(RM) incisive
+
+.PHONY: ncsim ncsim-gui ncsim-compile ncsim-clean ncsim-distclean
 
 
 

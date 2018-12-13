@@ -71,6 +71,9 @@ VSIMOPT  +=
 XMCOMOPT  +=
 XMLOGOPT  +=
 XMSIMOPT  += -input xmsim.in
+NCCOMOPT  +=
+NCLOGOPT  +=
+NCSIMOPT  += -input ncsim.in
 
 
 # Include unisim verilog librayr
@@ -102,6 +105,7 @@ VSIMOPT += -novopt +notimingchecks
 # Toplevel
 VSIMOPT += $(SIMTOP)
 XMSIMOPT += $(SIMTOP)
+NCSIMOPT += $(SIMTOP)
 
 ### Common design files ###
 SLDGEN_VHDL_RTL_PKGS += $(DESIGN_PATH)/sldgen/sld_devices.vhd
