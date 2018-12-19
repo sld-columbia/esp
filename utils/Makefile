@@ -1325,6 +1325,8 @@ clean: 		soft-clean		\
 		linux-clean		\
 		xilinx_lib-clean 	\
 		sim-clean		\
+		ncsim-clean 		\
+		xmsim-clean 		\
 		esp-config-clean	\
 		grlib-config-clean	\
 		vivado-clean		\
@@ -1340,6 +1342,8 @@ distclean:	check_all_srcs-distclean 	\
 		barec-distclean			\
 		xilinx_lib-distclean 		\
 		sim-distclean			\
+		ncsim-distclean			\
+		xmsim-distclean			\
 		esp-config-distclean		\
 		grlib-config-distclean		\
 		vivado-distclean		\
