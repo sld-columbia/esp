@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 from tkinter import *
 from tkinter.ttk import Separator
 import Pmw
