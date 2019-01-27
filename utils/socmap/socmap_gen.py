@@ -287,7 +287,7 @@ def print_constants(fp, esp_config, soc):
 
   if soc.HAS_JTAG == True:
     fp.write("  -- MST 1 (offchip)\n")
-    fp.write("  constant JTAG_USEOLDCOM : integer := 1 - (1-tap_tck_gated(CFG_FABTECH))*(1);\n")
+    fp.write("  constant JTAG_USEOLDCOM : integer := 0;\n")
     fp.write("  constant JTAG_REREAD : integer := 1;\n")
     fp.write("  constant JTAG_REVISION : integer := 2 - (2-JTAG_REREAD)*JTAG_USEOLDCOM;\n")
     fp.write("  constant jtag_hconfig : ahb_config_type := (\n")
