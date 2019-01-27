@@ -4,6 +4,7 @@ CURRENT_DIR=${PWD}
 SCRIPT_PATH=$(realpath $(dirname "$0"))
 ESP_ROOT=$(realpath ${SCRIPT_PATH}/../..)
 LINUXSRC=${ESP_ROOT}/soft/leon3/linux
+SYSROOT=${ESP_ROOT}/soft/leon3/sysroot
 
 DEFAULT_TARGET_DIR="/opt/leon"
 SRC_MIRROR="http://espdev.cs.columbia.edu/stuff/leon3"
@@ -80,7 +81,6 @@ NTHREADS=${NTHREADS:-""}
 # Tool chain environment
 export TOOLS=${TARGET_DIR}/sparc-linux
 export PATH=${TOOLS}/usr/bin:$PATH
-export SYSROOT=${ESP_ROOT}/soft/leon3/sysroot
 
 runsudo () {
     if [ -w $1 ]; then
