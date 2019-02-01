@@ -87,9 +87,6 @@ use work.allclkgen.all;
 
 use work.grethpkg.all;
 
-library unisim;
-use unisim.vcomponents.all;
-
 --------------------------------------------------------------------------------
 -- The entity declaration for the example design
 --------------------------------------------------------------------------------
@@ -300,6 +297,14 @@ component BUFHCE
      CE : in std_ulogic;
      I : in std_ulogic
   );
+end component;
+
+
+----- component BUFG -----
+component BUFG
+  port (
+    O : out std_logic;
+    I : in std_logic);
 end component;
 
 ----- component BUFGMUX -----
