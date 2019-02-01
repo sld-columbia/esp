@@ -1688,7 +1688,7 @@ begin  -- architecture rtl
       llc_rst_tb_ready      => llc_flush_resetn_ack,
       llc_rst_tb_done_valid => llc_flush_resetn_done,
       llc_rst_tb_done_data  => open,
-      llc_rst_tb_done_ready => std_logic'('1'),
+      llc_rst_tb_done_ready => std_logic' ('1'),
 
       -- NoC to cache
       llc_req_in_ready        => llc_req_in_ready,
