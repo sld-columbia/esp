@@ -14,6 +14,9 @@ vsim.mk
 *.wlf
 transcript
 
+xcelium
+incisive
+
 .grlib_config
 grlib_config.h
 grlib_config.help
