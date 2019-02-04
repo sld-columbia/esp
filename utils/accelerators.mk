@@ -7,17 +7,61 @@ ACCELERATORS-clean		= $(addsuffix -clean, $(ACCELERATORS))
 ACCELERATORS-distclean		= $(addsuffix -distclean, $(ACCELERATORS))
 ACCELERATORS-sim		= $(addsuffix -sim, $(ACCELERATORS))
 ACCELERATORS-plot		= $(addsuffix -plot, $(ACCELERATORS))
-ACCELERATORS-driver		= $(addsuffix -driver, $(ACCELERATORS))
-ACCELERATORS-driver-clean	= $(addsuffix -driver-clean, $(ACCELERATORS))
-ACCELERATORS-app		= $(addsuffix -app, $(ACCELERATORS))
-ACCELERATORS-app-clean		= $(addsuffix -app-clean, $(ACCELERATORS))
-ACCELERATORS-barec		= $(addsuffix -barec, $(ACCELERATORS))
-ACCELERATORS-barec-clean	= $(addsuffix -barec-clean, $(ACCELERATORS))
+
+CHISEL_PATH                     = $(ESP_ROOT)/chisel
+CHISEL_ACC_PATH                 = $(CHISEL_PATH)/src/main/scala/esp/examples
+CHISEL_ACCELERATORS             = $(shell ls $(CHISEL_ACC_PATH)/*.scala | awk -F/ '{print $$(NF)}' | sed 's/\.scala//g')
+CHISEL_ACCELERATORS-clean	= $(addsuffix -clean, $(CHISEL_ACCELERATORS))
+CHISEL_ACCELERATORS-distclean	= $(addsuffix -distclean, $(CHISEL_ACCELERATORS))
+
+ACCELERATORS-driver		= $(addsuffix -driver, $(ACCELERATORS)) $(addsuffix -driver, $(CHISEL_ACCELERATORS))
+ACCELERATORS-driver-clean	= $(addsuffix -driver-clean, $(ACCELERATORS)) $(addsuffix -driver-clean, $(CHISEL_ACCELERATORS))
+ACCELERATORS-app		= $(addsuffix -app, $(ACCELERATORS)) $(addsuffix -app, $(CHISEL_ACCELERATORS))
+ACCELERATORS-app-clean		= $(addsuffix -app-clean, $(ACCELERATORS)) $(addsuffix -app-clean, $(CHISEL_ACCELERATORS))
+ACCELERATORS-barec		= $(addsuffix -barec, $(ACCELERATORS)) $(addsuffix -barec, $(CHISEL_ACCELERATORS))
+ACCELERATORS-barec-clean	= $(addsuffix -barec-clean, $(ACCELERATORS)) $(addsuffix -barec-clean, $(CHISEL_ACCELERATORS))
+
 
 
 print-available-accelerators:
-	$(QUIET_INFO)echo "Available accelerators: $(ACCELERATORS)"
+	$(QUIET_INFO)echo "Available accelerators generated from HLS: $(ACCELERATORS)"
+	$(QUIET_INFO)echo "Available accelerators generated from Chisel3: $(CHISEL_ACCELERATORS)"
 
+sbt-run:
+	$(QUIET_RUN)
+	@cd $(CHISEL_PATH); sbt run;
+
+$(CHISEL_ACCELERATORS):
+	$(QUIET_BUILD)
+	@if ! test -e $(CHISEL_PATH)/build/$@; then \
+		$(MAKE) sbt-run; \
+	fi;
+	@cp -r $(CHISEL_PATH)/build/$@ $(ESP_ROOT)/tech/$(TECHLIB)/acc/$@; \
+	if test -e $(ESP_ROOT)/tech/$(TECHLIB)/acc/installed.log; then \
+		sed -i '/$@/d' $(ESP_ROOT)/tech/$(TECHLIB)/acc/installed.log; \
+	fi; \
+	echo "$@" >> $(ESP_ROOT)/tech/$(TECHLIB)/acc/installed.log;
+
+chisel-accelerators: $(CHISEL_ACCELERATORS)
+
+$(CHISEL_ACCELERATORS-clean):
+	$(QUIET_CLEAN)
+	@cd $(CHISEL_PATH); $(RM) build/$(@:-clean=)
+
+$(CHISEL_ACCELERATORS-distclean): %-distclean : %-clean
+	$(QUIET_CLEAN)
+	@$(RM) $(ESP_ROOT)/tech/$(TECHLIB)/acc/$(@:-distclean=);
+	@if test -e $(ESP_ROOT)/tech/$(TECHLIB)/acc/installed.log; then \
+		sed -i '/$(@:-distclean=)/d' $(ESP_ROOT)/tech/$(TECHLIB)/acc/installed.log; \
+	fi;
+
+chisel-accelerators-clean:
+	$(QUIET_CLEAN)
+	@cd $(CHISEL_PATH); sbt clean; $(RM) build
+
+chisel-accelerators-distclean: chisel-accelerators-clean $(CHISEL_ACCELERATORS-distclean)
+
+.PHONY: sbt-run chisel-accelerators chisel-accelerators-clean chisel-accelerators-distclean $(CHISEL_ACCELERATORS-clean) $(CHISEL_ACCELERATORS-distclean)
 
 $(ACCELERATORS-wdir):
 	$(QUIET_MKDIR)mkdir -p $(ACCELERATORS_PATH)/$(@:-wdir=)/hls-work-$(TECHLIB)
