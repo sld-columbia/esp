@@ -5,3 +5,6 @@
 	path = soft/leon3/linux
 	url = git@dev.sld.cs.columbia.edu:esp/linux-esp.git
 	branch = leon3
+[submodule "chisel"]
+	path = chisel
+	url = git@github.com:IBM/esp-chisel-accelerators.git
