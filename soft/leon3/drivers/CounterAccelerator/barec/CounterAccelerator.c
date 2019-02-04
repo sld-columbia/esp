@@ -32,7 +32,6 @@ int main(int argc, char * argv[])
 	for (n = 0; n < ndev; n++) {
 		struct esp_device *dev = &espdevs[n];
 		const int test_ticks = 8;
-		int actual_ticks = 0;
 		unsigned done;
 
 
@@ -55,16 +54,6 @@ int main(int argc, char * argv[])
 		}
 		iowrite32(dev, CMD_REG, 0x0);
 		printf("  Done\n");
-
-
-		/* Validation */
-		printf("  validating...\n");
-		actual_ticks = ioread32(dev, COUNTERACCELERATOR_TICKS_REG);
-
-		if (actual_ticks != test_ticks)
-			printf("  ... FAIL\n");
-		else
-			printf("  ... PASS\n");
 
 
 		printf("************************************************\n\n");
