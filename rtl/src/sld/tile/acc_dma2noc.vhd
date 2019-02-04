@@ -175,7 +175,7 @@ architecture rtl of acc_dma2noc is
   -- TLB
   signal pending_dma_read, pending_dma_write : std_ulogic;
   signal tlb_valid, tlb_clear, tlb_empty, tlb_write : std_ulogic;
-  signal tlb_wr_address : std_logic_vector((log2(tlb_entries) -1) downto 0);
+  signal tlb_wr_address : std_logic_vector((log2xx(tlb_entries) -1) downto 0);
   signal dma_address : std_logic_vector(31 downto 0);
   signal dma_length : std_logic_vector(31 downto 0);
 
@@ -249,34 +249,48 @@ begin  -- rtl
   -- TLB
   -----------------------------------------------------------------------------
 
-  acc_tlb_1 : acc_tlb
-    generic map (
-      tech           => tech,
-      scatter_gather => scatter_gather,
-      tlb_entries    => tlb_entries)
-    port map (
-      clk                  => clk,
-      rst                  => rst,
-      bankreg              => bankreg,
-      rd_request           => rd_request,
-      rd_index             => rd_index,
-      rd_length            => rd_length,
-      wr_request           => wr_request,
-      wr_index             => wr_index,
-      wr_length            => wr_length,
-      dma_tran_start       => dma_tran_start,
-      dma_tran_header_sent => dma_tran_header_sent,
-      dma_tran_done        => dma_tran_done,
-      pending_dma_write    => pending_dma_write,
-      pending_dma_read     => pending_dma_read,
-      tlb_empty            => tlb_empty,
-      tlb_clear            => tlb_clear,
-      tlb_valid            => tlb_valid,
-      tlb_write            => tlb_write,
-      tlb_wr_address       => tlb_wr_address,
-      tlb_datain           => dma_rcv_data_out_int(31 downto 0),
-      dma_address          => dma_address,
-      dma_length           => dma_length);
+  tlb_gen: if tlb_entries /= 0 generate
+    acc_tlb_1 : acc_tlb
+      generic map (
+        tech           => tech,
+        scatter_gather => scatter_gather,
+        tlb_entries    => tlb_entries)
+      port map (
+        clk                  => clk,
+        rst                  => rst,
+        bankreg              => bankreg,
+        rd_request           => rd_request,
+        rd_index             => rd_index,
+        rd_length            => rd_length,
+        wr_request           => wr_request,
+        wr_index             => wr_index,
+        wr_length            => wr_length,
+        dma_tran_start       => dma_tran_start,
+        dma_tran_header_sent => dma_tran_header_sent,
+        dma_tran_done        => dma_tran_done,
+        pending_dma_write    => pending_dma_write,
+        pending_dma_read     => pending_dma_read,
+        tlb_empty            => tlb_empty,
+        tlb_clear            => tlb_clear,
+        tlb_valid            => tlb_valid,
+        tlb_write            => tlb_write,
+        tlb_wr_address       => tlb_wr_address,
+        tlb_datain           => dma_rcv_data_out_int(31 downto 0),
+        dma_address          => dma_address,
+        dma_length           => dma_length);
+  end generate tlb_gen;
+
+  no_tlb_gen: if tlb_entries = 0 generate
+    -- No DMA transaction can occur
+    dma_tran_start <= '0';
+    pending_dma_write <= '0';
+    pending_dma_read <= '0';
+    -- Skip page-table fetch into the TLB
+    tlb_empty <= '0';
+    -- Don't care
+    dma_address <= (others => '0');
+    dma_length <= (others => '0');
+  end generate no_tlb_gen;
 
   -----------------------------------------------------------------------------
   -- DMA packet
@@ -443,7 +457,7 @@ begin  -- rtl
     clear_count <= '0';
     --TLB
     tlb_wr_address_next := count - 1;
-    tlb_wr_address <= tlb_wr_address_next(log2(tlb_entries) - 1 downto 0);
+    tlb_wr_address <= tlb_wr_address_next(log2xx(tlb_entries) - 1 downto 0);
     tlb_write <= '0';
     tlb_valid <= '0';
 
@@ -556,7 +570,6 @@ begin  -- rtl
           status <= (others => '0');
           status(STATUS_BIT_DONE) <= '1';
           sample_status <= '1';
-          clear_acc_done <= '1';
           if coherence = ACC_COH_FULL then
             flush <= '1';
           end if;

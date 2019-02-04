@@ -165,10 +165,8 @@ static int cmd_hw(struct test_info *info)
 	gettime(&ts_end);
 
 	uppername = str_to_upper(info->name);
-	printf("%s init: %llu\n", uppername, getformattedtime(&ts_start));
-	printf("%s hw-init: %llu\n", uppername, getformattedtime(&th_start));
-	printf("%s hw-end: %llu\n", uppername, getformattedtime(&th_end));
-	printf("%s end: %llu\n", uppername, getformattedtime(&ts_end));
+	printf("   hw-init: %llu ns\n", getformattedtime(&th_start) - getformattedtime(&ts_start));
+	printf("   hw-exec: %llu ns\n", getformattedtime(&th_end) - getformattedtime(&th_start));
 	free(uppername);
 	return 0;
 }

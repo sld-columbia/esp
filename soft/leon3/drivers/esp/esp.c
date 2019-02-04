@@ -108,6 +108,10 @@ static bool esp_xfer_input_ok(struct esp_device *esp, const struct contig_desc *
 {
 	unsigned nchunk_max = ioread32be(esp->iomem + PT_NCHUNK_MAX_REG);
 
+	/* No check needed if memory is not accessed (PT_NCHUNK_MAX == 0) */
+	if (!nchunk_max)
+		return true;
+
 	if (!contig->n || contig->n > nchunk_max)
 		return false;
 	return true;
