@@ -16,7 +16,7 @@ set TECH_PATH "$ESP_ROOT/tech/$TECH"
 #
 # Setup technology and include behavioral models and/or libraries
 #
-set fpga_techs [list "virtex7" "zynq7000"]
+set fpga_techs [list "virtex7" "zynq7000" "virtexup"]
 set asic_techs [list "cmos32soi"]
 
 if {[lsearch $fpga_techs $TECH] >= 0} {
@@ -33,6 +33,9 @@ if {[lsearch $fpga_techs $TECH] >= 0} {
     }
     if {$TECH eq "zynq7000"} {
 	set_attr fpga_part "xc7z020clg484-1"
+    }
+    if {$TECH eq "virtexup"} {
+	set_attr fpga_part "xcvu9p-flga2104-2L-e"
     }
 
     set TECH_IS_XILINX 1

@@ -88,6 +88,8 @@
 #define CONFIG_SYN_TECH virtex6
 #elif defined CONFIG_SYN_VIRTEX7
 #define CONFIG_SYN_TECH virtex7
+#elif defined CONFIG_SYN_VIRTEXUP
+#define CONFIG_SYN_TECH virtexup
 #elif defined CONFIG_SYN_KINTEX7
 #define CONFIG_SYN_TECH kintex7
 #elif defined CONFIG_SYN_ARTIX7

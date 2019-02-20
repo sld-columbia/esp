@@ -21,20 +21,22 @@ from mmi64_gen import *
 from power_gen import *
 
 def print_usage():
-  print("Usage                    : ./esp_creator.py <dma_width>")
+  print("Usage                    : ./esp_creator.py <dma_width> <tech>")
   print("")
   print("")
   print("      <dma_width>        : Bit-width for the DMA channel (currently supporting 32 bits only)")
+  print("      <tech>             : Target technology (e.g. virtex7, virtexup, ...)")
   print("")
 
-if len(sys.argv) != 2:
+if len(sys.argv) != 3:
     print_usage()
     sys.exit(1)
 
 DMA_WIDTH = int(sys.argv[1])
+TECH = sys.argv[2]
 
 root = Tk()
-soc = SoC_Config(DMA_WIDTH)
+soc = SoC_Config(DMA_WIDTH, TECH)
 soc.noc = NoC()
 x = soc.read_config(False)
 if x == -1:
