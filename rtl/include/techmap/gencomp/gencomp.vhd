@@ -37,7 +37,7 @@ package gencomp is
 
 -- technologies and libraries
 
-constant NTECH : integer := 57;
+constant NTECH : integer := 58;
 type tech_ability_type is array (0 to NTECH) of integer;
 
 constant inferred    : integer := 0;
@@ -99,6 +99,7 @@ constant igloo2      : integer := 55;
 constant smartfusion2: integer := 55;
 constant rhs65       : integer := 56;
 constant rtg4        : integer := 57;
+constant virtexup    : integer := 58;
 
 constant DEFMEMTECH  : integer := inferred;
 constant DEFPADTECH  : integer := inferred;
@@ -112,7 +113,7 @@ constant is_fpga : tech_ability_type :=
 	 stratix3 => 1, cyclone3 => 1, axdsp => 1,
 	 spartan6 => 1, virtex6 => 1, actfus => 1,
 	 stratix4 => 1, apa3e => 1, apa3l => 1, virtex7 => 1, kintex7 => 1,
-	 artix7 => 1, zynq7000 => 1, igloo2 => 1, rtg4 => 1,
+	 artix7 => 1, zynq7000 => 1, igloo2 => 1, rtg4 => 1, virtexup => 1,
 	 others => 0);
 
 constant infer_mul : tech_ability_type := is_fpga;
@@ -188,36 +189,36 @@ constant has_dpram : tech_ability_type :=
 	 tm65gplus => 1, axdsp => 0, spartan6 => 1, virtex6 => 1,
 	 actfus => 1, stratix4 => 1, easic45 => 1, apa3e => 1,
 	 apa3l => 1, ut90 => 1, virtex7 => 1, kintex7 => 1, artix7 => 1, zynq7000 => 1, 
-         dare => 1, igloo2 => 1, rtg4 => 1, others => 0);
+         dare => 1, igloo2 => 1, rtg4 => 1, virtexup => 1, others => 0);
 
 constant has_sram64 : tech_ability_type :=
 	(inferred => 0, virtex2 => 1, spartan3 => 1, virtex4 => 1,
 	 spartan3e => 1, memartisan => 1, virtex5 => 1, smic013 => 1,
 	 spartan6 => 1, virtex6 => 1, easic45 => 1, virtex7 => 1, kintex7 => 1,
-	 artix7 => 1, zynq7000 => 1, others => 0);
+	 artix7 => 1, zynq7000 => 1, virtexup => 1, others => 0);
 
 constant has_sram128bw : tech_ability_type := (
 	virtex2 => 1, virtex4 => 1, virtex5 => 1, spartan3 => 1,
 	spartan3e => 1, spartan6 => 1, virtex6 => 1,  virtex7 => 1, kintex7 => 1,
 	altera => 1, cyclone3 => 1, stratix2 => 1, stratix3 => 1, stratix4 => 1,
-	ut90 => 1, others => 0);
+	ut90 => 1, virtexup => 1, others => 0);
 
 constant has_sram128 : tech_ability_type := (
 	virtex2 => 1, virtex4 => 1, virtex5 => 1, spartan3 => 1,
 	spartan3e => 1, spartan6 => 1, virtex6 => 1, virtex7 => 1, kintex7 => 1,
-	tm65gplus => 0, easic45 => 1, others => 0);
+	tm65gplus => 0, easic45 => 1, virtexup => 1, others => 0);
 
 constant has_sram156bw : tech_ability_type := (
 	virtex2 => 0, virtex4 => 0, virtex5 => 0, spartan3 => 0,
 	spartan3e => 0, spartan6 => 0, virtex6 => 0, virtex7 => 0, kintex7 => 0,
 	altera => 0, cyclone3 => 0, stratix2 => 0, stratix3 => 0, stratix4 => 0,
-	tm65gplus => 0, custom1 => 1, ut90 => 1, rhs65 => 1, others => 0);
+	tm65gplus => 0, custom1 => 1, ut90 => 1, rhs65 => 1, virtexup => 1, others => 0);
 
 constant has_sram256bw : tech_ability_type := (
 	virtex2 => 1, virtex4 => 1, virtex5 => 1, spartan3 => 1,
 	spartan3e => 1, spartan6 => 1, virtex6 => 1, virtex7 => 1, kintex7 => 1,
 	altera => 1, cyclone3 => 1, stratix2 => 1, stratix3 => 1, stratix4 => 1,
-	tm65gplus => 0, cmos9sf => 1, others => 0);
+	tm65gplus => 0, cmos9sf => 1, virtexup => 1, others => 0);
 
 constant has_sram_2pbw : tech_ability_type := (
     easic45 => 1, others => 0);
@@ -225,7 +226,7 @@ constant has_sram_2pbw : tech_ability_type := (
 constant has_srambw : tech_ability_type := (easic45 => 1, virtex => 0, virtex2 => 0,
 	      virtex4 => 0, virtex5 => 1, spartan3 => 0, spartan3e => 0, spartan6 => 0,
 	      virtex6 => 1, virtex7 => 1, kintex7 => 1, artix7 => 1, zynq7000 => 1, rtg4 => 1,
-	      igloo2 => 1, others => 0);
+	      igloo2 => 1, virtexup => 1, others => 0);
 
 constant has_2pfifo : tech_ability_type := (
   altera    => 1, stratix1  => 1, stratix2 => 1, stratix3 => 1,
@@ -248,7 +249,7 @@ constant ram_raw_latency : tech_ability_type := (easic45 => 1, others => 0);
 constant has_sram_ecc :  tech_ability_type :=
   (rtg4 => 1, virtex5 => 1, virtex6 => 1,
    artix7 => 1, kintex7 => 1, virtex7 => 1,
-   others => 0);
+   virtexup => 1, others => 0);
 
 constant padoen_polarity : tech_ability_type :=
         (axcel => 1, proasic => 1, umc => 1, rhumc => 1, saed32 => 1, rhs65 => 0, dare => 1, apa3 => 1,
@@ -264,7 +265,7 @@ constant has_pads : tech_ability_type :=
 	 ut25 => 1, spartan3e => 1, peregrine => 1, virtex5 => 1, axdsp => 1,
 	 easic90 => 1, atc18rha => 1, spartan6 => 1, virtex6 => 1,
          actfus => 1, apa3e => 1, apa3l => 1, ut130 => 1, easic45 => 1,
-         ut90 => 1, virtex7 => 1, kintex7 => 1,
+         ut90 => 1, virtex7 => 1, kintex7 => 1, virtexup => 1,
          artix7 => 1, zynq7000 => 1, igloo2 => 1, rtg4 => 1, others => 0);
 
 constant has_ds_pads : tech_ability_type :=
@@ -275,7 +276,7 @@ constant has_ds_pads : tech_ability_type :=
 	 ut25 => 1, spartan3e => 1, virtex5 => 1, axdsp => 1,
 	 spartan6 => 1, virtex6 => 1, actfus => 1,
 	 apa3e => 1, apa3l => 1, ut130 => 0, easic45 => 1, virtex7 => 1, kintex7 => 1,
-         artix7 => 1, zynq7000 => 1, igloo2 => 1, rtg4 => 1, others => 0);
+         artix7 => 1, zynq7000 => 1, igloo2 => 1, rtg4 => 1, virtexup => 1, others => 0);
 
 constant has_ds_combo : tech_ability_type :=
 	( rhumc => 1, ut25 => 1, ut130 => 1, others => 0);
@@ -286,13 +287,15 @@ constant has_clkand : tech_ability_type :=
 	( virtex => 1, virtex2 => 1, spartan3 => 1, spartan3e => 1, virtex4 => 1,
 	  virtex5 => 1, ut25 => 1, rhlib18t => 1,
           spartan6 => 1, virtex6 => 1, ut130 => 1, easic45 => 1,
-          ut90 => 1, virtex7 => 1, kintex7 => 1, artix7 => 1, zynq7000 => 1, saed32 => 1, dare => 1, rhs65 => 1, others => 0);
+          ut90 => 1, virtex7 => 1, kintex7 => 1, artix7 => 1, zynq7000 => 1,
+          saed32 => 1, dare => 1, rhs65 => 1, virtexup => 1, others => 0);
 
 constant has_clkmux : tech_ability_type :=
 	( virtex => 1, virtex2 => 1, spartan3 => 1, spartan3e => 1,
 	  virtex4 => 1, virtex5 => 1,  rhlib18t => 1,
           spartan6 => 1, virtex6 => 1, ut130 => 1, easic45 => 1,
-          ut90 => 1, virtex7 => 1, kintex7 => 1, artix7 => 1, zynq7000 => 1, saed32 => 1, dare => 1, rhumc => 1, rhs65 => 1, others => 0);
+          ut90 => 1, virtex7 => 1, kintex7 => 1, artix7 => 1, zynq7000 => 1,
+          saed32 => 1, dare => 1, rhumc => 1, rhs65 => 1, virtexup => 1, others => 0);
 
 constant has_clkinv : tech_ability_type :=
 	( saed32 => 1, dare => 1, rhs65 => 1, others => 0);
@@ -303,13 +306,13 @@ constant has_techbuf : tech_ability_type :=
 	  apa3 => 1, easic90 => 1, axdsp => 1, actfus => 1,
 	  apa3e => 1, apa3l => 1, ut130 => 1, easic45 => 1,
           ut90 => 1, spartan6 => 1, virtex6 => 1, virtex7 => 1, kintex7 => 1,
-          artix7 => 1, zynq7000 => 1, igloo2 => 1, rtg4 => 1, others => 0);
+          artix7 => 1, zynq7000 => 1, igloo2 => 1, rtg4 => 1, virtexup => 1, others => 0);
 
 constant has_tapsel : tech_ability_type :=
         ( virtex => 1, virtex2 => 1, virtex4 => 1, virtex5 => 1,
           spartan3 => 1, spartan3e => 1,
 	 spartan6 => 1, virtex6 => 1, virtex7 => 1, kintex7 => 1,
-	 artix7 => 1, zynq7000 => 1, others => 0);
+	 artix7 => 1, zynq7000 => 1, virtexup => 1, others => 0);
 
 constant tap_tck_gated : tech_ability_type :=
   ( virtex => 1, virtex2 => 1, virtex4 => 1, virtex5 => 1, spartan3 => 1, spartan3e => 1,
@@ -324,7 +327,8 @@ constant need_extra_sync_reset : tech_ability_type :=
 constant is_unisim : tech_ability_type :=
         ( virtex => 1, virtex2 => 1, virtex4 => 1, virtex5 => 1,
           spartan3 => 1, spartan3e => 1,
-	  spartan6 => 1, virtex6 => 1, virtex7 => 1, kintex7 => 1, artix7 => 1, zynq7000 => 1, others => 0);
+	  spartan6 => 1, virtex6 => 1, virtex7 => 1, kintex7 => 1,
+          artix7 => 1, zynq7000 => 1, virtexup => 1, others => 0);
 
 constant has_tap : tech_ability_type :=
 	(inferred => 0, virtex => 1, virtex2 => 1, axcel => 0,
@@ -334,7 +338,7 @@ constant has_tap : tech_ability_type :=
 	 stratix3 => 1, cyclone3 => 1, axdsp => 0,
 	 spartan6 => 1, virtex6 => 1, actfus => 1,
 	 stratix4 => 1, easic45 => 0, apa3e => 1, apa3l => 1, virtex7 => 1, kintex7 => 1,
-	 artix7 => 1, zynq7000 => 1, igloo2 => 1, rtg4 => 1,
+	 artix7 => 1, zynq7000 => 1, igloo2 => 1, rtg4 => 1, virtexup => 1,
 	 others => 0);
 
 constant has_clkgen : tech_ability_type :=
@@ -345,7 +349,8 @@ constant has_clkgen : tech_ability_type :=
 	 stratix3 => 1, cyclone3 => 1, axdsp => 1,
 	 spartan6 => 1, virtex6 => 1, actfus => 1, easic90 => 1,
 	 stratix4 => 1, easic45 => 1, apa3e => 1, apa3l => 1,
-	 rhlib18t => 1, ut130 => 1, ut90 => 1, virtex7 => 1, kintex7 => 1, artix7 => 1, zynq7000 => 1, others => 0);
+	 rhlib18t => 1, ut130 => 1, ut90 => 1, virtex7 => 1,
+         kintex7 => 1, artix7 => 1, zynq7000 => 1, virtexup => 1, others => 0);
 
 constant has_ddr2phy: tech_ability_type :=
   (inferred => 0, stratix2 => 1, stratix3 => 1, stratix4 => 1, spartan3 => 1,
@@ -424,7 +429,7 @@ constant has_transceivers : tech_ability_type := (
   );
 
 constant has_pll : tech_ability_type := (
-  virtex7 => 1, others => 0
+  virtex7 => 1, virtexup => 1, others => 0
   );
 
 -- pragma translate_off
@@ -458,11 +463,12 @@ constant has_pll : tech_ability_type := (
   cmos9sf   => "cmos9sf   ", apa3e     => "proasic3e ",
   apa3l     => "proasic3l ", ut130     => "ut130hbd  ",
   ut90      => "ut90nhbd  ", gf65      => "gf65g     ",
-  virtex7   => "virtex7   ", kintex7   => "kintex7   ",
-  artix7    => "artix7    ", zynq7000  => "zynq7000  ",
-  rhlib13t  => "rhlib13t  ", saed32    => "saed32    ",
-  dare      => "dare      ", igloo2    => "igloo2    ",
-  rhs65     => "rhs65     ", rtg4      => "rtg4      ");
+  virtex7   => "virtex7   ", virtexup  => "virtexup  ",
+  kintex7   => "kintex7   ", artix7    => "artix7    ",
+  zynq7000  => "zynq7000  ", rhlib13t  => "rhlib13t  ",
+  saed32    => "saed32    ", dare      => "dare      ",
+  igloo2    => "igloo2    ", rhs65     => "rhs65     ",
+  rtg4      => "rtg4      ");
 
 -- pragma translate_on
 

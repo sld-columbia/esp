@@ -3,6 +3,7 @@
 --  Copyright (C) 2003 - 2008, Gaisler Research
 --  Copyright (C) 2008 - 2014, Aeroflex Gaisler
 --  Copyright (C) 2015 - 2016, Cobham Gaisler
+--  Copyright (C) 2018 - 2019, Columbia University
 --
 --  This program is free software; you can redistribute it and/or modify
 --  it under the terms of the GNU General Public License as published by
@@ -16,13 +17,14 @@
 --
 --  You should have received a copy of the GNU General Public License
 --  along with this program; if not, write to the Free Software
---  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA 
+--  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 -------------------------------------------------------------------------------
 -- Entity:      ahb2mig
 -- File:        ahb2mig.vhd
 -- Author:      Fredrik Ringhage - Aeroflex Gaisler AB
+--              Paolo Mantovani - Columbia University
 --
---  This is a AHB-2.0 interface for the Xilinx Virtex-7 MIG.
+--  This is a AHB-2.0 interface for the Xilinx Virtex-UltraScale+ MIG.
 --
 -------------------------------------------------------------------------------
 
@@ -39,43 +41,41 @@ use work.config.all;
 library std;
 use std.textio.all;
 
-entity ahb2mig_7series is
+entity ahb2mig_up is
   generic(
-    hindex                  : integer := 0;
-    haddr                   : integer := 0;
-    hmask                   : integer := 16#f00#
+    hindex        : integer := 0;
+    haddr         : integer := 0;
+    hmask         : integer := 16#f00#
     );
   port(
-    ddr3_dq         : inout std_logic_vector(63 downto 0);
-    ddr3_dqs_p      : inout std_logic_vector(7 downto 0);
-    ddr3_dqs_n      : inout std_logic_vector(7 downto 0);
-    ddr3_addr       : out   std_logic_vector(13 downto 0);
-    ddr3_ba         : out   std_logic_vector(2 downto 0);
-    ddr3_ras_n      : out   std_logic;
-    ddr3_cas_n      : out   std_logic;
-    ddr3_we_n       : out   std_logic;
-    ddr3_reset_n    : out   std_logic;
-    ddr3_ck_p       : out   std_logic_vector(0 downto 0);
-    ddr3_ck_n       : out   std_logic_vector(0 downto 0);
-    ddr3_cke        : out   std_logic_vector(0 downto 0);
-    ddr3_cs_n       : out   std_logic_vector(0 downto 0);
-    ddr3_dm         : out   std_logic_vector(7 downto 0);
-    ddr3_odt        : out   std_logic_vector(0 downto 0);
-    ahbso           : out   ahb_slv_out_type;
-    ahbsi           : in    ahb_slv_in_type;
-    calib_done      : out   std_logic;
-    rst_n_syn       : in    std_logic;
-    rst_n_async     : in    std_logic;
-    clk_amba        : in    std_logic;
-    sys_clk_p       : in    std_logic;
-    sys_clk_n       : in    std_logic;
-    clk_ref_i       : in    std_logic;
-    ui_clk          : out   std_logic;
-    ui_clk_sync_rst : out   std_logic
+    c0_sys_clk_p     : in    std_logic;
+    c0_sys_clk_n     : in    std_logic;
+    c0_ddr4_act_n    : out   std_logic;
+    c0_ddr4_adr      : out   std_logic_vector(16 downto 0);
+    c0_ddr4_ba       : out   std_logic_vector(1 downto 0);
+    c0_ddr4_bg       : out   std_logic_vector(0 downto 0);
+    c0_ddr4_cke      : out   std_logic_vector(0 downto 0);
+    c0_ddr4_odt      : out   std_logic_vector(0 downto 0);
+    c0_ddr4_cs_n     : out   std_logic_vector(0 downto 0);
+    c0_ddr4_ck_t     : out   std_logic_vector(0 downto 0);
+    c0_ddr4_ck_c     : out   std_logic_vector(0 downto 0);
+    c0_ddr4_reset_n  : out   std_logic;
+    c0_ddr4_dm_dbi_n : inout std_logic_vector(7 downto 0);
+    c0_ddr4_dq       : inout std_logic_vector(63 downto 0);
+    c0_ddr4_dqs_c    : inout std_logic_vector(7 downto 0);
+    c0_ddr4_dqs_t    : inout std_logic_vector(7 downto 0);
+    ahbso            : out   ahb_slv_out_type;
+    ahbsi            : in    ahb_slv_in_type;
+    calib_done       : out   std_logic;
+    rst_n_syn        : in    std_logic;
+    rst_n_async      : in    std_logic;
+    clk_amba         : in    std_logic;
+    ui_clk           : out   std_logic;
+    ui_clk_sync_rst  : out   std_logic
     );
 end;
 
-architecture rtl of ahb2mig_7series is
+architecture rtl of ahb2mig_up is
 
   type bstate_type is (idle, start, read_cmd, read_data, read_wait, read_output, write_cmd, write_burst);
 
@@ -122,6 +122,7 @@ architecture rtl of ahb2mig_7series is
     app_addr     : std_logic_vector(27 downto 0);
     app_cmd      : std_logic_vector(2 downto 0);
     app_en       : std_logic;
+    app_hi_pri   : std_logic;
     app_wdf_data : std_logic_vector(511 downto 0);
     app_wdf_end  : std_logic;
     app_wdf_mask : std_logic_vector(63 downto 0);
@@ -136,6 +137,8 @@ architecture rtl of ahb2mig_7series is
     app_wdf_rdy       : std_logic;
   end record;
 
+  signal sys_rst : std_logic;
+
   signal rin, r, rnxt, rnxtin : reg_type;
   signal migin                : mig_in_type;
   signal migout, migoutraw    : mig_out_type;
@@ -143,72 +146,46 @@ architecture rtl of ahb2mig_7series is
   signal debug         : std_logic                    := '0';
   signal size_to_watch : std_logic_vector(2 downto 0) := HSIZE_4WORD;
 
+
   component mig is
     port (
-      ddr3_dq             : inout std_logic_vector(63 downto 0);
-      ddr3_addr           : out   std_logic_vector(13 downto 0);
-      ddr3_ba             : out   std_logic_vector(2 downto 0);
-      ddr3_ras_n          : out   std_logic;
-      ddr3_cas_n          : out   std_logic;
-      ddr3_we_n           : out   std_logic;
-      ddr3_reset_n        : out   std_logic;
-      ddr3_dqs_n          : inout std_logic_vector(7 downto 0);
-      ddr3_dqs_p          : inout std_logic_vector(7 downto 0);
-      ddr3_ck_p           : out   std_logic_vector(0 downto 0);
-      ddr3_ck_n           : out   std_logic_vector(0 downto 0);
-      ddr3_cke            : out   std_logic_vector(0 downto 0);
-      ddr3_cs_n           : out   std_logic_vector(0 downto 0);
-      ddr3_dm             : out   std_logic_vector(7 downto 0);
-      ddr3_odt            : out   std_logic_vector(0 downto 0);
-      sys_clk_p           : in    std_logic;
-      sys_clk_n           : in    std_logic;
-      clk_ref_i           : in    std_logic;
-      app_addr            : in    std_logic_vector(27 downto 0);
-      app_cmd             : in    std_logic_vector(2 downto 0);
-      app_en              : in    std_logic;
-      app_wdf_data        : in    std_logic_vector(511 downto 0);
-      app_wdf_end         : in    std_logic;
-      app_wdf_mask        : in    std_logic_vector(63 downto 0);
-      app_wdf_wren        : in    std_logic;
-      app_rd_data         : out   std_logic_vector(511 downto 0);
-      app_rd_data_end     : out   std_logic;
-      app_rd_data_valid   : out   std_logic;
-      app_rdy             : out   std_logic;
-      app_wdf_rdy         : out   std_logic;
-      app_sr_req          : in    std_logic;
-      app_ref_req         : in    std_logic;
-      app_zq_req          : in    std_logic;
-      app_sr_active       : out   std_logic;
-      app_ref_ack         : out   std_logic;
-      app_zq_ack          : out   std_logic;
-      ui_clk              : out   std_logic;
-      ui_clk_sync_rst     : out   std_logic;
-      init_calib_complete : out   std_logic;
-      device_temp         : out   std_logic_vector(11 downto 0);
-      sys_rst             : in    std_logic
+      sys_rst                   : in  std_logic;
+      c0_sys_clk_p              : in  std_logic;
+      c0_sys_clk_n              : in  std_logic;
+      c0_ddr4_act_n             : out std_logic;
+      c0_ddr4_adr               : out std_logic_vector(16 downto 0);
+      c0_ddr4_ba                : out std_logic_vector(1 downto 0);
+      c0_ddr4_bg                : out std_logic_vector(0 downto 0);
+      c0_ddr4_cke               : out std_logic_vector(0 downto 0);
+      c0_ddr4_odt               : out std_logic_vector(0 downto 0);
+      c0_ddr4_cs_n              : out std_logic_vector(0 downto 0);
+      c0_ddr4_ck_t              : out std_logic_vector(0 downto 0);
+      c0_ddr4_ck_c              : out std_logic_vector(0 downto 0);
+      c0_ddr4_reset_n           : out std_logic;
+      c0_ddr4_dm_dbi_n          : in  std_logic_vector(7 downto 0);
+      c0_ddr4_dq                : in  std_logic_vector(63 downto 0);
+      c0_ddr4_dqs_c             : in  std_logic_vector(7 downto 0);
+      c0_ddr4_dqs_t             : in  std_logic_vector(7 downto 0);
+      c0_init_calib_complete    : out std_logic;
+      c0_ddr4_ui_clk            : out std_logic;
+      c0_ddr4_ui_clk_sync_rst   : out std_logic;
+      dbg_clk                   : out std_logic;
+      c0_ddr4_app_addr          : in  std_logic_vector(27 downto 0);
+      c0_ddr4_app_cmd           : in  std_logic_vector(2 downto 0);
+      c0_ddr4_app_en            : in  std_logic;
+      c0_ddr4_app_hi_pri        : in  std_logic;
+      c0_ddr4_app_wdf_data      : in  std_logic_vector(511 downto 0);
+      c0_ddr4_app_wdf_end       : in  std_logic;
+      c0_ddr4_app_wdf_mask      : in  std_logic_vector(63 downto 0);
+      c0_ddr4_app_wdf_wren      : in  std_logic;
+      c0_ddr4_app_rd_data       : out std_logic_vector(511 downto 0);
+      c0_ddr4_app_rd_data_end   : out std_logic;
+      c0_ddr4_app_rd_data_valid : out std_logic;
+      c0_ddr4_app_rdy           : out std_logic;
+      c0_ddr4_app_wdf_rdy       : out std_logic;
+      dbg_bus                   : out std_logic_vector(511 downto 0)
       );
   end component mig;
-
-  component mig_interface_model is
-    port (
-      app_addr            : in  std_logic_vector(27 downto 0);
-      app_cmd             : in  std_logic_vector(2 downto 0);
-      app_en              : in  std_logic;
-      app_wdf_data        : in  std_logic_vector(511 downto 0);
-      app_wdf_end         : in  std_logic;
-      app_wdf_mask        : in  std_logic_vector(63 downto 0);
-      app_wdf_wren        : in  std_logic;
-      app_rd_data         : out std_logic_vector(511 downto 0);
-      app_rd_data_end     : out std_logic;
-      app_rd_data_valid   : out std_logic;
-      app_rdy             : out std_logic;
-      app_wdf_rdy         : out std_logic;
-      ui_clk              : out std_logic;
-      ui_clk_sync_rst     : out std_logic;
-      init_calib_complete : out std_logic;
-      sys_rst             : in  std_logic
-      );
-  end component mig_interface_model;
 
 begin
 
@@ -332,7 +309,7 @@ begin
       when start =>
         v.migcommands := nbrmigcmds(r.hwrite, r.hsize, ahbsi.htrans, step_offset, AHBDW);
 
-        -- Check if a write command shall be issued to the DDR3 memory
+        -- Check if a write command shall be issued to the DDR4 memory
         if r.hwrite = '1' then
 
           wmask     := (others => '0');
@@ -531,9 +508,10 @@ begin
   ahbso.hresp  <= "00";                 --r.hresp;
   ahbso.hrdata <= ahbdrivedata(r.hrdata);
 
-  migin.app_addr <= r.haddr(27 downto 2) & "00";
-  migin.app_cmd  <= r.cmd;
-  migin.app_en   <= r.cmd_en;
+  migin.app_addr   <= r.haddr(27 downto 2) & "00";
+  migin.app_cmd    <= r.cmd;
+  migin.app_en     <= r.cmd_en;
+  migin.app_hi_pri <= '0';
 
   migin.app_wdf_data <= r.wdf_data_buffer;
   migin.app_wdf_end  <= r.wr_end;
@@ -647,49 +625,45 @@ begin
     end if;
   end process;
 
+  sys_rst <= not rst_n_async;
+
   MCB_inst : mig
     port map (
-      ddr3_dq             => ddr3_dq,
-      ddr3_dqs_p          => ddr3_dqs_p,
-      ddr3_dqs_n          => ddr3_dqs_n,
-      ddr3_addr           => ddr3_addr,
-      ddr3_ba             => ddr3_ba,
-      ddr3_ras_n          => ddr3_ras_n,
-      ddr3_cas_n          => ddr3_cas_n,
-      ddr3_we_n           => ddr3_we_n,
-      ddr3_reset_n        => ddr3_reset_n,
-      ddr3_ck_p           => ddr3_ck_p,
-      ddr3_ck_n           => ddr3_ck_n,
-      ddr3_cke            => ddr3_cke,
-      ddr3_cs_n           => ddr3_cs_n,
-      ddr3_dm             => ddr3_dm,
-      ddr3_odt            => ddr3_odt,
-      sys_clk_p           => sys_clk_p,
-      sys_clk_n           => sys_clk_n,
-      clk_ref_i           => clk_ref_i,
-      app_addr            => migin.app_addr,
-      app_cmd             => migin.app_cmd,
-      app_en              => migin.app_en,
-      app_rdy             => migoutraw.app_rdy,
-      app_wdf_data        => migin.app_wdf_data,
-      app_wdf_end         => migin.app_wdf_end,
-      app_wdf_mask        => migin.app_wdf_mask,
-      app_wdf_wren        => migin.app_wdf_wren,
-      app_wdf_rdy         => migoutraw.app_wdf_rdy,
-      app_rd_data         => migoutraw.app_rd_data,
-      app_rd_data_end     => migoutraw.app_rd_data_end,
-      app_rd_data_valid   => migoutraw.app_rd_data_valid,
-      app_sr_req          => '0',
-      app_ref_req         => '0',
-      app_zq_req          => '0',
-      app_sr_active       => open,
-      app_ref_ack         => open,
-      app_zq_ack          => open,
-      ui_clk              => ui_clk,
-      ui_clk_sync_rst     => ui_clk_sync_rst,
-      init_calib_complete => calib_done,
-      device_temp         => open,
-      sys_rst             => rst_n_async
+      sys_rst                   => sys_rst,
+      c0_sys_clk_p              => c0_sys_clk_p,
+      c0_sys_clk_n              => c0_sys_clk_n,
+      c0_ddr4_act_n             => c0_ddr4_act_n,
+      c0_ddr4_adr               => c0_ddr4_adr,
+      c0_ddr4_ba                => c0_ddr4_ba,
+      c0_ddr4_bg                => c0_ddr4_bg,
+      c0_ddr4_cke               => c0_ddr4_cke,
+      c0_ddr4_odt               => c0_ddr4_odt,
+      c0_ddr4_cs_n              => c0_ddr4_cs_n,
+      c0_ddr4_ck_t              => c0_ddr4_ck_t,
+      c0_ddr4_ck_c              => c0_ddr4_ck_c,
+      c0_ddr4_reset_n           => c0_ddr4_reset_n,
+      c0_ddr4_dm_dbi_n          => c0_ddr4_dm_dbi_n,
+      c0_ddr4_dq                => c0_ddr4_dq,
+      c0_ddr4_dqs_c             => c0_ddr4_dqs_c,
+      c0_ddr4_dqs_t             => c0_ddr4_dqs_t,
+      c0_init_calib_complete    => calib_done,
+      c0_ddr4_ui_clk            => ui_clk,
+      c0_ddr4_ui_clk_sync_rst   => ui_clk_sync_rst,
+      dbg_clk                   => open,
+      c0_ddr4_app_addr          => migin.app_addr,
+      c0_ddr4_app_cmd           => migin.app_cmd,
+      c0_ddr4_app_en            => migin.app_en,
+      c0_ddr4_app_hi_pri        => migin.app_hi_pri,
+      c0_ddr4_app_wdf_data      => migin.app_wdf_data,
+      c0_ddr4_app_wdf_end       => migin.app_wdf_end,
+      c0_ddr4_app_wdf_mask      => migin.app_wdf_mask,
+      c0_ddr4_app_wdf_wren      => migin.app_wdf_wren,
+      c0_ddr4_app_rd_data       => migoutraw.app_rd_data,
+      c0_ddr4_app_rd_data_end   => migoutraw.app_rd_data_end,
+      c0_ddr4_app_rd_data_valid => migoutraw.app_rd_data_valid,
+      c0_ddr4_app_rdy           => migoutraw.app_rdy,
+      c0_ddr4_app_wdf_rdy       => migoutraw.app_wdf_rdy,
+      dbg_bus                   => open
       );
 
 end;

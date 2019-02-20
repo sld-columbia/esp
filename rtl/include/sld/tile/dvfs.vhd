@@ -105,7 +105,7 @@ package body dvfs is
   begin
     ddac := (others => '0');
 
-    if tech = virtex7 then
+    if tech = virtex7 or tech = virtexup then
       for i in 0 to 4 loop
         if vlevel = i then
           ddac(i) := '1';
@@ -124,7 +124,7 @@ package body dvfs is
   begin
     rangea := (others => '0');
 
-    if tech = virtex7 then
+    if tech = virtex7 or tech = virtexup then
       for i in 0 to 4 loop
         if vlevel = i then
           rangea(i) := '1';

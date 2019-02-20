@@ -16,8 +16,8 @@
 --
 --  You should have received a copy of the GNU General Public License
 --  along with this program; if not, write to the Free Software
---  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA 
------------------------------------------------------------------------------   
+--  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+-----------------------------------------------------------------------------
 -- Entity:      tap_xilinx
 -- File:        tap_xilinx.vhd
 -- Author:      Edvin Catovic, Jiri Gaisler - Gaisler Research
@@ -25,62 +25,62 @@
 ------------------------------------------------------------------------------
 
 library ieee;
-use ieee.std_logic_1164.all;                                                    
--- pragma translate_off                                                         
-library unisim;                                                                 
-use unisim.vcomponents.all;                                                        
--- pragma translate_on                                                          
-                                                                                
-entity virtex_tap is                                                            
-port (                                                                          
-     tapi_tdo1   : in std_ulogic;                                               
-     tapi_tdo2   : in std_ulogic;                                               
-     tapo_tck    : out std_ulogic;                                              
-     tapo_tdi    : out std_ulogic;                                              
-     tapo_rst    : out std_ulogic;                                              
-     tapo_capt   : out std_ulogic;                                              
-     tapo_shft   : out std_ulogic;                                              
-     tapo_upd    : out std_ulogic;                                              
-     tapo_xsel1  : out std_ulogic;                                              
-     tapo_xsel2  : out std_ulogic                                               
-    );                                                                          
-end;                                                                            
-                                                                                
-architecture rtl of virtex_tap is                                               
-  component BSCAN_VIRTEX                                                        
-      port (CAPTURE : out STD_ULOGIC;                                           
-            DRCK1 : out STD_ULOGIC;                                             
-            DRCK2 : out STD_ULOGIC;                                             
-            RESET : out STD_ULOGIC;                                             
-            SEL1 : out STD_ULOGIC;                                              
-            SEL2 : out STD_ULOGIC;                                              
-            SHIFT : out STD_ULOGIC;                                             
-            TDI : out STD_ULOGIC;                                               
-            UPDATE : out STD_ULOGIC;                                            
-            TDO1 : in STD_ULOGIC;                                               
-            TDO2 : in STD_ULOGIC);                                              
-  end component;                                                                
-                                                                                
-  signal drck1, drck2, sel1, sel2 : std_ulogic;                                 
-  attribute dont_touch : boolean;                                               
-  attribute dont_touch of u0 : label is true;                                   
-begin                                                                           
-                                                                                
-  u0 : BSCAN_VIRTEX                                                             
-    port map (                                                                  
-              DRCK1 => drck1,                                                   
-              DRCK2 => drck2,                                                   
-              RESET => tapo_rst,                                                
-              SEL1 => sel1,                                                     
-              SEL2 => sel2,                                                     
-              SHIFT => tapo_shft,                                               
-              TDI => tapo_tdi,                                                  
-              UPDATE => tapo_upd,                                               
-              TDO1 => tapi_tdo1,                                                
-              TDO2 => tapi_tdo2);                                               
-  tapo_tck <= drck1 when sel1 = '1' else drck2;                                 
-  tapo_xsel1 <= sel1; tapo_xsel2 <= sel2; tapo_capt <= '0';                     
-end;                        
+use ieee.std_logic_1164.all;
+-- pragma translate_off
+library unisim;
+use unisim.vcomponents.all;
+-- pragma translate_on
+
+entity virtex_tap is
+port (
+     tapi_tdo1   : in std_ulogic;
+     tapi_tdo2   : in std_ulogic;
+     tapo_tck    : out std_ulogic;
+     tapo_tdi    : out std_ulogic;
+     tapo_rst    : out std_ulogic;
+     tapo_capt   : out std_ulogic;
+     tapo_shft   : out std_ulogic;
+     tapo_upd    : out std_ulogic;
+     tapo_xsel1  : out std_ulogic;
+     tapo_xsel2  : out std_ulogic
+    );
+end;
+
+architecture rtl of virtex_tap is
+  component BSCAN_VIRTEX
+      port (CAPTURE : out STD_ULOGIC;
+            DRCK1 : out STD_ULOGIC;
+            DRCK2 : out STD_ULOGIC;
+            RESET : out STD_ULOGIC;
+            SEL1 : out STD_ULOGIC;
+            SEL2 : out STD_ULOGIC;
+            SHIFT : out STD_ULOGIC;
+            TDI : out STD_ULOGIC;
+            UPDATE : out STD_ULOGIC;
+            TDO1 : in STD_ULOGIC;
+            TDO2 : in STD_ULOGIC);
+  end component;
+
+  signal drck1, drck2, sel1, sel2 : std_ulogic;
+  attribute dont_touch : boolean;
+  attribute dont_touch of u0 : label is true;
+begin
+
+  u0 : BSCAN_VIRTEX
+    port map (
+              DRCK1 => drck1,
+              DRCK2 => drck2,
+              RESET => tapo_rst,
+              SEL1 => sel1,
+              SEL2 => sel2,
+              SHIFT => tapo_shft,
+              TDI => tapo_tdi,
+              UPDATE => tapo_upd,
+              TDO1 => tapi_tdo1,
+              TDO2 => tapi_tdo2);
+  tapo_tck <= drck1 when sel1 = '1' else drck2;
+  tapo_xsel1 <= sel1; tapo_xsel2 <= sel2; tapo_capt <= '0';
+end;
 
 library ieee;
 use ieee.std_logic_1164.all;
@@ -124,8 +124,8 @@ architecture rtl of virtex2_tap is
   attribute dont_touch : boolean;
   attribute dont_touch of u0 : label is true;
 
-begin  
-  
+begin
+
   u0 : BSCAN_VIRTEX2
     port map (CAPTURE => tapo_capt,
               DRCK1 => drck1,
@@ -139,7 +139,7 @@ begin
               TDO1 => tapi_tdo1,
               TDO2 => tapi_tdo2);
   tapo_tck <= drck1 when sel1 = '1' else drck2;
-  tapo_xsel1 <= sel1; tapo_xsel2 <= sel2; 
+  tapo_xsel1 <= sel1; tapo_xsel2 <= sel2;
 end;
 
 library ieee;
@@ -184,7 +184,7 @@ architecture rtl of spartan3_tap is
   attribute dont_touch : boolean;
   attribute dont_touch of u0 : label is true;
 begin
-  
+
   u0 : BSCAN_SPARTAN3
     port map (CAPTURE => tapo_capt,
               DRCK1 => drck1,
@@ -243,34 +243,34 @@ architecture rtl of virtex4_tap is
   attribute dont_touch : boolean;
   attribute dont_touch of u0 : label is true;
   attribute dont_touch of u1 : label is true;
-  
+
 begin
-      
-  u0 : BSCAN_VIRTEX4 
-    generic map (JTAG_CHAIN => 1) 
+
+  u0 : BSCAN_VIRTEX4
+    generic map (JTAG_CHAIN => 1)
     port map (
-      CAPTURE => capt1, 
+      CAPTURE => capt1,
       DRCK => drck1,
-      RESET => rst1, 
-      SEL => sel1, 
-      SHIFT => shift1, 
-      TDI => tdi1, 
+      RESET => rst1,
+      SEL => sel1,
+      SHIFT => shift1,
+      TDI => tdi1,
       UPDATE => update1,
       TDO => tapi_tdo1
       );
 
-  u1 : BSCAN_VIRTEX4 
-    generic map (JTAG_CHAIN => 2) 
+  u1 : BSCAN_VIRTEX4
+    generic map (JTAG_CHAIN => 2)
     port map (
-      CAPTURE => capt2, 
+      CAPTURE => capt2,
       DRCK => drck2,
-      RESET => rst2, 
-      SEL => sel2, 
-      SHIFT => shift2, 
-      TDI => tdi2, 
+      RESET => rst2,
+      SEL => sel2,
+      SHIFT => shift2,
+      TDI => tdi2,
       UPDATE => update2,
       TDO => tapi_tdo2
-      );  
+      );
 
   tapo_capt <= capt1 when sel1 = '1' else capt2;
   tapo_tck  <= drck1 when sel1 = '1' else drck2;
@@ -279,8 +279,8 @@ begin
   tapo_tdi  <= tdi1  when sel1 = '1' else tdi2;
   tapo_upd  <= update1 when sel1 ='1' else update2;
   tapo_xsel1 <= sel1; tapo_xsel2 <= sel2;
-  
-  
+
+
 end;
 
 
@@ -325,34 +325,34 @@ architecture rtl of virtex5_tap is
   attribute dont_touch : boolean;
   attribute dont_touch of u0 : label is true;
   attribute dont_touch of u1 : label is true;
-  
+
 begin
-      
-  u0 : BSCAN_VIRTEX5 
-    generic map (JTAG_CHAIN => 1) 
+
+  u0 : BSCAN_VIRTEX5
+    generic map (JTAG_CHAIN => 1)
     port map (
-      CAPTURE => capt1, 
+      CAPTURE => capt1,
       DRCK => drck1,
-      RESET => rst1, 
-      SEL => sel1, 
-      SHIFT => shift1, 
-      TDI => tdi1, 
+      RESET => rst1,
+      SEL => sel1,
+      SHIFT => shift1,
+      TDI => tdi1,
       UPDATE => update1,
       TDO => tapi_tdo1
       );
 
-  u1 : BSCAN_VIRTEX5 
-    generic map (JTAG_CHAIN => 2) 
+  u1 : BSCAN_VIRTEX5
+    generic map (JTAG_CHAIN => 2)
     port map (
-      CAPTURE => capt2, 
+      CAPTURE => capt2,
       DRCK => drck2,
-      RESET => rst2, 
-      SEL => sel2, 
-      SHIFT => shift2, 
-      TDI => tdi2, 
+      RESET => rst2,
+      SEL => sel2,
+      SHIFT => shift2,
+      TDI => tdi2,
       UPDATE => update2,
       TDO => tapi_tdo2
-      );  
+      );
 
   tapo_capt <= capt1 when sel1 = '1' else capt2;
   tapo_tck  <= drck1 when sel1 = '1' else drck2;
@@ -361,8 +361,8 @@ begin
   tapo_tdi  <= tdi1  when sel1 = '1' else tdi2;
   tapo_upd  <= update1 when sel1 ='1' else update2;
   tapo_xsel1 <= sel1; tapo_xsel2 <= sel2;
-  
-  
+
+
 end;
 
 
@@ -419,35 +419,35 @@ end component;
   attribute dont_touch : boolean;
   attribute dont_touch of u0 : label is true;
   attribute dont_touch of u1 : label is true;
-  
+
 begin
-      
-  u0 : BSCAN_VIRTEX6 
-    generic map (JTAG_CHAIN => 1) 
+
+  u0 : BSCAN_VIRTEX6
+    generic map (JTAG_CHAIN => 1)
     port map (
-      CAPTURE => capt1, 
+      CAPTURE => capt1,
       DRCK => drck1,
-      RESET => rst1, 
-      SEL => sel1, 
-      SHIFT => shift1, 
-      TDI => tdi1, 
+      RESET => rst1,
+      SEL => sel1,
+      SHIFT => shift1,
+      TDI => tdi1,
       UPDATE => update1,
       TDO => tapi_tdo1,
       TCK => tapo_tck
       );
 
-  u1 : BSCAN_VIRTEX6 
-    generic map (JTAG_CHAIN => 2) 
+  u1 : BSCAN_VIRTEX6
+    generic map (JTAG_CHAIN => 2)
     port map (
-      CAPTURE => capt2, 
+      CAPTURE => capt2,
       DRCK => drck2,
-      RESET => rst2, 
-      SEL => sel2, 
-      SHIFT => shift2, 
-      TDI => tdi2, 
+      RESET => rst2,
+      SEL => sel2,
+      SHIFT => shift2,
+      TDI => tdi2,
       UPDATE => update2,
       TDO => tapi_tdo2
-      );  
+      );
 
   tapo_capt <= capt1 when sel1 = '1' else capt2;
   tapo_rst  <= rst1 when sel1 = '1' else rst2;
@@ -455,8 +455,8 @@ begin
   tapo_tdi  <= tdi1  when sel1 = '1' else tdi2;
   tapo_upd  <= update1 when sel1 ='1' else update2;
   tapo_xsel1 <= sel1; tapo_xsel2 <= sel2;
-  
-  
+
+
 end;
 
 
@@ -510,35 +510,35 @@ end component;
   attribute dont_touch : boolean;
   attribute dont_touch of u0 : label is true;
   attribute dont_touch of u1 : label is true;
-  
+
 begin
-      
-  u0 : BSCAN_SPARTAN6 
-    generic map (JTAG_CHAIN => 1) 
+
+  u0 : BSCAN_SPARTAN6
+    generic map (JTAG_CHAIN => 1)
     port map (
-      CAPTURE => capt1, 
+      CAPTURE => capt1,
       DRCK => drck1,
-      RESET => rst1, 
-      SEL => sel1, 
-      SHIFT => shift1, 
-      TDI => tdi1, 
+      RESET => rst1,
+      SEL => sel1,
+      SHIFT => shift1,
+      TDI => tdi1,
       UPDATE => update1,
       TDO => tapi_tdo1,
       TCK => tapo_tck
       );
 
-  u1 : BSCAN_SPARTAN6 
-    generic map (JTAG_CHAIN => 2) 
+  u1 : BSCAN_SPARTAN6
+    generic map (JTAG_CHAIN => 2)
     port map (
-      CAPTURE => capt2, 
+      CAPTURE => capt2,
       DRCK => drck2,
-      RESET => rst2, 
-      SEL => sel2, 
-      SHIFT => shift2, 
-      TDI => tdi2, 
+      RESET => rst2,
+      SEL => sel2,
+      SHIFT => shift2,
+      TDI => tdi2,
       UPDATE => update2,
       TDO => tapi_tdo2
-      );  
+      );
 
   tapo_capt <= capt1 when sel1 = '1' else capt2;
   tapo_rst  <= rst1 when sel1 = '1' else rst2;
@@ -546,8 +546,8 @@ begin
   tapo_tdi  <= tdi1  when sel1 = '1' else tdi2;
   tapo_upd  <= update1 when sel1 ='1' else update2;
   tapo_xsel1 <= sel1; tapo_xsel2 <= sel2;
-  
-  
+
+
 end;
 
 
@@ -602,35 +602,35 @@ end component;
   attribute dont_touch : boolean;
   attribute dont_touch of u0 : label is true;
   attribute dont_touch of u1 : label is true;
-  
+
 begin
-      
-  u0 : BSCANE2 
-    generic map (JTAG_CHAIN => 1) 
+
+  u0 : BSCANE2
+    generic map (JTAG_CHAIN => 1)
     port map (
-      CAPTURE => capt1, 
+      CAPTURE => capt1,
       DRCK => drck1,
-      RESET => rst1, 
-      SEL => sel1, 
-      SHIFT => shift1, 
-      TDI => tdi1, 
+      RESET => rst1,
+      SEL => sel1,
+      SHIFT => shift1,
+      TDI => tdi1,
       UPDATE => update1,
       TDO => tapi_tdo1,
       TCK => tapo_tck
       );
 
-  u1 : BSCANE2 
-    generic map (JTAG_CHAIN => 2) 
+  u1 : BSCANE2
+    generic map (JTAG_CHAIN => 2)
     port map (
-      CAPTURE => capt2, 
+      CAPTURE => capt2,
       DRCK => drck2,
-      RESET => rst2, 
-      SEL => sel2, 
-      SHIFT => shift2, 
-      TDI => tdi2, 
+      RESET => rst2,
+      SEL => sel2,
+      SHIFT => shift2,
+      TDI => tdi2,
       UPDATE => update2,
       TDO => tapi_tdo2
-      );  
+      );
 
   tapo_capt <= capt1 when sel1 = '1' else capt2;
   tapo_rst  <= rst1 when sel1 = '1' else rst2;
@@ -638,8 +638,98 @@ begin
   tapo_tdi  <= tdi1  when sel1 = '1' else tdi2;
   tapo_upd  <= update1 when sel1 ='1' else update2;
   tapo_xsel1 <= sel1; tapo_xsel2 <= sel2;
-  
-  
+
+
+end;
+
+library ieee;
+use ieee.std_logic_1164.all;
+-- pragma translate_off
+library unisim;
+use unisim.vcomponents.all;
+-- pragma translate_on
+
+entity virtexup_tap is
+port (
+     tapi_tdo1   : in std_ulogic;
+     tapi_tdo2   : in std_ulogic;
+     tapo_tck    : out std_ulogic;
+     tapo_tdi    : out std_ulogic;
+     tapo_rst    : out std_ulogic;
+     tapo_capt   : out std_ulogic;
+     tapo_shft   : out std_ulogic;
+     tapo_upd    : out std_ulogic;
+     tapo_xsel1  : out std_ulogic;
+     tapo_xsel2  : out std_ulogic
+    );
+end;
+
+architecture rtl of virtexup_tap is
+
+component BSCANE2
+  generic (
+     DISABLE_JTAG : string := "FALSE";
+     JTAG_CHAIN : integer := 1
+  );
+  port (
+     CAPTURE : out std_ulogic := 'H';
+     DRCK : out std_ulogic := 'H';
+     RESET : out std_ulogic := 'H';
+     RUNTEST : out std_ulogic := 'L';
+     SEL : out std_ulogic := 'L';
+     SHIFT : out std_ulogic := 'L';
+     TCK : out std_ulogic := 'L';
+     TDI : out std_ulogic := 'L';
+     TMS : out std_ulogic := 'L';
+     UPDATE : out std_ulogic := 'L';
+     TDO : in std_ulogic := 'X'
+  );
+end component;
+
+  signal drck1, drck2, sel1, sel2 : std_ulogic;
+  signal capt1, capt2, rst1, rst2 : std_ulogic;
+  signal shift1, shift2, tdi1, tdi2 : std_ulogic;
+  signal update1, update2 : std_ulogic;
+  attribute dont_touch : boolean;
+  attribute dont_touch of u0 : label is true;
+  attribute dont_touch of u1 : label is true;
+
+begin
+
+  u0 : BSCANE2
+    generic map (JTAG_CHAIN => 2)
+    port map (
+      CAPTURE => capt1,
+      DRCK => drck1,
+      RESET => rst1,
+      SEL => sel1,
+      SHIFT => shift1,
+      TDI => tdi1,
+      UPDATE => update1,
+      TDO => tapi_tdo1,
+      TCK => tapo_tck
+      );
+
+  u1 : BSCANE2
+    generic map (JTAG_CHAIN => 3)
+    port map (
+      CAPTURE => capt2,
+      DRCK => drck2,
+      RESET => rst2,
+      SEL => sel2,
+      SHIFT => shift2,
+      TDI => tdi2,
+      UPDATE => update2,
+      TDO => tapi_tdo2
+      );
+
+  tapo_capt <= capt1 when sel1 = '1' else capt2;
+  tapo_rst  <= rst1 when sel1 = '1' else rst2;
+  tapo_shft <= shift1 when sel1 = '1' else shift2;
+  tapo_tdi  <= tdi1  when sel1 = '1' else tdi2;
+  tapo_upd  <= update1 when sel1 ='1' else update2;
+  tapo_xsel1 <= sel1; tapo_xsel2 <= sel2;
+
 end;
 
 library ieee;
@@ -693,35 +783,35 @@ end component;
   attribute dont_touch : boolean;
   attribute dont_touch of u0 : label is true;
   attribute dont_touch of u1 : label is true;
-  
+
 begin
-      
-  u0 : BSCANE2 
-    generic map (JTAG_CHAIN => 1) 
+
+  u0 : BSCANE2
+    generic map (JTAG_CHAIN => 1)
     port map (
-      CAPTURE => capt1, 
+      CAPTURE => capt1,
       DRCK => drck1,
-      RESET => rst1, 
-      SEL => sel1, 
-      SHIFT => shift1, 
-      TDI => tdi1, 
+      RESET => rst1,
+      SEL => sel1,
+      SHIFT => shift1,
+      TDI => tdi1,
       UPDATE => update1,
       TDO => tapi_tdo1,
       TCK => tapo_tck
       );
 
-  u1 : BSCANE2 
-    generic map (JTAG_CHAIN => 2) 
+  u1 : BSCANE2
+    generic map (JTAG_CHAIN => 2)
     port map (
-      CAPTURE => capt2, 
+      CAPTURE => capt2,
       DRCK => drck2,
-      RESET => rst2, 
-      SEL => sel2, 
-      SHIFT => shift2, 
-      TDI => tdi2, 
+      RESET => rst2,
+      SEL => sel2,
+      SHIFT => shift2,
+      TDI => tdi2,
       UPDATE => update2,
       TDO => tapi_tdo2
-      );  
+      );
 
   tapo_capt <= capt1 when sel1 = '1' else capt2;
   tapo_rst  <= rst1 when sel1 = '1' else rst2;
@@ -729,8 +819,8 @@ begin
   tapo_tdi  <= tdi1  when sel1 = '1' else tdi2;
   tapo_upd  <= update1 when sel1 ='1' else update2;
   tapo_xsel1 <= sel1; tapo_xsel2 <= sel2;
-  
-  
+
+
 end;
 
 library ieee;
@@ -784,35 +874,35 @@ end component;
   attribute dont_touch : boolean;
   attribute dont_touch of u0 : label is true;
   attribute dont_touch of u1 : label is true;
-  
+
 begin
-      
-  u0 : BSCANE2 
-    generic map (JTAG_CHAIN => 1) 
+
+  u0 : BSCANE2
+    generic map (JTAG_CHAIN => 1)
     port map (
-      CAPTURE => capt1, 
+      CAPTURE => capt1,
       DRCK => drck1,
-      RESET => rst1, 
-      SEL => sel1, 
-      SHIFT => shift1, 
-      TDI => tdi1, 
+      RESET => rst1,
+      SEL => sel1,
+      SHIFT => shift1,
+      TDI => tdi1,
       UPDATE => update1,
       TDO => tapi_tdo1,
       TCK => tapo_tck
       );
 
-  u1 : BSCANE2 
-    generic map (JTAG_CHAIN => 2) 
+  u1 : BSCANE2
+    generic map (JTAG_CHAIN => 2)
     port map (
-      CAPTURE => capt2, 
+      CAPTURE => capt2,
       DRCK => drck2,
-      RESET => rst2, 
-      SEL => sel2, 
-      SHIFT => shift2, 
-      TDI => tdi2, 
+      RESET => rst2,
+      SEL => sel2,
+      SHIFT => shift2,
+      TDI => tdi2,
       UPDATE => update2,
       TDO => tapi_tdo2
-      );  
+      );
 
   tapo_capt <= capt1 when sel1 = '1' else capt2;
   tapo_rst  <= rst1 when sel1 = '1' else rst2;
@@ -820,6 +910,5 @@ begin
   tapo_tdi  <= tdi1  when sel1 = '1' else tdi2;
   tapo_upd  <= update1 when sel1 ='1' else update2;
   tapo_xsel1 <= sel1; tapo_xsel2 <= sel2;
-    
-end;
 
+end;

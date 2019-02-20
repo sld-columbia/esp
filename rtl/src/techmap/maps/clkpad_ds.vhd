@@ -47,7 +47,7 @@ begin
 	;
 
   end generate;
-  xcv : if (tech = virtex2) or (tech = spartan3)  or (tech = virtex7) or (tech = kintex7) or (tech =artix7) or (tech =zynq7000) generate
+  xcv : if (tech = virtex2) or (tech = spartan3)  or (tech = virtex7) or (tech = kintex7) or (tech =artix7) or (tech =zynq7000) or (tech = virtexup) generate
     u0 : unisim_clkpad_ds generic map (level, voltage) port map (padp, padn, o);
   end generate;
   xc4v : if (tech = virtex4) or (tech = spartan3e) or (tech = virtex5) or 
