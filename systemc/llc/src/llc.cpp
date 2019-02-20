@@ -1530,9 +1530,9 @@ void llc::ctrl()
         }
 
 
-
-#ifndef STRATUS_HLS
-        wait();
-#endif
+        {
+            HLS_DEFINE_PROTOCOL("end-of-loop-break-rw-protocol");
+            wait();
+        }
     }
 }
