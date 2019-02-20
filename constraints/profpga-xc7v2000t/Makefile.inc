@@ -1,5 +1,4 @@
 # FPGA and Dev Board used in Design
-TECHNOLOGY=Virtex7
 PART=XC7V2000T
 PACKAGE=flg1925
 SPEED=2
