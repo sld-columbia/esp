@@ -35,11 +35,7 @@ entity esp is
     XLEN                : integer := CFG_XLEN;
     YLEN                : integer := CFG_YLEN;
     TILES_NUM           : integer := CFG_TILES_NUM;
-    testahb             : boolean := false;
-    SIM_BYPASS_INIT_CAL : string := "OFF";
-    SIMULATION          : string := "FALSE";
-    USE_MIG_INTERFACE_MODEL : boolean := false;
-    autonegotiation     : integer := 1
+    testahb             : boolean := false
   );
   port (
     rst             : in    std_logic;
@@ -259,8 +255,7 @@ begin
           l2_pconfig              => l2_cache_pconfig(i),
           has_dvfs                => tile_has_dvfs(i),
           has_pll                 => tile_has_pll(i),
-          domain                  => tile_domain(i),
-          USE_MIG_INTERFACE_MODEL => USE_MIG_INTERFACE_MODEL)
+          domain                  => tile_domain(i))
         port map (
           rst                => rst_int,
           refclk             => refclk_int(i),
@@ -473,8 +468,7 @@ begin
           disas                   => disas,
           dbguart                 => dbguart,
           pclow                   => pclow,
-          testahb                 => testahb,
-          USE_MIG_INTERFACE_MODEL => USE_MIG_INTERFACE_MODEL)
+          testahb                 => testahb)
         port map (
           rst                => rst_int,
           clk                => noc_clk_int,
@@ -551,8 +545,7 @@ begin
             disas                   => disas,
             dbguart                 => dbguart,
             pclow                   => pclow,
-            testahb                 => testahb,
-            USE_MIG_INTERFACE_MODEL => USE_MIG_INTERFACE_MODEL)
+            testahb                 => testahb)
           port map (
             rst                => rst_int,
             clk                => clk_tile(i),

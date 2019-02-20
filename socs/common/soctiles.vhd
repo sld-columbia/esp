@@ -57,11 +57,7 @@ package soctiles is
       XLEN                    : integer;
       YLEN                    : integer;
       TILES_NUM               : integer;
-      testahb                 : boolean;
-      SIM_BYPASS_INIT_CAL     : string;
-      SIMULATION              : string;
-      USE_MIG_INTERFACE_MODEL : boolean;
-      autonegotiation         : integer);
+      testahb                 : boolean);
     port (
       rst           : in    std_ulogic;
       noc_clk       : in    std_ulogic;
@@ -123,8 +119,7 @@ package soctiles is
       l2_pconfig              : apb_config_type;
       has_dvfs                : integer;
       has_pll                 : integer;
-      domain                  : integer;
-      USE_MIG_INTERFACE_MODEL : boolean);
+      domain                  : integer);
     port (
       rst                : in  std_ulogic;
       refclk             : in  std_ulogic;
@@ -324,8 +319,7 @@ package soctiles is
       disas                   : integer;
       dbguart                 : integer;
       pclow                   : integer;
-      testahb                 : boolean;
-      USE_MIG_INTERFACE_MODEL : boolean);
+      testahb                 : boolean);
     port (
       rst                : in  std_ulogic;
       clk                : in  std_ulogic;
@@ -400,8 +394,7 @@ package soctiles is
       disas                   : integer;
       dbguart                 : integer;
       pclow                   : integer;
-      testahb                 : boolean;
-      USE_MIG_INTERFACE_MODEL : boolean);
+      testahb                 : boolean);
     port (
       rst                : in  std_ulogic;
       clk                : in  std_ulogic;

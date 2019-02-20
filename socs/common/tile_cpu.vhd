@@ -45,8 +45,7 @@ entity tile_cpu is
     l2_pconfig              : apb_config_type;
     has_dvfs                : integer;
     has_pll                 : integer;
-    domain                  : integer;
-    USE_MIG_INTERFACE_MODEL : boolean                              := false
+    domain                  : integer
     );
   port (
     rst                : in  std_ulogic;

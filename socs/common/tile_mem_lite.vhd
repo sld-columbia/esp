@@ -37,8 +37,7 @@ entity tile_mem_lite is
     disas                   : integer := CFG_DISAS;  -- Enable disassembly to console
     dbguart                 : integer := CFG_DUART;  -- Print UART on console
     pclow                   : integer := CFG_PCLOW;
-    testahb                 : boolean := false;
-    USE_MIG_INTERFACE_MODEL : boolean := false
+    testahb                 : boolean := false
     );
   port (
     rst                : in  std_ulogic;

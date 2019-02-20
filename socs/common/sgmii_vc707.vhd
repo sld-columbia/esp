@@ -83,7 +83,6 @@ use work.stdlib.all;
 use work.devices.all;
 
 use work.gencomp.all;
-use work.allclkgen.all;
 
 use work.grethpkg.all;
 

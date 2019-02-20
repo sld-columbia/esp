@@ -1,8 +1,6 @@
 ------------------------------------------------------------------------------
 --  ESP - xilinx - vc707
 ------------------------------------------------------------------------------
--- DISCLAIMER --
-------------------------------------------------------------------------------
 
 library ieee;
 use ieee.std_logic_1164.all;
@@ -42,9 +40,7 @@ entity top is
     dbguart             : integer := CFG_DUART;   -- Print UART on console
     pclow               : integer := CFG_PCLOW;
     testahb             : boolean := false;
-    SIM_BYPASS_INIT_CAL : string := "OFF";
-    SIMULATION          : string := "FALSE";
-    USE_MIG_INTERFACE_MODEL : boolean := false;
+    SIMULATION          : boolean := false;
     autonegotiation     : integer := 1
   );
   port (
@@ -90,8 +86,7 @@ entity top is
     uart_rtsn       : out   std_ulogic;  -- UART1_RTSN (u1o.rtsn)
     button          : in    std_logic_vector(3 downto 0);
     switch          : inout std_logic_vector(4 downto 0);
-    led             : out   std_logic_vector(6 downto 0)
-   );
+    led             : out   std_logic_vector(6 downto 0));
 end;
 
 
@@ -126,10 +121,7 @@ component ahb2mig_7series
   generic(
     hindex     : integer := 0;
     haddr      : integer := 0;
-    hmask      : integer := 16#f00#;
-    SIM_BYPASS_INIT_CAL : string := "OFF";
-    SIMULATION : string  := "FALSE";
-    USE_MIG_INTERFACE_MODEL : boolean := false
+    hmask      : integer := 16#f00#
   );
   port(
     ddr3_dq           : inout std_logic_vector(63 downto 0);
@@ -383,11 +375,9 @@ begin
 ---  DDR3 memory controller ------------------------------------------
 ----------------------------------------------------------------------
 
-  gen_mig : if (USE_MIG_INTERFACE_MODEL /= true) generate
+  gen_mig : if (SIMULATION /= true) generate
     ddrc : ahb2mig_7series generic map(
-      hindex => 4, haddr => 16#400#, hmask => 16#C00#,
-      SIM_BYPASS_INIT_CAL => SIM_BYPASS_INIT_CAL,
-      SIMULATION => SIMULATION, USE_MIG_INTERFACE_MODEL => USE_MIG_INTERFACE_MODEL)
+      hindex => 4, haddr => 16#400#, hmask => 16#C00#)
       port map(
         ddr3_dq         => ddr3_dq,
         ddr3_dqs_p      => ddr3_dqs_p,
@@ -422,7 +412,7 @@ begin
       port map (clkm, clkm, clkref, open, open, open, open, cgi, cgo, open, open, open);
   end generate gen_mig;
 
-  gen_mig_model : if (USE_MIG_INTERFACE_MODEL = true) generate
+  gen_mig_model : if (SIMULATION = true) generate
     -- pragma translate_off
 
     mig_ahbram : ahbram_sim
@@ -472,7 +462,7 @@ begin
 ---  ETHERNET ---------------------------------------------------------
 -----------------------------------------------------------------------
 
-  eth0 : if CFG_GRETH = 1 generate -- Gaisler ethernet MAC
+  eth0 : if SIMULATION = false and CFG_GRETH = 1 generate -- Gaisler ethernet MAC
     e1 : grethm
       generic map(
         hindex => CFG_AHB_JTAG,
@@ -553,7 +543,7 @@ begin
 
   end generate;
 
-  no_eth0 : if CFG_GRETH = 0 generate
+  no_eth0 : if SIMULATION = true or CFG_GRETH = 0 generate
     eth0_apbo <= apb_none;
     sgmii0_apbo <= apb_none;
     eth0_ahbmo <= ahbm_none;
@@ -585,11 +575,7 @@ begin
       has_sync                => CFG_HAS_SYNC,
       XLEN                    => CFG_XLEN,
       YLEN                    => CFG_YLEN,
-      TILES_NUM               => CFG_TILES_NUM,
-      SIM_BYPASS_INIT_CAL     => SIM_BYPASS_INIT_CAL,
-      SIMULATION              => SIMULATION,
-      USE_MIG_INTERFACE_MODEL => USE_MIG_INTERFACE_MODEL,
-      autonegotiation         => autonegotiation)
+      TILES_NUM               => CFG_TILES_NUM)
     port map (
       rst           => chip_rst,
       noc_clk       => noc_clk,

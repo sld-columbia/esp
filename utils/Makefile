@@ -171,14 +171,14 @@ socmap.vhd: .esp_config grlib_config.vhd
 	fi
 	@echo ""
 	@echo "Generating ESP configuration..."
-	@python3 $(ESP_ROOT)/utils/socmap/esp_creator_batch.py $(NOC_WIDTH)
+	@python3 $(ESP_ROOT)/utils/socmap/esp_creator_batch.py $(NOC_WIDTH) $(TECHLIB)
 
 esp-config: socmap.vhd
 
 esp-xconfig: grlib_config.vhd
 	@echo ""
 	@echo "Running interactive ESP configuration..."
-	@python3 $(ESP_ROOT)/utils/socmap/esp_creator.py $(NOC_WIDTH)
+	@python3 $(ESP_ROOT)/utils/socmap/esp_creator.py $(NOC_WIDTH) $(TECHLIB)
 
 esp-config-clean:
 	$(QUIET_CLEAN)$(RM) \
@@ -616,95 +616,7 @@ xilinx_lib-distclean: xilinx_lib-clean
 .PHONY: xilinx_lib-clean xilinx_lib-distclean
 
 
-ifeq ("$(TECHLIB)", "virtex7")
-modelsim/mig:
-	$(QUIET_MKDIR)mkdir -p $@
-	@if test -r $(ESP_ROOT)/constraints/$(BOARD)/mig.xci; then \
-		echo $(SPACES)"INFO generating MIG IP for simulation"; \
-		cp $(ESP_ROOT)/constraints/$(BOARD)/mig.xci $@; \
-		cp $(ESP_ROOT)/constraints/$(BOARD)/mig.prj $@; \
-		echo "create_project -part $(DEVICE) dummy ." > $@/vivado.tcl; \
-		if [ "$(PROTOBOARD)" != "" ]; then \
-			echo "set_property board_part $(PROTOBOARD) [current_project]"  >> $@/vivado.tcl; \
-		fi; \
-		echo "read_ip mig.xci" >> $@/vivado.tcl; \
-		echo "generate_target  all [get_files mig.xci] -force " >> $@/vivado.tcl; \
-		cd $@; \
-		vivado $(VIVADO_BATCH_OPT) -source vivado.tcl; \
-		cd $(DESIGN_PATH); \
-	else \
-		echo $(SPACES)"WARNING: no MIG IP was found"; \
-	fi;
-
-xcelium/mig: modelsim/mig
-	$(QUIET_MKDIR)mkdir -p xcelium
-	@cd xcelium; \
-	ln -s ../modelsim/mig;
-
-incisive/mig: modelsim/mig
-	$(QUIET_MKDIR)mkdir -p incisive
-	@cd incisive; \
-	ln -s ../modelsim/mig;
-
-ifeq ($(CONFIG_GRETH_ENABLE),y)
-modelsim/sgmii:
-	$(QUIET_MKDIR)mkdir -p $@
-	@if test -r $(ESP_ROOT)/constraints/$(BOARD)/sgmii.xci; then \
-		echo $(SPACES)"INFO generating SGMII IP for simulation"; \
-		cp $(ESP_ROOT)/constraints/$(BOARD)/sgmii.* $@; \
-		echo "create_project -part $(DEVICE) dummy ." > $@/vivado.tcl; \
-		if [ "$(PROTOBOARD)" != "" ]; then \
-			echo "set_property board_part $(PROTOBOARD) [current_project]"  >> $@/vivado.tcl; \
-		fi; \
-		echo "read_ip sgmii.xci" >> $@/vivado.tcl; \
-		echo "generate_target  all [get_files sgmii.xci] -force " >> $@/vivado.tcl; \
-		cd $@; \
-		vivado $(VIVADO_BATCH_OPT) -source vivado.tcl; \
-		cd $(DESIGN_PATH); \
-	else \
-		echo $(SPACES)"WARNING: no SGMII IP was found"; \
-	fi;
-
-xcelium/sgmii: modelsim/sgmii
-	$(QUIET_MKDIR)mkdir -p xcelium
-	@cd xcelium; \
-	ln -s ../modelsim/sgmii;
-
-
-incisive/sgmii: modelsim/sgmii
-	$(QUIET_MKDIR)mkdir -p incisive
-	@cd incisive; \
-	ln -s ../modelsim/sgmii;
-else
-
-modelsim/sgmii:
-
-xcelium/sgmii:
-
-incisive/sgmii:
-
-endif
-
-else
-
-modelsim/mig:
-
-xcelium/mig:
-
-incisive/mig:
-
-modelsim/sgmii:
-
-xcelium/sgmii:
-
-incisive/sgmii:
-
-endif
-
-
 ### Xcelium targets ###
-
-XCELIUM_VERILOG_XILINX_MIG_SIM = $(shell (find $(DESIGN_PATH)/xcelium/mig/mig/user_design/rtl/ -name "*.v" | grep -v "mig_mig.v"))
 
 xcelium/xmready: xcelium/xilinx_lib check_all_srcs.old $(PKG_LIST)
 	$(QUIET_MKDIR)mkdir -p xcelium
@@ -770,30 +682,12 @@ xcelium/xmready: xcelium/xilinx_lib check_all_srcs.old $(PKG_LIST)
 			$(XLOG) -INCDIR $(ESP_ROOT)/rtl/src/opencores/ge_1000baseX -work work $$rtl || exit; \
 		done; \
 	echo $(SPACES)"### Compile IPs simulation files ###"; \
-	if test -r ./mig/mig.xci; then \
-		for rtl in $(XCELIUM_VERILOG_XILINX_MIG_SIM); do \
-			echo $(SPACES)"$(XLOG) -work work $$rtl"; \
-			$(XLOG) -work work $$rtl || exit; \
-		done; \
-	fi; \
 	echo $(SPACES)"$(XLOG) -work work $(XILINX_VIVADO)/data/verilog/src/glbl.v"; \
 	$(XLOG) -work work $(XILINX_VIVADO)/data/verilog/src/glbl.v; \
-	grep --quiet "gig_ethernet_pcs_pma_v16_1_4" cds.lib; \
-	res=$$?; \
-	if [ $$res != 0 ]; then \
-		mkdir -p gig_ethernet_pcs_pma_v16_1_4; \
-		echo "DEFINE gig_ethernet_pcs_pma_v16_1_4 $(DESIGN_PATH)/xcelium/gig_ethernet_pcs_pma_v16_1_4" >> cds.lib; \
-	fi; \
-	if test -r ./sgmii/sgmii.xci; then \
-		echo $(SPACES)"$(XCOM) -wor gig_ethernet_pcs_pma_v16_1_4 ./sgmii/hdl/gig_ethernet_pcs_pma_v16_1_rfs.vhd"; \
-		$(XCOM) -work gig_ethernet_pcs_pma_v16_1_4 ./sgmii/hdl/gig_ethernet_pcs_pma_v16_1_rfs.vhd; \
-		$(XLOG) -work work ./sgmii/synth/*.v; \
-		$(XLOG) -work work ./sgmii/synth/*/*.v ;\
-        fi; \
 	ln -s ../prom.srec; \
 	ln -s ../ram.srec; \
-	echo $(SPACES)"$(XMELAB) $(SIMTOP):behav glbl"; \
-	$(XMELAB) $(SIMTOP):behav glbl && touch xmready; \
+	echo $(SPACES)"$(XMELAB) $(SIMTOP) $(EXTRA_SIMTOP)"; \
+	$(XMELAB) $(SIMTOP) $(EXTRA_SIMTOP) && touch xmready; \
 	cd ../;
 
 
@@ -801,10 +695,11 @@ xcelium/xmsim.in:
 	$(QUIET_BUILD)echo set severity_pack_assert_off {warning} > $@
 	@echo set pack_assert_off { std_logic_arith numeric_std } >> $@
 
-xmsim-compile: sldgen check_all_srcs xcelium/mig xcelium/sgmii soft xcelium/xmready xcelium/xmsim.in
+xmsim-compile: sldgen check_all_srcs soft xcelium/xmready xcelium/xmsim.in
 	$(QUIET_MAKE) \
 	cd xcelium; \
-	$(XMUPDATE) $(SIMTOP):behav glbl; \
+	echo $(SPACES)"$(XMUPDATE) $(SIMOPT)"; \
+	$(XMUPDATE) $(SIMTOP); \
 	cd ../;
 
 xmsim: xmsim-compile
@@ -829,8 +724,6 @@ xmsim-distclean: xmsim-clean
 
 
 ### Incisive targets ###
-
-INCISIVE_VERILOG_XILINX_MIG_SIM = $(shell (find $(DESIGN_PATH)/incisive/mig/mig/user_design/rtl/ -name "*.v" | grep -v "mig_mig.v"))
 
 incisive/ncready: incisive/xilinx_lib check_all_srcs.old $(PKG_LIST)
 	$(QUIET_MKDIR)mkdir -p incisive
@@ -896,30 +789,12 @@ incisive/ncready: incisive/xilinx_lib check_all_srcs.old $(PKG_LIST)
 			$(NCLOG) -INCDIR $(ESP_ROOT)/rtl/src/opencores/ge_1000baseX -work work $$rtl || exit; \
 		done; \
 	echo $(SPACES)"### Compile IPs simulation files ###"; \
-	if test -r ./mig/mig.xci; then \
-		for rtl in $(INCISIVE_VERILOG_XILINX_MIG_SIM); do \
-			echo $(SPACES)"$(NCLOG) -work work $$rtl"; \
-			$(NCLOG) -work work $$rtl || exit; \
-		done; \
-	fi; \
 	echo $(SPACES)"$(NCLOG) -work work $(XILINX_VIVADO)/data/verilog/src/glbl.v"; \
 	$(NCLOG) -work work $(XILINX_VIVADO)/data/verilog/src/glbl.v; \
-	grep --quiet "gig_ethernet_pcs_pma_v16_1_4" cds.lib; \
-	res=$$?; \
-	if [ $$res != 0 ]; then \
-		mkdir -p gig_ethernet_pcs_pma_v16_1_4; \
-		echo "DEFINE gig_ethernet_pcs_pma_v16_1_4 $(DESIGN_PATH)/incisive/gig_ethernet_pcs_pma_v16_1_4" >> cds.lib; \
-	fi; \
-	if test -r ./sgmii/sgmii.xci; then \
-		echo $(SPACES)"$(NCCOM) -wor gig_ethernet_pcs_pma_v16_1_4 ./sgmii/hdl/gig_ethernet_pcs_pma_v16_1_rfs.vhd"; \
-		$(NCCOM) -work gig_ethernet_pcs_pma_v16_1_4 ./sgmii/hdl/gig_ethernet_pcs_pma_v16_1_rfs.vhd; \
-		$(NCLOG) -work work ./sgmii/synth/*.v; \
-		$(NCLOG) -work work ./sgmii/synth/*/*.v ;\
-        fi; \
 	ln -s ../prom.srec; \
 	ln -s ../ram.srec; \
-	echo $(SPACES)"$(NCELAB) $(SIMTOP):behav glbl"; \
-	$(NCELAB) $(SIMTOP):behav glbl && touch ncready; \
+	echo $(SPACES)"$(NCELAB) $(SIMTOP) $(EXTRA_SIMTOP)"; \
+	$(NCELAB) $(SIMTOP) $(EXTRA_SIMTOP) && touch ncready; \
 	cd ../;
 
 
@@ -927,10 +802,11 @@ incisive/ncsim.in:
 	$(QUIET_BUILD)echo set severity_pack_assert_off {warning} > $@
 	@echo set pack_assert_off { std_logic_arith numeric_std } >> $@
 
-ncsim-compile: sldgen check_all_srcs incisive/mig incisive/sgmii soft incisive/ncready incisive/ncsim.in
+ncsim-compile: sldgen check_all_srcs soft incisive/ncready incisive/ncsim.in
 	$(QUIET_MAKE) \
 	cd incisive; \
-	$(NCUPDATE) $(SIMTOP):behav glbl; \
+	echo $(SPACES)"$(NCUPDATE) $(SIMTOP)"; \
+	$(NCUPDATE) $(SIMTOP); \
 	cd ../;
 
 ncsim: ncsim-compile
@@ -1014,21 +890,8 @@ modelsim/vsim.mk: modelsim/xilinx_lib check_all_srcs.old $(PKG_LIST)
 			$(VLOG) $$rtl || exit; \
 		done; \
 	echo $(SPACES)"### Compile IPs simulation files ###"; \
-	if test -r ./mig/mig.xci; then \
-		echo $(SPACES)"$(VLOG) ./mig/mig/user_design/rtl/mig.v"; \
-		$(VLOG) ./mig/mig/user_design/rtl/mig.v; \
-		$(VLOG) ./mig/mig/user_design/rtl/*/*.v; \
-	fi; \
 	echo $(SPACES)"$(VLOG) $(XILINX_VIVADO)/data/verilog/src/glbl.v"; \
 	$(VLOG) $(XILINX_VIVADO)/data/verilog/src/glbl.v; \
-	vlib -type directory gig_ethernet_pcs_pma_v16_1_4; \
-	if test -r ./sgmii/sgmii.xci; then \
-		vmap gig_ethernet_pcs_pma_v16_1_4 gig_ethernet_pcs_pma_v16_1_4; \
-		echo $(SPACES)"$(VCOM) ./sgmii/hdl/gig_ethernet_pcs_pma_v16_1_rfs.vhd"; \
-		$(VCOM) -work gig_ethernet_pcs_pma_v16_1_4 ./sgmii/hdl/gig_ethernet_pcs_pma_v16_1_rfs.vhd; \
-		$(VLOG) ./sgmii/synth/*.v; \
-		$(VLOG) ./sgmii/synth/*/*.v ;\
-        fi; \
 	$(SPACING)vmap work work;\
 	$(SPACING)vmap profpga profpga;\
 	echo $(SPACES)"vmake > vsim.mk"; \
@@ -1037,7 +900,7 @@ modelsim/vsim.mk: modelsim/xilinx_lib check_all_srcs.old $(PKG_LIST)
 	ln -s ../ram.srec; \
 	cd ../;
 
-sim-compile: sldgen check_all_srcs modelsim/mig modelsim/sgmii modelsim/vsim.mk soft
+sim-compile: sldgen check_all_srcs modelsim/vsim.mk soft
 	$(QUIET_MAKE)make -C modelsim -f vsim.mk
 
 sim: sim-compile
@@ -1104,7 +967,9 @@ endif
 		echo $(SPACES)"INFO including MIG IP"; \
 		mkdir -p vivado/mig; \
 		cp $(ESP_ROOT)/constraints/$(BOARD)/mig.xci ./vivado/mig; \
-		cp $(ESP_ROOT)/constraints/$(BOARD)/mig.prj ./vivado/mig; \
+		if test -r $(ESP_ROOT)/constraints/$(BOARD)/mig.prj; then \
+			cp $(ESP_ROOT)/constraints/$(BOARD)/mig.prj ./vivado/mig; \
+		fi; \
 		echo "import_ip -files ./mig/mig.xci" >> $@; \
 		echo "generate_target  all [get_ips mig] -force " >> $@; \
 	else \
@@ -1122,8 +987,8 @@ ifeq ($(CONFIG_GRETH_ENABLE),y)
 		echo $(SPACES)"WARNING: no SGMII IP was found"; \
 	fi;
 endif
-	@if test -r $(UTILS_GRLIB)/netlists/$(TECHNOLOGY); then \
-		echo "import_files $(UTILS_GRLIB)/netlists/$(TECHNOLOGY)" >> $@; \
+	@if test -r $(UTILS_GRLIB)/netlists/$(TECHLIB); then \
+		echo "import_files $(UTILS_GRLIB)/netlists/$(TECHLIB)" >> $@; \
 	fi;
 	@for i in $(XDC); do \
 	  echo "read_xdc $$i" >> $@; \

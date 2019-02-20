@@ -1,6 +1,6 @@
 ### Supported technology libraries ###
 ASICLIBS =
-FPGALIBS = virtex7
+FPGALIBS = virtex7 virtexup
 
 
 ### Check for technology library definition ###
@@ -29,7 +29,7 @@ endif
 ### Create FPGA part name ###
 ifneq ($(filter $(TECHLIB),$(FPGALIBS)),)
 include $(ESP_ROOT)/constraints/$(BOARD)/Makefile.inc
-DEVICE = $(PART)$(PACKAGE)-$(SPEED)
+DEVICE = $(PART)-$(PACKAGE)-$(SPEED)
 else ifneq ($(filter $(TECHLIB),$(ASICLIBS)),)
 DEVICE = ASIC-$(TECHLIB)
 else
@@ -81,29 +81,19 @@ ifneq ($(filter $(TECHLIB),$(FPGALIBS)),)
 VSIMOPT += -L secureip_ver -L unisims_ver
 endif
 
-# Xilinx MIG
-ifndef CONFIG_MIG_7SERIES_MODEL
-VSIMOPT  += -gUSE_MIG_INTERFACE_MODEL=false -gSIM_BYPASS_INIT_CAL=FAST -gSIMULATION=TRUE
-VSIMOPT  += -t fs
-else
-VSIMOPT  += -gUSE_MIG_INTERFACE_MODEL=true -t ps
-endif
+VSIMOPT += -t ps
 
 ifneq ($(filter $(TECHLIB),$(FPGALIBS)),)
-VSIMOPT  += glbl
-XSIMOPT  += glbl
-endif
-
-# Xilinx SGMII
-ifeq ($(CONFIG_GRETH_ENABLE),y)
-VSIMOPT += -L gig_ethernet_pcs_pma_v16_1_4
+EXTRA_SIMTOP  = glbl
+else
+EXTRA_SIMTOP  =
 endif
 
 # Simulator switches
 VSIMOPT += -novopt +notimingchecks
 
 # Toplevel
-VSIMOPT += $(SIMTOP)
+VSIMOPT += $(SIMTOP) $(EXTRA_SIMTOP)
 XMSIMOPT += $(SIMTOP)
 NCSIMOPT += $(SIMTOP)
 

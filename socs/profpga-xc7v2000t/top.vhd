@@ -42,10 +42,7 @@ entity top is
     dbguart             : integer := CFG_DUART;   -- Print UART on console
     pclow               : integer := CFG_PCLOW;
     testahb             : boolean := false;
-    SIM_BYPASS_INIT_CAL : string := "OFF";
-    SIMULATION          : string := "FALSE";
-    USE_MIG_INTERFACE_MODEL : boolean := false;
-    autonegotiation     : integer := 1
+    SIMULATION          : boolean := false
   );
   port (
     -- MMI64 interface:
@@ -598,7 +595,7 @@ begin
 ---  DDR3 memory controller ------------------------------------------
 ----------------------------------------------------------------------
 
-  gen_mig : if (USE_MIG_INTERFACE_MODEL /= true) generate
+  gen_mig : if (SIMULATION /= true) generate
 
      dual_mig_ahb_iface: if CFG_MIG_DUAL = 1 generate
        ddrc0 : ahb2mig_7series_profpga generic map(
@@ -764,7 +761,7 @@ begin
 
   end generate gen_mig;
 
-  gen_mig_model : if (USE_MIG_INTERFACE_MODEL = true) generate
+  gen_mig_model : if (SIMULATION = true) generate
     -- pragma translate_off
 
     dual_mig_sim: if CFG_MIG_DUAL = 1 generate
@@ -876,7 +873,7 @@ begin
 -----------------------------------------------------------------------
 
   reset_o2 <= rstn;
-  eth0 : if CFG_GRETH = 1 generate -- Gaisler ethernet MAC
+  eth0 : if SIMULATION = false and CFG_GRETH = 1 generate -- Gaisler ethernet MAC
     e1 : grethm
       generic map(
         hindex => CFG_AHB_JTAG,
@@ -939,8 +936,9 @@ begin
   emdc_pad : outpad generic map (tech => padtech, level => cmos, voltage => x18v)
     port map (emdc, etho.mdc);
 
-  no_eth0: if CFG_GRETH = 0 generate
+  no_eth0: if SIMULATION = true or CFG_GRETH = 0 generate
     eth0_apbo <= apb_none;
+    eth0_ahbmo <= ahbm_none;
     etho.mdio_o <= '0';
     etho.mdio_oe <= '0';
     etho.txd <= (others => '0');
@@ -1083,11 +1081,7 @@ begin
       has_sync                => CFG_HAS_SYNC,
       XLEN                    => CFG_XLEN,
       YLEN                    => CFG_YLEN,
-      TILES_NUM               => CFG_TILES_NUM,
-      SIM_BYPASS_INIT_CAL     => SIM_BYPASS_INIT_CAL,
-      SIMULATION              => SIMULATION,
-      USE_MIG_INTERFACE_MODEL => USE_MIG_INTERFACE_MODEL,
-      autonegotiation         => autonegotiation)
+      TILES_NUM               => CFG_TILES_NUM)
     port map (
       rst           => chip_rst,
       noc_clk       => noc_clk,
