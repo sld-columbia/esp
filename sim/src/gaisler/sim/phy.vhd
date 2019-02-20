@@ -2,7 +2,7 @@
 --  This file is a part of the GRLIB VHDL IP LIBRARY
 --  Copyright (C) 2003 - 2008, Gaisler Research
 --  Copyright (C) 2008 - 2014, Aeroflex Gaisler
---  Copyright (C) 2015 - 2016, Cobham Gaisler
+--  Copyright (C) 2015 - 2018, Cobham Gaisler
 --
 --  This program is free software; you can redistribute it and/or modify
 --  it under the terms of the GNU General Public License as published by
@@ -16,11 +16,11 @@
 --
 --  You should have received a copy of the GNU General Public License
 --  along with this program; if not, write to the Free Software
---  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA 
+--  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 ----------------------------------------------------------------------------
--- Entity:   	phy
--- File:	phy.vhd
--- Description:	Simulation model of an Ethernet PHY
+-- Entity:      phy
+-- File:        phy.vhd
+-- Description: Simulation model of an Ethernet PHY
 -- Author:      Marko Isomaki
 ------------------------------------------------------------------------------
 
@@ -48,30 +48,33 @@ entity phy is
     base1000_t_fd : integer range 0 to 1  := 1;
     base1000_t_hd : integer range 0 to 1  := 1;
     rmii          : integer range 0 to 1  := 0;
-    rgmii         : integer range 0 to 1  := 0
+    rgmii         : integer range 0 to 1  := 0;
+    extrxclken    : integer range 0 to 1  := 0;  -- align rx_clk with extrxclk (gmii only)
+    gmii100       : integer range 0 to 1  := 0  -- force 10/100 to (x10/x100 repeating) gmii
     );
   port(
-    rstn     : in std_logic;
+    rstn     : in    std_logic;
     mdio     : inout std_logic;
-    tx_clk   : out std_logic;
-    rx_clk   : out std_logic; 
-    rxd      : out std_logic_vector(7 downto 0);   
-    rx_dv    : out std_logic; 
-    rx_er    : out std_logic; 
-    rx_col   : out std_logic;
-    rx_crs   : out std_logic;
-    txd      : in std_logic_vector(7 downto 0);   
-    tx_en    : in std_logic; 
-    tx_er    : in std_logic; 
-    mdc      : in std_logic;
-    gtx_clk  : in std_logic  
-  );
+    tx_clk   : out   std_logic;
+    rx_clk   : out   std_logic;
+    rxd      : out   std_logic_vector(7 downto 0);
+    rx_dv    : out   std_logic;
+    rx_er    : out   std_logic;
+    rx_col   : out   std_logic;
+    rx_crs   : out   std_logic;
+    txd      : in    std_logic_vector(7 downto 0);
+    tx_en    : in    std_logic;
+    tx_er    : in    std_logic;
+    mdc      : in    std_logic;
+    gtx_clk  : in    std_logic;
+    extrxclk : in    std_logic
+    );
 end;
 
 architecture behavioral of phy is
   type mdio_state_type is (idle, start_of_frame, start_of_frame2, op, phyad, regad,
-    ta, rdata, wdata);
-           
+                           ta, rdata, wdata);
+
   type ctrl_reg_type is record
     reset       : std_ulogic;
     loopback    : std_ulogic;
@@ -103,10 +106,10 @@ architecture behavioral of phy is
   end record;
 
   type aneg_ab_type is record
-    next_page     : std_ulogic;
-    remote_fault  : std_ulogic;
-    tech_ability  : std_logic_vector(7 downto 0);
-    selector      : std_logic_vector(4 downto 0);
+    next_page    : std_ulogic;
+    remote_fault : std_ulogic;
+    tech_ability : std_logic_vector(7 downto 0);
+    selector     : std_logic_vector(4 downto 0);
   end record;
 
   type aneg_exp_type is record
@@ -118,11 +121,11 @@ architecture behavioral of phy is
   end record;
 
   type aneg_nextpage_type is record
-    next_page     : std_ulogic;
-    message_page  : std_ulogic;
-    ack2          : std_ulogic;
-    toggle        : std_ulogic;
-    message       : std_logic_vector(10 downto 0);
+    next_page    : std_ulogic;
+    message_page : std_ulogic;
+    ack2         : std_ulogic;
+    toggle       : std_ulogic;
+    message      : std_logic_vector(10 downto 0);
   end record;
 
   type mst_slv_ctrl_type is record
@@ -150,61 +153,76 @@ architecture behavioral of phy is
     base1000_t_fd : std_ulogic;
     base1000_t_hd : std_ulogic;
   end record;
-  
+
   type reg_type is record
-    state         : mdio_state_type;
-    cnt           : integer;
-    op            : std_logic_vector(1 downto 0);
-    phyad         : std_logic_vector(4 downto 0);
-    regad         : std_logic_vector(4 downto 0);
-    wr            : std_ulogic;
-    regtmp        : std_logic_vector(15 downto 0);
+    state      : mdio_state_type;
+    cnt        : integer;
+    op         : std_logic_vector(1 downto 0);
+    phyad      : std_logic_vector(4 downto 0);
+    regad      : std_logic_vector(4 downto 0);
+    wr         : std_ulogic;
+    regtmp     : std_logic_vector(15 downto 0);
     -- MII management registers
-    ctrl          : ctrl_reg_type;
-    status        : status_reg_type;
-    anegadv       : aneg_ab_type;
-    aneglp        : aneg_ab_type;
-    anegexp       : aneg_exp_type;
-    anegnptx      : aneg_nextpage_type;
-    anegnplp      : aneg_nextpage_type;
-    mstslvctrl    : mst_slv_ctrl_type;
-    mstslvstat    : mst_slv_status_type;
-    extstatus     : extended_status_reg_type;
-    rstcnt        : integer;
-    anegcnt       : integer;
+    ctrl       : ctrl_reg_type;
+    status     : status_reg_type;
+    anegadv    : aneg_ab_type;
+    aneglp     : aneg_ab_type;
+    anegexp    : aneg_exp_type;
+    anegnptx   : aneg_nextpage_type;
+    anegnplp   : aneg_nextpage_type;
+    mstslvctrl : mst_slv_ctrl_type;
+    mstslvstat : mst_slv_status_type;
+    extstatus  : extended_status_reg_type;
+    rstcnt     : integer;
+    anegcnt    : integer;
   end record;
 
-  signal r, rin   : reg_type;
-  signal int_clk  : std_ulogic := '0';
-  signal clkslow  : std_ulogic := '0';
-  signal rcnt     : integer;
-  signal anegact  : std_ulogic;
+  signal r, rin  : reg_type;
+  signal int_clk : std_ulogic := '0';
+  signal clkslow : std_ulogic := '0';
+  signal rcnt    : integer;
+  signal anegact : std_ulogic;
+
+  constant qlength      : integer                      := 4;
+  signal txdataq        : std_logic_vector(0 to qlength*10-1);
+  signal txqpos, rxqpos : integer range 0 to qlength-1 := 0;
+
+  type phy_interface_mode_type is (mode_mii, mode_gmii, mode_rmii, mode_rgmii);
+  signal ifmode : phy_interface_mode_type;
+
+  signal lb_rxd           : std_logic_vector(7 downto 0);
+  signal lb_rxdv, lb_rxer : std_ulogic;
+
+  signal erxclkdel : std_ulogic;
 begin
-  --mdio signal pull-up
-  int_clk <= not int_clk after 10 ns when rmii = 1 else
-             not int_clk after 4 ns when r.ctrl.speedsel = "01" else
-             not int_clk after 20 ns when r.ctrl.speedsel = "10" else
-             not int_clk after 200 ns when r.ctrl.speedsel = "00";
-  
+
+  -- Selects which interface standard should be implemented by the PHY
+  -- Note we assume selection between GMII and MII depending on speed setting
+  --   in MDIO reg
+  ifmode <= mode_rgmii when rgmii = 1 else
+            mode_rmii when rmii = 1 else
+            mode_gmii when (r.ctrl.speedsel = "01" or gmii100 = 1) else
+            mode_mii;
+
+  erxclkdel <= transport extrxclk after (8 ns - 2.5 ns);
+
+  int_clk <= erxclkdel when extrxclken = 1 and ifmode = mode_gmii else
+             not int_clk after 10 ns  when ifmode = mode_rmii else
+             gtx_clk     after 1 ns   when ifmode = mode_rgmii and r.ctrl.loopback = '1' else
+             not int_clk after 4 ns   when ifmode = mode_rgmii and r.ctrl.speedsel = "01" else
+             not int_clk after 20 ns  when ifmode = mode_rgmii and r.ctrl.speedsel = "10" else
+             not int_clk after 200 ns when ifmode = mode_rgmii and r.ctrl.speedsel = "00" else
+             not int_clk after 4 ns   when ifmode = mode_gmii else
+             not int_clk after 20 ns  when ifmode = mode_mii and r.ctrl.speedsel = "10" else
+             not int_clk after 200 ns when ifmode = mode_mii and r.ctrl.speedsel = "00";
+
   clkslow <= not clkslow after 20 ns when r.ctrl.speedsel = "10" else
              not clkslow after 200 ns;
-  
---   rstdelay : process
---   begin
---     loop
---       rstd <= '0';
---       while r.ctrl.reset /= '1' loop
---         wait on r.ctrl.reset;
---       end loop;
---       rstd <= '1';
---       while rstn = '0' loop
---         wait on rstn;
---       end loop;
---       wait on rstn for 3 us;
---       rstd <= '0';
---       wait on rstn until r.ctrl.reset = '0' for 5 us; 
---     end loop;
---   end process;
+
+  rx_clk <= int_clk after 2.5 ns when ifmode = mode_gmii else
+            int_clk after 10 ns when ifmode = mode_mii else
+            int_clk;
+  tx_clk <= clkslow when ifmode /= mode_gmii else '0';
 
   anegproc : process is
   begin
@@ -233,12 +251,12 @@ begin
         end if;
       end loop;
     end loop;
-  end process; 
+  end process;
 
   mdiocomb : process(rstn, r, anegact, mdio) is
     variable v : reg_type;
   begin
-    v := r; 
+    v := r;
     if anegact = '0' then
       v.ctrl.restartaneg := '0';
     end if;
@@ -267,9 +285,9 @@ begin
         end if;
       when op =>
         v.cnt := v.cnt + 1;
-        v.op := r.op(0) & to_X01(mdio);
+        v.op  := r.op(0) & to_X01(mdio);
         if r.cnt = 1 then
-          if (v.op = "01") or (v.op = "10") then 
+          if (v.op = "01") or (v.op = "10") then
             v.state := phyad; v.cnt := 0;
           else
             v.state := idle; v.cnt := 0;
@@ -277,17 +295,17 @@ begin
         end if;
       when phyad =>
         v.phyad := r.phyad(3 downto 0) & to_X01(mdio);
-        v.cnt := v.cnt + 1;
+        v.cnt   := v.cnt + 1;
         if r.cnt = 4 then
           v.state := regad; v.cnt := 0;
         end if;
       when regad =>
         v.regad := r.regad(3 downto 0) & to_X01(mdio);
-        v.cnt := v.cnt + 1;
+        v.cnt   := v.cnt + 1;
         if r.cnt = 4 then
           v.cnt := 0;
           if conv_integer(r.phyad) = address then
-            v.state := ta; 
+            v.state := ta;
           else
             v.state := idle;
           end if;
@@ -302,87 +320,87 @@ begin
           if r.op = "10" then
             mdio <= '0'; v.cnt := 0; v.state := rdata;
             case r.regad is
-              when "00000" => --ctrl (basic)
+              when "00000" =>           --ctrl (basic)
                 v.regtmp := r.ctrl.reset & r.ctrl.loopback &
-                  r.ctrl.speedsel(1) & r.ctrl.anegen & r.ctrl.powerdown &
-                  r.ctrl.isolate & r.ctrl.restartaneg & r.ctrl.duplexmode &
-                  r.ctrl.coltest & r.ctrl.speedsel(0) & "000000";
-              when "00001" => --statuc (basic)
-                v.regtmp := r.status.base100_t4 & r.status.base100_x_fd & 
-                  r.status.base100_x_hd & r.status.fd_10 & r.status.hd_10 & 
-                  r.status.base100_t2_fd & r.status.base100_t2_hd & 
-                  r.status.extstat & '0' & r.status.mfpreamblesup & 
-                  r.status.anegcmpt & r.status.remfault & r.status.anegability &
-                  r.status.linkstat & r.status.jabdetect & r.status.extcap;
-              when "00010" => --PHY ID (extended)
+                            r.ctrl.speedsel(1) & r.ctrl.anegen & r.ctrl.powerdown &
+                            r.ctrl.isolate & r.ctrl.restartaneg & r.ctrl.duplexmode &
+                            r.ctrl.coltest & r.ctrl.speedsel(0) & "000000";
+              when "00001" =>           --statuc (basic)
+                v.regtmp := r.status.base100_t4 & r.status.base100_x_fd &
+                            r.status.base100_x_hd & r.status.fd_10 & r.status.hd_10 &
+                            r.status.base100_t2_fd & r.status.base100_t2_hd &
+                            r.status.extstat & '0' & r.status.mfpreamblesup &
+                            r.status.anegcmpt & r.status.remfault & r.status.anegability &
+                            r.status.linkstat & r.status.jabdetect & r.status.extcap;
+              when "00010" =>           --PHY ID (extended)
                 if extended_regs = 1 then
                   v.regtmp := X"BBCD";
                 else
-                  v.cnt := 0; v.state := idle; 
+                  v.cnt := 0; v.state := idle;
                 end if;
-              when "00011" => --PHY ID (extended)
+              when "00011" =>           --PHY ID (extended)
                 if extended_regs = 1 then
                   v.regtmp := X"9C83";
                 else
-                  v.cnt := 0; v.state := idle; 
+                  v.cnt := 0; v.state := idle;
                 end if;
-              when "00100" => --Auto-neg adv. (extended)
+              when "00100" =>           --Auto-neg adv. (extended)
                 if extended_regs = 1 then
-                  v.regtmp := r.anegadv.next_page & '0' & r.anegadv.remote_fault & 
-                    r.anegadv.tech_ability & r.anegadv.selector;
-                else
-                  v.cnt := 0; v.state := idle; 
-                end if;
-              when "00101" => --Auto-neg link partner ability (extended)
-                if extended_regs = 1 then
-                  v.regtmp := r.aneglp.next_page & '0' & r.aneglp.remote_fault & 
-                    r.aneglp.tech_ability & r.aneglp.selector;
-                else
-                  v.cnt := 0; v.state := idle; 
-                end if;
-              when "00110" => --Auto-neg expansion (extended)
-                if extended_regs = 1 then
-                  v.regtmp := "00000000000" & r.anegexp.par_detct_flt & 
-                  r.anegexp.lp_np_able &  r.anegexp.np_able & r.anegexp.page_rx &
-                  r.anegexp.lp_aneg_able;
-                else
-                  v.cnt := 0; v.state := idle; 
-                end if;
-              when "00111" => --Auto-neg next page (extended)
-                if extended_regs = 1 then
-                  v.regtmp := r.anegnptx.next_page & '0' & r.anegnptx.message_page &
-                  r.anegnptx.ack2 & r.anegnptx.toggle & r.anegnptx.message;
-                else
-                  v.cnt := 0; v.state := idle; 
-                end if;
-              when "01000" => --Auto-neg link partner received next page (extended)
-                if extended_regs = 1 then
-                  v.regtmp := r.anegnplp.next_page & '0' & r.anegnplp.message_page &
-                  r.anegnplp.ack2 & r.anegnplp.toggle & r.anegnplp.message;
-                else
-                  v.cnt := 0; v.state := idle; 
-                end if;
-              when "01001" => --Master-slave control (extended)
-                if extended_regs = 1 then
-                  v.regtmp := r.mstslvctrl.tmode & r.mstslvctrl.manualcfgen & 
-                  r.mstslvctrl.cfgval & r.mstslvctrl.porttype &
-                  r.mstslvctrl.base1000_t_fd &  r.mstslvctrl.base1000_t_hd &
-                  "00000000";
+                  v.regtmp := r.anegadv.next_page & '0' & r.anegadv.remote_fault &
+                              r.anegadv.tech_ability & r.anegadv.selector;
                 else
                   v.cnt := 0; v.state := idle;
                 end if;
-              when "01010" => --Master-slave status (extended)
+              when "00101" =>  --Auto-neg link partner ability (extended)
+                if extended_regs = 1 then
+                  v.regtmp := r.aneglp.next_page & '0' & r.aneglp.remote_fault &
+                              r.aneglp.tech_ability & r.aneglp.selector;
+                else
+                  v.cnt := 0; v.state := idle;
+                end if;
+              when "00110" =>           --Auto-neg expansion (extended)
+                if extended_regs = 1 then
+                  v.regtmp := "00000000000" & r.anegexp.par_detct_flt &
+                              r.anegexp.lp_np_able & r.anegexp.np_able & r.anegexp.page_rx &
+                              r.anegexp.lp_aneg_able;
+                else
+                  v.cnt := 0; v.state := idle;
+                end if;
+              when "00111" =>           --Auto-neg next page (extended)
+                if extended_regs = 1 then
+                  v.regtmp := r.anegnptx.next_page & '0' & r.anegnptx.message_page &
+                              r.anegnptx.ack2 & r.anegnptx.toggle & r.anegnptx.message;
+                else
+                  v.cnt := 0; v.state := idle;
+                end if;
+              when "01000" =>  --Auto-neg link partner received next page (extended)
+                if extended_regs = 1 then
+                  v.regtmp := r.anegnplp.next_page & '0' & r.anegnplp.message_page &
+                              r.anegnplp.ack2 & r.anegnplp.toggle & r.anegnplp.message;
+                else
+                  v.cnt := 0; v.state := idle;
+                end if;
+              when "01001" =>           --Master-slave control (extended)
+                if extended_regs = 1 then
+                  v.regtmp := r.mstslvctrl.tmode & r.mstslvctrl.manualcfgen &
+                              r.mstslvctrl.cfgval & r.mstslvctrl.porttype &
+                              r.mstslvctrl.base1000_t_fd & r.mstslvctrl.base1000_t_hd &
+                              "00000000";
+                else
+                  v.cnt := 0; v.state := idle;
+                end if;
+              when "01010" =>           --Master-slave status (extended)
                 if extended_regs = 1 then
                   v.regtmp := r.mstslvstat.cfgfault & r.mstslvstat.cfgres &
-                  r.mstslvstat.locrxstate & r.mstslvstat.remrxstate & 
-                  r.mstslvstat.lpbase1000_t_fd & r.mstslvstat.lpbase1000_t_hd &
-                  "00" & r.mstslvstat.idlerrcnt;
+                              r.mstslvstat.locrxstate & r.mstslvstat.remrxstate &
+                              r.mstslvstat.lpbase1000_t_fd & r.mstslvstat.lpbase1000_t_hd &
+                              "00" & r.mstslvstat.idlerrcnt;
                 else
                   v.cnt := 0; v.state := idle;
                 end if;
               when "01111" =>
                 if (base1000_x_fd = 1) or (base1000_x_hd = 1) or
-                   (base1000_t_fd = 1) or (base1000_t_hd = 1) then
+                  (base1000_t_fd = 1) or (base1000_t_hd = 1) then
                   v.regtmp := r.extstatus.base1000_x_fd &
                               r.extstatus.base1000_x_hd &
                               r.extstatus.base1000_t_fd &
@@ -393,7 +411,7 @@ begin
               when others =>
                 --PHY shall not drive MDIO when unimplemented registers
                 --are accessed
-                v.cnt := 0; v.state := idle;
+                v.cnt    := 0; v.state := idle;
                 v.regtmp := (others => '0');
             end case;
             if r.ctrl.reset = '1' then
@@ -405,48 +423,48 @@ begin
             end if;
           else
             if to_X01(mdio) /= '0'then
-              v.cnt := 0; v.state := idle; 
+              v.cnt := 0; v.state := idle;
             else
               v.cnt := 0; v.state := wdata;
-            end if; 
+            end if;
           end if;
         end if;
       when rdata =>
         v.cnt := r.cnt + 1;
-        mdio <= r.regtmp(15-r.cnt);
+        mdio  <= r.regtmp(15-r.cnt);
         if r.cnt = 15 then
           v.state := idle; v.cnt := 0;
         end if;
       when wdata =>
-        v.cnt := r.cnt + 1;
+        v.cnt    := r.cnt + 1;
         v.regtmp := r.regtmp(14 downto 0) & to_X01(mdio);
         if r.cnt = 15 then
           v.state := idle; v.cnt := 0;
           if r.ctrl.reset = '0' then
             case r.regad is
               when "00000" =>
-                v.ctrl.reset := v.regtmp(15);
-                v.ctrl.loopback := v.regtmp(14);
+                v.ctrl.reset       := v.regtmp(15);
+                v.ctrl.loopback    := v.regtmp(14);
                 v.ctrl.speedsel(1) := v.regtmp(13);
-                v.ctrl.anegen := v.regtmp(12);
-                v.ctrl.powerdown := v.regtmp(11);
-                v.ctrl.isolate := v.regtmp(10);
+                v.ctrl.anegen      := v.regtmp(12);
+                v.ctrl.powerdown   := v.regtmp(11);
+                v.ctrl.isolate     := v.regtmp(10);
                 v.ctrl.restartaneg := v.regtmp(9);
-                v.ctrl.duplexmode := v.regtmp(8);
-                v.ctrl.coltest := v.regtmp(7);
+                v.ctrl.duplexmode  := v.regtmp(8);
+                v.ctrl.coltest     := v.regtmp(7);
                 v.ctrl.speedsel(0) := v.regtmp(6);
               when "00100" =>
                 if extended_regs = 1 then
                   v.anegadv.remote_fault := r.regtmp(13);
                   v.anegadv.tech_ability := r.regtmp(12 downto 5);
-                  v.anegadv.selector := r.regtmp(4 downto 0);
+                  v.anegadv.selector     := r.regtmp(4 downto 0);
                 end if;
               when "00111" =>
                 if extended_regs = 1 then
-                  v.anegnptx.next_page     := r.regtmp(15);
-                  v.anegnptx.message_page  := r.regtmp(13);
-                  v.anegnptx.ack2          := r.regtmp(12);
-                  v.anegnptx.message       := r.regtmp(10 downto 0);
+                  v.anegnptx.next_page    := r.regtmp(15);
+                  v.anegnptx.message_page := r.regtmp(13);
+                  v.anegnptx.ack2         := r.regtmp(12);
+                  v.anegnptx.message      := r.regtmp(10 downto 0);
                 end if;
               when "01001" =>
                 if extended_regs = 1 then
@@ -457,7 +475,7 @@ begin
                   v.mstslvctrl.base1000_t_fd := r.regtmp(9);
                   v.mstslvctrl.base1000_t_hd := r.regtmp(8);
                 end if;
-              when others =>  --no writable bits for other regs
+              when others =>            --no writable bits for other regs
                 null;
             end case;
           end if;
@@ -468,10 +486,10 @@ begin
     if r.rstcnt > 19 then
       v.ctrl.reset := '0'; v.rstcnt := 0;
     else
-      v.rstcnt := r.rstcnt + 1; 
+      v.rstcnt := r.rstcnt + 1;
     end if;
     if (v.ctrl.reset and not r.ctrl.reset) = '1' then
-      v.rstcnt := 0; 
+      v.rstcnt := 0;
     end if;
     if r.ctrl.anegen = '1' then
       if r.anegcnt < 10 then
@@ -479,21 +497,21 @@ begin
       else
         v.status.anegcmpt := '1';
         if (base1000_x_fd = 1) or (base1000_x_hd = 1) or
-           (r.mstslvctrl.base1000_t_fd = '1') or
-           (r.mstslvctrl.base1000_t_hd = '1') then
+          (r.mstslvctrl.base1000_t_fd = '1') or
+          (r.mstslvctrl.base1000_t_hd = '1') then
           v.ctrl.speedsel(1 downto 0) := "01";
         elsif (r.anegadv.tech_ability(4) = '1') or
-              (r.anegadv.tech_ability(3) = '1') or
-              (r.anegadv.tech_ability(2) = '1') or
-              (base100_t2_fd = 1) or (base100_t2_hd = 1) then
+          (r.anegadv.tech_ability(3) = '1') or
+          (r.anegadv.tech_ability(2) = '1') or
+          (base100_t2_fd = 1) or (base100_t2_hd = 1) then
           v.ctrl.speedsel(1 downto 0) := "10";
         else
           v.ctrl.speedsel(1 downto 0) := "00";
         end if;
         if ((base1000_x_fd = 1) or (r.mstslvctrl.base1000_t_fd = '1')) or
-           (((base100_t2_fd = 1) or (r.anegadv.tech_ability(3) = '1')) and
+          (((base100_t2_fd = 1) or (r.anegadv.tech_ability(3) = '1')) and
            (r.mstslvctrl.base1000_t_hd = '0') and (base1000_x_hd = 0)) or
-           ((r.anegadv.tech_ability(1) = '1') and (base100_t2_hd = 0) and
+          ((r.anegadv.tech_ability(1) = '1') and (base100_t2_hd = 0) and
            (r.anegadv.tech_ability(4) = '0') and
            (r.anegadv.tech_ability(2) = '0')) then
           v.ctrl.duplexmode := '1';
@@ -503,8 +521,8 @@ begin
       end if;
     end if;
     if r.ctrl.restartaneg = '1' then
-      v.anegcnt := 0;
-      v.status.anegcmpt := '0';
+      v.anegcnt          := 0;
+      v.status.anegcmpt  := '0';
       v.ctrl.restartaneg := '0';
     end if;
     rin <= v;
@@ -524,60 +542,60 @@ begin
 
     -- RESET
     if (r.ctrl.reset or not rstn) = '1' then
-      r.ctrl.loopback <= '1'; r.anegcnt <= 0;
+      r.ctrl.loopback <= '0'; r.anegcnt <= 0;
       if (base1000_x_hd = 1) or (base1000_x_fd = 1) or (base1000_t_hd = 1) or
-         (base1000_t_fd = 1) then
+        (base1000_t_fd = 1) then
         r.ctrl.speedsel <= "01";
       elsif (base100_x_hd = 1) or (base100_t2_hd = 1) or (base100_x_fd = 1) or
-            (base100_t2_fd = 1) or (base100_t4 = 1) then
+        (base100_t2_fd = 1) or (base100_t4 = 1) then
         r.ctrl.speedsel <= "10";
       else
         r.ctrl.speedsel <= "00";
       end if;
-        
-      r.ctrl.anegen <= conv_std_logic(aneg = 1);
-      r.ctrl.powerdown <= '0';
-      r.ctrl.isolate <= '0';
+
+      r.ctrl.anegen      <= conv_std_logic(aneg = 1);
+      r.ctrl.powerdown   <= '0';
+      r.ctrl.isolate     <= '0';
       r.ctrl.restartaneg <= '0';
       if (base100_x_hd = 0) and (hd_10 = 0) and (base100_t2_hd = 0) and
-         (base1000_x_hd = 0) and (base1000_t_hd = 0) then
+        (base1000_x_hd = 0) and (base1000_t_hd = 0) then
         r.ctrl.duplexmode <= '1';
       else
         r.ctrl.duplexmode <= '0';
       end if;
       r.ctrl.coltest <= '0';
-      
-      r.status.base100_t4 <= conv_std_logic(base100_t4 = 1);
-      r.status.base100_x_fd <= conv_std_logic(base100_x_fd = 1);
-      r.status.base100_x_hd <= conv_std_logic(base100_x_hd = 1);  
-      r.status.fd_10 <= conv_std_logic(fd_10 = 1);        
-      r.status.hd_10 <= conv_std_logic(hd_10 = 1);        
+
+      r.status.base100_t4    <= conv_std_logic(base100_t4 = 1);
+      r.status.base100_x_fd  <= conv_std_logic(base100_x_fd = 1);
+      r.status.base100_x_hd  <= conv_std_logic(base100_x_hd = 1);
+      r.status.fd_10         <= conv_std_logic(fd_10 = 1);
+      r.status.hd_10         <= conv_std_logic(hd_10 = 1);
       r.status.base100_t2_fd <= conv_std_logic(base100_t2_fd = 1);
       r.status.base100_t2_hd <= conv_std_logic(base100_t2_hd = 1);
       r.status.extstat <= conv_std_logic((base1000_x_fd = 1) or
                                          (base1000_x_hd = 1) or
                                          (base1000_t_fd = 1) or
-                                         (base1000_t_hd = 1)); 
+                                         (base1000_t_hd = 1));
       r.status.mfpreamblesup <= '0';
-      r.status.anegcmpt <= '0';      
-      r.status.remfault <= '0';     
-      r.status.anegability <= conv_std_logic(aneg = 1); 
-      r.status.linkstat <= '0';     
-      r.status.jabdetect <= '0';    
-      r.status.extcap <= conv_std_logic(extended_regs = 1);
+      r.status.anegcmpt      <= '0';
+      r.status.remfault      <= '0';
+      r.status.anegability   <= conv_std_logic(aneg = 1);
+      r.status.linkstat      <= '0';
+      r.status.jabdetect     <= '0';
+      r.status.extcap        <= conv_std_logic(extended_regs = 1);
 
-      r.anegadv.next_page <= '0';
+      r.anegadv.next_page    <= '0';
       r.anegadv.remote_fault <= '0';
       r.anegadv.tech_ability <= "000" & conv_std_logic(base100_t4 = 1) &
-        conv_std_logic(base100_x_fd = 1) & conv_std_logic(base100_x_hd = 1) &
-        conv_std_logic(fd_10 = 1) & conv_std_logic(hd_10 = 1);
+                                conv_std_logic(base100_x_fd = 1) & conv_std_logic(base100_x_hd = 1) &
+                                conv_std_logic(fd_10 = 1) & conv_std_logic(hd_10 = 1);
       r.anegadv.selector <= "00001";
 
-      r.aneglp.next_page <= '0';
+      r.aneglp.next_page    <= '0';
       r.aneglp.remote_fault <= '0';
       r.aneglp.tech_ability <= "000" & conv_std_logic(base100_t4 = 1) &
-        conv_std_logic(base100_x_fd = 1) & conv_std_logic(base100_x_hd = 1) &
-        conv_std_logic(fd_10 = 1) & conv_std_logic(hd_10 = 1);
+                               conv_std_logic(base100_x_fd = 1) & conv_std_logic(base100_x_hd = 1) &
+                               conv_std_logic(fd_10 = 1) & conv_std_logic(hd_10 = 1);
       r.aneglp.selector <= "00001";
 
       r.anegexp.par_detct_flt <= '0';
@@ -586,17 +604,17 @@ begin
       r.anegexp.page_rx       <= '0';
       r.anegexp.lp_aneg_able  <= '0';
 
-      r.anegnptx.next_page     <= '0';
-      r.anegnptx.message_page  <= '1';
-      r.anegnptx.ack2          <= '0';
-      r.anegnptx.toggle        <= '0';
-      r.anegnptx.message       <= "00000000001";
+      r.anegnptx.next_page    <= '0';
+      r.anegnptx.message_page <= '1';
+      r.anegnptx.ack2         <= '0';
+      r.anegnptx.toggle       <= '0';
+      r.anegnptx.message      <= "00000000001";
 
-      r.anegnplp.next_page     <= '0';
-      r.anegnplp.message_page  <= '1';
-      r.anegnplp.ack2          <= '0';
-      r.anegnplp.toggle        <= '0';
-      r.anegnplp.message       <= "00000000001";
+      r.anegnplp.next_page    <= '0';
+      r.anegnplp.message_page <= '1';
+      r.anegnplp.ack2         <= '0';
+      r.anegnplp.toggle       <= '0';
+      r.anegnplp.message      <= "00000000001";
 
       r.mstslvctrl.tmode         <= (others => '0');
       r.mstslvctrl.manualcfgen   <= '0';
@@ -605,74 +623,148 @@ begin
       r.mstslvctrl.base1000_t_fd <= conv_std_logic(base1000_t_fd = 1);
       r.mstslvctrl.base1000_t_hd <= conv_std_logic(base1000_t_fd = 1);
 
-      r.mstslvstat.cfgfault         <= '0';
-      r.mstslvstat.cfgres           <= '1';
-      r.mstslvstat.locrxstate       <= '1';
-      r.mstslvstat.remrxstate       <= '1';
-      r.mstslvstat.lpbase1000_t_fd  <= conv_std_logic(base1000_t_fd = 1);
-      r.mstslvstat.lpbase1000_t_hd  <= conv_std_logic(base1000_t_fd = 1);
-      r.mstslvstat.idlerrcnt        <= (others => '0');
-      
+      r.mstslvstat.cfgfault        <= '0';
+      r.mstslvstat.cfgres          <= '1';
+      r.mstslvstat.locrxstate      <= '1';
+      r.mstslvstat.remrxstate      <= '1';
+      r.mstslvstat.lpbase1000_t_fd <= conv_std_logic(base1000_t_fd = 1);
+      r.mstslvstat.lpbase1000_t_hd <= conv_std_logic(base1000_t_fd = 1);
+      r.mstslvstat.idlerrcnt       <= (others => '0');
+
       r.extstatus.base1000_x_fd <= conv_std_logic(base1000_x_fd = 1);
       r.extstatus.base1000_x_hd <= conv_std_logic(base1000_x_hd = 1);
       r.extstatus.base1000_t_fd <= conv_std_logic(base1000_t_fd = 1);
       r.extstatus.base1000_t_hd <= conv_std_logic(base1000_t_hd = 1);
-      
+
     end if;
-    
+
     if rstn = '0' then
-      r.cnt <= 0; r.state <= idle; r.rstcnt <= 0;
-      r.ctrl.reset <= '1'; 
+      r.cnt        <= 0; r.state <= idle; r.rstcnt <= 0;
+      r.ctrl.reset <= '1';
     end if;
   end process;
 
-
-  loopback_sel : process(r.ctrl.loopback, int_clk, gtx_clk, r.ctrl.speedsel, txd, tx_en) is
-  begin
-    if r.ctrl.loopback = '1' then
-      if rmii = 0 then
-        rx_col <= '0'; rx_crs <= tx_en; rx_dv <= tx_en; rx_er <= tx_er;
-        rxd <= txd;
-        if r.ctrl.speedsel /= "01" then
-          rx_clk <= int_clk; tx_clk <= int_clk;
-        else
-          rx_clk <= gtx_clk; tx_clk <= clkslow;
-        end if;
-      else
-        rx_dv <= '1'; rx_er <= '1'; --unused should not affect anything
-        rx_col <= '0'; rx_crs <= tx_en;
-        if tx_en = '0' then
-          rxd(1 downto 0) <= "00";
-        else
-          rxd(1 downto 0) <= txd(1 downto 0);
-        end if;
-        if rgmii = 1 then
-           if (gtx_clk = '1' and tx_en = '0') then
-              rxd(3 downto 0) <= r.ctrl.duplexmode & r.ctrl.speedsel & r.status.linkstat;
-           end if;
-        end if;  
-        rx_clk <= '0'; tx_clk <= '0';
-        
+  no_rgmii : if (rgmii = 0) generate
+    loopback_sel : process(r, gtx_clk, txd, tx_en, tx_er, lb_rxd, lb_rxer, lb_rxdv) is
+    begin
+      rx_col <= '0'; rx_crs <= '1';
+      rxd    <= (others => '0'); rx_dv <= '0'; rx_er <= '0';
+      if r.ctrl.loopback = '1' then
+        case ifmode is
+          when mode_mii | mode_gmii =>
+            -- Use TX ring buffer
+            rxd   <= lb_rxd;
+            rx_dv <= lb_rxdv;
+            rx_er <= lb_rxer;
+          when mode_rmii =>
+            rx_dv  <= '1'; rx_er <= '1';  --unused should not affect anything
+            rx_col <= '0'; rx_crs <= tx_en;
+            if tx_en = '1' then
+              rxd(1 downto 0) <= txd(1 downto 0);
+            end if;
+          when mode_rgmii =>
+            if (tx_en = '0') then
+              rxd(3 downto 0) <= r.ctrl.duplexmode & r.ctrl.speedsel(0) & r.ctrl.speedsel(1) & r.ctrl.loopback;
+            else
+              if (gtx_clk = '1') then
+                rx_dv <= '1';
+              else
+                rx_dv <= '1';             -- No Error
+              end if;
+              rxd(3 downto 0) <= txd(3 downto 0);
+            end if;
+            rxd(7 downto 4) <= (others => '0');
+        end case;
       end if;
-    else
-      rx_col <= '0'; rx_crs <= '0'; rx_dv <= '0'; rx_er <= '0';
-      rxd <= (others => '0');      
-      if rgmii = 1 then
-         if (gtx_clk = '1') then
-            rxd(3 downto 0) <= r.ctrl.duplexmode & r.ctrl.speedsel & r.status.linkstat;
-         end if;
-      end if;  
-      if rmii = 0 then
-        if r.ctrl.speedsel /= "01" then
-          rx_clk <= int_clk; tx_clk <= int_clk after 3 ns;
+    end process;
+  end generate no_rgmii;
+
+  en_rgmii : if (rgmii = 1) generate
+    loopback_sel : process(int_clk) is
+    begin
+      rx_col <= '0'; rx_crs <= '1';
+      rxd    <= (others => '0'); rx_dv <= '0'; rx_er <= '0';
+      if r.ctrl.loopback = '1' then
+        case ifmode is
+          when mode_rgmii =>
+            if (tx_en = '0') then
+              rxd(3 downto 0) <= r.ctrl.duplexmode & r.ctrl.speedsel(0) & r.ctrl.speedsel(1) & r.ctrl.loopback;
+            else
+              if (gtx_clk = '1') then
+                rx_dv <= '1';
+              else
+                rx_dv <= '1';           -- No Error
+              end if;
+              rxd(3 downto 0) <= txd(3 downto 0);
+            end if;
+            rxd(7 downto 4) <= (others => '0');
+          when others =>
+            rxd   <= (others => '0');
+            rx_dv <= '0';
+        end case;
+      end if;
+    end process;
+  end generate en_rgmii;
+
+  txsamp : process(txd, tx_en, tx_er, gtx_clk, int_clk, clkslow)
+
+    variable lasttxtr, lastclk : time;
+    variable lastclk_valid     : boolean := false;
+    constant tSU_GMII          : time    := 2.5 ns;
+    constant tH_GMII           : time    := 0.5 ns;
+    constant tCTOmax_MII       : time    := 25.0 ns;
+
+    procedure sample_data(tSU : time) is
+    begin
+      txdataq(txqpos*10 to txqpos*10+9) <= (txd & tx_en & tx_er);
+      txqpos                            <= (txqpos+1) mod qlength;
+      assert (now-lasttxtr) >= tSU
+        report "Setup violation on txd/tx_en/tx_er" severity warning;
+      lastclk       := now;
+      lastclk_valid := true;
+    end procedure;
+
+    procedure holdcheck(tH : time) is
+    begin
+      assert (not lastclk_valid) or (lastclk >= lasttxtr) or (lasttxtr-lastclk >= tH)
+        report "Hold violation on txd/tx_en/tx_er" severity warning;
+    end procedure;
+
+  begin
+    if txd'event or tx_en'event or tx_er'event then lasttxtr := now; end if;
+    case ifmode is
+      when mode_gmii =>
+        if r.ctrl.speedsel = "01" or gmii100 = 1 then
+          if rising_edge(gtx_clk) then sample_data(2.5 ns); end if;
+          holdcheck(0.5 ns);
         else
-          rx_clk <= gtx_clk; tx_clk <= clkslow;
+          if rising_edge(clkslow) then sample_data(15.0 ns); end if;
         end if;
+      when mode_mii =>
+        if rising_edge(int_clk) then sample_data(15.0 ns); end if;
+      when others =>
+    end case;
+  end process;
+
+  rxloopback : process(int_clk)
+    variable twin : time;
+  begin
+    if rising_edge(int_clk) then
+      if r.ctrl.loopback = '0' then
+        rxqpos <= (txqpos + (qlength/2)) mod qlength;
       else
-        rx_clk <= int_clk; tx_clk <= int_clk after 3 ns;
-      end if;  
+        rxqpos <= (rxqpos+1) mod qlength;
+      end if;
+      case ifmode is
+        when mode_mii  => twin := 20.0 ns;
+        when mode_gmii => twin := 3.0 ns;
+        when others    => twin := 1.0 ns;
+      end case;
+      lb_rxd  <= txdataq(rxqpos*10 to rxqpos*10+7), (others => '0') after twin;
+      lb_rxdv <= txdataq(rxqpos*10+8), '0'                          after twin;
+      lb_rxer <= txdataq(rxqpos*10+9), '0'                          after twin;
     end if;
   end process;
+
 end;
 -- pragma translate_on
-

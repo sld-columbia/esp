@@ -204,23 +204,26 @@ package sim is
       base1000_t_fd : integer range 0 to 1  := 1;
       base1000_t_hd : integer range 0 to 1  := 1;
       rmii          : integer range 0 to 1  := 0;
-      rgmii         : integer range 0 to 1  := 0
+      rgmii         : integer range 0 to 1  := 0;
+      extrxclken    : integer range 0 to 1  := 0;
+      gmii100       : integer range 0 to 1  := 0
       );
     port(
-      rstn     : in std_logic;
+      rstn     : in    std_logic;
       mdio     : inout std_logic;
-      tx_clk   : out std_logic;
-      rx_clk   : out std_logic;
-      rxd      : out std_logic_vector(7 downto 0);   
-      rx_dv    : out std_logic; 
-      rx_er    : out std_logic; 
-      rx_col   : out std_logic;
-      rx_crs   : out std_logic;
-      txd      : in std_logic_vector(7 downto 0);   
-      tx_en    : in std_logic; 
-      tx_er    : in std_logic; 
-      mdc      : in std_logic;
-      gtx_clk  : in std_logic
+      tx_clk   : out   std_logic;
+      rx_clk   : out   std_logic;
+      rxd      : out   std_logic_vector(7 downto 0);
+      rx_dv    : out   std_logic;
+      rx_er    : out   std_logic;
+      rx_col   : out   std_logic;
+      rx_crs   : out   std_logic;
+      txd      : in    std_logic_vector(7 downto 0);
+      tx_en    : in    std_logic;
+      tx_er    : in    std_logic;
+      mdc      : in    std_logic;
+      gtx_clk  : in    std_logic;
+      extrxclk : in    std_logic := '0'
       );
   end component;
 
