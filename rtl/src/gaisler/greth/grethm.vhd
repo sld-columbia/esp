@@ -54,6 +54,7 @@ entity grethm is
     ipaddrh        : integer := 16#c0a8#;
     ipaddrl        : integer := 16#0035#;
     phyrstadr      : integer range 0 to 32 := 0;
+    vcu118         : integer range 0 to 1  := 0;
     rmii           : integer range 0 to 1 := 0;
     sim            : integer range 0 to 1 := 0;
     giga           : integer range 0 to 1  := 0;
@@ -108,6 +109,7 @@ begin
         ipaddrh        => ipaddrh,
         ipaddrl        => ipaddrl,
         phyrstadr      => phyrstadr,
+        vcu118         => vcu118,
         rmii           => rmii,
         oepol          => oepol,
         scanen         => scanen,

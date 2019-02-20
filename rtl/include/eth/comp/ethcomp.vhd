@@ -38,6 +38,7 @@ package ethcomp is
       ipaddrh        : integer := 16#c0a8#;
       ipaddrl        : integer := 16#0035#;
       phyrstadr      : integer range 0 to 32 := 0;
+      vcu118         : integer range 0 to 1  := 0;
       rmii           : integer range 0 to 1  := 0;
       oepol	     : integer range 0 to 1  := 0; 
       scanen	     : integer range 0 to 1  := 0;

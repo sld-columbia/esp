@@ -46,6 +46,7 @@ entity grethc is
     ipaddrh        : integer := 16#c0a8#;
     ipaddrl        : integer := 16#0035#;
     phyrstadr      : integer range 0 to 32 := 0;
+    vcu118         : integer range 0 to 1  := 0;
     rmii           : integer range 0 to 1  := 0;
     oepol          : integer range 0 to 1  := 0; 
     scanen         : integer range 0 to 1  := 0;
@@ -243,6 +244,51 @@ architecture rtl of grethc is
   type mdio_state_type is (idle, preamble, startst, op, op2, phyadr, regadr,
                            ta, ta2, ta3, data, dataend);
 
+  -- VCU118 PHY initialization --
+  -- s0) Write 0x1040 to SGMII core register 0x0 (Control) to enable
+  -- Gigabit and Auto-negotiation
+
+  -- s1) Write 0x4000 to TI PHY register 0xD3 (SGMIICTL1) to enable
+  -- SGMII clock
+
+  -- s2) Write 0x1140 to TI PHY register 0x0 (BMCR) to enable Gigabit,
+  -- Auto-negotiation and full-duplex
+
+  -- s3) Write 0x29C7 to TI PHY register 0x14 (CFG2) to enable speed
+  -- optimization at 10Base-Te, SGMII auto-negotiation, enhanced speed
+  -- optimization, 4 speed optimization retries and low interrupt
+  -- polarity
+
+  -- s4) Write 0x0000 to TI PHY register 0x32 (RGMIICTL) to
+  -- disable RGMII
+
+  -- s5) Write 0x0800 to TI PHY register 0x10 (PHYCR) to enable SGMII
+
+  -- s6) Write 0x1170 to TI PHY register 0x31 (CFG4) to set the SGMII
+  -- auto-negotiation timer to 11 ms and perform the software
+  -- workaround mentioned in AR #69494 because the TI PHY is not
+  -- strapped to mode 3.
+
+  -- s7) Write 0x1340 to SGMII core register 0x0 (Control) to enable
+  -- Gigabit, Auto-negotiation and full-duplex and restart
+  -- auto-negotiation
+
+  -- Standard PHY initialization completion steps --
+  -- s8) Read SGMII core register 0x1 (Status) until bit 5 goes high
+  -- indicating auto-negotiation has completed
+
+  -- s9) Read SGMII core register 0x5 (SGMII A-Neg LP Ability) until
+  -- bit 15 goes high indicating the SGMII link is up
+
+  -- s10) Read SGMII core register 0x5 (SGMII A-Neg LP Ability) bits
+  -- [11:10] to determine the negotiated speed
+
+  type vcu118_mdio_init_type is (s0, s1a, s1b, s1c, s1d, s2, s3,
+                                 s4a, s4b, s4c, s4d, s5,
+                                 s6a, s6b, s6c, s6d, s7,
+                                 s8910);
+
+
   type ctrl_reg_type is record
     txen  : std_ulogic;
     rxen        : std_ulogic;
@@ -330,7 +376,9 @@ architecture rtl of grethc is
     txdesc      : std_logic_vector(31 downto 10);
     rxdesc      : std_logic_vector(31 downto 10);
     edclip      : std_logic_vector(31 downto 0);
-        
+    --special flag for Xilinx VCU118 configuration
+    vcu118_cfg_done : std_ulogic;
+    vcu118_init_state  : vcu118_mdio_init_type;
     --master tx interface
     txdsel          : std_logic_vector(9 downto 3);
     tmsto           : eth_tx_ahb_in_type;
@@ -478,8 +526,68 @@ architecture rtl of grethc is
   attribute sync_set_reset of irst : signal is "true";
   attribute async_set_reset of arst : signal is "true";
 
+  -- -- MDIO interface debug
+  -- ----- component BUFG -----
+  -- -- Clock debug signals with MDIO mdc or won't capture the transaction with
+  -- -- fast clock clk.
+  -- component BUFG
+  --   port (
+  --     O : out std_logic;
+  --     I : in std_logic);
+  -- end component;
+
+  -- signal mdioclk_buf : std_ulogic;
+
+  -- signal dbg_mdio_phyadr            : std_logic_vector(4 downto 0);
+  -- signal dbg_mdio_regadr            : std_logic_vector(4 downto 0);
+  -- signal dbg_mdio_write             : std_ulogic;
+  -- signal dbg_mdio_read              : std_ulogic;
+  -- signal dbg_mdio_data              : std_logic_vector(15 downto 0);
+  -- signal dbg_mdio_busy              : std_ulogic;
+  -- signal dbg_mdio_linkfail          : std_ulogic;
+  -- signal dbg_mdio_vcu118_cfg_done   : std_ulogic;
+  -- signal dbg_mdio_vcu118_init_state : vcu118_mdio_init_type;
+  -- signal dbg_mdio_mdio_state        : mdio_state_type;
+  -- signal dbg_mdio_mdioo             : std_ulogic;
+  -- signal dbg_mdio_mdioi             : std_ulogic;
+  -- signal dbg_mdio_cnt               : std_logic_vector(4 downto 0);
+  -- signal dbg_mdio_duplexstate       : duplexstate_type;
+  -- signal dbg_mdio_disableduplex     : std_ulogic;
+  -- signal dbg_mdio_init_busy         : std_ulogic;
+  -- signal dbg_mdio_regaddr           : std_logic_vector(4 downto 0);
+  -- signal dbg_mdio_phywr             : std_ulogic;
+  -- signal dbg_mdio_rstphy            : std_ulogic;
+  -- signal dbg_mdio_capbil            : std_logic_vector(4 downto 0);
+  -- signal dbg_mdio_rstaneg           : std_ulogic;
+  -- signal dbg_mdio_mdint_sync        : std_logic_vector(2 downto 0);
+
+  -- attribute mark_debug : string;
+
+  -- attribute mark_debug of dbg_mdio_phyadr            : signal is "true";
+  -- attribute mark_debug of dbg_mdio_regadr            : signal is "true";
+  -- attribute mark_debug of dbg_mdio_write             : signal is "true";
+  -- attribute mark_debug of dbg_mdio_read              : signal is "true";
+  -- attribute mark_debug of dbg_mdio_data              : signal is "true";
+  -- attribute mark_debug of dbg_mdio_busy              : signal is "true";
+  -- attribute mark_debug of dbg_mdio_linkfail          : signal is "true";
+  -- attribute mark_debug of dbg_mdio_vcu118_cfg_done   : signal is "true";
+  -- attribute mark_debug of dbg_mdio_vcu118_init_state : signal is "true";
+  -- attribute mark_debug of dbg_mdio_mdio_state        : signal is "true";
+  -- attribute mark_debug of dbg_mdio_mdioo             : signal is "true";
+  -- attribute mark_debug of dbg_mdio_mdioi             : signal is "true";
+  -- attribute mark_debug of dbg_mdio_cnt               : signal is "true";
+  -- attribute mark_debug of dbg_mdio_duplexstate       : signal is "true";
+  -- attribute mark_debug of dbg_mdio_disableduplex     : signal is "true";
+  -- attribute mark_debug of dbg_mdio_init_busy         : signal is "true";
+  -- attribute mark_debug of dbg_mdio_regaddr           : signal is "true";
+  -- attribute mark_debug of dbg_mdio_phywr             : signal is "true";
+  -- attribute mark_debug of dbg_mdio_rstphy            : signal is "true";
+  -- attribute mark_debug of dbg_mdio_capbil            : signal is "true";
+  -- attribute mark_debug of dbg_mdio_rstaneg           : signal is "true";
+  -- attribute mark_debug of dbg_mdio_mdint_sync        : signal is "true";
+
 begin
-   
+
   --reset generators for transmitter and receiver
   vcc <= '1';
   arst <= testrst when (scanen = 1) and (testen = '1') 
@@ -1849,6 +1957,8 @@ begin
            end if;
            if r.rstphy = '1' then
              v.mdio_ctrl.data := X"9000";
+             v.vcu118_init_state := s0;
+             v.vcu118_cfg_done := '0';
            end if;
          end if;
        when waitop =>
@@ -1862,63 +1972,181 @@ begin
            end if;
          end if;
        when nextop =>
-         case r.regaddr is
-           when "00000" =>
-             if r.mdio_ctrl.data(15) = '1' then --rst not finished
-               v.duplexstate := start; 
-             elsif (r.phywr and not r.rstaneg) = '1' then --forced to 10 Mbit HD
+         if vcu118 = 0 or r.vcu118_cfg_done = '1' then
+           case r.regaddr is
+             when "00000" =>
+               if r.mdio_ctrl.data(15) = '1' then --rst not finished
+                 v.duplexstate := start; 
+               elsif (r.phywr and not r.rstaneg) = '1' then --forced to 10 Mbit HD
+                 v.duplexstate := selmode;
+               elsif r.mdio_ctrl.data(12) = '0' then --no auto neg
+                 v.duplexstate := start; v.phywr := '1';
+                 v.mdio_ctrl.data := (others => '0');
+               else
+                 v.duplexstate := start; v.regaddr := "00001";
+               end if;
+               if r.rstaneg = '1' then
+                 v.phywr := '0';
+               end if;
+               if r.disableduplex = '1' then
+                 v.duplexstate := done; v.mdio_ctrl.busy := '0';
+               end if;
+             when "00001" =>
+               v.ext := r.mdio_ctrl.data(8); --extended status register
+               v.extcap := r.mdio_ctrl.data(1); --extended register capabilities
+               v.duplexstate := start;
+               if r.mdio_ctrl.data(0) = '0' then
+                 --no extended register capabilites, unable to read aneg config
+                 --forcing 10 Mbit
+                 v.duplexstate := start; v.phywr := '1';
+                 v.mdio_ctrl.data := (others => '0');
+                 v.regaddr := (others => '0');
+               elsif (r.mdio_ctrl.data(8) and not r.rstaneg) = '1' then
+                 --phy gbit capable, disable gbit
+                 v.regaddr := "01001"; 
+               elsif r.mdio_ctrl.data(5) = '1' then --auto neg completed
+                 v.regaddr := "00100";
+               end if;
+               if r.disableduplex = '1' then
+                 v.duplexstate := done; v.mdio_ctrl.busy := '0';
+               end if;
+             when "00100" =>
+               v.duplexstate := start; v.regaddr := "00101";
+               v.capbil(4 downto 0) := r.mdio_ctrl.data(9 downto 5);
+             when "00101" =>
                v.duplexstate := selmode;
-             elsif r.mdio_ctrl.data(12) = '0' then --no auto neg
-               v.duplexstate := start; v.phywr := '1';
-               v.mdio_ctrl.data := (others => '0');
-             else
-               v.duplexstate := start; v.regaddr := "00001";
-             end if;
-             if r.rstaneg = '1' then
-               v.phywr := '0';
-             end if;
-             if r.disableduplex = '1' then
-               v.duplexstate := done; v.mdio_ctrl.busy := '0';
-             end if;
-           when "00001" =>
-             v.ext := r.mdio_ctrl.data(8); --extended status register
-             v.extcap := r.mdio_ctrl.data(1); --extended register capabilities
-             v.duplexstate := start;
-             if r.mdio_ctrl.data(0) = '0' then
-               --no extended register capabilites, unable to read aneg config
-               --forcing 10 Mbit
-               v.duplexstate := start; v.phywr := '1';
-               v.mdio_ctrl.data := (others => '0');
-               v.regaddr := (others => '0');
-             elsif (r.mdio_ctrl.data(8) and not r.rstaneg) = '1' then
-               --phy gbit capable, disable gbit
-               v.regaddr := "01001"; 
-             elsif r.mdio_ctrl.data(5) = '1' then --auto neg completed
-               v.regaddr := "00100";
-             end if;
-             if r.disableduplex = '1' then
-               v.duplexstate := done; v.mdio_ctrl.busy := '0';
-             end if;
-           when "00100" =>
-             v.duplexstate := start; v.regaddr := "00101";
-             v.capbil(4 downto 0) := r.mdio_ctrl.data(9 downto 5);
-           when "00101" =>
-             v.duplexstate := selmode;
-             v.capbil(4 downto 0) :=
-             r.capbil(4 downto 0) and r.mdio_ctrl.data(9 downto 5);
-           when "01001" =>
-             if r.phywr = '0' then
-               v.duplexstate := start; v.phywr := '1';
-               v.mdio_ctrl.data(9 downto 8) := (others => '0');
-             else
+               v.capbil(4 downto 0) :=
+                 r.capbil(4 downto 0) and r.mdio_ctrl.data(9 downto 5);
+             when "01001" =>
+               if r.phywr = '0' then
+                 v.duplexstate := start; v.phywr := '1';
+                 v.mdio_ctrl.data(9 downto 8) := (others => '0');
+               else
+                 v.regaddr := "00000";
+                 v.duplexstate := start; v.phywr := '1';
+                 v.mdio_ctrl.data := X"3300"; v.rstaneg := '1';
+               end if;
+             when others =>
+               null;
+           end case;
+         else -- Special MDIO sequence to enable SGMII on Xilinx VCU118
+           case r.vcu118_init_state is
+             when s0 =>
+               if r.mdio_ctrl.data(15) = '1' then --rst not finished
+                 v.duplexstate := start;
+               else
+                 v.duplexstate := start;
+                 v.phywr := '1';
+                 v.regaddr := "00000";
+                 v.mdio_ctrl.data := X"1040";
+                 v.vcu118_init_state := s1a;
+               end if;
+             when s1a =>
+               v.duplexstate := start;
+               v.phywr := '1';
+               v.regaddr := "01101";
+               v.mdio_ctrl.data := X"001F";
+               v.vcu118_init_state := s1b;
+             when s1b =>
+               v.duplexstate := start;
+               v.phywr := '1';
+               v.regaddr := "01110";
+               v.mdio_ctrl.data := X"00D3";
+               v.vcu118_init_state := s1c;
+             when s1c =>
+               v.duplexstate := start;
+               v.phywr := '1';
+               v.regaddr := "01101";
+               v.mdio_ctrl.data := X"401F";
+               v.vcu118_init_state := s1d;
+             when s1d =>
+               v.duplexstate := start;
+               v.phywr := '1';
+               v.regaddr := "01110";
+               v.mdio_ctrl.data := X"4000";
+               v.vcu118_init_state := s2;
+             when s2 =>
+               v.duplexstate := start;
+               v.phywr := '1';
                v.regaddr := "00000";
-               v.duplexstate := start; v.phywr := '1';
-               v.mdio_ctrl.data := X"3300"; v.rstaneg := '1';
-             end if;
-           when others =>
-             null;
-         end case;
-       when selmode =>
+               v.mdio_ctrl.data := X"1140";
+               v.vcu118_init_state := s3;
+             when s3 =>
+               v.duplexstate := start;
+               v.phywr := '1';
+               v.regaddr := "10100";
+               v.mdio_ctrl.data := X"29C7";
+               v.vcu118_init_state := s4a;
+             when s4a =>
+               v.duplexstate := start;
+               v.phywr := '1';
+               v.regaddr := "01101";
+               v.mdio_ctrl.data := X"001F";
+               v.vcu118_init_state := s4b;
+             when s4b =>
+               v.duplexstate := start;
+               v.phywr := '1';
+               v.regaddr := "01110";
+               v.mdio_ctrl.data := X"0032";
+               v.vcu118_init_state := s4c;
+             when s4c =>
+               v.duplexstate := start;
+               v.phywr := '1';
+               v.regaddr := "01101";
+               v.mdio_ctrl.data := X"401F";
+               v.vcu118_init_state := s4d;
+             when s4d =>
+               v.duplexstate := start;
+               v.phywr := '1';
+               v.regaddr := "01110";
+               v.mdio_ctrl.data := X"0000";
+               v.vcu118_init_state := s5;
+             when s5 =>
+               v.duplexstate := start;
+               v.phywr := '1';
+               v.regaddr := "10000";
+               v.mdio_ctrl.data := X"0800";
+               v.vcu118_init_state := s6a;
+             when s6a =>
+               v.duplexstate := start;
+               v.phywr := '1';
+               v.regaddr := "01101";
+               v.mdio_ctrl.data := X"001F";
+               v.vcu118_init_state := s6b;
+             when s6b =>
+               v.duplexstate := start;
+               v.phywr := '1';
+               v.regaddr := "01110";
+               v.mdio_ctrl.data := X"0031";
+               v.vcu118_init_state := s6c;
+             when s6c =>
+               v.duplexstate := start;
+               v.phywr := '1';
+               v.regaddr := "01101";
+               v.mdio_ctrl.data := X"401F";
+               v.vcu118_init_state := s6d;
+             when s6d =>
+               v.duplexstate := start;
+               v.phywr := '1';
+               v.regaddr := "01110";
+               v.mdio_ctrl.data := X"1170";
+               v.vcu118_init_state := s7;
+             when s7 =>
+               v.duplexstate := start;
+               v.phywr := '1';
+               v.regaddr := "00000";
+               v.mdio_ctrl.data := X"1340";
+               v.vcu118_init_state := s8910;
+             when s8910 =>
+               v.duplexstate := start;
+               v.phywr := '0';
+               v.regaddr := "00000";
+               v.vcu118_cfg_done := '1';
+             when others =>
+               null;
+           end case;
+         end if;
+      when selmode =>
          v.duplexstate := done; v.mdio_ctrl.busy := '0';
          if r.phywr = '1' then
            v.ctrl.full_duplex := '0'; v.ctrl.speed := '0';
@@ -1991,6 +2219,8 @@ begin
       v.rxstart := (others => '0'); v.rxwrite := (others => '0');
       v.status.invaddr := '0'; v.status.toosmall := '0';
       v.ctrl.full_duplex := '0'; v.writeok := '1';
+      v.vcu118_cfg_done := '0';
+      v.vcu118_init_state := s0;
       if (enable_mdio = 0) or (edcl /= 0) then
         v.ctrl.reset := '0';
       end if;
@@ -2209,6 +2439,43 @@ begin
   begin
     if rising_edge(clk) then r <= rin; end if;
   end process;
+
+
+  -- -- MDIO debug signals sampling
+  -- mdioclk_bufg : BUFG
+  --   port map (
+  --     O => mdioclk_buf,
+  --     I => r.mdioclk);
+
+  -- mdio_dbg: process (mdioclk_buf) is
+  -- begin  -- process mdio_dbg
+  --   if mdioclk_buf'event and mdioclk_buf = '1' then  -- rising clock edge
+  --     dbg_mdio_phyadr <= r.mdio_ctrl.phyadr;
+  --     dbg_mdio_regadr <= r.mdio_ctrl.regadr;
+  --     dbg_mdio_write <= r.mdio_ctrl.write;
+  --     dbg_mdio_read <= r.mdio_ctrl.read;
+  --     dbg_mdio_data <= r.mdio_ctrl.data;
+  --     dbg_mdio_busy <= r.mdio_ctrl.busy;
+  --     dbg_mdio_linkfail <= r.mdio_ctrl.linkfail;
+  --     dbg_mdio_vcu118_cfg_done <= r.vcu118_cfg_done;
+  --     dbg_mdio_vcu118_init_state <= r.vcu118_init_state;
+  --     dbg_mdio_mdio_state <= r.mdio_state;
+  --     dbg_mdio_mdioo <= r.mdioo;
+  --     dbg_mdio_mdioi <= r.mdioi;
+  --     dbg_mdio_cnt <= r.cnt;
+  --     dbg_mdio_duplexstate <= r.duplexstate;
+  --     dbg_mdio_disableduplex <= r.disableduplex;
+  --     dbg_mdio_init_busy <= r.init_busy;
+  --     dbg_mdio_regaddr <= r.regaddr;
+  --     dbg_mdio_phywr <= r.phywr;
+  --     dbg_mdio_rstphy <= r.rstphy;
+  --     dbg_mdio_capbil <= r.capbil;
+  --     dbg_mdio_rstaneg <= r.rstaneg;
+  --     dbg_mdio_mdint_sync <= r.mdint_sync;
+  --   end if;
+  -- end process mdio_dbg;
+
+
 -------------------------------------------------------------------------------
 -- TRANSMITTER-----------------------------------------------------------------
 -------------------------------------------------------------------------------
