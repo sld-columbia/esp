@@ -619,7 +619,10 @@ class memory():
             elif self.write_interfaces == 2:
                 self.write_ports.append(wi)
             else:
-                self.write_ports.append((int(wi / self.hbanks) + (wi % self.bank_type.ports)) % self.bank_type.ports)
+                if self.hbanks != 1:
+                    self.write_ports.append((int(wi / self.hbanks) + (wi % self.bank_type.ports)) % self.bank_type.ports)
+                else:
+                    self.write_ports.append(wi % self.bank_type.ports)
         for ri in range(0, self.read_interfaces):
             if self.need_parallel_rw:
                 self.read_ports.append(1)
@@ -628,7 +631,10 @@ class memory():
             elif self.read_interfaces == 2:
                 self.read_ports.append(ri)
             else:
-                self.read_ports.append((int(ri / self.hbanks) + (ri % self.bank_type.ports)) % self.bank_type.ports)
+                if self.hbanks != 1:
+                    self.read_ports.append((int(ri / self.hbanks) + (ri % self.bank_type.ports)) % self.bank_type.ports)
+                else:
+                    self.read_ports.append(ri % self.bank_type.ports)
 
 
 
@@ -950,7 +956,7 @@ class memory():
         fd.write("setInputDataFormat 1\n")
         fd.write("setFileSuffix 0\n")
         fd.write("setHasReset 0\n")
-        fd.write("setNoSpecReads 0\n")
+        fd.write("setNoSpecReads 1\n")
         fd.write("setSharedAccess 1\n")
         fd.write("setMaxSharedPorts 32\n")
         fd.write("setIntRegMemIn 0\n")
