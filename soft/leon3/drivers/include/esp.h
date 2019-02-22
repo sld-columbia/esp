@@ -17,6 +17,11 @@ struct esp_access {
 	contig_khandle_t contig;
 	uint8_t run;
 	enum accelerator_coherence coherence;
+        unsigned int footprint;
+        enum contig_alloc_policy alloc_policy;
+        unsigned int ddr_node;
+	unsigned int in_place;
+	unsigned int reuse_factor;
 };
 
 #define ESP_IOC_RUN _IO('E', 0)
@@ -30,6 +35,12 @@ struct esp_access {
 #include <linux/module.h>
 #include <linux/mutex.h>
 #include <linux/cdev.h>
+
+// TO DO do not hard-code this values
+#define N_MEM 2
+#define PRIVATE_CACHE_SIZE 16384
+#define LLC_SIZE 524288
+#define LLC_SIZE_SPLIT 262144 
 
 struct esp_device;
 
@@ -58,6 +69,19 @@ struct esp_device {
 	struct module *module;
 	int number;
 	enum accelerator_coherence coherence;
+        unsigned int footprint;
+        enum contig_alloc_policy alloc_policy;
+        unsigned int ddr_node;
+	unsigned int in_place;
+	unsigned int reuse_factor;
+};
+
+struct esp_status {
+	struct mutex lock;
+	unsigned int active_acc_cnt;
+	unsigned int active_acc_cnt_full; 
+	unsigned int active_footprint;
+	unsigned int active_footprint_split[N_MEM]; // 2 mem ctrl
 };
 
 int esp_driver_register(struct esp_driver *driver);

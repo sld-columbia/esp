@@ -85,6 +85,7 @@ struct contig_alloc_req {
 	unsigned long __user *arr;
 	void __user **mm; /* user-space only */
 	unsigned int n; /* filled in by the kernel */
+	int most_allocated; /* filled in by the kernel */
 	unsigned int n_max;
 };
 
@@ -100,6 +101,7 @@ struct contig_desc {
 	unsigned long *arr;
 	dma_addr_t arr_dma_addr;
 	unsigned int n;
+	int most_allocated;
 	struct list_head desc_node;
 	struct list_head file_node;
 	struct list_head alloc_list;

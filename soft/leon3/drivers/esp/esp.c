@@ -13,6 +13,8 @@
 #define PFX "esp: "
 #define ESP_MAX_DEVICES	64
 
+struct esp_status esp_status;
+
 static irqreturn_t esp_irq(int irq, void *dev)
 {
 	struct esp_device *esp = dev_get_drvdata(dev);
@@ -71,10 +73,100 @@ static int esp_release(struct inode *inode, struct file *file)
 	return 0;
 }
 
+void esp_status_init(void) {
+
+    int i;
+
+    mutex_init(&esp_status.lock);
+    esp_status.active_acc_cnt = 0;
+    esp_status.active_footprint = 0;
+    for (i = 0; i < N_MEM; i++)
+	esp_status.active_footprint_split[i] = 0;
+}
+
+static void esp_runtime_config(struct esp_device *esp)
+{
+	unsigned int footprint, footprint_llc_threshold;
+
+	if (esp->coherence == ACC_COH_FULL) {
+
+		if (esp_status.active_acc_cnt_full >= 1)
+			/* esp->coherence = ACC_COH_RECALL; */
+			esp->coherence = ACC_COH_LLC;
+		else
+			esp_status.active_acc_cnt_full++;
+
+		return;
+	}
+
+	// Update number of active accelerators
+	esp_status.active_acc_cnt += 1;
+
+	// Evaluate footprint
+	if (esp->alloc_policy == CONTIG_ALLOC_PREFERRED ||
+	    esp->alloc_policy == CONTIG_ALLOC_LEAST_LOADED) {
+
+		footprint = esp_status.active_footprint_split[esp->ddr_node]
+			+ esp->footprint;
+		footprint_llc_threshold = LLC_SIZE_SPLIT;
+
+	} else { // CONTIG_ALLOC_BALANCED
+
+		footprint = esp_status.active_footprint + esp->footprint;;
+		footprint_llc_threshold = LLC_SIZE;
+	}
+
+	// Cache coherence choice
+	if (esp->footprint < PRIVATE_CACHE_SIZE) {
+		if (esp_status.active_acc_cnt_full < 1) {
+			esp->coherence = ACC_COH_FULL;
+			esp_status.active_acc_cnt_full++;
+
+		} else {
+			esp->coherence = ACC_COH_LLC;
+		}
+
+	} else if (esp_status.active_acc_cnt >= 6) {
+		esp->coherence = ACC_COH_NONE;
+
+	} else if (footprint > footprint_llc_threshold) {
+		esp->coherence = ACC_COH_NONE;
+
+	} else {
+		esp->coherence = ACC_COH_LLC;
+	}
+
+
+	// Update footprint
+	if (esp->coherence != ACC_COH_NONE) {
+
+		esp_status.active_footprint += esp->footprint;
+
+		if (esp->alloc_policy == CONTIG_ALLOC_PREFERRED ||
+		    esp->alloc_policy == CONTIG_ALLOC_LEAST_LOADED) {
+
+			esp_status.active_footprint_split[esp->ddr_node] +=
+				esp->footprint; 
+
+		} else { // CONTIG_ALLOC_BALANCED
+
+			int i;
+			for (i = 0; i < N_MEM; i++) {
+				esp_status.active_footprint_split[i] +=
+					(esp->footprint / N_MEM);
+			}
+		}
+	}
+
+	return;
+}
+
 static void esp_transfer(struct esp_device *esp, const struct contig_desc *contig)
 {
 	esp->err = 0;
 	reinit_completion(&esp->completion);
+
+	/* printk(KERN_INFO "[[[DAVIDE]]] esp_tranfer esp->coherence %d\n", esp->coherence); */
 
 	iowrite32be(contig->arr_dma_addr, esp->iomem + PT_ADDRESS_REG);
 	iowrite32be(contig_chunk_size_log, esp->iomem + PT_SHIFT_REG);
@@ -102,6 +194,51 @@ static int esp_wait(struct esp_device *esp)
 	}
 
 	return 0;
+}
+
+static void esp_update_status(struct esp_device *esp, bool auto_)
+{
+	int i;
+
+	/* printk(KERN_INFO "[[[DAVIDE]]] esp_update_status\n"); */
+
+	if (esp->coherence == ACC_COH_FULL)
+		esp_status.active_acc_cnt_full--;
+
+	if (!auto_)
+		return;
+
+	// Update number of active accelerators
+	esp_status.active_acc_cnt -= 1;
+	
+
+	// Update footprints
+	if (esp->coherence != ACC_COH_NONE) {
+
+		esp_status.active_footprint -= esp->footprint;
+
+		if (esp->alloc_policy == CONTIG_ALLOC_PREFERRED ||
+		    esp->alloc_policy == CONTIG_ALLOC_LEAST_LOADED) {
+
+			esp_status.active_footprint_split[esp->ddr_node] -= esp->footprint;
+
+		} else {
+
+			int i;
+			for (i = 0; i < N_MEM; i++) {
+				esp_status.active_footprint_split[i] -= (esp->footprint / N_MEM);
+			}
+		}
+	}
+
+	/* printk(KERN_INFO "*** CURRENT ESP STATUS ***\n"); */
+	/* printk(KERN_INFO "acc cnt %u\n", esp_status.active_acc_cnt); */
+	/* printk(KERN_INFO "acc cnt full%u\n", esp_status.active_acc_cnt_full); */
+	/* printk(KERN_INFO "acc footprint %u\n", esp_status.active_footprint); */
+
+	/* for (i = 0; i < N_MEM; i++) */
+	/* 	printk(KERN_INFO "acc footprint mem %i %u\n", i, */
+	/* 	       esp_status.active_footprint_split[i]); */
 }
 
 static bool esp_xfer_input_ok(struct esp_device *esp, const struct contig_desc *contig)
@@ -155,8 +292,27 @@ static int esp_access_ioctl(struct esp_device *esp, void __user *argp)
 	}
 
 	esp->coherence = access->coherence;
+	esp->footprint = access->footprint;
+        esp->alloc_policy = access->alloc_policy;
+        esp->ddr_node = access->ddr_node;
+	esp->in_place = access->in_place;
+	esp->reuse_factor = access->reuse_factor;
+
 	if (esp->driver->prep_xfer)
 		esp->driver->prep_xfer(esp, arg);
+
+	if (access->coherence == ACC_COH_AUTO ||
+	    access->coherence == ACC_COH_FULL) {
+	
+		if (mutex_lock_interruptible(&esp_status.lock)) {
+			rc = -EINTR;
+			goto out;
+		}
+
+		esp_runtime_config(esp);
+
+		mutex_unlock(&esp_status.lock);
+	}
 
 	rc = esp_flush(esp);
 	if (rc)
@@ -166,6 +322,22 @@ static int esp_access_ioctl(struct esp_device *esp, void __user *argp)
 	if (access->run)
 		esp_run(esp);
 	rc = esp_wait(esp);
+
+	if (access->coherence == ACC_COH_AUTO ||
+	    access->coherence == ACC_COH_FULL) {
+
+		bool auto_;
+		auto_ = (access->coherence == ACC_COH_AUTO);
+
+		if (mutex_lock_interruptible(&esp_status.lock)) {
+			rc = -EINTR;
+			goto out;
+		}
+
+		esp_update_status(esp, auto_);
+
+		mutex_unlock(&esp_status.lock);
+	}
 
 	mutex_unlock(&esp->lock);
 
@@ -388,6 +560,7 @@ EXPORT_SYMBOL_GPL(esp_driver_unregister);
 
 static int __init esp_init(void)
 {
+        esp_status_init();
 	return 0;
 }
 

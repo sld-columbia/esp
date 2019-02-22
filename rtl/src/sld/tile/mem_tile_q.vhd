@@ -60,21 +60,21 @@ entity mem_tile_q is
     coherence_rsp_rcv_rdreq                       : in  std_ulogic;
     coherence_rsp_rcv_data_out                    : out noc_flit_type;
     coherence_rsp_rcv_empty                       : out std_ulogic;
+    -- NoC6->tile
+    dma_rcv_rdreq                       : in  std_ulogic;
+    dma_rcv_data_out                    : out noc_flit_type;
+    dma_rcv_empty                       : out std_ulogic;
+    -- tile->NoC6
+    coherent_dma_snd_wrreq              : in  std_ulogic;
+    coherent_dma_snd_data_in            : in  noc_flit_type;
+    coherent_dma_snd_full               : out std_ulogic;
     -- tile->NoC4
     dma_snd_wrreq                       : in  std_ulogic;
     dma_snd_data_in                     : in  noc_flit_type;
     dma_snd_full                        : out std_ulogic;
     dma_snd_atleast_4slots              : out std_ulogic;
     dma_snd_exactly_3slots              : out std_ulogic;
-    -- tile->NoC4
-    coherent_dma_snd_wrreq              : in  std_ulogic;
-    coherent_dma_snd_data_in            : in  noc_flit_type;
-    coherent_dma_snd_full               : out std_ulogic;
-    -- NoC6->tile
-    dma_rcv_rdreq                       : in  std_ulogic;
-    dma_rcv_data_out                    : out noc_flit_type;
-    dma_rcv_empty                       : out std_ulogic;
-    -- NoC6->tile
+    -- NoC4->tile
     coherent_dma_rcv_rdreq              : in  std_ulogic;
     coherent_dma_rcv_data_out           : out noc_flit_type;
     coherent_dma_rcv_empty              : out std_ulogic;
@@ -225,35 +225,21 @@ architecture rtl of mem_tile_q is
   signal local_apb_rcv_empty                : std_ulogic;
 
 
-  signal noc1_dummy_in_stop   : std_ulogic;
   signal noc2_dummy_out_data  : noc_flit_type;
   signal noc2_dummy_out_void  : std_ulogic;
-  signal noc4_dummy_out_data  : noc_flit_type;
-  signal noc4_dummy_out_void  : std_ulogic;
-  signal noc6_dummy_in_stop   : std_ulogic;
-
-  type to_noc4_packet_fsm is (none, packet_dma_snd, packet_coherent_dma_snd);
-  signal to_noc4_fifos_current, to_noc4_fifos_next : to_noc4_packet_fsm;
+  signal noc1_dummy_in_stop   : std_ulogic;
 
   type noc5_packet_fsm is (none, packet_remote_apb_rcv,
                            packet_remote_ahbs_rcv, packet_apb_rcv,
                            packet_local_remote_apb_rcv, packet_local_apb_rcv);
   signal noc5_fifos_current, noc5_fifos_next : noc5_packet_fsm;
-
   type to_noc5_packet_fsm is (none, packet_remote_apb_snd, packet_remote_ahbs_snd,
                               packet_apb_snd, packet_local_remote_apb_snd,
                               packet_local_apb_snd);
   signal to_noc5_fifos_current, to_noc5_fifos_next : to_noc5_packet_fsm;
 
-  type noc6_packet_fsm is (none, packet_dma_rcv, packet_coherent_dma_rcv);
-  signal noc6_fifos_current, noc6_fifos_next : noc6_packet_fsm;
-
   signal noc5_msg_type : noc_msg_type;
   signal noc5_preamble : noc_preamble_type;
-
-  signal noc6_msg_type : noc_msg_type;
-  signal noc6_preamble : noc_preamble_type;
-
   signal local_remote_apb_rcv_preamble : noc_preamble_type;
   signal local_apb_rcv_preamble : noc_preamble_type;
 
@@ -345,77 +331,10 @@ begin  -- rtl
       data_out => coherence_rsp_snd_data_out);
 
 
-  -- From noc6: [LLC|Non]-coherent DMA requests from accelerators
-  noc6_in_data       <= (others => '0');
-  noc6_in_void       <= '1';
-  noc6_dummy_in_stop <=  noc6_in_stop;
-
-  noc6_msg_type <= get_msg_type(noc6_out_data);
-  noc6_preamble <= get_preamble(noc6_out_data);
-
-  process (clk, rst)
-  begin  -- process
-    if rst = '0' then                   -- asynchronous reset (active low)
-      noc6_fifos_current <= none;
-    elsif clk'event and clk = '1' then  -- rising clock edge
-      noc6_fifos_current <= noc6_fifos_next;
-    end if;
-  end process;
-  noc6_fifos_get_packet: process (noc6_out_data, noc6_out_void, noc6_msg_type,
-                                  noc6_preamble, noc6_fifos_current,
-                                  dma_rcv_full, coherent_dma_rcv_full)
-  begin
-    dma_rcv_wrreq <= '0';
-    dma_rcv_data_in <= noc6_out_data;
-
-    coherent_dma_rcv_wrreq <= '0';
-    coherent_dma_rcv_data_in <= noc6_out_data;
-
-    noc6_fifos_next <= noc6_fifos_current;
-    noc6_out_stop <= '0';
-
-    case noc6_fifos_current is
-      when none =>
-        if noc6_out_void = '0' then
-          if ((noc6_msg_type = DMA_TO_DEV or noc6_msg_type = DMA_FROM_DEV)
-              and noc6_preamble = PREAMBLE_HEADER) then
-            if dma_rcv_full = '0' then
-              dma_rcv_wrreq <= '1';
-              noc6_fifos_next <= packet_dma_rcv;
-            else
-              noc6_out_stop <= '1';
-            end if;
-          elsif ((noc6_msg_type = REQ_DMA_READ or noc6_msg_type = REQ_DMA_WRITE)
-              and noc6_preamble = PREAMBLE_HEADER) then
-            if coherent_dma_rcv_full = '0' then
-              coherent_dma_rcv_wrreq <= '1';
-              noc6_fifos_next <= packet_coherent_dma_rcv;
-            else
-              noc6_out_stop <= '1';
-            end if;
-          end if;
-        end if;
-
-      when packet_dma_rcv =>
-        dma_rcv_wrreq <= not noc6_out_void and (not dma_rcv_full);
-        noc6_out_stop <= dma_rcv_full and (not noc6_out_void);
-        if (noc6_preamble = PREAMBLE_TAIL and noc6_out_void = '0' and
-            dma_rcv_full = '0') then
-          noc6_fifos_next <= none;
-        end if;
-
-      when packet_coherent_dma_rcv =>
-        coherent_dma_rcv_wrreq <= not noc6_out_void and (not coherent_dma_rcv_full);
-        noc6_out_stop <= coherent_dma_rcv_full and (not noc6_out_void);
-        if (noc6_preamble = PREAMBLE_TAIL and noc6_out_void = '0' and
-            coherent_dma_rcv_full = '0') then
-          noc6_fifos_next <= none;
-        end if;
-
-      when others => noc6_fifos_next <= none;
-    end case;
-  end process noc6_fifos_get_packet;
-
+  -- From noc6: DMA requests from accelerators
+  noc6_out_stop   <= dma_rcv_full and (not noc6_out_void);
+  dma_rcv_data_in <= noc6_out_data;
+  dma_rcv_wrreq   <= (not noc6_out_void) and (not dma_rcv_full);
   fifo_13: fifo
     generic map (
       depth => 18,                      --Header, address, [data]
@@ -430,6 +349,10 @@ begin  -- rtl
       full     => dma_rcv_full,
       data_out => dma_rcv_data_out);
 
+  -- From noc4: Coherent DMA requests from accelerators
+  noc4_out_stop            <= coherent_dma_rcv_full and (not noc4_out_void);
+  coherent_dma_rcv_data_in <= noc4_out_data;
+  coherent_dma_rcv_wrreq   <= (not noc4_out_void) and (not coherent_dma_rcv_full);
   fifo_13c: fifo
     generic map (
       depth => 18,                      --Header, address, [data]
@@ -444,78 +367,10 @@ begin  -- rtl
       full     => coherent_dma_rcv_full,
       data_out => coherent_dma_rcv_data_out);
 
-  -- To noc4: [LLC|Non]-Coherent DMA response to accelerators
-  noc4_out_stop       <= '0';
-  noc4_dummy_out_data <= noc4_out_data;
-  noc4_dummy_out_void <= noc4_out_void;
-  process (clk, rst)
-  begin  -- process
-    if rst = '0' then                   -- asynchronous reset (active low)
-      to_noc4_fifos_current <= none;
-    elsif clk'event and clk = '1' then  -- rising clock edge
-      to_noc4_fifos_current <= to_noc4_fifos_next;
-    end if;
-  end process;
-
-  to_noc4_select_packet: process (noc4_in_stop, to_noc4_fifos_current,
-                                  dma_snd_data_out, dma_snd_empty,
-                                  coherent_dma_snd_data_out, coherent_dma_snd_empty)
-    variable to_noc4_preamble : noc_preamble_type;
-  begin  -- process to_noc4_select_packet
-    noc4_in_data <= (others => '0');
-    noc4_in_void <= '1';
-
-    dma_snd_rdreq <= '0';
-    coherent_dma_snd_rdreq <= '0';
-
-    to_noc4_fifos_next <= to_noc4_fifos_current;
-    to_noc4_preamble := "00";
-
-    case to_noc4_fifos_current is
-      when none =>
-        if dma_snd_empty = '0' then
-          noc4_in_data <= dma_snd_data_out;
-          noc4_in_void <= dma_snd_empty and (not noc4_in_stop);
-          if noc4_in_stop = '0' then
-            dma_snd_rdreq <= '1';
-            to_noc4_fifos_next <= packet_dma_snd;
-          end if;
-        elsif coherent_dma_snd_empty = '0' then
-          noc4_in_data <= coherent_dma_snd_data_out;
-          noc4_in_void <= coherent_dma_snd_empty and (not noc4_in_stop);
-          if noc4_in_stop = '0' then
-            coherent_dma_snd_rdreq <= '1';
-            to_noc4_fifos_next <= packet_coherent_dma_snd;
-          end if;
-
-        end if;
-
-      when packet_dma_snd  =>
-        to_noc4_preamble := get_preamble(dma_snd_data_out);
-        if (noc4_in_stop = '0' and dma_snd_empty = '0') then
-          noc4_in_data <= dma_snd_data_out;
-          noc4_in_void <= dma_snd_empty;
-          dma_snd_rdreq <= '1';
-          if (to_noc4_preamble = PREAMBLE_TAIL) then
-            to_noc4_fifos_next <= none;
-          end if;
-        end if;
-
-      when packet_coherent_dma_snd  =>
-        to_noc4_preamble := get_preamble(coherent_dma_snd_data_out);
-        if (noc4_in_stop = '0' and coherent_dma_snd_empty = '0') then
-          noc4_in_data <= coherent_dma_snd_data_out;
-          noc4_in_void <= coherent_dma_snd_empty;
-          coherent_dma_snd_rdreq <= '1';
-          if (to_noc4_preamble = PREAMBLE_TAIL) then
-            to_noc4_fifos_next <= none;
-          end if;
-        end if;
-
-      when others => to_noc4_fifos_next <= none;
-    end case;
-  end process to_noc4_select_packet;
-
+  -- To noc4: DMA response to accelerators
+  noc4_in_data <= dma_snd_data_out;
+  noc4_in_void <= dma_snd_empty or noc4_in_stop;
+  dma_snd_rdreq <= (not dma_snd_empty) and (not noc4_in_stop);
   fifo_14: fifo2
     generic map (
       depth => 18,                      --Header, address, [data]
@@ -532,6 +387,10 @@ begin  -- rtl
       exactly_3slots => dma_snd_exactly_3slots,
       data_out => dma_snd_data_out);
 
+  -- To noc6: Coherent DMA response to accelerators
+  noc6_in_data <= coherent_dma_snd_data_out;
+  noc6_in_void <= coherent_dma_snd_empty or noc6_in_stop;
+  coherent_dma_snd_rdreq <= (not coherent_dma_snd_empty) and (not noc6_in_stop);
   fifo_14c: fifo
     generic map (
       depth => 18,                      --Header, address, [data]
