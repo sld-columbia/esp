@@ -25,6 +25,8 @@
 -- File:        sgmii.vhd
 -- Author:      Fredrik Ringhage - Aeroflex Gaisler
 -- Description: GMII to SGMII interface
+-- Author:      Paolo Mantovani - Columbia University
+-- Description: Adapted interface to Xilinx VCU118
 --------------------------------------------------------------------------------
 
 
