@@ -61,7 +61,7 @@ define_system_module tb ../tb/system.cpp ../tb/sc_main.cpp
 ######################################################################
 set DEFAULT_ARGV "1024 16"
 
-foreach dma [list 32 64] {
+foreach dma [list 32] {
     define_io_config * IOCFG_DMA$dma -DDMA_WIDTH=$dma
 
     define_system_config tb TESTBENCH_DMA$dma -io_config IOCFG_DMA$dma
