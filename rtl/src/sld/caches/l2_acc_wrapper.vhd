@@ -37,18 +37,13 @@ entity l2_acc_wrapper is
     tech        : integer := virtex7;
     sets        : integer := 256;
     ways        : integer := 8;
-    nslaves     : integer := 1;
-    noc_xlen    : integer := 3;
-    hindex_slv  : hindex_vector(0 to NAHBSLV-1);
-    hindex_mst  : integer := 0;
     local_y     : local_yx;
     local_x     : local_yx;
     mem_num     : integer := 1;
-    mem_info    : tile_mem_info_vector;
-    destination : integer := 0;         -- 0: mem, 1: DSU
-    l1_cache_en : integer := 0;
+    mem_info    : tile_mem_info_vector(0 to MEM_MAX_NUM - 1);
+    cache_y     : yx_vec(0 to 2**NL2_MAX_LOG2 - 1);
+    cache_x     : yx_vec(0 to 2**NL2_MAX_LOG2 - 1);
     cache_tile_id : cache_attribute_array);
-
   port (
     rst : in std_ulogic;
     clk : in std_ulogic;
@@ -770,7 +765,8 @@ begin  -- architecture rtl of l2_acc_wrapper
             coherence_req_data_in <= make_header(req_out_data_coh_msg, mem_info,
                                                  mem_num, req_out_data_hprot,
                                                  req_out_data_addr, local_x, local_y,
-                                                 '0', req_id, cache_tile_id, noc_xlen);
+                                                 '0', req_id, cache_x,
+                                                 cache_y, cache_tile_id);
 
             reg.state := send_addr;
 
@@ -877,7 +873,8 @@ begin  -- architecture rtl of l2_acc_wrapper
             coherence_rsp_snd_data_in <= make_header(rsp_out_data_coh_msg, mem_info,
                                                      mem_num, hprot, rsp_out_data_addr, local_x,
                                                      local_y, rsp_out_data_to_req(0),
-                                                     rsp_out_data_req_id, cache_tile_id, noc_xlen);
+                                                     rsp_out_data_req_id, cache_x,
+                                                     cache_y, cache_tile_id);
 
             reg.state := send_addr;
 

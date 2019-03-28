@@ -25,9 +25,9 @@ package cachepackage is
   -- of LLC-coherent devices to 16. This is due to VHDL limitation, but the
   -- following constant can be changed arbitrarily.
   constant NL2_MAX_LOG2 : integer := 4;
-  constant NLLCC_MAX_LOG2 : integer := NL2_MAX_LOG2;
+  constant NLLC_MAX_LOG2 : integer := NL2_MAX_LOG2;
   type cache_attribute_array is array (0 to 2**NL2_MAX_LOG2 - 1) of integer;
-  type dma_attribute_array is array (0 to 2**NLLCC_MAX_LOG2 - 1) of integer;
+  type dma_attribute_array is array (0 to 2**NLLC_MAX_LOG2 - 1) of integer;
 
   -- NoC-L2cache planes encoding
   constant MSG_REQ_PLANE : std_logic_vector(1 downto 0) := "00";
@@ -169,11 +169,13 @@ package cachepackage is
   function read_word (line : line_t; w_off : integer)
     return word_t;
 
-  function make_header (coh_msg     : coh_msg_t; mem_info : tile_mem_info_vector;
+  function make_header (coh_msg     : coh_msg_t; mem_info : tile_mem_info_vector(0 to MEM_MAX_NUM - 1);
                         mem_num     : integer; hprot : hprot_t; addr : line_addr_t;
                         local_x     : local_yx; local_y : local_yx;
                         to_req      : std_ulogic; req_id : cache_id_t;
-                        cache_tile_id : cache_attribute_array; noc_xlen : integer)
+                        cache_x     : yx_vec(0 to 2**NL2_MAX_LOG2 - 1);
+                        cache_y       : yx_vec(0 to 2**NL2_MAX_LOG2 - 1);
+                        cache_tile_id : cache_attribute_array)
     return noc_flit_type;
 
   function get_owner_bits (ncpu_bits : integer)
@@ -188,22 +190,20 @@ package cachepackage is
       tech        : integer := virtex7;
       sets        : integer := 256;
       ways        : integer := 8;
-      nslaves     : integer := 1;
-      noc_xlen    : integer := 3;
-      hindex_slv  : hindex_vector(0 to NAHBSLV-1);
       hindex_mst  : integer := 0;
-      pindex      : integer range 0 to NAPBSLV-1 := 6;
-      pirq        : integer                      := 4;
+      pindex      : integer range 0 to NAPBSLV - 1 := 6;
+      pirq        : integer := 4;
       pconfig     : apb_config_type;
       local_y     : local_yx;
       local_x     : local_yx;
+      mem_hindex  : integer := 4;
+      mem_hconfig : ahb_config_type;
       mem_num     : integer := 1;
-      mem_info    : tile_mem_info_vector;
-      destination : integer := 0;       -- 0: mem, 1: DSU
-      l1_cache_en : integer := 0;
-      cpu_id      : integer := 0;
+      mem_info    : tile_mem_info_vector(0 to MEM_MAX_NUM - 1);
+      cache_y     : yx_vec(0 to 2**NL2_MAX_LOG2 - 1);
+      cache_x     : yx_vec(0 to 2**NL2_MAX_LOG2 - 1);
+      cache_id      : integer := 0;
       cache_tile_id : cache_attribute_array);
-
     port (
       rst : in std_ulogic;
       clk : in std_ulogic;
@@ -244,18 +244,13 @@ package cachepackage is
       tech        : integer := virtex7;
       sets        : integer := 256;
       ways        : integer := 8;
-      nslaves     : integer := 1;
-      noc_xlen    : integer := 3;
-      hindex_slv  : hindex_vector(0 to NAHBSLV-1);
-      hindex_mst  : integer := 0;
       local_y     : local_yx;
       local_x     : local_yx;
       mem_num     : integer := 1;
-      mem_info    : tile_mem_info_vector;
-      destination : integer := 0;       -- 0: mem, 1: DSU
-      l1_cache_en : integer := 0;
+      mem_info    : tile_mem_info_vector(0 to MEM_MAX_NUM - 1);
+      cache_y     : yx_vec(0 to 2**NL2_MAX_LOG2 - 1);
+      cache_x     : yx_vec(0 to 2**NL2_MAX_LOG2 - 1);
       cache_tile_id : cache_attribute_array);
-
     port (
       rst : in std_ulogic;
       clk : in std_ulogic;
@@ -310,10 +305,10 @@ package cachepackage is
       sets        : integer                      := 256;
       ways        : integer                      := 16;
       nl2         : integer                      := 4;
-      nllcc       : integer                      := 1;
+      nllc        : integer                      := 1;
       noc_xlen    : integer                      := 2;
-      hindex      : integer range 0 to NAHBSLV-1 := 4;
-      pindex      : integer range 0 to NAPBSLV-1 := 5;
+      hindex      : integer range 0 to NAHBSLV - 1 := 4;
+      pindex      : integer range 0 to NAPBSLV - 1 := 5;
       pirq        : integer                      := 4;
       pconfig     : apb_config_type;
       local_y     : local_yx;
@@ -324,8 +319,10 @@ package cachepackage is
       dma_tile_id   : dma_attribute_array;
       tile_cache_id : tile_attribute_array;
       tile_dma_id   : tile_attribute_array;
-      destination : integer                      := 0);  -- 0: mem
-                                                         -- 1: DSU
+      dma_y         : yx_vec(0 to 2**NLLC_MAX_LOG2 - 1);
+      dma_x         : yx_vec(0 to 2**NLLC_MAX_LOG2 - 1);
+      cache_y       : yx_vec(0 to 2**NL2_MAX_LOG2 - 1);
+      cache_x       : yx_vec(0 to 2**NL2_MAX_LOG2 - 1));
     port (
       rst   : in  std_ulogic;
       clk   : in  std_ulogic;
@@ -414,11 +411,13 @@ package body cachepackage is
 
   end function read_word;
   
-  function make_header (coh_msg     : coh_msg_t; mem_info : tile_mem_info_vector;
+  function make_header (coh_msg     : coh_msg_t; mem_info : tile_mem_info_vector(0 to MEM_MAX_NUM - 1);
                         mem_num     : integer; hprot : hprot_t; addr : line_addr_t;
                         local_x     : local_yx; local_y : local_yx;
                         to_req      : std_ulogic; req_id : cache_id_t;
-                        cache_tile_id : cache_attribute_array; noc_xlen : integer)
+                        cache_x     : yx_vec(0 to 2**NL2_MAX_LOG2 - 1);
+                        cache_y     : yx_vec(0 to 2**NL2_MAX_LOG2 - 1);
+                        cache_tile_id : cache_attribute_array)
     return noc_flit_type is
 
     variable header         : noc_flit_type;
@@ -447,8 +446,8 @@ package body cachepackage is
       if req_id >= "0" then
         dest_init := cache_tile_id(to_integer(unsigned(req_id)));
         if dest_init >= 0 then
-          dest_x := std_logic_vector(to_unsigned((dest_init mod noc_xlen), 3));
-          dest_y := std_logic_vector(to_unsigned((dest_init / noc_xlen), 3));
+          dest_x := cache_x(dest_init);
+          dest_y := cache_y(dest_init);
         end if;
       end if;
 

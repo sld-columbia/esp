@@ -37,23 +37,24 @@ entity llc_wrapper is
     sets          : integer                      := 256;
     ways          : integer                      := 16;
     nl2           : integer                      := 4;
-    nllcc         : integer                      := 0;
+    nllc          : integer                      := 0;
     noc_xlen      : integer                      := 3;
-    hindex        : integer range 0 to NAHBSLV-1 := 4;
-    pindex        : integer range 0 to NAPBSLV-1 := 5;
+    hindex        : integer range 0 to NAHBSLV - 1 := 4;
+    pindex        : integer range 0 to NAPBSLV - 1 := 5;
     pirq          : integer                      := 4;
     pconfig       : apb_config_type;
     local_y       : local_yx;
     local_x       : local_yx;
     cacheline     : integer;
     l2_cache_en   : integer                      := 0;
-    -- TODO: use dma_tile_id for DMA requests
     cache_tile_id : cache_attribute_array;
     dma_tile_id   : dma_attribute_array;
     tile_cache_id : tile_attribute_array;
     tile_dma_id   : tile_attribute_array;
-    destination   : integer                      := 0);  -- 0: mem
-                                                         -- 1: DSU
+    dma_y         : yx_vec(0 to 2**NLLC_MAX_LOG2 - 1);
+    dma_x         : yx_vec(0 to 2**NLLC_MAX_LOG2 - 1);
+    cache_y       : yx_vec(0 to 2**NL2_MAX_LOG2 - 1);
+    cache_x       : yx_vec(0 to 2**NL2_MAX_LOG2 - 1));
   port (
     rst   : in  std_ulogic;
     clk   : in  std_ulogic;
@@ -205,7 +206,7 @@ architecture rtl of llc_wrapper is
 -- AHB master FSM signals
 -----------------------------------------------------------------------------
   constant hconfig : ahb_config_type := (
-    0      => ahb_device_reg (VENDOR_SLD, SLD_L3_CACHE, 0, 0, 0),
+    0      => ahb_device_reg (VENDOR_SLD, SLD_LLC_CACHE, 0, 0, 0),
     others => zero32);
 
   type ahbm_fsm is (idle, grant_wait, load_line, send_mem_rsp, store_line);
@@ -1338,10 +1339,10 @@ begin  -- architecture rtl
             reg.addr := llc_fwd_out_data_addr;
 
             if llc_fwd_out_data_dest_id >= "0" then
-              dest_init := cache_tile_id(to_integer(unsigned(llc_fwd_out_data_dest_id)));
+              dest_init := to_integer(unsigned(llc_fwd_out_data_dest_id));
               if dest_init >= 0 then
-                dest_x := std_logic_vector(to_unsigned((dest_init mod noc_xlen), 3));
-                dest_y := std_logic_vector(to_unsigned((dest_init / noc_xlen), 3));
+                dest_x := cache_x(dest_init);
+                dest_y := cache_y(dest_init);
               end if;
             end if;
 
@@ -1422,13 +1423,9 @@ begin  -- architecture rtl
           reg.addr    := llc_rsp_out_data_addr;
           reg.line    := llc_rsp_out_data_line;
 
-          if llc_rsp_out_data_req_id >= "0" then
-            dest_init := cache_tile_id(to_integer(unsigned(llc_rsp_out_data_req_id)));
-            if dest_init >= 0 then
-              dest_x := std_logic_vector(to_unsigned((dest_init mod noc_xlen), 3));
-              dest_y := std_logic_vector(to_unsigned((dest_init / noc_xlen), 3));
-            end if;
-          end if;
+          dest_init := to_integer(unsigned(llc_rsp_out_data_req_id));
+          dest_x := cache_x(dest_init);
+          dest_y := cache_y(dest_init);
 
           reserved := std_logic_vector(resize(unsigned(
             llc_rsp_out_data_invack_cnt), RESERVED_WIDTH));
@@ -1565,10 +1562,10 @@ begin  -- architecture rtl
           reg.word_cnt   := to_integer(unsigned(reg.woffset));
 
           if llc_dma_rsp_out_data_req_id >= "0" then
-            dest_init := dma_tile_id(to_integer(unsigned(llc_dma_rsp_out_data_req_id)));
+            dest_init := to_integer(unsigned(llc_dma_rsp_out_data_req_id));
             if dest_init >= 0 then
-              dest_x := std_logic_vector(to_unsigned((dest_init mod noc_xlen), 3));
-              dest_y := std_logic_vector(to_unsigned((dest_init / noc_xlen), 3));
+              dest_x := dma_x(dest_init);
+              dest_y := dma_y(dest_init);
             end if;
           end if;
 

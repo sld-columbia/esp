@@ -36,22 +36,20 @@ entity l2_wrapper is
     tech        : integer := virtex7;
     sets        : integer := 256;
     ways        : integer := 8;
-    nslaves     : integer := 1;
-    noc_xlen    : integer := 3;
-    hindex_slv  : hindex_vector(0 to NAHBSLV-1);
     hindex_mst  : integer := 0;
-    pindex      : integer range 0 to NAPBSLV-1 := 6;
-    pirq        : integer                      := 4;
+    pindex      : integer range 0 to NAPBSLV - 1 := 6;
+    pirq        : integer := 4;
     pconfig     : apb_config_type;
     local_y     : local_yx;
     local_x     : local_yx;
+    mem_hindex  : integer := 4;
+    mem_hconfig : ahb_config_type;
     mem_num     : integer := 1;
-    mem_info    : tile_mem_info_vector;
-    destination : integer := 0;         -- 0: mem, 1: DSU
-    l1_cache_en : integer := 0;
-    cpu_id      : integer := 0;
+    mem_info    : tile_mem_info_vector(0 to MEM_MAX_NUM - 1);
+    cache_y     : yx_vec(0 to 2**NL2_MAX_LOG2 - 1);
+    cache_x     : yx_vec(0 to 2**NL2_MAX_LOG2 - 1);
+    cache_id      : integer := 0;
     cache_tile_id : cache_attribute_array);
-
   port (
     rst : in std_ulogic;
     clk : in std_ulogic;
@@ -551,7 +549,7 @@ begin  -- architecture rtl of l2_wrapper
     if rst = '0' then                   -- asynchronous reset (active low)
       cmd_reg                  <= (others => '0');
       status_reg(27 downto 0)  <= (others => '0');
-      status_reg(31 downto 28) <= std_logic_vector(to_unsigned(cpu_id, 4));
+      status_reg(31 downto 28) <= std_logic_vector(to_unsigned(cache_id, 4));
     elsif clk'event and clk = '1' then  -- rising clock edge
       if flush_done = '1' then
         status_reg(0) <= '1';
@@ -624,8 +622,8 @@ begin  -- architecture rtl of l2_wrapper
   ahbso.hresp   <= HRESP_OKAY;
   ahbso.hsplit  <= (others => '0');
   ahbso.hirq    <= (others => '0');
-  ahbso.hconfig <= hconfig_none;
-  ahbso.hindex  <= hindex_slv(0);
+  ahbso.hconfig <= mem_hconfig;
+  ahbso.hindex  <= mem_hindex;
 
   ahbmo.hwrite  <= '1';
   ahbmo.hsize   <= HSIZE_W;
@@ -705,14 +703,8 @@ begin  -- architecture rtl of l2_wrapper
 
     rd_rsp_ready <= '0';
 
-    -- check if any AHB slave has been selected
-    -- (this wrapper handles requests toward all the slaves)
-    selected := '0';
-    for i in 0 to nslaves-1 loop
-      if ahbsi.hsel(hindex_slv(i)) = '1' then
-        selected := '1';
-      end if;
-    end loop;
+    -- check if memory is selected
+    selected := ahbsi.hsel(mem_hindex);
 
     -- check for valid requests on AHB bus
     if (selected = '1' and ahbsi.hready = '1' and ahbsi.htrans /= HTRANS_IDLE and
@@ -1183,7 +1175,8 @@ begin  -- architecture rtl of l2_wrapper
             coherence_req_data_in <= make_header(req_out_data_coh_msg, mem_info,
                                                  mem_num, req_out_data_hprot,
                                                  req_out_data_addr, local_x, local_y,
-                                                 '0', req_id, cache_tile_id, noc_xlen);
+                                                 '0', req_id, cache_x,
+                                                 cache_y, cache_tile_id);
 
             reg.state := send_addr;
 
@@ -1286,7 +1279,8 @@ begin  -- architecture rtl of l2_wrapper
             coherence_rsp_snd_data_in <= make_header(rsp_out_data_coh_msg, mem_info,
                                                      mem_num, hprot, rsp_out_data_addr, local_x,
                                                      local_y, rsp_out_data_to_req(0),
-                                                     rsp_out_data_req_id, cache_tile_id, noc_xlen);
+                                                     rsp_out_data_req_id, cache_x,
+                                                     cache_y, cache_tile_id);
             reg.state := send_addr;
 
           end if;
