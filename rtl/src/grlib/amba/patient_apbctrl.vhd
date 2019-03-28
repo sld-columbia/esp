@@ -53,7 +53,7 @@ entity patient_apbctrl is
     pslvdisable : integer := 0;
     mcheck      : integer range 0 to 1 := 1;
     ccheck      : integer range 0 to 1 := 1;
-    remote_apb  : std_logic_vector(NAPBSLV-1 downto 0));
+    remote_apb  : std_logic_vector(0 to NAPBSLV - 1));
   port (
     rst     : in  std_ulogic;
     clk     : in  std_ulogic;
@@ -110,7 +110,7 @@ begin
   comb : process(ahbi, apbo, r, rst, ack)
   variable v : reg_type;
   variable psel   : std_logic_vector(0 to nslaves-1);
-  variable psel_idx : integer range 0 to NAPBSLV-1;
+  variable psel_idx : integer range 0 to NAPBSLV - 1;
   variable pwdata : std_logic_vector(31 downto 0);
   variable apbaddr : std_logic_vector(apbmax downto 0);
   variable apbaddr2 : std_logic_vector(31 downto 0);
@@ -363,7 +363,7 @@ begin
       end if;
     end loop;
     if nslaves < NAPBSLV then
-      for i in nslaves to NAPBSLV-1 loop
+      for i in nslaves to NAPBSLV - 1 loop
         for j in 0 to NAPBCFG-1 loop
           assert (apbo(i).pconfig(j) = zx or ccheck = 0)
             report "APB slave " & tost(i) & " is outside the range of decoded " &
