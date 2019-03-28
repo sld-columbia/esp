@@ -157,20 +157,13 @@ type apb_config_type is array (0 to NAPBCFG-1) of amba_config_word;
   type ahb_slv_out_vector_type is array (natural range <>) of ahb_slv_out_type;
   type ahb_slv_in_vector_type is array (natural range <>) of ahb_slv_in_type;
   subtype ahb_mst_out_vector is ahb_mst_out_vector_type(NAHBMST-1 downto 0);
-  subtype ahb_slv_out_vector is ahb_slv_out_vector_type(NAHBSLV-1 downto 0);
+  subtype ahb_slv_out_vector is ahb_slv_out_vector_type(0 to NAHBSLV-1);
   subtype ahb_mst_in_vector is ahb_mst_in_vector_type(NAHBMST-1 downto 0);
-  subtype ahb_slv_in_vector is ahb_slv_in_vector_type(NAHBSLV-1 downto 0);
+  subtype ahb_slv_in_vector is ahb_slv_in_vector_type(0 to NAHBSLV-1);
   type ahb_mst_out_bus_vector is array (0 to NBUS-1) of ahb_mst_out_vector;
   type ahb_slv_out_bus_vector is array (0 to NBUS-1) of ahb_slv_out_vector;
-
--- support fixed address mapping
-  type ahb_hconfig_vector_type is array (natural range <>) of ahb_config_type;
-  type apb_pconfig_vector_type is array (natural range <>) of apb_config_type;
-  type apb_pindex_vector_type is array (natural range <>) of integer range 0 to NAPBSLV-1;
-  subtype ahb_mst_hconfig_vector is ahb_hconfig_vector_type(NAHBMST-1 downto 0);
-  subtype ahb_slv_hconfig_vector is ahb_hconfig_vector_type(NAHBSLV-1 downto 0);
-  subtype apb_slv_pconfig_vector is apb_pconfig_vector_type(NAPBSLV-1 downto 0);
-  subtype apb_slv_pindex_vector is apb_pindex_vector_type(NAPBSLV-1 downto 0);
+  type ahb_config_vector_type is array (natural range <>) of ahb_config_type;
+  subtype ahb_slv_config_vector is ahb_config_vector_type(0 to NAHBSLV-1);
 
 -------------------------------------------------------------------------------
 -- Misc. types shared between AMBA IP cores
@@ -274,6 +267,8 @@ type apb_config_type is array (0 to NAPBCFG-1) of amba_config_word;
   type apb_slv_out_vector is array (0 to NAPBSLV-1) of apb_slv_out_type;
   type apb3_slv_out_vector is array (0 to NAPBSLV-1) of apb3_slv_out_type;
   type apb_slv_out_vector_type is array (natural range <>) of apb_slv_out_type;
+  type apb_config_vector_type is array (natural range <>) of apb_config_type;
+  subtype apb_slv_config_vector is apb_config_vector_type(0 to NAPBSLV-1);
 
   -- proxies might replace more than one slave.
   type hindex_vector is array (natural range <>) of integer range 0 to NAHBSLV-1;
@@ -630,7 +625,7 @@ component ahbxb is
       pslvdisable : integer := 0;
       mcheck      : integer range 0 to 1 := 1;
       ccheck      : integer range 0 to 1 := 1;
-      remote_apb  : std_logic_vector(NAPBSLV-1 downto 0));
+      remote_apb  : std_logic_vector(0 to NAPBSLV-1));
     port (
       rst  : in  std_ulogic;
       clk  : in  std_ulogic;
