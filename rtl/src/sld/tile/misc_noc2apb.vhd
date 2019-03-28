@@ -50,7 +50,7 @@ entity misc_noc2apb is
     tech         : integer := virtex7;
     local_y      : local_yx;
     local_x      : local_yx;
-    local_apb_en : std_logic_vector(NAPBSLV-1 downto 0));
+    local_apb_en : std_logic_vector(0 to NAPBSLV - 1));
 
   port (
     rst      : in  std_ulogic;
@@ -81,7 +81,7 @@ architecture rtl of misc_noc2apb is
   signal request_msg_type : noc_msg_type;
   signal sample_request : std_ulogic;
   signal header : noc_flit_type;
-  signal psel, psel_reg : integer range 0 to NAPBSLV-1;
+  signal psel, psel_reg : integer range 0 to NAPBSLV - 1;
   signal sample_psel : std_ulogic;
   signal tail, tail_reg : noc_flit_type;
   signal sample_tail : std_ulogic;
@@ -142,7 +142,9 @@ begin  -- rtl
     variable msg_type_v : noc_msg_type;
     variable addr_v : std_logic_vector(31 downto 0);
     variable data_v : std_logic_vector(31 downto 0);
-    variable psel_v : integer range 0 to NAPBSLV-1;
+    variable psel_v : integer range 0 to NAPBSLV - 1;
+    variable pirq_v : std_logic_vector(NAHBIRQ-1 downto 0);
+
     variable reply_v : std_logic_vector(31 downto 0);
     variable tail_v : noc_flit_type;
     variable apbi_V : apb_slv_in_type;
@@ -155,7 +157,7 @@ begin  -- rtl
     sample_prdata <= '0';
     sample_apbi <= '0';
     apbi_in <= apb_slv_in_none;
-    apbi <= apb_slv_in_none;            --IRQ not driven from this wrapper!
+    apbi <= apb_slv_in_none; -- only IRQ from local devices are driven here
     apbi_v := apb_slv_in_none;
     -- driving psel, penable, paddr, pwrite, pwdata
 
@@ -169,15 +171,22 @@ begin  -- rtl
     addr_v := apb_rcv_data_out(31 downto 0);
     waddr <= addr_v;
     psel_v := 0;
-    for i in 0 to NAPBSLV-1 loop
+    pirq_v := (others => '0');
+    for i in 0 to NAPBSLV - 1 loop
       if local_apb_en(i) = '1' then
+        -- Select
         if ((apbo(i).pconfig(1)(1 downto 0) = "01") and
             ((apbo(i).pconfig(1)(31 downto 20) and apbo(i).pconfig(1)(15 downto 4)) =
              (addr_v(19 downto  8) and apbo(i).pconfig(1)(15 downto 4))))
         then psel_v := i; end if;
+
+        -- local IRQ
+        pirq_v := pirq_v or apbo(i).pirq;
+
       end if;
     end loop;
     psel <= psel_v;
+    apbi.pirq <= pirq_v;
     -- Get data (valid during rcv_data_or_snd_header if request_msg_type = REQ_REG_WR)
     data_v := apb_rcv_data_out(31 downto 0);
 

@@ -26,6 +26,7 @@
 
 library ieee;
 use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
 
 --pragma translate_off
 use STD.textio.all;
@@ -45,72 +46,84 @@ use work.nocpackage.all;
 
 entity cpu_ahbs2noc is
   generic (
-    tech        : integer := virtex7;
-    ncpu        : integer := 4;
-    nslaves     : integer := 1;
-    hindex      : hindex_vector(0 to NAHBSLV-1);
-    local_y     : local_yx;
-    local_x     : local_yx;
-    mem_num     : integer := 1;
-    mem_info    : tile_mem_info_vector;
-    destination : integer := 0);        -- 0: mem
-                                        -- 1: DSU
-
+    tech             : integer;
+    hindex           : std_logic_vector(0 to NAHBSLV - 1);
+    hconfig          : ahb_slv_config_vector;
+    local_y          : local_yx;
+    local_x          : local_yx;
+    mem_hindex       : integer range 0 to NAHBSLV - 1;
+    mem_num          : integer;
+    mem_info         : tile_mem_info_vector(0 to MEM_MAX_NUM - 1);
+    slv_y            : local_yx;
+    slv_x            : local_yx;
+    retarget_for_dma : integer range 0 to 1 := 0;
+    dma_length       : integer := 4);
   port (
-    rst      : in  std_ulogic;
-    clk      : in  std_ulogic;
-    ahbsi    : in  ahb_slv_in_type;
-    ahbso    : out ahb_slv_out_type;
-
+    rst                        : in  std_ulogic;
+    clk                        : in  std_ulogic;
+    ahbsi                      : in  ahb_slv_in_type;
+    ahbso                      : out ahb_slv_out_vector;
+    dma_selected               : in  std_ulogic;
     -- tile->NoC1
-    coherence_req_wrreq                 : out std_ulogic;
-    coherence_req_data_in               : out noc_flit_type;
-    coherence_req_full                  : in  std_ulogic;
-    -- NoC2->tile
-    coherence_fwd_rdreq             : out std_ulogic;
-    coherence_fwd_data_out          : in  noc_flit_type;
-    coherence_fwd_empty             : in  std_ulogic;
+    coherence_req_wrreq        : out std_ulogic;
+    coherence_req_data_in      : out noc_flit_type;
+    coherence_req_full         : in  std_ulogic;
     -- Noc3->tile
-    coherence_rsp_rcv_rdreq            : out std_ulogic;
-    coherence_rsp_rcv_data_out         : in  noc_flit_type;
-    coherence_rsp_rcv_empty            : in  std_ulogic);
+    coherence_rsp_rcv_rdreq    : out std_ulogic;
+    coherence_rsp_rcv_data_out : in  noc_flit_type;
+    coherence_rsp_rcv_empty    : in  std_ulogic;
+    -- tile->NoC5
+    remote_ahbs_snd_wrreq      : out std_ulogic;
+    remote_ahbs_snd_data_in    : out noc_flit_type;
+    remote_ahbs_snd_full       : in  std_ulogic;
+    -- NoC5->tile
+    remote_ahbs_rcv_rdreq      : out std_ulogic;
+    remote_ahbs_rcv_data_out   : in  noc_flit_type;
+    remote_ahbs_rcv_empty      : in  std_ulogic);
 end cpu_ahbs2noc;
 
 architecture rtl of cpu_ahbs2noc is
 
   type ahbs_fsm is (idle, request_header, request_address,
-                    request_data, reply_header, reply_data);
+                    request_data, reply_header, reply_data,
+                    request_length);
   signal ahbs_state, ahbs_next : ahbs_fsm;
 
   signal header : noc_flit_type;
   signal payload_address : noc_flit_type;
+  signal dst_is_mem : std_ulogic;
   signal header_reg : noc_flit_type;
   signal payload_address_reg : noc_flit_type;
+  signal payload_length_reg : noc_flit_type;
+  signal dst_is_mem_reg : std_ulogic;
   signal sample_flits : std_ulogic;
 
   signal hwrite_reg : std_ulogic;
+  signal hsel_reg : std_logic_vector(0 to NAHBSLV - 1);
 
   signal load_transaction_active : std_ulogic;
   signal load_start, load_done : std_ulogic;
-begin  -- rtl
 
-  -- TODO: cache coherency!
-  coherence_fwd_rdreq <= '0';
+  constant zero_ahb_flags : std_logic_vector(0 to NAHBSLV - 1) := (others => '0');
+begin  -- rtl
 
   -----------------------------------------------------------------------------
   -- AHB handling
   -----------------------------------------------------------------------------
 
-  make_packet: process (ahbsi)
+  make_packet: process (ahbsi, dma_selected)
     variable msg_type : noc_msg_type;
     variable header_v : noc_flit_type;
     variable reserved : reserved_field_type;
     variable mem_x, mem_y : local_yx;
+    variable snd_to_mem : std_ulogic;
   begin  -- process make_packet
+    -- Get routing info
     mem_x := mem_info(0).x;
     mem_y := mem_info(0).y;
     if mem_num /= 1 then
       for i in 0 to mem_num - 1 loop
+        -- Need to match which memory split is selected
         if ((ahbsi.haddr(31 downto 20) xor conv_std_logic_vector(mem_info(i).haddr, 12))
             and conv_std_logic_vector(mem_info(i).hmask, 12)) = X"000" then
           mem_x := mem_info(i).x;
@@ -119,30 +132,28 @@ begin  -- rtl
       end loop;  -- i
     end if;
 
-    if destination = 0 then
-      -- Send to Memory
-      if ahbsi.hsize = HSIZE_BYTE then
-        msg_type := REQ_GETS_B;
-      elsif ahbsi.hsize = HSIZE_HWORD then
-        msg_type := REQ_GETS_HW;
-      else
-        msg_type := REQ_GETS_W;
-      end if;
+    -- Determine whether memory is selected
+    if retarget_for_dma = 1 then
+      snd_to_mem := dma_selected;
     else
-      -- Send to DSU
-      msg_type := AHB_RD;
+      if ahbsi.hsel(mem_hindex) = '1' then
+        snd_to_mem := '1';
+      else
+        snd_to_mem := '0';
+        mem_x := slv_x;
+        mem_y := slv_y;
+      end if;
     end if;
-    reserved := (others => '0');
-    reserved(3 downto 0) := ahbsi.hprot;
-    header_v := (others => '0');
+    dst_is_mem <= snd_to_mem;
 
-    payload_address(NOC_FLIT_SIZE-1 downto NOC_FLIT_SIZE-PREAMBLE_WIDTH) <= PREAMBLE_TAIL;
-    payload_address(NOC_FLIT_SIZE-PREAMBLE_WIDTH-1 downto 0) <= ahbsi.haddr;
 
+    -- Set message type
     if ahbsi.hwrite = '1' then
-      if destination = 0 then
+      if snd_to_mem = '1' then
         -- Send to Memory
-        if ahbsi.hsize = HSIZE_BYTE then
+        if retarget_for_dma = 1 then
+          msg_type := REQ_DMA_WRITE;
+        elsif ahbsi.hsize = HSIZE_BYTE then
           msg_type := REQ_GETM_B;
         elsif ahbsi.hsize = HSIZE_HWORD then
           msg_type := REQ_GETM_HW;
@@ -150,27 +161,70 @@ begin  -- rtl
           msg_type := REQ_GETM_W;
         end if;
       else
-        -- Send to DSU
+        -- Send to remote slave uncached
         msg_type := AHB_WR;
       end if;
+      -- Address flit is followed by data flits
       payload_address(NOC_FLIT_SIZE-1 downto NOC_FLIT_SIZE-PREAMBLE_WIDTH) <= PREAMBLE_BODY;
+    else
+      if snd_to_mem = '1' then
+        -- Send to Memory
+        if retarget_for_dma = 1 then
+          msg_type := REQ_DMA_READ;
+        elsif ahbsi.hsize = HSIZE_BYTE then
+          msg_type := REQ_GETS_B;
+        elsif ahbsi.hsize = HSIZE_HWORD then
+          msg_type := REQ_GETS_HW;
+        else
+          msg_type := REQ_GETS_W;
+        end if;
+      else
+        -- Send to remote slave uncached
+        msg_type := AHB_RD;
+      end if;
+      -- Address flit is the last flit; Lenght is assumed cacheline for memory
+      -- accesses and one word for remote slave accesses, unless the
+      -- transaction is retargeted for coherent DMA. In this case we must add
+      -- the read length.
+      if retarget_for_dma /= 0 and dma_selected = '1' then
+        payload_address(NOC_FLIT_SIZE-1 downto NOC_FLIT_SIZE-PREAMBLE_WIDTH) <= PREAMBLE_BODY;
+      else
+        payload_address(NOC_FLIT_SIZE-1 downto NOC_FLIT_SIZE-PREAMBLE_WIDTH) <= PREAMBLE_TAIL;
+      end if;
     end if;
+
+    -- Set address flit
+    payload_address(NOC_FLIT_SIZE-PREAMBLE_WIDTH-1 downto 0) <= ahbsi.haddr;
+
+    -- Create header flit
+    reserved := (others => '0');
+    reserved(3 downto 0) := ahbsi.hprot;
+    header_v := (others => '0');
     header_v := create_header(local_y, local_x, mem_y, mem_x, msg_type, reserved);
     header <= header_v;
+
   end process make_packet;
+
+  -- Set length flit
+  payload_length_reg(NOC_FLIT_SIZE-1 downto NOC_FLIT_SIZE-PREAMBLE_WIDTH) <= PREAMBLE_TAIL;
+  payload_length_reg(NOC_FLIT_SIZE-PREAMBLE_WIDTH-1 downto 0) <= conv_std_logic_vector(dma_length, NOC_FLIT_SIZE-PREAMBLE_WIDTH);
 
   process (clk, rst)
   begin  -- process
     if rst = '0' then                   -- asynchronous reset (active low)
       header_reg <= (others => '0');
       payload_address_reg <= (others => '0');
+      dst_is_mem_reg <= '0';
       hwrite_reg <= '0';
+      hsel_reg <= (others => '0');
       load_transaction_active <= '0';
     elsif clk'event and clk = '1' then  -- rising clock edge
       if sample_flits = '1' then
         header_reg <= header;
         payload_address_reg <= payload_address;
+        dst_is_mem_reg <= dst_is_mem;
         hwrite_reg <= ahbsi.hwrite;
+        hsel_reg <= ahbsi.hsel;
       end if;
       if load_start = '1' then
         load_transaction_active <= '1';
@@ -181,27 +235,33 @@ begin  -- rtl
   end process;
 
 
-  ahb_roundtrip: process (ahbs_state, ahbsi, load_transaction_active,
+  ahb_roundtrip: process (ahbs_state, ahbsi, load_transaction_active, dst_is_mem_reg,
                           coherence_req_full,
                           coherence_rsp_rcv_data_out, coherence_rsp_rcv_empty,
-                          header_reg, payload_address_reg, hwrite_reg)
+                          remote_ahbs_snd_full,
+                          remote_ahbs_rcv_data_out, remote_ahbs_rcv_empty,
+                          header_reg, payload_address_reg, payload_length_reg,
+                          hwrite_reg, hsel_reg)
     variable payload_data : noc_flit_type;
     variable sequential : std_ulogic;
     variable selected : std_ulogic;
     variable rsp_preamble : noc_preamble_type;
+    variable hrdata : std_logic_vector(AHBDW-1 downto 0);
+    variable hready : std_ulogic;
   begin  -- process ahb_roundtrip
     ahbs_next <= ahbs_state;
     sample_flits <= '0';
     coherence_req_data_in <= (others => '0');
     coherence_req_wrreq <= '0';
     coherence_rsp_rcv_rdreq <= '0';
+    remote_ahbs_snd_data_in <= (others => '0');
+    remote_ahbs_snd_wrreq <= '0';
+    remote_ahbs_rcv_rdreq <= '0';
 
     selected := '0';
-    for i in 0 to nslaves-1 loop
-      if ahbsi.hsel(hindex(i)) = '1' then
-        selected := '1';
-      end if;
-    end loop;  -- i
+    if (ahbsi.hsel and hindex) /= zero_ahb_flags then
+      selected := '1';
+    end if;
 
     if (ahbsi.htrans /= HTRANS_SEQ or selected = '0') then
       payload_data(NOC_FLIT_SIZE-1 downto NOC_FLIT_SIZE - PREAMBLE_WIDTH) := PREAMBLE_TAIL;
@@ -212,20 +272,36 @@ begin  -- rtl
     end if;
     payload_data(31 downto 0) := ahbreadword(ahbsi.hwdata);
 
-    rsp_preamble := get_preamble(coherence_rsp_rcv_data_out);
+    if dst_is_mem_reg = '1' then
+      rsp_preamble := get_preamble(coherence_rsp_rcv_data_out);
+    else
+      rsp_preamble := get_preamble(remote_ahbs_rcv_data_out);
+    end if;
 
     -- Default ahbso assignment
-    ahbso <= ahbs_none;
-    ahbso.hready <= '0';
-    ahbso.hresp <= HRESP_OKAY;
-    ahbso.hindex <= hindex(0);
+    for i in 0 to NAHBSLV - 1 loop
+      ahbso(i).hready <= '1';
+      ahbso(i).hrdata <= (others => '0');
+      ahbso(i).hresp <= HRESP_OKAY;
+      ahbso(i).hsplit <= (others => '0');
+      ahbso(i).hirq <= (others => '0');
+      if hindex(i) /= '0' then
+        ahbso(i).hconfig <= hconfig(i);
+        ahbso(i).hindex <= i;
+      else
+        ahbso(i).hconfig <= hconfig_none;
+        ahbso(i).hindex <= 0;
+      end if;
+    end loop;
 
     load_start <= '0';
     load_done <= '0';
 
+    hready := '1';
+    hrdata := (others => '0');
+
     case ahbs_state is
       when idle =>
-        ahbso.hready <= '1';
         if load_transaction_active = '1' then
           if coherence_rsp_rcv_empty = '0' then
             coherence_rsp_rcv_rdreq <= '1';
@@ -239,67 +315,145 @@ begin  -- rtl
           ahbs_next <= request_header;
         end if;
 
-      when request_header => if load_transaction_active = '1' then
-                               if coherence_rsp_rcv_empty = '0' then
-                                 coherence_rsp_rcv_rdreq <= '1';
-                                 if rsp_preamble = PREAMBLE_TAIL then
-                                   load_done <= '1';
-                                 end if;
-                               end if;
-                             else
-                               if coherence_req_full = '0' then
-                                 coherence_req_data_in <= header_reg;
-                                 coherence_req_wrreq <= '1';
-                                 ahbs_next <= request_address;
-                               end if;
-                             end if;
+      when request_header =>
+        hready := '0';
+        if load_transaction_active = '1' then
+          if coherence_rsp_rcv_empty = '0' then
+            coherence_rsp_rcv_rdreq <= '1';
+            if rsp_preamble = PREAMBLE_TAIL then
+              load_done <= '1';
+            end if;
+          end if;
+        elsif dst_is_mem_reg = '1' then
+          if coherence_req_full = '0' then
+            coherence_req_data_in <= header_reg;
+            coherence_req_wrreq <= '1';
+            ahbs_next <= request_address;
+          end if;
+        else
+          if remote_ahbs_snd_full = '0' then
+            remote_ahbs_snd_data_in <= header_reg;
+            remote_ahbs_snd_wrreq <= '1';
+            ahbs_next <= request_address;
+          end if;
+        end if;
 
-      when request_address => if coherence_req_full = '0' then
-                                coherence_req_data_in <= payload_address_reg;
-                                coherence_req_wrreq <= '1';
-                                if hwrite_reg = '1' then
-                                  ahbs_next <= request_data;
-                                else
-                                  ahbs_next <= reply_header;
-                                end if;
-                              end if;
+      when request_address =>
+        hready := '0';
+        if dst_is_mem_reg = '1' then
+          if coherence_req_full = '0' then
+            coherence_req_data_in <= payload_address_reg;
+            coherence_req_wrreq <= '1';
+            if hwrite_reg = '1' then
+              ahbs_next <= request_data;
+            else
+              if retarget_for_dma = 1 then
+                ahbs_next <= request_length;
+              else
+                ahbs_next <= reply_header;
+              end if;
+            end if;
+          end if;
+        else
+          if remote_ahbs_snd_full = '0' then
+            remote_ahbs_snd_data_in <= payload_address_reg;
+            remote_ahbs_snd_wrreq <= '1';
+            if hwrite_reg = '1' then
+              ahbs_next <= request_data;
+            else
+              ahbs_next <= reply_header;
+            end if;
+          end if;
+        end if;
 
-      when request_data => if coherence_req_full = '0' then
-                             ahbso.hready <= '1';
-                             coherence_req_data_in <= payload_data;
-                             coherence_req_wrreq <= '1';
-                             if selected = '0' or ahbsi.htrans = HTRANS_IDLE then
-                               ahbs_next <= idle;
-                             elsif sequential = '0' then
-                               sample_flits <= '1';
-                               ahbs_next <= request_header;
-                             end if;
-                           end if;
+      when request_length =>
+        hready := '0';
+        if coherence_req_full = '0' then
+          coherence_req_data_in <= payload_length_reg;
+          coherence_req_wrreq <= '1';
+          ahbs_next <= reply_header;
+        end if;
 
-      when reply_header => if coherence_rsp_rcv_empty = '0' then
-                             load_start <= '1';
-                             coherence_rsp_rcv_rdreq <= '1';
-                             ahbs_next <= reply_data;
-                           end if;
+      when request_data =>
+        hready := '0';
+        if dst_is_mem_reg = '1' then
+          if coherence_req_full = '0' then
+            hready := '1';
+            coherence_req_data_in <= payload_data;
+            coherence_req_wrreq <= '1';
+            if selected = '0' or ahbsi.htrans = HTRANS_IDLE then
+              ahbs_next <= idle;
+            elsif sequential = '0' then
+              sample_flits <= '1';
+              ahbs_next <= request_header;
+            end if;
+          end if;
+        else
+          if remote_ahbs_snd_full = '0' then
+            hready := '1';
+            remote_ahbs_snd_data_in <= payload_data;
+            remote_ahbs_snd_wrreq <= '1';
+            if selected = '0' or ahbsi.htrans = HTRANS_IDLE then
+              ahbs_next <= idle;
+            elsif sequential = '0' then
+              sample_flits <= '1';
+              ahbs_next <= request_header;
+            end if;
+          end if;
+        end if;
 
-      when reply_data => if coherence_rsp_rcv_empty = '0' then
-                           if rsp_preamble = PREAMBLE_TAIL then
-                             load_done <= '1';
-                           end if;
-                           coherence_rsp_rcv_rdreq <= '1';
-                           ahbso.hrdata <= ahbdrivedata(coherence_rsp_rcv_data_out(31 downto 0));
-                           ahbso.hready <= '1';
-                           if selected = '0' or ahbsi.htrans = HTRANS_IDLE then
-                             ahbs_next <= idle;
-                           elsif sequential = '0' or rsp_preamble = PREAMBLE_TAIL then
-                             sample_flits <= '1';
-                             ahbs_next <= request_header;
-                           end if;
-                         end if;
+      when reply_header =>
+        hready := '0';
+        if dst_is_mem_reg = '1' then
+          if coherence_rsp_rcv_empty = '0' then
+            load_start <= '1';
+            coherence_rsp_rcv_rdreq <= '1';
+            ahbs_next <= reply_data;
+          end if;
+        else
+          if remote_ahbs_rcv_empty = '0' then
+            remote_ahbs_rcv_rdreq <= '1';
+            ahbs_next <= reply_data;
+          end if;
+        end if;
 
-      when others => ahbs_next <= idle;
+      when reply_data =>
+        hready := '0';
+        if coherence_rsp_rcv_empty = '0' then
+          if rsp_preamble = PREAMBLE_TAIL then
+            load_done <= '1';
+          end if;
+          coherence_rsp_rcv_rdreq <= '1';
+          hrdata := ahbdrivedata(coherence_rsp_rcv_data_out(31 downto 0));
+          hready := '1';
+        end if;
+        if remote_ahbs_rcv_empty = '0' then
+          remote_ahbs_rcv_rdreq <= '1';
+          hrdata := ahbdrivedata(remote_ahbs_rcv_data_out(31 downto 0));
+          hready := '1';
+        end if;
+        if coherence_rsp_rcv_empty = '0' or remote_ahbs_rcv_empty = '0' then
+          if selected = '0' or ahbsi.htrans = HTRANS_IDLE then
+            ahbs_next <= idle;
+          elsif sequential = '0' or rsp_preamble = PREAMBLE_TAIL then
+            sample_flits <= '1';
+            ahbs_next <= request_header;
+          end if;
+        end if;
+
+      when others =>
+        hready := '0';
+        ahbs_next <= idle;
 
     end case;
+
+    for i in 0 to NAHBSLV - 1 loop
+      if hsel_reg(i) = '1' then
+        ahbso(i).hrdata <= hrdata;
+        ahbso(i).hready <= hready;
+      end if;
+    end loop;  -- i
+
   end process ahb_roundtrip;
 
   -- Update FSM state

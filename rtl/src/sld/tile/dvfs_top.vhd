@@ -53,9 +53,7 @@ entity dvfs_top is
     extra_clk_buf : integer range 0 to 1 := 1;
     pindex                : integer                            := 0;
     paddr                 : integer                            := 0;
-    pmask                 : integer                            := 16#fff#;
-    revision              : integer                            := 0;
-    devid                 : devid_t                   := 16#001#);
+    pmask                 : integer                            := 16#fff#);
   port (
     rst       : in  std_ulogic;
     clk       : in  std_ulogic;

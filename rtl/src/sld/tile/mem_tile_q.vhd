@@ -42,66 +42,58 @@ entity mem_tile_q is
   generic (
     tech        : integer := virtex7);
   port (
-    rst                                 : in  std_ulogic;
-    clk                                 : in  std_ulogic;
+    rst                        : in  std_ulogic;
+    clk                        : in  std_ulogic;
     -- NoC1->tile
-    coherence_req_rdreq                 : in  std_ulogic;
-    coherence_req_data_out              : out noc_flit_type;
-    coherence_req_empty                 : out std_ulogic;
+    coherence_req_rdreq        : in  std_ulogic;
+    coherence_req_data_out     : out noc_flit_type;
+    coherence_req_empty        : out std_ulogic;
     -- tile->NoC2
-    coherence_fwd_wrreq             : in  std_ulogic;
-    coherence_fwd_data_in           : in  noc_flit_type;
-    coherence_fwd_full              : out std_ulogic;
+    coherence_fwd_wrreq        : in  std_ulogic;
+    coherence_fwd_data_in      : in  noc_flit_type;
+    coherence_fwd_full         : out std_ulogic;
     -- tile->NoC3
-    coherence_rsp_snd_wrreq            : in  std_ulogic;
-    coherence_rsp_snd_data_in          : in  noc_flit_type;
-    coherence_rsp_snd_full             : out std_ulogic;
+    coherence_rsp_snd_wrreq    : in  std_ulogic;
+    coherence_rsp_snd_data_in  : in  noc_flit_type;
+    coherence_rsp_snd_full     : out std_ulogic;
     -- Noc3->tile
-    coherence_rsp_rcv_rdreq                       : in  std_ulogic;
-    coherence_rsp_rcv_data_out                    : out noc_flit_type;
-    coherence_rsp_rcv_empty                       : out std_ulogic;
+    coherence_rsp_rcv_rdreq    : in  std_ulogic;
+    coherence_rsp_rcv_data_out : out noc_flit_type;
+    coherence_rsp_rcv_empty    : out std_ulogic;
     -- NoC6->tile
-    dma_rcv_rdreq                       : in  std_ulogic;
-    dma_rcv_data_out                    : out noc_flit_type;
-    dma_rcv_empty                       : out std_ulogic;
+    dma_rcv_rdreq              : in  std_ulogic;
+    dma_rcv_data_out           : out noc_flit_type;
+    dma_rcv_empty              : out std_ulogic;
     -- tile->NoC6
-    coherent_dma_snd_wrreq              : in  std_ulogic;
-    coherent_dma_snd_data_in            : in  noc_flit_type;
-    coherent_dma_snd_full               : out std_ulogic;
+    coherent_dma_snd_wrreq     : in  std_ulogic;
+    coherent_dma_snd_data_in   : in  noc_flit_type;
+    coherent_dma_snd_full      : out std_ulogic;
     -- tile->NoC4
-    dma_snd_wrreq                       : in  std_ulogic;
-    dma_snd_data_in                     : in  noc_flit_type;
-    dma_snd_full                        : out std_ulogic;
-    dma_snd_atleast_4slots              : out std_ulogic;
-    dma_snd_exactly_3slots              : out std_ulogic;
+    dma_snd_wrreq              : in  std_ulogic;
+    dma_snd_data_in            : in  noc_flit_type;
+    dma_snd_full               : out std_ulogic;
+    dma_snd_atleast_4slots     : out std_ulogic;
+    dma_snd_exactly_3slots     : out std_ulogic;
     -- NoC4->tile
-    coherent_dma_rcv_rdreq              : in  std_ulogic;
-    coherent_dma_rcv_data_out           : out noc_flit_type;
-    coherent_dma_rcv_empty              : out std_ulogic;
+    coherent_dma_rcv_rdreq     : in  std_ulogic;
+    coherent_dma_rcv_data_out  : out noc_flit_type;
+    coherent_dma_rcv_empty     : out std_ulogic;
     -- NoC5->tile
-    remote_ahbs_rcv_rdreq               : in  std_ulogic;
-    remote_ahbs_rcv_data_out            : out noc_flit_type;
-    remote_ahbs_rcv_empty               : out std_ulogic;
+    remote_ahbs_rcv_rdreq      : in  std_ulogic;
+    remote_ahbs_rcv_data_out   : out noc_flit_type;
+    remote_ahbs_rcv_empty      : out std_ulogic;
     -- tile->NoC5
-    remote_ahbs_snd_wrreq               : in  std_ulogic;
-    remote_ahbs_snd_data_in             : in  noc_flit_type;
-    remote_ahbs_snd_full                : out std_ulogic;
+    remote_ahbs_snd_wrreq      : in  std_ulogic;
+    remote_ahbs_snd_data_in    : in  noc_flit_type;
+    remote_ahbs_snd_full       : out std_ulogic;
     -- NoC5->tile
-    remote_apb_rcv_rdreq       : in  std_ulogic;
-    remote_apb_rcv_data_out    : out noc_flit_type;
-    remote_apb_rcv_empty       : out std_ulogic;
+    apb_rcv_rdreq              : in  std_ulogic;
+    apb_rcv_data_out           : out noc_flit_type;
+    apb_rcv_empty              : out std_ulogic;
     -- tile->NoC5
-    remote_apb_snd_wrreq       : in  std_ulogic;
-    remote_apb_snd_data_in     : in  noc_flit_type;
-    remote_apb_snd_full        : out std_ulogic;
-    -- NoC5->tile
-    apb_rcv_rdreq                       : in  std_ulogic;
-    apb_rcv_data_out                    : out noc_flit_type;
-    apb_rcv_empty                       : out std_ulogic;
-    -- tile->NoC5
-    apb_snd_wrreq                       : in  std_ulogic;
-    apb_snd_data_in                     : in  noc_flit_type;
-    apb_snd_full                        : out std_ulogic;
+    apb_snd_wrreq              : in  std_ulogic;
+    apb_snd_data_in            : in  noc_flit_type;
+    apb_snd_full               : out std_ulogic;
 
     -- Cachable data plane 1 -> request messages
     noc1_out_data : in  noc_flit_type;
@@ -193,14 +185,6 @@ architecture rtl of mem_tile_q is
   signal remote_ahbs_snd_data_out     : noc_flit_type;
   signal remote_ahbs_snd_empty        : std_ulogic;
   -- NoC5->tile
-  signal remote_apb_rcv_wrreq                : std_ulogic;
-  signal remote_apb_rcv_data_in              : noc_flit_type;
-  signal remote_apb_rcv_full                 : std_ulogic;
-  -- tile->NoC5
-  signal remote_apb_snd_rdreq                : std_ulogic;
-  signal remote_apb_snd_data_out             : noc_flit_type;
-  signal remote_apb_snd_empty                : std_ulogic;
-  -- NoC5->tile
   signal apb_rcv_wrreq                : std_ulogic;
   signal apb_rcv_data_in              : noc_flit_type;
   signal apb_rcv_full                 : std_ulogic;
@@ -209,39 +193,17 @@ architecture rtl of mem_tile_q is
   signal apb_snd_data_out             : noc_flit_type;
   signal apb_snd_empty                : std_ulogic;
 
-  -- Local Master -> Local apb slave (request)
-  signal local_remote_apb_snd_wrreq                : std_ulogic;
-  signal local_remote_apb_snd_data_in              : noc_flit_type;
-  signal local_remote_apb_snd_full                 : std_ulogic;
-  signal local_remote_apb_rcv_rdreq                : std_ulogic;
-  signal local_remote_apb_rcv_data_out             : noc_flit_type;
-  signal local_remote_apb_rcv_empty                : std_ulogic;
-  -- Local apb slave --> Local Master (response)
-  signal local_apb_snd_wrreq                : std_ulogic;
-  signal local_apb_snd_data_in              : noc_flit_type;
-  signal local_apb_snd_full                 : std_ulogic;
-  signal local_apb_rcv_rdreq                : std_ulogic;
-  signal local_apb_rcv_data_out             : noc_flit_type;
-  signal local_apb_rcv_empty                : std_ulogic;
-
-
   signal noc2_dummy_out_data  : noc_flit_type;
   signal noc2_dummy_out_void  : std_ulogic;
   signal noc1_dummy_in_stop   : std_ulogic;
 
-  type noc5_packet_fsm is (none, packet_remote_apb_rcv,
-                           packet_remote_ahbs_rcv, packet_apb_rcv,
-                           packet_local_remote_apb_rcv, packet_local_apb_rcv);
+  type noc5_packet_fsm is (none, packet_remote_ahbs_rcv, packet_apb_rcv);
   signal noc5_fifos_current, noc5_fifos_next : noc5_packet_fsm;
-  type to_noc5_packet_fsm is (none, packet_remote_apb_snd, packet_remote_ahbs_snd,
-                              packet_apb_snd, packet_local_remote_apb_snd,
-                              packet_local_apb_snd);
+  type to_noc5_packet_fsm is (none, packet_remote_ahbs_snd, packet_apb_snd);
   signal to_noc5_fifos_current, to_noc5_fifos_next : to_noc5_packet_fsm;
 
   signal noc5_msg_type : noc_msg_type;
   signal noc5_preamble : noc_preamble_type;
-  signal local_remote_apb_rcv_preamble : noc_preamble_type;
-  signal local_apb_rcv_preamble : noc_preamble_type;
 
 begin  -- rtl
 
@@ -405,14 +367,10 @@ begin  -- rtl
       full     => coherent_dma_snd_full,
       data_out => coherent_dma_snd_data_out);
 
-  -- From noc5: APB slave response (APBs rcv)
   -- From noc5: AHB slave response from remote DSU (AHBs rcv)
-  -- From local_remote_apb_rcv (APB rcv from devicess in this tile)
   -- Priority must be respected to avoid deadlock!
   noc5_msg_type <= get_msg_type(noc5_out_data);
   noc5_preamble <= get_preamble(noc5_out_data);
-  local_remote_apb_rcv_preamble <= get_preamble(local_remote_apb_rcv_data_out);
-  local_apb_rcv_preamble <= get_preamble(local_apb_rcv_data_out);
   process (clk, rst)
   begin  -- process
     if rst = '0' then                   -- asynchronous reset (active low)
@@ -422,16 +380,10 @@ begin  -- rtl
     end if;
   end process;
   noc5_fifos_get_packet: process (noc5_out_data, noc5_out_void, noc5_msg_type,
-                                  noc5_preamble, remote_apb_rcv_full,
+                                  noc5_preamble,
                                   remote_ahbs_rcv_full, noc5_fifos_current,
-                                  apb_rcv_full, local_remote_apb_rcv_empty,
-                                  local_apb_rcv_empty, local_remote_apb_rcv_data_out,
-                                  local_apb_rcv_data_out, local_remote_apb_rcv_preamble,
-                                  local_apb_rcv_preamble)
+                                  apb_rcv_full)
   begin  -- process noc5_get_packet
-    remote_apb_rcv_wrreq <= '0';
-    remote_apb_rcv_data_in <= noc5_out_data;
-
     remote_ahbs_rcv_data_in <= noc5_out_data;
     remote_ahbs_rcv_wrreq <= '0';
 
@@ -441,37 +393,9 @@ begin  -- rtl
     noc5_fifos_next <= noc5_fifos_current;
     noc5_out_stop <= '0';
 
-
-    local_remote_apb_rcv_rdreq <= '0';
-    local_apb_rcv_rdreq <= '0';
-
     case noc5_fifos_current is
-      when none => if local_remote_apb_rcv_empty = '0' then
-                     noc5_out_stop <= not noc5_out_void;
-                     if apb_rcv_full = '0' then
-                       local_remote_apb_rcv_rdreq <= '1';
-                       apb_rcv_wrreq <= '1';
-                       apb_rcv_data_in <= local_remote_apb_rcv_data_out;
-                       noc5_fifos_next <= packet_local_remote_apb_rcv;
-                     end if;
-                   elsif local_apb_rcv_empty = '0' then
-                     noc5_out_stop <= not noc5_out_void;
-                     if remote_apb_rcv_full = '0' then
-                       local_apb_rcv_rdreq <= '1';
-                       remote_apb_rcv_wrreq <= '1';
-                       remote_apb_rcv_data_in <= local_apb_rcv_data_out;
-                       noc5_fifos_next <= packet_local_apb_rcv;
-                     end if;
-                   elsif noc5_out_void = '0' then
-                     if ((noc5_msg_type = RSP_REG_RD)
-                         and noc5_preamble = PREAMBLE_HEADER) then
-                       if remote_apb_rcv_full = '0' then
-                         remote_apb_rcv_wrreq <= '1';
-                         noc5_fifos_next <= packet_remote_apb_rcv;
-                       else
-                         noc5_out_stop <= '1';
-                       end if;
-                     elsif ((noc5_msg_type = AHB_RD or noc5_msg_type = AHB_WR) and noc5_preamble = PREAMBLE_HEADER) then
+      when none => if noc5_out_void = '0' then
+                     if ((noc5_msg_type = AHB_RD or noc5_msg_type = AHB_WR) and noc5_preamble = PREAMBLE_HEADER) then
                        if remote_ahbs_rcv_full = '0' then
                          remote_ahbs_rcv_wrreq <= '1';
                          noc5_fifos_next <= packet_remote_ahbs_rcv;
@@ -489,22 +413,6 @@ begin  -- rtl
 
                    end if;
 
-      when packet_remote_apb_rcv => remote_apb_rcv_wrreq <= not noc5_out_void and (not remote_apb_rcv_full);
-                             noc5_out_stop <= remote_apb_rcv_full and (not noc5_out_void);
-                             if (noc5_preamble = PREAMBLE_TAIL and noc5_out_void = '0' and
-                                 remote_apb_rcv_full = '0') then
-                               noc5_fifos_next <= none;
-                             end if;
-
-      when packet_local_remote_apb_rcv => noc5_out_stop <= not noc5_out_void;
-                                          apb_rcv_wrreq <= not local_remote_apb_rcv_empty and (not apb_rcv_full);
-                                          apb_rcv_data_in <= local_remote_apb_rcv_data_out;
-                                          local_remote_apb_rcv_rdreq <= (not apb_rcv_full);
-                                          if (local_remote_apb_rcv_preamble = PREAMBLE_TAIL and local_remote_apb_rcv_empty = '0' and
-                                              apb_rcv_full = '0') then
-                                            noc5_fifos_next <= none;
-                                          end if;
-
       when packet_remote_ahbs_rcv => remote_ahbs_rcv_wrreq <= not noc5_out_void and (not remote_ahbs_rcv_full);
                              noc5_out_stop <= remote_ahbs_rcv_full and (not noc5_out_void);
                              if (noc5_preamble = PREAMBLE_TAIL and noc5_out_void = '0' and
@@ -519,32 +427,9 @@ begin  -- rtl
                                noc5_fifos_next <= none;
                              end if;
 
-      when packet_local_apb_rcv => noc5_out_stop <= not noc5_out_void;
-                                   remote_apb_rcv_wrreq <= not local_apb_rcv_empty and (not remote_apb_rcv_full);
-                                   local_apb_rcv_rdreq <= (not remote_apb_rcv_full);
-                                   remote_apb_rcv_data_in <= local_apb_rcv_data_out;
-                                   if (local_apb_rcv_preamble = PREAMBLE_TAIL and local_apb_rcv_empty = '0' and
-                                       remote_apb_rcv_full = '0') then
-                                     noc5_fifos_next <= none;
-                                   end if;
-
       when others => noc5_fifos_next <= none;
     end case;
   end process noc5_fifos_get_packet;
-
-  fifo_7: fifo
-    generic map (
-      depth => 3,                       --Header, address, data
-      width => NOC_FLIT_SIZE)
-    port map (
-      clk      => clk,
-      rst      => fifo_rst,
-      rdreq    => remote_apb_rcv_rdreq,
-      wrreq    => remote_apb_rcv_wrreq,
-      data_in  => remote_apb_rcv_data_in,
-      empty    => remote_apb_rcv_empty,
-      full     => remote_apb_rcv_full,
-      data_out => remote_apb_rcv_data_out);
 
   fifo_8: fifo
     generic map (
@@ -577,7 +462,6 @@ begin  -- rtl
 
   -- To noc5: APB request to remote (APB snd)
   -- To noc5: AHB master request to DSU (AHBS snd) - TODO: broadcast to all DSUs
-  -- To local_remote_apb_snd (APB snd to devicess in this tile)
   process (clk, rst)
   begin  -- process
     if rst = '0' then                   -- asynchronous reset (active low)
@@ -588,23 +472,13 @@ begin  -- rtl
   end process;
 
   to_noc5_select_packet: process (noc5_in_stop, to_noc5_fifos_current,
-                                  remote_apb_snd_data_out, remote_apb_snd_empty,
                                   remote_ahbs_snd_data_out, remote_ahbs_snd_empty,
-                                  apb_snd_data_out, apb_snd_empty,
-                                  local_remote_apb_snd_full, local_apb_snd_full)
+                                  apb_snd_data_out, apb_snd_empty)
     variable to_noc5_preamble : noc_preamble_type;
-    variable remote_apb_snd_to_local : std_ulogic;
-    variable apb_snd_to_local : std_ulogic;
   begin  -- process to_noc5_select_packet
-    remote_apb_snd_to_local := remote_apb_snd_data_out(HEADER_ROUTE_L);
-    apb_snd_to_local        := apb_snd_data_out(HEADER_ROUTE_L);
-    local_remote_apb_snd_wrreq <= '0';
-    local_apb_snd_wrreq <= '0';
-
     noc5_in_data <= (others => '0');
     noc5_in_void <= '1';
 
-    remote_apb_snd_rdreq <= '0';
     remote_ahbs_snd_rdreq <= '0';
     apb_snd_rdreq <= '0';
     to_noc5_fifos_next <= to_noc5_fifos_current;
@@ -612,60 +486,21 @@ begin  -- rtl
 
 
     case to_noc5_fifos_current is
-      when none  => if (remote_apb_snd_empty = '0' and remote_apb_snd_to_local = '0') then
-                      noc5_in_data <= remote_apb_snd_data_out;
-                      noc5_in_void <= remote_apb_snd_empty;
-                      if noc5_in_stop = '0' then
-                        remote_apb_snd_rdreq <= '1';
-                        to_noc5_fifos_next <= packet_remote_apb_snd;
-                      end if;
-                    elsif (remote_apb_snd_empty = '0' and remote_apb_snd_to_local = '1') then
-                      if local_remote_apb_snd_full = '0' then
-                        local_remote_apb_snd_wrreq <= '1';
-                        remote_apb_snd_rdreq <= '1';
-                        to_noc5_fifos_next <= packet_local_remote_apb_snd;
-                      end if;
-                    elsif remote_ahbs_snd_empty = '0' then
+      when none  => if remote_ahbs_snd_empty = '0' then
                       noc5_in_data <= remote_ahbs_snd_data_out;
                       noc5_in_void <= remote_ahbs_snd_empty;
                       if noc5_in_stop = '0' then
                         remote_ahbs_snd_rdreq <= '1';
                         to_noc5_fifos_next <= packet_remote_ahbs_snd;
                       end if;
-                    elsif (apb_snd_empty = '0' and apb_snd_to_local = '0') then
+                    elsif apb_snd_empty = '0' then
                       noc5_in_data <= apb_snd_data_out;
                       noc5_in_void <= apb_snd_empty;
                       if noc5_in_stop = '0' then
                         apb_snd_rdreq <= '1';
                         to_noc5_fifos_next <= packet_apb_snd;
                       end if;
-                    elsif (apb_snd_empty = '0' and apb_snd_to_local = '1') then
-                      if local_apb_snd_full = '0' then
-                        local_apb_snd_wrreq <= '1';
-                        apb_snd_rdreq <= '1';
-                        to_noc5_fifos_next <= packet_local_apb_snd;
-                      end if;
-
                     end if;
-
-      when packet_remote_apb_snd => to_noc5_preamble := get_preamble(remote_apb_snd_data_out);
-                             if (noc5_in_stop = '0' and remote_apb_snd_empty = '0') then
-                               noc5_in_data <= remote_apb_snd_data_out;
-                               noc5_in_void <= remote_apb_snd_empty;
-                               remote_apb_snd_rdreq <= not noc5_in_stop;
-                               if to_noc5_preamble = PREAMBLE_TAIL then
-                                 to_noc5_fifos_next <= none;
-                               end if;
-                             end if;
-
-      when packet_local_remote_apb_snd => to_noc5_preamble := get_preamble(remote_apb_snd_data_out);
-                             if (local_remote_apb_snd_full = '0' and remote_apb_snd_empty = '0') then
-                               local_remote_apb_snd_wrreq <= '1';
-                               remote_apb_snd_rdreq <= '1';
-                               if to_noc5_preamble = PREAMBLE_TAIL then
-                                 to_noc5_fifos_next <= none;
-                               end if;
-                             end if;
 
       when packet_remote_ahbs_snd  => to_noc5_preamble := get_preamble(remote_ahbs_snd_data_out);
                              if (noc5_in_stop = '0' and remote_ahbs_snd_empty = '0') then
@@ -687,32 +522,9 @@ begin  -- rtl
                                end if;
                              end if;
 
-      when packet_local_apb_snd => to_noc5_preamble := get_preamble(apb_snd_data_out);
-                             if (local_apb_snd_full = '0' and apb_snd_empty = '0') then
-                               local_apb_snd_wrreq <= '1';
-                               apb_snd_rdreq <= '1';
-                               if to_noc5_preamble = PREAMBLE_TAIL then
-                                 to_noc5_fifos_next <= none;
-                               end if;
-                             end if;
-
   when others => to_noc5_fifos_next <= none;
     end case;
   end process to_noc5_select_packet;
-
-  fifo_10: fifo
-    generic map (
-      depth => 2,                       --Header, data (1 word)
-      width => NOC_FLIT_SIZE)
-    port map (
-      clk      => clk,
-      rst      => fifo_rst,
-      rdreq    => remote_apb_snd_rdreq,
-      wrreq    => remote_apb_snd_wrreq,
-      data_in  => remote_apb_snd_data_in,
-      empty    => remote_apb_snd_empty,
-      full     => remote_apb_snd_full,
-      data_out => remote_apb_snd_data_out);
 
   fifo_11: fifo
     generic map (
@@ -741,35 +553,5 @@ begin  -- rtl
       empty    => apb_snd_empty,
       full     => apb_snd_full,
       data_out => apb_snd_data_out);
-
-  local_remote_apb_snd_data_in <= remote_apb_snd_data_out;
-  fifo_18: fifo
-    generic map (
-      depth => 6,                       --Header, address, data (1 word) (2x)
-      width => NOC_FLIT_SIZE)
-    port map (
-      clk      => clk,
-      rst      => fifo_rst,
-      rdreq    => local_remote_apb_rcv_rdreq,
-      wrreq    => local_remote_apb_snd_wrreq,
-      data_in  => local_remote_apb_snd_data_in,
-      empty    => local_remote_apb_rcv_empty,
-      full     => local_remote_apb_snd_full,
-      data_out => local_remote_apb_rcv_data_out);
-
-  local_apb_snd_data_in <= apb_snd_data_out;
-  fifo_19: fifo
-    generic map (
-      depth => 6,                       --Header, data (1 word) (2x)
-      width => NOC_FLIT_SIZE)
-    port map (
-      clk      => clk,
-      rst      => fifo_rst,
-      rdreq    => local_apb_rcv_rdreq,
-      wrreq    => local_apb_snd_wrreq,
-      data_in  => local_apb_snd_data_in,
-      empty    => local_apb_rcv_empty,
-      full     => local_apb_snd_full,
-      data_out => local_apb_rcv_data_out);
 
 end rtl;

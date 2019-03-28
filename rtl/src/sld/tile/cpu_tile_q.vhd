@@ -42,56 +42,56 @@ entity cpu_tile_q is
   generic (
     tech        : integer := virtex7);
   port (
-    rst                                 : in  std_ulogic;
-    clk                                 : in  std_ulogic;
+    rst                        : in  std_ulogic;
+    clk                        : in  std_ulogic;
     -- tile->NoC1
-    coherence_req_wrreq                 : in  std_ulogic;
-    coherence_req_data_in               : in  noc_flit_type;
-    coherence_req_full                  : out std_ulogic;
+    coherence_req_wrreq        : in  std_ulogic;
+    coherence_req_data_in      : in  noc_flit_type;
+    coherence_req_full         : out std_ulogic;
     -- NoC2->tile
-    coherence_fwd_rdreq             : in  std_ulogic;
-    coherence_fwd_data_out          : out noc_flit_type;
-    coherence_fwd_empty             : out std_ulogic;
+    coherence_fwd_rdreq        : in  std_ulogic;
+    coherence_fwd_data_out     : out noc_flit_type;
+    coherence_fwd_empty        : out std_ulogic;
     -- Noc3->tile
-    coherence_rsp_rcv_rdreq            : in  std_ulogic;
-    coherence_rsp_rcv_data_out         : out noc_flit_type;
-    coherence_rsp_rcv_empty            : out std_ulogic;
+    coherence_rsp_rcv_rdreq    : in  std_ulogic;
+    coherence_rsp_rcv_data_out : out noc_flit_type;
+    coherence_rsp_rcv_empty    : out std_ulogic;
     -- tile->Noc3
-    coherence_rsp_snd_wrreq        : in  std_ulogic;
-    coherence_rsp_snd_data_in      : in  noc_flit_type;
-    coherence_rsp_snd_full         : out std_ulogic;
+    coherence_rsp_snd_wrreq    : in  std_ulogic;
+    coherence_rsp_snd_data_in  : in  noc_flit_type;
+    coherence_rsp_snd_full     : out std_ulogic;
     -- NoC5->tile
-    apb_rcv_rdreq                       : in  std_ulogic;
-    apb_rcv_data_out                    : out noc_flit_type;
-    apb_rcv_empty                       : out std_ulogic;
+    remote_ahbs_snd_wrreq      : in  std_ulogic;
+    remote_ahbs_snd_data_in    : in  noc_flit_type;
+    remote_ahbs_snd_full       : out std_ulogic;
     -- tile->NoC5
-    apb_snd_wrreq                       : in  std_ulogic;
-    apb_snd_data_in                     : in  noc_flit_type;
-    apb_snd_full                        : out std_ulogic;
+    remote_ahbs_rcv_rdreq      : in  std_ulogic;
+    remote_ahbs_rcv_data_out   : out noc_flit_type;
+    remote_ahbs_rcv_empty      : out std_ulogic;
     -- NoC5->tile
-    remote_apb_rcv_rdreq                : in  std_ulogic;
-    remote_apb_rcv_data_out             : out noc_flit_type;
-    remote_apb_rcv_empty                : out std_ulogic;
+    apb_rcv_rdreq              : in  std_ulogic;
+    apb_rcv_data_out           : out noc_flit_type;
+    apb_rcv_empty              : out std_ulogic;
     -- tile->NoC5
-    remote_apb_snd_wrreq                : in  std_ulogic;
-    remote_apb_snd_data_in              : in  noc_flit_type;
-    remote_apb_snd_full                 : out std_ulogic;
+    apb_snd_wrreq              : in  std_ulogic;
+    apb_snd_data_in            : in  noc_flit_type;
+    apb_snd_full               : out std_ulogic;
     -- NoC5->tile
-    remote_ahbm_rcv_rdreq               : in  std_ulogic;
-    remote_ahbm_rcv_data_out            : out noc_flit_type;
-    remote_ahbm_rcv_empty               : out std_ulogic;
+    remote_apb_rcv_rdreq       : in  std_ulogic;
+    remote_apb_rcv_data_out    : out noc_flit_type;
+    remote_apb_rcv_empty       : out std_ulogic;
     -- tile->NoC5
-    remote_ahbm_snd_wrreq               : in  std_ulogic;
-    remote_ahbm_snd_data_in             : in  noc_flit_type;
-    remote_ahbm_snd_full                : out std_ulogic;
+    remote_apb_snd_wrreq       : in  std_ulogic;
+    remote_apb_snd_data_in     : in  noc_flit_type;
+    remote_apb_snd_full        : out std_ulogic;
     -- NoC5->tile
-    remote_irq_rdreq                    : in  std_ulogic;
-    remote_irq_data_out                 : out noc_flit_type;
-    remote_irq_empty                    : out std_ulogic;
+    remote_irq_rdreq           : in  std_ulogic;
+    remote_irq_data_out        : out noc_flit_type;
+    remote_irq_empty           : out std_ulogic;
     -- tile->NoC5
-    remote_irq_ack_wrreq                : in  std_ulogic;
-    remote_irq_ack_data_in              : in  noc_flit_type;
-    remote_irq_ack_full                 : out std_ulogic;
+    remote_irq_ack_wrreq       : in  std_ulogic;
+    remote_irq_ack_data_in     : in  noc_flit_type;
+    remote_irq_ack_full        : out std_ulogic;
 
     -- Cachable data plane 1 -> request messages
     noc1_out_data : in  noc_flit_type;
@@ -143,68 +143,68 @@ architecture rtl of cpu_tile_q is
   signal fifo_rst : std_ulogic;
 
   -- tile->NoC1
-  signal coherence_req_rdreq                 : std_ulogic;
-  signal coherence_req_data_out              : noc_flit_type;
-  signal coherence_req_empty                 : std_ulogic;
+  signal coherence_req_rdreq        : std_ulogic;
+  signal coherence_req_data_out     : noc_flit_type;
+  signal coherence_req_empty        : std_ulogic;
   -- NoC2->tile
-  signal coherence_fwd_wrreq             : std_ulogic;
-  signal coherence_fwd_data_in           : noc_flit_type;
-  signal coherence_fwd_full              : std_ulogic;
+  signal coherence_fwd_wrreq        : std_ulogic;
+  signal coherence_fwd_data_in      : noc_flit_type;
+  signal coherence_fwd_full         : std_ulogic;
   -- NoC3->tile
-  signal coherence_rsp_rcv_wrreq            : std_ulogic;
-  signal coherence_rsp_rcv_data_in          : noc_flit_type;
-  signal coherence_rsp_rcv_full             : std_ulogic;
+  signal coherence_rsp_rcv_wrreq    : std_ulogic;
+  signal coherence_rsp_rcv_data_in  : noc_flit_type;
+  signal coherence_rsp_rcv_full     : std_ulogic;
   -- tile->NoC3
-  signal coherence_rsp_snd_rdreq     : std_ulogic;
-  signal coherence_rsp_snd_data_out  : noc_flit_type;
-  signal coherence_rsp_snd_empty     : std_ulogic;
-  -- NoC5->tile
-  signal apb_rcv_wrreq                : std_ulogic;
-  signal apb_rcv_data_in              : noc_flit_type;
-  signal apb_rcv_full                 : std_ulogic;
+  signal coherence_rsp_snd_rdreq    : std_ulogic;
+  signal coherence_rsp_snd_data_out : noc_flit_type;
+  signal coherence_rsp_snd_empty    : std_ulogic;
   -- tile->NoC5
-  signal apb_snd_rdreq                : std_ulogic;
-  signal apb_snd_data_out             : noc_flit_type;
-  signal apb_snd_empty                : std_ulogic;
+  signal remote_ahbs_snd_rdreq      : std_ulogic;
+  signal remote_ahbs_snd_data_out   : noc_flit_type;
+  signal remote_ahbs_snd_empty      : std_ulogic;
   -- NoC5->tile
-  signal remote_apb_rcv_wrreq                : std_ulogic;
-  signal remote_apb_rcv_data_in              : noc_flit_type;
-  signal remote_apb_rcv_full                 : std_ulogic;
-  -- tile->NoC5
-  signal remote_apb_snd_rdreq                : std_ulogic;
-  signal remote_apb_snd_data_out             : noc_flit_type;
-  signal remote_apb_snd_empty                : std_ulogic;
+  signal remote_ahbs_rcv_wrreq      : std_ulogic;
+  signal remote_ahbs_rcv_data_in    : noc_flit_type;
+  signal remote_ahbs_rcv_full       : std_ulogic;
   -- NoC5->tile
-  signal remote_ahbm_rcv_wrreq               : std_ulogic;
-  signal remote_ahbm_rcv_data_in             : noc_flit_type;
-  signal remote_ahbm_rcv_full                : std_ulogic;
+  signal apb_rcv_wrreq              : std_ulogic;
+  signal apb_rcv_data_in            : noc_flit_type;
+  signal apb_rcv_full               : std_ulogic;
   -- tile->NoC5
-  signal remote_ahbm_snd_rdreq               : std_ulogic;
-  signal remote_ahbm_snd_data_out            : noc_flit_type;
-  signal remote_ahbm_snd_empty               : std_ulogic;
+  signal apb_snd_rdreq              : std_ulogic;
+  signal apb_snd_data_out           : noc_flit_type;
+  signal apb_snd_empty              : std_ulogic;
   -- NoC5->tile
-  signal remote_irq_wrreq                    : std_ulogic;
-  signal remote_irq_data_in                  : noc_flit_type;
-  signal remote_irq_full                     : std_ulogic;
+  signal remote_apb_rcv_wrreq       : std_ulogic;
+  signal remote_apb_rcv_data_in     : noc_flit_type;
+  signal remote_apb_rcv_full        : std_ulogic;
   -- tile->NoC5
-  signal remote_irq_ack_rdreq                : std_ulogic;
-  signal remote_irq_ack_data_out             : noc_flit_type;
-  signal remote_irq_ack_empty                : std_ulogic;
+  signal remote_apb_snd_rdreq       : std_ulogic;
+  signal remote_apb_snd_data_out    : noc_flit_type;
+  signal remote_apb_snd_empty       : std_ulogic;
+  -- NoC5->tile
+  signal remote_irq_wrreq           : std_ulogic;
+  signal remote_irq_data_in         : noc_flit_type;
+  signal remote_irq_full            : std_ulogic;
+  -- tile->NoC5
+  signal remote_irq_ack_rdreq       : std_ulogic;
+  signal remote_irq_ack_data_out    : noc_flit_type;
+  signal remote_irq_ack_empty       : std_ulogic;
 
   -- Local Master -> Local apb slave (request)
-  signal local_remote_apb_snd_wrreq                : std_ulogic;
-  signal local_remote_apb_snd_data_in              : noc_flit_type;
-  signal local_remote_apb_snd_full                 : std_ulogic;
-  signal local_remote_apb_rcv_rdreq                : std_ulogic;
-  signal local_remote_apb_rcv_data_out             : noc_flit_type;
-  signal local_remote_apb_rcv_empty                : std_ulogic;
+  signal local_remote_apb_snd_wrreq    : std_ulogic;
+  signal local_remote_apb_snd_data_in  : noc_flit_type;
+  signal local_remote_apb_snd_full     : std_ulogic;
+  signal local_remote_apb_rcv_rdreq    : std_ulogic;
+  signal local_remote_apb_rcv_data_out : noc_flit_type;
+  signal local_remote_apb_rcv_empty    : std_ulogic;
   -- Local apb slave --> Local Master (response)
-  signal local_apb_snd_wrreq                : std_ulogic;
-  signal local_apb_snd_data_in              : noc_flit_type;
-  signal local_apb_snd_full                 : std_ulogic;
-  signal local_apb_rcv_rdreq                : std_ulogic;
-  signal local_apb_rcv_data_out             : noc_flit_type;
-  signal local_apb_rcv_empty                : std_ulogic;
+  signal local_apb_snd_wrreq           : std_ulogic;
+  signal local_apb_snd_data_in         : noc_flit_type;
+  signal local_apb_snd_full            : std_ulogic;
+  signal local_apb_rcv_rdreq           : std_ulogic;
+  signal local_apb_rcv_data_out        : noc_flit_type;
+  signal local_apb_rcv_empty           : std_ulogic;
 
 
   type noc2_packet_fsm is (none, packet_inv);
@@ -214,10 +214,12 @@ architecture rtl of cpu_tile_q is
   type to_noc3_packet_fsm is (none, packet_coherence_rsp_snd);
   signal to_noc3_fifos_current, to_noc3_fifos_next : to_noc3_packet_fsm;
   type noc5_packet_fsm is (none, packet_remote_apb_rcv, packet_ahbm_rcv, packet_irq,
-                           packet_apb_rcv, packet_local_remote_apb_rcv, packet_local_apb_rcv);
+                           packet_apb_rcv, packet_local_remote_apb_rcv, packet_local_apb_rcv,
+                           packet_remote_ahbs_rcv);
   signal noc5_fifos_current, noc5_fifos_next : noc5_packet_fsm;
   type to_noc5_packet_fsm is (none, packet_remote_apb_snd, packet_ahbm_snd, packet_irq_ack,
-                              packet_apb_snd, packet_local_remote_apb_snd, packet_local_apb_snd);
+                              packet_apb_snd, packet_local_remote_apb_snd, packet_local_apb_snd,
+                              packet_remote_ahbs_snd);
   signal to_noc5_fifos_current, to_noc5_fifos_next : to_noc5_packet_fsm;
 
 
@@ -327,7 +329,7 @@ begin  -- rtl
   -- From noc5: remote APB response to core (APB rcv)
   -- From noc5: remove AHB master request to DSU (AHBM rcv)
   -- From noc5: IRQ
-  -- From local_remote_apb_rcv (APB rcv from devicess in this tile)
+  -- From local_remote_apb_rcv (APB rcv from devices in this tile)
   noc5_msg_type <= get_msg_type(noc5_out_data);
   noc5_preamble <= get_preamble(noc5_out_data);
   local_remote_apb_rcv_preamble <= get_preamble(local_remote_apb_rcv_data_out);
@@ -343,22 +345,24 @@ begin  -- rtl
   end process;
   noc5_fifos_get_packet: process (noc5_out_data, noc5_out_void, noc5_msg_type,
                                   noc5_preamble, remote_apb_rcv_full,
-                                  remote_ahbm_rcv_full, remote_irq_full,
+                                  remote_irq_full,
                                   noc5_fifos_current,
                                   apb_rcv_full, local_remote_apb_rcv_empty,
                                   local_apb_rcv_empty, local_remote_apb_rcv_data_out,
                                   local_apb_rcv_data_out, local_remote_apb_rcv_preamble,
-                                  local_apb_rcv_preamble)
+                                  local_apb_rcv_preamble,
+                                  remote_ahbs_rcv_full)
   begin  -- process noc5_get_packet
     remote_apb_rcv_wrreq <= '0';
     remote_apb_rcv_data_in <= noc5_out_data;
-
-    remote_ahbm_rcv_wrreq <= '0';
 
     remote_irq_wrreq <= '0';
 
     apb_rcv_wrreq <= '0';
     apb_rcv_data_in <= noc5_out_data;
+
+    remote_ahbs_rcv_wrreq <= '0';
+    remote_ahbs_rcv_data_in <= noc5_out_data;
 
     noc5_fifos_next <= noc5_fifos_current;
     noc5_out_stop <= '0';
@@ -392,14 +396,6 @@ begin  -- rtl
                        else
                          noc5_out_stop <= '1';
                        end if;
-                     elsif ((noc5_msg_type = AHB_RD or noc5_msg_type = AHB_WR)
-                            and noc5_preamble = PREAMBLE_HEADER) then
-                       if remote_ahbm_rcv_full = '0' then
-                         remote_ahbm_rcv_wrreq <= '1';
-                         noc5_fifos_next <= packet_ahbm_rcv;
-                       else
-                         noc5_out_stop <= '1';
-                       end if;
                      elsif (noc5_msg_type = IRQ_MSG and noc5_preamble = PREAMBLE_HEADER) then
                        if remote_irq_full = '0' then
                          remote_irq_wrreq <= '1';
@@ -411,6 +407,13 @@ begin  -- rtl
                        if apb_rcv_full = '0' then
                          apb_rcv_wrreq <= '1';
                          noc5_fifos_next <= packet_apb_rcv;
+                       else
+                         noc5_out_stop <= '1';
+                       end if;
+                     elsif ((noc5_msg_type = RSP_AHB_RD) and noc5_preamble = PREAMBLE_HEADER) then
+                       if remote_ahbs_rcv_full = '0' then
+                         remote_ahbs_rcv_wrreq <= '1';
+                         noc5_fifos_next <= packet_remote_ahbs_rcv;
                        else
                          noc5_out_stop <= '1';
                        end if;
@@ -435,13 +438,6 @@ begin  -- rtl
                                             end if;
                                           end if;
 
-      when packet_ahbm_rcv => remote_ahbm_rcv_wrreq <= not noc5_out_void and (not remote_ahbm_rcv_full);
-                             noc5_out_stop <= remote_ahbm_rcv_full and (not noc5_out_void);
-                             if noc5_preamble = PREAMBLE_TAIL and noc5_out_void = '0' and
-                             remote_ahbm_rcv_full = '0' then
-                               noc5_fifos_next <= none;
-                             end if;
-
       when packet_irq => remote_irq_wrreq <= not noc5_out_void and (not remote_irq_full);
                              noc5_out_stop <= remote_irq_full and (not noc5_out_void);
                              if noc5_preamble = PREAMBLE_TAIL and noc5_out_void = '0' and
@@ -465,6 +461,13 @@ begin  -- rtl
                                      noc5_fifos_next <= none;
                                    end if;
 
+      when packet_remote_ahbs_rcv => remote_ahbs_rcv_wrreq <= not noc5_out_void and (not remote_ahbs_rcv_full);
+                                    noc5_out_stop <= remote_ahbs_rcv_full and (not noc5_out_void);
+                                    if (noc5_preamble = PREAMBLE_TAIL and noc5_out_void = '0' and
+                                        remote_ahbs_rcv_full = '0') then
+                                      noc5_fifos_next <= none;
+                                    end if;
+
       when others => noc5_fifos_next <= none;
     end case;
   end process noc5_fifos_get_packet;
@@ -482,22 +485,6 @@ begin  -- rtl
       empty    => remote_apb_rcv_empty,
       full     => remote_apb_rcv_full,
       data_out => remote_apb_rcv_data_out);
-
-  remote_ahbm_rcv_data_in <= noc5_out_data;
-  fifo_8: fifo
-    generic map (
-      depth => 6,                       --Header, address, data up to 4 words
-                                        --per packet
-      width => NOC_FLIT_SIZE)
-    port map (
-      clk      => clk,
-      rst      => fifo_rst,
-      rdreq    => remote_ahbm_rcv_rdreq,
-      wrreq    => remote_ahbm_rcv_wrreq,
-      data_in  => remote_ahbm_rcv_data_in,
-      empty    => remote_ahbm_rcv_empty,
-      full     => remote_ahbm_rcv_full,
-      data_out => remote_ahbm_rcv_data_out);
 
   remote_irq_data_in <= noc5_out_data;
   fifo_9: fifo
@@ -528,6 +515,20 @@ begin  -- rtl
       full     => apb_rcv_full,
       data_out => apb_rcv_data_out);
 
+  fifo_20: fifo
+    generic map (
+      depth => 3,                       --Header, address, data
+      width => NOC_FLIT_SIZE)
+    port map (
+      clk      => clk,
+      rst      => fifo_rst,
+      rdreq    => remote_ahbs_rcv_rdreq,
+      wrreq    => remote_ahbs_rcv_wrreq,
+      data_in  => remote_ahbs_rcv_data_in,
+      empty    => remote_ahbs_rcv_empty,
+      full     => remote_ahbs_rcv_full,
+      data_out => remote_ahbs_rcv_data_out);
+
   -- To noc5: remote APB request from core (APB snd)
   -- To noc5: remote AHB master response from DSU (AHBM snd) - CPU0 tile only
   -- To noc5: remote irq acknowledge response from CPU (IRQ)
@@ -542,10 +543,10 @@ begin  -- rtl
 
   to_noc5_select_packet: process (noc5_in_stop, to_noc5_fifos_current,
                                   remote_apb_snd_data_out, remote_apb_snd_empty,
-                                  remote_ahbm_snd_data_out, remote_ahbm_snd_empty,
                                   remote_irq_ack_data_out, remote_irq_ack_empty,
                                   apb_snd_data_out, apb_snd_empty,
-                                  local_remote_apb_snd_full, local_apb_snd_full)
+                                  local_remote_apb_snd_full, local_apb_snd_full,
+                                  remote_ahbs_snd_data_out, remote_ahbs_snd_empty)
     variable to_noc5_preamble : noc_preamble_type;
     variable remote_apb_snd_to_local : std_ulogic;
     variable apb_snd_to_local : std_ulogic;
@@ -558,9 +559,9 @@ begin  -- rtl
     noc5_in_data <= (others => '0');
     noc5_in_void <= '1';
     remote_apb_snd_rdreq <= '0';
-    remote_ahbm_snd_rdreq <= '0';
     remote_irq_ack_rdreq <= '0';
     apb_snd_rdreq <= '0';
+    remote_ahbs_snd_rdreq <= '0';
     to_noc5_fifos_next <= to_noc5_fifos_current;
     to_noc5_preamble := "00";
 
@@ -585,13 +586,6 @@ begin  -- rtl
                         remote_apb_snd_rdreq <= '1';
                         to_noc5_fifos_next <= packet_local_remote_apb_snd;
                       end if;
-                    elsif remote_ahbm_snd_empty = '0' then
-                      if noc5_in_stop = '0' then
-                        noc5_in_data <= remote_ahbm_snd_data_out;
-                        noc5_in_void <= remote_ahbm_snd_empty;
-                        remote_ahbm_snd_rdreq <= '1';
-                        to_noc5_fifos_next <= packet_ahbm_snd;
-                      end if;
                     elsif (apb_snd_empty = '0' and apb_snd_to_local = '0') then
                       if noc5_in_stop = '0' then
                         noc5_in_data <= apb_snd_data_out;
@@ -604,6 +598,13 @@ begin  -- rtl
                         local_apb_snd_wrreq <= '1';
                         apb_snd_rdreq <= '1';
                         to_noc5_fifos_next <= packet_local_apb_snd;
+                      end if;
+                    elsif remote_ahbs_snd_empty = '0' then
+                      if noc5_in_stop = '0' then
+                        noc5_in_data <= remote_ahbs_snd_data_out;
+                        noc5_in_void <= remote_ahbs_snd_empty;
+                        remote_ahbs_snd_rdreq <= '1';
+                        to_noc5_fifos_next <= packet_remote_ahbs_snd;
                       end if;
 
                     end if;
@@ -626,16 +627,6 @@ begin  -- rtl
                                  to_noc5_fifos_next <= none;
                                end if;
                              end if;
-
-      when packet_ahbm_snd => to_noc5_preamble := get_preamble(remote_ahbm_snd_data_out);
-                              if (noc5_in_stop = '0' and remote_ahbm_snd_empty = '0') then
-                                noc5_in_data <= remote_ahbm_snd_data_out;
-                                noc5_in_void <= remote_ahbm_snd_empty;
-                                remote_ahbm_snd_rdreq <= not noc5_in_stop;
-                                if to_noc5_preamble = PREAMBLE_TAIL then
-                                  to_noc5_fifos_next <= none;
-                                end if;
-                              end if;
 
       when packet_irq_ack  => to_noc5_preamble := get_preamble(remote_irq_ack_data_out);
                               if (noc5_in_stop = '0' and remote_irq_ack_empty = '0') then
@@ -666,6 +657,16 @@ begin  -- rtl
                                end if;
                              end if;
 
+      when packet_remote_ahbs_snd  => to_noc5_preamble := get_preamble(remote_ahbs_snd_data_out);
+                                      if (noc5_in_stop = '0' and remote_ahbs_snd_empty = '0') then
+                                        noc5_in_data <= remote_ahbs_snd_data_out;
+                                        noc5_in_void <= remote_ahbs_snd_empty;
+                                        remote_ahbs_snd_rdreq <= not noc5_in_stop;
+                                        if (to_noc5_preamble = PREAMBLE_TAIL) then
+                                          to_noc5_fifos_next <= none;
+                                        end if;
+                                      end if;
+
       when others => to_noc5_fifos_next <= none;
     end case;
   end process to_noc5_select_packet;
@@ -683,20 +684,6 @@ begin  -- rtl
       empty    => remote_apb_snd_empty,
       full     => remote_apb_snd_full,
       data_out => remote_apb_snd_data_out);
-
-  fifo_11: fifo
-    generic map (
-      depth => 5,                       --Header, data (up to 4 words)
-      width => NOC_FLIT_SIZE)
-    port map (
-      clk      => clk,
-      rst      => fifo_rst,
-      rdreq    => remote_ahbm_snd_rdreq,
-      wrreq    => remote_ahbm_snd_wrreq,
-      data_in  => remote_ahbm_snd_data_in,
-      empty    => remote_ahbm_snd_empty,
-      full     => remote_ahbm_snd_full,
-      data_out => remote_ahbm_snd_data_out);
 
   fifo_12: fifo
     generic map (
@@ -755,6 +742,20 @@ begin  -- rtl
       empty    => local_apb_rcv_empty,
       full     => local_apb_snd_full,
       data_out => local_apb_rcv_data_out);
+
+  fifo_21: fifo
+    generic map (
+      depth => 3,                       --Header, address, data
+      width => NOC_FLIT_SIZE)
+    port map (
+      clk      => clk,
+      rst      => fifo_rst,
+      rdreq    => remote_ahbs_snd_rdreq,
+      wrreq    => remote_ahbs_snd_wrreq,
+      data_in  => remote_ahbs_snd_data_in,
+      empty    => remote_ahbs_snd_empty,
+      full     => remote_ahbs_snd_full,
+      data_out => remote_ahbs_snd_data_out);
 
   -- noc4 does not interact with CPU tiles
   noc4_dummy_out_data <= noc4_out_data;

@@ -38,7 +38,7 @@ entity acc_dma2noc is
     local_y     : local_yx;
     local_x     : local_yx;
     mem_num     : integer := 1;
-    mem_info    : tile_mem_info_vector;
+    mem_info    : tile_mem_info_vector(0 to MEM_MAX_NUM);
     io_y        : local_yx;
     io_x        : local_yx;
     pindex                : integer                            := 0;
@@ -899,9 +899,7 @@ begin  -- rtl
       extra_clk_buf => extra_clk_buf,
       pindex   => pindex,
       paddr    => paddr,
-      pmask    => pmask,
-      revision => revision,
-      devid    => devid)
+      pmask    => pmask)
     port map (
       rst       => rst,
       clk       => clk,

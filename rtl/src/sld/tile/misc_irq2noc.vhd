@@ -46,8 +46,8 @@ entity misc_irq2noc is
     ncpu    : integer := 0;
     local_y : local_yx;
     local_x : local_yx;
-    cpu_y   : yx_vec(3 downto 0);
-    cpu_x   : yx_vec(3 downto 0));
+    cpu_y   : yx_vec(0 to CPU_MAX_NUM - 1);
+    cpu_x   : yx_vec(0 to CPU_MAX_NUM - 1));
   port (
     rst : in std_ulogic;
     clk : in std_ulogic;

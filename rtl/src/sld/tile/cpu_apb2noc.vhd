@@ -56,12 +56,12 @@ entity apb2noc is
   generic (
     tech        : integer := virtex7;
     ncpu        : integer := 4;
-    local_y     : local_yx;
-    local_x     : local_yx;
-    apb_slv_en  : std_logic_vector(NAPBSLV-1 downto 0);
-    apb_slv_y   : yx_vec(NAPBSLV-1 downto 0);
-    apb_slv_x   : yx_vec(NAPBSLV-1 downto 0));
-
+    local_y     : local_yx := "000";
+    local_x     : local_yx := "000";
+    apb_slv_cfg : apb_slv_config_vector;
+    apb_slv_en  : std_logic_vector(0 to NAPBSLV - 1);
+    apb_slv_y   : yx_vec(0 to NAPBSLV - 1);
+    apb_slv_x   : yx_vec(0 to NAPBSLV - 1));
   port (
     rst      : in  std_ulogic;
     clk      : in  std_ulogic;
@@ -95,8 +95,7 @@ architecture rtl of apb2noc is
   signal payload_address_reg : noc_flit_type;
   signal payload_data_reg : noc_flit_type;
   signal sample_flits : std_ulogic;
-  signal pindex : integer range 0 to NAPBSLV-1;
-  signal pindex_reg : integer range 0 to NAPBSLV-1;
+  signal pindex : integer range 0 to NAPBSLV - 1;
 
 begin  -- rtl
 
@@ -111,20 +110,12 @@ begin  -- rtl
   -- these reasons, we skip parsing the header and we simply forward the
   -- payload, which will always be a single flit, to the APB bus controller.
   -----------------------------------------------------------------------------
-  default_apbo: for i in 0 to NAPBSLV-1 generate
+  default_apbo: for i in 0 to NAPBSLV - 1 generate
     apbo(i).pirq <= (others => '0');
-    apbo(i).pconfig <= pconfig_none;
+    apbo(i).pconfig <= apb_slv_cfg(i) when apb_slv_en(i) = '1' else pconfig_none;
+    apbo(i).pindex <= i when apb_slv_en(i) = '1' else 0;
+    apbo(i).prdata <= remote_apb_rcv_data_out(31 downto 0);
   end generate default_apbo;
-
-  -- Assign APB write data
-  process (pindex_reg, remote_apb_rcv_data_out)
-  begin  -- process
-    for i in 0 to NAPBSLV-1 loop
-      apbo(i).prdata <= (others => '0');
-    end loop;  -- i
-    apbo(pindex_reg).prdata <= remote_apb_rcv_data_out(31 downto 0);
-  end process;
-
 
   make_packet: process (apbi)
     variable msg_type : noc_msg_type;
@@ -141,7 +132,7 @@ begin  -- rtl
     payload_data(NOC_FLIT_SIZE-PREAMBLE_WIDTH-1 downto 0) <= apbi.pwdata;
 
     pindex <= 0;
-    for i in NAPBSLV-1 downto 0 loop
+    for i in 0 to NAPBSLV - 1 loop
 
       if apbi.psel(i) = '1' then
         pindex <= i;
@@ -167,13 +158,11 @@ begin  -- rtl
       header_reg <= (others => '0');
       payload_address_reg <= (others => '0');
       payload_data_reg <= (others => '0');
-      pindex_reg <= 0;
     elsif clk'event and clk = '1' then  -- rising clock edge
       if sample_flits = '1' then
         header_reg <= header;
         payload_address_reg <= payload_address;
         payload_data_reg <= payload_data;
-        pindex_reg <= pindex;
       end if;
     end if;
   end process;
