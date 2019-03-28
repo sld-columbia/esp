@@ -51,7 +51,7 @@ entity acc_tlb is
     tlb_clear            : in  std_ulogic;
     tlb_valid            : in  std_ulogic;
     tlb_write            : in  std_ulogic;
-    tlb_wr_address       : in  std_logic_vector((log2(tlb_entries) -1) downto 0);
+    tlb_wr_address       : in  std_logic_vector((log2xx(tlb_entries) -1) downto 0);
     tlb_datain           : in  std_logic_vector(31 downto 0);
     dma_address          : out std_logic_vector(31 downto 0);
     dma_length           : out std_logic_vector(31 downto 0)
