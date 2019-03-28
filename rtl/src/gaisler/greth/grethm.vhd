@@ -33,6 +33,7 @@ use work.net.all;
 entity grethm is
   generic(
     hindex         : integer := 0;
+    ehindex        : integer := 1;
     pindex         : integer := 0;
     paddr          : integer := 0;
     pmask          : integer := 16#FFF#;
@@ -61,6 +62,7 @@ entity grethm is
     oepol          : integer range 0 to 1  := 0;
     scanen         : integer range 0 to 1  := 0;
     ft             : integer range 0 to 2  := 0;
+    edclsepahbg    : integer range 0 to 1  := 0;
     edclft         : integer range 0 to 2  := 0;
     mdint_pol      : integer range 0 to 1  := 0;
     enable_mdint   : integer range 0 to 1  := 0;
@@ -75,6 +77,7 @@ entity grethm is
     clk            : in  std_ulogic;
     ahbmi          : in  ahb_mst_in_type;
     ahbmo          : out ahb_mst_out_type;
+    eahbmo         : out ahb_mst_out_type;
     apbi           : in  apb_slv_in_type;
     apbo           : out apb_slv_out_type;
     ethi           : in  eth_in_type;
@@ -89,6 +92,7 @@ begin
     u0 : greth
       generic map (
         hindex         => hindex,
+        ehindex        => ehindex,
         pindex         => pindex,
         paddr          => paddr,
         pmask          => pmask,
@@ -114,6 +118,7 @@ begin
         oepol          => oepol,
         scanen         => scanen,
         ft             => ft,
+        edclsepahbg    => edclsepahbg,
         edclft         => edclft,
         mdint_pol      => mdint_pol,
         enable_mdint   => enable_mdint,
@@ -128,6 +133,7 @@ begin
         clk            => clk,
         ahbmi          => ahbmi,
         ahbmo          => ahbmo,
+        eahbmo         => eahbmo,
         apbi           => apbi,
         apbo           => apbo,
         ethi           => ethi,
@@ -178,6 +184,8 @@ begin
         apbo           => apbo,
         ethi           => ethi,
         etho           => etho);
+
+    eahbmo <= ahbm_none;
   end generate;
 
 end architecture;

@@ -130,6 +130,7 @@ package net is
   component greth is
     generic(
       hindex         : integer := 0;
+      ehindex        : integer := 1;
       pindex         : integer := 0;
       paddr          : integer := 0;
       pmask          : integer := 16#FFF#;
@@ -155,6 +156,7 @@ package net is
       oepol          : integer range 0 to 1  := 0; 
       scanen         : integer range 0 to 1  := 0;
       ft             : integer range 0 to 2  := 0;
+      edclsepahbg    : integer range 0 to 1  := 0;
       edclft         : integer range 0 to 2  := 0;
       mdint_pol      : integer range 0 to 1  := 0;
       enable_mdint   : integer range 0 to 1  := 0;
@@ -169,6 +171,7 @@ package net is
      clk            : in  std_ulogic;
      ahbmi          : in  ahb_mst_in_type;
      ahbmo          : out ahb_mst_out_type;
+     eahbmo         : out ahb_mst_out_type;
      apbi           : in  apb_slv_in_type;
      apbo           : out apb_slv_out_type;
      ethi           : in  eth_in_type;
@@ -333,6 +336,7 @@ package net is
   component grethm
   generic(
     hindex         : integer := 0;
+    ehindex        : integer := 1;
     pindex         : integer := 0;
     paddr          : integer := 0;
     pmask          : integer := 16#FFF#;
@@ -361,6 +365,7 @@ package net is
     oepol          : integer range 0 to 1  := 0;
     scanen         : integer range 0 to 1  := 0;
     ft             : integer range 0 to 2  := 0;
+    edclsepahbg    : integer range 0 to 1  := 0;
     edclft         : integer range 0 to 1  := 0;
     mdint_pol      : integer range 0 to 1  := 0;
     enable_mdint   : integer range 0 to 1  := 0;
@@ -375,6 +380,7 @@ package net is
     clk            : in  std_ulogic;
     ahbmi          : in  ahb_mst_in_type;
     ahbmo          : out ahb_mst_out_type;
+    eahbmo         : out ahb_mst_out_type;
     apbi           : in  apb_slv_in_type;
     apbo           : out apb_slv_out_type;
     ethi           : in  eth_in_type;

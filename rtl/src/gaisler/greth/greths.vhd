@@ -132,6 +132,7 @@ begin
   u0 : grethm
     generic map (
       hindex         => hindex,
+      ehindex        => 0,
       pindex         => pindex,
       paddr          => paddr,
       pmask          => pmask,
@@ -159,6 +160,7 @@ begin
       oepol          => oepol,
       scanen         => scanen,
       ft             => ft,
+      edclsepahbg    => 0,
       edclft         => edclft,
       mdint_pol      => mdint_pol,
       enable_mdint   => enable_mdint,
@@ -173,6 +175,7 @@ begin
       clk            => clk,
       ahbmi          => ahbmi,
       ahbmo          => ahbmo,
+      eahbmo         => open,
       apbi           => apbi,
       apbo           => apbo,
       ethi           => mac_ethi,

@@ -37,6 +37,7 @@ use work.ethcomp.all;
 entity greth is
   generic(
     hindex         : integer := 0;
+    ehindex        : integer := 1;
     pindex         : integer := 0;
     paddr          : integer := 0;
     pmask          : integer := 16#FFF#;
@@ -62,6 +63,7 @@ entity greth is
     oepol	   : integer range 0 to 1  := 0; 
     scanen	   : integer range 0 to 1  := 0;
     ft             : integer range 0 to 2  := 0;
+    edclsepahbg    : integer range 0 to 1  := 0;
     edclft         : integer range 0 to 2  := 0;
     mdint_pol      : integer range 0 to 1  := 0;
     enable_mdint   : integer range 0 to 1  := 0;
@@ -76,6 +78,7 @@ entity greth is
     clk            : in  std_ulogic;
     ahbmi          : in  ahb_mst_in_type;
     ahbmo          : out ahb_mst_out_type;
+    eahbmo         : out ahb_mst_out_type;
     apbi           : in  apb_slv_in_type;
     apbo           : out apb_slv_out_type;
     ethi           : in  eth_in_type;
@@ -133,7 +136,8 @@ architecture rtl of greth is
   signal txwdata      : std_logic_vector(31 downto 0);
   signal txwaddress   : std_logic_vector(10 downto 0);
   signal txrdata      : std_logic_vector(31 downto 0);
-  --edcl buf     
+  --edcl buf
+  signal ehgrant      : std_ulogic;
   signal erenable     : std_ulogic;
   signal eraddress    : std_logic_vector(15 downto 0);
   signal ewritem      : std_ulogic;
@@ -145,6 +149,7 @@ architecture rtl of greth is
   signal lmdio_oe     : std_ulogic;
   -- Fix for wider bus
   signal hwdata       : std_logic_vector(31 downto 0);
+  signal ehwdata      : std_logic_vector(31 downto 0);
   signal hrdata       : std_logic_vector(31 downto 0);
 
 begin
@@ -173,7 +178,7 @@ begin
       mdint_pol      => mdint_pol,
       enable_mdint   => enable_mdint,
       multicast      => multicast,
-      edclsepahbg    => 0,
+      edclsepahbg    => edclsepahbg,
       ramdebug       => ramdebug,
       mdiohold       => mdiohold, 
       maxsize        => maxsize,
@@ -198,20 +203,20 @@ begin
       hprot          => ahbmo.hprot,
       hwdata         => hwdata,
       --edcl ahb mst in   
-      ehgrant        => ahbmi.hgrant(hindex),
+      ehgrant        => ehgrant,
       ehready        => ahbmi.hready,
       ehresp         => ahbmi.hresp,
       ehrdata        => hrdata,
       --edcl ahb mst out  
-      ehbusreq       => open,
-      ehlock         => open,
-      ehtrans        => open,
-      ehaddr         => open,
-      ehwrite        => open,
-      ehsize         => open,
-      ehburst        => open,
-      ehprot         => open,
-      ehwdata        => open,
+      ehbusreq       => eahbmo.hbusreq,
+      ehlock         => eahbmo.hlock,
+      ehtrans        => eahbmo.htrans,
+      ehaddr         => eahbmo.haddr,
+      ehwrite        => eahbmo.hwrite,
+      ehsize         => eahbmo.hsize,
+      ehburst        => eahbmo.hburst,
+      ehprot         => eahbmo.hprot,
+      ehwdata        => ehwdata,
       --apb slv in 
       psel	         => apbi.psel(pindex),
       penable	       => apbi.penable,
@@ -294,7 +299,14 @@ begin
   ahbmo.hconfig <= hconfig;
   ahbmo.hindex  <= hindex;
   ahbmo.hirq    <= (others => '0');
-  
+
+  eahbmo.hwdata <= ahbdrivedata(ehwdata);
+  eahbmo.hconfig <= ehconfig;
+  eahbmo.hindex  <= ehindex;
+  eahbmo.hirq    <= (others => '0');
+
+  ehgrant <= ahbmi.hgrant(hindex) when edclsepahbg = 0 else ahbmi.hgrant(ehindex);
+
   apbo.pconfig  <= pconfig;
   apbo.pindex   <= pindex;
 -------------------------------------------------------------------------------
