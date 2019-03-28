@@ -9,6 +9,7 @@ import functools
 from soc import *
 from socmap_gen import NCPU_MAX
 from socmap_gen import NMEM_MAX
+from socmap_gen import NACC_MAX
 from socmap_gen import NTILE_MAX
 from socmap_gen import NFULL_COHERENT_MAX
 from socmap_gen import NLLC_COHERENT_MAX
@@ -90,7 +91,10 @@ class Tile():
       if soc.IPs.ACCELERATORS.count(selection):
         self.has_l2_selection.config(state=NORMAL)
       else:
-        self.has_l2.set(0)
+        if soc.IPs.PROCESSORS.count(selection):
+          self.has_l2.set(1)
+        else:
+          self.has_l2.set(0)
         self.has_l2_selection.config(state=DISABLED)
     except:
       pass
@@ -308,16 +312,13 @@ class NoC():
 
   def get_mem_num(self, soc):
     tot_mem = 0
-    tot_mem_debug = 0
     for y in range(0, self.rows):
       for x in range(0, self.cols):
          tile = self.topology[y][x]
          selection = tile.ip_type.get()
          if soc.IPs.MEM.count(selection):
             tot_mem += 1
-            if selection == "mem_dbg":
-              tot_mem_debug += 1
-    return (tot_mem, tot_mem_debug)
+    return tot_mem
 
   # WARNING: Geometry in this class only uses x=rows, y=cols, but socmap uses y=row, x=cols!
   def __init__(self):
@@ -481,7 +482,7 @@ class NoCFrame(Pmw.ScrolledFrame):
     tot_llc_coherent = self.noc.get_acc_num(self.soc)
     tot_io = 0
     tot_clkbuf = self.noc.get_clkbuf_num(self.soc)
-    (tot_mem, tot_mem_debug) = self.noc.get_mem_num(self.soc)
+    tot_mem = self.noc.get_mem_num(self.soc)
     tot_acc = self.noc.get_acc_num(self.soc)
     regions = self.noc.get_clk_regions()
     for y in range(0, self.noc.rows):
@@ -550,11 +551,11 @@ class NoCFrame(Pmw.ScrolledFrame):
 
     #update message box
     self.message.delete(0.0, END)
-    if tot_mem >= 2 or len(regions) >= 2:
+    if tot_mem > 1 or len(regions) > 1:
       self.cfg_frame.sync_label.config(text="With synchronizers",fg="darkgreen")
     else:
       self.cfg_frame.sync_label.config(text="No synchronizers", fg="red")
-    if tot_cpu <= NCPU_MAX and tot_mem_debug == 1 and tot_mem <= NMEM_MAX and tot_io == 1 and pll_ok == True and clkbuf_ok == True and clk_region_skip == 0 and tot_tiles <= NTILE_MAX and tot_full_coherent <= NFULL_COHERENT_MAX and tot_llc_coherent <= NLLC_COHERENT_MAX:
+    if tot_cpu <= NCPU_MAX and tot_mem > 0 and tot_mem <= NMEM_MAX and tot_acc < NACC_MAX and tot_io == 1 and pll_ok == True and clkbuf_ok == True and clk_region_skip == 0 and tot_tiles <= NTILE_MAX and tot_full_coherent <= NFULL_COHERENT_MAX and tot_llc_coherent <= NLLC_COHERENT_MAX:
       self.done.config(state=NORMAL)
     else:
       string = ""
@@ -562,17 +563,15 @@ class NoCFrame(Pmw.ScrolledFrame):
         string += "At least one CPU is required\n"
       if (tot_io == 0):
         string += "At least I/O tile is required\n"
-      if (tot_mem_debug == 0):
-        string += "At least one \"mem_dbg\" tile is required.\n"
       if (tot_cpu > NCPU_MAX):
         new_err = "Maximum number of supported CPUs is " + str(NCPU_MAX) + ".\n"
         string += new_err
       if (tot_io > 1):
         string += "Multiple I/O tiles are not supported\n"
-      if (tot_mem_debug > 1):
-        string += "Multiple \"mem_dbg\" tiles are not supported.\n"
-      if (tot_mem > NMEM_MAX):
-        string += "Maximum number of supported memory controllers is " + str(NMEM_MAX) + ".\n"
+      if (tot_mem < 1 or tot_mem > NMEM_MAX):
+        string += "There must be at least 1 memory tile and no more than " + str(NMEM_MAX) + ".\n"
+      if (tot_acc > NACC_MAX):
+        string += "There must no more than " + str(NACC_MAX) + " (can be relaxed).\n"
       if (tot_tiles > NTILE_MAX):
         string += "Maximum number of supported tiles is " + str(NTILE_MAX) + ".\n"
       if (tot_full_coherent > NFULL_COHERENT_MAX):

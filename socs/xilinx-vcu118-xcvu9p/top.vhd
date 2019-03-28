@@ -33,15 +33,7 @@ use work.soctiles.all;
 
 entity top is
   generic (
-    fabtech         : integer := CFG_FABTECH;
-    memtech         : integer := CFG_MEMTECH;
-    padtech         : integer := CFG_PADTECH;
-    disas           : integer := CFG_DISAS;  -- Enable disassembly to console
-    dbguart         : integer := CFG_DUART;  -- Print UART on console
-    pclow           : integer := CFG_PCLOW;
-    testahb         : boolean := false;
-    SIMULATION      : boolean := false;
-    autonegotiation : integer := 1
+    SIMULATION      : boolean := false
     );
   port (
     reset            : in    std_ulogic;
@@ -192,12 +184,11 @@ architecture rtl of top is
   signal mctrl_ahbso : ahb_slv_out_type;
   signal mctrl_apbi  : apb_slv_in_type;
   signal mctrl_apbo  : apb_slv_out_type;
-  signal mctrl_clk   : std_ulogic;
 --pragma translate_on
 
--- Memory controller DDR4
-  signal ddr_ahbsi : ahb_slv_in_type;
-  signal ddr_ahbso : ahb_slv_out_type;
+  -- Memory controller DDR4
+  signal ddr_ahbsi   : ahb_slv_in_vector_type(0 to CFG_NMEM_TILE - 1);
+  signal ddr_ahbso   : ahb_slv_out_vector_type(0 to CFG_NMEM_TILE - 1);
 
 -- DVI (unused on this board)
   signal dvi_apbi  : apb_slv_in_type;
@@ -225,14 +216,11 @@ architecture rtl of top is
   signal sgmii0_apbo      : apb_slv_out_type;
   signal eth0_ahbmi       : ahb_mst_in_type;
   signal eth0_ahbmo       : ahb_mst_out_type;
+  signal edcl_ahbmo : ahb_mst_out_type;
 
 -- DSU
   signal ndsuact : std_ulogic;
   signal dsuerr  : std_ulogic;
-
--- IRQ
-  signal irqi_fifo_overflow : std_ulogic;
-  signal irqo_fifo_overflow : std_ulogic;
 
 -- NOC
   signal chip_rst       : std_ulogic;
@@ -252,10 +240,10 @@ begin
 -------------------------------------------------------------------------------
 
   -- From DSU 0 (on chip)
-  led0_pad : outpad generic map (tech => padtech, level => cmos, voltage => x12v, strength => 8)
+  led0_pad : outpad generic map (tech => CFG_PADTECH, level => cmos, voltage => x12v, strength => 8)
     port map (led(0), ndsuact);
   -- From CPU 0 (on chip)
-  led1_pad : outpad generic map (tech => padtech, level => cmos, voltage => x12v, strength => 8)
+  led1_pad : outpad generic map (tech => CFG_PADTECH, level => cmos, voltage => x12v, strength => 8)
     port map (led(1), dsuerr);
   --pragma translate_off
   process(clkm, rstn)
@@ -267,44 +255,44 @@ begin
   --pragma translate_on
 
   -- From DDR controller (on FPGA)
-  led2_pad : outpad generic map (tech => padtech, level => cmos, voltage => x12v, strength => 8)
+  led2_pad : outpad generic map (tech => CFG_PADTECH, level => cmos, voltage => x12v, strength => 8)
     port map (led(2), calib_done);
-  led3_pad : outpad generic map (tech => padtech, level => cmos, voltage => x12v, strength => 8)
+  led3_pad : outpad generic map (tech => CFG_PADTECH, level => cmos, voltage => x12v, strength => 8)
     port map (led(3), lock);
-  led4_pad : outpad generic map (tech => padtech, level => cmos, voltage => x12v, strength => 8)
-    port map (led(4), ddr_ahbso.hready);
+  led4_pad : outpad generic map (tech => CFG_PADTECH, level => cmos, voltage => x12v, strength => 8)
+    port map (led(4), ddr_ahbso(0).hready);
 
-  -- IRQ overflow
-  led5_pad : outpad generic map (tech => padtech, level => cmos, voltage => x12v, strength => 8)
-    port map (led(5), irqi_fifo_overflow);
-  led6_pad : outpad generic map (tech => padtech, level => cmos, voltage => x12v, strength => 8)
-    port map (led(6), irqo_fifo_overflow);
+  -- unused
+  led5_pad : outpad generic map (tech => CFG_PADTECH, level => cmos, voltage => x12v, strength => 8)
+    port map (led(5), '0');
+  led6_pad : outpad generic map (tech => CFG_PADTECH, level => cmos, voltage => x12v, strength => 8)
+    port map (led(6), '0');
 
 -------------------------------------------------------------------------------
 -- Switches -------------------------------------------------------------------
 -------------------------------------------------------------------------------
 
-  sw0_pad : iopad generic map (tech => padtech, level => cmos, voltage => x12v, strength => 8)
+  sw0_pad : iopad generic map (tech => CFG_PADTECH, level => cmos, voltage => x12v, strength => 8)
     port map (switch(0), '0', '1', sel0);
-  sw1_pad : iopad generic map (tech => padtech, level => cmos, voltage => x12v, strength => 8)
+  sw1_pad : iopad generic map (tech => CFG_PADTECH, level => cmos, voltage => x12v, strength => 8)
     port map (switch(1), '0', '1', sel1);
-  sw2_pad : iopad generic map (tech => padtech, level => cmos, voltage => x12v, strength => 8)
+  sw2_pad : iopad generic map (tech => CFG_PADTECH, level => cmos, voltage => x12v, strength => 8)
     port map (switch(2), '0', '1', sel2);
-  sw3_pad : iopad generic map (tech => padtech, level => cmos, voltage => x12v, strength => 8)
+  sw3_pad : iopad generic map (tech => CFG_PADTECH, level => cmos, voltage => x12v, strength => 8)
     port map (switch(3), '0', '1', sel3);
 
 -------------------------------------------------------------------------------
 -- Buttons --------------------------------------------------------------------
 -------------------------------------------------------------------------------
 
-  --pio_pad : inpad generic map (tech => padtech, level => cmos, voltage => x18v)
+  --pio_pad : inpad generic map (tech => CFG_PADTECH, level => cmos, voltage => x18v)
   --  port map (button(i-4), gpioi.din(i));
 
 ----------------------------------------------------------------------
 --- FPGA Reset and Clock generation  ---------------------------------
 ----------------------------------------------------------------------
 
-  reset_pad : inpad generic map (tech => padtech, level => cmos, voltage => x12v) port map (reset, rst);
+  reset_pad : inpad generic map (tech => CFG_PADTECH, level => cmos, voltage => x12v) port map (reset, rst);
   rst0      : rstgen                    -- reset generator
     generic map (acthigh => 1, syncin => 0)
     port map (rst, clkm, lock, rstn, rstraw);
@@ -331,19 +319,19 @@ begin
                               ram16     => 1, sden => CFG_MCTRL_SDEN,
                               invclk    => 0, sepbus => CFG_MCTRL_SEPBUS,
                               pageburst => CFG_MCTRL_PAGE, rammask => 0, iomask => 0)
-    port map (rstn, mctrl_clk, memi, memo, mctrl_ahbsi, mctrl_ahbso, mctrl_apbi, mctrl_apbo, wpo, sdo);
+    port map (rstn, clkm, memi, memo, mctrl_ahbsi, mctrl_ahbso, mctrl_apbi, mctrl_apbo, wpo, sdo);
 
-  addr_pad : outpadv generic map (width => 26, tech => padtech, level => cmos, voltage => x18v)
+  addr_pad : outpadv generic map (width => 26, tech => CFG_PADTECH, level => cmos, voltage => x18v)
     port map (address(25 downto 0), memo.address(26 downto 1));
-  roms_pad : outpad generic map (tech => padtech, level => cmos, voltage => x18v)
+  roms_pad : outpad generic map (tech => CFG_PADTECH, level => cmos, voltage => x18v)
     port map (romsn, memo.romsn(0));
-  oen_pad : outpad generic map (tech => padtech, level => cmos, voltage => x18v)
+  oen_pad : outpad generic map (tech => CFG_PADTECH, level => cmos, voltage => x18v)
     port map (oen, memo.oen);
-  adv_pad : outpad generic map (tech => padtech, level => cmos, voltage => x18v)
+  adv_pad : outpad generic map (tech => CFG_PADTECH, level => cmos, voltage => x18v)
     port map (adv, '0');
-  wri_pad : outpad generic map (tech => padtech, level => cmos, voltage => x18v)
+  wri_pad : outpad generic map (tech => CFG_PADTECH, level => cmos, voltage => x18v)
     port map (writen, memo.writen);
-  data_pad : iopadvv generic map (tech => padtech, width => 16, level => cmos, voltage => x18v)
+  data_pad : iopadvv generic map (tech => CFG_PADTECH, width => 16, level => cmos, voltage => x18v)
     port map (data(15 downto 0), memo.data(31 downto 16),
               memo.vbdrive(31 downto 16), memi.data(31 downto 16));
   -- pragma translate_on
@@ -377,8 +365,8 @@ begin
         c0_ddr4_dq       => c0_ddr4_dq,
         c0_ddr4_dqs_c    => c0_ddr4_dqs_c,
         c0_ddr4_dqs_t    => c0_ddr4_dqs_t,
-        ahbso            => ddr_ahbso,
-        ahbsi            => ddr_ahbsi,
+        ahbso            => ddr_ahbso(0),
+        ahbsi            => ddr_ahbsi(0),
         calib_done       => calib_done,
         rst_n_syn        => migrstn,
         rst_n_async      => rstraw,
@@ -406,8 +394,8 @@ begin
       port map(
         rst   => rstn,
         clk   => clkm,
-        ahbsi => ddr_ahbsi,
-        ahbso => ddr_ahbso
+        ahbsi => ddr_ahbsi(0),
+        ahbso => ddr_ahbso(0)
         );
 
     c0_ddr4_act_n    <= '1';
@@ -442,11 +430,12 @@ begin
     e1 : grethm
       generic map(
         hindex       => CFG_AHB_JTAG,
+        ehindex      => CFG_AHB_JTAG + 1,
         pindex       => 14,
         paddr        => 16#800#,
         pmask        => 16#f00#,
         pirq         => 12,
-        memtech      => memtech,
+        memtech      => CFG_MEMTECH,
         mdcscaler    => CPU_FREQ/1000,
         rmii         => 0,
         enable_mdio  => 1,
@@ -463,13 +452,15 @@ begin
         ipaddrl      => CFG_ETH_IPL,
         giga         => CFG_GRETH1G,
         ramdebug     => 0,
-        gmiimode     => 1)
+        gmiimode     => 1,
+        edclsepahbg => 1)
       port map(
         rst   => rstn,
         clk   => clkm,
         ahbmi => eth0_ahbmi,
         ahbmo => eth0_ahbmo,
         apbi  => eth0_apbi,
+        eahbmo => edcl_ahbmo,
         apbo  => eth0_apbo,
         ethi  => gmiii,
         etho  => gmiio);
@@ -482,10 +473,10 @@ begin
         paddr           => 16#010#,
         pmask           => 16#ff0#,
         abits           => 8,
-        autonegotiation => autonegotiation,
+        autonegotiation => 1,
         pirq            => 11,
         debugmem        => 1,
-        tech            => fabtech,
+        tech            => CFG_FABTECH,
         simulation      => SIMULATION
         )
       port map(
@@ -500,16 +491,16 @@ begin
         apbo     => sgmii0_apbo
         );
 
-    emdio_pad : iopad generic map (tech => padtech, level => cmos, voltage => x18v)
+    emdio_pad : iopad generic map (tech => CFG_PADTECH, level => cmos, voltage => x18v)
       port map (emdio, sgmiio.mdio_o, sgmiio.mdio_oe, sgmiii.mdio_i);
 
-    emdc_pad : outpad generic map (tech => padtech, level => cmos, voltage => x18v)
+    emdc_pad : outpad generic map (tech => CFG_PADTECH, level => cmos, voltage => x18v)
       port map (emdc, sgmiio.mdc);
 
-    eint_pad : inpad generic map (tech => padtech, level => cmos, voltage => x18v)
+    eint_pad : inpad generic map (tech => CFG_PADTECH, level => cmos, voltage => x18v)
       port map (eint, sgmiii.mdint);
 
-    erst_pad : outpad generic map (tech => padtech, level => cmos, voltage => x18v)
+    erst_pad : outpad generic map (tech => CFG_PADTECH, level => cmos, voltage => x18v)
       port map (erst, sgmiio.reset);
 
     sgmiii.clkp <= gtrefclk_p;
@@ -525,6 +516,7 @@ begin
     eth0_apbo   <= apb_none;
     sgmii0_apbo <= apb_none;
     eth0_ahbmo  <= ahbm_none;
+    edcl_ahbmo <= ahbm_none;
     txp         <= '0';
     txn         <= '1';
     emdc        <= '0';
@@ -541,19 +533,6 @@ begin
   chip_pllbypass <= (others => '0');
 
   esp_1 : esp
-    generic map (
-      fabtech   => CFG_FABTECH,
-      memtech   => CFG_MEMTECH,
-      padtech   => CFG_PADTECH,
-      disas     => disas,
-      dbguart   => dbguart,
-      pclow     => pclow,
-      testahb   => testahb,
-      has_dvfs  => CFG_HAS_DVFS,
-      has_sync  => CFG_HAS_SYNC,
-      XLEN      => CFG_XLEN,
-      YLEN      => CFG_YLEN,
-      TILES_NUM => CFG_TILES_NUM)
     port map (
       rst                => chip_rst,
       noc_clk            => noc_clk,
@@ -565,7 +544,6 @@ begin
       mctrl_ahbso        => mctrl_ahbso,
       mctrl_apbi         => mctrl_apbi,
       mctrl_apbo         => mctrl_apbo,
-      mctrl_clk          => mctrl_clk,
       --pragma translate_on
       uart_rxd           => uart_rxd,
       uart_txd           => uart_txd,
@@ -573,14 +551,11 @@ begin
       uart_rtsn          => uart_rtsn,
       ndsuact            => ndsuact,
       dsuerr             => dsuerr,
-      irqi_fifo_overflow => irqi_fifo_overflow,
-      irqo_fifo_overflow => irqo_fifo_overflow,
-      ddr0_ahbsi         => ddr_ahbsi,
-      ddr0_ahbso         => ddr_ahbso,
-      ddr1_ahbsi         => open,
-      ddr1_ahbso         => ahbs_none,
+      ddr_ahbsi          => ddr_ahbsi,
+      ddr_ahbso          => ddr_ahbso,
       eth0_ahbmi         => eth0_ahbmi,
       eth0_ahbmo         => eth0_ahbmo,
+      edcl_ahbmo         => edcl_ahbmo,
       eth0_apbi          => eth0_apbi,
       eth0_apbo          => eth0_apbo,
       sgmii0_apbi        => sgmii0_apbi,

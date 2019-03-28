@@ -15,15 +15,6 @@ use work.gencomp.all;
 use work.grlib_config.all;
 
 entity testbench is
-  generic (
-    fabtech : integer := CFG_FABTECH;
-    memtech : integer := CFG_MEMTECH;
-    padtech : integer := CFG_PADTECH;
-    disas   : integer := CFG_DISAS;     -- Enable disassembly to console
-    dbguart : integer := CFG_DUART;     -- Print UART on console
-    pclow   : integer := CFG_PCLOW;
-    testahb : boolean := true
-    );
 end;
 
 architecture behav of testbench is
@@ -137,13 +128,6 @@ architecture behav of testbench is
 
   component top
     generic (
-      fabtech                 : integer;
-      memtech                 : integer;
-      padtech                 : integer;
-      disas                   : integer;
-      dbguart                 : integer;
-      pclow                   : integer;
-      testahb                 : boolean;
       SIMULATION              : boolean);
     port (
       -- MMI64 interface:
@@ -240,9 +224,7 @@ architecture behav of testbench is
       LED_BLUE          : out std_ulogic;
       LED_YELLOW        : out std_ulogic;
       c0_diagnostic_led : out std_ulogic;
-      c1_diagnostic_led : out std_ulogic;
-      irqi_overflow_led : out std_ulogic;
-      irqo_overflow_led : out std_ulogic);
+      c1_diagnostic_led : out std_ulogic);
 
   end component;
 
@@ -289,13 +271,6 @@ begin
 
   cpu : top
     generic map (
-      fabtech                 => fabtech,
-      memtech                 => memtech,
-      padtech                 => padtech,
-      disas                   => disas,
-      dbguart                 => dbguart,
-      pclow                   => pclow,
-      testahb                 => testahb,
       SIMULATION              => SIMULATION
       )
     port map (
@@ -390,9 +365,7 @@ begin
       LED_BLUE          => open,
       LED_YELLOW        => open,
       c0_diagnostic_led => open,
-      c1_diagnostic_led => open,
-      irqi_overflow_led => open,
-      irqo_overflow_led => open
+      c1_diagnostic_led => open
       );
 
 end;

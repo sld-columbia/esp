@@ -44,91 +44,56 @@ use work.socmap.all;
 
 package soctiles is
 
-  component esp
-    generic (
-      fabtech                 : integer;
-      memtech                 : integer;
-      padtech                 : integer;
-      disas                   : integer;
-      dbguart                 : integer;
-      pclow                   : integer;
-      has_dvfs                : integer;
-      has_sync                : integer;
-      XLEN                    : integer;
-      YLEN                    : integer;
-      TILES_NUM               : integer;
-      testahb                 : boolean);
+  component esp is
     port (
-      rst           : in    std_ulogic;
-      noc_clk       : in    std_ulogic;
-      refclk        : in    std_ulogic;
-      mem_clk       : in    std_ulogic;
-      pllbypass     : in    std_logic_vector(TILES_NUM-1 downto 0);
+      rst                : in  std_logic;
+      noc_clk            : in  std_logic;
+      refclk             : in  std_logic;
+      mem_clk            : in  std_logic;
+      pllbypass          : in  std_logic_vector(CFG_TILES_NUM - 1 downto 0);
       --pragma translate_off
-      mctrl_ahbsi   : out   ahb_slv_in_type;
-      mctrl_ahbso   : in    ahb_slv_out_type;
-      mctrl_apbi    : out   apb_slv_in_type;
-      mctrl_apbo    : in    apb_slv_out_type;
-      mctrl_clk     : out   std_ulogic;
+      mctrl_ahbsi        : out ahb_slv_in_type;
+      mctrl_ahbso        : in  ahb_slv_out_type;
+      mctrl_apbi         : out apb_slv_in_type;
+      mctrl_apbo         : in  apb_slv_out_type;
       --pragma translate_on
-      uart_rxd      : in    std_ulogic;
-      uart_txd      : out   std_ulogic;
-      uart_ctsn     : in    std_ulogic;
-      uart_rtsn     : out   std_ulogic;
-      ndsuact       : out   std_ulogic;
-      dsuerr        : out   std_ulogic;
-      irqi_fifo_overflow : out std_logic;
-      irqo_fifo_overflow : out std_logic;
-      ddr0_ahbsi    : out ahb_slv_in_type;
-      ddr0_ahbso    : in  ahb_slv_out_type;
-      ddr1_ahbsi    : out ahb_slv_in_type;
-      ddr1_ahbso    : in  ahb_slv_out_type;
-      eth0_apbi     : out apb_slv_in_type;
-      eth0_apbo     : in  apb_slv_out_type;
-      sgmii0_apbi   : out apb_slv_in_type;
-      sgmii0_apbo   : in  apb_slv_out_type;
-      eth0_ahbmi    : out ahb_mst_in_type;
-      eth0_ahbmo    : in  ahb_mst_out_type;
-      dvi_apbi      : out apb_slv_in_type;
-      dvi_apbo      : in  apb_slv_out_type;
-      dvi_ahbmi     : out ahb_mst_in_type;
-      dvi_ahbmo     : in  ahb_mst_out_type;
-      -- Monitor signals
-      mon_noc       : out monitor_noc_matrix(1 to 6, 0 to TILES_NUM-1);
-      mon_mem       : out monitor_mem_vector(0 to CFG_NLLC - 1);
-      mon_acc       : out monitor_acc_vector(0 to accelerators_num-1);
-      mon_l2        : out monitor_cache_vector(0 to CFG_NL2 - 1);
-      mon_llc       : out monitor_cache_vector(0 to CFG_NLLC - 1);
-      mon_dvfs      : out monitor_dvfs_vector(0 to TILES_NUM-1)
-      );
-  end component;
+      uart_rxd           : in  std_logic;
+      uart_txd           : out std_logic;
+      uart_ctsn          : in  std_logic;
+      uart_rtsn          : out std_logic;
+      ndsuact            : out std_logic;
+      dsuerr             : out std_logic;
+      ddr_ahbsi          : out ahb_slv_in_vector_type(0 to CFG_NMEM_TILE - 1);
+      ddr_ahbso          : in  ahb_slv_out_vector_type(0 to CFG_NMEM_TILE - 1);
+      eth0_apbi          : out apb_slv_in_type;
+      eth0_apbo          : in  apb_slv_out_type;
+      sgmii0_apbi        : out apb_slv_in_type;
+      sgmii0_apbo        : in  apb_slv_out_type;
+      eth0_ahbmi         : out ahb_mst_in_type;
+      eth0_ahbmo         : in  ahb_mst_out_type;
+      edcl_ahbmo         : in  ahb_mst_out_type;
+      dvi_apbi           : out apb_slv_in_type;
+      dvi_apbo           : in  apb_slv_out_type;
+      dvi_ahbmi          : out ahb_mst_in_type;
+      dvi_ahbmo          : in  ahb_mst_out_type;
+      mon_noc            : out monitor_noc_matrix(1 to 6, 0 to CFG_TILES_NUM-1);
+      mon_acc            : out monitor_acc_vector(0 to accelerators_num-1);
+      mon_mem            : out monitor_mem_vector(0 to CFG_NLLC - 1);
+      mon_l2             : out monitor_cache_vector(0 to CFG_NL2 - 1);
+      mon_llc            : out monitor_cache_vector(0 to CFG_NLLC - 1);
+      mon_dvfs           : out monitor_dvfs_vector(0 to CFG_TILES_NUM-1));
+  end component esp;
 
-  component tile_cpu
+  component tile_cpu is
     generic (
-      fabtech                 : integer;
-      memtech                 : integer;
-      padtech                 : integer;
-      disas                   : integer;
-      pclow                   : integer;
-      cpu_id                  : integer;
-      local_y                 : local_yx;
-      local_x                 : local_yx;
-      remote_apb_slv_en       : std_logic_vector(NAPBSLV-1 downto 0);
-      local_apb_en            : std_logic_vector(NAPBSLV-1 downto 0);
-      l2_pindex               : integer;
-      l2_pconfig              : apb_config_type;
-      has_dvfs                : integer;
-      has_pll                 : integer;
-      domain                  : integer);
+      tile_id : integer range 0 to CFG_TILES_NUM - 1);
     port (
       rst                : in  std_ulogic;
       refclk             : in  std_ulogic;
       pllbypass          : in  std_ulogic;
       pllclk             : out std_ulogic;
-      -- TODO: REMOVE!
-      dbgi               : in l3_debug_in_type;
+      dbgi               : in  l3_debug_in_type;
       dbgo               : out l3_debug_out_type;
-      irqo_fifo_overflow : out std_ulogic;
       noc1_input_port    : out noc_flit_type;
       noc1_data_void_in  : out std_ulogic;
       noc1_stop_in       : out std_ulogic;
@@ -168,34 +133,11 @@ package soctiles is
       mon_cache          : out monitor_cache_type;
       mon_dvfs_in        : in  monitor_dvfs_type;
       mon_dvfs           : out monitor_dvfs_type);
-  end component;
+  end component tile_cpu;
 
-  component tile_acc
+  component tile_acc is
     generic (
-      fabtech        : integer;
-      memtech        : integer;
-      padtech        : integer;
-      hls_conf       : hlscfg_t;
-      local_y        : local_yx;
-      local_x        : local_yx;
-      io_y           : local_yx;
-      io_x           : local_yx;
-      noc_xlen       : integer;
-      device         : devid_t;
-      pindex         : integer;
-      paddr          : integer;
-      pmask          : integer;
-      pirq           : integer;
-      scatter_gather : integer range 0 to 1;
-      local_apb_mask : std_logic_vector(NAPBSLV-1 downto 0);
-      sets           : integer;
-      ways           : integer;
-      cache_tile_id  : cache_attribute_array;
-      has_l2         : integer;
-      has_dvfs       : integer;
-      has_pll        : integer;
-      extra_clk_buf  : integer;
-      domain         : integer);
+      tile_id : integer range 0 to CFG_TILES_NUM - 1);
     port (
       rst                : in  std_ulogic;
       refclk             : in  std_ulogic;
@@ -238,109 +180,40 @@ package soctiles is
       noc6_data_void_out : in  std_ulogic;
       noc6_stop_out      : in  std_ulogic;
       mon_dvfs_in        : in  monitor_dvfs_type;
-      --Monitor signals
       mon_acc            : out monitor_acc_type;
       mon_cache          : out monitor_cache_type;
-      mon_dvfs           : out monitor_dvfs_type
-      );
-  end component;
+      mon_dvfs           : out monitor_dvfs_type);
+  end component tile_acc;
 
-  component tile_io
-    generic (
-      fabtech : integer;
-      memtech : integer;
-      padtech : integer;
-      disas   : integer;
-      dbguart : integer;
-      pclow   : integer);
+  component tile_io is
     port (
       rst                : in  std_ulogic;
       clk                : in  std_ulogic;
-      uart_rxd           : in  std_ulogic;
-      uart_txd           : out std_ulogic;
-      uart_ctsn          : in  std_ulogic;
-      uart_rtsn          : out std_ulogic;
-      dvi_apbi           : out apb_slv_in_type;
-      dvi_apbo           : in  apb_slv_out_type;
-      dvi_ahbmi          : out ahb_mst_in_type;
-      dvi_ahbmo          : in  ahb_mst_out_type;
-      -- TODO: REMOVE!
-      eth0_pirq      : in  std_logic_vector(NAHBIRQ-1 downto 0);
-      sgmii0_pirq    : in  std_logic_vector(NAHBIRQ-1 downto 0);
-      irqi_fifo_overflow : out std_ulogic;
-      noc1_input_port    : out noc_flit_type;
-      noc1_data_void_in  : out std_ulogic;
-      noc1_stop_in       : out  std_ulogic;
-      noc1_output_port   : in  noc_flit_type;
-      noc1_data_void_out : in  std_ulogic;
-      noc1_stop_out      : in  std_ulogic;
-      noc2_input_port    : out noc_flit_type;
-      noc2_data_void_in  : out std_ulogic;
-      noc2_stop_in       : out std_ulogic;
-      noc2_output_port   : in  noc_flit_type;
-      noc2_data_void_out : in  std_ulogic;
-      noc2_stop_out      : in  std_ulogic;
-      noc3_input_port    : out noc_flit_type;
-      noc3_data_void_in  : out std_ulogic;
-      noc3_stop_in       : out std_ulogic;
-      noc3_output_port   : in  noc_flit_type;
-      noc3_data_void_out : in  std_ulogic;
-      noc3_stop_out      : in  std_ulogic;
-      noc4_input_port    : out noc_flit_type;
-      noc4_data_void_in  : out std_ulogic;
-      noc4_stop_in       : out  std_ulogic;
-      noc4_output_port   : in  noc_flit_type;
-      noc4_data_void_out : in  std_ulogic;
-      noc4_stop_out      : in  std_ulogic;
-      noc5_input_port    : out noc_flit_type;
-      noc5_data_void_in  : out std_ulogic;
-      noc5_stop_in       : out  std_ulogic;
-      noc5_output_port   : in  noc_flit_type;
-      noc5_data_void_out : in  std_ulogic;
-      noc5_stop_out      : in  std_ulogic;
-      noc6_input_port    : out noc_flit_type;
-      noc6_data_void_in  : out std_ulogic;
-      noc6_stop_in       : out  std_ulogic;
-      noc6_output_port   : in  noc_flit_type;
-      noc6_data_void_out : in  std_ulogic;
-      noc6_stop_out      : in  std_ulogic;
-      mon_dvfs           : out monitor_dvfs_type
-      );
-  end component;
-
-  component tile_mem
-    generic (
-      fabtech                 : integer;
-      memtech                 : integer;
-      padtech                 : integer;
-      l3_pindex               : integer;
-      l3_pconfig              : apb_config_type;
-      local_apb_en            : std_logic_vector(NAPBSLV-1 downto 0);
-      disas                   : integer;
-      dbguart                 : integer;
-      pclow                   : integer;
-      testahb                 : boolean);
-    port (
-      rst                : in  std_ulogic;
-      clk                : in  std_ulogic;
-      ddr_ahbsi          : out ahb_slv_in_type;
-      ddr_ahbso          : in  ahb_slv_out_type;
       eth0_apbi          : out apb_slv_in_type;
       eth0_apbo          : in  apb_slv_out_type;
       sgmii0_apbi        : out apb_slv_in_type;
       sgmii0_apbo        : in  apb_slv_out_type;
       eth0_ahbmi         : out ahb_mst_in_type;
       eth0_ahbmo         : in  ahb_mst_out_type;
+      edcl_ahbmo         : in  ahb_mst_out_type;
+      dvi_apbi           : out apb_slv_in_type;
+      dvi_apbo           : in  apb_slv_out_type;
+      dvi_ahbmi          : out ahb_mst_in_type;
+      dvi_ahbmo          : in  ahb_mst_out_type;
       --pragma translate_off
-      mctrl_ahbsi        : out   ahb_slv_in_type;
-      mctrl_ahbso        : in    ahb_slv_out_type;
-      mctrl_apbi         : out   apb_slv_in_type;
-      mctrl_apbo         : in    apb_slv_out_type;
+      mctrl_ahbsi        : out ahb_slv_in_type;
+      mctrl_ahbso        : in  ahb_slv_out_type;
+      mctrl_apbi         : out apb_slv_in_type;
+      mctrl_apbo         : in  apb_slv_out_type;
       --pragma translate_on
-      ndsuact            : out std_ulogic; -- to chip_led(0)
+      uart_rxd           : in  std_ulogic;
+      uart_txd           : out std_ulogic;
+      uart_ctsn          : in  std_ulogic;
+      uart_rtsn          : out std_ulogic;
+      ndsuact            : out std_ulogic;
       dsuerr             : out std_ulogic;
       dbgi               : out l3_debug_in_vector(0 to CFG_NCPU_TILE-1);
-      dbgo               : in l3_debug_out_vector(0 to CFG_NCPU_TILE-1);
+      dbgo               : in  l3_debug_out_vector(0 to CFG_NCPU_TILE-1);
       noc1_input_port    : out noc_flit_type;
       noc1_data_void_in  : out std_ulogic;
       noc1_stop_in       : out std_ulogic;
@@ -377,30 +250,17 @@ package soctiles is
       noc6_output_port   : in  noc_flit_type;
       noc6_data_void_out : in  std_ulogic;
       noc6_stop_out      : in  std_ulogic;
-      mon_mem            : out monitor_mem_type;
-      mon_cache          : out monitor_cache_type;
-      mon_dvfs           : out monitor_dvfs_type
-      );
-  end component;
+      mon_dvfs           : out monitor_dvfs_type);
+  end component tile_io;
 
-  component tile_mem_lite
+  component tile_mem is
     generic (
-      fabtech                 : integer;
-      memtech                 : integer;
-      padtech                 : integer;
-      l3_pindex               : integer;
-      l3_pconfig              : apb_config_type;
-      local_apb_en            : std_logic_vector(NAPBSLV-1 downto 0);
-      disas                   : integer;
-      dbguart                 : integer;
-      pclow                   : integer;
-      testahb                 : boolean);
+      tile_id : integer range 0 to CFG_TILES_NUM - 1);
     port (
       rst                : in  std_ulogic;
       clk                : in  std_ulogic;
       ddr_ahbsi          : out ahb_slv_in_type;
       ddr_ahbso          : in  ahb_slv_out_type;
-      --TODO: REMOVE THIS!
       dbgi               : in  l3_debug_in_type;
       noc1_input_port    : out noc_flit_type;
       noc1_data_void_in  : out std_ulogic;
@@ -440,8 +300,7 @@ package soctiles is
       noc6_stop_out      : in  std_ulogic;
       mon_mem            : out monitor_mem_type;
       mon_cache          : out monitor_cache_type;
-      mon_dvfs           : out monitor_dvfs_type
-      );
-  end component;
+      mon_dvfs           : out monitor_dvfs_type);
+  end component tile_mem;
 
 end soctiles;

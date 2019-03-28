@@ -31,10 +31,9 @@ use std.textio.all;
     local_y        : local_yx;
     local_x        : local_yx;
     mem_num        : integer;
-    mem_info       : tile_mem_info_vector;
+    mem_info       : tile_mem_info_vector(0 to MEM_MAX_NUM);
     io_y           : local_yx;
     io_x           : local_yx;
-    noc_xlen       : integer := 3;
     pindex         : integer := 0;
     paddr          : integer := 0;
     pmask          : integer := 16#fff#;
@@ -43,11 +42,13 @@ use std.textio.all;
     sets           : integer := 256;
     ways           : integer := 8;
     cache_tile_id  : cache_attribute_array;
+    cache_y        : yx_vec(0 to 2**NL2_MAX_LOG2 - 1);
+    cache_x        : yx_vec(0 to 2**NL2_MAX_LOG2 - 1);
     has_l2         : integer := 1;
     has_dvfs       : integer := 1;
     has_pll        : integer;
     extra_clk_buf  : integer;
-    local_apb_en   : std_logic_vector(NAPBSLV-1 downto 0));
+    local_apb_en   : std_logic_vector(0 to NAPBSLV - 1));
   port (
     rst       : in  std_ulogic;
     clk       : in  std_ulogic;
@@ -207,8 +208,11 @@ end;
   signal apbo              : apb_slv_out_vector;
   signal mon_dvfs_feedthru : monitor_dvfs_type;
 
-  constant ahbslv_proxy_hindex : hindex_vector(0 to NAHBSLV-1) := (
+  constant ahbslv_proxy_hindex : hindex_vector(0 to NAHBSLV - 1) := (
     others => 0);
+
+  constant cacheable_mem_num  : integer := mem_num - 1;
+  constant cacheable_mem_info : tile_mem_info_vector(0 to MEM_MAX_NUM - 1) := mem_info(0 to MEM_MAX_NUM - 1);
 
 begin
 
@@ -216,21 +220,17 @@ begin
 
   l2_gen: if has_l2 /= 0 generate
     -- Private cache
-    l2_acc_wrapper_1: entity work.l2_acc_wrapper
+    l2_acc_wrapper_1: l2_acc_wrapper
       generic map (
         tech          => tech,
         sets          => sets,
         ways          => ways,
-        nslaves       => 1,
-        noc_xlen      => noc_xlen,
-        hindex_slv    => ahbslv_proxy_hindex,
-        hindex_mst    => 0,
         local_y       => local_y,
         local_x       => local_x,
-        mem_num       => mem_num,
-        mem_info      => mem_info,
-        destination   => 0,
-        l1_cache_en   => 0,
+        mem_num       => cacheable_mem_num,
+        mem_info      => cacheable_mem_info,
+        cache_y       => cache_y,
+        cache_x       => cache_x,
         cache_tile_id => cache_tile_id)
       port map (
         rst                        => rst,
@@ -414,7 +414,7 @@ begin
     );
 
   -- Using only one apbo signal
-  no_apb : for i in 0 to NAPBSLV-1 generate
+  no_apb : for i in 0 to NAPBSLV - 1 generate
     local_apb : if i /= pindex generate
       apbo(i)      <= apb_none;
       apbo(i).pirq <= (others => '0');

@@ -24,8 +24,7 @@ class Components():
   "IO",
   ]
   MEM = [
-  "mem_dbg",
-  "mem_lite",
+  "mem",
   ]
   ACCELERATORS = [
   ]
@@ -157,6 +156,8 @@ class SoC_Config():
           tile.clk_region.set(int(tokens[5]))
           tile.has_pll.set(int(tokens[6]))
           tile.has_clkbuf.set(int(tokens[7]))
+          if tokens[3] == "cpu":
+            tile.has_l2.set(1)
           if tokens[3] == "acc":
             tile.point.set(tokens[8])
             tile.has_l2.set(tokens[9])
@@ -241,10 +242,7 @@ class SoC_Config():
         elif self.IPs.MISC.count(selection):
           fp.write("misc")
         elif self.IPs.MEM.count(selection):
-          if selection == "mem_dbg":
-            fp.write("mem_dbg")
-          else:
-            fp.write("mem_lite")
+          fp.write("mem")
         elif self.IPs.ACCELERATORS.count(selection):
           is_accelerator = True
           fp.write("acc")

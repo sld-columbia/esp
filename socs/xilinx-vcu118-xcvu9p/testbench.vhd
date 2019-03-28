@@ -14,36 +14,18 @@ use work.gencomp.all;
 use work.grlib_config.all;
 
 entity testbench is
-  generic (
-    fabtech : integer := CFG_FABTECH;
-    memtech : integer := CFG_MEMTECH;
-    padtech : integer := CFG_PADTECH;
-    disas   : integer := CFG_DISAS;     -- Enable disassembly to console
-    dbguart : integer := CFG_DUART;     -- Print UART on console
-    pclow   : integer := CFG_PCLOW;
-    testahb : boolean := true
-    );
 end;
 
 architecture behav of testbench is
 
   constant SIMULATION      : boolean := true;
-  constant autonegotiation : integer := 1;
 
   constant promfile : string := "prom.srec";  -- rom contents
   constant ramfile  : string := "ram.srec";   -- ram contents
 
   component top is
     generic (
-      fabtech         : integer;
-      memtech         : integer;
-      padtech         : integer;
-      disas           : integer;
-      dbguart         : integer;
-      pclow           : integer;
-      testahb         : boolean;
-      SIMULATION      : boolean;
-      autonegotiation : integer);
+      SIMULATION      : boolean);
     port (
       reset            : in    std_ulogic;
       c0_sys_clk_p     : in    std_logic;
@@ -185,15 +167,7 @@ begin
 
   cpu : top
     generic map (
-      fabtech         => fabtech,
-      memtech         => memtech,
-      padtech         => padtech,
-      disas           => disas,
-      dbguart         => dbguart,
-      pclow           => pclow,
-      testahb         => testahb,
-      SIMULATION      => SIMULATION,
-      autonegotiation => autonegotiation)
+      SIMULATION      => SIMULATION)
     port map (
       reset            => reset,
       c0_sys_clk_p     => c0_sys_clk_p,
