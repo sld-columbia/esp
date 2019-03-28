@@ -110,6 +110,7 @@ package nocpackage is
   constant AHB_WR       : noc_msg_type := "011";
   constant IRQ_MSG      : noc_msg_type := "100";
   constant RSP_REG_RD   : noc_msg_type := "101";
+  constant RSP_AHB_RD   : noc_msg_type := "110";
   constant INTERRUPT    : noc_msg_type := "111";
 
   constant ROUTE_NOC3 : std_logic_vector(1 downto 0) := "01";
@@ -130,28 +131,30 @@ package nocpackage is
 
   type yx_vec is array (natural range <>) of std_logic_vector(2 downto 0);
 
+  -- WARNING: The following constants and types must be changed to scale up;
+  --          We need to hardcode this value because of VHDL limitations, but
+  --          the *_MAX and *_NUM values are not limited in practice.
+  --          These values should match those set in utils/socmap/
+  constant MEM_MAX_NUM : integer := 4;
+  constant CPU_MAX_NUM : integer := 4;
+  constant TILES_MAX_NUM : integer := 64;
+
   type tile_mem_info is record
-                          x     : local_yx;
-                          y     : local_yx;
-                          haddr : integer;
-                          hmask : integer;
-                        end record;
+    x     : local_yx;
+    y     : local_yx;
+    haddr : integer;
+    hmask : integer;
+  end record;
 
   constant tile_mem_info_none : tile_mem_info := (
     x => (others => '0'),
     y => (others => '0'),
     haddr => 16#000#,
-    hmask => 16#000#
+    hmask => 16#fff#
     );
 
-  -- WARNING: The following constants and types must be changed to scale up;
-  --          We need to hardcode this value because of VHDL limitations, but
-  --          the *_MAX and *_NUM values are not limited in practice.
-  --          These values should match those set in utils/socmap/
-  constant MEM_DEV_NUM : integer := 3;
-  constant CPU_MAX_NUM : integer := 4;
-  constant TILES_MAX_NUM : integer := 32;
-  type tile_mem_info_vector is array (MEM_DEV_NUM - 1 downto 0) of tile_mem_info;
+  type tile_mem_info_vector is array (natural range <>) of tile_mem_info;
+  type mem_attribute_array is array (0 to MEM_MAX_NUM - 1) of integer;
   type cpu_attribute_array is array (0 to CPU_MAX_NUM - 1) of integer;
   type tile_attribute_array is array (0 to TILES_MAX_NUM - 1) of integer;
 
