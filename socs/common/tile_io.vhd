@@ -204,6 +204,27 @@ architecture rtl of tile_io is
   constant this_local_ahb_en      : std_logic_vector(0 to NAHBSLV - 1) := local_ahb_mask(io_tile_id);
   constant this_remote_ahb_slv_en : std_logic_vector(0 to NAHBSLV - 1) := remote_ahb_mask(io_tile_id);
 
+  -- attribute mark_debug : string;
+
+  -- attribute mark_debug of ahbsi                 : signal is "true";
+  -- attribute mark_debug of ctrl_ahbso            : signal is "true";
+  -- attribute mark_debug of ahbmi                 : signal is "true";
+  -- attribute mark_debug of eth0_ahbmo            : signal is "true";
+  -- attribute mark_debug of edcl_ahbmo            : signal is "true";
+  -- attribute mark_debug of coherent_dma_selected : signal is "true";
+  -- attribute mark_debug of coherent_dma_rcv_rdreq    : signal is "true";
+  -- attribute mark_debug of coherent_dma_rcv_data_out : signal is "true";
+  -- attribute mark_debug of coherent_dma_rcv_empty    : signal is "true";
+  -- attribute mark_debug of coherent_dma_snd_wrreq    : signal is"true";
+  -- attribute mark_debug of coherent_dma_snd_data_in  : signal is"true";
+  -- attribute mark_debug of coherent_dma_snd_full     : signal is"true";
+  -- attribute mark_debug of remote_ahbs_rcv_rdreq     : signal is"true";
+  -- attribute mark_debug of remote_ahbs_rcv_data_out  : signal is"true";
+  -- attribute mark_debug of remote_ahbs_rcv_empty     : signal is"true";
+  -- attribute mark_debug of remote_ahbs_snd_wrreq     : signal is"true";
+  -- attribute mark_debug of remote_ahbs_snd_data_in   : signal is"true";
+  -- attribute mark_debug of remote_ahbs_snd_full      : signal is"true";
+
 begin
 
 

@@ -517,7 +517,7 @@ begin
   gmiii.tx_dv <= cnt_en when gmiio.tx_en = '1' else '1';
 
   -- GMII output controlled via generics
-  gmiii.edclsepahb <= '0';
+  gmiii.edclsepahb <= '1';
   gmiii.edcldisable <= '0';
   gmiii.phyrstaddr <= (others => '0');
   gmiii.edcladdr <= (others => '0');
