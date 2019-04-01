@@ -269,7 +269,7 @@ begin
   end generate;
   data <= buskeep(data) after 5 ns;
 
-  cpu : top
+  top_1 : top
     generic map (
       SIMULATION              => SIMULATION
       )
