@@ -222,7 +222,7 @@ signal ethi : eth_in_type;
 signal etho : eth_out_type;
 signal egtx_clk :std_ulogic;
 signal negtx_clk :std_ulogic;
-constant CPU_FREQ : integer := 81248;  -- cpu frequency in KHz
+constant CPU_FREQ : integer := 100000;  -- cpu frequency in KHz
 signal eth0_apbi : apb_slv_in_type;
 signal eth0_apbo : apb_slv_out_type;
 signal sgmii0_apbi : apb_slv_in_type;
@@ -393,7 +393,7 @@ begin
         );
 
     clkgenmigref0 : clkgen
-      generic map (CFG_FABTECH, 22, 9, 0, 0, 0, 0, 0, 81248)
+      generic map (CFG_FABTECH, 16, 8, 0, 0, 0, 0, 0, CPU_FREQ)
       port map (clkm, clkm, clkref, open, open, open, open, cgi, cgo, open, open, open);
   end generate gen_mig;
 
