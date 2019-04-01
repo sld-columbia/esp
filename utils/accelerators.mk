@@ -36,7 +36,7 @@ $(CHISEL_ACCELERATORS):
 	@if ! test -e $(CHISEL_PATH)/build/$@; then \
 		$(MAKE) sbt-run; \
 	fi;
-	@cp -r $(CHISEL_PATH)/build/$@ $(ESP_ROOT)/tech/$(TECHLIB)/acc/$@; \
+	@cp -r $(CHISEL_PATH)/build/$@ $(ESP_ROOT)/tech/$(TECHLIB)/acc/; \
 	if test -e $(ESP_ROOT)/tech/$(TECHLIB)/acc/installed.log; then \
 		sed -i '/$@/d' $(ESP_ROOT)/tech/$(TECHLIB)/acc/installed.log; \
 	fi; \
