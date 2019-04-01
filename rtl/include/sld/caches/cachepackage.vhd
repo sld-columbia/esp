@@ -174,8 +174,7 @@ package cachepackage is
                         local_x     : local_yx; local_y : local_yx;
                         to_req      : std_ulogic; req_id : cache_id_t;
                         cache_x     : yx_vec(0 to 2**NL2_MAX_LOG2 - 1);
-                        cache_y       : yx_vec(0 to 2**NL2_MAX_LOG2 - 1);
-                        cache_tile_id : cache_attribute_array)
+                        cache_y       : yx_vec(0 to 2**NL2_MAX_LOG2 - 1))
     return noc_flit_type;
 
   function get_owner_bits (ncpu_bits : integer)
@@ -416,8 +415,7 @@ package body cachepackage is
                         local_x     : local_yx; local_y : local_yx;
                         to_req      : std_ulogic; req_id : cache_id_t;
                         cache_x     : yx_vec(0 to 2**NL2_MAX_LOG2 - 1);
-                        cache_y     : yx_vec(0 to 2**NL2_MAX_LOG2 - 1);
-                        cache_tile_id : cache_attribute_array)
+                        cache_y     : yx_vec(0 to 2**NL2_MAX_LOG2 - 1))
     return noc_flit_type is
 
     variable header         : noc_flit_type;
@@ -444,7 +442,7 @@ package body cachepackage is
     else
 
       if req_id >= "0" then
-        dest_init := cache_tile_id(to_integer(unsigned(req_id)));
+        dest_init := to_integer(unsigned(req_id));
         if dest_init >= 0 then
           dest_x := cache_x(dest_init);
           dest_y := cache_y(dest_init);

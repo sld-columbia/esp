@@ -765,8 +765,8 @@ begin  -- architecture rtl of l2_acc_wrapper
             coherence_req_data_in <= make_header(req_out_data_coh_msg, mem_info,
                                                  mem_num, req_out_data_hprot,
                                                  req_out_data_addr, local_x, local_y,
-                                                 '0', req_id, cache_x,
-                                                 cache_y, cache_tile_id);
+                                                 '0', req_id,
+                                                 cache_x, cache_y);
 
             reg.state := send_addr;
 
@@ -873,8 +873,8 @@ begin  -- architecture rtl of l2_acc_wrapper
             coherence_rsp_snd_data_in <= make_header(rsp_out_data_coh_msg, mem_info,
                                                      mem_num, hprot, rsp_out_data_addr, local_x,
                                                      local_y, rsp_out_data_to_req(0),
-                                                     rsp_out_data_req_id, cache_x,
-                                                     cache_y, cache_tile_id);
+                                                     rsp_out_data_req_id,
+                                                     cache_x, cache_y);
 
             reg.state := send_addr;
 
