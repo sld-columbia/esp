@@ -69,19 +69,19 @@ void EspMonMain::show_soc()
 		std::ostringstream stm;
 		stm << i << ". " << t->name;
 		btn->setText(stm.str().c_str());
-		QFont f("Arial", 9, -1, false);
+		QFont f("Arial", 13, -1, false);
 		btn->setFont(f);
-		int r, g, b;
+                std::string color_html;
 		if (t->type == (int) cpu_tile) {
-			r = 255; g = 132; b = 198;
+			color_html="#fd8276";
 		} else if (t->type == (int) accelerator_tile) {
-			r = 255; g = 205; b = 0;
+			color_html="#8ad0c5";
 		} else if (t->type == (int) empty_tile) {
-			r = 224; g = 224; b = 224;
+			color_html="#e5e5e5";
 		} else {
-			r = 23; g = 223; b = 0;
+			color_html="#84bcf2";
 		}
-		QColor col(r, g, b);
+		QColor col(color_html.c_str());
 		QString qss = QString("background-color: %1").arg(col.name());
 		btn->setStyleSheet(qss);
 		btn->setMinimumHeight(50);
