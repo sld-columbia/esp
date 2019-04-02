@@ -54,7 +54,7 @@ void esp_flush(int coherence)
 
 	if (coherence == ACC_COH_NONE)
 		/* Look for LLC controller */
-		nllc = probe(&llcs, SLD_L3_CACHE, "llc_cache");
+		nllc = probe(&llcs, SLD_LLC_CACHE, "llc_cache");
 
 	if (coherence < ACC_COH_RECALL)
 		/* Look for L2 controller */

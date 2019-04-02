@@ -10,7 +10,7 @@
 #define NAPBSLV 32
 
 #define SLD_L2_CACHE 0x020
-#define SLD_L3_CACHE 0x021
+#define SLD_LLC_CACHE 0x021
 
 struct esp_device {
 	unsigned vendor;
