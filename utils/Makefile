@@ -1180,7 +1180,9 @@ espmon-clean:
 		moc_espmonmain.o	\
 		espmon.mk		\
 		moc_espmonmain.cpp	\
-		ui_espmonmain.h
+		ui_espmonmain.h		\
+		moc_predefs.h		\
+		.qmake.stash
 
 espmon-distclean: espmon-clean
 	$(QUIET_CLEAN)$(RM) 	\
