@@ -889,6 +889,8 @@ begin
         etho => etho);
   end generate;
 
+  ethi.edclsepahb <= '1';
+
   -- eth pads
   eth0_inpads : if (CFG_GRETH = 1) generate
     etxc_pad : clkpad generic map (tech => CFG_PADTECH, level => cmos, voltage => x18v, arch => 2)
