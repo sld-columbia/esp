@@ -20,12 +20,17 @@
 -- Entity:      apbctrl
 -- File:        apbctrl.vhd
 -- Author:      Jiri Gaisler - Gaisler Research
--- Edit:        Paolo Mantovani - SLD Group @ Columbia University
 -- Description: AMBA AHB/APB bridge with plug&play support
---              This version waits for APB slaves not ready. This can be used
---              to deal with devices which are not on the bus, althoug the
---              system believs they are.
 ------------------------------------------------------------------------------
+
+-----------------------------------------------------------------------------
+-- Entity:      patient_apbctrl
+-- File:        patient_apbctrl.vhd
+-- Author:      Paolo Mantovani - Columbia University
+-- Description: Patient version of the AHB/APB bridge
+------------------------------------------------------------------------------
+
+
 
 library ieee;
 use ieee.std_logic_1164.all;

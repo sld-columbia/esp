@@ -1,8 +1,8 @@
 ------------------------------------------------------------------------------
---  This file is part of an extension to the GRLIB VHDL IP library.
---  Copyright (C) 2013, System Level Design (SLD) group @ Columbia University
---
---  GRLIP is a Copyright (C) 2008 - 2013, Aeroflex Gaisler
+--  This file is a part of the GRLIB VHDL IP LIBRARY
+--  Copyright (C) 2003 - 2008, Gaisler Research
+--  Copyright (C) 2008 - 2014, Aeroflex Gaisler
+--  Copyright (C) 2015 - 2016, Cobham Gaisler
 --
 --  This program is free software; you can redistribute it and/or modify
 --  it under the terms of the GNU General Public License as published by
@@ -14,16 +14,10 @@
 --  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 --  GNU General Public License for more details.
 --
---  To receive a copy of the GNU General Public License, write to the Free
---  Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
---  02111-1307  USA.
+--  You should have received a copy of the GNU General Public License
+--  along with this program; if not, write to the Free Software
+--  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 -----------------------------------------------------------------------------
--- Package: 	coretypes
--- File:	coretypes.vhd
--- Author:	Paolo Mantovani - SLD @ Columbia University
--- Description:	FPU and IRQ types and constants
---              (partially moved from $GRLIB/lib/gaisler/leon3/leon3.vhd)
-------------------------------------------------------------------------------
 
 library ieee;
 use ieee.std_logic_1164.all;
@@ -84,7 +78,7 @@ package coretypes is
   type fp_rf_out_type is record
     data1    	: std_logic_vector(31 downto 0); -- read data 1
     data2    	: std_logic_vector(31 downto 0); -- read data 2
-  end record;  
+  end record;
 
   type fpc_pipeline_control_type is record
     pc    : std_logic_vector(31 downto 0);
@@ -93,7 +87,7 @@ package coretypes is
     trap  : std_ulogic;
     annul : std_ulogic;
     pv    : std_ulogic;
-  end record;  
+  end record;
 
   type fpc_debug_in_type is record
     enable : std_ulogic;
@@ -105,7 +99,7 @@ package coretypes is
 
   type fpc_debug_out_type is record
     data   : std_logic_vector(31 downto 0);
-  end record;  
+  end record;
 
   constant fpc_debug_none : fpc_debug_out_type := (data => X"00000000");
 
@@ -117,7 +111,7 @@ package coretypes is
     a             : fpc_pipeline_control_type;
     e             : fpc_pipeline_control_type;
     m             : fpc_pipeline_control_type;
-    x             : fpc_pipeline_control_type;    
+    x             : fpc_pipeline_control_type;
     lddata        : std_logic_vector(31 downto 0);     -- load data
     dbg           : fpc_debug_in_type;               -- debug signals
   end record;
@@ -129,9 +123,9 @@ package coretypes is
     ccv  	        : std_ulogic;			 -- FP condition codes valid
     ldlock        : std_logic;			 -- FP pipeline hold
     holdn          : std_ulogic;
-    dbg           : fpc_debug_out_type;             -- FP debug signals    
+    dbg           : fpc_debug_out_type;             -- FP debug signals
   end record;
 
-  constant fpc_out_none : fpc_out_type := (X"00000000", '0', "00", '1', '0', '1', fpc_debug_none); 
+  constant fpc_out_none : fpc_out_type := (X"00000000", '0', "00", '1', '0', '1', fpc_debug_none);
 
 end coretypes;

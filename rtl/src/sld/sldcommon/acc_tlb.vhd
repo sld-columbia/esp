@@ -1,11 +1,5 @@
-------------------------------------------------------------------------------
---  Copyright (C) 2015, System Level Design (SLD) group @ Columbia University
------------------------------------------------------------------------------
--- Entity:  acc_tlb
--- File:    acc_tlb.vhd
--- Authors: Paolo Mantovani - SLD @ Columbia University
--- Description: TLB and scatter gather logic for accelerators
-------------------------------------------------------------------------------
+-- Copyright (c) 2011-2019 Columbia University, System Level Design Group
+-- SPDX-License-Identifier: MIT
 
 library ieee;
 use ieee.std_logic_1164.all;

@@ -1,4 +1,9 @@
 /*
+ * Copyright (c) 2011-2019 Columbia University, System Level Design Group
+ * SPDX-License-Identifier: MIT
+ */
+
+/*
  * contig_alloc.c
  * Simple allocator for huge amounts of physically contiguous memory.
  * Allocation is done in chunks of configurable size (default 1MB).

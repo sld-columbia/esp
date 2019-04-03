@@ -1,28 +1,5 @@
-------------------------------------------------------------------------------
---  This file is part of an extension to the GRLIB VHDL IP library.
---  Copyright (C) 2013, System Level Design (SLD) group @ Columbia University
---
---  GRLIP is a Copyright (C) 2008 - 2013, Aeroflex Gaisler
---
---  This program is free software; you can redistribute it and/or modify
---  it under the terms of the GNU General Public License as published by
---  the Free Software Foundation; either version 2 of the License, or
---  (at your option) any later version.
---
---  This program is distributed in the hope that it will be useful,
---  but WITHOUT ANY WARRANTY; without even the implied warranty of
---  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
---  GNU General Public License for more details.
---
---  To receive a copy of the GNU General Public License, write to the Free
---  Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
---  02111-1307  USA.
------------------------------------------------------------------------------
--- Entity:  nocpackage
--- File:    nocpackage.vhd
--- Authors: Paolo Mantovani - SLD @ Columbia University
--- Description:	NoC constants declaration
-------------------------------------------------------------------------------
+-- Copyright (c) 2011-2019 Columbia University, System Level Design Group
+-- SPDX-License-Identifier: MIT
 
 library ieee;
 use ieee.std_logic_1164.all;
@@ -189,66 +166,6 @@ package nocpackage is
       atleast_4slots  : out std_logic;
       exactly_3slots  : out std_logic;
       data_out    : out std_logic_vector(width-1 downto 0));
-  end component;
-
-  component sync_noc_transmitter
-    generic (
-      DATA_WIDTH : integer := NOC_FLIT_SIZE);
-    port(
-      clock             : in std_logic;
-      reset             : in std_logic;
-      valid_in          : in std_logic;
-      ack               : in std_logic;
-      data_in           : in std_logic_vector(DATA_WIDTH-1 downto 0);
-      chnl_stop         : in std_logic;
-      req               : out std_logic;
-      data_out          : out std_logic_vector(DATA_WIDTH-1 downto 0);
-      stop_in           : out std_logic);
-  end component;
-
-  component sync_transmitter
-    generic (
-      DATA_WIDTH : integer := NOC_FLIT_SIZE);
-    port(
-      clock		: in std_logic;
-      reset		: in std_logic;
-      valid_in		: in std_logic;
-      ack		: in std_logic;
-      data_in 		: in std_logic_vector(DATA_WIDTH-1 downto 0);
-      chnl_stop		: in std_logic;
-      req       	: out std_logic;
-      data_out		: out std_logic_vector(DATA_WIDTH-1 downto 0);
-      stop_in		: out std_logic);
-  end component;
-
-  component sync_receiver
-    generic (
-      DATA_WIDTH : integer := NOC_FLIT_SIZE);
-    port(
-      clock		: in std_logic;
-      reset		: in std_logic;
-      req		: in std_logic;
-      data_in 		: in std_logic_vector(DATA_WIDTH-1 downto 0);
-      stop_out		: in std_logic;
-      ack		: out std_logic;
-      data_out		: out std_logic_vector(DATA_WIDTH-1 downto 0);
-      valid_out		: out std_logic;
-      chnl_stop		: out std_logic);
-  end component;
-
-  component sync_noc_receiver
-    generic (
-      DATA_WIDTH : integer := NOC_FLIT_SIZE);
-    port(
-      clock             : in std_logic;
-      reset             : in std_logic;
-      req               : in std_logic;
-      data_in           : in std_logic_vector(DATA_WIDTH-1 downto 0);
-      stop_out          : in std_logic;
-      ack               : out std_logic;
-      data_out          : out std_logic_vector(DATA_WIDTH-1 downto 0);
-      valid_out         : out std_logic;
-      chnl_stop         : out std_logic);
   end component;
 
   component inferred_async_fifo

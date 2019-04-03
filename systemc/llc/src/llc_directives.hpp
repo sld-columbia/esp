@@ -1,4 +1,5 @@
-/* Copyright 2017 Columbia University, SLD Group */
+// Copyright (c) 2011-2019 Columbia University, System Level Design Group
+// SPDX-License-Identifier: MIT
 
 #ifndef __LLC_DIRECTIVES_HPP__
 #define __LLC_DIRECTIVES_HPP__

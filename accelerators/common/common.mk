@@ -1,3 +1,6 @@
+# Copyright (c) 2011-2019 Columbia University, System Level Design Group
+# SPDX-License-Identifier: MIT
+
 ### Some pretty aliases ###
 
 # Define V=1 for a more verbose compilation

@@ -1,4 +1,5 @@
-/* Copyright 2017 Columbia University, SLD Group */
+// Copyright (c) 2011-2019 Columbia University, System Level Design Group
+// SPDX-License-Identifier: MIT
 
 #ifndef __<ACCELERATOR_NAME>_CONF_INFO_HPP__
 #define __<ACCELERATOR_NAME>_CONF_INFO_HPP__

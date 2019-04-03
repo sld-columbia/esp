@@ -1,13 +1,11 @@
+-- Copyright (c) 2011-2019 Columbia University, System Level Design Group
+-- SPDX-License-Identifier: MIT
+
 -------------------------------------------------------------------------------
---
 -- Module:      noc_xy
 -- Description: Mesh of x columns by y rows RTL routers
 --
--- Author:      Paolo Mantovani
--- Affiliation: Columbia University
---
--- last update: 2015-12-07
---
+-- Author:      Paolo Mantovani @ Columbia University
 -------------------------------------------------------------------------------
 --
 -- Addressing is XY; X: from left to right, Y: from top to bottom

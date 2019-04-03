@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
 
+# Copyright (c) 2011-2019 Columbia University, System Level Design Group
+# SPDX-License-Identifier: MIT
+
 import sys
 import os
 import re
@@ -318,13 +321,14 @@ class memory():
             fd = open(out_path + "/" + self.name + ".v", 'w')
         except IOError as e:
             die_werr(e)
-        fd.write("/**\n")
-        fd.write("* Created with the ESP Memory Generator\n")
-        fd.write("*\n")
-        fd.write("* Copyright (c) 2014-2017, Columbia University\n")
-        fd.write("*\n")
-        fd.write("* @author Paolo Mantovani <paolo@cs.columbia.edu>\n")
-        fd.write("*/\n")
+        fd.write("//\n")
+        fd.write("// Created with the ESP Memory Generator\n")
+        fd.write("//\n")
+        fd.write("// Copyright (c) 2011-2019 Columbia University, System Level Design Group\n")
+        fd.write("// SPDX-License-Identifier: MIT\n")
+        fd.write("//\n")
+        fd.write("// @author Paolo Mantovani <paolo@cs.columbia.edu>\n")
+        fd.write("//\n")
         fd.write("\n")
         fd.write("`timescale  1 ps / 1 ps\n")
         fd.write("\n")
@@ -664,13 +668,14 @@ class memory():
             fd = open(tb_path + "/" + self.name + "_tb.v", 'w')
         except IOError as e:
             die_werr(e)
-        fd.write("/**\n")
-        fd.write("* Created with the ESP Memory Generator\n")
-        fd.write("*\n")
-        fd.write("* Copyright (c) 2014-2017, Columbia University\n")
-        fd.write("*\n")
-        fd.write("* @author Paolo Mantovani <paolo@cs.columbia.edu>\n")
-        fd.write("*/\n")
+        fd.write("//\n")
+        fd.write("// Created with the ESP Memory Generator\n")
+        fd.write("//\n")
+        fd.write("// Copyright (c) 2011-2019 Columbia University, System Level Design Group\n")
+        fd.write("// SPDX-License-Identifier: MIT\n")
+        fd.write("//\n")
+        fd.write("// @author Paolo Mantovani <paolo@cs.columbia.edu>\n")
+        fd.write("//\n")
         fd.write("\n")
         fd.write("`timescale  1 ps / 1 ps\n")
         fd.write("\n")
@@ -896,13 +901,14 @@ class memory():
         except IOError as e:
             die_werr(e)
         print("  INFO: Generating SystemC explicit memory definition for " + self.name)
-        fd.write("/**\n")
-        fd.write("* Created with the ESP Memory Generator\n")
-        fd.write("*\n")
-        fd.write("* Copyright (c) 2014-2017, Columbia University\n")
-        fd.write("*\n")
-        fd.write("* @author Paolo Mantovani <paolo@cs.columbia.edu>\n")
-        fd.write("*/\n")
+        fd.write("//\n")
+        fd.write("// Created with the ESP Memory Generator\n")
+        fd.write("//\n")
+        fd.write("// Copyright (c) 2011-2019 Columbia University, System Level Design Group\n")
+        fd.write("// SPDX-License-Identifier: MIT\n")
+        fd.write("//\n")
+        fd.write("// @author Paolo Mantovani <paolo@cs.columbia.edu>\n")
+        fd.write("//\n")
         fd.write("\n")
         fd.write("#ifndef __" + self.name.upper() + "_HPP__\n")
         fd.write("#define __" + self.name.upper() + "_HPP__\n")

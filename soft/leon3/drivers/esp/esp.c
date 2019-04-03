@@ -1,4 +1,9 @@
 /*
+ * Copyright (c) 2011-2019 Columbia University, System Level Design Group
+ * SPDX-License-Identifier: MIT
+ */
+
+/*
  * esp.c
  * Accelerator-independent Linux module to manage an ESP accelerator.
  * The module requires these flags when it is installed:

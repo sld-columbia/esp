@@ -1,7 +1,10 @@
+-- Copyright (c) 2011-2019 Columbia University, System Level Design Group
+-- SPDX-License-Identifier: MIT
+
 -------------------------------------------------------------------------------
 -- Entity:      svga2tfp410
 -- File:        svga2tfp410.vhd
--- Author:      Paolo Mantovani - Columbia University
+-- Author:      Paolo Mantovani @ Columbia University
 --
 -- Description: Converter inteneded to connect a SVGACTRL core to a TI TFP410
 --              DVI transmitter. Assumes 80MHz input clock and generates 40MHz

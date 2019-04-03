@@ -1,10 +1,5 @@
-------------------------------------------------------------------------------
---  Copyright (C) 2015-2017, System Level Design (SLD) @ Columbia University
------------------------------------------------------------------------------
--- <<header>>
--- Authors:     Paolo Mantovani
--- Description: NoC interface with DMA controller for accelerators
-------------------------------------------------------------------------------
+-- Copyright (c) 2011-2019 Columbia University, System Level Design Group
+-- SPDX-License-Identifier: MIT
 
 library ieee;
 use ieee.std_logic_1164.all;

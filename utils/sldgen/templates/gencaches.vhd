@@ -1,12 +1,5 @@
-------------------------------------------------------------------------------
---  Copyright (C) 2015-2017, System Level Design (SLD) @ Columbia University
------------------------------------------------------------------------------
--- Entity: 	gencaches
--- File:	gencaches.vhd
--- Author:	Paolo Mantovani
---              Christian Pilato
--- Description: SLD caches tech independent component declarations
-------------------------------------------------------------------------------
+-- Copyright (c) 2011-2019 Columbia University, System Level Design Group
+-- SPDX-License-Identifier: MIT
 
 library ieee;
 use ieee.std_logic_1164.all;

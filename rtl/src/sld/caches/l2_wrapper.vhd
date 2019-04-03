@@ -1,12 +1,5 @@
--------------------------------------------------------------------------------
--- Entity: l2_wrapper
--- File: l2_wrapper.vhd
--- Author: Davide Giri - SLD @ Columbia University
--- Description: RTL wrapper for a private L2 cache to be included on a CPU tile
--- on a Embedded Scalable Platform.
--- Frontend: Amba 2.0 AHB to L2 cache wrapper.
--- Backend: L2 cache to Network on Chip wrapper.
--------------------------------------------------------------------------------
+-- Copyright (c) 2011-2019 Columbia University, System Level Design Group
+-- SPDX-License-Identifier: MIT
 
 library ieee;
 use ieee.std_logic_1164.all;

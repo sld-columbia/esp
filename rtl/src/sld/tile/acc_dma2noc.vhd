@@ -1,11 +1,5 @@
-------------------------------------------------------------------------------
---  Copyright (C) 2015, System Level Design (SLD) group @ Columbia University
------------------------------------------------------------------------------
--- Entity:  acc_dma2noc
--- File:    acc_dma2noc.vhd
--- Authors: Paolo Mantovani - SLD @ Columbia University
--- Description: DMA controller for accelerators over NoC
-------------------------------------------------------------------------------
+-- Copyright (c) 2011-2019 Columbia University, System Level Design Group
+-- SPDX-License-Identifier: MIT
 
 library ieee;
 use ieee.std_logic_1164.all;

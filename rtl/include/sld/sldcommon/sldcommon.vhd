@@ -1,12 +1,5 @@
-------------------------------------------------------------------------------
---  Copyright (C) 2015, System Level Design (SLD) group @ Columbia University
------------------------------------------------------------------------------
--- Package:     sldcommon
--- File:        sldcommon.vhd
--- Authors:     Paolo Mantovani - SLD @ Columbia University
--- Description: defines SLD components and types for both BUS and NoC
---              architectures.
-------------------------------------------------------------------------------
+-- Copyright (c) 2011-2019 Columbia University, System Level Design Group
+-- SPDX-License-Identifier: MIT
 
 library ieee;
 use ieee.std_logic_1164.all;

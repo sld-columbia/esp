@@ -3,7 +3,6 @@
 --  Copyright (C) 2003 - 2008, Gaisler Research
 --  Copyright (C) 2008 - 2014, Aeroflex Gaisler
 --  Copyright (C) 2015 - 2016, Cobham Gaisler
---  Copyright (C) 2018 - 2019, Columbia University
 --
 --  This program is free software; you can redistribute it and/or modify
 --  it under the terms of the GNU General Public License as published by
@@ -19,13 +18,11 @@
 --  along with this program; if not, write to the Free Software
 --  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 -------------------------------------------------------------------------------
--- Entity:      ahb2mig
--- File:        ahb2mig.vhd
--- Author:      Fredrik Ringhage - Aeroflex Gaisler AB
---              Paolo Mantovani - Columbia University
+
+-------------------------------------------------------------------------------
+--  Porting for UltraScale+ FPGA device
 --
---  This is a AHB-2.0 interface for the Xilinx Virtex-UltraScale+ MIG.
---
+--  Copyright (C) 2018 - 2019, Columbia University
 -------------------------------------------------------------------------------
 
 library ieee;

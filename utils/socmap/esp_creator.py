@@ -1,13 +1,11 @@
 #!/usr/bin/env python3
 
+# Copyright (c) 2011-2019 Columbia University, System Level Design Group
+# SPDX-License-Identifier: MIT
+
 ###############################################################################
 #
 # Graphic User Interface for ESP SoC-map
-#
-# Copyright (c) 2014-2017, Columbia University
-#
-# @authors: Christian Pilato <pilato@cs.columbia.edu>
-#           Paolo Mantovani <paolo@cs.columbia.edu>
 #
 ###############################################################################
 

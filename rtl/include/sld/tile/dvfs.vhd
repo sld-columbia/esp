@@ -1,11 +1,5 @@
-------------------------------------------------------------------------------
---  Copyright (C) 2015, System Level Design (SLD) group @ Columbia University
------------------------------------------------------------------------------
--- Package: dvfs
--- File:    dvfs.vhd
--- Authors: Paolo Mantovani - SLD @ Columbia University
--- Description:	DVFS controller definitions
-------------------------------------------------------------------------------
+-- Copyright (c) 2011-2019 Columbia University, System Level Design Group
+-- SPDX-License-Identifier: MIT
 
 library ieee;
 use ieee.std_logic_1164.all;

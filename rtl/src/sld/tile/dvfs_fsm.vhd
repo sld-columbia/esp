@@ -1,12 +1,5 @@
-------------------------------------------------------------------------------
---  Copyright (C) 2015, System Level Design (SLD) group @ Columbia University
------------------------------------------------------------------------------
--- Entity:  dvfs_fsm
--- File:    dvfs_fsm.vhd
--- Authors: Paolo Mantovani - SLD @ Columbia University
--- Description:	DVFS controller. Generic FSM
--- Notes: tech dependent implementation for Virtex7 only (limited to frequency)
-------------------------------------------------------------------------------
+-- Copyright (c) 2011-2019 Columbia University, System Level Design Group
+-- SPDX-License-Identifier: MIT
 
 library ieee;
 use ieee.std_logic_1164.all;

@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Copyright (c) 2011-2019 Columbia University, System Level Design Group
+# SPDX-License-Identifier: MIT
+
 if [ "$ESP_ROOT" == "" ]; then
     echo "ESP_ROOT is not set; aborting!"
     echo ""

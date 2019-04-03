@@ -1,13 +1,5 @@
--------------------------------------------------------------------------------
--- Monitoring interface for proFPGA mmi64 debug interface
--- Copyright (C) 2014 - 2015, Columbia University
--------------------------------------------------------------------------------
--- author    : Paolo Mantovani
--- contact   : paolo @ cs . columbia . edu
--- filename  : monitor.vhd
--- enity     : monitor
--- purpose   : providing an interface between mmi64_regif and the user design
--------------------------------------------------------------------------------
+-- Copyright (c) 2011-2019 Columbia University, System Level Design Group
+-- SPDX-License-Identifier: MIT
 
 library ieee;
 use ieee.std_logic_1164.all;

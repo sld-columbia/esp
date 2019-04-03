@@ -29,6 +29,13 @@
 -- Description: Adapted interface to Xilinx VCU118
 --------------------------------------------------------------------------------
 
+-------------------------------------------------------------------------------
+-- Porting for Xilinx VCU118 Evaluation Board
+--
+-- Copyright (C) 2018 - 2019, Columbia University, System Level Design Group
+--
+-- Author: Paolo Mantovani @ Columbia University
+-------------------------------------------------------------------------------
 
 --------------------------------------------------------------------------------
 -- File       : sgmii_example_design.v

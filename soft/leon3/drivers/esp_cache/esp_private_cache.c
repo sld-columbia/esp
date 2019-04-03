@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2011-2019 Columbia University, System Level Design Group
+ * SPDX-License-Identifier: MIT
+ */
+
 #include <linux/platform_device.h>
 #include <linux/dma-mapping.h>
 #include <linux/interrupt.h>

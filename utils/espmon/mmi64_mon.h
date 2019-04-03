@@ -1,3 +1,6 @@
+// Copyright (c) 2011-2019 Columbia University, System Level Design Group
+// SPDX-License-Identifier: MIT
+
 #ifndef __MMI64_MON_H__
 #define __MMI64_MON_H__
 

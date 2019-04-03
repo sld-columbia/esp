@@ -1,36 +1,5 @@
-------------------------------------------------------------------------------
---  This file is part of an extension to the GRLIB VHDL IP library.
---  Copyright (C) 2013, System Level Design (SLD) group @ Columbia University
---
---  GRLIP is a Copyright (C) 2008 - 2013, Aeroflex Gaisler
---
---  This program is free software; you can redistribute it and/or modify
---  it under the terms of the GNU General Public License as published by
---  the Free Software Foundation; either version 2 of the License, or
---  (at your option) any later version.
---
---  This program is distributed in the hope that it will be useful,
---  but WITHOUT ANY WARRANTY; without even the implied warranty of
---  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
---  GNU General Public License for more details.
---
---  To receive a copy of the GNU General Public License, write to the Free
---  Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
---  02111-1307  USA.
------------------------------------------------------------------------------
--- Entity:  apb2noc
--- File:    apb2noc.vhd
--- Authors: Paolo Mantovani - SLD @ Columbia University
--- Description:	Amba 2.0 APB to Network Interface wrapper. This serves as a
---              proxy for the patient version of the apb controller.
---              This interface sends and receives messsages from noc5. We
---              guarantee the "consumption assumption" because each message is
---              two flits long and we can have at most NCPU outstanding
---              requests at any given time. Also, due to AMBA limitations, one
---              core must wait for the response, before it can make a new
---              requests and the driver won't allow multiple threads to
---              interact with the same accelerator.
-------------------------------------------------------------------------------
+-- Copyright (c) 2011-2019 Columbia University, System Level Design Group
+-- SPDX-License-Identifier: MIT
 
 library ieee;
 use ieee.std_logic_1164.all;

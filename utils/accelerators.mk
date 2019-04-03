@@ -1,3 +1,5 @@
+# Copyright (c) 2011-2019 Columbia University, System Level Design Group
+# SPDX-License-Identifier: MIT
 
 ACCELERATORS_PATH		= $(ESP_ROOT)/accelerators
 ACCELERATORS			= $(filter-out common, $(shell ls -d $(ACCELERATORS_PATH)/*/ | awk -F/ '{print $$(NF-1)}'))

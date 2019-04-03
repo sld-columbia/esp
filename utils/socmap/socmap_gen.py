@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
 
+# Copyright (c) 2011-2019 Columbia University, System Level Design Group
+# SPDX-License-Identifier: MIT
+
 from collections import defaultdict
 import math
 
@@ -280,16 +283,18 @@ class soc_config:
 
 
 def print_header(fp):
+  fp.write("-- Copyright (c) 2011-2019 Columbia University, System Level Design Group\n")
+  fp.write("-- SPDX-License-Identifier: MIT\n\n")
+
   fp.write("------------------------------------------------------------------------------\n")
   fp.write("--  This file is a configuration file for the ESP NoC-based architecture\n")
-  fp.write("--  Copyright (C) 2014-2019, System Level Design (SLD) group @ Columbia University\n")
   fp.write("-----------------------------------------------------------------------------\n")
   fp.write("-- Entity:      socmap\n")
   fp.write("-- File:        socmap.vhd\n")
   fp.write("-- Author:      Paolo Mantovani - SLD @ Columbia University\n")
   fp.write("-- Author:      Christian Pilato - SLD @ Columbia University\n")
   fp.write("-- Description: System address mapping and NoC tiles configuration\n")
-  fp.write("------------------------------------------------------------------------------\n")
+  fp.write("------------------------------------------------------------------------------\n\n")
 
 def print_libs(fp):
   fp.write("library ieee;\n")
@@ -355,7 +360,7 @@ def print_mapping(fp, esp_config):
   #
   fp.write("  ------ Local-port Synchronizers iff more than 1 clock region (implied by > 1 memory tiles)\n")
   if esp_config.has_dvfs or esp_config.nmem > 1:
-    fp.write("  constant CFG_HAS_SYNC : integer := 2;\n")
+    fp.write("  constant CFG_HAS_SYNC : integer := 1;\n")
   else:
     fp.write("  constant CFG_HAS_SYNC : integer := 0;\n")
   if esp_config.has_dvfs:

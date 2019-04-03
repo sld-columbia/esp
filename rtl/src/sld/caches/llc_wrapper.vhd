@@ -1,12 +1,5 @@
--------------------------------------------------------------------------------
--- Entity: llc_wrapper
--- File: llc_wrapper.vhd
--- Author: Davide Giri - SLD @ Columbia University
--- Description: RTL wrapper for a Last Level Cache (LLC) with directory
--- to be included on a memory tile on an Embedded Scalable Platform.
--- Frontend: Network on Chip to LLC cache wrapper.
--- Backend: LLC cache wrapper to Amba 2.0 AHB.
--------------------------------------------------------------------------------
+-- Copyright (c) 2011-2019 Columbia University, System Level Design Group
+-- SPDX-License-Identifier: MIT
 
 library ieee;
 use ieee.std_logic_1164.all;

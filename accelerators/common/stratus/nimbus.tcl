@@ -1,3 +1,6 @@
+# Copyright (c) 2011-2019 Columbia University, System Level Design Group
+# SPDX-License-Identifier: MIT
+
 set PROJECT_FILE "project.tcl"
 set TOOL_VERSION [get_version]
 set NIMBUS_OUT_FILE "nimbus.csv"

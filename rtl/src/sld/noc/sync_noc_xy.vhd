@@ -1,27 +1,5 @@
--------------------------------------------------------------------------------
---
--- Module:      sync_noc_xy
--- Description: Mesh of x columns by y rows RTL routers with synchronizers
---
--- Author:      Christian Pilato
--- Affiliation: Columbia University
---
--- last update: 2015-12-07
---
--------------------------------------------------------------------------------
---
--- Addressing is XY; X: from left to right, Y: from top to bottom
---
--- Local mapping for the latency insensitive protocol
--- 0 = North
--- 1 = South
--- 2 = West
--- 3 = East
--- 4 = Local tile
---
--- Check the module "router" in router.vhd for details on routing algorithm
---
--------------------------------------------------------------------------------
+-- Copyright (c) 2011-2019 Columbia University, System Level Design Group
+-- SPDX-License-Identifier: MIT
 
 library ieee;
 use ieee.std_logic_1164.all;
@@ -37,7 +15,7 @@ entity sync_noc_xy is
     XLEN      : integer;
     YLEN      : integer;
     TILES_NUM : integer;
-    HAS_SYNC  : integer := 1);
+    HAS_SYNC  : integer range 0 to 1 := 0);
   port (
     clk           : in  std_logic;
     clk_tile      : in  std_logic_vector(TILES_NUM-1 downto 0);
@@ -144,73 +122,7 @@ begin
     end generate;
   end generate no_synchronizers;
 
-  synchronizers: if HAS_SYNC = 1 generate
-  FWD_rx:
-    for i in 0 to TILES_NUM-1 generate
-    begin
-      FWD_rx1: sync_noc_receiver
-        port map (
-          clock         => clk,
-          reset         => rst,
-          req           => fwd_req(i),
-          data_in       => fwd_chnl_data(i),
-          stop_out      => sync_stop_out(i),     -- name convention confusion
-          chnl_stop     => fwd_chnl_stop(i),
-          ack           => fwd_ack(i),
-          data_out      => sync_input_port(i),
-          valid_out     => sync_data_void_in(i));
-    end generate FWD_rx;
-
-  FWD_tx:
-    for i in 0 to TILES_NUM-1 generate
-    begin
-      FWD_tx1: sync_transmitter
-        port map (
-          clock         => clk_tile(i),
-          reset         => rst,  -- change to rst2
-          valid_in      => data_void_in(i),
-          ack           => fwd_ack(i),
-          data_in       => input_port(i),
-          chnl_stop     => fwd_chnl_stop(i),
-          req           => fwd_req(i),
-          data_out      => fwd_chnl_data(i),
-          stop_in       => stop_out(i));     --name convention confusion
-    end generate FWD_tx;
-
-  REV_tx:
-    for i in 0 to TILES_NUM-1 generate
-    begin
-      REV_tx1: sync_noc_transmitter
-        port map (
-          clock         => clk,
-          reset         => rst,
-          valid_in      => sync_data_void_out(i),
-          ack           => rev_ack(i),
-          data_in       => sync_output_port(i),
-          chnl_stop     => rev_chnl_stop(i),
-          req           => rev_req(i),
-          data_out      => rev_chnl_data(i),
-          stop_in       => sync_stop_in(i));    -- name convention confusion
-    end generate REV_tx;
-
-  REV_rx:
-    for i in 0 to TILES_NUM-1 generate
-    begin
-      REV_rx1: sync_receiver
-        port map (
-          clock         => clk_tile(i),  
-          reset         => rst,  -- change to rst2
-          req           => rev_req(i),
-          data_in       => rev_chnl_data(i),
-          stop_out      => stop_in(i), -- naem convention confusion
-          chnl_stop     => rev_chnl_stop(i),
-          ack           => rev_ack(i),
-          data_out      => output_port(i),
-          valid_out     => data_void_out(i));
-    end generate REV_rx;
-  end generate synchronizers;
-
-  inferred_async_fifos_gen: if HAS_SYNC = 2 generate
+  inferred_async_fifos_gen: if HAS_SYNC /= 0 generate
     tile_to_NoC:
     for i in 0 to TILES_NUM-1 generate
     begin

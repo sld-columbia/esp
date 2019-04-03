@@ -1,3 +1,6 @@
+-- Copyright (c) 2011-2019 Columbia University, System Level Design Group
+-- SPDX-License-Identifier: MIT
+
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.std_logic_misc.all;
@@ -72,7 +75,7 @@ architecture rtl of esp is
       XLEN      : integer;
       YLEN      : integer;
       TILES_NUM : integer;
-      has_sync  : integer);
+      has_sync  : integer range 0 to 1);
     port (
       clk           : in  std_logic;
       clk_tile      : in  std_logic_vector(TILES_NUM-1 downto 0);

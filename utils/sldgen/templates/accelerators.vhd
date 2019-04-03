@@ -1,11 +1,5 @@
-------------------------------------------------------------------------------
---  Copyright (C) 2015-2017, System Level Design (SLD) @ Columbia University
------------------------------------------------------------------------------
--- Entities:    <accelerator>_rtl
--- File:        accelerators.vhd
--- Authors:     Paolo Mantovani
---              Christian Pilato
--- Description: SLD accelerators instance based on HLS configuration
-------------------------------------------------------------------------------
+-- Copyright (c) 2011-2019 Columbia University, System Level Design Group
+-- SPDX-License-Identifier: MIT
+
 
 -- <<accelerators-entities>>

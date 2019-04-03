@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2011-2019 Columbia University, System Level Design Group
+ * SPDX-License-Identifier: MIT
+ */
+
 #include <assert.h>
 #include <stdint.h>
 #include <stdlib.h>

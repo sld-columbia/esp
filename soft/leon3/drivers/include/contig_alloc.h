@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2011-2019 Columbia University, System Level Design Group
+ * SPDX-License-Identifier: MIT
+ */
+
 #ifndef CONTIG_ALLOC_H
 #define CONTIG_ALLOC_H
 

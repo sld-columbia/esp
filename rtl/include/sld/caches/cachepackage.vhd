@@ -1,10 +1,5 @@
-------------------------------------------------------------------------------
--- Design Name: cachepackage
--- File: cachepackage.vhd
--- Author: Davide Giri - SLD @ Columbia University
--- Description: Package containing two components. A L2 cache and a LLC (Last
--- Level Cache).
--------------------------------------------------------------------------------
+-- Copyright (c) 2011-2019 Columbia University, System Level Design Group
+-- SPDX-License-Identifier: MIT
 
 library ieee;
 use ieee.std_logic_1164.all;

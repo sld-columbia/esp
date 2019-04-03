@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2011-2019 Columbia University, System Level Design Group
+ * SPDX-License-Identifier: MIT
+ */
+
 #ifndef ESP_CACHE_H
 #define ESP_CACHE_H
 
