@@ -3,7 +3,7 @@
 	url = git@dev.sld.cs.columbia.edu:esp/syn-templates-stratus.git
 [submodule "soft/leon3/linux"]
 	path = soft/leon3/linux
-	url = git@dev.sld.cs.columbia.edu:esp/linux-esp.git
+	url = git@github.com:sld-columbia/linux.git
 	branch = leon3
 [submodule "chisel"]
 	path = chisel
