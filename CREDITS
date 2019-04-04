@@ -35,7 +35,7 @@ D: Multi-threaded user-application layer for accelerators
 D: Solutions and techniques for design-space exploration of accelerators
 
 N: Davide Giri
-E: giri @ cs.columbia.edu
+E: davide.giri @ columbia.edu
 D: Cache hierarchy
 D: Accelerator coherence models
 D: Accelerator integration
