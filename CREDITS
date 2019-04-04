@@ -1,0 +1,68 @@
+This is a well deserved, even if only partial, credits-file of people that have
+contributed to the ESP project. Contributors are sorted by last name and the
+fields are: name (N), email (E) and description (D) of their major
+contributions.
+
+Thank you, not only for the lines of code, but also for the endless
+conversations that led to designing, implementing and debugging ESP.
+I couldn't have done it alone.
+
+ -- Paolo
+
+
+N: Luca P. Carloni
+E: luca @ cs.columbia.edu
+D: Concepts of ESP and Platform Services for Heterogeneous SoCs
+D: Constant advising and supervising over all aspects of the project
+
+N: Emilio G. Cota
+E: cota @ cs.columbia.edu
+D: Modular Linux device drivers for ESP
+D: contig_alloc on Leon3
+D: Common test application for ESP accelerators
+D: Loosely-coupled accelerator communication model
+
+N: Schuyler Eldridge
+E: schuyler.eldridge @ ibm.com
+D: Accelerator model and integration from Chisel
+
+N: Giuseppe Di Guglielmo
+E: giuseppe @ cs.columbia.edu
+D: Accelerator model for HLS
+D: Accelerator integration
+D: Accelerator examples w/ HLS
+D: Multi-threaded user-application layer for accelerators
+D: Solutions and techniques for design-space exploration of accelerators
+
+N: Davide Giri
+E: giri @ cs.columbia.edu
+D: Cache hierarchy
+D: Accelerator coherence models
+D: Accelerator integration
+
+N: Paolo Mantovani
+E: paolo @ cs.columbia.edu
+D: ESP architecture and SoC design
+D: Platform services for communication, memory access and power management
+D: NoC proxies and adapters for bus protocols
+D: DMA engine and TLB for loosely-coupled accelerators
+D: Processors, accelerators and peripherals integration
+D: Floating-point unit for Leon3
+D: SoC memory map and routing tables generation for ESP configuration
+D: FPGA emulation and evaluation infrastructure
+
+N: Michele Petracca
+E: petracca @ cadence.com
+D: Network-on-Chip
+
+N: Luca Piccolboni
+E: piccolboni @ cs.columbia.edu
+D: Accelerator templates and interfaces for HLS
+D: Solutions and techniques for design-space exploration of accelerators
+
+N: Christian Pilato
+E: christian.pilato @ polimi.it
+D: Memory subsystem generation for accelerators
+D: Solutions and techniques for design-space exploration of accelerators
+D: Graphical user interface for the ESP instance configuration
+D: Accelerators power estimation
