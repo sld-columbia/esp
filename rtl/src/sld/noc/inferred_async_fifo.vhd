@@ -1,3 +1,6 @@
+-- Copyright (c) 2011 CERN
+-- SPDX-License-Identifier: LGPL-3.0-only
+
 -------------------------------------------------------------------------------
 -- Title      : Parametrizable asynchronous FIFO (Generic version)
 -- Project    : Generics RAMs and FIFOs collection
@@ -6,15 +9,13 @@
 -- Author     : Tomasz Wlostowski
 -- Company    : CERN BE-CO-HT
 -- Created    : 2011-01-25
--- Last update: 2015-01-24
+-- Last update: 2019-04-03
 -- Platform   :
 -- Standard   : VHDL'93
 -------------------------------------------------------------------------------
 -- Description: Dual-clock asynchronous FIFO.
 -- - configurable data width and size
 -- - configurable full/empty/almost full/almost empty/word count signals
--------------------------------------------------------------------------------
--- Copyright (c) 2011 CERN
 -------------------------------------------------------------------------------
 -- Revisions  :
 -- Date        Version  Author          Description

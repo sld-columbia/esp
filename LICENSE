@@ -1,21 +1,41 @@
-MIT License
+                        ################################
+                        # ESP and Third Party Licenses #
+                        ################################
 
-Copyright (c) 2011-2019 Columbia University, System Level Design Group
+ The ESP repository includes original source code, as well as 3rd party software
+ and software derived from 3rd party source code.
 
-Permission is hereby granted, free of charge, to any person obtaining a copy of
-this software and associated documentation files (the "Software"), to deal in
-the Software without restriction, including without limitation the rights to
-use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
-the Software, and to permit persons to whom the Software is furnished to do so,
-subject to the following conditions:
+  1. The ESP original source code is governed by the MIT License.
+     Original ESP source files are tagged with the SPDX-License Identifier MIT
+     and report the following copyright notice.
 
-The above copyright notice and this permission notice (including the next
-paragraph) shall be included in all copies or substantial portions of the
-Software.
+       - Copyright (c) 2011-2019 Columbia University, System Level Design Group
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
-FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
-COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
-IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
-CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+  2. All source files from GRLIB and derived source files that include portions
+     of code from GRLIB are governed by the GNU General Public License as
+     published by the Free Software Foundation; either version 2 of the License,
+     or any later version. GRLIB source files and derived source files preserve
+     the original license header and report at least one of the following
+     copyright notices, depending on the release date.
+
+       -  Copyright (C) 2003 - 2008, Gaisler Research
+       -  Copyright (C) 2008 - 2014, Aeroflex Gaisler
+       -  Copyright (C) 2015 - 2016, Cobham Gaisler
+
+
+  3. The parametrizable asynchronous FIFO implementation in VHDL from the
+     project 'Generic RAMs and FIFOs collection' at CERN is governed by the GNU
+     Lesser General Public License version 3.0. The source file is tagged with
+     the SPDX-License Identifier LGPL-3.0-only and includes the original header
+     from CERN and the following copyright notice.
+
+       - Copyright (c) 2011 CERN
+
+
+   4. All source files released in Git submodules are governed by their
+      respective license(s) in accordance with the credits and license files
+      released in each linked repository.
+
+
+ A copy of all relevant license files is available in the folder licenses.
