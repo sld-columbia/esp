@@ -1,6 +1,17 @@
 -- Copyright (c) 2011-2019 Columbia University, System Level Design Group
 -- SPDX-License-Identifier: MIT
 
+-------------------------------------------------------------------------------
+-- This proxy replaces AHB slaves that are hosted in remote tiles and forwards
+-- AHB requests from masters to the NoC. Responses from the NoC are returned to
+-- the bus master as if the remote device was connected to the local bus.
+--
+-- This is intended to serve requests from the Leon3 processor, the Ethernet
+-- DMA engine and the JTAG or Ethernet debug interfaces. Since these master can
+-- only issue requests for up to 32-bits words, ths proxy does not handle
+-- larger word sizes.
+-------------------------------------------------------------------------------
+
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
