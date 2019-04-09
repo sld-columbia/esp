@@ -28,9 +28,8 @@ use work.soctiles.all;
 entity esp is
   port (
     rst             : in    std_logic;
-    noc_clk         : in    std_logic;
+    sys_clk         : in    std_logic_vector(0 to CFG_NMEM_TILE - 1);
     refclk          : in    std_logic;
-    mem_clk         : in    std_logic;
     pllbypass       : in    std_logic_vector(CFG_TILES_NUM - 1 downto 0);
     --pragma translate_off
     mctrl_ahbsi : out ahb_slv_in_type;
@@ -105,8 +104,7 @@ signal noc_data_void_out : noc_ctrl_matrix;
 signal noc_stop_out      : noc_ctrl_matrix;
 
 signal rst_int       : std_logic;
-signal noc_clk_int   : std_logic;
-signal mem_clk_int   : std_logic;
+signal sys_clk_int   : std_logic_vector(0 to CFG_NMEM_TILE - 1);
 signal refclk_int    : std_logic_vector(CFG_TILES_NUM -1 downto 0);
 signal pllbypass_int : std_logic_vector(CFG_TILES_NUM - 1 downto 0);
 signal uart_rxd_int  : std_logic;       -- UART1_RX (u1i.rxd)
@@ -129,8 +127,9 @@ signal dbgo : l3_debug_out_vector(0 to CFG_NCPU_TILE-1);
 begin
 
   rst_int <= rst;
-  noc_clk_int <= noc_clk;
-  mem_clk_int <= mem_clk;
+  clk_int_gen: for i in 0 to CFG_NMEM_TILE - 1 generate
+    sys_clk_int(i) <= sys_clk(i);
+  end generate clk_int_gen;
   pllbypass_int <= pllbypass;
 
   -----------------------------------------------------------------------------
@@ -211,11 +210,11 @@ begin
       noc_data_void_in(6)(i) <= '1';
       noc_stop_in(6)(i) <= '0';
       mon_dvfs_out(i).vf <= (others => '0');
-      mon_dvfs_out(i).clk <= noc_clk_int;
+      mon_dvfs_out(i).clk <= sys_clk_int(0);
       mon_dvfs_out(i).acc_idle <= '0';
       mon_dvfs_out(i).traffic <= '0';
       mon_dvfs_out(i).burst <= '0';
-      clk_tile(i) <= noc_clk_int;
+      clk_tile(i) <= sys_clk_int(0);
     end generate empty_tile;
 
     cpu_tile: if tile_type(i) = 1 generate
@@ -332,7 +331,7 @@ begin
       tile_io_i : tile_io
         port map (
           rst                => rst_int,
-          clk                => noc_clk_int,
+          clk                => sys_clk_int(0),
           eth0_apbi          => eth0_apbi,
           eth0_apbo          => eth0_apbo,
           sgmii0_apbi        => sgmii0_apbi,
@@ -395,7 +394,7 @@ begin
           noc6_data_void_out => noc_data_void_out(6)(i),
           noc6_stop_out      => noc_stop_out(6)(i),
           mon_dvfs           => mon_dvfs_out(i));
-      clk_tile(i) <= noc_clk_int;
+      clk_tile(i) <= sys_clk_int(0);
     end generate io_tile;
 
     mem_tile: if tile_type(i) = 4 generate
@@ -404,7 +403,7 @@ begin
           tile_id => i)
         port map (
           rst                => rst_int,
-          clk                => noc_clk_int,
+          clk                => sys_clk_int(tile_mem_id(i)),
           ddr_ahbsi          => ddr_ahbsi(tile_mem_id(i)),
           ddr_ahbso          => ddr_ahbso(tile_mem_id(i)),
           -- TODO: replace with direct reset for LLC instead!
@@ -448,7 +447,7 @@ begin
           mon_mem            => mon_mem(tile_mem_id(i)),
           mon_cache          => mon_llc_int(i),
           mon_dvfs           => mon_dvfs_out(i));
-      clk_tile(i) <= noc_clk_int;
+      clk_tile(i) <= sys_clk_int(tile_mem_id(i));
 
     end generate mem_tile;
 
@@ -467,7 +466,7 @@ begin
       TILES_NUM => CFG_TILES_NUM,
       has_sync  => CFG_HAS_SYNC)
     port map (
-      clk             => noc_clk_int,
+      clk             => sys_clk_int(0),
       clk_tile        => clk_tile,
       rst             => rst_int,
       input_port      => noc_input_port(1),
@@ -491,7 +490,7 @@ begin
       TILES_NUM => CFG_TILES_NUM,
       has_sync  => CFG_HAS_SYNC)
     port map (
-      clk             => noc_clk_int,
+      clk             => sys_clk_int(0),
       clk_tile        => clk_tile,
       rst             => rst_int,
       input_port      => noc_input_port(2),
@@ -511,7 +510,7 @@ begin
       TILES_NUM => CFG_TILES_NUM,
       has_sync  => CFG_HAS_SYNC)
     port map (
-      clk             => noc_clk_int,
+      clk             => sys_clk_int(0),
       clk_tile        => clk_tile,
       rst             => rst_int,
       input_port      => noc_input_port(3),
@@ -531,7 +530,7 @@ begin
       TILES_NUM => CFG_TILES_NUM,
       has_sync  => CFG_HAS_SYNC)
     port map (
-      clk             => noc_clk_int,
+      clk             => sys_clk_int(0),
       clk_tile        => clk_tile,
       rst             => rst_int,
       input_port      => noc_input_port(4),
@@ -551,7 +550,7 @@ begin
       TILES_NUM => CFG_TILES_NUM,
       has_sync  => CFG_HAS_SYNC)
     port map (
-      clk             => noc_clk_int,
+      clk             => sys_clk_int(0),
       clk_tile        => clk_tile,
       rst             => rst_int,
       input_port      => noc_input_port(5),
@@ -571,7 +570,7 @@ begin
       TILES_NUM => CFG_TILES_NUM,
       has_sync  => CFG_HAS_SYNC)
     port map (
-      clk             => noc_clk_int,
+      clk             => sys_clk_int(0),
       clk_tile        => clk_tile,
       rst             => rst_int,
       input_port      => noc_input_port(6),

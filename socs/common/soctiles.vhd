@@ -24,9 +24,8 @@ package soctiles is
   component esp is
     port (
       rst                : in  std_logic;
-      noc_clk            : in  std_logic;
+      sys_clk            : in    std_logic_vector(0 to CFG_NMEM_TILE - 1);
       refclk             : in  std_logic;
-      mem_clk            : in  std_logic;
       pllbypass          : in  std_logic_vector(CFG_TILES_NUM - 1 downto 0);
       --pragma translate_off
       mctrl_ahbsi        : out ahb_slv_in_type;

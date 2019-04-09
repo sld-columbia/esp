@@ -420,7 +420,7 @@ signal dsuerr      : std_ulogic;
 
 -- NOC
 signal chip_rst : std_ulogic;
-signal noc_clk : std_ulogic;
+signal sys_clk : std_logic_vector(0 to 1);
 signal chip_refclk : std_ulogic;
 signal chip_pllbypass : std_logic_vector(CFG_TILES_NUM-1 downto 0);
 signal chip_pllclk : std_ulogic;
@@ -1049,16 +1049,16 @@ begin
   -- CHIP
   -----------------------------------------------------------------------------
   chip_rst <= rstn;
-  noc_clk <= clkm;
+  sys_clk(0) <= clkm;
+  sys_clk(1) <= clkm_2;
   chip_refclk <= clkm;
   chip_pllbypass <= (others => '0');
 
   esp_1: esp
     port map (
       rst           => chip_rst,
-      noc_clk       => noc_clk,
+      sys_clk       => sys_clk(0 to CFG_NMEM_TILE - 1),
       refclk        => chip_refclk,
-      mem_clk       => clkm_2,
       pllbypass     => chip_pllbypass,
       --pragma translate_off
       mctrl_ahbsi   => mctrl_ahbsi,
