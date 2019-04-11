@@ -1223,20 +1223,13 @@ architecture rtl of iu3 is
   signal m_addr : word;
   
   attribute mark_debug : string;
-  attribute keep       : string;
 
   attribute mark_debug of program_counter : signal is "true";
-  attribute keep of program_counter : signal is "true";
   attribute mark_debug of pv : signal is "true";
-  attribute keep of pv : signal is "true";
   attribute mark_debug of psr : signal is "true";
-  attribute keep of psr : signal is "true";
   -- attribute mark_debug of inst0 : signal is "true";
-  -- attribute keep of inst0 : signal is "true";
   -- attribute mark_debug of inst1 : signal is "true";
-  -- attribute keep of inst1 : signal is "true";
   attribute mark_debug of m_addr : signal is "true";
-  attribute keep of m_addr : signal is "true";
 
 -- execute stage operations
 
