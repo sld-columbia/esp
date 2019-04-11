@@ -465,15 +465,15 @@ begin  -- rtl
     case to_noc5_fifos_current is
       when none  => if remote_ahbs_snd_empty = '0' then
                       noc5_in_data <= remote_ahbs_snd_data_out;
-                      noc5_in_void <= remote_ahbs_snd_empty;
                       if noc5_in_stop = '0' then
+                        noc5_in_void <= remote_ahbs_snd_empty;
                         remote_ahbs_snd_rdreq <= '1';
                         to_noc5_fifos_next <= packet_remote_ahbs_snd;
                       end if;
                     elsif apb_snd_empty = '0' then
                       noc5_in_data <= apb_snd_data_out;
-                      noc5_in_void <= apb_snd_empty;
                       if noc5_in_stop = '0' then
+                        noc5_in_void <= apb_snd_empty;
                         apb_snd_rdreq <= '1';
                         to_noc5_fifos_next <= packet_apb_snd;
                       end if;
