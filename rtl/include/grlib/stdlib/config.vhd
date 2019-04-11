@@ -26,6 +26,7 @@
 
 library ieee;
 use ieee.std_logic_1164.all;
+use work.esp_global.all;
 use work.config_types.all;
 
 package config is
@@ -37,7 +38,7 @@ package config is
 -- The value here sets the width of the AMBA AHB data vectors for all
 -- cores in the library.
 --
-constant CFG_AHBDW     : integer := 32;
+constant CFG_AHBDW     : integer := ARCH_BITS;
 
 
 -- CFG_AHB_ACDM - Enable AMBA Compliant Data Muxing in cores

@@ -699,7 +699,7 @@ begin  -- architecture rtl of l2_acc_wrapper
 
             reg.addr := reg.addr + BYTES_PER_WORD;
 
-            if get_preamble(dma_snd_data) = PREAMBLE_TAIL then
+            if get_preamble(NOC_FLIT_SIZE, dma_snd_data) = PREAMBLE_TAIL then
 
               reg.state := idle;
 
@@ -955,7 +955,7 @@ begin  -- architecture rtl of l2_acc_wrapper
     coherence_fwd_rdreq <= '0';
 
     -- get preambles
-    rsp_preamble := get_preamble(coherence_fwd_data_out);
+    rsp_preamble := get_preamble(NOC_FLIT_SIZE, coherence_fwd_data_out);
 
     -- fsm states
     case reg.state is
@@ -967,9 +967,9 @@ begin  -- architecture rtl of l2_acc_wrapper
 
           coherence_fwd_rdreq <= '1';
 
-          msg_type    := get_msg_type(coherence_fwd_data_out);
+          msg_type    := get_msg_type(NOC_FLIT_SIZE, coherence_fwd_data_out);
           reg.coh_msg := msg_type(reg.coh_msg'length - 1 downto 0);
-          reserved    := get_reserved_field(coherence_fwd_data_out);
+          reserved    := get_reserved_field(NOC_FLIT_SIZE, coherence_fwd_data_out);
           reg.req_id  := reserved(reg.req_id'length - 1 downto 0);
 
           reg.state := rcv_addr;
@@ -1025,7 +1025,7 @@ begin  -- architecture rtl of l2_acc_wrapper
     coherence_rsp_rcv_rdreq <= '0';
 
     -- get preambles
-    rsp_preamble := get_preamble(coherence_rsp_rcv_data_out);
+    rsp_preamble := get_preamble(NOC_FLIT_SIZE, coherence_rsp_rcv_data_out);
 
     -- fsm states
     case reg.state is
@@ -1037,9 +1037,9 @@ begin  -- architecture rtl of l2_acc_wrapper
 
           coherence_rsp_rcv_rdreq <= '1';
 
-          msg_type       := get_msg_type(coherence_rsp_rcv_data_out);
+          msg_type       := get_msg_type(NOC_FLIT_SIZE, coherence_rsp_rcv_data_out);
           reg.coh_msg    := msg_type(reg.coh_msg'length - 1 downto 0);
-          reserved       := get_reserved_field(coherence_rsp_rcv_data_out);
+          reserved       := get_reserved_field(NOC_FLIT_SIZE, coherence_rsp_rcv_data_out);
           reg.invack_cnt := reserved(reg.invack_cnt'length - 1 downto 0);
 
           reg.state := rcv_addr;

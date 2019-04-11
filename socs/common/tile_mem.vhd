@@ -7,6 +7,7 @@
 
 library ieee;
 use ieee.std_logic_1164.all;
+use work.esp_global.all;
 use work.amba.all;
 use work.stdlib.all;
 use work.sld_devices.all;
@@ -64,10 +65,10 @@ entity tile_mem is
     noc4_output_port   : in  noc_flit_type;
     noc4_data_void_out : in  std_ulogic;
     noc4_stop_out      : in  std_ulogic;
-    noc5_input_port    : out noc_flit_type;
+    noc5_input_port    : out misc_noc_flit_type;
     noc5_data_void_in  : out std_ulogic;
     noc5_stop_in       : out std_ulogic;
-    noc5_output_port   : in  noc_flit_type;
+    noc5_output_port   : in  misc_noc_flit_type;
     noc5_data_void_out : in  std_ulogic;
     noc5_stop_out      : in  std_ulogic;
     noc6_input_port    : out noc_flit_type;
@@ -114,17 +115,29 @@ architecture rtl of tile_mem is
   signal coherent_dma_snd_wrreq     : std_ulogic;
   signal coherent_dma_snd_data_in   : noc_flit_type;
   signal coherent_dma_snd_full      : std_ulogic;
+  -- These requests are delivered through NoC5 (32 bits always)
+  -- however, the proxy that handles expects a flit size in
+  -- accordance with ARCH_BITS. Hence we need to pad and move
+  -- header info and preamble to the right bit position
+  signal remote_ahbs_rcv_rdreq      : std_ulogic;
+  signal remote_ahbs_rcv_data_out   : misc_noc_flit_type;
+  signal remote_ahbs_rcv_empty      : std_ulogic;
+  signal remote_ahbs_snd_wrreq      : std_ulogic;
+  signal remote_ahbs_snd_data_in    : misc_noc_flit_type;
+  signal remote_ahbs_snd_full       : std_ulogic;
+  -- Extended remote_ahbs_* signals that
   signal remote_ahbm_rcv_rdreq      : std_ulogic;
-  signal remote_ahbm_rcv_data_out   : noc_flit_type;
+  signal remote_ahbm_rcv_data_out   : misc_noc_flit_type;
   signal remote_ahbm_rcv_empty      : std_ulogic;
   signal remote_ahbm_snd_wrreq      : std_ulogic;
-  signal remote_ahbm_snd_data_in    : noc_flit_type;
+  signal remote_ahbm_snd_data_in    : misc_noc_flit_type;
   signal remote_ahbm_snd_full       : std_ulogic;
+  --
   signal apb_rcv_rdreq              : std_ulogic;
-  signal apb_rcv_data_out           : noc_flit_type;
+  signal apb_rcv_data_out           : misc_noc_flit_type;
   signal apb_rcv_empty              : std_ulogic;
   signal apb_snd_wrreq              : std_ulogic;
-  signal apb_snd_data_in            : noc_flit_type;
+  signal apb_snd_data_in            : misc_noc_flit_type;
   signal apb_snd_full               : std_ulogic;
 
   -- Bus
@@ -448,6 +461,32 @@ begin
       dma_snd_atleast_4slots    => '1',
       dma_snd_exactly_3slots    => '0');
 
+  remote_ahbs_rcv_rdreq <= remote_ahbm_rcv_rdreq;
+  remote_ahbm_rcv_empty <= remote_ahbs_rcv_empty;
+  remote_ahbs_snd_wrreq <= remote_ahbm_snd_wrreq;
+  remote_ahbm_snd_full  <= remote_ahbs_snd_full;
+
+  large_bus: if ARCH_BITS /= 32 generate
+    -- Preamble
+    remote_ahbm_rcv_data_out(NOC_FLIT_SIZE - 1 downto NOC_FLIT_SIZE - PREAMBLE_WIDTH) <=
+      get_preamble(MISC_NOC_FLIT_SIZE, remote_ahbs_rcv_data_out);
+    remote_ahbs_snd_data_in(MISC_NOC_FLIT_SIZE - 1 downto MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH) <=
+      get_preamble(NOC_FLIT_SIZE, remote_ahbm_snd_data_in);
+    -- Unused bits
+    remote_ahbm_rcv_data_out(NOC_FLIT_SIZE - PREAMBLE_WIDTH downto MISC_NOC_FLIT_SIZE) <=
+      (others => '0');
+    -- Data
+    remote_ahbm_rcv_data_out(MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH - 1 downto 0) <=
+      remote_ahbs_rcv_data_out(MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH - 1 downto 0);
+    remote_ahbs_snd_data_in(MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH - 1 downto 0) <=
+      remote_ahbm_snd_data_in(MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH - 1 downto 0);
+  end generate large_bus;
+
+  std_bus: if ARCH_BITS = 32 generate
+    remote_ahbm_rcv_data_out <= remote_ahbs_rcv_data_out;
+    remote_ahbs_snd_data_in  <= remote_ahbm_snd_data_in;
+  end generate std_bus;
+
   -----------------------------------------------------------------------------
   -- Tile queues
   -----------------------------------------------------------------------------
@@ -485,12 +524,12 @@ begin
       coherent_dma_rcv_rdreq     => coherent_dma_rcv_rdreq,
       coherent_dma_rcv_data_out  => coherent_dma_rcv_data_out,
       coherent_dma_rcv_empty     => coherent_dma_rcv_empty,
-      remote_ahbs_rcv_rdreq      => remote_ahbm_rcv_rdreq,
-      remote_ahbs_rcv_data_out   => remote_ahbm_rcv_data_out,
-      remote_ahbs_rcv_empty      => remote_ahbm_rcv_empty,
-      remote_ahbs_snd_wrreq      => remote_ahbm_snd_wrreq,
-      remote_ahbs_snd_data_in    => remote_ahbm_snd_data_in,
-      remote_ahbs_snd_full       => remote_ahbm_snd_full,
+      remote_ahbs_rcv_rdreq      => remote_ahbs_rcv_rdreq,
+      remote_ahbs_rcv_data_out   => remote_ahbs_rcv_data_out,
+      remote_ahbs_rcv_empty      => remote_ahbs_rcv_empty,
+      remote_ahbs_snd_wrreq      => remote_ahbs_snd_wrreq,
+      remote_ahbs_snd_data_in    => remote_ahbs_snd_data_in,
+      remote_ahbs_snd_full       => remote_ahbs_snd_full,
       apb_rcv_rdreq              => apb_rcv_rdreq,
       apb_rcv_data_out           => apb_rcv_data_out,
       apb_rcv_empty              => apb_rcv_empty,

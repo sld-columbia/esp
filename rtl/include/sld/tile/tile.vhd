@@ -40,28 +40,28 @@ package tile is
       coherence_rsp_snd_data_in    : in  noc_flit_type;
       coherence_rsp_snd_full       : out std_ulogic;
       remote_ahbs_snd_wrreq      : in std_ulogic;
-      remote_ahbs_snd_data_in    : in noc_flit_type;
+      remote_ahbs_snd_data_in    : in misc_noc_flit_type;
       remote_ahbs_snd_full       : out std_ulogic;
       remote_ahbs_rcv_rdreq      : in std_ulogic;
-      remote_ahbs_rcv_data_out   : out noc_flit_type;
+      remote_ahbs_rcv_data_out   : out misc_noc_flit_type;
       remote_ahbs_rcv_empty      : out std_ulogic;
       apb_rcv_rdreq            : in  std_ulogic;
-      apb_rcv_data_out         : out noc_flit_type;
+      apb_rcv_data_out         : out misc_noc_flit_type;
       apb_rcv_empty            : out std_ulogic;
       apb_snd_wrreq            : in  std_ulogic;
-      apb_snd_data_in          : in  noc_flit_type;
+      apb_snd_data_in          : in  misc_noc_flit_type;
       apb_snd_full             : out std_ulogic;
       remote_apb_rcv_rdreq     : in  std_ulogic;
-      remote_apb_rcv_data_out  : out noc_flit_type;
+      remote_apb_rcv_data_out  : out misc_noc_flit_type;
       remote_apb_rcv_empty     : out std_ulogic;
       remote_apb_snd_wrreq     : in  std_ulogic;
-      remote_apb_snd_data_in   : in  noc_flit_type;
+      remote_apb_snd_data_in   : in  misc_noc_flit_type;
       remote_apb_snd_full      : out std_ulogic;
       remote_irq_rdreq         : in  std_ulogic;
-      remote_irq_data_out      : out noc_flit_type;
+      remote_irq_data_out      : out misc_noc_flit_type;
       remote_irq_empty         : out std_ulogic;
       remote_irq_ack_wrreq     : in  std_ulogic;
-      remote_irq_ack_data_in   : in  noc_flit_type;
+      remote_irq_ack_data_in   : in  misc_noc_flit_type;
       remote_irq_ack_full      : out std_ulogic;
       noc1_out_data            : in  noc_flit_type;
       noc1_out_void            : in  std_ulogic;
@@ -87,10 +87,10 @@ package tile is
       noc4_in_data             : out noc_flit_type;
       noc4_in_void             : out std_ulogic;
       noc4_in_stop             : in  std_ulogic;
-      noc5_out_data            : in  noc_flit_type;
+      noc5_out_data            : in  misc_noc_flit_type;
       noc5_out_void            : in  std_ulogic;
       noc5_out_stop            : out std_ulogic;
-      noc5_in_data             : out noc_flit_type;
+      noc5_in_data             : out misc_noc_flit_type;
       noc5_in_void             : out std_ulogic;
       noc5_in_stop             : in  std_ulogic;
       noc6_out_data            : in  noc_flit_type;
@@ -109,16 +109,16 @@ package tile is
       rst                             : in  std_ulogic;
       clk                             : in  std_ulogic;
       ahbs_rcv_rdreq                  : in  std_ulogic;
-      ahbs_rcv_data_out               : out noc_flit_type;
+      ahbs_rcv_data_out               : out misc_noc_flit_type;
       ahbs_rcv_empty                  : out std_ulogic;
       ahbs_snd_wrreq                  : in  std_ulogic;
-      ahbs_snd_data_in                : in  noc_flit_type;
+      ahbs_snd_data_in                : in  misc_noc_flit_type;
       ahbs_snd_full                   : out std_ulogic;
       remote_ahbs_rcv_rdreq           : in  std_ulogic;
-      remote_ahbs_rcv_data_out        : out noc_flit_type;
+      remote_ahbs_rcv_data_out        : out misc_noc_flit_type;
       remote_ahbs_rcv_empty           : out std_ulogic;
       remote_ahbs_snd_wrreq           : in  std_ulogic;
-      remote_ahbs_snd_data_in         : in  noc_flit_type;
+      remote_ahbs_snd_data_in         : in  misc_noc_flit_type;
       remote_ahbs_snd_full            : out std_ulogic;
       dma_rcv_rdreq                   : in  std_ulogic;
       dma_rcv_data_out                : out noc_flit_type;
@@ -135,16 +135,16 @@ package tile is
       coherent_dma_snd_data_in        : in  noc_flit_type;
       coherent_dma_snd_full           : out std_ulogic;
       apb_rcv_rdreq                   : in  std_ulogic;
-      apb_rcv_data_out                : out noc_flit_type;
+      apb_rcv_data_out                : out misc_noc_flit_type;
       apb_rcv_empty                   : out std_ulogic;
       apb_snd_wrreq                   : in  std_ulogic;
-      apb_snd_data_in                 : in  noc_flit_type;
+      apb_snd_data_in                 : in  misc_noc_flit_type;
       apb_snd_full                    : out std_ulogic;
       remote_apb_rcv_rdreq            : in  std_ulogic;
-      remote_apb_rcv_data_out         : out noc_flit_type;
+      remote_apb_rcv_data_out         : out misc_noc_flit_type;
       remote_apb_rcv_empty            : out std_ulogic;
       remote_apb_snd_wrreq            : in  std_ulogic;
-      remote_apb_snd_data_in          : in  noc_flit_type;
+      remote_apb_snd_data_in          : in  misc_noc_flit_type;
       remote_apb_snd_full             : out std_ulogic;
       local_apb_rcv_rdreq             : in std_ulogic;
       local_apb_rcv_data_out          : out noc_flit_type;
@@ -153,13 +153,13 @@ package tile is
       local_remote_apb_snd_data_in    : in  noc_flit_type;
       local_remote_apb_snd_full       : out std_ulogic;
       irq_ack_rdreq                   : in  std_ulogic;
-      irq_ack_data_out                : out noc_flit_type;
+      irq_ack_data_out                : out misc_noc_flit_type;
       irq_ack_empty                   : out std_ulogic;
       irq_wrreq                       : in  std_ulogic;
-      irq_data_in                     : in  noc_flit_type;
+      irq_data_in                     : in  misc_noc_flit_type;
       irq_full                        : out std_ulogic;
       interrupt_rdreq                 : in  std_ulogic;
-      interrupt_data_out              : out noc_flit_type;
+      interrupt_data_out              : out misc_noc_flit_type;
       interrupt_empty                 : out std_ulogic;
       noc1_out_data                   : in  noc_flit_type;
       noc1_out_void                   : in  std_ulogic;
@@ -185,10 +185,10 @@ package tile is
       noc4_in_data                    : out noc_flit_type;
       noc4_in_void                    : out std_ulogic;
       noc4_in_stop                    : in  std_ulogic;
-      noc5_out_data                   : in  noc_flit_type;
+      noc5_out_data                   : in  misc_noc_flit_type;
       noc5_out_void                   : in  std_ulogic;
       noc5_out_stop                   : out std_ulogic;
-      noc5_in_data                    : out noc_flit_type;
+      noc5_in_data                    : out misc_noc_flit_type;
       noc5_in_void                    : out std_ulogic;
       noc5_in_stop                    : in  std_ulogic;
       noc6_out_data                   : in  noc_flit_type;
@@ -232,16 +232,16 @@ package tile is
       dma_snd_atleast_4slots   : out std_ulogic;
       dma_snd_exactly_3slots   : out std_ulogic;
       remote_ahbs_rcv_rdreq    : in  std_ulogic;
-      remote_ahbs_rcv_data_out : out noc_flit_type;
+      remote_ahbs_rcv_data_out : out misc_noc_flit_type;
       remote_ahbs_rcv_empty    : out std_ulogic;
       remote_ahbs_snd_wrreq    : in  std_ulogic;
-      remote_ahbs_snd_data_in  : in  noc_flit_type;
+      remote_ahbs_snd_data_in  : in  misc_noc_flit_type;
       remote_ahbs_snd_full     : out std_ulogic;
       apb_rcv_rdreq            : in  std_ulogic;
-      apb_rcv_data_out         : out noc_flit_type;
+      apb_rcv_data_out         : out misc_noc_flit_type;
       apb_rcv_empty            : out std_ulogic;
       apb_snd_wrreq            : in  std_ulogic;
-      apb_snd_data_in          : in  noc_flit_type;
+      apb_snd_data_in          : in  misc_noc_flit_type;
       apb_snd_full             : out std_ulogic;
       noc1_out_data            : in  noc_flit_type;
       noc1_out_void            : in  std_ulogic;
@@ -267,10 +267,10 @@ package tile is
       noc4_in_data             : out noc_flit_type;
       noc4_in_void             : out std_ulogic;
       noc4_in_stop             : in  std_ulogic;
-      noc5_out_data            : in  noc_flit_type;
+      noc5_out_data            : in  misc_noc_flit_type;
       noc5_out_void            : in  std_ulogic;
       noc5_out_stop            : out std_ulogic;
-      noc5_in_data             : out noc_flit_type;
+      noc5_in_data             : out misc_noc_flit_type;
       noc5_in_void             : out std_ulogic;
       noc5_in_stop             : in  std_ulogic;
       noc6_out_data            : in  noc_flit_type;
@@ -312,13 +312,13 @@ package tile is
       coherent_dma_rcv_data_out  : out noc_flit_type;
       coherent_dma_rcv_empty     : out std_ulogic;
       apb_rcv_rdreq     : in  std_ulogic;
-      apb_rcv_data_out  : out noc_flit_type;
+      apb_rcv_data_out  : out misc_noc_flit_type;
       apb_rcv_empty     : out std_ulogic;
       apb_snd_wrreq     : in  std_ulogic;
-      apb_snd_data_in   : in  noc_flit_type;
+      apb_snd_data_in   : in  misc_noc_flit_type;
       apb_snd_full      : out std_ulogic;
       interrupt_wrreq   : in  std_ulogic;
-      interrupt_data_in : in  noc_flit_type;
+      interrupt_data_in : in  misc_noc_flit_type;
       interrupt_full    : out std_ulogic;
       noc1_out_data     : in  noc_flit_type;
       noc1_out_void     : in  std_ulogic;
@@ -344,10 +344,10 @@ package tile is
       noc4_in_data      : out noc_flit_type;
       noc4_in_void      : out std_ulogic;
       noc4_in_stop      : in  std_ulogic;
-      noc5_out_data     : in  noc_flit_type;
+      noc5_out_data     : in  misc_noc_flit_type;
       noc5_out_void     : in  std_ulogic;
       noc5_out_stop     : out std_ulogic;
-      noc5_in_data      : out noc_flit_type;
+      noc5_in_data      : out misc_noc_flit_type;
       noc5_in_void      : out std_ulogic;
       noc5_in_stop      : in  std_ulogic;
       noc6_out_data     : in  noc_flit_type;
@@ -356,48 +356,6 @@ package tile is
       noc6_in_data      : out noc_flit_type;
       noc6_in_void      : out std_ulogic;
       noc6_in_stop      : in  std_ulogic);
-  end component;
-
-  component fpga_q
-    generic (
-      tech : integer);
-    port (
-      rst                      : in  std_ulogic;
-      clk                      : in  std_ulogic;
-      remote_ahbs_rcv_rdreq    : in  std_ulogic;
-      remote_ahbs_rcv_data_out : out noc_flit_type;
-      remote_ahbs_rcv_empty    : out std_ulogic;
-      remote_ahbs_snd_wrreq    : in  std_ulogic;
-      remote_ahbs_snd_data_in  : in  noc_flit_type;
-      remote_ahbs_snd_full     : out std_ulogic;
-      remote_apb_rcv_rdreq     : in  std_ulogic;
-      remote_apb_rcv_data_out  : out noc_flit_type;
-      remote_apb_rcv_empty     : out std_ulogic;
-      remote_apb_snd_wrreq     : in  std_ulogic;
-      remote_apb_snd_data_in   : in  noc_flit_type;
-      remote_apb_snd_full      : out std_ulogic;
-      coherence_req_rdreq      : in  std_ulogic;
-      coherence_req_data_out   : out noc_flit_type;
-      coherence_req_empty      : out std_ulogic;
-      coherence_rsp_snd_wrreq      : in  std_ulogic;
-      coherence_rsp_snd_data_in    : in  noc_flit_type;
-      coherence_rsp_snd_full       : out std_ulogic;
-      dma_rcv_rdreq            : in  std_ulogic;
-      dma_rcv_data_out         : out noc_flit_type;
-      dma_rcv_empty            : out std_ulogic;
-      dma_snd_wrreq            : in  std_ulogic;
-      dma_snd_data_in          : in  noc_flit_type;
-      dma_snd_full             : out std_ulogic;
-      dma_snd_atleast_4slots   : out std_ulogic;
-      dma_snd_exactly_3slots   : out std_ulogic;
-      noc_id_out               : in  std_logic_vector(1 downto 0);
-      noc_id_in                : out std_logic_vector(1 downto 0);
-      bus_out_data             : in  noc_flit_type;
-      bus_out_void             : in  std_ulogic;
-      bus_out_stop             : out std_ulogic;
-      bus_in_data              : out noc_flit_type;
-      bus_in_void              : out std_ulogic;
-      bus_in_stop              : in  std_ulogic);
   end component;
 
   component apb2noc
@@ -418,10 +376,10 @@ package tile is
       apb_req                 : in  std_ulogic;
       apb_ack                 : out std_ulogic;
       remote_apb_snd_wrreq    : out std_ulogic;
-      remote_apb_snd_data_in  : out noc_flit_type;
+      remote_apb_snd_data_in  : out misc_noc_flit_type;
       remote_apb_snd_full     : in  std_ulogic;
       remote_apb_rcv_rdreq    : out std_ulogic;
-      remote_apb_rcv_data_out : in  noc_flit_type;
+      remote_apb_rcv_data_out : in  misc_noc_flit_type;
       remote_apb_rcv_empty    : in  std_ulogic);
   end component;
 
@@ -440,10 +398,10 @@ package tile is
       irqo                   : in  l3_irq_out_type;
       irqo_fifo_overflow     : out std_ulogic;
       remote_irq_rdreq       : out std_ulogic;
-      remote_irq_data_out    : in  noc_flit_type;
+      remote_irq_data_out    : in  misc_noc_flit_type;
       remote_irq_empty       : in  std_ulogic;
       remote_irq_ack_wrreq   : out std_ulogic;
-      remote_irq_ack_data_in : out noc_flit_type;
+      remote_irq_ack_data_in : out misc_noc_flit_type;
       remote_irq_ack_full    : in  std_ulogic);
   end component cpu_irq2noc;
 
@@ -474,10 +432,10 @@ package tile is
       coherence_rsp_rcv_data_out : in  noc_flit_type;
       coherence_rsp_rcv_empty    : in  std_ulogic;
       remote_ahbs_snd_wrreq      : out std_ulogic;
-      remote_ahbs_snd_data_in    : out noc_flit_type;
+      remote_ahbs_snd_data_in    : out misc_noc_flit_type;
       remote_ahbs_snd_full       : in  std_ulogic;
       remote_ahbs_rcv_rdreq      : out std_ulogic;
-      remote_ahbs_rcv_data_out   : in  noc_flit_type;
+      remote_ahbs_rcv_data_out   : in  misc_noc_flit_type;
       remote_ahbs_rcv_empty      : in  std_ulogic);
   end component;
 
@@ -494,10 +452,10 @@ package tile is
       apbo             : in  apb_slv_out_vector;
       dvfs_transient   : in  std_ulogic;
       apb_snd_wrreq    : out std_ulogic;
-      apb_snd_data_in  : out noc_flit_type;
+      apb_snd_data_in  : out misc_noc_flit_type;
       apb_snd_full     : in  std_ulogic;
       apb_rcv_rdreq    : out std_ulogic;
-      apb_rcv_data_out : in  noc_flit_type;
+      apb_rcv_data_out : in  misc_noc_flit_type;
       apb_rcv_empty    : in  std_ulogic);
   end component;
 
@@ -516,10 +474,10 @@ package tile is
           irqo               : out irq_out_vector(ncpu-1 downto 0);
           irqi_fifo_overflow : out std_ulogic;
           irq_ack_rdreq      : out std_ulogic;
-          irq_ack_data_out   : in  noc_flit_type;
+          irq_ack_data_out   : in  misc_noc_flit_type;
           irq_ack_empty      : in  std_ulogic;
           irq_wrreq          : out std_ulogic;
-          irq_data_in        : out noc_flit_type;
+          irq_data_in        : out misc_noc_flit_type;
           irq_full           : in  std_ulogic);
   end component misc_irq2noc;
 
@@ -533,7 +491,7 @@ package tile is
       clk                : in  std_ulogic;
       noc_pirq           : out std_logic_vector(NAHBIRQ-1 downto 0);
       interrupt_rdreq    : out std_ulogic;
-      interrupt_data_out : in  noc_flit_type;
+      interrupt_data_out : in  misc_noc_flit_type;
       interrupt_empty    : in  std_ulogic);
   end component;
 
@@ -640,48 +598,8 @@ package tile is
       dma_snd_data_in   : out noc_flit_type;
       dma_snd_full      : in  std_ulogic;
       interrupt_wrreq   : out std_ulogic;
-      interrupt_data_in : out noc_flit_type;
+      interrupt_data_in : out misc_noc_flit_type;
       interrupt_full    : in  std_ulogic);
-  end component;
-
-  component mem_q2bus
-    generic (
-      tech : integer);
-    port (
-      rst                      : in  std_ulogic;
-      clk                      : in  std_ulogic;
-      remote_ahbs_rcv_rdreq    : out std_ulogic;
-      remote_ahbs_rcv_data_out : in  noc_flit_type;
-      remote_ahbs_rcv_empty    : in  std_ulogic;
-      remote_ahbs_snd_wrreq    : out std_ulogic;
-      remote_ahbs_snd_data_in  : out noc_flit_type;
-      remote_ahbs_snd_full     : in  std_ulogic;
-      remote_apb_rcv_rdreq     : out std_ulogic;
-      remote_apb_rcv_data_out  : in  noc_flit_type;
-      remote_apb_rcv_empty     : in  std_ulogic;
-      remote_apb_snd_wrreq     : out std_ulogic;
-      remote_apb_snd_data_in   : out noc_flit_type;
-      remote_apb_snd_full      : in  std_ulogic;
-      coherence_req_rdreq      : out std_ulogic;
-      coherence_req_data_out   : in  noc_flit_type;
-      coherence_req_empty      : in  std_ulogic;
-      coherence_rsp_snd_wrreq      : out std_ulogic;
-      coherence_rsp_snd_data_in    : out noc_flit_type;
-      coherence_rsp_snd_full       : in  std_ulogic;
-      dma_rcv_rdreq            : out std_ulogic;
-      dma_rcv_data_out         : in  noc_flit_type;
-      dma_rcv_empty            : in  std_ulogic;
-      dma_snd_wrreq            : out std_ulogic;
-      dma_snd_data_in          : out noc_flit_type;
-      dma_snd_full             : in  std_ulogic;
-      noc_id_out               : out std_logic_vector(1 downto 0);
-      noc_id_in                : in  std_logic_vector(1 downto 0);
-      bus_out_data             : out noc_flit_type;
-      bus_out_void             : out std_ulogic;
-      bus_out_stop             : in  std_ulogic;
-      bus_in_data              : in  noc_flit_type;
-      bus_in_void              : in  std_ulogic;
-      bus_in_stop              : out std_ulogic);
   end component;
 
   component tile_dvfs

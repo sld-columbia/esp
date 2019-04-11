@@ -31,6 +31,7 @@ use ieee.numeric_std.all;
 -- pragma translate_off
 use std.textio.all;
 -- pragma translate_on
+use work.esp_global.all;
 use work.config_types.all;
 use work.config.all;
 use work.stdlib.all;
@@ -107,7 +108,7 @@ type apb_config_type is array (0 to NAPBCFG-1) of amba_config_word;
     hbusreq     : std_ulogic;                           -- bus request
     hlock       : std_ulogic;                           -- lock request
     htrans      : std_logic_vector(1 downto 0);         -- transfer type
-    haddr       : std_logic_vector(31 downto 0);        -- address bus (byte)
+    haddr       : std_logic_vector(ARCH_BITS-1 downto 0); -- address bus (byte)
     hwrite      : std_ulogic;                           -- read/write
     hsize       : std_logic_vector(2 downto 0);         -- transfer size
     hburst      : std_logic_vector(2 downto 0);         -- burst type
@@ -121,7 +122,7 @@ type apb_config_type is array (0 to NAPBCFG-1) of amba_config_word;
 -- AHB slave inputs
   type ahb_slv_in_type is record
     hsel        : std_logic_vector(0 to NAHBSLV-1);     -- slave select
-    haddr       : std_logic_vector(31 downto 0);        -- address bus (byte)
+    haddr       : std_logic_vector(ARCH_BITS-1 downto 0); -- address bus (byte)
     hwrite      : std_ulogic;                           -- read/write
     htrans      : std_logic_vector(1 downto 0);         -- transfer type
     hsize       : std_logic_vector(2 downto 0);         -- transfer size

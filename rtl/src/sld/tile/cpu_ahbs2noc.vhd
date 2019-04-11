@@ -62,11 +62,11 @@ entity cpu_ahbs2noc is
     coherence_rsp_rcv_empty    : in  std_ulogic;
     -- tile->NoC5
     remote_ahbs_snd_wrreq      : out std_ulogic;
-    remote_ahbs_snd_data_in    : out noc_flit_type;
+    remote_ahbs_snd_data_in    : out misc_noc_flit_type;
     remote_ahbs_snd_full       : in  std_ulogic;
     -- NoC5->tile
     remote_ahbs_rcv_rdreq      : out std_ulogic;
-    remote_ahbs_rcv_data_out   : in  noc_flit_type;
+    remote_ahbs_rcv_data_out   : in  misc_noc_flit_type;
     remote_ahbs_rcv_empty      : in  std_ulogic);
 end cpu_ahbs2noc;
 
@@ -77,12 +77,12 @@ architecture rtl of cpu_ahbs2noc is
                     request_length);
   signal ahbs_state, ahbs_next : ahbs_fsm;
 
-  signal header : noc_flit_type;
-  signal payload_address : noc_flit_type;
+  signal header : misc_noc_flit_type;
+  signal payload_address : misc_noc_flit_type;
   signal dst_is_mem : std_ulogic;
-  signal header_reg : noc_flit_type;
-  signal payload_address_reg : noc_flit_type;
-  signal payload_length_reg : noc_flit_type;
+  signal header_reg : misc_noc_flit_type;
+  signal payload_address_reg : misc_noc_flit_type;
+  signal payload_length_reg : misc_noc_flit_type;
   signal dst_is_mem_reg : std_ulogic;
   signal sample_flits : std_ulogic;
 
@@ -101,7 +101,7 @@ begin  -- rtl
 
   make_packet: process (ahbsi, dma_selected)
     variable msg_type : noc_msg_type;
-    variable header_v : noc_flit_type;
+    variable header_v : misc_noc_flit_type;
     variable reserved : reserved_field_type;
     variable mem_x, mem_y : local_yx;
     variable snd_to_mem : std_ulogic;
@@ -153,7 +153,7 @@ begin  -- rtl
         msg_type := AHB_WR;
       end if;
       -- Address flit is followed by data flits
-      payload_address(NOC_FLIT_SIZE-1 downto NOC_FLIT_SIZE-PREAMBLE_WIDTH) <= PREAMBLE_BODY;
+      payload_address(MISC_NOC_FLIT_SIZE-1 downto MISC_NOC_FLIT_SIZE-PREAMBLE_WIDTH) <= PREAMBLE_BODY;
     else
       if snd_to_mem = '1' then
         -- Send to Memory
@@ -175,27 +175,27 @@ begin  -- rtl
       -- transaction is retargeted for coherent DMA. In this case we must add
       -- the read length.
       if retarget_for_dma /= 0 and dma_selected = '1' then
-        payload_address(NOC_FLIT_SIZE-1 downto NOC_FLIT_SIZE-PREAMBLE_WIDTH) <= PREAMBLE_BODY;
+        payload_address(MISC_NOC_FLIT_SIZE-1 downto MISC_NOC_FLIT_SIZE-PREAMBLE_WIDTH) <= PREAMBLE_BODY;
       else
-        payload_address(NOC_FLIT_SIZE-1 downto NOC_FLIT_SIZE-PREAMBLE_WIDTH) <= PREAMBLE_TAIL;
+        payload_address(MISC_NOC_FLIT_SIZE-1 downto MISC_NOC_FLIT_SIZE-PREAMBLE_WIDTH) <= PREAMBLE_TAIL;
       end if;
     end if;
 
     -- Set address flit
-    payload_address(NOC_FLIT_SIZE-PREAMBLE_WIDTH-1 downto 0) <= ahbsi.haddr;
+    payload_address(MISC_NOC_FLIT_SIZE-PREAMBLE_WIDTH-1 downto 0) <= ahbsi.haddr;
 
     -- Create header flit
     reserved := (others => '0');
     reserved(3 downto 0) := ahbsi.hprot;
     header_v := (others => '0');
-    header_v := create_header(local_y, local_x, mem_y, mem_x, msg_type, reserved);
+    header_v := create_header(MISC_NOC_FLIT_SIZE, local_y, local_x, mem_y, mem_x, msg_type, reserved);
     header <= header_v;
 
   end process make_packet;
 
   -- Set length flit
-  payload_length_reg(NOC_FLIT_SIZE-1 downto NOC_FLIT_SIZE-PREAMBLE_WIDTH) <= PREAMBLE_TAIL;
-  payload_length_reg(NOC_FLIT_SIZE-PREAMBLE_WIDTH-1 downto 0) <= conv_std_logic_vector(dma_length, NOC_FLIT_SIZE-PREAMBLE_WIDTH);
+  payload_length_reg(MISC_NOC_FLIT_SIZE-1 downto MISC_NOC_FLIT_SIZE-PREAMBLE_WIDTH) <= PREAMBLE_TAIL;
+  payload_length_reg(MISC_NOC_FLIT_SIZE-PREAMBLE_WIDTH-1 downto 0) <= conv_std_logic_vector(dma_length, MISC_NOC_FLIT_SIZE-PREAMBLE_WIDTH);
 
   process (clk, rst)
   begin  -- process
@@ -230,7 +230,7 @@ begin  -- rtl
                           remote_ahbs_rcv_data_out, remote_ahbs_rcv_empty,
                           header_reg, payload_address_reg, payload_length_reg,
                           hwrite_reg, hsel_reg)
-    variable payload_data : noc_flit_type;
+    variable payload_data : misc_noc_flit_type;
     variable sequential : std_ulogic;
     variable selected : std_ulogic;
     variable rsp_preamble : noc_preamble_type;
@@ -253,20 +253,20 @@ begin  -- rtl
     end if;
 
     if (ahbsi.htrans /= HTRANS_SEQ or selected = '0') then
-      payload_data(NOC_FLIT_SIZE-1 downto NOC_FLIT_SIZE - PREAMBLE_WIDTH) := PREAMBLE_TAIL;
+      payload_data(MISC_NOC_FLIT_SIZE-1 downto MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH) := PREAMBLE_TAIL;
       sequential := '0';
     else
-      payload_data(NOC_FLIT_SIZE-1 downto NOC_FLIT_SIZE - PREAMBLE_WIDTH) := PREAMBLE_BODY;
+      payload_data(MISC_NOC_FLIT_SIZE-1 downto MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH) := PREAMBLE_BODY;
       sequential := '1';
     end if;
     payload_data(31 downto 0) := ahbreadword(ahbsi.hwdata);
 
     if dst_is_mem_reg = '1' then
-      rsp_preamble := get_preamble(coherence_rsp_rcv_data_out);
+      rsp_preamble := get_preamble(NOC_FLIT_SIZE, coherence_rsp_rcv_data_out);
     else
-      rsp_preamble := get_preamble(remote_ahbs_rcv_data_out);
+      rsp_preamble := get_preamble(MISC_NOC_FLIT_SIZE, remote_ahbs_rcv_data_out);
     end if;
-    coherence_rsp_rcv_preamble := get_preamble(coherence_rsp_rcv_data_out);
+    coherence_rsp_rcv_preamble := get_preamble(NOC_FLIT_SIZE, coherence_rsp_rcv_data_out);
 
     -- Default ahbso assignment
     for i in 0 to NAHBSLV - 1 loop
@@ -316,7 +316,10 @@ begin  -- rtl
           end if;
         elsif dst_is_mem_reg = '1' then
           if coherence_req_full = '0' then
-            coherence_req_data_in <= header_reg;
+            coherence_req_data_in(NOC_FLIT_SIZE - 1 downto NOC_FLIT_SIZE - MISC_NOC_FLIT_SIZE + NEXT_ROUTING_WIDTH) <=
+              header_reg(MISC_NOC_FLIT_SIZE - 1 downto NEXT_ROUTING_WIDTH);
+            coherence_req_data_in(NEXT_ROUTING_WIDTH - 1 downto 0) <=
+              header_reg(NEXT_ROUTING_WIDTH - 1 downto 0);
             coherence_req_wrreq <= '1';
             ahbs_next <= request_address;
           end if;
@@ -332,7 +335,10 @@ begin  -- rtl
         hready := '0';
         if dst_is_mem_reg = '1' then
           if coherence_req_full = '0' then
-            coherence_req_data_in <= payload_address_reg;
+            coherence_req_data_in(NOC_FLIT_SIZE - 1 downto NOC_FLIT_SIZE - PREAMBLE_WIDTH) <=
+              payload_address_reg(MISC_NOC_FLIT_SIZE - 1 downto MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH);
+            coherence_req_data_in(MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH - 1 downto 0) <=
+              payload_address_reg(MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH - 1 downto 0);
             coherence_req_wrreq <= '1';
             if hwrite_reg = '1' then
               ahbs_next <= request_data;
@@ -359,7 +365,10 @@ begin  -- rtl
       when request_length =>
         hready := '0';
         if coherence_req_full = '0' then
-          coherence_req_data_in <= payload_length_reg;
+          coherence_req_data_in(NOC_FLIT_SIZE - 1 downto NOC_FLIT_SIZE - PREAMBLE_WIDTH) <=
+            payload_length_reg(MISC_NOC_FLIT_SIZE - 1 downto MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH);
+          coherence_req_data_in(MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH - 1 downto 0) <=
+            payload_length_reg(MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH - 1 downto 0);
           coherence_req_wrreq <= '1';
           ahbs_next <= reply_header;
         end if;
@@ -369,7 +378,10 @@ begin  -- rtl
         if dst_is_mem_reg = '1' then
           if coherence_req_full = '0' then
             hready := '1';
-            coherence_req_data_in <= payload_data;
+            coherence_req_data_in(NOC_FLIT_SIZE - 1 downto NOC_FLIT_SIZE - PREAMBLE_WIDTH) <=
+              payload_data(MISC_NOC_FLIT_SIZE - 1 downto MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH);
+            coherence_req_data_in(MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH - 1 downto 0) <=
+              payload_data(MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH - 1 downto 0);
             coherence_req_wrreq <= '1';
             if selected = '0' or ahbsi.htrans = HTRANS_IDLE then
               ahbs_next <= idle;

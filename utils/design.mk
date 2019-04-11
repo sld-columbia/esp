@@ -101,6 +101,7 @@ XMSIMOPT += $(SIMTOP)
 NCSIMOPT += $(SIMTOP)
 
 ### Common design files ###
+SLDGEN_VHDL_RTL_PKGS += $(DESIGN_PATH)/esp_global.vhd
 SLDGEN_VHDL_RTL_PKGS += $(DESIGN_PATH)/sldgen/sld_devices.vhd
 SLDGEN_VHDL_RTL_PKGS += $(DESIGN_PATH)/sldgen/allacc.vhd
 SLDGEN_VHDL_RTL_PKGS += $(DESIGN_PATH)/sldgen/genacc.vhd

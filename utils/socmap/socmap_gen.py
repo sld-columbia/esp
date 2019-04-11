@@ -282,33 +282,48 @@ class soc_config:
             acc_l2_id = acc_l2_id + 1
 
 
-def print_header(fp):
+def print_header(fp, package):
   fp.write("-- Copyright (c) 2011-2019 Columbia University, System Level Design Group\n")
   fp.write("-- SPDX-License-Identifier: MIT\n\n")
 
   fp.write("------------------------------------------------------------------------------\n")
   fp.write("--  This file is a configuration file for the ESP NoC-based architecture\n")
   fp.write("-----------------------------------------------------------------------------\n")
-  fp.write("-- Entity:      socmap\n")
-  fp.write("-- File:        socmap.vhd\n")
+  fp.write("-- Package:     " + package + "\n")
+  fp.write("-- File:        " + package + ".vhd\n")
   fp.write("-- Author:      Paolo Mantovani - SLD @ Columbia University\n")
   fp.write("-- Author:      Christian Pilato - SLD @ Columbia University\n")
   fp.write("-- Description: System address mapping and NoC tiles configuration\n")
   fp.write("------------------------------------------------------------------------------\n\n")
 
-def print_libs(fp):
+def print_libs(fp, std_only):
   fp.write("library ieee;\n")
   fp.write("use ieee.std_logic_1164.all;\n")
   fp.write("use ieee.numeric_std.all;\n")
 
-  fp.write("use work.stdlib.all;\n")
-  fp.write("use work.grlib_config.all;\n")
-  fp.write("use work.amba.all;\n")
-  fp.write("use work.sld_devices.all;\n")
-  fp.write("use work.devices.all;\n")
-  fp.write("use work.leon3.all;\n")
-  fp.write("use work.nocpackage.all;\n")
-  fp.write("use work.cachepackage.all;\n")
+  if not std_only:
+    fp.write("use work.esp_global.all;\n")
+    fp.write("use work.stdlib.all;\n")
+    fp.write("use work.grlib_config.all;\n")
+    fp.write("use work.amba.all;\n")
+    fp.write("use work.sld_devices.all;\n")
+    fp.write("use work.devices.all;\n")
+    fp.write("use work.leon3.all;\n")
+    fp.write("use work.nocpackage.all;\n")
+    fp.write("use work.cachepackage.all;\n")
+
+def print_global_constants(fp, soc):
+  fp.write("  ------ Global architecture parameters\n")
+  fp.write("  constant ARCH_BITS : integer := " + str(soc.DMA_WIDTH) + ";\n")
+  fp.write("  constant GLOB_MEM_MAX_NUM : integer := " + str(NMEM_MAX) + ";\n")
+  fp.write("  constant GLOB_CPU_MAX_NUM : integer := " + str(NCPU_MAX) + ";\n")
+  fp.write("  constant GLOB_TILES_MAX_NUM : integer := " + str(NTILE_MAX) + ";\n")
+  # Keep cache-line size constant to 128 bits for now. We don't want huge line buffers
+  fp.write("  constant GLOB_WORD_OFFSET_BITS : integer := " + str(int(math.log(128/soc.DMA_WIDTH, 2))) + ";\n")
+  fp.write("  constant GLOB_BYTE_OFFSET_BITS : integer := " + str(int(math.log(soc.DMA_WIDTH/8, 2))) +";\n")
+  # TODO: Keep physical address to 32 bits for now to reduce tag size. This will increase to support more memory
+  fp.write("  constant GLOB_PHYS_ADDR_BITS : integer := " + str(32) +";\n")
+  fp.write("\n")
 
 def print_constants(fp, soc):
   fp.write("  ------ NoC parameters\n")
@@ -1319,10 +1334,24 @@ def print_tiles(fp, esp_config):
 
 
 def create_socmap(esp_config, soc):
+  fp = open('esp_global.vhd', 'w')
+
+  print_header(fp, "esp_global")
+  print_libs(fp, True)
+
+  fp.write("package esp_global is\n\n")
+  print_global_constants(fp, soc)
+
+  fp.write("end esp_global;\n")
+  fp.close()
+
+  print("Created global constants definition into 'esp_global.vhd'")
+
+
   fp = open('socmap.vhd', 'w')
 
-  print_header(fp)
-  print_libs(fp)
+  print_header(fp, "socmap")
+  print_libs(fp, False)
 
   fp.write("package socmap is\n\n")
   print_constants(fp, soc)
@@ -1331,4 +1360,6 @@ def create_socmap(esp_config, soc):
 
   fp.write("end socmap;\n")
   fp.close()
+
+
   print("Created configuration into 'socmap.vhd'")

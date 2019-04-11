@@ -9,6 +9,8 @@ use STD.textio.all;
 use ieee.std_logic_textio.all;
 --pragma translate_on
 
+use work.esp_global.all;
+
 use work.amba.all;
 use work.stdlib.all;
 use work.sld_devices.all;
@@ -65,6 +67,15 @@ architecture rtl of mem_noc2ahbm is
     0      => ahb_device_reg (VENDOR_SLD, SLD_MST_PROXY, 0, 0, 0),
     others => zero32);
 
+  function target_word_hsize
+    return std_logic_vector is
+  begin
+    case ARCH_BITS is
+      when 64 => return HSIZE_DWORD;
+      when others => return HSIZE_WORD;
+    end case;
+  end target_word_hsize;
+
   -- If length is not received, then use fix length of 4 words.
   -- The accelerators will always provide a length.
   -- Protection info is in the reserved field of the header
@@ -92,13 +103,14 @@ architecture rtl of mem_noc2ahbm is
   type reg_type is record
     msg     : noc_msg_type;
     hprot   : std_logic_vector(3 downto 0);
+    hsize_msb : std_ulogic;
     hsize   : std_logic_vector(2 downto 0);
     grant   : std_ulogic;
     ready   : std_ulogic;
     resp    : std_logic_vector(1 downto 0);
-    addr    : std_logic_vector(31 downto 0);
+    addr    : std_logic_vector(ARCH_BITS - 1 downto 0);
     flit    : noc_flit_type;
-    hwdata  : std_logic_vector(31 downto 0);
+    hwdata  : std_logic_vector(ARCH_BITS - 1 downto 0);
     state   : ahbm_fsm;
     count   : integer;
     bufen   : std_ulogic;
@@ -111,7 +123,8 @@ architecture rtl of mem_noc2ahbm is
   constant reg_none : reg_type := (
     msg     => REQ_GETS_W,
     hprot   => "0011",
-    hsize   => HSIZE_WORD,
+    hsize_msb => '0',
+    hsize   => target_word_hsize,
     grant   => '0',
     ready   => '0',
     resp    => HRESP_OKAY,
@@ -142,7 +155,7 @@ begin  -- rtl
     variable reserved           : reserved_field_type;
     variable origin_y, origin_x : local_yx;
   begin  -- process make_packet
-    input_msg_type := get_msg_type(coherence_req_data_out);
+    input_msg_type := get_msg_type(NOC_FLIT_SIZE, coherence_req_data_out);
     if input_msg_type = AHB_RD then
       -- Uncached request from generic master
       msg_type := RSP_AHB_RD;
@@ -162,9 +175,9 @@ begin  -- rtl
 
     reserved := (others => '0');
     header_v := (others => '0');
-    origin_y := get_origin_y(coherence_req_data_out);
-    origin_x := get_origin_x(coherence_req_data_out);
-    header_v := create_header(local_y, local_x, origin_y, origin_x, msg_type, reserved);
+    origin_y := get_origin_y(NOC_FLIT_SIZE, coherence_req_data_out);
+    origin_x := get_origin_x(NOC_FLIT_SIZE, coherence_req_data_out);
+    header_v := create_header(NOC_FLIT_SIZE, local_y, local_x, origin_y, origin_x, msg_type, reserved);
     header   <= header_v;
   end process make_rsp_snd_packet;
   -----------------------------------------------------------------------------
@@ -179,9 +192,9 @@ begin  -- rtl
     msg_type   := DMA_TO_DEV;
     reserved   := (others => '0');
     header_v   := (others => '0');
-    origin_y   := get_origin_y(dma_rcv_data_out);
-    origin_x   := get_origin_x(dma_rcv_data_out);
-    header_v   := create_header(local_y, local_x, origin_y, origin_x, msg_type, reserved);
+    origin_y   := get_origin_y(NOC_FLIT_SIZE, dma_rcv_data_out);
+    origin_x   := get_origin_x(NOC_FLIT_SIZE, dma_rcv_data_out);
+    header_v   := create_header(NOC_FLIT_SIZE, local_y, local_x, origin_y, origin_x, msg_type, reserved);
     dma_header <= header_v;
   end process make_dma_packet;
 
@@ -226,8 +239,8 @@ begin  -- rtl
     v.resp  := ahbmi.hresp;
 
     reserved     := (others => '0');
-    preamble     := get_preamble(coherence_req_data_out);
-    dma_preamble := get_preamble(dma_rcv_data_out);
+    preamble     := get_preamble(NOC_FLIT_SIZE, coherence_req_data_out);
+    dma_preamble := get_preamble(NOC_FLIT_SIZE, dma_rcv_data_out);
 
     sample_header     <= '0';
     sample_dma_header <= '0';
@@ -248,16 +261,17 @@ begin  -- rtl
         if coherence_req_empty = '0' then
           coherence_req_rdreq <= '1';
           -- Sample request info
-          v.msg               := get_msg_type(coherence_req_data_out);
-          reserved            := get_reserved_field(coherence_req_data_out);
+          v.msg               := get_msg_type(NOC_FLIT_SIZE, coherence_req_data_out);
+          reserved            := get_reserved_field(NOC_FLIT_SIZE, coherence_req_data_out);
           v.hprot             := reserved(3 downto 0);
+          v.hsize_msb         := get_unused_msb_field(NOC_FLIT_SIZE, coherence_req_data_out);
           sample_header       <= '1';
           v.state             := receive_address;
         elsif dma_rcv_empty = '0' then
           dma_rcv_rdreq     <= '1';
           -- Sample DMA request
-          v.msg             := get_msg_type(dma_rcv_data_out);
-          reserved          := get_reserved_field(dma_rcv_data_out);
+          v.msg             := get_msg_type(NOC_FLIT_SIZE, dma_rcv_data_out);
+          reserved          := get_reserved_field(NOC_FLIT_SIZE, dma_rcv_data_out);
           v.hprot           := reserved(3 downto 0);
           sample_dma_header <= '1';
           v.state           := dma_receive_address;
@@ -266,7 +280,7 @@ begin  -- rtl
       when receive_address =>
         if coherence_req_empty = '0' then
           coherence_req_rdreq <= '1';
-          v.addr              := coherence_req_data_out(31 downto 0);
+          v.addr              := coherence_req_data_out(ARCH_BITS - 1 downto 0);
           if (r.msg = REQ_GETS_W or r.msg = REQ_GETS_HW or r.msg = REQ_GETS_B or r.msg = AHB_RD)
             or ((r.msg = REQ_GETM_W) and (l2_cache_en /= 0)) then
             -- Use default size: cacheline
@@ -301,7 +315,7 @@ begin  -- rtl
       when dma_receive_address =>
         if dma_rcv_empty = '0' then
           dma_rcv_rdreq <= '1';
-          v.addr        := dma_rcv_data_out(31 downto 0);
+          v.addr        := dma_rcv_data_out(ARCH_BITS - 1 downto 0);
           if r.msg = DMA_TO_DEV then
             v.state := dma_receive_rdlength;
           else
@@ -322,6 +336,8 @@ begin  -- rtl
           v.hsize := HSIZE_BYTE;
         elsif r.msg = REQ_GETS_HW then
           v.hsize := HSIZE_HWORD;
+        elsif ARCH_BITS /= 32 and v.hsize_msb = '1' then
+          v.hsize := target_word_hsize;
         else
           v.hsize := HSIZE_WORD;
         end if;
@@ -363,7 +379,7 @@ begin  -- rtl
         end if;
 
       when dma_rd_request =>
-        v.hsize := HSIZE_WORD;
+        v.hsize := target_word_hsize;
         if dma_snd_atleast_4slots = '1' then
           if ((r.count = 1) and (v.grant = '1')
               and (v.ready = '1')) then
@@ -478,7 +494,7 @@ begin  -- rtl
           else
             -- Send data to noc
             coherence_rsp_snd_wrreq   <= '1';
-            coherence_rsp_snd_data_in <= PREAMBLE_BODY & ahbreadword(ahbmi.hrdata, r.hsize);
+            coherence_rsp_snd_data_in <= PREAMBLE_BODY & ahbmi.hrdata;
             -- Update address and control bus
             v.addr                    := r.addr + 4;
             v.count                   := r.count - 1;
@@ -489,7 +505,7 @@ begin  -- rtl
               v.hbusreq := '0';
               v.htrans  := HTRANS_IDLE;
             elsif r.count = 0 then
-              coherence_rsp_snd_data_in <= PREAMBLE_TAIL & ahbreadword(ahbmi.hrdata, r.hsize);
+              coherence_rsp_snd_data_in <= PREAMBLE_TAIL & ahbmi.hrdata;
               v.state                   := receive_header;
             else
               v.htrans := HTRANS_SEQ;
@@ -501,7 +517,7 @@ begin  -- rtl
         if (v.ready = '1') then
           -- Send data to noc
           dma_snd_wrreq   <= '1';
-          dma_snd_data_in <= PREAMBLE_BODY & ahbreadword(ahbmi.hrdata, r.hsize);
+          dma_snd_data_in <= PREAMBLE_BODY & ahbmi.hrdata;
           -- Update address and control bus
           v.addr          := r.addr + 4;
           v.count         := r.count - 1;
@@ -512,7 +528,7 @@ begin  -- rtl
             v.hbusreq := '0';
             v.htrans  := HTRANS_IDLE;
           elsif r.count = 0 then
-            dma_snd_data_in <= PREAMBLE_TAIL & ahbreadword(ahbmi.hrdata, r.hsize);
+            dma_snd_data_in <= PREAMBLE_TAIL & ahbmi.hrdata;
             v.state         := receive_header;
           else
             if dma_snd_exactly_3slots = '1' then
@@ -527,7 +543,7 @@ begin  -- rtl
       when dma_send_busy =>
         if (v.ready = '1') then
           dma_snd_wrreq   <= '1';
-          dma_snd_data_in <= PREAMBLE_BODY & ahbreadword(ahbmi.hrdata, r.hsize);
+          dma_snd_data_in <= PREAMBLE_BODY & ahbmi.hrdata;
           v.count         := r.count - 1;
           if r.count = 2 then
             v.hbusreq := '0';
@@ -549,6 +565,8 @@ begin  -- rtl
           v.hsize := HSIZE_BYTE;
         elsif r.msg = REQ_GETM_HW then
           v.hsize := HSIZE_HWORD;
+        elsif ARCH_BITS /= 32 and v.hsize_msb = '1' then
+          v.hsize := target_word_hsize;
         else
           v.hsize := HSIZE_WORD;
         end if;
@@ -589,7 +607,7 @@ begin  -- rtl
         end if;
 
       when dma_wr_request =>
-        v.hsize := HSIZE_WORD;
+        v.hsize := target_word_hsize;
         if dma_rcv_empty = '0' then
           if ((dma_preamble = PREAMBLE_TAIL) and
               (v.grant = '1') and (v.ready = '1')) then
@@ -629,7 +647,7 @@ begin  -- rtl
       when write_data =>
         if (v.ready = '1') then
           -- Write data to memory
-          v.hwdata := r.flit(31 downto 0);
+          v.hwdata := r.flit(ARCH_BITS - 1 downto 0);
           -- Update address and control
           v.addr   := r.addr + 4;
           if coherence_req_empty = '1' then
@@ -650,7 +668,7 @@ begin  -- rtl
       when dma_write_data =>
         if (v.ready = '1') then
           -- Write data to memory
-          v.hwdata := r.flit(31 downto 0);
+          v.hwdata := r.flit(ARCH_BITS - 1 downto 0);
           -- Upda`te address and control
           v.addr   := r.addr + 4;
           if dma_rcv_empty = '1' then
@@ -698,7 +716,7 @@ begin  -- rtl
 
       when write_last_data =>
         if (v.ready = '1') then
-          v.hwdata := r.flit(31 downto 0);
+          v.hwdata := r.flit(ARCH_BITS - 1 downto 0);
           v.htrans := HTRANS_IDLE;
           v.hwrite := '0';
           v.state  := write_complete;

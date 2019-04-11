@@ -55,15 +55,15 @@ entity acc_tile_q is
     coherent_dma_rcv_empty     : out std_ulogic;
     -- NoC5->tile
     apb_rcv_rdreq              : in  std_ulogic;
-    apb_rcv_data_out           : out noc_flit_type;
+    apb_rcv_data_out           : out misc_noc_flit_type;
     apb_rcv_empty              : out std_ulogic;
     -- tile->NoC5
     apb_snd_wrreq              : in  std_ulogic;
-    apb_snd_data_in            : in  noc_flit_type;
+    apb_snd_data_in            : in  misc_noc_flit_type;
     apb_snd_full               : out std_ulogic;
     -- tile->NoC5
     interrupt_wrreq            : in  std_ulogic;
-    interrupt_data_in          : in  noc_flit_type;
+    interrupt_data_in          : in  misc_noc_flit_type;
     interrupt_full             : out std_ulogic;
 
     -- Cachable data plane 1 -> request messages
@@ -95,10 +95,10 @@ entity acc_tile_q is
     noc4_in_void  : out std_ulogic;
     noc4_in_stop  : in  std_ulogic;
     -- Configuration plane 5 -> RD/WR registers
-    noc5_out_data : in  noc_flit_type;
+    noc5_out_data : in  misc_noc_flit_type;
     noc5_out_void : in  std_ulogic;
     noc5_out_stop : out std_ulogic;
-    noc5_in_data  : out noc_flit_type;
+    noc5_in_data  : out misc_noc_flit_type;
     noc5_in_void  : out std_ulogic;
     noc5_in_stop  : in  std_ulogic;
     -- Non cachable data data plane 6 -> DMA transfers requests
@@ -149,15 +149,15 @@ architecture rtl of acc_tile_q is
   signal coherent_dma_rcv_full               : std_ulogic;
   -- NoC5->tile
   signal apb_rcv_wrreq                : std_ulogic;
-  signal apb_rcv_data_in              : noc_flit_type;
+  signal apb_rcv_data_in              : misc_noc_flit_type;
   signal apb_rcv_full                 : std_ulogic;
   -- tile->NoC5
   signal apb_snd_rdreq                : std_ulogic;
-  signal apb_snd_data_out             : noc_flit_type;
+  signal apb_snd_data_out             : misc_noc_flit_type;
   signal apb_snd_empty                : std_ulogic;
   -- tile->Noc5
   signal interrupt_rdreq                    : std_ulogic;
-  signal interrupt_data_out                 : noc_flit_type;
+  signal interrupt_data_out                 : misc_noc_flit_type;
   signal interrupt_empty                    : std_ulogic;
 
   type noc2_packet_fsm is (none, packet_inv);
@@ -346,7 +346,7 @@ begin  -- rtl
   fifo_10: fifo
     generic map (
       depth => 3,                      --Header, address, [data]
-      width => NOC_FLIT_SIZE)
+      width => MISC_NOC_FLIT_SIZE)
     port map (
       clk      => clk,
       rst      => fifo_rst,
@@ -396,7 +396,7 @@ begin  -- rtl
                      end if;
                    end if;
 
-      when packet_apb_snd => to_noc5_preamble := get_preamble(apb_snd_data_out);
+      when packet_apb_snd => to_noc5_preamble := get_preamble(MISC_NOC_FLIT_SIZE, apb_snd_data_out);
                              if (noc5_in_stop = '0' and apb_snd_empty = '0') then
                                noc5_in_data <= apb_snd_data_out;
                                noc5_in_void <= apb_snd_empty;
@@ -413,7 +413,7 @@ begin  -- rtl
   fifo_7: fifo
     generic map (
       depth => 2,                       --Header, data (1 Word)
-      width => NOC_FLIT_SIZE)
+      width => MISC_NOC_FLIT_SIZE)
     port map (
       clk      => clk,
       rst      => fifo_rst,
@@ -427,7 +427,7 @@ begin  -- rtl
   fifo_15: fifo
     generic map (
       depth => 1,                       --Header only x possible sharers
-      width => NOC_FLIT_SIZE)
+      width => MISC_NOC_FLIT_SIZE)
     port map (
       clk      => clk,
       rst      => fifo_rst,

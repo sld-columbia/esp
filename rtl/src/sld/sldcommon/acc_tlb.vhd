@@ -1,6 +1,44 @@
 -- Copyright (c) 2011-2019 Columbia University, System Level Design Group
 -- SPDX-License-Identifier: MIT
 
+-------------------------------------------------------------------------------
+-- ESP Accelerator TLB
+--
+-- The accelerators communicate with memory by issuing DMA requests. This module
+-- translates the accelerator virtual index (expressed in number of 32-bit
+-- words) into a physical address in bytes. The latter corresponds to the DMA
+-- burst starting address. In addition, this module converts the DMA burst
+-- length (expressed in number of 32-bit words) issued by the accelerator into
+-- the corresponding DMA burst length in bytes.
+--
+-- When scatter-gather mode is enabled, the TLB loads the list of base addresses
+-- specified in the configuration registers, located at the following address
+-- "bankreg[PT_ADDRESS_EXTENDED_REG] & bankreg[PT_ADDRESS_REG]".  A single DMA
+-- request may result into more than one transaction, depending on the lenght of
+-- the request and the size of the accelerator pages, specified in
+-- bankreg[PT_SHIFT_REG]. The total number of accelerator pages is saved into
+-- bankreg[PT_NCHUNK_REG].
+-- In this mode, the registers bankreg[SRC_OFFSET_REG] and
+-- bankreg[DST_OFFSET_REG] should store the offset in bytes for the input and
+-- the output buffers, with respect to the virtual memory area reserved for the
+-- accelerator. For more complicated data structures, user-defined registers can
+-- be used to specify multiple offsets, while leaving the standard offset
+-- registers set to zero.
+--
+-- When contiguous memory allocation is selected, instead,
+-- bankreg[SRC_OFFSET_REG] and bankreg[DST_OFFSET_REG] contain the base
+-- addresses of the input and output buffers, which must both be contiguous in
+-- physical memory. Every DMA request can be served with a single transaction.
+-- Note that with the current implementation, we only support the contiguous
+-- memory setting when the physical address is 32 bits. This is defined by the
+-- global ESP constant GLOB_PHYS_ADDR_BITS.
+--
+-- Note that the accelerator interface limits the accelerator virtual memory to
+-- at most 4 GB. Therefore, accelerators can process up to 4 GB of data on a
+-- single invocation.
+--
+-------------------------------------------------------------------------------
+
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
@@ -9,6 +47,8 @@ use ieee.numeric_std.all;
 use STD.textio.all;
 use ieee.std_logic_textio.all;
 --pragma translate_on
+
+use work.esp_global.all;
 
 use work.amba.all;
 use work.stdlib.all;
@@ -46,8 +86,8 @@ entity acc_tlb is
     tlb_valid            : in  std_ulogic;
     tlb_write            : in  std_ulogic;
     tlb_wr_address       : in  std_logic_vector((log2xx(tlb_entries) -1) downto 0);
-    tlb_datain           : in  std_logic_vector(31 downto 0);
-    dma_address          : out std_logic_vector(31 downto 0);
+    tlb_datain           : in  std_logic_vector(GLOB_PHYS_ADDR_BITS - 1 downto 0);
+    dma_address          : out std_logic_vector(GLOB_PHYS_ADDR_BITS - 1 downto 0);
     dma_length           : out std_logic_vector(31 downto 0)
     );
 
@@ -78,8 +118,8 @@ architecture tlb of acc_tlb is
   signal dma_end_address_in, dma_end_address : std_logic_vector(31 downto 0);
   signal dma_split_in, dma_split : std_ulogic;
   -- TLB FSM stage 3
-  signal dma_base_address : std_logic_vector(31 downto 0);
-  signal dma_address_in : std_logic_vector(31 downto 0);
+  signal dma_base_address : std_logic_vector(GLOB_PHYS_ADDR_BITS - 1 downto 0);
+  signal dma_address_in : std_logic_vector(GLOB_PHYS_ADDR_BITS - 1 downto 0);
   signal dma_length_in  : std_logic_vector(31 downto 0);
   -- TLB FSM stage 4 (back to 0 if dma_length = remaining_length else back to 1)
   -- ** remain in stage 4 until DMA transfer completes **
@@ -92,7 +132,7 @@ architecture tlb of acc_tlb is
   -- TLB
   signal tlb_address         : std_logic_vector((log2(tlb_entries) -1) downto 0);
   signal tlb_rd_address      : std_logic_vector((log2(tlb_entries) -1) downto 0);
-  signal tlb_dataout         : std_logic_vector(31 downto 0);
+  signal tlb_dataout         : std_logic_vector(GLOB_PHYS_ADDR_BITS - 1 downto 0);
   signal tlb_enable          : std_ulogic;
   signal tlb_read            : std_ulogic;
   signal tlb_empty_int       : std_ulogic;
@@ -113,6 +153,7 @@ begin  -- tlb
   tlb_empty <= tlb_empty_int;
   dma_length <= dma_length_int;
 
+  -- TODO: without scatter-gather we only support 32-bits physica address
   no_scatter_gather: if scatter_gather = 0 generate
     dma_address <= (rd_index(29 downto 0) & "00") + bankreg(SRC_OFFSET_REG)
                    when rd_request = '1' else
@@ -152,7 +193,15 @@ begin  -- tlb
   dma_split_in <= '0' when dma_end_address_in <= chunk_size else '1';
   -- Stage 3 input
   dma_base_address <= tlb_dataout;
-  dma_address_in <= dma_base_address + dma_offset;
+
+  large_phys_addr: process (dma_base_address, dma_offset) is
+    variable extended_offset : std_logic_vector(GLOB_PHYS_ADDR_BITS - 1 downto 0);
+  begin  -- process lpa_1
+    extended_offset := (others => '0');
+    extended_offset(31 downto 0) := dma_offset;
+    dma_address_in <= dma_base_address + extended_offset;
+  end process large_phys_addr;
+
   dma_length_in <= remaining_length when dma_split = '0' else dma_length_fallback;
   -- Stage 4 input
   remaining_length_update_in <= remaining_length - dma_length_int;
@@ -302,7 +351,7 @@ begin  -- tlb
     generic map (
       tech       => tech,
       abits      => log2(tlb_entries),
-      dbits      => 32)
+      dbits      => GLOB_PHYS_ADDR_BITS)
     port map (
       clk       => clk,
       address   => tlb_address,

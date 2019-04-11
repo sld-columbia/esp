@@ -4,6 +4,8 @@
 library ieee;
 use ieee.std_logic_1164.all;
 
+use work.esp_global.all;
+
 use work.amba.all;
 use work.stdlib.all;
 use work.sld_devices.all;
@@ -150,8 +152,8 @@ package sldcommon is
       tlb_valid            : in  std_ulogic;
       tlb_write            : in  std_ulogic;
       tlb_wr_address       : in  std_logic_vector((log2xx(tlb_entries) -1) downto 0);
-      tlb_datain           : in  std_logic_vector(31 downto 0);
-      dma_address          : out std_logic_vector(31 downto 0);
+      tlb_datain           : in  std_logic_vector(GLOB_PHYS_ADDR_BITS - 1 downto 0);
+      dma_address          : out std_logic_vector(GLOB_PHYS_ADDR_BITS - 1 downto 0);
       dma_length           : out std_logic_vector(31 downto 0));
   end component;
 

@@ -29,11 +29,11 @@ entity misc_noc2apb is
     dvfs_transient      : in  std_ulogic;
     -- Packets to local APB slave (tile->NoC5)
     apb_snd_wrreq       : out std_ulogic;
-    apb_snd_data_in     : out noc_flit_type;
+    apb_snd_data_in     : out misc_noc_flit_type;
     apb_snd_full        : in  std_ulogic;
     -- Packets from remote APB (Noc5->tile)
     apb_rcv_rdreq       : out std_ulogic;
-    apb_rcv_data_out    : in  noc_flit_type;
+    apb_rcv_data_out    : in  misc_noc_flit_type;
     apb_rcv_empty       : in  std_ulogic);
 
 end misc_noc2apb;
@@ -49,10 +49,10 @@ architecture rtl of misc_noc2apb is
   signal request_y, request_x : local_yx;
   signal request_msg_type : noc_msg_type;
   signal sample_request : std_ulogic;
-  signal header : noc_flit_type;
+  signal header : misc_noc_flit_type;
   signal psel, psel_reg : integer range 0 to NAPBSLV - 1;
   signal sample_psel : std_ulogic;
-  signal tail, tail_reg : noc_flit_type;
+  signal tail, tail_reg : misc_noc_flit_type;
   signal sample_tail : std_ulogic;
   signal waddr, waddr_reg : std_logic_vector(31 downto 0);
   signal sample_waddr : std_ulogic;
@@ -79,9 +79,9 @@ begin  -- rtl
       apbi_reg <= apb_slv_in_none;
     elsif clk'event and clk = '1' then  -- rising clock edge
       if sample_request = '1' then
-        request_y <= get_origin_y(apb_rcv_data_out);
-        request_x <= get_origin_x(apb_rcv_data_out);
-        request_msg_type <= get_msg_type(apb_rcv_data_out);
+        request_y <= get_origin_y(MISC_NOC_FLIT_SIZE, apb_rcv_data_out);
+        request_x <= get_origin_x(MISC_NOC_FLIT_SIZE, apb_rcv_data_out);
+        request_msg_type <= get_msg_type(MISC_NOC_FLIT_SIZE, apb_rcv_data_out);
       end if;
       if sample_psel = '1' then
         psel_reg <= psel;
@@ -100,7 +100,7 @@ begin  -- rtl
       end if;
     end if;
   end process;
-  header <= create_header(local_y, local_x, request_y, request_x, RSP_REG_RD, (others => '0'));
+  header <= create_header(MISC_NOC_FLIT_SIZE, local_y, local_x, request_y, request_x, RSP_REG_RD, (others => '0'));
 
   -- This wrapper makes requests and waits for reply, but does not react to
   -- messages from remote masters, such as JTAG.
@@ -115,7 +115,7 @@ begin  -- rtl
     variable pirq_v : std_logic_vector(NAHBIRQ-1 downto 0);
 
     variable reply_v : std_logic_vector(31 downto 0);
-    variable tail_v : noc_flit_type;
+    variable tail_v : misc_noc_flit_type;
     variable apbi_V : apb_slv_in_type;
   begin  -- process apb_roundtrip
     apb_next <= apb_state;
@@ -135,7 +135,7 @@ begin  -- rtl
     apb_rcv_rdreq <= '0';
 
     -- Get message type (valid during rcv_header state)
-    msg_type_v := get_msg_type(apb_rcv_data_out);
+    msg_type_v := get_msg_type(MISC_NOC_FLIT_SIZE, apb_rcv_data_out);
     -- Select slave (valid during rcv_address state)
     addr_v := apb_rcv_data_out(31 downto 0);
     waddr <= addr_v;

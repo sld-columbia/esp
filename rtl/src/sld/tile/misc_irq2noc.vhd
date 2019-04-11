@@ -36,11 +36,11 @@ entity misc_irq2noc is
 
     -- NoC5->tile
     irq_ack_rdreq    : out std_ulogic;
-    irq_ack_data_out : in  noc_flit_type;
+    irq_ack_data_out : in  misc_noc_flit_type;
     irq_ack_empty    : in  std_ulogic;
     -- tile->NoC5
     irq_wrreq        : out std_ulogic;
-    irq_data_in      : out noc_flit_type;
+    irq_data_in      : out misc_noc_flit_type;
     irq_full         : in  std_ulogic);
 
 end misc_irq2noc;
@@ -66,13 +66,13 @@ architecture rtl of misc_irq2noc is
   signal intack_delay_2   : std_logic_vector(ncpu-1 downto 0);
   signal same_irl_pending : std_logic_vector(ncpu-1 downto 0);
 
-  signal header    : noc_flit_vector(ncpu-1 downto 0);
-  signal payload_1 : noc_flit_vector(ncpu-1 downto 0);
-  signal payload_2 : noc_flit_vector(ncpu-1 downto 0);
+  signal header    : misc_noc_flit_vector(ncpu-1 downto 0);
+  signal payload_1 : misc_noc_flit_vector(ncpu-1 downto 0);
+  signal payload_2 : misc_noc_flit_vector(ncpu-1 downto 0);
 
-  signal fifo_header    : noc_flit_vector(ncpu-1 downto 0);
-  signal fifo_payload_1 : noc_flit_vector(ncpu-1 downto 0);
-  signal fifo_payload_2 : noc_flit_vector(ncpu-1 downto 0);
+  signal fifo_header    : misc_noc_flit_vector(ncpu-1 downto 0);
+  signal fifo_payload_1 : misc_noc_flit_vector(ncpu-1 downto 0);
+  signal fifo_payload_2 : misc_noc_flit_vector(ncpu-1 downto 0);
 
   signal irqi_send_header    : std_logic_vector(ncpu-1 downto 0);
   signal irqi_send_payload_1 : std_logic_vector(ncpu-1 downto 0);
@@ -174,17 +174,17 @@ begin  -- rtl
     -- Make a packet for interrupt request
     make_packet : process (irqi(cpuid))
       variable msg_type    : noc_msg_type;
-      variable header_v    : noc_flit_type;
-      variable payload_1_v : noc_flit_type;
-      variable payload_2_v : noc_flit_type;
+      variable header_v    : misc_noc_flit_type;
+      variable payload_1_v : misc_noc_flit_type;
+      variable payload_2_v : misc_noc_flit_type;
     begin  -- process make_packet
       msg_type := IRQ_MSG;
 
       header_v := (others                                                                       => '0');
-      header_v := create_header(local_y, local_x, cpu_y(cpuid), cpu_x(cpuid), msg_type, (others => '0'));
+      header_v := create_header(MISC_NOC_FLIT_SIZE, local_y, local_x, cpu_y(cpuid), cpu_x(cpuid), msg_type, (others => '0'));
 
       payload_1_v                                                      := (others => '0');
-      payload_1_v(NOC_FLIT_SIZE-1 downto NOC_FLIT_SIZE-PREAMBLE_WIDTH) := PREAMBLE_BODY;
+      payload_1_v(MISC_NOC_FLIT_SIZE-1 downto MISC_NOC_FLIT_SIZE-PREAMBLE_WIDTH) := PREAMBLE_BODY;
       payload_1_v(IRQ_IRL_MSB downto IRQ_IRL_LSB)                      := irqi(cpuid).irl;
       payload_1_v(IRQ_RESUME_BIT)                                      := irqi(cpuid).resume;
       payload_1_v(IRQ_RSTRUN_BIT)                                      := irqi(cpuid).rstrun;
@@ -193,7 +193,7 @@ begin  -- rtl
       payload_1_v(IRQ_INDEX_MSB downto IRQ_INDEX_LSB)                  := irqi(cpuid).index;
 
       payload_2_v                                                      := (others => '0');
-      payload_2_v(NOC_FLIT_SIZE-1 downto NOC_FLIT_SIZE-PREAMBLE_WIDTH) := PREAMBLE_TAIL;
+      payload_2_v(MISC_NOC_FLIT_SIZE-1 downto MISC_NOC_FLIT_SIZE-PREAMBLE_WIDTH) := PREAMBLE_TAIL;
       payload_2_v(IRQ_PWDNEWADDR_MSB downto IRQ_PWDNEWADDR_LSB)        := irqi(cpuid).pwdnewaddr;
 
       header(cpuid)    <= header_v;
@@ -242,7 +242,7 @@ begin  -- rtl
     fifo_header_i : fifo
       generic map (
         depth => IRQ_FIFO_DEPTH,
-        width => NOC_FLIT_SIZE)
+        width => MISC_NOC_FLIT_SIZE)
       port map (
         clk      => clk,
         rst      => rst,
@@ -256,7 +256,7 @@ begin  -- rtl
     fifo_payload_1_i : fifo
       generic map (
         depth => IRQ_FIFO_DEPTH,
-        width => NOC_FLIT_SIZE)
+        width => MISC_NOC_FLIT_SIZE)
       port map (
         clk      => clk,
         rst      => rst,
@@ -270,7 +270,7 @@ begin  -- rtl
     fifo_payload_2_i : fifo
       generic map (
         depth => IRQ_FIFO_DEPTH,
-        width => NOC_FLIT_SIZE)
+        width => MISC_NOC_FLIT_SIZE)
       port map (
         clk      => clk,
         rst      => rst,

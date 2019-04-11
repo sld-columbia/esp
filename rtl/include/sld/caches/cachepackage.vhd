@@ -4,6 +4,7 @@
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
+use work.esp_global.all;
 use work.amba.all;
 use work.stdlib.all;
 use work.gencomp.all;
@@ -38,11 +39,10 @@ package cachepackage is
 
   constant COH_T_LOG2     : integer := 2;
 
-  -- TODO: The following are predefined by processor architecture and should
-  --       not be set here
-  constant WORD_OFFSET_BITS   : integer := 2;  -- CFG_ILINE = CFG_DLINE from grlib_config must match!
-  constant BYTE_OFFSET_BITS   : integer := 2;  -- Must be 2 for leon3 (32 bits)
-  constant ADDR_BITS          : integer := 32;
+  -- Global architecture parameters
+  constant WORD_OFFSET_BITS   : integer := GLOB_WORD_OFFSET_BITS;
+  constant BYTE_OFFSET_BITS   : integer := GLOB_BYTE_OFFSET_BITS;
+  constant ADDR_BITS          : integer := GLOB_PHYS_ADDR_BITS;
   --
 
   constant OFFSET_BITS        : integer := WORD_OFFSET_BITS + BYTE_OFFSET_BITS;
@@ -447,7 +447,7 @@ package body cachepackage is
     end if;
 
     -- compose header
-    header := create_header(local_y, local_x, dest_y, dest_x, '0' & coh_msg,
+    header := create_header(NOC_FLIT_SIZE, local_y, local_x, dest_y, dest_x, '0' & coh_msg,
                             std_logic_vector(resize(unsigned(hprot), RESERVED_WIDTH)));
 
     return header;

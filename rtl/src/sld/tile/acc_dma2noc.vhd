@@ -1,6 +1,25 @@
 -- Copyright (c) 2011-2019 Columbia University, System Level Design Group
 -- SPDX-License-Identifier: MIT
 
+-------------------------------------------------------------------------------
+-- ESP Accelerator DMA
+--
+-- The accelerators communicate with memory by issuing DMA requests. This module
+-- serves DMA requests by issuing burst transactions over the NoC. Address
+-- translation is performed thorugh a dedicated accelerator TLB (see
+-- sld/sldcommon/acc_tlb.vhd).
+--
+-- Note that the accelerator interface limits the accelerator virtual memory to
+-- at most 4 GB. Therefore, accelerators can process up to 4 GB of data on a
+-- single invocation.
+--
+-- NoC transactions can be non coherent DMA bursts that bypass the cache
+-- hierarchy, LLC-coherent DMA bursts, or memory access requests that comply
+-- with the MESI coherence protocol. The type of transaction is set at run time
+-- by configuring bankreg[COHERENCE_REG]. The fully-coherent model requires a
+-- private L2 cache to be instantiated through the ESP SoC generator.
+-------------------------------------------------------------------------------
+
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
@@ -9,6 +28,8 @@ use ieee.numeric_std.all;
 use STD.textio.all;
 use ieee.std_logic_textio.all;
 --pragma translate_on
+
+use work.esp_global.all;
 
 use work.amba.all;
 use work.stdlib.all;
@@ -106,7 +127,7 @@ entity acc_dma2noc is
     dma_snd_full                        : in  std_ulogic;
     -- tile->NoC5
     interrupt_wrreq                     : out std_ulogic;
-    interrupt_data_in                   : out noc_flit_type;
+    interrupt_data_in                   : out misc_noc_flit_type;
     interrupt_full                      : in  std_ulogic);
 
 end acc_dma2noc;
@@ -137,7 +158,7 @@ architecture rtl of acc_dma2noc is
   signal payload_address, payload_address_r  : noc_flit_type;
   signal payload_length, payload_length_r    : noc_flit_type;
   signal sample_flits                        : std_ulogic;
-  signal irq_header_i, irq_header            : noc_flit_type;
+  signal irq_header_i, irq_header            : misc_noc_flit_type;
   constant irq_info                          : std_logic_vector(3 downto 0) := conv_std_logic_vector(pirq, 4);
 
   -- DMA
@@ -170,7 +191,7 @@ architecture rtl of acc_dma2noc is
   signal pending_dma_read, pending_dma_write : std_ulogic;
   signal tlb_valid, tlb_clear, tlb_empty, tlb_write : std_ulogic;
   signal tlb_wr_address : std_logic_vector((log2xx(tlb_entries) -1) downto 0);
-  signal dma_address : std_logic_vector(31 downto 0);
+  signal dma_address : std_logic_vector(ADDR_BITS - 1 downto 0);
   signal dma_length : std_logic_vector(31 downto 0);
 
   -- Sample acc_done:
@@ -231,16 +252,16 @@ architecture rtl of acc_dma2noc is
   -- attribute mark_debug of burst : signal is "true";
   -- attribute mark_debug of acc_idle : signal is "true";
   -- attribute mark_debug of mon_dvfs_ctrl : signal is "true";
-  
+
 begin  -- rtl
 
   -----------------------------------------------------------------------------
   -- IRQ packet
   -----------------------------------------------------------------------------
-  irq_header_i <= create_header(local_y, local_x, io_y, io_x, INTERRUPT, irq_info);
-  irq_header(NOC_FLIT_SIZE-1 downto NOC_FLIT_SIZE-PREAMBLE_WIDTH) <= PREAMBLE_1FLIT;
-  irq_header(NOC_FLIT_SIZE-PREAMBLE_WIDTH-1 downto 0) <=
-    irq_header_i(NOC_FLIT_SIZE-PREAMBLE_WIDTH-1 downto 0);
+  irq_header_i <= create_header(MISC_NOC_FLIT_SIZE, local_y, local_x, io_y, io_x, INTERRUPT, irq_info);
+  irq_header(MISC_NOC_FLIT_SIZE-1 downto MISC_NOC_FLIT_SIZE-PREAMBLE_WIDTH) <= PREAMBLE_1FLIT;
+  irq_header(MISC_NOC_FLIT_SIZE-PREAMBLE_WIDTH-1 downto 0) <=
+    irq_header_i(MISC_NOC_FLIT_SIZE-PREAMBLE_WIDTH-1 downto 0);
 
   -----------------------------------------------------------------------------
   -- TLB
@@ -272,7 +293,7 @@ begin  -- rtl
         tlb_valid            => tlb_valid,
         tlb_write            => tlb_write,
         tlb_wr_address       => tlb_wr_address,
-        tlb_datain           => dma_rcv_data_out_int(31 downto 0),
+        tlb_datain           => dma_rcv_data_out_int(ADDR_BITS - 1 downto 0),
         dma_address          => dma_address,
         dma_length           => dma_length);
   end generate tlb_gen;
@@ -327,7 +348,8 @@ begin  -- rtl
   make_packet: process (bankreg, pending_dma_write, tlb_empty, dma_address, dma_length)
     variable msg_type : noc_msg_type;
     variable header_v : noc_flit_type;
-    variable address : std_logic_vector(31 downto 0);
+    variable tmp : std_logic_vector(63 downto 0);
+    variable address : std_logic_vector(ADDR_BITS - 1 downto 0);
     variable length : std_logic_vector(31 downto 0);
     variable mem_x, mem_y : local_yx;
     variable coherence : integer range 0 to ACC_COH_FULL;
@@ -338,7 +360,13 @@ begin  -- rtl
 
     if tlb_empty = '1' then
       -- fetch page table
-      address := bankreg(PT_ADDRESS_REG);
+      if ADDR_BITS > 32 then
+        tmp(63 downto 32) := bankreg(PT_ADDRESS_EXTENDED_REG);
+      else
+        tmp(63 downto 32) := (others => '0');
+      end if;
+      tmp(31 downto 0) := bankreg(PT_ADDRESS_REG);
+      address := tmp(ADDR_BITS - 1 downto 0);
       length  := bankreg(PT_NCHUNK_REG);
       if coherence = ACC_COH_LLC or coherence = ACC_COH_RECALL then
         msg_type := REQ_DMA_READ;
@@ -378,14 +406,16 @@ begin  -- rtl
     end if;
 
     header_v := (others => '0');
-    header_v := create_header(local_y, local_x, mem_y, mem_x, msg_type, hprot);
+    header_v := create_header(NOC_FLIT_SIZE, local_y, local_x, mem_y, mem_x, msg_type, hprot);
     header <= header_v;
 
+    payload_address <= (others => '0');
     payload_address(NOC_FLIT_SIZE-1 downto NOC_FLIT_SIZE-PREAMBLE_WIDTH) <= PREAMBLE_BODY;
-    payload_address(NOC_FLIT_SIZE-PREAMBLE_WIDTH-1 downto 0) <= address;
+    payload_address(ADDR_BITS-1 downto 0) <= address;
 
+    payload_length <= (others => '0');
     payload_length(NOC_FLIT_SIZE-1 downto NOC_FLIT_SIZE-PREAMBLE_WIDTH) <= PREAMBLE_TAIL;
-    payload_length(NOC_FLIT_SIZE-PREAMBLE_WIDTH-1 downto 0) <= length;
+    payload_length(31 downto 0) <= length;
 
   end process make_packet;
 
@@ -411,8 +441,12 @@ begin  -- rtl
     end if;
   end process;
 
-  coherent_dma_address <= payload_address_r(ADDR_BITS - 1 downto 0);
-  coherent_dma_length  <= payload_length_r(ADDR_BITS - 1 downto 0);
+  fill_coherent_dma_req: process (payload_address_r, payload_length_r) is
+  begin  -- process fill_coherent_dma_req
+    coherent_dma_address <= payload_address_r(ADDR_BITS - 1 downto 0);
+    coherent_dma_length <= (others => '0');
+    coherent_dma_length(31 downto 0) <= payload_length_r(31 downto 0);
+  end process fill_coherent_dma_req;
 
   -----------------------------------------------------------------------------
   -- DMA
@@ -468,15 +502,16 @@ begin  -- rtl
     dma_snd_wrreq_int <= '0';
     dma_rcv_rdreq_int <= '0';
 
-    preamble := get_preamble(dma_rcv_data_out_int);
-    msg := get_msg_type(header_r);
+    preamble := get_preamble(NOC_FLIT_SIZE, dma_rcv_data_out_int);
+    msg := get_msg_type(NOC_FLIT_SIZE, header_r);
     len := payload_length_r(31 downto 0);
     if count /= len then
       payload_data(NOC_FLIT_SIZE-1 downto NOC_FLIT_SIZE-PREAMBLE_WIDTH) := PREAMBLE_BODY;
     else
       payload_data(NOC_FLIT_SIZE-1 downto NOC_FLIT_SIZE-PREAMBLE_WIDTH) := PREAMBLE_TAIL;
     end if;
-    payload_data(31 downto 0) := bufdout_data;
+    -- Note that NOC_FLIT_SIZE os ARCH_BITS + PREAMBLE_WIDTH
+    payload_data(ARCH_BITS - 1 downto 0) := bufdout_data;
 
     -- Default private cache inputs
     coherent_dma_read  <= '0';
@@ -486,7 +521,7 @@ begin  -- rtl
     acc_rst <= rst;
     conf_done <= '0';
     rd_grant <= '0';
-    bufdin_data <= dma_rcv_data_out_int(31 downto 0);
+    bufdin_data <= dma_rcv_data_out_int(ARCH_BITS - 1 downto 0);
     bufdin_valid <= '0';
     wr_grant <= '0';
     bufdout_ready <= '0';

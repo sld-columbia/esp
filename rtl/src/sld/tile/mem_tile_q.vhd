@@ -57,19 +57,19 @@ entity mem_tile_q is
     coherent_dma_rcv_empty     : out std_ulogic;
     -- NoC5->tile
     remote_ahbs_rcv_rdreq      : in  std_ulogic;
-    remote_ahbs_rcv_data_out   : out noc_flit_type;
+    remote_ahbs_rcv_data_out   : out misc_noc_flit_type;
     remote_ahbs_rcv_empty      : out std_ulogic;
     -- tile->NoC5
     remote_ahbs_snd_wrreq      : in  std_ulogic;
-    remote_ahbs_snd_data_in    : in  noc_flit_type;
+    remote_ahbs_snd_data_in    : in  misc_noc_flit_type;
     remote_ahbs_snd_full       : out std_ulogic;
     -- NoC5->tile
     apb_rcv_rdreq              : in  std_ulogic;
-    apb_rcv_data_out           : out noc_flit_type;
+    apb_rcv_data_out           : out misc_noc_flit_type;
     apb_rcv_empty              : out std_ulogic;
     -- tile->NoC5
     apb_snd_wrreq              : in  std_ulogic;
-    apb_snd_data_in            : in  noc_flit_type;
+    apb_snd_data_in            : in  misc_noc_flit_type;
     apb_snd_full               : out std_ulogic;
 
     -- Cachable data plane 1 -> request messages
@@ -101,10 +101,10 @@ entity mem_tile_q is
     noc4_in_void  : out std_ulogic;
     noc4_in_stop  : in  std_ulogic;
     -- Configuration plane 5 -> RD/WR registers
-    noc5_out_data : in  noc_flit_type;
+    noc5_out_data : in  misc_noc_flit_type;
     noc5_out_void : in  std_ulogic;
     noc5_out_stop : out std_ulogic;
-    noc5_in_data  : out noc_flit_type;
+    noc5_in_data  : out misc_noc_flit_type;
     noc5_in_void  : out std_ulogic;
     noc5_in_stop  : in  std_ulogic;
     -- Non cachable data data plane 6 -> DMA requests
@@ -155,19 +155,19 @@ architecture rtl of mem_tile_q is
   signal coherent_dma_rcv_full               : std_ulogic;
   -- NoC5->tile
   signal remote_ahbs_rcv_wrreq        : std_ulogic;
-  signal remote_ahbs_rcv_data_in      : noc_flit_type;
+  signal remote_ahbs_rcv_data_in      : misc_noc_flit_type;
   signal remote_ahbs_rcv_full         : std_ulogic;
   -- tile->NoC5
   signal remote_ahbs_snd_rdreq        : std_ulogic;
-  signal remote_ahbs_snd_data_out     : noc_flit_type;
+  signal remote_ahbs_snd_data_out     : misc_noc_flit_type;
   signal remote_ahbs_snd_empty        : std_ulogic;
   -- NoC5->tile
   signal apb_rcv_wrreq                : std_ulogic;
-  signal apb_rcv_data_in              : noc_flit_type;
+  signal apb_rcv_data_in              : misc_noc_flit_type;
   signal apb_rcv_full                 : std_ulogic;
   -- tile->NoC5
   signal apb_snd_rdreq                : std_ulogic;
-  signal apb_snd_data_out             : noc_flit_type;
+  signal apb_snd_data_out             : misc_noc_flit_type;
   signal apb_snd_empty                : std_ulogic;
 
   signal noc2_dummy_out_data  : noc_flit_type;
@@ -346,8 +346,8 @@ begin  -- rtl
 
   -- From noc5: AHB slave response from remote DSU (AHBs rcv)
   -- Priority must be respected to avoid deadlock!
-  noc5_msg_type <= get_msg_type(noc5_out_data);
-  noc5_preamble <= get_preamble(noc5_out_data);
+  noc5_msg_type <= get_msg_type(MISC_NOC_FLIT_SIZE, noc5_out_data);
+  noc5_preamble <= get_preamble(MISC_NOC_FLIT_SIZE, noc5_out_data);
   process (clk, rst)
   begin  -- process
     if rst = '0' then                   -- asynchronous reset (active low)
@@ -412,7 +412,7 @@ begin  -- rtl
     generic map (
       depth => 5,                       --Header, data up to 4 words
                                         --per packet
-      width => NOC_FLIT_SIZE)
+      width => MISC_NOC_FLIT_SIZE)
     port map (
       clk      => clk,
       rst      => fifo_rst,
@@ -426,7 +426,7 @@ begin  -- rtl
   fifo_16: fifo
     generic map (
       depth => 3,                       --Header, address, data
-      width => NOC_FLIT_SIZE)
+      width => MISC_NOC_FLIT_SIZE)
     port map (
       clk      => clk,
       rst      => fifo_rst,
@@ -479,7 +479,7 @@ begin  -- rtl
                       end if;
                     end if;
 
-      when packet_remote_ahbs_snd  => to_noc5_preamble := get_preamble(remote_ahbs_snd_data_out);
+      when packet_remote_ahbs_snd  => to_noc5_preamble := get_preamble(MISC_NOC_FLIT_SIZE, remote_ahbs_snd_data_out);
                              if (noc5_in_stop = '0' and remote_ahbs_snd_empty = '0') then
                                noc5_in_data <= remote_ahbs_snd_data_out;
                                noc5_in_void <= remote_ahbs_snd_empty;
@@ -489,7 +489,7 @@ begin  -- rtl
                                end if;
                              end if;
 
-      when packet_apb_snd  => to_noc5_preamble := get_preamble(apb_snd_data_out);
+      when packet_apb_snd  => to_noc5_preamble := get_preamble(MISC_NOC_FLIT_SIZE, apb_snd_data_out);
                              if (noc5_in_stop = '0' and apb_snd_empty = '0') then
                                noc5_in_data <= apb_snd_data_out;
                                noc5_in_void <= apb_snd_empty;
@@ -506,7 +506,7 @@ begin  -- rtl
   fifo_11: fifo
     generic map (
       depth => 6,                       --Header, address, data (up to 4 words)
-      width => NOC_FLIT_SIZE)
+      width => MISC_NOC_FLIT_SIZE)
     port map (
       clk      => clk,
       rst      => fifo_rst,
@@ -520,7 +520,7 @@ begin  -- rtl
   fifo_17: fifo
     generic map (
       depth => 6,                       --Header, address, data (up to 4 words)
-      width => NOC_FLIT_SIZE)
+      width => MISC_NOC_FLIT_SIZE)
     port map (
       clk      => clk,
       rst      => fifo_rst,

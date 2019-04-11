@@ -37,11 +37,11 @@ entity cpu_irq2noc is
 
     -- NoC5->tile
     remote_irq_rdreq       : out std_ulogic;
-    remote_irq_data_out    : in  noc_flit_type;
+    remote_irq_data_out    : in  misc_noc_flit_type;
     remote_irq_empty       : in  std_ulogic;
     -- tile->NoC5
     remote_irq_ack_wrreq   : out std_ulogic;
-    remote_irq_ack_data_in : out noc_flit_type;
+    remote_irq_ack_data_in : out misc_noc_flit_type;
     remote_irq_ack_full    : in  std_ulogic);
 
 end cpu_irq2noc;
@@ -61,11 +61,11 @@ architecture rtl of cpu_irq2noc is
   signal irqi_noc : l3_irq_in_type;
   signal irqi_reg : l3_irq_in_type;
 
-  signal header    : noc_flit_type;
-  signal payload_1 : noc_flit_type;
+  signal header    : misc_noc_flit_type;
+  signal payload_1 : misc_noc_flit_type;
 
-  signal fifo_header    : noc_flit_type;
-  signal fifo_payload_1 : noc_flit_type;
+  signal fifo_header    : misc_noc_flit_type;
+  signal fifo_payload_1 : misc_noc_flit_type;
 
   signal irqo_send_header    : std_ulogic;
   signal irqo_send_payload_1 : std_ulogic;
@@ -138,16 +138,16 @@ begin  -- rtl
   -- Make a packet for interrupt acknowledge
   make_packet : process (irqo)
     variable msg_type    : noc_msg_type;
-    variable header_v    : noc_flit_type;
-    variable payload_1_v : noc_flit_type;
+    variable header_v    : misc_noc_flit_type;
+    variable payload_1_v : misc_noc_flit_type;
   begin  -- process make_packet
     msg_type := IRQ_MSG;
 
     header_v := (others                                                         => '0');
-    header_v := create_header(local_y, local_x, irq_y, irq_x, msg_type, (others => '0'));
+    header_v := create_header(MISC_NOC_FLIT_SIZE, local_y, local_x, irq_y, irq_x, msg_type, (others => '0'));
 
     payload_1_v                                                      := (others => '0');
-    payload_1_v(NOC_FLIT_SIZE-1 downto NOC_FLIT_SIZE-PREAMBLE_WIDTH) := PREAMBLE_TAIL;
+    payload_1_v(MISC_NOC_FLIT_SIZE-1 downto MISC_NOC_FLIT_SIZE-PREAMBLE_WIDTH) := PREAMBLE_TAIL;
     payload_1_v(IRQ_IRL_MSB downto IRQ_IRL_LSB)                      := irqo.irl;
     payload_1_v(IRQ_INTACK_BIT)                                      := irqo.intack;
     payload_1_v(IRQ_PWD_BIT)                                         := irqo.pwd;
@@ -179,7 +179,7 @@ begin  -- rtl
   fifo_header_i : fifo
     generic map (
       depth => IRQ_FIFO_DEPTH,
-      width => NOC_FLIT_SIZE)
+      width => MISC_NOC_FLIT_SIZE)
     port map (
       clk      => clk,
       rst      => rst,
@@ -193,7 +193,7 @@ begin  -- rtl
   fifo_payload_1_i : fifo
     generic map (
       depth => IRQ_FIFO_DEPTH,
-      width => NOC_FLIT_SIZE)
+      width => MISC_NOC_FLIT_SIZE)
     port map (
       clk      => clk,
       rst      => rst,

@@ -4,6 +4,8 @@
 library ieee;
 use ieee.std_logic_1164.all;
 
+use work.esp_global.all;
+
 use work.amba.all;
 use work.stdlib.all;
 use work.sld_devices.all;
@@ -48,14 +50,14 @@ package sldbus is
       rd_length     : in  std_logic_vector(31 downto 0);
       rd_grant      : out std_ulogic;
       bufdin_ready  : in  std_ulogic;
-      bufdin_data   : out std_logic_vector(31 downto 0);
+      bufdin_data   : out std_logic_vector(ARCH_BITS-1 downto 0);
       bufdin_valid  : out std_ulogic;
       wr_request    : in  std_ulogic;
       wr_index      : in  std_logic_vector(31 downto 0);
       wr_length     : in  std_logic_vector(31 downto 0);
       wr_grant      : out std_ulogic;
       bufdout_ready : out std_ulogic;
-      bufdout_data  : in  std_logic_vector(31 downto 0);
+      bufdout_data  : in  std_logic_vector(ARCH_BITS-1 downto 0);
       bufdout_valid : in  std_ulogic;
       acc_done      : in  std_ulogic);
   end component;

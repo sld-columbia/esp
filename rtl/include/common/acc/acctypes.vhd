@@ -40,7 +40,9 @@ package acctypes is
   -- bank(7)        : PT_NCHUNK_MAX (maximum number of chunks supported) - Read only
   constant PT_NCHUNK_MAX_REG : integer range 0 to MAXREGNUM - 1 := 7;
 
-  -- bank(8)        : RESERVED
+  -- bank(8)        : PT_ADDRESS_EXTENDED (page table bus address MSBs for
+  --                  architectures with more than 32 bits of address)
+  constant PT_ADDRESS_EXTENDED_REG : integer range 0 to MAXREGNUM - 1 := 8;
 
   -- bank(9)        : Type of coherence (None, LLC, Full)
   constant COHERENCE_REG : integer range 0 to MAXREGNUM - 1 := 9;

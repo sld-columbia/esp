@@ -29,6 +29,7 @@ tkconfig.h
 tkparse
 
 .esp_config
+esp_global.vhd
 socmap.vhd
 mmi64_regs.h
 power.h

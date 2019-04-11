@@ -87,10 +87,10 @@ entity tile_io is
     noc4_output_port   : in  noc_flit_type;
     noc4_data_void_out : in  std_ulogic;
     noc4_stop_out      : in  std_ulogic;
-    noc5_input_port    : out noc_flit_type;
+    noc5_input_port    : out misc_noc_flit_type;
     noc5_data_void_in  : out std_ulogic;
     noc5_stop_in       : out std_ulogic;
-    noc5_output_port   : in  noc_flit_type;
+    noc5_output_port   : in  misc_noc_flit_type;
     noc5_data_void_out : in  std_ulogic;
     noc5_stop_out      : in  std_ulogic;
     noc6_input_port    : out noc_flit_type;
@@ -138,16 +138,16 @@ architecture rtl of tile_io is
 
   -- Queues
   signal ahbs_rcv_rdreq            : std_ulogic;
-  signal ahbs_rcv_data_out         : noc_flit_type;
+  signal ahbs_rcv_data_out         : misc_noc_flit_type;
   signal ahbs_rcv_empty            : std_ulogic;
   signal ahbs_snd_wrreq            : std_ulogic;
-  signal ahbs_snd_data_in          : noc_flit_type;
+  signal ahbs_snd_data_in          : misc_noc_flit_type;
   signal ahbs_snd_full             : std_ulogic;
   signal remote_ahbs_rcv_rdreq     : std_ulogic;
-  signal remote_ahbs_rcv_data_out  : noc_flit_type;
+  signal remote_ahbs_rcv_data_out  : misc_noc_flit_type;
   signal remote_ahbs_rcv_empty     : std_ulogic;
   signal remote_ahbs_snd_wrreq     : std_ulogic;
-  signal remote_ahbs_snd_data_in   : noc_flit_type;
+  signal remote_ahbs_snd_data_in   : misc_noc_flit_type;
   signal remote_ahbs_snd_full      : std_ulogic;
   signal dma_rcv_rdreq             : std_ulogic;
   signal dma_rcv_data_out          : noc_flit_type;
@@ -164,31 +164,31 @@ architecture rtl of tile_io is
   signal coherent_dma_snd_data_in  : noc_flit_type;
   signal coherent_dma_snd_full     : std_ulogic;
   signal apb_rcv_rdreq             : std_ulogic;
-  signal apb_rcv_data_out          : noc_flit_type;
+  signal apb_rcv_data_out          : misc_noc_flit_type;
   signal apb_rcv_empty             : std_ulogic;
   signal apb_snd_wrreq             : std_ulogic;
-  signal apb_snd_data_in           : noc_flit_type;
+  signal apb_snd_data_in           : misc_noc_flit_type;
   signal apb_snd_full              : std_ulogic;
   signal remote_apb_rcv_rdreq      : std_ulogic;
-  signal remote_apb_rcv_data_out   : noc_flit_type;
+  signal remote_apb_rcv_data_out   : misc_noc_flit_type;
   signal remote_apb_rcv_empty      : std_ulogic;
   signal remote_apb_snd_wrreq      : std_ulogic;
-  signal remote_apb_snd_data_in    : noc_flit_type;
+  signal remote_apb_snd_data_in    : misc_noc_flit_type;
   signal remote_apb_snd_full       : std_ulogic;
   signal local_apb_rcv_rdreq          : std_ulogic;
-  signal local_apb_rcv_data_out       : noc_flit_type;
+  signal local_apb_rcv_data_out       : misc_noc_flit_type;
   signal local_apb_rcv_empty          : std_ulogic;
   signal local_remote_apb_snd_wrreq   : std_ulogic;
-  signal local_remote_apb_snd_data_in : noc_flit_type;
+  signal local_remote_apb_snd_data_in : misc_noc_flit_type;
   signal local_remote_apb_snd_full    : std_ulogic;
   signal irq_ack_rdreq             : std_ulogic;
-  signal irq_ack_data_out          : noc_flit_type;
+  signal irq_ack_data_out          : misc_noc_flit_type;
   signal irq_ack_empty             : std_ulogic;
   signal irq_wrreq                 : std_ulogic;
-  signal irq_data_in               : noc_flit_type;
+  signal irq_data_in               : misc_noc_flit_type;
   signal irq_full                  : std_ulogic;
   signal interrupt_rdreq           : std_ulogic;
-  signal interrupt_data_out        : noc_flit_type;
+  signal interrupt_data_out        : misc_noc_flit_type;
   signal interrupt_empty           : std_ulogic;
 
   -- bus

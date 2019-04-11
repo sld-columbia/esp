@@ -27,7 +27,7 @@ entity misc_noc2interrupt is
 
     -- NoC5->tile
     interrupt_rdreq                     : out std_ulogic;
-    interrupt_data_out                  : in  noc_flit_type;
+    interrupt_data_out                  : in  misc_noc_flit_type;
     interrupt_empty                     : in  std_ulogic);
 
 end misc_noc2interrupt;
@@ -41,7 +41,7 @@ begin  -- rtl
     variable irq_info : std_logic_vector(RESERVED_WIDTH-1 downto 0);
     variable pirq : integer range 0 to NAHBIRQ-1;
   begin  -- process set_interrupt
-    irq_info := get_reserved_field(interrupt_data_out);
+    irq_info := get_reserved_field(MISC_NOC_FLIT_SIZE, interrupt_data_out);
     noc_pirq <= (others => '0');
     interrupt_rdreq <= '0';
     pirq := conv_integer(irq_info);

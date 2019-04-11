@@ -41,11 +41,11 @@ entity apb2noc is
 
     -- Packets to remote APB slave (tile->NoC5)
     remote_apb_snd_wrreq      : out std_ulogic;
-    remote_apb_snd_data_in    : out noc_flit_type;
+    remote_apb_snd_data_in    : out misc_noc_flit_type;
     remote_apb_snd_full       : in  std_ulogic;
     -- Packets from remote APB (Noc5->tile)
     remote_apb_rcv_rdreq       : out std_ulogic;
-    remote_apb_rcv_data_out    : in  noc_flit_type;
+    remote_apb_rcv_data_out    : in  misc_noc_flit_type;
     remote_apb_rcv_empty       : in  std_ulogic);
 
 end apb2noc;
@@ -57,12 +57,12 @@ architecture rtl of apb2noc is
                    rd_reply_flit1, rd_reply_flit2);
   signal apb_state, apb_next : apb_fsm;
 
-  signal header : noc_flit_type;
-  signal payload_address : noc_flit_type;
-  signal payload_data : noc_flit_type;
-  signal header_reg : noc_flit_type;
-  signal payload_address_reg : noc_flit_type;
-  signal payload_data_reg : noc_flit_type;
+  signal header : misc_noc_flit_type;
+  signal payload_address : misc_noc_flit_type;
+  signal payload_data : misc_noc_flit_type;
+  signal header_reg : misc_noc_flit_type;
+  signal payload_address_reg : misc_noc_flit_type;
+  signal payload_data_reg : misc_noc_flit_type;
   signal sample_flits : std_ulogic;
   signal pindex : integer range 0 to NAPBSLV - 1;
 
@@ -88,17 +88,19 @@ begin  -- rtl
 
   make_packet: process (apbi)
     variable msg_type : noc_msg_type;
-    variable header_v : noc_flit_type;
+    variable header_v : misc_noc_flit_type;
     --pragma translate_off
     --variable my_line : LINE;
     --pragma translate_on
   begin  -- process make_packet
     msg_type := REQ_REG_RD;
     header_v := (others => '0');
-    payload_address(NOC_FLIT_SIZE-1 downto NOC_FLIT_SIZE-PREAMBLE_WIDTH) <= PREAMBLE_TAIL;
-    payload_address(NOC_FLIT_SIZE-PREAMBLE_WIDTH-1 downto 0) <= apbi.paddr;
-    payload_data(NOC_FLIT_SIZE-1 downto NOC_FLIT_SIZE-PREAMBLE_WIDTH) <= PREAMBLE_TAIL;
-    payload_data(NOC_FLIT_SIZE-PREAMBLE_WIDTH-1 downto 0) <= apbi.pwdata;
+    payload_address <= (others => '0');
+    payload_address(MISC_NOC_FLIT_SIZE-1 downto MISC_NOC_FLIT_SIZE-PREAMBLE_WIDTH) <= PREAMBLE_TAIL;
+    payload_address(31 downto 0) <= apbi.paddr;
+    payload_data <= (others => '0');
+    payload_data(MISC_NOC_FLIT_SIZE-1 downto MISC_NOC_FLIT_SIZE-PREAMBLE_WIDTH) <= PREAMBLE_TAIL;
+    payload_data(31 downto 0) <= apbi.pwdata;
 
     pindex <= 0;
     for i in 0 to NAPBSLV - 1 loop
@@ -107,9 +109,9 @@ begin  -- rtl
         pindex <= i;
         if apbi.pwrite = '1' then
           msg_type := REQ_REG_WR;
-          payload_address(NOC_FLIT_SIZE-1 downto NOC_FLIT_SIZE-PREAMBLE_WIDTH) <= PREAMBLE_BODY;
+          payload_address(MISC_NOC_FLIT_SIZE-1 downto MISC_NOC_FLIT_SIZE-PREAMBLE_WIDTH) <= PREAMBLE_BODY;
         end if;
-        header_v := create_header(local_y, local_x, apb_slv_y(i), apb_slv_x(i), msg_type, (others => '0'));
+        header_v := create_header(MISC_NOC_FLIT_SIZE, local_y, local_x, apb_slv_y(i), apb_slv_x(i), msg_type, (others => '0'));
 --pragma translate_off
         --Print("HEADER: ");
         --write(my_line, header_v);

@@ -879,7 +879,7 @@ begin  -- architecture rtl
     coherence_req_rdreq <= '0';
 
     -- incoming NoC messages parsing
-    preamble     := get_preamble(coherence_req_data_out);
+    preamble     := get_preamble(NOC_FLIT_SIZE, coherence_req_data_out);
 
     -- fsm states
     case reg.state is
@@ -892,12 +892,12 @@ begin  -- architecture rtl
 
           coherence_req_rdreq <= '1';
 
-          reg.coh_msg := get_msg_type(coherence_req_data_out);
-          reserved    := get_reserved_field(coherence_req_data_out);
+          reg.coh_msg := get_msg_type(NOC_FLIT_SIZE, coherence_req_data_out);
+          reserved    := get_reserved_field(NOC_FLIT_SIZE, coherence_req_data_out);
           reg.hprot   := reserved(HPROT_WIDTH - 1 downto 0);
 
-          reg.origin_x                                              := get_origin_x(coherence_req_data_out);
-          reg.origin_y                                              := get_origin_y(coherence_req_data_out);
+          reg.origin_x                                              := get_origin_x(NOC_FLIT_SIZE, coherence_req_data_out);
+          reg.origin_y                                              := get_origin_y(NOC_FLIT_SIZE, coherence_req_data_out);
           if unsigned(reg.origin_x) >= 0 and unsigned(reg.origin_x) <= noc_xlen and
              unsigned(reg.origin_y) >= 0 and unsigned(reg.origin_y) <= noc_xlen
           then
@@ -1011,7 +1011,7 @@ begin  -- architecture rtl
     dma_rcv_rdreq       <= '0';
 
     -- incoming NoC messages parsing
-    dma_preamble := get_preamble(dma_rcv_data_out);
+    dma_preamble := get_preamble(NOC_FLIT_SIZE, dma_rcv_data_out);
 
     -- fsm states
     case reg.state is
@@ -1024,10 +1024,10 @@ begin  -- architecture rtl
 
           dma_rcv_rdreq <= '1';
 
-          reg.coh_msg := get_msg_type(dma_rcv_data_out);
+          reg.coh_msg := get_msg_type(NOC_FLIT_SIZE, dma_rcv_data_out);
 
-          reg.origin_x := get_origin_x(dma_rcv_data_out);
-          reg.origin_y := get_origin_y(dma_rcv_data_out);
+          reg.origin_x := get_origin_x(NOC_FLIT_SIZE, dma_rcv_data_out);
+          reg.origin_y := get_origin_y(NOC_FLIT_SIZE, dma_rcv_data_out);
 
           if unsigned(reg.origin_x) >= 0 and unsigned(reg.origin_x) <= noc_xlen and
              unsigned(reg.origin_y) >= 0 and unsigned(reg.origin_y) <= noc_xlen
@@ -1185,9 +1185,9 @@ begin  -- architecture rtl
 
           coherence_rsp_rcv_rdreq <= '1';
 
-          reg.coh_msg := get_msg_type(coherence_rsp_rcv_data_out);
-          reg.origin_x := get_origin_x(coherence_rsp_rcv_data_out);
-          reg.origin_y := get_origin_y(coherence_rsp_rcv_data_out);
+          reg.coh_msg := get_msg_type(NOC_FLIT_SIZE, coherence_rsp_rcv_data_out);
+          reg.origin_x := get_origin_x(NOC_FLIT_SIZE, coherence_rsp_rcv_data_out);
+          reg.origin_y := get_origin_y(NOC_FLIT_SIZE, coherence_rsp_rcv_data_out);
 
           if unsigned(reg.origin_x) >= 0 and unsigned(reg.origin_x) <= noc_xlen and
              unsigned(reg.origin_y) >= 0 and unsigned(reg.origin_y) <= noc_xlen
@@ -1343,7 +1343,7 @@ begin  -- architecture rtl
             req_id(llc_fwd_out_data_req_id'length - 1 downto 0)            := llc_fwd_out_data_req_id;
 
             coherence_fwd_wrreq <= '1';
-            coherence_fwd_data_in <= create_header(local_y, local_x, dest_y, dest_x,
+            coherence_fwd_data_in <= create_header(NOC_FLIT_SIZE, local_y, local_x, dest_y, dest_x,
                                                    llc_fwd_out_data_coh_msg, req_id);
 
             reg.state := send_addr;
@@ -1427,7 +1427,7 @@ begin  -- architecture rtl
 
             coherence_rsp_snd_wrreq <= '1';
             coherence_rsp_snd_data_in <=
-              create_header(local_y, local_x, dest_y, dest_x,
+              create_header(NOC_FLIT_SIZE, local_y, local_x, dest_y, dest_x,
                             '0' & reg.coh_msg, reserved);
 
             reg.state := send_addr;
@@ -1451,7 +1451,7 @@ begin  -- architecture rtl
 
           coherence_rsp_snd_wrreq <= '1';
           coherence_rsp_snd_data_in <=
-            create_header(local_y, local_x, reg.dest_y, reg.dest_x,
+            create_header(NOC_FLIT_SIZE, local_y, local_x, reg.dest_y, reg.dest_x,
                           '0' & reg.coh_msg, reg.reserved);
 
           reg.state := send_addr;
@@ -1567,7 +1567,7 @@ begin  -- architecture rtl
           if dma_snd_full = '0' then
 
             dma_snd_wrreq <= '1';
-            dma_snd_data_in <= create_header(local_y, local_x, dest_y,
+            dma_snd_data_in <= create_header(NOC_FLIT_SIZE, local_y, local_x, dest_y,
                                              dest_x, '0' & reg.coh_msg, (others => '0'));
 
             reg.state := send_data_dma;
@@ -1589,7 +1589,7 @@ begin  -- architecture rtl
         if dma_snd_full = '0' then
 
           dma_snd_wrreq   <= '1';
-          dma_snd_data_in <= create_header(local_y, local_x, reg.dest_y, reg.dest_x, '0' & reg.coh_msg, (others => '0'));
+          dma_snd_data_in <= create_header(NOC_FLIT_SIZE, local_y, local_x, reg.dest_y, reg.dest_x, '0' & reg.coh_msg, (others => '0'));
 
           reg.state := send_data_dma;
 

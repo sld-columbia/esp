@@ -4,6 +4,8 @@
 library ieee;
 use ieee.std_logic_1164.all;
 
+use work.esp_global.all;
+
 package nocpackage is
 
 -------------------------------------------------------------------------------
@@ -18,8 +20,10 @@ package nocpackage is
 
   -- Header fields
   --
-  -- |33        32|31     27|26     22|21     17|16     12|11          9|8          5|4   0|
-  -- |  PREAMBLE  |  Src Y  |  Src X  |  Dst Y  |  Dst X  |  Msg. type  |  Reserved  |LEWSN|
+  -- Let W be the global constant ARCH_BITS
+  --
+  -- |W+1        W|W-1     W-5|W-6    W-10|W-11   W-15|W-16   W-20|W-21     W-23|W-24      W-27|W-28       5|4   0|
+  -- |  PREAMBLE  |   Src Y   |   Src X   |   Dst Y   |   Dst X   |  Msg. type  |   Reserved   |  [Unused]  |LEWSN|
   --
 
   constant HEADER_ROUTE_L : natural := 4;
@@ -33,19 +37,18 @@ package nocpackage is
   constant MSG_TYPE_WIDTH      : natural := 3;
   constant RESERVED_WIDTH      : natural := 4;
   constant NEXT_ROUTING_WIDTH  : natural := 5;
-  constant NOC_FLIT_SIZE       : natural := PREAMBLE_WIDTH+
-                                            4*YX_WIDTH+
-                                            MSG_TYPE_WIDTH+
-                                            RESERVED_WIDTH+
-                                            NEXT_ROUTING_WIDTH;
+  constant NOC_FLIT_SIZE       : natural := PREAMBLE_WIDTH + ARCH_BITS;
+  constant MISC_NOC_FLIT_SIZE  : natural := PREAMBLE_WIDTH + 32;
 
   subtype local_yx is std_logic_vector(2 downto 0);
   subtype noc_preamble_type is std_logic_vector(PREAMBLE_WIDTH-1 downto 0);
   subtype noc_msg_type is std_logic_vector(MSG_TYPE_WIDTH-1 downto 0);
   subtype noc_flit_type is std_logic_vector(NOC_FLIT_SIZE-1 downto 0);
+  subtype misc_noc_flit_type is std_logic_vector(33 downto 0);
   subtype reserved_field_type is std_logic_vector(RESERVED_WIDTH-1 downto 0);
 
   type noc_flit_vector is array (natural range <>) of noc_flit_type;
+  type misc_noc_flit_vector is array (natural range <>) of misc_noc_flit_type;
 
   -- Preamble encoding
   constant PREAMBLE_HEADER : noc_preamble_type := "10";
@@ -112,9 +115,9 @@ package nocpackage is
   --          We need to hardcode this value because of VHDL limitations, but
   --          the *_MAX and *_NUM values are not limited in practice.
   --          These values should match those set in utils/socmap/
-  constant MEM_MAX_NUM : integer := 4;
-  constant CPU_MAX_NUM : integer := 4;
-  constant TILES_MAX_NUM : integer := 64;
+  constant MEM_MAX_NUM : integer := GLOB_MEM_MAX_NUM;
+  constant CPU_MAX_NUM : integer := GLOB_CPU_MAX_NUM;
+  constant TILES_MAX_NUM : integer := GLOB_TILES_MAX_NUM;
 
   type tile_mem_info is record
     x     : local_yx;
@@ -186,24 +189,34 @@ package nocpackage is
 
   -- Helper functions
   function get_origin_y (
+    constant flit_sz : integer;
     flit : noc_flit_type)
     return local_yx;
 
   function get_origin_x (
+    constant flit_sz : integer;
     flit : noc_flit_type)
     return local_yx;
 
   function get_msg_type (
+    constant flit_sz : integer;
     flit : noc_flit_type)
     return noc_msg_type;
 
   function get_preamble (
+    constant flit_sz : integer;
     flit : noc_flit_type)
     return noc_preamble_type;
 
   function get_reserved_field (
+    constant flit_sz : integer;
     flit : noc_flit_type)
     return reserved_field_type;
+
+  function get_unused_msb_field (
+    constant flit_sz : integer;
+    flit : noc_flit_type)
+    return std_ulogic;
 
   function is_gets (
     msg : noc_msg_type)
@@ -214,6 +227,7 @@ package nocpackage is
     return boolean;
 
   function create_header (
+    constant flit_sz : integer;
     local_y           : local_yx;
     local_x           : local_yx;
     remote_y          : local_yx;
@@ -259,51 +273,72 @@ end nocpackage;
 package body nocpackage is
 
   function get_origin_y (
+    constant flit_sz : integer;
     flit : noc_flit_type)
     return local_yx is
     variable ret : local_yx;
   begin  -- get_origin_y
-    ret := flit(29 downto 27);
+    ret := (others => '0');
+    ret := flit(flit_sz - PREAMBLE_WIDTH - YX_WIDTH + 2 downto flit_sz - PREAMBLE_WIDTH - YX_WIDTH);
     return ret;
   end get_origin_y;
 
   function get_origin_x (
+    constant flit_sz : integer;
     flit : noc_flit_type)
     return local_yx is
     variable ret : local_yx;
-  begin  -- get_origin_y
-    ret := flit(24 downto 22);
+  begin  -- get_origin_x
+    ret := (others => '0');
+    ret := flit(flit_sz - PREAMBLE_WIDTH - 2*YX_WIDTH + 2 downto flit_sz - PREAMBLE_WIDTH - 2*YX_WIDTH);
     return ret;
   end get_origin_x;
 
   function get_msg_type (
+    constant flit_sz : integer;
     flit : noc_flit_type)
     return noc_msg_type is
     variable msg : noc_msg_type;
   begin
-    msg := flit(NOC_FLIT_SIZE - PREAMBLE_WIDTH - 4*YX_WIDTH - 1 downto
-                NOC_FLIT_SIZE - PREAMBLE_WIDTH - 4*YX_WIDTH - MSG_TYPE_WIDTH);
+    msg := (others => '0');
+    msg := flit(flit_sz - PREAMBLE_WIDTH - 4*YX_WIDTH - 1 downto
+                flit_sz - PREAMBLE_WIDTH - 4*YX_WIDTH - MSG_TYPE_WIDTH);
     return msg;
   end get_msg_type;
 
   function get_preamble (
+    constant flit_sz : integer;
     flit : noc_flit_type)
     return noc_preamble_type is
     variable ret : noc_preamble_type;
   begin
-    ret := flit(NOC_FLIT_SIZE - 1 downto NOC_FLIT_SIZE - PREAMBLE_WIDTH);
+    ret := (others => '0');
+    ret := flit(flit_sz - 1 downto flit_sz - PREAMBLE_WIDTH);
     return ret;
   end get_preamble;
 
   function get_reserved_field (
+    constant flit_sz : integer;
     flit : noc_flit_type)
     return reserved_field_type is
     variable ret : reserved_field_type;
   begin
-    ret := flit(NOC_FLIT_SIZE - PREAMBLE_WIDTH - 4*YX_WIDTH - MSG_TYPE_WIDTH - 1 downto
-                NOC_FLIT_SIZE - PREAMBLE_WIDTH - 4*YX_WIDTH - MSG_TYPE_WIDTH - RESERVED_WIDTH);
+    ret := (others => '0');
+    ret := flit(flit_sz - PREAMBLE_WIDTH - 4*YX_WIDTH - MSG_TYPE_WIDTH - 1 downto
+                flit_sz - PREAMBLE_WIDTH - 4*YX_WIDTH - MSG_TYPE_WIDTH - RESERVED_WIDTH);
     return ret;
   end get_reserved_field;
+
+  function get_unused_msb_field (
+    constant flit_sz : integer;
+    flit : noc_flit_type)
+    return std_ulogic is
+    variable ret : std_ulogic;
+  begin
+    ret := flit(flit_sz - PREAMBLE_WIDTH - 4*YX_WIDTH - MSG_TYPE_WIDTH - RESERVED_WIDTH - 1);
+    return ret;
+  end get_unused_msb_field;
+
 
   function is_gets (
     msg : noc_msg_type)
@@ -328,6 +363,7 @@ package body nocpackage is
   end is_getm;
 
   function create_header (
+    constant flit_sz : integer;
     local_y           : local_yx;
     local_x           : local_yx;
     remote_y          : local_yx;
@@ -335,24 +371,24 @@ package body nocpackage is
     msg_type          : noc_msg_type;
     reserved          : reserved_field_type)
     return noc_flit_type is
-    variable header : std_logic_vector(NOC_FLIT_SIZE - 1 downto 0);
+    variable header : std_logic_vector(flit_sz - 1 downto 0);
     variable go_left, go_right, go_up, go_down : std_logic_vector(NEXT_ROUTING_WIDTH - 1 downto 0);
   begin  -- create_header
     header := (others => '0');
-    header(NOC_FLIT_SIZE - 1 downto
-           NOC_FLIT_SIZE - PREAMBLE_WIDTH) := PREAMBLE_HEADER;
-    header(NOC_FLIT_SIZE - PREAMBLE_WIDTH - 1 downto
-           NOC_FLIT_SIZE - PREAMBLE_WIDTH - YX_WIDTH) := "00" & local_y;
-    header(NOC_FLIT_SIZE - PREAMBLE_WIDTH - YX_WIDTH - 1 downto
-           NOC_FLIT_SIZE - PREAMBLE_WIDTH - 2*YX_WIDTH) := "00" & local_x;
-    header(NOC_FLIT_SIZE - PREAMBLE_WIDTH - 2*YX_WIDTH - 1 downto
-           NOC_FLIT_SIZE - PREAMBLE_WIDTH - 3*YX_WIDTH) := "00" & remote_y;
-    header(NOC_FLIT_SIZE - PREAMBLE_WIDTH - 3*YX_WIDTH - 1 downto
-           NOC_FLIT_SIZE - PREAMBLE_WIDTH - 4*YX_WIDTH) := "00" & remote_x;
-    header(NOC_FLIT_SIZE - PREAMBLE_WIDTH - 4*YX_WIDTH - 1 downto
-           NOC_FLIT_SIZE - PREAMBLE_WIDTH - 4*YX_WIDTH - MSG_TYPE_WIDTH) := msg_type;
-    header(NOC_FLIT_SIZE - PREAMBLE_WIDTH - 4*YX_WIDTH - MSG_TYPE_WIDTH - 1 downto
-           NOC_FLIT_SIZE - PREAMBLE_WIDTH - 4*YX_WIDTH - MSG_TYPE_WIDTH - RESERVED_WIDTH) := reserved;
+    header(flit_sz - 1 downto
+           flit_sz - PREAMBLE_WIDTH) := PREAMBLE_HEADER;
+    header(flit_sz - PREAMBLE_WIDTH - 1 downto
+           flit_sz - PREAMBLE_WIDTH - YX_WIDTH) := "00" & local_y;
+    header(flit_sz - PREAMBLE_WIDTH - YX_WIDTH - 1 downto
+           flit_sz - PREAMBLE_WIDTH - 2*YX_WIDTH) := "00" & local_x;
+    header(flit_sz - PREAMBLE_WIDTH - 2*YX_WIDTH - 1 downto
+           flit_sz - PREAMBLE_WIDTH - 3*YX_WIDTH) := "00" & remote_y;
+    header(flit_sz - PREAMBLE_WIDTH - 3*YX_WIDTH - 1 downto
+           flit_sz - PREAMBLE_WIDTH - 4*YX_WIDTH) := "00" & remote_x;
+    header(flit_sz - PREAMBLE_WIDTH - 4*YX_WIDTH - 1 downto
+           flit_sz - PREAMBLE_WIDTH - 4*YX_WIDTH - MSG_TYPE_WIDTH) := msg_type;
+    header(flit_sz - PREAMBLE_WIDTH - 4*YX_WIDTH - MSG_TYPE_WIDTH - 1 downto
+           flit_sz - PREAMBLE_WIDTH - 4*YX_WIDTH - MSG_TYPE_WIDTH - RESERVED_WIDTH) := reserved;
 
     if local_x < remote_x then
       go_right := "01000";

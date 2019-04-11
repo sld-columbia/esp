@@ -4,6 +4,7 @@
 library ieee;
 use ieee.std_logic_1164.all;
 
+use work.esp_global.all;
 use work.amba.all;
 use work.stdlib.all;
 use work.sld_devices.all;
@@ -84,15 +85,15 @@ use std.textio.all;
     coherent_dma_snd_full      : in  std_ulogic;
     -- Noc plane miscellaneous (tile -> NoC)
     interrupt_wrreq   : out std_ulogic;
-    interrupt_data_in : out noc_flit_type;
+    interrupt_data_in : out misc_noc_flit_type;
     interrupt_full    : in  std_ulogic;
     -- Noc plane miscellaneous (tile -> NoC)
     apb_snd_wrreq     : out std_ulogic;
-    apb_snd_data_in   : out noc_flit_type;
+    apb_snd_data_in   : out misc_noc_flit_type;
     apb_snd_full      : in  std_ulogic;
     -- Noc plane miscellaneous (NoC -> tile)
     apb_rcv_rdreq     : out std_ulogic;
-    apb_rcv_data_out  : in  noc_flit_type;
+    apb_rcv_data_out  : in  misc_noc_flit_type;
     apb_rcv_empty     : in  std_ulogic;
     mon_dvfs_in       : in  monitor_dvfs_type;
     --Monitor signals
@@ -191,10 +192,10 @@ end;
   signal dma_write_ctrl_data_length : std_logic_vector(31 downto 0);
   signal dma_read_chnl_valid        : std_ulogic;
   signal dma_read_chnl_ready        : std_ulogic;
-  signal dma_read_chnl_data         : std_logic_vector(31 downto 0);
+  signal dma_read_chnl_data         : std_logic_vector(ARCH_BITS - 1 downto 0);
   signal dma_write_chnl_valid       : std_ulogic;
   signal dma_write_chnl_ready       : std_ulogic;
-  signal dma_write_chnl_data        : std_logic_vector(31 downto 0);
+  signal dma_write_chnl_data        : std_logic_vector(ARCH_BITS - 1 downto 0);
   signal acc_done                   : std_ulogic;
   signal flush                      : std_ulogic;
   -- Register control, interrupt and monitor signals
