@@ -175,6 +175,12 @@ architecture rtl of tile_io is
   signal remote_apb_snd_wrreq      : std_ulogic;
   signal remote_apb_snd_data_in    : noc_flit_type;
   signal remote_apb_snd_full       : std_ulogic;
+  signal local_apb_rcv_rdreq          : std_ulogic;
+  signal local_apb_rcv_data_out       : noc_flit_type;
+  signal local_apb_rcv_empty          : std_ulogic;
+  signal local_remote_apb_snd_wrreq   : std_ulogic;
+  signal local_remote_apb_snd_data_in : noc_flit_type;
+  signal local_remote_apb_snd_full    : std_ulogic;
   signal irq_ack_rdreq             : std_ulogic;
   signal irq_ack_data_out          : noc_flit_type;
   signal irq_ack_empty             : std_ulogic;
@@ -194,16 +200,21 @@ architecture rtl of tile_io is
   signal ahbmo            : ahb_mst_out_vector;
   signal apbi             : apb_slv_in_type;
   signal apbo             : apb_slv_out_vector;
+  signal local_apbo       : apb_slv_out_vector;
+  signal remote_apbo      : apb_slv_out_vector;
   signal noc_apbi         : apb_slv_in_type;
   signal noc_apbi_wirq    : apb_slv_in_type;
   signal noc_apbo         : apb_slv_out_vector;
   signal apb_req, apb_ack : std_ulogic;
+  signal local_apb_ack    : std_ulogic;
+  signal remote_apb_ack   : std_ulogic;
 
   -- Tile parameters
   constant this_local_y           : local_yx                           := tile_y(io_tile_id);
   constant this_local_x           : local_yx                           := tile_x(io_tile_id);
   constant this_local_apb_en      : std_logic_vector(0 to NAPBSLV - 1) := local_apb_mask(io_tile_id);
   constant this_remote_apb_slv_en : std_logic_vector(0 to NAPBSLV - 1) := remote_apb_slv_mask(io_tile_id);
+  constant this_apb_en            : std_logic_vector(0 to NAPBSLV - 1) := this_local_apb_en or this_remote_apb_slv_en;
   constant this_local_ahb_en      : std_logic_vector(0 to NAHBSLV - 1) := local_ahb_mask(io_tile_id);
   constant this_remote_ahb_slv_en : std_logic_vector(0 to NAHBSLV - 1) := remote_ahb_mask(io_tile_id);
 
@@ -263,7 +274,7 @@ begin
   -- tile. The AHB2APB bridge has been modified to be latency insensitive.
   apb0 : patient_apbctrl                -- AHB/APB bridge
     generic map (hindex     => ahb2apb_hindex, haddr => CFG_APBADDR, hmask => ahb2apb_hmask, nslaves => NAPBSLV,
-                 remote_apb => this_remote_apb_slv_en)
+                 remote_apb => this_apb_en)
     port map (rst, clk, ahbsi, ahbso(ahb2apb_hindex), apbi, apbo, apb_req, apb_ack);
 
 
@@ -542,7 +553,7 @@ begin
       remote_ahbs_rcv_data_out   => remote_ahbs_rcv_data_out,
       remote_ahbs_rcv_empty      => remote_ahbs_rcv_empty);
 
-  -- I/O bus proxy - remote memory-mapped I/O accessed from local masters
+  -- I/O bus proxy - from local masters to remote slaves
   apb2noc_1 : apb2noc
     generic map (
       tech        => CFG_FABTECH,
@@ -557,15 +568,53 @@ begin
       rst                     => rst,
       clk                     => clk,
       apbi                    => apbi,
-      apbo                    => apbo,
+      apbo                    => remote_apbo,
       apb_req                 => apb_req,
-      apb_ack                 => apb_ack,
+      apb_ack                 => remote_apb_ack,
       remote_apb_snd_wrreq    => remote_apb_snd_wrreq,
       remote_apb_snd_data_in  => remote_apb_snd_data_in,
       remote_apb_snd_full     => remote_apb_snd_full,
       remote_apb_rcv_rdreq    => remote_apb_rcv_rdreq,
       remote_apb_rcv_data_out => remote_apb_rcv_data_out,
       remote_apb_rcv_empty    => remote_apb_rcv_empty);
+
+  -- I/O bus proxy - From local masters to local slaves
+  apb2noc_2 : apb2noc
+    generic map (
+      tech        => CFG_FABTECH,
+      ncpu        => CFG_NCPU_TILE,
+      local_y     => this_local_y,
+      local_x     => this_local_x,
+      apb_slv_en  => this_local_apb_en,
+      apb_slv_cfg => fixed_apbo_pconfig,
+      apb_slv_y   => apb_slv_y,
+      apb_slv_x   => apb_slv_x)
+    port map (
+      rst                     => rst,
+      clk                     => clk,
+      apbi                    => apbi,
+      apbo                    => local_apbo,
+      apb_req                 => apb_req,
+      apb_ack                 => local_apb_ack,
+      remote_apb_snd_wrreq    => local_remote_apb_snd_wrreq,
+      remote_apb_snd_data_in  => local_remote_apb_snd_data_in,
+      remote_apb_snd_full     => local_remote_apb_snd_full,
+      remote_apb_rcv_rdreq    => local_apb_rcv_rdreq,
+      remote_apb_rcv_data_out => local_apb_rcv_data_out,
+      remote_apb_rcv_empty    => local_apb_rcv_empty);
+
+  remote_local_apbo_assign: process (local_apbo, remote_apbo) is
+  begin  -- process remote_local_apbo_assign
+    for i in 0 to NAPBSLV - 1 loop
+      if this_local_apb_en(i) = '1' then
+        apbo(i) <= local_apbo(i);
+      else
+        apbo(i) <= remote_apbo(i);
+      end if;
+    end loop;  -- i
+  end process remote_local_apbo_assign;
+  apb_ack <= local_apb_ack or remote_apb_ack;
+
 
   misc_noc2apb_1 : misc_noc2apb
     generic map (
@@ -712,6 +761,12 @@ begin
       remote_apb_snd_wrreq      => remote_apb_snd_wrreq,
       remote_apb_snd_data_in    => remote_apb_snd_data_in,
       remote_apb_snd_full       => remote_apb_snd_full,
+      local_apb_rcv_rdreq          => local_apb_rcv_rdreq,
+      local_apb_rcv_data_out       => local_apb_rcv_data_out,
+      local_apb_rcv_empty          => local_apb_rcv_empty,
+      local_remote_apb_snd_wrreq   => local_remote_apb_snd_wrreq,
+      local_remote_apb_snd_data_in => local_remote_apb_snd_data_in,
+      local_remote_apb_snd_full    => local_remote_apb_snd_full,
       irq_ack_rdreq             => irq_ack_rdreq,
       irq_ack_data_out          => irq_ack_data_out,
       irq_ack_empty             => irq_ack_empty,

@@ -234,6 +234,7 @@ begin  -- rtl
     variable sequential : std_ulogic;
     variable selected : std_ulogic;
     variable rsp_preamble : noc_preamble_type;
+    variable coherence_rsp_rcv_preamble : noc_preamble_type;
     variable hrdata : std_logic_vector(AHBDW-1 downto 0);
     variable hready : std_ulogic;
   begin  -- process ahb_roundtrip
@@ -265,6 +266,7 @@ begin  -- rtl
     else
       rsp_preamble := get_preamble(remote_ahbs_rcv_data_out);
     end if;
+    coherence_rsp_rcv_preamble := get_preamble(coherence_rsp_rcv_data_out);
 
     -- Default ahbso assignment
     for i in 0 to NAHBSLV - 1 loop
@@ -293,7 +295,7 @@ begin  -- rtl
         if load_transaction_active = '1' then
           if coherence_rsp_rcv_empty = '0' then
             coherence_rsp_rcv_rdreq <= '1';
-            if rsp_preamble = PREAMBLE_TAIL then
+            if coherence_rsp_rcv_preamble = PREAMBLE_TAIL then
               load_done <= '1';
             end if;
           end if;
@@ -308,7 +310,7 @@ begin  -- rtl
         if load_transaction_active = '1' then
           if coherence_rsp_rcv_empty = '0' then
             coherence_rsp_rcv_rdreq <= '1';
-            if rsp_preamble = PREAMBLE_TAIL then
+            if coherence_rsp_rcv_preamble = PREAMBLE_TAIL then
               load_done <= '1';
             end if;
           end if;
@@ -408,14 +410,13 @@ begin  -- rtl
       when reply_data =>
         hready := '0';
         if coherence_rsp_rcv_empty = '0' then
-          if rsp_preamble = PREAMBLE_TAIL then
+          if coherence_rsp_rcv_preamble = PREAMBLE_TAIL then
             load_done <= '1';
           end if;
           coherence_rsp_rcv_rdreq <= '1';
           hrdata := ahbdrivedata(coherence_rsp_rcv_data_out(31 downto 0));
           hready := '1';
-        end if;
-        if remote_ahbs_rcv_empty = '0' then
+        elsif remote_ahbs_rcv_empty = '0' then
           remote_ahbs_rcv_rdreq <= '1';
           hrdata := ahbdrivedata(remote_ahbs_rcv_data_out(31 downto 0));
           hready := '1';

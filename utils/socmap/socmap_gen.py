@@ -1201,6 +1201,7 @@ def print_tiles(fp, esp_config):
     t = esp_config.tiles[i]
     if t.type == "cpu" or t.type == "misc":
       fp.write("    " + str(i) + " => (\n")
+    if t.type == "cpu":
       fp.write("      --pragma translate_off\n")
       fp.write("      0 => '1',\n")
       fp.write("      --pragma translate_on\n")
@@ -1211,6 +1212,7 @@ def print_tiles(fp, esp_config):
       fp.write("      14 => to_std_logic(CFG_GRETH),\n")
       if esp_config.has_sgmii:
         fp.write("      15 => to_std_logic(CFG_GRETH),\n")
+    if t.type == "cpu" or t.type == "misc":
       for j in range(0, esp_config.ndvfs):
         dvfs = esp_config.dvfs_ctrls[j]
         if dvfs.id != -1:
