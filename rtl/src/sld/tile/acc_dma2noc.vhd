@@ -186,48 +186,51 @@ architecture rtl of acc_dma2noc is
   signal acc_idle : std_ulogic;
   signal mon_dvfs_ctrl : monitor_dvfs_type;
 
-  attribute mark_debug : string;
+  -----------------------------------------------------------------------------
+  -- De-comment signals you wish to debug
+  -----------------------------------------------------------------------------
+  -- attribute mark_debug : string;
 
-  attribute mark_debug of sample    : signal is "true";
-  attribute mark_debug of readdata  : signal is "true";
-  attribute mark_debug of dvfs_apbo : signal is "true";
-  attribute mark_debug of irq      : signal is "true";
-  attribute mark_debug of irqset   : signal is "true";
-  attribute mark_debug of irq_state: signal is "true";
-  attribute mark_debug of header                    : signal is "true";
-  attribute mark_debug of payload_address: signal is "true";
-  attribute mark_debug of payload_length    : signal is "true";
-  attribute mark_debug of sample_flits                        : signal is "true";
-  attribute mark_debug of irq_header            : signal is "true";
-  attribute mark_debug of dma_state : signal is "true";
-  attribute mark_debug of status : signal is "true";
-  attribute mark_debug of sample_status : signal is "true";
-  attribute mark_debug of count                : signal is "true";
-  attribute mark_debug of increment_count      : signal is "true";
-  attribute mark_debug of clear_count          : signal is "true";
-  attribute mark_debug of dma_tran_done        : signal is "true";
-  attribute mark_debug of dma_tran_header_sent : signal is "true";
-  attribute mark_debug of dma_tran_start       : signal is "true";
-  attribute mark_debug of dvfs_transient       : signal is "true";
-  attribute mark_debug of pending_dma_read : signal is "true";
-  attribute mark_debug of pending_dma_write : signal is "true";
-  attribute mark_debug of tlb_valid : signal is "true";
-  attribute mark_debug of tlb_clear : signal is "true";
-  attribute mark_debug of tlb_empty : signal is "true";
-  attribute mark_debug of tlb_write : signal is "true";
-  attribute mark_debug of tlb_wr_address : signal is "true";
-  attribute mark_debug of dma_address : signal is "true";
-  attribute mark_debug of dma_length : signal is "true";
-  attribute mark_debug of pending_acc_done : signal is "true";
-  attribute mark_debug of clear_acc_done : signal is "true";
-  attribute mark_debug of dma_snd_delay : signal is "true";
-  attribute mark_debug of dma_rcv_delay : signal is "true";
-  attribute mark_debug of read_burst : signal is "true";
-  attribute mark_debug of write_burst : signal is "true";
-  attribute mark_debug of noc_delay : signal is "true";
-  attribute mark_debug of burst : signal is "true";
-  attribute mark_debug of acc_idle : signal is "true";
-  attribute mark_debug of mon_dvfs_ctrl : signal is "true";
+  -- attribute mark_debug of sample    : signal is "true";
+  -- attribute mark_debug of readdata  : signal is "true";
+  -- attribute mark_debug of dvfs_apbo : signal is "true";
+  -- attribute mark_debug of irq      : signal is "true";
+  -- attribute mark_debug of irqset   : signal is "true";
+  -- attribute mark_debug of irq_state: signal is "true";
+  -- attribute mark_debug of header                    : signal is "true";
+  -- attribute mark_debug of payload_address: signal is "true";
+  -- attribute mark_debug of payload_length    : signal is "true";
+  -- attribute mark_debug of sample_flits                        : signal is "true";
+  -- attribute mark_debug of irq_header            : signal is "true";
+  -- attribute mark_debug of dma_state : signal is "true";
+  -- attribute mark_debug of status : signal is "true";
+  -- attribute mark_debug of sample_status : signal is "true";
+  -- attribute mark_debug of count                : signal is "true";
+  -- attribute mark_debug of increment_count      : signal is "true";
+  -- attribute mark_debug of clear_count          : signal is "true";
+  -- attribute mark_debug of dma_tran_done        : signal is "true";
+  -- attribute mark_debug of dma_tran_header_sent : signal is "true";
+  -- attribute mark_debug of dma_tran_start       : signal is "true";
+  -- attribute mark_debug of dvfs_transient       : signal is "true";
+  -- attribute mark_debug of pending_dma_read : signal is "true";
+  -- attribute mark_debug of pending_dma_write : signal is "true";
+  -- attribute mark_debug of tlb_valid : signal is "true";
+  -- attribute mark_debug of tlb_clear : signal is "true";
+  -- attribute mark_debug of tlb_empty : signal is "true";
+  -- attribute mark_debug of tlb_write : signal is "true";
+  -- attribute mark_debug of tlb_wr_address : signal is "true";
+  -- attribute mark_debug of dma_address : signal is "true";
+  -- attribute mark_debug of dma_length : signal is "true";
+  -- attribute mark_debug of pending_acc_done : signal is "true";
+  -- attribute mark_debug of clear_acc_done : signal is "true";
+  -- attribute mark_debug of dma_snd_delay : signal is "true";
+  -- attribute mark_debug of dma_rcv_delay : signal is "true";
+  -- attribute mark_debug of read_burst : signal is "true";
+  -- attribute mark_debug of write_burst : signal is "true";
+  -- attribute mark_debug of noc_delay : signal is "true";
+  -- attribute mark_debug of burst : signal is "true";
+  -- attribute mark_debug of acc_idle : signal is "true";
+  -- attribute mark_debug of mon_dvfs_ctrl : signal is "true";
   
 begin  -- rtl
 
