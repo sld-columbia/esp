@@ -23,9 +23,16 @@
 // Common
 //
 
-#define ADDR_BITS	32
-#define BYTE_BITS	2
-#define WORD_BITS	2
+#ifndef ADDR_BITS
+#define ADDR_BITS	32 // defined in l2,llc/stratus/project.tcl
+#endif
+#ifndef BYTE_BITS
+#define BYTE_BITS	2 // defined in l2,llc/stratus/project.tcl
+#endif
+#ifndef WORD_BITS
+#define WORD_BITS	2 // defined in l2,llc/stratus/project.tcl
+#endif
+
 #define OFFSET_BITS	(BYTE_BITS + WORD_BITS)
 
 #define LINE_RANGE_HI	(ADDR_BITS - 1)
@@ -40,7 +47,7 @@
 #define B_OFF_RANGE_LO	OFF_RANGE_LO
 
 #define SET_OFFSET	(1 << OFFSET_BITS)
-#define WORD_OFFSET	(1 << WORD_BITS)
+#define WORD_OFFSET	(1 << BYTE_BITS)
 #define LINE_ADDR_BITS  (ADDR_BITS - SET_RANGE_LO)
 
 // Cache sizes

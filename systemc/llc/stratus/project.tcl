@@ -33,32 +33,51 @@ foreach sets [list 1024] {
 
     foreach ways [list 16] {
 
-	set pars "_$sets\SETS_$ways\WAYS"
+	foreach wbits [list 1 2] {
 
-	set iocfg "IOCFG$pars"
+	    foreach bbits [list 2 3] {
 
-	define_io_config * $iocfg -DLLC_SETS=$sets -DLLC_WAYS=$ways
+		foreach abits [list 32] {
 
-	define_system_config tb "TESTBENCH$pars" -io_config $iocfg
+		    # Skip these configurations
+		    if {$wbits == 1 && $bbits == 2} {continue}
+		    if {$wbits == 2 && $bbits == 3} {continue}
 
-	define_sim_config "BEHAV$pars" "llc BEH" "tb TESTBENCH$pars" -io_config $iocfg
+		    set words_per_line [expr 1 << $wbits]
+		    set bits_per_word [expr (1 << $bbits) * 8]
 
-	foreach cfg [list BASIC] {
+		    set pars "_${sets}SETS_${ways}WAYS_${words_per_line}x${bits_per_word}LINE_${abits}ADDR"
 
-	    set cname "$cfg$pars"
+		    set iocfg "IOCFG$pars"
 
-	    define_hls_config llc $cname --clock_period=$CLOCK_PERIOD $COMMON_HLS_FLAGS \
-		-DHLS_DIRECTIVES_$cfg -io_config $iocfg
+		    define_io_config * $iocfg -DLLC_SETS=$sets -DLLC_WAYS=$ways \
+			-DADDR_BITS=$abits -DBYTE_BITS=$bbits -DWORD_BITS=$wbits
 
-	    if {$TECH_IS_XILINX == 1} {
+		    define_system_config tb "TESTBENCH$pars" -io_config $iocfg
 
-		define_sim_config "$cname\_V" "llc RTL_V $cname" "tb TESTBENCH$pars" \
-		    -verilog_top_modules glbl -io_config $iocfg
+		    define_sim_config "BEHAV$pars" "llc BEH" "tb TESTBENCH$pars" \
+			-io_config $iocfg
 
-	    } else {
+		    foreach cfg [list BASIC] {
 
-		define_sim_config "$cname\_V" "llc RTL_V $cname" "tb TESTBENCH$pars" \
-		    -io_config $iocfg
+			set cname "$cfg$pars"
+
+			define_hls_config llc $cname --clock_period=$CLOCK_PERIOD \
+			    $COMMON_HLS_FLAGS -DHLS_DIRECTIVES_$cfg -io_config $iocfg
+
+			if {$TECH_IS_XILINX == 1} {
+
+			    define_sim_config "$cname\_V" "llc RTL_V $cname" \
+				"tb TESTBENCH$pars" -verilog_top_modules glbl \
+				-io_config $iocfg
+
+			} else {
+
+			    define_sim_config "$cname\_V" "llc RTL_V $cname" \
+				"tb TESTBENCH$pars" -io_config $iocfg
+			}
+		    }
+		}
 	    }
 	}
     }

@@ -33,32 +33,48 @@ foreach sets [list 512] {
 
     foreach ways [list 4] {
 
-	set pars "_$sets\SETS_$ways\WAYS"
+	foreach wbits [list 1 2] {
 
-	set iocfg "IOCFG$pars"
+	    foreach bbits [list 2 3] {
 
-	define_io_config * $iocfg -DL2_SETS=$sets -DL2_WAYS=$ways
+		foreach abits [list 32] {
 
-	define_system_config tb "TESTBENCH$pars" -io_config $iocfg
+		    # Skip these configurations
+		    if {$wbits == 1 && $bbits == 2} {continue}
+		    if {$wbits == 2 && $bbits == 3} {continue}
 
-	define_sim_config "BEHAV$pars" "l2 BEH" \
-	    "tb TESTBENCH$pars" -io_config $iocfg
+		    set words_per_line [expr 1 << $wbits]
+		    set bits_per_word [expr (1 << $bbits) * 8]
 
-	foreach cfg [list BASIC] {
+		    set pars "_${sets}SETS_${ways}WAYS_${words_per_line}x${bits_per_word}LINE_${abits}ADDR"
 
-	    set cname "$cfg$pars"
+		    set iocfg "IOCFG$pars"
 
-	    define_hls_config l2 $cname --clock_period=$CLOCK_PERIOD $COMMON_HLS_FLAGS \
-		-DHLS_DIRECTIVES_$cfg -io_config $iocfg
+		    define_io_config * $iocfg -DL2_SETS=$sets -DL2_WAYS=$ways -DADDR_BITS=$abits -DBYTE_BITS=$bbits -DWORD_BITS=$wbits
 
-	    if {$TECH_IS_XILINX == 1} {
+		    define_system_config tb "TESTBENCH$pars" -io_config $iocfg
 
-		define_sim_config "$cname\_V" "l2 RTL_V $cname" "tb TESTBENCH$pars" \
-		    -verilog_top_modules glbl -io_config $iocfg
-	    } else {
+		    define_sim_config "BEHAV$pars" "l2 BEH" \
+			"tb TESTBENCH$pars" -io_config $iocfg
 
-		define_sim_config "$cname\_V" "l2 RTL_V $cname" "tb TESTBENCH$pars" \
-		    -io_config $iocfg
+		    foreach cfg [list BASIC] {
+
+			set cname "$cfg$pars"
+
+			define_hls_config l2 $cname --clock_period=$CLOCK_PERIOD $COMMON_HLS_FLAGS \
+			    -DHLS_DIRECTIVES_$cfg -io_config $iocfg
+
+			if {$TECH_IS_XILINX == 1} {
+
+			    define_sim_config "$cname\_V" "l2 RTL_V $cname" "tb TESTBENCH$pars" \
+				-verilog_top_modules glbl -io_config $iocfg
+			} else {
+
+			    define_sim_config "$cname\_V" "l2 RTL_V $cname" "tb TESTBENCH$pars" \
+				-io_config $iocfg
+			}
+		    }
+		}
 	    }
 	}
     }

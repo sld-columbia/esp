@@ -1187,16 +1187,20 @@ void llc_tb::op_dma(mix_msg_t coh_msg, llc_state_t state, bool evict, bool dirty
     init_offset = req_addr.w_off;
 
     if (coh_msg == REQ_DMA_READ_BURST) {
-        word_t word = req_line.range(ADDR_BITS - 1, 0).to_uint();
+        word_t word = (req_line.range(ADDR_BITS - 1, 0).to_uint() * 4 +
+		       (BYTES_PER_WORD-4)) / BYTES_PER_WORD;
         req_line = 0;
         req_line.range(BITS_PER_LINE - 1, BITS_PER_LINE - ADDR_BITS) = word;
 	wlength = word;
     } else if (coh_msg == REQ_DMA_WRITE_BURST) {
-	wlength = rsp_line;
+	wlength = (rsp_line * 4 + (BYTES_PER_WORD-4)) / BYTES_PER_WORD;
     }
 
-    word_t llength = (word_t) ((wlength + init_offset + 3) / WORDS_PER_LINE);
+    word_t llength = (word_t) ((wlength + init_offset + WORDS_PER_LINE - 1) / WORDS_PER_LINE);
     word_offset_t wvalid;
+
+    CACHE_REPORT_VAR(sc_time_stamp(), "wlength", wlength);
+    CACHE_REPORT_VAR(sc_time_stamp(), "llength", llength);
 
     for (int i = 0; i < llength; i++) {
 
@@ -1216,7 +1220,7 @@ void llc_tb::op_dma(mix_msg_t coh_msg, llc_state_t state, bool evict, bool dirty
 		wvalid = WORDS_PER_LINE - 1 - req_addr.w_off;
 
 	    else if (i == llength - 1)
-		wvalid = (init_offset + wlength) % 4 - 1;
+		wvalid = (init_offset + wlength) % WORDS_PER_LINE - 1;
 
 	    else
 		wvalid = WORDS_PER_LINE - 1;
@@ -1287,16 +1291,16 @@ void llc_tb::op_dma(mix_msg_t coh_msg, llc_state_t state, bool evict, bool dirty
 	invack_cnt[0] = done;
 
 	if (llength == 1)
-	    invack_cnt.range(2, 1) = wlength - 1;
+	    invack_cnt.range(WORD_BITS, 1) = wlength - 1;
 
 	else if (i == 0)
-	    invack_cnt.range(2, 1) = WORDS_PER_LINE - 1 - req_addr.w_off;
+	    invack_cnt.range(WORD_BITS, 1) = WORDS_PER_LINE - 1 - req_addr.w_off;
 
 	else if (i == llength - 1)
-	    invack_cnt.range(2, 1) = (init_offset + wlength) % 4 - 1;
+	    invack_cnt.range(WORD_BITS, 1) = (init_offset + wlength) % WORDS_PER_LINE - 1;
 
 	else
-	    invack_cnt.range(2, 1) = WORDS_PER_LINE - 1;
+	    invack_cnt.range(WORD_BITS, 1) = WORDS_PER_LINE - 1;
 
 	// rsp data to accelerator
 	if (coh_msg == DMA_READ)
