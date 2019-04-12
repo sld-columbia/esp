@@ -15,6 +15,7 @@ import xml.etree.ElementTree
 import glob
 import sys
 import re
+import math
 
 def get_immediate_subdirectories(a_dir):
   return [name for name in os.listdir(a_dir)
@@ -181,7 +182,7 @@ def write_acc_port_map(f, acc, dma_width, rst, is_noc_interface):
   f.write("      acc_done                   => acc_done\n")
   f.write("    );\n")
 
-
+# TODO replace all hardcoded vector lengths with constants
 def write_cache_interface(f, cac, is_llc):
   if (is_llc):
     f.write("      clk                          : in std_ulogic;\n")
@@ -190,16 +191,16 @@ def write_cache_interface(f, cac, is_llc):
     f.write("      llc_req_in_data_coh_msg      : in std_logic_vector(2 downto 0);\n")
     f.write("      llc_req_in_data_hprot        : in std_logic_vector(1 downto 0);\n")
     f.write("      llc_req_in_data_addr         : in std_logic_vector(27 downto 0);\n")
-    f.write("      llc_req_in_data_word_offset  : in std_logic_vector(1 downto 0);\n")
-    f.write("      llc_req_in_data_valid_words  : in std_logic_vector(1 downto 0);\n")
+    f.write("      llc_req_in_data_word_offset  : in std_logic_vector(GLOB_WORD_OFFSET_BITS-1 downto 0);\n")
+    f.write("      llc_req_in_data_valid_words  : in std_logic_vector(GLOB_WORD_OFFSET_BITS-1 downto 0);\n")
     f.write("      llc_req_in_data_line         : in std_logic_vector(127 downto 0);\n")
     f.write("      llc_req_in_data_req_id       : in std_logic_vector(3 downto 0);\n")
     f.write("      llc_dma_req_in_valid             : in std_ulogic;\n")
     f.write("      llc_dma_req_in_data_coh_msg      : in std_logic_vector(2 downto 0);\n")
     f.write("      llc_dma_req_in_data_hprot        : in std_logic_vector(1 downto 0);\n")
     f.write("      llc_dma_req_in_data_addr         : in std_logic_vector(27 downto 0);\n")
-    f.write("      llc_dma_req_in_data_word_offset  : in std_logic_vector(1 downto 0);\n")
-    f.write("      llc_dma_req_in_data_valid_words  : in std_logic_vector(1 downto 0);\n")
+    f.write("      llc_dma_req_in_data_word_offset  : in std_logic_vector(GLOB_WORD_OFFSET_BITS-1 downto 0);\n")
+    f.write("      llc_dma_req_in_data_valid_words  : in std_logic_vector(GLOB_WORD_OFFSET_BITS-1 downto 0);\n")
     f.write("      llc_dma_req_in_data_line         : in std_logic_vector(127 downto 0);\n")
     f.write("      llc_dma_req_in_data_req_id       : in std_logic_vector(3 downto 0);\n")
     f.write("      llc_rsp_in_valid             : in std_ulogic;\n")
@@ -229,7 +230,7 @@ def write_cache_interface(f, cac, is_llc):
     f.write("      llc_rsp_out_data_invack_cnt  : out std_logic_vector(3 downto 0);\n")
     f.write("      llc_rsp_out_data_req_id      : out std_logic_vector(3 downto 0);\n")
     f.write("      llc_rsp_out_data_dest_id     : out std_logic_vector(3 downto 0);\n")
-    f.write("      llc_rsp_out_data_word_offset : out std_logic_vector(1 downto 0);\n")
+    f.write("      llc_rsp_out_data_word_offset : out std_logic_vector(GLOB_WORD_OFFSET_BITS-1 downto 0);\n")
     f.write("      llc_dma_rsp_out_valid            : out std_ulogic;\n")
     f.write("      llc_dma_rsp_out_data_coh_msg     : out std_logic_vector(1 downto 0);\n")
     f.write("      llc_dma_rsp_out_data_addr        : out std_logic_vector(27 downto 0);\n")
@@ -237,7 +238,7 @@ def write_cache_interface(f, cac, is_llc):
     f.write("      llc_dma_rsp_out_data_invack_cnt  : out std_logic_vector(3 downto 0);\n")
     f.write("      llc_dma_rsp_out_data_req_id      : out std_logic_vector(3 downto 0);\n")
     f.write("      llc_dma_rsp_out_data_dest_id     : out std_logic_vector(3 downto 0);\n")
-    f.write("      llc_dma_rsp_out_data_word_offset : out std_logic_vector(1 downto 0);\n")
+    f.write("      llc_dma_rsp_out_data_word_offset : out std_logic_vector(GLOB_WORD_OFFSET_BITS-1 downto 0);\n")
     f.write("      llc_fwd_out_valid            : out std_ulogic;\n")
     f.write("      llc_fwd_out_data_coh_msg     : out std_logic_vector(2 downto 0);\n")
     f.write("      llc_fwd_out_data_addr        : out std_logic_vector(27 downto 0);\n")
@@ -555,13 +556,14 @@ def gen_tech_indep_impl(accelerator_list, cache_list, dma_width, template_dir, o
         is_llc = cac.name == "llc"
         f.write("library ieee;\n")
         f.write("use ieee.std_logic_1164.all;\n")
+        f.write("use work.esp_global.all;\n")
         f.write("use work.sld_devices.all;\n")
         f.write("use work.allcaches.all;\n")
         f.write("\n")
         f.write("entity " + cac.name + " is\n\n")
         f.write("    generic (\n")
-        f.write("      sets  : integer;\n")
-        f.write("      ways  : integer\n")
+        f.write("      sets             : integer;\n")
+        f.write("      ways             : integer\n")
         f.write("    );\n")
         f.write("\n")
         f.write("    port (\n")
@@ -573,19 +575,30 @@ def gen_tech_indep_impl(accelerator_list, cache_list, dma_width, template_dir, o
         f.write("architecture mapping of " + cac.name + " is\n\n")
         f.write("begin  -- mapping\n\n")
         for impl in cac.hlscfg:
-          info = impl.split("_")
+          info = re.split('_|x', impl)
           sets = 0
           ways = 0
+          addr_bits = 0
+          word_offset_bits = 0
+          offset_bits = 0
           for item in info:
             if re.match(r'[0-9]+sets', item, re.M|re.I):
               sets = int(item.replace("sets", ""))
-            if re.match(r'[0-9]+ways', item, re.M|re.I):
+            elif re.match(r'[0-9]+ways', item, re.M|re.I):
               ways = int(item.replace("ways", ""))
+            elif re.match(r'[0-9]+$', item, re.M|re.I):
+              word_offset_bits = int(math.log2(int(item)))
+            elif re.match(r'[0-9]+line', item, re.M|re.I):
+              offset_bits = int(int(math.log2((int(item.replace("line", "")))/8) + word_offset_bits))
+            elif re.match(r'[0-9]+addr', item, re.M|re.I):
+              addr_bits = int(item.replace("addr", ""))
           if sets * ways == 0:
             print("    ERROR: hls config must report number of sets and ways, both different from zero")
             sys.exit(1)
           f.write("\n")
-          f.write("  " + impl + "_gen: if sets = " + str(sets) + " and ways = " + str(ways) + " generate\n")
+          f.write("  " + impl + "_gen: if sets = " + str(sets) + " and ways = " + str(ways) \
+                  + " and GLOB_ADDR_BITS = " + str(addr_bits) + " and GLOB_WORD_OFFSET_BITS = " + \
+                  str(word_offset_bits) + " and GLOB_OFFSET_BITS = " + str(offset_bits) + " generate\n")
           f.write("    " + cac.name + "_" + impl + "_i: " + cac.name + "_" + impl + "\n")
           write_cache_port_map(f, cac, is_llc)
           f.write("  end generate " +  impl + "_gen;\n\n")
