@@ -296,7 +296,7 @@ void l2_tb::l2_test()
     	    for (int s = 0; s < L2_SETS; ++s) {
     		addr.breakdown((wo << W_OFF_RANGE_LO) + (wa << L2_TAG_RANGE_LO) + 
 				   (s << SET_RANGE_LO));
-		word = addr.word;
+		word = word_of_addr(addr.word);
 
     		if (s >= L2_SETS/2 && wo == 0) {
 		    op(WRITE, MISS, 0, RSP_DATA, 0, 0, WORD, addr, word, line_of_addr(addr.line), 
@@ -314,7 +314,9 @@ void l2_tb::l2_test()
     	for (int wa = 0; wa < L2_WAYS; ++wa) {
     	    for (int s = 0; s < L2_SETS/2; ++s) {
     		addr.breakdown((wo << W_OFF_RANGE_LO) + (wa << L2_TAG_RANGE_LO) + (s << SET_RANGE_LO));
-		word = addr.word + 1;
+		
+		// TODO REMOVE word = addr.word + 1;
+		word = word_of_addr(addr.word + 1);
 
 		op(WRITE, HIT, 0, 0, 0, 0, WORD, addr, word, 0, 0, 0, 0, 0, 0, DATA);
     	    }
@@ -331,7 +333,8 @@ void l2_tb::l2_test()
 	    int wo;
 	    if (s < L2_SETS/2) {
 		for (wo = 0; wo < WORDS_PER_LINE/2; ++wo) {
-		    write_word(line, addr.line + (wo << W_OFF_RANGE_LO) + 1, wo, 0, WORD);
+		    // TODO REMOVE write_word(line, addr.line + (wo << W_OFF_RANGE_LO) + 1, wo, 0, WORD);
+		    write_word(line, word_of_addr(addr.line + (wo << W_OFF_RANGE_LO) + 1), wo, 0, WORD);
 		}
 	    }
 
@@ -417,7 +420,7 @@ void l2_tb::l2_test()
 
     addr.tag_incr(1);
     off_tmp0 = addr.w_off * BYTES_PER_WORD + addr.b_off;
-    off_tmp0.range(0,0) = 0;
+    off_tmp0.range(B_OFF_RANGE_HI-1,0) = 0;
     if (off_tmp0.range(B_OFF_RANGE_HI,B_OFF_RANGE_HI) == 0)
 	off_tmp0.range(B_OFF_RANGE_HI,B_OFF_RANGE_HI) = 1;
     else
@@ -436,7 +439,7 @@ void l2_tb::l2_test()
 
     addr.tag_incr(1);
     off_tmp0 = addr.w_off * BYTES_PER_WORD + addr.b_off;
-    off_tmp0.range(0,0) = 0;
+    off_tmp0.range(B_OFF_RANGE_HI-1,0) = 0;
     if (off_tmp0.range(B_OFF_RANGE_HI,B_OFF_RANGE_HI) == 0)
 	off_tmp0.range(B_OFF_RANGE_HI,B_OFF_RANGE_HI) = 1;
     else
@@ -597,7 +600,8 @@ void l2_tb::l2_test()
 
 	put_cpu_req(cpu_req, READ, WORD, addr.word, 0, DATA);
 	line = line_of_addr(addr.line);
-	line.range(addr.w_off*ADDR_BITS + ADDR_BITS - 1, addr.w_off*ADDR_BITS) = 0;
+	line.range(addr.w_off*BITS_PER_WORD + BITS_PER_WORD - 1, 
+		   addr.w_off*BITS_PER_WORD) = 0;
 	get_rd_rsp(line);
 	wait();
     }
@@ -912,7 +916,7 @@ void l2_tb::l2_test()
 
     // fill a set
     for (int i = 0; i < L2_WAYS; ++i) {
-	op(WRITE, MISS, 0, RSP_DATA, 0, 0, WORD, addr, addr.word, line_of_addr(addr.line),
+	op(WRITE, MISS, 0, RSP_DATA, 0, 0, WORD, addr, word_of_addr(addr.word), line_of_addr(addr.line),
 	   0, 0, 0, 0, 0, DATA);
 
 	addr.tag_incr(1);
@@ -1225,7 +1229,7 @@ void l2_tb::l2_test()
 
     // fill a set
     for (int i = 0; i < L2_WAYS; ++i) {
-	op(WRITE, MISS, 0, RSP_DATA, 0, 0, WORD, addr, addr.word, line_of_addr(addr.line),
+	op(WRITE, MISS, 0, RSP_DATA, 0, 0, WORD, addr, word_of_addr(addr.word), line_of_addr(addr.line),
 	   0, 0, 0, 0, 0, DATA);
 
 	addr.tag_incr(1);
@@ -1234,13 +1238,13 @@ void l2_tb::l2_test()
     addr_evict = addr;
     addr_evict.tag_decr(L2_WAYS);
 
-    op(READ, MISS_EVICT, 0, RSP_DATA, 0, REQ_PUTM, WORD, addr, addr.word, line_of_addr(addr.line),
+    op(READ, MISS_EVICT, 0, RSP_DATA, 0, REQ_PUTM, WORD, addr, word_of_addr(addr.word), line_of_addr(addr.line),
        FWD_STALL_EVICT, FWD_GETS, 0, 1, line_of_addr(addr_evict.line), DATA);
 
     addr.tag_incr(1);
     addr_evict.tag_incr(1);
 
-    op(READ, MISS_EVICT, 0, RSP_DATA, 0, REQ_PUTM, WORD, addr, addr.word, line_of_addr(addr.line),
+    op(READ, MISS_EVICT, 0, RSP_DATA, 0, REQ_PUTM, WORD, addr, word_of_addr(addr.word), line_of_addr(addr.line),
        FWD_STALL_EVICT, FWD_GETM_LLC, MODIFIED, 0, line_of_addr(addr_evict.line), DATA);
 
     CACHE_REPORT_INFO("Flush all cache");
@@ -1408,8 +1412,10 @@ void l2_tb::op(cpu_msg_t cpu_msg, int beh, int rsp_beh, coh_msg_t rsp_msg, invac
     cpu_addr = req_addr.word + req_addr.b_off;
 
     if (hsize == BYTE) ;
-    else if (hsize == HALFWORD)	cpu_addr.range(0, 0) = 0;
-    else if (hsize == WORD)	cpu_addr.range(1, 0) = 0;
+    // else if (hsize == HALFWORD)	cpu_addr.range(0, 0) = 0;
+    // else if (hsize == WORD)	cpu_addr.range(1, 0) = 0;
+    else if (hsize == HALFWORD)	cpu_addr.range(B_OFF_RANGE_HI - 1, 0) = 0;
+    else if (hsize == WORD)	cpu_addr.range(B_OFF_RANGE_HI, 0) = 0;
     else CACHE_REPORT_ERROR("Wrong hsize.", hsize);
 
     if (cpu_msg == READ) {

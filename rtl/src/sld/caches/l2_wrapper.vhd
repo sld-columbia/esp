@@ -12,6 +12,7 @@ use ieee.std_logic_textio.all;
 --pragma translate_on
 use work.esp_global.all;
 
+use work.esp_global.all;
 use work.amba.all;
 use work.stdlib.all;
 use work.sld_devices.all;

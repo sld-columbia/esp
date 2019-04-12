@@ -54,12 +54,12 @@
 inline void write_word(line_t &line, word_t word, word_offset_t w_off, byte_offset_t b_off, hsize_t hsize)
 {
     uint32_t size = BITS_PER_WORD, b_off_tmp = 0;
-    
+
     if (hsize == BYTE) {
 	b_off_tmp = BYTES_PER_WORD - 1 - b_off;
 	size = 8;
     } else if (hsize == HALFWORD) {
-	b_off_tmp = BYTES_PER_WORD - 2 - b_off;
+	b_off_tmp = BYTES_PER_WORD - BYTES_PER_WORD/2 - b_off;
 	size = BITS_PER_HALFWORD;
     } else if (hsize == WORD) {
 	b_off_tmp = 0;
@@ -112,7 +112,13 @@ inline addr_breakdown_llc_t rand_addr_llc()
 
 inline word_t rand_word()
 {
-    word_t word = (rand() % (1 << BITS_PER_WORD-1));
+    word_t word;
+
+#if (BITS_PER_WORD == 64)
+    word = (((word_t) (rand() % (1 << 31))) << 32) + (rand() % (1 << 31));
+#else
+    word = (rand() % (1 << BITS_PER_WORD-1));
+#endif
 
     return word;
 }
@@ -121,10 +127,30 @@ inline line_t line_of_addr(addr_t addr)
 {
     line_t line;
 
-    for (int i = 0; i < WORDS_PER_LINE; ++i)
+    for (int i = 0; i < WORDS_PER_LINE; ++i) {
+#if (BITS_PER_WORD == 64)
+	addr_t tmp_addr = addr + (i * WORD_OFFSET);
+	write_word(line, (tmp_addr << 32) + tmp_addr, i, 0, WORD);
+#else
 	write_word(line, addr + (i * WORD_OFFSET), i, 0, WORD);
+#endif
+    }
 
     return line;
 }
+
+inline word_t word_of_addr(addr_t addr)
+{
+    word_t word;
+
+#if (BITS_PER_WORD == 64)
+    word = ((word_t) addr << 32) + addr;
+#else
+    word = addr;
+#endif
+
+    return word;
+}
+
 
 #endif /* __CACHE_UTILS_HPP__ */
