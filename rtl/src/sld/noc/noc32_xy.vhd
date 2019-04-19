@@ -29,7 +29,7 @@ use ieee.std_logic_unsigned.all;
 use work.sldcommon.all;
 use work.nocpackage.all;
 
-entity noc_xy is
+entity noc32_xy is
   generic (
     XLEN      : integer;
     YLEN      : integer;
@@ -37,19 +37,19 @@ entity noc_xy is
   port (
     clk           : in  std_logic;
     rst           : in  std_logic;
-    input_port    : in  noc_flit_vector(TILES_NUM-1 downto 0);
+    input_port    : in  misc_noc_flit_vector(TILES_NUM-1 downto 0);
     data_void_in  : in  std_logic_vector(TILES_NUM-1 downto 0);
     stop_in       : in  std_logic_vector(TILES_NUM-1 downto 0);
-    output_port   : out noc_flit_vector(TILES_NUM-1 downto 0);
+    output_port   : out misc_noc_flit_vector(TILES_NUM-1 downto 0);
     data_void_out : out std_logic_vector(TILES_NUM-1 downto 0);
     stop_out      : out std_logic_vector(TILES_NUM-1 downto 0);
     -- Monitor output. Can be left unconnected
     mon_noc       : out monitor_noc_vector(0 to TILES_NUM-1)
     );
 
-end noc_xy;
+end noc32_xy;
 
-architecture mesh of noc_xy is
+architecture mesh of noc32_xy is
 
   type ports_vec is array (TILES_NUM-1 downto 0) of std_logic_vector(4 downto 0);
   type local_vec is array (TILES_NUM-1 downto 0) of local_yx;
@@ -157,18 +157,18 @@ architecture mesh of noc_xy is
       stop_out      : out std_logic_vector(4 downto 0));
   end component;
 
-  signal data_n_in     : noc_flit_vector(TILES_NUM-1 downto 0);
-  signal data_s_in     : noc_flit_vector(TILES_NUM-1 downto 0);
-  signal data_w_in     : noc_flit_vector(TILES_NUM-1 downto 0);
-  signal data_e_in     : noc_flit_vector(TILES_NUM-1 downto 0);
-  signal data_p_in     : noc_flit_vector(TILES_NUM-1 downto 0);
+  signal data_n_in     : misc_noc_flit_vector(TILES_NUM-1 downto 0);
+  signal data_s_in     : misc_noc_flit_vector(TILES_NUM-1 downto 0);
+  signal data_w_in     : misc_noc_flit_vector(TILES_NUM-1 downto 0);
+  signal data_e_in     : misc_noc_flit_vector(TILES_NUM-1 downto 0);
+  signal data_p_in     : misc_noc_flit_vector(TILES_NUM-1 downto 0);
   signal data_void_in_i  : handshake_vec;
   signal stop_in_i       : handshake_vec;
-  signal data_n_out    : noc_flit_vector(TILES_NUM-1 downto 0);
-  signal data_s_out    : noc_flit_vector(TILES_NUM-1 downto 0);
-  signal data_w_out    : noc_flit_vector(TILES_NUM-1 downto 0);
-  signal data_e_out    : noc_flit_vector(TILES_NUM-1 downto 0);
-  signal data_p_out    : noc_flit_vector(TILES_NUM-1 downto 0);
+  signal data_n_out    : misc_noc_flit_vector(TILES_NUM-1 downto 0);
+  signal data_s_out    : misc_noc_flit_vector(TILES_NUM-1 downto 0);
+  signal data_w_out    : misc_noc_flit_vector(TILES_NUM-1 downto 0);
+  signal data_e_out    : misc_noc_flit_vector(TILES_NUM-1 downto 0);
+  signal data_p_out    : misc_noc_flit_vector(TILES_NUM-1 downto 0);
   signal data_void_out_i : handshake_vec;
   signal stop_out_i      : handshake_vec;
 
@@ -251,7 +251,7 @@ begin  -- mesh
     router_ij: router
         generic map (
           flow_control => FLOW_CONTROL,
-          width        => NOC_FLIT_SIZE,
+          width        => MISC_NOC_FLIT_SIZE,
           depth        => ROUTER_DEPTH,
           ports        => ROUTER_PORTS(k),
           localx        => localx(k),

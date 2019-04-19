@@ -188,7 +188,7 @@ begin  -- rtl
     reserved := (others => '0');
     reserved(3 downto 0) := ahbsi.hprot;
     header_v := (others => '0');
-    header_v := create_header(MISC_NOC_FLIT_SIZE, local_y, local_x, mem_y, mem_x, msg_type, reserved);
+    header_v := create_header(MISC_NOC_FLIT_SIZE, local_y, local_x, mem_y, mem_x, msg_type, reserved)(MISC_NOC_FLIT_SIZE - 1 downto 0);
     header <= header_v;
 
   end process make_packet;
@@ -264,7 +264,7 @@ begin  -- rtl
     if dst_is_mem_reg = '1' then
       rsp_preamble := get_preamble(NOC_FLIT_SIZE, coherence_rsp_rcv_data_out);
     else
-      rsp_preamble := get_preamble(MISC_NOC_FLIT_SIZE, remote_ahbs_rcv_data_out);
+      rsp_preamble := get_preamble(MISC_NOC_FLIT_SIZE, noc_flit_pad & remote_ahbs_rcv_data_out);
     end if;
     coherence_rsp_rcv_preamble := get_preamble(NOC_FLIT_SIZE, coherence_rsp_rcv_data_out);
 

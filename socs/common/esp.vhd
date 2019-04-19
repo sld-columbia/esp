@@ -70,7 +70,6 @@ architecture rtl of esp is
 
   component sync_noc_xy
     generic (
-      flit_size : integer;
       XLEN      : integer;
       YLEN      : integer;
       TILES_NUM : integer;
@@ -90,16 +89,46 @@ architecture rtl of esp is
       );
   end component;
 
+  component sync_noc32_xy
+    generic (
+      XLEN      : integer;
+      YLEN      : integer;
+      TILES_NUM : integer;
+      has_sync  : integer range 0 to 1);
+    port (
+      clk           : in  std_logic;
+      clk_tile      : in  std_logic_vector(TILES_NUM-1 downto 0);
+      rst           : in  std_logic;
+      input_port    : in  misc_noc_flit_vector(TILES_NUM-1 downto 0);
+      data_void_in  : in  std_logic_vector(TILES_NUM-1 downto 0);
+      stop_in       : in  std_logic_vector(TILES_NUM-1 downto 0);
+      output_port   : out misc_noc_flit_vector(TILES_NUM-1 downto 0);
+      data_void_out : out std_logic_vector(TILES_NUM-1 downto 0);
+      stop_out      : out std_logic_vector(TILES_NUM-1 downto 0);
+      -- Monitor output. Can be left unconnected
+      mon_noc       : out monitor_noc_vector(0 to TILES_NUM-1)
+      );
+  end component;
+
   constant nocs_num : integer := 6;
 
 signal clk_tile : std_logic_vector(CFG_TILES_NUM-1 downto 0);
-type noc_flit_matrix is array (1 to nocs_num) of noc_flit_vector(CFG_TILES_NUM-1 downto 0);
 type noc_ctrl_matrix is array (1 to nocs_num) of std_logic_vector(CFG_TILES_NUM-1 downto 0);
 
-signal noc_input_port    : noc_flit_matrix;
+signal noc_input_port_1  : noc_flit_vector(CFG_TILES_NUM-1 downto 0);
+signal noc_input_port_2  : noc_flit_vector(CFG_TILES_NUM-1 downto 0);
+signal noc_input_port_3  : noc_flit_vector(CFG_TILES_NUM-1 downto 0);
+signal noc_input_port_4  : noc_flit_vector(CFG_TILES_NUM-1 downto 0);
+signal noc_input_port_5  : misc_noc_flit_vector(CFG_TILES_NUM-1 downto 0);
+signal noc_input_port_6  : noc_flit_vector(CFG_TILES_NUM-1 downto 0);
 signal noc_data_void_in  : noc_ctrl_matrix;
 signal noc_stop_in       : noc_ctrl_matrix;
-signal noc_output_port   : noc_flit_matrix;
+signal noc_output_port_1 : noc_flit_vector(CFG_TILES_NUM-1 downto 0);
+signal noc_output_port_2 : noc_flit_vector(CFG_TILES_NUM-1 downto 0);
+signal noc_output_port_3 : noc_flit_vector(CFG_TILES_NUM-1 downto 0);
+signal noc_output_port_4 : noc_flit_vector(CFG_TILES_NUM-1 downto 0);
+signal noc_output_port_5 : misc_noc_flit_vector(CFG_TILES_NUM-1 downto 0);
+signal noc_output_port_6 : noc_flit_vector(CFG_TILES_NUM-1 downto 0);
 signal noc_data_void_out : noc_ctrl_matrix;
 signal noc_stop_out      : noc_ctrl_matrix;
 
@@ -191,22 +220,22 @@ begin
 
   tiles_gen: for i in 0 to CFG_TILES_NUM - 1  generate
     empty_tile: if tile_type(i) = 0 generate
-      noc_input_port(1)(i) <= (others => '0');
+      noc_input_port_1(i) <= (others => '0');
       noc_data_void_in(1)(i) <= '1';
       noc_stop_in(1)(i) <= '0';
-      noc_input_port(2)(i) <= (others => '0');
+      noc_input_port_2(i) <= (others => '0');
       noc_data_void_in(2)(i) <= '1';
       noc_stop_in(2)(i) <= '0';
-      noc_input_port(3)(i) <= (others => '0');
+      noc_input_port_3(i) <= (others => '0');
       noc_data_void_in(3)(i) <= '1';
       noc_stop_in(3)(i) <= '0';
-      noc_input_port(4)(i) <= (others => '0');
+      noc_input_port_4(i) <= (others => '0');
       noc_data_void_in(4)(i) <= '1';
       noc_stop_in(4)(i) <= '0';
-      noc_input_port(5)(i) <= (others => '0');
+      noc_input_port_5(i) <= (others => '0');
       noc_data_void_in(5)(i) <= '1';
       noc_stop_in(5)(i) <= '0';
-      noc_input_port(6)(i) <= (others => '0');
+      noc_input_port_6(i) <= (others => '0');
       noc_data_void_in(6)(i) <= '1';
       noc_stop_in(6)(i) <= '0';
       mon_dvfs_out(i).vf <= (others => '0');
@@ -230,40 +259,40 @@ begin
           --TODO: REMOVE!
           dbgi   => dbgi(tile_cpu_id(i)),
           dbgo   => dbgo(tile_cpu_id(i)),
-          noc1_input_port    => noc_input_port(1)(i),
+          noc1_input_port    => noc_input_port_1(i),
           noc1_data_void_in  => noc_data_void_in(1)(i),
           noc1_stop_in       => noc_stop_in(1)(i),
-          noc1_output_port   => noc_output_port(1)(i),
+          noc1_output_port   => noc_output_port_1(i),
           noc1_data_void_out => noc_data_void_out(1)(i),
           noc1_stop_out      => noc_stop_out(1)(i),
-          noc2_input_port    => noc_input_port(2)(i),
+          noc2_input_port    => noc_input_port_2(i),
           noc2_data_void_in  => noc_data_void_in(2)(i),
           noc2_stop_in       => noc_stop_in(2)(i),
-          noc2_output_port   => noc_output_port(2)(i),
+          noc2_output_port   => noc_output_port_2(i),
           noc2_data_void_out => noc_data_void_out(2)(i),
           noc2_stop_out      => noc_stop_out(2)(i),
-          noc3_input_port    => noc_input_port(3)(i),
+          noc3_input_port    => noc_input_port_3(i),
           noc3_data_void_in  => noc_data_void_in(3)(i),
           noc3_stop_in       => noc_stop_in(3)(i),
-          noc3_output_port   => noc_output_port(3)(i),
+          noc3_output_port   => noc_output_port_3(i),
           noc3_data_void_out => noc_data_void_out(3)(i),
           noc3_stop_out      => noc_stop_out(3)(i),
-          noc4_input_port    => noc_input_port(4)(i),
+          noc4_input_port    => noc_input_port_4(i),
           noc4_data_void_in  => noc_data_void_in(4)(i),
           noc4_stop_in       => noc_stop_in(4)(i),
-          noc4_output_port   => noc_output_port(4)(i),
+          noc4_output_port   => noc_output_port_4(i),
           noc4_data_void_out => noc_data_void_out(4)(i),
           noc4_stop_out      => noc_stop_out(4)(i),
-          noc5_input_port    => noc_input_port(5)(i),
+          noc5_input_port    => noc_input_port_5(i),
           noc5_data_void_in  => noc_data_void_in(5)(i),
           noc5_stop_in       => noc_stop_in(5)(i),
-          noc5_output_port   => noc_output_port(5)(i),
+          noc5_output_port   => noc_output_port_5(i),
           noc5_data_void_out => noc_data_void_out(5)(i),
           noc5_stop_out      => noc_stop_out(5)(i),
-          noc6_input_port    => noc_input_port(6)(i),
+          noc6_input_port    => noc_input_port_6(i),
           noc6_data_void_in  => noc_data_void_in(6)(i),
           noc6_stop_in       => noc_stop_in(6)(i),
-          noc6_output_port   => noc_output_port(6)(i),
+          noc6_output_port   => noc_output_port_6(i),
           noc6_data_void_out => noc_data_void_out(6)(i),
           noc6_stop_out      => noc_stop_out(6)(i),
           mon_cache          => mon_l2_int(i),
@@ -282,40 +311,40 @@ begin
           refclk             => refclk_int(i),
           pllbypass          => pllbypass_int(i),
           pllclk             => clk_tile(i),
-          noc1_input_port    => noc_input_port(1)(i),
+          noc1_input_port    => noc_input_port_1(i),
           noc1_data_void_in  => noc_data_void_in(1)(i),
           noc1_stop_in       => noc_stop_in(1)(i),
-          noc1_output_port   => noc_output_port(1)(i),
+          noc1_output_port   => noc_output_port_1(i),
           noc1_data_void_out => noc_data_void_out(1)(i),
           noc1_stop_out      => noc_stop_out(1)(i),
-          noc2_input_port    => noc_input_port(2)(i),
+          noc2_input_port    => noc_input_port_2(i),
           noc2_data_void_in  => noc_data_void_in(2)(i),
           noc2_stop_in       => noc_stop_in(2)(i),
-          noc2_output_port   => noc_output_port(2)(i),
+          noc2_output_port   => noc_output_port_2(i),
           noc2_data_void_out => noc_data_void_out(2)(i),
           noc2_stop_out      => noc_stop_out(2)(i),
-          noc3_input_port    => noc_input_port(3)(i),
+          noc3_input_port    => noc_input_port_3(i),
           noc3_data_void_in  => noc_data_void_in(3)(i),
           noc3_stop_in       => noc_stop_in(3)(i),
-          noc3_output_port   => noc_output_port(3)(i),
+          noc3_output_port   => noc_output_port_3(i),
           noc3_data_void_out => noc_data_void_out(3)(i),
           noc3_stop_out      => noc_stop_out(3)(i),
-          noc4_input_port    => noc_input_port(4)(i),
+          noc4_input_port    => noc_input_port_4(i),
           noc4_data_void_in  => noc_data_void_in(4)(i),
           noc4_stop_in       => noc_stop_in(4)(i),
-          noc4_output_port   => noc_output_port(4)(i),
+          noc4_output_port   => noc_output_port_4(i),
           noc4_data_void_out => noc_data_void_out(4)(i),
           noc4_stop_out      => noc_stop_out(4)(i),
-          noc5_input_port    => noc_input_port(5)(i),
+          noc5_input_port    => noc_input_port_5(i),
           noc5_data_void_in  => noc_data_void_in(5)(i),
           noc5_stop_in       => noc_stop_in(5)(i),
-          noc5_output_port   => noc_output_port(5)(i),
+          noc5_output_port   => noc_output_port_5(i),
           noc5_data_void_out => noc_data_void_out(5)(i),
           noc5_stop_out      => noc_stop_out(5)(i),
-          noc6_input_port    => noc_input_port(6)(i),
+          noc6_input_port    => noc_input_port_6(i),
           noc6_data_void_in  => noc_data_void_in(6)(i),
           noc6_stop_in       => noc_stop_in(6)(i),
-          noc6_output_port   => noc_output_port(6)(i),
+          noc6_output_port   => noc_output_port_6(i),
           noc6_data_void_out => noc_data_void_out(6)(i),
           noc6_stop_out      => noc_stop_out(6)(i),
           mon_dvfs_in        => mon_dvfs_domain(i),
@@ -357,40 +386,40 @@ begin
           dsuerr             => dsuerr,
           dbgi               => dbgi,
           dbgo               => dbgo,
-          noc1_input_port    => noc_input_port(1)(i),
+          noc1_input_port    => noc_input_port_1(i),
           noc1_data_void_in  => noc_data_void_in(1)(i),
           noc1_stop_in       => noc_stop_in(1)(i),
-          noc1_output_port   => noc_output_port(1)(i),
+          noc1_output_port   => noc_output_port_1(i),
           noc1_data_void_out => noc_data_void_out(1)(i),
           noc1_stop_out      => noc_stop_out(1)(i),
-          noc2_input_port    => noc_input_port(2)(i),
+          noc2_input_port    => noc_input_port_2(i),
           noc2_data_void_in  => noc_data_void_in(2)(i),
           noc2_stop_in       => noc_stop_in(2)(i),
-          noc2_output_port   => noc_output_port(2)(i),
+          noc2_output_port   => noc_output_port_2(i),
           noc2_data_void_out => noc_data_void_out(2)(i),
           noc2_stop_out      => noc_stop_out(2)(i),
-          noc3_input_port    => noc_input_port(3)(i),
+          noc3_input_port    => noc_input_port_3(i),
           noc3_data_void_in  => noc_data_void_in(3)(i),
           noc3_stop_in       => noc_stop_in(3)(i),
-          noc3_output_port   => noc_output_port(3)(i),
+          noc3_output_port   => noc_output_port_3(i),
           noc3_data_void_out => noc_data_void_out(3)(i),
           noc3_stop_out      => noc_stop_out(3)(i),
-          noc4_input_port    => noc_input_port(4)(i),
+          noc4_input_port    => noc_input_port_4(i),
           noc4_data_void_in  => noc_data_void_in(4)(i),
           noc4_stop_in       => noc_stop_in(4)(i),
-          noc4_output_port   => noc_output_port(4)(i),
+          noc4_output_port   => noc_output_port_4(i),
           noc4_data_void_out => noc_data_void_out(4)(i),
           noc4_stop_out      => noc_stop_out(4)(i),
-          noc5_input_port    => noc_input_port(5)(i),
+          noc5_input_port    => noc_input_port_5(i),
           noc5_data_void_in  => noc_data_void_in(5)(i),
           noc5_stop_in       => noc_stop_in(5)(i),
-          noc5_output_port   => noc_output_port(5)(i),
+          noc5_output_port   => noc_output_port_5(i),
           noc5_data_void_out => noc_data_void_out(5)(i),
           noc5_stop_out      => noc_stop_out(5)(i),
-          noc6_input_port    => noc_input_port(6)(i),
+          noc6_input_port    => noc_input_port_6(i),
           noc6_data_void_in  => noc_data_void_in(6)(i),
           noc6_stop_in       => noc_stop_in(6)(i),
-          noc6_output_port   => noc_output_port(6)(i),
+          noc6_output_port   => noc_output_port_6(i),
           noc6_data_void_out => noc_data_void_out(6)(i),
           noc6_stop_out      => noc_stop_out(6)(i),
           mon_dvfs           => mon_dvfs_out(i));
@@ -408,40 +437,40 @@ begin
           ddr_ahbso          => ddr_ahbso(tile_mem_id(i)),
           -- TODO: replace with direct reset for LLC instead!
           dbgi               => dbgi(0),
-          noc1_input_port    => noc_input_port(1)(i),
+          noc1_input_port    => noc_input_port_1(i),
           noc1_data_void_in  => noc_data_void_in(1)(i),
           noc1_stop_in       => noc_stop_in(1)(i),
-          noc1_output_port   => noc_output_port(1)(i),
+          noc1_output_port   => noc_output_port_1(i),
           noc1_data_void_out => noc_data_void_out(1)(i),
           noc1_stop_out      => noc_stop_out(1)(i),
-          noc2_input_port    => noc_input_port(2)(i),
+          noc2_input_port    => noc_input_port_2(i),
           noc2_data_void_in  => noc_data_void_in(2)(i),
           noc2_stop_in       => noc_stop_in(2)(i),
-          noc2_output_port   => noc_output_port(2)(i),
+          noc2_output_port   => noc_output_port_2(i),
           noc2_data_void_out => noc_data_void_out(2)(i),
           noc2_stop_out      => noc_stop_out(2)(i),
-          noc3_input_port    => noc_input_port(3)(i),
+          noc3_input_port    => noc_input_port_3(i),
           noc3_data_void_in  => noc_data_void_in(3)(i),
           noc3_stop_in       => noc_stop_in(3)(i),
-          noc3_output_port   => noc_output_port(3)(i),
+          noc3_output_port   => noc_output_port_3(i),
           noc3_data_void_out => noc_data_void_out(3)(i),
           noc3_stop_out      => noc_stop_out(3)(i),
-          noc4_input_port    => noc_input_port(4)(i),
+          noc4_input_port    => noc_input_port_4(i),
           noc4_data_void_in  => noc_data_void_in(4)(i),
           noc4_stop_in       => noc_stop_in(4)(i),
-          noc4_output_port   => noc_output_port(4)(i),
+          noc4_output_port   => noc_output_port_4(i),
           noc4_data_void_out => noc_data_void_out(4)(i),
           noc4_stop_out      => noc_stop_out(4)(i),
-          noc5_input_port    => noc_input_port(5)(i),
+          noc5_input_port    => noc_input_port_5(i),
           noc5_data_void_in  => noc_data_void_in(5)(i),
           noc5_stop_in       => noc_stop_in(5)(i),
-          noc5_output_port   => noc_output_port(5)(i),
+          noc5_output_port   => noc_output_port_5(i),
           noc5_data_void_out => noc_data_void_out(5)(i),
           noc5_stop_out      => noc_stop_out(5)(i),
-          noc6_input_port    => noc_input_port(6)(i),
+          noc6_input_port    => noc_input_port_6(i),
           noc6_data_void_in  => noc_data_void_in(6)(i),
           noc6_stop_in       => noc_stop_in(6)(i),
-          noc6_output_port   => noc_output_port(6)(i),
+          noc6_output_port   => noc_output_port_6(i),
           noc6_data_void_out => noc_data_void_out(6)(i),
           noc6_stop_out      => noc_stop_out(6)(i),
           mon_mem            => mon_mem(tile_mem_id(i)),
@@ -460,7 +489,6 @@ begin
 
   sync_noc_xy_1: sync_noc_xy
     generic map (
-      flit_size => NOC_FLIT_SIZE,
       XLEN      => CFG_XLEN,
       YLEN      => CFG_YLEN,
       TILES_NUM => CFG_TILES_NUM,
@@ -469,22 +497,21 @@ begin
       clk             => sys_clk_int(0),
       clk_tile        => clk_tile,
       rst             => rst_int,
-      input_port      => noc_input_port(1),
+      input_port      => noc_input_port_1,
       data_void_in    => noc_data_void_in(1),
       stop_in         => noc_stop_in(1),
-      output_port     => noc_output_port(1),
+      output_port     => noc_output_port_1,
       data_void_out   => noc_data_void_out(1),
       stop_out        => noc_stop_out(1),
       mon_noc         => mon_noc_vec(1)
       );
 
-  --noc_output_port(2) <= (others => (others => '0'));
+  --noc_output_port_2 <= (others => (others => '0'));
   --noc_data_void_out(2) <= (others => '1');
   --noc_stop_out(2) <= (others => '0');
   --mon_noc_vec(2) <= (others => monitor_noc_none);
   sync_noc_xy_2: sync_noc_xy
     generic map (
-      flit_size => NOC_FLIT_SIZE,
       XLEN      => CFG_XLEN,
       YLEN      => CFG_YLEN,
       TILES_NUM => CFG_TILES_NUM,
@@ -493,10 +520,10 @@ begin
       clk             => sys_clk_int(0),
       clk_tile        => clk_tile,
       rst             => rst_int,
-      input_port      => noc_input_port(2),
+      input_port      => noc_input_port_2,
       data_void_in    => noc_data_void_in(2),
       stop_in         => noc_stop_in(2),
-      output_port     => noc_output_port(2),
+      output_port     => noc_output_port_2,
       data_void_out   => noc_data_void_out(2),
       stop_out        => noc_stop_out(2),
       mon_noc         => mon_noc_vec(2)
@@ -504,7 +531,6 @@ begin
 
   sync_noc_xy_3: sync_noc_xy
     generic map (
-      flit_size => NOC_FLIT_SIZE,
       XLEN      => CFG_XLEN,
       YLEN      => CFG_YLEN,
       TILES_NUM => CFG_TILES_NUM,
@@ -513,10 +539,10 @@ begin
       clk             => sys_clk_int(0),
       clk_tile        => clk_tile,
       rst             => rst_int,
-      input_port      => noc_input_port(3),
+      input_port      => noc_input_port_3,
       data_void_in    => noc_data_void_in(3),
       stop_in         => noc_stop_in(3),
-      output_port     => noc_output_port(3),
+      output_port     => noc_output_port_3,
       data_void_out   => noc_data_void_out(3),
       stop_out        => noc_stop_out(3),
       mon_noc         => mon_noc_vec(3)
@@ -524,7 +550,6 @@ begin
 
   sync_noc_xy_4: sync_noc_xy
     generic map (
-      flit_size => NOC_FLIT_SIZE,
       XLEN      => CFG_XLEN,
       YLEN      => CFG_YLEN,
       TILES_NUM => CFG_TILES_NUM,
@@ -533,18 +558,17 @@ begin
       clk             => sys_clk_int(0),
       clk_tile        => clk_tile,
       rst             => rst_int,
-      input_port      => noc_input_port(4),
+      input_port      => noc_input_port_4,
       data_void_in    => noc_data_void_in(4),
       stop_in         => noc_stop_in(4),
-      output_port     => noc_output_port(4),
+      output_port     => noc_output_port_4,
       data_void_out   => noc_data_void_out(4),
       stop_out        => noc_stop_out(4),
       mon_noc         => mon_noc_vec(4)
       );
 
-  sync_noc_xy_5: sync_noc_xy
+  sync_noc_xy_5: sync_noc32_xy
     generic map (
-      flit_size => NOC_FLIT_SIZE,
       XLEN      => CFG_XLEN,
       YLEN      => CFG_YLEN,
       TILES_NUM => CFG_TILES_NUM,
@@ -553,10 +577,10 @@ begin
       clk             => sys_clk_int(0),
       clk_tile        => clk_tile,
       rst             => rst_int,
-      input_port      => noc_input_port(5),
+      input_port      => noc_input_port_5,
       data_void_in    => noc_data_void_in(5),
       stop_in         => noc_stop_in(5),
-      output_port     => noc_output_port(5),
+      output_port     => noc_output_port_5,
       data_void_out   => noc_data_void_out(5),
       stop_out        => noc_stop_out(5),
       mon_noc         => mon_noc_vec(5)
@@ -564,7 +588,6 @@ begin
 
   sync_noc_xy_6: sync_noc_xy
     generic map (
-      flit_size => NOC_FLIT_SIZE,
       XLEN      => CFG_XLEN,
       YLEN      => CFG_YLEN,
       TILES_NUM => CFG_TILES_NUM,
@@ -573,10 +596,10 @@ begin
       clk             => sys_clk_int(0),
       clk_tile        => clk_tile,
       rst             => rst_int,
-      input_port      => noc_input_port(6),
+      input_port      => noc_input_port_6,
       data_void_in    => noc_data_void_in(6),
       stop_in         => noc_stop_in(6),
-      output_port     => noc_output_port(6),
+      output_port     => noc_output_port_6,
       data_void_out   => noc_data_void_out(6),
       stop_out        => noc_stop_out(6),
       mon_noc         => mon_noc_vec(6)

@@ -485,9 +485,9 @@ begin  -- rtl
   -- From noc5: AHB requests from remote core (AHBS rcv)
   -- From noc5: AHB responses from remote core (remote AHBS rcv)
   -- From local_remote_apb_rcv (APB rcv from devices in this tile)
-  noc5_msg_type <= get_msg_type(MISC_NOC_FLIT_SIZE, noc5_out_data);
-  noc5_preamble <= get_preamble(MISC_NOC_FLIT_SIZE, noc5_out_data);
-  local_remote_apb_rcv_preamble <= get_preamble(MISC_NOC_FLIT_SIZE, local_remote_apb_rcv_data_out);
+  noc5_msg_type <= get_msg_type(MISC_NOC_FLIT_SIZE, noc_flit_pad & noc5_out_data);
+  noc5_preamble <= get_preamble(MISC_NOC_FLIT_SIZE, noc_flit_pad & noc5_out_data);
+  local_remote_apb_rcv_preamble <= get_preamble(MISC_NOC_FLIT_SIZE, noc_flit_pad & local_remote_apb_rcv_data_out);
 
   process (clk, rst)
   begin  -- process
@@ -809,7 +809,7 @@ begin  -- rtl
         end if;
 
       when packet_apb_snd =>
-        to_noc5_preamble := get_preamble(MISC_NOC_FLIT_SIZE, apb_snd_data_out);
+        to_noc5_preamble := get_preamble(MISC_NOC_FLIT_SIZE, noc_flit_pad & apb_snd_data_out);
         if (noc5_in_stop = '0' and apb_snd_empty = '0') then
           noc5_in_data  <= apb_snd_data_out;
           noc5_in_void  <= apb_snd_empty;
@@ -820,7 +820,7 @@ begin  -- rtl
         end if;
 
       when packet_local_apb_snd =>
-        to_noc5_preamble := get_preamble(MISC_NOC_FLIT_SIZE, apb_snd_data_out);
+        to_noc5_preamble := get_preamble(MISC_NOC_FLIT_SIZE, noc_flit_pad & apb_snd_data_out);
         if (local_apb_snd_full = '0' and apb_snd_empty = '0') then
           local_apb_snd_wrreq <= '1';
           apb_snd_rdreq <= '1';
@@ -830,7 +830,7 @@ begin  -- rtl
         end if;
 
       when packet_remote_apb_snd =>
-        to_noc5_preamble := get_preamble(MISC_NOC_FLIT_SIZE, remote_apb_snd_data_out);
+        to_noc5_preamble := get_preamble(MISC_NOC_FLIT_SIZE, noc_flit_pad & remote_apb_snd_data_out);
         if (noc5_in_stop = '0' and remote_apb_snd_empty = '0') then
           noc5_in_data         <= remote_apb_snd_data_out;
           noc5_in_void         <= remote_apb_snd_empty;
@@ -841,7 +841,7 @@ begin  -- rtl
         end if;
 
       when packet_ahbs_snd =>
-        to_noc5_preamble := get_preamble(MISC_NOC_FLIT_SIZE, ahbs_snd_data_out);
+        to_noc5_preamble := get_preamble(MISC_NOC_FLIT_SIZE, noc_flit_pad & ahbs_snd_data_out);
         if (noc5_in_stop = '0' and ahbs_snd_empty = '0') then
           noc5_in_data   <= ahbs_snd_data_out;
           noc5_in_void   <= ahbs_snd_empty;
@@ -852,7 +852,7 @@ begin  -- rtl
         end if;
 
       when packet_remote_ahbs_snd =>
-        to_noc5_preamble := get_preamble(MISC_NOC_FLIT_SIZE, remote_ahbs_snd_data_out);
+        to_noc5_preamble := get_preamble(MISC_NOC_FLIT_SIZE, noc_flit_pad & remote_ahbs_snd_data_out);
         if (noc5_in_stop = '0' and remote_ahbs_snd_empty = '0') then
           noc5_in_data          <= remote_ahbs_snd_data_out;
           noc5_in_void          <= remote_ahbs_snd_empty;
@@ -863,7 +863,7 @@ begin  -- rtl
         end if;
 
       when packet_irq =>
-        to_noc5_preamble := get_preamble(MISC_NOC_FLIT_SIZE, irq_data_out);
+        to_noc5_preamble := get_preamble(MISC_NOC_FLIT_SIZE, noc_flit_pad & irq_data_out);
         if (noc5_in_stop = '0' and irq_empty = '0') then
           noc5_in_data <= irq_data_out;
           noc5_in_void <= irq_empty;

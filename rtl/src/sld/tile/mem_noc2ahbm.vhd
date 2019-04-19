@@ -3,6 +3,7 @@
 
 library ieee;
 use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
 
 --pragma translate_off
 use STD.textio.all;
@@ -99,6 +100,9 @@ architecture rtl of mem_noc2ahbm is
   signal dma_header        : noc_flit_type;
   signal sample_dma_header : std_ulogic;
 
+  -- Default address increment
+  constant default_incr : std_logic_vector(GLOB_PHYS_ADDR_BITS - 1 downto 0) := conv_std_logic_vector(GLOB_ADDR_INCR, GLOB_PHYS_ADDR_BITS);
+
   -- common
   type reg_type is record
     msg     : noc_msg_type;
@@ -108,7 +112,8 @@ architecture rtl of mem_noc2ahbm is
     grant   : std_ulogic;
     ready   : std_ulogic;
     resp    : std_logic_vector(1 downto 0);
-    addr    : std_logic_vector(ARCH_BITS - 1 downto 0);
+    addr    : std_logic_vector(GLOB_PHYS_ADDR_BITS - 1 downto 0);
+    incr    : std_logic_vector(GLOB_PHYS_ADDR_BITS - 1 downto 0);
     flit    : noc_flit_type;
     hwdata  : std_logic_vector(ARCH_BITS - 1 downto 0);
     state   : ahbm_fsm;
@@ -129,6 +134,7 @@ architecture rtl of mem_noc2ahbm is
     ready   => '0',
     resp    => HRESP_OKAY,
     addr    => (others => '0'),
+    incr    => default_incr,
     flit    => (others => '0'),
     hwdata  => (others => '0'),
     state   => receive_header,
@@ -280,7 +286,7 @@ begin  -- rtl
       when receive_address =>
         if coherence_req_empty = '0' then
           coherence_req_rdreq <= '1';
-          v.addr              := coherence_req_data_out(ARCH_BITS - 1 downto 0);
+          v.addr              := coherence_req_data_out(GLOB_PHYS_ADDR_BITS - 1 downto 0);
           if (r.msg = REQ_GETS_W or r.msg = REQ_GETS_HW or r.msg = REQ_GETS_B or r.msg = AHB_RD)
             or ((r.msg = REQ_GETM_W) and (l2_cache_en /= 0)) then
             -- Use default size: cacheline
@@ -315,7 +321,7 @@ begin  -- rtl
       when dma_receive_address =>
         if dma_rcv_empty = '0' then
           dma_rcv_rdreq <= '1';
-          v.addr        := dma_rcv_data_out(ARCH_BITS - 1 downto 0);
+          v.addr        := dma_rcv_data_out(GLOB_PHYS_ADDR_BITS - 1 downto 0);
           if r.msg = DMA_TO_DEV then
             v.state := dma_receive_rdlength;
           else
@@ -417,7 +423,11 @@ begin  -- rtl
             coherence_rsp_snd_data_in <= header_reg;
             coherence_rsp_snd_wrreq   <= '1';
             -- Updated address and control bus
-            v.addr                    := r.addr + 4;
+            if r.hsize = HSIZE_WORD then
+              v.addr := r.addr + 4;
+            else
+              v.addr := r.addr + default_incr;
+            end if;
             v.count                   := r.count - 1;
             if r.count = 1 then
               v.hbusreq := '0';
@@ -447,7 +457,8 @@ begin  -- rtl
 
       when send_put_ack_address =>
         if (coherence_rsp_snd_full = '0') then
-          coherence_rsp_snd_data_in <= PREAMBLE_TAIL & r.addr;
+          coherence_rsp_snd_data_in(NOC_FLIT_SIZE - 1 downto NOC_FLIT_SIZE - PREAMBLE_WIDTH) <= PREAMBLE_TAIL;
+          coherence_rsp_snd_data_in(GLOB_PHYS_ADDR_BITS - 1 downto 0) <= r.addr;
           coherence_rsp_snd_wrreq   <= '1';
           if r.msg = REQ_PUTM then
             v.state := wr_request;
@@ -463,7 +474,7 @@ begin  -- rtl
           dma_snd_data_in <= header_reg;
           dma_snd_wrreq   <= '1';
           -- Updated address and control bus
-          v.addr          := r.addr + 4;
+          v.addr          := r.addr + default_incr;
           v.count         := r.count - 1;
           if r.count = 1 then
             v.hbusreq := '0';
@@ -479,10 +490,11 @@ begin  -- rtl
 
       when send_address =>
         if v.ready = '1' then
-          coherence_rsp_snd_data_in <= PREAMBLE_BODY & r.addr;
+          coherence_rsp_snd_data_in(NOC_FLIT_SIZE - 1 downto NOC_FLIT_SIZE - PREAMBLE_WIDTH) <= PREAMBLE_BODY;
+          coherence_rsp_snd_data_in(GLOB_PHYS_ADDR_BITS - 1 downto 0) <= r.addr;
           coherence_rsp_snd_wrreq   <= '1';
           v.count                   := r.count - 1;
-          v.addr                    := r.addr + 4;
+          v.addr                    := r.addr + default_incr;
           v.state                   := send_data;
           v.htrans                  := HTRANS_SEQ;
         end if;
@@ -496,7 +508,11 @@ begin  -- rtl
             coherence_rsp_snd_wrreq   <= '1';
             coherence_rsp_snd_data_in <= PREAMBLE_BODY & ahbmi.hrdata;
             -- Update address and control bus
-            v.addr                    := r.addr + 4;
+            if r.hsize = HSIZE_WORD then
+              v.addr := r.addr + 4;
+            else
+              v.addr := r.addr + default_incr;
+            end if;
             v.count                   := r.count - 1;
             if r.count = 2 then
               v.hbusreq := '0';
@@ -519,7 +535,7 @@ begin  -- rtl
           dma_snd_wrreq   <= '1';
           dma_snd_data_in <= PREAMBLE_BODY & ahbmi.hrdata;
           -- Update address and control bus
-          v.addr          := r.addr + 4;
+          v.addr          := r.addr + default_incr;
           v.count         := r.count - 1;
           if r.count = 2 then
             v.hbusreq := '0';
@@ -556,7 +572,7 @@ begin  -- rtl
           v.htrans := HTRANS_SEQ;
         end if;
         if (r.htrans = HTRANS_SEQ and v.ready = '1') then
-          v.addr  := r.addr + 4;
+          v.addr  := r.addr + default_incr;
           v.state := dma_send_data;
         end if;
 
@@ -649,7 +665,11 @@ begin  -- rtl
           -- Write data to memory
           v.hwdata := r.flit(ARCH_BITS - 1 downto 0);
           -- Update address and control
-          v.addr   := r.addr + 4;
+          if r.hsize = HSIZE_WORD then
+            v.addr := r.addr + 4;
+          else
+            v.addr := r.addr + default_incr;
+          end if;
           if coherence_req_empty = '1' then
             v.htrans := HTRANS_BUSY;
             v.state  := write_busy;
@@ -670,7 +690,7 @@ begin  -- rtl
           -- Write data to memory
           v.hwdata := r.flit(ARCH_BITS - 1 downto 0);
           -- Upda`te address and control
-          v.addr   := r.addr + 4;
+          v.addr   := r.addr + default_incr;
           if dma_rcv_empty = '1' then
             v.htrans := HTRANS_BUSY;
             v.state  := dma_write_busy;

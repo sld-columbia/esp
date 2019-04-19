@@ -202,7 +202,7 @@ begin
         v.hio := ahbsi.hmbsel(1);
         v.hsel := '1'; v.hready := v.hio;
       end if;
-      v.haddr := ahbsi.haddr;
+      v.haddr := ahbsi.haddr(31 downto 0);
       -- addr must be masked since address range can be smaller than
       -- total banksize. this can result in wrong chip select being
       -- asserted
@@ -215,7 +215,7 @@ begin
       haddr := r.haddr;
       htrans := r.htrans; hwrite := r.hwrite;
     else
-      haddr := ahbsi.haddr;
+      haddr := ahbsi.haddr(31 downto 0);
       htrans := ahbsi.htrans; hwrite := ahbsi.hwrite;
       -- addr must be masked since address range can be smaller than
       -- total banksize. this can result in wrong chip select being

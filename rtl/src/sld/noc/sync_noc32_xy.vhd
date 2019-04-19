@@ -9,7 +9,7 @@ use ieee.std_logic_unsigned.all;
 use work.sldcommon.all;
 use work.nocpackage.all;
 
-entity sync_noc_xy is
+entity sync_noc32_xy is
   generic (
     XLEN      : integer;
     YLEN      : integer;
@@ -19,21 +19,21 @@ entity sync_noc_xy is
     clk           : in  std_logic;
     clk_tile      : in  std_logic_vector(TILES_NUM-1 downto 0);
     rst           : in  std_logic;
-    input_port    : in  noc_flit_vector(TILES_NUM-1 downto 0);
+    input_port    : in  misc_noc_flit_vector(TILES_NUM-1 downto 0);
     data_void_in  : in  std_logic_vector(TILES_NUM-1 downto 0);
     stop_in       : in  std_logic_vector(TILES_NUM-1 downto 0);
-    output_port   : out noc_flit_vector(TILES_NUM-1 downto 0);
+    output_port   : out misc_noc_flit_vector(TILES_NUM-1 downto 0);
     data_void_out : out std_logic_vector(TILES_NUM-1 downto 0);
     stop_out      : out std_logic_vector(TILES_NUM-1 downto 0);
     -- Monitor output. Can be left unconnected
     mon_noc       : out monitor_noc_vector(0 to TILES_NUM-1)
     );
 
-end sync_noc_xy;
+end sync_noc32_xy;
 
-architecture mesh of sync_noc_xy is
+architecture mesh of sync_noc32_xy is
 
-  component noc_xy
+  component noc32_xy
     generic (
       XLEN      : integer;
       YLEN      : integer;
@@ -41,10 +41,10 @@ architecture mesh of sync_noc_xy is
     port (
       clk           : in  std_logic;
       rst           : in  std_logic;
-      input_port    : in  noc_flit_vector(TILES_NUM-1 downto 0);
+      input_port    : in  misc_noc_flit_vector(TILES_NUM-1 downto 0);
       data_void_in  : in  std_logic_vector(TILES_NUM-1 downto 0);
       stop_in       : in  std_logic_vector(TILES_NUM-1 downto 0);
-      output_port   : out noc_flit_vector(TILES_NUM-1 downto 0);
+      output_port   : out misc_noc_flit_vector(TILES_NUM-1 downto 0);
       data_void_out : out std_logic_vector(TILES_NUM-1 downto 0);
       stop_out      : out std_logic_vector(TILES_NUM-1 downto 0);
       -- Monitor output
@@ -54,17 +54,17 @@ architecture mesh of sync_noc_xy is
 
   signal fwd_ack	  : std_logic_vector(TILES_NUM-1 downto 0);
   signal fwd_req	  : std_logic_vector(TILES_NUM-1 downto 0);
-  signal fwd_chnl_data	  : noc_flit_vector(TILES_NUM-1 downto 0);
+  signal fwd_chnl_data	  : misc_noc_flit_vector(TILES_NUM-1 downto 0);
   signal fwd_chnl_stop	  : std_logic_vector(TILES_NUM-1 downto 0);
 
   signal rev_ack	  : std_logic_vector(TILES_NUM-1 downto 0);
   signal rev_req	  : std_logic_vector(TILES_NUM-1 downto 0);
-  signal rev_chnl_data	  : noc_flit_vector(TILES_NUM-1 downto 0);
+  signal rev_chnl_data	  : misc_noc_flit_vector(TILES_NUM-1 downto 0);
   signal rev_chnl_stop	  : std_logic_vector(TILES_NUM-1 downto 0);
 
-  signal sync_output_port   : noc_flit_vector(TILES_NUM-1 downto 0);
+  signal sync_output_port   : misc_noc_flit_vector(TILES_NUM-1 downto 0);
   signal sync_data_void_out : std_logic_vector(TILES_NUM-1 downto 0);
-  signal sync_input_port    : noc_flit_vector(TILES_NUM-1 downto 0);
+  signal sync_input_port    : misc_noc_flit_vector(TILES_NUM-1 downto 0);
   signal sync_data_void_in  : std_logic_vector(TILES_NUM-1 downto 0);
   signal sync_stop_in 	    : std_logic_vector(TILES_NUM-1 downto 0);
   signal sync_stop_out 	    : std_logic_vector(TILES_NUM-1 downto 0);
@@ -78,7 +78,7 @@ architecture mesh of sync_noc_xy is
 
 begin
 
-  noc_xy_1: noc_xy
+  noc_xy_1: noc32_xy
     generic map (
       XLEN      => XLEN,
       YLEN      => YLEN,
@@ -129,7 +129,7 @@ begin
       sync_data_void_in(i) <= fwd_rd_empty_o(i) when sync_stop_out(i) = '0' else '1';
       inferred_async_fifo_1: inferred_async_fifo
         generic map (
-          g_data_width => NOC_FLIT_SIZE,
+          g_data_width => MISC_NOC_FLIT_SIZE,
           g_size       => 8)
         port map (
           rst_n_i    => rst,
@@ -152,7 +152,7 @@ begin
       data_void_out(i) <= rev_rd_empty_o(i);-- when stop_in(i) = '0' else '1';
       inferred_async_fifo_1: inferred_async_fifo
         generic map (
-          g_data_width => NOC_FLIT_SIZE,
+          g_data_width => MISC_NOC_FLIT_SIZE,
           g_size       => 8)
         port map (
           rst_n_i    => rst,

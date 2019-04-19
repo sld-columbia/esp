@@ -755,7 +755,7 @@ begin  -- architecture rtl
           ahbmo.hprot(HPROT_WIDTH - 1 downto 0) <= reg.hprot;
           if ahbmi.hready = '1' then
             reg.word_cnt := reg.word_cnt + 1;
-            reg.haddr    := reg.haddr + 4;
+            reg.haddr    := reg.haddr + GLOB_ADDR_INCR;
           end if;
 
         elsif reg.word_cnt = WORDS_PER_LINE then
@@ -786,7 +786,7 @@ begin  -- architecture rtl
           if ahbmi.hready = '1' then
             reg.line(reg.word_cnt*BITS_PER_WORD-1 downto (reg.word_cnt-1)*BITS_PER_WORD) := ahbmi.hrdata;
             reg.word_cnt                                                                 := reg.word_cnt + 1;
-            reg.haddr                                                                    := reg.haddr + 4;
+            reg.haddr                                                                    := reg.haddr  + GLOB_ADDR_INCR;
           end if;
         end if;
 
@@ -814,7 +814,7 @@ begin  -- architecture rtl
           ahbmo.hprot(HPROT_WIDTH - 1 downto 0) <= reg.hprot;
           if ahbmi.hready = '1' then
             reg.word_cnt := reg.word_cnt + 1;
-            reg.haddr    := reg.haddr + 4;
+            reg.haddr    := reg.haddr  + GLOB_ADDR_INCR;
           end if;
 
         elsif reg.word_cnt = WORDS_PER_LINE then
@@ -839,7 +839,7 @@ begin  -- architecture rtl
           ahbmo.hprot(HPROT_WIDTH - 1 downto 0) <= reg.hprot;
           if ahbmi.hready = '1' then
             reg.word_cnt := reg.word_cnt + 1;
-            reg.haddr    := reg.haddr + 4;
+            reg.haddr    := reg.haddr  + GLOB_ADDR_INCR;
           end if;
 
         end if;
@@ -1356,9 +1356,10 @@ begin  -- architecture rtl
       when send_addr =>
         if coherence_fwd_full = '0' then
 
-          coherence_fwd_wrreq   <= '1';
-          coherence_fwd_data_in <= PREAMBLE_TAIL & reg.addr & empty_offset;
-          reg.state             := send_header;
+          coherence_fwd_wrreq <= '1';
+          coherence_fwd_data_in(NOC_FLIT_SIZE - 1 downto NOC_FLIT_SIZE - PREAMBLE_WIDTH) <= PREAMBLE_TAIL;
+          coherence_fwd_data_in(GLOB_PHYS_ADDR_BITS - 1 downto 0) <= reg.addr & empty_offset;
+          reg.state := send_header;
 
         end if;
 
@@ -1464,7 +1465,8 @@ begin  -- architecture rtl
         if coherence_rsp_snd_full = '0' then
 
           coherence_rsp_snd_wrreq   <= '1';
-          coherence_rsp_snd_data_in <= PREAMBLE_BODY & reg.addr & empty_offset;
+          coherence_rsp_snd_data_in(NOC_FLIT_SIZE - 1 downto NOC_FLIT_SIZE - PREAMBLE_WIDTH) <= PREAMBLE_BODY;
+          coherence_rsp_snd_data_in(GLOB_PHYS_ADDR_BITS - 1 downto 0) <= reg.addr & empty_offset;
           reg.state                 := send_data;
           reg.word_cnt              := 0;
 

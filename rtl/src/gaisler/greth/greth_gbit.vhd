@@ -179,7 +179,7 @@ begin
       hbusreq        => ahbmo.hbusreq,
       hlock          => ahbmo.hlock,
       htrans         => ahbmo.htrans,
-      haddr          => ahbmo.haddr,
+      haddr          => ahbmo.haddr(31 downto 0),
       hwrite         => ahbmo.hwrite,
       hsize          => ahbmo.hsize,
       hburst         => ahbmo.hburst,

@@ -50,6 +50,8 @@ package nocpackage is
   type noc_flit_vector is array (natural range <>) of noc_flit_type;
   type misc_noc_flit_vector is array (natural range <>) of misc_noc_flit_type;
 
+  constant noc_flit_pad : std_logic_vector(NOC_FLIT_SIZE - MISC_NOC_FLIT_SIZE - 1 downto 0) := (others => '0');
+
   -- Preamble encoding
   constant PREAMBLE_HEADER : noc_preamble_type := "10";
   constant PREAMBLE_TAIL   : noc_preamble_type := "01";
@@ -234,8 +236,15 @@ package nocpackage is
     remote_x          : local_yx;
     msg_type          : noc_msg_type;
     reserved          : reserved_field_type)
+    return std_logic_vector;
+
+  function narrow_to_large_flit (
+    narrow_flit : misc_noc_flit_type)
     return noc_flit_type;
 
+  function large_to_narrow_flit (
+    large_flit : noc_flit_type)
+    return misc_noc_flit_type;
 
   -- IRQ snd packet (Header + 2 flits):
   -- Payload 1
@@ -312,7 +321,6 @@ package body nocpackage is
     return noc_preamble_type is
     variable ret : noc_preamble_type;
   begin
-    ret := (others => '0');
     ret := flit(flit_sz - 1 downto flit_sz - PREAMBLE_WIDTH);
     return ret;
   end get_preamble;
@@ -323,7 +331,6 @@ package body nocpackage is
     return reserved_field_type is
     variable ret : reserved_field_type;
   begin
-    ret := (others => '0');
     ret := flit(flit_sz - PREAMBLE_WIDTH - 4*YX_WIDTH - MSG_TYPE_WIDTH - 1 downto
                 flit_sz - PREAMBLE_WIDTH - 4*YX_WIDTH - MSG_TYPE_WIDTH - RESERVED_WIDTH);
     return ret;
@@ -370,7 +377,7 @@ package body nocpackage is
     remote_x          : local_yx;
     msg_type          : noc_msg_type;
     reserved          : reserved_field_type)
-    return noc_flit_type is
+    return std_logic_vector is
     variable header : std_logic_vector(flit_sz - 1 downto 0);
     variable go_left, go_right, go_up, go_down : std_logic_vector(NEXT_ROUTING_WIDTH - 1 downto 0);
   begin  -- create_header
@@ -414,6 +421,52 @@ package body nocpackage is
 
     return header;
   end create_header;
+
+  function narrow_to_large_flit (
+    narrow_flit : misc_noc_flit_type)
+    return noc_flit_type is
+    variable ret : noc_flit_type;
+    variable preamble : noc_preamble_type;
+  begin
+    ret := (others => '0');
+    preamble := get_preamble(MISC_NOC_FLIT_SIZE, noc_flit_pad & narrow_flit);
+
+    if preamble = PREAMBLE_HEADER or preamble = PREAMBLE_1FLIT then
+      ret(NOC_FLIT_SIZE - 1 downto NOC_FLIT_SIZE - MISC_NOC_FLIT_SIZE + NEXT_ROUTING_WIDTH) :=
+        narrow_flit(MISC_NOC_FLIT_SIZE - 1 downto NEXT_ROUTING_WIDTH);
+      ret(NEXT_ROUTING_WIDTH - 1 downto 0) := narrow_flit(NEXT_ROUTING_WIDTH - 1 downto 0);
+    else
+      ret(NOC_FLIT_SIZE - 1 downto NOC_FLIT_SIZE - PREAMBLE_WIDTH) :=
+        narrow_flit(MISC_NOC_FLIT_SIZE - 1 downto MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH);
+      ret(MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH - 1 downto 0) :=
+        narrow_flit(MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH - 1 downto 0);
+    end if;
+
+    return ret;
+  end narrow_to_large_flit;
+
+  function large_to_narrow_flit (
+    large_flit : noc_flit_type)
+    return misc_noc_flit_type is
+    variable ret : misc_noc_flit_type;
+    variable preamble : noc_preamble_type;
+  begin
+    ret := (others => '0');
+    preamble := get_preamble(NOC_FLIT_SIZE, large_flit);
+
+    if preamble = PREAMBLE_HEADER or preamble = PREAMBLE_1FLIT then
+      ret(MISC_NOC_FLIT_SIZE - 1 downto NEXT_ROUTING_WIDTH) :=
+        large_flit(NOC_FLIT_SIZE - 1 downto NOC_FLIT_SIZE - MISC_NOC_FLIT_SIZE + NEXT_ROUTING_WIDTH);
+      ret(NEXT_ROUTING_WIDTH - 1 downto 0) := large_flit(NEXT_ROUTING_WIDTH - 1 downto 0);
+    else
+      ret(MISC_NOC_FLIT_SIZE - 1 downto MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH) :=
+        large_flit(NOC_FLIT_SIZE - 1 downto NOC_FLIT_SIZE - PREAMBLE_WIDTH);
+      ret(MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH - 1 downto 0) :=
+        large_flit(MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH - 1 downto 0);
+    end if;
+
+    return ret;
+  end large_to_narrow_flit;
 
 
 end nocpackage;

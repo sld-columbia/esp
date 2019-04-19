@@ -396,7 +396,7 @@ begin  -- rtl
                      end if;
                    end if;
 
-      when packet_apb_snd => to_noc5_preamble := get_preamble(MISC_NOC_FLIT_SIZE, apb_snd_data_out);
+      when packet_apb_snd => to_noc5_preamble := get_preamble(MISC_NOC_FLIT_SIZE, noc_flit_pad & apb_snd_data_out);
                              if (noc5_in_stop = '0' and apb_snd_empty = '0') then
                                noc5_in_data <= apb_snd_data_out;
                                noc5_in_void <= apb_snd_empty;

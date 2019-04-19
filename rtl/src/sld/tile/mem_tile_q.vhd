@@ -346,8 +346,8 @@ begin  -- rtl
 
   -- From noc5: AHB slave response from remote DSU (AHBs rcv)
   -- Priority must be respected to avoid deadlock!
-  noc5_msg_type <= get_msg_type(MISC_NOC_FLIT_SIZE, noc5_out_data);
-  noc5_preamble <= get_preamble(MISC_NOC_FLIT_SIZE, noc5_out_data);
+  noc5_msg_type <= get_msg_type(MISC_NOC_FLIT_SIZE, noc_flit_pad & noc5_out_data);
+  noc5_preamble <= get_preamble(MISC_NOC_FLIT_SIZE, noc_flit_pad & noc5_out_data);
   process (clk, rst)
   begin  -- process
     if rst = '0' then                   -- asynchronous reset (active low)
@@ -479,7 +479,7 @@ begin  -- rtl
                       end if;
                     end if;
 
-      when packet_remote_ahbs_snd  => to_noc5_preamble := get_preamble(MISC_NOC_FLIT_SIZE, remote_ahbs_snd_data_out);
+      when packet_remote_ahbs_snd  => to_noc5_preamble := get_preamble(MISC_NOC_FLIT_SIZE, noc_flit_pad & remote_ahbs_snd_data_out);
                              if (noc5_in_stop = '0' and remote_ahbs_snd_empty = '0') then
                                noc5_in_data <= remote_ahbs_snd_data_out;
                                noc5_in_void <= remote_ahbs_snd_empty;
@@ -489,7 +489,7 @@ begin  -- rtl
                                end if;
                              end if;
 
-      when packet_apb_snd  => to_noc5_preamble := get_preamble(MISC_NOC_FLIT_SIZE, apb_snd_data_out);
+      when packet_apb_snd  => to_noc5_preamble := get_preamble(MISC_NOC_FLIT_SIZE, noc_flit_pad & apb_snd_data_out);
                              if (noc5_in_stop = '0' and apb_snd_empty = '0') then
                                noc5_in_data <= apb_snd_data_out;
                                noc5_in_void <= apb_snd_empty;

@@ -97,7 +97,7 @@ begin
   ahbo_hbusreq   <= ahbo.hbusreq;
   ahbo_hlock     <= ahbo.hlock;
   ahbo_htrans    <= ahbo.htrans;
-  ahbo_haddr     <= ahbo.haddr;
+  ahbo_haddr     <= ahbo.haddr(31 downto 0);
   ahbo_hwrite    <= ahbo.hwrite;
   ahbo_hsize     <= ahbo.hsize;
   ahbo_hburst    <= ahbo.hburst;

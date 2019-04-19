@@ -319,8 +319,10 @@ def print_global_constants(fp, soc):
   fp.write("  constant GLOB_CPU_MAX_NUM : integer := " + str(NCPU_MAX) + ";\n")
   fp.write("  constant GLOB_TILES_MAX_NUM : integer := " + str(NTILE_MAX) + ";\n")
   # Keep cache-line size constant to 128 bits for now. We don't want huge line buffers
-  fp.write("  constant GLOB_WORD_OFFSET_BITS : integer := " + str(int(math.log(128/soc.DMA_WIDTH, 2))) + ";\n")
-  fp.write("  constant GLOB_BYTE_OFFSET_BITS : integer := " + str(int(math.log(soc.DMA_WIDTH/8, 2))) +";\n")
+  fp.write("  constant GLOB_WORD_OFFSET_BITS : integer := " + str(int(math.log2(128/soc.DMA_WIDTH))) + ";\n")
+  fp.write("  constant GLOB_BYTE_OFFSET_BITS : integer := " + str(int(math.log2(soc.DMA_WIDTH/8))) +";\n")
+  fp.write("  constant GLOB_OFFSET_BITS : integer := GLOB_WORD_OFFSET_BITS + GLOB_BYTE_OFFSET_BITS;\n")
+  fp.write("  constant GLOB_ADDR_INCR : integer := " + str(int(soc.DMA_WIDTH/8)) +";\n")
   # TODO: Keep physical address to 32 bits for now to reduce tag size. This will increase to support more memory
   fp.write("  constant GLOB_PHYS_ADDR_BITS : integer := " + str(32) +";\n")
   fp.write("\n")

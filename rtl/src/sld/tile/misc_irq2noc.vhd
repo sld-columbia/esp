@@ -174,6 +174,7 @@ begin  -- rtl
     -- Make a packet for interrupt request
     make_packet : process (irqi(cpuid))
       variable msg_type    : noc_msg_type;
+      variable tmp : noc_flit_type;
       variable header_v    : misc_noc_flit_type;
       variable payload_1_v : misc_noc_flit_type;
       variable payload_2_v : misc_noc_flit_type;

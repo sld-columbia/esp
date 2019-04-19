@@ -180,7 +180,7 @@ begin
         v.size := ahbsi.hsize(1 downto 0); v.hwrite := ahbsi.hwrite;
         v.htrans := ahbsi.htrans; v.hburst := ahbsi.hburst;
 	v.hsel := '1'; v.hmbsel := ahbsi.hmbsel(0 to 2);
-        v.haddr := ahbsi.haddr; v.hready := '0';
+        v.haddr := ahbsi.haddr(31 downto 0); v.hready := '0';
       else
 	v.hsel := '0';
       end if;
@@ -190,7 +190,7 @@ begin
       haddr := r.haddr;  hsize := r.size;
       htrans := r.htrans; hwrite := r.hwrite;
     else
-      haddr := ahbsi.haddr;  hsize := ahbsi.hsize(1 downto 0);
+      haddr := ahbsi.haddr(31 downto 0);  hsize := ahbsi.hsize(1 downto 0);
       htrans := ahbsi.htrans; hwrite := ahbsi.hwrite;
     end if;
 
@@ -256,7 +256,7 @@ begin
       v.ws := r.ws -1; v.oen := '0';
       if r.ws = "0000" then
 	if (r.size /= "11") or (r.haddr(2) = '1') or (AHBDW = 32) then 
-	  v.srstate := idle; v.hready := '1'; v.haddr := ahbsi.haddr;
+	  v.srstate := idle; v.hready := '1'; v.haddr := ahbsi.haddr(31 downto 0);
 	  v.ramsn := not (ahbsi.hmbsel(1) and ahbsi.htrans(1));
 	  v.romsn := not (ahbsi.hmbsel(0) and ahbsi.htrans(1));
 	  v.oen := not (ahbsi.hsel(hindex) and ahbsi.htrans(1) and not ahbsi.hwrite);

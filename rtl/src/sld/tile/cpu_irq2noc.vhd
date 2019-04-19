@@ -144,7 +144,7 @@ begin  -- rtl
     msg_type := IRQ_MSG;
 
     header_v := (others                                                         => '0');
-    header_v := create_header(MISC_NOC_FLIT_SIZE, local_y, local_x, irq_y, irq_x, msg_type, (others => '0'));
+    header_v := create_header(MISC_NOC_FLIT_SIZE, local_y, local_x, irq_y, irq_x, msg_type, (others => '0'))(MISC_NOC_FLIT_SIZE - 1 downto 0);
 
     payload_1_v                                                      := (others => '0');
     payload_1_v(MISC_NOC_FLIT_SIZE-1 downto MISC_NOC_FLIT_SIZE-PREAMBLE_WIDTH) := PREAMBLE_TAIL;

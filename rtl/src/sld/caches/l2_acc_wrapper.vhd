@@ -11,6 +11,8 @@ use STD.textio.all;
 use ieee.std_logic_textio.all;
 --pragma translate_on
 
+use work.esp_global.all;
+
 use work.amba.all;
 use work.stdlib.all;
 use work.sld_devices.all;
@@ -695,7 +697,7 @@ begin  -- architecture rtl of l2_acc_wrapper
             cpu_req_valid        <= '1';
             cpu_req_data_cpu_msg <= CPU_WRITE;
             cpu_req_data_addr    <= reg.addr;
-            cpu_req_data_word    <= dma_snd_data(ADDR_BITS - 1 downto 0);
+            cpu_req_data_word    <= dma_snd_data(ARCH_BITS - 1 downto 0);
 
             reg.addr := reg.addr + BYTES_PER_WORD;
 
@@ -775,13 +777,15 @@ begin  -- architecture rtl of l2_acc_wrapper
 
           if '0' & reg.coh_msg = REQ_PUTM then
 
-            coherence_req_data_in <= PREAMBLE_BODY & reg.addr & empty_offset;
+            coherence_req_data_in(NOC_FLIT_SIZE - 1 downto NOC_FLIT_SIZE - PREAMBLE_WIDTH) <= PREAMBLE_BODY;
+            coherence_req_data_in(GLOB_PHYS_ADDR_BITS - 1 downto 0) <= reg.addr & empty_offset;
             reg.state             := send_data;
             reg.word_cnt          := 0;
 
           else
 
-            coherence_req_data_in <= PREAMBLE_TAIL & reg.addr & empty_offset;
+            coherence_req_data_in(NOC_FLIT_SIZE - 1 downto NOC_FLIT_SIZE - PREAMBLE_WIDTH) <= PREAMBLE_TAIL;
+            coherence_req_data_in(GLOB_PHYS_ADDR_BITS - 1 downto 0) <= reg.addr & empty_offset;
             reg.state             := send_header;
 
           end if;
@@ -883,13 +887,15 @@ begin  -- architecture rtl of l2_acc_wrapper
 
           if '0' & reg.coh_msg = RSP_DATA then
 
-            coherence_rsp_snd_data_in <= PREAMBLE_BODY & reg.addr & empty_offset;
+            coherence_rsp_snd_data_in(NOC_FLIT_SIZE - 1 downto NOC_FLIT_SIZE - PREAMBLE_WIDTH) <= PREAMBLE_BODY;
+            coherence_rsp_snd_data_in(GLOB_PHYS_ADDR_BITS - 1 downto 0) <= reg.addr & empty_offset;
             reg.state                 := send_data;
             reg.word_cnt              := 0;
 
           else
 
-            coherence_rsp_snd_data_in <= PREAMBLE_TAIL & reg.addr & empty_offset;
+            coherence_rsp_snd_data_in(NOC_FLIT_SIZE - 1 downto NOC_FLIT_SIZE - PREAMBLE_WIDTH) <= PREAMBLE_TAIL;
+            coherence_rsp_snd_data_in(GLOB_PHYS_ADDR_BITS - 1 downto 0) <= reg.addr & empty_offset;
             reg.state                 := send_header;
 
           end if;

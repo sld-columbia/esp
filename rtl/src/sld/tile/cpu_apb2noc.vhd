@@ -111,7 +111,7 @@ begin  -- rtl
           msg_type := REQ_REG_WR;
           payload_address(MISC_NOC_FLIT_SIZE-1 downto MISC_NOC_FLIT_SIZE-PREAMBLE_WIDTH) <= PREAMBLE_BODY;
         end if;
-        header_v := create_header(MISC_NOC_FLIT_SIZE, local_y, local_x, apb_slv_y(i), apb_slv_x(i), msg_type, (others => '0'));
+        header_v := create_header(MISC_NOC_FLIT_SIZE, local_y, local_x, apb_slv_y(i), apb_slv_x(i), msg_type, (others => '0'))(MISC_NOC_FLIT_SIZE - 1 downto 0);
 --pragma translate_off
         --Print("HEADER: ");
         --write(my_line, header_v);

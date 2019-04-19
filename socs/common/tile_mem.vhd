@@ -127,10 +127,10 @@ architecture rtl of tile_mem is
   signal remote_ahbs_snd_full       : std_ulogic;
   -- Extended remote_ahbs_* signals that
   signal remote_ahbm_rcv_rdreq      : std_ulogic;
-  signal remote_ahbm_rcv_data_out   : misc_noc_flit_type;
+  signal remote_ahbm_rcv_data_out   : noc_flit_type;
   signal remote_ahbm_rcv_empty      : std_ulogic;
   signal remote_ahbm_snd_wrreq      : std_ulogic;
-  signal remote_ahbm_snd_data_in    : misc_noc_flit_type;
+  signal remote_ahbm_snd_data_in    : noc_flit_type;
   signal remote_ahbm_snd_full       : std_ulogic;
   --
   signal apb_rcv_rdreq              : std_ulogic;
@@ -467,19 +467,8 @@ begin
   remote_ahbm_snd_full  <= remote_ahbs_snd_full;
 
   large_bus: if ARCH_BITS /= 32 generate
-    -- Preamble
-    remote_ahbm_rcv_data_out(NOC_FLIT_SIZE - 1 downto NOC_FLIT_SIZE - PREAMBLE_WIDTH) <=
-      get_preamble(MISC_NOC_FLIT_SIZE, remote_ahbs_rcv_data_out);
-    remote_ahbs_snd_data_in(MISC_NOC_FLIT_SIZE - 1 downto MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH) <=
-      get_preamble(NOC_FLIT_SIZE, remote_ahbm_snd_data_in);
-    -- Unused bits
-    remote_ahbm_rcv_data_out(NOC_FLIT_SIZE - PREAMBLE_WIDTH downto MISC_NOC_FLIT_SIZE) <=
-      (others => '0');
-    -- Data
-    remote_ahbm_rcv_data_out(MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH - 1 downto 0) <=
-      remote_ahbs_rcv_data_out(MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH - 1 downto 0);
-    remote_ahbs_snd_data_in(MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH - 1 downto 0) <=
-      remote_ahbm_snd_data_in(MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH - 1 downto 0);
+    remote_ahbm_rcv_data_out <= narrow_to_large_flit(remote_ahbs_rcv_data_out);
+    remote_ahbs_snd_data_in <= large_to_narrow_flit(remote_ahbm_snd_data_in);
   end generate large_bus;
 
   std_bus: if ARCH_BITS = 32 generate

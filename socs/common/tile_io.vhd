@@ -8,6 +8,7 @@
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
+use work.esp_global.all;
 use work.amba.all;
 use work.stdlib.all;
 use work.sld_devices.all;
@@ -137,12 +138,24 @@ architecture rtl of tile_io is
   signal coherent_dma_selected : std_ulogic;
 
   -- Queues
+  -- These requests are delivered through NoC5 (32 bits always)
+  -- however, the proxy that handles expects a flit size in
+  -- accordance with ARCH_BITS. Hence we need to pad and move
+  -- header info and preamble to the right bit position
   signal ahbs_rcv_rdreq            : std_ulogic;
   signal ahbs_rcv_data_out         : misc_noc_flit_type;
   signal ahbs_rcv_empty            : std_ulogic;
   signal ahbs_snd_wrreq            : std_ulogic;
   signal ahbs_snd_data_in          : misc_noc_flit_type;
   signal ahbs_snd_full             : std_ulogic;
+  -- Extended remote_ahbs_* signals that
+  signal ahbm_rcv_rdreq      : std_ulogic;
+  signal ahbm_rcv_data_out   : noc_flit_type;
+  signal ahbm_rcv_empty      : std_ulogic;
+  signal ahbm_snd_wrreq      : std_ulogic;
+  signal ahbm_snd_data_in    : noc_flit_type;
+  signal ahbm_snd_full       : std_ulogic;
+
   signal remote_ahbs_rcv_rdreq     : std_ulogic;
   signal remote_ahbs_rcv_data_out  : misc_noc_flit_type;
   signal remote_ahbs_rcv_empty     : std_ulogic;
@@ -685,15 +698,15 @@ begin
       clk                       => clk,
       ahbmi                     => ahbmi,
       ahbmo                     => ahbmo(CFG_AHB_JTAG + CFG_GRETH + CFG_DSU_ETH),
-      coherence_req_rdreq       => ahbs_rcv_rdreq,
-      coherence_req_data_out    => ahbs_rcv_data_out,
-      coherence_req_empty       => ahbs_rcv_empty,
+      coherence_req_rdreq       => ahbm_rcv_rdreq,
+      coherence_req_data_out    => ahbm_rcv_data_out,
+      coherence_req_empty       => ahbm_rcv_empty,
       coherence_fwd_wrreq       => open,
       coherence_fwd_data_in     => open,
       coherence_fwd_full        => '0',
-      coherence_rsp_snd_wrreq   => ahbs_snd_wrreq,
-      coherence_rsp_snd_data_in => ahbs_snd_data_in,
-      coherence_rsp_snd_full    => ahbs_snd_full,
+      coherence_rsp_snd_wrreq   => ahbm_snd_wrreq,
+      coherence_rsp_snd_data_in => ahbm_snd_data_in,
+      coherence_rsp_snd_full    => ahbm_snd_full,
       dma_rcv_rdreq             => dma_rcv_rdreq,
       dma_rcv_data_out          => dma_rcv_data_out,
       dma_rcv_empty             => dma_rcv_empty,
@@ -702,6 +715,21 @@ begin
       dma_snd_full              => dma_snd_full,
       dma_snd_atleast_4slots    => dma_snd_atleast_4slots,
       dma_snd_exactly_3slots    => dma_snd_exactly_3slots);
+
+  ahbs_rcv_rdreq <= ahbm_rcv_rdreq;
+  ahbm_rcv_empty <= ahbs_rcv_empty;
+  ahbs_snd_wrreq <= ahbm_snd_wrreq;
+  ahbm_snd_full  <= ahbs_snd_full;
+
+  large_bus: if ARCH_BITS /= 32 generate
+    ahbm_rcv_data_out <= narrow_to_large_flit(ahbs_rcv_data_out);
+    ahbs_snd_data_in <= large_to_narrow_flit(ahbm_snd_data_in);
+  end generate large_bus;
+
+  std_bus: if ARCH_BITS = 32 generate
+    ahbm_rcv_data_out <= ahbs_rcv_data_out;
+    ahbs_snd_data_in  <= ahbm_snd_data_in;
+  end generate std_bus;
 
   -----------------------------------------------------------------------------
   -- Monitor for DVFS. (IO tile has no dvfs)

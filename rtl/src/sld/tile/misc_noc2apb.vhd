@@ -79,9 +79,9 @@ begin  -- rtl
       apbi_reg <= apb_slv_in_none;
     elsif clk'event and clk = '1' then  -- rising clock edge
       if sample_request = '1' then
-        request_y <= get_origin_y(MISC_NOC_FLIT_SIZE, apb_rcv_data_out);
-        request_x <= get_origin_x(MISC_NOC_FLIT_SIZE, apb_rcv_data_out);
-        request_msg_type <= get_msg_type(MISC_NOC_FLIT_SIZE, apb_rcv_data_out);
+        request_y <= get_origin_y(MISC_NOC_FLIT_SIZE, noc_flit_pad & apb_rcv_data_out);
+        request_x <= get_origin_x(MISC_NOC_FLIT_SIZE, noc_flit_pad & apb_rcv_data_out);
+        request_msg_type <= get_msg_type(MISC_NOC_FLIT_SIZE, noc_flit_pad & apb_rcv_data_out);
       end if;
       if sample_psel = '1' then
         psel_reg <= psel;
@@ -100,7 +100,7 @@ begin  -- rtl
       end if;
     end if;
   end process;
-  header <= create_header(MISC_NOC_FLIT_SIZE, local_y, local_x, request_y, request_x, RSP_REG_RD, (others => '0'));
+  header <= create_header(MISC_NOC_FLIT_SIZE, local_y, local_x, request_y, request_x, RSP_REG_RD, (others => '0'))(MISC_NOC_FLIT_SIZE - 1 downto 0);
 
   -- This wrapper makes requests and waits for reply, but does not react to
   -- messages from remote masters, such as JTAG.
@@ -135,7 +135,7 @@ begin  -- rtl
     apb_rcv_rdreq <= '0';
 
     -- Get message type (valid during rcv_header state)
-    msg_type_v := get_msg_type(MISC_NOC_FLIT_SIZE, apb_rcv_data_out);
+    msg_type_v := get_msg_type(MISC_NOC_FLIT_SIZE, noc_flit_pad & apb_rcv_data_out);
     -- Select slave (valid during rcv_address state)
     addr_v := apb_rcv_data_out(31 downto 0);
     waddr <= addr_v;
