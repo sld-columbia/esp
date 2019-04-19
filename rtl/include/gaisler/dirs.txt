@@ -1,7 +1,6 @@
 arith
 can
 ddr
-grdmac
 net
 greth
 i2c
