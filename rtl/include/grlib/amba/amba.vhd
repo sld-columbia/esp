@@ -53,6 +53,7 @@ package amba is
 constant AHBDW     : integer := CFG_AHBDW;
 constant AXIDW     : integer := AHBDW;
 constant XID_WIDTH : integer := 4;
+constant XUSER_WIDTH : integer := 1;
 
 -- CORE_ACDM - Enable AMBA Compliant Data Muxing in cores
 --
@@ -323,70 +324,78 @@ type apb_config_type is array (0 to NAPBCFG-1) of amba_config_word;
 -------------------------------------------------------------------------------
 
   type axi_aw_mosi_type is record      -- Master Output Slave Input
-    id    : std_logic_vector (XID_WIDTH-1 downto 0);           -- awid
-    addr  : std_logic_vector (GLOB_PHYS_ADDR_BITS - 1 downto 0);  -- awaddr
-    len   : std_logic_vector (7 downto 0);                        -- awlen
-    size  : std_logic_vector (2 downto 0);                        -- awsize
-    burst : std_logic_vector (1 downto 0);                        -- awburst
-    lock  : std_logic;                                            -- awlock
-    cache : std_logic_vector (3 downto 0);                        -- awcache
-    prot  : std_logic_vector (2 downto 0);                        -- awprot
-    valid : std_logic;                                            -- awvalid
-    qos   : std_logic_vector (3 downto 0);                        -- awqos
+    id     : std_logic_vector (XID_WIDTH-1 downto 0);
+    addr   : std_logic_vector (GLOB_PHYS_ADDR_BITS - 1 downto 0);
+    len    : std_logic_vector (7 downto 0);
+    size   : std_logic_vector (2 downto 0);
+    burst  : std_logic_vector (1 downto 0);
+    lock   : std_logic;
+    cache  : std_logic_vector (3 downto 0);
+    prot   : std_logic_vector (2 downto 0);
+    valid  : std_logic;
+    qos    : std_logic_vector (3 downto 0);
+    atop   : std_logic_vector(5 downto 0);
+    region : std_logic_vector(3 downto 0);
+    user   : std_logic_vector(XUSER_WIDTH-1 downto 0);
   end record;
 
   type axi_aw_somi_type is record -- Slave Output Master Input
-    ready  : std_logic;                                 -- awready
+    ready  : std_logic;
   end record;
 
   type axi_w_mosi_type is record -- Master Output Slave Input
-    data    : std_logic_vector (AXIDW-1 downto 0);      -- wdata
-    strb    : std_logic_vector (AXIDW/8-1 downto 0);    -- wstrb
-    last    : std_logic;                                -- wlast
-    valid   : std_logic;                                -- wvalid
+    data    : std_logic_vector (AXIDW-1 downto 0);
+    strb    : std_logic_vector (AXIDW/8-1 downto 0);
+    last    : std_logic;
+    valid   : std_logic;
+    user    : std_logic_vector(XUSER_WIDTH-1 downto 0);
   end record;
 
   type axi_w_somi_type is record -- Slave Output Master Input
-    ready   : std_logic;                                -- wready
+    ready   : std_logic;
   end record;
 
   type axi_ar_mosi_type is record -- Master Output Slave Input
-    id    : std_logic_vector (XID_WIDTH-1 downto 0);           -- arid
-    addr  : std_logic_vector (GLOB_PHYS_ADDR_BITS - 1 downto 0);  -- araddr
-    len   : std_logic_vector (7 downto 0);                        -- arlen
-    size  : std_logic_vector (2 downto 0);                        -- arsize
-    burst : std_logic_vector (1 downto 0);                        -- arburst
-    lock  : std_logic;                                            -- arlock
-    cache : std_logic_vector (3 downto 0);                        -- arcache
-    prot  : std_logic_vector (2 downto 0);                        -- arprot
-    valid : std_logic;                                            -- arvalid
-    qos   : std_logic_vector (3 downto 0);                        -- arqos
+    id     : std_logic_vector (XID_WIDTH-1 downto 0);
+    addr   : std_logic_vector (GLOB_PHYS_ADDR_BITS - 1 downto 0);
+    len    : std_logic_vector (7 downto 0);
+    size   : std_logic_vector (2 downto 0);
+    burst  : std_logic_vector (1 downto 0);
+    lock   : std_logic;
+    cache  : std_logic_vector (3 downto 0);
+    prot   : std_logic_vector (2 downto 0);
+    valid  : std_logic;
+    qos    : std_logic_vector (3 downto 0);
+    region : std_logic_vector(3 downto 0);
+    user   : std_logic_vector(XUSER_WIDTH-1 downto 0);
   end record;
 
   type axi_ar_somi_type is record -- Slave Output Master Input
-    ready  : std_logic;                                 -- arready
+    ready  : std_logic;
   end record;
 
   type axi_r_mosi_type is record -- Master Output Slave Input
-    ready   : std_logic;                                -- rready
+    ready   : std_logic;
   end record;
 
   type axi_r_somi_type is record -- Slave Output Master Input
-    id      : std_logic_vector (XID_WIDTH-1 downto 0); -- rid
-    data    : std_logic_vector (AXIDW-1 downto 0);        -- rdata
-    resp    : std_logic_vector (1 downto 0);              -- rresp
-    last    : std_logic;                                  -- rlast
-    valid   : std_logic;                                  -- rvalid
+    id    : std_logic_vector (XID_WIDTH-1 downto 0);
+    data  : std_logic_vector (AXIDW-1 downto 0);
+    resp  : std_logic_vector (1 downto 0);
+    last  : std_logic;
+    valid : std_logic;
+    user  : std_logic_vector(XUSER_WIDTH-1 downto 0);
   end record;
 
   type axi_b_mosi_type is record -- Master Output Slave Input
-    ready   : std_logic;                                -- bready
+    ready   : std_logic;
   end record;
 
   type axi_b_somi_type is record -- Slave Output Master Input
-    id      : std_logic_vector (XID_WIDTH-1 downto 0); -- bid
-    resp    : std_logic_vector (1 downto 0);              -- bresp
-    valid   : std_logic;                                  -- bvalid
+    id    : std_logic_vector (XID_WIDTH-1 downto 0);
+    resp  : std_logic_vector (1 downto 0);
+    valid : std_logic;
+    user  : std_logic_vector(XUSER_WIDTH-1 downto 0);
   end record;
 
   type axi_mosi_type is record -- Master Output Slave Input
