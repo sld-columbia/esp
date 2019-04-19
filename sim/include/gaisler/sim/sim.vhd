@@ -37,7 +37,7 @@ use work.gencomp.all;
 
 package sim is
 
-  component sram
+  component grsim_sram
       generic (index : integer := 0;		-- Byte lane (0 - 3)
 	Abits: Positive := 10;		-- Default 10 address bits (1 Kbyte)
 	tacc : integer := 10;		-- access time (ns)
@@ -51,23 +51,6 @@ package sim is
         OE : in std_logic);
   end component;  
 
-  component sram16
-  generic (
-    index : integer := 0;		-- Byte lane (0 - 3)
-    abits: Positive := 10;		-- Default 10 address bits (1 Kbyte)
-    echk : integer := 0;		-- Generate EDAC checksum
-    tacc : integer := 10;		-- access time (ns)
-    fname : string := "ram.dat";	-- File to read from
-    clear : integer := 0);		-- Clear memory
-  port (  
-    a : in std_logic_vector(abits-1 downto 0);
-    d : inout std_logic_vector(15 downto 0);
-    lb : in std_logic;
-    ub : in std_logic;
-    ce : in std_logic;
-    we : in std_ulogic;
-    oe : in std_ulogic);
-  end component;     
 
   component sramft
       generic (index : integer := 0;		-- Byte lane (0 - 3)

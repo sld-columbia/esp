@@ -33,7 +33,7 @@ use std.textio.all;
 use work.stdlib.all;
 use work.stdio.all;
 
-entity sram is
+entity grsim_sram is
   generic (
     index : integer := 0;		-- Byte lane (0 - 3)
     abits: Positive := 10;		-- Default 10 address bits (1 Kbyte)
@@ -49,7 +49,7 @@ entity sram is
 end;     
 
 
-architecture sim of sram is
+architecture sim of grsim_sram is
 
   subtype BYTE is std_logic_vector(7 downto 0);
   type MEM is array(0 to ((2**Abits)-1)) of BYTE;

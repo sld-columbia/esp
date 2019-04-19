@@ -141,7 +141,7 @@ begin
   -- configuration through debug unit. Supporting boot from SDCARD is on the
   -- TODO list.
   prom0 : for i in 0 to 1 generate
-    sr0 : sram generic map (index => i+4, abits => 26, fname => promfile)
+    sr0 : grsim_sram generic map (index => i+4, abits => 26, fname => promfile)
       port map (address(25 downto 0), data(15-i*8 downto 8-i*8), romsn,
                 writen, oen);
   end generate;
