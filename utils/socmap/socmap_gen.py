@@ -871,8 +871,10 @@ def print_mapping(fp, esp_config):
   fp.write("  -- Get accelerator ID from tile ID\n")
   fp.write("  constant tile_acc_id : tile_attribute_array := (\n")
   for i in range(0, esp_config.ntiles):
-    fp.write("    " + str(i) + " => " + str(esp_config.tiles[i].acc.id) + ",\n")
-  fp.write("    others => -1);\n\n")
+    t = esp_config.tiles[i]
+    if t.acc.id != -1:
+      fp.write("    " + str(i) + " => " + str(t.acc.id) + ",\n")
+  fp.write("    others => 0);\n\n")
 
   #
   fp.write("  -- Get miscellaneous tile ID\n")

@@ -77,6 +77,7 @@ constant log2xx   : log2arr := (
   others => 9);
 function log2ext(i: integer) return integer;
 
+function relu (v : integer) return integer;
 function decode(v : std_logic_vector) return std_logic_vector;
 function genmux(s,v : std_logic_vector) return std_ulogic;
 function xorv(d : std_logic_vector) return std_ulogic;
@@ -156,6 +157,16 @@ begin
   res := not is_x(d);
 -- pragma translate_on
   return (res);
+end;
+
+-- Rectifier (fix simulation warnings)
+function relu(v : integer) return integer is
+begin
+  if v < 0 then
+    return 0;
+  else
+    return v;
+  end if;
 end;
 
 -- generic decoder

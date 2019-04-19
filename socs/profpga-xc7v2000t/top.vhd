@@ -439,10 +439,10 @@ signal user_rstn        : std_ulogic;
 signal mon_ddr          : monitor_ddr_vector(0 to CFG_NMEM_TILE - 1);
 signal mon_noc          : monitor_noc_matrix(1 to 6, 0 to CFG_TILES_NUM-1);
 signal mon_noc_actual   : monitor_noc_matrix(0 to 1, 0 to CFG_TILES_NUM-1);
-signal mon_mem          : monitor_mem_vector(0 to CFG_NLLC - 1);
-signal mon_l2           : monitor_cache_vector(0 to CFG_NL2 - 1);
-signal mon_llc          : monitor_cache_vector(0 to CFG_NLLC - 1);
-signal mon_acc          : monitor_acc_vector(0 to accelerators_num-1);
+signal mon_mem          : monitor_mem_vector(0 to CFG_NMEM_TILE - 1);
+signal mon_l2           : monitor_cache_vector(0 to relu(CFG_NL2 - 1));
+signal mon_llc          : monitor_cache_vector(0 to relu(CFG_NLLC - 1));
+signal mon_acc          : monitor_acc_vector(0 to relu(accelerators_num-1));
 signal mon_dvfs         : monitor_dvfs_vector(0 to CFG_TILES_NUM-1);
 
 begin

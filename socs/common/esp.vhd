@@ -58,10 +58,10 @@ entity esp is
     dvi_ahbmo       : in  ahb_mst_out_type;
     -- Monitor signals
     mon_noc         : out monitor_noc_matrix(1 to 6, 0 to CFG_TILES_NUM-1);
-    mon_acc         : out monitor_acc_vector(0 to accelerators_num-1);
+    mon_acc         : out monitor_acc_vector(0 to relu(accelerators_num-1));
     mon_mem         : out monitor_mem_vector(0 to CFG_NMEM_TILE - 1);
-    mon_l2          : out monitor_cache_vector(0 to CFG_NL2 - 1);
-    mon_llc         : out monitor_cache_vector(0 to CFG_NLLC - 1);
+    mon_l2          : out monitor_cache_vector(0 to relu(CFG_NL2 - 1));
+    mon_llc         : out monitor_cache_vector(0 to relu(CFG_NLLC - 1));
     mon_dvfs        : out monitor_dvfs_vector(0 to CFG_TILES_NUM-1));
 end;
 
