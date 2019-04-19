@@ -139,6 +139,14 @@ help:
 include $(ESP_ROOT)/utils/design.mk
 
 
+### NoC flit-width (not including head and tail bits)
+ifneq ($(findstring ariane, $(CPU_ARCH)),)
+NOC_WIDTH = 64
+else
+NOC_WIDTH = 32
+endif
+
+
 ### Set variables needed before including accelerators.mk
 SOFT              = $(ESP_ROOT)/soft/$(CPU_ARCH)
 LINUXSRC          = $(SOFT)/linux
@@ -501,6 +509,14 @@ VHDL_PROFPGA =
 VERILOG_PROFPGA =
 endif
 
+ARIANE ?= $(ESP_ROOT)/ariane
+
+ifneq ($(findstring ariane, $(CPU_ARCH)),)
+VERILOG_ARIANE += $(shell strings $(ESP_ROOT)/utils/ariane_verilog.txt)
+else
+VERILOG_ARIANE =
+endif
+
 PKG_LIST  = $(shell (find $(ESP_ROOT)/rtl -name "*.txt" ))
 PKG_LIST += $(shell (find $(ESP_ROOT)/sim -name "*.txt" ))
 
@@ -855,6 +871,15 @@ modelsim/vsim.mk: modelsim/xilinx_lib check_all_srcs.old $(PKG_LIST)
 		$(VLOG) -work profpga $(PROFPGA_INCDIR_MODELSIM) $$rtl || exit; \
 	done; \
 	vlib -type directory work; \
+	echo $(SPACES)"### Compile Ariane source files ###"; \
+	rtl=$(ESP_ROOT)/socs/common/ariane_soc_pkg.sv; \
+	echo $(SPACES)"$(VLOG) $(ARIANE_VLOGOPT) $$rtl"; \
+	$(VLOG) $(ARIANE_VLOGOPT) $$rtl || exit; \
+	for ver in $(VERILOG_ARIANE); do \
+		rtl=$(ARIANE)/$$ver; \
+		echo $(SPACES)"$(VLOG) $(ARIANE_VLOGOPT) $$rtl"; \
+		$(VLOG) $(ARIANE_VLOGOPT) $$rtl || exit; \
+	done; \
 	echo $(SPACES)"### Compile VHDL packages ###"; \
 	for vhd in $(SLDGEN_VHDL_RTL_PKGS); do \
 		rtl=$$vhd; \

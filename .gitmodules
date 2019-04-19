@@ -8,3 +8,6 @@
 [submodule "chisel"]
 	path = chisel
 	url = git@github.com:IBM/esp-chisel-accelerators.git
+[submodule "ariane"]
+	path = ariane
+	url = git@github.com:pulp-platform/ariane.git

@@ -14,10 +14,6 @@ DESIGN   = esp-$(BOARD)
 LINUX_CONFIG = leon3_smp_defconfig
 
 
-### NoC flit-width (not including head and tail bits)
-NOC_WIDTH = 32
-
-
 ### Design top level and testbench ###
 TOP    = top
 SIMTOP = testbench
@@ -37,7 +33,11 @@ XLOGOPT +=
 
 # Print CPU instructions to simulator console
 # VSIMOPT += -gdisas=1
+ifneq ($(findstring ariane, $(CPU_ARCH)),)
+VSIMOPT += +UVM_NO_RELNOTES -64 +permissive-off
+else
 VSIMOPT +=
+endif
 
 
 ### Additional design files ###
@@ -50,7 +50,7 @@ TOP_VLOG_SIM_SRCS +=
 
 ### Xilinx Vivado hw_server ###
 FPGA_HOST ?= goliah.cs.columbia.edu
-XIL_HW_SERVER_PORT ?= 3122
+XIL_HW_SERVER_PORT ?= 3124
 
 
 ### Include global Makefile ###

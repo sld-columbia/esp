@@ -14,10 +14,6 @@ DESIGN   = esp-$(BOARD)
 LINUX_CONFIG = leon3_smp_defconfig
 
 
-### NoC flit-width (not including head and tail bits)
-NOC_WIDTH = 32
-
-
 ### Design top level and testbench ###
 TOP    = top
 SIMTOP = testbench
@@ -35,7 +31,11 @@ XLOGOPT +=
 
 # GRLIB options
 #VSIMOPT += -gdisas=1
+ifneq ($(findstring ariane, $(CPU_ARCH)),)
+VSIMOPT += +UVM_NO_RELNOTES -64 +permissive-off
+else
 VSIMOPT +=
+endif
 
 
 ### Additional design files ###

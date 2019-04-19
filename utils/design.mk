@@ -92,8 +92,26 @@ else
 EXTRA_SIMTOP  =
 endif
 
+# Compiler flags
+ARIANE_VLOGOPT  =
+ARIANE_VLOGOPT += -incr
+ARIANE_VLOGOPT += -64
+ARIANE_VLOGOPT += -nologo
+ARIANE_VLOGOPT += -suppress 13262
+ARIANE_VLOGOPT += -suppress 2286
+ARIANE_VLOGOPT += -permissive
+ARIANE_VLOGOPT += +define+WT_DCACHE
+ARIANE_VLOGOPT += -pedanticerrors
+ARIANE_VLOGOPT += -sv
+ARIANE_VLOGOPT += +incdir+${ARIANE}/src/common_cells/include/common_cells
+ARIANE_VLOGOPT += -suppress 2583
+
 # Simulator switches
-VSIMOPT += -novopt +notimingchecks
+# VSIMOPT += -novopt +notimingchecks
+VSIMOPT += -voptargs="+acc"
+VSIMOPT += -suppress 2697
+VSIMOPT += -suppress 8617
+VSIMOPT += +notimingchecks
 
 # Toplevel
 VSIMOPT += $(SIMTOP) $(EXTRA_SIMTOP)
@@ -121,7 +139,11 @@ TOP_VHDL_RTL_SRCS += $(wildcard $(ESP_ROOT)/socs/common/tile_*.vhd)
 TOP_VHDL_RTL_SRCS += $(ESP_ROOT)/socs/common/esp.vhd
 TOP_VHDL_RTL_SRCS += $(DESIGN_PATH)/$(TOP).vhd
 
+ifneq ($(findstring profpga, $(BOARD)),)
+TOP_VLOG_RTL_SRCS += $(ESP_ROOT)/socs/common/ariane_wrap.sv
+else
 TOP_VLOG_RTL_SRCS +=
+endif
 
 TOP_VHDL_SIM_PKGS +=
 
