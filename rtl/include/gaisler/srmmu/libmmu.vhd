@@ -33,7 +33,7 @@ use work.mmuiface.all;
 
 package libmmu is
 
-  component mmu 
+  component l3_mmu 
     generic (
       tech      : integer range 0 to NTECH := 0;
       itlbnum   : integer range 2 to 64 := 8;

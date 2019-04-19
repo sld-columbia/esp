@@ -146,7 +146,7 @@ begin
 
   -- MMU
   mmugen : if mmuen = 1 generate
-    m0 : mmu
+    m0 : l3_mmu
       generic map (MEMTECH_MOD*(1-TLB_INFER), itlbnum, dtlbnum, tlb_type, tlb_rep, mmupgsz, memtest_vlen)
       port map (rst, clk, mmudci, mmudco, mmuici, mmuico, mcmmo, mcmmi, ahbi.testin
                 );

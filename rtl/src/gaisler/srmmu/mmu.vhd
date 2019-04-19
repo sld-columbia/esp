@@ -34,7 +34,7 @@ use work.mmuconfig.all;
 use work.mmuiface.all;
 use work.libmmu.all;
 
-entity mmu is
+entity l3_mmu is
   generic (
     tech      : integer range 0 to NTECH := 0;
     itlbnum   : integer range 2 to 64 := 8;
@@ -60,9 +60,9 @@ entity mmu is
 
     testin  : in  std_logic_vector(TESTIN_WIDTH-1 downto 0)
     );
-end mmu;
+end l3_mmu;
 
-architecture rtl of mmu is
+architecture rtl of l3_mmu is
 
 constant MMUCTX_BITS 	: integer := M_CTX_SZ;
 
