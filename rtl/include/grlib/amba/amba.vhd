@@ -52,7 +52,7 @@ package amba is
 --
 constant AHBDW     : integer := CFG_AHBDW;
 constant AXIDW     : integer := AHBDW;
-constant XID_WIDTH : integer := 4;
+constant XID_WIDTH : integer := 6;
 constant XUSER_WIDTH : integer := 1;
 
 -- CORE_ACDM - Enable AMBA Compliant Data Muxing in cores
@@ -414,6 +414,89 @@ type apb_config_type is array (0 to NAPBCFG-1) of amba_config_word;
     r   : axi_r_somi_type;
   end record;
 
+  type axi_mosi_vector is array (natural range <>) of axi_mosi_type;
+  type axi_somi_vector is array (natural range <>) of axi_somi_type;
+
+  constant axi_aw_mosi_none : axi_aw_mosi_type := (
+    id     => (others => '0'),
+    addr   => (others => '0'),
+    len    => (others => '0'),
+    size   => (others => '0'),
+    burst  => (others => '0'),
+    lock   => '0',
+    cache  => (others => '0'),
+    prot   => (others => '0'),
+    valid  => '0',
+    qos    => (others => '0'),
+    atop   => (others => '0'),
+    region => (others => '0'),
+    user   => (others => '0')
+  );
+
+  constant axi_aw_somi_none : axi_aw_somi_type := (ready => '0');
+
+  constant axi_w_mosi_none : axi_w_mosi_type := (
+    data  => (others => '0'),
+    strb  => (others => '0'),
+    last  => '0',
+    valid => '0',
+    user  => (others => '0')
+  );
+
+  constant axi_w_somi_none : axi_w_somi_type := (ready => '0');
+
+  constant axi_ar_mosi_none : axi_ar_mosi_type := (
+    id     => (others => '0'),
+    addr   => (others => '0'),
+    len    => (others => '0'),
+    size   => (others => '0'),
+    burst  => (others => '0'),
+    lock   => '0',
+    cache  => (others => '0'),
+    prot   => (others => '0'),
+    valid  => '0',
+    qos    => (others => '0'),
+    region => (others => '0'),
+    user   => (others => '0')
+  );
+
+  constant axi_ar_somi_none : axi_ar_somi_type := (ready => '0');
+
+  constant axi_r_somi_none : axi_r_somi_type := (
+    id => (others => '0'),
+    data => (others => '0'),
+    resp => (others => '0'),
+    last => '0',
+    valid => '0',
+    user => (others => '0')
+  );
+
+  constant axi_r_mosi_none : axi_r_mosi_type := (ready => '0');
+
+  constant axi_b_somi_none : axi_b_somi_type := (
+    id => (others => '0'),
+    resp => (others => '0'),
+    valid => '0',
+    user => (others => '0')
+  );
+
+  constant axi_b_mosi_none : axi_b_mosi_type := (ready => '0');
+
+  constant axi_mosi_none : axi_mosi_type := (
+    aw => axi_aw_mosi_none,
+    w  => axi_w_mosi_none,
+    ar => axi_ar_mosi_none,
+    r  => axi_r_mosi_none,
+    b  => axi_b_mosi_none
+  );
+
+  constant axi_somi_none : axi_somi_type := (
+    aw => axi_aw_somi_none,
+    w  => axi_w_somi_none,
+    ar => axi_ar_somi_none,
+    r  => axi_r_somi_none,
+    b  => axi_b_somi_none
+  );
 
 -- AXI constants
   constant XBURST_FIXED:          std_logic_vector(1 downto 0) := "00";
