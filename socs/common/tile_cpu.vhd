@@ -7,6 +7,9 @@
 
 library ieee;
 use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
+
+use work.esp_global.all;
 use work.amba.all;
 use work.stdlib.all;
 use work.sld_devices.all;
@@ -103,6 +106,8 @@ architecture rtl of tile_cpu is
   -- Interrupt controller
   signal irqi : l3_irq_in_type;
   signal irqo : l3_irq_out_type;
+  -- TODO: remove the following and replace w/ ariane-specific irqi irqo
+  signal irq_sources : std_logic_vector(0 downto 0);
 
   -- Queues
   signal coherence_req_wrreq        : std_ulogic;
@@ -142,18 +147,21 @@ architecture rtl of tile_cpu is
   signal remote_irq_ack_data_in     : misc_noc_flit_type;
   signal remote_irq_ack_full        : std_ulogic;
 
-  -- Bus
-  signal ahbsi            : ahb_slv_in_type;
-  signal ahbso            : ahb_slv_out_vector;
-  signal noc_ahbso        : ahb_slv_out_vector;
-  signal ctrl_ahbso       : ahb_slv_out_vector;
-  signal ahbmi            : ahb_mst_in_type;
-  signal ahbmo            : ahb_mst_out_vector;
-  signal apbi             : apb_slv_in_type;
-  signal apbo             : apb_slv_out_vector;
-  signal noc_apbi         : apb_slv_in_type;
-  signal noc_apbo         : apb_slv_out_vector;
-  signal apb_req, apb_ack : std_ulogic;
+  -- Bus (AHB-based processor core)
+  signal ahbsi      : ahb_slv_in_type;
+  signal ahbso      : ahb_slv_out_vector;
+  signal noc_ahbso  : ahb_slv_out_vector;
+  signal ctrl_ahbso : ahb_slv_out_vector;
+  signal ahbmi      : ahb_mst_in_type;
+  signal ahbmo      : ahb_mst_out_vector;
+  signal apbi       : apb_slv_in_type;
+  signal apbo       : apb_slv_out_vector;
+  signal noc_apbi   : apb_slv_in_type;
+  signal noc_apbo   : apb_slv_out_vector;
+  signal apb_req    : std_ulogic;
+  signal apb_ack    : std_ulogic;
+  signal mosi       : axi_mosi_vector(0 to 1);
+  signal somi       : axi_somi_vector(0 to 1);
 
   -- GRLIB parameters
   constant disas : integer := CFG_DISAS;
@@ -161,6 +169,7 @@ architecture rtl of tile_cpu is
 
   -- Tile parameters
   constant this_cpu_id            : integer                            := tile_cpu_id(tile_id);
+  constant this_cpu_id_lv         : std_logic_vector(63 downto 0)      := conv_std_logic_vector(this_cpu_id, 64);
   constant this_dvfs_pindex       : integer                            := cpu_dvfs_pindex(tile_id);
   constant this_dvfs_paddr        : integer                            := cpu_dvfs_paddr(tile_id);
   constant this_dvfs_pmask        : integer                            := cpu_dvfs_pmask;
@@ -185,6 +194,8 @@ begin
   -----------------------------------------------------------------------------
   -- Bus
   -----------------------------------------------------------------------------
+
+  leon3_bus_gen: if GLOB_CPU_ARCH = leon3 generate
 
   hbus_pnp_gen : process (ahbso, noc_ahbso) is
   begin  -- process hbus_pnp_gen
@@ -217,10 +228,13 @@ begin
                  remote_apb => this_remote_apb_slv_en)
     port map (rst, clk_feedthru, ahbsi, ahbso(ahb2apb_hindex), apbi, apbo, apb_req, apb_ack);
 
+  end generate leon3_bus_gen;
 
   -----------------------------------------------------------------------------
   -- Drive unused bus ports
   -----------------------------------------------------------------------------
+
+  leon3_bus_not_driven_gen: if GLOB_CPU_ARCH = leon3 generate
 
   -- Master hindex must match cpu_id. This restriction only applies to LEON3
   nam0 : for i in 0 to this_cpu_id - 1 generate
@@ -241,6 +255,8 @@ begin
     end generate no_hslv_i_gen;
   end generate no_hslv_gen;
 
+  end generate leon3_bus_not_driven_gen;
+
   no_pslv_gen : for i in 0 to NAPBSLV - 1 generate
     -- NB: all local I/O-bus slaves are accessed through proxy as if they were
     -- remote. This allows any master in the system to access them
@@ -253,6 +269,17 @@ begin
   -----------------------------------------------------------------------------
   ---  Processor core
   -----------------------------------------------------------------------------
+
+  --pragma translate_off
+  process(clk_feedthru, rst)
+  begin  -- process
+    if rst = '1' then
+      assert (GLOB_CPU_ARCH = leon3 or GLOB_CPU_ARCH = ariane) report "Processor core architecture not supported!" severity failure;
+    end if;
+  end process;
+  --pragma translate_on
+
+  leon3_cpu_gen: if GLOB_CPU_ARCH = leon3 generate
 
   leon3_0 : leon3s
     generic map (this_cpu_id, CFG_FABTECH, CFG_MEMTECH, CFG_NWIN, CFG_DSU, CFG_FPU, CFG_V8,
@@ -267,9 +294,37 @@ begin
 
   irqo <= irqo_int;
 
+  end generate leon3_cpu_gen;
+
+  ariane_cpu_gen: if GLOB_CPU_ARCH = ariane generate
+
+    ariane_axi_wrap_2: entity work.ariane_axi_wrap
+      generic map (
+        HART_ID     => this_cpu_id_lv)
+      port map (
+        clk         => clk_feedthru,
+        rstn        => rst,
+        irq_sources => irq_sources,
+        romi        => mosi(0),
+        romo        => somi(0),
+        drami       => mosi(1),
+        dramo       => somi(1),
+        apbi        => apbi,
+        apbo        => apbo,
+        apb_req     => apb_req,
+        apb_ack     => apb_ack);
+
+    irq_sources <= (others => '0');
+
+    dbgo <= dbgo_none;
+
+  end generate ariane_cpu_gen;
+
   -----------------------------------------------------------------------------
   -- Services
   -----------------------------------------------------------------------------
+
+  leon3_cpu_tile_services_gen: if GLOB_CPU_ARCH = leon3 generate
 
   no_cache_coherence : if CFG_L2_ENABLE = 0 generate
     coherence_rsp_snd_data_in <= (others => '0');
@@ -398,6 +453,51 @@ begin
         );
 
   end generate with_cache_coherence;
+
+  end generate leon3_cpu_tile_services_gen;
+
+
+  ariane_cpu_tile_services_gen: if GLOB_CPU_ARCH = ariane generate
+
+    -- TODO: handle caches!!!
+    no_cache_coherence : if CFG_L2_ENABLE = 0 generate
+      coherence_rsp_snd_data_in <= (others => '0');
+      coherence_rsp_snd_wrreq   <= '0';
+      coherence_fwd_rdreq       <= '0';
+      mon_cache                 <= monitor_cache_none;
+
+      cpu_axi2noc_1: entity work.cpu_axi2noc
+        generic map (
+          tech         => CFG_FABTECH,
+          nmst         => 2,
+          local_y      => this_local_y,
+          local_x      => this_local_x,
+          mem_axi_port => 1,
+          mem_num      => CFG_NMEM_TILE,
+          mem_info     => tile_mem_list,
+          slv_y        => tile_y(io_tile_id),
+          slv_x        => tile_x(io_tile_id))
+        port map (
+          rst                        => rst,
+          clk                        => clk_feedthru,
+          mosi                       => mosi,
+          somi                       => somi,
+          coherence_req_wrreq        => coherence_req_wrreq,
+          coherence_req_data_in      => coherence_req_data_in,
+          coherence_req_full         => coherence_req_full,
+          coherence_rsp_rcv_rdreq    => coherence_rsp_rcv_rdreq,
+          coherence_rsp_rcv_data_out => coherence_rsp_rcv_data_out,
+          coherence_rsp_rcv_empty    => coherence_rsp_rcv_empty,
+          remote_ahbs_snd_wrreq      => remote_ahbs_snd_wrreq,
+          remote_ahbs_snd_data_in    => remote_ahbs_snd_data_in,
+          remote_ahbs_snd_full       => remote_ahbs_snd_full,
+          remote_ahbs_rcv_rdreq      => remote_ahbs_rcv_rdreq,
+          remote_ahbs_rcv_data_out   => remote_ahbs_rcv_data_out,
+          remote_ahbs_rcv_empty      => remote_ahbs_rcv_empty);
+
+    end generate no_cache_coherence;
+
+  end generate ariane_cpu_tile_services_gen;
 
   -- DVFS
   dvfs_gen : if this_has_dvfs /= 0 and this_has_pll /= 0 generate

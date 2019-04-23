@@ -167,6 +167,7 @@ src/common_cells/src/sync_wedge.sv
 src/common_cells/src/edge_detect.sv
 src/common_cells/src/fifo_v3.sv
 src/common_cells/src/fifo_v2.sv
+src/common_cells/src/fifo_v1.sv
 src/common_cells/src/lzc.sv
 src/common_cells/src/rrarbiter.sv
 src/common_cells/src/stream_delay.sv

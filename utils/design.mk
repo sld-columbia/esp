@@ -84,7 +84,7 @@ ifneq ($(filter $(TECHLIB),$(FPGALIBS)),)
 VSIMOPT += -L secureip_ver -L unisims_ver
 endif
 
-VSIMOPT += -t ps
+VSIMOPT += -uvmcontrol=disable -suppress 3009 -t ps
 
 ifneq ($(filter $(TECHLIB),$(FPGALIBS)),)
 EXTRA_SIMTOP  = glbl

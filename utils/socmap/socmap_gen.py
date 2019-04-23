@@ -325,6 +325,8 @@ def print_global_constants(fp, soc):
   fp.write("  constant GLOB_ADDR_INCR : integer := " + str(int(soc.DMA_WIDTH/8)) +";\n")
   # TODO: Keep physical address to 32 bits for now to reduce tag size. This will increase to support more memory
   fp.write("  constant GLOB_PHYS_ADDR_BITS : integer := " + str(32) +";\n")
+  fp.write("  type cpu_arch_type is (leon3, ariane);\n")
+  fp.write("  constant GLOB_CPU_ARCH : cpu_arch_type := " + soc.CPU_ARCH + ";\n")
   fp.write("\n")
 
 def print_constants(fp, soc):

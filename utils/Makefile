@@ -182,14 +182,14 @@ socmap.vhd: .esp_config grlib_config.vhd
 	fi
 	@echo ""
 	@echo "Generating ESP configuration..."
-	@python3 $(ESP_ROOT)/utils/socmap/esp_creator_batch.py $(NOC_WIDTH) $(TECHLIB)
+	@python3 $(ESP_ROOT)/utils/socmap/esp_creator_batch.py $(NOC_WIDTH) $(TECHLIB) $(CPU_ARCH)
 
 esp-config: socmap.vhd
 
 esp-xconfig: grlib_config.vhd
 	@echo ""
 	@echo "Running interactive ESP configuration..."
-	@python3 $(ESP_ROOT)/utils/socmap/esp_creator.py $(NOC_WIDTH) $(TECHLIB)
+	@python3 $(ESP_ROOT)/utils/socmap/esp_creator.py $(NOC_WIDTH) $(TECHLIB) $(CPU_ARCH)
 
 esp-config-clean:
 	$(QUIET_CLEAN)$(RM) \
@@ -530,8 +530,10 @@ else
 VHDL_RTL_SRCS  = $(shell (find $(ESP_ROOT)/rtl/src -name "*.vhd" | grep -v "sld/sldcommon/monitor.vhd"))
 endif
 
-VLOG_RTL_SRCS  = $(shell (find $(ESP_ROOT)/rtl/src -name "*.v" ))
-VLOG_RTL_SRCS += $(shell (find $(ESP_ROOT)/tech/$(TECHLIB) -name "*.v" ))
+VLOG_RTL_SRCS   = $(shell (find $(ESP_ROOT)/rtl/src -name "*.v" ))
+VLOG_RTL_SRCS  += $(shell (find $(ESP_ROOT)/tech/$(TECHLIB) -name "*.v" ))
+
+SVLOG_RTL_SRCS  = $(shell (find $(ESP_ROOT)/rtl/src -name "*.sv" ))
 
 VHDL_SIM_PKGS  = $(shell (find $(ESP_ROOT)/sim/include -name "*.vhd" ))
 VHDL_SIM_SRCS  = $(shell (find $(ESP_ROOT)/sim/src -name "*.vhd" ))
@@ -540,13 +542,14 @@ VLOG_SIM_SRCS  = $(shell (find $(ESP_ROOT)/sim/src -name "*.v" ))
 VHDL_PKGS = $(VHDL_RTL_PKGS) $(VHDL_SIM_PKGS) $(TOP_VHDL_RTL_PKGS) $(TOP_VHDL_SIM_PKGS)
 VHDL_SRCS = $(VHDL_RTL_SRCS) $(VHDL_SIM_SRCS) $(TOP_VHDL_RTL_SRCS) $(TOP_VHDL_SIM_SRCS)
 VLOG_SRCS = $(VLOG_RTL_SRCS) $(VLOG_SIM_SRCS) $(TOP_VLOG_RTL_SRCS) $(TOP_VLOG_SIM_SRCS)
+SVLOG_SRCS = $(SVLOG_RTL_SRCS)
 
-ALL_SRCS  = $(VHDL_PKGS) $(VHDL_SRCS) $(VLOG_SRCS)
+ALL_SRCS  = $(VHDL_PKGS) $(VHDL_SRCS) $(VLOG_SRCS) $(SVLOG_SRCS)
 
 VHDL_ALL_RTL = $(VHDL_RTL_PKGS) $(TOP_VHDL_RTL_PKGS)  $(VHDL_RTL_SRCS) $(TOP_VHDL_RTL_SRCS)
 VLOG_ALL_RTL = $(VLOG_RTL_PKGS) $(TOP_VLOG_RTL_PKGS)  $(VLOG_RTL_SRCS) $(TOP_VLOG_RTL_SRCS)
 
-ALL_RTL_SRCS  = $(VHDL_ALL_RTL) $(VLOG_ALL_RTL)
+ALL_RTL_SRCS  = $(VHDL_ALL_RTL) $(VLOG_ALL_RTL) $(SVLOG_SRCS)
 
 check_all_srcs: grlib_config.vhd socmap.vhd sldgen
 	@echo $(ALL_SRCS) > $@.new; \
@@ -916,6 +919,11 @@ modelsim/vsim.mk: modelsim/xilinx_lib check_all_srcs.old $(PKG_LIST)
 		for rtl in $(VLOG_SRCS); do \
 			echo $(SPACES)"$(VLOG) $$rtl"; \
 			$(VLOG) $$rtl || exit; \
+		done; \
+	echo $(SPACES)"### Compile SystemVerilog source files ###"; \
+		for rtl in $(SVLOG_SRCS); do \
+			echo $(SPACES)"$(VLOG) -sv $$rtl"; \
+			$(VLOG) -sv $$rtl || exit; \
 		done; \
 	echo $(SPACES)"### Compile IPs simulation files ###"; \
 	echo $(SPACES)"$(VLOG) $(XILINX_VIVADO)/data/verilog/src/glbl.v"; \

@@ -69,6 +69,7 @@ class SoC_Config():
   IP_ADDR = ""
   TECH = "virtex7"
   DMA_WIDTH = 32
+  CPU_ARCH = "leon3"
 
   def read_config(self, temporary):
     filename = ".esp_config"
@@ -297,9 +298,10 @@ class SoC_Config():
   def set_IP(self):
     self.IP_ADDR = str(int('0x' + self.IPM[:2], 16)) + "." + str(int('0x' + self.IPM[2:], 16)) + "." + str(int('0x' + self.IPL[:2], 16)) + "." + str(int('0x' + self.IPL[2:], 16))
 
-  def __init__(self, DMA_WIDTH, TECH):
+  def __init__(self, DMA_WIDTH, TECH, CPU_ARCH):
     self.DMA_WIDTH = DMA_WIDTH
     self.TECH = TECH
+    self.CPU_ARCH = CPU_ARCH
     #define whether SGMII has to be used or not: it is not used for PROFPGA boards
     with open("Makefile") as fp:
       for line in fp:
