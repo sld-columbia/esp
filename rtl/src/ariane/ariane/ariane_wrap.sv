@@ -1,22 +1,5 @@
-// Copyright 2018 ETH Zurich and University of Bologna.
-// Copyright and related rights are licensed under the Solderpad Hardware
-// License, Version 0.51 (the "License"); you may not use this file except in
-// compliance with the License.  You may obtain a copy of the License at
-// http://solderpad.org/licenses/SHL-0.51. Unless required by applicable law
-// or agreed to in writing, software, hardware and materials distributed under
-// this License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
-// CONDITIONS OF ANY KIND, either express or implied. See the License for the
-// specific language governing permissions and limitations under the License.
-
-// Copyright 2019 Columbia University, System Level Design Group
-// This file is derived work that includes substantial portions of code from
-// the Ariane project, distributed under the Solderpad Hardware License,
-// Version 0.51. The original copyright notice and copyright owners are
-// reported above. A full copy of the license is available in the liceses
-// folder.
-
-// Description and modifications:
-// Ariane interface for integration into the ESP processor tile.
+// Copyright (c) 2011-2019 Columbia University, System Level Design Group
+// SPDX-License-Identifier: MIT
 
 module ariane_wrap
   # (
@@ -225,18 +208,18 @@ module ariane_wrap
 	.slave        ( slave   ),
 	.master       ( master  ),
 	.start_addr_i ({
-			DRAMBase,
-			PLICBase,
-			CLINTBase,
-			APBBase,
-			ROMBase
+			DRAMBase[AXI_ADDR_WIDTH-1:0],
+			PLICBase[AXI_ADDR_WIDTH-1:0],
+			CLINTBase[AXI_ADDR_WIDTH-1:0],
+			APBBase[AXI_ADDR_WIDTH-1:0],
+			ROMBase[AXI_ADDR_WIDTH-1:0]
 			}),
 	.end_addr_i   ({
-			DRAMBase  + DRAMLength - 1,
-			PLICBase  + PLICLength - 1,
-			CLINTBase + CLINTLength - 1,
-			APBBase   + APBLength - 1,
-			ROMBase   + ROMLength - 1
+			DRAMBase[AXI_ADDR_WIDTH-1:0]  + DRAMLength[AXI_ADDR_WIDTH-1:0] - 1,
+			PLICBase[AXI_ADDR_WIDTH-1:0]  + PLICLength[AXI_ADDR_WIDTH-1:0] - 1,
+			CLINTBase[AXI_ADDR_WIDTH-1:0] + CLINTLength[AXI_ADDR_WIDTH-1:0] - 1,
+			APBBase[AXI_ADDR_WIDTH-1:0]   + APBLength[AXI_ADDR_WIDTH-1:0] - 1,
+			ROMBase[AXI_ADDR_WIDTH-1:0]   + ROMLength[AXI_ADDR_WIDTH-1:0] - 1
 			}),
 	.valid_rule_i ({{NSLV}{1'b1}})
 	);

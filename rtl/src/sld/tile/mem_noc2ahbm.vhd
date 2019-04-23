@@ -29,6 +29,7 @@ entity mem_noc2ahbm is
     hindex      : integer range 0 to NAHBSLV - 1;
     local_y     : local_yx;
     local_x     : local_yx;
+    axitran     : integer range 0 to 1 := 0;
     cacheline   : integer;
     l2_cache_en : integer);
   port (
@@ -77,12 +78,12 @@ architecture rtl of mem_noc2ahbm is
     end case;
   end target_word_hsize;
 
-  -- If length is not received, then use fix length of 4 words.
-  -- The accelerators will always provide a length.
+  -- If length is not received, then use fix length of cacheline words.
+  -- The accelerators and masters on AXI will always provide a length.
   -- Protection info is in the reserved field of the header
   -- determine the destination tile for the response based on the header origin
   -- x and y info
-  type ahbm_fsm is (receive_header,
+  type ahbm_fsm is (receive_header, receive_length,
                     receive_address, rd_request, send_header,
                     send_address, send_data, wr_request, write_data,
                     write_last_data, write_complete,
@@ -269,8 +270,13 @@ begin  -- rtl
           -- Sample request info
           v.msg               := get_msg_type(NOC_FLIT_SIZE, coherence_req_data_out);
           reserved            := get_reserved_field(NOC_FLIT_SIZE, coherence_req_data_out);
-          v.hprot             := reserved(3 downto 0);
-          v.hsize_msb         := get_unused_msb_field(NOC_FLIT_SIZE, coherence_req_data_out);
+          if axitran = 0 then
+            v.hprot             := reserved(3 downto 0);
+            v.hsize_msb         := '0';
+          else
+            v.hprot             := '0' & reserved(2 downto 0);
+            v.hsize_msb         := reserved(3);
+          end if;
           sample_header       <= '1';
           v.state             := receive_address;
         elsif dma_rcv_empty = '0' then
@@ -289,14 +295,21 @@ begin  -- rtl
           v.addr              := coherence_req_data_out(GLOB_PHYS_ADDR_BITS - 1 downto 0);
           if (r.msg = REQ_GETS_W or r.msg = REQ_GETS_HW or r.msg = REQ_GETS_B or r.msg = AHB_RD)
             or ((r.msg = REQ_GETM_W) and (l2_cache_en /= 0)) then
-            -- Use default size: cacheline
-            v.count := cacheline;
+            if axitran = 0 then
+              -- If master is on AHB, we don't know the lenght of a read transaction
+              -- Use default size: cacheline
+              v.count := cacheline;
+            end if;
             if l2_cache_en = 0 then
               -- NB: when the L2 cache is not enabled, we first initiate the
               -- bus handover to access memory and wait until the address bus
               -- is granted. Then we overlap the data bus handover with the
               -- send_header state.
-              v.state := rd_request;
+              if axitran = 0 then
+                v.state := rd_request;
+              else
+                v.state := receive_length;
+              end if;
             else
               -- NB: when L2 cache is enabled, but LLC is not, this proxy
               -- handles L2 requests, which imply read requests must return the
@@ -306,7 +319,11 @@ begin  -- rtl
               -- rd_request right after. We move to send_address when
               -- the address bus is acquired overlapping the data bus handover
               -- with this new state.
-              v.state := send_header;
+              if axitran = 0 then
+                v.state := send_header;
+              else
+                v.state := receive_length;
+              end if;
             end if;
           elsif ((r.msg = REQ_GETM_W or r.msg = REQ_GETM_HW or r.msg = REQ_GETM_B) and (l2_cache_en = 0)) or (r.msg = AHB_WR) then
             -- Writes don't need size. Stop when tail appears.
@@ -315,6 +332,18 @@ begin  -- rtl
             v.state := send_put_ack;
           else
             v.state := receive_header;
+          end if;
+        end if;
+
+      when receive_length =>
+        -- If master is on AXI, we know the length of the read transaction
+        if coherence_req_empty = '0' then
+          coherence_req_rdreq <= '1';
+          v.count := conv_integer(coherence_req_data_out(11 downto 0));
+          if l2_cache_en = 0 then
+            v.state := rd_request;
+          else
+            v.state := send_header;
           end if;
         end if;
 

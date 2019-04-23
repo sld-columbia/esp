@@ -11,26 +11,20 @@ package ariane_esp_pkg is
 
   component ariane_axi_wrap is
     generic (
-      HART_ID          : std_logic_vector(63 downto 0);
-      NMST             : integer;
-      NSLV             : integer;
-      NIRQ_SRCS        : integer;
-      AXI_ID_WIDTH     : integer;
-      AXI_ID_WIDTH_SLV : integer;
-      AXI_ADDR_WIDTH   : integer;
-      AXI_DATA_WIDTH   : integer;
-      AXI_USER_WIDTH   : integer;
-      AXI_STRB_WIDTH   : integer;
-      ROMBase          : std_logic_vector(63 downto 0);
-      ROMLength        : std_logic_vector(63 downto 0);
-      APBBase          : std_logic_vector(63 downto 0);
-      APBLength        : std_logic_vector(63 downto 0);
-      CLINTBase        : std_logic_vector(63 downto 0);
-      CLINTLength      : std_logic_vector(63 downto 0);
-      PLICBase         : std_logic_vector(63 downto 0);
-      PLICLength       : std_logic_vector(63 downto 0);
-      DRAMBase         : std_logic_vector(63 downto 0);
-      DRAMLength       : std_logic_vector(63 downto 0));
+      HART_ID     : std_logic_vector(63 downto 0);
+      NMST        : integer;
+      NSLV        : integer;
+      NIRQ_SRCS   : integer;
+      ROMBase     : std_logic_vector(63 downto 0);
+      ROMLength   : std_logic_vector(63 downto 0);
+      APBBase     : std_logic_vector(63 downto 0);
+      APBLength   : std_logic_vector(63 downto 0);
+      CLINTBase   : std_logic_vector(63 downto 0);
+      CLINTLength : std_logic_vector(63 downto 0);
+      PLICBase    : std_logic_vector(63 downto 0);
+      PLICLength  : std_logic_vector(63 downto 0);
+      DRAMBase    : std_logic_vector(63 downto 0);
+      DRAMLength  : std_logic_vector(63 downto 0));
     port (
       clk         : in  std_logic;
       rstn        : in  std_logic;
@@ -39,13 +33,11 @@ package ariane_esp_pkg is
       romo        : in  axi_somi_type;
       drami       : out axi_mosi_type;
       dramo       : in  axi_somi_type;
-      penable     : out std_logic;
-      pwrite      : out std_logic;
-      paddr       : out std_logic_vector(31 downto 0);
-      psel        : out std_logic;
-      pwdata      : out std_logic_vector(31 downto 0);
-      prdata      : in  std_logic_vector(31 downto 0);
-      pready      : in  std_logic);
+      apbi        : out apb_slv_in_type;
+      apbo        : in  apb_slv_out_vector;
+      apb_req     : out std_ulogic;
+      apb_ack     : in  std_ulogic);
   end component ariane_axi_wrap;
+
 
 end ariane_esp_pkg;
