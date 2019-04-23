@@ -141,7 +141,7 @@ package nocpackage is
   type tile_attribute_array is array (0 to TILES_MAX_NUM - 1) of integer;
 
   -- Components
-  component fifo
+  component fifo0
     generic (
       depth : integer;
       width : integer);

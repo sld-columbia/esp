@@ -188,7 +188,7 @@ begin  -- rtl
   noc1_in_data          <= coherence_req_data_out;
   noc1_in_void          <= coherence_req_empty or noc1_in_stop;
   coherence_req_rdreq   <= (not coherence_req_empty) and (not noc1_in_stop);
-  fifo_1: fifo
+  fifo_1: fifo0
     generic map (
       depth => 6,                       --Header, address, [cache line]
       width => NOC_FLIT_SIZE)
@@ -211,7 +211,7 @@ begin  -- rtl
   coherence_fwd_data_in <= noc2_out_data;
   coherence_fwd_wrreq <= (not noc2_out_void) and (not coherence_fwd_full);
 
-  fifo_2: fifo
+  fifo_2: fifo0
     generic map (
       depth => 4,                       --Header, address (x2)
       width => NOC_FLIT_SIZE)
@@ -231,7 +231,7 @@ begin  -- rtl
   coherence_rsp_rcv_data_in <= noc3_out_data;
   coherence_rsp_rcv_wrreq <= (not noc3_out_void) and (not coherence_rsp_rcv_full);
 
-  fifo_3: fifo
+  fifo_3: fifo0
     generic map (
       depth => 5,                       --Header (use RESERVED field to
                                         --determine  ACK number), cache line
@@ -251,7 +251,7 @@ begin  -- rtl
   noc3_in_data          <= coherence_rsp_snd_data_out;
   noc3_in_void          <= coherence_rsp_snd_empty or noc3_in_stop;
   coherence_rsp_snd_rdreq   <= (not coherence_rsp_snd_empty) and (not noc3_in_stop);
-  fifo_4: fifo
+  fifo_4: fifo0
     generic map (
       depth => 5,                       --Header
       width => NOC_FLIT_SIZE)
@@ -271,7 +271,7 @@ begin  -- rtl
   noc4_out_stop   <= dma_rcv_full and (not noc4_out_void);
   dma_rcv_data_in <= noc4_out_data;
   dma_rcv_wrreq   <= (not noc4_out_void) and (not dma_rcv_full);
-  fifo_14: fifo
+  fifo_14: fifo0
     generic map (
       depth => 18,                      --Header, [data]
       width => NOC_FLIT_SIZE)
@@ -289,7 +289,7 @@ begin  -- rtl
   noc6_out_stop   <= coherent_dma_rcv_full and (not noc6_out_void);
   coherent_dma_rcv_data_in <= noc6_out_data;
   coherent_dma_rcv_wrreq   <= (not noc6_out_void) and (not coherent_dma_rcv_full);
-  fifo_14c: fifo
+  fifo_14c: fifo0
     generic map (
       depth => 18,                      --Header, [data]
       width => NOC_FLIT_SIZE)
@@ -307,7 +307,7 @@ begin  -- rtl
   noc6_in_data <= dma_snd_data_out;
   noc6_in_void <= dma_snd_empty or noc6_in_stop;
   dma_snd_rdreq <= (not dma_snd_empty) and (not noc6_in_stop);
-  fifo_13: fifo
+  fifo_13: fifo0
     generic map (
       depth => 18,                      --Header, address, length or data
       width => NOC_FLIT_SIZE)
@@ -325,7 +325,7 @@ begin  -- rtl
   noc4_in_data <= coherent_dma_snd_data_out;
   noc4_in_void <= coherent_dma_snd_empty or noc4_in_stop;
   coherent_dma_snd_rdreq <= (not coherent_dma_snd_empty) and (not noc4_in_stop);
-  fifo_13c: fifo
+  fifo_13c: fifo0
     generic map (
       depth => 18,                      --Header, address, length or data
       width => NOC_FLIT_SIZE)
@@ -343,7 +343,7 @@ begin  -- rtl
   noc5_out_stop   <= apb_rcv_full and (not noc5_out_void);
   apb_rcv_data_in <= noc5_out_data;
   apb_rcv_wrreq   <= (not noc5_out_void) and (not apb_rcv_full);
-  fifo_10: fifo
+  fifo_10: fifo0
     generic map (
       depth => 3,                      --Header, address, [data]
       width => MISC_NOC_FLIT_SIZE)
@@ -410,7 +410,7 @@ begin  -- rtl
     end case;
   end process noc5_fifos_put_packet;
 
-  fifo_7: fifo
+  fifo_7: fifo0
     generic map (
       depth => 2,                       --Header, data (1 Word)
       width => MISC_NOC_FLIT_SIZE)
@@ -424,7 +424,7 @@ begin  -- rtl
       full     => apb_snd_full,
       data_out => apb_snd_data_out);
 
-  fifo_15: fifo
+  fifo_15: fifo0
     generic map (
       depth => 1,                       --Header only x possible sharers
       width => MISC_NOC_FLIT_SIZE)

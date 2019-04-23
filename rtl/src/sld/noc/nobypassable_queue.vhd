@@ -40,7 +40,7 @@ end nobypassable_queue;
 
 architecture behavior of nobypassable_queue is
 
-component fifo
+component fifo0
 	generic(
 		depth : integer;
 		width : integer);
@@ -110,7 +110,7 @@ queue: fifo1
 end generate;
 
 QUEUE_INST: if (depth > 1) generate
-queue: fifo 
+queue: fifo0
 	generic map(
 		depth => depth,
 		width => width)

@@ -176,7 +176,7 @@ begin  -- rtl
     end if;
   end process irqo_diff;
 
-  fifo_header_i : fifo
+  fifo_header_i : fifo0
     generic map (
       depth => IRQ_FIFO_DEPTH,
       width => MISC_NOC_FLIT_SIZE)
@@ -190,7 +190,7 @@ begin  -- rtl
       full     => fifo_full,
       data_out => fifo_header);
 
-  fifo_payload_1_i : fifo
+  fifo_payload_1_i : fifo0
     generic map (
       depth => IRQ_FIFO_DEPTH,
       width => MISC_NOC_FLIT_SIZE)

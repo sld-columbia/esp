@@ -347,7 +347,7 @@ begin  -- rtl
   end process noc6_fifos_get_packet;
 
   dma_rcv_data_in <= noc6_out_data;
-  fifo_18 : fifo
+  fifo_18 : fifo0
     generic map (
       depth => 18,                      --Header, address, [data]
       width => NOC_FLIT_SIZE)
@@ -362,7 +362,7 @@ begin  -- rtl
       data_out => dma_rcv_data_out);
 
   coherent_dma_rcv_data_in <= noc6_out_data;
-  fifo_25 : fifo
+  fifo_25 : fifo0
     generic map (
       depth => 8,                       --Header, address, [data]
       width => NOC_FLIT_SIZE)
@@ -465,7 +465,7 @@ begin  -- rtl
       exactly_3slots => dma_snd_exactly_3slots,
       data_out       => dma_snd_data_out);
 
-  fifo_22 : fifo
+  fifo_22 : fifo0
     generic map (
       depth => 8,                       --Header, address, [data]
       width => NOC_FLIT_SIZE)
@@ -638,7 +638,7 @@ begin  -- rtl
     end case;
   end process noc5_fifos_get_packet;
 
-  fifo_7 : fifo
+  fifo_7 : fifo0
     generic map (
       depth => 3,                       --Header, address, data
       width => MISC_NOC_FLIT_SIZE)
@@ -652,7 +652,7 @@ begin  -- rtl
       full     => apb_rcv_full,
       data_out => apb_rcv_data_out);
 
-  fifo_20 : fifo
+  fifo_20 : fifo0
     generic map (
       depth => 2,                       --Header, data
       width => MISC_NOC_FLIT_SIZE)
@@ -667,7 +667,7 @@ begin  -- rtl
       data_out => remote_apb_rcv_data_out);
 
   irq_ack_data_in <= noc5_out_data;
-  fifo_12 : fifo
+  fifo_12 : fifo0
     generic map (
       depth => 8,                       --Header, irq info x # cpus
       width => MISC_NOC_FLIT_SIZE)
@@ -682,7 +682,7 @@ begin  -- rtl
       data_out => irq_ack_data_out);
 
   interrupt_data_in <= noc5_out_data;
-  fifo_15 : fifo
+  fifo_15 : fifo0
     generic map (
       depth => 9,                       --Header x # accelerators
       width => MISC_NOC_FLIT_SIZE)
@@ -697,7 +697,7 @@ begin  -- rtl
       data_out => interrupt_data_out);
 
   ahbs_rcv_data_in <= noc5_out_data;
-  fifo_16 : fifo
+  fifo_16 : fifo0
     generic map (
       depth => 6,                       --Header, address, [data]
       width => MISC_NOC_FLIT_SIZE)
@@ -711,7 +711,7 @@ begin  -- rtl
       full     => ahbs_rcv_full,
       data_out => ahbs_rcv_data_out);
 
-  fifo_26 : fifo
+  fifo_26 : fifo0
     generic map (
       depth => 6,                       --Header, address, [data]
       width => MISC_NOC_FLIT_SIZE)
@@ -878,7 +878,7 @@ begin  -- rtl
     end case;
   end process to_noc5_select_packet;
 
-  fifo_23: fifo
+  fifo_23: fifo0
     generic map (
       depth => 6,                       --Header, address, data (1 word) (2x)
       width => MISC_NOC_FLIT_SIZE)
@@ -893,7 +893,7 @@ begin  -- rtl
       data_out => local_remote_apb_rcv_data_out);
 
   local_apb_snd_data_in <= apb_snd_data_out;
-  fifo_24: fifo
+  fifo_24: fifo0
     generic map (
       depth => 6,                       --Header, data (1 word) (2x)
       width => MISC_NOC_FLIT_SIZE)
@@ -907,7 +907,7 @@ begin  -- rtl
       full     => local_apb_snd_full,
       data_out => local_apb_rcv_data_out);
 
-  fifo_10 : fifo
+  fifo_10 : fifo0
     generic map (
       depth => 2,                       --Header, data (1 word)
       width => MISC_NOC_FLIT_SIZE)
@@ -921,7 +921,7 @@ begin  -- rtl
       full     => apb_snd_full,
       data_out => apb_snd_data_out);
 
-  fifo_21 : fifo
+  fifo_21 : fifo0
     generic map (
       depth => 3,                       --Header, address, data
       width => MISC_NOC_FLIT_SIZE)
@@ -935,7 +935,7 @@ begin  -- rtl
       full     => remote_apb_snd_full,
       data_out => remote_apb_snd_data_out);
 
-  fifo_9 : fifo
+  fifo_9 : fifo0
     generic map (
       depth => 2,                       --Header, irq level
       width => MISC_NOC_FLIT_SIZE)
@@ -949,7 +949,7 @@ begin  -- rtl
       full     => irq_full,
       data_out => irq_data_out);
 
-  fifo_17 : fifo
+  fifo_17 : fifo0
     generic map (
       depth => 5,                       --Header, data
       width => MISC_NOC_FLIT_SIZE)
@@ -963,7 +963,7 @@ begin  -- rtl
       full     => ahbs_snd_full,
       data_out => ahbs_snd_data_out);
 
-  fifo_27 : fifo
+  fifo_27 : fifo0
     generic map (
       depth => 5,                       --Header, data
       width => MISC_NOC_FLIT_SIZE)

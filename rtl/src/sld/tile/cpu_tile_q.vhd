@@ -224,7 +224,7 @@ begin  -- rtl
   noc1_in_data          <= coherence_req_data_out;
   noc1_in_void          <= coherence_req_empty or noc1_in_stop;
   coherence_req_rdreq   <= (not coherence_req_empty) and (not noc1_in_stop);
-  fifo_1: fifo
+  fifo_1: fifo0
     generic map (
       depth => 6,                       --Header, address, [cache line]
       width => NOC_FLIT_SIZE)
@@ -247,7 +247,7 @@ begin  -- rtl
   noc2_in_void <= '1';
   noc2_dummy_in_stop <= noc2_in_stop;
 
-  fifo_2: fifo
+  fifo_2: fifo0
     generic map (
       depth => 4,                       --Header, address (x2)
       width => NOC_FLIT_SIZE)
@@ -268,7 +268,7 @@ begin  -- rtl
   coherence_rsp_rcv_data_in <= noc3_out_data;
   coherence_rsp_rcv_wrreq <= (not noc3_out_void) and (not coherence_rsp_rcv_full);
 
-  fifo_3: fifo
+  fifo_3: fifo0
     generic map (
       depth => 5,                       --Header (use RESERVED field to
                                         --determine  ACK number), cache line
@@ -288,7 +288,7 @@ begin  -- rtl
   noc3_in_data          <= coherence_rsp_snd_data_out;
   noc3_in_void          <= coherence_rsp_snd_empty or noc3_in_stop;
   coherence_rsp_snd_rdreq   <= (not coherence_rsp_snd_empty) and (not noc3_in_stop);
-  fifo_4: fifo
+  fifo_4: fifo0
     generic map (
       depth => 5,                       --Header
       width => NOC_FLIT_SIZE)
@@ -449,7 +449,7 @@ begin  -- rtl
     end case;
   end process noc5_fifos_get_packet;
 
-  fifo_7: fifo
+  fifo_7: fifo0
     generic map (
       depth => 2,                       --Header, data
       width => MISC_NOC_FLIT_SIZE)
@@ -464,7 +464,7 @@ begin  -- rtl
       data_out => remote_apb_rcv_data_out);
 
   remote_irq_data_in <= noc5_out_data;
-  fifo_9: fifo
+  fifo_9: fifo0
     generic map (
       depth => 2,                       --Header, irq level
       width => MISC_NOC_FLIT_SIZE)
@@ -478,7 +478,7 @@ begin  -- rtl
       full     => remote_irq_full,
       data_out => remote_irq_data_out);
 
-  fifo_16: fifo
+  fifo_16: fifo0
     generic map (
       depth => 3,                       --Header, address, data
       width => MISC_NOC_FLIT_SIZE)
@@ -492,7 +492,7 @@ begin  -- rtl
       full     => apb_rcv_full,
       data_out => apb_rcv_data_out);
 
-  fifo_20: fifo
+  fifo_20: fifo0
     generic map (
       depth => 3,                       --Header, address, data
       width => MISC_NOC_FLIT_SIZE)
@@ -648,7 +648,7 @@ begin  -- rtl
     end case;
   end process to_noc5_select_packet;
 
-  fifo_10: fifo
+  fifo_10: fifo0
     generic map (
       depth => 3,                       --Header, address, data (1 word)
       width => MISC_NOC_FLIT_SIZE)
@@ -662,7 +662,7 @@ begin  -- rtl
       full     => remote_apb_snd_full,
       data_out => remote_apb_snd_data_out);
 
-  fifo_12: fifo
+  fifo_12: fifo0
     generic map (
       depth => 2,                       --Header, irq info
       width => MISC_NOC_FLIT_SIZE)
@@ -676,7 +676,7 @@ begin  -- rtl
       full     => remote_irq_ack_full,
       data_out => remote_irq_ack_data_out);
 
-  fifo_17: fifo
+  fifo_17: fifo0
     generic map (
       depth => 6,                       --Header, address, data (up to 4 words)
       width => MISC_NOC_FLIT_SIZE)
@@ -691,7 +691,7 @@ begin  -- rtl
       data_out => apb_snd_data_out);
 
   local_remote_apb_snd_data_in <= remote_apb_snd_data_out;
-  fifo_18: fifo
+  fifo_18: fifo0
     generic map (
       depth => 6,                       --Header, address, data (1 word) (2x)
       width => MISC_NOC_FLIT_SIZE)
@@ -706,7 +706,7 @@ begin  -- rtl
       data_out => local_remote_apb_rcv_data_out);
 
   local_apb_snd_data_in <= apb_snd_data_out;
-  fifo_19: fifo
+  fifo_19: fifo0
     generic map (
       depth => 6,                       --Header, data (1 word) (2x)
       width => MISC_NOC_FLIT_SIZE)
@@ -720,7 +720,7 @@ begin  -- rtl
       full     => local_apb_snd_full,
       data_out => local_apb_rcv_data_out);
 
-  fifo_21: fifo
+  fifo_21: fifo0
     generic map (
       depth => 3,                       --Header, address, data
       width => MISC_NOC_FLIT_SIZE)

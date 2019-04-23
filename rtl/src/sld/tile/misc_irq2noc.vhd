@@ -240,7 +240,7 @@ begin  -- rtl
       end if;
     end process irqi_diff;
 
-    fifo_header_i : fifo
+    fifo_header_i : fifo0
       generic map (
         depth => IRQ_FIFO_DEPTH,
         width => MISC_NOC_FLIT_SIZE)
@@ -254,7 +254,7 @@ begin  -- rtl
         full     => fifo_full(cpuid),
         data_out => fifo_header(cpuid));
 
-    fifo_payload_1_i : fifo
+    fifo_payload_1_i : fifo0
       generic map (
         depth => IRQ_FIFO_DEPTH,
         width => MISC_NOC_FLIT_SIZE)
@@ -268,7 +268,7 @@ begin  -- rtl
         full     => open,
         data_out => fifo_payload_1(cpuid));
 
-    fifo_payload_2_i : fifo
+    fifo_payload_2_i : fifo0
       generic map (
         depth => IRQ_FIFO_DEPTH,
         width => MISC_NOC_FLIT_SIZE)

@@ -2,7 +2,7 @@
 -- SPDX-License-Identifier: MIT
 
 --/*
--- * Module: fifo
+-- * Module: fifo_custom
 -- * Description: First In First Out queue.  
 -- *              The DEPTH parameter represents the number of memory locations 
 -- *              into the FIFO. The WIDTH parameter represents data parallelism.
