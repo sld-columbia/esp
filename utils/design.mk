@@ -137,6 +137,7 @@ TOP_VHDL_RTL_SRCS += $(wildcard $(DESIGN_PATH)/sldgen/noc_*.vhd)
 TOP_VHDL_RTL_SRCS += $(DESIGN_PATH)/sldgen/tile_acc.vhd
 TOP_VHDL_RTL_SRCS += $(wildcard $(ESP_ROOT)/socs/common/tile_*.vhd)
 TOP_VHDL_RTL_SRCS += $(ESP_ROOT)/socs/common/esp.vhd
+TOP_VHDL_RTL_SRCS += $(DESIGN_PATH)/ahbrom.vhd
 TOP_VHDL_RTL_SRCS += $(DESIGN_PATH)/$(TOP).vhd
 
 ifneq ($(findstring profpga, $(BOARD)),)
