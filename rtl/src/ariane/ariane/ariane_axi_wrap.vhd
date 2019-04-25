@@ -18,13 +18,13 @@ entity ariane_axi_wrap is
     NIRQ_SRCS        : integer                       := 1;
     ROMBase          : std_logic_vector(63 downto 0) := X"0000_0000_0001_0000";
     ROMLength        : std_logic_vector(63 downto 0) := X"0000_0000_0001_0000";
-    APBBase          : std_logic_vector(63 downto 0) := X"0000_0000_8000_0000";
+    APBBase          : std_logic_vector(63 downto 0) := X"0000_0000_6000_0000";
     APBLength        : std_logic_vector(63 downto 0) := X"0000_0000_1000_0000";
     CLINTBase        : std_logic_vector(63 downto 0) := X"0000_0000_0200_0000";
     CLINTLength      : std_logic_vector(63 downto 0) := X"0000_0000_000C_0000";
     PLICBase         : std_logic_vector(63 downto 0) := X"0000_0000_0C00_0000";
     PLICLength       : std_logic_vector(63 downto 0) := X"0000_0000_03FF_FFFF";
-    DRAMBase         : std_logic_vector(63 downto 0) := X"0000_0000_4000_0000";
+    DRAMBase         : std_logic_vector(63 downto 0) := X"0000_0000_8000_0000";
     DRAMLength       : std_logic_vector(63 downto 0) := X"0000_0000_4000_0000");
   port (
     clk         : in  std_logic;
@@ -328,7 +328,7 @@ begin  -- architecture rtl
 
   apbi.penable <= penable;
   apbi.pwrite  <= pwrite;
-  apbi.paddr   <= paddr;
+  apbi.paddr   <= X"000fffff" and paddr;
   apbi.pwdata  <= pwdata;
 
   psel_gen: process (psel, paddr, apbo) is
