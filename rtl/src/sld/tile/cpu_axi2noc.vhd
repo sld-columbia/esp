@@ -72,7 +72,8 @@ architecture rtl of cpu_axi2noc is
 
   type axi_fsm is (idle, request_header, request_address,
                    request_length, request_data, reply_header,
-                   reply_data);
+                   reply_data, request_data_lsb, request_data_msb,
+                   reply_data_lsb, reply_data_msb, request_data_ack);
 
   type transaction_type is record
     -- Selected master interfaces
@@ -143,6 +144,9 @@ architecture rtl of cpu_axi2noc is
   signal current_state, next_state    : axi_fsm;
   signal selected                     : std_ulogic;
   signal sample_flits                 : std_ulogic;
+
+  signal remote_ahbs_rcv_data_out_hold  : misc_noc_flit_type;
+  signal sample_and_hold : std_ulogic;
 
 begin  -- rtl
 
@@ -222,7 +226,7 @@ begin  -- rtl
     end if;
 
     -- Set message type
-    if tran.size = HSIZE_DWORD then
+    if tran.dst_is_mem = '1' and tran.size = HSIZE_DWORD then
       tran.hsize_msb := '1';
     end if;
 
@@ -268,7 +272,11 @@ begin  -- rtl
     tran.payload_length(7 downto 0) := tran.len;
 
     tran.payload_length_narrow(MISC_NOC_FLIT_SIZE-1 downto MISC_NOC_FLIT_SIZE-PREAMBLE_WIDTH) := PREAMBLE_TAIL;
-    tran.payload_length_narrow(7 downto 0) := tran.len;
+    if tran.dst_is_mem = '0' and tran.size = HSIZE_DWORD then
+      tran.payload_length_narrow(8 downto 0) := tran.len & '0';
+    else
+      tran.payload_length_narrow(8 downto 0) := '0' & tran.len;
+    end if;
 
 
     -- Create header flit
@@ -290,20 +298,24 @@ begin  -- rtl
                           coherence_req_full,
                           coherence_rsp_rcv_data_out, coherence_rsp_rcv_empty,
                           remote_ahbs_snd_full,
-                          remote_ahbs_rcv_data_out, remote_ahbs_rcv_empty)
-    variable payload_data        : noc_flit_type;
-    variable payload_data_narrow : misc_noc_flit_type;
-    variable rsp_preamble        : noc_preamble_type;
-    variable slv_ready           : std_ulogic;
-    variable slv_valid           : std_ulogic;
-    variable mst_ready           : std_ulogic;
-    variable mst_valid           : std_ulogic;
-    variable last                : std_ulogic;
+                          remote_ahbs_rcv_data_out, remote_ahbs_rcv_empty,
+                          remote_ahbs_rcv_data_out_hold)
+    variable payload_data            : noc_flit_type;
+    variable payload_data_narrow_lsb : misc_noc_flit_type;
+    variable payload_data_narrow_msb : misc_noc_flit_type;
+    variable rsp_preamble            : noc_preamble_type;
+    variable slv_ready               : std_ulogic;
+    variable slv_valid               : std_ulogic;
+    variable mst_ready               : std_ulogic;
+    variable mst_valid               : std_ulogic;
+    variable mst_bready              : std_ulogic;
+    variable last                    : std_ulogic;
   begin  -- process axi_roundtrip
 
     -- Default internal state
     next_state <= current_state;
     sample_flits <= '0';
+    sample_and_hold <= '0';
 
     -- Response data flit (AXI Read)
     if transaction_reg.dst_is_mem = '1' then
@@ -315,7 +327,12 @@ begin  -- rtl
       rsp_preamble := get_preamble(MISC_NOC_FLIT_SIZE, noc_flit_pad & remote_ahbs_rcv_data_out);
       for i in 0 to nmst - 1 loop
         somi(i).r.data <= (others => '0');
-        somi(i).r.data(MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH - 1 downto 0) <= (remote_ahbs_rcv_data_out(MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH - 1 downto 0));
+        if transaction_reg.size = HSIZE_DWORD then
+          somi(i).r.data(MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH - 1 downto 0) <= remote_ahbs_rcv_data_out_hold(MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH - 1 downto 0);
+          somi(i).r.data(2 * (MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH) - 1 downto MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH) <= (remote_ahbs_rcv_data_out(MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH - 1 downto 0));
+        else
+          somi(i).r.data(MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH - 1 downto 0) <= remote_ahbs_rcv_data_out(MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH - 1 downto 0);
+        end if;
       end loop;
     end if;
 
@@ -354,25 +371,31 @@ begin  -- rtl
     remote_ahbs_rcv_rdreq   <= '0';
 
     -- Data flit (AXI Write)
-    payload_data        := (others => '0');
-    payload_data_narrow := (others => '0');
+    payload_data            := (others => '0');
+    payload_data_narrow_lsb := (others => '0');
+    payload_data_narrow_msb := (others => '0');
     if (mosi(transaction_reg.xindex).w.last = '1') then
-      payload_data(NOC_FLIT_SIZE-1 downto NOC_FLIT_SIZE - PREAMBLE_WIDTH)                  := PREAMBLE_TAIL;
-      payload_data_narrow(MISC_NOC_FLIT_SIZE-1 downto MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH) := PREAMBLE_TAIL;
-      last                                                                                 := '1';
+      payload_data(NOC_FLIT_SIZE-1 downto NOC_FLIT_SIZE - PREAMBLE_WIDTH)                      := PREAMBLE_TAIL;
+      payload_data_narrow_lsb(MISC_NOC_FLIT_SIZE-1 downto MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH) := PREAMBLE_TAIL;
+      payload_data_narrow_msb(MISC_NOC_FLIT_SIZE-1 downto MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH) := PREAMBLE_TAIL;
+      last                                                                                     := '1';
     else
-      payload_data(NOC_FLIT_SIZE-1 downto NOC_FLIT_SIZE - PREAMBLE_WIDTH)                  := PREAMBLE_BODY;
-      payload_data_narrow(MISC_NOC_FLIT_SIZE-1 downto MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH) := PREAMBLE_BODY;
-      last                                                                                 := '0';
+      payload_data(NOC_FLIT_SIZE-1 downto NOC_FLIT_SIZE - PREAMBLE_WIDTH)                      := PREAMBLE_BODY;
+      payload_data_narrow_lsb(MISC_NOC_FLIT_SIZE-1 downto MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH) := PREAMBLE_BODY;
+      payload_data_narrow_msb(MISC_NOC_FLIT_SIZE-1 downto MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH) := PREAMBLE_BODY;
+      last                                                                                     := '0';
     end if;
     payload_data(AHBDW - 1 downto 0)                                      := mosi(transaction_reg.xindex).w.data;
-    payload_data_narrow(MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH - 1 downto 0) := mosi(transaction_reg.xindex).w.data(MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH - 1 downto 0);
+    -- TODO: this only works on a 64-bit AXI bus with 32-bit AHB remote slaves
+    payload_data_narrow_lsb(MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH - 1 downto 0) := mosi(transaction_reg.xindex).w.data(MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH - 1 downto 0);
+    payload_data_narrow_msb(MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH - 1 downto 0) := mosi(transaction_reg.xindex).w.data(2 * (MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH) - 1 downto MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH);
 
     -- Temporary AXI flags
-    slv_ready := '0';
-    slv_valid := '0';
-    mst_ready := mosi(transaction_reg.xindex).r.ready;
-    mst_valid := mosi(transaction_reg.xindex).w.valid;
+    slv_ready  := '0';
+    slv_valid  := '0';
+    mst_ready  := mosi(transaction_reg.xindex).r.ready;
+    mst_valid  := mosi(transaction_reg.xindex).w.valid;
+    mst_bready := mosi(transaction_reg.xindex).b.ready;
 
 
     -- FSM
@@ -426,7 +449,11 @@ begin  -- rtl
             remote_ahbs_snd_data_in <= transaction_reg.payload_address_narrow;
             remote_ahbs_snd_wrreq <= '1';
             if transaction_reg.write = '1' then
-              next_state <= request_data;
+              if transaction_reg.size = HSIZE_DWORD then
+                next_state <= request_data_lsb;
+              else
+                next_state <= request_data;
+              end if;
             else
               next_state <= request_length;
             end if;
@@ -457,27 +484,47 @@ begin  -- rtl
             coherence_req_data_in <= payload_data;
             coherence_req_wrreq <= '1';
             if last = '1' then
-              if selected = '0' then
-                next_state <= idle;
-              else
-                sample_flits <= '1';
-                next_state <= request_header;
-              end if;
+              next_state <= request_data_ack;
             end if;
           end if;
         else
           if remote_ahbs_snd_full = '0' and mst_valid = '1' then
             slv_ready := '1';
-            remote_ahbs_snd_data_in <= payload_data_narrow;
+            remote_ahbs_snd_data_in <= payload_data_narrow_lsb;
             remote_ahbs_snd_wrreq <= '1';
             if last = '1' then
-              if selected = '0' then
-                next_state <= idle;
-              else
-                sample_flits <= '1';
-                next_state <= request_header;
-              end if;
+              next_state <= request_data_ack;
             end if;
+          end if;
+        end if;
+
+      when request_data_lsb =>
+        if remote_ahbs_snd_full = '0' and mst_valid = '1' then
+          remote_ahbs_snd_data_in <= payload_data_narrow_lsb;
+          remote_ahbs_snd_wrreq <= '1';
+          next_state <= request_data_msb;
+        end if;
+
+      when request_data_msb =>
+        if remote_ahbs_snd_full = '0' then
+          slv_ready := '1';
+          remote_ahbs_snd_data_in <= payload_data_narrow_msb;
+          remote_ahbs_snd_wrreq <= '1';
+          if last = '1' then
+            next_state <= request_data_ack;
+          else
+            next_state <= request_data_lsb;
+          end if;
+        end if;
+
+      when request_data_ack =>
+        somi(transaction_reg.xindex).b.valid <= '1';
+        if mst_bready = '1' then
+          if selected = '0' then
+            next_state <= idle;
+          else
+            sample_flits <= '1';
+            next_state <= request_header;
           end if;
         end if;
 
@@ -490,7 +537,11 @@ begin  -- rtl
         else
           if remote_ahbs_rcv_empty = '0' then
             remote_ahbs_rcv_rdreq <= '1';
-            next_state            <= reply_data;
+            if transaction_reg.size = HSIZE_DWORD then
+              next_state <= reply_data_lsb;
+            else
+              next_state <= reply_data;
+            end if;
           end if;
         end if;
 
@@ -500,14 +551,43 @@ begin  -- rtl
         elsif remote_ahbs_rcv_empty = '0'and mst_ready = '1' then
           remote_ahbs_rcv_rdreq <= '1';
         end if;
-        if (coherence_rsp_rcv_empty = '0' or remote_ahbs_rcv_empty = '0') and mst_ready = '1' then
-          slv_valid               := '1';
-          if rsp_preamble = PREAMBLE_TAIL then
-            if selected = '0' then
-              next_state <= idle;
+        if (coherence_rsp_rcv_empty = '0' or remote_ahbs_rcv_empty = '0') then
+          slv_valid := '1';
+          if mst_ready = '1' then
+            if rsp_preamble = PREAMBLE_TAIL then
+              if selected = '0' then
+                next_state <= idle;
+              else
+                next_state   <= request_header;
+                sample_flits <= '1';
+              end if;
+            end if;
+          end if;
+        end if;
+
+      when reply_data_lsb =>
+        if remote_ahbs_rcv_empty = '0'then
+          remote_ahbs_rcv_rdreq <= '1';
+          sample_and_hold <= '1';
+          next_state <= reply_data_msb;
+        end if;
+
+      when reply_data_msb =>
+        if remote_ahbs_rcv_empty = '0'and mst_ready = '1' then
+          remote_ahbs_rcv_rdreq <= '1';
+        end if;
+        if remote_ahbs_rcv_empty = '0' then
+          slv_valid := '1';
+          if mst_ready = '1' then
+            if rsp_preamble = PREAMBLE_TAIL then
+              if selected = '0' then
+                next_state <= idle;
+              else
+                next_state   <= request_header;
+                sample_flits <= '1';
+              end if;
             else
-              next_state   <= request_header;
-              sample_flits <= '1';
+              next_state <= reply_data_lsb;
             end if;
           end if;
         end if;
@@ -528,10 +608,14 @@ begin  -- rtl
     if rst = '0' then                   -- asynchronous reset (active low)
       current_state <= idle;
       transaction_reg <= transaction_none;
+      remote_ahbs_rcv_data_out_hold <= (others => '0');
     elsif clk'event and clk = '1' then  -- rising clock edge
       current_state <= next_state;
       if sample_flits = '1' then
         transaction_reg <= transaction;
+      end if;
+      if sample_and_hold = '1' then
+        remote_ahbs_rcv_data_out_hold <= remote_ahbs_rcv_data_out;
       end if;
     end if;
   end process;

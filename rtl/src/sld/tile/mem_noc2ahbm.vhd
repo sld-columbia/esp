@@ -30,6 +30,7 @@ entity mem_noc2ahbm is
     local_y     : local_yx;
     local_x     : local_yx;
     axitran     : integer range 0 to 1 := 0;
+    little_end  : integer range 0 to 1 := 0;
     cacheline   : integer;
     l2_cache_en : integer);
   port (
@@ -77,6 +78,21 @@ architecture rtl of mem_noc2ahbm is
       when others => return HSIZE_WORD;
     end case;
   end target_word_hsize;
+
+  function fix_endian (
+    le : std_logic_vector(ARCH_BITS - 1 downto 0))
+    return std_logic_vector is
+    variable be : std_logic_vector(ARCH_BITS - 1 downto 0);
+  begin
+    if little_end = 0 then
+      be := le;
+    else
+      for i in 0 to (ARCH_BITS / 8) - 1 loop
+        be(8 * (i + 1) - 1 downto 8 * i) := le(ARCH_BITS - 8 * i - 1 downto ARCH_BITS - 8 * (i + 1));
+      end loop;  -- i
+    end if;
+    return be;
+  end fix_endian;
 
   -- If length is not received, then use fix length of cacheline words.
   -- The accelerators and masters on AXI will always provide a length.
@@ -535,7 +551,7 @@ begin  -- rtl
           else
             -- Send data to noc
             coherence_rsp_snd_wrreq   <= '1';
-            coherence_rsp_snd_data_in <= PREAMBLE_BODY & ahbmi.hrdata;
+            coherence_rsp_snd_data_in <= PREAMBLE_BODY & fix_endian(ahbmi.hrdata);
             -- Update address and control bus
             if r.hsize = HSIZE_WORD then
               v.addr := r.addr + 4;
@@ -550,7 +566,7 @@ begin  -- rtl
               v.hbusreq := '0';
               v.htrans  := HTRANS_IDLE;
             elsif r.count = 0 then
-              coherence_rsp_snd_data_in <= PREAMBLE_TAIL & ahbmi.hrdata;
+              coherence_rsp_snd_data_in <= PREAMBLE_TAIL & fix_endian(ahbmi.hrdata);
               v.state                   := receive_header;
             else
               v.htrans := HTRANS_SEQ;
@@ -562,7 +578,7 @@ begin  -- rtl
         if (v.ready = '1') then
           -- Send data to noc
           dma_snd_wrreq   <= '1';
-          dma_snd_data_in <= PREAMBLE_BODY & ahbmi.hrdata;
+          dma_snd_data_in <= PREAMBLE_BODY & fix_endian(ahbmi.hrdata);
           -- Update address and control bus
           v.addr          := r.addr + default_incr;
           v.count         := r.count - 1;
@@ -573,7 +589,7 @@ begin  -- rtl
             v.hbusreq := '0';
             v.htrans  := HTRANS_IDLE;
           elsif r.count = 0 then
-            dma_snd_data_in <= PREAMBLE_TAIL & ahbmi.hrdata;
+            dma_snd_data_in <= PREAMBLE_TAIL & fix_endian(ahbmi.hrdata);
             v.state         := receive_header;
           else
             if dma_snd_exactly_3slots = '1' then
@@ -588,7 +604,7 @@ begin  -- rtl
       when dma_send_busy =>
         if (v.ready = '1') then
           dma_snd_wrreq   <= '1';
-          dma_snd_data_in <= PREAMBLE_BODY & ahbmi.hrdata;
+          dma_snd_data_in <= PREAMBLE_BODY & fix_endian(ahbmi.hrdata);
           v.count         := r.count - 1;
           if r.count = 2 then
             v.hbusreq := '0';

@@ -533,6 +533,8 @@ package tile is
       hindex      : integer range 0 to NAHBSLV - 1;
       local_y     : local_yx;
       local_x     : local_yx;
+      axitran     : integer range 0 to 1 := 0;
+      little_end  : integer range 0 to 1 := 0;
       cacheline   : integer;
       l2_cache_en : integer := 0);
     port (
