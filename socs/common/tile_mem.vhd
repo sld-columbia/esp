@@ -273,6 +273,8 @@ begin
         hindex      => 0,
         local_y     => this_local_y,
         local_x     => this_local_x,
+        axitran     => GLOB_CPU_AXI,
+        little_end  => GLOB_CPU_AXI,
         cacheline   => CFG_DLINE,
         l2_cache_en => CFG_L2_ENABLE)
       port map (
@@ -321,6 +323,8 @@ begin
         hindex      => 0,
         local_y     => this_local_y,
         local_x     => this_local_x,
+        axitran     => GLOB_CPU_AXI,
+        little_end  => GLOB_CPU_AXI,
         cacheline   => CFG_DLINE,
         l2_cache_en => CFG_L2_ENABLE)
       port map (
@@ -436,6 +440,8 @@ begin
       hindex      => 1,
       local_y     => this_local_y,
       local_x     => this_local_x,
+      axitran     => 0,
+      little_end  => GLOB_CPU_AXI,
       cacheline   => 1,
       l2_cache_en => 0)
     port map (

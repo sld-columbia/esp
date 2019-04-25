@@ -31,12 +31,6 @@ entity esp is
     sys_clk         : in    std_logic_vector(0 to CFG_NMEM_TILE - 1);
     refclk          : in    std_logic;
     pllbypass       : in    std_logic_vector(CFG_TILES_NUM - 1 downto 0);
-    --pragma translate_off
-    mctrl_ahbsi : out ahb_slv_in_type;
-    mctrl_ahbso : in  ahb_slv_out_type;
-    mctrl_apbi  : out apb_slv_in_type;
-    mctrl_apbo  : in  apb_slv_out_type;
-    --pragma translate_on
     uart_rxd        : in    std_logic;  -- UART1_RX (u1i.rxd)
     uart_txd        : out   std_logic;  -- UART1_TX (u1o.txd)
     uart_ctsn       : in    std_logic;  -- UART1_RTSN (u1i.ctsn)
@@ -372,12 +366,6 @@ begin
           dvi_apbo           => dvi_apbo,
           dvi_ahbmi          => dvi_ahbmi,
           dvi_ahbmo          => dvi_ahbmo,
-          --pragma translate_off
-          mctrl_ahbsi        => mctrl_ahbsi,
-          mctrl_ahbso        => mctrl_ahbso,
-          mctrl_apbi         => mctrl_apbi,
-          mctrl_apbo         => mctrl_apbo,
-          --pragma translate_on
           uart_rxd           => uart_rxd_int,
           uart_txd           => uart_txd_int,
           uart_ctsn          => uart_ctsn_int,

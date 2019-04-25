@@ -15,9 +15,6 @@ use work.stdlib.all;
 use work.sld_devices.all;
 use work.devices.all;
 use work.gencomp.all;
---pragma translate_off
-use work.memctrl.all;
---pragma translate_on
 use work.leon3.all;
 use work.misc.all;
 -- pragma translate_off

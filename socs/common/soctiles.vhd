@@ -27,12 +27,6 @@ package soctiles is
       sys_clk            : in    std_logic_vector(0 to CFG_NMEM_TILE - 1);
       refclk             : in  std_logic;
       pllbypass          : in  std_logic_vector(CFG_TILES_NUM - 1 downto 0);
-      --pragma translate_off
-      mctrl_ahbsi        : out ahb_slv_in_type;
-      mctrl_ahbso        : in  ahb_slv_out_type;
-      mctrl_apbi         : out apb_slv_in_type;
-      mctrl_apbo         : in  apb_slv_out_type;
-      --pragma translate_on
       uart_rxd           : in  std_logic;
       uart_txd           : out std_logic;
       uart_ctsn          : in  std_logic;
@@ -176,12 +170,6 @@ package soctiles is
       dvi_apbo           : in  apb_slv_out_type;
       dvi_ahbmi          : out ahb_mst_in_type;
       dvi_ahbmo          : in  ahb_mst_out_type;
-      --pragma translate_off
-      mctrl_ahbsi        : out ahb_slv_in_type;
-      mctrl_ahbso        : in  ahb_slv_out_type;
-      mctrl_apbi         : out apb_slv_in_type;
-      mctrl_apbo         : in  apb_slv_out_type;
-      --pragma translate_on
       uart_rxd           : in  std_ulogic;
       uart_txd           : out std_ulogic;
       uart_ctsn          : in  std_ulogic;

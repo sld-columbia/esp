@@ -48,12 +48,6 @@ entity tile_io is
     dvi_apbo           : in  apb_slv_out_type;
     dvi_ahbmi          : out ahb_mst_in_type;
     dvi_ahbmo          : in  ahb_mst_out_type;
-    --pragma translate_off
-    mctrl_ahbsi        : out ahb_slv_in_type;
-    mctrl_ahbso        : in  ahb_slv_out_type;
-    mctrl_apbi         : out apb_slv_in_type;
-    mctrl_apbo         : in  apb_slv_out_type;
-    --pragma translate_on
     uart_rxd           : in  std_ulogic;
     uart_txd           : out std_ulogic;
     uart_ctsn          : in  std_ulogic;
@@ -106,6 +100,22 @@ entity tile_io is
 end;
 
 architecture rtl of tile_io is
+
+  -- Bootrom
+  component ahbrom is
+    generic (
+      hindex : integer;
+      haddr  : integer;
+      hmask  : integer;
+      pipe   : integer;
+      tech   : integer;
+      kbytes : integer);
+    port (
+      rst   : in  std_ulogic;
+      clk   : in  std_ulogic;
+      ahbsi : in  ahb_slv_in_type;
+      ahbso : out ahb_slv_out_type);
+  end component ahbrom;
 
   -- JTAG (Connected internally through tap and bscan components
   signal tck, tckn, tms, tdi, tdo : std_ulogic;
@@ -354,24 +364,19 @@ begin
 -----------------------------------------------------------------------------
   -- Memory Controller Slave (bootrom) - Simulation only for now
   -----------------------------------------------------------------------------
-  --pragma translate_off
-  mctrl_gen : process (
-    mctrl_apbo, mctrl_ahbso,
-    noc_apbi, ahbsi) is
-  begin  -- process mctrl_gen
-    noc_apbo(0) <= apb_none;
-    mctrl_apbi  <= apb_slv_in_none;
-
-    ahbso(mctrl_hindex) <= ahbs_none;
-    mctrl_ahbsi         <= ahbs_in_none;
-
-    ahbso(mctrl_hindex) <= mctrl_ahbso;
-    mctrl_ahbsi         <= ahbsi;
-
-    noc_apbo(0) <= mctrl_apbo;
-    mctrl_apbi  <= noc_apbi;
-  end process mctrl_gen;
-  --pragma translate_on
+  ahbrom_1: ahbrom
+    generic map (
+      hindex => ahbrom_hindex,
+      haddr  => ahbrom_haddr,
+      hmask  => ahbrom_hmask,
+      pipe   => 0,
+      tech   => CFG_FABTECH,
+      kbytes => 4)
+    port map (
+      rst   => rst,
+      clk   => clk,
+      ahbsi => ahbsi,
+      ahbso => ahbso(ahbrom_hindex));
 
   -----------------------------------------------------------------------------
   -- DSU Slave
@@ -691,6 +696,8 @@ begin
       hindex      => CFG_AHB_JTAG + CFG_GRETH + CFG_DSU_ETH,
       local_y     => this_local_y,
       local_x     => this_local_x,
+      axitran     => GLOB_CPU_AXI,
+      little_end  => GLOB_CPU_AXI,
       cacheline   => 1,
       l2_cache_en => 0)
     port map (
