@@ -16,7 +16,7 @@
 --
 --  You should have received a copy of the GNU General Public License
 --  along with this program; if not, write to the Free Software
---  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA 
+--  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 -----------------------------------------------------------------------------
 -- Entity:  ahbram
 -- File:  ahbram.vhd
@@ -47,7 +47,7 @@ entity ahbram_sim is
     hindex      : integer := 0;
     haddr       : integer := 0;
     hmask       : integer := 16#fff#;
-    tech        : integer := DEFMEMTECH; 
+    tech        : integer := DEFMEMTECH;
     kbytes      : integer := 1;
     pipe        : integer := 0;
     maccsz      : integer := AHBDW;
@@ -125,7 +125,7 @@ begin
     end loop;
     return rdata;
   end function reversedata;
-  
+
   begin
     v := r; v.hready := '1'; bs := (others => '0');
     v.pready := r.hready;
@@ -139,7 +139,7 @@ begin
       haddr := r.addr(abits-1+log2(dw/8) downto log2(dw/8));
     else
       haddr := ahbsi.haddr(abits-1+log2(dw/8) downto log2(dw/8));
-      bs := (others => '0'); 
+      bs := (others => '0');
     end if;
     raddr := (others => '0');
 
@@ -150,7 +150,7 @@ begin
     if ahbsi.hready = '1' then
       if pipe=0 then
         v.addr := ahbsi.haddr(abits-1+log2(dw/8) downto 0);
-      end if;        
+      end if;
       v.hsel := ahbsi.hsel(hindex) and ahbsi.htrans(1);
       v.size := ahbsi.hsize(2 downto 0);
       v.hwrite := ahbsi.hwrite and v.hsel;
@@ -178,7 +178,7 @@ begin
               bs(bs'left-i*4 downto bs'left-i*4-3) := (others => '1');
             end if;
           end loop;  -- i
-        end if;        
+        end if;
       when HSIZE_DWORD =>
         if dw = 32 then null;
         elsif dw = 64 then bs := (others => '1');
@@ -189,7 +189,7 @@ begin
             end if;
           end loop;  -- i
         end if;
-      when HSIZE_4WORD => 
+      when HSIZE_4WORD =>
         if dw < 128 then null;
         elsif dw = 128 then bs := (others => '1');
         else
@@ -197,7 +197,7 @@ begin
             if i = conv_integer(r.addr(3)) then
               bs(bs'left-i*8 downto bs'left-i*8-7) := (others => '1');
             end if;
-          end loop;  -- i  
+          end loop;  -- i
         end if;
       when others => --HSIZE_8WORD
         if dw < 256 then null;
@@ -213,9 +213,9 @@ begin
         seldata := ramdata;
       elsif dw = 64 then
         if r.size = HSIZE_DWORD then seldata := ramdata; else
-         if r.addr(2) = '0' then 
+         if r.addr(2) = '0' then
            seldata(dw/2-1 downto 0) := ramdata(dw-1 downto dw/2);
-         else 
+         else
            seldata(dw/2-1 downto 0) := ramdata(dw/2-1 downto 0);
          end if;
          seldata(dw-1 downto dw/2) := seldata(dw/2-1 downto 0);
@@ -266,34 +266,37 @@ begin
       v.hwrite := RES.hwrite; v.hready := RES.hready;
     end if;
     write <= bs; for i in 0 to dw/8-1 loop ramsel(i) <= v.hsel or r.hwrite; end loop;
-    ramaddr <= haddr; c <= v; 
+    ramaddr <= haddr; c <= v;
 
     ahbso.hrdata <= ahbdrivedata(hrdata);
     ahbso.hready <= r.hready;
 
     -- Select correct write data
     hwdata <= ahbreaddata(wdata, r.addr(4 downto 2), conv_std_logic_vector(log2(dw/8), 3));
-    
+
   end process;
 
-  ahbso.hresp   <= "00"; 
-  ahbso.hsplit  <= (others => '0'); 
+  ahbso.hresp   <= "00";
+  ahbso.hsplit  <= (others => '0');
   ahbso.hirq    <= (others => '0');
   ahbso.hconfig <= hconfig;
   ahbso.hindex  <= hindex;
-  
+
 --  aram : syncrambw generic map (tech, abits, dw, scantest) port map (
---  clk, ramaddr, hwdata, ramdata, ramsel, write, ahbsi.testin); 
+--  clk, ramaddr, hwdata, ramdata, ramsel, write, ahbsi.testin);
   RamProc: process(clk) is
 
   variable L1 : line;
   variable FIRST : boolean := true;
+  variable SECOND : boolean := false;
   variable ADR : std_logic_vector(19 downto 0);
   variable BUF : std_logic_vector(31 downto 0);
   variable CH : character;
   variable ai : integer := 0;
   variable len : integer := 0;
   variable wrd : integer := 0;
+  variable bts_pre : integer := 0;
+  variable bts_post : integer := 0;
   file TCF : text open read_mode is fname;
   variable rectype : std_logic_vector(3 downto 0);
   variable recaddr : std_logic_vector(31 downto 0);
@@ -312,9 +315,17 @@ begin
       read_address <= ramaddr;
     end if;
 
+    if (rst = '0') and (SECOND = true) then
+      for i in 0 to (2**ramaddr'length) - 1 loop
+        report "ram(" & tost(conv_std_logic_vector(i*(dw/8), 32)) & ") = " & tost(ram(i));
+      end loop;  -- i
+      SECOND := false;
+    end if;
+
     if (rst = '0') and (FIRST = true) then
       ram <= (others => (others => '0'));
-      
+      SECOND := true;
+
       L1:= new string'("");
       while not endfile(TCF) loop
         readline(TCF,L1);
@@ -329,7 +340,7 @@ begin
               hread(L1, rectype);
               hread(L1, reclen);
               recaddr := (others => '0');
-              case rectype is 
+              case rectype is
                 when "0001" =>
                   hread(L1, recaddr(15 downto 0));
                   len := conv_integer(reclen)-3;
@@ -345,11 +356,26 @@ begin
 
               recaddr(31 downto abits+2) := (others => '0');
               ai := conv_integer(recaddr)/(dw/8);
-              wrd := len/(dw/8);
+              bts_pre := ((dw/8) - (conv_integer(recaddr) mod (dw/8))) mod (dw/8);
+              len := len - bts_pre;
+              wrd := len / (dw/8);
+              bts_post := len mod (dw/8);
+
+              for i in bts_pre - 1 downto 0 loop
+                ram(ai)((i + 1) * 8 - 1 downto i * 8) <= recdata((bts_pre - i - 1) * 8 to (bts_pre - i) * 8 - 1);
+              end loop;  -- i
+
+              if bts_pre /= 0 then
+                ai := ai + 1;
+              end if;
 
               for i in 0 to wrd-1 loop
-                ram(ai+i)       <= recdata(i*dw to i*dw+dw-1);
+                ram(ai+i) <= recdata(i*dw + bts_pre * 8 to i*dw+dw-1 + bts_pre * 8);
               end loop;
+
+              for i in 0 to bts_post - 1 loop
+                ram(ai + wrd)(dw - i * 8 - 1 downto dw - (i + 1) * 8) <= recdata(wrd * dw + (bts_pre + i) * 8 to wrd * dw + (bts_pre + i + 1) * 8 - 1);
+              end loop;  -- i
 
               if ai = 0 then
                 ai := 1;
@@ -358,13 +384,13 @@ begin
           end if;
         end if;
       end loop;
-      
+
       FIRST := false;
-      
+
     end if;
 
   end process RamProc;
-  
+
   ramdata <= ram(to_integer(unsigned(read_address)));
 
   reg : process (clk)
@@ -377,10 +403,9 @@ begin
     end if;
   end process;
 
-    bootmsg : report_version 
+    bootmsg : report_version
     generic map ("ahbram" & tost(hindex) &
     ": AHB SRAM Module rev 1, " & tost(kbytes) & " kbytes");
 end;
 
 -- pragma translate_on
-

@@ -11,3 +11,6 @@
 [submodule "ariane"]
 	path = ariane
 	url = git@github.com:pulp-platform/ariane.git
+[submodule "ariane-sdk"]
+	path = ariane-sdk
+	url = git@github.com:pulp-platform/ariane-sdk.git
