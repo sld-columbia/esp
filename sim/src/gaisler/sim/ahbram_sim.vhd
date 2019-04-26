@@ -315,12 +315,12 @@ begin
       read_address <= ramaddr;
     end if;
 
-    if (rst = '0') and (SECOND = true) then
-      for i in 0 to (2**ramaddr'length) - 1 loop
-        report "ram(" & tost(conv_std_logic_vector(i*(dw/8), 32)) & ") = " & tost(ram(i));
-      end loop;  -- i
-      SECOND := false;
-    end if;
+    -- if (rst = '0') and (SECOND = true) then
+    --   for i in 0 to (2**ramaddr'length) - 1 loop
+    --     report "ram(" & tost(conv_std_logic_vector(i*(dw/8), 32)) & ") = " & tost(ram(i));
+    --   end loop;  -- i
+    --   SECOND := false;
+    -- end if;
 
     if (rst = '0') and (FIRST = true) then
       ram <= (others => (others => '0'));
