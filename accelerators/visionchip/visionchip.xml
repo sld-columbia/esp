@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sld>
+  <accelerator name="visionchip" desc="VISIONCHIP" data_size="32" device_id="013">
+    <param name="n_Rows" desc="number of rows of input image"/>
+    <param name="n_Cols" desc="number of columns of input image"/>
+  </accelerator>
+</sld>
