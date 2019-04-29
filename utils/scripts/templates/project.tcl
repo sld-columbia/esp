@@ -83,6 +83,6 @@ set_attr hls_cc_options "$INCLUDES"
 # Simulation Options
 #
 use_systemc_simulator incisive
-set_attr cc_options "$INCLUDES -DCLOCK_PERIOD=$CLOCK_PERIOD"
+set_attr cc_options "$INCLUDES -DCLOCK_PERIOD=$SIM_CLOCK_PERIOD"
 # enable_waveform_logging -vcd
 set_attr end_of_sim_command "make saySimPassed"
