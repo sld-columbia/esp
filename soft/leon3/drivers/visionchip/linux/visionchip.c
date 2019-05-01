@@ -11,8 +11,9 @@
 
 #define DRV_NAME	"visionchip"
 
-#define VISIONCHIP_ROWS_REG		0x40
-#define VISIONCHIP_COLS_REG		0x44
+#define VISIONCHIP_NIMAGES_REG	0x40
+#define VISIONCHIP_ROWS_REG	0x44
+#define VISIONCHIP_COLS_REG	0x48
 
 struct visionchip_device {
 	struct esp_device esp;
@@ -41,19 +42,23 @@ static void visionchip_prep_xfer(struct esp_device *esp, void *arg)
 {
 	struct visionchip_access *a = arg;
 
+	iowrite32be(a->nimages, esp->iomem + VISIONCHIP_NIMAGES_REG);
 	iowrite32be(a->rows, esp->iomem + VISIONCHIP_ROWS_REG);
 	iowrite32be(a->cols, esp->iomem + VISIONCHIP_COLS_REG);
 }
 
 static bool visionchip_xfer_input_ok(struct esp_device *esp, void *arg)
 {
-	/* struct visionchip_access *a = arg; */
+	struct visionchip_access *a = arg;
 
-	/* if (!is_power_of_2(a->rows)) */
-	/* 	return false; */
+        if (a->nimages > MAX_NIMAGES)
+	        return false;
 
-	/* if (!is_power_of_2(a->cols)) */
-	/* 	return false; */
+        if (a->rows > MAX_ROWS)
+		return false;
+
+        if (a->cols > MAX_COLS)
+	        return false;
 
 	return true;
 }
