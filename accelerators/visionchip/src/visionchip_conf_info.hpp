@@ -13,6 +13,8 @@ class conf_info_t
 {
 public:
 	// Rows of input image
+	uint32_t n_Images;
+	// Rows of input image
 	uint32_t n_Rows;
 	// Columns of input image
 	uint32_t n_Cols;
@@ -20,23 +22,25 @@ public:
 	// constructors
 	//
 	conf_info_t()
-		: n_Rows(0), n_Cols(0)
+		: n_Images(0), n_Rows(0), n_Cols(0)
 		{}
 
-	conf_info_t(uint32_t rows, uint32_t cols)
-		: n_Rows(rows), n_Cols(cols)
+	conf_info_t(uint32_t nimages, uint32_t rows, uint32_t cols)
+		: n_Images(nimages), n_Rows(rows), n_Cols(cols)
 		{}
 
 	// equals operator
 	inline bool operator==(const conf_info_t &rhs) const
 		{
-			return (rhs.n_Rows == n_Rows) &&
+			return (rhs.n_Images == n_Images) &&
+				(rhs.n_Rows == n_Rows) &&
 				(rhs.n_Cols == n_Cols);
 		}
 
 	// assignment operator
 	inline conf_info_t& operator=(const conf_info_t& other)
 		{
+			n_Images = other.n_Images;
 			n_Rows = other.n_Rows;
 			n_Cols = other.n_Cols;
 			return *this;
@@ -49,7 +53,8 @@ public:
 	// redirection operator
 	friend ostream& operator << (ostream& os, conf_info_t const &conf_info)
 		{
-			os << "{ n_Rows = " << conf_info.n_Rows
+			os << "{ n_Images = " << conf_info.n_Images
+			   << ", n_Rows = " << conf_info.n_Rows
 			   << ", n_Cols = " << conf_info.n_Cols
 			   << "}";
 			return os;

@@ -12,16 +12,8 @@
 
 int visionchip::kernel_nf(int n_Rows, int n_Cols)
 {
-	int32_t pxl_list[9];
+	int16_t pxl_list[9];
 	HLS_FLATTEN_ARRAY(pxl_list);
-
-
-
-	// [kuan] manually set to 0 here. but probably not a good way
-	for(uint32_t i = 0 ; i < n_Rows*n_Cols ; i++)
-	{
-		mem_buff_2.port1[0][i] = 0;
-	}
 
 	for (int r = 1 ; r < n_Rows - 1 ; r++)
 	{
@@ -33,6 +25,7 @@ int visionchip::kernel_nf(int n_Rows, int n_Cols)
 				for (int j = -1 ; j <= 1 ; j++)
 				{
 					pxl_list[k++] = mem_buff_1.port3[0][(r+i) * n_Cols + c + j];
+					// ESP_REPORT_INFO("nf %d:%d::%d - %d", r, c, (r+i) * n_Cols + c + j, pxl_list[k-1]);
 				}
 			}
 			// Sort the array of 9 elements
@@ -43,7 +36,7 @@ int visionchip::kernel_nf(int n_Rows, int n_Cols)
 				{
 					if (pxl_list[j-1] > pxl_list[j])
 					{
-						int32_t temp = pxl_list[j-1];
+						int16_t temp = pxl_list[j-1];
 						pxl_list[j-1] = pxl_list[j];
 						pxl_list[j] = temp;
 					}
@@ -77,7 +70,7 @@ int visionchip::kernel_hist(int n_Rows, int n_Cols)
 
 	for (int i = 0 ; i < n_Pixels ; i++)
 	{
-		int32_t temp = mem_buff_2.port2[0][i];
+		int16_t temp = mem_buff_2.port2[0][i];
 
 		if (temp >= n_Bins)
 		{
@@ -146,7 +139,7 @@ int visionchip::kernel_histEq(int n_Rows, int n_Cols)
 
 	for (int i = 0; i < n_Pixels; i++)
 	{
-		int32_t temp = mem_buff_2.port2[0][i];
+		int16_t temp = mem_buff_2.port2[0][i];
 		int32_t for_print = mem_LUT.port2[0][temp];
 		mem_buff_1.port1[0][i] = for_print;
 		// printf("%d\t%d\n", i, for_print);
@@ -188,7 +181,7 @@ int visionchip::dwt_row_transpose(int n_Rows, int n_Cols)
 	// printf("------- Start dwt_row_transpose -------\n");
 
 	int32_t cur;
-	int32_t temp;
+	int16_t temp;
 
 	for (int i = 0 ; i < n_Rows ; i++)
 	{
@@ -202,9 +195,9 @@ int visionchip::dwt_row_transpose(int n_Rows, int n_Cols)
 				wait();
 				temp = mem_buff_1.port3[0][cur - 1];
 				wait();
-				int32_t temp3 = mem_buff_1.port3[0][cur + 1] + temp;
+				int16_t temp3 = mem_buff_1.port3[0][cur + 1] + temp;
 				wait();
-				int32_t temp2 = mem_buff_1.port3[0][cur];
+				int16_t temp2 = mem_buff_1.port3[0][cur];
 				temp = temp3 >> 1;
 				wait();
 				mem_buff_1.port1[0][cur] = temp2 - temp;
@@ -219,9 +212,9 @@ int visionchip::dwt_row_transpose(int n_Rows, int n_Cols)
 
 			wait();
 			cur = i * n_Cols + n_Cols - 1;
-			int32_t temp2 = mem_buff_1.port3[0][cur];
+			int16_t temp2 = mem_buff_1.port3[0][cur];
 			wait();
-			int32_t temp3 = temp2 - mem_buff_1.port3[0][cur-1];
+			int16_t temp3 = temp2 - mem_buff_1.port3[0][cur-1];
 			wait();
 			mem_buff_1.port1[0][cur] = temp3;
 			wait();
@@ -234,11 +227,11 @@ int visionchip::dwt_row_transpose(int n_Rows, int n_Cols)
 			{
 				wait();
 				cur = i * n_Cols + j;
-				int32_t temp2 = mem_buff_1.port3[0][cur - 1];
+				int16_t temp2 = mem_buff_1.port3[0][cur - 1];
 				wait();
-				int32_t temp3 = mem_buff_1.port3[0][cur + 1];
+				int16_t temp3 = mem_buff_1.port3[0][cur + 1];
 				wait();
-				int32_t temp4 = mem_buff_1.port3[0][cur];
+				int16_t temp4 = mem_buff_1.port3[0][cur];
 				temp = temp2 + temp3;
 				wait();
 				temp = temp >> 2;
@@ -256,7 +249,7 @@ int visionchip::dwt_row_transpose(int n_Rows, int n_Cols)
 			temp = mem_buff_1.port3[0][cur + 1];
 			temp = temp >> 1;
 			wait();
-			int32_t temp2 = mem_buff_1.port3[0][cur] + temp;
+			int16_t temp2 = mem_buff_1.port3[0][cur] + temp;
 			wait();
 			mem_buff_1.port1[0][cur] = temp2;
 			wait();
@@ -267,9 +260,9 @@ int visionchip::dwt_row_transpose(int n_Rows, int n_Cols)
 			for (int j = 0 ; j < n_Cols / 2 ; j++)
 			{
 				wait();
-				int32_t temp2 = mem_buff_1.port3[0][i * n_Cols + 2 * j];
+				int16_t temp2 = mem_buff_1.port3[0][i * n_Cols + 2 * j];
 				wait();
-				int32_t temp3 = mem_buff_1.port3[0][i * n_Cols + 2 * j + 1];
+				int16_t temp3 = mem_buff_1.port3[0][i * n_Cols + 2 * j + 1];
 				wait();
 				mem_buff_2.port1[0][j * n_Rows + i] = temp2;
 				wait();
@@ -294,8 +287,8 @@ int visionchip::dwt_col_transpose(int n_Rows, int n_Cols)
 	// input: mem_buff_2, output: mem_buff_1
 	// printf("------- Start dwt_col_transpose -------\n");
 
-	int cur;
-	int temp;
+	int32_t cur;
+	int16_t temp;
 
 	for (int i = 0 ; i < n_Cols ; i++)
 	{
@@ -306,13 +299,13 @@ int visionchip::dwt_col_transpose(int n_Rows, int n_Cols)
 			{
 				wait();
 				cur = i * n_Rows + j;
-				int32_t temp2 = mem_buff_2.port2[0][cur - 1];
+				int16_t temp2 = mem_buff_2.port2[0][cur - 1];
 				wait();
-				int32_t temp3 = mem_buff_2.port2[0][cur + 1];
+				int16_t temp3 = mem_buff_2.port2[0][cur + 1];
 				temp = temp2 + temp3;
 				temp = temp >> 1;
 				wait();
-				int32_t temp4 = mem_buff_2.port2[0][cur];
+				int16_t temp4 = mem_buff_2.port2[0][cur];
 				temp = temp4 - temp;
 				wait();
 				mem_buff_2.port1[0][cur] = temp;
@@ -324,11 +317,11 @@ int visionchip::dwt_col_transpose(int n_Rows, int n_Cols)
 		{
 			HLS_DEFINE_PROTOCOL("dwt-col-1");
 
-			wait();
 			cur = i * n_Rows + n_Rows - 1;
-			int32_t temp2 = mem_buff_2.port2[0][cur];
 			wait();
-			int32_t temp3 = temp2 - mem_buff_2.port2[0][cur-1];
+			int16_t temp2 = mem_buff_2.port2[0][cur];
+			wait();
+			int16_t temp3 = temp2 - mem_buff_2.port2[0][cur-1];
 			wait();
 			mem_buff_2.port1[0][cur] = temp3;
 			wait();
@@ -344,13 +337,13 @@ int visionchip::dwt_col_transpose(int n_Rows, int n_Cols)
 			{
 				wait();
 				cur = i * n_Rows + j;
-				int32_t temp2 = mem_buff_2.port2[0][cur - 1];
+				int16_t temp2 = mem_buff_2.port2[0][cur - 1];
 				wait();
-				int32_t temp3 = mem_buff_2.port2[0][cur + 1];
+				int16_t temp3 = mem_buff_2.port2[0][cur + 1];
 				temp = temp2 + temp3;
 				temp = temp >> 2;
 				wait();
-				int32_t temp4 = mem_buff_2.port2[0][cur];
+				int16_t temp4 = mem_buff_2.port2[0][cur];
 				wait();
 				mem_buff_2.port1[0][cur] = temp4 + temp;
 				wait();
@@ -366,7 +359,7 @@ int visionchip::dwt_col_transpose(int n_Rows, int n_Cols)
 			temp = mem_buff_2.port2[0][cur + 1];
 			temp = temp >> 1;
 			wait();
-			int32_t temp2 = mem_buff_2.port2[0][cur];
+			int16_t temp2 = mem_buff_2.port2[0][cur];
 			wait();
 			mem_buff_2.port1[0][cur] = temp2 + temp;
 			wait();
@@ -382,9 +375,9 @@ int visionchip::dwt_col_transpose(int n_Rows, int n_Cols)
 			for (int j = 0 ; j < n_Rows / 2 ; j++)
 			{
 				wait();
-				int32_t temp2 = mem_buff_2.port2[0][i * n_Rows + 2 * j];
+				int16_t temp2 = mem_buff_2.port2[0][i * n_Rows + 2 * j];
 				wait();
-				int32_t temp3 = mem_buff_2.port2[0][i * n_Rows + 2 * j + 1];
+				int16_t temp3 = mem_buff_2.port2[0][i * n_Rows + 2 * j + 1];
 				wait();
 				mem_buff_1.port1[0][j * n_Cols + i] = temp2;
 				wait();
