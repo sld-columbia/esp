@@ -32,6 +32,12 @@ if {$TECH eq "zynq7000"} {
     set SIM_CLOCK_PERIOD 10000.0
     set_attr default_input_delay      0.1
 }
+if {$TECH eq "virtexup"} {
+    # Library is in ns, but simulation uses ps!
+    set CLOCK_PERIOD 6.4
+    set SIM_CLOCK_PERIOD 6400.0
+    set_attr default_input_delay      0.1
+}
 if {$TECH eq "cmos32soi"} {
     set CLOCK_PERIOD 1000.0
     set SIM_CLOCK_PERIOD 1000.0
@@ -43,8 +49,9 @@ set_attr clock_period $CLOCK_PERIOD
 # DSE configuration parameters
 #
 # TODO REMOVE small image
-# set PLM_IMG_SIZE "307200"
-set PLM_IMG_SIZE "256"
+#set PLM_IMG_SIZE "256"
+#set PLM_IMG_SIZE "504"
+set PLM_IMG_SIZE "307200"
 set PLM_HIST_SIZE "65536"
 set IMAGES "lena"
 
