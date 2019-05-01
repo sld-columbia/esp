@@ -15,8 +15,14 @@
 #include <esp.h>
 #include <esp_accelerator.h>
 
+#define MAX_NIMAGES 50
+#define MAX_ROWS 480
+#define MAX_COLS 640
+
 struct visionchip_access {
 	struct esp_access esp;
+	// Number of images to be processed
+	unsigned int nimages;
 	// Rows of input matrix. Rows of output vector.
 	unsigned int rows;
 	// Cols of input matrix. Cols of input vector.
