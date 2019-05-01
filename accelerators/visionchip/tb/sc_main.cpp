@@ -8,15 +8,18 @@
 system_t * testbench = NULL;
 
 // Default settings if argv[] is not set
-std::string image_A_path = "lena.txt";
-std::string image_gold_path = "AfterDWT-gold.txt";
-uint32_t n_Rows = 16;
-uint32_t n_Cols = 16;
+std::string image_A_path = "lena-18x28.txt";
+std::string image_gold_path = "gold-18x28.txt";
+uint32_t n_Images = 3;
+uint32_t n_Rows = 18;
+uint32_t n_Cols = 28;
+uint32_t n_Invocations = 1;
 
 extern void esc_elaborate()
 {
 	// Creating the whole system
-	testbench = new system_t("testbench", image_A_path, image_gold_path, n_Rows, n_Cols);
+	testbench = new system_t("testbench", image_A_path, image_gold_path,
+				 n_Images, n_Rows, n_Cols, n_Invocations);
 }
 
 extern void esc_cleanup()
@@ -39,13 +42,16 @@ int sc_main(int argc, char *argv[])
 
 	testbench->clk(clk);
 	testbench->rst(rst);
-	rst.write(false);
 
-	sc_start(RESET_PERIOD, SC_PS);
+	// for (int i = 0; i < n_Invocations; i++) {
+		rst.write(false);
+		sc_start(RESET_PERIOD, SC_PS);
+		rst.write(true);
+		// sc_start(30000000, SC_NS);
+		sc_start();
+	// }
 
-	rst.write(true);
-
-	sc_start();
+	// sc_stop();
 
 	esc_log_pass();
 

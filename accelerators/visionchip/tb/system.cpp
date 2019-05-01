@@ -13,7 +13,6 @@ std::ofstream ofs;
 // Process
 void system_t::config_proc()
 {
-
 	// Reset
 	{
 		conf_done.write(false);
@@ -28,8 +27,7 @@ void system_t::config_proc()
 
 	// Config
 	{
-		// TODO do not hardcode
-		conf_info_t config(16, 16);
+		conf_info_t config(n_Images, n_Rows, n_Cols);
 		wait();
 		conf_info.write(config);
 		conf_done.write(true);
@@ -71,6 +69,7 @@ void system_t::config_proc()
 
 	// Conclude
 	{
+		// while(true) wait();
 		sc_stop();
 	}
 }
@@ -88,9 +87,18 @@ void system_t::load_memory()
 	//  Memory initialization:
 	ESP_REPORT_INFO("---- load memory ----");
 
-	//  ===========================  ^
-	//  |  in/out image (uint32)  |  | img_size (in bytes)
-	//  ===========================  v
+	//  ===================================  ^
+	//  |  in/out image 1 (int32)         |  | img_size (in bytes)
+	//  ===================================  v
+	//  ===================================  ^
+	//  |  in/out image 2 (int32)         |  | img_size (in bytes)
+	//  ===================================  v
+
+	//                   ...
+
+	//  ===================================  ^
+	//  |  in/out image n_Images (int32)  |  | img_size (in bytes)
+	//  ===================================  v
 
 	// -- Read images
 	int n_Pixels = n_Rows * n_Cols;
@@ -98,7 +106,7 @@ void system_t::load_memory()
 
 	ESP_REPORT_INFO("------------ read image start ------------");
 
-	int i = 0;
+	int i = 0, j = 0;
 	int val = 0;
 	FILE *fileA = NULL;
 
@@ -112,11 +120,21 @@ void system_t::load_memory()
 	fscanf(fileA, "%d", &val);
 	while(!feof(fileA))
 	{
-		mem[i++] = val;
+		imgA[i++] = val;
 		fscanf(fileA, "%d", &val);
 	}
 
 	fclose(fileA);
+
+	int mem_i = 0;
+	for (i = 0; i < n_Images; i++) {
+		for (j = 0; j < n_Pixels; j++) {
+			mem[mem_i] = imgA[j];
+			mem_i++;
+		}
+	}
+
+	free(imgA);	
 
 	ESP_REPORT_INFO("------------ read image finish ------------");
 
@@ -159,24 +177,28 @@ int system_t::validate()
 
 	// Check for mismatches
 	// -- Compare the output with gold image
-	for(uint32_t i = 0 ; i < n_Pixels ; i++)
-	{
-		if (mem[i].to_int() != imgGold[i])
-		{
-			ESP_REPORT_INFO("Error: %d %d.", mem[i].to_int(), imgGold[i])
-			errors++;
+	int mem_j = 0;
+	for (int i = 0; i < n_Images; i++) {
+		for(uint32_t j = 0 ; j < n_Pixels ; j++) {
+			if (mem[mem_j].to_int() != imgGold[j])
+			{
+				ESP_REPORT_INFO("Error: %d: %d %d.",
+						mem_j, mem[mem_j].to_int(), imgGold[j]);
+				errors++;
+			}
+			mem_j++;
 		}
 	}
 
 	ESP_REPORT_INFO("====================================================");
 	if (errors)
 	{
-		ESP_REPORT_INFO("Errors: %d pixel(s) not match.", errors)
-			}
+		ESP_REPORT_INFO("Errors: %d pixel(s) not match.", errors);
+	}
 	else
 	{
-		ESP_REPORT_INFO("Correct!!")
-			}
+		ESP_REPORT_INFO("Correct!!");
+	}
 	ESP_REPORT_INFO("====================================================");
 
 
