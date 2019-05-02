@@ -36,7 +36,7 @@
 #define DEFAULT_NROWS 480
 #define DEFAULT_NCOLS 640
 #define DEFAULT_NBYTESPP 2
-#define DEFAULT_SWAPBYTES 1
+#define DEFAULT_SWAPBYTES 0
 
 #define IMAGE_SRC_DIR "."
 #define IMAGE_DST_DIR "."
@@ -350,7 +350,7 @@ int nf(algPixel_t *streamA, algPixel_t *out, int nRows, int nCols)
 
 int readFrame(FILE *fp, void *image, int nPxls, int nBytesPerPxl, bool bSwap)
 {
-	__int64 *p64 = (__int64 *)image;
+	/* __int64 *p64 = (__int64 *)image; */
 	unsigned long *p32 = (unsigned long *)image;
 	unsigned short *p16 = (unsigned short *)image;
 	int nPxlsRead = 0;
@@ -369,6 +369,9 @@ int readFrame(FILE *fp, void *image, int nPxls, int nBytesPerPxl, bool bSwap)
 	{
 		for (i = 0; i < nPxlsRead; i++)
 		{
+			/* printf("[%d]: raw-noswap=%hu\n", */
+			/*        i, *p16); */
+
 			if (nBytesPerPxl == sizeof(unsigned short))
 			{
 				*p16 = _byteswap_ushort(*p16);
@@ -378,11 +381,11 @@ int readFrame(FILE *fp, void *image, int nPxls, int nBytesPerPxl, bool bSwap)
 				*p32 = _byteswap_ulong(*p32);
 				p32++;
 			}
-			else if (nBytesPerPxl == sizeof(unsigned __int64))
-			{
-				*p64 = _byteswap_uint64(*p64);
-				p64++;
-			}
+			/* else if (nBytesPerPxl == sizeof(unsigned __int64)) */
+			/* { */
+			/* 	*p64 = _byteswap_uint64(*p64); */
+			/* 	p64++; */
+			/* } */
 		}
 	}
 
@@ -575,7 +578,7 @@ int ensemble_1(algPixel_t *streamA, algPixel_t *out, int nRows, int nCols,
 	// FOR TESTING, INVERT BACK TO GET DECENT IMAGE FOR COMPARISON...
 	// dwt53_inverse(wrkBuf2, nRows, nCols);
 
-	memcpy(out, wrkBuf2, nRows * nCols * sizeof(algPixel_t));
+	// memcpy(out, wrkBuf2, nRows * nCols * sizeof(algPixel_t));
 	
 	free(wrkBuf2);
 	free(wrkBuf1);
@@ -682,7 +685,6 @@ static void init_buf (struct visionchip_test *t)
 	for (i = 0; i < t->nimages; i++) {
 		for (j = 0; j < nPxls; j++) {
 			t->hbuf[hbuf_i++] = (int) rawBuf[j];
-			hbuf_i++;
 		}
 	}
 
@@ -796,12 +798,12 @@ static bool visionchip_diff_ok(struct test_info *info)
 
 	total_err += err;
 
-	if (t->verbose) {
-		for (i = 0; i < t->rows * t->cols * t->nimages; i++) {
-			printf("      \t%d : %d\n", i, t->hbuf[i]);
-		}
-		printf("\n");
-	}
+	/* if (t->verbose) { */
+	/* 	for (i = 0; i < t->rows * t->cols * t->nimages; i++) { */
+	/* 		printf("      \t%d : %d\n", i, t->hbuf[i]); */
+	/* 	} */
+	/* 	printf("\n"); */
+	/* } */
 	if (total_err)
 		printf("%d mismatches in total\n", total_err);
 	return !total_err;
