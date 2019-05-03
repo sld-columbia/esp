@@ -57,7 +57,6 @@ typedef int algPixel_t;
 
 #define CLIP_INRANGE(LOW,VAL,HIGH) ( (VAL) < (LOW) ? (LOW) : ((VAL) > (HIGH) ? (HIGH) : (VAL)) )
 
-
 int dwt53_row_transpose(algPixel_t *data, algPixel_t *data2, int nrows, int ncols)
 {
 	int i, j, cur;
@@ -475,8 +474,7 @@ int saveFrame(void *image, char *dstDir, char *baseFileName, int nRows, int nCol
 		return -1;
 	}
 
-	sprintf(fullFileName, "%s_%dR_%dC_%dBpp_Frame%d.raw", baseFileName, nRows,
-		nCols, nBytesPerPxl, frameNo);
+	sprintf(fullFileName, "outputs/out_%dx%d.raw", nCols, nRows);
 	if (bSwap)
 	{
 		for (i = 0; i < nPxlsToWrite; i++)
@@ -588,15 +586,14 @@ int ensemble_1(algPixel_t *streamA, algPixel_t *out, int nRows, int nCols,
 }
 
 static const char usage_str[] =
-	"usage: visionchip coherence cmd infile [nimages] [nrows] [ncols] [-v]\n"
+	"usage: ./visionchip.exe coherence infile [nimages] [ncols] [nrows] [-v]\n"
 	"  coherence: none|llc|recall|full\n"
-	"  cmd: config|test|hw|flush\n"
 	"  infile : input file name (includes the path)\n"
 	"\n"
 	"Optional arguments:.\n"
 	"  nimages : number of images to be processed. Default: 1\n"
-	"  nrows: number of rows of input image. Default: 480\n"
 	"  ncols: number of columns of input image. Default: 640\n"
+	"  nrows: number of rows of input image. Default: 480\n"
 	"  \n"
 	"\n"
 	"The remaining option is only optional for 'test':\n"
@@ -712,7 +709,7 @@ static void visionchip_alloc_contig(struct test_info *info)
 {
 	struct visionchip_test *t = to_visionchip(info);
 
-	printf("HW buf size: %zu\n", visionchip_size(t));
+	printf("HW buf size: %zu MB\n", visionchip_size(t) / 1000000);
 	if (contig_alloc(visionchip_size(t), &info->contig))
 		die_errno(__func__);
 }
@@ -832,35 +829,32 @@ static void NORETURN usage(void)
 
 int main(int argc, char *argv[])
 {
-	if (argc < 4 || argc == 6 || argc > 8) {
+	if (argc < 3 || argc == 5 || argc > 7) {
 		usage();
 
-	} else if (!strcmp(argv[2], "flush") && argc != 3) {
-		usage();
 	} else {
 		printf("\nCommand line arguments received:\n");
 		printf("\tcoherence: %s\n", argv[1]);
-		printf("\tcmd: %s\n", argv[2]);
 
-		visionchip_test.infile = argv[3];
+		visionchip_test.infile = argv[2];
 		printf("\tinfile: %s\n", visionchip_test.infile);
 
-		if (argc == 7 || argc == 8) {
-			visionchip_test.nimages = strtol(argv[4], NULL, 10);
+		if (argc == 6 || argc == 7) {
+			visionchip_test.nimages = strtol(argv[3], NULL, 10);
+			visionchip_test.cols = strtol(argv[4], NULL, 10);
 			visionchip_test.rows = strtol(argv[5], NULL, 10);
-			visionchip_test.cols = strtol(argv[6], NULL, 10);
-			printf("\tnimages: %u", visionchip_test.nimages);
-			printf("\tnrows: %u", visionchip_test.rows);
-			printf("\tncols: %u", visionchip_test.cols);
+			printf("\tnimages: %u\n", visionchip_test.nimages);
+			printf("\tncols: %u\n", visionchip_test.cols);
+			printf("\tnrows: %u\n", visionchip_test.rows);
 		} else {
 			visionchip_test.nimages = DEFAULT_NIMAGES;
 			visionchip_test.rows = DEFAULT_NROWS;
 			visionchip_test.cols = DEFAULT_NCOLS;
 		}
 
-		if (argc == 5 || argc == 8) {
-			if ((strcmp(argv[4], "-v") && argc == 5) ||
-			    (strcmp(argv[7], "-v") && argc == 8)) {
+		if (argc == 4 || argc == 7) {
+			if ((strcmp(argv[3], "-v") && argc == 4) ||
+			    (strcmp(argv[6], "-v") && argc == 7)) {
 				usage();
 			} else {
 				visionchip_test.verbose = true;
@@ -869,7 +863,8 @@ int main(int argc, char *argv[])
 		}
 		visionchip_test.nbytespp = DEFAULT_NBYTESPP;
 		visionchip_test.swapbytes = DEFAULT_SWAPBYTES;
+		printf("\n");
 	}
 
-	return test_main(&visionchip_test.info, argv[1], argv[2]);
+	return test_main(&visionchip_test.info, argv[1], "test");
 }
