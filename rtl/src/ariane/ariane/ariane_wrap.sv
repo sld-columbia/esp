@@ -27,7 +27,7 @@ module ariane_wrap
      parameter logic [63:0] PLICLength     = 64'h0000_0000_03FF_FFFF,
      // Slave 4
      parameter logic [63:0] DRAMBase       = 64'h0000_0000_4000_0000,
-     parameter logic [63:0] DRAMLength     = 64'h0000_0000_0010_0000 // TODO: change automatically bootloader and dts
+     parameter logic [63:0] DRAMLength     = 64'h0000_0000_2000_0000 // TODO: change automatically bootloader and dts
      )
    (
     input logic 			clk,
@@ -430,7 +430,7 @@ module ariane_wrap
     REG_BUS #(
         .ADDR_WIDTH ( 32 ),
         .DATA_WIDTH ( 32 )
-    ) reg_bus (clk_i);
+    ) reg_bus (clk);
 
     logic         plic_penable;
     logic         plic_pwrite;
@@ -452,8 +452,8 @@ module ariane_wrap
         .APB_ADDR_WIDTH     ( 32               )
 	) i_axi2apb_64_32_plic
 	(
-	 .ACLK      ( clk_i          ),
-         .ARESETn   ( rst_ni         ),
+	 .ACLK      ( clk           ),
+         .ARESETn   ( rstn          ),
          .test_en_i ( 1'b0           ),
          .AWID_i    ( master[PLIC].aw_id     ),
          .AWADDR_i  ( master[PLIC].aw_addr   ),
@@ -511,8 +511,8 @@ module ariane_wrap
 
     apb_to_reg i_apb_to_reg
       (
-       .clk_i     ( clk_i        ),
-       .rst_ni    ( rst_ni       ),
+       .clk_i     ( clk          ),
+       .rst_ni    ( rstn         ),
        .penable_i ( plic_penable ),
        .pwrite_i  ( plic_pwrite  ),
        .paddr_i   ( plic_paddr   ),
@@ -532,8 +532,8 @@ module ariane_wrap
         .NUM_SOURCES        ( NIRQ_SRCS )
 	) i_plic
 	(
-	 .clk_i              ( clk_i        ),
-	 .rst_ni             ( rst_ni       ),
+	 .clk_i              ( clk          ),
+	 .rst_ni             ( rstn         ),
 	 .irq_sources_i      ( irq_sources  ),
 	 .eip_targets_o      ( irq          ),
 	 .external_bus_io    ( reg_bus      )
