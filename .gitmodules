@@ -11,3 +11,6 @@
 [submodule "soft/ariane/linux"]
 	path = soft/ariane/linux
 	url = git@github.com:sld-columbia/linux.git
+[submodule "third-party/ariane"]
+	path = third-party/ariane
+	url = https://github.com/pulp-platform/ariane.git
