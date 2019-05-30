@@ -65,9 +65,9 @@ end;
 
 architecture rtl of ahbram_sim is
 
-constant abits : integer := log2ext(kbytes) + 8 - maccsz/64;
-
 constant dw : integer := maccsz;
+
+constant abits : integer := log2ext(kbytes) + 10 - log2(dw/8);
 
 constant hconfig : ahb_config_type := (
   0 => ahb_device_reg ( VENDOR_GAISLER, GAISLER_AHBRAM, 0, abits+2+maccsz/64, 0),
@@ -354,7 +354,7 @@ begin
               end case;
               hread(L1, recdata(0 to len*8-1));
 
-              recaddr(31 downto abits+2) := (others => '0');
+              recaddr(31 downto abits+log2(dw/8)) := (others => '0');
               ai := conv_integer(recaddr)/(dw/8);
               bts_pre := ((dw/8) - (conv_integer(recaddr) mod (dw/8))) mod (dw/8);
               len := len - bts_pre;
