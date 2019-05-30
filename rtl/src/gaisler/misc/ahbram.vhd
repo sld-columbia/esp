@@ -2,7 +2,7 @@
 --  This file is a part of the GRLIB VHDL IP LIBRARY
 --  Copyright (C) 2003 - 2008, Gaisler Research
 --  Copyright (C) 2008 - 2014, Aeroflex Gaisler
---  Copyright (C) 2015 - 2016, Cobham Gaisler
+--  Copyright (C) 2015 - 2018, Cobham Gaisler
 --
 --  This program is free software; you can redistribute it and/or modify
 --  it under the terms of the GNU General Public License as published by
@@ -27,6 +27,7 @@
 
 library ieee;
 use ieee.std_logic_1164.all;
+
 use work.config_types.all;
 use work.config.all;
 use work.amba.all;
@@ -36,14 +37,15 @@ use work.gencomp.all;
 
 entity ahbram is
   generic (
-    hindex  : integer := 0;
-    haddr   : integer := 0;
-    hmask   : integer := 16#fff#;
-    tech    : integer := DEFMEMTECH; 
-    kbytes  : integer := 1;
-    pipe    : integer := 0;
-    maccsz  : integer := AHBDW;
-    scantest: integer := 0);
+    hindex      : integer := 0;
+    haddr       : integer := 0;
+    hmask       : integer := 16#fff#;
+    tech        : integer := DEFMEMTECH; 
+    kbytes      : integer := 1;
+    pipe        : integer := 0;
+    maccsz      : integer := AHBDW;
+    scantest    : integer := 0;
+    endianness  : integer := 0);
   port (
     rst     : in  std_ulogic;
     clk     : in  std_ulogic;
@@ -96,9 +98,21 @@ begin
   variable v       : reg_type;
   variable haddr   : std_logic_vector(abits-1 downto 0);
   variable hrdata  : std_logic_vector(dw-1 downto 0);
+  variable wdata   : std_logic_vector(dw-1 downto 0);
   variable seldata : std_logic_vector(dw-1 downto 0);
   variable raddr   : std_logic_vector(3 downto 2);
   variable adsel   : std_logic;
+
+  function reversedata(data : std_logic_vector; step : integer)
+    return std_logic_vector is
+    variable rdata: std_logic_vector(data'length-1 downto 0);
+  begin
+    for i in 0 to (data'length/step-1) loop
+      rdata(i*step+step-1 downto i*step) := data(data'length-i*step-1 downto data'length-i*step-step);
+    end loop;
+    return rdata;
+  end function reversedata;
+
   begin
     v := r; v.hready := '1'; bs := (others => '0');
     v.pready := r.hready;
@@ -227,6 +241,13 @@ begin
       hrdata := r.prdata;
     end if;
 
+    -- Endianness conversion
+    wdata := ahbsi.hwdata;
+
+    if endianness = 1 then
+      hrdata    := reversedata(hrdata, 8);
+      wdata     := reversedata(wdata, 8);
+    end if;
 
     if (not RESET_ALL) and (rst = '0') then
       v.hwrite := RES.hwrite; v.hready := RES.hready;
@@ -236,6 +257,9 @@ begin
 
     ahbso.hrdata <= ahbdrivedata(hrdata);
     ahbso.hready <= r.hready;
+
+    -- Select correct write data
+    hwdata <= ahbreaddata(wdata, r.addr(4 downto 2), conv_std_logic_vector(log2(dw/8), 3));
     
   end process;
 
@@ -244,10 +268,6 @@ begin
   ahbso.hirq    <= (others => '0');
   ahbso.hconfig <= hconfig;
   ahbso.hindex  <= hindex;
-
-  -- Select correct write data
-  hwdata <= ahbreaddata(ahbsi.hwdata, r.addr(4 downto 2),
-                        conv_std_logic_vector(log2(dw/8), 3));
   
   aram : syncrambw generic map (tech, abits, dw, scantest) port map (
 	clk, ramaddr, hwdata, ramdata, ramsel, write, ahbsi.testin);
