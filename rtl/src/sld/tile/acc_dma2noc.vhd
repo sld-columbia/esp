@@ -140,6 +140,8 @@ architecture rtl of acc_dma2noc is
     1 => apb_iobar(paddr, pmask));
   constant hprot : std_logic_vector(3 downto 0) := "0011";
 
+  constant len_pad : std_logic_vector(GLOB_BYTE_OFFSET_BITS - 1 downto 0) := (others => '0');
+
   -- Register bank
   signal bankreg   : bank_type(0 to MAXREGNUM - 1);
   signal bankin    : bank_type(0 to MAXREGNUM - 1);
@@ -376,7 +378,7 @@ begin  -- rtl
     elsif pending_dma_write = '1' then
       -- accelerator write burst
       address := dma_address;
-      length  := "00" & dma_length(31 downto 2);
+      length  := len_pad & dma_length(31 downto GLOB_BYTE_OFFSET_BITS);
       if coherence = ACC_COH_LLC or coherence = ACC_COH_RECALL then
         msg_type := REQ_DMA_WRITE;
       else
@@ -385,7 +387,7 @@ begin  -- rtl
     else
       -- accelerator read burst
       address := dma_address;
-      length  := "00" & dma_length(31 downto 2);
+      length  := len_pad & dma_length(31 downto GLOB_BYTE_OFFSET_BITS);
       if coherence = ACC_COH_LLC or coherence = ACC_COH_RECALL then
         msg_type := REQ_DMA_READ;
       else

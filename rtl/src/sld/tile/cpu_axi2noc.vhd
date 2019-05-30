@@ -148,6 +148,24 @@ architecture rtl of cpu_axi2noc is
   signal remote_ahbs_rcv_data_out_hold  : misc_noc_flit_type;
   signal sample_and_hold : std_ulogic;
 
+  attribute mark_debug : string;
+
+  attribute mark_debug of coherence_req_wrreq : signal is "true";
+  attribute mark_debug of coherence_req_data_in : signal is "true";
+  attribute mark_debug of coherence_rsp_rcv_rdreq : signal is "true";
+  attribute mark_debug of coherence_rsp_rcv_data_out : signal is "true";
+  attribute mark_debug of remote_ahbs_snd_wrreq : signal is "true";
+  attribute mark_debug of remote_ahbs_snd_data_in : signal is "true";
+  attribute mark_debug of remote_ahbs_rcv_rdreq : signal is "true";
+  attribute mark_debug of remote_ahbs_rcv_data_out : signal is "true";
+  attribute mark_debug of transaction_reg : signal is "true";
+  attribute mark_debug of current_state : signal is "true";
+  attribute mark_debug of sample_flits : signal is "true";
+  attribute mark_debug of sample_and_hold : signal is "true";
+  attribute mark_debug of mosi : signal is "true";
+  attribute mark_debug of somi : signal is "true";
+
+
 begin  -- rtl
 
   make_packet: process (mosi)
@@ -300,6 +318,7 @@ begin  -- rtl
                           remote_ahbs_snd_full,
                           remote_ahbs_rcv_data_out, remote_ahbs_rcv_empty,
                           remote_ahbs_rcv_data_out_hold)
+    variable wdata                   : std_logic_vector(AHBDW - 1 downto 0);
     variable payload_data            : noc_flit_type;
     variable payload_data_narrow_lsb : misc_noc_flit_type;
     variable payload_data_narrow_msb : misc_noc_flit_type;
@@ -328,13 +347,27 @@ begin  -- rtl
       for i in 0 to nmst - 1 loop
         somi(i).r.data <= (others => '0');
         if transaction_reg.size = HSIZE_DWORD then
-          somi(i).r.data(MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH - 1 downto 0) <= remote_ahbs_rcv_data_out_hold(MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH - 1 downto 0);
-          somi(i).r.data(2 * (MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH) - 1 downto MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH) <= (remote_ahbs_rcv_data_out(MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH - 1 downto 0));
-        else
-          somi(i).r.data(MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH - 1 downto 0) <= remote_ahbs_rcv_data_out(MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH - 1 downto 0);
+          somi(i).r.data(31 downto 0) <= remote_ahbs_rcv_data_out_hold(31 downto 0);
+          somi(i).r.data(63 downto 32) <= (remote_ahbs_rcv_data_out(31 downto 0));
+        elsif transaction_reg.size = HSIZE_WORD then
+          somi(i).r.data <= ahbdrivedata(remote_ahbs_rcv_data_out(31 downto 0));
+        elsif transaction_reg.size = HSIZE_HWORD then
+          case transaction_reg.addr(1) is
+            when '0'    => somi(i).r.data <= ahbdrivedata(remote_ahbs_rcv_data_out(15 downto 0));
+            when others => somi(i).r.data <= ahbdrivedata(remote_ahbs_rcv_data_out(31 downto 16));
+          end case;
+        else -- HSIZE_BYTE
+          case transaction_reg.addr(1 downto 0) is
+            when "00"   => somi(i).r.data <= ahbdrivedata(remote_ahbs_rcv_data_out(7 downto 0));
+            when "01"   => somi(i).r.data <= ahbdrivedata(remote_ahbs_rcv_data_out(15 downto 8));
+            when "10"   => somi(i).r.data <= ahbdrivedata(remote_ahbs_rcv_data_out(23 downto 16));
+            when others => somi(i).r.data <= ahbdrivedata(remote_ahbs_rcv_data_out(31 downto 24));
+          end case;
         end if;
       end loop;
     end if;
+
+
 
     -- Default bus slave response
     for i in 0 to nmst - 1 loop
@@ -371,24 +404,70 @@ begin  -- rtl
     remote_ahbs_rcv_rdreq   <= '0';
 
     -- Data flit (AXI Write)
+    if transaction_reg.size = HSIZE_DWORD then
+      wdata := ahbdrivedata(mosi(transaction_reg.xindex).w.data);
+    elsif transaction_reg.size = HSIZE_WORD then
+      if AHBDW = 64 then
+        case transaction_reg.addr(2) is
+          when '0'    => wdata := ahbdrivedata(mosi(transaction_reg.xindex).w.data(31 downto 0));
+          when others => wdata := ahbdrivedata(mosi(transaction_reg.xindex).w.data(63 downto 32));
+        end case;
+      else
+        wdata := ahbdrivedata(mosi(transaction_reg.xindex).w.data);
+      end if;
+    elsif transaction_reg.size = HSIZE_HWORD then
+      if AHBDW = 64 then
+        case transaction_reg.addr(2 downto 1) is
+          when "00"   => wdata := ahbdrivedata(mosi(transaction_reg.xindex).w.data(15 downto 0));
+          when "01"   => wdata := ahbdrivedata(mosi(transaction_reg.xindex).w.data(31 downto 16));
+          when "10"   => wdata := ahbdrivedata(mosi(transaction_reg.xindex).w.data(47 downto 32));
+          when others => wdata := ahbdrivedata(mosi(transaction_reg.xindex).w.data(63 downto 48));
+        end case;
+      else
+        case transaction_reg.addr(1) is
+          when '0'    => wdata := ahbdrivedata(mosi(transaction_reg.xindex).w.data(15 downto 0));
+          when others => wdata := ahbdrivedata(mosi(transaction_reg.xindex).w.data(31 downto 16));
+        end case;
+      end if;
+    else -- HSIZE_BYTE
+      if AHBDW = 64 then
+        case transaction_reg.addr(2 downto 0) is
+          when "000"  => wdata := ahbdrivedata(mosi(transaction_reg.xindex).w.data(7 downto 0));
+          when "001"  => wdata := ahbdrivedata(mosi(transaction_reg.xindex).w.data(15 downto 8));
+          when "010"  => wdata := ahbdrivedata(mosi(transaction_reg.xindex).w.data(23 downto 16));
+          when "011"  => wdata := ahbdrivedata(mosi(transaction_reg.xindex).w.data(31 downto 24));
+          when "100"  => wdata := ahbdrivedata(mosi(transaction_reg.xindex).w.data(39 downto 32));
+          when "101"  => wdata := ahbdrivedata(mosi(transaction_reg.xindex).w.data(47 downto 40));
+          when "110"  => wdata := ahbdrivedata(mosi(transaction_reg.xindex).w.data(55 downto 48));
+          when others => wdata := ahbdrivedata(mosi(transaction_reg.xindex).w.data(63 downto 56));
+        end case;
+      else
+        case transaction_reg.addr(1 downto 0) is
+          when "00"   => wdata := ahbdrivedata(mosi(transaction_reg.xindex).w.data(7 downto 0));
+          when "01"   => wdata := ahbdrivedata(mosi(transaction_reg.xindex).w.data(15 downto 8));
+          when "10"   => wdata := ahbdrivedata(mosi(transaction_reg.xindex).w.data(23 downto 16));
+          when others => wdata := ahbdrivedata(mosi(transaction_reg.xindex).w.data(31 downto 24));
+        end case;
+      end if;
+    end if;
+
     payload_data            := (others => '0');
     payload_data_narrow_lsb := (others => '0');
     payload_data_narrow_msb := (others => '0');
+    payload_data_narrow_lsb(MISC_NOC_FLIT_SIZE-1 downto MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH) := PREAMBLE_BODY;
     if (mosi(transaction_reg.xindex).w.last = '1') then
       payload_data(NOC_FLIT_SIZE-1 downto NOC_FLIT_SIZE - PREAMBLE_WIDTH)                      := PREAMBLE_TAIL;
-      payload_data_narrow_lsb(MISC_NOC_FLIT_SIZE-1 downto MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH) := PREAMBLE_TAIL;
       payload_data_narrow_msb(MISC_NOC_FLIT_SIZE-1 downto MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH) := PREAMBLE_TAIL;
       last                                                                                     := '1';
     else
       payload_data(NOC_FLIT_SIZE-1 downto NOC_FLIT_SIZE - PREAMBLE_WIDTH)                      := PREAMBLE_BODY;
-      payload_data_narrow_lsb(MISC_NOC_FLIT_SIZE-1 downto MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH) := PREAMBLE_BODY;
       payload_data_narrow_msb(MISC_NOC_FLIT_SIZE-1 downto MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH) := PREAMBLE_BODY;
       last                                                                                     := '0';
     end if;
-    payload_data(AHBDW - 1 downto 0)                                      := mosi(transaction_reg.xindex).w.data;
+    payload_data(AHBDW - 1 downto 0)                                      := wdata;
     -- TODO: this only works on a 64-bit AXI bus with 32-bit AHB remote slaves
-    payload_data_narrow_lsb(MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH - 1 downto 0) := mosi(transaction_reg.xindex).w.data(MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH - 1 downto 0);
-    payload_data_narrow_msb(MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH - 1 downto 0) := mosi(transaction_reg.xindex).w.data(2 * (MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH) - 1 downto MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH);
+    payload_data_narrow_lsb(MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH - 1 downto 0) := wdata(MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH - 1 downto 0);
+    payload_data_narrow_msb(MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH - 1 downto 0) := wdata(2 * (MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH) - 1 downto MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH);
 
     -- Temporary AXI flags
     slv_ready  := '0';

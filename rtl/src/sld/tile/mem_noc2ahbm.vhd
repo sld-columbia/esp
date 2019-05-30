@@ -165,6 +165,15 @@ architecture rtl of mem_noc2ahbm is
 
   signal r, rin : reg_type;
 
+  attribute mark_debug : string;
+  attribute mark_debug of coherence_req_data_out : signal is "true";
+  attribute mark_debug of coherence_req_rdreq : signal is "true";
+  attribute mark_debug of coherence_rsp_snd_wrreq : signal is"true";
+  attribute mark_debug of coherence_rsp_snd_data_in : signal is"true";
+  attribute mark_debug of r : signal is"true";
+  attribute mark_debug of ahbmi : signal is"true";
+  attribute mark_debug of ahbmo : signal is"true";
+
 begin  -- rtl
 
   -----------------------------------------------------------------------------
@@ -254,6 +263,7 @@ begin  -- rtl
     variable v                      : reg_type;
     variable reserved               : reserved_field_type;
     variable preamble, dma_preamble : noc_preamble_type;
+    variable hwdata_be : std_logic_vector(ARCH_BITS - 1 downto 0);
   begin  -- process ahb_roundtrip
     -- Default ahbmo assignment
     v       := r;
@@ -806,7 +816,17 @@ begin  -- rtl
     ahbmo.hsize   <= r.hsize;
     ahbmo.hburst  <= r.hburst;
     ahbmo.hprot   <= r.hprot;
-    ahbmo.hwdata  <= ahbdrivedata(r.hwdata);
+    -- Fix little vs. big endian ... !
+    if r.hsize = HSIZE_BYTE then
+      hwdata_be := ahbdrivedata(r.hwdata(7 downto 0));
+    elsif r.hsize = HSIZE_HWORD then
+      hwdata_be := ahbdrivedata(r.hwdata(15 downto 0));
+    elsif r.hsize = HSIZE_WORD then
+      hwdata_be := ahbdrivedata(r.hwdata(31 downto 0));
+    else
+      hwdata_be := ahbdrivedata(r.hwdata(ARCH_BITS - 1 downto 0));
+    end if;
+    ahbmo.hwdata  <= fix_endian(hwdata_be);
     ahbmo.hirq    <= (others => '0');
     ahbmo.hconfig <= hconfig;
     ahbmo.hindex  <= hindex;
