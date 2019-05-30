@@ -107,8 +107,13 @@ ARIANE_VLOGOPT += +incdir+${ARIANE}/src/common_cells/include/common_cells
 ARIANE_VLOGOPT += -suppress 2583
 
 # Simulator switches
-# VSIMOPT += -novopt +notimingchecks
+ifeq ("$(CPU_ARCH)", "ariane")
+VSIMOPT += +UVM_NO_RELNOTES -64 +permissive-off
 VSIMOPT += -voptargs="+acc"
+else
+VSIMOPT += -novopt
+endif
+VSIMOPT += +notimingchecks
 VSIMOPT += -suppress 2697
 VSIMOPT += -suppress 8617
 VSIMOPT += +notimingchecks
