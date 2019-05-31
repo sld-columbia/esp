@@ -14,3 +14,6 @@
 [submodule "third-party/ariane"]
 	path = third-party/ariane
 	url = https://github.com/pulp-platform/ariane.git
+[submodule "soft/ariane/riscv-pk"]
+	path = soft/ariane/riscv-pk
+	url = git@github.com:sld-columbia/riscv-pk.git
