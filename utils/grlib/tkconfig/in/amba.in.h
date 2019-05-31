@@ -14,10 +14,6 @@
 #define CONFIG_AHB_IOADDR FFF
 #endif
 
-#ifndef CONFIG_APB_HADDR
-#define CONFIG_APB_HADDR 800
-#endif
-
 #ifndef CONFIG_AHB_MON
 #define CONFIG_AHB_MON 0
 #endif

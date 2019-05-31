@@ -6,7 +6,6 @@ comment 'AMBA configuration'
   bool 'AHB split-transaction support             ' CONFIG_AHB_SPLIT
   bool 'Enable full plug&play decoding            ' CONFIG_AHB_FPNPEN
   hex 'I/O area start address (haddr[31:20]) ' CONFIG_AHB_IOADDR FFF
-  hex 'AHB/APB bridge address (haddr[31:20]) ' CONFIG_APB_HADDR 800
   bool 'Enable AMBA AHB monitor              ' CONFIG_AHB_MON
   if [ "$CONFIG_AHB_MON" = "y" ]; then
     bool 'Report AHB errors                  ' CONFIG_AHB_MONERR

@@ -27,11 +27,6 @@ CONFIG_AHB_IOADDR
   in the plug&play extentions of the AMBA bus. Should be kept to FFF 
   unless you really know what you are doing.
 
-APB bridge address          
-CONFIG_APB_HADDR
-  Selects the MSB adddress (HADDR[31:20]) of the APB bridge. Should be
-  kept at 800 for software compatibility. 
-
 AHB monitor                 
 CONFIG_AHB_MON
   Say Y to enable the AHB bus monitor. The monitor will check for

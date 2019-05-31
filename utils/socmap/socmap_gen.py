@@ -6,6 +6,7 @@
 from collections import defaultdict
 import math
 
+
 # Maximum number of AHB and APB slaves can also be increased, but the
 # Leon3 utility mklinuximg and GRLIB AMBA package must be patched accordingly
 # The related constants are defined in
@@ -56,8 +57,13 @@ NACC_MAX = NAPBS - 2 * NCPU_MAX - NMEM_MAX - 8
 # Boot ROM slave index (With Leon3 this exists in simulation only for now)
 AHBROM_HINDEX = 0
 
-# Memory-mapped registers base address (includes peripherals and accelerators)
+# Memory-mapped registers slave index
 AHB2APB_HINDEX = 1
+
+# Memory-mapped registers base address (includes peripherals and accelerators)
+AHB2APB_HADDR = dict()
+AHB2APB_HADDR["leon3"] = 0x800
+AHB2APB_HADDR["ariane"] = 0x600
 
 # Leon-3 debug unit slave index
 DSU_HINDEX = 2
@@ -513,6 +519,7 @@ def print_mapping(fp, esp_config):
 
   #
   fp.write("  -- AHB2APB bus bridge slave\n")
+  fp.write("  constant CFG_APBADDR : integer := 16#" + format(AHB2APB_HADDR[esp_config.cpu_arch], '03X') + "#;\n")
   fp.write("  constant ahb2apb_hindex : integer := " + str(AHB2APB_HINDEX) + ";\n")
   fp.write("  constant ahb2apb_haddr : integer := CFG_APBADDR;\n")
   fp.write("  constant ahb2apb_hmask : integer := 16#F00#;\n")
@@ -1313,8 +1320,113 @@ def print_tiles(fp, esp_config):
       fp.write("      others => '0'),\n")
   fp.write("    others => (others => '0'));\n\n")
 
+def print_ariane_devtree(fp, esp_config):
+
+  # Get CPU base frequency
+  with open("top.vhd") as top_fp:
+    for line in top_fp:
+      if line.find("constant CPU_FREQ : integer") != -1:
+        line.strip();
+        items = line.split()
+        CPU_FREQ = int(items[5].replace(";",""))
+        top_fp.close()
+        break
+
+
+  # Count interrupt sources
+  irq_srcs = 1; # UART
+  if esp_config.has_eth:
+    # Ethenrnet
+    irq_srcs += 1
+  if esp_config.nacc > 0:
+    # Accelerators share one irq line
+    irq_srcs += 1
+  # TODO: add interrupt line for GPTIMER to be able to use it from Ariane as well
+
+
+  fp.write("/dts-v1/;\n")
+  fp.write("\n")
+  fp.write("/ {\n")
+  fp.write("  #address-cells = <2>;\n")
+  fp.write("  #size-cells = <2>;\n")
+  fp.write("  compatible = \"eth,ariane-bare-dev\";\n")
+  fp.write("  model = \"eth,ariane-bare\";\n")
+  fp.write("  chosen {\n")
+  fp.write("    stdout-path = \"/soc/uart@" + format(AHB2APB_HADDR[esp_config.cpu_arch], '03X') + "00100:38400\";\n")
+  fp.write("  };\n")
+  fp.write("  cpus {\n")
+  fp.write("    #address-cells = <1>;\n")
+  fp.write("    #size-cells = <0>;\n")
+  # TODO: determine timebase-frequency!!
+  fp.write("    timebase-frequency = <36000000>; // 36 MHz\n")
+  for i in range(esp_config.ncpu):
+    fp.write("    CPU" + str(i) + ": cpu@" + str(i) + " {\n")
+    fp.write("      clock-frequency = <" + str(CPU_FREQ) + "000>;\n")
+    fp.write("      device_type = \"cpu\";\n")
+    fp.write("      reg = <" + str(i) + ">;\n")
+    fp.write("      status = \"okay\";\n")
+    fp.write("      compatible = \"eth, ariane\", \"riscv\";\n")
+    fp.write("      riscv,isa = \"rv64imafdc\";\n")
+    fp.write("      mmu-type = \"riscv,sv39\";\n")
+    fp.write("      tlb-split;\n")
+    fp.write("      // HLIC - hart local interrupt controller\n")
+    fp.write("      CPU" + str(i) + "_intc: interrupt-controller {\n")
+    fp.write("        #interrupt-cells = <1>;\n")
+    fp.write("        interrupt-controller;\n")
+    fp.write("        compatible = \"riscv,cpu-intc\";\n")
+    fp.write("      };\n")
+    fp.write("    };\n")
+  fp.write("  };\n")
+  fp.write("  memory@" + format(DDR_HADDR[esp_config.cpu_arch], '03X') + "00000 {\n")
+  fp.write("    device_type = \"memory\";\n")
+  # TODO: increase memory address space.
+  fp.write("    reg = <0x0 0x" + format(DDR_HADDR[esp_config.cpu_arch], '03X') + "00000 0x0 0x20000000>;\n")
+  fp.write("  };\n")
+  fp.write("  L26: soc {\n")
+  fp.write("    #address-cells = <2>;\n")
+  fp.write("    #size-cells = <2>;\n")
+  fp.write("    compatible = \"eth,ariane-bare-soc\", \"simple-bus\";\n")
+  fp.write("    ranges;\n")
+  # TODO: make clint/plic remote devices w/ remote AXI proxy and variable address to be passed over
+  fp.write("    clint@2000000 {\n")
+  fp.write("      compatible = \"riscv,clint0\";\n")
+  fp.write("      interrupts-extended = <\n")
+  for i in range(esp_config.ncpu):
+    fp.write("                             &CPU" + str(i) + "_intc 3 &CPU" + str(i) + "_intc 7\n")
+  fp.write("                            >;\n")
+  fp.write("      reg = <0x0 0x2000000 0x0 0xc0000>;\n")
+  fp.write("      reg-names = \"control\";\n")
+  fp.write("    };\n")
+  fp.write("    PLIC0: interrupt-controller@c000000 {\n")
+  fp.write("      #address-cells = <0>;\n")
+  fp.write("      #interrupt-cells = <1>;\n")
+  fp.write("      compatible = \"riscv,plic0\";\n")
+  fp.write("      interrupt-controller;\n")
+  fp.write("      interrupts-extended = <\n")
+  for i in range(esp_config.ncpu):
+    fp.write("                             &CPU" + str(i) + "_intc 11 &CPU" + str(i) + "_intc 9\n")
+  fp.write("                            >;\n")
+  fp.write("      reg = <0x0 0xc000000 0x0 0x4000000>;\n")
+  fp.write("      riscv,max-priority = <7>;\n")
+  fp.write("      riscv,ndev = <" + str(irq_srcs) + ">;\n")
+  fp.write("    };\n")
+  # TODO add GPTIMER/Accelerators/Caches/SVGA/Ethernet/DVFS to devtree (and remove leon3 IRQ from socmap
+  fp.write("    uart@" + format(AHB2APB_HADDR[esp_config.cpu_arch], '03X') + "00100 {\n")
+  fp.write("      compatible = \"gaisler,apbuart\";\n")
+  fp.write("      reg = <0x0 0x" + format(AHB2APB_HADDR[esp_config.cpu_arch], '03X') + "00100 0x0 0x100>;\n")
+  fp.write("      freq = <" + str(CPU_FREQ) + "000>;\n")
+  fp.write("      interrupt-parent = <&PLIC0>;\n")
+  fp.write("      interrupts = <1>;\n")
+  fp.write("      reg-shift = <2>; // regs are spaced on 32 bit boundary\n")
+  fp.write("      reg-io-width = <4>; // only 32-bit access are supported\n")
+  fp.write("    };\n")
+  fp.write("  };\n")
+  fp.write("};\n")
+
 
 def create_socmap(esp_config, soc):
+
+  # Globals
   fp = open('esp_global.vhd', 'w')
 
   print_header(fp, "esp_global")
@@ -1329,6 +1441,7 @@ def create_socmap(esp_config, soc):
   print("Created global constants definition into 'esp_global.vhd'")
 
 
+  # SoC map
   fp = open('socmap.vhd', 'w')
 
   print_header(fp, "socmap")
@@ -1342,5 +1455,15 @@ def create_socmap(esp_config, soc):
   fp.write("end socmap;\n")
   fp.close()
 
-
   print("Created configuration into 'socmap.vhd'")
+
+  # Device tree
+  if esp_config.cpu_arch == "ariane":
+
+    fp = open('ariane.dts', 'w')
+
+    print_ariane_devtree(fp, esp_config)
+
+    fp.close()
+
+    print("Created device-tree into 'ariane.dts'")

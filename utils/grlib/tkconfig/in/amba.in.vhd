@@ -4,7 +4,6 @@
   constant CFG_SPLIT   	  : integer := CONFIG_AHB_SPLIT;
   constant CFG_FPNPEN  	  : integer := CONFIG_AHB_FPNPEN;
   constant CFG_AHBIO   	  : integer := 16#CONFIG_AHB_IOADDR#;
-  constant CFG_APBADDR 	  : integer := 16#CONFIG_APB_HADDR#;
   constant CFG_AHB_MON 	  : integer := CONFIG_AHB_MON;
   constant CFG_AHB_MONERR : integer := CONFIG_AHB_MONERR;
   constant CFG_AHB_MONWAR : integer := CONFIG_AHB_MONWAR;
