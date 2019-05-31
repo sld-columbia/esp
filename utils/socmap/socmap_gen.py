@@ -54,7 +54,7 @@ NACC_MAX = NAPBS - 2 * NCPU_MAX - NMEM_MAX - 8
 # Default device mapping
 
 # Boot ROM slave index (With Leon3 this exists in simulation only for now)
-MCTRL_HINDEX = 0
+AHBROM_HINDEX = 0
 
 # Memory-mapped registers base address (includes peripherals and accelerators)
 AHB2APB_HINDEX = 1
@@ -62,11 +62,18 @@ AHB2APB_HINDEX = 1
 # Leon-3 debug unit slave index
 DSU_HINDEX = 2
 
+# Leon-3 debug unit memory area
+DSU_HADDR = dict()
+DSU_HADDR["leon3"] = 0x900
+DSU_HADDR["ariane"] = 0x400
+
 # Memory controller slave index
 DDR_HINDEX = [4, 5, 6, 7]
 
 # Main memory area (12 MSBs)
-DDR_HADDR = 0x400
+DDR_HADDR = dict()
+DDR_HADDR["leon3"] = 0x400
+DDR_HADDR["ariane"] = 0x800
 
 # Main memory size (12 MSBs)
 DDR_SIZE = 0x400
@@ -142,6 +149,7 @@ def uint_to_bin(x, bits):
   return b
 
 class soc_config:
+  cpu_arch = "leon3"
   #components
   ncpu = 0
   nacc = 0
@@ -173,11 +181,15 @@ class soc_config:
 
   def __init__(self, soc):
     #components
+    self.cpu_arch = soc.CPU_ARCH.get()
     self.ncpu = soc.noc.get_cpu_num(soc)
     self.nmem = soc.noc.get_mem_num(soc)
     self.nacc = soc.noc.get_acc_num(soc)
     self.ntiles = soc.noc.rows * soc.noc.cols
-    self.coherence = True
+    if soc.cache_en.get() == 0:
+      self.coherence = False
+    else:
+      self.coherence = True
     self.has_dvfs = soc.noc.has_dvfs()
     if self.has_dvfs:
       self.regions = soc.noc.get_clk_regions()
@@ -326,8 +338,8 @@ def print_global_constants(fp, soc):
   # TODO: Keep physical address to 32 bits for now to reduce tag size. This will increase to support more memory
   fp.write("  constant GLOB_PHYS_ADDR_BITS : integer := " + str(32) +";\n")
   fp.write("  type cpu_arch_type is (leon3, ariane);\n")
-  fp.write("  constant GLOB_CPU_ARCH : cpu_arch_type := " + soc.CPU_ARCH + ";\n")
-  if soc.CPU_ARCH == "leon3":
+  fp.write("  constant GLOB_CPU_ARCH : cpu_arch_type := " + soc.CPU_ARCH.get() + ";\n")
+  if soc.CPU_ARCH.get() == "leon3":
     fp.write("  constant GLOB_CPU_AXI : integer range 0 to 1 := 0;\n")
   else:
     fp.write("  constant GLOB_CPU_AXI : integer range 0 to 1 := 1;\n")
@@ -401,14 +413,6 @@ def print_mapping(fp, esp_config):
   fp.write("  ------ Maximum number of slaves on both HP bus and I/O-bus\n")
   fp.write("  constant maxahbm : integer := NAHBMST;\n")
   fp.write("  constant maxahbs : integer := NAHBSLV;\n")
-
-  #
-  fp.write("  ------ Helper data types\n")
-  fp.write("  -- slave interace type for BOOT ROM (simulation only for now)\n")
-  fp.write("  --pragma translate_off\n")
-  fp.write("  type ahb_slv_in_type_vec is array (0 to CFG_NCPU_TILE-1) of ahb_slv_in_type;\n")
-  fp.write("  type apb_slv_in_type_vec is array (0 to CFG_NCPU_TILE-1) of apb_slv_in_type;\n")
-  fp.write("  --pragma translate_on\n\n")
 
   #
   fp.write("  -- Arrays of Plug&Play info\n")
@@ -498,25 +502,14 @@ def print_mapping(fp, esp_config):
     fp.write("    others => zero32);\n\n")
 
   #
-  fp.write("  -- BOOT ROM HP slave (simulation only for now)\n")
-  fp.write("  --pragma translate_off\n")
-  fp.write("  constant mctrl_hindex  : integer := " + str(MCTRL_HINDEX) + ";\n")
-  fp.write("  constant mctrl_haddr   : integer := 16#000#;\n")
-  fp.write("  constant mctrl_hmask   : integer := 16#C00#;\n")
-  fp.write("  constant romaddr   : integer := 16#000#;\n")
-  fp.write("  constant rommask   : integer := 16#E00#;\n")
-  fp.write("  constant ioaddr    : integer := 16#200#;\n")
-  fp.write("  constant iomask    : integer := 0; --16#E00#;\n")
-  # Not using SDRAM controller; removing from address map
-  # fp.write("  constant ramaddr   : integer := 16#400#;\n")
-  # fp.write("  constant rammask   : integer := 0; --16#C00#;\n")
-  fp.write("  constant mctrl_hconfig : ahb_config_type := (\n")
-  fp.write("    0 => ahb_device_reg ( VENDOR_ESA, ESA_MCTRL, 0, 1, 0),\n")
-  fp.write("    4 => ahb_membar(romaddr, '1', '1', rommask),\n")
-  fp.write("    5 => ahb_membar(ioaddr,  '0', '0', iomask),\n")
-  # fp.write("    6 => ahb_membar(ramaddr, '1', '1', rammask),\n")
+  fp.write("  -- BOOT ROM HP slave\n")
+  fp.write("  constant ahbrom_hindex  : integer := " + str(AHBROM_HINDEX) + ";\n")
+  fp.write("  constant ahbrom_haddr   : integer := 16#000#;\n")
+  fp.write("  constant ahbrom_hmask   : integer := 16#fff#;\n")
+  fp.write("  constant ahbrom_hconfig : ahb_config_type := (\n")
+  fp.write("    0 => ahb_device_reg ( VENDOR_GAISLER, GAISLER_AHBROM, 0, 0, 0),\n")
+  fp.write("    4 => ahb_membar(ahbrom_haddr, '1', '1', ahbrom_hmask),\n")
   fp.write("    others => zero32);\n")
-  fp.write("  --pragma translate_on\n\n")
 
   #
   fp.write("  -- AHB2APB bus bridge slave\n")
@@ -531,7 +524,7 @@ def print_mapping(fp, esp_config):
   #
   fp.write("  -- Leon3 debug unit\n")
   fp.write("  constant dsu_hindex : integer := " + str(DSU_HINDEX) + ";\n")
-  fp.write("  constant dsu_haddr : integer := 16#900#;\n")
+  fp.write("  constant dsu_haddr : integer := 16#" + format(DSU_HADDR[esp_config.cpu_arch], '03X') + "#;\n")
   fp.write("  constant dsu_hmask : integer := 16#F00#;\n")
   fp.write("  constant dsu_hconfig : ahb_config_type := (\n")
   fp.write("    0 => ahb_device_reg ( VENDOR_GAISLER, GAISLER_LEON3DSU, 0, 1, 0),\n")
@@ -544,7 +537,7 @@ def print_mapping(fp, esp_config):
 
   #
   fp.write("  ----  Memory controllers\n")
-  offset = DDR_HADDR;
+  offset = DDR_HADDR[esp_config.cpu_arch];
   size = int(DDR_SIZE / esp_config.nmem)
   mask = 0xfff & ~(size - 1)
   full_mask = 0xfff & ~(DDR_SIZE - 1)
@@ -554,7 +547,7 @@ def print_mapping(fp, esp_config):
   fp.write("  -- and each CPU should be able to address any region transparently.\n")
   fp.write("  constant cpu_tile_mig7_hconfig : ahb_config_type := (\n")
   fp.write("    0 => ahb_device_reg ( VENDOR_GAISLER, GAISLER_MIG_7SERIES, 0, 0, 0),\n")
-  fp.write("    4 => ahb_membar(16#" + format(DDR_HADDR, '03X') + "#, '1', '1', 16#" + format(full_mask, '03X')  + "#),\n")
+  fp.write("    4 => ahb_membar(16#" + format(DDR_HADDR[esp_config.cpu_arch], '03X') + "#, '1', '1', 16#" + format(full_mask, '03X')  + "#),\n")
   fp.write("    others => zero32);\n")
 
   #
@@ -605,9 +598,7 @@ def print_mapping(fp, esp_config):
   #
   fp.write("  -- HP slaves index / memory map\n")
   fp.write("  constant fixed_ahbso_hconfig : ahb_slv_config_vector := (\n")
-  fp.write("    --pragma translate_off\n")
-  fp.write("    " + str(MCTRL_HINDEX) + " => mctrl_hconfig,\n")
-  fp.write("    --pragma translate_on\n")
+  fp.write("    " + str(AHBROM_HINDEX) + " => ahbrom_hconfig,\n")
   fp.write("    " + str(AHB2APB_HINDEX) + " => ahb2apb_hconfig,\n")
   fp.write("    " + str(DSU_HINDEX) + " => dsu_hconfig,\n")
   for i in range(0, esp_config.nmem):
@@ -619,9 +610,7 @@ def print_mapping(fp, esp_config):
   fp.write("  -- HP slaves index / memory map for CPU tile\n")
   fp.write("  -- CPUs need to see memory as a single address range\n")
   fp.write("  constant cpu_tile_fixed_ahbso_hconfig : ahb_slv_config_vector := (\n")
-  fp.write("    --pragma translate_off\n")
-  fp.write("    " + str(MCTRL_HINDEX) + " => mctrl_hconfig,\n")
-  fp.write("    --pragma translate_on\n")
+  fp.write("    " + str(AHBROM_HINDEX) + " => ahbrom_hconfig,\n")
   fp.write("    " + str(AHB2APB_HINDEX) + " => ahb2apb_hconfig,\n")
   fp.write("    " + str(DSU_HINDEX) + " => dsu_hconfig,\n")
   fp.write("    " + str(DDR_HINDEX[0]) + " => cpu_tile_mig7_hconfig,\n")
@@ -630,14 +619,6 @@ def print_mapping(fp, esp_config):
 
   #
   fp.write("  ------ Plug&Play info on I/O bus\n")
-
-  #
-  fp.write("  -- BOOT ROM controller (simulation only for now) (GRLIB)\n")
-  fp.write("  --pragma translate_off\n")
-  fp.write("  constant mctrl_pconfig : apb_config_type := (\n")
-  fp.write("  0 => ahb_device_reg ( VENDOR_ESA, ESA_MCTRL, 0, 1, 0),\n")
-  fp.write("  1 => apb_iobar(16#000#, 16#fff#));\n")
-  fp.write("  --pragma translate_on\n\n")
 
   #
   fp.write("  -- UART (GRLIB)\n")
@@ -741,9 +722,6 @@ def print_mapping(fp, esp_config):
   #
   fp.write("  -- I/O bus slaves index / memory map\n")
   fp.write("  constant fixed_apbo_pconfig : apb_slv_config_vector := (\n")
-  fp.write("    --pragma translate_off\n")
-  fp.write("    0 => mctrl_pconfig,\n")
-  fp.write("    --pragma translate_on\n")
   fp.write("    1 => uart_pconfig,\n")
   fp.write("    2 => irqmp_pconfig,\n")
   fp.write("    3 => gptimer_pconfig,\n")
@@ -818,8 +796,9 @@ def print_mapping(fp, esp_config):
   fp.write("  -- Get L2 pindex from tile ID\n")
   fp.write("  constant l2_cache_pindex : tile_attribute_array := (\n")
   for i in range(0, esp_config.ntiles):
-    if esp_config.tiles[i].type == "cpu":
-      fp.write("    " + str(i) + " => " + str(esp_config.tiles[i].l2.idx) + ",\n")
+    t = esp_config.tiles[i]
+    if t.type == "cpu" and t.l2.idx != -1:
+      fp.write("    " + str(i) + " => " + str(t.l2.idx) + ",\n")
   fp.write("    others => -1);\n\n")
 
   #
@@ -851,8 +830,9 @@ def print_mapping(fp, esp_config):
   fp.write("  -- Get LLC pindex from tile ID\n")
   fp.write("  constant llc_cache_pindex : tile_attribute_array := (\n")
   for i in range(0, esp_config.ntiles):
-    if esp_config.tiles[i].type == "mem":
-      fp.write("    " + str(i) + " => " + str(esp_config.tiles[i].llc.idx) + ",\n")
+    t = esp_config.tiles[i]
+    if t.type == "mem" and t.llc.idx != -1:
+      fp.write("    " + str(i) + " => " + str(t.llc.idx) + ",\n")
   fp.write("    others => -1);\n\n")
 
   #
@@ -1083,8 +1063,9 @@ def print_mapping(fp, esp_config):
       fp.write("    " + str(acc_pindex) + " => " + str(i) + ",\n")
     # 16-19 - LLC cache controller (must change with NMEM_MAX)
     if t.type == "mem":
-      llc_pindex = t.llc.idx
-      fp.write("    " + str(llc_pindex) + " => " + str(i) + ",\n")
+      if esp_config.coherence:
+        llc_pindex = t.llc.idx
+        fp.write("    " + str(llc_pindex) + " => " + str(i) + ",\n")
     # 5-8 - Processors' DVFS controller (must change with NCPU_MAX)
     # 9-12 - Processors' private cache controller (must change with NCPU_MAX)
     if t.type == "cpu":
@@ -1227,9 +1208,6 @@ def print_tiles(fp, esp_config):
     if t.type == "cpu" or t.type == "misc":
       fp.write("    " + str(i) + " => (\n")
     if t.type == "cpu":
-      fp.write("      --pragma translate_off\n")
-      fp.write("      0 => '1',\n")
-      fp.write("      --pragma translate_on\n")
       fp.write("      1 => to_std_logic(CFG_UART1_ENABLE),\n")
       fp.write("      2 => to_std_logic(CFG_IRQ3_ENABLE),\n")
       fp.write("      3 => to_std_logic(CFG_GPT_ENABLE),\n")
@@ -1272,9 +1250,6 @@ def print_tiles(fp, esp_config):
       fp.write("    " + str(i) + " => " + acc.lowercase_name + "_" + str(acc.id) + "_apb_mask,\n")
     if t.type == "misc":
       fp.write("    " + str(i) + " => (\n")
-      fp.write("      --pragma translate_off\n")
-      fp.write("      0  => '1',\n") # MCTRL
-      fp.write("      --pragma translate_on\n")
       fp.write("      1  => '1',\n") # UART
       fp.write("      2  => '1',\n") # IRQ
       fp.write("      3  => '1',\n") # TIMER
@@ -1303,9 +1278,7 @@ def print_tiles(fp, esp_config):
     t = esp_config.tiles[i]
     if t.type == "misc":
       fp.write("    " + str(i) + " => (\n")
-      fp.write("      --pragma translate_off\n")
-      fp.write("      " + str(MCTRL_HINDEX) + "  => '1',\n")
-      fp.write("      --pragma translate_on\n")
+      fp.write("      " + str(AHBROM_HINDEX) + "  => '1',\n")
       fp.write("      " + str(AHB2APB_HINDEX) + "  => '1',\n")
       fp.write("      " + str(DSU_HINDEX) + " => '1',\n")
       fp.write("      " + str(FB_HINDEX) + "  => to_std_logic(CFG_SVGA_ENABLE),\n")
@@ -1333,9 +1306,7 @@ def print_tiles(fp, esp_config):
       fp.write("      others => '0'),\n")
     if t.type == "cpu":
       fp.write("    " + str(i) + " => (\n")
-      fp.write("      --pragma translate_off\n")
-      fp.write("      " + str(MCTRL_HINDEX) + "  => '1',\n")
-      fp.write("      --pragma translate_on\n")
+      fp.write("      " + str(AHBROM_HINDEX) + "  => '1',\n")
       fp.write("      " + str(DSU_HINDEX) + " => '1',\n")
       fp.write("      " + str(DDR_HINDEX[0]) + " => to_std_logic(CFG_L2_DISABLE),\n")
       fp.write("      " + str(FB_HINDEX) + "  => to_std_logic(CFG_SVGA_ENABLE),\n")

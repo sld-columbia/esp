@@ -69,7 +69,6 @@ class SoC_Config():
   IP_ADDR = ""
   TECH = "virtex7"
   DMA_WIDTH = 32
-  CPU_ARCH = "leon3"
 
   def read_config(self, temporary):
     filename = ".esp_config"
@@ -98,6 +97,11 @@ class SoC_Config():
                 first = False
               print("SAVED: " + line_orig.replace("\n","") + " -- TEMP: " + line_bak.replace("\n",""))
     fp = open(filename, 'r')
+    # CPU architecture
+    line = fp.readline()
+    item = line.split()
+    self.CPU_ARCH.set(item[2])
+    # Scatter-gather
     line = fp.readline()
     if line.find("CONFIG_HAS_SG = y") != -1:
       self.transfers.set(1)
@@ -113,6 +117,11 @@ class SoC_Config():
     cols = int(item[2])
     self.noc.create_topology(self.noc.top, rows, cols)
     # CONFIG_CPU_CACHES = L2_SETS L2_WAYS LLC_SETS LLC_WAYS
+    line = fp.readline()
+    if line.find("CONFIG_CACHE_EN = y") != -1:
+      self.cache_en.set(1)
+    else:
+      self.cache_en.set(0)
     line = fp.readline()
     item = line.split()
     self.l2_sets.set(int(item[2]))
@@ -191,12 +200,17 @@ class SoC_Config():
     print("Writing backup configuration: \".esp_config.bak\"")
     fp = open('.esp_config.bak', 'w')
     has_dvfs = False;
+    fp.write("CPU_ARCH = " + self.CPU_ARCH.get() + "\n")
     if self.transfers.get() == 1:
       fp.write("CONFIG_HAS_SG = y\n")
     else:
       fp.write("#CONFIG_HAS_SG is not set\n")
     fp.write("CONFIG_NOC_ROWS = " + str(self.noc.rows) + "\n")
     fp.write("CONFIG_NOC_COLS = " + str(self.noc.cols) + "\n")
+    if self.cache_en.get() == 1:
+      fp.write("CONFIG_CACHE_EN = y\n")
+    else:
+      fp.write("#CONFIG_CACHE_EN is not set\n")
     fp.write("CONFIG_CPU_CACHES = " + str(self.l2_sets.get()) + " " + str(self.l2_ways.get()) + " " + str(self.llc_sets.get()) + " " + str(self.llc_ways.get()) + "\n")
     fp.write("CONFIG_ACC_CACHES = " + str(self.acc_l2_sets.get()) + " " + str(self.acc_l2_ways.get()) + "\n")
     if self.noc.monitor_ddr.get() == 1:
@@ -298,10 +312,9 @@ class SoC_Config():
   def set_IP(self):
     self.IP_ADDR = str(int('0x' + self.IPM[:2], 16)) + "." + str(int('0x' + self.IPM[2:], 16)) + "." + str(int('0x' + self.IPL[:2], 16)) + "." + str(int('0x' + self.IPL[2:], 16))
 
-  def __init__(self, DMA_WIDTH, TECH, CPU_ARCH):
+  def __init__(self, DMA_WIDTH, TECH):
     self.DMA_WIDTH = DMA_WIDTH
     self.TECH = TECH
-    self.CPU_ARCH = CPU_ARCH
     #define whether SGMII has to be used or not: it is not used for PROFPGA boards
     with open("Makefile") as fp:
       for line in fp:
@@ -343,4 +356,7 @@ class SoC_Config():
     self.llc_ways = IntVar()
     self.acc_l2_sets = IntVar()
     self.acc_l2_ways = IntVar()
+    # CPU architecture
+    self.CPU_ARCH = StringVar()
+    self.cache_en = IntVar()
 

@@ -95,7 +95,7 @@ class Tile():
       if soc.IPs.ACCELERATORS.count(selection):
         self.has_l2_selection.config(state=NORMAL)
       else:
-        if soc.IPs.PROCESSORS.count(selection):
+        if soc.IPs.PROCESSORS.count(selection) and soc.cache_en.get() == 1:
           self.has_l2.set(1)
         else:
           self.has_l2.set(0)
