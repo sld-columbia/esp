@@ -17,3 +17,6 @@
 [submodule "soft/ariane/riscv-pk"]
 	path = soft/ariane/riscv-pk
 	url = git@github.com:sld-columbia/riscv-pk.git
+[submodule "soft/ariane/riscv-tests"]
+	path = soft/ariane/riscv-tests
+	url = https://github.com/riscv/riscv-tests.git
