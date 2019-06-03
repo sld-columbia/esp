@@ -182,23 +182,28 @@ socmap.vhd: .esp_config grlib_config.vhd
 	fi
 	@echo ""
 	@echo "Generating ESP configuration..."
-	@python3 $(ESP_ROOT)/utils/socmap/esp_creator_batch.py $(NOC_WIDTH) $(TECHLIB) $(CPU_ARCH)
+	@python3 $(ESP_ROOT)/utils/socmap/esp_creator_batch.py $(NOC_WIDTH) $(TECHLIB)
 
 esp-config: socmap.vhd
 
 esp-xconfig: grlib_config.vhd
 	@echo ""
 	@echo "Running interactive ESP configuration..."
-	@python3 $(ESP_ROOT)/utils/socmap/esp_creator.py $(NOC_WIDTH) $(TECHLIB) $(CPU_ARCH)
+	@python3 $(ESP_ROOT)/utils/socmap/esp_creator.py $(NOC_WIDTH) $(TECHLIB)
 
 esp-config-clean:
 	$(QUIET_CLEAN)$(RM) \
 		.esp_config.bak
 
+ifeq ("$(CPU_ARCH)", "ariane")
+ariane.dts: socmap.vhd
+endif
+
 esp-config-distclean: esp-config-clean
 	$(QUIET_CLEAN)$(RM)	\
 		socmap.vhd	\
 		.esp_config	\
+		ariane.dts	\
 		mmi64_regs.h	\
 		power.h
 
@@ -366,6 +371,145 @@ sysroot-clean:
 sysroot-distclean: sysroot-clean
 	$(QUIET_CLEAN)$(RM) sysroot
 
+barec-all: barec
+	@mkdir -p barec/dvi
+	@CROSS_COMPILE=sparc-elf- $(MAKE) -C $(DRIVERS)/dvi/barec
+	@cp $(DRIVERS)/dvi/barec/*.exe barec/dvi
+	@$(MAKE) accelerators-barec
+
+
+barec-distclean:
+	$(QUIET_CLEAN)$(RM) barec
+	@CROSS_COMPILE=sparc-elf- $(MAKE) --quiet -C $(DRIVERS)/dvi/barec clean
+	@$(MAKE) --quiet accelerators-barec-clean
+
+else ifeq ("$(CPU_ARCH)", "ariane")
+
+BOOTROM_PATH = $(SOFT)/bootrom
+RISCV_TESTS = $(SOFT)/riscv-tests
+
+soft: prom.srec ram.srec prom.bin systest.bin
+
+soft-clean:
+	$(QUIET_CLEAN)$(RM) 	\
+		prom.srec 	\
+		ram.srec	\
+		prom.exe	\
+		systest.exe	\
+		prom.bin	\
+		ariane.dtb	\
+		startup.o	\
+		main.o		\
+		uart.o		\
+		systest.bin
+
+
+soft-distclean: soft-clean ahbrom-distclean
+
+ariane.dtb: ariane.dts socmap.vhd
+	$(QUIET_BUILD) dtc -I dts $< -O dtb -o $@
+
+startup.o: $(BOOTROM_PATH)/startup.S
+	$(QUIET_CC) riscv64-unknown-elf-gcc \
+		-Os \
+		-Wall -Werror \
+		-mcmodel=medany -mexplicit-relocs \
+		-I$(BOOTROM_PATH) \
+		-c $< -o $@
+
+main.o: $(BOOTROM_PATH)/main.c
+	$(QUIET_CC) riscv64-unknown-elf-gcc \
+		-Os \
+		-Wall -Werror \
+		-mcmodel=medany -mexplicit-relocs \
+		-I$(BOOTROM_PATH) \
+		-c $< -o $@
+
+uart.o: $(BOOTROM_PATH)/uart.c
+	$(QUIET_CC) riscv64-unknown-elf-gcc \
+		-Os \
+		-Wall -Werror \
+		-mcmodel=medany -mexplicit-relocs \
+		-I$(BOOTROM_PATH) \
+		-c $< -o $@
+
+prom.exe: ariane.dtb startup.o uart.o main.o $(BOOTROM_PATH)/linker.lds
+	$(QUIET_CC) riscv64-unknown-elf-gcc \
+		-Os \
+		-Wall -Werror \
+		-mcmodel=medany -mexplicit-relocs \
+		-I$(BOOTROM_PATH) \
+		-nostdlib -nodefaultlibs -nostartfiles \
+		-T$(BOOTROM_PATH)/linker.lds \
+		startup.o uart.o main.o \
+		-o $@
+
+prom.srec: prom.exe
+	$(QUIET_OBJCP) riscv64-unknown-elf-objcopy -O srec $< $@
+
+
+prom.bin: prom.exe
+	$(QUIET_OBJCP) riscv64-unknown-elf-objcopy -O binary $< $@
+
+ahbrom: $(UTILS_GRLIB)/ahbrom.c
+	$(QUIET_CC)$(CC) $< -o $@
+
+ahbrom.vhd: prom.bin ahbrom
+	$(QUIET_BUILD)./ahbrom $< $@
+
+ahbrom-clean:
+	$(QUIET_CLEAN)$(RM) ahbrom
+
+ahbrom-distclean: ahbrom-clean
+	$(QUIET_CLEAN)$(RM) ahbrom.vhd
+
+
+RISCV_CFLAGS  = -I$(RISCV_TESTS)/env
+RISCV_CFLAGS += -I$(RISCV_TESTS)/benchmarks/common
+RISCV_CFLAGS += -I$(BOOTROM_PATH)
+RISCV_CFLAGS += -mcmodel=medany
+RISCV_CFLAGS += -static
+RISCV_CFLAGS += -std=gnu99
+RISCV_CFLAGS += -O2
+RISCV_CFLAGS += -ffast-math
+RISCV_CFLAGS += -fno-common
+RISCV_CFLAGS += -fno-builtin-printf
+RISCV_CFLAGS += -nostdlib
+RISCV_CFLAGS += -nostartfiles -lm -lgcc
+
+systest.exe: systest.c uart.o
+	$(QUIET_CC) riscv64-unknown-elf-gcc $(RISCV_CFLAGS) \
+	$(RISCV_TESTS)/benchmarks/common/syscalls.c \
+	$(RISCV_TESTS)/benchmarks/common/crt.S  \
+	-T $(RISCV_TESTS)/benchmarks/common/test.ld -o $@ \
+	uart.o $<
+
+systest.bin: systest.exe
+	$(QUIET_OBJCP) riscv64-unknown-elf-objcopy -O binary $< $@
+
+ram.srec: systest.exe
+	$(QUIET_OBJCP) riscv64-unknown-elf-objcopy -O srec --gap-fill 0 $< $@
+
+
+
+.PHONY: ahbrom-clean ahbrom-distclean
+
+linux:
+
+linux-clean:
+
+linux-distclean:
+
+sysroot-update:
+
+sysroot-clean:
+
+sysroot-distclean:
+
+barec-all:
+
+barec-distclean:
+
 else
 ### Other architectures if avalable ###
 
@@ -387,6 +531,10 @@ sysroot-clean:
 
 sysroot-distclean:
 
+barec-all:
+
+barec-distclean:
+
 endif
 
 linux-build:
@@ -398,18 +546,6 @@ linux-build:
 
 barec:
 	$(QUIET_MKDIR)mkdir -p $@
-
-barec-all: barec
-	@mkdir -p barec/dvi
-	@CROSS_COMPILE=sparc-elf- $(MAKE) -C $(DRIVERS)/dvi/barec
-	@cp $(DRIVERS)/dvi/barec/*.exe barec/dvi
-	@$(MAKE) accelerators-barec
-
-
-barec-distclean:
-	$(QUIET_CLEAN)$(RM) barec
-	@CROSS_COMPILE=sparc-elf- $(MAKE) --quiet -C $(DRIVERS)/dvi/barec clean
-	@$(MAKE) --quiet accelerators-barec-clean
 
 .PHONY: barec-distclean barec-all
 
@@ -509,7 +645,7 @@ VHDL_PROFPGA =
 VERILOG_PROFPGA =
 endif
 
-ARIANE ?= $(ESP_ROOT)/ariane
+ARIANE ?= $(ESP_ROOT)/third-party/ariane
 
 ifneq ($(findstring ariane, $(CPU_ARCH)),)
 VERILOG_ARIANE += $(shell strings $(ESP_ROOT)/utils/ariane_verilog.txt)
@@ -976,14 +1112,23 @@ vivado/srcs.tcl: vivado check_all_rtl_srcs.old
 		rtl=$(PROFPGA)/hdl/$$ver; \
 		echo "read_verilog -library profpga $$rtl" >> $@; \
 	done;
+	@ rtl=$(ESP_ROOT)/socs/common/ariane_soc_pkg.sv; \
+	echo "read_verilog -sv $$rtl" >> $@;
+	@for ver in $(VERILOG_ARIANE); do \
+		rtl=$(ARIANE)/$$ver; \
+		echo "read_verilog -sv $$rtl" >> $@; \
+	done;
 	@for rtl in $(SLDGEN_VHDL_RTL_PKGS); do \
 		echo "read_vhdl $$rtl" >> $@; \
 	done;
 	@for rtl in $(VHDL_ALL_RTL); do \
 		echo "read_vhdl $$rtl" >> $@; \
-	done; \
-	for rtl in $(VLOG_ALL_RTL); do \
+	done;
+	@for rtl in $(VLOG_ALL_RTL); do \
 		echo "read_verilog $$rtl" >> $@; \
+	done;
+	@for rtl in $(SVLOG_SRCS); do \
+		echo "read_verilog -sv $$rtl" >> $@; \
 	done;
 
 

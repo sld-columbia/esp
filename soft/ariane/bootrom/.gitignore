@@ -1,4 +1,5 @@
+venv
 *.elf
+*.o
 *.img
-*.dtb
 *.bin
