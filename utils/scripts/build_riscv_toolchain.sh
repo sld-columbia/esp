@@ -142,36 +142,44 @@ cd $TMP
 src=buildroot
 echo "*** Populating root file system w/ buildroot ... ***"
 if [ $(noyes "Skip buildroot?") == "n" ]; then
+    # Reset sysroot overlay to committed content
+    rm -rf ${SYSROOT}/*
+    git checkout ${SYSROOT}
+
+
     if test -e $src; then
-	cd $src
-	git checkout .
-	git pull
+    	cd $src
+    	git checkout .
+    	git pull
     else
-	git clone --recursive git://git.buildroot.net/buildroot
-	cd $src
+    	git clone --recursive git://git.buildroot.net/buildroot
+    	cd $src
     fi
 
     git reset --hard ${BUILDROOT_SHA}
     git submodule update --init --recursive
 
-    # Reset sysroot overlay to committed content
-    rm -rf ${SYSROOT}/*
-    git checkout ${SYSROOT}
-
+    make distclean
     make defconfig BR2_DEFCONFIG=${SCRIPT_PATH}/riscv_buildroot_defconfig
     make -j ${NTHREADS}
 
     # Populate repository sysroot overlay w/ generated files (git ignores them)
     rm output/target/THIS_IS_NOT_YOUR_ROOT_FILESYSTEM
     cp -r output/target/* ${SYSROOT}/
+    if [ ! -e ${SYSROOT}/init ]; then
+        /usr/bin/install -m 0755 fs/cpio/init ${SYSROOT}/init;
+    fi
 
     cd $TMP
 fi
 
 #Riscv
-echo "Use the following to load RISCV environment"
-echo "export PATH=${RISCV}/bin:$PATH"
-echo "export RISCV=${RISCV}"
+echo ""
+echo ""
+echo "=== Use the following to load RISCV environment ==="
+echo -n "  export PATH=${RISCV}/bin:"; echo '$PATH'
+echo "  export RISCV=${RISCV}"
+echo ""
 
 cd $CURRENT_DIR
 echo "*** Successfully installed Leon3 toolchain to $TARGET_DIR ***"
