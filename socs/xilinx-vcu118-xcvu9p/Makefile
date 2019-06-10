@@ -7,12 +7,10 @@ all: help
 ### Global design variables ###
 DESIGN_PATH = $(PWD)
 ESP_ROOT = $(realpath ../../)
-CPU_ARCH = leon3
 TECHLIB  = virtexup
 BOARD    = xilinx-vcu118-xcvu9p
 DESIGN   = esp-$(BOARD)
-LINUX_CONFIG = leon3_smp_defconfig
-
+#SMP     = 1
 
 ### Design top level and testbench ###
 TOP    = top
@@ -29,15 +27,7 @@ VLOGOPT +=
 XCOMOPT +=
 XLOGOPT +=
 
-# GRLIB options
-
-# Print CPU instructions to simulator console
-# VSIMOPT += -gdisas=1
-ifneq ($(findstring ariane, $(CPU_ARCH)),)
-VSIMOPT += +UVM_NO_RELNOTES -64 +permissive-off
-else
 VSIMOPT +=
-endif
 
 
 ### Additional design files ###
@@ -50,7 +40,7 @@ TOP_VLOG_SIM_SRCS +=
 
 ### Xilinx Vivado hw_server ###
 FPGA_HOST ?= goliah.cs.columbia.edu
-XIL_HW_SERVER_PORT ?= 3124
+XIL_HW_SERVER_PORT ?= 3123
 
 
 ### Include global Makefile ###

@@ -7,11 +7,10 @@ all: help
 ### Global design variables ###
 DESIGN_PATH = $(PWD)
 ESP_ROOT = $(realpath ../../)
-CPU_ARCH = leon3
 TECHLIB  = virtex7
 BOARD    = profpga-xc7v2000t
 DESIGN   = esp-$(BOARD)
-LINUX_CONFIG = leon3_smp_defconfig
+SMP      = 1
 
 
 ### Design top level and testbench ###
@@ -29,13 +28,7 @@ VLOGOPT +=
 XCOMOPT +=
 XLOGOPT +=
 
-# GRLIB options
-#VSIMOPT += -gdisas=1
-ifneq ($(findstring ariane, $(CPU_ARCH)),)
-VSIMOPT += +UVM_NO_RELNOTES -64 +permissive-off
-else
 VSIMOPT +=
-endif
 
 
 ### Additional design files ###
