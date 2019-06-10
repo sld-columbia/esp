@@ -70,3 +70,5 @@ mmi64
 *.dtb
 prom.bin
 systest.bin
+pk-build
+linux.bin
