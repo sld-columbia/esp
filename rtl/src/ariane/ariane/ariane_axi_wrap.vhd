@@ -15,7 +15,7 @@ entity ariane_axi_wrap is
     HART_ID          : std_logic_vector(63 downto 0) := (others => '0');
     NMST             : integer                       := 2;
     NSLV             : integer                       := 5;
-    NIRQ_SRCS        : integer                       := 1;
+    NIRQ_SRCS        : integer                       := 30;
     ROMBase          : std_logic_vector(63 downto 0) := X"0000_0000_0001_0000";
     ROMLength        : std_logic_vector(63 downto 0) := X"0000_0000_0001_0000";
     APBBase          : std_logic_vector(63 downto 0) := X"0000_0000_6000_0000";

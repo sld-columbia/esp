@@ -6,7 +6,7 @@ module ariane_wrap
      parameter logic [63:0] HART_ID = '0,
      parameter NMST = 2,
      parameter NSLV = 5,
-     parameter NIRQ_SRCS = 1,
+     parameter NIRQ_SRCS = 30,
      parameter AXI_ID_WIDTH = ariane_soc::IdWidth,
      parameter AXI_ID_WIDTH_SLV = ariane_soc::IdWidthSlave + $clog2(NMST),
      parameter AXI_ADDR_WIDTH = 64,
@@ -17,7 +17,7 @@ module ariane_wrap
      parameter logic [63:0] ROMBase        = 64'h0000_0000_0001_0000,
      parameter logic [63:0] ROMLength      = 64'h0000_0000_0001_0000,
      // Slave 1
-     parameter logic [63:0] APBBase        = 64'h0000_0000_8000_0000,
+     parameter logic [63:0] APBBase        = 64'h0000_0000_6000_0000,
      parameter logic [63:0] APBLength      = 64'h0000_0000_1000_0000,
      // Slave 2 (TODO: move to I/O tile)
      parameter logic [63:0] CLINTBase      = 64'h0000_0000_0200_0000,
@@ -26,8 +26,8 @@ module ariane_wrap
      parameter logic [63:0] PLICBase       = 64'h0000_0000_0C00_0000,
      parameter logic [63:0] PLICLength     = 64'h0000_0000_03FF_FFFF,
      // Slave 4
-     parameter logic [63:0] DRAMBase       = 64'h0000_0000_4000_0000,
-     parameter logic [63:0] DRAMLength     = 64'h0000_0000_2000_0000 // TODO: change automatically bootloader and dts
+     parameter logic [63:0] DRAMBase       = 64'h0000_0000_8000_0000,
+     parameter logic [63:0] DRAMLength     = 64'h0000_0000_2000_0000
      )
    (
     input logic 			clk,
@@ -149,9 +149,30 @@ module ariane_wrap
     );
 
    // Base addresses for Ariane
-   localparam bit SwapEndianess = 0;
-   localparam logic [63:0] CachedAddrBeg  = DRAMBase;
-   localparam logic [63:0] CachedAddrEnd  = DRAMBase + DRAMLength;
+  localparam ariane_pkg::ariane_cfg_t ArianeSocCfg = '{
+    RASDepth: 2,
+    BTBEntries: 32,
+    BHTEntries: 128,
+    // idempotent region
+    NrNonIdempotentRules:  0,
+    NonIdempotentAddrBase: {64'b0},
+    NonIdempotentLength:   {64'b0},
+    NrExecuteRegionRules:  2,
+    ExecuteRegionAddrBase: {DRAMBase,   ROMBase},
+    ExecuteRegionLength:   {DRAMLength, ROMLength},
+    // cached region
+    NrCachedRegionRules:    1,
+    CachedRegionAddrBase:  {DRAMBase},
+    CachedRegionLength:    {DRAMLength},
+    //  cache config
+    Axi64BitCompliant:      1'b1,
+    SwapEndianess:          1'b0,
+    // debug
+    DmBaseAddress:          64'd0
+  };
+
+  localparam int unsigned MaxPriority = 7;
+
 
    // TODO: move this to I/O tile and socmap CFG_NCPUTILE
    localparam NHARTS = 1;
@@ -240,9 +261,7 @@ module ariane_wrap
 
    ariane
      #(
-       .SwapEndianess ( SwapEndianess ),
-       .CachedAddrEnd ( CachedAddrEnd ),
-       .CachedAddrBeg ( CachedAddrBeg )
+       .ArianeCfg ( ArianeSocCfg )
        ) i_ariane
        (
 	.clk_i        ( clk                 ),
@@ -524,20 +543,34 @@ module ariane_wrap
        .reg_o     ( reg_bus      )
        );
 
-    plic
-      #(
-        .ID_BITWIDTH        ( 3         ), // TODO: check upstream repo (up to 8 physical lines?)
-        .PARAMETER_BITWIDTH ( 3         ),
-        .NUM_TARGETS        ( 2*NHARTS  ),
-        .NUM_SOURCES        ( NIRQ_SRCS )
-	) i_plic
-	(
-	 .clk_i              ( clk          ),
-	 .rst_ni             ( rstn         ),
-	 .irq_sources_i      ( irq_sources  ),
-	 .eip_targets_o      ( irq          ),
-	 .external_bus_io    ( reg_bus      )
-	 );
+   reg_intf::reg_intf_resp_d32 plic_resp;
+   reg_intf::reg_intf_req_a32_d32 plic_req;
+
+   assign plic_req.addr  = reg_bus.addr;
+   assign plic_req.write = reg_bus.write;
+   assign plic_req.wdata = reg_bus.wdata;
+   assign plic_req.wstrb = reg_bus.wstrb;
+   assign plic_req.valid = reg_bus.valid;
+
+   assign reg_bus.rdata = plic_resp.rdata;
+   assign reg_bus.error = plic_resp.error;
+   assign reg_bus.ready = plic_resp.ready;
+
+   plic_top
+     #(
+       .N_SOURCE    ( NIRQ_SRCS   ),
+       .N_TARGET    ( 2*NHARTS    ),
+       .MAX_PRIO    ( MaxPriority )
+       ) i_plic
+       (
+	.clk_i         ( clk         ),
+	.rst_ni        ( rstn        ),
+	.req_i         ( plic_req    ),
+	.resp_o        ( plic_resp   ),
+	.le_i          ( '0          ), // 0:level 1:edge
+	.irq_sources_i ( irq_sources ),
+	.eip_targets_o ( irq         )
+	);
 
 
    // ---------------
