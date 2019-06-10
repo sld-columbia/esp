@@ -355,7 +355,6 @@ linux-clean: sysroot-clean
 
 linux-distclean: sysroot-distclean
 	$(QUIET_CLEAN)$(RM) linux-build linux.dsu
-	@ARCH=sparc CROSS_COMPILE=sparc-leon3-linux- $(MAKE) --quiet -C ${LINUXSRC} mrproper
 
 sysroot-clean:
 	$(QUIET_CLEAN)$(RM) sysroot.files sysroot.cpio
@@ -387,6 +386,7 @@ else ifeq ("$(CPU_ARCH)", "ariane")
 
 BOOTROM_PATH = $(SOFT)/bootrom
 RISCV_TESTS = $(SOFT)/riscv-tests
+RISCV_PK = $(SOFT)/riscv-pk
 
 soft: prom.srec ram.srec prom.bin systest.bin
 
@@ -494,21 +494,83 @@ ram.srec: systest.exe
 
 .PHONY: ahbrom-clean ahbrom-distclean
 
-linux:
+sysroot:
+	$(QUIET_CP)cp -r $(SOFT)/sysroot .
 
-linux-clean:
+sysroot.files: sysroot
+	$(QUIET_MAKE)$(MAKE) -C ${LINUXSRC}/usr gen_init_cpio
+	$(QUIET_INFO)echo "Generating root file-system list..."
+	@sh ${LINUXSRC}/usr/gen_initramfs_list.sh -u `id -u` -g `id -g` $< \
+	    | sed -e 's/^file \(\/bin\/busybox .*\) 755 0 0/file \1 4755 0 0/' \
+	    > $@;
+	@echo "nod /dev/console 622 0 0 c 5 1" >> $@
+	@touch $@
 
-linux-distclean:
 
-sysroot-update:
+sysroot.cpio: sysroot.files
+	$(QUIET_BUILD)${LINUXSRC}/usr/gen_init_cpio $< > $@
+
+
+linux-build/.config: $(LINUXSRC)/arch/$(ARCH)/configs/$(LINUX_CONFIG)
+	@$(MAKE) linux-build
+	$(QUIET_MAKE) ARCH=$(ARCH) CROSS_COMPILE=$(CROSS_COMPILE_LINUX) $(MAKE)  O=${PWD}/linux-build -C ${LINUXSRC} $(LINUX_CONFIG)
+
+
+linux-build/vmlinux: sysroot.cpio linux-build/.config
+	$(QUIET_MAKE) ARCH=$(ARCH) CROSS_COMPILE=$(CROSS_COMPILE_LINUX) $(MAKE) -C linux-build
+
+
+sysroot-update: linux-build/vmlinux
+	@touch sysroot
+	$(QUIET_MAKE)$(MAKE) linux-build/vmlinux
+
+
+pk-build:
+	$(QUIET_MKDIR)mkdir -p $@
+
+
+pk-build/bbl: pk-build sysroot-update
+	$(QUIET_CHECK) cd pk-build; \
+		$(RISCV_PK)/configure \
+			--host=riscv64-unknown-elf \
+			CC=riscv64-unknown-elf-gcc \
+			OBJDUMP=riscv64-unknown-elf-objdump \
+			--with-payload=../linux-build/vmlinux
+	$(QUIET_MAKE) $(MAKE) -C pk-build
+
+
+linux.bin: pk-build/bbl
+	$(QUIET_OBJCP) riscv64-unknown-elf-objcopy -S -O binary --change-addresses -0x80000000 $< $@
+
+
+linux: linux.bin prom.bin
+
+
+linux-clean: sysroot-clean
+	$(QUIET_CLEAN)
+	@if test -e linux-build; then \
+		ARCH=$(ARCH) CROSS_COMPILE=$(CROSS_COMPILE_LINUX) $(MAKE) --quiet -C linux-build clean; \
+	fi;
+
+
+linux-distclean: sysroot-distclean
+	$(QUIET_CLEAN)$(RM) linux-build pk-build linux.bin
+
 
 sysroot-clean:
+	$(QUIET_CLEAN)$(RM) sysroot.files sysroot.cpio
 
-sysroot-distclean:
+
+sysroot-distclean: sysroot-clean
+	$(QUIET_CLEAN)$(RM) sysroot
+
 
 barec-all:
 
+
 barec-distclean:
+
+# TODO: Add device drivers for RISCV and add them to compile/clean targets above
 
 else
 ### Other architectures if avalable ###
@@ -1139,6 +1201,10 @@ vivado/setup.tcl: vivado $(XDC) $(BOARD_FILES)
 	@echo "set_property target_language verilog [current_project]" >> $@
 ifneq ($(findstring profpga, $(BOARD)),)
 	@echo "set_property include_dirs {$(PROFPGA_INCDIR)} [get_filesets {sim_1 sources_1}]" >> $@
+endif
+ifeq ("$(CPU_ARCH)", "ariane")
+	@echo "set_property include_dirs {$(ARIANE)/src/common_cells/include} [get_filesets {sim_1 sources_1}]" >> $@
+	@echo "set_property verilog_define {WT_DCACHE=1} [get_filesets {sim_1 sources_1}]" >> $@
 endif
 	@echo "source ./srcs.tcl" >> $@
 ifneq ("$(PROTOBOARD)","")

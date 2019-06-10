@@ -133,7 +133,7 @@ accelerators-distclean: $(ACCELERATORS-distclean)
 $(ACCELERATORS-driver): sysroot linux-build/vmlinux
 	@if test -e $(DRIVERS)/$(@:-driver=)/linux/$(@:-driver=).c; then \
 		echo '   ' MAKE $@; \
-		ARCH=sparc CROSS_COMPILE=sparc-leon3-linux- KSRC=$(PWD)/linux-build $(MAKE) ESP_CORE_PATH=$(ESP_CORE_PATH) -C $(DRIVERS)/$(@:-driver=)/linux; \
+		ARCH=$(ARCH) CROSS_COMPILE=$(CROSS_COMPILE_LINUX) KSRC=$(PWD)/linux-build $(MAKE) ESP_CORE_PATH=$(ESP_CORE_PATH) -C $(DRIVERS)/$(@:-driver=)/linux; \
 		if test -e $(DRIVERS)/$(@:-driver=)/linux/$(@:-driver=).ko; then \
 			echo '   ' CP $@; cp $(DRIVERS)/$(@:-driver=)/linux/$(@:-driver=).ko sysroot/opt/drivers/; \
 		else \
@@ -144,13 +144,13 @@ $(ACCELERATORS-driver): sysroot linux-build/vmlinux
 	fi;
 
 $(ACCELERATORS-driver-clean):
-	$(QUIET_CLEAN)ARCH=sparc CROSS_COMPILE=sparc-leon3-linux- KSRC=$(PWD)/linux-build $(MAKE) ESP_CORE_PATH=$(ESP_CORE_PATH) -C $(DRIVERS)/$(@:-driver-clean=)/linux clean
+	$(QUIET_CLEAN) ARCH=$(ARCH) CROSS_COMPILE=$(CROSS_COMPILE_LINUX) KSRC=$(PWD)/linux-build $(MAKE) ESP_CORE_PATH=$(ESP_CORE_PATH) -C $(DRIVERS)/$(@:-driver-clean=)/linux clean
 
 
 $(ACCELERATORS-app): sysroot
 	@if [ `ls -1 $(DRIVERS)/$(@:-app=)/app/*.c 2>/dev/null | wc -l ` -gt 0 ]; then \
 		echo '   ' MAKE $@; \
-		CROSS_COMPILE=sparc-leon3-linux- $(MAKE) -C $(DRIVERS)/$(@:-app=)/app; \
+		CROSS_COMPILE=$(CROSS_COMPILE_LINUX) $(MAKE) -C $(DRIVERS)/$(@:-app=)/app; \
 		if [ `ls -1 $(DRIVERS)/$(@:-app=)/app/*.exe 2>/dev/null | wc -l ` -gt 0 ]; then \
 			echo '   ' CP $@; cp $(DRIVERS)/$(@:-app=)/app/*.exe sysroot/applications/test/; \
 		else \
@@ -161,12 +161,12 @@ $(ACCELERATORS-app): sysroot
 	fi;
 
 $(ACCELERATORS-app-clean):
-	$(QUIET_CLEAN)CROSS_COMPILE=sparc-leon3-linux- $(MAKE) -C $(DRIVERS)/$(@:-app-clean=)/app clean
+	$(QUIET_CLEAN) CROSS_COMPILE=$(CROSS_COMPILE_LINUX) $(MAKE) -C $(DRIVERS)/$(@:-app-clean=)/app clean
 
 $(ACCELERATORS-barec): barec
 	@if [ `ls -1 $(DRIVERS)/$(@:-barec=)/barec/*.c 2>/dev/null | wc -l ` -gt 0 ]; then \
 		echo '   ' MAKE $@; \
-		CROSS_COMPILE=sparc-elf- $(MAKE) -C $(DRIVERS)/$(@:-barec=)/barec; \
+		CROSS_COMPILE=$(CROSS_COMPILE_ELF) $(MAKE) -C $(DRIVERS)/$(@:-barec=)/barec; \
 		if [ `ls -1 $(DRIVERS)/$(@:-barec=)/barec/*.exe 2>/dev/null | wc -l ` -gt 0 ]; then \
 			echo '   ' CP $@; cp $(DRIVERS)/$(@:-barec=)/barec/*.exe barec; \
 		else \
@@ -177,7 +177,7 @@ $(ACCELERATORS-barec): barec
 	fi;
 
 $(ACCELERATORS-barec-clean):
-	$(QUIET_CLEAN)CROSS_COMPILE=sparc-elf- $(MAKE) -C $(DRIVERS)/$(@:-barec-clean=)/barec clean
+	$(QUIET_CLEAN) CROSS_COMPILE=$(CROSS_COMPILE_ELF) $(MAKE) -C $(DRIVERS)/$(@:-barec-clean=)/barec clean
 
 
 .PHONY: $(ACCELERATORS-driver) $(ACCELERATORS-driver-clean) $(ACCELERATORS-app) $(ACCELERATORS-app-clean) $(ACCELERATORS-barec) $(ACCELERATORS-barec-clean)

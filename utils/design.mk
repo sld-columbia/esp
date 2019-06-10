@@ -44,6 +44,21 @@ endif
 -include .grlib_config
 -include .esp_config
 
+ifdef LINUX_SMP
+LINUX_CONFIG = $(CPU_ARCH)_smp_defconfig
+else
+LINUX_CONFIG = $(CPU_ARCH)_defconfig
+endif
+
+ifeq ("$(CPU_ARCH)", "ariane")
+ARCH=riscv
+CROSS_COMPILE_ELF = riscv64-unknown-elf-
+CROSS_COMPILE_LINUX = riscv64-unknown-linux-gnu-
+else
+ARCH=sparc
+CROSS_COMPILE_ELF = sparc-elf-
+CROSS_COMPILE_LINUX = sparc-leon3-linux-
+endif
 
 ### Vivado constaints ###
 ifneq ($(filter $(TECHLIB),$(FPGALIBS)),)
@@ -103,7 +118,7 @@ ARIANE_VLOGOPT += -permissive
 ARIANE_VLOGOPT += +define+WT_DCACHE
 ARIANE_VLOGOPT += -pedanticerrors
 ARIANE_VLOGOPT += -sv
-ARIANE_VLOGOPT += +incdir+${ARIANE}/src/common_cells/include/common_cells
+ARIANE_VLOGOPT += +incdir+${ARIANE}/src/common_cells/include
 ARIANE_VLOGOPT += -suppress 2583
 
 # Simulator switches
@@ -142,7 +157,6 @@ TOP_VHDL_RTL_SRCS += $(wildcard $(DESIGN_PATH)/sldgen/noc_*.vhd)
 TOP_VHDL_RTL_SRCS += $(DESIGN_PATH)/sldgen/tile_acc.vhd
 TOP_VHDL_RTL_SRCS += $(wildcard $(ESP_ROOT)/socs/common/tile_*.vhd)
 TOP_VHDL_RTL_SRCS += $(ESP_ROOT)/socs/common/esp.vhd
-TOP_VHDL_RTL_SRCS += $(DESIGN_PATH)/ahbrom.vhd
 TOP_VHDL_RTL_SRCS += $(DESIGN_PATH)/$(TOP).vhd
 
 ifneq ($(findstring profpga, $(BOARD)),)
