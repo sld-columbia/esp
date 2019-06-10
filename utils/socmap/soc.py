@@ -169,7 +169,7 @@ class SoC_Config():
           tile.clk_region.set(int(tokens[5]))
           tile.has_pll.set(int(tokens[6]))
           tile.has_clkbuf.set(int(tokens[7]))
-          if tokens[3] == "cpu":
+          if tokens[3] == "cpu" and self.cache_en.get() == 1:
             tile.has_l2.set(1)
           if tokens[3] == "acc":
             tile.point.set(tokens[8])

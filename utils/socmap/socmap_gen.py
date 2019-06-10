@@ -806,7 +806,7 @@ def print_mapping(fp, esp_config):
     t = esp_config.tiles[i]
     if t.type == "cpu" and t.l2.idx != -1:
       fp.write("    " + str(i) + " => " + str(t.l2.idx) + ",\n")
-  fp.write("    others => -1);\n\n")
+  fp.write("    others => 0);\n\n")
 
   #
   fp.write("  -- Flag tiles that have a private cache\n")
@@ -840,7 +840,7 @@ def print_mapping(fp, esp_config):
     t = esp_config.tiles[i]
     if t.type == "mem" and t.llc.idx != -1:
       fp.write("    " + str(i) + " => " + str(t.llc.idx) + ",\n")
-  fp.write("    others => -1);\n\n")
+  fp.write("    others => 0);\n\n")
 
   #
   fp.write("  -- Get tile ID from memory ID\n")
