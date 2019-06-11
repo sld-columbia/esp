@@ -44,12 +44,6 @@ architecture behav of testbench is
       c0_ddr4_dq       : inout std_logic_vector(63 downto 0);
       c0_ddr4_dqs_c    : inout std_logic_vector(7 downto 0);
       c0_ddr4_dqs_t    : inout std_logic_vector(7 downto 0);
-      address          : out   std_logic_vector(25 downto 0);
-      data             : inout std_logic_vector(15 downto 0);
-      oen              : out   std_ulogic;
-      writen           : out   std_ulogic;
-      romsn            : out   std_logic;
-      adv              : out   std_logic;
       gtrefclk_p       : in    std_logic;
       gtrefclk_n       : in    std_logic;
       txp              : out   std_logic;
@@ -92,14 +86,6 @@ architecture behav of testbench is
   signal c0_ddr4_dqs_c    : std_logic_vector(7 downto 0);
   signal c0_ddr4_dqs_t    : std_logic_vector(7 downto 0);
 
--- PROM (Simulation only for now)
-  signal address : std_logic_vector(25 downto 0);
-  signal data    : std_logic_vector(15 downto 0);
-  signal oen     : std_ulogic;
-  signal writen  : std_ulogic;
-  signal romsn   : std_logic;
-  signal adv     : std_logic;
-
 -- SGMII Ethernet
   signal gtrefclk_p : std_logic := '0';
   signal gtrefclk_n : std_logic := '1';
@@ -138,17 +124,6 @@ begin
   c0_ddr4_dqs_c    <= (others => 'Z');
   c0_ddr4_dqs_t    <= (others => 'Z');
 
-  -- Simulation model of generic async SRAM from GRLIB. For now the PROM is present
-  -- in simulation only. First-stage boot loader of FPGA is replaced by runtime
-  -- configuration through debug unit. Supporting boot from SDCARD is on the
-  -- TODO list.
-  prom0 : for i in 0 to 1 generate
-    sr0 : grsim_sram generic map (index => i+4, abits => 26, fname => promfile)
-      port map (address(25 downto 0), data(15-i*8 downto 8-i*8), romsn,
-                writen, oen);
-  end generate;
-  data <= buskeep(data) after 5 ns;
-
   -- Ethernet (We do not simulate any model of the PHY to speedup RTL simulation)
   gtrefclk_p <= not gtrefclk_p after 800 ps;
   gtrefclk_n <= not gtrefclk_n after 800 ps;
@@ -186,12 +161,6 @@ begin
       c0_ddr4_dq       => c0_ddr4_dq,
       c0_ddr4_dqs_c    => c0_ddr4_dqs_c,
       c0_ddr4_dqs_t    => c0_ddr4_dqs_t,
-      address          => address,
-      data             => data,
-      oen              => oen,
-      writen           => writen,
-      romsn            => romsn,
-      adv              => adv,
       gtrefclk_p       => gtrefclk_p,
       gtrefclk_n       => gtrefclk_n,
       txp              => txp,
