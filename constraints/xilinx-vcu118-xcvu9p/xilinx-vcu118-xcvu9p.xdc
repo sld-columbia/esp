@@ -24,6 +24,10 @@ set_input_jitter [get_clocks -of_objects [get_ports c0_sys_clk_p]] 0.05
 
 # Recover elaborated clock name
 set clkm_elab [get_clocks -of_objects [get_nets clkm]]
+set refclk_elab [get_clocks -of_objects [get_nets chip_refclk]]
+
+# Declare asynchronous clocks
+set_clock_groups -asynchronous -group [get_clocks ${clkm_elab}] -group [get_clocks ${refclk_elab}]
 
 
 # --- False paths
@@ -43,16 +47,16 @@ set_property PACKAGE_PIN BB22 [get_ports uart_rtsn]
 set_property IOSTANDARD LVCMOS18 [get_ports uart_*]
 
 # Inputs
-set_input_delay -clock [get_clocks ${clkm_elab}] -max 1.500 [get_ports uart_rxd]
-set_input_delay -clock [get_clocks ${clkm_elab}] -min -add_delay 0.500 [get_ports uart_rxd]
-set_input_delay -clock [get_clocks ${clkm_elab}] -max 1.500 [get_ports uart_ctsn]
-set_input_delay -clock [get_clocks ${clkm_elab}] -min -add_delay 0.500 [get_ports uart_ctsn]
+set_input_delay -clock [get_clocks ${refclk_elab}] -max 1.500 [get_ports uart_rxd]
+set_input_delay -clock [get_clocks ${refclk_elab}] -min -add_delay 0.500 [get_ports uart_rxd]
+set_input_delay -clock [get_clocks ${refclk_elab}] -max 1.500 [get_ports uart_ctsn]
+set_input_delay -clock [get_clocks ${refclk_elab}] -min -add_delay 0.500 [get_ports uart_ctsn]
 
 # Outputs
-set_output_delay -clock [get_clocks ${clkm_elab}] -max 0.500 [get_ports uart_txd]
-set_output_delay -clock [get_clocks ${clkm_elab}] -min -add_delay -0.500 [get_ports uart_txd]
-set_output_delay -clock [get_clocks ${clkm_elab}] -max 0.500 [get_ports uart_rtsn]
-set_output_delay -clock [get_clocks ${clkm_elab}] -min -add_delay -0.500 [get_ports uart_rtsn]
+set_output_delay -clock [get_clocks ${refclk_elab}] -max 0.500 [get_ports uart_txd]
+set_output_delay -clock [get_clocks ${refclk_elab}] -min -add_delay -0.500 [get_ports uart_txd]
+set_output_delay -clock [get_clocks ${refclk_elab}] -max 0.500 [get_ports uart_rtsn]
+set_output_delay -clock [get_clocks ${refclk_elab}] -min -add_delay -0.500 [get_ports uart_rtsn]
 
 # --- GPIO
 
