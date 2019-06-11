@@ -410,6 +410,11 @@ architecture top_level of sgmii_vcu118 is
   signal RMemRgmiiiRead : std_logic;
   signal RMemRgmiioRead : std_logic;
 
+  attribute keep         : boolean;
+  attribute syn_keep     : string;
+  attribute keep of clk125m : signal is true;
+  attribute syn_keep of clk125m : signal is "true";
+
 begin
 
   -----------------------------------------------------------------------------
