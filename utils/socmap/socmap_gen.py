@@ -155,6 +155,7 @@ def uint_to_bin(x, bits):
   return b
 
 class soc_config:
+  tech = "virtex7"
   cpu_arch = "leon3"
   #components
   ncpu = 0
@@ -187,6 +188,7 @@ class soc_config:
 
   def __init__(self, soc):
     #components
+    self.tech = soc.TECH
     self.cpu_arch = soc.CPU_ARCH.get()
     self.ncpu = soc.noc.get_cpu_num(soc)
     self.nmem = soc.noc.get_mem_num(soc)
@@ -400,7 +402,7 @@ def print_mapping(fp, esp_config):
 
   #
   fp.write("  ------ Local-port Synchronizers iff more than 1 clock region (implied by > 1 memory tiles)\n")
-  if esp_config.has_dvfs or esp_config.nmem > 1:
+  if esp_config.has_dvfs or esp_config.nmem > 1 or esp_config.tech == "virtexup":
     fp.write("  constant CFG_HAS_SYNC : integer := 1;\n")
   else:
     fp.write("  constant CFG_HAS_SYNC : integer := 0;\n")
@@ -1337,7 +1339,7 @@ def print_ariane_devtree(fp, esp_config):
   irq_srcs = 1; # UART
   if esp_config.has_eth:
     # Ethenrnet
-    irq_srcs += 1
+    irq_srcs += 2
   if esp_config.nacc > 0:
     # Accelerators share one irq line
     irq_srcs += 1

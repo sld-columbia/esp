@@ -555,7 +555,7 @@ class NoCFrame(Pmw.ScrolledFrame):
 
     #update message box
     self.message.delete(0.0, END)
-    if tot_mem > 1 or len(regions) > 1:
+    if tot_mem > 1 or len(regions) > 1 or self.soc.TECH == "virtexup":
       self.cfg_frame.sync_label.config(text="With synchronizers",fg="darkgreen")
     else:
       self.cfg_frame.sync_label.config(text="No synchronizers", fg="red")

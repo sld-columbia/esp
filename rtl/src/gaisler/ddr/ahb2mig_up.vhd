@@ -68,6 +68,7 @@ entity ahb2mig_up is
     rst_n_async      : in    std_logic;
     clk_amba         : in    std_logic;
     ui_clk           : out   std_logic;
+    ui_clk_slow      : out   std_logic;
     ui_clk_sync_rst  : out   std_logic
     );
 end;
@@ -166,6 +167,7 @@ architecture rtl of ahb2mig_up is
       c0_init_calib_complete    : out std_logic;
       c0_ddr4_ui_clk            : out std_logic;
       c0_ddr4_ui_clk_sync_rst   : out std_logic;
+      addn_ui_clkout1           : out std_logic;
       dbg_clk                   : out std_logic;
       c0_ddr4_app_addr          : in  std_logic_vector(27 downto 0);
       c0_ddr4_app_cmd           : in  std_logic_vector(2 downto 0);
@@ -646,6 +648,7 @@ begin
       c0_init_calib_complete    => calib_done,
       c0_ddr4_ui_clk            => ui_clk,
       c0_ddr4_ui_clk_sync_rst   => ui_clk_sync_rst,
+      addn_ui_clkout1           => ui_clk_slow,
       dbg_clk                   => open,
       c0_ddr4_app_addr          => migin.app_addr,
       c0_ddr4_app_cmd           => migin.app_cmd,

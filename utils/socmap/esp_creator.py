@@ -64,7 +64,10 @@ class ConfigFrame(Frame):
     self.svga_label.pack(side=TOP)      
     if soc.HAS_SVGA == True:
        self.svga_label.config(text="SVGA+FB",fg="darkgreen")
-    self.sync_label = Label(self, text="No synchronizers")
+    if soc.TECH == "virtexup":
+      self.sync_label = Label(self, text="With synchronizers", fg="darkgreen")
+    else:
+      self.sync_label = Label(self, text="No synchronizers", fg="red")
     self.sync_label.pack(side=TOP)    
 
 class OptionFrame(Frame):
