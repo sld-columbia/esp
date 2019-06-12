@@ -185,7 +185,7 @@ architecture rtl of top is
   signal chip_pllbypass : std_logic_vector(CFG_TILES_NUM-1 downto 0);
   signal chip_pllclk    : std_ulogic;
 
-constant CPU_FREQ : integer := 125000;  -- cpu frequency in KHz
+constant CPU_FREQ : integer := 78125;  -- cpu frequency in KHz
 
   attribute keep         : boolean;
   attribute syn_keep     : string;
@@ -342,7 +342,7 @@ begin
 
     calib_done <= '1';
     clkm       <= not clkm after 3.2 ns;
-    chip_refclk <= not chip_refclk after 4.0 ns;
+    chip_refclk <= not chip_refclk after 5.2 ns;
 
   -- pragma translate_on
   end generate gen_mig_model;
