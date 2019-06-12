@@ -306,7 +306,6 @@ begin
     coherent_dma_snd_wrreq   <= '0';
     coherent_dma_snd_data_in <= (others => '0');
 
-    apbo(this_llc_pindex) <= apb_none;
     mon_cache             <= monitor_cache_none;
 
     apb_snd_wrreq   <= '0';
@@ -441,7 +440,7 @@ begin
       local_y     => this_local_y,
       local_x     => this_local_x,
       axitran     => 0,
-      little_end  => GLOB_CPU_AXI,
+      little_end  => 0,
       cacheline   => 1,
       l2_cache_en => 0)
     port map (
