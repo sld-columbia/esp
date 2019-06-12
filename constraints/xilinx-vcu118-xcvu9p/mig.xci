@@ -215,7 +215,7 @@
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.C0.SYSCLK_CENTER_INFO">FALSE</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.CAL_INPUT_CLK_PERIOD">4000</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.CLKOUT0_DIVIDE">0</spirit:configurableElementValue>
-        <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.CLKOUT1_DIVIDE">13</spirit:configurableElementValue>
+        <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.CLKOUT1_DIVIDE">10</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.CLKOUT2_DIVIDE">0</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.CLKOUT3_DIVIDE">0</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.CLKOUT4_DIVIDE">0</spirit:configurableElementValue>
@@ -223,7 +223,7 @@
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.CUSTOM_PART_ATTRIBUTES">NONE</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.Debug_Signal">Disable</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.LR_WIDTH">1</spirit:configurableElementValue>
-        <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.M_ADDN_UI_CLKOUT1_FREQ_HZ">96</spirit:configurableElementValue>
+        <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.M_ADDN_UI_CLKOUT1_FREQ_HZ">125</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.M_ADDN_UI_CLKOUT1_PHASE">0</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.M_ADDN_UI_CLKOUT2_FREQ_HZ">0.0</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.M_ADDN_UI_CLKOUT2_PHASE">0</spirit:configurableElementValue>
@@ -233,7 +233,7 @@
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.M_ADDN_UI_CLKOUT4_PHASE">0</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.PING_PONG_PHY">1</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.Simulation_Mode">BFM</spirit:configurableElementValue>
-        <spirit:configurableElementValue spirit:referenceId="PARAM_VALUE.ADDN_UI_CLKOUT1_FREQ_HZ">96</spirit:configurableElementValue>
+        <spirit:configurableElementValue spirit:referenceId="PARAM_VALUE.ADDN_UI_CLKOUT1_FREQ_HZ">125</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="PARAM_VALUE.ADDN_UI_CLKOUT2_FREQ_HZ">None</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="PARAM_VALUE.ADDN_UI_CLKOUT3_FREQ_HZ">None</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="PARAM_VALUE.ADDN_UI_CLKOUT4_FREQ_HZ">None</spirit:configurableElementValue>
