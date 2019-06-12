@@ -16,6 +16,7 @@ use work.sld_devices.all;
 use work.devices.all;
 use work.gencomp.all;
 use work.leon3.all;
+use work.ariane_esp_pkg.all;
 use work.misc.all;
 -- pragma translate_off
 use work.sim.all;
@@ -34,6 +35,7 @@ use work.socmap.all;
 
 entity tile_cpu is
   generic (
+    SIMULATION : boolean := false;
     tile_id : integer range 0 to CFG_TILES_NUM - 1 := 0);
   port (
     rst                : in  std_ulogic;
@@ -41,6 +43,9 @@ entity tile_cpu is
     pllbypass          : in  std_ulogic;
     pllclk             : out std_ulogic;
     -- TODO: remove this; should use proxy
+    uart_irq           : in  std_ulogic;
+    eth0_irq           : in  std_ulogic;
+    sgmii0_irq         : in  std_ulogic;
     dbgi               : in  l3_debug_in_type;
     dbgo               : out l3_debug_out_type;
     -- NOC
@@ -104,7 +109,13 @@ architecture rtl of tile_cpu is
   signal irqi : l3_irq_in_type;
   signal irqo : l3_irq_out_type;
   -- TODO: remove the following and replace w/ ariane-specific irqi irqo
-  signal irq_sources : std_logic_vector(0 downto 0);
+  signal irq_sources : std_logic_vector(29 downto 0);
+  signal cpu_rstn : std_ulogic;
+  type cpu_rstn_state_type is (por, soft_reset_1_h, soft_reset_1_l,
+                               soft_reset_2_h, soft_reset_2_l,
+                               soft_reset_3_h, soft_reset_3_l,
+                               soft_reset_4_h, run);
+  signal cpu_rstn_state, cpu_rstn_next : cpu_rstn_state_type;
 
   -- Queues
   signal coherence_req_wrreq        : std_ulogic;
@@ -295,12 +306,29 @@ begin
 
   ariane_cpu_gen: if GLOB_CPU_ARCH = ariane generate
 
-    ariane_axi_wrap_2: entity work.ariane_axi_wrap
+    -- TODO: move reset logic into wrapper
+    -- TODO: fix irq delivery and move everything into wrapper
+    -- TODO: move dbg signals into wrapper
+    ariane_axi_wrap_1: ariane_axi_wrap
       generic map (
-        HART_ID     => this_cpu_id_lv)
+        HART_ID     => this_cpu_id_lv,
+        NMST        => 2,
+        NSLV        => 5,
+        NIRQ_SRCS   => 30,
+        ROMBase     => X"0000_0000_0001_0000",
+        ROMLength   => X"0000_0000_0001_0000",
+        APBBase     => X"0000_0000" & conv_std_logic_vector(CFG_APBADDR, 12) & X"0_0000",
+        APBLength   => X"0000_0000_1000_0000",
+        CLINTBase   => X"0000_0000_0200_0000",
+        CLINTLength => X"0000_0000_000C_0000",
+        PLICBase    => X"0000_0000_0C00_0000",
+        PLICLength  => X"0000_0000_03FF_FFFF",
+        DRAMBase    => X"0000_0000" & conv_std_logic_vector(ddr_haddr(0), 12) & X"0_0000",
+        DRAMLength  => X"0000_0000_2000_0000")  -- TODO: length set
+                                                -- automatically to match devtree
       port map (
         clk         => clk_feedthru,
-        rstn        => rst,
+        rstn        => cpu_rstn,
         irq_sources => irq_sources,
         romi        => mosi(0),
         romo        => somi(0),
@@ -311,9 +339,113 @@ begin
         apb_req     => apb_req,
         apb_ack     => apb_ack);
 
-    irq_sources <= (others => '0');
+    irq_sources(0) <= uart_irq;
+    irq_sources(1) <= eth0_irq;
+    irq_sources(2) <= sgmii0_irq;
+    irq_sources(29 downto 3) <= (others => '0');
 
-    dbgo <= dbgo_none;
+    dbgo.data <=  (others => '0');
+    dbgo.crdy <= '1';
+    dbgo.dsu <= '1';
+    dbgo.dsumode <= '0';
+    dbgo.error <=  '0';
+    dbgo.halt <= '0';
+    dbgo.pwd <= '1';
+    dbgo.idle <= '0';
+    dbgo.ipend <= '0';
+    dbgo.icnt <= '0';
+    dbgo.fcnt <= '0';
+    dbgo.optype <= (others => '0');
+    dbgo.bpmiss <= '0';
+    dbgo.istat <= (others => '0');
+    dbgo.dstat <= (others => '0');
+    dbgo.wbhold <= '0';
+    dbgo.su <= '0';
+
+    -- dbgo <= dbgo_none;
+
+    cpu_rstn_gen_sim: if SIMULATION = true generate
+      cpu_rstn <= rst;
+    end generate cpu_rstn_gen_sim;
+
+    cpu_rstn_gen: if SIMULATION = false generate
+
+      -- Workaroud to keep using GRMON. GRMON asserts dbgi.reset twice when
+      -- launched and then two more times every time the reset command is given
+      -- on the console.
+      -- to start the first application: open grmon - load -reset
+      -- to start a new application: reset - load -reset
+      -- The reset pulse is longer than one cycle, so we need to detect both edges
+      cpu_rstn_state_update: process (clk_feedthru, rst) is
+      begin  -- process cpu_rstn_gen
+        if rst = '0' then                 -- asynchronous reset (active low)
+          cpu_rstn_state <= por;
+        elsif clk_feedthru'event and clk_feedthru = '1' then  -- rising clock edge
+          cpu_rstn_state <= cpu_rstn_next;
+        end if;
+      end process cpu_rstn_state_update;
+
+      cpu_rstn_fsm: process (cpu_rstn_state, dbgi) is
+      begin  -- process cpu_rstn_fsm
+
+        cpu_rstn_next <= cpu_rstn_state;
+        cpu_rstn <= '0';
+
+        case cpu_rstn_state is
+
+          when por =>
+            if dbgi.reset = '1' then
+              cpu_rstn_next <= soft_reset_1_h;
+            end if;
+
+          when soft_reset_1_h =>
+            if dbgi.reset = '0' then
+              cpu_rstn_next <= soft_reset_1_l;
+            end if;
+
+          when soft_reset_1_l =>
+            if dbgi.reset = '1' then
+              cpu_rstn_next <= soft_reset_2_h;
+            end if;
+
+          when soft_reset_2_h =>
+            if dbgi.reset = '0' then
+              cpu_rstn_next <= soft_reset_2_l;
+            end if;
+
+          when soft_reset_2_l =>
+            if dbgi.reset = '1' then
+              cpu_rstn_next <= soft_reset_3_h;
+            end if;
+
+          when soft_reset_3_h =>
+            if dbgi.reset = '0' then
+              cpu_rstn_next <= soft_reset_3_l;
+            end if;
+
+          when soft_reset_3_l =>
+            if dbgi.reset = '1' then
+              cpu_rstn_next <= soft_reset_4_h;
+            end if;
+
+          when soft_reset_4_h =>
+            if dbgi.reset = '0' then
+              cpu_rstn_next <= run;
+            end if;
+
+          when run =>
+            cpu_rstn <= '1';
+            if dbgi.reset = '1' then
+              cpu_rstn_next <= soft_reset_1_h;
+            end if;
+
+          when others =>
+            cpu_rstn_next <= por;
+
+        end case;
+      end process cpu_rstn_fsm;
+
+    end generate cpu_rstn_gen;
 
   end generate ariane_cpu_gen;
 
@@ -366,6 +498,8 @@ begin
 
   end generate no_cache_coherence;
 
+  l2_rstn <= not dbgi.reset and rst;
+
   with_cache_coherence : if CFG_L2_ENABLE /= 0 generate
 
     -- Remote uncached slaves
@@ -401,8 +535,6 @@ begin
         remote_ahbs_rcv_rdreq      => remote_ahbs_rcv_rdreq,
         remote_ahbs_rcv_data_out   => remote_ahbs_rcv_data_out,
         remote_ahbs_rcv_empty      => remote_ahbs_rcv_empty);
-
-    l2_rstn <= not dbgi.reset and rst;
 
     -- Memory access w/ cache coherence (write-back L2 cache)
     l2_wrapper_1 : l2_wrapper

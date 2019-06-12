@@ -34,6 +34,8 @@ use work.socmap.all;
 use work.memoryctrl.all;
 
 entity tile_io is
+  generic (
+    SIMULATION : boolean := false);
   port (
     rst                : in  std_ulogic;
     clk                : in  std_ulogic;
@@ -55,6 +57,9 @@ entity tile_io is
     ndsuact            : out std_ulogic;
     dsuerr             : out std_ulogic;
     --TODO: REMOVE THIS and use NoC proxies
+    uart_irq           : out std_ulogic;
+    eth0_irq           : out std_ulogic;
+    sgmii0_irq         : out std_ulogic;
     dbgi               : out l3_debug_in_vector(0 to CFG_NCPU_TILE-1);
     dbgo               : in  l3_debug_out_vector(0 to CFG_NCPU_TILE-1);
     -- NOC
@@ -361,22 +366,53 @@ begin
     noc_apbo(15) <= apb_none;
   end generate no_sgmii_gen;
 
------------------------------------------------------------------------------
-  -- Memory Controller Slave (bootrom) - Simulation only for now
+  -- TODO: Remove
+  eth0_irq <= noc_apbo(14).pirq(12);
+  sgmii0_irq <= noc_apbo(15).pirq(11);
+
   -----------------------------------------------------------------------------
-  ahbrom_1: ahbrom
-    generic map (
-      hindex => ahbrom_hindex,
-      haddr  => ahbrom_haddr,
-      hmask  => ahbrom_hmask,
-      pipe   => 0,
-      tech   => CFG_FABTECH,
-      kbytes => 4)
-    port map (
-      rst   => rst,
-      clk   => clk,
-      ahbsi => ahbsi,
-      ahbso => ahbso(ahbrom_hindex));
+  -- Memory Controller Slave (BOOTROM is implemented as RAM for development)
+  -----------------------------------------------------------------------------
+
+-- pragma translate_off
+  bootram_model_gen: if SIMULATION = true generate
+    ahbram_1 : ahbram_sim
+      generic map (
+        hindex   => ahbrom_hindex,
+        haddr    => ahbrom_haddr,
+        hmask    => ahbrom_hmask,
+        tech     => 0,
+        kbytes   => 100,
+        pipe     => 0,
+        maccsz   => AHBDW,
+        fname    => "prom.srec"
+        )
+      port map(
+        rst     => rst,
+        clk     => clk,
+        ahbsi   => ahbsi,
+        ahbso   => ahbso(ahbrom_hindex)
+        );
+  end generate bootram_model_gen;
+-- pragma translate_on
+
+  bootram_gen: if SIMULATION = false generate
+    ahbram_2: ahbram
+      generic map (
+        hindex   => ahbrom_hindex,
+        haddr    => ahbrom_haddr,
+        hmask    => ahbrom_hmask,
+        tech     => CFG_FABTECH,
+        kbytes   => 128,
+        pipe     => 0,
+        maccsz   => AHBDW)
+      port map (
+        rst   => rst,
+        clk   => clk,
+        ahbsi => ahbsi,
+        ahbso => ahbso(ahbrom_hindex));
+  end generate bootram_gen;
+
 
   -----------------------------------------------------------------------------
   -- DSU Slave
@@ -414,6 +450,8 @@ begin
       port map (rst, clk, noc_apbi, noc_apbo(1), u1i, u1o);
     u1i.extclk <= '0';
   end generate;
+
+  uart_irq <= noc_apbo(1).pirq(CFG_UART1_IRQ);
 
   noua0 : if CFG_UART1_ENABLE = 0 generate
     noc_apbo(1) <= apb_none;

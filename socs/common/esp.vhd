@@ -26,6 +26,8 @@ use work.socmap.all;
 use work.soctiles.all;
 
 entity esp is
+  generic (
+    SIMULATION : boolean := false);
   port (
     rst             : in    std_logic;
     sys_clk         : in    std_logic_vector(0 to CFG_NMEM_TILE - 1);
@@ -146,6 +148,9 @@ signal mon_llc_int : monitor_cache_vector(0 to CFG_TILES_NUM-1);
 -- TODO: REMOVE!!! Debug unit messages must go through the NoC!
 signal dbgi : l3_debug_in_vector(0 to CFG_NCPU_TILE-1);
 signal dbgo : l3_debug_out_vector(0 to CFG_NCPU_TILE-1);
+signal uart_irq : std_ulogic;
+signal eth0_irq : std_ulogic;
+signal sgmii0_irq : std_ulogic;
 
 begin
 
@@ -244,13 +249,17 @@ begin
       assert tile_cpu_id(i) /= -1 report "Undefined CPU ID for CPU tile" severity error;
       tile_cpu_i: tile_cpu
         generic map (
-          tile_id => i)
+          SIMULATION => SIMULATION,
+          tile_id    => i)
         port map (
           rst                => rst_int,
           refclk             => refclk_int(i),
           pllbypass          => pllbypass_int(i),
           pllclk             => clk_tile(i),
           --TODO: REMOVE!
+          uart_irq   => uart_irq,
+          eth0_irq   => eth0_irq,
+          sgmii0_irq => sgmii0_irq,
           dbgi   => dbgi(tile_cpu_id(i)),
           dbgo   => dbgo(tile_cpu_id(i)),
           noc1_input_port    => noc_input_port_1(i),
@@ -352,9 +361,11 @@ begin
 
     io_tile: if tile_type(i) = 3 generate
       tile_io_i : tile_io
+        generic map (
+          SIMULATION => SIMULATION)
         port map (
           rst                => rst_int,
-          clk                => sys_clk_int(0),
+          clk                => refclk_int(i),
           eth0_apbi          => eth0_apbi,
           eth0_apbo          => eth0_apbo,
           sgmii0_apbi        => sgmii0_apbi,
@@ -372,6 +383,9 @@ begin
           uart_rtsn          => uart_rtsn_int,
           ndsuact            => ndsuact,
           dsuerr             => dsuerr,
+          uart_irq           => uart_irq,
+          eth0_irq           => eth0_irq,
+          sgmii0_irq         => sgmii0_irq,
           dbgi               => dbgi,
           dbgo               => dbgo,
           noc1_input_port    => noc_input_port_1(i),
@@ -411,7 +425,7 @@ begin
           noc6_data_void_out => noc_data_void_out(6)(i),
           noc6_stop_out      => noc_stop_out(6)(i),
           mon_dvfs           => mon_dvfs_out(i));
-      clk_tile(i) <= sys_clk_int(0);
+      clk_tile(i) <= refclk_int(i);
     end generate io_tile;
 
     mem_tile: if tile_type(i) = 4 generate

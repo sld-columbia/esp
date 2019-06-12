@@ -22,6 +22,8 @@ use work.socmap.all;
 package soctiles is
 
   component esp is
+    generic (
+      SIMULATION : boolean := false);
     port (
       rst                : in  std_logic;
       sys_clk            : in    std_logic_vector(0 to CFG_NMEM_TILE - 1);
@@ -56,12 +58,16 @@ package soctiles is
 
   component tile_cpu is
     generic (
+      SIMULATION : boolean := false;
       tile_id : integer range 0 to CFG_TILES_NUM - 1);
     port (
       rst                : in  std_ulogic;
       refclk             : in  std_ulogic;
       pllbypass          : in  std_ulogic;
       pllclk             : out std_ulogic;
+      uart_irq           : in  std_ulogic;
+      eth0_irq           : in  std_ulogic;
+      sgmii0_irq         : in  std_ulogic;
       dbgi               : in  l3_debug_in_type;
       dbgo               : out l3_debug_out_type;
       noc1_input_port    : out noc_flit_type;
@@ -156,6 +162,8 @@ package soctiles is
   end component tile_acc;
 
   component tile_io is
+    generic (
+      SIMULATION : boolean := false);
     port (
       rst                : in  std_ulogic;
       clk                : in  std_ulogic;
@@ -176,6 +184,9 @@ package soctiles is
       uart_rtsn          : out std_ulogic;
       ndsuact            : out std_ulogic;
       dsuerr             : out std_ulogic;
+      uart_irq           : out std_ulogic;
+      eth0_irq           : out std_ulogic;
+      sgmii0_irq         : out std_ulogic;
       dbgi               : out l3_debug_in_vector(0 to CFG_NCPU_TILE-1);
       dbgo               : in  l3_debug_out_vector(0 to CFG_NCPU_TILE-1);
       noc1_input_port    : out noc_flit_type;
