@@ -1248,6 +1248,8 @@ vivado/syn.tcl: vivado
 	$(QUIET_INFO)echo "generating synthesis script for Vivado"
 	@$(RM) $@
 	@echo "open_project $(DESIGN).xpr" > $@
+	@echo "update_ip_catalog" >> $@
+	@echo "update_compile_order -fileset sources_1" >> $@
 	@echo "synth_design -rtl -name rtl_1" >> $@
 #	@echo "synth_design -directive runtimeoptimize -resource_sharing off -keep_equivalent_registers -no_lc -rtl -name rtl_1" >> $@
 #	@echo "synth_design -resource_sharing off -keep_equivalent_registers -no_lc -rtl -name rtl_1" >> $@
