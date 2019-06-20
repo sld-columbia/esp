@@ -9,21 +9,21 @@
 #if defined(HLS_DIRECTIVES_BASIC)
 
 #define HLS_LOAD_INPUT_BATCH_LOOP		\
-	HLS_UNROLL_LOOP(OFF)
+    HLS_UNROLL_LOOP(OFF)
 #define HLS_LOAD_INPUT_LOOP			\
-	HLS_UNROLL_LOOP(OFF)
-#define HLS_LOAD_INPUT_PLM_WRITE					\
-	HLS_CONSTRAIN_LATENCY(0, 1, "constraint-load-mem-access")
+    HLS_UNROLL_LOOP(OFF)
+#define HLS_LOAD_INPUT_PLM_WRITE                                \
+    HLS_CONSTRAIN_LATENCY(0, 1, "constraint-load-mem-access")
 
 #define HLS_STORE_OUTPUT_BATCH_LOOP		\
-	HLS_UNROLL_LOOP(OFF)
+    HLS_UNROLL_LOOP(OFF)
 #define HLS_STORE_OUTPUT_LOOP			\
-	HLS_UNROLL_LOOP(OFF)
-#define HLS_STORE_OUTPUT_PLM_READ					\
-	HLS_CONSTRAIN_LATENCY(0, 1, "constraint-store-mem-access")
+    HLS_UNROLL_LOOP(OFF)
+#define HLS_STORE_OUTPUT_PLM_READ                               \
+    HLS_CONSTRAIN_LATENCY(0, 1, "constraint-store-mem-access")
 
 #define HLS_UNROLL_LOOP_SIMPLE                  \
-	HLS_UNROLL_LOOP(ON)
+    HLS_UNROLL_LOOP(ON)
 
 #else
 
