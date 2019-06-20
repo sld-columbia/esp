@@ -1,68 +1,87 @@
-This is a well deserved, even if only partial, credits-file of people that have
-contributed to the ESP project. Contributors are sorted by last name and the
-fields are: name (N), email (E) and description (D) of their major
-contributions.
+################################
+#  List of major contributors  #
+################################
 
-Thank you, not only for the lines of code, but also for the endless
-conversations that led to designing, implementing and debugging ESP.
-I couldn't have done it alone.
+#
+### Principal Investigator
+#
 
- -- Paolo
+Name : Luca P. Carloni
+Email: luca @ cs.columbia.edu
+Role : Principal Investigator
 
 
-N: Luca P. Carloni
-E: luca @ cs.columbia.edu
-D: Concepts of ESP and Platform Services for Heterogeneous SoCs
-D: Constant advising and supervising over all aspects of the project
+#
+### SLD Developers
+#
 
-N: Emilio G. Cota
-E: cota @ cs.columbia.edu
-D: Modular Linux device drivers for ESP
-D: contig_alloc on Leon3
-D: Common test application for ESP accelerators
-D: Loosely-coupled accelerator communication model
+Name : Paolo Mantovani
+Email: paolo @ cs.columbia.edu
+Role : Main architect
+       - Platform services for communication, memory access and power management
+       - NoC proxies and adapters for bus protocols
+       - DMA engine and TLB for loosely-coupled accelerators
+       - Processors, accelerators and peripherals integration
+       - Floating-point unit for Leon3
+       - SoC memory map and routing tables generation for ESP configuration
+       - FPGA emulation and evaluation infrastructure
 
-N: Schuyler Eldridge
-E: schuyler.eldridge @ ibm.com
-D: Accelerator model and integration from Chisel
+Name : Giuseppe Di Guglielmo
+Email: giuseppe @ cs.columbia.edu
+Role : Developer
+       - Accelerator model for HLS
+       - Accelerator integration
+       - Accelerator examples w/ HLS
+       - Multi-threaded user-application layer for accelerators
+       - Solutions and techniques for design-space exploration of accelerators
 
-N: Giuseppe Di Guglielmo
-E: giuseppe @ cs.columbia.edu
-D: Accelerator model for HLS
-D: Accelerator integration
-D: Accelerator examples w/ HLS
-D: Multi-threaded user-application layer for accelerators
-D: Solutions and techniques for design-space exploration of accelerators
+Name : Davide Giri
+Email: davide.giri @ columbia.edu
+Role : Developer
+       - Cache hierarchy
+       - Accelerator coherence models
+       - Accelerator integration
 
-N: Davide Giri
-E: davide.giri @ columbia.edu
-D: Cache hierarchy
-D: Accelerator coherence models
-D: Accelerator integration
+Name : Emilio G. Cota
+Email: cota @ cs.columbia.edu
+Role : Developer
+       - contig_alloc on Leon3
+       - Common test application for ESP accelerators
+       - Loosely-coupled accelerator communication model
 
-N: Paolo Mantovani
-E: paolo @ cs.columbia.edu
-D: ESP architecture and SoC design
-D: Platform services for communication, memory access and power management
-D: NoC proxies and adapters for bus protocols
-D: DMA engine and TLB for loosely-coupled accelerators
-D: Processors, accelerators and peripherals integration
-D: Floating-point unit for Leon3
-D: SoC memory map and routing tables generation for ESP configuration
-D: FPGA emulation and evaluation infrastructure
+Name : Luca Piccolboni
+Email: piccolboni @ cs.columbia.edu
+Role : Developer
+       - Accelerator templates and interfaces for HLS
+       - Solutions and techniques for design-space exploration of accelerators
 
-N: Michele Petracca
-E: petracca @ cadence.com
-D: Network-on-Chip
 
-N: Luca Piccolboni
-E: piccolboni @ cs.columbia.edu
-D: Accelerator templates and interfaces for HLS
-D: Solutions and techniques for design-space exploration of accelerators
+#
+### SLD Alumni
+#
 
-N: Christian Pilato
-E: christian.pilato @ polimi.it
-D: Memory subsystem generation for accelerators
-D: Solutions and techniques for design-space exploration of accelerators
-D: Graphical user interface for the ESP instance configuration
-D: Accelerators power estimation
+Name : Christian Pilato
+Email: christian.pilato @ polimi.it
+Role : Developer
+       - Memory subsystem generation for accelerators
+       - Solutions and techniques for design-space exploration of accelerators
+       - Graphical user interface for the ESP instance configuration
+       - Accelerators power estimation
+
+Name : Michele Petracca
+Email: petracca @ cadence.com
+Role : Developer
+       - Network-on-Chip
+
+
+#
+### External Collaborators
+#
+
+Name : Schuyler Eldridge
+Email: schuyler.eldridge @ ibm.com
+Role : Developer
+     - Accelerator model and integration from Chisel
+
+
+
