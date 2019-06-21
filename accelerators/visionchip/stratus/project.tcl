@@ -48,12 +48,8 @@ set_attr clock_period $CLOCK_PERIOD
 #
 # DSE configuration parameters
 #
-# TODO REMOVE small image
-#set PLM_IMG_SIZE "256"
-#set PLM_IMG_SIZE "504"
 set PLM_IMG_SIZE "307200"
 set PLM_HIST_SIZE "65536"
-set IMAGES "lena"
 
 #
 # System level modules to be synthesized
