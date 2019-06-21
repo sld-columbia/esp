@@ -23,9 +23,6 @@ void visionchip::load_input()
         this->reset_load_input();
         accel_ready.ack.reset_ack();
 
-        // PLM memories reset
-        mem_buff_1.port2.reset();
-
         // User-defined reset code
         n_Images = 0;
         n_Rows = 0;
@@ -76,7 +73,8 @@ void visionchip::load_input()
                     HLS_LOAD_INPUT_PLM_WRITE;
 
                     // Write to PLM
-                    mem_buff_1.port2[0][i] = (int16_t) data;
+                    wait();
+                    mem_buff_1[i] = (int16_t) data;
                 }
             }
 
@@ -106,9 +104,6 @@ void visionchip::store_output()
 
         this->reset_store_output();
         accel_ready.req.reset_req();
-
-        // PLM memories reset
-        mem_buff_1.port4.reset();
 
         // User-defined reset code
         n_Images = 0;
@@ -159,7 +154,8 @@ void visionchip::store_output()
                 {
                     HLS_STORE_OUTPUT_PLM_READ;
                     // Read from PLM
-                    data = sc_bv<DMA_WIDTH>((int32_t) mem_buff_1.port4[0][i]);
+                    data = sc_bv<DMA_WIDTH>((int32_t) mem_buff_1[i]);
+                    wait();
                 }
                 this->dma_write_chnl.put(data);
             }
@@ -190,21 +186,6 @@ void visionchip::compute_kernel()
 
         this->reset_compute_kernel();
 
-        // PLM memories reset
-        mem_buff_1.port1.reset();
-        mem_buff_1.port3.reset();
-        mem_buff_2.port1.reset();
-        mem_buff_2.port2.reset();
-
-        mem_hist.port1.reset();
-        mem_hist.port2.reset();
-
-        mem_CDF.port1.reset();
-        mem_CDF.port2.reset();
-
-        mem_LUT.port1.reset();
-        mem_LUT.port2.reset();
-
         // User-defined reset code
         n_Images = 0;
         n_Rows = 0;
@@ -234,14 +215,14 @@ void visionchip::compute_kernel()
         // reset mem_buff_2 memory
         for(uint32_t i = 0 ; i < plm_size; i++)
         {
-            mem_buff_2.port1[0][i] = 0;
+            mem_buff_2[i] = 0;
             wait();
         }
 
         // reset mem_hist
         for(uint32_t i = 0; i < PLM_HIST_SIZE; i++)
         {
-            mem_hist.port1[0][i] = 0;
+            mem_hist[i] = 0;
             wait();
         }
 

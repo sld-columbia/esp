@@ -11,10 +11,6 @@
 
 #include "visionchip_directives.hpp"
 
-#include "plm_data16_1w1r.hpp"
-#include "plm_data16_2w2r.hpp"
-#include "plm_hist_1w1r.hpp"
-
 #include "utils/esp_handshake.hpp"
 
 class visionchip : public esp_accelerator_3P<DMA_WIDTH>
@@ -36,11 +32,11 @@ public:
         accel_ready.bind_with(*this);
 
         // Clock binding for memories
-        mem_buff_1.clk(this->clk);
-        mem_buff_2.clk(this->clk);
-        mem_hist.clk(this->clk);
-        mem_CDF.clk(this->clk);
-        mem_LUT.clk(this->clk);
+        HLS_MAP_mem_buff_1;
+        HLS_MAP_mem_buff_2;
+        HLS_MAP_mem_hist;
+        HLS_MAP_mem_CDF;
+        HLS_MAP_mem_LUT;
     }
 
     // Processes
@@ -70,11 +66,11 @@ public:
     int dwt_col_transpose(int n_Rows, int n_Cols);
 
     // -- Private local memories
-    plm_data16_2w2r_t<int16_t, PLM_IMG_SIZE> mem_buff_1;
-    plm_data16_1w1r_t<int16_t, PLM_IMG_SIZE> mem_buff_2;
-    plm_hist_1w1r_t<int32_t, PLM_HIST_SIZE> mem_hist;
-    plm_hist_1w1r_t<int32_t, PLM_HIST_SIZE> mem_CDF;
-    plm_hist_1w1r_t<int32_t, PLM_HIST_SIZE> mem_LUT;
+    int16_t mem_buff_1[PLM_IMG_SIZE];
+    int16_t mem_buff_2[PLM_IMG_SIZE];
+    int32_t mem_hist[PLM_HIST_SIZE];
+    int32_t mem_CDF[PLM_HIST_SIZE];
+    int32_t mem_LUT[PLM_HIST_SIZE];
 };
 
 inline void visionchip::store_load_handshake()

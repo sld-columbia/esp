@@ -24,7 +24,7 @@ int visionchip::kernel_nf(int n_Rows, int n_Cols)
             {
                 for (int j = -1 ; j <= 1 ; j++)
                 {
-                    pxl_list[k++] = mem_buff_1.port3[0][(r+i) * n_Cols + c + j];
+                    pxl_list[k++] = mem_buff_1[(r+i) * n_Cols + c + j];
                     // ESP_REPORT_INFO("nf %d:%d::%d - %d", r, c, (r+i) * n_Cols + c + j, pxl_list[k-1]);
                 }
             }
@@ -44,7 +44,7 @@ int visionchip::kernel_nf(int n_Rows, int n_Cols)
             }
 
             int index = r * n_Cols + c;
-            mem_buff_2.port1[0][index] = pxl_list[4];
+            mem_buff_2[index] = pxl_list[4];
         }
     }
 
@@ -70,17 +70,17 @@ int visionchip::kernel_hist(int n_Rows, int n_Cols)
 
     for (int i = 0 ; i < n_Pixels ; i++)
     {
-        int16_t temp = mem_buff_2.port2[0][i];
+        int16_t temp = mem_buff_2[i];
 
         if (temp >= n_Bins)
         {
-            int32_t tmp = mem_hist.port2[0][n_Bins-1] + 1;
-            mem_hist.port1[0][n_Bins-1] = tmp;
+            int32_t tmp = mem_hist[n_Bins-1] + 1;
+            mem_hist[n_Bins-1] = tmp;
         }
         else
         {
-            int32_t tmp = mem_hist.port2[0][temp] + 1;
-            mem_hist.port1[0][temp] = tmp;
+            int32_t tmp = mem_hist[temp] + 1;
+            mem_hist[temp] = tmp;
         }
     }
 
@@ -113,27 +113,27 @@ int visionchip::kernel_histEq(int n_Rows, int n_Cols)
 
     for (int i = 0; i < nInpBins; i++)
     {
-        sum += mem_hist.port2[0][i];
-        mem_CDF.port1[0][i] = sum;
+        sum += mem_hist[i];
+        mem_CDF[i] = sum;
     }
 
     for (int i = 0; i < nInpBins; i++)
     {
 
-        CDFmin = MIN(CDFmin, mem_hist.port2[0][i]);
+        CDFmin = MIN(CDFmin, mem_hist[i]);
     }
 
     for (int i = 0; i < nInpBins; i++)
     {
-        int32_t temp = mem_CDF.port2[0][i];
-        mem_LUT.port1[0][i] = ((temp - CDFmin) * (nOutBins - 1)) / (n_Pixels - CDFmin);
+        int32_t temp = mem_CDF[i];
+        mem_LUT[i] = ((temp - CDFmin) * (nOutBins - 1)) / (n_Pixels - CDFmin);
     }
 
     for (int i = 0; i < n_Pixels; i++)
     {
-        int16_t temp = mem_buff_2.port2[0][i];
-        int32_t for_print = mem_LUT.port2[0][temp];
-        mem_buff_1.port1[0][i] = for_print;
+        int16_t temp = mem_buff_2[i];
+        int32_t for_print = mem_LUT[temp];
+        mem_buff_1[i] = for_print;
     }
 
     {
@@ -187,9 +187,9 @@ int visionchip::dwt_row_transpose(int n_Rows, int n_Cols)
 
                 cur = i * n_Cols + j;
                 wait();
-                temp = mem_buff_1.port3[0][cur - 1];
-                int16_t temp3 = mem_buff_1.port3[0][cur + 1] + temp;
-                int16_t temp2 = mem_buff_1.port3[0][cur];
+                temp = mem_buff_1[cur - 1];
+                int16_t temp3 = mem_buff_1[cur + 1] + temp;
+                int16_t temp2 = mem_buff_1[cur];
 
                 {
                     HLS_DEFINE_PROTOCOL("dwt-row-0");
@@ -197,7 +197,7 @@ int visionchip::dwt_row_transpose(int n_Rows, int n_Cols)
                 }
 
                 temp = temp3 >> 1;
-                mem_buff_1.port1[0][cur] = temp2 - temp;
+                mem_buff_1[cur] = temp2 - temp;
 
                 {
                     HLS_DEFINE_PROTOCOL("dwt-row-0");
@@ -215,15 +215,15 @@ int visionchip::dwt_row_transpose(int n_Rows, int n_Cols)
             }
 
             cur = i * n_Cols + n_Cols - 1;
-            int16_t temp2 = mem_buff_1.port3[0][cur];
-            int16_t temp3 = temp2 - mem_buff_1.port3[0][cur-1];
+            int16_t temp2 = mem_buff_1[cur];
+            int16_t temp3 = temp2 - mem_buff_1[cur-1];
 
             {
                 HLS_DEFINE_PROTOCOL("dwt-row-0");
                 wait();
             }
 
-            mem_buff_1.port1[0][cur] = temp3;
+            mem_buff_1[cur] = temp3;
 
             {
                 HLS_DEFINE_PROTOCOL("dwt-row-0");
@@ -240,9 +240,9 @@ int visionchip::dwt_row_transpose(int n_Rows, int n_Cols)
                 }
 
                 cur = i * n_Cols + j;
-                int16_t temp2 = mem_buff_1.port3[0][cur - 1];
-                int16_t temp3 = mem_buff_1.port3[0][cur + 1];
-                int16_t temp4 = mem_buff_1.port3[0][cur];
+                int16_t temp2 = mem_buff_1[cur - 1];
+                int16_t temp3 = mem_buff_1[cur + 1];
+                int16_t temp4 = mem_buff_1[cur];
                 temp = temp2 + temp3;
 
                 {
@@ -251,7 +251,7 @@ int visionchip::dwt_row_transpose(int n_Rows, int n_Cols)
                 }
 
                 temp = temp >> 2;
-                mem_buff_1.port1[0][cur] = temp4 + temp;
+                mem_buff_1[cur] = temp4 + temp;
 
                 {
                     HLS_DEFINE_PROTOCOL("dwt-row-0");
@@ -268,16 +268,16 @@ int visionchip::dwt_row_transpose(int n_Rows, int n_Cols)
             }
 
             cur = i * n_Cols;
-            temp = mem_buff_1.port3[0][cur + 1];
+            temp = mem_buff_1[cur + 1];
             temp = temp >> 1;
-            int16_t temp2 = mem_buff_1.port3[0][cur] + temp;
+            int16_t temp2 = mem_buff_1[cur] + temp;
 
             {
                 HLS_DEFINE_PROTOCOL("dwt-row-0");
                 wait();
             }
 
-            mem_buff_1.port1[0][cur] = temp2;
+            mem_buff_1[cur] = temp2;
 
             {
                 HLS_DEFINE_PROTOCOL("dwt-row-0");
@@ -293,16 +293,16 @@ int visionchip::dwt_row_transpose(int n_Rows, int n_Cols)
                     wait();
                 }
 
-                int16_t temp2 = mem_buff_1.port3[0][i * n_Cols + 2 * j];
-                int16_t temp3 = mem_buff_1.port3[0][i * n_Cols + 2 * j + 1];
+                int16_t temp2 = mem_buff_1[i * n_Cols + 2 * j];
+                int16_t temp3 = mem_buff_1[i * n_Cols + 2 * j + 1];
 
                 {
                     HLS_DEFINE_PROTOCOL("dwt-row-0");
                     wait();
                 }
 
-                mem_buff_2.port1[0][j * n_Rows + i] = temp2;
-                mem_buff_2.port1[0][(j + n_Cols / 2) * n_Rows + i] = temp3;
+                mem_buff_2[j * n_Rows + i] = temp2;
+                mem_buff_2[(j + n_Cols / 2) * n_Rows + i] = temp3;
 
                 {
                     HLS_DEFINE_PROTOCOL("dwt-row-0");
@@ -342,11 +342,11 @@ int visionchip::dwt_col_transpose(int n_Rows, int n_Cols)
                 }
 
                 cur = i * n_Rows + j;
-                int16_t temp2 = mem_buff_2.port2[0][cur - 1];
-                int16_t temp3 = mem_buff_2.port2[0][cur + 1];
+                int16_t temp2 = mem_buff_2[cur - 1];
+                int16_t temp3 = mem_buff_2[cur + 1];
                 temp = temp2 + temp3;
                 temp = temp >> 1;
-                int16_t temp4 = mem_buff_2.port2[0][cur];
+                int16_t temp4 = mem_buff_2[cur];
 
                 {
                     HLS_DEFINE_PROTOCOL("dwt-row-0");
@@ -354,7 +354,7 @@ int visionchip::dwt_col_transpose(int n_Rows, int n_Cols)
                 }
 
                 temp = temp4 - temp;
-                mem_buff_2.port1[0][cur] = temp;
+                mem_buff_2[cur] = temp;
 
                 {
                     HLS_DEFINE_PROTOCOL("dwt-row-0");
@@ -371,15 +371,15 @@ int visionchip::dwt_col_transpose(int n_Rows, int n_Cols)
             }
 
             cur = i * n_Rows + n_Rows - 1;
-            int16_t temp2 = mem_buff_2.port2[0][cur];
-            int16_t temp3 = temp2 - mem_buff_2.port2[0][cur-1];
+            int16_t temp2 = mem_buff_2[cur];
+            int16_t temp3 = temp2 - mem_buff_2[cur-1];
 
             {
                 HLS_DEFINE_PROTOCOL("dwt-row-0");
                 wait();
             }
 
-            mem_buff_2.port1[0][cur] = temp3;
+            mem_buff_2[cur] = temp3;
 
             {
                 HLS_DEFINE_PROTOCOL("dwt-row-0");
@@ -399,18 +399,18 @@ int visionchip::dwt_col_transpose(int n_Rows, int n_Cols)
                 }
 
                 cur = i * n_Rows + j;
-                int16_t temp2 = mem_buff_2.port2[0][cur - 1];
-                int16_t temp3 = mem_buff_2.port2[0][cur + 1];
+                int16_t temp2 = mem_buff_2[cur - 1];
+                int16_t temp3 = mem_buff_2[cur + 1];
                 temp = temp2 + temp3;
                 temp = temp >> 2;
-                int16_t temp4 = mem_buff_2.port2[0][cur];
+                int16_t temp4 = mem_buff_2[cur];
 
                 {
                     HLS_DEFINE_PROTOCOL("dwt-row-0");
                     wait();
                 }
 
-                mem_buff_2.port1[0][cur] = temp4 + temp;
+                mem_buff_2[cur] = temp4 + temp;
 
                 {
                     HLS_DEFINE_PROTOCOL("dwt-row-0");
@@ -427,16 +427,16 @@ int visionchip::dwt_col_transpose(int n_Rows, int n_Cols)
 
             // The first even pixel only has its right neighboring odd pixel
             cur = i * n_Rows;
-            temp = mem_buff_2.port2[0][cur + 1];
+            temp = mem_buff_2[cur + 1];
             temp = temp >> 1;
-            int16_t temp2 = mem_buff_2.port2[0][cur];
+            int16_t temp2 = mem_buff_2[cur];
 
             {
                 HLS_DEFINE_PROTOCOL("dwt-row-0");
                 wait();
             }
 
-            mem_buff_2.port1[0][cur] = temp2 + temp;
+            mem_buff_2[cur] = temp2 + temp;
 
             {
                 HLS_DEFINE_PROTOCOL("dwt-row-0");
@@ -456,8 +456,8 @@ int visionchip::dwt_col_transpose(int n_Rows, int n_Cols)
                     wait();
                 }
 
-                int16_t temp2 = mem_buff_2.port2[0][i * n_Rows + 2 * j];
-                int16_t temp3 = mem_buff_2.port2[0][i * n_Rows + 2 * j + 1];
+                int16_t temp2 = mem_buff_2[i * n_Rows + 2 * j];
+                int16_t temp3 = mem_buff_2[i * n_Rows + 2 * j + 1];
 
 
                 {
@@ -465,8 +465,8 @@ int visionchip::dwt_col_transpose(int n_Rows, int n_Cols)
                     wait();
                 }
 
-                mem_buff_1.port1[0][j * n_Cols + i] = temp2;
-                mem_buff_1.port1[0][(j + n_Rows / 2) * n_Cols + i] = temp3;
+                mem_buff_1[j * n_Cols + i] = temp2;
+                mem_buff_1[(j + n_Rows / 2) * n_Cols + i] = temp3;
 
                 {
                     HLS_DEFINE_PROTOCOL("dwt-row-0");
