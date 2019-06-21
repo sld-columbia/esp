@@ -32,15 +32,13 @@ public:
              std::string image_gold_test_path,
              uint32_t n_Images,
              uint32_t n_Rows,
-             uint32_t n_Cols,
-             uint32_t n_Invocations)
+             uint32_t n_Cols)
         : esp_system<DMA_WIDTH, MEM_SIZE>(name)
         , image_A_path(image_A_path)
         , image_gold_test_path(image_gold_test_path)
         , n_Images(n_Images)
         , n_Rows(n_Rows)
         , n_Cols(n_Cols)
-        , n_Invocations(n_Invocations)
     {
         // ACC
         acc = new visionchip_wrapper("visionchip_wrapper");

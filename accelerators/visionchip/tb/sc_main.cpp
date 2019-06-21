@@ -13,13 +13,12 @@ std::string image_gold_path = "gold-18x28.txt";
 uint32_t n_Images = 3;
 uint32_t n_Rows = 18;
 uint32_t n_Cols = 28;
-uint32_t n_Invocations = 1;
 
 extern void esc_elaborate()
 {
     // Creating the whole system
     testbench = new system_t("testbench", image_A_path, image_gold_path,
-                             n_Images, n_Rows, n_Cols, n_Invocations);
+                             n_Images, n_Rows, n_Cols);
 }
 
 extern void esc_cleanup()
@@ -32,7 +31,8 @@ int sc_main(int argc, char *argv[])
 {
     // Kills a Warning when using SC_CTHREADS
     sc_report_handler::set_actions("/IEEE_Std_1666/deprecated", SC_DO_NOTHING);
-    // sc_report_handler::set_actions(SC_WARNING, SC_DO_NOTHING);
+    // Kills Warning from FlexChannels library: no unique name assignment
+    sc_report_handler::set_actions(SC_WARNING, SC_DO_NOTHING);
 
     esc_initialize(argc, argv);
     esc_elaborate();
