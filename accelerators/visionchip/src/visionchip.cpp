@@ -222,7 +222,7 @@ void visionchip::compute_kernel()
         // reset mem_hist
         for(uint32_t i = 0; i < PLM_HIST_SIZE; i++)
         {
-            mem_hist[i] = 0;
+            mem_hist_1[i] = 0;
             wait();
         }
 

@@ -10,12 +10,10 @@
     HLS_MAP_TO_MEMORY(mem_buff_1, "plm_data16_2w2r")
 #define HLS_MAP_mem_buff_2                      \
     HLS_MAP_TO_MEMORY(mem_buff_2, "plm_data16_1w1r")
-#define HLS_MAP_mem_hist                        \
-    HLS_MAP_TO_MEMORY(mem_hist, "plm_hist_1w1r")
-#define HLS_MAP_mem_CDF                         \
-    HLS_MAP_TO_MEMORY(mem_CDF, "plm_hist_1w1r")
-#define HLS_MAP_mem_LUT                         \
-    HLS_MAP_TO_MEMORY(mem_LUT, "plm_hist_1w1r")
+#define HLS_MAP_mem_hist_1                      \
+    HLS_MAP_TO_MEMORY(mem_hist_1, "plm_hist_1w1r")
+#define HLS_MAP_mem_hist_2                      \
+    HLS_MAP_TO_MEMORY(mem_hist_2, "plm_hist_1w1r")
 
 
 #if defined(HLS_DIRECTIVES_BASIC)
@@ -47,9 +45,8 @@
 
 #define HLS_MAP_mem_buff_1
 #define HLS_MAP_mem_buff_2
-#define HLS_MAP_mem_hist
-#define HLS_MAP_mem_CDF
-#define HLS_MAP_mem_LUT
+#define HLS_MAP_mem_hist_1
+#define HLS_MAP_mem_hist_2
 
 #define HLS_LOAD_INPUT_BATCH_LOOP
 #define HLS_LOAD_INPUT_LOOP

@@ -49,11 +49,6 @@ int visionchip::kernel_nf(int n_Rows, int n_Cols)
     }
 
 
-    {
-        HLS_DEFINE_PROTOCOL("wait-after-nf-kernel");
-        wait();
-    }
-
     // printf("======= Finish kernel_nf =======\n");
     return 0;
 }
@@ -74,19 +69,14 @@ int visionchip::kernel_hist(int n_Rows, int n_Cols)
 
         if (temp >= n_Bins)
         {
-            int32_t tmp = mem_hist[n_Bins-1] + 1;
-            mem_hist[n_Bins-1] = tmp;
+            int32_t tmp = mem_hist_1[n_Bins-1] + 1;
+            mem_hist_1[n_Bins-1] = tmp;
         }
         else
         {
-            int32_t tmp = mem_hist[temp] + 1;
-            mem_hist[temp] = tmp;
+            int32_t tmp = mem_hist_1[temp] + 1;
+            mem_hist_1[temp] = tmp;
         }
-    }
-
-    {
-        HLS_DEFINE_PROTOCOL("wait-after-hist-kernel");
-        wait();
     }
 
     // printf("======= Finish kernel_hist =======\n");
@@ -113,33 +103,43 @@ int visionchip::kernel_histEq(int n_Rows, int n_Cols)
 
     for (int i = 0; i < nInpBins; i++)
     {
-        sum += mem_hist[i];
-        mem_CDF[i] = sum;
+        HLS_PIPELINE_LOOP(HARD_STALL, 1, "accumulate-pipeline");
+
+        int32_t val = mem_hist_1[i];
+        CDFmin = MIN(CDFmin, val);
+        sum += val;
+        mem_hist_2[i] = sum;
     }
+
+
+    const int MUL_FACTOR = (nOutBins - 1);
+    const int DIV_FACTOR = (n_Pixels - CDFmin);
 
     for (int i = 0; i < nInpBins; i++)
     {
 
-        CDFmin = MIN(CDFmin, mem_hist[i]);
-    }
+        HLS_PIPELINE_LOOP(HARD_STALL, 1, "div-pipeline");
 
-    for (int i = 0; i < nInpBins; i++)
-    {
-        int32_t temp = mem_CDF[i];
-        mem_LUT[i] = ((temp - CDFmin) * (nOutBins - 1)) / (n_Pixels - CDFmin);
+        // NB: Need two temp variable to avoid flase detection of loop-carried dependencies
+        uint32_t temp1;
+        uint32_t temp2;
+
+        temp1 = mem_hist_2[i];
+
+        temp2 = ((temp1 - CDFmin) * MUL_FACTOR) / DIV_FACTOR;
+
+        mem_hist_1[i] = temp2;
     }
 
     for (int i = 0; i < n_Pixels; i++)
     {
+        HLS_PIPELINE_LOOP(HARD_STALL, 1, "swap-data-pipeline");
+
         int16_t temp = mem_buff_2[i];
-        int32_t for_print = mem_LUT[temp];
+        int32_t for_print = mem_hist_1[temp];
         mem_buff_1[i] = for_print;
     }
 
-    {
-        HLS_DEFINE_PROTOCOL("wait-after-histeq-kernel");
-        wait();
-    }
 
     // printf("======= Finish kernel_histEq =======\n");
     return 0;
@@ -156,11 +156,6 @@ int visionchip::kernel_dwt(int n_Rows, int n_Cols)
     dwt_row_transpose(n_Rows, n_Cols);
     // Do the cols
     dwt_col_transpose(n_Rows, n_Cols);
-
-    {
-        HLS_DEFINE_PROTOCOL("wait-after-dwt-kernel");
-        wait();
-    }
 
     // printf("======= Finish kernel_dwt =======\n");
     return 0;
@@ -180,141 +175,66 @@ int visionchip::dwt_row_transpose(int n_Rows, int n_Cols)
         {
             for (int j = 1 ; j < n_Cols - 1 ; j += 2)
             {
-                {
-                    HLS_DEFINE_PROTOCOL("dwt-row");
-                    wait();
-                }
-
                 cur = i * n_Cols + j;
                 wait();
                 temp = mem_buff_1[cur - 1];
                 int16_t temp3 = mem_buff_1[cur + 1] + temp;
                 int16_t temp2 = mem_buff_1[cur];
 
-                {
-                    HLS_DEFINE_PROTOCOL("dwt-row-0");
-                    wait();
-                }
-
                 temp = temp3 >> 1;
                 mem_buff_1[cur] = temp2 - temp;
 
-                {
-                    HLS_DEFINE_PROTOCOL("dwt-row-0");
-                    wait();
-                }
             }
         }
 
 
         // The last odd pixel only has its left neighboring even pixel
         {
-            {
-                HLS_DEFINE_PROTOCOL("dwt-row-0");
-                wait();
-            }
-
             cur = i * n_Cols + n_Cols - 1;
             int16_t temp2 = mem_buff_1[cur];
             int16_t temp3 = temp2 - mem_buff_1[cur-1];
 
-            {
-                HLS_DEFINE_PROTOCOL("dwt-row-0");
-                wait();
-            }
-
             mem_buff_1[cur] = temp3;
-
-            {
-                HLS_DEFINE_PROTOCOL("dwt-row-0");
-                wait();
-            }
         }
 
         {
             for (int j = 2 ; j < n_Cols ; j += 2)
             {
-                {
-                    HLS_DEFINE_PROTOCOL("dwt-row-0");
-                    wait();
-                }
-
                 cur = i * n_Cols + j;
                 int16_t temp2 = mem_buff_1[cur - 1];
                 int16_t temp3 = mem_buff_1[cur + 1];
                 int16_t temp4 = mem_buff_1[cur];
                 temp = temp2 + temp3;
 
-                {
-                    HLS_DEFINE_PROTOCOL("dwt-row-0");
-                    wait();
-                }
-
                 temp = temp >> 2;
                 mem_buff_1[cur] = temp4 + temp;
 
-                {
-                    HLS_DEFINE_PROTOCOL("dwt-row-0");
-                    wait();
-                }
             }
         }
 
         // The first even pixel only has its right neighboring odd pixel
         {
-            {
-                HLS_DEFINE_PROTOCOL("dwt-row-0");
-                wait();
-            }
-
             cur = i * n_Cols;
             temp = mem_buff_1[cur + 1];
             temp = temp >> 1;
             int16_t temp2 = mem_buff_1[cur] + temp;
 
-            {
-                HLS_DEFINE_PROTOCOL("dwt-row-0");
-                wait();
-            }
 
             mem_buff_1[cur] = temp2;
 
-            {
-                HLS_DEFINE_PROTOCOL("dwt-row-0");
-                wait();
-            }
         }
 
         {
             for (int j = 0 ; j < n_Cols / 2 ; j++)
             {
-                {
-                    HLS_DEFINE_PROTOCOL("dwt-row-0");
-                    wait();
-                }
-
                 int16_t temp2 = mem_buff_1[i * n_Cols + 2 * j];
                 int16_t temp3 = mem_buff_1[i * n_Cols + 2 * j + 1];
-
-                {
-                    HLS_DEFINE_PROTOCOL("dwt-row-0");
-                    wait();
-                }
 
                 mem_buff_2[j * n_Rows + i] = temp2;
                 mem_buff_2[(j + n_Cols / 2) * n_Rows + i] = temp3;
 
-                {
-                    HLS_DEFINE_PROTOCOL("dwt-row-0");
-                    wait();
-                }
             }
         }
-    }
-
-    {
-        HLS_DEFINE_PROTOCOL("wait-after-dwt-row-kernel");
-        wait();
     }
 
     // printf("------- Finsih dwt_row_transpose -------\n");
@@ -336,11 +256,6 @@ int visionchip::dwt_col_transpose(int n_Rows, int n_Cols)
         {
             for (int j = 1 ; j < n_Rows - 1 ; j += 2)
             {
-                {
-                    HLS_DEFINE_PROTOCOL("dwt-row-0");
-                    wait();
-                }
-
                 cur = i * n_Rows + j;
                 int16_t temp2 = mem_buff_2[cur - 1];
                 int16_t temp3 = mem_buff_2[cur + 1];
@@ -348,43 +263,21 @@ int visionchip::dwt_col_transpose(int n_Rows, int n_Cols)
                 temp = temp >> 1;
                 int16_t temp4 = mem_buff_2[cur];
 
-                {
-                    HLS_DEFINE_PROTOCOL("dwt-row-0");
-                    wait();
-                }
-
                 temp = temp4 - temp;
                 mem_buff_2[cur] = temp;
 
-                {
-                    HLS_DEFINE_PROTOCOL("dwt-row-0");
-                    wait();
-                }
             }
         }
 
         // The last odd pixel only has its left neighboring even pixel
         {
-            {
-                HLS_DEFINE_PROTOCOL("dwt-row-0");
-                wait();
-            }
 
             cur = i * n_Rows + n_Rows - 1;
             int16_t temp2 = mem_buff_2[cur];
             int16_t temp3 = temp2 - mem_buff_2[cur-1];
 
-            {
-                HLS_DEFINE_PROTOCOL("dwt-row-0");
-                wait();
-            }
-
             mem_buff_2[cur] = temp3;
 
-            {
-                HLS_DEFINE_PROTOCOL("dwt-row-0");
-                wait();
-            }
         }
 
 
@@ -393,11 +286,6 @@ int visionchip::dwt_col_transpose(int n_Rows, int n_Cols)
         {
             for (int j = 2 ; j < n_Rows ; j += 2)
             {
-                {
-                    HLS_DEFINE_PROTOCOL("dwt-row-0");
-                    wait();
-                }
-
                 cur = i * n_Rows + j;
                 int16_t temp2 = mem_buff_2[cur - 1];
                 int16_t temp3 = mem_buff_2[cur + 1];
@@ -405,43 +293,18 @@ int visionchip::dwt_col_transpose(int n_Rows, int n_Cols)
                 temp = temp >> 2;
                 int16_t temp4 = mem_buff_2[cur];
 
-                {
-                    HLS_DEFINE_PROTOCOL("dwt-row-0");
-                    wait();
-                }
-
                 mem_buff_2[cur] = temp4 + temp;
-
-                {
-                    HLS_DEFINE_PROTOCOL("dwt-row-0");
-                    wait();
-                }
             }
         }
 
         {
-            {
-                HLS_DEFINE_PROTOCOL("dwt-row-0");
-                wait();
-            }
-
             // The first even pixel only has its right neighboring odd pixel
             cur = i * n_Rows;
             temp = mem_buff_2[cur + 1];
             temp = temp >> 1;
             int16_t temp2 = mem_buff_2[cur];
 
-            {
-                HLS_DEFINE_PROTOCOL("dwt-row-0");
-                wait();
-            }
-
             mem_buff_2[cur] = temp2 + temp;
-
-            {
-                HLS_DEFINE_PROTOCOL("dwt-row-0");
-                wait();
-            }
         }
 
         // Now rearrange the data by putting the low frequency components at the front
@@ -451,35 +314,14 @@ int visionchip::dwt_col_transpose(int n_Rows, int n_Cols)
         {
             for (int j = 0 ; j < n_Rows / 2 ; j++)
             {
-                {
-                    HLS_DEFINE_PROTOCOL("dwt-row-0");
-                    wait();
-                }
-
                 int16_t temp2 = mem_buff_2[i * n_Rows + 2 * j];
                 int16_t temp3 = mem_buff_2[i * n_Rows + 2 * j + 1];
 
-
-                {
-                    HLS_DEFINE_PROTOCOL("dwt-row-0");
-                    wait();
-                }
-
                 mem_buff_1[j * n_Cols + i] = temp2;
                 mem_buff_1[(j + n_Rows / 2) * n_Cols + i] = temp3;
-
-                {
-                    HLS_DEFINE_PROTOCOL("dwt-row-0");
-                    wait();
-                }
             }
         }
 
-    }
-
-    {
-        HLS_DEFINE_PROTOCOL("wait-after-dwt-col-kernel");
-        wait();
     }
 
     // printf("------- Finsih dwt_col_transpose -------\n");

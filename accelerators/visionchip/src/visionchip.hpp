@@ -34,9 +34,8 @@ public:
         // Clock binding for memories
         HLS_MAP_mem_buff_1;
         HLS_MAP_mem_buff_2;
-        HLS_MAP_mem_hist;
-        HLS_MAP_mem_CDF;
-        HLS_MAP_mem_LUT;
+        HLS_MAP_mem_hist_1;
+        HLS_MAP_mem_hist_2;
     }
 
     // Processes
@@ -68,9 +67,8 @@ public:
     // -- Private local memories
     int16_t mem_buff_1[PLM_IMG_SIZE];
     int16_t mem_buff_2[PLM_IMG_SIZE];
-    int32_t mem_hist[PLM_HIST_SIZE];
-    int32_t mem_CDF[PLM_HIST_SIZE];
-    int32_t mem_LUT[PLM_HIST_SIZE];
+    int32_t mem_hist_1[PLM_HIST_SIZE];
+    int32_t mem_hist_2[PLM_HIST_SIZE];
 };
 
 inline void visionchip::store_load_handshake()
