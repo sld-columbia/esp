@@ -10,7 +10,7 @@ system_t * testbench = NULL;
 // Default settings if argv[] is not set
 std::string image_A_path = "lena-18x28.txt";
 std::string image_gold_path = "gold-18x28.txt";
-uint32_t n_Images = 3;
+uint32_t n_Images = 1;
 uint32_t n_Rows = 18;
 uint32_t n_Cols = 28;
 
