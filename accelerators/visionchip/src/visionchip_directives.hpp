@@ -50,6 +50,15 @@
 
 #if defined(HLS_DIRECTIVES_BASIC)
 
+#define HLS_PIPE_H1(_s)
+
+#define HLS_PIPE_H2(_s)
+
+#define HLS_DWT_XPOSE_CONSTR(_m, _s)
+
+
+#elif defined(HLS_DIRECTIVES_FAST)
+
 #define HLS_PIPE_H1(_s)                         \
     HLS_PIPELINE_LOOP(HARD_STALL, 1, _s);
 
@@ -60,9 +69,11 @@
     HLS_CONSTRAIN_ARRAY_MAX_DISTANCE(_m, 2, _s);
 
 
+
 #else
 
 #error Unsupported or undefined HLS configuration
+
 
 #endif /* HLS_DIRECTIVES_* */
 

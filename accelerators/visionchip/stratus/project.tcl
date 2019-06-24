@@ -76,7 +76,7 @@ foreach dma [list 32 64] {
 
     define_sim_config "BEHAV_DMA$dma" "visionchip BEH" "tb TESTBENCH_DMA$dma" -io_config IOCFG_DMA$dma -argv $DEFAULT_ARGV
 
-    foreach cfg [list BASIC] {
+    foreach cfg [list BASIC FAST] {
 	set cname $cfg\_DMA$dma
 	define_hls_config visionchip $cname -io_config IOCFG_DMA$dma --clock_period=$CLOCK_PERIOD $COMMON_HLS_FLAGS -DHLS_DIRECTIVES_$cfg
 	if {$TECH_IS_XILINX == 1} {
