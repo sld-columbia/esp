@@ -75,6 +75,7 @@ void visionchip::load_input()
                     // Write to PLM
                     wait();
                     mem_buff_1[i] = (int16_t) data;
+                    mem_buff_2[i] = 0;
                 }
             }
 
@@ -211,20 +212,6 @@ void visionchip::compute_kernel()
     //Compute
     for (uint16_t a = 0; a < n_Images; a++)
     {
-        // Reset PLMs
-        // reset mem_buff_2 memory
-        for(uint32_t i = 0 ; i < plm_size; i++)
-        {
-            mem_buff_2[i] = 0;
-            wait();
-        }
-
-        // reset mem_hist
-        for(uint32_t i = 0; i < PLM_HIST_SIZE; i++)
-        {
-            mem_hist_1[i] = 0;
-            wait();
-        }
 
         this->compute_load_handshake();
 

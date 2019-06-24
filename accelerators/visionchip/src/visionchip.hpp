@@ -57,18 +57,22 @@ public:
     esp_config_proc cfg;
 
     // Functions
-    int kernel_nf(int n_Rows, int n_Cols);
-    int kernel_hist(int n_Rows, int n_Cols);
-    int kernel_histEq(int n_Rows, int n_Cols);
-    int kernel_dwt(int n_Rows, int n_Cols);
-    int dwt_row_transpose(int n_Rows, int n_Cols, int16_t buff1[PLM_IMG_SIZE], int16_t buff2[PLM_IMG_SIZE]);
-    int dwt_col_transpose(int n_Rows, int n_Cols);
+    void kernel_nf(uint32_t n_Rows, uint32_t n_Cols);
+    void kernel_hist(uint32_t n_Rows, uint32_t n_Cols);
+    void kernel_histEq(uint32_t n_Rows, uint32_t n_Cols);
+    void kernel_dwt(uint32_t n_Rows, uint32_t n_Cols);
+    void dwt_row_transpose(uint32_t n_Rows, uint32_t n_Cols, int16_t buff1[PLM_IMG_SIZE], int16_t buff2[PLM_IMG_SIZE]);
+    void dwt_col_transpose(uint32_t n_Rows, uint32_t n_Cols);
 
     // -- Private local memories
     int16_t mem_buff_1[PLM_IMG_SIZE];
     int16_t mem_buff_2[PLM_IMG_SIZE];
-    int32_t mem_hist_1[PLM_HIST_SIZE];
-    int32_t mem_hist_2[PLM_HIST_SIZE];
+    uint32_t mem_hist_1[PLM_HIST_SIZE];
+    uint32_t mem_hist_2[PLM_HIST_SIZE];
+
+    // -- Private state variables
+    uint16_t min_bin;
+    uint16_t max_bin;
 };
 
 inline void visionchip::store_load_handshake()

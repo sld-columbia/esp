@@ -10,14 +10,17 @@
 #define MIN(A, B)	(A < B) ? A : B
 #define MAX(A, B)	(A > B) ? A : B
 
-int visionchip::kernel_nf(int n_Rows, int n_Cols)
+void visionchip::kernel_nf(uint32_t n_Rows, uint32_t n_Cols)
 {
-    int16_t pxl_list[9];
+    uint16_t pxl_list[9];
+    min_bin = 65536;
+    max_bin = 0;
+
     HLS_FLATTEN_ARRAY(pxl_list);
 
-    for (int r = 1 ; r < n_Rows - 1 ; r++)
+    for (uint32_t r = 1 ; r < n_Rows - 1 ; r++)
     {
-        for (int c = 1 ; c < n_Cols - 1 ; c++)
+        for (uint32_t c = 1 ; c < n_Cols - 1 ; c++)
         {
             int k = 0;
             for (int i = -1 ; i <= 1 ; i++)
@@ -36,72 +39,76 @@ int visionchip::kernel_nf(int n_Rows, int n_Cols)
                 {
                     if (pxl_list[j-1] > pxl_list[j])
                     {
-                        int16_t temp = pxl_list[j-1];
+                        uint16_t temp = pxl_list[j-1];
                         pxl_list[j-1] = pxl_list[j];
                         pxl_list[j] = temp;
                     }
                 }
             }
 
-            int index = r * n_Cols + c;
+            uint32_t index = r * n_Cols + c;
             mem_buff_2[index] = pxl_list[4];
+
+            if (pxl_list[4] > max_bin)
+                max_bin = pxl_list[4];
+            if (pxl_list[4] < min_bin)
+                min_bin = pxl_list[4];
         }
     }
 
-
     // printf("======= Finish kernel_nf =======\n");
-    return 0;
 }
 
-int visionchip::kernel_hist(int n_Rows, int n_Cols)
+void visionchip::kernel_hist(uint32_t n_Rows, uint32_t n_Cols)
 {
     // hard code nInBpp as 16 here
-    int nInBpp = 16;
+    uint32_t nInBpp = 16;
     // printf("======= Start kernel_hist =======\n");
 
-    int n_Bins = 1 << nInBpp;
-    int n_Pixels = n_Rows * n_Cols;
+    uint32_t n_Bins = 1 << nInBpp;
+    uint32_t n_Pixels = n_Rows * n_Cols;
 
+    for (uint32_t i = min_bin; i <= max_bin; i++)
+        mem_hist_1[i] = 0;
 
-    for (int i = 0 ; i < n_Pixels ; i++)
+    mem_hist_1[n_Bins-1] = 0;
+
+    for (uint32_t i = 0 ; i < n_Pixels ; i++)
     {
-        int16_t temp = mem_buff_2[i];
+        uint16_t temp = mem_buff_2[i];
 
         if (temp >= n_Bins)
         {
-            int32_t tmp = mem_hist_1[n_Bins-1] + 1;
+            uint32_t tmp = mem_hist_1[n_Bins-1] + 1;
             mem_hist_1[n_Bins-1] = tmp;
         }
         else
         {
-            int32_t tmp = mem_hist_1[temp] + 1;
+            uint32_t tmp = mem_hist_1[temp] + 1;
             mem_hist_1[temp] = tmp;
         }
     }
 
     // printf("======= Finish kernel_hist =======\n");
-    return 0;
 }
 
-int visionchip::kernel_histEq(int n_Rows, int n_Cols)
+void visionchip::kernel_histEq(uint32_t n_Rows, uint32_t n_Cols)
 {
-    // hard code nInBpp as 16 here
+    // hard code nInBpp as 16 here (data type is 16 bits)
     // hard code nOutBpp as 10 here
-    int nInBpp = 16;
-    int nOutBpp = 10;
+    uint32_t nOutBpp = 10;
 
     // printf("======= Start kernel_histEq =======\n");
 
 
     int32_t nOutBins = (1 << nOutBpp);
-    int32_t nInpBins = (1 << nInBpp);
 
-    int n_Pixels = n_Rows * n_Cols;
+    uint32_t n_Pixels = n_Rows * n_Cols;
 
     int32_t CDFmin = 99999999;	// INT_MAX
     int32_t sum = 0;
 
-    for (int i = 0; i < nInpBins; i++)
+    for (uint32_t i = min_bin; i <= max_bin; i++)
     {
         HLS_PIPELINE_LOOP(HARD_STALL, 1, "accumulate-pipeline");
 
@@ -112,10 +119,10 @@ int visionchip::kernel_histEq(int n_Rows, int n_Cols)
     }
 
 
-    const int MUL_FACTOR = (nOutBins - 1);
-    const int DIV_FACTOR = (n_Pixels - CDFmin);
+    const uint32_t MUL_FACTOR = (nOutBins - 1);
+    const uint32_t DIV_FACTOR = (n_Pixels - CDFmin);
 
-    for (int i = 0; i < nInpBins; i++)
+    for (uint32_t i = min_bin; i <= max_bin; i++)
     {
 
         HLS_PIPELINE_LOOP(HARD_STALL, 1, "div-pipeline");
@@ -131,7 +138,7 @@ int visionchip::kernel_histEq(int n_Rows, int n_Cols)
         mem_hist_1[i] = temp2;
     }
 
-    for (int i = 0; i < n_Pixels; i++)
+    for (uint32_t i = 0; i < n_Pixels; i++)
     {
         HLS_PIPELINE_LOOP(HARD_STALL, 1, "swap-data-pipeline");
 
@@ -142,14 +149,13 @@ int visionchip::kernel_histEq(int n_Rows, int n_Cols)
 
 
     // printf("======= Finish kernel_histEq =======\n");
-    return 0;
 }
 
 
-int visionchip::kernel_dwt(int n_Rows, int n_Cols)
+void visionchip::kernel_dwt(uint32_t n_Rows, uint32_t n_Cols)
 {
     // printf("======= Start kernel_dwt =======\n");
-    int n_Pixels = n_Rows * n_Cols;
+    uint32_t n_Pixels = n_Rows * n_Cols;
 
 
     // Do the rows
@@ -158,29 +164,28 @@ int visionchip::kernel_dwt(int n_Rows, int n_Cols)
     dwt_row_transpose(n_Cols, n_Rows, mem_buff_2, mem_buff_1);
 
     // printf("======= Finish kernel_dwt =======\n");
-    return 0;
 }
 
-int visionchip::dwt_row_transpose(int n_Rows, int n_Cols, int16_t buff1[PLM_IMG_SIZE], int16_t buff2[PLM_IMG_SIZE])
+void visionchip::dwt_row_transpose(uint32_t n_Rows, uint32_t n_Cols, int16_t buff1[PLM_IMG_SIZE], int16_t buff2[PLM_IMG_SIZE])
 {
     // input: buff1, output: buff2
     // printf("------- Start dwt_row_transpose -------\n");
 
-    int32_t cur;
+    uint32_t cur;
     int16_t temp1;
     int16_t temp2;
     int16_t temp3;
     int16_t temp4;
     int16_t temp5;
 
-    for (int i = 0 ; i < n_Rows ; i++)
+    for (uint32_t i = 0 ; i < n_Rows ; i++)
     {
         // Predict the odd pixels using linear interpolation of the even pixels
         {
             // Prefetch first element
             temp1 = buff1[i * n_Cols];
 
-            for (int j = 1 ; j < n_Cols - 1 ; j += 2)
+            for (uint32_t j = 1 ; j < n_Cols - 1 ; j += 2)
             {
                 HLS_PIPELINE_LOOP(HARD_STALL, 1, "dwt-xpose-odd-pipeline");
                 HLS_CONSTRAIN_ARRAY_MAX_DISTANCE(buff1, 2, "dwt-odd-xpose-constrain");
@@ -222,7 +227,7 @@ int visionchip::dwt_row_transpose(int n_Rows, int n_Cols, int16_t buff1[PLM_IMG_
             // Prefetch first element
             temp1 = buff1[i * n_Cols + 1];
 
-            for (int j = 2 ; j < n_Cols ; j += 2)
+            for (uint32_t j = 2 ; j < n_Cols ; j += 2)
             {
                 HLS_PIPELINE_LOOP(HARD_STALL, 1, "dwt-xpose-even-pipeline");
                 HLS_CONSTRAIN_ARRAY_MAX_DISTANCE(buff1, 2, "dwt-xpose-even-constrain");
@@ -261,7 +266,7 @@ int visionchip::dwt_row_transpose(int n_Rows, int n_Cols, int16_t buff1[PLM_IMG_
         }
 
         {
-            for (int j = 0 ; j < n_Cols / 2 ; j++)
+            for (uint32_t j = 0 ; j < n_Cols / 2 ; j++)
             {
                 HLS_PIPELINE_LOOP(HARD_STALL, 2, "dwt-xpose-swp-pipeline");
 
@@ -291,7 +296,6 @@ int visionchip::dwt_row_transpose(int n_Rows, int n_Cols, int16_t buff1[PLM_IMG_
     }
 
     // printf("------- Finsih dwt_row_transpose -------\n");
-    return 0;
 }
 
 #endif /* __VISIONCHIP_FUNCTIONS_HPP__ */
