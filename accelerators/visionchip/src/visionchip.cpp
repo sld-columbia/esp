@@ -18,7 +18,7 @@ void visionchip::load_input()
 
     // Reset
     {
-        HLS_DEFINE_PROTOCOL("load-reset");
+        HLS_PROTO("load-reset");
 
         this->reset_load_input();
         accel_ready.ack.reset_ack();
@@ -33,7 +33,7 @@ void visionchip::load_input()
 
     // Config
     {
-        HLS_DEFINE_PROTOCOL("load-config");
+        HLS_PROTO("load-config");
 
         cfg.wait_for_config(); // config process
         conf_info_t config = this->conf_info.read();
@@ -48,45 +48,40 @@ void visionchip::load_input()
     uint32_t dma_addr = 0;
     for (uint16_t a = 0; a < n_Images; a++)
     {
+        HLS_PROTO("load-dma");
+
         this->load_store_handshake();
 
         uint32_t plm_addr = 0;
+
         for (uint16_t b = 0; b < n_Rows; b++)
         {
-            HLS_LOAD_INPUT_BATCH_LOOP;
 
-            {
-                HLS_DEFINE_PROTOCOL("load-dma-conf");
+            // Configure DMA transaction
+            dma_info_t dma_info(dma_addr, n_Cols);
+            this->dma_read_ctrl.put(dma_info);
 
-                // Configure DMA transaction
-                dma_info_t dma_info(dma_addr, n_Cols);
-
-                this->dma_read_ctrl.put(dma_info);
-            }
 
             for (uint32_t i = plm_addr; i < (plm_addr + n_Cols); i++)
             {
-                HLS_LOAD_INPUT_LOOP;
-
                 int32_t data = this->dma_read_chnl.get().to_int();
-                {
-                    HLS_LOAD_INPUT_PLM_WRITE;
 
-                    // Write to PLM
-                    wait();
-                    mem_buff_1[i] = (int16_t) data;
-                    mem_buff_2[i] = 0;
-                }
+                // Write to PLM
+                wait();
+                mem_buff_1[i] = (int16_t) data;
+                mem_buff_2[i] = 0;
             }
 
             dma_addr += n_Cols;
             plm_addr += n_Cols;
         }
+
         this->load_compute_handshake();
     }
 
     // Conclude
     {
+        HLS_PROTO("load-done");
         this->process_done();
     }
 }
@@ -101,7 +96,7 @@ void visionchip::store_output()
 
     // Reset
     {
-        HLS_DEFINE_PROTOCOL("store-reset");
+        HLS_PROTO("store-reset");
 
         this->reset_store_output();
         accel_ready.req.reset_req();
@@ -116,7 +111,7 @@ void visionchip::store_output()
 
     // Config
     {
-        HLS_DEFINE_PROTOCOL("store-config");
+        HLS_PROTO("store-config");
 
         cfg.wait_for_config(); // config process
         conf_info_t config = this->conf_info.read();
@@ -131,33 +126,26 @@ void visionchip::store_output()
     uint32_t dma_addr = 0;
     for (uint16_t a = 0; a < n_Images; a++)
     {
+        HLS_PROTO("store-dma");
+
         this->store_load_handshake();
         this->store_compute_handshake();
 
         uint32_t plm_addr = 0;
         for (uint16_t b = 0; b < n_Rows; b++)
         {
-            HLS_STORE_OUTPUT_BATCH_LOOP;
+            // Configure DMA transaction
+            dma_info_t dma_info(dma_addr, n_Cols);
 
-            {
-                HLS_DEFINE_PROTOCOL("store-dma-conf");
+            this->dma_write_ctrl.put(dma_info);
 
-                // Configure DMA transaction
-                dma_info_t dma_info(dma_addr, n_Cols);
-
-                this->dma_write_ctrl.put(dma_info);
-            }
             for (uint32_t i = plm_addr; i < (plm_addr + n_Cols); i++)
             {
-                HLS_STORE_OUTPUT_LOOP;
-
                 sc_bv<DMA_WIDTH> data;
-                {
-                    HLS_STORE_OUTPUT_PLM_READ;
-                    // Read from PLM
-                    data = sc_bv<DMA_WIDTH>((int32_t) mem_buff_1[i]);
-                    wait();
-                }
+                // Read from PLM
+                wait();
+                data = sc_bv<DMA_WIDTH>((int32_t) mem_buff_1[i]);
+
                 this->dma_write_chnl.put(data);
             }
             dma_addr += n_Cols;
@@ -167,6 +155,7 @@ void visionchip::store_output()
 
     // Conclude
     {
+        HLS_PROTO("store-done");
         this->accelerator_done();
         this->process_done();
     }
@@ -183,7 +172,7 @@ void visionchip::compute_kernel()
 
     // Reset
     {
-        HLS_DEFINE_PROTOCOL("compute-reset");
+        HLS_PROTO("compute-reset");
 
         this->reset_compute_kernel();
 
@@ -196,7 +185,7 @@ void visionchip::compute_kernel()
     }
 
     {
-        HLS_DEFINE_PROTOCOL("compute-config");
+        HLS_PROTO("compute-config");
 
         cfg.wait_for_config(); // config process
         conf_info_t config = this->conf_info.read();
@@ -226,6 +215,7 @@ void visionchip::compute_kernel()
 
     // Conclude
     {
+        HLS_PROTO("compute-done");
         this->process_done();
     }
 }

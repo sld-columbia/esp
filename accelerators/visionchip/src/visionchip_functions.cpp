@@ -13,10 +13,11 @@
 void visionchip::kernel_nf(uint32_t n_Rows, uint32_t n_Cols)
 {
     uint16_t pxl_list[9];
+    HLS_FLAT(pxl_list);
+
     min_bin = 65536;
     max_bin = 0;
 
-    HLS_FLATTEN_ARRAY(pxl_list);
 
     for (uint32_t r = 1 ; r < n_Rows - 1 ; r++)
     {
@@ -110,7 +111,7 @@ void visionchip::kernel_histEq(uint32_t n_Rows, uint32_t n_Cols)
 
     for (uint32_t i = min_bin; i <= max_bin; i++)
     {
-        HLS_PIPELINE_LOOP(HARD_STALL, 1, "accumulate-pipeline");
+        HLS_PIPE_H1("accumulate-pipeline");
 
         int32_t val = mem_hist_1[i];
         CDFmin = MIN(CDFmin, val);
@@ -125,7 +126,7 @@ void visionchip::kernel_histEq(uint32_t n_Rows, uint32_t n_Cols)
     for (uint32_t i = min_bin; i <= max_bin; i++)
     {
 
-        HLS_PIPELINE_LOOP(HARD_STALL, 1, "div-pipeline");
+        HLS_PIPE_H1("div-pipeline");
 
         // NB: Need two temp variable to avoid flase detection of loop-carried dependencies
         uint32_t temp1;
@@ -140,7 +141,7 @@ void visionchip::kernel_histEq(uint32_t n_Rows, uint32_t n_Cols)
 
     for (uint32_t i = 0; i < n_Pixels; i++)
     {
-        HLS_PIPELINE_LOOP(HARD_STALL, 1, "swap-data-pipeline");
+        HLS_PIPE_H1("swap-data-pipeline");
 
         int16_t temp = mem_buff_2[i];
         int32_t for_print = mem_hist_1[temp];
@@ -187,8 +188,8 @@ void visionchip::dwt_row_transpose(uint32_t n_Rows, uint32_t n_Cols, int16_t buf
 
             for (uint32_t j = 1 ; j < n_Cols - 1 ; j += 2)
             {
-                HLS_PIPELINE_LOOP(HARD_STALL, 1, "dwt-xpose-odd-pipeline");
-                HLS_CONSTRAIN_ARRAY_MAX_DISTANCE(buff1, 2, "dwt-odd-xpose-constrain");
+                HLS_PIPE_H1("dwt-xpose-odd-pipeline");
+                HLS_DWT_XPOSE_CONSTR(buff1, "dwt-odd-xpose-constrain");
 
                 cur = i * n_Cols + j;
 
@@ -218,7 +219,7 @@ void visionchip::dwt_row_transpose(uint32_t n_Rows, uint32_t n_Cols, int16_t buf
         }
 
         {
-            HLS_DEFINE_PROTOCOL("dwt-xpose-odd-last");
+            HLS_PROTO("dwt-xpose-odd-last");
             wait();
         }
 
@@ -229,8 +230,8 @@ void visionchip::dwt_row_transpose(uint32_t n_Rows, uint32_t n_Cols, int16_t buf
 
             for (uint32_t j = 2 ; j < n_Cols ; j += 2)
             {
-                HLS_PIPELINE_LOOP(HARD_STALL, 1, "dwt-xpose-even-pipeline");
-                HLS_CONSTRAIN_ARRAY_MAX_DISTANCE(buff1, 2, "dwt-xpose-even-constrain");
+                HLS_PIPE_H1("dwt-xpose-even-pipeline");
+                HLS_DWT_XPOSE_CONSTR(buff1, "dwt-xpose-even-constrain");
 
                 cur = i * n_Cols + j;
 
@@ -257,7 +258,7 @@ void visionchip::dwt_row_transpose(uint32_t n_Rows, uint32_t n_Cols, int16_t buf
             temp2 = buff1[cur] + temp1;
 
             {
-                HLS_DEFINE_PROTOCOL("dwt-xpose-even-first");
+                HLS_PROTO("dwt-xpose-even-first");
                 wait();
             }
 
@@ -268,19 +269,19 @@ void visionchip::dwt_row_transpose(uint32_t n_Rows, uint32_t n_Cols, int16_t buf
         {
             for (uint32_t j = 0 ; j < n_Cols / 2 ; j++)
             {
-                HLS_PIPELINE_LOOP(HARD_STALL, 2, "dwt-xpose-swp-pipeline");
+                HLS_PIPE_H2("dwt-xpose-swp-pipeline");
 
                 temp2 = buff1[i * n_Cols + 2 * j];
                 temp3 = buff1[i * n_Cols + 2 * j + 1];
 
                 {
-                    HLS_DEFINE_PROTOCOL("dwt-xpose-swp-w1");
+                    HLS_PROTO("dwt-xpose-swp-w1");
                     wait();
                     buff2[j * n_Rows + i] = temp2;
                 }
 
                 {
-                    HLS_DEFINE_PROTOCOL("dwt-xpose-swp-w2");
+                    HLS_PROTO("dwt-xpose-swp-w2");
                     wait();
                     buff2[(j + n_Cols / 2) * n_Rows + i] = temp3;
                 }
@@ -289,7 +290,7 @@ void visionchip::dwt_row_transpose(uint32_t n_Rows, uint32_t n_Cols, int16_t buf
         }
 
         {
-            HLS_DEFINE_PROTOCOL("dwt-xpose-end");
+            HLS_PROTO("dwt-xpose-end");
             wait();
         }
 

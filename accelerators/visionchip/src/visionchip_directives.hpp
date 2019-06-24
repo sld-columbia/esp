@@ -15,31 +15,31 @@
 #define HLS_MAP_mem_hist_2                      \
     HLS_MAP_TO_MEMORY(mem_hist_2, "plm_hist_1w1r")
 
+#define HLS_PROTO(_s)                           \
+    HLS_DEFINE_PROTOCOL(_s)
+
+#define HLS_FLAT(_a)                            \
+    HLS_FLATTEN_ARRAY(_a);
+
 
 #if defined(HLS_DIRECTIVES_BASIC)
 
-#define HLS_LOAD_INPUT_BATCH_LOOP		\
-    HLS_UNROLL_LOOP(OFF)
-#define HLS_LOAD_INPUT_LOOP			\
-    HLS_UNROLL_LOOP(OFF)
-#define HLS_LOAD_INPUT_PLM_WRITE                                \
-    HLS_CONSTRAIN_LATENCY(0, 1, "constraint-load-mem-access")
+#define HLS_PIPE_H1(_s)                         \
+    HLS_PIPELINE_LOOP(HARD_STALL, 1, _s);
 
-#define HLS_STORE_OUTPUT_BATCH_LOOP		\
-    HLS_UNROLL_LOOP(OFF)
-#define HLS_STORE_OUTPUT_LOOP			\
-    HLS_UNROLL_LOOP(OFF)
-#define HLS_STORE_OUTPUT_PLM_READ                               \
-    HLS_CONSTRAIN_LATENCY(0, 1, "constraint-store-mem-access")
+#define HLS_PIPE_H2(_s)                         \
+    HLS_PIPELINE_LOOP(HARD_STALL, 2, _s);
 
-#define HLS_UNROLL_LOOP_SIMPLE                  \
-    HLS_UNROLL_LOOP(ON)
+#define HLS_DWT_XPOSE_CONSTR(_m, _s)                    \
+    HLS_CONSTRAIN_ARRAY_MAX_DISTANCE(_m, 2, _s);
+
 
 #else
 
 #error Unsupported or undefined HLS configuration
 
 #endif /* HLS_DIRECTIVES_* */
+
 
 #else /* !STRATUS_HLS */
 
@@ -48,15 +48,12 @@
 #define HLS_MAP_mem_hist_1
 #define HLS_MAP_mem_hist_2
 
-#define HLS_LOAD_INPUT_BATCH_LOOP
-#define HLS_LOAD_INPUT_LOOP
-#define HLS_LOAD_INPUT_PLM_WRITE
+#define HLS_PROTO(_s)
+#define HLS_FLAT(_a)
+#define HLS_PIPE_H1(_s)
+#define HLS_PIPE_H2(_s)
 
-#define HLS_STORE_OUTPUT_BATCH_LOOP
-#define HLS_STORE_OUTPUT_LOOP
-#define HLS_STORE_OUTPUT_PLM_READ
-
-#define HLS_UNROLL_LOOP_SIMPLE
+#define HLS_DWT_XPOSE_CONSTR(_m, _s)
 
 #endif /* STRATUS_HLS */
 
