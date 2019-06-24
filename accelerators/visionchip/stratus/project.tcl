@@ -67,7 +67,7 @@ define_system_module tb ../tb/system.cpp ../tb/sc_main.cpp
 ######################################################################
 set DEFAULT_ARGV ""
 
-foreach dma [list 32] {
+foreach dma [list 32 64] {
     define_io_config * IOCFG_DMA$dma -DDMA_WIDTH=$dma \
 	-DPLM_IMG_SIZE=$PLM_IMG_SIZE \
 	-DPLM_HIST_SIZE=$PLM_HIST_SIZE

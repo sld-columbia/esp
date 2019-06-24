@@ -58,21 +58,25 @@ void visionchip::load_input()
         {
 
             // Configure DMA transaction
-            dma_info_t dma_info(dma_addr, n_Cols);
+            dma_info_t dma_info(dma_addr, n_Cols / WORDS_PER_DMA);
             this->dma_read_ctrl.put(dma_info);
 
 
-            for (uint32_t i = plm_addr; i < (plm_addr + n_Cols); i++)
+            for (uint32_t i = plm_addr; i < (plm_addr + n_Cols); i += WORDS_PER_DMA)
             {
-                int32_t data = this->dma_read_chnl.get().to_int();
-
-                // Write to PLM
+                sc_bv<DMA_WIDTH> data = this->dma_read_chnl.get();
+                HLS_BREAK_DEP(mem_buff_1);
+                HLS_BREAK_DEP(mem_buff_2);
                 wait();
-                mem_buff_1[i] = (int16_t) data;
-                mem_buff_2[i] = 0;
-            }
 
-            dma_addr += n_Cols;
+                for (uint8_t k = 0; k < WORDS_PER_DMA; k++) {
+                    HLS_UNROLL_SIMPLE;
+                    // Write to PLM
+                    mem_buff_1[i + k] = data.range(((k + 1) << 4) - 1, k << 4).to_int();
+                    mem_buff_2[i + k] = 0;
+                }
+            }
+            dma_addr += n_Cols / WORDS_PER_DMA;
             plm_addr += n_Cols;
         }
 
@@ -135,20 +139,24 @@ void visionchip::store_output()
         for (uint16_t b = 0; b < n_Rows; b++)
         {
             // Configure DMA transaction
-            dma_info_t dma_info(dma_addr, n_Cols);
+            dma_info_t dma_info(dma_addr, n_Cols / WORDS_PER_DMA);
 
             this->dma_write_ctrl.put(dma_info);
 
-            for (uint32_t i = plm_addr; i < (plm_addr + n_Cols); i++)
+            for (uint32_t i = plm_addr; i < (plm_addr + n_Cols); i += WORDS_PER_DMA)
             {
                 sc_bv<DMA_WIDTH> data;
-                // Read from PLM
+
                 wait();
-                data = sc_bv<DMA_WIDTH>((int32_t) mem_buff_1[i]);
+                for (uint8_t k = 0; k < WORDS_PER_DMA; k++) {
+                    HLS_UNROLL_SIMPLE;
+                    // Read from PLM
+                    data.range(((k + 1) << 4) - 1, k << 4) = sc_bv<16>(mem_buff_1[i + k]);
+                }
 
                 this->dma_write_chnl.put(data);
             }
-            dma_addr += n_Cols;
+            dma_addr += n_Cols / WORDS_PER_DMA;
             plm_addr += n_Cols;
         }
     }

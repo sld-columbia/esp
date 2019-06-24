@@ -102,12 +102,12 @@ void system_t::load_memory()
 
     // -- Read images
     int n_Pixels = n_Rows * n_Cols;
-    int *imgA = (int*)calloc(n_Pixels, sizeof(int));
+    uint16_t *imgA = (uint16_t *) calloc(n_Pixels, sizeof(uint16_t));
 
     ESP_REPORT_INFO("------------ read image start ------------");
 
     int i = 0, j = 0;
-    int val = 0;
+    uint16_t val = 0;
     FILE *fileA = NULL;
 
     if((fileA = fopen(image_A_path.c_str(), "r")) == (FILE*)NULL)
@@ -128,13 +128,14 @@ void system_t::load_memory()
 
     int mem_i = 0;
     for (i = 0; i < n_Images; i++) {
-        for (j = 0; j < n_Pixels; j++) {
-            mem[mem_i] = imgA[j];
+        for (j = 0; j < n_Pixels; j += WORDS_PER_DMA) {
+            for (uint8_t k = 0; k < WORDS_PER_DMA; k++)
+                mem[mem_i].range(((k + 1) << 4) - 1, k << 4) = sc_bv<16>(imgA[j + k]);
             mem_i++;
         }
     }
 
-    free(imgA);	
+    free(imgA);
 
     ESP_REPORT_INFO("------------ read image finish ------------");
 
@@ -179,13 +180,14 @@ int system_t::validate()
     // -- Compare the output with gold image
     int mem_j = 0;
     for (int i = 0; i < n_Images; i++) {
-        for(uint32_t j = 0 ; j < n_Pixels ; j++) {
-            if (mem[mem_j].to_int() != imgGold[j])
-            {
-                ESP_REPORT_INFO("Error: %d: %d %d.",
-                                mem_j, mem[mem_j].to_int(), imgGold[j]);
-                errors++;
-            }
+        for(uint32_t j = 0 ; j < n_Pixels ; j += WORDS_PER_DMA) {
+            for (uint8_t k = 0; k < WORDS_PER_DMA; k++)
+                if (mem[mem_j].range(((k + 1) << 4) - 1, k << 4).to_int() != imgGold[j + k])
+                {
+                    ESP_REPORT_INFO("Error: %d: %d %d.",
+                                    mem_j, mem[mem_j].range(((k + 1) << 4) - 1, k << 4).to_int(), imgGold[j + k]);
+                    errors++;
+                }
             mem_j++;
         }
     }
