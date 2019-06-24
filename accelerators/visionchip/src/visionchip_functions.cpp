@@ -153,61 +153,93 @@ int visionchip::kernel_dwt(int n_Rows, int n_Cols)
 
 
     // Do the rows
-    dwt_row_transpose(n_Rows, n_Cols);
+    dwt_row_transpose(n_Rows, n_Cols, mem_buff_1, mem_buff_2);
     // Do the cols
-    dwt_col_transpose(n_Rows, n_Cols);
+    dwt_row_transpose(n_Cols, n_Rows, mem_buff_2, mem_buff_1);
 
     // printf("======= Finish kernel_dwt =======\n");
     return 0;
 }
 
-int visionchip::dwt_row_transpose(int n_Rows, int n_Cols)
+int visionchip::dwt_row_transpose(int n_Rows, int n_Cols, int16_t buff1[PLM_IMG_SIZE], int16_t buff2[PLM_IMG_SIZE])
 {
-    // input: mem_buff_1, output: mem_buff_2
+    // input: buff1, output: buff2
     // printf("------- Start dwt_row_transpose -------\n");
 
     int32_t cur;
-    int16_t temp;
+    int16_t temp1;
+    int16_t temp2;
+    int16_t temp3;
+    int16_t temp4;
+    int16_t temp5;
 
     for (int i = 0 ; i < n_Rows ; i++)
     {
         // Predict the odd pixels using linear interpolation of the even pixels
         {
+            // Prefetch first element
+            temp1 = buff1[i * n_Cols];
+
             for (int j = 1 ; j < n_Cols - 1 ; j += 2)
             {
-                cur = i * n_Cols + j;
-                wait();
-                temp = mem_buff_1[cur - 1];
-                int16_t temp3 = mem_buff_1[cur + 1] + temp;
-                int16_t temp2 = mem_buff_1[cur];
+                HLS_PIPELINE_LOOP(HARD_STALL, 1, "dwt-xpose-odd-pipeline");
+                HLS_CONSTRAIN_ARRAY_MAX_DISTANCE(buff1, 2, "dwt-odd-xpose-constrain");
 
-                temp = temp3 >> 1;
-                mem_buff_1[cur] = temp2 - temp;
+                cur = i * n_Cols + j;
+
+                // Read 2 sequential words
+                temp2 = buff1[cur];
+                temp3 = buff1[cur + 1];
+
+                temp4 = (temp1 + temp3) >> 1;
+                temp5 = temp2 - temp4;
+
+                // Write 1 word
+                buff1[cur] = temp5;
+
+                // Prepare for next iteration
+                temp1 = temp3;
 
             }
         }
 
-
         // The last odd pixel only has its left neighboring even pixel
         {
             cur = i * n_Cols + n_Cols - 1;
-            int16_t temp2 = mem_buff_1[cur];
-            int16_t temp3 = temp2 - mem_buff_1[cur-1];
+            temp2 = buff1[cur];
+            temp3 = temp2 - temp3;
 
-            mem_buff_1[cur] = temp3;
+            buff1[cur] = temp3;
         }
 
         {
+            HLS_DEFINE_PROTOCOL("dwt-xpose-odd-last");
+            wait();
+        }
+
+        {
+
+            // Prefetch first element
+            temp1 = buff1[i * n_Cols + 1];
+
             for (int j = 2 ; j < n_Cols ; j += 2)
             {
-                cur = i * n_Cols + j;
-                int16_t temp2 = mem_buff_1[cur - 1];
-                int16_t temp3 = mem_buff_1[cur + 1];
-                int16_t temp4 = mem_buff_1[cur];
-                temp = temp2 + temp3;
+                HLS_PIPELINE_LOOP(HARD_STALL, 1, "dwt-xpose-even-pipeline");
+                HLS_CONSTRAIN_ARRAY_MAX_DISTANCE(buff1, 2, "dwt-xpose-even-constrain");
 
-                temp = temp >> 2;
-                mem_buff_1[cur] = temp4 + temp;
+                cur = i * n_Cols + j;
+
+                // Read 2 sequential words
+                temp2 = buff1[cur];
+                temp3 = buff1[cur + 1];
+
+                temp4 = (temp1 + temp3) >> 2;
+
+                // Write 1 word
+                buff1[cur] = temp4 + temp2;
+
+                // Prepare for next iteration
+                temp1 = temp3;
 
             }
         }
@@ -215,116 +247,50 @@ int visionchip::dwt_row_transpose(int n_Rows, int n_Cols)
         // The first even pixel only has its right neighboring odd pixel
         {
             cur = i * n_Cols;
-            temp = mem_buff_1[cur + 1];
-            temp = temp >> 1;
-            int16_t temp2 = mem_buff_1[cur] + temp;
+            temp1 = buff1[cur + 1];
+            temp1 = temp1 >> 1;
+            temp2 = buff1[cur] + temp1;
 
+            {
+                HLS_DEFINE_PROTOCOL("dwt-xpose-even-first");
+                wait();
+            }
 
-            mem_buff_1[cur] = temp2;
+            buff1[cur] = temp2;
 
         }
 
         {
             for (int j = 0 ; j < n_Cols / 2 ; j++)
             {
-                int16_t temp2 = mem_buff_1[i * n_Cols + 2 * j];
-                int16_t temp3 = mem_buff_1[i * n_Cols + 2 * j + 1];
+                HLS_PIPELINE_LOOP(HARD_STALL, 2, "dwt-xpose-swp-pipeline");
 
-                mem_buff_2[j * n_Rows + i] = temp2;
-                mem_buff_2[(j + n_Cols / 2) * n_Rows + i] = temp3;
+                temp2 = buff1[i * n_Cols + 2 * j];
+                temp3 = buff1[i * n_Cols + 2 * j + 1];
 
-            }
-        }
-    }
+                {
+                    HLS_DEFINE_PROTOCOL("dwt-xpose-swp-w1");
+                    wait();
+                    buff2[j * n_Rows + i] = temp2;
+                }
 
-    // printf("------- Finsih dwt_row_transpose -------\n");
-    return 0;
-}
-
-
-int visionchip::dwt_col_transpose(int n_Rows, int n_Cols)
-{
-    // input: mem_buff_2, output: mem_buff_1
-    // printf("------- Start dwt_col_transpose -------\n");
-
-    int32_t cur;
-    int16_t temp;
-
-    for (int i = 0 ; i < n_Cols ; i++)
-    {
-        // Predict the odd pixels using linear interpolation of the even pixels
-        {
-            for (int j = 1 ; j < n_Rows - 1 ; j += 2)
-            {
-                cur = i * n_Rows + j;
-                int16_t temp2 = mem_buff_2[cur - 1];
-                int16_t temp3 = mem_buff_2[cur + 1];
-                temp = temp2 + temp3;
-                temp = temp >> 1;
-                int16_t temp4 = mem_buff_2[cur];
-
-                temp = temp4 - temp;
-                mem_buff_2[cur] = temp;
+                {
+                    HLS_DEFINE_PROTOCOL("dwt-xpose-swp-w2");
+                    wait();
+                    buff2[(j + n_Cols / 2) * n_Rows + i] = temp3;
+                }
 
             }
         }
 
-        // The last odd pixel only has its left neighboring even pixel
         {
-
-            cur = i * n_Rows + n_Rows - 1;
-            int16_t temp2 = mem_buff_2[cur];
-            int16_t temp3 = temp2 - mem_buff_2[cur-1];
-
-            mem_buff_2[cur] = temp3;
-
-        }
-
-
-        // Update the even pixels using the odd pixels
-        // to preserve the mean value of the pixels
-        {
-            for (int j = 2 ; j < n_Rows ; j += 2)
-            {
-                cur = i * n_Rows + j;
-                int16_t temp2 = mem_buff_2[cur - 1];
-                int16_t temp3 = mem_buff_2[cur + 1];
-                temp = temp2 + temp3;
-                temp = temp >> 2;
-                int16_t temp4 = mem_buff_2[cur];
-
-                mem_buff_2[cur] = temp4 + temp;
-            }
-        }
-
-        {
-            // The first even pixel only has its right neighboring odd pixel
-            cur = i * n_Rows;
-            temp = mem_buff_2[cur + 1];
-            temp = temp >> 1;
-            int16_t temp2 = mem_buff_2[cur];
-
-            mem_buff_2[cur] = temp2 + temp;
-        }
-
-        // Now rearrange the data by putting the low frequency components at the front
-        // and the high frequency components at the back
-        // transposing the data at the same time
-
-        {
-            for (int j = 0 ; j < n_Rows / 2 ; j++)
-            {
-                int16_t temp2 = mem_buff_2[i * n_Rows + 2 * j];
-                int16_t temp3 = mem_buff_2[i * n_Rows + 2 * j + 1];
-
-                mem_buff_1[j * n_Cols + i] = temp2;
-                mem_buff_1[(j + n_Rows / 2) * n_Cols + i] = temp3;
-            }
+            HLS_DEFINE_PROTOCOL("dwt-xpose-end");
+            wait();
         }
 
     }
 
-    // printf("------- Finsih dwt_col_transpose -------\n");
+    // printf("------- Finsih dwt_row_transpose -------\n");
     return 0;
 }
 

@@ -61,7 +61,7 @@ public:
     int kernel_hist(int n_Rows, int n_Cols);
     int kernel_histEq(int n_Rows, int n_Cols);
     int kernel_dwt(int n_Rows, int n_Cols);
-    int dwt_row_transpose(int n_Rows, int n_Cols);
+    int dwt_row_transpose(int n_Rows, int n_Cols, int16_t buff1[PLM_IMG_SIZE], int16_t buff2[PLM_IMG_SIZE]);
     int dwt_col_transpose(int n_Rows, int n_Cols);
 
     // -- Private local memories
