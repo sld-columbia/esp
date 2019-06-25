@@ -72,7 +72,7 @@ void visionchip::load_input()
                 for (uint8_t k = 0; k < WORDS_PER_DMA; k++) {
                     HLS_UNROLL_SIMPLE;
                     // Write to PLM
-                    mem_buff_1[i + k] = data.range(((k + 1) << 4) - 1, k << 4).to_int();
+                    mem_buff_1[i + k] = data.range(((WORDS_PER_DMA - k) << 4) - 1, (WORDS_PER_DMA - k - 1) << 4).to_int();
                     mem_buff_2[i + k] = 0;
                 }
             }
@@ -151,7 +151,7 @@ void visionchip::store_output()
                 for (uint8_t k = 0; k < WORDS_PER_DMA; k++) {
                     HLS_UNROLL_SIMPLE;
                     // Read from PLM
-                    data.range(((k + 1) << 4) - 1, k << 4) = sc_bv<16>(mem_buff_1[i + k]);
+                    data.range(((WORDS_PER_DMA - k) << 4) - 1, (WORDS_PER_DMA - k - 1) << 4) = sc_bv<16>(mem_buff_1[i + k]);
                 }
 
                 this->dma_write_chnl.put(data);

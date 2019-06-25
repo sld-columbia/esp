@@ -130,7 +130,7 @@ void system_t::load_memory()
     for (i = 0; i < n_Images; i++) {
         for (j = 0; j < n_Pixels; j += WORDS_PER_DMA) {
             for (uint8_t k = 0; k < WORDS_PER_DMA; k++)
-                mem[mem_i].range(((k + 1) << 4) - 1, k << 4) = sc_bv<16>(imgA[j + k]);
+                mem[mem_i].range(((WORDS_PER_DMA - k) << 4) - 1, (WORDS_PER_DMA - k - 1) << 4) = sc_bv<16>(imgA[j + k]);
             mem_i++;
         }
     }
@@ -182,7 +182,7 @@ int system_t::validate()
     for (int i = 0; i < n_Images; i++) {
         for(uint32_t j = 0 ; j < n_Pixels ; j += WORDS_PER_DMA) {
             for (uint8_t k = 0; k < WORDS_PER_DMA; k++)
-                if (mem[mem_j].range(((k + 1) << 4) - 1, k << 4).to_int() != imgGold[j + k])
+                if (mem[mem_j].range(((WORDS_PER_DMA - k) << 4) - 1, (WORDS_PER_DMA - k - 1) << 4).to_int() != imgGold[j + k])
                 {
                     ESP_REPORT_INFO("Error: %d: %d %d.",
                                     mem_j, mem[mem_j].range(((k + 1) << 4) - 1, k << 4).to_int(), imgGold[j + k]);
