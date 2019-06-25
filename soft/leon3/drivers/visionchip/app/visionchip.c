@@ -611,7 +611,7 @@ struct visionchip_test {
 	unsigned cols;
 	unsigned nbytespp;
 	unsigned swapbytes;
-	int *hbuf;
+	short *hbuf;
 	int *sbuf_in;
 	int *sbuf_out;
 	bool verbose;
@@ -622,12 +622,12 @@ static inline struct visionchip_test *to_visionchip(struct test_info *info)
 	return container_of(info, struct visionchip_test, info);
 }
 
-static int check_gold (int *gold, int *array, unsigned len, bool verbose)
+static int check_gold (int *gold, short *array, unsigned len, bool verbose)
 {
 	int i;
 	int rtn = 0;
 	for (i = 0; i < len; i++) {
-		if (array[i] != gold[i]) {
+		if (((int) array[i]) != gold[i]) {
 			if (verbose)
 				printf("A[%d]: array=%d; gold=%d\n",
 				       i, array[i], gold[i]);
@@ -681,7 +681,10 @@ static void init_buf (struct visionchip_test *t)
 	hbuf_i = 0;
 	for (i = 0; i < t->nimages; i++) {
 		for (j = 0; j < nPxls; j++) {
-			t->hbuf[hbuf_i++] = (int) rawBuf[j];
+			t->hbuf[hbuf_i] = (short) rawBuf[j];
+			t->sbuf_in[hbuf_i] = (int) rawBuf[j];
+			printf("== %d - %d\n", t->hbuf[hbuf_i], t->sbuf_in[hbuf_i]);
+			hbuf_i++;
 		}
 	}
 
@@ -694,11 +697,16 @@ static inline size_t visionchip_size(struct visionchip_test *t)
 	return t->rows * t->cols * t->nimages * sizeof(int);
 }
 
+static inline size_t visionchip_size_opt(struct visionchip_test *t)
+{
+	return t->rows * t->cols * t->nimages * sizeof(short);
+}
+
 static void visionchip_alloc_buf(struct test_info *info)
 {
 	struct visionchip_test *t = to_visionchip(info);
 
-	t->hbuf = malloc0_check(visionchip_size(t));
+	t->hbuf = malloc0_check(visionchip_size_opt(t));
 	if (!strcmp(info->cmd, "test")) {
 		t->sbuf_in = malloc0_check(visionchip_size(t));
 		t->sbuf_out = malloc0_check(visionchip_size(t));
@@ -719,10 +727,7 @@ static void visionchip_init_bufs(struct test_info *info)
 	struct visionchip_test *t = to_visionchip(info);
 
 	init_buf(t);
-	contig_copy_to(info->contig, 0, t->hbuf, visionchip_size(t));
-
-	if (!strcmp(info->cmd, "test"))
-		memcpy(t->sbuf_in, t->hbuf, visionchip_size(t));
+	contig_copy_to(info->contig, 0, t->hbuf, visionchip_size_opt(t));
 }
 
 static void visionchip_set_access(struct test_info *info)
@@ -783,9 +788,9 @@ static bool visionchip_diff_ok(struct test_info *info)
 {
 	struct visionchip_test *t = to_visionchip(info);
 	int total_err = 0;
-	int i;
+	/* int i; */
 
-	contig_copy_from(t->hbuf, info->contig, 0, visionchip_size(t));
+	contig_copy_from(t->hbuf, info->contig, 0, visionchip_size_opt(t));
 
 	int err;
 
