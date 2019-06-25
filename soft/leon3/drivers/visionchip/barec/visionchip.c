@@ -12,11 +12,13 @@
 #define SLD_VISIONCHIP   0x13
 #define DEV_NAME "visionchip"
 
+#define COLS 40
+#define ROWS 30
 
-#define VISIONCHIP_BUF_SIZE 2048
+#define VISIONCHIP_BUF_SIZE (ROWS * COLS * sizeof(short))
 
 /* Size of the contiguous chunks for scatter/gather */
-#define CHUNK_SHIFT 7
+#define CHUNK_SHIFT 8
 #define CHUNK_SIZE BIT(CHUNK_SHIFT)
 #define NCHUNK ((VISIONCHIP_BUF_SIZE % CHUNK_SIZE == 0) ?		\
 			(VISIONCHIP_BUF_SIZE / CHUNK_SIZE) :		\
@@ -45,9 +47,9 @@ int main(int argc, char * argv[])
 		for (coherence = ACC_COH_NONE; coherence <= ACC_COH_FULL; coherence++) {
 			struct esp_device *dev = &espdevs[n];
 			int done;
-			int i;
+			int i, j;
 			unsigned **ptable;
-			unsigned *mem;
+			short *mem;
 			unsigned errors = 0;
 			int scatter_gather = 1;
 
@@ -78,12 +80,13 @@ int main(int argc, char * argv[])
 				//Alocate and populate page table
 				ptable = aligned_malloc(NCHUNK * sizeof(unsigned *));
 				for (i = 0; i < NCHUNK; i++)
-					ptable[i] = (unsigned *) &mem[i * (CHUNK_SIZE / sizeof(unsigned))];
+					ptable[i] = (unsigned *) &mem[i * (CHUNK_SIZE / sizeof(unsigned short))];
 				printf("  ptable = %p\n", ptable);
 				printf("  nchunk = %lu\n", NCHUNK);
 			}
 
 			// Initialize input (TODO)
+			#include "data.c"
 
 			// Configure device
 			iowrite32(dev, SELECT_REG, ioread32(dev, DEVID_REG));
@@ -102,8 +105,8 @@ int main(int argc, char * argv[])
 
 			// Accelerator-specific registers
 			iowrite32(dev, VISIONCHIP_NIMAGES_REG, 1);
-			iowrite32(dev, VISIONCHIP_NROWS_REG, 18);
-			iowrite32(dev, VISIONCHIP_NCOLS_REG, 28);
+			iowrite32(dev, VISIONCHIP_NROWS_REG, ROWS);
+			iowrite32(dev, VISIONCHIP_NCOLS_REG, COLS);
 
 			// Flush for non-coherent DMA
 			esp_flush(coherence);
@@ -120,8 +123,11 @@ int main(int argc, char * argv[])
 			iowrite32(dev, CMD_REG, 0x0);
 			printf("  Done\n");
 
-			/* Validation (TODO) */
+			/* Validation (TODO: just printing for now) */
 			printf("  validating...\n");
+			for (i = 0; i < ROWS; i++)
+				for (j = 0; j < COLS; j++)
+					printf(" %d,%d = %d\n", i, j, mem[i * COLS + j]);
 
 			if (errors)
 				printf("  ... FAIL\n");
