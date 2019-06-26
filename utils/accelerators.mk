@@ -68,12 +68,11 @@ chisel-accelerators-distclean: chisel-accelerators-clean $(CHISEL_ACCELERATORS-d
 $(ACCELERATORS-wdir):
 	$(QUIET_MKDIR)mkdir -p $(ACCELERATORS_PATH)/$(@:-wdir=)/hls-work-$(TECHLIB)
 	@cd $(ACCELERATORS_PATH)/$(@:-wdir=)/hls-work-$(TECHLIB); \
-	if test ! -e project.tcl; then \
-		ln -s ../stratus/project.tcl; \
-	fi; \
-	if test ! -e Makefile; then \
-		ln -s ../stratus/Makefile; \
-	fi;
+	cp ../stratus/* .; \
+	rm -f project.tcl; \
+	rm -f Makefile; \
+	ln -s ../stratus/project.tcl; \
+	ln -s ../stratus/Makefile;
 
 $(ACCELERATORS-hls): %-hls : %-wdir
 	$(QUIET_MAKE)ACCELERATOR=$(@:-hls=) TECH=$(TECHLIB) ESP_ROOT=$(ESP_ROOT) make -C $(ACCELERATORS_PATH)/$(@:-hls=)/hls-work-$(TECHLIB) memlib | tee $(@:-hls=)_memgen.log
