@@ -1,19 +1,6 @@
-all: check Module.symvers
-	make -C $(KSRC) M=`pwd`
+
+include ../../driver.mk
 
 Module.symvers:
-	$(MAKE) -C $(ESP_CORE_PATH)
+	$(MAKE) -C $(ESP_CORE_PATH) CROSS_COMPILE=$(CROSS_COMPILE) ARCH=$(ARCH)
 	cp $(ESP_CORE_PATH)/$@ .
-
-check:
-ifeq ($(KSRC),)
-	$(error 'Path to kernel in env variable KSRC not found. Exiting')
-endif
-.PHONY: check
-
-clean: check
-	$(MAKE) -C $(KSRC) M=`pwd` clean
-
-help: check
-	$(MAKE) -C $(KSRC) M=`pwd` help
-.PHONY: all clean help

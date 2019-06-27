@@ -173,7 +173,7 @@ int main(int argc, char * argv[])
 		exit(EXIT_FAILURE);
 	}
 
-#include "data.c"
+#include "data.h"
 
 	for (i = 0; i < vals_size; i++)
 		in_vals_fx_buf[i] = float_to_fixed32(in_vals_buf[i], 16);

@@ -1,9 +1,11 @@
-all: check Module.symvers
-	make -C $(KSRC) M=`pwd`
 
-Module.symvers:
-	$(MAKE) -C $(ESP_CORE_PATH)
-	cp $(ESP_CORE_PATH)/$@ .
+CROSS_COMPILE ?= sparc-leon3-linux-
+ARCH ?= sparc
+
+ESP_CORE_PATH ?= ../../esp
+
+all: check Module.symvers
+	make -C $(KSRC) M=`pwd` CROSS_COMPILE=$(CROSS_COMPILE) ARCH=$(ARCH)
 
 check:
 ifeq ($(KSRC),)
@@ -12,8 +14,8 @@ endif
 .PHONY: check
 
 clean: check
-	$(MAKE) -C $(KSRC) M=`pwd` clean
+	$(MAKE) -C $(KSRC) M=`pwd` CROSS_COMPILE=$(CROSS_COMPILE) ARCH=$(ARCH) clean
 
 help: check
-	$(MAKE) -C $(KSRC) M=`pwd` help
+	$(MAKE) -C $(KSRC) M=`pwd` CROSS_COMPILE=$(CROSS_COMPILE) ARCH=$(ARCH) help
 .PHONY: all clean help

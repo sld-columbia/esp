@@ -1,4 +1,7 @@
 
+CROSS_COMPILE ?= sparc-leon3-linux-
+ARRCH ?= sparc
+
 CFLAGS ?= -O3
 CFLAGS += -fno-builtin-cos -fno-builtin-sin
 CFLAGS += -Wall -Werror

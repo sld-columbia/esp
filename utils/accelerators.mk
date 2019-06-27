@@ -184,14 +184,29 @@ $(ACCELERATORS-barec-clean):
 
 accelerators-driver: $(ACCELERATORS-driver)
 
-accelerators-driver-clean: $(ACCELERATORS-driver-clean)
+accelerators-driver-clean: $(ACCELERATORS-driver-clean) contig-clean esp-clean esp-cache-clean
 
 accelerators-app: $(ACCELERATORS-app)
 
-accelerators-app-clean: $(ACCELERATORS-app-clean)
+accelerators-app-clean: $(ACCELERATORS-app-clean) test-clean
 
 accelerators-barec: $(ACCELERATORS-barec)
 
-accelerators-barec-clean: $(ACCELERATORS-barec-clean)
+accelerators-barec-clean: $(ACCELERATORS-barec-clean) probe-clean
 
-.PHONY: accelerators-driver accelerators-driver-clean accelerators-app accelerators-app-clean accelerators-barec accelerators-barec-clean
+esp-clean:
+	$(QUIET_CLEAN) CROSS_COMPILE=sparc-leon3-linux- ARCH=sparc KSRC=$(PWD)/linux-build $(MAKE) -C $(DRIVERS)/esp clean
+
+esp-cache-clean:
+	$(QUIET_CLEAN) CROSS_COMPILE=sparc-leon3-linux- ARCH=sparc KSRC=$(PWD)/linux-build $(MAKE) -C $(DRIVERS)/esp_cache clean
+
+contig-clean:
+	$(QUIET_CLEAN) CROSS_COMPILE=sparc-leon3-linux- ARCH=sparc KSRC=$(PWD)/linux-build $(MAKE) -C $(DRIVERS)/contig_alloc clean-libcontig
+
+probe-clean:
+	$(QUIET_CLEAN) CROSS_COMPILE=sparc-elf- $(MAKE) -C $(DRIVERS)/probe clean
+
+test-clean:
+	$(QUIET_CLEAN) CROSS_COMPILE=sparc-leon3-linux- $(MAKE) -C $(DRIVERS)/test clean
+
+.PHONY: accelerators-driver accelerators-driver-clean accelerators-app accelerators-app-clean accelerators-barec accelerators-barec-clean probe-clean contig-clean esp-clean esp-cache-clean test-clean

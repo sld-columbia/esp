@@ -1,24 +1,20 @@
 
-CFLAGS ?= -O3
+
+CFLAGS := -O3
 CFLAGS += -fno-builtin-cos -fno-builtin-sin
 CFLAGS += -Wall -Werror
 CFLAGS += -I../include
 
-OUT := libprobe.a
+target: libprobe.a
 
-OBJS := probe.o
-
-all: $(OUT)
+include ../common_bare.mk
 
 %.o: %.c
 	$(CROSS_COMPILE)gcc $(CFLAGS) -c $^ -o $@
 
-$(OUT): $(OBJS)
+libprobe.a: probe.o
 	$(CROSS_COMPILE)ar r $@ $^
 	$(CROSS_COMPILE)ranlib $@
 
-clean:
-	$(RM) *.o
-	$(RM) $(OUT)
 
-.PHONY: all clean
+.PHONY: target

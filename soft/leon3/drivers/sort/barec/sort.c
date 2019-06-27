@@ -192,7 +192,7 @@ int main(int argc, char * argv[])
 				aligned_free(ptable);
 			aligned_free(mem);
 
-			printf("**************************************************\n\n", DEV_NAME, n);
+			printf("**************************************************\n\n");
 		}
 	}
 	return 0;
