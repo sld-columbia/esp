@@ -318,6 +318,8 @@ if [ $(noyes "Skip ${src}?") == "n" ]; then
     fi
 
     cd $src
+    cp $SCRIPT_PATH/uclibc_config .config
+    sed -i "s~KERNEL_HEADERS=~KERNEL_HEADERS=\"${TOOLS}\/usr\/include\"~g" .config
     make -j ${NTHREADS}
     cmd="make PREFIX=${TOOLS} install"
     runsudo $TOOLS "$cmd"
@@ -428,6 +430,8 @@ if [ $(noyes "Skip ${src}?") == "n" ]; then
     fi
 
     cd $src
+    cp $SCRIPT_PATH/busybox_config .config
+    sed -i "s~CONFIG_SYSROOT=~CONFIG_SYSROOT=\"${TOOLS}\"~g" .config
     make busybox -j ${NTHREADS}
     make CONFIG_PREFIX=${SYSROOT} install
     if test ! -e ${SYSROOT}/init; then

@@ -21,6 +21,24 @@
 #include <test/test.h>
 #include <test/time.h>
 
+#define KNRM  "\x1B[0m"
+#define KRED  "\x1B[31m"
+#define KGRN  "\x1B[32m"
+#define KYEL  "\x1B[33m"
+#define KBLU  "\x1B[34m"
+#define KMAG  "\x1B[35m"
+#define KCYN  "\x1B[36m"
+#define KWHT  "\x1B[37m"
+
+#define SET_RED(_fp) fprintf(_fp, "%s", KRED)
+#define SET_GRN(_fp) fprintf(_fp, "%s", KGRN)
+#define SET_YEL(_fp) fprintf(_fp, "%s", KYEL)
+#define SET_BLU(_fp) fprintf(_fp, "%s", KBLU)
+#define SET_MAG(_fp) fprintf(_fp, "%s", KMAG)
+#define SET_CYN(_fp) fprintf(_fp, "%s", KCYN)
+#define SET_WHT(_fp) fprintf(_fp, "%s", KWHT)
+#define SET_NRM(_fp) fprintf(_fp, "%s", KNRM)
+
 static void dev_open(struct test_info *info)
 {
 	info->fd = open(info->devname, O_RDWR, 0);
@@ -139,17 +157,25 @@ static int cmd_test(struct test_info *info)
 		fflush(NULL);
 		info->to_float(info);
 	}
-	printf("\n\n");
-
+	printf("\n");
+	printf("\n--------------------------------\n");
 	hw_ns = ts_subtract(&th_start, &th_end);
 	sw_ns = ts_subtract(&ts_start, &ts_end);
-	printf("hw exec time: %llu ns\n", hw_ns);
-	printf("sw exec time: %llu ns\n", sw_ns);
+	printf("  hw exec time: %llu ms\n", hw_ns/1000000);
+	printf("  sw exec time: %llu ms\n", sw_ns/1000000);
+	unsigned int speedup = sw_ns / hw_ns;
+	SET_GRN(stdout);
+	printf("\n  HW SPEEDUP: %ux\n", speedup);
 
 	if (!info->diff_ok(info))
 		return 1;
 	else
-		printf("OK: Software and Hardware match\n");
+		printf("\n  SOFTWARE AND HARDWARE MATCH!\n");
+
+	SET_NRM(stdout);
+
+	        printf("--------------------------------\n");
+
 	return 0;
 }
 
@@ -257,11 +283,11 @@ int test_main(struct test_info *info, const char *coh, const char *cmd)
 	}
 
 
-	if (!strcmp(coh, "full"))
+	if (!strcmp(coh, "coh"))
 		coherence = ACC_COH_FULL;
-	else if (!strcmp(coh, "llc"))
+	else if (!strcmp(coh, "llc-coh-dma"))
 		coherence = ACC_COH_LLC;
-	else if (!strcmp(coh, "recall"))
+	else if (!strcmp(coh, "coh-dma"))
 		coherence = ACC_COH_RECALL;
 	else
 		coherence = ACC_COH_NONE;

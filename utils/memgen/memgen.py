@@ -283,15 +283,15 @@ class memory():
             we_str.append(we_str_i)
             wem_str.append(wem_str_i)
 
-        # This handles cases in which there are multiple parallel ops with pattern "modulo", but different distribution factor.
-        if parallelism != 0:
-            normalized_iface = iface
-            # If access patter is modulo, we know it's a power of two. If it's not modulo parallelism is set to 0 when calling this method
-            if not is_write:
-                normalized_iface = iface - self.write_interfaces
-            normalized_iface = normalized_iface % self.hbanks
-            normalized_parallelism = min(parallelism, self.hbanks)
-            fd.write("          if (h % " + str(normalized_parallelism) + " == " + str(normalized_iface) + ") begin\n")
+        # # This handles cases in which there are multiple parallel ops with pattern "modulo", but different distribution factor.
+        # if parallelism != 0:
+        #     normalized_iface = iface
+        #     # If access patter is modulo, we know it's a power of two. If it's not modulo parallelism is set to 0 when calling this method
+        #     if not is_write:
+        #         normalized_iface = iface - self.write_interfaces
+        #     normalized_iface = normalized_iface % self.hbanks
+        #     normalized_parallelism = min(parallelism, self.hbanks)
+        #     fd.write("          if (h % " + str(normalized_parallelism) + " == " + str(normalized_iface) + ") begin\n")
         fd.write("            if (ctrlh[" + str(iface) + "] == h && ctrlv[" + str(iface) + "] == v && CE" + str(iface) + " == 1'b1) begin\n")
         # Check that no port is accessed by more than one interface
         if (ASSERT_ON):
@@ -313,8 +313,8 @@ class memory():
             fd.write("              end\n")
             fd.write(we_str[duplicated_bank_set][port]  + str(iface)                       + ";\n")
         fd.write("            end\n")
-        if parallelism != 0:
-            fd.write("          end\n")
+        # if parallelism != 0:
+        #     fd.write("          end\n")
 
     def write_verilog(self, out_path):
         try:

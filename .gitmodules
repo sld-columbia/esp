@@ -1,6 +1,3 @@
-[submodule "accelerators/common/syn-templates"]
-	path = accelerators/common/syn-templates
-	url = git@dev.sld.cs.columbia.edu:esp/syn-templates-stratus.git
 [submodule "soft/leon3/linux"]
 	path = soft/leon3/linux
 	url = git@github.com:sld-columbia/linux.git
@@ -8,6 +5,9 @@
 [submodule "chisel"]
 	path = chisel
 	url = git@github.com:IBM/esp-chisel-accelerators.git
+[submodule "accelerators/common/syn-templates"]
+	path = accelerators/common/syn-templates
+	url = git@github.com:sld-columbia/esp-accelerator-templates.git
 [submodule "soft/ariane/linux"]
 	path = soft/ariane/linux
 	url = git@github.com:sld-columbia/linux.git
