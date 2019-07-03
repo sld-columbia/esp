@@ -186,10 +186,12 @@ end;
   signal dma_read_ctrl_ready        : std_ulogic;
   signal dma_read_ctrl_data_index   : std_logic_vector(31 downto 0);
   signal dma_read_ctrl_data_length  : std_logic_vector(31 downto 0);
+  signal dma_read_ctrl_data_size    : std_logic_vector(2 downto 0);
   signal dma_write_ctrl_valid       : std_ulogic;
   signal dma_write_ctrl_ready       : std_ulogic;
   signal dma_write_ctrl_data_index  : std_logic_vector(31 downto 0);
   signal dma_write_ctrl_data_length : std_logic_vector(31 downto 0);
+  signal dma_write_ctrl_data_size   : std_logic_vector(2 downto 0);
   signal dma_read_chnl_valid        : std_ulogic;
   signal dma_read_chnl_ready        : std_ulogic;
   signal dma_read_chnl_data         : std_logic_vector(ARCH_BITS - 1 downto 0);
@@ -312,6 +314,7 @@ begin
       rd_request                    => dma_read_ctrl_valid,
       rd_index                      => dma_read_ctrl_data_index,
       rd_length                     => dma_read_ctrl_data_length,
+      rd_size                       => dma_read_ctrl_data_size,
       rd_grant                      => dma_read_ctrl_ready,
       bufdin_ready                  => dma_read_chnl_ready,
       bufdin_data                   => dma_read_chnl_data,
@@ -319,6 +322,7 @@ begin
       wr_request                    => dma_write_ctrl_valid,
       wr_index                      => dma_write_ctrl_data_index,
       wr_length                     => dma_write_ctrl_data_length,
+      wr_size                       => dma_write_ctrl_data_size,
       wr_grant                      => dma_write_ctrl_ready,
       bufdout_ready                 => dma_write_chnl_ready,
       bufdout_data                  => dma_write_chnl_data,

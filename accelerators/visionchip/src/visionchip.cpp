@@ -58,7 +58,7 @@ void visionchip::load_input()
         {
 
             // Configure DMA transaction
-            dma_info_t dma_info(dma_addr, n_Cols / WORDS_PER_DMA);
+            dma_info_t dma_info(dma_addr, n_Cols / WORDS_PER_DMA, SIZE_HWORD);
             this->dma_read_ctrl.put(dma_info);
 
 
@@ -139,7 +139,7 @@ void visionchip::store_output()
         for (uint16_t b = 0; b < n_Rows; b++)
         {
             // Configure DMA transaction
-            dma_info_t dma_info(dma_addr, n_Cols / WORDS_PER_DMA);
+            dma_info_t dma_info(dma_addr, n_Cols / WORDS_PER_DMA, SIZE_HWORD);
 
             this->dma_write_ctrl.put(dma_info);
 

@@ -134,7 +134,7 @@ void synth::load_input()
 		    HLS_DEFINE_PROTOCOL("load-dma-conf");
 
 		    // Configure DMA transaction
-		    dma_info_t dma_info(index + offset, burst_len);
+		    dma_info_t dma_info(index + offset, burst_len, SIZE_WORD);
 		    this->dma_read_ctrl.put(dma_info);
 		}
 
@@ -286,7 +286,7 @@ void synth::store_output()
 		    HLS_DEFINE_PROTOCOL("store-dma-conf");
 
 		    // Configure DMA transaction
-		    dma_info_t dma_info(index + offset, burst_len);
+		    dma_info_t dma_info(index + offset, burst_len, SIZE_WORD);
 		    this->dma_write_ctrl.put(dma_info);
 		}
 		for (uint32_t i = 0; i < burst_len; i++)

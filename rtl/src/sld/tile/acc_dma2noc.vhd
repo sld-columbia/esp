@@ -86,6 +86,7 @@ entity acc_dma2noc is
     rd_request    : in  std_ulogic;
     rd_index      : in  std_logic_vector(31 downto 0);
     rd_length     : in  std_logic_vector(31 downto 0);
+    rd_size       : in  std_logic_vector(2 downto 0);
     rd_grant      : out std_ulogic;
     bufdin_ready  : in  std_ulogic;
     bufdin_data   : out std_logic_vector(ARCH_BITS - 1 downto 0);
@@ -93,6 +94,7 @@ entity acc_dma2noc is
     wr_request    : in  std_ulogic;
     wr_index      : in  std_logic_vector(31 downto 0);
     wr_length     : in  std_logic_vector(31 downto 0);
+    wr_size       : in  std_logic_vector(2 downto 0);
     wr_grant      : out std_ulogic;
     bufdout_ready : out std_ulogic;
     bufdout_data  : in  std_logic_vector(ARCH_BITS - 1 downto 0);
@@ -142,6 +144,46 @@ architecture rtl of acc_dma2noc is
 
   constant len_pad : std_logic_vector(GLOB_BYTE_OFFSET_BITS - 1 downto 0) := (others => '0');
 
+  function fix_endian (
+    din : std_logic_vector(ARCH_BITS - 1 downto 0);
+    sz  : std_logic_vector(2 downto 0))
+  return std_logic_vector is
+    variable dout : std_logic_vector(ARCH_BITS - 1 downto 0);
+  begin
+    -- If architecture is little endian, then return data as is
+    if GLOB_CPU_AXI = 1 then
+      dout := din;
+    else
+      case sz is
+
+        when HSIZE_DWORD =>
+          for i in 0 to (ARCH_BITS / 64) - 1 loop
+            dout(64 * (i + 1) - 1 downto 64 * i) := din(ARCH_BITS - 64 * i - 1 downto ARCH_BITS - 64 * (i + 1));
+          end loop;
+
+        when HSIZE_WORD =>
+          for i in 0 to (ARCH_BITS / 32) - 1 loop
+            dout(32 * (i + 1) - 1 downto 32 * i) := din(ARCH_BITS - 32 * i - 1 downto ARCH_BITS - 32 * (i + 1));
+          end loop;
+
+        when HSIZE_HWORD =>
+          for i in 0 to (ARCH_BITS / 16) - 1 loop
+            dout(16 * (i + 1) - 1 downto 16 * i) := din(ARCH_BITS - 16 * i - 1 downto ARCH_BITS - 16 * (i + 1));
+          end loop;
+
+        when HSIZE_BYTE =>
+          for i in 0 to (ARCH_BITS / 8) - 1 loop
+            dout(8 * (i + 1) - 1 downto 8 * i) := din(ARCH_BITS - 8 * i - 1 downto ARCH_BITS - 8 * (i + 1));
+          end loop;
+
+        when others =>
+          dout := din;
+
+      end case;
+    end if;
+    return dout;
+  end fix_endian;
+
   -- Register bank
   signal bankreg   : bank_type(0 to MAXREGNUM - 1);
   signal bankin    : bank_type(0 to MAXREGNUM - 1);
@@ -160,6 +202,8 @@ architecture rtl of acc_dma2noc is
   signal payload_address, payload_address_r  : noc_flit_type;
   signal payload_length, payload_length_r    : noc_flit_type;
   signal sample_flits                        : std_ulogic;
+  signal sample_rd_size, sample_wr_size      : std_ulogic;
+  signal size_r                              : std_logic_vector(2 downto 0);
   signal irq_header_i, irq_header            : misc_noc_flit_type;
   constant irq_info                          : std_logic_vector(3 downto 0) := conv_std_logic_vector(pirq, 4);
 
@@ -428,6 +472,7 @@ begin  -- rtl
       payload_address_r <= (others => '0');
       payload_length_r <= (others => '0');
       count <= conv_std_logic_vector(1, 32);
+      size_r <= HSIZE_WORD;
     elsif clk'event and clk = '1' then  -- rising clock edge
       if sample_flits = '1' then
         header_r <= header;
@@ -439,6 +484,11 @@ begin  -- rtl
       end if;
       if clear_count = '1' then
         count <= conv_std_logic_vector(1, 32);
+      end if;
+      if sample_rd_size = '1' then
+        size_r <= rd_size;
+      elsif sample_wr_size = '1' then
+        size_r <= wr_size;
       end if;
     end if;
   end process;
@@ -472,7 +522,8 @@ begin  -- rtl
                           pending_acc_done, dma_snd_full_int, dma_rcv_empty_int, dma_rcv_data_out_int,
                           header_r, payload_address_r, payload_length_r,
                           dma_tran_start, tlb_empty, pending_dma_write,
-                          pending_dma_read, coherent_dma_ready, dvfs_transient)
+                          pending_dma_read, coherent_dma_ready, dvfs_transient,
+                          size_r)
     variable payload_data : noc_flit_type;
     variable preamble : noc_preamble_type;
     variable msg : noc_msg_type;
@@ -486,6 +537,8 @@ begin  -- rtl
 
     dma_next <= dma_state;
     sample_flits <= '0';
+    sample_rd_size <= '0';
+    sample_wr_size <= '0';
     increment_count <= '0';
     clear_count <= '0';
     --TLB
@@ -513,7 +566,7 @@ begin  -- rtl
       payload_data(NOC_FLIT_SIZE-1 downto NOC_FLIT_SIZE-PREAMBLE_WIDTH) := PREAMBLE_TAIL;
     end if;
     -- Note that NOC_FLIT_SIZE os ARCH_BITS + PREAMBLE_WIDTH
-    payload_data(ARCH_BITS - 1 downto 0) := bufdout_data;
+    payload_data(ARCH_BITS - 1 downto 0) := fix_endian(bufdout_data, size_r);
 
     -- Default private cache inputs
     coherent_dma_read  <= '0';
@@ -523,7 +576,7 @@ begin  -- rtl
     acc_rst <= rst;
     conf_done <= '0';
     rd_grant <= '0';
-    bufdin_data <= dma_rcv_data_out_int(ARCH_BITS - 1 downto 0);
+    bufdin_data <= fix_endian(dma_rcv_data_out_int(ARCH_BITS - 1 downto 0), size_r);
     bufdin_valid <= '0';
     wr_grant <= '0';
     bufdout_ready <= '0';
@@ -612,11 +665,13 @@ begin  -- rtl
           if scatter_gather = 0 then
             sample_flits <= '1';
           end if;
+          sample_rd_size <= '1';
           dma_next <= rd_handshake;
         elsif wr_request = '1' then
           if scatter_gather = 0 then
             sample_flits <= '1';
           end if;
+          sample_wr_size <= '1';
           dma_next <= wr_handshake;
         end if;
 
