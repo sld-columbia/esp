@@ -172,7 +172,7 @@ esp-defconfig: ../defconfig/esp_$(BOARD)_defconfig
 	$(QUIET_CP)cp $< .esp_config
 	$(QUIET_MAKE)$(MAKE) esp-config
 
-socmap.vhd: .esp_config grlib_config.vhd
+socmap.vhd: .esp_config grlib_config.vhd top.vhd
 	$(QUIET_DIFF)echo "checking .esp_config..."
 	@/usr/bin/diff .esp_config ../defconfig/esp_$(BOARD)_defconfig -q > /dev/null; \
 	if test $$? = "0"; then \
@@ -196,7 +196,8 @@ esp-config-clean:
 		.esp_config.bak
 
 ifeq ("$(CPU_ARCH)", "ariane")
-ariane.dts: socmap.vhd
+ariane.dts: .esp_config grlib_config.vhd top.vhd
+	$(QUIET_MAKE) $(MAKE) socmap.vhd
 endif
 
 esp-config-distclean: esp-config-clean
@@ -310,38 +311,6 @@ linux-build/.config: $(LINUXSRC)/arch/sparc/configs/$(LINUX_CONFIG)
 linux-build/vmlinux: sysroot.cpio linux-build/.config
 	$(QUIET_MAKE)ARCH=sparc CROSS_COMPILE=sparc-leon3-linux- $(MAKE) -C linux-build
 
-sysroot/opt/drivers-esp/contig_alloc.ko: linux-build/vmlinux $(wildcard $(CONTIG_ALLOC_PATH)/*.c) $(wildcard $(CONTIG_ALLOC_PATH)/*.h) $(wildcard $(DRIVERS)/include/*.h)
-	$(QUIET_MAKE)ARCH=sparc CROSS_COMPILE=sparc-leon3-linux- KSRC=$(PWD)/linux-build $(MAKE) -C $(CONTIG_ALLOC_PATH)
-	$(QUIET_CP)cp $(CONTIG_ALLOC_PATH)/contig_alloc.ko $@
-
-sysroot/opt/drivers-esp/esp_cache.ko: linux-build/vmlinux $(wildcard $(ESP_CORE_PATH)/../esp_cache/*.c) $(wildcard $(ESP_CORE_PATH)/../esp_cache/*.h) $(wildcard $(DRIVERS)/include/*.h)
-	$(QUIET_MAKE)ARCH=sparc CROSS_COMPILE=sparc-leon3-linux- KSRC=$(PWD)/linux-build $(MAKE) -C $(ESP_CORE_PATH)/../esp_cache
-	$(QUIET_CP)cp $(ESP_CORE_PATH)/../esp_cache/esp_cache.ko $@
-
-sysroot/opt/drivers-esp/esp_private_cache.ko: sysroot/opt/drivers-esp/esp_cache.ko
-	$(QUIET_CP)cp $(ESP_CORE_PATH)/../esp_cache/esp_private_cache.ko $@
-
-sysroot/opt/drivers-esp/esp.ko: linux-build/vmlinux $(wildcard $(ESP_CORE_PATH)/*.c) $(wildcard $(ESP_CORE_PATH)/*.h) $(wildcard $(DRIVERS)/include/*.h)
-	$(QUIET_MAKE)ARCH=sparc CROSS_COMPILE=sparc-leon3-linux- KSRC=$(PWD)/linux-build CONTIG_ALLOC_PATH=$(CONTIG_ALLOC_PATH) $(MAKE) -C $(ESP_CORE_PATH)
-	$(QUIET_CP)cp $(ESP_CORE_PATH)/esp.ko $@
-
-# This is a PHONY to guarantee sysroot is always updated when apps or drivers change
-# Most targets won't actually do anything if their dependencies have not changed.
-# Linux is compiled twice if necessary to ensure drivers are compiled against the most recent kernel
-sysroot-update: linux-build/vmlinux
-	@touch sysroot
-	@$(MAKE) sysroot/opt/drivers-esp/contig_alloc.ko
-	@$(MAKE) sysroot/opt/drivers-esp/esp_cache.ko
-	@$(MAKE) sysroot/opt/drivers-esp/esp_private_cache.ko
-	@$(MAKE) sysroot/opt/drivers-esp/esp.ko
-	@CROSS_COMPILE=sparc-leon3-linux- $(MAKE) -C $(DRIVERS)/dvi/app
-	@cp $(DRIVERS)/dvi/app/*.exe sysroot/applications/dvi
-	@$(MAKE) accelerators-driver
-	@$(MAKE) accelerators-app
-	@touch sysroot
-	$(QUIET_MAKE)$(MAKE) linux-build/vmlinux
-
-
 linux.dsu: sysroot-update
 	$(QUIET_BUILD)mklinuximg linux-build/vmlinux $@
 
@@ -356,23 +325,9 @@ linux-clean: sysroot-clean
 linux-distclean: sysroot-distclean
 	$(QUIET_CLEAN)$(RM) linux-build linux.dsu
 
-sysroot-clean:
-	$(QUIET_CLEAN)$(RM) sysroot.files sysroot.cpio
-	@CROSS_COMPILE=sparc-leon3-linux- $(MAKE) --quiet -C $(DRIVERS)/dvi/app clean
-	@if test -e linux-build; then \
-		ARCH=sparc CROSS_COMPILE=sparc-leon3-linux- KSRC=$(PWD)/linux-build CONTIG_ALLOC_PATH=$(CONTIG_ALLOC_PATH) $(MAKE) --quiet -C $(ESP_CORE_PATH) clean; \
-		ARCH=sparc CROSS_COMPILE=sparc-leon3-linux- KSRC=$(PWD)/linux-build CONTIG_ALLOC_PATH=$(CONTIG_ALLOC_PATH) $(MAKE) --quiet -C $(ESP_CORE_PATH)/../esp_cache clean; \
-		ARCH=sparc CROSS_COMPILE=sparc-leon3-linux- KSRC=$(PWD)/linux-build $(MAKE) -C $(CONTIG_ALLOC_PATH) clean; \
-		$(MAKE) --quiet accelerators-driver-clean; \
-	fi;
-	@$(MAKE) --quiet accelerators-app-clean
-
-sysroot-distclean: sysroot-clean
-	$(QUIET_CLEAN)$(RM) sysroot
-
 barec-all: barec
 	@mkdir -p barec/dvi
-	@CROSS_COMPILE=sparc-elf- $(MAKE) -C $(DRIVERS)/dvi/barec
+	@$(MAKE) -C $(DRIVERS)/dvi/barec
 	@cp $(DRIVERS)/dvi/barec/*.exe barec/dvi
 	@$(MAKE) accelerators-barec
 
@@ -409,7 +364,7 @@ soft-distclean: soft-clean ahbrom-distclean
 ariane.dtb: ariane.dts socmap.vhd
 	$(QUIET_BUILD) dtc -I dts $< -O dtb -o $@
 
-startup.o: $(BOOTROM_PATH)/startup.S
+startup.o: $(BOOTROM_PATH)/startup.S ariane.dtb
 	$(QUIET_CC) riscv64-unknown-elf-gcc \
 		-Os \
 		-Wall -Werror \
@@ -433,7 +388,7 @@ uart.o: $(BOOTROM_PATH)/uart.c
 		-I$(BOOTROM_PATH) \
 		-c $< -o $@
 
-prom.exe: ariane.dtb startup.o uart.o main.o $(BOOTROM_PATH)/linker.lds
+prom.exe: startup.o uart.o main.o $(BOOTROM_PATH)/linker.lds
 	$(QUIET_CC) riscv64-unknown-elf-gcc \
 		-Os \
 		-Wall -Werror \
@@ -520,11 +475,6 @@ linux-build/vmlinux: sysroot.cpio linux-build/.config
 	$(QUIET_MAKE) ARCH=$(ARCH) CROSS_COMPILE=$(CROSS_COMPILE_LINUX) $(MAKE) -C linux-build
 
 
-sysroot-update: linux-build/vmlinux
-	@touch sysroot
-	$(QUIET_MAKE)$(MAKE) linux-build/vmlinux
-
-
 pk-build:
 	$(QUIET_MKDIR)mkdir -p $@
 
@@ -557,20 +507,18 @@ linux-distclean: sysroot-distclean
 	$(QUIET_CLEAN)$(RM) linux-build pk-build linux.bin
 
 
-sysroot-clean:
-	$(QUIET_CLEAN)$(RM) sysroot.files sysroot.cpio
-
-
-sysroot-distclean: sysroot-clean
-	$(QUIET_CLEAN)$(RM) sysroot
-
-
 barec-all:
+	@mkdir -p barec/dvi
+	@$(MAKE) -C $(DRIVERS)/dvi/barec
+	@cp $(DRIVERS)/dvi/barec/*.bin barec/dvi
+	@$(MAKE) accelerators-barec
 
 
 barec-distclean:
+	$(QUIET_CLEAN)$(RM) barec
+	@$(MAKE) --quiet -C $(DRIVERS)/dvi/barec clean
+	@$(MAKE) --quiet accelerators-barec-clean
 
-# TODO: Add device drivers for RISCV and add them to compile/clean targets above
 
 else
 ### Other architectures if avalable ###
@@ -587,17 +535,61 @@ linux-clean:
 
 linux-distclean:
 
-sysroot-update:
-
-sysroot-clean:
-
-sysroot-distclean:
-
 barec-all:
 
 barec-distclean:
 
 endif
+
+sysroot/opt/drivers-esp/contig_alloc.ko: linux-build/vmlinux $(wildcard $(CONTIG_ALLOC_PATH)/*.c) $(wildcard $(CONTIG_ALLOC_PATH)/*.h) $(wildcard $(DRIVERS)/include/*.h)
+	@mkdir -p sysroot/opt/drivers-esp
+	$(QUIET_MAKE)ARCH=$(ARCH) CROSS_COMPILE=$(CROSS_COMPILE_LINUX) KSRC=$(PWD)/linux-build $(MAKE) -C $(CONTIG_ALLOC_PATH)
+	$(QUIET_CP)cp $(CONTIG_ALLOC_PATH)/contig_alloc.ko $@
+
+sysroot/opt/drivers-esp/esp_cache.ko: linux-build/vmlinux $(wildcard $(ESP_CORE_PATH)/../esp_cache/*.c) $(wildcard $(ESP_CORE_PATH)/../esp_cache/*.h) $(wildcard $(DRIVERS)/include/*.h)
+	@mkdir -p sysroot/opt/drivers-esp
+	$(QUIET_MAKE)ARCH=$(ARCH) CROSS_COMPILE=$(CROSS_COMPILE_LINUX) KSRC=$(PWD)/linux-build $(MAKE) -C $(ESP_CORE_PATH)/../esp_cache
+	$(QUIET_CP)cp $(ESP_CORE_PATH)/../esp_cache/esp_cache.ko $@
+
+sysroot/opt/drivers-esp/esp_private_cache.ko: sysroot/opt/drivers-esp/esp_cache.ko
+	@mkdir -p sysroot/opt/drivers-esp
+	$(QUIET_CP)cp $(ESP_CORE_PATH)/../esp_cache/esp_private_cache.ko $@
+
+sysroot/opt/drivers-esp/esp.ko: linux-build/vmlinux $(wildcard $(ESP_CORE_PATH)/*.c) $(wildcard $(ESP_CORE_PATH)/*.h) $(wildcard $(DRIVERS)/include/*.h)
+	@mkdir -p sysroot/opt/drivers-esp
+	$(QUIET_MAKE)ARCH=$(ARCH) CROSS_COMPILE=$(CROSS_COMPILE_LINUX) KSRC=$(PWD)/linux-build CONTIG_ALLOC_PATH=$(CONTIG_ALLOC_PATH) $(MAKE) -C $(ESP_CORE_PATH)
+	$(QUIET_CP)cp $(ESP_CORE_PATH)/esp.ko $@
+
+# This is a PHONY to guarantee sysroot is always updated when apps or drivers change
+# Most targets won't actually do anything if their dependencies have not changed.
+# Linux is compiled twice if necessary to ensure drivers are compiled against the most recent kernel
+sysroot-update: linux-build/vmlinux
+	@touch sysroot
+	@$(MAKE) sysroot/opt/drivers-esp/contig_alloc.ko
+	@$(MAKE) sysroot/opt/drivers-esp/esp_cache.ko
+	@$(MAKE) sysroot/opt/drivers-esp/esp_private_cache.ko
+	@$(MAKE) sysroot/opt/drivers-esp/esp.ko
+	@$(MAKE) -C $(DRIVERS)/dvi/app
+	@mkdir -p sysroot/applications/dvi; cp $(DRIVERS)/dvi/app/*.exe sysroot/applications/dvi
+	@$(MAKE) accelerators-driver
+	@$(MAKE) accelerators-app
+	@touch sysroot
+	$(QUIET_MAKE)$(MAKE) linux-build/vmlinux
+
+sysroot-clean:
+	$(QUIET_CLEAN)$(RM) sysroot.files sysroot.cpio
+	@$(MAKE) --quiet -C $(DRIVERS)/dvi/app clean
+	@if test -e linux-build; then \
+		ARCH=$(ARCH) CROSS_COMPILE=$(CROSS_COMPILE_LINUX) KSRC=$(PWD)/linux-build CONTIG_ALLOC_PATH=$(CONTIG_ALLOC_PATH) $(MAKE) --quiet -C $(ESP_CORE_PATH) clean; \
+		ARCH=$(ARCH) CROSS_COMPILE=$(CROSS_COMPILE_LINUX) KSRC=$(PWD)/linux-build CONTIG_ALLOC_PATH=$(CONTIG_ALLOC_PATH) $(MAKE) --quiet -C $(ESP_CORE_PATH)/../esp_cache clean; \
+		ARCH=$(ARCH) CROSS_COMPILE=$(CROSS_COMPILE_LINUX) KSRC=$(PWD)/linux-build $(MAKE) -C $(CONTIG_ALLOC_PATH) clean; \
+		$(MAKE) --quiet accelerators-driver-clean; \
+	fi;
+	@$(MAKE) --quiet accelerators-app-clean
+
+sysroot-distclean: sysroot-clean
+	$(QUIET_CLEAN)$(RM) sysroot
+
 
 linux-build:
 	$(QUIET_MKDIR)mkdir -p $@
@@ -709,11 +701,7 @@ endif
 
 ARIANE ?= $(ESP_ROOT)/third-party/ariane
 
-ifneq ($(findstring ariane, $(CPU_ARCH)),)
 VERILOG_ARIANE += $(shell strings $(ESP_ROOT)/utils/ariane_verilog.txt)
-else
-VERILOG_ARIANE =
-endif
 
 PKG_LIST  = $(shell (find $(ESP_ROOT)/rtl -name "*.txt" ))
 PKG_LIST += $(shell (find $(ESP_ROOT)/sim -name "*.txt" ))
@@ -1202,10 +1190,8 @@ vivado/setup.tcl: vivado $(XDC) $(BOARD_FILES)
 ifneq ($(findstring profpga, $(BOARD)),)
 	@echo "set_property include_dirs {$(PROFPGA_INCDIR)} [get_filesets {sim_1 sources_1}]" >> $@
 endif
-ifeq ("$(CPU_ARCH)", "ariane")
 	@echo "set_property include_dirs {$(ARIANE)/src/common_cells/include} [get_filesets {sim_1 sources_1}]" >> $@
 	@echo "set_property verilog_define {WT_DCACHE=1} [get_filesets {sim_1 sources_1}]" >> $@
-endif
 	@echo "source ./srcs.tcl" >> $@
 ifneq ("$(PROTOBOARD)","")
 	@echo "set_property board_part $(PROTOBOARD) [current_project]"  >> $@

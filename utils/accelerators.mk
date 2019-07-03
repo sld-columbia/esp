@@ -36,10 +36,10 @@ sbt-run:
 $(CHISEL_ACCELERATORS):
 	$(QUIET_BUILD)
 	@if ! test -e $(CHISEL_PATH)/build/$@; then \
-		$(MAKE) sbt-run; \
+		$(MAKE) sbt-run && rm -rf $(ESP_ROOT)/tech/$(TECHLIB)/acc/$@; \
+		cp -r $(CHISEL_PATH)/build/$@ $(ESP_ROOT)/tech/$(TECHLIB)/acc/; \
 	fi;
-	@cp -r $(CHISEL_PATH)/build/$@ $(ESP_ROOT)/tech/$(TECHLIB)/acc/; \
-	if test -e $(ESP_ROOT)/tech/$(TECHLIB)/acc/installed.log; then \
+	@if test -e $(ESP_ROOT)/tech/$(TECHLIB)/acc/installed.log; then \
 		sed -i '/$@/d' $(ESP_ROOT)/tech/$(TECHLIB)/acc/installed.log; \
 	fi; \
 	echo "$@" >> $(ESP_ROOT)/tech/$(TECHLIB)/acc/installed.log;
@@ -131,7 +131,7 @@ accelerators-distclean: $(ACCELERATORS-distclean)
 
 $(ACCELERATORS-driver): sysroot linux-build/vmlinux
 	@if test -e $(DRIVERS)/$(@:-driver=)/linux/$(@:-driver=).c; then \
-		echo '   ' MAKE $@; \
+		echo '   ' MAKE $@; mkdir -p sysroot/opt/drivers; \
 		ARCH=$(ARCH) CROSS_COMPILE=$(CROSS_COMPILE_LINUX) KSRC=$(PWD)/linux-build $(MAKE) ESP_CORE_PATH=$(ESP_CORE_PATH) -C $(DRIVERS)/$(@:-driver=)/linux; \
 		if test -e $(DRIVERS)/$(@:-driver=)/linux/$(@:-driver=).ko; then \
 			echo '   ' CP $@; cp $(DRIVERS)/$(@:-driver=)/linux/$(@:-driver=).ko sysroot/opt/drivers/; \
@@ -148,7 +148,7 @@ $(ACCELERATORS-driver-clean):
 
 $(ACCELERATORS-app): sysroot
 	@if [ `ls -1 $(DRIVERS)/$(@:-app=)/app/*.c 2>/dev/null | wc -l ` -gt 0 ]; then \
-		echo '   ' MAKE $@; \
+		echo '   ' MAKE $@; mkdir -p sysroot/applications/test/; \
 		CROSS_COMPILE=$(CROSS_COMPILE_LINUX) $(MAKE) -C $(DRIVERS)/$(@:-app=)/app; \
 		if [ `ls -1 $(DRIVERS)/$(@:-app=)/app/*.exe 2>/dev/null | wc -l ` -gt 0 ]; then \
 			echo '   ' CP $@; cp $(DRIVERS)/$(@:-app=)/app/*.exe sysroot/applications/test/; \
@@ -166,6 +166,9 @@ $(ACCELERATORS-barec): barec
 	@if [ `ls -1 $(DRIVERS)/$(@:-barec=)/barec/*.c 2>/dev/null | wc -l ` -gt 0 ]; then \
 		echo '   ' MAKE $@; \
 		CROSS_COMPILE=$(CROSS_COMPILE_ELF) $(MAKE) -C $(DRIVERS)/$(@:-barec=)/barec; \
+		if [ `ls -1 $(DRIVERS)/$(@:-barec=)/barec/*.bin 2>/dev/null | wc -l ` -gt 0 ]; then \
+			echo '   ' CP $@; cp $(DRIVERS)/$(@:-barec=)/barec/*.bin barec; \
+		fi; \
 		if [ `ls -1 $(DRIVERS)/$(@:-barec=)/barec/*.exe 2>/dev/null | wc -l ` -gt 0 ]; then \
 			echo '   ' CP $@; cp $(DRIVERS)/$(@:-barec=)/barec/*.exe barec; \
 		else \
