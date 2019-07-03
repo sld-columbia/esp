@@ -26,6 +26,7 @@ use work.tile.all;
 use work.nocpackage.all;
 use work.coretypes.all;
 use work.config.all;
+use work.esp_global.all;
 use work.socmap.all;
 use work.soctiles.all;
 
@@ -342,7 +343,7 @@ begin
 
     calib_done <= '1';
     clkm       <= not clkm after 3.2 ns;
-    chip_refclk <= not chip_refclk after 5.2 ns;
+    chip_refclk <= not chip_refclk after 6.4 ns;
 
   -- pragma translate_on
   end generate gen_mig_model;
@@ -361,6 +362,7 @@ begin
         pmask        => 16#f00#,
         pirq         => 12,
         memtech      => CFG_MEMTECH,
+        little_end   => GLOB_CPU_AXI,
         mdcscaler    => CPU_FREQ/1000,
         rmii         => 0,
         enable_mdio  => 1,

@@ -20,9 +20,6 @@ architecture behav of testbench is
 
   constant SIMULATION      : boolean := true;
 
-  constant promfile : string := "prom.srec";  -- rom contents
-  constant ramfile  : string := "ram.srec";   -- ram contents
-
   component top is
     generic (
       SIMULATION      : boolean);
@@ -30,12 +27,6 @@ architecture behav of testbench is
       reset        : in    std_ulogic;
       sys_clk_p    : in    std_ulogic;
       sys_clk_n    : in    std_ulogic;
-      address      : out   std_logic_vector(25 downto 0);
-      data         : inout std_logic_vector(15 downto 0);
-      oen          : out   std_ulogic;
-      writen       : out   std_ulogic;
-      romsn        : out   std_logic;
-      adv          : out   std_logic;
       ddr3_dq      : inout std_logic_vector(63 downto 0);
       ddr3_dqs_p   : inout std_logic_vector(7 downto 0);
       ddr3_dqs_n   : inout std_logic_vector(7 downto 0);
@@ -78,14 +69,6 @@ architecture behav of testbench is
   signal reset     : std_ulogic := '1';
   signal sys_clk_p : std_ulogic := '0';
   signal sys_clk_n : std_ulogic := '1';
-
-  -- PROM (Simulation only for now)
-  signal address : std_logic_vector(25 downto 0);
-  signal data    : std_logic_vector(15 downto 0);
-  signal oen     : std_ulogic;
-  signal writen  : std_ulogic;
-  signal romsn   : std_logic;
-  signal adv     : std_logic;
 
   -- DDR3
   signal ddr3_dq      : std_logic_vector(63 downto 0);
@@ -136,17 +119,6 @@ begin
   sys_clk_p <= not sys_clk_p after 2.5 ns;
   sys_clk_n <= not sys_clk_n after 2.5 ns;
 
-  -- Simulation model of generic async SRAM from GRLIB. For now the PROM is present
-  -- in simulation only. First-stage boot loader of FPGA is replaced by runtime
-  -- configuration through debug unit. Supporting boot from SDCARD is on the
-  -- TODO list.
-  prom0 : for i in 0 to 1 generate
-    sr0 : grsim_sram generic map (index => i+4, abits => 26, fname => promfile)
-      port map (address(25 downto 0), data(15-i*8 downto 8-i*8), romsn,
-                writen, oen);
-  end generate;
-  data <= buskeep(data) after 5 ns;
-
   -- DDR3
   ddr3_dq    <= (others => 'Z');
   ddr3_dqs_p <= (others => 'Z');
@@ -177,12 +149,6 @@ begin
       reset        => reset,
       sys_clk_p    => sys_clk_p,
       sys_clk_n    => sys_clk_n,
-      address      => address,
-      data         => data,
-      oen          => oen,
-      writen       => writen,
-      romsn        => romsn,
-      adv          => adv,
       ddr3_dq      => ddr3_dq,
       ddr3_dqs_p   => ddr3_dqs_p,
       ddr3_dqs_n   => ddr3_dqs_n,

@@ -30,6 +30,7 @@ use work.tile.all;
 use work.nocpackage.all;
 use work.coretypes.all;
 use work.config.all;
+use work.esp_global.all;
 use work.socmap.all;
 use work.soctiles.all;
 
@@ -863,6 +864,7 @@ begin
         --pindex => 15,
         --paddr => 15,
         pirq => 12,
+        little_end => GLOB_CPU_AXI,
         memtech => CFG_MEMTECH,
         mdcscaler => CPU_FREQ/1000,
         enable_mdio => 1,

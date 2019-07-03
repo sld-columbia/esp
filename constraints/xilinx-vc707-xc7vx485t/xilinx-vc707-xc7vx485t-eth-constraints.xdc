@@ -9,12 +9,22 @@ set_propagated_clock [get_clocks *TXOUTCLK*]
 
 set_propagated_clock [get_clocks *RXOUTCLK*]
 
-set_max_delay -from [get_clocks -include_generated_clocks *clk_pll_i*] -to [get_clocks {gtrefclk *RXOUTCLK*}] 8.000
-set_max_delay -from [get_clocks -include_generated_clocks *clk_pll_i*] -to [get_clocks -include_generated_clocks *TXOUTCLK*] 8.000
-set_max_delay -from [get_clocks gtrefclk] -to [get_clocks -include_generated_clocks *clk_pll_i*] 8.000
-set_max_delay -from [get_clocks -include_generated_clocks *TXOUTCLK*] -to [get_clocks -include_generated_clocks *clk_pll_i*] 8.000
-set_max_delay -from [get_clocks *RXOUTCLK*] -to [get_clocks -include_generated_clocks *clk_pll_i*] 8.000
+set clkm_elab [get_clocks -of_objects [get_nets clkm]]
+set refclk_elab [get_clocks -of_objects [get_nets chip_refclk]]
 
+# Ethernet is asynchronous w.r.t. MIG ui_clk (clkm_elab)
+set_clock_groups -asynchronous -group [get_clocks {gtrefclk *RXOUTCLK*}] -group [get_clocks ${clkm_elab}]
+set_clock_groups -asynchronous -group [get_clocks -include_generated_clocks *TXOUTCLK*] -group [get_clocks ${clkm_elab}]
+
+
+# Ethernet MAC and PHY wrapper have timed domain crossing involving refclk_elab and Ethernet clocks
+set_max_delay -from [get_clocks -include_generated_clocks ${refclk_elab}] -to [get_clocks {gtrefclk *RXOUTCLK*}] 8.000
+set_max_delay -from [get_clocks -include_generated_clocks ${refclk_elab}] -to [get_clocks -include_generated_clocks *TXOUTCLK*] 8.000
+set_max_delay -from [get_clocks gtrefclk] -to [get_clocks -include_generated_clocks ${refclk_elab}] 8.000
+set_max_delay -from [get_clocks -include_generated_clocks *TXOUTCLK*] -to [get_clocks -include_generated_clocks ${refclk_elab}] 8.000
+set_max_delay -from [get_clocks *RXOUTCLK*] -to [get_clocks -include_generated_clocks ${refclk_elab}] 8.000
+
+# Ethenret clocks require their own internal timing constraints
 set_max_delay -from [get_clocks gtrefclk] -to [get_clocks {*TXOUTCLK* *RXOUTCLK*}] 8.000
 set_max_delay -from [get_clocks -include_generated_clocks *TXOUTCLK*] -to [get_clocks {gtrefclk *RXOUTCLK*}] 8.000
 set_max_delay -from [get_clocks *RXOUTCLK*] -to [get_clocks gtrefclk] 8.000
