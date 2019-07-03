@@ -36,6 +36,7 @@ power.h
 sldgen
 
 *.exe
+*.bin
 *.srec
 
 *.bit
