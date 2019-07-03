@@ -17,7 +17,7 @@
 #define COLS 40
 #define ROWS 30
 
-#define VISIONCHIP_BUF_SIZE (ROWS * COLS * sizeof(short))
+#define VISIONCHIP_BUF_SIZE (ROWS * COLS * sizeof(unsigned))
 
 /* Size of the contiguous chunks for scatter/gather */
 #define CHUNK_SHIFT 8

@@ -72,7 +72,7 @@ void aligned_free(void *ptr) {
 	// On RISC-V we never free memory
 	// This hack is intended for simulation only
 #ifndef __riscv
-	/* free(((void**)ptr)[-1]); */
+	free(((void**)ptr)[-1]);
 #endif
 }
 
@@ -150,10 +150,13 @@ void esp_flush(int coherence)
 	}
 
 
+#ifndef __riscv
 	if (llcs)
-		aligned_free(llcs);
+		free(llcs);
 	if (l2s)
-		aligned_free(l2s);
+		free(l2s);
+#endif
+
 }
 
 #ifdef __sparc
