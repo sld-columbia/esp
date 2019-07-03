@@ -25,7 +25,8 @@ entity ariane_axi_wrap is
     PLICBase         : std_logic_vector(63 downto 0) := X"0000_0000_0C00_0000";
     PLICLength       : std_logic_vector(63 downto 0) := X"0000_0000_03FF_FFFF";
     DRAMBase         : std_logic_vector(63 downto 0) := X"0000_0000_8000_0000";
-    DRAMLength       : std_logic_vector(63 downto 0) := X"0000_0000_2000_0000");
+    DRAMLength       : std_logic_vector(63 downto 0) := X"0000_0000_2000_0000";
+    DRAMCachedLength : std_logic_vector(63 downto 0) := X"0000_0000_2000_0000");
   port (
     clk         : in  std_logic;
     rstn        : in  std_logic;
@@ -65,7 +66,8 @@ architecture rtl of ariane_axi_wrap is
       PLICBase         : std_logic_vector(63 downto 0);
       PLICLength       : std_logic_vector(63 downto 0);
       DRAMBase         : std_logic_vector(63 downto 0);
-      DRAMLength       : std_logic_vector(63 downto 0));
+      DRAMLength       : std_logic_vector(63 downto 0);
+      DRAMCachedLength : std_logic_vector(63 downto 0));
     port (
       clk            : in  std_logic;
       rstn           : in  std_logic;
@@ -205,7 +207,8 @@ begin  -- architecture rtl
       PLICBase         => PLICBase,
       PLICLength       => PLICLength,
       DRAMBase         => DRAMBase,
-      DRAMLength       => DRAMLength)
+      DRAMLength       => DRAMLength,
+      DRAMCachedLength => DRAMCachedLength)
     port map (
       clk            => clk,
       rstn           => rstn,

@@ -311,21 +311,21 @@ begin
     -- TODO: move dbg signals into wrapper
     ariane_axi_wrap_1: ariane_axi_wrap
       generic map (
-        HART_ID     => this_cpu_id_lv,
-        NMST        => 2,
-        NSLV        => 5,
-        NIRQ_SRCS   => 30,
-        ROMBase     => X"0000_0000_0001_0000",
-        ROMLength   => X"0000_0000_0001_0000",
-        APBBase     => X"0000_0000" & conv_std_logic_vector(CFG_APBADDR, 12) & X"0_0000",
-        APBLength   => X"0000_0000_1000_0000",
-        CLINTBase   => X"0000_0000_0200_0000",
-        CLINTLength => X"0000_0000_000C_0000",
-        PLICBase    => X"0000_0000_0C00_0000",
-        PLICLength  => X"0000_0000_03FF_FFFF",
-        DRAMBase    => X"0000_0000" & conv_std_logic_vector(ddr_haddr(0), 12) & X"0_0000",
-        DRAMLength  => X"0000_0000_2000_0000")  -- TODO: length set
-                                                -- automatically to match devtree
+        HART_ID          => this_cpu_id_lv,
+        NMST             => 2,
+        NSLV             => 5,
+        NIRQ_SRCS        => 30,
+        ROMBase          => X"0000_0000_0001_0000",
+        ROMLength        => X"0000_0000_0001_0000",
+        APBBase          => X"0000_0000" & conv_std_logic_vector(CFG_APBADDR, 12) & X"0_0000",
+        APBLength        => X"0000_0000_1000_0000",
+        CLINTBase        => X"0000_0000_0200_0000",
+        CLINTLength      => X"0000_0000_000C_0000",
+        PLICBase         => X"0000_0000_0C00_0000",
+        PLICLength       => X"0000_0000_03FF_FFFF",
+        DRAMBase         => X"0000_0000" & conv_std_logic_vector(ddr_haddr(0), 12) & X"0_0000",
+        DRAMLength       => X"0000_0000_4000_0000",
+        DRAMCachedLength => X"0000_0000_2000_0000")  -- TODO: length set automatically to match devtree
       port map (
         clk         => clk_feedthru,
         rstn        => cpu_rstn,

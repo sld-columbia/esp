@@ -14,20 +14,21 @@ module ariane_wrap
      parameter AXI_USER_WIDTH = 1,
      parameter AXI_STRB_WIDTH = AXI_DATA_WIDTH / 8,
      // Slave 0
-     parameter logic [63:0] ROMBase        = 64'h0000_0000_0001_0000,
-     parameter logic [63:0] ROMLength      = 64'h0000_0000_0001_0000,
+     parameter logic [63:0] ROMBase             = 64'h0000_0000_0001_0000,
+     parameter logic [63:0] ROMLength           = 64'h0000_0000_0001_0000,
      // Slave 1
-     parameter logic [63:0] APBBase        = 64'h0000_0000_6000_0000,
-     parameter logic [63:0] APBLength      = 64'h0000_0000_1000_0000,
+     parameter logic [63:0] APBBase             = 64'h0000_0000_6000_0000,
+     parameter logic [63:0] APBLength           = 64'h0000_0000_1000_0000,
      // Slave 2 (TODO: move to I/O tile)
-     parameter logic [63:0] CLINTBase      = 64'h0000_0000_0200_0000,
-     parameter logic [63:0] CLINTLength    = 64'h0000_0000_000C_0000,
+     parameter logic [63:0] CLINTBase           = 64'h0000_0000_0200_0000,
+     parameter logic [63:0] CLINTLength         = 64'h0000_0000_000C_0000,
      // Slave 3 (TODO: move to I/O tile)
-     parameter logic [63:0] PLICBase       = 64'h0000_0000_0C00_0000,
-     parameter logic [63:0] PLICLength     = 64'h0000_0000_03FF_FFFF,
+     parameter logic [63:0] PLICBase            = 64'h0000_0000_0C00_0000,
+     parameter logic [63:0] PLICLength          = 64'h0000_0000_03FF_FFFF,
      // Slave 4
-     parameter logic [63:0] DRAMBase       = 64'h0000_0000_8000_0000,
-     parameter logic [63:0] DRAMLength     = 64'h0000_0000_2000_0000
+     parameter logic [63:0] DRAMBase            = 64'h0000_0000_8000_0000,
+     parameter logic [63:0] DRAMLength          = 64'h0000_0000_2000_0000,
+     parameter logic [63:0] DRAMCachedLength    = 64'h0000_0000_2000_0000
      )
    (
     input logic 			clk,
@@ -159,11 +160,11 @@ module ariane_wrap
     NonIdempotentLength:   {64'b0},
     NrExecuteRegionRules:  2,
     ExecuteRegionAddrBase: {DRAMBase,   ROMBase},
-    ExecuteRegionLength:   {DRAMLength, ROMLength},
+    ExecuteRegionLength:   {DRAMCachedLength, ROMLength},
     // cached region
     NrCachedRegionRules:    1,
     CachedRegionAddrBase:  {DRAMBase},
-    CachedRegionLength:    {DRAMLength},
+    CachedRegionLength:    {DRAMCachedLength},
     //  cache config
     Axi64BitCompliant:      1'b1,
     SwapEndianess:          1'b0,
