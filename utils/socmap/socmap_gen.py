@@ -7,11 +7,12 @@ from collections import defaultdict
 import math
 
 
-# Maximum number of AHB and APB slaves can also be increased, but the
-# Leon3 utility mklinuximg and GRLIB AMBA package must be patched accordingly
+# Maximum number of AHB and APB slaves can also be increased, but Leon3 utility
+# mklinuximg, GRLIB AMBA package and bare-metal probe constants must be updated.
 # The related constants are defined in
 # <mklinuximg>/include/ambapp.h
 # <esp>/rtl/include/grlib/amba/amba.vhd
+# <esp>/soft/leon3/include/esp_probe.h
 NAPBS = 32
 NAHBS = 16
 # Physical interrupt lines
@@ -38,7 +39,7 @@ NTILE_MAX = 64
 # <esp>/rtl/include/sld/noc/nocpackage.vhd
 # The following indices  are reserved:
 # 0 - BOOT ROM memory controller
-# 1 - I/O bus bridge
+# 1 - UART
 # 2 - Interrupt controller
 # 3 - Timer
 # 4 - Reserved
@@ -401,11 +402,8 @@ def print_mapping(fp, esp_config):
   fp.write("  constant CFG_NLLC_COHERENT : integer := " + str(esp_config.ncdma) + ";\n\n")
 
   #
-  fp.write("  ------ Local-port Synchronizers iff more than 1 clock region (implied by > 1 memory tiles)\n")
-  if esp_config.has_dvfs or esp_config.nmem > 1 or esp_config.tech == "virtexup":
-    fp.write("  constant CFG_HAS_SYNC : integer := 1;\n")
-  else:
-    fp.write("  constant CFG_HAS_SYNC : integer := 0;\n")
+  fp.write("  ------ Local-port Synchronizers are always present)\n")
+  fp.write("  constant CFG_HAS_SYNC : integer := 1;\n")
   if esp_config.has_dvfs:
     fp.write("  constant CFG_HAS_DVFS : integer := 1;\n")
   else:
