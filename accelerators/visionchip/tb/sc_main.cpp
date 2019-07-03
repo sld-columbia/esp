@@ -8,11 +8,17 @@
 system_t * testbench = NULL;
 
 // Default settings if argv[] is not set
-std::string image_A_path = "lena-18x28.txt";
-std::string image_gold_path = "gold-18x28.txt";
+// std::string image_A_path = "lena-18x28.txt";
+// std::string image_gold_path = "gold-18x28.txt";
+// uint32_t n_Images = 1;
+// uint32_t n_Rows = 18;
+// uint32_t n_Cols = 28;
+
+std::string image_A_path = "lena-30x40.txt";
+std::string image_gold_path = "gold-30x40.txt";
 uint32_t n_Images = 1;
-uint32_t n_Rows = 18;
-uint32_t n_Cols = 28;
+uint32_t n_Rows = 30;
+uint32_t n_Cols = 40;
 
 extern void esc_elaborate()
 {
