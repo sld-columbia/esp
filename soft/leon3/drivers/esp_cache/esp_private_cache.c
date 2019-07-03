@@ -11,7 +11,10 @@
 #include <linux/mm.h>
 #include <linux/ioctl.h>
 #include <asm/uaccess.h>
+
+#ifdef __sparc
 #include <uapi/asm/asi.h>
+#endif
 
 #include <esp_cache.h>
 
@@ -35,6 +38,9 @@ static struct of_device_id esp_private_cache_device_ids[] = {
 	{
 		.name = "eb_020",
 	},
+	{
+		.compatible = "sld,l2_cache",
+	},
 	{ },
 };
 
@@ -49,11 +55,13 @@ static struct of_device_id esp_private_cache_device_ids[] = {
  */
 static void leon3_flush_dcache_all(void)
 {
+#ifdef __sparc
 	__asm__ __volatile__(".align 32\nflush\n.align 32\n");	/*iflush*/
 	__asm__ __volatile__("sta %%g0, [%%g0] %0\n\t" : :
 			     "i"(ASI_LEON_DFLUSH) : "memory");
         /* __asm__ __volatile__("sta %%g0, [%%g0] %0\n\t" : : */
         /*                 "i"(ASI_LEON_DFLUSH) : "memory"); */
+#endif
 }
 
 
@@ -132,6 +140,7 @@ EXPORT_SYMBOL_GPL(esp_private_cache_flush);
 static int esp_private_cache_probe(struct platform_device *pdev)
 {
 	struct esp_private_cache_device *esp_private_cache;
+	struct resource *res;
 	int rc = 0;
 
 	esp_private_cache = kzalloc(sizeof(*esp_private_cache), GFP_KERNEL);
@@ -142,7 +151,8 @@ static int esp_private_cache_probe(struct platform_device *pdev)
 
 	esp_private_cache->module = THIS_MODULE;
 
-	esp_private_cache->iomem = of_ioremap(&pdev->resource[0], 0, resource_size(&pdev->resource[0]), "esp_private_cache regs");
+	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	esp_private_cache->iomem = devm_ioremap_resource(&pdev->dev, res);
 	if (esp_private_cache->iomem == NULL) {
 		dev_info(esp_private_cache->pdev, "cannot map registers for I/O\n");
 		rc = -ENODEV;
@@ -174,7 +184,7 @@ static int __exit esp_private_cache_remove(struct platform_device *pdev)
 
 	dev_info(esp_private_cache->pdev, "device unregistered.\n");
 
-	iounmap(esp_private_cache->iomem);
+	devm_iounmap(&pdev->dev, esp_private_cache->iomem);
 	kfree(esp_private_cache);
 
 	return 0;

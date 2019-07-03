@@ -3,10 +3,30 @@
  * SPDX-License-Identifier: MIT
  */
 
-#include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+
+#ifndef __riscv
+#include <stdio.h>
+#else
+#define printf print_uart
+#endif
+
 #include <esp_probe.h>
 
+#ifdef __riscv
+uintptr_t dtb = DTB_ADDRESS;
+/*
+ * The RISC-V bare-metal toolchain does not have support for malloc
+ * on unthethered systems. This simple hack is used to enable RTL
+ * simulation of an accelerator invoked by bare-metal software.
+ * Note that The RISC-V core in ESP is unthethered and cannot rely
+ * proxy kernel running on a host system.
+ */
+static uintptr_t uncached_area_ptr = 0xa0000000;
+#endif
+
+#ifdef __sparc
 asm(
     "	.text\n"
     "	.align 4\n"
@@ -18,7 +38,15 @@ asm(
     "        retl\n"
     "        and %o0, 0xf, %o0\n"
     );
-
+#elif __riscv
+int get_pid()
+{
+	int hartid = (int) read_csr(mhartid);
+	return hartid;
+}
+#else
+#error Unsupported ISA
+#endif
 
 const char* const coherence_label[5] = {
 	"non-coherent DMA",
@@ -28,14 +56,24 @@ const char* const coherence_label[5] = {
 	0 };
 
 void *aligned_malloc(int size) {
+#ifndef __riscv
 	void *mem = malloc(size + CACHELINE_SIZE + sizeof(void*));
+#else
+	void *mem = (void *) uncached_area_ptr;
+	uncached_area_ptr += size + CACHELINE_SIZE + sizeof(void*);
+#endif
+
 	void **ptr = (void**) ((uintptr_t) (mem + CACHELINE_SIZE + sizeof(void*)) & ~(CACHELINE_SIZE-1));
 	ptr[-1] = mem;
 	return ptr;
 }
 
 void aligned_free(void *ptr) {
-	free(((void**)ptr)[-1]);
+	// On RISC-V we never free memory
+	// This hack is intended for simulation only
+#ifndef __riscv
+	/* free(((void**)ptr)[-1]); */
+#endif
 }
 
 
@@ -59,60 +97,66 @@ void esp_flush(int coherence)
 
 	if (coherence == ACC_COH_NONE)
 		/* Look for LLC controller */
-		nllc = probe(&llcs, SLD_LLC_CACHE, "llc_cache");
+		nllc = probe(&llcs, SLD_LLC_CACHE, "sld,llc_cache");
 
 	if (coherence < ACC_COH_RECALL)
 		/* Look for L2 controller */
-		nl2 = probe(&l2s, SLD_L2_CACHE, "l2_cache");
+		nl2 = probe(&l2s, SLD_L2_CACHE, "sld,l2_cache");
 
 	if (coherence < ACC_COH_RECALL) {
 
-		/* Set L2 flush (waits for L1 to flush first) */
-		for (i = 0; i < nl2; i++) {
+		if (nl2 > 0) {
+			/* Set L2 flush (waits for L1 to flush first) */
+			for (i = 0; i < nl2; i++) {
+				struct esp_device *l2 = &l2s[i];
+				int cpuid = (ioread32(l2, ESP_CACHE_REG_STATUS) & ESP_CACHE_STATUS_CPUID_MASK) >> ESP_CACHE_STATUS_CPUID_SHIFT;
+				if (cpuid == pid) {
+					iowrite32(l2, ESP_CACHE_REG_CMD, cmd);
+					break;
+				}
+			}
+
+#ifdef __sparc
+			/* Flush L1 - also execute L2 flush */
+			__asm__ __volatile__("sta %%g0, [%%g0] %0\n\t" : :
+					"i"(ASI_LEON_DFLUSH) : "memory");
+#endif
+
+			/* Wait for L2 flush to complete */
 			struct esp_device *l2 = &l2s[i];
-			int cpuid = (ioread32(l2, ESP_CACHE_REG_STATUS) & ESP_CACHE_STATUS_CPUID_MASK) >> ESP_CACHE_STATUS_CPUID_SHIFT;
-			if (cpuid == pid) {
-				iowrite32(l2, ESP_CACHE_REG_CMD, cmd);
-				break;
+			/* Poll for completion */
+			while (!(ioread32(l2, ESP_CACHE_REG_STATUS) & ESP_CACHE_STATUS_DONE_MASK));
+			/* Clear IRQ */
+			iowrite32(l2, ESP_CACHE_REG_CMD, 0);
+		}
+
+		if (nllc > 0) {
+
+			/* Flus LLC */
+			for (i = 0; i < nllc; i++) {
+				struct esp_device *llc = &llcs[i];
+				iowrite32(llc, ESP_CACHE_REG_CMD, cmd);
+			}
+
+			/* Wait for LLC flush to complete */
+			for (i = 0; i < nllc; i++) {
+				struct esp_device *llc = &llcs[i];
+				/* Poll for completion */
+				while (!(ioread32(llc, ESP_CACHE_REG_STATUS) & ESP_CACHE_STATUS_DONE_MASK));
+				/* Clear IRQ */
+				iowrite32(llc, ESP_CACHE_REG_CMD, 0);
 			}
 		}
-
-		/* Flush L1 - also execute L2 flush */
-		__asm__ __volatile__("sta %%g0, [%%g0] %0\n\t" : :
-				"i"(ASI_LEON_DFLUSH) : "memory");
-
-		/* Wait for L2 flush to complete */
-		struct esp_device *l2 = &l2s[i];
-		/* Poll for completion */
-		while (!(ioread32(l2, ESP_CACHE_REG_STATUS) & ESP_CACHE_STATUS_DONE_MASK));
-		/* Clear IRQ */
-		iowrite32(l2, ESP_CACHE_REG_CMD, 0);
-
-		/* Flus LLC */
-		for (i = 0; i < nllc; i++) {
-			struct esp_device *llc = &llcs[i];
-			iowrite32(llc, ESP_CACHE_REG_CMD, cmd);
-		}
-
-		/* Wait for LLC flush to complete */
-		for (i = 0; i < nllc; i++) {
-			struct esp_device *llc = &llcs[i];
-			/* Poll for completion */
-			while (!(ioread32(llc, ESP_CACHE_REG_STATUS) & ESP_CACHE_STATUS_DONE_MASK));
-			/* Clear IRQ */
-			iowrite32(llc, ESP_CACHE_REG_CMD, 0);
-		}
-
-
 	}
 
 
 	if (llcs)
-		free(llcs);
+		aligned_free(llcs);
 	if (l2s)
-		free(l2s);
+		aligned_free(l2s);
 }
 
+#ifdef __sparc
 int probe(struct esp_device **espdevs, unsigned devid, const char *name)
 {
 	int i;
@@ -146,25 +190,102 @@ int probe(struct esp_device **espdevs, unsigned devid, const char *name)
 			(*espdevs)[ndev-1].number = number;
 			(*espdevs)[ndev-1].irq = irq;
 			(*espdevs)[ndev-1].addr = addr;
-			printf("  Registered %s.%d:\n", name, (*espdevs)[ndev-1].number);
-			printf("    addr = 0x%08x\n", (*espdevs)[ndev-1].addr);
-			printf("    irq  = %d\n", (*espdevs)[ndev-1].irq);
+			printf("[probe]  %s.%u registered\n", name, (*espdevs)[ndev-1].number);
+			printf("         Address   : 0x%08x\n", (unsigned) (*espdevs)[ndev-1].addr);
+			printf("         Interrupt : %u\n", (*espdevs)[ndev-1].irq);
 		}
 	}
 	printf("\n");
 	return ndev;
 }
+#elif __riscv
+
+static unsigned ndev = 0;
+
+static void esp_open(const struct fdt_scan_node *node, void *extra)
+{
+}
+
+static void esp_prop(const struct fdt_scan_prop *prop, void *extra)
+{
+	// Get pointer to last entry in espdevs. This has not been discovered yet.
+	struct esp_device **espdevs = (struct esp_device **) extra;
+	const char *name = (*espdevs)[0].name;
+
+	if (!strcmp(prop->name, "compatible") && !strcmp((const char*)prop->value, name))
+		(*espdevs)[ndev].compat = 1;
+	else if (!strcmp(prop->name, "reg"))
+		fdt_get_address(prop->node->parent, prop->value, (uint64_t *) &(*espdevs)[ndev].addr);
+	else if (!strcmp(prop->name, "interrupts"))
+		fdt_get_value(prop->value, &(*espdevs)[ndev].irq);
+}
+
+static void esp_done(const struct fdt_scan_node *node, void *extra)
+{
+	struct esp_device **espdevs = (struct esp_device **)extra;
+	const char *name = (*espdevs)[0].name;
+
+	if ((*espdevs)[ndev].compat != 0) {
+		print_uart("[probe] "); print_uart(name); print_uart("."); print_uart_int(ndev); print_uart(" registered\n");
+		print_uart("        "); print_uart("Address   : 0x"); print_uart_int((uint32_t) (*espdevs)[ndev].addr); print_uart("\n");
+		print_uart("        "); print_uart("Interrupt : "); print_uart_int((uint32_t) (*espdevs)[ndev].irq); print_uart("\n");
+		ndev++;
+
+		// Initialize new entry (may not be discovered!)
+		(*espdevs)[ndev].vendor = VENDOR_SLD;
+		(*espdevs)[ndev].id = (*espdevs)[ndev].id;
+		(*espdevs)[ndev].number = ndev;
+		(*espdevs)[ndev].compat = 0;
+		strcpy((*espdevs)[ndev].name, name);
+	}
+}
+
+int probe(struct esp_device **espdevs, unsigned devid, const char *name)
+{
+	struct fdt_cb cb;
+	ndev = 0;
+
+	// Initialize first entry of the device structure (may not be discovered!)
+	(*espdevs) = (struct esp_device *) aligned_malloc(NACC_MAX * sizeof(struct esp_device));
+	if (!(*espdevs)) {
+		print_uart("Error: cannot allocate esp_device list\n");
+		return -1;
+	}
+	memset((*espdevs), 0, NACC_MAX * sizeof(struct esp_device));
+
+	(*espdevs)[0].vendor = VENDOR_SLD;
+	(*espdevs)[0].id = devid;
+	(*espdevs)[0].number = 0;
+	(*espdevs)[0].compat = 0;
+	strcpy((*espdevs)[0].name, name);
+
+	memset(&cb, 0, sizeof(cb));
+	cb.open = esp_open;
+	cb.prop = esp_prop;
+	cb.done = esp_done;
+	cb.extra = espdevs;
+
+	fdt_scan(dtb, &cb);
+
+	return ndev;
+}
+
+#else /* !__riscv && !__sparc */
+
+#error Unsupported ISA
+
+#endif
 
 unsigned ioread32(struct esp_device *dev, unsigned offset)
 {
-	const long addr = dev->addr + offset;
+	const long unsigned addr = dev->addr + offset;
 	volatile unsigned *reg = (unsigned *) addr;
 	return *reg;
 }
 
 void iowrite32(struct esp_device *dev, unsigned offset, unsigned payload)
 {
-	const long addr = dev->addr + offset;
+	const long unsigned addr = dev->addr + offset;
 	volatile unsigned *reg = (unsigned *) addr;
 	*reg = payload;
 }

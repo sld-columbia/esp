@@ -31,6 +31,9 @@ static struct of_device_id spmv_device_ids[] = {
 	{
 		.name = "eb_00c",
 	},
+	{
+		.compatible = "sld,spmv",
+	},
 	{ },
 };
 

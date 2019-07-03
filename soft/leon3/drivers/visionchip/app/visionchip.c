@@ -683,7 +683,6 @@ static void init_buf (struct visionchip_test *t)
 		for (j = 0; j < nPxls; j++) {
 			t->hbuf[hbuf_i] = (short) rawBuf[j];
 			t->sbuf_in[hbuf_i] = (int) rawBuf[j];
-			printf("== %d - %d\n", t->hbuf[hbuf_i], t->sbuf_in[hbuf_i]);
 			hbuf_i++;
 		}
 	}

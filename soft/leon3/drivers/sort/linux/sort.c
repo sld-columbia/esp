@@ -33,6 +33,9 @@ static struct of_device_id sort_device_ids[] = {
 	{
 		.name = "eb_00b",
 	},
+	{
+		.compatible = "sld,sort",
+	},
 	{ },
 };
 

@@ -51,7 +51,7 @@ static void test_buf(int alloc_nr)
 	unsigned long i;
 	int mb = 0;
 
-	printf("handle 0x%x, size %lu\n", (unsigned int)handle, size);
+	printf("handle 0x%p, size %lu\n", (unsigned int *)handle, size);
 	for (i = 0; i < size / sizeof(int); i++) {
 		if (i && !((i * sizeof(int)) % (1024 * 1024))) {
 			mb++;

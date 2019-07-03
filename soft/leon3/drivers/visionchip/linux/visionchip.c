@@ -28,6 +28,9 @@ static struct of_device_id visionchip_device_ids[] = {
 	{
 		.name = "eb_013",
 	},
+	{
+		.compatible = "sld,visionchip",
+	},
 	{ },
 };
 

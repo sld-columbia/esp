@@ -16,6 +16,9 @@
  */
 
 #include <linux/platform_device.h>
+#include <linux/of_device.h>
+#include <linux/of_platform.h>
+#include <linux/of_irq.h>
 #include <linux/dma-mapping.h>
 #include <linux/interrupt.h>
 #include <linux/pagemap.h>
@@ -79,13 +82,13 @@ static irqreturn_t esp_irq(int irq, void *dev)
 static int esp_flush(struct esp_device *esp)
 {
 	int rc = 0;
-
+#ifndef __riscv
 	if (esp->coherence < ACC_COH_RECALL)
 		rc |= esp_private_cache_flush();
 
 	if (esp->coherence < ACC_COH_LLC)
 		rc |= esp_cache_flush();
-
+#endif
 	return rc;
 }
 
@@ -470,6 +473,7 @@ static void esp_destroy_cdev(struct esp_device *esp, int ndev)
 
 int esp_device_register(struct esp_device *esp, struct platform_device *pdev)
 {
+	struct resource *res;
 	int rc;
 
 	esp->pdev = &pdev->dev;
@@ -480,14 +484,19 @@ int esp_device_register(struct esp_device *esp, struct platform_device *pdev)
 	if (rc)
 		goto out;
 
+#ifndef __sparc
+	esp->irq = of_irq_get(pdev->dev.of_node, 0);
+#else
 	esp->irq = pdev->archdata.irqs[0];
+#endif
 	rc = request_irq(esp->irq, esp_irq, IRQF_SHARED, "esp", esp->pdev);
 	if (rc) {
 		dev_info(esp->pdev, "cannot request IRQ number %d\n", esp->irq);
 		goto out_irq;
 	}
 
-	esp->iomem = of_ioremap(&pdev->resource[0], 0, resource_size(&pdev->resource[0]), "esp regs");
+	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	esp->iomem = devm_ioremap_resource(&pdev->dev, res);
 	if (esp->iomem == NULL) {
 		dev_info(esp->pdev, "cannot map registers for I/O\n");
 		goto out_iomem;
@@ -521,7 +530,7 @@ void esp_device_unregister(struct esp_device *esp)
 {
 	free_irq(esp->irq, esp->pdev);
 	esp_destroy_cdev(esp, esp->number);
-	iounmap(esp->iomem);
+	devm_iounmap(esp->pdev, esp->iomem);
 	dev_info(esp->pdev, "device unregistered.\n");
 }
 EXPORT_SYMBOL_GPL(esp_device_unregister);

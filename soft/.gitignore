@@ -5,3 +5,4 @@ Module.symvers
 *.mod.c
 *.order
 *.exe
+*.bin

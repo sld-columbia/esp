@@ -15,7 +15,7 @@ OBJS := $(SRCS:.c=.exe)
 
 all: $(OBJS)
 
-%.exe: %.c
+%.exe: %.c $(wildcard ../../probe/*.c)
 	CROSS_COMPILE=$(CROSS_COMPILE) $(MAKE) -C ../../probe
 	$(CC) $(CFLAGS) -o $@ $< $(LIBS)
 

@@ -26,6 +26,9 @@ static struct of_device_id esp_cache_device_ids[] = {
 	{
 		.name = "eb_021",
 	},
+	{
+		.compatible = "sld,llc_cache",
+	},
 	{ },
 };
 
@@ -72,6 +75,7 @@ EXPORT_SYMBOL_GPL(esp_cache_flush);
 static int esp_cache_probe(struct platform_device *pdev)
 {
 	struct esp_cache_device *esp_cache;
+	struct resource *res;
 	int rc = 0;
 
 	esp_cache = kzalloc(sizeof(*esp_cache), GFP_KERNEL);
@@ -84,7 +88,8 @@ static int esp_cache_probe(struct platform_device *pdev)
 
 	mutex_init(&esp_cache->lock);
 
-	esp_cache->iomem = of_ioremap(&pdev->resource[0], 0, resource_size(&pdev->resource[0]), "esp_cache regs");
+	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	esp_cache->iomem = devm_ioremap_resource(&pdev->dev, res);
 	if (esp_cache->iomem == NULL) {
 		dev_info(esp_cache->pdev, "cannot map registers for I/O\n");
 		rc = -ENODEV;
@@ -116,7 +121,7 @@ static int __exit esp_cache_remove(struct platform_device *pdev)
 
 	dev_info(esp_cache->pdev, "device unregistered.\n");
 
-	iounmap(esp_cache->iomem);
+	devm_iounmap(&pdev->dev, esp_cache->iomem);
 	kfree(esp_cache);
 
 	return 0;

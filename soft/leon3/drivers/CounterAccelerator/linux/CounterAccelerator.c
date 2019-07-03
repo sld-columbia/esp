@@ -26,6 +26,9 @@ static struct of_device_id CounterAccelerator_device_ids[] = {
 	{
 		.name = "eb_012",
 	},
+	{
+		.compatible = "sld,CounterAccelerator",
+	},
 	{ },
 };
 
