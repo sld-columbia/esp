@@ -1,0 +1,6 @@
+venv
+*.elf
+*.o
+*.img
+*.bin
+*.exe

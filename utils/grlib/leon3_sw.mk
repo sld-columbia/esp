@@ -74,14 +74,6 @@ lib3tests.a: $(OFILES)
 
 leon3-soft: prom.srec ram.srec
 
-prom.o: prom.S ../common/prom.h
-	$(QUIET_AS)$(XAS) $<
-prom.exe: prom.o
-	$(QUIET_CC)$(XCC) -nostdlib -Tlinkprom -N -L./ -nostartfiles -o prom.exe $<
-
-prom.srec: prom.exe
-	$(QUIET_OBJCP)$(CROSS_COMPILE)objcopy -O srec $(EXTRA_PROM) prom.exe prom.srec
-
 systest.exe: systest.c lib3tests.a
 	$(QUIET_CC)$(XCC) $(XCFLAGS) systest.c $(XLDFLAGS) -o systest.exe
 
@@ -92,7 +84,7 @@ leon3-soft-clean:
 	$(QUIET_CLEAN)$(RM) $(OFILES) lib3tests.a prom.o
 
 leon3-soft-distclean: soft-clean
-	$(QUIET_CLEAN)$(RM) prom.exe systest.exe standalone.exe prom.srec ram.srec
+	$(QUIET_CLEAN)$(RM) prom.exe systest.exe standalone.exe prom.srec ram.srec prom.bin
 
 standalone.exe: systest.c standalone.c lib3tests.a
 	$(QUIET_CC)$(XCC) $(XCFLAGS) systest.c $(VPATH)/standalone.c $(XLDFLAGS) -o standalone.exe

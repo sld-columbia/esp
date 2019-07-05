@@ -149,6 +149,7 @@ endif
 
 ### Set variables needed before including accelerators.mk
 SOFT              = $(ESP_ROOT)/soft/$(CPU_ARCH)
+BOOTROM_PATH      = $(SOFT)/bootrom
 LINUXSRC          = $(SOFT)/linux
 DRIVERS           = $(SOFT)/drivers
 CONTIG_ALLOC_PATH = $(DRIVERS)/contig_alloc
@@ -247,7 +248,7 @@ ifeq ("$(CPU_ARCH)", "leon3")
 ### Leon3 Software targets ###
 include $(UTILS_GRLIB)/leon3_sw.mk
 
-soft: leon3-soft ahbrom.vhd
+soft: leon3-soft prom.srec ram.srec prom.bin systest.bin
 
 soft-clean: leon3-soft-clean ahbrom-clean
 
@@ -257,6 +258,16 @@ soft-distclean: leon3-soft-distclean ahbrom-distclean
 
 
 ### Leon3 prom ###
+
+prom.o: $(BOOTROM_PATH)/prom.S $(BOOTROM_PATH)/prom.h
+	$(QUIET_AS) $(CROSS_COMPILE_ELF)gcc -c -I$(BOOTROM_PATH) $<
+
+prom.exe: prom.o
+	$(QUIET_CC) $(CROSS_COMPILE_ELF)gcc \
+		-nostdlib \
+		-Tlinkprom -N \
+		-nostartfiles \
+		-o $@ $<
 
 ahbrom: $(UTILS_GRLIB)/ahbrom.c
 	$(QUIET_CC)$(CC) $< -o $@
@@ -339,7 +350,6 @@ barec-distclean:
 
 else ifeq ("$(CPU_ARCH)", "ariane")
 
-BOOTROM_PATH = $(SOFT)/bootrom
 RISCV_TESTS = $(SOFT)/riscv-tests
 RISCV_PK = $(SOFT)/riscv-pk
 
@@ -398,13 +408,6 @@ prom.exe: startup.o uart.o main.o $(BOOTROM_PATH)/linker.lds
 		-T$(BOOTROM_PATH)/linker.lds \
 		startup.o uart.o main.o \
 		-o $@
-
-prom.srec: prom.exe
-	$(QUIET_OBJCP) riscv64-unknown-elf-objcopy -O srec $< $@
-
-
-prom.bin: prom.exe
-	$(QUIET_OBJCP) riscv64-unknown-elf-objcopy -O binary $< $@
 
 ahbrom: $(UTILS_GRLIB)/ahbrom.c
 	$(QUIET_CC)$(CC) $< -o $@
@@ -540,6 +543,14 @@ barec-all:
 barec-distclean:
 
 endif
+
+
+prom.srec: prom.exe
+	$(QUIET_OBJCP)$(CROSS_COMPILE_ELF)objcopy -O srec $< $@
+
+prom.bin: prom.exe
+	$(QUIET_OBJCP) $(CROSS_COMPILE_ELF)objcopy -O binary $< $@
+
 
 sysroot/opt/drivers-esp/contig_alloc.ko: linux-build/vmlinux $(wildcard $(CONTIG_ALLOC_PATH)/*.c) $(wildcard $(CONTIG_ALLOC_PATH)/*.h) $(wildcard $(DRIVERS)/include/*.h)
 	@mkdir -p sysroot/opt/drivers-esp
