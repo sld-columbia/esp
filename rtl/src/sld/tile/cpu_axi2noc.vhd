@@ -348,7 +348,7 @@ begin  -- rtl
         somi(i).r.data <= (others => '0');
         if transaction_reg.size = HSIZE_DWORD then
           somi(i).r.data(31 downto 0) <= remote_ahbs_rcv_data_out_hold(31 downto 0);
-          somi(i).r.data(63 downto 32) <= (remote_ahbs_rcv_data_out(31 downto 0));
+          somi(i).r.data(ARCH_BITS - 1 downto ARCH_BITS - 32) <= (remote_ahbs_rcv_data_out(31 downto 0));
         elsif transaction_reg.size = HSIZE_WORD then
           somi(i).r.data <= ahbdrivedata(remote_ahbs_rcv_data_out(31 downto 0));
         elsif transaction_reg.size = HSIZE_HWORD then
@@ -466,8 +466,8 @@ begin  -- rtl
     end if;
     payload_data(AHBDW - 1 downto 0)                                      := wdata;
     -- TODO: this only works on a 64-bit AXI bus with 32-bit AHB remote slaves
-    payload_data_narrow_lsb(MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH - 1 downto 0) := wdata(MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH - 1 downto 0);
-    payload_data_narrow_msb(MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH - 1 downto 0) := wdata(2 * (MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH) - 1 downto MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH);
+    payload_data_narrow_lsb(31 downto 0) := wdata(31 downto 0);
+    payload_data_narrow_msb(31 downto 0) := wdata(ARCH_BITS - 1 downto ARCH_BITS - 32);
 
     -- Temporary AXI flags
     slv_ready  := '0';

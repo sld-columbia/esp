@@ -365,7 +365,7 @@ begin  -- rtl
         -- If master is on AXI, we know the length of the read transaction
         if coherence_req_empty = '0' then
           coherence_req_rdreq <= '1';
-          v.count := conv_integer(coherence_req_data_out(11 downto 0));
+          v.count := to_integer(unsigned(coherence_req_data_out(11 downto 0)));
           if l2_cache_en = 0 then
             v.state := rd_request;
           else
@@ -388,7 +388,7 @@ begin  -- rtl
       when dma_receive_rdlength =>
         if dma_rcv_empty = '0' then
           dma_rcv_rdreq <= '1';
-          v.count       := conv_integer(dma_rcv_data_out(31 downto 0));
+          v.count       := to_integer(unsigned(dma_rcv_data_out(31 downto 0)));
           v.state       := dma_rd_request;
         end if;
 
