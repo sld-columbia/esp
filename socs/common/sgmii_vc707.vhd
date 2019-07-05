@@ -485,6 +485,11 @@ constant pconfig : apb_config_type := (
   signal RMemRgmiiiRead       : std_logic;
   signal RMemRgmiioRead       : std_logic;
 
+  attribute keep         : boolean;
+  attribute syn_keep     : string;
+  attribute keep of userclk2 : signal is true;
+  attribute syn_keep of userclk2 : signal is "true";
+
 begin
 
    -----------------------------------------------------------------------------
