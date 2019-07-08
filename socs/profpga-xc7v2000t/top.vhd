@@ -324,10 +324,7 @@ signal ddr_ahbsi   : ahb_slv_in_vector_type(0 to CFG_NMEM_TILE - 1);
 signal ddr_ahbso   : ahb_slv_out_vector_type(0 to CFG_NMEM_TILE - 1);
 
 -- Ethernet
-constant BOARD_FREQ : integer := 160000;   -- input frequency in KHz
-constant BOARD_CLKMUL : integer := 4;
-constant BOARD_CLKDIV : integer := 8;
-constant CPU_FREQ : integer := BOARD_FREQ * BOARD_CLKMUL / BOARD_CLKDIV;  -- cpu frequency in KHz
+constant CPU_FREQ : integer := 80000;
 signal eth0_apbi : apb_slv_in_type;
 signal eth0_apbo : apb_slv_out_type;
 signal sgmii0_apbi : apb_slv_in_type;
