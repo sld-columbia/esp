@@ -250,9 +250,29 @@ include $(UTILS_GRLIB)/leon3_sw.mk
 
 soft: leon3-soft prom.srec ram.srec prom.bin systest.bin
 
+systest.bin: systest.exe
+	$(QUIET_OBJCP) $(CROSS_COMPILE_ELF)objcopy -O binary --change-addresses -0x40000000 $< $@
+
 soft-clean: leon3-soft-clean ahbrom-clean
+	@$(RM)			\
+	prom.out		\
+	xdump.s			\
+	mkprom2			\
+	lib			\
+	linkprom		\
+	linkbch			\
+	linkpromerc32		\
+	linkpromecos		\
+	linkpromflash		\
+	linkpromerc32flash	\
+	linkpromecosflash	\
+	dummy.exe
+
 
 soft-distclean: leon3-soft-distclean ahbrom-distclean
+	@$(RM) 		\
+	prom.bin	\
+	systest.bin
 
 .PHONY: leon3-soft-clean leon3-soft-distclean
 
@@ -268,6 +288,21 @@ prom.exe: prom.o
 		-Tlinkprom -N \
 		-nostartfiles \
 		-o $@ $<
+
+prom.srec: prom.exe
+	$(QUIET_OBJCP)$(CROSS_COMPILE_ELF)objcopy -O srec $< $@
+
+dummy.exe: $(UTILS_GRLIB)/mkprom2/dummy.c
+	$(QUIET_MAKE) $(CROSS_COMPILE_ELF)gcc $< -o $@
+
+mkprom2: $(wildcard $(UTILS_GRLIB)/mkprom2/*.S) $(wildcard $(UTILS_GRLIB)/mkprom2/*.c) $(wildcard $(UTILS_GRLIB)/mkprom2/*.h)
+	$(QUIET_MAKE) $(MAKE) --quiet -C $(UTILS_GRLIB)/mkprom2 PREFIX=$(DESIGN_PATH)
+
+prom.out: dummy.exe mkprom2
+	./mkprom2 -leon3 -freq $(LEON3_BASE_FREQ_MHZ) -nomsg -baud 38343 -stack $(LEON3_STACK) dummy.exe
+
+prom.bin: prom.out
+	$(QUIET_OBJCP) $(CROSS_COMPILE_ELF)objcopy -O binary --change-addresses -0x40000000 $< $@
 
 ahbrom: $(UTILS_GRLIB)/ahbrom.c
 	$(QUIET_CC)$(CC) $< -o $@
@@ -325,7 +360,10 @@ linux-build/vmlinux: sysroot.cpio linux-build/.config
 linux.dsu: sysroot-update
 	$(QUIET_BUILD)mklinuximg linux-build/vmlinux $@
 
-linux: linux.dsu
+linux.bin: linux.dsu
+	$(QUIET_OBJCP) sparc-leon3-linux-objcopy -S -O binary --change-addresses -0x40000000 $< $@
+
+linux: linux.bin
 
 linux-clean: sysroot-clean
 	$(QUIET_CLEAN)
@@ -334,7 +372,7 @@ linux-clean: sysroot-clean
 	fi;
 
 linux-distclean: sysroot-distclean
-	$(QUIET_CLEAN)$(RM) linux-build linux.dsu
+	$(QUIET_CLEAN)$(RM) linux-build linux.dsu linux.bin
 
 barec-all: barec
 	@mkdir -p barec/dvi
@@ -367,7 +405,6 @@ soft-clean:
 		main.o		\
 		uart.o		\
 		systest.bin
-
 
 soft-distclean: soft-clean ahbrom-distclean
 
@@ -408,6 +445,13 @@ prom.exe: startup.o uart.o main.o $(BOOTROM_PATH)/linker.lds
 		-T$(BOOTROM_PATH)/linker.lds \
 		startup.o uart.o main.o \
 		-o $@
+
+prom.srec: prom.exe
+	$(QUIET_OBJCP)$(CROSS_COMPILE_ELF)objcopy -O srec $< $@
+
+prom.bin: prom.exe
+	$(QUIET_OBJCP) $(CROSS_COMPILE_ELF)objcopy -O binary $< $@
+
 
 ahbrom: $(UTILS_GRLIB)/ahbrom.c
 	$(QUIET_CC)$(CC) $< -o $@
@@ -543,13 +587,6 @@ barec-all:
 barec-distclean:
 
 endif
-
-
-prom.srec: prom.exe
-	$(QUIET_OBJCP)$(CROSS_COMPILE_ELF)objcopy -O srec $< $@
-
-prom.bin: prom.exe
-	$(QUIET_OBJCP) $(CROSS_COMPILE_ELF)objcopy -O binary $< $@
 
 
 sysroot/opt/drivers-esp/contig_alloc.ko: linux-build/vmlinux $(wildcard $(CONTIG_ALLOC_PATH)/*.c) $(wildcard $(CONTIG_ALLOC_PATH)/*.h) $(wildcard $(DRIVERS)/include/*.h)
