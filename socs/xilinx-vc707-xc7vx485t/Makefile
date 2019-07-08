@@ -10,7 +10,9 @@ ESP_ROOT = $(realpath ../../)
 TECHLIB  = virtex7
 BOARD    = xilinx-vc707-xc7vx485t
 DESIGN   = esp-$(BOARD)
-#SMP     = 1
+#LINUX_SMP = 1
+LEON3_BASE_FREQ_MHZ ?= 50
+LEON3_STACK ?= 0x5bfffff0
 
 
 ### Design top level and testbench ###
@@ -42,7 +44,7 @@ TOP_VLOG_SIM_SRCS +=
 
 ### Xilinx Vivado hw_server ###
 FPGA_HOST ?= espdev.cs.columbia.edu
-XIL_HW_SERVER_PORT ?= 3125
+XIL_HW_SERVER_PORT ?= 3122
 
 
 ### Include global Makefile ###

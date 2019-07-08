@@ -42,7 +42,7 @@ NTILE_MAX = 64
 # 1 - UART
 # 2 - Interrupt controller
 # 3 - Timer
-# 4 - Reserved
+# 4 - ESPLink
 # 5-8 - DVFS controller
 # 9-12 - Processors' private cache controller (must change with NCPU_MAX)
 # 13 - SVGA controller
@@ -54,6 +54,9 @@ NACC_MAX = NAPBS - 2 * NCPU_MAX - NMEM_MAX - 8
 
 
 # Default device mapping
+RST_ADDR = dict()
+RST_ADDR["leon3"] = 0x0
+RST_ADDR["ariane"] = 0x10000
 
 # Boot ROM slave index (With Leon3 this exists in simulation only for now)
 AHBROM_HINDEX = 0
@@ -65,14 +68,6 @@ AHB2APB_HINDEX = 1
 AHB2APB_HADDR = dict()
 AHB2APB_HADDR["leon3"] = 0x800
 AHB2APB_HADDR["ariane"] = 0x600
-
-# Leon-3 debug unit slave index
-DSU_HINDEX = 2
-
-# Leon-3 debug unit memory area
-DSU_HADDR = dict()
-DSU_HADDR["leon3"] = 0x900
-DSU_HADDR["ariane"] = 0x400
 
 # Memory controller slave index
 DDR_HINDEX = [4, 5, 6, 7]
@@ -529,16 +524,6 @@ def print_mapping(fp, esp_config):
   fp.write("    others => zero32);\n\n")
 
   #
-  fp.write("  -- Leon3 debug unit\n")
-  fp.write("  constant dsu_hindex : integer := " + str(DSU_HINDEX) + ";\n")
-  fp.write("  constant dsu_haddr : integer := 16#" + format(DSU_HADDR[esp_config.cpu_arch], '03X') + "#;\n")
-  fp.write("  constant dsu_hmask : integer := 16#F00#;\n")
-  fp.write("  constant dsu_hconfig : ahb_config_type := (\n")
-  fp.write("    0 => ahb_device_reg ( VENDOR_GAISLER, GAISLER_LEON3DSU, 0, 1, 0),\n")
-  fp.write("    4 => ahb_membar(dsu_haddr, '0', '0', dsu_hmask),\n")
-  fp.write("    others => zero32);\n\n")
-
-  #
   fp.write("  -- Debbug access points proxy index\n")
   fp.write("  constant dbg_remote_ahb_hindex : integer := 3;\n\n")
 
@@ -607,7 +592,6 @@ def print_mapping(fp, esp_config):
   fp.write("  constant fixed_ahbso_hconfig : ahb_slv_config_vector := (\n")
   fp.write("    " + str(AHBROM_HINDEX) + " => ahbrom_hconfig,\n")
   fp.write("    " + str(AHB2APB_HINDEX) + " => ahb2apb_hconfig,\n")
-  fp.write("    " + str(DSU_HINDEX) + " => dsu_hconfig,\n")
   for i in range(0, esp_config.nmem):
     fp.write("    " + str(DDR_HINDEX[i]) + " => mig7_hconfig(" + str(i) + "),\n")
   fp.write("    " + str(FB_HINDEX) + " => fb_hconfig,\n")
@@ -619,7 +603,6 @@ def print_mapping(fp, esp_config):
   fp.write("  constant cpu_tile_fixed_ahbso_hconfig : ahb_slv_config_vector := (\n")
   fp.write("    " + str(AHBROM_HINDEX) + " => ahbrom_hconfig,\n")
   fp.write("    " + str(AHB2APB_HINDEX) + " => ahb2apb_hconfig,\n")
-  fp.write("    " + str(DSU_HINDEX) + " => dsu_hconfig,\n")
   fp.write("    " + str(DDR_HINDEX[0]) + " => cpu_tile_mig7_hconfig,\n")
   fp.write("    " + str(FB_HINDEX) + " => fb_hconfig,\n")
   fp.write("    others => hconfig_none);\n\n")
@@ -644,6 +627,12 @@ def print_mapping(fp, esp_config):
   fp.write("  constant gptimer_pconfig : apb_config_type := (\n")
   fp.write("  0 => ahb_device_reg (VENDOR_GAISLER, GAISLER_GPTIMER, 0, 1, CFG_GPT_IRQ),\n")
   fp.write("  1 => apb_iobar(16#003#, 16#fff#));\n\n")
+
+  #
+  fp.write("  -- ESPLink\n")
+  fp.write("  constant esplink_pconfig : apb_config_type := (\n")
+  fp.write("  0 => ahb_device_reg (VENDOR_SLD, SLD_ESPLINK, 0, 0, 0),\n")
+  fp.write("  1 => apb_iobar(16#004#, 16#fff#));\n\n")
 
   #
   fp.write("  -- SVGA controler (GRLIB)\n")
@@ -732,6 +721,7 @@ def print_mapping(fp, esp_config):
   fp.write("    1 => uart_pconfig,\n")
   fp.write("    2 => irqmp_pconfig,\n")
   fp.write("    3 => gptimer_pconfig,\n")
+  fp.write("    4 => esplink_pconfig,\n")
   for i in range(0, esp_config.ndvfs):
     dvfs = esp_config.dvfs_ctrls[i]
     fp.write("    " + str(dvfs.idx) + " => cpu_dvfs_pconfig(" + str(i) + "),\n")
@@ -1260,6 +1250,7 @@ def print_tiles(fp, esp_config):
       fp.write("      1  => '1',\n") # UART
       fp.write("      2  => '1',\n") # IRQ
       fp.write("      3  => '1',\n") # TIMER
+      fp.write("      4  => '1',\n") # ESPLink
       fp.write("      13 => to_std_logic(CFG_SVGA_ENABLE),\n"),
       fp.write("      14 => to_std_logic(CFG_GRETH),\n")
       fp.write("      15 => to_std_logic(CFG_SGMII * CFG_GRETH),\n")
@@ -1287,7 +1278,6 @@ def print_tiles(fp, esp_config):
       fp.write("    " + str(i) + " => (\n")
       fp.write("      " + str(AHBROM_HINDEX) + "  => '1',\n")
       fp.write("      " + str(AHB2APB_HINDEX) + "  => '1',\n")
-      fp.write("      " + str(DSU_HINDEX) + " => '1',\n")
       fp.write("      " + str(FB_HINDEX) + "  => to_std_logic(CFG_SVGA_ENABLE),\n")
       fp.write("      others => '0'),\n")
     if t.type == "cpu":
@@ -1314,11 +1304,36 @@ def print_tiles(fp, esp_config):
     if t.type == "cpu":
       fp.write("    " + str(i) + " => (\n")
       fp.write("      " + str(AHBROM_HINDEX) + "  => '1',\n")
-      fp.write("      " + str(DSU_HINDEX) + " => '1',\n")
       fp.write("      " + str(DDR_HINDEX[0]) + " => to_std_logic(CFG_L2_DISABLE),\n")
       fp.write("      " + str(FB_HINDEX) + "  => to_std_logic(CFG_SVGA_ENABLE),\n")
       fp.write("      others => '0'),\n")
   fp.write("    others => (others => '0'));\n\n")
+
+
+def print_esplink_header(fp, esp_config, soc):
+
+  # Get CPU base frequency
+  with open("top.vhd") as top_fp:
+    for line in top_fp:
+      if line.find("constant CPU_FREQ : integer") != -1:
+        line.strip();
+        items = line.split()
+        CPU_FREQ = 1000 * int(items[5].replace(";",""))
+        top_fp.close()
+        break
+
+  fp.write("#ifndef __SOCMAP_H__\n")
+  fp.write("#define __SOCMAP_H__\n")
+  fp.write("\n")
+  fp.write("#define EDCL_IP \"" + soc.IP_ADDR + "\"\n")
+  fp.write("#define BASE_FREQ " + str(CPU_FREQ) + "\n")
+  fp.write("#define BOOTROM_BASE_ADDR " + hex(RST_ADDR[esp_config.cpu_arch]) + "\n")
+  fp.write("#define DRAM_BASE_ADDR 0x" + format(DDR_HADDR[esp_config.cpu_arch], '03X') + "00000\n")
+  fp.write("#define TARGET_BYTE_ORDER __ORDER_BIG_ENDIAN__\n")
+  fp.write("\n")
+  fp.write("#endif /* __SOCMAP_H__ */\n")
+
+
 
 def print_ariane_devtree(fp, esp_config):
 
@@ -1456,6 +1471,17 @@ def create_socmap(esp_config, soc):
   fp.close()
 
   print("Created configuration into 'socmap.vhd'")
+
+  # ESPLink header
+  fp = open('socmap.h', 'w')
+
+  print_esplink_header(fp, esp_config, soc)
+
+  fp.close()
+
+  print("Created ESPLink header into 'socmap.h'")
+
+
 
   # Device tree
   if esp_config.cpu_arch == "ariane":

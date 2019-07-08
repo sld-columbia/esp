@@ -38,6 +38,7 @@ entity tile_io is
     SIMULATION : boolean := false);
   port (
     rst                : in  std_ulogic;
+    srst               : out std_ulogic;
     clk                : in  std_ulogic;
     eth0_apbi          : out apb_slv_in_type;
     eth0_apbo          : in  apb_slv_out_type;
@@ -54,14 +55,10 @@ entity tile_io is
     uart_txd           : out std_ulogic;
     uart_ctsn          : in  std_ulogic;
     uart_rtsn          : out std_ulogic;
-    ndsuact            : out std_ulogic;
-    dsuerr             : out std_ulogic;
     --TODO: REMOVE THIS and use NoC proxies
     uart_irq           : out std_ulogic;
     eth0_irq           : out std_ulogic;
     sgmii0_irq         : out std_ulogic;
-    dbgi               : out l3_debug_in_vector(0 to CFG_NCPU_TILE-1);
-    dbgo               : in  l3_debug_out_vector(0 to CFG_NCPU_TILE-1);
     -- NOC
     noc1_input_port    : out noc_flit_type;
     noc1_data_void_in  : out std_ulogic;
@@ -125,10 +122,6 @@ architecture rtl of tile_io is
   -- JTAG (Connected internally through tap and bscan components
   signal tck, tckn, tms, tdi, tdo : std_ulogic;
 
-  -- Debug Support Unit
-  signal dsui : dsu_in_type;
-  signal dsuo : dsu_out_type;
-
   -- Interrupt controller
   signal irqi               : irq_in_vector(0 to CFG_NCPU_TILE-1);
   signal irqo               : irq_out_vector(0 to CFG_NCPU_TILE-1);
@@ -140,7 +133,7 @@ architecture rtl of tile_io is
   signal u1o : uart_out_type;
 
   -- General Purpose Timer
-  signal gpti : gptimer_in_type;        --Partially driven by DSU..
+  signal gpti : gptimer_in_type;
   signal gpto : gptimer_out_type;       --Unused
 
   -- SVGA with dedicated memory
@@ -316,7 +309,7 @@ begin
 
   -- NB: all local I/O-bus slaves are accessed through proxy as if they were
   -- remote. This allows any master in the system to access them
-  no_pslv_gen_1 : for i in 4 to 12 generate
+  no_pslv_gen_1 : for i in 5 to 12 generate
     noc_apbo(i) <= apb_none;
   end generate no_pslv_gen_1;
   no_pslv_gen_2 : for i in 16 to NAPBSLV - 1 generate
@@ -414,27 +407,6 @@ begin
   end generate bootram_gen;
 
 
-  -----------------------------------------------------------------------------
-  -- DSU Slave
-  -----------------------------------------------------------------------------
-
-  dsugeni_0 : if CFG_DSU = 1 generate
-    dsu0 : dsu3                         -- LEON3 Debug Support Unit
-      generic map (hindex => dsu_hindex, haddr => dsu_haddr, hmask => dsu_hmask,
-                   ncpu   => CFG_NCPU_TILE, tbits => 30, tech => CFG_MEMTECH, irq => 0, kbytes => CFG_ATBSZ)
-      port map (rst, clk, ahbmi, ahbsi, ahbso(dsu_hindex), dbgo, dbgi, dsui, dsuo);
-    dsui.enable <= '1';
-    dsui.break  <= '0';
-  end generate;
-
-  nodsu : if CFG_DSU = 0 generate
-    dsuo.tstop <= '0'; dsuo.active <= '0'; ahbso(dsu_hindex) <= ahbs_none;
-  end generate;
-
-  ndsuact <= not dsuo.active;
-  dsuerr  <= not dbgo(0).error;
-
-
   -------------------------------------------------------------------------------
   -- APB 1: UART interface ------------------------------------------------------
   -------------------------------------------------------------------------------
@@ -497,6 +469,32 @@ begin
   nogpt : if CFG_GPT_ENABLE = 0 generate
     noc_apbo(3) <= apb_none;
   end generate;
+
+  -----------------------------------------------------------------------------
+  -- APB 4: ESP Link (Soft reset) ---------------------------------------------
+  -----------------------------------------------------------------------------
+
+  esplink_1: esplink
+    generic map (
+      APB_DW     => 32,
+      APB_AW     => 32,
+      REV_ENDIAN => 0)
+    port map (
+      clk     => clk,
+      rstn    => rst,
+      srst    => srst,
+      psel    => noc_apbi.psel(4),
+      penable => noc_apbi.penable,
+      pwrite  => noc_apbi.pwrite,
+      paddr   => noc_apbi.paddr,
+      pwdata  => noc_apbi.pwdata,
+      pready  => open,
+      pslverr => open,
+      prdata  => noc_apbo(4).prdata);
+
+  noc_apbo(4).pirq <= (others => '0');
+  noc_apbo(4).pconfig <= fixed_apbo_pconfig(4);
+  noc_apbo(4).pindex <= 4;
 
   -----------------------------------------------------------------------------
   -- APB 13: DVI

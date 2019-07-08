@@ -10,7 +10,10 @@ ESP_ROOT = $(realpath ../../)
 TECHLIB  = virtexup
 BOARD    = xilinx-vcu118-xcvu9p
 DESIGN   = esp-$(BOARD)
-#SMP     = 1
+#LINUX_SMP = 1
+LEON3_BASE_FREQ_MHZ ?= 78
+LEON3_STACK ?= 0x5bfffff0
+
 
 ### Design top level and testbench ###
 TOP    = top
@@ -40,7 +43,7 @@ TOP_VLOG_SIM_SRCS +=
 
 ### Xilinx Vivado hw_server ###
 FPGA_HOST ?= goliah.cs.columbia.edu
-XIL_HW_SERVER_PORT ?= 3123
+XIL_HW_SERVER_PORT ?= 3122
 
 
 ### Include global Makefile ###

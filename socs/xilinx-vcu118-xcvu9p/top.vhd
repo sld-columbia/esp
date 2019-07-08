@@ -175,9 +175,8 @@ architecture rtl of top is
   signal eth0_ahbmo       : ahb_mst_out_type;
   signal edcl_ahbmo : ahb_mst_out_type;
 
--- DSU
-  signal ndsuact : std_ulogic;
-  signal dsuerr  : std_ulogic;
+-- CPU flags
+signal cpuerr : std_ulogic;
 
 -- NOC
   signal chip_rst       : std_ulogic;
@@ -201,20 +200,18 @@ begin
 -- Leds -----------------------------------------------------------------------
 -------------------------------------------------------------------------------
 
-  -- From DSU 0 (on chip)
+
+  -- From CPU 0
   led0_pad : outpad generic map (tech => CFG_PADTECH, level => cmos, voltage => x12v, strength => 8)
-    port map (led(0), ndsuact);
-  -- From CPU 0 (on chip)
-  led1_pad : outpad generic map (tech => CFG_PADTECH, level => cmos, voltage => x12v, strength => 8)
-    port map (led(1), dsuerr);
-  -- --pragma translate_off
-  -- process(clkm, rstn)
-  -- begin  -- process
-  --   if rstn = '1' then
-  --     assert dsuerr = '0' report "Program Completed!" severity failure;
-  --   end if;
-  -- end process;
-  -- --pragma translate_on
+    port map (led(0), cpuerr);
+  --pragma translate_off
+  process(clkm, rstn)
+  begin  -- process
+    if rstn = '1' then
+      assert cpuerr = '0' report "Program Completed!" severity failure;
+    end if;
+  end process;
+  --pragma translate_on
 
   -- From DDR controller (on FPGA)
   led2_pad : outpad generic map (tech => CFG_PADTECH, level => cmos, voltage => x12v, strength => 8)
@@ -225,6 +222,8 @@ begin
     port map (led(4), ddr_ahbso(0).hready);
 
   -- unused
+  led1_pad : outpad generic map (tech => CFG_PADTECH, level => cmos, voltage => x12v, strength => 8)
+    port map (led(1), '0');
   led5_pad : outpad generic map (tech => CFG_PADTECH, level => cmos, voltage => x12v, strength => 8)
     port map (led(5), '0');
   led6_pad : outpad generic map (tech => CFG_PADTECH, level => cmos, voltage => x12v, strength => 8)
@@ -470,8 +469,7 @@ begin
       uart_txd    => uart_txd,
       uart_ctsn   => uart_ctsn,
       uart_rtsn   => uart_rtsn,
-      ndsuact     => ndsuact,
-      dsuerr      => dsuerr,
+      cpuerr      => cpuerr,
       ddr_ahbsi   => ddr_ahbsi,
       ddr_ahbso   => ddr_ahbso,
       eth0_ahbmi  => eth0_ahbmi,

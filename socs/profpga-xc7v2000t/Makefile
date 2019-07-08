@@ -10,7 +10,9 @@ ESP_ROOT = $(realpath ../../)
 TECHLIB  = virtex7
 BOARD    = profpga-xc7v2000t
 DESIGN   = esp-$(BOARD)
-SMP      = 1
+LINUX_SMP = 1
+LEON3_BASE_FREQ_MHZ ?= 80
+LEON3_STACK ?= 0x5bfffff0
 
 
 ### Design top level and testbench ###

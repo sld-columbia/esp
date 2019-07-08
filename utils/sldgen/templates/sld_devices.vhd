@@ -28,6 +28,7 @@ package sld_devices is
   constant VENDOR_SLD : vendor_t := 16#EB#;
 
   constant SLD_POWERCTRL : devid_t := 16#00F#;
+  constant SLD_ESPLINK : devid_t := 16#017#;
   constant SLD_AHBRAM_DP : devid_t := 16#01f#;
   constant SLD_L2_CACHE  : devid_t := 16#020#;
   constant SLD_LLC_CACHE  : devid_t := 16#021#;
@@ -41,6 +42,7 @@ package sld_devices is
 
   constant sld_device_table : dtable_t := (
     SLD_POWERCTRL => "Voltage and Frequency Scaling  ",
+    SLD_ESPLINK   => "ESP SoC Link                   ",
     SLD_AHBRAM_DP => "On-chip RAM with dual AHB iface",
     SLD_L2_CACHE  => "L2 cache                       ",
     SLD_LLC_CACHE => "LLC cache                      ",

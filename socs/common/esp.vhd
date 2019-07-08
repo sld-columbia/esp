@@ -37,8 +37,7 @@ entity esp is
     uart_txd        : out   std_logic;  -- UART1_TX (u1o.txd)
     uart_ctsn       : in    std_logic;  -- UART1_RTSN (u1i.ctsn)
     uart_rtsn       : out   std_logic;  -- UART1_RTSN (u1o.rtsn)
-    ndsuact         : out   std_logic;
-    dsuerr          : out   std_logic;
+    cpuerr          : out   std_logic;
     ddr_ahbsi      : out ahb_slv_in_vector_type(0 to CFG_NMEM_TILE - 1);
     ddr_ahbso      : in  ahb_slv_out_vector_type(0 to CFG_NMEM_TILE - 1);
     eth0_apbi       : out apb_slv_in_type;
@@ -129,6 +128,7 @@ signal noc_data_void_out : noc_ctrl_matrix;
 signal noc_stop_out      : noc_ctrl_matrix;
 
 signal rst_int       : std_logic;
+signal srst          : std_logic;
 signal sys_clk_int   : std_logic_vector(0 to CFG_NMEM_TILE - 1);
 signal refclk_int    : std_logic_vector(CFG_TILES_NUM -1 downto 0);
 signal pllbypass_int : std_logic_vector(CFG_TILES_NUM - 1 downto 0);
@@ -136,6 +136,7 @@ signal uart_rxd_int  : std_logic;       -- UART1_RX (u1i.rxd)
 signal uart_txd_int  : std_logic;       -- UART1_TX (u1o.txd)
 signal uart_ctsn_int : std_logic;       -- UART1_RTSN (u1i.ctsn)
 signal uart_rtsn_int : std_logic;       -- UART1_RTSN (u1o.rtsn)
+signal cpuerr_vec    : std_logic_vector(0 to CFG_NCPU_TILE-1);
 
 type monitor_noc_cast_vector is array (1 to nocs_num) of monitor_noc_vector(0 to CFG_TILES_NUM-1);
 signal mon_noc_vec : monitor_noc_cast_vector;
@@ -145,9 +146,6 @@ signal mon_dvfs_domain  : monitor_dvfs_vector(0 to CFG_TILES_NUM-1);
 signal mon_l2_int : monitor_cache_vector(0 to CFG_TILES_NUM-1);
 signal mon_llc_int : monitor_cache_vector(0 to CFG_TILES_NUM-1);
 
--- TODO: REMOVE!!! Debug unit messages must go through the NoC!
-signal dbgi : l3_debug_in_vector(0 to CFG_NCPU_TILE-1);
-signal dbgo : l3_debug_out_vector(0 to CFG_NCPU_TILE-1);
 signal uart_irq : std_ulogic;
 signal eth0_irq : std_ulogic;
 signal sgmii0_irq : std_ulogic;
@@ -159,6 +157,8 @@ begin
     sys_clk_int(i) <= sys_clk(i);
   end generate clk_int_gen;
   pllbypass_int <= pllbypass;
+
+  cpuerr <= cpuerr_vec(0);
 
   -----------------------------------------------------------------------------
   -- UART pads
@@ -253,15 +253,15 @@ begin
           tile_id    => i)
         port map (
           rst                => rst_int,
+          srst               => srst,
           refclk             => refclk_int(i),
           pllbypass          => pllbypass_int(i),
           pllclk             => clk_tile(i),
+          cpuerr             => cpuerr_vec(tile_cpu_id(i)),
           --TODO: REMOVE!
           uart_irq   => uart_irq,
           eth0_irq   => eth0_irq,
           sgmii0_irq => sgmii0_irq,
-          dbgi   => dbgi(tile_cpu_id(i)),
-          dbgo   => dbgo(tile_cpu_id(i)),
           noc1_input_port    => noc_input_port_1(i),
           noc1_data_void_in  => noc_data_void_in(1)(i),
           noc1_stop_in       => noc_stop_in(1)(i),
@@ -365,6 +365,7 @@ begin
           SIMULATION => SIMULATION)
         port map (
           rst                => rst_int,
+          srst               => srst,
           clk                => refclk_int(i),
           eth0_apbi          => eth0_apbi,
           eth0_apbo          => eth0_apbo,
@@ -381,13 +382,9 @@ begin
           uart_txd           => uart_txd_int,
           uart_ctsn          => uart_ctsn_int,
           uart_rtsn          => uart_rtsn_int,
-          ndsuact            => ndsuact,
-          dsuerr             => dsuerr,
           uart_irq           => uart_irq,
           eth0_irq           => eth0_irq,
           sgmii0_irq         => sgmii0_irq,
-          dbgi               => dbgi,
-          dbgo               => dbgo,
           noc1_input_port    => noc_input_port_1(i),
           noc1_data_void_in  => noc_data_void_in(1)(i),
           noc1_stop_in       => noc_stop_in(1)(i),
@@ -434,11 +431,10 @@ begin
           tile_id => i)
         port map (
           rst                => rst_int,
+          srst               => srst,
           clk                => sys_clk_int(tile_mem_id(i)),
           ddr_ahbsi          => ddr_ahbsi(tile_mem_id(i)),
           ddr_ahbso          => ddr_ahbso(tile_mem_id(i)),
-          -- TODO: replace with direct reset for LLC instead!
-          dbgi               => dbgi(0),
           noc1_input_port    => noc_input_port_1(i),
           noc1_data_void_in  => noc_data_void_in(1)(i),
           noc1_stop_in       => noc_stop_in(1)(i),

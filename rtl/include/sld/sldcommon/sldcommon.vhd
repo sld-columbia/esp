@@ -179,4 +179,25 @@ package sldcommon is
       ahbso2 : out ahb_slv_out_type);
   end component;
 
+  -- ESP Link
+
+  component esplink is
+    generic (
+      APB_DW     : integer;
+      APB_AW     : integer;
+      REV_ENDIAN : integer range 0 to 1);
+    port (
+      clk     : in  std_ulogic;
+      rstn    : in  std_ulogic;
+      srst    : out std_ulogic;
+      psel    : in  std_ulogic;
+      penable : in  std_ulogic;
+      pwrite  : in  std_ulogic;
+      paddr   : in  std_logic_vector(APB_AW - 1 downto 0);
+      pwdata  : in  std_logic_vector(APB_DW - 1 downto 0);
+      pready  : out std_ulogic;
+      pslverr : out std_ulogic;
+      prdata  : out std_logic_vector(APB_DW - 1 downto 0));
+  end component esplink;
+
 end sldcommon;

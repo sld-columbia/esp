@@ -54,15 +54,6 @@ entity top is
     c1_main_clk_n   : in    std_ulogic;  -- 160 MHz clock
     clk_ref_p       : in    std_ulogic;  -- 200 MHz clock
     clk_ref_n       : in    std_ulogic;  -- 200 MHz clock
-    --dsu_break      : in    std_ulogic;
-    --pragma translate_off
-    address         : out   std_logic_vector(25 downto 0);
-    data            : inout std_logic_vector(15 downto 0);
-    oen             : out   std_ulogic;
-    writen          : out   std_ulogic;
-    romsn           : out   std_logic;
-    adv             : out   std_logic;
-    --pragma translate_on
     c0_ddr3_dq         : inout std_logic_vector(63 downto 0);
     c0_ddr3_dqs_p      : inout std_logic_vector(7 downto 0);
     c0_ddr3_dqs_n      : inout std_logic_vector(7 downto 0);
@@ -275,18 +266,7 @@ component ahbram_sim
     ahbso   : out ahb_slv_out_type
   );
 end component ;
-
--- Signals for memory controller used to boot in simulation
-signal memi  : memory_in_type;
-signal memo  : memory_out_type;
-signal wpo   : wprot_out_type;
-signal sdi   : sdctrl_in_type;
-signal sdo   : sdram_out_type;
 -- pragma translate_on
-
-
--- constants
-signal vcc, gnd   : std_logic_vector(31 downto 0);
 
 -- Switches
 signal sel0, sel1, sel2, sel3, sel4 : std_ulogic;
@@ -414,10 +394,8 @@ attribute syn_preserve of clkvga : signal is true;
 attribute keep : boolean;
 attribute keep of clkvga : signal is true;
 
--- DSU
-signal ndsuact     : std_ulogic;
-signal dsuerr      : std_ulogic;
-
+-- CPU flags
+signal cpuerr : std_ulogic;
 
 -- NOC
 signal chip_rst : std_ulogic;
@@ -474,16 +452,16 @@ begin
 -- Leds -----------------------------------------------------------------------
 -------------------------------------------------------------------------------
 
-  -- From DSU 0 (on chip)
-  dsuact_pad : outpad generic map (tech => CFG_PADTECH, level => cmos, voltage => x18v) port map (LED_GREEN, ndsuact);
+  -- From memory controllers' PLLs
+  lock_pad : outpad generic map (tech => CFG_PADTECH, level => cmos, voltage => x18v) port map (LED_GREEN, lock);
 
   -- From CPU 0 (on chip)
-  led1_pad : outpad generic map (tech => CFG_PADTECH, level => cmos, voltage => x18v) port map (LED_RED, dsuerr);
+  cpuerr_pad : outpad generic map (tech => CFG_PADTECH, level => cmos, voltage => x18v) port map (LED_RED, cpuerr);
   --pragma translate_off
   process(clkm, rstn)
   begin  -- process
     if rstn = '1' then
-      assert dsuerr = '0' report "Program Completed!" severity failure;
+      assert cpuerr = '0' report "Program Completed!" severity failure;
     end if;
   end process;
   --pragma translate_on
@@ -492,7 +470,7 @@ begin
   calib0_complete_pad : outpad generic map (tech => CFG_PADTECH, level => cmos, voltage => x15v) port map (c0_calib_complete, c0_calib_done);
   calib1_complete_pad : outpad generic map (tech => CFG_PADTECH, level => cmos, voltage => x15v) port map (c1_calib_complete, c1_calib_done);
 
-  led3_pad : outpad generic map (tech => CFG_PADTECH, level => cmos, voltage => x18v) port map (LED_BLUE, lock);
+  led3_pad : outpad generic map (tech => CFG_PADTECH, level => cmos, voltage => x18v) port map (LED_BLUE, '0');
 
   led4_pad : outpad generic map (tech => CFG_PADTECH, level => cmos, voltage => x18v) port map (LED_YELLOW, '0');
 
@@ -527,8 +505,6 @@ begin
 --- FPGA Reset and Clock generation  ---------------------------------
 ----------------------------------------------------------------------
 
-  vcc <= (others => '1'); gnd <= (others => '0');
-
   reset_pad : inpad generic map (tech => CFG_PADTECH, level => cmos, voltage => x18v) port map (reset, rst);
   rst0 : rstgen         -- reset generator
   generic map (acthigh => 1, syncin => 0)
@@ -538,39 +514,6 @@ begin
   rst1 : rstgen         -- reset generator
   generic map (acthigh => 1)
   port map (rst, clkm, lock, migrstn, open);
-
-  -- pragma translate_off
-----------------------------------------------------------------------
----  Memory controllers ----------------------------------------------
-----------------------------------------------------------------------
-  -- Memory controller is required for current testbench, because it drives a
-  -- boot ROM. On the final system, instead, there is no ROM and the system
-  -- boots from DRAM thanks to grmon and the DSU.
-  memi.writen <= '1'; memi.wrn <= "1111"; memi.bwidth <= "01";
-  memi.brdyn <= '0'; memi.bexcn <= '1';
-
-  mctrl0 : mctrl generic map (hindex => 0, pindex => 0,
-                              paddr => 0, srbanks => 2, ram8 => 1,
-                              ram16 => 1, sden => CFG_MCTRL_SDEN,
-                              invclk => 0, sepbus => CFG_MCTRL_SEPBUS,
-                              pageburst => CFG_MCTRL_PAGE, rammask => 0, iomask => 0)
-    port map (rstn, clkm, memi, memo, mctrl_ahbsi, mctrl_ahbso, mctrl_apbi, mctrl_apbo, wpo, sdo);
-
-  addr_pad : outpadv generic map (width => 26, tech => CFG_PADTECH, level => cmos, voltage => x18v)
-    port map (address(25 downto 0), memo.address(26 downto 1));
-  roms_pad : outpad generic map (tech => CFG_PADTECH, level => cmos, voltage => x18v)
-    port map (romsn, memo.romsn(0));
-  oen_pad  : outpad generic map (tech => CFG_PADTECH, level => cmos, voltage => x18v)
-    port map (oen, memo.oen);
-  adv_pad  : outpad generic map (tech => CFG_PADTECH, level => cmos, voltage => x18v)
-    port map (adv, '0');
-  wri_pad  : outpad generic map (tech => CFG_PADTECH, level => cmos, voltage => x18v)
-    port map (writen, memo.writen);
-  data_pad : iopadvv generic map (tech => CFG_PADTECH, width => 16, level => cmos, voltage => x18v)
-    port map (data(15 downto 0), memo.data(31 downto 16),
-              memo.vbdrive(31 downto 16), memi.data(31 downto 16));
-  -- pragma translate_on
-
 
 
 ----------------------------------------------------------------------
@@ -1057,23 +1000,18 @@ begin
   chip_pllbypass <= (others => '0');
 
   esp_1: esp
+    generic map (
+      SIMULATION => SIMULATION)
     port map (
       rst           => chip_rst,
       sys_clk       => sys_clk(0 to CFG_NMEM_TILE - 1),
       refclk        => chip_refclk,
       pllbypass     => chip_pllbypass,
-      --pragma translate_off
-      mctrl_ahbsi   => mctrl_ahbsi,
-      mctrl_ahbso   => mctrl_ahbso,
-      mctrl_apbi    => mctrl_apbi,
-      mctrl_apbo    => mctrl_apbo,
-      --pragma translate_on
       uart_rxd      => uart_rxd,
       uart_txd      => uart_txd,
       uart_ctsn     => uart_ctsn,
       uart_rtsn     => uart_rtsn,
-      ndsuact       => ndsuact,
-      dsuerr        => dsuerr,
+      cpuerr        => cpuerr,
       ddr_ahbsi     => ddr_ahbsi,
       ddr_ahbso     => ddr_ahbso,
       eth0_apbi     => eth0_apbi,

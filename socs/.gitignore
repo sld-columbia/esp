@@ -31,6 +31,7 @@ tkparse
 .esp_config
 esp_global.vhd
 socmap.vhd
+socmap.h
 mmi64_regs.h
 power.h
 sldgen
@@ -85,3 +86,5 @@ linkpromecosflash
 prom.out
 xdump.s
 lib
+
+esplink

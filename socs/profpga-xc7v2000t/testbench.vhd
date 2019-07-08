@@ -21,18 +21,6 @@ architecture behav of testbench is
 
   constant SIMULATION      : boolean := true;
 
-  constant promfile : string := "prom.srec";  -- rom contents
-  constant ramfile  : string := "ram.srec";   -- ram contents
-
-  -- PROM (Simulation only for now)
-  signal address : std_logic_vector(25 downto 0);
-  signal data    : std_logic_vector(15 downto 0);
-  signal button  : std_logic_vector(3 downto 0) := "0000";
-  signal genio   : std_logic_vector(59 downto 0);
-  signal romsn   : std_logic;
-  signal oen     : std_ulogic;
-  signal writen  : std_ulogic;
-  signal adv     : std_logic;
 
   -- Ethernet signals
   signal reset_o2 : std_ulogic;
@@ -145,12 +133,6 @@ architecture behav of testbench is
       c1_main_clk_n     : in    std_ulogic;  -- 160 MHz clock
       clk_ref_p         : in    std_ulogic;  -- 200 MHz clock
       clk_ref_n         : in    std_ulogic;  -- 200 MHz clock
-      address           : out   std_logic_vector(25 downto 0);
-      data              : inout std_logic_vector(15 downto 0);
-      oen               : out   std_ulogic;
-      writen            : out   std_ulogic;
-      romsn             : out   std_logic;
-      adv               : out   std_logic;
       c0_ddr3_dq        : inout std_logic_vector(63 downto 0);
       c0_ddr3_dqs_p     : inout std_logic_vector(7 downto 0);
       c0_ddr3_dqs_n     : inout std_logic_vector(7 downto 0);
@@ -258,16 +240,6 @@ begin
   c1_ddr3_dqs_p <= (others => 'Z');
   c1_ddr3_dqs_n <= (others => 'Z');
 
-  -- Simulation model of generic async SRAM from GRLIB. For now the PROM is present
-  -- in simulation only. First-stage boot loader of FPGA is replaced by runtime
-  -- configuration through debug unit. Supporting boot from SDCARD is on the
-  -- TODO list.
-  prom0 : for i in 0 to 1 generate
-    sr0 : grsim_sram generic map (index => i+4, abits => 26, fname => promfile)
-      port map (address(25 downto 0), data(15-i*8 downto 8-i*8), romsn,
-                writen, oen);
-  end generate;
-  data <= buskeep(data) after 5 ns;
 
   top_1 : top
     generic map (
@@ -288,12 +260,6 @@ begin
       c1_main_clk_n     => c1_main_clk_n,
       clk_ref_p         => clk_ref_p,
       clk_ref_n         => clk_ref_n,
-      address           => address,
-      data              => data,
-      oen               => oen,
-      writen            => writen,
-      romsn             => romsn,
-      adv               => adv,
       c0_ddr3_dq        => c0_ddr3_dq,
       c0_ddr3_dqs_p     => c0_ddr3_dqs_p,
       c0_ddr3_dqs_n     => c0_ddr3_dqs_n,

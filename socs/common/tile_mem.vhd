@@ -35,11 +35,10 @@ entity tile_mem is
     tile_id : integer range 0 to CFG_TILES_NUM - 1 := 0);
   port (
     rst                : in  std_ulogic;
+    srst               : in  std_ulogic;
     clk                : in  std_ulogic;
     ddr_ahbsi          : out ahb_slv_in_type;
     ddr_ahbso          : in  ahb_slv_out_type;
-    --TODO: REMOVE THIS!
-    dbgi               : in  l3_debug_in_type;
     -- NOC
     noc1_input_port    : out noc_flit_type;
     noc1_data_void_in  : out std_ulogic;
@@ -349,7 +348,7 @@ begin
         dma_snd_atleast_4slots    => dma_snd_atleast_4slots,
         dma_snd_exactly_3slots    => dma_snd_exactly_3slots);
 
-    llc_rstn <= not dbgi.reset and rst;
+    llc_rstn <= not srst and rst;
 
     llc_wrapper_1 : llc_wrapper
       generic map (
