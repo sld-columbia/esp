@@ -98,6 +98,11 @@ help:
 	@echo
 	@echo " make espmon-run                   : open ESP monitor GUI interface (requires proFPGA system)"
 	@echo
+	@echo " make fpga-run                     : Run bare-metal program \"systest.exe\" on FPGA"
+	@echo "                                     Use targets \"make vivado-prog-fpga\" and \"make soft\" first"
+	@echo " make fpga-run-linux               : Run Linux on FPGA"
+	@echo "                                     Use targets \"make vivado-prog-fpga\" and \"make linux\" first"
+	@echo
 	@echo
 	@echo " === Software Flow ==="
 	@echo
@@ -1488,6 +1493,23 @@ espmon-distclean: espmon-clean
 
 .PHONY: espmon-clean espmon-distclean espmon-run
 
+
+### FPGA Deploy targets ###
+
+fpga-run: esplink
+	@./esplink --reset
+	@./esplink --brom -i prom.bin
+	@./esplink --dram -i systest.bin
+	@./esplink --reset
+
+fpga-run-linux: esplink
+	@./esplink --reset
+	@./esplink --brom -i prom.bin
+	@./esplink --dram -i linux.bin
+	@./esplink --reset
+
+
+.PHONY: fpga-run fpga-run-linux
 
 
 ### Clean all ###
