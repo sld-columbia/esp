@@ -61,13 +61,11 @@ void print_uart(const char *str)
 
 void init_uart()
 {
-	int i;
-	write_reg_u32(UART_CONTROL, UART_CTRL_TE | UART_CTRL_RE);
+	const unsigned scaler = BASE_FREQ / (38400 * 8 + 7);
+	write_reg_u32(UART_SCALER, scaler);
+	write_reg_u32(UART_CONTROL, UART_CTRL_FA | UART_CTRL_TE | UART_CTRL_RE);
 
-	for (i = 0; i < 8; i++) {
-		print_uart("Sync UART...\n");
-	}
-	print_uart("UART ready!\n\n");
+	print_uart("ESP-Ariane first-stage boot loader\n\n");
 }
 
 uint8_t bin_to_hex_table[16] = {

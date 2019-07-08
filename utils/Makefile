@@ -434,14 +434,16 @@ main.o: $(BOOTROM_PATH)/main.c
 		-Wall -Werror \
 		-mcmodel=medany -mexplicit-relocs \
 		-I$(BOOTROM_PATH) \
+		-I$(DESIGN_PATH) \
 		-c $< -o $@
 
-uart.o: $(BOOTROM_PATH)/uart.c
+uart.o: $(BOOTROM_PATH)/uart.c socmap.h
 	$(QUIET_CC) riscv64-unknown-elf-gcc \
 		-Os \
 		-Wall -Werror \
 		-mcmodel=medany -mexplicit-relocs \
 		-I$(BOOTROM_PATH) \
+		-I$(DESIGN_PATH) \
 		-c $< -o $@
 
 prom.exe: startup.o uart.o main.o $(BOOTROM_PATH)/linker.lds
@@ -450,6 +452,7 @@ prom.exe: startup.o uart.o main.o $(BOOTROM_PATH)/linker.lds
 		-Wall -Werror \
 		-mcmodel=medany -mexplicit-relocs \
 		-I$(BOOTROM_PATH) \
+		-I$(DESIGN_PATH) \
 		-nostdlib -nodefaultlibs -nostartfiles \
 		-T$(BOOTROM_PATH)/linker.lds \
 		startup.o uart.o main.o \
@@ -493,6 +496,7 @@ systest.exe: systest.c uart.o
 	$(RISCV_TESTS)/benchmarks/common/syscalls.c \
 	$(RISCV_TESTS)/benchmarks/common/crt.S  \
 	-T $(RISCV_TESTS)/benchmarks/common/test.ld -o $@ \
+	-I$(DESIGN_PATH) \
 	uart.o $<
 
 systest.bin: systest.exe

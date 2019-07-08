@@ -1,6 +1,7 @@
 #pragma once
 
 #include <stdint.h>
+#include "socmap.h"
 
 #define UART_BASE 0x60000100
 
@@ -22,6 +23,7 @@
 #define UART_CTRL_TF 0x200
 #define UART_CTRL_RF 0x400
 #define UART_CTRL_DB 0x800
+#define UART_CTRL_FA 0x80000000
 
 #define UART_STATUS_DR 0x1
 #define UART_STATUS_TS 0x2
