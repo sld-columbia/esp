@@ -36,7 +36,8 @@ typedef enum action {
 	DO_SET_WORD,
 	DO_GET_WORD,
 	DO_LOAD_BOOTROM,
-	DO_LOAD_DRAM
+	DO_LOAD_DRAM,
+	DO_RESET
 } action_t;
 
 typedef struct edcl_msg_rcv {
@@ -67,6 +68,7 @@ void load_memory_bin(u32 base_addr, char *fname);
 void dump_memory_bin(u32 address, u32 size, char *fname);
 void set_word(u32 addr, u32 data);
 void get_word(u32 addr);
+void reset(u32 addr);
 void disconnect_edcl(void);
 
 

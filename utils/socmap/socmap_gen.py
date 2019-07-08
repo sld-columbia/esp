@@ -1329,6 +1329,7 @@ def print_esplink_header(fp, esp_config, soc):
   fp.write("#define BASE_FREQ " + str(CPU_FREQ) + "\n")
   fp.write("#define BOOTROM_BASE_ADDR " + hex(RST_ADDR[esp_config.cpu_arch]) + "\n")
   fp.write("#define DRAM_BASE_ADDR 0x" + format(DDR_HADDR[esp_config.cpu_arch], '03X') + "00000\n")
+  fp.write("#define ESPLINK_BASE_ADDR 0x" + format(AHB2APB_HADDR[esp_config.cpu_arch], '03X') + "00400\n")
   fp.write("#define TARGET_BYTE_ORDER __ORDER_BIG_ENDIAN__\n")
   fp.write("\n")
   fp.write("#endif /* __SOCMAP_H__ */\n")

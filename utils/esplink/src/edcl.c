@@ -232,7 +232,7 @@ void die(char *s)
 
 void connect_edcl(const char *server)
 {
-	printf("Connect EDCL\n");
+	printf("Connect ESPLink\n");
 
 	// Open socket
 	if ( (s = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1)
@@ -423,6 +423,44 @@ void dump_memory_bin(u32 address, u32 size, char *fname)
 	printf("Dumped %u Bytes starting at %08x\n", size, address);
 }
 
+void reset(u32 addr)
+{
+	edcl_snd_t *snd = malloc(sizeof(edcl_snd_t));
+	edcl_rcv_t *rcv = malloc(sizeof(edcl_rcv_t));
+
+	snd->offset = 0;
+	snd->sequence = 0x0;
+	snd->write = 1;
+	snd->address = addr;
+	snd->data[0] = 0x1;
+	snd->length = 4;
+
+	// Reset must be sent twice
+	handle_edcl_message(snd, rcv);
+	usleep(500000);
+
+	free(snd);
+	free(rcv);
+
+	snd = malloc(sizeof(edcl_snd_t));
+	rcv = malloc(sizeof(edcl_rcv_t));
+
+	snd->offset = 0;
+	snd->sequence = 0x0;
+	snd->write = 1;
+	snd->address = addr;
+	snd->data[0] = 0x1;
+	snd->length = 4;
+
+	handle_edcl_message(snd, rcv);
+	usleep(500000);
+
+	free(snd);
+	free(rcv);
+
+	printf("Reset ESP processor cores\n");
+}
+
 void set_word(u32 addr, u32 data)
 {
 	edcl_snd_t *snd = malloc(sizeof(edcl_snd_t));
@@ -466,7 +504,6 @@ void get_word(u32 addr)
 
 void disconnect_edcl()
 {
-	printf("Disconnect EDCL\n");
 	close(s);
 }
 

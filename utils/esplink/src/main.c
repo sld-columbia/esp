@@ -24,6 +24,7 @@ static void print_usage() {
 	printf("  --dram              Load binary `infile` to system DRAM\n");
 	printf("  --regw              Write target register (4 Bytes)\n");
 	printf("  --regr              Read target register (4 Bytes)\n");
+	printf("  --reset             Send soft-reset to processor cores\n");
 
 	printf("\n");
 
@@ -76,6 +77,7 @@ static struct option long_options[] = {
         {"dram",    no_argument,        0,  DO_LOAD_DRAM    },
         {"regw",    no_argument,        0,  DO_SET_WORD     },
         {"regr",    no_argument,        0,  DO_GET_WORD     },
+        {"reset",   no_argument,        0,  DO_RESET        },
         {0,         0,                  0,  0               }
 };
 
@@ -111,6 +113,7 @@ int main(int argc, char *argv[]) {
 		case DO_READ_BIN :
 		case DO_LOAD_BOOTROM :
 		case DO_LOAD_DRAM :
+		case DO_RESET :
 		case DO_SET_WORD :
 		case DO_GET_WORD : action = opt; break;
 		default : print_usage(); exit(EXIT_FAILURE);
@@ -155,6 +158,10 @@ int main(int argc, char *argv[]) {
 		if (infile == NULL)
 			die("Invalid options for action --dram");
 		load_memory_bin(DRAM_BASE_ADDR, infile);
+		break;
+
+	case DO_RESET :
+		reset(ESPLINK_BASE_ADDR);
 		break;
 
 	case DO_SET_WORD :
