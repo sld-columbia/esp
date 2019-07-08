@@ -11,7 +11,6 @@ SRC_MIRROR="http://espdev.cs.columbia.edu/stuff/leon3"
 TMP=${PWD}/_leon3_build
 
 BAREC_GCC_VERSION="4.4.2"
-GRMON_VERSION="eval-3.0.9"
 MKLINUXIMG_VERSION="2.0.10"
 
 # Tool chain versions for Linux (stable)
@@ -136,37 +135,6 @@ if [ $(noyes "Skip ${src}") == "n" ]; then
     fi
 fi
 
-
-# GRMON debugger
-src=grmon-${GRMON_VERSION}
-tar=$src.tar.gz
-ovwrt="n"
-dst="${TARGET_DIR}/${src}"
-
-echo "*** Installing grmon ... ***"
-if [ $(noyes "Skip ${src}") == "n" ]; then
-    if test -e $dst; then
-	if [ $(noyes "Re-install ${dst}") == "y" ]; then
-	    ovwrt="y"
-	fi
-    else
-	ovwrt="y"
-    fi
-
-    if [ $ovwrt == "y" ]; then
-	cmd="rm -rf ${dst} ${TARGET_DIR}/grmon"
-	runsudo $TARGET_DIR "$cmd"
-	rm -rf ${src}
-	if test ! -e $tar; then
-	    wget ${SRC_MIRROR}/$tar
-	fi
-	tar xf $tar
-	cmd="mv ${src} ${TARGET_DIR}"
-	runsudo $TARGET_DIR "$cmd"
-	cmd="ln -s ${dst} ${TARGET_DIR}/grmon"
-	runsudo $TARGET_DIR "$cmd"
-    fi
-fi
 
 # MKLINUXIMG debugger
 src=mklinuximg-${MKLINUXIMG_VERSION}
@@ -520,8 +488,6 @@ fi
 
 
 # #Leon3
-# # grmon : JTAG debug tool
-# export PATH=/opt/leon/grmon/linux/bin64:$PATH
 # # sparc-linux- : Linux Cross compiler
 # export PATH=/opt/leon/sparc-linux/usr/bin:$PATH
 # # mklinuximg : Make bootable linux image (PATCHED TO WORK WITH NEW KERNEL)
