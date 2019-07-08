@@ -1,0 +1,45 @@
+# ABOUT
+This directory contains an example on how to configure the GRLIB clock gating
+unit (GRCLKGATE) and doing initialization of GPIO with the MKPROM2 boot loader.
+
+The example is applicable to UT700, and can be modified for other systems.
+
+
+# USAGE
+  $ make
+Then use the resulting bdinit.o with the MKPROM -bdinit option.
+
+The example can also be compiled manually on the command line. Any LEON
+compatible GCC will work:
+  $ sparc-rtems-gcc -Os -c bdinit.c -o bdinit.o
+
+
+# OPTIONS
+## TARGET
+Make variable TARGET can be used to specify the toolchain to use, for example:
+  $ make TARGET=sparc-gaisler-elf
+The default is sparc-rtems
+
+
+# CUSTOMIZATION
+## Clock gating unit base register address
+In bdinit.c, the define GRCLKGATE_REG_ADDR specifies the base for the GRCLKGATE
+peripheral. The default value is applicable to UT700 and UT699E.
+
+## Clock gating core selection
+Clock gating bit definitions for UT700 are available in the file clkgate_ut700.h.
+
+The parameter to the call of clkgate_gate() in bdinit.c can be changed to
+specify which cores to disable by MKPROM2.
+
+In addition, the function clkgate_enable() can be called to enable cores. This
+is in general not needed on UT700 since all cores are enabled on reset.
+
+## Custom register initializations.
+Lines can be added to array init_dev_table_example in bdinit.c.
+ * Each entry is on the format             {address, value}.
+ * The table is terminated with the entry  {0,       0}
+Parsing of the table stops when 0 is in the address field.
+
+This is useful to override reset values early.
+

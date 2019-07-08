@@ -1,0 +1,13 @@
+
+Please read the documentation in doc/mkprom2.pdf.
+
+Linux, cygwin:
+-------------
+Install to /opt/mkprom2. Add /opt/mkprom2 to your PATH
+$export /opt/mkprom2:$PATH
+so that /opt/mkprom2/mkprom2 is accessible.
+
+Windows:
+-------
+Install to c:/opt/mkprom2. Add c:/opt/mkprom2 to your PATH
+so that c:/opt/mkprom2/mkprom2.exe is accessible.

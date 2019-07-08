@@ -1,0 +1,32 @@
+OUTPUT_ARCH(sparc)
+__DYNAMIC  =  0;
+
+/*
+ * The memory map looks like this:
+ * +--------------------+ <- low memory
+ * | .text              |
+ * |                    | original image
+ * +--------------------+
+ * | .bch               | bch codes
+ * +--------------------+
+ */
+
+
+/* these are the maximum values */
+MEMORY
+{
+  rom     : ORIGIN = 0x00000000, LENGTH = 4095M
+}
+
+SECTIONS
+{
+  .text : 
+  {
+    *(.text)
+  } > rom
+  .data :
+  {
+    *(.data)
+  } > rom
+  
+}

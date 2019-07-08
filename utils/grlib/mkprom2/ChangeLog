@@ -1,0 +1,334 @@
+2018-07-09
+	* Improved Microsemi BSP SERDES and MDDR controller initialization.
+	* Updated for microsemi-m2s150ts-adv-kit template design with SPI
+	* Memory Controller on address 0x00000000.
+
+2018-06-04
+	* DOC: Added a note that the effective number of wait states is system
+	* dependent. See section named "Wait states options".
+
+2018-06-04
+	* Removed mkprom2-GUI from distribution.
+
+2018-05-31
+	* Default value for -romws is now 15.
+	* Default value for -ramws, -ramrws and -ramwws is now 3.
+
+2018-05-31
+	* The -freq <mhz> option is now mandatory.
+
+2018-02-08
+	* Added an "Examples" chapter to the Users' Manual. Describes how GRMON
+	* can be used to extract MKPROM parameters and bdinit hints.
+
+2018-02-08
+	* Added example on how to program the clock gating unit during the boot
+	* sequence. The example is available in bsp/clkgate targets the UT700
+	* component. The example can easily be customized for other systems.
+
+2018-02-06
+	* Removed the front-end options -duart and -dsubaud.
+
+2018-02-02
+	* Added example on custom initializations for microsemi-m2gl-eval-kit
+	* and microsemi-m2s150ts-adv-kit. The SERDES and MDDR controllers are
+	* initialized in bdinit0, before memory is accessed. Files are
+	* available in the bsp/ directory of the MKPROM2 installation.
+
+2018-01-02
+	* Updated _prom_window_{overflow,underflow} for LEON3/4: there was an
+	* issue which could show up on CPUs with fewer than 8 register windows.
+
+2017-12-20
+	* Updated compiler options for the distribution target libraries,
+	  taking technical note workarounds into consideration:
+	  * GRLIB-TN-0009
+	  * GRLIB-TN-0010 (MMU not enabled at boot time)
+	  * GRLIB-TN-0011 (MMU not enabled at boot time)
+	  * GRLIB-TN-0012 (FPU not used by MKPROM2)
+	  * GRLIB-TN-0013 (FPU not used by MKPROM2)
+
+2017-09-29
+	* Added -romres option used when creating a ROM resident application.
+	  See the documentation for more information.
+
+2017-09-07
+	* Removed undocumented options
+
+2017-08-24
+	* DOC: Clarify -mcfg usage
+
+2017-08-24
+	* Prevent buffer overflow if section name is too long
+
+2017-08-24
+	* Added options -mcfg{1,2,3}, sdfg1 aliasing memcfg
+
+2017-08-23
+	* Improved MKPROM front-end messages
+
+2017-06-09
+	* Added bdcpuinit0() hook for all processors
+
+2017-06-09
+	* Improved -bdinit documentation
+
+2017-06-09
+	* Call bdinit0() also when -noinit is used
+
+2017-06-09
+	* Initialize %y on all processors
+
+2017-06-01
+	* Reference GRMON2 command 'info mkprom2' in documentation
+
+2017-06-01
+	* Take PROM start address into account when using -bch8
+
+2017-05-10
+	* Search for sparc-gaisler-elf-gcc (BCC2)
+
+2017-02-23
+	* Check return value when calling GCC and binutils
+
+2017-02-20 Martin Aberg <maberg@gaisler.com>
+	* Correct stack calculation when -sparcleon0 is used.
+
+2016-09-15 Martin Aberg <maberg@gaisler.com>
+	* Back-to-Back Store Errata workaround implemented, enabled by
+	  -mfix-b2bst and is always included when -mtune=ut699 is used.
+
+2016-09-15 Martin Aberg <maberg@gaisler.com>
+	* Print full version number on boot
+
+2016-09-12 Martin Aberg <maberg@gaisler.com>
+	* Clarified timer device initialization
+
+2016-09-07 Arvid Bjorkengren <arvid@gaisler.com>
+	* Added AGGA4 support
+
+2015-05-04 Martin Aberg <maberg@gaisler.com>
+	* Added support for any number of program headers.
+
+2014-10-01 Daniel Hellstrom <daniel@gaisler.com>
+	* Fix for non-FPU system problem introduced 2014-08-27
+
+2014-08-27 Daniel Hellstrom <daniel@gaisler.com>
+	* added GRTIMER initialization, same initialization as for GPTIMER.
+	  This is to support systems that has GRTIMER instead of GPTIMER as
+	  primary timer core.
+	  Does not have any effect on the GR712RC since GRTIMER is on second
+	  APB bus.
+	* Clarified the tRP command line switch
+	* Fix PSR initialization problem with sign-extension
+	* FPU is always initialized when present. However if -msoft-float has
+	  been given the FPU will be disabled after initialization.
+	* Add support for FTAHBRAM, which is present in the GR712RC.
+
+2013-09-24 Konrad Eisele <konrad@gaisler.com>
+	* error in PNP scanning when -edac is given
+	* add GAISLER_SDCTRL64
+
+2013-06-07 Konrad Eisele <konrad@gaisler.com>
+	* add pre-register-init bdinit0
+	* perform power-on init DDR2
+
+2013-06-02 Konrad Eisele <konrad@gaisler.com>
+	* add SDCTRL64
+	* clear all timer ctrl registers
+
+2013-05-02 Konrad Eisele <konrad@gaisler.com>
+	* Add support for DDRSDMUX
+	* add -sdmemcfg1 option for SDCTRL
+	* init %tbr with start instead of 0
+
+2013-03-04 Konrad Eisele <konrad@gaisler.com>
+	* avoid endless recursion in multibus pnp scanning
+2013-03-01 Konrad Eisele <konrad@gaisler.com>
+	* -mp: avoid endless recursion
+2013-03-01 Konrad Eisele <konrad@gaisler.com>
+	* -nopnp for DDR2
+2013-02-20 Konrad Eisele <konrad@gaisler.com>
+	* Clear fpu regs using .text zero instead _stack
+	* Clear fpregs with ldd
+
+2012-04-05 Konrad Eisele <konrad@gaisler.com>
+	* Section name was getting corrupted when > 16 char
+
+2012-02-15 Konrad Eisele <konrad@gaisler.com>
+	* Set cache control register of slave cpus
+
+2011-11-25 Konrad Eisele <konrad@gaisler.com>
+	* Avoid bridge recursion if ioaddr is 0
+
+2011-11-18 Konrad Eisele <konrad@gaisler.com>
+	* -sparcleon0rom option for NGMP execute from rom images
+
+2011-10-04 Konrad Eisele <konrad@gaisler.com>
+	* Rewrite execute in rom linking for 4.4.2.
+
+2011-09-16 Konrad Eisele <konrad@gaisler.com>
+	* Rewrite code to output .bch section. Works with 4.4.2 now.
+
+2011-06-14  Jiri Gaisler  <jiri@gaisler.com>
+	* Set watchdog to 5 minutes time-out after re-programing timer
+
+2011-05-27  Jiri Gaisler  <jiri@gaisler.com>
+	* Do not try to preserve UART debug mode as it is not reset
+
+2011-04-01  Jiri Gaisler  <jiri@gaisler.com>
+	* UART receiver was not enabled at start-up
+
+2011-01-24  Konrad Eisele  <konrad@gaisler.com>
+	* Move _prom_registers_init below 0x1000, init %psr with PIL 0xf on
+	  reginit, shrink trap table
+
+2011-01-23  Konrad Eisele  <konrad@gaisler.com>
+	* Move register clean loop before hardware register initialization
+
+2010-11-01  Konrad Eisele  <konrad@gaisler.com>
+	* Add options to specify the FTSDCTRL64 config registers
+
+2010-10-25  Konrad Eisele  <konrad@gaisler.com>
+	* enable L2CACHE
+
+2010-10-01  Konrad Eisele  <konrad@gaisler.com>
+
+	* Use docbook for manual generation
+
+2010-09-30  Konrad Eisele  <konrad@gaisler.com>
+
+	* mkprom.c: add flag -linuxmore, -mpstart
+	* prominit_leon3.S: scan all UART and timers
+	* mp.c: multiprocessor init
+
+2010-09-08  Konrad Eisele  <konrad@gaisler.com>
+
+	* mkprom.c: add flag -linuxbase and -linuxcmdline
+
+2010-09-07  Konrad Eisele  <konrad@gaisler.com>
+
+	* prominit_leon3.S: add scanning over bridges, AHB2AHB, IOMMU, L2CACHE
+
+2010-08-19  Konrad Eisele  <konrad@gaisler.com>
+
+	* mkprom.c: add linux bootloader support -linux
+
+2010-05-24  Konrad Eisele  <konrad@gaisler.com>
+
+	* mkprom.c: remove the -start option, fix -entry option.
+
+2010-05-24  jerry.needell@unh.edu
+
+	* mkprom.c: rom resident image with -rstaddr
+
+2009-12-18  Jiri Gaisler <jiri@gaisler.com>
+
+	* promcore.S: Remove trap table for software traps to reduce size
+
+2009-12-18  Jan Andersson <jan@gaisler.com>
+
+	* mkprom.c: Add -ddr2spa_cfg4 flag
+	* prominit_leon3.S: Write DDR2SPA CFG4 reg. if -ddr2spa_cfg4 value != 0
+
+2009-12-03  Konrad Eisele  <konrad@gaisler.com>
+
+	* mkprom.c (main): use -bch8 and -bch8q and -romcs instead of
+	-bch8 and  -romedacaddr
+
+2009-11-30  Konrad Eisele  <konrad@gaisler.com>
+
+	* mkprom.c (main): if -edac and -ramwith 8 then skip 1/4 of ram (FTMCTRL)
+
+2009-11-25  Konrad Eisele  <konrad@gaisler.com>
+
+	* mkprom.c: add ftsrctrl -romedacaddr switch
+
+2009-11-24  Konrad Eisele  <konrad@gaisler.com>
+
+	* mkprom.c: add -bch8 switch for bch8 section addition
+
+2009-10-05  Konrad Eisele  <eiselekd@gaisler.com>
+
+	* mkprom.c: move clean_ramxx defines out of leon clause
+
+2009-09-30  Jan Andersson  <jan@gaisler.com>
+
+	* prominit_leon3.S : Calculation of SPIMCTRL register base
+	  address was not correct.
+
+2009-07-30  Jiri Gaisler  <jiri@gaisler.com>
+
+	* mkprom.c (main):   Multiple .o files could not be handled when
+	  creating an image that runs from PROM.
+
+2009-05-07  Jan Andersson  <jan@gaisler.com>
+
+	* mkprom.c (main):   Add option to use SPIMCTRL alternate scaler
+	* prominit_leon3.S : Set SPIMCTRL configuration register
+
+2009-04-09  Konrad Eisele  <konrad@gaisler.com>
+
+	* prominit.c : set edac bit before clearing memory
+
+2009-04-08  Konrad Eisele  <konrad@gaisler.com>
+
+	* mkprom.c : add options to specify ddr(2) registers directly
+
+2009-03-18  Konrad Eisele  <konrad@gaisler.com>
+
+	* prominit_leon3.S (Lnodsu): Disable snooping for ut699
+
+2009-02-10  Konrad Eisele  <konrad@gaisler.com>
+	* Clear 0x800000a8 for leon2
+
+2009-02-08  Konrad Eisele  <konrad@gaisler.com>
+
+	* Add Leon3 plug and play initialization
+
+2008-12-18  Konrad Eisele  <konrad@gaisler.com>
+
+	* mkprom.c (ldaout): support aout format
+
+2008-09-11  Konrad Eisele  <konrad@gaisler.com>
+
+	* prominit_leon2.S (_prom_registers_init): change irq registers clear order
+
+2008-09-10  Daniel Hellstrom <daniel@gaisler.com>
+	* Changed DDR2 CFG3 calculation. The tRFC value now depends on frequency times 13.
+
+2008-09-10  Konrad Eisele  <konrad@gaisler.com>
+
+	* promload.c (main): remove unused pbuf array
+
+2008-09-05  Konrad Eisele  <konrad@gaisler.com>
+
+	* prominit_leon2.S (_prom_registers_init): clear force bit on startup
+
+2008-04-30  Konrad Eisele  <konrad@gaisler.com>
+
+	* prominit_leon3.S (_prom_registers_init): add -dsustart and -dsutrace option to
+	enable DSU trace on startup for Leon3
+
+	* ddr/ddr2 wait loop
+
+2008-04-29  Jiri Gaisler <jiri@gaisler.com>
+
+	* erc32 timer register mirrow at 0x7E was not set
+
+2008-01-07  Konrad Eisele  <konrad@gaisler.com>
+
+	* mkprom.c (main): add leon3 ddr/2 controller support
+
+2007-11-06  Konrad Eisele  <konrad@gaisler.com>
+
+	* mkprom.c (main): use sparc-linux toolchain
+
+	* prominit_leon[2|3|erc].S: Clear irq mask register
+
+2007-05-02  Konrad Eisele  <konrad@gaisler.com>
+
+	* mkprom.c (main): -qsvt, -mflat, -msoft-float and -mflat file selection
+
+	* promcrt0_resident_ecos.S: ecos version of romresident init
+

@@ -1,0 +1,37 @@
+# ABOUT
+This directory contains example files for generating a bdinit.o for the
+Microsemi IGLOO2 FPGA Evaluation Kit (M2GL_M2S-EVAL-KIT).
+
+
+# USAGE
+  $ make
+Then use the resulting bdinit.o with the MKPROM -bdinit option.
+
+## mddr_init.inc
+Contains initialization offsets and values for the MDDR memory controller.
+
+## serdes_init.inc
+Contains initialization offsets and values for the SERDES controller.
+
+
+# OPTIONS
+## CC
+Make variable CC can be used to specify the toolchain to use, for example:
+  $ make CC=sparc-rtems-gcc
+
+## MDDR_APB
+The MDDR_APB make variable specifies where the MDDR APB interface is located as
+seen by the processor. To specify that the APB interface is located at bus
+address 0x90001000, use:
+  $ make MDDR_APB=0x90001000
+
+It is also possible to disable the MDDR initialization by using MDDR_APB=0.
+
+## SERDES_APB
+The same options apply for the SERDES controller and the make variable SERDES_APB.
+
+
+# CUSTOMIZATION
+For custom designs, the provided .reg files can be replaced by files generated
+by Microsemi Libero.
+

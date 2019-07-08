@@ -1,0 +1,179 @@
+/*  linkcmds
+ *
+ *  $Id: linkcmds,v 1.8.2.1 2000/05/24 17:06:38 joel Exp $
+ */
+
+OUTPUT_ARCH(sparc)
+__DYNAMIC  =  0;
+
+/*
+ * The memory map looks like this:
+ * +--------------------+ <- low memory
+ * | .text              |
+ * |        etext       |
+ * |        ctor list   | the ctor and dtor lists are for
+ * |        dtor list   | C++ support
+ * |        _endtext    |
+ * +--------------------+
+ * | .data              | initialized data goes here
+ * |        _sdata      |
+ * |        _edata      |
+ * +--------------------+
+ * | .bss               |
+ * |        __bss_start | start of bss, cleared by crt0
+ * |        _end        | start of heap, used by sbrk()
+ * +--------------------+
+ * |    heap space      |
+ * |        _ENDHEAP    |
+ * |    stack space     | 
+ * |        __stack     | top of stack
+ * +--------------------+ <- high memory
+ */
+
+
+/*
+ * User modifiable values:
+ *
+ * _CLOCK_SPEED               in Mhz (used to program the counter/timers)
+ *
+ * _PROM_SIZE                 size of PROM (permissible values are 128K, 256K,
+ *                               512K, 1M, 2M, 4M, 8M and 16M)
+ * _RAM_SIZE                  size of RAM (permissible values are 256K, 512K,
+ *                               1M, 2M, 4M, 8M, 16M, and 32M)
+ *
+ */
+
+/* Default values, can be overridden */
+
+_PROM_SIZE = 2M;
+_RAM_SIZE = 4M;
+
+_RAM_START = 0x02000000;
+_RAM_END = _RAM_START + _RAM_SIZE;
+
+_PROM_START = 0x00000000;
+_PROM_END = _PROM_START + _PROM_SIZE;
+
+/*
+ *  Alternate names without leading _.
+ */
+
+PROM_START = _PROM_START;
+PROM_SIZE = _PROM_SIZE;
+PROM_END = _PROM_END;
+
+RAM_START = _RAM_START;
+RAM_SIZE = _RAM_SIZE;
+RAM_END = _RAM_END;
+
+_LEON_REG = 0x80000000;
+LEON_REG = 0x80000000;
+_ERC32_MEC = 0x1f80000;
+ERC32_MEC = 0x1f80000;
+
+/* these are the maximum values */
+
+MEMORY
+{
+  rom     : ORIGIN = 0x00000000, LENGTH = 4095M
+}
+
+/*
+ * stick everything in ram (of course)
+ */
+SECTIONS
+{
+  .text :
+  {
+    CREATE_OBJECT_SYMBOLS
+    text_start = .;
+    _text_start = .;
+    *(.text)
+    *(.text.*)
+    . = ALIGN (16);
+
+    *(.eh_frame)
+    . = ALIGN (16);
+
+    *(.gnu.linkonce.t*)
+
+    /*
+     * C++ constructors
+     */
+    __CTOR_LIST__ = .;
+    __CTOR_LIST__ = ABSOLUTE (.);
+    KEEP(*(SORT(.ctors*)))
+    __CTOR_END__ = ABSOLUTE (.);
+    __DTOR_LIST__ = ABSOLUTE (.);
+    KEEP(*(SORT(.dtors*)))
+    __DTOR_END__ = ABSOLUTE (.);
+
+    _rodata_start = . ;
+    *(.rodata*)
+    *(.fixup)
+    *(.gnu.linkonce.r*)
+    _erodata = ALIGN( 0x10 ) ;
+
+    etext = ALIGN(0x10);
+    _etext = .;
+    *(.init)
+    *(.fini)
+    *(.lit)
+    *(.shdata)
+    . = ALIGN (16);
+    _endtext = .;
+  } > rom
+  .data :
+  {
+    data_start = ALIGN(0x8);
+    _data_start = .;
+    _sdata = . ;
+
+    KEEP (*(.vectors))
+
+    *(.data)
+    *(.data.*)
+    *(.gnu.linkonce.d*)
+    *(.gcc_except_table)
+  *(.dynamic)
+  *(.got)    
+  *(.plt)    
+  *(.hash)   
+  *(.dynrel) 
+  *(.dynsym) 
+  *(.dynstr) 
+  *(.hash)   
+   
+    KEEP(*( SORT (.ecos.table.*))) ;
+    . = ALIGN(0x10);
+    edata = ALIGN(0x8);
+    _edata = .;
+  } > rom
+  .shbss :
+  {
+    *(.shbss)
+  } > rom
+  .bss :
+  {
+    __bss_start = ALIGN(0x8);
+    _bss_start = .;
+    bss_start = .;
+    *(.bss)
+    *(.bss.*)
+    *(COMMON)
+    end = .;
+    _end = ALIGN(0x8);
+    __end = ALIGN(0x8);
+    __bss_end = ALIGN(0x8);
+    __heap1 = .;
+  } > rom
+  .jcr . (NOLOAD)  : { *(.jcr) 		}
+  .stab . (NOLOAD) :
+  {
+    [ .stab ]
+  }
+  .stabstr . (NOLOAD) :
+  {
+    [ .stabstr ]
+  }
+}

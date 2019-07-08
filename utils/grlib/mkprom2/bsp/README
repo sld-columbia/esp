@@ -1,0 +1,7 @@
+This directory contains support routines for using MKPROM on specific
+components and boards.
+
+Board specific routines are typicaly implemented as "bdinit" functions which
+are picked up by the MKPROM front-end when the option -bdinit is used. See the
+MKPROM2 User's Manaul for more information.
+

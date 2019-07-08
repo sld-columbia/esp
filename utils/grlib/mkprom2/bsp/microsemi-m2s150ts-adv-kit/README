@@ -1,0 +1,106 @@
+# ABOUT
+This directory contains example files for generating a bdinit.o for the
+Microsemi SmartFusion2 FPGA Advanced Kit.
+
+Compatible GRLIB design is leon3-microsemi-m2s150ts-adv-kit with SPI Memory
+Controller mapped to CPU bus address 0x00000000.
+
+
+# USAGE
+  $ make
+Then use the resulting bdinit.o with the MKPROM -bdinit option.
+
+## mddr_init.inc
+Contains initialization offsets and values for the MDDR memory controller.
+
+## serdes_init.inc
+Contains initialization offsets and values for the SERDES controller.
+
+
+# OPTIONS
+## CC
+Make variable CC can be used to specify the toolchain to use, for example:
+  $ make CC=sparc-rtems-gcc
+
+## MDDR_APB
+The MDDR_APB make variable specifies where the MDDR APB interface is located as
+seen by the processor. To specify that the APB interface is located at bus
+address 0x90001000, use:
+  $ make MDDR_APB=0x90001000
+
+It is also possible to disable the MDDR initialization by using MDDR_APB=0.
+
+## SERDES_APB
+The same options apply for the SERDES controller and the make variable SERDES_APB.
+
+
+# CUSTOMIZATION
+For custom designs, the provided .reg files can be replaced by files generated
+by Microsemi Libero.
+
+
+# EXAMPLE
+## BUILD
+Build the application as a normal RAM image. For example using:
+  $ sparc-gaisler-elf-gcc -O2 hello.c -msoft-float -o hello.elf
+In this case the hello.elf is linked to run from RAM address 0x40000000.
+
+Build the bdinit.o file:
+  $ make
+
+Generate the ROM image using MKPROM:
+  $ mkprom2 -leon3 -freq 60 -baud 38461 -bdinit -o myrom -msoft-float -v hello.elf
+
+
+## LOAD
+Load the rom image "myrom" with GRMON:
+  $ grmon <debuglink>
+  [...]
+  grmon3> spim flash erase
+  grmon3> spim flash load myrom
+  grmon3> verify myrom
+
+
+## RUN
+The boot loader can be run from inside GRMON.
+
+
+### UART WITH EXTERNAL TERMINAL
+If the APBUART0 is connected to an external terminal, and the GRMON option -u
+is NOT used, then do:
+  grmon3> go 0
+
+
+### UART FIFO DEBUG MODE
+If GRMON UART forwarding is enabled (-u), then the following can be used to see
+the boot process.
+  grmon3> symbols myrom
+  grmon3> bp hard putsx
+  grmon3> go 0
+  CPU 0:  breakpoint 2 hit
+          0x0000110c: 03000006  sethi  %hi(0x1800), %g1  <putsx+4>
+  CPU 1:  Power down mode
+
+  grmon3> bp del
+  grmon3> cont
+    MKPROM2 boot loader v2.0.65
+    Copyright Cobham Gaisler AB - all rights reserved
+  
+    system clock   : 60.0 MHz
+    baud rate      : 38461 baud
+    prom           : 512 K, (15/15) ws (r/w)
+    sram           : 2048 K, 1 bank(s), 3/3 ws (r/w)
+  
+    decompressing .text to 0x40000000
+    decompressing .rodata to 0x400066a0
+    decompressing .data to 0x40006720
+  
+    starting hello.elf
+  
+  hello SF2
+    
+    CPU 0:  Program exited normally.
+    CPU 1:  Power down mode
+
+The prom and sram printout from MKPROM welcome message can be ignored.
+

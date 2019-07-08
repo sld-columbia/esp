@@ -1,0 +1,36 @@
+# ===========================================================
+# Created by Microsemi SmartDesign Fri Sep  9 16:40:55 2016
+# 
+# Warning: Do not modify this file, it may lead to unexpected
+#          simulation failures in your design.
+# 
+# ===========================================================
+
+# -----------------------------------------------------------
+# -----------------------------------------------------------
+# -----------------------------------------------------------
+# Registers needed by pa4mssenvmgen
+# -----------------------------------------------------------
+SYSTEM_CONFIG_PHY_MODE_1 0x2028 0x80F
+LANE3_PHY_RESET_OVERRIDE 0x1d98 0x30
+LANE3_CR0 0x1c00 0x80
+LANE3_ERRCNT_DEC 0x1c04 0x20
+LANE3_RXIDLE_MAX_ERRCNT_THR 0x1c08 0xF8
+LANE3_IMPED_RATIO 0x1c0c 0x80
+LANE3_PLL_M_N 0x1c14 0x29
+LANE3_CNT250NS_MAX 0x1c18 0x20
+LANE3_TX_AMP_RATIO 0x1c24 0x80
+# LANE3_TX_PST_RATIO 0x1c28 0x15
+LANE3_ENDCALIB_MAX 0x1c30 0x10
+LANE3_CALIB_STABILITY_COUNT 0x1c34 0x38
+LANE3_RX_OFFSET_COUNT 0x1c3c 0x70
+LANE3_GEN1_TX_PLL_CCP 0x1dd4 0x2
+LANE3_GEN1_RX_PLL_CCP 0x1dd8 0x22
+LANE3_PHY_RESET_OVERRIDE 0x1d98 0x0
+LANE3_UPDATE_SETTINGS 0x1e00 0x1
+SYSTEM_CONFIG_PHY_MODE_1 0x2028 0xF0F
+
+# ----------------------------------
+# Parameters needed by pa4mssenvmgen
+# ----------------------------------
+
