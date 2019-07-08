@@ -160,11 +160,7 @@ TOP_VHDL_RTL_SRCS += $(wildcard $(ESP_ROOT)/socs/common/tile_*.vhd)
 TOP_VHDL_RTL_SRCS += $(ESP_ROOT)/socs/common/esp.vhd
 TOP_VHDL_RTL_SRCS += $(DESIGN_PATH)/$(TOP).vhd
 
-ifneq ($(findstring profpga, $(BOARD)),)
-TOP_VLOG_RTL_SRCS += $(ESP_ROOT)/socs/common/ariane_wrap.sv
-else
 TOP_VLOG_RTL_SRCS +=
-endif
 
 TOP_VHDL_SIM_PKGS +=
 
