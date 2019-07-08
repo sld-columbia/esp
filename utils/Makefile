@@ -1236,9 +1236,10 @@ vivado/setup.tcl: vivado $(XDC) $(BOARD_FILES)
 	@echo "create_project $(DESIGN) -part ${DEVICE} -force" > $@
 	@echo "set_property target_language verilog [current_project]" >> $@
 ifneq ($(findstring profpga, $(BOARD)),)
-	@echo "set_property include_dirs {$(PROFPGA_INCDIR)} [get_filesets {sim_1 sources_1}]" >> $@
-endif
+	@echo "set_property include_dirs {$(PROFPGA_INCDIR) $(ARIANE)/src/common_cells/include} [get_filesets {sim_1 sources_1}]" >> $@
+else
 	@echo "set_property include_dirs {$(ARIANE)/src/common_cells/include} [get_filesets {sim_1 sources_1}]" >> $@
+endif
 	@echo "set_property verilog_define {WT_DCACHE=1} [get_filesets {sim_1 sources_1}]" >> $@
 	@echo "source ./srcs.tcl" >> $@
 ifneq ("$(PROTOBOARD)","")
