@@ -39,19 +39,11 @@ BUILDCASES_TSIM_LEON3_SPARC_ELF = \
  mvt; \
  mvt/soft;@msoft-float \
  mvt/v8;@mcpu=v8 \
- mvt/flat;@mflat \
- mvt/v8/flat;@mcpu=v8@mflat \
  mvt/soft/v8;@msoft-float@mcpu=v8 \
- mvt/soft/flat;@msoft-float@mflat \
- mvt/soft/v8/flat;@msoft-float@mcpu=v8@mflat \
  svt;@qsvt \
  svt/soft;@qsvt@msoft-float \
  svt/v8;@qsvt@mcpu=v8 \
- svt/flat;@qsvt@mflat \
- svt/v8/flat;@qsvt@mcpu=v8@mflat \
  svt/soft/v8;@qsvt@msoft-float@mcpu=v8 \
- svt/soft/flat;@qsvt@msoft-float@mflat \
- svt/soft/v8/flat;@qsvt@msoft-float@mcpu=v8@mflat \
  mvt/ut699;@mtune=ut699 \
  mvt/mfix-b2bst;@mfix-b2bst \
  mvt/v8/ut699;@mcpu=v8@mtune=ut699 \

@@ -134,7 +134,7 @@ extern void _prom_mp(void);
 
 int main (void)
 {
-    int *paddr, *raddr, len, secnum, err;
+    /* int *paddr, *raddr, len, secnum, err; */
     void (*prog) ();
     /*char pbuf[8192];*/
 
