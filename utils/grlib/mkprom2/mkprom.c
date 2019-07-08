@@ -55,8 +55,8 @@ unsigned int ldelf (FILE * fp, FILE * dumpfile);
 struct sectype secarr[SECMAX];
 char filename[128] = "a.out";
 int romsize = 0x80000;
-int romedacaddr = 0;
-int romedacaddr_set = 0;
+unsigned int romedacaddr = 0;
+unsigned int romedacaddr_set = 0;
 int romsize_given = 0;
 int sparcleon0 = 0;
 int sparcleon0rom = 0;
@@ -99,7 +99,7 @@ char ofile[128] = "prom.out";
 
 enum {
     MULTIFLAG_FLAT  = 0x01,
-    MULTIFLAG_SOFT  = 0x04,
+    MULTIFLAG_SOFT  = 0x04
 };
 /*
  * multiflags: Bit mask with MULTIFLAG_x values
@@ -185,7 +185,7 @@ int main (argc, argv)
     int rambanks = 1;
     int romcs = 1;
     int rombanks = 1;
-    int ramsize = 0x200000;
+    unsigned int ramsize = 0x200000;
     int ramrws = 3;
     int ramwws = 3;
     int ramwidth = 32;
@@ -1107,7 +1107,7 @@ int main (argc, argv)
     fprintf (dumpfile, "_mpstart:\n");
     fprintf (dumpfile, "\t.word\t%d\n", mpstart);
 
-    for (i = 0; i < mpirqselcnt; i++) {
+    for (i = 0; (unsigned) i < mpirqselcnt; i++) {
         int cpu = mpirqsel[i].cpu;
         int sel = mpirqsel[i].sel;
         if (cpu < 8) {
@@ -1294,7 +1294,7 @@ int main (argc, argv)
 	      unsigned int ddr2spa_cfg1 = 0, ddr2spa_cfg3 = 0, ddr2spa_cfg4 = 0;
 	      unsigned int ddr2_ref, ddr2_OCD, ddr2_EMR, ddr2_bsize, ddr2_cmd;
 	      unsigned int ddr2_CE, ddr2_IN, ddr2_PR, ddr2_ref_val;
-	      unsigned int ddr2_RD, ddr2_tWR, ddr2_tCD, ddr2_tRP, ddr2_tRFC, ddr2_colsize;
+	      int ddr2_RD, ddr2_tWR, ddr2_tCD, ddr2_tRP, ddr2_tRFC, ddr2_colsize;
 	      
 /*       $ddr2_ref=1; */
 	      ddr2_ref = 1;	      
@@ -1426,7 +1426,7 @@ int main (argc, argv)
 /* 	  $ddr_ref=1; */
 	      unsigned int ddr_ref = 1;
 	      unsigned int ddr_cmd = 0,ddr_CE = 1, ddr_IN = 0, ddr_PR = 0;
-	      unsigned int ddr_tCD, ddr_tRP, ddr_tRFC, ddrspa_cfg1;
+	      int ddr_tCD, ddr_tRP, ddr_tRFC, ddrspa_cfg1;
 	      int ddr_ref_val,ddr_bsize; unsigned long ddr_msize = 0;
 	      
 /*       $ddr_bsize=$i-1; */
@@ -1529,7 +1529,7 @@ int main (argc, argv)
 
 /* 	  ################# UART ####################### */
 	  
-	  tmp = (((10 * (long long) freq) / (8 * baud)) - 5) / 10;
+	  tmp = (((10 * (long) freq) / (8 * baud)) - 5) / 10;
 	  baud = freq / (8 * (tmp + 1));
 	  fprintf (dumpfile, "_uart:\n");
 	  fprintf (dumpfile, "\t.word\t0x%08x\n", tmp);
@@ -1571,7 +1571,7 @@ int main (argc, argv)
 	  if (sdramsz)
 	      tmp = (refr << 12);
 	  fprintf (dumpfile, "_memcfg3:\n");
-	  if (edac) tmp |= 0x200;  // enable RAM EDAC
+	  if (edac) tmp |= 0x200;  /* enable RAM EDAC */
 	  if (memcfg3_on)
 		  tmp = memcfg3;
 	  fprintf (dumpfile, "\t.word\t0x%x\n", tmp);
@@ -1611,7 +1611,7 @@ int main (argc, argv)
 	  
 	  tmp |= ((i & 0x7) << 10) | (tmp2 & 0x3);
 
-	  //printf("Decoded memsz : 0x%x\n", (256 * 1024) << ((tmp >> 10) & 7));
+	  /* printf("Decoded memsz : 0x%x\n", (256 * 1024) << ((tmp >> 10) & 7)); */
 	  
 	  fprintf (dumpfile, "_memcfg1:\n");
 	  if (memcfg1_on)
@@ -1619,7 +1619,7 @@ int main (argc, argv)
 
 	  fprintf (dumpfile, "\t.word\t0x%x\n", tmp);
 	  
-	  tmp = (((10 * (long long) freq) / (32 * baud)) - 5) / 10;
+	  tmp = (((10 * (long) freq) / (32 * baud)) - 5) / 10;
 	  baud = freq / (32 * (tmp + 1));
 	  
 	  fprintf (dumpfile, "_uart:\n");
@@ -2081,7 +2081,8 @@ void usage (char *argv0)
 	 puts("Mkprom General Options");
 	 puts("  -baud <baudrate>\tSet rate of UART A to baudrate. Default value is 19200.");
 	 puts("  -bdinit\t\tCall the functions bdinit1() and bdinit2() in file\n\t\t\tbdinit.o during startup. See manual.");
-//	 puts("\tThe user can optionally call two user-defined routines, bdinit1() and bdinit2(), during  the boot process. bdinit1() is called after the LEON registers have been initialized but before the memory has been cleared. bdinit2() is called after the memory has been initialized but before the application is loaded. Note that when bdinit1() is called, the stack has not been setup meaning that bdinit1() must be a leaf routine and not allocate any stack space (no local variables). When -bdinit is used, a file called bdinit.o must exist in the current directory, containing the two routines.");
+/*	 puts("\tThe user can optionally call two user-defined routines, bdinit1() and bdinit2(), during  the boot process. bdinit1() is called after the LEON registers have been initialized but before the memory has been cleared. bdinit2() is called after the memory has been initialized but before the application is loaded. Note that when bdinit1() is called, the stack has not been setup meaning that bdinit1() must be a leaf routine and not allocate any stack space (no local variables). When -bdinit is used, a file called bdinit.o must exist in the current directory, containing the two routines.");
+ */
 	 puts("  -dump\t\t\tThe intermediate assembly code with the compressed\n\t\t\tapplication and the LEON register values is put in dump.s\n\t\t\t(only for debugging of mkprom).");
 	 puts("  -freq <mhz>\t\tDefines the system clock in MHz. This value is used to\n\t\t\tcalculate the divider value for the baud rate generator\n\t\t\tand timers.");
 	 puts("  -noinit\t\tSuppress all code which initializes on-chip peripherals\n\t\t\tsuch as uarts, timers and memory controllers. This option\n\t\t\trequires -bdinit to add custom initialisation code,\n\t\t\tor the boot process will fail.");
@@ -2418,8 +2419,7 @@ lzss (inbuf, outbuf, len, comp)
 #include <stdarg.h>
 
 void
-dump (section_address, buffer, count)
-     int section_address;
+dump (buffer, count)
      unsigned char *buffer;
      int count;
 {
@@ -2579,13 +2579,13 @@ dumpsec (char *buf, int section_address, int section_size,
     if (comp)
       {
 	  section_size = lzss (buf, lzss_buf, section_size, 1);
-	  dump (section_address, lzss_buf, section_size + 13);
+	  dump (lzss_buf, section_size + 13);
 	  free (buf);
 	  free (lzss_buf);
       }
     else
       {
-	  dump (section_address, buf, section_size);
+	  dump (buf, section_size);
 	  free (buf);
       }
 
@@ -2759,12 +2759,12 @@ ldelf (FILE * fp, FILE * dumpfile)
 			((sh.sh_addr+sh.sh_size) <= (ph[k].p_vaddr + ph[k].p_filesz))) {
 */
 		    vaddr = sh.sh_addr;
-//		    sh.sh_addr = sh.sh_addr  - ph[k].p_vaddr + ph[k].p_paddr;
+/*		    sh.sh_addr = sh.sh_addr  - ph[k].p_vaddr + ph[k].p_paddr; */
 		    sh.sh_addr = sh.sh_offset  - ph[k].p_offset + ph[k].p_paddr;
 	            if ((verbose) && (vaddr != sh.sh_addr)) {
 		      	printf( "relocating %s (%d): %08x -> %08x\n", &strtab[sh.sh_name], k, vaddr, sh.sh_addr); 
 		    }
-//		    sprintf(tdebug, "%08x (%08x)\n", sh.sh_addr, ph[k].p_paddr; dprint(tdebug);
+/*		    sprintf(tdebug, "%08x (%08x)\n", sh.sh_addr, ph[k].p_paddr; dprint(tdebug); */
 		    break;
 		}
 	    }
@@ -2909,7 +2909,8 @@ void appendbch8(char *post, int rev, int set, int pos )
 #endif
 	
 	if (file) {
-		int align,off,blen,i,len; char *buf, *bchb;
+		unsigned int off;
+		int align,blen,i,len; char *buf, *bchb;
 		unsigned int rompos = 0;
 		
 		fseek(file,0,SEEK_END);
@@ -3045,16 +3046,16 @@ void appendbch8(char *post, int rev, int set, int pos )
 	}
 }
 
-// BCH code
+/* BCH code */
 int bch (long int word)
 {
    int i, c=0;
    int cb[8], d[32];
 
-   // expand bit values from word
+   /* expand bit values from word */
    for (i=0; i <= 31; i++) d[i] = (word >> i) & 0x1;
 
-   // check sum
+   /* check sum */
    cb[0] = d[0] ^ d[4] ^ d[6] ^ d[7] ^ d[8] ^ d[9] ^ d[11] ^ d[14] ^ d[17] ^ d[18] ^ d[19] ^ d[21] ^ d[26] ^ d[28] ^ d[29] ^ d[31];
    cb[1] = d[0] ^ d[1] ^ d[2] ^ d[4] ^ d[6] ^ d[8] ^ d[10] ^ d[12] ^ d[16] ^ d[17] ^ d[18] ^ d[20] ^ d[22] ^ d[24] ^ d[26] ^ d[28];
    cb[2] = ~(d[0] ^ d[3] ^ d[4] ^ d[7] ^ d[9] ^ d[10] ^ d[13] ^ d[15] ^ d[16] ^ d[19] ^ d[20] ^ d[23] ^ d[25] ^ d[26] ^ d[29] ^ d[31]);
@@ -3063,7 +3064,7 @@ int bch (long int word)
    cb[5] = d[8] ^ d[9] ^ d[10] ^ d[11] ^ d[12] ^ d[13] ^ d[14] ^ d[15] ^ d[24] ^ d[25] ^ d[26] ^ d[27] ^ d[28] ^ d[29] ^ d[30] ^ d[31];
    cb[6] = d[0] ^ d[1] ^ d[2] ^ d[3] ^ d[4] ^ d[5] ^ d[6] ^ d[7] ^ d[24] ^ d[25] ^ d[26] ^ d[27] ^ d[28] ^ d[29] ^ d[30] ^ d[31];
 
-   // compress bit values from byte
+   /* compress bit values from byte */
    for (i=0; i < 7; i++) c |= ((cb[i] & 0x1) << i);
 
    return c;
