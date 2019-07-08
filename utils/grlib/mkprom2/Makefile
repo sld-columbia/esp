@@ -77,8 +77,8 @@ multi-do:
 				$(DO);  \
 	  done; \
 
-install: 
-	if [ ! -d $(PREFIX)/$(DESTDIR) ] ; then mkdir -p $(PREFIX)/$(DESTDIR); fi
+install:
+	@if [ ! -d $(PREFIX)/$(DESTDIR) ] ; then mkdir -p $(PREFIX)/$(DESTDIR); fi
 	for i in $(OBJS); do \
 		install $$i $(PREFIX)/$(DESTDIR); \
 	done; \
