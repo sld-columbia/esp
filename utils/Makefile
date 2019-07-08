@@ -185,6 +185,13 @@ socmap.vhd: .esp_config grlib_config.vhd top.vhd
 	@echo "Generating ESP configuration..."
 	@python3 $(ESP_ROOT)/utils/socmap/esp_creator_batch.py $(NOC_WIDTH) $(TECHLIB)
 
+socmap.h: socmap.vhd
+
+ESPLINK_SRCS = $(wildcard $(ESP_ROOT)/utils/esplink/src/*.c)
+ESPLINK_HDRS = $(wildcard $(ESP_ROOT)/utils/esplink/src/*.h)
+esplink: socmap.h $(ESPLINK_HDRS) $(ESPLINK_SRCS)
+	$(QUIET_CC) gcc -O3 -Wall -Werror -fmax-errors=5 -I$(ESP_ROOT)/utils/esplink/src/ -I$(DESIGN_PATH) $(ESPLINK_SRCS) -o $@
+
 esp-config: socmap.vhd
 
 esp-xconfig: grlib_config.vhd
@@ -207,7 +214,9 @@ esp-config-distclean: esp-config-clean
 		.esp_config	\
 		ariane.dts	\
 		mmi64_regs.h	\
-		power.h
+		power.h		\
+		socmap.h	\
+		esplink
 
 
 .PHONY: esp-xconfig esp-defconfig esp-config-clean esp-config-distclean
