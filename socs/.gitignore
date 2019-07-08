@@ -73,3 +73,15 @@ prom.bin
 systest.bin
 pk-build
 linux.bin
+
+mkprom2
+linkprom
+linkbch
+linkpromerc32
+linkpromecos
+linkpromflash
+linkpromerc32flash
+linkpromecosflash
+prom.out
+xdump.s
+lib
