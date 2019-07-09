@@ -27,6 +27,7 @@ use std.textio.all;
     local_y        : local_yx;
     local_x        : local_yx;
     mem_num        : integer;
+    cacheable_mem_num : integer;
     mem_info       : tile_mem_info_vector(0 to MEM_MAX_NUM);
     io_y           : local_yx;
     io_x           : local_yx;
@@ -209,7 +210,6 @@ end;
   constant ahbslv_proxy_hindex : hindex_vector(0 to NAHBSLV - 1) := (
     others => 0);
 
-  constant cacheable_mem_num  : integer := mem_num - 1;
   constant cacheable_mem_info : tile_mem_info_vector(0 to MEM_MAX_NUM - 1) := mem_info(0 to MEM_MAX_NUM - 1);
 
 begin
