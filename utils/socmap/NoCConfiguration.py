@@ -556,7 +556,7 @@ class NoCFrame(Pmw.ScrolledFrame):
     #update message box
     self.message.delete(0.0, END)
     self.cfg_frame.sync_label.config(text="With synchronizers",fg="darkgreen")
-    if tot_cpu <= NCPU_MAX and tot_mem > 0 and tot_mem <= NMEM_MAX and tot_acc < NACC_MAX and tot_io == 1 and pll_ok == True and clkbuf_ok == True and clk_region_skip == 0 and tot_tiles <= NTILE_MAX and tot_full_coherent <= NFULL_COHERENT_MAX and tot_llc_coherent <= NLLC_COHERENT_MAX:
+    if tot_cpu <= NCPU_MAX and tot_mem > 0 and tot_mem <= NMEM_MAX and tot_acc <= NACC_MAX and tot_io == 1 and pll_ok == True and clkbuf_ok == True and clk_region_skip == 0 and tot_tiles <= NTILE_MAX and tot_full_coherent <= NFULL_COHERENT_MAX and tot_llc_coherent <= NLLC_COHERENT_MAX:
       self.done.config(state=NORMAL)
     else:
       string = ""
