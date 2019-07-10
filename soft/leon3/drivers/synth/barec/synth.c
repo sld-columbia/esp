@@ -14,7 +14,7 @@
 #include <esp_accelerator.h>
 #include <esp_probe.h>
 
-#define SLD_SYNTH   0x012
+#define SLD_SYNTH   0x014
 #define DEV_NAME "synth"
 
 // Accelerator-specific buffe size
