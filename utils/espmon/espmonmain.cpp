@@ -643,8 +643,10 @@ void EspMonMain::update_probes()
 			mem += mmi->probes_acc[k][0]; // TLB
 			mem += mmi->probes_acc[k][1]; // DMA
 			tot += mmi->probes_acc[k][2]; // TOT
-			if (tot == 0.0)
+			if (tot == 0.0) {
+                                pbar_acc[k]->setValue(mem_compute);
 				continue;
+                        }
 			mem_compute = (100.0 * mem) / tot;
 			exec_compute = (100.0 * tot) / max;
 
@@ -669,15 +671,20 @@ void MmiWorker::process()
 {
 	bool relevant_sample = false;
 	bool auto_start = mon->ui->check_mmi_auto->isChecked();
+        unsigned no_activity_counter = 4;
 	while(mon->mmi_is_running) {
 		if(mon->read_probes()) {
 			if (mon->mmi->relevant_sample() || !auto_start) {
 				relevant_sample = true;
 				emit update();
+                                no_activity_counter = 4;
 			} else {
 				if (relevant_sample) {
 					emit update();
-					break;
+                                        no_activity_counter--;
+
+                                        if (no_activity_counter == 0)
+                                            break;
 				}
 			}
 		}
