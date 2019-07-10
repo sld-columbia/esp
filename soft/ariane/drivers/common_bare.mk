@@ -6,6 +6,7 @@ CFLAGS += -I../../include
 CFLAGS +=-I$(RISCV_TESTS)/env
 CFLAGS +=-I$(RISCV_TESTS)/benchmarks/common
 CFLAGS +=-I$(BOOTROM)
+CFLAGS += -I$(DESIGN_PATH)
 CFLAGS +=-mcmodel=medany
 CFLAGS +=-static
 CFLAGS +=-std=gnu99
@@ -34,7 +35,7 @@ BINS := $(OBJS:.exe=.bin)
 all: $(OBJS) $(BINS)
 
 %.exe: %.c $(wildcard ../../probe/*.c)
-	CROSS_COMPILE=$(CROSS_COMPILE) $(MAKE) -C ../../probe
+	CROSS_COMPILE=$(CROSS_COMPILE) DESIGN_PATH=$(DESIGN_PATH) $(MAKE) -C ../../probe
 	$(CC) $(CFLAGS) -o $@  $(LDFLAGS) $< ../../probe/libprobe.a
 
 %.bin: %.exe

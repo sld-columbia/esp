@@ -5,6 +5,7 @@ CFLAGS += -I../include
 CFLAGS += -I../../riscv-tests/env
 CFLAGS += -I../../riscv-tests/benchmarks/common
 CFLAGS += -I../../bootrom
+CFLAGS += -I$(DESIGN_PATH)
 CFLAGS += -mcmodel=medany
 CFLAGS += -static
 CFLAGS += -std=gnu99
