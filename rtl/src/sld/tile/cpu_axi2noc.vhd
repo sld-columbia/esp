@@ -40,6 +40,7 @@ entity cpu_axi2noc is
     nmst             : integer;
     local_y          : local_yx;
     local_x          : local_yx;
+    retarget_for_dma : integer range 0 to 1 := 0;
     mem_axi_port     : integer range 0 to NAHBSLV - 1;
     mem_num          : integer;
     mem_info         : tile_mem_info_vector(0 to MEM_MAX_NUM - 1);
@@ -249,32 +250,40 @@ begin  -- rtl
     end if;
 
     if tran.write = '1' then
-      if tran.dst_is_mem = '1' then
-        -- Send to Memory
-        if tran.size = HSIZE_BYTE then
-          tran.msg_type := REQ_GETM_B;
-        elsif tran.size = HSIZE_HWORD then
-          tran.msg_type := REQ_GETM_HW;
+      if retarget_for_dma = 1 then
+        tran.msg_type := DMA_TO_DEV;
+      else -- Processor core request
+        if tran.dst_is_mem = '1' then
+          -- Send to Memory
+          if tran.size = HSIZE_BYTE then
+            tran.msg_type := REQ_GETM_B;
+          elsif tran.size = HSIZE_HWORD then
+            tran.msg_type := REQ_GETM_HW;
+          else
+            tran.msg_type := REQ_GETM_W;
+          end if;
         else
-          tran.msg_type := REQ_GETM_W;
+          -- Send to remote slave uncached
+          tran.msg_type := AHB_WR;
         end if;
-      else
-        -- Send to remote slave uncached
-        tran.msg_type := AHB_WR;
       end if;
     else
-      if tran.dst_is_mem = '1' then
-        -- Send to Memory
-        if tran.size = HSIZE_BYTE then
-          tran.msg_type := REQ_GETS_B;
-        elsif tran.size = HSIZE_HWORD then
-          tran.msg_type := REQ_GETS_HW;
+      if retarget_for_dma = 1 then
+        tran.msg_type := DMA_FROM_DEV;
+      else -- Processor core request
+        if tran.dst_is_mem = '1' then
+          -- Send to Memory
+          if tran.size = HSIZE_BYTE then
+            tran.msg_type := REQ_GETS_B;
+          elsif tran.size = HSIZE_HWORD then
+            tran.msg_type := REQ_GETS_HW;
+          else
+            tran.msg_type := REQ_GETS_W;
+          end if;
         else
-          tran.msg_type := REQ_GETS_W;
+          -- Send to remote slave uncached
+          tran.msg_type := AHB_RD;
         end if;
-      else
-        -- Send to remote slave uncached
-        tran.msg_type := AHB_RD;
       end if;
     end if;
 

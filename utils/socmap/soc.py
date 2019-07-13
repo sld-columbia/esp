@@ -58,6 +58,15 @@ class Components():
       if len(self.POINTS[acc.upper()]) != 0:
         self.ACCELERATORS.append(acc.upper())
 
+    acc_dir = "../../third-party/accelerators/dma" + str(DMA_WIDTH)
+    dirs = get_immediate_subdirectories(acc_dir)
+    dirs = sorted(dirs, key=str.upper)
+    for acc in dirs:
+      self.POINTS[acc.upper()] = []
+      dp = "_wrapper"
+      self.POINTS[acc.upper()].append(dp)
+      self.ACCELERATORS.append(acc.upper())
+
 #board configuration
 class SoC_Config():
   HAS_FPU = "0"

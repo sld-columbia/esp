@@ -79,6 +79,23 @@ class Accelerator():
     cfgs = cfgs + "]"
     return "          " + self.name + "_" + cfgs + ": " + self.desc + ", " + str(self.data) + "MB, ID " + self.device_id + str(params)
 
+class AxiAccelerator():
+  def __init__(self):
+    self.name = ""
+    self.desc = ""
+    self.device_id = ""
+    self.clocks = [ ]
+    self.resets = [ ]
+    self.interrupt = ""
+    self.axi_prefix = ""
+    self.apb_prefix = ""
+    self.addr_widh = 32
+    self.id_width = 8
+    self.user_width = 0
+
+  def __str__(self):
+    return "          " + self.name + ": " + self.desc + ", ID " + self.device_id
+
 class Component():
   def __init__(self):
     self.name = ""
@@ -106,7 +123,7 @@ offset_bits = 4
 ### VHDL writer ###
 #
 
-def gen_device_id(accelerator_list, template_dir, out_dir):
+def gen_device_id(accelerator_list, axi_accelerator_list, template_dir, out_dir):
   f = open(out_dir + '/sld_devices.vhd', 'w')
   with open(template_dir + '/sld_devices.vhd', 'r') as ftemplate:
     for tline in ftemplate:
@@ -119,6 +136,8 @@ def gen_device_id(accelerator_list, template_dir, out_dir):
       elif tline.find("-- <<devid>>") >= 0:
         for acc in accelerator_list:
           f.write("  constant SLD_" + acc.name.upper() + " " + ": devid_t := 16#" + acc.device_id + "#;\n")
+        for acc in axi_accelerator_list:
+          f.write("  constant SLD_" + acc.name.upper() + " " + ": devid_t := 16#" + acc.device_id + "#;\n")
       elif tline.find("-- <<ddesc>>") >= 0:
         for acc in accelerator_list:
           desc = acc.desc
@@ -130,6 +149,165 @@ def gen_device_id(accelerator_list, template_dir, out_dir):
       else:
         f.write(tline)
 
+
+def write_axi_acc_interface(f, acc, dma_width):
+  for clk in acc.clocks:
+    f.write("  " + clk + " : in std_logic;\n")
+  for rst in acc.resets:
+    f.write("  " + rst + " : in std_logic;\n")
+  f.write("  " + acc.apb_prefix + "psel : in std_logic_vector(0 to NAPBSLV-1);\n")
+  f.write("  " + acc.apb_prefix + "penable : in std_ulogic;\n")
+  f.write("  " + acc.apb_prefix + "paddr : in std_logic_vector(31 downto 0);\n")
+  f.write("  " + acc.apb_prefix + "pwrite : in std_ulogic;\n")
+  f.write("  " + acc.apb_prefix + "pwdata : in std_logic_vector(31 downto 0);\n")
+  f.write("  " + acc.apb_prefix + "prdata : out std_Logic_vector(31 downto 0);\n")
+  f.write("  " + acc.apb_prefix + "pready : out std_logic;\n")
+  f.write("  " + acc.apb_prefix + "pslverr : out std_logic;\n")
+  f.write("  " + acc.axi_prefix + "awid : out std_logic_vector(" + str(acc.id_width) + " - 1 downto 0);\n")
+  f.write("  " + acc.axi_prefix + "awaddr : out std_logic_vector(" + str(acc.addr_width) + " - 1 downto 0);\n")
+  f.write("  " + acc.axi_prefix + "awlen : out std_logic_vector(7 downto 0);\n")
+  f.write("  " + acc.axi_prefix + "awsize : out std_logic_vector(2 downto 0);\n")
+  f.write("  " + acc.axi_prefix + "awburst : out std_logic_vector(1 downto 0);\n")
+  f.write("  " + acc.axi_prefix + "awlock : out std_logic;\n")
+  f.write("  " + acc.axi_prefix + "awcache : out std_logic_vector(3 downto 0);\n")
+  f.write("  " + acc.axi_prefix + "awprot : out std_logic_vector(2 downto 0);\n")
+  f.write("  " + acc.axi_prefix + "awvalid : out std_logic;\n")
+  f.write("  " + acc.axi_prefix + "awqos : out std_logic_vector(3 downto 0);\n")
+  f.write("  " + acc.axi_prefix + "awatop : out std_logic_vector(5 downto 0);\n")
+  f.write("  " + acc.axi_prefix + "awregion : out std_logic_vector(3 downto 0);\n")
+  if acc.user_width != "0":
+    f.write("  " + acc.axi_prefix + "awuser : out std_logic_vector(" + str(acc.user_width) + " - 1 downto 0);\n")
+  f.write("  " + acc.axi_prefix + "awready : in std_logic;\n")
+  f.write("  " + acc.axi_prefix + "wdata : out std_logic_vector (" + str(dma_width) + " - 1 downto 0);\n")
+  f.write("  " + acc.axi_prefix + "wstrb : out std_logic_vector (" + str(dma_width) + "/8 - 1 downto 0);\n")
+  f.write("  " + acc.axi_prefix + "wlast : out std_logic;\n")
+  f.write("  " + acc.axi_prefix + "wvalid : out std_logic;\n")
+  if acc.user_width != "0":
+    f.write("  " + acc.axi_prefix + "wuser : out std_logic_vector(" + str(acc.user_width) + " - 1 downto 0);\n")
+  f.write("  " + acc.axi_prefix + "wready : in std_logic;\n")
+  f.write("  " + acc.axi_prefix + "arid  : out std_logic_vector (" + str(acc.id_width) + " - 1 downto 0);\n")
+  f.write("  " + acc.axi_prefix + "araddr : out std_logic_vector (" + str(acc.addr_width) + " - 1 downto 0);\n")
+  f.write("  " + acc.axi_prefix + "arlen : out std_logic_vector (7 downto 0);\n")
+  f.write("  " + acc.axi_prefix + "arsize : out std_logic_vector (2 downto 0);\n")
+  f.write("  " + acc.axi_prefix + "arburst : out std_logic_vector (1 downto 0);\n")
+  f.write("  " + acc.axi_prefix + "arlock : out std_logic;\n")
+  f.write("  " + acc.axi_prefix + "arcache : out std_logic_vector (3 downto 0);\n")
+  f.write("  " + acc.axi_prefix + "arprot : out std_logic_vector (2 downto 0);\n")
+  f.write("  " + acc.axi_prefix + "arvalid : out std_logic;\n")
+  f.write("  " + acc.axi_prefix + "arqos : out std_logic_vector (3 downto 0);\n")
+  f.write("  " + acc.axi_prefix + "arregion : out std_logic_vector(3 downto 0);\n")
+  if acc.user_width != "0":
+    f.write("  " + acc.axi_prefix + "aruser : out std_logic_vector(" + str(acc.user_width) + " - 1 downto 0);\n")
+  f.write("  " + acc.axi_prefix + "arready : out std_logic;\n")
+  f.write("  " + acc.axi_prefix + "rready : out std_logic;\n")
+  f.write("  " + acc.axi_prefix + "rid : in std_logic_vector (" + str(acc.id_width) + " - 1 downto 0);\n")
+  f.write("  " + acc.axi_prefix + "rdata : in std_logic_vector (" + str(dma_width) + " - 1 downto 0);\n")
+  f.write("  " + acc.axi_prefix + "rresp : in std_logic_vector (1 downto 0);\n")
+  f.write("  " + acc.axi_prefix + "rlast : in std_logic;\n")
+  f.write("  " + acc.axi_prefix + "rvalid : in std_logic;\n")
+  if acc.user_width != "0":
+    f.write("  " + acc.axi_prefix + "ruser : in std_logic_vector(" + str(acc.user_width) + " - 1 downto 0);\n")
+  f.write("  " + acc.axi_prefix + "bready : out std_logic;\n")
+  f.write("  " + acc.axi_prefix + "bid : in std_logic_vector (" + str(acc.id_width) + "-1 downto 0);\n")
+  f.write("  " + acc.axi_prefix + "bresp : in std_logic_vector (1 downto 0);\n")
+  f.write("  " + acc.axi_prefix + "bvalid : in std_logic;\n")
+  if acc.user_width != "0":
+    f.write("  " + acc.axi_prefix + "buser : in std_logic_vector(" + str(acc.user_width) + "-1 downto 0)")
+  if acc.interrupt != "":
+    f.write(";\n")
+    f.write("  " + acc.interrupt + " : in std_logic\n")
+
+def bind_apb3(f, prefix):
+  f.write("      " + prefix + "psel => apbi.psel,\n");
+  f.write("      " + prefix + "penable => apbi.penable,\n");
+  f.write("      " + prefix + "paddr => apbi.paddr,\n");
+  f.write("      " + prefix + "pwrite => apbi.pwrite,\n");
+  f.write("      " + prefix + "pwdata => apbi.pwdata,\n");
+  f.write("      " + prefix + "prdata => apo.prdata,\n");
+  f.write("      " + prefix + "pready => apo.pready,\n");
+  f.write("      " + prefix + "pslverr => open, -- TODO: handle APB3 error\n");
+
+
+def bind_axi(f, acc, dma_width):
+  f.write("      " + acc.axi_prefix + "awid => mosi.aw.id(" + str(acc.id_width) + " - 1 downto 0),\n")
+  f.write("      " + acc.axi_prefix + "awaddr => mosi.aw.addr(" + str(acc.addr_width) + " - 1 downto 0),\n")
+  f.write("      " + acc.axi_prefix + "awlen => mosi.aw.len,\n")
+  f.write("      " + acc.axi_prefix + "awsize => mosi.aw.size,\n")
+  f.write("      " + acc.axi_prefix + "awburst => mosi.aw.burst,\n")
+  f.write("      " + acc.axi_prefix + "awlock => mosi.aw.lock,\n")
+  f.write("      " + acc.axi_prefix + "awcache => mosi.aw.cache,\n")
+  f.write("      " + acc.axi_prefix + "awprot => mosi.aw.prot,\n")
+  f.write("      " + acc.axi_prefix + "awvalid => mosi.aw.valid,\n")
+  f.write("      " + acc.axi_prefix + "awqos => mosi.aw.qos,\n")
+  f.write("      " + acc.axi_prefix + "awatop => mosi.aw.atop,\n")
+  f.write("      " + acc.axi_prefix + "awregion => mosi.aw.region,\n")
+  if acc.user_width != "0":
+    f.write("      " + acc.axi_prefix + "awuser => mosi.aw.user(" + str(acc.user_width) + " - 1 downto 0),\n")
+  f.write("      " + acc.axi_prefix + "awready => somi.aw.ready,\n")
+  f.write("      " + acc.axi_prefix + "wdata => mosi.w.data,\n")
+  f.write("      " + acc.axi_prefix + "wstrb => mosi.w.strb,\n")
+  f.write("      " + acc.axi_prefix + "wlast => mosi.w.last,\n")
+  f.write("      " + acc.axi_prefix + "wvalid => mosi.w.valid,\n")
+  if acc.user_width != "0":
+    f.write("      " + acc.axi_prefix + "wuser => mosi.w.user(" + str(acc.user_width) + " - 1 downto 0),\n")
+  f.write("      " + acc.axi_prefix + "wready => somi.w.ready,\n")
+  f.write("      " + acc.axi_prefix + "arid  => mosi.ar.id(" + str(acc.id_width) + " - 1 downto 0) ,\n")
+  f.write("      " + acc.axi_prefix + "araddr => mosi.ar.addr(" + str(acc.addr_width) + " - 1 downto 0),\n")
+  f.write("      " + acc.axi_prefix + "arlen => mosi.ar.len,\n")
+  f.write("      " + acc.axi_prefix + "arsize => mosi.ar.size,\n")
+  f.write("      " + acc.axi_prefix + "arburst => mosi.ar.burst,\n")
+  f.write("      " + acc.axi_prefix + "arlock => mosi.ar.lock,\n")
+  f.write("      " + acc.axi_prefix + "arcache => mosi.ar.cache,\n")
+  f.write("      " + acc.axi_prefix + "arprot => mosi.ar.prot,\n")
+  f.write("      " + acc.axi_prefix + "arvalid => mosi.ar.valid,\n")
+  f.write("      " + acc.axi_prefix + "arqos => mosi.ar.qos,\n")
+  f.write("      " + acc.axi_prefix + "arregion => mosi.ar.region,\n")
+  if acc.user_width != "0":
+    f.write("      " + acc.axi_prefix + "aruser => mosi.ar.user(" + str(acc.user_width) + " - 1 downto 0),\n")
+  f.write("      " + acc.axi_prefix + "arready => somi.ar.ready,\n")
+  f.write("      " + acc.axi_prefix + "rready => mosi.r.ready,\n")
+  f.write("      " + acc.axi_prefix + "rid => somi.r.id(" + str(acc.id_width) + " - 1 downto 0),\n")
+  f.write("      " + acc.axi_prefix + "rdata => somi.r.data,\n")
+  f.write("      " + acc.axi_prefix + "rresp => somi.r.resp,\n")
+  f.write("      " + acc.axi_prefix + "rlast => somi.r.last,\n")
+  f.write("      " + acc.axi_prefix + "rvalid => somi.r.valid,\n")
+  if acc.user_width != "0":
+    f.write("      " + acc.axi_prefix + "ruser => somi.r.user(" + str(acc.user_width) + " - 1 downto 0),\n")
+  f.write("      " + acc.axi_prefix + "bready => mosi.b.ready,\n")
+  f.write("      " + acc.axi_prefix + "bid => somi.b.id(" + str(acc.id_width) + " - 1 downto 0),\n")
+  f.write("      " + acc.axi_prefix + "bresp => somi.b.resp,\n")
+  f.write("      " + acc.axi_prefix + "bvalid => somi.b.valid")
+  if acc.user_width != "0":
+    f.write(",\n")
+    f.write("      " + acc.axi_prefix + "buser => somi.b.user")
+
+
+def tie_unused_axi(f, acc, dma_width):
+  f.write("      mosi.aw.id(XID_WIDTH - 1 downto " + str(acc.id_width) + ") <= (others => '0');\n")
+  f.write("      mosi.aw.addr(GLOB_PHYS_ADDR_BITS - 1 downto " + str(acc.addr_width) + ") <= (others => '0');\n")
+  f.write("      mosi.aw.user(XUSER_WIDTH - 1 downto " + str(acc.user_width) + ") <= (others => '0');\n")
+  f.write("      mosi.w.user(XUSER_WIDTH - 1 downto " + str(acc.user_width) + ") <= (others => '0');\n")
+  f.write("      mosi.ar.id(XID_WIDTH - 1 downto " + str(acc.id_width) + ") <= (others => '0');\n")
+  f.write("      mosi.ar.addr(GLOB_PHYS_ADDR_BITS - 1 downto " + str(acc.addr_width) + ") <= (others => '0');\n")
+  f.write("      mosi.ar.user(XUSER_WIDTH - 1 downto " + str(acc.user_width) + ") <= (others => '0');\n")
+  f.write("      mosi.r.id(XID_WIDTH - 1 downto " + str(acc.id_width) + ") <= (others => '0');\n")
+  f.write("      mosi.r.user(XUSER_WIDTH - 1 downto " + str(acc.user_width) + ") <= (others => '0');\n")
+  f.write("      mosi.b.id(XID_WIDTH - 1 downto " + str(acc.id_width) + ") <= (others => '0');\n")
+  f.write("      mosi.b.user(XUSER_WIDTH - 1 downto " + str(acc.user_width) + ") <= (others => '0');\n")
+
+
+def write_axi_acc_port_map(f, acc, dma_width):
+  f.write("    port map(\n")
+  for clk in acc.clocks:
+    f.write("      " + clk + " => clk,\n")
+  for rst in acc.resets:
+    f.write("      " + rst + " => rst,\n")
+  bind_apb3(f, acc.apb_prefix)
+  bind_axi(f, acc, dma_width)
+  if acc.interrupt != "":
+    f.write(",\n")
+    f.write("      " + acc.interrupt + " => acc_done\n")
+  f.write("    );\n")
 
 
 def write_acc_interface(f, acc, dma_width, rst):
@@ -478,7 +656,7 @@ def gen_tech_dep(accelerator_list, cache_list, dma_width, template_dir, out_dir)
 
 
 # Component declaration independent from technology and implementation
-def gen_tech_indep(accelerator_list, cache_list, dma_width, template_dir, out_dir):
+def gen_tech_indep(accelerator_list, axi_accelerator_list, cache_list, dma_width, template_dir, out_dir):
   f = open(out_dir + '/genacc.vhd', 'w')
   with open(template_dir + '/genacc.vhd', 'r') as ftemplate:
     for tline in ftemplate:
@@ -494,6 +672,14 @@ def gen_tech_indep(accelerator_list, cache_list, dma_width, template_dir, out_di
         f.write("\n")
         f.write("    port (\n")
         write_acc_interface(f, acc, dma_width, "acc_rst")
+        f.write("    );\n")
+        f.write("  end component;\n\n")
+        f.write("\n")
+      for acc in axi_accelerator_list:
+        f.write("\n")
+        f.write("  component " + acc.name + "_wrapper\n")
+        f.write("    port (\n")
+        write_axi_acc_interface(f, acc, dma_width)
         f.write("    );\n")
         f.write("  end component;\n\n")
         f.write("\n")
@@ -708,17 +894,22 @@ def gen_interfaces(accelerator_list, dma_width, template_dir, out_dir):
   ftemplate.close()
 
 
-def gen_noc_interface(acc, dma_width, template_dir, out_dir):
+def gen_noc_interface(acc, dma_width, template_dir, out_dir, is_axi):
   f = open(out_dir + "/noc_" + acc.name + ".vhd", 'w')
-  with open(template_dir + '/noc_interface.vhd', 'r') as ftemplate:
+
+  if not is_axi:
+    extra_str = ""
+  else:
+    extra_str = "2axi"
+
+  template_file = template_dir + '/noc' + extra_str + '_interface.vhd'
+
+  with open(template_file, 'r') as ftemplate:
     for tline in ftemplate:
-      if tline.find("-- <<header>>") >= 0:
-        f.write("-- Entity       noc_" + acc.name + "\n")
-        f.write("-- File         noc_" + acc.name + ".vhd\n")
-      elif tline.find("-- <<entity>>") >= 0:
-        f.write("entity noc_" + acc.name + " is\n")
+      if tline.find("-- <<entity>>") >= 0:
+        f.write("entity noc" + extra_str + "_" + acc.name + " is\n")
       elif tline.find("-- <<architecture>>") >= 0:
-        f.write("architecture rtl of noc_" + acc.name + " is\n")
+        f.write("architecture rtl of noc" + extra_str + "_" + acc.name + " is\n")
       elif tline.find("-- <<devid>>") >= 0:
         f.write("  constant devid         : devid_t                := SLD_" + acc.name.upper() + ";\n")
       elif tline.find("-- <<tlb_entries>>") >= 0:
@@ -738,12 +929,14 @@ def gen_noc_interface(acc, dma_width, template_dir, out_dir):
         for param in acc.param:
           if param.readonly:
             f.write("    " + acc.name.upper() + "_" + param.name.upper() + "_REG" + (31 - len(acc.name) - len(param.name))*" " + "=> X\"" + format(param.value, '08x') + "\",\n")
+      elif tline.find("-- <<axi_unused>>") >= 0:
+        tie_unused_axi(f, acc, dma_width)
       elif tline.find("-- <<accelerator_instance>>") >= 0:
-        f.write("  " + acc.name + "_rlt_i: " + acc.name + "_rtl\n")
-        f.write("    generic map (\n")
-        f.write("      hls_conf => hls_conf\n")
-        f.write("    )\n")
-        write_acc_port_map(f, acc, dma_width, "acc_rst", True)
+        f.write("  " + acc.name + "_rlt_i: " + acc.name + "_wrapper\n")
+        if is_axi:
+          write_axi_acc_port_map(f, acc, dma_width)
+        else:
+          write_acc_port_map(f, acc, dma_width, "acc_rst", True)
       else:
         f.write(tline)
 
@@ -834,20 +1027,23 @@ def gen_tile_acc(accelerator_list, template_dir, out_dir):
 ### Main script ###
 #
 
-if len(sys.argv) != 5:
+if len(sys.argv) != 6:
     print_usage()
     sys.exit(1)
 
 dma_width = int(sys.argv[1])
 acc_rtl_dir = sys.argv[2] + "/acc"
 caches_rtl_dir = sys.argv[2] + "/sccs"
-template_dir = sys.argv[3]
-out_dir = sys.argv[4]
+axi_acc_dir = sys.argv[3] + "/accelerators/dma" + str(dma_width)
+template_dir = sys.argv[4]
+out_dir = sys.argv[5]
 accelerator_list = [ ]
+axi_accelerator_list = [ ]
 cache_list = [ ]
 
 # Get scheduled accelerators
 accelerators = next(os.walk(acc_rtl_dir))[1]
+axi_accelerators = next(os.walk(axi_acc_dir))[1]
 
 caches = [ ]
 tmp_l2_dir = caches_rtl_dir + '/l2'
@@ -859,13 +1055,64 @@ if os.path.exists(tmp_llc_dir):
 
 
 if (len(accelerators) == 0):
-  print("    WARNING: No accelerators found in " + acc_rtl_dir + ".")
-  print("             Please run 'make accelerators' or make <accelerator>-hls.")
-  print("             Get available accelerators with 'make print-available-accelerators'")
+  print("    INFO: No accelerators found in " + acc_rtl_dir + ".")
+  print("          Please run 'make accelerators' or make <accelerator>-hls.")
+  print("          Get available accelerators with 'make print-available-accelerators'")
 
 if (len(caches) == 0):
   print("    WARNING: No caches found in " + caches_rtl_dir + ".")
   print("             Please run 'make caches'.")
+
+for acc in axi_accelerators:
+  accd = AxiAccelerator()
+  accd.name = acc
+
+  elem = xml.etree.ElementTree.parse(axi_acc_dir + "/" + acc + "/" + acc + ".xml")
+  e = elem.getroot()
+  for xmlacc in e.findall('accelerator'):
+    acc_name = xmlacc.get('name')
+    if acc_name != acc:
+      continue
+
+    print("    INFO: Retrieving information for " + acc)
+    if "desc" in xmlacc.attrib:
+      accd.desc = xmlacc.get('desc')
+    else:
+      print("    ERROR: Missing description for " + acc)
+      sys.exit(1)
+    if "device_id" in xmlacc.attrib:
+      accd.device_id = xmlacc.get('device_id')
+    else:
+      print("    ERROR: Missing device ID for " + acc)
+      sys.exit(1)
+
+    if "interrupt" in xmlacc.attrib:
+      accd.interrupt = xmlacc.get('interrupt')
+
+    if "axi_prefix" in xmlacc.attrib:
+      accd.axi_prefix = xmlacc.get('axi_prefix')
+
+    if "apb_prefix" in xmlacc.attrib:
+      accd.apb_prefix = xmlacc.get('apb_prefix')
+
+    if "addr_width" in xmlacc.attrib:
+      accd.addr_width = xmlacc.get('addr_width')
+
+    if "id_width" in xmlacc.attrib:
+      accd.id_width = xmlacc.get('id_width')
+
+    if "user_width" in xmlacc.attrib:
+      accd.user_width = xmlacc.get('user_width')
+
+    for xmlparam in xmlacc.findall('clock'):
+      accd.clocks.append(xmlparam.get('name'))
+    for xmlparam in xmlacc.findall('reset'):
+      #TODO: get polarity from XML (assuming active low for now)
+      accd.resets.append(xmlparam.get('name'))
+
+    axi_accelerator_list.append(accd)
+    print(str(accd))
+    break
 
 for acc in accelerators:
   accd = Accelerator()
@@ -972,12 +1219,16 @@ for cac in caches:
 
 # Generate RTL
 print("    INFO: Generating RTL to " + out_dir)
-gen_device_id(accelerator_list, template_dir, out_dir)
+gen_device_id(accelerator_list, axi_accelerator_list, template_dir, out_dir)
 gen_tech_dep(accelerator_list, cache_list, dma_width, template_dir, out_dir)
-gen_tech_indep(accelerator_list, cache_list, dma_width, template_dir, out_dir)
+gen_tech_indep(accelerator_list, axi_accelerator_list, cache_list, dma_width, template_dir, out_dir)
 gen_tech_indep_impl(accelerator_list, cache_list, dma_width, template_dir, out_dir)
 gen_interfaces(accelerator_list, dma_width, template_dir, out_dir)
 for acc in accelerator_list:
-  gen_noc_interface(acc, dma_width, template_dir, out_dir)
+  gen_noc_interface(acc, dma_width, template_dir, out_dir, False)
 gen_tile_acc(accelerator_list, template_dir, out_dir)
 
+
+for acc in axi_accelerator_list:
+  gen_noc_interface(acc, dma_width, template_dir, out_dir, True)
+gen_tile_acc(axi_accelerator_list, template_dir, out_dir)
