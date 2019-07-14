@@ -716,7 +716,7 @@ static void visionchip_alloc_contig(struct test_info *info)
 {
 	struct visionchip_test *t = to_visionchip(info);
 
-	printf("HW buf size: %zu MB\n", visionchip_size(t) / 1000000);
+	printf("HW buf size: %zu B\n", visionchip_size(t));
 	if (contig_alloc(visionchip_size(t), &info->contig))
 		die_errno(__func__);
 }
