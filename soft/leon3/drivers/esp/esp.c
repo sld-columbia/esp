@@ -224,6 +224,20 @@ static void esp_run(struct esp_device *esp)
 
 static int esp_wait(struct esp_device *esp)
 {
+
+#ifdef __riscv
+	/* Polling (TODO: connect accelerator's interrupt to PLIC) */
+	u32 status;
+	u32 done;
+
+	do {
+		status = ioread32be(esp->iomem + STATUS_REG);
+		done = status & STATUS_MASK_DONE;
+	} while (!done);
+
+	iowrite32be(0, esp->iomem + CMD_REG);
+#else
+	/* Interrupt */
 	int wait;
 
 	wait = wait_for_completion_interruptible(&esp->completion);
@@ -233,7 +247,7 @@ static int esp_wait(struct esp_device *esp)
 		pr_info(PFX "Error occured\n");
 		return -1;
 	}
-
+#endif
 	return 0;
 }
 
