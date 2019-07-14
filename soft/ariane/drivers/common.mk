@@ -13,7 +13,7 @@ LD := $(CROSS_COMPILE)$(LD)
 
 all: $(OBJS)
 
-%.exe: %.c
+%.exe: %.c $(wildcard ../../test/*.c)
 	CROSS_COMPILE=$(CROSS_COMPILE) $(MAKE) -C ../../contig_alloc/ libcontig.a
 	CROSS_COMPILE=$(CROSS_COMPILE) $(MAKE) -C ../../test
 	$(CROSS_COMPILE)$(CC) $(CFLAGS) -o $@ $< $(LIBS)
