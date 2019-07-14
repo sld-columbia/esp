@@ -89,7 +89,11 @@ static struct contig_desc *contig_alloc_descriptor(unsigned int n_chunks)
 	if (unlikely(desc->arr == NULL))
 		goto err_arr;
 
+#ifndef __riscv
 	desc->arr_dma_addr = dma_map_single(NULL, desc->arr, n_chunks * sizeof(dma_addr_t), DMA_TO_DEVICE);
+#else
+	desc->arr_dma_addr = virt_to_phys(desc->arr);
+#endif
 	if (unlikely(dma_mapping_error(NULL, desc->arr_dma_addr)))
 		goto err_dma;
 
@@ -106,7 +110,9 @@ static struct contig_desc *contig_alloc_descriptor(unsigned int n_chunks)
 
 static void contig_free_descriptor(struct contig_desc *desc)
 {
+#ifndef __riscv
 	dma_unmap_single(NULL, desc->arr_dma_addr, desc->n * sizeof(dma_addr_t), DMA_TO_DEVICE);
+#endif
 	kfree(desc->arr);
 	kfree(desc);
 }
