@@ -1,0 +1,12 @@
+# PLM Specifications
+#
+# Add a line for each memory element required with the following syntax
+# <accelerator_name>_<memory_element_name> <#_words> <#_bits> <parallel_access_list>
+#
+# Example:
+# sort_plm_block_multi_op 1024 32 1w:1r 4w:2r 0w:2ru
+#
+# See the ESP documentation for more info
+#
+vitbfly2_plm_block_4p 64 8 4w:0r 0w:4ru
+vitbfly2_plm_block_8p 64 8 8w:0r 0w:8ru
