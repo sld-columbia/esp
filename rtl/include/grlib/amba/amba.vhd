@@ -71,7 +71,7 @@ constant CORE_ACDM : integer := CFG_AHB_ACDM;
 
 constant NAHBMST   : integer := 16;  -- maximum AHB masters
 constant NAHBSLV   : integer := 16;  -- maximum AHB slaves
-constant NAPBSLV   : integer := 32; -- maximum APB slaves
+constant NAPBSLV   : integer := GLOB_MAXIOSLV; -- maximum APB slaves
 constant NAHBIRQ   : integer := 32 + 32*GRLIB_CONFIG_ARRAY(grlib_amba_inc_nirq); -- maximum interrupts
 constant NAHBAMR   : integer := 4;  -- maximum address mapping registers
 constant NAHBIR    : integer := 4;  -- maximum AHB identification registers

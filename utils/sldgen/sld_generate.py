@@ -155,7 +155,7 @@ def write_axi_acc_interface(f, acc, dma_width):
     f.write("  " + clk + " : in std_logic;\n")
   for rst in acc.resets:
     f.write("  " + rst + " : in std_logic;\n")
-  f.write("  " + acc.apb_prefix + "psel : in std_logic_vector(0 to NAPBSLV-1);\n")
+  f.write("  " + acc.apb_prefix + "psel : in std_logic_vector(0 to GLOB_MAXIOSLV-1);\n")
   f.write("  " + acc.apb_prefix + "penable : in std_ulogic;\n")
   f.write("  " + acc.apb_prefix + "paddr : in std_logic_vector(31 downto 0);\n")
   f.write("  " + acc.apb_prefix + "pwrite : in std_ulogic;\n")
@@ -210,11 +210,14 @@ def write_axi_acc_interface(f, acc, dma_width):
   f.write("  " + acc.axi_prefix + "bready : out std_logic;\n")
   f.write("  " + acc.axi_prefix + "bid : in std_logic_vector (" + str(acc.id_width) + "-1 downto 0);\n")
   f.write("  " + acc.axi_prefix + "bresp : in std_logic_vector (1 downto 0);\n")
-  f.write("  " + acc.axi_prefix + "bvalid : in std_logic;\n")
+  f.write("  " + acc.axi_prefix + "bvalid : in std_logic")
+  if acc.user_width != "0" or acc.interrupt != "":
+    f.write(";\n")
   if acc.user_width != "0":
     f.write("  " + acc.axi_prefix + "buser : in std_logic_vector(" + str(acc.user_width) + "-1 downto 0)")
+    if acc.interrupt != "":
+      f.write(";\n")
   if acc.interrupt != "":
-    f.write(";\n")
     f.write("  " + acc.interrupt + " : in std_logic\n")
 
 def bind_apb3(f, prefix):
@@ -223,77 +226,77 @@ def bind_apb3(f, prefix):
   f.write("      " + prefix + "paddr => apbi.paddr,\n");
   f.write("      " + prefix + "pwrite => apbi.pwrite,\n");
   f.write("      " + prefix + "pwdata => apbi.pwdata,\n");
-  f.write("      " + prefix + "prdata => apo.prdata,\n");
-  f.write("      " + prefix + "pready => apo.pready,\n");
+  f.write("      " + prefix + "prdata => apbo(pindex).prdata,\n");
+  f.write("      " + prefix + "pready => open,\n");
   f.write("      " + prefix + "pslverr => open, -- TODO: handle APB3 error\n");
 
 
 def bind_axi(f, acc, dma_width):
-  f.write("      " + acc.axi_prefix + "awid => mosi.aw.id(" + str(acc.id_width) + " - 1 downto 0),\n")
-  f.write("      " + acc.axi_prefix + "awaddr => mosi.aw.addr(" + str(acc.addr_width) + " - 1 downto 0),\n")
-  f.write("      " + acc.axi_prefix + "awlen => mosi.aw.len,\n")
-  f.write("      " + acc.axi_prefix + "awsize => mosi.aw.size,\n")
-  f.write("      " + acc.axi_prefix + "awburst => mosi.aw.burst,\n")
-  f.write("      " + acc.axi_prefix + "awlock => mosi.aw.lock,\n")
-  f.write("      " + acc.axi_prefix + "awcache => mosi.aw.cache,\n")
-  f.write("      " + acc.axi_prefix + "awprot => mosi.aw.prot,\n")
-  f.write("      " + acc.axi_prefix + "awvalid => mosi.aw.valid,\n")
-  f.write("      " + acc.axi_prefix + "awqos => mosi.aw.qos,\n")
-  f.write("      " + acc.axi_prefix + "awatop => mosi.aw.atop,\n")
-  f.write("      " + acc.axi_prefix + "awregion => mosi.aw.region,\n")
+  f.write("      " + acc.axi_prefix + "awid => mosi(0).aw.id(" + str(acc.id_width) + " - 1 downto 0),\n")
+  f.write("      " + acc.axi_prefix + "awaddr => mosi(0).aw.addr(" + str(acc.addr_width) + " - 1 downto 0),\n")
+  f.write("      " + acc.axi_prefix + "awlen => mosi(0).aw.len,\n")
+  f.write("      " + acc.axi_prefix + "awsize => mosi(0).aw.size,\n")
+  f.write("      " + acc.axi_prefix + "awburst => mosi(0).aw.burst,\n")
+  f.write("      " + acc.axi_prefix + "awlock => mosi(0).aw.lock,\n")
+  f.write("      " + acc.axi_prefix + "awcache => mosi(0).aw.cache,\n")
+  f.write("      " + acc.axi_prefix + "awprot => mosi(0).aw.prot,\n")
+  f.write("      " + acc.axi_prefix + "awvalid => mosi(0).aw.valid,\n")
+  f.write("      " + acc.axi_prefix + "awqos => mosi(0).aw.qos,\n")
+  f.write("      " + acc.axi_prefix + "awatop => mosi(0).aw.atop,\n")
+  f.write("      " + acc.axi_prefix + "awregion => mosi(0).aw.region,\n")
   if acc.user_width != "0":
-    f.write("      " + acc.axi_prefix + "awuser => mosi.aw.user(" + str(acc.user_width) + " - 1 downto 0),\n")
-  f.write("      " + acc.axi_prefix + "awready => somi.aw.ready,\n")
-  f.write("      " + acc.axi_prefix + "wdata => mosi.w.data,\n")
-  f.write("      " + acc.axi_prefix + "wstrb => mosi.w.strb,\n")
-  f.write("      " + acc.axi_prefix + "wlast => mosi.w.last,\n")
-  f.write("      " + acc.axi_prefix + "wvalid => mosi.w.valid,\n")
+    f.write("      " + acc.axi_prefix + "awuser => mosi(0).aw.user(" + str(acc.user_width) + " - 1 downto 0),\n")
+  f.write("      " + acc.axi_prefix + "awready => somi(0).aw.ready,\n")
+  f.write("      " + acc.axi_prefix + "wdata => mosi(0).w.data,\n")
+  f.write("      " + acc.axi_prefix + "wstrb => mosi(0).w.strb,\n")
+  f.write("      " + acc.axi_prefix + "wlast => mosi(0).w.last,\n")
+  f.write("      " + acc.axi_prefix + "wvalid => mosi(0).w.valid,\n")
   if acc.user_width != "0":
-    f.write("      " + acc.axi_prefix + "wuser => mosi.w.user(" + str(acc.user_width) + " - 1 downto 0),\n")
-  f.write("      " + acc.axi_prefix + "wready => somi.w.ready,\n")
-  f.write("      " + acc.axi_prefix + "arid  => mosi.ar.id(" + str(acc.id_width) + " - 1 downto 0) ,\n")
-  f.write("      " + acc.axi_prefix + "araddr => mosi.ar.addr(" + str(acc.addr_width) + " - 1 downto 0),\n")
-  f.write("      " + acc.axi_prefix + "arlen => mosi.ar.len,\n")
-  f.write("      " + acc.axi_prefix + "arsize => mosi.ar.size,\n")
-  f.write("      " + acc.axi_prefix + "arburst => mosi.ar.burst,\n")
-  f.write("      " + acc.axi_prefix + "arlock => mosi.ar.lock,\n")
-  f.write("      " + acc.axi_prefix + "arcache => mosi.ar.cache,\n")
-  f.write("      " + acc.axi_prefix + "arprot => mosi.ar.prot,\n")
-  f.write("      " + acc.axi_prefix + "arvalid => mosi.ar.valid,\n")
-  f.write("      " + acc.axi_prefix + "arqos => mosi.ar.qos,\n")
-  f.write("      " + acc.axi_prefix + "arregion => mosi.ar.region,\n")
+    f.write("      " + acc.axi_prefix + "wuser => mosi(0).w.user(" + str(acc.user_width) + " - 1 downto 0),\n")
+  f.write("      " + acc.axi_prefix + "wready => somi(0).w.ready,\n")
+  f.write("      " + acc.axi_prefix + "arid  => mosi(0).ar.id(" + str(acc.id_width) + " - 1 downto 0) ,\n")
+  f.write("      " + acc.axi_prefix + "araddr => mosi(0).ar.addr(" + str(acc.addr_width) + " - 1 downto 0),\n")
+  f.write("      " + acc.axi_prefix + "arlen => mosi(0).ar.len,\n")
+  f.write("      " + acc.axi_prefix + "arsize => mosi(0).ar.size,\n")
+  f.write("      " + acc.axi_prefix + "arburst => mosi(0).ar.burst,\n")
+  f.write("      " + acc.axi_prefix + "arlock => mosi(0).ar.lock,\n")
+  f.write("      " + acc.axi_prefix + "arcache => mosi(0).ar.cache,\n")
+  f.write("      " + acc.axi_prefix + "arprot => mosi(0).ar.prot,\n")
+  f.write("      " + acc.axi_prefix + "arvalid => mosi(0).ar.valid,\n")
+  f.write("      " + acc.axi_prefix + "arqos => mosi(0).ar.qos,\n")
+  f.write("      " + acc.axi_prefix + "arregion => mosi(0).ar.region,\n")
   if acc.user_width != "0":
-    f.write("      " + acc.axi_prefix + "aruser => mosi.ar.user(" + str(acc.user_width) + " - 1 downto 0),\n")
-  f.write("      " + acc.axi_prefix + "arready => somi.ar.ready,\n")
-  f.write("      " + acc.axi_prefix + "rready => mosi.r.ready,\n")
-  f.write("      " + acc.axi_prefix + "rid => somi.r.id(" + str(acc.id_width) + " - 1 downto 0),\n")
-  f.write("      " + acc.axi_prefix + "rdata => somi.r.data,\n")
-  f.write("      " + acc.axi_prefix + "rresp => somi.r.resp,\n")
-  f.write("      " + acc.axi_prefix + "rlast => somi.r.last,\n")
-  f.write("      " + acc.axi_prefix + "rvalid => somi.r.valid,\n")
+    f.write("      " + acc.axi_prefix + "aruser => mosi(0).ar.user(" + str(acc.user_width) + " - 1 downto 0),\n")
+  f.write("      " + acc.axi_prefix + "arready => somi(0).ar.ready,\n")
+  f.write("      " + acc.axi_prefix + "rready => mosi(0).r.ready,\n")
+  f.write("      " + acc.axi_prefix + "rid => somi(0).r.id(" + str(acc.id_width) + " - 1 downto 0),\n")
+  f.write("      " + acc.axi_prefix + "rdata => somi(0).r.data,\n")
+  f.write("      " + acc.axi_prefix + "rresp => somi(0).r.resp,\n")
+  f.write("      " + acc.axi_prefix + "rlast => somi(0).r.last,\n")
+  f.write("      " + acc.axi_prefix + "rvalid => somi(0).r.valid,\n")
   if acc.user_width != "0":
-    f.write("      " + acc.axi_prefix + "ruser => somi.r.user(" + str(acc.user_width) + " - 1 downto 0),\n")
-  f.write("      " + acc.axi_prefix + "bready => mosi.b.ready,\n")
-  f.write("      " + acc.axi_prefix + "bid => somi.b.id(" + str(acc.id_width) + " - 1 downto 0),\n")
-  f.write("      " + acc.axi_prefix + "bresp => somi.b.resp,\n")
-  f.write("      " + acc.axi_prefix + "bvalid => somi.b.valid")
+    f.write("      " + acc.axi_prefix + "ruser => somi(0).r.user(" + str(acc.user_width) + " - 1 downto 0),\n")
+  f.write("      " + acc.axi_prefix + "bready => mosi(0).b.ready,\n")
+  f.write("      " + acc.axi_prefix + "bid => somi(0).b.id(" + str(acc.id_width) + " - 1 downto 0),\n")
+  f.write("      " + acc.axi_prefix + "bresp => somi(0).b.resp,\n")
+  f.write("      " + acc.axi_prefix + "bvalid => somi(0).b.valid")
   if acc.user_width != "0":
     f.write(",\n")
-    f.write("      " + acc.axi_prefix + "buser => somi.b.user")
+    f.write("      " + acc.axi_prefix + "buser => somi(0).b.user")
 
 
 def tie_unused_axi(f, acc, dma_width):
-  f.write("      mosi.aw.id(XID_WIDTH - 1 downto " + str(acc.id_width) + ") <= (others => '0');\n")
-  f.write("      mosi.aw.addr(GLOB_PHYS_ADDR_BITS - 1 downto " + str(acc.addr_width) + ") <= (others => '0');\n")
-  f.write("      mosi.aw.user(XUSER_WIDTH - 1 downto " + str(acc.user_width) + ") <= (others => '0');\n")
-  f.write("      mosi.w.user(XUSER_WIDTH - 1 downto " + str(acc.user_width) + ") <= (others => '0');\n")
-  f.write("      mosi.ar.id(XID_WIDTH - 1 downto " + str(acc.id_width) + ") <= (others => '0');\n")
-  f.write("      mosi.ar.addr(GLOB_PHYS_ADDR_BITS - 1 downto " + str(acc.addr_width) + ") <= (others => '0');\n")
-  f.write("      mosi.ar.user(XUSER_WIDTH - 1 downto " + str(acc.user_width) + ") <= (others => '0');\n")
-  f.write("      mosi.r.id(XID_WIDTH - 1 downto " + str(acc.id_width) + ") <= (others => '0');\n")
-  f.write("      mosi.r.user(XUSER_WIDTH - 1 downto " + str(acc.user_width) + ") <= (others => '0');\n")
-  f.write("      mosi.b.id(XID_WIDTH - 1 downto " + str(acc.id_width) + ") <= (others => '0');\n")
-  f.write("      mosi.b.user(XUSER_WIDTH - 1 downto " + str(acc.user_width) + ") <= (others => '0');\n")
+  f.write("      mosi(0).aw.id(XID_WIDTH - 1 downto " + str(acc.id_width) + ") <= (others => '0');\n")
+  f.write("      mosi(0).aw.addr(GLOB_PHYS_ADDR_BITS - 1 downto " + str(acc.addr_width) + ") <= (others => '0');\n")
+  f.write("      mosi(0).aw.user(XUSER_WIDTH - 1 downto " + str(acc.user_width) + ") <= (others => '0');\n")
+  f.write("      mosi(0).w.user(XUSER_WIDTH - 1 downto " + str(acc.user_width) + ") <= (others => '0');\n")
+  f.write("      mosi(0).ar.id(XID_WIDTH - 1 downto " + str(acc.id_width) + ") <= (others => '0');\n")
+  f.write("      mosi(0).ar.addr(GLOB_PHYS_ADDR_BITS - 1 downto " + str(acc.addr_width) + ") <= (others => '0');\n")
+  f.write("      mosi(0).ar.user(XUSER_WIDTH - 1 downto " + str(acc.user_width) + ") <= (others => '0');\n")
+  f.write("      somi(0).r.id(XID_WIDTH - 1 downto " + str(acc.id_width) + ") <= (others => '0');\n")
+  f.write("      somi(0).r.user(XUSER_WIDTH - 1 downto " + str(acc.user_width) + ") <= (others => '0');\n")
+  f.write("      somi(0).b.id(XID_WIDTH - 1 downto " + str(acc.id_width) + ") <= (others => '0');\n")
+  f.write("      somi(0).b.user(XUSER_WIDTH - 1 downto " + str(acc.user_width) + ") <= (others => '0');\n")
 
 
 def write_axi_acc_port_map(f, acc, dma_width):
@@ -807,14 +810,14 @@ def gen_tech_indep_impl(accelerator_list, cache_list, dma_width, template_dir, o
 
 
 # Component declaration of NoC wrappers
-def gen_interfaces(accelerator_list, dma_width, template_dir, out_dir):
+def gen_interfaces(accelerator_list, axi_accelerator_list, dma_width, template_dir, out_dir):
   f = open(out_dir + '/sldacc.vhd', 'w')
   with open(template_dir + '/sldacc.vhd', 'r') as ftemplate:
     for tline in ftemplate:
       if tline.find("-- <<wrappers-components>>") < 0:
         f.write(tline)
         continue
-      for acc in accelerator_list:
+      for acc in accelerator_list + axi_accelerator_list:
         f.write("\n")
         f.write("  component noc_" + acc.name + "\n")
         f.write("    generic (\n")
@@ -907,9 +910,9 @@ def gen_noc_interface(acc, dma_width, template_dir, out_dir, is_axi):
   with open(template_file, 'r') as ftemplate:
     for tline in ftemplate:
       if tline.find("-- <<entity>>") >= 0:
-        f.write("entity noc" + extra_str + "_" + acc.name + " is\n")
+        f.write("entity noc" + "_" + acc.name + " is\n")
       elif tline.find("-- <<architecture>>") >= 0:
-        f.write("architecture rtl of noc" + extra_str + "_" + acc.name + " is\n")
+        f.write("architecture rtl of noc" + "_" + acc.name + " is\n")
       elif tline.find("-- <<devid>>") >= 0:
         f.write("  constant devid         : devid_t                := SLD_" + acc.name.upper() + ";\n")
       elif tline.find("-- <<tlb_entries>>") >= 0:
@@ -932,21 +935,26 @@ def gen_noc_interface(acc, dma_width, template_dir, out_dir, is_axi):
       elif tline.find("-- <<axi_unused>>") >= 0:
         tie_unused_axi(f, acc, dma_width)
       elif tline.find("-- <<accelerator_instance>>") >= 0:
-        f.write("  " + acc.name + "_rlt_i: " + acc.name + "_wrapper\n")
+        f.write("  " + acc.name + "_rlt_i: " + acc.name)
         if is_axi:
+          f.write("_wrapper\n")
           write_axi_acc_port_map(f, acc, dma_width)
         else:
+          f.write("_rtl\n")
+          f.write("    generic map (\n")
+          f.write("      hls_conf => hls_conf\n")
+          f.write("    )\n")
           write_acc_port_map(f, acc, dma_width, "acc_rst", True)
       else:
         f.write(tline)
 
 
-def gen_tile_acc(accelerator_list, template_dir, out_dir):
+def gen_tile_acc(accelerator_list, axi_acceleratorlist, template_dir, out_dir):
   f = open(out_dir + "/tile_acc.vhd", 'w')
   with open(template_dir + '/tile_acc.vhd', 'r') as ftemplate:
     for tline in ftemplate:
       if tline.find("-- <<accelerator-wrappers-gen>>") >= 0:
-        for acc in accelerator_list:
+        for acc in accelerator_list + axi_accelerator_list:
           f.write("  " + acc.name + "_gen: if this_device = SLD_" + acc.name.upper() + " generate\n")
           f.write("    noc_" + acc.name + "_i: noc_" + acc.name + "\n")
           f.write("      generic map (\n")
@@ -1223,12 +1231,9 @@ gen_device_id(accelerator_list, axi_accelerator_list, template_dir, out_dir)
 gen_tech_dep(accelerator_list, cache_list, dma_width, template_dir, out_dir)
 gen_tech_indep(accelerator_list, axi_accelerator_list, cache_list, dma_width, template_dir, out_dir)
 gen_tech_indep_impl(accelerator_list, cache_list, dma_width, template_dir, out_dir)
-gen_interfaces(accelerator_list, dma_width, template_dir, out_dir)
+gen_interfaces(accelerator_list, axi_accelerator_list, dma_width, template_dir, out_dir)
 for acc in accelerator_list:
   gen_noc_interface(acc, dma_width, template_dir, out_dir, False)
-gen_tile_acc(accelerator_list, template_dir, out_dir)
-
-
 for acc in axi_accelerator_list:
   gen_noc_interface(acc, dma_width, template_dir, out_dir, True)
-gen_tile_acc(axi_accelerator_list, template_dir, out_dir)
+gen_tile_acc(accelerator_list, axi_accelerator_list, template_dir, out_dir)

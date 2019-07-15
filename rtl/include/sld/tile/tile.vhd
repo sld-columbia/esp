@@ -447,6 +447,7 @@ package tile is
       nmst         : integer;
       local_y      : local_yx;
       local_x      : local_yx;
+      retarget_for_dma : integer range 0 to 1;
       mem_axi_port : integer range 0 to NAHBSLV - 1;
       mem_num      : integer;
       mem_info     : tile_mem_info_vector(0 to MEM_MAX_NUM - 1);

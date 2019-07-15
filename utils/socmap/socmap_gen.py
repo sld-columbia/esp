@@ -333,6 +333,7 @@ def print_global_constants(fp, soc):
   fp.write("  constant ARCH_BITS : integer := " + str(soc.DMA_WIDTH) + ";\n")
   fp.write("  constant GLOB_MEM_MAX_NUM : integer := " + str(NMEM_MAX) + ";\n")
   fp.write("  constant GLOB_CPU_MAX_NUM : integer := " + str(NCPU_MAX) + ";\n")
+  fp.write("  constant GLOB_MAXIOSLV : integer := " + str(NAPBS) + ";\n")
   fp.write("  constant GLOB_TILES_MAX_NUM : integer := " + str(NTILE_MAX) + ";\n")
   # Keep cache-line size constant to 128 bits for now. We don't want huge line buffers
   fp.write("  constant GLOB_WORD_OFFSET_BITS : integer := " + str(int(math.log2(128/soc.DMA_WIDTH))) + ";\n")

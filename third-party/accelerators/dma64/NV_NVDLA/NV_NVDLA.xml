@@ -4,6 +4,6 @@
     <clock name="dla_core_clk"/>
     <clock name="dla_csb_clk"/>
     <reset name="dla_reset_rstn" polarity="LOW"/>
-    <reset name="direct_reset_" polarity="LOW"/>
+    <reset name="direct_reset" polarity="LOW"/>
   </accelerator>
 </sld>

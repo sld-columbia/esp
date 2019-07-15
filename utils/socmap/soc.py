@@ -63,7 +63,7 @@ class Components():
     dirs = sorted(dirs, key=str.upper)
     for acc in dirs:
       self.POINTS[acc.upper()] = []
-      dp = "_wrapper"
+      dp = ""
       self.POINTS[acc.upper()].append(dp)
       self.ACCELERATORS.append(acc.upper())
 

@@ -592,6 +592,7 @@ begin
           nmst         => 2,
           local_y      => this_local_y,
           local_x      => this_local_x,
+          retarget_for_dma => 0,
           mem_axi_port => 1,
           mem_num      => CFG_NMEM_TILE,
           mem_info     => tile_mem_list,

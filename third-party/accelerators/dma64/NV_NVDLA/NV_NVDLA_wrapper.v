@@ -5,7 +5,7 @@ module NV_NVDLA_wrapper
    dla_core_clk,
    dla_csb_clk,
    dla_reset_rstn,
-   direct_reset_,
+   direct_reset,
    paddr,
    penable,
    psel,
@@ -56,7 +56,7 @@ module NV_NVDLA_wrapper
    input dla_core_clk;
    input dla_csb_clk;
    input dla_reset_rstn;
-   input direct_reset_;
+   input direct_reset;
    //apb
    input psel;
    input penable;
@@ -162,7 +162,7 @@ module NV_NVDLA_wrapper
       ,.global_clk_ovr_on(global_clk_ovr_on) //|< i
       ,.tmc2slcg_disable_clock_gating(tmc2slcg_disable_clock_gating) //|< i
       ,.dla_reset_rstn(dla_reset_rstn) //|< i
-      ,.direct_reset_(direct_reset_) //|< i
+      ,.direct_reset_(direct_reset) //|< i
       ,.test_mode(test_mode) //|< i
       ,.csb2nvdla_valid(csb2nvdla_valid) //|< i
       ,.csb2nvdla_ready(csb2nvdla_ready) //|> o

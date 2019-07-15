@@ -90,6 +90,15 @@ package sldcommon is
     miss => '0'
     );
 
+  constant monitor_dvfs_none : monitor_dvfs_type := (
+    clk => '0',
+    vf => (others => '0'),
+    acc_idle => '0',
+    traffic => '0',
+    burst => '0',
+    transient => '0'
+    );
+
   component monitor
     generic (
       memtech                : integer;

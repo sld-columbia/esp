@@ -5,7 +5,6 @@ library ieee;
 use ieee.std_logic_1164.all;
 
 use work.esp_global.all;
-use work.amba.all;
 use work.stdlib.all;
 use work.sld_devices.all;
 use work.sldcommon.all;
@@ -14,6 +13,7 @@ use work.cachepackage.all;
 use work.tile.all;
 use work.genacc.all;
 use work.acctypes.all;
+use work.amba.all;
 
 --pragma translate_off
 use std.textio.all;
@@ -22,10 +22,12 @@ use std.textio.all;
 -- <<entity>>
 
   generic (
+    hls_conf       : hlscfg_t;
     tech           : integer;
     local_y        : local_yx;
     local_x        : local_yx;
     mem_num        : integer;
+    cacheable_mem_num : integer;
     mem_info       : tile_mem_info_vector(0 to MEM_MAX_NUM);
     io_y           : local_yx;
     io_x           : local_yx;
@@ -33,6 +35,13 @@ use std.textio.all;
     paddr          : integer := 0;
     pmask          : integer := 16#fff#;
     pirq           : integer := 0;
+    scatter_gather : integer := 1;
+    sets           : integer := 256;
+    ways           : integer := 8;
+    cache_tile_id  : cache_attribute_array;
+    cache_y        : yx_vec(0 to 2**NL2_MAX_LOG2 - 1);
+    cache_x        : yx_vec(0 to 2**NL2_MAX_LOG2 - 1);
+    has_l2         : integer := 1;
     has_dvfs       : integer := 1;
     has_pll        : integer;
     extra_clk_buf  : integer;
@@ -111,14 +120,14 @@ end;
   signal irqset   : std_ulogic;
   type irq_fsm is (idle, pending);
   signal irq_state, irq_next : irq_fsm;
-  signal irq_header_i, irq_header            : misc_noc_flit_type;
-  constant irq_info                          : std_logic_vector(3 downto 0) := conv_std_logic_vector(
+  signal irq_header_i, irq_header : misc_noc_flit_type;
+  constant irq_info : std_logic_vector(3 downto 0) := conv_std_logic_vector(pirq, 4);
 
   -- Other signals
   signal acc_go : std_ulogic;
   signal acc_run : std_ulogic;
   signal acc_done : std_ulogic;
-  type acc_state_t is (idle, go, run);
+  type acc_state_t is (idle, run, done);
   signal acc_current, acc_next : acc_state_t;
 
   -- DVFS (unused for now)
@@ -135,8 +144,8 @@ begin
   coherence_req_wrreq <= '0';
   coherence_req_data_in <= (others => '0');
   coherence_fwd_rdreq <= '0';
-  coherence_rsp_rdreq <= '0';
-  cohernece_rsp_wrreq <= '0';
+  coherence_rsp_rcv_rdreq <= '0';
+  coherence_rsp_snd_wrreq <= '0';
   coherence_rsp_snd_data_in <= (others => '0');
 
   coherent_dma_rcv_rdreq <= '0';
@@ -152,7 +161,7 @@ begin
       retarget_for_dma => 1,
       mem_axi_port     => 0,
       mem_num          => mem_num,
-      mem_info         => mem_info,
+      mem_info         => mem_info(0 to cacheable_mem_num - 1),
       slv_y            => io_y,
       slv_x            => io_x)
     port map (
@@ -195,16 +204,16 @@ begin
     );
 
   -- Using only one apbo signal
-  no_apb : for i in 0 to NAPBSLV - 1 generate
+  no_apb : for i in 0 to GLOB_MAXIOSLV - 1 generate
     local_apb : if i /= pindex generate
       apbo(i)      <= apb_none;
       apbo(i).pirq <= (others => '0');
     end generate local_apb;
   end generate no_apb;
 
-  apbo(pindex)(NAHBIRQ - 1 downto pirq + 1) <= (others => '0');
-  apbo(pindex)(pirq) <= acc_done;
-  apbo(pindex)(pirq - 1 downto 0) <= (others => '0');
+  apbo(pindex).pirq(NAHBIRQ - 1 downto pirq + 1) <= (others => '0');
+  apbo(pindex).pirq(pirq) <= acc_done;
+  apbo(pindex).pirq(pirq - 1 downto 0) <= (others => '0');
 
 
   -- IRQ packet
@@ -245,10 +254,8 @@ begin
   process (clk, rst)
   begin  -- process
     if rst = '0' then                   -- asynchronous reset (active low)
-      dma_state <= idle;
       irq_state <= idle;
     elsif clk'event and clk = '1' then  -- rising clock edge
-      dma_state <= dma_next;
       irq_state <= irq_next;
     end if;
   end process;
@@ -269,12 +276,12 @@ begin
   begin  -- process
     acc_go <= '0';
     acc_run <= '0';
-    acc_next <= acc_rurrent;
+    acc_next <= acc_current;
 
     case acc_current is
 
       when idle =>
-        if mosi.ar.valid or mosi.aw.valid = '1' then
+        if mosi(0).ar.valid = '1' or mosi(0).aw.valid = '1' then
           acc_go <= '1';
           acc_next <= run;
         end if;
@@ -286,7 +293,7 @@ begin
         end if;
 
       when done =>
-        if not acc_done then
+        if acc_done = '0' then
           acc_next <= idle;
         end if;
 
@@ -302,12 +309,12 @@ begin
   mon_acc.go    <= acc_go;
   mon_acc.run   <= acc_run;
   mon_acc.done  <= acc_done;
-  mon_acc.burst <= mosi.w.valid or mosi.r.ready;
+  mon_acc.burst <= mosi(0).w.valid or mosi(0).r.ready;
 
   -- No DVFS on this tile for now
   pllclk_int <= refclk;
   pllclk <= pllclk_int;
 
-  mon_dvfs      <= mon_dvfs_none;
+  mon_dvfs      <= monitor_dvfs_none;
 
 end rtl;
