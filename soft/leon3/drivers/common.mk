@@ -2,7 +2,8 @@
 CROSS_COMPILE ?= sparc-leon3-linux-
 ARCH ?= sparc
 
-CFLAGS ?= -O3
+CFLAGS ?=
+CFLAGS += -O3
 # uclibc does not have sinf()
 CFLAGS += -fno-builtin-cos -fno-builtin-sin
 CFLAGS += -Wall
@@ -21,7 +22,7 @@ all: $(OBJS)
 	$(CROSS_COMPILE)$(CC) $(CFLAGS) -o $@ $< $(LIBS)
 
 clean:
-	$(RM) $(OBJS) *.o
+	$(RM) $(OBJS) *.o $(TARGET)
 
 
 .PHONY: all clean

@@ -2,7 +2,8 @@
 CROSS_COMPILE ?= riscv64-unknown-linux-gnu-
 ARCH ?= riscv
 
-CFLAGS ?= -O3
+CFLAGS ?=
+CFLAGS += -O3
 CFLAGS += -Wall
 CFLAGS += -I../../include -I../linux
 CFLAGS += -L../../contig_alloc -L../../test
@@ -19,7 +20,7 @@ all: $(OBJS)
 	$(CROSS_COMPILE)$(CC) $(CFLAGS) -o $@ $< $(LIBS)
 
 clean:
-	$(RM) $(OBJS) *.o
+	$(RM) $(OBJS) *.o $(TARGET)
 
 
 .PHONY: all clean
