@@ -1,5 +1,5 @@
 # Copyright (c) 2011-2019 Columbia University, System Level Design Group
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: Apache-2.0
 
 SCCS_PATH		= $(ESP_ROOT)/systemc/
 SCCS			= $(filter-out common, $(shell ls -d $(SCCS_PATH)/*/ | awk -F/ '{print $$(NF-1)}'))

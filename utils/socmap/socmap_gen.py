@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 # Copyright (c) 2011-2019 Columbia University, System Level Design Group
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: Apache-2.0
 
 from collections import defaultdict
 import math
@@ -300,7 +300,7 @@ class soc_config:
 
 def print_header(fp, package):
   fp.write("-- Copyright (c) 2011-2019 Columbia University, System Level Design Group\n")
-  fp.write("-- SPDX-License-Identifier: MIT\n\n")
+  fp.write("-- SPDX-License-Identifier: Apache-2.0\n\n")
 
   fp.write("------------------------------------------------------------------------------\n")
   fp.write("--  This file is a configuration file for the ESP NoC-based architecture\n")

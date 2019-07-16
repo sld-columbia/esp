@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 # Copyright (c) 2011-2019 Columbia University, System Level Design Group
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: Apache-2.0
 
 import sys
 import os
@@ -325,7 +325,7 @@ class memory():
         fd.write("// Created with the ESP Memory Generator\n")
         fd.write("//\n")
         fd.write("// Copyright (c) 2011-2019 Columbia University, System Level Design Group\n")
-        fd.write("// SPDX-License-Identifier: MIT\n")
+        fd.write("// SPDX-License-Identifier: Apache-2.0\n")
         fd.write("//\n")
         fd.write("// @author Paolo Mantovani <paolo@cs.columbia.edu>\n")
         fd.write("//\n")
@@ -672,7 +672,7 @@ class memory():
         fd.write("// Created with the ESP Memory Generator\n")
         fd.write("//\n")
         fd.write("// Copyright (c) 2011-2019 Columbia University, System Level Design Group\n")
-        fd.write("// SPDX-License-Identifier: MIT\n")
+        fd.write("// SPDX-License-Identifier: Apache-2.0\n")
         fd.write("//\n")
         fd.write("// @author Paolo Mantovani <paolo@cs.columbia.edu>\n")
         fd.write("//\n")
@@ -905,7 +905,7 @@ class memory():
         fd.write("// Created with the ESP Memory Generator\n")
         fd.write("//\n")
         fd.write("// Copyright (c) 2011-2019 Columbia University, System Level Design Group\n")
-        fd.write("// SPDX-License-Identifier: MIT\n")
+        fd.write("// SPDX-License-Identifier: Apache-2.0\n")
         fd.write("//\n")
         fd.write("// @author Paolo Mantovani <paolo@cs.columbia.edu>\n")
         fd.write("//\n")

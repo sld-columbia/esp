@@ -1,5 +1,5 @@
 -- Copyright (c) 2011-2019 Columbia University, System Level Design Group
--- SPDX-License-Identifier: MIT
+-- SPDX-License-Identifier: Apache-2.0
 
 -------------------------------------------------------------------------------
 -- This proxy replaces AHB slaves that are hosted in remote tiles and forwards

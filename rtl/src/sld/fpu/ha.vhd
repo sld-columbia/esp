@@ -1,5 +1,5 @@
--- SPDX-License-Identifier: MIT
--- SPDX-License-Identifier: MIT
+-- SPDX-License-Identifier: Apache-2.0
+-- SPDX-License-Identifier: Apache-2.0
 
 -----------------------------------------------------------------------------
 -- Entity: 	ha

@@ -5,8 +5,8 @@
  The ESP repository includes original source code, as well as 3rd party software
  and software derived from 3rd party source code.
 
-  1. The ESP original source code is governed by the MIT License.
-     Original ESP source files are tagged with the SPDX-License Identifier MIT
+  1. The ESP original source code is governed by the Apache License 2.0.
+     Original ESP source files are tagged with the SPDX-License Identifier Apache-2.0
      and report the following copyright notice.
 
        - Copyright (c) 2011-2019 Columbia University, System Level Design Group

@@ -1,5 +1,5 @@
 // Copyright (c) 2011-2019 Columbia University, System Level Design Group
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: Apache-2.0
 
 #ifndef __CACHES_CONSTS_HPP__
 #define __CACHES_CONSTS_HPP__
