@@ -42,8 +42,8 @@ TOP_VHDL_SIM_SRCS +=
 TOP_VLOG_SIM_SRCS +=
 
 ### Xilinx Vivado hw_server ###
-FPGA_HOST ?= goliah.cs.columbia.edu
-XIL_HW_SERVER_PORT ?= 3122
+FPGA_HOST ?= localhost
+XIL_HW_SERVER_PORT ?= 3121
 
 
 ### Include global Makefile ###
