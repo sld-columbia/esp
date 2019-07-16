@@ -1,6 +1,6 @@
 
 
-![esp-config](esp-logo.png)
+![Open-ESP](esp-logo.png)
 
 ESP is an open-source platform for heterogeneous SoC design and prototype on
 FPGA. It provides a flexible tile-based architecture built on a multi-plane
