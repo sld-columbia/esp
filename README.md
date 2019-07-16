@@ -13,8 +13,8 @@ services, such as DMA, distributed interrupt, and run-time coherence selection,
 that hide the complexity of hardware and software integration from the
 accelerator designer.
 
-Currently, ESP supports multi-core `Leon3` processor from GRLIB, based on the
-SPARC V8 32-bits ISA, and single-core `Ariane` processor from `Pulp Platform`,
+Currently, ESP supports multi-core [Leon3](https://www.gaisler.com/index.php/downloads/leongrlib) processor from GRLIB, based on the
+SPARC V8 32-bits ISA, and single-core [Ariane](https://github.com/pulp-platform/ariane) processor from Pulp Platform,
 based on the RISC-V 64-bits ISA.
 
 In addition to processor cores, ESP embeds accelerator design examples created
@@ -28,4 +28,4 @@ get the most out of ESP.
 
    - Multi-core [Ariane](https://github.com/pulp-platform/ariane) RISC-V
    - NVDIA Deep Learning Accelerator [NVDLA](http://nvdla.org/) integration
-   - Vivado HLS accelerator design and integratio
+   - Vivado HLS accelerator design and integration
