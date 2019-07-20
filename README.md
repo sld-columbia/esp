@@ -20,7 +20,7 @@ based on the RISC-V 64-bits ISA.
 In addition to processor cores, ESP embeds accelerator design examples created
 with Stratus HLS in SystemC, and Chisel.
 
-A [Quick Start Guide](www.open-esp.org/docs) is available on the [Open-ESP website](www.open-esp.org).
+A [Quick Start Guide](www.esp.cs.columbia.edu/docs) is available on the [Open-ESP website](www.esp.cs.columbia.edu).
 Complete documentation and tutorials will be released periodically to help users
 get the most out of ESP.
 
