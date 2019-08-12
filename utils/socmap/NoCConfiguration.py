@@ -53,6 +53,7 @@ class Tile():
     elif soc.IPs.ACCELERATORS.count(selection):
        self.label.config(bg='orange')
        self.point_label.pack(side=LEFT)
+       self.vendor = soc.IPs.VENDOR[selection]
        self.point_select.setitems(soc.IPs.POINTS[selection])
        point = self.point.get()
        for p in soc.IPs.POINTS[selection]:
@@ -201,6 +202,7 @@ class Tile():
     self.col = y
     self.ip_type = StringVar()
     self.point = StringVar()
+    self.vendor = ""
     self.clk_region = IntVar()
     self.has_l2 = IntVar()
     self.has_pll = IntVar()
@@ -233,6 +235,7 @@ class NoC():
           new_topology[y][x].has_pll.set(self.topology[y][x].has_pll.get())
           new_topology[y][x].has_clkbuf.set(self.topology[y][x].has_clkbuf.get())
           new_topology[y][x].point.set(self.topology[y][x].point.get())
+          new_topology[y][x].vendor = self.topology[y][x].vendor
           new_topology[y][x].energy_values = self.topology[y][x].energy_values
     self.topology = new_topology
     self.rows = _R
