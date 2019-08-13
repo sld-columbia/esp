@@ -25,3 +25,6 @@
 	path = third-party/accelerators/dma64/NV_NVDLA/ip
 	url = git@github.com:sld-columbia/nvdla-hw.git
 	branch = master
+[submodule "third-party/accelerators/dma64/NV_NVDLA/sw"]
+	path = third-party/accelerators/dma64/NV_NVDLA/sw
+	url = git@github.com:sld-columbia/nvdla-sw.git
