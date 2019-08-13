@@ -84,7 +84,7 @@ endif
 ### Simnulation common options ###
 
 VCOMOPT  +=
-VLOGOPT  +=
+VLOGOPT  += -suppress 2275
 VSIMOPT  +=
 XMCOMOPT  +=
 XMLOGOPT  +=
