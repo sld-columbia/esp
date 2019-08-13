@@ -92,7 +92,7 @@ $(THIRDPARTY_ACCELERATORS):
 	$(QUIET_BUILD)
 	@if ! test -e $(THIRDPARTY_PATH)/$@/out; then \
 		cd $(THIRDPARTY_PATH)/$@; \
-		$(MAKE); \
+		$(MAKE) CROSS_COMPILE=$(CROSS_COMPILE_LINUX) ARCH=$(ARCH) KSRC=$(PWD)/linux-build ; \
 	fi;
 
 thirdparty-accelerators: $(THIRDPARTY_ACCELERATORS)
@@ -100,12 +100,12 @@ thirdparty-accelerators: $(THIRDPARTY_ACCELERATORS)
 $(THIRDPARTY_ACCELERATORS-clean):
 	$(QUIET_CLEAN)
 	@cd $(THIRDPARTY_PATH)/$(@:-clean=); \
-	$(MAKE) clean;
+	$(MAKE) CROSS_COMPILE=$(CROSS_COMPILE_LINUX) ARCH=$(ARCH) KSRC=$(PWD)/linux-build clean;
 
 $(THIRDPARTY_ACCELERATORS-distclean): %-distclean : %-clean
 	$(QUIET_CLEAN)
 	@cd $(THIRDPARTY_PATH)/$(@:-distclean=); \
-	$(MAKE) distclean;
+	$(MAKE) CROSS_COMPILE=$(CROSS_COMPILE_LINUX) ARCH=$(ARCH) KSRC=$(PWD)/linux-build distclean;
 
 thirdparty-accelerators-clean: $(THIRDPARTY_ACCELERATORS-clean)
 
