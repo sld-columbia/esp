@@ -15,14 +15,20 @@ const size_t MEM_SIZE = (384 * 8) / DMA_WIDTH;
 
 #include "core/systems/esp_system.hpp"
 
+#ifdef CADENCE
 #include "vitbfly2_wrap.h"
+#endif
 
     class system_t : public esp_system<DMA_WIDTH, MEM_SIZE>
     {
     public:
 
         // ACC instance
+#ifdef CADENCE
         vitbfly2_wrapper *acc;
+#else
+        vitbfly2 *acc;
+#endif
 
         // Constructor
         SC_HAS_PROCESS(system_t);
@@ -34,7 +40,11 @@ const size_t MEM_SIZE = (384 * 8) / DMA_WIDTH;
             , image_gold_test_path(gold_path)
         {
             // ACC
+#ifdef CADENCE
             acc = new vitbfly2_wrapper("vitbfly2_wrapper");
+#else
+            acc = new vitbfly2("vitbfly2_wrapper");
+#endif
 
             // Binding ACC
             acc->clk(clk);
