@@ -46,11 +46,8 @@ int sc_main(int argc, char *argv[])
 
   sc_start();
 
-#ifdef CADENCE
   esc_log_pass();
-#else
   esc_cleanup();
-#endif
 
   return 0;
 }

@@ -50,9 +50,8 @@ void system_t::config_proc()
         sc_time end_time = sc_time_stamp();
         ESP_REPORT_TIME(end_time, "END - vitbfly2");
 
-#ifdef CADENCE
-        esc_log_latency(clock_cycle(end_time - begin_time));
-#endif
+        esc_log_latency(sc_object::basename(), clock_cycle(end_time - begin_time));
+
         wait();
         conf_done.write(false);
     }
