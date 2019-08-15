@@ -6,7 +6,7 @@
 
 // Functions
 
-#include "vitbfly2_functions.cpp"
+#include "vitbfly2_functions.hpp"
 
 // Processes
 
