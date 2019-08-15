@@ -43,7 +43,7 @@ void system_t::config_proc()
 		sc_time end_time = sc_time_stamp();
 		ESP_REPORT_TIME(end_time, "END - <accelerator_name>");
 
-		esc_log_latency(clock_cycle(end_time - begin_time));
+		esc_log_latency(sc_object::basename(), clock_cycle(end_time - begin_time));
 		wait(); conf_done.write(false);
 	}
 
@@ -70,11 +70,13 @@ void system_t::config_proc()
 void system_t::load_memory()
 {
 	// Optional usage check
+#ifdef CADENCE
 	if (esc_argc() != /* argc */)
 	{
 		ESP_REPORT_INFO("usage: %s <ARG1> <ARG2> ...\n", esc_argv()[0]);
 		sc_stop();
 	}
+#endif
 
 	//  Memory initialization:
 
