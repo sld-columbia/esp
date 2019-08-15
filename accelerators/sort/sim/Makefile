@@ -1,0 +1,2 @@
+
+include ../../common/systemc.mk

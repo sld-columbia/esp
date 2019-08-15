@@ -80,7 +80,7 @@ void system_t::config_proc()
 		sc_time end_time = sc_time_stamp();
 		ESP_REPORT_TIME(end_time, "END - sort");
 
-		esc_log_latency(clock_cycle(end_time - begin_time));
+		esc_log_latency(sc_object::basename(), clock_cycle(end_time - begin_time));
 		wait(); conf_done.write(false);
 	}
 
@@ -110,6 +110,7 @@ void system_t::load_memory()
 {
 
 	//  Memory initialization:
+#ifdef CADENCE
 	if (esc_argc() != 3)
 	{
 		ESP_REPORT_INFO("usage: %s <SORT_LEN> <SORT_BATCH>\n", esc_argv()[0]);
@@ -117,18 +118,23 @@ void system_t::load_memory()
 	}
 
 	int x;
-	istringstream s1(esc_argv()[1]);
+        std::istringstream s1(esc_argv()[1]);
 	if (!(s1 >> x))
 	{
 		ESP_REPORT_ERROR("Invalid number %s \n", esc_argv()[1]);
 	}
 	SORT_LEN = x;
-	istringstream s2(esc_argv()[2]);
+        std::istringstream s2(esc_argv()[2]);
 	if (!(s2 >> x))
 	{
 		ESP_REPORT_ERROR("Invalid number %s \n", esc_argv()[2]);
 	}
 	SORT_BATCH = x;
+#else
+        // esp_argv causes segfault w/ Accelera SystemC 2.3.0. Using default values instead
+        SORT_LEN = 1024;
+        SORT_BATCH = 16;
+#endif
 
 	ESP_REPORT_INFO("Sort %d vectors of %d float elements", SORT_BATCH, SORT_LEN);
 
