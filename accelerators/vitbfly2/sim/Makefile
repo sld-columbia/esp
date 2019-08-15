@@ -1,1 +1,2 @@
-../../common/systemc.mk
+
+include ../../common/systemc.mk
