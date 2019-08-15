@@ -9,6 +9,7 @@ ACCELERATORS-clean		= $(addsuffix -clean, $(ACCELERATORS))
 ACCELERATORS-distclean		= $(addsuffix -distclean, $(ACCELERATORS))
 ACCELERATORS-sim		= $(addsuffix -sim, $(ACCELERATORS))
 ACCELERATORS-plot		= $(addsuffix -plot, $(ACCELERATORS))
+ACCELERATORS-exe		= $(addsuffix -exe, $(ACCELERATORS))
 
 CHISEL_PATH                     = $(ESP_ROOT)/chisel
 CHISEL_ACC_PATH                 = $(CHISEL_PATH)/src/main/scala/esp/examples
@@ -93,8 +94,12 @@ $(ACCELERATORS-sim): %-sim : %-wdir
 $(ACCELERATORS-plot): %-plot : %-wdir
 	$(QUIET_RUN)ACCELERATOR=$(@:-plot=) TECH=$(TECHLIB) ESP_ROOT=$(ESP_ROOT) make -C $(ACCELERATORS_PATH)/$(@:-plot=)/hls-work-$(TECHLIB) plot
 
+$(ACCELERATORS-exe):
+	$(QUIET_RUN) ACCELERATOR=$(@:-exe=) TECH=$(TECHLIB) ESP_ROOT=$(ESP_ROOT) DMA_WIDTH=$(NOC_WIDTH) $(MAKE) -C $(ACCELERATORS_PATH)/$(@:-exe=)/sim run
+
 $(ACCELERATORS-clean): %-clean : %-wdir
 	$(QUIET_CLEAN)ACCELERATOR=$(@:-clean=) TECH=$(TECHLIB) ESP_ROOT=$(ESP_ROOT) make -C $(ACCELERATORS_PATH)/$(@:-clean=)/hls-work-$(TECHLIB) clean
+	@ACCELERATOR=$(@:-clean=) TECH=$(TECHLIB) ESP_ROOT=$(ESP_ROOT) DMA_WIDTH=$(NOC_WIDTH) $(MAKE) -C $(ACCELERATORS_PATH)/$(@:-clean=)/sim clean
 	@$(RM) $(@:-clean=)*.log
 
 $(ACCELERATORS-distclean): %-distclean : %-wdir
