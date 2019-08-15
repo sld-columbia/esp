@@ -16,14 +16,20 @@ const size_t MEM_SIZE = 5000000;
 
 #include "core/systems/esp_system.hpp"
 
+#ifdef CADENCE
 #include "visionchip_wrap.h"
+#endif
 
 class system_t : public esp_system<DMA_WIDTH, MEM_SIZE>
 {
 public:
 
     // ACC instance
+#ifdef CADENCE
     visionchip_wrapper *acc;
+#else
+    visionchip *acc;
+#endif
 
     // Constructor
     SC_HAS_PROCESS(system_t);
@@ -41,8 +47,11 @@ public:
         , n_Cols(n_Cols)
     {
         // ACC
+#ifdef CADENCE
         acc = new visionchip_wrapper("visionchip_wrapper");
-
+#else
+        acc = new visionchip("visionchip_wrapper");
+#endif
         // Binding ACC
         acc->clk(clk);
         acc->rst(acc_rst);

@@ -49,7 +49,7 @@ void system_t::config_proc()
         sc_time end_time = sc_time_stamp();
         ESP_REPORT_TIME(end_time, "END - visionchip");
 
-        esc_log_latency(clock_cycle(end_time - begin_time));
+        esc_log_latency(sc_object::name(), clock_cycle(end_time - begin_time));
         wait();
         conf_done.write(false);
     }
@@ -77,12 +77,14 @@ void system_t::config_proc()
 // Functions
 void system_t::load_memory()
 {
+#ifdef CADENCE
     // Optional usage check
     if (esc_argc() != 1)
     {
         ESP_REPORT_INFO("usage: %s\n", esc_argv()[0]);
         sc_stop();
     }
+#endif
 
     //  Memory initialization:
     ESP_REPORT_INFO("---- load memory ----");

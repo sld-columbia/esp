@@ -1,0 +1,1 @@
+../stratus/lena-30x40.txt
