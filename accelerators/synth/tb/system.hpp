@@ -13,7 +13,9 @@
 
 #include "core/systems/esp_system.hpp"
 
+#ifdef CADENCE
 #include "synth_wrap.h"
+#endif
 
 const size_t MEM_SIZE = 3000000; /* Compute memory footprint */
 const size_t N_ACC = 12;
@@ -23,7 +25,11 @@ class system_t : public esp_system<DMA_WIDTH, MEM_SIZE>
 public:
 
     // ACC instance
+#ifdef CADENCE
     synth_wrapper *acc;
+#else
+    synth *acc;
+#endif
 
     // Constructor
     SC_HAS_PROCESS(system_t);
@@ -31,8 +37,11 @@ public:
 	: esp_system<DMA_WIDTH, MEM_SIZE>(name)
 	{
 	    // ACC
+#ifdef CADENCE
 	    acc = new synth_wrapper("synth_wrapper");
-
+#else
+	    acc = new synth("synth_wrapper");
+#endif
 	    // Binding ACC
 	    acc->clk(clk);
 	    acc->rst(acc_rst);
