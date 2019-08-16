@@ -37,7 +37,7 @@ void system_t::config_proc()
 	    sc_time end_time = sc_time_stamp();
 	    ESP_REPORT_TIME(end_time, "END - synth");
 
-	    esc_log_latency(clock_cycle(end_time - begin_time));
+	    esc_log_latency(sc_object::basename(), clock_cycle(end_time - begin_time));
 	    wait(); conf_done.write(false);
 	}
 
@@ -64,9 +64,9 @@ void system_t::config_proc()
 // Functions
 void system_t::init_acc_params()
 {
-    conf_info_t conf0( 1048576, 1048576, 0, 256, 2, 2, 1, 0, 0x12345678,    1,    0, 0); 
+    conf_info_t conf0( 1048576, 262144, 0, 4096, 4, 1, 1, 0, 0x12345678,    4,    0, 0);
     configs[0] = conf0;
-    conf_info_t conf1( 1048576,   32768, 0, 4096, 8, 2, 0, 0, 0x12345678,   32,    0, 0);
+    conf_info_t conf1( 1048576,   1048576, 0, 16, 4, 2, 0, 1, 0x12345678,   1,    512, 0);
     configs[1] = conf1;
     conf_info_t conf2( 1048576,   65536, 0, 2048, 4, 4, 0, 0, 0x12345678,   16,    0, 0);
     configs[2] = conf2;

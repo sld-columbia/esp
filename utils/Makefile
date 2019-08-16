@@ -55,6 +55,9 @@ help:
 	@echo "                                          and generate corresponding RTL files."
 	@echo " make <accelerator>-sim                 : run all simulations defined for <accelerator> using the"
 	@echo "                                          SystemC testbench; HLS may start if the RTL is out-of-date."
+	@echo " make <accelerator>-exe                 : run plain SystemC execution w/o HLS tool environment. This is only"
+	@echo "                                          available for accelerators designed in SystemC and it still requires"
+	@echo "                                          access to some of the libraries from the HLS tool vendor."
 	@echo " make <accelerator>-plot                : run all simulations defined for <accelerator> and plot"
 	@echo "                                          results on a latency vs area chard; HLS may start if the"
 	@echo "                                          RTL is out-of-date."
@@ -71,7 +74,6 @@ help:
 	@echo " make thirdparty-accelerators           : make <accelerator> for all available third-party accelerators."
 	@echo " make thirdparty-accelerators-clean     : make <accelerator>-clean for all available third-party accelerators."
 	@echo " make thirdparty-accelerators-distclean : make <accelerator>-distclean for all available third-party accelerators."
-
 	@echo " make sldgen                            : generate RTL wrappers for scheduled accelerators; this"
 	@echo "                                          target is always called as a dependency before ESP"
 	@echo "                                          simulaiton and synthesis."

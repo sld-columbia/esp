@@ -14,7 +14,9 @@
 
 #include "core/systems/esp_system.hpp"
 
+#ifdef CADENCE
 #include "spmv_wrap.h"
+#endif
 
 #define REPORT_THRESHOLD 10
 #define MAX_REL_ERROR 0.003
@@ -29,7 +31,11 @@ class system_t : public esp_system<DMA_WIDTH, MEM_SIZE>
 public:
 
     // ACC instance
+#ifdef CADENCE
     spmv_wrapper *acc;
+#else
+    spmv *acc;
+#endif
 
     // Constructor
     SC_HAS_PROCESS(system_t);
@@ -37,8 +43,11 @@ public:
 	: esp_system<DMA_WIDTH, MEM_SIZE>(name)
         {
 	    // ACC
+#ifdef CADENCE
 	    acc = new spmv_wrapper("spmv_wrapper");
-
+#else
+	    acc = new spmv("spmv_wrapper");
+#endif
 	    // Binding ACC
 	    acc->clk(clk);
 	    acc->rst(acc_rst);

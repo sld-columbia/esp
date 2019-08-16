@@ -15,7 +15,7 @@ void visionchip::kernel_nf(uint32_t n_Rows, uint32_t n_Cols)
     uint16_t pxl_list[9];
     HLS_FLAT(pxl_list);
 
-    min_bin = 65536;
+    min_bin = 0;
     max_bin = 0;
 
 
@@ -52,8 +52,6 @@ void visionchip::kernel_nf(uint32_t n_Rows, uint32_t n_Cols)
 
             if (pxl_list[4] > max_bin)
                 max_bin = pxl_list[4];
-            if (pxl_list[4] < min_bin)
-                min_bin = pxl_list[4];
         }
     }
 

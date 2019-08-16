@@ -16,14 +16,20 @@ const size_t MEM_SIZE = LEN * LEN * (DMA_WIDTH / 32);
 
 #include "core/systems/esp_system.hpp"
 
+#ifdef CADENCE
 #include "sort_wrap.h"
+#endif
 
 class system_t : public esp_system<DMA_WIDTH, MEM_SIZE>
 {
 public:
 
         // ACC instance
+#ifdef CADENCE
        sort_wrapper *acc;
+#else
+       sort *acc;
+#endif
 
         // Constructor
         SC_HAS_PROCESS(system_t);
@@ -31,7 +37,11 @@ public:
           : esp_system<DMA_WIDTH, MEM_SIZE>(name)
         {
              // ACC
+#ifdef CADENCE
              acc = new sort_wrapper("sort_wrapper");
+#else
+             acc = new sort("sort_wrapper");
+#endif
 
              // Binding ACC
              acc->clk(clk);

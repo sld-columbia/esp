@@ -6,7 +6,7 @@
 
 // Functions
 
-#include "visionchip_functions.cpp"
+#include "visionchip_functions.hpp"
 
 // Processes
 

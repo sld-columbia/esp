@@ -6,7 +6,7 @@
 
 // Functions
 
-#include "<accelerator_name>_functions.cpp"
+#include "<accelerator_name>_functions.hpp"
 
 // Processes
 

@@ -6,7 +6,7 @@
 
 // Functions
 
-#include "sort_functions.cpp"
+#include "sort_functions.hpp"
 
 // Processes
 

@@ -26,6 +26,8 @@ public:
         : esp_accelerator_3P<DMA_WIDTH>(name)
         , cfg("config")
         , accel_ready("accel_ready")
+        , min_bin(0)
+        , max_bin(0)
     {
         // Signal binding
         cfg.bind_with(*this);

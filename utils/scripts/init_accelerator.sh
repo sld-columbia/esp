@@ -22,7 +22,7 @@ LOWER=$(echo $1 | awk '{print tolower($0)}')
 UPPER=$(echo $LOWER | awk '{print toupper($0)}')
 
 
-dirs="src  stratus  tb"
+dirs="src  stratus  tb  sim"
 ACC_DIR=$ESP_ROOT/accelerators/$LOWER
 
 if test -e $ACC_DIR; then
@@ -80,6 +80,12 @@ cp $ESP_ROOT/utils/scripts/templates/memlist.txt .
 rename accelerator $LOWER *
 sed -i "s/<accelerator_name>/$LOWER/g" *.xml
 sed -i "s/<ACCELERATOR_NAME>/$UPPER/g" *.xml
+
+## Initialize SystemC execution folder (no HLS license required)
+cd $ACC_DIR
+cd sim
+echo "include ../../common/systemc.mk" > Makefile
+echo "$LOWER" > .gitignore
 
 cd $CURR_DIR
 

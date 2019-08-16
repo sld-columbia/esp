@@ -7,7 +7,7 @@
 
 // Functions
 
-#include "synth_functions.cpp"
+#include "synth_functions.hpp"
 
 // Processes
 

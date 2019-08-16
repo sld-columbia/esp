@@ -15,14 +15,20 @@ const size_t MEM_SIZE = /* Compute memory footprint */
 
 #include "core/systems/esp_system.hpp"
 
+#ifdef CADENCE
 #include "<accelerator_name>_wrap.h"
+#endif
 
 class system_t : public esp_system<DMA_WIDTH, MEM_SIZE>
 {
 public:
 
         // ACC instance
+#ifdef CADENCE
        <accelerator_name>_wrapper *acc;
+#else
+       <accelerator_name> *acc;
+#endif
 
         // Constructor
         SC_HAS_PROCESS(system_t);
@@ -30,8 +36,11 @@ public:
           : esp_system<DMA_WIDTH, MEM_SIZE>(name)
         {
              // ACC
+#ifdef CADENCE
              acc = new <accelerator_name>_wrapper("<accelerator_name>_wrapper");
-
+#else
+             acc = new <accelerator_name>("<accelerator_name>_wrapper");
+#endif
              // Binding ACC
              acc->clk(clk);
              acc->rst(acc_rst);

@@ -6,7 +6,7 @@
 
 // Functions
 
-#include "spmv_functions.cpp"
+#include "spmv_functions.hpp"
 
 // Processes
 
