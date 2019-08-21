@@ -4,6 +4,9 @@
 #ifndef __SYSTEM_HPP__
 #define __SYSTEM_HPP__
 
+#include <iostream>
+#include <string>
+
 #include "visionchip_conf_info.hpp"
 #include "visionchip_debug_info.hpp"
 #include "visionchip.hpp"
@@ -35,16 +38,22 @@ public:
     SC_HAS_PROCESS(system_t);
     system_t(sc_module_name name,
              std::string image_A_path,
-             std::string image_gold_test_path,
+             std::string image_out_path,
              uint32_t n_Images,
              uint32_t n_Rows,
-             uint32_t n_Cols)
+             uint32_t n_Cols,
+             std::string image_gold_test_path,
+	     bool do_validation,
+	     bool do_dwt)
         : esp_system<DMA_WIDTH, MEM_SIZE>(name)
         , image_A_path(image_A_path)
+        , image_out_path(image_out_path)
         , image_gold_test_path(image_gold_test_path)
         , n_Images(n_Images)
         , n_Rows(n_Rows)
         , n_Cols(n_Cols)
+	, do_validation(do_validation)
+	, do_dwt(do_dwt)
     {
         // ACC
 #ifdef CADENCE
@@ -93,11 +102,18 @@ public:
     // Path for the input images
     std::string image_A_path;
 
+    // Path for the output images
+    std::string image_out_path;
+
     // Path for the gold output image
     std::string image_gold_test_path;
 
     // For validate
     int *imgOut;
+
+    // Test configuration
+    bool do_validation;
+    bool do_dwt;
 
     // Other Functions
 };

@@ -18,15 +18,18 @@ public:
     uint32_t n_Rows;
     // Columns of input image
     uint32_t n_Cols;
+    // Optional DWT step
+    uint32_t do_dwt;
+
     //
     // constructors
     //
     conf_info_t()
-        : n_Images(0), n_Rows(0), n_Cols(0)
+        : n_Images(0), n_Rows(0), n_Cols(0), do_dwt(0)
     {}
 
-    conf_info_t(uint32_t nimages, uint32_t rows, uint32_t cols)
-        : n_Images(nimages), n_Rows(rows), n_Cols(cols)
+    conf_info_t(uint32_t nimages, uint32_t rows, uint32_t cols, uint32_t do_dwt)
+        : n_Images(nimages), n_Rows(rows), n_Cols(cols), do_dwt(do_dwt)
     {}
 
     // equals operator
@@ -34,7 +37,8 @@ public:
     {
         return (rhs.n_Images == n_Images) &&
             (rhs.n_Rows == n_Rows) &&
-            (rhs.n_Cols == n_Cols);
+            (rhs.n_Cols == n_Cols) &&
+	    (rhs.do_dwt == do_dwt);
     }
 
     // assignment operator
@@ -43,6 +47,7 @@ public:
         n_Images = other.n_Images;
         n_Rows = other.n_Rows;
         n_Cols = other.n_Cols;
+	do_dwt = other.do_dwt;
         return *this;
     }
 
@@ -56,6 +61,7 @@ public:
         os << "{ n_Images = " << conf_info.n_Images
            << ", n_Rows = " << conf_info.n_Rows
            << ", n_Cols = " << conf_info.n_Cols
+	   << ", do_dwt = " << conf_info.do_dwt
            << "}";
         return os;
     }

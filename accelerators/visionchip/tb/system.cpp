@@ -27,7 +27,7 @@ void system_t::config_proc()
 
     // Config
     {
-        conf_info_t config(n_Images, n_Rows, n_Cols);
+        conf_info_t config(n_Images, n_Rows, n_Cols, do_dwt);
         wait();
         conf_info.write(config);
         conf_done.write(true);
@@ -57,14 +57,16 @@ void system_t::config_proc()
     // Validate
     {
         dump_memory(); // store the output in more suitable data structure if needed
-        // check the results with the golden model
-        if (validate())
-        {
-            ESP_REPORT_ERROR("validation failed!");
-        } else
-        {
-            ESP_REPORT_INFO("validation passed!");
-        }
+
+	if (do_validation) {
+	    if (validate())
+	    {
+		ESP_REPORT_ERROR("validation failed!");
+	    } else
+	    {
+		ESP_REPORT_INFO("validation passed!");
+	    }
+	}
     }
 
     // Conclude
@@ -146,7 +148,33 @@ void system_t::load_memory()
 
 void system_t::dump_memory()
 {
-    // ESP_REPORT_INFO("dump memory completed");
+    int n_Pixels = n_Rows * n_Cols;
+
+    // -- Read the gold image
+    FILE *fileOut = NULL;
+    if((fileOut = fopen(image_out_path.c_str(), "w")) == (FILE*)NULL)
+    {
+        ESP_REPORT_ERROR("[Err] could not open %s", image_out_path.c_str());
+        fclose(fileOut);
+    }
+
+    ESP_REPORT_INFO("image_out_path: %s", image_out_path.c_str());
+
+    // Store output file
+    int mem_j = 0;
+    for (int i = 0; i < n_Images; i++) {
+        for(uint32_t j = 0 ; j < n_Pixels ; j += WORDS_PER_DMA) {
+            for (uint8_t k = 0; k < WORDS_PER_DMA; k++) {
+		fprintf(fileOut, "%d\n",
+			mem[mem_j].range(((k + 1) << 4) - 1, k << 4).to_int());
+	    }
+            mem_j++;
+        }
+    }
+
+    fclose(fileOut);
+
+    ESP_REPORT_INFO("dump memory completed");
 }
 
 int system_t::validate()
@@ -187,7 +215,8 @@ int system_t::validate()
                 if (mem[mem_j].range(((k + 1) << 4) - 1, k << 4).to_int() != imgGold[j + k])
                 {
                     ESP_REPORT_INFO("Error: %d: %d %d.",
-                                    mem_j, mem[mem_j].range(((k + 1) << 4) - 1, k << 4).to_int(), imgGold[j + k]);
+                                    mem_j, mem[mem_j].range(((k + 1) << 4) - 1, k << 4).to_int(),
+				    imgGold[j + k]);
                     errors++;
                 }
             mem_j++;
