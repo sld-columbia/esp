@@ -42,6 +42,7 @@ int sc_main(int argc, char *argv[])
 	sc_start();
 
 	esc_log_pass();
+        esc_cleanup();
 
 	return 0;
 }

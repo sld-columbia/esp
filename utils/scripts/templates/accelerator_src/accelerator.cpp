@@ -13,169 +13,158 @@
 void <accelerator_name>::load_input()
 {
 
-	// Reset
-	{
-		HLS_DEFINE_PROTOCOL("load-reset");
+    // Reset
+    {
+        HLS_PROTO("load-reset");
 
-		this->reset_load_input();
+        this->reset_load_input();
 
-		// PLM memories reset
+        // PLM memories reset
 
-		// User-defined reset code
+        // User-defined reset code
 
-		wait();
-	}
+        wait();
+    }
 
-	// Config
-	{
-		HLS_DEFINE_PROTOCOL("load-config");
+    // Config
+    {
+        HLS_PROTO("load-config");
 
-		cfg.wait_for_config(); // config process
-		conf_info_t config = this->conf_info.read();
+        cfg.wait_for_config(); // config process
+        conf_info_t config = this->conf_info.read();
 
-		// User-defined config code
-	}
+        // User-defined config code
+    }
 
-	// Load
-	{
-		for (uint16_t b = 0; b < /* number of transfers */; b++)
-		{
-			HLS_LOAD_INPUT_BATCH_LOOP;
+    // Load
+    {
+        HLS_PROTO("load-dma");
+        for (uint16_t b = 0; b < /* number of transfers */; b++)
+        {
 
-			{
-				HLS_DEFINE_PROTOCOL("load-dma-conf");
+            dma_info_t dma_info;
+            // Configure DMA transaction
 
-				dma_info_t dma_info;
-				// Configure DMA transaction
+            this->dma_read_ctrl.put(dma_info);
 
-				this->dma_read_ctrl.put(dma_info);
-			}
+            for (uint16_t i = 0; i < /* transfer lenght */; i++)
+            {
 
-			for (uint16_t i = 0; i < /* transfer lenght */; i++)
-			{
-				HLS_LOAD_INPUT_LOOP;
+                uint32_t data = this->dma_read_chnl.get().to_uint();
+                wait();
+                // Write to PLM
 
-				uint32_t data = this->dma_read_chnl.get().to_uint();
-				{
-					HLS_LOAD_INPUT_PLM_WRITE;
-					// Write to PLM
-				}
-			}
-			this->load_compute_handshake();
-		}
-	}
+            }
+            this->load_compute_handshake();
+        }
+    }
 
-	// Conclude
-	{
-		this->process_done();
-	}
+    // Conclude
+    {
+        this->process_done();
+    }
 }
 
 
 
 void <accelerator_name>::store_output()
 {
-	// Reset
-	{
-		HLS_DEFINE_PROTOCOL("store-reset");
+    // Reset
+    {
+        HLS_PROTO("store-reset");
 
-		this->reset_store_output();
+        this->reset_store_output();
 
-		// PLM memories reset
+        // PLM memories reset
 
-		// User-defined reset code
+        // User-defined reset code
 
-		wait();
-	}
+        wait();
+    }
 
-	// Config
-	{
-		HLS_DEFINE_PROTOCOL("store-config");
+    // Config
+    {
+        HLS_PROTO("store-config");
 
-		cfg.wait_for_config(); // config process
-		conf_info_t config = this->conf_info.read();
+        cfg.wait_for_config(); // config process
+        conf_info_t config = this->conf_info.read();
 
-		// User-defined config code
-	}
+        // User-defined config code
+    }
 
-	// Store
-	{
-		for (uint16_t b = 0; b < /* number of transfers */; b++)
-		{
-			HLS_STORE_OUTPUT_BATCH_LOOP;
+    // Store
+    {
+        HLS_PROTO("store-dma");
 
-			this->store_compute_handshake();
+        for (uint16_t b = 0; b < /* number of transfers */; b++)
+        {
 
-			{
-				HLS_DEFINE_PROTOCOL("store-dma-conf");
+            this->store_compute_handshake();
 
-				dma_info_t dma_info;
-				// Configure DMA transaction
+            dma_info_t dma_info;
+            // Configure DMA transaction
 
-				this->dma_write_ctrl.put(dma_info);
-			}
-			for (uint16_t i = 0; i < /* transfer lenght */; i++)
-			{
-				HLS_STORE_OUTPUT_LOOP;
+            this->dma_write_ctrl.put(dma_info);
 
-				uint32_t data;
-				{
-					HLS_STORE_OUTPUT_PLM_READ;
-					// Read from PLM
-				}
-				this->dma_write_chnl.put(data);
-			}
-		}
-	}
+            for (uint16_t i = 0; i < /* transfer lenght */; i++)
+            {
+                uint32_t data;
+                wait();
+                // Read from PLM
 
-	// Conclude
-	{
-		this->accelerator_done();
-		this->process_done();
-	}
+                this->dma_write_chnl.put(data);
+            }
+        }
+    }
+
+    // Conclude
+    {
+        this->accelerator_done();
+        this->process_done();
+    }
 }
 
 
 void <accelerator_name>::compute_kernel()
 {
-	// Reset
-	{
-		HLS_DEFINE_PROTOCOL("compute-reset");
+    // Reset
+    {
+        HLS_PROTO("compute-reset");
 
-		this->reset_compute_1_kernel();
+        this->reset_compute_kernel();
 
-		// PLM memories reset
+        // PLM memories reset
 
-		// User-defined reset code
+        // User-defined reset code
 
-		wait();
-	}
+        wait();
+    }
 
-	// Config
-	{
-		HLS_DEFINE_PROTOCOL("compute-config");
+    // Config
+    {
+        HLS_PROTO("compute-config");
 
-		cfg.wait_for_config(); // config process
-		conf_info_t config = this->conf_info.read();
+        cfg.wait_for_config(); // config process
+        conf_info_t config = this->conf_info.read();
 
-		// User-defined config code
-	}
+        // User-defined config code
+    }
 
 
-	// Compute
-	{
-		for (uint16_t b = 0; b < /* number of transfers */; b++)
-		{
-			this->compute_load_handshake();
+    // Compute
+    {
+        for (uint16_t b = 0; b < /* number of transfers */; b++)
+        {
+            this->compute_load_handshake();
 
-			// Computing phase implementation
+            // Computing phase implementation
 
-			this->compute_store_handshake();
-		}
+            this->compute_store_handshake();
+        }
 
-		// Conclude
-		{
-			this->process_done();
-		}
-	}
+        // Conclude
+        {
+            this->process_done();
+        }
+    }
 }

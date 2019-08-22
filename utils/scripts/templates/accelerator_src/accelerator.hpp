@@ -15,36 +15,36 @@
 
 class <accelerator_name> : public esp_accelerator_3P<DMA_WIDTH>
 {
-    public:
-        // Constructor
-        SC_HAS_PROCESS(<accelerator_name>);
-        <accelerator_name>(const sc_module_name& name)
-          : esp_accelerator_3P<DMA_WIDTH>(name)
-          , cfg("config")
-        {
-            // Signal binding
-            cfg.bind_with(*this);
+public:
+    // Constructor
+    SC_HAS_PROCESS(<accelerator_name>);
+    <accelerator_name>(const sc_module_name& name)
+    : esp_accelerator_3P<DMA_WIDTH>(name)
+        , cfg("config")
+    {
+        // Signal binding
+        cfg.bind_with(*this);
 
-	    // Clock binding for memories
-        }
+        // Clock binding for memories
+    }
 
-        // Processes
+    // Processes
 
-        // Load the input data
-        void load_input();
+    // Load the input data
+    void load_input();
 
-        // Computation
-        void compute_kernel();
+    // Computation
+    void compute_kernel();
 
-        // Store the output data
-        void store_output();
+    // Store the output data
+    void store_output();
 
-        // Configure <accelerator_name>
-        esp_config_proc cfg;
+    // Configure <accelerator_name>
+    esp_config_proc cfg;
 
-        // Functions
+    // Functions
 
-        // Private local memories
+    // Private local memories
 
 };
 
