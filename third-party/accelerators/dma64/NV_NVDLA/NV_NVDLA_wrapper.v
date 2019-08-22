@@ -29,6 +29,7 @@ module NV_NVDLA_wrapper
    nvdla_core2dbb_arid,
    nvdla_core2dbb_arlen,
    nvdla_core2dbb_araddr,
+   nvdla_core2dbb_bresp,
    nvdla_core2dbb_bvalid,
    nvdla_core2dbb_bready,
    nvdla_core2dbb_bid,
@@ -37,6 +38,7 @@ module NV_NVDLA_wrapper
    nvdla_core2dbb_rid,
    nvdla_core2dbb_rlast,
    nvdla_core2dbb_rdata,
+   nvdla_core2dbb_rresp,
    nvdla_core2dbb_awsize,
    nvdla_core2dbb_arsize,
    nvdla_core2dbb_awburst,
@@ -48,7 +50,10 @@ module NV_NVDLA_wrapper
    nvdla_core2dbb_awprot,
    nvdla_core2dbb_arprot,
    nvdla_core2dbb_awqos,
+   nvdla_core2dbb_awatop,
+   nvdla_core2dbb_awregion,
    nvdla_core2dbb_arqos,
+   nvdla_core2dbb_arregion,
    dla_intr
    );
 
@@ -70,7 +75,7 @@ module NV_NVDLA_wrapper
    output wire 		 nvdla_core2dbb_awvalid;
    input wire 		 nvdla_core2dbb_awready;
    output wire [7:0] 	 nvdla_core2dbb_awid;
-   output wire [3:0] 	 nvdla_core2dbb_awlen;
+   output wire [7:0] 	 nvdla_core2dbb_awlen;
    output wire [32 -1:0] nvdla_core2dbb_awaddr;
    output wire 		 nvdla_core2dbb_wvalid;
    input wire 		 nvdla_core2dbb_wready;
@@ -80,8 +85,9 @@ module NV_NVDLA_wrapper
    output wire 		  nvdla_core2dbb_arvalid;
    input wire 		  nvdla_core2dbb_arready;
    output wire [7:0] 	  nvdla_core2dbb_arid;
-   output wire [3:0] 	  nvdla_core2dbb_arlen;
+   output wire [7:0] 	  nvdla_core2dbb_arlen;
    output wire [32 -1:0]  nvdla_core2dbb_araddr;
+   input wire  [1:0]	  nvdla_core2dbb_bresp;
    input wire 		  nvdla_core2dbb_bvalid;
    output wire 		  nvdla_core2dbb_bready;
    input wire [7:0] 	  nvdla_core2dbb_bid;
@@ -90,6 +96,7 @@ module NV_NVDLA_wrapper
    input wire [7:0] 	  nvdla_core2dbb_rid;
    input wire 		  nvdla_core2dbb_rlast;
    input wire [64 -1:0]   nvdla_core2dbb_rdata;
+   input wire [1:0] 	  nvdla_core2dbb_rresp;
    output wire [2:0] 	  nvdla_core2dbb_awsize;
    output wire [2:0] 	  nvdla_core2dbb_arsize;
    output wire [1:0] 	  nvdla_core2dbb_awburst;
@@ -101,7 +108,10 @@ module NV_NVDLA_wrapper
    output wire [2:0] 	  nvdla_core2dbb_awprot;
    output wire [2:0] 	  nvdla_core2dbb_arprot;
    output wire [3:0] 	  nvdla_core2dbb_awqos;
+   output wire [5:0] 	  nvdla_core2dbb_awatop;
+   output wire [3:0] 	  nvdla_core2dbb_awregion;
    output wire [3:0] 	  nvdla_core2dbb_arqos;
+   output wire [3:0] 	  nvdla_core2dbb_arregion;
    ///////////////
    output 		  dla_intr;
    ////////////////////////////////////////////////////////////////////////////////
@@ -154,6 +164,12 @@ module NV_NVDLA_wrapper
    assign nvdla_core2dbb_arprot = 3'b010;
    assign nvdla_core2dbb_awqos = 4'b0000;
    assign nvdla_core2dbb_arqos = 4'b0000;
+   assign nvdla_core2dbb_awatop = 6'b000000;
+   assign nvdla_core2dbb_awregion = 4'b0000;
+   assign nvdla_core2dbb_arregion = 4'b0000;
+
+   assign nvdla_core2dbb_awlen[7:4] = 4'b0000;
+   assign nvdla_core2dbb_arlen[7:4] = 4'b0000;
 
    NV_nvdla NV_nvdla_0
      (
@@ -176,7 +192,7 @@ module NV_NVDLA_wrapper
       ,.nvdla_core2dbb_aw_awvalid(nvdla_core2dbb_awvalid) //|> o
       ,.nvdla_core2dbb_aw_awready(nvdla_core2dbb_awready) //|< i
       ,.nvdla_core2dbb_aw_awid(nvdla_core2dbb_awid) //|> o
-      ,.nvdla_core2dbb_aw_awlen(nvdla_core2dbb_awlen) //|> o
+      ,.nvdla_core2dbb_aw_awlen(nvdla_core2dbb_awlen[3:0]) //|> o
       ,.nvdla_core2dbb_aw_awaddr(nvdla_core2dbb_awaddr) //|> o
       ,.nvdla_core2dbb_w_wvalid(nvdla_core2dbb_wvalid) //|> o
       ,.nvdla_core2dbb_w_wready(nvdla_core2dbb_wready) //|< i
@@ -189,7 +205,7 @@ module NV_NVDLA_wrapper
       ,.nvdla_core2dbb_ar_arvalid(nvdla_core2dbb_arvalid) //|> o
       ,.nvdla_core2dbb_ar_arready(nvdla_core2dbb_arready) //|< i
       ,.nvdla_core2dbb_ar_arid(nvdla_core2dbb_arid) //|> o
-      ,.nvdla_core2dbb_ar_arlen(nvdla_core2dbb_arlen) //|> o
+      ,.nvdla_core2dbb_ar_arlen(nvdla_core2dbb_arlen[3:0]) //|> o
       ,.nvdla_core2dbb_ar_araddr(nvdla_core2dbb_araddr) //|> o
       ,.nvdla_core2dbb_r_rvalid(nvdla_core2dbb_rvalid) //|< i
       ,.nvdla_core2dbb_r_rready(nvdla_core2dbb_rready) //|> o

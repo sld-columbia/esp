@@ -139,7 +139,7 @@ def gen_device_id(accelerator_list, axi_accelerator_list, template_dir, out_dir)
         for acc in axi_accelerator_list:
           f.write("  constant SLD_" + acc.name.upper() + " " + ": devid_t := 16#" + acc.device_id + "#;\n")
       elif tline.find("-- <<ddesc>>") >= 0:
-        for acc in accelerator_list:
+        for acc in accelerator_list + axi_accelerator_list:
           desc = acc.desc
           if len(acc.desc) < 31:
             desc = acc.desc + (31 - len(acc.desc))*" "
@@ -155,7 +155,7 @@ def write_axi_acc_interface(f, acc, dma_width):
     f.write("  " + clk + " : in std_logic;\n")
   for rst in acc.resets:
     f.write("  " + rst + " : in std_logic;\n")
-  f.write("  " + acc.apb_prefix + "psel : in std_logic_vector(0 to GLOB_MAXIOSLV-1);\n")
+  f.write("  " + acc.apb_prefix + "psel : in std_ulogic;\n")
   f.write("  " + acc.apb_prefix + "penable : in std_ulogic;\n")
   f.write("  " + acc.apb_prefix + "paddr : in std_logic_vector(31 downto 0);\n")
   f.write("  " + acc.apb_prefix + "pwrite : in std_ulogic;\n")
@@ -198,7 +198,7 @@ def write_axi_acc_interface(f, acc, dma_width):
   f.write("  " + acc.axi_prefix + "arregion : out std_logic_vector(3 downto 0);\n")
   if acc.user_width != "0":
     f.write("  " + acc.axi_prefix + "aruser : out std_logic_vector(" + str(acc.user_width) + " - 1 downto 0);\n")
-  f.write("  " + acc.axi_prefix + "arready : out std_logic;\n")
+  f.write("  " + acc.axi_prefix + "arready : in std_logic;\n")
   f.write("  " + acc.axi_prefix + "rready : out std_logic;\n")
   f.write("  " + acc.axi_prefix + "rid : in std_logic_vector (" + str(acc.id_width) + " - 1 downto 0);\n")
   f.write("  " + acc.axi_prefix + "rdata : in std_logic_vector (" + str(dma_width) + " - 1 downto 0);\n")
@@ -218,10 +218,10 @@ def write_axi_acc_interface(f, acc, dma_width):
     if acc.interrupt != "":
       f.write(";\n")
   if acc.interrupt != "":
-    f.write("  " + acc.interrupt + " : in std_logic\n")
+    f.write("  " + acc.interrupt + " : out std_logic\n")
 
 def bind_apb3(f, prefix):
-  f.write("      " + prefix + "psel => apbi.psel,\n");
+  f.write("      " + prefix + "psel => apbi.psel(pindex),\n");
   f.write("      " + prefix + "penable => apbi.penable,\n");
   f.write("      " + prefix + "paddr => apbi.paddr,\n");
   f.write("      " + prefix + "pwrite => apbi.pwrite,\n");

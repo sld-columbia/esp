@@ -84,7 +84,7 @@ endif
 ### Simnulation common options ###
 
 VCOMOPT  +=
-VLOGOPT  +=
+VLOGOPT  += -suppress 2275
 VSIMOPT  +=
 XMCOMOPT  +=
 XMLOGOPT  +=
@@ -99,7 +99,7 @@ ifneq ($(filter $(TECHLIB),$(FPGALIBS)),)
 VSIMOPT += -L secureip_ver -L unisims_ver
 endif
 
-VSIMOPT += -uvmcontrol=disable -suppress 3009 -t ps
+VSIMOPT += -uvmcontrol=disable -suppress 3009,2685,2718 -t ps
 
 ifneq ($(filter $(TECHLIB),$(FPGALIBS)),)
 EXTRA_SIMTOP  = glbl

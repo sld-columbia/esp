@@ -1,35 +1,56 @@
 # Copyright (c) 2011-2019 Columbia University, System Level Design Group
 # SPDX-License-Identifier: Apache-2.0
 
-ACCELERATORS_PATH		= $(ESP_ROOT)/accelerators
-ACCELERATORS			= $(filter-out common, $(shell ls -d $(ACCELERATORS_PATH)/*/ | awk -F/ '{print $$(NF-1)}'))
-ACCELERATORS-wdir		= $(addsuffix -wdir, $(ACCELERATORS))
-ACCELERATORS-hls		= $(addsuffix -hls, $(ACCELERATORS))
-ACCELERATORS-clean		= $(addsuffix -clean, $(ACCELERATORS))
-ACCELERATORS-distclean		= $(addsuffix -distclean, $(ACCELERATORS))
-ACCELERATORS-sim		= $(addsuffix -sim, $(ACCELERATORS))
-ACCELERATORS-plot		= $(addsuffix -plot, $(ACCELERATORS))
-ACCELERATORS-exe		= $(addsuffix -exe, $(ACCELERATORS))
+ACCELERATORS_PATH      = $(ESP_ROOT)/accelerators
+ACCELERATORS           = $(filter-out common, $(shell ls -d $(ACCELERATORS_PATH)/*/ | awk -F/ '{print $$(NF-1)}'))
+ACCELERATORS-wdir      = $(addsuffix -wdir, $(ACCELERATORS))
+ACCELERATORS-hls       = $(addsuffix -hls, $(ACCELERATORS))
+ACCELERATORS-clean     = $(addsuffix -clean, $(ACCELERATORS))
+ACCELERATORS-distclean = $(addsuffix -distclean, $(ACCELERATORS))
+ACCELERATORS-sim       = $(addsuffix -sim, $(ACCELERATORS))
+ACCELERATORS-plot      = $(addsuffix -plot, $(ACCELERATORS))
+ACCELERATORS-exe       = $(addsuffix -exe, $(ACCELERATORS))
 
-CHISEL_PATH                     = $(ESP_ROOT)/chisel
-CHISEL_ACC_PATH                 = $(CHISEL_PATH)/src/main/scala/esp/examples
-CHISEL_ACCELERATORS             = $(shell ls $(CHISEL_ACC_PATH)/*.scala | awk -F/ '{print $$(NF)}' | sed 's/\.scala//g')
-CHISEL_ACCELERATORS-clean	= $(addsuffix -clean, $(CHISEL_ACCELERATORS))
-CHISEL_ACCELERATORS-distclean	= $(addsuffix -distclean, $(CHISEL_ACCELERATORS))
 
-ACCELERATORS-driver		= $(addsuffix -driver, $(ACCELERATORS)) $(addsuffix -driver, $(CHISEL_ACCELERATORS))
-ACCELERATORS-driver-clean	= $(addsuffix -driver-clean, $(ACCELERATORS)) $(addsuffix -driver-clean, $(CHISEL_ACCELERATORS))
-ACCELERATORS-app		= $(addsuffix -app, $(ACCELERATORS)) $(addsuffix -app, $(CHISEL_ACCELERATORS))
-ACCELERATORS-app-clean		= $(addsuffix -app-clean, $(ACCELERATORS)) $(addsuffix -app-clean, $(CHISEL_ACCELERATORS))
-ACCELERATORS-barec		= $(addsuffix -barec, $(ACCELERATORS)) $(addsuffix -barec, $(CHISEL_ACCELERATORS))
-ACCELERATORS-barec-clean	= $(addsuffix -barec-clean, $(ACCELERATORS)) $(addsuffix -barec-clean, $(CHISEL_ACCELERATORS))
+CHISEL_PATH                   = $(ESP_ROOT)/chisel
+CHISEL_ACC_PATH               = $(CHISEL_PATH)/src/main/scala/esp/examples
+CHISEL_ACCELERATORS           = $(shell ls $(CHISEL_ACC_PATH)/*.scala | awk -F/ '{print $$(NF)}' | sed 's/\.scala//g')
+CHISEL_ACCELERATORS-clean     = $(addsuffix -clean, $(CHISEL_ACCELERATORS))
+CHISEL_ACCELERATORS-distclean = $(addsuffix -distclean, $(CHISEL_ACCELERATORS))
 
+
+THIRDPARTY_PATH                   = $(ESP_ROOT)/third-party/accelerators/dma$(NOC_WIDTH)
+THIRDPARTY_ACCELERATORS           = $(shell ls $(THIRDPARTY_PATH))
+THIRDPARTY_ACCELERATORS-clean     = $(addsuffix -clean, $(THIRDPARTY_ACCELERATORS))
+THIRDPARTY_ACCELERATORS-distclean = $(addsuffix -distclean, $(THIRDPARTY_ACCELERATORS))
+
+THIRDPARTY_VLOG       = $(foreach acc, $(THIRDPARTY_ACCELERATORS), $(THIRDPARTY_PATH)/$(acc)/$(acc)_wrapper.v)
+THIRDPARTY_VLOG      += $(foreach acc, $(THIRDPARTY_ACCELERATORS), $(foreach rtl, $(shell strings $(THIRDPARTY_PATH)/$(acc)/$(acc).verilog),  $(shell f=$(THIRDPARTY_PATH)/$(acc)/out/$(rtl); if test -e $$f; then echo $$f; fi;)))
+THIRDPARTY_INCDIR     = $(foreach acc, $(THIRDPARTY_ACCELERATORS), $(THIRDPARTY_PATH)/$(acc)/vlog_incdir)
+THIRDPARTY_SVLOG      = $(foreach acc, $(THIRDPARTY_ACCELERATORS), $(foreach rtl, $(shell strings $(THIRDPARTY_PATH)/$(acc)/$(acc).sverilog), $(shell f=$(THIRDPARTY_PATH)/$(acc)/out/$(rtl); if test -e $$f; then echo $$f; fi;)))
+THIRDPARTY_VHDL_PKGS  = $(foreach acc, $(THIRDPARTY_ACCELERATORS), $(foreach rtl, $(shell strings $(THIRDPARTY_PATH)/$(acc)/$(acc).pkgs),     $(shell f=$(THIRDPARTY_PATH)/$(acc)/out/$(rtl); if test -e $$f; then echo $$f; fi;)))
+THIRDPARTY_VHDL       = $(foreach acc, $(THIRDPARTY_ACCELERATORS), $(foreach rtl, $(shell strings $(THIRDPARTY_PATH)/$(acc)/$(acc).vhdl),     $(shell f=$(THIRDPARTY_PATH)/$(acc)/out/$(rtl); if test -e $$f; then echo $$f; fi;)))
+
+THIRDPARTY_INCDIR_MODELSIM = $(foreach dir, $(THIRDPARTY_INCDIR), +incdir+$(dir))
+THIRDPARTY_INCDIR_XCELIUM  = $(foreach dir, $(THIRDPARTY_INCDIR), -INCDIR $(dir))
+THIRDPARTY_INCDIR_INCISIVE = $(THIRDPARTY_INCDIR_XCELIUM)
+
+
+ACCELERATORS-driver       = $(addsuffix -driver, $(ACCELERATORS)) $(addsuffix -driver, $(CHISEL_ACCELERATORS))
+ACCELERATORS-driver-clean = $(addsuffix -driver-clean, $(ACCELERATORS)) $(addsuffix -driver-clean, $(CHISEL_ACCELERATORS))
+ACCELERATORS-app          = $(addsuffix -app, $(ACCELERATORS)) $(addsuffix -app, $(CHISEL_ACCELERATORS))
+ACCELERATORS-app-clean    = $(addsuffix -app-clean, $(ACCELERATORS)) $(addsuffix -app-clean, $(CHISEL_ACCELERATORS))
+ACCELERATORS-barec        = $(addsuffix -barec, $(ACCELERATORS)) $(addsuffix -barec, $(CHISEL_ACCELERATORS))
+ACCELERATORS-barec-clean  = $(addsuffix -barec-clean, $(ACCELERATORS)) $(addsuffix -barec-clean, $(CHISEL_ACCELERATORS))
 
 
 print-available-accelerators:
-	$(QUIET_INFO)echo "Available accelerators generated from HLS: $(ACCELERATORS)"
+	$(QUIET_INFO)echo "Available accelerators generated from Stratus HLS: $(ACCELERATORS)"
 	$(QUIET_INFO)echo "Available accelerators generated from Chisel3: $(CHISEL_ACCELERATORS)"
+	$(QUIET_INFO)echo "Available third-party accelerators: $(THIRDPARTY_ACCELERATORS)"
 
+
+### Chisel ###
 sbt-run:
 	$(QUIET_RUN)
 	@cd $(CHISEL_PATH); sbt run;
@@ -64,8 +85,37 @@ chisel-accelerators-clean:
 
 chisel-accelerators-distclean: chisel-accelerators-clean $(CHISEL_ACCELERATORS-distclean)
 
-.PHONY: sbt-run chisel-accelerators chisel-accelerators-clean chisel-accelerators-distclean $(CHISEL_ACCELERATORS-clean) $(CHISEL_ACCELERATORS-distclean)
+.PHONY: sbt-run chisel-accelerators chisel-accelerators-clean chisel-accelerators-distclean $(CHISEL_ACCELERATORS) $(CHISEL_ACCELERATORS-clean) $(CHISEL_ACCELERATORS-distclean)
 
+
+### Third-Party ###
+$(THIRDPARTY_ACCELERATORS):
+	$(QUIET_BUILD)
+	@if ! test -e $(THIRDPARTY_PATH)/$@/out; then \
+		cd $(THIRDPARTY_PATH)/$@; \
+		$(MAKE) CROSS_COMPILE=$(CROSS_COMPILE_LINUX) ARCH=$(ARCH) KSRC=$(PWD)/linux-build ; \
+	fi;
+
+thirdparty-accelerators: $(THIRDPARTY_ACCELERATORS)
+
+$(THIRDPARTY_ACCELERATORS-clean):
+	$(QUIET_CLEAN)
+	@cd $(THIRDPARTY_PATH)/$(@:-clean=); \
+	$(MAKE) CROSS_COMPILE=$(CROSS_COMPILE_LINUX) ARCH=$(ARCH) KSRC=$(PWD)/linux-build clean;
+
+$(THIRDPARTY_ACCELERATORS-distclean): %-distclean : %-clean
+	$(QUIET_CLEAN)
+	@cd $(THIRDPARTY_PATH)/$(@:-distclean=); \
+	$(MAKE) CROSS_COMPILE=$(CROSS_COMPILE_LINUX) ARCH=$(ARCH) KSRC=$(PWD)/linux-build distclean;
+
+thirdparty-accelerators-clean: $(THIRDPARTY_ACCELERATORS-clean)
+
+thirdparty-accelerators-distclean: $(THIRDPARTY_ACCELERATORS-distclean)
+
+.PHONY: thirdparty-accelerators thirdparty-accelerators-clean thirdparty-accelerators-distclean $(THIRDPARTY_ACCELERATORS) $(THIRDPARTY_ACCELERATORS-clean) $(THIRDPARTY_ACCELERATORS-distclean)
+
+
+### Stratus HLS ###
 $(ACCELERATORS-wdir):
 	$(QUIET_MKDIR)mkdir -p $(ACCELERATORS_PATH)/$(@:-wdir=)/hls-work-$(TECHLIB)
 	@cd $(ACCELERATORS_PATH)/$(@:-wdir=)/hls-work-$(TECHLIB); \
@@ -111,6 +161,15 @@ $(ACCELERATORS-distclean): %-distclean : %-wdir
 
 .PHONY: print-available-accelerators $(ACCELERATORS-wdir) $(ACCELERATORS-hls) $(ACCELERATORS-sim) $(ACCELERATORS-plot) $(ACCELERATORS-clean) $(ACCELERATORS-distclean)
 
+accelerators: $(ACCELERATORS-hls)
+
+accelerators-clean: $(ACCELERATORS-clean)
+
+accelerators-distclean: $(ACCELERATORS-distclean)
+
+.PHONY: accelerators accelerators-clean accelerators-distclean
+
+### Common ###
 $(ESP_ROOT)/tech/$(TECHLIB)/acc/installed.log:
 	touch $@
 
@@ -118,6 +177,7 @@ SLDGEN_DEPS  = $(ESP_ROOT)/tech/$(TECHLIB)/acc/installed.log
 SLDGEN_DEPS += $(ESP_ROOT)/utils/sldgen/sld_generate.py
 SLDGEN_DEPS += $(wildcard $(ESP_ROOT)/utils/sldgen/templates/*.vhd)
 
+## ESP Wrappers ##
 sldgen: $(SLDGEN_DEPS)
 	$(QUIET_MKDIR) $(RM) $@; mkdir -p $@
 	$(QUIET_RUN)$(ESP_ROOT)/utils/sldgen/sld_generate.py $(NOC_WIDTH) $(ESP_ROOT)/tech/$(TECHLIB) $(ESP_ROOT)/third-party $(ESP_ROOT)/utils/sldgen/templates ./sldgen
@@ -128,14 +188,9 @@ sldgen-clean:
 sldgen-distclean: sldgen-clean
 	$(QUIET_CLEAN)$(RM) sldgen
 
-accelerators: $(ACCELERATORS-hls)
+.PHONY: sldgen-clean sldgen-distclean
 
-accelerators-clean: $(ACCELERATORS-clean)
-
-accelerators-distclean: $(ACCELERATORS-distclean)
-
-.PHONY: sldgen-clean sldgen-distclean accelerators accelerators-clean accelerators-distclean
-
+## Device Drivers ##
 $(ACCELERATORS-driver): sysroot linux-build/vmlinux
 	@if test -e $(DRIVERS)/$(@:-driver=)/linux/$(@:-driver=).c; then \
 		echo '   ' MAKE $@; mkdir -p sysroot/opt/drivers; \
@@ -204,18 +259,18 @@ accelerators-barec: $(ACCELERATORS-barec)
 accelerators-barec-clean: $(ACCELERATORS-barec-clean) probe-clean
 
 esp-clean:
-	$(QUIET_CLEAN) CROSS_COMPILE=sparc-leon3-linux- ARCH=sparc KSRC=$(PWD)/linux-build $(MAKE) -C $(DRIVERS)/esp clean
+	$(QUIET_CLEAN) CROSS_COMPILE=$(CROSS_COMPILE_LINUX) ARCH=$(ARCH) KSRC=$(PWD)/linux-build $(MAKE) -C $(DRIVERS)/esp clean
 
 esp-cache-clean:
-	$(QUIET_CLEAN) CROSS_COMPILE=sparc-leon3-linux- ARCH=sparc KSRC=$(PWD)/linux-build $(MAKE) -C $(DRIVERS)/esp_cache clean
+	$(QUIET_CLEAN) CROSS_COMPILE=$(CROSS_COMPILE_LINUX) ARCH=$(ARCH) KSRC=$(PWD)/linux-build $(MAKE) -C $(DRIVERS)/esp_cache clean
 
 contig-clean:
-	$(QUIET_CLEAN) CROSS_COMPILE=sparc-leon3-linux- ARCH=sparc KSRC=$(PWD)/linux-build $(MAKE) -C $(DRIVERS)/contig_alloc clean-libcontig
+	$(QUIET_CLEAN) CROSS_COMPILE=$(CROSS_COMPILE_LINUX) ARCH=$(ARCH) KSRC=$(PWD)/linux-build $(MAKE) -C $(DRIVERS)/contig_alloc clean-libcontig
 
 probe-clean:
-	$(QUIET_CLEAN) CROSS_COMPILE=sparc-elf- $(MAKE) -C $(DRIVERS)/probe clean
+	$(QUIET_CLEAN) CROSS_COMPILE=$(CROSS_COMPILE_ELF) $(MAKE) -C $(DRIVERS)/probe clean
 
 test-clean:
-	$(QUIET_CLEAN) CROSS_COMPILE=sparc-leon3-linux- $(MAKE) -C $(DRIVERS)/test clean
+	$(QUIET_CLEAN) CROSS_COMPILE=$(CROSS_COMPILE_LINUX) $(MAKE) -C $(DRIVERS)/test clean
 
 .PHONY: accelerators-driver accelerators-driver-clean accelerators-app accelerators-app-clean accelerators-barec accelerators-barec-clean probe-clean contig-clean esp-clean esp-cache-clean test-clean
