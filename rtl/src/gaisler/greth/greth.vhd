@@ -43,6 +43,7 @@ entity greth is
     pmask          : integer := 16#FFF#;
     pirq           : integer := 0;
     memtech        : integer := 0;
+    little_end     : integer range 0 to 1 := 0;
     ifg_gap        : integer := 24; 
     attempt_limit  : integer := 16;
     backoff_limit  : integer := 10;
