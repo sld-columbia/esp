@@ -39,6 +39,7 @@ entity grethm is
     pmask          : integer := 16#FFF#;
     pirq           : integer := 0;
     memtech        : integer := 0;
+    little_end     : integer range 0 to 1 := 0;
     ifg_gap        : integer := 24; 
     attempt_limit  : integer := 16;
     backoff_limit  : integer := 10;
@@ -98,6 +99,7 @@ begin
         pmask          => pmask,
         pirq           => pirq,
         memtech        => memtech,
+        little_end     => little_end,
         ifg_gap        => ifg_gap,
         attempt_limit  => attempt_limit,
         backoff_limit  => backoff_limit,
