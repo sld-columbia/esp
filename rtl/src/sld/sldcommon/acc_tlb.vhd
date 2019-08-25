@@ -143,6 +143,11 @@ architecture tlb of acc_tlb is
   signal dma_read_done      : std_ulogic;
   signal dma_read_start     : std_ulogic;
 
+  -- P2P
+  signal src_is_p2p        : std_ulogic;
+  signal dst_is_p2p        : std_ulogic;
+  signal is_p2p_in, is_p2p : std_ulogic;
+
   -- Auxiliary
   signal one_sig : std_logic_vector(31 downto 0);
   signal fff_sig : std_logic_vector(31 downto 0);
@@ -153,6 +158,8 @@ begin  -- tlb
 
   tlb_empty <= tlb_empty_int;
   dma_length <= dma_length_int;
+  src_is_p2p <= bankreg(P2P_REG)(P2P_BIT_SRC_IS_P2P);
+  dst_is_p2p <= bankreg(P2P_REG)(P2P_BIT_DST_IS_P2P);
 
   -- TODO: without scatter-gather we only support 32-bits physical address and data width
   no_scatter_gather: if scatter_gather = 0 generate
@@ -203,13 +210,14 @@ begin  -- tlb
     dma_address_in <= dma_base_address + extended_offset;
   end process large_phys_addr;
 
-  dma_length_in <= remaining_length when dma_split = '0' else dma_length_fallback;
+  dma_length_in <= remaining_length when (dma_split = '0') or (is_p2p = '1') else dma_length_fallback;
   -- Stage 4 input
   remaining_length_update_in <= remaining_length - dma_length_int;
   vaddress_update_in <= vaddress + dma_length_int;
 
   tlb_fsm_proc: process(tlb_fsm_current, rd_request, wr_request, tlb_empty_int,
-                        dma_tran_done, dma_tran_header_sent, remaining_length)
+                        dma_tran_done, dma_tran_header_sent, remaining_length,
+                        src_is_p2p, dst_is_p2p)
   begin  -- process tlb_fsm_proc
     pt_fsm_sample_0 <= '0';
     pt_fsm_sample_1 <= '0';
@@ -223,17 +231,32 @@ begin  -- tlb
     dma_read_done <= '0';
     dma_write_start <= '0';
     dma_write_done <= '0';
+    is_p2p_in <= '0';
     case tlb_fsm_current is
       when tlb_init =>
         if tlb_empty_int = '0' then
           tlb_fsm_next <= tlb_s0;
         end if;
       when tlb_s0 =>
-        if (rd_request or wr_request) = '1' then
-          dma_read_start <= rd_request;
-          dma_write_start <= wr_request and (not rd_request);
+        -- Priority is always read first
+        if rd_request = '1' then
+          dma_read_start <= '1';
           pt_fsm_sample_0 <= '1';
-          tlb_fsm_next <= tlb_s1;
+          if src_is_p2p = '0' then
+            tlb_fsm_next <= tlb_s1;
+          else
+            is_p2p_in <= '1';
+            tlb_fsm_next <= tlb_s3;
+          end if;
+        elsif wr_request = '1' then
+          dma_write_start <= '1';
+          pt_fsm_sample_0 <= '1';
+          if dst_is_p2p = '0' then
+            tlb_fsm_next <= tlb_s1;
+          else
+            is_p2p_in <= '1';
+            tlb_fsm_next <= tlb_s3;
+          end if;
         end if;
       when tlb_s1 =>
         pt_fsm_sample_1 <= '1';
@@ -256,7 +279,7 @@ begin  -- tlb
         end if;
       when tlb_s5 =>
         if dma_tran_done = '1' then
-          if remaining_length = zero then
+          if (remaining_length = zero) or (is_p2p = '1') then
             dma_read_done <= '1';
             dma_write_done <= '1';
             tlb_fsm_next <= tlb_s0;
@@ -286,6 +309,7 @@ begin  -- tlb
       dma_split <= '0';
       dma_address <= (others => '0');
       dma_length_int <= (others => '0');
+      is_p2p <= '0';
     elsif clk'event and clk = '1' then  -- rising clock edge
       if tlb_empty_int = '1' then
         tlb_fsm_current <= tlb_init;
@@ -304,6 +328,7 @@ begin  -- tlb
       end if;
 
       if pt_fsm_sample_0 = '1' then
+        is_p2p <= is_p2p_in;
         chunk_size <= chunk_size_in;
         dma_offset_mask <= dma_offset_mask_in;
         vaddress <= vaddress_in;
@@ -335,11 +360,15 @@ begin  -- tlb
     if rst = '0' then                   -- asynchronous reset (active low)
       tlb_empty_int <= '1';
     elsif clk'event and clk = '1' then  -- rising clock edge
-      if tlb_valid = '1' then
+      if (src_is_p2p and dst_is_p2p) = '1' then
         tlb_empty_int <= '0';
-      end if;
-      if tlb_clear = '1' then
-        tlb_empty_int <= '1';
+      else
+        if tlb_valid = '1' then
+          tlb_empty_int <= '0';
+        end if;
+        if tlb_clear = '1' then
+          tlb_empty_int <= '1';
+        end if;
       end if;
     end if;
   end process tlb_status_register;

@@ -191,6 +191,21 @@ architecture rtl of acc_dma2noc is
   signal readdata  : std_logic_vector(31 downto 0);
   signal dvfs_apbo : apb_slv_out_type;
 
+  -- Coherence
+  signal coherence : integer range 0 to ACC_COH_FULL;
+
+  -- P2P
+  signal p2p_src_index_r      : integer range 0 to 3;
+  signal p2p_src_index_inc    : std_ulogic;
+  signal p2p_dst_y            : local_yx;
+  signal p2p_dst_x            : local_yx;
+  signal p2p_req_rcv_rdreq    : std_ulogic;
+  signal p2p_req_rcv_data_out : noc_flit_type;
+  signal p2p_req_rcv_empty    : std_ulogic;
+  signal p2p_rsp_snd_wrreq    : std_ulogic;
+  signal p2p_rsp_snd_data_in  : noc_flit_type;
+  signal p2p_rsp_snd_full     : std_ulogic;
+
   -- IRQ
   signal irq      : std_logic_vector(NAHBIRQ-1 downto 0);
   signal irqset   : std_ulogic;
@@ -210,7 +225,7 @@ architecture rtl of acc_dma2noc is
   -- DMA
   type dma_fsm is (idle, request_header, request_address, request_length,
                    request_data, reply_header, reply_data, config,
-                   send_header, rd_handshake, wr_handshake,
+                   send_header, rd_handshake, wr_handshake, wait_req_p2p,
                    running, reset, wait_for_completion, fully_coherent_request);
   signal dma_state, dma_next : dma_fsm;
   signal status : std_logic_vector(31 downto 0);
@@ -359,50 +374,73 @@ begin  -- rtl
   -----------------------------------------------------------------------------
   -- DMA packet
   -----------------------------------------------------------------------------
+  coherence <= conv_integer(bankreg(COHERENCE_REG)(COH_T_LOG2 - 1 downto 0));
 
   coherence_model_select: process (bankreg, dma_rcv_rdreq_int, dma_rcv_data_out, dma_rcv_empty,
                                    dma_snd_wrreq_int, dma_snd_data_in_int, dma_snd_full,
                                    llc_coherent_dma_rcv_data_out, llc_coherent_dma_rcv_empty,
-                                   llc_coherent_dma_snd_full) is
-    variable coherence : integer range 0 to ACC_COH_FULL;
+                                   llc_coherent_dma_snd_full, p2p_req_rcv_rdreq,
+                                   p2p_rsp_snd_wrreq, p2p_rsp_snd_data_in, coherence) is
   begin  -- process coherence_model_select
-    coherence := conv_integer(bankreg(COHERENCE_REG)(COH_T_LOG2 - 1 downto 0));
 
     if coherence = ACC_COH_LLC or coherence = ACC_COH_RECALL then
+      -- P2P requests (1 flit each) share the LLC-coherent DMA queues in output
+      -- from the tile. Given the NoC plane assignment to prevent deadlock,
+      -- these P2P requests are received on the non-coherent DMA queues, which
+      -- are otherwise not in use if coherence is set to LLC-coherent.
+      -- P2P resposnes use the non-coherent DMA request queues in
+      -- output, which are otherwise not in use if coherence is set to
+      -- LLC-coherent. These P2P responses are received on the shared queues
+      -- for LLC-coherent DMA as if memory replied.
       llc_coherent_dma_rcv_rdreq   <= dma_rcv_rdreq_int;
       dma_rcv_data_out_int         <= llc_coherent_dma_rcv_data_out;
       dma_rcv_empty_int            <= llc_coherent_dma_rcv_empty;
       llc_coherent_dma_snd_wrreq   <= dma_snd_wrreq_int;
       llc_coherent_dma_snd_data_in <= dma_snd_data_in_int;
       dma_snd_full_int             <= llc_coherent_dma_snd_full;
-      dma_rcv_rdreq                <= '0';
-      dma_snd_wrreq                <= '0';
-      dma_snd_data_in              <= (others => '0');
+      dma_rcv_rdreq                <= p2p_req_rcv_rdreq;
+      p2p_req_rcv_data_out         <= dma_rcv_data_out;
+      p2p_req_rcv_empty            <= dma_rcv_empty;
+      dma_snd_wrreq                <= p2p_rsp_snd_wrreq;
+      dma_snd_data_in              <= p2p_rsp_snd_data_in;
+      p2p_rsp_snd_full             <= dma_snd_full;
     else
+      -- Symmetrically P2P requeusts share the non-coherent DMA queues in
+      -- output, but are received on the LLC-coherent response queues.
+      -- P2P responses use the LLC-coherent DMA request queues in output and
+      -- are received on the non-coherent DMA queues.
       dma_rcv_rdreq                <= dma_rcv_rdreq_int;
       dma_rcv_data_out_int         <= dma_rcv_data_out;
       dma_rcv_empty_int            <= dma_rcv_empty;
       dma_snd_wrreq                <= dma_snd_wrreq_int;
       dma_snd_data_in              <= dma_snd_data_in_int;
       dma_snd_full_int             <= dma_snd_full;
-      llc_coherent_dma_rcv_rdreq   <= '0';
-      llc_coherent_dma_snd_wrreq   <= '0';
-      llc_coherent_dma_snd_data_in <= (others => '0');
+      llc_coherent_dma_rcv_rdreq   <= p2p_req_rcv_rdreq;
+      p2p_req_rcv_data_out         <= llc_coherent_dma_rcv_data_out;
+      p2p_req_rcv_empty            <= llc_coherent_dma_rcv_empty;
+      llc_coherent_dma_snd_wrreq   <= p2p_rsp_snd_wrreq;
+      llc_coherent_dma_snd_data_in <= p2p_rsp_snd_data_in;
+      p2p_rsp_snd_full             <= llc_coherent_dma_snd_full;
     end if;
   end process coherence_model_select;
 
-  make_packet: process (bankreg, pending_dma_write, tlb_empty, dma_address, dma_length)
+  p2p_dst_y <= get_origin_y(NOC_FLIT_SIZE, p2p_req_rcv_data_out);
+  p2p_dst_x <= get_origin_x(NOC_FLIT_SIZE, p2p_req_rcv_data_out);
+
+  make_packet: process (bankreg, pending_dma_write, tlb_empty, dma_address, dma_length,
+                        p2p_src_index_r, p2p_dst_y, p2p_dst_x, coherence)
     variable msg_type : noc_msg_type;
     variable header_v : noc_flit_type;
     variable tmp : std_logic_vector(63 downto 0);
     variable address : std_logic_vector(ADDR_BITS - 1 downto 0);
     variable length : std_logic_vector(31 downto 0);
     variable mem_x, mem_y : local_yx;
-    variable coherence : integer range 0 to ACC_COH_FULL;
+    variable is_p2p : std_ulogic;
+    variable p2p_src_x, p2p_src_y : local_yx;
+    variable p2p_header_v : noc_flit_type;
   begin  -- process make_packet
 
-    -- Get coherence model from configuration registers
-    coherence := conv_integer(bankreg(COHERENCE_REG)(COH_T_LOG2 - 1 downto 0));
+    is_p2p := '0';
 
     if tlb_empty = '1' then
       -- fetch page table
@@ -423,19 +461,29 @@ begin  -- rtl
       -- accelerator write burst
       address := dma_address;
       length  := len_pad & dma_length(31 downto GLOB_BYTE_OFFSET_BITS);
-      if coherence = ACC_COH_LLC or coherence = ACC_COH_RECALL then
-        msg_type := REQ_DMA_WRITE;
+      if bankreg(P2P_REG)(P2P_BIT_DST_IS_P2P) = '1' then
+        msg_type := RSP_P2P;
+        is_p2p := '1';
       else
-        msg_type := DMA_FROM_DEV;
+        if coherence = ACC_COH_LLC or coherence = ACC_COH_RECALL then
+          msg_type := REQ_DMA_WRITE;
+        else
+          msg_type := DMA_FROM_DEV;
+        end if;
       end if;
     else
       -- accelerator read burst
       address := dma_address;
       length  := len_pad & dma_length(31 downto GLOB_BYTE_OFFSET_BITS);
-      if coherence = ACC_COH_LLC or coherence = ACC_COH_RECALL then
-        msg_type := REQ_DMA_READ;
+      if bankreg(P2P_REG)(P2P_BIT_SRC_IS_P2P) = '1' then
+        msg_type := REQ_P2P;
+        is_p2p := '1';
       else
-        msg_type := DMA_TO_DEV;
+        if coherence = ACC_COH_LLC or coherence = ACC_COH_RECALL then
+          msg_type := REQ_DMA_READ;
+        else
+          msg_type := DMA_TO_DEV;
+        end if;
       end if;
     end if;
 
@@ -451,9 +499,23 @@ begin  -- rtl
       end loop;  -- i
     end if;
 
+    p2p_src_y := bankreg(P2P_REG)(9 + 6 * p2p_src_index_r downto 7 + 6 * p2p_src_index_r);
+    p2p_src_x := bankreg(P2P_REG)(6 + 6 * p2p_src_index_r downto 4 + 6 * p2p_src_index_r);
+
+    if msg_type = REQ_P2P then
+      p2p_header_v := create_header(NOC_FLIT_SIZE, local_y, local_x, p2p_src_y, p2p_src_x, msg_type, hprot);
+      p2p_header_v(NOC_FLIT_SIZE-1 downto NOC_FLIT_SIZE-PREAMBLE_WIDTH) := PREAMBLE_1FLIT;
+    else
+      p2p_header_v := create_header(NOC_FLIT_SIZE, local_y, local_x, p2p_dst_y, p2p_dst_x, msg_type, hprot);
+    end if;
+
     header_v := (others => '0');
     header_v := create_header(NOC_FLIT_SIZE, local_y, local_x, mem_y, mem_x, msg_type, hprot);
-    header <= header_v;
+    if is_p2p = '0' then
+      header <= header_v;
+    else
+      header <= p2p_header_v;
+    end if;
 
     payload_address <= (others => '0');
     payload_address(NOC_FLIT_SIZE-1 downto NOC_FLIT_SIZE-PREAMBLE_WIDTH) <= PREAMBLE_BODY;
@@ -473,6 +535,7 @@ begin  -- rtl
       payload_length_r <= (others => '0');
       count <= conv_std_logic_vector(1, 32);
       size_r <= HSIZE_WORD;
+      p2p_src_index_r <= 0;
     elsif clk'event and clk = '1' then  -- rising clock edge
       if sample_flits = '1' then
         header_r <= header;
@@ -489,6 +552,13 @@ begin  -- rtl
         size_r <= rd_size;
       elsif sample_wr_size = '1' then
         size_r <= wr_size;
+      end if;
+      if p2p_src_index_inc = '1' then
+        if p2p_src_index_r = conv_integer(bankreg(P2P_REG)(P2P_BIT_NSRCS + P2P_WIDTH_NSRCS - 1 downto P2P_BIT_NSRCS)) then
+          p2p_src_index_r <= 0;
+        else
+          p2p_src_index_r <= p2p_src_index_r + 1;
+        end if;
       end if;
     end if;
   end process;
@@ -523,17 +593,14 @@ begin  -- rtl
                           header_r, payload_address_r, payload_length_r,
                           dma_tran_start, tlb_empty, pending_dma_write,
                           pending_dma_read, coherent_dma_ready, dvfs_transient,
-                          size_r)
+                          size_r, coherence,
+                          p2p_req_rcv_empty, p2p_req_rcv_data_out, p2p_rsp_snd_full)
     variable payload_data : noc_flit_type;
     variable preamble : noc_preamble_type;
     variable msg : noc_msg_type;
     variable len : std_logic_vector(31 downto 0);
     variable tlb_wr_address_next : std_logic_vector(31 downto 0);
-    variable coherence : integer range 0 to ACC_COH_FULL;
   begin  -- process dma_roundtrip
-
-    -- Get coherence model from configuration registers
-    coherence := conv_integer(bankreg(COHERENCE_REG)(COH_T_LOG2 - 1 downto 0));
 
     dma_next <= dma_state;
     sample_flits <= '0';
@@ -556,6 +623,12 @@ begin  -- rtl
     dma_snd_data_in_int <= (others => '0');
     dma_snd_wrreq_int <= '0';
     dma_rcv_rdreq_int <= '0';
+
+    p2p_rsp_snd_data_in <= (others => '0');
+    p2p_rsp_snd_wrreq <= '0';
+    p2p_req_rcv_rdreq <= '0';
+
+    p2p_src_index_inc <= '0';
 
     preamble := get_preamble(NOC_FLIT_SIZE, dma_rcv_data_out_int);
     msg := get_msg_type(NOC_FLIT_SIZE, header_r);
@@ -631,7 +704,7 @@ begin  -- rtl
         -- Evaluation of inputs is done in the following order:
         -- 1) If there is a DMA transaction split across multiple chunks
         --    (scattered), we must first complete the transaction, because the
-        --    lenght has been sent to the memory tile. If not completed deadlock
+        --    length has been sent to the memory tile. If not completed deadlock
         --    will occur on the NoC.
         -- 2) If the software sends a reset command, both the accelerator and
         --    the FSM are reset during the next clock cycle (goto reset state)
@@ -641,7 +714,7 @@ begin  -- rtl
         --    register (goto wait_for_completion).
         -- 4) If there is a rd_request, a read transaction is initiated.
         -- 5) If there a wr_request, a write transaction is initiated. Read has
-        --    priority over write
+        --    priority over write regardless of P2P configuration.
         if (pending_dma_read or pending_dma_write) = '1' and scatter_gather /= 0 then
           if dma_tran_start = '1' then
             sample_flits <= '1';
@@ -723,25 +796,50 @@ begin  -- rtl
           elsif dma_tran_start = '1' and scatter_gather /= 0 then
             sample_flits <= '1';
             if coherence /= ACC_COH_FULL then
-              dma_next <= send_header;
+              if bankreg(P2P_REG)(P2P_BIT_DST_IS_P2P) = '1' then
+                dma_next <= wait_req_p2p;
+              else
+                dma_next <= send_header;
+              end if;
             else
               dma_next <= fully_coherent_request;
             end if;
           elsif scatter_gather = 0 then
             if coherence /= ACC_COH_FULL then
-              dma_next <= send_header;
+              if bankreg(P2P_REG)(P2P_BIT_DST_IS_P2P) = '1' then
+                dma_next <= wait_req_p2p;
+              else
+                dma_next <= send_header;
+              end if;
             else
               dma_next <= fully_coherent_request;
             end if;
           end if;
         end if;
 
+      when wait_req_p2p =>
+        if p2p_req_rcv_empty = '0' and dvfs_transient = '0' then
+          p2p_req_rcv_rdreq <= '1';
+          sample_flits <= '1';
+          dma_next <= send_header;
+        end if;
+
       when send_header =>
-        if dma_snd_full_int = '0' and dvfs_transient = '0' then
+        if dma_snd_full_int = '0' and dvfs_transient = '0' and msg /= RSP_P2P then
           dma_snd_data_in_int <= header_r;
           dma_snd_wrreq_int <= '1';
           dma_tran_header_sent <= '1';
-          dma_next <= request_address;
+          if msg = REQ_P2P then
+            dma_next <= reply_header;
+            p2p_src_index_inc <= '1';
+          else
+            dma_next <= request_address;
+          end if;
+        elsif p2p_rsp_snd_full = '0' and dvfs_transient = '0' and msg = RSP_P2P then
+          p2p_rsp_snd_data_in <= header_r;
+          p2p_rsp_snd_wrreq <= '1';
+          dma_tran_header_sent <= '1';
+          dma_next <= request_data;
         end if;
 
       when request_address =>
@@ -763,19 +861,30 @@ begin  -- rtl
         end if;
 
       when request_data =>
-        dma_snd_delay <= dma_snd_full_int;       -- for DVFS TRAFFIC policy
-        if bufdout_valid = '1' and dma_snd_full_int = '0' and dvfs_transient = '0' then
-          write_burst <= '1';
+        if msg = RSP_P2P then
+          dma_snd_delay <= p2p_rsp_snd_full;       -- for DVFS TRAFFIC policy
+        else
+          dma_snd_delay <= dma_snd_full_int;       -- for DVFS TRAFFIC policy
+        end if;
+        if ((bufdout_valid = '1' and dvfs_transient = '0') and
+            ((msg = RSP_P2P and p2p_rsp_snd_full = '0') or
+             (msg /= RSP_P2P and dma_snd_full_int = '0'))) then
+          if msg = RSP_P2P  then
+            p2p_rsp_snd_data_in <= payload_data;
+            p2p_rsp_snd_wrreq <= '1';
+          else
             dma_snd_data_in_int <= payload_data;
             dma_snd_wrreq_int <= '1';
-            bufdout_ready <= '1';
-            if count = len then
-              clear_count <= '1';
-              dma_tran_done <= '1';
-              dma_next <= running;
-            else
-              increment_count <= '1';
-            end if;
+          end if;
+          write_burst <= '1';
+          bufdout_ready <= '1';
+          if count = len then
+            clear_count <= '1';
+            dma_tran_done <= '1';
+            dma_next <= running;
+          else
+            increment_count <= '1';
+          end if;
         end if;
 
       when reply_header =>
