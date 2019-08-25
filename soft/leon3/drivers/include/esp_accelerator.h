@@ -40,15 +40,27 @@
 /* bank(7)        : PT_NCHUNK_MAX (maximum number of chunks supported) - Read only */
 #define PT_NCHUNK_MAX_REG 0x1c
 
-/* bank(8)        : RESERVED */
+/* bank(8)        : PT_ADDRESS_EXTENDED (page table bus address MSBs) */
+#define PT_ADDRESS_EXTENDED_REG 0x20
 
 /* bank(9)        : Type of coherence (None, LLC, Full) - Read only */
 #define COHERENCE_REG 0x24
 enum accelerator_coherence {ACC_COH_NONE = 0, ACC_COH_LLC, ACC_COH_RECALL, ACC_COH_FULL, ACC_COH_AUTO};
 
-/* bank(10)       : RESERVED */
+/* bank(10)       : Point-to-point configuration */
+#define P2P_REG 0x28
+#define P2P_MASK_NSRCS 0x3
+#define P2P_MASK_SRC_IS_P2P BIT(2)
+#define P2P_MASK_DST_IS_P2P BIT(3)
+#define P2P_MASK_SRCS_YX 0x7
+#define P2P_SHIFT_SRCS_Y(_n) (7 + _n * 6)
+#define P2P_SHIFT_SRCS_X(_n) (4 + _n * 6)
 
 /* bank(11)       : RESERVED */
+#define YX_REG 0x2c
+#define YX_SHIFT_X 0
+#define YX_SHIFT_Y 16
+#define YX_MASK_YX 0x7
 
 /* bank(12)       : SRC_OFFSET (offset in bytes from beginning of physical buffer) */
 #define SRC_OFFSET_REG 0x30
