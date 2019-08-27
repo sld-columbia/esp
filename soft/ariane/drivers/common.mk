@@ -7,7 +7,7 @@ CFLAGS += -O3
 CFLAGS += -Wall
 CFLAGS += -I../../include -I../linux
 CFLAGS += -L../../contig_alloc -L../../test
-LIBS := -lm -lrt -ltest -lcontig
+LIBS := -lm -lrt -ltest -lcontig -lpthread
 
 CC := gcc
 LD := $(CROSS_COMPILE)$(LD)
