@@ -340,9 +340,6 @@ static int esp_access_ioctl(struct esp_device *esp, void __user *argp)
 	esp->in_place = access->in_place;
 	esp->reuse_factor = access->reuse_factor;
 
-	if (esp->driver->prep_xfer)
-		esp->driver->prep_xfer(esp, arg);
-
 	if (access->coherence == ACC_COH_AUTO ||
 		access->coherence == ACC_COH_FULL) {
 
@@ -361,6 +358,10 @@ static int esp_access_ioctl(struct esp_device *esp, void __user *argp)
 		goto out;
 
 	esp_transfer(esp, contig);
+
+	if (esp->driver->prep_xfer)
+		esp->driver->prep_xfer(esp, arg);
+
 	if (access->run)
 		esp_run(esp);
 	rc = esp_wait(esp);
