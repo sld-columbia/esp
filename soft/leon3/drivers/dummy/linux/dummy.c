@@ -42,11 +42,11 @@ static inline struct dummy_device *to_dummy(struct esp_device *esp)
 static void dummy_prep_xfer(struct esp_device *esp, void *arg)
 {
 	struct dummy_access *a = arg;
-	unsigned offset = a->tokens * a->batch * sizeof(long long unsigned);
 
 	iowrite32be(a->tokens, esp->iomem + DUMMY_LEN_REG);
 	iowrite32be(a->batch, esp->iomem + DUMMY_BATCH_REG);
-	iowrite32be((unsigned) offset, esp->iomem + DST_OFFSET_REG);
+	iowrite32be(a->src_offset, esp->iomem + SRC_OFFSET_REG);
+	iowrite32be(a->dst_offset, esp->iomem + DST_OFFSET_REG);
 
 }
 

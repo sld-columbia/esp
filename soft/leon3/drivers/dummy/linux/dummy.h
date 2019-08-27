@@ -17,8 +17,10 @@
 
 struct dummy_access {
 	struct esp_access esp;
-	unsigned int tokens;
-	unsigned int batch;
+	unsigned tokens;
+	unsigned batch;
+	unsigned src_offset;
+	unsigned dst_offset;
 };
 
 #define DUMMY_IOC_ACCESS	_IOW ('S', 0, struct dummy_access)
