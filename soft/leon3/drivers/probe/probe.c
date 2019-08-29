@@ -297,6 +297,7 @@ void esp_p2p_init(struct esp_device *dev, struct esp_device **srcs, unsigned nsr
 {
 	unsigned i;
 
+	esp_p2p_reset(dev);
 	esp_p2p_enable_src(dev);
 	esp_p2p_set_nsrcs(dev, nsrcs);
 	for (i = 0; i < nsrcs; i++) {

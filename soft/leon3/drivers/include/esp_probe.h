@@ -77,6 +77,7 @@ void esp_p2p_init(struct esp_device *dev, struct esp_device **srcs, unsigned nsr
 
 #define esp_get_y(_dev) (YX_MASK_YX & (ioread32(_dev, YX_REG) >> YX_SHIFT_Y))
 #define esp_get_x(_dev) (YX_MASK_YX & (ioread32(_dev, YX_REG) >> YX_SHIFT_X))
+#define esp_p2p_reset(_dev) iowrite32(_dev, P2P_REG, 0)
 #define esp_p2p_enable_dst(_dev) iowrite32(_dev, P2P_REG, ioread32(_dev, P2P_REG) | P2P_MASK_DST_IS_P2P)
 #define esp_p2p_enable_src(_dev) iowrite32(_dev, P2P_REG, ioread32(_dev, P2P_REG) | P2P_MASK_SRC_IS_P2P)
 #define esp_p2p_set_nsrcs(_dev, _n) iowrite32(_dev, P2P_REG, ioread32(_dev, P2P_REG) | (P2P_MASK_NSRCS & (_n - 1)))
