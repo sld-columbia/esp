@@ -21,37 +21,46 @@ typedef u64 token_t;
 #define SLD_DUMMY   0x42
 #define DEV_NAME "sld,dummy"
 
-#define DUMMY_TOKENS 512
+#define TOKENS 512
+#define BATCH 256
 
-#define DUMMY_BUF_SIZE (4 * DUMMY_TOKENS * sizeof(u64))
+const unsigned out_offset = BATCH * TOKENS * sizeof(u64);
+const unsigned size = 3 * out_offset;
 
 /* Size of the contiguous chunks for scatter/gather */
-#define CHUNK_SHIFT 13
+#define CHUNK_SHIFT 20
 #define CHUNK_SIZE BIT(CHUNK_SHIFT)
-#define NCHUNK ((DUMMY_BUF_SIZE % CHUNK_SIZE == 0) ?			\
-			(DUMMY_BUF_SIZE / CHUNK_SIZE) :			\
-			(DUMMY_BUF_SIZE / CHUNK_SIZE) + 1)
+#define NCHUNK ((size % CHUNK_SIZE == 0) ?			\
+			(size / CHUNK_SIZE) :		\
+			(size / CHUNK_SIZE) + 1)
 
 // User defined registers
-#define DUMMY_TOKENS_REG	0x40
-#define DUMMY_BATCH_REG		0x44
+#define TOKENS_REG	0x40
+#define BATCH_REG	0x44
 
 
-static int validate_dummy(token_t *mem, int tokens)
+static int validate_dummy(token_t *mem)
 {
-	int i;
+	int i, j;
 	int rtn = 0;
-	for (i = 0; i < tokens; i++)
-		if (mem[i] != (mask | (token_t) i))
-			rtn++;
+	for (j = 0; j < BATCH; j++)
+		for (i = 0; i < TOKENS; i++)
+			if (mem[i + j * TOKENS + 2 * BATCH * TOKENS] != (mask | (token_t) i)) {
+				print_uart_int(mem[i + j * TOKENS + 2 * BATCH * TOKENS]);
+				rtn++;
+			}
 	return rtn;
 }
 
-static void init_buf (token_t *mem, int tokens)
+static void init_buf (token_t *mem)
 {
-	int i;
-	for (i = 0; i < tokens; i++)
-		mem[i] = (mask | (token_t) i);
+	int i, j;
+	for (j = 0; j < BATCH; j++)
+		for (i = 0; i < TOKENS; i++)
+			mem[i + j * TOKENS] = (mask | (token_t) i);
+
+	for (i = 0; i < 2 * BATCH * TOKENS; i++)
+		mem[i + BATCH * TOKENS] = 0xFFFFFFFFFFFFFFFFL;
 }
 
 
@@ -91,7 +100,7 @@ int main(int argc, char * argv[])
 	}
 
 	// Allocate memory
-	mem = aligned_malloc(DUMMY_BUF_SIZE);
+	mem = aligned_malloc(size);
 #ifndef __riscv
 	printf("  memory buffer base-address = %p\n", mem);
 #else
@@ -110,7 +119,7 @@ int main(int argc, char * argv[])
 #endif
 
 	printf("  Generate random input...\n");
-	init_buf(mem, 2 * DUMMY_TOKENS);
+	init_buf(mem);
 
 	// Pass common configuration parameters to all devices in the chain
 	for (n = 0; n < 3; n++) {
@@ -122,17 +131,25 @@ int main(int argc, char * argv[])
 		iowrite32(dev, PT_ADDRESS_REG, (unsigned long long) ptable);
 		iowrite32(dev, PT_NCHUNK_REG, NCHUNK);
 		iowrite32(dev, PT_SHIFT_REG, CHUNK_SHIFT);
-		if (n == 1)
-			iowrite32(dev, SRC_OFFSET_REG, DUMMY_TOKENS * sizeof(u64));
-		else
-			iowrite32(dev, SRC_OFFSET_REG, 0);
+		iowrite32(dev, TOKENS_REG, TOKENS);
+		switch (n) {
+		case 0:
+			iowrite32(dev, BATCH_REG, BATCH / 2);
+			iowrite32(dev, SRC_OFFSET_REG, 0x0);
+			iowrite32(dev, DST_OFFSET_REG, out_offset);
+			break;
+		case 1:
+			iowrite32(dev, BATCH_REG, BATCH / 2);
+			iowrite32(dev, SRC_OFFSET_REG, out_offset / 2);
+			iowrite32(dev, DST_OFFSET_REG, 3 * out_offset / 2);
+			break;
+		default :
+			iowrite32(dev, BATCH_REG, BATCH);
+			iowrite32(dev, SRC_OFFSET_REG, out_offset);
+			iowrite32(dev, DST_OFFSET_REG, 2 * out_offset);
+			break;
+		}
 
-		iowrite32(dev, DST_OFFSET_REG, 2 * DUMMY_TOKENS * sizeof(u64));
-		iowrite32(dev, DUMMY_TOKENS_REG, DUMMY_TOKENS);
-		if (n != 2)
-			iowrite32(dev, DUMMY_BATCH_REG, 1);
-		else
-			iowrite32(dev, DUMMY_BATCH_REG, 2);
 	}
 
 	// Configure point-to-point
@@ -171,7 +188,7 @@ int main(int argc, char * argv[])
 
 	/* Validation */
 	printf("  validating...\n");
-	errors = validate_dummy(&mem[2 * DUMMY_TOKENS], 2 * DUMMY_TOKENS);
+	errors = validate_dummy(mem);
 	if (errors)
 		printf("  ... FAIL\n");
 	else
