@@ -84,10 +84,15 @@ static void __dev_init(struct test_info *info, bool pr)
 		info->to_sc_fixed(info);
 	}
 
+	/* Disable P2P by default: user can override configuraion later */
+	info->esp->p2p_store = 0;
+	info->esp->p2p_nsrcs = 0;
+
 	if (info->set_access)
 		info->set_access(info);
 	info->esp->contig = contig_to_khandle(info->contig);
 	info->esp->run = true;
+
 }
 
 static void dev_init(struct test_info *info)

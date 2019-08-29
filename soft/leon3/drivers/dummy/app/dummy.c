@@ -11,8 +11,8 @@
 #include <test/time.h>
 #include <dummy.h>
 
-#define TOKENS 512
-#define BATCH 256
+#define TOKENS 8
+#define BATCH 2
 
 typedef unsigned long long u64;
 
@@ -46,7 +46,7 @@ void *accelerator_thread( void *ptr )
 	return NULL;
 }
 
-static void prepare_dummy(int *fd, contig_handle_t *mem, accelerator_thread_info_t *info, struct dummy_access *desc, const char *device_name, unsigned id)
+static void prepare_dummy(int *fd, contig_handle_t *mem, accelerator_thread_info_t *info, struct dummy_access *desc, const char *device_name, unsigned id, unsigned do_p2p)
 {
 		*fd = open(device_name, O_RDWR, 0);
 		if (*fd < 0) {
@@ -54,6 +54,8 @@ static void prepare_dummy(int *fd, contig_handle_t *mem, accelerator_thread_info
 			exit(1);
 		}
 
+		desc->esp.p2p_store = 0;
+		desc->esp.p2p_nsrcs = 0;
 		desc->esp.contig = contig_to_khandle(*mem);
 		desc->esp.run = true;
 		desc->esp.coherence = ACC_COH_NONE;
@@ -63,16 +65,27 @@ static void prepare_dummy(int *fd, contig_handle_t *mem, accelerator_thread_info
 			desc->batch = BATCH / 2;
 			desc->src_offset = 0;
 			desc->dst_offset = out_offset;
+			if (do_p2p)
+				desc->esp.p2p_store = 1;
 			break;
 		case 1 :
 			desc->batch = BATCH / 2;
 			desc->src_offset = out_offset / 2;
 			desc->dst_offset = 3 * out_offset / 2;
+			if (do_p2p)
+				desc->esp.p2p_store = 1;
 			break;
 		default :
 			desc->batch = BATCH;
 			desc->src_offset = out_offset;
 			desc->dst_offset = 2 * out_offset;
+			if (do_p2p) {
+				desc->esp.p2p_nsrcs = 2;
+				strncpy(desc->esp.p2p_srcs[0], "dummy.0", 63);
+				desc->esp.p2p_srcs[0][63] = '\0';
+				strncpy(desc->esp.p2p_srcs[1], "dummy.1", 63);
+				desc->esp.p2p_srcs[1][63] = '\0';
+			}
 			break;
 		}
 
@@ -146,9 +159,6 @@ int main(int argc, char *argv[])
 	printf("  - Allocate %u B\n", size);
 	contig_alloc(size, &hwbuf);
 
-	printf("  - Initialize input and clear output\n");
-	init_buffer(&hwbuf);
-
 	printf("\n");
 	printf("     * Virtual memory layout *\n");
         printf("                  |_______________|\n");
@@ -202,10 +212,14 @@ int main(int argc, char *argv[])
 
 	/* Simple DMA */
 	printf("  --> Start simple DMA test\n");
+
+	printf("  - Initialize input and clear output\n");
+	init_buffer(&hwbuf);
+
 	printf("  - Configure devices\n");
 	for (i = 0; i < 3; i++) {
 		sprintf(device_name, "/dev/dummy.%d", i);
-		prepare_dummy(&fd[i], &hwbuf, &info[i], &desc[i], device_name, i);
+		prepare_dummy(&fd[i], &hwbuf, &info[i], &desc[i], device_name, i, 0);
 	}
 	printf("      MEM ==> ACC.0 ==> MEM\n");
 	printf("      MEM ==> ACC.1 ==> MEM\n");
@@ -236,6 +250,46 @@ int main(int argc, char *argv[])
 	validate_buffer(&hwbuf);
 
 	print_time_info(info, ts_subtract(&th_start, &th_end), 3);
+
+
+	/* P2P Test */
+	printf("  --> Start P2P Test 1\n");
+
+	printf("  - Initialize input and clear output\n");
+	init_buffer(&hwbuf);
+
+	printf("  - Configure devices\n");
+	for (i = 0; i < 3; i++) {
+		sprintf(device_name, "/dev/dummy.%d", i);
+		prepare_dummy(&fd[i], &hwbuf, &info[i], &desc[i], device_name, i, 1);
+	}
+	printf("      MEM ==> ACC.0 ==> ACC.2\n");
+	printf("      MEM ==> ACC.1 ==> ACC.2\n");
+	printf("      ACC.0, ACC.1 ==> ACC.2 ==> MEM\n");
+
+	gettime(&th_start);
+	for (i = 0; i < 3; i++) {
+		rc = pthread_create(&thread[i], NULL, accelerator_thread, (void*) &info[i]);
+		if(rc != 0) {
+			perror("pthread_create");
+			goto free_and_exit;
+		}
+	}
+	for (i = 0; i < 3; i++) {
+		rc = pthread_join(thread[i], NULL);
+		if(rc != 0) {
+			perror("pthread_join");
+			goto free_and_exit;
+		}
+	}
+	gettime(&th_end);
+
+	validate_buffer(&hwbuf);
+
+	print_time_info(info, ts_subtract(&th_start, &th_end), 3);
+
+
+
 
 free_and_exit:
 	contig_free(hwbuf);

@@ -21,8 +21,8 @@ typedef u64 token_t;
 #define SLD_DUMMY   0x42
 #define DEV_NAME "sld,dummy"
 
-#define TOKENS 512
-#define BATCH 256
+#define TOKENS 256
+#define BATCH 4
 
 const unsigned out_offset = BATCH * TOKENS * sizeof(u64);
 const unsigned size = 3 * out_offset;
@@ -72,7 +72,8 @@ int main(int argc, char * argv[])
 	struct esp_device *espdevs;
 	struct esp_device *dev;
 	struct esp_device *srcs[4];
-	unsigned done;
+	unsigned all_done;
+	unsigned done[3];
 	unsigned **ptable;
 	token_t *mem;
 	unsigned errors = 0;
@@ -170,20 +171,24 @@ int main(int argc, char * argv[])
 	}
 
 	// Wait for completion
+	all_done = 0;
+	while (!all_done) {
+		for (n = 0; n < 3; n++) {
+			dev = &espdevs[n];
+			done[n] = ioread32(dev, STATUS_REG);
+			done[n] & STATUS_MASK_DONE;
+			/* if (done[n]) { */
+			/* 	print_uart("Done "); print_uart_int(n); print_uart("\n"); */
+			/* } */
+		}
+		all_done = done[0] & done[1] & done[2];
+	}
+
 	for (n = 0; n < 3; n++) {
 		dev = &espdevs[n];
-		done = 0;
-		while (!done) {
-			done = ioread32(dev, STATUS_REG);
-			done &= STATUS_MASK_DONE;
-		}
-#ifndef __riscv
-		printf("  Done device %d\n", n);
-#else
-		print_uart("  Done device "); print_uart_int(n); print_uart("\n");
-#endif
 		iowrite32(dev, CMD_REG, 0x0);
 	}
+
 	printf("  Done\n");
 
 	/* Validation */
