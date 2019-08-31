@@ -217,7 +217,7 @@ begin  -- tlb
 
   tlb_fsm_proc: process(tlb_fsm_current, rd_request, wr_request, tlb_empty_int,
                         dma_tran_done, dma_tran_header_sent, remaining_length,
-                        src_is_p2p, dst_is_p2p)
+                        src_is_p2p, dst_is_p2p, is_p2p)
   begin  -- process tlb_fsm_proc
     pt_fsm_sample_0 <= '0';
     pt_fsm_sample_1 <= '0';
