@@ -172,7 +172,7 @@ void esp_dump(void *swbuf, size_t size)
 	contig_copy_from(swbuf, *contig, 0, size);
 }
 
-void esp_cleanup(esp_thread_info_t cfg[], unsigned nacc)
+void esp_cleanup()
 {
 	int i;
 	contig_free(*contig);
