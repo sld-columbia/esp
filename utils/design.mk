@@ -129,9 +129,11 @@ else
 VSIMOPT += -novopt
 endif
 VSIMOPT += +notimingchecks
+VSIMOPT += -suppress 3812
 VSIMOPT += -suppress 2697
 VSIMOPT += -suppress 8617
 VSIMOPT += -suppress 151
+VSIMOPT += -suppress 143
 VSIMOPT += +notimingchecks
 
 # Toplevel
