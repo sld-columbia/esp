@@ -24,7 +24,7 @@ THIRDPARTY_ACCELERATORS           = $(shell ls $(THIRDPARTY_PATH))
 THIRDPARTY_ACCELERATORS-clean     = $(addsuffix -clean, $(THIRDPARTY_ACCELERATORS))
 THIRDPARTY_ACCELERATORS-distclean = $(addsuffix -distclean, $(THIRDPARTY_ACCELERATORS))
 
-THIRDPARTY_VLOG       = $(foreach acc, $(THIRDPARTY_ACCELERATORS), $(THIRDPARTY_PATH)/$(acc)/$(acc)_wrapper.v)
+THIRDPARTY_VLOG       = $(foreach acc, $(THIRDPARTY_ACCELERATORS), $(shell f=$(THIRDPARTY_PATH)/$(acc)/out; l=$$(readlink $$f); if test -e $(THIRDPARTY_PATH)/$(acc)/$$l; then echo $(THIRDPARTY_PATH)/$(acc)/$(acc)_wrapper.v; fi))
 THIRDPARTY_VLOG      += $(foreach acc, $(THIRDPARTY_ACCELERATORS), $(foreach rtl, $(shell strings $(THIRDPARTY_PATH)/$(acc)/$(acc).verilog),  $(shell f=$(THIRDPARTY_PATH)/$(acc)/out/$(rtl); if test -e $$f; then echo $$f; fi;)))
 THIRDPARTY_INCDIR     = $(foreach acc, $(THIRDPARTY_ACCELERATORS), $(THIRDPARTY_PATH)/$(acc)/vlog_incdir)
 THIRDPARTY_SVLOG      = $(foreach acc, $(THIRDPARTY_ACCELERATORS), $(foreach rtl, $(shell strings $(THIRDPARTY_PATH)/$(acc)/$(acc).sverilog), $(shell f=$(THIRDPARTY_PATH)/$(acc)/out/$(rtl); if test -e $$f; then echo $$f; fi;)))
