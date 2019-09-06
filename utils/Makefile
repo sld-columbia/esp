@@ -796,15 +796,15 @@ VHDL_SIM_PKGS  = $(shell (find $(ESP_ROOT)/sim/include -name "*.vhd" ))
 VHDL_SIM_SRCS  = $(shell (find $(ESP_ROOT)/sim/src -name "*.vhd" ))
 VLOG_SIM_SRCS  = $(shell (find $(ESP_ROOT)/sim/src -name "*.v" ))
 
-VHDL_PKGS = $(VHDL_RTL_PKGS) $(VHDL_SIM_PKGS) $(TOP_VHDL_RTL_PKGS) $(TOP_VHDL_SIM_PKGS)
-VHDL_SRCS = $(VHDL_RTL_SRCS) $(VHDL_SIM_SRCS) $(TOP_VHDL_RTL_SRCS) $(TOP_VHDL_SIM_SRCS)
-VLOG_SRCS = $(VLOG_RTL_SRCS) $(VLOG_SIM_SRCS) $(TOP_VLOG_RTL_SRCS) $(TOP_VLOG_SIM_SRCS)
-SVLOG_SRCS = $(SVLOG_RTL_SRCS)
+VHDL_PKGS = $(THIRDPARTY_VHDL_PKGS) $(VHDL_RTL_PKGS) $(VHDL_SIM_PKGS) $(TOP_VHDL_RTL_PKGS) $(TOP_VHDL_SIM_PKGS)
+VHDL_SRCS = $(THIRDPARTY_VHDL) $(VHDL_RTL_SRCS) $(VHDL_SIM_SRCS) $(TOP_VHDL_RTL_SRCS) $(TOP_VHDL_SIM_SRCS)
+VLOG_SRCS = $(THIRDPARTY_VLOG) $(VLOG_RTL_SRCS) $(VLOG_SIM_SRCS) $(TOP_VLOG_RTL_SRCS) $(TOP_VLOG_SIM_SRCS)
+SVLOG_SRCS = $(THIRDPARTY_SVLOG) $(SVLOG_RTL_SRCS)
 
 ALL_SRCS  = $(VHDL_PKGS) $(VHDL_SRCS) $(VLOG_SRCS) $(SVLOG_SRCS)
 
 VHDL_ALL_RTL = $(THIRDPARTY_VHDL_PKGS) $(VHDL_RTL_PKGS) $(TOP_VHDL_RTL_PKGS) $(THIRDPARTY_VHDL) $(VHDL_RTL_SRCS) $(TOP_VHDL_RTL_SRCS)
-VLOG_ALL_RTL = $(VLOG_RTL_PKGS) $(TOP_VLOG_RTL_PKGS) $(THIRDPARTY_VLOG) $(VLOG_RTL_SRCS) $(TOP_VLOG_RTL_SRCS)
+VLOG_ALL_RTL = $(THIRDPARTY_VLOG) $(VLOG_RTL_SRCS) $(TOP_VLOG_RTL_SRCS)
 SVLOG_ALL_RTL = $(THIRDPARTY_SVLOG) $(SVLOG_SRCS)
 
 ALL_RTL_SRCS  = $(VHDL_ALL_RTL) $(VLOG_ALL_RTL) $(SVLOG_ALL_RTL)
@@ -1132,23 +1132,6 @@ modelsim/vsim.mk: modelsim/xilinx_lib check_all_srcs.old $(PKG_LIST)
 		$(VLOG) -work profpga $(PROFPGA_INCDIR_MODELSIM) $$rtl || exit; \
 	done; \
 	vlib -type directory work; \
-	echo $(SPACES)"### Compile third-party accelerators source files ###"; \
-	for rtl in $(THIRDPARTY_VLOG); do \
-		echo $(SPACES)"$(VLOG) -work work +incdir+... $$rtl"; \
-		$(VLOG) -work work $(THIRDPARTY_INCDIR_MODELSIM) $$rtl || exit; \
-	done; \
-	for rtl in $(THIRDPARTY_SVLOG); do \
-		echo $(SPACES)"$(VLOG) -sv -work work +incdir+... $$rtl"; \
-		$(VLOG) -sv -work work $(THIRDPARTY_INCDIR_MODELSIM) $$rtl || exit; \
-	done; \
-	for rtl in $(THIRDPARTY_VHDL_PKGS); do \
-		echo $(SPACES)"$(VCOM) -work work $$rtl"; \
-		$(VCOM) -work work $$rtl || exit; \
-	done; \
-	for rtl in $(THIRDPARTY_VHDL); do \
-		echo $(SPACES)"$(VCOM) -work work $$rtl"; \
-		$(VCOM) -work work $$rtl || exit; \
-	done; \
 	echo $(SPACES)"### Compile Ariane source files ###"; \
 	rtl=$(ESP_ROOT)/socs/common/ariane_soc_pkg.sv; \
 	echo $(SPACES)"$(VLOG) $(ARIANE_VLOGOPT) $$rtl"; \
@@ -1159,6 +1142,10 @@ modelsim/vsim.mk: modelsim/xilinx_lib check_all_srcs.old $(PKG_LIST)
 		$(VLOG) $(ARIANE_VLOGOPT) $$rtl || exit; \
 	done; \
 	echo $(SPACES)"### Compile VHDL packages ###"; \
+	for rtl in $(THIRDPARTY_VHDL_PKGS); do \
+		echo $(SPACES)"$(VCOM) -work work $$rtl"; \
+		$(VCOM) -work work $$rtl || exit; \
+	done; \
 	for vhd in $(SLDGEN_VHDL_RTL_PKGS); do \
 		rtl=$$vhd; \
 		echo $(SPACES)"$(VCOM) $$rtl"; \
@@ -1193,12 +1180,12 @@ modelsim/vsim.mk: modelsim/xilinx_lib check_all_srcs.old $(PKG_LIST)
 	echo $(SPACES)"### Compile Verilog source files ###"; \
 		for rtl in $(VLOG_SRCS); do \
 			echo $(SPACES)"$(VLOG) $$rtl"; \
-			$(VLOG) $$rtl || exit; \
+			$(VLOG) $(THIRDPARTY_INCDIR_MODELSIM) $$rtl || exit; \
 		done; \
 	echo $(SPACES)"### Compile SystemVerilog source files ###"; \
 		for rtl in $(SVLOG_SRCS); do \
 			echo $(SPACES)"$(VLOG) -sv $$rtl"; \
-			$(VLOG) -sv $$rtl || exit; \
+			$(VLOG) -sv $(THIRDPARTY_INCDIR_MODELSIM) $$rtl || exit; \
 		done; \
 	echo $(SPACES)"### Compile IPs simulation files ###"; \
 	echo $(SPACES)"$(VLOG) $(XILINX_VIVADO)/data/verilog/src/glbl.v"; \
