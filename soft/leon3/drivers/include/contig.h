@@ -109,6 +109,7 @@ void contig_memcpy(contig_handle_t to, unsigned long to_off, contig_handle_t fro
 DEF_CONTIG_READ(contig_read32, uint32_t)
 DEF_CONTIG_READ(contig_read16, uint16_t)
 DEF_CONTIG_READ(contig_read8,  uint8_t)
+DEF_CONTIG_READ(contig_read64, uint64_t)
 
 #define DEF_CONTIG_WRITE(funcname_, type_)				\
 	static inline void						\
@@ -126,5 +127,6 @@ DEF_CONTIG_READ(contig_read8,  uint8_t)
 DEF_CONTIG_WRITE(contig_write32, uint32_t)
 DEF_CONTIG_WRITE(contig_write16, uint16_t)
 DEF_CONTIG_WRITE(contig_write8,  uint8_t)
+DEF_CONTIG_WRITE(contig_write64, uint64_t)
 
 #endif /* CONTIG_H */

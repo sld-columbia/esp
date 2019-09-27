@@ -10,6 +10,7 @@
 #include <encoding.h>
 #include <fdt.h>
 #include <uart.h>
+#define printf print_uart
 #endif
 
 #ifndef __ESP_PROBE_H__
@@ -72,5 +73,15 @@ int probe(struct esp_device **espdevs, unsigned devid, const char *name);
 unsigned ioread32(struct esp_device *dev, unsigned offset);
 void iowrite32(struct esp_device *dev, unsigned offset, unsigned payload);
 void esp_flush(int coherence);
+void esp_p2p_init(struct esp_device *dev, struct esp_device **srcs, unsigned nsrcs);
+
+#define esp_get_y(_dev) (YX_MASK_YX & (ioread32(_dev, YX_REG) >> YX_SHIFT_Y))
+#define esp_get_x(_dev) (YX_MASK_YX & (ioread32(_dev, YX_REG) >> YX_SHIFT_X))
+#define esp_p2p_reset(_dev) iowrite32(_dev, P2P_REG, 0)
+#define esp_p2p_enable_dst(_dev) iowrite32(_dev, P2P_REG, ioread32(_dev, P2P_REG) | P2P_MASK_DST_IS_P2P)
+#define esp_p2p_enable_src(_dev) iowrite32(_dev, P2P_REG, ioread32(_dev, P2P_REG) | P2P_MASK_SRC_IS_P2P)
+#define esp_p2p_set_nsrcs(_dev, _n) iowrite32(_dev, P2P_REG, ioread32(_dev, P2P_REG) | (P2P_MASK_NSRCS & (_n - 1)))
+#define esp_p2p_set_y(_dev, _n, _y) iowrite32(_dev, P2P_REG, ioread32(_dev, P2P_REG) | ((P2P_MASK_SRCS_YX & _y) << P2P_SHIFT_SRCS_Y(_n)))
+#define esp_p2p_set_x(_dev, _n, _x) iowrite32(_dev, P2P_REG, ioread32(_dev, P2P_REG) | ((P2P_MASK_SRCS_YX & _x) << P2P_SHIFT_SRCS_X(_n)))
 
 #endif /* __ESP_PROBE_H__ */

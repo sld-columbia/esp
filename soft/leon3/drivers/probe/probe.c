@@ -292,3 +292,17 @@ void iowrite32(struct esp_device *dev, unsigned offset, unsigned payload)
 	volatile unsigned *reg = (unsigned *) addr;
 	*reg = payload;
 }
+
+void esp_p2p_init(struct esp_device *dev, struct esp_device **srcs, unsigned nsrcs)
+{
+	unsigned i;
+
+	esp_p2p_reset(dev);
+	esp_p2p_enable_src(dev);
+	esp_p2p_set_nsrcs(dev, nsrcs);
+	for (i = 0; i < nsrcs; i++) {
+		esp_p2p_enable_dst(srcs[i]);
+		esp_p2p_set_y(dev, i, esp_get_y(srcs[i]));
+		esp_p2p_set_x(dev, i, esp_get_x(srcs[i]));
+	}
+}

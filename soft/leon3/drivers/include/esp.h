@@ -21,6 +21,9 @@
 struct esp_access {
 	contig_khandle_t contig;
 	uint8_t run;
+	uint8_t p2p_store;
+	uint8_t p2p_nsrcs;
+	char p2p_srcs[4][64];
 	enum accelerator_coherence coherence;
         unsigned int footprint;
         enum contig_alloc_policy alloc_policy;
@@ -40,12 +43,14 @@ struct esp_access {
 #include <linux/module.h>
 #include <linux/mutex.h>
 #include <linux/cdev.h>
+#include <linux/list.h>
 
 // TO DO do not hard-code this values
 #define N_MEM 2
 #define PRIVATE_CACHE_SIZE 16384
 #define LLC_SIZE 524288
 #define LLC_SIZE_SPLIT 262144 
+
 
 struct esp_device;
 
@@ -61,6 +66,7 @@ struct esp_driver {
 };
 
 struct esp_device {
+	struct list_head list;
 	struct cdev cdev;
 	struct device *pdev; /* parent device */
 	struct device *dev; /* associated device */
