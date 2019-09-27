@@ -72,7 +72,8 @@ void visionchip::load_input()
                 for (uint8_t k = 0; k < WORDS_PER_DMA; k++) {
                     HLS_UNROLL_SIMPLE;
                     // Write to PLM
-                    mem_buff_1[i + k] = data.range(((k + 1) << 4) - 1, k << 4).to_int();
+                    mem_buff_1[i + k] = data.range(((k + 1) << MAX_PXL_WIDTH_LOG) - 1,
+						   k << MAX_PXL_WIDTH_LOG).to_uint();
                     mem_buff_2[i + k] = 0;
                 }
             }
@@ -151,7 +152,8 @@ void visionchip::store_output()
                 for (uint8_t k = 0; k < WORDS_PER_DMA; k++) {
                     HLS_UNROLL_SIMPLE;
                     // Read from PLM
-                    data.range(((k + 1) << 4) - 1, k << 4) = sc_bv<16>(mem_buff_1[i + k]);
+                    data.range(((k + 1) << MAX_PXL_WIDTH_LOG) - 1, k << MAX_PXL_WIDTH_LOG) =
+			sc_bv<MAX_PXL_WIDTH>(mem_buff_1[i + k]);
                 }
 
                 this->dma_write_chnl.put(data);
@@ -212,8 +214,7 @@ void visionchip::compute_kernel()
     //Compute
     for (uint16_t a = 0; a < n_Images; a++)
     {
-
-        this->compute_load_handshake();
+	this->compute_load_handshake();
 
         // Computing phase implementation
         kernel_nf(n_Rows, n_Cols);
@@ -222,7 +223,7 @@ void visionchip::compute_kernel()
 	if (do_dwt)
 	    kernel_dwt(n_Rows, n_Cols);
 
-        this->compute_store_handshake();
+	this->compute_store_handshake();
     }
 
     // Conclude

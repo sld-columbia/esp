@@ -1,3 +1,8 @@
 plm_data16_2w2r 307200 16 2w:2r
 plm_data16_4w4r 307200 16 4w:4r
+plm_data16_4w4r 307200 16 8w:8r
 plm_hist_1w1r 65536 32 1w:0r 0w:1r
+plm_data16_1024_2w2r 1024 16 2w:2r
+plm_data16_1024_4w4r 1024 16 4w:4r
+plm_data16_1024_8w8r 1024 16 8w:8r
+plm_hist_256_1w1r 256 32 1w:0r 0w:1r

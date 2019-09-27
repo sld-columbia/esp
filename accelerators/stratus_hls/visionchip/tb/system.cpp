@@ -134,7 +134,8 @@ void system_t::load_memory()
     for (i = 0; i < n_Images; i++) {
         for (j = 0; j < n_Pixels; j += WORDS_PER_DMA) {
             for (uint8_t k = 0; k < WORDS_PER_DMA; k++)
-                mem[mem_i].range(((k + 1) << 4) - 1, k << 4) = sc_bv<16>(imgA[j + k]);
+                mem[mem_i].range(((k + 1) << MAX_PXL_WIDTH_LOG) - 1, k << MAX_PXL_WIDTH_LOG) =
+		    sc_bv<MAX_PXL_WIDTH>(imgA[j + k]);
             mem_i++;
         }
     }
@@ -165,8 +166,14 @@ void system_t::dump_memory()
     for (int i = 0; i < n_Images; i++) {
         for(uint32_t j = 0 ; j < n_Pixels ; j += WORDS_PER_DMA) {
             for (uint8_t k = 0; k < WORDS_PER_DMA; k++) {
-		fprintf(fileOut, "%d\n",
-			mem[mem_j].range(((k + 1) << 4) - 1, k << 4).to_int());
+		if (do_dwt)
+		    fprintf(fileOut, "%u\n",
+			    mem[mem_j].range(((k + 1) << MAX_PXL_WIDTH_LOG) - 1,
+					     k << MAX_PXL_WIDTH_LOG).to_int());
+		else
+		    fprintf(fileOut, "%u\n",
+			    mem[mem_j].range(((k + 1) << MAX_PXL_WIDTH_LOG) - 1,
+					     k << MAX_PXL_WIDTH_LOG).to_uint());
 	    }
             mem_j++;
         }
@@ -211,14 +218,27 @@ int system_t::validate()
     int mem_j = 0;
     for (int i = 0; i < n_Images; i++) {
         for(uint32_t j = 0 ; j < n_Pixels ; j += WORDS_PER_DMA) {
-            for (uint8_t k = 0; k < WORDS_PER_DMA; k++)
-                if (mem[mem_j].range(((k + 1) << 4) - 1, k << 4).to_int() != imgGold[j + k])
-                {
-                    ESP_REPORT_INFO("Error: %d: %d %d.",
-                                    mem_j, mem[mem_j].range(((k + 1) << 4) - 1, k << 4).to_int(),
-				    imgGold[j + k]);
-                    errors++;
-                }
+            for (uint8_t k = 0; k < WORDS_PER_DMA; k++) {
+		if (do_dwt) {
+		    if (mem[mem_j].range(((k + 1) << MAX_PXL_WIDTH_LOG) - 1,
+					 k << MAX_PXL_WIDTH_LOG).to_int() != imgGold[j + k])
+		    {
+			ESP_REPORT_INFO("Error: %d: %d %d.", mem_j,
+					mem[mem_j].range(((k + 1) << MAX_PXL_WIDTH_LOG) - 1,
+							 k << MAX_PXL_WIDTH_LOG).to_int(), imgGold[j + k]);
+			errors++;
+		    }
+		} else {
+		    if (mem[mem_j].range(((k + 1) << MAX_PXL_WIDTH_LOG) - 1,
+					 k << MAX_PXL_WIDTH_LOG).to_uint() != imgGold[j + k])
+		    {
+			ESP_REPORT_INFO("Error: %d: %d %d.", mem_j,
+					mem[mem_j].range(((k + 1) << MAX_PXL_WIDTH_LOG) - 1,
+							 k << MAX_PXL_WIDTH_LOG).to_uint(), imgGold[j + k]);
+			errors++;
+		    }
+		}
+	    }
             mem_j++;
         }
     }

@@ -61,7 +61,7 @@ void visionchip::kernel_nf(uint32_t n_Rows, uint32_t n_Cols)
 void visionchip::kernel_hist(uint32_t n_Rows, uint32_t n_Cols)
 {
     // hard code nInBpp as 16 here
-    uint32_t nInBpp = 16;
+    uint32_t nInBpp = MAX_PXL_WIDTH;
     // printf("======= Start kernel_hist =======\n");
 
     uint32_t n_Bins = 1 << nInBpp;
@@ -95,10 +95,13 @@ void visionchip::kernel_histEq(uint32_t n_Rows, uint32_t n_Cols)
 {
     // hard code nInBpp as 16 here (data type is 16 bits)
     // hard code nOutBpp as 10 here
+#if (MAX_PXL_WIDTH == 8)
+    uint32_t nOutBpp = 8;
+#else
     uint32_t nOutBpp = 10;
+#endif    
 
     // printf("======= Start kernel_histEq =======\n");
-
 
     int32_t nOutBins = (1 << nOutBpp);
 
@@ -116,7 +119,6 @@ void visionchip::kernel_histEq(uint32_t n_Rows, uint32_t n_Cols)
         sum += val;
         mem_hist_2[i] = sum;
     }
-
 
     const uint32_t MUL_FACTOR = (nOutBins - 1);
     const uint32_t DIV_FACTOR = (n_Pixels - CDFmin);

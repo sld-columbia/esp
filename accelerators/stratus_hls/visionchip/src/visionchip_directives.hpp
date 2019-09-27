@@ -4,35 +4,69 @@
 #ifndef __VISIONCHIP_DIRECTIVES_HPP__
 #define __VISIONCHIP_DIRECTIVES_HPP__
 
-#define WORDS_PER_DMA (DMA_WIDTH >> 4)
+#define MAX_PXL_WIDTH (1 << MAX_PXL_WIDTH_LOG)
+#define WORDS_PER_DMA (DMA_WIDTH >> MAX_PXL_WIDTH_LOG)
+#define PLM_HIST_SIZE (1 << MAX_PXL_WIDTH)
+
+typedef sc_uint<16> pixel_t;
 
 #if defined(STRATUS_HLS)
 
+#if (PLM_IMG_SIZE == 1024)
 
 #if (WORDS_PER_DMA == 2)
+#define HLS_MAP_mem_buff_1                              \
+    HLS_MAP_TO_MEMORY(mem_buff_1, "plm_data16_1024_2w2r")
+#define HLS_MAP_mem_buff_2                              \
+    HLS_MAP_TO_MEMORY(mem_buff_2, "plm_data16_1024_2w2r")
+#elif (WORDS_PER_DMA == 4)
+#define HLS_MAP_mem_buff_1                              \
+    HLS_MAP_TO_MEMORY(mem_buff_1, "plm_data16_1024_4w4r")
+#define HLS_MAP_mem_buff_2                              \
+    HLS_MAP_TO_MEMORY(mem_buff_2, "plm_data16_1024_4w4r")
+#elif (WORDS_PER_DMA == 8)
+#define HLS_MAP_mem_buff_1                              \
+    HLS_MAP_TO_MEMORY(mem_buff_1, "plm_data16_1024_8w8r")
+#define HLS_MAP_mem_buff_2                              \
+    HLS_MAP_TO_MEMORY(mem_buff_2, "plm_data16_1024_8w8r")
+#else /* WORDS_PER_DMA */
+#error Unsupported DMA width
+#endif /* WORDS_PER_DMA */
 
+#else
+
+#if (WORDS_PER_DMA == 2)
 #define HLS_MAP_mem_buff_1                              \
     HLS_MAP_TO_MEMORY(mem_buff_1, "plm_data16_2w2r")
 #define HLS_MAP_mem_buff_2                              \
     HLS_MAP_TO_MEMORY(mem_buff_2, "plm_data16_2w2r")
-
 #elif (WORDS_PER_DMA == 4)
-
 #define HLS_MAP_mem_buff_1                              \
     HLS_MAP_TO_MEMORY(mem_buff_1, "plm_data16_4w4r")
 #define HLS_MAP_mem_buff_2                              \
     HLS_MAP_TO_MEMORY(mem_buff_2, "plm_data16_4w4r")
-
+#elif (WORDS_PER_DMA == 8)
+#define HLS_MAP_mem_buff_1                              \
+    HLS_MAP_TO_MEMORY(mem_buff_1, "plm_data16_8w8r")
+#define HLS_MAP_mem_buff_2                              \
+    HLS_MAP_TO_MEMORY(mem_buff_2, "plm_data16_8w8r")
 #else /* WORDS_PER_DMA */
-
 #error Unsupported DMA width
-
 #endif /* WORDS_PER_DMA */
 
+#endif
+
+#if (PLM_HIST_SIZE == 256)
+#define HLS_MAP_mem_hist_1                              \
+    HLS_MAP_TO_MEMORY(mem_hist_1, "plm_hist_256_1w1r")
+#define HLS_MAP_mem_hist_2                      \
+    HLS_MAP_TO_MEMORY(mem_hist_2, "plm_hist_256_1w1r")
+#else
 #define HLS_MAP_mem_hist_1                              \
     HLS_MAP_TO_MEMORY(mem_hist_1, "plm_hist_1w1r")
 #define HLS_MAP_mem_hist_2                      \
     HLS_MAP_TO_MEMORY(mem_hist_2, "plm_hist_1w1r")
+#endif
 
 #define HLS_PROTO(_s)                           \
     HLS_DEFINE_PROTOCOL(_s)

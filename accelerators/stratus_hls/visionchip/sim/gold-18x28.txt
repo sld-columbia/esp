@@ -1,0 +1,1 @@
+../stratus/gold-18x28.txt

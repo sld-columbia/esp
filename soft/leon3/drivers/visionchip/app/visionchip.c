@@ -37,6 +37,11 @@
 #define DEFAULT_NCOLS 640
 #define DEFAULT_NBYTESPP 2
 #define DEFAULT_SWAPBYTES 0
+#define DEFAULT_DO_DWT 0
+#define DEFAULT_INFILE_IS_RAW 0
+#define DEFAULT_NBPP_IN 8
+#define DEFAULT_NBPP_OUT 8
+typedef unsigned char pixel_t;
 
 #define IMAGE_SRC_DIR "."
 #define IMAGE_DST_DIR "."
@@ -546,8 +551,8 @@ int ensemble_1(algPixel_t *streamA, algPixel_t *out, int nRows, int nCols,
 	err = nf(wrkBuf1, wrkBuf2, nRows, nCols);
 	err = hist(wrkBuf2, h, nRows, nCols, nInpBpp);
 	err = histEq(wrkBuf2, out, h, nRows, nCols, nInpBpp, nOutBpp);
-	err = dwt53(out, nRows, nCols);
-
+	if (DEFAULT_DO_DWT)
+	    err = dwt53(out, nRows, nCols);
 
 // -----------------------------------------
     /* 	int i = 0; */
@@ -606,12 +611,16 @@ struct visionchip_test {
 	struct test_info info;
 	struct visionchip_access desc;
 	char *infile;
+        bool infile_is_raw;
 	unsigned nimages;
 	unsigned rows;
 	unsigned cols;
 	unsigned nbytespp;
 	unsigned swapbytes;
-	short *hbuf;
+        unsigned do_dwt;
+        unsigned nbpp_in;
+        unsigned nbpp_out;
+	pixel_t *hbuf;
 	int *sbuf_in;
 	int *sbuf_out;
 	bool verbose;
@@ -622,7 +631,7 @@ static inline struct visionchip_test *to_visionchip(struct test_info *info)
 	return container_of(info, struct visionchip_test, info);
 }
 
-static int check_gold (int *gold, short *array, unsigned len, bool verbose)
+static int check_gold (int *gold, pixel_t *array, unsigned len, bool verbose)
 {
 	int i;
 	int rtn = 0;
@@ -654,11 +663,20 @@ static void init_buf (struct visionchip_test *t)
 	unsigned short *rawBuf;
 
 	// open input file
-        if((fd = fopen(t->infile, "rb")) == (FILE*)NULL)
-        {
+	if (t->infile_is_raw) {
+	    if((fd = fopen(t->infile, "rb")) == (FILE*)NULL)
+	    {
                 printf("[ERROR] Could not open %s\n", t->infile);
 		exit(1);
-        }
+	    }
+	} else {
+	    if((fd = fopen(t->infile, "r")) == (FILE*)NULL)
+	    {
+                printf("[ERROR] Could not open %s\n", t->infile);
+		exit(1);
+	    }
+
+	}
 
 	// allocate buffers
 	nPxls = t->rows * t->cols;
@@ -670,18 +688,34 @@ static void init_buf (struct visionchip_test *t)
 		exit(1);
 	}
 
-	// read image file
-	if (readFrame(fd, rawBuf, nPxls, t->nbytespp, t->swapbytes) != nPxls) {
+	if (t->infile_is_raw) {
+	    // read raw image file
+	    if (readFrame(fd, rawBuf, nPxls, t->nbytespp, t->swapbytes) != nPxls) {
                 printf("[ERROR] readFrame returns wrong number of pixels\n");
 		exit(1);
+	    }
+	} else {
+	    // read txt image file
+	    int i = 0;
+	    uint16_t val = 0;
+
+	    fscanf(fd, "%hu", &val);
+	    while(!feof(fd))
+	    {
+		rawBuf[i++] = val;
+		fscanf(fd, "%hu", &val);
+	    }
+
+	    fclose(fd);
 	}
+	
 
 	// store image in accelerator buffer
 	// repeat image according to nimages parameter
 	hbuf_i = 0;
 	for (i = 0; i < t->nimages; i++) {
 		for (j = 0; j < nPxls; j++) {
-			t->hbuf[hbuf_i] = (short) rawBuf[j];
+			t->hbuf[hbuf_i] = (pixel_t) rawBuf[j];
 			t->sbuf_in[hbuf_i] = (int) rawBuf[j];
 			hbuf_i++;
 		}
@@ -736,6 +770,9 @@ static void visionchip_set_access(struct test_info *info)
 	t->desc.nimages = t->nimages;
 	t->desc.rows = t->rows;
 	t->desc.cols = t->cols;
+	t->desc.do_dwt = t->do_dwt;
+	t->desc.src_offset = 0;
+	t->desc.dst_offset = 0;
 }
 
 static void visionchip_comp(struct test_info *info)
@@ -750,13 +787,34 @@ static void visionchip_comp(struct test_info *info)
 	for (i = 0; i < t->nimages; i++) {
 		buf_in = &(t->sbuf_in[i * t->cols * t->rows]);
 		buf_out = &(t->sbuf_out[i * t->cols * t->rows]);
-		algErr |= ensemble_1(buf_in, buf_out, t->rows, t->cols, 16, 10);
+		algErr |= ensemble_1(buf_in, buf_out, t->rows, t->cols, t->nbpp_in, t->nbpp_out);
 		assert(algErr == 0);
 	}
 
-	numOut = saveFrame(buf_out, ".", "ensemble1", t->rows,
-			   t->cols, 0, sizeof(int), false);
-	assert(numOut == t->rows * t->cols * sizeof(int));
+	if (t->infile_is_raw) {
+	    // save raw output image
+	    numOut = saveFrame(buf_out, ".", "ensemble1", t->rows,
+			       t->cols, 0, sizeof(int), false);
+	    assert(numOut == t->rows * t->cols * sizeof(int));
+	} else {
+	    // save txt output image
+	    
+	    FILE *fileOut = NULL;
+	    if((fileOut = fopen("out.txt", "w")) == (FILE*)NULL)
+	    {
+                printf("[ERROR] Could not open out.txt\n");
+		fclose(fileOut);
+	    }
+
+	    // store output file
+	    int npixels = t->nimages * t->rows * t->cols;
+
+	    for (int i = 0; i < npixels; i++) {
+		fprintf(fileOut, "%d\n", (int) t->hbuf[i]);
+	    }
+
+	    fclose(fileOut);
+	}
 
         // -- Read gold output
         /* printf("read gold output start\n"); */
@@ -831,6 +889,14 @@ static void NORETURN usage(void)
 	exit(1);
 }
 
+/*
+ * The app currently has some hard-coded parameters, that should be made configurable.:
+ * - do_dwt = false. DWT always disabled. This means that the output of the accelerator 
+ *   is expected to be unsigned.
+ * - in/out images in TXT format only, although the RAW format is supported as well
+ * - word bitwidth and related data type, it should be extracted from the HLS config of
+ *   the accelerator. NBPP_IN and NBPP_OUT.
+ */
 int main(int argc, char *argv[])
 {
 	if (argc < 3 || argc == 5 || argc > 7) {
@@ -867,6 +933,10 @@ int main(int argc, char *argv[])
 		}
 		visionchip_test.nbytespp = DEFAULT_NBYTESPP;
 		visionchip_test.swapbytes = DEFAULT_SWAPBYTES;
+		visionchip_test.do_dwt = DEFAULT_DO_DWT;
+		visionchip_test.infile_is_raw = DEFAULT_INFILE_IS_RAW;
+		visionchip_test.nbpp_in = DEFAULT_NBPP_IN;
+		visionchip_test.nbpp_out = DEFAULT_NBPP_OUT;
 		printf("\n");
 	}
 

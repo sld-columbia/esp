@@ -14,10 +14,23 @@
 #define SLD_VISIONCHIP   0x13
 #define DEV_NAME "sld,visionchip"
 
-#define COLS 40
-#define ROWS 30
+// Statically define the size of the input image for this test
+// Prepare in this path the corresponding data_ROWSxCOLS.h
+#define IS_SMALL
 
-#define VISIONCHIP_BUF_SIZE (ROWS * COLS * sizeof(unsigned))
+#ifndef IS_SMALL
+#define COLS 30
+#define ROWS 40
+// Define data type of the pixel
+typedef short pixel;
+#else
+#define COLS 32
+#define ROWS 32
+// Define data type of the pixel
+typedef char pixel;
+#endif
+
+#define VISIONCHIP_BUF_SIZE (ROWS * COLS * 2 * sizeof(pixel))
 
 /* Size of the contiguous chunks for scatter/gather */
 #define CHUNK_SHIFT 8
@@ -30,6 +43,7 @@
 #define VISIONCHIP_NIMAGES_REG   0x40
 #define VISIONCHIP_NROWS_REG     0x44
 #define VISIONCHIP_NCOLS_REG     0x48
+#define VISIONCHIP_DO_DWT_REG    0x4C
 
 
 int main(int argc, char * argv[])
@@ -55,15 +69,16 @@ int main(int argc, char * argv[])
 			int done;
 			int i, j;
 			unsigned **ptable = NULL;
-			short *mem;
-			short gold[COLS * ROWS];
+			pixel *mem;
+			pixel gold[COLS * ROWS];
 			unsigned errors = 0;
 			int scatter_gather = 1;
 
 #ifndef __riscv
 			printf("******************** %s.%d ********************\n", DEV_NAME, n);
 #else
-			print_uart("******************** "); print_uart(DEV_NAME); print_uart("."); print_uart_int(n); print_uart(" ********************\n");
+			print_uart("******************** "); print_uart(DEV_NAME);
+			print_uart("."); print_uart_int(n); print_uart(" ********************\n");
 #endif
 
 			// Check access ok (TODO)
@@ -107,7 +122,7 @@ int main(int argc, char * argv[])
 				//Alocate and populate page table
 				ptable = aligned_malloc(NCHUNK * sizeof(unsigned *));
 				for (i = 0; i < NCHUNK; i++)
-					ptable[i] = (unsigned *) &mem[i * (CHUNK_SIZE / sizeof(unsigned short))];
+					ptable[i] = (unsigned *) &mem[i * (CHUNK_SIZE / sizeof(pixel))];
 #ifndef __riscv
 				printf("  ptable = %p\n", ptable);
 				printf("  nchunk = %lu\n", NCHUNK);
@@ -118,8 +133,11 @@ int main(int argc, char * argv[])
 			}
 
 			// Initialize input (TODO)
-			#include "data.h"
-
+#if (ROWS == 32 && COLS == 32)
+			#include "data_32x32.h"
+#else
+			#include "data_30x40.h"
+#endif
 			// Configure device
 			iowrite32(dev, SELECT_REG, ioread32(dev, DEVID_REG));
 			iowrite32(dev, COHERENCE_REG, coherence);
@@ -139,6 +157,11 @@ int main(int argc, char * argv[])
 			iowrite32(dev, VISIONCHIP_NIMAGES_REG, 1);
 			iowrite32(dev, VISIONCHIP_NROWS_REG, ROWS);
 			iowrite32(dev, VISIONCHIP_NCOLS_REG, COLS);
+#if (ROWS == 32 && COLS == 32)
+			iowrite32(dev, VISIONCHIP_DO_DWT_REG, 0);
+#else
+			iowrite32(dev, VISIONCHIP_DO_DWT_REG, 1);
+#endif
 
 			// Flush for non-coherent DMA
 			esp_flush(coherence);
@@ -174,7 +197,8 @@ int main(int argc, char * argv[])
 				for (j = 0; j < COLS; j++)
 					if (mem[i * COLS + j] != gold[i * COLS + j]) {
 #ifndef __riscv
-						printf(" %d,%d: %d != %d\n", i, j, mem[i * COLS + j], gold[i * COLS + j]);
+						printf(" %d,%d: %d != %d\n", i, j,
+						       mem[i * COLS + j], gold[i * COLS + j]);
 #else
 						print_uart(" ");
 						print_uart_int(i);
@@ -185,11 +209,9 @@ int main(int argc, char * argv[])
 						print_uart(" != ");
 						print_uart_int(gold[i * COLS + j]);
 						print_uart("\n");
-
 #endif
 						errors++;
 					}
-
 
 			if (errors) {
 #ifndef __riscv
