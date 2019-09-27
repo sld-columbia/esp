@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <sld>
-  <accelerator name="spmv" desc="SPMV" data_size="32" device_id="00c">
+  <accelerator name="spmv" desc="SPMV" data_size="32" device_id="00c" hls_tool="stratus_hls">
     <param name="nrows" desc="number of input matrix rows"/>
     <param name="ncols" desc="number of input matrix columns"/>
     <param name="max_nonzero" desc="max non zero elements in a row of the input matrix"/>

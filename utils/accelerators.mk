@@ -1,7 +1,7 @@
 # Copyright (c) 2011-2019 Columbia University, System Level Design Group
 # SPDX-License-Identifier: Apache-2.0
 
-ACCELERATORS_PATH      = $(ESP_ROOT)/accelerators
+ACCELERATORS_PATH      = $(ESP_ROOT)/accelerators/stratus_hls
 ACCELERATORS           = $(filter-out common, $(shell ls -d $(ACCELERATORS_PATH)/*/ | awk -F/ '{print $$(NF-1)}'))
 ACCELERATORS-wdir      = $(addsuffix -wdir, $(ACCELERATORS))
 ACCELERATORS-hls       = $(addsuffix -hls, $(ACCELERATORS))

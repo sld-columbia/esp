@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <sld>
-  <accelerator name="synth" desc="SYNTH" data_size="100" device_id="014">
+  <accelerator name="synth" desc="SYNTH" data_size="100" device_id="014" hls_tool="stratus_hls">
     <param name="offset" desc="base address of the input dataset"/>
     <param name="pattern" desc="load pattern: streaming, strided, irregular"/>
     <param name="in_size" desc="size of input dataset"/>

@@ -28,7 +28,7 @@ memlib: ../memlist.txt $(MEMGEN)
 		bdw_memgen ./memlib/*.bdm; \
 	fi;
 
-Makefile.prj: memlib project.tcl $(ESP_ROOT)/accelerators/common/stratus/project.tcl
+Makefile.prj: memlib project.tcl ../../common/stratus/project.tcl
 	@bdw_makegen
 
 -include Makefile.prj
