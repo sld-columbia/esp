@@ -33,6 +33,7 @@ class Components():
   ]
 
   POINTS = {}
+  VENDOR = {}
 
   def __init__(self, TECH, DMA_WIDTH):
     tech_dir = TECH
@@ -41,6 +42,7 @@ class Components():
     dirs = sorted(dirs, key=str.upper)
     for acc in dirs:
       self.POINTS[acc.upper()] = []
+      self.VENDOR[acc.upper()] = "sld"
       acc_dp = get_immediate_subdirectories(acc_dir + '/' + acc)
       for dp_str in acc_dp:
         dp = dp_str.replace(acc + "_", "")
@@ -63,6 +65,9 @@ class Components():
     dirs = sorted(dirs, key=str.upper)
     for acc in dirs:
       self.POINTS[acc.upper()] = []
+      with open(acc_dir + "/" + acc + "/vendor") as f:
+        vendor = f.readline().strip()
+      self.VENDOR[acc.upper()] = vendor
       dp = ""
       self.POINTS[acc.upper()].append(dp)
       self.ACCELERATORS.append(acc.upper())
@@ -183,6 +188,7 @@ class SoC_Config():
           if tokens[3] == "acc":
             tile.point.set(tokens[8])
             tile.has_l2.set(tokens[9])
+            tile.vendor = tokens[10]
     # DVFS (skip whether it has it or not; we know that already)
     line = fp.readline()
     line = fp.readline()
@@ -290,6 +296,7 @@ class SoC_Config():
         if is_accelerator:
           fp.write(" " + str(tile.point.get()))
           fp.write(" " + str(tile.has_l2.get()))
+          fp.write(" " + str(tile.vendor))
         fp.write("\n")
         i += 1
     if has_dvfs:

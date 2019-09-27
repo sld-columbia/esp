@@ -47,98 +47,101 @@ help:
 	@echo
 	@echo " === Accelerators Flow ==="
 	@echo
-	@echo " make print-available-accelerators  : print a list of accelerators available for the HLS and Chisel flows."
-	@echo " make <accelerator>-hls             : run HLS for all configurations available for <accelerator>"
-	@echo "                                      and generate corresponding RTL files."
-	@echo " make <accelerator>                 : run SBT on all Chisel configurations available for <accelerator>"
-	@echo "                                      and generate corresponding RTL files."
-	@echo " make <accelerator>-sim             : run all simulations defined for <accelerator> using the"
-	@echo "                                      SystemC testbench; HLS may start if the RTL is out-of-date."
-	@echo " make <accelerator>-exe             : run plain SystemC execution w/o HLS tool environment. This is only"
-	@echo "                                      available for accelerators designed in SystemC and it still requires"
-	@echo "                                      access to some of the libraries from the HLS tool vendor."
-	@echo " make <accelerator>-plot            : run all simulations defined for <accelerator> and plot"
-	@echo "                                      results on a latency vs area chard; HLS may start if the"
-	@echo "                                      RTL is out-of-date."
-	@echo " make <accelerator>-clean           : clean HLS working directory, or the SBT build folder, but keep"
-	@echo "                                      the generated RTL for <accelerator>; HLS cache is not deleted."
-	@echo " make <accelerator>-distclean       : clean HLS working directory, or the SBT build folder, and remove"
-	@echo "                                      the generated RTL for <accelerator>; HLS cache is not deleted."
-	@echo " make accelerators                  : make <accelerator>-hls for all available accelerators."
-	@echo " make accelerators-clean            : make <accelerator>-clean for all available accelerators."
-	@echo " make accelerators-distclean        : make <accelerator>-distclean for all available accelerators."
-	@echo " make chisel-accelerators           : make <accelerator> for all available accelerators in Chisel."
-	@echo " make chisel-accelerators-clean     : make <accelerator>-clean for all available accelerators in Chisel."
-	@echo " make chisel-accelerators-distclean : make <accelerator>-distclean for all available accelerators in Chisel."
-
-	@echo " make sldgen                        : generate RTL wrappers for scheduled accelerators; this"
-	@echo "                                      target is always called as a dependency before ESP"
-	@echo "                                      simulaiton and synthesis."
+	@echo " make print-available-accelerators      : print a list of accelerators available for the HLS and Chisel flows."
+	@echo " make <accelerator>-hls                 : run HLS for all configurations available for <accelerator>"
+	@echo "                                          and generate corresponding RTL files."
+	@echo " make <accelerator>                     : run SBT on all available configurations for <accelerator> or the custom"
+	@echo "                                          Makefile of <accelerator> for Chisel or third-party ips respectively."
+	@echo "                                          and generate corresponding RTL files."
+	@echo " make <accelerator>-sim                 : run all simulations defined for <accelerator> using the"
+	@echo "                                          SystemC testbench; HLS may start if the RTL is out-of-date."
+	@echo " make <accelerator>-exe                 : run plain SystemC execution w/o HLS tool environment. This is only"
+	@echo "                                          available for accelerators designed in SystemC and it still requires"
+	@echo "                                          access to some of the libraries from the HLS tool vendor."
+	@echo " make <accelerator>-plot                : run all simulations defined for <accelerator> and plot"
+	@echo "                                          results on a latency vs area chard; HLS may start if the"
+	@echo "                                          RTL is out-of-date."
+	@echo " make <accelerator>-clean               : clean HLS working directory, or the SBT build folder, but keep"
+	@echo "                                          the generated RTL for <accelerator>; HLS cache is not deleted."
+	@echo " make <accelerator>-distclean           : clean HLS working directory, or the SBT build folder, and remove"
+	@echo "                                          the generated RTL for <accelerator>; HLS cache is not deleted."
+	@echo " make accelerators                      : make <accelerator>-hls for all available accelerators."
+	@echo " make accelerators-clean                : make <accelerator>-clean for all available accelerators."
+	@echo " make accelerators-distclean            : make <accelerator>-distclean for all available accelerators."
+	@echo " make chisel-accelerators               : make <accelerator> for all available accelerators in Chisel."
+	@echo " make chisel-accelerators-clean         : make <accelerator>-clean for all available accelerators in Chisel."
+	@echo " make chisel-accelerators-distclean     : make <accelerator>-distclean for all available accelerators in Chisel."
+	@echo " make thirdparty-accelerators           : make <accelerator> for all available third-party accelerators."
+	@echo " make thirdparty-accelerators-clean     : make <accelerator>-clean for all available third-party accelerators."
+	@echo " make thirdparty-accelerators-distclean : make <accelerator>-distclean for all available third-party accelerators."
+	@echo " make sldgen                            : generate RTL wrappers for scheduled accelerators; this"
+	@echo "                                          target is always called as a dependency before ESP"
+	@echo "                                          simulaiton and synthesis."
 	@echo
 	@echo
 	@echo " === SoC Flow ==="
 	@echo
-	@echo " make esp-defconfig                : read the default configuration for the current SoC folder"
-	@echo "                                     and generate the corresponding SoC map."
-	@echo " make esp-config                   : read the current configuration from .esp_config and"
-	@echo "                                     generate the corresponding SoC map (may run as dependency)."
-	@echo " make esp-xconfig                  : open a GUI to configure and generate the SoC map."
-	@echo " make sim                          : compile all source files and run an RTL simulation of ESP"
-	@echo "                                     (requires Modelsim 10.5c)."
-	@echo " make sim-gui                      : compile all source files and run an RTL simulation of ESP"
-	@echo "                                     with graphic user interface (requires Modelsim 10.5c)."
-	@echo " make vivado-syn                   : generate a bitstream of ESP (requires Vivado 2018.2)."
-	@echo " make vivado-prog-fpga             : load the generated bitstream to FPGA. This target requires"
-	@echo "                                     the environment variable FPGA_HOST set to the network ip of"
-	@echo "                                     the machine with FTDI or JTAG link to the FPGA. The FPGA_HOST"
-	@echo "                                     must run the hw_server deamon from Vivado 2018.2. The variable"
-	@echo "                                     XIL_HW_SERVER_PORT must be set to the port chosen for the"
-	@echo "                                     hw_server communication."
-	@echo " make profpga-prog-fpga            : load the generated bitstream to proFPGA system. The profpga.cfg"
-	@echo "                                     configuration file in the current SoC folder must match the"
-	@echo "                                     board setup, including network, USB, or PCIe link information."
-	@echo " make profpga-close-fpga           : turn off the proFPGA system."
+	@echo " make esp-defconfig                    : read the default configuration for the current SoC folder"
+	@echo "                                         and generate the corresponding SoC map."
+	@echo " make esp-config                       : read the current configuration from .esp_config and"
+	@echo "                                         generate the corresponding SoC map (may run as dependency)."
+	@echo " make esp-xconfig                      : open a GUI to configure and generate the SoC map."
+	@echo " make sim                              : compile all source files and run an RTL simulation of ESP"
+	@echo "                                         (requires Modelsim 10.5c)."
+	@echo " make sim-gui                          : compile all source files and run an RTL simulation of ESP"
+	@echo "                                         with graphic user interface (requires Modelsim 10.5c)."
+	@echo " make vivado-syn                       : generate a bitstream of ESP (requires Vivado 2018.2)."
+	@echo " make vivado-prog-fpga                 : load the generated bitstream to FPGA. This target requires"
+	@echo "                                         the environment variable FPGA_HOST set to the network ip of"
+	@echo "                                         the machine with FTDI or JTAG link to the FPGA. The FPGA_HOST"
+	@echo "                                         must run the hw_server deamon from Vivado 2018.2. The variable"
+	@echo "                                         XIL_HW_SERVER_PORT must be set to the port chosen for the"
+	@echo "                                         hw_server communication."
+	@echo " make profpga-prog-fpga                : load the generated bitstream to proFPGA system. The profpga.cfg"
+	@echo "                                         configuration file in the current SoC folder must match the"
+	@echo "                                         board setup, including network, USB, or PCIe link information."
+	@echo " make profpga-close-fpga               : turn off the proFPGA system."
 	@echo
-	@echo " make espmon-run                   : open ESP monitor GUI interface (requires proFPGA system)"
+	@echo " make espmon-run                       : open ESP monitor GUI interface (requires proFPGA system)"
 	@echo
-	@echo " make fpga-run                     : Run bare-metal program \"systest.exe\" on FPGA"
-	@echo "                                     Use targets \"make vivado-syn\" and \"make soft\" first"
-	@echo " make fpga-run-linux               : Run Linux on FPGA"
-	@echo "                                     Use targets \"make vivado-syn\", \"make soft\" and \"make linux\" first"
+	@echo " make fpga-run                         : Run bare-metal program \"systest.exe\" on FPGA"
+	@echo "                                         Use targets \"make vivado-syn\" and \"make soft\" first"
+	@echo " make fpga-run-linux                   : Run Linux on FPGA"
+	@echo "                                         Use targets \"make vivado-syn\", \"make soft\" and \"make linux\" first"
 	@echo
 	@echo
 	@echo " === Software Flow ==="
 	@echo
-	@echo " make soft                         : compile the bare-metal program systest.c. The target architecutre"
-	@echo "                                     is selected based on the varialble CPU_ARCH."
-	@echo " make barec-all                    : compile the bare-metal device drivers for available accelerators and"
-	@echo "                                     for the digital-video interface (DVI). Executables (.exe) are placed to"
-	@echo "                                     \"barec\" and can be used in simulation by replacing \"systest.c\""
-	@echo " make linux                        : compile Linux, create root file-system and compile all ESP core drivers,"
-	@echo "                                     drivers for accelerators, and test applications."
-	@echo " make <accelerator>-barec          : compile the bare-metal device driver for the specified accelerator."
-	@echo "                                     Executables (.exe) are placed to \"barec\" and can be used in simulation"
-	@echo "                                     by replacing \"systest.c\""
-	@echo " make <accelerator>-driver         : compile the Linux device driver for the specified accelerator. Drivers"
-	@echo "                                     are placed to \"sysroot/opt/drivers\" and load automatically during OS boot"
-	@echo " make <accelerator>-app            : compile the Linux test application for the specified accelerator."
-	@echo "                                     Executables are placed to \"sysroot/applications/test\""
+	@echo " make soft                             : compile the bare-metal program systest.c. The target architecutre"
+	@echo "                                         is selected based on the varialble CPU_ARCH."
+	@echo " make barec-all                        : compile the bare-metal device drivers for available accelerators and"
+	@echo "                                         for the digital-video interface (DVI). Executables (.exe) are placed to"
+	@echo "                                         \"barec\" and can be used in simulation by replacing \"systest.c\""
+	@echo " make linux                            : compile Linux, create root file-system and compile all ESP core drivers,"
+	@echo "                                         drivers for accelerators, and test applications."
+	@echo " make <accelerator>-barec              : compile the bare-metal device driver for the specified accelerator."
+	@echo "                                         Executables (.exe) are placed to \"barec\" and can be used in simulation"
+	@echo "                                         by replacing \"systest.c\""
+	@echo " make <accelerator>-driver             : compile the Linux device driver for the specified accelerator. Drivers"
+	@echo "                                         are placed to \"sysroot/opt/drivers\" and load automatically during OS boot"
+	@echo " make <accelerator>-app                : compile the Linux test application for the specified accelerator."
+	@echo "                                         Executables are placed to \"sysroot/applications/test\""
 	@echo
 	@echo
 	@echo " === Cobham open-source IPs (GRLIB) ==="
 	@echo
-	@echo " make grlib-defconfig              : read the default configuration for grlib IPs."
-	@echo " make grlib-config                 : read the configuration for grlib IPs from .grlib_config"
-	@echo "                                     (may run as dependency)."
-	@echo " make grlib-xconfig                : open grlib configuration GUI; useful when using the LEON-3"
-	@echo "                                     embedded processor."
-	@echo " make leon3-soft                   : compile the bare-metal program for LEON-3; The resulting"
-	@echo "                                     executable is used for RTL simulation, but can also run on"
-	@echo "                                     LEON-3 after loading the bistream to FPGA (requires LEON-3"
-	@echo "                                     tool-chain and optionally grmon if running on FPGA)."
-	@echo " make linux.dsu                    : package Linux image for LEON-3. This target is called by the"
-	@echo "                                     generic \"linux\" target when the variable CPU_ARCH is set to"
-	@echo "                                     leon3 (see \"make linux\")."
+	@echo " make grlib-defconfig                  : read the default configuration for grlib IPs."
+	@echo " make grlib-config                     : read the configuration for grlib IPs from .grlib_config"
+	@echo "                                         (may run as dependency)."
+	@echo " make grlib-xconfig                    : open grlib configuration GUI; useful when using the LEON-3"
+	@echo "                                         embedded processor."
+	@echo " make leon3-soft                       : compile the bare-metal program for LEON-3; The resulting"
+	@echo "                                         executable is used for RTL simulation, but can also run on"
+	@echo "                                         LEON-3 after loading the bistream to FPGA (requires LEON-3"
+	@echo "                                         tool-chain and optionally grmon if running on FPGA)."
+	@echo " make linux.dsu                        : package Linux image for LEON-3. This target is called by the"
+	@echo "                                         generic \"linux\" target when the variable CPU_ARCH is set to"
+	@echo "                                         leon3 (see \"make linux\")."
 	@echo
 
 
@@ -769,7 +772,6 @@ VERILOG_PROFPGA =
 endif
 
 ARIANE ?= $(ESP_ROOT)/third-party/ariane
-
 VERILOG_ARIANE += $(shell strings $(ESP_ROOT)/utils/ariane_verilog.txt)
 
 PKG_LIST  = $(shell (find $(ESP_ROOT)/rtl -name "*.txt" ))
@@ -801,10 +803,11 @@ SVLOG_SRCS = $(SVLOG_RTL_SRCS)
 
 ALL_SRCS  = $(VHDL_PKGS) $(VHDL_SRCS) $(VLOG_SRCS) $(SVLOG_SRCS)
 
-VHDL_ALL_RTL = $(VHDL_RTL_PKGS) $(TOP_VHDL_RTL_PKGS)  $(VHDL_RTL_SRCS) $(TOP_VHDL_RTL_SRCS)
-VLOG_ALL_RTL = $(VLOG_RTL_PKGS) $(TOP_VLOG_RTL_PKGS)  $(VLOG_RTL_SRCS) $(TOP_VLOG_RTL_SRCS)
+VHDL_ALL_RTL = $(THIRDPARTY_VHDL_PKGS) $(VHDL_RTL_PKGS) $(TOP_VHDL_RTL_PKGS) $(THIRDPARTY_VHDL) $(VHDL_RTL_SRCS) $(TOP_VHDL_RTL_SRCS)
+VLOG_ALL_RTL = $(VLOG_RTL_PKGS) $(TOP_VLOG_RTL_PKGS) $(THIRDPARTY_VLOG) $(VLOG_RTL_SRCS) $(TOP_VLOG_RTL_SRCS)
+SVLOG_ALL_RTL = $(THIRDPARTY_SVLOG) $(SVLOG_SRCS)
 
-ALL_RTL_SRCS  = $(VHDL_ALL_RTL) $(VLOG_ALL_RTL) $(SVLOG_SRCS)
+ALL_RTL_SRCS  = $(VHDL_ALL_RTL) $(VLOG_ALL_RTL) $(SVLOG_ALL_RTL)
 
 check_all_srcs: grlib_config.vhd socmap.vhd sldgen
 	@echo $(ALL_SRCS) > $@.new; \
@@ -1129,6 +1132,23 @@ modelsim/vsim.mk: modelsim/xilinx_lib check_all_srcs.old $(PKG_LIST)
 		$(VLOG) -work profpga $(PROFPGA_INCDIR_MODELSIM) $$rtl || exit; \
 	done; \
 	vlib -type directory work; \
+	echo $(SPACES)"### Compile third-party accelerators source files ###"; \
+	for rtl in $(THIRDPARTY_VLOG); do \
+		echo $(SPACES)"$(VLOG) -work work +incdir+... $$rtl"; \
+		$(VLOG) -work work $(THIRDPARTY_INCDIR_MODELSIM) $$rtl || exit; \
+	done; \
+	for rtl in $(THIRDPARTY_SVLOG); do \
+		echo $(SPACES)"$(VLOG) -sv -work work +incdir+... $$rtl"; \
+		$(VLOG) -sv -work work $(THIRDPARTY_INCDIR_MODELSIM) $$rtl || exit; \
+	done; \
+	for rtl in $(THIRDPARTY_VHDL_PKGS); do \
+		echo $(SPACES)"$(VCOM) -work work $$rtl"; \
+		$(VCOM) -work work $$rtl || exit; \
+	done; \
+	for rtl in $(THIRDPARTY_VHDL); do \
+		echo $(SPACES)"$(VCOM) -work work $$rtl"; \
+		$(VCOM) -work work $$rtl || exit; \
+	done; \
 	echo $(SPACES)"### Compile Ariane source files ###"; \
 	rtl=$(ESP_ROOT)/socs/common/ariane_soc_pkg.sv; \
 	echo $(SPACES)"$(VLOG) $(ARIANE_VLOGOPT) $$rtl"; \
@@ -1246,7 +1266,7 @@ vivado/srcs.tcl: vivado check_all_rtl_srcs.old
 	@for rtl in $(VLOG_ALL_RTL); do \
 		echo "read_verilog $$rtl" >> $@; \
 	done;
-	@for rtl in $(SVLOG_SRCS); do \
+	@for rtl in $(SVLOG_ALL_RTL); do \
 		echo "read_verilog -sv $$rtl" >> $@; \
 	done;
 
@@ -1257,9 +1277,9 @@ vivado/setup.tcl: vivado $(XDC) $(BOARD_FILES)
 	@echo "create_project $(DESIGN) -part ${DEVICE} -force" > $@
 	@echo "set_property target_language verilog [current_project]" >> $@
 ifneq ($(findstring profpga, $(BOARD)),)
-	@echo "set_property include_dirs {$(PROFPGA_INCDIR) $(ARIANE)/src/common_cells/include} [get_filesets {sim_1 sources_1}]" >> $@
+	@echo "set_property include_dirs {$(PROFPGA_INCDIR) $(THIRDPARTY_INCDIR) $(ARIANE)/src/common_cells/include} [get_filesets {sim_1 sources_1}]" >> $@
 else
-	@echo "set_property include_dirs {$(ARIANE)/src/common_cells/include} [get_filesets {sim_1 sources_1}]" >> $@
+	@echo "set_property include_dirs {$(THIRDPARTY_INCDIR) $(ARIANE)/src/common_cells/include} [get_filesets {sim_1 sources_1}]" >> $@
 endif
 	@echo "set_property verilog_define {WT_DCACHE=1} [get_filesets {sim_1 sources_1}]" >> $@
 	@echo "source ./srcs.tcl" >> $@

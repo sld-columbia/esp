@@ -134,6 +134,8 @@ end;
   signal pllclk_int        : std_ulogic;
   signal mon_dvfs_feedthru : monitor_dvfs_type;
 
+  constant cacheable_mem_info : tile_mem_info_vector(0 to MEM_MAX_NUM - 1) := mem_info(0 to MEM_MAX_NUM - 1);
+
 begin
 
   -- <<accelerator_instance>>
@@ -160,8 +162,8 @@ begin
       local_x          => local_x,
       retarget_for_dma => 1,
       mem_axi_port     => 0,
-      mem_num          => mem_num,
-      mem_info         => mem_info(0 to cacheable_mem_num - 1),
+      mem_num          => cacheable_mem_num,
+      mem_info         => cacheable_mem_info,
       slv_y            => io_y,
       slv_x            => io_x)
     port map (
@@ -316,5 +318,6 @@ begin
   pllclk <= pllclk_int;
 
   mon_dvfs      <= monitor_dvfs_none;
+  mon_cache     <= monitor_cache_none;
 
 end rtl;
