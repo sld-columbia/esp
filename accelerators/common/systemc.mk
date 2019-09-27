@@ -57,7 +57,7 @@ $(TARGET): $(OBJS)
 	$(QUIET_CXX)$(CXX) $(CXXFLAGS) ${INCDIR} -c $< -o $@
 
 run: $(TARGET)
-	$(QUIET_RUN) LD_LIBRARY_PATH=$(LD_LIBRARY_PATH):$(SYSTEMC)/lib-linux64 ./$<
+	$(QUIET_RUN) LD_LIBRARY_PATH=$(LD_LIBRARY_PATH):$(SYSTEMC)/lib-linux64 ./$< $(RUN_ARGS)
 
 clean:
 	$(QUIET_CLEAN)rm -f *.o $(TARGET)

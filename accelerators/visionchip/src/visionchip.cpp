@@ -177,6 +177,7 @@ void visionchip::compute_kernel()
     uint32_t n_Cols;
     uint32_t plm_size;
     uint32_t index_last_row;
+    bool do_dwt;
 
     // Reset
     {
@@ -188,6 +189,7 @@ void visionchip::compute_kernel()
         n_Images = 0;
         n_Rows = 0;
         n_Cols = 0;
+	do_dwt = 0;
 
         wait();
     }
@@ -202,6 +204,7 @@ void visionchip::compute_kernel()
         n_Images = config.n_Images;
         n_Rows = config.n_Rows;
         n_Cols = config.n_Cols;
+	do_dwt = config.do_dwt;
         plm_size = n_Cols * n_Rows;
         index_last_row = plm_size - n_Cols;
     }
@@ -216,7 +219,8 @@ void visionchip::compute_kernel()
         kernel_nf(n_Rows, n_Cols);
         kernel_hist(n_Rows, n_Cols);
         kernel_histEq(n_Rows, n_Cols);
-        kernel_dwt(n_Rows, n_Cols);
+	if (do_dwt)
+	    kernel_dwt(n_Rows, n_Cols);
 
         this->compute_store_handshake();
     }
