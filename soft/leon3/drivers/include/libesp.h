@@ -30,6 +30,7 @@
 #include <esp.h>
 #include <esp_accelerator.h>
 
+#include "adder.h"
 #include "CounterAccelerator.h"
 #include "dummy.h"
 #include "sort.h"
@@ -39,6 +40,7 @@
 #include "vitbfly2.h"
 
 enum esp_accelerator_type {
+	adder,
 	CounterAccelerator,
 	dummy,
 	sort,
@@ -49,6 +51,7 @@ enum esp_accelerator_type {
 };
 
 union esp_accelerator_descriptor {
+	struct adder_access adder_desc;
 	struct CounterAccelerator_access CounterAccelerator_desc;
 	struct dummy_access dummy_desc;
 	struct sort_access sort_desc;

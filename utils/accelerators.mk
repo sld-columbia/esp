@@ -12,6 +12,17 @@ ACCELERATORS-plot      = $(addsuffix -plot, $(ACCELERATORS))
 ACCELERATORS-exe       = $(addsuffix -exe, $(ACCELERATORS))
 
 
+VIVADOHLS_ACC_PATH      = $(ESP_ROOT)/accelerators/vivado_hls
+VIVADOHLS_ACC           = $(filter-out common, $(shell ls -d $(VIVADOHLS_ACC_PATH)/*/ | awk -F/ '{print $$(NF-1)}'))
+VIVADOHLS_ACC-wdir      = $(addsuffix -wdir, $(VIVADOHLS_ACC))
+VIVADOHLS_ACC-hls       = $(addsuffix -hls, $(VIVADOHLS_ACC))
+VIVADOHLS_ACC-clean     = $(addsuffix -clean, $(VIVADOHLS_ACC))
+VIVADOHLS_ACC-distclean = $(addsuffix -distclean, $(VIVADOHLS_ACC))
+VIVADOHLS_ACC-sim       = $(addsuffix -sim, $(VIVADOHLS_ACC))
+VIVADOHLS_ACC-plot      = $(addsuffix -plot, $(VIVADOHLS_ACC))
+VIVADOHLS_ACC-exe       = $(addsuffix -exe, $(VIVADOHLS_ACC))
+
+
 CHISEL_PATH                   = $(ESP_ROOT)/chisel
 CHISEL_ACC_PATH               = $(CHISEL_PATH)/src/main/scala/esp/examples
 CHISEL_ACCELERATORS           = $(shell ls $(CHISEL_ACC_PATH)/*.scala | awk -F/ '{print $$(NF)}' | sed 's/\.scala//g')
@@ -36,16 +47,17 @@ THIRDPARTY_INCDIR_XCELIUM  = $(foreach dir, $(THIRDPARTY_INCDIR), -INCDIR $(dir)
 THIRDPARTY_INCDIR_INCISIVE = $(THIRDPARTY_INCDIR_XCELIUM)
 
 
-ACCELERATORS-driver       = $(addsuffix -driver, $(ACCELERATORS)) $(addsuffix -driver, $(CHISEL_ACCELERATORS))
-ACCELERATORS-driver-clean = $(addsuffix -driver-clean, $(ACCELERATORS)) $(addsuffix -driver-clean, $(CHISEL_ACCELERATORS))
-ACCELERATORS-app          = $(addsuffix -app, $(ACCELERATORS)) $(addsuffix -app, $(CHISEL_ACCELERATORS))
-ACCELERATORS-app-clean    = $(addsuffix -app-clean, $(ACCELERATORS)) $(addsuffix -app-clean, $(CHISEL_ACCELERATORS))
-ACCELERATORS-barec        = $(addsuffix -barec, $(ACCELERATORS)) $(addsuffix -barec, $(CHISEL_ACCELERATORS))
-ACCELERATORS-barec-clean  = $(addsuffix -barec-clean, $(ACCELERATORS)) $(addsuffix -barec-clean, $(CHISEL_ACCELERATORS))
+ACCELERATORS-driver       = $(addsuffix -driver, $(ACCELERATORS)) $(addsuffix -driver, $(VIVADOHLS_ACC)) $(addsuffix -driver, $(CHISEL_ACCELERATORS))
+ACCELERATORS-driver-clean = $(addsuffix -driver-clean, $(ACCELERATORS)) $(addsuffix -driver-clean, $(VIVADOHLS_ACC)) $(addsuffix -driver-clean, $(CHISEL_ACCELERATORS))
+ACCELERATORS-app          = $(addsuffix -app, $(ACCELERATORS)) $(addsuffix -app, $(VIVADOHLS_ACC)) $(addsuffix -app, $(CHISEL_ACCELERATORS))
+ACCELERATORS-app-clean    = $(addsuffix -app-clean, $(ACCELERATORS)) $(addsuffix -app-clean, $(VIVADOHLS_ACC)) $(addsuffix -app-clean, $(CHISEL_ACCELERATORS))
+ACCELERATORS-barec        = $(addsuffix -barec, $(ACCELERATORS)) $(addsuffix -barec, $(VIVADOHLS_ACC)) $(addsuffix -barec, $(CHISEL_ACCELERATORS))
+ACCELERATORS-barec-clean  = $(addsuffix -barec-clean, $(ACCELERATORS)) $(addsuffix -barec-clean, $(VIVADOHLS_ACC)) $(addsuffix -barec-clean, $(CHISEL_ACCELERATORS))
 
 
 print-available-accelerators:
 	$(QUIET_INFO)echo "Available accelerators generated from Stratus HLS: $(ACCELERATORS)"
+	$(QUIET_INFO)echo "Available accelerators generated from Vivado HLS: $(VIVADOHLS_ACC)"
 	$(QUIET_INFO)echo "Available accelerators generated from Chisel3: $(CHISEL_ACCELERATORS)"
 	$(QUIET_INFO)echo "Available third-party accelerators: $(THIRDPARTY_ACCELERATORS)"
 
@@ -168,6 +180,58 @@ accelerators-clean: $(ACCELERATORS-clean)
 accelerators-distclean: $(ACCELERATORS-distclean)
 
 .PHONY: accelerators accelerators-clean accelerators-distclean
+
+### Vivado HLS ###
+$(VIVADOHLS_ACC-wdir):
+	$(QUIET_MKDIR)mkdir -p $(VIVADOHLS_ACC_PATH)/$(@:-wdir=)/hls-work-$(TECHLIB)
+	@cd $(VIVADOHLS_ACC_PATH)/$(@:-wdir=)/hls-work-$(TECHLIB); \
+	if ! test -e project.tcl; then \
+		cp ../syn/* .; \
+		rm -f script.tcl; \
+		rm -f directives.tcl; \
+		rm -f Makefile; \
+		ln -s ../syn/script.tcl; \
+		ln -s ../syn/directives.tcl; \
+		ln -s ../syn/Makefile; \
+	fi;
+
+$(VIVADOHLS_ACC-hls): %-hls : %-wdir
+	$(QUIET_INFO)echo "Running HLS for available implementations of $(@:-hls=)"
+	$(QUIET_MAKE)ACCELERATOR=$(@:-hls=) TECH=$(TECHLIB) ESP_ROOT=$(ESP_ROOT) make -C $(VIVADOHLS_ACC_PATH)/$(@:-hls=)/hls-work-$(TECHLIB) hls | tee $(@:-hls=)_hls.log
+	$(QUIET_INFO)echo "Installing available implementations for $(@:-hls=) to $(ESP_ROOT)/tech/$(TECHLIB)/acc/$(@:-hls=)"
+	$(QUIET_MAKE)ACCELERATOR=$(@:-hls=) TECH=$(TECHLIB) ESP_ROOT=$(ESP_ROOT) make -C $(VIVADOHLS_ACC_PATH)/$(@:-hls=)/hls-work-$(TECHLIB) install
+	@if test -e $(ESP_ROOT)/tech/$(TECHLIB)/acc/installed.log; then \
+		sed -i '/$(@:-hls=)/d' $(ESP_ROOT)/tech/$(TECHLIB)/acc/installed.log; \
+	fi;
+	@echo "$(@:-hls=)" >> $(ESP_ROOT)/tech/$(TECHLIB)/acc/installed.log
+
+
+# $(VIVADOHLS_ACC-sim): %-sim : %-wdir
+# 	$(QUIET_RUN)ACCELERATOR=$(@:-sim=) TECH=$(TECHLIB) ESP_ROOT=$(ESP_ROOT) make -C $(VIVADOHLS_ACC_PATH)/$(@:-sim=)/hls-work-$(TECHLIB) sim_all | tee $(@:-sim=)_sim.log
+
+# $(VIVADOHLS_ACC-exe):
+# 	$(QUIET_RUN) ACCELERATOR=$(@:-exe=) TECH=$(TECHLIB) ESP_ROOT=$(ESP_ROOT) DMA_WIDTH=$(NOC_WIDTH) RUN_ARGS="$(RUN_ARGS)" $(MAKE) -C $(VIVADOHLS_ACC_PATH)/$(@:-exe=)/sim run
+
+$(VIVADOHLS_ACC-clean): %-clean : %-wdir
+	$(QUIET_CLEAN)ACCELERATOR=$(@:-clean=) TECH=$(TECHLIB) ESP_ROOT=$(ESP_ROOT) make -C $(VIVADOHLS_ACC_PATH)/$(@:-clean=)/hls-work-$(TECHLIB) clean
+	@$(RM) $(@:-clean=)*.log
+
+$(VIVADOHLS_ACC-distclean): %-distclean : %-wdir
+	$(QUIET_CLEAN)ACCELERATOR=$(@:-distclean=) TECH=$(TECHLIB) ESP_ROOT=$(ESP_ROOT) make -C $(VIVADOHLS_ACC_PATH)/$(@:-distclean=)/hls-work-$(TECHLIB) distclean
+	@$(RM) $(@:-distclean=)*.log
+	@if test -e $(ESP_ROOT)/tech/$(TECHLIB)/acc/installed.log; then \
+		sed -i '/$(@:-distclean=)/d' $(ESP_ROOT)/tech/$(TECHLIB)/acc/installed.log; \
+	fi;
+
+.PHONY: $(VIVADOHLS_ACC-wdir) $(VIVADOHLS_ACC-hls) $(VIVADOHLS_ACC-sim) $(VIVADOHLS_ACC-clean) $(VIVADOHLS_ACC-distclean)
+
+vivadohls_acc: $(VIVADOHLS_ACC-hls)
+
+vivadohls_acc-clean: $(VIVADOHLS_ACC-clean)
+
+vivadohls_acc-distclean: $(VIVADOHLS_ACC-distclean)
+
+.PHONY: vivadohls_acc vivadohls_acc-clean vivadohls_acc-distclean
 
 ### Common ###
 $(ESP_ROOT)/tech/$(TECHLIB)/acc/installed.log:

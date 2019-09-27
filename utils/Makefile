@@ -801,13 +801,15 @@ VHDL_SRCS = $(THIRDPARTY_VHDL) $(VHDL_RTL_SRCS) $(VHDL_SIM_SRCS) $(TOP_VHDL_RTL_
 VLOG_SRCS = $(THIRDPARTY_VLOG) $(VLOG_RTL_SRCS) $(VLOG_SIM_SRCS) $(TOP_VLOG_RTL_SRCS) $(TOP_VLOG_SIM_SRCS)
 SVLOG_SRCS = $(THIRDPARTY_SVLOG) $(SVLOG_RTL_SRCS)
 
-ALL_SRCS  = $(VHDL_PKGS) $(VHDL_SRCS) $(VLOG_SRCS) $(SVLOG_SRCS)
+DAT_SRCS = $(shell (find $(ESP_ROOT)/tech/$(TECHLIB) -name "*.dat" ))
+
+ALL_SRCS  = $(VHDL_PKGS) $(VHDL_SRCS) $(VLOG_SRCS) $(SVLOG_SRCS) $(DAT_SRCS)
 
 VHDL_ALL_RTL = $(THIRDPARTY_VHDL_PKGS) $(VHDL_RTL_PKGS) $(TOP_VHDL_RTL_PKGS) $(THIRDPARTY_VHDL) $(VHDL_RTL_SRCS) $(TOP_VHDL_RTL_SRCS)
 VLOG_ALL_RTL = $(THIRDPARTY_VLOG) $(VLOG_RTL_SRCS) $(TOP_VLOG_RTL_SRCS)
 SVLOG_ALL_RTL = $(THIRDPARTY_SVLOG) $(SVLOG_SRCS)
 
-ALL_RTL_SRCS  = $(VHDL_ALL_RTL) $(VLOG_ALL_RTL) $(SVLOG_ALL_RTL)
+ALL_RTL_SRCS  = $(VHDL_ALL_RTL) $(VLOG_ALL_RTL) $(SVLOG_ALL_RTL) $(DAT_SRCS)
 
 check_all_srcs: grlib_config.vhd socmap.vhd sldgen
 	@echo $(ALL_SRCS) > $@.new; \
@@ -850,7 +852,7 @@ check_all_rtl_srcs-distclean:
 
 modelsim/xilinx_lib: $(XILINX_VIVADO)
 	$(QUIET_MKDIR)mkdir -p $@
-	@echo "compile_simlib -directory xilinx_lib -simulator modelsim -library unisim  -no_ip_compile" > $@/simlib.tcl; \
+	@echo "compile_simlib -directory xilinx_lib -simulator modelsim -library unisim -no_ip_compile" > $@/simlib.tcl; \
 	cd modelsim; \
 	vivado $(VIVADO_BATCH_OPT) -source xilinx_lib/simlib.tcl; \
 	lib_path=$$(cat modelsim.ini | grep secureip | cut -d " " -f 3); \
@@ -1255,6 +1257,9 @@ vivado/srcs.tcl: vivado check_all_rtl_srcs.old
 	done;
 	@for rtl in $(SVLOG_ALL_RTL); do \
 		echo "read_verilog -sv $$rtl" >> $@; \
+	done;
+	@for dat in $(DAT_SRCS); do \
+		echo "add_files $$dat" >> $@; \
 	done;
 
 
