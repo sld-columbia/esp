@@ -134,7 +134,7 @@ void dummy::store_output()
 #elif (DMA_WIDTH == 32)
                 this->dma_write_chnl.put(data_bv.range(31, 0));
                 wait();
-                this->dma_write_chnl.put(data_bv.range(64, 32);
+                this->dma_write_chnl.put(data_bv.range(64, 32));
 #endif
             }
             ping = !ping;
