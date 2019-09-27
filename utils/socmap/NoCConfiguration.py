@@ -19,7 +19,6 @@ from socmap_gen import NFULL_COHERENT_MAX
 from socmap_gen import NLLC_COHERENT_MAX
 
 
-
 def isInt(s):
   try:
     int(s)
@@ -45,13 +44,13 @@ class Tile():
     self.point_label.forget()
     self.point_select.forget()
     if soc.IPs.PROCESSORS.count(selection):
-       self.label.config(bg='deep pink')
+       self.label.config(bg="#ef6865")
     elif soc.IPs.MISC.count(selection):
-       self.label.config(bg='gray')
+       self.label.config(bg="#6ab0d4")
     elif soc.IPs.MEM.count(selection):
-       self.label.config(bg='green')
+       self.label.config(bg="#6ab0d4")
     elif soc.IPs.ACCELERATORS.count(selection):
-       self.label.config(bg='orange')
+       self.label.config(bg="#78cbbb")
        self.point_label.pack(side=LEFT)
        self.vendor = soc.IPs.VENDOR[selection]
        self.point_select.setitems(soc.IPs.POINTS[selection])
