@@ -1390,8 +1390,7 @@ def print_ariane_devtree(fp, esp_config):
   fp.write("  cpus {\n")
   fp.write("    #address-cells = <1>;\n")
   fp.write("    #size-cells = <0>;\n")
-  # TODO: determine timebase-frequency!!
-  fp.write("    timebase-frequency = <36000000>; // 36 MHz\n")
+  fp.write("    timebase-frequency = <" + str(int((CPU_FREQ * 1000) / 2)) + ">; // CPU_FREQ / 2\n")
   for i in range(esp_config.ncpu):
     fp.write("    CPU" + str(i) + ": cpu@" + str(i) + " {\n")
     fp.write("      clock-frequency = <" + str(CPU_FREQ) + "000>;\n")
