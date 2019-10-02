@@ -13,34 +13,49 @@ class conf_info_t
 {
 public:
 
-	//
-	// constructors
-	//
-	conf_info_t()
-		{}
+    //
+    // constructors
+    //
+    conf_info_t()
+    {
+        // <<--ctor-->>
+    }
 
-	// equals operator
-	inline bool operator==(const conf_info_t &rhs) const
-		{
-		}
+    conf_info_t(
+        // <<--ctor-args-->>
+        )
+    {
+        // <<--ctor-custom-->>
+    }
 
-	// assignment operator
-	inline conf_info_t& operator=(const conf_info_t& other)
-		{
+    // equals operator
+    inline bool operator==(const conf_info_t &rhs) const
+    {
+        // <<--eq-->>
+        return true;
+    }
 
-			return *this;
-		}
+    // assignment operator
+    inline conf_info_t& operator=(const conf_info_t& other)
+    {
+        // <<--assign-->>
+        return *this;
+    }
 
-	// VCD dumping function
-	friend void sc_trace(sc_trace_file *tf, const conf_info_t &v, const std::string &NAME)
-		{}
+    // VCD dumping function
+    friend void sc_trace(sc_trace_file *tf, const conf_info_t &v, const std::string &NAME)
+    {}
 
-	// redirection operator
-	friend ostream& operator << (ostream& os, conf_info_t const &conf_info)
-		{
-			os << "";
-			return os;
-		}
+    // redirection operator
+    friend ostream& operator << (ostream& os, conf_info_t const &conf_info)
+    {
+        os << "{";
+        // <<--print-->>
+        os << "}";
+        return os;
+    }
+
+        // <<--params-->>
 };
 
 #endif // __<ACCELERATOR_NAME>_CONF_INFO_HPP__

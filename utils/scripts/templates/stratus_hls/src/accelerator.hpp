@@ -11,7 +11,9 @@
 
 #include "<accelerator_name>_directives.hpp"
 
-// Include generated header files for PLM here
+#define __round_mask(x, y) ((y)-1)
+#define round_up(x, y) ((((x)-1) | __round_mask(x, y))+1)
+// <<--defines-->>
 
 class <accelerator_name> : public esp_accelerator_3P<DMA_WIDTH>
 {
@@ -25,7 +27,8 @@ public:
         // Signal binding
         cfg.bind_with(*this);
 
-        // Clock binding for memories
+        // Map arrays to memories
+        // <<--plm-bind-->>
     }
 
     // Processes
@@ -45,6 +48,10 @@ public:
     // Functions
 
     // Private local memories
+    sc_dt::sc_int<DATA_WIDTH> plm_in_ping[PLM_IN_WORD];
+    sc_dt::sc_int<DATA_WIDTH> plm_in_pong[PLM_IN_WORD];
+    sc_dt::sc_int<DATA_WIDTH> plm_out_ping[PLM_OUT_WORD];
+    sc_dt::sc_int<DATA_WIDTH> plm_out_pong[PLM_OUT_WORD];
 
 };
 
