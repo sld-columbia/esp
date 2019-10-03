@@ -256,6 +256,7 @@ for d in $dirs; do
     fi
 done
 
+
 if [ "$FLOW" == "stratus_hls" ]; then
     ## Initialize SystemC execution folder (no HLS license required)
     mkdir -p $ACC_DIR/sim
@@ -395,8 +396,110 @@ if [ "$FLOW" == "stratus_hls" ]; then
     fi
 fi
 
+
+### Device driver folders initialization
+TEMPLATES_DIR=$ESP_ROOT/utils/scripts/templates/drivers
+SOFT_DIR=$ESP_ROOT/soft
+CORE_MAIN="leon3"
+dirs="barec app linux"
+
+## initialize all driver folders
+cd $SOFT_DIR/leon3/drivers/include
+cp $TEMPLATES_DIR/include/accelerator.h .
+rename accelerator $LOWER accelerator.h
+sed -i "s/<accelerator_name>/$LOWER/g" ${LOWER}.h
+sed -i "s/<ACCELERATOR_NAME>/$UPPER/g" ${LOWER}.h
+for d in $dirs; do
+    new_dir=$SOFT_DIR/leon3/drivers/$LOWER/$d
+    mkdir -p $new_dir
+    cd $new_dir
+    cp $TEMPLATES_DIR/$d/* .
+    rename accelerator $LOWER *
+    sed -i "s/<accelerator_name>/$LOWER/g" *
+    sed -i "s/<ACCELERATOR_NAME>/$UPPER/g" *
+done
+
+for core in "ariane"; do
+    cd $SOFT_DIR/$core/drivers/include
+    ln -s ../../../leon3/drivers/include/${LOWER}.h
+    for d in $dirs; do
+	new_dir=$SOFT_DIR/$core/drivers/$LOWER/$d
+	mkdir -p $new_dir
+	cd $new_dir
+	for f in $(ls ../../../../leon3/drivers/$LOWER/$d); do
+	    ln -s ../../../../leon3/drivers/$LOWER/$d/$f
+	done
+    done
+done
+
+## Linux driver include file
+cd $SOFT_DIR/leon3/drivers/include
+indent="\	"
+for key in ${!values[@]}; do
+    sed -i "/\/\/ <<--regs-->>/a ${indent}unsigned ${key};" ${LOWER}.h
+done
+
+## Linux and baremetal drivers
+cd $SOFT_DIR/leon3/drivers/$LOWER
+indent="\	"
+sed -i "s/\/\/ <<--id-->>/${ID}/g" linux/${LOWER}.c
+
+user_reg_offset=64
+for key in ${!values[@]}; do
+    key_upper=$(echo $key | awk '{print toupper($0)}')
+    reg_offset_hex=$(printf '%x\n' ${user_reg_offset})
+    register_name="${UPPER}_${key_upper}_REG"
+
+    for f in "linux/${LOWER}.c barec/${LOWER}.c"; do
+	sed -i "/\/\/ <<--regs-->>/a #define ${register_name} 0x${reg_offset_hex}" ${f}
+    done
+    sed -i "/\/\/ <<--regs-config-->>/a ${indent}iowrite32be(a->${key}, esp->iomem + ${register_name});" linux/${LOWER}.c
+    sed -i "/\/\/ <<--regs-config-->>/a ${indent}${indent}iowrite32(dev, ${register_name}, ${key});" barec/${LOWER}.c
+    user_reg_offset=$((user_reg_offset + 4))
+done
+
+for f in "barec/${LOWER}.c app/cfg.h"; do
+    sed -i "s/\/\* <<--token-type-->> \*\//int${data_width}_t/g" ${f}
+done
+
+sed -i "s/\/\/ <<--id-->>/0x${ID}/g" barec/${LOWER}.c
+
+for f in "barec/${LOWER}.c app/${LOWER}.c app/cfg.h"; do
+    sed -i "s/\/\* <<--in-words-->> \*\//(${data_in_size_expr}) \* (${batching_factor_expr})/g" ${f}
+    sed -i "s/\/\* <<--out-words-->> \*\//(${data_out_size_expr}) \* (${batching_factor_expr})/g" ${f}
+    if [ "$IN_PLACE" == "y" ]; then
+	sed -i "s/\/\* <<--store-offset-->> \*\//0/g" ${f}
+    else
+	sed -i "s/\/\* <<--store-offset-->> \*\//round_up((${data_in_size_expr}) \* (${batching_factor_expr}), ${dma_adj})/g" ${f}
+    fi
+done
+
+for key in ${!values[@]}; do
+    for f in "barec/${LOWER}.c app/cfg.h"; do
+	sed -i "/\/\/ <<--params-->>/a const int32_t ${key} = ${values[$key]};" ${f}
+    done
+    sed -i "/\/\/ <<--descriptor-->>/a ${indent}${indent}.desc.${LOWER}_desc.${key} = ${values[$key]}," app/cfg.h
+done
+
+## ESP library update
+cd $SOFT_DIR/leon3/drivers/libesp
+sed -i "/\/\/ <<--esp-ioctl-->>/a ${indent}${indent}break;" libesp.c
+sed -i "/\/\/ <<--esp-ioctl-->>/a ${indent}${indent}rc = ioctl(info->fd, ${UPPER}_IOC_ACCESS, info->desc.${LOWER}_desc);" libesp.c
+sed -i "/\/\/ <<--esp-ioctl-->>/a ${indent}case ${LOWER} :" libesp.c
+sed -i "/\/\/ <<--esp-prepare-->>/a ${indent}${indent}${indent}break;" libesp.c
+sed -i "/\/\/ <<--esp-prepare-->>/a ${indent}${indent}${indent}esp_prepare(&info->desc.${LOWER}_desc.esp);" libesp.c
+sed -i "/\/\/ <<--esp-prepare-->>/a ${indent}${indent}case ${LOWER} :" libesp.c
+cd $SOFT_DIR/leon3/drivers/include
+sed -i "/\/\/ <<--esp-include-->>/a #include \"${LOWER}.h\"" libesp.h
+sed -i "/\/\/ <<--esp-enum-->>/a ${indent}${LOWER}," libesp.h
+sed -i "/\/\/ <<--esp-descriptor-->>/a ${indent}struct ${LOWER}_access ${LOWER}_desc;" libesp.h
+
+
+
 echo ""
 echo "=== Generated accelerator skeleton for $NAME ==="
+
+
 
 cd $CURR_DIR
 
