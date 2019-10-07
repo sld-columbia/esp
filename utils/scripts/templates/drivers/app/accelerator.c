@@ -1,24 +1,26 @@
 #include "libesp.h"
 #include "cfg.h"
 
-/* User-defined code */
-const unsigned in_size = /* <<--in-words-->> */ * sizeof(token_t);
-const unsigned out_size = /* <<--out-words-->> */ * sizeof(token_t);
-const unsigned out_offset = /* <<--store-offset-->> */;
-const unsigned size = in_size + out_size;
+static unsigned in_words_adj;
+static unsigned out_words_adj;
+static unsigned in_len;
+static unsigned out_len;
+static unsigned in_size;
+static unsigned out_size;
+static unsigned out_offset;
+static unsigned size;
 
 /* User-defined code */
 static int validate_buffer(token_t *out, token_t *gold)
 {
 	int i;
+	int j;
 	unsigned errors = 0;
 
-	for (i = 0; i < /* <<--out-words-->> */; i++) {
-		if (gold[i] != out[i])
-			errors++;
-	}
-
-	return errors;
+	for (i = 0; i < /* <<--number of transfers-->> */; i++)
+		for (j = 0; j < /* <<--data_out_size-->> */; j++)
+			if (gold[i * out_words_adj + j] != out[i * out_words_adj + j])
+				errors++;
 
 	return errors;
 }
@@ -28,21 +30,49 @@ static int validate_buffer(token_t *out, token_t *gold)
 static void init_buffer(token_t *in, token_t * gold)
 {
 	int i;
+	int j;
 
-	for (i = 0; i < /* <<--in-words-->> */; i++)
-		in[i] = (token_t) i;
+	for (i = 0; i < /* <<--number of transfers-->> */; i++)
+		for (j = 0; j < /* <<--data_in_size-->> */; j++)
+			in[i * in_words_adj + j] = (token_t) j;
 
-	for (i = 0; i < /* <<--out-words-->> */; i++)
-		gold[i] = (token_t) i;
+	for (i = 0; i < /* <<--number of transfers-->> */; i++)
+		for (j = 0; j < /* <<--data_out_size-->> */; j++)
+			gold[i * out_words_adj + j] = (token_t) j;
 }
+
+
+/* User-defined code */
+static void init_parameters()
+{
+	if (DMA_WORD_PER_BEAT(sizeof(token_t)) == 0) {
+		in_words_adj = /* <<--data_in_size-->> */;
+		out_words_adj = /* <<--data_out_size-->> */;
+	} else {
+		in_words_adj = round_up(/* <<--data_in_size-->> */, DMA_WORD_PER_BEAT(sizeof(token_t)));
+		out_words_adj = round_up(/* <<--data_out_size-->> */, DMA_WORD_PER_BEAT(sizeof(token_t)));
+	}
+	in_len = in_words_adj * (/* <<--number of transfers-->> */);
+	out_len =  out_words_adj * (/* <<--number of transfers-->> */);
+	in_size = in_len * sizeof(token_t);
+	out_size = out_len * sizeof(token_t);
+	out_offset = /* <<--store-offset-->> */;
+	size = (out_offset * sizeof(token_t)) + out_size;
+}
+
 
 int main(int argc, char **argv)
 {
 	int errors;
 	contig_handle_t contig;
 
-	token_t *buf = malloc(size);
-	token_t *gold = malloc(out_size);
+	token_t *buf;
+	token_t *gold;
+
+	init_parameters();
+
+	buf = malloc(size);
+	gold = malloc(out_size);
 
 	init_buffer(buf, gold);
 

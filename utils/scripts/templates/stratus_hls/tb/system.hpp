@@ -12,7 +12,6 @@
 #include "esp_templates.hpp"
 
 const size_t MEM_SIZE = /* <<--mem-footprint-->> */ / (DMA_WIDTH/8);
-const size_t DMA_ADJ = /* <<--dma-adj-->> */;
 
 #include "core/systems/esp_system.hpp"
 
@@ -54,7 +53,7 @@ public:
         acc->acc_done(acc_done);
         acc->debug(debug);
 
-        // <<--params-default-->>
+        /* <<--params-default-->> */
     }
 
     // Processes
@@ -72,10 +71,12 @@ public:
     int validate();
 
     // Accelerator-specific data
-    // <<--params-->>
+    /* <<--params-->> */
 
     uint32_t in_words_adj;
     uint32_t out_words_adj;
+    uint32_t in_size;
+    uint32_t out_size;
     int64_t *in;
     int64_t *out;
     int64_t *gold;

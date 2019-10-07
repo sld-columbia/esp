@@ -22,7 +22,7 @@ void system_t::config_proc()
     {
         conf_info_t config;
         // Custom configuration
-        // <<--params-->>
+        /* <<--params-->> */
 
         wait(); conf_info.write(config);
         conf_done.write(true);
@@ -80,27 +80,37 @@ void system_t::load_memory()
 #endif
 
     // Input data and golden output (aligned to DMA_WIDTH makes your life easier)
-    in_words_adj = round_up(/* <<--in-words-->> */, DMA_ADJ);
-    out_words_adj = round_up(/* <<--out-words-->> */, DMA_ADJ);
+#if (DMA_WORD_PER_BEAT == 0)
+    in_words_adj = /* <<--data_in_size-->> */;
+    out_words_adj = /* <<--data_out_size-->> */;
+#else
+    in_words_adj = round_up(/* <<--data_in_size-->> */, DMA_WORD_PER_BEAT);
+    out_words_adj = round_up(/* <<--data_out_size-->> */, DMA_WORD_PER_BEAT);
+#endif
 
-    in = new int64_t[in_words_adj];
-    for (int i = 0; i < /* <<--in-words-->> */; i++)
-        in[i] = (int64_t) i;
+    in_size = in_words_adj * (/* <<--number of transfers-->> */);
+    out_size = out_words_adj * (/* <<--number of transfers-->> */);
+
+    in = new int64_t[in_size];
+    for (int i = 0; i < /* <<--number of transfers-->> */; i++)
+        for (int j = 0; j < /* <<--data_in_size-->> */; j++)
+            in[i * in_words_adj + j] = (int64_t) j;
 
     // Compute golden output
-    gold = new int64_t[out_words_adj];
-    for (int i = 0; i < /* <<--out-words-->> */; i++)
-        gold[i] = (int64_t) i;
+    gold = new int64_t[out_size];
+    for (int i = 0; i < /* <<--number of transfers-->> */; i++)
+        for (int j = 0; j < /* <<--data_out_size-->> */; j++)
+            gold[i * out_words_adj + j] = (int64_t) j;
 
     // Memory initialization:
 #if (DMA_WORD_PER_BEAT == 0)
-    for (int i = 0; i < in_words_adj; i++)  {
+    for (int i = 0; i < in_size; i++)  {
         sc_dt::sc_bv<DATA_WIDTH> data_bv(in[i]);
         for (int j = 0; j < DMA_BEAT_PER_WORD; j++)
             mem[DMA_BEAT_PER_WORD * i + j] = data_bv.range((j + 1) * DMA_WIDTH - 1, j * DMA_WIDTH);
     }
 #else
-    for (int i = 0; i < in_words_adj / DMA_WORD_PER_BEAT; i++)  {
+    for (int i = 0; i < in_size / DMA_WORD_PER_BEAT; i++)  {
         sc_dt::sc_bv<DMA_WIDTH> data_bv(in[i]);
         for (int j = 0; j < DMA_WORD_PER_BEAT; j++)
             data_bv.range((j+1) * DATA_WIDTH - 1, j * DATA_WIDTH) = in[i * DMA_WORD_PER_BEAT + j];
@@ -114,12 +124,12 @@ void system_t::load_memory()
 void system_t::dump_memory()
 {
     // Get results from memory
-    out = new int64_t[out_words_adj];
-    uint32_t offset = //<<--store-offset-->>
+    out = new int64_t[out_size];
+    uint32_t offset = /* <<--store-offset-->> */;
 
 #if (DMA_WORD_PER_BEAT == 0)
     offset = offset * DMA_BEAT_PER_WORD;
-    for (int i = 0; i < out_words_adj; i++)  {
+    for (int i = 0; i < out_size; i++)  {
         sc_dt::sc_bv<DATA_WIDTH> data_bv;
 
         for (int j = 0; j < DMA_BEAT_PER_WORD; j++)
@@ -129,7 +139,7 @@ void system_t::dump_memory()
     }
 #else
     offset = offset / DMA_WORD_PER_BEAT;
-    for (int i = 0; i < out_words_adj / DMA_WORD_PER_BEAT; i++)
+    for (int i = 0; i < out_size / DMA_WORD_PER_BEAT; i++)
         for (int j = 0; j < DMA_WORD_PER_BEAT; j++)
             out[i * DMA_WORD_PER_BEAT + j] = mem[offset + i].range((j + 1) * DATA_WIDTH - 1, j * DATA_WIDTH).to_int64();
 #endif
@@ -142,10 +152,10 @@ int system_t::validate()
     // Check for mismatches
     uint32_t errors = 0;
 
-    for (int i = 0; i < /* <<--out-words-->> */; i++) {
-        if (gold[i] != out[i])
-            errors++;
-    }
+    for (int i = 0; i < /* <<--number of transfers-->> */; i++)
+        for (int j = 0; j < /* <<--data_out_size-->> */; j++)
+            if (gold[i * out_words_adj + j] != out[i * out_words_adj + j])
+                errors++;
 
     delete [] in;
     delete [] out;

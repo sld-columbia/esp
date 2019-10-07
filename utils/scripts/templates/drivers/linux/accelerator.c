@@ -10,7 +10,7 @@
 
 #define DRV_NAME	"<accelerator_name>"
 
-// <<--regs-->>
+/* <<--regs-->> */
 
 struct <accelerator_name>_device {
 	struct esp_device esp;
@@ -42,7 +42,7 @@ static void <accelerator_name>_prep_xfer(struct esp_device *esp, void *arg)
 {
 	struct <accelerator_name>_access *a = arg;
 
-	// <<--regs-config-->>
+	/* <<--regs-config-->> */
 	iowrite32be(a->src_offset, esp->iomem + SRC_OFFSET_REG);
 	iowrite32be(a->dst_offset, esp->iomem + DST_OFFSET_REG);
 

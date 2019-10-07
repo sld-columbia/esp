@@ -40,6 +40,8 @@
 #include "visionchip.h"
 #include "vitbfly2.h"
 
+unsigned DMA_WORD_PER_BEAT(unsigned _st);
+
 enum esp_accelerator_type {
 	// <<--esp-enum-->>
 	adder,

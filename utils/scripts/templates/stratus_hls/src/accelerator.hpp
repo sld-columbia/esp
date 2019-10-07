@@ -13,7 +13,7 @@
 
 #define __round_mask(x, y) ((y)-1)
 #define round_up(x, y) ((((x)-1) | __round_mask(x, y))+1)
-// <<--defines-->>
+/* <<--defines-->> */
 
 class <accelerator_name> : public esp_accelerator_3P<DMA_WIDTH>
 {
@@ -28,7 +28,7 @@ public:
         cfg.bind_with(*this);
 
         // Map arrays to memories
-        // <<--plm-bind-->>
+        /* <<--plm-bind-->> */
     }
 
     // Processes

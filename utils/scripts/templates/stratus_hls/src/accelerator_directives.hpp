@@ -5,15 +5,15 @@
 #define __<ACCELERATOR_NAME>_DIRECTIVES_HPP__
 
 #if (DMA_WIDTH == 32)
-#define DMA_BEAT_PER_WORD // <<--dbpw32-->>
-#define DMA_WORD_PER_BEAT // <<--dwpb32-->>
-#define PLM_IN_NAME // <<--plm_in_name32-->>
-#define PLM_OUT_NAME // <<--plm_out_name32-->>
+#define DMA_BEAT_PER_WORD /* <<--dbpw32-->> */
+#define DMA_WORD_PER_BEAT /* <<--dwpb32-->> */
+#define PLM_IN_NAME /* <<--plm_in_name32-->> */
+#define PLM_OUT_NAME /* <<--plm_out_name32-->> */
 #elif (DMA_WIDTH == 64)
-#define DMA_BEAT_PER_WORD // <<--dbpw64-->>
-#define DMA_WORD_PER_BEAT // <<--dwpb64-->>
-#define PLM_IN_NAME // <<--plm_in_name64-->>
-#define PLM_OUT_NAME // <<--plm_out_name64-->>
+#define DMA_BEAT_PER_WORD /* <<--dbpw64-->> */
+#define DMA_WORD_PER_BEAT /* <<--dwpb64-->> */
+#define PLM_IN_NAME /* <<--plm_in_name64-->> */
+#define PLM_OUT_NAME /* <<--plm_out_name64-->> */
 #endif
 
 

@@ -5,6 +5,11 @@
 
 #include "libesp.h"
 
+unsigned DMA_WORD_PER_BEAT(unsigned _st)
+{
+	return (sizeof(void *) / _st);
+}
+
 static contig_handle_t *contig;
 static pthread_t *thread;
 

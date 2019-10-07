@@ -27,7 +27,7 @@ void <accelerator_name>::load_input()
     }
 
     // Config
-    // <<--params-->>
+    /* <<--params-->> */
     {
         HLS_PROTO("load-config");
 
@@ -35,7 +35,7 @@ void <accelerator_name>::load_input()
         conf_info_t config = this->conf_info.read();
 
         // User-defined config code
-        // <<--local-params-->>
+        /* <<--local-params-->> */
     }
 
     // Load
@@ -49,7 +49,11 @@ void <accelerator_name>::load_input()
         for (uint16_t b = 0; b < /* <<--number of transfers-->> */; b++)
         {
             wait();
-            uint32_t length = //<<--data_in_size-->>
+#if (DMA_WORD_PER_BEAT == 0)
+            uint32_t length = /* <<--data_in_size-->> */;
+#else
+            uint32_t length = round_up(/* <<--data_in_size-->> */, DMA_WORD_PER_BEAT);
+#endif
             // Chunking
             for (int rem = length; rem > 0; rem -= PLM_IN_WORD)
             {
@@ -136,7 +140,7 @@ void <accelerator_name>::store_output()
     }
 
     // Config
-    // <<--params-->>
+    /* <<--params-->> */
     {
         HLS_PROTO("store-config");
 
@@ -144,21 +148,30 @@ void <accelerator_name>::store_output()
         conf_info_t config = this->conf_info.read();
 
         // User-defined config code
-        // <<--local-params-->>
+        /* <<--local-params-->> */
     }
 
     // Store
     {
         HLS_PROTO("store-dma");
         bool ping = true;
-        uint32_t offset = //<<--store-offset-->>
+#if (DMA_WORD_PER_BEAT == 0)
+        uint32_t store_offset = (/* <<--data_in_size-->> */) * /* <<--number of transfers-->> */;
+#else
+        uint32_t store_offset = round_up(/* <<--data_in_size-->> */, DMA_WORD_PER_BEAT) * /* <<--number of transfers-->> */;
+#endif
+        uint32_t offset = /* <<--store-offset-->> */;
 
         wait();
         // Batching
         for (uint16_t b = 0; b < /* <<--number of transfers-->> */; b++)
         {
             wait();
-            uint32_t length = //<<--data_out_size-->>
+#if (DMA_WORD_PER_BEAT == 0)
+            uint32_t length = /* <<--data_out_size-->> */;
+#else
+            uint32_t length = round_up(/* <<--data_out_size-->> */, DMA_WORD_PER_BEAT);
+#endif
             // Chunking
             for (int rem = length; rem > 0; rem -= PLM_OUT_WORD)
             {
@@ -247,7 +260,7 @@ void <accelerator_name>::compute_kernel()
     }
 
     // Config
-    // <<--params-->>
+    /* <<--params-->> */
     {
         HLS_PROTO("compute-config");
 
@@ -255,7 +268,7 @@ void <accelerator_name>::compute_kernel()
         conf_info_t config = this->conf_info.read();
 
         // User-defined config code
-        // <<--local-params-->>
+        /* <<--local-params-->> */
     }
 
 
@@ -264,8 +277,8 @@ void <accelerator_name>::compute_kernel()
     {
         for (uint16_t b = 0; b < /* <<--number of transfers-->> */; b++)
         {
-            uint32_t in_length = //<<--data_in_size-->>
-            uint32_t out_length = //<<--data_out_size-->>
+            uint32_t in_length = /* <<--data_in_size-->> */;
+            uint32_t out_length = /* <<--data_out_size-->> */;
             int out_rem = out_length;
 
             for (int in_rem = in_length; in_rem > 0; in_rem -= PLM_IN_WORD)
@@ -277,6 +290,12 @@ void <accelerator_name>::compute_kernel()
                 this->compute_load_handshake();
 
                 // Computing phase implementation
+                for (int i = 0; i < in_len; i++) {
+                    if (ping)
+                        plm_out_ping[i] = plm_in_ping[i];
+                    else
+                        plm_out_pong[i] = plm_in_pong[i];
+                }
 
                 out_rem -= PLM_OUT_WORD;
                 this->compute_store_handshake();

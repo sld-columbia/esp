@@ -290,13 +290,13 @@ if [ "$FLOW" == "stratus_hls" ]; then
     cd $ACC_DIR/src
     for key in ${!values[@]}; do
 	if [ $key == $(first_key) ]; then sep=""; else sep=", "; fi
-	sed -i "/\/\/ <<--ctor-->>/a ${indent}this->${key} = ${values[$key]};" ${LOWER}_conf_info.hpp
-	sed -i "/\/\/ <<--ctor-args-->>/a ${indent}int32_t ${key}${sep}" ${LOWER}_conf_info.hpp
-	sed -i "/\/\/ <<--ctor-custom-->>/a ${indent}this->${key} = ${key};" ${LOWER}_conf_info.hpp
-	sed -i "/\/\/ <<--eq-->>/a ${indent}if (${key} != rhs.${key}) return false;" ${LOWER}_conf_info.hpp
-	sed -i "/\/\/ <<--assign-->>/a ${indent}${key} = other.${key};" ${LOWER}_conf_info.hpp
-	sed -i "/\/\/ <<--print-->>/a ${indent}os << \"${key}\ = \" << conf_info.${key} << \"${sep}\";" ${LOWER}_conf_info.hpp
-	sed -i "/\/\/ <<--params-->>/a ${indent}int32_t ${key};" ${LOWER}_conf_info.hpp
+	sed -i "/\/\* <<--ctor-->> \*\//a ${indent}this->${key} = ${values[$key]};" ${LOWER}_conf_info.hpp
+	sed -i "/\/\* <<--ctor-args-->> \*\//a ${indent}int32_t ${key}${sep}" ${LOWER}_conf_info.hpp
+	sed -i "/\/\* <<--ctor-custom-->> \*\//a ${indent}this->${key} = ${key};" ${LOWER}_conf_info.hpp
+	sed -i "/\/\* <<--eq-->> \*\//a ${indent}if (${key} != rhs.${key}) return false;" ${LOWER}_conf_info.hpp
+	sed -i "/\/\* <<--assign-->> \*\//a ${indent}${key} = other.${key};" ${LOWER}_conf_info.hpp
+	sed -i "/\/\* <<--print-->> \*\//a ${indent}os << \"${key}\ = \" << conf_info.${key} << \"${sep}\";" ${LOWER}_conf_info.hpp
+	sed -i "/\/\* <<--params-->> \*\//a ${indent}int32_t ${key};" ${LOWER}_conf_info.hpp
     done
 fi
 
@@ -308,15 +308,15 @@ if [ "$FLOW" == "stratus_hls" ]; then
     # accelerator.hpp
     cd $ACC_DIR/src
     indent="\ \ \ \ \ \ \ \ "
-    sed -i "/\/\/ <<--defines-->>/a #define PLM_IN_WORD $in_word" ${LOWER}.hpp
-    sed -i "/\/\/ <<--defines-->>/a #define PLM_OUT_WORD $out_word" ${LOWER}.hpp
-    sed -i "/\/\/ <<--defines-->>/a #define DMA_SIZE $hsize" ${LOWER}.hpp
-    sed -i "/\/\/ <<--defines-->>/a #define DATA_WIDTH $data_width" ${LOWER}.hpp
+    sed -i "/\/\* <<--defines-->> \*\//a #define PLM_IN_WORD $in_word" ${LOWER}.hpp
+    sed -i "/\/\* <<--defines-->> \*\//a #define PLM_OUT_WORD $out_word" ${LOWER}.hpp
+    sed -i "/\/\* <<--defines-->> \*\//a #define DMA_SIZE $hsize" ${LOWER}.hpp
+    sed -i "/\/\* <<--defines-->> \*\//a #define DATA_WIDTH $data_width" ${LOWER}.hpp
 
-    sed -i "/\/\/ <<--plm-bind-->>/a ${indent}HLS_MAP_plm(plm_in_ping, PLM_IN_NAME);" ${LOWER}.hpp
-    sed -i "/\/\/ <<--plm-bind-->>/a ${indent}HLS_MAP_plm(plm_in_pong, PLM_IN_NAME);" ${LOWER}.hpp
-    sed -i "/\/\/ <<--plm-bind-->>/a ${indent}HLS_MAP_plm(plm_out_ping, PLM_OUT_NAME);" ${LOWER}.hpp
-    sed -i "/\/\/ <<--plm-bind-->>/a ${indent}HLS_MAP_plm(plm_out_pong, PLM_OUT_NAME);" ${LOWER}.hpp
+    sed -i "/\/\* <<--plm-bind-->> \*\//a ${indent}HLS_MAP_plm(plm_in_ping, PLM_IN_NAME);" ${LOWER}.hpp
+    sed -i "/\/\* <<--plm-bind-->> \*\//a ${indent}HLS_MAP_plm(plm_in_pong, PLM_IN_NAME);" ${LOWER}.hpp
+    sed -i "/\/\* <<--plm-bind-->> \*\//a ${indent}HLS_MAP_plm(plm_out_ping, PLM_OUT_NAME);" ${LOWER}.hpp
+    sed -i "/\/\* <<--plm-bind-->> \*\//a ${indent}HLS_MAP_plm(plm_out_pong, PLM_OUT_NAME);" ${LOWER}.hpp
 
     for d in ${dma_width[@]}; do
 	p=$(( (d+data_width-1)/data_width ))
@@ -332,10 +332,10 @@ if [ "$FLOW" == "stratus_hls" ]; then
 	cd $ACC_DIR/src
 	dbpw=$(( (data_width+d-1)/d ))
 	dwpb=$(( d/data_width )) # Zero on 32-bit DMA and 64-bit word
-	sed -i "s/\/\/ <<--dbpw${d}-->>/${dbpw}/g" ${LOWER}_directives.hpp
-	sed -i "s/\/\/ <<--dwpb${d}-->>/${dwpb}/g" ${LOWER}_directives.hpp
-	sed -i "s/\/\/ <<--plm_in_name${d}-->>/\"${plm_in_name}\"/g" ${LOWER}_directives.hpp
-	sed -i "s/\/\/ <<--plm_out_name${d}-->>/\"${plm_out_name}\"/g" ${LOWER}_directives.hpp
+	sed -i "s/\/\* <<--dbpw${d}-->> \*\//${dbpw}/g" ${LOWER}_directives.hpp
+	sed -i "s/\/\* <<--dwpb${d}-->> \*\//${dwpb}/g" ${LOWER}_directives.hpp
+	sed -i "s/\/\* <<--plm_in_name${d}-->> \*\//\"${plm_in_name}\"/g" ${LOWER}_directives.hpp
+	sed -i "s/\/\* <<--plm_out_name${d}-->> \*\//\"${plm_out_name}\"/g" ${LOWER}_directives.hpp
     done
 
 fi
@@ -348,17 +348,17 @@ if [ "$FLOW" == "stratus_hls" ]; then
     cd $ACC_DIR/src
     for key in ${!values[@]}; do
 	indent="\ \ \ \ "
-	sed -i "/\/\/ <<--params-->>/a ${indent}int32_t ${key};" ${LOWER}.cpp
+	sed -i "/\/\* <<--params-->> \*\//a ${indent}int32_t ${key};" ${LOWER}.cpp
 	indent="\ \ \ \ \ \ \ \ "
-	sed -i "/\/\/ <<--local-params-->>/a ${indent}${key} = config.${key};" ${LOWER}.cpp
+	sed -i "/\/\* <<--local-params-->> \*\//a ${indent}${key} = config.${key};" ${LOWER}.cpp
     done
     sed -i "s/\/\* <<--number of transfers-->> \*\//${batching_factor_expr}/g" ${LOWER}.cpp
-    sed -i "s/\/\/<<--data_in_size-->>/${data_in_size_expr};/g" ${LOWER}.cpp
-    sed -i "s/\/\/<<--data_out_size-->>/${data_out_size_expr};/g" ${LOWER}.cpp
+    sed -i "s/\/\* <<--data_in_size-->> \*\//${data_in_size_expr}/g" ${LOWER}.cpp
+    sed -i "s/\/\* <<--data_out_size-->> \*\//${data_out_size_expr}/g" ${LOWER}.cpp
     if [ "$IN_PLACE" == "y" ]; then
-	sed -i "s/\/\/<<--store-offset-->>/0;/g" ${LOWER}.cpp
+	sed -i "s/\/\* <<--store-offset-->> \*\//0/g" ${LOWER}.cpp
     else
-	sed -i "s/\/\/<<--store-offset-->>/round_up((${data_in_size_expr}) \* (${batching_factor_expr}), ${dma_adj});/g" ${LOWER}.cpp
+	sed -i "s/\/\* <<--store-offset-->> \*\//store_offset/g" ${LOWER}.cpp
     fi
 fi
 
@@ -369,30 +369,25 @@ if [ "$FLOW" == "stratus_hls" ]; then
     # system.hpp
     cd $ACC_DIR/tb
     sed -i "s/\/\* <<--mem-footprint-->> \*\//${memory_footprint}/g" system.hpp
-    sed -i "s/\/\* <<--dma-adj-->> \*\//${dma_adj};/g" system.hpp
     for key in ${!values[@]}; do
 	indent="\ \ \ \ "
-	sed -i "/\/\/ <<--params-->>/a ${indent}int32_t ${key};" system.hpp
+	sed -i "/\/\* <<--params-->> \*\//a ${indent}int32_t ${key};" system.hpp
 	indent="\ \ \ \ \ \ \ \ "
-	sed -i "/\/\/ <<--params-default-->>/a ${indent}${key} = ${values[$key]};" system.hpp
+	sed -i "/\/\* <<--params-default-->> \*\//a ${indent}${key} = ${values[$key]};" system.hpp
     done
 
     # system.cpp
-    # keys_to_default
-    # data_in_size_def=$(( data_in_size_expr ))
-    # data_out_size_def=$(( data_out_size_expr ))
-    # data_in_size_def=$(round_up $data_in_size_def $dma_adj) # Make size aligned to 64-bit to prevent non-aligend offsets
-    # data_out_size_def=$(round_up $data_out_size_def $dma_adj) # Make size aligned to 64-bit to prevent non-aligend offsets
-    sed -i "s/\/\* <<--in-words-->> \*\//(${data_in_size_expr}) \* (${batching_factor_expr})/g" system.cpp
-    sed -i "s/\/\* <<--out-words-->> \*\//(${data_out_size_expr}) \* (${batching_factor_expr})/g" system.cpp
+    sed -i "s/\/\* <<--number of transfers-->> \*\//${batching_factor_expr}/g" system.cpp
+    sed -i "s/\/\* <<--data_in_size-->> \*\//${data_in_size_expr}/g" system.cpp
+    sed -i "s/\/\* <<--data_out_size-->> \*\//${data_out_size_expr}/g" system.cpp
     for key in ${!values[@]}; do
 	indent="\ \ \ \ \ \ \ \ "
-	sed -i "/\/\/ <<--params-->>/a ${indent}config.${key} = ${key};" system.cpp
+	sed -i "/\/\* <<--params-->> \*\//a ${indent}config.${key} = ${key};" system.cpp
     done
     if [ "$IN_PLACE" == "y" ]; then
-	sed -i "s/\/\/<<--store-offset-->>/0;/g" system.cpp
+	sed -i "s/\/\* <<--store-offset-->> \*\//0/g" system.cpp
     else
-	sed -i "s/\/\/<<--store-offset-->>/round_up((${data_in_size_expr}) \* (${batching_factor_expr}), ${dma_adj});/g" system.cpp
+	sed -i "s/\/\* <<--store-offset-->> \*\//in_size/g" system.cpp
     fi
 fi
 
@@ -436,13 +431,13 @@ done
 cd $SOFT_DIR/leon3/drivers/include
 indent="\	"
 for key in ${!values[@]}; do
-    sed -i "/\/\/ <<--regs-->>/a ${indent}unsigned ${key};" ${LOWER}.h
+    sed -i "/\/\* <<--regs-->> \*\//a ${indent}unsigned ${key};" ${LOWER}.h
 done
 
 ## Linux and baremetal drivers
 cd $SOFT_DIR/leon3/drivers/$LOWER
 indent="\	"
-sed -i "s/\/\/ <<--id-->>/${ID}/g" linux/${LOWER}.c
+sed -i "s/\/\* <<--id-->> \*\//${ID}/g" linux/${LOWER}.c
 
 user_reg_offset=64
 for key in ${!values[@]}; do
@@ -451,10 +446,10 @@ for key in ${!values[@]}; do
     register_name="${UPPER}_${key_upper}_REG"
 
     for f in "linux/${LOWER}.c barec/${LOWER}.c"; do
-	sed -i "/\/\/ <<--regs-->>/a #define ${register_name} 0x${reg_offset_hex}" ${f}
+	sed -i "/\/\* <<--regs-->> \*\//a #define ${register_name} 0x${reg_offset_hex}" ${f}
     done
-    sed -i "/\/\/ <<--regs-config-->>/a ${indent}iowrite32be(a->${key}, esp->iomem + ${register_name});" linux/${LOWER}.c
-    sed -i "/\/\/ <<--regs-config-->>/a ${indent}${indent}iowrite32(dev, ${register_name}, ${key});" barec/${LOWER}.c
+    sed -i "/\/\* <<--regs-config-->> \*\//a ${indent}iowrite32be(a->${key}, esp->iomem + ${register_name});" linux/${LOWER}.c
+    sed -i "/\/\* <<--regs-config-->> \*\//a ${indent}${indent}iowrite32(dev, ${register_name}, ${key});" barec/${LOWER}.c
     user_reg_offset=$((user_reg_offset + 4))
 done
 
@@ -462,23 +457,24 @@ for f in "barec/${LOWER}.c app/cfg.h"; do
     sed -i "s/\/\* <<--token-type-->> \*\//int${data_width}_t/g" ${f}
 done
 
-sed -i "s/\/\/ <<--id-->>/0x${ID}/g" barec/${LOWER}.c
+sed -i "s/\/\* <<--id-->> \*\//0x${ID}/g" barec/${LOWER}.c
 
 for f in "barec/${LOWER}.c app/${LOWER}.c app/cfg.h"; do
-    sed -i "s/\/\* <<--in-words-->> \*\//(${data_in_size_expr}) \* (${batching_factor_expr})/g" ${f}
-    sed -i "s/\/\* <<--out-words-->> \*\//(${data_out_size_expr}) \* (${batching_factor_expr})/g" ${f}
+    sed -i "s/\/\* <<--number of transfers-->> \*\//${batching_factor_expr}/g" ${f}
+    sed -i "s/\/\* <<--data_in_size-->> \*\//${data_in_size_expr}/g" ${f}
+    sed -i "s/\/\* <<--data_out_size-->> \*\//${data_out_size_expr}/g" ${f}
     if [ "$IN_PLACE" == "y" ]; then
 	sed -i "s/\/\* <<--store-offset-->> \*\//0/g" ${f}
     else
-	sed -i "s/\/\* <<--store-offset-->> \*\//round_up((${data_in_size_expr}) \* (${batching_factor_expr}), ${dma_adj})/g" ${f}
+	sed -i "s/\/\* <<--store-offset-->> \*\//in_len/g" ${f}
     fi
 done
 
 for key in ${!values[@]}; do
     for f in "barec/${LOWER}.c app/cfg.h"; do
-	sed -i "/\/\/ <<--params-->>/a const int32_t ${key} = ${values[$key]};" ${f}
+	sed -i "/\/\* <<--params-->> \*\//a const int32_t ${key} = ${values[$key]};" ${f}
     done
-    sed -i "/\/\/ <<--descriptor-->>/a ${indent}${indent}.desc.${LOWER}_desc.${key} = ${values[$key]}," app/cfg.h
+    sed -i "/\/\* <<--descriptor-->> \*\//a ${indent}${indent}.desc.${LOWER}_desc.${key} = ${values[$key]}," app/cfg.h
 done
 
 ## ESP library update

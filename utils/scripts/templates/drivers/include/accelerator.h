@@ -17,7 +17,7 @@
 
 struct <accelerator_name>_access {
 	struct esp_access esp;
-	// <<--regs-->>
+	/* <<--regs-->> */
 	unsigned src_offset;
 	unsigned dst_offset;
 };

@@ -18,27 +18,27 @@ public:
     //
     conf_info_t()
     {
-        // <<--ctor-->>
+        /* <<--ctor-->> */
     }
 
     conf_info_t(
-        // <<--ctor-args-->>
+        /* <<--ctor-args-->> */
         )
     {
-        // <<--ctor-custom-->>
+        /* <<--ctor-custom-->> */
     }
 
     // equals operator
     inline bool operator==(const conf_info_t &rhs) const
     {
-        // <<--eq-->>
+        /* <<--eq-->> */
         return true;
     }
 
     // assignment operator
     inline conf_info_t& operator=(const conf_info_t& other)
     {
-        // <<--assign-->>
+        /* <<--assign-->> */
         return *this;
     }
 
@@ -50,12 +50,12 @@ public:
     friend ostream& operator << (ostream& os, conf_info_t const &conf_info)
     {
         os << "{";
-        // <<--print-->>
+        /* <<--print-->> */
         os << "}";
         return os;
     }
 
-        // <<--params-->>
+        /* <<--params-->> */
 };
 
 #endif // __<ACCELERATOR_NAME>_CONF_INFO_HPP__
