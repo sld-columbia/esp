@@ -159,30 +159,32 @@ while true; do
     if [ "$data_in_size_expr" == "" ]; then data_in_size_expr="$first_param"; fi
     data_in_size_max=$((data_in_size_expr))
     if [ "$(is_integer $data_in_size_max)" == "Y" ]; then
+	data_in_size_max=$(round_up $data_in_size_max $dma_adj) # Make size aligned to 64-bit to prevent non-aligend offsets
 	echo "      data_in_size_max = ${data_in_size_max}"; break
     else
 	warn "invalid expression \"${data_in_size_expr}\""
     fi
 done
-data_in_size_max=$(round_up $data_in_size_max $dma_adj) # Make size aligned to 64-bit to prevent non-aligend offsets
 
 while true; do
     read -p "    - Enter output data size in terms of configuration registers (e.g. 2 * $first_param) ${def}[$first_param]${normal}: " data_out_size_expr
     if [ "$data_out_size_expr" == "" ]; then data_out_size_expr="$first_param"; fi
     data_out_size_max=$((data_out_size_expr))
     if [ "$(is_integer $data_out_size_max)" == "Y" ]; then
+	data_out_size_max=$(round_up $data_out_size_max $dma_adj) # Make size aligned to 64-bit to prevent non-aligend offsets
 	echo "      data_out_size_max = ${data_out_size_max}"; break
     else
 	warn "invalid expression \"${data_out_size_expr}\""
     fi
 done
-data_out_size_max=$(round_up $data_out_size_max $dma_adj) # Make size aligned to 64-bit to prevent non-aligend offsets
 
 read -p "    - Enter an integer chunking factor (use 1 if you want PLM size equal to data size) ${def}[1]${normal}: " chunking_factor
 chunking_factor=${chunking_factor:-1}
 
 in_word=$(( (data_in_size_max+chunking_factor-1)/chunking_factor ))
 out_word=$(( (data_out_size_max+chunking_factor-1)/chunking_factor ))
+in_word=$(round_up $in_word $dma_adj)
+out_word=$(round_up $out_word $dma_adj)
 echo "      Input PLM has ${in_word} ${data_width}-bits words"
 echo "      Output PLM has ${out_word} ${data_width}-bits words"
 
@@ -265,6 +267,13 @@ if [ "$FLOW" == "stratus_hls" ]; then
     echo "$LOWER" > .gitignore
 fi
 
+if [ "$FLOW" == "vivado_hls" ]; then
+    ## Initialize gitignore
+    cd $ACC_DIR
+    echo "$LOWER" > .gitignore
+    echo "*.log" >> .gitignore
+fi
+
 
 ## initialize xml file
 cd $ACC_DIR
@@ -338,6 +347,56 @@ if [ "$FLOW" == "stratus_hls" ]; then
 	sed -i "s/\/\* <<--plm_out_name${d}-->> \*\//\"${plm_out_name}\"/g" ${LOWER}_directives.hpp
     done
 
+fi
+
+if [ "$FLOW" == "vivado_hls" ]; then
+
+    # espacc_config.h
+    cd $ACC_DIR/inc
+    sed -i "s/\/\* <<--plm-in-word-->> \*\//$in_word/g" espacc_config.h
+    sed -i "s/\/\* <<--plm-out-word-->> \*\//$out_word/g" espacc_config.h
+
+    # espacc.h espacc.cc tb.cc
+    indent="\	\ "
+    cd $ACC_DIR
+    for key in ${!values[@]}; do
+	for f in "inc/espacc.h src/espacc.cc"; do
+	    sed -i "/\/\* <<--params-->> \*\//a ${indent}const unsigned conf_info_${key}," ${f}
+	done
+	sed -i "/\/\* <<--params-->> \*\//a ${indent}const unsigned ${key} = ${values[$key]};" tb/tb.cc
+	sed -i "/\/\* <<--local-params-->> \*\//a ${indent}const unsigned ${key} = conf_info_${key};" src/espacc.cc
+	sed -i "/\/\* <<--compute-params-->> \*\//a ${indent}const unsigned ${key}," src/espacc.cc
+	for f in "tb/tb.cc src/espacc.cc"; do
+	    sed -i "/\/\* <<--args-->> \*\//a ${indent}${indent}${key}," ${f}
+	done
+    done
+
+    if [ "$IN_PLACE" == "y" ]; then
+	sed -i "s/\/\* <<--store-offset-->> \*\//0/g" src/espacc.cc
+    else
+	sed -i "s/\/\* <<--store-offset-->> \*\//store_offset/g" src/espacc.cc
+    fi
+    if [ "$IN_PLACE" == "y" ]; then
+	sed -i "s/\/\* <<--store-offset-->> \*\//0/g" tb/tb.cc
+    else
+	sed -i "s/\/\* <<--store-offset-->> \*\//dma_in_size/g" tb/tb.cc
+    fi
+    for f in "tb/tb.cc src/espacc.cc"; do
+	sed -i "s/\/\* <<--number of transfers-->> \*\//${batching_factor_expr}/g" ${f}
+	sed -i "s/\/\* <<--data_in_size-->> \*\//${data_in_size_expr}/g" ${f}
+	sed -i "s/\/\* <<--data_out_size-->> \*\//${data_out_size_expr}/g" ${f}
+    done
+    sed -i "s/\/\* <<--chunking-factor-->> \*\//${chunking_factor}/g" src/espacc.cc
+
+    # syn/custom.tcl
+    cd $ACC_DIR
+    if [ $data_width == 64 ]; then
+	dma_allowed="64"
+    else
+	dma_allowed="32 64"
+    fi
+    sed -i "s/<<--dma-width-->>/${dma_allowed}/g" syn/custom.tcl
+    sed -i "s/<<--data-widths-->>/${data_width}/g" syn/custom.tcl
 fi
 
 

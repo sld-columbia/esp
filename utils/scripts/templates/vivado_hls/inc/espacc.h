@@ -7,6 +7,9 @@
 #include <ap_fixed.h>
 #include <ap_int.h>
 
+#define __round_mask(x, y) ((y)-1)
+#define round_up(x, y) ((((x)-1) | __round_mask(x, y))+1)
+
 // Data types and constants
 #define VALUES_PER_WORD (DMA_SIZE / DATA_BITWIDTH)
 #if ((SIZE_IN_CHUNK_DATA % VALUES_PER_WORD) == 0)
@@ -61,7 +64,7 @@ typedef struct dma_info {
 #endif
 
 void top(dma_word_t *out, dma_word_t *in1,
-	 const unsigned conf_info_nbursts,
+	/* <<--params-->> */
 	 dma_info_t *load_ctrl, dma_info_t *store_ctrl);
 
 void compute(word_t _inbuff[SIZE_IN_CHUNK_DATA],

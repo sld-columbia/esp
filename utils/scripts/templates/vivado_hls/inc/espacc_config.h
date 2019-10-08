@@ -12,8 +12,8 @@
 
 // In/out arrays
 
-#define SIZE_IN_CHUNK_DATA 64
+#define SIZE_IN_CHUNK_DATA /* <<--plm-in-word-->> */
 
-#define SIZE_OUT_CHUNK_DATA 32
+#define SIZE_OUT_CHUNK_DATA /* <<--plm-out-word-->> */
 
 #endif

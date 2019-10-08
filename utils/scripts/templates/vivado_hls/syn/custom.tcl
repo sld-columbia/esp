@@ -3,8 +3,8 @@
 
 # HLS configs
 
-set dma_width {32 64}
-set word_widths {8 16 32}
+set dma_width {<<--dma-width-->>}
+set word_widths {<<--data-widths-->>}
 
 # Clock period
 
