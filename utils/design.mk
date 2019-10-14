@@ -147,7 +147,7 @@ SLDGEN_VHDL_RTL_PKGS += $(DESIGN_PATH)/sldgen/sld_devices.vhd
 SLDGEN_VHDL_RTL_PKGS += $(DESIGN_PATH)/sldgen/allacc.vhd
 SLDGEN_VHDL_RTL_PKGS += $(DESIGN_PATH)/sldgen/genacc.vhd
 SLDGEN_VHDL_RTL_PKGS += $(DESIGN_PATH)/sldgen/allcaches.vhd
-SLDGEN_VHDL_RTL_PKGS += $(DESIGN_PATH)/sldgen/gencaches.vhd
+# SLDGEN_VHDL_RTL_PKGS += $(DESIGN_PATH)/sldgen/gencaches.vhd
 
 TOP_VHDL_RTL_PKGS += $(DESIGN_PATH)/grlib_config.vhd
 TOP_VHDL_RTL_PKGS += $(DESIGN_PATH)/socmap.vhd

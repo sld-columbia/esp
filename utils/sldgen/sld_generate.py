@@ -941,28 +941,28 @@ def gen_tech_indep(accelerator_list, axi_accelerator_list, cache_list, dma_width
         f.write("\n")
   f.close()
   ftemplate.close()
-  f = open(out_dir + '/gencaches.vhd', 'w')
-  with open(template_dir + '/gencaches.vhd', 'r') as ftemplate:
-    for tline in ftemplate:
-      if tline.find("-- <<caches-components>>") < 0:
-        f.write(tline)
-        continue
-      for cac in cache_list:
-        is_llc = cac.name == "llc"
-        f.write("\n")
-        f.write("  component " + cac.name + "\n")
-        f.write("    generic (\n")
-        f.write("      sets  : integer;\n")
-        f.write("      ways  : integer\n")
-        f.write("    );\n")
-        f.write("\n")
-        f.write("    port (\n")
-        write_cache_interface(f, cac, is_llc)
-        f.write("    );\n")
-        f.write("  end component;\n\n")
-        f.write("\n")
-  f.close()
-  ftemplate.close()
+  # f = open(out_dir + '/gencaches.vhd', 'w')
+  # with open(template_dir + '/gencaches.vhd', 'r') as ftemplate:
+  #   for tline in ftemplate:
+  #     if tline.find("-- <<caches-components>>") < 0:
+  #       f.write(tline)
+  #       continue
+  #     for cac in cache_list:
+  #       is_llc = cac.name == "llc"
+  #       f.write("\n")
+  #       f.write("  component " + cac.name + "\n")
+  #       f.write("    generic (\n")
+  #       f.write("      sets  : integer;\n")
+  #       f.write("      ways  : integer\n")
+  #       f.write("    );\n")
+  #       f.write("\n")
+  #       f.write("    port (\n")
+  #       write_cache_interface(f, cac, is_llc)
+  #       f.write("    );\n")
+  #       f.write("  end component;\n\n")
+  #       f.write("\n")
+  # f.close()
+  # ftemplate.close()
 
 
 # Mapping from generic components to technology and implementation dependent ones
