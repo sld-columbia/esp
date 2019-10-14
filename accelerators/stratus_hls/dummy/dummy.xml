@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sld>
+  <accelerator name="dummy" desc="DUMMY" data_size="4" device_id="042" hls_tool="stratus_hls">
+    <param name="tokens" desc="Numer of words to transfer from src to dst" size="32"/>
+    <param name="batch" desc="Batches of tokens" size="32"/>
+  </accelerator>
+</sld>

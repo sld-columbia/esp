@@ -5,12 +5,13 @@
 [submodule "chisel"]
 	path = chisel
 	url = git@github.com:IBM/esp-chisel-accelerators.git
-[submodule "accelerators/common/syn-templates"]
-	path = accelerators/common/syn-templates
+[submodule "accelerators/stratus_hls/common/syn-templates"]
+	path = accelerators/stratus_hls/common/syn-templates
 	url = git@github.com:sld-columbia/esp-accelerator-templates.git
 [submodule "soft/ariane/linux"]
 	path = soft/ariane/linux
 	url = git@github.com:sld-columbia/linux.git
+	branch = ariane
 [submodule "third-party/ariane"]
 	path = third-party/ariane
 	url = https://github.com/pulp-platform/ariane.git
@@ -20,3 +21,10 @@
 [submodule "soft/ariane/riscv-tests"]
 	path = soft/ariane/riscv-tests
 	url = https://github.com/riscv/riscv-tests.git
+[submodule "third-party/accelerators/dma64/NV_NVDLA/ip"]
+	path = third-party/accelerators/dma64/NV_NVDLA/ip
+	url = git@github.com:sld-columbia/nvdla-hw.git
+	branch = master
+[submodule "third-party/accelerators/dma64/NV_NVDLA/sw"]
+	path = third-party/accelerators/dma64/NV_NVDLA/sw
+	url = git@github.com:sld-columbia/nvdla-sw.git

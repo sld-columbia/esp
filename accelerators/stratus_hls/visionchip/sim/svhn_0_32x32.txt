@@ -1,0 +1,1 @@
+../stratus/svhn_0_32x32.txt

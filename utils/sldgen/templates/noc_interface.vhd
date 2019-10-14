@@ -123,6 +123,7 @@ end;
     DEVID_REG          => '1',
     PT_NCHUNK_MAX_REG  => '1',
     EXP_DO_REG         => '1',
+    YX_REG             => '1',
     -- <<user_read_only>>
     others             => '0');
   -- Available registers mask (lo: common; hi: user defined)
@@ -138,6 +139,8 @@ end;
     SRC_OFFSET_REG     => '1',
     DST_OFFSET_REG     => '1',
     COHERENCE_REG      => '1',
+    P2P_REG            => '1',
+    YX_REG             => '1',
     -- <<user_mask>>
     others             => '0');
 
@@ -158,6 +161,7 @@ end;
   constant bankdef : bank_type(0 to MAXREGNUM - 1) := (
     DEVID_REG          => conv_std_logic_vector(vendorid, 16) & conv_std_logic_vector(devid, 16),
     PT_NCHUNK_MAX_REG  => conv_std_logic_vector(check_scatter_gather(tlb_entries), 32),
+    YX_REG             => "0000000000000" & local_y & "0000000000000" & local_x,
     -- <<user_read_only_default>>
     others             => (others => '0'));
 

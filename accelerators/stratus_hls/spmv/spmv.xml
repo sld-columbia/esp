@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sld>
+  <accelerator name="spmv" desc="SPMV" data_size="32" device_id="00c" hls_tool="stratus_hls">
+    <param name="nrows" desc="number of input matrix rows"/>
+    <param name="ncols" desc="number of input matrix columns"/>
+    <param name="max_nonzero" desc="max non zero elements in a row of the input matrix"/>
+    <param name="mtx_len" desc="number of non zero elements in the matrix"/>
+    <param name="vals_plm_size" desc="size of values PLM to be used"/>
+    <param name="vect_fits_plm" desc="'True' is the vector size fits the vector PLM"/>
+  </accelerator>
+</sld>

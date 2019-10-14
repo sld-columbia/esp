@@ -1,3 +1,0 @@
-plm_data16_2w2r 307200 16 2w:2r
-plm_data16_4w4r 307200 16 4w:4r
-plm_hist_1w1r 65536 32 1w:0r 0w:1r

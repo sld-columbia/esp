@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<sld>
-  <accelerator name="<accelerator_name>" desc="<ACCELERATOR_NAME>" data_size="<!-- TLB entries -->" device_id="<!-- unique device ID -->">
-    <param name="<!-- Configuration parameter name -->" desc="<!-- parameter description -->" size="<!-- parameter size in bits -->"/>
-    <param name="<!-- Read-only parameter name -->" desc="<!-- parameter description -->" size="<!-- parameter size in bits -->" value="<!-- parameter read-only value -->" />
-    <!-- More parameters -->
-  </accelerator>
-</sld>

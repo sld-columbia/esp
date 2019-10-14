@@ -84,7 +84,7 @@ endif
 ### Simnulation common options ###
 
 VCOMOPT  +=
-VLOGOPT  +=
+VLOGOPT  += -suppress 2275
 VSIMOPT  +=
 XMCOMOPT  +=
 XMLOGOPT  +=
@@ -99,7 +99,7 @@ ifneq ($(filter $(TECHLIB),$(FPGALIBS)),)
 VSIMOPT += -L secureip_ver -L unisims_ver
 endif
 
-VSIMOPT += -uvmcontrol=disable -suppress 3009 -t ps
+VSIMOPT += -uvmcontrol=disable -suppress 3009,2685,2718 -t ps
 
 ifneq ($(filter $(TECHLIB),$(FPGALIBS)),)
 EXTRA_SIMTOP  = glbl
@@ -129,9 +129,11 @@ else
 VSIMOPT += -novopt
 endif
 VSIMOPT += +notimingchecks
+VSIMOPT += -suppress 3812
 VSIMOPT += -suppress 2697
 VSIMOPT += -suppress 8617
 VSIMOPT += -suppress 151
+VSIMOPT += -suppress 143
 VSIMOPT += +notimingchecks
 
 # Toplevel
@@ -145,7 +147,7 @@ SLDGEN_VHDL_RTL_PKGS += $(DESIGN_PATH)/sldgen/sld_devices.vhd
 SLDGEN_VHDL_RTL_PKGS += $(DESIGN_PATH)/sldgen/allacc.vhd
 SLDGEN_VHDL_RTL_PKGS += $(DESIGN_PATH)/sldgen/genacc.vhd
 SLDGEN_VHDL_RTL_PKGS += $(DESIGN_PATH)/sldgen/allcaches.vhd
-SLDGEN_VHDL_RTL_PKGS += $(DESIGN_PATH)/sldgen/gencaches.vhd
+# SLDGEN_VHDL_RTL_PKGS += $(DESIGN_PATH)/sldgen/gencaches.vhd
 
 TOP_VHDL_RTL_PKGS += $(DESIGN_PATH)/grlib_config.vhd
 TOP_VHDL_RTL_PKGS += $(DESIGN_PATH)/socmap.vhd

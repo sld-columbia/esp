@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sld>
+  <accelerator name="sort" desc="SORT float[32:1024][1:1024]" data_size="4" device_id="00b" hls_tool="stratus_hls">
+    <param name="len" desc="input vector length (number of float)"/>
+    <param name="batch" desc="number of input vectors"/>
+    <param name="len_min" value="32"/>
+    <param name="len_max" value="1024"/>
+    <param name="batch_max" value="1024"/>
+  </accelerator>
+</sld>

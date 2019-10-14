@@ -182,4 +182,4 @@ echo "  export RISCV=${RISCV}"
 echo ""
 
 cd $CURRENT_DIR
-echo "*** Successfully installed Leon3 toolchain to $TARGET_DIR ***"
+echo "*** Successfully installed RISCV toolchain to $TARGET_DIR ***"

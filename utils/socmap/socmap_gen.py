@@ -107,10 +107,20 @@ SLD_APB_ADDR = 0x100
 # default mask for accelerators' registers base address (256 Bytes regions per accelerator)
 SLD_APB_ADDR_MSK = 0xfff
 
+# third-party APB address and mask
+# Hard-coded to ensure reserved addresses cover all configuration registers
+THIRDPARTY_APB_ADDR = dict()
+THIRDPARTY_APB_ADDR_MSK = dict()
+THIRDPARTY_APB_ADDR_SIZE = dict()
+
+THIRDPARTY_APB_ADDR["nv_nvdla"] = 0x300
+THIRDPARTY_APB_ADDR_MSK["nv_nvdla"] = 0xC00
+THIRDPARTY_APB_ADDR_SIZE["nv_nvdla"] = 0x40000
 
 class acc_info:
   uppercase_name = ""
   lowercase_name = ""
+  vendor = ""
   id = -1
   idx = -1
   irq = 3
@@ -285,6 +295,7 @@ class soc_config:
           acc.lowercase_name = selection.lower()
           acc.id = acc_id
           acc.idx = SLD_APB_PINDEX + acc_id
+          acc.vendor = soc.noc.topology[x][y].vendor
           self.tiles[t].acc = acc
           self.accelerators.append(acc)
           acc_id = acc_id + 1
@@ -705,13 +716,18 @@ def print_mapping(fp, esp_config):
   for i in range(esp_config.nacc):
     acc = esp_config.accelerators[i]
     fp.write("  -- Accelerator " + str(acc.id) + "\n")
-    address = format(SLD_APB_ADDR + acc.idx, "03X")
+    if acc.vendor == "sld":
+      address = format(SLD_APB_ADDR + acc.idx, "03X")
+      msk = format(SLD_APB_ADDR_MSK, "03X")
+    else:
+      address = format(THIRDPARTY_APB_ADDR[acc.lowercase_name], "03X")
+      msk = format(THIRDPARTY_APB_ADDR_MSK[acc.lowercase_name], "03X")
     fp.write("  -- APB " + str(acc.idx) + ": 0x800" + address + "00 - 0x800" + str(address) + "FF\n")
     fp.write("  -- " + acc.uppercase_name + "\n")
     fp.write("  constant " + acc.lowercase_name + "_" + str(acc.id) + "_pindex : integer range 0 to NAPBSLV - 1 := " + str(acc.idx) + ";\n")
     fp.write("  constant " + acc.lowercase_name + "_" + str(acc.id) + "_pirq : integer range 0 to NAHBIRQ - 1 := " + str(acc.irq) + ";\n")
     fp.write("  constant " + acc.lowercase_name + "_" + str(acc.id) + "_paddr : integer range 0 to 4095 := 16#" + str(address) + "#;\n")
-    fp.write("  constant " + acc.lowercase_name + "_" + str(acc.id) + "_pmask : integer range 0 to 4095 := 16#" + format(SLD_APB_ADDR_MSK, "03X") + "#;\n")
+    fp.write("  constant " + acc.lowercase_name + "_" + str(acc.id) + "_pmask : integer range 0 to 4095 := 16#" + str(msk) + "#;\n")
     fp.write("  constant " + acc.lowercase_name + "_" + str(acc.id) + "_pconfig : apb_config_type := (\n")
     fp.write("  0 => ahb_device_reg (VENDOR_SLD, SLD_" + acc.uppercase_name + ", 0, 0, " + str(acc.irq) + "),\n")
     fp.write("  1 => apb_iobar(16#" + address + "#, 16#" + format(SLD_APB_ADDR_MSK, "03X")  + "#));\n\n")
@@ -1374,8 +1390,7 @@ def print_ariane_devtree(fp, esp_config):
   fp.write("  cpus {\n")
   fp.write("    #address-cells = <1>;\n")
   fp.write("    #size-cells = <0>;\n")
-  # TODO: determine timebase-frequency!!
-  fp.write("    timebase-frequency = <36000000>; // 36 MHz\n")
+  fp.write("    timebase-frequency = <" + str(int((CPU_FREQ * 1000) / 2)) + ">; // CPU_FREQ / 2\n")
   for i in range(esp_config.ncpu):
     fp.write("    CPU" + str(i) + ": cpu@" + str(i) + " {\n")
     fp.write("      clock-frequency = <" + str(CPU_FREQ) + "000>;\n")
@@ -1439,10 +1454,15 @@ def print_ariane_devtree(fp, esp_config):
   fp.write("    };\n")
   for i in range(esp_config.nacc):
     acc = esp_config.accelerators[i]
-    address = format(SLD_APB_ADDR + acc.idx, "03X")
+    if acc.vendor == "sld":
+      address = format(SLD_APB_ADDR + acc.idx, "03X")
+      size = "0x100"
+    else:
+      address = format(THIRDPARTY_APB_ADDR[acc.lowercase_name], "03X")
+      size = hex(THIRDPARTY_APB_ADDR_SIZE[acc.lowercase_name])
     fp.write("    " + acc.lowercase_name + "@" + format(AHB2APB_HADDR[esp_config.cpu_arch], '03X') + str(address) + "00 {\n")
-    fp.write("      compatible = \"sld," + acc.lowercase_name + "\";\n")
-    fp.write("      reg = <0x0 0x" + format(AHB2APB_HADDR[esp_config.cpu_arch], '03X') + str(address) + "00 0x0 0x100>;\n")
+    fp.write("      compatible = \"" + acc.vendor + "," + acc.lowercase_name + "\";\n")
+    fp.write("      reg = <0x0 0x" + format(AHB2APB_HADDR[esp_config.cpu_arch], '03X') + str(address) + "00 0x0 " + size + ">;\n")
     fp.write("      interrupt-parent = <&PLIC0>;\n")
     fp.write("      interrupts = <3>;\n")
     fp.write("      reg-shift = <2>; // regs are spaced on 32 bit boundary\n")

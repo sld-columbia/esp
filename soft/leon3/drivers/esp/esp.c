@@ -25,6 +25,7 @@
 #include <linux/fs.h>
 #include <linux/mm.h>
 #include <linux/ioctl.h>
+#include <linux/string.h>
 
 #include <asm/uaccess.h>
 
@@ -32,6 +33,9 @@
 
 #define PFX "esp: "
 #define ESP_MAX_DEVICES	64
+
+static DEFINE_SPINLOCK(esp_devices_lock);
+static LIST_HEAD(esp_devices);
 
 /* These are overwritten whith insmod flags */
 static unsigned long cache_line_bytes = 16;
@@ -296,6 +300,63 @@ static bool esp_xfer_input_ok(struct esp_device *esp, const struct contig_desc *
 	return true;
 }
 
+#define esp_get_y(_dev) (YX_MASK_YX & (ioread32be(_dev->iomem + YX_REG) >> YX_SHIFT_Y))
+#define esp_get_x(_dev) (YX_MASK_YX & (ioread32be(_dev->iomem + YX_REG) >> YX_SHIFT_X))
+#define esp_p2p_reset(_dev) iowrite32be(0, _dev->iomem + P2P_REG)
+#define esp_p2p_enable_dst(_dev) iowrite32be(ioread32be(_dev->iomem + P2P_REG) | P2P_MASK_DST_IS_P2P, _dev->iomem + P2P_REG)
+#define esp_p2p_enable_src(_dev) iowrite32be(ioread32be(_dev->iomem + P2P_REG) | P2P_MASK_SRC_IS_P2P, _dev->iomem + P2P_REG)
+#define esp_p2p_set_nsrcs(_dev, _n) iowrite32be(ioread32be(_dev->iomem + P2P_REG) | (P2P_MASK_NSRCS & (_n - 1)), _dev->iomem + P2P_REG)
+#define esp_p2p_set_y(_dev, _n, _y) iowrite32be(ioread32be(_dev->iomem + P2P_REG) | ((P2P_MASK_SRCS_YX & _y) << P2P_SHIFT_SRCS_Y(_n)), _dev->iomem + P2P_REG)
+#define esp_p2p_set_x(_dev, _n, _x) iowrite32be(ioread32be(_dev->iomem + P2P_REG) | ((P2P_MASK_SRCS_YX & _x) << P2P_SHIFT_SRCS_X(_n)), _dev->iomem + P2P_REG)
+
+static long esp_p2p_set_src(struct esp_device *esp, char *src_name, int src_index)
+{
+	struct list_head *ele;
+	struct esp_device *dev;
+
+	dev_dbg(esp->pdev, "searching P2P source %s\n", src_name);
+	spin_lock(&esp_devices_lock);
+	list_for_each(ele, &esp_devices) {
+		dev = list_entry(ele, struct esp_device, list);
+		if (!strncmp(src_name, dev->dev->kobj.name, strlen(dev->dev->kobj.name))) {
+			unsigned y = esp_get_y(dev);
+			unsigned x = esp_get_x(dev);
+			esp_p2p_set_y(esp, src_index, y);
+			esp_p2p_set_x(esp, src_index, x);
+			spin_unlock(&esp_devices_lock);
+			dev_dbg(esp->pdev, "P2P source %s on tile %d,%d\n", dev->dev->kobj.name, y, x);
+			return true;
+		}
+	}
+	spin_unlock(&esp_devices_lock);
+
+	dev_info(esp->pdev, "ESP device %s not found\n", src_name);
+	return false;
+}
+
+static long esp_p2p_init(struct esp_device *esp, struct esp_access *access)
+{
+	int i = 0;
+
+	esp_p2p_reset(esp);
+
+	for (i = 0; i < access->p2p_nsrcs; i++)
+		if (!esp_p2p_set_src(esp, access->p2p_srcs[i], i))
+			return -ENODEV;
+
+	if (access->p2p_store) {
+		dev_dbg(esp->pdev, "P2P store enabled\n");
+		esp_p2p_enable_dst(esp);
+	}
+
+	if (access->p2p_nsrcs != 0) {
+		esp_p2p_enable_src(esp);
+		esp_p2p_set_nsrcs(esp, access->p2p_nsrcs);
+	}
+
+	return 0;
+}
+
 static int esp_access_ioctl(struct esp_device *esp, void __user *argp)
 {
 	struct contig_desc *contig;
@@ -319,10 +380,16 @@ static int esp_access_ioctl(struct esp_device *esp, void __user *argp)
 		goto out;
 	}
 
+	if (access->p2p_nsrcs > 4) {
+		rc = -EINVAL;
+		goto out;
+	}
+
 	if (!esp_xfer_input_ok(esp, contig)) {
 		rc = -EINVAL;
 		goto out;
 	}
+
 	if (esp->driver->xfer_input_ok && !esp->driver->xfer_input_ok(esp, arg)) {
 		rc = -EINVAL;
 		goto out;
@@ -333,15 +400,16 @@ static int esp_access_ioctl(struct esp_device *esp, void __user *argp)
 		goto out;
 	}
 
+	rc = esp_p2p_init(esp, access);
+	if (rc)
+		goto out;
+
 	esp->coherence = access->coherence;
 	esp->footprint = access->footprint;
         esp->alloc_policy = access->alloc_policy;
         esp->ddr_node = access->ddr_node;
 	esp->in_place = access->in_place;
 	esp->reuse_factor = access->reuse_factor;
-
-	if (esp->driver->prep_xfer)
-		esp->driver->prep_xfer(esp, arg);
 
 	if (access->coherence == ACC_COH_AUTO ||
 		access->coherence == ACC_COH_FULL) {
@@ -361,9 +429,14 @@ static int esp_access_ioctl(struct esp_device *esp, void __user *argp)
 		goto out;
 
 	esp_transfer(esp, contig);
-	if (access->run)
+
+	if (esp->driver->prep_xfer)
+		esp->driver->prep_xfer(esp, arg);
+
+	if (access->run) {
 		esp_run(esp);
-	rc = esp_wait(esp);
+		rc = esp_wait(esp);
+	}
 
 	if (access->coherence == ACC_COH_AUTO ||
 		access->coherence == ACC_COH_FULL) {
@@ -437,7 +510,6 @@ static long esp_ioctl(struct file *file, unsigned int cm, unsigned long arg)
 {
 	return esp_do_ioctl(file, cm, (void __user *)arg);
 }
-
 
 static const struct file_operations esp_fops = {
 	.owner		= THIS_MODULE,
@@ -526,6 +598,12 @@ int esp_device_register(struct esp_device *esp, struct platform_device *pdev)
 
 	dev_info(esp->pdev, "l2_size: %zu, llc_size %zu, llc_banks: %lu.\n",
 		cache_l2_size, cache_llc_size, cache_llc_banks);
+
+	/* Add device to ESP devices list */
+	spin_lock(&esp_devices_lock);
+	list_add(&esp->list, &esp_devices);
+	spin_unlock(&esp_devices_lock);
+
 	dev_info(esp->pdev, "device registered.\n");
 	platform_set_drvdata(pdev, esp);
 	return 0;
@@ -542,6 +620,7 @@ EXPORT_SYMBOL_GPL(esp_device_register);
 
 void esp_device_unregister(struct esp_device *esp)
 {
+	list_del(&esp->list);
 	free_irq(esp->irq, esp->pdev);
 	esp_destroy_cdev(esp, esp->number);
 	devm_iounmap(esp->pdev, esp->iomem);

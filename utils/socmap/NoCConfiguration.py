@@ -19,7 +19,6 @@ from socmap_gen import NFULL_COHERENT_MAX
 from socmap_gen import NLLC_COHERENT_MAX
 
 
-
 def isInt(s):
   try:
     int(s)
@@ -45,14 +44,15 @@ class Tile():
     self.point_label.forget()
     self.point_select.forget()
     if soc.IPs.PROCESSORS.count(selection):
-       self.label.config(bg='deep pink')
+       self.label.config(bg="#ef6865")
     elif soc.IPs.MISC.count(selection):
-       self.label.config(bg='gray')
+       self.label.config(bg="#6ab0d4")
     elif soc.IPs.MEM.count(selection):
-       self.label.config(bg='green')
+       self.label.config(bg="#6ab0d4")
     elif soc.IPs.ACCELERATORS.count(selection):
-       self.label.config(bg='orange')
+       self.label.config(bg="#78cbbb")
        self.point_label.pack(side=LEFT)
+       self.vendor = soc.IPs.VENDOR[selection]
        self.point_select.setitems(soc.IPs.POINTS[selection])
        point = self.point.get()
        for p in soc.IPs.POINTS[selection]:
@@ -201,6 +201,7 @@ class Tile():
     self.col = y
     self.ip_type = StringVar()
     self.point = StringVar()
+    self.vendor = ""
     self.clk_region = IntVar()
     self.has_l2 = IntVar()
     self.has_pll = IntVar()
@@ -233,6 +234,7 @@ class NoC():
           new_topology[y][x].has_pll.set(self.topology[y][x].has_pll.get())
           new_topology[y][x].has_clkbuf.set(self.topology[y][x].has_clkbuf.get())
           new_topology[y][x].point.set(self.topology[y][x].point.get())
+          new_topology[y][x].vendor = self.topology[y][x].vendor
           new_topology[y][x].energy_values = self.topology[y][x].energy_values
     self.topology = new_topology
     self.rows = _R

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sld>
+  <accelerator name="synth" desc="SYNTH" data_size="100" device_id="014" hls_tool="stratus_hls">
+    <param name="offset" desc="base address of the input dataset"/>
+    <param name="pattern" desc="load pattern: streaming, strided, irregular"/>
+    <param name="in_size" desc="size of input dataset"/>
+    <param name="access_factor" desc="accessed portion of dataset"/>
+    <param name="burst_len" desc="dma burst length"/>
+    <param name="compute_bound_factor" desc="cycles for word transferred"/>
+    <param name="irregular_seed" desc="random integer used for irregular DMA"/>
+    <param name="reuse_factor" desc="# of times the dataset is accessed"/>
+    <param name="ld_st_ratio" desc="size of data to be loaded w.r.t data to be stored"/>
+    <param name="stride_len" desc="stride length for strided pattern"/>
+    <param name="out_size" desc="size of output dataset"/>
+    <param name="in_place" desc="output stored in place of input"/>
+  </accelerator>
+</sld>

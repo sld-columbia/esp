@@ -1,1 +1,1 @@
-../../../accelerators/common/stratus/project.tcl
+../../../accelerators/stratus_hls/common/stratus/project.tcl

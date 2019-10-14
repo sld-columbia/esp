@@ -14,6 +14,7 @@
 #define VISIONCHIP_NIMAGES_REG	0x40
 #define VISIONCHIP_ROWS_REG	0x44
 #define VISIONCHIP_COLS_REG	0x48
+#define VISIONCHIP_DO_DWT_REG	0x4C
 
 struct visionchip_device {
 	struct esp_device esp;
@@ -48,6 +49,9 @@ static void visionchip_prep_xfer(struct esp_device *esp, void *arg)
 	iowrite32be(a->nimages, esp->iomem + VISIONCHIP_NIMAGES_REG);
 	iowrite32be(a->rows, esp->iomem + VISIONCHIP_ROWS_REG);
 	iowrite32be(a->cols, esp->iomem + VISIONCHIP_COLS_REG);
+	iowrite32be(a->do_dwt, esp->iomem + VISIONCHIP_DO_DWT_REG);
+	iowrite32be(a->src_offset, esp->iomem + SRC_OFFSET_REG);
+	iowrite32be(a->dst_offset, esp->iomem + DST_OFFSET_REG);
 }
 
 static bool visionchip_xfer_input_ok(struct esp_device *esp, void *arg)
@@ -61,6 +65,9 @@ static bool visionchip_xfer_input_ok(struct esp_device *esp, void *arg)
 		return false;
 
         if (a->cols > MAX_COLS)
+	        return false;
+
+        if (a->do_dwt != 0 && a->do_dwt != 1)
 	        return false;
 
 	return true;

@@ -1,6 +1,5 @@
 
 CFLAGS = -I../../include -std=c99 -DUSE_ESP_INTERFACE -DRUN_HW
-LDFLAGS = -L../../contig_alloc -lcontig
 
 SRC_S = $(wildcard *.c)
 OBJ_S = $(SRC_S:.c=.o)
@@ -18,6 +17,8 @@ include ../../common.mk
 
 vitbfly2.exe: $(OBJ_S)
 	CROSS_COMPILE=$(CROSS_COMPILE) $(MAKE) -C ../../contig_alloc/ libcontig.a
-	$(CROSS_COMPILE)$(CC) $^ -o $@ $(LDFLAGS)
+	CROSS_COMPILE=$(CROSS_COMPILE) $(MAKE) -C ../../test
+	CROSS_COMPILE=$(CROSS_COMPILE) $(MAKE) -C ../../libesp
+	$(CROSS_COMPILE)$(CC) $(CFLAGS) $^ -o $@ $(LDFLAGS)
 
 .PHONY: compile

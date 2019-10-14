@@ -1,6 +1,6 @@
 
 CROSS_COMPILE ?= riscv64-unknown-linux-gnu-
-ARRCH ?= riscv
+ARCH ?= riscv
 
 CFLAGS ?= -O3
 CFLAGS += -fno-builtin-cos -fno-builtin-sin
@@ -13,7 +13,7 @@ OBJS := test.o le.o wami.o fft.o
 all: $(OUT)
 
 %.o: %.c
-	$(CROSS_COMPILE)gcc $(CFLAGS) -c $^ -o $@
+	$(CROSS_COMPILE)gcc $(CFLAGS) -c $< -o $@
 
 $(OUT): $(OBJS)
 	$(CROSS_COMPILE)ar r $@ $^
