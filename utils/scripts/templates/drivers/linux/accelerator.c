@@ -23,7 +23,7 @@ static struct of_device_id <accelerator_name>_device_ids[] = {
 		.name = "SLD_<ACCELERATOR_NAME>",
 	},
 	{
-		.name = "eb_// <<--id-->>",
+		.name = "eb_/* <<--id-->> */",
 	},
 	{
 		.compatible = "sld,<accelerator_name>",

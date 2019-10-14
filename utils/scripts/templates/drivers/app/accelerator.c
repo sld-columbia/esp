@@ -76,10 +76,16 @@ int main(int argc, char **argv)
 
 	init_buffer(buf, gold);
 
+	printf("\n====== %s ======\n\n", cfg_000[0].devname);
+	/* <<--print-params-->> */
+	printf("\n  ** START **\n");
+
 	esp_alloc(&contig, buf, size, in_size);
 	esp_run(cfg_000, NACC);
-	esp_dump(&buf[out_offset], out_size);
+	esp_dump(&buf[out_offset], out_offset * sizeof(token_t), out_size);
 	esp_cleanup();
+
+	printf("\n  ** DONE **\n");
 
 	errors = validate_buffer(&buf[out_offset], gold);
 	free(buf);
@@ -89,6 +95,8 @@ int main(int argc, char **argv)
 		printf("+ Test PASSED\n");
 	else
 		printf("+ Test FAILED\n");
+
+	printf("\n====== %s ======\n\n", cfg_000[0].devname);
 
 	return errors;
 }

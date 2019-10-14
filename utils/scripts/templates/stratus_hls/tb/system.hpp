@@ -77,9 +77,9 @@ public:
     uint32_t out_words_adj;
     uint32_t in_size;
     uint32_t out_size;
-    int64_t *in;
-    int64_t *out;
-    int64_t *gold;
+    int/* <<--data-width-->> */_t *in;
+    int/* <<--data-width-->> */_t *out;
+    int/* <<--data-width-->> */_t *gold;
 
     // Other Functions
 };

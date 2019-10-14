@@ -119,8 +119,8 @@ param=${param:-"size"}
 while [ "${param}" != "" ]; do
     read -p "    - register $NPARAMS default value ${def}[1]${normal}: " val
     val=${val:-1}
-    read -p "    - register $NPARAMS max value ${def}[1]${normal}: " max
-    max=${max:-1}
+    read -p "    - register $NPARAMS max value ${def}[${val}]${normal}: " max
+    max=${max:-${val}}
 
     values+=( ["$param"]=$val )
     maxs+=( ["$param"]=$max )
@@ -138,8 +138,8 @@ first_param=$(first_key)
 keys_to_max
 
 ### Input / Output and local memory
-echo "  * Configure PLM size and create skeletof for load and store:"
-read -p "    - Enter input data bit-width (8, 16, 32, 64) ${def}[32]${normal}: " data_width
+echo "  * Configure PLM size and create skeleton for load and store:"
+read -p "    - Enter data bit-width (8, 16, 32, 64) ${def}[32]${normal}: " data_width
 data_width=${data_width:-32}
 while (true); do
     case $data_width in
@@ -189,7 +189,7 @@ echo "      Input PLM has ${in_word} ${data_width}-bits words"
 echo "      Output PLM has ${out_word} ${data_width}-bits words"
 
 while true; do
-    read -p "    - Enter number of input data to be processesd in batch (can be function of configuration registers) ${def}[1]${normal}: " batching_factor_expr
+    read -p "    - Enter number of input data to be processed in batch (can be function of configuration registers) ${def}[1]${normal}: " batching_factor_expr
     if [ "$batching_factor_expr" == "" ]; then batching_factor_expr="1"; fi
     batching_factor_max=$((batching_factor_expr))
     if [ "$(is_integer $batching_factor_max)" == "Y" ]; then
@@ -385,8 +385,8 @@ if [ "$FLOW" == "vivado_hls" ]; then
 	sed -i "s/\/\* <<--number of transfers-->> \*\//${batching_factor_expr}/g" ${f}
 	sed -i "s/\/\* <<--data_in_size-->> \*\//${data_in_size_expr}/g" ${f}
 	sed -i "s/\/\* <<--data_out_size-->> \*\//${data_out_size_expr}/g" ${f}
+	sed -i "s/\/\* <<--chunking-factor-->> \*\//${chunking_factor}/g" ${f}
     done
-    sed -i "s/\/\* <<--chunking-factor-->> \*\//${chunking_factor}/g" src/espacc.cc
 
     # syn/custom.tcl
     cd $ACC_DIR
@@ -428,6 +428,7 @@ if [ "$FLOW" == "stratus_hls" ]; then
     # system.hpp
     cd $ACC_DIR/tb
     sed -i "s/\/\* <<--mem-footprint-->> \*\//${memory_footprint}/g" system.hpp
+    sed -i "s/\/\* <<--data-width-->> \*\//${data_width}/g" system.hpp
     for key in ${!values[@]}; do
 	indent="\ \ \ \ "
 	sed -i "/\/\* <<--params-->> \*\//a ${indent}int32_t ${key};" system.hpp
@@ -436,6 +437,7 @@ if [ "$FLOW" == "stratus_hls" ]; then
     done
 
     # system.cpp
+    sed -i "s/\/\* <<--data-width-->> \*\//${data_width}/g" system.cpp
     sed -i "s/\/\* <<--number of transfers-->> \*\//${batching_factor_expr}/g" system.cpp
     sed -i "s/\/\* <<--data_in_size-->> \*\//${data_in_size_expr}/g" system.cpp
     sed -i "s/\/\* <<--data_out_size-->> \*\//${data_out_size_expr}/g" system.cpp
@@ -533,7 +535,8 @@ for key in ${!values[@]}; do
     for f in "barec/${LOWER}.c app/cfg.h"; do
 	sed -i "/\/\* <<--params-->> \*\//a const int32_t ${key} = ${values[$key]};" ${f}
     done
-    sed -i "/\/\* <<--descriptor-->> \*\//a ${indent}${indent}.desc.${LOWER}_desc.${key} = ${values[$key]}," app/cfg.h
+    sed -i "/\/\* <<--print-params-->> \*\//a ${indent}printf(\"  .${key} = %d\\\n\", ${key});" app/${LOWER}.c
+    sed -i "/\/\* <<--descriptor-->> \*\//a ${indent}${indent}.desc.${LOWER}_desc.${key} = ${key}," app/cfg.h
 done
 
 ## ESP library update

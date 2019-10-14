@@ -91,16 +91,16 @@ void system_t::load_memory()
     in_size = in_words_adj * (/* <<--number of transfers-->> */);
     out_size = out_words_adj * (/* <<--number of transfers-->> */);
 
-    in = new int64_t[in_size];
+    in = new int/* <<--data-width-->> */_t[in_size];
     for (int i = 0; i < /* <<--number of transfers-->> */; i++)
         for (int j = 0; j < /* <<--data_in_size-->> */; j++)
-            in[i * in_words_adj + j] = (int64_t) j;
+            in[i * in_words_adj + j] = (int/* <<--data-width-->> */_t) j;
 
     // Compute golden output
-    gold = new int64_t[out_size];
+    gold = new int/* <<--data-width-->> */_t[out_size];
     for (int i = 0; i < /* <<--number of transfers-->> */; i++)
         for (int j = 0; j < /* <<--data_out_size-->> */; j++)
-            gold[i * out_words_adj + j] = (int64_t) j;
+            gold[i * out_words_adj + j] = (int/* <<--data-width-->> */_t) j;
 
     // Memory initialization:
 #if (DMA_WORD_PER_BEAT == 0)
@@ -124,7 +124,7 @@ void system_t::load_memory()
 void system_t::dump_memory()
 {
     // Get results from memory
-    out = new int64_t[out_size];
+    out = new int/* <<--data-width-->> */_t[out_size];
     uint32_t offset = /* <<--store-offset-->> */;
 
 #if (DMA_WORD_PER_BEAT == 0)
