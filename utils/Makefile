@@ -263,6 +263,9 @@ TKCONFIG   = $(UTILS_GRLIB)/tkconfig
 ### Board files ###
 BOARD_FILES = $(wildcard $(ESP_ROOT)/constraints/$(BOARD)/*)
 
+### Default test program ###
+TEST_PROGRAM ?= systest.exe
+
 
 ifeq ("$(CPU_ARCH)", "leon3")
 ### Leon3 Software targets ###
@@ -270,7 +273,7 @@ include $(UTILS_GRLIB)/leon3_sw.mk
 
 soft: leon3-soft prom.srec ram.srec prom.bin systest.bin
 
-systest.bin: systest.exe
+systest.bin: $(TEST_PROGRAM)
 	$(QUIET_OBJCP) $(CROSS_COMPILE_ELF)objcopy -O binary --change-addresses -0x40000000 $< $@
 
 soft-clean: leon3-soft-clean ahbrom-clean
@@ -510,10 +513,10 @@ systest.exe: systest.c uart.o
 	-I$(DESIGN_PATH) \
 	uart.o $<
 
-systest.bin: systest.exe
+systest.bin: $(TEST_PROGRAM)
 	$(QUIET_OBJCP) riscv64-unknown-elf-objcopy -O binary $< $@
 
-ram.srec: systest.exe
+ram.srec: $(TEST_PROGRAM)
 	$(QUIET_OBJCP) riscv64-unknown-elf-objcopy -O srec --gap-fill 0 $< $@
 
 
@@ -818,9 +821,13 @@ check_all_srcs: grlib_config.vhd socmap.vhd sldgen
 		if [ $$? -eq 0 ]; then \
 			rm $@.new; \
 		else \
+			rm -rf modelsim/work; \
+			rm -rf modelsim/vsim.mk; \
 			mv $@.new $@.old; \
 		fi; \
 	else \
+		rm -rf modelsim/work; \
+		rm -rf modelsim/vsim.mk; \
 		mv $@.new $@.old; \
 	fi;
 

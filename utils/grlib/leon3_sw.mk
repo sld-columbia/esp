@@ -77,7 +77,7 @@ leon3-soft: prom.srec ram.srec
 systest.exe: systest.c lib3tests.a
 	$(QUIET_CC)$(XCC) $(XCFLAGS) systest.c $(XLDFLAGS) -o systest.exe
 
-ram.srec: systest.exe
+ram.srec: $(TEST_PROGRAM)
 	$(QUIET_OBJCP)$(CROSS_COMPILE)objcopy -O srec --gap-fill 0 systest.exe ram.srec
 
 leon3-soft-clean:
