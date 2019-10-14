@@ -117,11 +117,11 @@ static void print_time_info(esp_thread_info_t info[], unsigned long long hw_ns, 
 {
 	int i;
 
+	printf("  > Test time: %llu ns\n", hw_ns);
+
 	for (i = 0; i < nthreads; i++)
 		if (info->run)
-			printf("%s time: %llu ns\n", info[i].devname, info[i].hw_ns);
-
-	printf("Test time: %llu ns\n", hw_ns);
+			printf("    - %s time: %llu ns\n", info[i].devname, info[i].hw_ns);
 }
 
 void esp_run(esp_thread_info_t cfg[], unsigned nacc)
@@ -185,9 +185,9 @@ void esp_run(esp_thread_info_t cfg[], unsigned nacc)
 }
 
 
-void esp_dump(void *swbuf, size_t size)
+void esp_dump(void *swbuf, size_t offset, size_t size)
 {
-	contig_copy_from(swbuf, *contig, 0, size);
+	contig_copy_from(swbuf, *contig, offset, size);
 }
 
 void esp_cleanup()

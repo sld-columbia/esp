@@ -82,7 +82,7 @@ typedef struct esp_accelerator_thread_info esp_thread_info_t;
 
 void esp_alloc(contig_handle_t *handle, void *swbuf, size_t size, size_t in_size);
 void esp_run(esp_thread_info_t cfg[], unsigned nacc);
-void esp_dump(void *swbuf, size_t size);
+void esp_dump(void *swbuf, size_t offset, size_t size);
 void esp_cleanup();
 
 #endif /* __ESPLIB_H__ */
