@@ -33,6 +33,14 @@ def print_usage():
 #Configuration Frame (top-left)
 class ConfigFrame(Frame):
 
+  def set_cpu_specific_labels(self, soc):
+    if soc.CPU_ARCH.get() == "ariane":
+      self.fpu_label.config(text="ETH FPnew",fg="darkgreen")
+    elif soc.HAS_FPU == "7":
+      self.fpu_label.config(text="SLD FPU",fg="darkgreen")
+    elif soc.HAS_FPU == "(1+0)":
+      self.fpu_label.config(text="GRFPU",fg="darkgreen")
+
   def __init__(self, soc, top_frame):
 
     Frame.__init__(self, top_frame, width=75, borderwidth=2, relief=RIDGE) 
@@ -46,12 +54,7 @@ class ConfigFrame(Frame):
     self.jtag_label.pack(side=TOP)      
     self.eth_label = Label(self, text="No Ethernet",fg="red")
     self.eth_label.pack(side=TOP)
-    if soc.CPU_ARCH.get() == "ariane":
-       self.fpu_label.config(text="ETH FPnew",fg="darkgreen")
-    elif soc.HAS_FPU == "7":
-       self.fpu_label.config(text="SLD FPU",fg="darkgreen")
-    elif soc.HAS_FPU == "(1+0)":
-       self.fpu_label.config(text="GRFPU",fg="darkgreen")
+    self.set_cpu_specific_labels(soc)
     if soc.HAS_JTAG == 1:
        self.jtag_label.config(text="JTAG support",fg="darkgreen")
     if soc.HAS_ETH == 1:
@@ -67,6 +70,7 @@ class ConfigFrame(Frame):
     self.sync_label = Label(self, text="With synchronizers", fg="darkgreen")
     self.sync_label.pack(side=TOP)    
 
+
 class OptionFrame(Frame):
 
   def __init__(self, soc, top_frame):
@@ -80,7 +84,7 @@ class OptionFrame(Frame):
 
 class CacheFrame(Frame):
 
-  def __init__(self, soc, top_frame):
+  def __init__(self, soc, top_frame, main_frame):
     self.soc = soc
     Frame.__init__(self, top_frame, width=50, borderwidth=2, relief=RIDGE)
     self.pack(side=LEFT, expand=NO, fill=Y)
@@ -93,7 +97,8 @@ class CacheFrame(Frame):
     ways_choices = [2, 4, 8, 16, 32]
 
     Label(cache_config_frame, text = "Cache En.: ", font="TkDefaultFont 9 bold").grid(row=1, column=1)
-    Checkbutton(cache_config_frame, text="", variable=soc.cache_en).grid(row=1, column=2)
+    Checkbutton(cache_config_frame, text="", variable=soc.cache_en,
+                onvalue = 1, offvalue = 0, command=main_frame.update_noc_config).grid(row=1, column=2)
     Label(cache_config_frame, text = "L2 SETS: ").grid(row=2, column=1)
     OptionMenu(cache_config_frame, soc.l2_sets, *sets_choices).grid(row=2, column=2)
     Label(cache_config_frame, text = "L2 WAYS: ").grid(row=3, column=1)
@@ -109,7 +114,7 @@ class CacheFrame(Frame):
 
 class CpuFrame(Frame):
 
-  def __init__(self, soc, top_frame):
+  def __init__(self, soc, top_frame, main_frame):
     self.soc = soc
     Frame.__init__(self, top_frame, width=50, borderwidth=2, relief=RIDGE)
     self.pack(side=LEFT, expand=NO, fill=Y)
@@ -121,7 +126,8 @@ class CpuFrame(Frame):
     cpu_choices = ["leon3", "ariane"]
 
     Label(general_config_frame, text = "Core: ").grid(row=1, column=1)
-    OptionMenu(general_config_frame, soc.CPU_ARCH, *cpu_choices).grid(row=1, column=2)
+    Pmw.OptionMenu(general_config_frame, menubutton_font="TkDefaultFont 12", menubutton_textvariable=soc.CPU_ARCH,
+                   items=cpu_choices, command=main_frame.update_noc_config).grid(row=1, column=2)
 
 
 class EspCreator(Frame):
@@ -158,9 +164,9 @@ class EspCreator(Frame):
     #.:: creating the selection frame
     self.select_frame = OptionFrame(self.soc, self.top_frame)
     #.:: creating the cache frame
-    self.cache_frame = CacheFrame(self.soc, self.top_frame)
+    self.cache_frame = CacheFrame(self.soc, self.top_frame, self)
     #.:: creating the CPU frame
-    self.cpu_frame = CpuFrame(self.soc, self.top_frame)
+    self.cpu_frame = CpuFrame(self.soc, self.top_frame, self)
 
     #noc frame
     self.bottom_frame_noccfg = NoCFrame(self.soc, self.bottom_frame) 
@@ -174,6 +180,15 @@ class EspCreator(Frame):
     self.bottom_frame_noccfg.set_message(self.message, cfg_frame, self.done)   
 
     self.bottom_frame_noccfg.update_frame()
+
+  def update_noc_config(self, *args):
+    if soc.CPU_ARCH.get() == "ariane":
+      self.soc.DMA_WIDTH = 64
+    else:
+      self.soc.DMA_WIDTH = 32
+    self.soc.IPs = Components(self.soc.TECH, self.soc.DMA_WIDTH)
+    self.soc.update_list_of_ips()
+    self.bottom_frame_noccfg.changed()
 
   def generate_files(self):
       self.generate_socmap()

@@ -17,25 +17,25 @@ def get_immediate_subdirectories(a_dir):
 
 class Components():
 
-  EMPTY = [
-  "empty",
-  ]
-  PROCESSORS = [
-  "cpu",
-  ]
-  MISC = [
-  "IO",
-  ]
-  MEM = [
-  "mem",
-  ]
-  ACCELERATORS = [
-  ]
-
-  POINTS = {}
-  VENDOR = {}
-
   def __init__(self, TECH, DMA_WIDTH):
+    self.EMPTY = [
+      "empty",
+    ]
+    self.PROCESSORS = [
+      "cpu",
+    ]
+    self.MISC = [
+      "IO",
+    ]
+    self.MEM = [
+      "mem",
+    ]
+    self.ACCELERATORS = [
+    ]
+
+    self.POINTS = {}
+    self.VENDOR = {}
+
     tech_dir = TECH
     acc_dir = "../../tech/" + tech_dir + "/acc"
     dirs = get_immediate_subdirectories(acc_dir)
@@ -83,6 +83,9 @@ class SoC_Config():
   IP_ADDR = ""
   TECH = "virtex7"
   DMA_WIDTH = 32
+
+  def update_list_of_ips(self):
+    self.list_of_ips = tuple(self.IPs.EMPTY) + tuple(self.IPs.PROCESSORS) + tuple(self.IPs.MISC) + tuple(self.IPs.MEM) + tuple(self.IPs.ACCELERATORS)
 
   def read_config(self, temporary):
     filename = ".esp_config"
@@ -375,4 +378,5 @@ class SoC_Config():
     # CPU architecture
     self.CPU_ARCH = StringVar()
     self.cache_en = IntVar()
+    self.update_list_of_ips()
 

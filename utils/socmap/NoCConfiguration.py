@@ -43,6 +43,9 @@ class Tile():
     self.label.config(text=selection)
     self.point_label.forget()
     self.point_select.forget()
+    self.ip_list.forget()
+    self.ip_list.setitems(soc.list_of_ips)
+    self.ip_list.pack(side=LEFT)
     if soc.IPs.PROCESSORS.count(selection):
        self.label.config(bg="#ef6865")
     elif soc.IPs.MISC.count(selection):
@@ -64,7 +67,9 @@ class Tile():
        self.point_select.pack(side=LEFT)
     else:
        self.label.config(bg='white')
+       self.ip_type.set("empty")
     self.clk_reg_selection.config(to=soc.noc.get_clk_regions_max())
+
 
 
     try:
@@ -365,7 +370,7 @@ class NoCFrame(Pmw.ScrolledFrame):
 
   def create_tile(self, frame, tile):
     #computing the width of the widget
-    list_items = tuple(self.soc.IPs.EMPTY) + tuple(self.soc.IPs.PROCESSORS) + tuple(self.soc.IPs.MISC) + tuple(self.soc.IPs.MEM) + tuple(self.soc.IPs.ACCELERATORS)
+    list_items = self.soc.list_of_ips
     width = 0
     for x in range(0, len(list_items)):
       if len(list_items[x]) > width:
@@ -380,11 +385,12 @@ class NoCFrame(Pmw.ScrolledFrame):
     config_frame = Frame(frame)
     config_frame.pack(side=TOP)
 
-    Pmw.OptionMenu(select_frame, menubutton_font="TkDefaultFont 8",
+    tile.ip_list = Pmw.OptionMenu(select_frame, menubutton_font="TkDefaultFont 8",
                    menubutton_textvariable=tile.ip_type,
                    menubutton_width = width+2,
                    items=list_items
-                  ).pack(side=LEFT)
+                  )
+    tile.ip_list.pack(side=LEFT)
     tile.point_label = Label(select_frame, text="Impl.: ", width=5)
     tile.point_select = Pmw.OptionMenu(select_frame, menubutton_font="TkDefaultFont 8",
                    menubutton_textvariable=tile.point,
@@ -558,6 +564,7 @@ class NoCFrame(Pmw.ScrolledFrame):
     #update message box
     self.message.delete(0.0, END)
     self.cfg_frame.sync_label.config(text="With synchronizers",fg="darkgreen")
+    self.cfg_frame.set_cpu_specific_labels(self.soc)
     if tot_cpu <= NCPU_MAX and tot_mem > 0 and tot_mem <= NMEM_MAX and tot_acc <= NACC_MAX and tot_io == 1 and pll_ok == True and clkbuf_ok == True and clk_region_skip == 0 and tot_tiles <= NTILE_MAX and tot_full_coherent <= NFULL_COHERENT_MAX and tot_llc_coherent <= NLLC_COHERENT_MAX:
       self.done.config(state=NORMAL)
     else:
