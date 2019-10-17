@@ -21,7 +21,7 @@ ifeq ("$(XILINX_VIVADO)","")
 $(error XILINX_VIVADO path not specified)
 endif
 
-PROFPGA_REQUIRED_VER = proFPGA-2016B
+PROFPGA_REQUIRED_VER = proFPGA-2019A-SP4
 PROFPGA_CURRENT_VER = $(shell basename $(PROFPGA))
 ifneq ("$(PROFPGA_REQUIRED_VER)", "$(PROFPGA_CURRENT_VER)")
 $(error proFPGA tools version must be "$(PROFPGA_REQUIRED_VER)")

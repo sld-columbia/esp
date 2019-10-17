@@ -31,7 +31,6 @@ profpga_user/profpga_sync_rx.v
 profpga_user/profpga_sync_tx.v
 profpga_user/profpga_sync_rx2.v
 profpga_user/profpga_clocksync.v
-profpga_user/profpga_acm.v
 profpga_user/profpga_ctrl.v
 pd_muxdemux2/pd_muxdemux_xultrascale.sv
 pd_muxdemux2/pd_muxdemux_x7series.sv
