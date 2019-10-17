@@ -50,10 +50,10 @@ entity monitor is
     user_rstn       : in  std_logic;
     mon_ddr         : in  monitor_ddr_vector(0 to ddrs_num-1);
     mon_noc         : in  monitor_noc_matrix(0 to nocs_num-1, 0 to tiles_num-1);
-    mon_acc         : in  monitor_acc_vector(0 to accelerators_num-1);
-    mon_mem          : in  monitor_mem_vector(0 to llc_num-1);
-    mon_l2          : in  monitor_cache_vector(0 to l2_num-1);
-    mon_llc         : in  monitor_cache_vector(0 to llc_num-1);
+    mon_acc         : in  monitor_acc_vector(0 to relu(accelerators_num-1));
+    mon_mem          : in  monitor_mem_vector(0 to ddrs_num-1);
+    mon_l2          : in  monitor_cache_vector(0 to relu(l2_num-1));
+    mon_llc         : in  monitor_cache_vector(0 to relu(llc_num-1));
     mon_dvfs        : in  monitor_dvfs_vector(0 to tiles_num-1)
     );
 
@@ -203,7 +203,7 @@ architecture rtl of monitor is
   --      ...
   -- coh_reqX, coh_fwdX, ...
   function mem_offset (
-    constant mem : integer range 0 to llc_num;
+    constant mem : integer range -1 to ddrs_num;
     constant reg : integer range 0 to 8)
     return integer is
     variable offset : integer;
@@ -228,13 +228,13 @@ architecture rtl of monitor is
   -- ...  ...  ...  ...
   -- rX0  ...  ...  rXY
   function noc_tile_inject_offset (
-    constant plane : integer range 0 to nocs_num;
+    constant plane : integer range -1 to nocs_num;
     constant tile  : integer range 0 to tiles_num)
     return integer is
     variable offset : integer;
   begin  -- noc_offset
     offset := (plane * tiles_num) + tile;
-    return mem_offset(llc_num - 1, 8) + (offset * mon_noc_tile_inject_en);
+    return mem_offset(ddrs_num - 1, 8) + (offset * mon_noc_tile_inject_en);
   end noc_tile_inject_offset;
 
   -- X = nocs_num
@@ -246,7 +246,7 @@ architecture rtl of monitor is
   --         ...          ...  ...         ...
   -- nX0,sX0,wX0,eX0,lX0  ...  ...  nXY,sXY,wXY,eXY,lXY
   function noc_queues_full_offset (
-    constant plane     : integer range 0 to nocs_num;
+    constant plane     : integer range -1 to nocs_num;
     constant tile      : integer range 0 to tiles_num;
     constant direction : integer range 0 to 5)
     return integer is
@@ -291,7 +291,7 @@ architecture rtl of monitor is
   --      ...
   -- hitX,missX,
   function l2_offset (
-    constant l2 : integer range 0 to l2_num;
+    constant l2 : integer range -1 to l2_num;
     constant reg : integer range 0 to 2)
     return integer is
     variable offset : integer;
@@ -310,7 +310,7 @@ architecture rtl of monitor is
   --      ...
   -- hitX,missX,
   function llc_offset (
-    constant llc : integer range 0 to llc_num;
+    constant llc : integer range -1 to llc_num;
     constant reg : integer range 0 to 2)
     return integer is
     variable offset : integer;
@@ -690,7 +690,7 @@ begin
   end generate ddr_monitor_enabled_gen;
 
   mem_monitor_enabled_gen: if mon_mem_en /= 0 generate
-    mem_gen: for i in 0 to llc_num-1 generate
+    mem_gen: for i in 0 to ddrs_num-1 generate
       synchronizer_mem: synchronizer
         generic map (
           DATA_WIDTH => 1)
@@ -1200,7 +1200,7 @@ begin
     end if;
 
     if mon_mem_en /= 0 then
-      for i in 0 to llc_num-1 loop
+      for i in 0 to ddrs_num-1 loop
         write(s, "MEM-" & integer'image(i) & ".coh_req : " & integer'image(mem_offset(i, MEM_COH_REQ)) & LF);
         writeline(output,s);
         write(s, "MEM-" & integer'image(i) & ".coh_fwd : " & integer'image(mem_offset(i, MEM_COH_FWD)) & LF);

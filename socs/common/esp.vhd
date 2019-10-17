@@ -213,6 +213,7 @@ begin
   end generate domain_probes_gen;
 
   mon_dvfs <= mon_dvfs_out;
+
   -----------------------------------------------------------------------------
   -- TILES
   -----------------------------------------------------------------------------
@@ -616,5 +617,20 @@ begin
   monitor_llc_gen: for i in 0 to CFG_NLLC - 1 generate
     mon_llc(i) <= mon_llc_int(llc_tile_id(i));
   end generate monitor_llc_gen;
- end;
+
+
+  -- Handle cases with no accelerators, no l2, no llc
+  mon_acc_noacc_gen: if accelerators_num = 0 generate
+    mon_acc(0) <= monitor_acc_none;
+  end generate mon_acc_noacc_gen;
+
+  mon_l2_nol2_gen: if CFG_NL2 = 0 generate
+    mon_l2(0) <= monitor_cache_none;
+  end generate mon_l2_nol2_gen;
+
+  mon_llc_nollc_gen: if CFG_NLLC = 0 generate
+    mon_llc(0) <= monitor_cache_none;
+  end generate mon_llc_nollc_gen;
+
+end;
 

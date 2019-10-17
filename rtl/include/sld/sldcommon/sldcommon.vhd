@@ -84,6 +84,14 @@ package sldcommon is
     queue_full => (others => '0')
     );
 
+  constant monitor_acc_none : monitor_acc_type := (
+    clk   => '0',
+    go    => '0',
+    run   => '0',
+    done  => '0',
+    burst => '0'
+    );
+
   constant monitor_cache_none : monitor_cache_type := (
     clk => '0',
     hit => '0',
@@ -127,10 +135,10 @@ package sldcommon is
       user_rstn        : in  std_logic;
       mon_ddr          : in  monitor_ddr_vector(0 to ddrs_num-1);
       mon_noc          : in  monitor_noc_matrix(0 to nocs_num-1, 0 to tiles_num-1);
-      mon_acc          : in  monitor_acc_vector(0 to accelerators_num-1);
-      mon_mem          : in  monitor_mem_vector(0 to llc_num-1);
-      mon_l2           : in  monitor_cache_vector(0 to l2_num-1);
-      mon_llc          : in  monitor_cache_vector(0 to llc_num-1);
+      mon_acc          : in  monitor_acc_vector(0 to relu(accelerators_num-1));
+      mon_mem          : in  monitor_mem_vector(0 to ddrs_num-1);
+      mon_l2           : in  monitor_cache_vector(0 to relu(l2_num-1));
+      mon_llc          : in  monitor_cache_vector(0 to relu(llc_num-1));
       mon_dvfs         : in  monitor_dvfs_vector(0 to tiles_num-1)
       );
 
