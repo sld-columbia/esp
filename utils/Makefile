@@ -222,6 +222,7 @@ endif
 esp-config-distclean: esp-config-clean
 	$(QUIET_CLEAN)$(RM)	\
 		socmap.vhd	\
+		esp_global.vhd	\
 		.esp_config	\
 		ariane.dts	\
 		mmi64_regs.h	\
