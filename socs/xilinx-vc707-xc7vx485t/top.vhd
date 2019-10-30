@@ -85,7 +85,8 @@ component sgmii_vc707
     autonegotiation : integer := 1;
     pirq            : integer := 0;
     debugmem        : integer := 0;
-    tech            : integer := 0
+    tech            : integer := 0;
+    simulation      : boolean := false
   );
   port(
     sgmiii    :  in  eth_sgmii_in_type;
@@ -391,7 +392,7 @@ begin
 ---  ETHERNET ---------------------------------------------------------
 -----------------------------------------------------------------------
 
-  eth0 : if SIMULATION = false and CFG_GRETH = 1 generate -- Gaisler ethernet MAC
+  eth0 : if CFG_GRETH = 1 generate -- Gaisler ethernet MAC
     e1 : grethm
       generic map(
         hindex => CFG_AHB_JTAG,
@@ -441,7 +442,8 @@ begin
         autonegotiation => 1,
         pirq            => 11,
         debugmem        => 1,
-        tech            => CFG_FABTECH
+        tech            => CFG_FABTECH,
+        simulation      => SIMULATION
         )
       port map(
         sgmiii   => sgmiii,
@@ -476,7 +478,7 @@ begin
 
   end generate;
 
-  no_eth0 : if SIMULATION = true or CFG_GRETH = 0 generate
+  no_eth0 : if CFG_GRETH = 0 generate
     eth0_apbo <= apb_none;
     sgmii0_apbo <= apb_none;
     eth0_ahbmo <= ahbm_none;

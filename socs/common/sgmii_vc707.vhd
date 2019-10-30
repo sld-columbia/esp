@@ -100,7 +100,7 @@ entity sgmii_vc707 is
         pirq            : integer := 0;
         debugmem        : integer := 0;
         tech            : integer := 0;
-        simulation      : integer := 0
+        simulation      : boolean := false
       );
         port(
       -- Tranceiver Interface
@@ -543,11 +543,11 @@ begin
    -- Transceiver Clock Management
    -----------------------------------------------------------------------------
 
-   sgmii1 : if simulation = 1 generate
+   sgmii1 : if simulation  generate
 
    end generate;
 
-   sgmii0 : if simulation = 0 generate
+   sgmii0 : if not simulation  generate
 
        -- Clock circuitry for the GT Transceiver uses a differential input clock.
        -- gtrefclk is routed to the tranceiver.
