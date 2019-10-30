@@ -93,6 +93,26 @@ architecture rtl of cpu_ahbs2noc is
   signal load_start, load_done : std_ulogic;
 
   constant zero_ahb_flags : std_logic_vector(0 to NAHBSLV - 1) := (others => '0');
+
+  -- attribute mark_debug : string;
+  -- attribute mark_debug of dma_selected               : signal is "true";
+  -- attribute mark_debug of coherence_req_wrreq        : signal is "true";
+  -- attribute mark_debug of coherence_req_data_in      : signal is "true";
+  -- attribute mark_debug of coherence_req_full         : signal is "true";
+  -- attribute mark_debug of coherence_rsp_rcv_rdreq    : signal is "true";
+  -- attribute mark_debug of coherence_rsp_rcv_data_out : signal is "true";
+  -- attribute mark_debug of coherence_rsp_rcv_empty    : signal is "true";
+  -- attribute mark_debug of remote_ahbs_snd_wrreq      : signal is "true";
+  -- attribute mark_debug of remote_ahbs_snd_data_in    : signal is "true";
+  -- attribute mark_debug of remote_ahbs_snd_full       : signal is "true";
+  -- attribute mark_debug of remote_ahbs_rcv_rdreq      : signal is "true";
+  -- attribute mark_debug of remote_ahbs_rcv_data_out   : signal is "true";
+  -- attribute mark_debug of remote_ahbs_rcv_empty      : signal is "true";
+  -- attribute mark_debug of load_transaction_active    : signal is "true";
+  -- attribute mark_debug of ahbs_state                 : signal is "true";
+  -- attribute mark_debug of load_start                 : signal is "true";
+  -- attribute mark_debug of load_done                  : signal is "true";
+
 begin  -- rtl
 
   -----------------------------------------------------------------------------
