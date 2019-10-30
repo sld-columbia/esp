@@ -45,6 +45,8 @@ entity mem_tile_q is
     coherent_dma_snd_wrreq     : in  std_ulogic;
     coherent_dma_snd_data_in   : in  noc_flit_type;
     coherent_dma_snd_full      : out std_ulogic;
+    coherent_dma_snd_atleast_4slots : out std_ulogic;
+    coherent_dma_snd_exactly_3slots : out std_ulogic;
     -- tile->NoC4
     dma_snd_wrreq              : in  std_ulogic;
     dma_snd_data_in            : in  noc_flit_type;
@@ -330,7 +332,7 @@ begin  -- rtl
   noc6_in_data <= coherent_dma_snd_data_out;
   noc6_in_void <= coherent_dma_snd_empty or noc6_in_stop;
   coherent_dma_snd_rdreq <= (not coherent_dma_snd_empty) and (not noc6_in_stop);
-  fifo_14c: fifo0
+  fifo_14c: fifo2
     generic map (
       depth => 18,                      --Header, address, [data]
       width => NOC_FLIT_SIZE)
@@ -342,6 +344,8 @@ begin  -- rtl
       data_in  => coherent_dma_snd_data_in,
       empty    => coherent_dma_snd_empty,
       full     => coherent_dma_snd_full,
+      atleast_4slots => coherent_dma_snd_atleast_4slots,
+      exactly_3slots => coherent_dma_snd_exactly_3slots,
       data_out => coherent_dma_snd_data_out);
 
   -- From noc5: AHB slave response from remote DSU (AHBs rcv)

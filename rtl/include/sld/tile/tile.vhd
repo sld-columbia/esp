@@ -222,6 +222,8 @@ package tile is
       coherent_dma_snd_wrreq    : in  std_ulogic;
       coherent_dma_snd_data_in  : in  noc_flit_type;
       coherent_dma_snd_full     : out std_ulogic;
+      coherent_dma_snd_atleast_4slots : out std_ulogic;
+      coherent_dma_snd_exactly_3slots : out std_ulogic;
       dma_rcv_rdreq            : in  std_ulogic;
       dma_rcv_data_out         : out noc_flit_type;
       dma_rcv_empty            : out std_ulogic;
@@ -536,6 +538,7 @@ package tile is
       local_x     : local_yx;
       axitran     : integer range 0 to 1 := 0;
       little_end  : integer range 0 to 1 := 0;
+      eth_dma     : integer range 0 to 1 := 0;
       cacheline   : integer;
       l2_cache_en : integer := 0);
     port (

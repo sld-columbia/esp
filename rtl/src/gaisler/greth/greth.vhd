@@ -27,6 +27,7 @@
 library ieee;
 use ieee.std_logic_1164.all;
 use work.stdlib.all;
+use work.esp_global.all;
 use work.amba.all;
 use work.devices.all;
 use work.gencomp.all;
@@ -88,6 +89,24 @@ entity greth is
 end entity;
   
 architecture rtl of greth is
+
+
+  function fix_endian (
+    le : std_logic_vector(ARCH_BITS - 1 downto 0))
+    return std_logic_vector is
+    variable be : std_logic_vector(ARCH_BITS - 1 downto 0);
+  begin
+    if little_end = 0 then
+      be := le;
+    else
+      for i in 0 to (ARCH_BITS / 8) - 1 loop
+        be(8 * (i + 1) - 1 downto 8 * i) := le(ARCH_BITS - 8 * i - 1 downto ARCH_BITS - 8 * (i + 1));
+      end loop;  -- i
+    end if;
+    return be;
+  end fix_endian;
+
+
   function getfifosize(edcl, fifosize, ebufsize : in integer) return integer is
   begin
     if (edcl /= 0) and (ebufsize > fifosize) then
@@ -152,10 +171,11 @@ architecture rtl of greth is
   signal hwdata       : std_logic_vector(31 downto 0);
   signal ehwdata      : std_logic_vector(31 downto 0);
   signal hrdata       : std_logic_vector(31 downto 0);
+  signal ehrdata      : std_logic_vector(31 downto 0);
 
 begin
-  
-  
+
+
   ethc0: grethc 
     generic map(
       ifg_gap        => ifg_gap,
@@ -207,7 +227,7 @@ begin
       ehgrant        => ehgrant,
       ehready        => ahbmi.hready,
       ehresp         => ahbmi.hresp,
-      ehrdata        => hrdata,
+      ehrdata        => ehrdata,
       --edcl ahb mst out  
       ehbusreq       => eahbmo.hbusreq,
       ehlock         => eahbmo.hlock,
@@ -294,9 +314,12 @@ begin
     apbo.pirq(pirq) <= irq;
   end process;
 
-  hrdata <= ahbreadword(ahbmi.hrdata);
-  
-  ahbmo.hwdata <= ahbdrivedata(hwdata);
+  hrdata <= ahbreadword(fix_endian(ahbmi.hrdata));
+  -- hrdata <= ahbreadword(ahbmi.hrdata);
+  ehrdata <= ahbreadword(ahbmi.hrdata);
+
+  ahbmo.hwdata <= fix_endian(ahbdrivedata(hwdata));
+  -- ahbmo.hwdata <= ahbdrivedata(hwdata);
   ahbmo.hconfig <= hconfig;
   ahbmo.hindex  <= hindex;
   ahbmo.hirq    <= (others => '0');

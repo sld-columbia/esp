@@ -568,7 +568,7 @@ begin
     -- Note that Ehternet won't work if L2 is enabled and LLC is not.
 
     hmaster := to_integer(unsigned(ahbsi.hmaster));
-    if CFG_LLC_ENABLE /= 0 and hmaster = CFG_AHB_JTAG then
+    if hmaster = CFG_AHB_JTAG then
       coherent_dma_selected <= '1';
     end if;
 
@@ -734,6 +734,7 @@ begin
       local_x     => this_local_x,
       axitran     => GLOB_CPU_AXI,
       little_end  => GLOB_CPU_AXI,
+      eth_dma     => 0,
       cacheline   => 1,
       l2_cache_en => 0)
     port map (

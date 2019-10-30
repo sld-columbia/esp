@@ -114,6 +114,8 @@ architecture rtl of tile_mem is
   signal coherent_dma_snd_wrreq     : std_ulogic;
   signal coherent_dma_snd_data_in   : noc_flit_type;
   signal coherent_dma_snd_full      : std_ulogic;
+  signal coherent_dma_snd_atleast_4slots : std_ulogic;
+  signal coherent_dma_snd_exactly_3slots : std_ulogic;
   -- These requests are delivered through NoC5 (32 bits always)
   -- however, the proxy that handles expects a flit size in
   -- accordance with ARCH_BITS. Hence we need to pad and move
@@ -266,6 +268,7 @@ begin
   -- FROM NoC
   no_cache_coherence : if CFG_LLC_ENABLE = 0 generate
 
+    -- Hendle CPU coherent requests and accelerator non-coherent DMA
     mem_noc2ahbm_1 : mem_noc2ahbm
       generic map (
         tech        => CFG_FABTECH,
@@ -274,6 +277,7 @@ begin
         local_x     => this_local_x,
         axitran     => GLOB_CPU_AXI,
         little_end  => GLOB_CPU_AXI,
+        eth_dma     => 0,
         cacheline   => CFG_DLINE,
         l2_cache_en => CFG_L2_ENABLE)
       port map (
@@ -301,9 +305,6 @@ begin
 
     -- No LLC wrapper
     ahbmo(2)                 <= ahbm_none;
-    coherent_dma_rcv_rdreq   <= '0';
-    coherent_dma_snd_wrreq   <= '0';
-    coherent_dma_snd_data_in <= (others => '0');
 
     mon_cache             <= monitor_cache_none;
 
@@ -311,10 +312,48 @@ begin
     apb_snd_data_in <= (others => '0');
     apb_rcv_rdreq   <= '0';
 
+
+    -- Handle JTAG or EDCL requests to memory as well as ETH DMA
+    mem_noc2ahbm_2 : mem_noc2ahbm
+      generic map (
+        tech        => CFG_FABTECH,
+        hindex      => 1,
+        local_y     => this_local_y,
+        local_x     => this_local_x,
+        axitran     => 0,
+        little_end  => 0,
+        eth_dma     => 1,               -- Exception for fixed 32-bits DMA
+        cacheline   => 1,
+        l2_cache_en => 0)
+      port map (
+        rst                       => rst,
+        clk                       => clk,
+        ahbmi                     => ahbmi,
+        ahbmo                     => ahbmo(1),
+        coherence_req_rdreq       => remote_ahbm_rcv_rdreq,
+        coherence_req_data_out    => remote_ahbm_rcv_data_out,
+        coherence_req_empty       => remote_ahbm_rcv_empty,
+        coherence_fwd_wrreq       => open,
+        coherence_fwd_data_in     => open,
+        coherence_fwd_full        => '0',
+        coherence_rsp_snd_wrreq   => remote_ahbm_snd_wrreq,
+        coherence_rsp_snd_data_in => remote_ahbm_snd_data_in,
+        coherence_rsp_snd_full    => remote_ahbm_snd_full,
+        -- These requests are treated as non-coherent when no LLC is present!
+        dma_rcv_rdreq             => coherent_dma_rcv_rdreq,
+        dma_rcv_data_out          => coherent_dma_rcv_data_out,
+        dma_rcv_empty             => coherent_dma_rcv_empty,
+        dma_snd_wrreq             => coherent_dma_snd_wrreq,
+        dma_snd_data_in           => coherent_dma_snd_data_in,
+        dma_snd_full              => coherent_dma_snd_full,
+        dma_snd_atleast_4slots    => coherent_dma_snd_atleast_4slots,
+        dma_snd_exactly_3slots    => coherent_dma_snd_exactly_3slots);
+
   end generate no_cache_coherence;
 
   with_cache_coherence : if CFG_LLC_ENABLE /= 0 generate
 
+    -- Handle accelerators non-coherent DMA
     mem_noc2ahbm_1 : mem_noc2ahbm
       generic map (
         tech        => CFG_FABTECH,
@@ -323,6 +362,7 @@ begin
         local_x     => this_local_x,
         axitran     => GLOB_CPU_AXI,
         little_end  => GLOB_CPU_AXI,
+        eth_dma     => 0,
         cacheline   => CFG_DLINE,
         l2_cache_en => CFG_L2_ENABLE)
       port map (
@@ -348,6 +388,7 @@ begin
         dma_snd_atleast_4slots    => dma_snd_atleast_4slots,
         dma_snd_exactly_3slots    => dma_snd_exactly_3slots);
 
+    -- Handle CPU coherent requests and accelerators coherent DMA
     llc_rstn <= not srst and rst;
 
     llc_wrapper_1 : llc_wrapper
@@ -429,41 +470,42 @@ begin
         apb_rcv_data_out => apb_rcv_data_out,
         apb_rcv_empty    => apb_rcv_empty);
 
-  end generate with_cache_coherence;
+    -- Handle JTAG or EDCL requests to memory
+    mem_noc2ahbm_2 : mem_noc2ahbm
+      generic map (
+        tech        => CFG_FABTECH,
+        hindex      => 1,
+        local_y     => this_local_y,
+        local_x     => this_local_x,
+        axitran     => 0,
+        little_end  => 0,
+        eth_dma     => 0,
+        cacheline   => 1,
+        l2_cache_en => 0)
+      port map (
+        rst                       => rst,
+        clk                       => clk,
+        ahbmi                     => ahbmi,
+        ahbmo                     => ahbmo(1),
+        coherence_req_rdreq       => remote_ahbm_rcv_rdreq,
+        coherence_req_data_out    => remote_ahbm_rcv_data_out,
+        coherence_req_empty       => remote_ahbm_rcv_empty,
+        coherence_fwd_wrreq       => open,
+        coherence_fwd_data_in     => open,
+        coherence_fwd_full        => '0',
+        coherence_rsp_snd_wrreq   => remote_ahbm_snd_wrreq,
+        coherence_rsp_snd_data_in => remote_ahbm_snd_data_in,
+        coherence_rsp_snd_full    => remote_ahbm_snd_full,
+        dma_rcv_rdreq             => open,
+        dma_rcv_data_out          => (others => '0'),
+        dma_rcv_empty             => '1',
+        dma_snd_wrreq             => open,
+        dma_snd_data_in           => open,
+        dma_snd_full              => '0',
+        dma_snd_atleast_4slots    => '1',
+        dma_snd_exactly_3slots    => '0');
 
-  -- FROM JTAG to DDR1
-  mem_noc2ahbm_2 : mem_noc2ahbm
-    generic map (
-      tech        => CFG_FABTECH,
-      hindex      => 1,
-      local_y     => this_local_y,
-      local_x     => this_local_x,
-      axitran     => 0,
-      little_end  => 0,
-      cacheline   => 1,
-      l2_cache_en => 0)
-    port map (
-      rst                       => rst,
-      clk                       => clk,
-      ahbmi                     => ahbmi,
-      ahbmo                     => ahbmo(1),
-      coherence_req_rdreq       => remote_ahbm_rcv_rdreq,
-      coherence_req_data_out    => remote_ahbm_rcv_data_out,
-      coherence_req_empty       => remote_ahbm_rcv_empty,
-      coherence_fwd_wrreq       => open,
-      coherence_fwd_data_in     => open,
-      coherence_fwd_full        => '0',
-      coherence_rsp_snd_wrreq   => remote_ahbm_snd_wrreq,
-      coherence_rsp_snd_data_in => remote_ahbm_snd_data_in,
-      coherence_rsp_snd_full    => remote_ahbm_snd_full,
-      dma_rcv_rdreq             => open,
-      dma_rcv_data_out          => (others => '0'),
-      dma_rcv_empty             => '1',
-      dma_snd_wrreq             => open,
-      dma_snd_data_in           => open,
-      dma_snd_full              => '0',
-      dma_snd_atleast_4slots    => '1',
-      dma_snd_exactly_3slots    => '0');
+  end generate with_cache_coherence;
 
   remote_ahbs_rcv_rdreq <= remote_ahbm_rcv_rdreq;
   remote_ahbm_rcv_empty <= remote_ahbs_rcv_empty;
@@ -509,6 +551,8 @@ begin
       coherent_dma_snd_wrreq     => coherent_dma_snd_wrreq,
       coherent_dma_snd_data_in   => coherent_dma_snd_data_in,
       coherent_dma_snd_full      => coherent_dma_snd_full,
+      coherent_dma_snd_atleast_4slots => coherent_dma_snd_atleast_4slots,
+      coherent_dma_snd_exactly_3slots => coherent_dma_snd_exactly_3slots,
       dma_snd_wrreq              => dma_snd_wrreq,
       dma_snd_data_in            => dma_snd_data_in,
       dma_snd_full               => dma_snd_full,

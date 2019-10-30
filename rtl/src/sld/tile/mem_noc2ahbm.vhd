@@ -31,6 +31,7 @@ entity mem_noc2ahbm is
     local_x     : local_yx;
     axitran     : integer range 0 to 1 := 0;
     little_end  : integer range 0 to 1 := 0;
+    eth_dma     : integer range 0 to 1 := 0;
     cacheline   : integer;
     l2_cache_en : integer);
   port (
@@ -70,6 +71,9 @@ architecture rtl of mem_noc2ahbm is
     0      => ahb_device_reg (VENDOR_SLD, SLD_MST_PROXY, 0, 0, 0),
     others => zero32);
 
+  -- Default address increment
+  constant default_incr : std_logic_vector(GLOB_PHYS_ADDR_BITS - 1 downto 0) := conv_std_logic_vector(GLOB_ADDR_INCR, GLOB_PHYS_ADDR_BITS);
+
   function target_word_hsize
     return std_logic_vector is
   begin
@@ -94,6 +98,27 @@ architecture rtl of mem_noc2ahbm is
     return be;
   end fix_endian;
 
+  function target_dma_incr
+    return std_logic_vector is
+  begin
+    if eth_dma = 0 then
+      return default_incr;
+    else
+      return conv_std_logic_vector(4, GLOB_PHYS_ADDR_BITS);
+    end if;
+  end target_dma_incr;
+
+  function target_dma_word_hsize
+    return std_logic_vector is
+  begin
+    if eth_dma = 0 then
+      return target_word_hsize;
+    else
+      return HSIZE_WORD;
+    end if;
+  end target_dma_word_hsize;
+
+
   -- If length is not received, then use fix length of cacheline words.
   -- The accelerators and masters on AXI will always provide a length.
   -- Protection info is in the reserved field of the header
@@ -116,9 +141,6 @@ architecture rtl of mem_noc2ahbm is
   -- DMA_TO_DEV
   signal dma_header        : noc_flit_type;
   signal sample_dma_header : std_ulogic;
-
-  -- Default address increment
-  constant default_incr : std_logic_vector(GLOB_PHYS_ADDR_BITS - 1 downto 0) := conv_std_logic_vector(GLOB_ADDR_INCR, GLOB_PHYS_ADDR_BITS);
 
   -- common
   type reg_type is record
@@ -216,17 +238,24 @@ begin  -- rtl
   -- Create packet for DMA response message
   -----------------------------------------------------------------------------
   make_dma_packet : process (dma_rcv_data_out)
-    variable msg_type           : noc_msg_type;
+    variable msg_type_req       : noc_msg_type;
+    variable msg_type_rsp       : noc_msg_type;
     variable header_v           : noc_flit_type;
     variable reserved           : reserved_field_type;
     variable origin_y, origin_x : local_yx;
   begin  -- process make_packet
-    msg_type   := DMA_TO_DEV;
+    msg_type_req := get_msg_type(NOC_FLIT_SIZE, dma_rcv_data_out);
+    if msg_type_req = REQ_DMA_READ then
+      msg_type_rsp := RSP_DATA_DMA;
+    else
+      msg_type_rsp := DMA_TO_DEV;
+    end if;
+
     reserved   := (others => '0');
     header_v   := (others => '0');
     origin_y   := get_origin_y(NOC_FLIT_SIZE, dma_rcv_data_out);
     origin_x   := get_origin_x(NOC_FLIT_SIZE, dma_rcv_data_out);
-    header_v   := create_header(NOC_FLIT_SIZE, local_y, local_x, origin_y, origin_x, msg_type, reserved);
+    header_v   := create_header(NOC_FLIT_SIZE, local_y, local_x, origin_y, origin_x, msg_type_rsp, reserved);
     dma_header <= header_v;
   end process make_dma_packet;
 
@@ -377,7 +406,7 @@ begin  -- rtl
         if dma_rcv_empty = '0' then
           dma_rcv_rdreq <= '1';
           v.addr        := dma_rcv_data_out(GLOB_PHYS_ADDR_BITS - 1 downto 0);
-          if r.msg = DMA_TO_DEV then
+          if r.msg = DMA_TO_DEV or r.msg = REQ_DMA_READ then
             v.state := dma_receive_rdlength;
           else
             -- Writes don't need size. Stop when tail appears.
@@ -440,7 +469,7 @@ begin  -- rtl
         end if;
 
       when dma_rd_request =>
-        v.hsize := target_word_hsize;
+        v.hsize := target_dma_word_hsize;
         if dma_snd_atleast_4slots = '1' then
           if ((r.count = 1) and (v.grant = '1')
               and (v.ready = '1')) then
@@ -479,8 +508,10 @@ begin  -- rtl
             coherence_rsp_snd_wrreq   <= '1';
             -- Updated address and control bus
             if r.hsize = HSIZE_WORD then
+              -- EDCL always requests 32-bits bursts
               v.addr := r.addr + 4;
             else
+              -- Processors will only request bursts for hsize euqual to data width
               v.addr := r.addr + default_incr;
             end if;
             v.count                   := r.count - 1;
@@ -528,8 +559,9 @@ begin  -- rtl
           -- Send header
           dma_snd_data_in <= header_reg;
           dma_snd_wrreq   <= '1';
-          -- Updated address and control bus
-          v.addr          := r.addr + default_incr;
+          -- Accelerators work with data widht equal to the selected processor,
+          -- however, non-coherent Ethernet DMA makes 32-bits bursts
+          v.addr          := r.addr + target_dma_incr;
           v.count         := r.count - 1;
           if r.count = 1 then
             v.hbusreq := '0';
@@ -549,6 +581,7 @@ begin  -- rtl
           coherence_rsp_snd_data_in(GLOB_PHYS_ADDR_BITS - 1 downto 0) <= r.addr;
           coherence_rsp_snd_wrreq   <= '1';
           v.count                   := r.count - 1;
+          -- L2 cache alwasy uses hsize equal to data widht. So use deafult incr
           v.addr                    := r.addr + default_incr;
           v.state                   := send_data;
           v.htrans                  := HTRANS_SEQ;
@@ -564,8 +597,10 @@ begin  -- rtl
             coherence_rsp_snd_data_in <= PREAMBLE_BODY & fix_endian(ahbmi.hrdata);
             -- Update address and control bus
             if r.hsize = HSIZE_WORD then
+              -- EDCL burst
               v.addr := r.addr + 4;
             else
+              -- Processor burst
               v.addr := r.addr + default_incr;
             end if;
             v.count                   := r.count - 1;
@@ -589,8 +624,9 @@ begin  -- rtl
           -- Send data to noc
           dma_snd_wrreq   <= '1';
           dma_snd_data_in <= PREAMBLE_BODY & fix_endian(ahbmi.hrdata);
-          -- Update address and control bus
-          v.addr          := r.addr + default_incr;
+          -- Accelerators work with data widht equal to the selected processor,
+          -- however, non-coherent Ethernet DMA makes 32-bits bursts
+          v.addr          := r.addr + target_dma_incr;
           v.count         := r.count - 1;
           if r.count = 2 then
             v.hbusreq := '0';
@@ -627,7 +663,7 @@ begin  -- rtl
           v.htrans := HTRANS_SEQ;
         end if;
         if (r.htrans = HTRANS_SEQ and v.ready = '1') then
-          v.addr  := r.addr + default_incr;
+          v.addr  := r.addr + target_dma_incr;
           v.state := dma_send_data;
         end if;
 
@@ -678,7 +714,7 @@ begin  -- rtl
         end if;
 
       when dma_wr_request =>
-        v.hsize := target_word_hsize;
+        v.hsize := target_dma_word_hsize;
         if dma_rcv_empty = '0' then
           if ((dma_preamble = PREAMBLE_TAIL) and
               (v.grant = '1') and (v.ready = '1')) then
@@ -744,8 +780,8 @@ begin  -- rtl
         if (v.ready = '1') then
           -- Write data to memory
           v.hwdata := r.flit(ARCH_BITS - 1 downto 0);
-          -- Upda`te address and control
-          v.addr   := r.addr + default_incr;
+          -- Update address and control
+          v.addr   := r.addr + target_dma_incr;
           if dma_rcv_empty = '1' then
             v.htrans := HTRANS_BUSY;
             v.state  := dma_write_busy;
