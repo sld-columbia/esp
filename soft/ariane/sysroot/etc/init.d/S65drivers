@@ -36,7 +36,7 @@
 
 # Adjust below if necessary
 cd /opt/drivers-esp
-insmod contig_alloc.ko start=0xA0000000,0xB0000000 size=0x10000000,0x10000000 chunk_log=20
+insmod contig_alloc.ko start=0xA0100000,0xB0000000 size=0xff00000,0x10000000 chunk_log=20
 insmod esp_cache.ko
 insmod esp_private_cache.ko
 insmod esp.ko
