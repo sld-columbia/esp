@@ -6,7 +6,6 @@
 umask 077
 
 start() {
-	ifconfig eth0 hw ether 00:18:3E:02:E3:7F
 	chown root:root /etc/ssh/ssh_host_*
 	chmod 600 /etc/ssh/ssh_host_*key
 }
@@ -32,6 +31,8 @@ case "$1" in
 	echo "Usage: $0 {start|stop|restart}"
 	exit 1
 esac
+
+ifup eth0
 
 exit $?
 
