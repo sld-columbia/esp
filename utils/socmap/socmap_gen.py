@@ -1442,7 +1442,7 @@ def print_ariane_devtree(fp, esp_config):
   fp.write("      riscv,max-priority = <7>;\n")
   fp.write("      riscv,ndev = <" + str(irq_srcs) + ">;\n")
   fp.write("    };\n")
-  # TODO add GPTIMER/Accelerators/Caches/SVGA/Ethernet/DVFS to devtree (and remove leon3 IRQ from socmap
+  # TODO add GPTIMER/Accelerators/Caches/SVGA/DVFS to devtree (and remove leon3 IRQ from socmap
   fp.write("    uart@" + format(AHB2APB_HADDR[esp_config.cpu_arch], '03X') + "00100 {\n")
   fp.write("      compatible = \"gaisler,apbuart\";\n")
   fp.write("      reg = <0x0 0x" + format(AHB2APB_HADDR[esp_config.cpu_arch], '03X') + "00100 0x0 0x100>;\n")
@@ -1452,6 +1452,29 @@ def print_ariane_devtree(fp, esp_config):
   fp.write("      reg-shift = <2>; // regs are spaced on 32 bit boundary\n")
   fp.write("      reg-io-width = <4>; // only 32-bit access are supported\n")
   fp.write("    };\n")
+  fp.write("    eth: greth@" + format(AHB2APB_HADDR[esp_config.cpu_arch], '03X') + "80000 {\n")
+  fp.write("      #address-cells = <1>;\n")
+  fp.write("      #size-cells = <1>;\n")
+  fp.write("      compatible = \"gaisler,ethmac\";\n")
+  fp.write("      device_type = \"network\";\n")
+  fp.write("      interrupt-parent = <&PLIC0>;\n")
+  fp.write("      interrupts = <2 0>;\n")
+  # TODO Generate random mac address
+  fp.write("      local-mac-address = [00 20 3e 02 e3 77];\n")
+  fp.write("      reg = <0x0 0x" + format(AHB2APB_HADDR[esp_config.cpu_arch], '03X') + "80000 0x0 0x10000>;\n")
+  fp.write("      phy-handle = <&phy0>;\n")
+  fp.write("      phy-connection-type = \"sgmii\";\n")
+  fp.write("\n")
+  fp.write("      phy0: mdio@60001000 {\n")
+  fp.write("            #address-cells = <1>;\n")
+  fp.write("            #size-cells = <0>;\n")
+  fp.write("            compatible = \"gaisler,sgmii\";\n")
+  fp.write("            reg = <0x0 0x" + format(AHB2APB_HADDR[esp_config.cpu_arch], '03X') + "01000 0x0 0x1000>;\n")
+  fp.write("            interrupt-parent = <&PLIC0>;\n")
+  fp.write("            interrupts = <3 0>;\n")
+  fp.write("      };\n")
+  fp.write("    };\n")
+
   for i in range(esp_config.nacc):
     acc = esp_config.accelerators[i]
     if acc.vendor == "sld":
