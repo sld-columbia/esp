@@ -392,7 +392,7 @@ begin
 ---  ETHERNET ---------------------------------------------------------
 -----------------------------------------------------------------------
 
-  eth0 : if CFG_GRETH = 1 generate -- Gaisler ethernet MAC
+  eth0 : if SIMULATION = false and CFG_GRETH = 1 generate -- Gaisler ethernet MAC
     e1 : grethm
       generic map(
         hindex => CFG_AHB_JTAG,
@@ -478,7 +478,7 @@ begin
 
   end generate;
 
-  no_eth0 : if CFG_GRETH = 0 generate
+  no_eth0 : if SIMULATION = true or CFG_GRETH = 0 generate
     eth0_apbo <= apb_none;
     sgmii0_apbo <= apb_none;
     eth0_ahbmo <= ahbm_none;
