@@ -194,7 +194,9 @@ if [ $(noyes "Skip ${src}") == "n" ]; then
 
     cd $src
     if [ $ovwrt == "y" ]; then
-	./configure --prefix=${TOOLS}/usr --target=sparc-leon3-linux --with-sysroot=${TOOLS} --disable-nls --disable-multilib --with-cpu=v8
+	CFLAGS="-Wimplicit-fallthrough=0  -Wno-unused-value -Wno-shift-negative-value -Wno-pointer-compare" \
+	      CXXFLAGS="-Wimplicit-fallthrough=0 -Wno-unused-value -Wno-shift-negative-value -Wno-pointer-compare" \
+	      ./configure --prefix=${TOOLS}/usr --target=sparc-leon3-linux --with-sysroot=${TOOLS} --disable-nls --disable-multilib --with-cpu=v8
     fi
 
     make -j ${NTHREADS}
