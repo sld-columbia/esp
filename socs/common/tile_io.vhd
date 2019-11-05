@@ -32,6 +32,7 @@ use work.coretypes.all;
 use work.grlib_config.all;
 use work.socmap.all;
 use work.memoryctrl.all;
+use work.ariane_esp_pkg.all;
 
 entity tile_io is
   generic (
@@ -56,9 +57,7 @@ entity tile_io is
     uart_ctsn          : in  std_ulogic;
     uart_rtsn          : out std_ulogic;
     --TODO: REMOVE THIS and use NoC proxies
-    uart_irq           : out std_ulogic;
-    eth0_irq           : out std_ulogic;
-    sgmii0_irq         : out std_ulogic;
+    irq                : out std_logic_vector(CFG_NCPU_TILE * 2 - 1 downto 0);
     -- NOC
     noc1_input_port    : out noc_flit_type;
     noc1_data_void_in  : out std_ulogic;
@@ -127,6 +126,9 @@ architecture rtl of tile_io is
   signal irqo               : irq_out_vector(0 to CFG_NCPU_TILE-1);
   signal irqi_fifo_overflow : std_logic;
   signal noc_pirq           : std_logic_vector(NAHBIRQ-1 downto 0);  -- interrupt result bus from noc
+  signal plic_pready        : std_ulogic;  -- PLIC APB3
+  signal plic_pslverr       : std_ulogic;  -- PLIC APB3
+  signal irq_sources        : std_logic_vector(29 downto 0);  -- PLIC0 interrupt lines
 
   -- UART
   signal u1i : uart_in_type;
@@ -229,6 +231,7 @@ architecture rtl of tile_io is
   signal apb_req, apb_ack : std_ulogic;
   signal local_apb_ack    : std_ulogic;
   signal remote_apb_ack   : std_ulogic;
+  signal pready           : std_ulogic;
 
   -- Tile parameters
   constant this_local_y           : local_yx                           := tile_y(io_tile_id);
@@ -239,7 +242,8 @@ architecture rtl of tile_io is
   constant this_local_ahb_en      : std_logic_vector(0 to NAHBSLV - 1) := local_ahb_mask(io_tile_id);
   constant this_remote_ahb_slv_en : std_logic_vector(0 to NAHBSLV - 1) := remote_ahb_mask(io_tile_id);
 
-  -- attribute mark_debug : string;
+  attribute mark_debug : string;
+  attribute keep : string;
 
   -- attribute mark_debug of ahbsi                 : signal is "true";
   -- attribute mark_debug of ctrl_ahbso            : signal is "true";
@@ -260,8 +264,35 @@ architecture rtl of tile_io is
   -- attribute mark_debug of remote_ahbs_snd_data_in   : signal is"true";
   -- attribute mark_debug of remote_ahbs_snd_full      : signal is"true";
 
-begin
+  attribute keep of noc_apbi_wirq : signal is "true";
+  attribute keep of noc_apbo : signal is "true";
+  attribute keep of apb_snd_wrreq : signal is "true";
+  attribute keep of apb_snd_data_in : signal is "true";
+  attribute keep of apb_snd_full: signal is "true";
+  attribute keep of apb_rcv_rdreq : signal is "true";
+  attribute keep of apb_rcv_data_out : signal is "true";
+  attribute keep of apb_rcv_empty : signal is "true";
+  attribute keep of pready : signal is "true";
+  attribute keep of plic_pready : signal is "true";
+  attribute keep of plic_pslverr : signal is "true";
+  attribute keep of irq_sources : signal is "true";
+  attribute keep of irq : signal is "true";
 
+  attribute mark_debug of noc_apbi_wirq : signal is "true";
+  attribute mark_debug of noc_apbo : signal is "true";
+  attribute mark_debug of apb_snd_wrreq : signal is "true";
+  attribute mark_debug of apb_snd_data_in : signal is "true";
+  attribute mark_debug of apb_snd_full: signal is "true";
+  attribute mark_debug of apb_rcv_rdreq : signal is "true";
+  attribute mark_debug of apb_rcv_data_out : signal is "true";
+  attribute mark_debug of apb_rcv_empty : signal is "true";
+  attribute mark_debug of pready : signal is "true";
+  attribute mark_debug of plic_pready : signal is "true";
+  attribute mark_debug of plic_pslverr : signal is "true";
+  attribute mark_debug of irq_sources : signal is "true";
+  attribute mark_debug of irq : signal is "true";
+
+begin
 
   -----------------------------------------------------------------------------
   -- Bus
@@ -359,10 +390,6 @@ begin
     noc_apbo(15) <= apb_none;
   end generate no_sgmii_gen;
 
-  -- TODO: Remove
-  eth0_irq <= noc_apbo(14).pirq(12);
-  sgmii0_irq <= noc_apbo(15).pirq(11);
-
   -----------------------------------------------------------------------------
   -- Memory Controller Slave (BOOTROM is implemented as RAM for development)
   -----------------------------------------------------------------------------
@@ -423,8 +450,6 @@ begin
     u1i.extclk <= '0';
   end generate;
 
-  uart_irq <= noc_apbo(1).pirq(CFG_UART1_IRQ);
-
   noua0 : if CFG_UART1_ENABLE = 0 generate
     noc_apbo(1) <= apb_none;
   end generate;
@@ -440,33 +465,70 @@ begin
     noc_apbi_wirq.pirq <= noc_apbi.pirq or noc_pirq;
   end process apb_assignments;
 
-  irqctrl : if CFG_IRQ3_ENABLE /= 0 generate
-    irqctrl0 : irqmp                    -- interrupt controller
-      generic map (pindex => 2, paddr => 2, ncpu => CFG_NCPU_TILE)
-      port map (rst, clk, noc_apbi_wirq, noc_apbo(2), irqo, irqi);
+  leon3_irqmp_gen: if GLOB_CPU_ARCH = leon3 generate
+
+    irqctrl : if CFG_IRQ3_ENABLE /= 0 generate
+      irqctrl0 : irqmp                    -- interrupt controller
+        generic map (pindex => 2, paddr => 2, ncpu => CFG_NCPU_TILE)
+        port map (rst, clk, noc_apbi_wirq, noc_apbo(2), irqo, irqi);
+    end generate;
+
+    irq3 : if CFG_IRQ3_ENABLE = 0 generate
+      x : for i in 0 to CFG_NCPU_TILE-1 generate
+        irqi(i).irl <= (others => '0');
+      end generate;
+      noc_apbo(2) <= apb_none;
+    end generate;
+
   end generate;
 
-  irq3 : if CFG_IRQ3_ENABLE = 0 generate
+  irq_sources <= noc_apbi_wirq.pirq(29 downto 0);
+  riscv_plic_gen: if GLOB_CPU_ARCH = ariane generate
+
     x : for i in 0 to CFG_NCPU_TILE-1 generate
       irqi(i).irl <= (others => '0');
     end generate;
-    noc_apbo(2) <= apb_none;
+
+    riscv_plic0 : riscv_plic_apb_wrap
+      generic map (
+        pindex    => 2,
+        pconfig   => irqmp_pconfig,
+        NHARTS    => CFG_NCPU_TILE,
+        NIRQ_SRCS => 30)
+      port map (
+        clk         => clk,
+        rstn        => rst,
+        irq_sources => irq_sources,
+        irq         => irq,
+        apbi        => noc_apbi_wirq,
+        apbo        => noc_apbo(2),
+        pready      => plic_pready,
+        pslverr     => plic_pslverr);
+
   end generate;
 
   ----------------------------------------------------------------------
   ---  APB 3: Timer ----------------------------------------------------
   ----------------------------------------------------------------------
 
-  gpt : if CFG_GPT_ENABLE /= 0 generate
-    timer0 : gptimer                    -- timer unit
-      generic map (pindex => 3, paddr => 3, pirq => CFG_GPT_IRQ,
-                   sepirq => CFG_GPT_SEPIRQ, sbits => CFG_GPT_SW, ntimers => CFG_GPT_NTIM,
-                   nbits  => CFG_GPT_TW, wdog => CFG_GPT_WDOGEN*CFG_GPT_WDOG)
-      port map (rst, clk, noc_apbi, noc_apbo(3), gpti, gpto);
-    gpti.dhalt <= '0'; gpti.extclk <= '0';
+  leon3_gpt_gen: if GLOB_CPU_ARCH = leon3 generate
+
+    leon3_gpt : if CFG_GPT_ENABLE /= 0 generate
+      timer0 : gptimer                    -- timer unit
+        generic map (pindex => 3, paddr => 3, pirq => CFG_GPT_IRQ,
+                     sepirq => CFG_GPT_SEPIRQ, sbits => CFG_GPT_SW, ntimers => CFG_GPT_NTIM,
+                     nbits  => CFG_GPT_TW, wdog => CFG_GPT_WDOGEN*CFG_GPT_WDOG)
+        port map (rst, clk, noc_apbi, noc_apbo(3), gpti, gpto);
+      gpti.dhalt <= '0'; gpti.extclk <= '0';
+    end generate;
+
+    leon3_nogpt : if CFG_GPT_ENABLE = 0 generate
+      noc_apbo(3) <= apb_none;
+    end generate;
+
   end generate;
 
-  nogpt : if CFG_GPT_ENABLE = 0 generate
+  ariane_nogpt : if GLOB_CPU_ARCH = ariane generate
     noc_apbo(3) <= apb_none;
   end generate;
 
@@ -670,6 +732,18 @@ begin
   apb_ack <= local_apb_ack or remote_apb_ack;
 
 
+  -- Connect pready for APB3 devices
+  pready_gen: process (plic_pready, noc_apbi) is
+  begin  -- process pready_gen
+
+    pready <= '1';
+
+    if noc_apbi.psel(2) = '1' then
+      pready <= plic_pready;
+    end if;
+
+  end process pready_gen;
+
   misc_noc2apb_1 : misc_noc2apb
     generic map (
       tech         => CFG_FABTECH,
@@ -681,6 +755,7 @@ begin
       clk              => clk,
       apbi             => noc_apbi,
       apbo             => noc_apbo,
+      pready           => pready,
       dvfs_transient   => '0',
       apb_snd_wrreq    => apb_snd_wrreq,
       apb_snd_data_in  => apb_snd_data_in,

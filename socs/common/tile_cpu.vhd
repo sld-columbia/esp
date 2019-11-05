@@ -45,9 +45,7 @@ entity tile_cpu is
     pllclk             : out std_ulogic;
     cpuerr             : out std_ulogic;
     -- TODO: remove this; should use proxy
-    uart_irq           : in  std_ulogic;
-    eth0_irq           : in  std_ulogic;
-    sgmii0_irq         : in  std_ulogic;
+    irq                : in  std_logic_vector(1 downto 0);
     -- NOC
     noc1_input_port    : out noc_flit_type;
     noc1_data_void_in  : out std_ulogic;
@@ -120,8 +118,6 @@ architecture rtl of tile_cpu is
   -- Interrupt controller
   signal irqi : l3_irq_in_type;
   signal irqo : l3_irq_out_type;
--- TODO: remove the following and replace w/ ariane-specific irqi irqo
-  signal irq_sources : std_logic_vector(29 downto 0);
 
   -- Queues
   signal coherence_req_wrreq        : std_ulogic;
@@ -200,6 +196,31 @@ architecture rtl of tile_cpu is
   constant this_extra_clk_buf     : integer                            := extra_clk_buf(tile_id);
   constant this_local_y           : local_yx                           := tile_y(tile_id);
   constant this_local_x           : local_yx                           := tile_x(tile_id);
+
+  -- attribute keep : string;
+  -- attribute mark_debug : string;
+
+  -- attribute keep of apbi : signal is "true";
+  -- attribute keep of apbo : signal is "true";
+  -- attribute keep of apb_req : signal is "true";
+  -- attribute keep of apb_ack : signal is "true";
+  -- attribute keep of remote_apb_snd_wrreq : signal is "true";
+  -- attribute keep of remote_apb_snd_data_in : signal is "true";
+  -- attribute keep of remote_apb_snd_full : signal is "true";
+  -- attribute keep of remote_apb_rcv_rdreq : signal is "true";
+  -- attribute keep of remote_apb_rcv_data_out : signal is "true";
+  -- attribute keep of remote_apb_rcv_empty : signal is "true";
+
+  -- attribute mark_debug of apbi : signal is "true";
+  -- attribute mark_debug of apbo : signal is "true";
+  -- attribute mark_debug of apb_req : signal is "true";
+  -- attribute mark_debug of apb_ack : signal is "true";
+  -- attribute mark_debug of remote_apb_snd_wrreq : signal is "true";
+  -- attribute mark_debug of remote_apb_snd_data_in : signal is "true";
+  -- attribute mark_debug of remote_apb_snd_full : signal is "true";
+  -- attribute mark_debug of remote_apb_rcv_rdreq : signal is "true";
+  -- attribute mark_debug of remote_apb_rcv_data_out : signal is "true";
+  -- attribute mark_debug of remote_apb_rcv_empty : signal is "true";
 
 begin
 
@@ -404,23 +425,20 @@ begin
       generic map (
         HART_ID          => this_cpu_id_lv,
         NMST             => 2,
-        NSLV             => 5,
-        NIRQ_SRCS        => 30,
+        NSLV             => 4,
         ROMBase          => X"0000_0000_0001_0000",
         ROMLength        => X"0000_0000_0001_0000",
         APBBase          => X"0000_0000" & conv_std_logic_vector(CFG_APBADDR, 12) & X"0_0000",
         APBLength        => X"0000_0000_1000_0000",
         CLINTBase        => X"0000_0000_0200_0000",
         CLINTLength      => X"0000_0000_000C_0000",
-        PLICBase         => X"0000_0000_0C00_0000",
-        PLICLength       => X"0000_0000_03FF_FFFF",
         DRAMBase         => X"0000_0000" & conv_std_logic_vector(ddr_haddr(0), 12) & X"0_0000",
         DRAMLength       => X"0000_0000_6000_0000",
         DRAMCachedLength => X"0000_0000_2000_0000")  -- TODO: length set automatically to match devtree
       port map (
         clk         => clk_feedthru,
         rstn        => cpurstn,
-        irq_sources => irq_sources,
+        irq         => irq,
         romi        => mosi(0),
         romo        => somi(0),
         drami       => mosi(1),
@@ -429,11 +447,6 @@ begin
         apbo        => apbo,
         apb_req     => apb_req,
         apb_ack     => apb_ack);
-
-    irq_sources(0) <= uart_irq;
-    irq_sources(1) <= eth0_irq;
-    irq_sources(2) <= sgmii0_irq;
-    irq_sources(29 downto 3) <= (others => '0');
 
     -- TODO: find a way to flag end of program from Ariane as well.
     cpuerr <= '0';
@@ -713,6 +726,7 @@ begin
       clk              => clk_feedthru,
       apbi             => noc_apbi,
       apbo             => noc_apbo,
+      pready           => '1',
       dvfs_transient   => '0',
       apb_snd_wrreq    => apb_snd_wrreq,
       apb_snd_data_in  => apb_snd_data_in,

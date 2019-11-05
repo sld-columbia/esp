@@ -5,8 +5,7 @@ module ariane_wrap
   # (
      parameter logic [63:0] HART_ID = '0,
      parameter NMST = 2,
-     parameter NSLV = 5,
-     parameter NIRQ_SRCS = 30,
+     parameter NSLV = 4,
      parameter AXI_ID_WIDTH = ariane_soc::IdWidth,
      parameter AXI_ID_WIDTH_SLV = ariane_soc::IdWidthSlave + $clog2(NMST),
      parameter AXI_ADDR_WIDTH = 64,
@@ -22,10 +21,7 @@ module ariane_wrap
      // Slave 2 (TODO: move to I/O tile)
      parameter logic [63:0] CLINTBase           = 64'h0000_0000_0200_0000,
      parameter logic [63:0] CLINTLength         = 64'h0000_0000_000C_0000,
-     // Slave 3 (TODO: move to I/O tile)
-     parameter logic [63:0] PLICBase            = 64'h0000_0000_0C00_0000,
-     parameter logic [63:0] PLICLength          = 64'h0000_0000_03FF_FFFF,
-     // Slave 4
+     // Slave 3
      parameter logic [63:0] DRAMBase            = 64'h0000_0000_8000_0000,
      parameter logic [63:0] DRAMLength          = 64'h0000_0000_2000_0000,
      parameter logic [63:0] DRAMCachedLength    = 64'h0000_0000_2000_0000
@@ -33,9 +29,8 @@ module ariane_wrap
    (
     input logic 			clk,
     input logic 			rstn,
-    // TODO: move this to I/O tile
-    input logic [NIRQ_SRCS-1:0] 	irq_sources,
-    // TODO: add more AXI outputs for CLINT; use APB for PLIC
+    input logic [1:0] 			irq,
+    // TODO: add more AXI outputs for CLINT
     // -- ROM
     //    AW
     output logic [AXI_ID_WIDTH_SLV-1:0] rom_aw_id,
@@ -172,9 +167,6 @@ module ariane_wrap
     DmBaseAddress:          64'd0
   };
 
-  localparam int unsigned MaxPriority = 7;
-
-
    // TODO: move this to I/O tile and socmap CFG_NCPUTILE
    localparam NHARTS = 1;
 
@@ -182,8 +174,7 @@ module ariane_wrap
       ROM      = 0,
       APB      = 1,
       CLINT    = 2,
-      PLIC     = 3,
-      DRAM     = 4
+      DRAM     = 3
    } axi_slaves_t;
 
    AXI_BUS
@@ -231,14 +222,12 @@ module ariane_wrap
 	.master       ( master  ),
 	.start_addr_i ({
 			DRAMBase[AXI_ADDR_WIDTH-1:0],
-			PLICBase[AXI_ADDR_WIDTH-1:0],
 			CLINTBase[AXI_ADDR_WIDTH-1:0],
 			APBBase[AXI_ADDR_WIDTH-1:0],
 			ROMBase[AXI_ADDR_WIDTH-1:0]
 			}),
 	.end_addr_i   ({
 			DRAMBase[AXI_ADDR_WIDTH-1:0]  + DRAMLength[AXI_ADDR_WIDTH-1:0] - 1,
-			PLICBase[AXI_ADDR_WIDTH-1:0]  + PLICLength[AXI_ADDR_WIDTH-1:0] - 1,
 			CLINTBase[AXI_ADDR_WIDTH-1:0] + CLINTLength[AXI_ADDR_WIDTH-1:0] - 1,
 			APBBase[AXI_ADDR_WIDTH-1:0]   + APBLength[AXI_ADDR_WIDTH-1:0] - 1,
 			ROMBase[AXI_ADDR_WIDTH-1:0]   + ROMLength[AXI_ADDR_WIDTH-1:0] - 1
@@ -250,10 +239,8 @@ module ariane_wrap
    // Core
    // ---------------
    // TODO: move to inputs. These come from NoC
-   // input logic [NHARTS-1:0][1:0] irq;
    // input logic [NHARTS-1:0] 	   ipi;
    // input logic [NHARTS-1:0] 	   time_irq;
-   logic [1:0]	irq;
    logic 	ipi;
    logic 	time_irq;
 
@@ -442,136 +429,6 @@ module ariane_wrap
 	);
 
    axi_slave_connect i_axi_slave_connect_clint (.axi_req_o(axi_clint_req), .axi_resp_i(axi_clint_resp), .slave(master[CLINT]));
-
-   // ---------------
-   // PLIC (TODO: move to I/O tile)
-   // ---------------
-
-    REG_BUS #(
-        .ADDR_WIDTH ( 32 ),
-        .DATA_WIDTH ( 32 )
-    ) reg_bus (clk);
-
-    logic         plic_penable;
-    logic         plic_pwrite;
-    logic [31:0]  plic_paddr;
-    logic         plic_psel;
-    logic [31:0]  plic_pwdata;
-    logic [31:0]  plic_prdata;
-    logic         plic_pready;
-    logic         plic_pslverr;
-
-    axi2apb_64_32
-      #(
-        .AXI4_ADDRESS_WIDTH ( AXI_ADDR_WIDTH   ),
-        .AXI4_RDATA_WIDTH   ( AXI_DATA_WIDTH   ),
-        .AXI4_WDATA_WIDTH   ( AXI_DATA_WIDTH   ),
-        .AXI4_ID_WIDTH      ( AXI_ID_WIDTH_SLV ),
-        .AXI4_USER_WIDTH    ( AXI_USER_WIDTH   ),
-        .BUFF_DEPTH_SLAVE   ( 2                ),
-        .APB_ADDR_WIDTH     ( 32               )
-	) i_axi2apb_64_32_plic
-	(
-	 .ACLK      ( clk           ),
-         .ARESETn   ( rstn          ),
-         .test_en_i ( 1'b0           ),
-         .AWID_i    ( master[PLIC].aw_id     ),
-         .AWADDR_i  ( master[PLIC].aw_addr   ),
-         .AWLEN_i   ( master[PLIC].aw_len    ),
-         .AWSIZE_i  ( master[PLIC].aw_size   ),
-         .AWBURST_i ( master[PLIC].aw_burst  ),
-         .AWLOCK_i  ( master[PLIC].aw_lock   ),
-         .AWCACHE_i ( master[PLIC].aw_cache  ),
-         .AWPROT_i  ( master[PLIC].aw_prot   ),
-         .AWREGION_i( master[PLIC].aw_region ),
-         .AWUSER_i  ( master[PLIC].aw_user   ),
-         .AWQOS_i   ( master[PLIC].aw_qos    ),
-         .AWVALID_i ( master[PLIC].aw_valid  ),
-         .AWREADY_o ( master[PLIC].aw_ready  ),
-         .WDATA_i   ( master[PLIC].w_data    ),
-         .WSTRB_i   ( master[PLIC].w_strb    ),
-         .WLAST_i   ( master[PLIC].w_last    ),
-         .WUSER_i   ( master[PLIC].w_user    ),
-         .WVALID_i  ( master[PLIC].w_valid   ),
-         .WREADY_o  ( master[PLIC].w_ready   ),
-         .BID_o     ( master[PLIC].b_id      ),
-         .BRESP_o   ( master[PLIC].b_resp    ),
-         .BVALID_o  ( master[PLIC].b_valid   ),
-         .BUSER_o   ( master[PLIC].b_user    ),
-         .BREADY_i  ( master[PLIC].b_ready   ),
-         .ARID_i    ( master[PLIC].ar_id     ),
-         .ARADDR_i  ( master[PLIC].ar_addr   ),
-         .ARLEN_i   ( master[PLIC].ar_len    ),
-         .ARSIZE_i  ( master[PLIC].ar_size   ),
-         .ARBURST_i ( master[PLIC].ar_burst  ),
-         .ARLOCK_i  ( master[PLIC].ar_lock   ),
-         .ARCACHE_i ( master[PLIC].ar_cache  ),
-         .ARPROT_i  ( master[PLIC].ar_prot   ),
-         .ARREGION_i( master[PLIC].ar_region ),
-         .ARUSER_i  ( master[PLIC].ar_user   ),
-         .ARQOS_i   ( master[PLIC].ar_qos    ),
-         .ARVALID_i ( master[PLIC].ar_valid  ),
-         .ARREADY_o ( master[PLIC].ar_ready  ),
-         .RID_o     ( master[PLIC].r_id      ),
-         .RDATA_o   ( master[PLIC].r_data    ),
-         .RRESP_o   ( master[PLIC].r_resp    ),
-         .RLAST_o   ( master[PLIC].r_last    ),
-         .RUSER_o   ( master[PLIC].r_user    ),
-         .RVALID_o  ( master[PLIC].r_valid   ),
-         .RREADY_i  ( master[PLIC].r_ready   ),
-         .PENABLE   ( plic_penable   ),
-         .PWRITE    ( plic_pwrite    ),
-         .PADDR     ( plic_paddr     ),
-         .PSEL      ( plic_psel      ),
-         .PWDATA    ( plic_pwdata    ),
-         .PRDATA    ( plic_prdata    ),
-         .PREADY    ( plic_pready    ),
-         .PSLVERR   ( plic_pslverr   )
-	 );
-
-    apb_to_reg i_apb_to_reg
-      (
-       .clk_i     ( clk          ),
-       .rst_ni    ( rstn         ),
-       .penable_i ( plic_penable ),
-       .pwrite_i  ( plic_pwrite  ),
-       .paddr_i   ( plic_paddr   ),
-       .psel_i    ( plic_psel    ),
-       .pwdata_i  ( plic_pwdata  ),
-       .prdata_o  ( plic_prdata  ),
-       .pready_o  ( plic_pready  ),
-       .pslverr_o ( plic_pslverr ),
-       .reg_o     ( reg_bus      )
-       );
-
-   reg_intf::reg_intf_resp_d32 plic_resp;
-   reg_intf::reg_intf_req_a32_d32 plic_req;
-
-   assign plic_req.addr  = reg_bus.addr;
-   assign plic_req.write = reg_bus.write;
-   assign plic_req.wdata = reg_bus.wdata;
-   assign plic_req.wstrb = reg_bus.wstrb;
-   assign plic_req.valid = reg_bus.valid;
-
-   assign reg_bus.rdata = plic_resp.rdata;
-   assign reg_bus.error = plic_resp.error;
-   assign reg_bus.ready = plic_resp.ready;
-
-   plic_top
-     #(
-       .N_SOURCE    ( NIRQ_SRCS   ),
-       .N_TARGET    ( 2*NHARTS    ),
-       .MAX_PRIO    ( MaxPriority )
-       ) i_plic
-       (
-	.clk_i         ( clk         ),
-	.rst_ni        ( rstn        ),
-	.req_i         ( plic_req    ),
-	.resp_o        ( plic_resp   ),
-	.le_i          ( '0          ), // 0:level 1:edge
-	.irq_sources_i ( irq_sources ),
-	.eip_targets_o ( irq         )
-	);
 
 
    // ---------------

@@ -932,6 +932,7 @@ package devices is
     VENDOR_NASA_GSFC   => nasa_gsfc_lib,
     VENDOR_S3          => s3_lib,
     VENDOR_SLD         => sld_lib,
+    VENDOR_SIFIVE      => sifive_lib,
     others             => unknown_lib);
 
   type system_table_type is array (0 to 65535) of ddesc_t;

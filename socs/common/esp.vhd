@@ -146,9 +146,7 @@ signal mon_dvfs_domain  : monitor_dvfs_vector(0 to CFG_TILES_NUM-1);
 signal mon_l2_int : monitor_cache_vector(0 to CFG_TILES_NUM-1);
 signal mon_llc_int : monitor_cache_vector(0 to CFG_TILES_NUM-1);
 
-signal uart_irq : std_ulogic;
-signal eth0_irq : std_ulogic;
-signal sgmii0_irq : std_ulogic;
+signal irq : std_logic_vector(CFG_NCPU_TILE * 2 - 1 downto 0);
 
 begin
 
@@ -260,9 +258,7 @@ begin
           pllclk             => clk_tile(i),
           cpuerr             => cpuerr_vec(tile_cpu_id(i)),
           --TODO: REMOVE!
-          uart_irq   => uart_irq,
-          eth0_irq   => eth0_irq,
-          sgmii0_irq => sgmii0_irq,
+          irq   => irq((tile_cpu_id(i) + 1) * 2 - 1 downto tile_cpu_id(i) * 2),
           noc1_input_port    => noc_input_port_1(i),
           noc1_data_void_in  => noc_data_void_in(1)(i),
           noc1_stop_in       => noc_stop_in(1)(i),
@@ -383,9 +379,7 @@ begin
           uart_txd           => uart_txd_int,
           uart_ctsn          => uart_ctsn_int,
           uart_rtsn          => uart_rtsn_int,
-          uart_irq           => uart_irq,
-          eth0_irq           => eth0_irq,
-          sgmii0_irq         => sgmii0_irq,
+          irq                => irq,
           noc1_input_port    => noc_input_port_1(i),
           noc1_data_void_in  => noc_data_void_in(1)(i),
           noc1_stop_in       => noc_stop_in(1)(i),
@@ -633,4 +627,3 @@ begin
   end generate mon_llc_nollc_gen;
 
 end;
-

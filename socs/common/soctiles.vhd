@@ -65,10 +65,8 @@ package soctiles is
       refclk             : in  std_ulogic;
       pllbypass          : in  std_ulogic;
       pllclk             : out std_ulogic;
-      cpuerr             : out   std_logic;
-      uart_irq           : in  std_ulogic;
-      eth0_irq           : in  std_ulogic;
-      sgmii0_irq         : in  std_ulogic;
+      cpuerr             : out std_logic;
+      irq                : in  std_logic_vector(1 downto 0);
       noc1_input_port    : out noc_flit_type;
       noc1_data_void_in  : out std_ulogic;
       noc1_stop_in       : out std_ulogic;
@@ -182,9 +180,7 @@ package soctiles is
       uart_txd           : out std_ulogic;
       uart_ctsn          : in  std_ulogic;
       uart_rtsn          : out std_ulogic;
-      uart_irq           : out std_ulogic;
-      eth0_irq           : out std_ulogic;
-      sgmii0_irq         : out std_ulogic;
+      irq                : out std_logic_vector(CFG_NCPU_TILE * 2 - 1 downto 0);
       noc1_input_port    : out noc_flit_type;
       noc1_data_void_in  : out std_ulogic;
       noc1_stop_in       : out std_ulogic;

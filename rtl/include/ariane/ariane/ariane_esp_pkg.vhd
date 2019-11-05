@@ -14,22 +14,19 @@ package ariane_esp_pkg is
       HART_ID          : std_logic_vector(63 downto 0);
       NMST             : integer;
       NSLV             : integer;
-      NIRQ_SRCS        : integer;
       ROMBase          : std_logic_vector(63 downto 0);
       ROMLength        : std_logic_vector(63 downto 0);
       APBBase          : std_logic_vector(63 downto 0);
       APBLength        : std_logic_vector(63 downto 0);
       CLINTBase        : std_logic_vector(63 downto 0);
       CLINTLength      : std_logic_vector(63 downto 0);
-      PLICBase         : std_logic_vector(63 downto 0);
-      PLICLength       : std_logic_vector(63 downto 0);
       DRAMBase         : std_logic_vector(63 downto 0);
       DRAMLength       : std_logic_vector(63 downto 0);
       DRAMCachedLength : std_logic_vector(63 downto 0));
     port (
       clk         : in  std_logic;
       rstn        : in  std_logic;
-      irq_sources : in  std_logic_vector(NIRQ_SRCS-1 downto 0);
+      irq         : in  std_logic_vector(1 downto 0);
       romi        : out axi_mosi_type;
       romo        : in  axi_somi_type;
       drami       : out axi_mosi_type;
@@ -40,5 +37,21 @@ package ariane_esp_pkg is
       apb_ack     : in  std_ulogic);
   end component ariane_axi_wrap;
 
+  component riscv_plic_apb_wrap is
+    generic (
+      pindex    : integer;
+      pconfig   : apb_config_type;
+      NHARTS    : integer;
+      NIRQ_SRCS : integer);
+    port (
+      clk         : in  std_ulogic;
+      rstn        : in  std_ulogic;
+      irq_sources : in  std_logic_vector(NIRQ_SRCS - 1 downto 0);
+      irq         : out std_logic_vector(NHARTS * 2 - 1 downto 0);
+      apbi        : in  apb_slv_in_type;
+      apbo        : out apb_slv_out_type;
+      pready      : out std_ulogic;
+      pslverr     : out std_ulogic);
+  end component riscv_plic_apb_wrap;
 
 end ariane_esp_pkg;

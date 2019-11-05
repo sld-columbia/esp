@@ -631,8 +631,13 @@ def print_mapping(fp, esp_config):
   #
   fp.write("  -- Interrupt controller (Architecture-dependent)\n")
   fp.write("  constant irqmp_pconfig : apb_config_type := (\n")
-  fp.write("  0 => ahb_device_reg ( VENDOR_GAISLER, GAISLER_IRQMP, 0, 3, 0),\n")
-  fp.write("  1 => apb_iobar(16#002#, 16#fff#));\n\n")
+  if esp_config.cpu_arch == "leon3":
+    fp.write("  0 => ahb_device_reg ( VENDOR_GAISLER, GAISLER_IRQMP, 0, 3, 0),\n")
+    fp.write("  1 => apb_iobar(16#002#, 16#fff#));\n\n")
+  elif esp_config.cpu_arch == "ariane":
+    fp.write("  0 => ahb_device_reg ( VENDOR_SIFIVE, SIFIVE_PLIC0, 0, 3, 0),\n")
+    fp.write("  1 => apb_iobar(16#C00#, 16#800#));\n\n")
+    fp.write("  -- RISC-V PLIC is using the extended APB address space\n")
 
   #
   fp.write("  -- Timer (GRLIB)\n")
@@ -1366,17 +1371,6 @@ def print_ariane_devtree(fp, esp_config):
         break
 
 
-  # Count interrupt sources
-  irq_srcs = 1; # UART
-  if esp_config.has_eth:
-    # Ethenrnet
-    irq_srcs += 2
-  if esp_config.nacc > 0:
-    # Accelerators share one irq line
-    irq_srcs += 1
-  # TODO: add interrupt line for GPTIMER to be able to use it from Ariane as well
-
-
   fp.write("/dts-v1/;\n")
   fp.write("\n")
   fp.write("/ {\n")
@@ -1440,7 +1434,7 @@ def print_ariane_devtree(fp, esp_config):
   fp.write("      reg = <0x0 0x2000000 0x0 0xc0000>;\n")
   fp.write("      reg-names = \"control\";\n")
   fp.write("    };\n")
-  fp.write("    PLIC0: interrupt-controller@c000000 {\n")
+  fp.write("    PLIC0: interrupt-controller@6c000000 {\n")
   fp.write("      #address-cells = <0>;\n")
   fp.write("      #interrupt-cells = <1>;\n")
   fp.write("      compatible = \"riscv,plic0\";\n")
@@ -1449,9 +1443,9 @@ def print_ariane_devtree(fp, esp_config):
   for i in range(esp_config.ncpu):
     fp.write("                             &CPU" + str(i) + "_intc 11 &CPU" + str(i) + "_intc 9\n")
   fp.write("                            >;\n")
-  fp.write("      reg = <0x0 0xc000000 0x0 0x4000000>;\n")
+  fp.write("      reg = <0x0 0x6c000000 0x0 0x4000000>;\n")
   fp.write("      riscv,max-priority = <7>;\n")
-  fp.write("      riscv,ndev = <" + str(irq_srcs) + ">;\n")
+  fp.write("      riscv,ndev = <16>;\n")
   fp.write("    };\n")
   # TODO add GPTIMER/Accelerators/Caches/SVGA/DVFS to devtree (and remove leon3 IRQ from socmap
   fp.write("    uart@" + format(AHB2APB_HADDR[esp_config.cpu_arch], '03X') + "00100 {\n")
@@ -1459,7 +1453,7 @@ def print_ariane_devtree(fp, esp_config):
   fp.write("      reg = <0x0 0x" + format(AHB2APB_HADDR[esp_config.cpu_arch], '03X') + "00100 0x0 0x100>;\n")
   fp.write("      freq = <" + str(CPU_FREQ) + "000>;\n")
   fp.write("      interrupt-parent = <&PLIC0>;\n")
-  fp.write("      interrupts = <1>;\n")
+  fp.write("      interrupts = <3>;\n")
   fp.write("      reg-shift = <2>; // regs are spaced on 32 bit boundary\n")
   fp.write("      reg-io-width = <4>; // only 32-bit access are supported\n")
   fp.write("    };\n")
@@ -1469,7 +1463,7 @@ def print_ariane_devtree(fp, esp_config):
   fp.write("      compatible = \"gaisler,ethmac\";\n")
   fp.write("      device_type = \"network\";\n")
   fp.write("      interrupt-parent = <&PLIC0>;\n")
-  fp.write("      interrupts = <2 0>;\n")
+  fp.write("      interrupts = <13 0>;\n")
   # TODO Generate random mac address
   fp.write("      local-mac-address = [00 20 3e 02 e3 77];\n")
   fp.write("      reg = <0x0 0x" + format(AHB2APB_HADDR[esp_config.cpu_arch], '03X') + "80000 0x0 0x10000>;\n")
@@ -1483,7 +1477,7 @@ def print_ariane_devtree(fp, esp_config):
   fp.write("            compatible = \"gaisler,sgmii\";\n")
   fp.write("            reg = <0x0 0x" + format(AHB2APB_HADDR[esp_config.cpu_arch], '03X') + "01000 0x0 0x1000>;\n")
   fp.write("            interrupt-parent = <&PLIC0>;\n")
-  fp.write("            interrupts = <3 0>;\n")
+  fp.write("            interrupts = <12 0>;\n")
   fp.write("      };\n")
   fp.write("    };\n")
 
@@ -1499,7 +1493,7 @@ def print_ariane_devtree(fp, esp_config):
     fp.write("      compatible = \"" + acc.vendor + "," + acc.lowercase_name + "\";\n")
     fp.write("      reg = <0x0 0x" + format(AHB2APB_HADDR[esp_config.cpu_arch], '03X') + str(address) + "00 0x0 " + size + ">;\n")
     fp.write("      interrupt-parent = <&PLIC0>;\n")
-    fp.write("      interrupts = <3>;\n")
+    fp.write("      interrupts = <4>;\n")
     fp.write("      reg-shift = <2>; // regs are spaced on 32 bit boundary\n")
     fp.write("      reg-io-width = <4>; // only 32-bit access are supported\n")
     fp.write("    };\n")

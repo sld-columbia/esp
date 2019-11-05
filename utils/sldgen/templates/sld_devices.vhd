@@ -33,8 +33,10 @@ package sld_devices is
   constant SLD_L2_CACHE  : devid_t := 16#020#;
   constant SLD_LLC_CACHE  : devid_t := 16#021#;
   constant SLD_MST_PROXY : devid_t := 16#022#;
-
   -- <<devid>>
+
+  constant VENDOR_SIFIVE : vendor_t := 16#EC#;
+  constant SIFIVE_PLIC0 : devid_t := 16#001#;
 
 -- pragma translate_off
 
@@ -54,6 +56,18 @@ package sld_devices is
     vendorid     => VENDOR_SLD,
     vendordesc   => SLD_DESC,
     device_table => sld_device_table
+    );
+
+  constant SIFIVE_DESC : vdesc_t := "SiFive                  ";
+
+  constant sifive_device_table : dtable_t := (
+    SIFIVE_PLIC0 => "Platform Level Int. Controller ",
+    others       => "Unknown Device                 ");
+
+  constant sifive_lib : vlib_t := (
+    vendorid     => VENDOR_SIFIVE,
+    vendordesc   => SIFIVE_DESC,
+    device_table => sifive_device_table
     );
 
 -- pragma translate_on
