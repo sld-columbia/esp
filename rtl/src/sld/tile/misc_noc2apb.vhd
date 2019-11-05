@@ -1,6 +1,10 @@
 -- Copyright (c) 2011-2019 Columbia University, System Level Design Group
 -- SPDX-License-Identifier: Apache-2.0
 
+-- Note: both APB read and write operations would require a setup state.
+-- However, all integrated slaves so far respond to reads without setup, so we
+-- are saving one clock cycle per access here.
+
 library ieee;
 use ieee.std_logic_1164.all;
 
@@ -26,6 +30,7 @@ entity misc_noc2apb is
     clk      : in  std_ulogic;
     apbi     : out apb_slv_in_type;
     apbo     : in  apb_slv_out_vector;
+    pready   : in  std_ulogic;          -- exteded support for APB3 slaves
     dvfs_transient      : in  std_ulogic;
     -- Packets to local APB slave (tile->NoC5)
     apb_snd_wrreq       : out std_ulogic;
@@ -59,6 +64,7 @@ architecture rtl of misc_noc2apb is
   signal sample_prdata : std_ulogic;
   signal prdata : std_logic_vector(31 downto 0);
   signal prdata_reg : std_logic_vector(31 downto 0);
+  signal psel_sig : std_logic_vector(0 to NAPBSLV - 1);
 
 begin  -- rtl
 
@@ -104,10 +110,16 @@ begin  -- rtl
 
   -- This wrapper makes requests and waits for reply, but does not react to
   -- messages from remote masters, such as JTAG.
+  psel_gen: for i in 0 to NAPBSLV - 1 generate
+    psel_sig(i) <= apb_slv_decode(apbo(i).pconfig, apb_rcv_data_out(19 downto  8), apb_rcv_data_out(27 downto 16), 4);
+  end generate psel_gen;
+
+  -- This wrapper makes requests and waits for reply, but does not react to
+  -- messages from remote masters, such as JTAG.
   apb_roundtrip: process (apb_state, apbo, apb_rcv_empty, apb_rcv_data_out,
                           apb_snd_full, request_y, request_x, request_msg_type,
                           header, psel_reg, tail_reg, waddr_reg, prdata_reg,
-                          apbi_reg, dvfs_transient)
+                          apbi_reg, dvfs_transient, pready, psel_sig)
     variable msg_type_v : noc_msg_type;
     variable addr_v : std_logic_vector(31 downto 0);
     variable data_v : std_logic_vector(31 downto 0);
@@ -144,10 +156,9 @@ begin  -- rtl
     for i in 0 to NAPBSLV - 1 loop
       if local_apb_en(i) = '1' then
         -- Select
-        if ((apbo(i).pconfig(1)(1 downto 0) = "01") and
-            ((apbo(i).pconfig(1)(31 downto 20) and apbo(i).pconfig(1)(15 downto 4)) =
-             (addr_v(19 downto  8) and apbo(i).pconfig(1)(15 downto 4))))
-        then psel_v := i; end if;
+        if psel_sig(i) = '1' then
+          psel_v := i;
+        end if;
 
         -- local IRQ
         pirq_v := pirq_v or apbo(i).pirq;
@@ -179,20 +190,22 @@ begin  -- rtl
                             sample_psel <= '1';
                             if request_msg_type = REQ_REG_RD then
                               if apb_snd_full = '0' then
-                                -- Pop from queue
-                                apb_rcv_rdreq <= '1';
                                 -- Read from device
                                 apbi.psel(psel_v) <= '1';
                                 apbi.penable <= '1';
                                 apbi.paddr <= addr_v;
-                                -- Send header to queue
-                                apb_snd_data_in <= header;
-                                apb_snd_wrreq <= '1';
                                 -- Remember APB psel for reply
                                 sample_prdata <= '1';
                                 prdata <= apbo(psel_v).prdata;
                                 -- Update state
-                                apb_next <= snd_data;
+                                if pready = '1' then
+                                  -- Pop from queue
+                                  apb_rcv_rdreq <= '1';
+                                  -- Send header to queue
+                                  apb_snd_data_in <= header;
+                                  apb_snd_wrreq <= '1';
+                                  apb_next <= snd_data;
+                                end if;
                               end if;
                             else
                               -- Sample write address
@@ -204,6 +217,7 @@ begin  -- rtl
                             end if;
                           end if;
 
+
       when rcv_data => if apb_rcv_empty = '0' and dvfs_transient = '0' then
                          -- Pop from queue
                          apb_rcv_rdreq <= '1';
@@ -212,9 +226,9 @@ begin  -- rtl
                          apbi_v.paddr := waddr_reg;
                          apbi_v.pwrite := '1';
                          apbi_v.pwdata := apb_rcv_data_out(31 downto 0);
+                         apbi_v.penable := '0';
 
                          apbi <= apbi_v;
-                         apbi.penable <= '0';
                          apbi_v.penable := '1';
                          apbi_in <= apbi_v;
                          sample_apbi <= '1';
@@ -222,7 +236,9 @@ begin  -- rtl
                        end if;
 
       when apb_write_strobe => apbi <= apbi_reg;
-                               apb_next <= rcv_header;
+                               if pready = '1' then
+                                 apb_next <= rcv_header;
+                               end if;
 
       when snd_data => -- Send data to queue
                        if apb_snd_full = '0' and dvfs_transient = '0' then

@@ -485,6 +485,7 @@ package tile is
       clk              : in  std_ulogic;
       apbi             : out apb_slv_in_type;
       apbo             : in  apb_slv_out_vector;
+      pready           : in  std_ulogic;
       dvfs_transient   : in  std_ulogic;
       apb_snd_wrreq    : out std_ulogic;
       apb_snd_data_in  : out misc_noc_flit_type;

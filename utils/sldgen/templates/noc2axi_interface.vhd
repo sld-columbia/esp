@@ -114,6 +114,7 @@ end;
   -- APB
   signal apbi : apb_slv_in_type;
   signal apbo : apb_slv_out_vector;
+  signal pready : std_ulogic;
 
   -- IRQ
   signal irq      : std_logic_vector(NAHBIRQ-1 downto 0);
@@ -196,6 +197,7 @@ begin
       clk              => clk,
       apbi             => apbi,
       apbo             => apbo,
+      pready           => pready,
       dvfs_transient   => mon_dvfs_feedthru.transient,
       apb_snd_wrreq    => apb_snd_wrreq,
       apb_snd_data_in  => apb_snd_data_in,

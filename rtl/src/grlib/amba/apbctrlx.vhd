@@ -75,7 +75,7 @@ type pinteger_type is array (natural range <>) of integer range 0 to nslaves-1;
 type ahb_config_vector_type is array (natural range <>) of ahb_config_type;
 
 
-constant apbmax 	: integer := 19;
+constant apbmax 	: integer := 27;
 constant multiport: integer := conv_integer(conv_std_logic(nports>1));
 constant VERSION   : amba_version_type := 1;
 
@@ -132,8 +132,18 @@ signal r, rin : reg_type;
 signal lapbi  : apb_slv_in_type;
 --pragma translate_on
 
+signal psel_sig : pvector_type(0 to nports-1);
+
 begin
-  comb : process(ahbi, apbo, wp, wpv, r, rst)
+
+  psel_p_gen: for j in 0 to nports-1 generate
+    psel_gen: for i in 0 to nslaves-1 generate
+      psel_sig(j)(i) <= apb_slv_decode(apbo(i).pconfig, r.p(j).haddr(19 downto  8), r.p(j).haddr(apbmax downto apbmax - 11), 12 - (apbmax - 19));
+    end generate psel_gen;
+  end generate psel_p_gen;
+
+
+  comb : process(ahbi, apbo, wp, wpv, r, rst, psel_sig)
   variable v : reg_type;
   variable psel   : pvector_type(0 to nports-1);   
   variable pwdata : std_logic_vector(31 downto 0);
@@ -154,12 +164,7 @@ begin
 			v.p(j).psel := '0'; v.p(j).penable := '0'; psel(j) := (others => '0');
     	
       -- Decode APB slave
-      for i in 0 to nslaves-1 loop
-    	  if ((apbo(i).pconfig(1)(1 downto 0) = "01") and
-    	    ((apbo(i).pconfig(1)(31 downto 20) and apbo(i).pconfig(1)(15 downto 4)) = 
-    	    (r.p(j).haddr(19 downto  8) and apbo(i).pconfig(1)(15 downto 4))))
-    	  then psel(j)(i) := '1'; end if;
-    	end loop;
+        psel(j) := psel_sig(j);
 
     	bnslave(0) := psel(j)( 1) or psel(j)( 3) or psel(j)( 5) or psel(j)( 7) or
     	              psel(j)( 9) or psel(j)(11) or psel(j)(13) or psel(j)(15);
@@ -235,7 +240,7 @@ begin
     	end case;
 
       -- Decode PNP access
-    	if (r.p(j).haddr(19 downto  12) = "11111111") then 
+       if (r.p(j).haddr(19 downto  12) = "11111111") and (r.p(j).haddr(apbmax downto 20) = zero32(apbmax downto 20)) then
     	 v.p(j).cfgsel := '1'; psel(j) := (others => '0'); v.p(j).penable := '0';
     	else v.p(j).cfgsel := '0'; end if;
 

@@ -39,8 +39,8 @@ use work.config_types.all;
 use work.config.all;
 use work.amba.all;
 use work.stdlib.all;
--- pragma translate_off
 use work.devices.all;
+-- pragma translate_off
 use std.textio.all;
 -- pragma translate_on
 
@@ -73,7 +73,7 @@ end;
 
 architecture rtl of patient_apbctrl is
 
-constant apbmax : integer := 19;
+constant apbmax : integer := 27;
 
 constant VERSION   : amba_version_type := 0;
 
@@ -111,8 +111,15 @@ signal r, rin : reg_type;
 signal lapbi  : apb_slv_in_type;
 --pragma translate_on
 
+signal psel_sig : std_logic_vector(0 to nslaves-1);
+
 begin
-  comb : process(ahbi, apbo, r, rst, ack)
+
+  psel_gen: for i in 0 to nslaves-1 generate
+    psel_sig(i) <= apb_slv_decode(apbo(i).pconfig, r.haddr(19 downto  8), r.haddr(apbmax downto apbmax - 11), 12 - (apbmax - 19));
+  end generate psel_gen;
+
+  comb : process(ahbi, apbo, r, rst, ack, psel_sig)
   variable v : reg_type;
   variable psel   : std_logic_vector(0 to nslaves-1);
   variable psel_idx : integer range 0 to NAPBSLV - 1;
@@ -138,19 +145,16 @@ begin
       end if;
     end if;
 
-    psel := (others => '0');
-
+    psel := psel_sig;
     psel_idx := 0;
     for i in 0 to nslaves-1 loop
-      if ((apbo(i).pconfig(1)(1 downto 0) = "01") and
-          ((apbo(i).pconfig(1)(31 downto 20) and apbo(i).pconfig(1)(15 downto 4)) = 
-           (r.haddr(19 downto  8) and apbo(i).pconfig(1)(15 downto 4)))) then
-        psel(i) := '1';
+      if psel(i) = '1' then
         psel_idx := i;
       end if;
     end loop;
 
-    if (r.haddr(19 downto  12) = "11111111") then
+    -- Decode PNP access
+    if (r.haddr(19 downto  12) = "11111111") and (r.haddr(apbmax downto 20) = zero32(apbmax downto 20)) then
       v.cfgsel := '1';
     else
       v.cfgsel := '0';

@@ -462,6 +462,7 @@ begin
         clk              => clk,
         apbi             => ctrl_apbi,
         apbo             => ctrl_apbo,
+        pready           => '1',
         dvfs_transient   => '0',
         apb_snd_wrreq    => apb_snd_wrreq,
         apb_snd_data_in  => apb_snd_data_in,

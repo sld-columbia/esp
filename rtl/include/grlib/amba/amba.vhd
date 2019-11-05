@@ -522,6 +522,13 @@ type apb_config_type is array (0 to NAPBCFG-1) of amba_config_word;
 -- Subprograms
 -------------------------------------------------------------------------------
 
+  function apb_slv_decode (
+    signal pconfig         : apb_config_type;
+    signal haddr           : std_logic_vector(11 downto 0);
+    signal extended_haddr  : std_logic_vector(11 downto 0);
+    constant overlap       : integer range 0 to 10)
+    return std_ulogic;
+
   function ahb_device_reg(vendor : vendor_t; device : devid_t;
         cfgver : amba_cfgver_type; version : amba_version_type;
         interrupt : amba_irq_type)
@@ -1133,6 +1140,32 @@ component ahbxb is
 end;
 
 package body amba is
+
+  function apb_slv_decode (
+    signal pconfig         : apb_config_type;
+    signal haddr           : std_logic_vector(11 downto 0);
+    signal extended_haddr  : std_logic_vector(11 downto 0);
+    constant overlap       : integer range 0 to 10)
+    return std_ulogic is
+    variable selected : std_ulogic;
+    constant zero12 : std_logic_vector(11 downto 0) := (others => '0');
+  begin
+    selected := '0';
+    if (extended_haddr(11 downto overlap) /= zero12(11 downto overlap)) and (GLOB_CPU_ARCH /= leon3) then
+      -- Extended APB address
+      if ((pconfig(1)(1 downto 0) = "01") and
+          ((pconfig(1)(31 downto 20) and pconfig(1)(15 downto 4)) =
+           (extended_haddr and pconfig(1)(15 downto 4))))
+      then selected := '1'; end if;
+    else
+      -- Standard APB address decode
+      if ((pconfig(1)(1 downto 0) = "01") and
+          ((pconfig(1)(31 downto 20) and pconfig(1)(15 downto 4)) =
+           (haddr and pconfig(1)(15 downto 4))))
+      then selected := '1'; end if;
+    end if;
+    return selected;
+  end;
 
   function ahb_device_reg(vendor : vendor_t; device : devid_t;
         cfgver : amba_cfgver_type; version : amba_version_type;

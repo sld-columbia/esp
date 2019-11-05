@@ -408,6 +408,7 @@ begin
       clk              => clk,
       apbi             => apbi,
       apbo             => apbo,
+      pready           => '1',
       dvfs_transient   => mon_dvfs_feedthru.transient,
       apb_snd_wrreq    => apb_snd_wrreq,
       apb_snd_data_in  => apb_snd_data_in,

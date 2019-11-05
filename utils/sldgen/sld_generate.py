@@ -228,7 +228,7 @@ def bind_apb3(f, prefix):
   f.write("      " + prefix + "pwrite => apbi.pwrite,\n");
   f.write("      " + prefix + "pwdata => apbi.pwdata,\n");
   f.write("      " + prefix + "prdata => apbo(pindex).prdata,\n");
-  f.write("      " + prefix + "pready => open,\n");
+  f.write("      " + prefix + "pready => pready,\n");
   f.write("      " + prefix + "pslverr => open, -- TODO: handle APB3 error\n");
 
 
