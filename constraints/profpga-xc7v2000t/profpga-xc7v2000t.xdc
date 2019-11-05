@@ -116,9 +116,9 @@ set_property PACKAGE_PIN J44 [get_ports reset]
 #              Timing constraints                          -
 #-----------------------------------------------------------
 
-create_clock -period 6.250 [get_ports c0_main_clk_p]
+create_clock -period 5.0 [get_ports c0_main_clk_p]
 
-create_clock -period 6.250 [get_ports c1_main_clk_p]
+create_clock -period 5.0 [get_ports c1_main_clk_p]
 
 create_clock -period 5 [get_ports clk_ref_p]
 
@@ -132,8 +132,19 @@ set_property CLOCK_DEDICATED_ROUTE BACKBONE [get_nets c0_main_clk_p]
 set_property CLOCK_DEDICATED_ROUTE BACKBONE [get_nets c1_main_clk_p]
 set_property CLOCK_DEDICATED_ROUTE BACKBONE [get_pins -hierarchical *pll*CLKIN1]
 
+# Recover elaborated clock name
+set clkm_elab [get_clocks -of_objects [get_nets clkm]]
+set clkm2_elab [get_clocks -of_objects [get_nets clkm_2]]
+set refclk_elab [get_clocks -of_objects [get_nets chip_refclk]]
+
 # Both memory controllers impose their user clock. Make them asynchronous
-set_clock_groups -asynchronous -group [get_clocks clk_pll_i] -group [get_clocks clk_pll_i_1]
+set_clock_groups -asynchronous -group [get_clocks $clkm_elab] -group [get_clocks $clkm2_elab]
+set_clock_groups -asynchronous -group [get_clocks $clkm_elab] -group [get_clocks $refclk_elab]
+set_clock_groups -asynchronous -group [get_clocks $clkm2_elab] -group [get_clocks $refclk_elab]
+
+set_clock_groups -asynchronous -group [get_clocks clk_ref_p] -group [get_clocks $clkm_elab]
+set_clock_groups -asynchronous -group [get_clocks clk_ref_p] -group [get_clocks $clkm2_elab]
+set_clock_groups -asynchronous -group [get_clocks clk_ref_p] -group [get_clocks $refclk_elab]
 
 #-----------------------------------------------------------
 #              False Paths                                 -

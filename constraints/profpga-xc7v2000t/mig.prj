@@ -4,7 +4,7 @@
     <ModuleName>mig</ModuleName>
     <dci_inouts_inputs>1</dci_inouts_inputs>
     <dci_inputs>1</dci_inputs>
-    <Debug_En>Disable</Debug_En>
+    <Debug_En></Debug_En>
     <DataDepth_En>1024</DataDepth_En>
     <LowPower_En>OFF</LowPower_En>
     <XADC_En>Enabled</XADC_En>
@@ -19,12 +19,12 @@
     <dci_cascade>1</dci_cascade>
     <Controller number="0" >
         <MemoryDevice>DDR3_SDRAM/Components/MT41J256m16XX-125</MemoryDevice>
-        <TimePeriod>3125</TimePeriod>
-        <VccAuxIO>2.0V</VccAuxIO>
+        <TimePeriod>2500</TimePeriod>
+        <VccAuxIO>1.8V</VccAuxIO>
         <PHYRatio>4:1</PHYRatio>
-        <InputClkFreq>160</InputClkFreq>
+        <InputClkFreq>200</InputClkFreq>
         <UIExtraClocks>0</UIExtraClocks>
-        <MMCM_VCO>640</MMCM_VCO>
+        <MMCM_VCO>800</MMCM_VCO>
         <MMCMClkOut0> 1.000</MMCMClkOut0>
         <MMCMClkOut1>1</MMCMClkOut1>
         <MMCMClkOut2>1</MMCMClkOut2>
@@ -176,7 +176,7 @@
         </TimingParameters>
         <mrBurstLength name="Burst Length" >8 - Fixed</mrBurstLength>
         <mrBurstType name="Read Burst Type and Length" >Sequential</mrBurstType>
-        <mrCasLatency name="CAS Latency" >5</mrCasLatency>
+        <mrCasLatency name="CAS Latency" >6</mrCasLatency>
         <mrMode name="Mode" >Normal</mrMode>
         <mrDllReset name="DLL Reset" >No</mrDllReset>
         <mrPdMode name="DLL control for precharge PD" >Slow Exit</mrPdMode>
@@ -200,12 +200,12 @@
 
     <Controller number="1" >
         <MemoryDevice>DDR3_SDRAM/Components/MT41J256m16XX-125</MemoryDevice>
-        <TimePeriod>3125</TimePeriod>
-        <VccAuxIO>2.0V</VccAuxIO>
+        <TimePeriod>2500</TimePeriod>
+        <VccAuxIO>1.8V</VccAuxIO>
         <PHYRatio>4:1</PHYRatio>
-        <InputClkFreq>160</InputClkFreq>
+        <InputClkFreq>200</InputClkFreq>
         <UIExtraClocks>0</UIExtraClocks>
-        <MMCM_VCO>640</MMCM_VCO>
+        <MMCM_VCO>800</MMCM_VCO>
         <MMCMClkOut0> 1.000</MMCMClkOut0>
         <MMCMClkOut1>1</MMCMClkOut1>
         <MMCMClkOut2>1</MMCMClkOut2>
@@ -349,7 +349,7 @@
         </TimingParameters>
         <mrBurstLength name="Burst Length" >8 - Fixed</mrBurstLength>
         <mrBurstType name="Read Burst Type and Length" >Sequential</mrBurstType>
-        <mrCasLatency name="CAS Latency" >5</mrCasLatency>
+        <mrCasLatency name="CAS Latency" >6</mrCasLatency>
         <mrMode name="Mode" >Normal</mrMode>
         <mrDllReset name="DLL Reset" >No</mrDllReset>
         <mrPdMode name="DLL control for precharge PD" >Slow Exit</mrPdMode>

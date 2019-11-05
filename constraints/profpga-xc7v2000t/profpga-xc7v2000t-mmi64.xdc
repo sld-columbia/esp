@@ -150,9 +150,14 @@ set_property IOSTANDARD LVCMOS18 [get_ports {dmbi_h2f[*]}]
 create_clock -period 10.000 [get_ports {profpga_clk0_p}]
 
 # mmi and the rest of the desing are asynchronous
-set_clock_groups -asynchronous -group [get_clocks profpga_clk0_p] -group [get_clocks *clk_pll_i*]
-set_clock_groups -asynchronous -group [get_clocks *clk_pll_i*] -group [get_clocks *clk_mmi64]
-set_clock_groups -asynchronous -group [get_clocks *clk_mmi64] -group [get_clocks *clk_pll_i*]
+set clkm_elab [get_clocks -of_objects [get_nets clkm]]
+set clkm2_elab [get_clocks -of_objects [get_nets clkm_2]]
+set refclk_elab [get_clocks -of_objects [get_nets chip_refclk]]
+
+set_clock_groups -asynchronous -group [get_clocks profpga_clk0_p] -group [get_clocks $clkm_elab]
+set_clock_groups -asynchronous -group [get_clocks profpga_clk0_p] -group [get_clocks $clkm2_elab]
+set_clock_groups -asynchronous -group [get_clocks $clkm2_elab] -group [get_clocks *clk_mmi64]
+set_clock_groups -asynchronous -group [get_clocks $clkm_elab] -group [get_clocks *clk_mmi64]
 
 #set_max_delay -from [all_registers -clock profpga_clk0_p ] -to [all_registers -clock sys_clk  ] 4 -datapath_only
 #set_max_delay -from [all_registers -clock sys_clk  ] -to [all_registers -clock profpga_clk0_p ] 4 -datapath_only

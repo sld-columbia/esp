@@ -48,10 +48,10 @@ entity top is
     dmbi_f2h              : out std_logic_vector(19 downto 0);
     --
     reset           : in    std_ulogic;
-    c0_main_clk_p   : in    std_ulogic;  -- 160 MHz clock
-    c0_main_clk_n   : in    std_ulogic;  -- 160 MHz clock
-    c1_main_clk_p   : in    std_ulogic;  -- 160 MHz clock
-    c1_main_clk_n   : in    std_ulogic;  -- 160 MHz clock
+    c0_main_clk_p   : in    std_ulogic;  -- 200 MHz clock
+    c0_main_clk_n   : in    std_ulogic;  -- 200 MHz clock
+    c1_main_clk_p   : in    std_ulogic;  -- 200 MHz clock
+    c1_main_clk_n   : in    std_ulogic;  -- 200 MHz clock
     clk_ref_p       : in    std_ulogic;  -- 200 MHz clock
     clk_ref_n       : in    std_ulogic;  -- 200 MHz clock
     c0_ddr3_dq         : inout std_logic_vector(63 downto 0);
@@ -277,6 +277,8 @@ signal clkm_sync_rst, clkm_2_sync_rst : std_ulogic;
 signal rstn, rstraw : std_ulogic;
 signal lock, rst : std_ulogic;
 signal migrstn : std_logic;
+signal cgi : clkgen_in_type;
+signal cgo : clkgen_out_type;
 
 ---mig0 signals
 signal c0_app_addr          : std_logic_vector(28 downto 0);
@@ -324,7 +326,7 @@ signal ddr_ahbsi   : ahb_slv_in_vector_type(0 to CFG_NMEM_TILE - 1);
 signal ddr_ahbso   : ahb_slv_out_vector_type(0 to CFG_NMEM_TILE - 1);
 
 -- Ethernet
-constant CPU_FREQ : integer := 80000;
+constant CPU_FREQ : integer := 50000;
 signal eth0_apbi : apb_slv_in_type;
 signal eth0_apbo : apb_slv_out_type;
 signal sgmii0_apbi : apb_slv_in_type;
@@ -397,13 +399,14 @@ signal cpuerr : std_ulogic;
 -- NOC
 signal chip_rst : std_ulogic;
 signal sys_clk : std_logic_vector(0 to 1);
-signal chip_refclk : std_ulogic;
+signal chip_refclk : std_ulogic := '0';
 signal chip_pllbypass : std_logic_vector(CFG_TILES_NUM-1 downto 0);
 signal chip_pllclk : std_ulogic;
 
 
 attribute keep of clkm : signal is true;
 attribute keep of clkm_2 : signal is true;
+attribute keep of chip_refclk : signal is true;
 
 signal c0_diagnostic_count : std_logic_vector(26 downto 0);
 signal c0_diagnostic_toggle : std_ulogic;
@@ -501,6 +504,9 @@ begin
 ----------------------------------------------------------------------
 --- FPGA Reset and Clock generation  ---------------------------------
 ----------------------------------------------------------------------
+
+  cgi.pllctrl <= "00";
+  cgi.pllrst <= rstraw;
 
   reset_pad : inpad generic map (tech => CFG_PADTECH, level => cmos, voltage => x18v) port map (reset, rst);
   rst0 : rstgen         -- reset generator
@@ -680,6 +686,11 @@ begin
         sys_rst                 => rstraw
         );
 
+
+     clkgenmigref0 : clkgen
+       generic map (CFG_FABTECH, 16, 32, 0, 0, 0, 0, 0, 100000)
+       port map (clkm, clkm, chip_refclk, open, open, open, open, cgi, cgo, open, open, open);
+
   end generate gen_mig;
 
   gen_mig_model : if (SIMULATION = true) generate
@@ -717,7 +728,7 @@ begin
           )
         port map(
           rst     => rstn,
-          clk     => clkm,
+          clk     => clkm_2,
           ahbsi   => ddr_ahbsi(1),
           ahbso   => ddr_ahbso(1)
           );
@@ -780,11 +791,10 @@ begin
 
     c1_calib_done <= '1';
 
-    --ui_clk            : out   std_logic;
-    clkm <= not clkm after 6.25 ns;
-    clkm_2 <= not clkm_2 after 6.25 ns;
-    --ui_clk_sync_rst   : out   std_logic
-    -- n/a
+    clkm <= not clkm after 5 ns;
+    clkm_2 <= not clkm_2 after 5 ns;
+    chip_refclk <= not chip_refclk after 10.0 ns;
+
     -- pragma translate_on
   end generate gen_mig_model;
 
@@ -801,8 +811,6 @@ begin
         pindex => 14,
         paddr => 16#800#,
         pmask => 16#f00#,
-        --pindex => 15,
-        --paddr => 15,
         pirq => 12,
         little_end => GLOB_CPU_AXI,
         memtech => CFG_MEMTECH,
@@ -821,7 +829,7 @@ begin
         edclsepahbg => 1)
       port map(
         rst => rstn,
-        clk => clkm,
+        clk => chip_refclk,
         ahbmi => eth0_ahbmi,
         ahbmo => eth0_ahbmo,
         eahbmo => edcl_ahbmo,
@@ -894,7 +902,7 @@ begin
       ahbaccsz => CFG_AHBDW)
       port map(
         rst => rstn,
-        clk => clkm,
+        clk => chip_refclk,
         vgaclk => clkvga,
         apbi => dvi_apbi,
         apbo => dvi_apbo,
@@ -907,7 +915,7 @@ begin
       generic map (
         tech    => CFG_FABTECH)
       port map (
-        clk         => clkm,
+        clk         => chip_refclk,
         rstn        => rstraw,
         vgao        => vgao,
         vgaclk_fb   => clkvga,
@@ -993,7 +1001,6 @@ begin
   chip_rst <= rstn;
   sys_clk(0) <= clkm;
   sys_clk(1) <= clkm_2;
-  chip_refclk <= clkm;
   chip_pllbypass <= (others => '0');
 
   esp_1: esp
