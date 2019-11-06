@@ -114,11 +114,11 @@ char *prefix = TOOLBASE;
 void usage(char *);
 
 int searchforcc(char *p) {
-    char cmd[256];
+    char cmd[1024];
 #ifdef WIN32
-    snprintf(cmd, 256, "%s-gcc --version > NUL 2>&1", p);
+    snprintf(cmd, 1024, "%s-gcc --version > NUL 2>&1", p);
 #else
-    snprintf(cmd, 256, "%s-gcc --version > /dev/null 2>&1", p);
+    snprintf(cmd, 1024, "%s-gcc --version > /dev/null 2>&1", p);
 #endif
     if (!system(cmd)) {
 	return 1;
@@ -172,7 +172,7 @@ int main (argc, argv)
     FILE *xfile;
     char lscriptpath[512], lscriptpathdel[512];
     char buf[1024];
-    char cmd[512];
+    char cmd[1024];
     char msg[128];
     int baud = 19200;
     int dsubreak = 0;
