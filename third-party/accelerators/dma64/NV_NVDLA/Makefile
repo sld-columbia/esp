@@ -21,9 +21,7 @@ distclean: clean
 
 ## RTL ##
 vmod:
-	@if ! test -e $(IP_PATH)/tree.make; then \
-		cp config/tree.make $(IP_PATH); \
-	fi;
+	@cp config/tree.make $(IP_PATH);
 	@cd $(IP_PATH); \
 	./tools/bin/tmake -build vmod;
 

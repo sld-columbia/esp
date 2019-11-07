@@ -21,4 +21,4 @@ CXX  := /usr/bin/g++
 PERL := /usr/bin/perl
 JAVA := /usr/bin/java
 SYSTEMC := /opt/systemc
-PYTHON := /usr/bin/python36
+PYTHON := /usr/bin/python3
