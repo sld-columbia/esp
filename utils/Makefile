@@ -104,7 +104,7 @@ help:
 	@echo
 	@echo " make espmon-run                       : open ESP monitor GUI interface (requires proFPGA system)"
 	@echo
-	@echo " make fpga-run                         : Run bare-metal program \"systest.exe\" on FPGA"
+	@echo " make fpga-run                         : Run bare-metal program TEST_PROGRAM (default is systest.exe) on FPGA"
 	@echo "                                         Use targets \"make vivado-syn\" and \"make soft\" first"
 	@echo " make fpga-run-linux                   : Run Linux on FPGA"
 	@echo "                                         Use targets \"make vivado-syn\", \"make soft\" and \"make linux\" first"
@@ -112,16 +112,16 @@ help:
 	@echo
 	@echo " === Software Flow ==="
 	@echo
-	@echo " make soft                             : compile the bare-metal program systest.c. The target architecutre"
-	@echo "                                         is selected based on the varialble CPU_ARCH."
+	@echo " make soft                             : compile the bare-metal program TEST_PROGRAM (default is systest.exe)."
+	@echo "                                         The target architecutre is selected based on the varialble CPU_ARCH."
 	@echo " make barec-all                        : compile the bare-metal device drivers for available accelerators and"
 	@echo "                                         for the digital-video interface (DVI). Executables (.exe) are placed to"
-	@echo "                                         \"barec\" and can be used in simulation by replacing \"systest.c\""
+	@echo "                                         \"barec\" and can be used in simulation by setting TEST_PROGRAM"
 	@echo " make linux                            : compile Linux, create root file-system and compile all ESP core drivers,"
 	@echo "                                         drivers for accelerators, and test applications."
 	@echo " make <accelerator>-barec              : compile the bare-metal device driver for the specified accelerator."
 	@echo "                                         Executables (.exe) are placed to \"barec\" and can be used in simulation"
-	@echo "                                         by replacing \"systest.c\""
+	@echo "                                         by setting TEST_PROGRAM"
 	@echo " make <accelerator>-driver             : compile the Linux device driver for the specified accelerator. Drivers"
 	@echo "                                         are placed to \"sysroot/opt/drivers\" and load automatically during OS boot"
 	@echo " make <accelerator>-app                : compile the Linux test application for the specified accelerator."
@@ -556,11 +556,13 @@ pk-build:
 
 pk-build/bbl: pk-build sysroot-update
 	$(QUIET_CHECK) cd pk-build; \
-		$(RISCV_PK)/configure \
-			--host=riscv64-unknown-elf \
-			CC=riscv64-unknown-elf-gcc \
-			OBJDUMP=riscv64-unknown-elf-objdump \
-			--with-payload=../linux-build/vmlinux
+		if ! test -e Makefile; then \
+			$(RISCV_PK)/configure \
+				--host=riscv64-unknown-elf \
+				CC=riscv64-unknown-elf-gcc \
+				OBJDUMP=riscv64-unknown-elf-objdump \
+				--with-payload=../linux-build/vmlinux; \
+		fi;
 	$(QUIET_MAKE) $(MAKE) -C pk-build
 
 
@@ -1530,13 +1532,13 @@ fpga-program: vivado-prog-fpga
 endif
 
 
-fpga-run: esplink fpga-program
+fpga-run: esplink
 	@./esplink --reset
 	@./esplink --brom -i prom.bin
 	@./esplink --dram -i systest.bin
 	@./esplink --reset
 
-fpga-run-linux: esplink fpga-program
+fpga-run-linux: esplink
 	@./esplink --reset
 	@./esplink --brom -i prom.bin
 	@./esplink --dram -i linux.bin
