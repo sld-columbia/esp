@@ -67,7 +67,8 @@ class Tile():
        self.point_select.pack(side=LEFT)
     else:
        self.label.config(bg='white')
-       self.ip_type.set("empty")
+       if self.ip_type.get() != "empty":
+         self.ip_type.set("empty")
     self.clk_reg_selection.config(to=soc.noc.get_clk_regions_max())
 
 

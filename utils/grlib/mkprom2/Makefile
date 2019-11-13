@@ -13,8 +13,8 @@ HOSTCC  += -Wall -Wextra -pedantic
 AR=$(TARGET)-ar
 RANLIB=$(TARGET)-ranlib
 AS=$(TARGET)-gcc -c
-CFLAGS= -g -O2 $(XFLAGS) -Wall -DRELEASE_VERSION="$(RELEASE_VERSION)"
-ASFLAGS= -g -O2 $(XFLAGS)
+CFLAGS= -O2 $(XFLAGS) -Wall -DRELEASE_VERSION="$(RELEASE_VERSION)"
+ASFLAGS= -O2 $(XFLAGS)
 LIBOBJ=libmkprom.a libmkamba.a
 RELEASE_VERSION=2.0.65
 WPREFIX = c:/opt/mkprom2

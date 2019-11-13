@@ -244,7 +244,15 @@ for d in $dirs; do
     mkdir -p $ACC_DIR/$d
     cd $ACC_DIR/$d
     cp $TEMPLATES_DIR/$d/* .
-    rename accelerator $LOWER *
+    
+    if cat /etc/os-release | grep -q -i ubuntu; then
+        rename "s/accelerator/$LOWER/g" *
+    fi
+
+    if cat /etc/os-release | grep -q -i centos; then
+        rename accelerator $LOWER *
+    fi
+
     sed -i "s/<accelerator_name>/$LOWER/g" *
     sed -i "s/<ACCELERATOR_NAME>/$UPPER/g" *
 
@@ -462,7 +470,15 @@ dirs="barec app linux"
 ## initialize all driver folders
 cd $SOFT_DIR/leon3/drivers/include
 cp $TEMPLATES_DIR/include/accelerator.h .
-rename accelerator $LOWER accelerator.h
+
+if cat /etc/os-release | grep -q -i ubuntu; then
+    rename "s/accelerator/$LOWER/g" accelerator.h
+fi
+
+if cat /etc/os-release | grep -q -i centos; then
+    rename accelerator $LOWER accelerator.h
+fi
+
 sed -i "s/<accelerator_name>/$LOWER/g" ${LOWER}.h
 sed -i "s/<ACCELERATOR_NAME>/$UPPER/g" ${LOWER}.h
 for d in $dirs; do
@@ -470,7 +486,15 @@ for d in $dirs; do
     mkdir -p $new_dir
     cd $new_dir
     cp $TEMPLATES_DIR/$d/* .
-    rename accelerator $LOWER *
+
+    if cat /etc/os-release | grep -q -i ubuntu; then
+        rename "s/accelerator/$LOWER/g" *
+    fi
+
+    if cat /etc/os-release | grep -q -i centos; then
+	rename accelerator $LOWER *
+    fi
+
     sed -i "s/<accelerator_name>/$LOWER/g" *
     sed -i "s/<ACCELERATOR_NAME>/$UPPER/g" *
 done

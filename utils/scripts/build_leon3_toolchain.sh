@@ -194,7 +194,9 @@ if [ $(noyes "Skip ${src}") == "n" ]; then
 
     cd $src
     if [ $ovwrt == "y" ]; then
-	./configure --prefix=${TOOLS}/usr --target=sparc-leon3-linux --with-sysroot=${TOOLS} --disable-nls --disable-multilib --with-cpu=v8
+	CFLAGS="-Wimplicit-fallthrough=0  -Wno-unused-value -Wno-shift-negative-value -Wno-pointer-compare" \
+	      CXXFLAGS="-Wimplicit-fallthrough=0 -Wno-unused-value -Wno-shift-negative-value -Wno-pointer-compare" \
+	      ./configure --prefix=${TOOLS}/usr --target=sparc-leon3-linux --with-sysroot=${TOOLS} --disable-nls --disable-multilib --with-cpu=v8
     fi
 
     make -j ${NTHREADS}
@@ -331,6 +333,8 @@ if [ $(noyes "Skip ${src} second pass?") == "n" ]; then
     cmd="make install-strip"
     runsudo $TOOLS "$cmd"
 
+    cmd="rm -f ${TOOLS}/usr/bin/sparc-linux-*"
+    runsudo $TOOLS "$cmd"
     cmd="ln -s sparc-leon3-linux-gcc     ${TOOLS}/usr/bin/sparc-linux-gcc"
     runsudo $TOOLS "$cmd"
     cmd="ln -s sparc-leon3-linux-ld      ${TOOLS}/usr/bin/sparc-linux-ld"
@@ -479,6 +483,7 @@ if [ $(noyes "Skip ${src}?") == "n" ]; then
     mkdir -p ${SYSROOT}/usr/bin
     cd ${SYSROOT}/usr/bin
     if test ! -e dbclient; then
+	rm -f dbclient
 	ln -s ../../bin/dbclient
     fi
 
