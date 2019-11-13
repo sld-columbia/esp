@@ -11,13 +11,17 @@ ifndef IP_PATH
 $(error variable IP_PATH for $(IP) is not defined)
 endif
 
-all: vmod umd kmd
+all: sw hw
+
+sw: umd kmd
+
+hw: vmod
 
 clean: vmod-clean umd-clean kmd-clean
 
 distclean: clean
 
-.PHONY: all clean distclean
+.PHONY: all sw hw clean distclean
 
 ## RTL ##
 vmod:
