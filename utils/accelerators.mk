@@ -103,10 +103,19 @@ chisel-accelerators-distclean: chisel-accelerators-clean $(CHISEL_ACCELERATORS-d
 ### Third-Party ###
 $(THIRDPARTY_ACCELERATORS):
 	$(QUIET_BUILD)
-	@if ! test -e $(THIRDPARTY_PATH)/$@/out; then \
-		cd $(THIRDPARTY_PATH)/$@; \
-		$(MAKE) CROSS_COMPILE=$(CROSS_COMPILE_LINUX) ARCH=$(ARCH) KSRC=$(PWD)/linux-build ; \
+	@cd $(THIRDPARTY_PATH)/$@; \
+	if ! test -e $(THIRDPARTY_PATH)/$@/out; then \
+		$(MAKE) CROSS_COMPILE=$(CROSS_COMPILE_LINUX) ARCH=$(ARCH) KSRC=$(PWD)/linux-build hw; \
 	fi;
+	@cd $(THIRDPARTY_PATH)/$@; \
+	$(MAKE) CROSS_COMPILE=$(CROSS_COMPILE_LINUX) ARCH=$(ARCH) KSRC=$(PWD)/linux-build sw;
+	@for f in $$(cat $(THIRDPARTY_PATH)/$@/$@.kmd); do \
+		cp -r $(THIRDPARTY_PATH)/$@/sw/$$f sysroot/opt/drivers/; \
+	done;
+	@mkdir -p sysroot/root/$@
+	@for f in $$(cat $(THIRDPARTY_PATH)/$@/$@.umd); do \
+		cp -r $(THIRDPARTY_PATH)/$@/sw/$$f sysroot/root/$@/; \
+	done;
 
 thirdparty-accelerators: $(THIRDPARTY_ACCELERATORS)
 
