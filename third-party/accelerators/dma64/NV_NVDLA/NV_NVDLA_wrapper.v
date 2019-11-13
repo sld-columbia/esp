@@ -223,8 +223,8 @@ module NV_NVDLA_wrapper
 
    NV_NVDLA_apb2csb apb2csb_0
      (
-      .pclk(pclk)
-      ,.prstn(prstn)
+      .pclk(dla_csb_clk)
+      ,.prstn(dla_reset_rstn)
       ,.csb2nvdla_ready(csb2nvdla_ready)
       ,.nvdla2csb_data(nvdla2csb_data)
       ,.nvdla2csb_valid(nvdla2csb_valid)
