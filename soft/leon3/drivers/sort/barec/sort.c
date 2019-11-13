@@ -73,8 +73,15 @@ int main(int argc, char * argv[])
 		exit(EXIT_FAILURE);
 	}
 
+#ifndef __riscv 
 	printf("Test parameters: [LEN, BATCH] = [%d, %d]\n\n", SORT_LEN, SORT_BATCH);
-
+#else
+	print_uart("Test parameters: [LEN, BATCH] = [");
+	print_uart_int(SORT_LEN);
+	print_uart(" : ");
+	print_uart_int(SORT_BATCH);
+	print_uart("\n");
+#endif
 	for (n = 0; n < ndev; n++) {
 		for (coherence = ACC_COH_NONE; coherence <= ACC_COH_FULL; coherence++) {
 			struct esp_device *dev = &espdevs[n];
@@ -92,46 +99,63 @@ int main(int argc, char * argv[])
 			sort_len_min = ioread32(dev, SORT_LEN_MIN_REG);
 			sort_len_max = ioread32(dev, SORT_LEN_MAX_REG);
 
+#ifndef __riscv 
 			printf("******************** %s.%d ********************\n", DEV_NAME, n);
-
+#endif
 			// Check access ok
 			if (SORT_LEN < sort_len_min ||
 				SORT_LEN > sort_len_max ||
 				SORT_BATCH < 1 ||
 				SORT_BATCH > sort_batch_max) {
-				fprintf(stderr, "  Error: unsopported configuration parameters for %s.%d\n", DEV_NAME, n);
-				fprintf(stderr, "         device can sort up to %d fp-vectors of size [%d, %d]\n",
+#ifndef __riscv
+			    fprintf(stderr, "  Error: unsopported configuration parameters for %s.%d\n", DEV_NAME, n);
+			    fprintf(stderr, "         device can sort up to %d fp-vectors of size [%d, %d]\n",
 					sort_batch_max, sort_len_min, sort_len_max);
-
+#endif
 				break;
 			}
 
 			// Check if scatter-gather DMA is disabled
 			if (ioread32(dev, PT_NCHUNK_MAX_REG) == 0) {
-				printf("  -> scatter-gather DMA is disabled; revert to contiguous buffer.\n");
-				scatter_gather = 0;
-			} else {
-				printf("  -> scatter-gather DMA is enabled.\n");
+#ifndef __riscv
+			    printf("  -> scatter-gather DMA is disabled. Abort.\n");
+#else
+			    print_uart("  -> scatter-gather DMA is disabled. Abort.\n");
+#endif
+			    scatter_gather = 0;
 			}
 
 			if (scatter_gather)
 				if (ioread32(dev, PT_NCHUNK_MAX_REG) < NCHUNK) {
-					fprintf(stderr, "  Trying to allocate %lu chunks on %d TLB available entries\n",
-						NCHUNK, ioread32(dev, PT_NCHUNK_MAX_REG));
-					break;
+#ifndef __riscv
+				    printf("  -> Not enough TLB entries available. Abort.\n");
+#else
+				    print_uart("  -> Not enough TLB entries available. Abort.\n");
+#endif
+				    break;
 				}
 
 			// Allocate memory (will be contigous anyway in baremetal)
 			mem = aligned_malloc(SORT_BUF_SIZE);
+
+#ifndef __riscv
 			printf("  memory buffer base-address = %p\n", mem);
+#else
+			print_uart("  memory buffer base-address = "); print_uart_addr((uintptr_t) mem); print_uart("\n");
+#endif
 
 			if (scatter_gather) {
 				//Alocate and populate page table
 				ptable = aligned_malloc(NCHUNK * sizeof(unsigned *));
 				for (i = 0; i < NCHUNK; i++)
 					ptable[i] = (unsigned *) &mem[i * (CHUNK_SIZE / sizeof(unsigned))];
+#ifndef __riscv
 				printf("  ptable = %p\n", ptable);
 				printf("  nchunk = %lu\n", NCHUNK);
+#else
+				print_uart("  ptable = "); print_uart_addr((uintptr_t) ptable); print_uart("\n");
+				print_uart("  nchunk = "); print_uart_int(NCHUNK); print_uart("\n");
+#endif
 			}
 
 			// Initialize input: write floating point hex values (simpler to debug)
