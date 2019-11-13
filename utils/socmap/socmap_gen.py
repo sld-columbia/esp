@@ -112,10 +112,15 @@ SLD_APB_ADDR_MSK = 0xfff
 THIRDPARTY_APB_ADDR = dict()
 THIRDPARTY_APB_ADDR_MSK = dict()
 THIRDPARTY_APB_ADDR_SIZE = dict()
+THIRDPARTY_MEM_RESERVED_ADDR = dict()
+THIRDPARTY_MEM_RESERVED_SIZE = dict()
 
-THIRDPARTY_APB_ADDR["nv_nvdla"] = 0x300
+THIRDPARTY_APB_ADDR["nv_nvdla"] = 0x400
 THIRDPARTY_APB_ADDR_MSK["nv_nvdla"] = 0xC00
 THIRDPARTY_APB_ADDR_SIZE["nv_nvdla"] = 0x40000
+THIRDPARTY_MEM_RESERVED_ADDR["nv_nvdla"] = 0xB0000000
+THIRDPARTY_MEM_RESERVED_SIZE["nv_nvdla"] = 0x10000000
+
 
 class acc_info:
   uppercase_name = ""
@@ -735,7 +740,7 @@ def print_mapping(fp, esp_config):
     fp.write("  constant " + acc.lowercase_name + "_" + str(acc.id) + "_pmask : integer range 0 to 4095 := 16#" + str(msk) + "#;\n")
     fp.write("  constant " + acc.lowercase_name + "_" + str(acc.id) + "_pconfig : apb_config_type := (\n")
     fp.write("  0 => ahb_device_reg (VENDOR_SLD, SLD_" + acc.uppercase_name + ", 0, 0, " + str(acc.irq) + "),\n")
-    fp.write("  1 => apb_iobar(16#" + address + "#, 16#" + format(SLD_APB_ADDR_MSK, "03X")  + "#));\n\n")
+    fp.write("  1 => apb_iobar(16#" + address + "#, 16#" + msk  + "#));\n\n")
 
   #
   fp.write("  -- I/O bus slaves index / memory map\n")
@@ -1418,6 +1423,17 @@ def print_ariane_devtree(fp, esp_config):
   fp.write("      no-map;\n")
   fp.write("      reg = <0x0 0xA0000000 0x0 0x100000>;\n")
   fp.write("    };\n")
+  for i in range(esp_config.nacc):
+    acc = esp_config.accelerators[i]
+    if acc.vendor != "sld":
+      mem_address = format(THIRDPARTY_MEM_RESERVED_ADDR[acc.lowercase_name], "08X")
+      mem_size = format(THIRDPARTY_MEM_RESERVED_SIZE[acc.lowercase_name], "08X")
+      fp.write("\n")
+      fp.write("    " + acc.lowercase_name + "_reserved: buffer@" + mem_address + " {\n")
+      fp.write("      compatible = \"shared-dma-pool\";\n")
+      fp.write("      no-map;\n")
+      fp.write("      reg = <0x0 0x" + mem_address + " 0x0 0x" + mem_size + ">;\n")
+      fp.write("    };\n")
   fp.write("  };\n")
   fp.write("  L26: soc {\n")
   fp.write("    #address-cells = <2>;\n")
@@ -1496,6 +1512,7 @@ def print_ariane_devtree(fp, esp_config):
     fp.write("      interrupts = <4>;\n")
     fp.write("      reg-shift = <2>; // regs are spaced on 32 bit boundary\n")
     fp.write("      reg-io-width = <4>; // only 32-bit access are supported\n")
+    fp.write("      memory-region = <&" + acc.lowercase_name + "_reserved>;\n")
     fp.write("    };\n")
   fp.write("  };\n")
   fp.write("};\n")
