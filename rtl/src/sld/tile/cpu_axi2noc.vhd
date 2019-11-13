@@ -161,6 +161,7 @@ architecture rtl of cpu_axi2noc is
   attribute mark_debug of remote_ahbs_rcv_data_out : signal is "true";
   attribute mark_debug of transaction_reg : signal is "true";
   attribute mark_debug of current_state : signal is "true";
+  attribute mark_debug of selected : signal is "true";
   attribute mark_debug of sample_flits : signal is "true";
   attribute mark_debug of sample_and_hold : signal is "true";
   attribute mark_debug of mosi : signal is "true";
@@ -251,7 +252,7 @@ begin  -- rtl
 
     if tran.write = '1' then
       if retarget_for_dma = 1 then
-        tran.msg_type := DMA_TO_DEV;
+        tran.msg_type := DMA_FROM_DEV;
       else -- Processor core request
         if tran.dst_is_mem = '1' then
           -- Send to Memory
@@ -269,7 +270,7 @@ begin  -- rtl
       end if;
     else
       if retarget_for_dma = 1 then
-        tran.msg_type := DMA_FROM_DEV;
+        tran.msg_type := DMA_TO_DEV;
       else -- Processor core request
         if tran.dst_is_mem = '1' then
           -- Send to Memory
