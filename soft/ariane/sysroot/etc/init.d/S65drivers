@@ -6,37 +6,41 @@
 
 # Default values:
 #
-#               #DDR0#
-# 0x40000000 -> \----\
+#               #DDR#
+# 0x80000000 -> \----\
 #               |    |
 #               |    |
-#               |    | -> reserved (software only)
+#               |    | -> reserved for software only
 #               |    |
-#               |    |
-# 0x5bffffff -> \    | <- 0x5bfffff0 -> Leon3 stack pointer
-#               |    |
-#               |    | -> shared (software and accellerators)
-#               |    |
-# 0x5fffffff -> \----\
-
-#               #DDR1#
-# 0x60000000 -> \----\
+# 0xA0000000 -> |    | -> End of Ariane's L1 cacheable address space
+#               |    | -> reserved for Ethernet DMA
+# 0xA0100000 -> |    | -> End of Ethernet DMA buffer
 #               |    |
 #               |    |
 #               |    |
-#               |    |
-#               |    | -> shared (software and accellerators)
+#               |    | -> shared (software and accellerators) and cached in L2 and LLC
 #               |    |
 #               |    |
 #               |    |
 #               |    |
-# 0x7fffffff -> \----\
+#               |    |
+# 0xB0000000 -> |    | -> End shared accelerators' buffer
+#               |    |
+#               |    | -> reserved for NV_NVDLA
+#               |    |
+#               |    |
+# 0xBfffffff -> \----\ -> 1GB
 #
-# accelerator page: 2^20B -> 1MB
 
-# Adjust below if necessary
+# The current address mapping allows ESP to execute with accelerators
+# and NVDLA even on the VC707 board (1GB DDR3)
+# Adjust these settings in the system if necessary
+
+# accelerator page: 2^20B -> 1MB
+# shared accelerator buffer on DDR node 0 starts at 0xA0100000
+# shared accelerator buffer on DDR node 1 starts at 0xA8000000
 cd /opt/drivers-esp
-insmod contig_alloc.ko start=0xA0100000,0xB0000000 size=0xff00000,0x10000000 chunk_log=20
+insmod contig_alloc.ko start=0xA0100000,0xA8000000 size=0x7f00000,0x8000000 chunk_log=20
 insmod esp_cache.ko
 insmod esp_private_cache.ko
 insmod esp.ko
