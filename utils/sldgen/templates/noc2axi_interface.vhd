@@ -116,10 +116,18 @@ end;
   signal apbo : apb_slv_out_vector;
   signal pready : std_ulogic;
 
+  -- Plug&Play info
+  constant vendorid      : vendor_t               := VENDOR_SLD;
+  constant revision      : integer                := 0;
+  -- <<devid>>
+  constant pconfig : apb_config_type := (
+    0 => ahb_device_reg (vendorid, devid, 0, revision, pirq),
+    1 => apb_iobar(paddr, pmask));
+  signal apbi_paddr : std_logic_vector(31 downto 0);
+
   -- IRQ
   signal irq      : std_logic_vector(NAHBIRQ-1 downto 0);
-  signal irqset   : std_ulogic;
-  type irq_fsm is (idle, pending);
+  type irq_fsm is (idle, pending, wait_for_clear_irq);
   signal irq_state, irq_next : irq_fsm;
   signal irq_header_i, irq_header : misc_noc_flit_type;
   constant irq_info : std_logic_vector(3 downto 0) := conv_std_logic_vector(pirq, 4);
@@ -138,6 +146,8 @@ end;
   constant cacheable_mem_info : tile_mem_info_vector(0 to MEM_MAX_NUM - 1) := mem_info(0 to MEM_MAX_NUM - 1);
 
 begin
+
+  apbi_paddr <= apbi.paddr and X"0FFFFFFF";
 
   -- <<accelerator_instance>>
 
@@ -183,7 +193,7 @@ begin
       remote_ahbs_snd_full       => '0',
       remote_ahbs_rcv_rdreq      => open,
       remote_ahbs_rcv_data_out   => (others => '0'),
-      remote_ahbs_rcv_empty      => '0');
+      remote_ahbs_rcv_empty      => '1');
 
   -- APB proxy
   misc_noc2apb_1 : misc_noc2apb
@@ -218,6 +228,8 @@ begin
   apbo(pindex).pirq(NAHBIRQ - 1 downto pirq + 1) <= (others => '0');
   apbo(pindex).pirq(pirq) <= acc_done;
   apbo(pindex).pirq(pirq - 1 downto 0) <= (others => '0');
+  apbo(pindex).pconfig <= pconfig;
+  irq <= apbo(pindex).pirq;
 
 
   -- IRQ packet
@@ -240,12 +252,18 @@ begin
             irq_next <= pending;
           else
             interrupt_wrreq <= '1';
+            irq_next <= wait_for_clear_irq;
           end if;
         end if;
 
       when pending =>
         if interrupt_full = '0' then
           interrupt_wrreq <= '1';
+          irq_next <= wait_for_clear_irq;
+        end if;
+
+      when wait_for_clear_irq =>
+        if irq(pirq) = '0' then
           irq_next <= idle;
         end if;
 
@@ -321,5 +339,7 @@ begin
 
   mon_dvfs      <= monitor_dvfs_none;
   mon_cache     <= monitor_cache_none;
+
+  mon_dvfs_feedthru.transient <= '0';
 
 end rtl;

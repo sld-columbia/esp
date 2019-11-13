@@ -135,9 +135,7 @@ def gen_device_id(accelerator_list, axi_accelerator_list, template_dir, out_dir)
             f.write("  constant HLSCFG_" + acc.name.upper() + "_" + cfg.name.upper() + " " + ": hlscfg_t := " + str(conf_id) + ";\n")
             conf_id = conf_id + 1
       elif tline.find("-- <<devid>>") >= 0:
-        for acc in accelerator_list:
-          f.write("  constant SLD_" + acc.name.upper() + " " + ": devid_t := 16#" + acc.device_id + "#;\n")
-        for acc in axi_accelerator_list:
+        for acc in accelerator_list + axi_accelerator_list:
           f.write("  constant SLD_" + acc.name.upper() + " " + ": devid_t := 16#" + acc.device_id + "#;\n")
       elif tline.find("-- <<ddesc>>") >= 0:
         for acc in accelerator_list + axi_accelerator_list:
@@ -224,7 +222,7 @@ def write_axi_acc_interface(f, acc, dma_width):
 def bind_apb3(f, prefix):
   f.write("      " + prefix + "psel => apbi.psel(pindex),\n");
   f.write("      " + prefix + "penable => apbi.penable,\n");
-  f.write("      " + prefix + "paddr => apbi.paddr,\n");
+  f.write("      " + prefix + "paddr => apbi_paddr,\n");
   f.write("      " + prefix + "pwrite => apbi.pwrite,\n");
   f.write("      " + prefix + "pwdata => apbi.pwdata,\n");
   f.write("      " + prefix + "prdata => apbo(pindex).prdata,\n");
