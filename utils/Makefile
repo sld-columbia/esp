@@ -658,9 +658,6 @@ sysroot-clean:
 	$(QUIET_CLEAN)$(RM) sysroot.files sysroot.cpio
 	@$(MAKE) --quiet -C $(DRIVERS)/dvi/app clean
 	@if test -e linux-build; then \
-		ARCH=$(ARCH) CROSS_COMPILE=$(CROSS_COMPILE_LINUX) KSRC=$(PWD)/linux-build CONTIG_ALLOC_PATH=$(CONTIG_ALLOC_PATH) $(MAKE) --quiet -C $(ESP_CORE_PATH) clean; \
-		ARCH=$(ARCH) CROSS_COMPILE=$(CROSS_COMPILE_LINUX) KSRC=$(PWD)/linux-build CONTIG_ALLOC_PATH=$(CONTIG_ALLOC_PATH) $(MAKE) --quiet -C $(ESP_CORE_PATH)/../esp_cache clean; \
-		ARCH=$(ARCH) CROSS_COMPILE=$(CROSS_COMPILE_LINUX) KSRC=$(PWD)/linux-build $(MAKE) -C $(CONTIG_ALLOC_PATH) clean; \
 		$(MAKE) --quiet accelerators-driver-clean; \
 	fi;
 	@$(MAKE) --quiet accelerators-app-clean

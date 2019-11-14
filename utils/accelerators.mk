@@ -325,7 +325,7 @@ accelerators-driver-clean: $(ACCELERATORS-driver-clean) contig-clean esp-clean e
 
 accelerators-app: $(ACCELERATORS-app)
 
-accelerators-app-clean: $(ACCELERATORS-app-clean) test-clean
+accelerators-app-clean: $(ACCELERATORS-app-clean) test-clean libesp-clean
 
 accelerators-barec: $(ACCELERATORS-barec)
 
@@ -346,4 +346,7 @@ probe-clean:
 test-clean:
 	$(QUIET_CLEAN) CROSS_COMPILE=$(CROSS_COMPILE_LINUX) $(MAKE) -C $(DRIVERS)/test clean
 
-.PHONY: accelerators-driver accelerators-driver-clean accelerators-app accelerators-app-clean accelerators-barec accelerators-barec-clean probe-clean contig-clean esp-clean esp-cache-clean test-clean
+libesp-clean:
+	$(QUIET_CLEAN) CROSS_COMPILE=$(CROSS_COMPILE_LINUX) $(MAKE) -C $(DRIVERS)/libesp clean
+
+.PHONY: accelerators-driver accelerators-driver-clean accelerators-app accelerators-app-clean accelerators-barec accelerators-barec-clean probe-clean contig-clean esp-clean esp-cache-clean test-clean libesp-clean
