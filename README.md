@@ -2,7 +2,7 @@
 
 ![Open-ESP](esp-logo-small.png)
 
-The [ESP website] contains the complete information on the ESP project. The [documentation](https://www.esp.cs.columbia.edu/docs) page contains detailed guides and video tutorials that will be released periodically to help users get the most out of ESP.
+The [ESP website](https://www.esp.cs.columbia.edu) contains the complete information on the ESP project. The [documentation](https://www.esp.cs.columbia.edu/docs) page contains detailed guides and video tutorials that will be released periodically to help users get the most out of ESP.
 
 ESP is an open-source platform for heterogeneous SoC design and prototype on
 FPGA. It provides a flexible tile-based architecture built on a multi-plane
