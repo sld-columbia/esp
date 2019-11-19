@@ -1056,6 +1056,23 @@ component ahbxb is
       );
   end component;
 
+  component ahb2axi_l is
+    generic (
+      hindex    : integer;
+      hconfig   : ahb_config_type;
+      aximid    : integer range 0 to 15;
+      axisecure : boolean;
+      scantest  : integer);
+    port (
+      rst   : in  std_logic;
+      clk   : in  std_logic;
+      ahbsi : in  ahb_slv_in_type;
+      ahbso : out ahb_slv_out_type;
+      aximi : in  axi_somi_type;
+      aximo : out axi_mosi_type);
+  end component ahb2axi_l;
+
+
 -- pragma translate_off
 
   component ahbmon is
