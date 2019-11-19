@@ -809,6 +809,7 @@ begin
       local_x     => this_local_x,
       axitran     => GLOB_CPU_AXI,
       little_end  => GLOB_CPU_AXI,
+      narrow_noc  => 1,
       eth_dma     => 0,
       cacheline   => 1,
       l2_cache_en => 0)

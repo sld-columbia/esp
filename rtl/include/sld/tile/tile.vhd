@@ -540,6 +540,7 @@ package tile is
       axitran     : integer range 0 to 1 := 0;
       little_end  : integer range 0 to 1 := 0;
       eth_dma     : integer range 0 to 1 := 0;
+      narrow_noc  : integer range 0 to 1 := 0;
       cacheline   : integer;
       l2_cache_en : integer := 0);
     port (

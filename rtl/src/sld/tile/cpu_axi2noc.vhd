@@ -246,7 +246,7 @@ begin  -- rtl
     end if;
 
     -- Set message type
-    if tran.dst_is_mem = '1' and tran.size = HSIZE_DWORD then
+    if tran.size = HSIZE_DWORD then
       tran.hsize_msb := '1';
     end if;
 
@@ -300,12 +300,7 @@ begin  -- rtl
     tran.payload_length(7 downto 0) := tran.len;
 
     tran.payload_length_narrow(MISC_NOC_FLIT_SIZE-1 downto MISC_NOC_FLIT_SIZE-PREAMBLE_WIDTH) := PREAMBLE_TAIL;
-    if tran.dst_is_mem = '0' and tran.size = HSIZE_DWORD then
-      tran.payload_length_narrow(8 downto 0) := tran.len & '0';
-    else
-      tran.payload_length_narrow(8 downto 0) := '0' & tran.len;
-    end if;
-
+    tran.payload_length_narrow(7 downto 0) := tran.len;
 
     -- Create header flit
     tran.reserved             := (others => '0');
@@ -578,12 +573,13 @@ begin  -- rtl
           end if;
         else
           if remote_ahbs_snd_full = '0' and mst_valid = '1' then
+            if last = '1' then
+              payload_data_narrow_lsb(MISC_NOC_FLIT_SIZE-1 downto MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH) := PREAMBLE_TAIL;
+              next_state <= request_data_ack;
+            end if;
             slv_ready := '1';
             remote_ahbs_snd_data_in <= payload_data_narrow_lsb;
             remote_ahbs_snd_wrreq <= '1';
-            if last = '1' then
-              next_state <= request_data_ack;
-            end if;
           end if;
         end if;
 

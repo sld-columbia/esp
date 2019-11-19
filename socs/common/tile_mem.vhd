@@ -278,6 +278,7 @@ begin
         axitran     => GLOB_CPU_AXI,
         little_end  => GLOB_CPU_AXI,
         eth_dma     => 0,
+        narrow_noc  => 0,
         cacheline   => CFG_DLINE,
         l2_cache_en => CFG_L2_ENABLE)
       port map (
@@ -323,6 +324,7 @@ begin
         axitran     => 0,
         little_end  => 0,
         eth_dma     => 1,               -- Exception for fixed 32-bits DMA
+        narrow_noc  => 0,
         cacheline   => 1,
         l2_cache_en => 0)
       port map (
@@ -363,6 +365,7 @@ begin
         axitran     => GLOB_CPU_AXI,
         little_end  => GLOB_CPU_AXI,
         eth_dma     => 0,
+        narrow_noc  => 0,
         cacheline   => CFG_DLINE,
         l2_cache_en => CFG_L2_ENABLE)
       port map (
@@ -481,6 +484,7 @@ begin
         axitran     => 0,
         little_end  => 0,
         eth_dma     => 0,
+        narrow_noc  => 0,
         cacheline   => 1,
         l2_cache_en => 0)
       port map (
