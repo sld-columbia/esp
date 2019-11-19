@@ -33,6 +33,10 @@ case "$1" in
 esac
 
 ifup eth0
+export PASSWORD=openesp
+ifconfig eth0 $IP
+echo root:$PASSWORD | chpasswd
+echo "root password = $PASSWORD"
 
 exit $?
 
