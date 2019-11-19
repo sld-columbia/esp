@@ -30,7 +30,8 @@ module ariane_wrap
     input logic 			clk,
     input logic 			rstn,
     input logic [1:0] 			irq,
-    // TODO: add more AXI outputs for CLINT
+    input logic 			timer_irq,
+    input logic 			ipi,
     // -- ROM
     //    AW
     output logic [AXI_ID_WIDTH_SLV-1:0] rom_aw_id,
@@ -133,6 +134,57 @@ module ariane_wrap
     input logic [AXI_USER_WIDTH-1:0] 	dram_r_user,
     input logic 			dram_r_valid,
     output logic 			dram_r_ready,
+    // -- CLINT
+    //    AW
+    output logic [AXI_ID_WIDTH_SLV-1:0] clint_aw_id,
+    output logic [AXI_ADDR_WIDTH-1:0] 	clint_aw_addr,
+    output logic [7:0] 			clint_aw_len,
+    output logic [2:0] 			clint_aw_size,
+    output logic [1:0] 			clint_aw_burst,
+    output logic 			clint_aw_lock,
+    output logic [3:0] 			clint_aw_cache,
+    output logic [2:0] 			clint_aw_prot,
+    output logic [3:0] 			clint_aw_qos,
+    output logic [5:0] 			clint_aw_atop,
+    output logic [3:0] 			clint_aw_region,
+    output logic [AXI_USER_WIDTH-1:0] 	clint_aw_user,
+    output logic 			clint_aw_valid,
+    input logic 			clint_aw_ready,
+    //    W
+    output logic [AXI_DATA_WIDTH-1:0] 	clint_w_data,
+    output logic [AXI_STRB_WIDTH-1:0] 	clint_w_strb,
+    output logic 			clint_w_last,
+    output logic [AXI_USER_WIDTH-1:0] 	clint_w_user,
+    output logic 			clint_w_valid,
+    input logic 			clint_w_ready,
+    //    B
+    input logic [AXI_ID_WIDTH_SLV-1:0] 	clint_b_id,
+    input logic [1:0] 			clint_b_resp,
+    input logic [AXI_USER_WIDTH-1:0] 	clint_b_user,
+    input logic 			clint_b_valid,
+    output logic 			clint_b_ready,
+    //    AR
+    output logic [AXI_ID_WIDTH_SLV-1:0] clint_ar_id,
+    output logic [AXI_ADDR_WIDTH-1:0] 	clint_ar_addr,
+    output logic [7:0] 			clint_ar_len,
+    output logic [2:0] 			clint_ar_size,
+    output logic [1:0] 			clint_ar_burst,
+    output logic 			clint_ar_lock,
+    output logic [3:0] 			clint_ar_cache,
+    output logic [2:0] 			clint_ar_prot,
+    output logic [3:0] 			clint_ar_qos,
+    output logic [3:0] 			clint_ar_region,
+    output logic [AXI_USER_WIDTH-1:0] 	clint_ar_user,
+    output logic 			clint_ar_valid,
+    input logic 			clint_ar_ready,
+    //    R
+    input logic [AXI_ID_WIDTH_SLV-1:0] 	clint_r_id,
+    input logic [AXI_DATA_WIDTH-1:0] 	clint_r_data,
+    input logic [1:0] 			clint_r_resp,
+    input logic 			clint_r_last,
+    input logic [AXI_USER_WIDTH-1:0] 	clint_r_user,
+    input logic 			clint_r_valid,
+    output logic 			clint_r_ready,
     // APB
     output logic 			penable,
     output logic 			pwrite,
@@ -238,11 +290,6 @@ module ariane_wrap
    // ---------------
    // Core
    // ---------------
-   // TODO: move to inputs. These come from NoC
-   // input logic [NHARTS-1:0] 	   ipi;
-   // input logic [NHARTS-1:0] 	   time_irq;
-   logic 	ipi;
-   logic 	time_irq;
 
    ariane_axi::req_t    axi_ariane_req;
    ariane_axi::resp_t   axi_ariane_resp;
@@ -258,7 +305,7 @@ module ariane_wrap
 	.hart_id_i    ( HART_ID             ),
 	.irq_i        ( irq                 ),
 	.ipi_i        ( ipi	            ),
-	.time_irq_i   ( time_irq            ),
+	.time_irq_i   ( timer_irq           ),
 	.debug_req_i  ( 1'b0                ),
 	.axi_req_o    ( axi_ariane_req      ),
 	.axi_resp_i   ( axi_ariane_resp     )
@@ -270,6 +317,7 @@ module ariane_wrap
    // ---------------
    // ROM
    // ---------------
+   //    AW
    assign rom_aw_id = master[ROM].aw_id;
    assign rom_aw_addr = master[ROM].aw_addr;
    assign rom_aw_len = master[ROM].aw_len;
@@ -394,41 +442,58 @@ module ariane_wrap
 
 
    // ---------------
-   // CLINT (TODO: move to I/O tile)
+   // CLINT
    // ---------------
-   // divide clock by two
-   logic rtc;
-
-   always_ff @(posedge clk or negedge rstn) begin
-      if (~rstn) begin
-	 rtc <= 0;
-      end else begin
-	 rtc <= rtc ^ 1'b1;
-      end
-   end
-
-   ariane_axi::req_t    axi_clint_req;
-   ariane_axi::resp_t   axi_clint_resp;
-
-   clint
-     #(
-       .AXI_ADDR_WIDTH ( AXI_ADDR_WIDTH   ),
-       .AXI_DATA_WIDTH ( AXI_DATA_WIDTH   ),
-       .AXI_ID_WIDTH   ( AXI_ID_WIDTH_SLV ),
-       .NR_CORES       ( NHARTS           )
-       ) i_clint
-       (
-	.clk_i       ( clk            ),
-	.rst_ni      ( rstn           ),
-	.testmode_i  ( 1'b0           ),
-	.axi_req_i   ( axi_clint_req  ),
-	.axi_resp_o  ( axi_clint_resp ),
-	.rtc_i       ( rtc            ),
-	.timer_irq_o ( time_irq       ),
-	.ipi_o       ( ipi            )
-	);
-
-   axi_slave_connect i_axi_slave_connect_clint (.axi_req_o(axi_clint_req), .axi_resp_i(axi_clint_resp), .slave(master[CLINT]));
+   //    AW
+   assign clint_aw_id = master[CLINT].aw_id;
+   assign clint_aw_addr = master[CLINT].aw_addr;
+   assign clint_aw_len = master[CLINT].aw_len;
+   assign clint_aw_size = master[CLINT].aw_size;
+   assign clint_aw_burst = master[CLINT].aw_burst;
+   assign clint_aw_lock = master[CLINT].aw_lock;
+   assign clint_aw_cache = master[CLINT].aw_cache;
+   assign clint_aw_prot = master[CLINT].aw_prot;
+   assign clint_aw_qos = master[CLINT].aw_qos;
+   assign clint_aw_atop = master[CLINT].aw_atop;
+   assign clint_aw_region = master[CLINT].aw_region;
+   assign clint_aw_user = master[CLINT].aw_user;
+   assign clint_aw_valid = master[CLINT].aw_valid;
+   assign master[CLINT].aw_ready = clint_aw_ready;
+   //    W
+   assign clint_w_data = master[CLINT].w_data;
+   assign clint_w_strb = master[CLINT].w_strb;
+   assign clint_w_last = master[CLINT].w_last;
+   assign clint_w_user = master[CLINT].w_user;
+   assign clint_w_valid = master[CLINT].w_valid;
+   assign master[CLINT].w_ready = clint_w_ready;
+   //    B
+   assign master[CLINT].b_id = clint_b_id;
+   assign master[CLINT].b_resp = clint_b_resp;
+   assign master[CLINT].b_user = clint_b_user;
+   assign master[CLINT].b_valid = clint_b_valid;
+   assign clint_b_ready = master[CLINT].b_ready;
+   //    AR
+   assign clint_ar_id = master[CLINT].ar_id;
+   assign clint_ar_addr = master[CLINT].ar_addr;
+   assign clint_ar_len = master[CLINT].ar_len;
+   assign clint_ar_size = master[CLINT].ar_size;
+   assign clint_ar_burst = master[CLINT].ar_burst;
+   assign clint_ar_lock = master[CLINT].ar_lock;
+   assign clint_ar_cache = master[CLINT].ar_cache;
+   assign clint_ar_prot = master[CLINT].ar_prot;
+   assign clint_ar_qos = master[CLINT].ar_qos;
+   assign clint_ar_region = master[CLINT].ar_region;
+   assign clint_ar_user = master[CLINT].ar_user;
+   assign clint_ar_valid = master[CLINT].ar_valid;
+   assign master[CLINT].ar_ready = clint_ar_ready;
+   //    R
+   assign master[CLINT].r_id = clint_r_id;
+   assign master[CLINT].r_data = clint_r_data;
+   assign master[CLINT].r_resp = clint_r_resp;
+   assign master[CLINT].r_last = clint_r_last;
+   assign master[CLINT].r_user = clint_r_user;
+   assign master[CLINT].r_valid = clint_r_valid;
+   assign clint_r_ready = master[CLINT].r_ready;
 
 
    // ---------------
@@ -458,6 +523,7 @@ module ariane_wrap
 	.mst    ( dram         )
 	);
 
+   //    AW
    assign dram_aw_id = dram.aw_id;
    assign dram_aw_addr = dram.aw_addr;
    assign dram_aw_len = dram.aw_len;

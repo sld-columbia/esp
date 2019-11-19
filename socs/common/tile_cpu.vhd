@@ -46,6 +46,8 @@ entity tile_cpu is
     cpuerr             : out std_ulogic;
     -- TODO: remove this; should use proxy
     irq                : in  std_logic_vector(1 downto 0);
+    timer_irq           : in  std_ulogic;
+    ipi                : in  std_ulogic;
     -- NOC
     noc1_input_port    : out noc_flit_type;
     noc1_data_void_in  : out std_ulogic;
@@ -170,8 +172,8 @@ architecture rtl of tile_cpu is
   signal noc_apbo   : apb_slv_out_vector;
   signal apb_req    : std_ulogic;
   signal apb_ack    : std_ulogic;
-  signal mosi       : axi_mosi_vector(0 to 1);
-  signal somi       : axi_somi_vector(0 to 1);
+  signal mosi       : axi_mosi_vector(0 to 2);
+  signal somi       : axi_somi_vector(0 to 2);
 
   -- GRLIB parameters
   constant disas : integer := CFG_DISAS;
@@ -439,10 +441,14 @@ begin
         clk         => clk_feedthru,
         rstn        => cpurstn,
         irq         => irq,
+        timer_irq   => timer_irq,
+        ipi         => ipi,
         romi        => mosi(0),
         romo        => somi(0),
         drami       => mosi(1),
         dramo       => somi(1),
+        clinti      => mosi(2),
+        clinto      => somi(2),
         apbi        => apbi,
         apbo        => apbo,
         apb_req     => apb_req,
@@ -599,10 +605,10 @@ begin
       coherence_fwd_rdreq       <= '0';
       mon_cache                 <= monitor_cache_none;
 
-      cpu_axi2noc_1: entity work.cpu_axi2noc
+      cpu_axi2noc_1: cpu_axi2noc
         generic map (
           tech         => CFG_FABTECH,
-          nmst         => 2,
+          nmst         => 3,
           local_y      => this_local_y,
           local_x      => this_local_x,
           retarget_for_dma => 0,

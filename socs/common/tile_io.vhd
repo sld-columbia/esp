@@ -58,6 +58,8 @@ entity tile_io is
     uart_rtsn          : out std_ulogic;
     --TODO: REMOVE THIS and use NoC proxies
     irq                : out std_logic_vector(CFG_NCPU_TILE * 2 - 1 downto 0);
+    timer_irq          : out std_logic_vector(CFG_NCPU_TILE - 1 downto 0);
+    ipi                : out std_logic_vector(CFG_NCPU_TILE - 1 downto 0);
     -- NOC
     noc1_input_port    : out noc_flit_type;
     noc1_data_void_in  : out std_ulogic;
@@ -504,6 +506,19 @@ begin
         apbo        => noc_apbo(2),
         pready      => plic_pready,
         pslverr     => plic_pslverr);
+
+    riscv_clint_ahb_wrap_1: riscv_clint_ahb_wrap
+      generic map (
+        hindex  => clint_hindex,
+        hconfig => clint_hconfig,
+        NHARTS  => CFG_NCPU_TILE)
+      port map (
+        clk       => clk,
+        rstn      => rst,
+        timer_irq => timer_irq,
+        ipi       => ipi,
+        ahbsi     => ahbsi,
+        ahbso     => ahbso(clint_hindex));
 
   end generate;
 

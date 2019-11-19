@@ -28,10 +28,14 @@ entity ariane_axi_wrap is
     clk         : in  std_logic;
     rstn        : in  std_logic;
     irq         : in  std_logic_vector(1 downto 0);
+    timer_irq   : in  std_logic;
+    ipi         : in  std_logic;
     romi        : out axi_mosi_type;
     romo        : in  axi_somi_type;
     drami       : out axi_mosi_type;
     dramo       : in  axi_somi_type;
+    clinti      : out axi_mosi_type;
+    clinto      : in  axi_somi_type;
     apbi        : out apb_slv_in_type;
     apbo        : in  apb_slv_out_vector;
     apb_req     : out std_ulogic;
@@ -63,107 +67,154 @@ architecture rtl of ariane_axi_wrap is
       DRAMLength       : std_logic_vector(63 downto 0);
       DRAMCachedLength : std_logic_vector(63 downto 0));
     port (
-      clk            : in  std_logic;
-      rstn           : in  std_logic;
-      irq            : in  std_logic_vector(1 downto 0);
-      rom_aw_id      : out std_logic_vector(AXI_ID_WIDTH_SLV-1 downto 0);
-      rom_aw_addr    : out std_logic_vector(AXI_ADDR_WIDTH-1 downto 0);
-      rom_aw_len     : out std_logic_vector(7 downto 0);
-      rom_aw_size    : out std_logic_vector(2 downto 0);
-      rom_aw_burst   : out std_logic_vector(1 downto 0);
-      rom_aw_lock    : out std_logic;
-      rom_aw_cache   : out std_logic_vector(3 downto 0);
-      rom_aw_prot    : out std_logic_vector(2 downto 0);
-      rom_aw_qos     : out std_logic_vector(3 downto 0);
-      rom_aw_atop    : out std_logic_vector(5 downto 0);
-      rom_aw_region  : out std_logic_vector(3 downto 0);
-      rom_aw_user    : out std_logic_vector(AXI_USER_WIDTH-1 downto 0);
-      rom_aw_valid   : out std_logic;
-      rom_aw_ready   : in  std_logic;
-      rom_w_data     : out std_logic_vector(AXI_DATA_WIDTH-1 downto 0);
-      rom_w_strb     : out std_logic_vector(AXI_STRB_WIDTH-1 downto 0);
-      rom_w_last     : out std_logic;
-      rom_w_user     : out std_logic_vector(AXI_USER_WIDTH-1 downto 0);
-      rom_w_valid    : out std_logic;
-      rom_w_ready    : in  std_logic;
-      rom_b_id       : in  std_logic_vector(AXI_ID_WIDTH_SLV-1 downto 0);
-      rom_b_resp     : in  std_logic_vector(1 downto 0);
-      rom_b_user     : in  std_logic_vector(AXI_USER_WIDTH-1 downto 0);
-      rom_b_valid    : in  std_logic;
-      rom_b_ready    : out std_logic;
-      rom_ar_id      : out std_logic_vector(AXI_ID_WIDTH_SLV-1 downto 0);
-      rom_ar_addr    : out std_logic_vector(AXI_ADDR_WIDTH-1 downto 0);
-      rom_ar_len     : out std_logic_vector(7 downto 0);
-      rom_ar_size    : out std_logic_vector(2 downto 0);
-      rom_ar_burst   : out std_logic_vector(1 downto 0);
-      rom_ar_lock    : out std_logic;
-      rom_ar_cache   : out std_logic_vector(3 downto 0);
-      rom_ar_prot    : out std_logic_vector(2 downto 0);
-      rom_ar_qos     : out std_logic_vector(3 downto 0);
-      rom_ar_region  : out std_logic_vector(3 downto 0);
-      rom_ar_user    : out std_logic_vector(AXI_USER_WIDTH-1 downto 0);
-      rom_ar_valid   : out std_logic;
-      rom_ar_ready   : in  std_logic;
-      rom_r_id       : in  std_logic_vector(AXI_ID_WIDTH_SLV-1 downto 0);
-      rom_r_data     : in  std_logic_vector(AXI_DATA_WIDTH-1 downto 0);
-      rom_r_resp     : in  std_logic_vector(1 downto 0);
-      rom_r_last     : in  std_logic;
-      rom_r_user     : in  std_logic_vector(AXI_USER_WIDTH-1 downto 0);
-      rom_r_valid    : in  std_logic;
-      rom_r_ready    : out std_logic;
-      dram_aw_id     : out std_logic_vector(AXI_ID_WIDTH_SLV-1 downto 0);
-      dram_aw_addr   : out std_logic_vector(AXI_ADDR_WIDTH-1 downto 0);
-      dram_aw_len    : out std_logic_vector(7 downto 0);
-      dram_aw_size   : out std_logic_vector(2 downto 0);
-      dram_aw_burst  : out std_logic_vector(1 downto 0);
-      dram_aw_lock   : out std_logic;
-      dram_aw_cache  : out std_logic_vector(3 downto 0);
-      dram_aw_prot   : out std_logic_vector(2 downto 0);
-      dram_aw_qos    : out std_logic_vector(3 downto 0);
-      dram_aw_atop   : out std_logic_vector(5 downto 0);
-      dram_aw_region : out std_logic_vector(3 downto 0);
-      dram_aw_user   : out std_logic_vector(AXI_USER_WIDTH-1 downto 0);
-      dram_aw_valid  : out std_logic;
-      dram_aw_ready  : in  std_logic;
-      dram_w_data    : out std_logic_vector(AXI_DATA_WIDTH-1 downto 0);
-      dram_w_strb    : out std_logic_vector(AXI_STRB_WIDTH-1 downto 0);
-      dram_w_last    : out std_logic;
-      dram_w_user    : out std_logic_vector(AXI_USER_WIDTH-1 downto 0);
-      dram_w_valid   : out std_logic;
-      dram_w_ready   : in  std_logic;
-      dram_b_id      : in  std_logic_vector(AXI_ID_WIDTH_SLV-1 downto 0);
-      dram_b_resp    : in  std_logic_vector(1 downto 0);
-      dram_b_user    : in  std_logic_vector(AXI_USER_WIDTH-1 downto 0);
-      dram_b_valid   : in  std_logic;
-      dram_b_ready   : out std_logic;
-      dram_ar_id     : out std_logic_vector(AXI_ID_WIDTH_SLV-1 downto 0);
-      dram_ar_addr   : out std_logic_vector(AXI_ADDR_WIDTH-1 downto 0);
-      dram_ar_len    : out std_logic_vector(7 downto 0);
-      dram_ar_size   : out std_logic_vector(2 downto 0);
-      dram_ar_burst  : out std_logic_vector(1 downto 0);
-      dram_ar_lock   : out std_logic;
-      dram_ar_cache  : out std_logic_vector(3 downto 0);
-      dram_ar_prot   : out std_logic_vector(2 downto 0);
-      dram_ar_qos    : out std_logic_vector(3 downto 0);
-      dram_ar_region : out std_logic_vector(3 downto 0);
-      dram_ar_user   : out std_logic_vector(AXI_USER_WIDTH-1 downto 0);
-      dram_ar_valid  : out std_logic;
-      dram_ar_ready  : in  std_logic;
-      dram_r_id      : in  std_logic_vector(AXI_ID_WIDTH_SLV-1 downto 0);
-      dram_r_data    : in  std_logic_vector(AXI_DATA_WIDTH-1 downto 0);
-      dram_r_resp    : in  std_logic_vector(1 downto 0);
-      dram_r_last    : in  std_logic;
-      dram_r_user    : in  std_logic_vector(AXI_USER_WIDTH-1 downto 0);
-      dram_r_valid   : in  std_logic;
-      dram_r_ready   : out std_logic;
-      penable        : out std_logic;
-      pwrite         : out std_logic;
-      paddr          : out std_logic_vector(31 downto 0);
-      psel           : out std_logic;
-      pwdata         : out std_logic_vector(31 downto 0);
-      prdata         : in  std_logic_vector(31 downto 0);
-      pready         : in  std_logic;
-      pslverr        : in  std_logic);
+      clk             : in  std_logic;
+      rstn            : in  std_logic;
+      irq             : in  std_logic_vector(1 downto 0);
+      timer_irq       : in  std_logic;
+      ipi             : in  std_logic;
+      rom_aw_id       : out std_logic_vector(AXI_ID_WIDTH_SLV-1 downto 0);
+      rom_aw_addr     : out std_logic_vector(AXI_ADDR_WIDTH-1 downto 0);
+      rom_aw_len      : out std_logic_vector(7 downto 0);
+      rom_aw_size     : out std_logic_vector(2 downto 0);
+      rom_aw_burst    : out std_logic_vector(1 downto 0);
+      rom_aw_lock     : out std_logic;
+      rom_aw_cache    : out std_logic_vector(3 downto 0);
+      rom_aw_prot     : out std_logic_vector(2 downto 0);
+      rom_aw_qos      : out std_logic_vector(3 downto 0);
+      rom_aw_atop     : out std_logic_vector(5 downto 0);
+      rom_aw_region   : out std_logic_vector(3 downto 0);
+      rom_aw_user     : out std_logic_vector(AXI_USER_WIDTH-1 downto 0);
+      rom_aw_valid    : out std_logic;
+      rom_aw_ready    : in  std_logic;
+      rom_w_data      : out std_logic_vector(AXI_DATA_WIDTH-1 downto 0);
+      rom_w_strb      : out std_logic_vector(AXI_STRB_WIDTH-1 downto 0);
+      rom_w_last      : out std_logic;
+      rom_w_user      : out std_logic_vector(AXI_USER_WIDTH-1 downto 0);
+      rom_w_valid     : out std_logic;
+      rom_w_ready     : in  std_logic;
+      rom_b_id        : in  std_logic_vector(AXI_ID_WIDTH_SLV-1 downto 0);
+      rom_b_resp      : in  std_logic_vector(1 downto 0);
+      rom_b_user      : in  std_logic_vector(AXI_USER_WIDTH-1 downto 0);
+      rom_b_valid     : in  std_logic;
+      rom_b_ready     : out std_logic;
+      rom_ar_id       : out std_logic_vector(AXI_ID_WIDTH_SLV-1 downto 0);
+      rom_ar_addr     : out std_logic_vector(AXI_ADDR_WIDTH-1 downto 0);
+      rom_ar_len      : out std_logic_vector(7 downto 0);
+      rom_ar_size     : out std_logic_vector(2 downto 0);
+      rom_ar_burst    : out std_logic_vector(1 downto 0);
+      rom_ar_lock     : out std_logic;
+      rom_ar_cache    : out std_logic_vector(3 downto 0);
+      rom_ar_prot     : out std_logic_vector(2 downto 0);
+      rom_ar_qos      : out std_logic_vector(3 downto 0);
+      rom_ar_region   : out std_logic_vector(3 downto 0);
+      rom_ar_user     : out std_logic_vector(AXI_USER_WIDTH-1 downto 0);
+      rom_ar_valid    : out std_logic;
+      rom_ar_ready    : in  std_logic;
+      rom_r_id        : in  std_logic_vector(AXI_ID_WIDTH_SLV-1 downto 0);
+      rom_r_data      : in  std_logic_vector(AXI_DATA_WIDTH-1 downto 0);
+      rom_r_resp      : in  std_logic_vector(1 downto 0);
+      rom_r_last      : in  std_logic;
+      rom_r_user      : in  std_logic_vector(AXI_USER_WIDTH-1 downto 0);
+      rom_r_valid     : in  std_logic;
+      rom_r_ready     : out std_logic;
+      dram_aw_id      : out std_logic_vector(AXI_ID_WIDTH_SLV-1 downto 0);
+      dram_aw_addr    : out std_logic_vector(AXI_ADDR_WIDTH-1 downto 0);
+      dram_aw_len     : out std_logic_vector(7 downto 0);
+      dram_aw_size    : out std_logic_vector(2 downto 0);
+      dram_aw_burst   : out std_logic_vector(1 downto 0);
+      dram_aw_lock    : out std_logic;
+      dram_aw_cache   : out std_logic_vector(3 downto 0);
+      dram_aw_prot    : out std_logic_vector(2 downto 0);
+      dram_aw_qos     : out std_logic_vector(3 downto 0);
+      dram_aw_atop    : out std_logic_vector(5 downto 0);
+      dram_aw_region  : out std_logic_vector(3 downto 0);
+      dram_aw_user    : out std_logic_vector(AXI_USER_WIDTH-1 downto 0);
+      dram_aw_valid   : out std_logic;
+      dram_aw_ready   : in  std_logic;
+      dram_w_data     : out std_logic_vector(AXI_DATA_WIDTH-1 downto 0);
+      dram_w_strb     : out std_logic_vector(AXI_STRB_WIDTH-1 downto 0);
+      dram_w_last     : out std_logic;
+      dram_w_user     : out std_logic_vector(AXI_USER_WIDTH-1 downto 0);
+      dram_w_valid    : out std_logic;
+      dram_w_ready    : in  std_logic;
+      dram_b_id       : in  std_logic_vector(AXI_ID_WIDTH_SLV-1 downto 0);
+      dram_b_resp     : in  std_logic_vector(1 downto 0);
+      dram_b_user     : in  std_logic_vector(AXI_USER_WIDTH-1 downto 0);
+      dram_b_valid    : in  std_logic;
+      dram_b_ready    : out std_logic;
+      dram_ar_id      : out std_logic_vector(AXI_ID_WIDTH_SLV-1 downto 0);
+      dram_ar_addr    : out std_logic_vector(AXI_ADDR_WIDTH-1 downto 0);
+      dram_ar_len     : out std_logic_vector(7 downto 0);
+      dram_ar_size    : out std_logic_vector(2 downto 0);
+      dram_ar_burst   : out std_logic_vector(1 downto 0);
+      dram_ar_lock    : out std_logic;
+      dram_ar_cache   : out std_logic_vector(3 downto 0);
+      dram_ar_prot    : out std_logic_vector(2 downto 0);
+      dram_ar_qos     : out std_logic_vector(3 downto 0);
+      dram_ar_region  : out std_logic_vector(3 downto 0);
+      dram_ar_user    : out std_logic_vector(AXI_USER_WIDTH-1 downto 0);
+      dram_ar_valid   : out std_logic;
+      dram_ar_ready   : in  std_logic;
+      dram_r_id       : in  std_logic_vector(AXI_ID_WIDTH_SLV-1 downto 0);
+      dram_r_data     : in  std_logic_vector(AXI_DATA_WIDTH-1 downto 0);
+      dram_r_resp     : in  std_logic_vector(1 downto 0);
+      dram_r_last     : in  std_logic;
+      dram_r_user     : in  std_logic_vector(AXI_USER_WIDTH-1 downto 0);
+      dram_r_valid    : in  std_logic;
+      dram_r_ready    : out std_logic;
+      clint_aw_id     : out std_logic_vector(AXI_ID_WIDTH_SLV-1 downto 0);
+      clint_aw_addr   : out std_logic_vector(AXI_ADDR_WIDTH-1 downto 0);
+      clint_aw_len    : out std_logic_vector(7 downto 0);
+      clint_aw_size   : out std_logic_vector(2 downto 0);
+      clint_aw_burst  : out std_logic_vector(1 downto 0);
+      clint_aw_lock   : out std_logic;
+      clint_aw_cache  : out std_logic_vector(3 downto 0);
+      clint_aw_prot   : out std_logic_vector(2 downto 0);
+      clint_aw_qos    : out std_logic_vector(3 downto 0);
+      clint_aw_atop   : out std_logic_vector(5 downto 0);
+      clint_aw_region : out std_logic_vector(3 downto 0);
+      clint_aw_user   : out std_logic_vector(AXI_USER_WIDTH-1 downto 0);
+      clint_aw_valid  : out std_logic;
+      clint_aw_ready  : in  std_logic;
+      clint_w_data    : out std_logic_vector(AXI_DATA_WIDTH-1 downto 0);
+      clint_w_strb    : out std_logic_vector(AXI_STRB_WIDTH-1 downto 0);
+      clint_w_last    : out std_logic;
+      clint_w_user    : out std_logic_vector(AXI_USER_WIDTH-1 downto 0);
+      clint_w_valid   : out std_logic;
+      clint_w_ready   : in  std_logic;
+      clint_b_id      : in  std_logic_vector(AXI_ID_WIDTH_SLV-1 downto 0);
+      clint_b_resp    : in  std_logic_vector(1 downto 0);
+      clint_b_user    : in  std_logic_vector(AXI_USER_WIDTH-1 downto 0);
+      clint_b_valid   : in  std_logic;
+      clint_b_ready   : out std_logic;
+      clint_ar_id     : out std_logic_vector(AXI_ID_WIDTH_SLV-1 downto 0);
+      clint_ar_addr   : out std_logic_vector(AXI_ADDR_WIDTH-1 downto 0);
+      clint_ar_len    : out std_logic_vector(7 downto 0);
+      clint_ar_size   : out std_logic_vector(2 downto 0);
+      clint_ar_burst  : out std_logic_vector(1 downto 0);
+      clint_ar_lock   : out std_logic;
+      clint_ar_cache  : out std_logic_vector(3 downto 0);
+      clint_ar_prot   : out std_logic_vector(2 downto 0);
+      clint_ar_qos    : out std_logic_vector(3 downto 0);
+      clint_ar_region : out std_logic_vector(3 downto 0);
+      clint_ar_user   : out std_logic_vector(AXI_USER_WIDTH-1 downto 0);
+      clint_ar_valid  : out std_logic;
+      clint_ar_ready  : in  std_logic;
+      clint_r_id      : in  std_logic_vector(AXI_ID_WIDTH_SLV-1 downto 0);
+      clint_r_data    : in  std_logic_vector(AXI_DATA_WIDTH-1 downto 0);
+      clint_r_resp    : in  std_logic_vector(1 downto 0);
+      clint_r_last    : in  std_logic;
+      clint_r_user    : in  std_logic_vector(AXI_USER_WIDTH-1 downto 0);
+      clint_r_valid   : in  std_logic;
+      clint_r_ready   : out std_logic;
+      penable         : out std_logic;
+      pwrite          : out std_logic;
+      paddr           : out std_logic_vector(31 downto 0);
+      psel            : out std_logic;
+      pwdata          : out std_logic_vector(31 downto 0);
+      prdata          : in  std_logic_vector(31 downto 0);
+      pready          : in  std_logic;
+      pslverr         : in  std_logic);
   end component ariane_wrap;
 
   signal penable      : std_logic;
@@ -202,113 +253,162 @@ begin  -- architecture rtl
       DRAMLength       => DRAMLength,
       DRAMCachedLength => DRAMCachedLength)
     port map (
-      clk            => clk,
-      rstn           => rstn,
-      irq            => irq,
-      rom_aw_id      => romi.aw.id(ARIANE_AXI_ID_WIDTH_SLV - 1 downto 0),
-      rom_aw_addr    => romi.aw.addr,
-      rom_aw_len     => romi.aw.len,
-      rom_aw_size    => romi.aw.size,
-      rom_aw_burst   => romi.aw.burst,
-      rom_aw_lock    => romi.aw.lock,
-      rom_aw_cache   => romi.aw.cache,
-      rom_aw_prot    => romi.aw.prot,
-      rom_aw_qos     => romi.aw.qos,
-      rom_aw_atop    => romi.aw.atop,
-      rom_aw_region  => romi.aw.region,
-      rom_aw_user    => romi.aw.user,
-      rom_aw_valid   => romi.aw.valid,
-      rom_aw_ready   => romo.aw.ready,
-      rom_w_data     => romi.w.data,
-      rom_w_strb     => romi.w.strb,
-      rom_w_last     => romi.w.last,
-      rom_w_user     => romi.w.user,
-      rom_w_valid    => romi.w.valid,
-      rom_w_ready    => romo.w.ready,
-      rom_b_id       => romo.b.id(ARIANE_AXI_ID_WIDTH_SLV - 1 downto 0),
-      rom_b_resp     => romo.b.resp,
-      rom_b_user     => romo.b.user,
-      rom_b_valid    => romo.b.valid,
-      rom_b_ready    => romi.b.ready,
-      rom_ar_id      => romi.ar.id(ARIANE_AXI_ID_WIDTH_SLV - 1 downto 0),
-      rom_ar_addr    => romi.ar.addr,
-      rom_ar_len     => romi.ar.len,
-      rom_ar_size    => romi.ar.size,
-      rom_ar_burst   => romi.ar.burst,
-      rom_ar_lock    => romi.ar.lock,
-      rom_ar_cache   => romi.ar.cache,
-      rom_ar_prot    => romi.ar.prot,
-      rom_ar_qos     => romi.ar.qos,
-      rom_ar_region  => romi.ar.region,
-      rom_ar_user    => romi.ar.user,
-      rom_ar_valid   => romi.ar.valid,
-      rom_ar_ready   => romo.ar.ready,
-      rom_r_id       => romo.r.id(ARIANE_AXI_ID_WIDTH_SLV - 1 downto 0),
-      rom_r_data     => romo.r.data,
-      rom_r_resp     => romo.r.resp,
-      rom_r_last     => romo.r.last,
-      rom_r_user     => romo.r.user,
-      rom_r_valid    => romo.r.valid,
-      rom_r_ready    => romi.r.ready,
-      dram_aw_id     => drami.aw.id(ARIANE_AXI_ID_WIDTH_SLV - 1 downto 0),
-      dram_aw_addr   => drami.aw.addr,
-      dram_aw_len    => drami.aw.len,
-      dram_aw_size   => drami.aw.size,
-      dram_aw_burst  => drami.aw.burst,
-      dram_aw_lock   => drami.aw.lock,
-      dram_aw_cache  => drami.aw.cache,
-      dram_aw_prot   => drami.aw.prot,
-      dram_aw_qos    => drami.aw.qos,
-      dram_aw_atop   => drami.aw.atop,
-      dram_aw_region => drami.aw.region,
-      dram_aw_user   => drami.aw.user,
-      dram_aw_valid  => drami.aw.valid,
-      dram_aw_ready  => dramo.aw.ready,
-      dram_w_data    => drami.w.data,
-      dram_w_strb    => drami.w.strb,
-      dram_w_last    => drami.w.last,
-      dram_w_user    => drami.w.user,
-      dram_w_valid   => drami.w.valid,
-      dram_w_ready   => dramo.w.ready,
-      dram_b_id      => dramo.b.id(ARIANE_AXI_ID_WIDTH_SLV - 1 downto 0),
-      dram_b_resp    => dramo.b.resp,
-      dram_b_user    => dramo.b.user,
-      dram_b_valid   => dramo.b.valid,
-      dram_b_ready   => drami.b.ready,
-      dram_ar_id     => drami.ar.id(ARIANE_AXI_ID_WIDTH_SLV - 1 downto 0),
-      dram_ar_addr   => drami.ar.addr,
-      dram_ar_len    => drami.ar.len,
-      dram_ar_size   => drami.ar.size,
-      dram_ar_burst  => drami.ar.burst,
-      dram_ar_lock   => drami.ar.lock,
-      dram_ar_cache  => drami.ar.cache,
-      dram_ar_prot   => drami.ar.prot,
-      dram_ar_qos    => drami.ar.qos,
-      dram_ar_region => drami.ar.region,
-      dram_ar_user   => drami.ar.user,
-      dram_ar_valid  => drami.ar.valid,
-      dram_ar_ready  => dramo.ar.ready,
-      dram_r_id      => dramo.r.id(ARIANE_AXI_ID_WIDTH_SLV - 1 downto 0),
-      dram_r_data    => dramo.r.data,
-      dram_r_resp    => dramo.r.resp,
-      dram_r_last    => dramo.r.last,
-      dram_r_user    => dramo.r.user,
-      dram_r_valid   => dramo.r.valid,
-      dram_r_ready   => drami.r.ready,
-      penable        => penable,
-      pwrite         => pwrite,
-      paddr          => paddr,
-      psel           => psel,
-      pwdata         => pwdata,
-      prdata         => prdata,
-      pready         => apb_ack,
-      pslverr        => '0');
+      clk             => clk,
+      rstn            => rstn,
+      irq             => irq,
+      timer_irq       => timer_irq,
+      ipi             => ipi,
+      rom_aw_id       => romi.aw.id(ARIANE_AXI_ID_WIDTH_SLV - 1 downto 0),
+      rom_aw_addr     => romi.aw.addr,
+      rom_aw_len      => romi.aw.len,
+      rom_aw_size     => romi.aw.size,
+      rom_aw_burst    => romi.aw.burst,
+      rom_aw_lock     => romi.aw.lock,
+      rom_aw_cache    => romi.aw.cache,
+      rom_aw_prot     => romi.aw.prot,
+      rom_aw_qos      => romi.aw.qos,
+      rom_aw_atop     => romi.aw.atop,
+      rom_aw_region   => romi.aw.region,
+      rom_aw_user     => romi.aw.user,
+      rom_aw_valid    => romi.aw.valid,
+      rom_aw_ready    => romo.aw.ready,
+      rom_w_data      => romi.w.data,
+      rom_w_strb      => romi.w.strb,
+      rom_w_last      => romi.w.last,
+      rom_w_user      => romi.w.user,
+      rom_w_valid     => romi.w.valid,
+      rom_w_ready     => romo.w.ready,
+      rom_b_id        => romo.b.id(ARIANE_AXI_ID_WIDTH_SLV - 1 downto 0),
+      rom_b_resp      => romo.b.resp,
+      rom_b_user      => romo.b.user,
+      rom_b_valid     => romo.b.valid,
+      rom_b_ready     => romi.b.ready,
+      rom_ar_id       => romi.ar.id(ARIANE_AXI_ID_WIDTH_SLV - 1 downto 0),
+      rom_ar_addr     => romi.ar.addr,
+      rom_ar_len      => romi.ar.len,
+      rom_ar_size     => romi.ar.size,
+      rom_ar_burst    => romi.ar.burst,
+      rom_ar_lock     => romi.ar.lock,
+      rom_ar_cache    => romi.ar.cache,
+      rom_ar_prot     => romi.ar.prot,
+      rom_ar_qos      => romi.ar.qos,
+      rom_ar_region   => romi.ar.region,
+      rom_ar_user     => romi.ar.user,
+      rom_ar_valid    => romi.ar.valid,
+      rom_ar_ready    => romo.ar.ready,
+      rom_r_id        => romo.r.id(ARIANE_AXI_ID_WIDTH_SLV - 1 downto 0),
+      rom_r_data      => romo.r.data,
+      rom_r_resp      => romo.r.resp,
+      rom_r_last      => romo.r.last,
+      rom_r_user      => romo.r.user,
+      rom_r_valid     => romo.r.valid,
+      rom_r_ready     => romi.r.ready,
+      dram_aw_id      => drami.aw.id(ARIANE_AXI_ID_WIDTH_SLV - 1 downto 0),
+      dram_aw_addr    => drami.aw.addr,
+      dram_aw_len     => drami.aw.len,
+      dram_aw_size    => drami.aw.size,
+      dram_aw_burst   => drami.aw.burst,
+      dram_aw_lock    => drami.aw.lock,
+      dram_aw_cache   => drami.aw.cache,
+      dram_aw_prot    => drami.aw.prot,
+      dram_aw_qos     => drami.aw.qos,
+      dram_aw_atop    => drami.aw.atop,
+      dram_aw_region  => drami.aw.region,
+      dram_aw_user    => drami.aw.user,
+      dram_aw_valid   => drami.aw.valid,
+      dram_aw_ready   => dramo.aw.ready,
+      dram_w_data     => drami.w.data,
+      dram_w_strb     => drami.w.strb,
+      dram_w_last     => drami.w.last,
+      dram_w_user     => drami.w.user,
+      dram_w_valid    => drami.w.valid,
+      dram_w_ready    => dramo.w.ready,
+      dram_b_id       => dramo.b.id(ARIANE_AXI_ID_WIDTH_SLV - 1 downto 0),
+      dram_b_resp     => dramo.b.resp,
+      dram_b_user     => dramo.b.user,
+      dram_b_valid    => dramo.b.valid,
+      dram_b_ready    => drami.b.ready,
+      dram_ar_id      => drami.ar.id(ARIANE_AXI_ID_WIDTH_SLV - 1 downto 0),
+      dram_ar_addr    => drami.ar.addr,
+      dram_ar_len     => drami.ar.len,
+      dram_ar_size    => drami.ar.size,
+      dram_ar_burst   => drami.ar.burst,
+      dram_ar_lock    => drami.ar.lock,
+      dram_ar_cache   => drami.ar.cache,
+      dram_ar_prot    => drami.ar.prot,
+      dram_ar_qos     => drami.ar.qos,
+      dram_ar_region  => drami.ar.region,
+      dram_ar_user    => drami.ar.user,
+      dram_ar_valid   => drami.ar.valid,
+      dram_ar_ready   => dramo.ar.ready,
+      dram_r_id       => dramo.r.id(ARIANE_AXI_ID_WIDTH_SLV - 1 downto 0),
+      dram_r_data     => dramo.r.data,
+      dram_r_resp     => dramo.r.resp,
+      dram_r_last     => dramo.r.last,
+      dram_r_user     => dramo.r.user,
+      dram_r_valid    => dramo.r.valid,
+      dram_r_ready    => drami.r.ready,
+      clint_aw_id     => clinti.aw.id(ARIANE_AXI_ID_WIDTH_SLV - 1 downto 0),
+      clint_aw_addr   => clinti.aw.addr,
+      clint_aw_len    => clinti.aw.len,
+      clint_aw_size   => clinti.aw.size,
+      clint_aw_burst  => clinti.aw.burst,
+      clint_aw_lock   => clinti.aw.lock,
+      clint_aw_cache  => clinti.aw.cache,
+      clint_aw_prot   => clinti.aw.prot,
+      clint_aw_qos    => clinti.aw.qos,
+      clint_aw_atop   => clinti.aw.atop,
+      clint_aw_region => clinti.aw.region,
+      clint_aw_user   => clinti.aw.user,
+      clint_aw_valid  => clinti.aw.valid,
+      clint_aw_ready  => clinto.aw.ready,
+      clint_w_data    => clinti.w.data,
+      clint_w_strb    => clinti.w.strb,
+      clint_w_last    => clinti.w.last,
+      clint_w_user    => clinti.w.user,
+      clint_w_valid   => clinti.w.valid,
+      clint_w_ready   => clinto.w.ready,
+      clint_b_id      => clinto.b.id(ARIANE_AXI_ID_WIDTH_SLV - 1 downto 0),
+      clint_b_resp    => clinto.b.resp,
+      clint_b_user    => clinto.b.user,
+      clint_b_valid   => clinto.b.valid,
+      clint_b_ready   => clinti.b.ready,
+      clint_ar_id     => clinti.ar.id(ARIANE_AXI_ID_WIDTH_SLV - 1 downto 0),
+      clint_ar_addr   => clinti.ar.addr,
+      clint_ar_len    => clinti.ar.len,
+      clint_ar_size   => clinti.ar.size,
+      clint_ar_burst  => clinti.ar.burst,
+      clint_ar_lock   => clinti.ar.lock,
+      clint_ar_cache  => clinti.ar.cache,
+      clint_ar_prot   => clinti.ar.prot,
+      clint_ar_qos    => clinti.ar.qos,
+      clint_ar_region => clinti.ar.region,
+      clint_ar_user   => clinti.ar.user,
+      clint_ar_valid  => clinti.ar.valid,
+      clint_ar_ready  => clinto.ar.ready,
+      clint_r_id      => clinto.r.id(ARIANE_AXI_ID_WIDTH_SLV - 1 downto 0),
+      clint_r_data    => clinto.r.data,
+      clint_r_resp    => clinto.r.resp,
+      clint_r_last    => clinto.r.last,
+      clint_r_user    => clinto.r.user,
+      clint_r_valid   => clinto.r.valid,
+      clint_r_ready   => clinti.r.ready,
+      penable         => penable,
+      pwrite          => pwrite,
+      paddr           => paddr,
+      psel            => psel,
+      pwdata          => pwdata,
+      prdata          => prdata,
+      pready          => apb_ack,
+      pslverr         => '0');
 
   -- Unused extended AXI ID
   romi.aw.id(XID_WIDTH - 1 downto ARIANE_AXI_ID_WIDTH_SLV)  <= (others => '0');
   romi.ar.id(XID_WIDTH - 1 downto ARIANE_AXI_ID_WIDTH_SLV)  <= (others => '0');
   drami.aw.id(XID_WIDTH - 1 downto ARIANE_AXI_ID_WIDTH_SLV) <= (others => '0');
   drami.ar.id(XID_WIDTH - 1 downto ARIANE_AXI_ID_WIDTH_SLV) <= (others => '0');
+  clinti.aw.id(XID_WIDTH - 1 downto ARIANE_AXI_ID_WIDTH_SLV)  <= (others => '0');
+  clinti.ar.id(XID_WIDTH - 1 downto ARIANE_AXI_ID_WIDTH_SLV)  <= (others => '0');
 
   -- Unused
   apbi.pirq    <= (others => '0');

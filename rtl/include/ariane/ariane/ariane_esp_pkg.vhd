@@ -27,10 +27,14 @@ package ariane_esp_pkg is
       clk         : in  std_logic;
       rstn        : in  std_logic;
       irq         : in  std_logic_vector(1 downto 0);
+      timer_irq   : in  std_logic;
+      ipi         : in  std_logic;
       romi        : out axi_mosi_type;
       romo        : in  axi_somi_type;
       drami       : out axi_mosi_type;
       dramo       : in  axi_somi_type;
+      clinti      : out axi_mosi_type;
+      clinto      : in  axi_somi_type;
       apbi        : out apb_slv_in_type;
       apbo        : in  apb_slv_out_vector;
       apb_req     : out std_ulogic;
@@ -53,5 +57,19 @@ package ariane_esp_pkg is
       pready      : out std_ulogic;
       pslverr     : out std_ulogic);
   end component riscv_plic_apb_wrap;
+
+  component riscv_clint_ahb_wrap is
+    generic (
+      hindex  : integer;
+      hconfig : ahb_config_type;
+      NHARTS  : integer);
+    port (
+      clk         : in  std_ulogic;
+      rstn        : in  std_ulogic;
+      timer_irq   : out std_logic_vector(NHARTS - 1 downto 0);
+      ipi         : out std_logic_vector(NHARTS - 1 downto 0);
+      ahbsi       : in  ahb_slv_in_type;
+      ahbso       : out ahb_slv_out_type);
+  end component riscv_clint_ahb_wrap;
 
 end ariane_esp_pkg;

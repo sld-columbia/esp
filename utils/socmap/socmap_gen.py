@@ -69,6 +69,9 @@ AHB2APB_HADDR = dict()
 AHB2APB_HADDR["leon3"] = 0x800
 AHB2APB_HADDR["ariane"] = 0x600
 
+# RISC-V CPU Local Interruptor index
+RISCV_CLINT_HINDEX = 2
+
 # Memory controller slave index
 DDR_HINDEX = [4, 5, 6, 7]
 
@@ -541,7 +544,18 @@ def print_mapping(fp, esp_config):
   fp.write("    others => zero32);\n\n")
 
   #
-  fp.write("  -- Debbug access points proxy index\n")
+  if esp_config.cpu_arch == "ariane":
+    fp.write("  -- RISC-V CLINT\n")
+    fp.write("  constant clint_hindex  : integer := " + str(RISCV_CLINT_HINDEX) + ";\n")
+    fp.write("  constant clint_haddr   : integer := 16#020#;\n")
+    fp.write("  constant clint_hmask   : integer := 16#fff#;\n")
+    fp.write("  constant clint_hconfig : ahb_config_type := (\n")
+    fp.write("    0 => ahb_device_reg ( VENDOR_SIFIVE, SIFIVE_CLINT0, 0, 0, 0),\n")
+    fp.write("    4 => ahb_membar(clint_haddr, '0', '0', clint_hmask),\n")
+    fp.write("    others => zero32);\n\n")
+
+  #
+  fp.write("  -- Debug access points proxy index\n")
   fp.write("  constant dbg_remote_ahb_hindex : integer := 3;\n\n")
 
   #
@@ -609,6 +623,8 @@ def print_mapping(fp, esp_config):
   fp.write("  constant fixed_ahbso_hconfig : ahb_slv_config_vector := (\n")
   fp.write("    " + str(AHBROM_HINDEX) + " => ahbrom_hconfig,\n")
   fp.write("    " + str(AHB2APB_HINDEX) + " => ahb2apb_hconfig,\n")
+  if esp_config.cpu_arch == "ariane":
+    fp.write("    " + str(RISCV_CLINT_HINDEX) + " => clint_hconfig,\n")
   for i in range(0, esp_config.nmem):
     fp.write("    " + str(DDR_HINDEX[i]) + " => mig7_hconfig(" + str(i) + "),\n")
   fp.write("    " + str(FB_HINDEX) + " => fb_hconfig,\n")
@@ -620,6 +636,8 @@ def print_mapping(fp, esp_config):
   fp.write("  constant cpu_tile_fixed_ahbso_hconfig : ahb_slv_config_vector := (\n")
   fp.write("    " + str(AHBROM_HINDEX) + " => ahbrom_hconfig,\n")
   fp.write("    " + str(AHB2APB_HINDEX) + " => ahb2apb_hconfig,\n")
+  if esp_config.cpu_arch == "ariane":
+    fp.write("    " + str(RISCV_CLINT_HINDEX) + " => clint_hconfig,\n")
   fp.write("    " + str(DDR_HINDEX[0]) + " => cpu_tile_mig7_hconfig,\n")
   fp.write("    " + str(FB_HINDEX) + " => fb_hconfig,\n")
   fp.write("    others => hconfig_none);\n\n")
@@ -1305,6 +1323,8 @@ def print_tiles(fp, esp_config):
       fp.write("    " + str(i) + " => (\n")
       fp.write("      " + str(AHBROM_HINDEX) + "  => '1',\n")
       fp.write("      " + str(AHB2APB_HINDEX) + "  => '1',\n")
+      if esp_config.cpu_arch == "ariane":
+        fp.write("      " + str(RISCV_CLINT_HINDEX) + "  => '1',\n")
       fp.write("      " + str(FB_HINDEX) + "  => to_std_logic(CFG_SVGA_ENABLE),\n")
       fp.write("      others => '0'),\n")
     if t.type == "cpu":

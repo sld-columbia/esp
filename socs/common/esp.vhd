@@ -146,7 +146,10 @@ signal mon_dvfs_domain  : monitor_dvfs_vector(0 to CFG_TILES_NUM-1);
 signal mon_l2_int : monitor_cache_vector(0 to CFG_TILES_NUM-1);
 signal mon_llc_int : monitor_cache_vector(0 to CFG_TILES_NUM-1);
 
+-- TODO: remove this; IRQ will flow through the NoC
 signal irq : std_logic_vector(CFG_NCPU_TILE * 2 - 1 downto 0);
+signal timer_irq : std_logic_vector(CFG_NCPU_TILE - 1 downto 0);
+signal ipi : std_logic_vector(CFG_NCPU_TILE - 1 downto 0);
 
 begin
 
@@ -258,7 +261,9 @@ begin
           pllclk             => clk_tile(i),
           cpuerr             => cpuerr_vec(tile_cpu_id(i)),
           --TODO: REMOVE!
-          irq   => irq((tile_cpu_id(i) + 1) * 2 - 1 downto tile_cpu_id(i) * 2),
+          irq  => irq((tile_cpu_id(i) + 1) * 2 - 1 downto tile_cpu_id(i) * 2),
+          timer_irq => timer_irq(tile_cpu_id(i)),
+          ipi => ipi(tile_cpu_id(i)),
           noc1_input_port    => noc_input_port_1(i),
           noc1_data_void_in  => noc_data_void_in(1)(i),
           noc1_stop_in       => noc_stop_in(1)(i),
@@ -380,6 +385,8 @@ begin
           uart_ctsn          => uart_ctsn_int,
           uart_rtsn          => uart_rtsn_int,
           irq                => irq,
+          timer_irq          => timer_irq,
+          ipi                => ipi,
           noc1_input_port    => noc_input_port_1(i),
           noc1_data_void_in  => noc_data_void_in(1)(i),
           noc1_stop_in       => noc_stop_in(1)(i),

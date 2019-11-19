@@ -66,7 +66,10 @@ package soctiles is
       pllbypass          : in  std_ulogic;
       pllclk             : out std_ulogic;
       cpuerr             : out std_logic;
+      -- TODO: remove this; IRQ will flow through the NoC
       irq                : in  std_logic_vector(1 downto 0);
+      timer_irq          : in  std_ulogic;
+      ipi                : in  std_ulogic;
       noc1_input_port    : out noc_flit_type;
       noc1_data_void_in  : out std_ulogic;
       noc1_stop_in       : out std_ulogic;
@@ -180,7 +183,10 @@ package soctiles is
       uart_txd           : out std_ulogic;
       uart_ctsn          : in  std_ulogic;
       uart_rtsn          : out std_ulogic;
+      -- TODO: remove this; IRQ will flow through the NoC
       irq                : out std_logic_vector(CFG_NCPU_TILE * 2 - 1 downto 0);
+      timer_irq          : out std_logic_vector(CFG_NCPU_TILE - 1 downto 0);
+      ipi                : out std_logic_vector(CFG_NCPU_TILE - 1 downto 0);
       noc1_input_port    : out noc_flit_type;
       noc1_data_void_in  : out std_ulogic;
       noc1_stop_in       : out std_ulogic;
