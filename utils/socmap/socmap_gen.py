@@ -1500,19 +1500,20 @@ def print_ariane_devtree(fp, esp_config):
   for i in range(esp_config.nacc):
     acc = esp_config.accelerators[i]
     if acc.vendor == "sld":
-      address = format(SLD_APB_ADDR + acc.idx, "03X")
+      address = format(SLD_APB_ADDR + acc.idx, "03x")
       size = "0x100"
     else:
-      address = format(THIRDPARTY_APB_ADDR[acc.lowercase_name], "03X")
+      address = format(THIRDPARTY_APB_ADDR[acc.lowercase_name], "03x")
       size = hex(THIRDPARTY_APB_ADDR_SIZE[acc.lowercase_name])
-    fp.write("    " + acc.lowercase_name + "@" + format(AHB2APB_HADDR[esp_config.cpu_arch], '03X') + str(address) + "00 {\n")
+    fp.write("    " + acc.lowercase_name + "@" + format(AHB2APB_HADDR[esp_config.cpu_arch], '03x') + str(address) + "00 {\n")
     fp.write("      compatible = \"" + acc.vendor + "," + acc.lowercase_name + "\";\n")
     fp.write("      reg = <0x0 0x" + format(AHB2APB_HADDR[esp_config.cpu_arch], '03X') + str(address) + "00 0x0 " + size + ">;\n")
     fp.write("      interrupt-parent = <&PLIC0>;\n")
     fp.write("      interrupts = <4>;\n")
     fp.write("      reg-shift = <2>; // regs are spaced on 32 bit boundary\n")
     fp.write("      reg-io-width = <4>; // only 32-bit access are supported\n")
-    fp.write("      memory-region = <&" + acc.lowercase_name + "_reserved>;\n")
+    if acc.vendor != "sld":
+      fp.write("      memory-region = <&" + acc.lowercase_name + "_reserved>;\n")
     fp.write("    };\n")
   fp.write("  };\n")
   fp.write("};\n")

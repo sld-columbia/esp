@@ -2,6 +2,8 @@
 
 ![Open-ESP](esp-logo-small.png)
 
+The [ESP website](https://www.esp.cs.columbia.edu) contains the complete information on the ESP project. The [documentation](https://www.esp.cs.columbia.edu/docs) page contains detailed guides and video tutorials that will be released periodically to help users get the most out of ESP.
+
 ESP is an open-source platform for heterogeneous SoC design and prototype on
 FPGA. It provides a flexible tile-based architecture built on a multi-plane
 network-on-chip.
@@ -24,11 +26,8 @@ Furthermore, ESP can serve as a platform to integrate third-party IP blocks.
 As an example, ESP integrates the NVDIA Deep Learning Accelerator [NVDLA](http://nvdla.org/),
 which can be placed on any ESP accelerator tile.
 
-A [Quick Start Guide](https://www.esp.cs.columbia.edu/docs) is available on the [Open-ESP website](https://www.esp.cs.columbia.edu).
-Complete documentation and tutorials will be released periodically to help users
-get the most out of ESP.
-
 ## Stay tuned for the new features under development:
 
    - Multi-core [Ariane](https://github.com/pulp-platform/ariane) RISC-V
-   - Vivado HLS accelerator design and integration
+   - Automatic integration of accelerators generated with hls4ml from Keras/Tensorflow and Pytorch
+   - Support for Digilent Genesys2 FPGA board
