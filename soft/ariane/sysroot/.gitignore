@@ -1,5 +1,6 @@
 bin/
 dev/
+etc/dropbear
 etc/exports
 etc/fstab
 etc/group
@@ -8,6 +9,7 @@ etc/hosts
 etc/init.d/S01logging
 etc/init.d/S20urandom
 etc/init.d/S30rpcbind
+etc/init.d/S50dropbear
 etc/init.d/S50sshd
 etc/init.d/rcK
 etc/init.d/rcS
