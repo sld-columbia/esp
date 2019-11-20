@@ -759,7 +759,7 @@ begin
 
     pready <= '1';
 
-    if noc_apbi.psel(2) = '1' then
+    if noc_apbi.psel(2) = '1' and GLOB_CPU_ARCH = ariane then
       pready <= plic_pready;
     end if;
 
