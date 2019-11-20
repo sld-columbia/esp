@@ -36,7 +36,9 @@ package sld_devices is
   -- <<devid>>
 
   constant VENDOR_SIFIVE : vendor_t := 16#EC#;
-  constant SIFIVE_PLIC0 : devid_t := 16#001#;
+
+  constant SIFIVE_PLIC0  : devid_t := 16#001#;
+  constant SIFIVE_CLINT0 : devid_t := 16#002#;
 
 -- pragma translate_off
 
@@ -61,8 +63,9 @@ package sld_devices is
   constant SIFIVE_DESC : vdesc_t := "SiFive                  ";
 
   constant sifive_device_table : dtable_t := (
-    SIFIVE_PLIC0 => "Platform Level Int. Controller ",
-    others       => "Unknown Device                 ");
+    SIFIVE_PLIC0  => "Platform Level Int. Controller ",
+    SIFIVE_CLINT0 => "RISC-V CPU Local Interruptor   ",
+    others        => "Unknown Device                 ");
 
   constant sifive_lib : vlib_t := (
     vendorid     => VENDOR_SIFIVE,
