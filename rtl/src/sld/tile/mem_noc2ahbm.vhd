@@ -895,7 +895,7 @@ begin  -- rtl
   end process;
 
   -- SerDes for narrow NoC
-  serdes_gen: if narrow_noc /= 0 generate
+  serdes_gen: if narrow_noc /= 0 and ARCH_BITS /= 32 generate
 
     serdes_beh: process (serdes_current, r, ahbmi, rsp_reg, req_reg,
                          narrow_coherence_req_rdreq,
@@ -987,7 +987,7 @@ begin  -- rtl
   end generate serdes_gen;
 
 
-  no_serdes_gen: if narrow_noc = 0 generate
+  no_serdes_gen: if narrow_noc = 0 or ARCH_BITS = 32 generate
     coherence_req_rdreq           <= narrow_coherence_req_rdreq;
     narrow_coherence_req_data_out <= coherence_req_data_out;
     narrow_coherence_req_empty    <= coherence_req_empty;
