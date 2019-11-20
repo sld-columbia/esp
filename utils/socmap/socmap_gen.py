@@ -544,15 +544,14 @@ def print_mapping(fp, esp_config):
   fp.write("    others => zero32);\n\n")
 
   #
-  if esp_config.cpu_arch == "ariane":
-    fp.write("  -- RISC-V CLINT\n")
-    fp.write("  constant clint_hindex  : integer := " + str(RISCV_CLINT_HINDEX) + ";\n")
-    fp.write("  constant clint_haddr   : integer := 16#020#;\n")
-    fp.write("  constant clint_hmask   : integer := 16#fff#;\n")
-    fp.write("  constant clint_hconfig : ahb_config_type := (\n")
-    fp.write("    0 => ahb_device_reg ( VENDOR_SIFIVE, SIFIVE_CLINT0, 0, 0, 0),\n")
-    fp.write("    4 => ahb_membar(clint_haddr, '0', '0', clint_hmask),\n")
-    fp.write("    others => zero32);\n\n")
+  fp.write("  -- RISC-V CLINT\n")
+  fp.write("  constant clint_hindex  : integer := " + str(RISCV_CLINT_HINDEX) + ";\n")
+  fp.write("  constant clint_haddr   : integer := 16#020#;\n")
+  fp.write("  constant clint_hmask   : integer := 16#fff#;\n")
+  fp.write("  constant clint_hconfig : ahb_config_type := (\n")
+  fp.write("    0 => ahb_device_reg ( VENDOR_SIFIVE, SIFIVE_CLINT0, 0, 0, 0),\n")
+  fp.write("    4 => ahb_membar(clint_haddr, '0', '0', clint_hmask),\n")
+  fp.write("    others => zero32);\n\n")
 
   #
   fp.write("  -- Debug access points proxy index\n")
