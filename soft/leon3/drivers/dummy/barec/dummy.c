@@ -16,7 +16,7 @@ typedef long long unsigned u64;
 typedef unsigned u32;
 
 typedef u64 token_t;
-#define mask 0xFEED0BAC00000000L
+#define mask 0xFEED0BAC00000000LL
 
 #define SLD_DUMMY   0x42
 #define DEV_NAME "sld,dummy"
@@ -24,8 +24,8 @@ typedef u64 token_t;
 #define TOKENS 256
 #define BATCH 4
 
-const unsigned out_offset = BATCH * TOKENS * sizeof(u64);
-const unsigned size = 3 * out_offset;
+static unsigned out_offset;
+static unsigned size;
 
 /* Size of the contiguous chunks for scatter/gather */
 #define CHUNK_SHIFT 20
@@ -46,7 +46,11 @@ static int validate_dummy(token_t *mem)
 	for (j = 0; j < BATCH; j++)
 		for (i = 0; i < TOKENS; i++)
 			if (mem[i + j * TOKENS + 2 * BATCH * TOKENS] != (mask | (token_t) i)) {
+#ifndef __riscv
+				printf("[%d, %d]: %llu\n", j, i, mem[i + j * TOKENS + 2 * BATCH * TOKENS]);
+#else
 				print_uart_int(mem[i + j * TOKENS + 2 * BATCH * TOKENS]);
+#endif
 				rtn++;
 			}
 	return rtn;
@@ -60,7 +64,7 @@ static void init_buf (token_t *mem)
 			mem[i + j * TOKENS] = (mask | (token_t) i);
 
 	for (i = 0; i < 2 * BATCH * TOKENS; i++)
-		mem[i + BATCH * TOKENS] = 0xFFFFFFFFFFFFFFFFL;
+		mem[i + BATCH * TOKENS] = 0xFFFFFFFFFFFFFFFFLL;
 }
 
 
@@ -78,10 +82,21 @@ int main(int argc, char * argv[])
 	token_t *mem;
 	unsigned errors = 0;
 
+	out_offset = BATCH * TOKENS * sizeof(u64);
+	size = 3 * out_offset;
+
+#ifndef __riscv
 	printf("Scanning device tree... \n");
+#else
+	print_uart("Scanning device tree... \n");
+#endif
 	ndev = probe(&espdevs, SLD_DUMMY, DEV_NAME);
 	if (ndev < 3) {
+#ifndef __riscv
 		printf("This test requires 3 dummy devices!\n");
+#else
+		print_uart("This test requires 3 dummy devices!\n");
+#endif
 		return 0;
 	}
 
@@ -90,12 +105,20 @@ int main(int argc, char * argv[])
 		dev = &espdevs[n];
 
 		if (ioread32(dev, PT_NCHUNK_MAX_REG) == 0) {
+#ifndef __riscv
 			printf("  -> scatter-gather DMA is disabled. Abort.\n");
+#else
+			print_uart("  -> scatter-gather DMA is disabled. Abort.\n");
+#endif
 			return 0;
 		}
 
 		if (ioread32(dev, PT_NCHUNK_MAX_REG) < NCHUNK) {
+#ifndef __riscv
 			printf("  -> Not enough TLB entries available. Abort.\n");
+#else
+			print_uart("  -> Not enough TLB entries available. Abort.\n");
+#endif
 			return 0;
 		}
 	}
@@ -119,7 +142,11 @@ int main(int argc, char * argv[])
 	print_uart("  nchunk = "); print_uart_int(NCHUNK); print_uart("\n");
 #endif
 
+#ifndef __riscv
 	printf("  Generate random input...\n");
+#else
+	print_uart("  Generate random input...\n");
+#endif
 	init_buf(mem);
 
 	// Pass common configuration parameters to all devices in the chain
@@ -128,8 +155,7 @@ int main(int argc, char * argv[])
 
 		iowrite32(dev, SELECT_REG, ioread32(dev, DEVID_REG));
 		iowrite32(dev, COHERENCE_REG, ACC_COH_NONE);
-
-		iowrite32(dev, PT_ADDRESS_REG, (unsigned long long) ptable);
+		iowrite32(dev, PT_ADDRESS_REG, (unsigned long) ptable);
 		iowrite32(dev, PT_NCHUNK_REG, NCHUNK);
 		iowrite32(dev, PT_SHIFT_REG, CHUNK_SHIFT);
 		iowrite32(dev, TOKENS_REG, TOKENS);
@@ -163,7 +189,11 @@ int main(int argc, char * argv[])
 	esp_flush(ACC_COH_NONE);
 
 	// Start accelerators
+#ifndef __riscv
 	printf("  Start...\n");
+#else
+	print_uart("  Start...\n");
+#endif
 	for (n = 0; n < 3; n++) {
 		dev = &espdevs[n];
 
@@ -177,9 +207,6 @@ int main(int argc, char * argv[])
 			dev = &espdevs[n];
 			done[n] = ioread32(dev, STATUS_REG);
 			done[n] & STATUS_MASK_DONE;
-			/* if (done[n]) { */
-			/* 	print_uart("Done "); print_uart_int(n); print_uart("\n"); */
-			/* } */
 		}
 		all_done = done[0] & done[1] & done[2];
 	}
@@ -189,15 +216,31 @@ int main(int argc, char * argv[])
 		iowrite32(dev, CMD_REG, 0x0);
 	}
 
+#ifndef __riscv
 	printf("  Done\n");
+#else
+	print_uart("  Done\n");
+#endif
 
 	/* Validation */
+#ifndef __riscv
 	printf("  validating...\n");
+#else
+	print_uart("  validating...\n");
+#endif
 	errors = validate_dummy(mem);
+
+#ifndef __riscv
 	if (errors)
 		printf("  ... FAIL\n");
 	else
 		printf("  ... PASS\n");
+#else
+	if (errors)
+		print_uart("  ... FAIL\n");
+	else
+		print_uart("  ... PASS\n");
+#endif
 
 	aligned_free(ptable);
 	aligned_free(mem);

@@ -171,7 +171,7 @@ static void adder_alloc_contig(struct test_info *info)
 	struct adder_test *t = to_adder(info);
 
 	printf("HW buf size: %zu kB\n", adder_size(t) / 1000);
-	if (contig_alloc(adder_size(t), &info->contig))
+	if (contig_alloc(adder_size(t), &info->contig) == NULL)
 		die_errno(__func__);
 }
 

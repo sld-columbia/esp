@@ -592,7 +592,7 @@ int ensemble_1(algPixel_t *streamA, algPixel_t *out, int nRows, int nCols,
 
 static const char usage_str[] =
 	"usage: ./visionchip.exe coherence infile [nimages] [ncols] [nrows] [-v]\n"
-	"  coherence: none|llc|recall|full\n"
+	"  coherence: none|llc-coh-dma|coh-dma|coh\n"
 	"  infile : input file name (includes the path)\n"
 	"\n"
 	"Optional arguments:.\n"
@@ -751,7 +751,7 @@ static void visionchip_alloc_contig(struct test_info *info)
 	struct visionchip_test *t = to_visionchip(info);
 
 	printf("HW buf size: %zu B\n", visionchip_size(t));
-	if (contig_alloc(visionchip_size(t), &info->contig))
+	if (contig_alloc(visionchip_size(t), &info->contig) == NULL)
 		die_errno(__func__);
 }
 
@@ -809,7 +809,7 @@ static void visionchip_comp(struct test_info *info)
 	    // store output file
 	    int npixels = t->nimages * t->rows * t->cols;
 
-	    for (int i = 0; i < npixels; i++) {
+	    for (i = 0; i < npixels; i++) {
 		fprintf(fileOut, "%d\n", (int) t->hbuf[i]);
 	    }
 

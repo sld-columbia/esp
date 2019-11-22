@@ -447,7 +447,7 @@ uint8_t* decode(ofdm_param *ofdm, frame_param *frame, uint8_t *in) {
   }
 
   printf("Allocate hardware buffer of size %zu\n", size);
-  if (contig_alloc(size, &mem)) {
+  if (contig_alloc(size, &mem) == NULL) {
 	  fprintf(stderr, "Error: cannot allocate %zu contig bytes", size);
 	  exit(EXIT_FAILURE);
   }

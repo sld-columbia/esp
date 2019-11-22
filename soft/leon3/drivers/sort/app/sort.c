@@ -14,7 +14,7 @@
 #define NAME "sort"
 
 static const char usage_str[] = "usage: sort coherence cmd [n_elems] [n_batches] [-v]\n"
-	"  coherence: none|llc|recall|full\n"
+	"  coherence: none|llc-coh-dma|coh-dma|coh\n"
 	"  cmd: config|test|run|hw|flush\n"
 	"\n"
 	"Optional arguments: n_elems and batch apply to 'config', 'hw' and 'test':\n"
@@ -186,7 +186,7 @@ static void sort_alloc_contig(struct test_info *info)
 	struct sort_test *t = to_sort(info);
 
 	printf("HW buf size: %zu\n", sort_size(t));
-	if (contig_alloc(sort_size(t), &info->contig))
+	if (contig_alloc(sort_size(t), &info->contig) == NULL)
 		die_errno(__func__);
 }
 

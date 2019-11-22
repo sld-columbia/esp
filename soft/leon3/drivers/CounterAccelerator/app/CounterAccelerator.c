@@ -39,7 +39,7 @@ static void CounterAccelerator_alloc_buf(struct test_info *info)
 
 static void CounterAccelerator_alloc_contig(struct test_info *info)
 {
-	if (contig_alloc(CounterAccelerator_size(), &info->contig))
+	if (contig_alloc(CounterAccelerator_size(), &info->contig) == NULL)
 		die_errno(__func__);
 
 }

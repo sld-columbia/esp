@@ -8,8 +8,6 @@
 
 #ifndef __riscv
 #include <stdio.h>
-#else
-#define printf print_uart
 #endif
 
 #include <esp_probe.h>
@@ -88,10 +86,17 @@ void esp_flush(int coherence)
 	int pid = get_pid();
 
 	switch (coherence) {
+#ifndef __riscv
 	case ACC_COH_NONE   : printf("  -> Non-coherent DMA\n"); break;
 	case ACC_COH_LLC    : printf("  -> LLC-coherent DMA\n"); break;
 	case ACC_COH_RECALL : printf("  -> Coherent DMA\n"); break;
 	case ACC_COH_FULL   : printf("  -> Fully-coherent cache access\n"); break;
+#else
+	case ACC_COH_NONE   : print_uart("  -> Non-coherent DMA\n"); break;
+	case ACC_COH_LLC    : print_uart("  -> LLC-coherent DMA\n"); break;
+	case ACC_COH_RECALL : print_uart("  -> Coherent DMA\n"); break;
+	case ACC_COH_FULL   : print_uart("  -> Fully-coherent cache access\n"); break;
+#endif
 	}
 
 

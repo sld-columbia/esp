@@ -4,13 +4,15 @@
  * Select Scatter-Gather in ESP configuration
  */
 
+#ifndef __riscv
 #include <stdio.h>
+#endif
 #include <stdlib.h>
 #include <esp_accelerator.h>
 #include <esp_probe.h>
 
 #define SLD_COUNTERACCELERATOR   0x12
-#define DEV_NAME "counteraccelerator"
+#define DEV_NAME "sld,counteraccelerator"
 
 // User defined registers
 #define COUNTERACCELERATOR_GITHASH_REG		0x40
@@ -25,7 +27,11 @@ int main(int argc, char * argv[])
 
 	ndev = probe(&espdevs, SLD_COUNTERACCELERATOR, DEV_NAME);
 	if (!ndev) {
-		fprintf(stderr, "Error: %s device not found!\n", DEV_NAME);
+#ifndef __riscv
+		printf("Error: %s device not found!\n", DEV_NAME);
+#else
+		print_uart("Error: "); print_uart(DEV_NAME); print_uart(" device not found!\n");
+#endif
 		exit(EXIT_FAILURE);
 	}
 
@@ -35,7 +41,12 @@ int main(int argc, char * argv[])
 		unsigned done;
 
 
-		printf("************** %s.%d ************\n", DEV_NAME, n);
+#ifndef __riscv
+		printf("******************** %s.%d ********************\n", DEV_NAME, n);
+#else
+		print_uart("******************** "); print_uart(DEV_NAME); print_uart(".");
+		print_uart_int(n); print_uart(" ********************\n");
+#endif
 
 
 		// Configure device
@@ -44,7 +55,11 @@ int main(int argc, char * argv[])
 		iowrite32(dev, COUNTERACCELERATOR_TICKS_REG, test_ticks);
 
 		// Start accelerator
+#ifndef __riscv
 		printf("  Start..\n");
+#else
+		print_uart("  Start..\n");
+#endif
 		iowrite32(dev, CMD_REG, CMD_MASK_START);
 
 		done = 0;
@@ -53,10 +68,18 @@ int main(int argc, char * argv[])
 			done &= STATUS_MASK_DONE;
 		}
 		iowrite32(dev, CMD_REG, 0x0);
+#ifndef __riscv
 		printf("  Done\n");
+#else
+		print_uart("  Done\n");
+#endif
 
 
+#ifndef __riscv
 		printf("************************************************\n\n");
+#else
+		print_uart("************************************************\n\n");
+#endif
 	}
 	return 0;
 }

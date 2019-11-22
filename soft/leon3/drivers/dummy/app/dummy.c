@@ -16,8 +16,8 @@
 
 typedef unsigned long long u64;
 
-const unsigned out_offset = BATCH * TOKENS * sizeof(u64);
-const unsigned size = 3 * out_offset;
+static unsigned out_offset;
+static unsigned size;
 
 struct accelerator_thread_info {
 	int fd;
@@ -151,6 +151,9 @@ int main(int argc, char *argv[])
 	struct dummy_access desc[3];
 
 	void *rp;
+
+	out_offset = BATCH * TOKENS * sizeof(u64);
+	size = 3 * out_offset;
 
 	printf("=== Point-to-point test w/ dummy accelerator ===\n");
 

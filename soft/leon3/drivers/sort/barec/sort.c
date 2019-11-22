@@ -4,13 +4,15 @@
  * Select Scatter-Gather in ESP configuration
  */
 
+#ifndef __riscv
 #include <stdio.h>
+#endif
 #include <stdlib.h>
 #include <esp_accelerator.h>
 #include <esp_probe.h>
 
 #define SLD_SORT   0x0B
-#define DEV_NAME "sort"
+#define DEV_NAME "sld,sort"
 
 #define SORT_LEN 64
 #define SORT_BATCH 2
@@ -45,12 +47,20 @@ static int validate_sorted(float *array, int len)
 static void init_buf (float *buf, unsigned sort_size, unsigned sort_batch)
 {
 	int i, j;
+#ifndef __riscv
 	printf("  Generate random input...\n");
+#else
+	print_uart("  Generate random input...\n");
+#endif
 	/* srand(time(NULL)); */
 	for (j = 0; j < sort_batch; j++)
 		for (i = 0; i < sort_size; i++) {
 			/* TAV rand between 0 and 1 */
+#ifndef __riscv
 			buf[sort_size * j + i] = ((float) rand () / (float) RAND_MAX);
+#else
+			buf[sort_size * j + i] = 1.0 / ((float) i + 1);
+#endif
 			/* /\* More general testbench *\/ */
 			/* float M = 100000.0; */
 			/* buf[sort_size * j + i] =  M * ((float) rand() / (float) RAND_MAX) - M/2; */
@@ -69,21 +79,31 @@ int main(int argc, char * argv[])
 
 	ndev = probe(&espdevs, SLD_SORT, DEV_NAME);
 	if (!ndev) {
-		fprintf(stderr, "Error: %s device not found!\n", DEV_NAME);
+#ifndef __riscv
+		printf("Error: %s device not found!\n", DEV_NAME);
+#else
+		print_uart("Error: "); print_uart(DEV_NAME); print_uart(" device not found!\n");
+#endif
 		exit(EXIT_FAILURE);
 	}
 
-#ifndef __riscv 
+#ifndef __riscv
 	printf("Test parameters: [LEN, BATCH] = [%d, %d]\n\n", SORT_LEN, SORT_BATCH);
 #else
 	print_uart("Test parameters: [LEN, BATCH] = [");
 	print_uart_int(SORT_LEN);
 	print_uart(" : ");
 	print_uart_int(SORT_BATCH);
-	print_uart("\n");
+	print_uart("]\n");
 #endif
 	for (n = 0; n < ndev; n++) {
+#ifndef __riscv
 		for (coherence = ACC_COH_NONE; coherence <= ACC_COH_FULL; coherence++) {
+#else
+		{
+			/* TODO: Restore full test once ESP caches are integrated */
+			coherence = ACC_COH_NONE;
+#endif
 			struct esp_device *dev = &espdevs[n];
 			unsigned sort_batch_max;
 			unsigned sort_len_max;
@@ -99,7 +119,7 @@ int main(int argc, char * argv[])
 			sort_len_min = ioread32(dev, SORT_LEN_MIN_REG);
 			sort_len_max = ioread32(dev, SORT_LEN_MAX_REG);
 
-#ifndef __riscv 
+#ifndef __riscv
 			printf("******************** %s.%d ********************\n", DEV_NAME, n);
 #endif
 			// Check access ok
@@ -108,8 +128,8 @@ int main(int argc, char * argv[])
 				SORT_BATCH < 1 ||
 				SORT_BATCH > sort_batch_max) {
 #ifndef __riscv
-			    fprintf(stderr, "  Error: unsopported configuration parameters for %s.%d\n", DEV_NAME, n);
-			    fprintf(stderr, "         device can sort up to %d fp-vectors of size [%d, %d]\n",
+			    printf("  Error: unsopported configuration parameters for %s.%d\n", DEV_NAME, n);
+			    printf("         device can sort up to %d fp-vectors of size [%d, %d]\n",
 					sort_batch_max, sort_len_min, sort_len_max);
 #endif
 				break;
@@ -166,14 +186,14 @@ int main(int argc, char * argv[])
 			iowrite32(dev, COHERENCE_REG, coherence);
 
 			if (scatter_gather) {
-				iowrite32(dev, PT_ADDRESS_REG, (unsigned) ptable);
+				iowrite32(dev, PT_ADDRESS_REG, (unsigned long) ptable);
 				iowrite32(dev, PT_NCHUNK_REG, NCHUNK);
 				iowrite32(dev, PT_SHIFT_REG, CHUNK_SHIFT);
 				iowrite32(dev, SRC_OFFSET_REG, 0);
 				iowrite32(dev, DST_OFFSET_REG, 0); // Sort runs in place
 			} else {
-				iowrite32(dev, SRC_OFFSET_REG, (unsigned) mem);
-				iowrite32(dev, DST_OFFSET_REG, (unsigned) mem); // Sort runs in place
+				iowrite32(dev, SRC_OFFSET_REG, (unsigned long) mem);
+				iowrite32(dev, DST_OFFSET_REG, (unsigned long) mem); // Sort runs in place
 			}
 			iowrite32(dev, SORT_LEN_REG, SORT_LEN);
 			iowrite32(dev, SORT_BATCH_REG, SORT_BATCH);
@@ -182,7 +202,11 @@ int main(int argc, char * argv[])
 			esp_flush(coherence);
 
 			// Start accelerator
+#ifndef __riscv
 			printf("  Start..\n");
+#else
+			print_uart("  Start..\n");
+#endif
 			iowrite32(dev, CMD_REG, CMD_MASK_START);
 
 			done = 0;
@@ -191,7 +215,11 @@ int main(int argc, char * argv[])
 				done &= STATUS_MASK_DONE;
 			}
 			iowrite32(dev, CMD_REG, 0x0);
+#ifndef __riscv
 			printf("  Done\n");
+#else
+			print_uart("  Done\n");
+#endif
 
 			/* /\* Print output *\/ */
 			/* printf("  output:\n"); */
@@ -200,25 +228,35 @@ int main(int argc, char * argv[])
 			/* 		printf("    mem[%d][%d] = %08x\n", j, i, mem[j*SORT_LEN + i]); */
 
 			/* Validation */
+#ifndef __riscv
 			printf("  validating...\n");
+#else
+			print_uart("  validating...\n");
+#endif
 			for (j = 0; j < SORT_BATCH; j++) {
 				int err = validate_sorted((float *) &mem[j * SORT_LEN], SORT_LEN);
 				/* if (err != 0) */
-				/* 	fprintf(stderr, "  Error: %s.%d mismatch on batch %d\n", DEV_NAME, n, j); */
+				/* 	printf("  Error: %s.%d mismatch on batch %d\n", DEV_NAME, n, j); */
 				errors += err;
 			}
+#ifndef __riscv
 			if (errors)
 				printf("  ... FAIL\n");
 			else
 				printf("  ... PASS\n");
-
+			printf("**************************************************\n\n");
+#else
+			if (errors)
+				print_uart("  ... FAIL\n");
+			else
+				print_uart("  ... PASS\n");
+			print_uart("**************************************************\n\n");
+#endif
 			if (scatter_gather)
 				aligned_free(ptable);
 			aligned_free(mem);
 
-			printf("**************************************************\n\n");
 		}
 	}
 	return 0;
 }
-

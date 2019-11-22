@@ -4,8 +4,9 @@
  * Select Scatter-Gather in ESP configuration
  */
 
-
+#ifndef __riscv
 #include <stdio.h>
+#endif
 #include <stdlib.h>
 
 #include <esp_accelerator.h>
@@ -64,7 +65,13 @@ int main(int argc, char * argv[])
 	}
 
 	for (n = 0; n < ndev; n++) {
-		for (coherence = ACC_COH_NONE; coherence <= ACC_COH_NONE; coherence++) {
+#ifndef __riscv
+		for (coherence = ACC_COH_NONE; coherence <= ACC_COH_FULL; coherence++) {
+#else
+		{
+			/* TODO: Restore full test once ESP caches are integrated */
+			coherence = ACC_COH_NONE;
+#endif
 			struct esp_device *dev = &espdevs[n];
 			int done;
 			int i, j;

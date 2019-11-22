@@ -155,24 +155,24 @@ static const char *devname[NDEV] = {
 typedef struct yx_struct { unsigned char y; unsigned char x; } yx_t;
 
 /* Device y,x coordiantes on the NoC */
-static const yx_t coordinates[NDEV] = {
-	/* {0, 0}, mem.0 */
-	{0, 1}, /* synth.0 */
-	{0, 2}, /* synth.1 */
-	{0, 3}, /* synth.2 */
-	{1, 0}, /* synth.3 */
-	/* {1, 1}, cpu 0 */
-	{1, 2}, /* synth.4 */
-	{1, 3}, /* synth.5 */
-	{2, 0}, /* synth.6 */
-	{2, 1}, /* synth.7 */
-	/* {2, 2}, cpu.1 */
-	{2, 3}, /* synth.8 */
-	{3, 0}, /* synth.9 */
-	{3, 1}, /* synth.10 */
-	{3, 2}, /* synth.11 */
-	/* {3, 3} mem 1 */
-};
+/* static const yx_t coordinates[NDEV] = { */
+/* 	/\* {0, 0}, mem.0 *\/ */
+/* 	{0, 1}, /\* synth.0 *\/ */
+/* 	{0, 2}, /\* synth.1 *\/ */
+/* 	{0, 3}, /\* synth.2 *\/ */
+/* 	{1, 0}, /\* synth.3 *\/ */
+/* 	/\* {1, 1}, cpu 0 *\/ */
+/* 	{1, 2}, /\* synth.4 *\/ */
+/* 	{1, 3}, /\* synth.5 *\/ */
+/* 	{2, 0}, /\* synth.6 *\/ */
+/* 	{2, 1}, /\* synth.7 *\/ */
+/* 	/\* {2, 2}, cpu.1 *\/ */
+/* 	{2, 3}, /\* synth.8 *\/ */
+/* 	{3, 0}, /\* synth.9 *\/ */
+/* 	{3, 1}, /\* synth.10 *\/ */
+/* 	{3, 2}, /\* synth.11 *\/ */
+/* 	/\* {3, 3} mem 1 *\/ */
+/* }; */
 
 
 /* Hops from DDR nodes (the lower the better) */
@@ -344,7 +344,7 @@ static void alloc_phase(accelerator_thread_info_t **info, int nthreads,
 			params.pol.lloaded.threshold = 4;
 		}
 
-		if (contig_alloc_policy(params, info[i]->memsz, &info[i]->mem))
+		if (contig_alloc_policy(params, info[i]->memsz, &info[i]->mem) == NULL)
 			die_errno("error: cannot allocate %zu contig bytes", info[i]->memsz);
 
 		for (acc = 0; acc < info[i]->ndev; acc++) {

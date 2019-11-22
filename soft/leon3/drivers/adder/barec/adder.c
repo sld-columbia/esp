@@ -4,7 +4,9 @@
  * Select Scatter-Gather in ESP configuration
  */
 
+#ifndef __riscv
 #include <stdio.h>
+#endif
 #include <stdlib.h>
 #include <esp_accelerator.h>
 #include <esp_probe.h>
@@ -72,8 +74,16 @@ int main(int argc, char * argv[])
 
     ndev = probe(&espdevs, SLD_ADDER, DEV_NAME);
     if (!ndev) {
-	printf("Error: device not found!");
-	printf(DEV_NAME);
+#ifndef __riscv
+	    printf("Error: device not found!");
+#else
+	    print_uart("Error: device not found!");
+#endif
+#ifndef __riscv
+	    printf(DEV_NAME);
+#else
+	    print_uart(DEV_NAME);
+#endif
 	exit(EXIT_FAILURE);
     }
 
@@ -95,7 +105,7 @@ int main(int argc, char * argv[])
 #ifndef __riscv
 	    printf("\n********************************\n");
 	    printf("Process input # ");
-	    printf("%u\n", (uint32_t) k);
+	    printf("%u\n", (unsigned) k);
 #else
 	    print_uart("\n********************************\n");
 	    print_uart("Process input # ");
@@ -107,22 +117,30 @@ int main(int argc, char * argv[])
 
 	    // Check if scatter-gather DMA is disabled
 	    if (ioread32(dev, PT_NCHUNK_MAX_REG) == 0) {
-		printf("  -> scatter-gather DMA is disabled; revert to contiguous buffer.\n");
+#ifndef __riscv
+		    printf("  -> scatter-gather DMA is disabled; revert to contiguous buffer.\n");
+#else
+		    print_uart("  -> scatter-gather DMA is disabled; revert to contiguous buffer.\n");
+#endif
 		scatter_gather = 0;
 	    } else {
-		printf("  -> scatter-gather DMA is enabled.\n");
+#ifndef __riscv
+		    printf("  -> scatter-gather DMA is enabled.\n");
+#else
+		    print_uart("  -> scatter-gather DMA is enabled.\n");
+#endif
 	    }
 
 	    if (scatter_gather) {
 		if (ioread32(dev, PT_NCHUNK_MAX_REG) < NCHUNK) {
 #ifndef __riscv
 		    printf("  Trying to allocate # chunks on # TLB available entries: \n");
-		    printf("%u\t%u\n", (uint32_t) NCHUNK, (uint32_t) ioread32(dev, PT_NCHUNK_MAX_REG));
+		    printf("%u\t%u\n", (unsigned) NCHUNK, (unsigned) ioread32(dev, PT_NCHUNK_MAX_REG));
 #else
 		    print_uart("  Trying to allocate # chunks on # TLB available entries: \n");
-		    print_uart_int((uint32_t) NCHUNK);
+		    print_uart_int(NCHUNK);
 		    print_uart("\t");
-		    print_uart_int((uint32_t) ioread32(dev, PT_NCHUNK_MAX_REG));
+		    print_uart_int((unsigned) ioread32(dev, PT_NCHUNK_MAX_REG));
 		    print_uart("\n");
 #endif
 		    break;
@@ -132,11 +150,11 @@ int main(int argc, char * argv[])
 	    // Allocate memory (will be contiguos anyway in baremetal)
 	    mem = aligned_malloc(SIZE);
 #ifndef __riscv
-	    printf("  memory buffer base-address = %u\n", (uint64_t) mem);
+	    printf("  memory buffer base-address = %lu\n", (unsigned long) mem);
 #else
-	    printf("  memory buffer base-address = ");
+	    print_uart("  memory buffer base-address = ");
 	    print_uart_addr((uint64_t) mem);
-	    printf("\n");
+	    print_uart("\n");
 #endif
 	    if (scatter_gather) {
 		// Allocate and populate page table
@@ -164,11 +182,11 @@ int main(int argc, char * argv[])
 	    word_t *mem_gold;
 	    mem_gold = aligned_malloc(OUT_SIZE);
 #ifndef __riscv
-	    printf("  memory buffer base-address = %u\n", (uint64_t) mem_gold);
+	    printf("  memory buffer base-address = %lu\n", (unsigned long) mem_gold);
 #else
-	    printf("  memory buffer base-address = ");
+	    print_uart("  memory buffer base-address = ");
 	    print_uart_addr((uint64_t) mem_gold);
-	    printf("\n");
+	    print_uart("\n");
 #endif
 
 	    // Populate memory for gold output
@@ -181,14 +199,14 @@ int main(int argc, char * argv[])
 	    iowrite32(dev, COHERENCE_REG, coherence);
 
 	    if (scatter_gather) {
-		iowrite32(dev, PT_ADDRESS_REG, (unsigned) ptable);
+		iowrite32(dev, PT_ADDRESS_REG, (unsigned long) ptable);
 		iowrite32(dev, PT_NCHUNK_REG, NCHUNK);
 		iowrite32(dev, PT_SHIFT_REG, CHUNK_SHIFT);
 		iowrite32(dev, SRC_OFFSET_REG, 0);
 		iowrite32(dev, DST_OFFSET_REG, 0);
 	    } else {
-		iowrite32(dev, SRC_OFFSET_REG, (unsigned) mem);
-		iowrite32(dev, DST_OFFSET_REG, (unsigned) mem);
+		iowrite32(dev, SRC_OFFSET_REG, (unsigned long) mem);
+		iowrite32(dev, DST_OFFSET_REG, (unsigned long) mem);
 	    }
 
 	    // Accelerator-specific registers
@@ -210,7 +228,7 @@ int main(int argc, char * argv[])
 	    while (!done) {
 		done = ioread32(dev, STATUS_REG);
 		done &= STATUS_MASK_DONE;
-	    } 
+	    }
 
 	    iowrite32(dev, CMD_REG, 0x0);
 #ifndef __riscv
@@ -224,23 +242,22 @@ int main(int argc, char * argv[])
 #else
 	    print_uart("  validating...\n");
 #endif
-			
+
 	    errors = 0;
 	    for (i = 0; i < OUT_SIZE_DATA; i++) {
 		if (mem[i + IN_SIZE_DATA] != mem_gold[i]) {
 		    errors++;
 #ifndef __riscv
 		    printf("ERROR: i mem mem_gold\n");
-		    printf("%u\n%u\n%u\n", (uint32_t) i, (uint32_t) mem[i + IN_SIZE_DATA],
-		(uint32_t) mem_gold[i]);
+		    printf("%d\n%lu\n%lu\n", i, mem[i + IN_SIZE_DATA], mem_gold[i]);
 #else
-		    printf("ERROR: i mem mem_gold\n");
+		    print_uart("ERROR: i mem mem_gold\n");
 		    print_uart_int((uint32_t) i);
-		    printf("\n");
+		    print_uart("\n");
 		    print_uart_int((uint32_t) mem[i + IN_SIZE_DATA]);
-		    printf("\n");
+		    print_uart("\n");
 		    print_uart_int((uint32_t) mem_gold[i]);
-		    printf("\n");
+		    print_uart("\n");
 #endif
 		} else {
 #ifdef VERBOSE
@@ -249,27 +266,31 @@ int main(int argc, char * argv[])
 		    printf("%u\n%u\n%u\n", (uint32_t) i, (uint32_t) mem[i + IN_SIZE_DATA],
 			   (uint32_t) mem_gold[i]);
 #else
-		    printf("ERROR: i mem mem_gold\n");
+		    print_uart("ERROR: i mem mem_gold\n");
 		    print_uart_int((uint32_t) i);
-		    printf("\n");
+		    print_uart("\n");
 		    print_uart_int((uint32_t) mem[i + IN_SIZE_DATA]);
-		    printf("\n");
+		    print_uart("\n");
 		    print_uart_int((uint32_t) mem_gold[i]);
-		    printf("\n");
+		    print_uart("\n");
 #endif
 #endif
 		}
 	    }
 
 	    if (!errors) {
+#ifndef __riscv
 		printf("\n  Test PASSED!\n");
+#else
+		print_uart("\n  Test PASSED!\n");
+#endif
 	    } else {
 
 #ifndef __riscv
-		printf("\n  Test FAILED. Number of errors: %u\n", (uint32_t) errors);
+		printf("\n  Test FAILED. Number of errors: %d\n", errors);
 #else
-		printf("\n  Test FAILED. Number of errors: ");
-		print_uart_int((uint32_t) errors); printf("\n");
+		print_uart("\n  Test FAILED. Number of errors: ");
+		print_uart_int((uint32_t) errors); print_uart("\n");
 #endif
 
 	    }
