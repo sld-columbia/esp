@@ -77,26 +77,21 @@ static int contig_init(void)
 	return rc;
 }
 
-int contig_alloc(unsigned long size, contig_handle_t *handle)
+void *contig_alloc(unsigned long size, contig_handle_t *handle)
 {
 	struct contig_alloc_req *req;
 	unsigned long flags = PROT_READ | PROT_WRITE;
-	int i;
 
 	if (unlikely(contig_init()))
-		return -1;
+		return NULL;
 	req = calloc(1, sizeof(*req));
 	if (unlikely(req == NULL))
-		return -1;
+		return NULL;
 	req->n_max = DIV_ROUND_UP(size, chunk_size);
 
 	req->arr = calloc(req->n_max, sizeof(*req->arr));
 	if (unlikely(req->arr == NULL))
 		goto err_arr;
-
-	req->mm = calloc(req->n_max, sizeof(*req->mm));
-	if (unlikely(req->mm == NULL))
-		goto err_mm;
 
 	req->size = size;
 
@@ -107,50 +102,39 @@ int contig_alloc(unsigned long size, contig_handle_t *handle)
 	if (ioctl(fd, CONTIG_IOC_ALLOC, req) < 0)
 		goto err_ioctl;
 
-	for (i = 0; i < req->n; i++) {
-		req->mm[i] = mmap(NULL, chunk_size, flags, MAP_SHARED, fd, req->arr[i]);
-		if (req->mm[i] == MAP_FAILED) {
-			goto err_mmap;
-		}
+	req->mm = mmap(NULL, req->n * chunk_size, flags, MAP_SHARED, fd, req->arr[0]);
+	if (req->mm == MAP_FAILED) {
+		goto err_mmap;
 	}
 
 	*handle = (contig_handle_t)req;
-	return 0;
+	return req->mm;
 
  err_mmap:
-	while (--i >= 0) {
-		if (munmap(req->mm[i], chunk_size))
-			fprintf(stderr, PFX "munmap failed for %p\n", req->mm[i]);
-	}
+	if (munmap(req->mm, chunk_size))
+		fprintf(stderr, PFX "munmap failed for %p\n", req->mm);
  err_ioctl:
-	free(req->mm);
- err_mm:
 	free(req->arr);
  err_arr:
 	free(req);
-	return -1;
+	return NULL;
 }
 
-int contig_alloc_policy(struct contig_alloc_params params, unsigned long size, contig_handle_t *handle)
+void *contig_alloc_policy(struct contig_alloc_params params, unsigned long size, contig_handle_t *handle)
 {
 	struct contig_alloc_req *req;
 	unsigned long flags = PROT_READ | PROT_WRITE;
-	int i;
 
 	if (unlikely(contig_init()))
-		return -1;
+		return NULL;
 	req = calloc(1, sizeof(*req));
 	if (unlikely(req == NULL))
-		return -1;
+		return NULL;
 	req->n_max = DIV_ROUND_UP(size, chunk_size);
 
 	req->arr = calloc(req->n_max, sizeof(*req->arr));
 	if (unlikely(req->arr == NULL))
 		goto err_arr;
-
-	req->mm = calloc(req->n_max, sizeof(*req->mm));
-	if (unlikely(req->mm == NULL))
-		goto err_mm;
 
 	req->size = size;
 
@@ -159,34 +143,27 @@ int contig_alloc_policy(struct contig_alloc_params params, unsigned long size, c
 	if (ioctl(fd, CONTIG_IOC_ALLOC, req) < 0)
 		goto err_ioctl;
 
-	for (i = 0; i < req->n; i++) {
-		req->mm[i] = mmap(NULL, chunk_size, flags, MAP_SHARED, fd, req->arr[i]);
-		if (req->mm[i] == MAP_FAILED) {
-			goto err_mmap;
-		}
+	req->mm = mmap(NULL, req->n * chunk_size, flags, MAP_SHARED, fd, req->arr[0]);
+	if (req->mm == MAP_FAILED) {
+		goto err_mmap;
 	}
 
 	*handle = (contig_handle_t)req;
-	return 0;
+	return req->mm;
 
  err_mmap:
-	while (--i >= 0) {
-		if (munmap(req->mm[i], chunk_size))
-			fprintf(stderr, PFX "munmap failed for %p\n", req->mm[i]);
-	}
+	if (munmap(req->mm, chunk_size))
+		fprintf(stderr, PFX "munmap failed for %p\n", req->mm);
  err_ioctl:
-	free(req->mm);
- err_mm:
 	free(req->arr);
  err_arr:
 	free(req);
-	return -1;
+	return NULL;
 }
 
 void contig_free(contig_handle_t handle)
 {
 	struct contig_alloc_req *req = (struct contig_alloc_req *)handle;
-	int i;
 
 	assert(req);
 	if (unlikely(contig_init())) {
@@ -198,12 +175,9 @@ void contig_free(contig_handle_t handle)
 		perror(NULL);
 		abort();
 	}
-	for (i = 0; i < req->n; i++) {
-		if (munmap(req->mm[i], chunk_size))
-			fprintf(stderr, PFX "munmap failed for %p\n", req->mm[i]);
-	}
+	if (munmap(req->mm, chunk_size))
+		fprintf(stderr, PFX "munmap failed for %p\n", req->mm);
 	free(req->arr);
-	free(req->mm);
 	free(req);
 }
 
@@ -231,7 +205,6 @@ static inline unsigned long chunk_nr(unsigned long offset)
 static void contig_copy(contig_handle_t handle, unsigned long offset, void *vaddr, unsigned long size, bool to_contig)
 {
 	struct contig_alloc_req *req = (struct contig_alloc_req *)handle;
-	unsigned long copied;
 	uint8_t *curr;
 	uint8_t *fr;
 
@@ -247,27 +220,14 @@ static void contig_copy(contig_handle_t handle, unsigned long offset, void *vadd
 		abort();
 	}
 
-	copied = 0;
-	curr = req->mm[chunk_nr(offset)];
-	curr += offset & ~chunk_mask;
+	curr = req->mm;
+	curr += offset;
 	fr = vaddr;
-	/* Note: we cannot assume any aligment for req->mm[i] */
-	while (copied < size) {
-		unsigned long remainder;
-		unsigned long sz;
 
-		remainder = chunk_size - ((offset + copied) & ~chunk_mask);
-		/* copy the remainder of the chunk, or less if end is here */
-		sz = min(size - copied, remainder);
-
-		if (to_contig)
-			memcpy(curr, fr, sz);
-		else
-			memcpy(fr, curr, sz);
-		copied += sz;
-		fr += sz;
-		curr = req->mm[chunk_nr(offset + copied)];
-	}
+	if (to_contig)
+		memcpy(curr, fr, size);
+	else
+		memcpy(fr, curr, size);
 }
 
 void contig_copy_to(contig_handle_t handle, unsigned long offset, void *from, unsigned long size)
@@ -278,49 +238,4 @@ void contig_copy_to(contig_handle_t handle, unsigned long offset, void *from, un
 void contig_copy_from(void *to, contig_handle_t handle, unsigned long offset, unsigned long size)
 {
 	contig_copy(handle, offset, to, size, false);
-}
-
-void contig_memcpy(contig_handle_t to, unsigned long to_off, contig_handle_t fr, unsigned long fr_off, unsigned long size)
-{
-	struct contig_alloc_req *to_req = (struct contig_alloc_req *)to;
-	struct contig_alloc_req *fr_req = (struct contig_alloc_req *)fr;
-	unsigned long copied;
-	uint8_t *to_curr;
-	uint8_t *fr_curr;
-
-	assert(to_req);
-	assert(fr_req);
-	if (unlikely(contig_init())) {
-		fprintf(stderr, PFX "error: %s: cannot init contig\n", __func__);
-		abort();
-	}
-	if (to_off + size > to_req->n * chunk_size) {
-		fprintf(stderr, PFX "error: %s: destination out of bounds (offset 0x%lx + size %ld)\n",
-			__func__, to_off, size);
-		abort();
-	}
-	if (fr_off + size > fr_req->n * chunk_size) {
-		fprintf(stderr, PFX "error: %s: origin out of bounds (offset 0x%lx + size %ld)\n",
-			__func__, fr_off, size);
-		abort();
-	}
-
-	copied = 0;
-	while (copied < size) {
-		unsigned long to_part = (to_off + copied) & ~chunk_mask;
-		unsigned long fr_part = (fr_off + copied) & ~chunk_mask;
-		unsigned long to_remainder;
-		unsigned long fr_remainder;
-		unsigned long sz;
-
-		to_curr = to_req->mm[chunk_nr(to_off + copied)] + to_part;
-		fr_curr = fr_req->mm[chunk_nr(fr_off + copied)] + fr_part;
-
-		to_remainder = min(size - copied, chunk_size - to_part);
-		fr_remainder = min(size - copied, chunk_size - fr_part);
-		sz = min(to_remainder, fr_remainder);
-
-		memcpy(to_curr, fr_curr, sz);
-		copied += sz;
-	}
 }

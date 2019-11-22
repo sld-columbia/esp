@@ -10,7 +10,6 @@
 #include <encoding.h>
 #include <fdt.h>
 #include <uart.h>
-#define printf print_uart
 #endif
 
 #ifndef __ESP_PROBE_H__

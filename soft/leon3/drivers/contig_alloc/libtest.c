@@ -28,7 +28,7 @@ static void do_allocs(void)
 		exit(1);
 	}
 	for (i = 0; i < n_allocs; i++) {
-		if (contig_alloc(sizes[i], &handles[i])) {
+		if (contig_alloc(sizes[i], &handles[i]) == NULL) {
 			perror(__func__);
 			exit(1);
 		}

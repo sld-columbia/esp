@@ -597,9 +597,40 @@ static long contig_ioctl(struct file *file, unsigned int cm, unsigned long arg)
 
 static int contig_mmap(struct file *file, struct vm_area_struct *vma)
 {
+	int i, rc;
+	struct contig_desc *desc, *itr;
+	struct contig_file *priv = file->private_data;
+	long unsigned paddr = PFN_PHYS(vma->vm_pgoff);
+	bool found = false;
+
+	mutex_lock(&contig_lock);
+	list_for_each_entry(itr, &priv->desc_list, file_node) {
+		if (itr->arr[0] == paddr) {
+			found = true;
+			desc = itr;
+			break;
+		}
+	}
+	mutex_unlock(&contig_lock);
+
+	if (!found) {
+		pr_info("contig_alloc: descriptor for addres %08lX not found", paddr);
+		return -EFAULT;
+	}
+
+
 	vma->vm_page_prot = pgprot_noncached(vma->vm_page_prot);
-	return remap_pfn_range(vma, vma->vm_start, vma->vm_pgoff,
-			       vma->vm_end - vma->vm_start, vma->vm_page_prot);
+
+	for (i = 0; i < desc->n; i++) {
+		/* pr_info("contig_mmap: paddr[%d] = %08lX\n", i, desc->arr[i]); */
+		rc = remap_pfn_range(vma, vma->vm_start + i * chunk_size, PHYS_PFN(desc->arr[i]),
+				chunk_size, vma->vm_page_prot);
+
+		if (rc)
+			return rc;
+	}
+
+	return 0;
 }
 
 static int __init contig_create_file(void)

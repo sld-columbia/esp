@@ -88,7 +88,7 @@ struct contig_alloc_req {
 	struct contig_alloc_params params;
 	unsigned long size;
 	unsigned long __user *arr;
-	void __user **mm; /* user-space only */
+	void __user *mm; /* user-space only */
 	unsigned int n; /* filled in by the kernel */
 	int most_allocated; /* filled in by the kernel */
 	unsigned int n_max;

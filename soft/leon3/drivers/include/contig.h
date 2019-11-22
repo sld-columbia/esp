@@ -29,8 +29,8 @@ typedef struct contig_handle_struct *contig_handle_t;
  *
  * Returns 0 on success or -1 on error, setting errno.
  */
-int contig_alloc(unsigned long size, contig_handle_t *handle);
-int contig_alloc_policy(struct contig_alloc_params params, unsigned long size, contig_handle_t *handle);
+void *contig_alloc(unsigned long size, contig_handle_t *handle);
+void *contig_alloc_policy(struct contig_alloc_params params, unsigned long size, contig_handle_t *handle);
 
 /**
  * contig_free - free a contiguous buffer
@@ -78,16 +78,6 @@ void contig_copy_to(contig_handle_t handle, unsigned long offset, void *from, un
  * @size: size of the transfer
  */
 void contig_copy_from(void *to, contig_handle_t handle, unsigned long offset, unsigned long size);
-
-/**
- * contig_memcpy - copy data to and from a contig buffer
- * @to: handle of the buffer to copy to
- * @to_off: byte offset within the contig buffer to copy to
- * @from: handle of the buffer to copy from
- * @from_off: byte offset within the contig buffer to copy from
- * @size: size of the transfer
- */
-void contig_memcpy(contig_handle_t to, unsigned long to_off, contig_handle_t from, unsigned long from_off, unsigned long size);
 
 #define DEF_CONTIG_READ(funcname_, type_)				\
 	static inline type_						\

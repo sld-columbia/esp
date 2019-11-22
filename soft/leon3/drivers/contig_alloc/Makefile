@@ -3,15 +3,12 @@
 CFLAGS := -Wall -Werror -O3 -I../include -L./
 LIBCONTIG := libcontig.a
 
-target: driver contig_alloc-test $(LIBCONTIG) contig_alloc-libtest
+target: driver $(LIBCONTIG) contig_alloc-libtest
 
 include ../driver.mk
 
 driver: check
 	ARCH=$(ARCH) CROSS_COMPILE=$(CROSS_COMPILE) make -C $(KSRC) M=`pwd`
-
-contig_alloc-test: test.c
-	$(CROSS_COMPILE)gcc $(CFLAGS) $^ -o $@
 
 contig_alloc-libtest: libtest.c $(LIBCONTIG)
 	$(CROSS_COMPILE)gcc $(CFLAGS) $< -o $@ -lcontig
@@ -26,7 +23,6 @@ $(LIBCONTIG): lib.o
 clean-libcontig: clean
 	$(RM) *.o
 	$(RM) $(LIBCONTIG)
-	$(RM) contig_alloc-test
 	$(RM) contig_alloc-libtest
 
 .PHONY: target clean clean-libcontig

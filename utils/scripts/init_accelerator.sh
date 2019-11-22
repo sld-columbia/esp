@@ -244,7 +244,7 @@ for d in $dirs; do
     mkdir -p $ACC_DIR/$d
     cd $ACC_DIR/$d
     cp $TEMPLATES_DIR/$d/* .
-    
+
     if cat /etc/os-release | grep -q -i ubuntu; then
         rename "s/accelerator/$LOWER/g" *
     fi
@@ -556,11 +556,12 @@ for f in "barec/${LOWER}.c app/${LOWER}.c app/cfg.h"; do
 done
 
 for key in ${!values[@]}; do
-    for f in "barec/${LOWER}.c app/cfg.h"; do
-	sed -i "/\/\* <<--params-->> \*\//a const int32_t ${key} = ${values[$key]};" ${f}
-    done
+    key_upper=$(echo $key | awk '{print toupper($0)}')
+    sed -i "/\/\* <<--params-def-->> \*\//a #define ${key_upper} ${values[$key]}" app/cfg.h
+    sed -i "/\/\* <<--params-->> \*\//a const int32_t ${key} = ${key_upper};" app/cfg.h
+    sed -i "/\/\* <<--params-->> \*\//a const int32_t ${key} = ${values[$key]};" barec/${LOWER}.c
     sed -i "/\/\* <<--print-params-->> \*\//a ${indent}printf(\"  .${key} = %d\\\n\", ${key});" app/${LOWER}.c
-    sed -i "/\/\* <<--descriptor-->> \*\//a ${indent}${indent}.desc.${LOWER}_desc.${key} = ${key}," app/cfg.h
+    sed -i "/\/\* <<--descriptor-->> \*\//a ${indent}${indent}.desc.${LOWER}_desc.${key} = ${key_upper}," app/cfg.h
 done
 
 ## ESP library update

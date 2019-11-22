@@ -64,14 +64,13 @@ static void init_parameters()
 int main(int argc, char **argv)
 {
 	int errors;
-	contig_handle_t contig;
 
-	token_t *buf;
 	token_t *gold;
+	token_t *buf;
 
 	init_parameters();
 
-	buf = malloc(size);
+	buf = (token_t *) esp_alloc(size);
 	gold = malloc(out_size);
 
 	init_buffer(buf, gold);
@@ -80,16 +79,14 @@ int main(int argc, char **argv)
 	/* <<--print-params-->> */
 	printf("\n  ** START **\n");
 
-	esp_alloc(&contig, buf, size, in_size);
 	esp_run(cfg_000, NACC);
-	esp_dump(&buf[out_offset], out_offset * sizeof(token_t), out_size);
-	esp_cleanup();
 
 	printf("\n  ** DONE **\n");
 
 	errors = validate_buffer(&buf[out_offset], gold);
-	free(buf);
+
 	free(gold);
+	esp_cleanup();
 
 	if (!errors)
 		printf("+ Test PASSED\n");

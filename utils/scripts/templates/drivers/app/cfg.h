@@ -5,6 +5,8 @@
 
 typedef /* <<--token-type-->> */ token_t;
 
+/* <<--params-def-->> */
+
 /* <<--params-->> */
 
 #define NACC 1
