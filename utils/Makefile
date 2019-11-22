@@ -673,6 +673,9 @@ linux-build:
 
 .PHONY: sysroot-update sysroot-clean sysroot-distclean
 
+# The following PHONY guarantees that we execute the program set by TEST_PROGRAM
+.PHONY: systest.bin ram.srec
+
 barec:
 	$(QUIET_MKDIR)mkdir -p $@
 
@@ -1529,13 +1532,13 @@ fpga-program: vivado-prog-fpga
 endif
 
 
-fpga-run: esplink
+fpga-run: esplink soft
 	@./esplink --reset
 	@./esplink --brom -i prom.bin
 	@./esplink --dram -i systest.bin
 	@./esplink --reset
 
-fpga-run-linux: esplink
+fpga-run-linux: esplink fpga-program soft
 	@./esplink --reset
 	@./esplink --brom -i prom.bin
 	@./esplink --dram -i linux.bin
