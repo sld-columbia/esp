@@ -23,7 +23,7 @@ In addition to processor cores, ESP embeds accelerator design examples created
 with Stratus HLS in SystemC, and Chisel.
 
 Furthermore, ESP can serve as a platform to integrate third-party IP blocks.
-As an example, ESP integrates the NVDIA Deep Learning Accelerator [NVDLA](http://nvdla.org/),
+As an example, ESP integrates the nvidia Deep Learning Accelerator [NVDLA](http://nvdla.org/),
 which can be placed on any ESP accelerator tile.
 
 ## Stay tuned for the new features under development:
