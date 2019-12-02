@@ -26,6 +26,7 @@
 
 typedef unsigned char u8;
 typedef unsigned u32;
+typedef unsigned long long u64;
 
 typedef enum action {
 	DO_NONE = 0,
