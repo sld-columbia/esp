@@ -22,7 +22,7 @@
 #define VITBFLY2_BUF_SIZE (ROWS * COLS * sizeof(unsigned))
 
 /* Size of the contiguous chunks for scatter/gather */
-#define CHUNK_SHIFT 8
+#define CHUNK_SHIFT 20
 #define CHUNK_SIZE BIT(CHUNK_SHIFT)
 #define NCHUNK ((VITBFLY2_BUF_SIZE % CHUNK_SIZE == 0) ?		\
 			(VITBFLY2_BUF_SIZE / CHUNK_SIZE) :		\
