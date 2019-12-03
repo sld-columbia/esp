@@ -90,7 +90,7 @@ FB_HINDEX = 12
 DVFS_PINDEX = [5, 6, 7, 8]
 
 # private cache physical interrupt line
-L2_CACHE_PIRQ = 4
+L2_CACHE_PIRQ = 3
 
 # Private cache I/O-bus slave indices (more indices can be reserved if necessary)
 L2_CACHE_PINDEX = [9, 10, 11, 12]
@@ -131,7 +131,7 @@ class acc_info:
   vendor = ""
   id = -1
   idx = -1
-  irq = 3
+  irq = 5
 
 class cache_info:
   id = -1
@@ -247,6 +247,10 @@ class soc_config:
     mem_id = 0
     # Accelerator/DMA ID assigned dynamically to each accelerator tile
     acc_id = 0
+    # Accelerator interrupt dynamically to each accelerator tile because RISC-V PLIC does not work properly with shared lines
+    acc_irq = 3
+    if self.cpu_arch == "ariane":
+      acc_irq = 5
 
     for x in range(soc.noc.rows):
       for y in range(soc.noc.cols):
@@ -302,11 +306,17 @@ class soc_config:
           acc.uppercase_name = selection
           acc.lowercase_name = selection.lower()
           acc.id = acc_id
+          acc.irq = acc_irq
           acc.idx = SLD_APB_PINDEX + acc_id
           acc.vendor = soc.noc.topology[x][y].vendor
           self.tiles[t].acc = acc
           self.accelerators.append(acc)
           acc_id = acc_id + 1
+          if self.cpu_arch == "ariane":
+            acc_irq = acc_irq + 1
+            # Skip interrupt lines reserved to Ethernet
+            if acc_irq == 11:
+              acc_irq = 13
 
           if self.coherence and (self.tiles[t].has_l2 == 1):
             l2 = cache_info()
@@ -1528,7 +1538,7 @@ def print_ariane_devtree(fp, esp_config):
     fp.write("      compatible = \"" + acc.vendor + "," + acc.lowercase_name + "\";\n")
     fp.write("      reg = <0x0 0x" + format(AHB2APB_HADDR[esp_config.cpu_arch], '03X') + str(address) + "00 0x0 " + size + ">;\n")
     fp.write("      interrupt-parent = <&PLIC0>;\n")
-    fp.write("      interrupts = <4>;\n")
+    fp.write("      interrupts = <" + str(acc.irq + 1) + ">;\n")
     fp.write("      reg-shift = <2>; // regs are spaced on 32 bit boundary\n")
     fp.write("      reg-io-width = <4>; // only 32-bit access are supported\n")
     if acc.vendor != "sld":
