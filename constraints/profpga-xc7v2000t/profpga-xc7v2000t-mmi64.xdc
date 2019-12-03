@@ -158,6 +158,7 @@ set_clock_groups -asynchronous -group [get_clocks profpga_clk0_p] -group [get_cl
 set_clock_groups -asynchronous -group [get_clocks profpga_clk0_p] -group [get_clocks $clkm2_elab]
 set_clock_groups -asynchronous -group [get_clocks $clkm2_elab] -group [get_clocks *clk_mmi64]
 set_clock_groups -asynchronous -group [get_clocks $clkm_elab] -group [get_clocks *clk_mmi64]
+set_clock_groups -asynchronous -group [get_clocks clk_nobuf] -group [get_clocks *clk_mmi64]
 
 #set_max_delay -from [all_registers -clock profpga_clk0_p ] -to [all_registers -clock sys_clk  ] 4 -datapath_only
 #set_max_delay -from [all_registers -clock sys_clk  ] -to [all_registers -clock profpga_clk0_p ] 4 -datapath_only
