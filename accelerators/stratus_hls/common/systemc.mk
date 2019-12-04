@@ -12,14 +12,14 @@ ifeq ("$(DMA_WIDTH)", "")
 $(error please define the desired DMA_WIDTH for simulation)
 endif
 
-INCDIR :=
+INCDIR ?=
 INCDIR += -I../src
 INCDIR += -I../tb
 INCDIR += -I$(SYSTEMC)/include
 INCDIR += -I$(STRATUS_PATH)/share/stratus/include
 INCDIR += -I$(ESP_ROOT)/accelerators/stratus_hls/common/syn-templates
 
-CXXFLAGS :=
+CXXFLAGS ?=
 CXXFLAGS += -O3
 CXXFLAGS += $(INCDIR)
 CXXFLAGS += -DDMA_WIDTH=$(DMA_WIDTH)
@@ -32,7 +32,7 @@ LDFLAGS += -lsystemc
 
 TARGET = $(ACCELERATOR)
 
-VPATH :=
+VPATH ?=
 VPATH += ../src
 VPATH += ../tb
 
