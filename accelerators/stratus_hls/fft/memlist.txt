@@ -1,0 +1,4 @@
+fft_plm_block_in_dma32 32768 64 1w:0r 0w:2r
+fft_plm_block_out_dma32 32768 64 2w:0r 0w:1r
+fft_plm_block_in_dma64 32768 64 1w:0r 0w:2r
+fft_plm_block_out_dma64 32768 64 2w:0r 0w:1r

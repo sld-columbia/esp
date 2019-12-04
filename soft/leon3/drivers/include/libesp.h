@@ -31,6 +31,7 @@
 #include <esp_accelerator.h>
 
 // <<--esp-include-->>
+#include "fft.h"
 #include "adder.h"
 #include "CounterAccelerator.h"
 #include "dummy.h"
@@ -44,6 +45,7 @@ unsigned DMA_WORD_PER_BEAT(unsigned _st);
 
 enum esp_accelerator_type {
 	// <<--esp-enum-->>
+	fft,
 	adder,
 	CounterAccelerator,
 	dummy,
@@ -56,6 +58,7 @@ enum esp_accelerator_type {
 
 union esp_accelerator_descriptor {
 	// <<--esp-descriptor-->>
+	struct fft_access fft_desc;
 	struct adder_access adder_desc;
 	struct CounterAccelerator_access CounterAccelerator_desc;
 	struct dummy_access dummy_desc;

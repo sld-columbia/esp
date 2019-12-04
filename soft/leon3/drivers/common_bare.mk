@@ -12,13 +12,20 @@ LD := $(CROSS_COMPILE)$(LD)
 
 SRCS := $(wildcard *.c)
 OBJS := $(SRCS:.c=.exe)
+BINS := $(OBJS:.exe=.bin)
 
-all: $(OBJS)
+all: $(OBJS) $(BINS)
 
-%.exe: %.c $(wildcard ../../probe/*.c)
+fft_test.o: ../../test/fft_test.c
+	$(CC) $(CFLAGS) -c $<
+
+%.exe: %.c $(wildcard ../../probe/*.c) fft_test.o
 	CROSS_COMPILE=$(CROSS_COMPILE) $(MAKE) -C ../../probe
-	$(CC) $(CFLAGS) -o $@ $< $(LIBS)
+	$(CC) $(CFLAGS) -o $@ $< fft_test.o $(LIBS)
+
+%.bin: %.exe
+	$(CROSS_COMPILE)objcopy -O binary --change-addresses -0x40000000 $< $@
 
 clean:
-	$(RM) $(OBJS) *.o *.a
+	$(RM) $(OBJS) $(BINS) *.o *.a
 

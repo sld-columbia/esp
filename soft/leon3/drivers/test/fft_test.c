@@ -1,7 +1,42 @@
 #include <stdint.h>
-#include <stdio.h>
+#include <math.h>
 
-#include <test/fft.h>
+#include <test/fft_test.h>
+
+#ifndef __linux__
+#ifdef __riscv
+/* RISC-V baremetal does not have sin implementation */
+/* source stackoverflow: https://stackoverflow.com/a/2284929 */
+double sin(double x)
+{
+	int i = 1;
+	double cur = x;
+	double acc = 1;
+	double fact= 1;
+	double pow = x;
+	while (fabs(acc) > .00000001 &&   i < 100){
+		fact *= ((2*i)*(2*i+1));
+		pow *= -1 * x*x;
+		acc =  pow / fact;
+		cur += acc;
+		i++;
+	}
+	return cur;
+
+}
+
+/* simple not quite random implementation of rand() when stdlib is not available */
+static unsigned long int next = 42;
+float rand(void)
+{
+	unsigned int rand_tmp;
+	next = next * 1103515245 + 12345;
+	rand_tmp = (unsigned int) (next / 65536) % 32768;
+	return ((float) rand_tmp);
+
+}
+#endif
+#endif
 
 /*
  * This determines the maximum admissible relative error between the accelerated
@@ -17,35 +52,6 @@
  * from that of the host CPU.
  */
 #define MAX_REL_ERR 0.05
-#define PI 3.14159265358979323846
-
-bool fft_diff_ok(const float *sw_fft, contig_handle_t contig, int n, bool verbose)
-{
-	bool ok = true;
-	int i;
-
-	for (i = 0; i < n; i++) {
-		float sw1 = sw_fft[2 * i];
-		float sw2 = sw_fft[2 * i + 1];
-		float hw1, hw2;
-		double rel1, rel2;
-
-		contig_copy_from(&hw1, contig, sizeof(float) * 2 * i, sizeof(float));
-		contig_copy_from(&hw2, contig, sizeof(float) * (2 * i + 1), sizeof(float));
-		rel1 = fabs(sw1 - hw1) / sw1;
-		rel2 = fabs(sw2 - hw2) / sw2;
-
-		if (rel1 > MAX_REL_ERR || rel2 > MAX_REL_ERR) {
-			if (verbose) {
-				fprintf(stderr, "warning: FFT relative discrepancy above maximum relative error %g:\n", MAX_REL_ERR);
-				fprintf(stderr, "  sw FFT[%d] = %.15g %.15g\n", 2 * i, sw1, sw2);
-				fprintf(stderr, "  hw FFT[%d] = %.15g %.15g\n", 2 * i, hw1, hw2);
-			}
-			ok = false;
-		}
-	}
-	return ok;
-}
 
 unsigned int fft_rev(unsigned int v)
 {
@@ -61,7 +67,7 @@ unsigned int fft_rev(unsigned int v)
 	return r;
 }
 
-float *fft_bit_reverse(float *w, unsigned int n, unsigned int bits)
+void fft_bit_reverse(float *w, unsigned int n, unsigned int bits)
 {
 	unsigned int i, s, shift;
 
@@ -84,8 +90,6 @@ float *fft_bit_reverse(float *w, unsigned int n, unsigned int bits)
 			w[2 * r + 1] = t_imag;
 		}
 	}
-
-	return w;
 }
 
 int fft_comp(float *data, unsigned int n, unsigned int logn, int sign, bool rev)
@@ -104,7 +108,7 @@ int fft_comp(float *data, unsigned int n, unsigned int logn, int sign, bool rev)
 		w_real = 1.0;
 		w_imag = 0.0;
 
-		theta = 1.0 * sign * PI / (float) transform_length;
+		theta = 1.0 * sign * M_PI / (float) transform_length;
 
 		s = sin(theta);
 		t = sin(0.5 * theta);

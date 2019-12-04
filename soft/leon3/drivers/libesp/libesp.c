@@ -23,6 +23,9 @@ void *accelerator_thread( void *ptr )
 	gettime(&th_start);
 	switch (info->type) {
 	// <<--esp-ioctl-->>
+	case fft :
+		rc = ioctl(info->fd, FFT_IOC_ACCESS, info->desc.fft_desc);
+		break;
 	case adder :
 		rc = ioctl(info->fd, ADDER_IOC_ACCESS, info->desc.adder_desc);
 		break;
@@ -79,6 +82,9 @@ static void esp_config(esp_thread_info_t cfg[], unsigned nacc)
 
 		switch (info->type) {
 		// <<--esp-prepare-->>
+		case fft :
+			esp_prepare(&info->desc.fft_desc.esp);
+			break;
 		case adder:
 			esp_prepare(&info->desc.adder_desc.esp);
 			break;

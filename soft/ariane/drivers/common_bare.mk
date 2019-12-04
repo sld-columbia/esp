@@ -34,9 +34,12 @@ BINS := $(OBJS:.exe=.bin)
 
 all: $(OBJS) $(BINS)
 
-%.exe: %.c $(wildcard ../../probe/*.c)
+fft_test.o: ../../test/fft_test.c
+	$(CC) $(CFLAGS) -c $<
+
+%.exe: %.c $(wildcard ../../probe/*.c) fft_test.o
 	CROSS_COMPILE=$(CROSS_COMPILE) DESIGN_PATH=$(DESIGN_PATH) $(MAKE) -C ../../probe
-	$(CC) $(CFLAGS) -o $@  $(LDFLAGS) $< ../../probe/libprobe.a
+	$(CC) $(CFLAGS) -o $@  $(LDFLAGS) $< fft_test.o ../../probe/libprobe.a
 
 %.bin: %.exe
 	$(CROSS_COMPILE)objcopy -O binary $< $@

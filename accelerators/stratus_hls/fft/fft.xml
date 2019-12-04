@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sld>
+  <accelerator name="fft" desc="Accelerator FFT" data_size="4" device_id="059" hls_tool="stratus_hls">
+    <param name="log_len" desc="log_len" />
+    <param name="len" desc="len" />
+  </accelerator>
+</sld>
