@@ -71,11 +71,11 @@ $(CHISEL_ACCELERATORS):
 	$(QUIET_BUILD)
 	@if ! test -e $(CHISEL_PATH)/build/$@; then \
 		$(MAKE) sbt-run && rm -rf $(ESP_ROOT)/tech/$(TECHLIB)/acc/$@; \
-		cp -r $(CHISEL_PATH)/build/$@ $(ESP_ROOT)/tech/$(TECHLIB)/acc/; \
 	fi;
 	@if test -e $(ESP_ROOT)/tech/$(TECHLIB)/acc/installed.log; then \
 		sed -i '/$@/d' $(ESP_ROOT)/tech/$(TECHLIB)/acc/installed.log; \
 	fi; \
+	cp -r $(CHISEL_PATH)/build/$@ $(ESP_ROOT)/tech/$(TECHLIB)/acc/; \
 	echo "$@" >> $(ESP_ROOT)/tech/$(TECHLIB)/acc/installed.log;
 
 chisel-accelerators: $(CHISEL_ACCELERATORS)
