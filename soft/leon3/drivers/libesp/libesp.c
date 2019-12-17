@@ -23,6 +23,9 @@ void *accelerator_thread( void *ptr )
 	gettime(&th_start);
 	switch (info->type) {
 	// <<--esp-ioctl-->>
+	case fftaccelerator :
+		rc = ioctl(info->fd, FFTACCELERATOR_IOC_ACCESS, info->desc.fftaccelerator_desc);
+		break;
 	case fft :
 		rc = ioctl(info->fd, FFT_IOC_ACCESS, info->desc.fft_desc);
 		break;
@@ -82,6 +85,9 @@ static void esp_config(esp_thread_info_t cfg[], unsigned nacc)
 
 		switch (info->type) {
 		// <<--esp-prepare-->>
+		case fftaccelerator :
+			esp_prepare(&info->desc.fftaccelerator_desc.esp);
+			break;
 		case fft :
 			esp_prepare(&info->desc.fft_desc.esp);
 			break;
