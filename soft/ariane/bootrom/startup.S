@@ -9,7 +9,7 @@
   .globl _prog_start
 _prog_start:
   smp_pause(s1, s2)
-  li sp, 0x81000000
+  li sp, 0x9ff00000
   call main
   smp_resume(s1, s2)
   csrr a0, mhartid
