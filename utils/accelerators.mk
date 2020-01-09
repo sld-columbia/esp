@@ -264,6 +264,17 @@ sldgen-distclean: sldgen-clean
 .PHONY: sldgen-clean sldgen-distclean
 
 ## Device Drivers ##
+
+### Configuration-dependent CFLAGS ###
+
+#### FFT Accelerator
+FFT_FX_WIDTH=$(shell cat .esp_config | grep "acc FFT " | cut -d " " -f 9 | cut -d "_" -f 2 | sed 's/fx//g')
+ifeq ($(FFT_FX_WIDTH),)
+FFT_FX_WIDTH=32
+endif
+
+EXTRA_CFLAGS += -DFFT_FX_WIDTH=$(FFT_FX_WIDTH)
+
 $(ACCELERATORS-driver): sysroot linux-build/vmlinux
 	@if test -e $(DRIVERS)/$(@:-driver=)/linux/$(@:-driver=).c; then \
 		echo '   ' MAKE $@; mkdir -p sysroot/opt/drivers; \
@@ -284,7 +295,7 @@ $(ACCELERATORS-driver-clean):
 $(ACCELERATORS-app): sysroot
 	@if [ `ls -1 $(DRIVERS)/$(@:-app=)/app/*.c 2>/dev/null | wc -l ` -gt 0 ]; then \
 		echo '   ' MAKE $@; mkdir -p sysroot/applications/test/; \
-		CROSS_COMPILE=$(CROSS_COMPILE_LINUX) $(MAKE) -C $(DRIVERS)/$(@:-app=)/app; \
+		CROSS_COMPILE=$(CROSS_COMPILE_LINUX) $(MAKE) EXTRA_CFLAGS=$(EXTRA_CFLAGS) -C $(DRIVERS)/$(@:-app=)/app; \
 		if [ `ls -1 $(DRIVERS)/$(@:-app=)/app/*.exe 2>/dev/null | wc -l ` -gt 0 ]; then \
 			echo '   ' CP $@; cp $(DRIVERS)/$(@:-app=)/app/*.exe sysroot/applications/test/; \
 		else \
@@ -300,7 +311,7 @@ $(ACCELERATORS-app-clean):
 $(ACCELERATORS-barec): barec
 	@if [ `ls -1 $(DRIVERS)/$(@:-barec=)/barec/*.c 2>/dev/null | wc -l ` -gt 0 ]; then \
 		echo '   ' MAKE $@; \
-		CROSS_COMPILE=$(CROSS_COMPILE_ELF) DESIGN_PATH=$(DESIGN_PATH) $(MAKE) -C $(DRIVERS)/$(@:-barec=)/barec; \
+		CROSS_COMPILE=$(CROSS_COMPILE_ELF) DESIGN_PATH=$(DESIGN_PATH) $(MAKE) EXTRA_CFLAGS=$(EXTRA_CFLAGS) -C $(DRIVERS)/$(@:-barec=)/barec; \
 		if [ `ls -1 $(DRIVERS)/$(@:-barec=)/barec/*.bin 2>/dev/null | wc -l ` -gt 0 ]; then \
 			echo '   ' CP $@; cp $(DRIVERS)/$(@:-barec=)/barec/*.bin barec; \
 		fi; \

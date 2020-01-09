@@ -57,6 +57,8 @@ public:
         /* <<--params-default-->> */
         log_len = 8;
         len = (1 << log_len);
+        do_peak = 0;
+        do_bitrev = 1;
     }
 
     // Processes
@@ -75,6 +77,8 @@ public:
 
     // Accelerator-specific data
     /* <<--params-->> */
+    int32_t do_peak;
+    int32_t do_bitrev;
     int32_t len;
     int32_t log_len;
 

@@ -18,10 +18,11 @@
 struct fft_access {
 	struct esp_access esp;
 	/* <<--regs-->> */
-	unsigned len;
 	unsigned log_len;
+	unsigned do_bitrev;
 	unsigned src_offset;
 	unsigned dst_offset;
+
 };
 
 #define FFT_IOC_ACCESS	_IOW ('S', 0, struct fft_access)

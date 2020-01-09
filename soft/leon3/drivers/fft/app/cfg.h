@@ -3,13 +3,27 @@
 
 #include "libesp.h"
 
-typedef int64_t token_t;
+#if (FFT_FX_WIDTH == 64)
+typedef unsigned long long token_t;
+typedef double native_t;
+#define fx2float fixed64_to_double
+#define float2fx double_to_fixed64
+#define FX_IL 42
+#elif (FFT_FX_WIDTH == 32)
+typedef int token_t;
+typedef float native_t;
+#define fx2float fixed32_to_float
+#define float2fx float_to_fixed32
+#define FX_IL 12
+#endif /* FFT_FX_WIDTH */
 
 /* <<--params-def-->> */
-#define LEN 1024
 #define LOG_LEN 10
+#define LEN (1 << LOG_LEN)
+#define DO_BITREV 1
 
 /* <<--params-->> */
+const int32_t do_bitrev = DO_BITREV;
 const int32_t len = LEN;
 const int32_t log_len = LOG_LEN;
 
@@ -21,7 +35,7 @@ esp_thread_info_t cfg_000[] = {
 		.devname = "fft.0",
 		.type = fft,
 		/* <<--descriptor-->> */
-		.desc.fft_desc.len = LEN,
+		.desc.fft_desc.do_bitrev = DO_BITREV,
 		.desc.fft_desc.log_len = LOG_LEN,
 		.desc.fft_desc.src_offset = 0,
 		.desc.fft_desc.dst_offset = 0,

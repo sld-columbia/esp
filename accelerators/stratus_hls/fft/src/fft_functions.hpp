@@ -2,27 +2,84 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // complex number multiplication
-void compMul(const CompNum &x, const CompNum &y, CompNum &res)
+inline void compMul(const CompNum &x, const CompNum &y, CompNum &res)
 {
     res.re = x.re * y.re - x.im * y.im;
     res.im = x.re * y.im + x.im * y.re;
 }
 
 // complex number addition
-void compAdd(const CompNum &x, const CompNum &y, CompNum &res)
+inline void compAdd(const CompNum &x, const CompNum &y, CompNum &res)
 {
     res.re = x.re + y.re;
     res.im = x.im + y.im;
 }
 
 // complex number substraction
-void compSub(const CompNum &x, const CompNum &y, CompNum &res)
+inline void compSub(const CompNum &x, const CompNum &y, CompNum &res)
 {
     res.re = x.re - y.re;
     res.im = x.im - y.im;
 }
 
-FPDATA myCos(int m)
+// bit reverse
+inline unsigned int fft_rev(unsigned int v)
+{
+    unsigned int r = v;
+    int s = 31;
+    int i;
+
+    for (i = 0; i < 31; i++) {
+        HLS_UNROLL_N(8, "fft-rev-unroll");
+        v >>= 1;
+        if (v != 0) {
+            r <<= 1;
+            r |= v & 1;
+            s--;
+        }
+    }
+
+    r <<= s;
+
+    return r;
+}
+
+inline void fft::fft_bit_reverse(unsigned int n, unsigned int bits)
+{
+	unsigned int i, s, shift;
+
+        s = 31;
+        shift = s - bits + 1;
+
+        for (i = 0; i < n; i++) {
+            unsigned int r;
+            FPDATA_WORD t1_real, t1_imag;
+            FPDATA_WORD t2_real, t2_imag;
+
+            r = fft_rev(i);
+            r >>= shift;
+
+            wait();
+            t1_real = A0[2 * i];
+            t1_imag = A0[2 * i + 1];
+            wait();
+            t2_real = A0[2 * r];
+            t2_imag = A0[2 * r + 1];
+
+            if (i < r) {
+                HLS_PROTO("bit-rev-memread");
+                HLS_BREAK_DEP(A0);
+                wait();
+                A0[2 * i] = t2_real;
+                A0[2 * i + 1] = t2_imag;
+                wait();
+                A0[2 * r] = t1_real;
+                A0[2 * r + 1] = t1_imag;
+            }
+        }
+}
+
+inline FPDATA myCos(int m)
 {
 	switch(m) {
 	case 1: return 2;
@@ -45,7 +102,7 @@ FPDATA myCos(int m)
 	}
 }
 
-FPDATA mySin(int m)
+inline FPDATA mySin(int m)
 {
 	switch(m) {
 	case 1: return 8.74227765734759e-08;

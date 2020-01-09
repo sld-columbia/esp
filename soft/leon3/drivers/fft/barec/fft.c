@@ -10,7 +10,19 @@
 #include <esp_probe.h>
 #include "test/fft_test.h"
 
-typedef int64_t token_t;
+#if (FFT_FX_WIDTH == 64)
+typedef long long token_t;
+typedef double native_t;
+#define fx2float fixed64_to_double
+#define float2fx double_to_fixed64
+#define FX_IL 42
+#elif (FFT_FX_WIDTH == 32)
+typedef int token_t;
+typedef float native_t;
+#define fx2float fixed32_to_float
+#define float2fx float_to_fixed32
+#define FX_IL 12
+#endif /* FFT_FX_WIDTH */
 
 const float ERR_TH = 0.05;
 
@@ -24,8 +36,9 @@ static unsigned DMA_WORD_PER_BEAT(unsigned _st)
 #define DEV_NAME "sld,fft"
 
 /* <<--params-->> */
-const int32_t len = 32;
-const int32_t log_len = 5;
+const int32_t log_len = 3;
+int32_t len;
+int32_t do_bitrev = 1;
 
 static unsigned in_words_adj;
 static unsigned out_words_adj;
@@ -45,7 +58,8 @@ static unsigned mem_size;
 
 /* User defined registers */
 /* <<--regs-->> */
-#define FFT_LEN_REG 0x44
+#define FFT_DO_PEAK_REG 0x48
+#define FFT_DO_BITREV_REG 0x44
 #define FFT_LOG_LEN_REG 0x40
 
 
@@ -55,7 +69,7 @@ static int validate_buf(token_t *out, float *gold)
 	unsigned errors = 0;
 
 	for (j = 0; j < 2 * len; j++) {
-		double val = fixed64_to_double(out[j], 42);
+		native_t val = fx2float(out[j], FX_IL);
 		if ((fabs(gold[j] - val) / fabs(gold[j])) > ERR_TH)
 			errors++;
 	}
@@ -76,8 +90,8 @@ static int validate_buf(token_t *out, float *gold)
 static void init_buf(token_t *in, float *gold)
 {
 	int j;
-	const float LO = -100.0;
-	const float HI = 9991228468.0;
+	const float LO = -10.0;
+	const float HI = 10.0;
 
 	/* srand((unsigned int) time(NULL)); */
 
@@ -87,14 +101,16 @@ static void init_buf(token_t *in, float *gold)
 	}
 
 	// preprocess with bitreverse (fast in software anyway)
-	fft_bit_reverse(gold, len, log_len);
+	if (!do_bitrev)
+		fft_bit_reverse(gold, len, log_len);
 
 	// convert input to fixed point
 	for (j = 0; j < 2 * len; j++)
-		in[j] = double_to_fixed64((double) gold[j], 42);
+		in[j] = float2fx((native_t) gold[j], FX_IL);
+
 
 	// Compute golden output
-	fft_comp(gold, len, log_len,  -1,  false);
+	fft_comp(gold, len, log_len, -1, do_bitrev);
 }
 
 
@@ -111,6 +127,8 @@ int main(int argc, char * argv[])
 	float *gold;
 	unsigned errors = 0;
         const int ERROR_COUNT_TH = 0.001;
+
+	len = 1 << log_len;
 
 	if (DMA_WORD_PER_BEAT(sizeof(token_t)) == 0) {
 		in_words_adj = 2 * len;
@@ -213,7 +231,8 @@ int main(int argc, char * argv[])
 
 		// Pass accelerator-specific configuration parameters
 		/* <<--regs-config-->> */
-		iowrite32(dev, FFT_LEN_REG, len);
+		iowrite32(dev, FFT_DO_PEAK_REG, 0);
+		iowrite32(dev, FFT_DO_BITREV_REG, do_bitrev);
 		iowrite32(dev, FFT_LOG_LEN_REG, log_len);
 
 		// Flush (customize coherence model here)

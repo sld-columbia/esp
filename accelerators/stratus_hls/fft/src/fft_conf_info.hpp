@@ -19,18 +19,21 @@ public:
     conf_info_t()
     {
         /* <<--ctor-->> */
-        this->len = 8;
+        this->do_peak = 0;
+        this->do_bitrev = 1;
         this->log_len = 3;
     }
 
     conf_info_t(
         /* <<--ctor-args-->> */
-        int32_t len, 
+        int32_t do_peak,
+        int32_t do_bitrev,
         int32_t log_len
         )
     {
         /* <<--ctor-custom-->> */
-        this->len = len;
+        this->do_peak = do_peak;
+        this->do_bitrev = do_bitrev;
         this->log_len = log_len;
     }
 
@@ -38,7 +41,8 @@ public:
     inline bool operator==(const conf_info_t &rhs) const
     {
         /* <<--eq-->> */
-        if (len != rhs.len) return false;
+        if (do_peak != rhs.do_peak) return false;
+        if (do_bitrev != rhs.do_bitrev) return false;
         if (log_len != rhs.log_len) return false;
         return true;
     }
@@ -47,7 +51,8 @@ public:
     inline conf_info_t& operator=(const conf_info_t& other)
     {
         /* <<--assign-->> */
-        len = other.len;
+        do_peak = other.do_peak;
+        do_bitrev = other.do_bitrev;
         log_len = other.log_len;
         return *this;
     }
@@ -61,14 +66,16 @@ public:
     {
         os << "{";
         /* <<--print-->> */
-        os << "len = " << conf_info.len << ", ";
+        os << "do_peak = " << conf_info.do_peak << ", ";
+        os << "do_bitrev = " << conf_info.do_bitrev << ", ";
         os << "log_len = " << conf_info.log_len << "";
         os << "}";
         return os;
     }
 
         /* <<--params-->> */
-        int32_t len;
+        int32_t do_peak;
+        int32_t do_bitrev;
         int32_t log_len;
 };
 

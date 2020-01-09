@@ -224,6 +224,7 @@ esp-config-distclean: esp-config-clean
 		socmap.vhd	\
 		esp_global.vhd	\
 		.esp_config	\
+		.soft_config	\
 		ariane.dts	\
 		mmi64_regs.h	\
 		power.h		\

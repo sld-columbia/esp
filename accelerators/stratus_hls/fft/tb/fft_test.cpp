@@ -1,5 +1,6 @@
 #include <stdint.h>
 #include <stdio.h>
+#include <iostream>
 
 #include "fft_test.hpp"
 
@@ -40,6 +41,7 @@ void fft_bit_reverse(float *w, unsigned int n, unsigned int bits)
 			w[2 * r + 1] = t_imag;
 		}
 	}
+
 }
 
 int fft_comp(float *data, unsigned int n, unsigned int logn, int sign, bool rev)

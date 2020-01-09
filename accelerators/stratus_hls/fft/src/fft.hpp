@@ -15,10 +15,15 @@
 #define __round_mask(x, y) ((y)-1)
 #define round_up(x, y) ((((x)-1) | __round_mask(x, y))+1)
 /* <<--defines-->> */
-#define DATA_WIDTH 64
+#define LOG_LEN_MAX 14
+#define LEN_MAX (1 << LOG_LEN_MAX)
+#define DATA_WIDTH FX_WIDTH
+#if (FX_WIDTH == 64)
 #define DMA_SIZE SIZE_DWORD
-#define PLM_OUT_WORD 32768
-#define PLM_IN_WORD 32768
+#elif (FX_WIDTH == 32)
+#define DMA_SIZE SIZE_WORD
+#endif // FX_WIDTH
+#define PLM_IN_WORD (LEN_MAX << 1)
 
 class fft : public esp_accelerator_3P<DMA_WIDTH>
 {
@@ -34,8 +39,6 @@ public:
 
         // Map arrays to memories
         /* <<--plm-bind-->> */
-        HLS_MAP_plm(B0, PLM_OUT_NAME);
-        HLS_MAP_plm(C, PLM_OUT_NAME);
         HLS_MAP_plm(A0, PLM_IN_NAME);
     }
 
@@ -54,11 +57,10 @@ public:
     esp_config_proc cfg;
 
     // Functions
+    void fft_bit_reverse(unsigned int n, unsigned int bits);
 
     // Private local memories
     sc_dt::sc_int<DATA_WIDTH> A0[PLM_IN_WORD];
-    sc_dt::sc_int<DATA_WIDTH> C[PLM_OUT_WORD];
-    sc_dt::sc_int<DATA_WIDTH> B0[PLM_OUT_WORD];
 
 };
 

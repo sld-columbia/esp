@@ -13,8 +13,8 @@ static std::mt19937 *gen;
 
 static void init_random_distribution(void)
 {
-    const float LO = -100.0;
-    const float HI = 9991228468.0;
+    const float LO = -10.0;
+    const float HI = 10.0;
 
     gen = new std::mt19937(rd());
     dis = new std::uniform_real_distribution<float>(LO, HI);
@@ -46,7 +46,8 @@ void system_t::config_proc()
         conf_info_t config;
         // Custom configuration
         /* <<--params-->> */
-        config.len = len;
+        config.do_peak = do_peak;
+        config.do_bitrev = do_bitrev;
         config.log_len = log_len;
 
         wait(); conf_info.write(config);
@@ -124,12 +125,13 @@ void system_t::load_memory()
     }
 
     // preprocess with bitreverse (fast in software anyway)
-    fft_bit_reverse(in, len, log_len);
+    if (!do_bitrev)
+        fft_bit_reverse(in, len, log_len);
 
     // Compute golden output
     gold = new float[out_size];
     memcpy(gold, in, out_size * sizeof(float));
-    fft_comp(gold, len, log_len,  -1,  false);
+    fft_comp(gold, len, log_len,  -1,  do_bitrev);
 
     // Memory initialization:
 #if (DMA_WORD_PER_BEAT == 0)

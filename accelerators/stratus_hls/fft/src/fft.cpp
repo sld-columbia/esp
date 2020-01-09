@@ -38,8 +38,8 @@ void fft::load_input()
 
         // User-defined config code
         /* <<--local-params-->> */
-        len = config.len;
         log_len = config.log_len;
+        len = 1 << log_len;
     }
 
     // Load
@@ -137,8 +137,8 @@ void fft::store_output()
 
         // User-defined config code
         /* <<--local-params-->> */
-        len = config.len;
         log_len = config.log_len;
+        len = 1 << log_len;
     }
 
     // Store
@@ -177,7 +177,7 @@ void fft::store_output()
             // Read from PLM
             sc_dt::sc_int<DATA_WIDTH> data;
             wait();
-            data = B0[i];
+            data = A0[i];
             sc_dt::sc_bv<DATA_WIDTH> dataBv(data);
 
             uint16_t k = 0;
@@ -200,7 +200,7 @@ void fft::store_output()
             for (uint16_t k = 0; k < DMA_WORD_PER_BEAT; k++)
             {
                 HLS_UNROLL_SIMPLE;
-                dataBv.range((k+1) * DATA_WIDTH - 1, k * DATA_WIDTH) = B0[i + k];
+                dataBv.range((k+1) * DATA_WIDTH - 1, k * DATA_WIDTH) = A0[i + k];
             }
             this->dma_write_chnl.put(dataBv);
         }
@@ -232,6 +232,8 @@ void fft::compute_kernel()
 
     // Config
     /* <<--params-->> */
+    bool do_peak;
+    bool do_bitrev;
     int32_t len;
     int32_t log_len;
     {
@@ -242,15 +244,23 @@ void fft::compute_kernel()
 
         // User-defined config code
         /* <<--local-params-->> */
-        len = config.len;
         log_len = config.log_len;
+#ifndef STRATUS_HLS
+        sc_assert(log_len < LOG_LEN_MAX);
+#endif
+        len = 1 << log_len;
+        do_peak = config.do_peak;
+        do_bitrev = config.do_bitrev;
     }
-
 
     // Compute FFT single pass (FIXME: assume vector fits in the PLM)
     {
         uint32_t length = 2 * len;
         this->compute_load_handshake();
+
+        // Optional step: bit reverse
+        if (do_bitrev)
+            fft_bit_reverse(len, log_len);
 
         // Computing phase implementation
         int m = 1;  // iterative FFT
@@ -277,34 +287,11 @@ void fft::compute_kernel()
 
                     CompNum akj, akjm;
                     CompNum bkj, bkjm;
-                    CompNum akj32, akjm32;
-                    CompNum bkj32, bkjm32;
-                    CompNum akj32_A, akjm32_A;
-                    CompNum akj32_C, akjm32_C;
 
-                    akj32_A.re = int2fp<FPDATA, WORD_SIZE>(A0[2 * kj]);
-                    akj32_A.im = int2fp<FPDATA, WORD_SIZE>(A0[2 * kj + 1]);
-                    akj32_C.re = int2fp<FPDATA, WORD_SIZE>(C[2 * kj]);
-                    akj32_C.im = int2fp<FPDATA, WORD_SIZE>(C[2 * kj + 1]);
-                    akjm32_A.re = int2fp<FPDATA, WORD_SIZE>(A0[2 * kjm]);
-                    akjm32_A.im = int2fp<FPDATA, WORD_SIZE>(A0[2 * kjm + 1]);
-                    akjm32_C.re = int2fp<FPDATA, WORD_SIZE>(C[2 * kjm]);
-                    akjm32_C.im = int2fp<FPDATA, WORD_SIZE>(C[2 * kjm + 1]);
-
-                    if (s == 1) {
-                        akj32 = akj32_A;
-                        akjm32 = akjm32_A;
-                    } else {
-                        akj32 = akj32_C;
-                        akjm32 = akjm32_C;
-                    }
-                    akj.re = akj32.re;
-                    akj.im = akj32.im;
-                    akjm.re = akjm32.re;
-                    akjm.im = akjm32.im;
-
-                    // printf("i: %d,  j: %d\n", kj, kjm);
-                    // printf("w: %.15g, %.15g\n", w.re, w.im);
+                    akj.re = int2fp<FPDATA, WORD_SIZE>(A0[2 * kj]);
+                    akj.im = int2fp<FPDATA, WORD_SIZE>(A0[2 * kj + 1]);
+                    akjm.re = int2fp<FPDATA, WORD_SIZE>(A0[2 * kjm]);
+                    akjm.im = int2fp<FPDATA, WORD_SIZE>(A0[2 * kjm + 1]);
 
                     CompNum t;
                     compMul(w, akjm, t);
@@ -314,36 +301,19 @@ void fft::compute_kernel()
                     CompNum wwm;
                     wwm.re = w.re - (wm.im * w.im + wm.re * w.re);
                     wwm.im = w.im + (wm.im * w.re - wm.re * w.im);
-                    // compMul(w, wm, wwm);
                     w = wwm;
 
-                    bkj32.re = bkj.re;
-                    bkj32.im = bkj.im;
-                    bkjm32.re = bkjm.re;
-                    bkjm32.im = bkjm.im;
-
-                    if (s == log_len) {
-                        HLS_PROTO("compute_write_B0");
-                        HLS_BREAK_DEP(B0);
+                    {
+                        HLS_PROTO("compute_write_A0");
+                        HLS_BREAK_DEP(A0);
                         wait();
-                        B0[2 * kj] = fp2int<FPDATA, WORD_SIZE>(bkj32.re);
-                        B0[2 * kj + 1] = fp2int<FPDATA, WORD_SIZE>(bkj32.im);
+                        A0[2 * kj] = fp2int<FPDATA, WORD_SIZE>(bkj.re);
+                        A0[2 * kj + 1] = fp2int<FPDATA, WORD_SIZE>(bkj.im);
                         wait();
-                        B0[2 * kjm] = fp2int<FPDATA, WORD_SIZE>(bkjm32.re);
-                        B0[2 * kjm + 1] = fp2int<FPDATA, WORD_SIZE>(bkjm32.im);
-                        // cout << "DFT: B0 " << kj << ": " << B0[kj].re.to_hex() << " " << B0[kj].im.to_hex() << endl;
-                        // cout << "DFT: B0 " << kjm << ": " << B0[kjm].re.to_hex() << " " << B0[kjm].im.to_hex() << endl;
-                    } else {
-                        HLS_PROTO("compute_write_C");
-                        HLS_BREAK_DEP(C);
-                        wait();
-                        C[2 * kj] = fp2int<FPDATA, WORD_SIZE>(bkj32.re);
-                        C[2 * kj + 1] = fp2int<FPDATA, WORD_SIZE>(bkj32.im);
-                        wait();
-                        C[2 * kjm] = fp2int<FPDATA, WORD_SIZE>(bkjm32.re);
-                        C[2 * kjm + 1] = fp2int<FPDATA, WORD_SIZE>(bkjm32.im);
-                        // cout << "DFT: C " << kj << ": " << C[kj].re.to_hex() << " " << C[kj].im.to_hex() << endl;
-                        // cout << "DFT: C " << kjm << ": " << C[kjm].re.to_hex() << " " << C[kjm].im.to_hex() << endl;
+                        A0[2 * kjm] = fp2int<FPDATA, WORD_SIZE>(bkjm.re);
+                        A0[2 * kjm + 1] = fp2int<FPDATA, WORD_SIZE>(bkjm.im);
+                        // cout << "DFT: A0 " << kj << ": " << A0[kj].re.to_hex() << " " << A0[kj].im.to_hex() << endl;
+                        // cout << "DFT: A0 " << kjm << ": " << A0[kjm].re.to_hex() << " " << A0[kjm].im.to_hex() << endl;
                     }
                 }
             }

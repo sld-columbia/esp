@@ -15,11 +15,15 @@
 
 // Data types
 
-const unsigned int WORD_SIZE = 64;
+const unsigned int WORD_SIZE = FX_WIDTH;
 
-const unsigned int FPDATA_WL = 64;
+const unsigned int FPDATA_WL = FX_WIDTH;
 
-const unsigned int FPDATA_IL = 42;
+#if (FX_WIDTH==64)
+const unsigned int FPDATA_IL = FX64_IL;
+#elif (FX_WIDTH==32)
+const unsigned int FPDATA_IL = FX32_IL;
+#endif // FX_WIDTH
 
 const unsigned int FPDATA_PL = (FPDATA_WL - FPDATA_IL);
 
