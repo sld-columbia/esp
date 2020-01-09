@@ -144,6 +144,7 @@ architecture rtl of acc_dma2noc is
 
   constant len_pad : std_logic_vector(GLOB_BYTE_OFFSET_BITS - 1 downto 0) := (others => '0');
 
+  -- Fix endianness
   function fix_endian (
     din : std_logic_vector(ARCH_BITS - 1 downto 0);
     sz  : std_logic_vector(2 downto 0))
@@ -155,11 +156,6 @@ architecture rtl of acc_dma2noc is
       dout := din;
     else
       case sz is
-
-        when HSIZE_DWORD =>
-          for i in 0 to (ARCH_BITS / 64) - 1 loop
-            dout(64 * (i + 1) - 1 downto 64 * i) := din(ARCH_BITS - 64 * i - 1 downto ARCH_BITS - 64 * (i + 1));
-          end loop;
 
         when HSIZE_WORD =>
           for i in 0 to (ARCH_BITS / 32) - 1 loop
@@ -183,6 +179,17 @@ architecture rtl of acc_dma2noc is
     end if;
     return dout;
   end fix_endian;
+
+  -- Endiannes adapter for big endian 32 bits systems (support up to 64 bits words)
+  signal fixen_bypass            : std_ulogic;
+  signal fixen_bufdin_data       : std_logic_vector(ARCH_BITS - 1 downto 0);
+  signal fixen_bufdin_valid      : std_ulogic;
+  signal fixen_bufdin_ready      : std_ulogic;
+  signal fixen_bufdout_data      : std_logic_vector(ARCH_BITS - 1 downto 0);
+  signal fixen_bufdout_valid     : std_ulogic;
+  signal fixen_bufdout_ready     : std_ulogic;
+  signal fixen_bufdout_ready_act : std_ulogic;
+  signal fixen_out_msg_type      : noc_msg_type;
 
   -- Register bank
   signal bankreg   : bank_type(0 to MAXREGNUM - 1);
@@ -370,6 +377,7 @@ begin  -- rtl
     dma_address <= (others => '0');
     dma_length <= (others => '0');
   end generate no_tlb_gen;
+
 
   -----------------------------------------------------------------------------
   -- DMA packet
@@ -571,6 +579,52 @@ begin  -- rtl
   end process fill_coherent_dma_req;
 
   -----------------------------------------------------------------------------
+  -- Endianness on narrow NoC
+  -----------------------------------------------------------------------------
+  fixen_bypass <= '1' when size_r /= HSIZE_DWORD else '0';
+
+  fixen_64to32_in: fixen_64to32
+    port map (
+      clk         => clk,
+      rstn        => rst,
+      bypass_i    => fixen_bypass,
+      in_data_i   => fixen_bufdin_data,
+      in_valid_i  => fixen_bufdin_valid,
+      in_ready_o  => fixen_bufdin_ready,
+      out_data_o  => bufdin_data,
+      out_valid_o => bufdin_valid,
+      out_ready_i => bufdin_ready);
+
+  fixen_64to32_ou: fixen_64to32
+    port map (
+      clk         => clk,
+      rstn        => rst,
+      bypass_i    => fixen_bypass,
+      in_data_i   => bufdout_data,
+      in_valid_i  => bufdout_valid,
+      in_ready_o  => bufdout_ready,
+      out_data_o  => fixen_bufdout_data,
+      out_valid_o => fixen_bufdout_valid,
+      out_ready_i => fixen_bufdout_ready_act);
+
+  fixen_out_msg_type <= get_msg_type(NOC_FLIT_SIZE, header_r);
+
+  fixen_bufdout_ready_fix: process (fixen_bufdout_ready, fixen_bypass, fixen_out_msg_type,
+                                    p2p_rsp_snd_full, dma_snd_full_int, dvfs_transient,
+                                    dma_state) is
+  begin  -- process fixen_bufdout_ready_fix
+    if ARCH_BITS /= 32 or GLOB_CPU_AXI /= 0 or fixen_bypass = '1' then
+      fixen_bufdout_ready_act <= fixen_bufdout_ready;
+    elsif (dvfs_transient = '0' and dma_state = request_data and
+           ((fixen_out_msg_type  = RSP_P2P and p2p_rsp_snd_full = '0') or
+            (fixen_out_msg_type /= RSP_P2P and dma_snd_full_int = '0'))) then
+      fixen_bufdout_ready_act <= '1';
+    else
+      fixen_bufdout_ready_act <= '0';
+    end if;
+  end process fixen_bufdout_ready_fix;
+
+  -----------------------------------------------------------------------------
   -- DMA
   -----------------------------------------------------------------------------
   sample_acc_done: process (clk, rst)
@@ -587,8 +641,8 @@ begin  -- rtl
     end if;
   end process sample_acc_done;
 
-  dma_roundtrip: process (dma_state, rst, count, rd_request, bufdin_ready,
-                          wr_request, bufdout_valid, bufdout_data, bankreg,
+  dma_roundtrip: process (dma_state, rst, count, rd_request, fixen_bufdin_ready,
+                          wr_request, fixen_bufdout_valid, fixen_bufdout_data, bankreg,
                           pending_acc_done, dma_snd_full_int, dma_rcv_empty_int, dma_rcv_data_out_int,
                           header_r, payload_address_r, payload_length_r,
                           dma_tran_start, tlb_empty, pending_dma_write,
@@ -639,7 +693,7 @@ begin  -- rtl
       payload_data(NOC_FLIT_SIZE-1 downto NOC_FLIT_SIZE-PREAMBLE_WIDTH) := PREAMBLE_TAIL;
     end if;
     -- Note that NOC_FLIT_SIZE os ARCH_BITS + PREAMBLE_WIDTH
-    payload_data(ARCH_BITS - 1 downto 0) := fix_endian(bufdout_data, size_r);
+    payload_data(ARCH_BITS - 1 downto 0) := fix_endian(fixen_bufdout_data, size_r);
 
     -- Default private cache inputs
     coherent_dma_read  <= '0';
@@ -649,10 +703,10 @@ begin  -- rtl
     acc_rst <= rst;
     conf_done <= '0';
     rd_grant <= '0';
-    bufdin_data <= fix_endian(dma_rcv_data_out_int(ARCH_BITS - 1 downto 0), size_r);
-    bufdin_valid <= '0';
+    fixen_bufdin_data <= fix_endian(dma_rcv_data_out_int(ARCH_BITS - 1 downto 0), size_r);
+    fixen_bufdin_valid <= '0';
     wr_grant <= '0';
-    bufdout_ready <= '0';
+    fixen_bufdout_ready <= '0';
 
     clear_acc_done <= '0';
     flush <= '0';
@@ -866,7 +920,7 @@ begin  -- rtl
         else
           dma_snd_delay <= dma_snd_full_int;       -- for DVFS TRAFFIC policy
         end if;
-        if ((bufdout_valid = '1' and dvfs_transient = '0') and
+        if ((fixen_bufdout_valid = '1' and dvfs_transient = '0') and
             ((msg = RSP_P2P and p2p_rsp_snd_full = '0') or
              (msg /= RSP_P2P and dma_snd_full_int = '0'))) then
           if msg = RSP_P2P  then
@@ -877,7 +931,7 @@ begin  -- rtl
             dma_snd_wrreq_int <= '1';
           end if;
           write_burst <= '1';
-          bufdout_ready <= '1';
+          fixen_bufdout_ready <= '1';
           if count = len then
             clear_count <= '1';
             dma_tran_done <= '1';
@@ -905,10 +959,10 @@ begin  -- rtl
             tlb_valid <= '1';
             dma_next <= idle;
           end if;
-        elsif dma_rcv_empty_int = '0' and bufdin_ready = '1' and dvfs_transient = '0' then
+        elsif dma_rcv_empty_int = '0' and fixen_bufdin_ready = '1' and dvfs_transient = '0' then
           read_burst <= '1';
           dma_rcv_rdreq_int <= '1';
-          bufdin_valid <= '1';
+          fixen_bufdin_valid <= '1';
           if preamble = PREAMBLE_TAIL then
             dma_tran_done <= '1';
             dma_next <= running;
