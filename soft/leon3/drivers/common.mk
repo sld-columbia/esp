@@ -2,7 +2,7 @@
 CROSS_COMPILE ?= sparc-leon3-linux-
 ARCH ?= sparc
 
-CFLAGS ?=
+CFLAGS += $(EXTRA_CFLAGS)
 CFLAGS += -O3
 # uclibc does not have sinf()
 CFLAGS += -fno-builtin-cos -fno-builtin-sin

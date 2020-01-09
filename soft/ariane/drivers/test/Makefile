@@ -2,7 +2,7 @@
 CROSS_COMPILE ?= riscv64-unknown-linux-gnu-
 ARCH ?= riscv
 
-CFLAGS ?= -O3
+CFLAGS += -O3
 CFLAGS += -fno-builtin-cos -fno-builtin-sin
 CFLAGS += -Wall -Werror
 CFLAGS += -I../include

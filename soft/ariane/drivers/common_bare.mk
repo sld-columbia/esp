@@ -2,6 +2,7 @@
 RISCV_TESTS = ../../../riscv-tests
 BOOTROM = ../../../bootrom
 
+CFLAGS += $(EXTRA_CFLAGS)
 CFLAGS += -I../../include
 CFLAGS +=-I$(RISCV_TESTS)/env
 CFLAGS +=-I$(RISCV_TESTS)/benchmarks/common

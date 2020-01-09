@@ -2,7 +2,7 @@
 CROSS_COMPILE ?= riscv64-unknown-linux-gnu-
 ARCH ?= riscv
 
-CFLAGS ?=
+CFLAGS += $(EXTRA_CFLAGS)
 CFLAGS += -O3
 CFLAGS += -Wall
 CFLAGS += -I../../include -I../linux

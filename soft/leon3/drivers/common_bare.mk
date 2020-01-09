@@ -1,5 +1,5 @@
 
-CFLAGS ?=
+CFLAGS += $(EXTRA_CFLAGS)
 CFLAGS += -Wall
 CFLAGS += -I../../include
 CFLAGS += -L../../probe
