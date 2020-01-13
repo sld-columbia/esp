@@ -133,42 +133,42 @@ architecture rtl of tile_acc is
   constant this_extra_clk_buf  : integer                            := extra_clk_buf(tile_id);
   constant this_domain         : integer                            := tile_domain(tile_id);
 
+  -- add attribute 'keep' to fix a bug with Vivado HLS accelerators
+  attribute keep : string;
 
-  -- attribute mark_debug : string;
-
-  -- attribute mark_debug of coherence_req_wrreq        : signal is "true";
-  -- attribute mark_debug of coherence_req_data_in      : signal is "true";
-  -- attribute mark_debug of coherence_req_full         : signal is "true";
-  -- attribute mark_debug of coherence_fwd_rdreq        : signal is "true";
-  -- attribute mark_debug of coherence_fwd_data_out     : signal is "true";
-  -- attribute mark_debug of coherence_fwd_empty        : signal is "true";
-  -- attribute mark_debug of coherence_rsp_rcv_rdreq    : signal is "true";
-  -- attribute mark_debug of coherence_rsp_rcv_data_out : signal is "true";
-  -- attribute mark_debug of coherence_rsp_rcv_empty    : signal is "true";
-  -- attribute mark_debug of coherence_rsp_snd_wrreq    : signal is "true";
-  -- attribute mark_debug of coherence_rsp_snd_data_in  : signal is "true";
-  -- attribute mark_debug of coherence_rsp_snd_full     : signal is "true";
-  -- attribute mark_debug of dma_rcv_rdreq              : signal is "true";
-  -- attribute mark_debug of dma_rcv_data_out           : signal is "true";
-  -- attribute mark_debug of dma_rcv_empty              : signal is "true";
-  -- attribute mark_debug of dma_snd_wrreq              : signal is "true";
-  -- attribute mark_debug of dma_snd_data_in            : signal is "true";
-  -- attribute mark_debug of dma_snd_full               : signal is "true";
-  -- attribute mark_debug of coherent_dma_rcv_rdreq     : signal is "true";
-  -- attribute mark_debug of coherent_dma_rcv_data_out  : signal is "true";
-  -- attribute mark_debug of coherent_dma_rcv_empty     : signal is "true";
-  -- attribute mark_debug of coherent_dma_snd_wrreq     : signal is "true";
-  -- attribute mark_debug of coherent_dma_snd_data_in   : signal is "true";
-  -- attribute mark_debug of coherent_dma_snd_full      : signal is "true";
-  -- attribute mark_debug of interrupt_wrreq            : signal is "true";
-  -- attribute mark_debug of interrupt_data_in          : signal is "true";
-  -- attribute mark_debug of interrupt_full             : signal is "true";
-  -- attribute mark_debug of apb_snd_wrreq              : signal is "true";
-  -- attribute mark_debug of apb_snd_data_in            : signal is "true";
-  -- attribute mark_debug of apb_snd_full               : signal is "true";
-  -- attribute mark_debug of apb_rcv_rdreq              : signal is "true";
-  -- attribute mark_debug of apb_rcv_data_out           : signal is "true";
-  -- attribute mark_debug of apb_rcv_empty              : signal is "true";
+  attribute keep of coherence_req_wrreq        : signal is "true";
+  attribute keep of coherence_req_data_in      : signal is "true";
+  attribute keep of coherence_req_full         : signal is "true";
+  attribute keep of coherence_fwd_rdreq        : signal is "true";
+  attribute keep of coherence_fwd_data_out     : signal is "true";
+  attribute keep of coherence_fwd_empty        : signal is "true";
+  attribute keep of coherence_rsp_rcv_rdreq    : signal is "true";
+  attribute keep of coherence_rsp_rcv_data_out : signal is "true";
+  attribute keep of coherence_rsp_rcv_empty    : signal is "true";
+  attribute keep of coherence_rsp_snd_wrreq    : signal is "true";
+  attribute keep of coherence_rsp_snd_data_in  : signal is "true";
+  attribute keep of coherence_rsp_snd_full     : signal is "true";
+  attribute keep of dma_rcv_rdreq              : signal is "true";
+  attribute keep of dma_rcv_data_out           : signal is "true";
+  attribute keep of dma_rcv_empty              : signal is "true";
+  attribute keep of dma_snd_wrreq              : signal is "true";
+  attribute keep of dma_snd_data_in            : signal is "true";
+  attribute keep of dma_snd_full               : signal is "true";
+  attribute keep of coherent_dma_rcv_rdreq     : signal is "true";
+  attribute keep of coherent_dma_rcv_data_out  : signal is "true";
+  attribute keep of coherent_dma_rcv_empty     : signal is "true";
+  attribute keep of coherent_dma_snd_wrreq     : signal is "true";
+  attribute keep of coherent_dma_snd_data_in   : signal is "true";
+  attribute keep of coherent_dma_snd_full      : signal is "true";
+  attribute keep of interrupt_wrreq            : signal is "true";
+  attribute keep of interrupt_data_in          : signal is "true";
+  attribute keep of interrupt_full             : signal is "true";
+  attribute keep of apb_snd_wrreq              : signal is "true";
+  attribute keep of apb_snd_data_in            : signal is "true";
+  attribute keep of apb_snd_full               : signal is "true";
+  attribute keep of apb_rcv_rdreq              : signal is "true";
+  attribute keep of apb_rcv_data_out           : signal is "true";
+  attribute keep of apb_rcv_empty              : signal is "true";
 
 begin
 

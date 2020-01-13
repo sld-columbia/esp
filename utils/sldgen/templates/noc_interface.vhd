@@ -216,6 +216,48 @@ end;
 
   constant cacheable_mem_info : tile_mem_info_vector(0 to MEM_MAX_NUM - 1) := mem_info(0 to MEM_MAX_NUM - 1);
 
+  -- add attribute 'keep' to fix a bug with Vivado HLS accelerators
+  attribute keep : string;
+
+  attribute keep of dma_read : signal is "true";
+  attribute keep of dma_write : signal is "true";
+  attribute keep of dma_length : signal is "true";
+  attribute keep of dma_address : signal is "true";
+  attribute keep of dma_ready : signal is "true";
+  attribute keep of dma_rcv_rdreq_int : signal is "true";
+  attribute keep of dma_rcv_data_out_int : signal is "true";
+  attribute keep of dma_rcv_empty_int : signal is "true";
+  attribute keep of dma_snd_wrreq_int : signal is "true";
+  attribute keep of dma_snd_data_in_int : signal is "true";
+  attribute keep of dma_snd_full_int : signal is "true";
+  attribute keep of dma_rcv_ready : signal is "true";
+  attribute keep of dma_rcv_data : signal is "true";
+  attribute keep of dma_rcv_valid : signal is "true";
+  attribute keep of dma_snd_valid : signal is "true";
+  attribute keep of dma_snd_data : signal is "true";
+  attribute keep of dma_snd_ready : signal is "true";
+  attribute keep of acc_rst : signal is "true";
+  attribute keep of conf_done : signal is "true";
+  attribute keep of dma_read_ctrl_valid : signal is "true";
+  attribute keep of dma_read_ctrl_ready : signal is "true";
+  attribute keep of dma_read_ctrl_data_index : signal is "true";
+  attribute keep of dma_read_ctrl_data_length : signal is "true";
+  attribute keep of dma_read_ctrl_data_size : signal is "true";
+  attribute keep of dma_write_ctrl_valid : signal is "true";
+  attribute keep of dma_write_ctrl_ready : signal is "true";
+  attribute keep of dma_write_ctrl_data_index : signal is "true";
+  attribute keep of dma_write_ctrl_data_length : signal is "true";
+  attribute keep of dma_write_ctrl_data_size : signal is "true";
+  attribute keep of dma_read_chnl_valid : signal is "true";
+  attribute keep of dma_read_chnl_ready : signal is "true";
+  attribute keep of dma_read_chnl_data : signal is "true";
+  attribute keep of dma_write_chnl_valid : signal is "true";
+  attribute keep of dma_write_chnl_ready : signal is "true";
+  attribute keep of dma_write_chnl_data : signal is "true";
+  attribute keep of acc_done : signal is "true";
+  attribute keep of flush : signal is "true";
+  attribute keep of pllclk_int : signal is "true";
+
 begin
 
   -- <<accelerator_instance>>
