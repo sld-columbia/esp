@@ -93,6 +93,11 @@ begin
     generic map (clk_mul, clk_div, freq)
     port map (clkin, clk, clkn, clk2x ,cgi, cgo);
   end generate;
+  xcu : if (tech = virtexu) generate
+    v : clkgen_virtexu
+    generic map (clk_mul, clk_div, freq)
+    port map (clkin, clk, clkn, clk2x ,cgi, cgo);
+  end generate;
   xcup : if (tech = virtexup) generate
     v : clkgen_virtexup
     generic map (clk_mul, clk_div, freq)

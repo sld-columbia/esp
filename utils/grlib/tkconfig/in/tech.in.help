@@ -25,7 +25,7 @@ CONFIG_SYN_INFERRED
   - Xilinx-Spartan/2/3/6: Xilinx Spartan/2/3/6 libraries
   - Xilinx-Spartan3E: Xilinx Spartan3E libraries
   - Xilinx-Virtex/E: Xilinx Virtex/E libraries
-  - Xilinx-Virtex2/4/5/6/7/UP: Xilinx Virtex2/4/5/6/7/UP libraries
+  - Xilinx-Virtex2/4/5/6/7/U/UP: Xilinx Virtex2/4/5/6/7/U/U+ libraries
 
   Note: Level of technology support depends on type of GRLIB
   distribution. A technology may be present in this list while the

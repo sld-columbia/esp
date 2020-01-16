@@ -52,8 +52,14 @@ architecture rtl of unisim_iddr_reg is
   signal D_delay : std_ulogic;
    
 begin
-     V7 : if (tech = virtex7) or (tech = kintex7) or (tech = artix7) or (tech = virtexup) generate
+     V7 : if (tech = virtex7) or (tech = kintex7) or (tech = artix7) generate
        U0 : IDDR generic map( DDR_CLK_EDGE => "SAME_EDGE")
+         Port map( Q1 => Q1, Q2 => Q2, C => C1, CE => CE,
+                   D => D, R => R, S => S);
+     end generate;
+
+     VU : if (tech = virtexu) or (tech = virtexup) generate
+       U0 : IDDR generic map( DDR_CLK_EDGE => "SAME_EDGE", SRTYPE => "ASYNC")
          Port map( Q1 => Q1, Q2 => Q2, C => C1, CE => CE,
                    D => D, R => R, S => S);
      end generate;
@@ -171,8 +177,15 @@ architecture rtl of unisim_oddr_reg is
   
 begin
 
-  V7 : if (tech = virtex7) or (tech = kintex7) or (tech = artix7) or (tech = virtexup) generate
+  V7 : if (tech = virtex7) or (tech = kintex7) or (tech = artix7) generate
      U0 : ODDR generic map( DDR_CLK_EDGE => "SAME_EDGE")
+       port map(
+         Q => Q, C => C1, CE => CE, D1 => D1,
+         D2 => D2, R => R, S => S);
+  end generate;
+
+  VU : if (tech = virtexu) or (tech = virtexup) generate
+     U0 : ODDR generic map( DDR_CLK_EDGE => "SAME_EDGE", SRTYPE => "ASYNC")
        port map(
          Q => Q, C => C1, CE => CE, D1 => D1,
          D2 => D2, R => R, S => S);

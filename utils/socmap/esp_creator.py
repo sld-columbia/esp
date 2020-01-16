@@ -27,7 +27,7 @@ def print_usage():
   print("")
   print("")
   print("      <dma_width>        : Bit-width for the DMA channel (currently supporting 32 bits only)")
-  print("      <tech>             : Target technology (e.g. virtex7, virtexup, ...)")
+  print("      <tech>             : Target technology (e.g. virtex7, virtexu, virtexup, ...)")
   print("")
 
 #Configuration Frame (top-left)

@@ -125,7 +125,7 @@ begin
      tapo_tck <= ltck; tapo_tckn <= not ltck;
    end generate;
 
-   xcvup : if tech = virtexup generate
+   xcvup : if (tech = virtexu) or (tech = virtexup) generate
      u0 : virtexup_tap port map (tapi_tdo1, tapi_tdo1, ltck, tapo_tdi, tapo_rst,
                                 tapo_capt, tapo_shft, tapo_upd, tapo_xsel1, tapo_xsel2);
      tapo_inst <= (others => '0'); tdoen <= '0'; tdo <= '0';

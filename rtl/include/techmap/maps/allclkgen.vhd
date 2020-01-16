@@ -130,11 +130,25 @@ component clkgen_virtexup is
   port (
     clkin : in  std_ulogic;
     clk   : out std_ulogic;
-    clk90 : out std_ulogic;
+    clkn  : out std_ulogic;
     clkio : out std_ulogic;
     cgi   : in  clkgen_in_type;
     cgo   : out clkgen_out_type);
 end component clkgen_virtexup;
+
+component clkgen_virtexu is
+  generic (
+    clk_mul : integer;
+    clk_div : integer;
+    freq    : integer);
+  port (
+    clkin : in  std_ulogic;
+    clk   : out std_ulogic;
+    clkn  : out std_ulogic;
+    clkio : out std_ulogic;
+    cgi   : in  clkgen_in_type;
+    cgo   : out clkgen_out_type);
+end component clkgen_virtexu;
 
 component clkgen_axcelerator 
   generic (

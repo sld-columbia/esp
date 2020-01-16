@@ -1,5 +1,6 @@
   choice 'Target technology                           ' \
 	"Xilinx-Virtex7		CONFIG_SYN_VIRTEX7 \
+	Xilinx-VirtexU		CONFIG_SYN_VIRTEXU \
 	Xilinx-VirtexUP		CONFIG_SYN_VIRTEXUP \
 	" Xilinx-VirtexUP
   bool 'Disable asynchronous reset' CONFIG_SYN_NO_ASYNC

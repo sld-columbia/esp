@@ -3,7 +3,7 @@
 
 ### Supported technology libraries ###
 ASICLIBS =
-FPGALIBS = virtex7 virtexup
+FPGALIBS = virtex7 virtexu virtexup
 
 
 ### Check for technology library definition ###
