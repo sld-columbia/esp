@@ -11,7 +11,7 @@ TECHLIB  = virtex7
 BOARD    = profpga-xc7v2000t
 DESIGN   = esp-$(BOARD)
 LINUX_SMP = 1
-LEON3_BASE_FREQ_MHZ ?= 80
+LEON3_BASE_FREQ_MHZ ?= 50
 LEON3_STACK ?= 0x5bfffff0
 
 
