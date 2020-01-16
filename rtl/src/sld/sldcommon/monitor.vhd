@@ -61,6 +61,14 @@ end monitor;
 
 architecture rtl of monitor is
 
+  subtype profpga_tech_description is string(1 to 4);
+  type profpga_device_table_t is array (0 to NTECH) of profpga_tech_description;
+  constant profpga_device_table : profpga_device_table_t := (
+    virtex7 => "XV7S",
+    virtexu => "XVUS",
+    virtexup => "XVUP",
+    others => "NONE");
+
   component synchronizer is
     generic (
       DATA_WIDTH : integer
@@ -74,8 +82,7 @@ architecture rtl of monitor is
 
     component profpga_ctrl is
     generic (
-      DEVICE             : string := "XV7S"  --! "XV7S"- Xilinx Virtex 7series; "XVUS"- Xilinx Virtex UltraScale
-    );
+      DEVICE             : string := "XV7S");
     port (
       -- access to FPGA pins
       clk0_p    : in  std_logic;
@@ -412,16 +419,12 @@ architecture rtl of monitor is
 
 begin
 
-  --pragma translate_off
-  no_v7: if memtech /= virtex7 generate
-    assert false report "mmi64 is only supported on Virtex7 FPGAs mounted on proFPGA systems" severity error;
-  end generate no_v7;
-  --pragma translate_on
-
   -----------------------------------------------------------------------------
   -- MMI64 Interface (mmi64_clk domain)
   -----------------------------------------------------------------------------
   U_PROFPGA_CTRL : profpga_ctrl
+    generic map (
+      DEVICE => profpga_device_table(memtech))
     port map (
       -- access to FPGA pins
       clk0_p        => profpga_clk0_p,

@@ -6,6 +6,9 @@ generic_hdl/generic_dpram.v
 generic_hdl/generic_dpram_separated_ports.v
 generic_hdl/timer.v
 generic_hdl/axi_ram_slave.v
+mmi64/BitSlipInLogic_4b.v
+mmi64/BitSlipInLogic_8b.v
+mmi64/BitSlipInLogic.v
 mmi64/mmi64_disco.v
 mmi64/mmi64_async_buffer.v
 mmi64/mmi64_identify.v
