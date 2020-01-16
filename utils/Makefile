@@ -1298,6 +1298,15 @@ endif
 		fi; \
 		echo "import_ip -files ./mig/mig.xci" >> $@; \
 		echo "generate_target  all [get_ips mig] -force " >> $@; \
+	elif test -r $(ESP_ROOT)/constraints/$(BOARD)/mig.tcl; then \
+		echo $(SPACES)"INFO including MIG IP"; \
+		mkdir -p vivado/mig; \
+		cp $(ESP_ROOT)/constraints/$(BOARD)/mig.tcl ./vivado/mig; \
+		if test -r $(ESP_ROOT)/constraints/$(BOARD)/mig.csv; then \
+			cp $(ESP_ROOT)/constraints/$(BOARD)/mig.csv ./vivado/mig; \
+		fi; \
+		echo "source ./mig/mig.tcl" >> $@; \
+		echo "generate_target  all [get_ips mig] -force " >> $@; \
 	else \
 		echo $(SPACES)"WARNING: no MIG IP was found"; \
 	fi;
