@@ -590,7 +590,7 @@ begin
 
     -- Dedicated Video Memory with dual-port interface.
 
-    -- SLV 7: 0xB0100000 - 0xB01FFFFF
+    -- SLV 7: 0x30100000 - 0x301FFFFF
     ahbmo2(NAHBMST - 1 downto 1)   <= (others => ahbm_none);
     ahbso2(1 to NAHBSLV - 1) <= (others => ahbs_none);
     ahbram_dp_1 : ahbram_dp
