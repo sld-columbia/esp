@@ -15,8 +15,11 @@ if {[lsearch $fpga_techs $TECH] >= 0} {
     if {$TECH eq "zynq7000"} {
 	set clock_period 10
     }
+    if {$TECH eq "virtexu"} {
+	set clock_period 8
+    }
     if {$TECH eq "virtexup"} {
-	set clock_period 10
+	set clock_period 6.4
     }
 }
 

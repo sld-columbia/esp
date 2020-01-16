@@ -12,7 +12,7 @@ set TECH $::env(TECH)
 set ESP_ROOT $::env(ESP_ROOT)
 set ACCELERATOR $::env(ACCELERATOR)
 set TECH_PATH "$ESP_ROOT/tech/$TECH"
-set fpga_techs [list "virtex7" "zynq7000" "virtexup"]
+set fpga_techs [list "virtex7" "zynq7000" "virtexu" "virtexup"]
 
 source "./custom.tcl"
 
@@ -41,6 +41,9 @@ foreach dma $dma_width {
 	    }
 	    if {$TECH eq "zynq7000"} {
 		set_part "xc7z020clg484-1"
+	    }
+	    if {$TECH eq "virtexu"} {
+		set_part "xcvu440-flga2892-2-e"
 	    }
 	    if {$TECH eq "virtexup"} {
 		set_part "xcvu9p-flga2104-2L-e"

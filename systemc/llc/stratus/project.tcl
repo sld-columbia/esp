@@ -11,17 +11,15 @@
 source ../../common/stratus/caches.tcl
 
 #
-# WORKAROUND. When the target FPGA is the Xilinx Ultrascale+ we generate the LLC
-# as if the target FPGA was a Xilinx Virtex7. To do so here we overwrite two
-# attributes.
+# WORKAROUND. When the target FPGA is the Xilinx Ultrascale(+) we generate the LLC
+# as if the target FPGA was a Xilinx Virtex7 w/ clock period of 12.5 ns.
+# To do so here we overwrite two attributes.
 #
-if {$TECH eq "virtexup"} {
-    # Xilinx Virtex7 part
-    set_attr fpga_part "xc7v2000tflg1925-2"
+# Xilinx Virtex7 part
+set_attr fpga_part "xc7v2000tflg1925-2"
 
-    # Xilinx Virtex7 ESP target clock cycle
-    set CLOCK_PERIOD 12.5
-}
+# Xilinx Virtex7 ESP target clock cycle
+set CLOCK_PERIOD 12.5
 
 #
 # System level modules to be synthesized

@@ -40,6 +40,10 @@ if {$TECH eq "zynq7000"} {
     set CLOCK_PERIOD 10.0
     set_attr default_input_delay      0.1
 }
+if {$TECH eq "virtexu"} {
+    set CLOCK_PERIOD 8.0
+    set_attr default_input_delay      0.1
+}
 if {$TECH eq "virtexup"} {
     set CLOCK_PERIOD 6.4
     set_attr default_input_delay      0.1
