@@ -1096,9 +1096,9 @@ library ieee;
 use ieee.std_logic_1164.all;
 -- pragma translate_off
 use work.stdlib.all;
-library unisim;
-use UNISIM.vcomponents.all;
 -- pragma translate_on
+library unisim;
+use unisim.VCOMPONENTS.all;
 use work.gencomp.all;
 
 entity clkgen_virtexu is
@@ -1119,43 +1119,6 @@ end;
 
 architecture struct of clkgen_virtexu is
 
-component BUFG port (O : out std_logic; I : in std_logic); end component; 
-
------ component PLLE3_BASE -----
-component PLLE3_BASE
-  generic (
-     CLKFBOUT_MULT : integer := 5;
-     CLKFBOUT_PHASE : real := 0.0;
-     CLKIN_PERIOD : real := 0.0;
-     CLKOUT0_DIVIDE : integer := 1;
-     CLKOUT0_DUTY_CYCLE : real := 0.5;
-     CLKOUT0_PHASE : real := 0.0;
-     CLKOUT1_DIVIDE : integer := 1;
-     CLKOUT1_DUTY_CYCLE : real := 0.5;
-     CLKOUT1_PHASE : real := 0.0;
-     CLKOUTPHY_MODE : string := "VCO_2X";
-     DIVCLK_DIVIDE : integer := 1;
-     IS_CLKINSEL_INVERTED : std_logic := std_logic' ('0');
-     IS_PWRDWN_INVERTED : std_logic := std_logic' ('0');
-     IS_RST_INVERTED : std_logic := std_logic' ('0');
-     REF_JITTER : real := 0.0;
-     STARTUP_WAIT : string := "FALSE"
-  );
-  port (
-     CLKFBOUT : out std_ulogic := '0';
-     CLKOUT0 : out std_ulogic := '0';
-     CLKOUT0B : out std_ulogic := '0';
-     CLKOUT1 : out std_ulogic := '0';
-     CLKOUT1B : out std_ulogic := '0';
-     CLKOUTPHY : out std_ulogic := '0';
-     LOCKED : out std_ulogic := '0';
-     CLKFBIN : in std_ulogic;
-     CLKIN : in std_ulogic;
-     CLKOUTPHYEN : in std_ulogic;
-     PWRDWN : in std_ulogic;
-     RST : in std_ulogic
-  );
-end component;
 constant VERSION : integer := 1;
 constant period : real := 1000000.0/real(freq);
 constant clkio_div : integer := freq*clk_mul/200000;
@@ -1235,9 +1198,9 @@ library ieee;
 use ieee.std_logic_1164.all;
 -- pragma translate_off
 use work.stdlib.all;
-library unisim;
-use UNISIM.vcomponents.all;
 -- pragma translate_on
+library unisim;
+use unisim.VCOMPONENTS.all;
 use work.gencomp.all;
 
 entity clkgen_virtexup is
@@ -1258,43 +1221,6 @@ end;
 
 architecture struct of clkgen_virtexup is
 
-component BUFG port (O : out std_logic; I : in std_logic); end component; 
-
------ component PLLE4_BASE -----
-component PLLE4_BASE
-  generic (
-     CLKFBOUT_MULT : integer := 5;
-     CLKFBOUT_PHASE : real := 0.0;
-     CLKIN_PERIOD : real := 0.0;
-     CLKOUT0_DIVIDE : integer := 1;
-     CLKOUT0_DUTY_CYCLE : real := 0.5;
-     CLKOUT0_PHASE : real := 0.0;
-     CLKOUT1_DIVIDE : integer := 1;
-     CLKOUT1_DUTY_CYCLE : real := 0.5;
-     CLKOUT1_PHASE : real := 0.0;
-     CLKOUTPHY_MODE : string := "VCO_2X";
-     DIVCLK_DIVIDE : integer := 1;
-     IS_CLKINSEL_INVERTED : std_logic := std_logic' ('0');
-     IS_PWRDWN_INVERTED : std_logic := std_logic' ('0');
-     IS_RST_INVERTED : std_logic := std_logic' ('0');
-     REF_JITTER : real := 0.0;
-     STARTUP_WAIT : string := "FALSE"
-  );
-  port (
-     CLKFBOUT : out std_ulogic := '0';
-     CLKOUT0 : out std_ulogic := '0';
-     CLKOUT0B : out std_ulogic := '0';
-     CLKOUT1 : out std_ulogic := '0';
-     CLKOUT1B : out std_ulogic := '0';
-     CLKOUTPHY : out std_ulogic := '0';
-     LOCKED : out std_ulogic := '0';
-     CLKFBIN : in std_ulogic;
-     CLKIN : in std_ulogic;
-     CLKOUTPHYEN : in std_ulogic;
-     PWRDWN : in std_ulogic;
-     RST : in std_ulogic
-  );
-end component;
 constant VERSION : integer := 1;
 constant period : real := 1000000.0/real(freq);
 constant clkio_div : integer := freq*clk_mul/200000;
