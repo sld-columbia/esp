@@ -1,5 +1,8 @@
+-- Copyright (c) 2011-2020 Columbia University, System Level Design Group
+-- SPDX-License-Identifier: Apache-2.0
+
 -----------------------------------------------------------------------------
---  Testbench for ESP on proFPGA xc7v2000t with dual DDR3, Ethernet and DVI
+--  Testbench for ESP on proFPGA xcvu440 with DDR4, Ethernet and DVI
 ------------------------------------------------------------------------------
 
 
@@ -19,8 +22,7 @@ end;
 
 architecture behav of testbench is
 
-  constant SIMULATION      : boolean := true;
-
+  constant SIMULATION : boolean := true;
 
   -- Ethernet signals
   signal reset_o2 : std_ulogic;
@@ -56,12 +58,14 @@ architecture behav of testbench is
   signal tft_npd         : std_ulogic;
 
   -- Clock and reset
-  signal reset         : std_ulogic := '1';
+  signal reset        : std_ulogic := '1';
   signal c0_sys_clk_p : std_ulogic := '0';
   signal c0_sys_clk_n : std_ulogic := '1';
+  signal esp_clk_p    : std_ulogic := '0';
+  signal esp_clk_n    : std_ulogic := '1';
 
 
--- DDR3 memory
+  -- DDR4 memory
   signal c0_ddr4_act_n    : std_logic;
   signal c0_ddr4_adr      : std_logic_vector(16 downto 0);
   signal c0_ddr4_ba       : std_logic_vector(1 downto 0);
@@ -85,7 +89,7 @@ architecture behav of testbench is
   signal uart_rtsn : std_ulogic;
 
 
--- MMI64
+  -- MMI64
   signal profpga_clk0_p  : std_ulogic := '0';  -- 100 MHz clock
   signal profpga_clk0_n  : std_ulogic := '1';  -- 100 MHz clock
   signal profpga_sync0_p : std_ulogic;
@@ -95,7 +99,7 @@ architecture behav of testbench is
 
   component top
     generic (
-      SIMULATION              : boolean);
+      SIMULATION : boolean);
     port (
       -- MMI64 interface:
       profpga_clk0_p    : in    std_ulogic;  -- 100 MHz clock
@@ -104,26 +108,30 @@ architecture behav of testbench is
       profpga_sync0_n   : in    std_ulogic;
       dmbi_h2f          : in    std_logic_vector(19 downto 0);
       dmbi_f2h          : out   std_logic_vector(19 downto 0);
-      --
+      -- Main ESP clock
+      esp_clk_p         : in    std_ulogic;  -- 78.125 MHz clock
+      esp_clk_n         : in    std_ulogic;  -- 78.125 MHz clock
       reset             : in    std_ulogic;
-      c0_sys_clk_p     : in    std_logic;
-      c0_sys_clk_n     : in    std_logic;
-      c0_ddr4_act_n    : out   std_logic;
-      c0_ddr4_adr      : out   std_logic_vector(16 downto 0);
-      c0_ddr4_ba       : out   std_logic_vector(1 downto 0);
-      c0_ddr4_bg       : out   std_logic_vector(1 downto 0);
-      c0_ddr4_cke      : out   std_logic_vector(1 downto 0);
-      c0_ddr4_odt      : out   std_logic_vector(1 downto 0);
-      c0_ddr4_cs_n     : out   std_logic_vector(1 downto 0);
-      c0_ddr4_ck_t     : out   std_logic_vector(0 downto 0);
-      c0_ddr4_ck_c     : out   std_logic_vector(0 downto 0);
-      c0_ddr4_reset_n  : out   std_logic;
-      c0_ddr4_dm_dbi_n : inout std_logic_vector(7 downto 0);
-      c0_ddr4_dq       : inout std_logic_vector(63 downto 0);
-      c0_ddr4_dqs_c    : inout std_logic_vector(7 downto 0);
-      c0_ddr4_dqs_t    : inout std_logic_vector(7 downto 0);
+      -- DDR4
+      c0_sys_clk_p      : in    std_logic;
+      c0_sys_clk_n      : in    std_logic;
+      c0_ddr4_act_n     : out   std_logic;
+      c0_ddr4_adr       : out   std_logic_vector(16 downto 0);
+      c0_ddr4_ba        : out   std_logic_vector(1 downto 0);
+      c0_ddr4_bg        : out   std_logic_vector(1 downto 0);
+      c0_ddr4_cke       : out   std_logic_vector(1 downto 0);
+      c0_ddr4_odt       : out   std_logic_vector(1 downto 0);
+      c0_ddr4_cs_n      : out   std_logic_vector(1 downto 0);
+      c0_ddr4_ck_t      : out   std_logic_vector(0 downto 0);
+      c0_ddr4_ck_c      : out   std_logic_vector(0 downto 0);
+      c0_ddr4_reset_n   : out   std_logic;
+      c0_ddr4_dm_dbi_n  : inout std_logic_vector(7 downto 0);
+      c0_ddr4_dq        : inout std_logic_vector(63 downto 0);
+      c0_ddr4_dqs_c     : inout std_logic_vector(7 downto 0);
+      c0_ddr4_dqs_t     : inout std_logic_vector(7 downto 0);
       c0_calib_complete : out   std_logic;
-      c0_diagnostic_led : out std_ulogic;
+      c0_diagnostic_led : out   std_ulogic;
+      -- UART
       uart_rxd          : in    std_ulogic;
       uart_txd          : out   std_ulogic;
       uart_ctsn         : in    std_ulogic;
@@ -159,17 +167,17 @@ architecture behav of testbench is
       tft_dsel          : out   std_logic;
       tft_edge          : out   std_ulogic;
       tft_npd           : out   std_ulogic;
-
-      LED_RED           : out std_ulogic;
-      LED_GREEN         : out std_ulogic;
-      LED_BLUE          : out std_ulogic;
-      LED_YELLOW        : out std_ulogic);
+      -- LEDs
+      LED_RED           : out   std_ulogic;
+      LED_GREEN         : out   std_ulogic;
+      LED_BLUE          : out   std_ulogic;
+      LED_YELLOW        : out   std_ulogic);
 
   end component;
 
 begin
 
-  --MMI 64
+  --MMI64
   profpga_clk0_p  <= not profpga_clk0_p after 5 ns;
   profpga_clk0_n  <= not profpga_clk0_n after 5 ns;
   profpga_sync0_p <= '0';
@@ -177,9 +185,11 @@ begin
   dmbi_h2f        <= (others => '0');
 
   -- clock and reset
-  reset         <= '0'               after 2500 ns;
+  reset        <= '0'              after 2500 ns;
   c0_sys_clk_p <= not c0_sys_clk_p after 4.0 ns;
   c0_sys_clk_n <= not c0_sys_clk_n after 4.0 ns;
+  esp_clk_p    <= not esp_clk_p    after 6.4 ns;
+  esp_clk_n    <= not esp_clk_n    after 6.4 ns;
 
   -- UART
   uart_rxd  <= '0';
@@ -194,7 +204,7 @@ begin
 
   top_1 : top
     generic map (
-      SIMULATION              => SIMULATION
+      SIMULATION => SIMULATION
       )
     port map (
       -- MMI64
@@ -204,6 +214,8 @@ begin
       profpga_sync0_n   => profpga_sync0_n,
       dmbi_h2f          => dmbi_h2f,
       dmbi_f2h          => dmbi_f2h,
+      esp_clk_p         => esp_clk_p,
+      esp_clk_n         => esp_clk_n,
       reset             => reset,
       c0_sys_clk_p      => c0_sys_clk_p,
       c0_sys_clk_n      => c0_sys_clk_n,
@@ -256,7 +268,6 @@ begin
       tft_dsel          => tft_dsel,
       tft_edge          => tft_edge,
       tft_npd           => tft_npd,
-
       LED_RED           => open,
       LED_GREEN         => open,
       LED_BLUE          => open,

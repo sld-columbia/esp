@@ -19,11 +19,11 @@ use work.uart.all;
 use work.misc.all;
 use work.net.all;
 use work.jtag.all;
+library unisim;
 -- pragma translate_off
 use work.sim.all;
-library unisim;
-use unisim.all;
 -- pragma translate_on
+use unisim.VCOMPONENTS.all;
 use work.sldcommon.all;
 use work.sldacc.all;
 use work.tile.all;
@@ -46,6 +46,9 @@ entity top is
     profpga_sync0_n   : in    std_ulogic;
     dmbi_h2f          : in    std_logic_vector(19 downto 0);
     dmbi_f2h          : out   std_logic_vector(19 downto 0);
+    -- Main ESP clock
+    esp_clk_p         : in    std_ulogic;  -- 78.25 MHz clock
+    esp_clk_n         : in    std_ulogic;  -- 78.25 MHz clock
     -- DDR4
     reset             : in    std_ulogic;
     c0_sys_clk_p      : in    std_logic;   -- 125 MHz clock
@@ -268,7 +271,8 @@ constant CPU_FREQ : integer := 78125;  -- cpu frequency in KHz
 -- NOC
   signal chip_rst       : std_ulogic;
   signal sys_clk        : std_logic_vector(0 to 1);
-  signal chip_refclk    : std_ulogic := '0';
+  signal esp_clk        : std_ulogic;
+  signal chip_refclk    : std_ulogic;
   signal chip_pllbypass : std_logic_vector(CFG_TILES_NUM-1 downto 0);
   signal chip_pllclk    : std_ulogic;
 
@@ -359,19 +363,33 @@ begin
   cgi.pllctrl <= "00";
   cgi.pllrst  <= rstraw;
 
+  lock <= c0_calib_done and cgo.clklock;
+
   reset_pad : inpad generic map (tech => CFG_PADTECH, level => cmos, voltage => x12v) port map (reset, rst);
   rst0      : rstgen                    -- reset generator
     generic map (acthigh => 1, syncin => 0)
     port map (rst, clkm, lock, rstn, rstraw);
-  lock <= c0_calib_done;
 
   rst1 : rstgen                         -- reset generator
     generic map (acthigh => 1)
     port map (rst, clkm, lock, migrstn, open);
 
+  esp_clk_buf : ibufgds
+    generic map(
+      IBUF_LOW_PWR => FALSE
+      )
+    port map (
+      I  => esp_clk_p,
+      IB => esp_clk_n,
+      O  => esp_clk
+      );
+
+  esp_clkgen : clkgen
+    generic map (CFG_FABTECH, 8, 8, 0, 0, 0, 0, 0, CPU_FREQ)
+    port map (esp_clk, esp_clk, chip_refclk, open, open, open, open, cgi, cgo, open, open, open);
 
 ----------------------------------------------------------------------
----  DDR3 memory controller ------------------------------------------
+---  DDR4 memory controller ------------------------------------------
 ----------------------------------------------------------------------
 
   gen_mig : if (SIMULATION /= true) generate
@@ -404,10 +422,6 @@ begin
         ui_clk           => clkm,
         ui_clk_sync_rst  => clkm_sync_rst
         );
-
-    clkgenmigref0 : clkgen
-      generic map (CFG_FABTECH, 8, 16, 0, 0, 0, 0, 0, 156250)
-      port map (clkm, clkm, chip_refclk, open, open, open, open, cgi, cgo, open, open, open);
 
   end generate gen_mig;
 
@@ -449,7 +463,6 @@ begin
 
     c0_calib_done <= '1';
     clkm          <= not clkm        after 3.2 ns;
-    chip_refclk   <= not chip_refclk after 6.4 ns;
 
   -- pragma translate_on
   end generate gen_mig_model;

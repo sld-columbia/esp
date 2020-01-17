@@ -75,10 +75,25 @@ set_property PACKAGE_PIN AM41 [get_ports reset]
 
 
 #-----------------------------------------------------------
+#              Clock                                       -
+#-----------------------------------------------------------
+
+# {CLK1_N}
+set_property IOSTANDARD LVDS [get_ports {esp_clk_n}]
+set_property PACKAGE_PIN BC28 [get_ports {esp_clk_n}]
+
+# {CLK1_P}
+set_property IOSTANDARD LVDS [get_ports {esp_clk_p}]
+set_property PACKAGE_PIN BC27 [get_ports {esp_clk_p}]
+
+
+#-----------------------------------------------------------
 #              Timing constraints                          -
 #-----------------------------------------------------------
 
 create_clock -period 8.0 [get_ports c0_sys_clk_p]
+
+create_clock -period 12.8 [get_ports esp_clk_p]
 
 # Recover elaborated clock name
 set clkm_elab [get_clocks -of_objects [get_nets clkm]]
