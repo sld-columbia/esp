@@ -1,9 +1,0 @@
-#!/bin/sh
-
-set -e
-
-initctl emit -n net-device-down \
-	"IFACE=$IFACE" \
-	"LOGICAL=$LOGICAL" \
-	"ADDRFAM=$ADDRFAM" \
-	"METHOD=$METHOD"

@@ -1,11 +1,9 @@
 #!/bin/sh
-mkdir -p /lib/modules/$(uname -r)
-echo 8 > /proc/sys/kernel/printk
-mount -t openpromfs none /proc/openprom
 
 # start (per DDR node): contig_alloc starting address
 # size (per DDR node): contig_alloc region size
 # chunk_log: default accelerator page
+
 
 # Default values:
 #
@@ -37,7 +35,9 @@ mount -t openpromfs none /proc/openprom
 #
 # accelerator page: 2^20B -> 1MB
 
-# Adjust below if necessary
+# Adjust these settings in the system if necessary
+
+# accelerator page: 2^20B -> 1MB
 cd /opt/drivers-esp
 insmod contig_alloc.ko start=0x5c000000,0x60000000 size=0x4000000,0x20000000 chunk_log=20
 insmod esp_cache.ko
@@ -50,4 +50,3 @@ for K in `ls *.ko`; do
 done
 
 lsmod
-
