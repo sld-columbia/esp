@@ -19,22 +19,24 @@ from mmi64_gen import *
 from power_gen import *
 
 def print_usage():
-  print("Usage                    : ./esp_creator.py <dma_width> <tech>")
+  print("Usage                    : ./esp_creator.py <dma_width> <tech> <MAC>")
   print("")
   print("")
   print("      <dma_width>        : Bit-width for the DMA channel (currently supporting 32 bits only)")
   print("      <tech>             : Target technology (e.g. virtex7, virtexup, ...)")
+  print("      <MAC>              : MAC Address for Linux network interface)")
   print("")
 
-if len(sys.argv) != 3:
+if len(sys.argv) != 4:
     print_usage()
     sys.exit(1)
 
 DMA_WIDTH = int(sys.argv[1])
 TECH = sys.argv[2]
+LINUX_MAC = sys.argv[3]
 
 root = Tk()
-soc = SoC_Config(DMA_WIDTH, TECH)
+soc = SoC_Config(DMA_WIDTH, TECH, LINUX_MAC)
 soc.noc = NoC()
 x = soc.read_config(False)
 if x == -1:

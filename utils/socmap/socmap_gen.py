@@ -203,6 +203,7 @@ class soc_config:
   def __init__(self, soc):
     #components
     self.tech = soc.TECH
+    self.linux_mac = soc.LINUX_MAC
     self.cpu_arch = soc.CPU_ARCH.get()
     self.ncpu = soc.noc.get_cpu_num(soc)
     self.nmem = soc.noc.get_mem_num(soc)
@@ -1509,8 +1510,9 @@ def print_ariane_devtree(fp, esp_config):
   fp.write("      device_type = \"network\";\n")
   fp.write("      interrupt-parent = <&PLIC0>;\n")
   fp.write("      interrupts = <13 0>;\n")
-  # TODO Generate random mac address
-  fp.write("      local-mac-address = [00 20 3e 02 e3 77];\n")
+  # Use randomly generated MAC address
+  mac = " ".join(esp_config.linux_mac[i:i+2] for i in range(0, len(esp_config.linux_mac), 2))
+  fp.write("      local-mac-address = [" + mac + "];\n")
   fp.write("      reg = <0x0 0x" + format(AHB2APB_HADDR[esp_config.cpu_arch], '03X') + "80000 0x0 0x10000>;\n")
   fp.write("      phy-handle = <&phy0>;\n")
   fp.write("      phy-connection-type = \"sgmii\";\n")
