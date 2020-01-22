@@ -1,2 +1,0 @@
-# file system  mount-point  type   options          dump  check
-proc           /proc        proc   defaults         0     0

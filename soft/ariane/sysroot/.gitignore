@@ -13,6 +13,9 @@ etc/init.d/S50dropbear
 etc/init.d/S50sshd
 etc/init.d/rcK
 etc/init.d/rcS
+etc/init.d/S40network
+etc/network/if-pre-up.d/
+etc/network/nfs_check
 etc/inittab
 etc/iproute2/
 etc/issue
@@ -44,5 +47,8 @@ usr/lib/
 usr/lib64
 usr/libexec/
 usr/sbin/
+usr/share/applications/
+usr/share/pixmaps/
+usr/share/terminfo/
 var/
 init

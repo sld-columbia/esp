@@ -194,7 +194,7 @@ socmap.vhd: .esp_config grlib_config.vhd top.vhd
 	fi
 	@echo ""
 	@echo "Generating ESP configuration..."
-	@python3 $(ESP_ROOT)/utils/socmap/esp_creator_batch.py $(NOC_WIDTH) $(TECHLIB)
+	@python3 $(ESP_ROOT)/utils/socmap/esp_creator_batch.py $(NOC_WIDTH) $(TECHLIB) $(LINUX_MAC)
 
 socmap.h: socmap.vhd
 
@@ -208,7 +208,7 @@ esp-config: socmap.vhd
 esp-xconfig: grlib_config.vhd
 	@echo ""
 	@echo "Running interactive ESP configuration..."
-	@python3 $(ESP_ROOT)/utils/socmap/esp_creator.py $(NOC_WIDTH) $(TECHLIB)
+	@python3 $(ESP_ROOT)/utils/socmap/esp_creator.py $(NOC_WIDTH) $(TECHLIB) $(LINUX_MAC)
 
 esp-config-clean:
 	$(QUIET_CLEAN)$(RM) \
@@ -377,23 +377,23 @@ sysroot.cpio: sysroot.files
 
 linux-build/.config: $(LINUXSRC)/arch/sparc/configs/$(LINUX_CONFIG)
 	@$(MAKE) linux-build
-	$(QUIET_MAKE)ARCH=sparc CROSS_COMPILE=sparc-leon3-linux- $(MAKE)  O=${PWD}/linux-build -C ${LINUXSRC} $(LINUX_CONFIG)
+	$(QUIET_MAKE)ARCH=sparc CROSS_COMPILE=$(CROSS_COMPILE_LINUX) $(MAKE)  O=${PWD}/linux-build -C ${LINUXSRC} $(LINUX_CONFIG)
 
 linux-build/vmlinux: sysroot.cpio linux-build/.config
-	$(QUIET_MAKE)ARCH=sparc CROSS_COMPILE=sparc-leon3-linux- $(MAKE) -C linux-build
+	$(QUIET_MAKE)ARCH=sparc CROSS_COMPILE=$(CROSS_COMPILE_LINUX) $(MAKE) -C linux-build
 
 linux.dsu: sysroot-update
-	$(QUIET_BUILD)mklinuximg linux-build/vmlinux $@
+	$(QUIET_BUILD)mklinuximg -ethmac $(LINUX_MAC) linux-build/vmlinux $@
 
 linux.bin: linux.dsu
-	$(QUIET_OBJCP) sparc-leon3-linux-objcopy -S -O binary --change-addresses -0x40000000 $< $@
+	$(QUIET_OBJCP) $(CROSS_COMPILE_LINUX)objcopy -S -O binary --change-addresses -0x40000000 $< $@
 
 linux: linux.bin
 
 linux-clean: sysroot-clean
 	$(QUIET_CLEAN)
 	@if test -e linux-build; then \
-		ARCH=sparc CROSS_COMPILE=sparc-leon3-linux- $(MAKE) --quiet -C linux-build clean; \
+		ARCH=sparc CROSS_COMPILE=$(CROSS_COMPILE_LINUX) $(MAKE) --quiet -C linux-build clean; \
 	fi;
 
 linux-distclean: sysroot-distclean
@@ -1534,11 +1534,11 @@ espmon-distclean: espmon-clean
 ifneq ($(findstring profpga, $(BOARD)),)
 fpga-program: profpga-prog-fpga
 	$(QUIET_INFO) echo "Waiting for DDR calibration..."
-	@sleep 3
+	@sleep 5
 else
 fpga-program: vivado-prog-fpga
 	$(QUIET_INFO) echo "Waiting for DDR calibration..."
-	@sleep 3
+	@sleep 5
 endif
 
 
