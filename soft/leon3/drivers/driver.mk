@@ -1,5 +1,5 @@
 
-CROSS_COMPILE ?= sparc-leon3-linux-
+CROSS_COMPILE ?= sparc-linux-
 ARCH ?= sparc
 
 ESP_CORE_PATH ?= ../../esp

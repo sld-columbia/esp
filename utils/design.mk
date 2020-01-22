@@ -57,7 +57,7 @@ CROSS_COMPILE_LINUX = riscv64-unknown-linux-gnu-
 else
 ARCH=sparc
 CROSS_COMPILE_ELF = sparc-elf-
-CROSS_COMPILE_LINUX = sparc-leon3-linux-
+CROSS_COMPILE_LINUX = sparc-linux-
 endif
 
 ### Vivado constaints ###

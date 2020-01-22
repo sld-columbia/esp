@@ -377,23 +377,23 @@ sysroot.cpio: sysroot.files
 
 linux-build/.config: $(LINUXSRC)/arch/sparc/configs/$(LINUX_CONFIG)
 	@$(MAKE) linux-build
-	$(QUIET_MAKE)ARCH=sparc CROSS_COMPILE=sparc-leon3-linux- $(MAKE)  O=${PWD}/linux-build -C ${LINUXSRC} $(LINUX_CONFIG)
+	$(QUIET_MAKE)ARCH=sparc CROSS_COMPILE=$(CROSS_COMPILE_LINUX) $(MAKE)  O=${PWD}/linux-build -C ${LINUXSRC} $(LINUX_CONFIG)
 
 linux-build/vmlinux: sysroot.cpio linux-build/.config
-	$(QUIET_MAKE)ARCH=sparc CROSS_COMPILE=sparc-leon3-linux- $(MAKE) -C linux-build
+	$(QUIET_MAKE)ARCH=sparc CROSS_COMPILE=$(CROSS_COMPILE_LINUX) $(MAKE) -C linux-build
 
 linux.dsu: sysroot-update
 	$(QUIET_BUILD)mklinuximg linux-build/vmlinux $@
 
 linux.bin: linux.dsu
-	$(QUIET_OBJCP) sparc-leon3-linux-objcopy -S -O binary --change-addresses -0x40000000 $< $@
+	$(QUIET_OBJCP) $(CROSS_COMPILE_LINUX)objcopy -S -O binary --change-addresses -0x40000000 $< $@
 
 linux: linux.bin
 
 linux-clean: sysroot-clean
 	$(QUIET_CLEAN)
 	@if test -e linux-build; then \
-		ARCH=sparc CROSS_COMPILE=sparc-leon3-linux- $(MAKE) --quiet -C linux-build clean; \
+		ARCH=sparc CROSS_COMPILE=$(CROSS_COMPILE_LINUX) $(MAKE) --quiet -C linux-build clean; \
 	fi;
 
 linux-distclean: sysroot-distclean
