@@ -1525,11 +1525,11 @@ espmon-distclean: espmon-clean
 ifneq ($(findstring profpga, $(BOARD)),)
 fpga-program: profpga-prog-fpga
 	$(QUIET_INFO) echo "Waiting for DDR calibration..."
-	@sleep 3
+	@sleep 5
 else
 fpga-program: vivado-prog-fpga
 	$(QUIET_INFO) echo "Waiting for DDR calibration..."
-	@sleep 3
+	@sleep 5
 endif
 
 
