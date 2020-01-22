@@ -383,7 +383,7 @@ linux-build/vmlinux: sysroot.cpio linux-build/.config
 	$(QUIET_MAKE)ARCH=sparc CROSS_COMPILE=$(CROSS_COMPILE_LINUX) $(MAKE) -C linux-build
 
 linux.dsu: sysroot-update
-	$(QUIET_BUILD)mklinuximg linux-build/vmlinux $@
+	$(QUIET_BUILD)mklinuximg -ethmac $(LINUX_MAC) linux-build/vmlinux $@
 
 linux.bin: linux.dsu
 	$(QUIET_OBJCP) $(CROSS_COMPILE_LINUX)objcopy -S -O binary --change-addresses -0x40000000 $< $@
