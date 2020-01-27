@@ -55,10 +55,10 @@ entity ahb2mig_ebddr4r5 is
     c0_ddr4_ck_t     : out   std_logic_vector(0 downto 0);
     c0_ddr4_ck_c     : out   std_logic_vector(0 downto 0);
     c0_ddr4_reset_n  : out   std_logic;
-    c0_ddr4_dm_dbi_n : inout std_logic_vector(7 downto 0);
-    c0_ddr4_dq       : inout std_logic_vector(63 downto 0);
-    c0_ddr4_dqs_c    : inout std_logic_vector(7 downto 0);
-    c0_ddr4_dqs_t    : inout std_logic_vector(7 downto 0);
+    c0_ddr4_dm_dbi_n : inout std_logic_vector(8 downto 0);
+    c0_ddr4_dq       : inout std_logic_vector(71 downto 0);
+    c0_ddr4_dqs_c    : inout std_logic_vector(8 downto 0);
+    c0_ddr4_dqs_t    : inout std_logic_vector(8 downto 0);
     ahbso            : out   ahb_slv_out_type;
     ahbsi            : in    ahb_slv_in_type;
     calib_done       : out   std_logic;
@@ -119,12 +119,13 @@ architecture rtl of ahb2mig_ebddr4r5 is
     app_cmd      : std_logic_vector(2 downto 0);
     app_en       : std_logic;
     app_hi_pri   : std_logic;
-    app_wdf_data : std_logic_vector(511 downto 0);
+    app_wdf_data : std_logic_vector(575 downto 0);  --using 512 bits only
     app_wdf_end  : std_logic;
-    app_wdf_mask : std_logic_vector(63 downto 0);
+    app_wdf_mask : std_logic_vector(71 downto 0);  -- using 64 bits only
     app_wdf_wren : std_logic;
   end record;
 
+  signal app_rd_data_full    : std_logic_vector(575 downto 0);
   type mig_out_type is record
     app_rd_data       : std_logic_vector(511 downto 0);
     app_rd_data_end   : std_logic;
@@ -158,11 +159,15 @@ architecture rtl of ahb2mig_ebddr4r5 is
       c0_ddr4_ck_t              : out std_logic_vector(0 downto 0);
       c0_ddr4_ck_c              : out std_logic_vector(0 downto 0);
       c0_ddr4_reset_n           : out std_logic;
-      c0_ddr4_dm_dbi_n          : in  std_logic_vector(7 downto 0);
-      c0_ddr4_dq                : in  std_logic_vector(63 downto 0);
-      c0_ddr4_dqs_c             : in  std_logic_vector(7 downto 0);
-      c0_ddr4_dqs_t             : in  std_logic_vector(7 downto 0);
+      c0_ddr4_dm_dbi_n          : in  std_logic_vector(8 downto 0);
+      c0_ddr4_dq                : in  std_logic_vector(71 downto 0);
+      c0_ddr4_dqs_c             : in  std_logic_vector(8 downto 0);
+      c0_ddr4_dqs_t             : in  std_logic_vector(8 downto 0);
       c0_init_calib_complete    : out std_logic;
+      -- c0_ddr4_app_correct_en_i  : in  std_logic;
+      -- c0_ddr4_ecc_err_addr      : out std_logic_vector(51 downto 0);
+      -- c0_ddr4_ecc_single        : out std_logic_vector(7 downto 0);
+      -- c0_ddr4_ecc_multiple      : out std_logic_vector(7 downto 0);
       c0_ddr4_ui_clk            : out std_logic;
       c0_ddr4_ui_clk_sync_rst   : out std_logic;
       dbg_clk                   : out std_logic;
@@ -170,11 +175,11 @@ architecture rtl of ahb2mig_ebddr4r5 is
       c0_ddr4_app_cmd           : in  std_logic_vector(2 downto 0);
       c0_ddr4_app_en            : in  std_logic;
       c0_ddr4_app_hi_pri        : in  std_logic;
-      c0_ddr4_app_wdf_data      : in  std_logic_vector(511 downto 0);
+      c0_ddr4_app_wdf_data      : in  std_logic_vector(575 downto 0);
       c0_ddr4_app_wdf_end       : in  std_logic;
-      c0_ddr4_app_wdf_mask      : in  std_logic_vector(63 downto 0);
+      c0_ddr4_app_wdf_mask      : in  std_logic_vector(71 downto 0);
       c0_ddr4_app_wdf_wren      : in  std_logic;
-      c0_ddr4_app_rd_data       : out std_logic_vector(511 downto 0);
+      c0_ddr4_app_rd_data       : out std_logic_vector(575 downto 0);
       c0_ddr4_app_rd_data_end   : out std_logic;
       c0_ddr4_app_rd_data_valid : out std_logic;
       c0_ddr4_app_rdy           : out std_logic;
@@ -511,9 +516,9 @@ begin
   migin.app_en     <= r.cmd_en;
   migin.app_hi_pri <= '0';
 
-  migin.app_wdf_data <= r.wdf_data_buffer;
+  migin.app_wdf_data <= X"0000000000000000" & r.wdf_data_buffer;
   migin.app_wdf_end  <= r.wr_end;
-  migin.app_wdf_mask <= r.wdf_mask_buffer;
+  migin.app_wdf_mask <= X"00" & r.wdf_mask_buffer;
   migin.app_wdf_wren <= r.wr_en;
 
   ahbso.hconfig <= hconfig;
@@ -645,6 +650,10 @@ begin
       c0_ddr4_dqs_c             => c0_ddr4_dqs_c,
       c0_ddr4_dqs_t             => c0_ddr4_dqs_t,
       c0_init_calib_complete    => calib_done,
+      -- c0_ddr4_app_correct_en_i  => '0',
+      -- c0_ddr4_ecc_err_addr      => open,
+      -- c0_ddr4_ecc_single        => open,
+      -- c0_ddr4_ecc_multiple      => open,
       c0_ddr4_ui_clk            => ui_clk,
       c0_ddr4_ui_clk_sync_rst   => ui_clk_sync_rst,
       dbg_clk                   => open,
@@ -656,13 +665,15 @@ begin
       c0_ddr4_app_wdf_end       => migin.app_wdf_end,
       c0_ddr4_app_wdf_mask      => migin.app_wdf_mask,
       c0_ddr4_app_wdf_wren      => migin.app_wdf_wren,
-      c0_ddr4_app_rd_data       => migoutraw.app_rd_data,
+      c0_ddr4_app_rd_data       => app_rd_data_full,
       c0_ddr4_app_rd_data_end   => migoutraw.app_rd_data_end,
       c0_ddr4_app_rd_data_valid => migoutraw.app_rd_data_valid,
       c0_ddr4_app_rdy           => migoutraw.app_rdy,
       c0_ddr4_app_wdf_rdy       => migoutraw.app_wdf_rdy,
       dbg_bus                   => open
       );
+
+  migoutraw.app_rd_data <= app_rd_data_full(511 downto 0);
 
 end;
 

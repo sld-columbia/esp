@@ -78,6 +78,8 @@ set_property  PACKAGE_PIN AU46 [get_ports {c0_ddr4_dm_dbi_n[5]}]
 set_property  PACKAGE_PIN BB49 [get_ports {c0_ddr4_dm_dbi_n[6]}]
 # {ta1_eb1_DDR4_DQ07_DM_DBI_N}
 set_property  PACKAGE_PIN AL47 [get_ports {c0_ddr4_dm_dbi_n[7]}]
+# {ta1_eb1_DDR4_DQ08_DM_DBI_N}
+set_property  PACKAGE_PIN AN52 [get_ports {c0_ddr4_dm_dbi_n[8]}]
 # {ta1_eb1_DDR4_DQ00_D0_DX00}
 set_property  PACKAGE_PIN BB51 [get_ports {c0_ddr4_dq[0]}]
 # {ta1_eb1_DDR4_DQ00_D1_DX01}
@@ -206,6 +208,22 @@ set_property  PACKAGE_PIN AM47 [get_ports {c0_ddr4_dq[61]}]
 set_property  PACKAGE_PIN AN46 [get_ports {c0_ddr4_dq[62]}]
 # {ta1_eb1_DDR4_DQ07_D7_DX63}
 set_property  PACKAGE_PIN AN47 [get_ports {c0_ddr4_dq[63]}]
+# {ta1_eb1_DDR4_DQ08_D0_DX64}
+set_property  PACKAGE_PIN AL53 [get_ports {c0_ddr4_dq[64]}]
+# {ta1_eb1_DDR4_DQ08_D1_DX65}
+set_property  PACKAGE_PIN AL54 [get_ports {c0_ddr4_dq[65]}]
+# {ta1_eb1_DDR4_DQ08_D2_DX66}
+set_property  PACKAGE_PIN AJ53 [get_ports {c0_ddr4_dq[66]}]
+# {ta1_eb1_DDR4_DQ08_D3_DX67}
+set_property  PACKAGE_PIN AK53 [get_ports {c0_ddr4_dq[67]}]
+# {ta1_eb1_DDR4_DQ08_D4_DX68}
+set_property  PACKAGE_PIN AM54 [get_ports {c0_ddr4_dq[68]}]
+# {ta1_eb1_DDR4_DQ08_D5_DX69}
+set_property  PACKAGE_PIN AN54 [get_ports {c0_ddr4_dq[69]}]
+# {ta1_eb1_DDR4_DQ08_D6_DX70}
+set_property  PACKAGE_PIN AK52 [get_ports {c0_ddr4_dq[70]}]
+# {ta1_eb1_DDR4_DQ08_D7_DX71}
+set_property  PACKAGE_PIN AL52 [get_ports {c0_ddr4_dq[71]}]
 # {ta1_eb1_DDR4_DQ00_DQS_C}
 set_property  PACKAGE_PIN BA53 [get_ports {c0_ddr4_dqs_c[0]}]
 # {ta1_eb1_DDR4_DQ01_DQS_C}
@@ -222,6 +240,8 @@ set_property  PACKAGE_PIN AR46 [get_ports {c0_ddr4_dqs_c[5]}]
 set_property  PACKAGE_PIN AW51 [get_ports {c0_ddr4_dqs_c[6]}]
 # {ta1_eb1_DDR4_DQ07_DQS_C}
 set_property  PACKAGE_PIN AK46 [get_ports {c0_ddr4_dqs_c[7]}]
+# {ta1_eb1_DDR4_DQ08_DQS_C}
+set_property  PACKAGE_PIN AJ54 [get_ports {c0_ddr4_dqs_c[8]}]
 # {ta1_eb1_DDR4_DQ00_DQS_T}
 set_property  PACKAGE_PIN BA52 [get_ports {c0_ddr4_dqs_t[0]}]
 # {ta1_eb1_DDR4_DQ01_DQS_T}
@@ -238,6 +258,8 @@ set_property  PACKAGE_PIN AR45 [get_ports {c0_ddr4_dqs_t[5]}]
 set_property  PACKAGE_PIN AW50 [get_ports {c0_ddr4_dqs_t[6]}]
 # {ta1_eb1_DDR4_DQ07_DQS_T}
 set_property  PACKAGE_PIN AK45 [get_ports {c0_ddr4_dqs_t[7]}]
+# {ta1_eb1_DDR4_DQ08_DQS_T}
+set_property  PACKAGE_PIN AH54 [get_ports {c0_ddr4_dqs_t[8]}]
 # {ta1_eb1_DDR4_ODT}
 set_property  PACKAGE_PIN AN42 [get_ports {c0_ddr4_odt[0]}]
 # {ta1_eb1_DDR4_C2_ODT1}

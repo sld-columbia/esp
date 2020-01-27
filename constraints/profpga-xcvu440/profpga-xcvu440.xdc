@@ -91,7 +91,7 @@ set_property PACKAGE_PIN BC27 [get_ports {esp_clk_p}]
 #              Timing constraints                          -
 #-----------------------------------------------------------
 
-create_clock -period 8.0 [get_ports c0_sys_clk_p]
+create_clock -period 11.2 [get_ports c0_sys_clk_p]
 
 create_clock -period 12.8 [get_ports esp_clk_p]
 

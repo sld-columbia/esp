@@ -63,10 +63,10 @@ entity top is
     c0_ddr4_ck_t      : out   std_logic_vector(0 downto 0);
     c0_ddr4_ck_c      : out   std_logic_vector(0 downto 0);
     c0_ddr4_reset_n   : out   std_logic;
-    c0_ddr4_dm_dbi_n  : inout std_logic_vector(7 downto 0);
-    c0_ddr4_dq        : inout std_logic_vector(63 downto 0);
-    c0_ddr4_dqs_c     : inout std_logic_vector(7 downto 0);
-    c0_ddr4_dqs_t     : inout std_logic_vector(7 downto 0);
+    c0_ddr4_dm_dbi_n  : inout std_logic_vector(8 downto 0);
+    c0_ddr4_dq        : inout std_logic_vector(71 downto 0);
+    c0_ddr4_dqs_c     : inout std_logic_vector(8 downto 0);
+    c0_ddr4_dqs_t     : inout std_logic_vector(8 downto 0);
     c0_calib_complete : out   std_logic;
     c0_diagnostic_led : out   std_ulogic;
     -- UART
@@ -132,10 +132,10 @@ architecture rtl of top is
       c0_ddr4_ck_t     : out   std_logic_vector(0 downto 0);
       c0_ddr4_ck_c     : out   std_logic_vector(0 downto 0);
       c0_ddr4_reset_n  : out   std_logic;
-      c0_ddr4_dm_dbi_n : inout std_logic_vector(7 downto 0);
-      c0_ddr4_dq       : inout std_logic_vector(63 downto 0);
-      c0_ddr4_dqs_c    : inout std_logic_vector(7 downto 0);
-      c0_ddr4_dqs_t    : inout std_logic_vector(7 downto 0);
+      c0_ddr4_dm_dbi_n : inout std_logic_vector(8 downto 0);
+      c0_ddr4_dq       : inout std_logic_vector(71 downto 0);
+      c0_ddr4_dqs_c    : inout std_logic_vector(8 downto 0);
+      c0_ddr4_dqs_t    : inout std_logic_vector(8 downto 0);
       ahbso            : out   ahb_slv_out_type;
       ahbsi            : in    ahb_slv_in_type;
       calib_done       : out   std_logic;

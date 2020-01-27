@@ -1,0 +1,425 @@
+#Do not send this file to Silicon Labs. Use custom part menu option instead.
+#This file is not valid for NVM generation.
+#Do not modify the contents of this file.
+#BEGIN_PROFILE
+#Date = Thursday, January 23, 2020 6:22:23 PM
+#Profile = 1
+#Software version = 6.4 - October 8, 2014
+#File version = 3
+#Chip = Si5338
+#Input Frequency (MHz) = 25.000000000
+#Input Type = Crystal
+#P1 = 1
+#Input Mux = XoClk
+#FDBK Input Frequency (MHz) = 25.000000000
+#FDBK Input Type = OFF
+#P2 = 1
+#FDBK Mux = NoClk
+#PFD Input Frequency (MHz) = 25.000000000
+#VCO Frequency (GHz) = 2.520000
+#N = 100  4/5  (100.8000)
+#Internal feedback enabled
+#Output Clock 0
+# Output Frequency (MHz) = 45.000000000
+# Mux Selection = IDn
+# MultiSynth = 56  (56.0000)
+# R = 1
+#Output Clock 1
+# Output is off
+#Output Clock 2
+# Output is off
+#Output Clock 3
+# Output is off
+#Driver 0
+# Enabled
+# Powered on
+# Output voltage = 3.30
+# Output type = 3.3V LVDS
+# Output state when disabled = StopLow
+#Driver 1
+# Disabled
+# Powered off
+# Output voltage = 3.30
+# Output type = 3.3V LVDS
+# Output state when disabled = StopLow
+#Driver 2
+# Disabled
+# Powered off
+# Output voltage = 3.30
+# Output type = 3.3V LVDS
+# Output state when disabled = StopLow
+#Driver 3
+# Disabled
+# Powered off
+# Output voltage = 3.30
+# Output type = 3.3V LVDS
+# Output state when disabled = StopLow
+#Frequency and phase adjust 0
+# Initial phase offset (ns) = 0.000
+# Phase step size (ns) = 0.000
+# Frequency adjust is off
+#Frequency and phase adjust 1
+# Frequency and phase increment and decrement is off
+#Frequency and phase adjust 2
+# Frequency and phase increment and decrement is off
+#Frequency and phase adjust 3
+# Frequency and phase increment and decrement is off
+#Spread spectrum 0
+# Spread spectrum is off
+#Spread spectrum 1
+# Spread spectrum is off
+#Spread spectrum 2
+# Spread spectrum is off
+#Spread spectrum 3
+# Spread spectrum is off
+#REGISTER_MAP
+  0,00h
+  1,00h
+  2,00h
+  3,00h
+  4,00h
+  5,00h
+  6,08h
+  7,00h
+  8,70h
+  9,0Fh
+ 10,00h
+ 11,00h
+ 12,00h
+ 13,00h
+ 14,00h
+ 15,00h
+ 16,00h
+ 17,00h
+ 18,00h
+ 19,00h
+ 20,00h
+ 21,00h
+ 22,00h
+ 23,00h
+ 24,00h
+ 25,00h
+ 26,00h
+ 27,70h
+ 28,16h
+ 29,90h
+ 30,B0h
+ 31,C0h
+ 32,E3h
+ 33,E3h
+ 34,E3h
+ 35,00h
+ 36,06h
+ 37,00h
+ 38,00h
+ 39,00h
+ 40,63h
+ 41,0Ch
+ 42,23h
+ 43,00h
+ 44,00h
+ 45,00h
+ 46,00h
+ 47,14h
+ 48,39h
+ 49,00h
+ 50,C4h
+ 51,07h
+ 52,10h
+ 53,00h
+ 54,1Ah
+ 55,00h
+ 56,00h
+ 57,00h
+ 58,00h
+ 59,01h
+ 60,00h
+ 61,00h
+ 62,00h
+ 63,10h
+ 64,00h
+ 65,00h
+ 66,00h
+ 67,00h
+ 68,00h
+ 69,00h
+ 70,00h
+ 71,00h
+ 72,00h
+ 73,00h
+ 74,10h
+ 75,00h
+ 76,00h
+ 77,00h
+ 78,00h
+ 79,00h
+ 80,00h
+ 81,00h
+ 82,00h
+ 83,00h
+ 84,00h
+ 85,10h
+ 86,00h
+ 87,00h
+ 88,00h
+ 89,00h
+ 90,00h
+ 91,00h
+ 92,00h
+ 93,00h
+ 94,00h
+ 95,00h
+ 96,10h
+ 97,66h
+ 98,30h
+ 99,08h
+100,00h
+101,00h
+102,00h
+103,05h
+104,00h
+105,00h
+106,80h
+107,00h
+108,00h
+109,00h
+110,40h
+111,00h
+112,00h
+113,00h
+114,40h
+115,00h
+116,80h
+117,00h
+118,40h
+119,00h
+120,00h
+121,00h
+122,40h
+123,00h
+124,00h
+125,00h
+126,00h
+127,00h
+128,00h
+129,00h
+130,00h
+131,00h
+132,00h
+133,00h
+134,00h
+135,00h
+136,00h
+137,00h
+138,00h
+139,00h
+140,00h
+141,00h
+142,00h
+143,00h
+144,00h
+145,00h
+146,FFh
+147,00h
+148,00h
+149,00h
+150,00h
+151,00h
+152,00h
+153,00h
+154,00h
+155,00h
+156,00h
+157,00h
+158,00h
+159,00h
+160,00h
+161,00h
+162,00h
+163,00h
+164,00h
+165,00h
+166,00h
+167,00h
+168,00h
+169,00h
+170,00h
+171,00h
+172,00h
+173,00h
+174,00h
+175,00h
+176,00h
+177,00h
+178,00h
+179,00h
+180,00h
+181,00h
+182,00h
+183,00h
+184,00h
+185,00h
+186,00h
+187,00h
+188,00h
+189,00h
+190,00h
+191,00h
+192,00h
+193,00h
+194,00h
+195,00h
+196,00h
+197,00h
+198,00h
+199,00h
+200,00h
+201,00h
+202,00h
+203,00h
+204,00h
+205,00h
+206,00h
+207,00h
+208,00h
+209,00h
+210,00h
+211,00h
+212,00h
+213,00h
+214,00h
+215,00h
+216,00h
+217,00h
+218,00h
+219,00h
+220,00h
+221,0Dh
+222,00h
+223,00h
+224,F4h
+225,F0h
+226,00h
+227,00h
+228,00h
+229,00h
+230,0Eh
+231,00h
+232,00h
+233,00h
+234,00h
+235,00h
+236,00h
+237,00h
+238,14h
+239,00h
+240,00h
+242,00h
+243,F0h
+244,00h
+245,00h
+247,00h
+248,00h
+249,A8h
+250,00h
+251,84h
+252,00h
+253,00h
+254,00h
+255,00h
+256,00h
+257,00h
+258,00h
+259,00h
+260,00h
+261,00h
+262,00h
+263,00h
+264,00h
+265,00h
+266,00h
+267,00h
+268,00h
+269,00h
+270,00h
+271,00h
+272,00h
+273,01h
+274,00h
+275,00h
+276,90h
+277,31h
+278,00h
+279,00h
+280,01h
+281,00h
+282,00h
+283,00h
+284,00h
+285,00h
+286,00h
+287,00h
+288,00h
+289,01h
+290,00h
+291,00h
+292,90h
+293,31h
+294,00h
+295,00h
+296,01h
+297,00h
+298,00h
+299,00h
+300,00h
+301,00h
+302,00h
+303,00h
+304,00h
+305,01h
+306,00h
+307,00h
+308,90h
+309,31h
+310,00h
+311,00h
+312,01h
+313,00h
+314,00h
+315,00h
+316,00h
+317,00h
+318,00h
+319,00h
+320,00h
+321,01h
+322,00h
+323,00h
+324,90h
+325,31h
+326,00h
+327,00h
+328,01h
+329,00h
+330,00h
+331,00h
+332,00h
+333,00h
+334,00h
+335,00h
+336,00h
+337,00h
+338,00h
+339,00h
+340,90h
+341,31h
+342,00h
+343,00h
+344,01h
+345,00h
+346,00h
+347,00h
+348,00h
+349,00h
+350,00h
+#END_PROFILE
