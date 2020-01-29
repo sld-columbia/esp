@@ -34,7 +34,7 @@ static struct of_device_id synth_device_ids[] = {
 		.name = "SLD_SYNTH",
 	},
 	{
-		.name = "eb_012",
+		.name = "eb_014",
 	},
 	{
 		.compatible = "sld,synth",

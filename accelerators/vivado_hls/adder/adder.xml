@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <sld>
-  <accelerator name="adder" desc="ADDER" data_size="32" device_id="014" hls_tool="vivado_hls">
+  <accelerator name="adder" desc="ADDER" data_size="32" device_id="040" hls_tool="vivado_hls">
     <param name="nbursts" desc="Number of load/store bursts toward memory"/>
   </accelerator>
 </sld>
