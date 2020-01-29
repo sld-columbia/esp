@@ -379,6 +379,12 @@ def print_global_constants(fp, soc):
   else:
     fp.write("  constant GLOB_CPU_AXI : integer range 0 to 1 := 1;\n")
   fp.write("\n")
+  # RTL caches
+  if soc.cache_rtl.get() == 1:
+    fp.write("  constant CFG_CACHE_RTL   : integer := 1;\n")
+  else:
+    fp.write("  constant CFG_CACHE_RTL   : integer := 0;\n")
+
 
 def print_constants(fp, soc):
   fp.write("  ------ NoC parameters\n")
@@ -1550,6 +1556,19 @@ def print_ariane_devtree(fp, esp_config):
   fp.write("};\n")
 
 
+def print_cache_config(fp, soc):
+  fp.write("`ifndef __CACHES_CFG_SVH__\n")
+  fp.write("`define __CACHES_CFG_SVH__\n")
+  fp.write("\n")
+  fp.write("`define L2_WAYS      " + str(soc.l2_ways.get()) + "\n")
+  fp.write("`define L2_SETS      " + str(soc.l2_sets.get()) + "\n")
+  fp.write("`define LLC_WAYS     " + str(soc.llc_ways.get()) + "\n")
+  fp.write("`define LLC_SETS     " + str(soc.llc_sets.get()) + "\n")
+  fp.write("\n")
+  fp.write("`endif // __CACHES_CFG_SVH__\n")
+
+
+
 def create_socmap(esp_config, soc):
 
   # Globals
@@ -1604,3 +1623,13 @@ def create_socmap(esp_config, soc):
     fp.close()
 
     print("Created device-tree into 'ariane.dts'")
+
+
+  # RTL Caches configuration
+  fp = open('cache_cfg.svh', 'w')
+
+  print_cache_config(fp, soc)
+
+  fp.close()
+
+  print("Created RTL caches configuration into 'cache_cfg.svh'")

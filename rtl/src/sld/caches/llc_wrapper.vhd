@@ -1670,6 +1670,7 @@ begin  -- architecture rtl
   -- instantiation of llc cache on cpu tile
   llc_cache_i : llc
     generic map (
+      use_rtl => CFG_CACHE_RTL,
       sets => sets,
       ways => ways)
     port map (

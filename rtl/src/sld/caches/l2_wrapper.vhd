@@ -440,6 +440,7 @@ begin  -- architecture rtl of l2_wrapper
 
   l2_cache_i : l2
     generic map (
+      use_rtl => CFG_CACHE_RTL,
       sets => sets,
       ways => ways)
     port map (

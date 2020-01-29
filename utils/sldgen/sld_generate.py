@@ -1047,6 +1047,7 @@ def gen_tech_indep_impl(accelerator_list, cache_list, dma_width, template_dir, o
         f.write("\n")
         f.write("entity " + cac.name + " is\n\n")
         f.write("    generic (\n")
+        f.write("      use_rtl          : integer;\n")
         f.write("      sets             : integer;\n")
         f.write("      ways             : integer\n")
         f.write("    );\n")
@@ -1059,6 +1060,12 @@ def gen_tech_indep_impl(accelerator_list, cache_list, dma_width, template_dir, o
         f.write("\n")
         f.write("architecture mapping of " + cac.name + " is\n\n")
         f.write("begin  -- mapping\n\n")
+        f.write("  rtl_gen: if use_rtl /= 0 generate\n")
+        f.write("    " + cac.name + "_rtl_top_i: " + cac.name + "_rtl_top\n")
+        write_cache_port_map(f, cac, is_llc)
+        f.write("  end generate rtl_gen;\n\n")
+        f.write("\n");
+        f.write("  hls_gen: if use_rtl = 0 generate\n")
         for impl in cac.hlscfg:
           info = re.split('_|x', impl)
           sets = 0
@@ -1088,6 +1095,7 @@ def gen_tech_indep_impl(accelerator_list, cache_list, dma_width, template_dir, o
           f.write("    " + cac.name + "_" + impl + "_i: " + cac.name + "_" + impl + "\n")
           write_cache_port_map(f, cac, is_llc)
           f.write("  end generate " +  impl + "_gen;\n\n")
+        f.write("  end generate hls_gen;\n\n")
         f.write("end mapping;\n\n")
   f.close()
   ftemplate.close()

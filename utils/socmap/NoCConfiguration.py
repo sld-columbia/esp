@@ -355,6 +355,11 @@ class NoCFrame(Pmw.ScrolledFrame):
   row_frames = []
 
   def changed(self,*args):
+    # If using RTL caches, then SETS/WAYS must be the same for both CPU and ACC
+    if self.soc.cache_rtl.get() == 1:
+      self.soc.acc_l2_ways.set(self.soc.l2_ways.get())
+      self.soc.acc_l2_sets.set(self.soc.l2_sets.get())
+
     if isInt(self.ROWS.get()) == False or isInt(self.COLS.get()) == False:
        return
     for y in range(0, int(self.ROWS.get())):
