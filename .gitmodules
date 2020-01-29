@@ -28,3 +28,6 @@
 [submodule "third-party/accelerators/dma64/NV_NVDLA/sw"]
 	path = third-party/accelerators/dma64/NV_NVDLA/sw
 	url = https://github.com/sld-columbia/nvdla-sw.git
+[submodule "rtl/src/sld/caches/esp-caches"]
+	path = rtl/src/sld/caches/esp-caches
+	url = https://github.com/sld-columbia/esp-caches.git
