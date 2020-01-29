@@ -355,6 +355,8 @@ static void alloc_phase(accelerator_thread_info_t **info, int nthreads,
 
 			info[i]->chain[acc].desc.esp.alloc_policy = params.policy;
 			info[i]->chain[acc].desc.esp.ddr_node = contig_to_most_allocated(info[i]->mem);
+			info[i]->chain[acc].desc.esp.p2p_store = 0;
+			info[i]->chain[acc].desc.esp.p2p_nsrcs = 0;
 		}
 	}
 }
