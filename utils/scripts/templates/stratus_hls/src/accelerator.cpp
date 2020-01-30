@@ -41,10 +41,11 @@ void <accelerator_name>::load_input()
     // Load
     {
         HLS_PROTO("load-dma");
+        wait();
+
         bool ping = true;
         uint32_t offset = 0;
 
-        wait();
         // Batching
         for (uint16_t b = 0; b < /* <<--number of transfers-->> */; b++)
         {
@@ -154,6 +155,8 @@ void <accelerator_name>::store_output()
     // Store
     {
         HLS_PROTO("store-dma");
+        wait();
+
         bool ping = true;
 #if (DMA_WORD_PER_BEAT == 0)
         uint32_t store_offset = (/* <<--data_in_size-->> */) * /* <<--number of transfers-->> */;
