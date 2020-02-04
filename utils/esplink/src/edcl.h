@@ -14,8 +14,6 @@
 
 /* #define VERBOSE */
 
-#define PORT 46392
-
 #define NWORD_MAX_SND 27
 #define MAX_SND_SZ (4 * NWORD_MAX_SND)
 #define BUFSIZE_MAX_SND (10 + 4 * NWORD_MAX_SND)

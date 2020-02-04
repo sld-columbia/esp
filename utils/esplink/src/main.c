@@ -120,7 +120,15 @@ int main(int argc, char *argv[]) {
 		}
 	}
 
-	connect_edcl(EDCL_IP);
+	printf("ESPLink address ");
+	if (ESPLINK_IP[0] == '\0') {
+		printf("%s:%d\n", EDCL_IP, PORT);
+		connect_edcl(EDCL_IP);
+	} else {
+		printf("%s:%d\n", ESPLINK_IP, PORT);
+		connect_edcl(ESPLINK_IP);
+	}
+
 	atexit(disconnect_edcl);
 
 	switch (action) {
