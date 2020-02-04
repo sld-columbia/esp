@@ -91,6 +91,7 @@ help:
 	@echo " make sim-gui                          : compile all source files and run an RTL simulation of ESP"
 	@echo "                                         with graphic user interface (requires Modelsim 10.5c)."
 	@echo " make vivado-syn                       : generate a bitstream of ESP (requires Vivado 2018.2)."
+	@echo " make vivado-update                    : run synthesis and implemenation without touching the current Vivado project setup"
 	@echo " make vivado-prog-fpga                 : load the generated bitstream to FPGA. This target requires"
 	@echo "                                         the environment variable FPGA_HOST set to the network ip of"
 	@echo "                                         the machine with FTDI or JTAG link to the FPGA. The FPGA_HOST"
@@ -1348,15 +1349,19 @@ vivado/syn.tcl: vivado
 	@echo "open_project $(DESIGN).xpr" > $@
 	@echo "update_ip_catalog" >> $@
 	@echo "update_compile_order -fileset sources_1" >> $@
-	@echo "synth_design -rtl -name rtl_1" >> $@
+	@echo "reset_run impl_1" >> $@
+	@echo "reset_run synth_1" >> $@
+#	@echo "synth_design -rtl -name rtl_1" >> $@
 #	@echo "synth_design -directive runtimeoptimize -resource_sharing off -keep_equivalent_registers -no_lc -rtl -name rtl_1" >> $@
 #	@echo "synth_design -resource_sharing off -keep_equivalent_registers -no_lc -rtl -name rtl_1" >> $@
-	@echo "launch_runs synth_1" >> $@
+	@echo "launch_runs synth_1 -jobs 12" >> $@
 	@echo "get_ips" >> $@
 	@echo "wait_on_run -timeout 360 synth_1" >> $@
 	@echo "set_msg_config -suppress -id {Drc 23-20}" >> $@
-	@echo "launch_runs impl_1 -to_step write_bitstream" >> $@
+	@echo "launch_runs impl_1 -jobs 12" >> $@
 	@echo "wait_on_run -timeout 360 impl_1" >> $@
+	@echo "launch_runs impl_1 -to_step write_bitstream" >> $@
+	@echo "wait_on_run -timeout 60 impl_1" >> $@
 
 vivado/program.tcl: vivado
 	$(QUIET_INFO)echo "generating programming script for $(PART)"
@@ -1434,6 +1439,23 @@ vivado-syn: vivado-setup
 	else \
 		echo $(SPACES)"ERROR: bistream not found; synthesis failed"; \
 	fi; \
+
+vivado-update: vivado vivado/syn.tcl
+	$(QUIET_INFO)echo "Updating implementaiton with Vivado"
+	@cd vivado; \
+	if ! test -r $(DESIGN).xpr; then \
+		echo -n $(SPACES)"Error: Vivado project \"$(DESIGN)\" does not exist. Please run 'make vivado-syn' first"; \
+	else \
+		vivado $(VIVADO_BATCH_OPT) -source syn.tcl | tee ../vivado_syn.log; \
+		cd ../; \
+		bit=vivado/$(DESIGN).runs/impl_1/$(TOP).bit; \
+		if test -r $$bit; then \
+			rm -rf $(TOP).bit; \
+			ln -s $$bit; \
+		else \
+			echo $(SPACES)"ERROR: bistream not found; synthesis failed"; \
+		fi; \
+	fi;
 
 vivado-prog-fpga: vivado/program.tcl
 	@cd vivado; \
