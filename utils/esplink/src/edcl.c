@@ -232,7 +232,7 @@ void die(char *s)
 
 void connect_edcl(const char *server)
 {
-	printf("Connect ESPLink\n");
+	/* printf("Connect ESPLink\n"); */
 
 	// Open socket
 	if ( (s = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1)

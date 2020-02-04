@@ -47,6 +47,23 @@ FPGA_HOST ?= localhost
 XIL_HW_SERVER_PORT ?= 3121
 
 
+### Network configuration ###
+
+# IP address or host name of the host connected to the FPGA
+UART_IP ?=
+UART_PORT ?=
+
+# SSH IP address or host name of the ESP Linux instance or gateway
+SSH_IP ?=
+SSH_PORT ?= 22
+
+# ESPLink IP address or gateway (DO NOT USE HOST NAME)
+ESPLINK_IP ?=
+ESPLINK_PORT ?= 46392
+
+# MAC address for Linux if using IP address reservation (e.g. 00aabb33cc77)
+LINUX_MAC ?=
+
+
 ### Include global Makefile ###
 include $(ESP_ROOT)/utils/Makefile
-
