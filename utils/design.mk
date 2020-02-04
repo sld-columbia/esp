@@ -29,6 +29,7 @@ endif
 
 endif
 
+
 ### Create FPGA part name ###
 ifneq ($(filter $(TECHLIB),$(FPGALIBS)),)
 include $(ESP_ROOT)/constraints/$(BOARD)/Makefile.inc
@@ -171,4 +172,4 @@ TOP_VHDL_SIM_SRCS += $(DESIGN_PATH)/$(SIMTOP).vhd
 TOP_VLOG_SIM_SRCS +=
 
 # Random MAC address for Linux
-LINUX_MAC=$(shell echo 0000$$(dd if=/dev/urandom count=1 2>/dev/null | md5sum | sed 's/^\(..\)\(..\)\(..\)\(..\).*$$/\1\2\3\4/'))
+LINUX_MAC ?= $(shell echo 0000$$(dd if=/dev/urandom count=1 2>/dev/null | md5sum | sed 's/^\(..\)\(..\)\(..\)\(..\).*$$/\1\2\3\4/'))
