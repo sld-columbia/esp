@@ -208,7 +208,10 @@ socmap.h: socmap.vhd
 ESPLINK_SRCS = $(wildcard $(ESP_ROOT)/utils/esplink/src/*.c)
 ESPLINK_HDRS = $(wildcard $(ESP_ROOT)/utils/esplink/src/*.h)
 esplink: socmap.h $(ESPLINK_HDRS) $(ESPLINK_SRCS)
-	$(QUIET_CC) gcc -O3 -Wall -Werror -fmax-errors=5 -I$(ESP_ROOT)/utils/esplink/src/ -I$(DESIGN_PATH) $(ESPLINK_SRCS) -o $@
+	$(QUIET_CC) gcc -O3 -Wall -Werror -fmax-errors=5 \
+		-DESPLINK_IP=\"$(ESPLINK_IP)\" -DPORT=$(ESPLINK_PORT) \
+		-I$(ESP_ROOT)/utils/esplink/src/ -I$(DESIGN_PATH) \
+		$(ESPLINK_SRCS) -o $@
 
 esp-config: socmap.vhd
 
@@ -239,7 +242,7 @@ esp-config-distclean: esp-config-clean
 		esplink
 
 
-.PHONY: esp-xconfig esp-defconfig esp-config-clean esp-config-distclean
+.PHONY: esplink esp-xconfig esp-defconfig esp-config-clean esp-config-distclean
 
 ### RTL simulator executables for Modelsim SE ###
 VLIB = vlib
