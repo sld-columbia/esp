@@ -1348,10 +1348,8 @@ axi_accelerators = next(os.walk(axi_acc_dir))[1]
 caches = [ ]
 tmp_l2_dir = caches_rtl_dir + '/l2'
 tmp_llc_dir = caches_rtl_dir + '/llc'
-if os.path.exists(tmp_l2_dir):
-  caches.append('l2')
-if os.path.exists(tmp_llc_dir):
-  caches.append('llc')
+caches.append('l2')
+caches.append('llc')
 
 
 if (len(accelerators) == 0):
@@ -1359,9 +1357,9 @@ if (len(accelerators) == 0):
   print("          Please run 'make accelerators' or make <accelerator>-hls.")
   print("          Get available accelerators with 'make print-available-accelerators'")
 
-if (len(caches) == 0):
+if (not os.path.exists(tmp_l2_dir) or not os.path.exists(tmp_llc_dir)):
   print("    WARNING: No caches found in " + caches_rtl_dir + ".")
-  print("             Please run 'make caches'.")
+  print("             Please check the \"Use RTL\" option in the \"Cache Configuration\" tab when configuring ESP.")
 
 for acc in axi_accelerators:
   accd = AxiAccelerator()
@@ -1518,14 +1516,12 @@ for cac in caches:
 
   # Get scheduled HLS configurations
   cac_dir = caches_rtl_dir + "/" + cac
-  cac_dp = get_immediate_subdirectories(cac_dir)
-  for dp_str in cac_dp:
-    dp = dp_str.replace(cac + "_", "")
-    cacd.hlscfg.append(dp)
-    print("    INFO: Found implementation " + dp + " for " + cac)
-  if len(cacd.hlscfg) == 0:
-    print("    WARNING: No valid HLS configuration found for " + cac)
-    continue
+  if os.path.exists(cac_dir):
+    cac_dp = get_immediate_subdirectories(cac_dir)
+    for dp_str in cac_dp:
+      dp = dp_str.replace(cac + "_", "")
+      cacd.hlscfg.append(dp)
+      print("    INFO: Found implementation " + dp + " for " + cac)
   cache_list.append(cacd)
 
 
