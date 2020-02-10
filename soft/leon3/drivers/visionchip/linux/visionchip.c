@@ -27,7 +27,7 @@ static struct of_device_id visionchip_device_ids[] = {
 		.name = "SLD_VISIONCHIP",
 	},
 	{
-		.name = "eb_013",
+		.name = "eb_011",
 	},
 	{
 		.compatible = "sld,visionchip",
