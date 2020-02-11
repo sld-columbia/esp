@@ -87,9 +87,8 @@ help:
 	@echo "                                         generate the corresponding SoC map (may run as dependency)."
 	@echo " make esp-xconfig                      : open a GUI to configure and generate the SoC map."
 	@echo " make sim                              : compile all source files and run an RTL simulation of ESP"
-	@echo "                                         (requires Modelsim 10.5c)."
 	@echo " make sim-gui                          : compile all source files and run an RTL simulation of ESP"
-	@echo "                                         with graphic user interface (requires Modelsim 10.5c)."
+	@echo "                                         with graphic user interface"
 	@echo " make vivado-syn                       : generate a bitstream of ESP (requires Vivado 2018.2)."
 	@echo " make vivado-update                    : run synthesis and implemenation without touching the current Vivado project setup"
 	@echo " make vivado-prog-fpga                 : load the generated bitstream to FPGA. This target requires"
@@ -245,7 +244,7 @@ esp-config-distclean: esp-config-clean
 
 .PHONY: esplink esp-xconfig esp-defconfig esp-config-clean esp-config-distclean
 
-### RTL simulator executables for Modelsim SE ###
+### RTL simulator executables ###
 VLIB = vlib
 VCOM = vcom -quiet $(VCOMOPT)
 VLOG = vlog -quiet $(VLOGOPT)
@@ -946,13 +945,22 @@ xcelium/xmready: xcelium/xilinx_lib check_all_srcs.old $(PKG_LIST)
 		echo $(SPACES)"$(XLOG) -work profpga -INCDIR ... $$rtl"; \
 		$(XLOG) -work profpga $(INCDIR_XCELIUM) $$rtl || exit; \
 	done; \
-	echo $(SPACES)"### Compile VHDL packages ###"; \
 	grep --quiet "work" cds.lib; \
 	res=$$?; \
 	if [ $$res != 0 ]; then \
 		mkdir -p work; \
 		echo "DEFINE work $(DESIGN_PATH)/xcelium/work" >> cds.lib; \
 	fi; \
+	echo $(SPACES)"### Compile Ariane source files ###"; \
+	rtl=$(ESP_ROOT)/socs/common/ariane_soc_pkg.sv; \
+	echo $(SPACES)"$(XLOG) -work work $(ARIANE_XLOGOPT) $$rtl"; \
+	$(XLOG) -work work $(ARIANE_XLOGOPT) $$rtl || exit; \
+	for ver in $(VERILOG_ARIANE); do \
+		rtl=$(ARIANE)/$$ver; \
+		echo $(SPACES)"$(XLOG) -work work $(ARIANE_XLOGOPT) $$rtl"; \
+		$(XLOG) -work work $(ARIANE_XLOGOPT) $$rtl || exit; \
+	done; \
+	echo $(SPACES)"### Compile VHDL packages ###"; \
 	for vhd in $(SLDGEN_VHDL_RTL_PKGS); do \
 		rtl=$$vhd; \
 		echo $(SPACES)"$(XCOM) -work work $$rtl"; \
@@ -986,8 +994,13 @@ xcelium/xmready: xcelium/xilinx_lib check_all_srcs.old $(PKG_LIST)
 		done; \
 	echo $(SPACES)"### Compile Verilog source files ###"; \
 		for rtl in $(VLOG_SRCS); do \
-			echo $(SPACES)"$(XLOG) -work work -INCDIR ... $$rtl"; \
-			$(XLOG) -INCDIR $(ESP_ROOT)/rtl/src/opencores/ge_1000baseX -work work $$rtl || exit; \
+			echo $(SPACES)"$(XLOG) $$rtl"; \
+			$(XLOG) -work work $(THIRDPARTY_INCDIR_XCELIUM) $$rtl || exit; \
+		done; \
+	echo $(SPACES)"### Compile SystemVerilog source files ###"; \
+		for rtl in $(SVLOG_SRCS); do \
+			echo $(SPACES)"$(XLOG) -SV $$rtl"; \
+			$(XLOG) -SV -work work $(THIRDPARTY_INCDIR_XCELIUM) $$rtl || exit; \
 		done; \
 	echo $(SPACES)"### Compile IPs simulation files ###"; \
 	echo $(SPACES)"$(XLOG) -work work $(XILINX_VIVADO)/data/verilog/src/glbl.v"; \
@@ -1026,7 +1039,7 @@ xmsim-clean:
 	$(QUIET_CLEAN)
 
 xmsim-distclean: xmsim-clean
-	$(QUIET_CLEAN) $(RM) xcelium
+	$(QUIET_CLEAN) $(RM) xcelium INCA_libs xcelium.d
 
 .PHONY: xmsim xmsim-gui xmsim-compile xmsim-clean xmsim-distclean
 
@@ -1035,6 +1048,7 @@ xmsim-distclean: xmsim-clean
 
 incisive/ncready: incisive/xilinx_lib check_all_srcs.old $(PKG_LIST)
 	$(QUIET_MKDIR)mkdir -p incisive
+	@echo $(SPACES)"WARNING: The source code for Ariane cannot be compiled with Incisive!!! If you need Ariane, please switch to Modelsim or Xcelium";
 	@cd incisive; \
 	echo $(SPACES)"### Compile proFPGA source files ###"; \
 	grep --quiet "profpga" cds.lib; \
@@ -1053,13 +1067,13 @@ incisive/ncready: incisive/xilinx_lib check_all_srcs.old $(PKG_LIST)
 		echo $(SPACES)"$(NCLOG) -work profpga -INCDIR ... $$rtl"; \
 		$(NCLOG) -work profpga $(INCDIR_INCISIVE) $$rtl || exit; \
 	done; \
-	echo $(SPACES)"### Compile VHDL packages ###"; \
 	grep --quiet "work" cds.lib; \
 	res=$$?; \
 	if [ $$res != 0 ]; then \
 		mkdir -p work; \
 		echo "DEFINE work $(DESIGN_PATH)/incisive/work" >> cds.lib; \
 	fi; \
+	echo $(SPACES)"### Compile VHDL packages ###"; \
 	for vhd in $(SLDGEN_VHDL_RTL_PKGS); do \
 		rtl=$$vhd; \
 		echo $(SPACES)"$(NCCOM) -work work $$rtl"; \
@@ -1093,8 +1107,19 @@ incisive/ncready: incisive/xilinx_lib check_all_srcs.old $(PKG_LIST)
 		done; \
 	echo $(SPACES)"### Compile Verilog source files ###"; \
 		for rtl in $(VLOG_SRCS); do \
-			echo $(SPACES)"$(NCLOG) -work work -INCDIR ... $$rtl"; \
-			$(NCLOG) -INCDIR $(ESP_ROOT)/rtl/src/opencores/ge_1000baseX -work work $$rtl || exit; \
+			echo $(SPACES)"$(NCLOG) $$rtl"; \
+			$(NCLOG) -work work $(THIRDPARTY_INCDIR_INCISIVE) $$rtl || exit; \
+		done; \
+	echo $(SPACES)"### Compile SystemVerilog source files ###"; \
+		for rtl in $(SVLOG_SRCS); do \
+			echo $$rtl | grep --quiet "ariane"; \
+			res=$$?; \
+			if [ $$res == 0 ]; then \
+				echo $(SPACES)"### Skip Ariane source files ###"; \
+			else \
+				echo $(SPACES)"$(NCLOG) -SV $$rtl"; \
+				$(NCLOG) -SV -work work $(THIRDPARTY_INCDIR_INCISIVE) $$rtl || exit; \
+			fi; \
 		done; \
 	echo $(SPACES)"### Compile IPs simulation files ###"; \
 	echo $(SPACES)"$(NCLOG) -work work $(XILINX_VIVADO)/data/verilog/src/glbl.v"; \
