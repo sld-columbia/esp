@@ -123,6 +123,14 @@ ARIANE_VLOGOPT += -sv
 ARIANE_VLOGOPT += +incdir+${ARIANE}/src/common_cells/include
 ARIANE_VLOGOPT += -suppress 2583
 
+ARIANE_XLOGOPT  =
+# Define verilator env because Incisive and Xcelium do not support SVAs and UVM in Ariane
+ARIANE_XLOGOPT += -DEFINE VERILATOR
+ARIANE_XLOGOPT += -UNCLOCKEDSVA
+ARIANE_XLOGOPT += -DEFINE WT_DCACHE=1
+ARIANE_XLOGOPT += -SV
+ARIANE_XLOGOPT += -INCDIR ${ARIANE}/src/common_cells/include
+
 # Simulator switches
 ifeq ("$(CPU_ARCH)", "ariane")
 VSIMOPT += +UVM_NO_RELNOTES -64 +permissive-off

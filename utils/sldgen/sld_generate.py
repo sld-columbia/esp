@@ -1021,14 +1021,14 @@ def gen_tech_indep_impl(accelerator_list, cache_list, dma_width, template_dir, o
         f.write("begin  -- mapping\n\n")
         for impl in acc.hlscfg:
           f.write("\n")
-          f.write("  " + impl.name + "_gen: if hls_conf = HLSCFG_" + acc.name.upper() + "_" + impl.name.upper() + " generate\n")
+          f.write("  impl_" + impl.name + "_gen: if hls_conf = HLSCFG_" + acc.name.upper() + "_" + impl.name.upper() + " generate\n")
           if acc.hls_tool == 'stratus_hls':
             f.write("    " + acc.name + "_" + impl.name + "_i: " + acc.name + "_" + impl.name + "\n")
             write_acc_port_map(f, acc, dma_width, "rst", False, False)
           else:
             f.write("    " + acc.name + "_" + impl.name + "_top_i: " + acc.name + "_" + impl.name + "_top\n")
             write_acc_port_map(f, acc, dma_width, "rst", False, True)
-          f.write("  end generate " +  impl.name + "_gen;\n\n")
+          f.write("  end generate impl_" +  impl.name + "_gen;\n\n")
         f.write("end mapping;\n\n")
   f.close()
   ftemplate.close()
