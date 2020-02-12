@@ -9,6 +9,7 @@ use work.stdlib.all;
 use work.sld_devices.all;
 use work.sldcommon.all;
 use work.nocpackage.all;
+use work.allcaches.all;
 use work.cachepackage.all;
 use work.tile.all;
 use work.genacc.all;

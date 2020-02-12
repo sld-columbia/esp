@@ -259,7 +259,7 @@ architecture rtl of acc_dma2noc is
   signal pending_dma_read, pending_dma_write : std_ulogic;
   signal tlb_valid, tlb_clear, tlb_empty, tlb_write : std_ulogic;
   signal tlb_wr_address : std_logic_vector((log2xx(tlb_entries) -1) downto 0);
-  signal dma_address : std_logic_vector(ADDR_BITS - 1 downto 0);
+  signal dma_address : addr_t;
   signal dma_length : std_logic_vector(31 downto 0);
 
   -- Sample acc_done:
@@ -361,7 +361,7 @@ begin  -- rtl
         tlb_valid            => tlb_valid,
         tlb_write            => tlb_write,
         tlb_wr_address       => tlb_wr_address,
-        tlb_datain           => dma_rcv_data_out_int(ADDR_BITS - 1 downto 0),
+        tlb_datain           => dma_rcv_data_out_int(GLOB_PHYS_ADDR_BITS - 1 downto 0),
         dma_address          => dma_address,
         dma_length           => dma_length);
   end generate tlb_gen;
@@ -440,7 +440,7 @@ begin  -- rtl
     variable msg_type : noc_msg_type;
     variable header_v : noc_flit_type;
     variable tmp : std_logic_vector(63 downto 0);
-    variable address : std_logic_vector(ADDR_BITS - 1 downto 0);
+    variable address : addr_t;
     variable length : std_logic_vector(31 downto 0);
     variable mem_x, mem_y : local_yx;
     variable is_p2p : std_ulogic;
@@ -452,13 +452,13 @@ begin  -- rtl
 
     if tlb_empty = '1' then
       -- fetch page table
-      if ADDR_BITS > 32 then
+      if GLOB_PHYS_ADDR_BITS > 32 then
         tmp(63 downto 32) := bankreg(PT_ADDRESS_EXTENDED_REG);
       else
         tmp(63 downto 32) := (others => '0');
       end if;
       tmp(31 downto 0) := bankreg(PT_ADDRESS_REG);
-      address := tmp(ADDR_BITS - 1 downto 0);
+      address := tmp(GLOB_PHYS_ADDR_BITS - 1 downto 0);
       length  := bankreg(PT_NCHUNK_REG);
       if coherence = ACC_COH_LLC or coherence = ACC_COH_RECALL then
         msg_type := REQ_DMA_READ;
@@ -527,7 +527,7 @@ begin  -- rtl
 
     payload_address <= (others => '0');
     payload_address(NOC_FLIT_SIZE-1 downto NOC_FLIT_SIZE-PREAMBLE_WIDTH) <= PREAMBLE_BODY;
-    payload_address(ADDR_BITS-1 downto 0) <= address;
+    payload_address(GLOB_PHYS_ADDR_BITS - 1 downto 0) <= address;
 
     payload_length <= (others => '0');
     payload_length(NOC_FLIT_SIZE-1 downto NOC_FLIT_SIZE-PREAMBLE_WIDTH) <= PREAMBLE_TAIL;
@@ -573,7 +573,7 @@ begin  -- rtl
 
   fill_coherent_dma_req: process (payload_address_r, payload_length_r) is
   begin  -- process fill_coherent_dma_req
-    coherent_dma_address <= payload_address_r(ADDR_BITS - 1 downto 0);
+    coherent_dma_address <= payload_address_r(GLOB_PHYS_ADDR_BITS - 1 downto 0);
     coherent_dma_length <= (others => '0');
     coherent_dma_length(31 downto 0) <= payload_length_r(31 downto 0);
   end process fill_coherent_dma_req;

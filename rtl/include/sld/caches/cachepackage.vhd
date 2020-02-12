@@ -10,6 +10,7 @@ use work.stdlib.all;
 use work.gencomp.all;
 use work.nocpackage.all;
 use work.sldcommon.all;
+use work.allcaches.all;
 
 package cachepackage is
 
@@ -17,83 +18,7 @@ package cachepackage is
   -- Constants
   -----------------------------------------------------------------------------
 
-  -- Warning: setting max number of fully-coherent devices to 16 and max number
-  -- of LLC-coherent devices to 16. This is due to VHDL limitation, but the
-  -- following constant can be changed arbitrarily.
-  constant NL2_MAX_LOG2 : integer := 4;
-  constant NLLC_MAX_LOG2 : integer := NL2_MAX_LOG2;
-  type cache_attribute_array is array (0 to 2**NL2_MAX_LOG2 - 1) of integer;
-  type dma_attribute_array is array (0 to 2**NLLC_MAX_LOG2 - 1) of integer;
-
-  -- NoC-L2cache planes encoding
-  constant MSG_REQ_PLANE : std_logic_vector(1 downto 0) := "00";
-  constant MSG_FWD_PLANE : std_logic_vector(1 downto 0) := "01";
-  constant MSG_RSP_PLANE : std_logic_vector(1 downto 0) := "10";
-  constant MSG_DMA_PLANE : std_logic_vector(1 downto 0) := "11";
-
-  -- Accelerator coherence type encoding
-  constant ACC_COH_NONE   : integer := 0;
-  constant ACC_COH_LLC    : integer := 1;
-  constant ACC_COH_RECALL : integer := 2;
-  constant ACC_COH_FULL   : integer := 3;
-
-  constant COH_T_LOG2     : integer := 2;
-
-  -- Global architecture parameters
-  constant WORD_OFFSET_BITS   : integer := GLOB_WORD_OFFSET_BITS;
-  constant BYTE_OFFSET_BITS   : integer := GLOB_BYTE_OFFSET_BITS;
-  constant ADDR_BITS          : integer := GLOB_PHYS_ADDR_BITS;
-  --
-
-  constant OFFSET_BITS        : integer := WORD_OFFSET_BITS + BYTE_OFFSET_BITS;
-  constant LINE_ADDR_BITS     : integer := ADDR_BITS - OFFSET_BITS;
-  constant WORDS_PER_LINE     : integer := 2**WORD_OFFSET_BITS;
-  constant BYTES_PER_WORD     : integer := 2**BYTE_OFFSET_BITS;
-  constant BYTES_PER_LINE     : integer := WORDS_PER_LINE * BYTES_PER_WORD;
-  constant BITS_PER_WORD      : integer := (BYTES_PER_WORD * 8);
-  constant BITS_PER_HWORD     : integer := BITS_PER_WORD/2;
-  constant BITS_PER_LINE      : integer := (BITS_PER_WORD * WORDS_PER_LINE);
-
-  -- Cache data types width
-  constant CPU_MSG_TYPE_WIDTH : integer := 2;
-  constant COH_MSG_TYPE_WIDTH : integer := 2;
-  constant MIX_MSG_TYPE_WIDTH : integer := 3;
-
-  constant HSIZE_WIDTH           : integer := 3;
-  constant HPROT_WIDTH           : integer := 2;
-  constant INVACK_CNT_WIDTH      : integer := NL2_MAX_LOG2;
-  constant INVACK_CNT_CALC_WIDTH : integer := INVACK_CNT_WIDTH + 1;
-
-  constant CPU_READ       : std_logic_vector(1 downto 0) := "00";
-  constant CPU_READ_ATOM  : std_logic_vector(1 downto 0) := "01";
-  constant CPU_WRITE      : std_logic_vector(1 downto 0) := "10";
-  constant CPU_WRITE_ATOM : std_logic_vector(1 downto 0) := "11";
-
-  --constant ASSERTS_WIDTH          : integer := 19;
-  --constant BOOKMARK_WIDTH         : integer := 32;
-  --constant LLC_ASSERTS_WIDTH      : integer := 6;
-  --constant LLC_BOOKMARK_WIDTH     : integer := 10;
-  constant ASSERTS_AHBS_WIDTH     : integer := 13;
-  constant ASSERTS_AHBM_WIDTH     : integer := 1;
-  constant ASSERTS_REQ_WIDTH      : integer := 1;
-  constant ASSERTS_RSP_IN_WIDTH   : integer := 1;
-  constant ASSERTS_FWD_WIDTH      : integer := 1;
-  constant ASSERTS_RSP_OUT_WIDTH  : integer := 1;
-  constant ASSERTS_LLC_AHBM_WIDTH : integer := 2;
-
-  -- Ongoing transaction buffers
-  constant N_REQS : integer := 4;
-
-  constant LINE_RANGE_HI    : integer := (ADDR_BITS - 1);
-  constant LINE_RANGE_LO    : integer := (OFFSET_BITS);
-  constant OFF_RANGE_HI     : integer := (OFFSET_BITS - 1);
-  constant OFF_RANGE_LO     : integer := 0;
-  constant W_OFF_RANGE_HI   : integer := (OFFSET_BITS - 1);
-  constant W_OFF_RANGE_LO   : integer := (OFFSET_BITS - WORD_OFFSET_BITS);
-  constant B_OFF_RANGE_HI   : integer := (BYTE_OFFSET_BITS - 1);
-  constant B_OFF_RANGE_LO   : integer := 0;
-
--- Asserts
+  -- Asserts
   constant AS_AHBS_HSIZE         : integer := 0;
   constant AS_AHBS_CACHEABLE     : integer := 1;
   constant AS_AHBS_OPCODE        : integer := 2;
@@ -114,8 +39,42 @@ package cachepackage is
   -- constant AS_RSPIN_ : integer := 0;
 
   --
+
+  -- NoC-L2cache planes encoding
+  constant MSG_REQ_PLANE : std_logic_vector(1 downto 0) := "00";
+  constant MSG_FWD_PLANE : std_logic_vector(1 downto 0) := "01";
+  constant MSG_RSP_PLANE : std_logic_vector(1 downto 0) := "10";
+  constant MSG_DMA_PLANE : std_logic_vector(1 downto 0) := "11";
+
+  -- Accelerator coherence type encoding
+  constant ACC_COH_NONE   : integer := 0;
+  constant ACC_COH_LLC    : integer := 1;
+  constant ACC_COH_RECALL : integer := 2;
+  constant ACC_COH_FULL   : integer := 3;
+
+  constant COH_T_LOG2 : integer := 2;
+
+  -- Bus state
   constant AS_AHBM_LOAD_NOT_GRANTED  : integer := 0;
   constant AS_AHBM_STORE_NOT_GRANTED : integer := 1;
+
+  -- CPU request type
+  constant CPU_READ       : std_logic_vector(1 downto 0) := "00";
+  constant CPU_READ_ATOM  : std_logic_vector(1 downto 0) := "01";
+  constant CPU_WRITE      : std_logic_vector(1 downto 0) := "10";
+  constant CPU_WRITE_ATOM : std_logic_vector(1 downto 0) := "11";
+
+  -- Ongoing transaction buffers
+  constant N_REQS : integer := 4;
+
+  constant LINE_RANGE_HI  : integer := (ADDR_BITS - 1);
+  constant LINE_RANGE_LO  : integer := (OFFSET_BITS);
+  constant OFF_RANGE_HI   : integer := (OFFSET_BITS - 1);
+  constant OFF_RANGE_LO   : integer := 0;
+  constant W_OFF_RANGE_HI : integer := (OFFSET_BITS - 1);
+  constant W_OFF_RANGE_LO : integer := (OFFSET_BITS - WORD_OFFSET_BITS);
+  constant B_OFF_RANGE_HI : integer := (BYTE_OFFSET_BITS - 1);
+  constant B_OFF_RANGE_LO : integer := 0;
 
   -----------------------------------------------------------------------------
   -- Types

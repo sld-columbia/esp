@@ -22,6 +22,7 @@ use work.genacc.all;
 use work.gencaches.all;
 
 use work.nocpackage.all;
+use work.allcaches.all;
 use work.cachepackage.all;              -- contains l2 cache component
 use work.sldcommon.all;
 
