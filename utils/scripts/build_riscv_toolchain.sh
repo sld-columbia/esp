@@ -152,7 +152,7 @@ if [ $(noyes "Skip buildroot?") == "n" ]; then
     	git checkout .
     	git pull
     else
-    	git clone --recursive git://git.buildroot.net/buildroot
+    	git clone --recursive https://git.buildroot.net/buildroot
     	cd $src
     fi
 
