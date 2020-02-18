@@ -185,15 +185,15 @@ include $(ESP_ROOT)/utils/sc_components.mk
 ### SoC configuration for ESP ###
 
 .esp_config:
-	$(QUIET_CP)cp ../defconfig/esp_$(BOARD)_defconfig $@
+	$(QUIET_CP)cp $(ESP_ROOT)/socs/defconfig/esp_$(BOARD)_defconfig $@
 
-esp-defconfig: ../defconfig/esp_$(BOARD)_defconfig
+esp-defconfig: $(ESP_ROOT)/socs/defconfig/esp_$(BOARD)_defconfig
 	$(QUIET_CP)cp $< .esp_config
 	$(QUIET_MAKE)$(MAKE) esp-config
 
 socmap.vhd: .esp_config grlib_config.vhd top.vhd
 	$(QUIET_DIFF)echo "checking .esp_config..."
-	@/usr/bin/diff .esp_config ../defconfig/esp_$(BOARD)_defconfig -q > /dev/null; \
+	@/usr/bin/diff .esp_config $(ESP_ROOT)/socs/defconfig/esp_$(BOARD)_defconfig -q > /dev/null; \
 	if test $$? = "0"; then \
 		echo $(SPACES)"INFO Using default configuration file for ESP"; \
 	else \
@@ -707,9 +707,9 @@ TKCONFIG_DEP  += $(wildcard $(TKCONFIG)/in/*.in.help)
 TKCONFIG_DEP  += grlib_config.in
 
 .grlib_config:
-	$(QUIET_CP)cp ../defconfig/grlib_$(BOARD)_defconfig $@
+	$(QUIET_CP)cp $(ESP_ROOT)/socs/defconfig/grlib_$(BOARD)_defconfig $@
 
-grlib-defconfig: ../defconfig/grlib_$(BOARD)_defconfig
+grlib-defconfig: $(ESP_ROOT)/socs/defconfig/grlib_$(BOARD)_defconfig
 	$(QUIET_CP)cp $< .grlib_config
 	$(QUIET_MAKE)$(MAKE) grlib_config.vhd
 
@@ -736,7 +736,7 @@ lconfig.tk: main.tk $(TKCONFIG_DEP) grlib_config.in
 
 grlib_config.vhd: lconfig.tk .grlib_config
 	$(QUIET_DIFF)echo "checking .grlib_config..."
-	@/usr/bin/diff .grlib_config ../defconfig/grlib_$(BOARD)_defconfig -q > /dev/null; \
+	@/usr/bin/diff .grlib_config $(ESP_ROOT)/socs/defconfig/grlib_$(BOARD)_defconfig -q > /dev/null; \
 	if test $$? = "0"; then \
 		echo $(SPACES)"INFO Using default configuration file for GRLIB"; \
 	else \

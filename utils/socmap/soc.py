@@ -37,7 +37,8 @@ class Components():
     self.VENDOR = {}
 
     tech_dir = TECH
-    acc_dir = "../../tech/" + tech_dir + "/acc"
+    ESP_ROOT = os.path.realpath(os.path.dirname(os.path.realpath(__file__)) + "/../../")
+    acc_dir = ESP_ROOT + "/tech/" + tech_dir + "/acc"
     dirs = get_immediate_subdirectories(acc_dir)
     dirs = sorted(dirs, key=str.upper)
     for acc in dirs:
@@ -60,7 +61,7 @@ class Components():
       if len(self.POINTS[acc.upper()]) != 0:
         self.ACCELERATORS.append(acc.upper())
 
-    acc_dir = "../../third-party/accelerators/dma" + str(DMA_WIDTH)
+    acc_dir = ESP_ROOT + "/third-party/accelerators/dma" + str(DMA_WIDTH)
     dirs = get_immediate_subdirectories(acc_dir)
     dirs = sorted(dirs, key=str.upper)
     for acc in dirs:
