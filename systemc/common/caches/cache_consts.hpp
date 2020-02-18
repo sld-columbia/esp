@@ -34,10 +34,10 @@
 #define ADDR_BITS	32 // defined in l2,llc/stratus/project.tcl
 #endif
 #ifndef BYTE_BITS
-#define BYTE_BITS	2 // defined in l2,llc/stratus/project.tcl
+#define BYTE_BITS	3 // defined in l2,llc/stratus/project.tcl
 #endif
 #ifndef WORD_BITS
-#define WORD_BITS	2 // defined in l2,llc/stratus/project.tcl
+#define WORD_BITS	1 // defined in l2,llc/stratus/project.tcl
 #endif
 
 #define OFFSET_BITS	(BYTE_BITS + WORD_BITS)
@@ -61,6 +61,7 @@
 #define BYTES_PER_WORD		(1 << BYTE_BITS)
 #define BITS_PER_WORD		(BYTES_PER_WORD << 3)
 #define BITS_PER_HALFWORD	(BITS_PER_WORD >> 1)
+#define BITS_PER_DOUBLEWORD (BITS_PER_WORD << 1)
 #define BITS_PER_LINE		(BITS_PER_WORD * WORDS_PER_LINE)
 #define WORDS_PER_LINE		(1 << WORD_BITS)
 
@@ -241,10 +242,15 @@
 // hsize
 #define BYTE		0
 #define HALFWORD	1
-#define WORD		2
-#define WORDS_4		4
-#define WORDS_8		5
+#define WORD_32		2
+#define WORD_64     3
+#define WORDS_128   4
+#define WORDS_256   5
 
+//used for LLC transactions to memory
+//byte bits matches hsize encoding for a word
+//for both LEON(2) and ARIANE(3)
+#define WORD BYTE_BITS
 // hprot
 #define INSTR 0
 #define DATA  1

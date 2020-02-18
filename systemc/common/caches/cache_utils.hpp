@@ -55,16 +55,43 @@ inline void write_word(line_t &line, word_t word, word_offset_t w_off, byte_offs
 {
     uint32_t size = BITS_PER_WORD, b_off_tmp = 0;
 
-    if (hsize == BYTE) {
-	b_off_tmp = BYTES_PER_WORD - 1 - b_off;
-	size = 8;
-    } else if (hsize == HALFWORD) {
-	b_off_tmp = BYTES_PER_WORD - BYTES_PER_WORD/2 - b_off;
-	size = BITS_PER_HALFWORD;
-    } else if (hsize == WORD) {
-	b_off_tmp = 0;
-	size = BITS_PER_WORD;
+#ifdef BIG_ENDIAN
+
+    switch (hsize) {
+    case BYTE:
+        b_off_tmp = BYTES_PER_WORD - 1 - b_off;
+	size = 8; break;
+    case HALFWORD:
+        b_off_tmp = BYTES_PER_WORD - BYTES_PER_WORD/2 - b_off;
+	size = 16; break;
+#if (BYTES_PER_WORD == 4)
+    default:
+        b_off_tmp = 0;
+        size = 32; break;
+#else
+    case WORD_32:
+        b_off_tmp = BYTES_PER_WORD - BYTES_PER_WORD/4 - b_off;
+        size = 32; break;
+    default:
+        b_off_tmp = 0;
+        size = 64; break;
+#endif
     }
+
+#else // LITTLE_ENDIAN
+    b_off_tmp = b_off;
+
+    switch (hsize) {
+    case BYTE:
+	size = 8; break;
+    case HALFWORD:
+	size = 16; break;
+    case WORD_32:
+        size = 32; break;
+    default:
+        size = 64; break;
+    }
+#endif
 
     uint32_t w_off_bits = BITS_PER_WORD * w_off;
     uint32_t b_off_bits = 8 * b_off_tmp;
