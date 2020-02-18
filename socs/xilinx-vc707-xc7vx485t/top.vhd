@@ -406,7 +406,7 @@ begin
         pmask => 16#f00#,
         pirq => 12,
         memtech => CFG_MEMTECH,
-        little_end => GLOB_CPU_AXI,
+        little_end  => GLOB_CPU_AXI * CFG_L2_DISABLE,
         mdcscaler => CPU_FREQ/1000,
         rmii => 0,
         enable_mdio => 1,

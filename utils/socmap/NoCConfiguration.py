@@ -588,8 +588,7 @@ class NoCFrame(Pmw.ScrolledFrame):
     self.message.delete(0.0, END)
     self.cfg_frame.sync_label.config(text="With synchronizers",fg="darkgreen")
     self.cfg_frame.set_cpu_specific_labels(self.soc)
-
-    if tot_cpu > 0 and tot_cpu <= NCPU_MAX and tot_mem > 0 and tot_mem <= NMEM_MAX and tot_slm <= NSLM_MAX and tot_acc <= NACC_MAX and not tot_mem == 3 and tot_io == 1 and pll_ok == True and clkbuf_ok == True and clk_region_skip == 0 and tot_tiles <= NTILE_MAX and tot_full_coherent <= NFULL_COHERENT_MAX and tot_llc_coherent <= NLLC_COHERENT_MAX and not (self.soc.TECH != "virtexu" and tot_mem == 4) and not (self.soc.TECH == "virtexu" and tot_mem >= 2 and (self.noc.rows < 3 or self.noc.cols < 3)) and (self.noc.cols <= 8 and self.noc.rows <= 8) and (self.soc.CPU_ARCH.get() != "ariane" or tot_cpu <= 1) and (self.soc.CPU_ARCH.get() != "ariane" or not self.soc.cache_en.get()) and (tot_cpu <= 1 or self.soc.cache_en.get()) and (self.soc.llc_sets.get() < 8192 or self.soc.llc_ways.get() < 16 or tot_mem > 1):
+    if tot_cpu > 0 and tot_cpu <= NCPU_MAX and tot_mem > 0 and tot_mem <= NMEM_MAX and tot_slm <= NSLM_MAX and tot_acc <= NACC_MAX and not tot_mem == 3 and tot_io == 1 and pll_ok == True and clkbuf_ok == True and clk_region_skip == 0 and tot_tiles <= NTILE_MAX and tot_full_coherent <= NFULL_COHERENT_MAX and tot_llc_coherent <= NLLC_COHERENT_MAX and not (self.soc.TECH != "virtexu" and tot_mem == 4) and not (self.soc.TECH == "virtexu" and tot_mem >= 2 and (self.noc.rows < 3 or self.noc.cols < 3)) and (self.noc.cols <= 8 and self.noc.rows <= 8) and (tot_cpu <= 1 or self.soc.cache_en.get()) and (self.soc.llc_sets.get() < 8192 or self.soc.llc_ways.get() < 16 or tot_mem > 1):
       self.done.config(state=NORMAL)
     else:
       string = ""
@@ -597,10 +596,6 @@ class NoCFrame(Pmw.ScrolledFrame):
         string += "Maximum number of rows and columns is 8.\n"
       if (tot_cpu == 0):
         string += "At least one CPU is required\n"
-      if (self.soc.CPU_ARCH.get() == "ariane" and tot_cpu > 1):
-        string += "Multicore for Ariane is under development and is not supported at this time.\n"
-      if (self.soc.CPU_ARCH.get() == "ariane" and self.soc.cache_en.get()): 
-        string += "Cache integration for Ariane is under development and is not supported at this time.\n"
       if (tot_cpu > 1 and not self.soc.cache_en.get()):
         string += "Caches are required for multicore SoCs.\n"
       if (tot_io == 0):

@@ -449,7 +449,12 @@ begin  -- architecture rtl of l2_acc_wrapper
 
   flush_data           <= '0';
   inval_ready          <= '1'; -- inval not used by accelerators
-  cpu_req_data_hsize   <= "010";
+  hsize32_gen: if ARCH_BITS = 32 generate
+    cpu_req_data_hsize   <= "010";
+  end generate hsize32_gen;
+  hsize64_gen: if ARCH_BITS = 64 generate
+    cpu_req_data_hsize   <= "011";
+  end generate hsize64_gen;
   cpu_req_data_hprot   <= "01";
 
   stats_ready    <= '1';

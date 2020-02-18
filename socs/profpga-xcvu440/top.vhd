@@ -824,7 +824,7 @@ begin
         paddr       => 16#800#,
         pmask       => 16#f00#,
         pirq        => 12,
-        little_end  => GLOB_CPU_AXI,
+        little_end  => GLOB_CPU_AXI * CFG_L2_DISABLE,
         memtech     => CFG_MEMTECH,
         mdcscaler   => CPU_FREQ/1000,
         enable_mdio => 1,

@@ -49,7 +49,7 @@ package allcaches is
   --constant BOOKMARK_WIDTH : integer := 32;
   --constant LLC_ASSERTS_WIDTH : integer := 6;
   --constant LLC_BOOKMARK_WIDTH : integer := 10;
-  constant ASSERTS_AHBS_WIDTH     : integer := 13;
+  constant ASSERTS_AHBS_WIDTH     : integer := 14;
   constant ASSERTS_AHBM_WIDTH     : integer := 1;
   constant ASSERTS_REQ_WIDTH      : integer := 1;
   constant ASSERTS_RSP_IN_WIDTH   : integer := 1;
