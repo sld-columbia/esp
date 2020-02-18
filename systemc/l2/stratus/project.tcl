@@ -42,6 +42,8 @@ foreach sets [list 512] {
 		    # Skip these configurations
 		    if {$wbits == 1 && $bbits == 2} {continue}
 		    if {$wbits == 2 && $bbits == 3} {continue}
+		    # Ariane is 64-bits little endian, Leon3 is 32-bits big endian
+		    if {$bbits == 2} { set endian BIG_ENDIAN } else { set endian LITTLE_ENDIAN }
 
 		    set words_per_line [expr 1 << $wbits]
 		    set bits_per_word [expr (1 << $bbits) * 8]
@@ -50,7 +52,7 @@ foreach sets [list 512] {
 
 		    set iocfg "IOCFG$pars"
 
-		    define_io_config * $iocfg -DL2_SETS=$sets -DL2_WAYS=$ways -DADDR_BITS=$abits -DBYTE_BITS=$bbits -DWORD_BITS=$wbits
+		    define_io_config * $iocfg -DL2_SETS=$sets -DL2_WAYS=$ways -DADDR_BITS=$abits -DBYTE_BITS=$bbits -DWORD_BITS=$wbits -D$endian
 
 		    define_system_config tb "TESTBENCH$pars" -io_config $iocfg
 
