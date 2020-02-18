@@ -804,6 +804,9 @@ endif
 
 ARIANE ?= $(ESP_ROOT)/third-party/ariane
 VERILOG_ARIANE += $(shell strings $(ESP_ROOT)/utils/ariane_verilog.txt)
+ifneq ($(filter $(TECHLIB),$(FPGALIBS)),)
+VERILOG_ARIANE += $(shell strings $(ESP_ROOT)/utils/ariane_verilog_fpga.txt)
+endif
 
 PKG_LIST  = $(shell (find $(ESP_ROOT)/rtl -name "*.txt" ))
 PKG_LIST += $(shell (find $(ESP_ROOT)/sim -name "*.txt" ))

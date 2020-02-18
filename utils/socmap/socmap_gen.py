@@ -143,8 +143,8 @@ THIRDPARTY_APB_EXT_ADDRESS      = 0x00400000
 THIRDPARTY_APB_EXT_ADDRESS_SIZE = 0x00100000
 
 # Memory reserved for accelerators
-ACC_MEM_RESERVED_START_ADDR = 0xA0100000
-ACC_MEM_RESERVED_TOTAL_SIZE = 0x1FF00000
+ACC_MEM_RESERVED_START_ADDR = 0xA0200000
+ACC_MEM_RESERVED_TOTAL_SIZE = 0x1FE00000
 THIRDPARTY_MEM_RESERVED_ADDR = 0xB0000000
 THIRDPARTY_MEM_RESERVED_SIZE = 0x10000000
 
@@ -1706,7 +1706,7 @@ def print_ariane_devtree(fp, esp_config):
   fp.write("    greth_reserved: buffer@A0000000 {\n")
   fp.write("      compatible = \"shared-dma-pool\";\n")
   fp.write("      no-map;\n")
-  fp.write("      reg = <0x0 0xA0000000 0x0 0x100000>;\n")
+  fp.write("      reg = <0x0 0xA0000000 0x0 0x200000>;\n")
   fp.write("    };\n")
   
   # Add only one memory region for all third-party accelerator instances
@@ -1800,6 +1800,36 @@ def print_ariane_devtree(fp, esp_config):
   fp.write("            interrupts = <12 0>;\n")
   fp.write("      };\n")
   fp.write("    };\n")
+
+  # ESP L2 caches
+  base = AHB2APB_HADDR[esp_config.cpu_arch] << 20
+  for i in range(esp_config.nl2):
+    l2 = esp_config.l2s[i]
+    if l2.idx != -1:
+      address = base + 0xD000 + (l2.idx << 8)
+      address_str = format(address, "X")
+      size_str = "100"
+      fp.write("      espl2cache" + str(l2.id) + "@" + address_str + " {\n")
+      fp.write("      compatible = \"sld,l2_cache\";\n")
+      fp.write("      reg = <0x0 0x" + address_str + " 0x0 0x" + size_str + ">;\n")
+      fp.write("      reg-shift = <2>; // regs are spaced on 32 bit boundary\n")
+      fp.write("      reg-io-width = <4>; // only 32-bit access are supported\n")
+      fp.write("    };\n")
+
+  # ESP LLC caches
+  base = AHB2APB_HADDR[esp_config.cpu_arch] << 20
+  for i in range(esp_config.nllc):
+    llc = esp_config.llcs[i]
+    if llc.idx != -1:
+      address = base + 0xD000 + (llc.idx << 8)
+      address_str = format(address, "X")
+      size_str = "100"
+      fp.write("      espllccache" + str(llc.id) + "@" + address_str + " {\n")
+      fp.write("      compatible = \"sld,llc_cache\";\n")
+      fp.write("      reg = <0x0 0x" + address_str + " 0x0 0x" + size_str + ">;\n")
+      fp.write("      reg-shift = <2>; // regs are spaced on 32 bit boundary\n")
+      fp.write("      reg-io-width = <4>; // only 32-bit access are supported\n")
+      fp.write("    };\n")
 
   # Reset all THIRDPARTY accelerators counters
   THIRDPARTY_N = 0
@@ -2051,7 +2081,7 @@ def print_load_script(fp, soc, esp_config):
   
   end = start + ddr_size
   if soc.CPU_ARCH.get() == "ariane":
-    sp = int(0xa0100000) - line_size 
+    sp = int(0xa0200000) - line_size 
     if esp_config.nthirdparty > 0:        
         end = int(0xb0000000)
   else: 
