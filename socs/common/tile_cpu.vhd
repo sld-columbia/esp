@@ -396,23 +396,11 @@ architecture rtl of tile_cpu is
   constant this_remote_ahb_slv_en : std_logic_vector(0 to NAHBSLV - 1) := remote_ahb_mask_cpu;
 
 
-  -- attribute keep : string;
   attribute mark_debug : string;
 
   -- attribute mark_debug of irq : signal is "true";
   -- attribute mark_debug of timer_irq : signal is "true";
   -- attribute mark_debug of ipi : signal is "true";
-
-  -- attribute keep of apbi : signal is "true";
-  -- attribute keep of apbo : signal is "true";
-  -- attribute keep of apb_req : signal is "true";
-  -- attribute keep of apb_ack : signal is "true";
-  -- attribute keep of remote_apb_snd_wrreq : signal is "true";
-  -- attribute keep of remote_apb_snd_data_in : signal is "true";
-  -- attribute keep of remote_apb_snd_full : signal is "true";
-  -- attribute keep of remote_apb_rcv_rdreq : signal is "true";
-  -- attribute keep of remote_apb_rcv_data_out : signal is "true";
-  -- attribute keep of remote_apb_rcv_empty : signal is "true";
 
   -- attribute mark_debug of apbi : signal is "true";
   -- attribute mark_debug of apbo : signal is "true";

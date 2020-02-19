@@ -82,36 +82,21 @@ architecture rtl of cpu_irq2noc is
   signal rst_int : std_ulogic;
 
   -- attribute mark_debug : string;
-  -- attribute keep       : string;
 
   -- attribute mark_debug of irqi                   : signal is "true";
-  -- attribute keep of irqi                         : signal is "true";
   -- attribute mark_debug of irqo                   : signal is "true";
-  -- attribute keep of irqo                         : signal is "true";
   -- attribute mark_debug of remote_irq_rdreq       : signal is "true";
-  -- attribute keep of remote_irq_rdreq             : signal is "true";
   -- attribute mark_debug of remote_irq_data_out    : signal is "true";
-  -- attribute keep of remote_irq_data_out          : signal is "true";
   -- attribute mark_debug of remote_irq_empty       : signal is "true";
-  -- attribute keep of remote_irq_empty             : signal is "true";
   -- attribute mark_debug of remote_irq_ack_wrreq   : signal is "true";
-  -- attribute keep of remote_irq_ack_wrreq         : signal is "true";
   -- attribute mark_debug of remote_irq_ack_data_in : signal is "true";
-  -- attribute keep of remote_irq_ack_data_in       : signal is "true";
   -- attribute mark_debug of remote_irq_ack_full    : signal is "true";
-  -- attribute keep of remote_irq_ack_full          : signal is "true";
   -- attribute mark_debug of irqo_changed           : signal is "true";
-  -- attribute keep of irqo_changed                 : signal is "true";
   -- attribute mark_debug of fifo_full              : signal is "true";
-  -- attribute keep of fifo_full                    : signal is "true";
   -- attribute mark_debug of fifo_empty             : signal is "true";
-  -- attribute keep of fifo_empty                   : signal is "true";
   -- attribute mark_debug of overflow               : signal is "true";
-  -- attribute keep of overflow                     : signal is "true";
   -- attribute mark_debug of irq_snd_state          : signal is "true";
-  -- attribute keep of irq_snd_state                : signal is "true";
   -- attribute mark_debug of irq_rcv_state          : signal is "true";
-  -- attribute keep of irq_rcv_state                : signal is "true";
 
 begin  -- rtl
 
