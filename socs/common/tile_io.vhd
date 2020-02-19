@@ -708,7 +708,6 @@ architecture rtl of tile_io is
   attribute keep of noc6_data_void_out : signal is "true";
   attribute keep of noc6_stop_out      : signal is "true";
 
-
 begin
 
  -----------------------------------------------------------------------------

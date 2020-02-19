@@ -58,14 +58,14 @@ architecture rtl of riscv_plic_apb_wrap is
 
   attribute mark_debug : string;
 
-  attribute mark_debug of plic_penable : signal is "true";
-  attribute mark_debug of plic_pwrite : signal is "true";
-  attribute mark_debug of plic_paddr : signal is "true";
-  attribute mark_debug of plic_psel : signal is "true";
-  attribute mark_debug of plic_pwdata : signal is "true";
-  attribute mark_debug of plic_prdata : signal is "true";
-  attribute mark_debug of pready : signal is "true";
-  attribute mark_debug of pslverr : signal is "true";
+  -- attribute mark_debug of plic_penable : signal is "true";
+  -- attribute mark_debug of plic_pwrite : signal is "true";
+  -- attribute mark_debug of plic_paddr : signal is "true";
+  -- attribute mark_debug of plic_psel : signal is "true";
+  -- attribute mark_debug of plic_pwdata : signal is "true";
+  -- attribute mark_debug of plic_prdata : signal is "true";
+  -- attribute mark_debug of pready : signal is "true";
+  -- attribute mark_debug of pslverr : signal is "true";
 
 begin  -- architecture rtl
 
