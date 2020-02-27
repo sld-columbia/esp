@@ -197,10 +197,10 @@ $(VIVADOHLS_ACC-wdir):
 	@cd $(VIVADOHLS_ACC_PATH)/$(@:-wdir=)/hls-work-$(TECHLIB); \
 	if ! test -e project.tcl; then \
 		cp ../syn/* .; \
-		rm -f script.tcl; \
+		rm -f custom.tcl; \
 		rm -f directives.tcl; \
 		rm -f Makefile; \
-		ln -s ../syn/script.tcl; \
+		ln -s ../syn/custom.tcl; \
 		ln -s ../syn/directives.tcl; \
 		ln -s ../syn/Makefile; \
 	fi;
