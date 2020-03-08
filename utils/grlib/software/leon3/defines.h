@@ -2,8 +2,8 @@
 #define __DEFINES_H__
 
 /* Cache parameters */
-#define SETS 256
-#define L2_WAYS 8
+#define SETS 512
+#define L2_WAYS 4
 // #define N_CPU 4
 #define MAX_N_CPU 4
 //#define LLC_WAYS CPUS*L2_WAYS
@@ -16,7 +16,7 @@
 #define L2_CACHE_BYTES (SETS * L2_WAYS * LINE_SIZE)
 #define L2_CACHE_WORDS (L2_CACHE_BYTES / BYTES_PER_WORD)
 
-#define TAG_OFFSET 12
+#define TAG_OFFSET 13
 #define SET_OFFSET 4
 #define WORD_OFFSET 2
 #define BYTE_OFFSET 0
@@ -54,12 +54,12 @@
 #define TEST_FPU 5
 #define TEST_FILL_B 6
 #define TEST_SHARING 7
-#define TEST_RAND_RW 8
-#define TEST_FILL_HW 9
-#define TEST_MESI 10
-#define TEST_LOCK 11
-#define TEST_FILL_W 12
-#define TEST_MP_END 13
+#define TEST_L2 8
+#define TEST_RAND_RW 9
+#define TEST_FILL_HW 10
+#define TEST_MESI 11
+#define TEST_LOCK 12
+#define TEST_FILL_W 13
 #define TEST_END 14
 
 /* Fail IDs (max 32, which is the word size) */
@@ -90,7 +90,6 @@ typedef volatile unsigned int arch_spinlock_t;
 arch_spinlock_t lock;
 
 /* Sync arrays */
-volatile int sync_loop_start[MAX_N_CPU]; // = {0, 0, 0, 0};
 volatile int sync_loop_end[MAX_N_CPU]; // = {0, 0, 0, 0};
 volatile int sync_leon3_test[MAX_N_CPU]; // = {0, 0, 0, 0};
 volatile int sync_cache_fill_bytes[MAX_N_CPU]; // = {0, 0, 0, 0};

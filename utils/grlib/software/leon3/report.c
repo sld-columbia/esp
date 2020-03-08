@@ -1,6 +1,9 @@
 #include <stdio.h>
 #include "defines.h"
 
+/* Global synchronization array */
+volatile int sync_loop_start[MAX_N_CPU] = {0, 0, 0, 1};
+
 /* Global arrays containing test results */
 int report_test_array[MAX_N_CPU][N_IDS]; /* list of executed tests */
 int report_fail_array[MAX_N_CPU][N_IDS]; /* info on execution errors occurred */
@@ -13,12 +16,12 @@ char report_test_string[N_IDS_TEST][MAX_REPORT_STRING] = {"Test     start : ",
 							  "FPU      test  : ",
 							  "Fill B   test  : ",
 							  "Sharing  test  : ",
+							  "L2       test  : ",
 							  "Rand RW  test  : ",
 							  "Fill HW  test  : ",
 							  "MESI     test  : ",
 							  "Lock     test  : ",
 							  "Fill W   test  : ",
-							  "MP end   test  : ",
 							  "Test     end   : "};
 
 char report_fail_string[N_IDS_FAIL][MAX_REPORT_STRING] = {"Reg      fail  : ",
@@ -129,6 +132,8 @@ void test_loop_start()
     }
 
     psync(sync_loop_start, pid, ncpu);
+
+    report_test(TEST_START);
 }
 
 void test_loop_end()
@@ -145,4 +150,6 @@ void test_loop_end()
     }
 
     psync(sync_loop_end, pid, ncpu);
+
+    report_test(TEST_END);
 }

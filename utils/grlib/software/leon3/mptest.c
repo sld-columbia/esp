@@ -109,7 +109,7 @@ int mptest(volatile int *irqmp_ptr)
 
     for (pindex[id] = 0; pindex[id] < MPLOOPS; pindex[id]++)
     {
-//    do {sem = get_sem();} while (!sem);
+        // do {sem = get_sem();} while (!sem);
 	do {sem = get_sem();} while (sem);
 	for (i = 0; i < ncpu; i++)
 	{
@@ -160,7 +160,7 @@ int mptest_end(volatile int *irqmp_ptr)
 
     for (pindex[id] = 0; pindex[id] < MPLOOPS; pindex[id]++)
     {
-//    do {sem = get_sem();} while (!sem);
+        // do {sem = get_sem();} while (!sem);
 	do {sem = get_sem();} while (sem);
 	/* for (i = 0; i < ncpu; i++) */
 	/* { */
@@ -174,8 +174,11 @@ int mptest_end(volatile int *irqmp_ptr)
     /* if (cnt != (MPLOOPS*ncpu)) report_fail(FAIL_MPTEST); */
     /* if ((cnt <= 0) || (cnt > (MPLOOPS*ncpu))) report_fail(FAIL_MPTEST); */
 
-    /* if (id != 0) asm("ta 0"); */
-    if (id != 0) while(1);
+    /* Different strategy for RTL simulation and FPGA prototyping */
+    /* Use this for RTL simulation */
+    if (id != 0) asm("ta 0");
+    /* Use this for FPGA prototyping */
+    /* if (id != 0) while(1); */
 
     return(0);
 }
