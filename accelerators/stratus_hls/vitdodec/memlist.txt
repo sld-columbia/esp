@@ -1,0 +1,4 @@
+vitdodec_plm_block_in_dma32 24856 8 4w:0r 0w:1r
+vitdodec_plm_block_out_dma32 18592 8 1w:0r 0w:4r
+vitdodec_plm_block_in_dma64 24856 8 8w:0r 0w:1r
+vitdodec_plm_block_out_dma64 18592 8 1w:0r 0w:8r
