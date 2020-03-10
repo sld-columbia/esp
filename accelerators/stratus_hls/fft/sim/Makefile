@@ -1,5 +1,5 @@
 FX_WIDTH ?= 64
-FX32_IL   = 12
+FX32_IL   = 14
 FX64_IL   = 42
 
 CXXFLAGS += -std=c++11
