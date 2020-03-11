@@ -356,11 +356,6 @@ class NoCFrame(Pmw.ScrolledFrame):
   row_frames = []
 
   def changed(self,*args):
-    # If using RTL caches, then SETS/WAYS must be the same for both CPU and ACC
-    if self.soc.cache_rtl.get() == 1:
-      self.soc.acc_l2_ways.set(self.soc.l2_ways.get())
-      self.soc.acc_l2_sets.set(self.soc.l2_sets.get())
-
     if isInt(self.ROWS.get()) == False or isInt(self.COLS.get()) == False:
        return
     for y in range(0, int(self.ROWS.get())):
@@ -572,12 +567,20 @@ class NoCFrame(Pmw.ScrolledFrame):
     self.message.delete(0.0, END)
     self.cfg_frame.sync_label.config(text="With synchronizers",fg="darkgreen")
     self.cfg_frame.set_cpu_specific_labels(self.soc)
-    if tot_cpu <= NCPU_MAX and tot_mem > 0 and tot_mem <= NMEM_MAX and tot_acc <= NACC_MAX and tot_io == 1 and pll_ok == True and clkbuf_ok == True and clk_region_skip == 0 and tot_tiles <= NTILE_MAX and tot_full_coherent <= NFULL_COHERENT_MAX and tot_llc_coherent <= NLLC_COHERENT_MAX:
+    if tot_cpu <= NCPU_MAX and tot_mem > 0 and tot_mem <= NMEM_MAX and tot_acc <= NACC_MAX and not tot_mem == 3 and tot_io == 1 and pll_ok == True and clkbuf_ok == True and clk_region_skip == 0 and tot_tiles <= NTILE_MAX and tot_full_coherent <= NFULL_COHERENT_MAX and tot_llc_coherent <= NLLC_COHERENT_MAX and not (self.soc.TECH != "virtexu" and tot_mem == 4) and not (tot_mem >= 2 and (self.noc.rows < 3 or self.noc.cols < 3)) and (self.noc.cols <= 8 and self.noc.rows <= 8) and (self.soc.CPU_ARCH.get() != "ariane" or tot_cpu <= 1) and (self.soc.CPU_ARCH.get() != "ariane" or not self.soc.cache_en.get()) and (tot_cpu <= 1 or self.soc.cache_en.get()) and (self.soc.llc_sets.get() < 4096 or self.soc.llc_ways.get() < 16 or tot_mem > 1):
       self.done.config(state=NORMAL)
     else:
       string = ""
+      if (self.noc.cols > 8 or self.noc.rows > 8): 
+        string += "Maximum number of rows and columns is 8.\n"
       if (tot_cpu == 0):
         string += "At least one CPU is required\n"
+      if (self.soc.CPU_ARCH.get() == "ariane" and tot_cpu > 1):
+        string += "Multicore for Ariane is under development and is not supported at this time.\n"
+      if (self.soc.CPU_ARCH.get() == "ariane" and self.soc.cache_en.get()): 
+        string += "Cache integration for Ariane is under development and is not supported at this time.\n"
+      if (tot_cpu > 1 and not self.soc.cache_en.get()):
+        string += "Caches are required for multicore SoCs.\n"
       if (tot_io == 0):
         string += "At least I/O tile is required\n"
       if (tot_cpu > NCPU_MAX):
@@ -587,6 +590,14 @@ class NoCFrame(Pmw.ScrolledFrame):
         string += "Multiple I/O tiles are not supported\n"
       if (tot_mem < 1 or tot_mem > NMEM_MAX):
         string += "There must be at least 1 memory tile and no more than " + str(NMEM_MAX) + ".\n"
+      if (tot_mem == 3): 
+        string += "Number of memory tiles must be a power of 2.\n" 
+      if (self.soc.TECH != "virtexu" and tot_mem == 4): 
+        string += "4 memory tiles is only supported for virtexu (profpga-xcvu440).\n"
+      if (self.soc.llc_sets.get() >= 4096 and self.soc.llc_ways.get() >= 16 and tot_mem == 1): 
+        string += "A 1MB LLC (4096 sets and 16 ways) requires multiple memory tiles.\n"
+      if (tot_mem >= 2 and (self.noc.rows < 3 or self.noc.cols < 3)):
+        string += "a 3x3 NoC or larger is recommended for multiple memory tiles.\n" 
       if (tot_acc > NACC_MAX):
         string += "There must no more than " + str(NACC_MAX) + " (can be relaxed).\n"
       if (tot_tiles > NTILE_MAX):

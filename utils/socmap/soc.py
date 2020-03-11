@@ -85,6 +85,14 @@ class SoC_Config():
   TECH = "virtex7"
   DMA_WIDTH = 32
 
+  def changed(self, *args): 
+    if self.cache_impl.get() == "SystemVerilog":
+      self.acc_l2_ways.set(self.l2_ways.get())
+      self.acc_l2_sets.set(self.l2_sets.get())
+      self.cache_rtl.set(1)
+    else:
+      self.cache_rtl.set(0)
+  
   def update_list_of_ips(self):
     self.list_of_ips = tuple(self.IPs.EMPTY) + tuple(self.IPs.PROCESSORS) + tuple(self.IPs.MISC) + tuple(self.IPs.MEM) + tuple(self.IPs.ACCELERATORS)
 
@@ -143,8 +151,10 @@ class SoC_Config():
     line = fp.readline()
     if line.find("CONFIG_CACHE_RTL = y") != -1:
       self.cache_rtl.set(1)
+      self.cache_impl.set("SystemVerilog")
     else:
       self.cache_rtl.set(0)
+      self.cache_impl.set("SystemC + HLS")
     line = fp.readline()
     item = line.split()
     self.l2_sets.set(int(item[2]))
@@ -390,5 +400,6 @@ class SoC_Config():
     self.CPU_ARCH = StringVar()
     self.cache_en = IntVar()
     self.cache_rtl = IntVar()
+    self.cache_impl = StringVar()
     self.update_list_of_ips()
 

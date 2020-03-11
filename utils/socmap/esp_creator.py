@@ -97,25 +97,25 @@ class CacheFrame(Frame):
     sets_choices = [32, 64, 128, 256, 512, 1024, 2048, 4096]
     l2_ways_choices = [2, 4, 8]
     llc_ways_choices = [4, 8, 16]
+    cache_choices = ["SystemVerilog", "SystemC + HLS"]
 
-    Label(cache_config_frame, text = "Cache En.: ", font="TkDefaultFont 9 bold").grid(row=1, column=1)
+    Label(cache_config_frame, text = "Use Caches: ", font="TkDefaultFont 9 bold").grid(row=1, column=1)
     Checkbutton(cache_config_frame, text="", variable=soc.cache_en,
                 onvalue = 1, offvalue = 0, command=main_frame.update_noc_config).grid(row=1, column=2)
-    Label(cache_config_frame, text = "Use RTL.: ", font="TkDefaultFont 9 bold").grid(row=2, column=1)
-    Checkbutton(cache_config_frame, text="", variable=soc.cache_rtl,
-                onvalue = 1, offvalue = 0, command=main_frame.update_noc_config).grid(row=2, column=2)
+    Label(cache_config_frame, text = "Implementation: ", font="TkDefaultFont 9 bold").grid(row=2, column=1)
+    OptionMenu(cache_config_frame, soc.cache_impl, *cache_choices, command=main_frame.update_noc_config).grid(row=2,column=2)
     Label(cache_config_frame, text = "L2 SETS: ").grid(row=3, column=1)
-    OptionMenu(cache_config_frame, soc.l2_sets, *sets_choices).grid(row=3, column=2)
+    OptionMenu(cache_config_frame, soc.l2_sets, *sets_choices, command=main_frame.update_noc_config).grid(row=3, column=2)
     Label(cache_config_frame, text = "L2 WAYS: ").grid(row=4, column=1)
-    OptionMenu(cache_config_frame, soc.l2_ways, *l2_ways_choices).grid(row=4, column=2)
+    OptionMenu(cache_config_frame, soc.l2_ways, *l2_ways_choices, command=main_frame.update_noc_config).grid(row=4, column=2)
     Label(cache_config_frame, text = "LLC SETS: ").grid(row=5, column=1)
-    OptionMenu(cache_config_frame, soc.llc_sets, *sets_choices).grid(row=5, column=2)
+    OptionMenu(cache_config_frame, soc.llc_sets, *sets_choices, command=main_frame.update_noc_config).grid(row=5, column=2)
     Label(cache_config_frame, text = "LLC WAYS: ").grid(row=6, column=1)
-    OptionMenu(cache_config_frame, soc.llc_ways, *llc_ways_choices).grid(row=6, column=2)
+    OptionMenu(cache_config_frame, soc.llc_ways, *llc_ways_choices, command=main_frame.update_noc_config).grid(row=6, column=2)
     Label(cache_config_frame, text = "ACC L2 SETS: ").grid(row=7, column=1)
-    OptionMenu(cache_config_frame, soc.acc_l2_sets, *sets_choices).grid(row=7, column=2)
+    OptionMenu(cache_config_frame, soc.acc_l2_sets, *sets_choices, command=main_frame.update_noc_config).grid(row=7, column=2)
     Label(cache_config_frame, text = "ACC L2 WAYS: ").grid(row=8, column=1)
-    OptionMenu(cache_config_frame, soc.acc_l2_ways, *l2_ways_choices).grid(row=8, column=2)
+    OptionMenu(cache_config_frame, soc.acc_l2_ways, *l2_ways_choices, command=main_frame.update_noc_config).grid(row=8, column=2)
 
 class CpuFrame(Frame):
 
@@ -194,6 +194,7 @@ class EspCreator(Frame):
     self.soc.IPs = Components(self.soc.TECH, self.soc.DMA_WIDTH)
     self.soc.update_list_of_ips()
     self.bottom_frame_noccfg.changed()
+    self.soc.changed()
 
   def generate_files(self):
     self.bottom_frame_noccfg.changed()
