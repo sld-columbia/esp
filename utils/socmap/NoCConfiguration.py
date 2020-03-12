@@ -484,8 +484,8 @@ class NoCFrame(Pmw.ScrolledFrame):
            label_font="TkDefaultFont 11 bold",
            usehullsize = 1,
            horizflex='expand',
-           hull_width = 400,
-           hull_height = 300,)
+           hull_width = 1180,
+           hull_height = 520,)
     self.noc_frame = self.interior()
 
   def update_msg(self):

@@ -141,28 +141,54 @@ class EspCreator(Frame):
     self.soc = _soc
     self.soc.noc = NoC()
     self.noc = self.soc.noc
-    self.ParentFrame = master
-
+    self.master = master
+    
     # Read configuration file
     self.soc.read_config(True)
 
+    # Create scroll bar
+    self.y_axis_scrollbar = Scrollbar(self.master)
+    self.x_axis_scrollbar = Scrollbar(self.master, orient='horizontal')
+
+    # Create canvas with yscrollcommmand from scrollbar, use xscrollcommand for horizontal scroll
+    self.main_canvas = Canvas(self.master, yscrollcommand=self.y_axis_scrollbar.set,
+                              xscrollcommand=self.x_axis_scrollbar.set)
+
+    # Configure and pack/grid scrollbar to master
+    self.y_axis_scrollbar.config(command=self.main_canvas.yview)
+    self.y_axis_scrollbar.pack(side=RIGHT, fill=BOTH, expand=NO)
+    self.x_axis_scrollbar.config(command=self.main_canvas.xview)
+    self.x_axis_scrollbar.pack(side=BOTTOM, fill=BOTH, expand=NO)
+
+    # This is the frame all content will go to. The 'master' of the frame is the canvas
+    self.ParentFrame = Frame(self.main_canvas, borderwidth=5, relief=RIDGE)
+    self.ParentFrame.pack(side=TOP, expand=YES, fill=BOTH)
+        
+    # Place canvas on app pack/grid
+    self.main_canvas.pack(side=TOP, fill=BOTH, expand=YES)
+
+    # create_window draws the Frame on the canvas. Imagine it as another pack/grid
+    self.main_canvas.create_window((0, 0), window=self.ParentFrame, anchor=E)
+
+    #, width=self.master.winfo_screenwidth(), height=self.master.winfo_screenheight())
+    
     #.:: creating the general layout
     #top frame (configuration of SoC and peripherals)
     self.top_frame = Frame(self.ParentFrame, borderwidth=5, relief=RIDGE) 
-    self.top_frame.pack(side=TOP, expand=NO,  padx=10, pady=5, ipadx=5, ipady=5, fill=BOTH)    
+    self.top_frame.pack(side=TOP, expand=YES,  padx=10, pady=5, ipadx=5, ipady=5, fill=BOTH)    
     #bottom frame (configuration of components)
     self.bottom_frame = Frame(self.ParentFrame, borderwidth=5, relief=RIDGE)
     self.bottom_frame.pack(side=TOP, expand=YES,  padx=10, pady=5, ipadx=5, ipady=5, fill=BOTH)    
     #message frame
     self.message_frame = Frame(self.ParentFrame, borderwidth=5, relief=RIDGE)
-    self.message_frame.pack(side=TOP, expand=NO,  padx=10, pady=5, ipadx=5, ipady=5, fill=BOTH)
+    self.message_frame.pack(side=TOP, expand=YES,  padx=10, pady=5, ipadx=5, ipady=5, fill=BOTH)
     self.message_bar = Frame(self.message_frame)
     self.message_bar.pack(side=LEFT,fill=BOTH,expand=YES)
     self.message_buttons = Frame(self.message_frame, width=50)
-    self.message_buttons.pack(side=RIGHT, expand=NO, fill=X)
+    self.message_buttons.pack(side=RIGHT, expand=YES, fill=BOTH)
     #final button
-    self.done = Button(self.message_buttons, text="Generate SoC config", width=15, state=DISABLED, command=self.generate_files)
-    self.done.pack()
+    self.done = Button(self.message_buttons, text="Generate SoC config", width=25, state=DISABLED, command=self.generate_files)
+    self.done.pack(side=RIGHT)
 
     #.:: creating the configuration frame (read-only)
     cfg_frame = ConfigFrame(self.soc, self.top_frame) 
@@ -180,11 +206,19 @@ class EspCreator(Frame):
     self.done.config(state=DISABLED)
 
     #message box
-    self.message=Text(self.message_bar, width = 75, height = 7, wrap = WORD)
+    self.message=Text(self.message_bar, width = 150, height = 7, wrap = WORD)
     self.message.pack()
     self.bottom_frame_noccfg.set_message(self.message, cfg_frame, self.done)   
 
     self.bottom_frame_noccfg.update_frame()
+
+    # Call this method after every update to the canvas
+    self.update_scroll_region()
+
+  def update_scroll_region(self):
+    ''' Call after every update to content in self.main_canvas '''
+    self.master.update()
+    self.main_canvas.config(scrollregion=self.main_canvas.bbox('all'))
 
   def update_noc_config(self, *args):
     if soc.CPU_ARCH.get() == "ariane":
