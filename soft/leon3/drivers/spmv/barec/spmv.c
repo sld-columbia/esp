@@ -166,6 +166,12 @@ int main(int argc, char * argv[])
 	out_addr  = nrows + 2 * mtx_len + ncols;
 	out_size  = nrows;
 
+#ifndef __riscv
+	printf("Memory allocation\n");
+#else
+	print_uart("Memory allocation\n");
+#endif
+
 	in_vals_buf = aligned_malloc(sizeof(float) * vals_size);
 	in_cols_buf = aligned_malloc(sizeof(unsigned) * cols_size);
 	in_rows_buf = aligned_malloc(sizeof(unsigned) * rows_size);
@@ -185,6 +191,12 @@ int main(int argc, char * argv[])
 #endif
 		exit(EXIT_FAILURE);
 	}
+
+#ifndef __riscv
+	printf("Data initialization\n");
+#else
+	print_uart("Data initialization\n");
+#endif
 
 #include "data.h"
 
@@ -206,9 +218,14 @@ int main(int argc, char * argv[])
 	}
 
 	// Run software
+#ifndef __riscv
+	printf("Software execution\n");
+#else
+	print_uart("Software execution\n");
+#endif
 	spmv_comp(nrows, ncols, in_vals_buf, in_cols_buf, in_rows_buf, in_vect_buf, gold_buf);
 
-	// Test all devices mtching SPMV ID.
+	// Test all devices matching SPMV ID.
 	for (n = 0; n < ndev; n++) {
 #ifndef __riscv
 		for (coherence = ACC_COH_NONE; coherence <= ACC_COH_FULL; coherence++) {
