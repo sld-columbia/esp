@@ -34,7 +34,7 @@ typedef int32_t word_t;
 /////////////////////////////////
 
 // Specify accelerator type
-#define SLD_ADDER   0x14
+#define SLD_ADDER   0x40
 #define DEV_NAME "sld,adder"
 
 // Sizes
@@ -87,8 +87,7 @@ int main(int argc, char * argv[])
 	exit(EXIT_FAILURE);
     }
 
-    n = 2;
-    /* for (n = 0; n < ndev; n++) { */
+    for (n = 0; n < ndev; n++) {
 
 	for (k = 0; k < NINVOKE; ++k) {
 
@@ -294,7 +293,7 @@ int main(int argc, char * argv[])
 #endif
 
 	    }
-	/* } */
+	}
     }
 
     return 0;
