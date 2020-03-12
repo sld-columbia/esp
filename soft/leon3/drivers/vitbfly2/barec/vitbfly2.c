@@ -13,7 +13,7 @@
 #include <esp_accelerator.h>
 #include <esp_probe.h>
 
-#define SLD_VITBFLY2   0x15
+#define SLD_VITBFLY2   0x16
 #define DEV_NAME "sld,vitbfly2"
 
 #define COLS 40
@@ -40,6 +40,18 @@ int main(int argc, char * argv[])
 	int ndev;
 	struct esp_device *espdevs = NULL;
 	unsigned coherence;
+
+	// TODO This app is just a placeholder. Exit!
+#ifndef __riscv
+	printf("There is no bare-metal app for the 'vitbfly2' accelerator.\n");
+	printf("This bare-metal app is a placeholder.\n");
+	printf("Exiting...\n");
+#else
+	print_uart("There is no bare-metal app for the 'vitbfly2' accelerator.\n");
+	print_uart("This bare-metal app is a placeholder.\n");
+	print_uart("Exiting...\n");
+#endif
+	return 0;
 
 	ndev = probe(&espdevs, SLD_VITBFLY2, DEV_NAME);
 	if (ndev <= 0) {

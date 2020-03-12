@@ -85,6 +85,18 @@ int main(int argc, char * argv[])
 	out_offset = BATCH * TOKENS * sizeof(u64);
 	size = 3 * out_offset;
 
+	// TODO This app is just a placeholder. Exit!
+#ifndef __riscv
+	printf("There is no bare-metal app for the 'dummy' accelerator.\n");
+	printf("This bare-metal app is a placeholder.\n");
+	printf("Exiting...\n");
+#else
+	print_uart("There is no bare-metal app for the 'dummy' accelerator.\n");
+	print_uart("This bare-metal app is a placeholder.\n");
+	print_uart("Exiting...\n");
+#endif
+	return 0;
+
 #ifndef __riscv
 	printf("Scanning device tree... \n");
 #else
