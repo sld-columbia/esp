@@ -61,6 +61,12 @@ architecture behav of testbench is
   signal reset        : std_ulogic := '1';
   signal c0_sys_clk_p : std_ulogic := '0';
   signal c0_sys_clk_n : std_ulogic := '1';
+  signal c1_sys_clk_p : std_ulogic := '0';
+  signal c1_sys_clk_n : std_ulogic := '1';
+  signal c2_sys_clk_p : std_ulogic := '0';
+  signal c2_sys_clk_n : std_ulogic := '1';
+  signal c3_sys_clk_p : std_ulogic := '0';
+  signal c3_sys_clk_n : std_ulogic := '1';
   signal esp_clk_p    : std_ulogic := '0';
   signal esp_clk_n    : std_ulogic := '1';
 
@@ -76,11 +82,63 @@ architecture behav of testbench is
   signal c0_ddr4_ck_t     : std_logic_vector(0 downto 0);
   signal c0_ddr4_ck_c     : std_logic_vector(0 downto 0);
   signal c0_ddr4_reset_n  : std_logic;
-  signal c0_ddr4_dm_dbi_n : std_logic_vector(7 downto 0);
-  signal c0_ddr4_dq       : std_logic_vector(63 downto 0);
-  signal c0_ddr4_dqs_c    : std_logic_vector(7 downto 0);
-  signal c0_ddr4_dqs_t    : std_logic_vector(7 downto 0);
-
+  signal c0_ddr4_dm_dbi_n : std_logic_vector(8 downto 0);
+  signal c0_ddr4_dq       : std_logic_vector(71 downto 0);
+  signal c0_ddr4_dqs_c    : std_logic_vector(8 downto 0);
+  signal c0_ddr4_dqs_t    : std_logic_vector(8 downto 0);
+  signal c0_calib_complete : std_logic;
+  signal c0_diagnostic_led :  std_ulogic; 
+  
+  signal c1_ddr4_act_n    : std_logic;
+  signal c1_ddr4_adr      : std_logic_vector(16 downto 0);
+  signal c1_ddr4_ba       : std_logic_vector(1 downto 0);
+  signal c1_ddr4_bg       : std_logic_vector(1 downto 0);
+  signal c1_ddr4_cke      : std_logic_vector(1 downto 0);
+  signal c1_ddr4_odt      : std_logic_vector(1 downto 0);
+  signal c1_ddr4_cs_n     : std_logic_vector(1 downto 0);
+  signal c1_ddr4_ck_t     : std_logic_vector(0 downto 0);
+  signal c1_ddr4_ck_c     : std_logic_vector(0 downto 0);
+  signal c1_ddr4_reset_n  : std_logic;
+  signal c1_ddr4_dm_dbi_n : std_logic_vector(8 downto 0);
+  signal c1_ddr4_dq       : std_logic_vector(71 downto 0);
+  signal c1_ddr4_dqs_c    : std_logic_vector(8 downto 0);
+  signal c1_ddr4_dqs_t    : std_logic_vector(8 downto 0);
+  signal c1_calib_complete : std_logic;
+  signal c1_diagnostic_led : std_ulogic; 
+  
+  signal c2_ddr4_act_n    : std_logic;
+  signal c2_ddr4_adr      : std_logic_vector(16 downto 0);
+  signal c2_ddr4_ba       : std_logic_vector(1 downto 0);
+  signal c2_ddr4_bg       : std_logic_vector(1 downto 0);
+  signal c2_ddr4_cke      : std_logic_vector(1 downto 0);
+  signal c2_ddr4_odt      : std_logic_vector(1 downto 0);
+  signal c2_ddr4_cs_n     : std_logic_vector(1 downto 0);
+  signal c2_ddr4_ck_t     : std_logic_vector(0 downto 0);
+  signal c2_ddr4_ck_c     : std_logic_vector(0 downto 0);
+  signal c2_ddr4_reset_n  : std_logic;
+  signal c2_ddr4_dm_dbi_n : std_logic_vector(8 downto 0);
+  signal c2_ddr4_dq       : std_logic_vector(71 downto 0);
+  signal c2_ddr4_dqs_c    : std_logic_vector(8 downto 0);
+  signal c2_ddr4_dqs_t    : std_logic_vector(8 downto 0);
+  signal c2_calib_complete : std_logic;
+  signal c2_diagnostic_led : std_ulogic; 
+  
+  signal c3_ddr4_act_n    : std_logic;
+  signal c3_ddr4_adr      : std_logic_vector(16 downto 0);
+  signal c3_ddr4_ba       : std_logic_vector(1 downto 0);
+  signal c3_ddr4_bg       : std_logic_vector(1 downto 0);
+  signal c3_ddr4_cke      : std_logic_vector(1 downto 0);
+  signal c3_ddr4_odt      : std_logic_vector(1 downto 0);
+  signal c3_ddr4_cs_n     : std_logic_vector(1 downto 0);
+  signal c3_ddr4_ck_t     : std_logic_vector(0 downto 0);
+  signal c3_ddr4_ck_c     : std_logic_vector(0 downto 0);
+  signal c3_ddr4_reset_n  : std_logic;
+  signal c3_ddr4_dm_dbi_n : std_logic_vector(8 downto 0);
+  signal c3_ddr4_dq       : std_logic_vector(71 downto 0);
+  signal c3_ddr4_dqs_c    : std_logic_vector(8 downto 0);
+  signal c3_ddr4_dqs_t    : std_logic_vector(8 downto 0);
+  signal c3_calib_complete : std_logic;
+  signal c3_diagnostic_led : std_ulogic; 
 
   -- UART
   signal uart_rxd  : std_ulogic;
@@ -125,13 +183,67 @@ architecture behav of testbench is
       c0_ddr4_ck_t      : out   std_logic_vector(0 downto 0);
       c0_ddr4_ck_c      : out   std_logic_vector(0 downto 0);
       c0_ddr4_reset_n   : out   std_logic;
-      c0_ddr4_dm_dbi_n  : inout std_logic_vector(7 downto 0);
-      c0_ddr4_dq        : inout std_logic_vector(63 downto 0);
-      c0_ddr4_dqs_c     : inout std_logic_vector(7 downto 0);
-      c0_ddr4_dqs_t     : inout std_logic_vector(7 downto 0);
+      c0_ddr4_dm_dbi_n  : inout std_logic_vector(8 downto 0);
+      c0_ddr4_dq        : inout std_logic_vector(71 downto 0);
+      c0_ddr4_dqs_c     : inout std_logic_vector(8 downto 0);
+      c0_ddr4_dqs_t     : inout std_logic_vector(8 downto 0);
       c0_calib_complete : out   std_logic;
       c0_diagnostic_led : out   std_ulogic;
-      -- UART
+      c1_sys_clk_p      : in    std_logic;
+      c1_sys_clk_n      : in    std_logic;
+      c1_ddr4_act_n     : out   std_logic;
+      c1_ddr4_adr       : out   std_logic_vector(16 downto 0);
+      c1_ddr4_ba        : out   std_logic_vector(1 downto 0);
+      c1_ddr4_bg        : out   std_logic_vector(1 downto 0);
+      c1_ddr4_cke       : out   std_logic_vector(1 downto 0);
+      c1_ddr4_odt       : out   std_logic_vector(1 downto 0);
+      c1_ddr4_cs_n      : out   std_logic_vector(1 downto 0);
+      c1_ddr4_ck_t      : out   std_logic_vector(0 downto 0);
+      c1_ddr4_ck_c      : out   std_logic_vector(0 downto 0);
+      c1_ddr4_reset_n   : out   std_logic;
+      c1_ddr4_dm_dbi_n  : inout std_logic_vector(8 downto 0);
+      c1_ddr4_dq        : inout std_logic_vector(71 downto 0);
+      c1_ddr4_dqs_c     : inout std_logic_vector(8 downto 0);
+      c1_ddr4_dqs_t     : inout std_logic_vector(8 downto 0);
+      c1_calib_complete : out   std_logic;
+      c1_diagnostic_led : out   std_ulogic;
+      c2_sys_clk_p      : in    std_logic;
+      c2_sys_clk_n      : in    std_logic;
+      c2_ddr4_act_n     : out   std_logic;
+      c2_ddr4_adr       : out   std_logic_vector(16 downto 0);
+      c2_ddr4_ba        : out   std_logic_vector(1 downto 0);
+      c2_ddr4_bg        : out   std_logic_vector(1 downto 0);
+      c2_ddr4_cke       : out   std_logic_vector(1 downto 0);
+      c2_ddr4_odt       : out   std_logic_vector(1 downto 0);
+      c2_ddr4_cs_n      : out   std_logic_vector(1 downto 0);
+      c2_ddr4_ck_t      : out   std_logic_vector(0 downto 0);
+      c2_ddr4_ck_c      : out   std_logic_vector(0 downto 0);
+      c2_ddr4_reset_n   : out   std_logic;
+      c2_ddr4_dm_dbi_n  : inout std_logic_vector(8 downto 0);
+      c2_ddr4_dq        : inout std_logic_vector(71 downto 0);
+      c2_ddr4_dqs_c     : inout std_logic_vector(8 downto 0);
+      c2_ddr4_dqs_t     : inout std_logic_vector(8 downto 0);
+      c2_calib_complete : out   std_logic;
+      c2_diagnostic_led : out   std_ulogic;
+      c3_sys_clk_p      : in    std_logic;
+      c3_sys_clk_n      : in    std_logic;
+      c3_ddr4_act_n     : out   std_logic;
+      c3_ddr4_adr       : out   std_logic_vector(16 downto 0);
+      c3_ddr4_ba        : out   std_logic_vector(1 downto 0);
+      c3_ddr4_bg        : out   std_logic_vector(1 downto 0);
+      c3_ddr4_cke       : out   std_logic_vector(1 downto 0);
+      c3_ddr4_odt       : out   std_logic_vector(1 downto 0);
+      c3_ddr4_cs_n      : out   std_logic_vector(1 downto 0);
+      c3_ddr4_ck_t      : out   std_logic_vector(0 downto 0);
+      c3_ddr4_ck_c      : out   std_logic_vector(0 downto 0);
+      c3_ddr4_reset_n   : out   std_logic;
+      c3_ddr4_dm_dbi_n  : inout std_logic_vector(8 downto 0);
+      c3_ddr4_dq        : inout std_logic_vector(71 downto 0);
+      c3_ddr4_dqs_c     : inout std_logic_vector(8 downto 0);
+      c3_ddr4_dqs_t     : inout std_logic_vector(8 downto 0);
+      c3_calib_complete : out   std_logic;
+      c3_diagnostic_led : out   std_ulogic;
+-- UART
       uart_rxd          : in    std_ulogic;
       uart_txd          : out   std_ulogic;
       uart_ctsn         : in    std_ulogic;
@@ -188,6 +300,12 @@ begin
   reset        <= '0'              after 2500 ns;
   c0_sys_clk_p <= not c0_sys_clk_p after 4.0 ns;
   c0_sys_clk_n <= not c0_sys_clk_n after 4.0 ns;
+  c1_sys_clk_p <= not c1_sys_clk_p after 4.0 ns;
+  c1_sys_clk_n <= not c1_sys_clk_n after 4.0 ns;
+  c2_sys_clk_p <= not c2_sys_clk_p after 4.0 ns;
+  c2_sys_clk_n <= not c2_sys_clk_n after 4.0 ns;
+  c3_sys_clk_p <= not c3_sys_clk_p after 4.0 ns;
+  c3_sys_clk_n <= not c3_sys_clk_n after 4.0 ns;
   esp_clk_p    <= not esp_clk_p    after 6.4 ns;
   esp_clk_n    <= not esp_clk_n    after 6.4 ns;
 
@@ -200,7 +318,18 @@ begin
   c0_ddr4_dq       <= (others => 'Z');
   c0_ddr4_dqs_c    <= (others => 'Z');
   c0_ddr4_dqs_t    <= (others => 'Z');
-
+  c1_ddr4_dm_dbi_n <= (others => 'Z');
+  c1_ddr4_dq       <= (others => 'Z');
+  c1_ddr4_dqs_c    <= (others => 'Z');
+  c1_ddr4_dqs_t    <= (others => 'Z');
+  c2_ddr4_dm_dbi_n <= (others => 'Z');
+  c2_ddr4_dq       <= (others => 'Z');
+  c2_ddr4_dqs_c    <= (others => 'Z');
+  c2_ddr4_dqs_t    <= (others => 'Z');
+  c3_ddr4_dm_dbi_n <= (others => 'Z');
+  c3_ddr4_dq       <= (others => 'Z');
+  c3_ddr4_dqs_c    <= (others => 'Z');
+  c3_ddr4_dqs_t    <= (others => 'Z');
 
   top_1 : top
     generic map (
@@ -235,6 +364,60 @@ begin
       c0_ddr4_dqs_t     => c0_ddr4_dqs_t,
       c0_calib_complete => open,
       c0_diagnostic_led => open,
+      c1_sys_clk_p      => c1_sys_clk_p,
+      c1_sys_clk_n      => c1_sys_clk_n,
+      c1_ddr4_act_n     => c1_ddr4_act_n,
+      c1_ddr4_adr       => c1_ddr4_adr,
+      c1_ddr4_ba        => c1_ddr4_ba,
+      c1_ddr4_bg        => c1_ddr4_bg,
+      c1_ddr4_cke       => c1_ddr4_cke,
+      c1_ddr4_odt       => c1_ddr4_odt,
+      c1_ddr4_cs_n      => c1_ddr4_cs_n,
+      c1_ddr4_ck_t      => c1_ddr4_ck_t,
+      c1_ddr4_ck_c      => c1_ddr4_ck_c,
+      c1_ddr4_reset_n   => c1_ddr4_reset_n,
+      c1_ddr4_dm_dbi_n  => c1_ddr4_dm_dbi_n,
+      c1_ddr4_dq        => c1_ddr4_dq,
+      c1_ddr4_dqs_c     => c1_ddr4_dqs_c,
+      c1_ddr4_dqs_t     => c1_ddr4_dqs_t,
+      c1_calib_complete => open,
+      c1_diagnostic_led => open,
+      c2_sys_clk_p      => c2_sys_clk_p,
+      c2_sys_clk_n      => c2_sys_clk_n,
+      c2_ddr4_act_n     => c2_ddr4_act_n,
+      c2_ddr4_adr       => c2_ddr4_adr,
+      c2_ddr4_ba        => c2_ddr4_ba,
+      c2_ddr4_bg        => c2_ddr4_bg,
+      c2_ddr4_cke       => c2_ddr4_cke,
+      c2_ddr4_odt       => c2_ddr4_odt,
+      c2_ddr4_cs_n      => c2_ddr4_cs_n,
+      c2_ddr4_ck_t      => c2_ddr4_ck_t,
+      c2_ddr4_ck_c      => c2_ddr4_ck_c,
+      c2_ddr4_reset_n   => c2_ddr4_reset_n,
+      c2_ddr4_dm_dbi_n  => c2_ddr4_dm_dbi_n,
+      c2_ddr4_dq        => c2_ddr4_dq,
+      c2_ddr4_dqs_c     => c2_ddr4_dqs_c,
+      c2_ddr4_dqs_t     => c2_ddr4_dqs_t,
+      c2_calib_complete => open,
+      c2_diagnostic_led => open,
+      c3_sys_clk_p      => c3_sys_clk_p,
+      c3_sys_clk_n      => c3_sys_clk_n,
+      c3_ddr4_act_n     => c3_ddr4_act_n,
+      c3_ddr4_adr       => c3_ddr4_adr,
+      c3_ddr4_ba        => c3_ddr4_ba,
+      c3_ddr4_bg        => c3_ddr4_bg,
+      c3_ddr4_cke       => c3_ddr4_cke,
+      c3_ddr4_odt       => c3_ddr4_odt,
+      c3_ddr4_cs_n      => c3_ddr4_cs_n,
+      c3_ddr4_ck_t      => c3_ddr4_ck_t,
+      c3_ddr4_ck_c      => c3_ddr4_ck_c,
+      c3_ddr4_reset_n   => c3_ddr4_reset_n,
+      c3_ddr4_dm_dbi_n  => c3_ddr4_dm_dbi_n,
+      c3_ddr4_dq        => c3_ddr4_dq,
+      c3_ddr4_dqs_c     => c3_ddr4_dqs_c,
+      c3_ddr4_dqs_t     => c3_ddr4_dqs_t,
+      c3_calib_complete => open,
+      c3_diagnostic_led => open,
       uart_rxd          => uart_rxd,
       uart_txd          => uart_txd,
       uart_ctsn         => uart_ctsn,

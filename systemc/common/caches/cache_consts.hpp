@@ -100,11 +100,11 @@
 //
 
 #ifndef LLC_WAYS
-#define LLC_WAYS      32 // defined in l2/stratus/project.tcl
+#define LLC_WAYS      16 // defined in l2/stratus/project.tcl
 #endif
 
 #ifndef LLC_SETS
-#define LLC_SETS      256  // defined in l2/stratus/project.tcl
+#define LLC_SETS      512  // defined in l2/stratus/project.tcl
 #endif
 
 #define LLC_WAY_BITS		ilog2(LLC_WAYS)
