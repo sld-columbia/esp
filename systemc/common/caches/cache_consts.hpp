@@ -7,6 +7,10 @@
 #include "log2.h"
 #include <algorithm>
 
+#ifdef RTL_CACHE
+#include "cache_cfg.hpp"
+#endif
+
 /*
  * System
  */
