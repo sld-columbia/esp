@@ -1472,9 +1472,13 @@ for acc in accelerators:
 
     if "hls_tool" in xmlacc.attrib:
       accd.hls_tool = xmlacc.get('hls_tool')
+      # hls4ml accelerators are implemented as Vivado HLS accelerators
+      if accd.hls_tool in ('hls4ml'):
+        accd.hls_tool = 'vivado_hls'
       if not accd.hls_tool in ('stratus_hls', 'vivado_hls'):
         print("    ERROR: Wrong HLS tool for " + acc)
         sys.exit(1)
+
     else:
       # Default to stratus_hls for Chisel, because the interface matches the Stratus HLS flow
       accd.hls_tool = 'stratus_hls'

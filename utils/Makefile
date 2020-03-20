@@ -1139,6 +1139,9 @@ incisive/ncsim.in:
 	@echo set pack_assert_off { std_logic_arith numeric_std } >> $@
 
 ncsim-compile: sldgen check_all_srcs soft incisive/ncready incisive/ncsim.in
+	@for dat in $(DAT_SRCS); do \
+		cp $$dat incisive; \
+	done; \
 	$(QUIET_MAKE) \
 	cd incisive; \
 	echo $(SPACES)"$(NCUPDATE) $(SIMTOP)"; \
@@ -1255,6 +1258,9 @@ modelsim/vsim.mk: modelsim/xilinx_lib check_all_srcs.old $(PKG_LIST)
 	cd ../;
 
 sim-compile: sldgen check_all_srcs modelsim/vsim.mk soft
+	@for dat in $(DAT_SRCS); do \
+		cp $$dat modelsim; \
+	done;
 	$(QUIET_MAKE)make -C modelsim -f vsim.mk
 
 sim: sim-compile
@@ -1372,7 +1378,7 @@ endif
 		echo "read_xdc  $(DESIGN_PATH)/mem_tile_floorplanning.xdc" >> $@; \
 	    echo "set_property used_in_synthesis true [get_files $(DESIGN_PATH)/mem_tile_floorplanning.xdc]" >> $@; \
 	    echo "set_property used_in_implementation true [get_files $(DESIGN_PATH)/mem_tile_floorplanning.xdc]" >> $@; \
-    	echo "set_property strategy Congestion_SpreadLogic_high [get_runs impl_1]" >> $@; \
+	echo "set_property strategy Congestion_SpreadLogic_high [get_runs impl_1]" >> $@; \
 	fi;
 	@for i in $(XDC); do \
 	  echo "read_xdc $$i" >> $@; \
