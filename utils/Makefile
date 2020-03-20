@@ -180,6 +180,9 @@ include $(ESP_ROOT)/utils/accelerators.mk
 ### Include targets to generate caches RTL with HLS ###
 include $(ESP_ROOT)/utils/sc_components.mk
 
+### Include targets to compile example applications ###
+include $(ESP_ROOT)/utils/examples.mk
+
 .PHONY: all help
 
 ### SoC configuration for ESP ###
@@ -1645,6 +1648,7 @@ distclean:	check_all_srcs-distclean 	\
 		soft-distclean 			\
 		linux-distclean			\
 		barec-distclean			\
+		examples-clean			\
 		xilinx_lib-distclean 		\
 		sim-distclean			\
 		ncsim-distclean			\
