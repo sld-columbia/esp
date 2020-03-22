@@ -80,7 +80,7 @@ void l2_tb::l2_test()
      */
 
     // preparation variables
-    addr_breakdown_t addr, addr1, addr2, addr3, addr4, addr_evict;
+    addr_breakdown_t addr, addr1, addr2, addr3, addr4, addr5, addr_evict;
     word_t word, word1, word2, word3, word4;
     line_t line, req_line, fwd_line;
     l2_cpu_req_t cpu_req, cpu_req1, cpu_req2, cpu_req3, cpu_req4;
@@ -631,8 +631,12 @@ void l2_tb::l2_test()
 	addr2 = rand_addr();
 	addr3 = rand_addr();
 	addr4 = rand_addr();
-    } while (addr1.set == addr2.set || addr1.set == addr3.set || addr1.set == addr4.set || 
-	     addr2.set == addr3.set || addr2.set == addr4.set || addr3.set == addr4.set);
+    addr5 = rand_addr();
+    } while (addr1.set == addr2.set || addr1.set == addr3.set ||
+         addr1.set == addr4.set || addr2.set == addr3.set ||
+         addr2.set == addr4.set || addr3.set == addr4.set ||
+         addr1.set == addr5.set || addr2.set == addr5.set ||
+         addr3.set == addr5.set ||addr4.set == addr5.set);
 
     word1 = rand_word();
     word2 = rand_word();
@@ -651,18 +655,18 @@ void l2_tb::l2_test()
 
     CACHE_REPORT_INFO("READ(I), RSP_EDATA(ISD), RSP_DATA(ISD).");
 
-    addr = addr1;
-    
-    // This leaves a set with 4 EXCLUSIVE and 4 SHARED lines
-    for (int i = 0; i < 4; i++) { // Assuming 8 ways
+    // This leaves a set full of EXCLUSIVE lines and a set of SHARED lines
+    for (int i = 0; i < L2_WAYS; i++){
 	// READ(I), RSP_EDATA(ISD)
+    addr = addr5;
+	addr.tag_incr(i);
 	op(READ, MISS, 0, RSP_EDATA, 0, 0, WORD, addr, 0, line_of_addr(addr.line),
 	   0, 0, 0, 0, 0, DATA);
-	addr.tag_incr(1);
 
 	// READ(I), RSP_DATA(ISD)
-	op(READ, MISS, 0, RSP_DATA, 0, 0, WORD, addr, 0, line_of_addr(addr.line), 0, 0, 0, 0, 0, DATA);
-	addr.tag_incr(1);
+	addr = addr1;
+	addr.tag_incr(i);
+    op(READ, MISS, 0, RSP_DATA, 0, 0, WORD, addr, 0, line_of_addr(addr.line), 0, 0, 0, 0, 0, DATA);
     }
 
     CACHE_REPORT_INFO("WRITE(I), RSP_DATA(IMAD), RSP_INVACK(IMAD), RSP_INVACK(IMA).");
@@ -670,8 +674,8 @@ void l2_tb::l2_test()
     addr = addr2;
     word = word2;
 
-    // This leaves a set with 8 MODIFIED lines
-    for (int i = 0; i < 2; i++) { // Assuming 8 ways
+    // This leaves a set with MODIFIED lines
+    for (int i = 0; i < L2_WAYS/4; i++){
 	// WRITE(I), RSP_DATA(IMAD)
 	op(WRITE, MISS, 0, RSP_DATA, 0, 0, WORD, addr, word++, line_of_addr(addr.line), 
 	   0, 0, 0, 0, 0, DATA);
@@ -700,8 +704,8 @@ void l2_tb::l2_test()
     addr = addr3;
     word = word3;
 
-    // This leaves a set with 8 MODIFIED lines
-    for (int i = 0; i < 2; i++) { // Assuming 8 ways
+    // This leaves a set with MODIFIED lines
+    for (int i = 0; i < L2_WAYS/4; i++){
 
 	// READ_ATOMIC(I), RSP_DATA(IMADW)
 	op(READ_ATOMIC, MISS, 0, RSP_DATA, 0, 0, WORD, addr, 0, line_of_addr(addr.line), 
@@ -790,22 +794,21 @@ void l2_tb::l2_test()
     word = word1;
 
     // this starts from 4 lines in shared state and leaves them in modified state
-    addr.tag_incr(1);
     req_line = line_of_addr(addr.line);
     op(WRITE, MISS, DATA_FIRST, RSP_DATA, MAX_N_L2-2, 0, WORD, addr, word++, req_line, 
        0, 0, 0, 0, 0, DATA);
 
-    addr.tag_incr(2);
+    addr.tag_incr(1);
     req_line = line_of_addr(addr.line);
     op(WRITE, MISS, DATA_HALFWAY, RSP_DATA, MAX_N_L2-1, 0, WORD, addr, word++, req_line, 
        0, 0, 0, 0, 0, DATA);
 
-    addr.tag_incr(2);
+    addr.tag_incr(1);
     req_line = line_of_addr(addr.line);
     op(WRITE, MISS, DATA_LAST, RSP_DATA, MAX_N_L2-2, 0, WORD, addr, word++, req_line, 
        0, 0, 0, 0, 0, DATA);
 
-    addr.tag_incr(2);
+    addr.tag_incr(1);
     req_line = line_of_addr(addr.line);
     op(WRITE, MISS, 0, RSP_DATA, 0, 0, WORD, addr, word++, req_line, FWD_STALL, FWD_INV,
        0,        id++, 0, DATA);
@@ -818,7 +821,7 @@ void l2_tb::l2_test()
     invack = MAX_N_L2-1;
 
     // this starts from an empty set
-    for (int i = 0; i < 8; i++) {
+    for (int i = 0; i < L2_WAYS; i++) {
 	op(READ, MISS, 0, RSP_DATA, 0, 0, WORD, addr, 0, line_of_addr(addr.line), 0, 0, 0, 0, 0, DATA);
 	addr.tag_incr(1);
     }
@@ -861,25 +864,26 @@ void l2_tb::l2_test()
 
     CACHE_REPORT_INFO("READ_ATOMIC(E), FWD_GETS(E), FWD_GETM(E).");
 
-    addr = addr1;
+    addr = addr5;
     word = word1;
 
-    // this starts from 4 lines in shared state and leaves them in modified state
+    // this starts from 4 lines in an exclusive state and leaves them in modified state
     req_line = line_of_addr(addr.line);
     op(READ_ATOMIC, HIT, 0, 0, 0, 0, WORD, addr, 0, req_line, 0, 0, 0, 0, 0, DATA);
     op(WRITE_ATOMIC, HIT, 0, 0, 0, 0, WORD, addr, word++, 0, 0, 0, 0, 0, 0, DATA);
     write_word(req_line, word-1, addr.w_off, addr.b_off, WORD);
     op(READ, HIT, 0, 0, 0, 0, WORD, addr, 0, req_line, 0, 0, 0, 0, 0, DATA);
 
-    addr.tag_incr(2);
+    addr.tag_incr(1);
     req_line = line_of_addr(addr.line);
     op(READ, HIT, 0, 0, 0, 0, WORD, addr, 0, req_line, FWD_NOSTALL, FWD_GETS, 0, id--, req_line, DATA);
 
-    addr.tag_incr(2);
+    addr.tag_incr(1);
     req_line = line_of_addr(addr.line);
     op(READ, HIT, 0, 0, 0, 0, WORD, addr, 0, req_line, FWD_NOSTALL, FWD_GETM, 0, id++, req_line, DATA);
 
-    addr.tag_incr(1);
+    addr = addr1;
+    addr.tag_incr(2);
     req_line = line_of_addr(addr.line);
     write_word(req_line, word1 + 2, addr.w_off, addr.b_off, WORD);
     op(READ_ATOMIC, HIT, 0, 0, 0, 0, WORD, addr, 0, req_line, 0, 0, 0, 0, 0, DATA);
@@ -889,7 +893,7 @@ void l2_tb::l2_test()
 
     CACHE_REPORT_INFO("Flush all cache");
 
-    flush(30, flush_all); // 7 (addr1 set) + 8 (addr2 set) + 8 (addr3 set) + 7 (addr4 set)
+    flush(3*L2_WAYS + 2*(L2_WAYS-1), flush_all); // 7 (addr1 set) + 8 (addr2 set) + 8 (addr3 set) + 7 (addr4 set)
 
 /************/
 /* Eviction */
@@ -936,7 +940,7 @@ void l2_tb::l2_test()
 
     CACHE_REPORT_INFO("Flush all cache");
 
-    flush(16, flush_all); // 7 (addr1 set) + 8 (addr2 set) + 8 (addr3 set) + 7 (addr4 set)
+    flush(2*L2_WAYS, flush_all); // 7 (addr1 set) + 8 (addr2 set) + 8 (addr3 set) + 7 (addr4 set)
 
 /*
  * T8) Repeat some tests from T7 to test FWD_GETM_LLC and FWD_INV_LLC
@@ -949,8 +953,12 @@ void l2_tb::l2_test()
 	addr2 = rand_addr();
 	addr3 = rand_addr();
 	addr4 = rand_addr();
-    } while (addr1.set == addr2.set || addr1.set == addr3.set || addr1.set == addr4.set || 
-	     addr2.set == addr3.set || addr2.set == addr4.set || addr3.set == addr4.set);
+    addr5 = rand_addr();
+    } while (addr1.set == addr2.set || addr1.set == addr3.set ||
+         addr1.set == addr4.set || addr2.set == addr3.set ||
+         addr2.set == addr4.set || addr3.set == addr4.set ||
+         addr1.set == addr5.set || addr2.set == addr5.set ||
+         addr3.set == addr5.set ||addr4.set == addr5.set);
 
     word1 = rand_word();
     word2 = rand_word();
@@ -966,18 +974,19 @@ void l2_tb::l2_test()
 
     CACHE_REPORT_INFO("READ(I), RSP_EDATA(ISD), RSP_DATA(ISD).");
 
-    addr = addr1;
-    
-    // This leaves a set with 4 EXCLUSIVE and 4 SHARED lines
-    for (int i = 0; i < 4; i++) { // Assuming 8 ways
-	// READ(I), RSP_EDATA(ISD)
-	op(READ, MISS, 0, RSP_EDATA, 0, 0, WORD, addr, 0, line_of_addr(addr.line),
+    // This leaves a set full of EXCLUSIVE lines and a set of SHARED lines
+    for (int i = 0; i < L2_WAYS; i++){
+    // READ(I), RSP_EDATA(ISD)
+	addr = addr5;
+	addr.tag_incr(i);
+    op(READ, MISS, 0, RSP_EDATA, 0, 0, WORD, addr, 0, line_of_addr(addr.line),
 	   0, 0, 0, 0, 0, DATA);
 	addr.tag_incr(1);
 
 	// READ(I), RSP_DATA(ISD)
-	op(READ, MISS, 0, RSP_DATA, 0, 0, WORD, addr, 0, line_of_addr(addr.line), 0, 0, 0, 0, 0, DATA);
-	addr.tag_incr(1);
+    addr = addr1;
+	addr.tag_incr(i);
+    op(READ, MISS, 0, RSP_DATA, 0, 0, WORD, addr, 0, line_of_addr(addr.line), 0, 0, 0, 0, 0, DATA);
     }
 
     CACHE_REPORT_INFO("WRITE(I), RSP_DATA(IMAD), RSP_INVACK(IMAD), RSP_INVACK(IMA).");
@@ -985,9 +994,9 @@ void l2_tb::l2_test()
     addr = addr2;
     word = word2;
 
-    // This leaves a set with 8 MODIFIED lines
-    for (int i = 0; i < 2; i++) { // Assuming 8 ways
-	// WRITE(I), RSP_DATA(IMAD)
+    // This leaves a set with MODIFIED lines
+    for (int i = 0; i < L2_WAYS/4; i++){
+    // WRITE(I), RSP_DATA(IMAD)
 	op(WRITE, MISS, 0, RSP_DATA, 0, 0, WORD, addr, word++, line_of_addr(addr.line), 
 	   0, 0, 0, 0, 0, DATA);
 	addr.tag_incr(1);
@@ -1015,11 +1024,10 @@ void l2_tb::l2_test()
     addr = addr3;
     word = word3;
 
-    // This leaves a set with 8 MODIFIED lines
-    for (int i = 0; i < 2; i++) { // Assuming 8 ways
-
+    // This leaves a set with MODIFIED lines
+    for (int i = 0; i < L2_WAYS/4; i++){
 	// READ_ATOMIC(I), RSP_DATA(IMADW)
-	op(READ_ATOMIC, MISS, 0, RSP_DATA, 0, 0, WORD, addr, 0, line_of_addr(addr.line), 
+	op(READ_ATOMIC, MISS, 0, RSP_DATA, 0, 0, WORD, addr, 0, line_of_addr(addr.line),
 	   0, 0, 0, 0, 0, DATA);
 	// READ_ATOMIC(XMW)
 	op(READ_ATOMIC, HIT, 0, 0, 0, 0, WORD, addr, 0, line_of_addr(addr.line), 0, 0, 0, 0, 0, DATA);
@@ -1085,7 +1093,7 @@ void l2_tb::l2_test()
     op(READ, HIT, 0, 0, 0, 0, WORD, addr, 0, fwd_line, FWD_NONE, 0, 0, 0, 0, DATA);
     fwd_line = req_line;
     write_word(fwd_line, word, addr.w_off, addr.b_off, WORD);
-    op(WRITE, MISS, 0, RSP_DATA, 0, 0, WORD, addr, word++, req_line, FWD_STALL, 
+    op(WRITE, MISS, 0, RSP_DATA, 0, 0, WORD, addr, word++, req_line, FWD_STALL,
        FWD_GETS, 0, id++, fwd_line, DATA);
 
     // WRITE(S), FWD_GETM_LLC(SMAD), FWD_GETM_LLC(M)
@@ -1103,22 +1111,21 @@ void l2_tb::l2_test()
     word = word1;
 
     // this starts from 4 lines in shared state and leaves them in modified state
+    req_line = line_of_addr(addr.line);
+    op(WRITE, MISS, DATA_FIRST, RSP_DATA, MAX_N_L2-2, 0, WORD, addr, word++, req_line,
+       0, 0, 0, 0, 0, DATA);
+
     addr.tag_incr(1);
     req_line = line_of_addr(addr.line);
-    op(WRITE, MISS, DATA_FIRST, RSP_DATA, MAX_N_L2-2, 0, WORD, addr, word++, req_line, 
+    op(WRITE, MISS, DATA_HALFWAY, RSP_DATA, MAX_N_L2-1, 0, WORD, addr, word++, req_line,
        0, 0, 0, 0, 0, DATA);
 
-    addr.tag_incr(2);
+    addr.tag_incr(1);
     req_line = line_of_addr(addr.line);
-    op(WRITE, MISS, DATA_HALFWAY, RSP_DATA, MAX_N_L2-1, 0, WORD, addr, word++, req_line, 
+    op(WRITE, MISS, DATA_LAST, RSP_DATA, MAX_N_L2-2, 0, WORD, addr, word++, req_line,
        0, 0, 0, 0, 0, DATA);
 
-    addr.tag_incr(2);
-    req_line = line_of_addr(addr.line);
-    op(WRITE, MISS, DATA_LAST, RSP_DATA, MAX_N_L2-2, 0, WORD, addr, word++, req_line, 
-       0, 0, 0, 0, 0, DATA);
-
-    addr.tag_incr(2);
+    addr.tag_incr(1);
     req_line = line_of_addr(addr.line);
     op(WRITE, MISS, 0, RSP_DATA, 0, 0, WORD, addr, word++, req_line, FWD_STALL, FWD_INV_LLC,
        0,        id++, 0, DATA);
@@ -1131,7 +1138,7 @@ void l2_tb::l2_test()
     invack = MAX_N_L2-1;
 
     // this starts from an empty set
-    for (int i = 0; i < 8; i++) {
+    for (int i = 0; i < L2_WAYS; i++){
 	op(READ, MISS, 0, RSP_DATA, 0, 0, WORD, addr, 0, line_of_addr(addr.line), 0, 0, 0, 0, 0, DATA);
 	addr.tag_incr(1);
     }
@@ -1173,26 +1180,27 @@ void l2_tb::l2_test()
 
     CACHE_REPORT_INFO("READ_ATOMIC(E), FWD_GETS(E), FWD_GETM_LLC(E).");
 
-    addr = addr1;
+    addr = addr5;
     word = word1;
 
-    // this starts from 4 lines in shared state and leaves them in modified state
+    // this starts from 4 lines in an exclusive state and leaves them in modified state
     req_line = line_of_addr(addr.line);
     op(READ_ATOMIC, HIT, 0, 0, 0, 0, WORD, addr, 0, req_line, 0, 0, 0, 0, 0, DATA);
     op(WRITE_ATOMIC, HIT, 0, 0, 0, 0, WORD, addr, word++, 0, 0, 0, 0, 0, 0, DATA);
     write_word(req_line, word-1, addr.w_off, addr.b_off, WORD);
     op(READ, HIT, 0, 0, 0, 0, WORD, addr, 0, req_line, 0, 0, 0, 0, 0, DATA);
 
-    addr.tag_incr(2);
+    addr.tag_incr(1);
     req_line = line_of_addr(addr.line);
     op(READ, HIT, 0, 0, 0, 0, WORD, addr, 0, req_line, FWD_NOSTALL, FWD_GETS, 0, id--, req_line, DATA);
 
-    addr.tag_incr(2);
+    addr.tag_incr(1);
     req_line = line_of_addr(addr.line);
     op(READ, HIT, 0, 0, 0, 0, WORD, addr, 0, req_line, FWD_NOSTALL, FWD_GETM_LLC,
        EXCLUSIVE, id++, req_line, DATA);
 
-    addr.tag_incr(1);
+    addr = addr1;
+    addr.tag_incr(2);
     req_line = line_of_addr(addr.line);
     write_word(req_line, word1 + 2, addr.w_off, addr.b_off, WORD);
     op(READ_ATOMIC, HIT, 0, 0, 0, 0, WORD, addr, 0, req_line, 0, 0, 0, 0, 0, DATA);
@@ -1202,7 +1210,7 @@ void l2_tb::l2_test()
 
     CACHE_REPORT_INFO("Flush all cache");
 
-    flush(30, flush_all); // 7 (addr1 set) + 8 (addr2 set) + 8 (addr3 set) + 7 (addr4 set)
+    flush(3*L2_WAYS + 2*(L2_WAYS-1), flush_all); // 7 (addr1 set) + 8 (addr2 set) + 8 (addr3 set) + 7 (addr4 set)
 
 /************/
 /* Eviction */
@@ -1249,7 +1257,7 @@ void l2_tb::l2_test()
 
     CACHE_REPORT_INFO("Flush all cache");
 
-    flush(13, flush_all); // 7 (addr1 set) + 8 (addr2 set) + 8 (addr3 set) + 7 (addr4 set)
+    flush(2*L2_WAYS, flush_all); // 7 (addr1 set) + 8 (addr2 set) + 8 (addr3 set) + 7 (addr4 set)
 
     // End simulation
     sc_stop();
