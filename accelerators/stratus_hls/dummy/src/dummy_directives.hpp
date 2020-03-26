@@ -11,8 +11,6 @@
 #elif (DMA_WIDTH == 32)
 #define DMA_BEAT_PER_WORD 2
 #define DMA_SIZE SIZE_WORD
-#else
-#error Unsupported DMA_WIDTH
 #endif
 
 
