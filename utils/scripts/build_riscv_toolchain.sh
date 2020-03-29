@@ -103,7 +103,7 @@ if [ $(noyes "Skip ${src}") == "n" ]; then
 	git checkout .
 	git submodule update --init --recursive
     else
-	git clone --recursive git@github.com:riscv/riscv-gnu-toolchain.git
+	git clone --recursive https://github.com/riscv/riscv-gnu-toolchain.git
 	cd $src
     fi
 
@@ -124,7 +124,7 @@ if [ $(noyes "Skip ${src}") == "n" ]; then
 	git checkout .
 	git submodule update --init --recursive
     else
-	git clone --recursive git@github.com:riscv/riscv-gnu-toolchain.git
+	git clone --recursive https://github.com/riscv/riscv-gnu-toolchain.git
 	cd $src
     fi
 
