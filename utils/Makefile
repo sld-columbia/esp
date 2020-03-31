@@ -1003,7 +1003,7 @@ xcelium/xmready: xcelium/xilinx_lib check_all_srcs.old $(PKG_LIST)
 	echo $(SPACES)"### Compile SystemVerilog source files ###"; \
 		for rtl in $(SVLOG_SRCS); do \
 			echo $(SPACES)"$(XLOG) -SV $$rtl"; \
-			$(XLOG) -SV -work work $(THIRDPARTY_INCDIR_XCELIUM) $$rtl || exit; \
+			$(XLOG) -SV -work work $(INCDIR_XCELIUM) $(THIRDPARTY_INCDIR_XCELIUM) $$rtl || exit; \
 		done; \
 	echo $(SPACES)"### Compile IPs simulation files ###"; \
 	echo $(SPACES)"$(XLOG) -work work $(XILINX_VIVADO)/data/verilog/src/glbl.v"; \
@@ -1121,7 +1121,7 @@ incisive/ncready: incisive/xilinx_lib check_all_srcs.old $(PKG_LIST)
 				echo $(SPACES)"### Skip Ariane source files ###"; \
 			else \
 				echo $(SPACES)"$(NCLOG) -SV $$rtl"; \
-				$(NCLOG) -SV -work work $(THIRDPARTY_INCDIR_INCISIVE) $$rtl || exit; \
+				$(NCLOG) -SV -work work $(INCDIR_INCISIVE) $(THIRDPARTY_INCDIR_INCISIVE) $$rtl || exit; \
 			fi; \
 		done; \
 	echo $(SPACES)"### Compile IPs simulation files ###"; \
