@@ -267,7 +267,11 @@ NCUPDATE = ncupdate
 VIVADO_BATCH_OPT = -mode batch -quiet -notrace
 
 ### proFPGA include paths ###
+ifneq ($(findstring profpga, $(BOARD)),)
 PROFPGA_INCDIR = $(PROFPGA)/hdl/generic_hdl $(PROFPGA)/hdl/mmi64 $(PROFPGA)/hdl/profpga_user $(PROFPGA)/hdl/pd_muxdemux2
+else
+PROFPGA_INCDIR =
+endif
 
 ### RTL caches include paths ###
 ESP_CACHES_INCDIR = $(ESP_ROOT)/rtl/src/sld/caches/esp-caches/common/defs $(DESIGN_PATH)
