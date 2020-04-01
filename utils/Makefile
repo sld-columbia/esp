@@ -242,6 +242,7 @@ esp-config-distclean: esp-config-clean
 		mmi64_regs.h	\
 		power.h		\
 		socmap.h	\
+		cache_cfg.svh	\
 		esplink
 
 
