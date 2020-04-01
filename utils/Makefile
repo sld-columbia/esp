@@ -1019,6 +1019,7 @@ xcelium/xmready: xcelium/xilinx_lib check_all_srcs.old $(PKG_LIST)
 xcelium/xmsim.in:
 	$(QUIET_BUILD)echo set severity_pack_assert_off {warning} > $@
 	@echo set pack_assert_off { std_logic_arith numeric_std } >> $@
+	@echo set intovf_severity_level {ignore} >> $@
 
 xmsim-compile: sldgen check_all_srcs soft xcelium/xmready xcelium/xmsim.in
 	$(QUIET_MAKE) \
@@ -1138,6 +1139,7 @@ incisive/ncready: incisive/xilinx_lib check_all_srcs.old $(PKG_LIST)
 incisive/ncsim.in:
 	$(QUIET_BUILD)echo set severity_pack_assert_off {warning} > $@
 	@echo set pack_assert_off { std_logic_arith numeric_std } >> $@
+	@echo set intovf_severity_level {ignore} >> $@
 
 ncsim-compile: sldgen check_all_srcs soft incisive/ncready incisive/ncsim.in
 	@for dat in $(DAT_SRCS); do \
