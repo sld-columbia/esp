@@ -11,14 +11,14 @@ ifeq ("$(TECHLIB)","")
 $(error technology library not specified)
 endif
 
+ifeq ("$(XILINX_VIVADO)","")
+$(error XILINX_VIVADO path not specified)
+endif
+
 ifneq ($(findstring profpga, $(BOARD)),)
 
 ifeq ("$(PROFPGA)","")
 $(error proFPGA path not specified)
-endif
-
-ifeq ("$(XILINX_VIVADO)","")
-$(error XILINX_VIVADO path not specified)
 endif
 
 PROFPGA_REQUIRED_VER = proFPGA-2019A-SP4
