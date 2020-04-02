@@ -108,7 +108,9 @@ int main(int argc, char **argv)
 	init_parameters();
 
 	buf = (token_t *) esp_alloc(size);
-	gold = malloc(out_size);
+	cfg_000.hw_buf = buf;
+    
+    gold = malloc(out_size);
 
 	init_buffer(buf, gold);
 
@@ -123,7 +125,7 @@ int main(int argc, char **argv)
 	errors = validate_buffer(&buf[out_offset], gold);
 
 	free(gold);
-	esp_cleanup();
+	esp_free(buf);
 
 	if (!errors)
 		printf("    + Test PASSED\n");

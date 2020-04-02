@@ -22,7 +22,8 @@
 #define SYNTH_STRIDE_LEN_REG		0x64
 #define SYNTH_OUT_SIZE_REG		0x68
 #define SYNTH_IN_PLACE_REG		0x6c
-
+#define SYNTH_WR_DATA_REG       0x70
+#define SYNTH_RD_DATA_REG       0x74
 struct synth_device {
 	struct esp_device esp;
 };
@@ -53,26 +54,20 @@ static void synth_prep_xfer(struct esp_device *esp, void *arg)
 {
 	struct synth_access *a = arg;
 
-	/* printk(KERN_INFO "*** PREP XFER ***"); */
-	/* printk(KERN_INFO "[[[DAVIDE]]] synth prep xfer a->cfg.offset %d\n", a->cfg.offset); */
-	/* printk(KERN_INFO "[[[DAVIDE]]] synth prep xfer a->cfg.pattern %d\n", a->cfg.pattern); */
-	/* printk(KERN_INFO "[[[DAVIDE]]] synth prep xfer a->cfg.in_size %d\n", a->cfg.in_size); */
-	/* printk(KERN_INFO "[[[DAVIDE]]] synth prep xfer a->cfg.burst_len %d\n", a->cfg.burst_len); */
-	/* printk(KERN_INFO "[[[DAVIDE]]] synth prep xfer a->cfg.reuse_factor %d\n", a->cfg.reuse_factor); */
-	/* printk(KERN_INFO "[[[DAVIDE]]] synth prep xfer a->cfg.in_place %d\n", a->cfg.in_place); */
-
-	iowrite32be(a->cfg.offset, esp->iomem + SYNTH_OFFSET_REG);
-	iowrite32be(a->cfg.pattern, esp->iomem + SYNTH_PATTERN_REG);
-	iowrite32be(a->cfg.in_size, esp->iomem + SYNTH_IN_SIZE_REG);
-	iowrite32be(a->cfg.access_factor, esp->iomem + SYNTH_ACCESS_FACTOR_REG);
-	iowrite32be(a->cfg.burst_len, esp->iomem + SYNTH_BURST_LEN_REG);
-	iowrite32be(a->cfg.compute_bound_factor, esp->iomem + SYNTH_COMPUTE_BOUND_factor_REG);
-	iowrite32be(a->cfg.irregular_seed, esp->iomem + SYNTH_IRREGULAR_SEED_REG);
-	iowrite32be(a->cfg.reuse_factor, esp->iomem + SYNTH_REUSE_FACTOR_REG);
-	iowrite32be(a->cfg.ld_st_ratio, esp->iomem + SYNTH_LD_ST_ratio_REG);
-	iowrite32be(a->cfg.stride_len, esp->iomem + SYNTH_STRIDE_LEN_REG);
-	iowrite32be(a->cfg.out_size, esp->iomem + SYNTH_OUT_SIZE_REG);
-	iowrite32be(a->cfg.in_place, esp->iomem + SYNTH_IN_PLACE_REG);
+	iowrite32be(a->offset, esp->iomem + SYNTH_OFFSET_REG);
+	iowrite32be(a->pattern, esp->iomem + SYNTH_PATTERN_REG);
+	iowrite32be(a->in_size, esp->iomem + SYNTH_IN_SIZE_REG);
+	iowrite32be(a->access_factor, esp->iomem + SYNTH_ACCESS_FACTOR_REG);
+	iowrite32be(a->burst_len, esp->iomem + SYNTH_BURST_LEN_REG);
+	iowrite32be(a->compute_bound_factor, esp->iomem + SYNTH_COMPUTE_BOUND_factor_REG);
+	iowrite32be(a->irregular_seed, esp->iomem + SYNTH_IRREGULAR_SEED_REG);
+	iowrite32be(a->reuse_factor, esp->iomem + SYNTH_REUSE_FACTOR_REG);
+	iowrite32be(a->ld_st_ratio, esp->iomem + SYNTH_LD_ST_ratio_REG);
+	iowrite32be(a->stride_len, esp->iomem + SYNTH_STRIDE_LEN_REG);
+	iowrite32be(a->out_size, esp->iomem + SYNTH_OUT_SIZE_REG);
+	iowrite32be(a->in_place, esp->iomem + SYNTH_IN_PLACE_REG);
+    iowrite32be(a->wr_data, esp->iomem + SYNTH_WR_DATA_REG);
+    iowrite32be(a->rd_data, esp->iomem + SYNTH_RD_DATA_REG);
 }
 
 static bool synth_xfer_input_ok(struct esp_device *esp, void *arg)

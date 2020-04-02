@@ -13,6 +13,8 @@
 
 #include "core/systems/esp_system.hpp"
 
+//#define COLLECT_LATENCY 0
+
 #ifdef CADENCE
 #include "synth_wrap.h"
 #endif
@@ -23,6 +25,16 @@ const size_t N_ACC = 12;
 class system_t : public esp_system<DMA_WIDTH, MEM_SIZE>
 {
 public:
+
+#ifdef COLLECT_LATENCY
+    put_get_channel<bool> load_chnl;
+    put_get_channel<bool> compute_chnl;
+    put_get_channel<bool> store_chnl;
+
+    nb_get_initiator<bool> load;
+    nb_get_initiator<bool> compute;
+    nb_get_initiator<bool> store;
+#endif
 
     // ACC instance
 #ifdef CADENCE
@@ -35,8 +47,18 @@ public:
     SC_HAS_PROCESS(system_t);
     system_t(sc_module_name name)
 	: esp_system<DMA_WIDTH, MEM_SIZE>(name)
-	{
-	    // ACC
+#ifdef COLLECT_LATENCY
+    , load("load")
+    , compute("compute")
+    , store("store")
+#endif
+    {
+#ifdef COLLECT_LATENCY
+        SC_CTHREAD(report_latency, clk.pos());
+        reset_signal_is(acc_rst, false);
+#endif
+        
+    // ACC
 #ifdef CADENCE
 	    acc = new synth_wrapper("synth_wrapper");
 #else
@@ -53,7 +75,21 @@ public:
 	    acc->conf_done(conf_done);
 	    acc->acc_done(acc_done);
 	    acc->debug(debug);
-	}
+#ifdef COLLECT_LATENCY
+        acc->load(load_chnl);
+        acc->compute(compute_chnl);
+        acc->store(store_chnl);
+        
+        this->load(load_chnl);
+        this->compute(compute_chnl);
+        this->store(store_chnl);
+
+        load.clk_rst(clk, rst);
+        compute.clk_rst(clk, rst);
+        store.clk_rst(clk, rst);
+#endif
+    
+    }
 
     // Processes
 
@@ -68,15 +104,24 @@ public:
 
     // Send configuration
     void send_config(int acc_id);
+    void load_memory_acc_id(int acc_id);
+    int validate_acc_id(int acc_id);
 
     // Dump internal memory
     void dump_memory();
+    void dump_memory_acc_id(int acc_id);
 
     // Validate accelerator results
     int validate();
+    sc_signal<int> acc_num;
+
+#ifdef COLLECT_LATENCY
+    void report_latency();
+#endif
 
     // Accelerator-specific data
-    
+    uint32_t *in;
+    uint32_t *out;
 
     // Other Functions
 
