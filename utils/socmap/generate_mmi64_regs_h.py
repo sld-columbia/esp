@@ -69,13 +69,13 @@ def main(argv):
   if soc.noc.monitor_mem.get() == 1:
     fp.write("#define MEM_offset " + str(ddr_offset) + "\n")
   mem_offset = ddr_offset + ((num_llc-1) * mem_mon_regs + mem_mon_regs) * soc.noc.monitor_mem.get()
-  if soc.noc.monitor_inj == 1:
+  if soc.noc.monitor_inj.get() == 1:
     fp.write("#define NOC_INJECT_offset " + str(mem_offset) + "\n")
   inj_offset = mem_offset + (((num_nocs-1) * num_tiles) + num_tiles) * soc.noc.monitor_inj.get()
   if soc.noc.monitor_routers.get() == 1:
     fp.write("#define NOC_QUEUES_offset " + str(inj_offset) + "\n")
   routers_offset = inj_offset + ((num_nocs-1) * num_tiles * directions + ((num_tiles-1) * directions) + directions) * soc.noc.monitor_routers.get()
-  if soc.noc.monitor_accelerators == 1:
+  if soc.noc.monitor_accelerators.get() == 1:
     fp.write("#define ACC_offset " + str(routers_offset) + "\n")
   accelerators_offset = routers_offset + ((num_acc-1) * acc_mon_regs + acc_mon_regs) * soc.noc.monitor_accelerators.get()
   if soc.noc.monitor_l2.get() == 1:
@@ -125,13 +125,13 @@ def main(argv):
     for y in range(soc.noc.cols):
       t = y + x * soc.noc.cols
       tiles[t] = soc.noc.topology[x][y]
-      if tiles[t].has_pll == 1:
+      if tiles[t].has_pll.get() == 1:
         pll_tile[tiles[t].clk_region] = t
   for x in range(len(tiles)):
     if x > 0:
       fp.write(",\n")
     fp.write("\t{" + str(x) + ", ")
-    selection = tiles[x].ip_type
+    selection = tiles[x].ip_type.get()
     tile_type = 0
     if soc.IPs.PROCESSORS.count(selection):
       tile_type = 1
@@ -143,9 +143,9 @@ def main(argv):
       tile_type = 3
     fp.write(str(tile_type) + ", ")
     fp.write("{" + str(tiles[x].row) + ", " + str(tiles[x].col) + "}, ")
-    fp.write("\"" + selection.get() + "\", ")
-    fp.write(str(tiles[x].has_pll) + ", ")
-    fp.write(str(tiles[x].clk_region) + ", ")
+    fp.write("\"" + selection + "\", ")
+    fp.write(str(tiles[x].has_pll.get()) + ", ")
+    fp.write(str(tiles[x].clk_region.get()) + ", ")
     if tiles[x].clk_region.get() > 0:
       fp.write(str(pll_tile[tiles[x].clk_region.get()]))
     else:
