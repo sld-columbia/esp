@@ -3,14 +3,31 @@
 # Copyright (c) 2011-2019 Columbia University, System Level Design Group
 # SPDX-License-Identifier: Apache-2.0
 
-from soc import *
-from NoCConfiguration import *
+import sys
+import soc as soclib
+import socmap_gen as socgen
+import NoCConfiguration as noclib 
 
-def create_mmi64_regs(soc):
+from tkinter import *
+
+def main(argv):
+
+  if len(sys.argv) != 4:
+    sys.exit(1)
+
+  root = Tk()
+  DMA_WIDTH = int(sys.argv[1])
+  TECH      = sys.argv[2]
+  LINUX_MAC = sys.argv[3]
+ 
   fp = open('mmi64_regs.h', 'w')
 
   fp.write("#ifndef __MMI64_REGS_H__\n")
   fp.write("#define __MMI64_REGS_H__\n\n")
+
+  soc = soclib.SoC_Config(DMA_WIDTH, TECH, LINUX_MAC)
+  soc.noc = noclib.NoC()
+  soc.read_config(False)
 
   num_nocs = 2
   num_acc = soc.noc.get_acc_num(soc)
@@ -52,13 +69,13 @@ def create_mmi64_regs(soc):
   if soc.noc.monitor_mem.get() == 1:
     fp.write("#define MEM_offset " + str(ddr_offset) + "\n")
   mem_offset = ddr_offset + ((num_llc-1) * mem_mon_regs + mem_mon_regs) * soc.noc.monitor_mem.get()
-  if soc.noc.monitor_inj.get() == 1:
+  if soc.noc.monitor_inj == 1:
     fp.write("#define NOC_INJECT_offset " + str(mem_offset) + "\n")
   inj_offset = mem_offset + (((num_nocs-1) * num_tiles) + num_tiles) * soc.noc.monitor_inj.get()
   if soc.noc.monitor_routers.get() == 1:
     fp.write("#define NOC_QUEUES_offset " + str(inj_offset) + "\n")
   routers_offset = inj_offset + ((num_nocs-1) * num_tiles * directions + ((num_tiles-1) * directions) + directions) * soc.noc.monitor_routers.get()
-  if soc.noc.monitor_accelerators.get() == 1:
+  if soc.noc.monitor_accelerators == 1:
     fp.write("#define ACC_offset " + str(routers_offset) + "\n")
   accelerators_offset = routers_offset + ((num_acc-1) * acc_mon_regs + acc_mon_regs) * soc.noc.monitor_accelerators.get()
   if soc.noc.monitor_l2.get() == 1:
@@ -108,13 +125,13 @@ def create_mmi64_regs(soc):
     for y in range(soc.noc.cols):
       t = y + x * soc.noc.cols
       tiles[t] = soc.noc.topology[x][y]
-      if tiles[t].has_pll.get() == 1:
-        pll_tile[tiles[t].clk_region.get()] = t
+      if tiles[t].has_pll == 1:
+        pll_tile[tiles[t].clk_region] = t
   for x in range(len(tiles)):
     if x > 0:
       fp.write(",\n")
     fp.write("\t{" + str(x) + ", ")
-    selection = tiles[x].ip_type.get()
+    selection = tiles[x].ip_type
     tile_type = 0
     if soc.IPs.PROCESSORS.count(selection):
       tile_type = 1
@@ -126,9 +143,9 @@ def create_mmi64_regs(soc):
       tile_type = 3
     fp.write(str(tile_type) + ", ")
     fp.write("{" + str(tiles[x].row) + ", " + str(tiles[x].col) + "}, ")
-    fp.write("\"" + selection + "\", ")
-    fp.write(str(tiles[x].has_pll.get()) + ", ")
-    fp.write(str(tiles[x].clk_region.get()) + ", ")
+    fp.write("\"" + selection.get() + "\", ")
+    fp.write(str(tiles[x].has_pll) + ", ")
+    fp.write(str(tiles[x].clk_region) + ", ")
     if tiles[x].clk_region.get() > 0:
       fp.write(str(pll_tile[tiles[x].clk_region.get()]))
     else:
@@ -140,3 +157,7 @@ def create_mmi64_regs(soc):
 
   fp.close()
   print("Created configuration into 'mmi64_regs.h'")
+
+if __name__ == "__main__":
+    main(sys.argv)
+

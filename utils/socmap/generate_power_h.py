@@ -1,16 +1,32 @@
 #!/usr/bin/env python3
 
-# Copyright (c) 2011-2019 Columbia University, System Level Design Group
+# Copyright (c) 2011-2020 Columbia University, System Level Design Group
 # SPDX-License-Identifier: Apache-2.0
 
-from soc import *
-from NoCConfiguration import *
+import sys
+import soc as soclib
+import NoCConfiguration as noclib 
 
-def create_power(soc):
+from tkinter import *
+
+def main(argv):
+
+  if len(sys.argv) != 4:
+    sys.exit(1)
+
+  root = Tk()
+  DMA_WIDTH = int(sys.argv[1])
+  TECH      = sys.argv[2]
+  LINUX_MAC = sys.argv[3]
+  
   fp = open('power.h', 'w')
 
   fp.write("#ifndef __POWER_H__\n")
   fp.write("#define __POWER_H__\n\n")
+
+  soc = soclib.SoC_Config(DMA_WIDTH, TECH, LINUX_MAC)
+  soc.noc = noclib.NoC()
+  soc.read_config(False) 
 
   vf_points = soc.noc.vf_points
 
@@ -63,4 +79,7 @@ def create_power(soc):
 
   fp.close()
   print("Created configuration into 'power.h'")
+
+if __name__ == "__main__":
+    main(sys.argv)
 

@@ -222,6 +222,13 @@ esp-xconfig: grlib_config.vhd
 	@echo ""
 	@echo "Running interactive ESP configuration..."
 	@python3 $(ESP_ROOT)/utils/socmap/esp_creator.py $(NOC_WIDTH) $(TECHLIB) $(LINUX_MAC)
+	@python3 $(ESP_ROOT)/utils/socmap/generate_socmap_vhd.py $(NOC_WIDTH) $(TECHLIB) $(LINUX_MAC)
+	@python3 $(ESP_ROOT)/utils/socmap/generate_power_h.py $(NOC_WIDTH) $(TECHLIB) $(LINUX_MAC)
+	@python3 $(ESP_ROOT)/utils/socmap/generate_mmi64_regs_h.py $(NOC_WIDTH) $(TECHLIB) $(LINUX_MAC)
+	@python3 $(ESP_ROOT)/utils/socmap/generate_cache_config_svh.py $(NOC_WIDTH) $(TECHLIB) $(LINUX_MAC)
+	@python3 $(ESP_ROOT)/utils/socmap/generate_esp_global_vhd.py $(NOC_WIDTH) $(TECHLIB) $(LINUX_MAC)
+	@python3 $(ESP_ROOT)/utils/socmap/generate_mem_tile_floorplanning_xdc.py $(NOC_WIDTH) $(TECHLIB) $(LINUX_MAC)
+	@python3 $(ESP_ROOT)/utils/socmap/generate_ariane_dts.py $(NOC_WIDTH) $(TECHLIB) $(LINUX_MAC)
 
 esp-config-clean:
 	$(QUIET_CLEAN)$(RM) \

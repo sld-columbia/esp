@@ -19,8 +19,6 @@ from subprocess import Popen, PIPE
 from NoCConfiguration import *
 from soc import *
 from socmap_gen import *
-from mmi64_gen import *
-from power_gen import *
 
 def print_usage():
   print("Usage                    : ./esp_creator.py <dma_width> <tech> <MAC>")
@@ -233,8 +231,6 @@ class EspCreator(Frame):
   def generate_files(self):
     self.bottom_frame_noccfg.changed()
     self.generate_socmap()
-    self.generate_mmi64_regs()
-    self.generate_power()
     if os.path.isfile(".esp_config.bak") == True:
       shutil.move(".esp_config.bak", ".esp_config")
 
@@ -246,14 +242,7 @@ class EspCreator(Frame):
     self.soc.noc.vf_points = int(self.bottom_frame_noccfg.vf_points_entry.get())
     self.soc.write_config()
     esp_config = soc_config(soc)
-    create_socmap(esp_config, soc)
  
-  def generate_power(self):
-      create_power(soc)
-
-  def generate_mmi64_regs(self):
-      create_mmi64_regs(soc)
-
 if len(sys.argv) != 4:
     print_usage()
     sys.exit(1)
