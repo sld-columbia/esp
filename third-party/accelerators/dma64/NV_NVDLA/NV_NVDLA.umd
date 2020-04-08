@@ -1,3 +1,3 @@
-umd/out/runtime/libnvdla_runtime/libnvdla_runtime.so
-umd/out/runtime/nvdla_runtime/nvdla_runtime
+umd/out/core/src/runtime/libnvdla_runtime/libnvdla_runtime.so
+umd/out/apps/runtime/nvdla_runtime/nvdla_runtime
 regression/flatbufs/kmd/CONV/CONV_D_L0_0_small_fbuf

@@ -37,7 +37,7 @@ vmod-clean:
 ## User-space application and libraries ##
 umd:
 	@cd $(SW_PATH)/umd; \
-	$(MAKE) TOOLCHAIN_PREFIX=$(CROSS_COMPILE) TOP=$(SW_PATH)/umd
+	$(MAKE) TOOLCHAIN_PREFIX=$(CROSS_COMPILE) TOP=$(SW_PATH)/umd runtime
 
 umd-clean:
 	@cd $(SW_PATH)/umd; \

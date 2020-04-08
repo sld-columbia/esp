@@ -117,13 +117,14 @@ THIRDPARTY_APB_ADDR_MSK = dict()
 THIRDPARTY_APB_ADDR_SIZE = dict()
 THIRDPARTY_MEM_RESERVED_ADDR = dict()
 THIRDPARTY_MEM_RESERVED_SIZE = dict()
+THIRDPARTY_COMPATIBLE = dict()
 
 THIRDPARTY_APB_ADDR["nv_nvdla"] = 0x400
 THIRDPARTY_APB_ADDR_MSK["nv_nvdla"] = 0xC00
 THIRDPARTY_APB_ADDR_SIZE["nv_nvdla"] = 0x40000
 THIRDPARTY_MEM_RESERVED_ADDR["nv_nvdla"] = 0xB0000000
 THIRDPARTY_MEM_RESERVED_SIZE["nv_nvdla"] = 0x10000000
-
+THIRDPARTY_COMPATIBLE["nv_nvdla"] = "nv_small"
 
 class acc_info:
   uppercase_name = ""
@@ -1544,7 +1545,7 @@ def print_ariane_devtree(fp, esp_config):
       address = format(THIRDPARTY_APB_ADDR[acc.lowercase_name], "03x")
       size = hex(THIRDPARTY_APB_ADDR_SIZE[acc.lowercase_name])
     fp.write("    " + acc.lowercase_name + "@" + format(AHB2APB_HADDR[esp_config.cpu_arch], '03x') + str(address) + "00 {\n")
-    fp.write("      compatible = \"" + acc.vendor + "," + acc.lowercase_name + "\";\n")
+    fp.write("      compatible = \"" + acc.vendor + "," + THIRDPARTY_COMPATIBLE[acc.lowercase_name] + "\";\n")
     fp.write("      reg = <0x0 0x" + format(AHB2APB_HADDR[esp_config.cpu_arch], '03X') + str(address) + "00 0x0 " + size + ">;\n")
     fp.write("      interrupt-parent = <&PLIC0>;\n")
     fp.write("      interrupts = <" + str(acc.irq + 1) + ">;\n")
