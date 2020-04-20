@@ -36,9 +36,11 @@ leon3_test(int domp, int *irqmp, int mtest)
 
     report_test(TEST_MUL);
     multest();
+    if (!pid) printf("Finished multest.\n");
 
     report_test(TEST_DIV);
     divtest();
+    if (!pid) printf("Finished divtest.\n");
 
     /* //report_test(TEST_FPU); */
     /* //fputest(); */
@@ -47,10 +49,13 @@ leon3_test(int domp, int *irqmp, int mtest)
 
     report_test(TEST_FILL_B);
     cache_fill(4, ncpu, BYTE);
+    if (!pid) printf("Finished cache_fill with BYTE granularity.\n");
     report_test(TEST_FILL_HW);
     cache_fill(4, ncpu, HALFWORD);
+    if (!pid) printf("Finished cache_fill with HALFWORD granularity.\n");
     report_test(TEST_FILL_W);
     cache_fill(4, ncpu, WORD);
+    if (!pid) printf("Finished cache_fill with WORD granularity.\n");
     
     report_test(TEST_SHARING);
     false_sharing(20, ncpu);
@@ -60,12 +65,15 @@ leon3_test(int domp, int *irqmp, int mtest)
 
     report_test(TEST_LOCK);
     test_lock(100, ncpu);
+    if (!pid) printf("Finished test_lock.\n");
 
     report_test(TEST_MESI);
     mesi_test(ncpu, 1);
+    if (!pid) printf("Finished mesi_test.\n");
 
     report_test(TEST_RAND_RW);
     rand_rw(200, ncpu);
+    if (!pid) printf("Finished rand_rw.\n");
     
     /* End of TESTS */
     
