@@ -454,8 +454,9 @@ begin
         apb_req     => apb_req,
         apb_ack     => apb_ack);
 
-    -- TODO: find a way to flag end of program from Ariane as well.
-    cpuerr <= '0';
+    -- exit() writes to this address right before completing the program
+    -- Next instruction is a jump to current PC.
+    cpuerr <= '1' when mosi(1).aw.addr = X"80001000" and mosi(1).aw.valid = '1' else '0';
 
   end generate ariane_cpu_gen;
 
