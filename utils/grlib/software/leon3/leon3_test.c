@@ -48,13 +48,13 @@ leon3_test(int domp, int *irqmp, int mtest)
     if (!pid) data_structures_setup();
 
     report_test(TEST_FILL_B);
-    cache_fill(4, ncpu, BYTE);
+    cache_fill(L2_WAYS, ncpu, BYTE);
     if (!pid) printf("Finished cache_fill with BYTE granularity.\n");
     report_test(TEST_FILL_HW);
-    cache_fill(4, ncpu, HALFWORD);
+    cache_fill(L2_WAYS, ncpu, HALFWORD);
     if (!pid) printf("Finished cache_fill with HALFWORD granularity.\n");
     report_test(TEST_FILL_W);
-    cache_fill(4, ncpu, WORD);
+    cache_fill(L2_WAYS, ncpu, WORD);
     if (!pid) printf("Finished cache_fill with WORD granularity.\n");
     
     report_test(TEST_SHARING);
