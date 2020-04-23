@@ -567,7 +567,7 @@ class NoCFrame(Pmw.ScrolledFrame):
     self.message.delete(0.0, END)
     self.cfg_frame.sync_label.config(text="With synchronizers",fg="darkgreen")
     self.cfg_frame.set_cpu_specific_labels(self.soc)
-    if tot_cpu <= NCPU_MAX and tot_mem > 0 and tot_mem <= NMEM_MAX and tot_acc <= NACC_MAX and not tot_mem == 3 and tot_io == 1 and pll_ok == True and clkbuf_ok == True and clk_region_skip == 0 and tot_tiles <= NTILE_MAX and tot_full_coherent <= NFULL_COHERENT_MAX and tot_llc_coherent <= NLLC_COHERENT_MAX and not (self.soc.TECH != "virtexu" and tot_mem == 4) and not (tot_mem >= 2 and (self.noc.rows < 3 or self.noc.cols < 3)) and (self.noc.cols <= 8 and self.noc.rows <= 8) and (self.soc.CPU_ARCH.get() != "ariane" or tot_cpu <= 1) and (self.soc.CPU_ARCH.get() != "ariane" or not self.soc.cache_en.get()) and (tot_cpu <= 1 or self.soc.cache_en.get()) and (self.soc.llc_sets.get() < 4096 or self.soc.llc_ways.get() < 16 or tot_mem > 1):
+    if tot_cpu <= NCPU_MAX and tot_mem > 0 and tot_mem <= NMEM_MAX and tot_acc <= NACC_MAX and not tot_mem == 3 and tot_io == 1 and pll_ok == True and clkbuf_ok == True and clk_region_skip == 0 and tot_tiles <= NTILE_MAX and tot_full_coherent <= NFULL_COHERENT_MAX and tot_llc_coherent <= NLLC_COHERENT_MAX and not (self.soc.TECH != "virtexu" and tot_mem == 4) and not (self.soc.TECH == "virtexu" and tot_mem >= 2 and (self.noc.rows < 3 or self.noc.cols < 3)) and (self.noc.cols <= 8 and self.noc.rows <= 8) and (self.soc.CPU_ARCH.get() != "ariane" or tot_cpu <= 1) and (self.soc.CPU_ARCH.get() != "ariane" or not self.soc.cache_en.get()) and (tot_cpu <= 1 or self.soc.cache_en.get()): 
       self.done.config(state=NORMAL)
     else:
       string = ""
@@ -594,10 +594,8 @@ class NoCFrame(Pmw.ScrolledFrame):
         string += "Number of memory tiles must be a power of 2.\n" 
       if (self.soc.TECH != "virtexu" and tot_mem == 4): 
         string += "4 memory tiles is only supported for virtexu (profpga-xcvu440).\n"
-      if (self.soc.llc_sets.get() >= 4096 and self.soc.llc_ways.get() >= 16 and tot_mem == 1): 
-        string += "A 1MB LLC (4096 sets and 16 ways) requires multiple memory tiles.\n"
-      if (tot_mem >= 2 and (self.noc.rows < 3 or self.noc.cols < 3)):
-        string += "a 3x3 NoC or larger is recommended for multiple memory tiles.\n" 
+      if (self.soc.TECH == "virtexu" and tot_mem >= 2 and (self.noc.rows < 3 or self.noc.cols < 3)):
+        string += "a 3x3 NoC or larger is recommended for multiple memory tiles for virtexu (profpga-xcvu440).\n" 
       if (tot_acc > NACC_MAX):
         string += "There must no more than " + str(NACC_MAX) + " (can be relaxed).\n"
       if (tot_tiles > NTILE_MAX):
