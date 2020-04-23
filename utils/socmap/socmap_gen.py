@@ -112,19 +112,28 @@ SLD_APB_ADDR_MSK = 0xfff
 
 # third-party APB address and mask
 # Hard-coded to ensure reserved addresses cover all configuration registers
+THIRDPARTY_N = dict()
+THIRDPARTY_APB_EXT_ADDR = dict()
+THIRDPARTY_APB_EXT_ADDR_SIZE = dict()
 THIRDPARTY_APB_ADDR = dict()
-THIRDPARTY_APB_ADDR_MSK = dict()
 THIRDPARTY_APB_ADDR_SIZE = dict()
 THIRDPARTY_MEM_RESERVED_ADDR = dict()
 THIRDPARTY_MEM_RESERVED_SIZE = dict()
 THIRDPARTY_COMPATIBLE = dict()
 
-THIRDPARTY_APB_ADDR["nv_nvdla"] = 0x400
-THIRDPARTY_APB_ADDR_MSK["nv_nvdla"] = 0xC00
-THIRDPARTY_APB_ADDR_SIZE["nv_nvdla"] = 0x40000
+# If APB EXT ADDR SIZE is not zero, then APB mask will be applied to
+# the extended address Each device instance will reserve EXT SIZE
+# bytes in the address space, even if a signle instance would take
+# less. This is to simplify (hence speedup) APB decode.  APB_ADDR_SIZE
+# will still be used to generate the device tree.
+THIRDPARTY_N["nv_nvdla"] = 0
+THIRDPARTY_APB_EXT_ADDR["nv_nvdla"]      = 0x100000
+THIRDPARTY_APB_EXT_ADDR_SIZE["nv_nvdla"] = 0x100000
+THIRDPARTY_APB_ADDR["nv_nvdla"]          = 0x0
+THIRDPARTY_APB_ADDR_SIZE["nv_nvdla"]     = 0x40000
 THIRDPARTY_MEM_RESERVED_ADDR["nv_nvdla"] = 0xB0000000
 THIRDPARTY_MEM_RESERVED_SIZE["nv_nvdla"] = 0x10000000
-THIRDPARTY_COMPATIBLE["nv_nvdla"] = "nv_small"
+THIRDPARTY_COMPATIBLE["nv_nvdla"]        = "nv_small"
 
 class acc_info:
   uppercase_name = ""
@@ -671,6 +680,7 @@ def print_mapping(fp, esp_config):
 
   #
   fp.write("  -- Interrupt controller (Architecture-dependent)\n")
+  fp.write("  -- RISC-V PLIC is using the extended APB address space\n")
   fp.write("  constant irqmp_pconfig : apb_config_type := (\n")
   if esp_config.cpu_arch == "leon3":
     fp.write("  0 => ahb_device_reg ( VENDOR_GAISLER, GAISLER_IRQMP, 0, 3, 0),\n")
@@ -678,7 +688,6 @@ def print_mapping(fp, esp_config):
   elif esp_config.cpu_arch == "ariane":
     fp.write("  0 => ahb_device_reg ( VENDOR_SIFIVE, SIFIVE_PLIC0, 0, 3, 0),\n")
     fp.write("  1 => apb_iobar(16#C00#, 16#800#));\n\n")
-    fp.write("  -- RISC-V PLIC is using the extended APB address space\n")
 
   #
   fp.write("  -- Timer (GRLIB)\n")
@@ -759,24 +768,49 @@ def print_mapping(fp, esp_config):
   #
   fp.write("  -- Accelerators\n")
   fp.write("  constant accelerators_num : integer := " + str(esp_config.nacc) + ";\n\n")
+  # Reset all THIRDPARTY accelerators counters
+  for key in THIRDPARTY_N:
+    THIRDPARTY_N[key] = 0
+
   for i in range(esp_config.nacc):
     acc = esp_config.accelerators[i]
     fp.write("  -- Accelerator " + str(acc.id) + "\n")
-    if acc.vendor == "sld":
-      address = format(SLD_APB_ADDR + acc.idx, "03X")
-      msk = format(SLD_APB_ADDR_MSK, "03X")
-    else:
-      address = format(THIRDPARTY_APB_ADDR[acc.lowercase_name], "03X")
-      msk = format(THIRDPARTY_APB_ADDR_MSK[acc.lowercase_name], "03X")
-    fp.write("  -- APB " + str(acc.idx) + ": 0x800" + address + "00 - 0x800" + str(address) + "FF\n")
+    fp.write("  -- APB " + str(acc.idx) + "\n")
     fp.write("  -- " + acc.uppercase_name + "\n")
+
+    if acc.vendor == "sld":
+      address = SLD_APB_ADDR + acc.idx
+      address_str = format(address, "03X")
+      msk = SLD_APB_ADDR_MSK
+    else:
+      n = THIRDPARTY_N[acc.lowercase_name]
+      # Compute base address
+      if THIRDPARTY_APB_EXT_ADDR[acc.lowercase_name] == 0:
+        # Use part of standard APB address space
+        address = THIRDPARTY_APB_ADDR[acc.lowercase_name] + n * THIRDPARTY_APB_ADDR_SIZE[acc.lowercase_name]
+        address_str = format(address >> 8, "03X")
+        size = THIRDPARTY_APB_ADDR_SIZE[acc.lowercase_name]
+        msk = 0xfff & ~((size >> 8) - 1)
+      else:
+        fp.write("  -- Using extended APB address\n")
+        # Use extended APB address space (large number of registers)
+        address = THIRDPARTY_APB_EXT_ADDR[acc.lowercase_name] + n * THIRDPARTY_APB_EXT_ADDR_SIZE[acc.lowercase_name]
+        address_str = format(address >> 20, "03X")
+        size = THIRDPARTY_APB_EXT_ADDR_SIZE[acc.lowercase_name]
+        msk = 0xfff & ~((size >> 20) - 1)
+
+      # Increment count
+      THIRDPARTY_N[acc.lowercase_name] = n + 1;
+
+    msk_str = format(msk, "03X")
+
     fp.write("  constant " + acc.lowercase_name + "_" + str(acc.id) + "_pindex : integer range 0 to NAPBSLV - 1 := " + str(acc.idx) + ";\n")
     fp.write("  constant " + acc.lowercase_name + "_" + str(acc.id) + "_pirq : integer range 0 to NAHBIRQ - 1 := " + str(acc.irq) + ";\n")
-    fp.write("  constant " + acc.lowercase_name + "_" + str(acc.id) + "_paddr : integer range 0 to 4095 := 16#" + str(address) + "#;\n")
-    fp.write("  constant " + acc.lowercase_name + "_" + str(acc.id) + "_pmask : integer range 0 to 4095 := 16#" + str(msk) + "#;\n")
+    fp.write("  constant " + acc.lowercase_name + "_" + str(acc.id) + "_paddr : integer range 0 to 4095 := 16#" + str(address_str) + "#;\n")
+    fp.write("  constant " + acc.lowercase_name + "_" + str(acc.id) + "_pmask : integer range 0 to 4095 := 16#" + str(msk_str) + "#;\n")
     fp.write("  constant " + acc.lowercase_name + "_" + str(acc.id) + "_pconfig : apb_config_type := (\n")
     fp.write("  0 => ahb_device_reg (VENDOR_SLD, SLD_" + acc.uppercase_name + ", 0, 0, " + str(acc.irq) + "),\n")
-    fp.write("  1 => apb_iobar(16#" + address + "#, 16#" + msk  + "#));\n\n")
+    fp.write("  1 => apb_iobar(16#" + address_str + "#, 16#" + msk_str  + "#));\n\n")
 
   #
   fp.write("  -- I/O bus slaves index / memory map\n")
@@ -1463,7 +1497,9 @@ def print_ariane_devtree(fp, esp_config):
   fp.write("    };\n")
   for i in range(esp_config.nacc):
     acc = esp_config.accelerators[i]
-    if acc.vendor != "sld":
+    if acc.vendor != "sld" and THIRDPARTY_N[acc.lowercase_name] != 0:
+      # Add only one memory region for all instances (shared by one driver module)
+      THIRDPARTY_N[acc.lowercase_name] = 0
       mem_address = format(THIRDPARTY_MEM_RESERVED_ADDR[acc.lowercase_name], "08X")
       mem_size = format(THIRDPARTY_MEM_RESERVED_SIZE[acc.lowercase_name], "08X")
       fp.write("\n")
@@ -1538,15 +1574,32 @@ def print_ariane_devtree(fp, esp_config):
 
   for i in range(esp_config.nacc):
     acc = esp_config.accelerators[i]
+    base = AHB2APB_HADDR[esp_config.cpu_arch] << 20
     if acc.vendor == "sld":
-      address = format(SLD_APB_ADDR + acc.idx, "03x")
+      address = base + ((SLD_APB_ADDR + acc.idx) << 8)
       size = "0x100"
     else:
-      address = format(THIRDPARTY_APB_ADDR[acc.lowercase_name], "03x")
-      size = hex(THIRDPARTY_APB_ADDR_SIZE[acc.lowercase_name])
-    fp.write("    " + acc.lowercase_name + "@" + format(AHB2APB_HADDR[esp_config.cpu_arch], '03x') + str(address) + "00 {\n")
+      n = THIRDPARTY_N[acc.lowercase_name]
+      # Compute base address
+      if THIRDPARTY_APB_EXT_ADDR[acc.lowercase_name] == 0:
+        # Use part of standard APB address space
+        address = base + THIRDPARTY_APB_ADDR[acc.lowercase_name] + n * THIRDPARTY_APB_ADDR_SIZE[acc.lowercase_name]
+      else:
+        # Use extended APB address space (large number of registers)
+        address = base + THIRDPARTY_APB_EXT_ADDR[acc.lowercase_name] + n * THIRDPARTY_APB_EXT_ADDR_SIZE[acc.lowercase_name]
+
+      # Extended size might not be needed for one instance
+      size = THIRDPARTY_APB_ADDR_SIZE[acc.lowercase_name]
+
+      # Increment count
+      THIRDPARTY_N[acc.lowercase_name] = n + 1;
+
+    address_str = format(address, "08X")
+    size_str = format(size, "08X")
+
+    fp.write("    " + acc.lowercase_name + "@" + address_str + " {\n")
     fp.write("      compatible = \"" + acc.vendor + "," + THIRDPARTY_COMPATIBLE[acc.lowercase_name] + "\";\n")
-    fp.write("      reg = <0x0 0x" + format(AHB2APB_HADDR[esp_config.cpu_arch], '03X') + str(address) + "00 0x0 " + size + ">;\n")
+    fp.write("      reg = <0x0 0x" + address_str + " 0x0 0x" + size_str + ">;\n")
     fp.write("      interrupt-parent = <&PLIC0>;\n")
     fp.write("      interrupts = <" + str(acc.irq + 1) + ">;\n")
     fp.write("      reg-shift = <2>; // regs are spaced on 32 bit boundary\n")
