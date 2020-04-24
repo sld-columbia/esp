@@ -124,8 +124,7 @@ THIRDPARTY_COMPATIBLE = dict()
 # If APB EXT ADDR SIZE is not zero, then APB mask will be applied to
 # the extended address Each device instance will reserve EXT SIZE
 # bytes in the address space, even if a signle instance would take
-# less. This is to simplify (hence speedup) APB decode.  APB_ADDR_SIZE
-# will still be used to generate the device tree.
+# less. This is to simplify (hence speedup) APB decode.
 # APB EXT ADDR most significant hex digit (i.e. digit 7) must be 0
 THIRDPARTY_N["nv_nvdla"] = 0
 THIRDPARTY_APB_EXT_ADDR["nv_nvdla"]      = 0x00100000
@@ -1614,35 +1613,35 @@ def print_ariane_devtree(fp, esp_config):
     base = AHB2APB_HADDR[esp_config.cpu_arch] << 20
     if acc.vendor == "sld":
       address = base + ((SLD_APB_ADDR + acc.idx) << 8)
-      size = "0x100"
+      size = 0x100
     else:
       n = THIRDPARTY_N[acc.lowercase_name]
       # Compute base address
       if THIRDPARTY_APB_EXT_ADDR[acc.lowercase_name] == 0:
         # Use part of standard APB address space
         address = base + THIRDPARTY_APB_ADDR[acc.lowercase_name] + n * THIRDPARTY_APB_ADDR_SIZE[acc.lowercase_name]
+        size = THIRDPARTY_APB_ADDR_SIZE[acc.lowercase_name]
       else:
         # Use extended APB address space (large number of registers)
         address = base + THIRDPARTY_APB_EXT_ADDR[acc.lowercase_name] + n * THIRDPARTY_APB_EXT_ADDR_SIZE[acc.lowercase_name]
-
-      # Extended size might not be needed for one instance
-      size = THIRDPARTY_APB_ADDR_SIZE[acc.lowercase_name]
+        size = THIRDPARTY_APB_EXT_ADDR_SIZE[acc.lowercase_name]
 
       # Increment count
       THIRDPARTY_N[acc.lowercase_name] = n + 1;
 
-    address_str = format(address, "08X")
-    size_str = format(size, "08X")
+    address_str = format(address, "X")
+    size_str = format(size, "X")
 
     fp.write("    " + acc.lowercase_name + "@" + address_str + " {\n")
-    fp.write("      compatible = \"" + acc.vendor + "," + THIRDPARTY_COMPATIBLE[acc.lowercase_name] + "\";\n")
+    fp.write("      compatible = \"" + acc.vendor + "," + acc.lowercase_name + "\";\n")
     fp.write("      reg = <0x0 0x" + address_str + " 0x0 0x" + size_str + ">;\n")
     fp.write("      interrupt-parent = <&PLIC0>;\n")
     fp.write("      interrupts = <" + str(acc.irq + 1) + ">;\n")
     fp.write("      reg-shift = <2>; // regs are spaced on 32 bit boundary\n")
     fp.write("      reg-io-width = <4>; // only 32-bit access are supported\n")
     if acc.vendor != "sld":
-      fp.write("      memory-region = <&" + acc.lowercase_name + "_reserved>;\n")
+      if THIRDPARTY_MEM_RESERVED_SIZE[acc.lowercase_name] != 0:
+        fp.write("      memory-region = <&" + acc.lowercase_name + "_reserved>;\n")
     fp.write("    };\n")
   fp.write("  };\n")
   fp.write("};\n")
