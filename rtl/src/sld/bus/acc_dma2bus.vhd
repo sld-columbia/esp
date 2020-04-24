@@ -79,7 +79,8 @@ architecture rtl of acc_dma2bus is
   -- APB interface signals and constants
   constant pconfig : apb_config_type := (
     0 => ahb_device_reg (VENDOR_SLD, devid, 0, revision, pirq),
-    1 => apb_iobar(paddr, pmask));
+    1 => apb_iobar(paddr, pmask),
+2 => (others => '0'));
   -- AHB interface signals and constants
   constant hconfig : ahb_config_type := (
   0 => ahb_device_reg (VENDOR_SLD, devid, 0, REVISION, 0),

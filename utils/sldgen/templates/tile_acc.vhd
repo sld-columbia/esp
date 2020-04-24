@@ -124,6 +124,8 @@ architecture rtl of tile_acc is
   constant this_pindex         : integer                            := tile_apb_idx(tile_id);
   constant this_paddr          : integer                            := tile_apb_paddr(tile_id);
   constant this_pmask          : integer                            := tile_apb_pmask(tile_id);
+  constant this_paddr_ext      : integer                            := tile_apb_paddr_ext(tile_id);
+  constant this_pmask_ext      : integer                            := tile_apb_pmask_ext(tile_id);
   constant this_pirq           : integer                            := tile_apb_irq(tile_id);
   constant this_scatter_gather : integer range 0 to 1               := tile_scatter_gather(tile_id);
   constant this_local_apb_mask : std_logic_vector(0 to NAPBSLV - 1) := local_apb_mask(tile_id);

@@ -87,7 +87,8 @@ architecture rtl of spi2ahb_apb is
   -- AMBA PnP
   constant PCONFIG : apb_config_type := (
     0 => ahb_device_reg(VENDOR_GAISLER, GAISLER_SPI2AHB, 0, 0, 0),
-    1 => apb_iobar(paddr, pmask));
+    1 => apb_iobar(paddr, pmask),
+    2 => (others => '0'));
 
   type apb_reg_type is record
     spi2ahbi : spi2ahb_in_type;

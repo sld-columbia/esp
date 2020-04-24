@@ -35,7 +35,8 @@ architecture struct of ahbdma is
 
 constant pconfig : apb_config_type := (
   0 => ahb_device_reg ( VENDOR_GAISLER, GAISLER_AHBDMA, 0, 0, pirq),
-  1 => apb_iobar(paddr, pmask));
+  1 => apb_iobar(paddr, pmask),
+2 => (others => '0'));
 
 type dma_state_type is (readc, writec);
 subtype word32 is std_logic_vector(31 downto 0);

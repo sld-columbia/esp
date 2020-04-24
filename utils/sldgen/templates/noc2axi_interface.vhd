@@ -35,6 +35,8 @@ use std.textio.all;
     pindex         : integer := 0;
     paddr          : integer := 0;
     pmask          : integer := 16#fff#;
+    paddr_ext      : integer := 0;
+    pmask_ext      : integer := 16#fff#;
     pirq           : integer := 0;
     scatter_gather : integer := 1;
     sets           : integer := 256;
@@ -123,7 +125,8 @@ end;
   -- <<devid>>
   constant pconfig : apb_config_type := (
     0 => ahb_device_reg (vendorid, devid, 0, revision, pirq),
-    1 => apb_iobar(paddr, pmask));
+    1 => apb_iobar(paddr, pmask),
+    2 => apb_iobar(paddr_ext, pmask_ext));
   signal apbi_paddr : std_logic_vector(31 downto 0);
 
   -- IRQ

@@ -126,11 +126,12 @@ THIRDPARTY_COMPATIBLE = dict()
 # bytes in the address space, even if a signle instance would take
 # less. This is to simplify (hence speedup) APB decode.  APB_ADDR_SIZE
 # will still be used to generate the device tree.
+# APB EXT ADDR most significant hex digit (i.e. digit 7) must be 0
 THIRDPARTY_N["nv_nvdla"] = 0
-THIRDPARTY_APB_EXT_ADDR["nv_nvdla"]      = 0x100000
-THIRDPARTY_APB_EXT_ADDR_SIZE["nv_nvdla"] = 0x100000
-THIRDPARTY_APB_ADDR["nv_nvdla"]          = 0x0
-THIRDPARTY_APB_ADDR_SIZE["nv_nvdla"]     = 0x40000
+THIRDPARTY_APB_EXT_ADDR["nv_nvdla"]      = 0x00100000
+THIRDPARTY_APB_EXT_ADDR_SIZE["nv_nvdla"] = 0x00100000
+THIRDPARTY_APB_ADDR["nv_nvdla"]          = 0x00000000
+THIRDPARTY_APB_ADDR_SIZE["nv_nvdla"]     = 0x00040000
 THIRDPARTY_MEM_RESERVED_ADDR["nv_nvdla"] = 0xB0000000
 THIRDPARTY_MEM_RESERVED_SIZE["nv_nvdla"] = 0x10000000
 THIRDPARTY_COMPATIBLE["nv_nvdla"]        = "nv_small"
@@ -676,7 +677,8 @@ def print_mapping(fp, esp_config):
   fp.write("  -- UART (GRLIB)\n")
   fp.write("  constant uart_pconfig : apb_config_type := (\n")
   fp.write("  0 => ahb_device_reg ( VENDOR_GAISLER, GAISLER_APBUART, 0, 1, CFG_UART1_IRQ),\n")
-  fp.write("  1 => apb_iobar(16#001#, 16#fff#));\n\n")
+  fp.write("  1 => apb_iobar(16#001#, 16#fff#),\n")
+  fp.write("  2 => (others => '0'));\n\n")
 
   #
   fp.write("  -- Interrupt controller (Architecture-dependent)\n")
@@ -684,40 +686,47 @@ def print_mapping(fp, esp_config):
   fp.write("  constant irqmp_pconfig : apb_config_type := (\n")
   if esp_config.cpu_arch == "leon3":
     fp.write("  0 => ahb_device_reg ( VENDOR_GAISLER, GAISLER_IRQMP, 0, 3, 0),\n")
-    fp.write("  1 => apb_iobar(16#002#, 16#fff#));\n\n")
+    fp.write("  1 => apb_iobar(16#002#, 16#fff#),\n")
+    fp.write("  2 => (others => '0'));\n\n")
   elif esp_config.cpu_arch == "ariane":
     fp.write("  0 => ahb_device_reg ( VENDOR_SIFIVE, SIFIVE_PLIC0, 0, 3, 0),\n")
-    fp.write("  1 => apb_iobar(16#C00#, 16#800#));\n\n")
+    fp.write("  1 => apb_iobar(16#000#, 16#000#),\n")
+    fp.write("  2 => apb_iobar(16#0C0#, 16#FC0#));\n\n")
 
   #
   fp.write("  -- Timer (GRLIB)\n")
   fp.write("  constant gptimer_pconfig : apb_config_type := (\n")
   fp.write("  0 => ahb_device_reg (VENDOR_GAISLER, GAISLER_GPTIMER, 0, 1, CFG_GPT_IRQ),\n")
-  fp.write("  1 => apb_iobar(16#003#, 16#fff#));\n\n")
+  fp.write("  1 => apb_iobar(16#003#, 16#fff#),\n")
+  fp.write("  2 => (others => '0'));\n\n")
 
   #
   fp.write("  -- ESPLink\n")
   fp.write("  constant esplink_pconfig : apb_config_type := (\n")
   fp.write("  0 => ahb_device_reg (VENDOR_SLD, SLD_ESPLINK, 0, 0, 0),\n")
-  fp.write("  1 => apb_iobar(16#004#, 16#fff#));\n\n")
+  fp.write("  1 => apb_iobar(16#004#, 16#fff#),\n")
+  fp.write("  2 => (others => '0'));\n\n")
 
   #
   fp.write("  -- SVGA controler (GRLIB)\n")
   if esp_config.has_svga:
     fp.write("  constant svga_pconfig : apb_config_type := (\n")
     fp.write("  0 => ahb_device_reg (VENDOR_GAISLER, GAISLER_SVGACTRL, 0, 0, 0),\n")
-    fp.write("  1 => apb_iobar(16#006#, 16#fff#));\n\n")
+    fp.write("  1 => apb_iobar(16#006#, 16#fff#),\n")
+    fp.write("  2 => (others => '0'));\n\n")
 
   #
   fp.write("  -- Ethernet MAC (GRLIB)\n")
   if esp_config.has_eth:
     fp.write("  constant eth0_pconfig : apb_config_type := (\n")
     fp.write("  0 => ahb_device_reg (VENDOR_GAISLER, GAISLER_ETHMAC, 0, 0, 12),\n")
-    fp.write("  1 => apb_iobar(16#800#, 16#f00#));\n\n")
+    fp.write("  1 => apb_iobar(16#800#, 16#f00#),\n")
+    fp.write("  2 => (others => '0'));\n\n")
 
     fp.write("  constant sgmii0_pconfig : apb_config_type := (\n")
     fp.write("  0 => ahb_device_reg (VENDOR_GAISLER, GAISLER_SGMII, 0, 1, 11),\n")
-    fp.write("  1 => apb_iobar(16#010#, 16#ff0#));\n\n")
+    fp.write("  1 => apb_iobar(16#010#, 16#ff0#),\n")
+    fp.write("  2 => (others => '0'));\n\n")
 
   #
   fp.write("  -- CPU DVFS controller\n")
@@ -740,7 +749,8 @@ def print_mapping(fp, esp_config):
     if dvfs.id != -1:
       fp.write("    " + str(dvfs.id) + " => (\n")
       fp.write("      0 => ahb_device_reg (VENDOR_SLD, SLD_POWERCTRL, 0, 0, 0),\n")
-      fp.write("      1 => apb_iobar(16#" + format(0xD0 + dvfs.idx, '03X') + "#, 16#fff#)),\n")
+      fp.write("      1 => apb_iobar(16#" + format(0xD0 + dvfs.idx, '03X') + "#, 16#fff#),\n")
+      fp.write("      2 => (others => '0')),\n")
   fp.write("    others => pconfig_none);\n\n")
 
   #
@@ -752,7 +762,8 @@ def print_mapping(fp, esp_config):
     if l2.idx != -1:
       fp.write("    " + str(l2.id) + " => (\n")
       fp.write("      0 => ahb_device_reg (VENDOR_SLD, SLD_L2_CACHE, 0, 0, CFG_SLD_L2_CACHE_IRQ),\n")
-      fp.write("      1 => apb_iobar(16#" + format(0xD0 + l2.idx, '03X') + "#, 16#fff#)),\n")
+      fp.write("      1 => apb_iobar(16#" + format(0xD0 + l2.idx, '03X') + "#, 16#fff#),\n")
+      fp.write("      2 => (others => '0')),\n")
   fp.write("    others => pconfig_none);\n\n")
 
   #
@@ -762,7 +773,8 @@ def print_mapping(fp, esp_config):
     llc = esp_config.llcs[i]
     fp.write("    " + str(i) + " => (\n")
     fp.write("      0 => ahb_device_reg (VENDOR_SLD, SLD_LLC_CACHE, 0, 0, CFG_SLD_LLC_CACHE_IRQ),\n")
-    fp.write("      1 => apb_iobar(16#" + format(0xD0 + llc.idx, '03X') + "#, 16#fff#)),\n")
+    fp.write("      1 => apb_iobar(16#" + format(0xD0 + llc.idx, '03X') + "#, 16#fff#),\n")
+    fp.write("      2 => (others => '0')),\n")
   fp.write("    others => pconfig_none);\n\n")
 
   #
@@ -780,37 +792,48 @@ def print_mapping(fp, esp_config):
 
     if acc.vendor == "sld":
       address = SLD_APB_ADDR + acc.idx
-      address_str = format(address, "03X")
+      address_ext = 0
       msk = SLD_APB_ADDR_MSK
+      msk_ext = 0
+      address_str = format(address, "03X")
+      address_ext_str = format(address_ext, "03X")
     else:
       n = THIRDPARTY_N[acc.lowercase_name]
       # Compute base address
       if THIRDPARTY_APB_EXT_ADDR[acc.lowercase_name] == 0:
         # Use part of standard APB address space
         address = THIRDPARTY_APB_ADDR[acc.lowercase_name] + n * THIRDPARTY_APB_ADDR_SIZE[acc.lowercase_name]
-        address_str = format(address >> 8, "03X")
         size = THIRDPARTY_APB_ADDR_SIZE[acc.lowercase_name]
-        msk = 0xfff & ~((size >> 8) - 1)
+        address_ext = 0
+        size_ext = 0
       else:
-        fp.write("  -- Using extended APB address\n")
         # Use extended APB address space (large number of registers)
-        address = THIRDPARTY_APB_EXT_ADDR[acc.lowercase_name] + n * THIRDPARTY_APB_EXT_ADDR_SIZE[acc.lowercase_name]
-        address_str = format(address >> 20, "03X")
-        size = THIRDPARTY_APB_EXT_ADDR_SIZE[acc.lowercase_name]
-        msk = 0xfff & ~((size >> 20) - 1)
+        address = 0
+        size = 0
+        address_ext = THIRDPARTY_APB_EXT_ADDR[acc.lowercase_name] + n * THIRDPARTY_APB_EXT_ADDR_SIZE[acc.lowercase_name]
+        size_ext = THIRDPARTY_APB_EXT_ADDR_SIZE[acc.lowercase_name]
+
+      msk = 0xfff & ~((size >> 8) - 1)
+      msk_ext = 0xfff & ~((size_ext >> 20) - 1)
+      address_str = format(address >> 8, "03X")
+      address_ext_str = format(address_ext >> 20, "03X")
 
       # Increment count
       THIRDPARTY_N[acc.lowercase_name] = n + 1;
 
     msk_str = format(msk, "03X")
+    msk_ext_str = format(msk_ext, "03X")
 
     fp.write("  constant " + acc.lowercase_name + "_" + str(acc.id) + "_pindex : integer range 0 to NAPBSLV - 1 := " + str(acc.idx) + ";\n")
     fp.write("  constant " + acc.lowercase_name + "_" + str(acc.id) + "_pirq : integer range 0 to NAHBIRQ - 1 := " + str(acc.irq) + ";\n")
     fp.write("  constant " + acc.lowercase_name + "_" + str(acc.id) + "_paddr : integer range 0 to 4095 := 16#" + str(address_str) + "#;\n")
     fp.write("  constant " + acc.lowercase_name + "_" + str(acc.id) + "_pmask : integer range 0 to 4095 := 16#" + str(msk_str) + "#;\n")
+    fp.write("  constant " + acc.lowercase_name + "_" + str(acc.id) + "_paddr_ext : integer range 0 to 4095 := 16#" + str(address_ext_str) + "#;\n")
+    fp.write("  constant " + acc.lowercase_name + "_" + str(acc.id) + "_pmask_ext : integer range 0 to 4095 := 16#" + str(msk_ext_str) + "#;\n")
     fp.write("  constant " + acc.lowercase_name + "_" + str(acc.id) + "_pconfig : apb_config_type := (\n")
     fp.write("  0 => ahb_device_reg (VENDOR_SLD, SLD_" + acc.uppercase_name + ", 0, 0, " + str(acc.irq) + "),\n")
-    fp.write("  1 => apb_iobar(16#" + address_str + "#, 16#" + msk_str  + "#));\n\n")
+    fp.write("  1 => apb_iobar(16#" + address_str + "#, 16#" + msk_str  + "#),\n")
+    fp.write("  2 => apb_iobar(16#" + address_ext_str + "#, 16#" + msk_ext_str  + "#));\n\n")
 
   #
   fp.write("  -- I/O bus slaves index / memory map\n")
@@ -1042,6 +1065,13 @@ def print_mapping(fp, esp_config):
       fp.write("    " + str(i) + " => " + acc.lowercase_name + "_" + str(acc.id) + "_paddr,\n")
   fp.write("    others => 0);\n\n")
 
+  fp.write("  constant tile_apb_paddr_ext : tile_addr_array := (\n")
+  for i in range(0, esp_config.ntiles):
+    if esp_config.tiles[i].type == "acc":
+      acc = esp_config.tiles[i].acc
+      fp.write("    " + str(i) + " => " + acc.lowercase_name + "_" + str(acc.id) + "_paddr_ext,\n")
+  fp.write("    others => 0);\n\n")
+
   #
   fp.write("  -- Get I/O-bus address mask for accelerators from tile ID\n")
   fp.write("  constant tile_apb_pmask : tile_addr_array := (\n")
@@ -1049,6 +1079,13 @@ def print_mapping(fp, esp_config):
     if esp_config.tiles[i].type == "acc":
       acc = esp_config.tiles[i].acc
       fp.write("    " + str(i) + " => " + acc.lowercase_name + "_" + str(acc.id) + "_pmask,\n")
+  fp.write("    others => 0);\n\n")
+
+  fp.write("  constant tile_apb_pmask_ext : tile_addr_array := (\n")
+  for i in range(0, esp_config.ntiles):
+    if esp_config.tiles[i].type == "acc":
+      acc = esp_config.tiles[i].acc
+      fp.write("    " + str(i) + " => " + acc.lowercase_name + "_" + str(acc.id) + "_pmask_ext,\n")
   fp.write("    others => 0);\n\n")
 
   #

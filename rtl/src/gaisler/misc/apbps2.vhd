@@ -110,7 +110,8 @@ end record;
  constant REVISION      : integer := 2;
  constant pconfig       : apb_config_type := (
                         0 => ahb_device_reg ( VENDOR_GAISLER, GAISLER_APBPS2, 0, REVISION, pirq),
-                        1 => apb_iobar(paddr, pmask));
+                        1 => apb_iobar(paddr, pmask),
+2 => (others => '0'));
 
  constant OUTPUT : std_ulogic := conv_std_logic(oepol = 1);
  constant INPUT  : std_ulogic := conv_std_logic(oepol = 0);

@@ -422,7 +422,7 @@ begin  -- architecture rtl
   apb_req <= psel and penable;
 
   psel_gen: for i in 0 to NAPBSLV - 1 generate
-    psel_sig(i) <= apb_slv_decode(apbo(i).pconfig, paddr(19 downto  8), paddr(27 downto 16), 4) and psel;
+    psel_sig(i) <= apb_slv_decode(apbo(i).pconfig, paddr(19 downto  8), paddr(27 downto 20)) and psel;
   end generate psel_gen;
 
   psel_idx_gen: process (psel_sig) is

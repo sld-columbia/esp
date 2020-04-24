@@ -101,7 +101,8 @@ end record;
 constant REVISION       : amba_version_type := 0; 
 constant pconfig        : apb_config_type := (
                         0 => ahb_device_reg ( VENDOR_GAISLER, GAISLER_VGACTRL, 0, REVISION, 0),
-                        1 => apb_iobar(paddr, pmask));
+                        1 => apb_iobar(paddr, pmask),
+2 => (others => '0'));
 constant hmax           : integer:= 799;
 constant vmax           : integer:= 524;
 constant hvideo         : integer:= 639;

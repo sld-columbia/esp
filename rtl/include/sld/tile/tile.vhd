@@ -580,6 +580,8 @@ package tile is
       pindex             : integer;
       paddr              : integer;
       pmask              : integer;
+      paddr_ext          : integer;
+      pmask_ext          : integer;
       pirq               : integer;
       revision           : integer;
       devid              : devid_t;

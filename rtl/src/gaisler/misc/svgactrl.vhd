@@ -74,7 +74,8 @@ architecture rtl of svgactrl is
   constant REVISION : amba_version_type := 0; 
   constant pconfig : apb_config_type := (
      0 => ahb_device_reg ( VENDOR_GAISLER, GAISLER_SVGACTRL, 0, REVISION, 0),
-     1 => apb_iobar(paddr, pmask));
+     1 => apb_iobar(paddr, pmask),
+     2 => (others => '0'));
 
   -- Calculates the required number of address bits for 32 bit buffer
   function addrbits return integer is

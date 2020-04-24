@@ -35,6 +35,8 @@ use std.textio.all;
     pindex         : integer := 0;
     paddr          : integer := 0;
     pmask          : integer := 16#fff#;
+    paddr_ext      : integer := 0;
+    pmask_ext      : integer := 16#fff#;
     pirq           : integer := 0;
     scatter_gather : integer := 1;
     sets           : integer := 256;
@@ -336,6 +338,8 @@ begin
       pindex             => pindex,
       paddr              => paddr,
       pmask              => pmask,
+      paddr_ext          => paddr_ext,
+      pmask_ext          => pmask_ext,
       pirq               => pirq,
       revision           => revision,
       devid              => devid,

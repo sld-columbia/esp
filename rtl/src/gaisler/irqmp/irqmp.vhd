@@ -62,7 +62,8 @@ constant REVISION : integer := 4;
 
 constant pconfig : apb_config_type := (
   0 => ahb_device_reg ( VENDOR_GAISLER, GAISLER_IRQMP, 0, REVISION, 0),
-  1 => apb_iobar(paddr, pmask));
+  1 => apb_iobar(paddr, pmask),
+  2 => (others => '0'));
 
 function IMAP_HIGH return integer is
 begin
