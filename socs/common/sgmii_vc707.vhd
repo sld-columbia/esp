@@ -341,7 +341,8 @@ constant REVISION : integer := 1;
 
 constant pconfig : apb_config_type := (
   0 => ahb_device_reg ( VENDOR_GAISLER, GAISLER_SGMII, 0, REVISION, pirq),
-  1 => apb_iobar(paddr, pmask));
+  1 => apb_iobar(paddr, pmask),
+  2 => (others => '0'));
 
   type sgmiiregs is record
     irq                  :  std_logic_vector(31 downto 0); -- interrupt
