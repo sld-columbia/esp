@@ -176,7 +176,7 @@ architecture rtl of acc_tile_q is
   signal to_noc3_fifos_current, to_noc3_fifos_next : to_noc3_packet_fsm;
   type noc5_packet_fsm is (none, packet_apb_rcv);
   signal noc5_fifos_current, noc5_fifos_next : noc5_packet_fsm;
-  type to_noc5_packet_fsm is (none, packet_apb_snd);
+  type to_noc5_packet_fsm is (none, packet_apb_snd, packet_interrupt);
   signal to_noc5_fifos_current, to_noc5_fifos_next : to_noc5_packet_fsm;
 
   signal noc3_msg_type : noc_msg_type;
@@ -491,6 +491,16 @@ begin  -- rtl
                                noc5_in_data <= apb_snd_data_out;
                                noc5_in_void <= apb_snd_empty;
                                apb_snd_rdreq <= not noc5_in_stop;
+                               if to_noc5_preamble = PREAMBLE_TAIL then
+                                 to_noc5_fifos_next <= none;
+                               end if;
+                             end if;
+
+      when packet_interrupt => to_noc5_preamble := get_preamble(MISC_NOC_FLIT_SIZE, noc_flit_pad & interrupt_data_out);
+                             if (noc5_in_stop = '0' and interrupt_empty = '0') then
+                               noc5_in_data <= interrupt_data_out;
+                               noc5_in_void <= interrupt_empty;
+                               interrupt_rdreq <= not noc5_in_stop;
                                if to_noc5_preamble = PREAMBLE_TAIL then
                                  to_noc5_fifos_next <= none;
                                end if;
