@@ -38,6 +38,7 @@ use std.textio.all;
     paddr_ext      : integer := 0;
     pmask_ext      : integer := 16#fff#;
     pirq           : integer := 0;
+    irq_type       : integer := 0;
     scatter_gather : integer := 1;
     sets           : integer := 256;
     ways           : integer := 8;
@@ -91,6 +92,10 @@ use std.textio.all;
     interrupt_wrreq   : out std_ulogic;
     interrupt_data_in : out misc_noc_flit_type;
     interrupt_full    : in  std_ulogic;
+    -- Noc plane miscellaneous (NoC -> tile)
+    interrupt_ack_rdreq    : out std_ulogic;
+    interrupt_ack_data_out : in  misc_noc_flit_type;
+    interrupt_ack_empty    : in  std_ulogic;
     -- Noc plane miscellaneous (tile -> NoC)
     apb_snd_wrreq     : out std_ulogic;
     apb_snd_data_in   : out misc_noc_flit_type;
@@ -242,11 +247,14 @@ begin
   irq_header(MISC_NOC_FLIT_SIZE-PREAMBLE_WIDTH-1 downto 0) <=
     irq_header_i(MISC_NOC_FLIT_SIZE-PREAMBLE_WIDTH-1 downto 0);
 
+ 
   -- Interrupt over NoC
-  irq_send: process (irq, interrupt_full, irq_state, irq_header)
+  irq_send: process (irq, interrupt_full, irq_state, irq_header,
+                     interrupt_ack_empty, interrupt_ack_data_out)
   begin  -- process irq_send
     interrupt_data_in <= irq_header;
     interrupt_wrreq <= '0';
+    interrupt_ack_rdreq <= '0';
     irq_next <= irq_state;
 
     case irq_state is
@@ -267,13 +275,32 @@ begin
         end if;
 
       when wait_for_clear_irq =>
-        if irq(pirq) = '0' then
-          irq_next <= idle;
+        if irq_type = 0 then
+          if irq(pirq) = '0' then
+            irq_next <= idle;
+          end if;
+        else
+          if interrupt_ack_empty = '0' then
+            interrupt_ack_rdreq <= '1';
+            if acc_done = '0' then
+              irq_next <= idle;
+            else
+              if interrupt_full = '1' then
+                irq_next <= pending;
+              else
+                interrupt_wrreq <= '1';
+                irq_next <= wait_for_clear_irq;
+              end if;
+            end if;
+          end if;
+
         end if;
 
       when others =>
         irq_next <= idle;
+
     end case;
+
   end process irq_send;
 
   -- Update FSM state

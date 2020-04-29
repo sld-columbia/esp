@@ -38,6 +38,7 @@ use std.textio.all;
     paddr_ext      : integer := 0;
     pmask_ext      : integer := 16#fff#;
     pirq           : integer := 0;
+    irq_type       : integer := 0;
     scatter_gather : integer := 1;
     sets           : integer := 256;
     ways           : integer := 8;
@@ -91,6 +92,10 @@ use std.textio.all;
     interrupt_wrreq   : out std_ulogic;
     interrupt_data_in : out misc_noc_flit_type;
     interrupt_full    : in  std_ulogic;
+    -- Noc plane miscellaneous (NoC -> tile)
+    interrupt_ack_rdreq    : out std_ulogic;
+    interrupt_ack_data_out : in  misc_noc_flit_type;
+    interrupt_ack_empty    : in  std_ulogic;
     -- Noc plane miscellaneous (tile -> NoC)
     apb_snd_wrreq     : out std_ulogic;
     apb_snd_data_in   : out misc_noc_flit_type;
@@ -263,6 +268,8 @@ end;
 
 begin
 
+  interrupt_ack_rdreq <= '0';
+  
   -- <<accelerator_instance>>
 
   l2_gen: if has_l2 /= 0 generate
