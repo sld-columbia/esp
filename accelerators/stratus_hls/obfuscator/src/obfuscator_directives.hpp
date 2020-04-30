@@ -1,0 +1,87 @@
+/* Copyright 2018 Columbia University, SLD Group */
+
+#ifndef __OBFUSCATOR_DIRECTIVES_HPP__
+#define __OBFUSCATOR_DIRECTIVES_HPP__
+
+// Kernel
+
+#define KERNEL_SIZE 8
+
+#define KERNEL_SIZE_LOG 3
+
+// A Memory
+
+#define A_MEMORY_TYPE \
+  GENERATE_PLM_TYPE(OBFUSCATOR_A_MEMORY, DMA_WIDTH, DMA_CHUNK, NUM_PORTS)
+
+#define A_MEMORY_NAME \
+  GENERATE_PLM_NAME(OBFUSCATOR_A_MEMORY, DMA_WIDTH, DMA_CHUNK, NUM_PORTS)
+
+#define A_MEMORY_HEADER \
+  GENERATE_PLM_HDR(OBFUSCATOR_A_MEMORY, DMA_WIDTH, DMA_CHUNK, NUM_PORTS)
+
+#define A_MEMORY_SIZE (DMA_CHUNK + 1)
+
+// B Memory
+
+#define B_MEMORY_TYPE \
+  GENERATE_PLM_TYPE(OBFUSCATOR_B_MEMORY, DMA_WIDTH, DMA_CHUNK, NUM_PORTS)
+
+#define B_MEMORY_NAME \
+  GENERATE_PLM_NAME(OBFUSCATOR_B_MEMORY, DMA_WIDTH, DMA_CHUNK, NUM_PORTS)
+
+#define B_MEMORY_HEADER \
+  GENERATE_PLM_HDR(OBFUSCATOR_B_MEMORY, DMA_WIDTH, DMA_CHUNK, NUM_PORTS)
+
+#define B_MEMORY_SIZE (DMA_CHUNK + 1)
+
+// C Memory
+
+#define C_MEMORY_TYPE \
+  GENERATE_PLM_TYPE(OBFUSCATOR_C_MEMORY, DMA_WIDTH, DMA_CHUNK, NUM_PORTS)
+
+#define C_MEMORY_NAME \
+  GENERATE_PLM_NAME(OBFUSCATOR_C_MEMORY, DMA_WIDTH, DMA_CHUNK, NUM_PORTS)
+
+#define C_MEMORY_HEADER \
+  GENERATE_PLM_HDR(OBFUSCATOR_C_MEMORY, DMA_WIDTH, DMA_CHUNK, NUM_PORTS)
+
+#define C_MEMORY_SIZE (DMA_CHUNK / KERNEL_SIZE)
+
+// HLS Directives
+
+//
+// DMA WIDTH 32
+//
+
+#if NUM_PORTS == 1
+
+#define LOAD_INPUT_RESET_PORTS \
+    PLM_A0.port1.reset(); \
+    PLM_A1.port1.reset(); \
+    PLM_A2.port1.reset(); \
+    PLM_A3.port1.reset()
+
+#define COMPUTE_KERNEL_RESET_PORTS \
+    PLM_A0.port2.reset(); \
+    PLM_A1.port2.reset(); \
+    PLM_A2.port2.reset(); \
+    PLM_A3.port2.reset(); \
+    PLM_B0.port1.reset(); \
+    PLM_B1.port1.reset()
+
+#define STORE_OUTPUT_RESET_PORTS \
+    PLM_B0.port2.reset(); \
+    PLM_B1.port2.reset(); \
+    PLM_C0.port1.reset(); \
+    PLM_C0.port2.reset()
+
+#else // DEFAULT CASE
+
+#define LOAD_INPUT_RESET_PORTS
+#define STORE_OUTPUT_RESET_PORTS
+#define COMPUTE_KERNEL_RESET_PORTS
+
+#endif // NUM_PORTS
+
+#endif // __OBFUSCATOR_DIRECTIVES_HPP__

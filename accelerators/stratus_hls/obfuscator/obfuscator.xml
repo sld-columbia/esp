@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sld>
+  <accelerator name="obfuscator" desc="Accelerator obfuscator" data_size="4" device_id="04A" hls_tool="stratus_hls">
+    <param name="num_rows"   desc="num_rows"   />
+    <param name="num_cols"   desc="num_cols"   />
+    <param name="i_row_blur" desc="i_row_blur" />
+    <param name="i_col_blur" desc="i_col_blur" />
+    <param name="e_row_blur" desc="e_row_blur" />
+    <param name="e_col_blur" desc="e_col_blur" />
+    <param name="ld_offset"  desc="ld_offset"  />
+    <param name="st_offset"  desc="st_offset"  />
+  </accelerator>
+</sld>
