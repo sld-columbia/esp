@@ -10,11 +10,11 @@
 
 #ifdef ENABLE_DIFT_SUPPORT
 // Tag used for the input
-#define SRC_TAG 0x0100DEAD
+#define SRC_TAG 0x00000000
 // Tag used for the output
-#define DST_TAG 0xBEEF0100
+#define DST_TAG 0x00000000
 // Decomment to see leakage
-#define ENABLE_WRONG_FIRST_TAG
+// #define ENABLE_WRONG_FIRST_TAG
 #endif // ENABLE_DIFT_SUPPORT
 
 #ifdef ENABLE_WRONG_FIRST_TAG
@@ -27,11 +27,7 @@
 
 void system_t::config_proc()
 {
-#ifdef ENABLE_DIFT_SUPPORT
-    dift_conf_info_t config;
-#else // DISABLE_DIFT_SUPPORT
     conf_info_t config;
-#endif // ENABLE_DIFT_SUPPORT
 
     // Reset
 
@@ -46,12 +42,6 @@ void system_t::config_proc()
     {
         // Provide the input data
         load_memory(); wait();
-
-#ifdef ENABLE_DIFT_SUPPORT
-        config.src_tag = SRC_TAG;
-        config.dst_tag = DST_TAG;
-        config.tag_off = (uint32_t) log2(tag_offset);
-#endif // ENABLE_DIFT_SUPPORT
 
         config.ld_offset = 0;
         config.st_offset = index;
@@ -135,19 +125,11 @@ void system_t::load_memory()
 
     index = 0;
 
-#ifdef ENABLE_DIFT_SUPPORT
-    if (esc_argc() != 9)
-    {
-        ESP_REPORT_INFO("usage: %s <in-file> <out-file> <i_row_blur>"
-                " <i_col_blur> <e_row_blur> <e_col_blur> <dma-chunk>"
-                " <tag-offset>\n", esc_argv()[0]);
-#else // DISABLE_DIFT_SUPPORT
     if (esc_argc() != 7)
     {
         ESP_REPORT_INFO("usage: %s <in-file> <out-file> <i_row_blur>"
                 " <i_col_blur> <e_row_blur> <e_col_blur>",
                 esc_argv()[0]);
-#endif // ENABLE_DIFT_SUPPORT
         sc_stop();
     }
 
@@ -156,8 +138,8 @@ void system_t::load_memory()
     e_row_blur = atoi(esc_argv()[5]);
     e_col_blur = atoi(esc_argv()[6]);
 #ifdef ENABLE_DIFT_SUPPORT
-    tag_offset = tag_off = atoi(esc_argv()[8]);
-#endif // ENABLE_DIFT_SUPPORT
+    tag_offset = tag_off = 1;
+#endif // ENABLED_DIFT_SUPPORT
 
     if (read_image_from_file(&in_image, &num_rows, &num_cols, esc_argv()[1]) < 0)
     {

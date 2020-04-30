@@ -9,12 +9,13 @@
 #ifdef CADENCE
 #ifdef ENABLE_DIFT_SUPPORT
 #include "obfuscator_dift_wrap.h"
+#include "esp_templates.hpp"
+#include "esp_dift_templates.hpp"
 #else // DISABLE_DIFT_SUPPORT
 #include "obfuscator_wrap.h"
+#include "esp_templates.hpp"
 #endif // ENABLE_DIFT_SUPPORT
 #endif // CADENCE
-
-#include "esp_templates.hpp"
 
 const size_t MEM_SIZE = 2048 * 2048 * 16;
 

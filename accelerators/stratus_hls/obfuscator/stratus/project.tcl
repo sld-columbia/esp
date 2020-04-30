@@ -4,13 +4,16 @@
 # Enable DIFT support
 #
 
-set DIFT_ENABLED 0
+set DIFT_ENABLED 1 
 
 #
 # Source the common configurations
 #
 
 source ../../common/stratus/project.tcl
+
+append INCLUDES " -I../dift"
+append INCLUDES " -I../dift/templates"
 
 #
 # Set the library for the memories
@@ -65,6 +68,10 @@ set SCHED_ASAP no
 set COMMON_HLS_FLAGS "--clock_period=$CLOCK_PERIOD --prints=$PRINT --sched_asap=$SCHED_ASAP"
 set COMMON_CFG_FLAGS "-DCLOCK_PERIOD=$SIM_CLOCK_PERIOD -DRESET_PERIOD=$SIM_RESET_PERIOD"
 
+if { $DIFT_ENABLED } {
+    append COMMON_CFG_FLAGS " -DENABLE_DIFT_SUPPORT"
+}
+
 #
 # Testbench or system level modules
 #
@@ -77,6 +84,10 @@ define_system_module tb ../tb/system.cpp ../tb/sc_main.cpp
 #
 
 define_hls_module obfuscator ../src/obfuscator.cpp
+
+if { $DIFT_ENABLED } {
+    define_hls_module obfuscator_dift ../dift/obfuscator_dift.cpp
+}
 
 #
 # TB configuration
@@ -122,8 +133,6 @@ set NUM_PORTS "1"
 
 set DMA_CHUNK "8"
 
-set TAG_OFFSETS "1"
-
 #
 # Split the multipliers
 #
@@ -135,20 +144,22 @@ set_attr split_multiply 32
 # Generating sim/system configs
 #
 
+set ARGV ""
+append ARGV "$INPUT_PATH/$TESTBENCH.txt " ; # argv[1]
+append ARGV "$OUTPUT_PATH/$TESTBENCH.txt "; # argv[2]
+append ARGV "$I_ROW_BLURS($TESTBENCH) "   ; # argv[3]
+append ARGV "$I_COL_BLURS($TESTBENCH) "   ; # argv[4]
+append ARGV "$E_ROW_BLURS($TESTBENCH) "   ; # argv[5]
+append ARGV "$E_COL_BLURS($TESTBENCH) "   ; # argv[6]
+
 foreach dma [list 32] {
 
-    set ARGV ""
-    append ARGV "$INPUT_PATH/$TESTBENCH.txt " ; # argv[1]
-    append ARGV "$OUTPUT_PATH/$TESTBENCH.txt "; # argv[2]
-    append ARGV "$I_ROW_BLURS($TESTBENCH) "   ; # argv[3]
-    append ARGV "$I_COL_BLURS($TESTBENCH) "   ; # argv[4]
-    append ARGV "$E_ROW_BLURS($TESTBENCH) "   ; # argv[5]
-    append ARGV "$E_COL_BLURS($TESTBENCH) "   ; # argv[6]
+	set cname BASIC_DMA$dma
 
     define_io_config * IOCFG_DMA$dma -DDMA_WIDTH=$dma \
                                      -DNUM_PORTS=$NUM_PORTS \
                                      -DDMA_CHUNK=$DMA_CHUNK \
-                                      $COMMON_CFG_FLAGS
+                                     $COMMON_CFG_FLAGS
 
     define_system_config tb TESTBENCH_DMA$dma -io_config IOCFG_DMA$dma
 
@@ -159,19 +170,41 @@ foreach dma [list 32] {
 
     # High-Level Synthesi Conf
 
-    define_hls_config obfuscator BASIC -io_config IOCFG_DMA$dma $COMMON_HLS_FLAGS
+    define_hls_config obfuscator $cname -io_config IOCFG_DMA$dma $COMMON_HLS_FLAGS
+
+    if { $DIFT_ENABLED } {
+        define_hls_config obfuscator_dift $cname -io_config IOCFG_DMA$dma $COMMON_HLS_FLAGS
+    }
 
     # RTL Verilog simulation
 
     if {$TECH_IS_XILINX == 1} {
 
-        define_sim_config "BASIC_V" "obfuscator RTL_V BASIC" "tb TESTBENCH_DMA$dma" \
-            -io_config IOCFG_DMA$dma -verilog_top_modules glbl -argv $ARGV
+        if { $DIFT_ENABLED } {
+
+            define_sim_config "$cname\_V" "obfuscator RTL_V $cname" "tb TESTBENCH_DMA$dma" \
+                "obfuscator_dift RTL_V $cname" -io_config IOCFG_DMA$dma \
+                -verilog_top_modules glbl -argv $ARGV
+
+        } else {
+
+            define_sim_config "$cname\_V" "obfuscator RTL_V $cname" "tb TESTBENCH_DMA$dma" \
+                -io_config IOCFG_DMA$dma -verilog_top_modules glbl -argv $ARGV
+
+        }
 
     } else {
 
-        define_sim_config "BASIC_V" "obfuscator RTL_V BASIC" "tb TESTBENCH_DMA$dma" \
-            -io_config IOCFG_DMA$dma -argv $ARGV
+        if { $DIFT_ENABLED } {
+
+            define_sim_config "$cname\_V" "obfuscator RTL_V $cname" "tb TESTBENCH_DMA$dma" \
+                "obfuscator_dift RTL_V $cname " -io_config IOCFG_DMA$dma
+
+        } else {
+
+            define_sim_config "$cname\_V" "obfuscator RTL_V $cname" "tb TESTBENCH_DMA$dma" \
+                -io_config IOCFG_DMA$dma -argv $ARGV
+        }
     }
 
 }; # foreach dma

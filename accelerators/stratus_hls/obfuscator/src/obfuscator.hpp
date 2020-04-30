@@ -7,10 +7,6 @@
 
 #include "obfuscator_conf_info.hpp"
 
-#ifdef ENABLE_DIFT_SUPPORT
-#include "../dift/obfuscator_dift_config.hpp"
-#endif // ENABLE_DIFT_SUPPORT
-
 #include "obfuscator_directives.hpp"
 
 #include "esp_templates.hpp"
