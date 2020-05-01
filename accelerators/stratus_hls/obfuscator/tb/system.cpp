@@ -10,7 +10,8 @@
 
 #ifdef ENABLE_DIFT_SUPPORT
 // Tag used for the input
-#define SRC_TAG 0x00000000
+#define SRC_TAG_0 0x00000000
+#define SRC_TAG_1 0x00000001
 // Tag used for the output
 #define DST_TAG 0x00000000
 // Decomment to see leakage
@@ -173,7 +174,18 @@ void system_t::load_memory()
 #ifdef ENABLE_DIFT_SUPPORT
 	        if (!(--tag_off))
             {
-                this->mem[index++] = sc_dt::sc_bv<32>(SRC_TAG);
+                if (row >= i_row_blur &&
+                    row <= e_row_blur &&
+                    col >= i_col_blur &&
+                    col <= e_col_blur)
+                {
+                    this->mem[index++] = sc_dt::sc_bv<32>(SRC_TAG_1);
+                }
+                else
+                {
+                    this->mem[index++] = sc_dt::sc_bv<32>(SRC_TAG_0);
+                }
+
                 tag_off = tag_offset;
             }
 #endif // ENABLE_DIFT_SUPPORT
@@ -190,7 +202,7 @@ void system_t::load_memory()
     }
 
     // To measure leakage of info
-    this->mem[tag_offset] = ~SRC_TAG;
+    this->mem[tag_offset] = ~SRC_TAG_0;
 #endif // ENABLE_WRONG_FIRST_TAG
 #endif // ENABLE_DIFT_SUPPORT
 

@@ -70,6 +70,9 @@ void esp_dift_load_wrapper_I<_DMA_WIDTH_>::load_input(void)
                 first = false;
             }
 
+            int row = (info.index - init_off) / this->conf_info.read().num_cols;
+            int col = (info.index - init_off) - (row * this->conf_info.read().num_cols);
+
             /// --- Calculate how to adjust the read request
 
             o_length = info.length; // save original length
@@ -115,17 +118,35 @@ void esp_dift_load_wrapper_I<_DMA_WIDTH_>::load_input(void)
                 {
                     /* ESP_REPORT_INFO("tag\n"); */
                     // The current input data is a tag
-                    if (this->tag.read() != tmp)
+                    if (row >= this->conf_info.read().i_row_blur &&
+                        row <= this->conf_info.read().e_row_blur &&
+                        col >= this->conf_info.read().i_col_blur &&
+                        col <= this->conf_info.read().e_col_blur)
+                    {
+                        if (tmp != 1)
+                        {
+                            // The tag is not the one expected
+                            this->load_valid.write(false);
+                        }
+                    }
+                    else if (tmp != 0)
                     {
                         // The tag is not the one expected
                         this->load_valid.write(false);
                     }
 
                     counter = tag_off_pow + 1;
+
+                    col += 1;
+                    if (col == this->conf_info.read().num_cols)
+                    {
+                        row += 1;
+                        col = 0;
+                    }
                 }
                 else
                 {
-                    /* ESP_REPORT_INFO("val\n"); */
+                    /* ESP_REPORT_INFO("val [row = %d col = %d]\n", row, col); */
                     // The current input data is a value
                     this->output_dma_read_chnl.put(tmp);
                     counter--;

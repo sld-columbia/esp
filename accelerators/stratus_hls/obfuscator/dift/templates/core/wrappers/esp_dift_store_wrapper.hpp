@@ -30,6 +30,9 @@ class esp_dift_store_wrapper : public sc_module
         // Log of the tag offset
         sc_in<uint32_t> tag_off;
 
+        // Wrapper configuration
+        sc_in<conf_info_t> conf_info;
+
         // DMA write control
         nb_get_initiator<dma_info_t> input_dma_write_ctrl;
 
@@ -56,6 +59,7 @@ class esp_dift_store_wrapper : public sc_module
             , rst("rst")
             , tag("tag")
             , tag_off("tag_off")
+            , conf_info("conf_info")
             , input_dma_write_ctrl("input_dma_write_ctrl")
             , input_dma_write_chnl("input_dma_write_chnl")
             , store_valid("store_valid")

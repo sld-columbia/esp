@@ -25,8 +25,6 @@ class obfuscator : public esp_accelerator_3P<DMA_WIDTH>
         // Config process
         esp_config_proc cfg;
 
-        // -- Handshakes
-
         // Declaration of the accelerator PLMs (0)
         A_MEMORY_TYPE<FPDATA_WORD, A_MEMORY_SIZE> PLM_A0;
         A_MEMORY_TYPE<FPDATA_WORD, A_MEMORY_SIZE> PLM_A1;

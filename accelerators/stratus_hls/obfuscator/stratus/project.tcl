@@ -4,7 +4,7 @@
 # Enable DIFT support
 #
 
-set DIFT_ENABLED 1 
+set DIFT_ENABLED 1
 
 #
 # Source the common configurations
