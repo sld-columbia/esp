@@ -85,6 +85,25 @@ void obfuscator::apply_sharpening(uint32_t circ_buffer,
     {
         HLS_UNROLL_LOOP(OFF); // disabled
 
+        if (circ_buffer == 0)
+        {
+            val = PLM_A0.port2[0][col];
+        }
+        else if (circ_buffer == 1)
+        {
+            val = PLM_A1.port2[0][col];
+        }
+        else if (circ_buffer == 2)
+        {
+            val = PLM_A2.port2[0][col];
+        }
+        else // if (circ_buffer == 3)
+        {
+            val = PLM_A3.port2[0][col];
+        }
+
+        { HLS_DEFINE_PROTOCOL("wait"); wait(); }
+
         if ((row != 0) && (row != num_rows - 1) && (col != 0) &&
             (chk != chunks - 1 || col != length + last - 1))
         {
@@ -120,30 +139,9 @@ void obfuscator::apply_sharpening(uint32_t circ_buffer,
             //    bv2fp<FPDATA, 32>(val4).to_double());
             // ESP_REPORT_INFO(" -----     => %lf",
             //    bv2fp<FPDATA, 32>(val5).to_double()); }
-
-
-        } else { /* all the middle rows */
-
-            // { ESP_REPORT_INFO("(false) row %d col %d", row, col); }
-
-            if (circ_buffer == 0)
-            {
-                val = PLM_A0.port2[0][col];
-            }
-            else if (circ_buffer == 1)
-            {
-                val = PLM_A1.port2[0][col];
-            }
-            else if (circ_buffer == 2)
-            {
-                val = PLM_A2.port2[0][col];
-            }
-            else // if (circ_buffer == 3)
-            {
-                val = PLM_A3.port2[0][col];
-            }
-
         }
+
+        { HLS_DEFINE_PROTOCOL("wait"); wait(); }
 
         // { ESP_REPORT_INFO("output[%d] => %lf (%d)", col - init,
         //    bv2fp<FPDATA, 32>(val).to_double(), pingpong); }

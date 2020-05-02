@@ -48,10 +48,8 @@ class obfuscator : public esp_accelerator_3P<DMA_WIDTH>
             PLM_A1.clk(this->clk);
             PLM_A2.clk(this->clk);
             PLM_A3.clk(this->clk);
-
             PLM_B0.clk(this->clk);
             PLM_B1.clk(this->clk);
-
             PLM_C0.clk(this->clk);
         }
 

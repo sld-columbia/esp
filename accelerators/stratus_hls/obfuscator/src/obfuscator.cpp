@@ -118,7 +118,7 @@ void obfuscator::compute_kernel()
     // Reset
 
     {
-        HLS_DEFINE_PROTOCOL("reset-load");
+        HLS_DEFINE_PROTOCOL("reset-compute");
 
         this->reset_compute_kernel();
         COMPUTE_KERNEL_RESET_PORTS;
@@ -140,7 +140,7 @@ void obfuscator::compute_kernel()
     // Config
 
     {
-        HLS_DEFINE_PROTOCOL("config-load");
+        HLS_DEFINE_PROTOCOL("config-compute");
 
         cfg.wait_for_config();
         num_rows = this->conf_info.read().num_rows;
@@ -222,7 +222,7 @@ void obfuscator::store_output()
     // Reset
 
     {
-        HLS_DEFINE_PROTOCOL("reset-load");
+        HLS_DEFINE_PROTOCOL("reset-store");
 
         this->reset_store_output();
         STORE_OUTPUT_RESET_PORTS;
@@ -249,7 +249,7 @@ void obfuscator::store_output()
     // Config
 
     {
-        HLS_DEFINE_PROTOCOL("config-load");
+        HLS_DEFINE_PROTOCOL("config-store");
 
         cfg.wait_for_config();
         num_rows = this->conf_info.read().num_rows;

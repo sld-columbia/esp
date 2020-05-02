@@ -55,6 +55,8 @@ void system_t::config_proc()
         config.e_row_blur = e_row_blur;
         config.e_col_blur = e_col_blur;
 
+        ESP_REPORT_INFO("st_offset %u", index);
+
         this->conf_info.write(config);
         this->conf_done.write(true);
     }
@@ -280,11 +282,11 @@ int system_t::validate()
                   out_image_gold[i].val, rel_error))
             {
                 if (tot_errors < REPORT_THRESHOLD)
-                    {
-                        ESP_REPORT_INFO("obfuscator[%u, %u] = %f (%f)",
-                       row, col-1, out_image[i-1].val, out_image_gold[i-1].val);
-                        ESP_REPORT_INFO("obfuscator[%u, %u] = %f (%f)",
-                       row, col, out_image[i].val, out_image_gold[i].val); }
+                {
+                    ESP_REPORT_INFO("obfuscator[%u, %u] = %f (%f)",
+                       row, col, out_image[i].val, out_image_gold[i].val);
+                }
+
                 tot_errors++;
             }
 
