@@ -21,7 +21,7 @@ static unsigned DMA_WORD_PER_BEAT(unsigned _st)
 #define SLD_OBFUSCATOR 0x04A
 #define DEV_NAME "sld,obfuscator"
 
-/* #define DIFT_SUPPORT_ENABLED */
+#define DIFT_SUPPORT_ENABLED
 
 const int32_t num_rows   = 20;
 const int32_t num_cols   = 20;
@@ -289,6 +289,13 @@ int main(int argc, char * argv[])
 #endif
 		init_buf(mem, gold);
 
+#ifdef DIFT_SUPPORT_ENABLED
+#ifndef __riscv
+		printf("  DIFT enabled... =) \n");
+#else
+		print_uart("  DIFT enabled... =) \n");
+#endif
+#endif
 		// Pass common configuration parameters
 
 		iowrite32(dev, SELECT_REG, ioread32(dev, DEVID_REG));
