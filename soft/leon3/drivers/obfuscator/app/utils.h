@@ -21,8 +21,6 @@ int read_image_from_file(float **data, unsigned
     fscanf(fp, "%u", &tmp);
     *num_cols = tmp;
 
-    fscanf(fp, "\n");
-
     *data = (float *) malloc(((*num_rows) *
           (*num_cols)) * sizeof(float));
 
@@ -30,9 +28,12 @@ int read_image_from_file(float **data, unsigned
     {
         for (j = 0; j < *num_cols; j++)
         {
-            float _tmp;
-            fscanf(fp, "%f", &_tmp);
-            (*data)[(i * (*num_cols)) + j] = _tmp;
+            float ftmp = 0.0;
+            uint32_t utmp = 0;
+            fscanf(fp, "%x", &utmp);
+            ftmp = (float) *((float*) &utmp);
+            (*data)[(i * (*num_cols)) + j] = ftmp;
+            /* assert (ftmp >= 0 && ftmp <= 256.0); */
         }
     }
 
@@ -60,7 +61,9 @@ int write_image_to_file(float *data, unsigned
     {
         for (j = 0; j < num_cols; j++)
         {
-            fprintf(fp, " %f", data[(i * num_cols) + j]);
+            float ftmp = data[(i * num_cols) + j];
+            assert (ftmp >= 0 && ftmp <= 256.0);
+            fprintf(fp, " %f", ftmp);
         }
 
         fprintf(fp, "\n");
