@@ -126,7 +126,7 @@ fi
 ### Basic configuration
 read -p "  * Enter unique accelerator id as three hex digits ${def}[${ID_DEFAULT}]${normal}: " ID
 ID=${ID:-$ID_DEFAULT}
-
+ID=$(echo $ID | awk '{print tolower($0)}')
 
 ### Configuration registers
 if [ $FLOW != "hls4ml" ]; then
