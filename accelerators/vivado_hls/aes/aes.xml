@@ -1,8 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <sld>
-  <accelerator name="aes" desc="AES accelerator" data_size="32" device_id="04A" hls_tool="vivado_hls">
-    <param name="encryption" desc="encryption"/>
-    <param name="key_bytes"  desc="key_bytes" />
-    <param name="in_bytes"   desc="in_bytes"  />
+  <accelerator name="aes" desc="Accelerator AES" data_size="4" device_id="04a" hls_tool="vivado_hls">
+    <param name="num_blocks" desc="num_blocks" />
+    <param name="encryption" desc="encryption" />
   </accelerator>
 </sld>

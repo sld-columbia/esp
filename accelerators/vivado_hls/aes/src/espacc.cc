@@ -10,13 +10,13 @@ void load_k(dma_word_t *in1,
 {
 load_key:
 
-    load_ctrl[0].index = 0;
     load_ctrl[0].size = SIZE_WORD_T;
     load_ctrl[0].length = WORDS_IN_CHUNK;
+    load_ctrl[0].index = 0;
 
     for (unsigned i = 0; i < WORDS_IN_CHUNK; i++)
     {
-    	load_label0: for(unsigned j = 0; j < VALUES_PER_WORD; j++)
+        load_label0: for(unsigned j = 0; j < VALUES_PER_WORD; j++)
         {
             _keybuff[i * VALUES_PER_WORD + j] = in1[i].word[j];
         }
@@ -39,7 +39,7 @@ load_data:
 
     for (unsigned i = 0; i < WORDS_IN_CHUNK; i++)
     {
-    	load_label0: for(unsigned j = 0; j < VALUES_PER_WORD; j++)
+        load_label1: for(unsigned j = 0; j < VALUES_PER_WORD; j++)
         {
             _inbuff[i * VALUES_PER_WORD + j] = in1[base + i].word[j];
         }
@@ -89,8 +89,8 @@ void top(dma_word_t *out,
 {
     ap_uint<8> _keybuff[KEY_BYTES];
     ap_uint<32> _keyexp[EXP_KEY_SIZE];
-    const uint32_t ld_offset = KEY_BYTES;
-    const uint32_t st_offset = KEY_BYTES +
+    const uint32_t ld_offset = 0;
+    const uint32_t st_offset = WORDS_IN_CHUNK +
         conf_info_num_blocks * WORDS_IN_CHUNK;
 
 	load_k(in1, _keybuff, load_ctrl);

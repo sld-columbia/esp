@@ -14,7 +14,6 @@
 // AES DATA BLOCK bytes
 #define BLOCK_BYTES 16
 
-
 typedef struct dma_info
 {
     ap_uint<32> index;
