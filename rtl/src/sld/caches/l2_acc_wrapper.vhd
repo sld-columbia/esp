@@ -89,8 +89,6 @@ architecture rtl of l2_acc_wrapper is
 
   -- Interface with L2 cache
 
-  -- TODO: Replace AHB with DMA handling
-
   -- AHB to cache
   signal cpu_req_ready          : std_ulogic;
   signal cpu_req_valid          : std_ulogic;
@@ -148,9 +146,10 @@ architecture rtl of l2_acc_wrapper is
   -------------------------------------------------------------------------------
   -- Flush FSM signals
   -------------------------------------------------------------------------------
-  type flush_fsm is (idle, issue);
+  type flush_fsm is (idle, hold, issue);
   signal flush_state      : flush_fsm := idle;
   signal flush_state_next : flush_fsm := idle;
+  signal flush_hold : std_ulogic;
 
   -------------------------------------------------------------------------------
   -- FSM: Requests/Responses from/to accelerator (handled one at a time)
@@ -488,7 +487,9 @@ begin  -- architecture rtl of l2_acc_wrapper
 -------------------------------------------------------------------------------
 -- FSM: L2 flush management
 -------------------------------------------------------------------------------
-  fsm_flush : process (flush_state, flush, flush_ready)
+  flush_hold <= dma_read or dma_write or (not cpu_req_ready);
+
+  fsm_flush : process (flush_state, flush, flush_ready, flush_hold)
 
   begin
 
@@ -497,27 +498,42 @@ begin  -- architecture rtl of l2_acc_wrapper
       -- IDLE
       when idle =>
 
+        flush_valid <= '0';
+
         if flush = '1' then
 
-          flush_valid <= '1';
-
-          if flush_ready = '0' then
+          if flush_hold = '0' then
 
             flush_state_next <= issue;
 
           else
 
-            flush_state_next <= idle;
+            flush_state_next <= hold;
 
           end if;
 
         else
 
-          flush_valid <= '0';
-
           flush_state_next <= idle;
 
         end if;
+
+
+      -- HOLD
+      when hold =>
+
+        flush_valid <= '0';
+
+        if flush_hold = '0' then
+
+          flush_state_next <= issue;
+
+        else
+
+          flush_state_next <= hold;
+
+        end if;
+
 
       -- ISSUE
       when issue =>
