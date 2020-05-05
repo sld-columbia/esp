@@ -22,7 +22,7 @@ static unsigned DMA_WORD_PER_BEAT(unsigned _st)
 
 /* <<--params-->> */
 const int32_t encryption = 0;
-const int32_t num_blocks = 1;
+const int32_t num_blocks = 3;
 
 static unsigned in_words_adj;
 static unsigned out_words_adj;
@@ -63,20 +63,23 @@ static int validate_buf(token_t *out)
 {
 	unsigned errors = 0;
 
-	for (int i = 0; i < 16; i++)
+    for (int k = 0; k < num_blocks; ++k)
     {
-		if (out[i] != cipher[i])
+        for (int i = 0; i < 16; i++)
         {
+	    	if (out[k * 16 + i] != cipher[i])
+            {
 #ifndef __riscv
-            printf("error: %02x %02x\n", out[i], cipher[i])
+                printf("error: %02x %02x\n", out[i], cipher[i])
 #else
-            print_uart("error: ");
-            print_uart_byte(out[i]);
-            print_uart(" ");
-            print_uart_byte(cipher[i]);
-            print_uart("\n");
+                print_uart("error: ");
+                print_uart_byte(out[i]);
+                print_uart(" ");
+                print_uart_byte(cipher[i]);
+                print_uart("\n");
 #endif
-            errors++;
+                errors++;
+            }
         }
     }
 	return errors;
@@ -92,8 +95,11 @@ static void init_buf (token_t *in)
 
     // Input
 
-    for (int i = 0; i < 16; ++i)
-        in[i + 16] = plain[i];
+    for (int k = 0; k < num_blocks; ++k)
+    {
+        for (int i = 0; i < 16; ++i)
+            in[i + 16 * (k + 1)] = plain[i];
+    }
 }
 
 int main(int argc, char * argv[])
@@ -116,8 +122,10 @@ int main(int argc, char * argv[])
 	}
     else
     {
-		in_words_adj = round_up((num_blocks + 1) * 16, DMA_WORD_PER_BEAT(sizeof(token_t)));
-		out_words_adj = round_up(num_blocks * 16, DMA_WORD_PER_BEAT(sizeof(token_t)));
+		in_words_adj = round_up((num_blocks + 1) * 16,
+            DMA_WORD_PER_BEAT(sizeof(token_t)));
+		out_words_adj = round_up(num_blocks * 16,
+            DMA_WORD_PER_BEAT(sizeof(token_t)));
 	}
 
 	in_len = in_words_adj;
