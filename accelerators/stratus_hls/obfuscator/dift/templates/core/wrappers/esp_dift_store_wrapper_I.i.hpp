@@ -107,6 +107,8 @@ void esp_dift_store_wrapper_I<_DMA_WIDTH_>::store_output(void)
 
                 if (!this->load_valid.read())
                 {
+                    /* ESP_REPORT_INFO("zeroing values"); */
+
                     tmp = 0; // do not leak data
                 }
 

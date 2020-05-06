@@ -22,6 +22,7 @@ static unsigned DMA_WORD_PER_BEAT(unsigned _st)
 #define DEV_NAME "sld,obfuscator"
 
 #define DIFT_SUPPORT_ENABLED
+#define ENABLE_REGS_ATTACK
 
 const int32_t num_rows   = 20;
 const int32_t num_cols   = 20;
@@ -100,11 +101,10 @@ static int validate_buf(token_t *out, token_t *gold)
         {
             // Val
 
-            native_t value = ufixed32_to_float(out[index], 11);
+            native_t value = fixed32_to_float(out[index], 11);
 
             if (value != exp[x][y])
             {
-				printf("[%d, %d] val: %f expected: %f\n", x, y, value, exp[x][y]);
                 errors += 1;
             }
 
@@ -115,7 +115,7 @@ static int validate_buf(token_t *out, token_t *gold)
 #ifdef DIFT_SUPPORT_ENABLED
             if (out[index] != 0)
             {
-                printf("[%d, %d] tag: %d expected: %d\n", x, y, out[index], 0);
+                errors += 1;
             }
 
             index++;
@@ -141,9 +141,9 @@ static void init_buf(token_t *in, token_t * gold)
             // Val
 
 			if (y % 2 == 0)
-            	in[index] = float_to_ufixed32((native_t) 32.0, 11);
+            	in[index] = float_to_fixed32((native_t) 32.0, 11);
             else // y % 2 == 1
-				in[index] = float_to_ufixed32((native_t) 31.0, 11);
+				in[index] = float_to_fixed32((native_t) 31.0, 11);
 
             index++;
 
@@ -313,10 +313,21 @@ int main(int argc, char * argv[])
 		iowrite32(dev, SRC_OFFSET_REG, 0x0);
 		iowrite32(dev, DST_OFFSET_REG, 0x0);
 
+#ifdef DIFT_SUPPORT_ENABLED
+#ifndef __riscv
+		printf("  REGS attacked... =) \n");
+#else
+		print_uart("  REGS attacked... =) \n");
+#endif
+#endif	
 		// Pass accelerator-specific configuration parameters
 		/* <<--regs-config-->> */
-		iowrite32(dev, OBFUSCATOR_NUM_ROWS_REG, num_rows);
-		iowrite32(dev, OBFUSCATOR_NUM_COLS_REG, num_cols);
+#ifdef ENABLE_REGS_ATTACK
+        iowrite32(dev, OBFUSCATOR_NUM_ROWS_REG, num_rows + 2);
+#else // !ENABLE_REGS_ATTACK
+        iowrite32(dev, OBFUSCATOR_NUM_ROWS_REG, num_rows);
+#endif // ENABLE_REGS_ATTACK
+        iowrite32(dev, OBFUSCATOR_NUM_COLS_REG, num_cols);
 		iowrite32(dev, OBFUSCATOR_I_ROW_BLUR_REG, i_row_blur);
 		iowrite32(dev, OBFUSCATOR_I_COL_BLUR_REG, i_col_blur);
 		iowrite32(dev, OBFUSCATOR_E_ROW_BLUR_REG, e_row_blur);

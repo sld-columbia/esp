@@ -31,16 +31,16 @@ void esp_dift_wrapper<_DMA_WIDTH_>::drive_acc_done()
 
                 do { wait(); } while (true);
             }
-            else if (dift_error.read())
-            {
+            /* else if (dift_error.read()) */
+            /* { */
                 // DIFT exception
 
-                wait(); acc_done.write(true);
+                /* wait(); acc_done.write(true); */
 
-                wait(); acc_done.write(false);
+                /* wait(); acc_done.write(false); */
 
-                do { wait(); } while (true);
-            }
+                /* do { wait(); } while (true); */
+            /* } */
 
             wait();
         }
