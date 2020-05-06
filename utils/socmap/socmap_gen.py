@@ -120,6 +120,11 @@ THIRDPARTY_APB_ADDR_SIZE = dict()
 THIRDPARTY_MEM_RESERVED_ADDR = dict()
 THIRDPARTY_MEM_RESERVED_SIZE = dict()
 THIRDPARTY_COMPATIBLE = dict()
+# TODO: extract the IRQ_TYPE from the accelerator's XML
+# IRQ line types
+#     0 : edge-sensitive
+#     1 : level-sensitive
+THIRDPARTY_IRQ_TYPE = dict()
 
 # If APB EXT ADDR SIZE is not zero, then APB mask will be applied to
 # the extended address Each device instance will reserve EXT SIZE
@@ -134,6 +139,7 @@ THIRDPARTY_APB_ADDR_SIZE["nv_nvdla"]     = 0x00040000
 THIRDPARTY_MEM_RESERVED_ADDR["nv_nvdla"] = 0xB0000000
 THIRDPARTY_MEM_RESERVED_SIZE["nv_nvdla"] = 0x10000000
 THIRDPARTY_COMPATIBLE["nv_nvdla"]        = "nv_small"
+THIRDPARTY_IRQ_TYPE["nv_nvdla"]          = "1"
 
 class acc_info:
   uppercase_name = ""
@@ -825,6 +831,10 @@ def print_mapping(fp, esp_config):
 
     fp.write("  constant " + acc.lowercase_name + "_" + str(acc.id) + "_pindex : integer range 0 to NAPBSLV - 1 := " + str(acc.idx) + ";\n")
     fp.write("  constant " + acc.lowercase_name + "_" + str(acc.id) + "_pirq : integer range 0 to NAHBIRQ - 1 := " + str(acc.irq) + ";\n")
+    if acc.vendor == "sld":
+      fp.write("  constant " + acc.lowercase_name + "_" + str(acc.id) + "_irq_type : integer range 0 to 1 := " + "0" + ";\n")
+    else:
+      fp.write("  constant " + acc.lowercase_name + "_" + str(acc.id) + "_irq_type : integer range 0 to 1 := " + THIRDPARTY_IRQ_TYPE[acc.lowercase_name] + ";\n")
     fp.write("  constant " + acc.lowercase_name + "_" + str(acc.id) + "_paddr : integer range 0 to 4095 := 16#" + str(address_str) + "#;\n")
     fp.write("  constant " + acc.lowercase_name + "_" + str(acc.id) + "_pmask : integer range 0 to 4095 := 16#" + str(msk_str) + "#;\n")
     fp.write("  constant " + acc.lowercase_name + "_" + str(acc.id) + "_paddr_ext : integer range 0 to 4095 := 16#" + str(address_ext_str) + "#;\n")
@@ -1094,6 +1104,18 @@ def print_mapping(fp, esp_config):
     if esp_config.tiles[i].type == "acc":
       acc = esp_config.tiles[i].acc
       fp.write("    " + str(i) + " => " + acc.lowercase_name + "_" + str(acc.id) + "_pirq,\n")
+  fp.write("    others => 0);\n\n")
+
+  #
+  fp.write("  -- Get IRQ line type for accelerators from tile ID\n")
+  fp.write("  -- IRQ line types:\n")
+  fp.write("  --     0 : edge-sensitive\n")
+  fp.write("  --     1 : level-sensitive\n")
+  fp.write("  constant tile_irq_type : tile_irq_array := (\n")
+  for i in range(0, esp_config.ntiles):
+    if esp_config.tiles[i].type == "acc":
+      acc = esp_config.tiles[i].acc
+      fp.write("    " + str(i) + " => " + acc.lowercase_name + "_" + str(acc.id) + "_irq_type,\n")
   fp.write("    others => 0);\n\n")
 
   #
@@ -1633,7 +1655,10 @@ def print_ariane_devtree(fp, esp_config):
     size_str = format(size, "X")
 
     fp.write("    " + acc.lowercase_name + "@" + address_str + " {\n")
-    fp.write("      compatible = \"" + acc.vendor + "," + acc.lowercase_name + "\";\n")
+    if acc.vendor == "sld":
+      fp.write("      compatible = \"" + acc.vendor + "," + acc.lowercase_name + "\";\n")
+    else:
+      fp.write("      compatible = \"" + acc.vendor + "," + THIRDPARTY_COMPATIBLE[acc.lowercase_name] + "\";\n")
     fp.write("      reg = <0x0 0x" + address_str + " 0x0 0x" + size_str + ">;\n")
     fp.write("      interrupt-parent = <&PLIC0>;\n")
     fp.write("      interrupts = <" + str(acc.irq + 1) + ">;\n")

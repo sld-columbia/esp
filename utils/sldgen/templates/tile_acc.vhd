@@ -107,6 +107,9 @@ architecture rtl of tile_acc is
   signal interrupt_wrreq            : std_ulogic;
   signal interrupt_data_in          : misc_noc_flit_type;
   signal interrupt_full             : std_ulogic;
+  signal interrupt_ack_rdreq        : std_ulogic;
+  signal interrupt_ack_data_out     : misc_noc_flit_type;
+  signal interrupt_ack_empty        : std_ulogic;
   signal apb_snd_wrreq              : std_ulogic;
   signal apb_snd_data_in            : misc_noc_flit_type;
   signal apb_snd_full               : std_ulogic;
@@ -127,6 +130,7 @@ architecture rtl of tile_acc is
   constant this_paddr_ext      : integer                            := tile_apb_paddr_ext(tile_id);
   constant this_pmask_ext      : integer                            := tile_apb_pmask_ext(tile_id);
   constant this_pirq           : integer                            := tile_apb_irq(tile_id);
+  constant this_irq_type       : integer                            := tile_irq_type(tile_id);
   constant this_scatter_gather : integer range 0 to 1               := tile_scatter_gather(tile_id);
   constant this_local_apb_mask : std_logic_vector(0 to NAPBSLV - 1) := local_apb_mask(tile_id);
   constant this_has_l2         : integer                            := tile_has_l2(tile_id);
@@ -165,6 +169,9 @@ architecture rtl of tile_acc is
   attribute keep of interrupt_wrreq            : signal is "true";
   attribute keep of interrupt_data_in          : signal is "true";
   attribute keep of interrupt_full             : signal is "true";
+  attribute keep of interrupt_ack_rdreq        : signal is "true";
+  attribute keep of interrupt_ack_data_out     : signal is "true";
+  attribute keep of interrupt_ack_empty        : signal is "true";
   attribute keep of apb_snd_wrreq              : signal is "true";
   attribute keep of apb_snd_data_in            : signal is "true";
   attribute keep of apb_snd_full               : signal is "true";
@@ -226,6 +233,9 @@ begin
       interrupt_wrreq            => interrupt_wrreq,
       interrupt_data_in          => interrupt_data_in,
       interrupt_full             => interrupt_full,
+      interrupt_ack_rdreq        => interrupt_ack_rdreq,
+      interrupt_ack_data_out     => interrupt_ack_data_out,
+      interrupt_ack_empty        => interrupt_ack_empty,
       noc1_out_data              => noc1_output_port,
       noc1_out_void              => noc1_data_void_out,
       noc1_out_stop              => noc1_stop_in,

@@ -104,6 +104,11 @@ entity misc_tile_q is
     interrupt_rdreq                 : in  std_ulogic;
     interrupt_data_out              : out misc_noc_flit_type;
     interrupt_empty                 : out std_ulogic;
+    -- Interrupt acknowledge to accelerators with level-sensitive interrupts
+    -- tile->NoC5
+    interrupt_ack_wrreq             : in  std_ulogic;
+    interrupt_ack_data_in           : in misc_noc_flit_type;
+    interrupt_ack_full              : out std_ulogic;
     -- Cachable data plane 1 -> request messages
     noc1_out_data                   : in  noc_flit_type;
     noc1_out_void                   : in  std_ulogic;
@@ -213,6 +218,10 @@ architecture rtl of misc_tile_q is
   signal interrupt_wrreq           : std_ulogic;
   signal interrupt_data_in         : misc_noc_flit_type;
   signal interrupt_full            : std_ulogic;
+  -- tile->NoC5
+  signal interrupt_ack_rdreq       : std_ulogic;
+  signal interrupt_ack_data_out    : misc_noc_flit_type;
+  signal interrupt_ack_empty       : std_ulogic;
 
   -- Partially decoupling local-remote transactions to prevent deadlock
   -- Local Master -> Local apb slave (request)
@@ -274,6 +283,21 @@ architecture rtl of misc_tile_q is
   signal noc4_dummy_out_void : std_ulogic;
   signal noc6_dummy_in_stop  : std_ulogic;
 
+  attribute mark_debug : string;
+
+  attribute mark_debug of interrupt_wrreq : signal is "true";
+  attribute mark_debug of interrupt_data_in : signal is "true";
+  attribute mark_debug of interrupt_full : signal is "true";
+  attribute mark_debug of interrupt_ack_rdreq : signal is "true";
+  attribute mark_debug of interrupt_ack_data_out : signal is "true";
+  attribute mark_debug of interrupt_ack_empty : signal is "true";
+  attribute mark_debug of noc5_msg_type : signal is "true";
+  attribute mark_debug of noc5_preamble : signal is "true";
+  attribute mark_debug of noc5_fifos_current : signal is "true";
+  attribute mark_debug of noc5_fifos_next : signal is "true";
+  attribute mark_debug of to_noc5_fifos_current : signal is "true";
+  attribute mark_debug of to_noc5_fifos_next : signal is "true";
+  
 begin  -- rtl
 
   fifo_rst <= rst;                      --FIFO rst active low
@@ -560,9 +584,13 @@ begin  -- rtl
             else
               noc5_out_stop <= '1';
             end if;
-          elsif (noc5_msg_type = INTERRUPT and noc5_preamble = PREAMBLE_1FLIT) then
-            interrupt_wrreq <= not interrupt_full;
-            noc5_out_stop   <= interrupt_full;
+          elsif (noc5_msg_type = INTERRUPT and noc5_preamble = PREAMBLE_HEADER) then
+            if interrupt_full = '0' then
+              interrupt_wrreq   <= '1';
+              noc5_fifos_next <= packet_interrupt;
+            else
+              noc5_out_stop <= '1';
+            end if;
           elsif ((noc5_msg_type = AHB_RD or noc5_msg_type = AHB_WR)
                  and noc5_preamble = PREAMBLE_HEADER) then
             if ahbs_rcv_full = '0' then
@@ -600,7 +628,6 @@ begin  -- rtl
           noc5_fifos_next <= none;
         end if;
 
-
       when packet_remote_apb_rcv =>
         remote_apb_rcv_wrreq <= not noc5_out_void and (not remote_apb_rcv_full);
         noc5_out_stop        <= remote_apb_rcv_full and (not noc5_out_void);
@@ -614,6 +641,14 @@ begin  -- rtl
         noc5_out_stop <= irq_ack_full and (not noc5_out_void);
         if (noc5_preamble = PREAMBLE_TAIL and noc5_out_void = '0' and
             irq_ack_full = '0') then
+          noc5_fifos_next <= none;
+        end if;
+
+      when packet_interrupt =>
+        interrupt_wrreq <= not noc5_out_void and (not interrupt_full);
+        noc5_out_stop <= interrupt_full and (not noc5_out_void);
+        if (noc5_preamble = PREAMBLE_TAIL and noc5_out_void = '0' and
+            interrupt_full = '0') then
           noc5_fifos_next <= none;
         end if;
 
@@ -728,6 +763,7 @@ begin  -- rtl
 
   -- To noc5: APB response to remote core (APB snd)
   -- To noc5: IRQ
+  -- To noc5: INTERRUPT ack to accelerators
   -- to noc5: AHB reponse messages to CPU (AHBS snd)
   -- to noc5: AHB request messages to remote slaves (remote AHBS snd)
   process (clk, rst)
@@ -744,6 +780,7 @@ begin  -- rtl
                                    apb_snd_data_out, apb_snd_empty,
                                    remote_apb_snd_data_out, remote_apb_snd_empty,
                                    irq_data_out, irq_empty,
+                                   interrupt_ack_data_out, interrupt_ack_empty,
                                    ahbs_snd_data_out, ahbs_snd_empty,
                                    remote_ahbs_snd_data_out, remote_ahbs_snd_empty)
     variable to_noc5_preamble : noc_preamble_type;
@@ -758,6 +795,7 @@ begin  -- rtl
     apb_snd_rdreq         <= '0';
     remote_apb_snd_rdreq  <= '0';
     irq_rdreq             <= '0';
+    interrupt_ack_rdreq   <= '0';
     ahbs_snd_rdreq        <= '0';
     remote_ahbs_snd_rdreq <= '0';
     to_noc5_fifos_next    <= to_noc5_fifos_current;
@@ -771,6 +809,12 @@ begin  -- rtl
             noc5_in_void       <= irq_empty;
             irq_rdreq          <= '1';
             to_noc5_fifos_next <= packet_irq;
+          end if;
+        elsif interrupt_ack_empty = '0' then
+          if noc5_in_stop = '0' then
+            noc5_in_data <= interrupt_ack_data_out;
+            noc5_in_void <= interrupt_ack_empty;
+            interrupt_ack_rdreq <= '1';
           end if;
         elsif (apb_snd_empty = '0' and apb_snd_to_local = '0') then
           noc5_in_data <= apb_snd_data_out;
@@ -949,6 +993,20 @@ begin  -- rtl
       full     => irq_full,
       data_out => irq_data_out);
 
+  fifo_11 : fifo0
+    generic map (
+      depth => 2,                       --Header, interrupt_ack level
+      width => MISC_NOC_FLIT_SIZE)
+    port map (
+      clk      => clk,
+      rst      => fifo_rst,
+      rdreq    => interrupt_ack_rdreq,
+      wrreq    => interrupt_ack_wrreq,
+      data_in  => interrupt_ack_data_in,
+      empty    => interrupt_ack_empty,
+      full     => interrupt_ack_full,
+      data_out => interrupt_ack_data_out);
+  
   fifo_17 : fifo0
     generic map (
       depth => 5,                       --Header, data
