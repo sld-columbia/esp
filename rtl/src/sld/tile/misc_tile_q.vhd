@@ -584,13 +584,9 @@ begin  -- rtl
             else
               noc5_out_stop <= '1';
             end if;
-          elsif (noc5_msg_type = INTERRUPT and noc5_preamble = PREAMBLE_HEADER) then
-            if interrupt_full = '0' then
-              interrupt_wrreq   <= '1';
-              noc5_fifos_next <= packet_interrupt;
-            else
-              noc5_out_stop <= '1';
-            end if;
+          elsif (noc5_msg_type = INTERRUPT and noc5_preamble = PREAMBLE_1FLIT) then
+            interrupt_wrreq <= not interrupt_full;
+            noc5_out_stop   <= interrupt_full;
           elsif ((noc5_msg_type = AHB_RD or noc5_msg_type = AHB_WR)
                  and noc5_preamble = PREAMBLE_HEADER) then
             if ahbs_rcv_full = '0' then
@@ -641,14 +637,6 @@ begin  -- rtl
         noc5_out_stop <= irq_ack_full and (not noc5_out_void);
         if (noc5_preamble = PREAMBLE_TAIL and noc5_out_void = '0' and
             irq_ack_full = '0') then
-          noc5_fifos_next <= none;
-        end if;
-
-      when packet_interrupt =>
-        interrupt_wrreq <= not noc5_out_void and (not interrupt_full);
-        noc5_out_stop <= interrupt_full and (not noc5_out_void);
-        if (noc5_preamble = PREAMBLE_TAIL and noc5_out_void = '0' and
-            interrupt_full = '0') then
           noc5_fifos_next <= none;
         end if;
 

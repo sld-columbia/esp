@@ -136,7 +136,7 @@ end;
 
   -- IRQ
   signal irq      : std_logic_vector(NAHBIRQ-1 downto 0);
-  type irq_fsm is (idle, pending, send_tail, wait_for_clear_irq);
+  type irq_fsm is (idle, pending, wait_for_clear_irq);
   signal irq_state, irq_next : irq_fsm;
   signal irq_header_i, irq_header : misc_noc_flit_type;
   constant irq_info : std_logic_vector(3 downto 0) := conv_std_logic_vector(pirq, 4);
@@ -243,7 +243,7 @@ begin
 
   -- IRQ packet
   irq_header_i <= create_header(MISC_NOC_FLIT_SIZE, local_y, local_x, io_y, io_x, INTERRUPT, irq_info)(MISC_NOC_FLIT_SIZE - 1 downto 0);
-  irq_header(MISC_NOC_FLIT_SIZE-1 downto MISC_NOC_FLIT_SIZE-PREAMBLE_WIDTH) <= PREAMBLE_HEADER;
+  irq_header(MISC_NOC_FLIT_SIZE-1 downto MISC_NOC_FLIT_SIZE-PREAMBLE_WIDTH) <= PREAMBLE_1FLIT;
   irq_header(MISC_NOC_FLIT_SIZE-PREAMBLE_WIDTH-1 downto 0) <=
     irq_header_i(MISC_NOC_FLIT_SIZE-PREAMBLE_WIDTH-1 downto 0);
 
@@ -264,21 +264,13 @@ begin
             irq_next <= pending;
           else
             interrupt_wrreq <= '1';
-            irq_next <= send_tail;
+            irq_next <= wait_for_clear_irq;
           end if;
         end if;
 
       when pending =>
         if interrupt_full = '0' then
           interrupt_wrreq <= '1';
-          irq_next <= send_tail;
-        end if;
-
-      when send_tail =>
-        if interrupt_full = '0' then
-          interrupt_wrreq <= '1';
-          interrupt_data_in(MISC_NOC_FLIT_SIZE-1 downto
-                            MISC_NOC_FLIT_SIZE-PREAMBLE_WIDTH) <= PREAMBLE_TAIL;
           irq_next <= wait_for_clear_irq;
         end if;
 
@@ -297,7 +289,7 @@ begin
                 irq_next <= pending;
               else
                 interrupt_wrreq <= '1';
-                irq_next <= send_tail;
+                irq_next <= wait_for_clear_irq;
               end if;
             end if;
           end if;
