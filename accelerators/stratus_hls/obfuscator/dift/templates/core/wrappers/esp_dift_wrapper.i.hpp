@@ -130,5 +130,6 @@ void esp_dift_wrapper<_DMA_WIDTH_>::bind_store_wrapper(esp_dift_config *cfg)
     store_wrapper->input_dma_write_ctrl(this->dift_write_ctrl);
     store_wrapper->output_dma_write_ctrl(this->dma_write_ctrl);
     store_wrapper->output_dma_write_chnl(this->dma_write_chnl);
+    store_wrapper->load_valid(this->sig_load_valid);
     store_wrapper->store_valid(this->sig_store_valid);
 }

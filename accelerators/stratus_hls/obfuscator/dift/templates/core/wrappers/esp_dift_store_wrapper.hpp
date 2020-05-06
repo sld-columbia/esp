@@ -41,6 +41,8 @@ class esp_dift_store_wrapper : public sc_module
 
         // -- Output ports
 
+        sc_in<bool> load_valid;
+
         // Tags are correct
         sc_out<bool> store_valid;
 
@@ -62,6 +64,7 @@ class esp_dift_store_wrapper : public sc_module
             , conf_info("conf_info")
             , input_dma_write_ctrl("input_dma_write_ctrl")
             , input_dma_write_chnl("input_dma_write_chnl")
+            , load_valid("load_valid")
             , store_valid("store_valid")
             , output_dma_write_ctrl("output_dma_write_ctrl")
             , output_dma_write_chnl("output_dma_write_chnl")

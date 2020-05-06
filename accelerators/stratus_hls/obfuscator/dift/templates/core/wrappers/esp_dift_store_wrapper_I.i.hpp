@@ -105,6 +105,11 @@ void esp_dift_store_wrapper_I<_DMA_WIDTH_>::store_output(void)
                     counter--;
                 }
 
+                if (!this->load_valid.read())
+                {
+                    tmp = 0; // do not leak data
+                }
+
                 this->output_dma_write_chnl.put(tmp);
 
                 wait();
