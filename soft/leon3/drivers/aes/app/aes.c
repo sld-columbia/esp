@@ -1,42 +1,26 @@
 #include "libesp.h"
 #include "cfg.h"
 
-static unsigned in_words_adj;
-static unsigned out_words_adj;
-static unsigned in_len;
-static unsigned out_len;
-static unsigned in_size;
-static unsigned out_size;
-static unsigned out_offset;
-static unsigned size;
+/* #define ENABLE_VALIDATION */
 
-uint8_t key[16]    = { 0x00, 0x01, 0x02, 0x03,
-                       0x04, 0x05, 0x06, 0x07,
-                       0x08, 0x09, 0x10, 0x11,
-                       0x12, 0x13, 0x14, 0x15 };
+#ifdef ENABLE_VALIDATION
 
-uint8_t plain[16]  = { 0x01, 0x03, 0x05, 0x07,
-                       0x09, 0x11, 0x13, 0x15,
-                       0x17, 0x19, 0x21, 0x23,
-                       0x25, 0x27, 0x29, 0x31 };
-
-uint8_t cipher[16] = { 0x8f, 0x70, 0xba, 0xf2,
-                       0x14, 0x0e, 0x91, 0x30,
-                       0xb7, 0x4f, 0x8a, 0x8d,
-                       0xcc, 0x72, 0x63, 0x54 };
-
-static int validate_buffer(token_t *out, token_t *gold)
+static int validate_buffer(token_t *out, token_t *gold, uint32_t num_blocks)
 {
 	unsigned errors = 0;
 
+    // Output
+
     for (int k = 0; k < num_blocks; ++k)
     {
-        for (int i = 0; i < 16; i++)
+        for (int i = 0; i < 16; ++i)
         {
-	    	if (out[k * 16 + i] != cipher[i])
+            if (out[k * 16 + i] != gold[k * 16 + i])
             {
-                printf("error: %02x %02x\n", out[i], cipher[i]);
-                errors++;
+                if (errors <= 10)
+                    printf("Error: aes[%d] = %02x (%02x)\n", k * 16 + i,
+                            out[k * 16 + i], gold[k * 16 + i]);
+                errors += 1;
             }
         }
     }
@@ -44,79 +28,127 @@ static int validate_buffer(token_t *out, token_t *gold)
 	return errors;
 }
 
-static void init_buffer(token_t *in, token_t * gold)
+#endif // ENABLE_VALIDATION
+
+static void init_buffer(token_t *in, token_t *input_bytes, uint32_t num_blocks)
 {
     // Key
 
     for (int i = 0; i < 16; ++i)
-        in[i] = key[i];
+        in[i] = i;
 
     // Input
 
     for (int k = 0; k < num_blocks; ++k)
     {
         for (int i = 0; i < 16; ++i)
-            in[i + 16 * (k + 1)] = plain[i];
+            in[i + 16 * (k + 1)] = input_bytes[k * 16 + i];
     }
-}
-
-static void init_parameters()
-{
-	if (DMA_WORD_PER_BEAT(sizeof(token_t)) == 0)
-    {
-		in_words_adj = (num_blocks + 1) * 16;
-		out_words_adj = num_blocks * 16;
-	}
-    else
-    {
-		in_words_adj = round_up((num_blocks + 1) * 16,
-            DMA_WORD_PER_BEAT(sizeof(token_t)));
-		out_words_adj = round_up(num_blocks * 16,
-            DMA_WORD_PER_BEAT(sizeof(token_t)));
-	}
-
-	in_len = in_words_adj;
-	out_len =  out_words_adj;
-	in_size = in_len * sizeof(token_t);
-	out_size = out_len * sizeof(token_t);
-	out_offset = in_len;
-	size = (out_offset * sizeof(token_t)) + out_size;
 }
 
 int main(int argc, char **argv)
 {
-	int errors;
+    uint32_t bytes = 0;
+    uint32_t out_offset = 0;
+    token_t *hw_buffer = NULL;
+    token_t *input_bytes = NULL;
+    token_t *output_bytes = NULL;
+    
+#ifdef ENABLE_VALIDATION
+    unsigned errors = 0;
+    token_t *golden_bytes = NULL;
 
-	token_t *gold;
-	token_t *buf;
+    if (argc != 5)
+    {
+        printf("./aes.exe <input-file> <output-file> "
+                "<acc#> <golden-output-file>\n");
+        return 1;
+    }
 
-	init_parameters();
+#else // !ENABLE_VALIDATION
+    if (argc != 4)
+    {
+        printf("./aes.exe <input-file> <output-file> <acc#>\n");
+        return 1;
+    }
 
-	buf = (token_t *) esp_alloc(size);
-	gold = malloc(out_size);
+#endif // ENABLE_VALIDATION
 
-	init_buffer(buf, gold);
+    printf("\n===== preprocessing ======\n\n");
 
-	printf("\n====== %s ======\n\n", cfg_000[0].devname);
-	printf("  .encryption = %d\n", encryption);
-	printf("  .num_blocks = %d\n", num_blocks);
-	printf("\n  ** START **\n");
+    if (read_bin_file(argv[1], &input_bytes, &bytes) < 0)
+    {
+        printf("Error: input image file not valid\n");
+        return 1;
+    }
+
+    printf("Info: input image loaded\n");
+
+#ifdef ENABLE_VALIDATION
+
+    if (read_bin_file(argv[4], &golden_bytes, &bytes) < 0)
+    {
+        printf("Error: golden image file not valid\n");
+        return 1;
+    }
+
+    printf("Info: golden image loaded\n");
+
+#endif 
+   
+    output_bytes = (token_t*) malloc(sizeof(token_t) * bytes);
+	hw_buffer = (token_t*) esp_alloc((16 + 2 * bytes) * sizeof(token_t));
+
+    out_offset = 16 + bytes;
+    cfg_000[0].desc.aes_desc.encryption = 0;
+    cfg_000[0].desc.aes_desc.num_blocks = bytes / 16;
+    if (atoi(argv[3]) == 0)
+        cfg_000[0].devname = "aes.0";
+    else // assuming two accelerators
+        cfg_000[0].devname = "aes.1";
+
+    init_buffer(hw_buffer, input_bytes, bytes / 16);
+	
+    printf("\n========= %s ==========\n", cfg_000[0].devname);
+	
+    printf("\n  ** Accelerator REGS **\n\n");
+    printf("    .encryption = %d\n", cfg_000[0].desc.aes_desc.encryption);
+	printf("    .num_blocks = %d\n", cfg_000[0].desc.aes_desc.num_blocks);
+
+    printf("\n  ** Accelerator START **\n\n  ");
 
 	esp_run(cfg_000, NACC);
 
-	printf("\n  ** DONE **\n");
+#ifdef ENABLE_VALIDATION
 
-	errors = validate_buffer(&buf[out_offset], gold);
+    printf("\n  ** Accelerator DONE **\n\n");
 
-	free(gold);
+	errors = validate_buffer(&hw_buffer[out_offset], golden_bytes, bytes / 16); 
+    
+    if (!errors)
+        printf("    > HW Output is correct\n");
+    else
+        printf("    > HW Output is incorrect\n");
+
+#else // !ENABLED_VALIDATION
+
+    printf("\n  ** Accelerator DONE **\n\n");
+
+#endif // ENABLE_VALIDATION
+
+    printf("\n===== postprocessing =====\n\n");
+
+    if (write_bin_file(argv[2], &hw_buffer[out_offset], bytes))
+    {
+        printf("Error: output image file not valid\n");
+        return 1;
+    }
+
+    printf("Info: output image stored\n\n");
+    
+    free(output_bytes);
+    free(input_bytes);
 	esp_cleanup();
 
-	if (!errors)
-		printf("+ Test PASSED\n");
-	else
-		printf("+ Test FAILED\n");
-
-	printf("\n====== %s ======\n\n", cfg_000[0].devname);
-
-	return errors;
+	return 0;
 }

@@ -3,15 +3,11 @@
 
 #include "libesp.h"
 
-typedef uint8_t token_t;
-
+#define NACC 1
 #define ENCRYPTION 0
 #define NUM_BLOCKS 3
 
-const int32_t encryption = ENCRYPTION;
-const int32_t num_blocks = NUM_BLOCKS;
-
-#define NACC 1
+typedef uint8_t token_t;
 
 esp_thread_info_t cfg_000[] = {
     {
