@@ -1278,6 +1278,13 @@ void llc::ctrl()
 
 
                 else if (states_buf[way] == SD) {
+                    for (int i = 0; i < MAX_N_L2; i++) {
+                        HLS_DEFINE_PROTOCOL("send_fwd_out-8");
+                        if (sharers_buf[way] & (1 << i))
+                            send_fwd_out(FWD_INV_LLC, addr_evict, i, i);
+                        wait();
+                    }
+
                     recall_pending = true;
                 }
 
@@ -1290,7 +1297,7 @@ void llc::ctrl()
                             send_fwd_out(FWD_INV_LLC, addr_evict, i, i);
                         wait();
                     }
-
+                    recall_valid = true;
                 }
 
             }
