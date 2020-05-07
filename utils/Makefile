@@ -887,7 +887,9 @@ modelsim/xilinx_lib: $(XILINX_VIVADO)
 	$(QUIET_MKDIR)mkdir -p $@
 	@echo "compile_simlib -directory xilinx_lib -simulator modelsim -library unisim -no_ip_compile" > $@/simlib.tcl; \
 	cd modelsim; \
-	vivado $(VIVADO_BATCH_OPT) -source xilinx_lib/simlib.tcl; \
+	if ! vivado $(VIVADO_BATCH_OPT) -source xilinx_lib/simlib.tcl; then \
+		echo "$(SPACES)ERROR: Xilinx library compilation failed!"; rm -rf xilinx_lib modelsim.ini; exit 1; \
+	fi; \
 	lib_path=$$(cat modelsim.ini | grep secureip | cut -d " " -f 3); \
 	sed -i "/secureip =/a secureip_ver = "$$lib_path"" modelsim.ini; \
 	sed -i 's/; Show_source = 1/Show_source = 1/g' modelsim.ini; \
@@ -903,13 +905,18 @@ xcelium/xilinx_lib: $(XILINX_VIVADO)
 	$(QUIET_MKDIR)mkdir -p $@
 	@echo "compile_simlib -directory xilinx_lib -simulator xcelium -library unisim -no_ip_compile" > $@/simlib.tcl; \
 	cd xcelium; \
-	vivado $(VIVADO_BATCH_OPT) -source xilinx_lib/simlib.tcl; \
+	if ! vivado $(VIVADO_BATCH_OPT) -source xilinx_lib/simlib.tcl; then \
+		echo "$(SPACES)ERROR: Xilinx library compilation failed!"; rm -rf xilinx_lib cds.lib; exit 1; \
+	fi;
+
 
 incisive/xilinx_lib: $(XILINX_VIVADO)
 	$(QUIET_MKDIR)mkdir -p $@
 	@echo "compile_simlib -directory xilinx_lib -simulator ies -library unisim -no_ip_compile" > $@/simlib.tcl; \
 	cd incisive; \
-	vivado $(VIVADO_BATCH_OPT) -source xilinx_lib/simlib.tcl; \
+	if ! vivado $(VIVADO_BATCH_OPT) -source xilinx_lib/simlib.tcl; then \
+		echo "$(SPACES)ERROR: Xilinx library compilation failed!"; rm -rf xilinx_lib cds.lib; exit 1; \
+	fi;
 
 
 xilinx_lib-clean:
@@ -935,13 +942,14 @@ xilinx_lib-distclean: xilinx_lib-clean
 
 xcelium/xmready: xcelium/xilinx_lib check_all_srcs.old $(PKG_LIST)
 	$(QUIET_MKDIR)mkdir -p xcelium
+ifneq ($(findstring profpga, $(BOARD)),)
 	@cd xcelium; \
 	echo $(SPACES)"### Compile proFPGA source files ###"; \
-	grep --quiet "profpga" cds.lib; \
-	res=$$?; \
-	if [ $$res != 0 ]; then \
-		mkdir -p profpga; \
+	if ! grep --quiet "DEFINE profpga" cds.lib; then \
 		echo "DEFINE profpga $(DESIGN_PATH)/xcelium/profpga" >> cds.lib; \
+	fi; \
+	if ! test -d profpga; then \
+		mkdir -p profpga; \
 	fi; \
 	for vhd in $(VHDL_PROFPGA); do \
 		rtl=$(PROFPGA)/hdl/$$vhd; \
@@ -952,12 +960,14 @@ xcelium/xmready: xcelium/xilinx_lib check_all_srcs.old $(PKG_LIST)
 		rtl=$(PROFPGA)/hdl/$$ver; \
 		echo $(SPACES)"$(XLOG) -work profpga -INCDIR ... $$rtl"; \
 		$(XLOG) -work profpga $(INCDIR_XCELIUM) $$rtl || exit; \
-	done; \
-	grep --quiet "work" cds.lib; \
-	res=$$?; \
-	if [ $$res != 0 ]; then \
-		mkdir -p work; \
+	done;
+endif
+	@cd xcelium; \
+	if ! grep --quiet "DEFINE work" cds.lib; then \
 		echo "DEFINE work $(DESIGN_PATH)/xcelium/work" >> cds.lib; \
+	fi; \
+	if ! test -e work; then \
+		mkdir -p work; \
 	fi; \
 	echo $(SPACES)"### Compile Ariane source files ###"; \
 	rtl=$(ESP_ROOT)/socs/common/ariane_soc_pkg.sv; \
@@ -1013,8 +1023,12 @@ xcelium/xmready: xcelium/xilinx_lib check_all_srcs.old $(PKG_LIST)
 	echo $(SPACES)"### Compile IPs simulation files ###"; \
 	echo $(SPACES)"$(XLOG) -work work $(XILINX_VIVADO)/data/verilog/src/glbl.v"; \
 	$(XLOG) -work work $(XILINX_VIVADO)/data/verilog/src/glbl.v; \
-	ln -s ../prom.srec; \
-	ln -s ../ram.srec; \
+	if ! test -e prom.srec; then \
+		ln -s ../prom.srec; \
+	fi; \
+	if ! test -e ram.srec; then \
+		ln -s ../ram.srec; \
+	fi; \
 	echo $(SPACES)"$(XMELAB) $(SIMTOP) $(EXTRA_SIMTOP)"; \
 	$(XMELAB) $(SIMTOP) $(EXTRA_SIMTOP) && touch xmready; \
 	cd ../;
@@ -1058,13 +1072,14 @@ xmsim-distclean: xmsim-clean
 incisive/ncready: incisive/xilinx_lib check_all_srcs.old $(PKG_LIST)
 	$(QUIET_MKDIR)mkdir -p incisive
 	@echo $(SPACES)"WARNING: The source code for Ariane cannot be compiled with Incisive!!! If you need Ariane, please switch to Modelsim or Xcelium";
+ifneq ($(findstring profpga, $(BOARD)),)
 	@cd incisive; \
 	echo $(SPACES)"### Compile proFPGA source files ###"; \
-	grep --quiet "profpga" cds.lib; \
-	res=$$?; \
-	if [ $$res != 0 ]; then \
-		mkdir -p profpga; \
+	if ! grep --quiet "DEFINE profpga" cds.lib; then \
 		echo "DEFINE profpga $(DESIGN_PATH)/incisive/profpga" >> cds.lib; \
+	fi; \
+	if ! test -d profpga; then \
+		mkdir -p profpga; \
 	fi; \
 	for vhd in $(VHDL_PROFPGA); do \
 		rtl=$(PROFPGA)/hdl/$$vhd; \
@@ -1075,12 +1090,14 @@ incisive/ncready: incisive/xilinx_lib check_all_srcs.old $(PKG_LIST)
 		rtl=$(PROFPGA)/hdl/$$ver; \
 		echo $(SPACES)"$(NCLOG) -work profpga -INCDIR ... $$rtl"; \
 		$(NCLOG) -work profpga $(INCDIR_INCISIVE) $$rtl || exit; \
-	done; \
-	grep --quiet "work" cds.lib; \
-	res=$$?; \
-	if [ $$res != 0 ]; then \
-		mkdir -p work; \
+	done;
+endif
+	@cd incisive; \
+	if ! grep --quiet "DEFINE work" cds.lib; then \
 		echo "DEFINE work $(DESIGN_PATH)/incisive/work" >> cds.lib; \
+	fi; \
+	if ! test -e work; then \
+		mkdir -p work; \
 	fi; \
 	echo $(SPACES)"### Compile VHDL packages ###"; \
 	for vhd in $(SLDGEN_VHDL_RTL_PKGS); do \
@@ -1133,8 +1150,12 @@ incisive/ncready: incisive/xilinx_lib check_all_srcs.old $(PKG_LIST)
 	echo $(SPACES)"### Compile IPs simulation files ###"; \
 	echo $(SPACES)"$(NCLOG) -work work $(XILINX_VIVADO)/data/verilog/src/glbl.v"; \
 	$(NCLOG) -work work $(XILINX_VIVADO)/data/verilog/src/glbl.v; \
-	ln -s ../prom.srec; \
-	ln -s ../ram.srec; \
+	if ! test -e prom.srec; then \
+		ln -s ../prom.srec; \
+	fi; \
+	if ! test -e ram.srec; then \
+		ln -s ../ram.srec; \
+	fi; \
 	echo $(SPACES)"$(NCELAB) $(SIMTOP) $(EXTRA_SIMTOP)"; \
 	$(NCELAB) $(SIMTOP) $(EXTRA_SIMTOP) && touch ncready; \
 	cd ../;
@@ -1184,8 +1205,11 @@ ncsim-distclean: ncsim-clean
 # Please keep 2> /dev/null until the bug is fixed with a newer Modelsim release.
 modelsim/vsim.mk: modelsim/xilinx_lib check_all_srcs.old $(PKG_LIST)
 	$(QUIET_MKDIR)mkdir -p modelsim
+ifneq ($(findstring profpga, $(BOARD)),)
 	@cd modelsim; \
-	vlib -type directory profpga; \
+	if ! test -e profpga; then \
+		vlib -type directory profpga; \
+	fi
 	echo $(SPACES)"### Compile proFPGA source files ###"; \
 	for vhd in $(VHDL_PROFPGA); do \
 		rtl=$(PROFPGA)/hdl/$$vhd; \
@@ -1196,8 +1220,12 @@ modelsim/vsim.mk: modelsim/xilinx_lib check_all_srcs.old $(PKG_LIST)
 		rtl=$(PROFPGA)/hdl/$$ver; \
 		echo $(SPACES)"$(VLOG) -work profpga +incdir+... $$rtl"; \
 		$(VLOG) -work profpga $(INCDIR_MODELSIM) $$rtl || exit; \
-	done; \
-	vlib -type directory work; \
+	done;
+endif
+	@cd modelsim; \
+	if ! test -e work; then \
+		vlib -type directory work; \
+	fi; \
 	echo $(SPACES)"### Compile Ariane source files ###"; \
 	rtl=$(ESP_ROOT)/socs/common/ariane_soc_pkg.sv; \
 	echo $(SPACES)"$(VLOG) $(ARIANE_VLOGOPT) $$rtl"; \
@@ -1256,12 +1284,20 @@ modelsim/vsim.mk: modelsim/xilinx_lib check_all_srcs.old $(PKG_LIST)
 	echo $(SPACES)"### Compile IPs simulation files ###"; \
 	echo $(SPACES)"$(VLOG) $(XILINX_VIVADO)/data/verilog/src/glbl.v"; \
 	$(VLOG) $(XILINX_VIVADO)/data/verilog/src/glbl.v; \
-	$(SPACING)vmap work work;\
-	$(SPACING)vmap profpga profpga;\
+	$(SPACING)vmap work work;
+ifneq ($(findstring profpga, $(BOARD)),)
+	@cd modelsim; \
+	$(SPACING)vmap profpga profpga;
+endif
+	@cd modelsim; \
 	echo $(SPACES)"vmake > vsim.mk"; \
 	vmake 2> /dev/null > vsim.mk; \
-	ln -s ../prom.srec; \
-	ln -s ../ram.srec; \
+	if ! test -e prom.srec; then \
+		ln -s ../prom.srec; \
+	fi; \
+	if ! test -e ram.srec; then \
+		ln -s ../ram.srec; \
+	fi; \
 	cd ../;
 
 sim-compile: sldgen check_all_srcs modelsim/vsim.mk soft
@@ -1299,6 +1335,7 @@ vivado:
 vivado/srcs.tcl: vivado check_all_rtl_srcs.old
 	$(QUIET_INFO)echo "generating source list for Vivado"
 	@$(RM) $@
+ifneq ($(findstring profpga, $(BOARD)),)
 	@for vhd in $(VHDL_PROFPGA); do \
 		rtl=$(PROFPGA)/hdl/$$vhd; \
 		echo "read_vhdl -library profpga $$rtl" >> $@; \
@@ -1307,6 +1344,7 @@ vivado/srcs.tcl: vivado check_all_rtl_srcs.old
 		rtl=$(PROFPGA)/hdl/$$ver; \
 		echo "read_verilog -library profpga $$rtl" >> $@; \
 	done;
+endif
 	@ rtl=$(ESP_ROOT)/socs/common/ariane_soc_pkg.sv; \
 	echo "read_verilog -sv $$rtl" >> $@;
 	@for ver in $(VERILOG_ARIANE); do \
