@@ -740,7 +740,7 @@ OUTPUT_CONTROL : for i in 0 to 4 generate
 						if valid_no_collision(i) = '1' then
 							routing_configuration(i) <= grant_no_collision(i);
 							if data_out_crossbar(i)(width - 2) = '1' then
-								forwarding_under_progress(i) <=	'0';
+								forwarding_under_progress(i) <=	data_out_crossbar(i)(width - 1); -- considering single-flit packets!
 								new_state(i) <= read_ctrl_msg;
 							else
 								forwarding_under_progress(i) <=	'1';
