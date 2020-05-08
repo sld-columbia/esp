@@ -253,8 +253,8 @@ VLIB = vlib
 VCOM = vcom -quiet $(VCOMOPT)
 VLOG = vlog -quiet $(VLOGOPT)
 
-XCOM = xmvhdl -NOVITALCHECK -linedebug -v93 -nocopyright $(XCOMOPT)
-XLOG = xmvlog -nocopyright -linedebug -sv $(XLOGOPT)
+XMCOM = xmvhdl -NOVITALCHECK -linedebug -v93 -nocopyright $(XMCOMOPT)
+XMLOG = xmvlog -nocopyright -linedebug -sv $(XMLOGOPT)
 XMELAB = xmelab -nowarn DLCPT -v93 -nocopyright -disable_sem2009 -nomxindr -timescale 10ps/10ps
 XMUPDATE = xmupdate
 
@@ -953,13 +953,13 @@ ifneq ($(findstring profpga, $(BOARD)),)
 	fi; \
 	for vhd in $(VHDL_PROFPGA); do \
 		rtl=$(PROFPGA)/hdl/$$vhd; \
-		echo $(SPACES)"$(XCOM) -work profpga $$rtl"; \
-		$(XCOM) -work profpga $$rtl || exit; \
+		echo $(SPACES)"$(XMCOM) -work profpga $$rtl"; \
+		$(XMCOM) -work profpga $$rtl || exit; \
 	done; \
 	for ver in $(VERILOG_PROFPGA); do \
 		rtl=$(PROFPGA)/hdl/$$ver; \
-		echo $(SPACES)"$(XLOG) -work profpga -INCDIR ... $$rtl"; \
-		$(XLOG) -work profpga $(INCDIR_XCELIUM) $$rtl || exit; \
+		echo $(SPACES)"$(XMLOG) -work profpga -INCDIR ... $$rtl"; \
+		$(XMLOG) -work profpga $(INCDIR_XCELIUM) $$rtl || exit; \
 	done;
 endif
 	@cd xcelium; \
@@ -971,58 +971,58 @@ endif
 	fi; \
 	echo $(SPACES)"### Compile Ariane source files ###"; \
 	rtl=$(ESP_ROOT)/socs/common/ariane_soc_pkg.sv; \
-	echo $(SPACES)"$(XLOG) -work work $(ARIANE_XLOGOPT) $$rtl"; \
-	$(XLOG) -work work $(ARIANE_XLOGOPT) $$rtl || exit; \
+	echo $(SPACES)"$(XMLOG) -work work $(ARIANE_XMLOGOPT) $$rtl"; \
+	$(XMLOG) -work work $(ARIANE_XMLOGOPT) $$rtl || exit; \
 	for ver in $(VERILOG_ARIANE); do \
 		rtl=$(ARIANE)/$$ver; \
-		echo $(SPACES)"$(XLOG) -work work $(ARIANE_XLOGOPT) $$rtl"; \
-		$(XLOG) -work work $(ARIANE_XLOGOPT) $$rtl || exit; \
+		echo $(SPACES)"$(XMLOG) -work work $(ARIANE_XMLOGOPT) $$rtl"; \
+		$(XMLOG) -work work $(ARIANE_XMLOGOPT) $$rtl || exit; \
 	done; \
 	echo $(SPACES)"### Compile VHDL packages ###"; \
 	for vhd in $(SLDGEN_VHDL_RTL_PKGS); do \
 		rtl=$$vhd; \
-		echo $(SPACES)"$(XCOM) -work work $$rtl"; \
-		$(XCOM) -work work $$rtl || exit; \
+		echo $(SPACES)"$(XMCOM) -work work $$rtl"; \
+		$(XMCOM) -work work $$rtl || exit; \
 	done; \
 	for lib in $$(cat $(ESP_ROOT)/rtl/include/libs.txt); do \
 		for dir in $$(cat $(ESP_ROOT)/rtl/include/$$lib/dirs.txt); do \
 			for vhd in $$(cat $(ESP_ROOT)/rtl/include/$$lib/$$dir/pkgs.txt); do \
 				rtl=$(ESP_ROOT)/rtl/include/$$lib/$$dir/$$vhd; \
-				echo $(SPACES)"$(XCOM) -work work $$rtl"; \
-				$(XCOM) -work work $$rtl || exit; \
+				echo $(SPACES)"$(XMCOM) -work work $$rtl"; \
+				$(XMCOM) -work work $$rtl || exit; \
 			done; \
 			if test -d $(ESP_ROOT)/sim/include/$$lib/$$dir/; then \
 				for vhd in $$(cat $(ESP_ROOT)/sim/include/$$lib/$$dir/pkgs.txt); do \
 					rtl=$(ESP_ROOT)/sim/include/$$lib/$$dir/$$vhd; \
-					echo $(SPACES)"$(XCOM) -work work $$rtl"; \
-					$(XCOM) -work work $$rtl || exit; \
+					echo $(SPACES)"$(XMCOM) -work work $$rtl"; \
+					$(XMCOM) -work work $$rtl || exit; \
 				done; \
 			fi; \
 		done; \
 	done; \
 	for vhd in $(TOP_VHDL_RTL_PKGS); do \
 		rtl=$$vhd; \
-		echo $(SPACES)"$(XCOM) -work work $$rtl"; \
-		$(XCOM) -work work $$rtl || exit; \
+		echo $(SPACES)"$(XMCOM) -work work $$rtl"; \
+		$(XMCOM) -work work $$rtl || exit; \
 	done; \
 	echo $(SPACES)"### Compile VHDL source files ###"; \
 		for rtl in $(VHDL_SRCS); do \
-			echo $(SPACES)"$(XCOM) -work work $$rtl"; \
-			$(XCOM) -work work $$rtl || exit; \
+			echo $(SPACES)"$(XMCOM) -work work $$rtl"; \
+			$(XMCOM) -work work $$rtl || exit; \
 		done; \
 	echo $(SPACES)"### Compile Verilog source files ###"; \
 		for rtl in $(VLOG_SRCS); do \
-			echo $(SPACES)"$(XLOG) $$rtl"; \
-			$(XLOG) -work work $(THIRDPARTY_INCDIR_XCELIUM) $$rtl || exit; \
+			echo $(SPACES)"$(XMLOG) $$rtl"; \
+			$(XMLOG) -work work $(THIRDPARTY_INCDIR_XCELIUM) $$rtl || exit; \
 		done; \
 	echo $(SPACES)"### Compile SystemVerilog source files ###"; \
 		for rtl in $(SVLOG_SRCS); do \
-			echo $(SPACES)"$(XLOG) -SV $$rtl"; \
-			$(XLOG) -SV -work work $(INCDIR_XCELIUM) $(THIRDPARTY_INCDIR_XCELIUM) $$rtl || exit; \
+			echo $(SPACES)"$(XMLOG) -SV $$rtl"; \
+			$(XMLOG) -SV -work work $(INCDIR_XCELIUM) $(THIRDPARTY_INCDIR_XCELIUM) $$rtl || exit; \
 		done; \
 	echo $(SPACES)"### Compile IPs simulation files ###"; \
-	echo $(SPACES)"$(XLOG) -work work $(XILINX_VIVADO)/data/verilog/src/glbl.v"; \
-	$(XLOG) -work work $(XILINX_VIVADO)/data/verilog/src/glbl.v; \
+	echo $(SPACES)"$(XMLOG) -work work $(XILINX_VIVADO)/data/verilog/src/glbl.v"; \
+	$(XMLOG) -work work $(XILINX_VIVADO)/data/verilog/src/glbl.v; \
 	if ! test -e prom.srec; then \
 		ln -s ../prom.srec; \
 	fi; \
@@ -1327,6 +1327,7 @@ sim-distclean: sim-clean
 .PHONY: sim sim-gui sim-compile sim-clean sim-distclean
 
 
+
 ### Vivado targets ###
 
 vivado:
@@ -1345,7 +1346,7 @@ ifneq ($(findstring profpga, $(BOARD)),)
 		echo "read_verilog -library profpga $$rtl" >> $@; \
 	done;
 endif
-	@ rtl=$(ESP_ROOT)/socs/common/ariane_soc_pkg.sv; \
+	@rtl=$(ESP_ROOT)/socs/common/ariane_soc_pkg.sv; \
 	echo "read_verilog -sv $$rtl" >> $@;
 	@for ver in $(VERILOG_ARIANE); do \
 		rtl=$(ARIANE)/$$ver; \
