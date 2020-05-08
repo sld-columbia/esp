@@ -17,19 +17,34 @@ set fpga_techs [list "virtex7" "zynq7000" "virtexu" "virtexup"]
 source "./custom.tcl"
 
 foreach dma $dma_width {
+
+    set index 0
     foreach width $word_widths {
+
+    set key_check [lindex $key_checks $index]
 
 	if {$dma < $width} {error "dma width larger than word width"}
 
 	set unroll_factor [expr $dma / $width]
 
 	# Create project
-	open_project "${ACCELERATOR}_dma${dma}_w${width}"
+
+    if {$key_check} {
+	    open_project "${ACCELERATOR}_check_dma${dma}_w${width}"
+    } else {
+	    open_project "${ACCELERATOR}_dma${dma}_w${width}"
+    }
 
 	set_top "top"
 
-	add_files [glob ../src/*] -cflags "-I../inc -DDMA_SIZE=${dma} -DDATA_BITWIDTH=${width} -std=c++0x "
-	add_files -tb ../tb/tb.cc -cflags "-I../inc -Wno-unknown-pragmas -Wno-unknown-pragmas -DDMA_SIZE=${dma} -DDATA_BITWIDTH=${width} -std=c++0x "
+    if {$key_check} {
+	    add_files [glob ../src/*] -cflags "-I../inc -DKEY_CHECK -DDMA_SIZE=${dma} -DDATA_BITWIDTH=${width} -std=c++0x "
+
+        add_files -tb ../tb/tb.cc -cflags "-I../inc -Wno-unknown-pragmas -Wno-unknown-pragmas -DKEY_CHECK -DDMA_SIZE=${dma} -DDATA_BITWIDTH=${width} -std=c++0x "
+    } else {
+	    add_files [glob ../src/*] -cflags "-I../inc -DDMA_SIZE=${dma} -DDATA_BITWIDTH=${width} -std=c++0x "
+        add_files -tb ../tb/tb.cc -cflags "-I../inc -Wno-unknown-pragmas -Wno-unknown-pragmas -DDMA_SIZE=${dma} -DDATA_BITWIDTH=${width} -std=c++0x "
+    }
 
 	open_solution "${ACCELERATOR}_acc"
 
@@ -51,8 +66,13 @@ foreach dma $dma_width {
 	}
 
 	# Config HLS
-	config_rtl -prefix "${ACCELERATOR}_dma${dma}_w${width}_" 
-	config_compile -no_signed_zeros=0 -unsafe_math_optimizations=0
+    if {$key_check} {
+	    config_rtl -prefix "${ACCELERATOR}_check_dma${dma}_w${width}_"
+    } else {
+        config_rtl -prefix "${ACCELERATOR}_dma${dma}_w${width}_"
+    }
+
+    config_compile -no_signed_zeros=0 -unsafe_math_optimizations=0
 	config_schedule -effort medium -relax_ii_for_timing=0 -verbose=0
 	config_bind -effort medium
 	config_sdx -optimization_level none -target none
@@ -74,7 +94,11 @@ foreach dma $dma_width {
     set_directive_unroll -factor ${unroll_factor} "load_k/load_label0"
     set_directive_unroll -factor ${unroll_factor} "load_d/load_label1"
     set_directive_unroll -factor ${unroll_factor} "store_d/store_label1"
-	set_directive_array_partition -type cyclic -factor ${unroll_factor} -dim 1 "top" _inbuff
+    if {$key_check} {
+        set_directive_unroll -factor ${unroll_factor} "store_c/store_label2"
+    }
+
+    set_directive_array_partition -type cyclic -factor ${unroll_factor} -dim 1 "top" _inbuff
 	set_directive_array_partition -type cyclic -factor ${unroll_factor} -dim 1 "top" _outbuff
 
 	# Custom directives
@@ -92,6 +116,8 @@ foreach dma $dma_width {
 
 	# Export RTL
 	export_design -rtl verilog -format ip_catalog
+
+    incr index
     }
 }
 

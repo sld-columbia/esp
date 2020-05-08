@@ -19,6 +19,7 @@ static unsigned DMA_WORD_PER_BEAT(unsigned _st)
 
 #define SLD_AES 0x04A
 #define DEV_NAME "sld,aes"
+#define CHECK_IS_ENABLED
 
 /* <<--params-->> */
 const int32_t encryption = 0;
@@ -70,10 +71,11 @@ static int validate_buf(token_t *out)
 	    	if (out[k * 16 + i] != cipher[i])
             {
 #ifndef __riscv
-                printf("error: %02x %02x\n", out[i], cipher[i])
+                printf("+ error: %02x %02x\n",
+                        out[k * 16 + i], cipher[i])
 #else
-                print_uart("error: ");
-                print_uart_byte(out[i]);
+                print_uart("+ error: ");
+                print_uart_byte(out[k * 16 + i]);
                 print_uart(" ");
                 print_uart_byte(cipher[i]);
                 print_uart("\n");
@@ -82,6 +84,25 @@ static int validate_buf(token_t *out)
             }
         }
     }
+
+#ifdef CHECK_IS_ENABLED
+    for (int i = 0; i < 16; i++)
+    {
+		if ((num_blocks > 1  && (out[num_blocks * 16 + i] != 0xff)) ||
+            (num_blocks == 1 && (out[num_blocks * 16 + i] != 0x00)))
+        {
+#ifndef __riscv
+            printf("* error: %02x\n", out[num_blocks * 16 + i])
+#else
+            print_uart("* error: ");
+            print_uart_byte(out[num_blocks * 16 + i]);
+            print_uart("\n");
+#endif
+            errors++;
+        }
+    }
+#endif // !CHECK_IS_ENABLED
+
 	return errors;
 }
 
@@ -118,21 +139,30 @@ int main(int argc, char * argv[])
 	if (DMA_WORD_PER_BEAT(sizeof(token_t)) == 0)
     {
 		in_words_adj = (num_blocks + 1) * 16;
-		out_words_adj = num_blocks * 16;
+#ifdef CHECK_IS_ENABLED
+        out_words_adj = (num_blocks + 1) * 16;
+#else // !CHECK_IS_ENABLED
+        out_words_adj = num_blocks * 16;
+#endif // !CHECK_IS_ENABLED
 	}
     else
     {
 		in_words_adj = round_up((num_blocks + 1) * 16,
             DMA_WORD_PER_BEAT(sizeof(token_t)));
-		out_words_adj = round_up(num_blocks * 16,
+#ifdef CHECK_IS_ENABLED
+        out_words_adj = round_up((num_blocks + 1) * 16,
             DMA_WORD_PER_BEAT(sizeof(token_t)));
+#else // !CHECK_IS_ENABLED
+        out_words_adj = round_up(num_blocks * 16,
+            DMA_WORD_PER_BEAT(sizeof(token_t)));
+#endif // !CHECK_IS_ENABLED
 	}
 
 	in_len = in_words_adj;
 	out_len = out_words_adj;
 	in_size = in_len * sizeof(token_t);
 	out_size = out_len * sizeof(token_t);
-	out_offset  = in_len;
+	out_offset = in_len;
 	mem_size = (out_offset * sizeof(token_t)) + out_size;
 
 	// Search for the device

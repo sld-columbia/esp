@@ -3,8 +3,9 @@
 
 # HLS configs
 
-set dma_width {32 64}
-set word_widths {8}
+set dma_width {64}
+set word_widths {8 8}
+set key_checks {0 1}
 
 # Clock period
 

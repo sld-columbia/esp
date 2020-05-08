@@ -3,22 +3,32 @@
 #include <unistd.h>
 #include "espacc.h"
 
-int main(int argc, char **argv) {
-
+int main(int argc, char **argv)
+{
     printf("****start*****\n");
 
     unsigned k = 0;
     int num_blocks = 4;
 
     int size_in = (num_blocks + 1) * WORDS_IN_CHUNK;
+#ifdef KEY_CHECK
+    int size_tmp = (num_blocks + 2) * WORDS_IN_CHUNK;
+    int size_out = (num_blocks + 1) * WORDS_IN_CHUNK;
+#else // !KEY_CHECK
+    int size_tmp = (num_blocks + 1) * WORDS_IN_CHUNK;
     int size_out = (num_blocks + 0) * WORDS_IN_CHUNK;
+#endif // KEY_CHECK
 
     dma_word_t *in  = (dma_word_t*) malloc(size_in * sizeof(dma_word_t));
-    dma_word_t *tmp = (dma_word_t*) malloc(size_in * sizeof(dma_word_t));
+    dma_word_t *tmp = (dma_word_t*) malloc(size_tmp * sizeof(dma_word_t));
     dma_word_t *out = (dma_word_t*) malloc(size_out * sizeof(dma_word_t));
 
     dma_info_t *load  = (dma_info_t*) malloc((num_blocks + 1) * sizeof(dma_info_t));
+#ifdef KEY_CHECK
+    dma_info_t *store = (dma_info_t*) malloc((num_blocks + 1) * sizeof(dma_info_t));
+#else // !KEY_CHECK
     dma_info_t *store = (dma_info_t*) malloc((num_blocks + 0) * sizeof(dma_info_t));
+#endif // KEY_CHECK
 
     // Init key + data
 
@@ -45,10 +55,6 @@ int main(int argc, char **argv) {
     dma_word_t *ptr = tmp + WORDS_IN_CHUNK;
     top(ptr, in, 0, num_blocks, load, store);
 
-    /* for (unsigned i = 0; i < size_in; i++) */
-		/* for (unsigned j = 0; j < VALUES_PER_WORD; j++) */
-            /* std::cout << "tmp[" << i << "][" << j << "] = " << tmp[i].word[j] << std::endl; */
-
     // Use same key for decryption
 
     for (unsigned i = 0; i < WORDS_IN_CHUNK; i++)
@@ -59,10 +65,6 @@ int main(int argc, char **argv) {
 	    }
     }
 
-    /* for (unsigned i = 0; i < size_in; i++) */
-		/* for (unsigned j = 0; j < VALUES_PER_WORD; j++) */
-            /* std::cout << "tmp[" << i << "][" << j << "] = " << tmp[i].word[j] << std::endl; */
-
     // Decrypt the data with AES
 
     top(out, tmp, 1, num_blocks, load, store);
@@ -71,14 +73,50 @@ int main(int argc, char **argv) {
 
     int errors = 0;
 
+#ifdef KEY_CHECK
+    int check_offset = num_blocks * WORDS_IN_CHUNK;
+    for (unsigned i = 0; i < check_offset; i++)
+#else // !KEY_CHECK
     for (unsigned i = 0; i < size_out; i++)
+#endif // KEY_CHECK
     {
 	    for (unsigned j = 0; j < VALUES_PER_WORD; j++)
         {
             if (out[i].word[j] != in[i + WORDS_IN_CHUNK].word[j])
+            {
+                std::cout << "error: " << out[i].word[j] << " (" <<
+                    in[i + WORDS_IN_CHUNK].word[j] << ")" << std::endl;
                 errors++;
+            }
 	    }
     }
+
+#ifdef KEY_CHECK
+    for (unsigned i = 0; i < WORDS_IN_CHUNK; i++)
+    {
+        for (unsigned j = 0; j < VALUES_PER_WORD; j++)
+        {
+            if (out[check_offset + i].word[j] != 0xff)
+            {
+                std::cout << "error: " << out[check_offset+i].word[j] << std::endl;
+                errors++;
+            }
+        }
+    }
+
+    check_offset = (num_blocks + 1) * WORDS_IN_CHUNK;
+    for (unsigned i = 0; i < WORDS_IN_CHUNK; i++)
+    {
+        for (unsigned j = 0; j < VALUES_PER_WORD; j++)
+        {
+            if (tmp[check_offset + i].word[j] != 0xff)
+            {
+                std::cout << "error: " << out[check_offset+i].word[j] << std::endl;
+                errors++;
+            }
+        }
+    }
+#endif // KEY_CHECK
 
     if (errors)
 	    std::cout << "Test FAILED with " << errors << " errors." << std::endl;

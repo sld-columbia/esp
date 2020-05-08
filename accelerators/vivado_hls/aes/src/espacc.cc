@@ -69,6 +69,33 @@ store_data:
     }
 }
 
+#ifdef KEY_CHECK
+
+void store_c(dma_word_t *out,
+             uint32_t num_blocks,
+             uint32_t st_offset,
+	         dma_info_t *store_ctrl)
+{
+store_check:
+
+    uint8_t val = (num_blocks > 1)? 0xFF : 0x00;
+    uint32_t base = WORDS_IN_CHUNK * num_blocks;
+
+    store_ctrl[num_blocks].size = SIZE_WORD_T;
+    store_ctrl[num_blocks].length = WORDS_IN_CHUNK;
+    store_ctrl[num_blocks].index = st_offset + base;
+
+    for (unsigned i = 0; i < WORDS_IN_CHUNK; i++)
+    {
+        store_label2: for(unsigned j = 0; j < VALUES_PER_WORD; j++)
+        {
+            out[base + i].word[j] = val;
+        }
+    }
+}
+
+#endif // KEY_CHECK
+
 void compute(uint32_t encryption,
 			 ap_uint<32> key[EXP_KEY_SIZE],
              ap_uint<8> input[BLOCK_BYTES],
@@ -96,6 +123,10 @@ void top(dma_word_t *out,
 	load_k(in1, _keybuff, load_ctrl);
 
 	aes_expand(conf_info_encryption, _keybuff, _keyexp);
+
+#ifdef KEY_CHECK
+    store_c(out, conf_info_num_blocks, st_offset, store_ctrl);
+#endif // KEY_CHECK
 
 go:
     for (unsigned i = 0; i < conf_info_num_blocks; i++)
