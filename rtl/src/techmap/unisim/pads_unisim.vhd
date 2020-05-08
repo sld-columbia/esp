@@ -541,7 +541,7 @@ entity unisim_clkpad is
 end; 
 architecture rtl of unisim_clkpad is
   component IBUFG  generic(
-      CAPACITANCE : string := "DONT_CARE"; IOSTANDARD : string := "LVCMOS25");
+      CAPACITANCE : string := "DONT_CARE"; IBUF_DELAY_VALUE : string := "0"; IBUF_LOW_PWR : string := "TRUE"; IOSTANDARD : string := "LVCMOS25");
     port (O : out std_logic; I : in std_logic); end component;
   component IBUF generic(
       CAPACITANCE : string := "DONT_CARE";
