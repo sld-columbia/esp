@@ -17,10 +17,10 @@ int main(int argc, char **argv) {
     word_t *inbuff= (word_t*) malloc(size_in * VALUES_PER_WORD * sizeof(word_t));
     dma_word_t *out= (dma_word_t*) malloc(size_out * sizeof(dma_word_t));
     word_t *outbuff_gold= (word_t*) malloc(size_out * VALUES_PER_WORD * sizeof(word_t));
-    dma_info_t *load = (dma_info_t*) malloc(nbursts * sizeof(dma_info_t));
-    dma_info_t *store = (dma_info_t*) malloc(nbursts * sizeof(dma_info_t));
+    dma_info_t load;
+    dma_info_t store;
 
-    if (in == NULL || out == NULL || load == NULL || store == NULL)
+    if (in == NULL || out == NULL)
     {
     	printf("null operator...FAIL");
     	exit(1);
@@ -77,8 +77,6 @@ int main(int argc, char **argv) {
     free(inbuff);
     free(out);
     free(outbuff_gold);
-    free(load);
-    free(store);
 
     return 0;
 }

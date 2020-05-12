@@ -464,7 +464,7 @@ if [ "$FLOW" == "vivado_hls" ]; then
 	sed -i "s/\/\* <<--chunking-factor-->> \*\//${chunking_factor}/g" ${f}
     done
 
-    # syn/custom.tcl
+    # syn/custom.tcl syn/directives.tcl
     cd $ACC_DIR
     if [ $data_width == 64 ]; then
 	dma_allowed="64"
@@ -473,6 +473,9 @@ if [ "$FLOW" == "vivado_hls" ]; then
     fi
     sed -i "s/<<--dma-width-->>/${dma_allowed}/g" syn/custom.tcl
     sed -i "s/<<--data-widths-->>/${data_width}/g" syn/custom.tcl
+    for key in ${!values[@]}; do
+	sed -i "/<<--directives-param-->>/a set_directive_interface -mode ap_none \"top\" conf_info_${key}" syn/directives.tcl
+    done
 fi
 
 if [ "$FLOW" == "hls4ml" ]; then

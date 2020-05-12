@@ -33,8 +33,8 @@ int main(int argc, char **argv) {
     word_t *inbuff=(word_t*) malloc(in_size * sizeof(word_t));
     word_t *outbuff=(word_t*) malloc(out_size * sizeof(word_t));
     word_t *outbuff_gold= (word_t*) malloc(out_size * sizeof(word_t));
-    dma_info_t *load = (dma_info_t*) malloc(sizeof(dma_info_t));
-    dma_info_t *store = (dma_info_t*) malloc(sizeof(dma_info_t));
+    dma_info_t load;
+    dma_info_t store;
 
     // Prepare input data
     for(unsigned i = 0; i < /* <<--number of transfers-->> */; i++)
@@ -79,8 +79,6 @@ int main(int argc, char **argv) {
     free(inbuff);
     free(outbuff);
     free(outbuff_gold);
-    free(load);
-    free(store);
 
     return 0;
 }
