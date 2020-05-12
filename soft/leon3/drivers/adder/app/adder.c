@@ -10,7 +10,7 @@
 #include <test/time.h>
 #include <adder.h>
 
-#define DEVNAME "/dev/adder.2"
+#define DEVNAME "/dev/adder.0"
 #define NAME "adder"
 
 // Default command line arguments
