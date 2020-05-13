@@ -5,7 +5,6 @@
 #include <cstring>
 
 #include "myproject.h"
-#include "parameters.h"
 
 void load(input_t _inbuff[SIZE_IN_CHUNK_DATA], dma_word_t *in1, unsigned chunk,
 	  dma_info_t &load_ctrl, int base_index)

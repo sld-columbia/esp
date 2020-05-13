@@ -2,11 +2,12 @@
 #define INC_ESPACC_H
 
 #include "../inc/espacc_config.h"
-#include "../hls4ml/firmware/parameters.h"
 #include <cstdio>
 
 #include <ap_fixed.h>
 #include <ap_int.h>
+
+#include "defines.h"
 
 // Data types and constants
 #define VALUES_PER_WORD (DMA_SIZE / DATA_BITWIDTH)

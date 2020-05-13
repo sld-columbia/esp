@@ -6,9 +6,7 @@
 #include <unistd.h>
 #include <fstream>
 #include <iostream>
-
-#include "myproject.h"
-#include "parameters.h"
+#include <vector>
 
 int main(int argc, char **argv) {
 
