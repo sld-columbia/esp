@@ -63,7 +63,7 @@ typedef struct dma_info {
 
 void top(dma_word_t *out, dma_word_t *in1,
 	 const unsigned conf_info_nbursts,
-	 dma_info_t *load_ctrl, dma_info_t *store_ctrl);
+	 dma_info_t &load_ctrl, dma_info_t &store_ctrl);
 
 void compute(input_t _inbuff[SIZE_IN_CHUNK_DATA],
 	     result_t _outbuff[SIZE_OUT_CHUNK_DATA]);
