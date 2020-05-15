@@ -4,9 +4,18 @@
 #include "utils.h"
 #include "validation.h"
 
+#define RED   "\x1B[31m"
+#define GRN   "\x1B[32m"
+#define YEL   "\x1B[33m"
+#define BLU   "\x1B[34m"
+#define MAG   "\x1B[35m"
+#define CYN   "\x1B[36m"
+#define WHT   "\x1B[37m"
+#define RESET "\x1B[0m"
+
 #define DMA_CHUNK 8
 
-#define ENABLE_REGS_ATTACK
+/* #define ENABLE_REGS_ATTACK */
 #define DIFT_SUPPORT_ENABLED
 
 uint32_t num_rows;
@@ -128,7 +137,7 @@ int main(int argc, char **argv)
     e_row_blur = atoi(argv[5]);
     e_col_blur = atoi(argv[6]);
 
-    printf("\n===== preprocessing ======\n\n");
+    printf("\n===== preprocessing ======\n");
 
     if (read_image_from_file(&sw_input, &num_rows, &num_cols, argv[1]) < 0)
     {
@@ -191,32 +200,32 @@ int main(int argc, char **argv)
     printf("    .i_col_blur   = %d\n", i_col_blur);
     printf("    .e_row_blur   = %d\n", e_row_blur);
 #ifdef ENABLE_REGS_ATTACK
-    printf("       -> ATTACKED: value %d\n", cfg.desc.obfuscator_desc.e_row_blur);
+    printf(MAG "       -> CHANGED TO: value %d\n" RESET, cfg.desc.obfuscator_desc.e_row_blur);
 #endif // ENABLE_REGS_ATTACK
     printf("    .e_col_blur   = %d\n", e_col_blur);
-    printf("    .ld_offset    = %d\n", ld_offset);
-    printf("    .st_offset    = %d\n\n", st_offset);
+    /* printf("    .ld_offset    = %d\n", ld_offset); */
+    /* printf("    .st_offset    = %d\n\n", st_offset); */
 
 #ifdef DIFT_SUPPORT_ENABLED
-    printf("    .dift_enable  = %d\n", 1);
+    printf(YEL "    .dift_enable  = %d\n" RESET, 1);
 #endif // DIFT_SUPPORT_ENABLED
 
-    printf("\n  ** Accelerator START **\n\n  ");
+    printf("\n  ** Accelerator START **\n  ");
 
     esp_run(&cfg, 1);
 
-    printf("\n  ** Accelerator DONE **\n\n");
+    printf("  ** Accelerator DONE **\n");
 
     errors = validate_buffer(&hw_buf[st_offset], hw_output, sw_output);
 
     esp_cleanup();
 
     if (!errors)
-        printf("    > HW Output is correct\n");
+        printf(GRN "\n  ====> HW Output is correct\n" RESET);
     else
-        printf("    > HW Output is incorrect\n");
+        printf(MAG "\n  ====> HW Output is incorrect\n" RESET);
 
-    printf("\n===== postprocessing =====\n\n");
+    printf("\n===== postprocessing =====\n");
 
     if (write_image_to_file(hw_output, num_rows, num_cols, argv[2]) < 0)
     {
