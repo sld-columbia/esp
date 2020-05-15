@@ -23,6 +23,9 @@ void *accelerator_thread( void *ptr )
 	gettime(&th_start);
 	switch (info->type) {
 	// <<--esp-ioctl-->>
+	case obfuscator :
+		rc = ioctl(info->fd, OBFUSCATOR_IOC_ACCESS, info->desc.obfuscator_desc);
+		break;
 	case fftaccelerator :
 		rc = ioctl(info->fd, FFTACCELERATOR_IOC_ACCESS, info->desc.fftaccelerator_desc);
 		break;
@@ -88,6 +91,9 @@ static void esp_config(esp_thread_info_t cfg[], unsigned nacc)
 
 		switch (info->type) {
 		// <<--esp-prepare-->>
+		case obfuscator :
+			esp_prepare(&info->desc.obfuscator_desc.esp);
+			break;
 		case fftaccelerator :
 			esp_prepare(&info->desc.fftaccelerator_desc.esp);
 			break;
@@ -133,11 +139,11 @@ static void print_time_info(esp_thread_info_t info[], unsigned long long hw_ns, 
 {
 	int i;
 
-	printf("  > Test time: %llu ns\n", hw_ns);
+	/* printf("  > Test time: %llu ns\n", hw_ns); */
 
 	for (i = 0; i < nthreads; i++)
 		if (info->run)
-			printf("    - %s time: %llu ns\n", info[i].devname, info[i].hw_ns);
+			printf("    > %s time: %llu ns\n", info[i].devname, info[i].hw_ns);
 }
 
 void esp_run(esp_thread_info_t cfg[], unsigned nacc)
