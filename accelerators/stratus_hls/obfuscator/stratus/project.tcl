@@ -96,6 +96,12 @@ if { $DIFT_ENABLED } {
 set INPUT_PATH  "../stratus/input"
 set OUTPUT_PATH "../stratus/output"
 
+# -- Small
+set I_ROW_BLURS(small) "0"
+set I_COL_BLURS(small) "0"
+set E_ROW_BLURS(small) "0"
+set E_COL_BLURS(small) "0"
+
 # -- Lincoln
 set I_ROW_BLURS(lincoln) "75"
 set I_COL_BLURS(lincoln) "125"
@@ -120,6 +126,7 @@ set I_COL_BLURS(roosevelt) "100"
 set E_ROW_BLURS(roosevelt) "250"
 set E_COL_BLURS(roosevelt) "250"
 
+# set TESTBENCH "small"
 set TESTBENCH "lincoln"
 # set TESTBENCH "jefferson"
 # set TESTBENCH "washington"
