@@ -31,7 +31,7 @@ static struct of_device_id obfuscator_device_ids[] = {
 		.name = "SLD_OBFUSCATOR",
 	},
 	{
-		.name = "eb_04a",
+		.name = "eb_04b",
 	},
 	{
 		.compatible = "sld,obfuscator",

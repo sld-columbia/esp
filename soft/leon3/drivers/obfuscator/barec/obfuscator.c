@@ -18,7 +18,7 @@ static unsigned DMA_WORD_PER_BEAT(unsigned _st)
         return (sizeof(void *) / _st);
 }
 
-#define SLD_OBFUSCATOR 0x04A
+#define SLD_OBFUSCATOR 0x04B
 #define DEV_NAME "sld,obfuscator"
 
 #define DIFT_SUPPORT_ENABLED

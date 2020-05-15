@@ -32,6 +32,7 @@
 
 // <<--esp-include-->>
 #include "obfuscator.h"
+#include "aes.h"
 #include "FFTAccelerator.h"
 #include "AdderAccelerator.h"
 #include "fft.h"
@@ -49,6 +50,7 @@ unsigned DMA_WORD_PER_BEAT(unsigned _st);
 enum esp_accelerator_type {
 	// <<--esp-enum-->>
 	obfuscator,
+	aes,
 	fftaccelerator,
 	adderaccelerator,
 	fft,
@@ -65,6 +67,7 @@ enum esp_accelerator_type {
 union esp_accelerator_descriptor {
 	// <<--esp-descriptor-->>
 	struct obfuscator_access obfuscator_desc;
+	struct aes_access aes_desc;
 	struct fftaccelerator_access fftaccelerator_desc;
 	struct adderaccelerator_access adderaccelerator_desc;
 	struct fft_access fft_desc;

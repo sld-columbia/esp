@@ -25,6 +25,9 @@ void *accelerator_thread( void *ptr )
 	// <<--esp-ioctl-->>
 	case obfuscator :
 		rc = ioctl(info->fd, OBFUSCATOR_IOC_ACCESS, info->desc.obfuscator_desc);
+	    break;
+    case aes :
+		rc = ioctl(info->fd, AES_IOC_ACCESS, info->desc.aes_desc);
 		break;
 	case fftaccelerator :
 		rc = ioctl(info->fd, FFTACCELERATOR_IOC_ACCESS, info->desc.fftaccelerator_desc);
@@ -93,6 +96,9 @@ static void esp_config(esp_thread_info_t cfg[], unsigned nacc)
 		// <<--esp-prepare-->>
 		case obfuscator :
 			esp_prepare(&info->desc.obfuscator_desc.esp);
+		    break;
+        case aes :
+			esp_prepare(&info->desc.aes_desc.esp);
 			break;
 		case fftaccelerator :
 			esp_prepare(&info->desc.fftaccelerator_desc.esp);
