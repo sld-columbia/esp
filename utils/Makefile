@@ -884,10 +884,10 @@ check_all_rtl_srcs-distclean:
 
 ### Xilinx Simulation libs targets ###
 
-modelsim/xilinx_lib: $(XILINX_VIVADO)
+$(ESP_ROOT)/.cache/modelsim/xilinx_lib:
 	$(QUIET_MKDIR)mkdir -p $@
 	@echo "compile_simlib -directory xilinx_lib -simulator modelsim -library unisim -no_ip_compile" > $@/simlib.tcl; \
-	cd modelsim; \
+	cd $(ESP_ROOT)/.cache/modelsim; \
 	if ! vivado $(VIVADO_BATCH_OPT) -source xilinx_lib/simlib.tcl; then \
 		echo "$(SPACES)ERROR: Xilinx library compilation failed!"; rm -rf xilinx_lib modelsim.ini; exit 1; \
 	fi; \
@@ -902,22 +902,42 @@ modelsim/xilinx_lib: $(XILINX_VIVADO)
 	sed -i '/\[msg_system\]/a suppress = 8780,8891,1491,12110\nwarning = 8891' modelsim.ini; \
 	cd ../;
 
-xcelium/xilinx_lib: $(XILINX_VIVADO)
+modelsim/modelsim.ini: $(ESP_ROOT)/.cache/modelsim/xilinx_lib
+	$(QUIET_MAKE)mkdir -p modelsim
+	@cp $(ESP_ROOT)/.cache/modelsim/modelsim.ini $@
+
+
+$(ESP_ROOT)/.cache/xcelium/xilinx_lib:
 	$(QUIET_MKDIR)mkdir -p $@
 	@echo "compile_simlib -directory xilinx_lib -simulator xcelium -library unisim -no_ip_compile" > $@/simlib.tcl; \
-	cd xcelium; \
+	cd $(ESP_ROOT)/.cache/xcelium; \
 	if ! vivado $(VIVADO_BATCH_OPT) -source xilinx_lib/simlib.tcl; then \
 		echo "$(SPACES)ERROR: Xilinx library compilation failed!"; rm -rf xilinx_lib cds.lib; exit 1; \
 	fi;
 
+xcelium/cds.lib: $(ESP_ROOT)/.cache/xcelium/xilinx_lib
+	$(QUIET_MAKE)mkdir -p xcelium
+	@cp $(ESP_ROOT)/.cache/xcelium/cds.lib $@
 
-incisive/xilinx_lib: $(XILINX_VIVADO)
+xcelium/hdl.var: xcelium/cds.lib
+	@cp $(ESP_ROOT)/.cache/xcelium/hdl.var $@
+
+
+$(ESP_ROOT)/.cache/incisive/xilinx_lib:
 	$(QUIET_MKDIR)mkdir -p $@
 	@echo "compile_simlib -directory xilinx_lib -simulator ies -library unisim -no_ip_compile" > $@/simlib.tcl; \
-	cd incisive; \
+	cd $(ESP_ROOT)/.cache/incisive; \
 	if ! vivado $(VIVADO_BATCH_OPT) -source xilinx_lib/simlib.tcl; then \
 		echo "$(SPACES)ERROR: Xilinx library compilation failed!"; rm -rf xilinx_lib cds.lib; exit 1; \
 	fi;
+
+incisive/cds.lib: $(ESP_ROOT)/.cache/incisive/xilinx_lib
+	$(QUIET_MAKE)mkdir -p incisive
+	@cp $(ESP_ROOT)/.cache/incisive/cds.lib $@
+
+incisive/hdl.var: incisive/cds.lib
+	@cp $(ESP_ROOT)/.cache/incisive/hdl.var $@
+
 
 
 xilinx_lib-clean:
@@ -932,16 +952,16 @@ xilinx_lib-clean:
 
 xilinx_lib-distclean: xilinx_lib-clean
 	$(QUIET_CLEAN)$(RM) \
-		modelsim/xilinx_lib \
-		xcelium/xilinx_lib \
-		incisive/xilinx_lib
+		$(ESP_ROOT)/.cache/modelsim/xilinx_lib \
+		$(ESP_ROOT)/.cache/xcelium/xilinx_lib \
+		$(ESP_ROOT)/.cache/incisive/xilinx_lib
 
 .PHONY: xilinx_lib-clean xilinx_lib-distclean
 
 
 ### Xcelium targets ###
 
-xcelium/xmready: xcelium/xilinx_lib check_all_srcs.old $(PKG_LIST)
+xcelium/xmready: xcelium/hdl.var check_all_srcs.old $(PKG_LIST)
 	$(QUIET_MKDIR)mkdir -p xcelium
 ifneq ($(findstring profpga, $(BOARD)),)
 	@cd xcelium; \
@@ -1070,7 +1090,7 @@ xmsim-distclean: xmsim-clean
 
 ### Incisive targets ###
 
-incisive/ncready: incisive/xilinx_lib check_all_srcs.old $(PKG_LIST)
+incisive/ncready: incisive/hdl.var check_all_srcs.old $(PKG_LIST)
 	$(QUIET_MKDIR)mkdir -p incisive
 	@echo $(SPACES)"WARNING: The source code for Ariane cannot be compiled with Incisive!!! If you need Ariane, please switch to Modelsim or Xcelium";
 ifneq ($(findstring profpga, $(BOARD)),)
@@ -1204,8 +1224,7 @@ ncsim-distclean: ncsim-clean
 # Note that vmake fails to find unisim.vcomponents, however produces the correct
 # makefile for future compilation and all components are properly bound in simulation.
 # Please keep 2> /dev/null until the bug is fixed with a newer Modelsim release.
-modelsim/vsim.mk: modelsim/xilinx_lib check_all_srcs.old $(PKG_LIST)
-	$(QUIET_MKDIR)mkdir -p modelsim
+modelsim/vsim.mk: modelsim/modelsim.ini check_all_srcs.old $(PKG_LIST)
 ifneq ($(findstring profpga, $(BOARD)),)
 	@cd modelsim; \
 	if ! test -e profpga; then \
@@ -1709,7 +1728,6 @@ distclean:	check_all_srcs-distclean 	\
 		linux-distclean			\
 		barec-distclean			\
 		examples-clean			\
-		xilinx_lib-distclean 		\
 		sim-distclean			\
 		ncsim-distclean			\
 		xmsim-distclean			\
