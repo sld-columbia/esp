@@ -815,6 +815,7 @@ VHDL_RTL_SRCS  = $(shell (find $(ESP_ROOT)/rtl/src -name "*.vhd" ))
 else
 VHDL_RTL_SRCS  = $(shell (find $(ESP_ROOT)/rtl/src -name "*.vhd" | grep -v "sld/sldcommon/monitor.vhd"))
 endif
+VHDL_RTL_SRCS  += $(shell (find $(ESP_ROOT)/tech/$(TECHLIB) -name "*.vhd" ))
 
 VLOG_RTL_SRCS   = $(shell (find $(ESP_ROOT)/rtl/src -name "*.v" ))
 VLOG_RTL_SRCS  += $(shell (find $(ESP_ROOT)/tech/$(TECHLIB) -name "*.v" ))
