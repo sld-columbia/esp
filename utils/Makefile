@@ -1488,7 +1488,7 @@ vivado/program.tcl: vivado
 	@echo "set part [lindex \$$argv 2]" >> $@
 	@echo "set bit [lindex \$$argv 3]" >> $@
 	@echo "" >> $@
-	@echo "open_hw" >> $@
+	@echo "open_hw_manager" >> $@
 	@echo "connect_hw_server -url \$$fpga_host:\$$port" >> $@
 	@echo "puts \"Connected to \$$fpga_host\"" >> $@
 	@echo "puts \"Searching for \$$part...\"" >> $@
