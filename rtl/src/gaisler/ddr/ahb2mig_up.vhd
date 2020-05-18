@@ -42,7 +42,8 @@ entity ahb2mig_up is
   generic(
     hindex        : integer := 0;
     haddr         : integer := 0;
-    hmask         : integer := 16#f00#
+    hmask         : integer := 16#f00#;
+    clamshell     : integer range 0 to 1 := 0
     );
   port(
     c0_sys_clk_p     : in    std_logic;
@@ -53,7 +54,7 @@ entity ahb2mig_up is
     c0_ddr4_bg       : out   std_logic_vector(0 downto 0);
     c0_ddr4_cke      : out   std_logic_vector(0 downto 0);
     c0_ddr4_odt      : out   std_logic_vector(0 downto 0);
-    c0_ddr4_cs_n     : out   std_logic_vector(0 downto 0);
+    c0_ddr4_cs_n     : out   std_logic_vector(1 downto 0);
     c0_ddr4_ck_t     : out   std_logic_vector(0 downto 0);
     c0_ddr4_ck_c     : out   std_logic_vector(0 downto 0);
     c0_ddr4_reset_n  : out   std_logic;
@@ -185,6 +186,47 @@ architecture rtl of ahb2mig_up is
       dbg_bus                   : out std_logic_vector(511 downto 0)
       );
   end component mig;
+
+  component mig_clamshell is
+    port (
+      sys_rst                   : in  std_logic;
+      c0_sys_clk_p              : in  std_logic;
+      c0_sys_clk_n              : in  std_logic;
+      c0_ddr4_act_n             : out std_logic;
+      c0_ddr4_adr               : out std_logic_vector(16 downto 0);
+      c0_ddr4_ba                : out std_logic_vector(1 downto 0);
+      c0_ddr4_bg                : out std_logic_vector(0 downto 0);
+      c0_ddr4_cke               : out std_logic_vector(0 downto 0);
+      c0_ddr4_odt               : out std_logic_vector(0 downto 0);
+      c0_ddr4_cs_n              : out std_logic_vector(1 downto 0);
+      c0_ddr4_ck_t              : out std_logic_vector(0 downto 0);
+      c0_ddr4_ck_c              : out std_logic_vector(0 downto 0);
+      c0_ddr4_reset_n           : out std_logic;
+      c0_ddr4_dm_dbi_n          : in  std_logic_vector(7 downto 0);
+      c0_ddr4_dq                : in  std_logic_vector(63 downto 0);
+      c0_ddr4_dqs_c             : in  std_logic_vector(7 downto 0);
+      c0_ddr4_dqs_t             : in  std_logic_vector(7 downto 0);
+      c0_init_calib_complete    : out std_logic;
+      c0_ddr4_ui_clk            : out std_logic;
+      c0_ddr4_ui_clk_sync_rst   : out std_logic;
+      addn_ui_clkout1           : out std_logic;
+      dbg_clk                   : out std_logic;
+      c0_ddr4_app_addr          : in  std_logic_vector(27 downto 0);
+      c0_ddr4_app_cmd           : in  std_logic_vector(2 downto 0);
+      c0_ddr4_app_en            : in  std_logic;
+      c0_ddr4_app_hi_pri        : in  std_logic;
+      c0_ddr4_app_wdf_data      : in  std_logic_vector(511 downto 0);
+      c0_ddr4_app_wdf_end       : in  std_logic;
+      c0_ddr4_app_wdf_mask      : in  std_logic_vector(63 downto 0);
+      c0_ddr4_app_wdf_wren      : in  std_logic;
+      c0_ddr4_app_rd_data       : out std_logic_vector(511 downto 0);
+      c0_ddr4_app_rd_data_end   : out std_logic;
+      c0_ddr4_app_rd_data_valid : out std_logic;
+      c0_ddr4_app_rdy           : out std_logic;
+      c0_ddr4_app_wdf_rdy       : out std_logic;
+      dbg_bus                   : out std_logic_vector(511 downto 0)
+      );
+  end component mig_clamshell;
 
 begin
 
@@ -626,45 +668,90 @@ begin
 
   sys_rst <= not rst_n_async;
 
-  MCB_inst : mig
-    port map (
-      sys_rst                   => sys_rst,
-      c0_sys_clk_p              => c0_sys_clk_p,
-      c0_sys_clk_n              => c0_sys_clk_n,
-      c0_ddr4_act_n             => c0_ddr4_act_n,
-      c0_ddr4_adr               => c0_ddr4_adr,
-      c0_ddr4_ba                => c0_ddr4_ba,
-      c0_ddr4_bg                => c0_ddr4_bg,
-      c0_ddr4_cke               => c0_ddr4_cke,
-      c0_ddr4_odt               => c0_ddr4_odt,
-      c0_ddr4_cs_n              => c0_ddr4_cs_n,
-      c0_ddr4_ck_t              => c0_ddr4_ck_t,
-      c0_ddr4_ck_c              => c0_ddr4_ck_c,
-      c0_ddr4_reset_n           => c0_ddr4_reset_n,
-      c0_ddr4_dm_dbi_n          => c0_ddr4_dm_dbi_n,
-      c0_ddr4_dq                => c0_ddr4_dq,
-      c0_ddr4_dqs_c             => c0_ddr4_dqs_c,
-      c0_ddr4_dqs_t             => c0_ddr4_dqs_t,
-      c0_init_calib_complete    => calib_done,
-      c0_ddr4_ui_clk            => ui_clk,
-      c0_ddr4_ui_clk_sync_rst   => ui_clk_sync_rst,
-      addn_ui_clkout1           => ui_clk_slow,
-      dbg_clk                   => open,
-      c0_ddr4_app_addr          => migin.app_addr,
-      c0_ddr4_app_cmd           => migin.app_cmd,
-      c0_ddr4_app_en            => migin.app_en,
-      c0_ddr4_app_hi_pri        => migin.app_hi_pri,
-      c0_ddr4_app_wdf_data      => migin.app_wdf_data,
-      c0_ddr4_app_wdf_end       => migin.app_wdf_end,
-      c0_ddr4_app_wdf_mask      => migin.app_wdf_mask,
-      c0_ddr4_app_wdf_wren      => migin.app_wdf_wren,
-      c0_ddr4_app_rd_data       => migoutraw.app_rd_data,
-      c0_ddr4_app_rd_data_end   => migoutraw.app_rd_data_end,
-      c0_ddr4_app_rd_data_valid => migoutraw.app_rd_data_valid,
-      c0_ddr4_app_rdy           => migoutraw.app_rdy,
-      c0_ddr4_app_wdf_rdy       => migoutraw.app_wdf_rdy,
-      dbg_bus                   => open
-      );
+  no_clamshell_gen: if clamshell = 0 generate
+    MCB_inst : mig
+      port map (
+        sys_rst                   => sys_rst,
+        c0_sys_clk_p              => c0_sys_clk_p,
+        c0_sys_clk_n              => c0_sys_clk_n,
+        c0_ddr4_act_n             => c0_ddr4_act_n,
+        c0_ddr4_adr               => c0_ddr4_adr,
+        c0_ddr4_ba                => c0_ddr4_ba,
+        c0_ddr4_bg                => c0_ddr4_bg,
+        c0_ddr4_cke               => c0_ddr4_cke,
+        c0_ddr4_odt               => c0_ddr4_odt,
+        c0_ddr4_cs_n              => c0_ddr4_cs_n(0 downto 0),
+        c0_ddr4_ck_t              => c0_ddr4_ck_t,
+        c0_ddr4_ck_c              => c0_ddr4_ck_c,
+        c0_ddr4_reset_n           => c0_ddr4_reset_n,
+        c0_ddr4_dm_dbi_n          => c0_ddr4_dm_dbi_n,
+        c0_ddr4_dq                => c0_ddr4_dq,
+        c0_ddr4_dqs_c             => c0_ddr4_dqs_c,
+        c0_ddr4_dqs_t             => c0_ddr4_dqs_t,
+        c0_init_calib_complete    => calib_done,
+        c0_ddr4_ui_clk            => ui_clk,
+        c0_ddr4_ui_clk_sync_rst   => ui_clk_sync_rst,
+        addn_ui_clkout1           => ui_clk_slow,
+        dbg_clk                   => open,
+        c0_ddr4_app_addr          => migin.app_addr,
+        c0_ddr4_app_cmd           => migin.app_cmd,
+        c0_ddr4_app_en            => migin.app_en,
+        c0_ddr4_app_hi_pri        => migin.app_hi_pri,
+        c0_ddr4_app_wdf_data      => migin.app_wdf_data,
+        c0_ddr4_app_wdf_end       => migin.app_wdf_end,
+        c0_ddr4_app_wdf_mask      => migin.app_wdf_mask,
+        c0_ddr4_app_wdf_wren      => migin.app_wdf_wren,
+        c0_ddr4_app_rd_data       => migoutraw.app_rd_data,
+        c0_ddr4_app_rd_data_end   => migoutraw.app_rd_data_end,
+        c0_ddr4_app_rd_data_valid => migoutraw.app_rd_data_valid,
+        c0_ddr4_app_rdy           => migoutraw.app_rdy,
+        c0_ddr4_app_wdf_rdy       => migoutraw.app_wdf_rdy,
+        dbg_bus                   => open
+        );
+    c0_ddr4_cs_n(1) <= '1';
+  end generate no_clamshell_gen;
+
+   clamshell_gen: if clamshell /= 0 generate
+    MCB_inst : mig_clamshell
+      port map (
+        sys_rst                   => sys_rst,
+        c0_sys_clk_p              => c0_sys_clk_p,
+        c0_sys_clk_n              => c0_sys_clk_n,
+        c0_ddr4_act_n             => c0_ddr4_act_n,
+        c0_ddr4_adr               => c0_ddr4_adr,
+        c0_ddr4_ba                => c0_ddr4_ba,
+        c0_ddr4_bg                => c0_ddr4_bg,
+        c0_ddr4_cke               => c0_ddr4_cke,
+        c0_ddr4_odt               => c0_ddr4_odt,
+        c0_ddr4_cs_n              => c0_ddr4_cs_n,
+        c0_ddr4_ck_t              => c0_ddr4_ck_t,
+        c0_ddr4_ck_c              => c0_ddr4_ck_c,
+        c0_ddr4_reset_n           => c0_ddr4_reset_n,
+        c0_ddr4_dm_dbi_n          => c0_ddr4_dm_dbi_n,
+        c0_ddr4_dq                => c0_ddr4_dq,
+        c0_ddr4_dqs_c             => c0_ddr4_dqs_c,
+        c0_ddr4_dqs_t             => c0_ddr4_dqs_t,
+        c0_init_calib_complete    => calib_done,
+        c0_ddr4_ui_clk            => ui_clk,
+        c0_ddr4_ui_clk_sync_rst   => ui_clk_sync_rst,
+        addn_ui_clkout1           => ui_clk_slow,
+        dbg_clk                   => open,
+        c0_ddr4_app_addr          => migin.app_addr,
+        c0_ddr4_app_cmd           => migin.app_cmd,
+        c0_ddr4_app_en            => migin.app_en,
+        c0_ddr4_app_hi_pri        => migin.app_hi_pri,
+        c0_ddr4_app_wdf_data      => migin.app_wdf_data,
+        c0_ddr4_app_wdf_end       => migin.app_wdf_end,
+        c0_ddr4_app_wdf_mask      => migin.app_wdf_mask,
+        c0_ddr4_app_wdf_wren      => migin.app_wdf_wren,
+        c0_ddr4_app_rd_data       => migoutraw.app_rd_data,
+        c0_ddr4_app_rd_data_end   => migoutraw.app_rd_data_end,
+        c0_ddr4_app_rd_data_valid => migoutraw.app_rd_data_valid,
+        c0_ddr4_app_rdy           => migoutraw.app_rdy,
+        c0_ddr4_app_wdf_rdy       => migoutraw.app_wdf_rdy,
+        dbg_bus                   => open
+        );
+  end generate clamshell_gen;
 
 end;
 

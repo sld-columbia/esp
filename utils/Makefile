@@ -1410,9 +1410,16 @@ ifeq ($(CONFIG_GRETH_ENABLE),y)
 	@if test -r $(ESP_ROOT)/constraints/$(BOARD)/sgmii.xci; then \
 		echo $(SPACES)"INFO including SGMII IP"; \
 		mkdir -p vivado/sgmii; \
-		cp $(ESP_ROOT)/constraints/$(BOARD)/sgmii.* ./vivado/sgmii; \
+		cp $(ESP_ROOT)/constraints/$(BOARD)/sgmii.xci ./vivado/sgmii; \
 		echo "set_property target_language verilog [current_project]" >> $@; \
 		echo "import_ip -files ./sgmii/sgmii.xci" >> $@; \
+		echo "generate_target  all [get_ips sgmii] -force " >> $@; \
+	elif test -r $(ESP_ROOT)/constraints/$(BOARD)/sgmii.tcl; then \
+		echo $(SPACES)"INFO including SGMII IP"; \
+		mkdir -p vivado/sgmii; \
+		cp $(ESP_ROOT)/constraints/$(BOARD)/sgmii.tcl ./vivado/sgmii; \
+		echo "set_property target_language verilog [current_project]" >> $@; \
+		echo "source ./sgmii/sgmii.tcl" >> $@; \
 		echo "generate_target  all [get_ips sgmii] -force " >> $@; \
 	else \
 		echo $(SPACES)"WARNING: no SGMII IP was found"; \
