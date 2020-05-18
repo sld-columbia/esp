@@ -94,7 +94,7 @@ class CacheFrame(Frame):
     cache_config_frame = Frame(self)
     cache_config_frame.pack(side=TOP)
 
-    sets_choices = [32, 64, 128, 256, 512, 1024, 2048, 4096]
+    sets_choices = [32, 64, 128, 256, 512, 1024, 2048, 4096, 8192]
     l2_ways_choices = [2, 4, 8]
     llc_ways_choices = [4, 8, 16]
     cache_choices = ["SystemVerilog", "SystemC + HLS"]
