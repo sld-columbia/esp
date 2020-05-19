@@ -44,7 +44,7 @@ entity top is
     c0_ddr4_bg       : out   std_logic_vector(0 downto 0);
     c0_ddr4_cke      : out   std_logic_vector(0 downto 0);
     c0_ddr4_odt      : out   std_logic_vector(0 downto 0);
-    c0_ddr4_cs_n     : out   std_logic_vector(0 downto 0);
+    c0_ddr4_cs_n     : out   std_logic_vector(1 downto 0);
     c0_ddr4_ck_t     : out   std_logic_vector(0 downto 0);
     c0_ddr4_ck_c     : out   std_logic_vector(0 downto 0);
     c0_ddr4_reset_n  : out   std_logic;
@@ -61,13 +61,11 @@ entity top is
     emdio            : inout std_logic;
     emdc             : out   std_ulogic;
     eint             : in    std_ulogic;
-    erst             : out   std_ulogic;
+    edummy           : in    std_ulogic;
     uart_rxd         : in    std_ulogic;     -- UART1_RX (u1i.rxd)
     uart_txd         : out   std_ulogic;     -- UART1_TX (u1o.txd)
     uart_ctsn        : in    std_ulogic;     -- UART1_RTSN (u1i.ctsn)
     uart_rtsn        : out   std_ulogic;     -- UART1_RTSN (u1o.rtsn)
-    button           : in    std_logic_vector(3 downto 0);
-    switch           : inout std_logic_vector(3 downto 0);
     led              : out   std_logic_vector(6 downto 0));
 end;
 
@@ -135,9 +133,6 @@ architecture rtl of top is
   end component ahb2mig_up;
 
 
--- Switches
-  signal sel0, sel1, sel2, sel3 : std_ulogic;
-
 -- clock and reset
   signal clkm                  : std_ulogic := '0';
   signal rstn, rstraw          : std_ulogic;
@@ -150,7 +145,6 @@ architecture rtl of top is
   -- Memory controller DDR4
   signal ddr_ahbsi   : ahb_slv_in_vector_type(0 to CFG_NMEM_TILE - 1);
   signal ddr_ahbso   : ahb_slv_out_vector_type(0 to CFG_NMEM_TILE - 1);
-  signal c0_ddr4_cs_n_vec : std_logic_vector(1 downto 0);
 
 -- DVI (unused on this board)
   signal dvi_apbi  : apb_slv_in_type;
@@ -164,6 +158,7 @@ architecture rtl of top is
   signal sgmiii           : eth_sgmii_in_type;
   signal sgmiio           : eth_sgmii_out_type;
   signal sgmiirst         : std_logic;
+  signal sgmii_dummy      : std_logic;
   signal ethernet_phy_int : std_logic;
   signal rxd1             : std_logic;
   signal txd1             : std_logic;
@@ -189,7 +184,7 @@ signal cpuerr : std_ulogic;
   signal chip_pllbypass : std_logic_vector(CFG_TILES_NUM-1 downto 0);
   signal chip_pllclk    : std_ulogic;
 
-constant CPU_FREQ : integer := 78125;  -- cpu frequency in KHz
+constant CPU_FREQ : integer := 75000;  -- cpu frequency in KHz
 
   attribute keep         : boolean;
   attribute syn_keep     : string;
@@ -233,26 +228,6 @@ begin
   led6_pad : outpad generic map (tech => CFG_PADTECH, level => cmos, voltage => x12v, strength => 8)
     port map (led(6), '0');
 
--------------------------------------------------------------------------------
--- Switches -------------------------------------------------------------------
--------------------------------------------------------------------------------
-
-  sw0_pad : iopad generic map (tech => CFG_PADTECH, level => cmos, voltage => x12v, strength => 8)
-    port map (switch(0), '0', '1', sel0);
-  sw1_pad : iopad generic map (tech => CFG_PADTECH, level => cmos, voltage => x12v, strength => 8)
-    port map (switch(1), '0', '1', sel1);
-  sw2_pad : iopad generic map (tech => CFG_PADTECH, level => cmos, voltage => x12v, strength => 8)
-    port map (switch(2), '0', '1', sel2);
-  sw3_pad : iopad generic map (tech => CFG_PADTECH, level => cmos, voltage => x12v, strength => 8)
-    port map (switch(3), '0', '1', sel3);
-
--------------------------------------------------------------------------------
--- Buttons --------------------------------------------------------------------
--------------------------------------------------------------------------------
-
-  --pio_pad : inpad generic map (tech => CFG_PADTECH, level => cmos, voltage => x18v)
-  --  port map (button(i-4), gpioi.din(i));
-
 ----------------------------------------------------------------------
 --- FPGA Reset and Clock generation  ---------------------------------
 ----------------------------------------------------------------------
@@ -278,7 +253,7 @@ begin
         hindex => 4,
         haddr  => 16#400#,
         hmask  => 16#C00#,
-        clamshell => 0)
+        clamshell => 1)
       port map (
         c0_sys_clk_p     => c0_sys_clk_p,
         c0_sys_clk_n     => c0_sys_clk_n,
@@ -288,7 +263,7 @@ begin
         c0_ddr4_bg       => c0_ddr4_bg,
         c0_ddr4_cke      => c0_ddr4_cke,
         c0_ddr4_odt      => c0_ddr4_odt,
-        c0_ddr4_cs_n     => c0_ddr4_cs_n_vec,
+        c0_ddr4_cs_n     => c0_ddr4_cs_n,
         c0_ddr4_ck_t     => c0_ddr4_ck_t,
         c0_ddr4_ck_c     => c0_ddr4_ck_c,
         c0_ddr4_reset_n  => c0_ddr4_reset_n,
@@ -306,9 +281,6 @@ begin
         ui_clk_slow      => chip_refclk,
         ui_clk_sync_rst  => open
         );
-
-    c0_ddr4_cs_n <= c0_ddr4_cs_n_vec(0 downto 0);
-
   end generate gen_mig;
 
   gen_mig_model : if (SIMULATION = true) generate
@@ -410,13 +382,13 @@ begin
         pirq            => 11,
         debugmem        => 1,
         tech            => CFG_FABTECH,
-        vcu128          => 0,
+        vcu128          => 1,
         simulation      => SIMULATION
         )
       port map(
         sgmiii   => sgmiii,
         sgmiio   => sgmiio,
-        sgmii_dummy => '0',
+        sgmii_dummy => sgmii_dummy,
         gmiii    => gmiii,
         gmiio    => gmiio,
         reset    => sgmiirst,
@@ -435,8 +407,11 @@ begin
     eint_pad : inpad generic map (tech => CFG_PADTECH, level => cmos, voltage => x18v)
       port map (eint, sgmiii.mdint);
 
-    erst_pad : outpad generic map (tech => CFG_PADTECH, level => cmos, voltage => x18v)
-      port map (erst, sgmiio.reset);
+    edummy_pad : inpad generic map (tech => CFG_PADTECH, level => cmos, voltage => x18v)
+      port map (edummy, sgmii_dummy);
+
+    -- erst_pad : outpad generic map (tech => CFG_PADTECH, level => cmos, voltage => x18v)
+    --   port map (erst, sgmiio.reset);
 
     sgmiii.clkp <= gtrefclk_p;
     sgmiii.clkn <= gtrefclk_n;
@@ -455,7 +430,7 @@ begin
     txp         <= '0';
     txn         <= '1';
     emdc        <= '0';
-    erst        <= '0';
+    -- erst        <= '0';
     emdio       <= '0';
   end generate;
 

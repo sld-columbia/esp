@@ -211,7 +211,7 @@ architecture rtl of ahb2mig_up is
       c0_ddr4_ui_clk_sync_rst   : out std_logic;
       addn_ui_clkout1           : out std_logic;
       dbg_clk                   : out std_logic;
-      c0_ddr4_app_addr          : in  std_logic_vector(27 downto 0);
+      c0_ddr4_app_addr          : in  std_logic_vector(28 downto 0);
       c0_ddr4_app_cmd           : in  std_logic_vector(2 downto 0);
       c0_ddr4_app_en            : in  std_logic;
       c0_ddr4_app_hi_pri        : in  std_logic;
@@ -227,6 +227,8 @@ architecture rtl of ahb2mig_up is
       dbg_bus                   : out std_logic_vector(511 downto 0)
       );
   end component mig_clamshell;
+
+  signal vcu128_c0_ddr4_app_addr : std_logic_vector(28 downto 0);
 
 begin
 
@@ -736,7 +738,7 @@ begin
         c0_ddr4_ui_clk_sync_rst   => ui_clk_sync_rst,
         addn_ui_clkout1           => ui_clk_slow,
         dbg_clk                   => open,
-        c0_ddr4_app_addr          => migin.app_addr,
+        c0_ddr4_app_addr          => vcu128_c0_ddr4_app_addr,
         c0_ddr4_app_cmd           => migin.app_cmd,
         c0_ddr4_app_en            => migin.app_en,
         c0_ddr4_app_hi_pri        => migin.app_hi_pri,
@@ -751,7 +753,10 @@ begin
         c0_ddr4_app_wdf_rdy       => migoutraw.app_wdf_rdy,
         dbg_bus                   => open
         );
-  end generate clamshell_gen;
+
+    -- VCU128 has 4.5 GB of DDR4, but we only address 4GB
+    vcu128_c0_ddr4_app_addr <= '0' & migin.app_addr;
+   end generate clamshell_gen;
 
 end;
 
