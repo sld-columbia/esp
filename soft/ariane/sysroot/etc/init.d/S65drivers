@@ -39,11 +39,8 @@
 # accelerator page: 2^20B -> 1MB
 # shared accelerator buffer on DDR node 0 starts at 0xA0100000
 # shared accelerator buffer on DDR node 1 starts at 0xA8000000
-cd /opt/drivers-esp
-insmod contig_alloc.ko start=0xA0100000,0xA8000000 size=0x7f00000,0x8000000 chunk_log=20
-insmod esp_cache.ko
-insmod esp_private_cache.ko
-insmod esp.ko
+
+#note: the above comments apply to S64esp
 
 cd /opt/drivers
 for K in `ls *.ko`; do

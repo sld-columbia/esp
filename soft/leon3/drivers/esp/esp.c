@@ -50,6 +50,8 @@ static unsigned long cache_llc_ways = 16;
 module_param_named(llc_ways, cache_llc_ways, ulong, S_IRUGO);
 static unsigned long cache_llc_banks = 1;
 module_param_named(llc_banks, cache_llc_banks, ulong, S_IRUGO);
+static unsigned long rtl_cache = 1;
+module_param(rtl_cache, ulong, S_IRUGO);
 
 /* These are overwritten when the module initializes based on input flags */
 static size_t cache_l2_size = 32768;
@@ -121,8 +123,14 @@ void esp_status_init(void) {
 	int i;
 
 	cache_l2_size = cache_l2_sets * cache_l2_ways * cache_line_bytes;
-	cache_llc_size = cache_llc_sets * cache_llc_ways * cache_line_bytes * cache_llc_banks;
-	cache_llc_bank_size = cache_llc_sets * cache_llc_ways * cache_line_bytes;
+	
+    if (rtl_cache) {
+        cache_llc_size = cache_llc_sets * cache_llc_ways * cache_line_bytes;
+        cache_llc_bank_size = cache_llc_sets * cache_llc_ways * cache_line_bytes / cache_llc_banks;
+    } else {
+        cache_llc_size = cache_llc_sets * cache_llc_ways * cache_line_bytes * cache_llc_banks;
+        cache_llc_bank_size = cache_llc_sets * cache_llc_ways * cache_line_bytes;
+    }
 
 	mutex_init(&esp_status.lock);
 	esp_status.active_acc_cnt = 0;
@@ -577,8 +585,9 @@ int esp_device_register(struct esp_device *esp, struct platform_device *pdev)
 
 	/* reset device and wait for it to complete */
 	iowrite32be(0x0, esp->iomem + CMD_REG);
-	while (ioread32be(esp->iomem + CMD_REG))
-		cpu_relax();
+	while (ioread32be(esp->iomem + CMD_REG)){
+        cpu_relax();
+    }
 
 	/* set type of coherence to no coherence by default */
 	esp->coherence = ACC_COH_NONE;
