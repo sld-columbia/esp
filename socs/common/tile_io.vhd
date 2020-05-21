@@ -820,8 +820,7 @@ begin
       interrupt_empty    => interrupt_empty);
 
   -- Remote uncached slave and non-coherent DMA requests
-  -- Requestes may be directed to he frame buffer or the boot ROM
-  -- For now, the boot ROM is only present during simulation
+  -- Requestes may be directed to the frame buffer or the boot ROM
   mem_noc2ahbm_1 : mem_noc2ahbm
     generic map (
       tech        => CFG_FABTECH,
