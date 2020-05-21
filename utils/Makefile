@@ -1227,10 +1227,10 @@ ncsim-distclean: ncsim-clean
 modelsim/vsim.mk: modelsim/modelsim.ini check_all_srcs.old $(PKG_LIST)
 ifneq ($(findstring profpga, $(BOARD)),)
 	@cd modelsim; \
+	echo $(SPACES)"### Compile proFPGA source files ###"; \
 	if ! test -e profpga; then \
 		vlib -type directory profpga; \
-	fi
-	echo $(SPACES)"### Compile proFPGA source files ###"; \
+	fi; \
 	for vhd in $(VHDL_PROFPGA); do \
 		rtl=$(PROFPGA)/hdl/$$vhd; \
 		echo $(SPACES)"$(VCOM) -work profpga $$rtl"; \
