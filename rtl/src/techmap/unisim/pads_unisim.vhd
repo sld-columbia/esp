@@ -27,10 +27,8 @@
 library ieee;
 use ieee.std_logic_1164.all;
 use work.gencomp.all;
--- pragma translate_off
 library unisim;
 use unisim.vcomponents.IBUF;
--- pragma translate_on
 
 entity unisim_inpad is
   generic (level : integer := 0; voltage : integer := x33v);
@@ -82,10 +80,8 @@ end;
 library ieee;
 use ieee.std_logic_1164.all;
 use work.gencomp.all;
--- pragma translate_off
 library unisim;
 use unisim.vcomponents.IOBUF;
--- pragma translate_on
 
 entity unisim_iopad  is
   generic (level : integer := 0; slew : integer := 0;
@@ -192,10 +188,8 @@ end;
 library ieee;
 use ieee.std_logic_1164.all;
 use work.gencomp.all;
--- pragma translate_off
 library unisim;
 use unisim.vcomponents.OBUF;
--- pragma translate_on
 
 entity unisim_outpad  is
   generic (level : integer := 0; slew : integer := 0;
@@ -303,10 +297,8 @@ end;
 library ieee;
 use ieee.std_logic_1164.all;
 use work.gencomp.all;
--- pragma translate_off
 library unisim;
 use unisim.vcomponents.OBUFT;
--- pragma translate_on
 
 entity unisim_toutpad  is
   generic (level : integer := 0; slew : integer := 0;
