@@ -952,9 +952,9 @@ xilinx_lib-clean:
 
 xilinx_lib-distclean: xilinx_lib-clean
 	$(QUIET_CLEAN)$(RM) \
-		$(ESP_ROOT)/.cache/modelsim/xilinx_lib \
-		$(ESP_ROOT)/.cache/xcelium/xilinx_lib \
-		$(ESP_ROOT)/.cache/incisive/xilinx_lib
+		$(ESP_ROOT)/.cache/modelsim/ 	\
+		$(ESP_ROOT)/.cache/xcelium/ 	\
+		$(ESP_ROOT)/.cache/incisive/
 
 .PHONY: xilinx_lib-clean xilinx_lib-distclean
 
@@ -1591,6 +1591,7 @@ vivado-clean:
 vivado-distclean: vivado-clean
 	$(QUIET_CLEAN)$(RM) \
 		vivado	\
+		mem_tile_floorplanning.xdc \
 		*.bit
 
 .PHONY: vivado-clean vivado-distclean vivado-syn vivado-prog-fpga vivado/$(DESIGN) vivado-setup vivado-gui
