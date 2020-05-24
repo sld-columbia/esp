@@ -27,22 +27,16 @@
 library ieee;
 use ieee.std_logic_1164.all;
 use work.gencomp.all;
+-- pragma translate_off
+library unisim;
+use unisim.vcomponents.IBUF;
+-- pragma translate_on
 
 entity unisim_inpad is
   generic (level : integer := 0; voltage : integer := x33v);
   port (pad : in std_ulogic; o : out std_ulogic);
 end; 
 architecture rtl of unisim_inpad is
-  component IBUF generic(
-      CAPACITANCE : string := "DONT_CARE";
-      IBUF_DELAY_VALUE : string := "0";
-      IBUF_LOW_PWR : string := "TRUE";
-      IFD_DELAY_VALUE : string := "AUTO";
-      IOSTANDARD : string := "LVCMOS25");
-    port (O : out std_ulogic; I : in std_ulogic); end component;
-
-  attribute syn_noprune : boolean;
-  attribute syn_noprune of IBUF : component is true;
   
 begin
   pci0 : if level = pci33 generate
@@ -88,6 +82,10 @@ end;
 library ieee;
 use ieee.std_logic_1164.all;
 use work.gencomp.all;
+-- pragma translate_off
+library unisim;
+use unisim.vcomponents.IOBUF;
+-- pragma translate_on
 
 entity unisim_iopad  is
   generic (level : integer := 0; slew : integer := 0;
@@ -95,14 +93,6 @@ entity unisim_iopad  is
   port (pad : inout std_ulogic; i, en : in std_ulogic; o : out std_ulogic);
 end ;
 architecture rtl of unisim_iopad is
-  component IOBUF generic (
-      DRIVE : integer := 12;
-      IBUF_LOW_PWR : string := "TRUE";
-      IOSTANDARD  : string := "LVCMOS25"; SLEW : string := "SLOW");
-    port (O : out std_ulogic; IO : inout std_logic; I, T : in std_ulogic); end component;
-  
-  attribute syn_noprune : boolean;
-  attribute syn_noprune of IOBUF : component is true;
   
 begin
   pci0 : if level = pci33 generate
@@ -213,13 +203,6 @@ entity unisim_outpad  is
   port (pad : out std_ulogic; i : in std_ulogic);
 end ;
 architecture rtl of unisim_outpad is
-  component OBUF generic (
-      CAPACITANCE : string := "DONT_CARE"; DRIVE : integer := 12;
-      IOSTANDARD  : string := "LVCMOS25"; SLEW : string := "SLOW");
-    port (O : out std_ulogic; I : in std_ulogic); end component;
-
-  attribute syn_noprune : boolean;
-  attribute syn_noprune of OBUF : component is true;
 
 begin
   pci0 : if level = pci33 generate
@@ -331,13 +314,6 @@ entity unisim_toutpad  is
   port (pad : out std_ulogic; i, en : in std_ulogic);
 end ;
 architecture rtl of unisim_toutpad is
-  component OBUFT generic (
-      CAPACITANCE : string := "DONT_CARE"; DRIVE : integer := 12;
-      IOSTANDARD  : string := "LVCMOS25"; SLEW : string := "SLOW");
-    port (O : out std_ulogic; I, T : in std_ulogic); end component;
-
-  attribute syn_noprune : boolean;
-  attribute syn_noprune of OBUFT : component is true;
 
 begin
   pci0 : if level = pci33 generate
