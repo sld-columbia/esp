@@ -898,6 +898,7 @@ $(ESP_ROOT)/.cache/modelsim/xilinx_lib:
 	sed -i 's/; Show_Warning5 = 0/Show_Warning5 = 0/g' modelsim.ini; \
 	sed -i 's/; StdArithNoWarnings = 1/StdArithNoWarnings = 1/g' modelsim.ini; \
 	sed -i 's/; NumericStdNoWarnings = 1/NumericStdNoWarnings = 1/g' modelsim.ini; \
+	sed -i 's/VoptFlow = 1/VoptFlow = 0/g' modelsim.ini; \
 	sed -i '/suppress = [0-9]\+/d' modelsim.ini; \
 	sed -i '/\[msg_system\]/a suppress = 8780,8891,1491,12110\nwarning = 8891' modelsim.ini; \
 	cd ../;
