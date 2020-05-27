@@ -137,7 +137,7 @@ package sldcommon is
       mon_ddr          : in  monitor_ddr_vector(0 to ddrs_num-1);
       mon_noc          : in  monitor_noc_matrix(0 to nocs_num-1, 0 to tiles_num-1);
       mon_acc          : in  monitor_acc_vector(0 to relu(accelerators_num-1));
-      mon_mem          : in  monitor_mem_vector(0 to ddrs_num-1);
+      mon_mem          : in  monitor_mem_vector(0 to ddrs_num+slms_num-1);
       mon_l2           : in  monitor_cache_vector(0 to relu(l2_num-1));
       mon_llc          : in  monitor_cache_vector(0 to relu(llc_num-1));
       mon_dvfs         : in  monitor_dvfs_vector(0 to tiles_num-1)
