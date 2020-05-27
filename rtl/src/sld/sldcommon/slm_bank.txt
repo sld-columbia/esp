@@ -1,0 +1,3 @@
+slm_bank_1mb 131072 64 1w:1r
+slm_bank_2mb 262144 64 1w:1r
+slm_bank_4mb 524288 64 1w:1r
