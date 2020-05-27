@@ -5,7 +5,7 @@
 
 from collections import defaultdict
 import math
-
+from thirdparty import *
 
 # Maximum number of AHB and APB slaves can also be increased, but Leon3 utility
 # mklinuximg, GRLIB AMBA package and bare-metal probe constants must be updated.
@@ -110,36 +110,29 @@ SLD_APB_ADDR = 0x100
 # default mask for accelerators' registers base address (256 Bytes regions per accelerator)
 SLD_APB_ADDR_MSK = 0xfff
 
-# third-party APB address and mask
-# Hard-coded to ensure reserved addresses cover all configuration registers
-THIRDPARTY_N = dict()
-THIRDPARTY_APB_EXT_ADDR = dict()
-THIRDPARTY_APB_EXT_ADDR_SIZE = dict()
-THIRDPARTY_APB_ADDR = dict()
-THIRDPARTY_APB_ADDR_SIZE = dict()
-THIRDPARTY_MEM_RESERVED_ADDR = dict()
-THIRDPARTY_MEM_RESERVED_SIZE = dict()
-THIRDPARTY_COMPATIBLE = dict()
-# TODO: extract the IRQ_TYPE from the accelerator's XML
-# IRQ line types
-#     0 : edge-sensitive
-#     1 : level-sensitive
-THIRDPARTY_IRQ_TYPE = dict()
+###########
+# Constants for third-party accelerators
 
+# third-party accelerators counter
+THIRDPARTY_N = 0
+
+# third-party APB address and mask
 # If APB EXT ADDR SIZE is not zero, then APB mask will be applied to
-# the extended address Each device instance will reserve EXT SIZE
+# the extended address. Each device instance will reserve EXT SIZE
 # bytes in the address space, even if a signle instance would take
 # less. This is to simplify (hence speedup) APB decode.
 # APB EXT ADDR most significant hex digit (i.e. digit 7) must be 0
-THIRDPARTY_N["nv_nvdla"] = 0
-THIRDPARTY_APB_EXT_ADDR["nv_nvdla"]      = 0x00100000
-THIRDPARTY_APB_EXT_ADDR_SIZE["nv_nvdla"] = 0x00100000
-THIRDPARTY_APB_ADDR["nv_nvdla"]          = 0x00000000
-THIRDPARTY_APB_ADDR_SIZE["nv_nvdla"]     = 0x00040000
-THIRDPARTY_MEM_RESERVED_ADDR["nv_nvdla"] = 0xB0000000
-THIRDPARTY_MEM_RESERVED_SIZE["nv_nvdla"] = 0x10000000
-THIRDPARTY_COMPATIBLE["nv_nvdla"]        = "nv_small"
-THIRDPARTY_IRQ_TYPE["nv_nvdla"]          = "1"
+THIRDPARTY_APB_ADDR          = 0x00000000
+THIRDPARTY_APB_ADDR_SIZE     = 0x00040000
+THIRDPARTY_APB_EXT_ADDR      = 0x00400000
+THIRDPARTY_APB_EXT_ADDR_SIZE = 0x00100000
+
+# Memory reserved for all third-party accelerators
+THIRDPARTY_MEM_RESERVED_ADDR = 0xB0000000
+THIRDPARTY_MEM_RESERVED_SIZE = 0x10000000
+
+# End of constants for third-party accelerators
+###########
 
 class acc_info:
   uppercase_name = ""
@@ -786,8 +779,7 @@ def print_mapping(fp, esp_config):
   fp.write("  -- Accelerators\n")
   fp.write("  constant accelerators_num : integer := " + str(esp_config.nacc) + ";\n\n")
   # Reset all THIRDPARTY accelerators counters
-  for key in THIRDPARTY_N:
-    THIRDPARTY_N[key] = 0
+  THIRDPARTY_N = 0
 
   for i in range(esp_config.nacc):
     acc = esp_config.accelerators[i]
@@ -803,20 +795,20 @@ def print_mapping(fp, esp_config):
       address_str = format(address, "03X")
       address_ext_str = format(address_ext, "03X")
     else:
-      n = THIRDPARTY_N[acc.lowercase_name]
+      n = THIRDPARTY_N
       # Compute base address
-      if THIRDPARTY_APB_EXT_ADDR[acc.lowercase_name] == 0:
+      if THIRDPARTY_APB_EXT_ADDR == 0:
         # Use part of standard APB address space
-        address = THIRDPARTY_APB_ADDR[acc.lowercase_name] + n * THIRDPARTY_APB_ADDR_SIZE[acc.lowercase_name]
-        size = THIRDPARTY_APB_ADDR_SIZE[acc.lowercase_name]
+        address = THIRDPARTY_APB_ADDR + n * THIRDPARTY_APB_ADDR_SIZE
+        size = THIRDPARTY_APB_ADDR_SIZE
         address_ext = 0
         size_ext = 0
       else:
         # Use extended APB address space (large number of registers)
         address = 0
         size = 0
-        address_ext = THIRDPARTY_APB_EXT_ADDR[acc.lowercase_name] + n * THIRDPARTY_APB_EXT_ADDR_SIZE[acc.lowercase_name]
-        size_ext = THIRDPARTY_APB_EXT_ADDR_SIZE[acc.lowercase_name]
+        address_ext = THIRDPARTY_APB_EXT_ADDR + n * THIRDPARTY_APB_EXT_ADDR_SIZE
+        size_ext = THIRDPARTY_APB_EXT_ADDR_SIZE
 
       msk = 0xfff & ~((size >> 8) - 1)
       msk_ext = 0xfff & ~((size_ext >> 20) - 1)
@@ -824,7 +816,7 @@ def print_mapping(fp, esp_config):
       address_ext_str = format(address_ext >> 20, "03X")
 
       # Increment count
-      THIRDPARTY_N[acc.lowercase_name] = n + 1;
+      THIRDPARTY_N = n + 1;
 
     msk_str = format(msk, "03X")
     msk_ext_str = format(msk_ext, "03X")
@@ -1553,19 +1545,16 @@ def print_ariane_devtree(fp, esp_config):
   fp.write("      no-map;\n")
   fp.write("      reg = <0x0 0xA0000000 0x0 0x100000>;\n")
   fp.write("    };\n")
-  for i in range(esp_config.nacc):
-    acc = esp_config.accelerators[i]
-    if acc.vendor != "sld" and THIRDPARTY_N[acc.lowercase_name] != 0:
-      # Add only one memory region for all instances (shared by one driver module)
-      THIRDPARTY_N[acc.lowercase_name] = 0
-      mem_address = format(THIRDPARTY_MEM_RESERVED_ADDR[acc.lowercase_name], "08X")
-      mem_size = format(THIRDPARTY_MEM_RESERVED_SIZE[acc.lowercase_name], "08X")
-      fp.write("\n")
-      fp.write("    " + acc.lowercase_name + "_reserved: buffer@" + mem_address + " {\n")
-      fp.write("      compatible = \"shared-dma-pool\";\n")
-      fp.write("      no-map;\n")
-      fp.write("      reg = <0x0 0x" + mem_address + " 0x0 0x" + mem_size + ">;\n")
-      fp.write("    };\n")
+
+  # Add only one memory region for all third-party accelerator instances
+  mem_address = format(THIRDPARTY_MEM_RESERVED_ADDR, "08X")
+  mem_size = format(THIRDPARTY_MEM_RESERVED_SIZE, "08X")
+  fp.write("\n")
+  fp.write("    thirdparty_reserved: buffer@" + mem_address + " {\n")
+  fp.write("      compatible = \"shared-dma-pool\";\n")
+  fp.write("      no-map;\n")
+  fp.write("      reg = <0x0 0x" + mem_address + " 0x0 0x" + mem_size + ">;\n")
+  fp.write("    };\n")
   fp.write("  };\n")
   fp.write("  L26: soc {\n")
   fp.write("    #address-cells = <2>;\n")
@@ -1630,6 +1619,9 @@ def print_ariane_devtree(fp, esp_config):
   fp.write("      };\n")
   fp.write("    };\n")
 
+  # Reset all THIRDPARTY accelerators counters
+  THIRDPARTY_N = 0
+  
   for i in range(esp_config.nacc):
     acc = esp_config.accelerators[i]
     base = AHB2APB_HADDR[esp_config.cpu_arch] << 20
@@ -1637,19 +1629,19 @@ def print_ariane_devtree(fp, esp_config):
       address = base + ((SLD_APB_ADDR + acc.idx) << 8)
       size = 0x100
     else:
-      n = THIRDPARTY_N[acc.lowercase_name]
+      n = THIRDPARTY_N
       # Compute base address
-      if THIRDPARTY_APB_EXT_ADDR[acc.lowercase_name] == 0:
+      if THIRDPARTY_APB_EXT_ADDR == 0:
         # Use part of standard APB address space
-        address = base + THIRDPARTY_APB_ADDR[acc.lowercase_name] + n * THIRDPARTY_APB_ADDR_SIZE[acc.lowercase_name]
-        size = THIRDPARTY_APB_ADDR_SIZE[acc.lowercase_name]
+        address = base + THIRDPARTY_APB_ADDR + n * THIRDPARTY_APB_ADDR_SIZE
+        size = THIRDPARTY_APB_ADDR_SIZE
       else:
         # Use extended APB address space (large number of registers)
-        address = base + THIRDPARTY_APB_EXT_ADDR[acc.lowercase_name] + n * THIRDPARTY_APB_EXT_ADDR_SIZE[acc.lowercase_name]
-        size = THIRDPARTY_APB_EXT_ADDR_SIZE[acc.lowercase_name]
+        address = base + THIRDPARTY_APB_EXT_ADDR + n * THIRDPARTY_APB_EXT_ADDR_SIZE
+        size = THIRDPARTY_APB_EXT_ADDR_SIZE
 
       # Increment count
-      THIRDPARTY_N[acc.lowercase_name] = n + 1;
+      THIRDPARTY_N = n + 1;
 
     address_str = format(address, "X")
     size_str = format(size, "X")
@@ -1665,8 +1657,7 @@ def print_ariane_devtree(fp, esp_config):
     fp.write("      reg-shift = <2>; // regs are spaced on 32 bit boundary\n")
     fp.write("      reg-io-width = <4>; // only 32-bit access are supported\n")
     if acc.vendor != "sld":
-      if THIRDPARTY_MEM_RESERVED_SIZE[acc.lowercase_name] != 0:
-        fp.write("      memory-region = <&" + acc.lowercase_name + "_reserved>;\n")
+      fp.write("      memory-region = <&thirdparty_reserved>;\n")
     fp.write("    };\n")
   fp.write("  };\n")
   fp.write("};\n")
