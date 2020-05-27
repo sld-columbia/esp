@@ -11,6 +11,8 @@
 
 from tkinter import *
 from tkinter import messagebox
+from tkinter import ttk
+
 import Pmw
 import os.path
 import shutil
@@ -71,18 +73,6 @@ class ConfigFrame(Frame):
     self.sync_label = Label(self, text="With synchronizers", fg="darkgreen")
     self.sync_label.pack(side=TOP)    
 
-
-class OptionFrame(Frame):
-
-  def __init__(self, soc, top_frame):
-    self.soc = soc
-    Frame.__init__(self, top_frame, width=50, borderwidth=2, relief=RIDGE) 
-    self.pack(side=LEFT, expand=NO, fill=Y)      
-    Label(self, text = "Data transfers: ", font="TkDefaultFont 11 bold").pack(side = TOP)
-    Radiobutton(self, text = "Bigphysical area", variable = soc.transfers, value = 0).pack(side = TOP)
-    Radiobutton(self, text = "Scatter/Gather  ", variable = soc.transfers, value = 1).pack(side = TOP)
-
-
 class CacheFrame(Frame):
 
   def __init__(self, soc, top_frame, main_frame):
@@ -121,12 +111,12 @@ class CpuFrame(Frame):
 
   def __init__(self, soc, top_frame, main_frame):
     self.soc = soc
-    Frame.__init__(self, top_frame, width=50, borderwidth=2, relief=RIDGE)
+    Frame.__init__(self, top_frame, width=70, borderwidth=2, relief=RIDGE)
     self.pack(side=LEFT, expand=NO, fill=Y)
-    Label(self, text = "CPU Architecture: ", font="TkDefaultFont 11 bold").pack(side = TOP)
+    Label(self, text = "CPU Architecture: ", font="TkDefaultFont 11 bold").pack(side=TOP)
 
     general_config_frame = Frame(self)
-    general_config_frame.pack(side=TOP)
+    general_config_frame.pack(side=TOP, pady=5)
 
     cpu_choices = ["leon3", "ariane"]
 
@@ -134,6 +124,23 @@ class CpuFrame(Frame):
     Pmw.OptionMenu(general_config_frame, menubutton_font="TkDefaultFont 12", menubutton_textvariable=soc.CPU_ARCH,
                    items=cpu_choices, command=main_frame.update_noc_config).grid(row=1, column=2)
 
+    ttk.Separator(self, orient="horizontal").pack(anchor="nw", fill=X, pady=10)
+
+    Label(self, text = "Shared Local Memory: ", font="TkDefaultFont 11 bold").pack(side=TOP)
+
+    slm_config_frame = Frame(self)
+    slm_config_frame.pack(side=TOP, pady=5)
+
+    slm_mbytes_choices = [1, 2, 4]
+
+    Label(slm_config_frame, text = "MB per tile: ").grid(row=1, column=1)
+    OptionMenu(slm_config_frame, soc.slm_mbytes, *slm_mbytes_choices, command=main_frame.update_noc_config).grid(row=1, column=2)
+
+    ttk.Separator(self, orient="horizontal").pack(anchor="nw", fill=X, pady=10)
+
+    Label(self, text = "Data transfers: ", font="TkDefaultFont 11 bold").pack(side = TOP, pady=5)
+    Radiobutton(self, text = "Bigphysical area", variable = soc.transfers, value = 0).pack(side = TOP)
+    Radiobutton(self, text = "Scatter/Gather  ", variable = soc.transfers, value = 1).pack(side = TOP)
 
 class EspCreator(Frame):
 
@@ -192,12 +199,10 @@ class EspCreator(Frame):
 
     #.:: creating the configuration frame (read-only)
     cfg_frame = ConfigFrame(self.soc, self.top_frame) 
-    #.:: creating the selection frame
-    self.select_frame = OptionFrame(self.soc, self.top_frame)
-    #.:: creating the cache frame
-    self.cache_frame = CacheFrame(self.soc, self.top_frame, self)
     #.:: creating the CPU frame
     self.cpu_frame = CpuFrame(self.soc, self.top_frame, self)
+    #.:: creating the cache frame
+    self.cache_frame = CacheFrame(self.soc, self.top_frame, self)
 
     #noc frame
     self.bottom_frame_noccfg = NoCFrame(self.soc, self.bottom_frame) 

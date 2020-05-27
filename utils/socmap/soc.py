@@ -30,6 +30,9 @@ class Components():
     self.MEM = [
       "mem",
     ]
+    self.SLM = [
+      "slm",
+    ]
     self.ACCELERATORS = [
     ]
 
@@ -94,7 +97,7 @@ class SoC_Config():
       self.cache_rtl.set(0)
   
   def update_list_of_ips(self):
-    self.list_of_ips = tuple(self.IPs.EMPTY) + tuple(self.IPs.PROCESSORS) + tuple(self.IPs.MISC) + tuple(self.IPs.MEM) + tuple(self.IPs.ACCELERATORS)
+    self.list_of_ips = tuple(self.IPs.EMPTY) + tuple(self.IPs.PROCESSORS) + tuple(self.IPs.MISC) + tuple(self.IPs.MEM) + tuple(self.IPs.SLM) + tuple(self.IPs.ACCELERATORS)
 
   def read_config(self, temporary):
     filename = ".esp_config"
@@ -166,6 +169,10 @@ class SoC_Config():
     item = line.split()
     self.acc_l2_sets.set(int(item[2]))
     self.acc_l2_ways.set(int(item[3]))
+    # CONFIG_SLM_MBYTES
+    line = fp.readline()
+    item = line.split()
+    self.slm_mbytes.set(int(item[2]))
     # Monitors
     line = fp.readline()
     if line.find("CONFIG_MON_DDR = y") != -1:
@@ -251,6 +258,7 @@ class SoC_Config():
       fp.write("#CONFIG_CACHE_RTL is not set\n")
     fp.write("CONFIG_CPU_CACHES = " + str(self.l2_sets.get()) + " " + str(self.l2_ways.get()) + " " + str(self.llc_sets.get()) + " " + str(self.llc_ways.get()) + "\n")
     fp.write("CONFIG_ACC_CACHES = " + str(self.acc_l2_sets.get()) + " " + str(self.acc_l2_ways.get()) + "\n")
+    fp.write("CONFIG_SLM_MBYTES = " + str(self.slm_mbytes.get()) + "\n")
     if self.noc.monitor_ddr.get() == 1:
       fp.write("CONFIG_MON_DDR = y\n")
     else:
@@ -299,6 +307,8 @@ class SoC_Config():
           fp.write("misc")
         elif self.IPs.MEM.count(selection):
           fp.write("mem")
+        elif self.IPs.SLM.count(selection):
+          fp.write("slm")
         elif self.IPs.ACCELERATORS.count(selection):
           is_accelerator = True
           fp.write("acc")
@@ -396,6 +406,7 @@ class SoC_Config():
     self.llc_ways = IntVar()
     self.acc_l2_sets = IntVar()
     self.acc_l2_ways = IntVar()
+    self.slm_mbytes = IntVar()
     # CPU architecture
     self.CPU_ARCH = StringVar()
     self.cache_en = IntVar()

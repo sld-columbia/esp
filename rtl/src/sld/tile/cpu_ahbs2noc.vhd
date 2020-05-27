@@ -21,6 +21,7 @@ use STD.textio.all;
 use ieee.std_logic_textio.all;
 --pragma translate_on
 
+use work.esp_global.all;
 use work.amba.all;
 use work.stdlib.all;
 use work.sld_devices.all;
@@ -31,7 +32,6 @@ use work.genacc.all;
 
 use work.nocpackage.all;
 
-
 entity cpu_ahbs2noc is
   generic (
     tech             : integer;
@@ -41,7 +41,7 @@ entity cpu_ahbs2noc is
     local_x          : local_yx;
     mem_hindex       : integer range 0 to NAHBSLV - 1;
     mem_num          : integer;
-    mem_info         : tile_mem_info_vector(0 to MEM_MAX_NUM - 1);
+    mem_info         : tile_mem_info_vector(0 to CFG_NMEM_TILE + CFG_NSLM_TILE - 1);
     slv_y            : local_yx;
     slv_x            : local_yx;
     retarget_for_dma : integer range 0 to 1 := 0;

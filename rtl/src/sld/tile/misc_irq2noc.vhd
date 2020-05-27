@@ -17,14 +17,16 @@ use work.nocpackage.all;
 
 use work.coretypes.all;
 
+use work.esp_global.all;
+
 entity misc_irq2noc is
   generic (
     tech    : integer := virtex7;
     ncpu    : integer := 0;
     local_y : local_yx;
     local_x : local_yx;
-    cpu_y   : yx_vec(0 to CPU_MAX_NUM - 1);
-    cpu_x   : yx_vec(0 to CPU_MAX_NUM - 1));
+    cpu_y   : yx_vec(0 to CFG_NCPU_TILE - 1);
+    cpu_x   : yx_vec(0 to CFG_NCPU_TILE - 1));
   port (
     rst : in std_ulogic;
     clk : in std_ulogic;

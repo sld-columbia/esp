@@ -41,6 +41,14 @@ entity cpu_tile_q is
     remote_ahbs_snd_wrreq      : in  std_ulogic;
     remote_ahbs_snd_data_in    : in  misc_noc_flit_type;
     remote_ahbs_snd_full       : out std_ulogic;
+    -- NoC4->tile
+    dma_rcv_rdreq              : in  std_ulogic;
+    dma_rcv_data_out           : out noc_flit_type;
+    dma_rcv_empty              : out std_ulogic;
+    -- tile->NoC6
+    dma_snd_wrreq              : in  std_ulogic;
+    dma_snd_data_in            : in  noc_flit_type;
+    dma_snd_full               : out std_ulogic;
     -- tile->NoC5
     remote_ahbs_rcv_rdreq      : in  std_ulogic;
     remote_ahbs_rcv_data_out   : out misc_noc_flit_type;
@@ -135,6 +143,14 @@ architecture rtl of cpu_tile_q is
   signal coherence_rsp_snd_rdreq    : std_ulogic;
   signal coherence_rsp_snd_data_out : noc_flit_type;
   signal coherence_rsp_snd_empty    : std_ulogic;
+  -- NoC4->tile
+  signal dma_rcv_wrreq              : std_ulogic;
+  signal dma_rcv_data_in            : noc_flit_type;
+  signal dma_rcv_full               : std_ulogic;
+  -- tile->NoC6
+  signal dma_snd_rdreq              : std_ulogic;
+  signal dma_snd_data_out           : noc_flit_type;
+  signal dma_snd_empty              : std_ulogic;
   -- tile->NoC5
   signal remote_ahbs_snd_rdreq      : std_ulogic;
   signal remote_ahbs_snd_data_out   : misc_noc_flit_type;
@@ -209,9 +225,6 @@ architecture rtl of cpu_tile_q is
 
   signal noc2_dummy_in_stop   : std_ulogic;
   signal noc4_dummy_in_stop   : std_ulogic;
-  signal noc4_dummy_out_data  : noc_flit_type;
-  signal noc4_dummy_out_void  : std_ulogic;
-  signal noc6_dummy_in_stop   : std_ulogic;
   signal noc6_dummy_out_data  : noc_flit_type;
   signal noc6_dummy_out_void  : std_ulogic;
 
@@ -735,18 +748,46 @@ begin  -- rtl
       data_out => remote_ahbs_snd_data_out);
 
   -- noc4 does not interact with CPU tiles
-  noc4_dummy_out_data <= noc4_out_data;
-  noc4_dummy_out_void <= noc4_out_void;
-  noc4_out_stop <= '0';
+  -- From noc4: DMA response to accelerators
   noc4_in_data <= (others => '0');
   noc4_in_void <= '1';
   noc4_dummy_in_stop <= noc4_in_stop;
+  noc4_out_stop   <= dma_rcv_full and (not noc4_out_void);
+  dma_rcv_data_in <= noc4_out_data;
+  dma_rcv_wrreq   <= (not noc4_out_void) and (not dma_rcv_full);
+  fifo_14: fifo0
+    generic map (
+      depth => 6,                      -- same as coherence req for the CPU
+      width => NOC_FLIT_SIZE)
+    port map (
+      clk      => clk,
+      rst      => fifo_rst,
+      rdreq    => dma_rcv_rdreq,
+      wrreq    => dma_rcv_wrreq,
+      data_in  => dma_rcv_data_in,
+      empty    => dma_rcv_empty,
+      full     => dma_rcv_full,
+      data_out => dma_rcv_data_out);
+
   -- noc6 does not interact with CPU tiles
   noc6_dummy_out_data <= noc6_out_data;
   noc6_dummy_out_void <= noc6_out_void;
   noc6_out_stop <= '0';
-  noc6_in_data <= (others => '0');
-  noc6_in_void <= '1';
-  noc6_dummy_in_stop <= noc6_in_stop;
+  noc6_in_data <= dma_snd_data_out;
+  noc6_in_void <= dma_snd_empty or noc6_in_stop;
+  dma_snd_rdreq <= (not dma_snd_empty) and (not noc6_in_stop);
+  fifo_13: fifo0
+    generic map (
+      depth => 5,                       -- same as coherence rsp for the CPU
+      width => NOC_FLIT_SIZE)
+    port map (
+      clk      => clk,
+      rst      => fifo_rst,
+      rdreq    => dma_snd_rdreq,
+      wrreq    => dma_snd_wrreq,
+      data_in  => dma_snd_data_in,
+      empty    => dma_snd_empty,
+      full     => dma_snd_full,
+      data_out => dma_snd_data_out);
 
 end rtl;
