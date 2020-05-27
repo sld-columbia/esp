@@ -182,7 +182,7 @@ begin
       local_x          => local_x,
       retarget_for_dma => 1,
       mem_axi_port     => 0,
-      mem_num          => mem_num,
+      mem_num          => CFG_NSLM_TILE + CFG_NMEM_TILE,
       mem_info         => nofb_mem_info,
       slv_y            => io_y,
       slv_x            => io_x)
