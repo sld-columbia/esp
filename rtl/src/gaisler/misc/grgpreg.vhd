@@ -63,7 +63,8 @@ architecture rtl of grgpreg is
 
     constant pconfig : apb_config_type := (
         0 => ahb_device_reg (VENDOR_GAISLER, GAISLER_GPREG, 0, REVISION, 0),
-        1 => apb_iobar(paddr, pmask));
+        1 => apb_iobar(paddr, pmask),
+        2 => (others => '0'));
 
     type registers is record
           reg  	:  std_logic_vector(nbits-1 downto 0);

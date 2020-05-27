@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <sld>
-  <accelerator name="NV_NVDLA" desc="NVDIA, NVDLA small" device_id="100" axi_prefix="nvdla_core2dbb_" interrupt="dla_intr" addr_width="32" id_width="8" user_width="0">
+  <accelerator name="NV_NVDLA" desc="NVIDIA, NVDLA small" device_id="100" axi_prefix="nvdla_core2dbb_" interrupt="dla_intr" addr_width="32" id_width="8" user_width="0">
     <clock name="dla_core_clk"/>
     <clock name="dla_csb_clk"/>
     <reset name="dla_reset_rstn" polarity="LOW"/>

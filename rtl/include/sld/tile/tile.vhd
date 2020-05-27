@@ -163,6 +163,9 @@ package tile is
       interrupt_rdreq                 : in  std_ulogic;
       interrupt_data_out              : out misc_noc_flit_type;
       interrupt_empty                 : out std_ulogic;
+      interrupt_ack_wrreq             : in  std_ulogic;
+      interrupt_ack_data_in           : in  misc_noc_flit_type;
+      interrupt_ack_full              : out std_ulogic;
       noc1_out_data                   : in  noc_flit_type;
       noc1_out_void                   : in  std_ulogic;
       noc1_out_stop                   : out std_ulogic;
@@ -324,6 +327,9 @@ package tile is
       interrupt_wrreq   : in  std_ulogic;
       interrupt_data_in : in  misc_noc_flit_type;
       interrupt_full    : out std_ulogic;
+      interrupt_ack_rdreq    : in  std_ulogic;
+      interrupt_ack_data_out : out misc_noc_flit_type;
+      interrupt_ack_empty    : out std_ulogic;
       noc1_out_data     : in  noc_flit_type;
       noc1_out_void     : in  std_ulogic;
       noc1_out_stop     : out std_ulogic;
@@ -580,6 +586,8 @@ package tile is
       pindex             : integer;
       paddr              : integer;
       pmask              : integer;
+      paddr_ext          : integer;
+      pmask_ext          : integer;
       pirq               : integer;
       revision           : integer;
       devid              : devid_t;

@@ -112,7 +112,8 @@ architecture rtl of i2cslv is
  -- AMBA PnP
  constant PCONFIG : apb_config_type := (
    0 => ahb_device_reg(VENDOR_GAISLER, GAISLER_I2CSLV, 0, I2CSLV_REV, pirq),
-   1 => apb_iobar(paddr, pmask));
+   1 => apb_iobar(paddr, pmask),
+   2 => (others => '0'));
 
  -- Register addresses
  constant SLV_ADDR  : std_logic_vector(7 downto 2) := "000000";

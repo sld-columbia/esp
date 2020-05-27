@@ -65,6 +65,10 @@ entity acc_tile_q is
     interrupt_wrreq            : in  std_ulogic;
     interrupt_data_in          : in  misc_noc_flit_type;
     interrupt_full             : out std_ulogic;
+    -- NoC5->tile
+    interrupt_ack_rdreq        : in  std_ulogic;
+    interrupt_ack_data_out     : out misc_noc_flit_type;
+    interrupt_ack_empty        : out std_ulogic;
 
     -- Cachable data plane 1 -> request messages
     noc1_out_data : in  noc_flit_type;
@@ -159,6 +163,10 @@ architecture rtl of acc_tile_q is
   signal interrupt_rdreq                    : std_ulogic;
   signal interrupt_data_out                 : misc_noc_flit_type;
   signal interrupt_empty                    : std_ulogic;
+  -- NoC5->tile
+  signal interrupt_ack_wrreq                : std_ulogic;
+  signal interrupt_ack_data_in              : misc_noc_flit_type;
+  signal interrupt_ack_full                 : std_ulogic;
 
   type noc2_packet_fsm is (none, packet_inv);
   signal noc2_fifos_current, noc2_fifos_next : noc2_packet_fsm;
@@ -166,17 +174,35 @@ architecture rtl of acc_tile_q is
   signal noc3_fifos_current, noc3_fifos_next : noc3_packet_fsm;
   type to_noc3_packet_fsm is (none, packet_coherence_rsp_snd);
   signal to_noc3_fifos_current, to_noc3_fifos_next : to_noc3_packet_fsm;
+  type noc5_packet_fsm is (none, packet_apb_rcv);
+  signal noc5_fifos_current, noc5_fifos_next : noc5_packet_fsm;
   type to_noc5_packet_fsm is (none, packet_apb_snd);
   signal to_noc5_fifos_current, to_noc5_fifos_next : to_noc5_packet_fsm;
 
   signal noc3_msg_type : noc_msg_type;
   signal noc3_preamble : noc_preamble_type;
+  signal noc5_msg_type : noc_msg_type;
+  signal noc5_preamble : noc_preamble_type;
 
   signal noc2_dummy_in_stop   : std_ulogic;
   signal noc1_dummy_out_data  : noc_flit_type;
   signal noc1_dummy_out_void  : std_ulogic;
 
+  attribute mark_debug : string;
 
+  attribute mark_debug of interrupt_ack_wrreq : signal is "true";
+  attribute mark_debug of interrupt_ack_data_in : signal is "true";
+  attribute mark_debug of interrupt_ack_full : signal is "true";
+  attribute mark_debug of interrupt_rdreq : signal is "true";
+  attribute mark_debug of interrupt_data_out : signal is "true";
+  attribute mark_debug of interrupt_empty : signal is "true";
+  attribute mark_debug of noc5_msg_type : signal is "true";
+  attribute mark_debug of noc5_preamble : signal is "true";
+  attribute mark_debug of noc5_fifos_current : signal is "true";
+  attribute mark_debug of noc5_fifos_next : signal is "true";
+  attribute mark_debug of to_noc5_fifos_current : signal is "true";
+  attribute mark_debug of to_noc5_fifos_next : signal is "true";
+  
 begin  -- rtl
 
   fifo_rst <= rst;                  --FIFO rst active low
@@ -340,12 +366,62 @@ begin  -- rtl
       data_out => coherent_dma_snd_data_out);
 
   -- From noc5: APB requests from cores
-  noc5_out_stop   <= apb_rcv_full and (not noc5_out_void);
+  noc5_msg_type <= get_msg_type(MISC_NOC_FLIT_SIZE, noc_flit_pad & noc5_out_data);
+  noc5_preamble <= get_preamble(MISC_NOC_FLIT_SIZE, noc_flit_pad & noc5_out_data);
+  process (clk, rst)
+  begin  -- process
+    if rst = '0' then                   -- asynchronous reset (active low)
+      noc5_fifos_current <= none;
+    elsif clk'event and clk = '1' then  -- rising clock edge
+      noc5_fifos_current <= noc5_fifos_next;
+    end if;
+  end process;
+  noc5_fifos_get_packet : process (noc5_out_data, noc5_out_void, noc5_msg_type,
+                                   noc5_preamble, noc5_fifos_current,
+                                   apb_rcv_full,
+                                   interrupt_ack_full)
+  begin  -- process noc5_get_packet
+    apb_rcv_wrreq       <= '0';
+    interrupt_ack_wrreq <= '0';
+
+    noc5_fifos_next <= noc5_fifos_current;
+    noc5_out_stop   <= '0';
+
+    case noc5_fifos_current is
+      when none =>
+        if noc5_out_void = '0' then
+          if ((noc5_msg_type = REQ_REG_RD or noc5_msg_type = REQ_REG_WR)
+              and noc5_preamble = PREAMBLE_HEADER) then
+            if apb_rcv_full = '0' then
+              apb_rcv_wrreq   <= '1';
+              noc5_fifos_next <= packet_apb_rcv;
+            else
+              noc5_out_stop <= '1';
+            end if;
+          elsif (noc5_msg_type = INTERRUPT and noc5_preamble = PREAMBLE_1FLIT) then
+            interrupt_ack_wrreq <= not interrupt_ack_full;
+            noc5_out_stop <= interrupt_ack_full;
+          end if;
+        end if;
+
+      when packet_apb_rcv =>
+        apb_rcv_wrreq <= not noc5_out_void and (not apb_rcv_full);
+        noc5_out_stop <= apb_rcv_full and (not noc5_out_void);
+        if (noc5_preamble = PREAMBLE_TAIL and noc5_out_void = '0' and
+            apb_rcv_full = '0') then
+          noc5_fifos_next <= none;
+        end if;
+
+      when others =>
+        noc5_fifos_next <= none;
+
+    end case;
+  end process noc5_fifos_get_packet;
+
   apb_rcv_data_in <= noc5_out_data;
-  apb_rcv_wrreq   <= (not noc5_out_void) and (not apb_rcv_full);
-  fifo_10: fifo0
+  fifo_10 : fifo0
     generic map (
-      depth => 3,                      --Header, address, [data]
+      depth => 3,                       --Header, address, data
       width => MISC_NOC_FLIT_SIZE)
     port map (
       clk      => clk,
@@ -356,7 +432,21 @@ begin  -- rtl
       empty    => apb_rcv_empty,
       full     => apb_rcv_full,
       data_out => apb_rcv_data_out);
-
+  
+  interrupt_ack_data_in <= noc5_out_data;
+  fifo_16 : fifo0
+    generic map (
+      depth => 2,                       --Header x # accelerators
+      width => MISC_NOC_FLIT_SIZE)
+    port map (
+      clk      => clk,
+      rst      => fifo_rst,
+      rdreq    => interrupt_ack_rdreq,
+      wrreq    => interrupt_ack_wrreq,
+      data_in  => interrupt_ack_data_in,
+      empty    => interrupt_ack_empty,
+      full     => interrupt_ack_full,
+      data_out => interrupt_ack_data_out);
 
   -- To noc5: APB response from accelerators
   -- To noc5: interrupts from accelerators
@@ -426,7 +516,7 @@ begin  -- rtl
 
   fifo_15: fifo0
     generic map (
-      depth => 1,                       --Header only x possible sharers
+      depth => 2,                       --Header only x possible sharers
       width => MISC_NOC_FLIT_SIZE)
     port map (
       clk      => clk,

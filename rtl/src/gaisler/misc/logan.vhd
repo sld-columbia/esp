@@ -59,7 +59,8 @@ architecture rtl of logan is
   constant REVISION : amba_version_type := 0;
   constant pconfig : apb_config_type := (
     0 => ahb_device_reg ( VENDOR_GAISLER, GAISLER_LOGAN, 0, REVISION, 0),
-    1 => apb_iobar(paddr, pmask));
+    1 => apb_iobar(paddr, pmask),
+    2 => (others => '0'));
 
   constant abits: integer := 8 + log2x(depth/256 - 1);
   constant az   : std_logic_vector(abits-1 downto 0) := (others => '0');

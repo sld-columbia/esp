@@ -59,6 +59,8 @@ entity acc_dma2noc is
     pindex                : integer                            := 0;
     paddr                 : integer                            := 0;
     pmask                 : integer                            := 16#fff#;
+    paddr_ext             : integer                            := 0;
+    pmask_ext             : integer                            := 16#fff#;
     pirq                  : integer                            := 0;
     revision              : integer                            := 0;
     devid                 : devid_t                   := 16#001#;
@@ -139,7 +141,8 @@ architecture rtl of acc_dma2noc is
   -- plug & play info
   constant pconfig : apb_config_type := (
     0 => ahb_device_reg (VENDOR_SLD, devid, 0, revision, pirq),
-    1 => apb_iobar(paddr, pmask));
+    1 => apb_iobar(paddr, pmask),
+    2 => apb_iobar(paddr_ext, pmask_ext));
   constant hprot : std_logic_vector(3 downto 0) := "0011";
 
   constant len_pad : std_logic_vector(GLOB_BYTE_OFFSET_BITS - 1 downto 0) := (others => '0');

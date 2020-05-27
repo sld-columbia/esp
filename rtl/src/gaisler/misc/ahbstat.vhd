@@ -64,7 +64,8 @@ architecture rtl of ahbstat is
   
   constant pconfig : apb_config_type := (
   0 => ahb_device_reg (VENDOR_GAISLER, GAISLER_AHBSTAT, 0, VERSION, pirq),
-  1 => apb_iobar(paddr, pmask));
+  1 => apb_iobar(paddr, pmask),
+2 => (others => '0'));
 
 begin
 

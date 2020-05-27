@@ -72,7 +72,8 @@ architecture rtl of grgprbank is
 
   constant pconfig: apb_config_type := (
     0 => ahb_device_reg(VENDOR_GAISLER, GAISLER_GPREGBANK, 0, 0, 0),
-    1 => apb_iobar(paddr, pmask));
+    1 => apb_iobar(paddr, pmask),
+    2 => (others => '0'));
   
 begin
 

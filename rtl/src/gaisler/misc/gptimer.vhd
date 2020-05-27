@@ -85,7 +85,8 @@ constant REVISION : integer := 1;
 
 constant pconfig : apb_config_type := (
   0 => ahb_device_reg (VENDOR_GAISLER, GAISLER_GPTIMER, 0, REVISION, pirq),
-  1 => apb_iobar(paddr, pmask));
+  1 => apb_iobar(paddr, pmask),
+  2 => (others => '0'));
 
 type timer_reg is record
   enable        :  std_ulogic;  -- enable counter

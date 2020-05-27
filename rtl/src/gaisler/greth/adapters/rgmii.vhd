@@ -75,7 +75,8 @@ architecture rtl of rgmii is
 
   constant pconfig : apb_config_type := (
     0 => ahb_device_reg ( VENDOR_GAISLER, GAISLER_RGMII, 0, REVISION, pirq),
-    1 => apb_iobar(paddr, pmask));
+    1 => apb_iobar(paddr, pmask),
+    2 => (others => '0'));
 
   type status_vector_type is array(1 downto 0) of std_logic_vector(15 downto 0);
 

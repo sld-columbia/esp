@@ -52,7 +52,8 @@ architecture rtl of tile_dvfs is
   constant REVISION : integer := 0;
   constant pconfig : apb_config_type := (
     0 => ahb_device_reg (VENDOR_SLD, SLD_POWERCTRL, 0, revision, 0),
-    1 => apb_iobar(paddr, pmask));
+    1 => apb_iobar(paddr, pmask),
+    2 => (others => '0'));
 
   -- Read only registers mask
   constant rdonly_reg_mask : std_logic_vector(0 to MAXREGNUM - 1) := (

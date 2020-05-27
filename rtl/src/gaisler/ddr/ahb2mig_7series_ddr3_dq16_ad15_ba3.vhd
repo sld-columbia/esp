@@ -102,7 +102,8 @@ constant hconfig : ahb_config_type := (
 
 constant pconfig : apb_config_type := (
   0 => ahb_device_reg ( VENDOR_GAISLER, GAISLER_MIG_7SERIES, 0, 0, 0),
-  1 => apb_iobar(paddr, pmask));
+  1 => apb_iobar(paddr, pmask),
+2 => (others => '0'));
 
 type reg_type is record
   bstate          : bstate_type;

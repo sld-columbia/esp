@@ -89,7 +89,8 @@ constant hconfig : ahb_config_type := (
 
 constant pconfig : apb_config_type := (
   0 => ahb_device_reg ( VENDOR_ESA, ESA_MCTRL, 0, REVISION, 0),
-  1 => apb_iobar(paddr, pmask));
+  1 => apb_iobar(paddr, pmask),
+  2 => (others => '0'));
 
 constant RAMSEL5 : boolean := srbanks = 5;
 constant SDRAMEN : boolean := (sden /= 0);

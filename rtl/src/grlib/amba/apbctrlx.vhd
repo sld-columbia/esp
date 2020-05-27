@@ -138,7 +138,7 @@ begin
 
   psel_p_gen: for j in 0 to nports-1 generate
     psel_gen: for i in 0 to nslaves-1 generate
-      psel_sig(j)(i) <= apb_slv_decode(apbo(i).pconfig, r.p(j).haddr(19 downto  8), r.p(j).haddr(apbmax downto apbmax - 11), 12 - (apbmax - 19));
+      psel_sig(j)(i) <= apb_slv_decode(apbo(i).pconfig, r.p(j).haddr(19 downto  8), r.p(j).haddr(apbmax downto 20));
     end generate psel_gen;
   end generate psel_p_gen;
 
@@ -322,6 +322,7 @@ begin
         apbi(j).penable <= '0';
       end if;
 
+      -- MSB hex digit of extended addr must always be 0
       apbi(j).paddr   <= apbaddr;
       apbi(j).pirq    <= ahbi(0).hirq;
       apbi(j).testen  <= ahbi(0).testen;
@@ -372,8 +373,8 @@ begin
 
   diag : process
   type apb_memarea_type is record
-     start : std_logic_vector(31 downto 20);
-     stop  : std_logic_vector(31 downto 20);
+     start : std_logic_vector(31 downto 8);
+     stop  : std_logic_vector(31 downto 8);
   end record;
   type memmap_type is array (0 to nslaves-1) of apb_memarea_type;
   variable k : integer;
@@ -382,6 +383,7 @@ begin
   variable devicei : integer;
   variable vendor : std_logic_vector( 7 downto 0);
   variable vendori : integer;
+  variable iosize_unit : integer;
   variable iosize : integer;
   variable iounit : string(1 to 5) := "byte ";
   variable memstart : std_logic_vector(11 downto 0) := IOAREA and IOMSK;
@@ -407,19 +409,30 @@ begin
           std.textio.write(L1, "apbctrl: slv" & tost(i) & ": " &                
            iptable(vendori).vendordesc  & iptable(vendori).device_table(devicei));
           std.textio.writeline(OUTPUT, L1);
-          mask := apbo(i).pconfig(1)(15 downto 4);
+          if apbo(i).pconfig(2)(apbmax downto 20) = zero32(7 downto 0) then
+            mask := apbo(i).pconfig(1)(15 downto 4);
+            iosize_unit := 256;
+          else
+            mask := apbo(i).pconfig(2)(15 downto 4);
+            iosize_unit := 1048576;
+          end if;
           k := 0;
-          while (k<15) and (mask(k) = '0') loop k := k+1; end loop;      
-          iosize := 256 * 2**k; iounit := "byte ";
-          if (iosize > 1023) then iosize := iosize/1024; iounit := "kbyte"; end if;
+          while (k<12) and (mask(k) = '0') loop k := k+1; end loop;      
+          iosize := iosize_unit * 2**k; iounit := "byte ";
+          if (iosize > 1023) then iosize := iosize/1024; iounit := "kbyte";
+          elsif (iosize > 1048575) then iosize := iosize/1048576; iounit := "mbyte";
+          end if;
           print("apbctrl:       I/O ports at " & 
-            tost(memstart & (apbo(i).pconfig(1)(31 downto 20) and
-                             apbo(i).pconfig(1)(15 downto 4))) &
+            tost(memstart(11 downto 8) &
+                 (apbo(i).pconfig(2)(apbmax downto 20) and apbo(i).pconfig(2)(11 downto 4)) &
+                 (apbo(i).pconfig(1)(31 downto 20) and apbo(i).pconfig(1)(15 downto 4))) &
                 "00, size " & tost(iosize) & " " & iounit);
           if mcheck /= 0 then
-            memmap(i).start := (apbo(i).pconfig(1)(31 downto 20) and
+            memmap(i).start := (apbo(i).pconfig(2)(31 downto 20) and
+                                apbo(i).pconfig(2)(15 downto 4)) &
+                               (apbo(i).pconfig(1)(31 downto 20) and
                                 apbo(i).pconfig(1)(15 downto 4));
-            memmap(i).stop := memmap(i).start + 2**k;
+            memmap(i).stop := memmap(i).start + (2**k) * iosize_unit/256;
           end if;
         end if;
         assert (apbo(i).pindex = i) or (icheck = 0)

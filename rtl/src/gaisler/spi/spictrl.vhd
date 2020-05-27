@@ -95,7 +95,8 @@ architecture rtl of spictrl is
 
   constant PCONFIG : apb_config_type := (
   0 => ahb_device_reg(VENDOR_GAISLER, GAISLER_SPICTRL, 0, SPICTRL_REV, pirq),
-  1 => apb_iobar(paddr, pmask));
+  1 => apb_iobar(paddr, pmask),
+  2 => (others => '0'));
 
   -----------------------------------------------------------------------------
   -- Component

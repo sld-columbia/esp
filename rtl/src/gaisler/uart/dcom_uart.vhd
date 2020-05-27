@@ -61,7 +61,8 @@ constant REVISION : integer := 0;
 
 constant pconfig : apb_config_type := (
   0 => ahb_device_reg ( VENDOR_GAISLER, GAISLER_AHBUART, 0, REVISION, 0),
-  1 => apb_iobar(paddr, pmask));
+  1 => apb_iobar(paddr, pmask),
+2 => (others => '0'));
 
 type rxfsmtype is (idle, startbit, data, stopbit);
 type txfsmtype is (idle, data);
