@@ -53,7 +53,7 @@ entity acc_dma2noc is
     local_y     : local_yx;
     local_x     : local_yx;
     mem_num     : integer := 1;
-    mem_info    : tile_mem_info_vector(0 to MEM_MAX_NUM);
+    mem_info    : tile_mem_info_vector(0 to CFG_NMEM_TILE + CFG_NSLM_TILE);
     io_y        : local_yx;
     io_x        : local_yx;
     pindex                : integer                            := 0;

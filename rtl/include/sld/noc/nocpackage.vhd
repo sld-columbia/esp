@@ -87,6 +87,7 @@ package nocpackage is
   constant REQ_P2P       : noc_msg_type := "101";
   constant REQ_DMA_READ  : noc_msg_type := "110";  -- Read coherent with LLC
   constant REQ_DMA_WRITE : noc_msg_type := "111";  -- Write coherent with LLC
+  constant CPU_DMA       : std_logic_vector(2 downto 0) := "100";  -- identify DMA from CPU
   -- Configuration plane 5 -> RD/WR registers
   constant REQ_REG_RD   : noc_msg_type := "000";
   constant REQ_REG_WR   : noc_msg_type := "001";
@@ -115,14 +116,6 @@ package nocpackage is
 
   type yx_vec is array (natural range <>) of std_logic_vector(2 downto 0);
 
-  -- WARNING: The following constants and types must be changed to scale up;
-  --          We need to hardcode this value because of VHDL limitations, but
-  --          the *_MAX and *_NUM values are not limited in practice.
-  --          These values should match those set in utils/socmap/
-  constant MEM_MAX_NUM : integer := GLOB_MEM_MAX_NUM;
-  constant CPU_MAX_NUM : integer := GLOB_CPU_MAX_NUM;
-  constant TILES_MAX_NUM : integer := GLOB_TILES_MAX_NUM;
-
   type tile_mem_info is record
     x     : local_yx;
     y     : local_yx;
@@ -138,9 +131,7 @@ package nocpackage is
     );
 
   type tile_mem_info_vector is array (natural range <>) of tile_mem_info;
-  type mem_attribute_array is array (0 to MEM_MAX_NUM - 1) of integer;
-  type cpu_attribute_array is array (0 to CPU_MAX_NUM - 1) of integer;
-  type tile_attribute_array is array (0 to TILES_MAX_NUM - 1) of integer;
+  type attribute_vector is array (natural range <>) of integer;
 
   -- Components
   component fifo0

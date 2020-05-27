@@ -7,6 +7,7 @@
 
 library ieee;
 use ieee.std_logic_1164.all;
+use work.esp_global.all;
 use work.amba.all;
 use work.stdlib.all;
 use work.sld_devices.all;

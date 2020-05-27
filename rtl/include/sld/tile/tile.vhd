@@ -41,6 +41,12 @@ package tile is
       coherence_rsp_snd_wrreq      : in  std_ulogic;
       coherence_rsp_snd_data_in    : in  noc_flit_type;
       coherence_rsp_snd_full       : out std_ulogic;
+      dma_rcv_rdreq              : in  std_ulogic;
+      dma_rcv_data_out           : out noc_flit_type;
+      dma_rcv_empty              : out std_ulogic;
+      dma_snd_wrreq              : in  std_ulogic;
+      dma_snd_data_in            : in  noc_flit_type;
+      dma_snd_full               : out std_ulogic;
       remote_ahbs_snd_wrreq      : in std_ulogic;
       remote_ahbs_snd_data_in    : in misc_noc_flit_type;
       remote_ahbs_snd_full       : out std_ulogic;
@@ -288,6 +294,79 @@ package tile is
       noc6_in_stop             : in  std_ulogic);
   end component;
 
+  component slm_tile_q
+    generic (
+      tech : integer);
+    port (
+      rst                             : in  std_ulogic;
+      clk                             : in  std_ulogic;
+      coherent_dma_snd_wrreq          : in  std_ulogic;
+      coherent_dma_snd_data_in        : in  noc_flit_type;
+      coherent_dma_snd_full           : out std_ulogic;
+      coherent_dma_snd_atleast_4slots : out std_ulogic;
+      coherent_dma_snd_exactly_3slots : out std_ulogic;
+      dma_rcv_rdreq                   : in  std_ulogic;
+      dma_rcv_data_out                : out noc_flit_type;
+      dma_rcv_empty                   : out std_ulogic;
+      cpu_dma_rcv_rdreq               : in  std_ulogic;
+      cpu_dma_rcv_data_out            : out noc_flit_type;
+      cpu_dma_rcv_empty               : out std_ulogic;
+      coherent_dma_rcv_rdreq          : in  std_ulogic;
+      coherent_dma_rcv_data_out       : out noc_flit_type;
+      coherent_dma_rcv_empty          : out std_ulogic;
+      dma_snd_wrreq                   : in  std_ulogic;
+      dma_snd_data_in                 : in  noc_flit_type;
+      dma_snd_full                    : out std_ulogic;
+      dma_snd_atleast_4slots          : out std_ulogic;
+      dma_snd_exactly_3slots          : out std_ulogic;
+      cpu_dma_snd_wrreq               : in  std_ulogic;
+      cpu_dma_snd_data_in             : in  noc_flit_type;
+      cpu_dma_snd_full                : out std_ulogic;
+      remote_ahbs_rcv_rdreq           : in  std_ulogic;
+      remote_ahbs_rcv_data_out        : out misc_noc_flit_type;
+      remote_ahbs_rcv_empty           : out std_ulogic;
+      remote_ahbs_snd_wrreq           : in  std_ulogic;
+      remote_ahbs_snd_data_in         : in  misc_noc_flit_type;
+      remote_ahbs_snd_full            : out std_ulogic;
+      noc1_out_data                   : in  noc_flit_type;
+      noc1_out_void                   : in  std_ulogic;
+      noc1_out_stop                   : out std_ulogic;
+      noc1_in_data                    : out noc_flit_type;
+      noc1_in_void                    : out std_ulogic;
+      noc1_in_stop                    : in  std_ulogic;
+      noc2_out_data                   : in  noc_flit_type;
+      noc2_out_void                   : in  std_ulogic;
+      noc2_out_stop                   : out std_ulogic;
+      noc2_in_data                    : out noc_flit_type;
+      noc2_in_void                    : out std_ulogic;
+      noc2_in_stop                    : in  std_ulogic;
+      noc3_out_data                   : in  noc_flit_type;
+      noc3_out_void                   : in  std_ulogic;
+      noc3_out_stop                   : out std_ulogic;
+      noc3_in_data                    : out noc_flit_type;
+      noc3_in_void                    : out std_ulogic;
+      noc3_in_stop                    : in  std_ulogic;
+      noc4_out_data                   : in  noc_flit_type;
+      noc4_out_void                   : in  std_ulogic;
+      noc4_out_stop                   : out std_ulogic;
+      noc4_in_data                    : out noc_flit_type;
+      noc4_in_void                    : out std_ulogic;
+      noc4_in_stop                    : in  std_ulogic;
+      noc5_out_data                   : in  misc_noc_flit_type;
+      noc5_out_void                   : in  std_ulogic;
+      noc5_out_stop                   : out std_ulogic;
+      noc5_in_data                    : out misc_noc_flit_type;
+      noc5_in_void                    : out std_ulogic;
+      noc5_in_stop                    : in  std_ulogic;
+      noc6_out_data                   : in  noc_flit_type;
+      noc6_out_void                   : in  std_ulogic;
+      noc6_out_stop                   : out std_ulogic;
+      noc6_in_data                    : out noc_flit_type;
+      noc6_in_void                    : out std_ulogic;
+      noc6_in_stop                    : in  std_ulogic);
+  end component;
+
+
   component acc_tile_q
     generic (
       tech : integer);
@@ -424,7 +503,7 @@ package tile is
       local_x     : local_yx;
       mem_hindex  : integer range 0 to NAHBSLV - 1;
       mem_num     : integer;
-      mem_info    : tile_mem_info_vector(0 to MEM_MAX_NUM - 1);
+      mem_info    : tile_mem_info_vector(0 to CFG_NMEM_TILE + CFG_NSLM_TILE - 1);
       slv_y       : local_yx;
       slv_x       : local_yx;
       retarget_for_dma : integer range 0 to 1;
@@ -458,7 +537,7 @@ package tile is
       retarget_for_dma : integer range 0 to 1;
       mem_axi_port : integer range 0 to NAHBSLV - 1;
       mem_num      : integer;
-      mem_info     : tile_mem_info_vector(0 to MEM_MAX_NUM - 1);
+      mem_info     : tile_mem_info_vector(0 to CFG_NMEM_TILE + CFG_NSLM_TILE - 1);
       slv_y        : local_yx;
       slv_x        : local_yx);
     port (
@@ -507,8 +586,8 @@ package tile is
       ncpu    : integer;
       local_y : local_yx;
       local_x : local_yx;
-      cpu_y   : yx_vec(0 to CPU_MAX_NUM - 1);
-      cpu_x   : yx_vec(0 to CPU_MAX_NUM - 1));
+      cpu_y   : yx_vec(0 to CFG_NCPU_TILE - 1);
+      cpu_x   : yx_vec(0 to CFG_NCPU_TILE - 1));
     port (
           rst                : in  std_ulogic;
           clk                : in  std_ulogic;
@@ -580,7 +659,7 @@ package tile is
       local_y            : local_yx;
       local_x            : local_yx;
       mem_num            : integer := 1;
-      mem_info           : tile_mem_info_vector(0 to MEM_MAX_NUM);
+      mem_info           : tile_mem_info_vector(0 to CFG_NMEM_TILE + CFG_NSLM_TILE);
       io_y               : local_yx;
       io_x               : local_yx;
       pindex             : integer;

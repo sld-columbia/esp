@@ -26,6 +26,7 @@ use work.allcaches.all;
 use work.cachepackage.all;              -- contains l2 cache component
 use work.sldcommon.all;
 
+
 entity l2_wrapper is
   generic (
     tech        : integer := virtex7;
@@ -40,7 +41,7 @@ entity l2_wrapper is
     mem_hindex  : integer := 4;
     mem_hconfig : ahb_config_type;
     mem_num     : integer := 1;
-    mem_info    : tile_mem_info_vector(0 to MEM_MAX_NUM - 1);
+    mem_info    : tile_mem_info_vector(0 to CFG_NMEM_TILE - 1);
     cache_y     : yx_vec(0 to 2**NL2_MAX_LOG2 - 1);
     cache_x     : yx_vec(0 to 2**NL2_MAX_LOG2 - 1);
     cache_id      : integer := 0;
