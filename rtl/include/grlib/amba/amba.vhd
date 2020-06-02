@@ -1165,27 +1165,24 @@ package body amba is
     signal haddr           : std_logic_vector(11 downto 0);
     signal extended_haddr  : std_logic_vector(7 downto 0))
     return std_ulogic is
-    variable selected : std_ulogic;
-    constant zero12 : std_logic_vector(11 downto 0) := (others => '0');
   begin
-    selected := '0';
-    if (extended_haddr /= zero12(7 downto 0)) then
+    if (pconfig(2)(1 downto 0) = "01") and (extended_haddr /= "00000000") then
       -- Extended APB address
-      if ((pconfig(1)(1 downto 0) = "01") and
-          ((pconfig(1)(31 downto 20) and pconfig(1)(15 downto 4)) =
-           (haddr and pconfig(1)(15 downto 4))) and
-          ((pconfig(2)(27 downto 20) and pconfig(2)(11 downto 4)) =
-           (extended_haddr and pconfig(2)(11 downto 4))))
-      then selected := '1'; end if;
-    else
+      if (pconfig(2)(27 downto 20) and pconfig(2)(11 downto 4)) = (extended_haddr and pconfig(2)(11 downto 4)) then
+        return '1';
+      else
+        return '0';
+      end if;
+    elsif (pconfig(1)(1 downto 0) = "01") and (pconfig(2)(1 downto 0) = "00") and (extended_haddr = "00000000") then
       -- Standard APB address decode
-      if ((pconfig(1)(1 downto 0) = "01") and
-          ((pconfig(1)(31 downto 20) and pconfig(1)(15 downto 4)) =
-           (haddr and pconfig(1)(15 downto 4))) and
-          (pconfig(2)(11 downto 4) = zero12(11 downto 4)))
-      then selected := '1'; end if;
+      if (pconfig(1)(31 downto 20) and pconfig(1)(15 downto 4)) = (haddr and pconfig(1)(15 downto 4)) then
+        return '1';
+      else
+        return '0';
+      end if;
+    else
+      return '0';
     end if;
-    return selected;
   end;
 
   function ahb_device_reg(vendor : vendor_t; device : devid_t;
