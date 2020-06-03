@@ -532,7 +532,7 @@ RISCV_CFLAGS += -nostartfiles -lm -lgcc
 
 systest.exe: systest.c uart.o
 	$(QUIET_CC) riscv64-unknown-elf-gcc $(RISCV_CFLAGS) \
-	$(RISCV_TESTS)/benchmarks/common/syscalls.c \
+	$(SOFT)/common/syscalls.c \
 	$(RISCV_TESTS)/benchmarks/common/crt.S  \
 	-T $(RISCV_TESTS)/benchmarks/common/test.ld -o $@ \
 	-I$(DESIGN_PATH) \

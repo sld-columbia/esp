@@ -6,9 +6,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#ifndef __riscv
 #include <stdio.h>
-#endif
 
 #include <esp_probe.h>
 
@@ -86,17 +84,10 @@ void esp_flush(int coherence)
 	int pid = get_pid();
 
 	switch (coherence) {
-#ifndef __riscv
 	case ACC_COH_NONE   : printf("  -> Non-coherent DMA\n"); break;
 	case ACC_COH_LLC    : printf("  -> LLC-coherent DMA\n"); break;
 	case ACC_COH_RECALL : printf("  -> Coherent DMA\n"); break;
 	case ACC_COH_FULL   : printf("  -> Fully-coherent cache access\n"); break;
-#else
-	case ACC_COH_NONE   : print_uart("  -> Non-coherent DMA\n"); break;
-	case ACC_COH_LLC    : print_uart("  -> LLC-coherent DMA\n"); break;
-	case ACC_COH_RECALL : print_uart("  -> Coherent DMA\n"); break;
-	case ACC_COH_FULL   : print_uart("  -> Fully-coherent cache access\n"); break;
-#endif
 	}
 
 
@@ -153,7 +144,6 @@ void esp_flush(int coherence)
 			}
 		}
 	}
-
 
 #ifndef __riscv
 	if (llcs)
@@ -234,9 +224,9 @@ static void esp_done(const struct fdt_scan_node *node, void *extra)
 	const char *name = (*espdevs)[0].name;
 
 	if ((*espdevs)[ndev].compat != 0) {
-		print_uart("[probe] "); print_uart(name); print_uart("."); print_uart_int(ndev); print_uart(" registered\n");
-		print_uart("        "); print_uart("Address   : 0x"); print_uart_int((uint32_t) (*espdevs)[ndev].addr); print_uart("\n");
-		print_uart("        "); print_uart("Interrupt : "); print_uart_int((uint32_t) (*espdevs)[ndev].irq); print_uart("\n");
+		printf("[probe] %s.%d registered\n", name, ndev);
+		printf("        Address   : 0x%08x\n", (uint32_t) (*espdevs)[ndev].addr);
+		printf("        Interrupt : %d\n", (*espdevs)[ndev].irq);
 		ndev++;
 
 		// Initialize new entry (may not be discovered!)
@@ -256,8 +246,8 @@ int probe(struct esp_device **espdevs, unsigned devid, const char *name)
 	// Initialize first entry of the device structure (may not be discovered!)
 	(*espdevs) = (struct esp_device *) aligned_malloc(NACC_MAX * sizeof(struct esp_device));
 	if (!(*espdevs)) {
-		print_uart("Error: cannot allocate esp_device list\n");
-		return -1;
+		printf("Error: cannot allocate esp_device list\n");
+		exit(EXIT_FAILURE);
 	}
 	memset((*espdevs), 0, NACC_MAX * sizeof(struct esp_device));
 

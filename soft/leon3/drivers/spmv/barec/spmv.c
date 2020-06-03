@@ -4,9 +4,7 @@
  * Select Scatter-Gather in ESP configuration
  */
 
-#ifndef __riscv
 #include <stdio.h>
-#endif
 #include <stdlib.h>
 #include <string.h>
 #include <esp_accelerator.h>
@@ -65,9 +63,7 @@ static int validate(float *gold, float *out, int nrows, int verbose)
 #ifndef __riscv
 				printf("out[%d]: result=%.15g; gold=%.15g\n", i, out[i], gold[i]);
 #else
-				print_uart("out["); print_uart_int(i); print_uart("]: result=");
-				print_uart_int((unsigned long) &out[i]); print_uart("; gold=");
-				print_uart_int((unsigned long) &gold[i]); print_uart("\n");
+				printf("out[%d]: result=%08x; gold=%08x\n", i, *((unsigned *) &out[i]), *((unsigned *) &gold[i]));
 #endif
 			}
 			rtn++;
@@ -166,11 +162,7 @@ int main(int argc, char * argv[])
 	out_addr  = nrows + 2 * mtx_len + ncols;
 	out_size  = nrows;
 
-#ifndef __riscv
 	printf("Memory allocation\n");
-#else
-	print_uart("Memory allocation\n");
-#endif
 
 	in_vals_buf = aligned_malloc(sizeof(float) * vals_size);
 	in_cols_buf = aligned_malloc(sizeof(unsigned) * cols_size);
@@ -184,19 +176,11 @@ int main(int argc, char * argv[])
 	out_fx_buf     = aligned_malloc(sizeof(int) * out_size);
 
 	if (!(in_vals_buf && in_cols_buf && in_rows_buf && in_vect_buf && out_buf && in_vals_fx_buf && in_vect_fx_buf && out_fx_buf)) {
-#ifndef __riscv
 		printf("Error: not enough memory\n");
-#else
-		print_uart("Error: not enough memory\n");
-#endif
 		exit(EXIT_FAILURE);
 	}
 
-#ifndef __riscv
 	printf("Data initialization\n");
-#else
-	print_uart("Data initialization\n");
-#endif
 
 #include "data.h"
 
@@ -209,20 +193,12 @@ int main(int argc, char * argv[])
 	// Search for the device
 	ndev = probe(&espdevs, SLD_SPMV, DEV_NAME);
 	if (!ndev) {
-#ifndef __riscv
 		printf("Error: %s device not found!\n", DEV_NAME);
-#else
-		print_uart("Error: "); print_uart(DEV_NAME); print_uart(" device not found!\n");
-#endif
 		exit(EXIT_FAILURE);
 	}
 
 	// Run software
-#ifndef __riscv
 	printf("Software execution\n");
-#else
-	print_uart("Software execution\n");
-#endif
 	spmv_comp(nrows, ncols, in_vals_buf, in_cols_buf, in_rows_buf, in_vect_buf, gold_buf);
 
 	// Test all devices matching SPMV ID.
@@ -242,88 +218,54 @@ int main(int argc, char * argv[])
 			unsigned errors = 0;
 			int scatter_gather = 1;
 			size_t size;
-#ifndef __riscv
+
 			printf("Testing %s.%d \n", DEV_NAME, n);
-#else
-			print_uart("Testing "); print_uart(DEV_NAME); print_uart("."); print_uart_int(n); print_uart("\n");
-#endif
 
 			// Check access ok (TODO)
 
 			// Check if scatter-gather DMA is disabled
 			if (ioread32(dev, PT_NCHUNK_MAX_REG) == 0) {
-#ifndef __riscv
 				printf("  -> scatter-gather DMA is disabled; revert to contiguous buffer.\n");
-#else
-				print_uart("  -> scatter-gather DMA is disabled; revert to contiguous buffer.\n");
-#endif
 				scatter_gather = 0;
 			} else {
-#ifndef __riscv
 				printf("  -> scatter-gather DMA is enabled.\n");
-#else
-				print_uart("  -> scatter-gather DMA is enabled.\n");
-#endif
 			}
 
 			size = sizeof(int) * (vals_size + cols_size + rows_size + vect_size + out_size);
 
 			if (scatter_gather)
 				if (ioread32(dev, PT_NCHUNK_MAX_REG) < NCHUNK(size)) {
-#ifndef __riscv
 					printf("  Trying to allocate %lu chunks on %d TLB available entries\n",
 						NCHUNK(size), ioread32(dev, PT_NCHUNK_MAX_REG));
-#else
-					print_uart("  Trying to allocate more chunks than available TLB entries\n");
-#endif
 					break;
 				}
 
 			// Allocate memory (will be contigous anyway in baremetal)
 			mem = aligned_malloc(size);
 			if (!mem) {
-#ifndef __riscv
 				printf("Error: not enough memory\n");
-#else
-				print_uart("Error: not enough memory\n");
-#endif
 				exit(EXIT_FAILURE);
 			}
-#ifndef __riscv
 			printf("  memory buffer base-address = %p\n", mem);
-#else
-			print_uart("  memory buffer base-address = 0x"); print_uart_int((unsigned long) mem); print_uart("\n");
-#endif
 
 			if (scatter_gather) {
 				//Alocate and populate page table
 				ptable = aligned_malloc(NCHUNK(size) * sizeof(unsigned *));
 				for (i = 0; i < NCHUNK(size); i++)
 					ptable[i] = (unsigned *) &mem[i * (CHUNK_SIZE / sizeof(unsigned))];
-#ifndef __riscv
 				printf("  ptable = %p\n", ptable);
 				printf("  nchunk = %lu\n", NCHUNK(size));
-#else
-				print_uart("  ptable = 0x"); print_uart_int((unsigned long) ptable); print_uart("\n");
-				print_uart("  nchunk = 0x"); print_uart_int(NCHUNK(size)); print_uart("\n");
-#endif
 			}
 
 			// Initialize input: write floating point hex values (simpler to debug)
-#ifndef __riscv
 			printf("  Prepare input... ");
-#else
-			print_uart("  Prepare input... ");
-#endif
+
 			memcpy(&mem[vals_addr], in_vals_fx_buf, sizeof(int) * vals_size);
 			memcpy(&mem[cols_addr], in_cols_buf, sizeof(int) * cols_size);
 			memcpy(&mem[rows_addr], in_rows_buf, sizeof(int) * rows_size);
 			memcpy(&mem[vect_addr], in_vect_fx_buf, sizeof(int) * vect_size);
-#ifndef __riscv
+
 			printf("Input ready\n");
-#else
-			print_uart("Input ready\n");
-#endif
 
 			// Configure device
 			iowrite32(dev, SELECT_REG, ioread32(dev, DEVID_REG));
@@ -351,11 +293,7 @@ int main(int argc, char * argv[])
 			esp_flush(coherence);
 
 			// Start accelerator
-#ifndef __riscv
 			printf("  Start..\n");
-#else
-			print_uart("  Start..\n");
-#endif
 			iowrite32(dev, CMD_REG, CMD_MASK_START);
 
 			done = 0;
@@ -364,19 +302,11 @@ int main(int argc, char * argv[])
 				done &= STATUS_MASK_DONE;
 			}
 			iowrite32(dev, CMD_REG, 0x0);
-#ifndef __riscv
 			printf("  Done\n");
-#else
-			print_uart("  Done\n");
-#endif
 
 
 			/* Validation */
-#ifndef __riscv
 			printf("  validating...\n");
-#else
-			print_uart("  validating...\n");
-#endif
 
 
 			memcpy(out_fx_buf, &mem[out_addr], out_size * sizeof(int));
@@ -385,19 +315,11 @@ int main(int argc, char * argv[])
 
 			errors = validate(gold_buf, out_buf, nrows, 0);
 
-#ifndef __riscv
 			if (errors)
 				printf("  ... FAIL\n");
 			else
 				printf("  ... PASS\n");
 			printf("\n");
-#else
-			if (errors)
-				print_uart("  ... FAIL\n");
-			else
-				print_uart("  ... PASS\n");
-			print_uart("\n");
-#endif
 
 			if (scatter_gather)
 				aligned_free(ptable);

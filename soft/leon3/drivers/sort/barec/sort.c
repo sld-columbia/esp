@@ -4,9 +4,7 @@
  * Select Scatter-Gather in ESP configuration
  */
 
-#ifndef __riscv
 #include <stdio.h>
-#endif
 #include <stdlib.h>
 #include <esp_accelerator.h>
 #include <esp_probe.h>
@@ -47,11 +45,8 @@ static int validate_sorted(float *array, int len)
 static void init_buf (float *buf, unsigned sort_size, unsigned sort_batch)
 {
 	int i, j;
-#ifndef __riscv
 	printf("  Generate random input...\n");
-#else
-	print_uart("  Generate random input...\n");
-#endif
+
 	/* srand(time(NULL)); */
 	for (j = 0; j < sort_batch; j++)
 		for (i = 0; i < sort_size; i++) {
@@ -79,23 +74,11 @@ int main(int argc, char * argv[])
 
 	ndev = probe(&espdevs, SLD_SORT, DEV_NAME);
 	if (!ndev) {
-#ifndef __riscv
 		printf("Error: %s device not found!\n", DEV_NAME);
-#else
-		print_uart("Error: "); print_uart(DEV_NAME); print_uart(" device not found!\n");
-#endif
 		exit(EXIT_FAILURE);
 	}
 
-#ifndef __riscv
 	printf("Test parameters: [LEN, BATCH] = [%d, %d]\n\n", SORT_LEN, SORT_BATCH);
-#else
-	print_uart("Test parameters: [LEN, BATCH] = [");
-	print_uart_int(SORT_LEN);
-	print_uart(" : ");
-	print_uart_int(SORT_BATCH);
-	print_uart("]\n");
-#endif
 	for (n = 0; n < ndev; n++) {
 #ifndef __riscv
 		for (coherence = ACC_COH_NONE; coherence <= ACC_COH_FULL; coherence++) {
@@ -119,63 +102,43 @@ int main(int argc, char * argv[])
 			sort_len_min = ioread32(dev, SORT_LEN_MIN_REG);
 			sort_len_max = ioread32(dev, SORT_LEN_MAX_REG);
 
-#ifndef __riscv
 			printf("******************** %s.%d ********************\n", DEV_NAME, n);
-#endif
 			// Check access ok
 			if (SORT_LEN < sort_len_min ||
 				SORT_LEN > sort_len_max ||
 				SORT_BATCH < 1 ||
 				SORT_BATCH > sort_batch_max) {
-#ifndef __riscv
-			    printf("  Error: unsopported configuration parameters for %s.%d\n", DEV_NAME, n);
-			    printf("         device can sort up to %d fp-vectors of size [%d, %d]\n",
+				printf("  Error: unsopported configuration parameters for %s.%d\n", DEV_NAME, n);
+				printf("         device can sort up to %d fp-vectors of size [%d, %d]\n",
 					sort_batch_max, sort_len_min, sort_len_max);
-#endif
 				break;
 			}
 
 			// Check if scatter-gather DMA is disabled
 			if (ioread32(dev, PT_NCHUNK_MAX_REG) == 0) {
-#ifndef __riscv
 			    printf("  -> scatter-gather DMA is disabled. Abort.\n");
-#else
-			    print_uart("  -> scatter-gather DMA is disabled. Abort.\n");
-#endif
 			    scatter_gather = 0;
 			}
 
 			if (scatter_gather)
 				if (ioread32(dev, PT_NCHUNK_MAX_REG) < NCHUNK) {
-#ifndef __riscv
 				    printf("  -> Not enough TLB entries available. Abort.\n");
-#else
-				    print_uart("  -> Not enough TLB entries available. Abort.\n");
-#endif
 				    break;
 				}
 
 			// Allocate memory (will be contigous anyway in baremetal)
 			mem = aligned_malloc(SORT_BUF_SIZE);
 
-#ifndef __riscv
 			printf("  memory buffer base-address = %p\n", mem);
-#else
-			print_uart("  memory buffer base-address = "); print_uart_addr((uintptr_t) mem); print_uart("\n");
-#endif
 
 			if (scatter_gather) {
 				//Alocate and populate page table
 				ptable = aligned_malloc(NCHUNK * sizeof(unsigned *));
 				for (i = 0; i < NCHUNK; i++)
 					ptable[i] = (unsigned *) &mem[i * (CHUNK_SIZE / sizeof(unsigned))];
-#ifndef __riscv
+
 				printf("  ptable = %p\n", ptable);
 				printf("  nchunk = %lu\n", NCHUNK);
-#else
-				print_uart("  ptable = "); print_uart_addr((uintptr_t) ptable); print_uart("\n");
-				print_uart("  nchunk = "); print_uart_int(NCHUNK); print_uart("\n");
-#endif
 			}
 
 			// Initialize input: write floating point hex values (simpler to debug)
@@ -202,11 +165,7 @@ int main(int argc, char * argv[])
 			esp_flush(coherence);
 
 			// Start accelerator
-#ifndef __riscv
 			printf("  Start..\n");
-#else
-			print_uart("  Start..\n");
-#endif
 			iowrite32(dev, CMD_REG, CMD_MASK_START);
 
 			done = 0;
@@ -215,11 +174,7 @@ int main(int argc, char * argv[])
 				done &= STATUS_MASK_DONE;
 			}
 			iowrite32(dev, CMD_REG, 0x0);
-#ifndef __riscv
 			printf("  Done\n");
-#else
-			print_uart("  Done\n");
-#endif
 
 			/* /\* Print output *\/ */
 			/* printf("  output:\n"); */
@@ -228,30 +183,20 @@ int main(int argc, char * argv[])
 			/* 		printf("    mem[%d][%d] = %08x\n", j, i, mem[j*SORT_LEN + i]); */
 
 			/* Validation */
-#ifndef __riscv
 			printf("  validating...\n");
-#else
-			print_uart("  validating...\n");
-#endif
+
 			for (j = 0; j < SORT_BATCH; j++) {
 				int err = validate_sorted((float *) &mem[j * SORT_LEN], SORT_LEN);
 				/* if (err != 0) */
 				/* 	printf("  Error: %s.%d mismatch on batch %d\n", DEV_NAME, n, j); */
 				errors += err;
 			}
-#ifndef __riscv
 			if (errors)
 				printf("  ... FAIL\n");
 			else
 				printf("  ... PASS\n");
 			printf("**************************************************\n\n");
-#else
-			if (errors)
-				print_uart("  ... FAIL\n");
-			else
-				print_uart("  ... PASS\n");
-			print_uart("**************************************************\n\n");
-#endif
+
 			if (scatter_gather)
 				aligned_free(ptable);
 			aligned_free(mem);
