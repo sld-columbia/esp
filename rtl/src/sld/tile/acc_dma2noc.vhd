@@ -142,7 +142,7 @@ architecture rtl of acc_dma2noc is
   constant pconfig : apb_config_type := (
     0 => ahb_device_reg (VENDOR_SLD, devid, 0, revision, pirq),
     1 => apb_iobar(paddr, pmask),
-    2 => apb_iobar(paddr_ext, pmask_ext));
+    2 => (others => '0'));
   constant hprot : std_logic_vector(3 downto 0) := "0011";
 
   constant len_pad : std_logic_vector(GLOB_BYTE_OFFSET_BITS - 1 downto 0) := (others => '0');

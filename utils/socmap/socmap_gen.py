@@ -917,7 +917,10 @@ def print_mapping(fp, esp_config):
     fp.write("  constant " + acc.lowercase_name + "_" + str(acc.id) + "_pconfig : apb_config_type := (\n")
     fp.write("  0 => ahb_device_reg (VENDOR_SLD, SLD_" + acc.uppercase_name + ", 0, 0, " + str(acc.irq) + "),\n")
     fp.write("  1 => apb_iobar(16#" + address_str + "#, 16#" + msk_str  + "#),\n")
-    fp.write("  2 => apb_iobar(16#" + address_ext_str + "#, 16#" + msk_ext_str  + "#));\n\n")
+    if address_ext == 0:
+      fp.write("  2 => (others => '0'));\n\n")
+    else:
+      fp.write("  2 => apb_iobar(16#" + address_ext_str + "#, 16#" + msk_ext_str  + "#));\n\n")
 
   #
   fp.write("  -- I/O bus slaves index / memory map\n")
