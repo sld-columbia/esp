@@ -572,7 +572,7 @@ begin
     end process fsm_intr_ack_update;
 
     -- purpose: send interrupt acknowledge to accelerator with level-sensitive interrupts
-    fsm_intr_ack: process (intr_ack_state, noc_apbi_wirq, plic_pready, interrupt_ack_full) is
+    fsm_intr_ack: process (intr_ack_state, noc_apbi_wirq, plic_pready, interrupt_ack_full, header) is
       variable state_reg : intr_ack_fsm;
       variable irq_pwdata_hit : std_ulogic;
       variable intr_id : integer range 0 to NAHBIRQ - 1;
