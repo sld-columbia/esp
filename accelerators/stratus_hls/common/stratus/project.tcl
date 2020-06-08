@@ -81,9 +81,10 @@ set COMMON_HLS_FLAGS "--prints=$PRINT"
 # Templates for synthesis
 #
 set ESP_HDRS_PATH "$ESP_ROOT/accelerators/stratus_hls/common/syn-templates"
+set ESP_HDRS_PATH2 "$ESP_ROOT/accelerators/stratus_hls/common/utils"
 
 #
 # Compiling Options
 #
-set INCLUDES "-I$ESP_HDRS_PATH -I../src -I./memlib"
+set INCLUDES "-I$ESP_HDRS_PATH -I$ESP_HDRS_PATH2 -I../src -I./memlib"
 
