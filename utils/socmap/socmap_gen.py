@@ -1844,20 +1844,39 @@ def print_floorplan_constraints(fp, soc, esp_config):
       mem_tiles[mem_num] = i
       mem_num += 1
 
-  #4096 sets + 2 tiles
+  #4096 sets + 2 tiles or 8192 sets + 4 tiles
   if int((soc.llc_sets.get() * soc.llc_ways.get()) / (esp_config.nmem * 16)) == 2048:
     fp.write("create_pblock {pblock_mem_tile_0}\n")
     fp.write("add_cells_to_pblock [get_pblocks {pblock_mem_tile_0}] [get_cells -quiet [list {esp_1/tiles_gen[" + str(mem_tiles[0]) + "].mem_tile.tile_mem_i}]]\n")
-    fp.write("resize_pblock [get_pblocks {pblock_mem_tile_0}] -add {SLICE_X23Y0:SLICE_X206Y299}\n")
-    fp.write("resize_pblock [get_pblocks {pblock_mem_tile_0}] -add {DSP48E2_X0Y0:DSP48E2_X3Y119}\n")
-    fp.write("resize_pblock [get_pblocks {pblock_mem_tile_0}] -add {RAMB18_X1Y0:RAMB18_X6Y119}\n")
-    fp.write("resize_pblock [get_pblocks {pblock_mem_tile_0}] -add {RAMB36_X1Y0:RAMB36_X6Y59}\n")
+    fp.write("resize_pblock [get_pblocks {pblock_mem_tile_0}] -add {SLICE_X24Y91:SLICE_X152Y338}\n")
+    fp.write("resize_pblock [get_pblocks {pblock_mem_tile_0}] -add {DSP48E2_X0Y38:DSP48E2_X2Y133}\n")
+    fp.write("resize_pblock [get_pblocks {pblock_mem_tile_0}] -add {RAMB18_X1Y38:RAMB18_X4Y133}\n")
+    fp.write("resize_pblock [get_pblocks {pblock_mem_tile_0}] -add {RAMB36_X1Y19:RAMB36_X4Y66}\n")
     fp.write("create_pblock {pblock_mem_tile_1}\n")
     fp.write("add_cells_to_pblock [get_pblocks {pblock_mem_tile_1}] [get_cells -quiet [list {esp_1/tiles_gen[" + str(mem_tiles[1]) + "].mem_tile.tile_mem_i}]]\n")
-    fp.write("resize_pblock [get_pblocks {pblock_mem_tile_1}] -add {SLICE_X209Y0:SLICE_X358Y299}\n")
-    fp.write("resize_pblock [get_pblocks {pblock_mem_tile_1}] -add {DSP48E2_X5Y0:DSP48E2_X7Y119}\n")
-    fp.write("resize_pblock [get_pblocks {pblock_mem_tile_1}] -add {RAMB18_X7Y0:RAMB18_X13Y119}\n")
-    fp.write("resize_pblock [get_pblocks {pblock_mem_tile_1}] -add {RAMB36_X7Y0:RAMB36_X13Y59}\n")
+    fp.write("resize_pblock [get_pblocks {pblock_mem_tile_1}] -add {SLICE_X168Y96:SLICE_X295Y339}\n")
+    fp.write("resize_pblock [get_pblocks {pblock_mem_tile_1}] -add {DSP48E2_X3Y40:DSP48E2_X5Y135}\n")
+    fp.write("resize_pblock [get_pblocks {pblock_mem_tile_1}] -add {RAMB18_X5Y40:RAMB18_X8Y135}\n")
+    fp.write("resize_pblock [get_pblocks {pblock_mem_tile_1}] -add {RAMB36_X5Y20:RAMB36_X8Y67}\n")
+  if (esp_config.nmem == 4): 
+      fp.write("create_pblock {pblock_mem_tile_2}\n")
+      fp.write("add_cells_to_pblock [get_pblocks {pblock_mem_tile_2}] [get_cells -quiet [list {esp_1/tiles_gen[" + str(mem_tiles[2]) + "].mem_tile.tile_mem_i}]]\n")
+      fp.write("resize_pblock [get_pblocks {pblock_mem_tile_2}] -add {SLICE_X25Y350:SLICE_X153Y598}\n")
+      fp.write("resize_pblock [get_pblocks {pblock_mem_tile_2}] -add {DSP48E2_X0Y140:DSP48E2_X2Y237}\n")
+      fp.write("resize_pblock [get_pblocks {pblock_mem_tile_2}] -add {RAMB18_X1Y140:RAMB18_X4Y237}\n")
+      fp.write("resize_pblock [get_pblocks {pblock_mem_tile_2}] -add {RAMB36_X1Y70:RAMB36_X4Y118}\n")
+      fp.write("create_pblock {pblock_mem_tile_3}\n")
+      fp.write("add_cells_to_pblock [get_pblocks {pblock_mem_tile_3}] [get_cells -quiet [list {esp_1/tiles_gen[" + str(mem_tiles[3]) + "].mem_tile.tile_mem_i}]]\n")
+      fp.write("resize_pblock [get_pblocks {pblock_mem_tile_3}] -add {SLICE_X169Y594:SLICE_X293Y836}\n")
+      fp.write("resize_pblock [get_pblocks {pblock_mem_tile_3}] -add {DSP48E2_X3Y238:DSP48E2_X5Y333}\n")
+      fp.write("resize_pblock [get_pblocks {pblock_mem_tile_3}] -add {RAMB18_X5Y238:RAMB18_X8Y333}\n")
+      fp.write("resize_pblock [get_pblocks {pblock_mem_tile_3}] -add {RAMB36_X5Y119:RAMB36_X8Y166}\n")
+      fp.write("create_pblock pblock_gen_mig.ddrc3\n")
+      fp.write("add_cells_to_pblock [get_pblocks pblock_gen_mig.ddrc3] [get_cells -quiet [list gen_mig.ddrc3]]\n")
+      fp.write("resize_pblock [get_pblocks pblock_gen_mig.ddrc3] -add {SLICE_X263Y660:SLICE_X336Y839}\n")
+      fp.write("resize_pblock [get_pblocks pblock_gen_mig.ddrc3] -add {DSP48E2_X6Y264:DSP48E2_X7Y335}\n")
+      fp.write("resize_pblock [get_pblocks pblock_gen_mig.ddrc3] -add {RAMB18_X9Y264:RAMB18_X10Y335}\n")
+      fp.write("resize_pblock [get_pblocks pblock_gen_mig.ddrc3] -add {RAMB36_X9Y132:RAMB36_X10Y167}\n")
   #2048 sets + 2 tiles or 4096 sets + 4 tiles
   elif int((soc.llc_sets.get() * soc.llc_ways.get()) / (esp_config.nmem * 16)) == 1024:
     fp.write("create_pblock {pblock_mem_tile_0}\n")

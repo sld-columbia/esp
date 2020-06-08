@@ -87,7 +87,8 @@ int main(int argc, char **argv)
 
 	init_parameters();
 
-	buf = (token_t *) esp_alloc(size);
+    buf = (token_t *) esp_alloc(size);
+    cfg_000[0].hw_buf = buf;
 	gold = malloc(out_len * sizeof(float));
 
 	init_buffer(buf, gold);
@@ -105,7 +106,7 @@ int main(int argc, char **argv)
 	errors = validate_buffer(&buf[out_offset], gold);
 
 	free(gold);
-	esp_cleanup();
+	esp_free(buf);
 
         if ((errors / len) > ERROR_COUNT_TH)
 		printf("  + TEST FAIL: exceeding error count threshold\n");

@@ -355,9 +355,11 @@ constant CPU_FREQ : integer := 78125;  -- cpu frequency in KHz
 -- MMI64
   signal user_rstn      : std_ulogic;
   signal mon_ddr        : monitor_ddr_vector(0 to CFG_NMEM_TILE - 1);
+  signal mon_ddr_reg    : monitor_ddr_vector(0 to CFG_NMEM_TILE - 1);
   signal mon_noc        : monitor_noc_matrix(1 to 6, 0 to CFG_TILES_NUM-1);
   signal mon_noc_actual : monitor_noc_matrix(0 to 1, 0 to CFG_TILES_NUM-1);
   signal mon_mem        : monitor_mem_vector(0 to CFG_NMEM_TILE + CFG_NSLM_TILE - 1);
+  signal mon_mem_reg    : monitor_mem_vector(0 to CFG_NMEM_TILE + CFG_NSLM_TILE - 1);
   signal mon_l2         : monitor_cache_vector(0 to relu(CFG_NL2 - 1));
   signal mon_llc        : monitor_cache_vector(0 to relu(CFG_NLLC - 1));
   signal mon_acc        : monitor_acc_vector(0 to relu(accelerators_num-1));
@@ -1032,18 +1034,61 @@ begin
     user_rstn <= rstn;
 
     mon_ddr(0).clk <= clkm;
-    detect_ddr_access : process (ddr_ahbsi)
-    begin  -- process detect_mem_access
-      mon_ddr(0).word_transfer <= '0';
+    mon_ddr(1).clk <= clkm_1;
+    mon_ddr(2).clk <= clkm_2;
+    mon_ddr(3).clk <= clkm_3;
+    
+    gen_mon_ddr : for i in 0 to CFG_NMEM_TILE - 1 generate
+        detect_ddr_access : process (ddr_ahbsi)
+        begin  -- process detect_mem_access
+          mon_ddr(i).word_transfer <= '0';
 
-      if ((ddr_ahbsi(0).haddr(31 downto 20) xor conv_std_logic_vector(ddr_haddr(0), 12))
-          and conv_std_logic_vector(ddr_hmask(0), 12)) = zero32(31 downto 20) then
-        if ddr_ahbsi(0).hready = '1' and ddr_ahbsi(0).htrans /= HTRANS_IDLE then
-          mon_ddr(0).word_transfer <= '1';
-        end if;
-      end if;
-    end process detect_ddr_access;
-
+          if ((ddr_ahbsi(i).haddr(31 downto 20) xor conv_std_logic_vector(ddr_haddr(i), 12))
+              and conv_std_logic_vector(ddr_hmask(i), 12)) = zero32(31 downto 20) then
+            if ddr_ahbsi(i).hready = '1' and ddr_ahbsi(i).htrans /= HTRANS_IDLE then
+              mon_ddr(i).word_transfer <= '1';
+            end if;
+          end if;
+        end process detect_ddr_access;
+    end generate gen_mon_ddr;
+    
+    gen_mon_regs : for i in 0 to CFG_NMEM_TILE - 1 generate
+        mon_mem_reg(i).clk <= mon_mem(i).clk;
+        mon_mem_reg_gen : process(mon_mem(i).clk, rstn) 
+        begin 
+            if rstn = '0' then 
+                mon_mem_reg(i).coherent_req <= '0';
+                mon_mem_reg(i).coherent_fwd <= '0';
+                mon_mem_reg(i).coherent_rsp_rcv <= '0';
+                mon_mem_reg(i).coherent_rsp_snd <= '0';
+                mon_mem_reg(i).dma_req <= '0';
+                mon_mem_reg(i).dma_rsp <= '0';
+                mon_mem_reg(i).coherent_dma_req <= '0';
+                mon_mem_reg(i).coherent_dma_rsp <= '0';
+            elsif mon_mem(i).clk'event and mon_mem(i).clk = '1' then 
+                mon_mem_reg(i).coherent_req <= mon_mem(i).coherent_req;
+                mon_mem_reg(i).coherent_fwd <= mon_mem(i).coherent_fwd;
+                mon_mem_reg(i).coherent_rsp_rcv <= mon_mem(i).coherent_rsp_rcv;
+                mon_mem_reg(i).coherent_rsp_snd <= mon_mem(i).coherent_rsp_snd;
+                mon_mem_reg(i).dma_req <= mon_mem(i).dma_req;
+                mon_mem_reg(i).dma_rsp <= mon_mem(i).dma_rsp;
+                mon_mem_reg(i).coherent_dma_req <= mon_mem(i).coherent_dma_req;
+                mon_mem_reg(i).coherent_dma_rsp <= mon_mem(i).coherent_dma_rsp;
+            end if;
+        end process mon_mem_reg_gen;
+   
+        mon_ddr_reg(i).clk <= mon_ddr(i).clk;
+        mon_ddr_reg_gen : process(mon_ddr(i).clk, rstn)
+        begin 
+            if rstn = '0' then 
+                mon_ddr_reg(i).word_transfer <= '0';
+            elsif mon_ddr(i).clk'event and mon_ddr(i).clk = '1' then 
+                mon_ddr_reg(i).word_transfer <= mon_ddr(i).word_transfer;
+            end if;
+        end process mon_ddr_reg_gen;
+        
+    end generate gen_mon_regs; 
+    
     mon_noc_map_gen : for i in 0 to CFG_TILES_NUM-1 generate
       --mon_noc_actual(0,i) <= mon_noc(1,i);
       --mon_noc_actual(1,i) <= mon_noc(3,i);
@@ -1079,8 +1124,8 @@ begin
         dmbi_h2f        => dmbi_h2f,
         dmbi_f2h        => dmbi_f2h,
         user_rstn       => user_rstn,
-        mon_ddr         => mon_ddr,
-        mon_mem         => mon_mem,
+        mon_ddr         => mon_ddr_reg,
+        mon_mem         => mon_mem_reg,
         mon_noc         => mon_noc_actual,
         mon_acc         => mon_acc,
         mon_l2          => mon_l2,

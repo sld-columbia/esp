@@ -46,7 +46,7 @@ struct esp_access {
 #include <linux/list.h>
 
 // TO DO do not hard-code this values
-#define N_MEM 2
+#define N_MEM 8
 #define PRIVATE_CACHE_SIZE 16384
 #define LLC_SIZE 524288
 #define LLC_SIZE_SPLIT 262144 

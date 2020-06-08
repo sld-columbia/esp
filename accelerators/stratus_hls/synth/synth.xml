@@ -13,5 +13,7 @@
     <param name="stride_len" desc="stride length for strided pattern"/>
     <param name="out_size" desc="size of output dataset"/>
     <param name="in_place" desc="output stored in place of input"/>
-  </accelerator>
+    <param name="wr_data" desc="output word to be written"/>
+    <param name="rd_data" desc="input word for read validation"/>
+    </accelerator>
 </sld>
