@@ -5,7 +5,7 @@ module ariane_wrap
   # (
      parameter logic [63:0] HART_ID = '0,
      parameter NMST = 2,
-     parameter NSLV = 4,
+     parameter NSLV = 5,
      parameter AXI_ID_WIDTH = ariane_soc::IdWidth,
      parameter AXI_ID_WIDTH_SLV = ariane_soc::IdWidthSlave + $clog2(NMST),
      parameter AXI_ADDR_WIDTH = 64,
@@ -18,10 +18,13 @@ module ariane_wrap
      // Slave 1
      parameter logic [63:0] APBBase             = 64'h0000_0000_6000_0000,
      parameter logic [63:0] APBLength           = 64'h0000_0000_1000_0000,
-     // Slave 2 (TODO: move to I/O tile)
+     // Slave 2
      parameter logic [63:0] CLINTBase           = 64'h0000_0000_0200_0000,
      parameter logic [63:0] CLINTLength         = 64'h0000_0000_000C_0000,
      // Slave 3
+     parameter logic [63:0] SLMBase             = 64'h0000_0000_0400_0000,
+     parameter logic [63:0] SLMLength           = 64'h0000_0000_0400_0000,
+     // Slave 4
      parameter logic [63:0] DRAMBase            = 64'h0000_0000_8000_0000,
      parameter logic [63:0] DRAMLength          = 64'h0000_0000_2000_0000,
      parameter logic [63:0] DRAMCachedLength    = 64'h0000_0000_2000_0000
@@ -185,6 +188,57 @@ module ariane_wrap
     input logic [AXI_USER_WIDTH-1:0] 	clint_r_user,
     input logic 			clint_r_valid,
     output logic 			clint_r_ready,
+    // -- SLM
+    //    AW
+    output logic [AXI_ID_WIDTH_SLV-1:0] slm_aw_id,
+    output logic [AXI_ADDR_WIDTH-1:0] 	slm_aw_addr,
+    output logic [7:0] 			slm_aw_len,
+    output logic [2:0] 			slm_aw_size,
+    output logic [1:0] 			slm_aw_burst,
+    output logic 			slm_aw_lock,
+    output logic [3:0] 			slm_aw_cache,
+    output logic [2:0] 			slm_aw_prot,
+    output logic [3:0] 			slm_aw_qos,
+    output logic [5:0] 			slm_aw_atop,
+    output logic [3:0] 			slm_aw_region,
+    output logic [AXI_USER_WIDTH-1:0] 	slm_aw_user,
+    output logic 			slm_aw_valid,
+    input logic 			slm_aw_ready,
+    //    W
+    output logic [AXI_DATA_WIDTH-1:0] 	slm_w_data,
+    output logic [AXI_STRB_WIDTH-1:0] 	slm_w_strb,
+    output logic 			slm_w_last,
+    output logic [AXI_USER_WIDTH-1:0] 	slm_w_user,
+    output logic 			slm_w_valid,
+    input logic 			slm_w_ready,
+    //    B
+    input logic [AXI_ID_WIDTH_SLV-1:0] 	slm_b_id,
+    input logic [1:0] 			slm_b_resp,
+    input logic [AXI_USER_WIDTH-1:0] 	slm_b_user,
+    input logic 			slm_b_valid,
+    output logic 			slm_b_ready,
+    //    AR
+    output logic [AXI_ID_WIDTH_SLV-1:0] slm_ar_id,
+    output logic [AXI_ADDR_WIDTH-1:0] 	slm_ar_addr,
+    output logic [7:0] 			slm_ar_len,
+    output logic [2:0] 			slm_ar_size,
+    output logic [1:0] 			slm_ar_burst,
+    output logic 			slm_ar_lock,
+    output logic [3:0] 			slm_ar_cache,
+    output logic [2:0] 			slm_ar_prot,
+    output logic [3:0] 			slm_ar_qos,
+    output logic [3:0] 			slm_ar_region,
+    output logic [AXI_USER_WIDTH-1:0] 	slm_ar_user,
+    output logic 			slm_ar_valid,
+    input logic 			slm_ar_ready,
+    //    R
+    input logic [AXI_ID_WIDTH_SLV-1:0] 	slm_r_id,
+    input logic [AXI_DATA_WIDTH-1:0] 	slm_r_data,
+    input logic [1:0] 			slm_r_resp,
+    input logic 			slm_r_last,
+    input logic [AXI_USER_WIDTH-1:0] 	slm_r_user,
+    input logic 			slm_r_valid,
+    output logic 			slm_r_ready,
     // APB
     output logic 			penable,
     output logic 			pwrite,
@@ -226,7 +280,8 @@ module ariane_wrap
       ROM      = 0,
       APB      = 1,
       CLINT    = 2,
-      DRAM     = 3
+      SLM      = 3,
+      DRAM     = 4
    } axi_slaves_t;
 
    AXI_BUS
@@ -274,12 +329,14 @@ module ariane_wrap
 	.master       ( master  ),
 	.start_addr_i ({
 			DRAMBase[AXI_ADDR_WIDTH-1:0],
+			SLMBase[AXI_ADDR_WIDTH-1:0],
 			CLINTBase[AXI_ADDR_WIDTH-1:0],
 			APBBase[AXI_ADDR_WIDTH-1:0],
 			ROMBase[AXI_ADDR_WIDTH-1:0]
 			}),
 	.end_addr_i   ({
 			DRAMBase[AXI_ADDR_WIDTH-1:0]  + DRAMLength[AXI_ADDR_WIDTH-1:0] - 1,
+			SLMBase[AXI_ADDR_WIDTH-1:0]   + SLMLength[AXI_ADDR_WIDTH-1:0] - 1,
 			CLINTBase[AXI_ADDR_WIDTH-1:0] + CLINTLength[AXI_ADDR_WIDTH-1:0] - 1,
 			APBBase[AXI_ADDR_WIDTH-1:0]   + APBLength[AXI_ADDR_WIDTH-1:0] - 1,
 			ROMBase[AXI_ADDR_WIDTH-1:0]   + ROMLength[AXI_ADDR_WIDTH-1:0] - 1
@@ -494,6 +551,61 @@ module ariane_wrap
    assign master[CLINT].r_user = clint_r_user;
    assign master[CLINT].r_valid = clint_r_valid;
    assign clint_r_ready = master[CLINT].r_ready;
+
+
+   // ---------------
+   // SLM
+   // ---------------
+   //    AW
+   assign slm_aw_id = master[SLM].aw_id;
+   assign slm_aw_addr = master[SLM].aw_addr;
+   assign slm_aw_len = master[SLM].aw_len;
+   assign slm_aw_size = master[SLM].aw_size;
+   assign slm_aw_burst = master[SLM].aw_burst;
+   assign slm_aw_lock = master[SLM].aw_lock;
+   assign slm_aw_cache = master[SLM].aw_cache;
+   assign slm_aw_prot = master[SLM].aw_prot;
+   assign slm_aw_qos = master[SLM].aw_qos;
+   assign slm_aw_atop = master[SLM].aw_atop;
+   assign slm_aw_region = master[SLM].aw_region;
+   assign slm_aw_user = master[SLM].aw_user;
+   assign slm_aw_valid = master[SLM].aw_valid;
+   assign master[SLM].aw_ready = slm_aw_ready;
+   //    W
+   assign slm_w_data = master[SLM].w_data;
+   assign slm_w_strb = master[SLM].w_strb;
+   assign slm_w_last = master[SLM].w_last;
+   assign slm_w_user = master[SLM].w_user;
+   assign slm_w_valid = master[SLM].w_valid;
+   assign master[SLM].w_ready = slm_w_ready;
+   //    B
+   assign master[SLM].b_id = slm_b_id;
+   assign master[SLM].b_resp = slm_b_resp;
+   assign master[SLM].b_user = slm_b_user;
+   assign master[SLM].b_valid = slm_b_valid;
+   assign slm_b_ready = master[SLM].b_ready;
+   //    AR
+   assign slm_ar_id = master[SLM].ar_id;
+   assign slm_ar_addr = master[SLM].ar_addr;
+   assign slm_ar_len = master[SLM].ar_len;
+   assign slm_ar_size = master[SLM].ar_size;
+   assign slm_ar_burst = master[SLM].ar_burst;
+   assign slm_ar_lock = master[SLM].ar_lock;
+   assign slm_ar_cache = master[SLM].ar_cache;
+   assign slm_ar_prot = master[SLM].ar_prot;
+   assign slm_ar_qos = master[SLM].ar_qos;
+   assign slm_ar_region = master[SLM].ar_region;
+   assign slm_ar_user = master[SLM].ar_user;
+   assign slm_ar_valid = master[SLM].ar_valid;
+   assign master[SLM].ar_ready = slm_ar_ready;
+   //    R
+   assign master[SLM].r_id = slm_r_id;
+   assign master[SLM].r_data = slm_r_data;
+   assign master[SLM].r_resp = slm_r_resp;
+   assign master[SLM].r_last = slm_r_last;
+   assign master[SLM].r_user = slm_r_user;
+   assign master[SLM].r_valid = slm_r_valid;
+   assign slm_r_ready = master[SLM].r_ready;
 
 
    // ---------------

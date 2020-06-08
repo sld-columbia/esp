@@ -202,13 +202,15 @@ accelerators-distclean: $(ACCELERATORS-distclean)
 
 ### Vivado HLS ###
 $(VIVADOHLS_ACC-wdir):
-	$(QUIET_MKDIR)mkdir -p $(VIVADOHLS_ACC_PATH)/$(@:-wdir=)/hls-work-$(TECHLIB)
-	@cd $(VIVADOHLS_ACC_PATH)/$(@:-wdir=)/hls-work-$(TECHLIB); \
-	if ! test -e project.tcl; then \
+	$(QUIET_MKDIR) if ! test -e $(VIVADOHLS_ACC_PATH)/$(@:-wdir=)/hls-work-$(TECHLIB); then \
+		mkdir -p $(VIVADOHLS_ACC_PATH)/$(@:-wdir=)/hls-work-$(TECHLIB); \
+		cd $(VIVADOHLS_ACC_PATH)/$(@:-wdir=)/hls-work-$(TECHLIB); \
 		cp ../syn/* .; \
+		rm -f common.tcl; \
 		rm -f custom.tcl; \
 		rm -f directives.tcl; \
 		rm -f Makefile; \
+		ln -s ../syn/common.tcl; \
 		ln -s ../syn/custom.tcl; \
 		ln -s ../syn/directives.tcl; \
 		ln -s ../syn/Makefile; \

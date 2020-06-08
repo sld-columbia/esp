@@ -74,10 +74,12 @@ architecture rtl of l3stat is
 constant REVISION : integer := 1 - forcer0;
 constant pconfig  : apb_config_type := (
 	0 => ahb_device_reg (VENDOR_GAISLER, GAISLER_L3STAT, 0, REVISION, 0),
-	1 => apb_iobar(paddr, pmask));
+	1 => apb_iobar(paddr, pmask),
+        2 => (others => '0'));
 constant pconfig2  : apb_config_type := (
 	0 => ahb_device_reg (VENDOR_GAISLER, GAISLER_L3STAT, 0, REVISION, 0),
-	1 => apb_iobar(paddr2, pmask2));
+	1 => apb_iobar(paddr2, pmask2),
+        2 => (others => '0'));
 
 constant MAX_CNT : natural := 64 - 32*forcer0; -- Maximum number of counters
 constant MADDR   : natural := log2(MAX_CNT) + 2;

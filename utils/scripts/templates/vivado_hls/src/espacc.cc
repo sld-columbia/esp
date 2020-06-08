@@ -6,7 +6,7 @@
 
 void load(word_t _inbuff[SIZE_IN_CHUNK_DATA], dma_word_t *in1,
           /* <<--compute-params-->> */
-	  dma_info_t *load_ctrl, int chunk, int batch)
+	  dma_info_t &load_ctrl, int chunk, int batch)
 {
 load_data:
 
@@ -16,9 +16,9 @@ load_data:
     unsigned dma_length = length / VALUES_PER_WORD;
     unsigned dma_index = index / VALUES_PER_WORD;
 
-    load_ctrl[0].index = dma_index;
-    load_ctrl[0].length = dma_length;
-    load_ctrl[0].size = SIZE_WORD_T;
+    load_ctrl.index = dma_index;
+    load_ctrl.length = dma_length;
+    load_ctrl.size = SIZE_WORD_T;
 
     for (unsigned i = 0; i < dma_length; i++) {
     load_label0:for(unsigned j = 0; j < VALUES_PER_WORD; j++) {
@@ -29,7 +29,7 @@ load_data:
 
 void store(word_t _outbuff[SIZE_OUT_CHUNK_DATA], dma_word_t *out,
           /* <<--compute-params-->> */
-	   dma_info_t *store_ctrl, int chunk, int batch)
+	   dma_info_t &store_ctrl, int chunk, int batch)
 {
 store_data:
 
@@ -41,9 +41,9 @@ store_data:
     unsigned dma_length = length / VALUES_PER_WORD;
     unsigned dma_index = index / VALUES_PER_WORD;
 
-    store_ctrl[0].index = dma_index;
-    store_ctrl[0].length = dma_length;
-    store_ctrl[0].size = SIZE_WORD_T;
+    store_ctrl.index = dma_index;
+    store_ctrl.length = dma_length;
+    store_ctrl.size = SIZE_WORD_T;
 
     for (unsigned i = 0; i < dma_length; i++) {
     store_label1:for(unsigned j = 0; j < VALUES_PER_WORD; j++) {
@@ -68,7 +68,7 @@ void compute(word_t _inbuff[SIZE_IN_CHUNK_DATA],
 
 void top(dma_word_t *out, dma_word_t *in1,
          /* <<--params-->> */
-	 dma_info_t *load_ctrl, dma_info_t *store_ctrl)
+	 dma_info_t &load_ctrl, dma_info_t &store_ctrl)
 {
 
     /* <<--local-params-->> */

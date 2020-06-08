@@ -3,6 +3,9 @@
 
 # Insert here any custom directive
 
+# hls4ml accelerators only have one user-defined configuration register named nbursts
+set_directive_interface -mode ap_none "top" conf_info_nbursts
+
 add_files [glob ../hls4ml/firmware/*.cpp] -cflags "-I../inc \
 	  -I../hls4ml/firmware -I[file normalize ../hls4ml/firmware/nnet_utils] \
 	  -DDMA_SIZE=${dma} -DDATA_BITWIDTH=${width} -std=c++0x "

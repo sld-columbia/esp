@@ -36,7 +36,7 @@ entity l2_acc_wrapper is
     local_y     : local_yx;
     local_x     : local_yx;
     mem_num     : integer := 1;
-    mem_info    : tile_mem_info_vector(0 to MEM_MAX_NUM - 1);
+    mem_info    : tile_mem_info_vector(0 to CFG_NMEM_TILE - 1);
     cache_y     : yx_vec(0 to 2**NL2_MAX_LOG2 - 1);
     cache_x     : yx_vec(0 to 2**NL2_MAX_LOG2 - 1);
     cache_tile_id : cache_attribute_array);
@@ -287,7 +287,7 @@ architecture rtl of l2_acc_wrapper is
   -- Others
   -------------------------------------------------------------------------------
 
-  signal empty_offset : std_logic_vector(OFFSET_BITS - 1 downto 0) := (others => '0');
+  constant empty_offset : std_logic_vector(OFFSET_BITS - 1 downto 0) := (others => '0');
 
   -------------------------------------------------------------------------------
   -- Debug

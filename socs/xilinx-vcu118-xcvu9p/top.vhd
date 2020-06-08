@@ -84,10 +84,12 @@ architecture rtl of top is
       pirq            : integer;
       debugmem        : integer;
       tech            : integer;
+      vcu128          : integer range 0 to 1;
       simulation      : boolean);
     port (
       sgmiii   : in  eth_sgmii_in_type;
       sgmiio   : out eth_sgmii_out_type;
+      sgmii_dummy : in std_logic;
       gmiii    : out eth_in_type;
       gmiio    : in  eth_out_type;
       reset    : in  std_logic;
@@ -102,7 +104,8 @@ architecture rtl of top is
     generic (
       hindex : integer;
       haddr  : integer;
-      hmask  : integer);
+      hmask  : integer;
+      clamshell : integer range 0 to 1);
     port (
       c0_sys_clk_p     : in    std_logic;
       c0_sys_clk_n     : in    std_logic;
@@ -112,7 +115,7 @@ architecture rtl of top is
       c0_ddr4_bg       : out   std_logic_vector(0 downto 0);
       c0_ddr4_cke      : out   std_logic_vector(0 downto 0);
       c0_ddr4_odt      : out   std_logic_vector(0 downto 0);
-      c0_ddr4_cs_n     : out   std_logic_vector(0 downto 0);
+      c0_ddr4_cs_n     : out   std_logic_vector(1 downto 0);
       c0_ddr4_ck_t     : out   std_logic_vector(0 downto 0);
       c0_ddr4_ck_c     : out   std_logic_vector(0 downto 0);
       c0_ddr4_reset_n  : out   std_logic;
@@ -147,6 +150,7 @@ architecture rtl of top is
   -- Memory controller DDR4
   signal ddr_ahbsi   : ahb_slv_in_vector_type(0 to CFG_NMEM_TILE - 1);
   signal ddr_ahbso   : ahb_slv_out_vector_type(0 to CFG_NMEM_TILE - 1);
+  signal c0_ddr4_cs_n_vec : std_logic_vector(1 downto 0);
 
 -- DVI (unused on this board)
   signal dvi_apbi  : apb_slv_in_type;
@@ -273,7 +277,8 @@ begin
       generic map (
         hindex => 4,
         haddr  => 16#400#,
-        hmask  => 16#C00#)
+        hmask  => 16#C00#,
+        clamshell => 0)
       port map (
         c0_sys_clk_p     => c0_sys_clk_p,
         c0_sys_clk_n     => c0_sys_clk_n,
@@ -283,7 +288,7 @@ begin
         c0_ddr4_bg       => c0_ddr4_bg,
         c0_ddr4_cke      => c0_ddr4_cke,
         c0_ddr4_odt      => c0_ddr4_odt,
-        c0_ddr4_cs_n     => c0_ddr4_cs_n,
+        c0_ddr4_cs_n     => c0_ddr4_cs_n_vec,
         c0_ddr4_ck_t     => c0_ddr4_ck_t,
         c0_ddr4_ck_c     => c0_ddr4_ck_c,
         c0_ddr4_reset_n  => c0_ddr4_reset_n,
@@ -302,6 +307,8 @@ begin
         ui_clk_sync_rst  => open
         );
 
+    c0_ddr4_cs_n <= c0_ddr4_cs_n_vec(0 downto 0);
+
   end generate gen_mig;
 
   gen_mig_model : if (SIMULATION = true) generate
@@ -313,7 +320,7 @@ begin
         haddr  => 16#400#,
         hmask  => 16#C00#,
         tech   => 0,
-        kbytes => 1000,
+        kbytes => 4 * 1024,
         pipe   => 0,
         maccsz => AHBDW,
         fname  => "ram.srec"
@@ -403,11 +410,13 @@ begin
         pirq            => 11,
         debugmem        => 1,
         tech            => CFG_FABTECH,
+        vcu128          => 0,
         simulation      => SIMULATION
         )
       port map(
         sgmiii   => sgmiii,
         sgmiio   => sgmiio,
+        sgmii_dummy => '0',
         gmiii    => gmiii,
         gmiio    => gmiio,
         reset    => sgmiirst,

@@ -60,8 +60,8 @@ foreach dma $dma_width {
 
 	# Directives
 	set_directive_interface -mode ap_none "top" conf_info_ninputs
-	set_directive_interface -mode ap_fifo -depth 10 "top" load_ctrl
-	set_directive_interface -mode ap_fifo -depth 10 "top" store_ctrl
+	set_directive_interface -mode ap_hs -depth 10 "top" load_ctrl
+	set_directive_interface -mode ap_hs -depth 10 "top" store_ctrl
 	set_directive_interface -mode ap_fifo -depth 100000 "top" in1
 	set_directive_interface -mode ap_fifo -depth 100000 "top" out
 	set_directive_data_pack "top" load_ctrl

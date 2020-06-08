@@ -33,6 +33,7 @@ package sld_devices is
   constant SLD_L2_CACHE  : devid_t := 16#020#;
   constant SLD_LLC_CACHE  : devid_t := 16#021#;
   constant SLD_MST_PROXY : devid_t := 16#022#;
+  constant SLD_SLM : devid_t := 16#023#;
   -- <<devid>>
 
   constant VENDOR_SIFIVE : vendor_t := 16#EC#;
@@ -51,6 +52,7 @@ package sld_devices is
     SLD_L2_CACHE  => "L2 cache                       ",
     SLD_LLC_CACHE => "LLC cache                      ",
     SLD_MST_PROXY => "bus-master proxy               ",
+    SLD_SLM       => "Shared-local memory            ",
     -- <<ddesc>>
     others => "Unknown Device                 ");
 

@@ -4,6 +4,7 @@
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.std_logic_misc.all;
+use work.esp_global.all;
 use work.amba.all;
 use work.stdlib.all;
 use work.sld_devices.all;
@@ -54,7 +55,7 @@ entity esp is
     -- Monitor signals
     mon_noc         : out monitor_noc_matrix(1 to 6, 0 to CFG_TILES_NUM-1);
     mon_acc         : out monitor_acc_vector(0 to relu(accelerators_num-1));
-    mon_mem         : out monitor_mem_vector(0 to CFG_NMEM_TILE - 1);
+    mon_mem         : out monitor_mem_vector(0 to CFG_NMEM_TILE + CFG_NSLM_TILE - 1);
     mon_l2          : out monitor_cache_vector(0 to relu(CFG_NL2 - 1));
     mon_llc         : out monitor_cache_vector(0 to relu(CFG_NLLC - 1));
     mon_dvfs        : out monitor_dvfs_vector(0 to CFG_TILES_NUM-1));
@@ -479,6 +480,54 @@ begin
       clk_tile(i) <= sys_clk_int(tile_mem_id(i));
 
     end generate mem_tile;
+
+    slm_tile: if tile_type(i) = 5 generate
+      tile_slm_i: tile_slm
+        generic map (
+          tile_id => i)
+        port map (
+          rst                => rst_int,
+          clk                => refclk_int(i),
+          noc1_input_port    => noc_input_port_1(i),
+          noc1_data_void_in  => noc_data_void_in(1)(i),
+          noc1_stop_in       => noc_stop_in(1)(i),
+          noc1_output_port   => noc_output_port_1(i),
+          noc1_data_void_out => noc_data_void_out(1)(i),
+          noc1_stop_out      => noc_stop_out(1)(i),
+          noc2_input_port    => noc_input_port_2(i),
+          noc2_data_void_in  => noc_data_void_in(2)(i),
+          noc2_stop_in       => noc_stop_in(2)(i),
+          noc2_output_port   => noc_output_port_2(i),
+          noc2_data_void_out => noc_data_void_out(2)(i),
+          noc2_stop_out      => noc_stop_out(2)(i),
+          noc3_input_port    => noc_input_port_3(i),
+          noc3_data_void_in  => noc_data_void_in(3)(i),
+          noc3_stop_in       => noc_stop_in(3)(i),
+          noc3_output_port   => noc_output_port_3(i),
+          noc3_data_void_out => noc_data_void_out(3)(i),
+          noc3_stop_out      => noc_stop_out(3)(i),
+          noc4_input_port    => noc_input_port_4(i),
+          noc4_data_void_in  => noc_data_void_in(4)(i),
+          noc4_stop_in       => noc_stop_in(4)(i),
+          noc4_output_port   => noc_output_port_4(i),
+          noc4_data_void_out => noc_data_void_out(4)(i),
+          noc4_stop_out      => noc_stop_out(4)(i),
+          noc5_input_port    => noc_input_port_5(i),
+          noc5_data_void_in  => noc_data_void_in(5)(i),
+          noc5_stop_in       => noc_stop_in(5)(i),
+          noc5_output_port   => noc_output_port_5(i),
+          noc5_data_void_out => noc_data_void_out(5)(i),
+          noc5_stop_out      => noc_stop_out(5)(i),
+          noc6_input_port    => noc_input_port_6(i),
+          noc6_data_void_in  => noc_data_void_in(6)(i),
+          noc6_stop_in       => noc_stop_in(6)(i),
+          noc6_output_port   => noc_output_port_6(i),
+          noc6_data_void_out => noc_data_void_out(6)(i),
+          noc6_stop_out      => noc_stop_out(6)(i),
+          mon_mem            => mon_mem(CFG_NMEM_TILE + tile_slm_id(i)),
+          mon_dvfs           => mon_dvfs_out(i));
+      clk_tile(i) <= refclk_int(i);
+    end generate slm_tile;
 
   end generate tiles_gen;
 

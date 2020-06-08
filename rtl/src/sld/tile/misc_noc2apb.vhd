@@ -111,7 +111,7 @@ begin  -- rtl
   -- This wrapper makes requests and waits for reply, but does not react to
   -- messages from remote masters, such as JTAG.
   psel_gen: for i in 0 to NAPBSLV - 1 generate
-    psel_sig(i) <= apb_slv_decode(apbo(i).pconfig, apb_rcv_data_out(19 downto  8), apb_rcv_data_out(27 downto 16), 4);
+    psel_sig(i) <= apb_slv_decode(apbo(i).pconfig, apb_rcv_data_out(19 downto  8), apb_rcv_data_out(27 downto 20));
   end generate psel_gen;
 
   -- This wrapper makes requests and waits for reply, but does not react to

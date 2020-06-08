@@ -29,13 +29,16 @@ use std.textio.all;
     local_x        : local_yx;
     mem_num        : integer;
     cacheable_mem_num : integer;
-    mem_info       : tile_mem_info_vector(0 to MEM_MAX_NUM);
+    mem_info       : tile_mem_info_vector(0 to CFG_NMEM_TILE + CFG_NSLM_TILE);
     io_y           : local_yx;
     io_x           : local_yx;
     pindex         : integer := 0;
     paddr          : integer := 0;
     pmask          : integer := 16#fff#;
+    paddr_ext      : integer := 0;
+    pmask_ext      : integer := 16#fff#;
     pirq           : integer := 0;
+    irq_type       : integer := 0;
     scatter_gather : integer := 1;
     sets           : integer := 256;
     ways           : integer := 8;
@@ -89,6 +92,10 @@ use std.textio.all;
     interrupt_wrreq   : out std_ulogic;
     interrupt_data_in : out misc_noc_flit_type;
     interrupt_full    : in  std_ulogic;
+    -- Noc plane miscellaneous (NoC -> tile)
+    interrupt_ack_rdreq    : out std_ulogic;
+    interrupt_ack_data_out : in  misc_noc_flit_type;
+    interrupt_ack_empty    : in  std_ulogic;
     -- Noc plane miscellaneous (tile -> NoC)
     apb_snd_wrreq     : out std_ulogic;
     apb_snd_data_in   : out misc_noc_flit_type;
@@ -215,7 +222,7 @@ end;
   constant ahbslv_proxy_hindex : hindex_vector(0 to NAHBSLV - 1) := (
     others => 0);
 
-  constant cacheable_mem_info : tile_mem_info_vector(0 to MEM_MAX_NUM - 1) := mem_info(0 to MEM_MAX_NUM - 1);
+  constant cacheable_mem_info : tile_mem_info_vector(0 to CFG_NMEM_TILE - 1) := mem_info(0 to CFG_NMEM_TILE - 1);
 
   -- add attribute 'keep' to fix a bug with Vivado HLS accelerators
   attribute keep : string;
@@ -261,6 +268,8 @@ end;
 
 begin
 
+  interrupt_ack_rdreq <= '0';
+  
   -- <<accelerator_instance>>
 
   l2_gen: if has_l2 /= 0 generate
@@ -336,6 +345,8 @@ begin
       pindex             => pindex,
       paddr              => paddr,
       pmask              => pmask,
+      paddr_ext          => paddr_ext,
+      pmask_ext          => pmask_ext,
       pirq               => pirq,
       revision           => revision,
       devid              => devid,

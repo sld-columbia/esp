@@ -27,6 +27,7 @@ mmi64/mmi64_router_upstream.v
 mmi64/mmi64_router_core.v
 mmi64/mmi64_router.v
 mmi64/mmi64_rt.v
+mmi64/mmi64_rt64.v
 mmi64/mmi64_serializer.v
 profpga_user/profpga_sync_ipad.v
 profpga_user/profpga_sync_opad.v

@@ -667,9 +667,6 @@ begin  -- rtl
           dma_snd_wrreq   <= '1';
           dma_snd_data_in <= PREAMBLE_BODY & fix_endian(ahbmi.hrdata);
           v.count         := r.count - 1;
-          if r.count = 2 then
-            v.hbusreq := '0';
-          end if;
           v.state := dma_wait_busy;
         end if;
 

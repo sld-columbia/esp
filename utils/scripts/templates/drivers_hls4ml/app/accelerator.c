@@ -22,7 +22,7 @@ static int validate_buffer(token_t *out, token_t *gold)
 	// Validation expecting results of a classifier in the range [0, 1]
 	// MODIFY the validation below if needed.
 	int threshold = fl2fx(0.5);
-	
+
 	for (i = 0; i < nbursts; i++)
 		for (j = 0; j < out_words; j++)
 		        if ((gold[i * out_words_adj + j] < threshold &&
@@ -50,14 +50,18 @@ static void init_buffer(token_t *in, token_t *gold)
 		exit(1);
 	}
 
-	i = 0;
 	val_float = 0;
 	fscanf(fd, "%f", &val_float);
-	while(!feof(fd))
-	{
-		in[i++] = (token_t) fl2fx(val_float);
-		fscanf(fd, "%f", &val_float);
-	}
+	for (i = 0; i < nbursts; i++)
+		for (j = 0; j < in_words; j++) {
+			if (feof(fd)) {
+				printf("Error: unexpected EOF data/tb_input_features.dat");
+				fclose(fd);
+				exit(EXIT_FAILURE);
+			}
+			in[i * in_words_adj + j] = (token_t) fl2fx(val_float);
+			fscanf(fd, "%f", &val_float);
+		}
 	fclose(fd);
 
 	// Load golden output
@@ -67,13 +71,17 @@ static void init_buffer(token_t *in, token_t *gold)
 		exit(1);
 	}
 
-	i = 0;
 	val_float = 0;
 	fscanf(fd, "%f", &val_float);
-	while(!feof(fd))
-	{
-		gold[i++] = (token_t) fl2fx(val_float);
-		fscanf(fd, "%f", &val_float);
+	for (i = 0; i < nbursts; i++)
+		for (j = 0; j < out_words; j++) {
+			if (feof(fd)) {
+				printf("Error: unexpected EOF data/tb_output_predictions_fixed.dat");
+				fclose(fd);
+				exit(EXIT_FAILURE);
+			}
+			gold[i * out_words_adj + j] = (token_t) fl2fx(val_float);
+			fscanf(fd, "%f", &val_float);
 	}
 	fclose(fd);
 }

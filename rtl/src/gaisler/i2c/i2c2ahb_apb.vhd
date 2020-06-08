@@ -88,7 +88,8 @@ architecture rtl of i2c2ahb_apb is
   -- AMBA PnP
   constant PCONFIG : apb_config_type := (
     0 => ahb_device_reg(VENDOR_GAISLER, GAISLER_I2C2AHB, 0, 0, pirq),
-    1 => apb_iobar(paddr, pmask));
+    1 => apb_iobar(paddr, pmask),
+    2 => (others => '0'));
 
 
   type apb_reg_type is record

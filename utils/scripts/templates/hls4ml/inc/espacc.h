@@ -2,11 +2,12 @@
 #define INC_ESPACC_H
 
 #include "../inc/espacc_config.h"
-#include "../hls4ml/firmware/parameters.h"
 #include <cstdio>
 
 #include <ap_fixed.h>
 #include <ap_int.h>
+
+#include "defines.h"
 
 // Data types and constants
 #define VALUES_PER_WORD (DMA_SIZE / DATA_BITWIDTH)
@@ -63,7 +64,7 @@ typedef struct dma_info {
 
 void top(dma_word_t *out, dma_word_t *in1,
 	 const unsigned conf_info_nbursts,
-	 dma_info_t *load_ctrl, dma_info_t *store_ctrl);
+	 dma_info_t &load_ctrl, dma_info_t &store_ctrl);
 
 void compute(input_t _inbuff[SIZE_IN_CHUNK_DATA],
 	     result_t _outbuff[SIZE_OUT_CHUNK_DATA]);

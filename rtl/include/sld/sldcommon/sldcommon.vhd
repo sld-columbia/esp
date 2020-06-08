@@ -112,6 +112,7 @@ package sldcommon is
       memtech                : integer;
       mmi64_width            : integer;
       ddrs_num               : integer;
+      slms_num               : integer;
       nocs_num               : integer;
       tiles_num              : integer;
       accelerators_num       : integer;
@@ -136,7 +137,7 @@ package sldcommon is
       mon_ddr          : in  monitor_ddr_vector(0 to ddrs_num-1);
       mon_noc          : in  monitor_noc_matrix(0 to nocs_num-1, 0 to tiles_num-1);
       mon_acc          : in  monitor_acc_vector(0 to relu(accelerators_num-1));
-      mon_mem          : in  monitor_mem_vector(0 to ddrs_num-1);
+      mon_mem          : in  monitor_mem_vector(0 to ddrs_num+slms_num-1);
       mon_l2           : in  monitor_cache_vector(0 to relu(l2_num-1));
       mon_llc          : in  monitor_cache_vector(0 to relu(llc_num-1));
       mon_dvfs         : in  monitor_dvfs_vector(0 to tiles_num-1)
@@ -216,5 +217,62 @@ package sldcommon is
       pslverr : out std_ulogic;
       prdata  : out std_logic_vector(APB_DW - 1 downto 0));
   end component esplink;
+
+
+  -- Shared Local Memory
+
+  component ahbslm is
+    generic (
+      hindex : integer;
+      haddr  : integer;
+      hmask  : integer;
+      tech   : integer;
+      mbytes : integer);
+    port (
+      rst    : in  std_ulogic;
+      clk    : in  std_ulogic;
+      ahbsi  : in  ahb_slv_in_type;
+      ahbso  : out ahb_slv_out_type);
+  end component ahbslm;
+
+  component slm_bank_1mb_unisim is
+    port (
+      CLK  : in  std_ulogic;
+      CE0  : in  std_ulogic;
+      A0   : in  std_logic_vector(16 downto 0);
+      D0   : in  std_logic_vector(63 downto 0);
+      WE0  : in  std_ulogic;
+      WEM0 : in  std_logic_vector(63 downto 0);
+      CE1  : in  std_ulogic;
+      A1   : in  std_logic_vector(16 downto 0);
+      Q1   : out std_logic_vector(63 downto 0));
+  end component slm_bank_1mb_unisim;
+
+  component slm_bank_2mb_unisim is
+    port (
+      CLK  : in  std_ulogic;
+      CE0  : in  std_ulogic;
+      A0   : in  std_logic_vector(17 downto 0);
+      D0   : in  std_logic_vector(63 downto 0);
+      WE0  : in  std_ulogic;
+      WEM0 : in  std_logic_vector(63 downto 0);
+      CE1  : in  std_ulogic;
+      A1   : in  std_logic_vector(17 downto 0);
+      Q1   : out std_logic_vector(63 downto 0));
+  end component slm_bank_2mb_unisim;
+
+  component slm_bank_4mb_unisim is
+    port (
+      CLK  : in  std_ulogic;
+      CE0  : in  std_ulogic;
+      A0   : in  std_logic_vector(18 downto 0);
+      D0   : in  std_logic_vector(63 downto 0);
+      WE0  : in  std_ulogic;
+      WEM0 : in  std_logic_vector(63 downto 0);
+      CE1  : in  std_ulogic;
+      A1   : in  std_logic_vector(18 downto 0);
+      Q1   : out std_logic_vector(63 downto 0));
+  end component slm_bank_4mb_unisim;
+
 
 end sldcommon;

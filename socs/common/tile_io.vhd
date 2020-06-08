@@ -215,6 +215,9 @@ architecture rtl of tile_io is
   signal interrupt_rdreq           : std_ulogic;
   signal interrupt_data_out        : misc_noc_flit_type;
   signal interrupt_empty           : std_ulogic;
+  signal interrupt_ack_wrreq       : std_ulogic;
+  signal interrupt_ack_data_in     : misc_noc_flit_type;
+  signal interrupt_ack_full        : std_ulogic;
 
   -- bus
   signal ahbsi            : ahb_slv_in_type;
@@ -235,6 +238,11 @@ architecture rtl of tile_io is
   signal remote_apb_ack   : std_ulogic;
   signal pready           : std_ulogic;
 
+  -- Interrupt ack to NoC
+  type intr_ack_fsm is (idle, send_packet);
+  signal intr_ack_state, intr_ack_state_next : intr_ack_fsm := idle;
+  signal header, header_next : std_logic_vector(MISC_NOC_FLIT_SIZE - 1 downto 0);
+  
   -- Tile parameters
   constant this_local_y           : local_yx                           := tile_y(io_tile_id);
   constant this_local_x           : local_yx                           := tile_x(io_tile_id);
@@ -245,55 +253,85 @@ architecture rtl of tile_io is
   constant this_remote_ahb_slv_en : std_logic_vector(0 to NAHBSLV - 1) := remote_ahb_mask(io_tile_id);
 
   attribute mark_debug : string;
-  attribute keep : string;
 
-  -- attribute mark_debug of ahbsi                 : signal is "true";
-  -- attribute mark_debug of ctrl_ahbso            : signal is "true";
-  -- attribute mark_debug of ahbmi                 : signal is "true";
-  -- attribute mark_debug of eth0_ahbmo            : signal is "true";
-  -- attribute mark_debug of edcl_ahbmo            : signal is "true";
-  -- attribute mark_debug of coherent_dma_selected : signal is "true";
-  -- attribute mark_debug of coherent_dma_rcv_rdreq    : signal is "true";
+  -- attribute mark_debug of irqi : signal is "true";
+  -- attribute mark_debug of irqo : signal is "true";
+  -- attribute mark_debug of irqi_fifo_overflow : signal is "true";
+  -- attribute mark_debug of noc_pirq : signal is "true";
+  -- attribute mark_debug of plic_pready : signal is "true";
+  -- attribute mark_debug of plic_pslverr : signal is "true";
+  attribute mark_debug of irq_sources : signal is "true";
+  
+  -- attribute mark_debug of ahbs_rcv_rdreq : signal is "true";
+  -- attribute mark_debug of ahbs_rcv_data_out : signal is "true";
+  -- attribute mark_debug of ahbs_rcv_empty : signal is "true";
+  -- attribute mark_debug of ahbs_snd_wrreq : signal is "true";
+  -- attribute mark_debug of ahbs_snd_data_in : signal is "true";
+  -- attribute mark_debug of ahbs_snd_full : signal is "true";
+  -- attribute mark_debug of ahbm_rcv_rdreq : signal is "true";
+  -- attribute mark_debug of ahbm_rcv_data_out : signal is "true";
+  -- attribute mark_debug of ahbm_rcv_empty : signal is "true";
+  -- attribute mark_debug of ahbm_snd_wrreq : signal is "true";
+  -- attribute mark_debug of ahbm_snd_data_in : signal is "true";
+  -- attribute mark_debug of ahbm_snd_full : signal is "true";
+  -- attribute mark_debug of remote_ahbs_rcv_rdreq : signal is "true";
+  -- attribute mark_debug of remote_ahbs_rcv_data_out : signal is "true";
+  -- attribute mark_debug of remote_ahbs_rcv_empty : signal is "true";
+  -- attribute mark_debug of remote_ahbs_snd_wrreq : signal is "true";
+  -- attribute mark_debug of remote_ahbs_snd_data_in : signal is "true";
+  -- attribute mark_debug of remote_ahbs_snd_full : signal is "true";
+  -- attribute mark_debug of dma_rcv_rdreq : signal is "true";
+  -- attribute mark_debug of dma_rcv_data_out : signal is "true";
+  -- attribute mark_debug of dma_rcv_empty : signal is "true";
+  -- attribute mark_debug of dma_snd_wrreq : signal is "true";
+  -- attribute mark_debug of dma_snd_data_in : signal is "true";
+  -- attribute mark_debug of dma_snd_full : signal is "true";
+  -- attribute mark_debug of dma_snd_atleast_4slots : signal is "true";
+  -- attribute mark_debug of dma_snd_exactly_3slots : signal is "true";
+  -- attribute mark_debug of coherent_dma_rcv_rdreq : signal is "true";
   -- attribute mark_debug of coherent_dma_rcv_data_out : signal is "true";
-  -- attribute mark_debug of coherent_dma_rcv_empty    : signal is "true";
-  -- attribute mark_debug of coherent_dma_snd_wrreq    : signal is"true";
-  -- attribute mark_debug of coherent_dma_snd_data_in  : signal is"true";
-  -- attribute mark_debug of coherent_dma_snd_full     : signal is"true";
-  -- attribute mark_debug of remote_ahbs_rcv_rdreq     : signal is"true";
-  -- attribute mark_debug of remote_ahbs_rcv_data_out  : signal is"true";
-  -- attribute mark_debug of remote_ahbs_rcv_empty     : signal is"true";
-  -- attribute mark_debug of remote_ahbs_snd_wrreq     : signal is"true";
-  -- attribute mark_debug of remote_ahbs_snd_data_in   : signal is"true";
-  -- attribute mark_debug of remote_ahbs_snd_full      : signal is"true";
-
-  attribute keep of noc_apbi_wirq : signal is "true";
-  attribute keep of noc_apbo : signal is "true";
-  attribute keep of apb_snd_wrreq : signal is "true";
-  attribute keep of apb_snd_data_in : signal is "true";
-  attribute keep of apb_snd_full: signal is "true";
-  attribute keep of apb_rcv_rdreq : signal is "true";
-  attribute keep of apb_rcv_data_out : signal is "true";
-  attribute keep of apb_rcv_empty : signal is "true";
-  attribute keep of pready : signal is "true";
-  attribute keep of plic_pready : signal is "true";
-  attribute keep of plic_pslverr : signal is "true";
-  attribute keep of irq_sources : signal is "true";
-  attribute keep of irq : signal is "true";
-
-  attribute mark_debug of noc_apbi_wirq : signal is "true";
-  attribute mark_debug of noc_apbo : signal is "true";
-  attribute mark_debug of apb_snd_wrreq : signal is "true";
-  attribute mark_debug of apb_snd_data_in : signal is "true";
-  attribute mark_debug of apb_snd_full: signal is "true";
+  -- attribute mark_debug of coherent_dma_rcv_empty : signal is "true";
+  -- attribute mark_debug of coherent_dma_snd_wrreq : signal is "true";
+  -- attribute mark_debug of coherent_dma_snd_data_in : signal is "true";
+  -- attribute mark_debug of coherent_dma_snd_full : signal is "true";
   attribute mark_debug of apb_rcv_rdreq : signal is "true";
   attribute mark_debug of apb_rcv_data_out : signal is "true";
   attribute mark_debug of apb_rcv_empty : signal is "true";
-  attribute mark_debug of pready : signal is "true";
-  attribute mark_debug of plic_pready : signal is "true";
-  attribute mark_debug of plic_pslverr : signal is "true";
-  attribute mark_debug of irq_sources : signal is "true";
-  attribute mark_debug of irq : signal is "true";
+  attribute mark_debug of apb_snd_wrreq : signal is "true";
+  attribute mark_debug of apb_snd_data_in : signal is "true";
+  attribute mark_debug of apb_snd_full : signal is "true";
+  -- attribute mark_debug of remote_apb_rcv_rdreq : signal is "true";
+  -- attribute mark_debug of remote_apb_rcv_data_out : signal is "true";
+  -- attribute mark_debug of remote_apb_rcv_empty : signal is "true";
+  -- attribute mark_debug of remote_apb_snd_wrreq : signal is "true";
+  -- attribute mark_debug of remote_apb_snd_data_in : signal is "true";
+  -- attribute mark_debug of remote_apb_snd_full : signal is "true";
+  -- attribute mark_debug of local_apb_rcv_rdreq : signal is "true";
+  -- attribute mark_debug of local_apb_rcv_data_out : signal is "true";
+  -- attribute mark_debug of local_apb_rcv_empty : signal is "true";
+  -- attribute mark_debug of local_remote_apb_snd_wrreq : signal is "true";
+  -- attribute mark_debug of local_remote_apb_snd_data_in : signal is "true";
+  -- attribute mark_debug of local_remote_apb_snd_full : signal is "true";
+  -- attribute mark_debug of irq_ack_rdreq : signal is "true";
+  -- attribute mark_debug of irq_ack_data_out : signal is "true";
+  -- attribute mark_debug of irq_ack_empty : signal is "true";
+  -- attribute mark_debug of irq_wrreq : signal is "true";
+  -- attribute mark_debug of irq_data_in : signal is "true";
+  -- attribute mark_debug of irq_full : signal is "true";
+  attribute mark_debug of interrupt_rdreq : signal is "true";
+  attribute mark_debug of interrupt_data_out : signal is "true";
+  attribute mark_debug of interrupt_empty : signal is "true";
+  attribute mark_debug of interrupt_ack_wrreq : signal is "true";
+  attribute mark_debug of interrupt_ack_data_in : signal is "true";
+  attribute mark_debug of interrupt_ack_full : signal is "true";
+  attribute mark_debug of noc_apbi_wirq : signal is "true";
+  -- attribute mark_debug of noc_apbo : signal is "true";
 
+  attribute mark_debug of intr_ack_state : signal is "true";
+  attribute mark_debug of intr_ack_state_next : signal is "true";
+  attribute mark_debug of header : signal is "true";
+  attribute mark_debug of header_next : signal is "true";
+  
 begin
 
   -----------------------------------------------------------------------------
@@ -404,7 +442,7 @@ begin
         haddr    => ahbrom_haddr,
         hmask    => ahbrom_hmask,
         tech     => 0,
-        kbytes   => 100,
+        kbytes   => 128,
         pipe     => 0,
         maccsz   => AHBDW,
         fname    => "prom.srec"
@@ -520,14 +558,93 @@ begin
         ahbsi     => ahbsi,
         ahbso     => ahbso(clint_hindex));
 
+    -- TODO: if the interrupt_ack queue is full this entity may miss some irq
+    -- restore message to the interrupt controller
+    fsm_intr_ack_update : process (clk, rst)
+    begin
+      if rst = '0' then
+        intr_ack_state <= idle;
+        header <= (others => '0');
+      elsif clk'event and clk = '1' then
+        intr_ack_state <= intr_ack_state_next;
+        header <= header_next;
+      end if;
+    end process fsm_intr_ack_update;
+
+    -- purpose: send interrupt acknowledge to accelerator with level-sensitive interrupts
+    fsm_intr_ack: process (intr_ack_state, noc_apbi_wirq, plic_pready, interrupt_ack_full, header) is
+      variable state_reg : intr_ack_fsm;
+      variable irq_pwdata_hit : std_ulogic;
+      variable intr_id : integer range 0 to NAHBIRQ - 1;
+      variable header_reg : std_logic_vector(MISC_NOC_FLIT_SIZE - 1 downto 0);
+      variable dest_y, dest_x : local_yx;
+    begin  -- process fsm_intr_ack
+      state_reg := intr_ack_state;
+      header_reg := header;
+      interrupt_ack_wrreq <= '0';
+      interrupt_ack_data_in <= (others => '0');
+
+      irq_pwdata_hit := '0';
+      dest_y := (others => '0');
+      dest_x := (others => '0');
+      for i in 0 to CFG_TILES_NUM - 1 loop
+        if tile_irq_type(i) = 1 and
+            tile_apb_irq(i) = to_integer(unsigned(noc_apbi_wirq.pwdata)) - 1 then
+          irq_pwdata_hit := '1';
+          dest_y := tile_y(i);
+          dest_x := tile_x(i);
+        end if;
+      end loop;  -- i
+      
+      case intr_ack_state is
+
+        when idle =>
+          
+          if (plic_pready = '1' and noc_apbi_wirq.penable = '1' and noc_apbi_wirq.psel(2) = '1' and
+              noc_apbi_wirq.pwrite = '1' and noc_apbi_wirq.paddr(11 downto 0) = x"004" and
+              noc_apbi_wirq.paddr(31 downto 16) = x"0c20" and irq_pwdata_hit = '1') then
+
+            header_reg := create_header(MISC_NOC_FLIT_SIZE, this_local_y, this_local_x, dest_y, dest_x,
+                                        INTERRUPT, "0000");
+            header_reg(MISC_NOC_FLIT_SIZE - 1 downto
+                       MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH) := PREAMBLE_1FLIT;
+
+            if interrupt_ack_full = '0' then
+              interrupt_ack_wrreq <= '1';
+              interrupt_ack_data_in <= header_reg;
+            else
+              state_reg := send_packet;
+            end if;
+          end if;
+
+        when send_packet =>
+
+          if interrupt_ack_full = '0' then
+            interrupt_ack_wrreq <= '1';
+            interrupt_ack_data_in <= header_reg;
+            state_reg := idle;
+          end if;
+
+      end case;
+      
+      intr_ack_state_next <= state_reg;
+      header_next <= header_reg;
+
+    end process fsm_intr_ack; 
+   
   end generate;
 
   unused_riscv_irq_gen: if GLOB_CPU_ARCH /= ariane generate
     irq <= (others => '0');
     timer_irq <= (others => '0');
     ipi <= (others => '0');
-  end generate;
 
+    interrupt_ack_wrreq <= '0';
+    interrupt_ack_data_in <= (others => '0');
+    intr_ack_state_next <= idle;
+    header_next <= (others => '0');
+  end generate;
+  
   ----------------------------------------------------------------------
   ---  APB 3: Timer ----------------------------------------------------
   ----------------------------------------------------------------------
@@ -665,8 +782,8 @@ begin
       local_y          => this_local_y,
       local_x          => this_local_x,
       mem_hindex       => ddr_hindex(0),
-      mem_num          => CFG_NMEM_TILE,
-      mem_info         => tile_mem_list,
+      mem_num          => CFG_NMEM_TILE + CFG_NSLM_TILE,
+      mem_info         => tile_acc_mem_list(0 to CFG_NMEM_TILE + CFG_NSLM_TILE - 1),
       slv_y            => tile_y(io_tile_id),
       slv_x            => tile_x(io_tile_id),
       retarget_for_dma => 1,
@@ -820,8 +937,7 @@ begin
       interrupt_empty    => interrupt_empty);
 
   -- Remote uncached slave and non-coherent DMA requests
-  -- Requestes may be directed to he frame buffer or the boot ROM
-  -- For now, the boot ROM is only present during simulation
+  -- Requestes may be directed to the frame buffer or the boot ROM
   mem_noc2ahbm_1 : mem_noc2ahbm
     generic map (
       tech        => CFG_FABTECH,
@@ -945,6 +1061,9 @@ begin
       interrupt_rdreq           => interrupt_rdreq,
       interrupt_data_out        => interrupt_data_out,
       interrupt_empty           => interrupt_empty,
+      interrupt_ack_wrreq       => interrupt_ack_wrreq,
+      interrupt_ack_data_in     => interrupt_ack_data_in,
+      interrupt_ack_full        => interrupt_ack_full,
       noc1_out_data             => noc1_output_port,
       noc1_out_void             => noc1_data_void_out,
       noc1_out_stop             => noc1_stop_in,

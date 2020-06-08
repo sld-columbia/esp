@@ -84,7 +84,8 @@ constant INPEN_RESVAL : std_logic_vector(31 downto 0) := conv_std_logic_vector(i
 
 constant pconfig : apb_config_type := (
   0 => ahb_device_reg ( VENDOR_GAISLER, GAISLER_GPIO, 0, REVISION, pirq),
-  1 => apb_iobar(paddr, pmask));
+  1 => apb_iobar(paddr, pmask),
+  2 => (others => '0'));
 
 -- Prevent tools from issuing index errors for unused code
 function calc_nirqmux return integer is

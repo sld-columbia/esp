@@ -29,13 +29,16 @@ use std.textio.all;
     local_x        : local_yx;
     mem_num        : integer;
     cacheable_mem_num : integer;
-    mem_info       : tile_mem_info_vector(0 to MEM_MAX_NUM);
+    mem_info       : tile_mem_info_vector(0 to CFG_NMEM_TILE + CFG_NSLM_TILE);
     io_y           : local_yx;
     io_x           : local_yx;
     pindex         : integer := 0;
     paddr          : integer := 0;
     pmask          : integer := 16#fff#;
+    paddr_ext      : integer := 0;
+    pmask_ext      : integer := 16#fff#;
     pirq           : integer := 0;
+    irq_type       : integer := 0;
     scatter_gather : integer := 1;
     sets           : integer := 256;
     ways           : integer := 8;
@@ -89,6 +92,10 @@ use std.textio.all;
     interrupt_wrreq   : out std_ulogic;
     interrupt_data_in : out misc_noc_flit_type;
     interrupt_full    : in  std_ulogic;
+    -- Noc plane miscellaneous (NoC -> tile)
+    interrupt_ack_rdreq    : out std_ulogic;
+    interrupt_ack_data_out : in  misc_noc_flit_type;
+    interrupt_ack_empty    : in  std_ulogic;
     -- Noc plane miscellaneous (tile -> NoC)
     apb_snd_wrreq     : out std_ulogic;
     apb_snd_data_in   : out misc_noc_flit_type;
@@ -123,7 +130,8 @@ end;
   -- <<devid>>
   constant pconfig : apb_config_type := (
     0 => ahb_device_reg (vendorid, devid, 0, revision, pirq),
-    1 => apb_iobar(paddr, pmask));
+    1 => apb_iobar(paddr, pmask),
+    2 => apb_iobar(paddr_ext, pmask_ext));
   signal apbi_paddr : std_logic_vector(31 downto 0);
 
   -- IRQ
@@ -144,7 +152,7 @@ end;
   signal pllclk_int        : std_ulogic;
   signal mon_dvfs_feedthru : monitor_dvfs_type;
 
-  constant cacheable_mem_info : tile_mem_info_vector(0 to MEM_MAX_NUM - 1) := mem_info(0 to MEM_MAX_NUM - 1);
+  constant nofb_mem_info : tile_mem_info_vector(0 to CFG_NSLM_TILE + CFG_NMEM_TILE - 1) := mem_info(0 to CFG_NSLM_TILE + CFG_NMEM_TILE - 1);
 
 begin
 
@@ -174,8 +182,8 @@ begin
       local_x          => local_x,
       retarget_for_dma => 1,
       mem_axi_port     => 0,
-      mem_num          => cacheable_mem_num,
-      mem_info         => cacheable_mem_info,
+      mem_num          => CFG_NSLM_TILE + CFG_NMEM_TILE,
+      mem_info         => nofb_mem_info,
       slv_y            => io_y,
       slv_x            => io_x)
     port map (
@@ -239,11 +247,14 @@ begin
   irq_header(MISC_NOC_FLIT_SIZE-PREAMBLE_WIDTH-1 downto 0) <=
     irq_header_i(MISC_NOC_FLIT_SIZE-PREAMBLE_WIDTH-1 downto 0);
 
+ 
   -- Interrupt over NoC
-  irq_send: process (irq, interrupt_full, irq_state, irq_header)
+  irq_send: process (irq, interrupt_full, irq_state, irq_header,
+                     interrupt_ack_empty, interrupt_ack_data_out)
   begin  -- process irq_send
     interrupt_data_in <= irq_header;
     interrupt_wrreq <= '0';
+    interrupt_ack_rdreq <= '0';
     irq_next <= irq_state;
 
     case irq_state is
@@ -264,13 +275,32 @@ begin
         end if;
 
       when wait_for_clear_irq =>
-        if irq(pirq) = '0' then
-          irq_next <= idle;
+        if irq_type = 0 then
+          if irq(pirq) = '0' then
+            irq_next <= idle;
+          end if;
+        else
+          if interrupt_ack_empty = '0' then
+            interrupt_ack_rdreq <= '1';
+            if acc_done = '0' then
+              irq_next <= idle;
+            else
+              if interrupt_full = '1' then
+                irq_next <= pending;
+              else
+                interrupt_wrreq <= '1';
+                irq_next <= wait_for_clear_irq;
+              end if;
+            end if;
+          end if;
+
         end if;
 
       when others =>
         irq_next <= idle;
+
     end case;
+
   end process irq_send;
 
   -- Update FSM state

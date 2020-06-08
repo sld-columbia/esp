@@ -77,7 +77,7 @@ constant NAHBAMR   : integer := 4;  -- maximum address mapping registers
 constant NAHBIR    : integer := 4;  -- maximum AHB identification registers
 constant NAHBCFG   : integer := NAHBIR + NAHBAMR;  -- words in AHB config block
 constant NAPBIR    : integer := 1;  -- maximum APB configuration words
-constant NAPBAMR   : integer := 1;  -- maximum APB configuration words
+constant NAPBAMR   : integer := 2;  -- maximum APB configuration words
 constant NAPBCFG   : integer := NAPBIR + NAPBAMR;  -- words in APB config block
 constant NBUS      : integer := 4;
 
@@ -316,7 +316,10 @@ type apb_config_type is array (0 to NAPBCFG-1) of amba_config_word;
      '0', '0', '0', '0', '0', (others => '0'));
 
   constant hconfig_none : ahb_config_type := (others => zx);
-  constant pconfig_none : apb_config_type := (others => zx);
+  constant pconfig_none : apb_config_type := (
+    2 => (others => '0'),
+    others => zx
+    );
 
 
 -------------------------------------------------------------------------------
@@ -525,8 +528,7 @@ type apb_config_type is array (0 to NAPBCFG-1) of amba_config_word;
   function apb_slv_decode (
     signal pconfig         : apb_config_type;
     signal haddr           : std_logic_vector(11 downto 0);
-    signal extended_haddr  : std_logic_vector(11 downto 0);
-    constant overlap       : integer range 0 to 10)
+    signal extended_haddr  : std_logic_vector(7 downto 0))
     return std_ulogic;
 
   function ahb_device_reg(vendor : vendor_t; device : devid_t;
@@ -1161,27 +1163,26 @@ package body amba is
   function apb_slv_decode (
     signal pconfig         : apb_config_type;
     signal haddr           : std_logic_vector(11 downto 0);
-    signal extended_haddr  : std_logic_vector(11 downto 0);
-    constant overlap       : integer range 0 to 10)
+    signal extended_haddr  : std_logic_vector(7 downto 0))
     return std_ulogic is
-    variable selected : std_ulogic;
-    constant zero12 : std_logic_vector(11 downto 0) := (others => '0');
   begin
-    selected := '0';
-    if (extended_haddr(11 downto overlap) /= zero12(11 downto overlap)) and (GLOB_CPU_ARCH /= leon3) then
+    if (pconfig(2)(1 downto 0) = "01") and (extended_haddr /= "00000000") then
       -- Extended APB address
-      if ((pconfig(1)(1 downto 0) = "01") and
-          ((pconfig(1)(31 downto 20) and pconfig(1)(15 downto 4)) =
-           (extended_haddr and pconfig(1)(15 downto 4))))
-      then selected := '1'; end if;
-    else
+      if (pconfig(2)(27 downto 20) and pconfig(2)(11 downto 4)) = (extended_haddr and pconfig(2)(11 downto 4)) then
+        return '1';
+      else
+        return '0';
+      end if;
+    elsif (pconfig(1)(1 downto 0) = "01") and (pconfig(2)(1 downto 0) = "00") and (extended_haddr = "00000000") then
       -- Standard APB address decode
-      if ((pconfig(1)(1 downto 0) = "01") and
-          ((pconfig(1)(31 downto 20) and pconfig(1)(15 downto 4)) =
-           (haddr and pconfig(1)(15 downto 4))))
-      then selected := '1'; end if;
+      if (pconfig(1)(31 downto 20) and pconfig(1)(15 downto 4)) = (haddr and pconfig(1)(15 downto 4)) then
+        return '1';
+      else
+        return '0';
+      end if;
+    else
+      return '0';
     end if;
-    return selected;
   end;
 
   function ahb_device_reg(vendor : vendor_t; device : devid_t;

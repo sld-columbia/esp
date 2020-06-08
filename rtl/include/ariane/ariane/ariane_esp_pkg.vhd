@@ -20,6 +20,8 @@ package ariane_esp_pkg is
       APBLength        : std_logic_vector(63 downto 0);
       CLINTBase        : std_logic_vector(63 downto 0);
       CLINTLength      : std_logic_vector(63 downto 0);
+      SLMBase          : std_logic_vector(63 downto 0);
+      SLMLength        : std_logic_vector(63 downto 0);
       DRAMBase         : std_logic_vector(63 downto 0);
       DRAMLength       : std_logic_vector(63 downto 0);
       DRAMCachedLength : std_logic_vector(63 downto 0));
@@ -35,6 +37,8 @@ package ariane_esp_pkg is
       dramo       : in  axi_somi_type;
       clinti      : out axi_mosi_type;
       clinto      : in  axi_somi_type;
+      slmi        : out axi_mosi_type;
+      slmo        : in  axi_somi_type;
       apbi        : out apb_slv_in_type;
       apbo        : in  apb_slv_out_vector;
       apb_req     : out std_ulogic;

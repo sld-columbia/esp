@@ -120,12 +120,14 @@ entity sgmii_vcu118 is
     pirq            : integer := 0;
     debugmem        : integer := 0;
     tech            : integer := 0;
+    vcu128          : integer range 0 to 1 := 0;
     simulation      : boolean := false
     );
   port(
     -- Tranceiver Interface
     sgmiii   : in  eth_sgmii_in_type;
     sgmiio   : out eth_sgmii_out_type;
+    sgmii_dummy : in std_logic;
     -- GMII Interface (client MAC <=> PCS)
     gmiii    : out eth_in_type;
     gmiio    : in  eth_out_type;
@@ -146,7 +148,8 @@ architecture top_level of sgmii_vcu118 is
 
   constant pconfig : apb_config_type := (
     0 => ahb_device_reg (VENDOR_GAISLER, GAISLER_SGMII, 0, REVISION, pirq),
-    1 => apb_iobar(paddr, pmask));
+    1 => apb_iobar(paddr, pmask),
+    2 => (others => '0'));
 
   component sgmii is
     port (
@@ -202,6 +205,62 @@ architecture top_level of sgmii_vcu118 is
       rx_vtc_rdy             : out std_logic;
       reset                  : in  std_logic);
   end component sgmii;
+
+  component sgmii_vcu128 is
+    port (
+      dummy_port_in          : in  std_logic;
+      txp_0                  : out std_logic;
+      txn_0                  : out std_logic;
+      rxp_0                  : in  std_logic;
+      rxn_0                  : in  std_logic;
+      signal_detect_0        : in  std_logic;
+      gmii_txd_0             : in  std_logic_vector (7 downto 0);
+      gmii_tx_en_0           : in  std_logic;
+      gmii_tx_er_0           : in  std_logic;
+      gmii_rxd_0             : out std_logic_vector (7 downto 0);
+      gmii_rx_dv_0           : out std_logic;
+      gmii_rx_er_0           : out std_logic;
+      gmii_isolate_0         : out std_logic;
+      sgmii_clk_r_0          : out std_logic;
+      sgmii_clk_f_0          : out std_logic;
+      sgmii_clk_en_0         : out std_logic;
+      speed_is_10_100_0      : in  std_logic;
+      speed_is_100_0         : in  std_logic;
+      an_interrupt_0         : out std_logic;
+      an_adv_config_vector_0 : in  std_logic_vector (15 downto 0);
+      an_restart_config_0    : in  std_logic;
+      status_vector_0        : out std_logic_vector (15 downto 0);
+      configuration_vector_0 : in  std_logic_vector (4 downto 0);
+      clk125m                : in  std_logic;
+      clk312                 : in  std_logic;
+      rx_btval               : in  std_logic_vector (8 downto 0);
+      tx_bsc_rst             : in  std_logic;
+      rx_bsc_rst             : in  std_logic;
+      tx_bs_rst              : in  std_logic;
+      rx_bs_rst              : in  std_logic;
+      tx_rst_dly             : in  std_logic;
+      rx_rst_dly             : in  std_logic;
+      tx_bsc_en_vtc          : in  std_logic;
+      rx_bsc_en_vtc          : in  std_logic;
+      tx_bs_en_vtc           : in  std_logic;
+      rx_bs_en_vtc           : in  std_logic;
+      riu_clk                : in  std_logic;
+      riu_addr               : in  std_logic_vector (5 downto 0);
+      riu_wr_data            : in  std_logic_vector (15 downto 0);
+      riu_wr_en              : in  std_logic;
+      riu_nibble_sel         : in  std_logic_vector (1 downto 0);
+      riu_prsnt              : out std_logic;
+      riu_valid              : out std_logic;
+      riu_rd_data            : out std_logic_vector (15 downto 0);
+      tx_pll_clk             : in  std_logic;
+      rx_pll_clk             : in  std_logic;
+      tx_rdclk               : in  std_logic;
+      tx_dly_rdy             : out std_logic;
+      tx_vtc_rdy             : out std_logic;
+      rx_dly_rdy             : out std_logic;
+      rx_vtc_rdy             : out std_logic;
+      reset                  : in  std_logic);
+  end component sgmii_vcu128;
 
   component sgmii_vcu118_clock_reset is
     generic (
@@ -540,59 +599,118 @@ begin
   speed_is_10_100 <= not gmiio.gbit;
   speed_is_100    <= gmiio.speed;
 
-  core_wrapper : sgmii
-    port map (
-      txp_0                  => sgmiio.txp,
-      txn_0                  => sgmiio.txn,
-      rxp_0                  => sgmiii.rxp,
-      rxn_0                  => sgmiii.rxn,
-      signal_detect_0        => signal_detect,
-      gmii_txd_0             => gmii_txd,
-      gmii_tx_en_0           => gmii_tx_en,
-      gmii_tx_er_0           => gmii_tx_er,
-      gmii_rxd_0             => gmii_rxd_int,
-      gmii_rx_dv_0           => gmii_rx_dv_int,
-      gmii_rx_er_0           => gmii_rx_er_int,
-      gmii_isolate_0         => gmii_isolate,
-      sgmii_clk_r_0          => sgmii_clk_r,
-      sgmii_clk_f_0          => sgmii_clk_f,
-      sgmii_clk_en_0         => sgmii_clk_en,
-      speed_is_10_100_0      => speed_is_10_100,
-      speed_is_100_0         => speed_is_100,
-      an_interrupt_0         => an_interrupt,
-      an_adv_config_vector_0 => an_adv_config_vector,
-      an_restart_config_0    => an_restart_config,
-      status_vector_0        => status_vector_int,
-      configuration_vector_0 => configuration_vector,
-      clk125m                => clk125m,
-      clk312                 => clk312,
-      rx_btval               => rx_btval,
-      tx_bsc_rst             => tx_bsc_rst,
-      rx_bsc_rst             => rx_bsc_rst,
-      tx_bs_rst              => tx_bs_rst,
-      rx_bs_rst              => rx_bs_rst,
-      tx_rst_dly             => tx_rst_dly,
-      rx_rst_dly             => rx_rst_dly,
-      tx_bsc_en_vtc          => tx_bsc_en_vtc,
-      rx_bsc_en_vtc          => rx_bsc_en_vtc,
-      tx_bs_en_vtc           => tx_bs_en_vtc,
-      rx_bs_en_vtc           => rx_bs_en_vtc,
-      riu_clk                => riu_clk,
-      riu_addr               => riu_addr,
-      riu_wr_data            => riu_wr_data,
-      riu_wr_en              => riu_wr_en,
-      riu_nibble_sel         => riu_nibble_sel,
-      riu_prsnt              => riu_prsnt,
-      riu_valid              => riu_valid,
-      riu_rd_data            => riu_rd_data,
-      tx_pll_clk             => tx_pll_clk,
-      rx_pll_clk             => rx_pll_clk,
-      tx_rdclk               => tx_rdclk,
-      tx_dly_rdy             => tx_dly_rdy,
-      tx_vtc_rdy             => tx_vtc_rdy,
-      rx_dly_rdy             => rx_dly_rdy,
-      rx_vtc_rdy             => rx_vtc_rdy,
-      reset                  => rst125m);
+  vcu118_gen: if vcu128 = 0 generate
+    core_wrapper : sgmii
+      port map (
+        txp_0                  => sgmiio.txp,
+        txn_0                  => sgmiio.txn,
+        rxp_0                  => sgmiii.rxp,
+        rxn_0                  => sgmiii.rxn,
+        signal_detect_0        => signal_detect,
+        gmii_txd_0             => gmii_txd,
+        gmii_tx_en_0           => gmii_tx_en,
+        gmii_tx_er_0           => gmii_tx_er,
+        gmii_rxd_0             => gmii_rxd_int,
+        gmii_rx_dv_0           => gmii_rx_dv_int,
+        gmii_rx_er_0           => gmii_rx_er_int,
+        gmii_isolate_0         => gmii_isolate,
+        sgmii_clk_r_0          => sgmii_clk_r,
+        sgmii_clk_f_0          => sgmii_clk_f,
+        sgmii_clk_en_0         => sgmii_clk_en,
+        speed_is_10_100_0      => speed_is_10_100,
+        speed_is_100_0         => speed_is_100,
+        an_interrupt_0         => an_interrupt,
+        an_adv_config_vector_0 => an_adv_config_vector,
+        an_restart_config_0    => an_restart_config,
+        status_vector_0        => status_vector_int,
+        configuration_vector_0 => configuration_vector,
+        clk125m                => clk125m,
+        clk312                 => clk312,
+        rx_btval               => rx_btval,
+        tx_bsc_rst             => tx_bsc_rst,
+        rx_bsc_rst             => rx_bsc_rst,
+        tx_bs_rst              => tx_bs_rst,
+        rx_bs_rst              => rx_bs_rst,
+        tx_rst_dly             => tx_rst_dly,
+        rx_rst_dly             => rx_rst_dly,
+        tx_bsc_en_vtc          => tx_bsc_en_vtc,
+        rx_bsc_en_vtc          => rx_bsc_en_vtc,
+        tx_bs_en_vtc           => tx_bs_en_vtc,
+        rx_bs_en_vtc           => rx_bs_en_vtc,
+        riu_clk                => riu_clk,
+        riu_addr               => riu_addr,
+        riu_wr_data            => riu_wr_data,
+        riu_wr_en              => riu_wr_en,
+        riu_nibble_sel         => riu_nibble_sel,
+        riu_prsnt              => riu_prsnt,
+        riu_valid              => riu_valid,
+        riu_rd_data            => riu_rd_data,
+        tx_pll_clk             => tx_pll_clk,
+        rx_pll_clk             => rx_pll_clk,
+        tx_rdclk               => tx_rdclk,
+        tx_dly_rdy             => tx_dly_rdy,
+        tx_vtc_rdy             => tx_vtc_rdy,
+        rx_dly_rdy             => rx_dly_rdy,
+        rx_vtc_rdy             => rx_vtc_rdy,
+        reset                  => rst125m);
+  end generate vcu118_gen;
+
+  vcu128_gen: if vcu128 /= 0 generate
+    core_wrapper : sgmii_vcu128
+      port map (
+        dummy_port_in          => sgmii_dummy,
+        txp_0                  => sgmiio.txp,
+        txn_0                  => sgmiio.txn,
+        rxp_0                  => sgmiii.rxp,
+        rxn_0                  => sgmiii.rxn,
+        signal_detect_0        => signal_detect,
+        gmii_txd_0             => gmii_txd,
+        gmii_tx_en_0           => gmii_tx_en,
+        gmii_tx_er_0           => gmii_tx_er,
+        gmii_rxd_0             => gmii_rxd_int,
+        gmii_rx_dv_0           => gmii_rx_dv_int,
+        gmii_rx_er_0           => gmii_rx_er_int,
+        gmii_isolate_0         => gmii_isolate,
+        sgmii_clk_r_0          => sgmii_clk_r,
+        sgmii_clk_f_0          => sgmii_clk_f,
+        sgmii_clk_en_0         => sgmii_clk_en,
+        speed_is_10_100_0      => speed_is_10_100,
+        speed_is_100_0         => speed_is_100,
+        an_interrupt_0         => an_interrupt,
+        an_adv_config_vector_0 => an_adv_config_vector,
+        an_restart_config_0    => an_restart_config,
+        status_vector_0        => status_vector_int,
+        configuration_vector_0 => configuration_vector,
+        clk125m                => clk125m,
+        clk312                 => clk312,
+        rx_btval               => rx_btval,
+        tx_bsc_rst             => tx_bsc_rst,
+        rx_bsc_rst             => rx_bsc_rst,
+        tx_bs_rst              => tx_bs_rst,
+        rx_bs_rst              => rx_bs_rst,
+        tx_rst_dly             => tx_rst_dly,
+        rx_rst_dly             => rx_rst_dly,
+        tx_bsc_en_vtc          => tx_bsc_en_vtc,
+        rx_bsc_en_vtc          => rx_bsc_en_vtc,
+        tx_bs_en_vtc           => tx_bs_en_vtc,
+        rx_bs_en_vtc           => rx_bs_en_vtc,
+        riu_clk                => riu_clk,
+        riu_addr               => riu_addr,
+        riu_wr_data            => riu_wr_data,
+        riu_wr_en              => riu_wr_en,
+        riu_nibble_sel         => riu_nibble_sel,
+        riu_prsnt              => riu_prsnt,
+        riu_valid              => riu_valid,
+        riu_rd_data            => riu_rd_data,
+        tx_pll_clk             => tx_pll_clk,
+        rx_pll_clk             => rx_pll_clk,
+        tx_rdclk               => tx_rdclk,
+        tx_dly_rdy             => tx_dly_rdy,
+        tx_vtc_rdy             => tx_vtc_rdy,
+        rx_dly_rdy             => rx_dly_rdy,
+        rx_vtc_rdy             => rx_vtc_rdy,
+        reset                  => rst125m);
+  end generate vcu128_gen;
 
   ------------------------------------------------------------------------------
   -- GMII (Aeroflex Gaisler) to GMII (Xilinx) style

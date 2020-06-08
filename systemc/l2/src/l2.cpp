@@ -353,6 +353,8 @@ void l2::ctrl()
 		    if (fwd_in.coh_msg == FWD_INV)
 			send_rsp_out(RSP_INVACK, fwd_in.req_id, 1, fwd_in.addr, 0);
 
+		    send_inval(fwd_in.addr);
+
 		    reqs[reqs_hit_i].state -= 4; // TODO remove hardcoding, also in other places
 
 		    break;

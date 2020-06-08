@@ -44,8 +44,8 @@ entity llc_wrapper is
     l2_cache_en   : integer                      := 0;
     cache_tile_id : cache_attribute_array;
     dma_tile_id   : dma_attribute_array;
-    tile_cache_id : tile_attribute_array;
-    tile_dma_id   : tile_attribute_array;
+    tile_cache_id : attribute_vector(0 to CFG_TILES_NUM - 1);
+    tile_dma_id   : attribute_vector(0 to CFG_TILES_NUM - 1);
     dma_y         : yx_vec(0 to 2**NLLC_MAX_LOG2 - 1);
     dma_x         : yx_vec(0 to 2**NLLC_MAX_LOG2 - 1);
     cache_y       : yx_vec(0 to 2**NL2_MAX_LOG2 - 1);

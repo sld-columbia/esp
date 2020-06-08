@@ -5,18 +5,17 @@
 #include <cstring>
 
 #include "myproject.h"
-#include "parameters.h"
 
 void load(input_t _inbuff[SIZE_IN_CHUNK_DATA], dma_word_t *in1, unsigned chunk,
-	  dma_info_t *load_ctrl, int base_index)
+	  dma_info_t &load_ctrl, int base_index)
 {
 load_data:
 
     unsigned base = SIZE_IN_CHUNK * chunk;
 
-    load_ctrl[chunk].index = base;
-    load_ctrl[chunk].length = SIZE_IN_CHUNK;
-    load_ctrl[chunk].size = SIZE_WORD_T;
+    load_ctrl.index = base;
+    load_ctrl.length = SIZE_IN_CHUNK;
+    load_ctrl.size = SIZE_WORD_T;
 
     for (unsigned i = 0; i < SIZE_IN_CHUNK; i++) {
     	load_label0:for(unsigned j = 0; j < VALUES_PER_WORD; j++) {
@@ -28,15 +27,15 @@ load_data:
 }
 
 void store(result_t _outbuff[SIZE_OUT_CHUNK_DATA], dma_word_t *out, unsigned chunk,
-	   dma_info_t *store_ctrl, int base_index)
+	   dma_info_t &store_ctrl, int base_index)
 {
 store_data:
 
     unsigned base = SIZE_OUT_CHUNK * chunk;
 
-    store_ctrl[chunk].index = base + base_index;
-    store_ctrl[chunk].length = SIZE_OUT_CHUNK;
-    store_ctrl[chunk].size = SIZE_WORD_T;
+    store_ctrl.index = base + base_index;
+    store_ctrl.length = SIZE_OUT_CHUNK;
+    store_ctrl.size = SIZE_WORD_T;
 
     for (unsigned i = 0; i < SIZE_OUT_CHUNK; i++) {
 	store_label1:for(unsigned j = 0; j < VALUES_PER_WORD; j++) {
@@ -57,7 +56,7 @@ void compute(input_t _inbuff[SIZE_IN_CHUNK_DATA], result_t _outbuff[SIZE_OUT_CHU
 }
 
 void top(dma_word_t *out, dma_word_t *in1, const unsigned conf_info_nbursts,
-	 dma_info_t *load_ctrl, dma_info_t *store_ctrl)
+	 dma_info_t &load_ctrl, dma_info_t &store_ctrl)
 {
 
 go:

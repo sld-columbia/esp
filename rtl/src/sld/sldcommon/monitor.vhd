@@ -27,6 +27,7 @@ entity monitor is
     memtech                : integer;
     mmi64_width            : integer;
     ddrs_num               : integer;
+    slms_num               : integer;
     nocs_num               : integer;
     tiles_num              : integer;
     accelerators_num       : integer;
@@ -51,7 +52,7 @@ entity monitor is
     mon_ddr         : in  monitor_ddr_vector(0 to ddrs_num-1);
     mon_noc         : in  monitor_noc_matrix(0 to nocs_num-1, 0 to tiles_num-1);
     mon_acc         : in  monitor_acc_vector(0 to relu(accelerators_num-1));
-    mon_mem          : in  monitor_mem_vector(0 to ddrs_num-1);
+    mon_mem         : in  monitor_mem_vector(0 to ddrs_num+slms_num-1);
     mon_l2          : in  monitor_cache_vector(0 to relu(l2_num-1));
     mon_llc         : in  monitor_cache_vector(0 to relu(llc_num-1));
     mon_dvfs        : in  monitor_dvfs_vector(0 to tiles_num-1)
@@ -210,7 +211,7 @@ architecture rtl of monitor is
   --      ...
   -- coh_reqX, coh_fwdX, ...
   function mem_offset (
-    constant mem : integer range -1 to ddrs_num;
+    constant mem : integer range -1 to ddrs_num + slms_num;
     constant reg : integer range 0 to 8)
     return integer is
     variable offset : integer;
@@ -241,7 +242,7 @@ architecture rtl of monitor is
     variable offset : integer;
   begin  -- noc_offset
     offset := (plane * tiles_num) + tile;
-    return mem_offset(ddrs_num - 1, 8) + (offset * mon_noc_tile_inject_en);
+    return mem_offset(ddrs_num + slms_num - 1, 8) + (offset * mon_noc_tile_inject_en);
   end noc_tile_inject_offset;
 
   -- X = nocs_num
@@ -395,14 +396,14 @@ architecture rtl of monitor is
   signal new_window             : std_logic;
   signal new_window_delayed     : std_logic;
   signal new_window_sync_ddr    : std_logic_vector(0 to ddrs_num-1);
-  signal new_window_sync_mem    : std_logic_vector(0 to llc_num-1);
+  signal new_window_sync_mem    : std_logic_vector(0 to ddrs_num+slms_num-1);
   signal new_window_sync_noc    : std_logic_vector(0 to nocs_num-1);
   signal new_window_sync_acc    : std_logic_vector(0 to accelerators_num-1);
   signal new_window_sync_l2     : std_logic_vector(0 to l2_num-1);
   signal new_window_sync_llc    : std_logic_vector(0 to llc_num-1);
   signal new_window_sync_dvfs   : std_logic_vector(0 to tiles_num-1);
   signal updated_ddr    : std_logic_vector(0 to ddrs_num-1);
-  signal updated_mem    : std_logic_vector(0 to llc_num-1);
+  signal updated_mem    : std_logic_vector(0 to ddrs_num+slms_num-1);
   signal updated_noc    : std_logic_vector(0 to nocs_num-1);
   signal updated_acc    : std_logic_vector(0 to accelerators_num-1);
   signal updated_l2     : std_logic_vector(0 to l2_num-1);
@@ -693,7 +694,7 @@ begin
   end generate ddr_monitor_enabled_gen;
 
   mem_monitor_enabled_gen: if mon_mem_en /= 0 generate
-    mem_gen: for i in 0 to ddrs_num-1 generate
+    mem_gen: for i in 0 to ddrs_num+slms_num-1 generate
       synchronizer_mem: synchronizer
         generic map (
           DATA_WIDTH => 1)
@@ -1203,7 +1204,7 @@ begin
     end if;
 
     if mon_mem_en /= 0 then
-      for i in 0 to ddrs_num-1 loop
+      for i in 0 to ddrs_num+slms_num-1 loop
         write(s, "MEM-" & integer'image(i) & ".coh_req : " & integer'image(mem_offset(i, MEM_COH_REQ)) & LF);
         writeline(output,s);
         write(s, "MEM-" & integer'image(i) & ".coh_fwd : " & integer'image(mem_offset(i, MEM_COH_FWD)) & LF);

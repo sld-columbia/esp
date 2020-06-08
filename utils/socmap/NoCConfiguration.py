@@ -13,6 +13,7 @@ import functools
 from soc import *
 from socmap_gen import NCPU_MAX
 from socmap_gen import NMEM_MAX
+from socmap_gen import NSLM_MAX
 from socmap_gen import NACC_MAX
 from socmap_gen import NTILE_MAX
 from socmap_gen import NFULL_COHERENT_MAX
@@ -49,9 +50,11 @@ class Tile():
     if soc.IPs.PROCESSORS.count(selection):
        self.label.config(bg="#ef6865")
     elif soc.IPs.MISC.count(selection):
-       self.label.config(bg="#6ab0d4")
+       self.label.config(bg="#fdfda0")
     elif soc.IPs.MEM.count(selection):
        self.label.config(bg="#6ab0d4")
+    elif soc.IPs.SLM.count(selection):
+       self.label.config(bg="#c9a6e4")
     elif soc.IPs.ACCELERATORS.count(selection):
        self.label.config(bg="#78cbbb")
        self.point_label.pack(side=LEFT)
@@ -333,6 +336,16 @@ class NoC():
             tot_mem += 1
     return tot_mem
 
+  def get_slm_num(self, soc):
+    tot_slm = 0
+    for y in range(0, self.rows):
+      for x in range(0, self.cols):
+         tile = self.topology[y][x]
+         selection = tile.ip_type.get()
+         if soc.IPs.SLM.count(selection):
+            tot_slm += 1
+    return tot_slm
+
   # WARNING: Geometry in this class only uses x=rows, y=cols, but socmap uses y=row, x=cols!
   def __init__(self):
     self.cols = 0
@@ -454,12 +467,14 @@ class NoCFrame(Pmw.ScrolledFrame):
     Label(self.noc_config_frame, height=1).pack()
     self.TOT_CPU = Label(self.noc_config_frame, anchor=W, width=20)
     self.TOT_MEM = Label(self.noc_config_frame, anchor=W, width=25)
+    self.TOT_SLM = Label(self.noc_config_frame, anchor=W, width=25)
     self.TOT_MISC = Label(self.noc_config_frame, anchor=W, width=20)
     self.TOT_ACC = Label(self.noc_config_frame, anchor=W, width=20)
     self.TOT_IVR = Label(self.noc_config_frame, anchor=W, width=20)
     self.TOT_CLKBUF = Label(self.noc_config_frame, anchor=W, width=20)
     self.TOT_CPU.pack(side=TOP, fill=BOTH)
     self.TOT_MEM.pack(side=TOP, fill=BOTH)
+    self.TOT_SLM.pack(side=TOP, fill=BOTH)
     self.TOT_MISC.pack(side=TOP, fill=BOTH)
     self.TOT_ACC.pack(side=TOP, fill=BOTH)
     Label(self.noc_config_frame, height=1).pack()
@@ -497,6 +512,7 @@ class NoCFrame(Pmw.ScrolledFrame):
     tot_io = 0
     tot_clkbuf = self.noc.get_clkbuf_num(self.soc)
     tot_mem = self.noc.get_mem_num(self.soc)
+    tot_slm = self.noc.get_slm_num(self.soc)
     tot_acc = self.noc.get_acc_num(self.soc)
     regions = self.noc.get_clk_regions()
     for y in range(0, self.noc.rows):
@@ -508,6 +524,7 @@ class NoCFrame(Pmw.ScrolledFrame):
     #update statistics
     self.TOT_CPU.config(text=" Num CPUs: " + str(tot_cpu))
     self.TOT_MEM.config(text=" Num memory controllers: " + str(tot_mem))
+    self.TOT_SLM.config(text=" Num local memory tiles: " + str(tot_slm))
     self.TOT_MISC.config(text=" Num I/O tiles: " + str(tot_io))
     self.TOT_ACC.config(text=" Num accelerators: " + str(tot_acc))
     self.TOT_IVR.config(text=" Num CLK regions: " + str(len(regions)))
@@ -567,7 +584,8 @@ class NoCFrame(Pmw.ScrolledFrame):
     self.message.delete(0.0, END)
     self.cfg_frame.sync_label.config(text="With synchronizers",fg="darkgreen")
     self.cfg_frame.set_cpu_specific_labels(self.soc)
-    if tot_cpu <= NCPU_MAX and tot_mem > 0 and tot_mem <= NMEM_MAX and tot_acc <= NACC_MAX and not tot_mem == 3 and tot_io == 1 and pll_ok == True and clkbuf_ok == True and clk_region_skip == 0 and tot_tiles <= NTILE_MAX and tot_full_coherent <= NFULL_COHERENT_MAX and tot_llc_coherent <= NLLC_COHERENT_MAX and not (self.soc.TECH != "virtexu" and tot_mem == 4) and not (tot_mem >= 2 and (self.noc.rows < 3 or self.noc.cols < 3)) and (self.noc.cols <= 8 and self.noc.rows <= 8) and (self.soc.CPU_ARCH.get() != "ariane" or tot_cpu <= 1) and (self.soc.CPU_ARCH.get() != "ariane" or not self.soc.cache_en.get()) and (tot_cpu <= 1 or self.soc.cache_en.get()) and (self.soc.llc_sets.get() < 8192 or self.soc.llc_ways.get() < 16 or tot_mem > 1):
+
+    if tot_cpu > 0 and tot_cpu <= NCPU_MAX and tot_mem > 0 and tot_mem <= NMEM_MAX and tot_slm <= NSLM_MAX and tot_acc <= NACC_MAX and not tot_mem == 3 and tot_io == 1 and pll_ok == True and clkbuf_ok == True and clk_region_skip == 0 and tot_tiles <= NTILE_MAX and tot_full_coherent <= NFULL_COHERENT_MAX and tot_llc_coherent <= NLLC_COHERENT_MAX and not (self.soc.TECH != "virtexu" and tot_mem == 4) and not (self.soc.TECH == "virtexu" and tot_mem >= 2 and (self.noc.rows < 3 or self.noc.cols < 3)) and (self.noc.cols <= 8 and self.noc.rows <= 8) and (self.soc.CPU_ARCH.get() != "ariane" or tot_cpu <= 1) and (self.soc.CPU_ARCH.get() != "ariane" or not self.soc.cache_en.get()) and (tot_cpu <= 1 or self.soc.cache_en.get()) and (self.soc.llc_sets.get() < 8192 or self.soc.llc_ways.get() < 16 or tot_mem > 1):
       self.done.config(state=NORMAL)
     else:
       string = ""
@@ -592,12 +610,14 @@ class NoCFrame(Pmw.ScrolledFrame):
         string += "There must be at least 1 memory tile and no more than " + str(NMEM_MAX) + ".\n"
       if (tot_mem == 3): 
         string += "Number of memory tiles must be a power of 2.\n" 
+      if (tot_slm > NSLM_MAX):
+        string += "There must be no more than " + str(NSLM_MAX) + ".\n"
       if (self.soc.TECH != "virtexu" and tot_mem == 4): 
         string += "4 memory tiles is only supported for virtexu (profpga-xcvu440).\n"
       if (self.soc.llc_sets.get() >= 8192 and self.soc.llc_ways.get() >= 16 and tot_mem == 1): 
-        string += "A 2MB LLC (4096 sets and 16 ways) requires multiple memory tiles.\n"
-      if (tot_mem >= 2 and (self.noc.rows < 3 or self.noc.cols < 3)):
-        string += "a 3x3 NoC or larger is recommended for multiple memory tiles.\n" 
+        string += "A 2MB LLC (8192 sets and 16 ways) requires multiple memory tiles.\n"
+      if (self.soc.TECH == "virtexu" and tot_mem >= 2 and (self.noc.rows < 3 or self.noc.cols < 3)):
+        string += "a 3x3 NoC or larger is recommended for multiple memory tiles for virtexu (profpga-xcvu440).\n" 
       if (tot_acc > NACC_MAX):
         string += "There must no more than " + str(NACC_MAX) + " (can be relaxed).\n"
       if (tot_tiles > NTILE_MAX):

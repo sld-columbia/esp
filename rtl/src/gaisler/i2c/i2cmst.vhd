@@ -100,7 +100,8 @@ architecture rtl of i2cmst is
   
   constant PCONFIG : apb_config_type := (
   0 => ahb_device_reg(VENDOR_GAISLER, GAISLER_I2CMST, 0, I2CMST_REV, pirq),
-  1 => apb_iobar(paddr, pmask));
+  1 => apb_iobar(paddr, pmask),
+  2 => (others => '0'));
 
   constant PRER_addr : std_logic_vector(7 downto 2) := "000000";
   constant CTR_addr  : std_logic_vector(7 downto 2) := "000001";

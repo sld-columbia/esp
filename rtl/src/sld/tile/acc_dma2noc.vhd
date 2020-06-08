@@ -53,12 +53,14 @@ entity acc_dma2noc is
     local_y     : local_yx;
     local_x     : local_yx;
     mem_num     : integer := 1;
-    mem_info    : tile_mem_info_vector(0 to MEM_MAX_NUM);
+    mem_info    : tile_mem_info_vector(0 to CFG_NMEM_TILE + CFG_NSLM_TILE);
     io_y        : local_yx;
     io_x        : local_yx;
     pindex                : integer                            := 0;
     paddr                 : integer                            := 0;
     pmask                 : integer                            := 16#fff#;
+    paddr_ext             : integer                            := 0;
+    pmask_ext             : integer                            := 16#fff#;
     pirq                  : integer                            := 0;
     revision              : integer                            := 0;
     devid                 : devid_t                   := 16#001#;
@@ -139,7 +141,8 @@ architecture rtl of acc_dma2noc is
   -- plug & play info
   constant pconfig : apb_config_type := (
     0 => ahb_device_reg (VENDOR_SLD, devid, 0, revision, pirq),
-    1 => apb_iobar(paddr, pmask));
+    1 => apb_iobar(paddr, pmask),
+    2 => (others => '0'));
   constant hprot : std_logic_vector(3 downto 0) := "0011";
 
   constant len_pad : std_logic_vector(GLOB_BYTE_OFFSET_BITS - 1 downto 0) := (others => '0');
@@ -920,24 +923,26 @@ begin  -- rtl
         else
           dma_snd_delay <= dma_snd_full_int;       -- for DVFS TRAFFIC policy
         end if;
-        if ((fixen_bufdout_valid = '1' and dvfs_transient = '0') and
+        if ((dvfs_transient = '0') and
             ((msg = RSP_P2P and p2p_rsp_snd_full = '0') or
              (msg /= RSP_P2P and dma_snd_full_int = '0'))) then
-          if msg = RSP_P2P  then
-            p2p_rsp_snd_data_in <= payload_data;
-            p2p_rsp_snd_wrreq <= '1';
-          else
-            dma_snd_data_in_int <= payload_data;
-            dma_snd_wrreq_int <= '1';
-          end if;
           write_burst <= '1';
           fixen_bufdout_ready <= '1';
-          if count = len then
-            clear_count <= '1';
-            dma_tran_done <= '1';
-            dma_next <= running;
-          else
-            increment_count <= '1';
+          if fixen_bufdout_valid = '1' then
+            if msg = RSP_P2P  then
+              p2p_rsp_snd_data_in <= payload_data;
+              p2p_rsp_snd_wrreq <= '1';
+            else
+              dma_snd_data_in_int <= payload_data;
+              dma_snd_wrreq_int <= '1';
+            end if;
+            if count = len then
+              clear_count <= '1';
+              dma_tran_done <= '1';
+              dma_next <= running;
+            else
+              increment_count <= '1';
+            end if;
           end if;
         end if;
 
@@ -959,13 +964,15 @@ begin  -- rtl
             tlb_valid <= '1';
             dma_next <= idle;
           end if;
-        elsif dma_rcv_empty_int = '0' and fixen_bufdin_ready = '1' and dvfs_transient = '0' then
-          read_burst <= '1';
-          dma_rcv_rdreq_int <= '1';
+        elsif dma_rcv_empty_int = '0' and dvfs_transient = '0' then
           fixen_bufdin_valid <= '1';
-          if preamble = PREAMBLE_TAIL then
-            dma_tran_done <= '1';
-            dma_next <= running;
+          read_burst <= '1';
+          if fixen_bufdin_ready = '1' then
+            dma_rcv_rdreq_int <= '1';
+            if preamble = PREAMBLE_TAIL then
+              dma_tran_done <= '1';
+              dma_next <= running;
+            end if;
           end if;
         end if;
 
