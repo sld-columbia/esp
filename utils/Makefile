@@ -372,48 +372,48 @@ ahbrom-distclean: ahbrom-clean
 ### Leon3 Linux ###
 sysroot/etc/init.d/S64esp : sysroot socmap.vhd esp_global.vhd .esp_config Makefile 
 	$(QUIET_INFO)echo "Generating esp load script" ; \
-	rm $@ ; \
+	rm -f $@ ; \
 	printf "cd /opt/drivers-esp\n" >> $@ ; \
-    printf "insmod contig_alloc.ko " >> $@; \
-    ddr_size=$$(sed -n 's/DDR_SIZE = \(0x[0-f]*\)/\1/p' ../../utils/socmap/socmap_gen.py)00000; \
-    nmem=$$(grep -c 'TILE_[0-8]*_[0-8]* = [0-9]* mem' .esp_config); \
-    size=$$(( $$ddr_size / $$nmem )); \
+	printf "insmod contig_alloc.ko " >> $@; \
+	ddr_size=$$(sed -n 's/DDR_SIZE = \(0x[0-f]*\)/\1/p' ../../utils/socmap/socmap_gen.py)00000; \
+	nmem=$$(grep -c 'TILE_[0-8]*_[0-8]* = [0-9]* mem' .esp_config); \
+	size=$$(( $$ddr_size / $$nmem )); \
 	sizes=(); \
-    starts=(); \
-    nddr=0; \
-    for i in $$(sed -n '/ddr_haddr : mem_attribute_array/,/others/p' socmap.vhd | sed -n 's/[0-9]* => 16#\([0-9]*\)#,/\1/p'); \
-    do  \
+	starts=(); \
+	nddr=0; \
+	for i in $$(sed -n '/ddr_haddr : mem_attribute_array/,/others/p' socmap.vhd | sed -n 's/[0-9]* => 16#\([0-9]*\)#,/\1/p'); \
+	do  \
 		str=0x$${i}00000; \
-        val=$$(printf "%d" "$$str"); \
+		val=$$(printf "%d" "$$str"); \
 		sp_val=$$(printf "%d" "$(LEON3_STACK)"); \
 		if [ $$val -ge $$(($$sp_val + 0x10)) ]; then \
-            starts+=("$$str"); \
-            nddr=$$((nddr+1)); \
-            sizes+=("$$size"); \
+			starts+=("$$str"); \
+			nddr=$$((nddr+1)); \
+			sizes+=("$$size"); \
 		elif [ $$(($$val + $$size)) -gt $$(($$sp_val + 0x10)) ]; then \
-            starts+=("$$((sp_val + 0x10))") ; \
-            nddr=$$((nddr+1)); \
-            sizes+="$$((($$val + $$size) - ($$sp_val + 0x10)))" ; \
+			starts+=("$$((sp_val + 0x10))") ; \
+			nddr=$$((nddr+1)); \
+			sizes+="$$((($$val + $$size) - ($$sp_val + 0x10)))" ; \
 		fi; \
-    done; \
+	done; \
 	printf "nddr=%d " $$nddr >> $@; \
-    printf "start=" >> $@; \
-    for (( i=0; i < $$nddr; i++ )); \
-    do \
-        printf "0x%x" $${starts[$$i]} >> $@ ; \
-        if [[ $$i -ne $$(($$nddr - 1)) ]]; then \
-            printf "," >>  $@; \
-        fi; \
-    done; \
-    printf " size=" >> $@; \
-    for (( i=0; i < $$nddr; i++ )); \
-    do \
-	printf "0x%x" $${sizes[$$i]} >> $@ ; \
-        if [[ $$i -ne $$(($$nddr - 1)) ]]; then \
+	printf "start=" >> $@; \
+	for (( i=0; i < $$nddr; i++ )); \
+	do \
+		printf "0x%x" $${starts[$$i]} >> $@ ; \
+		if [[ $$i -ne $$(($$nddr - 1)) ]]; then \
 			printf "," >>  $@; \
-        fi; \
-    done; \
-    printf " chunk_log=20\n" >> $@; \
+		fi; \
+	done; \
+	printf " size=" >> $@; \
+	for (( i=0; i < $$nddr; i++ )); \
+	do \
+		printf "0x%x" $${sizes[$$i]} >> $@ ; \
+		if [[ $$i -ne $$(($$nddr - 1)) ]]; then \
+			printf "," >>  $@; \
+		fi; \
+	done; \
+	printf " chunk_log=20\n" >> $@; \
 	l2_sets=$$(sed -n 's/constant CFG_L2_SETS\s*: integer := \([0-9]*\);/\1/p' socmap.vhd); \
 	l2_ways=$$(sed -n 's/constant CFG_L2_WAYS\s*: integer := \([0-9]*\);/\1/p' socmap.vhd); \
 	llc_sets=$$(sed -n 's/constant CFG_LLC_SETS\s*: integer := \([0-9]*\);/\1/p' socmap.vhd); \
@@ -421,9 +421,9 @@ sysroot/etc/init.d/S64esp : sysroot socmap.vhd esp_global.vhd .esp_config Makefi
 	nmem=$$(sed -n 's/constant CFG_NMEM_TILE\s*: integer := \([0-9]*\);/\1/p' socmap.vhd); \
 	rtl_cache=$$(sed -n 's/constant CFG_CACHE_RTL\s*: integer := \([0-1]\);/\1/p' esp_global.vhd); \
 	printf "insmod esp_cache.ko\n" >> $@; \
-    printf "insmod esp_private_cache.ko\n" >> $@; \
+	printf "insmod esp_private_cache.ko\n" >> $@; \
 	printf "insmod esp.ko " >> $@; \
- 	printf "line_bytes=16 " >> $@; \
+	printf "line_bytes=16 " >> $@; \
 	printf "l2_sets=%d " $${l2_sets} >> $@; \
 	printf "l2_ways=%d " $${l2_ways} >> $@; \
 	printf "llc_sets=%d " $${llc_sets} >> $@; \
@@ -613,49 +613,49 @@ sysroot:
 
 sysroot/etc/init.d/S64esp : sysroot socmap.vhd esp_global.vhd .esp_config Makefile 
 	$(QUIET_INFO)echo "Generating esp load script" ; \
-	rm $@ ; \
+	rm -f $@ ; \
 	printf "cd /opt/drivers-esp\n" >> $@ ; \
-    printf "insmod contig_alloc.ko " >> $@; \
-    ddr_size=$$(sed -n 's/DDR_SIZE = \(0x[0-f]*\)/\1/p' ../../utils/socmap/socmap_gen.py)00000; \
-    nmem=$$(grep -c 'TILE_[0-8]*_[0-8]* = [0-9]* mem' .esp_config); \
-    size=$$(( $$ddr_size / $$nmem )); \
+	printf "insmod contig_alloc.ko " >> $@; \
+	ddr_size=$$(sed -n 's/DDR_SIZE = \(0x[0-f]*\)/\1/p' ../../utils/socmap/socmap_gen.py)00000; \
+	nmem=$$(grep -c 'TILE_[0-8]*_[0-8]* = [0-9]* mem' .esp_config); \
+	size=$$(( $$ddr_size / $$nmem )); \
 	sizes=(); \
-    starts=(); \
-    nddr=0; \
-    for i in $$(sed -n '/ddr_haddr : mem_attribute_array/,/others/p' socmap.vhd | sed -n 's/[0-9]* => 16#\([0-9|A-F]*\)#,/\1/p'); \
-    do  \
+	starts=(); \
+	nddr=0; \
+	for i in $$(sed -n '/ddr_haddr : mem_attribute_array/,/others/p' socmap.vhd | sed -n 's/[0-9]* => 16#\([0-9|A-F]*\)#,/\1/p'); \
+	do  \
 		str=0x$${i}00000; \
-        val=$$(printf "%d" "$$str"); \
+		val=$$(printf "%d" "$$str"); \
 		sp_tmp=$$(printf "%d" 0xa0100000); \
 		sp_val=$$(($$sp_tmp - 0x10)); \
 		if [ $$val -ge $$(($$sp_val + 0x10)) ]; then \
-            starts+=("$$str"); \
-            nddr=$$((nddr+1)); \
-            sizes+=("$$size"); \
+			starts+=("$$str"); \
+			nddr=$$((nddr+1)); \
+			sizes+=("$$size"); \
 		elif [ $$(($$val + $$size)) -gt $$(($$sp_val + 0x10)) ]; then \
-            starts+=("$$((sp_val + 0x10))") ; \
-            nddr=$$((nddr+1)); \
-            sizes+="$$((($$val + $$size) - ($$sp_val + 0x10)))" ; \
+			starts+=("$$((sp_val + 0x10))") ; \
+			nddr=$$((nddr+1)); \
+			sizes+="$$((($$val + $$size) - ($$sp_val + 0x10)))" ; \
 		fi; \
-    done; \
+	done; \
 	printf "nddr=%d " $$nddr >> $@; \
-    printf "start=" >> $@; \
-    for (( i=0; i < $$nddr; i++ )); \
-    do \
-        printf "0x%x" $${starts[$$i]} >> $@ ; \
-        if [[ $$i -ne $$(($$nddr - 1)) ]]; then \
-            printf "," >>  $@; \
-        fi; \
-    done; \
-    printf " size=" >> $@; \
-    for (( i=0; i < $$nddr; i++ )); \
-    do \
-	printf "0x%x" $${sizes[$$i]} >> $@ ; \
-        if [[ $$i -ne $$(($$nddr - 1)) ]]; then \
+	printf "start=" >> $@; \
+	for (( i=0; i < $$nddr; i++ )); \
+	do \
+		printf "0x%x" $${starts[$$i]} >> $@ ; \
+		if [[ $$i -ne $$(($$nddr - 1)) ]]; then \
 			printf "," >>  $@; \
-        fi; \
-    done; \
-    printf " chunk_log=20\n" >> $@; \
+		fi; \
+	done; \
+	printf " size=" >> $@; \
+	for (( i=0; i < $$nddr; i++ )); \
+	do \
+		printf "0x%x" $${sizes[$$i]} >> $@ ; \
+		if [[ $$i -ne $$(($$nddr - 1)) ]]; then \
+			printf "," >>  $@; \
+		fi; \
+	done; \
+	printf " chunk_log=20\n" >> $@; \
 	l2_sets=$$(sed -n 's/constant CFG_L2_SETS\s*: integer := \([0-9]*\);/\1/p' socmap.vhd); \
 	l2_ways=$$(sed -n 's/constant CFG_L2_WAYS\s*: integer := \([0-9]*\);/\1/p' socmap.vhd); \
 	llc_sets=$$(sed -n 's/constant CFG_LLC_SETS\s*: integer := \([0-9]*\);/\1/p' socmap.vhd); \
@@ -663,9 +663,9 @@ sysroot/etc/init.d/S64esp : sysroot socmap.vhd esp_global.vhd .esp_config Makefi
 	nmem=$$(sed -n 's/constant CFG_NMEM_TILE\s*: integer := \([0-9]*\);/\1/p' socmap.vhd); \
 	rtl_cache=$$(sed -n 's/constant CFG_CACHE_RTL\s*: integer := \([0-1]\);/\1/p' esp_global.vhd); \
 	printf "insmod esp_cache.ko\n" >> $@; \
-    printf "insmod esp_private_cache.ko\n" >> $@; \
+	printf "insmod esp_private_cache.ko\n" >> $@; \
 	printf "insmod esp.ko " >> $@; \
- 	printf "line_bytes=16 " >> $@; \
+	printf "line_bytes=16 " >> $@; \
 	printf "l2_sets=%d " $${l2_sets} >> $@; \
 	printf "l2_ways=%d " $${l2_ways} >> $@; \
 	printf "llc_sets=%d " $${llc_sets} >> $@; \
