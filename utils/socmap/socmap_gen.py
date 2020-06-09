@@ -129,10 +129,10 @@ THIRDPARTY_N = 0
 # bytes in the address space, even if a signle instance would take
 # less. This is to simplify (hence speedup) APB decode.
 # APB EXT ADDR most significant hex digit (i.e. digit 7) must be 0
-THIRDPARTY_APB_ADDR          = 0x00000000
-THIRDPARTY_APB_ADDR_SIZE     = 0x00040000
-THIRDPARTY_APB_EXT_ADDR      = 0x00400000
-THIRDPARTY_APB_EXT_ADDR_SIZE = 0x00100000
+THIRDPARTY_APB_ADDRESS          = 0x00000000
+THIRDPARTY_APB_ADDRESS_SIZE     = 0x00040000
+THIRDPARTY_APB_EXT_ADDRESS      = 0x00400000
+THIRDPARTY_APB_EXT_ADDRESS_SIZE = 0x00100000
 
 # Memory reserved for all third-party accelerators
 THIRDPARTY_MEM_RESERVED_ADDR = 0xB0000000
@@ -880,18 +880,18 @@ def print_mapping(fp, esp_config):
     else:
       n = THIRDPARTY_N
       # Compute base address
-      if THIRDPARTY_APB_EXT_ADDR == 0:
+      if THIRDPARTY_APB_EXT_ADDRESS == 0:
         # Use part of standard APB address space
-        address = THIRDPARTY_APB_ADDR + n * THIRDPARTY_APB_ADDR_SIZE
-        size = THIRDPARTY_APB_ADDR_SIZE
+        address = THIRDPARTY_APB_ADDRESS + n * THIRDPARTY_APB_ADDRESS_SIZE
+        size = THIRDPARTY_APB_ADDRESS_SIZE
         address_ext = 0
         size_ext = 0
       else:
         # Use extended APB address space (large number of registers)
         address = 0
         size = 0
-        address_ext = THIRDPARTY_APB_EXT_ADDR + n * THIRDPARTY_APB_EXT_ADDR_SIZE
-        size_ext = THIRDPARTY_APB_EXT_ADDR_SIZE
+        address_ext = THIRDPARTY_APB_EXT_ADDRESS + n * THIRDPARTY_APB_EXT_ADDRESS_SIZE
+        size_ext = THIRDPARTY_APB_EXT_ADDRESS_SIZE
 
       msk = 0xfff & ~((size >> 8) - 1)
       msk_ext = 0xfff & ~((size_ext >> 20) - 1)
@@ -1778,14 +1778,14 @@ def print_ariane_devtree(fp, esp_config):
     else:
       n = THIRDPARTY_N
       # Compute base address
-      if THIRDPARTY_APB_EXT_ADDR == 0:
+      if THIRDPARTY_APB_EXT_ADDRESS == 0:
         # Use part of standard APB address space
-        address = base + THIRDPARTY_APB_ADDR + n * THIRDPARTY_APB_ADDR_SIZE
-        size = THIRDPARTY_APB_ADDR_SIZE
+        address = base + THIRDPARTY_APB_ADDRESS + n * THIRDPARTY_APB_ADDRESS_SIZE
+        size = THIRDPARTY_APB_ADDRESS_SIZE
       else:
         # Use extended APB address space (large number of registers)
-        address = base + THIRDPARTY_APB_EXT_ADDR + n * THIRDPARTY_APB_EXT_ADDR_SIZE
-        size = THIRDPARTY_APB_EXT_ADDR_SIZE
+        address = base + THIRDPARTY_APB_EXT_ADDRESS + n * THIRDPARTY_APB_EXT_ADDRESS_SIZE
+        size = THIRDPARTY_APB_EXT_ADDRESS_SIZE
 
       # Increment count
       THIRDPARTY_N = n + 1;
