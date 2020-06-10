@@ -321,7 +321,7 @@ class NoC():
       for x in range(0, self.cols):
          tile = self.topology[y][x]
          selection = tile.ip_type.get()
-         if soc.IPs.ACC_L2ELERATORS.count(selection):
+         if soc.IPs.ACCELERATORS.count(selection):
            if tile.has_l2.get() != 0:
              tot_acc_l2 += 1
     return tot_acc_l2
@@ -507,8 +507,12 @@ class NoCFrame(Pmw.ScrolledFrame):
     self.done.config(state=DISABLED)
     tot_tiles = self.noc.rows * self.noc.cols
     tot_cpu = self.noc.get_cpu_num(self.soc)
-    tot_full_coherent = self.noc.get_acc_num(self.soc) + self.noc.get_cpu_num(self.soc)
-    tot_llc_coherent = self.noc.get_acc_num(self.soc)
+    if self.soc.cache_en.get():
+      tot_full_coherent = self.noc.get_acc_l2_num(self.soc) + self.noc.get_cpu_num(self.soc)
+      tot_llc_coherent = self.noc.get_acc_num(self.soc)
+    else:
+      tot_full_coherent = 0
+      tot_llc_coherent = 0
     tot_io = 0
     tot_clkbuf = self.noc.get_clkbuf_num(self.soc)
     tot_mem = self.noc.get_mem_num(self.soc)
