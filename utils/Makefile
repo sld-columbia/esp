@@ -381,7 +381,7 @@ sysroot/etc/init.d/S64esp : sysroot socmap.vhd esp_global.vhd .esp_config Makefi
 	sizes=(); \
 	starts=(); \
 	nddr=0; \
-	for i in $$(sed -n '/ddr_haddr : mem_attribute_array/,/others/p' socmap.vhd | sed -n 's/[0-9]* => 16#\([0-9]*\)#,/\1/p'); \
+	for i in $$(sed -n '/ddr_haddr : attribute_vector/,/others/p' socmap.vhd | sed -n 's/[0-9]* => 16#\([0-9]*\)#,/\1/p'); \
 	do  \
 		str=0x$${i}00000; \
 		val=$$(printf "%d" "$$str"); \
@@ -414,11 +414,11 @@ sysroot/etc/init.d/S64esp : sysroot socmap.vhd esp_global.vhd .esp_config Makefi
 		fi; \
 	done; \
 	printf " chunk_log=20\n" >> $@; \
-	l2_sets=$$(sed -n 's/constant CFG_L2_SETS\s*: integer := \([0-9]*\);/\1/p' socmap.vhd); \
-	l2_ways=$$(sed -n 's/constant CFG_L2_WAYS\s*: integer := \([0-9]*\);/\1/p' socmap.vhd); \
-	llc_sets=$$(sed -n 's/constant CFG_LLC_SETS\s*: integer := \([0-9]*\);/\1/p' socmap.vhd); \
-	llc_ways=$$(sed -n 's/constant CFG_LLC_WAYS\s*: integer := \([0-9]*\);/\1/p' socmap.vhd); \
-	nmem=$$(sed -n 's/constant CFG_NMEM_TILE\s*: integer := \([0-9]*\);/\1/p' socmap.vhd); \
+	l2_sets=$$(sed -n 's/constant CFG_L2_SETS\s*: integer := \([0-9]*\);/\1/p' esp_global.vhd); \
+	l2_ways=$$(sed -n 's/constant CFG_L2_WAYS\s*: integer := \([0-9]*\);/\1/p' esp_global.vhd); \
+	llc_sets=$$(sed -n 's/constant CFG_LLC_SETS\s*: integer := \([0-9]*\);/\1/p' esp_global.vhd); \
+	llc_ways=$$(sed -n 's/constant CFG_LLC_WAYS\s*: integer := \([0-9]*\);/\1/p' esp_global.vhd); \
+	nmem=$$(sed -n 's/constant CFG_NMEM_TILE\s*: integer := \([0-9]*\);/\1/p' esp_global.vhd); \
 	rtl_cache=$$(sed -n 's/constant CFG_CACHE_RTL\s*: integer := \([0-1]\);/\1/p' esp_global.vhd); \
 	printf "insmod esp_cache.ko\n" >> $@; \
 	printf "insmod esp_private_cache.ko\n" >> $@; \
@@ -622,7 +622,7 @@ sysroot/etc/init.d/S64esp : sysroot socmap.vhd esp_global.vhd .esp_config Makefi
 	sizes=(); \
 	starts=(); \
 	nddr=0; \
-	for i in $$(sed -n '/ddr_haddr : mem_attribute_array/,/others/p' socmap.vhd | sed -n 's/[0-9]* => 16#\([0-9|A-F]*\)#,/\1/p'); \
+	for i in $$(sed -n '/ddr_haddr : attribute_vector/,/others/p' socmap.vhd | sed -n 's/[0-9]* => 16#\([0-9]*\)#,/\1/p'); \
 	do  \
 		str=0x$${i}00000; \
 		val=$$(printf "%d" "$$str"); \
@@ -656,11 +656,11 @@ sysroot/etc/init.d/S64esp : sysroot socmap.vhd esp_global.vhd .esp_config Makefi
 		fi; \
 	done; \
 	printf " chunk_log=20\n" >> $@; \
-	l2_sets=$$(sed -n 's/constant CFG_L2_SETS\s*: integer := \([0-9]*\);/\1/p' socmap.vhd); \
-	l2_ways=$$(sed -n 's/constant CFG_L2_WAYS\s*: integer := \([0-9]*\);/\1/p' socmap.vhd); \
-	llc_sets=$$(sed -n 's/constant CFG_LLC_SETS\s*: integer := \([0-9]*\);/\1/p' socmap.vhd); \
-	llc_ways=$$(sed -n 's/constant CFG_LLC_WAYS\s*: integer := \([0-9]*\);/\1/p' socmap.vhd); \
-	nmem=$$(sed -n 's/constant CFG_NMEM_TILE\s*: integer := \([0-9]*\);/\1/p' socmap.vhd); \
+	l2_sets=$$(sed -n 's/constant CFG_L2_SETS\s*: integer := \([0-9]*\);/\1/p' esp_global.vhd); \
+	l2_ways=$$(sed -n 's/constant CFG_L2_WAYS\s*: integer := \([0-9]*\);/\1/p' esp_global.vhd); \
+	llc_sets=$$(sed -n 's/constant CFG_LLC_SETS\s*: integer := \([0-9]*\);/\1/p' esp_global.vhd); \
+	llc_ways=$$(sed -n 's/constant CFG_LLC_WAYS\s*: integer := \([0-9]*\);/\1/p' esp_global.vhd); \
+	nmem=$$(sed -n 's/constant CFG_NMEM_TILE\s*: integer := \([0-9]*\);/\1/p' esp_global.vhd); \
 	rtl_cache=$$(sed -n 's/constant CFG_CACHE_RTL\s*: integer := \([0-1]\);/\1/p' esp_global.vhd); \
 	printf "insmod esp_cache.ko\n" >> $@; \
 	printf "insmod esp_private_cache.ko\n" >> $@; \
