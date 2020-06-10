@@ -128,7 +128,7 @@ begin
   variable apbaddr2 : std_logic_vector(31 downto 0);
   variable pirq : std_logic_vector(NAHBIRQ-1 downto 0);
   variable nslave : integer range 0 to nslaves-1;
-  variable bnslave : std_logic_vector(log2(nslaves)-1 downto 0);
+  variable bnslave : std_logic_vector(6 downto 0);
   begin
 
     v := r; v.psel := '0'; v.penable := '0'; psel := (others => '0');
@@ -182,26 +182,193 @@ begin
 
     -- WARNING: the following encoder is fast, but we're hard-coding the number
     -- of APB slaves that can be seen on the bus.
-    bnslave(0) := psel(1)  or psel(3)  or psel(5)  or psel(7)  or
-                  psel(9)  or psel(11) or psel(13) or psel(15) or
-                  psel(17) or psel(19) or psel(21) or psel(23) or
-                  psel(25) or psel(27) or psel(29) or psel(31);
-    bnslave(1) := psel(2)  or psel(3)  or psel(6)  or psel(7)  or
-                  psel(10) or psel(11) or psel(14) or psel(15) or
-                  psel(18) or psel(19) or psel(22) or psel(23) or
-                  psel(26) or psel(27) or psel(30) or psel(31);
-    bnslave(2) := psel(4)  or psel(5)  or psel(6)  or psel(7)  or
-                  psel(12) or psel(13) or psel(14) or psel(15) or
-                  psel(20) or psel(21) or psel(22) or psel(23) or
-                  psel(28) or psel(29) or psel(30) or psel(31);
-    bnslave(3) := psel(8)  or psel(9)  or psel(10) or psel(11) or
-                  psel(12) or psel(13) or psel(14) or psel(15) or
-                  psel(24) or psel(25) or psel(26) or psel(27) or
-                  psel(28) or psel(29) or psel(30) or psel(31);
-    bnslave(4) := psel(16) or psel(17) or psel(18) or psel(19) or
-                  psel(20) or psel(21) or psel(22) or psel(23) or
-                  psel(24) or psel(25) or psel(26) or psel(27) or
-                  psel(28) or psel(29) or psel(30) or psel(31);
+    if NAPBSLV = 32 then
+      bnslave(0) := psel(1)  or psel(3)  or psel(5)  or psel(7)  or
+                    psel(9)  or psel(11) or psel(13) or psel(15) or
+                    psel(17) or psel(19) or psel(21) or psel(23) or
+                    psel(25) or psel(27) or psel(29) or psel(31);
+      bnslave(1) := psel(2)  or psel(3)  or psel(6)  or psel(7)  or
+                    psel(10) or psel(11) or psel(14) or psel(15) or
+                    psel(18) or psel(19) or psel(22) or psel(23) or
+                    psel(26) or psel(27) or psel(30) or psel(31);
+      bnslave(2) := psel(4)  or psel(5)  or psel(6)  or psel(7)  or
+                    psel(12) or psel(13) or psel(14) or psel(15) or
+                    psel(20) or psel(21) or psel(22) or psel(23) or
+                    psel(28) or psel(29) or psel(30) or psel(31);
+      bnslave(3) := psel(8)  or psel(9)  or psel(10) or psel(11) or
+                    psel(12) or psel(13) or psel(14) or psel(15) or
+                    psel(24) or psel(25) or psel(26) or psel(27) or
+                    psel(28) or psel(29) or psel(30) or psel(31);
+      bnslave(4) := psel(16) or psel(17) or psel(18) or psel(19) or
+                    psel(20) or psel(21) or psel(22) or psel(23) or
+                    psel(24) or psel(25) or psel(26) or psel(27) or
+                    psel(28) or psel(29) or psel(30) or psel(31);
+      bnslave(5) := '0';
+      bnslave(6) := '0';
+    elsif NAPBSLV = 64 then
+      bnslave(0) := psel(1)  or psel(3)  or psel(5)  or psel(7)  or
+                    psel(9)  or psel(11) or psel(13) or psel(15) or
+                    psel(17) or psel(19) or psel(21) or psel(23) or
+                    psel(25) or psel(27) or psel(29) or psel(31) or
+                    psel(33) or psel(35) or psel(37) or psel(39) or
+                    psel(41) or psel(43) or psel(45) or psel(47) or
+                    psel(49) or psel(51) or psel(53) or psel(55) or
+                    psel(57) or psel(59) or psel(61) or psel(63);
+      bnslave(1) := psel(2)  or psel(3)  or psel(6)  or psel(7)  or
+                    psel(10) or psel(11) or psel(14) or psel(15) or
+                    psel(18) or psel(19) or psel(22) or psel(23) or
+                    psel(26) or psel(27) or psel(30) or psel(31) or
+                    psel(34) or psel(35) or psel(38) or psel(39) or
+                    psel(42) or psel(43) or psel(46) or psel(47) or
+                    psel(50) or psel(51) or psel(54) or psel(55) or
+                    psel(58) or psel(59) or psel(62) or psel(63);
+      bnslave(2) := psel(4)  or psel(5)  or psel(6)  or psel(7)  or
+                    psel(12) or psel(13) or psel(14) or psel(15) or
+                    psel(20) or psel(21) or psel(22) or psel(23) or
+                    psel(28) or psel(29) or psel(30) or psel(31) or
+                    psel(36) or psel(37) or psel(38) or psel(39) or
+                    psel(44) or psel(45) or psel(46) or psel(47) or
+                    psel(52) or psel(53) or psel(54) or psel(55) or
+                    psel(60) or psel(61) or psel(62) or psel(63);
+      bnslave(3) := psel(8)  or psel(9)  or psel(10) or psel(11) or
+                    psel(12) or psel(13) or psel(14) or psel(15) or
+                    psel(24) or psel(25) or psel(26) or psel(27) or
+                    psel(28) or psel(29) or psel(30) or psel(31) or
+                    psel(40) or psel(41) or psel(42) or psel(43) or
+                    psel(44) or psel(45) or psel(46) or psel(47) or
+                    psel(56) or psel(57) or psel(58) or psel(59) or
+                    psel(60) or psel(61) or psel(62) or psel(63);
+      bnslave(4) := psel(16) or psel(17) or psel(18) or psel(19) or
+                    psel(20) or psel(21) or psel(22) or psel(23) or
+                    psel(24) or psel(25) or psel(26) or psel(27) or
+                    psel(28) or psel(29) or psel(30) or psel(31) or
+                    psel(48) or psel(49) or psel(50) or psel(51) or
+                    psel(52) or psel(53) or psel(54) or psel(55) or
+                    psel(56) or psel(57) or psel(58) or psel(59) or
+                    psel(60) or psel(61) or psel(62) or psel(63);
+      bnslave(5) := psel(32) or psel(33) or psel(34) or psel(35) or
+                    psel(36) or psel(37) or psel(38) or psel(39) or
+                    psel(40) or psel(41) or psel(42) or psel(43) or
+                    psel(44) or psel(45) or psel(46) or psel(47) or
+                    psel(48) or psel(49) or psel(50) or psel(51) or
+                    psel(52) or psel(53) or psel(54) or psel(55) or
+                    psel(56) or psel(57) or psel(58) or psel(59) or
+                    psel(60) or psel(61) or psel(62) or psel(63);
+      bnslave(6) := '0';
+    else -- NAPBSLV = 128
+      bnslave(0) := psel(1)   or psel(3)   or psel(5)   or psel(7)   or
+                    psel(9)   or psel(11)  or psel(13)  or psel(15)  or
+                    psel(17)  or psel(19)  or psel(21)  or psel(23)  or
+                    psel(25)  or psel(27)  or psel(29)  or psel(31)  or
+                    psel(33)  or psel(35)  or psel(37)  or psel(39)  or
+                    psel(41)  or psel(43)  or psel(45)  or psel(47)  or
+                    psel(49)  or psel(51)  or psel(53)  or psel(55)  or
+                    psel(57)  or psel(59)  or psel(61)  or psel(63)  or
+                    psel(65)  or psel(67)  or psel(69)  or psel(71)  or
+                    psel(73)  or psel(75)  or psel(77)  or psel(79)  or
+                    psel(81)  or psel(83)  or psel(85)  or psel(87)  or
+                    psel(89)  or psel(91)  or psel(93)  or psel(95)  or
+                    psel(97)  or psel(99)  or psel(101) or psel(103) or
+                    psel(105) or psel(107) or psel(109) or psel(111) or
+                    psel(113) or psel(115) or psel(117) or psel(119) or
+                    psel(121) or psel(123) or psel(125) or psel(127);
+      bnslave(1) := psel(2)   or psel(3)   or psel(6)   or psel(7)   or
+                    psel(10)  or psel(11)  or psel(14)  or psel(15)  or
+                    psel(18)  or psel(19)  or psel(22)  or psel(23)  or
+                    psel(26)  or psel(27)  or psel(30)  or psel(31)  or
+                    psel(34)  or psel(35)  or psel(38)  or psel(39)  or
+                    psel(42)  or psel(43)  or psel(46)  or psel(47)  or
+                    psel(50)  or psel(51)  or psel(54)  or psel(55)  or
+                    psel(58)  or psel(59)  or psel(62)  or psel(63)  or
+                    psel(66)  or psel(67)  or psel(70)  or psel(71)  or
+                    psel(74)  or psel(75)  or psel(78)  or psel(79)  or
+                    psel(82)  or psel(83)  or psel(86)  or psel(87)  or
+                    psel(90)  or psel(91)  or psel(94)  or psel(95)  or
+                    psel(98)  or psel(99)  or psel(102) or psel(103) or
+                    psel(106) or psel(107) or psel(110) or psel(111) or
+                    psel(114) or psel(115) or psel(118) or psel(119) or
+                    psel(122) or psel(123) or psel(126) or psel(127);
+      bnslave(2) := psel(4)   or psel(5)   or psel(6)   or psel(7)   or
+                    psel(12)  or psel(13)  or psel(14)  or psel(15)  or
+                    psel(20)  or psel(21)  or psel(22)  or psel(23)  or
+                    psel(28)  or psel(29)  or psel(30)  or psel(31)  or
+                    psel(36)  or psel(37)  or psel(38)  or psel(39)  or
+                    psel(44)  or psel(45)  or psel(46)  or psel(47)  or
+                    psel(52)  or psel(53)  or psel(54)  or psel(55)  or
+                    psel(60)  or psel(61)  or psel(62)  or psel(63)  or
+                    psel(68)  or psel(69)  or psel(70)  or psel(71)  or
+                    psel(76)  or psel(77)  or psel(78)  or psel(79)  or
+                    psel(84)  or psel(85)  or psel(86)  or psel(87)  or
+                    psel(92)  or psel(93)  or psel(94)  or psel(95)  or
+                    psel(100) or psel(101) or psel(102) or psel(103) or
+                    psel(108) or psel(109) or psel(110) or psel(111) or
+                    psel(116) or psel(117) or psel(118) or psel(119) or
+                    psel(124) or psel(125) or psel(126) or psel(127);
+      bnslave(3) := psel(8)   or psel(9)   or psel(10)  or psel(11)  or
+                    psel(12)  or psel(13)  or psel(14)  or psel(15)  or
+                    psel(24)  or psel(25)  or psel(26)  or psel(27)  or
+                    psel(28)  or psel(29)  or psel(30)  or psel(31)  or
+                    psel(40)  or psel(41)  or psel(42)  or psel(43)  or
+                    psel(44)  or psel(45)  or psel(46)  or psel(47)  or
+                    psel(56)  or psel(57)  or psel(58)  or psel(59)  or
+                    psel(60)  or psel(61)  or psel(62)  or psel(63)  or
+                    psel(72)  or psel(73)  or psel(74)  or psel(75)  or
+                    psel(76)  or psel(77)  or psel(78)  or psel(79)  or
+                    psel(88)  or psel(89)  or psel(90)  or psel(91)  or
+                    psel(92)  or psel(93)  or psel(94)  or psel(95)  or
+                    psel(104) or psel(105) or psel(106) or psel(107) or
+                    psel(108) or psel(109) or psel(110) or psel(111) or
+                    psel(120) or psel(121) or psel(122) or psel(123) or
+                    psel(124) or psel(125) or psel(126) or psel(127);
+      bnslave(4) := psel(16)  or psel(17)  or psel(18)  or psel(19)  or
+                    psel(20)  or psel(21)  or psel(22)  or psel(23)  or
+                    psel(24)  or psel(25)  or psel(26)  or psel(27)  or
+                    psel(28)  or psel(29)  or psel(30)  or psel(31)  or
+                    psel(48)  or psel(49)  or psel(50)  or psel(51)  or
+                    psel(52)  or psel(53)  or psel(54)  or psel(55)  or
+                    psel(56)  or psel(57)  or psel(58)  or psel(59)  or
+                    psel(60)  or psel(61)  or psel(62)  or psel(63)  or
+                    psel(80)  or psel(81)  or psel(82)  or psel(83)  or
+                    psel(84)  or psel(85)  or psel(86)  or psel(87)  or
+                    psel(88)  or psel(89)  or psel(90)  or psel(91)  or
+                    psel(92)  or psel(93)  or psel(94)  or psel(95)  or
+                    psel(112) or psel(113) or psel(114) or psel(115) or
+                    psel(116) or psel(117) or psel(118) or psel(119) or
+                    psel(120) or psel(121) or psel(122) or psel(123) or
+                    psel(124) or psel(125) or psel(126) or psel(127);
+      bnslave(5) := psel(32)  or psel(33)  or psel(34)  or psel(35)  or
+                    psel(36)  or psel(37)  or psel(38)  or psel(39)  or
+                    psel(40)  or psel(41)  or psel(42)  or psel(43)  or
+                    psel(44)  or psel(45)  or psel(46)  or psel(47)  or
+                    psel(48)  or psel(49)  or psel(50)  or psel(51)  or
+                    psel(52)  or psel(53)  or psel(54)  or psel(55)  or
+                    psel(56)  or psel(57)  or psel(58)  or psel(59)  or
+                    psel(60)  or psel(61)  or psel(62)  or psel(63)  or
+                    psel(96)  or psel(97)  or psel(98)  or psel(99)  or
+                    psel(100) or psel(101) or psel(102) or psel(103) or
+                    psel(104) or psel(105) or psel(106) or psel(107) or
+                    psel(108) or psel(109) or psel(110) or psel(111) or
+                    psel(112) or psel(113) or psel(114) or psel(115) or
+                    psel(116) or psel(117) or psel(118) or psel(119) or
+                    psel(120) or psel(121) or psel(122) or psel(123) or
+                    psel(124) or psel(125) or psel(126) or psel(127);
+      bnslave(6) := psel(64)  or psel(65)  or psel(66)  or psel(67)  or
+                    psel(68)  or psel(69)  or psel(70)  or psel(71)  or
+                    psel(72)  or psel(73)  or psel(74)  or psel(75)  or
+                    psel(76)  or psel(77)  or psel(78)  or psel(79)  or
+                    psel(80)  or psel(81)  or psel(82)  or psel(83)  or
+                    psel(84)  or psel(85)  or psel(86)  or psel(87)  or
+                    psel(88)  or psel(89)  or psel(90)  or psel(91)  or
+                    psel(92)  or psel(93)  or psel(94)  or psel(95)  or
+                    psel(96)  or psel(97)  or psel(98)  or psel(99)  or
+                    psel(100) or psel(101) or psel(102) or psel(103) or
+                    psel(104) or psel(105) or psel(106) or psel(107) or
+                    psel(108) or psel(109) or psel(110) or psel(111) or
+                    psel(112) or psel(113) or psel(114) or psel(115) or
+                    psel(116) or psel(117) or psel(118) or psel(119) or
+                    psel(120) or psel(121) or psel(122) or psel(123) or
+                    psel(124) or psel(125) or psel(126) or psel(127);
+    end if;
 
     nslave := conv_integer(bnslave);
 

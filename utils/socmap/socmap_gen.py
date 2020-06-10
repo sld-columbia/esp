@@ -13,7 +13,7 @@ from thirdparty import *
 # <mklinuximg>/include/ambapp.h
 # <esp>/rtl/include/grlib/amba/amba.vhd
 # <esp>/soft/leon3/include/esp_probe.h
-NAPBS = 32
+NAPBS = 128
 NAHBS = 16
 # Physical interrupt lines
 IRQ_LINES = 32
@@ -50,8 +50,9 @@ NTILE_MAX = 64
 # 14 - Ethernet MAC controller
 # 15 - Ethernet SGMII PHY controller
 # 16-19 - LLC cache controller (must change with NMEM_MAX)
-# 20-(NAPBS-1) - Accelerators
-NACC_MAX = NAPBS - 2 * NCPU_MAX - NMEM_MAX - 8
+# 20-83 - Distributed monitors (equal to the number of tiles NTILE_MAX)
+# 84-(NAPBS-1) - Accelerators
+NACC_MAX = NAPBS - 2 * NCPU_MAX - NMEM_MAX - NTILE_MAX - 8
 
 
 # Default device mapping
@@ -108,8 +109,15 @@ LLC_CACHE_PIRQ = 4
 # Last-level cache I/O-bus slave indices (more indices can be reserved if necessary)
 LLC_CACHE_PINDEX = [16, 17, 18, 19]
 
+# Monitors APB indices
+MON_PINDEX = list(range(20, 20 + NTILE_MAX))
+
+# I/O memory area offset for monitors
+MON_APB_ADDR = 0x900
+MON_APB_ADDR_MSK = 0xfff
+
 # First I/O-bus index for accelerators
-SLD_APB_PINDEX = 20
+SLD_APB_PINDEX = 20 + NTILE_MAX
 
 # I/O memory area offset for accelerators (address bits 19-8)
 SLD_APB_ADDR = 0x100
@@ -871,7 +879,7 @@ def print_mapping(fp, esp_config):
     fp.write("  -- " + acc.uppercase_name + "\n")
 
     if acc.vendor == "sld":
-      address = SLD_APB_ADDR + acc.idx
+      address = SLD_APB_ADDR + acc.id
       address_ext = 0
       msk = SLD_APB_ADDR_MSK
       msk_ext = 0
@@ -1773,7 +1781,7 @@ def print_ariane_devtree(fp, esp_config):
     acc = esp_config.accelerators[i]
     base = AHB2APB_HADDR[esp_config.cpu_arch] << 20
     if acc.vendor == "sld":
-      address = base + ((SLD_APB_ADDR + acc.idx) << 8)
+      address = base + ((SLD_APB_ADDR + acc.id) << 8)
       size = 0x100
     else:
       n = THIRDPARTY_N
