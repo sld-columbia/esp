@@ -29,7 +29,7 @@ NSLM_MAX = 16
 # <esp>/systemc/common/caches/cache_consts.h
 # <esp>/rtl/include/sld/caches/cachepackage.vhd
 NFULL_COHERENT_MAX = 16
-NLLC_COHERENT_MAX = 16
+NLLC_COHERENT_MAX = 64
 # The NoC routers are using 3 bits for both Y and X coordinates.
 # The 34-bits header can host up to 5 bits if necessary.
 # <esp>/rtl/[include|src]/sld/noc/*.vhd

@@ -106,6 +106,7 @@ package cachepackage is
   --subtype llc_bookmark_t is std_logic_vector(LLC_BOOKMARK_WIDTH - 1 downto 0);
   --subtype custom_dbg_t is std_logic_vector(31 downto 0);
   subtype cache_id_t is std_logic_vector(NL2_MAX_LOG2 - 1 downto 0);
+  subtype llc_coh_dev_id_t is std_logic_vector(NLLC_MAX_LOG2 - 1 downto 0);
   -- hprot
   constant DEFAULT_HPROT : hprot_t := "00";
 

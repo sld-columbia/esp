@@ -74,15 +74,15 @@ public:
 #endif
 
     // Input ports
-    nb_get_initiator<llc_req_in_t>	llc_req_in;
-    nb_get_initiator<llc_req_in_t>	llc_dma_req_in;
+    nb_get_initiator<llc_req_in_t<CACHE_ID_WIDTH> >        llc_req_in;
+    nb_get_initiator<llc_req_in_t<LLC_COH_DEV_ID_WIDTH> >  llc_dma_req_in;
     nb_get_initiator<llc_rsp_in_t>	llc_rsp_in;
     nb_get_initiator<llc_mem_rsp_t>	llc_mem_rsp;
     nb_get_initiator<bool>              llc_rst_tb;
 
     // Output ports
-    nb_put_initiator<llc_rsp_out_t>	llc_rsp_out;
-    nb_put_initiator<llc_rsp_out_t>	llc_dma_rsp_out;
+    nb_put_initiator<llc_rsp_out_t<CACHE_ID_WIDTH> >        llc_rsp_out;
+    nb_put_initiator<llc_rsp_out_t<LLC_COH_DEV_ID_WIDTH> >  llc_dma_rsp_out;
     nb_put_initiator<llc_fwd_out_t>	llc_fwd_out;
     nb_put_initiator<llc_mem_req_t>     llc_mem_req;
     nb_put_initiator<bool>              llc_rst_tb_done;
@@ -195,7 +195,7 @@ public:
     inline void send_rsp_out(coh_msg_t coh_msg, line_addr_t addr, line_t line, cache_id_t req_id,
                              cache_id_t dest_id, invack_cnt_t invack_cnt, word_offset_t word_offset);
     inline void send_fwd_out(mix_msg_t coh_msg, line_addr_t addr, cache_id_t req_id, cache_id_t dest_id);
-    inline void send_dma_rsp_out(coh_msg_t coh_msg, line_addr_t addr, line_t line, cache_id_t req_id,
+    inline void send_dma_rsp_out(coh_msg_t coh_msg, line_addr_t addr, line_t line, llc_coh_dev_id_t req_id,
                                  cache_id_t dest_id, invack_cnt_t invack_cnt, word_offset_t word_offset);
 
 private:
@@ -211,10 +211,10 @@ private:
     llc_set_t rst_flush_stalled_set;
     bool req_stall;
     bool req_in_stalled_valid;
-    llc_req_in_t req_in_stalled;
+    llc_req_in_t<CACHE_ID_WIDTH> req_in_stalled;
     llc_tag_t req_in_stalled_tag;
     llc_set_t req_in_stalled_set;
-    llc_req_in_t dma_req_in;
+    llc_req_in_t<LLC_COH_DEV_ID_WIDTH> dma_req_in;
     bool dma_read_pending;
     bool dma_write_pending;
     addr_t dma_addr;

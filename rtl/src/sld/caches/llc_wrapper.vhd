@@ -111,7 +111,7 @@ architecture rtl of llc_wrapper is
   signal llc_dma_req_in_data_word_offset : word_offset_t;
   signal llc_dma_req_in_data_valid_words : word_offset_t;
   signal llc_dma_req_in_data_line        : line_t;
-  signal llc_dma_req_in_data_req_id      : cache_id_t;
+  signal llc_dma_req_in_data_req_id      : llc_coh_dev_id_t;
 
   signal llc_rsp_in_ready        : std_ulogic;
   signal llc_rsp_in_valid        : std_ulogic;
@@ -137,8 +137,8 @@ architecture rtl of llc_wrapper is
   signal llc_dma_rsp_out_data_addr        : line_addr_t;
   signal llc_dma_rsp_out_data_line        : line_t;
   signal llc_dma_rsp_out_data_invack_cnt  : invack_cnt_t;
-  signal llc_dma_rsp_out_data_req_id      : cache_id_t;
-  signal llc_dma_rsp_out_data_dest_id     : cache_id_t;
+  signal llc_dma_rsp_out_data_req_id      : llc_coh_dev_id_t;
+  signal llc_dma_rsp_out_data_dest_id     : cache_id_t;  -- not used
   signal llc_dma_rsp_out_data_word_offset : word_offset_t;
 
   signal llc_fwd_out_ready        : std_ulogic;
@@ -348,7 +348,7 @@ architecture rtl of llc_wrapper is
     addr     : line_addr_t;
     woffset  : word_offset_t;
     line     : line_t;
-    req_id   : cache_id_t;
+    req_id   : llc_coh_dev_id_t;
     word_cnt : natural range 0 to 3;
     origin_x : local_yx;
     origin_y : local_yx;
@@ -1038,7 +1038,7 @@ begin  -- architecture rtl
                            to_integer(unsigned(reg.origin_y)) * noc_xlen;
 
             if tile_dma_id(reg.tile_id) >= 0 then
-              reg.req_id := std_logic_vector(to_unsigned(tile_dma_id(reg.tile_id), NL2_MAX_LOG2));
+              reg.req_id := std_logic_vector(to_unsigned(tile_dma_id(reg.tile_id), NLLC_MAX_LOG2));
             end if;
 
           end if;

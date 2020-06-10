@@ -94,7 +94,7 @@ package gencaches is
       llc_dma_req_in_data_word_offset : in word_offset_t;
       llc_dma_req_in_data_valid_words : in word_offset_t;
       llc_dma_req_in_data_line : in line_t;
-      llc_dma_req_in_data_req_id : in cache_id_t;
+      llc_dma_req_in_data_req_id : in llc_coh_dev_id_t;
       llc_rsp_in_valid : in std_ulogic;
       llc_rsp_in_data_coh_msg : in coh_msg_t;
       llc_rsp_in_data_addr : in line_addr_t;
@@ -128,7 +128,7 @@ package gencaches is
       llc_dma_rsp_out_data_addr : out line_addr_t;
       llc_dma_rsp_out_data_line : out line_t;
       llc_dma_rsp_out_data_invack_cnt : out invack_cnt_t;
-      llc_dma_rsp_out_data_req_id : out cache_id_t;
+      llc_dma_rsp_out_data_req_id : out llc_coh_dev_id_t;
       llc_dma_rsp_out_data_dest_id : out cache_id_t;
       llc_dma_rsp_out_data_word_offset : out word_offset_t;
       llc_fwd_out_valid : out std_ulogic;
