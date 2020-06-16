@@ -25,18 +25,20 @@ def print_usage():
   print("      <dma_width>        : Bit-width for the DMA channel (currently supporting 32 bits only)")
   print("      <tech>             : Target technology (e.g. virtex7, virtexu, virtexup, ...)")
   print("      <MAC>              : MAC Address for Linux network interface)")
+  print("      <LEON3_STACK>      : Stack Pointer for LEON3)")
   print("")
 
-if len(sys.argv) != 4:
+if len(sys.argv) != 5:
     print_usage()
     sys.exit(1)
 
 DMA_WIDTH = int(sys.argv[1])
 TECH = sys.argv[2]
 LINUX_MAC = sys.argv[3]
+LEON3_STACK = sys.argv[4]
 
 root = Tk()
-soc = SoC_Config(DMA_WIDTH, TECH, LINUX_MAC)
+soc = SoC_Config(DMA_WIDTH, TECH, LINUX_MAC, LEON3_STACK)
 soc.noc = NoC()
 x = soc.read_config(False)
 if x == -1:

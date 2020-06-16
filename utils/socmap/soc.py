@@ -361,10 +361,11 @@ class SoC_Config():
   def set_IP(self):
     self.IP_ADDR = str(int('0x' + self.IPM[:2], 16)) + "." + str(int('0x' + self.IPM[2:], 16)) + "." + str(int('0x' + self.IPL[:2], 16)) + "." + str(int('0x' + self.IPL[2:], 16))
 
-  def __init__(self, DMA_WIDTH, TECH, LINUX_MAC):
+  def __init__(self, DMA_WIDTH, TECH, LINUX_MAC, LEON3_STACK):
     self.DMA_WIDTH = DMA_WIDTH
     self.TECH = TECH
     self.LINUX_MAC = LINUX_MAC
+    self.LEON3_STACK = LEON3_STACK
     #define whether SGMII has to be used or not: it is not used for PROFPGA boards
     with open("Makefile") as fp:
       for line in fp:
