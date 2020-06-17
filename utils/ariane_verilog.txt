@@ -137,7 +137,6 @@ src/riscv-dbg/src/dm_top.sv
 src/riscv-dbg/debug_rom/debug_rom.sv
 src/register_interface/src/apb_to_reg.sv
 src/axi/src/axi_multicut.sv
-src/common_cells/src/deprecated/generic_fifo.sv
 src/common_cells/src/deprecated/pulp_sync.sv
 src/common_cells/src/deprecated/find_first_one.sv
 src/common_cells/src/stream_mux.sv
