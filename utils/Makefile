@@ -1741,6 +1741,7 @@ distclean:	check_all_srcs-distclean 	\
 		sldgen-distclean		\
 		espmon-distclean		\
 		mmi64-distclean
+	$(QUIET_CLEAN)$(RM) *.log
 
 
 .PHONY: clean distclean
