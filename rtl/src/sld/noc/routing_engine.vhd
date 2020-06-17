@@ -19,14 +19,17 @@ use ieee.std_logic_arith.all;
 
 entity routing_engine is
 	generic(
-		loc_port		:  integer;
-		localx	: std_logic_vector(2 downto 0);
-		localy	: std_logic_vector(2 downto 0));
+		loc_port		:  integer
+--		localx	: std_logic_vector(2 downto 0);
+--		localy	: std_logic_vector(2 downto 0)
+        );
 
 	port(
 		clk		: in std_logic;
 		rst		: in std_logic;
 
+                localx          : in std_logic_vector(2 downto 0);
+                localy          : in std_logic_vector(2 downto 0);
 
 		--current hop routing; one-hot encoding
 		destination_port : in std_logic_vector(4 downto 0);

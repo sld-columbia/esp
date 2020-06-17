@@ -36,14 +36,18 @@ entity router is
 		flow_control : integer := 0; --0 = AN; 1 = CB
 		width : integer := 34;
 		depth : integer := 4;
-		ports : std_logic_vector(4 downto 0) := "11111";
-                localx  : std_logic_vector(2 downto 0);
-                localy  : std_logic_vector(2 downto 0)
+                ports : std_logic_vector(4 downto 0) := "11111"
+--                localx  : std_logic_vector(2 downto 0);
+--                localy  : std_logic_vector(2 downto 0)
 
 	);
 	port(
 		clk		: in std_logic;
 		rst		: in std_logic;
+
+--                CONST_ports     : in std_logic_vector(4 downto 0);
+                CONST_localx    : in std_logic_vector(2 downto 0);
+                CONST_localy    : in std_logic_vector(2 downto 0);
 
 		data_n_in	: in std_logic_vector(width-1 downto 0);
 		data_s_in	: in std_logic_vector(width-1 downto 0);
@@ -71,14 +75,17 @@ architecture behavior of router is
 component bypassable_queue
 	generic(
 		depth : integer;
-		width : integer;
-		localx	: std_logic_vector(2 downto 0);
-		localy	: std_logic_vector(2 downto 0));
+		width : integer
+--		localx	: std_logic_vector(2 downto 0);
+--		localy	: std_logic_vector(2 downto 0)
+        );
 
 	port(
 		clk		: in std_logic;
 		rst		: in std_logic;
 
+--                CONST_localx    : in std_logic_vector(2 downto 0);
+--                CONST_localy    : in std_logic_vector(2 downto 0);
 
 		rdreq		: in std_logic;
 		wrreq		: in std_logic;
@@ -94,14 +101,17 @@ end component;
 component nobypassable_queue
 	generic(
 		depth : integer;
-		width : integer;
-		localx	: std_logic_vector(2 downto 0);
-		localy	: std_logic_vector(2 downto 0));
+		width : integer
+--		localx	: std_logic_vector(2 downto 0);
+--		localy	: std_logic_vector(2 downto 0)
+        );
 
 	port(
 		clk		: in std_logic;
 		rst		: in std_logic;
 
+--                CONST_localx    : in std_logic_vector(2 downto 0);
+--                CONST_localy    : in std_logic_vector(2 downto 0);
 
 		rdreq		: in std_logic;
 		wrreq		: in std_logic;
@@ -116,14 +126,17 @@ end component;
 
 component routing_engine
 	generic(
-		loc_port		: integer;
-		localx	: std_logic_vector(2 downto 0);
-		localy	: std_logic_vector(2 downto 0));
+		loc_port		: integer
+--		localx	: std_logic_vector(2 downto 0);
+--		localy	: std_logic_vector(2 downto 0)
+        );
 
 	port(
 		clk		: in std_logic;
 		rst		: in std_logic;
 
+                localx          : in std_logic_vector(2 downto 0);
+                localy          : in std_logic_vector(2 downto 0);
 
 		--current hop routing; one-hot encoding
 		destination_port : in std_logic_vector(4 downto 0);
@@ -245,13 +258,16 @@ INPUT_FIFO : for i in 0 to 4 generate
 			INPUT_FIFO_i: bypassable_queue --ACKNACK or CB w/ bypassable queue
 			generic map(
 				depth => depth,
-				width => width,
-				localx => localx,
-				localy => localy)
+				width => width
+--				localx => localx,
+--				localy => localy
+                          )
                           port map(
 				clk => clk,
 				rst => rst,
 
+--                                CONST_localx => CONST_localx,
+--                                CONST_localy => CONST_localy,
 
 				rdreq => rd_fifo_or(i),
 				wrreq	=> wr_fifo(i),
@@ -270,13 +286,16 @@ INPUT_FIFO : for i in 0 to 4 generate
 			INPUT_FIFO_i: nobypassable_queue --CB w/ non-bypassable queue
 			generic map(
 				depth => depth,
-				width => width,
-				localx => localx,
-				localy => localy)
+				width => width
+--				localx => localx,
+--				localy => localy
+                          )
                           port map(
 				clk => clk,
 				rst => rst,
 
+--                                CONST_localx => CONST_localx,
+--                                CONST_localy => CONST_localy,
 
 				rdreq => rd_fifo_or(i),
 				wrreq	=> wr_fifo(i),
@@ -389,13 +408,16 @@ INPUT_FIFO : for i in 0 to 4 generate
 
 		ROUTING_INPUT_i: routing_engine
 		generic map (
-			loc_port => i,
-			localx => localx,
-			localy => localy)
+			loc_port => i
+--			localx => localx,
+--			localy => localy
+                  )
                   port map(
 			clk => clk,
 			rst => rst,
 
+                        localx => CONST_localx,
+                        localy => CONST_localy,
 
 			destination_port => fifo_head(i)(4 downto 0),
 			--move the destination address at the begining of the head flit - there were 2 bits for command
