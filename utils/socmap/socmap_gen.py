@@ -142,7 +142,9 @@ THIRDPARTY_APB_ADDRESS_SIZE     = 0x00040000
 THIRDPARTY_APB_EXT_ADDRESS      = 0x00400000
 THIRDPARTY_APB_EXT_ADDRESS_SIZE = 0x00100000
 
-# Memory reserved for all third-party accelerators
+# Memory reserved for accelerators
+ACC_MEM_RESERVED_START_ADDR = 0xA0100000
+ACC_MEM_RESERVED_TOTAL_SIZE = 0x1FF00000
 THIRDPARTY_MEM_RESERVED_ADDR = 0xB0000000
 THIRDPARTY_MEM_RESERVED_SIZE = 0x10000000
 
@@ -221,6 +223,8 @@ class soc_config:
   nllc = 0
   # Number of coherent-DMA devices (== number of accelerators + Ethernet iff coherence)
   ncdma = 0
+  # Number of third party accelerators
+  nthirdparty = 0
 
   accelerators = []
   l2s = []
@@ -233,6 +237,7 @@ class soc_config:
     #components
     self.tech = soc.TECH
     self.linux_mac = soc.LINUX_MAC
+    self.leon3_stack = soc.LEON3_STACK
     self.cpu_arch = soc.CPU_ARCH.get()
     self.ncpu = soc.noc.get_cpu_num(soc)
     self.nmem = soc.noc.get_mem_num(soc)
@@ -351,6 +356,8 @@ class soc_config:
           acc.irq = acc_irq
           acc.idx = SLD_APB_PINDEX + acc_id
           acc.vendor = soc.noc.topology[x][y].vendor
+          if acc.vendor != "sld":
+              self.nthirdparty += 1
           self.tiles[t].acc = acc
           self.accelerators.append(acc)
           acc_id = acc_id + 1
@@ -1700,17 +1707,36 @@ def print_ariane_devtree(fp, esp_config):
   fp.write("      no-map;\n")
   fp.write("      reg = <0x0 0xA0000000 0x0 0x100000>;\n")
   fp.write("    };\n")
-
+  
   # Add only one memory region for all third-party accelerator instances
-  mem_address = format(THIRDPARTY_MEM_RESERVED_ADDR, "08X")
-  mem_size = format(THIRDPARTY_MEM_RESERVED_SIZE, "08X")
-  fp.write("\n")
-  fp.write("    thirdparty_reserved: buffer@" + mem_address + " {\n")
-  fp.write("      compatible = \"shared-dma-pool\";\n")
-  fp.write("      no-map;\n")
-  fp.write("      reg = <0x0 0x" + mem_address + " 0x0 0x" + mem_size + ">;\n")
-  fp.write("    };\n")
+  acc_mem_address = format(ACC_MEM_RESERVED_START_ADDR, "08X")
+  acc_mem_size = format(ACC_MEM_RESERVED_TOTAL_SIZE, "08X")
+  if esp_config.nacc > esp_config.nthirdparty:
+    tp_mem_address = format(THIRDPARTY_MEM_RESERVED_ADDR, "08X")
+    tp_mem_size = format(THIRDPARTY_MEM_RESERVED_SIZE, "08X")
+  else: 
+    tp_mem_address = format(ACC_MEM_RESERVED_START_ADDR, "08X")
+    tp_mem_size = format(ACC_MEM_RESERVED_TOTAL_SIZE, "08X")
+   
+  if esp_config.nthirdparty > 0:
+    acc_mem_size = format(ACC_MEM_RESERVED_TOTAL_SIZE - THIRDPARTY_MEM_RESERVED_SIZE, "08X")
+  
+  if esp_config.nacc > esp_config.nthirdparty:
+    fp.write("\n")
+    fp.write("    accelerator_reserved: buffer@" + acc_mem_address + " {\n")
+    fp.write("      compatible = \"shared-dma-pool\";\n")
+    fp.write("      no-map;\n")
+    fp.write("      reg = <0x0 0x" + acc_mem_address + " 0x0 0x" + acc_mem_size + ">;\n")
+    fp.write("    };\n")
+  if esp_config.nthirdparty > 0:
+    fp.write("\n")
+    fp.write("    thirdparty_reserved: buffer@" + tp_mem_address + " {\n")
+    fp.write("      compatible = \"shared-dma-pool\";\n")
+    fp.write("      no-map;\n")
+    fp.write("      reg = <0x0 0x" + tp_mem_address + " 0x0 0x" + tp_mem_size + ">;\n")
+    fp.write("    };\n")
   fp.write("  };\n")
+  
   fp.write("  L26: soc {\n")
   fp.write("    #address-cells = <2>;\n")
   fp.write("    #size-cells = <2>;\n")
@@ -2010,6 +2036,68 @@ def print_floorplan_constraints(fp, soc, esp_config):
   fp.write("set_property C_USER_SCAN_CHAIN 1 [get_debug_cores dbg_hub]\n")
   fp.write("connect_debug_port dbg_hub/clk [get_nets clk]\n")
 
+def print_load_script(fp, soc, esp_config):
+  fp.write("cd /opt/drivers-esp\n")
+  fp.write("insmod contig_alloc.ko ")
+  nmem = esp_config.nmem
+  ddr_size = int(str(DDR_SIZE)) * int(0x100000)
+  size = int(ddr_size / nmem)
+  sizes = []
+  starts = []
+  start = int(str(DDR_HADDR[soc.CPU_ARCH.get()])) * int(0x100000)
+  nddr = 0
+  line_size = int(0x10)
+  
+  end = start + ddr_size
+  if soc.CPU_ARCH.get() == "ariane":
+    sp = int(0xa0100000) - line_size 
+    if esp_config.nthirdparty > 0:        
+        end = int(0xb0000000)
+  else: 
+    sp = int(str(soc.LEON3_STACK), 16)
+
+  addr = start
+  for _ in range(nmem):
+    if addr >= (sp + line_size) and addr < end:
+        starts.append(hex(addr))
+        if addr + size <= end: 
+            sizes.append(hex(size))
+        else:
+            size.append(hex(end - addr))
+        nddr += 1
+    elif (addr + size) > (sp + line_size) and addr < end:
+        starts.append(hex(sp + line_size))
+        if addr + size <= end:
+            sizes.append(hex((addr + size) - (sp + line_size)))
+        else:
+            sizes.append(hex(end - (sp + line_size)))
+        nddr += 1
+    addr += size
+
+  fp.write("nddr=" + str(nddr) + " ")
+  fp.write("start=")
+  for i in range(nddr):
+    fp.write(starts[i])
+    if i != nddr - 1:
+        fp.write(",")
+            
+  fp.write(" size=")
+  for i in range(nddr):
+    fp.write(sizes[i])
+    if i != nddr - 1:
+        fp.write(",")
+    
+  fp.write(" chunk_log=20\n")
+  fp.write("insmod esp_cache.ko\n")
+  fp.write("insmod esp_private_cache.ko\n")
+  fp.write("insmod esp.ko")
+  fp.write(" line_bytes=16")
+  fp.write(" l2_sets=" + str(soc.l2_sets.get()))
+  fp.write(" l2_ways=" + str(soc.l2_ways.get()))
+  fp.write(" llc_sets=" + str(soc.llc_sets.get()))
+  fp.write(" llc_ways=" + str(soc.llc_ways.get()))
+  fp.write(" llc_banks=" + str(nmem))
+  fp.write(" rtl_cache=" + str(soc.cache_rtl.get()))
 
 def create_socmap(esp_config, soc):
 
@@ -2085,3 +2173,11 @@ def create_socmap(esp_config, soc):
     fp.close()
     
     print("Created floorplanning constraints for profgpa-xcvu440 into 'mem_tile_floorplanning.xdc'")
+  
+  fp = open('S64esp', 'w')
+
+  print_load_script(fp, soc, esp_config)
+
+  fp.close()
+  
+  print("Created kernel module load script into 'S64esp'")
