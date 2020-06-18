@@ -233,6 +233,10 @@ architecture rtl of tile_acc is
   end component;
 
   signal clk_feedthru : std_ulogic;
+  signal apbi         : apb_slv_in_type;
+  signal apbo         : apb_slv_out_vector;
+  signal pready       : std_ulogic;
+  signal mon_dvfs_int : monitor_dvfs_type;
 
   signal coherence_req_wrreq        : std_ulogic;
   signal coherence_req_data_in      : noc_flit_type;
@@ -556,6 +560,29 @@ begin
   -----------------------------------------------------------------------------
   -- Tile queues
   -----------------------------------------------------------------------------
+
+  -- APB proxy
+  misc_noc2apb_1 : misc_noc2apb
+    generic map (
+      tech         => CFG_MEMTECH,
+      local_y      => this_local_y,
+      local_x      => this_local_x,
+      local_apb_en => this_local_apb_mask)
+    port map (
+      rst              => rst,
+      clk              => clk_feedthru,
+      apbi             => apbi,
+      apbo             => apbo,
+      pready           => pready,
+      dvfs_transient   => mon_dvfs_int.transient,
+      apb_snd_wrreq    => apb_snd_wrreq,
+      apb_snd_data_in  => apb_snd_data_in,
+      apb_snd_full     => apb_snd_full,
+      apb_rcv_rdreq    => apb_rcv_rdreq,
+      apb_rcv_data_out => apb_rcv_data_out,
+      apb_rcv_empty    => apb_rcv_empty
+    );
+  mon_dvfs <= mon_dvfs_int;
 
   acc_tile_q_1 : acc_tile_q
     generic map (

@@ -48,14 +48,17 @@ use std.textio.all;
     has_l2         : integer := 1;
     has_dvfs       : integer := 1;
     has_pll        : integer;
-    extra_clk_buf  : integer;
-    local_apb_en   : std_logic_vector(0 to NAPBSLV - 1));
+    extra_clk_buf  : integer);
   port (
     rst       : in  std_ulogic;
     clk       : in  std_ulogic;
     refclk    : in  std_ulogic;
     pllbypass : in  std_ulogic;
     pllclk    : out std_ulogic;
+    -- APB
+    apbi      : in apb_slv_in_type;
+    apbo      : out apb_slv_out_vector;
+    pready    : out std_ulogic;
 
     -- NoC plane coherence request
     coherence_req_wrreq        : out std_ulogic;
@@ -96,14 +99,6 @@ use std.textio.all;
     interrupt_ack_rdreq    : out std_ulogic;
     interrupt_ack_data_out : in  misc_noc_flit_type;
     interrupt_ack_empty    : in  std_ulogic;
-    -- Noc plane miscellaneous (tile -> NoC)
-    apb_snd_wrreq     : out std_ulogic;
-    apb_snd_data_in   : out misc_noc_flit_type;
-    apb_snd_full      : in  std_ulogic;
-    -- Noc plane miscellaneous (NoC -> tile)
-    apb_rcv_rdreq     : out std_ulogic;
-    apb_rcv_data_out  : in  misc_noc_flit_type;
-    apb_rcv_empty     : in  std_ulogic;
     mon_dvfs_in       : in  monitor_dvfs_type;
     --Monitor signals
     mon_acc           : out monitor_acc_type;
@@ -215,8 +210,6 @@ end;
   signal flush                      : std_ulogic;
   -- Register control, interrupt and monitor signals
   signal pllclk_int        : std_ulogic;
-  signal apbi              : apb_slv_in_type;
-  signal apbo              : apb_slv_out_vector;
   signal mon_dvfs_feedthru : monitor_dvfs_type;
 
   constant ahbslv_proxy_hindex : hindex_vector(0 to NAHBSLV - 1) := (
@@ -411,6 +404,8 @@ begin
       interrupt_full                => interrupt_full
       );
 
+  pready <= '1';
+
   -- Fully coherent (to L2 wrapper)
   dma_snd_data         <= dma_snd_data_in_int;
 
@@ -449,28 +444,6 @@ begin
     end if;
 
   end process coherence_model_select;
-
-
-  misc_noc2apb_1 : misc_noc2apb
-    generic map (
-      tech         => tech,
-      local_y      => local_y,
-      local_x      => local_x,
-      local_apb_en => local_apb_en)
-    port map (
-      rst              => rst,
-      clk              => clk,
-      apbi             => apbi,
-      apbo             => apbo,
-      pready           => '1',
-      dvfs_transient   => mon_dvfs_feedthru.transient,
-      apb_snd_wrreq    => apb_snd_wrreq,
-      apb_snd_data_in  => apb_snd_data_in,
-      apb_snd_full     => apb_snd_full,
-      apb_rcv_rdreq    => apb_rcv_rdreq,
-      apb_rcv_data_out => apb_rcv_data_out,
-      apb_rcv_empty    => apb_rcv_empty
-    );
 
   -- Using only one apbo signal
   no_apb : for i in 0 to NAPBSLV - 1 generate

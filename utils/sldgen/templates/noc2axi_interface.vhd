@@ -48,14 +48,17 @@ use std.textio.all;
     has_l2         : integer := 1;
     has_dvfs       : integer := 1;
     has_pll        : integer;
-    extra_clk_buf  : integer;
-    local_apb_en   : std_logic_vector(0 to NAPBSLV - 1));
+    extra_clk_buf  : integer);
   port (
     rst       : in  std_ulogic;
     clk       : in  std_ulogic;
     refclk    : in  std_ulogic;
     pllbypass : in  std_ulogic;
     pllclk    : out std_ulogic;
+    -- APB
+    apbi      : in apb_slv_in_type;
+    apbo      : out apb_slv_out_vector;
+    pready    : out std_ulogic;
 
     -- NoC plane coherence request
     coherence_req_wrreq        : out std_ulogic;
@@ -96,14 +99,6 @@ use std.textio.all;
     interrupt_ack_rdreq    : out std_ulogic;
     interrupt_ack_data_out : in  misc_noc_flit_type;
     interrupt_ack_empty    : in  std_ulogic;
-    -- Noc plane miscellaneous (tile -> NoC)
-    apb_snd_wrreq     : out std_ulogic;
-    apb_snd_data_in   : out misc_noc_flit_type;
-    apb_snd_full      : in  std_ulogic;
-    -- Noc plane miscellaneous (NoC -> tile)
-    apb_rcv_rdreq     : out std_ulogic;
-    apb_rcv_data_out  : in  misc_noc_flit_type;
-    apb_rcv_empty     : in  std_ulogic;
     mon_dvfs_in       : in  monitor_dvfs_type;
     --Monitor signals
     mon_acc           : out monitor_acc_type;
@@ -119,11 +114,6 @@ end;
   signal mosi : axi_mosi_vector(0 to 0);
   signal somi : axi_somi_vector(0 to 0);
 
-  -- APB
-  signal apbi : apb_slv_in_type;
-  signal apbo : apb_slv_out_vector;
-  signal pready : std_ulogic;
-
   -- Plug&Play info
   constant vendorid      : vendor_t               := VENDOR_SLD;
   constant revision      : integer                := 0;
@@ -135,7 +125,6 @@ end;
   signal apbi_paddr : std_logic_vector(31 downto 0);
 
   -- IRQ
-  signal irq      : std_logic_vector(NAHBIRQ-1 downto 0);
   type irq_fsm is (idle, pending, wait_for_clear_irq);
   signal irq_state, irq_next : irq_fsm;
   signal irq_header_i, irq_header : misc_noc_flit_type;
@@ -204,27 +193,6 @@ begin
       remote_ahbs_rcv_data_out   => (others => '0'),
       remote_ahbs_rcv_empty      => '1');
 
-  -- APB proxy
-  misc_noc2apb_1 : misc_noc2apb
-    generic map (
-      tech         => tech,
-      local_y      => local_y,
-      local_x      => local_x,
-      local_apb_en => local_apb_en)
-    port map (
-      rst              => rst,
-      clk              => clk,
-      apbi             => apbi,
-      apbo             => apbo,
-      pready           => pready,
-      dvfs_transient   => mon_dvfs_feedthru.transient,
-      apb_snd_wrreq    => apb_snd_wrreq,
-      apb_snd_data_in  => apb_snd_data_in,
-      apb_snd_full     => apb_snd_full,
-      apb_rcv_rdreq    => apb_rcv_rdreq,
-      apb_rcv_data_out => apb_rcv_data_out,
-      apb_rcv_empty    => apb_rcv_empty
-    );
 
   -- Using only one apbo signal
   no_apb : for i in 0 to GLOB_MAXIOSLV - 1 generate
@@ -238,7 +206,6 @@ begin
   apbo(pindex).pirq(pirq) <= acc_done;
   apbo(pindex).pirq(pirq - 1 downto 0) <= (others => '0');
   apbo(pindex).pconfig <= pconfig;
-  irq <= apbo(pindex).pirq;
 
 
   -- IRQ packet
@@ -249,7 +216,7 @@ begin
 
  
   -- Interrupt over NoC
-  irq_send: process (irq, interrupt_full, irq_state, irq_header,
+  irq_send: process (acc_done, interrupt_full, irq_state, irq_header,
                      interrupt_ack_empty, interrupt_ack_data_out)
   begin  -- process irq_send
     interrupt_data_in <= irq_header;
@@ -259,7 +226,7 @@ begin
 
     case irq_state is
       when idle =>
-        if irq(pirq) = '1' then
+        if acc_done = '1' then
           if interrupt_full = '1' then
             irq_next <= pending;
           else
@@ -276,7 +243,7 @@ begin
 
       when wait_for_clear_irq =>
         if irq_type = 0 then
-          if irq(pirq) = '0' then
+          if acc_done = '0' then
             irq_next <= idle;
           end if;
         else
