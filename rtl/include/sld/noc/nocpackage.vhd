@@ -497,11 +497,11 @@ package body nocpackage is
       ports(2) := '0';
     end if;
     -- south ports removed in bottom tiles
-    if (to_integer(unsigned(local_y))) = CFG_XLEN-1 then
+    if (to_integer(unsigned(local_y))) = CFG_YLEN-1 then
       ports(1) := '0';
     end if;
     -- east ports removed in right edge tiles
-    if (to_integer(unsigned(local_x))) = CFG_YLEN-1 then
+    if (to_integer(unsigned(local_x))) = CFG_XLEN-1 then
       ports(3) := '0';
     end if;
     return ports;
