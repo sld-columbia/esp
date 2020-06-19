@@ -34,6 +34,7 @@ package sld_devices is
   constant SLD_LLC_CACHE  : devid_t := 16#021#;
   constant SLD_MST_PROXY : devid_t := 16#022#;
   constant SLD_SLM : devid_t := 16#023#;
+  constant SLD_TILE_CSR : devid_t := 16#024#;
   -- <<devid>>
 
   constant VENDOR_SIFIVE : vendor_t := 16#EC#;
@@ -53,6 +54,7 @@ package sld_devices is
     SLD_LLC_CACHE => "LLC cache                      ",
     SLD_MST_PROXY => "bus-master proxy               ",
     SLD_SLM       => "Shared-local memory            ",
+    SLD_TILE_CSR  => "ESP tile ctrl & stats          ",
     -- <<ddesc>>
     others => "Unknown Device                 ");
 
