@@ -271,23 +271,35 @@ architecture rtl of tile_slm is
   signal remote_ahbm_snd_wrreq      : std_ulogic;
   signal remote_ahbm_snd_data_in    : noc_flit_type;
   signal remote_ahbm_snd_full       : std_ulogic;
+  signal apb_rcv_rdreq              : std_ulogic;
+  signal apb_rcv_data_out           : misc_noc_flit_type;
+  signal apb_rcv_empty              : std_ulogic;
+  signal apb_snd_wrreq              : std_ulogic;
+  signal apb_snd_data_in            : misc_noc_flit_type;
+  signal apb_snd_full               : std_ulogic;
+
 
   -- Bus
   signal ahbsi : ahb_slv_in_type;
   signal ahbso : ahb_slv_out_vector;
   signal ahbmi : ahb_mst_in_type;
   signal ahbmo : ahb_mst_out_vector;
+  signal apbi  : apb_slv_in_type;
+  signal apbo  : apb_slv_out_vector;
 
   signal ctrl_ahbsi : ahb_slv_in_type;
   signal ctrl_ahbso : ahb_slv_out_vector;
   signal ctrl_ahbmi : ahb_mst_in_type;
   signal ctrl_ahbmo : ahb_mst_out_vector;
+  signal ctrl_apbi  : apb_slv_in_type;
+  signal ctrl_apbo  : apb_slv_out_vector;
 
   -- Tile parameters
   constant this_slm_id       : integer                            := tile_slm_id(tile_id);
   constant this_slm_hindex   : integer                            := slm_hindex(this_slm_id);
   constant this_slm_haddr    : integer                            := slm_haddr(this_slm_id);
   constant this_slm_hmask    : integer                            := slm_hmask(this_slm_id);
+  constant this_local_apb_en : std_logic_vector(0 to NAPBSLV - 1) := local_apb_mask(tile_id);
   constant this_local_ahb_en : std_logic_vector(0 to NAHBSLV - 1) := local_ahb_mask(tile_id);
   constant this_local_y      : local_yx                           := tile_y(tile_id);
   constant this_local_x      : local_yx                           := tile_x(tile_id);
@@ -528,6 +540,19 @@ begin
                  nahbm   => maxahbm, nahbs => maxahbs)
     port map (rst, clk, ctrl_ahbmi, ctrl_ahbmo, ctrl_ahbsi, ctrl_ahbso);
 
+  io_pandp_gen : process (ctrl_apbi, apbo)
+  begin  -- process assign_bus_ctrl_sig
+    apbi      <= ctrl_apbi;
+    ctrl_apbo <= apbo;
+
+    for i in 0 to NAPBSLV - 1 loop
+      if this_local_apb_en(i) = '1' then
+        ctrl_apbo(i).pconfig <= fixed_apbo_pconfig(i);
+      else
+        ctrl_apbo(i).pconfig <= pconfig_none;
+      end if;
+    end loop;  -- i
+  end process io_pandp_gen;
 
   -----------------------------------------------------------------------
   ---  Drive unused bus ports
@@ -683,6 +708,28 @@ begin
     remote_ahbs_snd_data_in  <= remote_ahbm_snd_data_in;
   end generate std_bus;
 
+
+  -- Handle APB requests for CSRs
+  misc_noc2apb_1 : misc_noc2apb
+    generic map (
+      tech         => CFG_FABTECH,
+      local_y      => this_local_y,
+      local_x      => this_local_x,
+      local_apb_en => this_local_apb_en)
+    port map (
+      rst              => rst,
+      clk              => clk,
+      apbi             => ctrl_apbi,
+      apbo             => ctrl_apbo,
+      pready           => '1',
+      dvfs_transient   => '0',
+      apb_snd_wrreq    => apb_snd_wrreq,
+      apb_snd_data_in  => apb_snd_data_in,
+      apb_snd_full     => apb_snd_full,
+      apb_rcv_rdreq    => apb_rcv_rdreq,
+      apb_rcv_data_out => apb_rcv_data_out,
+      apb_rcv_empty    => apb_rcv_empty);
+
   -----------------------------------------------------------------------------
   -- Tile queues
   -----------------------------------------------------------------------------
@@ -721,6 +768,12 @@ begin
       remote_ahbs_snd_wrreq      => remote_ahbs_snd_wrreq,
       remote_ahbs_snd_data_in    => remote_ahbs_snd_data_in,
       remote_ahbs_snd_full       => remote_ahbs_snd_full,
+      apb_snd_wrreq              => apb_snd_wrreq,
+      apb_snd_data_in            => apb_snd_data_in,
+      apb_snd_full               => apb_snd_full,
+      apb_rcv_rdreq              => apb_rcv_rdreq,
+      apb_rcv_data_out           => apb_rcv_data_out,
+      apb_rcv_empty              => apb_rcv_empty,
       noc1_out_data              => noc1_output_port,
       noc1_out_void              => noc1_mem_data_void_out,
       noc1_out_stop              => noc1_mem_stop_in,
