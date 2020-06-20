@@ -814,4 +814,21 @@ package tile is
       mon_dvfs  : out monitor_dvfs_type);
   end component;
 
+  component esp_tile_csr 
+   generic (
+     pindex       : integer range 0 to NAPBSLV -1;
+     pconfig      : apb_config_type);
+   port (
+      clk         : in std_logic;
+      rstn        : in std_logic;
+      mon_ddr     : in monitor_ddr_type;
+      mon_mem     : in monitor_mem_type;
+      mon_noc     : in monitor_noc_vector(1 to 6);
+      mon_l2      : in monitor_cache_type;
+      mon_llc     : in monitor_cache_type;
+      mon_acc     : in monitor_acc_type;
+      mon_dvfs    : in monitor_dvfs_type;
+      apbi        : in apb_slv_in_type;
+      apbo        : out apb_slv_out_type);
+  end component;
 end tile;

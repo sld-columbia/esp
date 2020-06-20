@@ -224,8 +224,6 @@ architecture rtl of tile_mem is
         noc6_output_port   : out noc_flit_type;
         noc6_data_void_out : out std_logic_vector(4 downto 0);
         noc6_stop_out      : out std_logic_vector(4 downto 0);
-
-        -- Monitor output. Can be left unconnected
         noc1_mon_noc_vec   : out monitor_noc_type;
         noc2_mon_noc_vec   : out monitor_noc_type;
         noc3_mon_noc_vec   : out monitor_noc_type;
@@ -310,11 +308,26 @@ architecture rtl of tile_mem is
   signal ctrl_apbi  : apb_slv_in_type;
   signal ctrl_apbo  : apb_slv_out_vector;
 
+  -- Mon
+  signal mon_mem_int    : monitor_mem_type;
+  signal mon_cache_int  : monitor_cache_type;
+  signal mon_dvfs_int   : monitor_dvfs_type;
+  signal mon_noc        : monitor_noc_vector(1 to 6);
+  signal mon_ddr        : monitor_ddr_type;
+  signal noc1_mon_noc_vec_int  : monitor_noc_type;
+  signal noc2_mon_noc_vec_int  : monitor_noc_type;
+  signal noc3_mon_noc_vec_int  : monitor_noc_type;
+  signal noc4_mon_noc_vec_int  : monitor_noc_type;
+  signal noc5_mon_noc_vec_int  : monitor_noc_type;
+  signal noc6_mon_noc_vec_int  : monitor_noc_type;
+
   -- Tile parameters
   constant this_mem_id       : integer                            := tile_mem_id(tile_id);
   constant this_ddr_hindex   : integer                            := ddr_hindex(this_mem_id);
   constant this_llc_pindex   : integer                            := llc_cache_pindex(tile_id);
   constant this_llc_pconfig  : apb_config_type                    := fixed_apbo_pconfig(this_llc_pindex);
+  constant this_csr_pindex   : integer                            := tile_csr_pindex(tile_id);
+  constant this_csr_pconfig  : apb_config_type                    := fixed_apbo_pconfig(this_csr_pindex);
   constant this_local_apb_en : std_logic_vector(0 to NAPBSLV - 1) := local_apb_mask(tile_id);
   constant this_local_ahb_en : std_logic_vector(0 to NAHBSLV - 1) := local_ahb_mask(tile_id);
   constant this_local_y      : local_yx                           := tile_y(tile_id);
@@ -521,12 +534,12 @@ begin
      noc6_output_port   => noc6_output_port,
      noc6_data_void_out => noc6_data_void_out_s,
      noc6_stop_out      => noc6_stop_out_s,
-     noc1_mon_noc_vec   => noc1_mon_noc_vec,
-     noc2_mon_noc_vec   => noc2_mon_noc_vec,
-     noc3_mon_noc_vec   => noc3_mon_noc_vec,
-     noc4_mon_noc_vec   => noc4_mon_noc_vec,
-     noc5_mon_noc_vec   => noc5_mon_noc_vec,
-     noc6_mon_noc_vec   => noc6_mon_noc_vec
+     noc1_mon_noc_vec   => noc1_mon_noc_vec_int,
+     noc2_mon_noc_vec   => noc2_mon_noc_vec_int,
+     noc3_mon_noc_vec   => noc3_mon_noc_vec_int,
+     noc4_mon_noc_vec   => noc4_mon_noc_vec_int,
+     noc5_mon_noc_vec   => noc5_mon_noc_vec_int,
+     noc6_mon_noc_vec   => noc6_mon_noc_vec_int
 
      );
 
@@ -606,23 +619,71 @@ begin
   -----------------------------------------------------------------------------
 
   -- DVFS monitor
-  mon_dvfs.vf        <= "1000";         --run at highest frequency always
-  mon_dvfs.transient <= '0';
-  mon_dvfs.clk       <= clk;
-  mon_dvfs.acc_idle  <= '0';
-  mon_dvfs.traffic   <= '0';
-  mon_dvfs.burst     <= '0';
+  mon_dvfs_int.vf        <= "1000";         --run at highest frequency always
+  mon_dvfs_int.transient <= '0';
+  mon_dvfs_int.clk       <= clk;
+  mon_dvfs_int.acc_idle  <= '0';
+  mon_dvfs_int.traffic   <= '0';
+  mon_dvfs_int.burst     <= '0';
+
+  mon_dvfs <= mon_dvfs_int;
 
   -- Memory access monitor
-  mon_mem.clk              <= clk;
-  mon_mem.coherent_req     <= coherence_req_rdreq;
-  mon_mem.coherent_fwd     <= coherence_fwd_wrreq;
-  mon_mem.coherent_rsp_rcv <= coherence_rsp_rcv_rdreq;
-  mon_mem.coherent_rsp_snd <= coherence_rsp_snd_wrreq;
-  mon_mem.dma_req          <= dma_rcv_rdreq;
-  mon_mem.dma_rsp          <= dma_snd_wrreq;
-  mon_mem.coherent_dma_req <= coherent_dma_rcv_rdreq;
-  mon_mem.coherent_dma_rsp <= coherent_dma_snd_wrreq;
+  mon_mem_int.clk              <= clk;
+  mon_mem_int.coherent_req     <= coherence_req_rdreq;
+  mon_mem_int.coherent_fwd     <= coherence_fwd_wrreq;
+  mon_mem_int.coherent_rsp_rcv <= coherence_rsp_rcv_rdreq;
+  mon_mem_int.coherent_rsp_snd <= coherence_rsp_snd_wrreq;
+  mon_mem_int.dma_req          <= dma_rcv_rdreq;
+  mon_mem_int.dma_rsp          <= dma_snd_wrreq;
+  mon_mem_int.coherent_dma_req <= coherent_dma_rcv_rdreq;
+  mon_mem_int.coherent_dma_rsp <= coherent_dma_snd_wrreq;
+ 
+  mon_mem <= mon_mem_int;
+
+  mon_cache <= mon_cache_int;
+
+  noc1_mon_noc_vec <= noc1_mon_noc_vec_int;
+  noc2_mon_noc_vec <= noc2_mon_noc_vec_int;
+  noc3_mon_noc_vec <= noc3_mon_noc_vec_int;
+  noc4_mon_noc_vec <= noc4_mon_noc_vec_int;
+  noc5_mon_noc_vec <= noc5_mon_noc_vec_int;
+  noc6_mon_noc_vec <= noc6_mon_noc_vec_int;
+ 
+  mon_noc(1) <= noc1_mon_noc_vec_int;
+  mon_noc(2) <= noc2_mon_noc_vec_int;
+  mon_noc(3) <= noc3_mon_noc_vec_int;
+  mon_noc(4) <= noc4_mon_noc_vec_int;
+  mon_noc(5) <= noc5_mon_noc_vec_int;
+  mon_noc(6) <= noc6_mon_noc_vec_int;
+
+  mon_ddr.clk <= clk;
+  detect_ddr_access : process(ahbsi)
+  begin
+    mon_ddr.word_transfer <= '0';
+    if ahbsi.hready =  '1' and ahbsi.htrans /= HTRANS_IDLE then
+      mon_ddr.word_transfer <= '1';
+    end if;
+  end process detect_ddr_access;
+
+  --Memory mapped registers
+  mem_tile_csr : esp_tile_csr
+    generic map(
+      pindex  => this_csr_pindex,
+      pconfig => this_csr_pconfig)
+    port map(
+      clk => clk,
+      rstn => rst,
+      mon_ddr => mon_ddr,
+      mon_mem => mon_mem_int,
+      mon_noc => mon_noc,
+      mon_l2 => monitor_cache_none,
+      mon_llc => mon_cache_int,
+      mon_acc => monitor_acc_none,
+      mon_dvfs => mon_dvfs_int,
+      apbi => apbi, 
+      apbo => apbo(this_csr_pindex)
+    );
 
   -----------------------------------------------------------------------------
   -- Proxies
@@ -670,7 +731,7 @@ begin
     -- No LLC wrapper
     ahbmo(2)                 <= ahbm_none;
 
-    mon_cache             <= monitor_cache_none;
+    mon_cache_int             <= monitor_cache_none;
 
     apb_snd_wrreq   <= '0';
     apb_snd_data_in <= (others => '0');
@@ -813,7 +874,7 @@ begin
         dma_snd_data_in            => coherent_dma_snd_data_in,
         dma_snd_full               => coherent_dma_snd_full,
         -- Monitor
-        mon_cache                  => mon_cache
+        mon_cache                  => mon_cache_int
         );
 
     -- APB to LLC cache
@@ -977,4 +1038,5 @@ begin
       noc6_in_data               => noc6_input_port,
       noc6_in_void               => noc6_mem_data_void_in,
       noc6_in_stop               => noc6_mem_stop_out);
+
 end;

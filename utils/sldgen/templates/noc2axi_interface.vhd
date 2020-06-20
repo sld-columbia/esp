@@ -57,7 +57,7 @@ use std.textio.all;
     pllclk    : out std_ulogic;
     -- APB
     apbi      : in apb_slv_in_type;
-    apbo      : out apb_slv_out_vector;
+    apbo      : out apb_slv_out_type;
     pready    : out std_ulogic;
 
     -- NoC plane coherence request
@@ -193,20 +193,10 @@ begin
       remote_ahbs_rcv_data_out   => (others => '0'),
       remote_ahbs_rcv_empty      => '1');
 
-
-  -- Using only one apbo signal
-  no_apb : for i in 0 to GLOB_MAXIOSLV - 1 generate
-    local_apb : if i /= pindex generate
-      apbo(i)      <= apb_none;
-      apbo(i).pirq <= (others => '0');
-    end generate local_apb;
-  end generate no_apb;
-
-  apbo(pindex).pirq(NAHBIRQ - 1 downto pirq + 1) <= (others => '0');
-  apbo(pindex).pirq(pirq) <= acc_done;
-  apbo(pindex).pirq(pirq - 1 downto 0) <= (others => '0');
-  apbo(pindex).pconfig <= pconfig;
-
+  apbo.pirq(NAHBIRQ - 1 downto pirq + 1) <= (others => '0');
+  apbo.pirq(pirq) <= acc_done;
+  apbo.pirq(pirq - 1 downto 0) <= (others => '0');
+  apbo.pconfig <= pconfig;
 
   -- IRQ packet
   irq_header_i <= create_header(MISC_NOC_FLIT_SIZE, local_y, local_x, io_y, io_x, INTERRUPT, irq_info)(MISC_NOC_FLIT_SIZE - 1 downto 0);

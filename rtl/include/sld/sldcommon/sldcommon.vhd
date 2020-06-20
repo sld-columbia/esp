@@ -106,6 +106,23 @@ package sldcommon is
     burst => '0',
     transient => '0'
     );
+    
+  constant monitor_ddr_none : monitor_ddr_type := (
+    clk => '0', 
+    word_transfer => '0'
+    );
+
+   constant monitor_mem_none :  monitor_mem_type := (
+    clk              => '0',
+    coherent_req     => '0',
+    coherent_fwd     => '0',
+    coherent_rsp_rcv => '0',
+    coherent_rsp_snd => '0',
+    dma_req          => '0',
+    dma_rsp          => '0',
+    coherent_dma_req => '0',
+    coherent_dma_rsp => '0'
+    );
 
   component monitor
     generic (

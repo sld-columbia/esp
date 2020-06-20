@@ -234,8 +234,6 @@ architecture rtl of tile_cpu is
 	noc6_output_port   : out noc_flit_type;
 	noc6_data_void_out : out std_logic_vector(4 downto 0);
 	noc6_stop_out      : out std_logic_vector(4 downto 0);
-
-	-- Monitor output. Can be left unconnected
 	noc1_mon_noc_vec   : out monitor_noc_type;
 	noc2_mon_noc_vec   : out monitor_noc_type;
 	noc3_mon_noc_vec   : out monitor_noc_type;
@@ -338,6 +336,17 @@ architecture rtl of tile_cpu is
   signal mosi       : axi_mosi_vector(0 to 3);
   signal somi       : axi_somi_vector(0 to 3);
 
+  -- Mon
+  signal mon_cache_int  : monitor_cache_type;
+  signal mon_dvfs_int   : monitor_dvfs_type;
+  signal mon_noc        : monitor_noc_vector(1 to 6);
+  signal noc1_mon_noc_vec_int  : monitor_noc_type;
+  signal noc2_mon_noc_vec_int  : monitor_noc_type;
+  signal noc3_mon_noc_vec_int  : monitor_noc_type;
+  signal noc4_mon_noc_vec_int  : monitor_noc_type;
+  signal noc5_mon_noc_vec_int  : monitor_noc_type;
+  signal noc6_mon_noc_vec_int  : monitor_noc_type;
+
   -- GRLIB parameters
   constant disas : integer := CFG_DISAS;
   constant pclow : integer := CFG_PCLOW;
@@ -350,6 +359,8 @@ architecture rtl of tile_cpu is
   constant this_dvfs_pmask        : integer                            := cpu_dvfs_pmask;
   constant this_dvfs_pconfig      : apb_config_type                    := cpu_dvfs_pconfig(tile_id);
   constant this_cache_id          : integer                            := tile_cache_id(tile_id);
+  constant this_csr_pindex        : integer                            := tile_csr_pindex(tile_id);
+  constant this_csr_pconfig       : apb_config_type                    := fixed_apbo_pconfig(this_csr_pindex);
   constant this_local_apb_en      : std_logic_vector(0 to NAPBSLV - 1) := local_apb_mask(tile_id);
   constant this_remote_apb_slv_en : std_logic_vector(0 to NAPBSLV - 1) := remote_apb_slv_mask(tile_id);
   constant this_local_ahb_en      : std_logic_vector(0 to NAHBSLV - 1) := local_ahb_mask(tile_id);
@@ -592,12 +603,12 @@ begin
      noc6_output_port   => noc6_output_port,
      noc6_data_void_out => noc6_data_void_out_s,
      noc6_stop_out      => noc6_stop_out_s,
-     noc1_mon_noc_vec   => noc1_mon_noc_vec,
-     noc2_mon_noc_vec   => noc2_mon_noc_vec,
-     noc3_mon_noc_vec   => noc3_mon_noc_vec,
-     noc4_mon_noc_vec   => noc4_mon_noc_vec,
-     noc5_mon_noc_vec   => noc5_mon_noc_vec,
-     noc6_mon_noc_vec   => noc6_mon_noc_vec
+     noc1_mon_noc_vec   => noc1_mon_noc_vec_int,
+     noc2_mon_noc_vec   => noc2_mon_noc_vec_int,
+     noc3_mon_noc_vec   => noc3_mon_noc_vec_int,
+     noc4_mon_noc_vec   => noc4_mon_noc_vec_int,
+     noc5_mon_noc_vec   => noc5_mon_noc_vec_int,
+     noc6_mon_noc_vec   => noc6_mon_noc_vec_int
 
      );
 
@@ -851,7 +862,7 @@ begin
     coherence_rsp_snd_data_in <= (others => '0');
     coherence_rsp_snd_wrreq   <= '0';
     coherence_fwd_rdreq       <= '0';
-    mon_cache                 <= monitor_cache_none;
+    mon_cache_int                 <= monitor_cache_none;
 
     -- Remote uncached slaves, including memory
     -- Memory request/response sue planes 1 and 3; other slaves use plane 5
@@ -970,7 +981,7 @@ begin
         coherence_rsp_snd_wrreq    => coherence_rsp_snd_wrreq,
         coherence_rsp_snd_data_in  => coherence_rsp_snd_data_in,
         coherence_rsp_snd_full     => coherence_rsp_snd_full,
-        mon_cache                  => mon_cache
+        mon_cache                  => mon_cache_int
         );
 
   end generate with_cache_coherence;
@@ -1019,7 +1030,7 @@ begin
       coherence_rsp_snd_data_in <= (others => '0');
       coherence_rsp_snd_wrreq   <= '0';
       coherence_fwd_rdreq       <= '0';
-      mon_cache                 <= monitor_cache_none;
+      mon_cache_int             <= monitor_cache_none;
 
       cpu_axi2noc_1: cpu_axi2noc
         generic map (
@@ -1086,6 +1097,8 @@ begin
 
   end generate ariane_cpu_tile_services_gen;
 
+  mon_cache <= mon_cache_int;
+
   -- DVFS
   dvfs_gen : if this_has_dvfs /= 0 and this_has_pll /= 0 generate
     dvfs_top_1 : dvfs_top
@@ -1109,9 +1122,9 @@ begin
         mon_dvfs  => mon_dvfs_ctrl
         );
 
-    mon_dvfs.clk       <= mon_dvfs_ctrl.clk;
-    mon_dvfs.vf        <= mon_dvfs_ctrl.vf;
-    mon_dvfs.transient <= mon_dvfs_ctrl.transient;
+    mon_dvfs_int.clk       <= mon_dvfs_ctrl.clk;
+    mon_dvfs_int.vf        <= mon_dvfs_ctrl.vf;
+    mon_dvfs_int.transient <= mon_dvfs_ctrl.transient;
   end generate dvfs_gen;
 
   dvfs_no_master_or_no_dvfs : if this_has_dvfs = 0 or this_has_pll = 0 generate
@@ -1119,28 +1132,63 @@ begin
     process (clk_feedthru, rst)
     begin  -- process
       if rst = '0' then                 -- asynchronous reset (active low)
-        mon_dvfs.vf <= "1000";
+        mon_dvfs_int.vf <= "1000";
       elsif clk_feedthru'event and clk_feedthru = '1' then  -- rising clock edge
         if this_has_dvfs /= 0 then
-          mon_dvfs.vf <= mon_dvfs_in.vf;
+          mon_dvfs_int.vf <= mon_dvfs_in.vf;
         end if;
       end if;
     end process;
     process (mon_dvfs_in)
     begin  -- process
       if this_has_dvfs = 1 then
-        mon_dvfs.transient <= mon_dvfs_in.transient;
+        mon_dvfs_int.transient <= mon_dvfs_in.transient;
       else
-        mon_dvfs.transient <= '0';
+        mon_dvfs_int.transient <= '0';
       end if;
     end process;
-    mon_dvfs.clk <= clk_feedthru;
+    mon_dvfs_int.clk <= clk_feedthru;
   end generate dvfs_no_master_or_no_dvfs;
 
-  mon_dvfs.acc_idle <= irqo_int.pwd;
-  mon_dvfs.traffic  <= '0';
-  mon_dvfs.burst    <= '0';
+  --Monitors
+  mon_dvfs_int.acc_idle <= irqo_int.pwd;
+  mon_dvfs_int.traffic  <= '0';
+  mon_dvfs_int.burst    <= '0';
 
+  mon_dvfs <= mon_dvfs_int;
+  
+  noc1_mon_noc_vec <= noc1_mon_noc_vec_int;
+  noc2_mon_noc_vec <= noc2_mon_noc_vec_int;
+  noc3_mon_noc_vec <= noc3_mon_noc_vec_int;
+  noc4_mon_noc_vec <= noc4_mon_noc_vec_int;
+  noc5_mon_noc_vec <= noc5_mon_noc_vec_int;
+  noc6_mon_noc_vec <= noc6_mon_noc_vec_int;
+ 
+  mon_noc(1) <= noc1_mon_noc_vec_int;
+  mon_noc(2) <= noc2_mon_noc_vec_int;
+  mon_noc(3) <= noc3_mon_noc_vec_int;
+  mon_noc(4) <= noc4_mon_noc_vec_int;
+  mon_noc(5) <= noc5_mon_noc_vec_int;
+  mon_noc(6) <= noc6_mon_noc_vec_int;
+  
+  -- Memory mapped registers
+  cpu_tile_csr : esp_tile_csr
+    generic map(
+      pindex  => this_csr_pindex,
+      pconfig => this_csr_pconfig)
+    port map(
+      clk => clk_feedthru,
+      rstn => rst,
+      mon_ddr => monitor_ddr_none,
+      mon_mem => monitor_mem_none,
+      mon_noc => mon_noc,
+      mon_l2 => mon_cache_int,
+      mon_llc => monitor_cache_none,
+      mon_acc => monitor_acc_none,
+      mon_dvfs => mon_dvfs_int,
+      apbi => noc_apbi, 
+      apbo => noc_apbo(this_csr_pindex)
+    );
 
   -- I/O bus proxy - remote memory-mapped I/O accessed from local masters
   apb2noc_1 : apb2noc
@@ -1308,5 +1356,5 @@ begin
       noc6_in_data               => noc6_input_port,
       noc6_in_void               => noc6_cpu_data_void_in,
       noc6_in_stop               => noc6_cpu_stop_out);
-
+ 
 end;

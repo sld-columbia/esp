@@ -222,8 +222,6 @@ architecture rtl of tile_empty is
     noc6_output_port   : out noc_flit_type;
     noc6_data_void_out : out std_logic_vector(4 downto 0);
     noc6_stop_out      : out std_logic_vector(4 downto 0);
-
-    -- Monitor output. Can be left unconnected
     noc1_mon_noc_vec   : out monitor_noc_type;
     noc2_mon_noc_vec   : out monitor_noc_type;
     noc3_mon_noc_vec   : out monitor_noc_type;
@@ -278,21 +276,24 @@ signal noc4_stop_out_s : std_logic_vector(4 downto 0);
 signal noc5_stop_out_s : std_logic_vector(4 downto 0);
 signal noc6_stop_out_s : std_logic_vector(4 downto 0);
 
+-- Mon
+signal mon_dvfs_int   : monitor_dvfs_type;
+signal mon_noc        : monitor_noc_vector(1 to 6);
+signal noc1_mon_noc_vec_int  : monitor_noc_type;
+signal noc2_mon_noc_vec_int  : monitor_noc_type;
+signal noc3_mon_noc_vec_int  : monitor_noc_type;
+signal noc4_mon_noc_vec_int  : monitor_noc_type;
+signal noc5_mon_noc_vec_int  : monitor_noc_type;
+signal noc6_mon_noc_vec_int  : monitor_noc_type;
+
 constant this_local_y  : local_yx  := tile_y(tile_id);
 constant this_local_x  : local_yx  := tile_x(tile_id);
 constant ROUTER_PORTS  : ports_vec := set_router_ports(CFG_XLEN, CFG_YLEN, this_local_x, this_local_y);
 
 begin
 
-mon_dvfs_out.vf        <= (others => '0');
-mon_dvfs_out.clk       <= sys_clk_int;
-mon_dvfs_out.acc_idle  <= '0';
-mon_dvfs_out.traffic   <= '0';
-mon_dvfs_out.burst     <= '0';
-mon_dvfs_out.transient <= '0';
 
 -- Connect data_void, data_stop, data_in
-
 
 noc1_input_port <= (others => '0');
 noc2_input_port <= (others => '0');
@@ -328,6 +329,45 @@ noc3_stop_out <= noc3_stop_out_s(3 downto 0);
 noc4_stop_out <= noc4_stop_out_s(3 downto 0);
 noc5_stop_out <= noc5_stop_out_s(3 downto 0);
 noc6_stop_out <= noc6_stop_out_s(3 downto 0);
+
+--Monitors
+mon_dvfs_int.vf        <= (others => '0');
+mon_dvfs_int.clk       <= sys_clk_int;
+mon_dvfs_int.acc_idle  <= '0';
+mon_dvfs_int.traffic   <= '0';
+mon_dvfs_int.burst     <= '0';
+mon_dvfs_int.transient <= '0';
+mon_dvfs_out           <= mon_dvfs_int;
+
+noc1_mon_noc_vec <= noc1_mon_noc_vec_int;
+noc2_mon_noc_vec <= noc2_mon_noc_vec_int;
+noc3_mon_noc_vec <= noc3_mon_noc_vec_int;
+noc4_mon_noc_vec <= noc4_mon_noc_vec_int;
+noc5_mon_noc_vec <= noc5_mon_noc_vec_int;
+noc6_mon_noc_vec <= noc6_mon_noc_vec_int;
+
+mon_noc(1) <= noc1_mon_noc_vec_int;
+mon_noc(2) <= noc2_mon_noc_vec_int;
+mon_noc(3) <= noc3_mon_noc_vec_int;
+mon_noc(4) <= noc4_mon_noc_vec_int;
+mon_noc(5) <= noc5_mon_noc_vec_int;
+mon_noc(6) <= noc6_mon_noc_vec_int;
+
+  --Memory mapped registers
+--  empty_tile_csr : esp_tile_csr
+--    port map(
+--      clk => clk,
+--      rstn => rst,
+--      mon_ddr => mon_ddr,
+--      mon_mem => mon_mem_int,
+--      mon_noc => mon_noc,
+--      mon_l2 => monitor_cache_none,
+--      mon_llc => mon_cache_int,
+--      mon_acc => monitor_acc_none,
+--      mon_dvfs => mon_dvfs_int
+--      apbi => apbi, 
+--      apbo => apbo
+--    );
 
   sync_noc_set_empty: sync_noc_set
   generic map (
@@ -426,12 +466,12 @@ noc6_stop_out <= noc6_stop_out_s(3 downto 0);
      noc6_output_port   => noc6_output_port,
      noc6_data_void_out => noc6_data_void_out_s,
      noc6_stop_out      => noc6_stop_out_s,
-     noc1_mon_noc_vec   => noc1_mon_noc_vec,
-     noc2_mon_noc_vec   => noc2_mon_noc_vec,
-     noc3_mon_noc_vec   => noc3_mon_noc_vec,
-     noc4_mon_noc_vec   => noc4_mon_noc_vec,
-     noc5_mon_noc_vec   => noc5_mon_noc_vec,
-     noc6_mon_noc_vec   => noc6_mon_noc_vec
+     noc1_mon_noc_vec   => noc1_mon_noc_vec_int,
+     noc2_mon_noc_vec   => noc2_mon_noc_vec_int,
+     noc3_mon_noc_vec   => noc3_mon_noc_vec_int,
+     noc4_mon_noc_vec   => noc4_mon_noc_vec_int,
+     noc5_mon_noc_vec   => noc5_mon_noc_vec_int,
+     noc6_mon_noc_vec   => noc6_mon_noc_vec_int
    
      );
 

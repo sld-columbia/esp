@@ -57,7 +57,7 @@ use std.textio.all;
     pllclk    : out std_ulogic;
     -- APB
     apbi      : in apb_slv_in_type;
-    apbo      : out apb_slv_out_vector;
+    apbo      : out apb_slv_out_type;
     pready    : out std_ulogic;
 
     -- NoC plane coherence request
@@ -357,7 +357,7 @@ begin
       pllbypass                     => pllbypass,
       pllclk                        => pllclk_int,
       apbi                          => apbi,
-      apbo                          => apbo(pindex),
+      apbo                          => apbo,
       bank                          => bank,
       bankdef                       => bankdef,
       acc_rst                       => acc_rst,
@@ -444,14 +444,6 @@ begin
     end if;
 
   end process coherence_model_select;
-
-  -- Using only one apbo signal
-  no_apb : for i in 0 to NAPBSLV - 1 generate
-    local_apb : if i /= pindex generate
-      apbo(i)      <= apb_none;
-      apbo(i).pirq <= (others => '0');
-    end generate local_apb;
-  end generate no_apb;
 
   mon_acc.clk   <= pllclk_int; pllclk <= pllclk_int;
   mon_acc.go    <= bank(CMD_REG)(0);

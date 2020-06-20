@@ -246,8 +246,6 @@ architecture rtl of tile_io is
         noc6_output_port   : out noc_flit_type;
         noc6_data_void_out : out std_logic_vector(4 downto 0);
         noc6_stop_out      : out std_logic_vector(4 downto 0);
-
-        -- Monitor output. Can be left unconnected
         noc1_mon_noc_vec   : out monitor_noc_type;
         noc2_mon_noc_vec   : out monitor_noc_type;
         noc3_mon_noc_vec   : out monitor_noc_type;
@@ -395,6 +393,16 @@ architecture rtl of tile_io is
   signal remote_apb_ack   : std_ulogic;
   signal pready           : std_ulogic;
 
+  -- Mon
+  signal mon_dvfs_int   : monitor_dvfs_type;
+  signal mon_noc        : monitor_noc_vector(1 to 6);
+  signal noc1_mon_noc_vec_int  : monitor_noc_type;
+  signal noc2_mon_noc_vec_int  : monitor_noc_type;
+  signal noc3_mon_noc_vec_int  : monitor_noc_type;
+  signal noc4_mon_noc_vec_int  : monitor_noc_type;
+  signal noc5_mon_noc_vec_int  : monitor_noc_type;
+  signal noc6_mon_noc_vec_int  : monitor_noc_type;
+
   -- Interrupt ack to NoC
   type intr_ack_fsm is (idle, send_packet);
   signal intr_ack_state, intr_ack_state_next : intr_ack_fsm := idle;
@@ -403,6 +411,8 @@ architecture rtl of tile_io is
   -- Tile parameters
   constant this_local_y           : local_yx                           := tile_y(io_tile_id);
   constant this_local_x           : local_yx                           := tile_x(io_tile_id);
+  constant this_csr_pindex        : integer                            := tile_csr_pindex(tile_id);
+  constant this_csr_pconfig       : apb_config_type                    := fixed_apbo_pconfig(this_csr_pindex);
   constant this_local_apb_en      : std_logic_vector(0 to NAPBSLV - 1) := local_apb_mask(io_tile_id);
   constant this_remote_apb_slv_en : std_logic_vector(0 to NAPBSLV - 1) := remote_apb_slv_mask(io_tile_id);
   constant this_apb_en            : std_logic_vector(0 to NAPBSLV - 1) := this_local_apb_en or this_remote_apb_slv_en;
@@ -691,12 +701,12 @@ begin
      noc6_output_port   => noc6_output_port,
      noc6_data_void_out => noc6_data_void_out_s,
      noc6_stop_out      => noc6_stop_out_s,
-     noc1_mon_noc_vec   => noc1_mon_noc_vec,
-     noc2_mon_noc_vec   => noc2_mon_noc_vec,
-     noc3_mon_noc_vec   => noc3_mon_noc_vec,
-     noc4_mon_noc_vec   => noc4_mon_noc_vec,
-     noc5_mon_noc_vec   => noc5_mon_noc_vec,
-     noc6_mon_noc_vec   => noc6_mon_noc_vec
+     noc1_mon_noc_vec   => noc1_mon_noc_vec_int,
+     noc2_mon_noc_vec   => noc2_mon_noc_vec_int,
+     noc3_mon_noc_vec   => noc3_mon_noc_vec_int,
+     noc4_mon_noc_vec   => noc4_mon_noc_vec_int,
+     noc5_mon_noc_vec   => noc5_mon_noc_vec_int,
+     noc6_mon_noc_vec   => noc6_mon_noc_vec_int
 
      );
 
@@ -751,7 +761,9 @@ begin
     noc_apbo(i) <= apb_none;
   end generate no_pslv_gen_1;
   no_pslv_gen_2 : for i in 16 to NAPBSLV - 1 generate
-    noc_apbo(i) <= apb_none;
+    skip_csr_apb_gen : if i /= this_csr_pindex generate 
+      noc_apbo(i) <= apb_none;
+    end generate skip_csr_apb_gen;
   end generate no_pslv_gen_2;
 
 
@@ -1358,14 +1370,49 @@ begin
   -----------------------------------------------------------------------------
   -- Monitor for DVFS. (IO tile has no dvfs)
   -----------------------------------------------------------------------------
-  mon_dvfs.vf        <= "1000";         -- Run at highest frequency always
-  mon_dvfs.transient <= '0';
-  mon_dvfs.clk       <= clk;
-  mon_dvfs.acc_idle  <= '0';
-  mon_dvfs.traffic   <= '0';
-  mon_dvfs.burst     <= '0';
+  mon_dvfs_int.vf        <= "1000";         -- Run at highest frequency always
+  mon_dvfs_int.transient <= '0';
+  mon_dvfs_int.clk       <= clk;
+  mon_dvfs_int.acc_idle  <= '0';
+  mon_dvfs_int.traffic   <= '0';
+  mon_dvfs_int.burst     <= '0';
 
-  -----------------------------------------------------------------------------
+  mon_dvfs <= mon_dvfs_int;
+  
+  noc1_mon_noc_vec <= noc1_mon_noc_vec_int;
+  noc2_mon_noc_vec <= noc2_mon_noc_vec_int;
+  noc3_mon_noc_vec <= noc3_mon_noc_vec_int;
+  noc4_mon_noc_vec <= noc4_mon_noc_vec_int;
+  noc5_mon_noc_vec <= noc5_mon_noc_vec_int;
+  noc6_mon_noc_vec <= noc6_mon_noc_vec_int;
+ 
+  mon_noc(1) <= noc1_mon_noc_vec_int;
+  mon_noc(2) <= noc2_mon_noc_vec_int;
+  mon_noc(3) <= noc3_mon_noc_vec_int;
+  mon_noc(4) <= noc4_mon_noc_vec_int;
+  mon_noc(5) <= noc5_mon_noc_vec_int;
+  mon_noc(6) <= noc6_mon_noc_vec_int;
+
+  -- Memory mapped registers
+  io_tile_csr : esp_tile_csr
+    generic map(
+      pindex  => this_csr_pindex,
+      pconfig => this_csr_pconfig)
+    port map(
+      clk => clk,
+      rstn => rst,
+      mon_ddr => monitor_ddr_none,
+      mon_mem => monitor_mem_none,
+      mon_noc => mon_noc,
+      mon_l2 => monitor_cache_none,
+      mon_llc => monitor_cache_none,
+      mon_acc => monitor_acc_none,
+      mon_dvfs => mon_dvfs_int,
+      apbi => noc_apbi, 
+      apbo => noc_apbo(this_csr_pindex)
+    );
+
+-----------------------------------------------------------------------------
   -- Tile queues
   -----------------------------------------------------------------------------
 
@@ -1469,4 +1516,3 @@ begin
       noc6_in_stop              => noc6_io_stop_out);
 
 end;
-

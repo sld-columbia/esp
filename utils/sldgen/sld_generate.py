@@ -225,7 +225,7 @@ def bind_apb3(f, prefix):
   f.write("      " + prefix + "paddr => apbi_paddr,\n");
   f.write("      " + prefix + "pwrite => apbi.pwrite,\n");
   f.write("      " + prefix + "pwdata => apbi.pwdata,\n");
-  f.write("      " + prefix + "prdata => apbo(pindex).prdata,\n");
+  f.write("      " + prefix + "prdata => apbo.prdata,\n");
   f.write("      " + prefix + "pready => pready,\n");
   f.write("      " + prefix + "pslverr => open, -- TODO: handle APB3 error\n");
 
@@ -1014,7 +1014,7 @@ def gen_interfaces(accelerator_list, axi_accelerator_list, dma_width, template_d
         f.write("      pllbypass         : in  std_ulogic;\n")
         f.write("      pllclk            : out std_ulogic;\n")
         f.write("      apbi              : in apb_slv_in_type;\n")
-        f.write("      apbo              : out apb_slv_out_vector;\n")
+        f.write("      apbo              : out apb_slv_out_type;\n")
         f.write("      pready            : out std_ulogic;\n")
         f.write("      coherence_req_wrreq        : out std_ulogic;\n")
         f.write("      coherence_req_data_in      : out noc_flit_type;\n")
@@ -1151,7 +1151,7 @@ def gen_tile_acc(accelerator_list, axi_acceleratorlist, template_dir, out_dir):
           f.write("        pllbypass         => pllbypass,\n")
           f.write("        pllclk            => clk_feedthru,\n")
           f.write("        apbi              => apbi,\n")
-          f.write("        apbo              => apbo,\n")
+          f.write("        apbo              => apbo(this_pindex),\n")
           f.write("        pready            => pready,\n")
           f.write("        coherence_req_wrreq        => coherence_req_wrreq,\n")
           f.write("        coherence_req_data_in      => coherence_req_data_in,\n")
@@ -1185,8 +1185,8 @@ def gen_tile_acc(accelerator_list, axi_acceleratorlist, template_dir, out_dir):
           f.write("        interrupt_ack_empty    => interrupt_ack_empty,\n")
           f.write("        mon_dvfs_in       => mon_dvfs_in,\n")
           f.write("        -- Monitor signals\n")
-          f.write("        mon_acc           => mon_acc,\n")
-          f.write("        mon_cache         => mon_cache,\n")
+          f.write("        mon_acc           => mon_acc_int,\n")
+          f.write("        mon_cache         => mon_cache_int,\n")
           f.write("        mon_dvfs          => mon_dvfs_int\n")
           f.write("      );\n")
           f.write("  end generate " + acc.name + "_gen;\n\n")
