@@ -1348,6 +1348,9 @@ def print_mapping(fp, esp_config):
     fp.write("    14 => io_tile_id,\n")
     if esp_config.has_sgmii:
       fp.write("    15 => io_tile_id,\n")
+  # 20-83 - ESP Tile CSRs
+  for i in range(0, esp_config.ntiles):
+    fp.write("    " + str(CSR_PINDEX[i]) + " => " + str(i) + ",\n")
   # 20-(NAPBSLV - 1) - Accelerators
   for i in range(0, esp_config.ntiles):
     t =  esp_config.tiles[i]
