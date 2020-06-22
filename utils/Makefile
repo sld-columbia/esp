@@ -467,7 +467,7 @@ startup.o: $(BOOTROM_PATH)/startup.S ariane.dtb
 		-I$(BOOTROM_PATH) \
 		-c $< -o $@
 
-main.o: $(BOOTROM_PATH)/main.c
+main.o: $(BOOTROM_PATH)/main.c socmap.h
 	$(QUIET_CC) riscv64-unknown-elf-gcc \
 		-Os \
 		-Wall -Werror \
