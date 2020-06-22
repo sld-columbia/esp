@@ -126,11 +126,8 @@
 //
 
 // User defined constants
-// #define WORD_SIZE_LOG (slog_2<WORD_SIZE>::value)
-// #define WORDS_PER_DMA (DMA_WIDTH >> WORD_SIZE_LOG)
-// #define WORDS_PER_DMA_LOG (slog_2<WORDS_PER_DMA>::value)
 #ifndef WORD_SIZE
-#define WORD_SIZE 1
+#define WORD_SIZE 32
 #endif
 
 #define WORDS_PER_DMA (DMA_WIDTH / WORD_SIZE)

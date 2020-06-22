@@ -32,7 +32,7 @@ void gemm::gemm_main(uint32_t length,
 	    FPDATA row_elem_1 = INT2FP(row[plm_i]);
 	    FPDATA col_elem_1 = INT2FP(col[plm_i]);
 
-	    if (plm_i_base < length) {
+	    if (plm_i < length) {
 		MULTIPLY(mult_out[0][m], row_elem_1, col_elem_1);
 	    }
 	}
@@ -42,7 +42,7 @@ void gemm::gemm_main(uint32_t length,
 	    HLS_UNROLL_LOOP(ON);
 
 	    uint32_t plm_i = plm_i_base + m;
-	    if (plm_i_base < length) {
+	    if (plm_i < length) {
 		ADD(accumulator[0], accumulator[0], mult_out[0][m]);
 	    }
 	}
@@ -59,7 +59,7 @@ void gemm::gemm_main(uint32_t length,
 	    FPDATA row_elem_2 = INT2FP(row[plm_i].range(2 * WORD_SIZE-1, WORD_SIZE)); 
 	    FPDATA col_elem_2 = INT2FP(col[plm_i].range(2 * WORD_SIZE-1, WORD_SIZE));
 
-	    if (plm_i_base < length) {
+	    if (plm_i < length) {
 		MULTIPLY(mult_out[0][m], row_elem_1, col_elem_1);
 		MULTIPLY(mult_out[1][m], row_elem_2, col_elem_2);
 	    }
@@ -70,7 +70,7 @@ void gemm::gemm_main(uint32_t length,
 	    HLS_UNROLL_LOOP(ON);
 
 	    uint32_t plm_i = plm_i_base + m;
-	    if (plm_i_base < length) {
+	    if (plm_i < length) {
 		ADD(accumulator[0], accumulator[0], mult_out[0][m]);
 		ADD(accumulator[1], accumulator[1], mult_out[1][m]);
 	    }
@@ -111,7 +111,7 @@ inline void gemm::sync_compute_store(uint32_t &count)
     {
         ++count;
 
-        if (count >= DMA_CHUNK / WORDS_PER_DMA)
+        if (count >= (DMA_CHUNK >> WORDS_PER_DMA_LOG))
         {
             count = 0;
 

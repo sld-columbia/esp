@@ -90,11 +90,9 @@ void gemm::load_input()
 	    {
 		index_d1_tmp = index_d1;
 
-		// index_d1 = ((a * matrix_d1 * matrix_d2) >> WORDS_PER_DMA_LOG) +
-		//     ld_offset1 + ((d1 * matrix_d2) >> WORDS_PER_DMA_LOG);
-		// index_d2 = ((a * matrix_d2 * matrix_d3) >> WORDS_PER_DMA_LOG) +
-		//     ld_offset2 + ((d2 * matrix_d2) >> WORDS_PER_DMA_LOG);
 		length = DMA_CHUNK;
+
+		uint32_t index_m2_dma = index_d2_tmp;
 
 		for (uint32_t chk = 0; chk < matrix_chk; ++chk)
 		{
@@ -138,14 +136,16 @@ void gemm::load_input()
 
 		    // TODO
 		    // This does not work when WORDS_PER_DMA != 1
-		    uint32_t m2_loop_iters, length_m2_dma;
+		    uint32_t m2_loop_iters, length_m2_dma, index_m2_incr;
 			
-		    if (transpose) {
+		    if (!transpose) {
 			m2_loop_iters = length;
 			length_m2_dma = 1;
+			index_m2_incr = matrix_d3;
 		    } else {
 			m2_loop_iters = 1;
 			length_m2_dma = length;
+			index_m2_incr = length;
 		    }
 
 		    i = 0;
@@ -153,7 +153,9 @@ void gemm::load_input()
 		    {
 			{
 			    HLS_DEFINE_PROTOCOL("load-matrix2-info");
-			    dma_info_t dma_info(index_d2_tmp + t, length_m2_dma >> WORDS_PER_DMA_LOG, SIZE_WORD);
+
+			    dma_info_t dma_info(index_m2_dma, // + t * matrix_d2,
+						length_m2_dma >> WORDS_PER_DMA_LOG, SIZE_WORD);
 			    this->dma_read_ctrl.put(dma_info);
 			}
 
@@ -173,6 +175,8 @@ void gemm::load_input()
 				wait(); // Only considered in behavioral simulation
 			    }
 			}
+
+			index_m2_dma += index_m2_incr;
 		    }
 		    
 		    // Call the compute_kernel process
@@ -183,8 +187,11 @@ void gemm::load_input()
 
 		    // Update the indices
 		    index_d1_tmp += length >> WORDS_PER_DMA_LOG;
-		    index_d2_tmp += length >> WORDS_PER_DMA_LOG;
+		    if (transpose)
+			index_d2_tmp += length_m2_dma >> WORDS_PER_DMA_LOG;
 		}
+		if (!transpose)
+		    index_d2_tmp += 1;
 	    }
 	    index_d1 += (matrix_d2 >> WORDS_PER_DMA_LOG);
 	}
@@ -247,56 +254,55 @@ void gemm::store_output()
         matrix_d1 = config.d1;
         matrix_d3 = config.d3;
         st_offset = config.st_offset;
+    }
 
+    {
         // Calculating number of outputs to generate
-        matrix_out = matrix_d1 * matrix_d3;
+        matrix_out = matrix_d1 * matrix_d3 * ninputs;
         calculate_chunks(matrix_chk, matrix_rem, matrix_out);
     }
 
     // Store
-    for (uint16_t a = 0; a < ninputs; a++)
+    index = st_offset;
+    length = DMA_CHUNK;
+
+    for (uint32_t chk = 0; chk < matrix_chk; ++chk)
     {
-	index = st_offset + ((a * matrix_out) >> WORDS_PER_DMA_LOG);
-	length = DMA_CHUNK;
+	// If true the next is the last (smaller) chunk
+	if (chk == matrix_chk - 1 && matrix_rem != 0)
+	    length = matrix_rem;
 
-	for (uint32_t chk = 0; chk < matrix_chk; ++chk)
+	// Wait the compute_process
+	store_compute_handshake();
+
 	{
-            // If true the next is the last (smaller) chunk
-	    if (chk == matrix_chk - 1 && matrix_rem != 0)
-		length = matrix_rem;
-
-	    // Wait the compute_process
-	    store_compute_handshake();
-
-	    {
-		HLS_DEFINE_PROTOCOL("store-matrix-info");
-		dma_info_t dma_info(index, length >> WORDS_PER_DMA_LOG, SIZE_WORD);
-		this->dma_write_ctrl.put(dma_info);
-	    }
-
-	    i = 0;
-	    for (uint32_t k = 0; k < length >> WORDS_PER_DMA_LOG; ++k)
-	    {
-		sc_dt::sc_bv<DMA_WIDTH> data = 0;
-
-		{
-		    // This ensures the maximum throughput
-		    HLS_CONSTRAIN_LATENCY(0, 1, "store-matrix");
-
-		    data = output[i++];
-
-		    wait(); // Only considered in behavioral simulation
-		}
-
-		this->dma_write_chnl.put(data);
-	    }
-
-	    // release compute_process
-	    store_compute_2_handshake();
-
-	    // update the index
-	    index += length >> WORDS_PER_DMA_LOG;
+	    HLS_DEFINE_PROTOCOL("store-matrix-info");
+	    dma_info_t dma_info(index, length >> WORDS_PER_DMA_LOG, SIZE_WORD);
+	    this->dma_write_ctrl.put(dma_info);
 	}
+
+	i = 0;
+	for (uint32_t k = 0; k < length >> WORDS_PER_DMA_LOG; ++k)
+	{
+	    sc_dt::sc_bv<DMA_WIDTH> data = 0;
+
+	    {
+		// This ensures the maximum throughput
+		HLS_CONSTRAIN_LATENCY(0, 1, "store-matrix");
+
+		data = output[i++];
+
+		wait(); // Only considered in behavioral simulation
+	    }
+
+	    this->dma_write_chnl.put(data);
+	}
+
+	// release compute_process
+	store_compute_2_handshake();
+
+	// update the index
+	index += length >> WORDS_PER_DMA_LOG;
     }
 
     // Conclude
@@ -421,8 +427,10 @@ void gemm::compute_kernel()
 		}
 	    }
 	}
+    }
 
-	// Force to store the last chunk
+    // Force to store the last chunk
+    if (store_count) {
 	store_count = (DMA_CHUNK >> WORDS_PER_DMA_LOG) - 1;
 	sync_compute_store(store_count);
     }

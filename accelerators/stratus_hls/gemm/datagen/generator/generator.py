@@ -20,7 +20,7 @@ def gen(is_transposed, batch_size, rowsA, colsA, colsB, name):
     matrixA.write(str(colsA) + "\n") # colsA
 
     for i in range(0, batch_size * rowsA * colsA):
-        matrixA.write(str(random.uniform(1, value_range)) + " ")
+        matrixA.write(str(random.randint(-value_range, value_range)) + " ")
 
     matrixA.close()
 
@@ -33,7 +33,7 @@ def gen(is_transposed, batch_size, rowsA, colsA, colsB, name):
     matrixB.write(str(colsB) + "\n") # colsB
 
     for i in range(0, batch_size * colsA * colsB):
-        matrixB.write(str(random.uniform(1, value_range)) + " ")
+        matrixB.write(str(random.randint(-value_range, value_range)) + " ")
 
     matrixB.close()
 
@@ -41,50 +41,50 @@ def main():
 
     # Generate small sized matrices
     gen(1,
-        random.randint(1, 4),
-        random.randint(4, 32),
-        random.randint(4, 32),
-        random.randint(4, 32),
+        random.randint(1, 8),
+        random.randint(2, 8) * 2,
+        random.randint(2, 8) * 2,
+        random.randint(2, 8) * 2,
         "testS")
 
     # Generate medium sized matrices
     gen(1,
-        random.randint( 1,   8),
-        random.randint(32, 128),
-        random.randint(32, 128),
-        random.randint(32, 128),
+        random.randint( 1,  4),
+        random.randint(8, 32) * 2,
+        random.randint(8, 32) * 2,
+        random.randint(8, 32) * 2,
         "testM")
 
     # Generate large sized matrices
     gen(1,
         random.randint( 1,   2),
-        random.randint(64, 256),
-        random.randint(64, 256),
-        random.randint(64, 256),
+        random.randint(32, 128) * 2,
+        random.randint(32, 128) * 2,
+        random.randint(32, 128) * 2,
         "testL")
 
     # Generate matrices with single row matrix A and single column matrix B
     gen(1,
         random.randint(1, 8),
         1,
-        random.randint(1024, 65536),
+        random.randint(512, 32768) * 2,
         1,
         "testR")
 
     # Generate matrices with single column matrix A and single row matrix B
     gen(1,
         random.randint(1, 8),
-        random.randint(128,1024),
+        random.randint(64,256) * 2,
         1,
-        random.randint(128,1024),
+        random.randint(64,256) * 2,
         "testC")
 
     # Generate matrices with non-transposed matrix B
     gen(0,
-        random.randint(1, 8),
-        random.randint(32, 256),
-        random.randint(32, 256),
-        random.randint(32, 256),
+        random.randint(1, 1),
+        random.randint(1, 128) * 2,
+        random.randint(1, 128) * 2,
+        random.randint(1, 128) * 2,
         "testNT")
 
     print("Info: input successfully generated")

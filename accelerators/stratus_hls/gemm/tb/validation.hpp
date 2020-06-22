@@ -8,7 +8,7 @@
 #define REPORT_THRESHOLD 10
 
 // MAX_ERROR_THRESHOLD: the maximum relative error (percentage)
-#define MAX_ERROR_THRESHOLD 0.01
+#define MAX_ERROR_THRESHOLD 0.0
 
 bool check_error_threshold(double out, double gold, double &error)
 {
@@ -19,10 +19,12 @@ bool check_error_threshold(double out, double gold, double &error)
 
     if (gold != 0)
         error = fabs((gold - out) / gold);
-    else
+    else if (out != 0)
         error = fabs((out - gold) / out);
+    else
+	error = 0;
 
-    return (error > MAX_ERROR_THRESHOLD && !(out < 0.5 && out > -0.5));
+    return (error > MAX_ERROR_THRESHOLD); // && !(out < 0.5 && out > -0.5));
 }
 
 #endif // __VALIDATION_HPP__

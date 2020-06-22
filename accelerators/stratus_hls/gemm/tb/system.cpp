@@ -259,7 +259,7 @@ int system_t::validate()
     // Check for mismatches
     for (uint32_t d2 = 0; d2 < size_out * batch_size; ++d2)
     {
-        if (check_error_threshold(matrix_out->data[d2], matrix_out_gold->data[d2], rel_error)) // || d2 < 10) // TODO remove d2 < 10
+        if (check_error_threshold(matrix_out->data[d2], matrix_out_gold->data[d2], rel_error))
         {
             if (tot_errors < REPORT_THRESHOLD)
             {

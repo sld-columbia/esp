@@ -1,3 +1,7 @@
+plm_w16_chk128_1w1r 128 16 1w:0r 0w:1r
+plm_w16_chk512_1w1r 512 16 1w:0r 0w:1r
+plm_w16_chk2048_1w1r 2048 16 1w:0r 0w:1r
+plm_w16_chk8192_1w1r 8192 16 1w:0r 0w:1r
 plm_w32_chk128_1w1r 128 32 1w:0r 0w:1r
 plm_w32_chk512_1w1r 512 32 1w:0r 0w:1r
 plm_w32_chk2048_1w1r 2048 32 1w:0r 0w:1r

@@ -90,11 +90,9 @@ if {$TECH_IS_XILINX == 1} {
 
 # 0 = fixed point, 1 = float point
 
-# 32
-set DMA_WIDTH "64"
-set DMA_CHUNK "128 512 2048 8192"
-# 32
-set WORD_SIZE "64"
+set DMA_WIDTH "32 64"
+set DMA_CHUNK "128 512 2048 8192" 
+set WORD_SIZE "32 64"
 set PARALLELISM "4 8 16"
 set_attr split_multiply 32
 set_attr split_add 32

@@ -21,7 +21,7 @@ typedef sc_dt::sc_int<DMA_WIDTH> PLM_WORD;
 const unsigned int FPDATA_ML = 23;
 const unsigned int FPDATA_EL = 8;
 #elif (WORD_SIZE == 64)
-const unsigned int FPDATA_ML = 52
+const unsigned int FPDATA_ML = 52;
 const unsigned int FPDATA_EL = 12;
 #endif
 
