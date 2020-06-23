@@ -1032,13 +1032,9 @@ begin
   profpga_mmi64_gen : if CFG_MON_DDR_EN + CFG_MON_NOC_INJECT_EN + CFG_MON_NOC_QUEUES_EN + CFG_MON_ACC_EN + CFG_MON_DVFS_EN /= 0 generate
     -- MMI64
     user_rstn <= rstn;
-
-    mon_ddr(0).clk <= clkm;
-    mon_ddr(1).clk <= clkm_1;
-    mon_ddr(2).clk <= clkm_2;
-    mon_ddr(3).clk <= clkm_3;
     
     gen_mon_ddr : for i in 0 to CFG_NMEM_TILE - 1 generate
+        mon_ddr(i).clk <= sys_clk(i);
         detect_ddr_access : process (ddr_ahbsi)
         begin  -- process detect_mem_access
           mon_ddr(i).word_transfer <= '0';
