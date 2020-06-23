@@ -197,6 +197,7 @@ begin
   apbo.pirq(pirq) <= acc_done;
   apbo.pirq(pirq - 1 downto 0) <= (others => '0');
   apbo.pconfig <= pconfig;
+  apbo.pindex <= pindex;
 
   -- IRQ packet
   irq_header_i <= create_header(MISC_NOC_FLIT_SIZE, local_y, local_x, io_y, io_x, INTERRUPT, irq_info)(MISC_NOC_FLIT_SIZE - 1 downto 0);
