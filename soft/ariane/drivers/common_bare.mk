@@ -1,6 +1,7 @@
 
 RISCV_TESTS = ../../../riscv-tests
 BOOTROM = ../../../bootrom
+COMMON = ../../../common
 
 CFLAGS += $(EXTRA_CFLAGS)
 CFLAGS += -I../../include
@@ -20,7 +21,7 @@ CFLAGS +=-nostartfiles
 
 LDFLAGS += -lm
 LDFLAGS += -lgcc
-LDFLAGS += $(RISCV_TESTS)/benchmarks/common/syscalls.c
+LDFLAGS += $(COMMON)/syscalls.c
 LDFLAGS += $(RISCV_TESTS)/benchmarks/common/crt.S
 LDFLAGS += -T $(RISCV_TESTS)/benchmarks/common/test.ld
 

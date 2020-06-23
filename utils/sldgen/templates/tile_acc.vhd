@@ -234,6 +234,7 @@ architecture rtl of tile_acc is
   signal apbi           : apb_slv_in_type;
   signal apbo           : apb_slv_out_vector;
   signal pready         : std_ulogic;
+  signal pready_noc     : std_ulogic;
   signal mon_dvfs_int   : monitor_dvfs_type;
   signal mon_cache_int  : monitor_cache_type;
   signal mon_acc_int    : monitor_acc_type;
@@ -578,6 +579,16 @@ begin
     end generate local_apb;
   end generate no_apb;
 
+  -- Connect pready for APB3 accelerators
+  pready_gen: process (pready, apbi) is
+  begin  -- process pready_gen
+    if apbi.psel(this_pindex) = '1' then
+      pready_noc <= pready;
+    else
+      pready_noc <= '1';
+    end if;
+  end process pready_gen;
+
   -- APB proxy
   misc_noc2apb_1 : misc_noc2apb
     generic map (
@@ -590,7 +601,7 @@ begin
       clk              => clk_feedthru,
       apbi             => apbi,
       apbo             => apbo,
-      pready           => pready,
+      pready           => pready_noc,
       dvfs_transient   => mon_dvfs_int.transient,
       apb_snd_wrreq    => apb_snd_wrreq,
       apb_snd_data_in  => apb_snd_data_in,

@@ -23,7 +23,6 @@ CC := $(CROSS_COMPILE)gcc
 LD := $(CROSS_COMPILE)$(LD)
 
 VPATH := ./
-VPATH += ../../riscv-tests/benchmarks/common
 
 libprobe.a: syscalls.o probe.o uart.o fdt.o
 	$(CROSS_COMPILE)ar r $@ $^
