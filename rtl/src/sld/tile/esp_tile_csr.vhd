@@ -142,7 +142,7 @@ architecture rtl of esp_tile_csr is
         end if; 
         if ctrl_window_size_sample = '1' then 
             window_size  <= wdata;
-            window_reset <= '0';
+            window_reset <= '1';
         end if;
     end if;
   end process wr_registers;
