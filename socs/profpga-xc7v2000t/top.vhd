@@ -703,7 +703,7 @@ begin
           haddr    => 16#400#,
           hmask    => 16#E00#,
           tech     => 0,
-          kbytes   => 1000,
+          kbytes   => 2048,
           pipe     => 0,
           maccsz   => AHBDW,
           fname    => "ram.srec"
@@ -721,7 +721,7 @@ begin
           haddr    => 16#600#,
           hmask    => 16#E00#,
           tech     => 0,
-          kbytes   => 1000,
+          kbytes   => 2048,
           pipe     => 0,
           maccsz   => AHBDW,
           fname    => "ram.srec"
@@ -741,7 +741,7 @@ begin
           haddr    => 16#400#,
           hmask    => 16#C00#,
           tech     => 0,
-          kbytes   => 1000,
+          kbytes   => 2048,
           pipe     => 0,
           maccsz   => AHBDW,
           fname    => "ram.srec"
