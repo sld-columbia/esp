@@ -27,7 +27,6 @@ package ethcomp is
       ifg_gap        : integer := 24; 
       attempt_limit  : integer := 16;
       backoff_limit  : integer := 10;
-      mdcscaler      : integer range 0 to 255 := 25; 
       enable_mdio    : integer range 0 to 1 := 0;
       fifosize       : integer range 4 to 512 := 8;
       nsync          : integer range 1 to 2 := 2;
@@ -54,6 +53,7 @@ package ethcomp is
     port(
       rst            : in  std_ulogic;
       clk            : in  std_ulogic;
+      mdcscaler      : in  integer range 0 to 2047 := 25; 
       --ahb mst in
       hgrant         : in  std_ulogic;
       hready         : in  std_ulogic;   
@@ -156,7 +156,6 @@ package ethcomp is
       attempt_limit  : integer := 16;
       backoff_limit  : integer := 10;
       slot_time      : integer := 128;
-      mdcscaler      : integer range 0 to 255 := 25; 
       nsync          : integer range 1 to 2 := 2;
       edcl           : integer range 0 to 3 := 0;
       edclbufsz      : integer range 1 to 64 := 1;
@@ -182,6 +181,7 @@ package ethcomp is
     port(
       rst            : in  std_ulogic;
       clk            : in  std_ulogic;
+      mdcscaler      : in  integer range 0 to 2047 := 25; 
       --ahb mst in
       hgrant         : in  std_ulogic;
       hready         : in  std_ulogic;   
@@ -295,7 +295,7 @@ package ethcomp is
       ifg_gap        : integer := 24; 
       attempt_limit  : integer := 16;
       backoff_limit  : integer := 10;
-      mdcscaler      : integer range 0 to 255 := 25; 
+      mdcscaler      : integer range 0 to 2047 := 25; 
       enable_mdio    : integer range 0 to 1 := 0;
       fifosize       : integer range 4 to 64 := 8;
       nsync          : integer range 1 to 2 := 2;
@@ -382,7 +382,7 @@ package ethcomp is
       attempt_limit  : integer := 16;
       backoff_limit  : integer := 10;
       slot_time      : integer := 128;
-      mdcscaler      : integer range 0 to 255 := 25; 
+      mdcscaler      : integer range 0 to 2047 := 25; 
       nsync          : integer range 1 to 2 := 2;
       edcl           : integer range 0 to 3 := 1;
       edclbufsz      : integer range 1 to 64 := 1;

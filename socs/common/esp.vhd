@@ -75,10 +75,6 @@ signal rst_int       : std_logic;
 signal sys_clk_int   : std_logic_vector(0 to CFG_NMEM_TILE - 1);
 signal refclk_int    : std_logic_vector(CFG_TILES_NUM -1 downto 0);
 signal pllbypass_int : std_logic_vector(CFG_TILES_NUM - 1 downto 0);
-signal uart_rxd_int  : std_logic;       -- UART1_RX (u1i.rxd)
-signal uart_txd_int  : std_logic;       -- UART1_TX (u1o.txd)
-signal uart_ctsn_int : std_logic;       -- UART1_RTSN (u1i.ctsn)
-signal uart_rtsn_int : std_logic;       -- UART1_RTSN (u1o.rtsn)
 signal cpuerr_vec    : std_logic_vector(0 to CFG_NCPU_TILE-1);
 
 type monitor_noc_cast_vector is array (1 to nocs_num) of monitor_noc_vector(0 to CFG_TILES_NUM-1);
@@ -173,15 +169,6 @@ begin
   pllbypass_int <= pllbypass;
 
   cpuerr <= cpuerr_vec(0);
-
-  -----------------------------------------------------------------------------
-  -- UART pads
-  -----------------------------------------------------------------------------
-
-  uart_rxd_pad   : inpad  generic map (level => cmos, voltage => x18v, tech => CFG_PADTECH) port map (uart_rxd, uart_rxd_int);
-  uart_txd_pad   : outpad generic map (level => cmos, voltage => x18v, tech => CFG_PADTECH) port map (uart_txd, uart_txd_int);
-  uart_ctsn_pad : inpad  generic map (level => cmos, voltage => x18v, tech => CFG_PADTECH) port map (uart_ctsn, uart_ctsn_int);
-  uart_rtsn_pad : outpad generic map (level => cmos, voltage => x18v, tech => CFG_PADTECH) port map (uart_rtsn, uart_rtsn_int);
 
 
   -----------------------------------------------------------------------------
@@ -433,7 +420,16 @@ begin
         HAS_SYNC     => CFG_HAS_SYNC)
       port map (
         rst                => rst,
+        refclk             => '0',
+        pllbypass          => '0',
+        pllclk             => open,
 	sys_clk_int        => sys_clk_int(0),
+        -- Test interface
+        tdi                => '0',
+        tdo                => open,
+        tms                => '0',
+        tclk               => '0',
+        -- NOC
 	noc1_data_n_in     => noc1_data_n_in(i),
 	noc1_data_s_in     => noc1_data_s_in(i),
 	noc1_data_w_in     => noc1_data_w_in(i),
@@ -534,6 +530,11 @@ begin
         pllbypass          => pllbypass_int(i),
         pllclk             => clk_tile(i),
         cpuerr             => cpuerr_vec(tile_cpu_id(i)),
+        -- Test interface
+        tdi                => '0',
+        tdo                => open,
+        tms                => '0',
+        tclk               => '0',
         -- NOC
         sys_clk_int        => sys_clk_int(0),
         noc1_data_n_in     => noc1_data_n_in(i),
@@ -638,6 +639,11 @@ begin
         refclk             => refclk_int(i),
         pllbypass          => pllbypass_int(i),
         pllclk             => clk_tile(i),
+        -- Test interface
+        tdi                => '0',
+        tdo                => open,
+        tms                => '0',
+        tclk               => '0',
         -- NOC
         sys_clk_int        => sys_clk_int(0),
         noc1_data_n_in     => noc1_data_n_in(i),
@@ -736,6 +742,13 @@ begin
       port map (
 	rst                => rst_int,
 	clk                => refclk_int(i),
+        refclk             => '0',
+        pllbypass          => '0',
+        pllclk             => open,
+        dco_clk            => open,
+        -- Ethernet MDC Scaler configuration
+        mdcscaler          => open,
+        -- I/O bus interfaces
 	eth0_apbi          => eth0_apbi,
 	eth0_apbo          => eth0_apbo,
 	sgmii0_apbi        => sgmii0_apbi,
@@ -747,12 +760,18 @@ begin
 	dvi_apbo           => dvi_apbo,
 	dvi_ahbmi          => dvi_ahbmi,
 	dvi_ahbmo          => dvi_ahbmo,
-	uart_rxd           => uart_rxd_int,
-	uart_txd           => uart_txd_int,
-	uart_ctsn          => uart_ctsn_int,
-	uart_rtsn          => uart_rtsn_int,
+	uart_rxd           => uart_rxd,
+	uart_txd           => uart_txd,
+	uart_ctsn          => uart_ctsn,
+	uart_rtsn          => uart_rtsn,
+        -- Test interface
+        tdi                => '0',
+        tdo                => open,
+        tms                => '0',
+        tclk               => '0',
 	-- NOC
 	sys_clk_int        => sys_clk_int(0),
+        sys_clk_out        => open,
 	noc1_data_n_in     => noc1_data_n_in(i),
 	noc1_data_s_in     => noc1_data_s_in(i),
 	noc1_data_w_in     => noc1_data_w_in(i),
@@ -844,8 +863,22 @@ begin
       port map (
 	rst                => rst_int,
 	clk                => sys_clk_int(tile_mem_id(i)),
+        pllbypass          => '0',
+        pllclk             => open,
 	ddr_ahbsi          => ddr_ahbsi(tile_mem_id(i)),
 	ddr_ahbso          => ddr_ahbso(tile_mem_id(i)),
+        fpga_data_in       => (others => '0'),
+        fpga_data_out      => open,
+        fpga_oen           => open,
+        fpga_clk_in        => '0',
+        fpga_clk_out       => open,
+        fpga_credit_in     => '0',
+        fpga_credit_out    => open,
+        -- Test interface
+        tdi                => '0',
+        tdo                => open,
+        tms                => '0',
+        tclk               => '0',
 	-- NOC
 	sys_clk_int        => sys_clk_int(0),
 	noc1_data_n_in     => noc1_data_n_in(i),
@@ -940,6 +973,13 @@ begin
         port map (
           rst                => rst_int,
           clk                => refclk_int(i),
+          pllbypass          => '0',
+          pllclk             => open,
+          -- Test interface
+          tdi                => '0',
+          tdo                => open,
+          tms                => '0',
+          tclk               => '0',
           -- NOC
           sys_clk_int        => sys_clk_int(0),
           noc1_data_n_in     => noc1_data_n_in(i),

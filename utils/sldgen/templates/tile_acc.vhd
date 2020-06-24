@@ -32,14 +32,21 @@ entity tile_acc is
     this_has_l2        : integer range 0 to 1 := 0;
     this_has_dvfs      : integer range 0 to 1 := 0;
     this_has_pll       : integer range 0 to 1 := 0;
+    this_has_dco       : integer range 0 to 1 := 0;
     this_extra_clk_buf : integer range 0 to 1 := 0;
+    test_if_en         : integer range 0 to 1 := 0;
     ROUTER_PORTS       : ports_vec            := "11111";
-    HAS_SYNC           : integer range 0 to 1 := 0);
+    HAS_SYNC           : integer range 0 to 1 := 1);
   port (
     rst                : in  std_ulogic;
     refclk             : in  std_ulogic;
     pllbypass          : in  std_ulogic;
     pllclk             : out std_ulogic;
+    -- Test interface
+    tdi                : in  std_logic;
+    tdo                : out std_logic;
+    tms                : in  std_logic;
+    tclk               : in  std_logic;
     -- NOC
     sys_clk_int        : in  std_logic;
     noc1_data_n_in     : in  noc_flit_type;
@@ -456,7 +463,11 @@ architecture rtl of tile_acc is
 --  attribute mark_debug of noc5_stop_out      : signal is "true";
 begin
 
+  -- TODO: DCO
   pllclk <= clk_feedthru;
+
+  -- TODO: JTAG
+  tdo <= '0';
 
   -----------------------------------------------------------------------------
   -- Tile parameters

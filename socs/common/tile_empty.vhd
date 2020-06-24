@@ -36,10 +36,21 @@ use work.socmap.all;
 entity tile_empty is
   generic (
     SIMULATION   : boolean              := false;
+    this_has_dco : integer range 0 to 1 := 0;
+    test_if_en   : integer range 0 to 1 := 0;
     ROUTER_PORTS : ports_vec            := "11111";
-    HAS_SYNC     : integer range 0 to 1 := 0);
+    HAS_SYNC     : integer range 0 to 1 := 1);
   port (
     rst                : in  std_logic;
+    refclk             : in  std_ulogic;
+    pllbypass          : in  std_ulogic;
+    pllclk             : out std_ulogic;
+    -- Test interface
+    tdi                : in  std_logic;
+    tdo                : out std_logic;
+    tms                : in  std_logic;
+    tclk               : in  std_logic;
+    -- NoC
     sys_clk_int        : in  std_logic;
     noc1_data_n_in     : in  noc_flit_type;
     noc1_data_s_in     : in  noc_flit_type;
@@ -335,6 +346,12 @@ architecture rtl of tile_empty is
     others => '0');
 
 begin
+
+  -- TODO:  DCO
+  pllclk <= '0';
+
+  -- TODO JTAG
+  tdo <= '0';
 
   -----------------------------------------------------------------------------
   -- Tile parameters

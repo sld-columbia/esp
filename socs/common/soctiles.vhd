@@ -61,23 +61,30 @@ package soctiles is
       SIMULATION         : boolean              := false;
       this_has_dvfs      : integer range 0 to 1 := 0;
       this_has_pll       : integer range 0 to 1 := 0;
+      this_has_dco       : integer range 0 to 1 := 0;
       this_extra_clk_buf : integer range 0 to 1 := 0;
+      test_if_en         : integer range 0 to 1 := 0;
       ROUTER_PORTS       : ports_vec            := "11111";
-      HAS_SYNC           : integer range 0 to 1 := 0);
+      HAS_SYNC           : integer range 0 to 1 := 1);
     port (
       rst                : in  std_ulogic;
       refclk             : in  std_ulogic;
       pllbypass          : in  std_ulogic;
       pllclk             : out std_ulogic;
       cpuerr             : out std_ulogic;
+      -- Test interface
+      tdi                : in  std_logic;
+      tdo                : out std_logic;
+      tms                : in  std_logic;
+      tclk               : in  std_logic;
       -- NOC
       sys_clk_int        : in  std_logic;
       noc1_data_n_in     : in  noc_flit_type;
       noc1_data_s_in     : in  noc_flit_type;
       noc1_data_w_in     : in  noc_flit_type;
       noc1_data_e_in     : in  noc_flit_type;
-      noc1_data_void_in  : in std_logic_vector(3 downto 0);
-      noc1_stop_in       : in std_logic_vector(3 downto 0);
+      noc1_data_void_in  : in  std_logic_vector(3 downto 0);
+      noc1_stop_in       : in  std_logic_vector(3 downto 0);
       noc1_data_n_out    : out noc_flit_type;
       noc1_data_s_out    : out noc_flit_type;
       noc1_data_w_out    : out noc_flit_type;
@@ -88,8 +95,8 @@ package soctiles is
       noc2_data_s_in     : in  noc_flit_type;
       noc2_data_w_in     : in  noc_flit_type;
       noc2_data_e_in     : in  noc_flit_type;
-      noc2_data_void_in  : in std_logic_vector(3 downto 0);
-      noc2_stop_in       : in std_logic_vector(3 downto 0);
+      noc2_data_void_in  : in  std_logic_vector(3 downto 0);
+      noc2_stop_in       : in  std_logic_vector(3 downto 0);
       noc2_data_n_out    : out noc_flit_type;
       noc2_data_s_out    : out noc_flit_type;
       noc2_data_w_out    : out noc_flit_type;
@@ -100,8 +107,8 @@ package soctiles is
       noc3_data_s_in     : in  noc_flit_type;
       noc3_data_w_in     : in  noc_flit_type;
       noc3_data_e_in     : in  noc_flit_type;
-      noc3_data_void_in  : in std_logic_vector(3 downto 0);
-      noc3_stop_in       : in std_logic_vector(3 downto 0);
+      noc3_data_void_in  : in  std_logic_vector(3 downto 0);
+      noc3_stop_in       : in  std_logic_vector(3 downto 0);
       noc3_data_n_out    : out noc_flit_type;
       noc3_data_s_out    : out noc_flit_type;
       noc3_data_w_out    : out noc_flit_type;
@@ -112,8 +119,8 @@ package soctiles is
       noc4_data_s_in     : in  noc_flit_type;
       noc4_data_w_in     : in  noc_flit_type;
       noc4_data_e_in     : in  noc_flit_type;
-      noc4_data_void_in  : in std_logic_vector(3 downto 0);
-      noc4_stop_in       : in std_logic_vector(3 downto 0);
+      noc4_data_void_in  : in  std_logic_vector(3 downto 0);
+      noc4_stop_in       : in  std_logic_vector(3 downto 0);
       noc4_data_n_out    : out noc_flit_type;
       noc4_data_s_out    : out noc_flit_type;
       noc4_data_w_out    : out noc_flit_type;
@@ -124,8 +131,8 @@ package soctiles is
       noc5_data_s_in     : in  misc_noc_flit_type;
       noc5_data_w_in     : in  misc_noc_flit_type;
       noc5_data_e_in     : in  misc_noc_flit_type;
-      noc5_data_void_in  : in std_logic_vector(3 downto 0); 
-      noc5_stop_in       : in std_logic_vector(3 downto 0);
+      noc5_data_void_in  : in  std_logic_vector(3 downto 0);
+      noc5_stop_in       : in  std_logic_vector(3 downto 0);
       noc5_data_n_out    : out misc_noc_flit_type;
       noc5_data_s_out    : out misc_noc_flit_type;
       noc5_data_w_out    : out misc_noc_flit_type;
@@ -136,8 +143,8 @@ package soctiles is
       noc6_data_s_in     : in  noc_flit_type;
       noc6_data_w_in     : in  noc_flit_type;
       noc6_data_e_in     : in  noc_flit_type;
-      noc6_data_void_in  : in std_logic_vector(3 downto 0);
-      noc6_stop_in       : in std_logic_vector(3 downto 0);
+      noc6_data_void_in  : in  std_logic_vector(3 downto 0);
+      noc6_stop_in       : in  std_logic_vector(3 downto 0);
       noc6_data_n_out    : out noc_flit_type;
       noc6_data_s_out    : out noc_flit_type;
       noc6_data_w_out    : out noc_flit_type;
@@ -163,14 +170,21 @@ package soctiles is
       this_has_l2        : integer range 0 to 1 := 0;
       this_has_dvfs      : integer range 0 to 1 := 0;
       this_has_pll       : integer range 0 to 1 := 0;
+      this_has_dco       : integer range 0 to 1 := 0;
       this_extra_clk_buf : integer range 0 to 1 := 0;
+      test_if_en         : integer range 0 to 1 := 0;
       ROUTER_PORTS       : ports_vec            := "11111";
-      HAS_SYNC           : integer range 0 to 1 := 0);
+      HAS_SYNC           : integer range 0 to 1 := 1);
     port (
       rst                : in  std_ulogic;
       refclk             : in  std_ulogic;
       pllbypass          : in  std_ulogic;
       pllclk             : out std_ulogic;
+      -- Test interface
+      tdi                : in  std_logic;
+      tdo                : out std_logic;
+      tms                : in  std_logic;
+      tclk               : in  std_logic;
       -- NOC
       sys_clk_int        : in  std_logic;
       noc1_data_n_in     : in  noc_flit_type;
@@ -262,11 +276,25 @@ package soctiles is
   component tile_io is
     generic (
       SIMULATION   : boolean              := false;
+      this_has_dco : integer range 0 to 1 := 0;
+      test_if_en   : integer range 0 to 1 := 0;
       ROUTER_PORTS : ports_vec            := "11111";
-      HAS_SYNC     : integer range 0 to 1 := 0);
+      HAS_SYNC     : integer range 0 to 1 := 1);
     port (
       rst                : in  std_ulogic;
       clk                : in  std_ulogic;
+      refclk             : in  std_ulogic;
+      pllbypass          : in  std_ulogic;
+      pllclk             : out std_ulogic;
+      dco_clk            : out std_ulogic;
+      -- Test interface
+      tdi                : in  std_logic;
+      tdo                : out std_logic;
+      tms                : in  std_logic;
+      tclk               : in  std_logic;
+      -- Ethernet MDC Scaler configuration
+      mdcscaler          : out integer range 0 to 1023;
+      -- I/O bus interfaces
       eth0_apbi          : out apb_slv_in_type;
       eth0_apbo          : in  apb_slv_out_type;
       sgmii0_apbi        : out apb_slv_in_type;
@@ -284,6 +312,7 @@ package soctiles is
       uart_rtsn          : out std_ulogic;
       -- NOC
       sys_clk_int        : in  std_logic;
+      sys_clk_out        : out std_logic;
       noc1_data_n_in     : in  noc_flit_type;
       noc1_data_s_in     : in  noc_flit_type;
       noc1_data_w_in     : in  noc_flit_type;
@@ -367,13 +396,30 @@ package soctiles is
 
   component tile_mem is
     generic (
+      this_has_dco : integer range 0 to 1 := 0;
+      test_if_en   : integer range 0 to 1 := 0;
+      this_has_ddr : integer range 0 to 1 := 1;
       ROUTER_PORTS : ports_vec            := "11111";
-      HAS_SYNC     : integer range 0 to 1 := 0);
+      HAS_SYNC     : integer range 0 to 1 := 1);
     port (
       rst                : in  std_ulogic;
       clk                : in  std_ulogic;
+      pllbypass          : in  std_ulogic;
+      pllclk             : out std_ulogic;
       ddr_ahbsi          : out ahb_slv_in_type;
       ddr_ahbso          : in  ahb_slv_out_type;
+      fpga_data_in       : in  std_logic_vector(ARCH_BITS downto 0);
+      fpga_data_out      : out std_logic_vector(ARCH_BITS downto 0);
+      fpga_oen           : out std_ulogic;
+      fpga_clk_in        : in  std_ulogic;
+      fpga_clk_out       : out std_ulogic;
+      fpga_credit_in     : in  std_ulogic;
+      fpga_credit_out    : out std_ulogic;
+      -- Test interface
+      tdi                : in  std_logic;
+      tdo                : out std_logic;
+      tms                : in  std_logic;
+      tclk               : in  std_logic;
       -- NOC
       sys_clk_int        : in  std_logic;
       noc1_data_n_in     : in  noc_flit_type;
@@ -462,10 +508,21 @@ package soctiles is
   component tile_empty is
     generic (
       SIMULATION   : boolean              := false;
+      this_has_dco : integer range 0 to 1 := 0;
+      test_if_en   : integer range 0 to 1 := 0;
       ROUTER_PORTS : ports_vec            := "11111";
-      HAS_SYNC     : integer range 0 to 1 := 0);
+      HAS_SYNC     : integer range 0 to 1 := 1);
     port (
       rst                : in  std_logic;
+      refclk             : in  std_ulogic;
+      pllbypass          : in  std_ulogic;
+      pllclk             : out std_ulogic;
+      -- Test interface
+      tdi                : in  std_logic;
+      tdo                : out std_logic;
+      tms                : in  std_logic;
+      tclk               : in  std_logic;
+      -- NoC
       sys_clk_int        : in  std_logic;
       noc1_data_n_in     : in  noc_flit_type;
       noc1_data_s_in     : in  noc_flit_type;
@@ -550,11 +607,21 @@ package soctiles is
 
   component tile_slm is
     generic (
+      this_has_dco : integer range 0 to 1 := 0;
+      test_if_en   : integer range 0 to 1 := 0;
       ROUTER_PORTS : ports_vec            := "11111";
-      HAS_SYNC     : integer range 0 to 1 := 0);
+      HAS_SYNC     : integer range 0 to 1 := 1);
     port (
       rst                : in  std_ulogic;
       clk                : in  std_ulogic;
+      pllbypass          : in  std_ulogic;
+      pllclk             : out std_ulogic;
+      -- Test interface
+      tdi                : in  std_logic;
+      tdo                : out std_logic;
+      tms                : in  std_logic;
+      tclk               : in  std_logic;
+      -- NoC
       sys_clk_int        : in  std_logic;
       noc1_data_n_in     : in  noc_flit_type;
       noc1_data_s_in     : in  noc_flit_type;

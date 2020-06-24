@@ -37,11 +37,20 @@ use work.ariane_esp_pkg.all;
 entity tile_io is
   generic (
     SIMULATION : boolean := false;
+    this_has_dco : integer range 0 to 1 := 0;
+    test_if_en   : integer range 0 to 1 := 0;
     ROUTER_PORTS : ports_vec := "11111";
-    HAS_SYNC : integer range 0 to 1 := 0 );
+    HAS_SYNC : integer range 0 to 1 := 1 );
   port (
     rst                : in  std_ulogic;
     clk                : in  std_ulogic;
+    refclk             : in  std_ulogic;
+    pllbypass          : in  std_ulogic;
+    pllclk             : out std_ulogic;
+    dco_clk            : out std_ulogic;
+    -- Ethernet MDC Scaler configuration
+    mdcscaler          : out integer range 0 to 1023;
+    -- I/O bus interfaces
     eth0_apbi          : out apb_slv_in_type;
     eth0_apbo          : in  apb_slv_out_type;
     sgmii0_apbi        : out apb_slv_in_type;
@@ -57,7 +66,14 @@ entity tile_io is
     uart_txd           : out std_ulogic;
     uart_ctsn          : in  std_ulogic;
     uart_rtsn          : out std_ulogic;
+    -- Test interface
+    tdi                : in  std_logic;
+    tdo                : out std_logic;
+    tms                : in  std_logic;
+    tclk               : in  std_logic;
+    -- NOC
     sys_clk_int        : in  std_logic;
+    sys_clk_out        : out std_logic;
     noc1_data_n_in     : in  noc_flit_type;
     noc1_data_s_in     : in  noc_flit_type;
     noc1_data_w_in     : in  noc_flit_type;
@@ -161,10 +177,6 @@ architecture rtl of tile_io is
   end component ahbrom;
 
 
-
-  -- JTAG (Connected internally through tap and bscan components
-  signal tck, tckn, tms, tdi, tdo : std_ulogic;
-
   -- Interrupt controller
   signal irqi               : irq_in_vector(0 to CFG_NCPU_TILE-1);
   signal irqo               : irq_out_vector(0 to CFG_NCPU_TILE-1);
@@ -177,6 +189,9 @@ architecture rtl of tile_io is
   signal timer_irq          : std_logic_vector(CFG_NCPU_TILE - 1 downto 0);  --CLINT
   signal ipi                : std_logic_vector(CFG_NCPU_TILE - 1 downto 0);  --CLINT
 
+  signal override_cpu_loc : std_ulogic;
+  signal cpu_loc_y        : yx_vec(0 to CFG_NCPU_TILE - 1);
+  signal cpu_loc_x        : yx_vec(0 to CFG_NCPU_TILE - 1);
 
   -- UART
   signal u1i : uart_in_type;
@@ -606,7 +621,18 @@ architecture rtl of tile_io is
 
 begin
 
- -----------------------------------------------------------------------------
+  -- TODO:  DCO (two instances)
+  pllclk <= '0';
+  dco_clk <= '0';
+  sys_clk_out <= '0';
+
+  -- TODO JTAG
+  tdo <= '0';
+
+  -- MDC scaler configuration
+  mdcscaler              <= conv_integer(tile_config(ESP_CSR_MDC_SCALER_CFG_MSB downto ESP_CSR_MDC_SCALER_CFG_LSB));
+
+  -----------------------------------------------------------------------------
   -- NOC Connections
   ----------------------------------------------------------------------------
   noc1_stop_in_s         <= noc1_io_stop_in  & noc1_stop_in;
@@ -769,7 +795,7 @@ begin
   ahb0 : ahbctrl                        -- AHB arbiter/multiplexer
     generic map (defmast => CFG_DEFMST, split => CFG_SPLIT,
                  rrobin  => CFG_RROBIN, ioaddr => CFG_AHBIO, fpnpen => CFG_FPNPEN,
-                 nahbm   => CFG_AHB_JTAG + CFG_GRETH + CFG_DSU_ETH + 2, nahbs => maxahbs)
+                 nahbm   => CFG_GRETH + CFG_DSU_ETH + 2, nahbs => maxahbs)
     port map (rst, clk, ahbmi, ahbmo, ahbsi, ctrl_ahbso);
 
 
@@ -789,7 +815,7 @@ begin
   -- Drive unused bus ports
   -----------------------------------------------------------------------------
 
-  nam0 : for i in (CFG_AHB_JTAG + CFG_GRETH + CFG_DSU_ETH + 2) to NAHBMST-1 generate
+  nam0 : for i in (CFG_GRETH + CFG_DSU_ETH + 2) to NAHBMST-1 generate
     ahbmo(i) <= ahbm_none;
   end generate;
 
@@ -809,7 +835,7 @@ begin
   -----------------------------------------------------------------------------
   esp_init_1 : esp_init
     generic map (
-      hindex => CFG_AHB_JTAG + CFG_GRETH + CFG_DSU_ETH + 1,
+      hindex => CFG_GRETH + CFG_DSU_ETH + 1,
       sequence => esp_init_sequence,
       srst_sequence => esp_srst_sequence)
     port map (
@@ -818,23 +844,14 @@ begin
       noinit => '0',
       srst   => srst,
       ahbmi  => ahbmi,
-      ahbmo  => ahbmo(CFG_AHB_JTAG + CFG_GRETH + CFG_DSU_ETH + 1));
-
-  -----------------------------------------------------------------------------
-  -- JTAG Master
-  -----------------------------------------------------------------------------
-  ahbjtaggen0 : if CFG_AHB_JTAG = 1 generate
-    ahbjtag0 : ahbjtag generic map(tech => CFG_FABTECH, hindex => 0)
-      port map(rst, clk, tck, tms, tdi, tdo, ahbmi, ahbmo(0),
-               open, open, open, open, open, open, open, '0');
-  end generate;
+      ahbmo  => ahbmo(CFG_GRETH + CFG_DSU_ETH + 1));
 
   -----------------------------------------------------------------------------
   -- ETH0 and EDCL Master
   -----------------------------------------------------------------------------
 
   eth0_gen : if CFG_GRETH = 1 generate
-    ahbmo(CFG_AHB_JTAG) <= eth0_ahbmo;
+    ahbmo(0) <= eth0_ahbmo;
     eth0_ahbmi          <= ahbmi;
 
     noc_apbo(14) <= eth0_apbo;
@@ -846,7 +863,7 @@ begin
     end generate sgmii_gen;
 
     edcl_gen : if CFG_DSU_ETH = 1 generate
-      ahbmo(CFG_AHB_JTAG + 1) <= edcl_ahbmo;
+      ahbmo(1) <= edcl_ahbmo;
     end generate edcl_gen;
 
   end generate eth0_gen;
@@ -1213,7 +1230,7 @@ begin
     -- Note that Ehternet won't work if L2 is enabled and LLC is not.
 
     hmaster := to_integer(unsigned(ahbsi.hmaster));
-    if hmaster = CFG_AHB_JTAG then
+    if hmaster = 0 then
       coherent_dma_selected <= '1';
     end if;
 
@@ -1347,6 +1364,18 @@ begin
       apb_rcv_data_out => apb_rcv_data_out,
       apb_rcv_empty    => apb_rcv_empty);
 
+
+  -- Enable configuration registers to relocate CPUs. Chaing this routing
+  -- table, incombination with the reconfiguration of the HART ID allows any
+  -- CPU (rather than CPU0 only) to boot in single-core mode.
+  -- Default CPU ID and routing tables are defined as constants in the generated
+  -- socmap, which is based on the ESP configuration file.
+  override_cpu_loc <= tile_config(ESP_CSR_CPU_LOC_OVR_LSB);
+  cpu_loc_ovr_gen: for i in 0 to CFG_NCPU_TILE - 1 generate
+    cpu_loc_x(i) <= tile_config(ESP_CSR_CPU_LOC_OVR_LSB + 1 + i * 6 + 0 + 2 downto ESP_CSR_CPU_LOC_OVR_LSB + 1 + i * 6 + 0);
+    cpu_loc_y(i) <= tile_config(ESP_CSR_CPU_LOC_OVR_LSB + 1 + i * 6 + 3 + 2 downto ESP_CSR_CPU_LOC_OVR_LSB + 1 + i * 6 + 3);
+  end generate cpu_loc_ovr_gen;
+
   misc_irq2noc_1 : misc_irq2noc
     generic map (
       tech  => CFG_FABTECH,
@@ -1358,6 +1387,9 @@ begin
       clk                => clk,
       local_y            => this_local_y,
       local_x            => this_local_x,
+      override_cpu_loc   => override_cpu_loc,
+      cpu_loc_y          => cpu_loc_y,
+      cpu_loc_x          => cpu_loc_x,
       irqi               => irqi,
       irqo               => irqo,
       irqi_fifo_overflow => irqi_fifo_overflow,
@@ -1384,7 +1416,7 @@ begin
   mem_noc2ahbm_1 : mem_noc2ahbm
     generic map (
       tech        => CFG_FABTECH,
-      hindex      => CFG_AHB_JTAG + CFG_GRETH + CFG_DSU_ETH,
+      hindex      => CFG_GRETH + CFG_DSU_ETH,
       axitran     => GLOB_CPU_AXI,
       little_end  => GLOB_CPU_AXI,
       narrow_noc  => 1,
@@ -1397,7 +1429,7 @@ begin
       local_y                   => this_local_y,
       local_x                   => this_local_x,
       ahbmi                     => ahbmi,
-      ahbmo                     => ahbmo(CFG_AHB_JTAG + CFG_GRETH + CFG_DSU_ETH),
+      ahbmo                     => ahbmo(CFG_GRETH + CFG_DSU_ETH),
       coherence_req_rdreq       => ahbm_rcv_rdreq,
       coherence_req_data_out    => ahbm_rcv_data_out,
       coherence_req_empty       => ahbm_rcv_empty,

@@ -147,7 +147,13 @@ architecture rtl of top is
 
 -- Tiles
 
-  -- Memory controller DDR4
+-- UART
+  signal uart_rxd_int  : std_logic;       -- UART1_RX (u1i.rxd)
+  signal uart_txd_int  : std_logic;       -- UART1_TX (u1o.txd)
+  signal uart_ctsn_int : std_logic;       -- UART1_RTSN (u1i.ctsn)
+  signal uart_rtsn_int : std_logic;       -- UART1_RTSN (u1o.rtsn)
+
+-- Memory controller DDR4
   signal ddr_ahbsi   : ahb_slv_in_vector_type(0 to CFG_NMEM_TILE - 1);
   signal ddr_ahbso   : ahb_slv_out_vector_type(0 to CFG_NMEM_TILE - 1);
   signal c0_ddr4_cs_n_vec : std_logic_vector(1 downto 0);
@@ -268,6 +274,15 @@ begin
     port map (rst, clkm, lock, migrstn, open);
 
 
+-----------------------------------------------------------------------------
+-- UART pads
+-----------------------------------------------------------------------------
+
+  uart_rxd_pad   : inpad  generic map (level => cmos, voltage => x18v, tech => CFG_PADTECH) port map (uart_rxd, uart_rxd_int);
+  uart_txd_pad   : outpad generic map (level => cmos, voltage => x18v, tech => CFG_PADTECH) port map (uart_txd, uart_txd_int);
+  uart_ctsn_pad : inpad  generic map (level => cmos, voltage => x18v, tech => CFG_PADTECH) port map (uart_ctsn, uart_ctsn_int);
+  uart_rtsn_pad : outpad generic map (level => cmos, voltage => x18v, tech => CFG_PADTECH) port map (uart_rtsn, uart_rtsn_int);
+
 ----------------------------------------------------------------------
 ---  DDR4 memory controller ------------------------------------------
 ----------------------------------------------------------------------
@@ -369,7 +384,6 @@ begin
         pirq         => 12,
         memtech      => CFG_MEMTECH,
         little_end   => GLOB_CPU_AXI * CFG_L2_DISABLE,
-        mdcscaler    => CPU_FREQ/1000,
         rmii         => 0,
         enable_mdio  => 1,
         fifosize     => CFG_ETH_FIFO,
@@ -390,6 +404,7 @@ begin
       port map(
         rst   => rstn,
         clk   => chip_refclk,
+        mdcscaler  => CPU_FREQ/1000,
         ahbmi => eth0_ahbmi,
         ahbmo => eth0_ahbmo,
         apbi  => eth0_apbi,
@@ -474,10 +489,10 @@ begin
       sys_clk     => sys_clk(0 to CFG_NMEM_TILE - 1),
       refclk      => chip_refclk,
       pllbypass   => chip_pllbypass,
-      uart_rxd    => uart_rxd,
-      uart_txd    => uart_txd,
-      uart_ctsn   => uart_ctsn,
-      uart_rtsn   => uart_rtsn,
+      uart_rxd    => uart_rxd_int,
+      uart_txd    => uart_txd_int,
+      uart_ctsn   => uart_ctsn_int,
+      uart_rtsn   => uart_rtsn_int,
       cpuerr      => cpuerr,
       ddr_ahbsi   => ddr_ahbsi,
       ddr_ahbso   => ddr_ahbso,

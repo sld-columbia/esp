@@ -38,15 +38,22 @@ entity tile_cpu is
     SIMULATION         : boolean              := false;
     this_has_dvfs      : integer range 0 to 1 := 0;
     this_has_pll       : integer range 0 to 1 := 0;
+    this_has_dco       : integer range 0 to 1 := 0;
     this_extra_clk_buf : integer range 0 to 1 := 0;
+    test_if_en         : integer range 0 to 1 := 0;
     ROUTER_PORTS       : ports_vec := "11111";
-    HAS_SYNC           : integer range 0 to 1 := 0);
+    HAS_SYNC           : integer range 0 to 1 := 1);
   port (
     rst                : in  std_ulogic;
     refclk             : in  std_ulogic;
     pllbypass          : in  std_ulogic;
     pllclk             : out std_ulogic;
     cpuerr             : out std_ulogic;
+    -- Test interface
+    tdi                : in  std_logic;
+    tdo                : out std_logic;
+    tms                : in  std_logic;
+    tclk               : in  std_logic;
     -- NOC
     sys_clk_int        : in  std_logic;
     noc1_data_n_in     : in  noc_flit_type;
@@ -267,6 +274,7 @@ architecture rtl of tile_cpu is
   signal tile_id : integer range 0 to CFG_TILES_NUM - 1;
 
   signal this_cpu_id            : integer range 0 to CFG_NCPU_TILE - 1;
+  signal this_ariane_hartid_cfg : std_logic_vector(ESP_CSR_ARIANE_HARTID_MSB downto ESP_CSR_ARIANE_HARTID_LSB + 1);
   signal this_cpu_id_lv         : std_logic_vector(63 downto 0);
 
   signal this_dvfs_pindex       : integer range 0 to NAPBSLV - 1;
@@ -509,7 +517,11 @@ architecture rtl of tile_cpu is
 
 begin
 
+  -- TODO DCO
   pllclk <= clk_feedthru;
+
+  -- TODO JTAG
+  tdo <= '0';
 
   -----------------------------------------------------------------------------
   -- Tile parameters
@@ -517,7 +529,8 @@ begin
   tile_id                <= to_integer(unsigned(config(ESP_CSR_TILE_ID_MSB downto ESP_CSR_TILE_ID_LSB)));
 
   this_cpu_id            <= tile_cpu_id(tile_id);
-  this_cpu_id_lv         <= conv_std_logic_vector(this_cpu_id, 64);
+  this_ariane_hartid_cfg <= tile_config(ESP_CSR_ARIANE_HARTID_MSB downto ESP_CSR_ARIANE_HARTID_LSB + 1);
+  this_cpu_id_lv         <= conv_std_logic_vector(this_cpu_id, 64) when tile_config(ESP_CSR_ARIANE_HARTID_LSB) = '0' else X"0000_0000_0000_000" & this_ariane_hartid_cfg;
 
   this_dvfs_pindex       <= cpu_dvfs_pindex(tile_id);
   this_dvfs_paddr        <= cpu_dvfs_paddr(tile_id);

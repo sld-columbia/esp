@@ -130,6 +130,8 @@ class SoC_Config():
     line = fp.readline()
     item = line.split()
     self.CPU_ARCH.set(item[2])
+    # CPU count (skip this info while rebuilding SoC config)
+    line = fp.readline()
     # Scatter-gather
     line = fp.readline()
     if line.find("CONFIG_HAS_SG = y") != -1:
@@ -242,6 +244,7 @@ class SoC_Config():
     fp = open('.esp_config.bak', 'w')
     has_dvfs = False;
     fp.write("CPU_ARCH = " + self.CPU_ARCH.get() + "\n")
+    fp.write("NCPU_TILE = " + str(self.noc.get_cpu_num(self)) + "\n")
     if self.transfers.get() == 1:
       fp.write("CONFIG_HAS_SG = y\n")
     else:

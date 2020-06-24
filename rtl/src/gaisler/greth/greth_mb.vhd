@@ -47,7 +47,7 @@ entity greth_mb is
     attempt_limit  : integer := 16;
     backoff_limit  : integer := 10;
     slot_time      : integer := 128;
-    mdcscaler      : integer range 0 to 255 := 25; 
+    mdcscaler      : integer range 0 to 2047 := 25; 
     enable_mdio    : integer range 0 to 1 := 0;
     fifosize       : integer range 4 to 512 := 8;
     nsync          : integer range 1 to 2 := 2;
@@ -159,7 +159,6 @@ begin
       ifg_gap        => ifg_gap,
       attempt_limit  => attempt_limit,
       backoff_limit  => backoff_limit,
-      mdcscaler      => mdcscaler,
       enable_mdio    => enable_mdio,
       fifosize       => fifosize,
       nsync          => nsync,
@@ -185,6 +184,7 @@ begin
     port map(
       rst            => rst,
       clk            => clk,
+      mdcscaler      => mdcscaler,
       --ahb mst in
       hgrant         => ahbmi.hgrant(hindex),
       hready         => ahbmi.hready,

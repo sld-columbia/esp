@@ -125,7 +125,6 @@ src/axi_riscv_atomics/src/axi_riscv_atomics_wrap.sv
 src/axi_mem_if/src/axi2mem.sv
 src/rv_plic/rtl/rv_plic_target.sv
 src/rv_plic/rtl/rv_plic_gateway.sv
-src/rv_plic/rtl/plic_regmap.sv
 src/rv_plic/rtl/plic_top.sv
 src/riscv-dbg/src/dmi_jtag.sv
 src/riscv-dbg/src/dmi_jtag_tap.sv

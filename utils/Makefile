@@ -173,6 +173,8 @@ DRIVERS           = $(SOFT)/drivers
 CONTIG_ALLOC_PATH = $(DRIVERS)/contig_alloc
 ESP_CORE_PATH     = $(DRIVERS)/esp
 
+ARIANE           ?= $(ESP_ROOT)/third-party/ariane
+
 
 ### Include targets to generate accelerators RTL with HLS ###
 include $(ESP_ROOT)/utils/accelerators.mk
@@ -231,6 +233,16 @@ esp-config-clean:
 ifeq ("$(CPU_ARCH)", "ariane")
 ariane.dts: .esp_config grlib_config.vhd top.vhd
 	$(QUIET_MAKE) $(MAKE) socmap.vhd
+
+ARIANE_RV_PLIC_REGMAP_GEN = $(ARIANE)/src/rv_plic/rtl/gen_plic_addrmap.py
+
+plic_regmap.sv: $(ARIANE_RV_PLIC_REGMAP_GEN) .esp_config
+	$(QUIET_MAKE)$< -t $$(($(NCPU_TILE)*2)) > $@
+endif
+
+ifneq ("$(CPU_ARCH)", "ariane")
+plic_regmap.sv:
+
 endif
 
 esp-config-distclean: esp-config-clean
@@ -240,6 +252,7 @@ esp-config-distclean: esp-config-clean
 		.esp_config	\
 		.soft_config	\
 		ariane.dts	\
+		plic_regmap.sv	\
 		mmi64_regs.h	\
 		power.h		\
 		socmap.h	\
@@ -804,10 +817,12 @@ VHDL_PROFPGA =
 VERILOG_PROFPGA =
 endif
 
-ARIANE ?= $(ESP_ROOT)/third-party/ariane
-VERILOG_ARIANE += $(shell strings $(ESP_ROOT)/utils/ariane_verilog.txt)
+VERILOG_ARIANE += $(foreach f, $(shell strings $(ESP_ROOT)/utils/ariane_verilog.txt), $(ARIANE)/$(f))
 ifneq ($(filter $(TECHLIB),$(FPGALIBS)),)
-VERILOG_ARIANE += $(shell strings $(ESP_ROOT)/utils/ariane_verilog_fpga.txt)
+VERILOG_ARIANE += $(foreach f, $(shell strings $(ESP_ROOT)/utils/ariane_verilog_fpga.txt), $(ARIANE)/$(f))
+endif
+ifeq ("$(CPU_ARCH)", "ariane")
+VERILOG_ARIANE += $(DESIGN_PATH)/plic_regmap.sv
 endif
 
 PKG_LIST  = $(shell (find $(ESP_ROOT)/rtl -name "*.txt" ))
@@ -851,7 +866,7 @@ SVLOG_ALL_RTL = $(THIRDPARTY_SVLOG) $(SVLOG_SRCS)
 
 ALL_RTL_SRCS  = $(VHDL_ALL_RTL) $(VLOG_ALL_RTL) $(SVLOG_ALL_RTL) $(DAT_SRCS)
 
-check_all_srcs: grlib_config.vhd socmap.vhd sldgen
+check_all_srcs: grlib_config.vhd socmap.vhd sldgen plic_regmap.sv
 	@echo $(ALL_SRCS) > $@.new; \
 	if test -f $@.old; then \
 		/usr/bin/diff -q $@.old $@.new > /dev/null; \
@@ -873,7 +888,7 @@ check_all_srcs-distclean:
 
 .PHONY: check_all_srcs check_all_srcs-distclean
 
-check_all_rtl_srcs: grlib_config.vhd socmap.vhd sldgen
+check_all_rtl_srcs: grlib_config.vhd socmap.vhd sldgen plic_regmap.sv
 	@echo $(ALL_RTL_SRCS) > $@.new; \
 	if test -f $@.old; then \
 		/usr/bin/diff -q $@.old $@.new > /dev/null; \
@@ -1006,7 +1021,7 @@ endif
 	echo $(SPACES)"$(XMLOG) -work work $(ARIANE_XMLOGOPT) $$rtl"; \
 	$(XMLOG) -work work $(ARIANE_XMLOGOPT) $$rtl || exit; \
 	for ver in $(VERILOG_ARIANE); do \
-		rtl=$(ARIANE)/$$ver; \
+		rtl=$$ver; \
 		echo $(SPACES)"$(XMLOG) -work work $(ARIANE_XMLOGOPT) $$rtl"; \
 		$(XMLOG) -work work $(ARIANE_XMLOGOPT) $$rtl || exit; \
 	done; \
@@ -1262,7 +1277,7 @@ endif
 	echo $(SPACES)"$(VLOG) $(ARIANE_VLOGOPT) $$rtl"; \
 	$(VLOG) $(ARIANE_VLOGOPT) $$rtl || exit; \
 	for ver in $(VERILOG_ARIANE); do \
-		rtl=$(ARIANE)/$$ver; \
+		rtl=$$ver; \
 		echo $(SPACES)"$(VLOG) $(ARIANE_VLOGOPT) $$rtl"; \
 		$(VLOG) $(ARIANE_VLOGOPT) $$rtl || exit; \
 	done; \
@@ -1380,7 +1395,7 @@ endif
 	@rtl=$(ESP_ROOT)/socs/common/ariane_soc_pkg.sv; \
 	echo "read_verilog -sv $$rtl" >> $@;
 	@for ver in $(VERILOG_ARIANE); do \
-		rtl=$(ARIANE)/$$ver; \
+		rtl=$$ver; \
 		echo "read_verilog -sv $$rtl" >> $@; \
 	done;
 	@for rtl in $(SLDGEN_VHDL_RTL_PKGS); do \
