@@ -186,17 +186,18 @@ include $(ESP_ROOT)/utils/examples.mk
 .PHONY: all help
 
 ### SoC configuration for ESP ###
+ESP_DEFCONFIG ?= $(ESP_ROOT)/socs/defconfig/esp_$(BOARD)_defconfig
 
 .esp_config:
-	$(QUIET_CP)cp $(ESP_ROOT)/socs/defconfig/esp_$(BOARD)_defconfig $@
+	$(QUIET_CP)cp $(ESP_DEFCONFIG) $@
 
-esp-defconfig: $(ESP_ROOT)/socs/defconfig/esp_$(BOARD)_defconfig
+esp-defconfig: $(ESP_DEFCONFIG)
 	$(QUIET_CP)cp $< .esp_config
 	$(QUIET_MAKE)$(MAKE) esp-config
 
 socmap.vhd: .esp_config grlib_config.vhd top.vhd Makefile
 	$(QUIET_DIFF)echo "checking .esp_config..."
-	@/usr/bin/diff .esp_config $(ESP_ROOT)/socs/defconfig/esp_$(BOARD)_defconfig -q > /dev/null; \
+	@/usr/bin/diff .esp_config $(ESP_DEFCONFIG) -q > /dev/null; \
 	if test $$? = "0"; then \
 		echo $(SPACES)"INFO Using default configuration file for ESP"; \
 	else \
@@ -708,6 +709,7 @@ barec:
 
 
 ### GRLIB config targets ###
+GRLIB_DEFCONFIG ?= $(ESP_ROOT)/socs/defconfig/grlib_$(BOARD)_defconfig
 
 TKCONFIG_DEP   = $(TKCONFIG)/config.vhd
 TKCONFIG_DEP  += $(wildcard $(TKCONFIG)/in/*.in)
@@ -717,9 +719,9 @@ TKCONFIG_DEP  += $(wildcard $(TKCONFIG)/in/*.in.help)
 TKCONFIG_DEP  += grlib_config.in
 
 .grlib_config:
-	$(QUIET_CP)cp $(ESP_ROOT)/socs/defconfig/grlib_$(BOARD)_defconfig $@
+	$(QUIET_CP)cp $(GRLIB_DEFCONFIG) $@
 
-grlib-defconfig: $(ESP_ROOT)/socs/defconfig/grlib_$(BOARD)_defconfig
+grlib-defconfig: $(GRLIB_DEFCONFIG)
 	$(QUIET_CP)cp $< .grlib_config
 	$(QUIET_MAKE)$(MAKE) grlib_config.vhd
 
@@ -746,7 +748,7 @@ lconfig.tk: main.tk $(TKCONFIG_DEP) grlib_config.in
 
 grlib_config.vhd: lconfig.tk .grlib_config
 	$(QUIET_DIFF)echo "checking .grlib_config..."
-	@/usr/bin/diff .grlib_config $(ESP_ROOT)/socs/defconfig/grlib_$(BOARD)_defconfig -q > /dev/null; \
+	@/usr/bin/diff .grlib_config $(GRLIB_DEFCONFIG) -q > /dev/null; \
 	if test $$? = "0"; then \
 		echo $(SPACES)"INFO Using default configuration file for GRLIB"; \
 	else \
