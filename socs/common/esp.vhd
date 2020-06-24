@@ -416,14 +416,18 @@ begin
     tile_empty_i: tile_empty
       generic map (
         SIMULATION   => SIMULATION,
-        ROUTER_PORTS => set_router_ports(CFG_XLEN, CFG_YLEN, tile_x(i), tile_y(i)),
+        ROUTER_PORTS => set_router_ports(CFG_FABTECH, CFG_XLEN, CFG_YLEN, tile_x(i), tile_y(i)),
         HAS_SYNC     => CFG_HAS_SYNC)
       port map (
+        raw_rstn           => '0',
         rst                => rst,
+        clk                => sys_clk_int(0),
         refclk             => '0',
         pllbypass          => '0',
         pllclk             => open,
 	sys_clk_int        => sys_clk_int(0),
+        dco_clk            => open,
+        dco_clk_lock       => open,
         -- Test interface
         tdi                => '0',
         tdo                => open,
@@ -514,7 +518,9 @@ begin
 
 
     cpu_tile: if tile_type(i) = 1 generate
+-- pragma translate_off
       assert tile_cpu_id(i) /= -1 report "Undefined CPU ID for CPU tile" severity error;
+-- pragma translate_on
       tile_cpu_i: tile_cpu
 
       generic map (
@@ -522,13 +528,16 @@ begin
         this_has_dvfs      => tile_has_dvfs(i),
         this_has_pll       => tile_has_pll(i),
         this_extra_clk_buf => extra_clk_buf(i),
-        ROUTER_PORTS       => set_router_ports(CFG_XLEN, CFG_YLEN, tile_x(i), tile_y(i)),
+        ROUTER_PORTS       => set_router_ports(CFG_FABTECH, CFG_XLEN, CFG_YLEN, tile_x(i), tile_y(i)),
         HAS_SYNC           => CFG_HAS_SYNC)
       port map (
+        raw_rstn           => '0',
         rst                => rst_int,
         refclk             => refclk_int(i),
         pllbypass          => pllbypass_int(i),
         pllclk             => clk_tile(i),
+        dco_clk            => open,
+        dco_clk_lock       => open,
         cpuerr             => cpuerr_vec(tile_cpu_id(i)),
         -- Test interface
         tdi                => '0',
@@ -622,7 +631,9 @@ begin
 
 
     accelerator_tile: if tile_type(i) = 2 generate
+-- pragma translate_off
       assert tile_device(i) /= 0 report "Undefined device ID for accelerator tile" severity error;
+-- pragma translate_on
       tile_acc_i: tile_acc
       generic map (
         this_hls_conf      => tile_design_point(i),
@@ -632,13 +643,16 @@ begin
         this_has_dvfs      => tile_has_dvfs(i),
         this_has_pll       => tile_has_pll(i),
         this_extra_clk_buf => extra_clk_buf(i),
-        ROUTER_PORTS       => set_router_ports(CFG_XLEN, CFG_YLEN, tile_x(i), tile_y(i)),
+        ROUTER_PORTS       => set_router_ports(CFG_FABTECH, CFG_XLEN, CFG_YLEN, tile_x(i), tile_y(i)),
         HAS_SYNC           => CFG_HAS_SYNC)
       port map (
+        raw_rstn           => '0',
         rst                => rst_int,
         refclk             => refclk_int(i),
         pllbypass          => pllbypass_int(i),
         pllclk             => clk_tile(i),
+        dco_clk            => open,
+        dco_clk_lock       => open,
         -- Test interface
         tdi                => '0',
         tdo                => open,
@@ -737,15 +751,24 @@ begin
       tile_io_i : tile_io
       generic map (
         SIMULATION   => SIMULATION,
-        ROUTER_PORTS => set_router_ports(CFG_XLEN, CFG_YLEN, tile_x(i), tile_y(i)),
+        ROUTER_PORTS => set_router_ports(CFG_FABTECH, CFG_XLEN, CFG_YLEN, tile_x(i), tile_y(i)),
         HAS_SYNC     => CFG_HAS_SYNC)
       port map (
+        raw_rstn           => '0',
 	rst                => rst_int,
 	clk                => refclk_int(i),
+        refclk_noc         => '0',
+        pllclk_noc         => open,
         refclk             => '0',
         pllbypass          => '0',
         pllclk             => open,
         dco_clk            => open,
+        dco_clk_lock       => open,
+        -- Test interface
+        tdi                => '0',
+        tdo                => open,
+        tms                => '0',
+        tclk               => '0',
         -- Ethernet MDC Scaler configuration
         mdcscaler          => open,
         -- I/O bus interfaces
@@ -764,14 +787,11 @@ begin
 	uart_txd           => uart_txd,
 	uart_ctsn          => uart_ctsn,
 	uart_rtsn          => uart_rtsn,
-        -- Test interface
-        tdi                => '0',
-        tdo                => open,
-        tms                => '0',
-        tclk               => '0',
 	-- NOC
 	sys_clk_int        => sys_clk_int(0),
+        sys_rstn           => rst_int,
         sys_clk_out        => open,
+        sys_clk_lock       => open,
 	noc1_data_n_in     => noc1_data_n_in(i),
 	noc1_data_s_in     => noc1_data_s_in(i),
 	noc1_data_w_in     => noc1_data_w_in(i),
@@ -858,13 +878,17 @@ begin
     mem_tile: if tile_type(i) = 4 generate
       tile_mem_i: tile_mem
       generic map (
-        ROUTER_PORTS => set_router_ports(CFG_XLEN, CFG_YLEN, tile_x(i), tile_y(i)),
+        ROUTER_PORTS => set_router_ports(CFG_FABTECH, CFG_XLEN, CFG_YLEN, tile_x(i), tile_y(i)),
         HAS_SYNC     => CFG_HAS_SYNC)
       port map (
+        raw_rstn           => '0',
 	rst                => rst_int,
+        refclk             => '0',
 	clk                => sys_clk_int(tile_mem_id(i)),
         pllbypass          => '0',
         pllclk             => open,
+        dco_clk            => open,
+        dco_clk_lock       => open,
 	ddr_ahbsi          => ddr_ahbsi(tile_mem_id(i)),
 	ddr_ahbso          => ddr_ahbso(tile_mem_id(i)),
         fpga_data_in       => (others => '0'),
@@ -970,13 +994,17 @@ begin
     slm_tile: if tile_type(i) = 5 generate
       tile_slm_i: tile_slm
         generic map (
-          ROUTER_PORTS => set_router_ports(CFG_XLEN, CFG_YLEN, tile_x(i), tile_y(i)),
+          ROUTER_PORTS => set_router_ports(CFG_FABTECH, CFG_XLEN, CFG_YLEN, tile_x(i), tile_y(i)),
           HAS_SYNC     => CFG_HAS_SYNC)
         port map (
+          raw_rstn           => '0',
           rst                => rst_int,
           clk                => refclk_int(i),
+          refclk             => '0',
           pllbypass          => '0',
           pllclk             => open,
+          dco_clk            => open,
+          dco_clk_lock       => open,
           -- Test interface
           tdi                => '0',
           tdo                => open,

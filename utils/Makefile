@@ -839,8 +839,13 @@ VHDL_RTL_SRCS  = $(shell (find $(ESP_ROOT)/rtl/src -name "*.vhd" | grep -v "sld/
 endif
 VHDL_RTL_SRCS  += $(shell (find $(ESP_ROOT)/tech/$(TECHLIB)/ -name "*.vhd" ))
 
-VLOG_RTL_SRCS   = $(shell (find $(ESP_ROOT)/rtl/src -name "*.v" ))
-VLOG_RTL_SRCS  += $(shell (find $(ESP_ROOT)/tech/$(TECHLIB)/ -name "*.v" ))
+
+VLOG_RTL_SRCS      = $(shell (find $(ESP_ROOT)/rtl/src -name "*.v" ))
+VLOG_RTL_SRCS     += $(shell (find $(ESP_ROOT)/tech/$(TECHLIB)/ -name "*.v" ))
+
+RTL_TECH_FOLDERS   = $(filter-out $(ESP_ROOT)/tech/$(TECHLIB)/verilog/, $(shell ls -d $(ESP_ROOT)/tech/$(TECHLIB)/*/))
+VLOG_SYN_RTL_SRCS  = $(shell (find $(ESP_ROOT)/rtl/src -name "*.v" ))
+VLOG_SYN_RTL_SRCS += $(foreach f, $(RTL_TECH_FOLDERS), $(shell (find $(f) -name "*.v")))
 
 SVLOG_RTL_SRCS   = $(shell (find $(ESP_ROOT)/rtl/src -name "*.sv" ))
 SVLOG_RTL_SRCS  += $(shell (find $(ESP_ROOT)/tech/$(TECHLIB)/ -name "*.sv" ))
@@ -855,6 +860,12 @@ VHDL_PKGS = $(THIRDPARTY_VHDL_PKGS) $(VHDL_RTL_PKGS) $(VHDL_SIM_PKGS) $(TOP_VHDL
 VHDL_SRCS = $(THIRDPARTY_VHDL) $(VHDL_RTL_SRCS) $(VHDL_SIM_SRCS) $(TOP_VHDL_RTL_SRCS) $(TOP_VHDL_SIM_SRCS)
 VLOG_SRCS = $(THIRDPARTY_VLOG) $(VLOG_RTL_SRCS) $(VLOG_SIM_SRCS) $(TOP_VLOG_RTL_SRCS) $(TOP_VLOG_SIM_SRCS)
 SVLOG_SRCS = $(THIRDPARTY_SVLOG) $(SVLOG_RTL_SRCS)
+
+VHDL_SYN_PKGS = $(THIRDPARTY_VHDL_PKGS) $(VHDL_RTL_PKGS) $(TOP_VHDL_RTL_PKGS)
+VHDL_SYN_SRCS = $(THIRDPARTY_VHDL) $(VHDL_RTL_SRCS) $(TOP_VHDL_RTL_SRCS)
+VLOG_SYN_SRCS = $(THIRDPARTY_VLOG) $(VLOG_SYN_RTL_SRCS) $(TOP_VLOG_RTL_SRCS)
+SVLOG_SYN_SRCS = $(THIRDPARTY_SVLOG) $(SVLOG_RTL_SRCS)
+
 
 DAT_SRCS = $(shell (find $(ESP_ROOT)/tech/$(TECHLIB)/ -name "*.dat" ))
 
@@ -1629,6 +1640,78 @@ vivado-distclean: vivado-clean
 .PHONY: vivado-clean vivado-distclean vivado-syn vivado-prog-fpga vivado/$(DESIGN) vivado-setup vivado-gui
 
 
+
+
+### Genus Targets
+
+GENUS_VLOG = read_hdl -language v2001
+GENUS_SVLOG = read_hdl -language sv
+GENUS_VHDL = read_hdl -language vhdl
+
+genus:
+	$(QUIET_MKDIR)mkdir -p genus
+
+
+genus/incdir.tcl: genus
+	$(QUIET_MAKE) \
+	echo "set log_syn(hdl_search_path) \"$(THIRDPARTY_INCDIR) $(ESP_CACHES_INCDIR) ${ARIANE}/src/common_cells/include\"" > $@
+
+genus/srcs.tcl: genus check_all_rtl_srcs.old
+	$(QUIET_MAKE)echo "### Compile Ariane source files ###" > $@; \
+	rtl=$(ESP_ROOT)/socs/common/ariane_soc_pkg.sv; \
+	echo "$(GENUS_SVLOG) $(GENUS_ARIANE_VLOGOPT) $$rtl" >> $@; \
+	for ver in $(VERILOG_ARIANE); do \
+		rtl=$$ver; \
+		[[ $$rtl =~ .+trace  ]] || echo "$(GENUS_SVLOG) $(GENUS_ARIANE_VLOGOPT) $$rtl" >> $@; \
+	done; \
+	echo "### Compile VHDL packages ###" >> $@; \
+	for rtl in $(THIRDPARTY_VHDL_PKGS); do \
+		echo "$(GENUS_VHDL) $$rtl" >> $@; \
+	done; \
+	for vhd in $(SLDGEN_VHDL_RTL_PKGS); do \
+		rtl=$$vhd; \
+		echo "$(GENUS_VHDL) $$rtl" >> $@; \
+	done; \
+	for lib in $$(cat $(ESP_ROOT)/rtl/include/libs.txt); do \
+		for dir in $$(cat $(ESP_ROOT)/rtl/include/$$lib/dirs.txt); do \
+			for vhd in $$(cat $(ESP_ROOT)/rtl/include/$$lib/$$dir/pkgs.txt); do \
+				rtl=$(ESP_ROOT)/rtl/include/$$lib/$$dir/$$vhd; \
+				echo "$(GENUS_VHDL) $$rtl" >> $@; \
+			done; \
+		done; \
+	done; \
+	for vhd in $(TOP_VHDL_RTL_PKGS); do \
+		rtl=$$vhd; \
+		echo "$(GENUS_VHDL) $$rtl" >> $@; \
+	done; \
+	echo "### Compile VHDL source files ###" >> $@; \
+		for rtl in $(VHDL_SYN_SRCS); do \
+			[[ $$rtl =~ techmap/unisim  ]] || [[ $$rtl =~ fpga_proxy_top.vhd  ]] || echo "$(GENUS_VHDL) $$rtl" >> $@; \
+		done; \
+	echo "### Compile Verilog source files ###" >> $@; \
+		for rtl in $(VLOG_SYN_SRCS); do \
+			[[ $$rtl =~ techmap/unisim  ]] || echo "$(GENUS_VLOG) $$rtl" >> $@; \
+		done; \
+	echo "### Compile SystemVerilog source files ###" >> $@; \
+		for rtl in $(SVLOG_SYN_SRCS); do \
+			echo "$(GENUS_SVLOG) $(GENUS_SVLOGOPT) $$rtl" >> $@; \
+		done; \
+
+genus/$(DESIGN): genus genus/srcs.tcl genus/incdir.tcl
+
+genus-setup: check_all_rtl_srcs genus/$(DESIGN)
+
+
+genus-clean:
+
+genus-distclean: genus-clean
+	$(QUIET_CLEAN)$(RM) \
+		genus
+
+#TODO rename genus/$(DESIGN) to actual Genus project name
+.PHONY: genus-clean genus-distclean genus-setup genus/$(DESIGN)
+
+
 ### PROFPGA targets ###
 
 boards:
@@ -1750,6 +1833,7 @@ clean: 		soft-clean		\
 		esp-config-clean	\
 		grlib-config-clean	\
 		vivado-clean		\
+		genus-clean		\
 		sldgen-clean		\
 		espmon-clean		\
 		mmi64-clean
@@ -1767,6 +1851,7 @@ distclean:	check_all_srcs-distclean 	\
 		esp-config-distclean		\
 		grlib-config-distclean		\
 		vivado-distclean		\
+		genus-distclean			\
 		sldgen-distclean		\
 		espmon-distclean		\
 		mmi64-distclean

@@ -588,7 +588,7 @@ class NoCFrame(Pmw.ScrolledFrame):
     self.message.delete(0.0, END)
     self.cfg_frame.sync_label.config(text="With synchronizers",fg="darkgreen")
     self.cfg_frame.set_cpu_specific_labels(self.soc)
-    if tot_cpu > 0 and tot_cpu <= NCPU_MAX and tot_mem > 0 and tot_mem <= NMEM_MAX and tot_slm <= NSLM_MAX and tot_acc <= NACC_MAX and not tot_mem == 3 and tot_io == 1 and pll_ok == True and clkbuf_ok == True and clk_region_skip == 0 and tot_tiles <= NTILE_MAX and tot_full_coherent <= NFULL_COHERENT_MAX and tot_llc_coherent <= NLLC_COHERENT_MAX and not (self.soc.TECH != "virtexu" and tot_mem == 4) and not (self.soc.TECH == "virtexu" and tot_mem >= 2 and (self.noc.rows < 3 or self.noc.cols < 3)) and (self.noc.cols <= 8 and self.noc.rows <= 8) and (tot_cpu <= 1 or self.soc.cache_en.get()) and (self.soc.llc_sets.get() < 8192 or self.soc.llc_ways.get() < 16 or tot_mem > 1):
+    if tot_cpu > 0 and tot_cpu <= NCPU_MAX and tot_mem > 0 and tot_mem <= NMEM_MAX and tot_slm <= NSLM_MAX and tot_acc <= NACC_MAX and not tot_mem == 3 and tot_io == 1 and pll_ok == True and clkbuf_ok == True and clk_region_skip == 0 and tot_tiles <= NTILE_MAX and tot_full_coherent <= NFULL_COHERENT_MAX and tot_llc_coherent <= NLLC_COHERENT_MAX and not (self.soc.TECH != "gf12" and self.soc.TECH != "virtexu" and tot_mem == 4) and not (self.soc.TECH == "virtexu" and tot_mem >= 2 and (self.noc.rows < 3 or self.noc.cols < 3)) and (self.noc.cols <= 8 and self.noc.rows <= 8) and (tot_cpu <= 1 or self.soc.cache_en.get()) and (self.soc.llc_sets.get() < 8192 or self.soc.llc_ways.get() < 16 or tot_mem > 1):
       self.done.config(state=NORMAL)
     else:
       string = ""
@@ -611,7 +611,7 @@ class NoCFrame(Pmw.ScrolledFrame):
         string += "Number of memory tiles must be a power of 2.\n" 
       if (tot_slm > NSLM_MAX):
         string += "There must be no more than " + str(NSLM_MAX) + ".\n"
-      if (self.soc.TECH != "virtexu" and tot_mem == 4): 
+      if (self.soc.TECH != "gf12" and self.soc.TECH != "virtexu" and tot_mem == 4): 
         string += "4 memory tiles is only supported for virtexu (profpga-xcvu440).\n"
       if (self.soc.llc_sets.get() >= 8192 and self.soc.llc_ways.get() >= 16 and tot_mem == 1): 
         string += "A 2MB LLC (8192 sets and 16 ways) requires multiple memory tiles.\n"

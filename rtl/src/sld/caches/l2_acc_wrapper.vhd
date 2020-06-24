@@ -180,8 +180,8 @@ architecture rtl of l2_acc_wrapper is
     line            => (others => '0'),
     cnt             => 0);
 
-  signal req_acc_reg      : req_acc_reg_type := REQ_ACC_REG_DEFAULT;
-  signal req_acc_reg_next : req_acc_reg_type := REQ_ACC_REG_DEFAULT;
+  signal req_acc_reg      : req_acc_reg_type;
+  signal req_acc_reg_next : req_acc_reg_type;
 
 
   -------------------------------------------------------------------------------
@@ -206,8 +206,8 @@ architecture rtl of l2_acc_wrapper is
     word_cnt => 0,
     asserts  => (others => '0'));
 
-  signal req_reg      : req_reg_type := REQ_REG_DEFAULT;
-  signal req_reg_next : req_reg_type := REQ_REG_DEFAULT;
+  signal req_reg      : req_reg_type;
+  signal req_reg_next : req_reg_type;
 
   -------------------------------------------------------------------------------
   -- FSM: Response to NoC
@@ -231,8 +231,8 @@ architecture rtl of l2_acc_wrapper is
     word_cnt => 0,
     asserts  => (others => '0'));
 
-  signal rsp_out_reg      : rsp_out_reg_type := RSP_OUT_REG_DEFAULT;
-  signal rsp_out_reg_next : rsp_out_reg_type := RSP_OUT_REG_DEFAULT;
+  signal rsp_out_reg      : rsp_out_reg_type;
+  signal rsp_out_reg_next : rsp_out_reg_type;
 
   -------------------------------------------------------------------------------
   -- FSM: Forward from  NoC
@@ -253,8 +253,8 @@ architecture rtl of l2_acc_wrapper is
     req_id  => (others => '0'),
     asserts => (others => '0'));
 
-  signal fwd_in_reg      : fwd_in_reg_type := FWD_IN_REG_DEFAULT;
-  signal fwd_in_reg_next : fwd_in_reg_type := FWD_IN_REG_DEFAULT;
+  signal fwd_in_reg      : fwd_in_reg_type;
+  signal fwd_in_reg_next : fwd_in_reg_type;
 
   -------------------------------------------------------------------------------
   -- FSM: Response from  NoC
@@ -281,8 +281,8 @@ architecture rtl of l2_acc_wrapper is
     word_cnt   => 0,
     asserts    => (others => '0'));
 
-  signal rsp_in_reg      : rsp_in_reg_type := RSP_IN_REG_DEFAULT;
-  signal rsp_in_reg_next : rsp_in_reg_type := RSP_IN_REG_DEFAULT;
+  signal rsp_in_reg      : rsp_in_reg_type;
+  signal rsp_in_reg_next : rsp_in_reg_type;
 
   -------------------------------------------------------------------------------
   -- Others

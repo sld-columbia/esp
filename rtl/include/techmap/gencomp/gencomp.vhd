@@ -37,7 +37,7 @@ package gencomp is
 
 -- technologies and libraries
 
-constant NTECH : integer := 59;
+constant NTECH : integer := 60;
 type tech_ability_type is array (0 to NTECH) of integer;
 
 constant inferred    : integer := 0;
@@ -101,6 +101,7 @@ constant rhs65       : integer := 56;
 constant rtg4        : integer := 57;
 constant virtexup    : integer := 58;
 constant virtexu     : integer := 59;
+constant gf12        : integer := 60;
 
 constant DEFMEMTECH  : integer := inferred;
 constant DEFPADTECH  : integer := inferred;
@@ -189,14 +190,14 @@ constant has_dpram : tech_ability_type :=
 	 cyclone3 => 1, memvirage90 => 1, atc18rha => 1, smic013 => 1,
 	 tm65gplus => 1, axdsp => 0, spartan6 => 1, virtex6 => 1,
 	 actfus => 1, stratix4 => 1, easic45 => 1, apa3e => 1,
-	 apa3l => 1, ut90 => 1, virtex7 => 1, kintex7 => 1, artix7 => 1, zynq7000 => 1, 
+	 apa3l => 1, ut90 => 1, virtex7 => 1, kintex7 => 1, artix7 => 1, zynq7000 => 1,
          dare => 1, igloo2 => 1, rtg4 => 1, virtexup => 1, virtexu => 1, others => 0);
 
 constant has_sram64 : tech_ability_type :=
 	(inferred => 0, virtex2 => 1, spartan3 => 1, virtex4 => 1,
 	 spartan3e => 1, memartisan => 1, virtex5 => 1, smic013 => 1,
 	 spartan6 => 1, virtex6 => 1, easic45 => 1, virtex7 => 1, kintex7 => 1,
-	 artix7 => 1, zynq7000 => 1, virtexup => 1, virtexu => 1, others => 0);
+	 artix7 => 1, zynq7000 => 1, virtexup => 1, virtexu => 1, gf12 => 1, others => 0);
 
 constant has_sram128bw : tech_ability_type := (
 	virtex2 => 1, virtex4 => 1, virtex5 => 1, spartan3 => 1,
@@ -257,7 +258,7 @@ constant padoen_polarity : tech_ability_type :=
         (axcel => 1, proasic => 1, umc => 1, rhumc => 1, saed32 => 1, rhs65 => 0, dare => 1, apa3 => 1,
          ihp25 => 1, ut25 => 1, peregrine => 1, easic90 => 1, axdsp => 1,
 	 actfus => 1, apa3e => 1, apa3l => 1, ut130 => 1, easic45 => 1,
-         ut90 => 1, igloo2 => 1, rtg4 => 1, others => 0);
+         ut90 => 1, igloo2 => 1, rtg4 => 1, gf12 => 1, others => 0);
 
 constant has_pads : tech_ability_type :=
 	(inferred => 0, virtex => 1, virtex2 => 1, memvirage => 0,
@@ -268,7 +269,7 @@ constant has_pads : tech_ability_type :=
 	 easic90 => 1, atc18rha => 1, spartan6 => 1, virtex6 => 1,
          actfus => 1, apa3e => 1, apa3l => 1, ut130 => 1, easic45 => 1,
          ut90 => 1, virtex7 => 1, kintex7 => 1, virtexup => 1, virtexu => 1,
-         artix7 => 1, zynq7000 => 1, igloo2 => 1, rtg4 => 1, others => 0);
+         artix7 => 1, zynq7000 => 1, igloo2 => 1, rtg4 => 1, gf12 => 1, others => 0);
 
 constant has_ds_pads : tech_ability_type :=
 	(inferred => 0, virtex => 1, virtex2 => 1, memvirage => 0,
@@ -437,7 +438,11 @@ constant has_transceivers : tech_ability_type := (
   );
 
 constant has_pll : tech_ability_type := (
-  virtex7 => 1, virtexup => 1, virtexu => 1, others => 0
+  virtex7 => 1, virtexup => 1, virtexu => 1,  others => 0
+  );
+
+constant has_dco : tech_ability_type := (
+  gf12 => 1, others => 0
   );
 
 -- pragma translate_off
@@ -476,7 +481,8 @@ constant has_pll : tech_ability_type := (
   zynq7000  => "zynq7000  ", rhlib13t  => "rhlib13t  ",
   saed32    => "saed32    ", dare      => "dare      ",
   igloo2    => "igloo2    ", rhs65     => "rhs65     ",
-  rtg4      => "rtg4      ", virtexu   => "virtexu   ");
+  rtg4      => "rtg4      ", virtexu   => "virtexu   ",
+  gf12      => "gf12      ");
 
 -- pragma translate_on
 
@@ -557,6 +563,23 @@ constant m010     : integer := 13;
       vergtune  : in  std_logic_vector(2 downto 0));
   end component;
 
+  component dco is
+    generic (
+      tech : integer;
+      dlog : integer range 0 to 15);
+    port (
+      rstn     : in  std_ulogic;
+      ext_clk  : in  std_logic;
+      en       : in  std_ulogic;
+      clk_sel  : in  std_ulogic;
+      cc_sel   : in  std_logic_vector(5 downto 0);
+      fc_sel   : in  std_logic_vector(5 downto 0);
+      div_sel  : in  std_logic_vector(2 downto 0);
+      freq_sel : in  std_logic_vector(1 downto 0);
+      clk      : out std_logic;
+      clk_div  : out std_logic;
+      lock     : out std_ulogic);
+  end component dco;
 
 ---------------------------------------------------------------------------
 -- MEMORY
@@ -851,14 +874,15 @@ constant m010     : integer := 13;
 component inpad
   generic (tech : integer := 0; level : integer := 0;
 	voltage : integer := x33v; filter : integer := 0;
-	strength : integer := 0);
+	strength : integer := 0; loc : std_logic := '0');
   port (pad : in std_ulogic; o : out std_ulogic);
 end component;
 
 component inpadv
   generic (tech : integer := 0; level : integer := 0;
 	   voltage : integer := x33v; width : integer := 1;
-           filter : integer := 0; strength : integer := 0);
+           filter : integer := 0; strength : integer := 0;
+           loc : std_logic_vector := (31 downto 0 => '0'));
   port (
     pad : in  std_logic_vector(width-1 downto 0);
     o   : out std_logic_vector(width-1 downto 0));
@@ -867,7 +891,7 @@ end component;
 component iopad
   generic (tech : integer := 0; level : integer := 0; slew : integer := 0;
 	   voltage : integer := x33v; strength : integer := 12;
-	   oepol : integer := 0; filter : integer := 0);
+	   oepol : integer := 0; filter : integer := 0; loc : std_logic := '0');
   port (pad : inout std_ulogic; i, en : in std_ulogic; o : out std_ulogic;
         cfgi: in std_logic_vector(19 downto 0) := "00000000000000000000");
 end component;
@@ -875,7 +899,7 @@ end component;
 component iopadv
   generic (tech : integer := 0; level : integer := 0; slew : integer := 0;
 	voltage : integer := x33v; strength : integer := 12; width : integer := 1;
-	   oepol : integer := 0; filter : integer := 0);
+	   oepol : integer := 0; filter : integer := 0; loc : std_logic_vector := (31 downto 0 => '0'));
   port (
     pad : inout std_logic_vector(width-1 downto 0);
     i   : in  std_logic_vector(width-1 downto 0);
@@ -887,7 +911,7 @@ end component;
 component iopadvv is
   generic (tech : integer := 0; level : integer := 0; slew : integer := 0;
 	voltage : integer := x33v; strength : integer := 12; width : integer := 1;
-	oepol : integer := 0; filter : integer := 0);
+	oepol : integer := 0; filter : integer := 0; loc : std_logic_vector := (31 downto 0 => '0'));
   port (
     pad : inout std_logic_vector(width-1 downto 0);
     i   : in  std_logic_vector(width-1 downto 0);
@@ -897,17 +921,30 @@ component iopadvv is
   );
 end component;
 
+component iopadvvv is
+  generic (tech : integer := 0; level : integer := 0; slew : integer := 0;
+	voltage : integer := x33v; strength : integer := 12; width : integer := 1;
+	oepol : integer := 0; filter : integer := 0; loc : std_logic_vector := (31 downto 0 => '0'));
+  port (
+    pad : inout std_logic_vector(width-1 downto 0);
+    i   : in  std_logic_vector(width-1 downto 0);
+    en  : in  std_logic_vector(width-1 downto 0);
+    o   : out std_logic_vector(width-1 downto 0);
+    cfgi: in std_logic_vector(width*20 - 1 downto 0) := (others => '0')
+  );
+end component;
+
 component iodpad
   generic (tech : integer := 0; level : integer := 0; slew : integer := 0;
 	   voltage : integer := x33v; strength : integer := 12;
-	   oepol : integer := 0);
+	   oepol : integer := 0; loc : std_logic := '0');
   port (pad : inout std_ulogic; i : in std_ulogic; o : out std_ulogic);
 end component;
 
 component iodpadv
   generic (tech : integer := 0; level : integer := 0; slew : integer := 0;
 	voltage : integer := x33v; strength : integer := 12; width : integer := 1;
-	   oepol : integer := 0);
+	   oepol : integer := 0; loc : std_logic_vector := (31 downto 0 => '0'));
   port (
     pad : inout std_logic_vector(width-1 downto 0);
     i   : in  std_logic_vector(width-1 downto 0);
@@ -916,18 +953,27 @@ end component;
 
 component outpad
   generic (tech : integer := 0; level : integer := 0; slew : integer := 0;
-	   voltage : integer := x33v; strength : integer := 12);
+	   voltage : integer := x33v; strength : integer := 12; loc : std_logic := '0');
   port (pad : out std_ulogic; i : in std_ulogic;
   cfgi : in std_logic_vector(19 downto 0) := "00000000000000000000");
 end component;
 
 component outpadv
   generic (tech : integer := 0; level : integer := 0; slew : integer := 0;
-	   voltage : integer := x33v; strength : integer := 12; width : integer := 1);
+	   voltage : integer := x33v; strength : integer := 12; width : integer := 1; loc : std_logic_vector := (31 downto 0 => '0'));
   port (
     pad : out std_logic_vector(width-1 downto 0);
     i   : in  std_logic_vector(width-1 downto 0);
     cfgi: in  std_logic_vector(19 downto 0) := "00000000000000000000");
+end component;
+
+component outpadvvv
+  generic (tech : integer := 0; level : integer := 0; slew : integer := 0;
+	   voltage : integer := x33v; strength : integer := 12; width : integer := 1; loc : std_logic_vector := (31 downto 0 => '0'));
+  port (
+    pad : out std_logic_vector(width-1 downto 0);
+    i   : in  std_logic_vector(width-1 downto 0);
+    cfgi: in std_logic_vector(width*20 - 1 downto 0) := (others => '0'));
 end component;
 
 component odpad
@@ -1017,7 +1063,7 @@ end component;
 component clkpad
   generic (tech : integer := 0; level : integer := 0;
 	   voltage : integer := x33v; arch : integer := 0;
-	   hf : integer := 0; filter : integer := 0);
+	   hf : integer := 0; filter : integer := 0; loc : std_logic := '0');
   port (pad : in std_ulogic; o : out std_ulogic; rstn : std_ulogic := '1'; lock : out std_ulogic);
 end component;
 

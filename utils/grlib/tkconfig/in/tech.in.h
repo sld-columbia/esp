@@ -116,6 +116,8 @@
 #define CONFIG_SYN_TECH tsmc90
 #elif defined CONFIG_SYN_TM65GPLUS
 #define CONFIG_SYN_TECH tm65gplus
+#elif defined CONFIG_SYN_GF12
+#define CONFIG_SYN_TECH gf12
 #elif defined CONFIG_SYN_CUSTOM1
 #define CONFIG_SYN_TECH custom1
 #else

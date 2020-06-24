@@ -86,9 +86,9 @@ begin  -- rtl
     variable rs2p1    : integer range 31 downto 0;
     variable rd       : integer range 31 downto 0;
     variable rdp1     : integer range 31 downto 0;
-    variable rfvalid  : std_logic_vector(31 downto 0) := (others => '1');
-    variable rfinuse  : std_logic_vector(31 downto 0) := (others => '0');
-    variable fsrvalid : std_ulogic := '1';
+    variable rfvalid  : std_logic_vector(31 downto 0);
+    variable rfinuse  : std_logic_vector(31 downto 0);
+    variable fsrvalid : std_ulogic;
     variable fsrinuse : std_ulogic;
   begin  -- process drive_ldlock
     rfvalid  := rf_dst_mask_a;

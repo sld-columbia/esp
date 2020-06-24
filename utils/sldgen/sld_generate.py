@@ -1408,7 +1408,7 @@ def gen_tile_acc(accelerator_list, axi_acceleratorlist, template_dir, out_dir):
           f.write("      port map (\n")
           f.write("        rst               => rst,\n")
           f.write("        clk               => clk_feedthru,\n")
-          f.write("        refclk            => refclk,\n")
+          f.write("        refclk            => dvfs_clk,\n")
           f.write("        pllbypass         => pllbypass,\n")
           f.write("        pllclk            => clk_feedthru,\n")
           f.write("        local_y           => this_local_y,\n")

@@ -132,9 +132,6 @@ signal rin, r, rnxt, rnxtin      : reg_type;
 signal migin            : mig_in_type;
 signal migout,migoutraw : mig_out_type;
 
-signal debug : std_logic := '0';
-signal size_to_watch : std_logic_vector(2 downto 0) := HSIZE_4WORD;
-
 begin
 
   comb: process( rst_n_syn, r, rin, ahbsi, migout, rnxt )

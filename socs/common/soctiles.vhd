@@ -67,16 +67,21 @@ package soctiles is
       ROUTER_PORTS       : ports_vec            := "11111";
       HAS_SYNC           : integer range 0 to 1 := 1);
     port (
+      raw_rstn           : in  std_ulogic;
       rst                : in  std_ulogic;
       refclk             : in  std_ulogic;
       pllbypass          : in  std_ulogic;
       pllclk             : out std_ulogic;
+      dco_clk            : out std_ulogic;
+      dco_clk_lock       : out std_ulogic;
       cpuerr             : out std_ulogic;
       -- Test interface
       tdi                : in  std_logic;
       tdo                : out std_logic;
       tms                : in  std_logic;
       tclk               : in  std_logic;
+      -- Pads configuration
+      pad_cfg            : out std_logic_vector(ESP_CSR_PAD_CFG_MSB - ESP_CSR_PAD_CFG_LSB downto 0);
       -- NOC
       sys_clk_int        : in  std_logic;
       noc1_data_n_in     : in  noc_flit_type;
@@ -176,15 +181,20 @@ package soctiles is
       ROUTER_PORTS       : ports_vec            := "11111";
       HAS_SYNC           : integer range 0 to 1 := 1);
     port (
+      raw_rstn           : in  std_ulogic;
       rst                : in  std_ulogic;
       refclk             : in  std_ulogic;
       pllbypass          : in  std_ulogic;
       pllclk             : out std_ulogic;
+      dco_clk            : out std_ulogic;
+      dco_clk_lock       : out std_ulogic;
       -- Test interface
       tdi                : in  std_logic;
       tdo                : out std_logic;
       tms                : in  std_logic;
       tclk               : in  std_logic;
+      -- Pads configuration
+      pad_cfg            : out std_logic_vector(ESP_CSR_PAD_CFG_MSB - ESP_CSR_PAD_CFG_LSB downto 0);
       -- NOC
       sys_clk_int        : in  std_logic;
       noc1_data_n_in     : in  noc_flit_type;
@@ -281,12 +291,16 @@ package soctiles is
       ROUTER_PORTS : ports_vec            := "11111";
       HAS_SYNC     : integer range 0 to 1 := 1);
     port (
+      raw_rstn           : in  std_ulogic;
       rst                : in  std_ulogic;
       clk                : in  std_ulogic;
+      refclk_noc         : in  std_ulogic;
+      pllclk_noc         : out std_ulogic;
       refclk             : in  std_ulogic;
       pllbypass          : in  std_ulogic;
       pllclk             : out std_ulogic;
       dco_clk            : out std_ulogic;
+      dco_clk_lock       : out std_ulogic;
       -- Test interface
       tdi                : in  std_logic;
       tdo                : out std_logic;
@@ -310,9 +324,13 @@ package soctiles is
       uart_txd           : out std_ulogic;
       uart_ctsn          : in  std_ulogic;
       uart_rtsn          : out std_ulogic;
+      -- Pads configuration
+      pad_cfg            : out std_logic_vector(ESP_CSR_PAD_CFG_MSB - ESP_CSR_PAD_CFG_LSB downto 0);
       -- NOC
-      sys_clk_int        : in  std_logic;
-      sys_clk_out        : out std_logic;
+      sys_clk_int        : in  std_ulogic;
+      sys_rstn           : in  std_ulogic;
+      sys_clk_out        : out std_ulogic;
+      sys_clk_lock       : out std_ulogic;
       noc1_data_n_in     : in  noc_flit_type;
       noc1_data_s_in     : in  noc_flit_type;
       noc1_data_w_in     : in  noc_flit_type;
@@ -402,10 +420,14 @@ package soctiles is
       ROUTER_PORTS : ports_vec            := "11111";
       HAS_SYNC     : integer range 0 to 1 := 1);
     port (
+      raw_rstn           : in  std_ulogic;
       rst                : in  std_ulogic;
+      refclk             : in  std_ulogic;
       clk                : in  std_ulogic;
       pllbypass          : in  std_ulogic;
       pllclk             : out std_ulogic;
+      dco_clk            : out std_ulogic;
+      dco_clk_lock       : out std_ulogic;
       ddr_ahbsi          : out ahb_slv_in_type;
       ddr_ahbso          : in  ahb_slv_out_type;
       fpga_data_in       : in  std_logic_vector(ARCH_BITS - 1 downto 0);
@@ -422,6 +444,8 @@ package soctiles is
       tdo                : out std_logic;
       tms                : in  std_logic;
       tclk               : in  std_logic;
+      -- Pads configuration
+      pad_cfg            : out std_logic_vector(ESP_CSR_PAD_CFG_MSB - ESP_CSR_PAD_CFG_LSB downto 0);
       -- NOC
       sys_clk_int        : in  std_logic;
       noc1_data_n_in     : in  noc_flit_type;
@@ -515,15 +539,21 @@ package soctiles is
       ROUTER_PORTS : ports_vec            := "11111";
       HAS_SYNC     : integer range 0 to 1 := 1);
     port (
+      raw_rstn           : in  std_ulogic;
       rst                : in  std_logic;
+      clk                : in  std_logic;
       refclk             : in  std_ulogic;
       pllbypass          : in  std_ulogic;
       pllclk             : out std_ulogic;
-      -- Test interface
+      dco_clk            : out std_ulogic;
+      dco_clk_lock       : out std_ulogic;
+     -- Test interface
       tdi                : in  std_logic;
       tdo                : out std_logic;
       tms                : in  std_logic;
       tclk               : in  std_logic;
+      -- Pads configuration
+      pad_cfg            : out std_logic_vector(ESP_CSR_PAD_CFG_MSB - ESP_CSR_PAD_CFG_LSB downto 0);
       -- NoC
       sys_clk_int        : in  std_logic;
       noc1_data_n_in     : in  noc_flit_type;
@@ -614,15 +644,21 @@ package soctiles is
       ROUTER_PORTS : ports_vec            := "11111";
       HAS_SYNC     : integer range 0 to 1 := 1);
     port (
+      raw_rstn           : in  std_ulogic;
       rst                : in  std_ulogic;
       clk                : in  std_ulogic;
+      refclk             : in  std_ulogic;
       pllbypass          : in  std_ulogic;
       pllclk             : out std_ulogic;
+      dco_clk            : out std_ulogic;
+      dco_clk_lock       : out std_ulogic;
       -- Test interface
       tdi                : in  std_logic;
       tdo                : out std_logic;
       tms                : in  std_logic;
       tclk               : in  std_logic;
+      -- Pads configuration
+      pad_cfg            : out std_logic_vector(ESP_CSR_PAD_CFG_MSB - ESP_CSR_PAD_CFG_LSB downto 0);
       -- NoC
       sys_clk_int        : in  std_logic;
       noc1_data_n_in     : in  noc_flit_type;

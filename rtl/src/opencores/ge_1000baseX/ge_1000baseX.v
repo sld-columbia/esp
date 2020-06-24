@@ -388,10 +388,17 @@ module ge_1000baseX #(
 
    always @(posedge rx_ck, posedge rx_reset)
      begin
-        tbi_rxd_d1 <= (rx_reset) ? 0 : tbi_rxd;
-        tbi_rxd_d2 <= (rx_reset) ? 0 : tbi_rxd_d1;
-        tbi_rxd_d3 <= (rx_reset) ? 0 : tbi_rxd_d2;
-        tbi_rxd_d4 <= (rx_reset) ? 0 : tbi_rxd_d3;
+	if (rx_reset) begin
+           tbi_rxd_d1 <= 0;
+           tbi_rxd_d2 <= 0;
+           tbi_rxd_d3 <= 0;
+           tbi_rxd_d4 <= 0;
+	end else begin
+           tbi_rxd_d1 <= tbi_rxd;
+           tbi_rxd_d2 <= tbi_rxd_d1;
+           tbi_rxd_d3 <= tbi_rxd_d2;
+           tbi_rxd_d4 <= tbi_rxd_d3;
+	end
      end
 
    //////////////////////////////////////////////////////////////////////////////
@@ -641,9 +648,13 @@ module ge_1000baseX #(
 
    always @(posedge tx_ck, posedge tx_reset)
      begin
-        xmit_txc <= (tx_reset) ? `XMIT_IDLE :  xmit_txc0;
-
-        xmit_txc0 <= (tx_reset) ? `XMIT_IDLE : xmit;
+	if (tx_reset) begin
+           xmit_txc <= `XMIT_IDLE;
+           xmit_txc0 <= `XMIT_IDLE;
+	end else begin
+           xmit_txc <= xmit_txc0;
+           xmit_txc0 <= xmit;
+	end
      end
 
    //////////////////////////////////////////////////////////////////////////////

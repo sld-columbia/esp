@@ -100,13 +100,13 @@ begin  -- rtl
     variable wreg, wrcc, acsr : std_ulogic;
     
     variable rd11addr, rd21addr, rd12addr, rd22addr : std_logic_vector(3 downto 0);
-    variable rf_inv_mask : std_logic_vector(31 downto 0) := X"11111111";
-    variable fsr_inv_mask : std_ulogic := '1';
+    variable rf_inv_mask : std_logic_vector(31 downto 0);
+    variable fsr_inv_mask : std_ulogic;
     variable rfvalid : std_logic_vector(31 downto 0);
     variable rd11int, rd12int, rd21int, rd22int : integer range 31 downto 0;
     variable dst   : integer range 31 downto 0;
     variable dstp1 : integer range 31 downto 0;
-    variable ren11, ren21, ren12, ren22 : std_ulogic := '0';
+    variable ren11, ren21, ren12, ren22 : std_ulogic;
   begin  -- process fetch_operands
     if fpu_inbuf_state_a = empty or (fpu_inbuf_state_a = first and fpu_inbuf_rdy_a = '1') then
       cnt := cnt_d;
