@@ -32,6 +32,10 @@ entity misc_irq2noc is
     local_y : in local_yx;
     local_x : in local_yx;
 
+    override_cpu_loc : in std_ulogic;
+    cpu_loc_y        : in yx_vec(0 to CFG_NCPU_TILE - 1);
+    cpu_loc_x        : in yx_vec(0 to CFG_NCPU_TILE - 1);
+
     irqi : in  irq_in_vector(0 to ncpu-1);
     irqo : out irq_out_vector(0 to ncpu-1);
 
@@ -157,13 +161,15 @@ begin  -- rtl
     end process detect_fifo_overflow;
 
     -- Make a packet for interrupt request
-    make_packet : process (irqi(cpuid), local_y, local_x)
+    make_packet : process (irqi(cpuid), local_y, local_x, override_cpu_loc, cpu_loc_y, cpu_loc_x)
       variable msg_type    : noc_msg_type;
       variable tmp         : noc_flit_type;
       variable header_v    : misc_noc_flit_type;
       variable payload_1_v : misc_noc_flit_type;
       variable payload_2_v : misc_noc_flit_type;
       variable reserved    : reserved_field_type;
+      variable target_y    : local_yx;
+      variable target_x    : local_yx;
     begin  -- process make_packet
       msg_type := IRQ_MSG;
 
@@ -173,8 +179,16 @@ begin  -- rtl
         reserved := (others => '0');
       end if;
 
+      if override_cpu_loc = '1' and ncpu > 1 then
+        target_y := cpu_loc_y(cpuid);
+        target_x := cpu_loc_x(cpuid);
+      else
+        target_y := cpu_y(cpuid);
+        target_x := cpu_x(cpuid);
+      end if;
+
       header_v := (others                                                                       => '0');
-      header_v := create_header(MISC_NOC_FLIT_SIZE, local_y, local_x, cpu_y(cpuid), cpu_x(cpuid), msg_type, reserved);
+      header_v := create_header(MISC_NOC_FLIT_SIZE, local_y, local_x, target_y, target_x, msg_type, reserved);
       if GLOB_CPU_ARCH = ariane then
         header_v(MISC_NOC_FLIT_SIZE-1 downto MISC_NOC_FLIT_SIZE-PREAMBLE_WIDTH) := PREAMBLE_1FLIT;
       end if;

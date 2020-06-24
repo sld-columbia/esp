@@ -48,7 +48,7 @@ entity greths is
     attempt_limit  : integer := 16;
     backoff_limit  : integer := 10;
     slot_time      : integer := 128;
-    mdcscaler      : integer range 0 to 255 := 25; 
+    mdcscaler      : integer range 0 to 2047 := 25; 
     enable_mdio    : integer range 0 to 1 := 0;
     fifosize       : integer range 4 to 64 := 8;
     nsync          : integer range 1 to 2 := 2;
@@ -142,7 +142,6 @@ begin
       attempt_limit  => attempt_limit,
       backoff_limit  => backoff_limit,
       slot_time      => slot_time,
-      mdcscaler      => mdcscaler,
       enable_mdio    => enable_mdio,
       fifosize       => fifosize,
       nsync          => nsync,
@@ -173,6 +172,7 @@ begin
     port map (
       rst            => rst,
       clk            => clk,
+      mdcscaler      => mdcscaler,
       ahbmi          => ahbmi,
       ahbmo          => ahbmo,
       eahbmo         => open,

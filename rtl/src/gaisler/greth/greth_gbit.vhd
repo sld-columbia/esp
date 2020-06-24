@@ -46,7 +46,6 @@ entity greth_gbit is
     attempt_limit  : integer := 16;
     backoff_limit  : integer := 10;
     slot_time      : integer := 128;
-    mdcscaler      : integer range 0 to 255 := 25; 
     nsync          : integer range 1 to 2 := 2;
     edcl           : integer range 0 to 3 := 0;
     edclbufsz      : integer range 1 to 64 := 1;
@@ -71,6 +70,7 @@ entity greth_gbit is
   port(
     rst            : in  std_ulogic;
     clk            : in  std_ulogic;
+    mdcscaler      : in  integer range 0 to 2047 := 25; 
     ahbmi          : in  ahb_mst_in_type;
     ahbmo          : out ahb_mst_out_type;
     apbi           : in  apb_slv_in_type;
@@ -147,7 +147,6 @@ begin
       attempt_limit  => attempt_limit,
       backoff_limit  => backoff_limit,
       slot_time      => slot_time,
-      mdcscaler      => mdcscaler,
       nsync          => nsync,
       edcl           => edcl,
       edclbufsz      => edclbufsz,
@@ -171,6 +170,7 @@ begin
     port map(
       rst            => rst,
       clk            => clk,
+      mdcscaler      => mdcscaler,
       --ahb mst in   
       hgrant         => ahbmi.hgrant(hindex),
       hready         => ahbmi.hready,

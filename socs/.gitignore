@@ -35,6 +35,7 @@ socmap.h
 mmi64_regs.h
 power.h
 cache_cfg.svh
+plic_regmap.sv
 sldgen
 
 *.exe

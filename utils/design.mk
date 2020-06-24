@@ -168,6 +168,7 @@ TOP_VHDL_RTL_PKGS += $(DESIGN_PATH)/grlib_config.vhd
 TOP_VHDL_RTL_PKGS += $(DESIGN_PATH)/socmap.vhd
 TOP_VHDL_RTL_PKGS += $(DESIGN_PATH)/sldgen/sldacc.vhd
 TOP_VHDL_RTL_PKGS += $(ESP_ROOT)/socs/common/soctiles.vhd
+TOP_VHDL_RTL_PKGS += $(EXTRA_TOP_VHDL_RTL_PKGS)
 
 TOP_VHDL_RTL_SRCS += $(DESIGN_PATH)/sldgen/accelerators.vhd
 TOP_VHDL_RTL_SRCS += $(DESIGN_PATH)/sldgen/caches.vhd
