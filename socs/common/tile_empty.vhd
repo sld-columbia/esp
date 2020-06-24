@@ -41,15 +41,21 @@ entity tile_empty is
     ROUTER_PORTS : ports_vec            := "11111";
     HAS_SYNC     : integer range 0 to 1 := 1);
   port (
+    raw_rstn           : in  std_ulogic;
     rst                : in  std_logic;
+    clk                : in  std_logic;
     refclk             : in  std_ulogic;
     pllbypass          : in  std_ulogic;
     pllclk             : out std_ulogic;
+    dco_clk            : out std_ulogic;
+    dco_clk_lock       : out std_ulogic;
     -- Test interface
     tdi                : in  std_logic;
     tdo                : out std_logic;
     tms                : in  std_logic;
     tclk               : in  std_logic;
+    -- Pads configuration
+    pad_cfg            : out std_logic_vector(ESP_CSR_PAD_CFG_MSB - ESP_CSR_PAD_CFG_LSB downto 0);
     -- NoC
     sys_clk_int        : in  std_logic;
     noc1_data_n_in     : in  noc_flit_type;
@@ -135,6 +141,14 @@ entity tile_empty is
 end;
 
 architecture rtl of tile_empty is
+
+  -- DCO
+  signal dco_en       : std_ulogic;
+  signal dco_clk_sel  : std_ulogic;
+  signal dco_cc_sel   : std_logic_vector(5 downto 0);
+  signal dco_fc_sel   : std_logic_vector(5 downto 0);
+  signal dco_div_sel  : std_logic_vector(2 downto 0);
+  signal dco_freq_sel : std_logic_vector(1 downto 0);
 
   -- Queues
   signal apb_rcv_rdreq    : std_ulogic;
@@ -331,7 +345,7 @@ architecture rtl of tile_empty is
   attribute keep of noc6_stop_out      : signal is "true";
 
   -- Tile parameters
-  signal config : std_logic_vector(ESP_CSR_WIDTH - 1 downto 0);
+  signal tile_config : std_logic_vector(ESP_CSR_WIDTH - 1 downto 0);
 
   signal tile_id : integer range 0 to CFG_TILES_NUM - 1;
 
@@ -347,8 +361,39 @@ architecture rtl of tile_empty is
 
 begin
 
-  -- TODO:  DCO
-  pllclk <= '0';
+  -- DCO
+  dco_gen: if this_has_dco /= 0 generate
+
+    dco_i: dco
+      generic map (
+        tech => CFG_FABTECH,
+        dlog => 9)                      -- come out of reset after NoC, but
+                                        -- before tile_io.
+      port map (
+        rstn     => raw_rstn,
+        ext_clk  => refclk,
+        en       => dco_en,
+        clk_sel  => dco_clk_sel,
+        cc_sel   => dco_cc_sel,
+        fc_sel   => dco_fc_sel,
+        div_sel  => dco_div_sel,
+        freq_sel => dco_freq_sel,
+        clk      => dco_clk,
+        clk_div  => pllclk,
+        lock     => dco_clk_lock);
+
+    dco_freq_sel <= tile_config(ESP_CSR_DCO_CFG_MSB - 0  downto ESP_CSR_DCO_CFG_MSB - 0  - 1);
+    dco_div_sel  <= tile_config(ESP_CSR_DCO_CFG_MSB - 2  downto ESP_CSR_DCO_CFG_MSB - 2  - 2);
+    dco_fc_sel   <= tile_config(ESP_CSR_DCO_CFG_MSB - 5  downto ESP_CSR_DCO_CFG_MSB - 5  - 5);
+    dco_cc_sel   <= tile_config(ESP_CSR_DCO_CFG_MSB - 11 downto ESP_CSR_DCO_CFG_MSB - 11 - 5);
+    dco_clk_sel  <= tile_config(ESP_CSR_DCO_CFG_LSB + 1);
+    dco_en       <= raw_rstn and tile_config(ESP_CSR_DCO_CFG_LSB);
+
+  end generate dco_gen;
+
+  no_dco_gen: if this_has_dco = 0 generate
+    pllclk <= '0';
+  end generate no_dco_gen;
 
   -- TODO JTAG
   tdo <= '0';
@@ -356,7 +401,8 @@ begin
   -----------------------------------------------------------------------------
   -- Tile parameters
   -----------------------------------------------------------------------------
-  tile_id                <= to_integer(unsigned(config(ESP_CSR_TILE_ID_MSB downto ESP_CSR_TILE_ID_LSB)));
+  tile_id                <= to_integer(unsigned(tile_config(ESP_CSR_TILE_ID_MSB downto ESP_CSR_TILE_ID_LSB)));
+  pad_cfg                <= tile_config(ESP_CSR_PAD_CFG_MSB downto ESP_CSR_PAD_CFG_LSB);
 
   this_csr_pindex        <= tile_csr_pindex(tile_id);
   this_csr_pconfig       <= fixed_apbo_pconfig(this_csr_pindex);
@@ -386,7 +432,7 @@ begin
       local_apb_en => this_local_apb_en)
     port map (
       rst              => rst,
-      clk              => sys_clk_int,
+      clk              => clk,
       local_y          => this_local_y,
       local_x          => this_local_x,
       apbi             => apbi,
@@ -402,7 +448,7 @@ begin
 
   --Monitors
   mon_dvfs_int.vf        <= (others => '0');
-  mon_dvfs_int.clk       <= sys_clk_int;
+  mon_dvfs_int.clk       <= clk;
   mon_dvfs_int.acc_idle  <= '0';
   mon_dvfs_int.traffic   <= '0';
   mon_dvfs_int.burst     <= '0';
@@ -428,7 +474,7 @@ begin
     generic map(
       pindex => 0)
    port map(
-     clk => sys_clk_int,
+     clk => clk,
      rstn => rst,
      pconfig => this_csr_pconfig,
      mon_ddr => monitor_ddr_none,
@@ -438,7 +484,7 @@ begin
      mon_llc => monitor_cache_none,
      mon_acc => monitor_acc_none,
      mon_dvfs => mon_dvfs_int,
-     config => config,
+     tile_config => tile_config,
      srst => open,
      apbi => apbi,
      apbo => apbo(0)
@@ -454,7 +500,7 @@ begin
       tech => CFG_FABTECH)
     port map (
       rst                        => rst,
-      clk                        => sys_clk_int,
+      clk                        => clk,
       apb_snd_wrreq              => apb_snd_wrreq,
       apb_snd_data_in            => apb_snd_data_in,
       apb_snd_full               => apb_snd_full,
@@ -546,7 +592,7 @@ begin
       HAS_SYNC => HAS_SYNC)
     port map (
       clk                => sys_clk_int,
-      clk_tile           => sys_clk_int,
+      clk_tile           => clk,
       rst                => rst,
       CONST_local_x      => this_local_x,
       CONST_local_y      => this_local_y,

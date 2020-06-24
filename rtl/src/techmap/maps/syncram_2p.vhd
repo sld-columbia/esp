@@ -380,7 +380,13 @@ begin
          port map (rclk, renable2, raddress, dataoutx, wclk, xwrite, waddress, datain,
                    testin(TESTIN_WIDTH-1 downto TESTIN_WIDTH-4));
   end generate;
-  
+
+  gf12x : if tech = gf12 generate
+    x0 : gf12_syncram_2p generic map (abits, dbits)
+      port map (rclk, renable2, raddress, dataoutx,
+                wclk, xwrite, waddress, datain);
+  end generate;
+
 -- pragma translate_off
   noram : if has_2pram(tech) = 0 generate
     x : process

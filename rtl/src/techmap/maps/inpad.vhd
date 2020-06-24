@@ -32,7 +32,7 @@ use work.allpads.all;
 entity inpad is
   generic (tech : integer := 0; level : integer := 0;
 	voltage : integer := x33v; filter : integer := 0;
-	strength : integer := 0);
+	strength : integer := 0; loc : std_logic := '0');
   port (pad : in std_ulogic; o : out std_ulogic);
 end;
 
@@ -44,6 +44,9 @@ begin
  	after 1 ns
 -- pragma translate_on
 	;
+  end generate;
+  gf12p : if (tech = gf12) generate
+    x0 : gf12_inpad generic map (PAD_TYPE => loc) port map (pad, o);
   end generate;
   xcv : if (is_unisim(tech) = 1) generate
     x0 : unisim_inpad generic map (level, voltage) port map (pad, o);
@@ -123,7 +126,8 @@ use work.gencomp.all;
 entity inpadv is
   generic (tech : integer := 0; level : integer := 0;
 	   voltage : integer := 0; width : integer := 1;
-           filter : integer := 0; strength : integer := 0);
+           filter : integer := 0; strength : integer := 0;
+           loc : std_logic_vector := (31 downto 0 => '0'));
   port (
     pad : in  std_logic_vector(width-1 downto 0);
     o   : out std_logic_vector(width-1 downto 0));
@@ -131,7 +135,7 @@ end;
 architecture rtl of inpadv is
 begin
   v : for i in width-1 downto 0 generate
-    x0 : inpad generic map (tech, level, voltage, filter, strength) port map (pad(i), o(i));
+    x0 : inpad generic map (tech, level, voltage, filter, strength, loc(i)) port map (pad(i), o(i));
   end generate;
 end;
 

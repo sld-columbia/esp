@@ -42,12 +42,21 @@ entity tile_io is
     ROUTER_PORTS : ports_vec := "11111";
     HAS_SYNC : integer range 0 to 1 := 1 );
   port (
-    rst                : in  std_ulogic;
-    clk                : in  std_ulogic;
-    refclk             : in  std_ulogic;
-    pllbypass          : in  std_ulogic;
-    pllclk             : out std_ulogic;
-    dco_clk            : out std_ulogic;
+    raw_rstn           : in  std_ulogic;  -- active low raw reset (connect to DCO if present)
+    rst                : in  std_ulogic;  -- active low tile reset synch on clk
+    clk                : in  std_ulogic;  -- tile clock (connect to external clock or DCO clock)
+    refclk_noc         : in  std_ulogic;  -- NoC DCO external backup clock
+    pllclk_noc         : out std_ulogic;  -- NoC DCO test out clock
+    refclk             : in  std_ulogic;  -- tile DCO external backup clock
+    pllbypass          : in  std_ulogic;  -- unused
+    pllclk             : out std_ulogic;  -- tile DCO test out clock
+    dco_clk            : out std_ulogic;  -- tile clock (if DCO is present)
+    dco_clk_lock       : out std_ulogic;  -- tile DCO lock
+    -- Test interface
+    tdi                : in  std_logic;
+    tdo                : out std_logic;
+    tms                : in  std_logic;
+    tclk               : in  std_logic;
     -- Ethernet MDC Scaler configuration
     mdcscaler          : out integer range 0 to 1023;
     -- I/O bus interfaces
@@ -66,14 +75,13 @@ entity tile_io is
     uart_txd           : out std_ulogic;
     uart_ctsn          : in  std_ulogic;
     uart_rtsn          : out std_ulogic;
-    -- Test interface
-    tdi                : in  std_logic;
-    tdo                : out std_logic;
-    tms                : in  std_logic;
-    tclk               : in  std_logic;
+    -- Pads configuration
+    pad_cfg            : out std_logic_vector(ESP_CSR_PAD_CFG_MSB - ESP_CSR_PAD_CFG_LSB downto 0);
     -- NOC
-    sys_clk_int        : in  std_logic;
-    sys_clk_out        : out std_logic;
+    sys_clk_int        : in  std_ulogic;  -- NoC clock in
+    sys_rstn           : in  std_ulogic;  -- active low NoC reset
+    sys_clk_out        : out std_ulogic;  -- NoC clock out (if DCO is present)
+    sys_clk_lock       : out std_ulogic;  -- NoC DCO lock
     noc1_data_n_in     : in  noc_flit_type;
     noc1_data_s_in     : in  noc_flit_type;
     noc1_data_w_in     : in  noc_flit_type;
@@ -159,6 +167,21 @@ end;
 
 architecture rtl of tile_io is
 
+
+  -- DCO
+  signal dco_noc_en       : std_ulogic;
+  signal dco_noc_clk_sel  : std_ulogic;
+  signal dco_noc_cc_sel   : std_logic_vector(5 downto 0);
+  signal dco_noc_fc_sel   : std_logic_vector(5 downto 0);
+  signal dco_noc_div_sel  : std_logic_vector(2 downto 0);
+  signal dco_noc_freq_sel : std_logic_vector(1 downto 0);
+
+  signal dco_en       : std_ulogic;
+  signal dco_clk_sel  : std_ulogic;
+  signal dco_cc_sel   : std_logic_vector(5 downto 0);
+  signal dco_fc_sel   : std_logic_vector(5 downto 0);
+  signal dco_div_sel  : std_logic_vector(2 downto 0);
+  signal dco_freq_sel : std_logic_vector(1 downto 0);
 
   -- Bootrom
   component ahbrom is
@@ -319,7 +342,7 @@ architecture rtl of tile_io is
   signal header, header_next : std_logic_vector(MISC_NOC_FLIT_SIZE - 1 downto 0);
 
   -- Tile parameters
-  signal config : std_logic_vector(ESP_CSR_WIDTH - 1 downto 0);
+  signal tile_config : std_logic_vector(ESP_CSR_WIDTH - 1 downto 0);
 
   constant this_local_y           : local_yx                           := tile_y(io_tile_id);
   constant this_local_x           : local_yx                           := tile_x(io_tile_id);
@@ -621,16 +644,76 @@ architecture rtl of tile_io is
 
 begin
 
-  -- TODO:  DCO (two instances)
-  pllclk <= '0';
-  dco_clk <= '0';
-  sys_clk_out <= '0';
+  -- DCO
+  dco_gen: if this_has_dco /= 0 generate
+    dco_noc_i : dco
+      generic map (
+        tech => CFG_FABTECH,
+        dlog => 8)                      -- NoC is the first to come out of reset
+      port map (
+        rstn     => raw_rstn,
+        ext_clk  => refclk_noc,
+        en       => dco_noc_en,
+        clk_sel  => dco_noc_clk_sel,
+        cc_sel   => dco_noc_cc_sel,
+        fc_sel   => dco_noc_fc_sel,
+        div_sel  => dco_noc_div_sel,
+        freq_sel => dco_noc_freq_sel,
+        clk      => sys_clk_out,
+        clk_div  => pllclk_noc,
+        lock     => sys_clk_lock);
+
+    dco_noc_freq_sel <= tile_config(ESP_CSR_DCO_NOC_CFG_MSB - 0  downto ESP_CSR_DCO_NOC_CFG_MSB - 0  - 1);
+    dco_noc_div_sel  <= tile_config(ESP_CSR_DCO_NOC_CFG_MSB - 2  downto ESP_CSR_DCO_NOC_CFG_MSB - 2  - 2);
+    dco_noc_fc_sel   <= tile_config(ESP_CSR_DCO_NOC_CFG_MSB - 5  downto ESP_CSR_DCO_NOC_CFG_MSB - 5  - 5);
+    dco_noc_cc_sel   <= tile_config(ESP_CSR_DCO_NOC_CFG_MSB - 11 downto ESP_CSR_DCO_NOC_CFG_MSB - 11 - 5);
+    dco_noc_clk_sel  <= tile_config(ESP_CSR_DCO_NOC_CFG_LSB + 1);
+    dco_noc_en       <= raw_rstn and tile_config(ESP_CSR_DCO_NOC_CFG_LSB);
+
+    dco_i: dco
+      generic map (
+        tech => CFG_FABTECH,
+        dlog => 10)                     -- Tile I/O is the first sending NoC
+                                        -- packets; last reset to be released
+      port map (
+        rstn     => raw_rstn,
+        ext_clk  => refclk,
+        en       => dco_en,
+        clk_sel  => dco_clk_sel,
+        cc_sel   => dco_cc_sel,
+        fc_sel   => dco_fc_sel,
+        div_sel  => dco_div_sel,
+        freq_sel => dco_freq_sel,
+        clk      => dco_clk,
+        clk_div  => pllclk,
+        lock     => dco_clk_lock);
+
+    dco_freq_sel <= tile_config(ESP_CSR_DCO_CFG_MSB - 0  downto ESP_CSR_DCO_CFG_MSB - 0  - 1);
+    dco_div_sel  <= tile_config(ESP_CSR_DCO_CFG_MSB - 2  downto ESP_CSR_DCO_CFG_MSB - 2  - 2);
+    dco_fc_sel   <= tile_config(ESP_CSR_DCO_CFG_MSB - 5  downto ESP_CSR_DCO_CFG_MSB - 5  - 5);
+    dco_cc_sel   <= tile_config(ESP_CSR_DCO_CFG_MSB - 11 downto ESP_CSR_DCO_CFG_MSB - 11 - 5);
+    dco_clk_sel  <= tile_config(ESP_CSR_DCO_CFG_LSB + 1);
+    dco_en       <= raw_rstn and tile_config(ESP_CSR_DCO_CFG_LSB);
+
+  end generate dco_gen;
+
+  no_dco_gen: if this_has_dco = 0 generate
+    pllclk       <= '0';
+    pllclk_noc   <= '0';
+    dco_clk      <= '0';
+    sys_clk_out  <= '0';
+    dco_clk_lock <= '1';
+    sys_clk_lock <= '1';
+  end generate no_dco_gen;
 
   -- TODO JTAG
   tdo <= '0';
 
   -- MDC scaler configuration
   mdcscaler              <= conv_integer(tile_config(ESP_CSR_MDC_SCALER_CFG_MSB downto ESP_CSR_MDC_SCALER_CFG_LSB));
+
+  -- Pads configuration
+  pad_cfg                <= tile_config(ESP_CSR_PAD_CFG_MSB downto ESP_CSR_PAD_CFG_LSB);
 
   -----------------------------------------------------------------------------
   -- NOC Connections
@@ -675,11 +758,11 @@ begin
  sync_noc_set_io: sync_noc_set
   generic map (
      PORTS    => ROUTER_PORTS,
-     HAS_SYNC => HAS_SYNC )
+     HAS_SYNC => HAS_SYNC)
    port map (
      clk                => sys_clk_int,
      clk_tile           => clk,
-     rst                => rst,
+     rst                => sys_rstn,
      CONST_local_x      => this_local_x,
      CONST_local_y      => this_local_y,
      noc1_data_n_in     => noc1_data_n_in,
@@ -1504,7 +1587,7 @@ begin
       mon_llc => monitor_cache_none,
       mon_acc => monitor_acc_none,
       mon_dvfs => mon_dvfs_int,
-      config => config,
+      tile_config => tile_config,
       srst => open,
       apbi => noc_apbi,
       apbo => noc_apbo(0)

@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 ### Supported technology libraries ###
-ASICLIBS =
+ASICLIBS = gf12
 FPGALIBS = virtex7 virtexu virtexup
 
 
@@ -106,7 +106,7 @@ ifneq ($(filter $(TECHLIB),$(FPGALIBS)),)
 VSIMOPT += -L secureip_ver -L unisims_ver
 endif
 
-VSIMOPT += -uvmcontrol=disable -suppress 3009,2685,2718 -t ps
+VSIMOPT += -uvmcontrol=disable -suppress 3009,2685,2718 -t fs
 
 ifneq ($(filter $(TECHLIB),$(FPGALIBS)),)
 EXTRA_SIMTOP  = glbl
@@ -150,6 +150,14 @@ VSIMOPT += -suppress 8617
 VSIMOPT += -suppress 151
 VSIMOPT += -suppress 143
 VSIMOPT += +notimingchecks
+
+
+### ASIC synthesis common options ###
+
+# Genus compile flags #
+GENUS_ARIANE_VLOGOPT = -define WT_DCACHE=1
+GENUS_SVLOGOPT +=
+
 
 # Toplevel
 VSIMOPT += $(SIMTOP) $(EXTRA_SIMTOP)

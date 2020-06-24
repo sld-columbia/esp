@@ -298,8 +298,8 @@ architecture rtl of llc_wrapper is
     addr    => (others => '0'),
     asserts => (others => '0'));
 
-  signal fwd_out_reg      : fwd_out_reg_type := FWD_OUT_REG_DEFAULT;
-  signal fwd_out_reg_next : fwd_out_reg_type := FWD_OUT_REG_DEFAULT;
+  signal fwd_out_reg      : fwd_out_reg_type;
+  signal fwd_out_reg_next : fwd_out_reg_type;
 
   -------------------------------------------------------------------------------
   -- FSM: Response to NoC
@@ -481,8 +481,8 @@ architecture rtl of llc_wrapper is
     tile_id  => 0,
     asserts  => (others => '0'));
 
-  signal rsp_in_reg      : rsp_in_reg_type := RSP_IN_REG_DEFAULT;
-  signal rsp_in_reg_next : rsp_in_reg_type := RSP_IN_REG_DEFAULT;
+  signal rsp_in_reg      : rsp_in_reg_type;
+  signal rsp_in_reg_next : rsp_in_reg_type;
 
   -------------------------------------------------------------------------------
   -- Others
@@ -1619,7 +1619,9 @@ begin  -- architecture rtl
               end if;
             end if;
 
-            req_id(RESERVED_WIDTH-1 downto llc_fwd_out_data_req_id'length) := (others => '0');
+            if llc_fwd_out_data_req_id'length < RESERVED_WIDTH then
+              req_id(RESERVED_WIDTH-1 downto llc_fwd_out_data_req_id'length) := (others => '0');
+            end if;
             req_id(llc_fwd_out_data_req_id'length - 1 downto 0)            := llc_fwd_out_data_req_id;
 
             coherence_fwd_wrreq <= '1';

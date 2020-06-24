@@ -47,6 +47,11 @@ if {$TECH eq "cmos32soi"} {
     set SIM_CLOCK_PERIOD 1000.0
     set_attr default_input_delay      100.0
 }
+if {$TECH eq "gf12"} {
+    set CLOCK_PERIOD 1000.0
+    set SIM_CLOCK_PERIOD 1000.0
+    set_attr default_input_delay      100.0
+}
 set_attr clock_period $CLOCK_PERIOD
 # set_attr dpopt_auto all
 # set_attr dpopt_effort high

@@ -8,6 +8,7 @@ use ieee.numeric_std.all;
 
 use work.esp_global.all;
 use work.sldcommon.all;
+use work.gencomp.all;
 
 package nocpackage is
 
@@ -373,6 +374,7 @@ package nocpackage is
     return misc_noc_flit_type;
 
   function set_router_ports (
+    constant TECH : integer;
     constant CFG_XLEN : integer;
     constant CFG_YLEN : integer;
     constant local_x : local_yx;
@@ -629,6 +631,7 @@ package body nocpackage is
 -- This function will go to top and ROUTER_PORTS will be passed through parameter
 
   function set_router_ports (
+    constant TECH : integer;
     constant CFG_XLEN : integer;
     constant CFG_YLEN : integer;
     constant local_x : local_yx;
@@ -646,13 +649,24 @@ package body nocpackage is
     if local_x = "000" then
       ports(2) := '0';
     end if;
-    -- south ports removed in bottom tiles
-    if (to_integer(unsigned(local_y))) = CFG_YLEN-1 then
-      ports(1) := '0';
-    end if;
-    -- east ports removed in right edge tiles
-    if (to_integer(unsigned(local_x))) = CFG_XLEN-1 then
-      ports(3) := '0';
+    if is_fpga(TECH) /= 0 then
+      -- On FPGA we want to simplify logic as much as possible.
+      -- For ASIC flow, however, we want to minimize the number of tiles that
+      -- differ due to router's ports. We assume that routers are placed on the
+      -- bottom-right corner of each tile, so leaving east and south ports
+      -- enabled won't incur long dangling metal lines. Unused ports should
+      -- have inputs tied to VSS, except for void signals, which must be tied
+      -- to VDD.
+
+      -- south ports removed in bottom tiles
+      if (to_integer(unsigned(local_y))) = CFG_YLEN-1 then
+        ports(1) := '0';
+      end if;
+      -- east ports removed in right edge tiles
+      if (to_integer(unsigned(local_x))) = CFG_XLEN-1 then
+        ports(3) := '0';
+      end if;
+
     end if;
     return ports;
   end set_router_ports;

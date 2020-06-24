@@ -38,15 +38,21 @@ entity tile_slm is
     ROUTER_PORTS : ports_vec := "11111";
     HAS_SYNC     : integer range 0 to 1 := 1);
   port (
+    raw_rstn           : in  std_ulogic;
     rst                : in  std_ulogic;
     clk                : in  std_ulogic;
+    refclk             : in  std_ulogic;
     pllbypass          : in  std_ulogic;
     pllclk             : out std_ulogic;
+    dco_clk            : out std_ulogic;
+    dco_clk_lock       : out std_ulogic;
     -- Test interface
     tdi                : in  std_logic;
     tdo                : out std_logic;
     tms                : in  std_logic;
     tclk               : in  std_logic;
+    -- Pads configuration
+    pad_cfg            : out std_logic_vector(ESP_CSR_PAD_CFG_MSB - ESP_CSR_PAD_CFG_LSB downto 0);
     -- NOC
     sys_clk_int        : in  std_logic;
     noc1_data_n_in     : in  noc_flit_type;
@@ -135,6 +141,14 @@ end;
 architecture rtl of tile_slm is
 
 
+  -- DCO
+  signal dco_en       : std_ulogic;
+  signal dco_clk_sel  : std_ulogic;
+  signal dco_cc_sel   : std_logic_vector(5 downto 0);
+  signal dco_fc_sel   : std_logic_vector(5 downto 0);
+  signal dco_div_sel  : std_logic_vector(2 downto 0);
+  signal dco_freq_sel : std_logic_vector(1 downto 0);
+
   -- Queues (despite their name, for this tile, all queues carry non-coherent requests)
   signal dma_rcv_rdreq              : std_ulogic;
   signal dma_rcv_data_out           : noc_flit_type;
@@ -203,7 +217,7 @@ architecture rtl of tile_slm is
   signal noc6_mon_noc_vec_int  : monitor_noc_type;
 
   -- Tile parameters
-  signal config : std_logic_vector(ESP_CSR_WIDTH - 1 downto 0);
+  signal tile_config : std_logic_vector(ESP_CSR_WIDTH - 1 downto 0);
 
   signal tile_id : integer range 0 to CFG_TILES_NUM - 1;
 
@@ -291,8 +305,39 @@ architecture rtl of tile_slm is
 
 begin
 
-  -- TODO:  DCO (two instances)
-  pllclk <= '0';
+  -- DCO
+  dco_gen: if this_has_dco /= 0 generate
+
+    dco_i: dco
+      generic map (
+        tech => CFG_FABTECH,
+        dlog => 9)                      -- come out of reset after NoC, but
+                                        -- before tile_io.
+      port map (
+        rstn     => raw_rstn,
+        ext_clk  => refclk,
+        en       => dco_en,
+        clk_sel  => dco_clk_sel,
+        cc_sel   => dco_cc_sel,
+        fc_sel   => dco_fc_sel,
+        div_sel  => dco_div_sel,
+        freq_sel => dco_freq_sel,
+        clk      => dco_clk,
+        clk_div  => pllclk,
+        lock     => dco_clk_lock);
+
+    dco_freq_sel <= tile_config(ESP_CSR_DCO_CFG_MSB - 0  downto ESP_CSR_DCO_CFG_MSB - 0  - 1);
+    dco_div_sel  <= tile_config(ESP_CSR_DCO_CFG_MSB - 2  downto ESP_CSR_DCO_CFG_MSB - 2  - 2);
+    dco_fc_sel   <= tile_config(ESP_CSR_DCO_CFG_MSB - 5  downto ESP_CSR_DCO_CFG_MSB - 5  - 5);
+    dco_cc_sel   <= tile_config(ESP_CSR_DCO_CFG_MSB - 11 downto ESP_CSR_DCO_CFG_MSB - 11 - 5);
+    dco_clk_sel  <= tile_config(ESP_CSR_DCO_CFG_LSB + 1);
+    dco_en       <= raw_rstn and tile_config(ESP_CSR_DCO_CFG_LSB);
+
+  end generate dco_gen;
+
+  no_dco_gen: if this_has_dco = 0 generate
+    pllclk <= '0';
+  end generate no_dco_gen;
 
   -- TODO JTAG
   tdo <= '0';
@@ -300,7 +345,8 @@ begin
   -----------------------------------------------------------------------------
   -- Tile parameters
   -----------------------------------------------------------------------------
-  tile_id           <= to_integer(unsigned(config(ESP_CSR_TILE_ID_MSB downto ESP_CSR_TILE_ID_LSB)));
+  tile_id           <= to_integer(unsigned(tile_config(ESP_CSR_TILE_ID_MSB downto ESP_CSR_TILE_ID_LSB)));
+  pad_cfg           <= tile_config(ESP_CSR_PAD_CFG_MSB downto ESP_CSR_PAD_CFG_LSB);
 
   this_slm_id       <= tile_slm_id(tile_id);
   this_slm_hindex   <= slm_hindex(this_slm_id);
@@ -566,7 +612,7 @@ begin
       mon_llc => monitor_cache_none,
       mon_acc => monitor_acc_none,
       mon_dvfs => mon_dvfs_int,
-      config => config,
+      tile_config => tile_config,
       srst => open,
       apbi => apbi,
       apbo => apbo(0)

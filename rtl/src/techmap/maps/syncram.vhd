@@ -296,7 +296,12 @@ begin
     x0 : rh_lib13t_syncram generic map(abits, dbits)
          port map(clk, address, datain, dataoutx, xenable, xwrite, testin(TESTIN_WIDTH-3 downto TESTIN_WIDTH-4));
   end generate;
-  
+
+  gf12x : if tech = gf12 generate
+    x0 : gf12_syncram generic map (abits, dbits)
+      port map (clk, address, datain, dataoutx, xenable, xwrite);
+  end generate;
+
 -- pragma translate_off
   noram : if has_sram(tech) = 0 generate
     x : process

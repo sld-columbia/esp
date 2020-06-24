@@ -69,7 +69,7 @@ begin  -- rtl
     variable wrdata2 : std_logic_vector(31 downto 0);
     variable wraddr : std_logic_vector(3 downto 0);
     variable wren1, wren2 : std_ulogic;
-    variable fsr_valid : std_ulogic := '0';
+    variable fsr_valid : std_ulogic;
   begin  -- process write_rf
     dst := conv_integer(rd_wb);
     dstp1 := conv_integer(rd_wb(4 downto 1) & '1');

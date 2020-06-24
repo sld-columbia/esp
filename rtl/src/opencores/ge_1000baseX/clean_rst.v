@@ -54,10 +54,15 @@ module clean_rst(
    
    always @(posedge clk, posedge rsti)
      begin
-	rstt <= (rsti) ? 1 : 0;
-	rsto <= (rsti) ? 1 : rstt;
+	if (rsti) begin
+	   rstt <= 1;
+	   rsto <= 1;
+	end else begin
+	   rstt <= 0;
+	   rsto <= rstt;
+	end
      end
-     
+
 endmodule
 
 

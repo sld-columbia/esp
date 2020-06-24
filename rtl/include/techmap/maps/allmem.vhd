@@ -16,7 +16,7 @@
 --
 --  You should have received a copy of the GNU General Public License
 --  along with this program; if not, write to the Free Software
---  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA 
+--  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 -----------------------------------------------------------------------------
 -- Package: 	allmem
 -- File:	allmem.vhd
@@ -373,7 +373,7 @@ package allmem is
       addr:    in    std_logic_vector(6 downto 0);
       data:    out   std_logic_vector(7 downto 0));
   end component;
-  
+
 -- IGLOO2
   component igloo2_syncram
   generic ( abits : integer := 10; dbits : integer := 8 );
@@ -427,7 +427,7 @@ package allmem is
     enable   : in std_logic_vector (dbits/8-1 downto 0);
     write    : in std_logic_vector (dbits/8-1 downto 0));
   end component;
-  
+
 -- RTG4
   component rtg4_syncram
   generic ( abits : integer := 10; dbits : integer := 8; ecc : integer := 0);
@@ -682,7 +682,7 @@ end component;
   );
   end component;
 
-  component generic_fifo 
+  component generic_fifo
   generic (tech  : integer := 0; abits : integer := 10; dbits : integer := 32;
     sepclk : integer := 1; pfull : integer := 100; pempty : integer := 10; fwft : integer := 0);
   port (
@@ -990,7 +990,7 @@ end component;
     errinj  : in  std_logic_vector(1 downto 0)
   );
   end component;
-  
+
   component unisim_syncram_dp
   generic ( abits : integer := 10; dbits : integer := 8 );
   port (
@@ -1640,5 +1640,36 @@ end component;
     diagin   : in std_logic_vector(1 downto 0) := "00");
   end component;
 
-end;
+  -- GF12
 
+  component gf12_syncram is
+    generic (
+      abits : integer;
+      dbits : integer);
+    port (
+      clk     : in  std_ulogic;
+      address : in  std_logic_vector (abits -1 downto 0);
+      datain  : in  std_logic_vector (dbits -1 downto 0);
+      dataout : out std_logic_vector (dbits -1 downto 0);
+      enable  : in  std_ulogic;
+      write   : in  std_ulogic);
+  end component gf12_syncram;
+
+  component gf12_syncram_2p is
+    generic (
+      abits  : integer;
+      dbits  : integer);
+    port (
+      rclk     : in  std_ulogic;
+      renable  : in  std_ulogic;
+      raddress : in  std_logic_vector((abits -1) downto 0);
+      dataout  : out std_logic_vector((dbits -1) downto 0);
+      wclk     : in  std_ulogic;
+      write    : in  std_ulogic;
+      waddress : in  std_logic_vector((abits -1) downto 0);
+      datain   : in  std_logic_vector((dbits -1) downto 0));
+  end component gf12_syncram_2p;
+
+
+
+end;
