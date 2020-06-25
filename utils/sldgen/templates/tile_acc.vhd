@@ -702,7 +702,7 @@ begin
       noc2_out_stop              => noc2_acc_stop_in,
       noc2_in_data               => noc2_input_port,
       noc2_in_void               => noc2_acc_data_void_in,
-      noc2_in_stop               => noc1_acc_stop_out,
+      noc2_in_stop               => noc2_acc_stop_out,
       noc3_out_data              => noc3_output_port,
       noc3_out_void              => noc3_acc_data_void_out,
       noc3_out_stop              => noc3_acc_stop_in,
