@@ -31,6 +31,7 @@
 #include <esp_accelerator.h>
 
 // <<--esp-include-->>
+#include "conv2d.h"
 #include "gemm.h"
 #include "FFTAccelerator.h"
 #include "AdderAccelerator.h"
@@ -48,6 +49,7 @@ unsigned DMA_WORD_PER_BEAT(unsigned _st);
 
 enum esp_accelerator_type {
 	// <<--esp-enum-->>
+	conv2d,
 	gemm,
 	fftaccelerator,
 	adderaccelerator,
@@ -64,6 +66,7 @@ enum esp_accelerator_type {
 
 union esp_accelerator_descriptor {
 	// <<--esp-descriptor-->>
+	struct conv2d_access conv2d_desc;
 	struct gemm_access gemm_desc;
 	struct fftaccelerator_access fftaccelerator_desc;
 	struct adderaccelerator_access adderaccelerator_desc;

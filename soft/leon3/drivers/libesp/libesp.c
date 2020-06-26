@@ -23,6 +23,9 @@ void *accelerator_thread( void *ptr )
 	gettime(&th_start);
 	switch (info->type) {
 	// <<--esp-ioctl-->>
+	case conv2d :
+		rc = ioctl(info->fd, CONV2D_IOC_ACCESS, info->desc.conv2d_desc);
+		break;
 	case gemm :
 		rc = ioctl(info->fd, GEMM_IOC_ACCESS, info->desc.gemm_desc);
 		break;
@@ -91,6 +94,9 @@ static void esp_config(esp_thread_info_t cfg[], unsigned nacc)
 
 		switch (info->type) {
 		// <<--esp-prepare-->>
+		case conv2d :
+			esp_prepare(&info->desc.conv2d_desc.esp);
+			break;
 		case gemm :
 			esp_prepare(&info->desc.gemm_desc.esp);
 			break;
