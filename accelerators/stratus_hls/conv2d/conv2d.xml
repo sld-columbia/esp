@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sld>
+  <accelerator name="conv2d" desc="Accelerator CONV2D" data_size="4" device_id="052" hls_tool="stratus_hls">
+    <param name="n_channels" desc="n_channels" />
+    <param name="feature_map_height" desc="feature_map_height" />
+    <param name="feature_map_width" desc="feature_map_width" />
+    <param name="n_filters" desc="n_filters" />
+    <param name="filter_height" desc="filter_height" />
+    <param name="filter_width" desc="filter_width" />
+    <param name="pad_h" desc="pad_h" />
+    <param name="pad_w" desc="pad_w" />
+    <param name="stride_h" desc="stride_h" />
+    <param name="stride_w" desc="stride_w" />
+    <param name="dilation_h" desc="dilation_h" />
+    <param name="dilation_w" desc="dilation_w" />
+  </accelerator>
+</sld>
