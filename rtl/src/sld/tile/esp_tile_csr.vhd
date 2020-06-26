@@ -160,7 +160,7 @@ architecture rtl of esp_tile_csr is
       -- Advance time
       time_counter <= time_counter + 1;
       -- Advance window count
-      if time_counter = window_size or window_reset = '1' then
+      if time_counter = window_size or window_reset = '1' or ctrl_rst(0) = '1' then
         time_counter <= (others => '0');
         window_count <= window_count + 1;
         new_window <= '1';
@@ -291,17 +291,11 @@ architecture rtl of esp_tile_csr is
           count(R) <= (others => '0');
           count_value(R) <= count(R);
         end loop;
-      end if;
-   
-      if ctrl_rst(0) = '1' then 
-        for R in 0 to MONITOR_REG_COUNT - 1 loop
-          count(R) <= (others => '0');
-          count_value(R) <= (others => '0');
-        end loop;
         accelerator_tlb_count := (others => '0');
         accelerator_mem_count := (others => '0');
         accelerator_tot_count := (others => '0');
       end if;
+   
     end if;
   end process counters;
     
