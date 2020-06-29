@@ -890,7 +890,7 @@ begin  -- architecture rtl
       when rcv_header =>
 
         -- coherence requests
-        if coherence_req_empty = '0' then
+        if coherence_req_empty = '0' and preamble(1) = '1' then
 
           coherence_req_rdreq <= '1';
 
@@ -1022,7 +1022,7 @@ begin  -- architecture rtl
       when rcv_header =>
 
         -- dma requests coherent with LLC
-        if dma_rcv_empty = '0' then
+        if dma_rcv_empty = '0' and dma_preamble(1) = '1' then
 
           dma_rcv_rdreq <= '1';
 
@@ -1161,6 +1161,7 @@ begin  -- architecture rtl
 
     variable reg : rsp_in_reg_type;
     variable msg : noc_msg_type;
+    variable preamble : noc_preamble_type;
     
   begin  -- process fsm_rsp_in
     -- initialize variables
@@ -1177,13 +1178,16 @@ begin  -- architecture rtl
     -- initialize signals toward noc (receive from noc)
     coherence_rsp_rcv_rdreq <= '0';
 
+    -- incoming NoC messages parsing
+    preamble     := get_preamble(NOC_FLIT_SIZE, coherence_rsp_rcv_data_out);
+
     -- fsm states
     case reg.state is
 
       -- RECEIVE HEADER
       when rcv_header =>
 
-        if coherence_rsp_rcv_empty = '0' then
+        if coherence_rsp_rcv_empty = '0' and preamble(1) = '1' then
 
           coherence_rsp_rcv_rdreq <= '1';
 
