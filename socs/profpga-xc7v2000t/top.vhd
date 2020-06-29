@@ -512,7 +512,7 @@ begin
   rst0 : rstgen         -- reset generator
   generic map (acthigh => 1, syncin => 0)
   port map (rst, clkm, lock, rstn, rstraw);
-  lock <= c0_calib_done and c1_calib_done;
+  lock <= c0_calib_done and c1_calib_done and cgo.clklock;
 
   rst1 : rstgen         -- reset generator
   generic map (acthigh => 1)
@@ -522,6 +522,11 @@ begin
 ----------------------------------------------------------------------
 ---  DDR3 memory controller ------------------------------------------
 ----------------------------------------------------------------------
+
+  clkgenmigref0 : clkgen
+    generic map (CFG_FABTECH, 16, 32, 0, 0, 0, 0, 0, 100000)
+    port map (clkm, clkm, chip_refclk, open, open, open, open, cgi, cgo, open, open, open);
+
 
   gen_mig : if (SIMULATION /= true) generate
 
@@ -687,10 +692,6 @@ begin
         );
 
 
-     clkgenmigref0 : clkgen
-       generic map (CFG_FABTECH, 16, 32, 0, 0, 0, 0, 0, 100000)
-       port map (clkm, clkm, chip_refclk, open, open, open, open, cgi, cgo, open, open, open);
-
   end generate gen_mig;
 
   gen_mig_model : if (SIMULATION = true) generate
@@ -793,7 +794,6 @@ begin
 
     clkm <= not clkm after 5 ns;
     clkm_2 <= not clkm_2 after 5 ns;
-    chip_refclk <= not chip_refclk after 10.0 ns;
 
     -- pragma translate_on
   end generate gen_mig_model;

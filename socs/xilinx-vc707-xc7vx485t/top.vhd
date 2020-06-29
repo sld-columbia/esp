@@ -295,7 +295,7 @@ begin
   rst0 : rstgen         -- reset generator
   generic map (acthigh => 1, syncin => 0)
   port map (rst, clkm, lock, rstn, rstraw);
-  lock <= calib_done;
+  lock <= calib_done and cgo.clklock;
 
   rst1 : rstgen         -- reset generator
   generic map (acthigh => 1)
@@ -306,6 +306,11 @@ begin
 ----------------------------------------------------------------------
 ---  DDR3 memory controller ------------------------------------------
 ----------------------------------------------------------------------
+
+  clkgenmigref0 : clkgen
+    generic map (CFG_FABTECH, 16, 32, 0, 0, 0, 0, 0, 100000)
+    port map (clkm, clkm, chip_refclk, open, clkref, open, open, cgi, cgo, open, open, open);
+
 
   gen_mig : if (SIMULATION /= true) generate
     ddrc : ahb2mig_7series generic map(
@@ -339,9 +344,6 @@ begin
         ui_clk_sync_rst => open
         );
 
-    clkgenmigref0 : clkgen
-      generic map (CFG_FABTECH, 16, 32, 0, 0, 0, 0, 0, 100000)
-      port map (clkm, clkm, chip_refclk, open, clkref, open, open, cgi, cgo, open, open, open);
   end generate gen_mig;
 
   gen_mig_model : if (SIMULATION = true) generate
@@ -383,7 +385,6 @@ begin
 
     calib_done <= '1';
     clkm <= not clkm after 5.0 ns;
-    chip_refclk <= not chip_refclk after 10.0 ns;
 
     -- pragma translate_on
   end generate gen_mig_model;
