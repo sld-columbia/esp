@@ -906,11 +906,9 @@ end struct;
 
 library ieee;
 use ieee.std_logic_1164.all;
--- pragma translate_off
 use work.stdlib.all;
 library unisim;
 use UNISIM.vcomponents.all;
--- pragma translate_on
 use work.gencomp.all;
 
 entity clkgen_virtex7 is
@@ -933,65 +931,7 @@ architecture struct of clkgen_virtex7 is
 
 component BUFG port (O : out std_logic; I : in std_logic); end component; 
 
------ component PLLE2_ADV -----
-component PLLE2_ADV
-  generic (
-     BANDWIDTH : string := "OPTIMIZED";
-     CLKFBOUT_MULT : integer := 5;
-     CLKFBOUT_PHASE : real := 0.0;
-     CLKIN1_PERIOD : real := 0.0;
-     CLKIN2_PERIOD : real := 0.0;
-     CLKOUT0_DIVIDE : integer := 1;
-     CLKOUT0_DUTY_CYCLE : real := 0.5;
-     CLKOUT0_PHASE : real := 0.0;
-     CLKOUT1_DIVIDE : integer := 1;
-     CLKOUT1_DUTY_CYCLE : real := 0.5;
-     CLKOUT1_PHASE : real := 0.0;
-     CLKOUT2_DIVIDE : integer := 1;
-     CLKOUT2_DUTY_CYCLE : real := 0.5;
-     CLKOUT2_PHASE : real := 0.0;
-     CLKOUT3_DIVIDE : integer := 1;
-     CLKOUT3_DUTY_CYCLE : real := 0.5;
-     CLKOUT3_PHASE : real := 0.0;
-     CLKOUT4_DIVIDE : integer := 1;
-     CLKOUT4_DUTY_CYCLE : real := 0.5;
-     CLKOUT4_PHASE : real := 0.0;
-     CLKOUT5_DIVIDE : integer := 1;
-     CLKOUT5_DUTY_CYCLE : real := 0.5;
-     CLKOUT5_PHASE : real := 0.0;
-     COMPENSATION : string := "ZHOLD";
-     DIVCLK_DIVIDE : integer := 1;
-     IS_CLKINSEL_INVERTED : std_logic := std_logic' ('0');
-     IS_PWRDWN_INVERTED : std_logic := std_logic' ('0');
-     IS_RST_INVERTED : std_logic := std_logic' ('0');
-     REF_JITTER1 : real := 0.0;
-     REF_JITTER2 : real := 0.0;
-     STARTUP_WAIT : string := "FALSE"
-  );
-  port (
-     CLKFBOUT : out std_ulogic := '0';
-     CLKOUT0 : out std_ulogic := '0';
-     CLKOUT1 : out std_ulogic := '0';
-     CLKOUT2 : out std_ulogic := '0';
-     CLKOUT3 : out std_ulogic := '0';
-     CLKOUT4 : out std_ulogic := '0';
-     CLKOUT5 : out std_ulogic := '0';
-     DO : out std_logic_vector (15 downto 0);
-     DRDY : out std_ulogic := '0';
-     LOCKED : out std_ulogic := '0';
-     CLKFBIN : in std_ulogic;
-     CLKIN1 : in std_ulogic;
-     CLKIN2 : in std_ulogic;
-     CLKINSEL : in std_ulogic;
-     DADDR : in std_logic_vector(6 downto 0);
-     DCLK : in std_ulogic;
-     DEN : in std_ulogic;
-     DI : in std_logic_vector(15 downto 0);
-     DWE : in std_ulogic;
-     PWRDWN : in std_ulogic;
-     RST : in std_ulogic
-  );
-end component;
+
 constant VERSION : integer := 1;
 constant period : real := 1000000.0/real(freq);
 constant clkio_div : integer := freq*clk_mul/200000;
@@ -1039,6 +979,9 @@ generic map (
    CLKOUT5_PHASE      => 0.0,
    COMPENSATION       => "ZHOLD", -- ZHOLD, BUF_IN, EXTERNAL, INTERNAL
    DIVCLK_DIVIDE      => 1, -- Master division value (1-56)
+   IS_CLKINSEL_INVERTED => '0',
+   IS_PWRDWN_INVERTED   => '0',
+   IS_RST_INVERTED      => '0',
    -- REF_JITTER: Reference input jitter in UI (0.000-0.999).
    REF_JITTER1        => 0.0,
    REF_JITTER2        => 0.0,
