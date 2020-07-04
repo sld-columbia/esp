@@ -25,7 +25,8 @@ public:
     uint32_t ld_st_ratio;
     uint32_t stride_len;
     uint32_t offset;
-
+    uint32_t wr_data;
+    uint32_t rd_data;
     //
     // constructors
     //
@@ -42,7 +43,9 @@ public:
 	, ld_st_ratio(0)
 	, stride_len(0)
 	, offset(0)
-	{}
+    , wr_data(0)
+	, rd_data(0)
+    {}
 
     conf_info_t(
 	uint32_t in_size,
@@ -56,8 +59,10 @@ public:
 	uint32_t irregular_seed,
 	uint32_t ld_st_ratio,
 	uint32_t stride_len,
-	uint32_t offset)
-	: in_size(in_size)
+	uint32_t offset,
+    uint32_t wr_data,
+	uint32_t rd_data)
+    : in_size(in_size)
 	, out_size(out_size)
 	, access_factor(access_factor)
 	, burst_len(burst_len)
@@ -69,7 +74,9 @@ public:
 	, ld_st_ratio(ld_st_ratio)
 	, stride_len(stride_len)
 	, offset(offset)
-	{}
+	, wr_data(wr_data)
+    , rd_data(rd_data)
+    {}
 
     // equals operator
     inline bool operator==(const conf_info_t &rhs) const
@@ -85,8 +92,10 @@ public:
 		&& (rhs.irregular_seed == irregular_seed)
 		&& (rhs.ld_st_ratio == ld_st_ratio)
 		&& (rhs.stride_len == stride_len)
-		&& (rhs.offset == offset);
-	}
+		&& (rhs.offset == offset)
+	    && (rhs.wr_data == wr_data)
+	    && (rhs.rd_data == rd_data);
+    }
 
     // assignment operator
     inline conf_info_t& operator=(const conf_info_t& other)
@@ -103,7 +112,9 @@ public:
 	    ld_st_ratio = other.ld_st_ratio;
 	    stride_len = other.stride_len;
 	    offset = other.offset;
-	    return *this;
+        wr_data = other.wr_data;
+	    rd_data = other.rd_data;
+        return *this;
 	}
 
     // VCD dumping function
@@ -125,7 +136,9 @@ public:
 	       << ", ld_st_ratio = " << conf_info.ld_st_ratio
 	       << ", stride_len = " << conf_info.stride_len
 	       << ", offset = " << conf_info.offset
-	       << "}";
+	       << ", wr_data = " << conf_info.wr_data
+           << ", rd_data = " << conf_info.rd_data
+           << "}";
 	    return os;
 	}
 };

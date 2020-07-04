@@ -46,22 +46,24 @@ struct contig_file {
 
 #define PFX "contig_alloc: "
 
-#define DDR_NODES 2
+#define MAX_DDR_NODES 8
 
 static unsigned long chunk_size;
 unsigned long contig_chunk_size_log = 20;
 EXPORT_SYMBOL_GPL(contig_chunk_size_log);
 module_param_named(chunk_log, contig_chunk_size_log, ulong, S_IRUGO);
-static unsigned long mem_start[DDR_NODES];
-module_param_array_named(start, mem_start, ulong, NULL, S_IRUGO);
-static unsigned long mem_size[DDR_NODES];
-module_param_array_named(size, mem_size, ulong, NULL, S_IRUGO);
+static unsigned int nddr;
+module_param(nddr, uint, S_IRUGO);
+static unsigned long mem_start[MAX_DDR_NODES];
+module_param_array_named(start, mem_start, ulong, &nddr, S_IRUGO);
+static unsigned long mem_size[MAX_DDR_NODES];
+module_param_array_named(size, mem_size, ulong, &nddr, S_IRUGO);
 
 static struct class *contig_class;
 static DEFINE_MUTEX(contig_lock);
 static LIST_HEAD(desc_list);
-static struct list_head inactive_chunks[DDR_NODES];
-static unsigned long mem_allocated[DDR_NODES];
+static struct list_head inactive_chunks[MAX_DDR_NODES];
+static unsigned long mem_allocated[MAX_DDR_NODES];
 static caddr_t bp_buf __maybe_unused;
 
 static int contig_open(struct inode *, struct file *);
@@ -121,7 +123,7 @@ static int get_next_ddr_node(int ddr_node, int first_ddr_node)
 {
 	BUG_ON(mem_allocated[ddr_node] > mem_size[ddr_node]);
 	while (mem_allocated[ddr_node] == mem_size[ddr_node]) {
-		ddr_node = (ddr_node + 1) % DDR_NODES;
+		ddr_node = (ddr_node + 1) % nddr;
 		BUG_ON(ddr_node == first_ddr_node);
 	}
 	return ddr_node;
@@ -147,8 +149,8 @@ static int contig_alloc_preferred(struct contig_desc *desc, const struct contig_
 	int i;
 
 	unsigned int n_per_node_max;
-	unsigned int n_per_node[DDR_NODES];
-	for (i = 0; i < DDR_NODES; i++)
+	unsigned int n_per_node[MAX_DDR_NODES];
+	for (i = 0; i < nddr; i++)
 		n_per_node[i] = 0;
 
 	ddr_node = params->pol.first.ddr_node;
@@ -164,7 +166,7 @@ static int contig_alloc_preferred(struct contig_desc *desc, const struct contig_
 	ddr_node = 0;
 	n_per_node_max = n_per_node[0];
 
-	for (i = 1; i < DDR_NODES; i++)
+	for (i = 1; i < nddr; i++)
 		if (n_per_node[i] > n_per_node_max) {
 			ddr_node = i;
 			n_per_node_max = n_per_node[i];
@@ -177,7 +179,7 @@ static int contig_alloc_preferred(struct contig_desc *desc, const struct contig_
 static bool least_loaded_alloc_ok(unsigned int n_chunks)
 {
 	int i;
-	for (i = 0; i < DDR_NODES; i++)
+	for (i = 0; i < nddr; i++)
 		if (mem_size[i] - mem_allocated[i] >= n_chunks * chunk_size)
 			return true;
 	return false;
@@ -191,7 +193,7 @@ static int get_least_loaded_ddr_node(unsigned int n_chunks, unsigned int thresho
 	unsigned long tba = n_chunks * chunk_size;
 	unsigned long th = threshold * chunk_size;
 
-	for (i = 1; i < DDR_NODES; i++)
+	for (i = 1; i < nddr; i++)
 		if (mem_allocated[i] <= min_allocated && mem_size[i] - mem_allocated[i] >= tba) {
 			min_allocated = mem_allocated[i];
 			least_loaded = i;
@@ -233,8 +235,8 @@ static int contig_alloc_balanced(struct contig_desc *desc, const struct contig_a
 	int i;
 
 	unsigned int n_per_node_max;
-	unsigned int n_per_node[DDR_NODES];
-	for (i = 0; i < DDR_NODES; i++)
+	unsigned int n_per_node[MAX_DDR_NODES];
+	for (i = 0; i < nddr; i++)
 		n_per_node[i] = 0;
 
 	ddr_node = get_least_loaded_ddr_node(1,	params->pol.balanced.threshold);
@@ -242,7 +244,7 @@ static int contig_alloc_balanced(struct contig_desc *desc, const struct contig_a
 	cluster_chunk = 0;
 	for (i = 0; i < desc->n; i++) {
 		if (cluster_chunk == params->pol.balanced.cluster_size) {
-			next_ddr_node = (ddr_node + 1) % DDR_NODES;
+			next_ddr_node = (ddr_node + 1) % nddr;
 			next_ddr_node = get_next_ddr_node(next_ddr_node, next_ddr_node);
 		} else {
 			next_ddr_node = get_next_ddr_node(ddr_node, ddr_node);
@@ -266,7 +268,7 @@ static int contig_alloc_balanced(struct contig_desc *desc, const struct contig_a
 	ddr_node = 0;
 	n_per_node_max = n_per_node[0];
 
-	for (i = 1; i < DDR_NODES; i++)
+	for (i = 1; i < nddr; i++)
 		if (n_per_node[i] > n_per_node_max) {
 			ddr_node = i;
 			n_per_node_max = n_per_node[i];
@@ -314,7 +316,7 @@ static struct contig_desc *__contig_alloc(const struct contig_alloc_params *para
 	unsigned int n_chunks;
 	int i;
 
-	for (i = 0; i < DDR_NODES; i++)
+	for (i = 0; i < nddr; i++)
 		mem_free += mem_size[i] - mem_allocated[i];
 
 	if (size > mem_free)
@@ -389,7 +391,7 @@ static void __contig_chunks_remove(void)
 	struct contig_chunk *ch, *nxt;
 	int i;
 
-	for (i = 0; i < DDR_NODES; i++)
+	for (i = 0; i < nddr; i++)
 		list_for_each_entry_safe(ch, nxt, &inactive_chunks[i], node) {
 			list_del(&ch->node);
 			kfree(ch);
@@ -487,7 +489,7 @@ static bool contig_alloc_ok(const struct contig_alloc_params *params)
 {
 	switch (params->policy) {
 	case CONTIG_ALLOC_PREFERRED:
-		if (params->pol.first.ddr_node < 0 || params->pol.first.ddr_node > DDR_NODES)
+		if (params->pol.first.ddr_node < 0 || params->pol.first.ddr_node > nddr)
 			return false;
 		break;
 	case CONTIG_ALLOC_LEAST_LOADED:
@@ -680,7 +682,7 @@ static int __init contig_init(void)
 		return -EINVAL;
 	}
 
-	for (i = 0; i < DDR_NODES; i++) {
+	for (i = 0; i < nddr; i++) {
 		INIT_LIST_HEAD(&inactive_chunks[i]);
 		if (mem_size[i] % chunk_size) {
 			pr_warn(PFX "chunk_size (0x%lx) does not divide evenly mem_size[%d] (0x%lx); discarding %ld bytes\n",
@@ -700,7 +702,7 @@ static int __init contig_init(void)
 	if (rc)
 		return rc;
 
-	for (i = 0; i < DDR_NODES; i++) {
+	for (i = 0; i < nddr; i++) {
 		rc = contig_chunks_create(i, mem_size[i] / chunk_size);
 		if (rc)
 			goto err_chunks;

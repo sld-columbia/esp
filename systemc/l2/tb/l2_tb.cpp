@@ -811,7 +811,7 @@ void l2_tb::l2_test()
     addr.tag_incr(1);
     req_line = line_of_addr(addr.line);
     op(WRITE, MISS, 0, RSP_DATA, 0, 0, WORD, addr, word++, req_line, FWD_STALL, FWD_INV,
-       0,        id++, 0, DATA);
+       SHARED, id++, 0, DATA);
 
     CACHE_REPORT_INFO("READ_ATOM(S), RSP_DATA(SMADW), RSP_INVACK(SMADW), RSP_INVACK(SMAW).");
     CACHE_REPORT_INFO("FWD_INV(SMADW), FWD_GETS(XMW), FWD_GETM(XMW).");
@@ -1128,7 +1128,7 @@ void l2_tb::l2_test()
     addr.tag_incr(1);
     req_line = line_of_addr(addr.line);
     op(WRITE, MISS, 0, RSP_DATA, 0, 0, WORD, addr, word++, req_line, FWD_STALL, FWD_INV_LLC,
-       0,        id++, 0, DATA);
+       SHARED, id++, 0, DATA);
 
     CACHE_REPORT_INFO("READ_ATOM(S), RSP_DATA(SMADW), RSP_INVACK(SMADW), RSP_INVACK(SMAW).");
     CACHE_REPORT_INFO("FWD_INV_LLC(SMADW), FWD_GETS(XMW), FWD_GETM_LLC(XMW).");
@@ -1539,7 +1539,7 @@ void l2_tb::op(cpu_msg_t cpu_msg, int beh, int rsp_beh, coh_msg_t rsp_msg, invac
 	
 	if (fwd_msg == FWD_INV) {
 
-	    if (cpu_msg == READ) {
+	    if (cpu_msg == READ || (cpu_msg == WRITE && fwd_state == SHARED)) {
 		get_inval(req_addr.line);
 	    }
 	    get_rsp_out(RSP_INVACK, fwd_id, 1, req_addr.line, 0);
@@ -1560,7 +1560,7 @@ void l2_tb::op(cpu_msg_t cpu_msg, int beh, int rsp_beh, coh_msg_t rsp_msg, invac
 
 	} else if (fwd_msg == FWD_INV_LLC) {
 
-	    if (cpu_msg == READ) {
+	    if (cpu_msg == READ || (cpu_msg == WRITE && fwd_state == SHARED)) {
 		get_inval(req_addr.line);
 	    }
 

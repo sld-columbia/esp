@@ -194,7 +194,7 @@ esp-defconfig: $(ESP_ROOT)/socs/defconfig/esp_$(BOARD)_defconfig
 	$(QUIET_CP)cp $< .esp_config
 	$(QUIET_MAKE)$(MAKE) esp-config
 
-socmap.vhd: .esp_config grlib_config.vhd top.vhd
+socmap.vhd: .esp_config grlib_config.vhd top.vhd Makefile
 	$(QUIET_DIFF)echo "checking .esp_config..."
 	@/usr/bin/diff .esp_config $(ESP_ROOT)/socs/defconfig/esp_$(BOARD)_defconfig -q > /dev/null; \
 	if test $$? = "0"; then \
@@ -204,7 +204,7 @@ socmap.vhd: .esp_config grlib_config.vhd top.vhd
 	fi
 	@echo ""
 	@echo "Generating ESP configuration..."
-	@python3 $(ESP_ROOT)/utils/socmap/esp_creator_batch.py $(NOC_WIDTH) $(TECHLIB) $(LINUX_MAC)
+	@python3 $(ESP_ROOT)/utils/socmap/esp_creator_batch.py $(NOC_WIDTH) $(TECHLIB) $(LINUX_MAC) $(LEON3_STACK)
 
 socmap.h: socmap.vhd
 
@@ -221,7 +221,7 @@ esp-config: socmap.vhd
 esp-xconfig: grlib_config.vhd
 	@echo ""
 	@echo "Running interactive ESP configuration..."
-	@python3 $(ESP_ROOT)/utils/socmap/esp_creator.py $(NOC_WIDTH) $(TECHLIB) $(LINUX_MAC)
+	@python3 $(ESP_ROOT)/utils/socmap/esp_creator.py $(NOC_WIDTH) $(TECHLIB) $(LINUX_MAC) $(LEON3_STACK)
 
 esp-config-clean:
 	$(QUIET_CLEAN)$(RM) \
@@ -243,6 +243,7 @@ esp-config-distclean: esp-config-clean
 		power.h		\
 		socmap.h	\
 		cache_cfg.svh	\
+		S64esp		\
 		esplink
 
 
@@ -664,7 +665,7 @@ sysroot/opt/drivers-esp/esp.ko: linux-build/vmlinux $(wildcard $(ESP_CORE_PATH)/
 # This is a PHONY to guarantee sysroot is always updated when apps or drivers change
 # Most targets won't actually do anything if their dependencies have not changed.
 # Linux is compiled twice if necessary to ensure drivers are compiled against the most recent kernel
-sysroot-update: linux-build/vmlinux
+sysroot-update: linux-build/vmlinux socmap.vhd
 	@touch sysroot
 	@$(MAKE) sysroot/opt/drivers-esp/contig_alloc.ko
 	@$(MAKE) sysroot/opt/drivers-esp/esp_cache.ko
@@ -675,6 +676,7 @@ sysroot-update: linux-build/vmlinux
 	@$(MAKE) accelerators-driver
 	@$(MAKE) accelerators-app
 	@touch sysroot
+	@chmod a+x S64esp; cp S64esp sysroot/etc/init.d/
 	$(QUIET_MAKE)$(MAKE) linux-build/vmlinux
 
 sysroot-clean:
