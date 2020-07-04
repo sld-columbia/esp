@@ -150,13 +150,13 @@ static int validate_buf(token_t *out, native_t *gold)
 		(((gold[j] - val) / gold[j]) > REL_ERROR_THRESHOLD ||
 		((gold[j] - val) / gold[j]) < -REL_ERROR_THRESHOLD))
 		{
-                errors++;
-                if (errors <= MAX_PRINTED_ERRORS) {
+		    errors++;
+		    if (errors <= MAX_PRINTED_ERRORS) {
 #ifndef __riscv
-                    printf("%d : %d\n", (int) val, (int) gold[j]);
+			printf("%d : %d\n", (int) val, (int) gold[j]);
 #else
-                    print_uart_int((int) val); print_uart(" : ");
-                    print_uart_int((int) gold[j]); print_uart("\n");
+			print_uart_int((int) val); print_uart(" : ");
+			print_uart_int((int) gold[j]); print_uart("\n");
 #endif
                 }
             }

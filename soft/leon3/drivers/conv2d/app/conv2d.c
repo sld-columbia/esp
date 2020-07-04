@@ -27,7 +27,10 @@ static int validate_buffer(token_t *out, native_t *gold)
 #else
             val = out[i];
 #endif
-            if (gold[i] != val) {
+            if (!gold[j] && val ||
+		(((gold[j] - val) / gold[j]) > REL_ERROR_THRESHOLD ||
+		 ((gold[j] - val) / gold[j]) < -REL_ERROR_THRESHOLD))
+	    {
                 errors++;
                 if (errors <= MAX_PRINTED_ERRORS)
                     printf("%d : %d\n", (int) val, (int) gold[i]);
@@ -113,7 +116,7 @@ int main(int argc, char **argv)
 	errors = validate_buffer(&buf[out_offset], gold);
 
 	free(gold);
-	esp_cleanup();
+	esp_free(buf);
 
 	if (!errors)
 		printf("+ Test PASSED\n");

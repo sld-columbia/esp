@@ -110,7 +110,8 @@ int main(int argc, char **argv)
 	errors = validate_buffer(&buf[out_offset], gold);
 
 	free(gold);
-	esp_cleanup();
+	esp_free(buf);
+
 
 	if (!errors)
 		printf("+ Test PASSED\n");
