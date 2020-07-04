@@ -8,38 +8,105 @@
 
 #include <esp_accelerator.h>
 #include <esp_probe.h>
+#include <fixed_point.h>
 
-typedef int32_t token_t;
+/* User defined */
+
+// Define data type (decomment the one needed)
+// #define __UINT
+// #define __INT
+#define __FIXED
+// #define __FLOAT
+
+// Define bit width (decomment the one needed)
+#ifndef __riscv
+#define BITWIDTH 32
+// #define BITWIDTH 64
+#else
+#define BITWIDTH 32
+//#define BITWIDTH 64
+#endif
+
+/* End of user defined */
+
+#ifdef __UINT
+#if (BITWIDTH == 32)
+typedef unsigned token_t;
+#elif (BITWIDTH == 64)
+typedef long long unsigned token_t;
+#endif
+#endif
+
+#ifdef __INT
+#if (BITWIDTH == 32)
+typedef int token_t;
+#elif (BITWIDTH == 64)
+typedef long long token_t;
+#endif
+#endif
+
+#ifdef __FIXED
+#if (BITWIDTH == 32)
+typedef int token_t;
+#define fx2float fixed32_to_float
+#define float2fx float_to_fixed32
+#define FX_IL 16
+#elif (BITWIDTH == 64)
+typedef long long token_t;
+#define fx2float fixed64_to_double
+#define float2fx double_to_fixed64
+#define FX_IL 32
+#endif
+#endif
+
+#ifdef __FLOAT
+#if (BITWIDTH == 32)
+typedef float token_t;
+#elif (BITWIDTH == 64)
+typedef double token_t;
+#endif
+#endif
+
+#if (BITWIDTH == 32)
+typedef float native_t;
+#elif (BITWIDTH == 64)
+typedef double native_t;
+#endif
 
 static unsigned DMA_WORD_PER_BEAT(unsigned _st)
 {
         return (sizeof(void *) / _st);
 }
 
-
+#define MAX_PRINTED_ERRORS 10
+#define REL_ERROR_THRESHOLD 0.01
 #define SLD_CONV2D 0x052
 #define DEV_NAME "sld,conv2d"
 
 /* <<--params-->> */
-const int32_t n_channels = 1;
-const int32_t n_filters = 1;
-const int32_t filter_height = 1;
-const int32_t dilation_h = 1;
-const int32_t stride_w = 1;
-const int32_t pad_w = 1;
-const int32_t feature_map_height = 1;
+const int32_t n_channels = 2;
+const int32_t feature_map_height = 6;
+const int32_t feature_map_width = 6;
+const int32_t n_filters = 2;
+const int32_t filter_height = 3;
+const int32_t filter_width = 3;
 const int32_t pad_h = 1;
+const int32_t pad_w = 1;
 const int32_t stride_h = 1;
-const int32_t filter_width = 1;
+const int32_t stride_w = 1;
+const int32_t dilation_h = 1;
 const int32_t dilation_w = 1;
-const int32_t feature_map_width = 1;
 
 static unsigned in_words_adj;
+static unsigned weights_words_adj;
 static unsigned out_words_adj;
 static unsigned in_len;
+static unsigned weights_len;
 static unsigned out_len;
 static unsigned in_size;
+static unsigned weights_size;
 static unsigned out_size;
+static unsigned weights_offset;
 static unsigned out_offset;
 static unsigned mem_size;
 
@@ -52,47 +119,57 @@ static unsigned mem_size;
 
 /* User defined registers */
 /* <<--regs-->> */
-#define CONV2D_N_CHANNELS_REG 0x6c
-#define CONV2D_N_FILTERS_REG 0x68
-#define CONV2D_FILTER_HEIGHT_REG 0x64
-#define CONV2D_DILATION_H_REG 0x60
-#define CONV2D_STRIDE_W_REG 0x5c
-#define CONV2D_PAD_W_REG 0x58
-#define CONV2D_FEATURE_MAP_HEIGHT_REG 0x54
-#define CONV2D_PAD_H_REG 0x50
-#define CONV2D_STRIDE_H_REG 0x4c
-#define CONV2D_FILTER_WIDTH_REG 0x48
-#define CONV2D_DILATION_W_REG 0x44
-#define CONV2D_FEATURE_MAP_WIDTH_REG 0x40
+#define CONV2D_N_CHANNELS_REG 0x40
+#define CONV2D_FEATURE_MAP_HEIGHT_REG 0x44
+#define CONV2D_FEATURE_MAP_WIDTH_REG 0x48
+#define CONV2D_N_FILTERS_REG 0x4c
+#define CONV2D_FILTER_HEIGHT_REG 0x50
+#define CONV2D_FILTER_WIDTH_REG 0x54
+#define CONV2D_PAD_H_REG 0x58
+#define CONV2D_PAD_W_REG 0x5c
+#define CONV2D_STRIDE_H_REG 0x60
+#define CONV2D_STRIDE_W_REG 0x64
+#define CONV2D_DILATION_H_REG 0x68
+#define CONV2D_DILATION_W_REG 0x6c
 
 
-static int validate_buf(token_t *out, token_t *gold)
+
+static int validate_buf(token_t *out, native_t *gold)
 {
-	int i;
 	int j;
+	native_t val;
 	unsigned errors = 0;
 
-	for (i = 0; i < 1; i++)
-		for (j = 0; j < n_channels * feature_map_height * feature_map_width; j++)
-			if (gold[i * out_words_adj + j] != out[i * out_words_adj + j])
-				errors++;
+        for (j = 0; j < out_len; j++) {
+#ifdef __FIXED
+	    val = fx2float(out[j], FX_IL);
+#else
+            val = out[j];
+#endif
+            if (!gold[j] && val ||
+		(((gold[j] - val) / gold[j]) > REL_ERROR_THRESHOLD ||
+		((gold[j] - val) / gold[j]) < -REL_ERROR_THRESHOLD))
+		{
+                errors++;
+                if (errors <= MAX_PRINTED_ERRORS) {
+#ifndef __riscv
+                    printf("%d : %d\n", (int) val, (int) gold[j]);
+#else
+                    print_uart_int((int) val); print_uart(" : ");
+                    print_uart_int((int) gold[j]); print_uart("\n");
+#endif
+                }
+            }
+	}
 
 	return errors;
 }
 
 
-static void init_buf (token_t *in, token_t * gold)
+static void init_buf (token_t *in, native_t * gold)
 {
-	int i;
-	int j;
-
-	for (i = 0; i < 1; i++)
-		for (j = 0; j < n_channels * feature_map_height * feature_map_width; j++)
-			in[i * in_words_adj + j] = (token_t) j;
-
-	for (i = 0; i < 1; i++)
-		for (j = 0; j < n_channels * feature_map_height * feature_map_width; j++)
-			gold[i * out_words_adj + j] = (token_t) j;
+#include "input.h"
+#include "gold.h"
 }
 
 
@@ -106,22 +183,32 @@ int main(int argc, char * argv[])
 	unsigned done;
 	unsigned **ptable;
 	token_t *mem;
-	token_t *gold;
+	native_t *gold;
 	unsigned errors = 0;
 
+	// Input data and golden output (aligned to DMA_WIDTH makes your life easier)
 	if (DMA_WORD_PER_BEAT(sizeof(token_t)) == 0) {
-		in_words_adj = n_channels * feature_map_height * feature_map_width;
-		out_words_adj = n_channels * feature_map_height * feature_map_width;
+	    in_words_adj = n_channels * feature_map_height * feature_map_width;
+	    weights_words_adj = n_filters * n_channels * filter_height * filter_width;
+	    out_words_adj = n_filters * feature_map_height * feature_map_width;
 	} else {
-		in_words_adj = round_up(n_channels * feature_map_height * feature_map_width, DMA_WORD_PER_BEAT(sizeof(token_t)));
-		out_words_adj = round_up(n_channels * feature_map_height * feature_map_width, DMA_WORD_PER_BEAT(sizeof(token_t)));
+	    in_words_adj = round_up(n_channels * feature_map_height * feature_map_width,
+				    DMA_WORD_PER_BEAT(sizeof(token_t)));
+	    weights_words_adj = round_up(n_filters * n_channels * filter_height * filter_width,
+					 DMA_WORD_PER_BEAT(sizeof(token_t)));
+	    out_words_adj = round_up(n_filters * feature_map_height * feature_map_width,
+				     DMA_WORD_PER_BEAT(sizeof(token_t)));
 	}
+
 	in_len = in_words_adj * (1);
+	weights_len = weights_words_adj * (1);
 	out_len = out_words_adj * (1);
 	in_size = in_len * sizeof(token_t);
+	weights_size = weights_len * sizeof(token_t);
 	out_size = out_len * sizeof(token_t);
-	out_offset  = in_len;
-	mem_size = (out_offset * sizeof(token_t)) + out_size;
+	weights_offset = in_len;
+	out_offset  = in_len + weights_len;
+	mem_size = in_size + weights_size + out_size;
 
 
 	// Search for the device
