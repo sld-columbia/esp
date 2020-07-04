@@ -109,15 +109,13 @@ public:
     int32_t stride_w;
     int32_t dilation_h;
     int32_t dilation_w;
-
-
+    
     uint32_t in_words_adj;
+    uint32_t weights_words_adj;
     uint32_t out_words_adj;
     uint32_t in_size;
+    uint32_t weights_size;
     uint32_t out_size;
-    int32_t *in;
-    int32_t *out;
-    int32_t *gold;
 
     FPDATA* hw_input;
     FPDATA* hw_weights;

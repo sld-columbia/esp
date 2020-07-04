@@ -127,14 +127,14 @@
 
 
 #elif defined(TINY)
-#define CONV_F_HEIGHT		(5)
-#define CONV_F_WIDTH		(5)
+#define CONV_F_HEIGHT		(6)
+#define CONV_F_WIDTH		(6)
 #define CONV_F_CHANNELS		(2)
 
 #define CONV_K_HEIGHT		(3)
 #define CONV_K_WIDTH		(3)
 #define CONV_K_IN_CHANNELS	(2)
-#define CONV_K_OUT_CHANNELS	(1)
+#define CONV_K_OUT_CHANNELS	(2)
 
 #else
 #error "Layer not defined"

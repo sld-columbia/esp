@@ -84,11 +84,20 @@ if {$TECH_IS_XILINX == 1} {
 }
 
 set data_width 32
+set input_plm_size 8192
+set weights_plm_size 9216
+set output_plm_size 8192
+set patch_plm_size 288
+set mac_plm_size 288
 
 append COMMON_HLS_FLAGS \
-    " -DDATA_WIDTH=${data_width} -DWORD_SIZE=${data_width} -DPLM_OUT_WORD=2 -DPLM_IN_WORD=2"
+    " -DDATA_WIDTH=${data_width} -DWORD_SIZE=${data_width} -DINPUT_PLM_SIZE=$input_plm_size \
+      -DWEIGHTS_PLM_SIZE=$weights_plm_size -DOUTPUT_PLM_SIZE=$output_plm_size \
+      -DPATCH_PLM_SIZE=$patch_plm_size -DMAC_PLM_SIZE=$mac_plm_size"
 append COMMON_CFG_FLAGS \
-    " -DDATA_WIDTH=${data_width} -DWORD_SIZE=${data_width} -DPLM_OUT_WORD=2 -DPLM_IN_WORD=2"
+    " -DDATA_WIDTH=${data_width} -DWORD_SIZE=${data_width} -DINPUT_PLM_SIZE=$input_plm_size \
+      -DWEIGHTS_PLM_SIZE=$weights_plm_size -DOUTPUT_PLM_SIZE=$output_plm_size \
+      -DPATCH_PLM_SIZE=$patch_plm_size -DMAC_PLM_SIZE=$mac_plm_size"
 
 set DEFAULT_ARGV ""
 

@@ -4,8 +4,11 @@
 #ifndef __CONV2D_HPP__
 #define __CONV2D_HPP__
 
+#include <math.h>
+
 #include "conv2d_data.hpp"
 #include "fpdata.hpp"
+#include "common.hpp"
 #include "conv2d_conf_info.hpp"
 #include "conv2d_debug_info.hpp"
 
@@ -34,8 +37,13 @@ public:
         /* <<--plm-bind-->> */
         HLS_MAP_plm(plm_out_pong, PLM_OUT_NAME);
         HLS_MAP_plm(plm_out_ping, PLM_OUT_NAME);
+        HLS_MAP_plm(plm_weights_pong, PLM_WEIGHTS_NAME);
+        HLS_MAP_plm(plm_weights_ping, PLM_WEIGHTS_NAME);
         HLS_MAP_plm(plm_in_pong, PLM_IN_NAME);
         HLS_MAP_plm(plm_in_ping, PLM_IN_NAME);
+
+	HLS_FLATTEN_ARRAY(plm_patch);
+	HLS_FLATTEN_ARRAY(plm_mac);
     }
 
     // Processes
@@ -53,13 +61,44 @@ public:
     esp_config_proc cfg;
 
     // Functions
+    void compute_dimensions(uint16_t height, uint16_t width, uint16_t channels, uint8_t pad_h,
+			    uint8_t pad_w, uint8_t stride_h, uint8_t stride_w, uint8_t dilation_h,
+			    uint8_t dilation_w, uint8_t filter_height, uint8_t filter_width,
+			    uint16_t num_filters, uint16_t *output_h, uint16_t *output_w,
+			    uint16_t *filter_size, uint8_t *max_cacheable_rows,
+			    uint8_t *max_cacheable_filters, uint16_t *total_input_chunks,
+			    uint16_t *total_filters_chunks);
+    void template_patch_extractor_3_3(const uint16_t channels, const uint16_t height,
+				      const uint16_t width, const uint16_t channel_size,
+				      const uint16_t ping_input,
+				      const uint16_t output_row, const uint16_t output_col,
+				      const uint16_t pad_h, const uint16_t pad_w,
+				      const uint16_t dilation_h, const uint16_t dilation_w);
+    void patch_extractor(const uint16_t channels, const uint16_t height, const uint16_t width,
+			 const uint16_t channel_size, const uint16_t ping_input,
+			 const uint16_t output_row,  const uint16_t output_col,
+			 const uint16_t pad_h, const uint16_t pad_w,
+			 const uint16_t dilation_h, const uint16_t dilation_w,
+			 const uint16_t kernel_h, const uint16_t kernel_w);
+    void elementwise_multiplier(const uint16_t ping_weights,
+				const uint16_t filter_size, const uint16_t filter_count);
+    void accumulator(const uint16_t size, FPDATA* result);
+    void multiple_multiplier_accumulator(const uint16_t ping_weights, const uint16_t ping_output,
+					 const uint16_t filter_size, const uint16_t num_filters,
+					 const uint16_t filter_chunk,
+					 const uint16_t max_cacheable_filters,
+					 const uint16_t output_plm_offset,
+					 const uint16_t loadable_output_size);
 
     // Private local memories
-    sc_dt::sc_int<DATA_WIDTH> plm_in_ping[PLM_IN_WORD];
-    sc_dt::sc_int<DATA_WIDTH> plm_in_pong[PLM_IN_WORD];
-    sc_dt::sc_int<DATA_WIDTH> plm_out_ping[PLM_OUT_WORD];
-    sc_dt::sc_int<DATA_WIDTH> plm_out_pong[PLM_OUT_WORD];
-
+    sc_dt::sc_int<DATA_WIDTH> plm_in_ping[INPUT_PLM_SIZE];
+    sc_dt::sc_int<DATA_WIDTH> plm_in_pong[INPUT_PLM_SIZE];
+    sc_dt::sc_int<DATA_WIDTH> plm_weights_ping[WEIGHTS_PLM_SIZE];
+    sc_dt::sc_int<DATA_WIDTH> plm_weights_pong[WEIGHTS_PLM_SIZE];
+    sc_dt::sc_int<DATA_WIDTH> plm_out_ping[OUTPUT_PLM_SIZE];
+    sc_dt::sc_int<DATA_WIDTH> plm_out_pong[OUTPUT_PLM_SIZE];
+    FPDATA plm_patch[PATCH_PLM_SIZE];
+    FPDATA plm_mac[MAC_PLM_SIZE];
 };
 
 
