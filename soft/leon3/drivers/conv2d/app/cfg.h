@@ -3,21 +3,85 @@
 
 #include "libesp.h"
 
-typedef int32_t token_t;
+/* User defined */
+
+// Define data type (decomment the one needed)
+// #define __UINT
+// #define __INT
+#define __FIXED
+// #define __FLOAT
+
+// Define bit width (decomment the one needed)
+#ifndef __riscv
+#define BITWIDTH 32
+// #define BITWIDTH 64
+#else
+#define BITWIDTH 32
+// #define BITWIDTH 64
+#endif
+
+/* End of user defined */
+
+#ifdef __UINT
+#if (BITWIDTH == 32)
+typedef unsigned token_t;
+#elif (BITWIDTH == 64)
+typedef long long unsigned token_t;
+#endif
+#endif
+
+#ifdef __INT
+#if (BITWIDTH == 32)
+typedef int token_t;
+#elif (BITWIDTH == 64)
+typedef long long token_t;
+#endif
+#endif
+
+#ifdef __FIXED
+#if (BITWIDTH == 32)
+typedef int token_t;
+#define fx2float fixed32_to_float
+#define float2fx float_to_fixed32
+#define FX_IL 16
+#elif (BITWIDTH == 64)
+typedef long long token_t;
+#define fx2float fixed64_to_double
+#define float2fx double_to_fixed64
+#define FX_IL 32
+#endif
+#endif
+
+#ifdef __FLOAT
+#if (BITWIDTH == 32)
+typedef float token_t;
+#elif (BITWIDTH == 64)
+typedef double token_t;
+#endif
+#endif
+
+#if (BITWIDTH == 32)
+typedef float native_t;
+#elif (BITWIDTH == 64)
+typedef double native_t;
+#endif
+
+#define MAX_PRINTED_ERRORS 10
+
 
 /* <<--params-def-->> */
-#define N_CHANNELS 1
-#define N_FILTERS 1
-#define FILTER_HEIGHT 1
+#define N_CHANNELS 2
+#define N_FILTERS 2
+#define FILTER_HEIGHT 3
 #define DILATION_H 1
 #define STRIDE_W 1
 #define PAD_W 1
-#define FEATURE_MAP_HEIGHT 1
+#define FEATURE_MAP_HEIGHT 6
 #define PAD_H 1
 #define STRIDE_H 1
-#define FILTER_WIDTH 1
+#define FILTER_WIDTH 3
 #define DILATION_W 1
-#define FEATURE_MAP_WIDTH 1
+#define FEATURE_MAP_WIDTH 6
 
 /* <<--params-->> */
 const int32_t n_channels = N_CHANNELS;
