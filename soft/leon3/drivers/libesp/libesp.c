@@ -58,7 +58,13 @@ bool thread_is_p2p(esp_thread_info_t *thread)
 {
      switch (thread->type) {
         // <<--esp-prepare-->>
-         case fftaccelerator :
+        case conv2d :
+            return (thread->desc.conv2d_desc.esp.p2p_store 
+                    || thread->desc.conv2d_desc.esp.p2p_nsrcs);
+        case gemm:
+            return (thread->desc.gemm_desc.esp.p2p_store 
+                    || thread->desc.gemm_desc.esp.p2p_nsrcs);
+        case fftaccelerator :
             return (thread->desc.fftaccelerator_desc.esp.p2p_store 
                     || thread->desc.fftaccelerator_desc.esp.p2p_nsrcs);
         case adderaccelerator :
@@ -214,6 +220,12 @@ void *accelerator_thread_serial(void *ptr)
         gettime(&th_start);
         switch (info->type) {
         // <<--esp-ioctl-->>
+        case conv2d :
+            rc = ioctl(info->fd, CONV2D_IOC_ACCESS, info->desc.conv2d_desc);
+            break;
+        case gemm :
+            rc = ioctl(info->fd, GEMM_IOC_ACCESS, info->desc.gemm_desc);
+            break;
         case fftaccelerator :
             rc = ioctl(info->fd, FFTACCELERATOR_IOC_ACCESS, info->desc.fftaccelerator_desc);
             break;
