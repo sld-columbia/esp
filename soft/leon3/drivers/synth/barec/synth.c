@@ -38,14 +38,14 @@
 #define SYNTH_RD_DATA_REG 0x78
 
 // Accelerator-specific buffe size
-#define IN_SIZE 524288
-#define LD_ST_RATIO 1
+#define IN_SIZE 1024
+#define LD_ST_RATIO 2
 #define ACCESS_FACTOR 0
 #define OUT_SIZE ((IN_SIZE / LD_ST_RATIO) >> ACCESS_FACTOR)
 #define SYNTH_BUF_SIZE ((IN_SIZE + OUT_SIZE) * sizeof(unsigned))
 #define OUT_DATA 0x12345678
 #define IN_DATA 0x89abcdef
-#define IN_PLACE 1
+#define IN_PLACE 0
 /* Size of the contiguous chunks for scatter/gather */
 #define CHUNK_SHIFT 20
 #define CHUNK_SIZE BIT(CHUNK_SHIFT)
@@ -71,14 +71,14 @@ int main(int argc, char * argv[])
 	}
 
 	for (trial = 0; trial < TRIALS; trial++) {
-#ifndef __riscv
-		for (coherence = ACC_COH_NONE; coherence <= ACC_COH_RECALL; coherence++)
-		{
-#else
+/* #ifndef __riscv */
+/* 		for (coherence = ACC_COH_NONE; coherence <= ACC_COH_RECALL; coherence++) */
+/* 		{ */
+/* #else */
 		{
 			/* TODO: Restore full test once ESP caches are integrated */
 			coherence = ACC_COH_NONE;
-#endif
+/* #endif */
 			struct esp_device *dev;
 			unsigned **ptable;
 			unsigned *mem;
@@ -146,7 +146,7 @@ int main(int argc, char * argv[])
 				iowrite32(dev, SYNTH_IRREGULAR_SEED_REG, 0);
 				iowrite32(dev, SYNTH_REUSE_FACTOR_REG, 8);
 				iowrite32(dev, SYNTH_LD_ST_RATIO_REG, LD_ST_RATIO);
-				iowrite32(dev, SYNTH_STRIDE_LEN_REG, 4);
+				iowrite32(dev, SYNTH_STRIDE_LEN_REG, 256);
 				iowrite32(dev, SYNTH_OUT_SIZE_REG, OUT_SIZE);
 				iowrite32(dev, SYNTH_IN_PLACE_REG, IN_PLACE);
 				iowrite32(dev, SYNTH_WR_DATA_REG, OUT_DATA);
@@ -161,7 +161,7 @@ int main(int argc, char * argv[])
 				unsigned done = 0;
 
 				while (!done) {
-					dev = &espdevs[0];
+					dev = &espdevs[n];
 					done = ioread32(dev, STATUS_REG);
 					done &= STATUS_MASK_DONE;
 				}
