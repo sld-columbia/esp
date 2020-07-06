@@ -9,7 +9,7 @@
 
 `timescale  1 ps / 1 ps
 
-module slm_bank_1mb_unisim(
+module slm_bank_4mb_unisim(
     CLK,
     CE0,
     A0,
@@ -22,30 +22,31 @@ module slm_bank_1mb_unisim(
   );
   input CLK;
   input CE0;
-  input [16:0] A0;
+  input [18:0] A0;
   input [63:0] D0;
   input WE0;
   input [63:0] WEM0;
   input CE1;
-  input [16:0] A1;
+  input [18:0] A1;
   output [63:0] Q1;
   genvar d, h, v, hh;
 
-  reg               bank_CE  [0:0][0:0][63:0][7:0][1:0];
-  reg        [10:0] bank_A   [0:0][0:0][63:0][7:0][1:0];
-  reg         [7:0] bank_D   [0:0][0:0][63:0][7:0][1:0];
-  reg               bank_WE  [0:0][0:0][63:0][7:0][1:0];
-  reg         [7:0] bank_WEM [0:0][0:0][63:0][7:0][1:0];
-  wire        [7:0] bank_Q   [0:0][0:0][63:0][7:0][1:0];
+  reg               bank_CE  [0:0][0:0][255:0][7:0][1:0];
+  reg        [10:0] bank_A   [0:0][0:0][255:0][7:0][1:0];
+  reg         [7:0] bank_D   [0:0][0:0][255:0][7:0][1:0];
+  reg               bank_WE  [0:0][0:0][255:0][7:0][1:0];
+  reg         [7:0] bank_WEM [0:0][0:0][255:0][7:0][1:0];
+  wire        [7:0] bank_Q   [0:0][0:0][255:0][7:0][1:0];
   wire        [0:0] ctrld    [1:1];
   wire        [0:0] ctrlh    [1:0];
-  wire        [5:0] ctrlv    [1:0];
+  wire        [7:0] ctrlv    [1:0];
   reg         [0:0] seld     [1:1];
   reg         [0:0] selh     [1:1];
-  reg         [5:0] selv     [1:1];
+  reg         [7:0] selv     [1:1];
 // synthesis translate_off
 // synopsys translate_off
-  integer check_bank_access [0:0][0:0][63:0][7:0][1:0];
+// cadence translate_off
+  integer check_bank_access [0:0][0:0][255:0][7:0][1:0];
 
   task check_access;
     input integer iface;
@@ -65,14 +66,15 @@ module slm_bank_1mb_unisim(
     end
   end
   endtask
+// cadence translate_on
 // synopsys translate_on
 // synthesis translate_on
 
   assign ctrld[1] = 0;
   assign ctrlh[0] = 0;
   assign ctrlh[1] = 0;
-  assign ctrlv[0] = A0[16:11];
-  assign ctrlv[1] = A1[16:11];
+  assign ctrlv[0] = A0[18:11];
+  assign ctrlv[1] = A1[18:11];
 
   always @(posedge CLK) begin
     seld[1] <= ctrld[1];
@@ -82,22 +84,26 @@ module slm_bank_1mb_unisim(
 
   generate
   for (h = 0; h < 1; h = h + 1) begin : gen_ctrl_hbanks
-    for (v = 0; v < 64; v = v + 1) begin : gen_ctrl_vbanks
+    for (v = 0; v < 256; v = v + 1) begin : gen_ctrl_vbanks
       for (hh = 0; hh < 8; hh = hh + 1) begin : gen_ctrl_hhbanks
 
         always @(*) begin : handle_ops
 
 // synthesis translate_off
 // synopsys translate_off
+// cadence translate_off
           // Prevent assertions to trigger with false positive
           # 1
+// cadence translate_on
 // synopsys translate_on
 // synthesis translate_on
 
           /** Default **/
 // synthesis translate_off
 // synopsys translate_off
+// cadence translate_off
           check_bank_access[0][h][v][hh][0] = -1;
+// cadence translate_on
 // synopsys translate_on
 // synthesis translate_on
           bank_CE[0][h][v][hh][0]  = 0;
@@ -107,7 +113,9 @@ module slm_bank_1mb_unisim(
           bank_WEM[0][h][v][hh][0] = 0;
 // synthesis translate_off
 // synopsys translate_off
+// cadence translate_off
           check_bank_access[0][h][v][hh][1] = -1;
+// cadence translate_on
 // synopsys translate_on
 // synthesis translate_on
           bank_CE[0][h][v][hh][1]  = 0;
@@ -121,7 +129,9 @@ module slm_bank_1mb_unisim(
             if (ctrlh[0] == h && ctrlv[0] == v && CE0 == 1'b1) begin
 // synthesis translate_off
 // synopsys translate_off
+// cadence translate_off
               check_access(0, 0, h, v, hh, 0);
+// cadence translate_on
 // synopsys translate_on
 // synthesis translate_on
                 bank_CE[0][h][v][hh][0]  = CE0;
@@ -134,7 +144,9 @@ module slm_bank_1mb_unisim(
             if (ctrlh[1] == h && ctrlv[1] == v && CE1 == 1'b1) begin
 // synthesis translate_off
 // synopsys translate_off
+// cadence translate_off
               check_access(1, 0, h, v, hh, 1);
+// cadence translate_on
 // synopsys translate_on
 // synthesis translate_on
                 bank_CE[0][h][v][hh][1]  = CE1;
@@ -161,7 +173,7 @@ module slm_bank_1mb_unisim(
   generate
   for (d = 0; d < 1; d = d + 1) begin : gen_wires_dbanks
     for (h = 0; h < 1; h = h + 1) begin : gen_wires_hbanks
-      for (v = 0; v < 64; v = v + 1) begin : gen_wires_vbanks
+      for (v = 0; v < 256; v = v + 1) begin : gen_wires_vbanks
         for (hh = 0; hh < 8; hh = hh + 1) begin : gen_wires_hhbanks
 
           BRAM_2048x8 bank_i(
@@ -182,6 +194,7 @@ module slm_bank_1mb_unisim(
 
 // synthesis translate_off
 // synopsys translate_off
+// cadence translate_off
             always @(posedge CLK) begin
               if ((bank_CE[d][h][v][hh][0] & bank_CE[d][h][v][hh][1]) &&
                   (bank_WE[d][h][v][hh][0] | bank_WE[d][h][v][hh][1]) &&
@@ -190,6 +203,7 @@ module slm_bank_1mb_unisim(
                 $finish;
               end
             end
+// cadence translate_on
 // synopsys translate_on
 // synthesis translate_on
 
