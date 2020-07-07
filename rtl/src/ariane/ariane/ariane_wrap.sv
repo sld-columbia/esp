@@ -256,9 +256,9 @@ module ariane_wrap
     BTBEntries: 32,
     BHTEntries: 128,
     // idempotent region
-    NrNonIdempotentRules:  0,
+    NrNonIdempotentRules:  1,
     NonIdempotentAddrBase: {64'b0},
-    NonIdempotentLength:   {64'b0},
+    NonIdempotentLength:   {DRAMBase},
     NrExecuteRegionRules:  2,
     ExecuteRegionAddrBase: {DRAMBase,   ROMBase},
     ExecuteRegionLength:   {DRAMCachedLength, ROMLength},
