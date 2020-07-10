@@ -666,11 +666,14 @@ done
 
 ## ESP library update
 cd $SOFT_DIR/leon3/drivers/libesp
+sed -i "/\/\/ <<--esp-p2p-thread-->>/a ${indent}${indent}${indent}${indent}|| thread->desc.${LOWER}_desc.esp.p2p_nsrcs);" libesp.c
+sed -i "/\/\/ <<--esp-p2p-thread-->>/a ${indent}${indent}${indent}return (thread->desc.${LOWER}_desc.esp.p2p_store" libesp.c
+sed -i "/\/\/ <<--esp-p2p-thread-->>/a ${indent}${indent}case ${LOWER} :" libesp.c
 sed -i "/\/\/ <<--esp-ioctl-->>/a ${indent}${indent}break;" libesp.c
 sed -i "/\/\/ <<--esp-ioctl-->>/a ${indent}${indent}rc = ioctl(info->fd, ${UPPER}_IOC_ACCESS, info->desc.${LOWER}_desc);" libesp.c
 sed -i "/\/\/ <<--esp-ioctl-->>/a ${indent}case ${LOWER} :" libesp.c
 sed -i "/\/\/ <<--esp-prepare-->>/a ${indent}${indent}${indent}break;" libesp.c
-sed -i "/\/\/ <<--esp-prepare-->>/a ${indent}${indent}${indent}esp_prepare(&info->desc.${LOWER}_desc.esp);" libesp.c
+sed -i "/\/\/ <<--esp-prepare-->>/a ${indent}${indent}${indent}esp_prepare(&info->desc.${LOWER}_desc.esp, handle, policy);" libesp.c
 sed -i "/\/\/ <<--esp-prepare-->>/a ${indent}${indent}case ${LOWER} :" libesp.c
 cd $SOFT_DIR/leon3/drivers/include
 sed -i "/\/\/ <<--esp-include-->>/a #include \"${LOWER}.h\"" libesp.h
