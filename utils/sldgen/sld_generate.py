@@ -292,10 +292,6 @@ def tie_unused_axi(f, acc, dma_width):
   f.write("      mosi(0).ar.id(XID_WIDTH - 1 downto " + str(acc.id_width) + ") <= (others => '0');\n")
   f.write("      mosi(0).ar.addr(GLOB_PHYS_ADDR_BITS - 1 downto " + str(acc.addr_width) + ") <= (others => '0');\n")
   f.write("      mosi(0).ar.user(XUSER_WIDTH - 1 downto " + str(acc.user_width) + ") <= (others => '0');\n")
-  f.write("      somi(0).r.id(XID_WIDTH - 1 downto " + str(acc.id_width) + ") <= (others => '0');\n")
-  f.write("      somi(0).r.user(XUSER_WIDTH - 1 downto " + str(acc.user_width) + ") <= (others => '0');\n")
-  f.write("      somi(0).b.id(XID_WIDTH - 1 downto " + str(acc.id_width) + ") <= (others => '0');\n")
-  f.write("      somi(0).b.user(XUSER_WIDTH - 1 downto " + str(acc.user_width) + ") <= (others => '0');\n")
 
 
 def write_axi_acc_port_map(f, acc, dma_width):
