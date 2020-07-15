@@ -112,7 +112,7 @@ package sldcommon is
     word_transfer => '0'
     );
 
-   constant monitor_mem_none :  monitor_mem_type := (
+  constant monitor_mem_none :  monitor_mem_type := (
     clk              => '0',
     coherent_req     => '0',
     coherent_fwd     => '0',
@@ -251,45 +251,5 @@ package sldcommon is
       ahbsi  : in  ahb_slv_in_type;
       ahbso  : out ahb_slv_out_type);
   end component ahbslm;
-
-  component slm_bank_1mb_unisim is
-    port (
-      CLK  : in  std_ulogic;
-      CE0  : in  std_ulogic;
-      A0   : in  std_logic_vector(16 downto 0);
-      D0   : in  std_logic_vector(63 downto 0);
-      WE0  : in  std_ulogic;
-      WEM0 : in  std_logic_vector(63 downto 0);
-      CE1  : in  std_ulogic;
-      A1   : in  std_logic_vector(16 downto 0);
-      Q1   : out std_logic_vector(63 downto 0));
-  end component slm_bank_1mb_unisim;
-
-  component slm_bank_2mb_unisim is
-    port (
-      CLK  : in  std_ulogic;
-      CE0  : in  std_ulogic;
-      A0   : in  std_logic_vector(17 downto 0);
-      D0   : in  std_logic_vector(63 downto 0);
-      WE0  : in  std_ulogic;
-      WEM0 : in  std_logic_vector(63 downto 0);
-      CE1  : in  std_ulogic;
-      A1   : in  std_logic_vector(17 downto 0);
-      Q1   : out std_logic_vector(63 downto 0));
-  end component slm_bank_2mb_unisim;
-
-  component slm_bank_4mb_unisim is
-    port (
-      CLK  : in  std_ulogic;
-      CE0  : in  std_ulogic;
-      A0   : in  std_logic_vector(18 downto 0);
-      D0   : in  std_logic_vector(63 downto 0);
-      WE0  : in  std_ulogic;
-      WEM0 : in  std_logic_vector(63 downto 0);
-      CE1  : in  std_ulogic;
-      A1   : in  std_logic_vector(18 downto 0);
-      Q1   : out std_logic_vector(63 downto 0));
-  end component slm_bank_4mb_unisim;
-
 
 end sldcommon;

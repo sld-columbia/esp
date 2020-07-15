@@ -11,6 +11,7 @@ use work.sld_devices.all;
 use work.sldcommon.all;
 use work.devices.all;
 use work.gencomp.all;
+use work.allslm.all;
 
 entity ahbslm is
   generic (
