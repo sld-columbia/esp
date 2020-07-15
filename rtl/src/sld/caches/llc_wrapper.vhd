@@ -37,9 +37,6 @@ entity llc_wrapper is
     hindex        : integer range 0 to NAHBSLV - 1 := 4;
     pindex        : integer range 0 to NAPBSLV - 1 := 5;
     pirq          : integer                      := 4;
-    pconfig       : apb_config_type;
-    local_y       : local_yx;
-    local_x       : local_yx;
     cacheline     : integer;
     l2_cache_en   : integer                      := 0;
     cache_tile_id : cache_attribute_array;
@@ -53,6 +50,11 @@ entity llc_wrapper is
   port (
     rst   : in  std_ulogic;
     clk   : in  std_ulogic;
+
+    local_y : in local_yx;
+    local_x : in local_yx;
+    pconfig : in apb_config_type;
+
     ahbmi : in  ahb_mst_in_type;
     ahbmo : out ahb_mst_out_type;
     apbi  : in  apb_slv_in_type;
@@ -1300,7 +1302,8 @@ begin  -- architecture rtl
 -------------------------------------------------------------------------------
   fsm_fwd_out : process (fwd_out_reg, coherence_fwd_full,
                          llc_fwd_out_valid, llc_fwd_out_data_coh_msg, llc_fwd_out_data_addr,
-                         llc_fwd_out_data_req_id, llc_fwd_out_data_dest_id) is
+                         llc_fwd_out_data_req_id, llc_fwd_out_data_dest_id,
+                         local_y, local_x) is
 
     variable reg       : fwd_out_reg_type;
     variable dest_init : integer;
@@ -1380,7 +1383,8 @@ begin  -- architecture rtl
   fsm_rsp_out : process (rsp_out_reg, coherence_rsp_snd_full,
                          llc_rsp_out_valid, llc_rsp_out_data_coh_msg, llc_rsp_out_data_addr,
                          llc_rsp_out_data_line, llc_rsp_out_data_invack_cnt, llc_rsp_out_data_word_offset,
-                         llc_rsp_out_data_req_id, llc_rsp_out_data_dest_id) is
+                         llc_rsp_out_data_req_id, llc_rsp_out_data_dest_id,
+                         local_y, local_x) is
 
     variable reg       : rsp_out_reg_type;
     variable dest_init : integer;
@@ -1514,7 +1518,8 @@ begin  -- architecture rtl
   dma_fsm_rsp_out : process (dma_rsp_out_reg, dma_snd_full,
                              llc_dma_rsp_out_valid, llc_dma_rsp_out_data_coh_msg, llc_dma_rsp_out_data_addr,
                              llc_dma_rsp_out_data_line, llc_dma_rsp_out_data_invack_cnt, llc_dma_rsp_out_data_word_offset,
-                             llc_dma_rsp_out_data_req_id, llc_dma_rsp_out_data_dest_id) is
+                             llc_dma_rsp_out_data_req_id, llc_dma_rsp_out_data_dest_id,
+                             local_y, local_x) is
 
     variable reg       : dma_rsp_out_reg_type;
     variable dest_init : integer;

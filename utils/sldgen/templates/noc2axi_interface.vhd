@@ -25,19 +25,12 @@ use std.textio.all;
   generic (
     hls_conf       : hlscfg_t;
     tech           : integer;
-    local_y        : local_yx;
-    local_x        : local_yx;
     mem_num        : integer;
     cacheable_mem_num : integer;
     mem_info       : tile_mem_info_vector(0 to CFG_NMEM_TILE + CFG_NSLM_TILE);
     io_y           : local_yx;
     io_x           : local_yx;
     pindex         : integer := 0;
-    paddr          : integer := 0;
-    pmask          : integer := 16#fff#;
-    paddr_ext      : integer := 0;
-    pmask_ext      : integer := 16#fff#;
-    pirq           : integer := 0;
     irq_type       : integer := 0;
     scatter_gather : integer := 1;
     sets           : integer := 256;
@@ -55,6 +48,13 @@ use std.textio.all;
     refclk    : in  std_ulogic;
     pllbypass : in  std_ulogic;
     pllclk    : out std_ulogic;
+    local_y   : in  local_yx;
+    local_x   : in  local_yx;
+    paddr     : in  integer;
+    pmask     : in  integer;
+    paddr_ext : in  integer;
+    pmask_ext : in  integer;
+    pirq      : in  integer;
     -- APB
     apbi      : in apb_slv_in_type;
     apbo      : out apb_slv_out_type;
@@ -118,17 +118,14 @@ end;
   constant vendorid      : vendor_t               := VENDOR_SLD;
   constant revision      : integer                := 0;
   -- <<devid>>
-  constant pconfig : apb_config_type := (
-    0 => ahb_device_reg (vendorid, devid, 0, revision, pirq),
-    1 => apb_iobar(paddr, pmask),
-    2 => apb_iobar(paddr_ext, pmask_ext));
+  signal pconfig : apb_config_type;
   signal apbi_paddr : std_logic_vector(31 downto 0);
 
   -- IRQ
   type irq_fsm is (idle, pending, wait_for_clear_irq);
   signal irq_state, irq_next : irq_fsm;
   signal irq_header_i, irq_header : misc_noc_flit_type;
-  constant irq_info : std_logic_vector(3 downto 0) := conv_std_logic_vector(pirq, 4);
+  signal irq_info : std_logic_vector(3 downto 0);
 
   -- Other signals
   signal acc_go : std_ulogic;
@@ -144,6 +141,13 @@ end;
   constant nofb_mem_info : tile_mem_info_vector(0 to CFG_NSLM_TILE + CFG_NMEM_TILE - 1) := mem_info(0 to CFG_NSLM_TILE + CFG_NMEM_TILE - 1);
 
 begin
+
+  pconfig <= (
+    0 => ahb_device_reg (vendorid, devid, 0, revision, pirq),
+    1 => apb_iobar(paddr, pmask),
+    2 => apb_iobar(paddr_ext, pmask_ext));
+
+  irq_info <= conv_std_logic_vector(pirq, 4);
 
   apbi_paddr <= apbi.paddr and X"0FFFFFFF";
 
@@ -167,8 +171,6 @@ begin
     generic map (
       tech             => tech,
       nmst             => 1,
-      local_y          => local_y,
-      local_x          => local_x,
       retarget_for_dma => 1,
       mem_axi_port     => 0,
       mem_num          => CFG_NSLM_TILE + CFG_NMEM_TILE,
@@ -178,6 +180,8 @@ begin
     port map (
       rst                        => rst,
       clk                        => clk,
+      local_y                    => local_y,
+      local_x                    => local_x,
       mosi                       => mosi,
       somi                       => somi,
       coherence_req_wrreq        => dma_snd_wrreq,
@@ -193,9 +197,7 @@ begin
       remote_ahbs_rcv_data_out   => (others => '0'),
       remote_ahbs_rcv_empty      => '1');
 
-  apbo.pirq(NAHBIRQ - 1 downto pirq + 1) <= (others => '0');
-  apbo.pirq(pirq) <= acc_done;
-  apbo.pirq(pirq - 1 downto 0) <= (others => '0');
+  apbo.pirq <= (others => '0');         -- IRQ forwarded to NoC directly
   apbo.pconfig <= pconfig;
   apbo.pindex <= pindex;
 

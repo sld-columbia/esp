@@ -16,10 +16,7 @@ use work.nocpackage.all;
 
 entity misc_noc2interrupt is
   generic (
-    tech         : integer := virtex7;
-    local_y      : local_yx;
-    local_x      : local_yx);
-
+    tech         : integer := virtex7);
   port (
     rst      : in  std_ulogic;
     clk      : in  std_ulogic;

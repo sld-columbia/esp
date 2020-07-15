@@ -16,14 +16,14 @@ use work.allslm.all;
 entity ahbslm is
   generic (
     hindex : integer := 0;
-    haddr  : integer := 0;
-    hmask  : integer := 16#fff#;        -- valid values are: fff, ffe, ffc
     tech   : integer := DEFMEMTECH;
     mbytes : integer := 1               -- valid values are 1, 2, 4
     );
   port (
     rst   : in  std_ulogic;
     clk   : in  std_ulogic;
+    haddr : in  integer range 0 to 4095;
+    hmask : in  integer range 0 to 4095;
     ahbsi : in  ahb_slv_in_type;
     ahbso : out ahb_slv_out_type
     );
@@ -37,10 +37,7 @@ architecture rtl of ahbslm is
   -- DO NOT CHANGE dw. This code is meant to work w/ 64-bit data width
   constant dw : integer := 64;
 
-  constant hconfig : ahb_config_type := (
-    0      => ahb_device_reg (VENDOR_SLD, SLD_SLM, 0, 0, 0),
-    4      => ahb_membar(haddr, '1', '1', hmask),
-    others => zero32);
+  signal hconfig : ahb_config_type;
 
   type reg_type is record
     hwrite : std_ulogic;
@@ -147,6 +144,11 @@ architecture rtl of ahbslm is
   end selectdata;
 
 begin
+
+  hconfig <= (
+    0      => ahb_device_reg (VENDOR_SLD, SLD_SLM, 0, 0, 0),
+    4      => ahb_membar(haddr, '1', '1', hmask),
+    others => zero32);
 
   -- FSM
   ahb_slv_fsm : process (ahbsi, r)

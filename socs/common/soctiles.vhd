@@ -58,9 +58,12 @@ package soctiles is
 
   component tile_cpu is
     generic (
-      SIMULATION : boolean := false;
-      tile_id : integer range 0 to CFG_TILES_NUM - 1 := 0;
-      HAS_SYNC : integer range 0 to 1 := 0 );
+      SIMULATION         : boolean              := false;
+      this_has_dvfs      : integer range 0 to 1 := 0;
+      this_has_pll       : integer range 0 to 1 := 0;
+      this_extra_clk_buf : integer range 0 to 1 := 0;
+      ROUTER_PORTS       : ports_vec            := "11111";
+      HAS_SYNC           : integer range 0 to 1 := 0);
     port (
       rst                : in  std_ulogic;
       srst               : in  std_ulogic;
@@ -158,9 +161,16 @@ package soctiles is
   end component tile_cpu;
 
   component tile_acc is
-    generic ( 
-      tile_id : integer range 0 to CFG_TILES_NUM - 1 := 0;
-      HAS_SYNC : integer range 0 to 1 := 0 );
+    generic (
+      this_hls_conf      : hlscfg_t             := 0;
+      this_device        : devid_t              := 0;
+      this_irq_type      : integer              := 0;
+      this_has_l2        : integer range 0 to 1 := 0;
+      this_has_dvfs      : integer range 0 to 1 := 0;
+      this_has_pll       : integer range 0 to 1 := 0;
+      this_extra_clk_buf : integer range 0 to 1 := 0;
+      ROUTER_PORTS       : ports_vec            := "11111";
+      HAS_SYNC           : integer range 0 to 1 := 0);
     port (
       rst                : in  std_ulogic;
       refclk             : in  std_ulogic;
@@ -256,9 +266,9 @@ package soctiles is
 
   component tile_io is
     generic (
-      SIMULATION : boolean := false;
-      tile_id  : integer range 0 to CFG_TILES_NUM-1 := 0;
-      HAS_SYNC : integer range 0 to 1 := 0 );
+      SIMULATION   : boolean              := false;
+      ROUTER_PORTS : ports_vec            := "11111";
+      HAS_SYNC     : integer range 0 to 1 := 0);
     port (
       rst                : in  std_ulogic;
       srst               : out std_ulogic;
@@ -367,8 +377,8 @@ package soctiles is
 
   component tile_mem is
     generic (
-      tile_id : integer range 0 to CFG_TILES_NUM - 1 := 0;
-      HAS_SYNC: integer range 0 to 1 := 0);
+      ROUTER_PORTS : ports_vec            := "11111";
+      HAS_SYNC     : integer range 0 to 1 := 0);
     port (
       rst                : in  std_ulogic;
       srst               : in  std_ulogic;
@@ -462,9 +472,9 @@ package soctiles is
 
   component tile_empty is
     generic (
-      SIMULATION : boolean := false;
-      tile_id : integer range 0 to CFG_TILES_NUM - 1 := 0;
-      HAS_SYNC : integer range 0 to 1 := 0 );
+      SIMULATION   : boolean              := false;
+      ROUTER_PORTS : ports_vec            := "11111";
+      HAS_SYNC     : integer range 0 to 1 := 0);
     port (
       rst                : in  std_logic;
       sys_clk_int        : in  std_logic;
@@ -551,8 +561,8 @@ package soctiles is
 
   component tile_slm is
     generic (
-      tile_id : integer range 0 to CFG_TILES_NUM - 1;
-      HAS_SYNC: integer range 0 to 1 := 0);
+      ROUTER_PORTS : ports_vec            := "11111";
+      HAS_SYNC     : integer range 0 to 1 := 0);
     port (
       rst                : in  std_ulogic;
       clk                : in  std_ulogic;

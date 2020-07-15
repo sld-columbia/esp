@@ -106,6 +106,7 @@ entity leon3x is
     gfclk2     : in  std_ulogic;                     -- gated 2x FPU clock
     clk2       : in  std_ulogic;                     -- free-running 2x clock
     rstn       : in  std_ulogic;
+    cpuid      : in  integer range 0 to 15:= 0;
     ahbi       : in  ahb_mst_in_type;
     ahbo       : out ahb_mst_out_type;
     ahbsi      : in  ahb_slv_in_type;
@@ -179,7 +180,7 @@ begin
          ilramstart, dlram, dlramsize, dlramstart, mmuen, itlbnum, dtlbnum,
          tlb_type, tlb_rep, lddel, disas, tbuf, pwd, svt, rstaddr, smp,
          cached, clk2x, scantest, mmupgsz, bp, npasi, pwrpsr, rex, altwin)
-       port map (gclk2, rst, holdn, ahbi, ahbo, ahbsi, ahbso, rfi, rfo, crami, cramo, 
+       port map (gclk2, rst, cpuid, holdn, ahbi, ahbo, ahbsi, ahbso, rfi, rfo, crami, cramo, 
                  tbi, tbo, tbi_2p, tbo_2p, fpi, fpo, cpi, cpo, irqi, irqo, dbgi, dbgo, clk, clk2, clken
                  );
 

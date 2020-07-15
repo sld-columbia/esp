@@ -12,7 +12,6 @@ use work.ariane_esp_pkg.all;
 
 entity ariane_axi_wrap is
   generic (
-    HART_ID          : std_logic_vector(63 downto 0) := (others => '0');
     NMST             : integer                       := 2;
     NSLV             : integer                       := 5;
     ROMBase          : std_logic_vector(63 downto 0) := X"0000_0000_0001_0000";
@@ -29,6 +28,7 @@ entity ariane_axi_wrap is
   port (
     clk         : in  std_logic;
     rstn        : in  std_logic;
+    HART_ID     : in  std_logic_vector(63 downto 0);
     irq         : in  std_logic_vector(1 downto 0);
     timer_irq   : in  std_logic;
     ipi         : in  std_logic;
@@ -52,7 +52,6 @@ architecture rtl of ariane_axi_wrap is
 
   component ariane_wrap is
     generic (
-      HART_ID          : std_logic_vector(63 downto 0);
       NMST             : integer;
       NSLV             : integer;
       AXI_ID_WIDTH     : integer;
@@ -75,6 +74,7 @@ architecture rtl of ariane_axi_wrap is
     port (
       clk             : in  std_logic;
       rstn            : in  std_logic;
+      HART_ID         : in  std_logic_vector(63 downto 0);
       irq             : in  std_logic_vector(1 downto 0);
       timer_irq       : in  std_logic;
       ipi             : in  std_logic;
@@ -285,7 +285,6 @@ begin  -- architecture rtl
 
   ariane_wrap_1 : ariane_wrap
     generic map (
-      HART_ID          => HART_ID,
       NMST             => NMST,
       NSLV             => NSLV,
       AXI_ID_WIDTH     => ARIANE_AXI_ID_WIDTH,
@@ -308,6 +307,7 @@ begin  -- architecture rtl
     port map (
       clk             => clk,
       rstn            => rstn,
+      HART_ID         => HART_ID,
       irq             => irq,
       timer_irq       => timer_irq,
       ipi             => ipi,

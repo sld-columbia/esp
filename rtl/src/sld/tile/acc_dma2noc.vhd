@@ -48,35 +48,33 @@ use work.acctypes.all;
 
 entity acc_dma2noc is
   generic (
-    tech        : integer := virtex7;
-    extra_clk_buf : integer range 0 to 1;
-    local_y     : local_yx;
-    local_x     : local_yx;
-    mem_num     : integer := 1;
-    mem_info    : tile_mem_info_vector(0 to CFG_NMEM_TILE + CFG_NSLM_TILE);
-    io_y        : local_yx;
-    io_x        : local_yx;
-    pindex                : integer                            := 0;
-    paddr                 : integer                            := 0;
-    pmask                 : integer                            := 16#fff#;
-    paddr_ext             : integer                            := 0;
-    pmask_ext             : integer                            := 16#fff#;
-    pirq                  : integer                            := 0;
-    revision              : integer                            := 0;
-    devid                 : devid_t                   := 16#001#;
-    available_reg_mask    : std_logic_vector(0 to MAXREGNUM - 1) := (others => '1');
-    rdonly_reg_mask       : std_logic_vector(0 to MAXREGNUM - 1) := (others => '0');
-    exp_registers         : integer range 0 to 1               := 0;  -- Not implemented
-    scatter_gather        : integer range 0 to 1               := 1;
-    tlb_entries           : integer                            := 256;
-    has_dvfs              : integer                            := 1;
-    has_pll               : integer);
+    tech               : integer                              := virtex7;
+    extra_clk_buf      : integer range 0 to 1;
+    mem_num            : integer                              := 1;
+    mem_info           : tile_mem_info_vector(0 to CFG_NMEM_TILE + CFG_NSLM_TILE);
+    io_y               : local_yx;
+    io_x               : local_yx;
+    pindex             : integer                              := 0;
+    revision           : integer                              := 0;
+    devid              : devid_t                              := 16#001#;
+    available_reg_mask : std_logic_vector(0 to MAXREGNUM - 1) := (others => '1');
+    rdonly_reg_mask    : std_logic_vector(0 to MAXREGNUM - 1) := (others => '0');
+    exp_registers      : integer range 0 to 1                 := 0;  -- Not implemented
+    scatter_gather     : integer range 0 to 1                 := 1;
+    tlb_entries        : integer                              := 256;
+    has_dvfs           : integer                              := 1;
+    has_pll            : integer);
   port (
     rst           : in  std_ulogic;
     clk           : in  std_ulogic;
     refclk        : in  std_ulogic;
     pllbypass     : in  std_ulogic;
     pllclk        : out std_ulogic;
+    local_y       : in  local_yx;
+    local_x       : in  local_yx;
+    paddr         : in  integer;
+    pmask         : in  integer;
+    pirq          : in  integer;
     -- APB interface
     apbi          : in  apb_slv_in_type;
     apbo          : out apb_slv_out_type;
@@ -139,10 +137,7 @@ end acc_dma2noc;
 architecture rtl of acc_dma2noc is
 
   -- plug & play info
-  constant pconfig : apb_config_type := (
-    0 => ahb_device_reg (VENDOR_SLD, devid, 0, revision, pirq),
-    1 => apb_iobar(paddr, pmask),
-    2 => (others => '0'));
+  signal pconfig : apb_config_type;
   constant hprot : std_logic_vector(3 downto 0) := "0011";
 
   constant len_pad : std_logic_vector(GLOB_BYTE_OFFSET_BITS - 1 downto 0) := (others => '0');
@@ -217,7 +212,7 @@ architecture rtl of acc_dma2noc is
   signal p2p_rsp_snd_full     : std_ulogic;
 
   -- IRQ
-  signal irq      : std_logic_vector(NAHBIRQ-1 downto 0);
+  signal irq      : std_ulogic;
   signal irqset   : std_ulogic;
   type irq_fsm is (idle, pending);
   signal irq_state, irq_next : irq_fsm;
@@ -230,7 +225,7 @@ architecture rtl of acc_dma2noc is
   signal sample_rd_size, sample_wr_size      : std_ulogic;
   signal size_r                              : std_logic_vector(2 downto 0);
   signal irq_header_i, irq_header            : misc_noc_flit_type;
-  constant irq_info                          : std_logic_vector(3 downto 0) := conv_std_logic_vector(pirq, 4);
+  signal irq_info                            : std_logic_vector(3 downto 0);
 
   -- DMA
   type dma_fsm is (idle, request_header, request_address, request_length,
@@ -329,6 +324,7 @@ begin  -- rtl
   -----------------------------------------------------------------------------
   -- IRQ packet
   -----------------------------------------------------------------------------
+  irq_info <= conv_std_logic_vector(pirq, 4);
   irq_header_i <= create_header(MISC_NOC_FLIT_SIZE, local_y, local_x, io_y, io_x, INTERRUPT, irq_info)(MISC_NOC_FLIT_SIZE - 1 downto 0);
   irq_header(MISC_NOC_FLIT_SIZE-1 downto MISC_NOC_FLIT_SIZE-PREAMBLE_WIDTH) <= PREAMBLE_1FLIT;
   irq_header(MISC_NOC_FLIT_SIZE-PREAMBLE_WIDTH-1 downto 0) <=
@@ -439,7 +435,7 @@ begin  -- rtl
   p2p_dst_x <= get_origin_x(NOC_FLIT_SIZE, p2p_req_rcv_data_out);
 
   make_packet: process (bankreg, pending_dma_write, tlb_empty, dma_address, dma_length,
-                        p2p_src_index_r, p2p_dst_y, p2p_dst_x, coherence)
+                        p2p_src_index_r, p2p_dst_y, p2p_dst_x, coherence, local_y, local_x)
     variable msg_type : noc_msg_type;
     variable header_v : noc_flit_type;
     variable tmp : std_logic_vector(63 downto 0);
@@ -991,7 +987,7 @@ begin  -- rtl
 
     case irq_state is
       when idle =>
-        if irq(pirq) = '1' then
+        if irq = '1' then
           if interrupt_full = '1' then
             irq_next <= pending;
           else
@@ -1027,6 +1023,10 @@ begin  -- rtl
   -------------------------------------------------------------------------------
 
   -- APB Interface
+  pconfig(0) <=  ahb_device_reg (VENDOR_SLD, devid, 0, revision, pirq);
+  pconfig(1) <=  apb_iobar(paddr, pmask);
+  pconfig(2) <=  (others => '0');
+
   process (apbi, readdata, dvfs_apbo)
   begin  -- process
     if apbi.paddr(7) = '1' then
@@ -1035,7 +1035,7 @@ begin  -- rtl
       apbo.prdata <= readdata;
     end if;
   end process;
-  apbo.pirq    <= irq;
+  apbo.pirq    <= (others => '0');      -- IRQ forwarded to the NoC directly
   apbo.pindex  <= pindex;
   apbo.pconfig <= pconfig;
 
@@ -1046,19 +1046,15 @@ begin  -- rtl
   drive_irq: process (clk, rst)
   begin  -- process drive_irq
     if rst = '0' then                   -- asynchronous reset (active low)
-      irq <= (others => '0');
+      irq <= '0';
       irqset <= '0';
     elsif clk'event and clk = '1' then  -- rising clock edge
-      -- Avoid latches on other irq bits
-      irq <= (others => '0');
-      irq(pirq) <= irq(pirq);
-      --
       if irqset = '1' then
-        irq(pirq) <= '0';
+        irq <= '0';
       elsif ((bankreg(STATUS_REG)(STATUS_BIT_DONE) or
               bankreg(STATUS_REG)(STATUS_BIT_ERR)) = '1' and
              irqset = '0') then
-        irq(pirq) <= '1';
+        irq <= '1';
         irqset <=  '1';
       end if;
       if ((bankreg(STATUS_REG)(STATUS_BIT_RUN) or
@@ -1114,6 +1110,8 @@ begin  -- rtl
             bankreg(i) <= bankdef(i);
           elsif sample(i) = '1' and rdonly_reg_mask(i) = '0' then
             bankreg(i) <= bankin(i);
+          elsif i = YX_REG then
+            bankreg(i) <=  "0000000000000" & local_y & "0000000000000" & local_x;
           end if;
         end if;
       end process;
@@ -1154,14 +1152,14 @@ begin  -- rtl
   with_dvfs: if has_dvfs /= 0 and has_pll /= 0 generate
   dvfs_top_1: dvfs_top
     generic map (
-      tech     => tech,
+      tech          => tech,
       extra_clk_buf => extra_clk_buf,
-      pindex   => pindex,
-      paddr    => paddr,
-      pmask    => pmask)
+      pindex        => pindex)
     port map (
       rst       => rst,
       clk       => clk,
+      paddr     => paddr,
+      pmask     => pmask,
       refclk    => refclk,
       pllbypass => pllbypass,
       pllclk    => pllclk,

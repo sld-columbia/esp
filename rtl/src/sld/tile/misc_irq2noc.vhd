@@ -23,13 +23,14 @@ entity misc_irq2noc is
   generic (
     tech    : integer := virtex7;
     ncpu    : integer := 0;
-    local_y : local_yx;
-    local_x : local_yx;
     cpu_y   : yx_vec(0 to CFG_NCPU_TILE - 1);
     cpu_x   : yx_vec(0 to CFG_NCPU_TILE - 1));
   port (
     rst : in std_ulogic;
     clk : in std_ulogic;
+
+    local_y : in local_yx;
+    local_x : in local_yx;
 
     irqi : in  irq_in_vector(0 to ncpu-1);
     irqo : out irq_out_vector(0 to ncpu-1);
@@ -174,7 +175,7 @@ begin  -- rtl
     end process detect_fifo_overflow;
 
     -- Make a packet for interrupt request
-    make_packet : process (irqi(cpuid))
+    make_packet : process (irqi(cpuid), local_y, local_x)
       variable msg_type    : noc_msg_type;
       variable tmp : noc_flit_type;
       variable header_v    : misc_noc_flit_type;

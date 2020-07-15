@@ -7,6 +7,7 @@
 
 library ieee;
 use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
 use work.esp_global.all;
 use work.amba.all;
 use work.stdlib.all;
@@ -32,7 +33,7 @@ use work.socmap.all;
 
 entity tile_mem is
   generic (
-    tile_id : integer range 0 to CFG_TILES_NUM - 1 := 0;
+    ROUTER_PORTS : ports_vec := "11111";
     HAS_SYNC: integer range 0 to 1 := 0);
   port (
     rst                : in  std_ulogic;
@@ -65,7 +66,7 @@ entity tile_mem is
     noc2_data_w_out    : out noc_flit_type;
     noc2_data_e_out    : out noc_flit_type;
     noc2_data_void_out : out std_logic_vector(3 downto 0);
-    noc2_stop_out      : out std_logic_vector(3 downto 0);   
+    noc2_stop_out      : out std_logic_vector(3 downto 0);
     noc3_data_n_in     : in  noc_flit_type;
     noc3_data_s_in     : in  noc_flit_type;
     noc3_data_w_in     : in  noc_flit_type;
@@ -94,7 +95,7 @@ entity tile_mem is
     noc5_data_s_in     : in  misc_noc_flit_type;
     noc5_data_w_in     : in  misc_noc_flit_type;
     noc5_data_e_in     : in  misc_noc_flit_type;
-    noc5_data_void_in  : in  std_logic_vector(3 downto 0); 
+    noc5_data_void_in  : in  std_logic_vector(3 downto 0);
     noc5_stop_in       : in  std_logic_vector(3 downto 0);
     noc5_data_n_out    : out misc_noc_flit_type;
     noc5_data_s_out    : out misc_noc_flit_type;
@@ -131,8 +132,6 @@ architecture rtl of tile_mem is
   component sync_noc_set
      generic (
        PORTS     : std_logic_vector(4 downto 0);
---       local_x   : std_logic_vector(2 downto 0);
---       local_y   : std_logic_vector(2 downto 0);
        HAS_SYNC  : integer range 0 to 1 := 0);
      port (
         clk           : in  std_logic;
@@ -301,12 +300,8 @@ architecture rtl of tile_mem is
   signal apbi  : apb_slv_in_type;
   signal apbo  : apb_slv_out_vector;
 
-  signal ctrl_ahbsi : ahb_slv_in_type;
-  signal ctrl_ahbso : ahb_slv_out_vector;
   signal ctrl_ahbmi : ahb_mst_in_type;
   signal ctrl_ahbmo : ahb_mst_out_vector;
-  signal ctrl_apbi  : apb_slv_in_type;
-  signal ctrl_apbo  : apb_slv_out_vector;
 
   -- Mon
   signal mon_mem_int    : monitor_mem_type;
@@ -322,17 +317,32 @@ architecture rtl of tile_mem is
   signal noc6_mon_noc_vec_int  : monitor_noc_type;
 
   -- Tile parameters
-  constant this_mem_id       : integer                            := tile_mem_id(tile_id);
-  constant this_ddr_hindex   : integer                            := ddr_hindex(this_mem_id);
-  constant this_llc_pindex   : integer                            := llc_cache_pindex(tile_id);
-  constant this_llc_pconfig  : apb_config_type                    := fixed_apbo_pconfig(this_llc_pindex);
-  constant this_csr_pindex   : integer                            := tile_csr_pindex(tile_id);
-  constant this_csr_pconfig  : apb_config_type                    := fixed_apbo_pconfig(this_csr_pindex);
-  constant this_local_apb_en : std_logic_vector(0 to NAPBSLV - 1) := local_apb_mask(tile_id);
-  constant this_local_ahb_en : std_logic_vector(0 to NAHBSLV - 1) := local_ahb_mask(tile_id);
-  constant this_local_y      : local_yx                           := tile_y(tile_id);
-  constant this_local_x      : local_yx                           := tile_x(tile_id);
-  constant ROUTER_PORTS      : ports_vec                          := set_router_ports(CFG_XLEN, CFG_YLEN, this_local_x, this_local_y);
+  signal config : std_logic_vector(ESP_CSR_WIDTH - 1 downto 0);
+
+  signal tile_id : integer range 0 to CFG_TILES_NUM - 1;
+
+  signal this_mem_id       : integer range 0 to CFG_NMEM_TILE - 1;
+  signal this_ddr_hindex   : integer range 0 to NAHBSLV - 1;
+  signal this_ddr_hconfig  : ahb_config_type;
+
+  signal this_llc_pindex   : integer range 0 to NAPBSLV - 1;
+  signal this_llc_pconfig  : apb_config_type;
+
+  signal this_csr_pindex   : integer range 0 to NAPBSLV - 1;
+  signal this_csr_pconfig  : apb_config_type;
+
+  signal this_local_y      : local_yx;
+  signal this_local_x      : local_yx;
+
+  constant this_local_apb_en : std_logic_vector(0 to NAPBSLV - 1) := (
+    0 => '1',                           -- CSRs
+    1 => to_std_logic(CFG_LLC_ENABLE),  -- last-level cache
+    others => '0');
+
+  constant this_local_ahb_en : std_logic_vector(0 to NAHBSLV - 1) := (
+    0      => '1',  -- memory
+    others => '0');
+
 
   -- Noc signals
   signal noc1_stop_in_s         : std_logic_vector(4 downto 0);
@@ -399,6 +409,24 @@ architecture rtl of tile_mem is
 begin
 
   -----------------------------------------------------------------------------
+  -- Tile parameters
+  -----------------------------------------------------------------------------
+  tile_id           <= to_integer(unsigned(config(ESP_CSR_TILE_ID_MSB downto ESP_CSR_TILE_ID_LSB)));
+
+  this_mem_id       <= tile_mem_id(tile_id);
+  this_ddr_hindex   <= ddr_hindex(this_mem_id);
+  this_ddr_hconfig  <= fixed_ahbso_hconfig(this_ddr_hindex);
+
+  this_llc_pindex   <= llc_cache_pindex(tile_id);
+  this_llc_pconfig  <= fixed_apbo_pconfig(this_llc_pindex);
+
+  this_csr_pindex   <= tile_csr_pindex(tile_id);
+  this_csr_pconfig  <= fixed_apbo_pconfig(this_csr_pindex);
+
+  this_local_y      <= tile_y(tile_id);
+  this_local_x      <= tile_x(tile_id);
+
+  -----------------------------------------------------------------------------
   -- NOC Connections
   ----------------------------------------------------------------------------
   noc1_stop_in_s         <= noc1_mem_stop_in  & noc1_stop_in;
@@ -441,8 +469,6 @@ begin
   sync_noc_set_mem: sync_noc_set
   generic map (
      PORTS    => ROUTER_PORTS,
---     local_x  => this_local_x,
---     local_y  => this_local_y,
      HAS_SYNC => HAS_SYNC )
    port map (
      clk                => sys_clk_int,
@@ -548,42 +574,12 @@ begin
   -- Bus
   -----------------------------------------------------------------------------
 
-  hp_pandp_gen : process (ctrl_ahbmi, ctrl_ahbsi, ahbmo, ahbso)
-  begin  -- process assign_bus_ctrl_sig
-    ahbmi      <= ctrl_ahbmi;
-    ahbsi      <= ctrl_ahbsi;
-    ctrl_ahbmo <= ahbmo;
-    ctrl_ahbso <= ahbso;
-
-    for i in 0 to NAHBSLV - 1 loop
-      if this_local_ahb_en(i) = '1' then
-        ctrl_ahbso(i).hconfig <= fixed_ahbso_hconfig(i);
-      else
-        ctrl_ahbso(i).hconfig <= hconfig_none;
-      end if;
-    end loop;  -- i
-  end process hp_pandp_gen;
-
   ahb2 : ahbctrl                        -- AHB arbiter/multiplexer
     generic map (defmast => CFG_DEFMST, split => CFG_SPLIT,
                  rrobin  => CFG_RROBIN, ioaddr => CFG_AHBIO, fpnpen => CFG_FPNPEN,
                  nahbm   => maxahbm, nahbs => maxahbs)
-    port map (rst, clk, ctrl_ahbmi, ctrl_ahbmo, ctrl_ahbsi, ctrl_ahbso);
+    port map (rst, clk, ahbmi, ahbmo, ahbsi, ahbso);
 
-
-  io_pandp_gen : process (ctrl_apbi, apbo)
-  begin  -- process assign_bus_ctrl_sig
-    apbi      <= ctrl_apbi;
-    ctrl_apbo <= apbo;
-
-    for i in 0 to NAPBSLV - 1 loop
-      if this_local_apb_en(i) = '1' then
-        ctrl_apbo(i).pconfig <= fixed_apbo_pconfig(i);
-      else
-        ctrl_apbo(i).pconfig <= pconfig_none;
-      end if;
-    end loop;  -- i
-  end process io_pandp_gen;
 
   -----------------------------------------------------------------------
   ---  Drive unused bus ports
@@ -610,9 +606,13 @@ begin
   -----------------------------------------------------------------------------
 
   -- DDR Controller
-  ahbso(this_ddr_hindex) <= ddr_ahbso;
-  ddr_ahbsi              <= ahbsi;
+  ddr_ahbso_gen: process (ddr_ahbso, this_ddr_hconfig) is
+  begin  -- process ddr_ahbso_gen
+    ahbso(0)         <= ddr_ahbso;
+    ahbso(0).hconfig <= this_ddr_hconfig;
+  end process ddr_ahbso_gen;
 
+  ddr_ahbsi <= ahbsi;
 
   -----------------------------------------------------------------------------
   -- Services
@@ -638,7 +638,7 @@ begin
   mon_mem_int.dma_rsp          <= dma_snd_wrreq;
   mon_mem_int.coherent_dma_req <= coherent_dma_rcv_rdreq;
   mon_mem_int.coherent_dma_rsp <= coherent_dma_snd_wrreq;
- 
+
   mon_mem <= mon_mem_int;
 
   mon_cache <= mon_cache_int;
@@ -649,7 +649,7 @@ begin
   noc4_mon_noc_vec <= noc4_mon_noc_vec_int;
   noc5_mon_noc_vec <= noc5_mon_noc_vec_int;
   noc6_mon_noc_vec <= noc6_mon_noc_vec_int;
- 
+
   mon_noc(1) <= noc1_mon_noc_vec_int;
   mon_noc(2) <= noc2_mon_noc_vec_int;
   mon_noc(3) <= noc3_mon_noc_vec_int;
@@ -669,11 +669,11 @@ begin
   --Memory mapped registers
   mem_tile_csr : esp_tile_csr
     generic map(
-      pindex  => this_csr_pindex,
-      pconfig => this_csr_pconfig)
+      pindex  => 0)
     port map(
       clk => clk,
       rstn => rst,
+      pconfig => this_csr_pconfig,
       mon_ddr => mon_ddr,
       mon_mem => mon_mem_int,
       mon_noc => mon_noc,
@@ -681,8 +681,9 @@ begin
       mon_llc => mon_cache_int,
       mon_acc => monitor_acc_none,
       mon_dvfs => mon_dvfs_int,
-      apbi => apbi, 
-      apbo => apbo(this_csr_pindex)
+      config => config,
+      apbi => apbi,
+      apbo => apbo(0)
     );
 
   -----------------------------------------------------------------------------
@@ -697,8 +698,6 @@ begin
       generic map (
         tech        => CFG_FABTECH,
         hindex      => 0,
-        local_y     => this_local_y,
-        local_x     => this_local_x,
         axitran     => GLOB_CPU_AXI,
         little_end  => GLOB_CPU_AXI,
         eth_dma     => 0,
@@ -708,6 +707,8 @@ begin
       port map (
         rst                       => rst,
         clk                       => clk,
+        local_y                   => this_local_y,
+        local_x                   => this_local_x,
         ahbmi                     => ahbmi,
         ahbmo                     => ahbmo(0),
         coherence_req_rdreq       => coherence_req_rdreq,
@@ -729,22 +730,14 @@ begin
         dma_snd_exactly_3slots    => dma_snd_exactly_3slots);
 
     -- No LLC wrapper
-    ahbmo(2)                 <= ahbm_none;
-
-    mon_cache_int             <= monitor_cache_none;
-
-    apb_snd_wrreq   <= '0';
-    apb_snd_data_in <= (others => '0');
-    apb_rcv_rdreq   <= '0';
-
+    ahbmo(2)      <= ahbm_none;
+    mon_cache_int <= monitor_cache_none;
 
     -- Handle JTAG or EDCL requests to memory as well as ETH DMA
     mem_noc2ahbm_2 : mem_noc2ahbm
       generic map (
         tech        => CFG_FABTECH,
         hindex      => 1,
-        local_y     => this_local_y,
-        local_x     => this_local_x,
         axitran     => 0,
         little_end  => 0,
         eth_dma     => 1,               -- Exception for fixed 32-bits DMA
@@ -754,6 +747,8 @@ begin
       port map (
         rst                       => rst,
         clk                       => clk,
+        local_y                   => this_local_y,
+        local_x                   => this_local_x,
         ahbmi                     => ahbmi,
         ahbmo                     => ahbmo(1),
         coherence_req_rdreq       => remote_ahbm_rcv_rdreq,
@@ -784,8 +779,6 @@ begin
       generic map (
         tech        => CFG_FABTECH,
         hindex      => 0,
-        local_y     => this_local_y,
-        local_x     => this_local_x,
         axitran     => GLOB_CPU_AXI,
         little_end  => GLOB_CPU_AXI,
         eth_dma     => 0,
@@ -795,6 +788,8 @@ begin
       port map (
         rst                       => rst,
         clk                       => clk,
+        local_y                   => this_local_y,
+        local_x                   => this_local_x,
         ahbmi                     => ahbmi,
         ahbmo                     => ahbmo(0),
         coherence_req_rdreq       => open,
@@ -827,11 +822,8 @@ begin
         nllc          => CFG_NLLC_COHERENT,
         noc_xlen      => CFG_XLEN,
         hindex        => 2,
-        pindex        => this_llc_pindex,
+        pindex        => 1,
         pirq          => CFG_SLD_LLC_CACHE_IRQ,
-        pconfig       => this_llc_pconfig,
-        local_y       => this_local_y,
-        local_x       => this_local_x,
         cacheline     => CFG_DLINE,
         l2_cache_en   => CFG_L2_ENABLE,
         cache_tile_id => cache_tile_id,
@@ -845,10 +837,13 @@ begin
       port map (
         rst                        => llc_rstn,
         clk                        => clk,
+        local_y                    => this_local_y,
+        local_x                    => this_local_x,
+        pconfig                    => this_llc_pconfig,
         ahbmi                      => ahbmi,
         ahbmo                      => ahbmo(2),
         apbi                       => apbi,
-        apbo                       => apbo(this_llc_pindex),
+        apbo                       => apbo(1),
         -- NoC1->tile
         coherence_req_rdreq        => coherence_req_rdreq,
         coherence_req_data_out     => coherence_req_data_out,
@@ -877,34 +872,11 @@ begin
         mon_cache                  => mon_cache_int
         );
 
-    -- APB to LLC cache
-    misc_noc2apb_1 : misc_noc2apb
-      generic map (
-        tech         => CFG_FABTECH,
-        local_y      => this_local_y,
-        local_x      => this_local_x,
-        local_apb_en => this_local_apb_en)
-      port map (
-        rst              => rst,
-        clk              => clk,
-        apbi             => ctrl_apbi,
-        apbo             => ctrl_apbo,
-        pready           => '1',
-        dvfs_transient   => '0',
-        apb_snd_wrreq    => apb_snd_wrreq,
-        apb_snd_data_in  => apb_snd_data_in,
-        apb_snd_full     => apb_snd_full,
-        apb_rcv_rdreq    => apb_rcv_rdreq,
-        apb_rcv_data_out => apb_rcv_data_out,
-        apb_rcv_empty    => apb_rcv_empty);
-
     -- Handle JTAG or EDCL requests to memory
     mem_noc2ahbm_2 : mem_noc2ahbm
       generic map (
         tech        => CFG_FABTECH,
         hindex      => 1,
-        local_y     => this_local_y,
-        local_x     => this_local_x,
         axitran     => 0,
         little_end  => 0,
         eth_dma     => 0,
@@ -914,6 +886,8 @@ begin
       port map (
         rst                       => rst,
         clk                       => clk,
+        local_y                   => this_local_y,
+        local_x                   => this_local_x,
         ahbmi                     => ahbmi,
         ahbmo                     => ahbmo(1),
         coherence_req_rdreq       => remote_ahbm_rcv_rdreq,
@@ -950,6 +924,27 @@ begin
     remote_ahbm_rcv_data_out <= remote_ahbs_rcv_data_out;
     remote_ahbs_snd_data_in  <= remote_ahbm_snd_data_in;
   end generate std_bus;
+
+  -- APB to LLC cache and CSRs
+  misc_noc2apb_1 : misc_noc2apb
+    generic map (
+      tech         => CFG_FABTECH,
+      local_apb_en => this_local_apb_en)
+    port map (
+      rst              => rst,
+      clk              => clk,
+      local_y          => this_local_y,
+      local_x          => this_local_x,
+      apbi             => apbi,
+      apbo             => apbo,
+      pready           => '1',
+      dvfs_transient   => '0',
+      apb_snd_wrreq    => apb_snd_wrreq,
+      apb_snd_data_in  => apb_snd_data_in,
+      apb_snd_full     => apb_snd_full,
+      apb_rcv_rdreq    => apb_rcv_rdreq,
+      apb_rcv_data_out => apb_rcv_data_out,
+      apb_rcv_empty    => apb_rcv_empty);
 
   -----------------------------------------------------------------------------
   -- Tile queues

@@ -20,15 +20,16 @@ use work.coretypes.all;
 entity cpu_irq2noc is
   generic (
     tech    : integer := virtex7;
-    cpu_id  : integer := 0;
-    local_y : local_yx;
-    local_x : local_yx;
     irq_y   : local_yx;
     irq_x   : local_yx);
 
   port (
     rst : in std_ulogic;
     clk : in std_ulogic;
+
+    cpu_id  : in integer;
+    local_y : in local_yx;
+    local_x : in local_yx;
 
     irqi : out l3_irq_in_type;
     irqo : in  l3_irq_out_type;
@@ -51,7 +52,7 @@ architecture rtl of cpu_irq2noc is
   constant IRQ_FIFO_DEPTH : integer := 8;
 
   type irq_snd_fsm is (idle, irq_snd_header, irq_snd_payload_1);
-  type irq_rcv_fsm is (idle, irq_rcv_req_1, irq_rcv_req_2);
+  type irq_rcv_fsm is (reset_active, reset_released, idle, irq_rcv_req_1, irq_rcv_req_2);
   signal irq_snd_state, irq_snd_next : irq_snd_fsm;
   signal irq_rcv_state, irq_rcv_next : irq_rcv_fsm;
 
@@ -76,6 +77,8 @@ architecture rtl of cpu_irq2noc is
 
   signal sample_irq_1 : std_ulogic;
   signal sample_irq_2 : std_ulogic;
+
+  signal rst_int : std_ulogic;
 
   -- attribute mark_debug : string;
   -- attribute keep       : string;
@@ -136,7 +139,7 @@ begin  -- rtl
   end process detect_fifo_overflow;
 
   -- Make a packet for interrupt acknowledge
-  make_packet : process (irqo)
+  make_packet : process (irqo, cpu_id, local_y, local_x)
     variable msg_type    : noc_msg_type;
     variable header_v    : misc_noc_flit_type;
     variable payload_1_v : misc_noc_flit_type;
@@ -204,21 +207,22 @@ begin  -- rtl
       full     => open,
       data_out => fifo_payload_1);
 
+  -- Sample reset
+  rst_int_gen: process (clk) is
+  begin  -- process rst_int_gen
+    if clk'event and clk = '1' then  -- rising clock edge
+      rst_int <= rst;
+    end if;
+  end process rst_int_gen;
+
   -- Sample interrupt to CPU
-  process (clk, rst)
+  process (clk)
     variable irqi_v : l3_irq_in_type;
   begin  -- process
-    if rst = '0' then                   -- asynchronous reset (active low)
-      irqi_v   := irq_in_none;
-      if cpu_id = 0 then
-        irqi_v.rstrun := '1';
-      end if;
-      irqi_v.index := std_logic_vector(to_unsigned(cpu_id, 4));
-      irqi_reg <= irqi_v;
-      irqi     <= irqi_v;
-    elsif clk'event and clk = '1' then  -- rising clock edge
+    if clk'event and clk = '1' then  -- rising clock edge
       irqi_v.irl        := irqi_noc.irl;
       irqi_v.resume     := irqi_noc.resume;
+      irqi_v.rstvec     := irqi_noc.rstvec;
       irqi_v.rstrun     := irqi_noc.rstrun;
       irqi_v.forceerr   := irqi_noc.forceerr;
       irqi_v.pwdsetaddr := irqi_noc.pwdsetaddr;
@@ -229,7 +233,9 @@ begin  -- rtl
         irqi_reg <= irqi_v;
       end if;
 
-      if sample_irq_2 = '1' then
+      if rst = '0' then
+        irqi             <= irq_in_none;
+      elsif sample_irq_2 = '1' then
         -- Complete IRQ request info (second flit)
         irqi_v            := irqi_reg;
         irqi_v.pwdnewaddr := irqi_noc.pwdnewaddr;
@@ -238,10 +244,8 @@ begin  -- rtl
         -- When intack is asserted, previous irl should be cleared (TODO: check!)
         irqi.irl <= (others => '0');
       end if;
-
     end if;
   end process;
-
 
   -- Send interrupt acknowledge
   noc_irq_snd : process (irq_snd_state, remote_irq_ack_full, fifo_header,
@@ -287,7 +291,7 @@ begin  -- rtl
 
 
   -- Receive interrupt request
-  noc_irq_rcv : process (irq_rcv_state, remote_irq_empty, remote_irq_data_out)
+  noc_irq_rcv : process (irq_rcv_state, remote_irq_empty, remote_irq_data_out, cpu_id, rst_int)
   begin  -- process irq_roundtrip
     irq_rcv_next <= irq_rcv_state;
     irqi_noc     <= irq_in_none;
@@ -297,6 +301,20 @@ begin  -- rtl
     remote_irq_rdreq <= '0';
 
     case irq_rcv_state is
+      when reset_active =>
+        if cpu_id = 0 then
+          irqi_noc.rstrun <= '1';
+        end if;
+        irqi_noc.index <= conv_std_logic_vector(cpu_id, 4);
+        sample_irq_1 <= '1';
+        if rst_int = '1' then
+          irq_rcv_next <= reset_released;
+        end if;
+
+      when reset_released =>
+        sample_irq_2 <= '1';
+        irq_rcv_next <= idle;
+
       when idle =>
         if remote_irq_empty = '0' then
           remote_irq_rdreq <= '1';
@@ -332,7 +350,7 @@ begin  -- rtl
   process (clk, rst)
   begin  -- process
     if rst = '0' then                   -- asynchronous reset (active low)
-      irq_rcv_state <= idle;
+      irq_rcv_state <= reset_active;
       irq_snd_state <= idle;
     elsif clk'event and clk = '1' then  -- rising clock edge
       irq_rcv_state <= irq_rcv_next;

@@ -74,6 +74,7 @@ entity iu3 is
   port (
     clk   : in  std_ulogic;
     rstn  : in  std_ulogic;
+    cpuid : in  integer range 0 to 15:= 0;
     holdn : in  std_ulogic;
     ici   : out icache_in_type;
     ico   : in  icache_out_type;
@@ -596,12 +597,15 @@ architecture rtl of iu3 is
       end if;
   end;
 
-  function asr17_gen ( r : in registers) return word is
+  function asr17_gen (
+    r : in registers;
+    core_id : in integer range 0 to 15)
+    return word is
   variable asr17 : word;
-  variable fpu2 : integer range 0 to 3;  
+  variable fpu2 : integer range 0 to 3;
   begin
     asr17 := zero32;
-    asr17(31 downto 28) := conv_std_logic_vector(index, 4);
+    asr17(31 downto 28) := conv_std_logic_vector(core_id, 4);
     if bp = 2 then asr17(27) := r.w.s.dbp; end if;
     if notag = 0 then asr17(26) := '1'; end if; -- CASA and tagged arith
     if bp = 2 then asr17(25) := r.w.s.dbprepl;
@@ -643,6 +647,7 @@ architecture rtl of iu3 is
                      tbufo  : in tracebuf_out_type;
                      tbufo_2p : in tracebuf_2p_out_type;
                      xc_wimmask: in std_logic_vector;
+                     core_id : in integer range 0 to 15;
                      data : out word) is
     variable cwp : std_logic_vector(4 downto 0);
     variable rd : std_logic_vector(4 downto 0);
@@ -723,7 +728,7 @@ architecture rtl of iu3 is
             when "01" =>
               if dbgi.daddr(5) = '0' then 
                 if dbgi.daddr(4 downto 2) = "001" then -- %ASR17
-                  data := asr17_gen(r);
+                  data := asr17_gen(r, core_id);
                 elsif MACEN and  dbgi.daddr(4 downto 2) = "010" then -- %ASR18
                   data := r.w.s.asr18;
                 elsif (AWPEN or RFPART) and dbgi.daddr(4 downto 2) = "100" then  -- %ASR20
@@ -2391,6 +2396,7 @@ end;
 
   procedure misc_op(r : registers; wpr : watchpoint_registers; 
         aluin1, aluin2, ldata, mey : word; xc_wimmask: std_logic_vector;
+        core_id : integer range 0 to 15;
         mout, edata : out word) is
   variable miscout, bpdata, stdata : word;
   variable wpi : integer;
@@ -2426,7 +2432,7 @@ end;
         else miscout := wpr(wpi).mask & wpr(wpi).load & wpr(wpi).store; end if;
       end if;
       if (r.e.ctrl.inst(18 downto 17) = "10") and (r.e.ctrl.inst(14) = '1') then --%ASR17
-        miscout := asr17_gen(r);
+        miscout := asr17_gen(r, core_id);
       end if;
 
       if MACEN then
@@ -3778,7 +3784,7 @@ begin
   BLOCKBPMISS <= '0' when bp = 0 else '1' when bp = 1 else r.w.s.dbprepl;
 
   comb : process(ico, dco, rfo, r, wpr, ir, dsur, rstn, holdn, irqi, dbgi, fpo, cpo, tbo, tbo_2p,
-                 mulo, divo, dummy, rp, BPRED, BLOCKBPMISS)
+                 mulo, divo, dummy, rp, BPRED, BLOCKBPMISS, cpuid)
 
   variable v    : registers;
   variable vp  : pwd_register_type;
@@ -4238,7 +4244,7 @@ begin
     ex_jump_address := ex_add_res(32 downto PCLOW+1);
     logic_op(r, ex_op1, ex_op2, v.x.y, ex_ymsb, ex_logic_res, v.m.y);
     ex_shift_res := shift(r, ex_op1, ex_op2, ex_shcnt, ex_sari);
-    misc_op(r, wpr, ex_op1, ex_op2, xc_df_result, v.x.y, xc_wimmask, ex_misc_res, ex_edata);
+    misc_op(r, wpr, ex_op1, ex_op2, xc_df_result, v.x.y, xc_wimmask, cpuid, ex_misc_res, ex_edata);
     ex_add_res(3):= ex_add_res(3) or ex_force_a2;
     if CASAEN and LDDEL=2 and (r.m.casa='1' and r.e.ctrl.cnt="11") then
       ex_add_res(32 downto 1) := r.e.op2;
@@ -4535,7 +4541,7 @@ begin
 -----------------------------------------------------------------------
 
     if DBGUNIT then -- DSU diagnostic read    
-      diagread(dbgi, r, dsur, ir, wpr, dco, tbo, tbo_2p, xc_wimmask, diagdata);
+      diagread(dbgi, r, dsur, ir, wpr, dco, tbo, tbo_2p, xc_wimmask, cpuid, diagdata);
       diagrdy(dbgi.denable, dsur, r.m.dci, dco.mds, ico, vdsu.crdy);
       vdsu.cfc := dsur.cfc(3 downto 0) & r.f.branch;
     end if;
@@ -4807,7 +4813,7 @@ begin
     rexen:=false;
     if rex=1 then pc(1):=r.x.ctrl.pc(2-1*REX); rexen:=(r.x.ctrl.pc(2-2*REX)='1'); end if;
     if (disas = 1) and rising_edge(clk) and (rstn = '1') then
-      print_insn (index, pc, r.x.ctrl.inst,
+      print_insn(cpuid, pc, r.x.ctrl.inst,
                   rin.w.result, valid, r.x.ctrl.trap = '1', rin.w.wreg = '1',
                   rexen);
     end if;
@@ -4818,7 +4824,7 @@ begin
 
   dis2 : if disas > 1 generate
       disasen <= '1' when disas /= 0 else '0';
-      cpu_index <= conv_std_logic_vector(index, 4);
+      cpu_index <= conv_std_logic_vector(cpuid, 4);
       x0 : cpu_disasx
       port map (clk, rstn, dummy, r.x.ctrl.inst, r.x.ctrl.pc(31 downto 2),
         rin.w.result, cpu_index, rin.w.wreg, r.x.ctrl.annul, holdn,

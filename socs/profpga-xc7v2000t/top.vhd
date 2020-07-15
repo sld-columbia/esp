@@ -246,6 +246,22 @@ component mig is
    );
 end component mig;
 
+  function set_ddr_index (
+    constant n : integer range 0 to 1)
+    return integer is
+  begin
+    if n > (CFG_NMEM_TILE - 1) then
+      return CFG_NMEM_TILE - 1;
+    else
+      return n;
+    end if;
+  end set_ddr_index;
+
+  constant this_ddr_index : attribute_vector(0 to 1) := (
+    0 => set_ddr_index(0),
+    1 => set_ddr_index(1)
+    );
+
 -- pragma translate_off
 -- Memory model for simulation purposes only
 component ahbram_sim
@@ -531,8 +547,11 @@ begin
   gen_mig : if (SIMULATION /= true) generate
 
      dual_mig_ahb_iface: if CFG_NMEM_TILE = 2 generate
-       ddrc0 : ahb2mig_7series_profpga generic map(
-         hindex => 4, haddr => 16#400#, hmask => 16#E00#)
+       ddrc0 : ahb2mig_7series_profpga
+         generic map (
+           hindex => 0,
+           haddr  => ddr_haddr(this_ddr_index(0)),
+           hmask  => ddr_hmask(this_ddr_index(0)))
          port map(
            app_addr          => c0_app_addr,
            app_cmd           => c0_app_cmd,
@@ -552,8 +571,11 @@ begin
            clk_amba          => clkm
            );
 
-       ddrc1 : ahb2mig_7series_profpga generic map(
-         hindex => 5, haddr => 16#600#, hmask => 16#E00#)
+       ddrc1 : ahb2mig_7series_profpga
+         generic map (
+           hindex => 0,
+           haddr  => ddr_haddr(this_ddr_index(1)),
+           hmask  => ddr_hmask(this_ddr_index(1)))
          port map(
            app_addr          => c1_app_addr,
            app_cmd           => c1_app_cmd,
@@ -575,8 +597,11 @@ begin
      end generate dual_mig_ahb_iface;
 
      single_mig_ahb_iface: if CFG_NMEM_TILE = 1 generate
-       ddrc0 : ahb2mig_7series_profpga generic map(
-         hindex => 4, haddr => 16#400#, hmask => 16#C00#)
+       ddrc0 : ahb2mig_7series_profpga
+         generic map (
+           hindex => 0,
+           haddr  => ddr_haddr(this_ddr_index(0)),
+           hmask  => ddr_hmask(this_ddr_index(0)))
          port map(
            app_addr          => c0_app_addr,
            app_cmd           => c0_app_cmd,
@@ -700,9 +725,9 @@ begin
     dual_mig_sim: if CFG_NMEM_TILE = 2 generate
       mig_ahbram1 : ahbram_sim
         generic map (
-          hindex   => 4,
-          haddr    => 16#400#,
-          hmask    => 16#E00#,
+          hindex   => 0,
+          haddr    => ddr_haddr(this_ddr_index(0)),
+          hmask    => ddr_hmask(this_ddr_index(0)),
           tech     => 0,
           kbytes   => 2048,
           pipe     => 0,
@@ -718,9 +743,9 @@ begin
 
       mig_ahbram2 : ahbram_sim
         generic map (
-          hindex   => 5,
-          haddr    => 16#600#,
-          hmask    => 16#E00#,
+          hindex   => 0,
+          haddr    => ddr_haddr(this_ddr_index(1)),
+          hmask    => ddr_hmask(this_ddr_index(1)),
           tech     => 0,
           kbytes   => 2048,
           pipe     => 0,
@@ -738,9 +763,9 @@ begin
     single_mig_sim: if CFG_NMEM_TILE = 1 generate
       mig_ahbram1 : ahbram_sim
         generic map (
-          hindex   => 4,
-          haddr    => 16#400#,
-          hmask    => 16#C00#,
+          hindex   => 0,
+          haddr    => ddr_haddr(this_ddr_index(0)),
+          hmask    => ddr_hmask(this_ddr_index(0)),
           tech     => 0,
           kbytes   => 2048,
           pipe     => 0,

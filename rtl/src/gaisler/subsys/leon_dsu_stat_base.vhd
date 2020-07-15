@@ -241,6 +241,7 @@ begin
             gfclk2     => cpuclk,
             clk2       => cpuclk,
             rstn       => rstn,
+            cpuid      => i,
             ahbi       => leon_ahbmi,
             ahbo       => leon_ahbmo(i),
             ahbsi      => leon_ahbsi,

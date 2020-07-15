@@ -19,6 +19,8 @@ use work.acctypes.all;
 
 package sldcommon is
 
+  type attribute_vector is array (natural range <>) of integer;
+
   type monitor_ddr_type is record
     clk              : std_ulogic;
     word_transfer    : std_ulogic;
@@ -123,6 +125,17 @@ package sldcommon is
     coherent_dma_req => '0',
     coherent_dma_rsp => '0'
     );
+
+  constant ESP_CSR_WIDTH : integer := 9;
+
+  constant ESP_CSR_VALID_ADDR : integer range 0 to 127 := 0;
+  constant ESP_CSR_VALID_LSB  : integer range 0 to ESP_CSR_WIDTH-1 := 0;
+  constant ESP_CSR_VALID_MSB  : integer range 0 to ESP_CSR_WIDTH-1 := 0;
+
+  constant ESP_CSR_TILE_ID_ADDR : integer range 0 to 127 := 1;
+  constant ESP_CSR_TILE_ID_LSB  : integer range 0 to ESP_CSR_WIDTH-1 := 1;
+  constant ESP_CSR_TILE_ID_MSB  : integer range 0 to ESP_CSR_WIDTH-1 := 8;
+
 
   component monitor
     generic (
@@ -236,20 +249,35 @@ package sldcommon is
   end component esplink;
 
 
+  -- ESP self configuration
+
+  component esp_init is
+    generic (
+      hindex   : integer;
+      sequence : attribute_vector(0 to CFG_TILES_NUM + CFG_NCPU_TILE - 1));
+    port (
+      rstn   : in  std_ulogic;
+      clk    : in  std_ulogic;
+      noinit : in  std_ulogic;
+      ahbmi  : in  ahb_mst_in_type;
+      ahbmo  : out ahb_mst_out_type);
+  end component esp_init;
+
+
   -- Shared Local Memory
 
   component ahbslm is
     generic (
       hindex : integer;
-      haddr  : integer;
-      hmask  : integer;
       tech   : integer;
       mbytes : integer);
     port (
-      rst    : in  std_ulogic;
-      clk    : in  std_ulogic;
-      ahbsi  : in  ahb_slv_in_type;
-      ahbso  : out ahb_slv_out_type);
+      rst   : in  std_ulogic;
+      clk   : in  std_ulogic;
+      haddr : in  integer range 0 to 4095;
+      hmask : in  integer range 0 to 4095;
+      ahbsi : in  ahb_slv_in_type;
+      ahbso : out ahb_slv_out_type);
   end component ahbslm;
 
 end sldcommon;

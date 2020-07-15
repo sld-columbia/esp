@@ -40,7 +40,9 @@ use std.textio.all;
 
 entity ahb2mig_ebddr4r5 is
   generic(
-    hindex        : integer := 0
+    hindex : integer := 0;
+    haddr  : integer := 0;
+    hmask  : integer := 16#f00#
     );
   port(
     c0_sys_clk_p     : in    std_logic;
@@ -82,7 +84,7 @@ architecture rtl of ahb2mig_ebddr4r5 is
   -- This is just a placeholder. The actual hconfig is overwritten by the ESP socmap
   constant hconfig : ahb_config_type := (
     0      => ahb_device_reg (VENDOR_GAISLER, GAISLER_MIG_7SERIES, 0, 0, 0),
-    4      => ahb_membar(16#400#, '1', '1', 16#C00#),
+    4      => ahb_membar(haddr, '1', '1', hmask),
     others => zero32);
 
   type reg_type is record

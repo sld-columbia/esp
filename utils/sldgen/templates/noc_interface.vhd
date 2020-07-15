@@ -25,19 +25,12 @@ use std.textio.all;
   generic (
     hls_conf       : hlscfg_t;
     tech           : integer;
-    local_y        : local_yx;
-    local_x        : local_yx;
     mem_num        : integer;
     cacheable_mem_num : integer;
     mem_info       : tile_mem_info_vector(0 to CFG_NMEM_TILE + CFG_NSLM_TILE);
     io_y           : local_yx;
     io_x           : local_yx;
     pindex         : integer := 0;
-    paddr          : integer := 0;
-    pmask          : integer := 16#fff#;
-    paddr_ext      : integer := 0;
-    pmask_ext      : integer := 16#fff#;
-    pirq           : integer := 0;
     irq_type       : integer := 0;
     scatter_gather : integer := 1;
     sets           : integer := 256;
@@ -55,6 +48,13 @@ use std.textio.all;
     refclk    : in  std_ulogic;
     pllbypass : in  std_ulogic;
     pllclk    : out std_ulogic;
+    local_y   : in  local_yx;
+    local_x   : in  local_yx;
+    paddr     : in  integer;
+    pmask     : in  integer;
+    paddr_ext : in  integer;
+    pmask_ext : in  integer;
+    pirq      : in  integer;
     -- APB
     apbi      : in apb_slv_in_type;
     apbo      : out apb_slv_out_type;
@@ -164,7 +164,7 @@ end;
   constant bankdef : bank_type(0 to MAXREGNUM - 1) := (
     DEVID_REG          => conv_std_logic_vector(vendorid, 16) & conv_std_logic_vector(devid, 16),
     PT_NCHUNK_MAX_REG  => conv_std_logic_vector(check_scatter_gather(tlb_entries), 32),
-    YX_REG             => "0000000000000" & local_y & "0000000000000" & local_x,
+    YX_REG             => (others => '0'),
     -- <<user_read_only_default>>
     others             => (others => '0'));
 
@@ -272,8 +272,6 @@ begin
         tech          => tech,
         sets          => sets,
         ways          => ways,
-        local_y       => local_y,
-        local_x       => local_x,
         mem_num       => cacheable_mem_num,
         mem_info      => cacheable_mem_info,
         cache_y       => cache_y,
@@ -282,6 +280,8 @@ begin
       port map (
         rst                        => rst,
         clk                        => clk,
+        local_y                    => local_y,
+        local_x                    => local_x,
         dma_read                   => dma_read,
         dma_write                  => dma_write,
         dma_length                 => dma_length,
@@ -329,18 +329,11 @@ begin
     generic map (
       tech               => tech,
       extra_clk_buf      => extra_clk_buf,
-      local_y            => local_y,
-      local_x            => local_x,
       mem_num            => mem_num,
       mem_info           => mem_info,
       io_y               => io_y,
       io_x               => io_x,
       pindex             => pindex,
-      paddr              => paddr,
-      pmask              => pmask,
-      paddr_ext          => paddr_ext,
-      pmask_ext          => pmask_ext,
-      pirq               => pirq,
       revision           => revision,
       devid              => devid,
       available_reg_mask => available_reg_mask,
@@ -356,6 +349,11 @@ begin
       refclk                        => refclk,
       pllbypass                     => pllbypass,
       pllclk                        => pllclk_int,
+      local_y                       => local_y,
+      local_x                       => local_x,
+      paddr                         => paddr,
+      pmask                         => pmask,
+      pirq                          => pirq,
       apbi                          => apbi,
       apbo                          => apbo,
       bank                          => bank,

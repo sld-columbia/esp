@@ -35,20 +35,21 @@ entity l2_wrapper is
     hindex_mst  : integer := 0;
     pindex      : integer range 0 to NAPBSLV - 1 := 6;
     pirq        : integer := 4;
-    pconfig     : apb_config_type;
-    local_y     : local_yx;
-    local_x     : local_yx;
     mem_hindex  : integer := 4;
     mem_hconfig : ahb_config_type;
     mem_num     : integer := 1;
     mem_info    : tile_mem_info_vector(0 to CFG_NMEM_TILE - 1);
     cache_y     : yx_vec(0 to 2**NL2_MAX_LOG2 - 1);
     cache_x     : yx_vec(0 to 2**NL2_MAX_LOG2 - 1);
-    cache_id      : integer := 0;
     cache_tile_id : cache_attribute_array);
   port (
     rst : in std_ulogic;
     clk : in std_ulogic;
+
+    local_y  : in local_yx;
+    local_x  : in local_yx;
+    pconfig  : in apb_config_type;
+    cache_id : in integer;
 
     -- frontend (cache - AHB/CPU)
     ahbsi : in  ahb_slv_in_type;
@@ -544,10 +545,10 @@ begin  -- architecture rtl of l2_wrapper
   cmd_status: process (clk, rst)
   begin  -- process cmd_status
     if rst = '0' then                   -- asynchronous reset (active low)
-      cmd_reg                  <= (others => '0');
-      status_reg(27 downto 0)  <= (others => '0');
-      status_reg(31 downto 28) <= std_logic_vector(to_unsigned(cache_id, 4));
+      cmd_reg     <= (others => '0');
+      status_reg  <= (others => '0');
     elsif clk'event and clk = '1' then  -- rising clock edge
+      status_reg(31 downto 28) <= std_logic_vector(to_unsigned(cache_id, 4));
       if flush_done = '1' then
         status_reg(0) <= '1';
       end if;
@@ -1138,16 +1139,18 @@ begin  -- architecture rtl of l2_wrapper
 -------------------------------------------------------------------------------
   fsm_req : process (req_reg, coherence_req_full,
                      req_out_valid, req_out_data_coh_msg, req_out_data_hprot,
-                     req_out_data_addr, req_out_data_line) is
+                     req_out_data_addr, req_out_data_line,
+                     local_x, local_y) is
 
     variable reg    : req_reg_type;
-    variable req_id : cache_id_t := (others => '0');
+    variable req_id : cache_id_t;
 
   begin  -- process fsm_cache2noc
 
     -- initialize variables
     reg         := req_reg;
     reg.asserts := (others => '0');
+    req_id      := (others => '0');
 
     -- initialize signals toward cache (receive from cache)
     req_out_ready <= '0';
@@ -1243,7 +1246,8 @@ begin  -- architecture rtl of l2_wrapper
 -------------------------------------------------------------------------------
   fsm_rsp_out : process (rsp_out_reg, coherence_rsp_snd_full,
                          rsp_out_valid, rsp_out_data_coh_msg, rsp_out_data_req_id,
-                         rsp_out_data_to_req, rsp_out_data_addr, rsp_out_data_line) is
+                         rsp_out_data_to_req, rsp_out_data_addr, rsp_out_data_line,
+                         local_x, local_y) is
 
     variable reg   : rsp_out_reg_type;
     variable hprot : hprot_t := (others => '0');

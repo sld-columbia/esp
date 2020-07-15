@@ -313,8 +313,11 @@ begin
 
 
   gen_mig : if (SIMULATION /= true) generate
-    ddrc : ahb2mig_7series generic map(
-      hindex => 4, haddr => 16#400#, hmask => 16#C00#)
+    ddrc : ahb2mig_7series
+      generic map (
+        hindex => 0,
+        haddr  => ddr_haddr(0),
+        hmask  => ddr_hmask(0))
       port map(
         ddr3_dq         => ddr3_dq,
         ddr3_dqs_p      => ddr3_dqs_p,
@@ -351,14 +354,14 @@ begin
 
     mig_ahbram : ahbram_sim
       generic map (
-        hindex   => 4,
-        haddr    => 16#400#,
-        hmask    => 16#C00#,
-        tech     => 0,
-        kbytes   => 4 * 1024,
-        pipe     => 0,
-        maccsz   => AHBDW,
-        fname    => "ram.srec"
+        hindex => 0,
+        haddr  => ddr_haddr(0),
+        hmask  => ddr_hmask(0),
+        tech   => 0,
+        kbytes => 2 * 1024,
+        pipe   => 0,
+        maccsz => AHBDW,
+        fname  => "ram.srec"
         )
       port map(
         rst     => rstn,

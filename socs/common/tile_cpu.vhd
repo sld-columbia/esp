@@ -35,9 +35,12 @@ use work.socmap.all;
 
 entity tile_cpu is
   generic (
-    SIMULATION : boolean := false;
-    tile_id : integer range 0 to CFG_TILES_NUM - 1 := 0;
-    HAS_SYNC : integer range 0 to 1 := 0 );
+    SIMULATION         : boolean              := false;
+    this_has_dvfs      : integer range 0 to 1 := 0;
+    this_has_pll       : integer range 0 to 1 := 0;
+    this_extra_clk_buf : integer range 0 to 1 := 0;
+    ROUTER_PORTS       : ports_vec := "11111";
+    HAS_SYNC           : integer range 0 to 1 := 0);
   port (
     rst                : in  std_ulogic;
     srst               : in  std_ulogic;
@@ -140,14 +143,11 @@ architecture rtl of tile_cpu is
   component sync_noc_set
      generic (
        PORTS     : std_logic_vector(4 downto 0);
---       local_x   : std_logic_vector(2 downto 0);
---       local_y   : std_logic_vector(2 downto 0);
        HAS_SYNC  : integer range 0 to 1 := 0);
      port (
 	clk           : in  std_logic;
 	clk_tile      : in  std_logic;
 	rst           : in  std_logic;
---        CONST_PORTS   : in  std_logic_vector(4 downto 0);
         CONST_local_x : in  std_logic_vector(2 downto 0);
         CONST_local_y : in  std_logic_vector(2 downto 0);
 	noc1_data_n_in     : in  noc_flit_type;
@@ -257,7 +257,10 @@ architecture rtl of tile_cpu is
   signal dbgo : l3_debug_out_type;
 
   -- CPU Reset
-  signal cpurstn : std_ulogic;
+  signal cleanrstn : std_ulogic;  -- deassert when tile config is valid
+  signal cpurstn   : std_ulogic;  -- in simulation, allow mininum delay from cleanrstn;
+                                  -- Leon3 SMP reads irqi while cpurstn is
+                                  -- active and irqi depends on tile config.
   type cpu_rstn_state_type is (por, soft_reset_1_h, soft_reset_1_l,
                                soft_reset_2_h, soft_reset_2_l,
                                soft_reset_3_h, soft_reset_3_l,
@@ -352,27 +355,42 @@ architecture rtl of tile_cpu is
   constant pclow : integer := CFG_PCLOW;
 
   -- Tile parameters
-  constant this_cpu_id            : integer                            := tile_cpu_id(tile_id);
-  constant this_cpu_id_lv         : std_logic_vector(63 downto 0)      := conv_std_logic_vector(this_cpu_id, 64);
-  constant this_dvfs_pindex       : integer                            := cpu_dvfs_pindex(tile_id);
-  constant this_dvfs_paddr        : integer                            := cpu_dvfs_paddr(tile_id);
-  constant this_dvfs_pmask        : integer                            := cpu_dvfs_pmask;
-  constant this_dvfs_pconfig      : apb_config_type                    := cpu_dvfs_pconfig(tile_id);
-  constant this_cache_id          : integer                            := tile_cache_id(tile_id);
-  constant this_csr_pindex        : integer                            := tile_csr_pindex(tile_id);
-  constant this_csr_pconfig       : apb_config_type                    := fixed_apbo_pconfig(this_csr_pindex);
-  constant this_local_apb_en      : std_logic_vector(0 to NAPBSLV - 1) := local_apb_mask(tile_id);
-  constant this_remote_apb_slv_en : std_logic_vector(0 to NAPBSLV - 1) := remote_apb_slv_mask(tile_id);
-  constant this_local_ahb_en      : std_logic_vector(0 to NAHBSLV - 1) := local_ahb_mask(tile_id);
-  constant this_remote_ahb_slv_en : std_logic_vector(0 to NAHBSLV - 1) := remote_ahb_mask(tile_id);
-  constant this_l2_pindex         : integer                            := l2_cache_pindex(tile_id);
-  constant this_l2_pconfig        : apb_config_type                    := fixed_apbo_pconfig(this_l2_pindex);
-  constant this_has_dvfs          : integer                            := tile_has_dvfs(tile_id);
-  constant this_has_pll           : integer                            := tile_has_pll(tile_id);
-  constant this_extra_clk_buf     : integer                            := extra_clk_buf(tile_id);
-  constant this_local_y           : local_yx                           := tile_y(tile_id);
-  constant this_local_x           : local_yx                           := tile_x(tile_id);
-  constant ROUTER_PORTS           : ports_vec                          := set_router_ports(CFG_XLEN, CFG_YLEN, this_local_x, this_local_y);
+  signal config : std_logic_vector(ESP_CSR_WIDTH - 1 downto 0);
+
+  signal tile_id : integer range 0 to CFG_TILES_NUM - 1;
+
+  signal this_cpu_id            : integer range 0 to CFG_NCPU_TILE - 1;
+  signal this_cpu_id_lv         : std_logic_vector(63 downto 0);
+
+  signal this_dvfs_pindex       : integer range 0 to NAPBSLV - 1;
+  signal this_dvfs_paddr        : integer;
+  signal this_dvfs_pmask        : integer;
+  signal this_dvfs_pconfig      : apb_config_type;
+
+  signal this_cache_id          : integer;
+  signal this_l2_pindex         : integer range 0 to NAPBSLV - 1;
+  signal this_l2_pconfig        : apb_config_type;
+
+  signal this_csr_pindex        : integer range 0 to NAPBSLV - 1;
+  signal this_csr_pconfig       : apb_config_type;
+
+  signal this_local_y : local_yx;
+  signal this_local_x : local_yx;
+
+  constant this_local_apb_en : std_logic_vector(0 to NAPBSLV - 1) := (
+    0 => '1',                           -- CSRs
+    1 => to_std_logic(CFG_L2_ENABLE),   -- write-back L2 private cache
+    2 => to_std_logic(this_has_pll),    -- DVFS controller
+    others => '0');
+
+  constant this_local_ahb_en : std_logic_vector(0 to NAHBSLV - 1) := (
+    1      => '1',                         -- ahb2apb
+    4      => to_std_logic(CFG_L2_ENABLE), -- write-back L2 private cache
+    others => '0');
+
+  constant this_remote_apb_slv_en : std_logic_vector(0 to NAPBSLV - 1) := remote_apb_slv_mask_cpu;
+  constant this_remote_ahb_slv_en : std_logic_vector(0 to NAHBSLV - 1) := remote_ahb_mask_cpu;
+
 
   -- attribute keep : string;
   -- attribute mark_debug : string;
@@ -465,6 +483,28 @@ begin
 
   pllclk <= clk_feedthru;
 
+  -----------------------------------------------------------------------------
+  -- Tile parameters
+  -----------------------------------------------------------------------------
+  tile_id                <= to_integer(unsigned(config(ESP_CSR_TILE_ID_MSB downto ESP_CSR_TILE_ID_LSB)));
+
+  this_cpu_id            <= tile_cpu_id(tile_id);
+  this_cpu_id_lv         <= conv_std_logic_vector(this_cpu_id, 64);
+
+  this_dvfs_pindex       <= cpu_dvfs_pindex(tile_id);
+  this_dvfs_paddr        <= cpu_dvfs_paddr(tile_id);
+  this_dvfs_pmask        <= cpu_dvfs_pmask;
+  this_dvfs_pconfig      <= cpu_dvfs_pconfig(tile_id);
+
+  this_cache_id          <= tile_cache_id(tile_id);
+  this_l2_pindex         <= l2_cache_pindex(tile_id);
+  this_l2_pconfig        <= fixed_apbo_pconfig(this_l2_pindex);
+
+  this_csr_pindex        <= tile_csr_pindex(tile_id);
+  this_csr_pconfig       <= fixed_apbo_pconfig(this_csr_pindex);
+
+  this_local_y           <= tile_y(tile_id);
+  this_local_x           <= tile_x(tile_id);
 
   -----------------------------------------------------------------------------
   -- NOC Connections
@@ -509,14 +549,11 @@ begin
   sync_noc_set_cpu: sync_noc_set
   generic map (
      PORTS    => ROUTER_PORTS,
---     local_x  => this_local_x,
---     local_y  => this_local_y,
      HAS_SYNC => HAS_SYNC )
    port map (
      clk                => sys_clk_int,
      clk_tile           => clk_feedthru,
      rst                => rst,
---     CONST_ports        => ROUTER_PORTS,
      CONST_local_x      => this_local_x,
      CONST_local_y      => this_local_y,
      noc1_data_n_in     => noc1_data_n_in,
@@ -609,7 +646,6 @@ begin
      noc4_mon_noc_vec   => noc4_mon_noc_vec_int,
      noc5_mon_noc_vec   => noc5_mon_noc_vec_int,
      noc6_mon_noc_vec   => noc6_mon_noc_vec_int
-
      );
 
   -----------------------------------------------------------------------------
@@ -662,11 +698,7 @@ begin
   leon3_bus_not_driven_gen: if GLOB_CPU_ARCH = leon3 generate
 
   -- Master hindex must match cpu_id. This restriction only applies to LEON3
-  nam0 : for i in 0 to this_cpu_id - 1 generate
-    ahbmo(i) <= ahbm_none;
-  end generate;
-
-  nam1 : for i in this_cpu_id + 1 to CFG_NCPU_TILE - 1 generate
+  nam1 : for i in 1 to CFG_NCPU_TILE - 1 generate
     ahbmo(i) <= ahbm_none;
   end generate;
 
@@ -705,24 +737,68 @@ begin
   --pragma translate_on
 
   -- Processor core reset
+  cleanrstn <= rst and config(ESP_CSR_VALID_LSB);
+
+  -- SRST (soft reset) must be asserted twice:
+  -- In between the two reset period, a program can be loaded to both the
+  -- bootrom and the system main memory.
+  -- The reset pulse is longer than one cycle, so we need to detect both edges
+  cpu_rstn_state_update: process (clk_feedthru, rst) is
+  begin  -- process cpu_rstn_gen
+    if rst = '0' then                 -- asynchronous reset (active low)
+      cpu_rstn_state <= por;
+    elsif clk_feedthru'event and clk_feedthru = '1' then  -- rising clock edge
+      cpu_rstn_state <= cpu_rstn_next;
+    end if;
+  end process cpu_rstn_state_update;
+
   cpu_rstn_gen_sim: if SIMULATION = true generate
-    cpurstn <= rst;
+
+    cpu_rstn_sim_fsm: process (cpu_rstn_state, cleanrstn) is
+    begin
+      cpu_rstn_next <= cpu_rstn_state;
+      cpurstn <= '0';
+
+      case cpu_rstn_state is
+
+        when por =>
+          if cleanrstn = '1' then
+            cpu_rstn_next <= soft_reset_1_h;
+          end if;
+
+        when soft_reset_1_h =>
+          cpu_rstn_next <= soft_reset_1_l;
+
+        when soft_reset_1_l =>
+          cpu_rstn_next <= soft_reset_2_h;
+
+        when soft_reset_2_h =>
+          cpu_rstn_next <= soft_reset_2_l;
+
+        when soft_reset_2_l =>
+          cpu_rstn_next <= soft_reset_3_h;
+
+        when soft_reset_3_h =>
+          cpu_rstn_next <= soft_reset_3_l;
+
+        when soft_reset_3_l =>
+          cpu_rstn_next <= soft_reset_4_h;
+
+        when soft_reset_4_h =>
+          cpu_rstn_next <= run;
+
+        when run =>
+          cpurstn <= '1';
+
+        when others =>
+          cpu_rstn_next <= por;
+
+      end case;
+    end process cpu_rstn_sim_fsm;
+
   end generate cpu_rstn_gen_sim;
 
   cpu_rstn_gen: if SIMULATION = false generate
-
-    -- SRST (soft reset) must be asserted twice:
-    -- In between the two reset period, a program can be loaded to both the
-    -- bootrom and the system main memory.
-    -- The reset pulse is longer than one cycle, so we need to detect both edges
-    cpu_rstn_state_update: process (clk_feedthru, rst) is
-    begin  -- process cpu_rstn_gen
-      if rst = '0' then                 -- asynchronous reset (active low)
-        cpu_rstn_state <= por;
-      elsif clk_feedthru'event and clk_feedthru = '1' then  -- rising clock edge
-        cpu_rstn_state <= cpu_rstn_next;
-      end if;
-    end process cpu_rstn_state_update;
 
     cpu_rstn_fsm: process (cpu_rstn_state, srst) is
     begin  -- process cpu_rstn_fsm
@@ -791,14 +867,14 @@ begin
   leon3_cpu_gen: if GLOB_CPU_ARCH = leon3 generate
 
   leon3_0 : leon3s
-    generic map (this_cpu_id, CFG_FABTECH, CFG_MEMTECH, CFG_NWIN, CFG_DSU, CFG_FPU, CFG_V8,
+    generic map (0, CFG_FABTECH, CFG_MEMTECH, CFG_NWIN, CFG_DSU, CFG_FPU, CFG_V8,
                  0, CFG_MAC, pclow, CFG_NOTAG, CFG_NWP, CFG_ICEN, CFG_IREPL, CFG_ISETS, CFG_ILINE,
                  CFG_ISETSZ, CFG_ILOCK, CFG_DCEN, CFG_DREPL, CFG_DSETS, CFG_DLINE, CFG_DSETSZ,
                  CFG_DLOCK, CFG_DSNOOP, CFG_ILRAMEN, CFG_ILRAMSZ, CFG_ILRAMADDR, CFG_DLRAMEN,
                  CFG_DLRAMSZ, CFG_DLRAMADDR, CFG_MMUEN, CFG_ITLBNUM, CFG_DTLBNUM, CFG_TLB_TYPE, CFG_TLB_REP,
                  CFG_LDDEL, disas, CFG_ITBSZ, CFG_PWD, CFG_SVT, CFG_RSTADDR, CFG_NCPU_TILE-1,
                  CFG_DFIXED, CFG_SCAN, CFG_MMU_PAGE, CFG_BP)
-    port map (clk_feedthru, cpurstn, ahbmi, ahbmo(this_cpu_id), ahbsi, ahbso, dflush,
+    port map (clk_feedthru, cpurstn, this_cpu_id, ahbmi, ahbmo(0), ahbsi, ahbso, dflush,
               irqi, irqo_int, dbgi, dbgo);
 
   dbgi <= dbgi_none;
@@ -813,7 +889,6 @@ begin
     -- TODO: fix irq delivery and move everything into wrapper
     ariane_axi_wrap_1: ariane_axi_wrap
       generic map (
-        HART_ID          => this_cpu_id_lv,
         NMST             => 2,
         NSLV             => 5,
         ROMBase          => X"0000_0000_0001_0000",
@@ -830,6 +905,7 @@ begin
       port map (
         clk         => clk_feedthru,
         rstn        => cpurstn,
+        HART_ID     => this_cpu_id_lv,
         irq         => irq,
         timer_irq   => timer_irq,
         ipi         => ipi,
@@ -871,8 +947,6 @@ begin
         tech             => CFG_FABTECH,
         hindex           => this_remote_ahb_slv_en,
         hconfig          => cpu_tile_fixed_ahbso_hconfig,
-        local_y          => this_local_y,
-        local_x          => this_local_x,
         mem_hindex       => ddr_hindex(0),
         mem_num          => CFG_NMEM_TILE,
         mem_info         => tile_mem_list,
@@ -881,8 +955,10 @@ begin
         retarget_for_dma => 0,
         dma_length       => CFG_DLINE)
       port map (
-        rst                        => rst,
+        rst                        => cleanrstn,
         clk                        => clk_feedthru,
+        local_y                    => this_local_y,
+        local_x                    => this_local_x,
         ahbsi                      => ahbsi,
         ahbso                      => noc_ahbso,
         dma_selected               => '0',
@@ -911,8 +987,6 @@ begin
         tech             => CFG_FABTECH,
         hindex           => this_remote_ahb_slv_en,
         hconfig          => cpu_tile_fixed_ahbso_hconfig,
-        local_y          => this_local_y,
-        local_x          => this_local_x,
         mem_hindex       => ddr_hindex(0),
         mem_num          => CFG_NMEM_TILE,
         mem_info         => tile_mem_list,
@@ -921,8 +995,10 @@ begin
         retarget_for_dma => 0,
         dma_length       => CFG_DLINE)
       port map (
-        rst                        => rst,
+        rst                        => cleanrstn,
         clk                        => clk_feedthru,
+        local_y                    => this_local_y,
+        local_x                    => this_local_x,
         ahbsi                      => ahbsi,
         ahbso                      => noc_ahbso,
         dma_selected               => '0',
@@ -946,28 +1022,28 @@ begin
         sets          => CFG_L2_SETS,
         ways          => CFG_L2_WAYS,
         hindex_mst    => CFG_NCPU_TILE,
-        pindex        => this_l2_pindex,
+        pindex        => 1,
         pirq          => CFG_SLD_L2_CACHE_IRQ,
-        pconfig       => this_l2_pconfig,
-        local_y       => this_local_y,
-        local_x       => this_local_x,
         mem_hindex    => ddr_hindex(0),
         mem_hconfig   => cpu_tile_mig7_hconfig,
         mem_num       => CFG_NMEM_TILE,
         mem_info      => tile_mem_list(0 to CFG_NMEM_TILE - 1),
         cache_y       => cache_y,
         cache_x       => cache_x,
-        cache_id      => this_cache_id,
         cache_tile_id => cache_tile_id)
       port map (
         rst                        => l2_rstn,
         clk                        => clk_feedthru,
+        local_y                    => this_local_y,
+        local_x                    => this_local_x,
+        pconfig                    => this_l2_pconfig,
+        cache_id                   => this_cache_id,
         ahbsi                      => ahbsi,
         ahbso                      => ahbso(ddr_hindex(0)),
         ahbmi                      => ahbmi,
         ahbmo                      => ahbmo(CFG_NCPU_TILE),
         apbi                       => noc_apbi,
-        apbo                       => noc_apbo(this_l2_pindex),
+        apbo                       => noc_apbo(1),
         flush                      => dflush,
         coherence_req_wrreq        => coherence_req_wrreq,
         coherence_req_data_in      => coherence_req_data_in,
@@ -992,8 +1068,6 @@ begin
       tech             => CFG_FABTECH,
       hindex           => slm_ahb_mask,
       hconfig          => cpu_tile_fixed_ahbso_hconfig,
-      local_y          => this_local_y,
-      local_x          => this_local_x,
       mem_hindex       => slm_hindex(0),
       mem_num          => CFG_NSLM_TILE,
       mem_info         => tile_slm_list,
@@ -1002,8 +1076,10 @@ begin
       retarget_for_dma => 0,
       dma_length       => CFG_DLINE)
     port map (
-      rst                        => rst,
+      rst                        => cleanrstn,
       clk                        => clk_feedthru,
+      local_y                    => this_local_y,
+      local_x                    => this_local_x,
       ahbsi                      => ahbsi,
       ahbso                      => noc_ahbso_2,
       dma_selected               => '0',
@@ -1036,8 +1112,6 @@ begin
         generic map (
           tech         => CFG_FABTECH,
           nmst         => 3,
-          local_y      => this_local_y,
-          local_x      => this_local_x,
           retarget_for_dma => 0,
           mem_axi_port => 1,
           mem_num      => CFG_NMEM_TILE,
@@ -1045,8 +1119,10 @@ begin
           slv_y        => tile_y(io_tile_id),
           slv_x        => tile_x(io_tile_id))
         port map (
-          rst                        => rst,
+          rst                        => cleanrstn,
           clk                        => clk_feedthru,
+          local_y                    => this_local_y,
+          local_x                    => this_local_x,
           mosi                       => mosi(0 to 2),
           somi                       => somi(0 to 2),
           coherence_req_wrreq        => coherence_req_wrreq,
@@ -1069,8 +1145,6 @@ begin
       generic map (
         tech         => CFG_FABTECH,
         nmst         => 1,
-        local_y      => this_local_y,
-        local_x      => this_local_x,
         retarget_for_dma => 0,
         mem_axi_port => 0,
         mem_num      => CFG_NSLM_TILE,
@@ -1078,8 +1152,10 @@ begin
         slv_y        => tile_y(io_tile_id),
         slv_x        => tile_x(io_tile_id))
       port map (
-        rst                        => rst,
+        rst                        => cleanrstn,
         clk                        => clk_feedthru,
+        local_y                    => this_local_y,
+        local_x                    => this_local_x,
         mosi                       => mosi(3 to 3),
         somi                       => somi(3 to 3),
         coherence_req_wrreq        => dma_snd_wrreq,
@@ -1105,17 +1181,17 @@ begin
       generic map (
         tech          => CFG_FABTECH,
         extra_clk_buf => this_extra_clk_buf,
-        pindex        => this_dvfs_pindex,
-        paddr         => this_dvfs_paddr,
-        pmask         => this_dvfs_pmask)
+        pindex        => 2)
       port map (
-        rst       => rst,
+        rst       => cleanrstn,
         clk       => clk_feedthru,
+        paddr     => this_dvfs_paddr,
+        pmask     => this_dvfs_pmask,
         refclk    => refclk,
         pllbypass => pllbypass,
         pllclk    => clk_feedthru,
         apbi      => noc_apbi,
-        apbo      => noc_apbo(this_dvfs_pindex),
+        apbo      => noc_apbo(2),
         acc_idle  => mon_dvfs_in.acc_idle,
         traffic   => mon_dvfs_in.traffic,
         burst     => mon_dvfs_in.burst,
@@ -1156,29 +1232,29 @@ begin
   mon_dvfs_int.burst    <= '0';
 
   mon_dvfs <= mon_dvfs_int;
-  
+
   noc1_mon_noc_vec <= noc1_mon_noc_vec_int;
   noc2_mon_noc_vec <= noc2_mon_noc_vec_int;
   noc3_mon_noc_vec <= noc3_mon_noc_vec_int;
   noc4_mon_noc_vec <= noc4_mon_noc_vec_int;
   noc5_mon_noc_vec <= noc5_mon_noc_vec_int;
   noc6_mon_noc_vec <= noc6_mon_noc_vec_int;
- 
+
   mon_noc(1) <= noc1_mon_noc_vec_int;
   mon_noc(2) <= noc2_mon_noc_vec_int;
   mon_noc(3) <= noc3_mon_noc_vec_int;
   mon_noc(4) <= noc4_mon_noc_vec_int;
   mon_noc(5) <= noc5_mon_noc_vec_int;
   mon_noc(6) <= noc6_mon_noc_vec_int;
-  
+
   -- Memory mapped registers
   cpu_tile_csr : esp_tile_csr
     generic map(
-      pindex  => this_csr_pindex,
-      pconfig => this_csr_pconfig)
+      pindex  => 0)
     port map(
       clk => clk_feedthru,
       rstn => rst,
+      pconfig => this_csr_pconfig,
       mon_ddr => monitor_ddr_none,
       mon_mem => monitor_mem_none,
       mon_noc => mon_noc,
@@ -1186,8 +1262,9 @@ begin
       mon_llc => monitor_cache_none,
       mon_acc => monitor_acc_none,
       mon_dvfs => mon_dvfs_int,
-      apbi => noc_apbi, 
-      apbo => noc_apbo(this_csr_pindex)
+      config => config,
+      apbi => noc_apbi,
+      apbo => noc_apbo(0)
     );
 
   -- I/O bus proxy - remote memory-mapped I/O accessed from local masters
@@ -1195,8 +1272,6 @@ begin
     generic map (
       tech        => CFG_FABTECH,
       ncpu        => CFG_NCPU_TILE,
-      local_y     => this_local_y,
-      local_x     => this_local_x,
       apb_slv_en  => this_remote_apb_slv_en,
       apb_slv_cfg => fixed_apbo_pconfig,
       apb_slv_y   => apb_slv_y,
@@ -1204,6 +1279,8 @@ begin
     port map (
       rst                     => rst,
       clk                     => clk_feedthru,
+      local_y                 => this_local_y,
+      local_x                 => this_local_x,
       apbi                    => apbi,
       apbo                    => apbo,
       apb_req                 => apb_req,
@@ -1219,12 +1296,12 @@ begin
   misc_noc2apb_1 : misc_noc2apb
     generic map (
       tech         => CFG_FABTECH,
-      local_y      => this_local_y,
-      local_x      => this_local_x,
       local_apb_en => this_local_apb_en)
     port map (
       rst              => rst,
       clk              => clk_feedthru,
+      local_y          => this_local_y,
+      local_x          => this_local_x,
       apbi             => noc_apbi,
       apbo             => noc_apbo,
       pready           => '1',
@@ -1240,14 +1317,14 @@ begin
   cpu_irq2noc_1 : cpu_irq2noc
     generic map (
       tech    => CFG_FABTECH,
-      cpu_id  => this_cpu_id,
-      local_y => this_local_y,
-      local_x => this_local_x,
       irq_y   => tile_y(io_tile_id),
       irq_x   => tile_x(io_tile_id))
     port map (
-      rst                    => rst,
+      rst                    => cleanrstn,
       clk                    => clk_feedthru,
+      cpu_id                 => this_cpu_id,
+      local_y                => this_local_y,
+      local_x                => this_local_x,
       irqi                   => irqi,
       irqo                   => irqo,
       irqo_fifo_overflow     => open,
@@ -1356,5 +1433,5 @@ begin
       noc6_in_data               => noc6_input_port,
       noc6_in_void               => noc6_cpu_data_void_in,
       noc6_in_stop               => noc6_cpu_stop_out);
- 
+
 end;

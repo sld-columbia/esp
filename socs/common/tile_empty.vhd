@@ -35,9 +35,9 @@ use work.socmap.all;
 
 entity tile_empty is
   generic (
-    SIMULATION : boolean                              := false;
-    tile_id    : integer range 0 to CFG_TILES_NUM - 1 := 0;
-    HAS_SYNC   : integer range 0 to 1                 := 0);
+    SIMULATION   : boolean              := false;
+    ROUTER_PORTS : ports_vec            := "11111";
+    HAS_SYNC     : integer range 0 to 1 := 0);
   port (
     rst                : in  std_logic;
     sys_clk_int        : in  std_logic;
@@ -128,14 +128,11 @@ architecture rtl of tile_empty is
   component sync_noc_set
     generic (
       PORTS    : std_logic_vector(4 downto 0);
---    local_x   : std_logic_vector(2 downto 0);
---    local_y   : std_logic_vector(2 downto 0);
       HAS_SYNC : integer range 0 to 1 := 0);
     port (
       clk                : in  std_logic;
       clk_tile           : in  std_logic;
       rst                : in  std_logic;
---    CONST_PORTS   : in  std_logic_vector(4 downto 0);
       CONST_local_x      : in  std_logic_vector(2 downto 0);
       CONST_local_y      : in  std_logic_vector(2 downto 0);
       noc1_data_n_in     : in  noc_flit_type;
@@ -318,21 +315,40 @@ architecture rtl of tile_empty is
   signal noc5_mon_noc_vec_int : monitor_noc_type;
   signal noc6_mon_noc_vec_int : monitor_noc_type;
 
-  constant this_local_y     : local_yx        := tile_y(tile_id);
-  constant this_local_x     : local_yx        := tile_x(tile_id);
-  constant this_local_apb_en : std_logic_vector(0 to NAPBSLV - 1) := local_apb_mask(tile_id);
-  constant this_csr_pindex  : integer         := tile_csr_pindex(tile_id);
-  constant this_csr_pconfig : apb_config_type := fixed_apbo_pconfig(this_csr_pindex);
-  constant ROUTER_PORTS     : ports_vec       := set_router_ports(CFG_XLEN, CFG_YLEN, this_local_x, this_local_y);
+  -- Tile parameters
+  signal config : std_logic_vector(ESP_CSR_WIDTH - 1 downto 0);
+
+  signal tile_id : integer range 0 to CFG_TILES_NUM - 1;
+
+  signal this_csr_pindex        : integer range 0 to NAPBSLV - 1;
+  signal this_csr_pconfig       : apb_config_type;
+
+  signal this_local_y : local_yx;
+  signal this_local_x : local_yx;
+
+  constant this_local_apb_en : std_logic_vector(0 to NAPBSLV - 1) := (
+    0 => '1',                           -- CSRs
+    others => '0');
 
 begin
+
+  -----------------------------------------------------------------------------
+  -- Tile parameters
+  -----------------------------------------------------------------------------
+  tile_id                <= to_integer(unsigned(config(ESP_CSR_TILE_ID_MSB downto ESP_CSR_TILE_ID_LSB)));
+
+  this_csr_pindex        <= tile_csr_pindex(tile_id);
+  this_csr_pconfig       <= fixed_apbo_pconfig(this_csr_pindex);
+
+  this_local_y           <= tile_y(tile_id);
+  this_local_x           <= tile_x(tile_id);
 
   -----------------------------------------------------------------------------
   -- Buse
   -----------------------------------------------------------------------------
   -- Unused APB ports
   no_apb : for i in 0 to NAPBSLV - 1 generate
-    local_apb : if i /= this_csr_pindex generate
+    local_apb : if this_local_apb_en(i) = '0' generate
       apbo(i)      <= apb_none;
       apbo(i).pirq <= (others => '0');
     end generate local_apb;
@@ -346,12 +362,12 @@ begin
   misc_noc2apb_1 : misc_noc2apb
     generic map (
       tech         => CFG_FABTECH,
-      local_y      => this_local_y,
-      local_x      => this_local_x,
       local_apb_en => this_local_apb_en)
     port map (
       rst              => rst,
       clk              => sys_clk_int,
+      local_y          => this_local_y,
+      local_x          => this_local_x,
       apbi             => apbi,
       apbo             => apbo,
       pready           => '1',
@@ -389,11 +405,11 @@ begin
   --Memory mapped registers
  empty_tile_csr : esp_tile_csr
     generic map(
-      pindex  => this_csr_pindex,
-      pconfig => this_csr_pconfig)
+      pindex => 0)
    port map(
      clk => sys_clk_int,
      rstn => rst,
+     pconfig => this_csr_pconfig,
      mon_ddr => monitor_ddr_none,
      mon_mem => monitor_mem_none,
      mon_noc => mon_noc,
@@ -401,8 +417,9 @@ begin
      mon_llc => monitor_cache_none,
      mon_acc => monitor_acc_none,
      mon_dvfs => mon_dvfs_int,
+     config => config,
      apbi => apbi,
-     apbo => apbo(this_csr_pindex)
+     apbo => apbo(0)
    );
 
 
@@ -504,14 +521,11 @@ begin
   sync_noc_set_empty : sync_noc_set
     generic map (
       PORTS    => ROUTER_PORTS,
---     local_x  => this_local_x,
---     local_y  => this_local_y,
       HAS_SYNC => HAS_SYNC)
     port map (
       clk                => sys_clk_int,
       clk_tile           => sys_clk_int,
       rst                => rst,
---     CONST_PORTS        => ROUTER_PORTS,
       CONST_local_x      => this_local_x,
       CONST_local_y      => this_local_y,
       noc1_data_n_in     => noc1_data_n_in,

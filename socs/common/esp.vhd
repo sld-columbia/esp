@@ -434,9 +434,9 @@ begin
     empty_tile: if tile_type(i) = 0 generate
     tile_empty_i: tile_empty
       generic map (
-        SIMULATION => SIMULATION,
-        tile_id    => i,
-        HAS_SYNC   => CFG_HAS_SYNC)
+        SIMULATION   => SIMULATION,
+        ROUTER_PORTS => set_router_ports(CFG_XLEN, CFG_YLEN, tile_x(i), tile_y(i)),
+        HAS_SYNC     => CFG_HAS_SYNC)
       port map (
         rst                => rst,
 	sys_clk_int        => sys_clk_int(0),
@@ -528,9 +528,12 @@ begin
       tile_cpu_i: tile_cpu
 
       generic map (
-        SIMULATION => SIMULATION,
-        tile_id    => i,
-        HAS_SYNC   => CFG_HAS_SYNC)
+        SIMULATION         => SIMULATION,
+        this_has_dvfs      => tile_has_dvfs(i),
+        this_has_pll       => tile_has_pll(i),
+        this_extra_clk_buf => extra_clk_buf(i),
+        ROUTER_PORTS       => set_router_ports(CFG_XLEN, CFG_YLEN, tile_x(i), tile_y(i)),
+        HAS_SYNC           => CFG_HAS_SYNC)
       port map (
         rst                => rst_int,
         srst               => srst,
@@ -632,8 +635,15 @@ begin
       assert tile_device(i) /= 0 report "Undefined device ID for accelerator tile" severity error;
       tile_acc_i: tile_acc
       generic map (
-        tile_id  => i,
-        HAS_SYNC => CFG_HAS_SYNC )
+        this_hls_conf      => tile_design_point(i),
+        this_device        => tile_device(i),
+        this_irq_type      => tile_irq_type(i),
+        this_has_l2        => tile_has_l2(i),
+        this_has_dvfs      => tile_has_dvfs(i),
+        this_has_pll       => tile_has_pll(i),
+        this_extra_clk_buf => extra_clk_buf(i),
+        ROUTER_PORTS       => set_router_ports(CFG_XLEN, CFG_YLEN, tile_x(i), tile_y(i)),
+        HAS_SYNC           => CFG_HAS_SYNC)
       port map (
         rst                => rst_int,
         refclk             => refclk_int(i),
@@ -731,9 +741,9 @@ begin
     io_tile: if tile_type(i) = 3 generate
       tile_io_i : tile_io
       generic map (
-        SIMULATION => SIMULATION,
-        tile_id    => i,
-        HAS_SYNC   => CFG_HAS_SYNC)
+        SIMULATION   => SIMULATION,
+        ROUTER_PORTS => set_router_ports(CFG_XLEN, CFG_YLEN, tile_x(i), tile_y(i)),
+        HAS_SYNC     => CFG_HAS_SYNC)
       port map (
 	rst                => rst_int,
 	srst               => srst,
@@ -845,8 +855,8 @@ begin
     mem_tile: if tile_type(i) = 4 generate
       tile_mem_i: tile_mem
       generic map (
-        tile_id  => i,
-        HAS_SYNC => CFG_HAS_SYNC)
+        ROUTER_PORTS => set_router_ports(CFG_XLEN, CFG_YLEN, tile_x(i), tile_y(i)),
+        HAS_SYNC     => CFG_HAS_SYNC)
       port map (
 	rst                => rst_int,
 	srst               => srst,
@@ -942,8 +952,8 @@ begin
     slm_tile: if tile_type(i) = 5 generate
       tile_slm_i: tile_slm
         generic map (
-          tile_id => i,
-          HAS_SYNC   => CFG_HAS_SYNC)
+          ROUTER_PORTS => set_router_ports(CFG_XLEN, CFG_YLEN, tile_x(i), tile_y(i)),
+          HAS_SYNC     => CFG_HAS_SYNC)
         port map (
           rst                => rst_int,
           clk                => refclk_int(i),

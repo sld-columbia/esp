@@ -183,6 +183,7 @@ package libiu is
     port (
       clk     : in  std_ulogic;
       rstn    : in  std_ulogic;
+      cpuid   : in  integer range 0 to 15:= 0;
       holdn   : in  std_ulogic;
       ici     : out icache_in_type;
       ico     : in  icache_out_type;

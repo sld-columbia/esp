@@ -21,13 +21,12 @@ use work.nocpackage.all;
 entity misc_noc2apb is
   generic (
     tech         : integer := virtex7;
-    local_y      : local_yx;
-    local_x      : local_yx;
     local_apb_en : std_logic_vector(0 to NAPBSLV - 1));
-
   port (
     rst      : in  std_ulogic;
     clk      : in  std_ulogic;
+    local_y  : in  local_yx;
+    local_x  : in  local_yx;
     apbi     : out apb_slv_in_type;
     apbo     : in  apb_slv_out_vector;
     pready   : in  std_ulogic;          -- exteded support for APB3 slaves
@@ -151,6 +150,9 @@ begin  -- rtl
     -- Select slave (valid during rcv_address state)
     addr_v := apb_rcv_data_out(31 downto 0);
     waddr <= addr_v;
+    -- When no slave matches, select CSRs on pindex 0. This enables
+    -- setting tile_id after reset before all pconfig entries are
+    -- configured correctly
     psel_v := 0;
     pirq_v := (others => '0');
     for i in 0 to NAPBSLV - 1 loop

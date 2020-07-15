@@ -402,6 +402,7 @@ def print_libs(fp, std_only):
     fp.write("use work.amba.all;\n")
     fp.write("use work.sld_devices.all;\n")
     fp.write("use work.devices.all;\n")
+    fp.write("use work.sldcommon.all;\n")
     fp.write("use work.leon3.all;\n")
     fp.write("use work.nocpackage.all;\n")
     fp.write("use work.allcaches.all;\n")
@@ -492,7 +493,7 @@ def print_constants(fp, soc, esp_config):
   fp.write("  constant CFG_SLD_L2_CACHE_IRQ : integer := " + str(L2_CACHE_PIRQ) + ";\n\n")
 
 
-def print_mapping(fp, esp_config):
+def print_mapping(fp, soc, esp_config):
 
   #
   fp.write("  ------ Maximum number of slaves on both HP bus and I/O-bus\n")
@@ -535,14 +536,6 @@ def print_mapping(fp, esp_config):
   #
   fp.write("  -- Array of flags\n")
   fp.write("  type tile_flag_array is array (0 to CFG_TILES_NUM - 1) of integer range 0 to 1;\n")
-
-  #
-  fp.write("  -- Array for I/O-bus peripherals enable\n")
-  fp.write("  type tile_apb_enable_array is array (0 to CFG_TILES_NUM - 1) of std_logic_vector(0 to NAPBSLV - 1);\n")
-
-  #
-  fp.write("  -- Array for bus peripherals enable\n")
-  fp.write("  type tile_ahb_enable_array is array (0 to CFG_TILES_NUM - 1) of std_logic_vector(0 to NAHBSLV - 1);\n")
 
   fp.write("\n")
 
@@ -991,8 +984,10 @@ def print_mapping(fp, esp_config):
   fp.write("  -- Get CPU ID from tile ID\n")
   fp.write("  constant tile_cpu_id : attribute_vector(0 to CFG_TILES_NUM - 1) := (\n")
   for i in range(0, esp_config.ntiles):
-    fp.write("    " + str(i) + " => " + str(esp_config.tiles[i].cpu_id) + ",\n")
-  fp.write("    others => -1);\n\n")
+    t = esp_config.tiles[i]
+    if t.cpu_id != -1:
+      fp.write("    " + str(i) + " => " + str(t.cpu_id) + ",\n")
+  fp.write("    others => 0);\n\n")
 
   #
   fp.write("  -- Get tile ID from CPU ID\n")
@@ -1009,7 +1004,7 @@ def print_mapping(fp, esp_config):
     t = esp_config.tiles[i]
     if t.type == "cpu" and t.has_pll != 0:
       fp.write("    " + str(i) + " => " + str(esp_config.tiles[i].dvfs.idx) + ",\n")
-  fp.write("    others => -1);\n\n")
+  fp.write("    others => 0);\n\n")
 
   #
   fp.write("  -- Get L2 cache ID from tile ID\n")
@@ -1091,7 +1086,7 @@ def print_mapping(fp, esp_config):
     t = esp_config.tiles[i]
     if t.slm_id != -1:
       fp.write("    " + str(i) + " => " + str(t.slm_id) + ",\n")
-  fp.write("    others => -1);\n\n")
+  fp.write("    others => 0);\n\n")
 
   #
   fp.write("  -- Get tile ID from memory ID\n")
@@ -1109,7 +1104,7 @@ def print_mapping(fp, esp_config):
     t = esp_config.tiles[i]
     if t.mem_id != -1:
       fp.write("    " + str(i) + " => " + str(t.mem_id) + ",\n")
-  fp.write("    others => -1);\n\n")
+  fp.write("    others => 0);\n\n")
 
   #
   fp.write("  -- Get CSR pindex from tile ID\n")
@@ -1371,6 +1366,22 @@ def print_mapping(fp, esp_config):
         fp.write("    " + str(t.l2.idx) + " => " + str(i) + ",\n")
   fp.write("    others => 0);\n\n")
 
+  #
+  fp.write("  constant esp_init_sequence : attribute_vector(0 to CFG_TILES_NUM + CFG_NCPU_TILE - 1) := (\n")
+  fp.write("    ")
+  # Set tile_id to adjacent tiles starting from tile_io
+  for i in list(range(esp_config.tiles[misc_id].row, -1, -1)) + list(range(esp_config.tiles[misc_id].row + 1, soc.noc.rows)):
+    for j in list(range(esp_config.tiles[misc_id].col, -1, -1)) + list(range(esp_config.tiles[misc_id].col + 1, soc.noc.cols)):
+      tile_id = i * soc.noc.cols + j
+      if tile_id != misc_id:
+        fp.write(", ")
+      fp.write(str(tile_id))
+  # Mark tile_id configuration valid for CPU tiles. Set CPU0 last.
+  for i in range(esp_config.ntiles - 1, -1, -1):
+    t =  esp_config.tiles[i]
+    if t.type == "cpu":
+      fp.write(", " + str(i))
+  fp.write(");\n\n")
 
 
 def print_tiles(fp, esp_config):
@@ -1509,7 +1520,7 @@ def print_tiles(fp, esp_config):
 
   #
   fp.write("  -- Flag I/O-bus slaves that are remote\n")
-  fp.write("  -- Note that some components can be remote to a tile even if they are\n")
+  fp.write("  -- Note that all components appear as remote to CPU and I/O tiles even if\n")
   fp.write("  -- located in that tile. This is because local masters still have to go\n")
   fp.write("  -- through ESP proxies to address such devices (e.g. L2 cache and DVFS\n")
   fp.write("  -- controller in CPU tiles). This choice allows any master in the SoC to\n")
@@ -1517,135 +1528,72 @@ def print_tiles(fp, esp_config):
   fp.write("  -- must be able to access all DVFS controllers from other CPUS; another\n")
   fp.write("  -- example is the synchronized flush of all private caches, which is\n")
   fp.write("  -- initiated by a single CPU\n")
-  fp.write("  constant remote_apb_slv_mask : tile_apb_enable_array := (\n")
-  for i in range(0, esp_config.ntiles):
-    t = esp_config.tiles[i]
-    if t.type == "cpu" or t.type == "misc":
-      fp.write("    " + str(i) + " => (\n")
-    if t.type == "cpu":
-      fp.write("      1 => to_std_logic(CFG_UART1_ENABLE),\n")
-      fp.write("      2 => to_std_logic(CFG_IRQ3_ENABLE),\n")
-      fp.write("      3 => to_std_logic(CFG_GPT_ENABLE),\n")
-      fp.write("      13 => to_std_logic(CFG_SVGA_ENABLE),\n")
-      fp.write("      14 => to_std_logic(CFG_GRETH),\n")
-      if esp_config.has_sgmii:
-        fp.write("      15 => to_std_logic(CFG_GRETH),\n")
-    if t.type == "cpu" or t.type == "misc":
-      for j in range(0, esp_config.ndvfs):
-        dvfs = esp_config.dvfs_ctrls[j]
-        if dvfs.id != -1:
-          fp.write("      " + str(dvfs.idx) + " => '1',\n")
-      for j in range(0, esp_config.nl2):
-        l2 = esp_config.l2s[j]
-        if l2.idx != -1:
-          fp.write("      " + str(l2.idx) + " => '1',\n")
-      for j in range(0, esp_config.nllc):
-        llc = esp_config.llcs[j]
-        if llc.idx != -1:
-          fp.write("      " + str(llc.idx) + " => '1',\n")
-      for j in range(0, esp_config.ntiles):
-        if i != j or t.type != "misc":
-          fp.write("      " + str(CSR_PINDEX[j]) + " => '1',\n")
-      for j in range(0, esp_config.nacc):
-        acc = esp_config.accelerators[j]
-        fp.write("      " + str(acc.idx) + " => '1',\n")
-      fp.write("      others => '0'),\n")
-  fp.write("    others => (others => '0'));\n\n")
+  fp.write("  constant remote_apb_slv_mask_cpu : std_logic_vector(0 to NAPBSLV - 1) := (\n")
+  fp.write("    1 => to_std_logic(CFG_UART1_ENABLE),\n")
+  fp.write("    2 => to_std_logic(CFG_IRQ3_ENABLE),\n")
+  fp.write("    3 => to_std_logic(CFG_GPT_ENABLE),\n")
+  fp.write("    13 => to_std_logic(CFG_SVGA_ENABLE),\n")
+  fp.write("    14 => to_std_logic(CFG_GRETH),\n")
+  if esp_config.has_sgmii:
+    fp.write("    15 => to_std_logic(CFG_GRETH),\n")
+  for j in range(0, esp_config.ndvfs):
+    dvfs = esp_config.dvfs_ctrls[j]
+    if dvfs.id != -1:
+      fp.write("    " + str(dvfs.idx) + " => '1',\n")
+  for j in range(0, esp_config.nl2):
+    l2 = esp_config.l2s[j]
+    if l2.idx != -1:
+      fp.write("    " + str(l2.idx) + " => '1',\n")
+  for j in range(0, esp_config.nllc):
+    llc = esp_config.llcs[j]
+    if llc.idx != -1:
+      fp.write("    " + str(llc.idx) + " => '1',\n")
+  for j in range(0, esp_config.ntiles):
+    fp.write("    " + str(CSR_PINDEX[j]) + " => '1',\n")
+  for j in range(0, esp_config.nacc):
+    acc = esp_config.accelerators[j]
+    fp.write("    " + str(acc.idx) + " => '1',\n")
+  fp.write("    others => '0');\n\n")
 
-  #
-  fp.write("  constant local_apb_mask : tile_apb_enable_array := (\n")
-  for i in range(0, esp_config.ntiles):
-    t = esp_config.tiles[i]
-    if t.type == "acc":
-      acc = t.acc
-      fp.write("    " + str(i) + " => (\n")
-      fp.write("      " + str(CSR_PINDEX[i]) + " => '1',\n") # ESP Tile CSRs
-      fp.write("      " + str(acc.idx) + " => '1',\n") # Accelerator
-      fp.write("      others => '0'),\n")
-    elif t.type == "misc":
-      fp.write("    " + str(i) + " => (\n")
-      fp.write("      1  => '1',\n") # UART
-      fp.write("      2  => '1',\n") # IRQ
-      fp.write("      3  => '1',\n") # TIMER
-      fp.write("      4  => '1',\n") # ESPLink
-      fp.write("      13 => to_std_logic(CFG_SVGA_ENABLE),\n"),
-      fp.write("      14 => to_std_logic(CFG_GRETH),\n")
-      fp.write("      15 => to_std_logic(CFG_SGMII * CFG_GRETH),\n")
-      fp.write("      " + str(CSR_PINDEX[i]) + " => '1',\n") # ESP Tile CSRs
-      fp.write("      others => '0'),\n")
-    elif t.type == "mem":
-      fp.write("    " + str(i) + " => (\n")
-      if esp_config.coherence:
-        fp.write("      " + str(t.llc.idx) + " => '1',\n")
-      fp.write("      " + str(CSR_PINDEX[i]) + " => '1',\n") # ESP Tile CSRs
-      fp.write("      others => '0'),\n")
-    elif t.type == "cpu":
-      fp.write("    " + str(i) + " => (\n")
-      if t.has_pll != 0:
-        fp.write("      " + str(t.dvfs.idx) + " => '1',\n")
-      if t.has_l2 != 0:
-        fp.write("      " + str(t.l2.idx) + " => '1',\n")
-      fp.write("      " + str(CSR_PINDEX[i]) + " => '1',\n") # ESP Tile CSRs
-      fp.write("      others => '0'),\n")
-    else:
-      fp.write("    " + str(i) + " => (\n")
-      fp.write("      " + str(CSR_PINDEX[i]) + " => '1',\n") # ESP Tile CSRs
-      fp.write("      others => '0'),\n")
-  fp.write("    others => (others => '0'));\n\n")
 
-  #
-  fp.write("  -- Flag bus slaves that are local to each tile (either device or proxy)\n")
-  fp.write("  constant local_ahb_mask : tile_ahb_enable_array := (\n")
-  for i in range(0, esp_config.ntiles):
-    t = esp_config.tiles[i]
-    if t.type == "misc":
-      fp.write("    " + str(i) + " => (\n")
-      fp.write("      " + str(AHBROM_HINDEX) + "  => '1',\n")
-      fp.write("      " + str(AHB2APB_HINDEX) + "  => '1',\n")
-      if esp_config.cpu_arch == "ariane":
-        fp.write("      " + str(RISCV_CLINT_HINDEX) + "  => '1',\n")
-      fp.write("      " + str(FB_HINDEX) + "  => to_std_logic(CFG_SVGA_ENABLE),\n")
-      fp.write("      others => '0'),\n")
-    if t.type == "cpu":
-      fp.write("    " + str(i) + " => (\n")
-      fp.write("      " + str(AHB2APB_HINDEX) + "  => '1',\n")
-      fp.write("      " + str(DDR_HINDEX[0]) + " => to_std_logic(CFG_L2_ENABLE),\n")
-      fp.write("      others => '0'),\n")
-    if t.type == "mem":
-      fp.write("    " + str(i) + " => (\n")
-      fp.write("      " + str(DDR_HINDEX[t.mem_id]) + " => '1',\n")
-      fp.write("      others => '0'),\n")
-    if t.type == "slm":
-      index = SLM_HINDEX + t.slm_id
-      if index >= 12:
-        index = index + 1
-      fp.write("    " + str(i) + " => (\n")
-      fp.write("      " + str(index) + " => '1',\n")
-      fp.write("      others => '0'),\n")
-  fp.write("    others => (others => '0'));\n\n")
+  fp.write("  constant remote_apb_slv_mask_misc : std_logic_vector(0 to NAPBSLV - 1) := (\n")
+  for j in range(0, esp_config.ndvfs):
+    dvfs = esp_config.dvfs_ctrls[j]
+    if dvfs.id != -1:
+      fp.write("    " + str(dvfs.idx) + " => '1',\n")
+  for j in range(0, esp_config.nl2):
+    l2 = esp_config.l2s[j]
+    if l2.idx != -1:
+      fp.write("    " + str(l2.idx) + " => '1',\n")
+  for j in range(0, esp_config.nllc):
+    llc = esp_config.llcs[j]
+    if llc.idx != -1:
+      fp.write("    " + str(llc.idx) + " => '1',\n")
+  for j in range(0, esp_config.ntiles):
+    if esp_config.tiles[j].type != "misc":
+      fp.write("    " + str(CSR_PINDEX[j]) + " => '1',\n")
+  for j in range(0, esp_config.nacc):
+    acc = esp_config.accelerators[j]
+    fp.write("    " + str(acc.idx) + " => '1',\n")
+  fp.write("    others => '0');\n")
 
   #
   fp.write("  -- Flag bus slaves that are remote to each tile (request selects slv proxy)\n")
-  fp.write("  constant remote_ahb_mask : tile_ahb_enable_array := (\n")
-  for i in range(0, esp_config.ntiles):
-    t = esp_config.tiles[i]
-    if t.type == "misc":
-      fp.write("    " + str(i) + " => (\n")
-      for j in range(0, esp_config.nmem):
-        fp.write("      " + str(DDR_HINDEX[j]) + " => '1',\n")
-      for j in range(0, esp_config.nslm):
-        index = SLM_HINDEX + j
-        if index >= 12:
-          index = index + 1
-        fp.write("      " + str(index) + " => '1',\n")
-      fp.write("      others => '0'),\n")
-    if t.type == "cpu":
-      fp.write("    " + str(i) + " => (\n")
-      fp.write("      " + str(AHBROM_HINDEX) + "  => '1',\n")
-      fp.write("      " + str(DDR_HINDEX[0]) + " => to_std_logic(CFG_L2_DISABLE),\n")
-      fp.write("      " + str(FB_HINDEX) + "  => to_std_logic(CFG_SVGA_ENABLE),\n")
-      fp.write("      others => '0'),\n")
-  fp.write("    others => (others => '0'));\n\n")
+  fp.write("  constant remote_ahb_mask_misc : std_logic_vector(0 to NAHBSLV - 1) := (\n")
+  for j in range(0, esp_config.nmem):
+    fp.write("    " + str(DDR_HINDEX[j]) + " => '1',\n")
+  for j in range(0, esp_config.nslm):
+    index = SLM_HINDEX + j
+    if index >= 12:
+      index = index + 1
+    fp.write("    " + str(index) + " => '1',\n")
+  fp.write("    others => '0');\n\n")
+
+  fp.write("  constant remote_ahb_mask_cpu : std_logic_vector(0 to NAHBSLV - 1) := (\n")
+  fp.write("    " + str(AHBROM_HINDEX) + "  => '1',\n")
+  fp.write("    " + str(DDR_HINDEX[0]) + " => to_std_logic(CFG_L2_DISABLE),\n")
+  fp.write("    " + str(FB_HINDEX) + "  => to_std_logic(CFG_SVGA_ENABLE),\n")
+  fp.write("    others => '0');\n\n")
 
   fp.write("  constant slm_ahb_mask : std_logic_vector(0 to NAHBSLV - 1) := (\n")
   for j in range(0, esp_config.nslm):
@@ -1654,6 +1602,7 @@ def print_tiles(fp, esp_config):
       index = index + 1
     fp.write("    " + str(index) + " => '1',\n")
   fp.write("    others => '0');\n\n")
+
 
 def print_esplink_header(fp, esp_config, soc):
 
@@ -2158,7 +2107,7 @@ def create_socmap(esp_config, soc):
   print_libs(fp, False)
 
   fp.write("package socmap is\n\n")
-  print_mapping(fp, esp_config)
+  print_mapping(fp, soc, esp_config)
   print_tiles(fp, esp_config)
 
   fp.write("end socmap;\n")

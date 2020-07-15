@@ -7,6 +7,7 @@
 
 library ieee;
 use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
 use work.esp_global.all;
 use work.amba.all;
 use work.stdlib.all;
@@ -25,8 +26,15 @@ use work.grlib_config.all;
 
 entity tile_acc is
   generic (
-    tile_id : integer range 0 to CFG_TILES_NUM - 1 := 0;
-    HAS_SYNC : integer range 0 to 1 := 0 );
+    this_hls_conf      : hlscfg_t             := 0;
+    this_device        : devid_t              := 0;
+    this_irq_type      : integer              := 0;
+    this_has_l2        : integer range 0 to 1 := 0;
+    this_has_dvfs      : integer range 0 to 1 := 0;
+    this_has_pll       : integer range 0 to 1 := 0;
+    this_extra_clk_buf : integer range 0 to 1 := 0;
+    ROUTER_PORTS       : ports_vec            := "11111";
+    HAS_SYNC           : integer range 0 to 1 := 0);
   port (
     rst                : in  std_ulogic;
     refclk             : in  std_ulogic;
@@ -86,7 +94,7 @@ entity tile_acc is
     noc5_data_s_in     : in  misc_noc_flit_type;
     noc5_data_w_in     : in  misc_noc_flit_type;
     noc5_data_e_in     : in  misc_noc_flit_type;
-    noc5_data_void_in  : in  std_logic_vector(3 downto 0); --std_ulogic; 
+    noc5_data_void_in  : in  std_logic_vector(3 downto 0); --std_ulogic;
     noc5_stop_in       : in  std_logic_vector(3 downto 0); --std_ulogic;
     noc5_data_n_out    : out misc_noc_flit_type;
     noc5_data_s_out    : out misc_noc_flit_type;
@@ -126,14 +134,11 @@ architecture rtl of tile_acc is
   component sync_noc_set
      generic (
        PORTS     : std_logic_vector(4 downto 0);
---       local_x   : std_logic_vector(2 downto 0);
---       local_y   : std_logic_vector(2 downto 0);
        HAS_SYNC  : integer range 0 to 1 := 0);
      port (
         clk           : in  std_logic;
         clk_tile      : in  std_logic;
         rst           : in  std_logic;
---        CONST_PORTS   : in  std_logic_vector(4 downto 0);
         CONST_local_x : in  std_logic_vector(2 downto 0);
         CONST_local_y : in  std_logic_vector(2 downto 0);
         noc1_data_n_in     : in  noc_flit_type;
@@ -284,32 +289,33 @@ architecture rtl of tile_acc is
   signal apb_rcv_empty              : std_ulogic;
 
   -- Tile parameters
-  constant this_hls_conf       : hlscfg_t                           := tile_design_point(tile_id);
-  constant this_local_y        : local_yx                           := tile_y(tile_id);
-  constant this_local_x        : local_yx                           := tile_x(tile_id);
+  signal config : std_logic_vector(ESP_CSR_WIDTH - 1 downto 0);
+
+  signal tile_id : integer range 0 to CFG_TILES_NUM - 1;
+
+  signal this_pindex    : integer range 0 to NAPBSLV - 1;
+  signal this_paddr     : integer range 0 to 4095;
+  signal this_pmask     : integer range 0 to 4095;
+  signal this_paddr_ext : integer range 0 to 4095;
+  signal this_pmask_ext : integer range 0 to 4095;
+  signal this_pirq      : integer range 0 to NAHBIRQ - 1;
+
+  signal this_csr_pindex        : integer range 0 to NAPBSLV - 1;
+  signal this_csr_pconfig       : apb_config_type;
+
+  signal this_local_y : local_yx;
+  signal this_local_x : local_yx;
+
+  constant this_local_apb_en : std_logic_vector(0 to NAPBSLV - 1) := (
+    0 => '1',                           -- CSRs
+    1 => '1',                           -- ESP accelerator w/ DVFS controller
+    others => '0');
+
   constant io_y                : local_yx                           := tile_y(io_tile_id);
   constant io_x                : local_yx                           := tile_x(io_tile_id);
-  constant this_device         : devid_t                            := tile_device(tile_id);
-  constant this_pindex         : integer                            := tile_apb_idx(tile_id);
-  constant this_paddr          : integer                            := tile_apb_paddr(tile_id);
-  constant this_pmask          : integer                            := tile_apb_pmask(tile_id);
-  constant this_paddr_ext      : integer                            := tile_apb_paddr_ext(tile_id);
-  constant this_pmask_ext      : integer                            := tile_apb_pmask_ext(tile_id);
-  constant this_pirq           : integer                            := tile_apb_irq(tile_id);
-  constant this_irq_type       : integer                            := tile_irq_type(tile_id);
-  constant this_scatter_gather : integer range 0 to 1               := tile_scatter_gather(tile_id);
-  constant this_csr_pindex     : integer                            := tile_csr_pindex(tile_id);
-  constant this_csr_pconfig    : apb_config_type                    := fixed_apbo_pconfig(this_csr_pindex);
-  constant this_local_apb_mask : std_logic_vector(0 to NAPBSLV - 1) := local_apb_mask(tile_id);
-  constant this_has_l2         : integer                            := tile_has_l2(tile_id);
-  constant this_has_dvfs       : integer                            := tile_has_dvfs(tile_id);
-  constant this_has_pll        : integer                            := tile_has_pll(tile_id);
-  constant this_extra_clk_buf  : integer                            := extra_clk_buf(tile_id);
-  constant this_domain         : integer                            := tile_domain(tile_id);
-  constant ROUTER_PORTS        : ports_vec                          := set_router_ports(CFG_XLEN, CFG_YLEN, this_local_x, this_local_y);
---  constant ROUTER_PORTS        : ports_vec                          := set_router_ports(CFG_XLEN, CFG_YLEN);
+  constant this_scatter_gather : integer range 0 to 1               := CFG_SCATTER_GATHER;
 
- -- Noc signals
+   -- Noc signals
   signal noc1_stop_in_s         : std_logic_vector(4 downto 0);
   signal noc1_stop_out_s        : std_logic_vector(4 downto 0);
   signal noc1_acc_stop_in       : std_ulogic;
@@ -417,6 +423,24 @@ begin
   pllclk <= clk_feedthru;
 
   -----------------------------------------------------------------------------
+  -- Tile parameters
+  -----------------------------------------------------------------------------
+  tile_id          <= to_integer(unsigned(config(ESP_CSR_TILE_ID_MSB downto ESP_CSR_TILE_ID_LSB)));
+
+  this_pindex      <= tile_apb_idx(tile_id);
+  this_paddr       <= tile_apb_paddr(tile_id);
+  this_pmask       <= tile_apb_pmask(tile_id);
+  this_paddr_ext   <= tile_apb_paddr_ext(tile_id);
+  this_pmask_ext   <= tile_apb_pmask_ext(tile_id);
+  this_pirq        <= tile_apb_irq(tile_id);
+
+  this_csr_pindex  <= tile_csr_pindex(tile_id);
+  this_csr_pconfig <= fixed_apbo_pconfig(this_csr_pindex);
+
+  this_local_y     <= tile_y(tile_id);
+  this_local_x     <= tile_x(tile_id);
+
+  -----------------------------------------------------------------------------
   -- NOC Connections
   ----------------------------------------------------------------------------
   noc1_stop_in_s         <= noc1_acc_stop_in  & noc1_stop_in;
@@ -459,14 +483,11 @@ begin
  sync_noc_set_acc: sync_noc_set
   generic map (
      PORTS    => ROUTER_PORTS,
---     local_x  => this_local_x,
---     local_y  => this_local_y,
      HAS_SYNC => HAS_SYNC )
    port map (
      clk                => sys_clk_int,
      clk_tile           => clk_feedthru,
      rst                => rst,
---     CONST_PORTS        => ROUTER_PORTS,
      CONST_local_x      => this_local_x,
      CONST_local_y      => this_local_y,
      noc1_data_n_in     => noc1_data_n_in,
@@ -574,7 +595,7 @@ begin
 
   -- Using only one apbo signal
   no_apb : for i in 0 to NAPBSLV - 1 generate
-    local_apb : if i /= this_pindex and i /= this_csr_pindex generate
+    local_apb : if this_local_apb_en(i) = '0' generate
       apbo(i)      <= apb_none;
       apbo(i).pirq <= (others => '0');
     end generate local_apb;
@@ -583,7 +604,7 @@ begin
   -- Connect pready for APB3 accelerators
   pready_gen: process (pready, apbi) is
   begin  -- process pready_gen
-    if apbi.psel(this_pindex) = '1' then
+    if apbi.psel(1) = '1' then
       pready_noc <= pready;
     else
       pready_noc <= '1';
@@ -594,12 +615,12 @@ begin
   misc_noc2apb_1 : misc_noc2apb
     generic map (
       tech         => CFG_MEMTECH,
-      local_y      => this_local_y,
-      local_x      => this_local_x,
-      local_apb_en => this_local_apb_mask)
+      local_apb_en => this_local_apb_en)
     port map (
       rst              => rst,
       clk              => clk_feedthru,
+      local_y          => this_local_y,
+      local_x          => this_local_x,
       apbi             => apbi,
       apbo             => apbo,
       pready           => pready_noc,
@@ -611,19 +632,19 @@ begin
       apb_rcv_data_out => apb_rcv_data_out,
       apb_rcv_empty    => apb_rcv_empty
     );
- 
+
   --Monitors
   mon_dvfs  <= mon_dvfs_int;
   mon_cache <= mon_cache_int;
-  mon_acc   <= mon_acc_int; 
-  
+  mon_acc   <= mon_acc_int;
+
   noc1_mon_noc_vec <= noc1_mon_noc_vec_int;
   noc2_mon_noc_vec <= noc2_mon_noc_vec_int;
   noc3_mon_noc_vec <= noc3_mon_noc_vec_int;
   noc4_mon_noc_vec <= noc4_mon_noc_vec_int;
   noc5_mon_noc_vec <= noc5_mon_noc_vec_int;
   noc6_mon_noc_vec <= noc6_mon_noc_vec_int;
- 
+
   mon_noc(1) <= noc1_mon_noc_vec_int;
   mon_noc(2) <= noc2_mon_noc_vec_int;
   mon_noc(3) <= noc3_mon_noc_vec_int;
@@ -634,11 +655,11 @@ begin
   -- Memory mapped registers
   acc_tile_csr : esp_tile_csr
     generic map(
-      pindex  => this_csr_pindex,
-      pconfig => this_csr_pconfig)
+      pindex  => 0)
     port map(
       clk => clk_feedthru,
       rstn => rst,
+      pconfig => this_csr_pconfig,
       mon_ddr => monitor_ddr_none,
       mon_mem => monitor_mem_none,
       mon_noc => mon_noc,
@@ -646,8 +667,9 @@ begin
       mon_llc => monitor_cache_none,
       mon_acc => mon_acc_int,
       mon_dvfs => mon_dvfs_int,
-      apbi => apbi, 
-      apbo => apbo(this_csr_pindex)
+      config => config,
+      apbi => apbi,
+      apbo => apbo(0)
     );
 
   acc_tile_q_1 : acc_tile_q
@@ -728,6 +750,5 @@ begin
       noc6_in_data               => noc6_input_port,
       noc6_in_void               => noc6_acc_data_void_in,
       noc6_in_stop               => noc6_acc_stop_out);
- 
-end;
 
+end;

@@ -25,8 +25,6 @@ entity apb2noc is
   generic (
     tech        : integer := virtex7;
     ncpu        : integer := 4;
-    local_y     : local_yx := "000";
-    local_x     : local_yx := "000";
     apb_slv_cfg : apb_slv_config_vector;
     apb_slv_en  : std_logic_vector(0 to NAPBSLV - 1);
     apb_slv_y   : yx_vec(0 to NAPBSLV - 1);
@@ -34,6 +32,8 @@ entity apb2noc is
   port (
     rst      : in  std_ulogic;
     clk      : in  std_ulogic;
+    local_y     : in  local_yx;
+    local_x     : in  local_yx;
     apbi     : in  apb_slv_in_type;
     apbo     : out apb_slv_out_vector;
     apb_req  : in  std_ulogic;
@@ -86,7 +86,7 @@ begin  -- rtl
     apbo(i).prdata <= remote_apb_rcv_data_out(31 downto 0);
   end generate default_apbo;
 
-  make_packet: process (apbi)
+  make_packet: process (apbi, local_y, local_x)
     variable msg_type : noc_msg_type;
     variable header_v : misc_noc_flit_type;
     --pragma translate_off
@@ -153,7 +153,7 @@ begin  -- rtl
     remote_apb_rcv_rdreq <= '0';
 
     case apb_state is
-      when idle => if apb_req = '1' and apb_slv_en(pindex) = '1'then
+      when idle => if (apb_req and apbi.psel(pindex) and apb_slv_en(pindex)) = '1'then
                      sample_flits <= '1';
                      if apbi.pwrite = '1' then
                        apb_next <= wr_request_flit1;

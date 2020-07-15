@@ -35,6 +35,7 @@ package sld_devices is
   constant SLD_MST_PROXY : devid_t := 16#022#;
   constant SLD_SLM : devid_t := 16#023#;
   constant SLD_TILE_CSR : devid_t := 16#024#;
+  constant SLD_ESP_INIT : devid_t := 16#025#;
   -- <<devid>>
 
   constant VENDOR_SIFIVE : vendor_t := 16#EC#;
@@ -55,6 +56,7 @@ package sld_devices is
     SLD_MST_PROXY => "bus-master proxy               ",
     SLD_SLM       => "Shared-local memory            ",
     SLD_TILE_CSR  => "ESP tile ctrl & stats          ",
+    SLD_ESP_INIT  => "ESP self init module           ",
     -- <<ddesc>>
     others => "Unknown Device                 ");
 
