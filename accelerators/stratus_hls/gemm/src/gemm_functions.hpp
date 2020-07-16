@@ -83,6 +83,24 @@ void gemm::gemm_main(uint32_t length,
 // Utility functions
 //
 
+inline void gemm::calculate_config(uint32_t ninputs,
+				   uint32_t matrix_d1,
+				   uint32_t matrix_d2,
+				   uint32_t matrix_d3,
+				   uint32_t& size_matrix2,
+				   uint32_t& matrix_out,
+				   uint32_t& matrix_chk_in,
+				   uint32_t& matrix_rem_in,
+				   uint32_t& matrix_chk_out,
+				   uint32_t& matrix_rem_out)
+{
+    size_matrix2 = matrix_d2 * matrix_d3;
+    calculate_chunks(matrix_chk_in, matrix_rem_in, matrix_d2);
+
+    matrix_out = matrix_d1 * matrix_d3 * ninputs;
+    calculate_chunks(matrix_chk_out, matrix_rem_out, matrix_out);
+}
+
 inline void gemm::calculate_chunks(uint32_t  &matrix_chk,
 				   uint32_t &matrix_rem,
 				   uint32_t matrix_d2)
@@ -136,4 +154,32 @@ inline void gemm::store_compute_2_handshake()
     HLS_DEFINE_PROTOCOL("store-compute-2-handshake");
 
     output_done.req.req();
+}
+
+inline void gemm::load_compute_cfg_handshake()
+{
+    HLS_DEFINE_PROTOCOL("load-compute-cfg-handshake");
+
+    load_compute_cfg_done.req.req();
+}
+
+inline void gemm::compute_load_cfg_handshake()
+{
+    HLS_DEFINE_PROTOCOL("compute-load-cfg-handshake");
+
+    load_compute_cfg_done.ack.ack();
+}
+
+inline void gemm::load_store_cfg_handshake()
+{
+    HLS_DEFINE_PROTOCOL("load-store-cfg-handshake");
+
+    load_store_cfg_done.req.req();
+}
+
+inline void gemm::store_load_cfg_handshake()
+{
+    HLS_DEFINE_PROTOCOL("store-load-cfg-handshake");
+
+    load_store_cfg_done.ack.ack();
 }

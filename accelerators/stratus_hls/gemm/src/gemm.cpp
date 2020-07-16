@@ -20,9 +20,12 @@ void gemm::load_input()
     uint32_t matrix_d1;
     uint32_t matrix_d2;
     uint32_t matrix_d3;
+    uint32_t matrix_out;
     uint32_t size_matrix2;
-    uint32_t matrix_chk;
-    uint32_t matrix_rem;
+    uint32_t matrix_chk_in;
+    uint32_t matrix_rem_in;
+    uint32_t matrix_chk_out;
+    uint32_t matrix_rem_out;
     uint32_t ld_offset1;
     uint32_t ld_offset2;
     uint32_t transpose;
@@ -32,6 +35,8 @@ void gemm::load_input()
 	HLS_DEFINE_PROTOCOL("load-reset");
 
 	this->reset_load_input();
+	load_compute_cfg_done.req.reset_req();
+	load_store_cfg_done.req.reset_req();
 
 	// PLM memories reset
 
@@ -46,9 +51,12 @@ void gemm::load_input()
         matrix_d1 = 0;
         matrix_d2 = 0;
         matrix_d3 = 0;
+        matrix_out = 0;
 	size_matrix2 = 0;
-        matrix_chk = 0;
-        matrix_rem = 0;
+        matrix_chk_in = 0;
+        matrix_rem_in = 0;
+        matrix_chk_out = 0;
+        matrix_rem_out = 0;
         ld_offset1 = 0;
         ld_offset2 = 0;
 	transpose = 0;
@@ -72,11 +80,26 @@ void gemm::load_input()
         ld_offset1 = config.ld_offset1;
         ld_offset2 = config.ld_offset2;
 	transpose = config.transpose;
+    }
+
+    {
+	calculate_config(ninputs, matrix_d1, matrix_d2, matrix_d3,
+			 size_matrix2, matrix_out, matrix_chk_in, matrix_rem_in,
+			 matrix_chk_out, matrix_rem_out);
+
+	size_matrix2_sig.write(size_matrix2);
+	matrix_chk_in_sig.write(matrix_chk_in);
+	matrix_rem_in_sig.write(matrix_rem_in);
+	matrix_chk_out_sig.write(matrix_chk_out);
+	matrix_rem_out_sig.write(matrix_rem_out);
 
 	index_d1 = ld_offset1;
 	index_d2 = ld_offset2;
-	size_matrix2 = matrix_d2 * matrix_d3;
-	calculate_chunks(matrix_chk, matrix_rem, matrix_d2);
+	// size_matrix2 = matrix_d2 * matrix_d3;
+	// calculate_chunks(matrix_chk, matrix_rem, matrix_d2);
+
+	load_compute_cfg_handshake();
+	load_store_cfg_handshake();
     }
 
     // Load
@@ -94,15 +117,15 @@ void gemm::load_input()
 
 		uint32_t index_m2_dma = index_d2_tmp;
 
-		for (uint32_t chk = 0; chk < matrix_chk; ++chk)
+		for (uint32_t chk = 0; chk < matrix_chk_in; ++chk)
 		{
 		    //
 		    // 1. Load chunks of the first matrix in PLMs input0 and input1
 		    //
 
 		    // If true the next is the last (smaller) chunk
-		    if (chk == matrix_chk - 1 && matrix_rem != 0)
-			length = matrix_rem;
+		    if (chk == matrix_chk_in - 1 && matrix_rem_in != 0)
+			length = matrix_rem_in;
 
 		    {
 			HLS_DEFINE_PROTOCOL("load-matrix1-info");
@@ -208,13 +231,10 @@ void gemm::load_input()
 void gemm::store_output()
 {
     uint32_t i;
-    uint32_t ninputs;
     uint32_t index;
     uint32_t length;
-    uint32_t matrix_d1;
-    uint32_t matrix_d3;
-    uint32_t matrix_chk;
-    uint32_t matrix_rem;
+    uint32_t matrix_chk_out;
+    uint32_t matrix_rem_out;
     uint32_t matrix_out;
     uint32_t st_offset;
 
@@ -224,18 +244,16 @@ void gemm::store_output()
 
     	this->reset_store_output();
         output_done.req.reset_req();
+	load_store_cfg_done.ack.reset_ack();
 
     	// PLM memories reset
 
     	// User-defined reset code
 	i = 0;
-    	ninputs = 0;
         index = 0;
         length = 0;
-        matrix_d1 = 0;
-        matrix_d3 = 0;
-        matrix_chk = 0;
-        matrix_rem = 0;
+        matrix_chk_out = 0;
+        matrix_rem_out = 0;
         matrix_out = 0;
         st_offset = 0;
 
@@ -250,27 +268,25 @@ void gemm::store_output()
     	conf_info_t config = this->conf_info.read();
 
 	// User-defined config code
-	ninputs   = config.ninputs;
-        matrix_d1 = config.d1;
-        matrix_d3 = config.d3;
         st_offset = config.st_offset;
-    }
 
-    {
+	store_load_cfg_handshake();
+
         // Calculating number of outputs to generate
-        matrix_out = matrix_d1 * matrix_d3 * ninputs;
-        calculate_chunks(matrix_chk, matrix_rem, matrix_out);
+	matrix_out = matrix_out_sig.read();
+	matrix_chk_out = matrix_chk_out_sig.read();
+	matrix_rem_out = matrix_rem_out_sig.read();
     }
 
     // Store
     index = st_offset;
     length = DMA_CHUNK;
 
-    for (uint32_t chk = 0; chk < matrix_chk; ++chk)
+    for (uint32_t chk = 0; chk < matrix_chk_out; ++chk)
     {
 	// If true the next is the last (smaller) chunk
-	if (chk == matrix_chk - 1 && matrix_rem != 0)
-	    length = matrix_rem;
+	if (chk == matrix_chk_out - 1 && matrix_rem_out != 0)
+	    length = matrix_rem_out;
 
 	// Wait the compute_process
 	store_compute_handshake();
@@ -322,8 +338,8 @@ void gemm::compute_kernel()
     uint32_t matrix_d2;
     uint32_t matrix_d3;
     uint32_t do_relu;
-    uint32_t matrix_chk;
-    uint32_t matrix_rem;
+    uint32_t matrix_chk_in;
+    uint32_t matrix_rem_in;
     uint32_t store_count;
 
     // Reset
@@ -332,6 +348,7 @@ void gemm::compute_kernel()
 
     	this->reset_compute_kernel();
 	output_done.ack.reset_ack();
+	load_compute_cfg_done.ack.reset_ack();
 
     	// PLM memories reset
 
@@ -343,8 +360,8 @@ void gemm::compute_kernel()
         matrix_d2 = 0;
         matrix_d3 = 0;
 	do_relu = 0;
-        matrix_chk = 0;
-        matrix_rem = 0;
+        matrix_chk_in = 0;
+        matrix_rem_in = 0;
         store_count = 0;
 
     	wait();
@@ -360,11 +377,13 @@ void gemm::compute_kernel()
     	// User-defined config code
     	ninputs = config.ninputs;
         matrix_d1 = config.d1;
-        matrix_d2 = config.d2;
         matrix_d3 = config.d3;
 	do_relu = config.do_relu;
 
-	calculate_chunks(matrix_chk, matrix_rem, matrix_d2);
+	compute_load_cfg_handshake();
+
+	matrix_chk_in = matrix_chk_in_sig.read();
+	matrix_rem_in = matrix_rem_in_sig.read();
     }
 
     // Compute
@@ -386,11 +405,11 @@ void gemm::compute_kernel()
 
 		length = DMA_CHUNK;
 
-		for (uint32_t chk = 0; chk < matrix_chk; ++chk)
+		for (uint32_t chk = 0; chk < matrix_chk_in; ++chk)
 		{
 		    // If true the next is the last (smaller) chunk
-		    if (chk == matrix_chk - 1 && matrix_rem != 0)
-			length = matrix_rem;
+		    if (chk == matrix_chk_in - 1 && matrix_rem_in != 0)
+			length = matrix_rem_in;
 
 		    // Wait the load_input process
 		    compute_load_handshake();
