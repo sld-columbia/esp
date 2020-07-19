@@ -57,7 +57,7 @@ void remove_buf(void *buf){
 bool thread_is_p2p(esp_thread_info_t *thread)
 {
      switch (thread->type) {
-        // <<--esp-prepare-->>
+        // <<--esp-p2p-thread-->>
          case fftaccelerator :
             return (thread->desc.fftaccelerator_desc.esp.p2p_store 
                     || thread->desc.fftaccelerator_desc.esp.p2p_nsrcs);
