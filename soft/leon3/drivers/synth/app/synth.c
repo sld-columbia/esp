@@ -455,7 +455,7 @@ static void dump_results(FILE* out_file, accelerator_thread_info_t **thread_info
         else if (thread_info[t]->alloc_choice == CONTIG_ALLOC_LEAST_LOADED)
             fprintf(out_file,"lloaded,");
         
-        fprintf(out_file, "%d,", thread_info[t]->memsz);
+        fprintf(out_file, "%u,", thread_info[t]->memsz);
         phase_size += thread_info[t]->memsz; 
         
         fprintf(out_file,"%d,", cfg[t][0].desc.synth_desc.esp.ddr_node);
