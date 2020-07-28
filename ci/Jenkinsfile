@@ -1,5 +1,5 @@
 #!/usr/bin/groovy
-@Library('sld-lib-jenkins') _
+//@Library('sld-lib-jenkins') _
 
 pipeline {
     agent any
