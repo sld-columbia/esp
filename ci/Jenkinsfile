@@ -6,7 +6,9 @@ pipeline {
     // libraries {
     //     lib 'sld-lib-jenkins'
     // }
-
+    triggers {
+      githubPush()
+    }
     stages {
         stage('start') {
 	    steps {
