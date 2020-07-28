@@ -13,7 +13,8 @@ pipeline {
         stage('start') {
 	    steps {
             // send build started notifications
-            sendNotifications 'STARTED'
+            // sendNotifications 'STARTED'
+	    notifySlack 'STARTED'
 	    // slackSend (color: '#FFFF00', message: "STARTED: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' (${env.BUILD_URL})")
 	    }
         }
@@ -46,7 +47,8 @@ pipeline {
         }
         success {
             echo 'This will run only if successful'
-            slackSend (color: "good", message: "SUCCESSFUL: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' (${env.BUILD_URL})")
+	    notifySlack currentBuild.result
+            // slackSend (color: "good", message: "SUCCESSFUL: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' (${env.BUILD_URL})")
         }
         failure {
             echo 'This will run only if failed'
