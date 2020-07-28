@@ -57,11 +57,13 @@ pipeline {
         }
         unstable {
             echo 'This will run only if the run was marked as unstable'
-            slackSend (color: "warning", message: "UNSTABLE: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' (${env.BUILD_URL})")
+	    notifySlack currentBuild.result
+            // slackSend (color: "warning", message: "UNSTABLE: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' (${env.BUILD_URL})")
         }
         changed {
             echo 'This will run only if the state of the Pipeline has changed'
             echo 'For example, if the Pipeline was previously failing but is now successful'
+	    notifySlack currentBuild.result
         }
     }
 }
