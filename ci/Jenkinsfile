@@ -13,8 +13,8 @@ pipeline {
         stage('start') {
 	    steps {
             // send build started notifications
-            // sendNotifications 'STARTED'
-	    notifySlack 'STARTED'
+            sendNotifications 'STARTED'
+	    // notifySlack 'STARTED'
 	    // slackSend (color: '#FFFF00', message: "STARTED: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' (${env.BUILD_URL})")
 	    }
         }
@@ -52,7 +52,8 @@ pipeline {
         }
         failure {
             echo 'This will run only if failed'
-            slackSend (color: "danger", message: "FAILED: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' (${env.BUILD_URL})")
+	    notifySlack currentBuild.result
+            // slackSend (color: "danger", message: "FAILED: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' (${env.BUILD_URL})")
         }
         unstable {
             echo 'This will run only if the run was marked as unstable'
