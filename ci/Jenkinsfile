@@ -1,9 +1,18 @@
+#!/usr/bin/groovy
+@Library('sld-lib-jenkins') _
+
 pipeline {
     agent any
+    // libraries {
+    //     lib 'sld-lib-jenkins'
+    // }
+
     stages {
         stage('start') {
 	    steps {
-	        slackSend (color: '#FFFF00', message: "STARTED: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' (${env.BUILD_URL})")
+            // send build started notifications
+            sendNotifications 'STARTED'
+	    // slackSend (color: '#FFFF00', message: "STARTED: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' (${env.BUILD_URL})")
 	    }
         }
         stage('build') {
