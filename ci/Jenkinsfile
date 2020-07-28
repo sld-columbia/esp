@@ -1,6 +1,9 @@
 pipeline {
     agent any
     stages {
+        stage('start') {
+            slackSend (color: '#FFFF00', message: "STARTED: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' (${env.BUILD_URL})")
+        }
         stage('build') {
             steps {
                 sh 'echo "Hello World"'
@@ -30,12 +33,15 @@ pipeline {
         }
         success {
             echo 'This will run only if successful'
+            slackSend (color: "good", message: "SUCCESSFUL: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' (${env.BUILD_URL})")
         }
         failure {
             echo 'This will run only if failed'
+            slackSend (color: "danger", message: "FAILED: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' (${env.BUILD_URL})")
         }
         unstable {
             echo 'This will run only if the run was marked as unstable'
+            slackSend (color: "warning", message: "UNSTABLE: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' (${env.BUILD_URL})")
         }
         changed {
             echo 'This will run only if the state of the Pipeline has changed'
