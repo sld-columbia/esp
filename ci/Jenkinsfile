@@ -3,6 +3,7 @@
 //@Library('sld-lib-jenkins') _
 
 pipeline {
+
     agent {label 'worker_node_alba'}
 
     // libraries {
@@ -12,13 +13,16 @@ pipeline {
     triggers {
       githubPush()
     }
+
     stages {
+
         stage('start') {
 	    steps {
 		// send build started notifications
 		sendNotifications('STARTED')
 	    }
         }
+	
         stage('build') {
             steps {
                 sh 'echo "Hello World"'
@@ -28,6 +32,7 @@ pipeline {
                 '''
             }
         }
+
         stage('deploy') {
             steps {
                 retry(3) {
