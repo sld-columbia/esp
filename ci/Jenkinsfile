@@ -15,7 +15,7 @@ pipeline {
         stage('start') {
 	    steps {
             // send build started notifications
-            sendNotifications 'STARTED'
+            sendNotifications 'STARTED' currentBuild.durationString
 	    }
         }
         stage('build') {
@@ -44,7 +44,7 @@ pipeline {
     post {
         always {
             echo 'The run completed.'
-	    sendNotifications currentBuild.result
+	    sendNotifications currentBuild.result currentBuild.durationString
         }
         success {
             echo 'Success: the run succeeded.'
