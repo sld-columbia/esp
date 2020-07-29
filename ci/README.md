@@ -1,5 +1,11 @@
 # ESP Continuous Integration (CI)
 
+## Overview
+
+* Jenkins project type: GitHub organization. This same project can be
+  extended to work on any of the GitHub repositories of the SLD Group
+  at Columbia.
+
 ## Sources
 
 * **General**
