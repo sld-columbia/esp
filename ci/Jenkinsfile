@@ -53,10 +53,10 @@ pipeline {
             echo 'Failure: the run failed.'
         }
 	aborted {
-	    echo 'Aborted: the run was "aborted", usually due to the Pipeline being manually aborted.'
+	    echo 'Aborted: the run was aborted, usually due to the Pipeline being manually aborted.'
 	}
         unstable {
-            echo 'Unstable: run has an "unstable" status, usually caused by test failures, code violations, etc...'
+            echo 'Unstable: run has an unstable status, usually caused by test failures, code violations, etc...'
         }
         changed {
 	    echo 'Changed: the run has a different completion status as compared to the previous run.'
@@ -64,7 +64,7 @@ pipeline {
 		echo 'Fixed: the run is successful and the previous run failed or was unstable.'
 	    }
 	    regression {
-		echo 'Regression: run’s status is failure, unstable, or aborted and the previous run was successful.'
+		echo 'Regression: the run status is failure, unstable, or aborted and the previous run was successful.'
 	    }
         }
 	cleanup {
