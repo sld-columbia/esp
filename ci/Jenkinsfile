@@ -1,4 +1,5 @@
 #!/usr/bin/groovy
+
 //@Library('sld-lib-jenkins') _
 
 pipeline {
@@ -6,6 +7,7 @@ pipeline {
     // libraries {
     //     lib 'sld-lib-jenkins'
     // }
+
     triggers {
       githubPush()
     }
@@ -14,8 +16,6 @@ pipeline {
 	    steps {
             // send build started notifications
             sendNotifications 'STARTED'
-	    // notifySlack 'STARTED'
-	    // slackSend (color: '#FFFF00', message: "STARTED: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' (${env.BUILD_URL})")
 	    }
         }
         stage('build') {
@@ -43,27 +43,33 @@ pipeline {
 
     post {
         always {
-            echo 'This will always run'
+            echo 'The run completed. ${currentBuild.result}'
         }
         success {
-            echo 'This will run only if successful'
-	    sendNotifications currentBuild.result
-            // slackSend (color: "good", message: "SUCCESSFUL: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' (${env.BUILD_URL})")
+            echo 'Success: the run succeeded ${currentBuild.result}'
         }
         failure {
-            echo 'This will run only if failed'
-	    sendNotifications currentBuild.result
-            // slackSend (color: "danger", message: "FAILED: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' (${env.BUILD_URL})")
+            echo 'Failure: the run failed. ${currentBuild.result}'
         }
+	aborted {
+	    echo 'Aborted: the run was "aborted", usually due to the Pipeline being manually aborted. ${currentBuild.result}'
+	}
         unstable {
-            echo 'This will run only if the run was marked as unstable'
-	    sendNotifications currentBuild.result
-            // slackSend (color: "warning", message: "UNSTABLE: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' (${env.BUILD_URL})")
+            echo 'Unstable: run has an "unstable" status, usually caused by test failures, code violations, etc... ${currentBuild.result}'
         }
         changed {
-            echo 'This will run only if the state of the Pipeline has changed'
-            echo 'For example, if the Pipeline was previously failing but is now successful'
-	    sendNotifications currentBuild.result
+	    echo 'Changed: the run has a different completion status as compared to the previous run. ${currentBuild.result}'
+	    fixed {
+		echo 'Fixed: the run is successful and the previous run failed or was unstable. ${currentBuild.result}'
+	    }
+	    regression {
+		echo 'Regression: run’s status is failure, unstable, or aborted and the previous run was successful. ${currentBuild.result}'
+	    }
         }
+	cleanup {
+	    echo 'Cleanup: all other Post steps have been evaluated. ${currentBuild.result}'
+	}
+	
+	sendNotifications currentBuild.result
     }
 }
