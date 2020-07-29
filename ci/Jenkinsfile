@@ -4,6 +4,7 @@
 
 pipeline {
     agent {label 'worker_node_alba'}
+
     // libraries {
     //     lib 'sld-lib-jenkins'
     // }
