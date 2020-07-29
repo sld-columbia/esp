@@ -60,13 +60,13 @@ pipeline {
         }
         changed {
 	    echo 'Changed: the run has a different completion status as compared to the previous run.'
-	    fixed {
-		echo 'Fixed: the run is successful and the previous run failed or was unstable.'
-	    }
-	    regression {
-		echo 'Regression: the run status is failure, unstable, or aborted and the previous run was successful.'
-	    }
-        }
+	}
+	fixed {
+	    echo 'Fixed: the run is successful and the previous run failed or was unstable.'
+	}
+	regression {
+	    echo 'Regression: the run status is failure, unstable, or aborted and the previous run was successful.'
+	}
 	cleanup {
 	    echo 'Cleanup: all other Post steps have been evaluated.'
 	}
