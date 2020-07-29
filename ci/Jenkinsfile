@@ -37,7 +37,7 @@ pipeline {
                         sh 'echo "execute with timeout of 3 minutes"'
                     }
                 }
-	        }
+	    }
         }
     }
 
