@@ -43,32 +43,32 @@ pipeline {
 
     post {
         always {
-            echo 'The run completed. ${currentBuild.result}'
+            echo 'The run completed.'
 	    sendNotifications currentBuild.result
         }
         success {
-            echo 'Success: the run succeeded ${currentBuild.result}'
+            echo 'Success: the run succeeded.'
         }
         failure {
-            echo 'Failure: the run failed. ${currentBuild.result}'
+            echo 'Failure: the run failed.'
         }
 	aborted {
-	    echo 'Aborted: the run was "aborted", usually due to the Pipeline being manually aborted. ${currentBuild.result}'
+	    echo 'Aborted: the run was "aborted", usually due to the Pipeline being manually aborted.'
 	}
         unstable {
-            echo 'Unstable: run has an "unstable" status, usually caused by test failures, code violations, etc... ${currentBuild.result}'
+            echo 'Unstable: run has an "unstable" status, usually caused by test failures, code violations, etc...'
         }
         changed {
-	    echo 'Changed: the run has a different completion status as compared to the previous run. ${currentBuild.result}'
+	    echo 'Changed: the run has a different completion status as compared to the previous run.'
 	    fixed {
-		echo 'Fixed: the run is successful and the previous run failed or was unstable. ${currentBuild.result}'
+		echo 'Fixed: the run is successful and the previous run failed or was unstable.'
 	    }
 	    regression {
-		echo 'Regression: run’s status is failure, unstable, or aborted and the previous run was successful. ${currentBuild.result}'
+		echo 'Regression: run’s status is failure, unstable, or aborted and the previous run was successful.'
 	    }
         }
 	cleanup {
-	    echo 'Cleanup: all other Post steps have been evaluated. ${currentBuild.result}'
+	    echo 'Cleanup: all other Post steps have been evaluated.'
 	}
     }
 }
