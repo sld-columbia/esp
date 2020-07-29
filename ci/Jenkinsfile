@@ -44,6 +44,7 @@ pipeline {
     post {
         always {
             echo 'The run completed. ${currentBuild.result}'
+	    sendNotifications currentBuild.result
         }
         success {
             echo 'Success: the run succeeded ${currentBuild.result}'
@@ -69,7 +70,5 @@ pipeline {
 	cleanup {
 	    echo 'Cleanup: all other Post steps have been evaluated. ${currentBuild.result}'
 	}
-	
-	sendNotifications currentBuild.result
     }
 }
