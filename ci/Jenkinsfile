@@ -3,7 +3,7 @@
 //@Library('sld-lib-jenkins') _
 
 pipeline {
-    agent any
+    agent {label: 'worker_node_alba'}
     // libraries {
     //     lib 'sld-lib-jenkins'
     // }
