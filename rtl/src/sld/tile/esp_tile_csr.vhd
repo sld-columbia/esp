@@ -94,6 +94,8 @@ architecture rtl of esp_tile_csr is
     signal config_r : std_logic_vector(ESP_CSR_WIDTH - 1 downto 0);
     constant DEFAULT_CONFIG : std_logic_vector(ESP_CSR_WIDTH - 1 downto 0) := (others => '0');
 
+    signal csr_addr : integer range 0 to 31;
+
  begin
 
   apbo.prdata   <= readdata;
@@ -102,14 +104,13 @@ architecture rtl of esp_tile_csr is
   apbo.pconfig  <= pconfig;
 
   config <= config_r;
+  csr_addr <= conv_integer(apbi.paddr(6 downto 2));
 
-  rd_registers : process(apbi, count_value, ctrl_rst, window_size, window_count, config_r)
+  rd_registers : process(apbi, count_value, ctrl_rst, window_size, window_count, config_r, csr_addr)
     --TODO 
     variable addr : integer range 0 to 127;
-    variable csr_addr : integer range 0 to 127;
   begin 
     addr := conv_integer(apbi.paddr(8 downto 2));
-    csr_addr := conv_integer(apbi.paddr(6 downto 0));
     readdata <= (others => '0');
 
     wdata <= apbi.pwdata;
@@ -150,9 +151,7 @@ architecture rtl of esp_tile_csr is
   end process rd_registers;
   
   wr_registers : process(clk, rstn)
-    variable csr_addr : integer range 0 to 127;
   begin
-    csr_addr := conv_integer(apbi.paddr(6 downto 2));
     if rstn =  '0' then
         ctrl_rst <= (others => '0');
         window_size <= DEFAULT_WINDOW;

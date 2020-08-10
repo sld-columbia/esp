@@ -128,11 +128,11 @@ package sldcommon is
 
   constant ESP_CSR_WIDTH : integer := 9;
 
-  constant ESP_CSR_VALID_ADDR : integer range 0 to 127 := 0;
+  constant ESP_CSR_VALID_ADDR : integer range 0 to 31 := 0;
   constant ESP_CSR_VALID_LSB  : integer range 0 to ESP_CSR_WIDTH-1 := 0;
   constant ESP_CSR_VALID_MSB  : integer range 0 to ESP_CSR_WIDTH-1 := 0;
 
-  constant ESP_CSR_TILE_ID_ADDR : integer range 0 to 127 := 1;
+  constant ESP_CSR_TILE_ID_ADDR : integer range 0 to 31 := 1;
   constant ESP_CSR_TILE_ID_LSB  : integer range 0 to ESP_CSR_WIDTH-1 := 1;
   constant ESP_CSR_TILE_ID_MSB  : integer range 0 to ESP_CSR_WIDTH-1 := 8;
 
