@@ -10,6 +10,7 @@
 #include "gemm_debug_info.hpp"
 #include "esp_templates.hpp"
 #include "gemm_directives.hpp"
+#include "common.hpp"
 
 class gemm : public esp_accelerator_3P<DMA_WIDTH>
 {
@@ -64,22 +65,29 @@ public:
     // Functions
 
     // Calculate the number of chunks and remaining cols
-    inline void calculate_config(uint32_t ninputs,
-				 uint32_t matrix_d1,
-				 uint32_t matrix_d2,
-				 uint32_t matrix_d3,
+    inline void calculate_config(uint24_t ninputs,
+				 uint24_t matrix_d1,
+				 uint24_t matrix_d2,
+				 uint24_t matrix_d3,
+				 bool transpose,
+				 uint32_t& size_matrix1,
 				 uint32_t& size_matrix2,
-				 uint32_t& matrix_out,
-				 uint32_t& matrix_chk_in,
-				 uint32_t& matrix_rem_in,
-				 uint32_t& matrix_chk_out,
-				 uint32_t& matrix_rem_out);
-
-    inline void calculate_chunks(uint32_t &matrix_chk,
-				 uint32_t &matrix_rem, uint32_t matrix_d2);
+				 uint32_t& size_matrix_out,
+				 uint24_t& matrix_chk_in,
+				 uint16_t& matrix_rem_in1,
+				 uint16_t& matrix_rem_in2,
+				 uint24_t& matrix_chk_out,
+				 uint16_t& matrix_rem_out,
+				 uint8_t& load_cfg,
+				 uint16_t& loadable_rows,
+				 uint16_t& loadable_chunk,
+				 uint16_t& index_d1_incr);
+    inline void calculate_chunks(uint24_t &matrix_chk,
+				 uint16_t &matrix_rem, uint32_t matrix_d2);
 
     // Synchronize compute_kernel and store_output processes
-    inline void sync_compute_store(uint32_t &count);
+    inline void sync_compute_store(uint16_t &count, uint16_t loaded_rows,
+				   uint8_t load_cfg, uint16_t loadable_rows);
 
     // Handshake callable from compute_kernel
     inline void compute_store_2_handshake();
@@ -94,7 +102,7 @@ public:
     inline void store_load_cfg_handshake();
 
     // Matrix multiplication kernel
-    void gemm_main(uint32_t length,
+    void gemm_main(uint16_t length,
 		   PLM_WORD *row,
 		   PLM_WORD *col);
 
@@ -108,13 +116,18 @@ public:
     FPDATA accumulator[WORDS_PER_DMA];
 
     // Custom configuration signals
-    sc_signal<uint32_t> matrix_out_sig;
+    sc_signal<uint32_t> size_matrix_out_sig;
+    sc_signal<uint32_t> size_matrix1_sig;
     sc_signal<uint32_t> size_matrix2_sig;
-    sc_signal<uint32_t> matrix_chk_in_sig;
-    sc_signal<uint32_t> matrix_rem_in_sig;
-    sc_signal<uint32_t> matrix_chk_out_sig;
-    sc_signal<uint32_t> matrix_rem_out_sig;
-    // sc_signal<uint32_t> ;
+    sc_signal<uint24_t> matrix_chk_in_sig;
+    sc_signal<uint16_t> matrix_rem_in1_sig;
+    sc_signal<uint16_t> matrix_rem_in2_sig;
+    sc_signal<uint24_t> matrix_chk_out_sig;
+    sc_signal<uint16_t> matrix_rem_out_sig;
+    sc_signal<uint8_t> load_cfg_sig;
+    sc_signal<uint16_t> loadable_rows_sig;
+    sc_signal<uint16_t> loadable_chunk_sig;
+    sc_signal<uint16_t> index_d1_incr_sig;
 };
 
 #endif /* __GEMM_HPP__ */

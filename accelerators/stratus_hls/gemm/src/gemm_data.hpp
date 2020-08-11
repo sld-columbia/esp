@@ -29,4 +29,9 @@ typedef sc_dt::sc_uint<DMA_WIDTH> PLM_WORD;
 
 #endif
 
+// Custom SC data types
+typedef sc_dt::sc_uint<20> uint20_t;
+typedef sc_dt::sc_uint<24> uint24_t;
+typedef sc_dt::sc_uint<28> uint28_t;
+
 #endif // __GEMM_DATA_HPP__

@@ -9,39 +9,44 @@
 // Computational kernels
 //
 
-void gemm::gemm_main(uint32_t length,
+void gemm::gemm_main(uint16_t length,
 		     PLM_WORD *row,
 		     PLM_WORD *col)
 {
-    for (uint32_t k = 0; k < DMA_CHUNK / WORDS_PER_DMA / PARALLELISM; ++k)
+    for (uint16_t k = 0; k < DMA_CHUNK / WORDS_PER_DMA / PARALLELISM; ++k)
     {
         HLS_CONSTRAIN_LATENCY(0, HLS_ACHIEVABLE, "main-loop");
 
-	uint32_t plm_i_base = k * PARALLELISM;
+	// std::cout << "gemm_main k " << k << " length " << length << std::endl;
+
+	uint16_t plm_i_base = k * PARALLELISM;
 
 	if (plm_i_base >= length)
 	    break;
 
 #if (WORDS_PER_DMA == 1)
 
-	for (uint32_t m = 0; m < PARALLELISM; ++m)
+	for (uint8_t m = 0; m < PARALLELISM; ++m)
 	{
 	    HLS_UNROLL_LOOP(ON);
 
-	    uint32_t plm_i = plm_i_base + m;
+	    // std::cout << "gemm_main wordsperdma1 m " << m << std::endl;
+
+	    uint16_t plm_i = plm_i_base + m;
 	    FPDATA row_elem_1 = INT2FP(row[plm_i]);
 	    FPDATA col_elem_1 = INT2FP(col[plm_i]);
 
 	    if (plm_i < length) {
+		// std::cout << "multiply " << row_elem_1 << " , " << col_elem_1 << std::endl;
 		MULTIPLY(mult_out[0][m], row_elem_1, col_elem_1);
 	    }
 	}
 
-	for (uint32_t m = 0; m < PARALLELISM; ++m)
+	for (uint8_t m = 0; m < PARALLELISM; ++m)
 	{
 	    HLS_UNROLL_LOOP(ON);
 
-	    uint32_t plm_i = plm_i_base + m;
+	    uint16_t plm_i = plm_i_base + m;
 	    if (plm_i < length) {
 		ADD(accumulator[0], accumulator[0], mult_out[0][m]);
 	    }
@@ -49,11 +54,13 @@ void gemm::gemm_main(uint32_t length,
 	
 #elif (WORDS_PER_DMA == 2)
 
-	for (uint32_t m = 0; m < PARALLELISM; ++m)
+	for (uint8_t m = 0; m < PARALLELISM; ++m)
 	{
 	    HLS_UNROLL_LOOP(ON);
 
-	    uint32_t plm_i = plm_i_base + m;
+	    // std::cout << "gemm_main wordsperdma2 m " << m << std::endl;
+
+	    uint16_t plm_i = plm_i_base + m;
 	    FPDATA row_elem_1 = INT2FP(row[plm_i].range(WORD_SIZE-1, 0));	
 	    FPDATA col_elem_1 = INT2FP(col[plm_i].range(WORD_SIZE-1, 0));	
 	    FPDATA row_elem_2 = INT2FP(row[plm_i].range(2 * WORD_SIZE-1, WORD_SIZE)); 
@@ -65,11 +72,11 @@ void gemm::gemm_main(uint32_t length,
 	    }
 	}
 
-	for (uint32_t m = 0; m < PARALLELISM; ++m)
+	for (uint8_t m = 0; m < PARALLELISM; ++m)
 	{
 	    HLS_UNROLL_LOOP(ON);
 
-	    uint32_t plm_i = plm_i_base + m;
+	    uint16_t plm_i = plm_i_base + m;
 	    if (plm_i < length) {
 		ADD(accumulator[0], accumulator[0], mult_out[0][m]);
 		ADD(accumulator[1], accumulator[1], mult_out[1][m]);
@@ -83,26 +90,63 @@ void gemm::gemm_main(uint32_t length,
 // Utility functions
 //
 
-inline void gemm::calculate_config(uint32_t ninputs,
-				   uint32_t matrix_d1,
-				   uint32_t matrix_d2,
-				   uint32_t matrix_d3,
+inline void gemm::calculate_config(uint24_t ninputs,
+				   uint24_t matrix_d1,
+				   uint24_t matrix_d2,
+				   uint24_t matrix_d3,
+				   bool transpose,
+				   uint32_t& size_matrix1,
 				   uint32_t& size_matrix2,
-				   uint32_t& matrix_out,
-				   uint32_t& matrix_chk_in,
-				   uint32_t& matrix_rem_in,
-				   uint32_t& matrix_chk_out,
-				   uint32_t& matrix_rem_out)
+				   uint32_t& size_matrix_out,
+				   uint24_t& matrix_chk_in,
+				   uint16_t& matrix_rem_in1,
+				   uint16_t& matrix_rem_in2,
+				   uint24_t& matrix_chk_out,
+				   uint16_t& matrix_rem_out,
+				   uint8_t& load_cfg,
+				   uint16_t& loadable_rows,
+				   uint16_t& loadable_chunk,
+				   uint16_t& index_d1_incr)
 {
+    size_matrix1 = matrix_d1 * matrix_d2;
     size_matrix2 = matrix_d2 * matrix_d3;
-    calculate_chunks(matrix_chk_in, matrix_rem_in, matrix_d2);
+    size_matrix_out = matrix_d1 * matrix_d3 * ninputs;
 
-    matrix_out = matrix_d1 * matrix_d3 * ninputs;
-    calculate_chunks(matrix_chk_out, matrix_rem_out, matrix_out);
+    if (matrix_d2 > (DMA_CHUNK << WORDS_PER_DMA_LOG) ||
+	!transpose) {
+	load_cfg = LESS_THAN_ROW;
+	loadable_rows = 1;
+	loadable_chunk = (DMA_CHUNK << WORDS_PER_DMA_LOG);
+	calculate_chunks(matrix_chk_in, matrix_rem_in1, matrix_d2);
+	matrix_rem_in2 = matrix_rem_in1;
+	index_d1_incr = matrix_d2;
+    } else if (size_matrix2 > (DMA_CHUNK << WORDS_PER_DMA_LOG)) {
+	load_cfg = LESS_THAN_MATRIX2;
+	loadable_rows = (DMA_CHUNK << WORDS_PER_DMA_LOG) / matrix_d2;
+	if (loadable_rows != 1)
+	    loadable_rows = (loadable_rows >> 1) << 1;
+	loadable_chunk = loadable_rows * matrix_d2;
+	matrix_chk_in = 1;
+	matrix_rem_in1 = size_matrix1 % loadable_chunk;
+	matrix_rem_in2 = size_matrix2 % loadable_chunk;
+	index_d1_incr = loadable_chunk;
+    } else {
+	load_cfg = MORE_THAN_MATRIX2;
+	loadable_rows = matrix_d3;
+	loadable_chunk = size_matrix2;
+	matrix_chk_in = 1;
+	matrix_rem_in1 = size_matrix1;
+	matrix_rem_in2 = size_matrix2;
+	index_d1_incr = loadable_chunk;
+    }
+
+    index_d1_incr = index_d1_incr >> WORDS_PER_DMA_LOG;
+
+    calculate_chunks(matrix_chk_out, matrix_rem_out, size_matrix_out);
 }
 
-inline void gemm::calculate_chunks(uint32_t  &matrix_chk,
-				   uint32_t &matrix_rem,
+inline void gemm::calculate_chunks(uint24_t  &matrix_chk,
+				   uint16_t &matrix_rem,
 				   uint32_t matrix_d2)
 {
      uint32_t matrix_mul;
@@ -124,20 +168,34 @@ inline void gemm::calculate_chunks(uint32_t  &matrix_chk,
     }
 }
 
-inline void gemm::sync_compute_store(uint32_t &count)
+inline void gemm::sync_compute_store(uint16_t &count, uint16_t loaded_rows,
+				     uint8_t load_cfg, uint16_t loadable_rows)
 {
-    {
-        ++count;
+    ++count;
 
-        if (count >= (DMA_CHUNK >> WORDS_PER_DMA_LOG))
-        {
+    if (load_cfg == LESS_THAN_MATRIX2 && loadable_rows != 1) {
+	if (count == (loaded_rows >> WORDS_PER_DMA_LOG)) {
             count = 0;
-
+	    // ESP_REPORT_INFO("COMPUTE2: before store hs %u", count);
             // Call the store_output process
             compute_store_handshake();
-
+	    // ESP_REPORT_INFO("COMPUTE2: after store hs %u", count);
+	    // ESP_REPORT_INFO("COMPUTE2: before store hs2 %u", count);
             // Wait for the store_output process
             compute_store_2_handshake();
+	    // ESP_REPORT_INFO("COMPUTE2: after store hs2 %u", count);
+	}
+    } else {
+        if (count == (DMA_CHUNK >> WORDS_PER_DMA_LOG)) {
+            count = 0;
+	    // ESP_REPORT_INFO("COMPUTE: before store hs");
+            // Call the store_output process
+            compute_store_handshake();
+	    // ESP_REPORT_INFO("COMPUTE: after store hs");
+	    // ESP_REPORT_INFO("COMPUTE: before store hs2");
+            // Wait for the store_output process
+            compute_store_2_handshake();
+	    // ESP_REPORT_INFO("COMPUTE: after store hs2");
         }
     }
 }

@@ -11,7 +11,16 @@
 
 #if (DMA_WIDTH == 32)
 
-#if (DMA_CHUNK == 128)
+#if (DMA_CHUNK == 8)
+
+// define differently depending on chunk size
+#define HLS_MAP_IN0 HLS_MAP_TO_MEMORY(input0, "plm_w32_chk128_1w1r")
+#define HLS_MAP_IN1 HLS_MAP_TO_MEMORY(input1, "plm_w32_chk128_1w1r")
+#define HLS_MAP_IN2 HLS_MAP_TO_MEMORY(input2, "plm_w32_chk128_1w1r")
+#define HLS_MAP_IN3 HLS_MAP_TO_MEMORY(input3, "plm_w32_chk128_1w1r")
+#define HLS_MAP_OUT HLS_MAP_TO_MEMORY(output, "plm_w32_chk128_1w1r")
+
+#elif (DMA_CHUNK == 128)
 
 // define differently depending on chunk size
 #define HLS_MAP_IN0 HLS_MAP_TO_MEMORY(input0, "plm_w32_chk128_1w1r")
@@ -55,7 +64,16 @@
 
 #elif (DMA_WIDTH == 64)
 
-#if (DMA_CHUNK == 128)
+#if (DMA_CHUNK == 8)
+
+// define differently depending on chunk size
+#define HLS_MAP_IN0 HLS_MAP_TO_MEMORY(input0, "plm_w64_chk128_1w1r")
+#define HLS_MAP_IN1 HLS_MAP_TO_MEMORY(input1, "plm_w64_chk128_1w1r")
+#define HLS_MAP_IN2 HLS_MAP_TO_MEMORY(input2, "plm_w64_chk128_1w1r")
+#define HLS_MAP_IN3 HLS_MAP_TO_MEMORY(input3, "plm_w64_chk128_1w1r")
+#define HLS_MAP_OUT HLS_MAP_TO_MEMORY(output, "plm_w64_chk128_1w1r")
+
+#elif (DMA_CHUNK == 128)
 
 // define differently depending on chunk size
 #define HLS_MAP_IN0 HLS_MAP_TO_MEMORY(input0, "plm_w64_chk128_1w1r")
@@ -124,6 +142,11 @@
 //
 // Macros
 //
+
+// Load configuration
+#define LESS_THAN_ROW 0
+#define LESS_THAN_MATRIX2 1
+#define MORE_THAN_MATRIX2 2
 
 // User defined constants
 #ifndef WORD_SIZE
