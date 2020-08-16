@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sld>
+  <accelerator name="cholesky_6x6" desc="Accelerator CHOLESKY_6X6" data_size="4" device_id="059" hls_tool="stratus_hls">
+    <param name="output_rows" desc="output_rows" />
+    <param name="input_rows" desc="input_rows" />
+  </accelerator>
+</sld>
