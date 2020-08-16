@@ -276,20 +276,25 @@ architecture rtl of acc_dma2noc is
   -----------------------------------------------------------------------------
   -- De-comment signals you wish to debug
   -----------------------------------------------------------------------------
-  -- attribute mark_debug : string;
+   attribute mark_debug : string;
 
+   attribute mark_debug of apbi    : signal is "true";
+   attribute mark_debug of apbo    : signal is "true";
   -- attribute mark_debug of sample    : signal is "true";
   -- attribute mark_debug of readdata  : signal is "true";
   -- attribute mark_debug of dvfs_apbo : signal is "true";
-  -- attribute mark_debug of irq      : signal is "true";
+   attribute mark_debug of irq      : signal is "true";
   -- attribute mark_debug of irqset   : signal is "true";
-  -- attribute mark_debug of irq_state: signal is "true";
+   attribute mark_debug of irq_state: signal is "true";
   -- attribute mark_debug of header                    : signal is "true";
   -- attribute mark_debug of payload_address: signal is "true";
   -- attribute mark_debug of payload_length    : signal is "true";
   -- attribute mark_debug of sample_flits                        : signal is "true";
-  -- attribute mark_debug of irq_header            : signal is "true";
-  -- attribute mark_debug of dma_state : signal is "true";
+   attribute mark_debug of irq_header                : signal is "true";
+   attribute mark_debug of interrupt_full            : signal is "true";
+   attribute mark_debug of interrupt_data_in         : signal is "true";
+   attribute mark_debug of interrupt_wrreq           : signal is "true";
+-- attribute mark_debug of dma_state : signal is "true";
   -- attribute mark_debug of status : signal is "true";
   -- attribute mark_debug of sample_status : signal is "true";
   -- attribute mark_debug of count                : signal is "true";
@@ -715,6 +720,7 @@ begin  -- rtl
     dma_rcv_delay <= '0';
     read_burst <= '0';
     write_burst <= '0';
+    burst <= '0';
 
     case dma_state is
       when idle =>
@@ -739,6 +745,7 @@ begin  -- rtl
         end if;
 
       when fully_coherent_request =>
+        burst <= '1';
         if msg = DMA_TO_DEV then
           coherent_dma_read <= '1';
           if coherent_dma_ready = '1' then
@@ -823,6 +830,7 @@ begin  -- rtl
         dma_next <= running;
 
       when rd_handshake =>
+        burst <= '1';
         if dma_snd_full_int = '0' or coherence = ACC_COH_FULL then
           if rd_request = '1' then
             rd_grant <= '1';
@@ -843,6 +851,7 @@ begin  -- rtl
         end if;
 
       when wr_handshake =>
+        burst <= '1';
         if dma_snd_full_int = '0' or coherence = ACC_COH_FULL then
           if wr_request = '1' then
             wr_grant <= '1';
@@ -871,6 +880,7 @@ begin  -- rtl
         end if;
 
       when wait_req_p2p =>
+        burst <= '1';
         if p2p_req_rcv_empty = '0' and dvfs_transient = '0' then
           p2p_req_rcv_rdreq <= '1';
           sample_flits <= '1';
@@ -878,6 +888,7 @@ begin  -- rtl
         end if;
 
       when send_header =>
+        burst <= '1';
         if dma_snd_full_int = '0' and dvfs_transient = '0' and msg /= RSP_P2P then
           dma_snd_data_in_int <= header_r;
           dma_snd_wrreq_int <= '1';
@@ -896,6 +907,7 @@ begin  -- rtl
         end if;
 
       when request_address =>
+        burst <= '1';
         if dma_snd_full_int = '0' and dvfs_transient = '0' then
           dma_snd_data_in_int <= payload_address_r;
           dma_snd_wrreq_int <= '1';
@@ -907,6 +919,7 @@ begin  -- rtl
         end if;
 
       when request_length =>
+        burst <= '1';
         if dma_snd_full_int = '0' and dvfs_transient = '0' then
           dma_snd_data_in_int <= payload_length_r;
           dma_snd_wrreq_int <= '1';
@@ -914,6 +927,7 @@ begin  -- rtl
         end if;
 
       when request_data =>
+        burst <= '1';
         if msg = RSP_P2P then
           dma_snd_delay <= p2p_rsp_snd_full;       -- for DVFS TRAFFIC policy
         else
@@ -943,6 +957,7 @@ begin  -- rtl
         end if;
 
       when reply_header =>
+        burst <= '1';
         dma_rcv_delay <= dma_rcv_empty_int;       -- for DVFS TRAFFIC policy
         if dma_rcv_empty_int = '0' and dvfs_transient = '0' then
           dma_rcv_rdreq_int <= '1';
@@ -950,6 +965,7 @@ begin  -- rtl
         end if;
 
       when reply_data =>
+        burst <= '1';
         dma_rcv_delay <= dma_rcv_empty_int;       -- for DVFS TRAFFIC policy
         if dma_rcv_empty_int = '0' and tlb_empty = '1' and dvfs_transient = '0' then
           dma_rcv_rdreq_int <= '1';
@@ -1143,7 +1159,6 @@ begin  -- rtl
   end generate dvfs_no_master;
 
   noc_delay <= dma_snd_delay or dma_rcv_delay;
-  burst <= read_burst or write_burst;
   acc_idle <= '1' when dma_state = idle and bankreg(CMD_REG)(CMD_BIT_START) = '0' else '0';
   mon_dvfs.acc_idle <= acc_idle;
   mon_dvfs.traffic <= noc_delay;

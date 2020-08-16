@@ -210,6 +210,66 @@ signal forwarded_tail, forwarding_tail, forwarding_head, forwarded_head, forward
 
 signal insert_lookahead_routing : std_logic_vector(4 downto 0);
 
+attribute keep : string;
+attribute keep of data_n_in	: signal is "true";
+attribute keep of data_s_in	: signal is "true";
+attribute keep of	data_w_in	: signal is "true";
+attribute keep of	data_e_in	: signal is "true";
+attribute keep of	data_p_in	: signal is "true";
+attribute keep of	data_void_in	: signal is "true";
+attribute keep of	stop_in		: signal is "true";
+attribute keep of	data_n_out	: signal is "true";
+attribute keep of	data_s_out	: signal is "true";
+attribute keep of	data_w_out	: signal is "true";
+attribute keep of	data_e_out	: signal is "true";
+attribute keep of	data_p_out	: signal is "true";
+attribute keep of data_void_out	: signal is "true";
+attribute keep of	stop_out		: signal is "true";
+attribute keep of	data_in		: signal is "true";
+attribute keep of	data_out		: signal is "true";
+attribute keep of	data_out_crossbar		: signal is "true";
+attribute keep of	fifo_head		: signal is "true";
+attribute keep of	last_flit		: signal is "true";
+attribute keep of	saved_routing_request		: signal is "true";
+attribute keep of	final_routing_request		: signal is "true";
+attribute keep of	routing_request		: signal is "true";
+attribute keep of	next_hop_routing		: signal is "true";
+attribute keep of	enhanc_routing_configuration		: signal is "true";
+attribute keep of transp_final_routing_request : signal is "true";
+attribute keep of grant_no_collision : signal is "true";
+attribute keep of grant_collision : signal is "true";
+attribute keep of saved_grant_collision : signal is "true";
+attribute keep of saved_grant_no_collision : signal is "true";
+attribute keep of routing_configuration : signal is "true";
+attribute keep of saved_routing_configuration : signal is "true";
+attribute keep of rd_fifo : signal is "true";
+attribute keep of routing_clr : signal is "true";
+attribute keep of rd_fifo_output : signal is "true";
+attribute keep of state : signal is "true";
+attribute keep of new_state : signal is "true";
+attribute keep of in_unvalid_flit : signal is "true";
+attribute keep of out_unvalid_flit : signal is "true";
+attribute keep of rd_fifo_or : signal is "true";
+attribute keep of full : signal is "true";
+attribute keep of empty : signal is "true";
+attribute keep of wr_fifo : signal is "true";
+attribute keep of shift_priority : signal is "true";
+attribute keep of update_priority : signal is "true";
+attribute keep of lock_priority : signal is "true";
+attribute keep of data_void_in_d : signal is "true";
+attribute keep of stop_out_i : signal is "true";
+attribute keep of data_void_out_i : signal is "true";
+attribute keep of valid_no_collision : signal is "true";
+attribute keep of valid_collision : signal is "true";
+attribute keep of last_flit_tail : signal is "true";
+attribute keep of credits : signal is "true";
+attribute keep of forwarded_tail : signal is "true";
+attribute keep of forwarding_tail : signal is "true";
+attribute keep of forwarding_head : signal is "true";
+attribute keep of forwarded_head : signal is "true";
+attribute keep of forwarding_under_progress : signal is "true";
+attribute keep of insert_lookahead_routing : signal is "true";
+
 begin
 
 data_in(0) <= data_n_in;
