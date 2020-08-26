@@ -386,10 +386,13 @@ begin  -- rtl
                        else
                          noc5_out_stop <= '1';
                        end if;
-                     elsif (noc5_msg_type = IRQ_MSG and noc5_preamble = PREAMBLE_HEADER) then
+                     elsif (noc5_msg_type = IRQ_MSG and (noc5_preamble = PREAMBLE_HEADER or noc5_preamble = PREAMBLE_1FLIT)) then
                        if remote_irq_full = '0' then
                          remote_irq_wrreq <= '1';
-                         noc5_fifos_next <= packet_irq;
+                         if noc5_preamble = PREAMBLE_HEADER then
+                           -- Leon3 needs more than single-flit packet
+                           noc5_fifos_next <= packet_irq;
+                         end if;
                        else
                          noc5_out_stop <= '1';
                        end if;

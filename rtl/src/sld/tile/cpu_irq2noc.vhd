@@ -17,12 +17,13 @@ use work.nocpackage.all;
 
 use work.coretypes.all;
 
+use work.esp_global.all;
+
 entity cpu_irq2noc is
   generic (
-    tech    : integer := virtex7;
-    irq_y   : local_yx;
-    irq_x   : local_yx);
-
+    tech  : integer := virtex7;
+    irq_y : local_yx;
+    irq_x : local_yx);
   port (
     rst : in std_ulogic;
     clk : in std_ulogic;
@@ -216,36 +217,55 @@ begin  -- rtl
   end process rst_int_gen;
 
   -- Sample interrupt to CPU
-  process (clk)
-    variable irqi_v : l3_irq_in_type;
-  begin  -- process
-    if clk'event and clk = '1' then  -- rising clock edge
-      irqi_v.irl        := irqi_noc.irl;
-      irqi_v.resume     := irqi_noc.resume;
-      irqi_v.rstvec     := irqi_noc.rstvec;
-      irqi_v.rstrun     := irqi_noc.rstrun;
-      irqi_v.forceerr   := irqi_noc.forceerr;
-      irqi_v.pwdsetaddr := irqi_noc.pwdsetaddr;
-      irqi_v.index      := irqi_noc.index;
+  leon3_irqi_gen: if GLOB_CPU_ARCH = leon3 generate
+    process (clk)
+      variable irqi_v : l3_irq_in_type;
+    begin  -- process
+      if clk'event and clk = '1' then  -- rising clock edge
+        irqi_v.irl        := irqi_noc.irl;
+        irqi_v.resume     := irqi_noc.resume;
+        irqi_v.rstvec     := irqi_noc.rstvec;
+        irqi_v.rstrun     := irqi_noc.rstrun;
+        irqi_v.forceerr   := irqi_noc.forceerr;
+        irqi_v.pwdsetaddr := irqi_noc.pwdsetaddr;
+        irqi_v.index      := irqi_noc.index;
 
-      if sample_irq_1 = '1' then
-        -- Save partial IRQ request info (first flit)
-        irqi_reg <= irqi_v;
-      end if;
+        if sample_irq_1 = '1' then
+          -- Save partial IRQ request info (first flit)
+          irqi_reg <= irqi_v;
+        end if;
 
-      if rst = '0' then
-        irqi             <= irq_in_none;
-      elsif sample_irq_2 = '1' then
-        -- Complete IRQ request info (second flit)
-        irqi_v            := irqi_reg;
-        irqi_v.pwdnewaddr := irqi_noc.pwdnewaddr;
-        irqi              <= irqi_v;
-      elsif irqo.intack = '1' then
-        -- When intack is asserted, previous irl should be cleared (TODO: check!)
-        irqi.irl <= (others => '0');
+        if rst = '0' then
+          irqi             <= irq_in_none;
+        elsif sample_irq_2 = '1' then
+          -- Complete IRQ request info (second flit)
+          irqi_v            := irqi_reg;
+          irqi_v.pwdnewaddr := irqi_noc.pwdnewaddr;
+          irqi              <= irqi_v;
+        elsif irqo.intack = '1' then
+          -- When intack is asserted, previous irl should be cleared (TODO: check!)
+          irqi.irl <= (others => '0');
+        end if;
       end if;
-    end if;
-  end process;
+    end process;
+  end generate leon3_irqi_gen;
+
+  geneirc_irqi_gen: if GLOB_CPU_ARCH /= leon3 generate
+    irqi <= irqi_reg;
+
+    process (clk, rst) is
+    begin  -- process
+      if rst = '0' then             -- asynchronous reset (active low)
+        irqi_reg <= irq_in_none;
+        -- RISC-V CLINT timer_irq is set high after reset
+        irqi_reg.irl(2) <= '1';
+      elsif clk'event and clk = '1' then  -- rising clock edge
+        if sample_irq_1 = '1' then
+          irqi_reg <= irqi_noc;
+        end if;
+      end if;
+    end process;
+  end generate geneirc_irqi_gen;
 
   -- Send interrupt acknowledge
   noc_irq_snd : process (irq_snd_state, remote_irq_ack_full, fifo_header,
@@ -261,7 +281,7 @@ begin  -- rtl
 
     case irq_snd_state is
       when idle =>
-        if fifo_empty /= '1' then
+        if fifo_empty /= '1' and GLOB_CPU_ARCH = leon3 then
           irq_snd_next <= irq_snd_header;
         end if;
 
@@ -318,7 +338,14 @@ begin  -- rtl
       when idle =>
         if remote_irq_empty = '0' then
           remote_irq_rdreq <= '1';
-          irq_rcv_next     <= irq_rcv_req_1;
+          if GLOB_CPU_ARCH = leon3 then
+            irq_rcv_next     <= irq_rcv_req_1;
+          else
+            -- reserved field is 4 bits; reused for RISC-V -> {clint.ipi, clint.timer_irq, plic.irq}
+            irqi_noc.irl <= get_reserved_field(MISC_NOC_FLIT_SIZE, noc_flit_pad & remote_irq_data_out);
+            sample_irq_1 <= '1';
+            irq_rcv_next <= idle;
+          end if;
         end if;
 
       when irq_rcv_req_1 =>
@@ -350,7 +377,11 @@ begin  -- rtl
   process (clk, rst)
   begin  -- process
     if rst = '0' then                   -- asynchronous reset (active low)
-      irq_rcv_state <= reset_active;
+      if GLOB_CPU_ARCH = leon3 then
+        irq_rcv_state <= reset_active;
+      else
+        irq_rcv_state <= idle;
+      end if;
       irq_snd_state <= idle;
     elsif clk'event and clk = '1' then  -- rising clock edge
       irq_rcv_state <= irq_rcv_next;

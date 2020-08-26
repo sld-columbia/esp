@@ -531,9 +531,9 @@ package tile is
 
   component cpu_irq2noc is
     generic (
-      tech    : integer;
-      irq_y   : local_yx;
-      irq_x   : local_yx);
+      tech  : integer;
+      irq_y : local_yx;
+      irq_x : local_yx);
     port (
       rst                    : in  std_ulogic;
       clk                    : in  std_ulogic;
@@ -639,10 +639,10 @@ package tile is
 
   component misc_irq2noc is
     generic (
-      tech    : integer;
-      ncpu    : integer;
-      cpu_y   : yx_vec(0 to CFG_NCPU_TILE - 1);
-      cpu_x   : yx_vec(0 to CFG_NCPU_TILE - 1));
+      tech  : integer;
+      ncpu  : integer;
+      cpu_y : yx_vec(0 to CFG_NCPU_TILE - 1);
+      cpu_x : yx_vec(0 to CFG_NCPU_TILE - 1));
     port (
       rst                : in  std_ulogic;
       clk                : in  std_ulogic;

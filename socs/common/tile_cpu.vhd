@@ -48,10 +48,6 @@ entity tile_cpu is
     pllbypass          : in  std_ulogic;
     pllclk             : out std_ulogic;
     cpuerr             : out std_ulogic;
-    -- TODO: remove this; should use proxy
-    irq                : in  std_logic_vector(1 downto 0);
-    timer_irq          : in  std_ulogic;
-    ipi                : in  std_ulogic;
     -- NOC
     sys_clk_int        : in  std_logic;
     noc1_data_n_in     : in  noc_flit_type;
@@ -276,6 +272,12 @@ architecture rtl of tile_cpu is
   -- Interrupt controller
   signal irqi : l3_irq_in_type;
   signal irqo : l3_irq_out_type;
+
+  -- RISC-V PLIC/CLINT outputs
+  signal irq       : std_logic_vector(1 downto 0);
+  signal timer_irq : std_ulogic;
+  signal ipi       : std_ulogic;
+
 
   -- Queues
   signal coherence_req_wrreq        : std_ulogic;
@@ -890,7 +892,6 @@ begin
   -- Ariane
   ariane_cpu_gen: if GLOB_CPU_ARCH = ariane generate
 
-    -- TODO: fix irq delivery and move everything into wrapper
     ariane_axi_wrap_1: ariane_axi_wrap
       generic map (
         NMST             => 2,
@@ -929,6 +930,14 @@ begin
     -- exit() writes to this address right before completing the program
     -- Next instruction is a jump to current PC.
     cpuerr <= '1' when mosi(1).aw.addr = X"80001000" and mosi(1).aw.valid = '1' else '0';
+
+    -- RISC-V PLIC/CLINT outputs
+    irq       <= irqi.irl(1 downto 0);
+    timer_irq <= irqi.irl(2);
+    ipi       <= irqi.irl(3);
+
+    -- IRQ claim/ack occurs via memory-mapped registers
+    irqo <= irq_out_none;
 
   end generate ariane_cpu_gen;
 
@@ -1320,9 +1329,9 @@ begin
   -- Interrupt level acknowledge - remote interrupt controller
   cpu_irq2noc_1 : cpu_irq2noc
     generic map (
-      tech    => CFG_FABTECH,
-      irq_y   => tile_y(io_tile_id),
-      irq_x   => tile_x(io_tile_id))
+      tech  => CFG_FABTECH,
+      irq_y => tile_y(io_tile_id),
+      irq_x => tile_x(io_tile_id))
     port map (
       rst                    => cleanrstn,
       clk                    => clk_feedthru,

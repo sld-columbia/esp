@@ -58,11 +58,6 @@ entity tile_io is
     uart_txd           : out std_ulogic;
     uart_ctsn          : in  std_ulogic;
     uart_rtsn          : out std_ulogic;
-    --TODO: REMOVE THIS and use NoC proxies
-    irq                : out std_logic_vector(CFG_NCPU_TILE * 2 - 1 downto 0);
-    timer_irq          : out std_logic_vector(CFG_NCPU_TILE - 1 downto 0);
-    ipi                : out std_logic_vector(CFG_NCPU_TILE - 1 downto 0);
-    -- NOC
     sys_clk_int        : in  std_logic;
     noc1_data_n_in     : in  noc_flit_type;
     noc1_data_s_in     : in  noc_flit_type;
@@ -283,6 +278,10 @@ architecture rtl of tile_io is
   signal plic_pready        : std_ulogic;  -- PLIC APB3
   signal plic_pslverr       : std_ulogic;  -- PLIC APB3
   signal irq_sources        : std_logic_vector(29 downto 0);  -- PLIC0 interrupt lines
+  signal irq                : std_logic_vector(CFG_NCPU_TILE * 2 - 1 downto 0);
+  signal timer_irq          : std_logic_vector(CFG_NCPU_TILE - 1 downto 0);  --CLINT
+  signal ipi                : std_logic_vector(CFG_NCPU_TILE - 1 downto 0);  --CLINT
+
 
   -- UART
   signal u1i : uart_in_type;
@@ -948,7 +947,18 @@ begin
   riscv_plic_gen: if GLOB_CPU_ARCH = ariane generate
 
     x : for i in 0 to CFG_NCPU_TILE-1 generate
-      irqi(i).irl <= (others => '0');
+      riscv_irqinfo_proc : process (irq, timer_irq, ipi) is
+      begin  -- process riscv_irqinfo_gen
+        -- Use irq field to send timer IRQ
+        irqi(i).irl <= ipi & timer_irq & irq;
+        irqi(i).resume <= '0';
+        irqi(i).rstrun <= '0';
+        irqi(i).rstvec <= (others => '0');
+        irqi(i).index <= conv_std_logic_vector(i, 4);
+        irqi(i).pwdsetaddr <= '0';
+        irqi(i).pwdnewaddr <= (others => '0');
+        irqi(i).forceerr <= '0';
+      end process riscv_irqinfo_proc;
     end generate;
 
     riscv_plic0 : riscv_plic_apb_wrap
@@ -1326,10 +1336,10 @@ begin
 
   misc_irq2noc_1 : misc_irq2noc
     generic map (
-      tech    => CFG_FABTECH,
-      ncpu    => CFG_NCPU_TILE,
-      cpu_y   => cpu_y,
-      cpu_x   => cpu_x)
+      tech  => CFG_FABTECH,
+      ncpu  => CFG_NCPU_TILE,
+      cpu_y => cpu_y,
+      cpu_x => cpu_x)
     port map (
       rst                => rst,
       clk                => clk,
