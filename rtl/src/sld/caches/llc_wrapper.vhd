@@ -443,97 +443,97 @@ architecture rtl of llc_wrapper is
   signal req_in_state   : req_in_fsm;
   signal rsp_in_state   : rsp_in_fsm;
 
-  attribute mark_debug : string;
+  -- attribute mark_debug : string;
 
-  attribute mark_debug of llc_req_in_ready            : signal is "true";
-  attribute mark_debug of llc_req_in_valid            : signal is "true";
-  attribute mark_debug of llc_req_in_data_coh_msg     : signal is "true";
-  attribute mark_debug of llc_req_in_data_hprot       : signal is "true";
-  attribute mark_debug of llc_req_in_data_addr        : signal is "true";
-  attribute mark_debug of llc_req_in_data_word_offset : signal is "true";
-  attribute mark_debug of llc_req_in_data_valid_words : signal is "true";
-  attribute mark_debug of llc_req_in_data_line        : signal is "true";
-  attribute mark_debug of llc_req_in_data_req_id      : signal is "true";
+  -- attribute mark_debug of llc_req_in_ready            : signal is "true";
+  -- attribute mark_debug of llc_req_in_valid            : signal is "true";
+  -- attribute mark_debug of llc_req_in_data_coh_msg     : signal is "true";
+  -- attribute mark_debug of llc_req_in_data_hprot       : signal is "true";
+  -- attribute mark_debug of llc_req_in_data_addr        : signal is "true";
+  -- attribute mark_debug of llc_req_in_data_word_offset : signal is "true";
+  -- attribute mark_debug of llc_req_in_data_valid_words : signal is "true";
+  -- attribute mark_debug of llc_req_in_data_line        : signal is "true";
+  -- attribute mark_debug of llc_req_in_data_req_id      : signal is "true";
 
-  attribute mark_debug of llc_dma_req_in_ready            : signal is "true";
-  attribute mark_debug of llc_dma_req_in_valid            : signal is "true";
-  attribute mark_debug of llc_dma_req_in_data_coh_msg     : signal is "true";
-  attribute mark_debug of llc_dma_req_in_data_hprot       : signal is "true";
-  attribute mark_debug of llc_dma_req_in_data_addr        : signal is "true";
-  attribute mark_debug of llc_dma_req_in_data_word_offset : signal is "true";
-  attribute mark_debug of llc_dma_req_in_data_valid_words : signal is "true";
-  attribute mark_debug of llc_dma_req_in_data_line        : signal is "true";
-  attribute mark_debug of llc_dma_req_in_data_req_id      : signal is "true";
+  -- attribute mark_debug of llc_dma_req_in_ready            : signal is "true";
+  -- attribute mark_debug of llc_dma_req_in_valid            : signal is "true";
+  -- attribute mark_debug of llc_dma_req_in_data_coh_msg     : signal is "true";
+  -- attribute mark_debug of llc_dma_req_in_data_hprot       : signal is "true";
+  -- attribute mark_debug of llc_dma_req_in_data_addr        : signal is "true";
+  -- attribute mark_debug of llc_dma_req_in_data_word_offset : signal is "true";
+  -- attribute mark_debug of llc_dma_req_in_data_valid_words : signal is "true";
+  -- attribute mark_debug of llc_dma_req_in_data_line        : signal is "true";
+  -- attribute mark_debug of llc_dma_req_in_data_req_id      : signal is "true";
 
-  attribute mark_debug of llc_rsp_in_ready        : signal is "true";
-  attribute mark_debug of llc_rsp_in_valid        : signal is "true";
-  attribute mark_debug of llc_rsp_in_data_coh_msg : signal is "true";
-  attribute mark_debug of llc_rsp_in_data_addr    : signal is "true";
-  -- attribute mark_debug of llc_rsp_in_data_line   : signal is "true";
-  attribute mark_debug of llc_rsp_in_data_req_id  : signal is "true";
+  -- attribute mark_debug of llc_rsp_in_ready        : signal is "true";
+  -- attribute mark_debug of llc_rsp_in_valid        : signal is "true";
+  -- attribute mark_debug of llc_rsp_in_data_coh_msg : signal is "true";
+  -- attribute mark_debug of llc_rsp_in_data_addr    : signal is "true";
+  -- -- attribute mark_debug of llc_rsp_in_data_line   : signal is "true";
+  -- attribute mark_debug of llc_rsp_in_data_req_id  : signal is "true";
 
-  attribute mark_debug of llc_rsp_out_ready            : signal is "true";
-  attribute mark_debug of llc_rsp_out_valid            : signal is "true";
-  attribute mark_debug of llc_rsp_out_data_coh_msg     : signal is "true";
-  attribute mark_debug of llc_rsp_out_data_addr        : signal is "true";
-  attribute mark_debug of llc_rsp_out_data_line        : signal is "true";
-  attribute mark_debug of llc_rsp_out_data_invack_cnt  : signal is "true";
-  attribute mark_debug of llc_rsp_out_data_req_id      : signal is "true";
-  attribute mark_debug of llc_rsp_out_data_dest_id     : signal is "true";
-  attribute mark_debug of llc_rsp_out_data_word_offset : signal is "true";
+  -- attribute mark_debug of llc_rsp_out_ready            : signal is "true";
+  -- attribute mark_debug of llc_rsp_out_valid            : signal is "true";
+  -- attribute mark_debug of llc_rsp_out_data_coh_msg     : signal is "true";
+  -- attribute mark_debug of llc_rsp_out_data_addr        : signal is "true";
+  -- attribute mark_debug of llc_rsp_out_data_line        : signal is "true";
+  -- attribute mark_debug of llc_rsp_out_data_invack_cnt  : signal is "true";
+  -- attribute mark_debug of llc_rsp_out_data_req_id      : signal is "true";
+  -- attribute mark_debug of llc_rsp_out_data_dest_id     : signal is "true";
+  -- attribute mark_debug of llc_rsp_out_data_word_offset : signal is "true";
 
-  attribute mark_debug of llc_dma_rsp_out_ready            : signal is "true";
-  attribute mark_debug of llc_dma_rsp_out_valid            : signal is "true";
-  attribute mark_debug of llc_dma_rsp_out_data_coh_msg     : signal is "true";
-  attribute mark_debug of llc_dma_rsp_out_data_addr        : signal is "true";
-  attribute mark_debug of llc_dma_rsp_out_data_line        : signal is "true";
-  attribute mark_debug of llc_dma_rsp_out_data_invack_cnt  : signal is "true";
-  attribute mark_debug of llc_dma_rsp_out_data_req_id      : signal is "true";
-  attribute mark_debug of llc_dma_rsp_out_data_dest_id     : signal is "true";
-  attribute mark_debug of llc_dma_rsp_out_data_word_offset : signal is "true";
+  -- attribute mark_debug of llc_dma_rsp_out_ready            : signal is "true";
+  -- attribute mark_debug of llc_dma_rsp_out_valid            : signal is "true";
+  -- attribute mark_debug of llc_dma_rsp_out_data_coh_msg     : signal is "true";
+  -- attribute mark_debug of llc_dma_rsp_out_data_addr        : signal is "true";
+  -- attribute mark_debug of llc_dma_rsp_out_data_line        : signal is "true";
+  -- attribute mark_debug of llc_dma_rsp_out_data_invack_cnt  : signal is "true";
+  -- attribute mark_debug of llc_dma_rsp_out_data_req_id      : signal is "true";
+  -- attribute mark_debug of llc_dma_rsp_out_data_dest_id     : signal is "true";
+  -- attribute mark_debug of llc_dma_rsp_out_data_word_offset : signal is "true";
 
-  attribute mark_debug of llc_fwd_out_ready        : signal is "true";
-  attribute mark_debug of llc_fwd_out_valid        : signal is "true";
-  attribute mark_debug of llc_fwd_out_data_coh_msg : signal is "true";
-  attribute mark_debug of llc_fwd_out_data_addr    : signal is "true";
-  attribute mark_debug of llc_fwd_out_data_req_id  : signal is "true";
-  attribute mark_debug of llc_fwd_out_data_dest_id : signal is "true";
+  -- attribute mark_debug of llc_fwd_out_ready        : signal is "true";
+  -- attribute mark_debug of llc_fwd_out_valid        : signal is "true";
+  -- attribute mark_debug of llc_fwd_out_data_coh_msg : signal is "true";
+  -- attribute mark_debug of llc_fwd_out_data_addr    : signal is "true";
+  -- attribute mark_debug of llc_fwd_out_data_req_id  : signal is "true";
+  -- attribute mark_debug of llc_fwd_out_data_dest_id : signal is "true";
 
-  attribute mark_debug of llc_mem_rsp_ready : signal is "true";
-  attribute mark_debug of llc_mem_rsp_valid : signal is "true";
-  -- attribute mark_debug of llc_mem_rsp_data_line : signal is "true";
+  -- attribute mark_debug of llc_mem_rsp_ready : signal is "true";
+  -- attribute mark_debug of llc_mem_rsp_valid : signal is "true";
+  -- -- attribute mark_debug of llc_mem_rsp_data_line : signal is "true";
 
-  attribute mark_debug of llc_mem_req_ready       : signal is "true";
-  attribute mark_debug of llc_mem_req_valid       : signal is "true";
-  attribute mark_debug of llc_mem_req_data_hwrite : signal is "true";
-  attribute mark_debug of llc_mem_req_data_hsize  : signal is "true";
-  attribute mark_debug of llc_mem_req_data_hprot  : signal is "true";
-  attribute mark_debug of llc_mem_req_data_addr   : signal is "true";
-  attribute mark_debug of llc_mem_req_data_line   : signal is "true";
+  -- attribute mark_debug of llc_mem_req_ready       : signal is "true";
+  -- attribute mark_debug of llc_mem_req_valid       : signal is "true";
+  -- attribute mark_debug of llc_mem_req_data_hwrite : signal is "true";
+  -- attribute mark_debug of llc_mem_req_data_hsize  : signal is "true";
+  -- attribute mark_debug of llc_mem_req_data_hprot  : signal is "true";
+  -- attribute mark_debug of llc_mem_req_data_addr   : signal is "true";
+  -- attribute mark_debug of llc_mem_req_data_line   : signal is "true";
 
-  -- attribute mark_debug of llc_stats_ready         : signal is "true";
-  -- attribute mark_debug of llc_stats_valid         : signal is "true";
-  -- attribute mark_debug of llc_stats_data          : signal is "true";
+  -- -- attribute mark_debug of llc_stats_ready         : signal is "true";
+  -- -- attribute mark_debug of llc_stats_valid         : signal is "true";
+  -- -- attribute mark_debug of llc_stats_data          : signal is "true";
 
-  --attribute mark_debug of asserts    : signal is "true";
-  --attribute mark_debug of bookmark   : signal is "true";
-  --attribute mark_debug of custom_dbg : signal is "true";
+  -- --attribute mark_debug of asserts    : signal is "true";
+  -- --attribute mark_debug of bookmark   : signal is "true";
+  -- --attribute mark_debug of custom_dbg : signal is "true";
 
-  -- attribute mark_debug of ahbm_asserts : signal is "true";
+  -- -- attribute mark_debug of ahbm_asserts : signal is "true";
 
-  attribute mark_debug of llc_cmd_state : signal is "true";
-  attribute mark_debug of llc_cmd_next  : signal is "true";
-  attribute mark_debug of cmd_reg       : signal is "true";
-  attribute mark_debug of status_reg    : signal is "true";
-  attribute mark_debug of cmd_in        : signal is "true";
-  attribute mark_debug of cmd_sample    : signal is "true";
-  attribute mark_debug of readdata      : signal is "true";
+  -- attribute mark_debug of llc_cmd_state : signal is "true";
+  -- attribute mark_debug of llc_cmd_next  : signal is "true";
+  -- attribute mark_debug of cmd_reg       : signal is "true";
+  -- attribute mark_debug of status_reg    : signal is "true";
+  -- attribute mark_debug of cmd_in        : signal is "true";
+  -- attribute mark_debug of cmd_sample    : signal is "true";
+  -- attribute mark_debug of readdata      : signal is "true";
 
-  attribute mark_debug of ahbm_reg_state : signal is "true";
-  attribute mark_debug of fwd_out_state  : signal is "true";
-  attribute mark_debug of rsp_out_state  : signal is "true";
-  attribute mark_debug of req_in_state   : signal is "true";
-  attribute mark_debug of rsp_in_state   : signal is "true";
+  -- attribute mark_debug of ahbm_reg_state : signal is "true";
+  -- attribute mark_debug of fwd_out_state  : signal is "true";
+  -- attribute mark_debug of rsp_out_state  : signal is "true";
+  -- attribute mark_debug of req_in_state   : signal is "true";
+  -- attribute mark_debug of rsp_in_state   : signal is "true";
 
 begin  -- architecture rtl
 -------------------------------------------------------------------------------

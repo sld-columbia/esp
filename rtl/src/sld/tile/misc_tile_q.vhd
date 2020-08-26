@@ -283,20 +283,20 @@ architecture rtl of misc_tile_q is
   signal noc4_dummy_out_void : std_ulogic;
   signal noc6_dummy_in_stop  : std_ulogic;
 
-  attribute mark_debug : string;
+  -- attribute mark_debug : string;
 
-  attribute mark_debug of interrupt_wrreq : signal is "true";
-  attribute mark_debug of interrupt_data_in : signal is "true";
-  attribute mark_debug of interrupt_full : signal is "true";
-  attribute mark_debug of interrupt_ack_rdreq : signal is "true";
-  attribute mark_debug of interrupt_ack_data_out : signal is "true";
-  attribute mark_debug of interrupt_ack_empty : signal is "true";
-  attribute mark_debug of noc5_msg_type : signal is "true";
-  attribute mark_debug of noc5_preamble : signal is "true";
-  attribute mark_debug of noc5_fifos_current : signal is "true";
-  attribute mark_debug of noc5_fifos_next : signal is "true";
-  attribute mark_debug of to_noc5_fifos_current : signal is "true";
-  attribute mark_debug of to_noc5_fifos_next : signal is "true";
+  -- attribute mark_debug of interrupt_wrreq : signal is "true";
+  -- attribute mark_debug of interrupt_data_in : signal is "true";
+  -- attribute mark_debug of interrupt_full : signal is "true";
+  -- attribute mark_debug of interrupt_ack_rdreq : signal is "true";
+  -- attribute mark_debug of interrupt_ack_data_out : signal is "true";
+  -- attribute mark_debug of interrupt_ack_empty : signal is "true";
+  -- attribute mark_debug of noc5_msg_type : signal is "true";
+  -- attribute mark_debug of noc5_preamble : signal is "true";
+  -- attribute mark_debug of noc5_fifos_current : signal is "true";
+  -- attribute mark_debug of noc5_fifos_next : signal is "true";
+  -- attribute mark_debug of to_noc5_fifos_current : signal is "true";
+  -- attribute mark_debug of to_noc5_fifos_next : signal is "true";
   
 begin  -- rtl
 
