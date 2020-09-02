@@ -37,7 +37,6 @@ entity tile_mem is
     HAS_SYNC: integer range 0 to 1 := 0);
   port (
     rst                : in  std_ulogic;
-    srst               : in  std_ulogic;
     clk                : in  std_ulogic;
     ddr_ahbsi          : out ahb_slv_in_type;
     ddr_ahbso          : in  ahb_slv_out_type;
@@ -315,6 +314,9 @@ architecture rtl of tile_mem is
   signal noc4_mon_noc_vec_int  : monitor_noc_type;
   signal noc5_mon_noc_vec_int  : monitor_noc_type;
   signal noc6_mon_noc_vec_int  : monitor_noc_type;
+
+  -- Soft reset
+  signal srst : std_ulogic;
 
   -- Tile parameters
   signal config : std_logic_vector(ESP_CSR_WIDTH - 1 downto 0);
@@ -682,6 +684,7 @@ begin
       mon_acc => monitor_acc_none,
       mon_dvfs => mon_dvfs_int,
       config => config,
+      srst => srst,
       apbi => apbi,
       apbo => apbo(0)
     );

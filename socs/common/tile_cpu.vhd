@@ -43,7 +43,6 @@ entity tile_cpu is
     HAS_SYNC           : integer range 0 to 1 := 0);
   port (
     rst                : in  std_ulogic;
-    srst               : in  std_ulogic;
     refclk             : in  std_ulogic;
     pllbypass          : in  std_ulogic;
     pllclk             : out std_ulogic;
@@ -355,6 +354,9 @@ architecture rtl of tile_cpu is
   -- GRLIB parameters
   constant disas : integer := CFG_DISAS;
   constant pclow : integer := CFG_PCLOW;
+
+  -- Soft reset
+  signal srst : std_ulogic;
 
   -- Tile parameters
   signal config : std_logic_vector(ESP_CSR_WIDTH - 1 downto 0);
@@ -1276,6 +1278,7 @@ begin
       mon_acc => monitor_acc_none,
       mon_dvfs => mon_dvfs_int,
       config => config,
+      srst => srst,
       apbi => noc_apbi,
       apbo => noc_apbo(0)
     );

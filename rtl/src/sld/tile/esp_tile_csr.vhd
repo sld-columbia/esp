@@ -30,6 +30,7 @@ entity esp_tile_csr is
     mon_acc     : in monitor_acc_type;
     mon_dvfs    : in monitor_dvfs_type;
     config      : out std_logic_vector(ESP_CSR_WIDTH - 1 downto 0);
+    srst        : out std_ulogic;
     apbi        : in apb_slv_in_type;
     apbo        : out apb_slv_out_type
   );
@@ -157,6 +158,7 @@ architecture rtl of esp_tile_csr is
         window_size <= DEFAULT_WINDOW;
         window_reset <= '0';
         config_r <= DEFAULT_CONFIG;
+        srst <= '0';
     elsif clk'event and clk = '1' then 
         -- Monitors
         window_reset <= '0';
@@ -175,6 +177,8 @@ architecture rtl of esp_tile_csr is
               config_r(ESP_CSR_VALID_MSB downto ESP_CSR_VALID_LSB) <= apbi.pwdata(ESP_CSR_VALID_MSB - ESP_CSR_VALID_LSB downto 0);
             when ESP_CSR_TILE_ID_ADDR =>
               config_r(ESP_CSR_TILE_ID_MSB downto ESP_CSR_TILE_ID_LSB) <= apbi.pwdata(ESP_CSR_TILE_ID_MSB - ESP_CSR_TILE_ID_LSB downto 0);
+            when ESP_CSR_SRST_ADDR =>
+              srst <= wdata(0);
             when others => null;
           end case;
         end if;

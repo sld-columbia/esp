@@ -136,6 +136,7 @@ package sldcommon is
   constant ESP_CSR_TILE_ID_LSB  : integer range 0 to ESP_CSR_WIDTH-1 := 1;
   constant ESP_CSR_TILE_ID_MSB  : integer range 0 to ESP_CSR_WIDTH-1 := 8;
 
+  constant ESP_CSR_SRST_ADDR : integer range 0 to 31 := 31;  -- reserved address
 
   component monitor
     generic (
@@ -254,11 +255,13 @@ package sldcommon is
   component esp_init is
     generic (
       hindex   : integer;
-      sequence : attribute_vector(0 to CFG_TILES_NUM + CFG_NCPU_TILE - 1));
+      sequence : attribute_vector(0 to CFG_TILES_NUM + CFG_NCPU_TILE - 1);
+      srst_sequence : attribute_vector(0 to CFG_NMEM_TILE + CFG_NCPU_TILE - 1));
     port (
       rstn   : in  std_ulogic;
       clk    : in  std_ulogic;
       noinit : in  std_ulogic;
+      srst   : in  std_ulogic;
       ahbmi  : in  ahb_mst_in_type;
       ahbmo  : out ahb_mst_out_type);
   end component esp_init;

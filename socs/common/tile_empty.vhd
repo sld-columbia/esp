@@ -418,6 +418,7 @@ begin
      mon_acc => monitor_acc_none,
      mon_dvfs => mon_dvfs_int,
      config => config,
+     srst => open,
      apbi => apbi,
      apbo => apbo(0)
    );

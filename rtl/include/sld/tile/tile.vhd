@@ -876,6 +876,7 @@ package tile is
       mon_acc     : in monitor_acc_type;
       mon_dvfs    : in monitor_dvfs_type;
       config      : out std_logic_vector(ESP_CSR_WIDTH - 1 downto 0);
+      srst        : out std_ulogic;
       apbi        : in apb_slv_in_type;
       apbo        : out apb_slv_out_type);
   end component;

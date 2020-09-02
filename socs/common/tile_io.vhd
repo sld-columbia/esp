@@ -41,7 +41,6 @@ entity tile_io is
     HAS_SYNC : integer range 0 to 1 := 0 );
   port (
     rst                : in  std_ulogic;
-    srst               : out std_ulogic;
     clk                : in  std_ulogic;
     eth0_apbi          : out apb_slv_in_type;
     eth0_apbo          : in  apb_slv_out_type;
@@ -369,6 +368,10 @@ architecture rtl of tile_io is
   signal interrupt_ack_wrreq       : std_ulogic;
   signal interrupt_ack_data_in     : misc_noc_flit_type;
   signal interrupt_ack_full        : std_ulogic;
+
+  -- ESPLink
+  signal srst : std_ulogic;             -- soft reset
+  signal soft_reset : std_ulogic;       -- local soft reset
 
   -- bus
   signal ahbsi            : ahb_slv_in_type;
@@ -801,11 +804,13 @@ begin
   esp_init_1 : esp_init
     generic map (
       hindex => CFG_AHB_JTAG + CFG_GRETH + CFG_DSU_ETH + 1,
-      sequence => esp_init_sequence)
+      sequence => esp_init_sequence,
+      srst_sequence => esp_srst_sequence)
     port map (
       rstn   => rst,
       clk    => clk,
       noinit => '0',
+      srst   => srst,
       ahbmi  => ahbmi,
       ahbmo  => ahbmo(CFG_AHB_JTAG + CFG_GRETH + CFG_DSU_ETH + 1));
 
@@ -931,7 +936,7 @@ begin
     irqctrl : if CFG_IRQ3_ENABLE /= 0 generate
       irqctrl0 : irqmp                    -- interrupt controller
         generic map (pindex => 2, paddr => 2, ncpu => CFG_NCPU_TILE)
-        port map (rst, clk, noc_apbi_wirq, noc_apbo(2), irqo, irqi);
+        port map (soft_reset, clk, noc_apbi_wirq, noc_apbo(2), irqo, irqi);
     end generate;
 
     irq3 : if CFG_IRQ3_ENABLE = 0 generate
@@ -969,7 +974,7 @@ begin
         NIRQ_SRCS => 30)
       port map (
         clk         => clk,
-        rstn        => rst,
+        rstn        => soft_reset,
         irq_sources => irq_sources,
         irq         => irq,
         apbi        => noc_apbi_wirq,
@@ -984,7 +989,7 @@ begin
         NHARTS  => CFG_NCPU_TILE)
       port map (
         clk       => clk,
-        rstn      => rst,
+        rstn      => soft_reset,
         timer_irq => timer_irq,
         ipi       => ipi,
         ahbsi     => ahbsi,
@@ -1088,7 +1093,7 @@ begin
         generic map (pindex => 3, paddr => 3, pirq => CFG_GPT_IRQ,
                      sepirq => CFG_GPT_SEPIRQ, sbits => CFG_GPT_SW, ntimers => CFG_GPT_NTIM,
                      nbits  => CFG_GPT_TW, wdog => CFG_GPT_WDOGEN*CFG_GPT_WDOG)
-        port map (rst, clk, noc_apbi, noc_apbo(3), gpti, gpto);
+        port map (soft_reset, clk, noc_apbi, noc_apbo(3), gpti, gpto);
       gpti.dhalt <= '0'; gpti.extclk <= '0';
     end generate;
 
@@ -1105,6 +1110,8 @@ begin
   -----------------------------------------------------------------------------
   -- APB 4: ESP Link (Soft reset) ---------------------------------------------
   -----------------------------------------------------------------------------
+
+  soft_reset <= (not srst) and rst;
 
   esplink_1: esplink
     generic map (
@@ -1460,6 +1467,7 @@ begin
       mon_acc => monitor_acc_none,
       mon_dvfs => mon_dvfs_int,
       config => config,
+      srst => open,
       apbi => noc_apbi,
       apbo => noc_apbo(0)
     );

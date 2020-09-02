@@ -16,11 +16,13 @@ entity esp_init is
 
   generic (
     hindex   : integer := 0;
-    sequence : attribute_vector(0 to CFG_TILES_NUM + CFG_NCPU_TILE - 1));
+    sequence : attribute_vector(0 to CFG_TILES_NUM + CFG_NCPU_TILE - 1);
+    srst_sequence : attribute_vector(0 to CFG_NMEM_TILE + CFG_NCPU_TILE - 1));
   port (
     rstn   : in  std_ulogic;
     clk    : in  std_ulogic;
     noinit : in  std_ulogic;
+    srst   : in  std_ulogic;
     ahbmi  : in  ahb_mst_in_type;
     ahbmo  : out ahb_mst_out_type);
 
@@ -52,12 +54,25 @@ architecture rtl of esp_init is
   constant data_width : integer := ESP_CSR_TILE_ID_MSB - ESP_CSR_TILE_ID_LSB + 1;
 
   signal req : eth_tx_ahb_in_type;
+  signal req_reg : eth_tx_ahb_in_type;
   signal rsp : eth_tx_ahb_out_type;
+
+  constant req_none : eth_tx_ahb_in_type := (
+    req   => '0',
+    write => '1',
+    addr  => (others => '0'),
+    data  => (others => '0')
+    );
 
   signal count : integer range 0 to CFG_TILES_NUM + CFG_NCPU_TILE - 1;
   signal incr : std_ulogic;
+  signal clear : std_ulogic;
 
-  type init_state_t is (start, busy, pause, done);
+  signal srst_reg : std_ulogic;
+  signal sample_srst : std_ulogic;
+
+  type init_state_t is (start, reset_released, busy, pause, done,
+                        set_srst, wait_set_srst, pending_srst);
   signal init_state, init_next : init_state_t;
 
   signal msti : ahbc_mst_in_type;
@@ -70,15 +85,25 @@ begin  -- architecture rtl
     if rstn = '0' then                  -- asynchronous reset (active low)
       count <= 0;
       init_state <= start;
+      srst_reg <= '0';
+      req_reg <= req_none;
     elsif clk'event and clk = '1' then  -- rising clock edge
       init_state <= init_next;
-      if incr = '1' then
+      if clear = '1' then
+        count <= 0;
+      elsif incr = '1' then
         count <= count + 1;
+      end if;
+      if sample_srst = '1' then
+        srst_reg <= srst;
+      end if;
+      if req.req = '1' then
+        req_reg <= req;
       end if;
     end if;
   end process count_gen;
 
-  init_fsm: process (init_state, count, rsp) is
+  init_fsm: process (init_state, count, rsp, srst, srst_reg, req_reg) is
     variable tile_id_address : std_logic_vector(31 downto 0);
     variable valid_address : std_logic_vector(31 downto 0);
     variable data : std_logic_vector(data_width - 1 downto 0);
@@ -88,34 +113,39 @@ begin  -- architecture rtl
     valid_address   := apb_base_address & csr_base_address & conv_std_logic_vector(sequence(count), 7) & "11" & conv_std_logic_vector(ESP_CSR_VALID_ADDR, 5) & "00";
     data            := conv_std_logic_vector(sequence(count), data_width);
 
-    req.req                        <= '0';
-    req.write                      <= '1';
-    req.data(31 downto data_width) <= (others => '0');
-    if count >= CFG_TILES_NUM then
-      req.data(data_width - 1 downto 1) <= (others => '0');
-      req.data(0)                       <= '1';
-      req.addr                          <= valid_address;
-    else
-      req.addr                          <= tile_id_address;
-      req.data(data_width - 1 downto 0) <= data;
-    end if;
+    req     <= req_reg;
 
+    req.write <= '1';
+    req.req <= '0';
     incr <= '0';
+    clear <= '0';
+    sample_srst <= '0';
     init_next <= init_state;
 
     case init_state is
       when start =>
         -- wait as long as reset is active
+        init_next <= reset_released;
+
+      when reset_released =>
+        -- Wait for reset propagation (mixed sync/async reset)
         init_next <= busy;
 
       when busy =>
         req.req <= '1';
+        if count >= CFG_TILES_NUM then
+          req.data(data_width - 1 downto 1) <= (others => '0');
+          req.data(0)                       <= '1';
+          req.addr                          <= valid_address;
+        else
+          req.addr                          <= tile_id_address;
+          req.data(data_width - 1 downto 0) <= data;
+        end if;
         if rsp.grant = '1' then
           init_next <= pause;
         end if;
 
       when pause =>
-        req.req <= '0';
         if rsp.ready = '1' then
           if count /= CFG_TILES_NUM + CFG_NCPU_TILE - 1 then
             incr      <= '1';
@@ -127,6 +157,42 @@ begin  -- architecture rtl
 
       when done =>
         incr <= '0';
+        clear <= '1';
+        if srst = '1' then
+          sample_srst <= '1';
+          init_next <= set_srst;
+        end if;
+
+      when set_srst =>
+        req.req <= '1';
+        req.data(data_width - 1 downto 1) <= (others => '0');
+        req.data(0) <= srst_reg;
+        req.addr <= apb_base_address & csr_base_address & conv_std_logic_vector(srst_sequence(count), 7) & "11" & conv_std_logic_vector(ESP_CSR_SRST_ADDR, 5) & "00";
+        if rsp.grant = '1' then
+          init_next <= wait_set_srst;
+        end if;
+
+      when wait_set_srst =>
+        req.req <= '0';
+        if rsp.ready = '1' then
+          if count /= CFG_NMEM_TILE + CFG_NCPU_TILE - 1 then
+            incr      <= '1';
+            init_next <= set_srst;
+          else
+            if srst_reg = '1' then
+              init_next <= pending_srst;
+            else
+              init_next <= done;
+            end if;
+          end if;
+        end if;
+
+      when pending_srst =>
+        clear <= '1';
+        if srst = '0' then
+          sample_srst <= '1';
+          init_next <= set_srst;
+        end if;
 
       when others =>
         null;

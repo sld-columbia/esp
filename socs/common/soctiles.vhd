@@ -66,7 +66,6 @@ package soctiles is
       HAS_SYNC           : integer range 0 to 1 := 0);
     port (
       rst                : in  std_ulogic;
-      srst               : in  std_ulogic;
       refclk             : in  std_ulogic;
       pllbypass          : in  std_ulogic;
       pllclk             : out std_ulogic;
@@ -267,7 +266,6 @@ package soctiles is
       HAS_SYNC     : integer range 0 to 1 := 0);
     port (
       rst                : in  std_ulogic;
-      srst               : out std_ulogic;
       clk                : in  std_ulogic;
       eth0_apbi          : out apb_slv_in_type;
       eth0_apbo          : in  apb_slv_out_type;
@@ -373,7 +371,6 @@ package soctiles is
       HAS_SYNC     : integer range 0 to 1 := 0);
     port (
       rst                : in  std_ulogic;
-      srst               : in  std_ulogic;
       clk                : in  std_ulogic;
       ddr_ahbsi          : out ahb_slv_in_type;
       ddr_ahbso          : in  ahb_slv_out_type;

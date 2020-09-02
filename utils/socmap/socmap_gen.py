@@ -1383,6 +1383,24 @@ def print_mapping(fp, soc, esp_config):
       fp.write(", " + str(i))
   fp.write(");\n\n")
 
+  fp.write("  constant esp_srst_sequence : attribute_vector(0 to CFG_NMEM_TILE + CFG_NCPU_TILE - 1) := (\n")
+  fp.write("    ")
+  # Send srs to MEM tiles (LLC) and to CPU tiles. Reset CPU0 last.
+  first = True
+  for i in range(esp_config.ntiles - 1, -1, -1):
+    t =  esp_config.tiles[i]
+    if t.type == "mem":
+      if first:
+        first = False
+      else:
+        fp.write(", ")
+      fp.write(str(i))
+  for i in range(esp_config.ntiles - 1, -1, -1):
+    t =  esp_config.tiles[i]
+    if t.type == "cpu":
+      fp.write(", " + str(i))
+  fp.write(");\n\n")
+
 
 def print_tiles(fp, esp_config):
   #
