@@ -950,7 +950,7 @@ begin
       riscv_irqinfo_proc : process (irq, timer_irq, ipi) is
       begin  -- process riscv_irqinfo_gen
         -- Use irq field to send timer IRQ
-        irqi(i).irl <= ipi & timer_irq & irq;
+        irqi(i).irl <= ipi(i) & timer_irq(i) & irq((i + 1) * 2 - 1 downto i * 2);
         irqi(i).resume <= '0';
         irqi(i).rstrun <= '0';
         irqi(i).rstvec <= (others => '0');
