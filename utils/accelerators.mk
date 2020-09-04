@@ -1,4 +1,4 @@
-# Copyright (c) 2011-2019 Columbia University, System Level Design Group
+# Copyright (c) 2011-2020 Columbia University, System Level Design Group
 # SPDX-License-Identifier: Apache-2.0
 
 ACCELERATORS_PATH      = $(ESP_ROOT)/accelerators/stratus_hls
@@ -21,6 +21,16 @@ VIVADOHLS_ACC-distclean = $(addsuffix -distclean, $(VIVADOHLS_ACC))
 VIVADOHLS_ACC-sim       = $(addsuffix -sim, $(VIVADOHLS_ACC))
 VIVADOHLS_ACC-plot      = $(addsuffix -plot, $(VIVADOHLS_ACC))
 VIVADOHLS_ACC-exe       = $(addsuffix -exe, $(VIVADOHLS_ACC))
+
+CATAPULTHLS_ACC_PATH      = $(ESP_ROOT)/accelerators/catapult_hls
+CATAPULTHLS_ACC           = $(filter-out common, $(shell ls -d $(CATAPULTHLS_ACC_PATH)/*/ | awk -F/ '{print $$(NF-1)}'))
+CATAPULTHLS_ACC-wdir      = $(addsuffix -wdir, $(CATAPULTHLS_ACC))
+CATAPULTHLS_ACC-hls       = $(addsuffix -hls, $(CATAPULTHLS_ACC))
+CATAPULTHLS_ACC-clean     = $(addsuffix -clean, $(CATAPULTHLS_ACC))
+CATAPULTHLS_ACC-distclean = $(addsuffix -distclean, $(CATAPULTHLS_ACC))
+CATAPULTHLS_ACC-sim       = $(addsuffix -sim, $(CATAPULTHLS_ACC))
+CATAPULTHLS_ACC-plot      = $(addsuffix -plot, $(CATAPULTHLS_ACC))
+CATAPULTHLS_ACC-exe       = $(addsuffix -exe, $(CATAPULTHLS_ACC))
 
 HLS4ML_ACC_PATH      = $(ESP_ROOT)/accelerators/hls4ml
 HLS4ML_ACC           = $(filter-out common, $(shell ls -d $(HLS4ML_ACC_PATH)/*/ | awk -F/ '{print $$(NF-1)}'))
@@ -55,14 +65,12 @@ THIRDPARTY_INCDIR_XCELIUM  = $(foreach dir, $(THIRDPARTY_INCDIR), -INCDIR $(dir)
 THIRDPARTY_INCDIR_XCELIUM += -INCDIR $(ESP_ROOT)/rtl/src/opencores/ge_1000baseX
 THIRDPARTY_INCDIR_INCISIVE = $(THIRDPARTY_INCDIR_XCELIUM)
 
-
-ACCELERATORS-driver       = $(addsuffix -driver, $(ACCELERATORS)) $(addsuffix -driver, $(VIVADOHLS_ACC)) $(addsuffix -driver, $(HLS4ML_ACC)) $(addsuffix -driver, $(CHISEL_ACCELERATORS))
-ACCELERATORS-driver-clean = $(addsuffix -driver-clean, $(ACCELERATORS)) $(addsuffix -driver-clean, $(VIVADOHLS_ACC)) $(addsuffix -driver-clean, $(HLS4ML_ACC)) $(addsuffix -driver-clean, $(CHISEL_ACCELERATORS))
-ACCELERATORS-app          = $(addsuffix -app, $(ACCELERATORS)) $(addsuffix -app, $(VIVADOHLS_ACC)) $(addsuffix -app, $(HLS4ML_ACC)) $(addsuffix -app, $(CHISEL_ACCELERATORS))
-ACCELERATORS-app-clean    = $(addsuffix -app-clean, $(ACCELERATORS)) $(addsuffix -app-clean, $(VIVADOHLS_ACC)) $(addsuffix -app-clean, $(HLS4ML_ACC)) $(addsuffix -app-clean, $(CHISEL_ACCELERATORS))
-ACCELERATORS-barec        = $(addsuffix -barec, $(ACCELERATORS)) $(addsuffix -barec, $(VIVADOHLS_ACC)) $(addsuffix -barec, $(HLS4ML_ACC)) $(addsuffix -barec, $(CHISEL_ACCELERATORS))
-ACCELERATORS-barec-clean  = $(addsuffix -barec-clean, $(ACCELERATORS)) $(addsuffix -barec-clean, $(VIVADOHLS_ACC)) $(addsuffix -barec-clean, $(HLS4ML_ACC)) $(addsuffix -barec-clean, $(CHISEL_ACCELERATORS))
-
+ACCELERATORS-driver       = $(addsuffix -driver, $(ACCELERATORS)) $(addsuffix -driver, $(VIVADOHLS_ACC)) $(addsuffix -driver, $(HLS4ML_ACC)) $(addsuffix -driver, $(CHISEL_ACCELERATORS)) $(addsuffix -driver, $(CATAPULTHLS_ACC))
+ACCELERATORS-driver-clean = $(addsuffix -driver-clean, $(ACCELERATORS)) $(addsuffix -driver-clean, $(VIVADOHLS_ACC)) $(addsuffix -driver-clean, $(HLS4ML_ACC)) $(addsuffix -driver-clean, $(CHISEL_ACCELERATORS)) $(addsuffix -driver-clean, $(CATAPULTHLS_ACC))
+ACCELERATORS-app          = $(addsuffix -app, $(ACCELERATORS)) $(addsuffix -app, $(VIVADOHLS_ACC)) $(addsuffix -app, $(HLS4ML_ACC)) $(addsuffix -app, $(CHISEL_ACCELERATORS)) $(addsuffix -app, $(CATAPULTHLS_ACC))
+ACCELERATORS-app-clean    = $(addsuffix -app-clean, $(ACCELERATORS)) $(addsuffix -app-clean, $(VIVADOHLS_ACC)) $(addsuffix -app-clean, $(HLS4ML_ACC)) $(addsuffix -app-clean, $(CHISEL_ACCELERATORS)) $(addsuffix -app-clean, $(CATAPULTHLS_ACC))
+ACCELERATORS-barec        = $(addsuffix -barec, $(ACCELERATORS)) $(addsuffix -barec, $(VIVADOHLS_ACC)) $(addsuffix -barec, $(HLS4ML_ACC)) $(addsuffix -barec, $(CHISEL_ACCELERATORS)) $(addsuffix -barec, $(CATAPULTHLS_ACC))
+ACCELERATORS-barec-clean  = $(addsuffix -barec-clean, $(ACCELERATORS)) $(addsuffix -barec-clean, $(VIVADOHLS_ACC)) $(addsuffix -barec-clean, $(HLS4ML_ACC)) $(addsuffix -barec-clean, $(CHISEL_ACCELERATORS)) $(addsuffix -barec-clean, $(CATAPULTHLS_ACC))
 
 print-available-accelerators:
 	$(QUIET_INFO)echo "Available accelerators generated from Stratus HLS: $(ACCELERATORS)"
@@ -306,6 +314,53 @@ hls4ml_acc-distclean: $(HLS4ML_ACC-distclean)
 
 .PHONY: hls4ml_acc hls4ml_acc-clean hls4ml_acc-distclean
 
+### Catapult HLS ###
+$(CATAPULTHLS_ACC-wdir):
+	$(QUIET_MKDIR) if ! test -e $(CATAPULTHLS_ACC_PATH)/$(@:-wdir=)/hls-work-$(TECHLIB); then \
+		mkdir -p $(CATAPULTHLS_ACC_PATH)/$(@:-wdir=)/hls-work-$(TECHLIB); \
+		cd $(CATAPULTHLS_ACC_PATH)/$(@:-wdir=)/hls-work-$(TECHLIB); \
+		ln -f -s ../syn/build_prj.tcl; \
+		ln -f -s ../syn/build_prj_top.tcl; \
+		ln -f -s ../syn/Makefile; \
+	fi;
+
+$(CATAPULTHLS_ACC-hls): %-hls : %-wdir
+	$(QUIET_INFO)echo "Running HLS for available implementations of $(@:-hls=)"
+	$(QUIET_MAKE)ACCELERATOR=$(@:-hls=) TECH=$(TECHLIB) ESP_ROOT=$(ESP_ROOT) make -C $(CATAPULTHLS_ACC_PATH)/$(@:-hls=)/hls-work-$(TECHLIB) hls | tee $(@:-hls=)_hls.log
+	$(QUIET_INFO)echo "Installing available implementations for $(@:-hls=) to $(ESP_ROOT)/tech/$(TECHLIB)/acc/$(@:-hls=)"
+	$(QUIET_MAKE)ACCELERATOR=$(@:-hls=) TECH=$(TECHLIB) ESP_ROOT=$(ESP_ROOT) make -C $(CATAPULTHLS_ACC_PATH)/$(@:-hls=)/hls-work-$(TECHLIB) install
+	@if test -e $(ESP_ROOT)/tech/$(TECHLIB)/acc/installed.log; then \
+		sed -i '/$(@:-hls=)/d' $(ESP_ROOT)/tech/$(TECHLIB)/acc/installed.log; \
+	fi;
+	@echo "$(@:-hls=)" >> $(ESP_ROOT)/tech/$(TECHLIB)/acc/installed.log
+
+# $(CATAPULTHLS_ACC-sim): %-sim : %-wdir
+# 	$(QUIET_RUN)ACCELERATOR=$(@:-sim=) TECH=$(TECHLIB) ESP_ROOT=$(ESP_ROOT) make -C $(CATAPULTHLS_ACC_PATH)/$(@:-sim=)/hls-work-$(TECHLIB) sim_all | tee $(@:-sim=)_sim.log
+
+# $(CATAPULTHLS_ACC-exe):
+# 	$(QUIET_RUN) ACCELERATOR=$(@:-exe=) TECH=$(TECHLIB) ESP_ROOT=$(ESP_ROOT) DMA_WIDTH=$(NOC_WIDTH) RUN_ARGS="$(RUN_ARGS)" $(MAKE) -C $(CATAPULTHLS_ACC_PATH)/$(@:-exe=)/sim run
+
+$(CATAPULTHLS_ACC-clean): %-clean : %-wdir
+	$(QUIET_CLEAN)ACCELERATOR=$(@:-clean=) TECH=$(TECHLIB) ESP_ROOT=$(ESP_ROOT) make -C $(CATAPULTHLS_ACC_PATH)/$(@:-clean=)/hls-work-$(TECHLIB) clean
+	@$(RM) $(@:-clean=)*.log
+
+$(CATAPULTHLS_ACC-distclean): %-distclean : %-wdir
+	$(QUIET_CLEAN)ACCELERATOR=$(@:-distclean=) TECH=$(TECHLIB) ESP_ROOT=$(ESP_ROOT) make -C $(CATAPULTHLS_ACC_PATH)/$(@:-distclean=)/hls-work-$(TECHLIB) distclean
+	@$(RM) $(@:-distclean=)*.log
+	@if test -e $(ESP_ROOT)/tech/$(TECHLIB)/acc/installed.log; then \
+		sed -i '/$(@:-distclean=)/d' $(ESP_ROOT)/tech/$(TECHLIB)/acc/installed.log; \
+	fi;
+
+.PHONY: $(CATAPULTHLS_ACC-wdir) $(CATAPULTHLS_ACC-hls) $(CATAPULTHLS_ACC-sim) $(CATAPULTHLS_ACC-clean) $(CATAPULTHLS_ACC-distclean)
+
+catapulthls_acc: $(CATAPULTHLS_ACC-hls)
+
+catapulthls_acc-clean: $(CATAPULTHLS_ACC-clean)
+
+catapulthls_acc-distclean: $(CATAPULTHLS_ACC-distclean)
+
+.PHONY: catapulthls_acc catapulthls_acc-clean catapulthls_acc-distclean
+
 ### Common ###
 $(ESP_ROOT)/tech/$(TECHLIB)/acc/installed.log:
 	touch $@
@@ -315,7 +370,7 @@ SLDGEN_DEPS += $(ESP_ROOT)/utils/sldgen/sld_generate.py
 SLDGEN_DEPS += $(wildcard $(ESP_ROOT)/utils/sldgen/templates/*.vhd)
 SLDGEN_DEPS += socmap.vhd esp_global.vhd
 
-## ESP Wrappers ##
+### ESP Wrappers ###
 sldgen: $(SLDGEN_DEPS)
 	$(QUIET_MKDIR) $(RM) $@; mkdir -p $@
 	$(QUIET_RUN)$(ESP_ROOT)/utils/sldgen/sld_generate.py $(NOC_WIDTH) $(ESP_ROOT)/tech/$(TECHLIB) $(ESP_ROOT)/third-party $(ESP_ROOT)/utils/sldgen/templates ./sldgen

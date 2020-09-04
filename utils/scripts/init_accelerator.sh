@@ -310,6 +310,10 @@ for d in $dirs; do
         rename accelerator $LOWER *
     fi
 
+    if cat /etc/os-release | grep -q -i rhel; then
+        rename accelerator $LOWER *
+    fi
+
     sed -i "s/<accelerator_name>/$LOWER/g" *
     sed -i "s/<ACCELERATOR_NAME>/$UPPER/g" *
 
@@ -575,6 +579,10 @@ if cat /etc/os-release | grep -q -i centos; then
     rename accelerator $LOWER accelerator.h
 fi
 
+if cat /etc/os-release | grep -q -i rhel; then
+    rename accelerator $LOWER accelerator.h
+fi
+
 sed -i "s/<accelerator_name>/$LOWER/g" ${LOWER}.h
 sed -i "s/<ACCELERATOR_NAME>/$UPPER/g" ${LOWER}.h
 for d in $dirs; do
@@ -588,6 +596,10 @@ for d in $dirs; do
     fi
 
     if cat /etc/os-release | grep -q -i centos; then
+	rename accelerator $LOWER *
+    fi
+
+    if cat /etc/os-release | grep -q -i rhel; then
 	rename accelerator $LOWER *
     fi
 
