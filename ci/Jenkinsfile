@@ -35,7 +35,7 @@ pipeline {
 
         stage('deploy') {
             steps {
-		sh './test_scripts/accelerators_in_isolation.sh'
+		sh './ci/test_scripts/accelerators_in_isolation.sh'
 
 		retry(3) {
                     sh 'echo "execute retrying 3 times"'
