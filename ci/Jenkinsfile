@@ -35,7 +35,9 @@ pipeline {
 
         stage('deploy') {
             steps {
-                retry(3) {
+		sh ./test_scripts/accelerators_in_isolation.sh
+
+		retry(3) {
                     sh 'echo "execute retrying 3 times"'
                 }
                 timeout(time: 3, unit: 'MINUTES') {
