@@ -68,10 +68,14 @@ architecture rtl of esp_init is
   signal incr : std_ulogic;
   signal clear : std_ulogic;
 
+  signal timer : integer range 0 to 15;
+  signal timer_rst : std_ulogic;
+  signal timer_en : std_ulogic;
+
   signal srst_reg : std_ulogic;
   signal sample_srst : std_ulogic;
 
-  type init_state_t is (start, reset_released, busy, pause, done,
+  type init_state_t is (start, reset_released, busy, pause, timeout, done,
                         set_srst, wait_set_srst, pending_srst);
   signal init_state, init_next : init_state_t;
 
@@ -87,6 +91,7 @@ begin  -- architecture rtl
       init_state <= start;
       srst_reg <= '0';
       req_reg <= req_none;
+      timer <= 0;
     elsif clk'event and clk = '1' then  -- rising clock edge
       init_state <= init_next;
       if clear = '1' then
@@ -100,10 +105,15 @@ begin  -- architecture rtl
       if req.req = '1' then
         req_reg <= req;
       end if;
+      if timer_rst = '1' then
+        timer <= 0;
+      elsif timer_en = '1' then
+        timer <= (timer + 1) mod 16;
+      end if;
     end if;
   end process count_gen;
 
-  init_fsm: process (init_state, count, rsp, srst, srst_reg, req_reg) is
+  init_fsm: process (init_state, count, rsp, srst, srst_reg, req_reg, timer) is
     variable tile_id_address : std_logic_vector(31 downto 0);
     variable valid_address : std_logic_vector(31 downto 0);
     variable data : std_logic_vector(data_width - 1 downto 0);
@@ -119,6 +129,8 @@ begin  -- architecture rtl
     req.req <= '0';
     incr <= '0';
     clear <= '0';
+    timer_en <= '0';
+    timer_rst <= '0';
     sample_srst <= '0';
     init_next <= init_state;
 
@@ -149,10 +161,19 @@ begin  -- architecture rtl
         if rsp.ready = '1' then
           if count /= CFG_TILES_NUM + CFG_NCPU_TILE - 1 then
             incr      <= '1';
-            init_next <= busy;
+            init_next <= timeout;
+            timer_rst <= '1';
           else
             init_next <= done;
           end if;
+        end if;
+
+      when timeout =>
+        -- wait 16 cycles (gives enough margin to complete tile_id
+        -- configuration of the previous tile
+        timer_en <= '1';
+        if timer = 15 then
+          init_next <= busy;
         end if;
 
       when done =>
