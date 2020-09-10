@@ -1,0 +1,4 @@
+*.a
+lib
+boost_1_68_0*
+boost
