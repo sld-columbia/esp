@@ -16,30 +16,17 @@ static int validate_buffer(token_t *out, token_t *gold)
 	int i;
 	int j;
 	unsigned errors = 0;
-
-	for (i = 0; i < 1; i++)
-		for (j = 0; j < output_rows * output_rows; j++)
-			if (gold[i * out_words_adj + j] != out[i * out_words_adj + j])
-				errors++;
-
+ const float ERR_TH = 0.2f;
+        for (i = 0; i < 1; i++)
+                for (j = 0; j < output_rows * output_rows; j++)
+                  if ((fabs(gold[j] - out[j]) / fabs(gold[j])) > ERR_TH) {
+                                printf(" GOLD = %d   and  OUT = %d  and J = %d \n", gold[j], out[j], );
+                                errors++; }
+`
 	return errors;
 }
 
 
-/* User-defined code */
-static void init_buffer(token_t *in, token_t * gold)
-{
-	int i;
-	int j;
-
-	for (i = 0; i < 1; i++)
-		for (j = 0; j < input_rows * input_rows; j++)
-			in[i * in_words_adj + j] = (token_t) j;
-
-	for (i = 0; i < 1; i++)
-		for (j = 0; j < output_rows * output_rows; j++)
-			gold[i * out_words_adj + j] = (token_t) j;
-}
 
 
 /* User-defined code */
@@ -75,7 +62,8 @@ int main(int argc, char **argv)
     
     gold = malloc(out_size);
 
-	init_buffer(buf, gold);
+//	init_buffer(buf, gold);
+#include "data.h"
 
 	printf("\n====== %s ======\n\n", cfg_000[0].devname);
 	/* <<--print-params-->> */

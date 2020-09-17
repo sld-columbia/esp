@@ -30,6 +30,7 @@
 #include <esp_accelerator.h>
 
 // <<--esp-include-->>
+#include "cholesky_6x6.h"
 #include "cholesky_small.h"
 #include "FFTAccelerator.h"
 #include "AdderAccelerator.h"
@@ -47,6 +48,7 @@ unsigned DMA_WORD_PER_BEAT(unsigned _st);
 
 enum esp_accelerator_type {
 	// <<--esp-enum-->>
+	cholesky_6x6,
 	cholesky_small,
 	fftaccelerator,
 	adderaccelerator,
@@ -63,6 +65,7 @@ enum esp_accelerator_type {
 
 union esp_accelerator_descriptor {
 	// <<--esp-descriptor-->>
+	struct cholesky_6x6_access cholesky_6x6_desc;
 	struct cholesky_small_access cholesky_small_desc;
 	struct fftaccelerator_access fftaccelerator_desc;
 	struct adderaccelerator_access adderaccelerator_desc;

@@ -83,126 +83,126 @@ runsudo () {
     fi
 }
 
-# Create target folder
-if test ! -e ${TARGET_DIR}; then
-    pdir=${TARGET_DIR}
-    while test ! -e $pdir; do
-	pdir=$(dirname $pdir)
-    done;
-    cmd="mkdir -p ${TARGET_DIR}"
-    runsudo $pdir "$cmd"
-fi
-
-
-# Assign User ownership of target folder (needed to create toolchain through buildroot)
-# Users can restore the ownership to root:root after running the script
-cmd="chown $USER:$(id -gn) ${TARGET_DIR}"
-runsudo ${TARGET_DIR} "$cmd"
+## Create target folder
+#if test ! -e ${TARGET_DIR}; then
+#    pdir=${TARGET_DIR}
+#    while test ! -e $pdir; do
+#	pdir=$(dirname $pdir)
+#    done;
+#    cmd="mkdir -p ${TARGET_DIR}"
+#    runsudo $pdir "$cmd"
+#fi
+#
+#
+## Assign User ownership of target folder (needed to create toolchain through buildroot)
+## Users can restore the ownership to root:root after running the script
+#cmd="chown $USER:$(id -gn) ${TARGET_DIR}"
+#runsudo ${TARGET_DIR} "$cmd"
 
 # Create temporary folder
 mkdir -p $TMP
 cd $TMP
 
-# Bare-metal compiler
-src=sparc-elf-${BAREC_GCC_VERSION}
-tar=$src.tar
-ovwrt="n"
-dst="${TARGET_DIR}/${src}"
-
-echo "*** Installing bare-metal compiler... ***"
-if [ $(noyes "Skip ${src}") == "n" ]; then
-    if test -e $dst; then
-	if [ $(noyes "Re-install ${dst}") == "y" ]; then
-	    ovwrt="y"
-	fi
-    else
-	ovwrt="y"
-    fi
-
-    if [ $ovwrt == "y" ]; then
-	cmd="rm -rf ${dst} ${TARGET_DIR}/sparc-elf"
-	runsudo $TARGET_DIR "$cmd"
-	rm -rf ${src}
-	if test ! -e $tar; then
-	    wget ${SRC_MIRROR}/$tar
-	fi
-	tar xf $tar
-	cmd="mv ${src} ${TARGET_DIR}"
-	runsudo $TARGET_DIR "$cmd"
-	cmd="ln -s ${dst} ${TARGET_DIR}/sparc-elf"
-	runsudo $TARGET_DIR "$cmd"
-    fi
-fi
-cd $TMP
-
-# MKLINUXIMG debugger
-src=mklinuximg-${MKLINUXIMG_VERSION}
-tar=$src.tar.bz2
-ovwrt="n"
-dst="${TARGET_DIR}/${src}"
-
-echo "*** Installing mklinuximg ... ***"
-if [ $(noyes "Skip ${src}") == "n" ]; then
-    if test -e $dst; then
-	if [ $(noyes "Re-install ${dst}") == "y" ]; then
-	    ovwrt="y"
-	fi
-    else
-	ovwrt="y"
-    fi
-
-    if [ $ovwrt == "y" ]; then
-	cmd="rm -rf ${dst} ${TARGET_DIR}/mklinuximg"
-	runsudo $TARGET_DIR "$cmd"
-	rm -rf ${src}
-	if test ! -e $tar; then
-	    wget ${SRC_MIRROR}/$tar
-	fi
-	tar xf $tar
-	cmd="mv ${src} ${TARGET_DIR}"
-	runsudo $TARGET_DIR "$cmd"
-	cmd="ln -s ${dst} ${TARGET_DIR}/mklinuximg"
-	runsudo $TARGET_DIR "$cmd"
-    fi
-fi
-cd $TMP
-
-# # Linux headers
-# echo "*** Installing Linux headers... ***"
-# if [ $(noyes "Skip Linux headers?") == "n" ]; then
-#     cd $LINUXSRC
-#     make mrproper
-#     ARCH=sparc make leon3_smp_defconfig
-#     make ARCH=sparc headers_check
-#     cmd="mkdir -p ${TARGET_DIR}/usr"
-#     runsudo $TARGET_DIR "$cmd"
-#     cmd="make ARCH=sparc INSTALL_HDR_PATH=${TARGET_DIR}/usr headers_install"
-#     runsudo $TARGET_DIR "$cmd"
-#     make mrproper
-# fi
-# cd $TMP
-
-
-# Linux toolchain
-src=buildroot
-echo "*** Installing Linux uClibC tool chain w/ buildroot ... ***"
-if [ $(noyes "Skip Linux toolchain") == "n" ]; then
-    if test -e $src; then
-	cd $src
-	git checkout .
-	git pull
-    else
-    	git clone --recursive git://git.buildroot.net/buildroot
-	cd $src
-    fi
-
-    git reset --hard ${BUILDROOT_SHA}
-    git submodule update --init --recursive
-
-    make distclean
-    make defconfig BR2_DEFCONFIG=${SCRIPT_PATH}/leon3_buildroot_toolchain_defconfig
-    make toolchain -j ${NTHREADS}
-fi
+## Bare-metal compiler
+#src=sparc-elf-${BAREC_GCC_VERSION}
+#tar=$src.tar
+#ovwrt="n"
+#dst="${TARGET_DIR}/${src}"
+#
+#echo "*** Installing bare-metal compiler... ***"
+#if [ $(noyes "Skip ${src}") == "n" ]; then
+#    if test -e $dst; then
+#	if [ $(noyes "Re-install ${dst}") == "y" ]; then
+#	    ovwrt="y"
+#	fi
+#    else
+#	ovwrt="y"
+#    fi
+#
+#    if [ $ovwrt == "y" ]; then
+#	cmd="rm -rf ${dst} ${TARGET_DIR}/sparc-elf"
+#	runsudo $TARGET_DIR "$cmd"
+#	rm -rf ${src}
+#	if test ! -e $tar; then
+#	    wget ${SRC_MIRROR}/$tar
+#	fi
+#	tar xf $tar
+#	cmd="mv ${src} ${TARGET_DIR}"
+#	runsudo $TARGET_DIR "$cmd"
+#	cmd="ln -s ${dst} ${TARGET_DIR}/sparc-elf"
+#	runsudo $TARGET_DIR "$cmd"
+#    fi
+#fi
+#cd $TMP
+#
+## MKLINUXIMG debugger
+#src=mklinuximg-${MKLINUXIMG_VERSION}
+#tar=$src.tar.bz2
+#ovwrt="n"
+#dst="${TARGET_DIR}/${src}"
+#
+#echo "*** Installing mklinuximg ... ***"
+#if [ $(noyes "Skip ${src}") == "n" ]; then
+#    if test -e $dst; then
+#	if [ $(noyes "Re-install ${dst}") == "y" ]; then
+#	    ovwrt="y"
+#	fi
+#    else
+#	ovwrt="y"
+#    fi
+#
+#    if [ $ovwrt == "y" ]; then
+#	cmd="rm -rf ${dst} ${TARGET_DIR}/mklinuximg"
+#	runsudo $TARGET_DIR "$cmd"
+#	rm -rf ${src}
+#	if test ! -e $tar; then
+#	    wget ${SRC_MIRROR}/$tar
+#	fi
+#	tar xf $tar
+#	cmd="mv ${src} ${TARGET_DIR}"
+#	runsudo $TARGET_DIR "$cmd"
+#	cmd="ln -s ${dst} ${TARGET_DIR}/mklinuximg"
+#	runsudo $TARGET_DIR "$cmd"
+#    fi
+#fi
+#cd $TMP
+#
+## # Linux headers
+## echo "*** Installing Linux headers... ***"
+## if [ $(noyes "Skip Linux headers?") == "n" ]; then
+##     cd $LINUXSRC
+##     make mrproper
+##     ARCH=sparc make leon3_smp_defconfig
+##     make ARCH=sparc headers_check
+##     cmd="mkdir -p ${TARGET_DIR}/usr"
+##     runsudo $TARGET_DIR "$cmd"
+##     cmd="make ARCH=sparc INSTALL_HDR_PATH=${TARGET_DIR}/usr headers_install"
+##     runsudo $TARGET_DIR "$cmd"
+##     make mrproper
+## fi
+## cd $TMP
+#
+#
+## Linux toolchain
+#src=buildroot
+#echo "*** Installing Linux uClibC tool chain w/ buildroot ... ***"
+#if [ $(noyes "Skip Linux toolchain") == "n" ]; then
+#    if test -e $src; then
+#	cd $src
+#	git checkout .
+#	git pull
+#    else
+#    	git clone --recursive git://git.buildroot.net/buildroot
+#	cd $src
+#    fi
+#
+#    git reset --hard ${BUILDROOT_SHA}
+#    git submodule update --init --recursive
+#
+#    make distclean
+#    make defconfig BR2_DEFCONFIG=${SCRIPT_PATH}/leon3_buildroot_toolchain_defconfig
+#    make toolchain -j ${NTHREADS}
+#fi
 cd $TMP
 
 

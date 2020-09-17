@@ -8,7 +8,7 @@
 
 #include <esp_accelerator.h>
 #include <esp_probe.h>
-
+#include <math.h>
 typedef int32_t token_t;
 
 static unsigned DMA_WORD_PER_BEAT(unsigned _st)
@@ -21,8 +21,8 @@ static unsigned DMA_WORD_PER_BEAT(unsigned _st)
 #define DEV_NAME "sld,cholesky_6x6"
 
 /* <<--params-->> */
-const int32_t input_rows = 6;
-const int32_t output_rows = 6;
+const int32_t input_rows = 25;
+const int32_t output_rows = 25;
 
 static unsigned in_words_adj;
 static unsigned out_words_adj;
@@ -51,29 +51,17 @@ static int validate_buf(token_t *out, token_t *gold)
 	int i;
 	int j;
 	unsigned errors = 0;
-
+	const float ERR_TH = 0.2f;
 	for (i = 0; i < 1; i++)
 		for (j = 0; j < output_rows * output_rows; j++)
-			if (gold[i * out_words_adj + j] != out[i * out_words_adj + j])
-				errors++;
+		  if ((fabs(gold[j] - out[j]) / fabs(gold[j])) > ERR_TH) {
+				printf(" GOLD = %d   and  OUT = %d  and J = %d \n", gold[j], out[j], j); 
+                                errors++; }
 
 	return errors;
 }
 
 
-static void init_buf (token_t *in, token_t * gold)
-{
-	int i;
-	int j;
-
-	for (i = 0; i < 1; i++)
-		for (j = 0; j < input_rows * input_rows; j++)
-			in[i * in_words_adj + j] = (token_t) j;
-
-	for (i = 0; i < 1; i++)
-		for (j = 0; j < output_rows * output_rows; j++)
-			gold[i * out_words_adj + j] = (token_t) j;
-}
 
 
 int main(int argc, char * argv[])
@@ -169,7 +157,8 @@ int main(int argc, char * argv[])
 #else
 		print_uart("  Generate input...\n");
 #endif
-		init_buf(mem, gold);
+		//init_buf(mem, gold);
+		#include "data.h"
 
 		// Pass common configuration parameters
 
@@ -223,8 +212,10 @@ int main(int argc, char * argv[])
 		/* Validation */
 		errors = validate_buf(&mem[out_offset], gold);
 #ifndef __riscv
-		if (errors)
+		if (errors){
 			printf("  ... FAIL\n");
+			printf(" ERRORS = %d \n",errors);}
+			
 		else
 			printf("  ... PASS\n");
 #else

@@ -6,8 +6,8 @@
 typedef int32_t token_t;
 
 /* <<--params-def-->> */
-#define INPUT_ROWS 6
-#define OUTPUT_ROWS 6
+#define INPUT_ROWS 25
+#define OUTPUT_ROWS 25
 
 /* <<--params-->> */
 const int32_t input_rows = INPUT_ROWS;
