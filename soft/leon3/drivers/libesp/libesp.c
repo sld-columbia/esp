@@ -57,13 +57,7 @@ void remove_buf(void *buf){
 bool thread_is_p2p(esp_thread_info_t *thread)
 {
      switch (thread->type) {
-        // <<--esp-prepare-->>
-		case cholesky_6x6 :
-			esp_prepare(&info->desc.cholesky_6x6_desc.esp);
-			break;
-		case cholesky_small :
-			esp_prepare(&info->desc.cholesky_small_desc.esp);
-			break;
+
          case fftaccelerator :
             return (thread->desc.fftaccelerator_desc.esp.p2p_store 
                     || thread->desc.fftaccelerator_desc.esp.p2p_nsrcs);
