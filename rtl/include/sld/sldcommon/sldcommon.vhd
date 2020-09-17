@@ -283,4 +283,11 @@ package sldcommon is
       ahbso : out ahb_slv_out_type);
   end component ahbslm;
 
+
+  -- Unread dummy from Ariane (avoid Vivado black-box error)
+  component unread is
+    port (
+      d_i : in std_ulogic);
+  end component unread;
+
 end sldcommon;
