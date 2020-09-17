@@ -1,4 +1,6 @@
 cholesky_small_plm_block_in_dma32 4 32 1w:0r 0w:1r
 cholesky_small_plm_block_out_dma32 4 32 1w:0r 0w:1r
+cholesky_small_plm_block_temp_dma32 8 32 1w:0r 0w:1r
 cholesky_small_plm_block_in_dma64 4 32 2w:0r 0w:1r
 cholesky_small_plm_block_out_dma64 4 32 1w:0r 0w:2r
+cholesky_small_plm_block_temp_dma64 8 32 1w:0r 0w:2r

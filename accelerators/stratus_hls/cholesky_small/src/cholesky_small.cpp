@@ -289,37 +289,121 @@ void cholesky_small::compute_kernel()
 
     // Compute
     bool ping = true;
+    FPDATA s;
+    FPDATA index_sqrt;
     {
         for (uint16_t b = 0; b < 1; b++)
         {
             uint32_t in_length = input_rows * input_rows;
             uint32_t out_length = output_rows * output_rows;
             int out_rem = out_length;
-
+	    uint32_t n = input_rows;
+		int i =0;
+		int fill =0;
+		int temp ;
             for (int in_rem = in_length; in_rem > 0; in_rem -= PLM_IN_WORD)
             {
-
+		temp=0;
                 uint32_t in_len  = in_rem  > PLM_IN_WORD  ? PLM_IN_WORD  : in_rem;
                 uint32_t out_len = out_rem > PLM_OUT_WORD ? PLM_OUT_WORD : out_rem;
 
                 this->compute_load_handshake();
-
+		
                 // Computing phase implementation
-                for (int i = 0; i < in_len; i++) {
+               
                     if (ping)
-                        plm_out_ping[i] = plm_in_ping[i];
-                    else
-                        plm_out_pong[i] = plm_in_pong[i];
-                }
+			{	
+			   for (int j = 0; j < (i+1); j++)
+			     {
+          			 s = 0;
+            			 for (int k = 0; k < j; k++) {
+					if(i!=j) {
+						if(j==(PLM_IN_WORD-2))
+                				s += int2fp<FPDATA, WORD_SIZE> ( plm_out_ping[k])  * int2fp<FPDATA, WORD_SIZE> (plm_temp[temp]);
+						else
+						s += int2fp<FPDATA, WORD_SIZE> ( plm_out_ping[k])  * int2fp<FPDATA, WORD_SIZE> (plm_temp[temp]);
+						}
+					else 
+                			s += int2fp<FPDATA, WORD_SIZE> ( plm_out_ping[k])  * int2fp<FPDATA, WORD_SIZE> (plm_out_ping[k]);
+					temp++;
+					}
+
+                		if(i == j){
+                        	  index_sqrt =int2fp<FPDATA, WORD_SIZE> ( plm_in_ping[i]) - s;
+                        	   plm_out_ping[j] =fp2int<FPDATA, WORD_SIZE> ( sqrt(index_sqrt));
+                        	   plm_diag[ j] = fp2int<FPDATA, WORD_SIZE> (sqrt(index_sqrt));
+                  			 }
+               			 else{
+			                if( plm_temp[j] != 0) {
+                        		  plm_out_ping[j] =  fp2int<FPDATA, WORD_SIZE> ((1.0 /int2fp<FPDATA, WORD_SIZE>( plm_diag[j])) *( int2fp<FPDATA, WORD_SIZE>(plm_in_ping[ j]) - s));                			      plm_temp[fill] =  fp2int<FPDATA, WORD_SIZE> ((1.0 /int2fp<FPDATA, WORD_SIZE>( plm_diag[j])) *( int2fp<FPDATA, WORD_SIZE>(plm_in_ping[ j]) - s));
+					}else
+                    			   plm_out_ping[j] = 0;
+				     fill++;
+       				     }	
+				  //fill++;
+        			 } //for-j
+
+			}//if
+                    else // !ping
+			{
+			    for (int j = 0; j < (i+1); j++)
+                             {
+                                 s = 0;
+                                 for (int k = 0; k < j; k++) {
+					if(i!=j)  {
+                                                if(j==((PLM_IN_WORD-2)))
+                                                s += int2fp<FPDATA, WORD_SIZE> ( plm_out_pong[k])  * int2fp<FPDATA, WORD_SIZE> (plm_temp[temp]); //j+1+k
+						else
+                                        	s += int2fp<FPDATA, WORD_SIZE> ( plm_out_pong[k]) * int2fp<FPDATA, WORD_SIZE> ( plm_temp[temp]);
+						}	
+				        else
+                                        s += int2fp<FPDATA, WORD_SIZE> ( plm_out_pong[k])  * int2fp<FPDATA, WORD_SIZE> (plm_out_pong[k]);
+					temp++;
+                                        }
+
+                                if(i == j){
+                                  index_sqrt = int2fp<FPDATA, WORD_SIZE> (plm_in_pong[i]) - s;
+                                   plm_out_pong[j] = fp2int<FPDATA, WORD_SIZE>  (sqrt(index_sqrt));
+                                   plm_diag[ j] = fp2int<FPDATA, WORD_SIZE> (sqrt(index_sqrt));
+                                         }
+                                 else{
+                                        if( plm_diag[j] != 0) {
+                                            plm_out_pong[j] =  fp2int<FPDATA, WORD_SIZE> ((1.0 /int2fp<FPDATA, WORD_SIZE>( plm_diag[j])) * (int2fp<FPDATA, WORD_SIZE>(plm_in_pong[j]) - s));
+                                            plm_temp[fill] =  fp2int<FPDATA, WORD_SIZE> ((1.0 /int2fp<FPDATA, WORD_SIZE>( plm_diag[j])) * (int2fp<FPDATA, WORD_SIZE>(plm_in_pong[j]) - s));
+                                     }   else
+                                           plm_out_pong[j] = 0;
+					fill++;
+                                     }
+				// fill++;
+                               }//for-j
+
+			}//else
+
+			for (int z =(i+1) ; z < input_rows ; z++) {
+				if(ping) 
+				 plm_out_ping[z] =0;
+				else 
+				plm_out_pong[z] =0;
+			}
 
                 out_rem -= PLM_OUT_WORD;
                 this->compute_store_handshake();
                 ping = !ping;
+		i++;
+		cout << "TEMP VAL " << temp << "\n";
             }
+
+		for( int l =0 ; l <4 ; l++)
+		cout << "PLM TEMP LOC = " << l << "  IS  " << int2fp<FPDATA, WORD_SIZE>(plm_temp[l]) << "\n" ;
+		cout << "\n";
+		for( int l =0 ; l <4 ; l++)
+                cout << "PLM DIAG LOC = " << l << "  IS  " << int2fp<FPDATA, WORD_SIZE>(plm_diag[l]) << "\n" ;
         }
 
         // Conclude
-        {
+       
+
+ {
             this->process_done();
         }
     }

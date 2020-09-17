@@ -93,16 +93,28 @@ void system_t::load_memory()
     in_size = in_words_adj * (1);
     out_size = out_words_adj * (1);
 
-    in = new int32_t[in_size];
+
+ifstream f("/home/esp2020/pa2562/esp-1/accelerators/stratus_hls/cholesky_small/tb/inputnew.txt");
+    if (!f) {
+        cout << "Cannot open input file.\n";
+        return;
+    }
+ifstream fo("/home/esp2020/pa2562/esp-1/accelerators/stratus_hls/cholesky_small/tb/outputnew.txt");
+    if (!fo) {
+        cout << "Cannot open input file.\n";
+        return;
+    }
+
+    in = new float[in_size];
     for (int i = 0; i < 1; i++)
         for (int j = 0; j < input_rows * input_rows; j++)
-            in[i * in_words_adj + j] = (int32_t) j;
+          f>>  in[i * in_words_adj + j] ;
 
     // Compute golden output
-    gold = new int32_t[out_size];
+    gold = new float[out_size];
     for (int i = 0; i < 1; i++)
         for (int j = 0; j < output_rows * output_rows; j++)
-            gold[i * out_words_adj + j] = (int32_t) j;
+           fo>>  gold[i * out_words_adj + j] ;
 
     // Memory initialization:
 #if (DMA_WORD_PER_BEAT == 0)
@@ -113,9 +125,9 @@ void system_t::load_memory()
     }
 #else
     for (int i = 0; i < in_size / DMA_WORD_PER_BEAT; i++)  {
-        sc_dt::sc_bv<DMA_WIDTH> data_bv(in[i]);
+        sc_dt::sc_bv<DMA_WIDTH> data_bv;
         for (int j = 0; j < DMA_WORD_PER_BEAT; j++)
-            data_bv.range((j+1) * DATA_WIDTH - 1, j * DATA_WIDTH) = in[i * DMA_WORD_PER_BEAT + j];
+            data_bv.range((j+1) * DATA_WIDTH - 1, j * DATA_WIDTH) = fp2bv<FPDATA, WORD_SIZE>(FPDATA( in[i * DMA_WORD_PER_BEAT + j]));
         mem[i] = data_bv;
     }
 #endif
@@ -126,7 +138,7 @@ void system_t::load_memory()
 void system_t::dump_memory()
 {
     // Get results from memory
-    out = new int32_t[out_size];
+    out = new float[out_size];
     uint32_t offset = in_size;
 
 #if (DMA_WORD_PER_BEAT == 0)
@@ -142,8 +154,10 @@ void system_t::dump_memory()
 #else
     offset = offset / DMA_WORD_PER_BEAT;
     for (int i = 0; i < out_size / DMA_WORD_PER_BEAT; i++)
-        for (int j = 0; j < DMA_WORD_PER_BEAT; j++)
-            out[i * DMA_WORD_PER_BEAT + j] = mem[offset + i].range((j + 1) * DATA_WIDTH - 1, j * DATA_WIDTH).to_int64();
+        for (int j = 0; j < DMA_WORD_PER_BEAT; j++) {
+           FPDATA out_fx =  bv2fp<FPDATA, WORD_SIZE>(mem[offset + i].range((j + 1) * DATA_WIDTH - 1, j * DATA_WIDTH).to_int64());
+out[i * DMA_WORD_PER_BEAT + j] = (float) out_fx;
+}
 #endif
 
     ESP_REPORT_INFO("dump memory completed");
@@ -153,11 +167,14 @@ int system_t::validate()
 {
     // Check for mismatches
     uint32_t errors = 0;
-
+   const float ERR_TH = 0.01f; //1%
     for (int i = 0; i < 1; i++)
-        for (int j = 0; j < output_rows * output_rows; j++)
-            if (gold[i * out_words_adj + j] != out[i * out_words_adj + j])
-                errors++;
+        for (int j = 0; j < output_rows * output_rows; j++) {
+		cout << " GOLDEN  || " << gold[i * out_words_adj + j] << "   DESIGN  || " <<  out[i * out_words_adj + j] << "\n" ;
+		if ((fabs(gold[i* out_words_adj + j] - out[i* out_words_adj +j]) / fabs(gold[i * out_words_adj +j])) > ERR_TH) {
+                                errors++;
+                        }
+	}
 
     delete [] in;
     delete [] out;

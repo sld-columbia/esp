@@ -11,7 +11,7 @@
 
 #include "esp_templates.hpp"
 #include "fpdata.hpp"
-const size_t MEM_SIZE = 131072 / (DMA_WIDTH/8);
+const size_t MEM_SIZE = 33554432 / (DMA_WIDTH/8);
 
 #include "core/systems/esp_system.hpp"
 
@@ -54,8 +54,8 @@ public:
         acc->debug(debug);
 
         /* <<--params-default-->> */
-        input_rows =128;
-        output_rows = 128;
+        input_rows =25;
+        output_rows = 25;
     }
 
     // Processes

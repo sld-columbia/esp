@@ -91,9 +91,9 @@ void cholesky_6x6::load_input()
                         	HLS_UNROLL_SIMPLE;
                         	if (ping)
 				   {
-                                     if(i==(len-2) && (k==0))
-                                        plm_in_ping[i ] = dataBv.range(  DATA_WIDTH - 1, 0).to_int64();
-                                     else if (i!=(len-2))
+                                     //if(i==(len-2) && (k==0))
+                                     //   plm_in_ping[i ] = dataBv.range(  DATA_WIDTH - 1, 0).to_int64();
+                                    // else if (i!=(len-2))
                                         plm_in_ping[i + k] = dataBv.range((k+1) * DATA_WIDTH - 1, k * DATA_WIDTH).to_int64();
                                    }
                                 else
@@ -379,6 +379,8 @@ void cholesky_6x6::compute_kernel()
     	FPDATA plm_in_data;
     	FPDATA plm_out_data;
     	FPDATA plm_diag_data;
+    	FPDATA plm_temp_data;
+    	FPDATA plm_fetch_data;
 
     {
         for (uint16_t b = 0; b < 1; b++)
@@ -397,64 +399,67 @@ void cholesky_6x6::compute_kernel()
                  HLS_BREAK_DEP(plm_temp_ping);
                  HLS_BREAK_DEP(plm_temp_pong);
                  HLS_BREAK_DEP(plm_diag);
-
+	
 		temp =0;
-                uint32_t in_len  = in_rem  > input_rows  ? input_rows  : in_rem;
-                uint32_t out_len = out_rem > PLM_OUT_WORD ? PLM_OUT_WORD : out_rem;
 		if(i<3)
                 this->compute_load_handshake();
-
+		wait();
                 // Computing phase implementation
 		int call_times =0;
 		fill=0;
 		bool fetch_out_ping =true;
-		//int num_of_calls = (i>=3) ? input_rows-3 :0;
 		int num_of_calls = (i>=3) ? i-1 :0;
-		if (ping)
-		  {
-		
+	        int plm_out_data_int;
+		int plm_temp_data_int;	
 		   for (int j = 0; j < (i+1); j++)
 		   	{ 
 			   wait();
 			   if(i>=3 &&  (call_times < num_of_calls)) 
 			   this->compute_load_handshake();
-			   
-			   plm_in_data = int2fp<FPDATA, WORD_SIZE>(plm_in_ping[ j]);
+			  
+			   plm_in_data = (ping) ? int2fp<FPDATA, WORD_SIZE>(plm_in_ping[ j]) : int2fp<FPDATA, WORD_SIZE>(plm_in_pong[ j]) ;
+			  
 			   plm_diag_data = int2fp<FPDATA, WORD_SIZE>(plm_diag[ j]);
                            s = 0;
                            for (int k = 0; k < j; k++) 
 			      {
 				wait();
-				plm_out_data = int2fp<FPDATA, WORD_SIZE> ( plm_out_ping[k]);
+				plm_out_data_int = (ping) ?  plm_out_ping[k] :  plm_out_pong[k];
+				plm_temp_data_int =(ping) ? ( plm_temp_pong[k]) :   ( plm_temp_ping[k]);
+				plm_out_data = int2fp<FPDATA, WORD_SIZE> (plm_out_data_int);
+			        plm_temp_data = int2fp<FPDATA, WORD_SIZE> (plm_temp_data_int);
 				if(i>=3)
                                    {
-                                      if(j<(i-1))
-					{
+                                      if(j<(i-1)) 
+					 {
 					  if(fetch_out_ping)
-                                        	s += plm_out_data * int2fp<FPDATA, WORD_SIZE> ( plm_fetch_outdata_ping[k]);
-                                          else
-						s += plm_out_data * int2fp<FPDATA, WORD_SIZE> ( plm_fetch_outdata_pong[k]);
-
+					      plm_fetch_data =int2fp<FPDATA, WORD_SIZE> ( plm_fetch_outdata_ping[k]);
+					  else
+					      plm_fetch_data =int2fp<FPDATA, WORD_SIZE> ( plm_fetch_outdata_pong[k]);
+                                 	  s +=  plm_out_data * plm_fetch_data ;
 					}
                                       else if(j==(i-1))
-                                        s += plm_out_data * int2fp<FPDATA, WORD_SIZE> ( plm_temp_pong[k]);
+                                        s += plm_out_data * plm_temp_data;
                                       else
                                         s += plm_out_data * plm_out_data;
                                    }
                                  else
                                    {
                                      if(i!=j)
-                                        s += plm_out_data * int2fp<FPDATA, WORD_SIZE> ( plm_temp_pong[k]);
+                                        s += plm_out_data * plm_temp_data;
                                       else
                                         s += plm_out_data * plm_out_data;
                                    }
 
-                              }
+                              }//for(k)
                            if(i == j)
 			     {
                                index_sqrt = plm_in_data - s;
                                index_sqrt_data =fp2int<FPDATA, WORD_SIZE> ( sqrt(index_sqrt));
-                               plm_out_ping[j] =index_sqrt_data;
+			       if(ping)
+                               	  plm_out_ping[j] =index_sqrt_data;
+			       else
+				  plm_out_pong[j] =index_sqrt_data;
                                plm_diag[ j] = index_sqrt_data;
                              }
                            else //(i!=j)
@@ -462,91 +467,36 @@ void cholesky_6x6::compute_kernel()
                                if( plm_diag_data != 0)
 			         {
                                   output_data =  fp2int<FPDATA, WORD_SIZE> ((1.0 /plm_diag_data) *( plm_in_data - s));  
-                                  plm_out_ping[j] =  output_data;  
-                                  plm_temp_ping[fill] =  output_data;
+				  if(ping)
+				    {
+                                  	plm_out_ping[j] =  output_data;  
+                                  	plm_temp_ping[fill] =  output_data;
+				    }
+				  else
+				    {
+					plm_out_pong[j] =  output_data;
+                                        plm_temp_pong[fill] =  output_data;
+				    }
                                  }
 			       else
 				 {
-			         plm_out_ping[j] = 0;
-				 plm_temp_ping[fill]=0;
+				    if(ping)
+				      {
+			         	plm_out_ping[j] = 0;
+				 	plm_temp_ping[fill]=0;
+				      }
+				    else
+				      {
+					plm_out_pong[j] = 0;
+                                        plm_temp_pong[fill]=0;
+				      }
+
 				 }
                                fill++;
-                             }
+                             }//else(i!=j)
 			    call_times++;
 			    if(j>0) fetch_out_ping= !fetch_out_ping;
                         }//for(j)
-
-		  }
-
-	      else //!ping
-	 	  {
-		     
-                     for (int j = 0; j < (i+1); j++)
-                        {
-			   wait();
-			   if(i>=3 && (call_times < num_of_calls)) 
-                           this->compute_load_handshake(); //how many times is this called and how many times it is needed ?
-		
-			   
-			   plm_in_data = int2fp<FPDATA, WORD_SIZE>(plm_in_pong[ j]);
-                           plm_diag_data = int2fp<FPDATA, WORD_SIZE>(plm_diag[ j]);
-
-                           s = 0;
-                           for (int k = 0; k < j; k++) 
-			      {
-				 wait();
-				 plm_out_data = int2fp<FPDATA, WORD_SIZE> ( plm_out_pong[k]);
-				 if(i>=3)
-				   {
-                               	      if(j<(i-1))
-					{
-					  if(fetch_out_ping)
-                                             s += plm_out_data * int2fp<FPDATA, WORD_SIZE> ( plm_fetch_outdata_ping[k]);
-                                          else
-                                             s += plm_out_data * int2fp<FPDATA, WORD_SIZE> ( plm_fetch_outdata_pong[k]);
-					}
-				      else if(j==(i-1)) 
-					s += plm_out_data * int2fp<FPDATA, WORD_SIZE> ( plm_temp_ping[k]);
-					
-                                      else
-                                        s += plm_out_data * plm_out_data;
-					
-				   }
-				  else
-				   {
-			         if(i!=j)
-                                        s += plm_out_data * int2fp<FPDATA, WORD_SIZE> ( plm_temp_ping[k]);
-                                      else
-                                        s += plm_out_data * plm_out_data;
-				   }
-                               }//for(k)
-                           if(i == j)
-			      {
-                                index_sqrt = plm_in_data - s;
-                                index_sqrt_data = fp2int<FPDATA, WORD_SIZE>  (sqrt(index_sqrt));
-                                plm_out_pong[j] = index_sqrt_data;
-                                plm_diag[ j] = index_sqrt_data;
-                              }
-                           else
-			      {
-                                if( plm_diag_data != 0) 
-				   {
-                                     output_data =  fp2int<FPDATA, WORD_SIZE> ((1.0 /plm_diag_data) * (plm_in_data - s));
-                                     plm_out_pong[j] =  output_data;
-                                     plm_temp_pong[fill] = output_data;
-                                    }
-				else
-				  {
-				    plm_out_pong[j] = 0;
-				    plm_temp_pong[fill] =0;
-				  }
-                                fill++;
-			     }
-			     call_times++;
-			     if(j>0) fetch_out_ping= !fetch_out_ping;
-			}
-
-                  }//else
 
                 for (int z =(i+1) ; z < input_rows ; z++)
 		    {
@@ -557,7 +507,6 @@ void cholesky_6x6::compute_kernel()
                           plm_out_pong[z] =0;
                     }
 
-                out_rem -= PLM_OUT_WORD;
                 this->compute_store_handshake();
                 ping = !ping;
 		i++;

@@ -19,7 +19,7 @@ const unsigned int WORD_SIZE = 32;
 
 const unsigned int FPDATA_WL = 32;
 
-const unsigned int FPDATA_IL = 9;
+const unsigned int FPDATA_IL = 12;
 
 const unsigned int FPDATA_PL = (FPDATA_WL - FPDATA_IL);
 

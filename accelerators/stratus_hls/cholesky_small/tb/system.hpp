@@ -10,6 +10,7 @@
 #include "cholesky_small_directives.hpp"
 
 #include "esp_templates.hpp"
+#include "fpdata.hpp"
 
 const size_t MEM_SIZE = 128 / (DMA_WIDTH/8);
 
@@ -81,9 +82,9 @@ public:
     uint32_t out_words_adj;
     uint32_t in_size;
     uint32_t out_size;
-    int32_t *in;
-    int32_t *out;
-    int32_t *gold;
+    float *in;
+    float *out;
+    float *gold;
 
     // Other Functions
 };

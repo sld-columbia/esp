@@ -16,8 +16,8 @@
 /* <<--defines-->> */
 #define DATA_WIDTH 32
 #define DMA_SIZE SIZE_WORD
-#define PLM_OUT_WORD 128
-#define PLM_IN_WORD 128
+#define PLM_OUT_WORD 2048
+#define PLM_IN_WORD 2048
 class cholesky_6x6 : public esp_accelerator_3P<DMA_WIDTH>
 {
 public:

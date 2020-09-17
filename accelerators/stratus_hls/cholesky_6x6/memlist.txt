@@ -1,4 +1,4 @@
-cholesky_6x6_plm_block_in_dma32 128 32 1w:0r 0w:1r
-cholesky_6x6_plm_block_out_dma32 128 32 1w:0r 0w:1r
-cholesky_6x6_plm_block_in_dma64 128 32 2w:0r 0w:1r
-cholesky_6x6_plm_block_out_dma64 128 32 1w:0r 0w:2r
+cholesky_6x6_plm_block_in_dma32 2048 32 1w:0r 0w:1r
+cholesky_6x6_plm_block_out_dma32 2048 32 1w:0r 0w:1r
+cholesky_6x6_plm_block_in_dma64 2048 32 2w:0r 0w:1r
+cholesky_6x6_plm_block_out_dma64 2048 32 1w:0r 0w:2r

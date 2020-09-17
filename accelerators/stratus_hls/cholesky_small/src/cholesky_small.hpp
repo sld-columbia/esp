@@ -11,6 +11,7 @@
 
 #include "cholesky_small_directives.hpp"
 
+#include "fpdata.hpp"
 #define __round_mask(x, y) ((y)-1)
 #define round_up(x, y) ((((x)-1) | __round_mask(x, y))+1)
 /* <<--defines-->> */
@@ -18,6 +19,7 @@
 #define DMA_SIZE SIZE_WORD
 #define PLM_OUT_WORD 4
 #define PLM_IN_WORD 4
+#define PLM_TEMP_WORD 8
 
 class cholesky_small : public esp_accelerator_3P<DMA_WIDTH>
 {
@@ -36,6 +38,8 @@ public:
         HLS_MAP_plm(plm_out_pong, PLM_OUT_NAME);
         HLS_MAP_plm(plm_out_ping, PLM_OUT_NAME);
         HLS_MAP_plm(plm_in_pong, PLM_IN_NAME);
+        HLS_MAP_plm(plm_diag, PLM_IN_NAME);
+        HLS_MAP_plm(plm_temp, PLM_TEMP_NAME);
         HLS_MAP_plm(plm_in_ping, PLM_IN_NAME);
     }
 
@@ -58,6 +62,8 @@ public:
     // Private local memories
     sc_dt::sc_int<DATA_WIDTH> plm_in_ping[PLM_IN_WORD];
     sc_dt::sc_int<DATA_WIDTH> plm_in_pong[PLM_IN_WORD];
+    sc_dt::sc_int<DATA_WIDTH> plm_diag[PLM_IN_WORD];
+    sc_dt::sc_int<DATA_WIDTH> plm_temp[PLM_TEMP_WORD];
     sc_dt::sc_int<DATA_WIDTH> plm_out_ping[PLM_OUT_WORD];
     sc_dt::sc_int<DATA_WIDTH> plm_out_pong[PLM_OUT_WORD];
 

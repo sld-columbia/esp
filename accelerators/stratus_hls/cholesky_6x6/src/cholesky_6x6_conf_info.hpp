@@ -19,8 +19,8 @@ public:
     conf_info_t()
     {
         /* <<--ctor-->> */
-        this->input_rows = 128;
-        this->output_rows = 128;
+        this->input_rows = 25;
+        this->output_rows = 25;
     }
 
     conf_info_t(
