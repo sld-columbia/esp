@@ -1013,7 +1013,7 @@ def print_mapping(fp, soc, esp_config):
     l2 = esp_config.tiles[i].l2
     if l2.id != -1:
       fp.write("    " + str(i) + " => " + str(l2.id) + ",\n")
-  fp.write("    others => -1);\n\n")
+  fp.write("    others => 0);\n\n")
 
   #
   fp.write("  -- Get tile ID from L2 cache ID\n")

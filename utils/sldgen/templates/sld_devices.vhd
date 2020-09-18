@@ -36,6 +36,7 @@ package sld_devices is
   constant SLD_SLM : devid_t := 16#023#;
   constant SLD_TILE_CSR : devid_t := 16#024#;
   constant SLD_ESP_INIT : devid_t := 16#025#;
+  constant SLD_EXTMEM_LINK : devid_t := 16#026#;
   -- <<devid>>
 
   constant VENDOR_SIFIVE : vendor_t := 16#EC#;
@@ -48,15 +49,16 @@ package sld_devices is
   constant SLD_DESC : vdesc_t := "Columbia University SLD ";
 
   constant sld_device_table : dtable_t := (
-    SLD_POWERCTRL => "Voltage and Frequency Scaling  ",
-    SLD_ESPLINK   => "ESP SoC Link                   ",
-    SLD_AHBRAM_DP => "On-chip RAM with dual AHB iface",
-    SLD_L2_CACHE  => "L2 cache                       ",
-    SLD_LLC_CACHE => "LLC cache                      ",
-    SLD_MST_PROXY => "bus-master proxy               ",
-    SLD_SLM       => "Shared-local memory            ",
-    SLD_TILE_CSR  => "ESP tile ctrl & stats          ",
-    SLD_ESP_INIT  => "ESP self init module           ",
+    SLD_POWERCTRL   => "Voltage and Frequency Scaling  ",
+    SLD_ESPLINK     => "ESP SoC Link                   ",
+    SLD_AHBRAM_DP   => "On-chip RAM with dual AHB iface",
+    SLD_L2_CACHE    => "L2 cache                       ",
+    SLD_LLC_CACHE   => "LLC cache                      ",
+    SLD_MST_PROXY   => "bus-master proxy               ",
+    SLD_SLM         => "Shared-local memory            ",
+    SLD_TILE_CSR    => "ESP tile ctrl & stats          ",
+    SLD_ESP_INIT    => "ESP self init module           ",
+    SLD_EXTMEM_LINK => "FPGA external memory link      ",
     -- <<ddesc>>
     others => "Unknown Device                 ");
 

@@ -408,9 +408,11 @@ package soctiles is
       pllclk             : out std_ulogic;
       ddr_ahbsi          : out ahb_slv_in_type;
       ddr_ahbso          : in  ahb_slv_out_type;
-      fpga_data_in       : in  std_logic_vector(ARCH_BITS downto 0);
-      fpga_data_out      : out std_logic_vector(ARCH_BITS downto 0);
+      fpga_data_in       : in  std_logic_vector(ARCH_BITS - 1 downto 0);
+      fpga_data_out      : out std_logic_vector(ARCH_BITS - 1 downto 0);
       fpga_oen           : out std_ulogic;
+      fpga_valid_in      : in  std_ulogic;
+      fpga_valid_out     : out std_ulogic;
       fpga_clk_in        : in  std_ulogic;
       fpga_clk_out       : out std_ulogic;
       fpga_credit_in     : in  std_ulogic;

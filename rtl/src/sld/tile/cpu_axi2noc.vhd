@@ -252,7 +252,15 @@ begin  -- rtl
 
     if tran.write = '1' then
       if retarget_for_dma = 1 then
-        tran.msg_type := DMA_FROM_DEV;
+        tran.msg_type := REQ_DMA_WRITE;  -- This request is non coherent, but
+                                         -- mem_noc2ahbm must skip
+                                         -- receive_wrlength, which only exists
+                                         -- for DMA_FROM_DEV from accelerators.
+                                         -- We use this workaround because
+                                         -- systems without DDR controller are
+                                         -- using a FPGA-to-memory link on
+                                         -- which we do not send the tail bit
+                                         -- to save some I/O pads.
       else -- Processor core request
         if tran.dst_is_mem = '1' then
           -- Send to Memory

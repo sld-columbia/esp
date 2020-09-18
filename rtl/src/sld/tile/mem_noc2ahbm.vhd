@@ -131,7 +131,7 @@ architecture rtl of mem_noc2ahbm is
                     write_last_data, write_complete,
                     dma_receive_address, dma_rd_request, dma_send_header,
                     dma_send_data, dma_wr_request, dma_write_data,
-                    dma_receive_rdlength, dma_send_busy, dma_wait_busy,
+                    dma_receive_rdlength, dma_receive_wrlength, dma_send_busy, dma_wait_busy,
                     dma_write_busy, write_busy, send_put_ack, send_put_ack_address);
 
   -- RSP_DATA
@@ -423,10 +423,27 @@ begin  -- rtl
           v.addr        := dma_rcv_data_out(GLOB_PHYS_ADDR_BITS - 1 downto 0);
           if r.msg = DMA_TO_DEV or r.msg = REQ_DMA_READ then
             v.state := dma_receive_rdlength;
+          elsif r.msg = DMA_FROM_DEV then
+            -- Note: in order to support ESP instances withouth DDR controller,
+            -- non coherent DMA is sending the transaction length to work with FPGA-based
+            -- memory proxy (mem2ext) for which the lenght of the payload must be known
+            -- when the transaction begins. The external link can only handle
+            -- non-coherent DMA and LLC requests (i.e. it assumes LLC is present),
+            -- therefore coherent DMA requests do not send the transaction
+            -- lenght to reduce the NoC packet overhead.
+            v.state := dma_receive_wrlength;
           else
-            -- Writes don't need size. Stop when tail appears.
+            -- Coherent writes do not send length. Stop when tail appears.
             v.state := dma_wr_request;
           end if;
+        end if;
+
+      when dma_receive_wrlength =>
+        if dma_rcv_empty = '0' then
+          -- Ignore lenght. DMA Length is only required for the
+          -- mem2ext proxy (see commet above)
+          dma_rcv_rdreq <= '1';
+          v.state := dma_wr_request;
         end if;
 
       when dma_receive_rdlength =>

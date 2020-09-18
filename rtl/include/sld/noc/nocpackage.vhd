@@ -170,6 +170,22 @@ package nocpackage is
       data_out    : out std_logic_vector(width-1 downto 0));
   end component;
 
+  component fifo3
+    generic (
+      depth : integer;
+      width : integer);
+    port (
+      clk         : in  std_logic;
+      rst         : in  std_logic;
+      rdreq       : in  std_logic;
+      wrreq       : in  std_logic;
+      data_in     : in  std_logic_vector(width-1 downto 0);
+      empty       : out std_logic;
+      full        : out std_logic;
+      almost_full : out std_logic;
+      data_out    : out std_logic_vector(width-1 downto 0));
+  end component;
+
   component inferred_async_fifo
     generic (
       g_data_width : natural := NOC_FLIT_SIZE;
@@ -300,6 +316,16 @@ package nocpackage is
     flit : noc_flit_type)
     return local_yx;
 
+  function get_destination_y (
+    constant flit_sz : integer;
+    flit : noc_flit_type)
+    return local_yx;
+
+  function get_destination_x (
+    constant flit_sz : integer;
+    flit : noc_flit_type)
+    return local_yx;
+
   function get_msg_type (
     constant flit_sz : integer;
     flit : noc_flit_type)
@@ -409,6 +435,28 @@ package body nocpackage is
     ret := flit(flit_sz - PREAMBLE_WIDTH - 2*YX_WIDTH + 2 downto flit_sz - PREAMBLE_WIDTH - 2*YX_WIDTH);
     return ret;
   end get_origin_x;
+
+  function get_destination_y (
+    constant flit_sz : integer;
+    flit : noc_flit_type)
+    return local_yx is
+    variable ret : local_yx;
+  begin  -- get_destination_y
+    ret := (others => '0');
+    ret := flit(flit_sz - PREAMBLE_WIDTH - 2*YX_WIDTH - YX_WIDTH + 2 downto flit_sz - PREAMBLE_WIDTH - 2*YX_WIDTH - YX_WIDTH);
+    return ret;
+  end get_destination_y;
+
+  function get_destination_x (
+    constant flit_sz : integer;
+    flit : noc_flit_type)
+    return local_yx is
+    variable ret : local_yx;
+  begin  -- get_destination_x
+    ret := (others => '0');
+    ret := flit(flit_sz - PREAMBLE_WIDTH - 2*YX_WIDTH - 2*YX_WIDTH + 2 downto flit_sz - PREAMBLE_WIDTH - 2*YX_WIDTH - 2*YX_WIDTH);
+    return ret;
+  end get_destination_x;
 
   function get_msg_type (
     constant flit_sz : integer;
