@@ -19,6 +19,8 @@ use work.acctypes.all;
 
 package sldcommon is
 
+  type attribute_vector is array (natural range <>) of integer;
+
   type monitor_ddr_type is record
     clk              : std_ulogic;
     word_transfer    : std_ulogic;
@@ -106,6 +108,35 @@ package sldcommon is
     burst => '0',
     transient => '0'
     );
+    
+  constant monitor_ddr_none : monitor_ddr_type := (
+    clk => '0', 
+    word_transfer => '0'
+    );
+
+  constant monitor_mem_none :  monitor_mem_type := (
+    clk              => '0',
+    coherent_req     => '0',
+    coherent_fwd     => '0',
+    coherent_rsp_rcv => '0',
+    coherent_rsp_snd => '0',
+    dma_req          => '0',
+    dma_rsp          => '0',
+    coherent_dma_req => '0',
+    coherent_dma_rsp => '0'
+    );
+
+  constant ESP_CSR_WIDTH : integer := 9;
+
+  constant ESP_CSR_VALID_ADDR : integer range 0 to 31 := 0;
+  constant ESP_CSR_VALID_LSB  : integer range 0 to ESP_CSR_WIDTH-1 := 0;
+  constant ESP_CSR_VALID_MSB  : integer range 0 to ESP_CSR_WIDTH-1 := 0;
+
+  constant ESP_CSR_TILE_ID_ADDR : integer range 0 to 31 := 1;
+  constant ESP_CSR_TILE_ID_LSB  : integer range 0 to ESP_CSR_WIDTH-1 := 1;
+  constant ESP_CSR_TILE_ID_MSB  : integer range 0 to ESP_CSR_WIDTH-1 := 8;
+
+  constant ESP_CSR_SRST_ADDR : integer range 0 to 31 := 31;  -- reserved address
 
   component monitor
     generic (
@@ -219,60 +250,44 @@ package sldcommon is
   end component esplink;
 
 
+  -- ESP self configuration
+
+  component esp_init is
+    generic (
+      hindex   : integer;
+      sequence : attribute_vector(0 to CFG_TILES_NUM + CFG_NCPU_TILE - 1);
+      srst_sequence : attribute_vector(0 to CFG_NMEM_TILE + CFG_NCPU_TILE - 1));
+    port (
+      rstn   : in  std_ulogic;
+      clk    : in  std_ulogic;
+      noinit : in  std_ulogic;
+      srst   : in  std_ulogic;
+      ahbmi  : in  ahb_mst_in_type;
+      ahbmo  : out ahb_mst_out_type);
+  end component esp_init;
+
+
   -- Shared Local Memory
 
   component ahbslm is
     generic (
       hindex : integer;
-      haddr  : integer;
-      hmask  : integer;
       tech   : integer;
       mbytes : integer);
     port (
-      rst    : in  std_ulogic;
-      clk    : in  std_ulogic;
-      ahbsi  : in  ahb_slv_in_type;
-      ahbso  : out ahb_slv_out_type);
+      rst   : in  std_ulogic;
+      clk   : in  std_ulogic;
+      haddr : in  integer range 0 to 4095;
+      hmask : in  integer range 0 to 4095;
+      ahbsi : in  ahb_slv_in_type;
+      ahbso : out ahb_slv_out_type);
   end component ahbslm;
 
-  component slm_bank_1mb_unisim is
-    port (
-      CLK  : in  std_ulogic;
-      CE0  : in  std_ulogic;
-      A0   : in  std_logic_vector(16 downto 0);
-      D0   : in  std_logic_vector(63 downto 0);
-      WE0  : in  std_ulogic;
-      WEM0 : in  std_logic_vector(63 downto 0);
-      CE1  : in  std_ulogic;
-      A1   : in  std_logic_vector(16 downto 0);
-      Q1   : out std_logic_vector(63 downto 0));
-  end component slm_bank_1mb_unisim;
 
-  component slm_bank_2mb_unisim is
+  -- Unread dummy from Ariane (avoid Vivado black-box error)
+  component unread is
     port (
-      CLK  : in  std_ulogic;
-      CE0  : in  std_ulogic;
-      A0   : in  std_logic_vector(17 downto 0);
-      D0   : in  std_logic_vector(63 downto 0);
-      WE0  : in  std_ulogic;
-      WEM0 : in  std_logic_vector(63 downto 0);
-      CE1  : in  std_ulogic;
-      A1   : in  std_logic_vector(17 downto 0);
-      Q1   : out std_logic_vector(63 downto 0));
-  end component slm_bank_2mb_unisim;
-
-  component slm_bank_4mb_unisim is
-    port (
-      CLK  : in  std_ulogic;
-      CE0  : in  std_ulogic;
-      A0   : in  std_logic_vector(18 downto 0);
-      D0   : in  std_logic_vector(63 downto 0);
-      WE0  : in  std_ulogic;
-      WEM0 : in  std_logic_vector(63 downto 0);
-      CE1  : in  std_ulogic;
-      A1   : in  std_logic_vector(18 downto 0);
-      Q1   : out std_logic_vector(63 downto 0));
-  end component slm_bank_4mb_unisim;
-
+      d_i : in std_ulogic);
+  end component unread;
 
 end sldcommon;

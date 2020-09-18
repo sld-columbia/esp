@@ -24,14 +24,14 @@ use work.acctypes.all;
 
 entity tile_dvfs is
   generic (
-    tech        : integer := virtex7;
-    pindex                : integer                            := 0;
-    paddr                 : integer                            := 0;
-    pmask                 : integer                            := 16#fff#);
+    tech          :     integer := virtex7;
+    pindex        :     integer := 0);
   port (
-    rst      : in  std_ulogic;
-    clk      : in  std_ulogic;
+    rst           : in  std_ulogic;
+    clk           : in  std_ulogic;
     -- APB interface
+    paddr         : in  integer;
+    pmask         : in  integer;
     apbi          : in  apb_slv_in_type;
     apbo          : out apb_slv_out_type;
     -- DVFS interface
@@ -50,10 +50,6 @@ architecture rtl of tile_dvfs is
 
   -- APB interface signals and constants
   constant REVISION : integer := 0;
-  constant pconfig : apb_config_type := (
-    0 => ahb_device_reg (VENDOR_SLD, SLD_POWERCTRL, 0, revision, 0),
-    1 => apb_iobar(paddr, pmask),
-    2 => (others => '0'));
 
   -- Read only registers mask
   constant rdonly_reg_mask : std_logic_vector(0 to MAXREGNUM - 1) := (
@@ -115,7 +111,9 @@ begin  -- rtl
   apbo.prdata  <= readdata;
   apbo.pirq    <= (others => '0');
   apbo.pindex  <= pindex;
-  apbo.pconfig <= pconfig;
+  apbo.pconfig(0) <= ahb_device_reg (VENDOR_SLD, SLD_POWERCTRL, 0, revision, 0);
+  apbo.pconfig(1) <= apb_iobar(paddr, pmask);
+  apbo.pconfig(2) <= (others => '0');
 
   reg_out: for i in 0 to MAXREGNUM - 1 generate
     bank(i) <= bankreg(i);

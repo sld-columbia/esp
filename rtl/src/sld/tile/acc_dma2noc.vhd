@@ -48,35 +48,33 @@ use work.acctypes.all;
 
 entity acc_dma2noc is
   generic (
-    tech        : integer := virtex7;
-    extra_clk_buf : integer range 0 to 1;
-    local_y     : local_yx;
-    local_x     : local_yx;
-    mem_num     : integer := 1;
-    mem_info    : tile_mem_info_vector(0 to CFG_NMEM_TILE + CFG_NSLM_TILE);
-    io_y        : local_yx;
-    io_x        : local_yx;
-    pindex                : integer                            := 0;
-    paddr                 : integer                            := 0;
-    pmask                 : integer                            := 16#fff#;
-    paddr_ext             : integer                            := 0;
-    pmask_ext             : integer                            := 16#fff#;
-    pirq                  : integer                            := 0;
-    revision              : integer                            := 0;
-    devid                 : devid_t                   := 16#001#;
-    available_reg_mask    : std_logic_vector(0 to MAXREGNUM - 1) := (others => '1');
-    rdonly_reg_mask       : std_logic_vector(0 to MAXREGNUM - 1) := (others => '0');
-    exp_registers         : integer range 0 to 1               := 0;  -- Not implemented
-    scatter_gather        : integer range 0 to 1               := 1;
-    tlb_entries           : integer                            := 256;
-    has_dvfs              : integer                            := 1;
-    has_pll               : integer);
+    tech               : integer                              := virtex7;
+    extra_clk_buf      : integer range 0 to 1;
+    mem_num            : integer                              := 1;
+    mem_info           : tile_mem_info_vector(0 to CFG_NMEM_TILE + CFG_NSLM_TILE);
+    io_y               : local_yx;
+    io_x               : local_yx;
+    pindex             : integer                              := 0;
+    revision           : integer                              := 0;
+    devid              : devid_t                              := 16#001#;
+    available_reg_mask : std_logic_vector(0 to MAXREGNUM - 1) := (others => '1');
+    rdonly_reg_mask    : std_logic_vector(0 to MAXREGNUM - 1) := (others => '0');
+    exp_registers      : integer range 0 to 1                 := 0;  -- Not implemented
+    scatter_gather     : integer range 0 to 1                 := 1;
+    tlb_entries        : integer                              := 256;
+    has_dvfs           : integer                              := 1;
+    has_pll            : integer);
   port (
     rst           : in  std_ulogic;
     clk           : in  std_ulogic;
     refclk        : in  std_ulogic;
     pllbypass     : in  std_ulogic;
     pllclk        : out std_ulogic;
+    local_y       : in  local_yx;
+    local_x       : in  local_yx;
+    paddr         : in  integer;
+    pmask         : in  integer;
+    pirq          : in  integer;
     -- APB interface
     apbi          : in  apb_slv_in_type;
     apbo          : out apb_slv_out_type;
@@ -139,10 +137,7 @@ end acc_dma2noc;
 architecture rtl of acc_dma2noc is
 
   -- plug & play info
-  constant pconfig : apb_config_type := (
-    0 => ahb_device_reg (VENDOR_SLD, devid, 0, revision, pirq),
-    1 => apb_iobar(paddr, pmask),
-    2 => (others => '0'));
+  signal pconfig : apb_config_type;
   constant hprot : std_logic_vector(3 downto 0) := "0011";
 
   constant len_pad : std_logic_vector(GLOB_BYTE_OFFSET_BITS - 1 downto 0) := (others => '0');
@@ -217,7 +212,7 @@ architecture rtl of acc_dma2noc is
   signal p2p_rsp_snd_full     : std_ulogic;
 
   -- IRQ
-  signal irq      : std_logic_vector(NAHBIRQ-1 downto 0);
+  signal irq      : std_ulogic;
   signal irqset   : std_ulogic;
   type irq_fsm is (idle, pending);
   signal irq_state, irq_next : irq_fsm;
@@ -230,7 +225,7 @@ architecture rtl of acc_dma2noc is
   signal sample_rd_size, sample_wr_size      : std_ulogic;
   signal size_r                              : std_logic_vector(2 downto 0);
   signal irq_header_i, irq_header            : misc_noc_flit_type;
-  constant irq_info                          : std_logic_vector(3 downto 0) := conv_std_logic_vector(pirq, 4);
+  signal irq_info                            : std_logic_vector(3 downto 0);
 
   -- DMA
   type dma_fsm is (idle, request_header, request_address, request_length,
@@ -281,20 +276,25 @@ architecture rtl of acc_dma2noc is
   -----------------------------------------------------------------------------
   -- De-comment signals you wish to debug
   -----------------------------------------------------------------------------
-  -- attribute mark_debug : string;
+   attribute mark_debug : string;
 
+   attribute mark_debug of apbi    : signal is "true";
+   attribute mark_debug of apbo    : signal is "true";
   -- attribute mark_debug of sample    : signal is "true";
   -- attribute mark_debug of readdata  : signal is "true";
   -- attribute mark_debug of dvfs_apbo : signal is "true";
-  -- attribute mark_debug of irq      : signal is "true";
+   attribute mark_debug of irq      : signal is "true";
   -- attribute mark_debug of irqset   : signal is "true";
-  -- attribute mark_debug of irq_state: signal is "true";
+   attribute mark_debug of irq_state: signal is "true";
   -- attribute mark_debug of header                    : signal is "true";
   -- attribute mark_debug of payload_address: signal is "true";
   -- attribute mark_debug of payload_length    : signal is "true";
   -- attribute mark_debug of sample_flits                        : signal is "true";
-  -- attribute mark_debug of irq_header            : signal is "true";
-  -- attribute mark_debug of dma_state : signal is "true";
+   attribute mark_debug of irq_header                : signal is "true";
+   attribute mark_debug of interrupt_full            : signal is "true";
+   attribute mark_debug of interrupt_data_in         : signal is "true";
+   attribute mark_debug of interrupt_wrreq           : signal is "true";
+-- attribute mark_debug of dma_state : signal is "true";
   -- attribute mark_debug of status : signal is "true";
   -- attribute mark_debug of sample_status : signal is "true";
   -- attribute mark_debug of count                : signal is "true";
@@ -329,6 +329,7 @@ begin  -- rtl
   -----------------------------------------------------------------------------
   -- IRQ packet
   -----------------------------------------------------------------------------
+  irq_info <= conv_std_logic_vector(pirq, 4);
   irq_header_i <= create_header(MISC_NOC_FLIT_SIZE, local_y, local_x, io_y, io_x, INTERRUPT, irq_info)(MISC_NOC_FLIT_SIZE - 1 downto 0);
   irq_header(MISC_NOC_FLIT_SIZE-1 downto MISC_NOC_FLIT_SIZE-PREAMBLE_WIDTH) <= PREAMBLE_1FLIT;
   irq_header(MISC_NOC_FLIT_SIZE-PREAMBLE_WIDTH-1 downto 0) <=
@@ -439,7 +440,7 @@ begin  -- rtl
   p2p_dst_x <= get_origin_x(NOC_FLIT_SIZE, p2p_req_rcv_data_out);
 
   make_packet: process (bankreg, pending_dma_write, tlb_empty, dma_address, dma_length,
-                        p2p_src_index_r, p2p_dst_y, p2p_dst_x, coherence)
+                        p2p_src_index_r, p2p_dst_y, p2p_dst_x, coherence, local_y, local_x)
     variable msg_type : noc_msg_type;
     variable header_v : noc_flit_type;
     variable tmp : std_logic_vector(63 downto 0);
@@ -719,6 +720,7 @@ begin  -- rtl
     dma_rcv_delay <= '0';
     read_burst <= '0';
     write_burst <= '0';
+    burst <= '0';
 
     case dma_state is
       when idle =>
@@ -743,6 +745,7 @@ begin  -- rtl
         end if;
 
       when fully_coherent_request =>
+        burst <= '1';
         if msg = DMA_TO_DEV then
           coherent_dma_read <= '1';
           if coherent_dma_ready = '1' then
@@ -827,6 +830,7 @@ begin  -- rtl
         dma_next <= running;
 
       when rd_handshake =>
+        burst <= '1';
         if dma_snd_full_int = '0' or coherence = ACC_COH_FULL then
           if rd_request = '1' then
             rd_grant <= '1';
@@ -847,6 +851,7 @@ begin  -- rtl
         end if;
 
       when wr_handshake =>
+        burst <= '1';
         if dma_snd_full_int = '0' or coherence = ACC_COH_FULL then
           if wr_request = '1' then
             wr_grant <= '1';
@@ -875,6 +880,7 @@ begin  -- rtl
         end if;
 
       when wait_req_p2p =>
+        burst <= '1';
         if p2p_req_rcv_empty = '0' and dvfs_transient = '0' then
           p2p_req_rcv_rdreq <= '1';
           sample_flits <= '1';
@@ -882,6 +888,7 @@ begin  -- rtl
         end if;
 
       when send_header =>
+        burst <= '1';
         if dma_snd_full_int = '0' and dvfs_transient = '0' and msg /= RSP_P2P then
           dma_snd_data_in_int <= header_r;
           dma_snd_wrreq_int <= '1';
@@ -900,6 +907,7 @@ begin  -- rtl
         end if;
 
       when request_address =>
+        burst <= '1';
         if dma_snd_full_int = '0' and dvfs_transient = '0' then
           dma_snd_data_in_int <= payload_address_r;
           dma_snd_wrreq_int <= '1';
@@ -911,6 +919,7 @@ begin  -- rtl
         end if;
 
       when request_length =>
+        burst <= '1';
         if dma_snd_full_int = '0' and dvfs_transient = '0' then
           dma_snd_data_in_int <= payload_length_r;
           dma_snd_wrreq_int <= '1';
@@ -918,6 +927,7 @@ begin  -- rtl
         end if;
 
       when request_data =>
+        burst <= '1';
         if msg = RSP_P2P then
           dma_snd_delay <= p2p_rsp_snd_full;       -- for DVFS TRAFFIC policy
         else
@@ -947,6 +957,7 @@ begin  -- rtl
         end if;
 
       when reply_header =>
+        burst <= '1';
         dma_rcv_delay <= dma_rcv_empty_int;       -- for DVFS TRAFFIC policy
         if dma_rcv_empty_int = '0' and dvfs_transient = '0' then
           dma_rcv_rdreq_int <= '1';
@@ -954,6 +965,7 @@ begin  -- rtl
         end if;
 
       when reply_data =>
+        burst <= '1';
         dma_rcv_delay <= dma_rcv_empty_int;       -- for DVFS TRAFFIC policy
         if dma_rcv_empty_int = '0' and tlb_empty = '1' and dvfs_transient = '0' then
           dma_rcv_rdreq_int <= '1';
@@ -991,7 +1003,7 @@ begin  -- rtl
 
     case irq_state is
       when idle =>
-        if irq(pirq) = '1' then
+        if irq = '1' then
           if interrupt_full = '1' then
             irq_next <= pending;
           else
@@ -1027,6 +1039,10 @@ begin  -- rtl
   -------------------------------------------------------------------------------
 
   -- APB Interface
+  pconfig(0) <=  ahb_device_reg (VENDOR_SLD, devid, 0, revision, pirq);
+  pconfig(1) <=  apb_iobar(paddr, pmask);
+  pconfig(2) <=  (others => '0');
+
   process (apbi, readdata, dvfs_apbo)
   begin  -- process
     if apbi.paddr(7) = '1' then
@@ -1035,7 +1051,7 @@ begin  -- rtl
       apbo.prdata <= readdata;
     end if;
   end process;
-  apbo.pirq    <= irq;
+  apbo.pirq    <= (others => '0');      -- IRQ forwarded to the NoC directly
   apbo.pindex  <= pindex;
   apbo.pconfig <= pconfig;
 
@@ -1046,19 +1062,15 @@ begin  -- rtl
   drive_irq: process (clk, rst)
   begin  -- process drive_irq
     if rst = '0' then                   -- asynchronous reset (active low)
-      irq <= (others => '0');
+      irq <= '0';
       irqset <= '0';
     elsif clk'event and clk = '1' then  -- rising clock edge
-      -- Avoid latches on other irq bits
-      irq <= (others => '0');
-      irq(pirq) <= irq(pirq);
-      --
       if irqset = '1' then
-        irq(pirq) <= '0';
+        irq <= '0';
       elsif ((bankreg(STATUS_REG)(STATUS_BIT_DONE) or
               bankreg(STATUS_REG)(STATUS_BIT_ERR)) = '1' and
              irqset = '0') then
-        irq(pirq) <= '1';
+        irq <= '1';
         irqset <=  '1';
       end if;
       if ((bankreg(STATUS_REG)(STATUS_BIT_RUN) or
@@ -1114,6 +1126,8 @@ begin  -- rtl
             bankreg(i) <= bankdef(i);
           elsif sample(i) = '1' and rdonly_reg_mask(i) = '0' then
             bankreg(i) <= bankin(i);
+          elsif i = YX_REG then
+            bankreg(i) <=  "0000000000000" & local_y & "0000000000000" & local_x;
           end if;
         end if;
       end process;
@@ -1145,7 +1159,6 @@ begin  -- rtl
   end generate dvfs_no_master;
 
   noc_delay <= dma_snd_delay or dma_rcv_delay;
-  burst <= read_burst or write_burst;
   acc_idle <= '1' when dma_state = idle and bankreg(CMD_REG)(CMD_BIT_START) = '0' else '0';
   mon_dvfs.acc_idle <= acc_idle;
   mon_dvfs.traffic <= noc_delay;
@@ -1154,14 +1167,14 @@ begin  -- rtl
   with_dvfs: if has_dvfs /= 0 and has_pll /= 0 generate
   dvfs_top_1: dvfs_top
     generic map (
-      tech     => tech,
+      tech          => tech,
       extra_clk_buf => extra_clk_buf,
-      pindex   => pindex,
-      paddr    => paddr,
-      pmask    => pmask)
+      pindex        => pindex)
     port map (
       rst       => rst,
       clk       => clk,
+      paddr     => paddr,
+      pmask     => pmask,
       refclk    => refclk,
       pllbypass => pllbypass,
       pllclk    => pllclk,

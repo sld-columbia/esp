@@ -246,6 +246,22 @@ component mig is
    );
 end component mig;
 
+  function set_ddr_index (
+    constant n : integer range 0 to 1)
+    return integer is
+  begin
+    if n > (CFG_NMEM_TILE - 1) then
+      return CFG_NMEM_TILE - 1;
+    else
+      return n;
+    end if;
+  end set_ddr_index;
+
+  constant this_ddr_index : attribute_vector(0 to 1) := (
+    0 => set_ddr_index(0),
+    1 => set_ddr_index(1)
+    );
+
 -- pragma translate_off
 -- Memory model for simulation purposes only
 component ahbram_sim
@@ -512,7 +528,7 @@ begin
   rst0 : rstgen         -- reset generator
   generic map (acthigh => 1, syncin => 0)
   port map (rst, clkm, lock, rstn, rstraw);
-  lock <= c0_calib_done and c1_calib_done;
+  lock <= c0_calib_done and c1_calib_done and cgo.clklock;
 
   rst1 : rstgen         -- reset generator
   generic map (acthigh => 1)
@@ -523,11 +539,19 @@ begin
 ---  DDR3 memory controller ------------------------------------------
 ----------------------------------------------------------------------
 
+  clkgenmigref0 : clkgen
+    generic map (CFG_FABTECH, 16, 32, 0, 0, 0, 0, 0, 100000)
+    port map (clkm, clkm, chip_refclk, open, open, open, open, cgi, cgo, open, open, open);
+
+
   gen_mig : if (SIMULATION /= true) generate
 
      dual_mig_ahb_iface: if CFG_NMEM_TILE = 2 generate
-       ddrc0 : ahb2mig_7series_profpga generic map(
-         hindex => 4, haddr => 16#400#, hmask => 16#E00#)
+       ddrc0 : ahb2mig_7series_profpga
+         generic map (
+           hindex => 0,
+           haddr  => ddr_haddr(this_ddr_index(0)),
+           hmask  => ddr_hmask(this_ddr_index(0)))
          port map(
            app_addr          => c0_app_addr,
            app_cmd           => c0_app_cmd,
@@ -547,8 +571,11 @@ begin
            clk_amba          => clkm
            );
 
-       ddrc1 : ahb2mig_7series_profpga generic map(
-         hindex => 5, haddr => 16#600#, hmask => 16#E00#)
+       ddrc1 : ahb2mig_7series_profpga
+         generic map (
+           hindex => 0,
+           haddr  => ddr_haddr(this_ddr_index(1)),
+           hmask  => ddr_hmask(this_ddr_index(1)))
          port map(
            app_addr          => c1_app_addr,
            app_cmd           => c1_app_cmd,
@@ -570,8 +597,11 @@ begin
      end generate dual_mig_ahb_iface;
 
      single_mig_ahb_iface: if CFG_NMEM_TILE = 1 generate
-       ddrc0 : ahb2mig_7series_profpga generic map(
-         hindex => 4, haddr => 16#400#, hmask => 16#C00#)
+       ddrc0 : ahb2mig_7series_profpga
+         generic map (
+           hindex => 0,
+           haddr  => ddr_haddr(this_ddr_index(0)),
+           hmask  => ddr_hmask(this_ddr_index(0)))
          port map(
            app_addr          => c0_app_addr,
            app_cmd           => c0_app_cmd,
@@ -687,10 +717,6 @@ begin
         );
 
 
-     clkgenmigref0 : clkgen
-       generic map (CFG_FABTECH, 16, 32, 0, 0, 0, 0, 0, 100000)
-       port map (clkm, clkm, chip_refclk, open, open, open, open, cgi, cgo, open, open, open);
-
   end generate gen_mig;
 
   gen_mig_model : if (SIMULATION = true) generate
@@ -699,11 +725,11 @@ begin
     dual_mig_sim: if CFG_NMEM_TILE = 2 generate
       mig_ahbram1 : ahbram_sim
         generic map (
-          hindex   => 4,
-          haddr    => 16#400#,
-          hmask    => 16#E00#,
+          hindex   => 0,
+          haddr    => ddr_haddr(this_ddr_index(0)),
+          hmask    => ddr_hmask(this_ddr_index(0)),
           tech     => 0,
-          kbytes   => 1000,
+          kbytes   => 2048,
           pipe     => 0,
           maccsz   => AHBDW,
           fname    => "ram.srec"
@@ -717,11 +743,11 @@ begin
 
       mig_ahbram2 : ahbram_sim
         generic map (
-          hindex   => 5,
-          haddr    => 16#600#,
-          hmask    => 16#E00#,
+          hindex   => 0,
+          haddr    => ddr_haddr(this_ddr_index(1)),
+          hmask    => ddr_hmask(this_ddr_index(1)),
           tech     => 0,
-          kbytes   => 1000,
+          kbytes   => 2048,
           pipe     => 0,
           maccsz   => AHBDW,
           fname    => "ram.srec"
@@ -737,11 +763,11 @@ begin
     single_mig_sim: if CFG_NMEM_TILE = 1 generate
       mig_ahbram1 : ahbram_sim
         generic map (
-          hindex   => 4,
-          haddr    => 16#400#,
-          hmask    => 16#C00#,
+          hindex   => 0,
+          haddr    => ddr_haddr(this_ddr_index(0)),
+          hmask    => ddr_hmask(this_ddr_index(0)),
           tech     => 0,
-          kbytes   => 1000,
+          kbytes   => 2048,
           pipe     => 0,
           maccsz   => AHBDW,
           fname    => "ram.srec"
@@ -793,7 +819,6 @@ begin
 
     clkm <= not clkm after 5 ns;
     clkm_2 <= not clkm_2 after 5 ns;
-    chip_refclk <= not chip_refclk after 10.0 ns;
 
     -- pragma translate_on
   end generate gen_mig_model;

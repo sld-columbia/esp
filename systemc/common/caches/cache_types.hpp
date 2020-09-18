@@ -45,6 +45,7 @@ typedef sc_uint<STABLE_STATE_BITS>	state_t;
 typedef sc_uint<LLC_STATE_BITS>	        llc_state_t;
 typedef sc_uint<UNSTABLE_STATE_BITS>	unstable_state_t;
 typedef sc_uint<CACHE_ID_WIDTH>         cache_id_t;
+typedef sc_uint<LLC_COH_DEV_ID_WIDTH>   llc_coh_dev_id_t;
 typedef sc_uint<MAX_N_L2_BITS>		owner_t;
 typedef sc_uint<MAX_N_L2>		sharers_t;
 typedef sc_uint<DMA_BURST_LENGTH_BITS>  dma_length_t;
@@ -239,6 +240,7 @@ public:
     }
 };
 
+template <unsigned REQ_ID_WIDTH>
 class llc_rsp_out_t
 {
 
@@ -248,7 +250,7 @@ public:
     line_addr_t		addr;
     line_t		line;
     invack_cnt_t	invack_cnt; // used to mark last line of RSP_DATA_DMA
-    cache_id_t          req_id;
+    sc_uint<REQ_ID_WIDTH> req_id;
     cache_id_t          dest_id;
     word_offset_t       word_offset;
 
@@ -421,6 +423,7 @@ public:
     }
 };
 
+template <unsigned REQ_ID_WIDTH>
 class llc_req_in_t
 {
 
@@ -430,7 +433,7 @@ public:
     hprot_t	  hprot; // used for dma write burst end (0) and non-aligned addr (1)
     line_addr_t	  addr;
     line_t	  line; // used for dma burst length too
-    cache_id_t    req_id;
+    sc_uint<REQ_ID_WIDTH> req_id;
     word_offset_t word_offset;
     word_offset_t valid_words;
 

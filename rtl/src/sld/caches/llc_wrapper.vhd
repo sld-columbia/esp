@@ -37,9 +37,6 @@ entity llc_wrapper is
     hindex        : integer range 0 to NAHBSLV - 1 := 4;
     pindex        : integer range 0 to NAPBSLV - 1 := 5;
     pirq          : integer                      := 4;
-    pconfig       : apb_config_type;
-    local_y       : local_yx;
-    local_x       : local_yx;
     cacheline     : integer;
     l2_cache_en   : integer                      := 0;
     cache_tile_id : cache_attribute_array;
@@ -53,6 +50,11 @@ entity llc_wrapper is
   port (
     rst   : in  std_ulogic;
     clk   : in  std_ulogic;
+
+    local_y : in local_yx;
+    local_x : in local_yx;
+    pconfig : in apb_config_type;
+
     ahbmi : in  ahb_mst_in_type;
     ahbmo : out ahb_mst_out_type;
     apbi  : in  apb_slv_in_type;
@@ -111,7 +113,7 @@ architecture rtl of llc_wrapper is
   signal llc_dma_req_in_data_word_offset : word_offset_t;
   signal llc_dma_req_in_data_valid_words : word_offset_t;
   signal llc_dma_req_in_data_line        : line_t;
-  signal llc_dma_req_in_data_req_id      : cache_id_t;
+  signal llc_dma_req_in_data_req_id      : llc_coh_dev_id_t;
 
   signal llc_rsp_in_ready        : std_ulogic;
   signal llc_rsp_in_valid        : std_ulogic;
@@ -137,8 +139,8 @@ architecture rtl of llc_wrapper is
   signal llc_dma_rsp_out_data_addr        : line_addr_t;
   signal llc_dma_rsp_out_data_line        : line_t;
   signal llc_dma_rsp_out_data_invack_cnt  : invack_cnt_t;
-  signal llc_dma_rsp_out_data_req_id      : cache_id_t;
-  signal llc_dma_rsp_out_data_dest_id     : cache_id_t;
+  signal llc_dma_rsp_out_data_req_id      : llc_coh_dev_id_t;
+  signal llc_dma_rsp_out_data_dest_id     : cache_id_t;  -- not used
   signal llc_dma_rsp_out_data_word_offset : word_offset_t;
 
   signal llc_fwd_out_ready        : std_ulogic;
@@ -348,7 +350,7 @@ architecture rtl of llc_wrapper is
     addr     : line_addr_t;
     woffset  : word_offset_t;
     line     : line_t;
-    req_id   : cache_id_t;
+    req_id   : llc_coh_dev_id_t;
     word_cnt : natural range 0 to 3;
     origin_x : local_yx;
     origin_y : local_yx;
@@ -441,97 +443,97 @@ architecture rtl of llc_wrapper is
   signal req_in_state   : req_in_fsm;
   signal rsp_in_state   : rsp_in_fsm;
 
-  attribute mark_debug : string;
+  -- attribute mark_debug : string;
 
-  attribute mark_debug of llc_req_in_ready            : signal is "true";
-  attribute mark_debug of llc_req_in_valid            : signal is "true";
-  attribute mark_debug of llc_req_in_data_coh_msg     : signal is "true";
-  attribute mark_debug of llc_req_in_data_hprot       : signal is "true";
-  attribute mark_debug of llc_req_in_data_addr        : signal is "true";
-  attribute mark_debug of llc_req_in_data_word_offset : signal is "true";
-  attribute mark_debug of llc_req_in_data_valid_words : signal is "true";
-  attribute mark_debug of llc_req_in_data_line        : signal is "true";
-  attribute mark_debug of llc_req_in_data_req_id      : signal is "true";
+  -- attribute mark_debug of llc_req_in_ready            : signal is "true";
+  -- attribute mark_debug of llc_req_in_valid            : signal is "true";
+  -- attribute mark_debug of llc_req_in_data_coh_msg     : signal is "true";
+  -- attribute mark_debug of llc_req_in_data_hprot       : signal is "true";
+  -- attribute mark_debug of llc_req_in_data_addr        : signal is "true";
+  -- attribute mark_debug of llc_req_in_data_word_offset : signal is "true";
+  -- attribute mark_debug of llc_req_in_data_valid_words : signal is "true";
+  -- attribute mark_debug of llc_req_in_data_line        : signal is "true";
+  -- attribute mark_debug of llc_req_in_data_req_id      : signal is "true";
 
-  attribute mark_debug of llc_dma_req_in_ready            : signal is "true";
-  attribute mark_debug of llc_dma_req_in_valid            : signal is "true";
-  attribute mark_debug of llc_dma_req_in_data_coh_msg     : signal is "true";
-  attribute mark_debug of llc_dma_req_in_data_hprot       : signal is "true";
-  attribute mark_debug of llc_dma_req_in_data_addr        : signal is "true";
-  attribute mark_debug of llc_dma_req_in_data_word_offset : signal is "true";
-  attribute mark_debug of llc_dma_req_in_data_valid_words : signal is "true";
-  attribute mark_debug of llc_dma_req_in_data_line        : signal is "true";
-  attribute mark_debug of llc_dma_req_in_data_req_id      : signal is "true";
+  -- attribute mark_debug of llc_dma_req_in_ready            : signal is "true";
+  -- attribute mark_debug of llc_dma_req_in_valid            : signal is "true";
+  -- attribute mark_debug of llc_dma_req_in_data_coh_msg     : signal is "true";
+  -- attribute mark_debug of llc_dma_req_in_data_hprot       : signal is "true";
+  -- attribute mark_debug of llc_dma_req_in_data_addr        : signal is "true";
+  -- attribute mark_debug of llc_dma_req_in_data_word_offset : signal is "true";
+  -- attribute mark_debug of llc_dma_req_in_data_valid_words : signal is "true";
+  -- attribute mark_debug of llc_dma_req_in_data_line        : signal is "true";
+  -- attribute mark_debug of llc_dma_req_in_data_req_id      : signal is "true";
 
-  attribute mark_debug of llc_rsp_in_ready        : signal is "true";
-  attribute mark_debug of llc_rsp_in_valid        : signal is "true";
-  attribute mark_debug of llc_rsp_in_data_coh_msg : signal is "true";
-  attribute mark_debug of llc_rsp_in_data_addr    : signal is "true";
-  -- attribute mark_debug of llc_rsp_in_data_line   : signal is "true";
-  attribute mark_debug of llc_rsp_in_data_req_id  : signal is "true";
+  -- attribute mark_debug of llc_rsp_in_ready        : signal is "true";
+  -- attribute mark_debug of llc_rsp_in_valid        : signal is "true";
+  -- attribute mark_debug of llc_rsp_in_data_coh_msg : signal is "true";
+  -- attribute mark_debug of llc_rsp_in_data_addr    : signal is "true";
+  -- -- attribute mark_debug of llc_rsp_in_data_line   : signal is "true";
+  -- attribute mark_debug of llc_rsp_in_data_req_id  : signal is "true";
 
-  attribute mark_debug of llc_rsp_out_ready            : signal is "true";
-  attribute mark_debug of llc_rsp_out_valid            : signal is "true";
-  attribute mark_debug of llc_rsp_out_data_coh_msg     : signal is "true";
-  attribute mark_debug of llc_rsp_out_data_addr        : signal is "true";
-  attribute mark_debug of llc_rsp_out_data_line        : signal is "true";
-  attribute mark_debug of llc_rsp_out_data_invack_cnt  : signal is "true";
-  attribute mark_debug of llc_rsp_out_data_req_id      : signal is "true";
-  attribute mark_debug of llc_rsp_out_data_dest_id     : signal is "true";
-  attribute mark_debug of llc_rsp_out_data_word_offset : signal is "true";
+  -- attribute mark_debug of llc_rsp_out_ready            : signal is "true";
+  -- attribute mark_debug of llc_rsp_out_valid            : signal is "true";
+  -- attribute mark_debug of llc_rsp_out_data_coh_msg     : signal is "true";
+  -- attribute mark_debug of llc_rsp_out_data_addr        : signal is "true";
+  -- attribute mark_debug of llc_rsp_out_data_line        : signal is "true";
+  -- attribute mark_debug of llc_rsp_out_data_invack_cnt  : signal is "true";
+  -- attribute mark_debug of llc_rsp_out_data_req_id      : signal is "true";
+  -- attribute mark_debug of llc_rsp_out_data_dest_id     : signal is "true";
+  -- attribute mark_debug of llc_rsp_out_data_word_offset : signal is "true";
 
-  attribute mark_debug of llc_dma_rsp_out_ready            : signal is "true";
-  attribute mark_debug of llc_dma_rsp_out_valid            : signal is "true";
-  attribute mark_debug of llc_dma_rsp_out_data_coh_msg     : signal is "true";
-  attribute mark_debug of llc_dma_rsp_out_data_addr        : signal is "true";
-  attribute mark_debug of llc_dma_rsp_out_data_line        : signal is "true";
-  attribute mark_debug of llc_dma_rsp_out_data_invack_cnt  : signal is "true";
-  attribute mark_debug of llc_dma_rsp_out_data_req_id      : signal is "true";
-  attribute mark_debug of llc_dma_rsp_out_data_dest_id     : signal is "true";
-  attribute mark_debug of llc_dma_rsp_out_data_word_offset : signal is "true";
+  -- attribute mark_debug of llc_dma_rsp_out_ready            : signal is "true";
+  -- attribute mark_debug of llc_dma_rsp_out_valid            : signal is "true";
+  -- attribute mark_debug of llc_dma_rsp_out_data_coh_msg     : signal is "true";
+  -- attribute mark_debug of llc_dma_rsp_out_data_addr        : signal is "true";
+  -- attribute mark_debug of llc_dma_rsp_out_data_line        : signal is "true";
+  -- attribute mark_debug of llc_dma_rsp_out_data_invack_cnt  : signal is "true";
+  -- attribute mark_debug of llc_dma_rsp_out_data_req_id      : signal is "true";
+  -- attribute mark_debug of llc_dma_rsp_out_data_dest_id     : signal is "true";
+  -- attribute mark_debug of llc_dma_rsp_out_data_word_offset : signal is "true";
 
-  attribute mark_debug of llc_fwd_out_ready        : signal is "true";
-  attribute mark_debug of llc_fwd_out_valid        : signal is "true";
-  attribute mark_debug of llc_fwd_out_data_coh_msg : signal is "true";
-  attribute mark_debug of llc_fwd_out_data_addr    : signal is "true";
-  attribute mark_debug of llc_fwd_out_data_req_id  : signal is "true";
-  attribute mark_debug of llc_fwd_out_data_dest_id : signal is "true";
+  -- attribute mark_debug of llc_fwd_out_ready        : signal is "true";
+  -- attribute mark_debug of llc_fwd_out_valid        : signal is "true";
+  -- attribute mark_debug of llc_fwd_out_data_coh_msg : signal is "true";
+  -- attribute mark_debug of llc_fwd_out_data_addr    : signal is "true";
+  -- attribute mark_debug of llc_fwd_out_data_req_id  : signal is "true";
+  -- attribute mark_debug of llc_fwd_out_data_dest_id : signal is "true";
 
-  attribute mark_debug of llc_mem_rsp_ready : signal is "true";
-  attribute mark_debug of llc_mem_rsp_valid : signal is "true";
-  -- attribute mark_debug of llc_mem_rsp_data_line : signal is "true";
+  -- attribute mark_debug of llc_mem_rsp_ready : signal is "true";
+  -- attribute mark_debug of llc_mem_rsp_valid : signal is "true";
+  -- -- attribute mark_debug of llc_mem_rsp_data_line : signal is "true";
 
-  attribute mark_debug of llc_mem_req_ready       : signal is "true";
-  attribute mark_debug of llc_mem_req_valid       : signal is "true";
-  attribute mark_debug of llc_mem_req_data_hwrite : signal is "true";
-  attribute mark_debug of llc_mem_req_data_hsize  : signal is "true";
-  attribute mark_debug of llc_mem_req_data_hprot  : signal is "true";
-  attribute mark_debug of llc_mem_req_data_addr   : signal is "true";
-  attribute mark_debug of llc_mem_req_data_line   : signal is "true";
+  -- attribute mark_debug of llc_mem_req_ready       : signal is "true";
+  -- attribute mark_debug of llc_mem_req_valid       : signal is "true";
+  -- attribute mark_debug of llc_mem_req_data_hwrite : signal is "true";
+  -- attribute mark_debug of llc_mem_req_data_hsize  : signal is "true";
+  -- attribute mark_debug of llc_mem_req_data_hprot  : signal is "true";
+  -- attribute mark_debug of llc_mem_req_data_addr   : signal is "true";
+  -- attribute mark_debug of llc_mem_req_data_line   : signal is "true";
 
-  -- attribute mark_debug of llc_stats_ready         : signal is "true";
-  -- attribute mark_debug of llc_stats_valid         : signal is "true";
-  -- attribute mark_debug of llc_stats_data          : signal is "true";
+  -- -- attribute mark_debug of llc_stats_ready         : signal is "true";
+  -- -- attribute mark_debug of llc_stats_valid         : signal is "true";
+  -- -- attribute mark_debug of llc_stats_data          : signal is "true";
 
-  --attribute mark_debug of asserts    : signal is "true";
-  --attribute mark_debug of bookmark   : signal is "true";
-  --attribute mark_debug of custom_dbg : signal is "true";
+  -- --attribute mark_debug of asserts    : signal is "true";
+  -- --attribute mark_debug of bookmark   : signal is "true";
+  -- --attribute mark_debug of custom_dbg : signal is "true";
 
-  -- attribute mark_debug of ahbm_asserts : signal is "true";
+  -- -- attribute mark_debug of ahbm_asserts : signal is "true";
 
-  attribute mark_debug of llc_cmd_state : signal is "true";
-  attribute mark_debug of llc_cmd_next  : signal is "true";
-  attribute mark_debug of cmd_reg       : signal is "true";
-  attribute mark_debug of status_reg    : signal is "true";
-  attribute mark_debug of cmd_in        : signal is "true";
-  attribute mark_debug of cmd_sample    : signal is "true";
-  attribute mark_debug of readdata      : signal is "true";
+  -- attribute mark_debug of llc_cmd_state : signal is "true";
+  -- attribute mark_debug of llc_cmd_next  : signal is "true";
+  -- attribute mark_debug of cmd_reg       : signal is "true";
+  -- attribute mark_debug of status_reg    : signal is "true";
+  -- attribute mark_debug of cmd_in        : signal is "true";
+  -- attribute mark_debug of cmd_sample    : signal is "true";
+  -- attribute mark_debug of readdata      : signal is "true";
 
-  attribute mark_debug of ahbm_reg_state : signal is "true";
-  attribute mark_debug of fwd_out_state  : signal is "true";
-  attribute mark_debug of rsp_out_state  : signal is "true";
-  attribute mark_debug of req_in_state   : signal is "true";
-  attribute mark_debug of rsp_in_state   : signal is "true";
+  -- attribute mark_debug of ahbm_reg_state : signal is "true";
+  -- attribute mark_debug of fwd_out_state  : signal is "true";
+  -- attribute mark_debug of rsp_out_state  : signal is "true";
+  -- attribute mark_debug of req_in_state   : signal is "true";
+  -- attribute mark_debug of rsp_in_state   : signal is "true";
 
 begin  -- architecture rtl
 -------------------------------------------------------------------------------
@@ -890,7 +892,7 @@ begin  -- architecture rtl
       when rcv_header =>
 
         -- coherence requests
-        if coherence_req_empty = '0' then
+        if coherence_req_empty = '0' and preamble(1) = '1' then
 
           coherence_req_rdreq <= '1';
 
@@ -1022,7 +1024,7 @@ begin  -- architecture rtl
       when rcv_header =>
 
         -- dma requests coherent with LLC
-        if dma_rcv_empty = '0' then
+        if dma_rcv_empty = '0' and dma_preamble(1) = '1' then
 
           dma_rcv_rdreq <= '1';
 
@@ -1038,7 +1040,7 @@ begin  -- architecture rtl
                            to_integer(unsigned(reg.origin_y)) * noc_xlen;
 
             if tile_dma_id(reg.tile_id) >= 0 then
-              reg.req_id := std_logic_vector(to_unsigned(tile_dma_id(reg.tile_id), NL2_MAX_LOG2));
+              reg.req_id := std_logic_vector(to_unsigned(tile_dma_id(reg.tile_id), NLLC_MAX_LOG2));
             end if;
 
           end if;
@@ -1161,6 +1163,7 @@ begin  -- architecture rtl
 
     variable reg : rsp_in_reg_type;
     variable msg : noc_msg_type;
+    variable preamble : noc_preamble_type;
     
   begin  -- process fsm_rsp_in
     -- initialize variables
@@ -1177,13 +1180,16 @@ begin  -- architecture rtl
     -- initialize signals toward noc (receive from noc)
     coherence_rsp_rcv_rdreq <= '0';
 
+    -- incoming NoC messages parsing
+    preamble     := get_preamble(NOC_FLIT_SIZE, coherence_rsp_rcv_data_out);
+
     -- fsm states
     case reg.state is
 
       -- RECEIVE HEADER
       when rcv_header =>
 
-        if coherence_rsp_rcv_empty = '0' then
+        if coherence_rsp_rcv_empty = '0' and preamble(1) = '1' then
 
           coherence_rsp_rcv_rdreq <= '1';
 
@@ -1296,7 +1302,8 @@ begin  -- architecture rtl
 -------------------------------------------------------------------------------
   fsm_fwd_out : process (fwd_out_reg, coherence_fwd_full,
                          llc_fwd_out_valid, llc_fwd_out_data_coh_msg, llc_fwd_out_data_addr,
-                         llc_fwd_out_data_req_id, llc_fwd_out_data_dest_id) is
+                         llc_fwd_out_data_req_id, llc_fwd_out_data_dest_id,
+                         local_y, local_x) is
 
     variable reg       : fwd_out_reg_type;
     variable dest_init : integer;
@@ -1376,7 +1383,8 @@ begin  -- architecture rtl
   fsm_rsp_out : process (rsp_out_reg, coherence_rsp_snd_full,
                          llc_rsp_out_valid, llc_rsp_out_data_coh_msg, llc_rsp_out_data_addr,
                          llc_rsp_out_data_line, llc_rsp_out_data_invack_cnt, llc_rsp_out_data_word_offset,
-                         llc_rsp_out_data_req_id, llc_rsp_out_data_dest_id) is
+                         llc_rsp_out_data_req_id, llc_rsp_out_data_dest_id,
+                         local_y, local_x) is
 
     variable reg       : rsp_out_reg_type;
     variable dest_init : integer;
@@ -1510,7 +1518,8 @@ begin  -- architecture rtl
   dma_fsm_rsp_out : process (dma_rsp_out_reg, dma_snd_full,
                              llc_dma_rsp_out_valid, llc_dma_rsp_out_data_coh_msg, llc_dma_rsp_out_data_addr,
                              llc_dma_rsp_out_data_line, llc_dma_rsp_out_data_invack_cnt, llc_dma_rsp_out_data_word_offset,
-                             llc_dma_rsp_out_data_req_id, llc_dma_rsp_out_data_dest_id) is
+                             llc_dma_rsp_out_data_req_id, llc_dma_rsp_out_data_dest_id,
+                             local_y, local_x) is
 
     variable reg       : dma_rsp_out_reg_type;
     variable dest_init : integer;

@@ -95,6 +95,7 @@ package libleon3 is
     port (
       clk        : in  std_ulogic;
       rstn       : in  std_ulogic;
+      cpuid      : in  integer range 0 to 15:= 0;
       holdn      : out std_ulogic;
       ahbi       : in  ahb_mst_in_type;
       ahbo       : out ahb_mst_out_type;

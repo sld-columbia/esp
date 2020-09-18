@@ -3,7 +3,6 @@
 
 module ariane_wrap
   # (
-     parameter logic [63:0] HART_ID = '0,
      parameter NMST = 2,
      parameter NSLV = 5,
      parameter AXI_ID_WIDTH = ariane_soc::IdWidth,
@@ -32,6 +31,7 @@ module ariane_wrap
    (
     input logic 			clk,
     input logic 			rstn,
+    input logic [63:0]                  HART_ID = '0,
     input logic [1:0] 			irq,
     input logic 			timer_irq,
     input logic 			ipi,
@@ -256,9 +256,9 @@ module ariane_wrap
     BTBEntries: 32,
     BHTEntries: 128,
     // idempotent region
-    NrNonIdempotentRules:  0,
+    NrNonIdempotentRules:  1,
     NonIdempotentAddrBase: {64'b0},
-    NonIdempotentLength:   {64'b0},
+    NonIdempotentLength:   {DRAMBase},
     NrExecuteRegionRules:  2,
     ExecuteRegionAddrBase: {DRAMBase,   ROMBase},
     ExecuteRegionLength:   {DRAMCachedLength, ROMLength},

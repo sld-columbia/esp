@@ -1338,7 +1338,7 @@ void llc_tb::op_dma(mix_msg_t coh_msg, llc_state_t state, bool evict, bool dirty
 void llc_tb::get_rsp_out(coh_msg_t coh_msg, addr_t addr, line_t line, invack_cnt_t invack_cnt,
 			 cache_id_t req_id, cache_id_t dest_id, word_offset_t woff)
 {
-    llc_rsp_out_t rsp_out;
+    llc_rsp_out_t<CACHE_ID_WIDTH> rsp_out;
 
     llc_rsp_out_tb.get(rsp_out);
 
@@ -1371,9 +1371,9 @@ void llc_tb::get_rsp_out(coh_msg_t coh_msg, addr_t addr, line_t line, invack_cnt
 }
 
 void llc_tb::get_dma_rsp_out(coh_msg_t coh_msg, addr_t addr, line_t line, invack_cnt_t invack_cnt,
-			 cache_id_t req_id, cache_id_t dest_id, word_offset_t woff)
+			 llc_coh_dev_id_t req_id, cache_id_t dest_id, word_offset_t woff)
 {
-    llc_rsp_out_t rsp_out;
+    llc_rsp_out_t<LLC_COH_DEV_ID_WIDTH> rsp_out;
 
     llc_dma_rsp_out_tb.get(rsp_out);
 
@@ -1467,7 +1467,7 @@ void llc_tb::put_mem_rsp(line_t line)
 void llc_tb::put_req_in(mix_msg_t coh_msg, addr_t addr, line_t line, cache_id_t req_id,
 			hprot_t hprot, word_offset_t woff, word_offset_t wvalid)
 {
-    llc_req_in_t req_in;
+    llc_req_in_t<CACHE_ID_WIDTH> req_in;
     req_in.coh_msg = coh_msg;
     req_in.hprot = hprot;
     req_in.addr = addr.range(TAG_RANGE_HI, SET_RANGE_LO);
@@ -1484,10 +1484,10 @@ void llc_tb::put_req_in(mix_msg_t coh_msg, addr_t addr, line_t line, cache_id_t 
 	CACHE_REPORT_VAR(sc_time_stamp(), "REQ_IN", req_in);
 }
 
-void llc_tb::put_dma_req_in(mix_msg_t coh_msg, addr_t addr, line_t line, cache_id_t req_id,
+void llc_tb::put_dma_req_in(mix_msg_t coh_msg, addr_t addr, line_t line, llc_coh_dev_id_t req_id,
                             hprot_t hprot, word_offset_t woff, word_offset_t wvalid)
 {
-    llc_req_in_t req_in;
+    llc_req_in_t<LLC_COH_DEV_ID_WIDTH> req_in;
     req_in.coh_msg = coh_msg;
     req_in.hprot = hprot;
     req_in.addr = addr.range(TAG_RANGE_HI, SET_RANGE_LO);

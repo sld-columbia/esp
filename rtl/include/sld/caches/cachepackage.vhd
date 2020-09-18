@@ -106,6 +106,7 @@ package cachepackage is
   --subtype llc_bookmark_t is std_logic_vector(LLC_BOOKMARK_WIDTH - 1 downto 0);
   --subtype custom_dbg_t is std_logic_vector(31 downto 0);
   subtype cache_id_t is std_logic_vector(NL2_MAX_LOG2 - 1 downto 0);
+  subtype llc_coh_dev_id_t is std_logic_vector(NLLC_MAX_LOG2 - 1 downto 0);
   -- hprot
   constant DEFAULT_HPROT : hprot_t := "00";
 
@@ -146,20 +147,21 @@ package cachepackage is
       hindex_mst  : integer := 0;
       pindex      : integer range 0 to NAPBSLV - 1 := 6;
       pirq        : integer := 4;
-      pconfig     : apb_config_type;
-      local_y     : local_yx;
-      local_x     : local_yx;
       mem_hindex  : integer := 4;
       mem_hconfig : ahb_config_type;
       mem_num     : integer := 1;
       mem_info    : tile_mem_info_vector(0 to CFG_NMEM_TILE - 1);
       cache_y     : yx_vec(0 to 2**NL2_MAX_LOG2 - 1);
       cache_x     : yx_vec(0 to 2**NL2_MAX_LOG2 - 1);
-      cache_id      : integer := 0;
       cache_tile_id : cache_attribute_array);
     port (
       rst : in std_ulogic;
       clk : in std_ulogic;
+
+      local_y  : in local_yx;
+      local_x  : in local_yx;
+      pconfig  : in apb_config_type;
+      cache_id : in integer;
 
       -- frontend (cache - AMBA)
       ahbsi : in  ahb_slv_in_type;
@@ -197,8 +199,6 @@ package cachepackage is
       tech        : integer := virtex7;
       sets        : integer := 256;
       ways        : integer := 8;
-      local_y     : local_yx;
-      local_x     : local_yx;
       mem_num     : integer := 1;
       mem_info    : tile_mem_info_vector(0 to CFG_NMEM_TILE - 1);
       cache_y     : yx_vec(0 to 2**NL2_MAX_LOG2 - 1);
@@ -207,6 +207,9 @@ package cachepackage is
     port (
       rst : in std_ulogic;
       clk : in std_ulogic;
+
+      local_y  : in local_yx;
+      local_x  : in local_yx;
 
       -- frontend (cache - Accelerator DMA)
       -- header / lenght parallel ports
@@ -263,9 +266,6 @@ package cachepackage is
       hindex      : integer range 0 to NAHBSLV - 1 := 4;
       pindex      : integer range 0 to NAPBSLV - 1 := 5;
       pirq        : integer                      := 4;
-      pconfig     : apb_config_type;
-      local_y     : local_yx;
-      local_x     : local_yx;
       cacheline   : integer;
       l2_cache_en : integer                      := 0;
       cache_tile_id : cache_attribute_array;
@@ -279,6 +279,11 @@ package cachepackage is
     port (
       rst   : in  std_ulogic;
       clk   : in  std_ulogic;
+
+      local_y : in local_yx;
+      local_x : in local_yx;
+      pconfig : in apb_config_type;
+
       ahbmi : in  ahb_mst_in_type;
       ahbmo : out ahb_mst_out_type;
       apbi  : in  apb_slv_in_type;

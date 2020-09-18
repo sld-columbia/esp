@@ -467,7 +467,7 @@ startup.o: $(BOOTROM_PATH)/startup.S ariane.dtb
 		-I$(BOOTROM_PATH) \
 		-c $< -o $@
 
-main.o: $(BOOTROM_PATH)/main.c
+main.o: $(BOOTROM_PATH)/main.c socmap.h
 	$(QUIET_CC) riscv64-unknown-elf-gcc \
 		-Os \
 		-Wall -Werror \
@@ -532,7 +532,7 @@ RISCV_CFLAGS += -nostartfiles -lm -lgcc
 
 systest.exe: systest.c uart.o
 	$(QUIET_CC) riscv64-unknown-elf-gcc $(RISCV_CFLAGS) \
-	$(RISCV_TESTS)/benchmarks/common/syscalls.c \
+	$(SOFT)/common/syscalls.c \
 	$(RISCV_TESTS)/benchmarks/common/crt.S  \
 	-T $(RISCV_TESTS)/benchmarks/common/test.ld -o $@ \
 	-I$(DESIGN_PATH) \
@@ -1741,6 +1741,7 @@ distclean:	check_all_srcs-distclean 	\
 		sldgen-distclean		\
 		espmon-distclean		\
 		mmi64-distclean
+	$(QUIET_CLEAN)$(RM) *.log
 
 
 .PHONY: clean distclean

@@ -4,9 +4,7 @@
  * Select Scatter-Gather in ESP configuration
  */
 
-#ifndef __riscv
 #include <stdio.h>
-#endif
 #include <stdlib.h>
 #include <esp_accelerator.h>
 #include <esp_probe.h>
@@ -66,25 +64,13 @@ int main(int argc, char * argv[])
     struct esp_device *espdevs = NULL;
     unsigned coherence;
 
-#ifndef __riscv
     printf("STARTING!\n");
-#else
-    print_uart("STARTING!\n");
-#endif
 
     ndev = probe(&espdevs, SLD_ADDER, DEV_NAME);
     if (!ndev) {
-#ifndef __riscv
 	    printf("Error: device not found!");
-#else
-	    print_uart("Error: device not found!");
-#endif
-#ifndef __riscv
 	    printf(DEV_NAME);
-#else
-	    print_uart(DEV_NAME);
-#endif
-	exit(EXIT_FAILURE);
+	    exit(EXIT_FAILURE);
     }
 
     for (n = 0; n < ndev; n++) {
@@ -101,60 +87,32 @@ int main(int argc, char * argv[])
 	    unsigned errors = 0;
 	    int scatter_gather = 1;
 
-#ifndef __riscv
 	    printf("\n********************************\n");
 	    printf("Process input # ");
 	    printf("%u\n", (unsigned) k);
-#else
-	    print_uart("\n********************************\n");
-	    print_uart("Process input # ");
-	    print_uart_int((uint32_t) k);
-	    print_uart("\n");
-#endif
 
 	    // Check access ok (TODO)
 
 	    // Check if scatter-gather DMA is disabled
 	    if (ioread32(dev, PT_NCHUNK_MAX_REG) == 0) {
-#ifndef __riscv
 		    printf("  -> scatter-gather DMA is disabled; revert to contiguous buffer.\n");
-#else
-		    print_uart("  -> scatter-gather DMA is disabled; revert to contiguous buffer.\n");
-#endif
-		scatter_gather = 0;
+		    scatter_gather = 0;
 	    } else {
-#ifndef __riscv
 		    printf("  -> scatter-gather DMA is enabled.\n");
-#else
-		    print_uart("  -> scatter-gather DMA is enabled.\n");
-#endif
 	    }
 
 	    if (scatter_gather) {
 		if (ioread32(dev, PT_NCHUNK_MAX_REG) < NCHUNK) {
-#ifndef __riscv
 		    printf("  Trying to allocate # chunks on # TLB available entries: \n");
 		    printf("%u\t%u\n", (unsigned) NCHUNK, (unsigned) ioread32(dev, PT_NCHUNK_MAX_REG));
-#else
-		    print_uart("  Trying to allocate # chunks on # TLB available entries: \n");
-		    print_uart_int(NCHUNK);
-		    print_uart("\t");
-		    print_uart_int((unsigned) ioread32(dev, PT_NCHUNK_MAX_REG));
-		    print_uart("\n");
-#endif
 		    break;
 		}
 	    }
 
 	    // Allocate memory (will be contiguos anyway in baremetal)
 	    mem = aligned_malloc(SIZE);
-#ifndef __riscv
 	    printf("  memory buffer base-address = %lu\n", (unsigned long) mem);
-#else
-	    print_uart("  memory buffer base-address = ");
-	    print_uart_addr((uint64_t) mem);
-	    print_uart("\n");
-#endif
+
 	    if (scatter_gather) {
 		// Allocate and populate page table
 		ptable = aligned_malloc(NCHUNK * sizeof(unsigned *));
@@ -162,13 +120,8 @@ int main(int argc, char * argv[])
 		    ptable[i] = (unsigned *)
 			&mem[i * (CHUNK_SIZE / sizeof(unsigned))];
 
-#ifndef __riscv
 		printf("  ptable = %p\n", ptable);
 		printf("  nchunk = %lu\n", NCHUNK);
-#else
-		print_uart("  ptable = "); print_uart_addr((uintptr_t) ptable); print_uart("\n");
-		print_uart("  nchunk = "); print_uart_int(NCHUNK); print_uart("\n");
-#endif
 	    }
 
 	    // Initialize input and output
@@ -180,13 +133,7 @@ int main(int argc, char * argv[])
 	    // Allocate memory for gold output
 	    word_t *mem_gold;
 	    mem_gold = aligned_malloc(OUT_SIZE);
-#ifndef __riscv
 	    printf("  memory buffer base-address = %lu\n", (unsigned long) mem_gold);
-#else
-	    print_uart("  memory buffer base-address = ");
-	    print_uart_addr((uint64_t) mem_gold);
-	    print_uart("\n");
-#endif
 
 	    // Populate memory for gold output
 	    for (i = 0; i < OUT_SIZE_DATA; ++i) {
@@ -215,11 +162,7 @@ int main(int argc, char * argv[])
 	    esp_flush(coherence);
 
 	    // Start accelerator
-#ifndef __riscv
 	    printf("  Start..\n");
-#else
-	    print_uart("  Start..\n");
-#endif
 	    iowrite32(dev, CMD_REG, CMD_MASK_START);
 
 	    done = 0;
@@ -230,68 +173,30 @@ int main(int argc, char * argv[])
 	    }
 
 	    iowrite32(dev, CMD_REG, 0x0);
-#ifndef __riscv
 	    printf("  Done\n");
-#else
-	    print_uart("  Done\n");
-#endif
+
 	    /* Validation */
-#ifndef __riscv
 	    printf("  validating...\n");
-#else
-	    print_uart("  validating...\n");
-#endif
 
 	    errors = 0;
 	    for (i = 0; i < OUT_SIZE_DATA; i++) {
 		if (mem[i + IN_SIZE_DATA] != mem_gold[i]) {
 		    errors++;
-#ifndef __riscv
 		    printf("ERROR: i mem mem_gold\n");
 		    printf("%d\n%lu\n%lu\n", i, mem[i + IN_SIZE_DATA], mem_gold[i]);
-#else
-		    print_uart("ERROR: i mem mem_gold\n");
-		    print_uart_int((uint32_t) i);
-		    print_uart("\n");
-		    print_uart_int((uint32_t) mem[i + IN_SIZE_DATA]);
-		    print_uart("\n");
-		    print_uart_int((uint32_t) mem_gold[i]);
-		    print_uart("\n");
-#endif
 		} else {
 #ifdef VERBOSE
-#ifndef __riscv
 		    printf("ERROR: i mem mem_gold\n");
 		    printf("%u\n%u\n%u\n", (uint32_t) i, (uint32_t) mem[i + IN_SIZE_DATA],
 			   (uint32_t) mem_gold[i]);
-#else
-		    print_uart("ERROR: i mem mem_gold\n");
-		    print_uart_int((uint32_t) i);
-		    print_uart("\n");
-		    print_uart_int((uint32_t) mem[i + IN_SIZE_DATA]);
-		    print_uart("\n");
-		    print_uart_int((uint32_t) mem_gold[i]);
-		    print_uart("\n");
-#endif
 #endif
 		}
 	    }
 
 	    if (!errors) {
-#ifndef __riscv
 		printf("\n  Test PASSED!\n");
-#else
-		print_uart("\n  Test PASSED!\n");
-#endif
 	    } else {
-
-#ifndef __riscv
 		printf("\n  Test FAILED. Number of errors: %d\n", errors);
-#else
-		print_uart("\n  Test FAILED. Number of errors: ");
-		print_uart_int((uint32_t) errors); print_uart("\n");
-#endif
-
 	    }
 	}
     }

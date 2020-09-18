@@ -26,16 +26,16 @@ use work.acctypes.all;
 entity dvfs_top is
 
   generic (
-    tech : integer := virtex7;
+    tech          : integer              := virtex7;
     extra_clk_buf : integer range 0 to 1 := 1;
-    pindex                : integer                            := 0;
-    paddr                 : integer                            := 0;
-    pmask                 : integer                            := 16#fff#);
+    pindex        : integer              := 0);
   port (
     rst       : in  std_ulogic;
     clk       : in  std_ulogic;
-    refclk    : in  std_ulogic;
-    pllbypass : in  std_ulogic;
+    paddr     : in integer;
+    pmask     : in integer;
+    refclk    : in std_ulogic;
+    pllbypass : in std_ulogic;
     pllclk    : out std_ulogic;
     apbi      : in  apb_slv_in_type;
     apbo      : out apb_slv_out_type;
@@ -83,12 +83,12 @@ begin  -- rtl
   tile_dvfs_1: tile_dvfs
     generic map (
       tech   => tech,
-      pindex => pindex,
-      paddr  => paddr,
-      pmask  => pmask)
+      pindex => pindex)
     port map (
       rst           => rst,
       clk           => clk,
+      paddr         => paddr,
+      pmask         => pmask,
       apbi          => apbi,
       apbo          => apbo,
       clear_command => clear_command,

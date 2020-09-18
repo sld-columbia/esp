@@ -6,8 +6,8 @@
 #define dprintf if(DEBUG) printf
 
 #define NPHASES_MAX 100
-#define NTHREADS_MAX 12
-#define NDEV_MAX 12
+#define NTHREADS_MAX 16
+#define NDEV_MAX 16
 #define IRREGULAR_SEED_MAX 2048
 
 #define CFG 0
@@ -86,6 +86,10 @@ char *devnames[] = {
 "synth.9",
 "synth.10",
 "synth.11",
+"synth.12",
+"synth.13",
+"synth.14",
+"synth.15",
 };
 
 static void read_soc_config(FILE* f, soc_config_t* soc_config){
@@ -455,7 +459,7 @@ static void dump_results(FILE* out_file, accelerator_thread_info_t **thread_info
         else if (thread_info[t]->alloc_choice == CONTIG_ALLOC_LEAST_LOADED)
             fprintf(out_file,"lloaded,");
         
-        fprintf(out_file, "%u,", thread_info[t]->memsz);
+        fprintf(out_file, "%zu,", thread_info[t]->memsz);
         phase_size += thread_info[t]->memsz; 
         
         fprintf(out_file,"%d,", cfg[t][0].desc.synth_desc.esp.ddr_node);

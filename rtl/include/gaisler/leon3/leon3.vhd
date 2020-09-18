@@ -221,6 +221,7 @@ package leon3 is
   port (
     clk    : in  std_ulogic;
     rstn   : in  std_ulogic;
+    cpuid  : in  integer range 0 to 15:= 0;
     ahbi   : in  ahb_mst_in_type;
     ahbo   : out ahb_mst_out_type;
     ahbsi  : in  ahb_slv_in_type;
@@ -290,6 +291,7 @@ package leon3 is
   port (
     clk    : in  std_ulogic;
     rstn   : in  std_ulogic;
+    cpuid  : in  integer range 0 to 15:= 0;
     ahbi   : in  ahb_mst_in_type;
     ahbo   : out ahb_mst_out_type;
     ahbsi  : in  ahb_slv_in_type;
@@ -481,6 +483,7 @@ package leon3 is
   port (
     clk    : in  std_ulogic;
     rstn   : in  std_ulogic;
+    cpuid  : in  integer range 0 to 15:= 0;
     ahbi   : in  ahb_mst_in_type;
     ahbo   : out ahb_mst_out_type;
     ahbsi  : in  ahb_slv_in_type;
@@ -1090,6 +1093,7 @@ component leon3x
     gfclk2 : in  std_ulogic;    -- gated 2x FPU clock
     clk2   : in  std_ulogic;    -- free-running 2x clock
     rstn   : in  std_ulogic;
+    cpuid  : in  integer range 0 to 15:= 0;
     ahbi   : in  ahb_mst_in_type;
     ahbo   : out ahb_mst_out_type;
     ahbsi  : in  ahb_slv_in_type;

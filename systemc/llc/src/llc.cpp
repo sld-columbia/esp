@@ -534,7 +534,7 @@ inline void llc::send_rsp_out(coh_msg_t coh_msg, line_addr_t addr, line_t line, 
                               cache_id_t dest_id, invack_cnt_t invack_cnt, word_offset_t word_offset)
 {
     SEND_RSP_OUT;
-    llc_rsp_out_t rsp_out;
+    llc_rsp_out_t<CACHE_ID_WIDTH> rsp_out;
     rsp_out.coh_msg = coh_msg;
     rsp_out.addr = addr;
     rsp_out.line = line;
@@ -562,11 +562,11 @@ inline void llc::send_fwd_out(mix_msg_t coh_msg, line_addr_t addr, cache_id_t re
     llc_fwd_out.nb_put(fwd_out);
 }
 
-inline void llc::send_dma_rsp_out(coh_msg_t coh_msg, line_addr_t addr, line_t line, cache_id_t req_id,
+inline void llc::send_dma_rsp_out(coh_msg_t coh_msg, line_addr_t addr, line_t line, llc_coh_dev_id_t req_id,
                            cache_id_t dest_id, invack_cnt_t invack_cnt, word_offset_t word_offset)
 {
     SEND_DMA_RSP_OUT;
-    llc_rsp_out_t rsp_out;
+    llc_rsp_out_t<LLC_COH_DEV_ID_WIDTH> rsp_out;
     rsp_out.coh_msg = coh_msg;
     rsp_out.addr = addr;
     rsp_out.line = line;
@@ -617,7 +617,7 @@ void llc::ctrl()
 
         bool rst_in = false;
         llc_rsp_in_t rsp_in;
-        llc_req_in_t req_in;
+        llc_req_in_t<CACHE_ID_WIDTH> req_in;
 
         bool can_get_rst_tb = false;
         bool can_get_rsp_in = false;

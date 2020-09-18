@@ -5,3 +5,4 @@ allmul.vhd
 allpads.vhd
 alltap.vhd
 allpll.vhd
+allslm.vhd

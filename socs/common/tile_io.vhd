@@ -36,10 +36,11 @@ use work.ariane_esp_pkg.all;
 
 entity tile_io is
   generic (
-    SIMULATION : boolean := false);
+    SIMULATION : boolean := false;
+    ROUTER_PORTS : ports_vec := "11111";
+    HAS_SYNC : integer range 0 to 1 := 0 );
   port (
     rst                : in  std_ulogic;
-    srst               : out std_ulogic;
     clk                : in  std_ulogic;
     eth0_apbi          : out apb_slv_in_type;
     eth0_apbo          : in  apb_slv_out_type;
@@ -56,53 +57,196 @@ entity tile_io is
     uart_txd           : out std_ulogic;
     uart_ctsn          : in  std_ulogic;
     uart_rtsn          : out std_ulogic;
-    --TODO: REMOVE THIS and use NoC proxies
-    irq                : out std_logic_vector(CFG_NCPU_TILE * 2 - 1 downto 0);
-    timer_irq          : out std_logic_vector(CFG_NCPU_TILE - 1 downto 0);
-    ipi                : out std_logic_vector(CFG_NCPU_TILE - 1 downto 0);
-    -- NOC
-    noc1_input_port    : out noc_flit_type;
-    noc1_data_void_in  : out std_ulogic;
-    noc1_stop_in       : out std_ulogic;
-    noc1_output_port   : in  noc_flit_type;
-    noc1_data_void_out : in  std_ulogic;
-    noc1_stop_out      : in  std_ulogic;
-    noc2_input_port    : out noc_flit_type;
-    noc2_data_void_in  : out std_ulogic;
-    noc2_stop_in       : out std_ulogic;
-    noc2_output_port   : in  noc_flit_type;
-    noc2_data_void_out : in  std_ulogic;
-    noc2_stop_out      : in  std_ulogic;
-    noc3_input_port    : out noc_flit_type;
-    noc3_data_void_in  : out std_ulogic;
-    noc3_stop_in       : out std_ulogic;
-    noc3_output_port   : in  noc_flit_type;
-    noc3_data_void_out : in  std_ulogic;
-    noc3_stop_out      : in  std_ulogic;
-    noc4_input_port    : out noc_flit_type;
-    noc4_data_void_in  : out std_ulogic;
-    noc4_stop_in       : out std_ulogic;
-    noc4_output_port   : in  noc_flit_type;
-    noc4_data_void_out : in  std_ulogic;
-    noc4_stop_out      : in  std_ulogic;
-    noc5_input_port    : out misc_noc_flit_type;
-    noc5_data_void_in  : out std_ulogic;
-    noc5_stop_in       : out std_ulogic;
-    noc5_output_port   : in  misc_noc_flit_type;
-    noc5_data_void_out : in  std_ulogic;
-    noc5_stop_out      : in  std_ulogic;
-    noc6_input_port    : out noc_flit_type;
-    noc6_data_void_in  : out std_ulogic;
-    noc6_stop_in       : out std_ulogic;
-    noc6_output_port   : in  noc_flit_type;
-    noc6_data_void_out : in  std_ulogic;
-    noc6_stop_out      : in  std_ulogic;
+    sys_clk_int        : in  std_logic;
+    noc1_data_n_in     : in  noc_flit_type;
+    noc1_data_s_in     : in  noc_flit_type;
+    noc1_data_w_in     : in  noc_flit_type;
+    noc1_data_e_in     : in  noc_flit_type;
+    noc1_data_void_in  : in  std_logic_vector(3 downto 0);
+    noc1_stop_in       : in  std_logic_vector(3 downto 0);
+    noc1_data_n_out    : out noc_flit_type;
+    noc1_data_s_out    : out noc_flit_type;
+    noc1_data_w_out    : out noc_flit_type;
+    noc1_data_e_out    : out noc_flit_type;
+    noc1_data_void_out : out std_logic_vector(3 downto 0);
+    noc1_stop_out      : out std_logic_vector(3 downto 0);
+    noc2_data_n_in     : in  noc_flit_type;
+    noc2_data_s_in     : in  noc_flit_type;
+    noc2_data_w_in     : in  noc_flit_type;
+    noc2_data_e_in     : in  noc_flit_type;
+    noc2_data_void_in  : in  std_logic_vector(3 downto 0);
+    noc2_stop_in       : in  std_logic_vector(3 downto 0);
+    noc2_data_n_out    : out noc_flit_type;
+    noc2_data_s_out    : out noc_flit_type;
+    noc2_data_w_out    : out noc_flit_type;
+    noc2_data_e_out    : out noc_flit_type;
+    noc2_data_void_out : out std_logic_vector(3 downto 0);
+    noc2_stop_out      : out std_logic_vector(3 downto 0);
+    noc3_data_n_in     : in  noc_flit_type;
+    noc3_data_s_in     : in  noc_flit_type;
+    noc3_data_w_in     : in  noc_flit_type;
+    noc3_data_e_in     : in  noc_flit_type;
+    noc3_data_void_in  : in  std_logic_vector(3 downto 0);
+    noc3_stop_in       : in  std_logic_vector(3 downto 0);
+    noc3_data_n_out    : out noc_flit_type;
+    noc3_data_s_out    : out noc_flit_type;
+    noc3_data_w_out    : out noc_flit_type;
+    noc3_data_e_out    : out noc_flit_type;
+    noc3_data_void_out : out std_logic_vector(3 downto 0);
+    noc3_stop_out      : out std_logic_vector(3 downto 0);
+    noc4_data_n_in     : in  noc_flit_type;
+    noc4_data_s_in     : in  noc_flit_type;
+    noc4_data_w_in     : in  noc_flit_type;
+    noc4_data_e_in     : in  noc_flit_type;
+    noc4_data_void_in  : in  std_logic_vector(3 downto 0);
+    noc4_stop_in       : in  std_logic_vector(3 downto 0);
+    noc4_data_n_out    : out noc_flit_type;
+    noc4_data_s_out    : out noc_flit_type;
+    noc4_data_w_out    : out noc_flit_type;
+    noc4_data_e_out    : out noc_flit_type;
+    noc4_data_void_out : out std_logic_vector(3 downto 0);
+    noc4_stop_out      : out std_logic_vector(3 downto 0);
+    noc5_data_n_in     : in  misc_noc_flit_type;
+    noc5_data_s_in     : in  misc_noc_flit_type;
+    noc5_data_w_in     : in  misc_noc_flit_type;
+    noc5_data_e_in     : in  misc_noc_flit_type;
+    noc5_data_void_in  : in  std_logic_vector(3 downto 0); 
+    noc5_stop_in       : in  std_logic_vector(3 downto 0);
+    noc5_data_n_out    : out misc_noc_flit_type;
+    noc5_data_s_out    : out misc_noc_flit_type;
+    noc5_data_w_out    : out misc_noc_flit_type;
+    noc5_data_e_out    : out misc_noc_flit_type;
+    noc5_data_void_out : out std_logic_vector(3 downto 0);
+    noc5_stop_out      : out std_logic_vector(3 downto 0);
+    noc6_data_n_in     : in  noc_flit_type;
+    noc6_data_s_in     : in  noc_flit_type;
+    noc6_data_w_in     : in  noc_flit_type;
+    noc6_data_e_in     : in  noc_flit_type;
+    noc6_data_void_in  : in  std_logic_vector(3 downto 0);
+    noc6_stop_in       : in  std_logic_vector(3 downto 0);
+    noc6_data_n_out    : out noc_flit_type;
+    noc6_data_s_out    : out noc_flit_type;
+    noc6_data_w_out    : out noc_flit_type;
+    noc6_data_e_out    : out noc_flit_type;
+    noc6_data_void_out : out  std_logic_vector(3 downto 0);
+    noc6_stop_out      : out  std_logic_vector(3 downto 0);
+    noc1_mon_noc_vec   : out monitor_noc_type;
+    noc2_mon_noc_vec   : out monitor_noc_type;
+    noc3_mon_noc_vec   : out monitor_noc_type;
+    noc4_mon_noc_vec   : out monitor_noc_type;
+    noc5_mon_noc_vec   : out monitor_noc_type;
+    noc6_mon_noc_vec   : out monitor_noc_type;
     mon_dvfs           : out monitor_dvfs_type
     );
 
 end;
 
 architecture rtl of tile_io is
+
+  component sync_noc_set
+     generic (
+       PORTS     : std_logic_vector(4 downto 0);
+       HAS_SYNC  : integer range 0 to 1 := 0);
+     port (
+        clk           : in  std_logic;
+        clk_tile      : in  std_logic;
+        rst           : in  std_logic;
+        CONST_local_x : in  std_logic_vector(2 downto 0);
+        CONST_local_y : in  std_logic_vector(2 downto 0);
+        noc1_data_n_in     : in  noc_flit_type;
+        noc1_data_s_in     : in  noc_flit_type;
+        noc1_data_w_in     : in  noc_flit_type;
+        noc1_data_e_in     : in  noc_flit_type;
+        noc1_input_port    : in  noc_flit_type;
+        noc1_data_void_in  : in std_logic_vector(4 downto 0);
+        noc1_stop_in       : in std_logic_vector(4 downto 0);
+        noc1_data_n_out    : out noc_flit_type;
+        noc1_data_s_out    : out noc_flit_type;
+        noc1_data_w_out    : out noc_flit_type;
+        noc1_data_e_out    : out noc_flit_type;
+        noc1_output_port   : out noc_flit_type;
+        noc1_data_void_out : out std_logic_vector(4 downto 0);
+        noc1_stop_out      : out std_logic_vector(4 downto 0);
+        noc2_data_n_in     : in  noc_flit_type;
+        noc2_data_s_in     : in  noc_flit_type;
+        noc2_data_w_in     : in  noc_flit_type;
+        noc2_data_e_in     : in  noc_flit_type;
+        noc2_input_port    : in  noc_flit_type;
+        noc2_data_void_in  : in std_logic_vector(4 downto 0);
+        noc2_stop_in       : in std_logic_vector(4 downto 0);
+        noc2_data_n_out    : out noc_flit_type;
+        noc2_data_s_out    : out noc_flit_type;
+        noc2_data_w_out    : out noc_flit_type;
+        noc2_data_e_out    : out noc_flit_type;
+        noc2_output_port   : out noc_flit_type;
+        noc2_data_void_out : out std_logic_vector(4 downto 0);
+        noc2_stop_out      : out std_logic_vector(4 downto 0);
+        noc3_data_n_in     : in  noc_flit_type;
+        noc3_data_s_in     : in  noc_flit_type;
+        noc3_data_w_in     : in  noc_flit_type;
+        noc3_data_e_in     : in  noc_flit_type;
+        noc3_input_port    : in  noc_flit_type;
+        noc3_data_void_in  : in std_logic_vector(4 downto 0);
+        noc3_stop_in       : in std_logic_vector(4 downto 0);
+        noc3_data_n_out    : out noc_flit_type;
+        noc3_data_s_out    : out noc_flit_type;
+        noc3_data_w_out    : out noc_flit_type;
+        noc3_data_e_out    : out noc_flit_type;
+        noc3_output_port   : out noc_flit_type;
+        noc3_data_void_out : out std_logic_vector(4 downto 0);
+        noc3_stop_out      : out std_logic_vector(4 downto 0);
+        noc4_data_n_in     : in  noc_flit_type;
+        noc4_data_s_in     : in  noc_flit_type;
+        noc4_data_w_in     : in  noc_flit_type;
+        noc4_data_e_in     : in  noc_flit_type;
+        noc4_input_port    : in  noc_flit_type;
+        noc4_data_void_in  : in std_logic_vector(4 downto 0);
+        noc4_stop_in       : in std_logic_vector(4 downto 0);
+        noc4_data_n_out    : out noc_flit_type;
+        noc4_data_s_out    : out noc_flit_type;
+        noc4_data_w_out    : out noc_flit_type;
+        noc4_data_e_out    : out noc_flit_type;
+        noc4_output_port   : out noc_flit_type;
+        noc4_data_void_out : out std_logic_vector(4 downto 0);
+        noc4_stop_out      : out std_logic_vector(4 downto 0);
+        noc5_data_n_in     : in  misc_noc_flit_type;
+        noc5_data_s_in     : in  misc_noc_flit_type;
+        noc5_data_w_in     : in  misc_noc_flit_type;
+        noc5_data_e_in     : in  misc_noc_flit_type;
+        noc5_input_port    : in  misc_noc_flit_type;
+        noc5_data_void_in  : in std_logic_vector(4 downto 0);
+        noc5_stop_in       : in std_logic_vector(4 downto 0);
+        noc5_data_n_out    : out misc_noc_flit_type;
+        noc5_data_s_out    : out misc_noc_flit_type;
+        noc5_data_w_out    : out misc_noc_flit_type;
+        noc5_data_e_out    : out misc_noc_flit_type;
+        noc5_output_port   : out misc_noc_flit_type;
+        noc5_data_void_out : out std_logic_vector(4 downto 0);
+        noc5_stop_out      : out std_logic_vector(4 downto 0);
+        noc6_data_n_in     : in  noc_flit_type;
+        noc6_data_s_in     : in  noc_flit_type;
+        noc6_data_w_in     : in  noc_flit_type;
+        noc6_data_e_in     : in  noc_flit_type;
+        noc6_input_port    : in  noc_flit_type;
+        noc6_data_void_in  : in std_logic_vector(4 downto 0);
+        noc6_stop_in       : in std_logic_vector(4 downto 0);
+        noc6_data_n_out    : out noc_flit_type;
+        noc6_data_s_out    : out noc_flit_type;
+        noc6_data_w_out    : out noc_flit_type;
+        noc6_data_e_out    : out noc_flit_type;
+        noc6_output_port   : out noc_flit_type;
+        noc6_data_void_out : out std_logic_vector(4 downto 0);
+        noc6_stop_out      : out std_logic_vector(4 downto 0);
+        noc1_mon_noc_vec   : out monitor_noc_type;
+        noc2_mon_noc_vec   : out monitor_noc_type;
+        noc3_mon_noc_vec   : out monitor_noc_type;
+        noc4_mon_noc_vec   : out monitor_noc_type;
+        noc5_mon_noc_vec   : out monitor_noc_type;
+        noc6_mon_noc_vec   : out monitor_noc_type
+
+    );
+
+  end component;
 
   -- Bootrom
   component ahbrom is
@@ -120,6 +264,8 @@ architecture rtl of tile_io is
       ahbso : out ahb_slv_out_type);
   end component ahbrom;
 
+
+
   -- JTAG (Connected internally through tap and bscan components
   signal tck, tckn, tms, tdi, tdo : std_ulogic;
 
@@ -131,6 +277,10 @@ architecture rtl of tile_io is
   signal plic_pready        : std_ulogic;  -- PLIC APB3
   signal plic_pslverr       : std_ulogic;  -- PLIC APB3
   signal irq_sources        : std_logic_vector(29 downto 0);  -- PLIC0 interrupt lines
+  signal irq                : std_logic_vector(CFG_NCPU_TILE * 2 - 1 downto 0);
+  signal timer_irq          : std_logic_vector(CFG_NCPU_TILE - 1 downto 0);  --CLINT
+  signal ipi                : std_logic_vector(CFG_NCPU_TILE - 1 downto 0);  --CLINT
+
 
   -- UART
   signal u1i : uart_in_type;
@@ -219,6 +369,10 @@ architecture rtl of tile_io is
   signal interrupt_ack_data_in     : misc_noc_flit_type;
   signal interrupt_ack_full        : std_ulogic;
 
+  -- ESPLink
+  signal srst : std_ulogic;             -- soft reset
+  signal soft_reset : std_ulogic;       -- local soft reset
+
   -- bus
   signal ahbsi            : ahb_slv_in_type;
   signal ahbso            : ahb_slv_out_vector;
@@ -238,21 +392,131 @@ architecture rtl of tile_io is
   signal remote_apb_ack   : std_ulogic;
   signal pready           : std_ulogic;
 
+  -- Mon
+  signal mon_dvfs_int   : monitor_dvfs_type;
+  signal mon_noc        : monitor_noc_vector(1 to 6);
+  signal noc1_mon_noc_vec_int  : monitor_noc_type;
+  signal noc2_mon_noc_vec_int  : monitor_noc_type;
+  signal noc3_mon_noc_vec_int  : monitor_noc_type;
+  signal noc4_mon_noc_vec_int  : monitor_noc_type;
+  signal noc5_mon_noc_vec_int  : monitor_noc_type;
+  signal noc6_mon_noc_vec_int  : monitor_noc_type;
+
   -- Interrupt ack to NoC
   type intr_ack_fsm is (idle, send_packet);
   signal intr_ack_state, intr_ack_state_next : intr_ack_fsm := idle;
   signal header, header_next : std_logic_vector(MISC_NOC_FLIT_SIZE - 1 downto 0);
-  
+
   -- Tile parameters
+  signal config : std_logic_vector(ESP_CSR_WIDTH - 1 downto 0);
+
   constant this_local_y           : local_yx                           := tile_y(io_tile_id);
   constant this_local_x           : local_yx                           := tile_x(io_tile_id);
-  constant this_local_apb_en      : std_logic_vector(0 to NAPBSLV - 1) := local_apb_mask(io_tile_id);
-  constant this_remote_apb_slv_en : std_logic_vector(0 to NAPBSLV - 1) := remote_apb_slv_mask(io_tile_id);
+  constant this_csr_pindex        : integer                            := tile_csr_pindex(io_tile_id);
+  constant this_csr_pconfig       : apb_config_type                    := fixed_apbo_pconfig(this_csr_pindex);
+
+  constant this_local_apb_en : std_logic_vector(0 to NAPBSLV - 1) := (
+    0      => '1',                                  -- CSRs
+    1      => '1',                                  -- uart
+    2      => '1',                                  -- irq3mp / plic
+    3      => '1',                                  -- gptimer
+    4      => '1',                                  -- esplink
+    13     => to_std_logic(CFG_SVGA_ENABLE),        -- svga
+    14     => to_std_logic(CFG_GRETH),              -- eth mac
+    15     => to_std_logic(CFG_SGMII * CFG_GRETH),  -- eth phy
+    others => '0');
+
+  constant this_local_ahb_en : std_logic_vector(0 to NAHBSLV - 1) := (
+    0      => '1',                            -- bootrom
+    1      => '1',                            -- ahb2apb
+    2      => to_std_logic(GLOB_CPU_AXI),     -- risc-v clint
+    12     => to_std_logic(CFG_SVGA_ENABLE),  -- frame buffer
+    others => '0');
+
+  constant this_remote_apb_slv_en : std_logic_vector(0 to NAPBSLV - 1) := remote_apb_slv_mask_misc;
   constant this_apb_en            : std_logic_vector(0 to NAPBSLV - 1) := this_local_apb_en or this_remote_apb_slv_en;
-  constant this_local_ahb_en      : std_logic_vector(0 to NAHBSLV - 1) := local_ahb_mask(io_tile_id);
-  constant this_remote_ahb_slv_en : std_logic_vector(0 to NAHBSLV - 1) := remote_ahb_mask(io_tile_id);
+  constant this_remote_ahb_slv_en : std_logic_vector(0 to NAHBSLV - 1) := remote_ahb_mask_misc;
+
+  function set_local_pconfig (
+    constant csr_pconfig   : apb_config_type;
+    constant fixed_pconfig : apb_slv_config_vector)
+    return apb_slv_config_vector is
+    variable cfg : apb_slv_config_vector;
+  begin  -- function set_local_pconfig
+    cfg := (others => pconfig_none);
+    cfg(0) := csr_pconfig;
+    for i in 1 to 19 loop
+      cfg(i) := fixed_pconfig(i);
+    end loop;  -- i
+    return cfg;
+  end function set_local_pconfig;
+
+  constant local_apbo_pconfig : apb_slv_config_vector := set_local_pconfig(this_csr_pconfig, fixed_apbo_pconfig);
+
+  -- Noc signals
+  signal noc1_stop_in_s         : std_logic_vector(4 downto 0);
+  signal noc1_stop_out_s        : std_logic_vector(4 downto 0);
+  signal noc1_io_stop_in        : std_ulogic;
+  signal noc1_io_stop_out       : std_ulogic;
+  signal noc1_data_void_in_s    : std_logic_vector(4 downto 0);
+  signal noc1_data_void_out_s   : std_logic_vector(4 downto 0);
+  signal noc1_io_data_void_in   : std_ulogic;
+  signal noc1_io_data_void_out  : std_ulogic;
+  signal noc2_stop_in_s         : std_logic_vector(4 downto 0);
+  signal noc2_stop_out_s        : std_logic_vector(4 downto 0);
+  signal noc2_io_stop_in        : std_ulogic;
+  signal noc2_io_stop_out       : std_ulogic;
+  signal noc2_data_void_in_s    : std_logic_vector(4 downto 0);
+  signal noc2_data_void_out_s   : std_logic_vector(4 downto 0);
+  signal noc2_io_data_void_in   : std_ulogic;
+  signal noc2_io_data_void_out  : std_ulogic;
+  signal noc3_stop_in_s         : std_logic_vector(4 downto 0);
+  signal noc3_stop_out_s        : std_logic_vector(4 downto 0);
+  signal noc3_io_stop_in        : std_ulogic;
+  signal noc3_io_stop_out       : std_ulogic;
+  signal noc3_data_void_in_s    : std_logic_vector(4 downto 0);
+  signal noc3_data_void_out_s   : std_logic_vector(4 downto 0);
+  signal noc3_io_data_void_in   : std_ulogic;
+  signal noc3_io_data_void_out  : std_ulogic;
+  signal noc4_stop_in_s         : std_logic_vector(4 downto 0);
+  signal noc4_stop_out_s        : std_logic_vector(4 downto 0);
+  signal noc4_io_stop_in        : std_ulogic;
+  signal noc4_io_stop_out       : std_ulogic;
+  signal noc4_data_void_in_s    : std_logic_vector(4 downto 0);
+  signal noc4_data_void_out_s   : std_logic_vector(4 downto 0);
+  signal noc4_io_data_void_in   : std_ulogic;
+  signal noc4_io_data_void_out  : std_ulogic;
+  signal noc5_stop_in_s         : std_logic_vector(4 downto 0);
+  signal noc5_stop_out_s        : std_logic_vector(4 downto 0);
+  signal noc5_io_stop_in        : std_ulogic;
+  signal noc5_io_stop_out       : std_ulogic;
+  signal noc5_data_void_in_s    : std_logic_vector(4 downto 0);
+  signal noc5_data_void_out_s   : std_logic_vector(4 downto 0);
+  signal noc5_io_data_void_in   : std_ulogic;
+  signal noc5_io_data_void_out  : std_ulogic;
+  signal noc6_stop_in_s         : std_logic_vector(4 downto 0);
+  signal noc6_stop_out_s        : std_logic_vector(4 downto 0);
+  signal noc6_io_stop_in        : std_ulogic;
+  signal noc6_io_stop_out       : std_ulogic;
+  signal noc6_data_void_in_s    : std_logic_vector(4 downto 0);
+  signal noc6_data_void_out_s   : std_logic_vector(4 downto 0);
+  signal noc6_io_data_void_in   : std_ulogic;
+  signal noc6_io_data_void_out  : std_ulogic;
+  signal noc1_input_port        : noc_flit_type;
+  signal noc2_input_port        : noc_flit_type;
+  signal noc3_input_port        : noc_flit_type;
+  signal noc4_input_port        : noc_flit_type;
+  signal noc5_input_port        : misc_noc_flit_type;
+  signal noc6_input_port        : noc_flit_type;
+  signal noc1_output_port       : noc_flit_type;
+  signal noc2_output_port       : noc_flit_type;
+  signal noc3_output_port       : noc_flit_type;
+  signal noc4_output_port       : noc_flit_type;
+  signal noc5_output_port       : misc_noc_flit_type;
+  signal noc6_output_port       : noc_flit_type;
 
   attribute mark_debug : string;
+  attribute keep       : string;
 
   -- attribute mark_debug of irqi : signal is "true";
   -- attribute mark_debug of irqo : signal is "true";
@@ -260,8 +524,11 @@ architecture rtl of tile_io is
   -- attribute mark_debug of noc_pirq : signal is "true";
   -- attribute mark_debug of plic_pready : signal is "true";
   -- attribute mark_debug of plic_pslverr : signal is "true";
-  attribute mark_debug of irq_sources : signal is "true";
-  
+  attribute keep of irq_sources : signal is "true";
+  attribute keep of irq : signal is "true";
+  attribute keep of timer_irq : signal is "true";
+  attribute keep of ipi : signal is "true";
+
   -- attribute mark_debug of ahbs_rcv_rdreq : signal is "true";
   -- attribute mark_debug of ahbs_rcv_data_out : signal is "true";
   -- attribute mark_debug of ahbs_rcv_empty : signal is "true";
@@ -294,12 +561,12 @@ architecture rtl of tile_io is
   -- attribute mark_debug of coherent_dma_snd_wrreq : signal is "true";
   -- attribute mark_debug of coherent_dma_snd_data_in : signal is "true";
   -- attribute mark_debug of coherent_dma_snd_full : signal is "true";
-  attribute mark_debug of apb_rcv_rdreq : signal is "true";
-  attribute mark_debug of apb_rcv_data_out : signal is "true";
-  attribute mark_debug of apb_rcv_empty : signal is "true";
-  attribute mark_debug of apb_snd_wrreq : signal is "true";
-  attribute mark_debug of apb_snd_data_in : signal is "true";
-  attribute mark_debug of apb_snd_full : signal is "true";
+  attribute keep of apb_rcv_rdreq : signal is "true";
+  attribute keep of apb_rcv_data_out : signal is "true";
+  attribute keep of apb_rcv_empty : signal is "true";
+  attribute keep of apb_snd_wrreq : signal is "true";
+  attribute keep of apb_snd_data_in : signal is "true";
+  attribute keep of apb_snd_full : signal is "true";
   -- attribute mark_debug of remote_apb_rcv_rdreq : signal is "true";
   -- attribute mark_debug of remote_apb_rcv_data_out : signal is "true";
   -- attribute mark_debug of remote_apb_rcv_empty : signal is "true";
@@ -318,21 +585,275 @@ architecture rtl of tile_io is
   -- attribute mark_debug of irq_wrreq : signal is "true";
   -- attribute mark_debug of irq_data_in : signal is "true";
   -- attribute mark_debug of irq_full : signal is "true";
-  attribute mark_debug of interrupt_rdreq : signal is "true";
-  attribute mark_debug of interrupt_data_out : signal is "true";
-  attribute mark_debug of interrupt_empty : signal is "true";
-  attribute mark_debug of interrupt_ack_wrreq : signal is "true";
-  attribute mark_debug of interrupt_ack_data_in : signal is "true";
-  attribute mark_debug of interrupt_ack_full : signal is "true";
-  attribute mark_debug of noc_apbi_wirq : signal is "true";
+  attribute keep of interrupt_rdreq : signal is "true";
+  attribute keep of interrupt_data_out : signal is "true";
+  attribute keep of interrupt_empty : signal is "true";
+  attribute keep of interrupt_ack_wrreq : signal is "true";
+  attribute keep of interrupt_ack_data_in : signal is "true";
+  attribute keep of interrupt_ack_full : signal is "true";
+  attribute keep of noc_apbi_wirq : signal is "true";
   -- attribute mark_debug of noc_apbo : signal is "true";
 
-  attribute mark_debug of intr_ack_state : signal is "true";
-  attribute mark_debug of intr_ack_state_next : signal is "true";
-  attribute mark_debug of header : signal is "true";
-  attribute mark_debug of header_next : signal is "true";
-  
+  attribute keep of intr_ack_state : signal is "true";
+  attribute keep of intr_ack_state_next : signal is "true";
+  attribute keep of header : signal is "true";
+  attribute keep of header_next : signal is "true";
+
+  attribute keep of noc1_io_stop_in       : signal is "true";
+  attribute keep of noc1_io_stop_out      : signal is "true";
+  attribute keep of noc1_io_data_void_in  : signal is "true";
+  attribute keep of noc1_io_data_void_out : signal is "true";
+  attribute keep of noc1_input_port        : signal is "true";
+  attribute keep of noc1_output_port       : signal is "true";
+  attribute keep of noc1_data_n_in     : signal is "true";
+  attribute keep of noc1_data_s_in     : signal is "true";
+  attribute keep of noc1_data_w_in     : signal is "true";
+  attribute keep of noc1_data_e_in     : signal is "true";
+  attribute keep of noc1_data_void_in  : signal is "true";
+  attribute keep of noc1_stop_in       : signal is "true";
+  attribute keep of noc1_data_n_out    : signal is "true";
+  attribute keep of noc1_data_s_out    : signal is "true";
+  attribute keep of noc1_data_w_out    : signal is "true";
+  attribute keep of noc1_data_e_out    : signal is "true";
+  attribute keep of noc1_data_void_out : signal is "true";
+  attribute keep of noc1_stop_out      : signal is "true";
+  attribute keep of noc2_io_stop_in       : signal is "true";
+  attribute keep of noc2_io_stop_out      : signal is "true";
+  attribute keep of noc2_io_data_void_in  : signal is "true";
+  attribute keep of noc2_io_data_void_out : signal is "true";
+  attribute keep of noc2_input_port        : signal is "true";
+  attribute keep of noc2_output_port       : signal is "true";
+  attribute keep of noc2_data_n_in     : signal is "true";
+  attribute keep of noc2_data_s_in     : signal is "true";
+  attribute keep of noc2_data_w_in     : signal is "true";
+  attribute keep of noc2_data_e_in     : signal is "true";
+  attribute keep of noc2_data_void_in  : signal is "true";
+  attribute keep of noc2_stop_in       : signal is "true";
+  attribute keep of noc2_data_n_out    : signal is "true";
+  attribute keep of noc2_data_s_out    : signal is "true";
+  attribute keep of noc2_data_w_out    : signal is "true";
+  attribute keep of noc2_data_e_out    : signal is "true";
+  attribute keep of noc2_data_void_out : signal is "true";
+  attribute keep of noc2_stop_out      : signal is "true";
+  attribute keep of noc3_io_stop_in       : signal is "true";
+  attribute keep of noc3_io_stop_out      : signal is "true";
+  attribute keep of noc3_io_data_void_in  : signal is "true";
+  attribute keep of noc3_io_data_void_out : signal is "true";
+  attribute keep of noc3_input_port        : signal is "true";
+  attribute keep of noc3_output_port       : signal is "true";
+  attribute keep of noc3_data_n_in     : signal is "true";
+  attribute keep of noc3_data_s_in     : signal is "true";
+  attribute keep of noc3_data_w_in     : signal is "true";
+  attribute keep of noc3_data_e_in     : signal is "true";
+  attribute keep of noc3_data_void_in  : signal is "true";
+  attribute keep of noc3_stop_in       : signal is "true";
+  attribute keep of noc3_data_n_out    : signal is "true";
+  attribute keep of noc3_data_s_out    : signal is "true";
+  attribute keep of noc3_data_w_out    : signal is "true";
+  attribute keep of noc3_data_e_out    : signal is "true";
+  attribute keep of noc3_data_void_out : signal is "true";
+  attribute keep of noc3_stop_out      : signal is "true";
+  attribute keep of noc4_io_stop_in       : signal is "true";
+  attribute keep of noc4_io_stop_out      : signal is "true";
+  attribute keep of noc4_io_data_void_in  : signal is "true";
+  attribute keep of noc4_io_data_void_out : signal is "true";
+  attribute keep of noc4_input_port        : signal is "true";
+  attribute keep of noc4_output_port       : signal is "true";
+  attribute keep of noc4_data_n_in     : signal is "true";
+  attribute keep of noc4_data_s_in     : signal is "true";
+  attribute keep of noc4_data_w_in     : signal is "true";
+  attribute keep of noc4_data_e_in     : signal is "true";
+  attribute keep of noc4_data_void_in  : signal is "true";
+  attribute keep of noc4_stop_in       : signal is "true";
+  attribute keep of noc4_data_n_out    : signal is "true";
+  attribute keep of noc4_data_s_out    : signal is "true";
+  attribute keep of noc4_data_w_out    : signal is "true";
+  attribute keep of noc4_data_e_out    : signal is "true";
+  attribute keep of noc4_data_void_out : signal is "true";
+  attribute keep of noc4_stop_out      : signal is "true";
+  attribute keep of noc5_io_stop_in       : signal is "true";
+  attribute keep of noc5_io_stop_out      : signal is "true";
+  attribute keep of noc5_io_data_void_in  : signal is "true";
+  attribute keep of noc5_io_data_void_out : signal is "true";
+  attribute keep of noc5_input_port        : signal is "true";
+  attribute keep of noc5_output_port       : signal is "true";
+  attribute keep of noc5_data_n_in     : signal is "true";
+  attribute keep of noc5_data_s_in     : signal is "true";
+  attribute keep of noc5_data_w_in     : signal is "true";
+  attribute keep of noc5_data_e_in     : signal is "true";
+  attribute keep of noc5_data_void_in  : signal is "true";
+  attribute keep of noc5_stop_in       : signal is "true";
+  attribute keep of noc5_data_n_out    : signal is "true";
+  attribute keep of noc5_data_s_out    : signal is "true";
+  attribute keep of noc5_data_w_out    : signal is "true";
+  attribute keep of noc5_data_e_out    : signal is "true";
+  attribute keep of noc5_data_void_out : signal is "true";
+  attribute keep of noc5_stop_out      : signal is "true";
+  attribute keep of noc6_io_stop_in       : signal is "true";
+  attribute keep of noc6_io_stop_out      : signal is "true";
+  attribute keep of noc6_io_data_void_in  : signal is "true";
+  attribute keep of noc6_io_data_void_out : signal is "true";
+  attribute keep of noc6_input_port        : signal is "true";
+  attribute keep of noc6_output_port       : signal is "true";
+  attribute keep of noc6_data_n_in     : signal is "true";
+  attribute keep of noc6_data_s_in     : signal is "true";
+  attribute keep of noc6_data_w_in     : signal is "true";
+  attribute keep of noc6_data_e_in     : signal is "true";
+  attribute keep of noc6_data_void_in  : signal is "true";
+  attribute keep of noc6_stop_in       : signal is "true";
+  attribute keep of noc6_data_n_out    : signal is "true";
+  attribute keep of noc6_data_s_out    : signal is "true";
+  attribute keep of noc6_data_w_out    : signal is "true";
+  attribute keep of noc6_data_e_out    : signal is "true";
+  attribute keep of noc6_data_void_out : signal is "true";
+  attribute keep of noc6_stop_out      : signal is "true";
+
+
 begin
+
+ -----------------------------------------------------------------------------
+  -- NOC Connections
+  ----------------------------------------------------------------------------
+  noc1_stop_in_s         <= noc1_io_stop_in  & noc1_stop_in;
+  noc1_stop_out          <= noc1_stop_out_s(3 downto 0);
+  noc1_io_stop_out       <= noc1_stop_out_s(4);
+  noc1_data_void_in_s    <= noc1_io_data_void_in & noc1_data_void_in;
+  noc1_data_void_out     <= noc1_data_void_out_s(3 downto 0);
+  noc1_io_data_void_out  <= noc1_data_void_out_s(4);
+  noc2_stop_in_s         <= noc2_io_stop_in  & noc2_stop_in;
+  noc2_stop_out          <= noc2_stop_out_s(3 downto 0);
+  noc2_io_stop_out       <= noc2_stop_out_s(4);
+  noc2_data_void_in_s    <= noc2_io_data_void_in & noc2_data_void_in;
+  noc2_data_void_out     <= noc2_data_void_out_s(3 downto 0);
+  noc2_io_data_void_out  <= noc2_data_void_out_s(4);
+  noc3_stop_in_s         <= noc3_io_stop_in  & noc3_stop_in;
+  noc3_stop_out          <= noc3_stop_out_s(3 downto 0);
+  noc3_io_stop_out       <= noc3_stop_out_s(4);
+  noc3_data_void_in_s    <= noc3_io_data_void_in & noc3_data_void_in;
+  noc3_data_void_out     <= noc3_data_void_out_s(3 downto 0);
+  noc3_io_data_void_out  <= noc3_data_void_out_s(4);
+  noc4_stop_in_s         <= noc4_io_stop_in  & noc4_stop_in;
+  noc4_stop_out          <= noc4_stop_out_s(3 downto 0);
+  noc4_io_stop_out       <= noc4_stop_out_s(4);
+  noc4_data_void_in_s    <= noc4_io_data_void_in & noc4_data_void_in;
+  noc4_data_void_out     <= noc4_data_void_out_s(3 downto 0);
+  noc4_io_data_void_out  <= noc4_data_void_out_s(4);
+  noc5_stop_in_s         <= noc5_io_stop_in  & noc5_stop_in;
+  noc5_stop_out          <= noc5_stop_out_s(3 downto 0);
+  noc5_io_stop_out       <= noc5_stop_out_s(4);
+  noc5_data_void_in_s    <= noc5_io_data_void_in & noc5_data_void_in;
+  noc5_data_void_out     <= noc5_data_void_out_s(3 downto 0);
+  noc5_io_data_void_out  <= noc5_data_void_out_s(4);
+  noc6_stop_in_s         <= noc6_io_stop_in  & noc6_stop_in;
+  noc6_stop_out          <= noc6_stop_out_s(3 downto 0);
+  noc6_io_stop_out       <= noc6_stop_out_s(4);
+  noc6_data_void_in_s    <= noc6_io_data_void_in & noc6_data_void_in;
+  noc6_data_void_out     <= noc6_data_void_out_s(3 downto 0);
+  noc6_io_data_void_out  <= noc6_data_void_out_s(4);
+
+ sync_noc_set_io: sync_noc_set
+  generic map (
+     PORTS    => ROUTER_PORTS,
+     HAS_SYNC => HAS_SYNC )
+   port map (
+     clk                => sys_clk_int,
+     clk_tile           => clk,
+     rst                => rst,
+     CONST_local_x      => this_local_x,
+     CONST_local_y      => this_local_y,
+     noc1_data_n_in     => noc1_data_n_in,
+     noc1_data_s_in     => noc1_data_s_in,
+     noc1_data_w_in     => noc1_data_w_in,
+     noc1_data_e_in     => noc1_data_e_in,
+     noc1_input_port    => noc1_input_port,
+     noc1_data_void_in  => noc1_data_void_in_s,
+     noc1_stop_in       => noc1_stop_in_s,
+     noc1_data_n_out    => noc1_data_n_out,
+     noc1_data_s_out    => noc1_data_s_out,
+     noc1_data_w_out    => noc1_data_w_out,
+     noc1_data_e_out    => noc1_data_e_out,
+     noc1_output_port   => noc1_output_port,
+     noc1_data_void_out => noc1_data_void_out_s,
+     noc1_stop_out      => noc1_stop_out_s,
+     noc2_data_n_in     => noc2_data_n_in,
+     noc2_data_s_in     => noc2_data_s_in,
+     noc2_data_w_in     => noc2_data_w_in,
+     noc2_data_e_in     => noc2_data_e_in,
+     noc2_input_port    => noc2_input_port,
+     noc2_data_void_in  => noc2_data_void_in_s,
+     noc2_stop_in       => noc2_stop_in_s,
+     noc2_data_n_out    => noc2_data_n_out,
+     noc2_data_s_out    => noc2_data_s_out,
+     noc2_data_w_out    => noc2_data_w_out,
+     noc2_data_e_out    => noc2_data_e_out,
+     noc2_output_port   => noc2_output_port,
+     noc2_data_void_out => noc2_data_void_out_s,
+     noc2_stop_out      => noc2_stop_out_s,
+     noc3_data_n_in     => noc3_data_n_in,
+     noc3_data_s_in     => noc3_data_s_in,
+     noc3_data_w_in     => noc3_data_w_in,
+     noc3_data_e_in     => noc3_data_e_in,
+     noc3_input_port    => noc3_input_port,
+     noc3_data_void_in  => noc3_data_void_in_s,
+     noc3_stop_in       => noc3_stop_in_s,
+     noc3_data_n_out    => noc3_data_n_out,
+     noc3_data_s_out    => noc3_data_s_out,
+     noc3_data_w_out    => noc3_data_w_out,
+     noc3_data_e_out    => noc3_data_e_out,
+     noc3_output_port   => noc3_output_port,
+     noc3_data_void_out => noc3_data_void_out_s,
+     noc3_stop_out      => noc3_stop_out_s,
+     noc4_data_n_in     => noc4_data_n_in,
+     noc4_data_s_in     => noc4_data_s_in,
+     noc4_data_w_in     => noc4_data_w_in,
+     noc4_data_e_in     => noc4_data_e_in,
+     noc4_input_port    => noc4_input_port,
+     noc4_data_void_in  => noc4_data_void_in_s,
+     noc4_stop_in       => noc4_stop_in_s,
+     noc4_data_n_out    => noc4_data_n_out,
+     noc4_data_s_out    => noc4_data_s_out,
+     noc4_data_w_out    => noc4_data_w_out,
+     noc4_data_e_out    => noc4_data_e_out,
+     noc4_output_port   => noc4_output_port,
+     noc4_data_void_out => noc4_data_void_out_s,
+     noc4_stop_out      => noc4_stop_out_s,
+     noc5_data_n_in     => noc5_data_n_in,
+     noc5_data_s_in     => noc5_data_s_in,
+     noc5_data_w_in     => noc5_data_w_in,
+     noc5_data_e_in     => noc5_data_e_in,
+     noc5_input_port    => noc5_input_port,
+     noc5_data_void_in  => noc5_data_void_in_s,
+     noc5_stop_in       => noc5_stop_in_s,
+     noc5_data_n_out    => noc5_data_n_out,
+     noc5_data_s_out    => noc5_data_s_out,
+     noc5_data_w_out    => noc5_data_w_out,
+     noc5_data_e_out    => noc5_data_e_out,
+     noc5_output_port   => noc5_output_port,
+     noc5_data_void_out => noc5_data_void_out_s,
+     noc5_stop_out      => noc5_stop_out_s,
+     noc6_data_n_in     => noc6_data_n_in,
+     noc6_data_s_in     => noc6_data_s_in,
+     noc6_data_w_in     => noc6_data_w_in,
+     noc6_data_e_in     => noc6_data_e_in,
+     noc6_input_port    => noc6_input_port,
+     noc6_data_void_in  => noc6_data_void_in_s,
+     noc6_stop_in       => noc6_stop_in_s,
+     noc6_data_n_out    => noc6_data_n_out,
+     noc6_data_s_out    => noc6_data_s_out,
+     noc6_data_w_out    => noc6_data_w_out,
+     noc6_data_e_out    => noc6_data_e_out,
+     noc6_output_port   => noc6_output_port,
+     noc6_data_void_out => noc6_data_void_out_s,
+     noc6_stop_out      => noc6_stop_out_s,
+     noc1_mon_noc_vec   => noc1_mon_noc_vec_int,
+     noc2_mon_noc_vec   => noc2_mon_noc_vec_int,
+     noc3_mon_noc_vec   => noc3_mon_noc_vec_int,
+     noc4_mon_noc_vec   => noc4_mon_noc_vec_int,
+     noc5_mon_noc_vec   => noc5_mon_noc_vec_int,
+     noc6_mon_noc_vec   => noc6_mon_noc_vec_int
+
+     );
+
 
   -----------------------------------------------------------------------------
   -- Bus
@@ -353,7 +874,7 @@ begin
   ahb0 : ahbctrl                        -- AHB arbiter/multiplexer
     generic map (defmast => CFG_DEFMST, split => CFG_SPLIT,
                  rrobin  => CFG_RROBIN, ioaddr => CFG_AHBIO, fpnpen => CFG_FPNPEN,
-                 nahbm   => CFG_AHB_JTAG + CFG_GRETH + CFG_DSU_ETH + 1, nahbs => maxahbs)
+                 nahbm   => CFG_AHB_JTAG + CFG_GRETH + CFG_DSU_ETH + 2, nahbs => maxahbs)
     port map (rst, clk, ahbmi, ahbmo, ahbsi, ctrl_ahbso);
 
 
@@ -369,12 +890,11 @@ begin
                  remote_apb => this_apb_en)
     port map (rst, clk, ahbsi, ahbso(ahb2apb_hindex), apbi, apbo, apb_req, apb_ack);
 
-
   -----------------------------------------------------------------------------
   -- Drive unused bus ports
   -----------------------------------------------------------------------------
 
-  nam0 : for i in (CFG_AHB_JTAG + CFG_GRETH + CFG_DSU_ETH + 1) to NAHBMST-1 generate
+  nam0 : for i in (CFG_AHB_JTAG + CFG_GRETH + CFG_DSU_ETH + 2) to NAHBMST-1 generate
     ahbmo(i) <= ahbm_none;
   end generate;
 
@@ -384,9 +904,26 @@ begin
     noc_apbo(i) <= apb_none;
   end generate no_pslv_gen_1;
   no_pslv_gen_2 : for i in 16 to NAPBSLV - 1 generate
-    noc_apbo(i) <= apb_none;
+    skip_csr_apb_gen : if i /= this_csr_pindex generate
+      noc_apbo(i) <= apb_none;
+    end generate skip_csr_apb_gen;
   end generate no_pslv_gen_2;
 
+  -----------------------------------------------------------------------------
+  -- Self configuration
+  -----------------------------------------------------------------------------
+  esp_init_1 : esp_init
+    generic map (
+      hindex => CFG_AHB_JTAG + CFG_GRETH + CFG_DSU_ETH + 1,
+      sequence => esp_init_sequence,
+      srst_sequence => esp_srst_sequence)
+    port map (
+      rstn   => rst,
+      clk    => clk,
+      noinit => '0',
+      srst   => srst,
+      ahbmi  => ahbmi,
+      ahbmo  => ahbmo(CFG_AHB_JTAG + CFG_GRETH + CFG_DSU_ETH + 1));
 
   -----------------------------------------------------------------------------
   -- JTAG Master
@@ -510,7 +1047,7 @@ begin
     irqctrl : if CFG_IRQ3_ENABLE /= 0 generate
       irqctrl0 : irqmp                    -- interrupt controller
         generic map (pindex => 2, paddr => 2, ncpu => CFG_NCPU_TILE)
-        port map (rst, clk, noc_apbi_wirq, noc_apbo(2), irqo, irqi);
+        port map (soft_reset, clk, noc_apbi_wirq, noc_apbo(2), irqo, irqi);
     end generate;
 
     irq3 : if CFG_IRQ3_ENABLE = 0 generate
@@ -526,7 +1063,18 @@ begin
   riscv_plic_gen: if GLOB_CPU_ARCH = ariane generate
 
     x : for i in 0 to CFG_NCPU_TILE-1 generate
-      irqi(i).irl <= (others => '0');
+      riscv_irqinfo_proc : process (irq, timer_irq, ipi) is
+      begin  -- process riscv_irqinfo_gen
+        -- Use irq field to send timer IRQ
+        irqi(i).irl <= ipi(i) & timer_irq(i) & irq((i + 1) * 2 - 1 downto i * 2);
+        irqi(i).resume <= '0';
+        irqi(i).rstrun <= '0';
+        irqi(i).rstvec <= (others => '0');
+        irqi(i).index <= conv_std_logic_vector(i, 4);
+        irqi(i).pwdsetaddr <= '0';
+        irqi(i).pwdnewaddr <= (others => '0');
+        irqi(i).forceerr <= '0';
+      end process riscv_irqinfo_proc;
     end generate;
 
     riscv_plic0 : riscv_plic_apb_wrap
@@ -537,7 +1085,7 @@ begin
         NIRQ_SRCS => 30)
       port map (
         clk         => clk,
-        rstn        => rst,
+        rstn        => soft_reset,
         irq_sources => irq_sources,
         irq         => irq,
         apbi        => noc_apbi_wirq,
@@ -552,7 +1100,7 @@ begin
         NHARTS  => CFG_NCPU_TILE)
       port map (
         clk       => clk,
-        rstn      => rst,
+        rstn      => soft_reset,
         timer_irq => timer_irq,
         ipi       => ipi,
         ahbsi     => ahbsi,
@@ -656,7 +1204,7 @@ begin
         generic map (pindex => 3, paddr => 3, pirq => CFG_GPT_IRQ,
                      sepirq => CFG_GPT_SEPIRQ, sbits => CFG_GPT_SW, ntimers => CFG_GPT_NTIM,
                      nbits  => CFG_GPT_TW, wdog => CFG_GPT_WDOGEN*CFG_GPT_WDOG)
-        port map (rst, clk, noc_apbi, noc_apbo(3), gpti, gpto);
+        port map (soft_reset, clk, noc_apbi, noc_apbo(3), gpti, gpto);
       gpti.dhalt <= '0'; gpti.extclk <= '0';
     end generate;
 
@@ -673,6 +1221,8 @@ begin
   -----------------------------------------------------------------------------
   -- APB 4: ESP Link (Soft reset) ---------------------------------------------
   -----------------------------------------------------------------------------
+
+  soft_reset <= (not srst) and rst;
 
   esplink_1: esplink
     generic map (
@@ -779,8 +1329,6 @@ begin
       tech             => CFG_FABTECH,
       hindex           => this_remote_ahb_slv_en,
       hconfig          => fixed_ahbso_hconfig,
-      local_y          => this_local_y,
-      local_x          => this_local_x,
       mem_hindex       => ddr_hindex(0),
       mem_num          => CFG_NMEM_TILE + CFG_NSLM_TILE,
       mem_info         => tile_acc_mem_list(0 to CFG_NMEM_TILE + CFG_NSLM_TILE - 1),
@@ -791,6 +1339,8 @@ begin
     port map (
       rst                        => rst,
       clk                        => clk,
+      local_y                    => this_local_y,
+      local_x                    => this_local_x,
       ahbsi                      => ahbsi,
       ahbso                      => noc_ahbso,
       dma_selected               => coherent_dma_selected,
@@ -812,8 +1362,6 @@ begin
     generic map (
       tech        => CFG_FABTECH,
       ncpu        => CFG_NCPU_TILE,
-      local_y     => this_local_y,
-      local_x     => this_local_x,
       apb_slv_en  => this_remote_apb_slv_en,
       apb_slv_cfg => fixed_apbo_pconfig,
       apb_slv_y   => apb_slv_y,
@@ -821,6 +1369,8 @@ begin
     port map (
       rst                     => rst,
       clk                     => clk,
+      local_y                 => this_local_y,
+      local_x                 => this_local_x,
       apbi                    => apbi,
       apbo                    => remote_apbo,
       apb_req                 => apb_req,
@@ -837,15 +1387,15 @@ begin
     generic map (
       tech        => CFG_FABTECH,
       ncpu        => CFG_NCPU_TILE,
-      local_y     => this_local_y,
-      local_x     => this_local_x,
       apb_slv_en  => this_local_apb_en,
-      apb_slv_cfg => fixed_apbo_pconfig,
+      apb_slv_cfg => local_apbo_pconfig,
       apb_slv_y   => apb_slv_y,
       apb_slv_x   => apb_slv_x)
     port map (
       rst                     => rst,
       clk                     => clk,
+      local_y                 => this_local_y,
+      local_x                 => this_local_x,
       apbi                    => apbi,
       apbo                    => local_apbo,
       apb_req                 => apb_req,
@@ -885,12 +1435,12 @@ begin
   misc_noc2apb_1 : misc_noc2apb
     generic map (
       tech         => CFG_FABTECH,
-      local_y      => this_local_y,
-      local_x      => this_local_x,
       local_apb_en => this_local_apb_en)
     port map (
       rst              => rst,
       clk              => clk,
+      local_y          => this_local_y,
+      local_x          => this_local_x,
       apbi             => noc_apbi,
       apbo             => noc_apbo,
       pready           => pready,
@@ -904,15 +1454,15 @@ begin
 
   misc_irq2noc_1 : misc_irq2noc
     generic map (
-      tech    => CFG_FABTECH,
-      ncpu    => CFG_NCPU_TILE,
-      local_y => this_local_y,
-      local_x => this_local_x,
-      cpu_y   => cpu_y,
-      cpu_x   => cpu_x)
+      tech  => CFG_FABTECH,
+      ncpu  => CFG_NCPU_TILE,
+      cpu_y => cpu_y,
+      cpu_x => cpu_x)
     port map (
       rst                => rst,
       clk                => clk,
+      local_y            => this_local_y,
+      local_x            => this_local_x,
       irqi               => irqi,
       irqo               => irqo,
       irqi_fifo_overflow => irqi_fifo_overflow,
@@ -925,9 +1475,7 @@ begin
 
   misc_noc2interrupt_1 : misc_noc2interrupt
     generic map (
-      tech    => CFG_FABTECH,
-      local_y => this_local_y,
-      local_x => this_local_x)
+      tech    => CFG_FABTECH)
     port map (
       rst                => rst,
       clk                => clk,
@@ -942,8 +1490,6 @@ begin
     generic map (
       tech        => CFG_FABTECH,
       hindex      => CFG_AHB_JTAG + CFG_GRETH + CFG_DSU_ETH,
-      local_y     => this_local_y,
-      local_x     => this_local_x,
       axitran     => GLOB_CPU_AXI,
       little_end  => GLOB_CPU_AXI,
       narrow_noc  => 1,
@@ -953,6 +1499,8 @@ begin
     port map (
       rst                       => rst,
       clk                       => clk,
+      local_y                   => this_local_y,
+      local_x                   => this_local_x,
       ahbmi                     => ahbmi,
       ahbmo                     => ahbmo(CFG_AHB_JTAG + CFG_GRETH + CFG_DSU_ETH),
       coherence_req_rdreq       => ahbm_rcv_rdreq,
@@ -991,14 +1539,51 @@ begin
   -----------------------------------------------------------------------------
   -- Monitor for DVFS. (IO tile has no dvfs)
   -----------------------------------------------------------------------------
-  mon_dvfs.vf        <= "1000";         -- Run at highest frequency always
-  mon_dvfs.transient <= '0';
-  mon_dvfs.clk       <= clk;
-  mon_dvfs.acc_idle  <= '0';
-  mon_dvfs.traffic   <= '0';
-  mon_dvfs.burst     <= '0';
+  mon_dvfs_int.vf        <= "1000";         -- Run at highest frequency always
+  mon_dvfs_int.transient <= '0';
+  mon_dvfs_int.clk       <= clk;
+  mon_dvfs_int.acc_idle  <= '0';
+  mon_dvfs_int.traffic   <= '0';
+  mon_dvfs_int.burst     <= '0';
 
-  -----------------------------------------------------------------------------
+  mon_dvfs <= mon_dvfs_int;
+  
+  noc1_mon_noc_vec <= noc1_mon_noc_vec_int;
+  noc2_mon_noc_vec <= noc2_mon_noc_vec_int;
+  noc3_mon_noc_vec <= noc3_mon_noc_vec_int;
+  noc4_mon_noc_vec <= noc4_mon_noc_vec_int;
+  noc5_mon_noc_vec <= noc5_mon_noc_vec_int;
+  noc6_mon_noc_vec <= noc6_mon_noc_vec_int;
+ 
+  mon_noc(1) <= noc1_mon_noc_vec_int;
+  mon_noc(2) <= noc2_mon_noc_vec_int;
+  mon_noc(3) <= noc3_mon_noc_vec_int;
+  mon_noc(4) <= noc4_mon_noc_vec_int;
+  mon_noc(5) <= noc5_mon_noc_vec_int;
+  mon_noc(6) <= noc6_mon_noc_vec_int;
+
+  -- Memory mapped registers
+  io_tile_csr : esp_tile_csr
+    generic map(
+      pindex  => 0)
+    port map(
+      clk => clk,
+      rstn => rst,
+      pconfig => this_csr_pconfig,
+      mon_ddr => monitor_ddr_none,
+      mon_mem => monitor_mem_none,
+      mon_noc => mon_noc,
+      mon_l2 => monitor_cache_none,
+      mon_llc => monitor_cache_none,
+      mon_acc => monitor_acc_none,
+      mon_dvfs => mon_dvfs_int,
+      config => config,
+      srst => open,
+      apbi => noc_apbi,
+      apbo => noc_apbo(0)
+    );
+
+-----------------------------------------------------------------------------
   -- Tile queues
   -----------------------------------------------------------------------------
 
@@ -1065,41 +1650,40 @@ begin
       interrupt_ack_data_in     => interrupt_ack_data_in,
       interrupt_ack_full        => interrupt_ack_full,
       noc1_out_data             => noc1_output_port,
-      noc1_out_void             => noc1_data_void_out,
-      noc1_out_stop             => noc1_stop_in,
+      noc1_out_void             => noc1_io_data_void_out,
+      noc1_out_stop             => noc1_io_stop_in,
       noc1_in_data              => noc1_input_port,
-      noc1_in_void              => noc1_data_void_in,
-      noc1_in_stop              => noc1_stop_out,
+      noc1_in_void              => noc1_io_data_void_in,
+      noc1_in_stop              => noc1_io_stop_out,
       noc2_out_data             => noc2_output_port,
-      noc2_out_void             => noc2_data_void_out,
-      noc2_out_stop             => noc2_stop_in,
+      noc2_out_void             => noc2_io_data_void_out,
+      noc2_out_stop             => noc2_io_stop_in,
       noc2_in_data              => noc2_input_port,
-      noc2_in_void              => noc2_data_void_in,
-      noc2_in_stop              => noc2_stop_out,
+      noc2_in_void              => noc2_io_data_void_in,
+      noc2_in_stop              => noc2_io_stop_out,
       noc3_out_data             => noc3_output_port,
-      noc3_out_void             => noc3_data_void_out,
-      noc3_out_stop             => noc3_stop_in,
+      noc3_out_void             => noc3_io_data_void_out,
+      noc3_out_stop             => noc3_io_stop_in,
       noc3_in_data              => noc3_input_port,
-      noc3_in_void              => noc3_data_void_in,
-      noc3_in_stop              => noc3_stop_out,
+      noc3_in_void              => noc3_io_data_void_in,
+      noc3_in_stop              => noc3_io_stop_out,
       noc4_out_data             => noc4_output_port,
-      noc4_out_void             => noc4_data_void_out,
-      noc4_out_stop             => noc4_stop_in,
+      noc4_out_void             => noc4_io_data_void_out,
+      noc4_out_stop             => noc4_io_stop_in,
       noc4_in_data              => noc4_input_port,
-      noc4_in_void              => noc4_data_void_in,
-      noc4_in_stop              => noc4_stop_out,
+      noc4_in_void              => noc4_io_data_void_in,
+      noc4_in_stop              => noc4_io_stop_out,
       noc5_out_data             => noc5_output_port,
-      noc5_out_void             => noc5_data_void_out,
-      noc5_out_stop             => noc5_stop_in,
+      noc5_out_void             => noc5_io_data_void_out,
+      noc5_out_stop             => noc5_io_stop_in,
       noc5_in_data              => noc5_input_port,
-      noc5_in_void              => noc5_data_void_in,
-      noc5_in_stop              => noc5_stop_out,
+      noc5_in_void              => noc5_io_data_void_in,
+      noc5_in_stop              => noc5_io_stop_out,
       noc6_out_data             => noc6_output_port,
-      noc6_out_void             => noc6_data_void_out,
-      noc6_out_stop             => noc6_stop_in,
+      noc6_out_void             => noc6_io_data_void_out,
+      noc6_out_stop             => noc6_io_stop_in,
       noc6_in_data              => noc6_input_port,
-      noc6_in_void              => noc6_data_void_in,
-      noc6_in_stop              => noc6_stop_out);
+      noc6_in_void              => noc6_io_data_void_in,
+      noc6_in_stop              => noc6_io_stop_out);
 
 end;
-

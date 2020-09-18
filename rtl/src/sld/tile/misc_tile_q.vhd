@@ -283,20 +283,20 @@ architecture rtl of misc_tile_q is
   signal noc4_dummy_out_void : std_ulogic;
   signal noc6_dummy_in_stop  : std_ulogic;
 
-  attribute mark_debug : string;
+  -- attribute mark_debug : string;
 
-  attribute mark_debug of interrupt_wrreq : signal is "true";
-  attribute mark_debug of interrupt_data_in : signal is "true";
-  attribute mark_debug of interrupt_full : signal is "true";
-  attribute mark_debug of interrupt_ack_rdreq : signal is "true";
-  attribute mark_debug of interrupt_ack_data_out : signal is "true";
-  attribute mark_debug of interrupt_ack_empty : signal is "true";
-  attribute mark_debug of noc5_msg_type : signal is "true";
-  attribute mark_debug of noc5_preamble : signal is "true";
-  attribute mark_debug of noc5_fifos_current : signal is "true";
-  attribute mark_debug of noc5_fifos_next : signal is "true";
-  attribute mark_debug of to_noc5_fifos_current : signal is "true";
-  attribute mark_debug of to_noc5_fifos_next : signal is "true";
+  -- attribute mark_debug of interrupt_wrreq : signal is "true";
+  -- attribute mark_debug of interrupt_data_in : signal is "true";
+  -- attribute mark_debug of interrupt_full : signal is "true";
+  -- attribute mark_debug of interrupt_ack_rdreq : signal is "true";
+  -- attribute mark_debug of interrupt_ack_data_out : signal is "true";
+  -- attribute mark_debug of interrupt_ack_empty : signal is "true";
+  -- attribute mark_debug of noc5_msg_type : signal is "true";
+  -- attribute mark_debug of noc5_preamble : signal is "true";
+  -- attribute mark_debug of noc5_fifos_current : signal is "true";
+  -- attribute mark_debug of noc5_fifos_next : signal is "true";
+  -- attribute mark_debug of to_noc5_fifos_current : signal is "true";
+  -- attribute mark_debug of to_noc5_fifos_next : signal is "true";
   
 begin  -- rtl
 
@@ -793,10 +793,14 @@ begin  -- rtl
       when none =>
         if irq_empty = '0' then
           noc5_in_data <= irq_data_out;
+          to_noc5_preamble := get_preamble(MISC_NOC_FLIT_SIZE, noc_flit_pad & irq_data_out);
           if noc5_in_stop = '0' then
             noc5_in_void       <= irq_empty;
             irq_rdreq          <= '1';
-            to_noc5_fifos_next <= packet_irq;
+            if to_noc5_preamble = PREAMBLE_HEADER then
+              -- Leon3 needs more than single flit
+              to_noc5_fifos_next <= packet_irq;
+            end if;
           end if;
         elsif interrupt_ack_empty = '0' then
           if noc5_in_stop = '0' then

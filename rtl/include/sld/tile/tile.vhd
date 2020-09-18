@@ -328,6 +328,12 @@ package tile is
       remote_ahbs_snd_wrreq           : in  std_ulogic;
       remote_ahbs_snd_data_in         : in  misc_noc_flit_type;
       remote_ahbs_snd_full            : out std_ulogic;
+      apb_rcv_rdreq                   : in  std_ulogic;
+      apb_rcv_data_out                : out misc_noc_flit_type;
+      apb_rcv_empty                   : out std_ulogic;
+      apb_snd_wrreq                   : in  std_ulogic;
+      apb_snd_data_in                 : in  misc_noc_flit_type;
+      apb_snd_full                    : out std_ulogic;
       noc1_out_data                   : in  noc_flit_type;
       noc1_out_void                   : in  std_ulogic;
       noc1_out_stop                   : out std_ulogic;
@@ -447,19 +453,70 @@ package tile is
       noc6_in_stop      : in  std_ulogic);
   end component;
 
+
+  component empty_tile_q is
+    generic (
+      tech : integer);
+    port (
+      rst              : in  std_ulogic;
+      clk              : in  std_ulogic;
+      apb_rcv_rdreq    : in  std_ulogic;
+      apb_rcv_data_out : out misc_noc_flit_type;
+      apb_rcv_empty    : out std_ulogic;
+      apb_snd_wrreq    : in  std_ulogic;
+      apb_snd_data_in  : in  misc_noc_flit_type;
+      apb_snd_full     : out std_ulogic;
+      noc1_out_data    : in  noc_flit_type;
+      noc1_out_void    : in  std_ulogic;
+      noc1_out_stop    : out std_ulogic;
+      noc1_in_data     : out noc_flit_type;
+      noc1_in_void     : out std_ulogic;
+      noc1_in_stop     : in  std_ulogic;
+      noc2_out_data    : in  noc_flit_type;
+      noc2_out_void    : in  std_ulogic;
+      noc2_out_stop    : out std_ulogic;
+      noc2_in_data     : out noc_flit_type;
+      noc2_in_void     : out std_ulogic;
+      noc2_in_stop     : in  std_ulogic;
+      noc3_out_data    : in  noc_flit_type;
+      noc3_out_void    : in  std_ulogic;
+      noc3_out_stop    : out std_ulogic;
+      noc3_in_data     : out noc_flit_type;
+      noc3_in_void     : out std_ulogic;
+      noc3_in_stop     : in  std_ulogic;
+      noc4_out_data    : in  noc_flit_type;
+      noc4_out_void    : in  std_ulogic;
+      noc4_out_stop    : out std_ulogic;
+      noc4_in_data     : out noc_flit_type;
+      noc4_in_void     : out std_ulogic;
+      noc4_in_stop     : in  std_ulogic;
+      noc5_out_data    : in  misc_noc_flit_type;
+      noc5_out_void    : in  std_ulogic;
+      noc5_out_stop    : out std_ulogic;
+      noc5_in_data     : out misc_noc_flit_type;
+      noc5_in_void     : out std_ulogic;
+      noc5_in_stop     : in  std_ulogic;
+      noc6_out_data    : in  noc_flit_type;
+      noc6_out_void    : in  std_ulogic;
+      noc6_out_stop    : out std_ulogic;
+      noc6_in_data     : out noc_flit_type;
+      noc6_in_void     : out std_ulogic;
+      noc6_in_stop     : in  std_ulogic);
+  end component empty_tile_q;
+
   component apb2noc
     generic (
       tech       : integer;
       ncpu       : integer;
-      local_y    : local_yx;
-      local_x    : local_yx;
-      apb_slv_en : std_logic_vector(0 to NAPBSLV - 1);
       apb_slv_cfg : apb_slv_config_vector;
+      apb_slv_en : std_logic_vector(0 to NAPBSLV - 1);
       apb_slv_y  : yx_vec(0 to NAPBSLV - 1);
       apb_slv_x  : yx_vec(0 to NAPBSLV - 1));
     port (
       rst                     : in  std_ulogic;
       clk                     : in  std_ulogic;
+      local_y                 : in  local_yx;
+      local_x                 : in  local_yx;
       apbi                    : in  apb_slv_in_type;
       apbo                    : out apb_slv_out_vector;
       apb_req                 : in  std_ulogic;
@@ -474,15 +531,15 @@ package tile is
 
   component cpu_irq2noc is
     generic (
-      tech    : integer;
-      cpu_id  : integer;
-      local_y : local_yx;
-      local_x : local_yx;
-      irq_y   : local_yx;
-      irq_x   : local_yx);
+      tech  : integer;
+      irq_y : local_yx;
+      irq_x : local_yx);
     port (
       rst                    : in  std_ulogic;
       clk                    : in  std_ulogic;
+      cpu_id                 : in  integer;
+      local_y                : in  local_yx;
+      local_x                : in  local_yx;
       irqi                   : out l3_irq_in_type;
       irqo                   : in  l3_irq_out_type;
       irqo_fifo_overflow     : out std_ulogic;
@@ -499,8 +556,6 @@ package tile is
       tech        : integer;
       hindex      : std_logic_vector(0 to NAHBSLV - 1);
       hconfig     : ahb_slv_config_vector;
-      local_y     : local_yx;
-      local_x     : local_yx;
       mem_hindex  : integer range 0 to NAHBSLV - 1;
       mem_num     : integer;
       mem_info    : tile_mem_info_vector(0 to CFG_NMEM_TILE + CFG_NSLM_TILE - 1);
@@ -511,6 +566,8 @@ package tile is
    port (
       rst                        : in  std_ulogic;
       clk                        : in  std_ulogic;
+      local_y                    : in  local_yx;
+      local_x                    : in  local_yx;
       ahbsi                      : in  ahb_slv_in_type;
       ahbso                      : out ahb_slv_out_vector;
       dma_selected               : in  std_ulogic;
@@ -532,8 +589,6 @@ package tile is
     generic (
       tech         : integer;
       nmst         : integer;
-      local_y      : local_yx;
-      local_x      : local_yx;
       retarget_for_dma : integer range 0 to 1;
       mem_axi_port : integer range 0 to NAHBSLV - 1;
       mem_num      : integer;
@@ -543,6 +598,8 @@ package tile is
     port (
       rst                        : in  std_ulogic;
       clk                        : in  std_ulogic;
+      local_y                    : in  local_yx;
+      local_x                    : in  local_yx;
       mosi                       : in  axi_mosi_vector(0 to nmst - 1);
       somi                       : out axi_somi_vector(0 to nmst - 1);
       coherence_req_wrreq        : out std_ulogic;
@@ -562,12 +619,12 @@ package tile is
   component misc_noc2apb
     generic (
       tech         : integer;
-      local_y      : local_yx;
-      local_x      : local_yx;
-      local_apb_en : std_logic_vector(0 to NAPBSLV - 1));
+      local_apb_en : in  std_logic_vector(0 to NAPBSLV - 1));
     port (
       rst              : in  std_ulogic;
       clk              : in  std_ulogic;
+      local_y          : in  local_yx;
+      local_x          : in  local_yx;
       apbi             : out apb_slv_in_type;
       apbo             : in  apb_slv_out_vector;
       pready           : in  std_ulogic;
@@ -582,31 +639,29 @@ package tile is
 
   component misc_irq2noc is
     generic (
-      tech    : integer;
-      ncpu    : integer;
-      local_y : local_yx;
-      local_x : local_yx;
-      cpu_y   : yx_vec(0 to CFG_NCPU_TILE - 1);
-      cpu_x   : yx_vec(0 to CFG_NCPU_TILE - 1));
+      tech  : integer;
+      ncpu  : integer;
+      cpu_y : yx_vec(0 to CFG_NCPU_TILE - 1);
+      cpu_x : yx_vec(0 to CFG_NCPU_TILE - 1));
     port (
-          rst                : in  std_ulogic;
-          clk                : in  std_ulogic;
-          irqi               : in  irq_in_vector(ncpu-1 downto 0);
-          irqo               : out irq_out_vector(ncpu-1 downto 0);
-          irqi_fifo_overflow : out std_ulogic;
-          irq_ack_rdreq      : out std_ulogic;
-          irq_ack_data_out   : in  misc_noc_flit_type;
-          irq_ack_empty      : in  std_ulogic;
-          irq_wrreq          : out std_ulogic;
-          irq_data_in        : out misc_noc_flit_type;
-          irq_full           : in  std_ulogic);
+      rst                : in  std_ulogic;
+      clk                : in  std_ulogic;
+      local_y            : in  local_yx;
+      local_x            : in  local_yx;
+      irqi               : in  irq_in_vector(ncpu-1 downto 0);
+      irqo               : out irq_out_vector(ncpu-1 downto 0);
+      irqi_fifo_overflow : out std_ulogic;
+      irq_ack_rdreq      : out std_ulogic;
+      irq_ack_data_out   : in  misc_noc_flit_type;
+      irq_ack_empty      : in  std_ulogic;
+      irq_wrreq          : out std_ulogic;
+      irq_data_in        : out misc_noc_flit_type;
+      irq_full           : in  std_ulogic);
   end component misc_irq2noc;
 
   component misc_noc2interrupt
     generic (
-      tech    : integer;
-      local_y : local_yx;
-      local_x : local_yx);
+      tech    : integer);
     port (
       rst                : in  std_ulogic;
       clk                : in  std_ulogic;
@@ -620,8 +675,6 @@ package tile is
     generic (
       tech        : integer;
       hindex      : integer range 0 to NAHBSLV - 1;
-      local_y     : local_yx;
-      local_x     : local_yx;
       axitran     : integer range 0 to 1 := 0;
       little_end  : integer range 0 to 1 := 0;
       eth_dma     : integer range 0 to 1 := 0;
@@ -631,6 +684,8 @@ package tile is
     port (
       rst                    : in  std_ulogic;
       clk                    : in  std_ulogic;
+      local_y                : in  local_yx;
+      local_x                : in  local_yx;
       ahbmi                  : in  ahb_mst_in_type;
       ahbmo                  : out ahb_mst_out_type;
       coherence_req_rdreq    : out std_ulogic;
@@ -656,18 +711,11 @@ package tile is
     generic (
       tech               : integer;
       extra_clk_buf      : integer range 0 to 1;
-      local_y            : local_yx;
-      local_x            : local_yx;
       mem_num            : integer := 1;
       mem_info           : tile_mem_info_vector(0 to CFG_NMEM_TILE + CFG_NSLM_TILE);
       io_y               : local_yx;
       io_x               : local_yx;
       pindex             : integer;
-      paddr              : integer;
-      pmask              : integer;
-      paddr_ext          : integer;
-      pmask_ext          : integer;
-      pirq               : integer;
       revision           : integer;
       devid              : devid_t;
       available_reg_mask : std_logic_vector(0 to 31);
@@ -683,6 +731,11 @@ package tile is
       refclk            : in  std_ulogic;
       pllbypass         : in  std_ulogic;
       pllclk            : out std_ulogic;
+      local_y           : in  local_yx;
+      local_x           : in  local_yx;
+      paddr             : in  integer;
+      pmask             : in  integer;
+      pirq              : in  integer;
       apbi              : in  apb_slv_in_type;
       apbo              : out apb_slv_out_type;
       bank              : out bank_type(0 to MAXREGNUM - 1);
@@ -747,12 +800,12 @@ package tile is
   component tile_dvfs
     generic (
       tech   : integer;
-      pindex : integer;
-      paddr  : integer;
-      pmask  : integer);
+      pindex : integer := 0);
     port (
       rst           : in  std_ulogic;
       clk           : in  std_ulogic;
+      paddr         : in  integer;
+      pmask         : in  integer;
       apbi          : in  apb_slv_in_type;
       apbo          : out apb_slv_out_type;
       clear_command : in  std_ulogic;
@@ -789,14 +842,14 @@ package tile is
 
   component dvfs_top
     generic (
-      tech          : integer;
-      extra_clk_buf : integer;
-      pindex        : integer;
-      paddr         : integer;
-      pmask         : integer);
+      tech          : integer              := virtex7;
+      extra_clk_buf : integer range 0 to 1 := 1;
+      pindex        : integer              := 0);
     port (
       rst       : in  std_ulogic;
       clk       : in  std_ulogic;
+      paddr     : in integer;
+      pmask     : in integer;
       refclk    : in  std_ulogic;
       pllbypass : in  std_ulogic;
       pllclk    : out std_ulogic;
@@ -806,6 +859,26 @@ package tile is
       traffic   : in  std_ulogic;
       burst     : in  std_ulogic;
       mon_dvfs  : out monitor_dvfs_type);
+  end component;
+
+  component esp_tile_csr
+    generic (
+      pindex : integer range 0 to NAPBSLV - 1);
+    port (
+      clk         : in std_logic;
+      rstn        : in std_logic;
+      pconfig     : in apb_config_type;
+      mon_ddr     : in monitor_ddr_type;
+      mon_mem     : in monitor_mem_type;
+      mon_noc     : in monitor_noc_vector(1 to 6);
+      mon_l2      : in monitor_cache_type;
+      mon_llc     : in monitor_cache_type;
+      mon_acc     : in monitor_acc_type;
+      mon_dvfs    : in monitor_dvfs_type;
+      config      : out std_logic_vector(ESP_CSR_WIDTH - 1 downto 0);
+      srst        : out std_ulogic;
+      apbi        : in apb_slv_in_type;
+      apbo        : out apb_slv_out_type);
   end component;
 
 end tile;

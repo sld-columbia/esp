@@ -25,19 +25,12 @@ use std.textio.all;
   generic (
     hls_conf       : hlscfg_t;
     tech           : integer;
-    local_y        : local_yx;
-    local_x        : local_yx;
     mem_num        : integer;
     cacheable_mem_num : integer;
     mem_info       : tile_mem_info_vector(0 to CFG_NMEM_TILE + CFG_NSLM_TILE);
     io_y           : local_yx;
     io_x           : local_yx;
     pindex         : integer := 0;
-    paddr          : integer := 0;
-    pmask          : integer := 16#fff#;
-    paddr_ext      : integer := 0;
-    pmask_ext      : integer := 16#fff#;
-    pirq           : integer := 0;
     irq_type       : integer := 0;
     scatter_gather : integer := 1;
     sets           : integer := 256;
@@ -48,14 +41,24 @@ use std.textio.all;
     has_l2         : integer := 1;
     has_dvfs       : integer := 1;
     has_pll        : integer;
-    extra_clk_buf  : integer;
-    local_apb_en   : std_logic_vector(0 to NAPBSLV - 1));
+    extra_clk_buf  : integer);
   port (
     rst       : in  std_ulogic;
     clk       : in  std_ulogic;
     refclk    : in  std_ulogic;
     pllbypass : in  std_ulogic;
     pllclk    : out std_ulogic;
+    local_y   : in  local_yx;
+    local_x   : in  local_yx;
+    paddr     : in  integer;
+    pmask     : in  integer;
+    paddr_ext : in  integer;
+    pmask_ext : in  integer;
+    pirq      : in  integer;
+    -- APB
+    apbi      : in apb_slv_in_type;
+    apbo      : out apb_slv_out_type;
+    pready    : out std_ulogic;
 
     -- NoC plane coherence request
     coherence_req_wrreq        : out std_ulogic;
@@ -96,14 +99,6 @@ use std.textio.all;
     interrupt_ack_rdreq    : out std_ulogic;
     interrupt_ack_data_out : in  misc_noc_flit_type;
     interrupt_ack_empty    : in  std_ulogic;
-    -- Noc plane miscellaneous (tile -> NoC)
-    apb_snd_wrreq     : out std_ulogic;
-    apb_snd_data_in   : out misc_noc_flit_type;
-    apb_snd_full      : in  std_ulogic;
-    -- Noc plane miscellaneous (NoC -> tile)
-    apb_rcv_rdreq     : out std_ulogic;
-    apb_rcv_data_out  : in  misc_noc_flit_type;
-    apb_rcv_empty     : in  std_ulogic;
     mon_dvfs_in       : in  monitor_dvfs_type;
     --Monitor signals
     mon_acc           : out monitor_acc_type;
@@ -169,7 +164,7 @@ end;
   constant bankdef : bank_type(0 to MAXREGNUM - 1) := (
     DEVID_REG          => conv_std_logic_vector(vendorid, 16) & conv_std_logic_vector(devid, 16),
     PT_NCHUNK_MAX_REG  => conv_std_logic_vector(check_scatter_gather(tlb_entries), 32),
-    YX_REG             => "0000000000000" & local_y & "0000000000000" & local_x,
+    YX_REG             => (others => '0'),
     -- <<user_read_only_default>>
     others             => (others => '0'));
 
@@ -215,8 +210,6 @@ end;
   signal flush                      : std_ulogic;
   -- Register control, interrupt and monitor signals
   signal pllclk_int        : std_ulogic;
-  signal apbi              : apb_slv_in_type;
-  signal apbo              : apb_slv_out_vector;
   signal mon_dvfs_feedthru : monitor_dvfs_type;
 
   constant ahbslv_proxy_hindex : hindex_vector(0 to NAHBSLV - 1) := (
@@ -279,8 +272,6 @@ begin
         tech          => tech,
         sets          => sets,
         ways          => ways,
-        local_y       => local_y,
-        local_x       => local_x,
         mem_num       => cacheable_mem_num,
         mem_info      => cacheable_mem_info,
         cache_y       => cache_y,
@@ -289,6 +280,8 @@ begin
       port map (
         rst                        => rst,
         clk                        => clk,
+        local_y                    => local_y,
+        local_x                    => local_x,
         dma_read                   => dma_read,
         dma_write                  => dma_write,
         dma_length                 => dma_length,
@@ -336,18 +329,11 @@ begin
     generic map (
       tech               => tech,
       extra_clk_buf      => extra_clk_buf,
-      local_y            => local_y,
-      local_x            => local_x,
       mem_num            => mem_num,
       mem_info           => mem_info,
       io_y               => io_y,
       io_x               => io_x,
       pindex             => pindex,
-      paddr              => paddr,
-      pmask              => pmask,
-      paddr_ext          => paddr_ext,
-      pmask_ext          => pmask_ext,
-      pirq               => pirq,
       revision           => revision,
       devid              => devid,
       available_reg_mask => available_reg_mask,
@@ -363,8 +349,13 @@ begin
       refclk                        => refclk,
       pllbypass                     => pllbypass,
       pllclk                        => pllclk_int,
+      local_y                       => local_y,
+      local_x                       => local_x,
+      paddr                         => paddr,
+      pmask                         => pmask,
+      pirq                          => pirq,
       apbi                          => apbi,
-      apbo                          => apbo(pindex),
+      apbo                          => apbo,
       bank                          => bank,
       bankdef                       => bankdef,
       acc_rst                       => acc_rst,
@@ -411,6 +402,8 @@ begin
       interrupt_full                => interrupt_full
       );
 
+  pready <= '1';
+
   -- Fully coherent (to L2 wrapper)
   dma_snd_data         <= dma_snd_data_in_int;
 
@@ -449,36 +442,6 @@ begin
     end if;
 
   end process coherence_model_select;
-
-
-  misc_noc2apb_1 : misc_noc2apb
-    generic map (
-      tech         => tech,
-      local_y      => local_y,
-      local_x      => local_x,
-      local_apb_en => local_apb_en)
-    port map (
-      rst              => rst,
-      clk              => clk,
-      apbi             => apbi,
-      apbo             => apbo,
-      pready           => '1',
-      dvfs_transient   => mon_dvfs_feedthru.transient,
-      apb_snd_wrreq    => apb_snd_wrreq,
-      apb_snd_data_in  => apb_snd_data_in,
-      apb_snd_full     => apb_snd_full,
-      apb_rcv_rdreq    => apb_rcv_rdreq,
-      apb_rcv_data_out => apb_rcv_data_out,
-      apb_rcv_empty    => apb_rcv_empty
-    );
-
-  -- Using only one apbo signal
-  no_apb : for i in 0 to NAPBSLV - 1 generate
-    local_apb : if i /= pindex generate
-      apbo(i)      <= apb_none;
-      apbo(i).pirq <= (others => '0');
-    end generate local_apb;
-  end generate no_apb;
 
   mon_acc.clk   <= pllclk_int; pllclk <= pllclk_int;
   mon_acc.go    <= bank(CMD_REG)(0);

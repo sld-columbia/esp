@@ -42,10 +42,10 @@
  * 14 - Ethernet MAC controller
  * 15 - Ethernet SGMII PHY controller
  * 16-19 - LLC cache controller (must change with NMEM_MAX)
- * 20-(NAPBS-1) - Accelerators
+ * 84-(NAPBS-1) - Accelerators
  */
-#define NAPBSLV 32
-#define NACC_MAX 12
+#define NAPBSLV 128
+#define NACC_MAX 44
 
 
 #define SLD_L2_CACHE 0x020

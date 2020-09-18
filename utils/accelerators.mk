@@ -123,10 +123,10 @@ $(THIRDPARTY_ACCELERATORS):
 	$(QUIET_BUILD)
 	@cd $(THIRDPARTY_PATH)/$@; \
 	if ! test -e $(THIRDPARTY_PATH)/$@/out; then \
-		$(MAKE) CROSS_COMPILE=$(CROSS_COMPILE_LINUX) ARCH=$(ARCH) KSRC=$(PWD)/linux-build hw; \
+		$(MAKE) CROSS_COMPILE_ELF=$(CROSS_COMPILE_ELF) CROSS_COMPILE=$(CROSS_COMPILE_LINUX) ARCH=$(ARCH) KSRC=$(PWD)/linux-build hw; \
 	fi;
 	@cd $(THIRDPARTY_PATH)/$@; \
-	$(MAKE) CROSS_COMPILE=$(CROSS_COMPILE_LINUX) ARCH=$(ARCH) KSRC=$(PWD)/linux-build sw;
+	$(MAKE) ESP_ROOT=$(ESP_ROOT) DESIGN_PATH=$(DESIGN_PATH) CPU_ARCH=$(CPU_ARCH) CROSS_COMPILE_ELF=$(CROSS_COMPILE_ELF) CROSS_COMPILE=$(CROSS_COMPILE_LINUX) ARCH=$(ARCH) KSRC=$(PWD)/linux-build sw;
 	@for f in $$(cat $(THIRDPARTY_PATH)/$@/$@.kmd); do \
 		cp -r $(THIRDPARTY_PATH)/$@/sw/$$f sysroot/opt/drivers/; \
 	done;
@@ -134,18 +134,23 @@ $(THIRDPARTY_ACCELERATORS):
 	@for f in $$(cat $(THIRDPARTY_PATH)/$@/$@.umd); do \
 		cp -r $(THIRDPARTY_PATH)/$@/sw/$$f sysroot/root/$@/; \
 	done;
+	@mkdir -p barec
+	@for f in $$(cat $(THIRDPARTY_PATH)/$@/$@.bc); do \
+		cp -r $(THIRDPARTY_PATH)/$@/sw/$$f barec/; \
+	done;
+
 
 thirdparty-accelerators: $(THIRDPARTY_ACCELERATORS)
 
 $(THIRDPARTY_ACCELERATORS-clean):
 	$(QUIET_CLEAN)
 	@cd $(THIRDPARTY_PATH)/$(@:-clean=); \
-	$(MAKE) CROSS_COMPILE=$(CROSS_COMPILE_LINUX) ARCH=$(ARCH) KSRC=$(PWD)/linux-build clean;
+	$(MAKE) CROSS_COMPILE_ELF=$(CROSS_COMPILE_ELF) CROSS_COMPILE=$(CROSS_COMPILE_LINUX) ARCH=$(ARCH) KSRC=$(PWD)/linux-build clean;
 
 $(THIRDPARTY_ACCELERATORS-distclean): %-distclean : %-clean
 	$(QUIET_CLEAN)
 	@cd $(THIRDPARTY_PATH)/$(@:-distclean=); \
-	$(MAKE) CROSS_COMPILE=$(CROSS_COMPILE_LINUX) ARCH=$(ARCH) KSRC=$(PWD)/linux-build distclean;
+	$(MAKE) CROSS_COMPILE_ELF=$(CROSS_COMPILE_ELF) CROSS_COMPILE=$(CROSS_COMPILE_LINUX) ARCH=$(ARCH) KSRC=$(PWD)/linux-build distclean;
 
 thirdparty-accelerators-clean: $(THIRDPARTY_ACCELERATORS-clean)
 

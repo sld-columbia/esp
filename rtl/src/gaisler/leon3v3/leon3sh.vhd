@@ -88,6 +88,7 @@ entity leon3sh is
   port (
     clk        : in  std_ulogic;
     rstn       : in  std_ulogic;
+    cpuid      : in  integer range 0 to 15:= 0;
     ahbi       : in  ahb_mst_in_type;
     ahbo       : out ahb_mst_out_type;
     ahbsi      : in  ahb_slv_in_type;
@@ -176,6 +177,7 @@ begin
       gfclk2     => clk,
       clk2       => clk,
       rstn       => rstn,
+      cpuid      => cpuid,
       ahbi       => ahbi,
       ahbo       => ahbo,
       ahbsi      => ahbsi,

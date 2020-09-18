@@ -176,7 +176,10 @@ architecture rtl of top is
 
   component ahb2mig_ebddr4r5 is
     generic (
-      hindex : integer);
+      hindex : integer;
+      haddr  : integer;
+      hmask  : integer
+      );
     port (
       c0_sys_clk_p     : in    std_logic;
       c0_sys_clk_n     : in    std_logic;
@@ -204,6 +207,23 @@ architecture rtl of top is
       ui_clk_sync_rst  : out   std_logic);
   end component ahb2mig_ebddr4r5;
 
+  function set_ddr_index (
+    constant n : integer range 0 to 3)
+    return integer is
+  begin
+    if n > (CFG_NMEM_TILE - 1) then
+      return CFG_NMEM_TILE - 1;
+    else
+      return n;
+    end if;
+  end set_ddr_index;
+
+  constant this_ddr_index : attribute_vector(0 to 3) := (
+    0 => set_ddr_index(0),
+    1 => set_ddr_index(1),
+    2 => set_ddr_index(2),
+    3 => set_ddr_index(3)
+    );
 
 -- pragma translate_off
 -- Memory model for simulation purposes only
@@ -516,7 +536,9 @@ begin
   gen_mig : if (SIMULATION /= true) generate
     ddrc0 : ahb2mig_ebddr4r5
       generic map (
-        hindex => 4)
+        hindex => 0,
+        haddr  => ddr_haddr(this_ddr_index(0)),
+        hmask  => ddr_hmask(this_ddr_index(0)))
       port map (
         c0_sys_clk_p     => c0_sys_clk_p,
         c0_sys_clk_n     => c0_sys_clk_n,
@@ -546,7 +568,9 @@ begin
     
     ddrc1 : ahb2mig_ebddr4r5
       generic map (
-        hindex => 5)
+        hindex => 0,
+        haddr  => ddr_haddr(this_ddr_index(1)),
+        hmask  => ddr_hmask(this_ddr_index(1)))
       port map (
         c0_sys_clk_p     => c1_sys_clk_p,
         c0_sys_clk_n     => c1_sys_clk_n,
@@ -576,7 +600,9 @@ begin
     
     ddrc2 : ahb2mig_ebddr4r5
       generic map (
-        hindex => 6)
+        hindex => 0,
+        haddr  => ddr_haddr(this_ddr_index(2)),
+        hmask  => ddr_hmask(this_ddr_index(2)))
       port map (
         c0_sys_clk_p     => c2_sys_clk_p,
         c0_sys_clk_n     => c2_sys_clk_n,
@@ -606,7 +632,9 @@ begin
     
     ddrc3 : ahb2mig_ebddr4r5
       generic map (
-        hindex => 7)
+        hindex => 0,
+        haddr  => ddr_haddr(this_ddr_index(3)),
+        hmask  => ddr_hmask(this_ddr_index(3)))
       port map (
         c0_sys_clk_p     => c3_sys_clk_p,
         c0_sys_clk_n     => c3_sys_clk_n,
@@ -641,9 +669,9 @@ begin
 
     mig_ahbram : ahbram_sim
       generic map (
-        hindex => 4,
-        haddr  => 16#400#,
-        hmask  => 16#F00#,
+        hindex => 0,
+        haddr  => ddr_haddr(this_ddr_index(0)),
+        hmask  => ddr_hmask(this_ddr_index(0)),
         tech   => 0,
         kbytes => 1000,
         pipe   => 0,
@@ -659,9 +687,9 @@ begin
     
     mig_ahbram1 : ahbram_sim
       generic map (
-        hindex => 5,
-        haddr  => 16#500#,
-        hmask  => 16#F00#,
+        hindex => 0,
+        haddr  => ddr_haddr(this_ddr_index(1)),
+        hmask  => ddr_hmask(this_ddr_index(1)),
         tech   => 0,
         kbytes => 1000,
         pipe   => 0,
@@ -677,9 +705,9 @@ begin
       
     mig_ahbram2 : ahbram_sim
       generic map (
-        hindex => 6,
-        haddr  => 16#600#,
-        hmask  => 16#F00#,
+        hindex => 0,
+        haddr  => ddr_haddr(this_ddr_index(2)),
+        hmask  => ddr_hmask(this_ddr_index(2)),
         tech   => 0,
         kbytes => 1000,
         pipe   => 0,
@@ -695,9 +723,9 @@ begin
     
     mig_ahbram3 : ahbram_sim
       generic map (
-        hindex => 7,
-        haddr  => 16#700#,
-        hmask  => 16#F00#,
+        hindex => 0,
+        haddr  => ddr_haddr(this_ddr_index(3)),
+        hmask  => ddr_hmask(this_ddr_index(3)),
         tech   => 0,
         kbytes => 1000,
         pipe   => 0,
@@ -1032,13 +1060,9 @@ begin
   profpga_mmi64_gen : if CFG_MON_DDR_EN + CFG_MON_NOC_INJECT_EN + CFG_MON_NOC_QUEUES_EN + CFG_MON_ACC_EN + CFG_MON_DVFS_EN /= 0 generate
     -- MMI64
     user_rstn <= rstn;
-
-    mon_ddr(0).clk <= clkm;
-    mon_ddr(1).clk <= clkm_1;
-    mon_ddr(2).clk <= clkm_2;
-    mon_ddr(3).clk <= clkm_3;
     
     gen_mon_ddr : for i in 0 to CFG_NMEM_TILE - 1 generate
+        mon_ddr(i).clk <= sys_clk(i);
         detect_ddr_access : process (ddr_ahbsi)
         begin  -- process detect_mem_access
           mon_ddr(i).word_transfer <= '0';

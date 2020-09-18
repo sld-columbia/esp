@@ -19,9 +19,10 @@ use ieee.std_logic_arith.all;
 entity nobypassable_queue is
 	generic(
 		depth : integer;
-		width : integer;
-		localx	: std_logic_vector(2 downto 0);
-		localy	: std_logic_vector(2 downto 0));
+		width : integer
+--		localx	: std_logic_vector(2 downto 0);
+--		localy	: std_logic_vector(2 downto 0)
+        );
 	port(
 		clk		: in std_logic := '0';
 		rst		: in std_logic;

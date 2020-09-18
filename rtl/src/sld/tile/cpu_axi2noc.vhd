@@ -38,8 +38,6 @@ entity cpu_axi2noc is
   generic (
     tech             : integer;
     nmst             : integer;
-    local_y          : local_yx;
-    local_x          : local_yx;
     retarget_for_dma : integer range 0 to 1 := 0;
     mem_axi_port     : integer range 0 to NAHBSLV - 1;
     mem_num          : integer;
@@ -49,6 +47,8 @@ entity cpu_axi2noc is
   port (
     rst                        : in  std_ulogic;
     clk                        : in  std_ulogic;
+    local_y                    : in  local_yx;
+    local_x                    : in  local_yx;
     mosi                       : in  axi_mosi_vector(0 to nmst - 1);
     somi                       : out axi_somi_vector(0 to nmst - 1);
     -- tile->NoC1
@@ -149,28 +149,28 @@ architecture rtl of cpu_axi2noc is
   signal remote_ahbs_rcv_data_out_hold  : misc_noc_flit_type;
   signal sample_and_hold : std_ulogic;
 
-  attribute mark_debug : string;
+  -- attribute mark_debug : string;
 
-  attribute mark_debug of coherence_req_wrreq : signal is "true";
-  attribute mark_debug of coherence_req_data_in : signal is "true";
-  attribute mark_debug of coherence_rsp_rcv_rdreq : signal is "true";
-  attribute mark_debug of coherence_rsp_rcv_data_out : signal is "true";
-  attribute mark_debug of remote_ahbs_snd_wrreq : signal is "true";
-  attribute mark_debug of remote_ahbs_snd_data_in : signal is "true";
-  attribute mark_debug of remote_ahbs_rcv_rdreq : signal is "true";
-  attribute mark_debug of remote_ahbs_rcv_data_out : signal is "true";
-  attribute mark_debug of transaction_reg : signal is "true";
-  attribute mark_debug of current_state : signal is "true";
-  attribute mark_debug of selected : signal is "true";
-  attribute mark_debug of sample_flits : signal is "true";
-  attribute mark_debug of sample_and_hold : signal is "true";
-  attribute mark_debug of mosi : signal is "true";
-  attribute mark_debug of somi : signal is "true";
+  -- attribute mark_debug of coherence_req_wrreq : signal is "true";
+  -- attribute mark_debug of coherence_req_data_in : signal is "true";
+  -- attribute mark_debug of coherence_rsp_rcv_rdreq : signal is "true";
+  -- attribute mark_debug of coherence_rsp_rcv_data_out : signal is "true";
+  -- attribute mark_debug of remote_ahbs_snd_wrreq : signal is "true";
+  -- attribute mark_debug of remote_ahbs_snd_data_in : signal is "true";
+  -- attribute mark_debug of remote_ahbs_rcv_rdreq : signal is "true";
+  -- attribute mark_debug of remote_ahbs_rcv_data_out : signal is "true";
+  -- attribute mark_debug of transaction_reg : signal is "true";
+  -- attribute mark_debug of current_state : signal is "true";
+  -- attribute mark_debug of selected : signal is "true";
+  -- attribute mark_debug of sample_flits : signal is "true";
+  -- attribute mark_debug of sample_and_hold : signal is "true";
+  -- attribute mark_debug of mosi : signal is "true";
+  -- attribute mark_debug of somi : signal is "true";
 
 
 begin  -- rtl
 
-  make_packet: process (mosi)
+  make_packet: process (mosi, local_y, local_x)
     variable tran : transaction_type;
   begin  -- process make_packet
 

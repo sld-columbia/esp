@@ -37,8 +37,6 @@ entity cpu_ahbs2noc is
     tech             : integer;
     hindex           : std_logic_vector(0 to NAHBSLV - 1);
     hconfig          : ahb_slv_config_vector;
-    local_y          : local_yx;
-    local_x          : local_yx;
     mem_hindex       : integer range 0 to NAHBSLV - 1;
     mem_num          : integer;
     mem_info         : tile_mem_info_vector(0 to CFG_NMEM_TILE + CFG_NSLM_TILE - 1);
@@ -49,6 +47,8 @@ entity cpu_ahbs2noc is
   port (
     rst                        : in  std_ulogic;
     clk                        : in  std_ulogic;
+    local_y                    : in  local_yx;
+    local_x                    : in  local_yx;
     ahbsi                      : in  ahb_slv_in_type;
     ahbso                      : out ahb_slv_out_vector;
     dma_selected               : in  std_ulogic;
@@ -119,7 +119,7 @@ begin  -- rtl
   -- AHB handling
   -----------------------------------------------------------------------------
 
-  make_packet: process (ahbsi, dma_selected)
+  make_packet: process (ahbsi, dma_selected, local_y, local_x)
     variable msg_type : noc_msg_type;
     variable header_v : misc_noc_flit_type;
     variable reserved : reserved_field_type;

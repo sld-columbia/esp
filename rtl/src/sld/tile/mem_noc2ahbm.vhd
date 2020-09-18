@@ -27,8 +27,6 @@ entity mem_noc2ahbm is
   generic (
     tech        : integer;
     hindex      : integer range 0 to NAHBSLV - 1;
-    local_y     : local_yx;
-    local_x     : local_yx;
     axitran     : integer range 0 to 1 := 0;
     little_end  : integer range 0 to 1 := 0;
     eth_dma     : integer range 0 to 1 := 0;
@@ -38,6 +36,8 @@ entity mem_noc2ahbm is
   port (
     rst   : in  std_ulogic;
     clk   : in  std_ulogic;
+    local_y : in  local_yx;
+    local_x : in  local_yx;
     ahbmi : in  ahb_mst_in_type;
     ahbmo : out ahb_mst_out_type;
 
@@ -202,21 +202,21 @@ architecture rtl of mem_noc2ahbm is
   signal req_reg : noc_flit_type;
   signal rsp_reg : noc_flit_type;
 
-  attribute mark_debug : string;
-  attribute mark_debug of coherence_req_data_out : signal is "true";
-  attribute mark_debug of coherence_req_rdreq : signal is "true";
-  attribute mark_debug of coherence_rsp_snd_wrreq : signal is"true";
-  attribute mark_debug of coherence_rsp_snd_data_in : signal is"true";
-  attribute mark_debug of r : signal is"true";
-  attribute mark_debug of ahbmi : signal is"true";
-  attribute mark_debug of ahbmo : signal is"true";
+  -- attribute mark_debug : string;
+  -- attribute mark_debug of coherence_req_data_out : signal is "true";
+  -- attribute mark_debug of coherence_req_rdreq : signal is "true";
+  -- attribute mark_debug of coherence_rsp_snd_wrreq : signal is"true";
+  -- attribute mark_debug of coherence_rsp_snd_data_in : signal is"true";
+  -- attribute mark_debug of r : signal is"true";
+  -- attribute mark_debug of ahbmi : signal is"true";
+  -- attribute mark_debug of ahbmo : signal is"true";
 
 begin  -- rtl
 
   -----------------------------------------------------------------------------
   -- Create packet for response messages to GETS
   -----------------------------------------------------------------------------
-  make_rsp_snd_packet : process (narrow_coherence_req_data_out)
+  make_rsp_snd_packet : process (narrow_coherence_req_data_out, local_y, local_x)
     variable input_msg_type     : noc_msg_type;
     variable preamble           : noc_preamble_type;
     variable msg_type           : noc_msg_type;
@@ -252,7 +252,7 @@ begin  -- rtl
   -----------------------------------------------------------------------------
   -- Create packet for DMA response message
   -----------------------------------------------------------------------------
-  make_dma_packet : process (dma_rcv_data_out)
+  make_dma_packet : process (dma_rcv_data_out, local_y, local_x)
     variable msg_type_req       : noc_msg_type;
     variable msg_type_rsp       : noc_msg_type;
     variable header_v           : noc_flit_type;

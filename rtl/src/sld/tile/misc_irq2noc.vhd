@@ -21,15 +21,16 @@ use work.esp_global.all;
 
 entity misc_irq2noc is
   generic (
-    tech    : integer := virtex7;
-    ncpu    : integer := 0;
-    local_y : local_yx;
-    local_x : local_yx;
-    cpu_y   : yx_vec(0 to CFG_NCPU_TILE - 1);
-    cpu_x   : yx_vec(0 to CFG_NCPU_TILE - 1));
+    tech  : integer := virtex7;
+    ncpu  : integer := 0;
+    cpu_y : yx_vec(0 to CFG_NCPU_TILE - 1);
+    cpu_x : yx_vec(0 to CFG_NCPU_TILE - 1));
   port (
     rst : in std_ulogic;
     clk : in std_ulogic;
+
+    local_y : in local_yx;
+    local_x : in local_yx;
 
     irqi : in  irq_in_vector(0 to ncpu-1);
     irqo : out irq_out_vector(0 to ncpu-1);
@@ -174,17 +175,28 @@ begin  -- rtl
     end process detect_fifo_overflow;
 
     -- Make a packet for interrupt request
-    make_packet : process (irqi(cpuid))
+    make_packet : process (irqi(cpuid), local_y, local_x)
       variable msg_type    : noc_msg_type;
-      variable tmp : noc_flit_type;
+      variable tmp         : noc_flit_type;
       variable header_v    : misc_noc_flit_type;
       variable payload_1_v : misc_noc_flit_type;
       variable payload_2_v : misc_noc_flit_type;
+      variable reserved    : reserved_field_type;
     begin  -- process make_packet
       msg_type := IRQ_MSG;
 
+      if GLOB_CPU_ARCH = ariane then
+        reserved := irqi(cpuid).irl;
+      else
+        reserved := (others => '0');
+      end if;
+
       header_v := (others                                                                       => '0');
-      header_v := create_header(MISC_NOC_FLIT_SIZE, local_y, local_x, cpu_y(cpuid), cpu_x(cpuid), msg_type, (others => '0'));
+      header_v := create_header(MISC_NOC_FLIT_SIZE, local_y, local_x, cpu_y(cpuid), cpu_x(cpuid), msg_type, reserved);
+      if GLOB_CPU_ARCH = ariane then
+        header_v(MISC_NOC_FLIT_SIZE-1 downto MISC_NOC_FLIT_SIZE-PREAMBLE_WIDTH) := PREAMBLE_1FLIT;
+      end if;
+
 
       payload_1_v                                                      := (others => '0');
       payload_1_v(MISC_NOC_FLIT_SIZE-1 downto MISC_NOC_FLIT_SIZE-PREAMBLE_WIDTH) := PREAMBLE_BODY;
@@ -256,33 +268,42 @@ begin  -- rtl
         full     => fifo_full(cpuid),
         data_out => fifo_header(cpuid));
 
-    fifo_payload_1_i : fifo0
-      generic map (
-        depth => IRQ_FIFO_DEPTH,
-        width => MISC_NOC_FLIT_SIZE)
-      port map (
-        clk      => clk,
-        rst      => rst,
-        rdreq    => irqi_send_payload_1(cpuid),
-        wrreq    => irqi_changed(cpuid),
-        data_in  => payload_1(cpuid),
-        empty    => open,
-        full     => open,
-        data_out => fifo_payload_1(cpuid));
+    irqlevel_payload_gen: if GLOB_CPU_ARCH = leon3 generate
 
-    fifo_payload_2_i : fifo0
-      generic map (
-        depth => IRQ_FIFO_DEPTH,
-        width => MISC_NOC_FLIT_SIZE)
-      port map (
-        clk      => clk,
-        rst      => rst,
-        rdreq    => irqi_send_payload_2(cpuid),
-        wrreq    => irqi_changed(cpuid),
-        data_in  => payload_2(cpuid),
-        empty    => open,
-        full     => open,
-        data_out => fifo_payload_2(cpuid));
+      fifo_payload_1_i : fifo0
+        generic map (
+          depth => IRQ_FIFO_DEPTH,
+          width => MISC_NOC_FLIT_SIZE)
+        port map (
+          clk      => clk,
+          rst      => rst,
+          rdreq    => irqi_send_payload_1(cpuid),
+          wrreq    => irqi_changed(cpuid),
+          data_in  => payload_1(cpuid),
+          empty    => open,
+          full     => open,
+          data_out => fifo_payload_1(cpuid));
+
+      fifo_payload_2_i : fifo0
+        generic map (
+          depth => IRQ_FIFO_DEPTH,
+          width => MISC_NOC_FLIT_SIZE)
+        port map (
+          clk      => clk,
+          rst      => rst,
+          rdreq    => irqi_send_payload_2(cpuid),
+          wrreq    => irqi_changed(cpuid),
+          data_in  => payload_2(cpuid),
+          empty    => open,
+          full     => open,
+          data_out => fifo_payload_2(cpuid));
+
+    end generate irqlevel_payload_gen;
+
+    unused_fifo_gen: if GLOB_CPU_ARCH /= leon3 generate
+      fifo_payload_1(cpuid) <= (others => '0');
+      fifo_payload_2(cpuid) <= (others => '0');
+    end generate unused_fifo_gen;
 
     -- Sample interrupt ack.to IRQMP
     irqo(cpuid) <= irqo_reg(cpuid);
@@ -366,7 +387,11 @@ begin  -- rtl
           irqi_send_header(cpuid) <= '1';
           irq_wrreq               <= '1';
           irq_data_in             <= fifo_header(cpuid);
-          irq_snd_next            <= irq_snd_payload_1;
+          if GLOB_CPU_ARCH = leon3 then
+            irq_snd_next            <= irq_snd_payload_1;
+          else
+            irq_snd_next            <= idle;
+          end if;
         end if;
 
       when irq_snd_payload_1 =>

@@ -4,7 +4,10 @@
 library ieee;
 use ieee.std_logic_1164.all;
 
+use ieee.numeric_std.all;
+
 use work.esp_global.all;
+use work.sldcommon.all;
 
 package nocpackage is
 
@@ -46,9 +49,11 @@ package nocpackage is
   subtype noc_flit_type is std_logic_vector(NOC_FLIT_SIZE-1 downto 0);
   subtype misc_noc_flit_type is std_logic_vector(33 downto 0);
   subtype reserved_field_type is std_logic_vector(RESERVED_WIDTH-1 downto 0);
+  subtype ports_vec is std_logic_vector(4 downto 0);
 
   type noc_flit_vector is array (natural range <>) of noc_flit_type;
   type misc_noc_flit_vector is array (natural range <>) of misc_noc_flit_type;
+
 
   constant noc_flit_pad : std_logic_vector(NOC_FLIT_SIZE - MISC_NOC_FLIT_SIZE - 1 downto 0) := (others => '0');
 
@@ -131,7 +136,6 @@ package nocpackage is
     );
 
   type tile_mem_info_vector is array (natural range <>) of tile_mem_info;
-  type attribute_vector is array (natural range <>) of integer;
 
   -- Components
   component fifo0
@@ -238,6 +242,13 @@ package nocpackage is
   function large_to_narrow_flit (
     large_flit : noc_flit_type)
     return misc_noc_flit_type;
+
+  function set_router_ports (
+    constant CFG_XLEN : integer;
+    constant CFG_YLEN : integer;
+    constant local_x : local_yx;
+    constant local_y : local_yx)
+    return ports_vec;
 
   -- IRQ snd packet (Header + 2 flits):
   -- Payload 1
@@ -461,5 +472,38 @@ package body nocpackage is
     return ret;
   end large_to_narrow_flit;
 
+----------------------------------------------------------------------------------------
+-- Use conditionals of local_x and local_y to find required ports
+-- Same port generation must be used in tiles ports
+-- This function will go to top and ROUTER_PORTS will be passed through parameter
+
+  function set_router_ports (
+    constant CFG_XLEN : integer;
+    constant CFG_YLEN : integer;
+    constant local_x : local_yx;
+    constant local_y : local_yx)
+    return ports_vec is
+    variable ports : ports_vec;
+  begin
+    -- initialize all local ports set
+    ports := (others => '1');
+    -- nord ports removed in top tiles
+    if local_y = "000" then
+      ports(0) := '0';
+    end if;
+    -- west ports removed in left edge tiles
+    if local_x = "000" then
+      ports(2) := '0';
+    end if;
+    -- south ports removed in bottom tiles
+    if (to_integer(unsigned(local_y))) = CFG_YLEN-1 then
+      ports(1) := '0';
+    end if;
+    -- east ports removed in right edge tiles
+    if (to_integer(unsigned(local_x))) = CFG_XLEN-1 then
+      ports(3) := '0';
+    end if;
+    return ports;
+  end set_router_ports;
 
 end nocpackage;

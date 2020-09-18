@@ -11,7 +11,6 @@ package ariane_esp_pkg is
 
   component ariane_axi_wrap is
     generic (
-      HART_ID          : std_logic_vector(63 downto 0);
       NMST             : integer;
       NSLV             : integer;
       ROMBase          : std_logic_vector(63 downto 0);
@@ -28,6 +27,7 @@ package ariane_esp_pkg is
     port (
       clk         : in  std_logic;
       rstn        : in  std_logic;
+      HART_ID     : in  std_logic_vector(63 downto 0);
       irq         : in  std_logic_vector(1 downto 0);
       timer_irq   : in  std_logic;
       ipi         : in  std_logic;

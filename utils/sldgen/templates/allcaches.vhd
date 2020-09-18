@@ -16,7 +16,7 @@ package allcaches is
   -- of LLC-coherent devices to 16. This is due to VHDL limitation, but the
   -- following constant can be changed arbitrarily.
   constant NL2_MAX_LOG2  : integer := 4;
-  constant NLLC_MAX_LOG2 : integer := NL2_MAX_LOG2;
+  constant NLLC_MAX_LOG2 : integer := 6;
   type cache_attribute_array is array (0 to 2**NL2_MAX_LOG2 - 1) of integer;
   type dma_attribute_array is array (0 to 2**NLLC_MAX_LOG2 - 1) of integer;
 
@@ -132,7 +132,7 @@ package allcaches is
       llc_dma_req_in_data_word_offset  : in  std_logic_vector(WORD_OFFSET_BITS - 1 downto 0);
       llc_dma_req_in_data_valid_words  : in  std_logic_vector(WORD_OFFSET_BITS - 1 downto 0);
       llc_dma_req_in_data_line         : in  std_logic_vector(BITS_PER_LINE - 1 downto 0);
-      llc_dma_req_in_data_req_id       : in  std_logic_vector(NL2_MAX_LOG2 - 1 downto 0);
+      llc_dma_req_in_data_req_id       : in  std_logic_vector(NLLC_MAX_LOG2 - 1 downto 0);
       llc_rsp_in_valid                 : in  std_ulogic;
       llc_rsp_in_data_coh_msg          : in  std_logic_vector(COH_MSG_TYPE_WIDTH - 1 downto 0);
       llc_rsp_in_data_addr             : in  std_logic_vector(ADDR_BITS - OFFSET_BITS - 1 downto 0);
@@ -166,7 +166,7 @@ package allcaches is
       llc_dma_rsp_out_data_addr        : out std_logic_vector(ADDR_BITS - OFFSET_BITS - 1 downto 0);
       llc_dma_rsp_out_data_line        : out std_logic_vector(BITS_PER_LINE - 1 downto 0);
       llc_dma_rsp_out_data_invack_cnt  : out std_logic_vector(INVACK_CNT_WIDTH - 1 downto 0);
-      llc_dma_rsp_out_data_req_id      : out std_logic_vector(NL2_MAX_LOG2 - 1 downto 0);
+      llc_dma_rsp_out_data_req_id      : out std_logic_vector(NLLC_MAX_LOG2 - 1 downto 0);
       llc_dma_rsp_out_data_dest_id     : out std_logic_vector(NL2_MAX_LOG2 - 1 downto 0);
       llc_dma_rsp_out_data_word_offset : out std_logic_vector(WORD_OFFSET_BITS - 1 downto 0);
       llc_fwd_out_valid                : out std_ulogic;
