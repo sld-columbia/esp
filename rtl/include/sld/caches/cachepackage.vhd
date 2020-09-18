@@ -269,6 +269,7 @@ package cachepackage is
       tech        : integer                      := virtex7;
       sets        : integer                      := 256;
       ways        : integer                      := 16;
+      ahb_if_en   : integer range 0 to 1         := 1;
       nl2         : integer                      := 4;
       nllc        : integer                      := 1;
       noc_xlen    : integer                      := 2;
@@ -324,7 +325,14 @@ package cachepackage is
       dma_snd_wrreq          : out std_ulogic;
       dma_snd_data_in        : out noc_flit_type;
       dma_snd_full           : in  std_ulogic;
-
+      -- LLC->ext
+      ext_req_ready              : in  std_ulogic;
+      ext_req_valid              : out std_ulogic;
+      ext_req_data               : out std_logic_vector(ARCH_BITS - 1 downto 0);
+      -- ext->LLC
+      ext_rsp_ready              : out std_ulogic;
+      ext_rsp_valid              : in  std_ulogic;
+      ext_rsp_data               : in  std_logic_vector(ARCH_BITS - 1 downto 0);
       mon_cache                  : out monitor_cache_type
       );
   end component;

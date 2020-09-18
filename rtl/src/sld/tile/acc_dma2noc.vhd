@@ -911,7 +911,7 @@ begin  -- rtl
         if dma_snd_full_int = '0' and dvfs_transient = '0' then
           dma_snd_data_in_int <= payload_address_r;
           dma_snd_wrreq_int <= '1';
-          if msg = DMA_TO_DEV or msg = REQ_DMA_READ then
+          if msg = DMA_TO_DEV or msg = REQ_DMA_READ or msg = DMA_FROM_DEV then
             dma_next <= request_length;
           else
             dma_next <= request_data;
@@ -923,7 +923,13 @@ begin  -- rtl
         if dma_snd_full_int = '0' and dvfs_transient = '0' then
           dma_snd_data_in_int <= payload_length_r;
           dma_snd_wrreq_int <= '1';
-          dma_next <= reply_header;
+          if msg = DMA_FROM_DEV then
+            -- In case of a write, length is not the tail!
+            dma_snd_data_in_int(NOC_FLIT_SIZE - 1 downto NOC_FLIT_SIZE - PREAMBLE_WIDTH) <= PREAMBLE_BODY;
+            dma_next <= request_data;
+          else
+            dma_next <= reply_header;
+          end if;
         end if;
 
       when request_data =>

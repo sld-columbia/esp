@@ -870,6 +870,8 @@ begin
         fpga_data_in       => (others => '0'),
         fpga_data_out      => open,
         fpga_oen           => open,
+        fpga_valid_in      => '0',
+        fpga_valid_out     => open,
         fpga_clk_in        => '0',
         fpga_clk_out       => open,
         fpga_credit_in     => '0',
