@@ -78,12 +78,25 @@ void bin_to_hex(uint8_t inp, uint8_t res[2])
     return;
 }
 
-void print_uart_int(uint32_t addr)
+void print_uart_int(uint32_t data)
 {
     int i;
     for (i = 3; i > -1; i--)
     {
-        uint8_t cur = (addr >> (i * 8)) & 0xff;
+        uint8_t cur = (data >> (i * 8)) & 0xff;
+        uint8_t hex[2];
+        bin_to_hex(cur, hex);
+        write_serial(hex[0]);
+        write_serial(hex[1]);
+    }
+}
+
+void print_uart_int64(uint64_t data)
+{
+    int i;
+    for (i = 7; i > -1; i--)
+    {
+        uint8_t cur = (data >> (i * 8)) & 0xff;
         uint8_t hex[2];
         bin_to_hex(cur, hex);
         write_serial(hex[0]);

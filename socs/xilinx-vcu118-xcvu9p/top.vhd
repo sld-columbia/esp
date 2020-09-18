@@ -320,7 +320,7 @@ begin
         haddr  => ddr_haddr(0),
         hmask  => ddr_hmask(0),
         tech   => 0,
-        kbytes => 2 * 1024,
+        kbytes => 2048,
         pipe   => 0,
         maccsz => AHBDW,
         fname  => "ram.srec"

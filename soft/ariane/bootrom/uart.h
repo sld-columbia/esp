@@ -41,8 +41,10 @@ void init_uart();
 
 void print_uart(const char* str);
 
-void print_uart_int(uint32_t addr);
+void print_uart_int(uint32_t data);
 
 void print_uart_addr(uint64_t addr);
 
 void print_uart_byte(uint8_t byte);
+
+void print_uart_int64(uint64_t data);
