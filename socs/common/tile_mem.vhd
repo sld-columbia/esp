@@ -163,6 +163,44 @@ architecture rtl of tile_mem is
   signal dco_div_sel  : std_logic_vector(2 downto 0);
   signal dco_freq_sel : std_logic_vector(1 downto 0);
 
+  -- Test interface / bypass
+  signal test1_output_port   : noc_flit_type;
+  signal test1_data_void_out : std_ulogic;
+  signal test1_stop_in       : std_ulogic;
+  signal test2_output_port   : noc_flit_type;
+  signal test2_data_void_out : std_ulogic;
+  signal test2_stop_in       : std_ulogic;
+  signal test3_output_port   : noc_flit_type;
+  signal test3_data_void_out : std_ulogic;
+  signal test3_stop_in       : std_ulogic;
+  signal test4_output_port   : noc_flit_type;
+  signal test4_data_void_out : std_ulogic;
+  signal test4_stop_in       : std_ulogic;
+  signal test5_output_port   : misc_noc_flit_type;
+  signal test5_data_void_out : std_ulogic;
+  signal test5_stop_in       : std_ulogic;
+  signal test6_output_port   : noc_flit_type;
+  signal test6_data_void_out : std_ulogic;
+  signal test6_stop_in       : std_ulogic;
+  signal test1_input_port    : noc_flit_type;
+  signal test1_data_void_in  : std_ulogic;
+  signal test1_stop_out      : std_ulogic;
+  signal test2_input_port    : noc_flit_type;
+  signal test2_data_void_in  : std_ulogic;
+  signal test2_stop_out      : std_ulogic;
+  signal test3_input_port    : noc_flit_type;
+  signal test3_data_void_in  : std_ulogic;
+  signal test3_stop_out      : std_ulogic;
+  signal test4_input_port    : noc_flit_type;
+  signal test4_data_void_in  : std_ulogic;
+  signal test4_stop_out      : std_ulogic;
+  signal test5_input_port    : misc_noc_flit_type;
+  signal test5_data_void_in  : std_ulogic;
+  signal test5_stop_out      : std_ulogic;
+  signal test6_input_port    : noc_flit_type;
+  signal test6_data_void_in  : std_ulogic;
+  signal test6_stop_out      : std_ulogic;
+
   -- LLC
   signal llc_rstn : std_ulogic;
 
@@ -501,8 +539,91 @@ begin
   end generate no_dco_gen;
 
 
-  -- TODO JTAG
-  tdo <= '0';
+  -----------------------------------------------------------------------------
+  -- JTAG for single tile testing / bypass when test_if_en = 0
+  -----------------------------------------------------------------------------
+  jtag_test_i : jtag_test
+    generic map (
+      test_if_en => test_if_en)
+    port map (
+      rst                 => rst,
+      refclk              => clk,
+      tdi                 => tdi,
+      tdo                 => tdo,
+      tms                 => tms,
+      tclk                => tclk,
+      noc1_output_port    => noc1_output_port,
+      noc1_data_void_out  => noc1_mem_data_void_out,
+      noc1_stop_in        => noc1_mem_stop_in,
+      noc2_output_port    => noc2_output_port,
+      noc2_data_void_out  => noc2_mem_data_void_out,
+      noc2_stop_in        => noc2_mem_stop_in,
+      noc3_output_port    => noc3_output_port,
+      noc3_data_void_out  => noc3_mem_data_void_out,
+      noc3_stop_in        => noc3_mem_stop_in,
+      noc4_output_port    => noc4_output_port,
+      noc4_data_void_out  => noc4_mem_data_void_out,
+      noc4_stop_in        => noc4_mem_stop_in,
+      noc5_output_port    => noc5_output_port,
+      noc5_data_void_out  => noc5_mem_data_void_out,
+      noc5_stop_in        => noc5_mem_stop_in,
+      noc6_output_port    => noc6_output_port,
+      noc6_data_void_out  => noc6_mem_data_void_out,
+      noc6_stop_in        => noc6_mem_stop_in,
+      test1_output_port   => test1_output_port,
+      test1_data_void_out => test1_data_void_out,
+      test1_stop_in       => test1_stop_in,
+      test2_output_port   => test2_output_port,
+      test2_data_void_out => test2_data_void_out,
+      test2_stop_in       => test2_stop_in,
+      test3_output_port   => test3_output_port,
+      test3_data_void_out => test3_data_void_out,
+      test3_stop_in       => test3_stop_in,
+      test4_output_port   => test4_output_port,
+      test4_data_void_out => test4_data_void_out,
+      test4_stop_in       => test4_stop_in,
+      test5_output_port   => test5_output_port,
+      test5_data_void_out => test5_data_void_out,
+      test5_stop_in       => test5_stop_in,
+      test6_output_port   => test6_output_port,
+      test6_data_void_out => test6_data_void_out,
+      test6_stop_in       => test6_stop_in,
+      test1_input_port    => test1_input_port,
+      test1_data_void_in  => test1_data_void_in,
+      test1_stop_out      => test1_stop_out,
+      test2_input_port    => test2_input_port,
+      test2_data_void_in  => test2_data_void_in,
+      test2_stop_out      => test2_stop_out,
+      test3_input_port    => test3_input_port,
+      test3_data_void_in  => test3_data_void_in,
+      test3_stop_out      => test3_stop_out,
+      test4_input_port    => test4_input_port,
+      test4_data_void_in  => test4_data_void_in,
+      test4_stop_out      => test4_stop_out,
+      test5_input_port    => test5_input_port,
+      test5_data_void_in  => test5_data_void_in,
+      test5_stop_out      => test5_stop_out,
+      test6_input_port    => test6_input_port,
+      test6_data_void_in  => test6_data_void_in,
+      test6_stop_out      => test6_stop_out,
+      noc1_input_port     => noc1_input_port,
+      noc1_data_void_in   => noc1_mem_data_void_in,
+      noc1_stop_out       => noc1_mem_stop_out,
+      noc2_input_port     => noc2_input_port,
+      noc2_data_void_in   => noc2_mem_data_void_in,
+      noc2_stop_out       => noc2_mem_stop_out,
+      noc3_input_port     => noc3_input_port,
+      noc3_data_void_in   => noc3_mem_data_void_in,
+      noc3_stop_out       => noc3_mem_stop_out,
+      noc4_input_port     => noc4_input_port,
+      noc4_data_void_in   => noc4_mem_data_void_in,
+      noc4_stop_out       => noc4_mem_stop_out,
+      noc5_input_port     => noc5_input_port,
+      noc5_data_void_in   => noc5_mem_data_void_in,
+      noc5_stop_out       => noc5_mem_stop_out,
+      noc6_input_port     => noc6_input_port,
+      noc6_data_void_in   => noc6_mem_data_void_in,
+      noc6_stop_out       => noc6_mem_stop_out);
 
   -----------------------------------------------------------------------------
   -- Tile parameters
@@ -1177,41 +1298,41 @@ begin
       apb_snd_wrreq              => apb_snd_wrreq,
       apb_snd_data_in            => apb_snd_data_in,
       apb_snd_full               => apb_snd_full,
-      noc1_out_data              => noc1_output_port,
-      noc1_out_void              => noc1_mem_data_void_out,
-      noc1_out_stop              => noc1_mem_stop_in,
-      noc1_in_data               => noc1_input_port,
-      noc1_in_void               => noc1_mem_data_void_in,
-      noc1_in_stop               => noc1_mem_stop_out,
-      noc2_out_data              => noc2_output_port,
-      noc2_out_void              => noc2_mem_data_void_out,
-      noc2_out_stop              => noc2_mem_stop_in,
-      noc2_in_data               => noc2_input_port,
-      noc2_in_void               => noc2_mem_data_void_in,
-      noc2_in_stop               => noc2_mem_stop_out,
-      noc3_out_data              => noc3_output_port,
-      noc3_out_void              => noc3_mem_data_void_out,
-      noc3_out_stop              => noc3_mem_stop_in,
-      noc3_in_data               => noc3_input_port,
-      noc3_in_void               => noc3_mem_data_void_in,
-      noc3_in_stop               => noc3_mem_stop_out,
-      noc4_out_data              => noc4_output_port,
-      noc4_out_void              => noc4_mem_data_void_out,
-      noc4_out_stop              => noc4_mem_stop_in,
-      noc4_in_data               => noc4_input_port,
-      noc4_in_void               => noc4_mem_data_void_in,
-      noc4_in_stop               => noc4_mem_stop_out,
-      noc5_out_data              => noc5_output_port,
-      noc5_out_void              => noc5_mem_data_void_out,
-      noc5_out_stop              => noc5_mem_stop_in,
-      noc5_in_data               => noc5_input_port,
-      noc5_in_void               => noc5_mem_data_void_in,
-      noc5_in_stop               => noc5_mem_stop_out,
-      noc6_out_data              => noc6_output_port,
-      noc6_out_void              => noc6_mem_data_void_out,
-      noc6_out_stop              => noc6_mem_stop_in,
-      noc6_in_data               => noc6_input_port,
-      noc6_in_void               => noc6_mem_data_void_in,
-      noc6_in_stop               => noc6_mem_stop_out);
+      noc1_out_data              => test1_output_port,
+      noc1_out_void              => test1_data_void_out,
+      noc1_out_stop              => test1_stop_in,
+      noc1_in_data               => test1_input_port,
+      noc1_in_void               => test1_data_void_in,
+      noc1_in_stop               => test1_stop_out,
+      noc2_out_data              => test2_output_port,
+      noc2_out_void              => test2_data_void_out,
+      noc2_out_stop              => test2_stop_in,
+      noc2_in_data               => test2_input_port,
+      noc2_in_void               => test2_data_void_in,
+      noc2_in_stop               => test2_stop_out,
+      noc3_out_data              => test3_output_port,
+      noc3_out_void              => test3_data_void_out,
+      noc3_out_stop              => test3_stop_in,
+      noc3_in_data               => test3_input_port,
+      noc3_in_void               => test3_data_void_in,
+      noc3_in_stop               => test3_stop_out,
+      noc4_out_data              => test4_output_port,
+      noc4_out_void              => test4_data_void_out,
+      noc4_out_stop              => test4_stop_in,
+      noc4_in_data               => test4_input_port,
+      noc4_in_void               => test4_data_void_in,
+      noc4_in_stop               => test4_stop_out,
+      noc5_out_data              => test5_output_port,
+      noc5_out_void              => test5_data_void_out,
+      noc5_out_stop              => test5_stop_in,
+      noc5_in_data               => test5_input_port,
+      noc5_in_void               => test5_data_void_in,
+      noc5_in_stop               => test5_stop_out,
+      noc6_out_data              => test6_output_port,
+      noc6_out_void              => test6_data_void_out,
+      noc6_out_stop              => test6_stop_in,
+      noc6_in_data               => test6_input_port,
+      noc6_in_void               => test6_data_void_in,
+      noc6_in_stop               => test6_stop_out);
 
 end;
