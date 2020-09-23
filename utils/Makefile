@@ -89,6 +89,14 @@ help:
 	@echo " make sim                              : compile all source files and run an RTL simulation of ESP"
 	@echo " make sim-gui                          : compile all source files and run an RTL simulation of ESP"
 	@echo "                                         with graphic user interface"
+	@echo
+	@echo " make jtag-trace                       : run RTL simulation of ESP and generate traces for single-tile testing."
+	@echo "                                         Traces are read by a dedicated per-tile JTAG interface that bypasses the NoC"
+	@echo " make sim-jtag                         : run RTL simulation of one ESP tile using pregenerated traces. Target 'jtag-trace'"
+	@echo "                                         must be manually launched prior to 'sim-jtag'. The target tile for the simulation"
+	@echo "                                         defaults to tile 0, but can be overwritten by setting the environment variable"
+	@echo "                                         JTAG_TEST_TILE to the number of the desired tile"
+	@echo
 	@echo " make vivado-syn                       : generate a bitstream of ESP (requires Vivado 2018.2)."
 	@echo " make vivado-update                    : run synthesis and implemenation without touching the current Vivado project setup"
 	@echo " make vivado-prog-fpga                 : load the generated bitstream to FPGA. This target requires"
@@ -1382,6 +1390,35 @@ sim-distclean: sim-clean
 	$(QUIET_CLEAN)rm -rf modelsim
 
 .PHONY: sim sim-gui sim-compile sim-clean sim-distclean
+
+
+
+### JTAG trace-based simulation (Modelsim only)
+
+JTAG_TEST_SCRIPTS_DIR = $(ESP_ROOT)/utils/scripts/jtag_test
+JTAG_TEST_TILE ?= 0
+
+jtag-trace: sim-compile
+	$(QUIET_RUN)cd modelsim; \
+	echo $(SPACES)"vsim $(VSIMOPT)" -do "do $(JTAG_TEST_SCRIPTS_DIR)/jtag_test_gettrace.tcl"; \
+	vsim $(VSIMOPT) -do "do $(JTAG_TEST_SCRIPTS_DIR)/jtag_test_gettrace.tcl"; \
+	cd ../
+
+jtag-trace-pretty:
+	$(QUIET_BUILD)cd modelsim; \
+	$(JTAG_TEST_SCRIPTS_DIR)/jtag_test_format.sh
+
+jtag-stim: jtag-trace-pretty
+	$(QUIET_BUILD)cd modelsim; \
+	$(JTAG_TEST_SCRIPTS_DIR)/jtag_test_stim.py $(JTAG_TEST_TILE)
+
+sim-jtag: sim-compile jtag-stim
+	$(QUIET_RUN)cd modelsim; \
+	echo $(SPACES)"vsim $(VSIMOPT) -g JTAG_TRACE=$(JTAG_TEST_TILE)"; \
+	vsim $(VSIMOPT) -g JTAG_TRACE=$(JTAG_TEST_TILE); \
+	cd ../; \
+
+.PHONY: jtag-trace jtag-trace-pretty jtag-stim
 
 
 
