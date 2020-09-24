@@ -1568,11 +1568,11 @@ for acc in accelerators:
         if dp_dma_width != dma_width:
           skip = True
           break;
-      if re.match(r'flin', item, re.M|re.I):
+      if re.fullmatch(r'fl32in', item):
         datatype = "float_in"
-      elif re.match(r'flout', item, re.M|re.I):
+      elif re.fullmatch(r'fl32out', item):
         datatype = "float_out"
-      elif re.match(r'fl', item, re.M|re.I):
+      elif re.fullmatch(r'fl32', item):
         datatype = "float"
 
     if skip:
