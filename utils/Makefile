@@ -1402,7 +1402,7 @@ ifneq ($(findstring profpga, $(BOARD)),)
 else
 	@echo "set_property include_dirs {$(ESP_CACHES_INCDIR) $(THIRDPARTY_INCDIR) $(ARIANE)/src/common_cells/include} [get_filesets {sim_1 sources_1}]" >> $@
 endif
-	@echo "set_property verilog_define {WT_DCACHE=1} [get_filesets {sim_1 sources_1}]" >> $@
+	@echo "set_property verilog_define {XILINX_FPGA=1 WT_DCACHE=1} [get_filesets {sim_1 sources_1}]" >> $@
 	@echo "source ./srcs.tcl" >> $@
 ifneq ("$(PROTOBOARD)","")
 	@echo "set_property board_part $(PROTOBOARD) [current_project]"  >> $@
