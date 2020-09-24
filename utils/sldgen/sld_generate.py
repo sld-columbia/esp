@@ -54,6 +54,7 @@ class Implementation():
   def __init__(self):
     self.name = ""
     self.dma_width = 0
+    self.datatype = ""
 
   def __str__(self):
     return self.name
@@ -308,7 +309,7 @@ def write_axi_acc_port_map(f, acc, dma_width):
   f.write("    );\n")
 
 
-def write_acc_interface(f, acc, dma_width, rst, is_vivadohls_if, is_catapulthls_cxx_if, is_catapulthls_sysc_if):
+def write_acc_interface(f, acc, dma_width, datatype, rst, is_vivadohls_if, is_catapulthls_cxx_if, is_catapulthls_sysc_if):
 
   if is_catapulthls_cxx_if:
     conf_info_size = 0
@@ -386,12 +387,22 @@ def write_acc_interface(f, acc, dma_width, rst, is_vivadohls_if, is_catapulthls_
     f.write("      ap_done                    : out std_ulogic;\n")
     f.write("      ap_idle                    : out std_ulogic;\n")
     f.write("      ap_ready                   : out std_ulogic;\n")
-    f.write("      out_word_V_din             : out std_logic_vector (" + str(dma_width - 1) + " downto 0);\n")
-    f.write("      out_word_V_full_n          : in  std_logic;\n")
-    f.write("      out_word_V_write           : out std_logic;\n")
-    f.write("      in1_word_V_dout            : in  std_logic_vector (" + str(dma_width - 1) + " downto 0);\n")
-    f.write("      in1_word_V_empty_n         : in  std_logic;\n")
-    f.write("      in1_word_V_read            : out std_logic;\n")
+    if datatype == 'float' or  datatype == 'float_out':
+      f.write("      out_word_din             : out std_logic_vector (" + str(dma_width - 1) + " downto 0);\n")
+      f.write("      out_word_full_n          : in  std_logic;\n")
+      f.write("      out_word_write           : out std_logic;\n")
+    else:
+      f.write("      out_word_V_din             : out std_logic_vector (" + str(dma_width - 1) + " downto 0);\n")
+      f.write("      out_word_V_full_n          : in  std_logic;\n")
+      f.write("      out_word_V_write           : out std_logic;\n")
+    if datatype == 'float' or  datatype == 'float_in':
+      f.write("      in1_word_dout            : in  std_logic_vector (" + str(dma_width - 1) + " downto 0);\n")
+      f.write("      in1_word_empty_n         : in  std_logic;\n")
+      f.write("      in1_word_read            : out std_logic;\n")
+    else:
+      f.write("      in1_word_V_dout            : in  std_logic_vector (" + str(dma_width - 1) + " downto 0);\n")
+      f.write("      in1_word_V_empty_n         : in  std_logic;\n")
+      f.write("      in1_word_V_read            : out std_logic;\n")
     f.write("      load_ctrl                  : out std_logic_vector (" + str(95) + " downto 0);\n")
     f.write("      load_ctrl_ap_ack           : in  std_logic;\n")
     f.write("      load_ctrl_ap_vld           : out std_logic;\n")
@@ -446,7 +457,7 @@ def write_ap_acc_signals(f):
   f.write("signal dma_write_ctrl_data : std_logic_vector(95 downto 0);\n")
   f.write("\n")
 
-def write_acc_port_map(f, acc, dma_width, rst, is_noc_interface, is_vivadohls_if, is_catapulthls_cxx_if, is_catapulthls_sysc_if):
+def write_acc_port_map(f, acc, dma_width, datatype, rst, is_noc_interface, is_vivadohls_if, is_catapulthls_cxx_if, is_catapulthls_sysc_if):
 
   if is_vivadohls_if:
     f.write("    port map(\n")
@@ -468,12 +479,20 @@ def write_acc_port_map(f, acc, dma_width, rst, is_noc_interface, is_vivadohls_if
     f.write("      store_ctrl_ap_vld          => dma_write_ctrl_valid,\n")
     f.write("      store_ctrl_ap_ack          => dma_write_ctrl_ready,\n")
     f.write("      store_ctrl                 => dma_write_ctrl_data,\n")
-    f.write("      in1_word_V_empty_n         => dma_read_chnl_valid,\n")
-    f.write("      in1_word_V_read            => dma_read_chnl_ready,\n")
-    f.write("      in1_word_V_dout            => dma_read_chnl_data,\n")
-    f.write("      out_word_V_write           => dma_write_chnl_valid,\n")
-    f.write("      out_word_V_full_n          => dma_write_chnl_ready,\n")
-    f.write("      out_word_V_din             => dma_write_chnl_data,\n")
+    if datatype == 'float':
+      f.write("      in1_word_empty_n         => dma_read_chnl_valid,\n")
+      f.write("      in1_word_read            => dma_read_chnl_ready,\n")
+      f.write("      in1_word_dout            => dma_read_chnl_data,\n")
+      f.write("      out_word_write           => dma_write_chnl_valid,\n")
+      f.write("      out_word_full_n          => dma_write_chnl_ready,\n")
+      f.write("      out_word_din             => dma_write_chnl_data,\n")
+    else:
+      f.write("      in1_word_V_empty_n         => dma_read_chnl_valid,\n")
+      f.write("      in1_word_V_read            => dma_read_chnl_ready,\n")
+      f.write("      in1_word_V_dout            => dma_read_chnl_data,\n")
+      f.write("      out_word_V_write           => dma_write_chnl_valid,\n")
+      f.write("      out_word_V_full_n          => dma_write_chnl_ready,\n")
+      f.write("      out_word_V_din             => dma_write_chnl_data,\n")
     f.write("      ap_done                    => ap_done,\n")
     f.write("      ap_idle                    => ap_idle,\n")
     f.write("      ap_ready                   => ap_ready\n")
@@ -912,19 +931,19 @@ def gen_tech_dep(accelerator_list, cache_list, dma_width, template_dir, out_dir)
           if acc.hls_tool == 'stratus_hls':
             f.write("  component " + acc.name + "_" + impl.name + "\n")
             f.write("    port (\n")
-            write_acc_interface(f, acc, dma_width, "rst", False, False, False)
+            write_acc_interface(f, acc, dma_width, impl.datatype, "rst", False, False, False)
           elif acc.hls_tool == 'catapult_hls_cxx':
             f.write("  component " + acc.name + "_" + impl.name + "\n")
             f.write("    port (\n")
-            write_acc_interface(f, acc, dma_width, "rst", False, True, False)
+            write_acc_interface(f, acc, dma_width, impl.datatype, "rst", False, True, False)
           elif acc.hls_tool == 'catapult_hls_sysc':
             f.write("  component " + acc.name + "_" + impl.name + "\n")
             f.write("    port (\n")
-            write_acc_interface(f, acc, dma_width, "rst", False, False, True)
+            write_acc_interface(f, acc, dma_width, impl.datatype, "rst", False, False, True)
           else:
             f.write("  component " + acc.name + "_" + impl.name + "_top\n")
             f.write("    port (\n")
-            write_acc_interface(f, acc, dma_width, "ap_rst", True, False, False)
+            write_acc_interface(f, acc, dma_width, impl.datatype, "ap_rst", True, False, False)
           f.write("    );\n")
           f.write("  end component;\n\n")
           f.write("\n")
@@ -966,7 +985,7 @@ def gen_tech_indep(accelerator_list, axi_accelerator_list, cache_list, dma_width
         f.write("    );\n")
         f.write("\n")
         f.write("    port (\n")
-        write_acc_interface(f, acc, dma_width, "acc_rst", False, False, False)
+        write_acc_interface(f, acc, dma_width, "", "acc_rst", False, False, False)
         f.write("    );\n")
         f.write("  end component;\n\n")
         f.write("\n")
@@ -1025,7 +1044,7 @@ def gen_tech_indep_impl(accelerator_list, cache_list, dma_width, template_dir, o
           f.write("    );\n")
           f.write("\n")
           f.write("    port (\n")
-          write_acc_interface(f, acc, dma_width, "acc_rst", False, False, False)
+          write_acc_interface(f, acc, dma_width, "", "acc_rst", False, False, False)
           f.write("    );\n")
           f.write("\n")
           f.write("end entity " + acc.name + "_rtl;\n\n")
@@ -1046,7 +1065,7 @@ def gen_tech_indep_impl(accelerator_list, cache_list, dma_width, template_dir, o
             f.write("\n")
             f.write("  impl_" + impl.name + "_gen: if hls_conf = HLSCFG_" + acc.name.upper() + "_" + impl.name.upper() + " generate\n")
             f.write("    " + acc.name + "_" + impl.name + "_i: " + acc.name + "_" + impl.name + "\n")
-            write_acc_port_map(f, acc, dma_width, "rst", False, False, True, False)
+            write_acc_port_map(f, acc, dma_width, impl.datatype, "rst", False, False, True, False)
             f.write("\n\n")
             f.write("  -- CONF_DONE FSM\n")
             f.write("\n")
@@ -1099,7 +1118,7 @@ def gen_tech_indep_impl(accelerator_list, cache_list, dma_width, template_dir, o
           f.write("    );\n")
           f.write("\n")
           f.write("    port (\n")
-          write_acc_interface(f, acc, dma_width, "acc_rst", False, False, False)
+          write_acc_interface(f, acc, dma_width, "", "acc_rst", False, False, False)
           f.write("    );\n")
           f.write("\n")
           f.write("end entity " + acc.name + "_rtl;\n\n")
@@ -1110,7 +1129,7 @@ def gen_tech_indep_impl(accelerator_list, cache_list, dma_width, template_dir, o
             f.write("\n")
             f.write("  impl_" + impl.name + "_gen: if hls_conf = HLSCFG_" + acc.name.upper() + "_" + impl.name.upper() + " generate\n")
             f.write("    " + acc.name + "_" + impl.name + "_i: " + acc.name + "_" + impl.name + "\n")
-            write_acc_port_map(f, acc, dma_width, "rst", False, False, False, True)
+            write_acc_port_map(f, acc, dma_width, impl.datatype, "rst", False, False, False, True)
             f.write("  end generate impl_" +  impl.name + "_gen;\n\n")
           f.write("end mapping;\n\n")
         else:
@@ -1125,7 +1144,7 @@ def gen_tech_indep_impl(accelerator_list, cache_list, dma_width, template_dir, o
           f.write("    );\n")
           f.write("\n")
           f.write("    port (\n")
-          write_acc_interface(f, acc, dma_width, "acc_rst", False, False, False)
+          write_acc_interface(f, acc, dma_width, "", "acc_rst", False, False, False)
           f.write("    );\n")
           f.write("\n")
           f.write("end entity " + acc.name + "_rtl;\n\n")
@@ -1139,10 +1158,10 @@ def gen_tech_indep_impl(accelerator_list, cache_list, dma_width, template_dir, o
             f.write("  impl_" + impl.name + "_gen: if hls_conf = HLSCFG_" + acc.name.upper() + "_" + impl.name.upper() + " generate\n")
             if acc.hls_tool == 'stratus_hls':
               f.write("    " + acc.name + "_" + impl.name + "_i: " + acc.name + "_" + impl.name + "\n")
-              write_acc_port_map(f, acc, dma_width, "rst", False, False, False, False)
+              write_acc_port_map(f, acc, dma_width, impl.datatype, "rst", False, False, False, False)
             else:
               f.write("    " + acc.name + "_" + impl.name + "_top_i: " + acc.name + "_" + impl.name + "_top\n")
-              write_acc_port_map(f, acc, dma_width, "rst", False, True, False, False)
+              write_acc_port_map(f, acc, dma_width, impl.datatype, "rst", False, True, False, False)
             f.write("  end generate impl_" +  impl.name + "_gen;\n\n")
           f.write("end mapping;\n\n")
   f.close()
@@ -1353,7 +1372,7 @@ def gen_noc_interface(acc, dma_width, template_dir, out_dir, is_axi):
           f.write("    generic map (\n")
           f.write("      hls_conf => hls_conf\n")
           f.write("    )\n")
-          write_acc_port_map(f, acc, dma_width, "acc_rst", True, False, False, False)
+          write_acc_port_map(f, acc, dma_width, "", "acc_rst", True, False, False, False)
       else:
         f.write(tline)
 
@@ -1542,12 +1561,20 @@ for acc in accelerators:
     dp = dp_str.replace(acc + "_", "")
     dp_info = dp.split("_")
     skip = False
+    datatype = ""
     for item in dp_info:
       if re.match(r'dma[1-9]+', item, re.M|re.I):
         dp_dma_width = int(item.replace("dma", ""))
         if dp_dma_width != dma_width:
           skip = True
           break;
+      if re.fullmatch(r'fl32in', item):
+        datatype = "float_in"
+      elif re.fullmatch(r'fl32out', item):
+        datatype = "float_out"
+      elif re.fullmatch(r'fl32', item):
+        datatype = "float"
+
     if skip:
       print("    INFO: System DMA_WIDTH is " + str(dma_width) + "; skipping " + acc + "_" + dp)
       continue
@@ -1555,6 +1582,7 @@ for acc in accelerators:
     impl = Implementation()
     impl.name = dp
     impl.dma_width = dma_width
+    impl.datatype = datatype
     accd.hlscfg.append(impl)
 
   # Read accelerator parameters and info

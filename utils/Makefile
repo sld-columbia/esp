@@ -824,6 +824,8 @@ VLOG_RTL_SRCS  += $(shell (find $(ESP_ROOT)/tech/$(TECHLIB) -name "*.v" ))
 
 SVLOG_RTL_SRCS  = $(shell (find $(ESP_ROOT)/rtl/src -name "*.sv" ))
 
+IP_XCI_SRCS  = $(shell (find $(ESP_ROOT)/tech/$(TECHLIB) -name "*.xci" ))
+
 VHDL_SIM_PKGS  = $(shell (find $(ESP_ROOT)/sim/include -name "*.vhd" ))
 VHDL_SIM_SRCS  = $(shell (find $(ESP_ROOT)/sim/src -name "*.vhd" ))
 VLOG_SIM_SRCS  = $(shell (find $(ESP_ROOT)/sim/src -name "*.v" ))
@@ -888,7 +890,7 @@ check_all_rtl_srcs-distclean:
 
 $(ESP_ROOT)/.cache/modelsim/xilinx_lib:
 	$(QUIET_MKDIR)mkdir -p $@
-	@echo "compile_simlib -directory xilinx_lib -simulator modelsim -library unisim -no_ip_compile" > $@/simlib.tcl; \
+	@echo "compile_simlib -directory xilinx_lib -simulator modelsim -library all" > $@/simlib.tcl; \
 	cd $(ESP_ROOT)/.cache/modelsim; \
 	if ! vivado $(VIVADO_BATCH_OPT) -source xilinx_lib/simlib.tcl; then \
 		echo "$(SPACES)ERROR: Xilinx library compilation failed!"; rm -rf xilinx_lib modelsim.ini; exit 1; \
@@ -912,7 +914,7 @@ modelsim/modelsim.ini: $(ESP_ROOT)/.cache/modelsim/xilinx_lib
 
 $(ESP_ROOT)/.cache/xcelium/xilinx_lib:
 	$(QUIET_MKDIR)mkdir -p $@
-	@echo "compile_simlib -directory xilinx_lib -simulator xcelium -library unisim -no_ip_compile" > $@/simlib.tcl; \
+	@echo "compile_simlib -directory xilinx_lib -simulator xcelium -library all" > $@/simlib.tcl; \
 	cd $(ESP_ROOT)/.cache/xcelium; \
 	if ! vivado $(VIVADO_BATCH_OPT) -source xilinx_lib/simlib.tcl; then \
 		echo "$(SPACES)ERROR: Xilinx library compilation failed!"; rm -rf xilinx_lib cds.lib; exit 1; \
@@ -928,7 +930,7 @@ xcelium/hdl.var: xcelium/cds.lib
 
 $(ESP_ROOT)/.cache/incisive/xilinx_lib:
 	$(QUIET_MKDIR)mkdir -p $@
-	@echo "compile_simlib -directory xilinx_lib -simulator ies -library unisim -no_ip_compile" > $@/simlib.tcl; \
+	@echo "compile_simlib -directory xilinx_lib -simulator ies -library all" > $@/simlib.tcl; \
 	cd $(ESP_ROOT)/.cache/incisive; \
 	if ! vivado $(VIVADO_BATCH_OPT) -source xilinx_lib/simlib.tcl; then \
 		echo "$(SPACES)ERROR: Xilinx library compilation failed!"; rm -rf xilinx_lib cds.lib; exit 1; \
@@ -1406,6 +1408,12 @@ endif
 	@echo "source ./srcs.tcl" >> $@
 ifneq ("$(PROTOBOARD)","")
 	@echo "set_property board_part $(PROTOBOARD) [current_project]"  >> $@
+endif
+ifneq ($(IP_XCI_SRCS),)
+	@for rtl in $(IP_XCI_SRCS); do \
+		echo "import_ip -files $$rtl" >> $@; \
+	done;
+	@echo "upgrade_ip [get_ips -all]" >> $@
 endif
 	@if test -r $(ESP_ROOT)/constraints/$(BOARD)/mig.xci; then \
 		echo $(SPACES)"INFO including MIG IP"; \

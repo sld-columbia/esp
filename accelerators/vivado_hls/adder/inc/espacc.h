@@ -25,6 +25,12 @@
 typedef ap_fixed<DATA_BITWIDTH-FRAC_BITS,FRAC_BITS> word_t;
 #elif (IS_TYPE_UINT == 1)
 typedef ap_uint<DATA_BITWIDTH> word_t;
+#elif (IS_TYPE_FLOAT == 1)
+#if (DATA_BITWIDTH == 32)
+typedef float word_t;
+#else
+#error "Floating point word bitwidth not supported. Only 32 is supported."
+#endif
 #else // (IS_TYPE_INT == 1)
 typedef ap_int<DATA_BITWIDTH> word_t;
 #endif

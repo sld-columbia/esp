@@ -5,6 +5,12 @@
 
 set dma_width {32 64}
 set word_widths {8 16 32}
+# specify if the input or the output of the accelerator are float
+# set dataype "" if input and output are NOT float
+# set dataype "fl32" if both input and output are float
+# set dataype "fl32in" if only the input is float
+# set dataype "fl32out" if only the output is float
+set datatype ""
 
 # Clock period
 

@@ -20,8 +20,10 @@ endif
 		PRJ_NAME=$$prj; \
 		mkdir -p $(RTL_OUT)/$$PRJ_NAME; \
 		cp $$PRJ_NAME/$(TARGET_NAME)_acc/impl/ip/hdl/verilog/* $(RTL_OUT)/$$PRJ_NAME; \
-		if [ -e $$PRJ_NAME/$(TARGET_NAME)_acc/impl/ip/hdl/ip/* ]; then \
-			cp $$PRJ_NAME/$(TARGET_NAME)_acc/impl/ip/hdl/ip/* $(RTL_OUT)/$$PRJ_NAME; \
+		if [ -e $$PRJ_NAME/$(TARGET_NAME)_acc/impl/ip/hdl/ip ]; then \
+			if [ -z $(ls -A $$PRJ_NAME/$(TARGET_NAME)_acc/impl/ip/hdl/ip) ]; then \
+				cp $$PRJ_NAME/$(TARGET_NAME)_acc/impl/ip/hdl/ip/* $(RTL_OUT)/$$PRJ_NAME; \
+			fi; \
 		fi; \
 		if [ -e $$PRJ_NAME/$(TARGET_NAME)_acc/impl/ip/tmp.srcs/sources_1/ip ]; then \
 			for dir in $$(ls $$PRJ_NAME/$(TARGET_NAME)_acc/impl/ip/tmp.srcs/sources_1/ip); do \

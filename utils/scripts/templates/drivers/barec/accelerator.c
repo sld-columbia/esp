@@ -8,6 +8,7 @@
 
 #include <esp_accelerator.h>
 #include <esp_probe.h>
+#include <fixed_point.h>
 
 typedef /* <<--token-type-->> */ token_t;
 
