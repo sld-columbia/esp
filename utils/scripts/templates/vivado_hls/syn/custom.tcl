@@ -5,6 +5,12 @@
 
 set dma_width {<<--dma-width-->>}
 set word_widths {<<--data-widths-->>}
+# specify if the input or the output of the accelerator are float
+# set dataype "" if input and output are NOT float
+# set dataype "fl" if both input and output are float
+# set dataype "flin" if only the input is float
+# set dataype "flout" if only the output is float
+set datatype ""
 
 # Clock period
 

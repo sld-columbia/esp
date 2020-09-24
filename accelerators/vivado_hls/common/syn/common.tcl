@@ -24,7 +24,11 @@ foreach dma $dma_width {
 	set unroll_factor [expr $dma / $width]
 
 	# Create project
-	open_project "${ACCELERATOR}_dma${dma}_w${width}"
+	if {$datatype eq ""} {
+	    open_project "${ACCELERATOR}_dma${dma}_w${width}"
+	} else {
+	    open_project "${ACCELERATOR}_dma${dma}_w${width}_${datatype}"
+	}
 
 	set_top "top"
 
@@ -51,7 +55,11 @@ foreach dma $dma_width {
 	}
 
 	# Config HLS
-	config_rtl -prefix "${ACCELERATOR}_dma${dma}_w${width}_" 
+	if {$datatype eq ""} {
+	    config_rtl -prefix "${ACCELERATOR}_dma${dma}_w${width}_"
+	} else {
+	    config_rtl -prefix "${ACCELERATOR}_dma${dma}_w${width}_${datatype}_"
+	}
 	config_compile -no_signed_zeros=0 -unsafe_math_optimizations=0
 	config_schedule -effort medium -relax_ii_for_timing=0 -verbose=0
 	config_bind -effort medium

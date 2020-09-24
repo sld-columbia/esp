@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <esp_accelerator.h>
 #include <esp_probe.h>
+#include <fixed_point.h>
 
 /////////////////////////////////
 // TODO include accelerators configuration header
@@ -29,6 +30,7 @@
 
 #define DATA_BITWIDTH 32
 typedef int32_t word_t;
+// typedef float word_t; // use this if the accelerator is floating point
 /////////////////////////////////
 
 // Specify accelerator type
