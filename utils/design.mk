@@ -94,6 +94,11 @@ XMSIMOPT  += -input xmsim.in
 NCCOMOPT  +=
 NCLOGOPT  +=
 NCSIMOPT  += -input ncsim.in
+ifneq ($(filter $(TECHLIB),$(FPGALIBS)),)
+VLOGOPT  += +define+XILINX_FPGA
+XMLOGOPT += -DEFINE XILINX_FPGA
+NCLOGOPT += -DEFINE XILINX_FPGA
+endif
 
 
 # Include unisim verilog librayr
