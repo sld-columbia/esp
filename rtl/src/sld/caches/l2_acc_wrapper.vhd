@@ -148,8 +148,8 @@ architecture rtl of l2_acc_wrapper is
   -- Flush FSM signals
   -------------------------------------------------------------------------------
   type flush_fsm is (idle, hold, issue);
-  signal flush_state      : flush_fsm := idle;
-  signal flush_state_next : flush_fsm := idle;
+  signal flush_state      : flush_fsm;
+  signal flush_state_next : flush_fsm;
   signal flush_hold : std_ulogic;
 
   -------------------------------------------------------------------------------
