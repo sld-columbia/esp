@@ -22,60 +22,60 @@ void system_t::config_proc()
     // Config
     load_memory();
     {
-	// Custom configuration
-	conf_info_t config;
+    	// Custom configuration
+    	conf_info_t config;
 
-	// Custom configuration
-	config.ninputs = matrix_inA->dims[0];
-	config.transpose = matrix_inB->is_transposed;
-	config.d1 = matrix_inA->dims[1];
-	config.d2 = matrix_inA->dims[2];
-	config.d3 = matrix_inB->dims[2];
-	config.ld_offset1 = 0;
-	config.ld_offset2 = indexA;
-	config.st_offset  = indexB;
-	config.do_relu = 0;
+    	// Custom configuration
+    	config.ninputs = matrix_inA->dims[0];
+    	config.transpose = matrix_inB->is_transposed;
+    	config.d1 = matrix_inA->dims[1];
+    	config.d2 = matrix_inA->dims[2];
+    	config.d3 = matrix_inB->dims[2];
+    	config.ld_offset1 = 0;
+    	config.ld_offset2 = indexA * WORDS_PER_DMA;
+    	config.st_offset  = indexB * WORDS_PER_DMA;
+    	config.do_relu = 0;
 
-	wait(); conf_info.write(config);
-	conf_done.write(true);
+    	wait(); conf_info.write(config);
+    	conf_done.write(true);
     }
 
     ESP_REPORT_INFO("config done");
 
     // Compute
     {
-	// Print information about begin time
-	sc_time begin_time = sc_time_stamp();
-	ESP_REPORT_TIME(begin_time, "BEGIN - gemm");
+    	// Print information about begin time
+    	sc_time begin_time = sc_time_stamp();
+    	ESP_REPORT_TIME(begin_time, "BEGIN - gemm");
 
-	// Wait the termination of the accelerator
-	do { wait(); } while (!acc_done.read());
-	debug_info_t debug_code = debug.read();
+    	// Wait the termination of the accelerator
+    	do { wait(); } while (!acc_done.read());
+    	debug_info_t debug_code = debug.read();
 
-	// Print information about end time
-	sc_time end_time = sc_time_stamp();
-	ESP_REPORT_TIME(end_time, "END - gemm");
+    	// Print information about end time
+    	sc_time end_time = sc_time_stamp();
+    	ESP_REPORT_TIME(end_time, "END - gemm");
 
-	esc_log_latency(sc_object::basename(), clock_cycle(end_time - begin_time));
-	wait(); conf_done.write(false);
+    	esc_log_latency(sc_object::basename(), clock_cycle(end_time - begin_time));
+    	wait(); conf_done.write(false);
     }
 
     // Validate
     {
-	dump_memory(); // store the output in more suitable data structure if needed
-	// check the results with the golden model
-	if (validate())
-	{
-	    ESP_REPORT_ERROR("validation failed!");
-	} else
-	{
-	    ESP_REPORT_INFO("validation passed!");
-	}
+    	dump_memory(); // store the output in more suitable data structure if needed
+    	// check the results with the golden model
+    	if (validate())
+    	{
+    	    ESP_REPORT_ERROR("validation failed!");
+    	} else
+    	{
+    	    ESP_REPORT_INFO("validation passed!");
+    	}
 
-	debug_info_t debug_code = debug.read();
-	if (debug_code != 0) { goto free_and_terminate; }
+    	debug_info_t debug_code = debug.read();
+    	if (debug_code != 0) { goto free_and_terminate; }
 
-	store_double_matrix_t(matrix_out, esc_argv()[3]);
+    	store_double_matrix_t(matrix_out, esc_argv()[3]);
     	free_double_matrix_t(&matrix_out_gold);
     	free_double_matrix_t(&matrix_out);
 
@@ -161,22 +161,22 @@ void system_t::load_memory()
     uint32_t k = 0;
     for (uint32_t b = 0; b < batch_size; ++b)
     {
-	for (uint32_t d1 = 0; d1 < rowsA; ++d1)
-	{
-	    for (uint32_t d2 = 0; d2 < colsA; ++d2)
-	    {
-		data = fp2bv<FPDATA, WORD_SIZE>(FPDATA((float) matrix_inA->data[k++]));
+    	for (uint32_t d1 = 0; d1 < rowsA; ++d1)
+    	{
+    	    for (uint32_t d2 = 0; d2 < colsA; ++d2)
+    	    {
+    		data = fp2bv<FPDATA, WORD_SIZE>(FPDATA((float) matrix_inA->data[k++]));
 
-		// TODO works only for WORDS_PER_DMA = {1, 2}
-		if (!(d2 % WORDS_PER_DMA))
-		    (this->mem[indexA]) = data  | this->mem[indexA];
-		else
-		    (this->mem[indexA]) = (data << WORD_SIZE) | this->mem[indexA];
+    		// TODO works only for WORDS_PER_DMA = {1, 2}
+    		if (!((k-1) % WORDS_PER_DMA))
+    		    (this->mem[indexA]) = data  | this->mem[indexA];
+    		else
+    		    (this->mem[indexA]) = (data << WORD_SIZE) | this->mem[indexA];
 
-		if (d2 % WORDS_PER_DMA == WORDS_PER_DMA - 1)
-		    indexA++;
-	    }
-	}
+    		if ((k-1) % WORDS_PER_DMA == WORDS_PER_DMA - 1)
+    		    indexA++;
+    	    }
+    	}
     }
 
     //
@@ -188,22 +188,22 @@ void system_t::load_memory()
     k = 0;
     for (uint32_t b = 0; b < batch_size; ++b)
     {
-	for (uint32_t d1 = 0; d1 < rowsB_actual; ++d1)
-	{
-	    for (uint32_t d2 = 0; d2 < colsB_actual; ++d2)
-	    {
-		data = fp2bv<FPDATA, WORD_SIZE>(FPDATA(matrix_inB->data[k++]));
+    	for (uint32_t d1 = 0; d1 < rowsB_actual; ++d1)
+    	{
+    	    for (uint32_t d2 = 0; d2 < colsB_actual; ++d2)
+    	    {
+    		data = fp2bv<FPDATA, WORD_SIZE>(FPDATA(matrix_inB->data[k++]));
 
-		// TODO works only for WORDS_PER_DMA = {1, 2}
-		if (!(d2 % WORDS_PER_DMA))
-		    (this->mem[indexB]) = data | this->mem[indexB];
-		else
-		    (this->mem[indexB]) = (data << WORD_SIZE) | this->mem[indexB];
+    		// TODO works only for WORDS_PER_DMA = {1, 2}
+    		if (!((k-1) % WORDS_PER_DMA))
+    		    (this->mem[indexB]) = data | this->mem[indexB];
+    		else
+    		    (this->mem[indexB]) = (data << WORD_SIZE) | this->mem[indexB];
 
-		if (d2 % WORDS_PER_DMA == WORDS_PER_DMA - 1)
-		    indexB++;
-	    }
-	}
+    		if ((k-1) % WORDS_PER_DMA == WORDS_PER_DMA - 1)
+    		    indexB++;
+    	    }
+    	}
     }
 
     ESP_REPORT_INFO("load memory completed");
@@ -222,21 +222,17 @@ void system_t::dump_memory()
     create_double_matrix_t(&matrix_out, sizes, M_DIMS);
 
     uint32_t k = 0;
-    for (uint32_t b = 0; b < batch_size; ++b)
+    for (uint32_t i = 0; i < round_up((batch_size * rowsA * colsB), WORDS_PER_DMA)
+	     / WORDS_PER_DMA; ++i)
     {
-	for (uint32_t d1 = 0; d1 < rowsA; ++d1)
-	{
-	    for (uint32_t d2 = 0; d2 < colsB / WORDS_PER_DMA; ++d2)
-	    {
-		data = this->mem[indexB++];
+	data = this->mem[indexB++];
 
-		for (uint32_t w = 0; w < WORDS_PER_DMA; ++w) {
+	for (uint32_t w = 0; w < WORDS_PER_DMA; ++w) {
 
-		    bv2fp<FPDATA, WORD_SIZE>(elem, data.range((w+1) * WORD_SIZE - 1, w * WORD_SIZE));
+	    bv2fp<FPDATA, WORD_SIZE>(elem, data.range((w+1) * WORD_SIZE - 1, w * WORD_SIZE));
 
-		    matrix_out->data[k++] = elem.to_double();
-		}
-	    }
+	    if (k < batch_size*rowsA*colsB)
+		matrix_out->data[k++] = elem.to_double();
 	}
     }
 
@@ -269,6 +265,9 @@ int system_t::validate()
 
             tot_errors++;
         }
+
+	// ESP_REPORT_INFO("gemm[%d] = %lf (%lf) error: %.2lf%%", d2,
+	// 		matrix_out->data[d2], matrix_out_gold->data[d2], rel_error * 100);
 
         // Tracking the maximum error w.r.t. the programmer's view
         if (rel_error > max_error) { max_error = rel_error; }

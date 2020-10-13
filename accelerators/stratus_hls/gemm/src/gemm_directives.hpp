@@ -9,133 +9,126 @@
 
 #if defined(HLS_DIRECTIVES_BASIC)
 
-#if (DMA_WIDTH == 32)
+#define HLS_MAP_plm(_mem, _plm_block_name)      \
+    HLS_MAP_TO_MEMORY(_mem, _plm_block_name)
+
+#if (DMA_WIDTH == 64)
+#if (WORD_SIZE == 32)
 
 #if (DMA_CHUNK == 8)
+#if (PARALLELISM == 1)
+#define IN_PLM_NAME "plm_w32_d64_chk8_p1"
+#define OUT_PLM_NAME "plm_w32_d64_chk8"
+#elif (PARALLELISM == 4)
+#define IN_PLM_NAME "plm_w32_d64_chk8_p4"
+#define OUT_PLM_NAME "plm_w32_d64_chk8"
+#elif (PARALLELISM == 8)
+#define IN_PLM_NAME "plm_w32_d64_chk8_p8"
+#define OUT_PLM_NAME "plm_w32_d64_chk8"
+#else // (PARALLELISM == 16)
+#define IN_PLM_NAME "plm_w32_d64_chk8_p16"
+#define OUT_PLM_NAME "plm_w32_d64_chk8"
+#endif
 
-// define differently depending on chunk size
-#define HLS_MAP_IN0 HLS_MAP_TO_MEMORY(input0, "plm_w32_chk128_1w1r")
-#define HLS_MAP_IN1 HLS_MAP_TO_MEMORY(input1, "plm_w32_chk128_1w1r")
-#define HLS_MAP_IN2 HLS_MAP_TO_MEMORY(input2, "plm_w32_chk128_1w1r")
-#define HLS_MAP_IN3 HLS_MAP_TO_MEMORY(input3, "plm_w32_chk128_1w1r")
-#define HLS_MAP_OUT HLS_MAP_TO_MEMORY(output, "plm_w32_chk128_1w1r")
+#elif (DMA_CHUNK == 16)
+#if (PARALLELISM == 1)
+#define IN_PLM_NAME "plm_w32_d64_chk16_p1"
+#define OUT_PLM_NAME "plm_w32_d64_chk16"
+#elif (PARALLELISM == 4)
+#define IN_PLM_NAME "plm_w32_d64_chk16_p4"
+#define OUT_PLM_NAME "plm_w32_d64_chk16"
+#elif (PARALLELISM == 8)
+#define IN_PLM_NAME "plm_w32_d64_chk16_p8"
+#define OUT_PLM_NAME "plm_w32_d64_chk16"
+#else // (PARALLELISM == 16)
+#define IN_PLM_NAME "plm_w32_d64_chk16_p16"
+#define OUT_PLM_NAME "plm_w32_d64_chk16"
+#endif
+
+#elif (DMA_CHUNK == 64)
+#if (PARALLELISM == 1)
+#define IN_PLM_NAME "plm_w32_d64_chk64_p1"
+#define OUT_PLM_NAME "plm_w32_d64_chk64"
+#elif (PARALLELISM == 4)
+#define IN_PLM_NAME "plm_w32_d64_chk64_p4"
+#define OUT_PLM_NAME "plm_w32_d64_chk64"
+#elif (PARALLELISM == 8)
+#define IN_PLM_NAME "plm_w32_d64_chk64_p8"
+#define OUT_PLM_NAME "plm_w32_d64_chk64"
+#else // (PARALLELISM == 16)
+#define IN_PLM_NAME "plm_w32_d64_chk64_p16"
+#define OUT_PLM_NAME "plm_w32_d64_chk64"
+#endif
 
 #elif (DMA_CHUNK == 128)
-
-// define differently depending on chunk size
-#define HLS_MAP_IN0 HLS_MAP_TO_MEMORY(input0, "plm_w32_chk128_1w1r")
-#define HLS_MAP_IN1 HLS_MAP_TO_MEMORY(input1, "plm_w32_chk128_1w1r")
-#define HLS_MAP_IN2 HLS_MAP_TO_MEMORY(input2, "plm_w32_chk128_1w1r")
-#define HLS_MAP_IN3 HLS_MAP_TO_MEMORY(input3, "plm_w32_chk128_1w1r")
-#define HLS_MAP_OUT HLS_MAP_TO_MEMORY(output, "plm_w32_chk128_1w1r")
+#if (PARALLELISM == 1)
+#define IN_PLM_NAME "plm_w32_d64_chk128_p1"
+#define OUT_PLM_NAME "plm_w32_d64_chk128"
+#elif (PARALLELISM == 4)
+#define IN_PLM_NAME "plm_w32_d64_chk128_p4"
+#define OUT_PLM_NAME "plm_w32_d64_chk128"
+#elif (PARALLELISM == 8)
+#define IN_PLM_NAME "plm_w32_d64_chk128_p8"
+#define OUT_PLM_NAME "plm_w32_d64_chk128"
+#else // (PARALLELISM == 16)
+#define IN_PLM_NAME "plm_w32_d64_chk128_p16"
+#define OUT_PLM_NAME "plm_w32_d64_chk128"
+#endif
 
 #elif (DMA_CHUNK == 512)
-
-// define differently depending on chunk size
-#define HLS_MAP_IN0 HLS_MAP_TO_MEMORY(input0, "plm_w32_chk512_1w1r")
-#define HLS_MAP_IN1 HLS_MAP_TO_MEMORY(input1, "plm_w32_chk512_1w1r")
-#define HLS_MAP_IN2 HLS_MAP_TO_MEMORY(input2, "plm_w32_chk512_1w1r")
-#define HLS_MAP_IN3 HLS_MAP_TO_MEMORY(input3, "plm_w32_chk512_1w1r")
-#define HLS_MAP_OUT HLS_MAP_TO_MEMORY(output, "plm_w32_chk512_1w1r")
+#if (PARALLELISM == 1)
+#define IN_PLM_NAME "plm_w32_d64_chk512_p1"
+#define OUT_PLM_NAME "plm_w32_d64_chk512"
+#elif (PARALLELISM == 4)
+#define IN_PLM_NAME "plm_w32_d64_chk512_p4"
+#define OUT_PLM_NAME "plm_w32_d64_chk512"
+#elif (PARALLELISM == 8)
+#define IN_PLM_NAME "plm_w32_d64_chk512_p8"
+#define OUT_PLM_NAME "plm_w32_d64_chk512"
+#else // (PARALLELISM == 16)
+#define IN_PLM_NAME "plm_w32_d64_chk512_p16"
+#define OUT_PLM_NAME "plm_w32_d64_chk512"
+#endif
 
 #elif (DMA_CHUNK == 2048)
-
-// define differently depending on chunk size
-#define HLS_MAP_IN0 HLS_MAP_TO_MEMORY(input0, "plm_w32_chk2048_1w1r")
-#define HLS_MAP_IN1 HLS_MAP_TO_MEMORY(input1, "plm_w32_chk2048_1w1r")
-#define HLS_MAP_IN2 HLS_MAP_TO_MEMORY(input2, "plm_w32_chk2048_1w1r")
-#define HLS_MAP_IN3 HLS_MAP_TO_MEMORY(input3, "plm_w32_chk2048_1w1r")
-#define HLS_MAP_OUT HLS_MAP_TO_MEMORY(output, "plm_w32_chk2048_1w1r")
-
-#elif (DMA_CHUNK == 8192)
-
-// define differently depending on chunk size
-#define HLS_MAP_IN0 HLS_MAP_TO_MEMORY(input0, "plm_w32_chk8192_1w1r")
-#define HLS_MAP_IN1 HLS_MAP_TO_MEMORY(input1, "plm_w32_chk8192_1w1r")
-#define HLS_MAP_IN2 HLS_MAP_TO_MEMORY(input2, "plm_w32_chk8192_1w1r")
-#define HLS_MAP_IN3 HLS_MAP_TO_MEMORY(input3, "plm_w32_chk8192_1w1r")
-#define HLS_MAP_OUT HLS_MAP_TO_MEMORY(output, "plm_w32_chk8192_1w1r")
-
-#else
-
-#error Unsupported or undefined HLS configuration
-
+#if (PARALLELISM == 1)
+#define IN_PLM_NAME "plm_w32_d64_chk2048_p1"
+#define OUT_PLM_NAME "plm_w32_d64_chk2048"
+#elif (PARALLELISM == 4)
+#define IN_PLM_NAME "plm_w32_d64_chk2048_p4"
+#define OUT_PLM_NAME "plm_w32_d64_chk2048"
+#elif (PARALLELISM == 8)
+#define IN_PLM_NAME "plm_w32_d64_chk2048_p8"
+#define OUT_PLM_NAME "plm_w32_d64_chk2048"
+#else // (PARALLELISM == 16)
+#define IN_PLM_NAME "plm_w32_d64_chk2048_p16"
+#define OUT_PLM_NAME "plm_w32_d64_chk2048"
 #endif
 
-#elif (DMA_WIDTH == 64)
-
-#if (DMA_CHUNK == 8)
-
-// define differently depending on chunk size
-#define HLS_MAP_IN0 HLS_MAP_TO_MEMORY(input0, "plm_w64_chk128_1w1r")
-#define HLS_MAP_IN1 HLS_MAP_TO_MEMORY(input1, "plm_w64_chk128_1w1r")
-#define HLS_MAP_IN2 HLS_MAP_TO_MEMORY(input2, "plm_w64_chk128_1w1r")
-#define HLS_MAP_IN3 HLS_MAP_TO_MEMORY(input3, "plm_w64_chk128_1w1r")
-#define HLS_MAP_OUT HLS_MAP_TO_MEMORY(output, "plm_w64_chk128_1w1r")
-
-#elif (DMA_CHUNK == 128)
-
-// define differently depending on chunk size
-#define HLS_MAP_IN0 HLS_MAP_TO_MEMORY(input0, "plm_w64_chk128_1w1r")
-#define HLS_MAP_IN1 HLS_MAP_TO_MEMORY(input1, "plm_w64_chk128_1w1r")
-#define HLS_MAP_IN2 HLS_MAP_TO_MEMORY(input2, "plm_w64_chk128_1w1r")
-#define HLS_MAP_IN3 HLS_MAP_TO_MEMORY(input3, "plm_w64_chk128_1w1r")
-#define HLS_MAP_OUT HLS_MAP_TO_MEMORY(output, "plm_w64_chk128_1w1r")
-
-#elif (DMA_CHUNK == 512)
-
-// define differently depending on chunk size
-#define HLS_MAP_IN0 HLS_MAP_TO_MEMORY(input0, "plm_w64_chk512_1w1r")
-#define HLS_MAP_IN1 HLS_MAP_TO_MEMORY(input1, "plm_w64_chk512_1w1r")
-#define HLS_MAP_IN2 HLS_MAP_TO_MEMORY(input2, "plm_w64_chk512_1w1r")
-#define HLS_MAP_IN3 HLS_MAP_TO_MEMORY(input3, "plm_w64_chk512_1w1r")
-#define HLS_MAP_OUT HLS_MAP_TO_MEMORY(output, "plm_w64_chk512_1w1r")
-
-#elif (DMA_CHUNK == 2048)
-
-// define differently depending on chunk size
-#define HLS_MAP_IN0 HLS_MAP_TO_MEMORY(input0, "plm_w64_chk2048_1w1r")
-#define HLS_MAP_IN1 HLS_MAP_TO_MEMORY(input1, "plm_w64_chk2048_1w1r")
-#define HLS_MAP_IN2 HLS_MAP_TO_MEMORY(input2, "plm_w64_chk2048_1w1r")
-#define HLS_MAP_IN3 HLS_MAP_TO_MEMORY(input3, "plm_w64_chk2048_1w1r")
-#define HLS_MAP_OUT HLS_MAP_TO_MEMORY(output, "plm_w64_chk2048_1w1r")
-
-#elif (DMA_CHUNK == 8192)
-
-// define differently depending on chunk size
-#define HLS_MAP_IN0 HLS_MAP_TO_MEMORY(input0, "plm_w64_chk8192_1w1r")
-#define HLS_MAP_IN1 HLS_MAP_TO_MEMORY(input1, "plm_w64_chk8192_1w1r")
-#define HLS_MAP_IN2 HLS_MAP_TO_MEMORY(input2, "plm_w64_chk8192_1w1r")
-#define HLS_MAP_IN3 HLS_MAP_TO_MEMORY(input3, "plm_w64_chk8192_1w1r")
-#define HLS_MAP_OUT HLS_MAP_TO_MEMORY(output, "plm_w64_chk8192_1w1r")
-
-#else
-
-#error Unsupported or undefined HLS configuration
-    
+#else // (DMA_CHUNK == 8192)
+#define OUT_PLM_NAME "plm_w32_d64_chk8192"
+#if (PARALLELISM == 1)
+#define IN_PLM_NAME "plm_w32_d64_chk8192_p1"
+#elif (PARALLELISM == 2)
+#define IN_PLM_NAME "plm_w32_d64_chk8192_p2"
+#elif (PARALLELISM == 4)
+#define IN_PLM_NAME "plm_w32_d64_chk8192_p4"
+#elif (PARALLELISM == 8)
+#define IN_PLM_NAME "plm_w32_d64_chk8192_p8"
+#else // (PARALLELISM == 16)
+#define IN_PLM_NAME "plm_w32_d64_chk8192_p16"
 #endif
 
 #endif
 
-#endif /* HLS_DIRECTIVES_* */
+#endif
+#endif
+
+#endif // HLS_DIRECTIVES_BASIC
 
 #else /* !STRATUS_HLS */
 
-#ifndef HLS_MAP_IN0
-#define HLS_MAP_IN0
-#endif
-#ifndef HLS_MAP_IN1
-#define HLS_MAP_IN1
-#endif
-#ifndef HLS_MAP_IN2
-#define HLS_MAP_IN2
-#endif
-#ifndef HLS_MAP_IN3
-#define HLS_MAP_IN3
-#endif
-#ifndef HLS_MAP_OUT
-#define HLS_MAP_OUT
-#endif
+#define HLS_MAP_plm(_mem, _plm_block_name)
 
 #endif /* STRATUS_HLS */
 
@@ -147,14 +140,6 @@
 #define LESS_THAN_ROW 0
 #define LESS_THAN_MATRIX2 1
 #define MORE_THAN_MATRIX2 2
-
-// User defined constants
-#ifndef WORD_SIZE
-#define WORD_SIZE 32
-#endif
-
-#define WORDS_PER_DMA (DMA_WIDTH / WORD_SIZE)
-#define WORDS_PER_DMA_LOG (slog_2<WORDS_PER_DMA>::value)
 
 // log of chunk size
 #define DMA_CHUNK_LOG (slog_2<DMA_CHUNK>::value)

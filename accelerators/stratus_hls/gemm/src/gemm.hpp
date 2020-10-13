@@ -12,6 +12,9 @@
 #include "gemm_directives.hpp"
 #include "common.hpp"
 
+#define __round_mask(x, y) ((y)-1)
+#define round_up(x, y) ((((x)-1) | __round_mask(x, y))+1)
+
 class gemm : public esp_accelerator_3P<DMA_WIDTH>
 {
 public:
@@ -33,14 +36,16 @@ public:
 
 	    // Flatten arrays
 	    HLS_FLATTEN_ARRAY(mult_out);
-	    HLS_FLATTEN_ARRAY(accumulator);
+	    HLS_FLATTEN_ARRAY(row);
+	    HLS_FLATTEN_ARRAY(col);
 
 	    // Map memories
-	    HLS_MAP_IN0;
-	    HLS_MAP_IN1;
-	    HLS_MAP_IN2;
-	    HLS_MAP_IN3;
-	    HLS_MAP_OUT;
+	    HLS_MAP_plm(input0, IN_PLM_NAME);
+	    HLS_MAP_plm(input1, IN_PLM_NAME);
+	    HLS_MAP_plm(input2, IN_PLM_NAME);
+	    HLS_MAP_plm(input3, IN_PLM_NAME);
+	    HLS_MAP_plm(output0, OUT_PLM_NAME);
+	    HLS_MAP_plm(output1, OUT_PLM_NAME);
         }
 
     // Processes
@@ -81,13 +86,16 @@ public:
 				 uint8_t& load_cfg,
 				 uint16_t& loadable_rows,
 				 uint16_t& loadable_chunk,
-				 uint16_t& index_d1_incr);
+				 uint16_t& index_d1_incr,
+				 uint16_t& m2_loop_iters,
+				 uint16_t& m2_plm_incr);
     inline void calculate_chunks(uint24_t &matrix_chk,
 				 uint16_t &matrix_rem, uint32_t matrix_d2);
 
     // Synchronize compute_kernel and store_output processes
     inline void sync_compute_store(uint16_t &count, uint16_t loaded_rows,
-				   uint8_t load_cfg, uint16_t loadable_rows);
+				   uint8_t load_cfg, uint16_t loadable_rows,
+				   bool &pingpong);
 
     // Handshake callable from compute_kernel
     inline void compute_store_2_handshake();
@@ -101,19 +109,17 @@ public:
     inline void load_store_cfg_handshake();
     inline void store_load_cfg_handshake();
 
-    // Matrix multiplication kernel
-    void gemm_main(uint16_t length,
-		   PLM_WORD *row,
-		   PLM_WORD *col);
-
     // Private local memories
-    PLM_WORD input0[DMA_CHUNK / WORDS_PER_DMA];
-    PLM_WORD input1[DMA_CHUNK / WORDS_PER_DMA];
-    PLM_WORD input2[DMA_CHUNK / WORDS_PER_DMA];
-    PLM_WORD input3[DMA_CHUNK / WORDS_PER_DMA];
-    PLM_WORD output[DMA_CHUNK / WORDS_PER_DMA];
-    FPDATA mult_out[WORDS_PER_DMA][PARALLELISM];
-    FPDATA accumulator[WORDS_PER_DMA];
+    PLM_WORD input0[DMA_CHUNK];
+    PLM_WORD input1[DMA_CHUNK];
+    PLM_WORD input2[DMA_CHUNK];
+    PLM_WORD input3[DMA_CHUNK];
+    PLM_WORD output0[DMA_CHUNK];
+    PLM_WORD output1[DMA_CHUNK];
+    FPDATA row[PARALLELISM];
+    FPDATA col[PARALLELISM];
+    FPDATA mult_out[PARALLELISM];
+    FPDATA accumulator;
 
     // Custom configuration signals
     sc_signal<uint32_t> size_matrix_out_sig;

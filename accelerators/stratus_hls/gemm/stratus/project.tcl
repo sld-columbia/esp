@@ -43,6 +43,12 @@ if {$TECH eq "cmos32soi"} {
     set SIM_CLOCK_PERIOD 1000.0
     set_attr default_input_delay      100.0
 }
+if {$TECH eq "gf12"} {
+    set CLOCK_PERIOD 750.0
+    set SIM_CLOCK_PERIOD 2000.0
+    set_attr default_input_delay      100.0
+}
+
 set_attr clock_period $CLOCK_PERIOD
 
 
@@ -63,21 +69,21 @@ define_system_module tb ../tb/system.cpp ../tb/sc_main.cpp
 #
 set INPUT_PATH  "../datagen/input"
 set OUTPUT_PATH "../datagen/output"
-set TESTBENCHES "testS testM testL testR testC testNT"
+set TESTBENCHES "testS testM testL testR testC testNTS testNTM testNTL"
 
 #
 # Common options for all configurations
 #
 
-append COMMON_HLS_FLAGS \
-    " -DFIXED_POINT --clock_period=$CLOCK_PERIOD"
-set COMMON_CFG_FLAGS \
-    "-DFIXED_POINT -DCLOCK_PERIOD=$SIM_CLOCK_PERIOD"
-
 # append COMMON_HLS_FLAGS \
-#     " -DFLOAT_POINT --clock_period=$CLOCK_PERIOD"
+#     " -DFIXED_POINT --clock_period=$CLOCK_PERIOD"
 # set COMMON_CFG_FLAGS \
-#     "-DFLOAT_POINT -DCLOCK_PERIOD=$SIM_CLOCK_PERIOD"
+#     "-DFIXED_POINT -DCLOCK_PERIOD=$SIM_CLOCK_PERIOD"
+
+append COMMON_HLS_FLAGS \
+    " -DFLOAT_POINT --clock_period=$CLOCK_PERIOD"
+set COMMON_CFG_FLAGS \
+    "-DFLOAT_POINT -DCLOCK_PERIOD=$SIM_CLOCK_PERIOD"
 
 if {$TECH_IS_XILINX == 1} {
     append COMMON_HLS_FLAGS " -DTECH_IS_FPGA "
@@ -90,10 +96,10 @@ if {$TECH_IS_XILINX == 1} {
 
 # 0 = fixed point, 1 = float point
 
-set DMA_WIDTH "32 64"
-set DMA_CHUNK "16 128 512 2048 8192" 
-set WORD_SIZE "32 64"
-set PARALLELISM "1 4 8 16"
+set DMA_WIDTH "64"
+set DMA_CHUNK "8 16 64 128 512 2048 8192" 
+set WORD_SIZE "32"
+set PARALLELISM "1 2 4 8 16"
 set_attr split_multiply 32
 set_attr split_add 32
 

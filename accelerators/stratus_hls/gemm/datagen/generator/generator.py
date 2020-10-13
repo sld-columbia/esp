@@ -41,51 +41,67 @@ def main():
 
     # Generate small sized matrices
     gen(1,
-        random.randint(1, 8),
-        random.randint(2, 8) * 2,
-        random.randint(2, 8) * 2,
-        random.randint(2, 8) * 2,
+        random.randint(1, 1),
+        random.randint(4, 4) * 2,
+        random.randint(4, 4) * 2,
+        random.randint(4, 4) * 2,
         "testS")
 
     # Generate medium sized matrices
     gen(1,
-        random.randint( 1,  4),
-        random.randint(8, 32) * 2,
-        random.randint(8, 32) * 2,
-        random.randint(8, 32) * 2,
+        random.randint( 1, 1),
+        random.randint(32, 32) * 2,
+        random.randint(32, 32) * 2,
+        random.randint(32, 32) * 2,
         "testM")
 
     # Generate large sized matrices
     gen(1,
-        random.randint( 1,   2),
-        random.randint(32, 128) * 2,
-        random.randint(32, 128) * 2,
-        random.randint(32, 128) * 2,
+        random.randint( 1,   1),
+        random.randint(128, 128) * 2,
+        random.randint(128, 128) * 2,
+        random.randint(128, 128) * 2,
         "testL")
 
     # Generate matrices with single row matrix A and single column matrix B
     gen(1,
-        random.randint(1, 8),
+        random.randint(1, 1),
         1,
-        random.randint(512, 32768) * 2,
+        random.randint(2048, 2048) * 2,
         1,
         "testR")
 
     # Generate matrices with single column matrix A and single row matrix B
     gen(1,
-        random.randint(1, 8),
-        random.randint(64,256) * 2,
+        random.randint(1, 1),
+        random.randint(64,64) * 2,
         1,
-        random.randint(64,256) * 2,
+        random.randint(64,64) * 2,
         "testC")
 
     # Generate matrices with non-transposed matrix B
     gen(0,
         random.randint(1, 1),
-        random.randint(1, 128) * 2,
-        random.randint(1, 128) * 2,
-        random.randint(1, 128) * 2,
-        "testNT")
+        random.randint(4, 4) * 2,
+        random.randint(4, 4) * 2,
+        random.randint(4, 4) * 2,
+        "testNTS")
+
+    # Generate matrices with non-transposed matrix B
+    gen(0,
+        random.randint(1, 1),
+        random.randint(32, 32) * 2,
+        random.randint(32, 32) * 2,
+        random.randint(32, 32) * 2,
+        "testNTM")
+
+    # Generate matrices with non-transposed matrix B
+    gen(0,
+        random.randint(1, 1),
+        random.randint(128, 128) * 2,
+        random.randint(128, 128) * 2,
+        random.randint(128, 128) * 2,
+        "testNTL")
 
     print("Info: input successfully generated")
 
