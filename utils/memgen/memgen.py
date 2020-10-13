@@ -84,6 +84,7 @@ ASSERT_ON = True
 ### Default memory delay (must be included int he mem/lib.txt file"
 mem_delay = 0.2
 mem_setup = 0.06
+single_port = False
 
 ### Data structures ###
 class sram():
@@ -181,10 +182,16 @@ class memory():
                                      (op.rn > 0 and op.wn > 0))
             # Note that we force dual-port memories to get half the number of hbanks when possible
             # dual_port
-            self.need_dual_port = (self.need_dual_port or
-                                   self.need_parallel_rw or
-                                   (op.wn == 2 and op.wp == "unknown") or
-                                   ((not self.need_parallel_rw) and (op.rn > 1 or op.wn > 1)))
+            if single_port:
+                if self.need_parallel_rw or (op.wn == 2 and op.wp == "unknown"):
+                    print("Requested memory " + self.name + " requires a dual-port SRAM bank, which is not available for the target technology")
+                    sys.exit(0)
+                self.need_dual_port = False
+            else:
+                self.need_dual_port = (self.need_dual_port or
+                                       self.need_parallel_rw or
+                                       (op.wn == 2 and op.wp == "unknown") or
+                                       ((not self.need_parallel_rw) and (op.rn > 1 or op.wn > 1)))
 
         for op in self.ops:
             # Duplication
@@ -205,12 +212,12 @@ class memory():
             # Distribution
             op_distribution_factor = 1
             if (op.rp == "modulo" and op.rn > 1):
-                if (op.wn != 0 or self.need_parallel_rw):
+                if (op.wn != 0 or self.need_parallel_rw or single_port):
                     op_distribution_factor = op.rn
                 else:
                     op_distribution_factor = op.rn >> 1
             if (op.wp == "modulo" and op.wn > 1):
-                if (op.rn != 0 or self.need_parallel_rw):
+                if (op.rn != 0 or self.need_parallel_rw or single_port):
                     op_distribution_factor = max(op_distribution_factor, op.wn)
                 else:
                     op_distribution_factor = op.wn >> 1
@@ -589,7 +596,7 @@ class memory():
             fd.write(",\n              .Q"   + str(p) + "(bank_Q[d][h][v][hh]["   + str(p) + "])")
         fd.write("\n            );\n")
         fd.write("\n")
-        if (ASSERT_ON):
+        if (ASSERT_ON and (self.bank_type.ports > 1)):
             fd.write("// synthesis translate_off\n")
             fd.write("// synopsys translate_off\n")
             fd.write("            always @(posedge CLK) begin\n")
@@ -616,7 +623,9 @@ class memory():
 
     def __set_rwports(self):
         for wi in range(0, self.write_interfaces):
-            if self.need_parallel_rw:
+            if self.bank_type.ports == 1:
+                self.write_ports.append(0)
+            elif self.need_parallel_rw:
                 self.write_ports.append(0)
             elif self.write_interfaces == 1:
                 self.write_ports.append(0)
@@ -628,7 +637,9 @@ class memory():
                 else:
                     self.write_ports.append(wi % self.bank_type.ports)
         for ri in range(0, self.read_interfaces):
-            if self.need_parallel_rw:
+            if self.bank_type.ports == 1:
+                self.read_ports.append(0)
+            elif self.need_parallel_rw:
                 self.read_ports.append(1)
             elif self.read_interfaces == 1:
                 self.read_ports.append(0)
@@ -1101,6 +1112,7 @@ def parse_op(op, mem_words):
 def read_techfile(tech_path, sram_list):
     global mem_delay
     global mem_setup
+    global single_port
     try:
         fd = open(tech_path + "/lib.txt", 'r')
     except IOError as e:
@@ -1113,6 +1125,8 @@ def read_techfile(tech_path, sram_list):
             mem_delay = float(item[2])
         if re.match(r'# setup*', line, re.M|re.I):
             mem_setup = float(item[2])
+        if re.match(r'# single_port*', line, re.M|re.I):
+            single_port = True
         if re.match(r'#\.*', line, re.M|re.I):
             continue
         ram = parse_sram(line)
