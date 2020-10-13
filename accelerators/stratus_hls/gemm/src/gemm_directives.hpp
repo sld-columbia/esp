@@ -165,14 +165,14 @@
 
 // arithmetic operators
 #ifdef FIXED_POINT
-#define ACCUMULATE(add, mul1, mul2)					\
+#define MAC(add, mul1, mul2)					\
     add = add + (mul1 * mul2)
 
 #define MULTIPLY(mul_out, mul1, mul2)		\
     mul_out = (mul1 * mul2)
 
-#define ADD(add_out, add1, add2)		\
-    add_out = (add1 + add2)
+#define ACCUMULATE(add1, add2)		\
+    add1 = (add1 + add2)
 
 
 // use this to substitute fixed-point from Stratus
@@ -182,24 +182,24 @@
 
 #ifdef TECH_IS_FPGA
 
-#define ACCUMULATE(add, mul1, mul2)			\
+#define MAC(add, mul1, mul2)			\
     add = esp_f32_add(add, esp_f32_mul(mul1, mul2))
 
 #define MULTIPLY(mul_out, mul1, mul2)		\
     mul_out = esp_f32_mul(mul1, mul2)
 
-#define ADD(add_out, add1, add2)		\
-    add_out = esp_f32_add(add1, add2)
+#define ACCUMULATE(add1, add2)		\
+    add1 = esp_f32_add(add1, add2)
 
 #else // ASIC
-#define ACCUMULATE(add, mul1, mul2)		\
+#define MAC(add, mul1, mul2)		\
     add = add + (mul1 * mul2)
 
 #define MULTIPLY(mul_out, mul1, mul2)		\
     mul_out = (mul1 * mul2)
 
-#define ADD(add_out, add1, add2)		\
-    add_out = (add1 + add2)
+#define ACCUMULATE(add1, add2)		\
+    add1 = (add1 + add2)
 
 #endif
 #endif

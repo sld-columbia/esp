@@ -125,12 +125,12 @@ void gemm::load_input()
 	index_d1 = ld_offset1;
 	index_d2 = ld_offset2;
 
-	// ESP_REPORT_INFO("LOAD %u %u %u %u %u %u %u %u %u %u %u",
-	// 		size_matrix1, size_matrix2,
-	// 		matrix_chk_in, matrix_rem_in1, matrix_rem_in2,
-	// 		matrix_chk_out, matrix_rem_out,
-	// 		load_cfg, loadable_rows,
-	// 		loadable_chunk, index_d1_incr);
+	ESP_REPORT_INFO("LOAD %u %u %u %u %u %u %u %u %u %u %u",
+			(unsigned) size_matrix1, (unsigned) size_matrix2,
+			(unsigned) matrix_chk_in, (unsigned) matrix_rem_in1, (unsigned) matrix_rem_in2,
+			(unsigned) matrix_chk_out, (unsigned) matrix_rem_out,
+			(unsigned) load_cfg, (unsigned) loadable_rows,
+			(unsigned) loadable_chunk, (unsigned) index_d1_incr);
 
 	load_compute_cfg_handshake();
 	load_store_cfg_handshake();
@@ -177,7 +177,8 @@ void gemm::load_input()
 			    dma_info_t dma_info(index_d1_tmp, length1 >> WORDS_PER_DMA_LOG, SIZE_WORD);
 			    this->dma_read_ctrl.put(dma_info);
 
-			    // ESP_REPORT_INFO("load m1 %u %u", index_d1_tmp, length);
+			    ESP_REPORT_INFO("load m1 %u %u",
+					    (unsigned) index_d1_tmp, (unsigned) length1);
 			}
 
 			sc_dt::sc_bv<DMA_WIDTH> data_high;
@@ -214,11 +215,11 @@ void gemm::load_input()
 		    if (!transpose && matrix_d3 != 1) {
 			length_m2_dma = min(loadable_rows, matrix_d3 - 1 - d1);
 			m2_loop_iters = length2 / length_m2_dma;
-			index_m2_incr = matrix_d3;
+			index_m2_incr = matrix_d3 >> WORDS_PER_DMA_LOG;
 		    } else {
 			length_m2_dma = length2;
 			m2_loop_iters = 1;
-			index_m2_incr = length2;
+			index_m2_incr = length2 >> WORDS_PER_DMA_LOG;
 		    }
 
 		    i = 0;
@@ -231,7 +232,8 @@ void gemm::load_input()
 						length_m2_dma >> WORDS_PER_DMA_LOG, SIZE_WORD);
 			    this->dma_read_ctrl.put(dma_info);
 
-			    // ESP_REPORT_INFO("load m2 %u %u", index_m2_dma, length_m2_dma);
+			    ESP_REPORT_INFO("load m2 %u %u",
+					    (unsigned) index_m2_dma, (unsigned) length_m2_dma);
 			}
 
 			for (uint16_t k = 0; k < length_m2_dma >> WORDS_PER_DMA_LOG; ++k)
@@ -256,9 +258,11 @@ void gemm::load_input()
 		    }
 		    
 		    // Call the compute_kernel process
-		    // ESP_REPORT_INFO("LOAD: before compute hs d1 %u d2 %u", d1, d2);
+		    ESP_REPORT_INFO("LOAD: before compute hs d1 %u d2 %u",
+				    (unsigned) d1, (unsigned) d2);
 		    load_compute_handshake();
-		    // ESP_REPORT_INFO("LOAD: after compute hs d1 %u d2 %u", d1, d2);
+		    ESP_REPORT_INFO("LOAD: after compute hs d1 %u d2 %u",
+				    (unsigned) d1, (unsigned) d2);
 
 		    // Change pingpong buffer
 		    pingpong_m2 = !pingpong_m2;
@@ -359,8 +363,8 @@ void gemm::store_output()
 	    loadable_rows = 1;
 	}
 
-	// ESP_REPORT_INFO("STORE %u %u %u",
-	// 		size_matrix_out, matrix_chk_out, matrix_rem_out);
+	ESP_REPORT_INFO("STORE %u %u %u", (unsigned) size_matrix_out,
+			(unsigned) matrix_chk_out, (unsigned) matrix_rem_out);
     }
 
     // Store
@@ -395,16 +399,19 @@ void gemm::store_output()
 			}
 
 			// Wait the compute_process
-			// ESP_REPORT_INFO("STORE: before compute hs %u %u %u %u", d1, d2, d1i, chk);
+			ESP_REPORT_INFO("STORE: before compute hs %u %u %u %u",
+					(unsigned) d1, (unsigned) d2, (unsigned) d1i, (unsigned) chk);
 			store_compute_handshake();
-			// ESP_REPORT_INFO("STORE: after compute hs %u %u %u %u", d1, d2, d1i, chk);
+			ESP_REPORT_INFO("STORE: after compute hs %u %u %u %u",
+					(unsigned) d1, (unsigned) d2, (unsigned) d1i, (unsigned) chk);
 
 			{
 			    HLS_DEFINE_PROTOCOL("store-matrix-info");
 			    dma_info_t dma_info(index, length >> WORDS_PER_DMA_LOG, SIZE_WORD);
 			    this->dma_write_ctrl.put(dma_info);
 
-			    // ESP_REPORT_INFO("STORE index %u length %u", index, length);
+			    ESP_REPORT_INFO("STORE index %u length %u",
+					    (unsigned) index, (unsigned) length);
 			}
 
 			i = 0;
@@ -425,20 +432,22 @@ void gemm::store_output()
 			}
 
 			// release compute_process
-			// ESP_REPORT_INFO("STORE: before compute hs2 %u %u %u %u", d1, d2, d1i, chk);
+			ESP_REPORT_INFO("STORE: before compute hs2 %u %u %u %u",
+					(unsigned) d1, (unsigned) d2, (unsigned) d1i, (unsigned) chk);
 			store_compute_2_handshake();
-			// ESP_REPORT_INFO("STORE: after compute hs2 %u %u %u %u", d1, d2, d1i, chk);
+			ESP_REPORT_INFO("STORE: after compute hs2 %u %u %u %u",
+					(unsigned) d1, (unsigned) d2, (unsigned) d1i, (unsigned) chk);
 
 			// update the index
 			index_simple += length >> WORDS_PER_DMA_LOG;
 		    }
-		    index_d1i += matrix_d3;
+		    index_d1i += matrix_d3 >> WORDS_PER_DMA_LOG;
 		}
-		index_d2 += loadable_rows;
+		index_d2 += (loadable_rows >> WORDS_PER_DMA_LOG);
 	    }
-	    index_d1 += (loadable_rows * matrix_d3);
+	    index_d1 += ((loadable_rows * matrix_d3) >> WORDS_PER_DMA_LOG);
 	}
-	index_a += size_matrix_out;
+	index_a += (size_matrix_out >> WORDS_PER_DMA_LOG);
     }
 
     // Conclude
@@ -451,6 +460,7 @@ void gemm::store_output()
 void gemm::compute_kernel()
 {
     bool pingpong_m1, pingpong_m2;
+    bool pos;
     uint24_t ninputs;
     uint16_t length;
     uint24_t matrix_d1;
@@ -477,6 +487,7 @@ void gemm::compute_kernel()
     	// User-defined reset code
         pingpong_m1 = true;
         pingpong_m2 = true;
+	pos = 0;
     	ninputs = 0;
         matrix_d1 = 0;
         matrix_d2 = 0;
@@ -514,9 +525,9 @@ void gemm::compute_kernel()
 	load_cfg = load_cfg_sig.read();
 	loadable_rows = loadable_rows_sig.read();
 
-	// ESP_REPORT_INFO("COMPUTE %u %u %u %u",
-	// 		matrix_chk_in, matrix_rem_in1, matrix_rem_in2,
-	// 		load_cfg, loadable_rows);
+	ESP_REPORT_INFO("COMPUTE %u %u %u %u",
+			(unsigned) matrix_chk_in, (unsigned) matrix_rem_in1, (unsigned) matrix_rem_in2,
+			(unsigned) load_cfg, (unsigned) loadable_rows);
     }
 
     // Compute
@@ -553,7 +564,8 @@ void gemm::compute_kernel()
 
 			for (uint24_t chk = 0; chk < matrix_chk_in; ++chk)
 			{
-			    // ESP_REPORT_INFO("COMPUTE: before load hs d1 %u d2 %u", d1, d2);
+			    ESP_REPORT_INFO("COMPUTE: before load hs d1 %u d2 %u",
+					    (unsigned) d1, (unsigned) d2);
 			    // If true the next is the last (smaller) chunk
 			    if (load_cfg == LESS_THAN_ROW) {
 				if (chk == matrix_chk_in - 1 && matrix_rem_in2 != 0) {
@@ -581,7 +593,8 @@ void gemm::compute_kernel()
 				    compute_load_handshake();
 				}
 			    }
-			    // ESP_REPORT_INFO("COMPUTE: before load hs d1 %u d2 %u", d1, d2);
+			    ESP_REPORT_INFO("COMPUTE: before load hs d1 %u d2 %u",
+					    (unsigned) d1, (unsigned) d2);
 
 			    PLM_WORD *inA, *inB;
 		    
@@ -595,19 +608,28 @@ void gemm::compute_kernel()
 			    // else
 			    // 	inB = &input3[plm_offset_m2];
 
-			    // ESP_REPORT_INFO("COMPUTE: pingpong %u %u offset %u %u",
-			    // 		    pingpong_m1, pingpong_m2, plm_offset_m1, plm_offset_m2);
+			    ESP_REPORT_INFO("COMPUTE: pingpong %u %u offset %u %u",
+			    		    pingpong_m1, pingpong_m2,
+					    (unsigned) plm_offset_m1, (unsigned) plm_offset_m2);
 
 			    // gemm_main(length >> WORDS_PER_DMA_LOG, inA, inB);
 
 			    if (pingpong_m1 && pingpong_m2)
-				gemm_main(length >> WORDS_PER_DMA_LOG, &input0[plm_offset_m1], &input2[plm_offset_m2]);
+				gemm_main(length >> WORDS_PER_DMA_LOG,
+					  &input0[plm_offset_m1 >> WORDS_PER_DMA_LOG],
+					  &input2[plm_offset_m2 >> WORDS_PER_DMA_LOG]);
 			    else if (pingpong_m1 && !pingpong_m2)
-				gemm_main(length >> WORDS_PER_DMA_LOG, &input0[plm_offset_m1], &input3[plm_offset_m2]);
+				gemm_main(length >> WORDS_PER_DMA_LOG,
+					  &input0[plm_offset_m1 >> WORDS_PER_DMA_LOG],
+					  &input3[plm_offset_m2 >> WORDS_PER_DMA_LOG]);
 			    else if (!pingpong_m1 && pingpong_m2)
-				gemm_main(length >> WORDS_PER_DMA_LOG, &input1[plm_offset_m1], &input2[plm_offset_m2]);
+				gemm_main(length >> WORDS_PER_DMA_LOG,
+					  &input1[plm_offset_m1 >> WORDS_PER_DMA_LOG],
+					  &input2[plm_offset_m2 >> WORDS_PER_DMA_LOG]);
 			    else
-				gemm_main(length >> WORDS_PER_DMA_LOG, &input1[plm_offset_m1], &input3[plm_offset_m2]);			
+				gemm_main(length >> WORDS_PER_DMA_LOG,
+					  &input1[plm_offset_m1 >> WORDS_PER_DMA_LOG],
+					  &input3[plm_offset_m2 >> WORDS_PER_DMA_LOG]);
 			}
 
 			{
@@ -623,18 +645,24 @@ void gemm::compute_kernel()
 			if (do_relu && accumulator[0] < 0)
 			    accumulator[0] = 0;
 
-		        // std:cout << "accumulator[0] " << accumulator[0] << std::endl;
+		        std:cout << "accumulator[0] " << accumulator[0] << std::endl;
 
-			uint8_t pos = d2 % WORDS_PER_DMA;
 			output[store_count].range((pos+1) * WORD_SIZE - 1, pos * WORD_SIZE) =
 			    FP2INT(accumulator[0]);
 		    
 			// Call the store_output process and wait for the store_output process
 			// -> output PLM is not in pingpong
 			if (pos == WORDS_PER_DMA - 1) {
-			    // ESP_REPORT_INFO("sync_comput_store %u %u %u %u %u ", d1, d2, d1i, d2i, loaded_rows_d3);
+			    ESP_REPORT_INFO("sync_comput_store %u %u %u %u %u ", (unsigned) d1,
+					    (unsigned) d2, (unsigned) d1i, (unsigned) d2i,
+					    (unsigned) loaded_rows_d3);
 			    sync_compute_store(store_count, loaded_rows_d3, load_cfg, loadable_rows);
 			}
+
+			if (!pos)
+			    pos = 1;
+			else
+			    pos = 0;
 		    }
 		}
 	    }

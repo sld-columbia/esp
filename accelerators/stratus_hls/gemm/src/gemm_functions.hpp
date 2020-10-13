@@ -48,7 +48,7 @@ void gemm::gemm_main(uint16_t length,
 
 	    uint16_t plm_i = plm_i_base + m;
 	    if (plm_i < length) {
-		ADD(accumulator[0], accumulator[0], mult_out[0][m]);
+		ACCUMULATE(accumulator[0], mult_out[0][m]);
 	    }
 	}
 	
@@ -61,10 +61,13 @@ void gemm::gemm_main(uint16_t length,
 	    // std::cout << "gemm_main wordsperdma2 m " << m << std::endl;
 
 	    uint16_t plm_i = plm_i_base + m;
-	    FPDATA row_elem_1 = INT2FP(row[plm_i].range(WORD_SIZE-1, 0));	
-	    FPDATA col_elem_1 = INT2FP(col[plm_i].range(WORD_SIZE-1, 0));	
-	    FPDATA row_elem_2 = INT2FP(row[plm_i].range(2 * WORD_SIZE-1, WORD_SIZE)); 
-	    FPDATA col_elem_2 = INT2FP(col[plm_i].range(2 * WORD_SIZE-1, WORD_SIZE));
+	    PLM_WORD row_word = row[plm_i];
+	    PLM_WORD col_word = col[plm_i];
+
+	    FPDATA row_elem_1 = INT2FP(row_word.range(WORD_SIZE - 1, 0));	
+	    FPDATA col_elem_1 = INT2FP(col_word.range(WORD_SIZE - 1, 0));	
+	    FPDATA row_elem_2 = INT2FP(row_word.range((WORD_SIZE << 1) - 1, WORD_SIZE)); 
+	    FPDATA col_elem_2 = INT2FP(col_word.range((WORD_SIZE << 1) - 1, WORD_SIZE));
 
 	    if (plm_i < length) {
 		MULTIPLY(mult_out[0][m], row_elem_1, col_elem_1);
@@ -78,8 +81,8 @@ void gemm::gemm_main(uint16_t length,
 
 	    uint16_t plm_i = plm_i_base + m;
 	    if (plm_i < length) {
-		ADD(accumulator[0], accumulator[0], mult_out[0][m]);
-		ADD(accumulator[1], accumulator[1], mult_out[1][m]);
+		ACCUMULATE(accumulator[0], mult_out[0][m]);
+		ACCUMULATE(accumulator[1], mult_out[1][m]);
 	    }
 	}
 #endif
@@ -112,17 +115,17 @@ inline void gemm::calculate_config(uint24_t ninputs,
     size_matrix2 = matrix_d2 * matrix_d3;
     size_matrix_out = matrix_d1 * matrix_d3 * ninputs;
 
-    if (matrix_d2 > (DMA_CHUNK << WORDS_PER_DMA_LOG) ||
+    if (matrix_d2 > DMA_CHUNK ||
 	!transpose) {
 	load_cfg = LESS_THAN_ROW;
 	loadable_rows = 1;
-	loadable_chunk = (DMA_CHUNK << WORDS_PER_DMA_LOG);
+	loadable_chunk = DMA_CHUNK;
 	calculate_chunks(matrix_chk_in, matrix_rem_in1, matrix_d2);
 	matrix_rem_in2 = matrix_rem_in1;
 	index_d1_incr = matrix_d2;
-    } else if (size_matrix2 > (DMA_CHUNK << WORDS_PER_DMA_LOG)) {
+    } else if (size_matrix2 > DMA_CHUNK) {
 	load_cfg = LESS_THAN_MATRIX2;
-	loadable_rows = (DMA_CHUNK << WORDS_PER_DMA_LOG) / matrix_d2;
+	loadable_rows = DMA_CHUNK / matrix_d2;
 	if (loadable_rows != 1)
 	    loadable_rows = (loadable_rows >> 1) << 1;
 	loadable_chunk = loadable_rows * matrix_d2;
@@ -176,26 +179,26 @@ inline void gemm::sync_compute_store(uint16_t &count, uint16_t loaded_rows,
     if (load_cfg == LESS_THAN_MATRIX2 && loadable_rows != 1) {
 	if (count == (loaded_rows >> WORDS_PER_DMA_LOG)) {
             count = 0;
-	    // ESP_REPORT_INFO("COMPUTE2: before store hs %u", count);
+	    ESP_REPORT_INFO("COMPUTE2: before store hs %u", (unsigned) count);
             // Call the store_output process
             compute_store_handshake();
-	    // ESP_REPORT_INFO("COMPUTE2: after store hs %u", count);
-	    // ESP_REPORT_INFO("COMPUTE2: before store hs2 %u", count);
+	    ESP_REPORT_INFO("COMPUTE2: after store hs %u", (unsigned) count);
+	    ESP_REPORT_INFO("COMPUTE2: before store hs2 %u", (unsigned) count);
             // Wait for the store_output process
             compute_store_2_handshake();
-	    // ESP_REPORT_INFO("COMPUTE2: after store hs2 %u", count);
+	    ESP_REPORT_INFO("COMPUTE2: after store hs2 %u", (unsigned) count);
 	}
     } else {
         if (count == (DMA_CHUNK >> WORDS_PER_DMA_LOG)) {
             count = 0;
-	    // ESP_REPORT_INFO("COMPUTE: before store hs");
+	    ESP_REPORT_INFO("COMPUTE: before store hs");
             // Call the store_output process
             compute_store_handshake();
-	    // ESP_REPORT_INFO("COMPUTE: after store hs");
-	    // ESP_REPORT_INFO("COMPUTE: before store hs2");
+	    ESP_REPORT_INFO("COMPUTE: after store hs");
+	    ESP_REPORT_INFO("COMPUTE: before store hs2");
             // Wait for the store_output process
             compute_store_2_handshake();
-	    // ESP_REPORT_INFO("COMPUTE: after store hs2");
+	    ESP_REPORT_INFO("COMPUTE: after store hs2");
         }
     }
 }
