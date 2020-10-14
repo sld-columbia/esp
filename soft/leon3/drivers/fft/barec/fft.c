@@ -74,7 +74,7 @@ static int validate_buf(token_t *out, float *gold)
 			errors++;
 	}
 
-	printf("  + Relative error > %.02f for %d output values out of %ld\n", ERR_TH, errors, 2 * len);
+	//printf("  %u errors\n", errors);
 	return errors;
 }
 
@@ -118,6 +118,7 @@ int main(int argc, char * argv[])
 	token_t *mem;
 	float *gold;
 	unsigned errors = 0;
+	unsigned coherence;
         const int ERROR_COUNT_TH = 0.001;
 
 	len = 1 << log_len;
@@ -148,6 +149,8 @@ int main(int argc, char * argv[])
 
 	for (n = 0; n < ndev; n++) {
 
+		printf("**************** %s.%d ****************\n", DEV_NAME, n);
+
 		dev = &espdevs[n];
 
 		// Check DMA capabilities
@@ -166,7 +169,7 @@ int main(int argc, char * argv[])
 		mem = aligned_malloc(mem_size);
 		printf("  memory buffer base-address = %p\n", mem);
 
-		// Alocate and populate page table
+		// Allocate and populate page table
 		ptable = aligned_malloc(NCHUNK(mem_size) * sizeof(unsigned *));
 		for (i = 0; i < NCHUNK(mem_size); i++)
 			ptable[i] = (unsigned *) &mem[i * (CHUNK_SIZE / sizeof(token_t))];
@@ -174,57 +177,65 @@ int main(int argc, char * argv[])
 		printf("  ptable = %p\n", ptable);
 		printf("  nchunk = %lu\n", NCHUNK(mem_size));
 
-		printf("  Generate input...\n");
-		init_buf(mem, gold);
+#ifndef __riscv
+		for (coherence = ACC_COH_NONE; coherence <= ACC_COH_FULL; coherence++) {
+#else
+		{
+			/* TODO: Restore full test once ESP caches are integrated */
+			coherence = ACC_COH_NONE;
+#endif
+			printf("  --------------------\n");
+			printf("  Generate input...\n");
+			init_buf(mem, gold);
 
-		// Pass common configuration parameters
+			// Pass common configuration parameters
 
-		iowrite32(dev, SELECT_REG, ioread32(dev, DEVID_REG));
-		iowrite32(dev, COHERENCE_REG, ACC_COH_NONE);
+			iowrite32(dev, SELECT_REG, ioread32(dev, DEVID_REG));
+			iowrite32(dev, COHERENCE_REG, coherence);
 
 #ifndef __sparc
-		iowrite32(dev, PT_ADDRESS_REG, (unsigned long long) ptable);
+			iowrite32(dev, PT_ADDRESS_REG, (unsigned long long) ptable);
 #else
-		iowrite32(dev, PT_ADDRESS_REG, (unsigned) ptable);
+			iowrite32(dev, PT_ADDRESS_REG, (unsigned) ptable);
 #endif
-		iowrite32(dev, PT_NCHUNK_REG, NCHUNK(mem_size));
-		iowrite32(dev, PT_SHIFT_REG, CHUNK_SHIFT);
+			iowrite32(dev, PT_NCHUNK_REG, NCHUNK(mem_size));
+			iowrite32(dev, PT_SHIFT_REG, CHUNK_SHIFT);
 
-		// Use the following if input and output data are not allocated at the default offsets
-		iowrite32(dev, SRC_OFFSET_REG, 0x0);
-		iowrite32(dev, DST_OFFSET_REG, 0x0);
+			// Use the following if input and output data are not allocated at the default offsets
+			iowrite32(dev, SRC_OFFSET_REG, 0x0);
+			iowrite32(dev, DST_OFFSET_REG, 0x0);
 
-		// Pass accelerator-specific configuration parameters
-		/* <<--regs-config-->> */
-		iowrite32(dev, FFT_DO_PEAK_REG, 0);
-		iowrite32(dev, FFT_DO_BITREV_REG, do_bitrev);
-		iowrite32(dev, FFT_LOG_LEN_REG, log_len);
+			// Pass accelerator-specific configuration parameters
+			/* <<--regs-config-->> */
+			iowrite32(dev, FFT_DO_PEAK_REG, 0);
+			iowrite32(dev, FFT_DO_BITREV_REG, do_bitrev);
+			iowrite32(dev, FFT_LOG_LEN_REG, log_len);
 
-		// Flush (customize coherence model here)
-		esp_flush(ACC_COH_NONE);
+			// Flush (customize coherence model here)
+			esp_flush(coherence);
 
-		// Start accelerators
-		printf("  Start...\n");
-		iowrite32(dev, CMD_REG, CMD_MASK_START);
+			// Start accelerators
+			printf("  Start...\n");
+			iowrite32(dev, CMD_REG, CMD_MASK_START);
 
-		// Wait for completion
-		done = 0;
-		while (!done) {
-			done = ioread32(dev, STATUS_REG);
-			done &= STATUS_MASK_DONE;
+			// Wait for completion
+			done = 0;
+			while (!done) {
+				done = ioread32(dev, STATUS_REG);
+				done &= STATUS_MASK_DONE;
+			}
+			iowrite32(dev, CMD_REG, 0x0);
+
+			printf("  Done\n");
+			printf("  validating...\n");
+
+			/* Validation */
+			errors = validate_buf(&mem[out_offset], gold);
+			if ((errors / len) > ERROR_COUNT_TH)
+				printf("  ... FAIL\n");
+			else
+				printf("  ... PASS\n");
 		}
-		iowrite32(dev, CMD_REG, 0x0);
-
-		printf("  Done\n");
-		printf("  validating...\n");
-
-		/* Validation */
-		errors = validate_buf(&mem[out_offset], gold);
-		if ((errors / len) > ERROR_COUNT_TH)
-			printf("  ... FAIL: exceeding error count threshold\n");
-		else
-			printf("  ... PASS: not exceeding error count threshold\n");
-
 		aligned_free(ptable);
 		aligned_free(mem);
 		aligned_free(gold);
