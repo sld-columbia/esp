@@ -16,7 +16,7 @@ typedef double native_t;
 #define fx2float fixed64_to_double
 #define float2fx double_to_fixed64
 #define FX_IL 42
-#elif (FFT_FX_WIDTH == 32)
+#else // (FFT_FX_WIDTH == 32)
 typedef int token_t;
 typedef float native_t;
 #define fx2float fixed32_to_float
