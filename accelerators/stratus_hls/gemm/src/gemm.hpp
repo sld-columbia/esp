@@ -89,8 +89,8 @@ public:
 				 uint16_t& index_d1_incr,
 				 uint16_t& m2_loop_iters,
 				 uint16_t& m2_plm_incr);
-    inline void calculate_chunks(uint24_t &matrix_chk,
-				 uint16_t &matrix_rem, uint32_t matrix_d2);
+    inline void calculate_chunks(uint24_t &matrix_chk, uint16_t &matrix_rem,
+				 uint32_t matrix_d2, bool in_or_out);
 
     // Synchronize compute_kernel and store_output processes
     inline void sync_compute_store(uint16_t &count, uint16_t loaded_rows,
@@ -114,8 +114,8 @@ public:
     PLM_WORD input1[DMA_CHUNK];
     PLM_WORD input2[DMA_CHUNK];
     PLM_WORD input3[DMA_CHUNK];
-    PLM_WORD output0[DMA_CHUNK];
-    PLM_WORD output1[DMA_CHUNK];
+    PLM_WORD output0[OUT_DMA_CHUNK];
+    PLM_WORD output1[OUT_DMA_CHUNK];
     FPDATA row[PARALLELISM];
     FPDATA col[PARALLELISM];
     FPDATA mult_out[PARALLELISM];

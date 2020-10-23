@@ -40,7 +40,7 @@ inline void gemm::calculate_config(uint24_t ninputs,
 	load_cfg = LESS_THAN_ROW;
 	loadable_rows = 1;
 	loadable_chunk = DMA_CHUNK;
-	calculate_chunks(matrix_chk_in, matrix_rem_in1, matrix_d2);
+	calculate_chunks(matrix_chk_in, matrix_rem_in1, matrix_d2, 0);
 	matrix_rem_in2 = matrix_rem_in1;
 	index_d1_incr = matrix_d2;
     } else if (size_matrix2 > DMA_CHUNK || !transpose) {
@@ -71,23 +71,29 @@ inline void gemm::calculate_config(uint24_t ninputs,
 	index_d1_incr = loadable_chunk;
     }
 
-    calculate_chunks(matrix_chk_out, matrix_rem_out, size_matrix_out);
+    calculate_chunks(matrix_chk_out, matrix_rem_out, size_matrix_out, 1);
 }
 
 inline void gemm::calculate_chunks(uint24_t  &matrix_chk,
 				   uint16_t &matrix_rem,
-				   uint32_t matrix_d2)
+				   uint32_t matrix_d2,
+				   bool in_or_out)
 {
      uint32_t matrix_mul;
-
      {
         HLS_CONSTRAIN_LATENCY(0, HLS_ACHIEVABLE, "calc-chunks");
 
-        // calculating the number of chunks (ceil)
-        matrix_chk = matrix_d2 >> DMA_CHUNK_LOG;
-
-        // calculating the number of cols (covered the by the chunks)
-        matrix_mul = matrix_chk << DMA_CHUNK_LOG;
+	if (!in_or_out) {
+	    // calculating the number of chunks (ceil)
+	    matrix_chk = matrix_d2 >> DMA_CHUNK_LOG;
+	    // calculating the number of cols (covered the by the chunks)
+	    matrix_mul = matrix_chk << DMA_CHUNK_LOG;
+	} else {
+	    // calculating the number of chunks (ceil)
+	    matrix_chk = matrix_d2 >> OUT_DMA_CHUNK_LOG;
+	    // calculating the number of cols (covered the by the chunks)
+	    matrix_mul = matrix_chk << OUT_DMA_CHUNK_LOG;
+	}
 
         // calculating the remaining cols (size of the last chunk)
         matrix_rem = matrix_d2 - matrix_mul;
@@ -112,7 +118,7 @@ inline void gemm::sync_compute_store(uint16_t &count, uint16_t loaded_rows,
 	    pingpong = !pingpong;
 	}
     } else {
-        if (count == DMA_CHUNK) {
+        if (count == OUT_DMA_CHUNK) {
             count = 0;
 	    // ESP_REPORT_INFO("COMPUTE: before store hs");
             // Call the store_output process

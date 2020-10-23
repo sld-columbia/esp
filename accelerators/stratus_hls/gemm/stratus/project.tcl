@@ -51,6 +51,7 @@ if {$TECH eq "gf12"} {
 
 set_attr clock_period $CLOCK_PERIOD
 
+set_attr dpopt_effort high
 
 #
 # System level modules to be synthesized
@@ -97,7 +98,7 @@ if {$TECH_IS_XILINX == 1} {
 # 0 = fixed point, 1 = float point
 
 set DMA_WIDTH "64"
-set DMA_CHUNK "8 16 64 128 512 2048 8192" 
+set DMA_CHUNK "8 16 32 64 128 512 2048 8192" 
 set WORD_SIZE "32"
 set PARALLELISM "1 2 4 8 16"
 set_attr split_multiply 32

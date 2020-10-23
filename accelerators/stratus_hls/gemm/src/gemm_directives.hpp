@@ -16,97 +16,99 @@
 #if (WORD_SIZE == 32)
 
 #if (DMA_CHUNK == 8)
+#define OUT_DMA_CHUNK 8
+#define OUT_PLM_NAME "plm_w32_d64_chk8"
 #if (PARALLELISM == 1)
 #define IN_PLM_NAME "plm_w32_d64_chk8_p1"
-#define OUT_PLM_NAME "plm_w32_d64_chk8"
 #elif (PARALLELISM == 4)
 #define IN_PLM_NAME "plm_w32_d64_chk8_p4"
-#define OUT_PLM_NAME "plm_w32_d64_chk8"
 #elif (PARALLELISM == 8)
 #define IN_PLM_NAME "plm_w32_d64_chk8_p8"
-#define OUT_PLM_NAME "plm_w32_d64_chk8"
 #else // (PARALLELISM == 16)
 #define IN_PLM_NAME "plm_w32_d64_chk8_p16"
-#define OUT_PLM_NAME "plm_w32_d64_chk8"
 #endif
 
 #elif (DMA_CHUNK == 16)
+#define OUT_DMA_CHUNK 16
+#define OUT_PLM_NAME "plm_w32_d64_chk16"
 #if (PARALLELISM == 1)
 #define IN_PLM_NAME "plm_w32_d64_chk16_p1"
-#define OUT_PLM_NAME "plm_w32_d64_chk16"
 #elif (PARALLELISM == 4)
 #define IN_PLM_NAME "plm_w32_d64_chk16_p4"
-#define OUT_PLM_NAME "plm_w32_d64_chk16"
 #elif (PARALLELISM == 8)
 #define IN_PLM_NAME "plm_w32_d64_chk16_p8"
-#define OUT_PLM_NAME "plm_w32_d64_chk16"
 #else // (PARALLELISM == 16)
 #define IN_PLM_NAME "plm_w32_d64_chk16_p16"
-#define OUT_PLM_NAME "plm_w32_d64_chk16"
+#endif
+
+#elif (DMA_CHUNK == 32)
+#define OUT_DMA_CHUNK 32
+#define OUT_PLM_NAME "plm_w32_d64_chk32"
+#if (PARALLELISM == 1)
+#define IN_PLM_NAME "plm_w32_d64_chk32_p1"
+#elif (PARALLELISM == 4)
+#define IN_PLM_NAME "plm_w32_d64_chk32_p4"
+#elif (PARALLELISM == 8)
+#define IN_PLM_NAME "plm_w32_d64_chk32_p8"
+#else // (PARALLELISM == 16)
+#define IN_PLM_NAME "plm_w32_d64_chk32_p16"
 #endif
 
 #elif (DMA_CHUNK == 64)
+#define OUT_DMA_CHUNK 64
+#define OUT_PLM_NAME "plm_w32_d64_chk64"
 #if (PARALLELISM == 1)
 #define IN_PLM_NAME "plm_w32_d64_chk64_p1"
-#define OUT_PLM_NAME "plm_w32_d64_chk64"
 #elif (PARALLELISM == 4)
 #define IN_PLM_NAME "plm_w32_d64_chk64_p4"
-#define OUT_PLM_NAME "plm_w32_d64_chk64"
 #elif (PARALLELISM == 8)
 #define IN_PLM_NAME "plm_w32_d64_chk64_p8"
-#define OUT_PLM_NAME "plm_w32_d64_chk64"
 #else // (PARALLELISM == 16)
 #define IN_PLM_NAME "plm_w32_d64_chk64_p16"
-#define OUT_PLM_NAME "plm_w32_d64_chk64"
 #endif
 
 #elif (DMA_CHUNK == 128)
+#define OUT_DMA_CHUNK 128
+#define OUT_PLM_NAME "plm_w32_d64_chk128"
 #if (PARALLELISM == 1)
 #define IN_PLM_NAME "plm_w32_d64_chk128_p1"
-#define OUT_PLM_NAME "plm_w32_d64_chk128"
 #elif (PARALLELISM == 4)
 #define IN_PLM_NAME "plm_w32_d64_chk128_p4"
-#define OUT_PLM_NAME "plm_w32_d64_chk128"
 #elif (PARALLELISM == 8)
 #define IN_PLM_NAME "plm_w32_d64_chk128_p8"
-#define OUT_PLM_NAME "plm_w32_d64_chk128"
 #else // (PARALLELISM == 16)
 #define IN_PLM_NAME "plm_w32_d64_chk128_p16"
-#define OUT_PLM_NAME "plm_w32_d64_chk128"
 #endif
 
 #elif (DMA_CHUNK == 512)
+#define OUT_DMA_CHUNK 512
+#define OUT_PLM_NAME "plm_w32_d64_chk512"
 #if (PARALLELISM == 1)
 #define IN_PLM_NAME "plm_w32_d64_chk512_p1"
-#define OUT_PLM_NAME "plm_w32_d64_chk512"
 #elif (PARALLELISM == 4)
 #define IN_PLM_NAME "plm_w32_d64_chk512_p4"
-#define OUT_PLM_NAME "plm_w32_d64_chk512"
 #elif (PARALLELISM == 8)
 #define IN_PLM_NAME "plm_w32_d64_chk512_p8"
-#define OUT_PLM_NAME "plm_w32_d64_chk512"
 #else // (PARALLELISM == 16)
 #define IN_PLM_NAME "plm_w32_d64_chk512_p16"
-#define OUT_PLM_NAME "plm_w32_d64_chk512"
 #endif
 
 #elif (DMA_CHUNK == 2048)
+#define OUT_DMA_CHUNK 512
+#define OUT_PLM_NAME "plm_w32_d64_chk512"
 #if (PARALLELISM == 1)
 #define IN_PLM_NAME "plm_w32_d64_chk2048_p1"
-#define OUT_PLM_NAME "plm_w32_d64_chk2048"
 #elif (PARALLELISM == 4)
 #define IN_PLM_NAME "plm_w32_d64_chk2048_p4"
-#define OUT_PLM_NAME "plm_w32_d64_chk2048"
 #elif (PARALLELISM == 8)
 #define IN_PLM_NAME "plm_w32_d64_chk2048_p8"
-#define OUT_PLM_NAME "plm_w32_d64_chk2048"
 #else // (PARALLELISM == 16)
 #define IN_PLM_NAME "plm_w32_d64_chk2048_p16"
-#define OUT_PLM_NAME "plm_w32_d64_chk2048"
 #endif
 
 #else // (DMA_CHUNK == 8192)
-#define OUT_PLM_NAME "plm_w32_d64_chk8192"
+#define OUT_DMA_CHUNK 512
+#define OUT_PLM_NAME "plm_w32_d64_chk512"
 #if (PARALLELISM == 1)
 #define IN_PLM_NAME "plm_w32_d64_chk8192_p1"
 #elif (PARALLELISM == 2)
@@ -129,6 +131,7 @@
 #else /* !STRATUS_HLS */
 
 #define HLS_MAP_plm(_mem, _plm_block_name)
+#define OUT_DMA_CHUNK DMA_CHUNK
 
 #endif /* STRATUS_HLS */
 
@@ -143,6 +146,7 @@
 
 // log of chunk size
 #define DMA_CHUNK_LOG (slog_2<DMA_CHUNK>::value)
+#define OUT_DMA_CHUNK_LOG (slog_2<OUT_DMA_CHUNK>::value)
 
 // floating/fixed point conversions
 #define INT2FP(x) int2fp<FPDATA, WORD_SIZE>(x)

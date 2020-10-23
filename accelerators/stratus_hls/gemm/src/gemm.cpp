@@ -432,7 +432,7 @@ void gemm::store_output()
     // Store
     uint32_t index = 0;
     uint32_t index_simple = st_offset;
-    uint16_t length = DMA_CHUNK;
+    uint16_t length = OUT_DMA_CHUNK;
     uint32_t index_a = st_offset;
 
     for (uint24_t a = 0; a < ninputs; a++)
@@ -663,8 +663,11 @@ void gemm::compute_kernel()
 			    for (uint16_t k = 0; k < length / PARALLELISM; ++k)
 			    {
 				//HLS_CONSTRAIN_LATENCY(0, HLS_ACHIEVABLE, "constrain-mac");
- 				HLS_PIPELINE_LOOP(HARD_STALL, 1, "pipeline-mac");
-
+#ifdef FIXED_POINT
+ 				HLS_PIPELINE_LOOP(HARD_STALL, 1, "pipeline-mac-fixed");
+#else
+ 				HLS_PIPELINE_LOOP(HARD_STALL, 2, "pipeline-mac-float");
+#endif
 				HLS_BREAK_ARRAY_DEPENDENCY(input0);
 				HLS_BREAK_ARRAY_DEPENDENCY(input1);
 				HLS_BREAK_ARRAY_DEPENDENCY(input2);
@@ -683,6 +686,16 @@ void gemm::compute_kernel()
 				    row[6] = INT2FP(input0[plm_i_row++]);
 				    row[7] = INT2FP(input0[plm_i_row++]);
 #endif
+#if (PARALLELISM >= 16)
+				    row[8] = INT2FP(input0[plm_i_row++]);
+				    row[9] = INT2FP(input0[plm_i_row++]);
+				    row[10] = INT2FP(input0[plm_i_row++]);
+				    row[11] = INT2FP(input0[plm_i_row++]);
+				    row[12] = INT2FP(input0[plm_i_row++]);
+				    row[13] = INT2FP(input0[plm_i_row++]);
+				    row[14] = INT2FP(input0[plm_i_row++]);
+				    row[15] = INT2FP(input0[plm_i_row++]);
+#endif
 				} else {
 				    row[0] = INT2FP(input1[plm_i_row++]);
 				    row[1] = INT2FP(input1[plm_i_row++]);
@@ -696,83 +709,165 @@ void gemm::compute_kernel()
 				    row[6] = INT2FP(input1[plm_i_row++]);
 				    row[7] = INT2FP(input1[plm_i_row++]);
 #endif
-				}
-				    if (pingpong_m2) {
-					col[0] = INT2FP(input2[plm_i_col++]);
-					col[1] = INT2FP(input2[plm_i_col++]);
-#if (PARALLELISM >= 4)
-					col[2] = INT2FP(input2[plm_i_col++]);
-					col[3] = INT2FP(input2[plm_i_col++]);
+#if (PARALLELISM >= 16)
+				    row[8] = INT2FP(input1[plm_i_row++]);
+				    row[9] = INT2FP(input1[plm_i_row++]);
+				    row[10] = INT2FP(input1[plm_i_row++]);
+				    row[11] = INT2FP(input1[plm_i_row++]);
+				    row[12] = INT2FP(input1[plm_i_row++]);
+				    row[13] = INT2FP(input1[plm_i_row++]);
+				    row[14] = INT2FP(input1[plm_i_row++]);
+				    row[15] = INT2FP(input1[plm_i_row++]);
 #endif
-#if (PARALLELISM >= 8)
-					col[4] = INT2FP(input2[plm_i_col++]);
-					col[5] = INT2FP(input2[plm_i_col++]);
-					col[6] = INT2FP(input2[plm_i_col++]);
-					col[7] = INT2FP(input2[plm_i_col++]);
-#endif
-				    } else {
-					col[0] = INT2FP(input3[plm_i_col++]);
-					col[1] = INT2FP(input3[plm_i_col++]);
-#if (PARALLELISM >= 4)
-					col[2] = INT2FP(input3[plm_i_col++]);
-					col[3] = INT2FP(input3[plm_i_col++]);
-#endif
-#if (PARALLELISM >= 8)
-					col[4] = INT2FP(input3[plm_i_col++]);
-					col[5] = INT2FP(input3[plm_i_col++]);
-					col[6] = INT2FP(input3[plm_i_col++]);
-					col[7] = INT2FP(input3[plm_i_col++]);
-#endif
-				    }
 
-				    uint16_t plm_i = (k << 1) + 1;
-				    mult_out[0] = row[0] * col[0];
-				    if (plm_i < length)
-					mult_out[1] =  row[1] * col[1];
-				    else
-					mult_out[1] = 0;
+				}
+				if (pingpong_m2) {
+				    col[0] = INT2FP(input2[plm_i_col++]);
+				    col[1] = INT2FP(input2[plm_i_col++]);
 #if (PARALLELISM >= 4)
-				    if (plm_i + 1 < length)
-					mult_out[2] = row[2] * col[2];
-				    else
-					mult_out[2] = 0;
-				    if (plm_i + 2 < length)
-					mult_out[3] = row[3] * col[3];
-				    else
-					mult_out[3] = 0;
+				    col[2] = INT2FP(input2[plm_i_col++]);
+				    col[3] = INT2FP(input2[plm_i_col++]);
 #endif
 #if (PARALLELISM >= 8)
-				    if (plm_i + 3 < length)
-					mult_out[4] = row[4] * col[4];
-				    else
-					mult_out[4] = 0;
-				    if (plm_i + 4 < length)
-					mult_out[5] = row[5] * col[5];
-				    else
-					mult_out[5] = 0;
-				    if (plm_i + 5 < length)
-					mult_out[6] = row[6] * col[6];
-				    else
-					mult_out[6] = 0;
-				    if (plm_i + 6 < length)
-					mult_out[7] = row[7] * col[7];
-				    else
-					mult_out[7] = 0;
+				    col[4] = INT2FP(input2[plm_i_col++]);
+				    col[5] = INT2FP(input2[plm_i_col++]);
+				    col[6] = INT2FP(input2[plm_i_col++]);
+				    col[7] = INT2FP(input2[plm_i_col++]);
 #endif
+#if (PARALLELISM >= 16)
+				    col[8] = INT2FP(input2[plm_i_col++]);
+				    col[9] = INT2FP(input2[plm_i_col++]);
+				    col[10] = INT2FP(input2[plm_i_col++]);
+				    col[11] = INT2FP(input2[plm_i_col++]);
+				    col[12] = INT2FP(input2[plm_i_col++]);
+				    col[13] = INT2FP(input2[plm_i_col++]);
+				    col[14] = INT2FP(input2[plm_i_col++]);
+				    col[15] = INT2FP(input2[plm_i_col++]);
+#endif
+				} else {
+				    col[0] = INT2FP(input3[plm_i_col++]);
+				    col[1] = INT2FP(input3[plm_i_col++]);
+#if (PARALLELISM >= 4)
+				    col[2] = INT2FP(input3[plm_i_col++]);
+				    col[3] = INT2FP(input3[plm_i_col++]);
+#endif
+#if (PARALLELISM >= 8)
+				    col[4] = INT2FP(input3[plm_i_col++]);
+				    col[5] = INT2FP(input3[plm_i_col++]);
+				    col[6] = INT2FP(input3[plm_i_col++]);
+				    col[7] = INT2FP(input3[plm_i_col++]);
+#endif
+#if (PARALLELISM >= 16)
+				    col[8] = INT2FP(input3[plm_i_col++]);
+				    col[9] = INT2FP(input3[plm_i_col++]);
+				    col[10] = INT2FP(input3[plm_i_col++]);
+				    col[11] = INT2FP(input3[plm_i_col++]);
+				    col[12] = INT2FP(input3[plm_i_col++]);
+				    col[13] = INT2FP(input3[plm_i_col++]);
+				    col[14] = INT2FP(input3[plm_i_col++]);
+				    col[15] = INT2FP(input3[plm_i_col++]);
+#endif
+				}
+
+				uint16_t plm_i = (k << 1) + 1;
+				mult_out[0] = row[0] * col[0];
+				if (plm_i < length)
+				    mult_out[1] =  row[1] * col[1];
+				else
+				    mult_out[1] = 0;
+#if (PARALLELISM >= 4)
+				if (plm_i + 1 < length)
+				    mult_out[2] = row[2] * col[2];
+				else
+				    mult_out[2] = 0;
+				if (plm_i + 2 < length)
+				    mult_out[3] = row[3] * col[3];
+				else
+				    mult_out[3] = 0;
+#endif
+#if (PARALLELISM >= 8)
+				if (plm_i + 3 < length)
+				    mult_out[4] = row[4] * col[4];
+				else
+				    mult_out[4] = 0;
+				if (plm_i + 4 < length)
+				    mult_out[5] = row[5] * col[5];
+				else
+				    mult_out[5] = 0;
+				if (plm_i + 5 < length)
+				    mult_out[6] = row[6] * col[6];
+				else
+				    mult_out[6] = 0;
+				if (plm_i + 6 < length)
+				    mult_out[7] = row[7] * col[7];
+				else
+				    mult_out[7] = 0;
+#endif
+#if (PARALLELISM >= 16)
+				if (plm_i + 7 < length)
+				    mult_out[8] = row[8] * col[8];
+				else
+				    mult_out[8] = 0;
+				if (plm_i + 8 < length)
+				    mult_out[9] = row[9] * col[9];
+				else
+				    mult_out[9] = 0;
+				if (plm_i + 9 < length)
+				    mult_out[10] = row[10] * col[10];
+				else
+				    mult_out[10] = 0;
+				if (plm_i + 10 < length)
+				    mult_out[11] = row[11] * col[11];
+				else
+				    mult_out[11] = 0;
+				if (plm_i + 11 < length)
+				    mult_out[12] = row[12] * col[12];
+				else
+				    mult_out[12] = 0;
+				if (plm_i + 12 < length)
+				    mult_out[13] = row[13] * col[13];
+				else
+				    mult_out[13] = 0;
+				if (plm_i + 13 < length)
+				    mult_out[14] = row[14] * col[14];
+				else
+				    mult_out[14] = 0;
+				if (plm_i + 14 < length)
+				    mult_out[15] = row[15] * col[15];
+				else
+				    mult_out[15] = 0;
+#endif
+
 #if (PARALLELISM == 2)
-				    accumulator += mult_out[0] + mult_out[1];
+				accumulator += mult_out[0] + mult_out[1];
 #elif (PARALLELISM == 4)
-				    FPDATA add_tmp0 = mult_out[0] + mult_out[1];
-				    FPDATA add_tmp1 = mult_out[2] + mult_out[3];
-				    accumulator += add_tmp0 + add_tmp1;
+				FPDATA add_tmp0 = mult_out[0] + mult_out[1];
+				FPDATA add_tmp1 = mult_out[2] + mult_out[3];
+				accumulator += add_tmp0 + add_tmp1;
 #elif (PARALLELISM == 8)
-				    FPDATA add_tmp0 = mult_out[0] + mult_out[1];
-				    FPDATA add_tmp1 = mult_out[2] + mult_out[3];
-				    FPDATA add_tmp2 = mult_out[4] + mult_out[5];
-				    FPDATA add_tmp3 = mult_out[6] + mult_out[7];
-				    FPDATA add_tmp4 = add_tmp0 + add_tmp1;
-				    FPDATA add_tmp5 = add_tmp2 + add_tmp3;
-				    accumulator += add_tmp4 + add_tmp5;
+				FPDATA add_tmp0 = mult_out[0] + mult_out[1];
+				FPDATA add_tmp1 = mult_out[2] + mult_out[3];
+				FPDATA add_tmp2 = mult_out[4] + mult_out[5];
+				FPDATA add_tmp3 = mult_out[6] + mult_out[7];
+				FPDATA add_tmp4 = add_tmp0 + add_tmp1;
+				FPDATA add_tmp5 = add_tmp2 + add_tmp3;
+				accumulator += add_tmp4 + add_tmp5;
+#elif (PARALLELISM == 16)
+				FPDATA add_tmp0 = mult_out[0] + mult_out[1];
+				FPDATA add_tmp1 = mult_out[2] + mult_out[3];
+				FPDATA add_tmp2 = mult_out[4] + mult_out[5];
+				FPDATA add_tmp3 = mult_out[6] + mult_out[7];
+				FPDATA add_tmp4 = mult_out[8] + mult_out[9];
+				FPDATA add_tmp5 = mult_out[10] + mult_out[11];
+				FPDATA add_tmp6 = mult_out[12] + mult_out[13];
+				FPDATA add_tmp7 = mult_out[14] + mult_out[15];
+				FPDATA add_tmp8 = add_tmp0 + add_tmp1;
+				FPDATA add_tmp9 = add_tmp2 + add_tmp3;
+				FPDATA add_tmp10 = add_tmp4 + add_tmp5;
+				FPDATA add_tmp11 = add_tmp6 + add_tmp7;
+				FPDATA add_tmp12 = add_tmp8 + add_tmp9;
+				FPDATA add_tmp13 = add_tmp10 + add_tmp11;
+				accumulator += add_tmp12 + add_tmp13;
 #endif
 			    }
 
@@ -808,7 +903,7 @@ void gemm::compute_kernel()
 
     // Force to store the last chunk
     if (store_count) {
-    	store_count = DMA_CHUNK - 1;
+    	store_count = OUT_DMA_CHUNK - 1;
     	sync_compute_store(store_count, 1, load_cfg, loadable_rows, pingpong_out);
     }
 
