@@ -41,9 +41,8 @@ public:
         HLS_MAP_plm(plm_weights_ping, PLM_WEIGHTS_NAME);
         HLS_MAP_plm(plm_in_pong, PLM_IN_NAME);
         HLS_MAP_plm(plm_in_ping, PLM_IN_NAME);
-
-	HLS_FLATTEN_ARRAY(plm_patch);
-	HLS_FLATTEN_ARRAY(plm_mac);
+        HLS_MAP_plm(plm_patch, PLM_PATCH_NAME);
+        HLS_MAP_plm(plm_mac, PLM_MAC_NAME);
     }
 
     // Processes
@@ -91,14 +90,14 @@ public:
 					 const uint16_t loadable_output_size);
 
     // Private local memories
-    sc_dt::sc_int<DATA_WIDTH> plm_in_ping[INPUT_PLM_SIZE];
-    sc_dt::sc_int<DATA_WIDTH> plm_in_pong[INPUT_PLM_SIZE];
-    sc_dt::sc_int<DATA_WIDTH> plm_weights_ping[WEIGHTS_PLM_SIZE];
-    sc_dt::sc_int<DATA_WIDTH> plm_weights_pong[WEIGHTS_PLM_SIZE];
-    sc_dt::sc_int<DATA_WIDTH> plm_out_ping[OUTPUT_PLM_SIZE];
-    sc_dt::sc_int<DATA_WIDTH> plm_out_pong[OUTPUT_PLM_SIZE];
-    FPDATA plm_patch[PATCH_PLM_SIZE];
-    FPDATA plm_mac[MAC_PLM_SIZE];
+    FPDATA_WORD plm_in_ping[INPUT_PLM_SIZE];
+    FPDATA_WORD plm_in_pong[INPUT_PLM_SIZE];
+    FPDATA_WORD plm_weights_ping[WEIGHTS_PLM_SIZE];
+    FPDATA_WORD plm_weights_pong[WEIGHTS_PLM_SIZE];
+    FPDATA_WORD plm_out_ping[OUTPUT_PLM_SIZE];
+    FPDATA_WORD plm_out_pong[OUTPUT_PLM_SIZE];
+    FPDATA_WORD plm_patch[PATCH_PLM_SIZE];
+    FPDATA_WORD plm_mac[MAC_PLM_SIZE];
 };
 
 

@@ -55,11 +55,11 @@ inline void conv2d::template_patch_extractor_3_3(const uint16_t channels, const 
                 int input_row = output_row - pad_h + kernel_row * dilation_h;
                 int input_col = output_col - pad_w + kernel_col * dilation_w;
 
-		FPDATA value;
+		FPDATA_WORD value;
 		if (input_row >=0 && input_row < height && input_col >= 0 && input_col < width)
-		    value = INT2FP(plm_in_ping[channel_base + input_row * width + input_col]);
+		    value = plm_in_ping[channel_base + input_row * width + input_col];
 		else
-		    value = FPDATA(0);
+		    value = 0;
 
 		// ESP_REPORT_INFO("PATCH %u %f", index, (float) value);
 
@@ -96,7 +96,7 @@ inline void conv2d::elementwise_multiplier(const uint16_t ping_weights,
 	else
 	    weight = INT2FP(plm_weights_pong[start_address++]);
 
-	plm_mac[i] = plm_patch[i] * weight;
+	plm_mac[i] = FP2INT(INT2FP(plm_patch[i]) * weight);
 
 	// ESP_REPORT_INFO("MULTIPLY patch * weight = res : %f * %f = %f", (float) plm_patch[i], (float) weight, (float) plm_mac[i]);
 
@@ -109,7 +109,7 @@ inline void conv2d::accumulator(const uint16_t size, FPDATA* result)
     FPDATA result_local = 0;
 
     for(uint16_t i = 0; i < size; i++) {
-	result_local += plm_mac[i];
+	result_local += INT2FP(plm_mac[i]);
 	// ESP_REPORT_INFO("ACCUM i %u val %f res %f", i, (float) plm_mac[i], (float) result_local);
 	wait();
     }
