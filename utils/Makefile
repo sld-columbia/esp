@@ -1427,6 +1427,8 @@ sim-jtag: sim-compile jtag-stim
 vivado:
 	$(QUIET_MKDIR)mkdir -p vivado
 
+ifneq ($(filter $(TECHLIB),$(FPGALIBS)),)
+
 vivado/srcs.tcl: vivado check_all_rtl_srcs.old
 	$(QUIET_INFO)echo "generating source list for Vivado"
 	@$(RM) $@
@@ -1653,6 +1655,8 @@ vivado-update: vivado vivado/syn.tcl
 			echo $(SPACES)"ERROR: bistream not found; synthesis failed"; \
 		fi; \
 	fi;
+
+endif # ifneq ($(filter $(TECHLIB),$(FPGALIBS)),)
 
 vivado-prog-fpga: vivado/program.tcl
 	@cd vivado; \
