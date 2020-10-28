@@ -273,7 +273,7 @@ esp-config-distclean: esp-config-clean
 
 ### RTL simulator executables ###
 VLIB = vlib
-VCOM = vcom -quiet $(VCOMOPT)
+VCOM = vcom -quiet -93 $(VCOMOPT)
 VLOG = vlog -quiet $(VLOGOPT)
 
 XMCOM = xmvhdl -NOVITALCHECK -linedebug -v93 -nocopyright $(XMCOMOPT)
