@@ -1062,7 +1062,7 @@ begin
 
     llc_wrapper_1 : llc_wrapper
       generic map (
-        tech          => CFG_MEMTECH,
+        tech          => CFG_FABTECH,
         sets          => CFG_LLC_SETS,
         ways          => CFG_LLC_WAYS,
         ahb_if_en     => this_has_ddr,

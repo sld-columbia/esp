@@ -838,7 +838,7 @@ begin
   -- APB proxy
   misc_noc2apb_1 : misc_noc2apb
     generic map (
-      tech         => CFG_MEMTECH,
+      tech         => CFG_FABTECH,
       local_apb_en => this_local_apb_en)
     port map (
       rst              => rst,
