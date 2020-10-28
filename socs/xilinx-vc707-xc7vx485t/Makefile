@@ -23,8 +23,7 @@ SIMTOP = testbench
 ### Modelsim Simulation Options ###
 
 # Compile flags
-# VHDL-93 is required by some GRLIB source files
-VCOMOPT += -93
+VCOMOPT +=
 VLOGOPT +=
 
 XCOMOPT +=
