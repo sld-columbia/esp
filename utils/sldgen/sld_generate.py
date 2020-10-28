@@ -1387,7 +1387,7 @@ def gen_tile_acc(accelerator_list, axi_acceleratorlist, template_dir, out_dir):
           f.write("    noc_" + acc.name + "_i: noc_" + acc.name + "\n")
           f.write("      generic map (\n")
           f.write("        hls_conf       => this_hls_conf,\n")
-          f.write("        tech           => CFG_MEMTECH,\n")
+          f.write("        tech           => CFG_FABTECH,\n")
           f.write("        mem_num        => CFG_NMEM_TILE + CFG_NSLM_TILE + CFG_SVGA_ENABLE,\n")
           f.write("        cacheable_mem_num => CFG_NMEM_TILE,\n")
           f.write("        mem_info       => tile_acc_mem_list,\n")

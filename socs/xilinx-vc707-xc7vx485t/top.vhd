@@ -241,7 +241,7 @@ begin
 -------------------------------------------------------------------------------
 
   -- From CPU 0
-  led0_pad : outpad generic map (tech => CFG_PADTECH, level => cmos, voltage => x18v)
+  led0_pad : outpad generic map (tech => CFG_FABTECH, level => cmos, voltage => x18v)
     port map (led(0), cpuerr);
   --pragma translate_off
   process(clkm, rstn)
@@ -253,41 +253,41 @@ begin
   --pragma translate_on
 
   -- From DDR controller (on FPGA)
-  led2_pad : outpad generic map (tech => CFG_PADTECH, level => cmos, voltage => x18v)
+  led2_pad : outpad generic map (tech => CFG_FABTECH, level => cmos, voltage => x18v)
     port map (led(2), calib_done);
-  led3_pad : outpad generic map (tech => CFG_PADTECH, level => cmos, voltage => x18v)
+  led3_pad : outpad generic map (tech => CFG_FABTECH, level => cmos, voltage => x18v)
     port map (led(3), lock);
-  led4_pad : outpad generic map (tech => CFG_PADTECH, level => cmos, voltage => x18v)
+  led4_pad : outpad generic map (tech => CFG_FABTECH, level => cmos, voltage => x18v)
     port map (led(4), ddr_ahbso(0).hready);
 
   -- Unused
-  led1_pad : outpad generic map (tech => CFG_PADTECH, level => cmos, voltage => x18v)
+  led1_pad : outpad generic map (tech => CFG_FABTECH, level => cmos, voltage => x18v)
     port map (led(1), '0');
-  led5_pad : outpad generic map (tech => CFG_PADTECH, level => cmos, voltage => x18v)
+  led5_pad : outpad generic map (tech => CFG_FABTECH, level => cmos, voltage => x18v)
     port map (led(5), '0');
-  led6_pad : outpad generic map (tech => CFG_PADTECH, level => cmos, voltage => x18v)
+  led6_pad : outpad generic map (tech => CFG_FABTECH, level => cmos, voltage => x18v)
     port map (led(6), '0');
 
 -------------------------------------------------------------------------------
 -- Switches -------------------------------------------------------------------
 -------------------------------------------------------------------------------
 
-  sw0_pad : iopad generic map (tech => CFG_PADTECH, level => cmos, voltage => x18v)
+  sw0_pad : iopad generic map (tech => CFG_FABTECH, level => cmos, voltage => x18v)
     port map (switch(0), '0', '1', sel0);
-  sw1_pad : iopad generic map (tech => CFG_PADTECH, level => cmos, voltage => x18v)
+  sw1_pad : iopad generic map (tech => CFG_FABTECH, level => cmos, voltage => x18v)
     port map (switch(1), '0', '1', sel1);
-  sw2_pad : iopad generic map (tech => CFG_PADTECH, level => cmos, voltage => x18v)
+  sw2_pad : iopad generic map (tech => CFG_FABTECH, level => cmos, voltage => x18v)
     port map (switch(2), '0', '1', sel2);
-  sw3_pad : iopad generic map (tech => CFG_PADTECH, level => cmos, voltage => x18v)
+  sw3_pad : iopad generic map (tech => CFG_FABTECH, level => cmos, voltage => x18v)
     port map (switch(3), '0', '1', sel3);
-  sw4_pad : iopad generic map (tech => CFG_PADTECH, level => cmos, voltage => x18v)
+  sw4_pad : iopad generic map (tech => CFG_FABTECH, level => cmos, voltage => x18v)
     port map (switch(4), '0', '1', sel4);
 
 -------------------------------------------------------------------------------
 -- Buttons --------------------------------------------------------------------
 -------------------------------------------------------------------------------
 
-  --pio_pad : inpad generic map (tech => CFG_PADTECH, level => cmos, voltage => x18v)
+  --pio_pad : inpad generic map (tech => CFG_FABTECH, level => cmos, voltage => x18v)
   --  port map (button(i-4), gpioi.din(i));
 
 ----------------------------------------------------------------------
@@ -297,7 +297,7 @@ begin
   vcc <= (others => '1'); gnd <= (others => '0');
   cgi.pllctrl <= "00"; cgi.pllrst <= rstraw;
 
-  reset_pad : inpad generic map (tech => CFG_PADTECH, level => cmos, voltage => x18v) port map (reset, rst);
+  reset_pad : inpad generic map (tech => CFG_FABTECH, level => cmos, voltage => x18v) port map (reset, rst);
   rst0 : rstgen         -- reset generator
   generic map (acthigh => 1, syncin => 0)
   port map (rst, clkm, lock, rstn, rstraw);
@@ -312,10 +312,10 @@ begin
 -- UART pads
 -----------------------------------------------------------------------------
 
-  uart_rxd_pad   : inpad  generic map (level => cmos, voltage => x18v, tech => CFG_PADTECH) port map (uart_rxd, uart_rxd_int);
-  uart_txd_pad   : outpad generic map (level => cmos, voltage => x18v, tech => CFG_PADTECH) port map (uart_txd, uart_txd_int);
-  uart_ctsn_pad : inpad  generic map (level => cmos, voltage => x18v, tech => CFG_PADTECH) port map (uart_ctsn, uart_ctsn_int);
-  uart_rtsn_pad : outpad generic map (level => cmos, voltage => x18v, tech => CFG_PADTECH) port map (uart_rtsn, uart_rtsn_int);
+  uart_rxd_pad   : inpad  generic map (level => cmos, voltage => x18v, tech => CFG_FABTECH) port map (uart_rxd, uart_rxd_int);
+  uart_txd_pad   : outpad generic map (level => cmos, voltage => x18v, tech => CFG_FABTECH) port map (uart_txd, uart_txd_int);
+  uart_ctsn_pad : inpad  generic map (level => cmos, voltage => x18v, tech => CFG_FABTECH) port map (uart_ctsn, uart_ctsn_int);
+  uart_rtsn_pad : outpad generic map (level => cmos, voltage => x18v, tech => CFG_FABTECH) port map (uart_rtsn, uart_rtsn_int);
 
 ----------------------------------------------------------------------
 ---  DDR3 memory controller ------------------------------------------
@@ -419,7 +419,7 @@ begin
         paddr => 16#800#,
         pmask => 16#f00#,
         pirq => 12,
-        memtech => CFG_MEMTECH,
+        memtech => CFG_FABTECH,
         little_end  => GLOB_CPU_AXI * CFG_L2_DISABLE,
         rmii => 0,
         enable_mdio => 1,
@@ -475,16 +475,16 @@ begin
         apbo     => sgmii0_apbo
         );
 
-    emdio_pad : iopad generic map (tech => CFG_PADTECH, level => cmos, voltage => x18v)
+    emdio_pad : iopad generic map (tech => CFG_FABTECH, level => cmos, voltage => x18v)
       port map (emdio, sgmiio.mdio_o, sgmiio.mdio_oe, sgmiii.mdio_i);
 
-    emdc_pad : outpad generic map (tech => CFG_PADTECH, level => cmos, voltage => x18v)
+    emdc_pad : outpad generic map (tech => CFG_FABTECH, level => cmos, voltage => x18v)
       port map (emdc, sgmiio.mdc);
 
-    eint_pad : inpad generic map (tech => CFG_PADTECH, level => cmos, voltage => x18v)
+    eint_pad : inpad generic map (tech => CFG_FABTECH, level => cmos, voltage => x18v)
       port map (eint, sgmiii.mdint);
 
-    erst_pad : outpad generic map (tech => CFG_PADTECH, level => cmos, voltage => x18v)
+    erst_pad : outpad generic map (tech => CFG_FABTECH, level => cmos, voltage => x18v)
       port map (erst, sgmiio.reset);
 
     sgmiii.clkp <= gtrefclk_p;

@@ -379,9 +379,6 @@ class SoC_Config():
     #determine other parameters
     with open("grlib_config.vhd") as fp:
       for line in fp:
-        #check target technology
-        if line.find("CFG_FABTECH : integer") != -1:
-          self.TECH = self.check_cfg(line, "integer := ", ";")
         #check if the CPU is configured to used the CPU
         if line.find("CFG_FPU : integer") != -1:
           self.HAS_FPU = self.check_cfg(line, "integer := ", " ")

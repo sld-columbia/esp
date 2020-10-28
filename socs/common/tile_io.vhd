@@ -1383,7 +1383,7 @@ begin
         hindex2 => 0,
         haddr2  => CFG_SVGA_MEMORY_HADDR,
         hmask   => fb_hmask,
-        tech    => CFG_MEMTECH,
+        tech    => CFG_FABTECH,
         kbytes  => 512,
         wordsz  => 32)
       port map (

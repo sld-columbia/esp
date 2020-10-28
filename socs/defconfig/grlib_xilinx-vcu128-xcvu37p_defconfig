@@ -7,10 +7,6 @@ CONFIG_HAS_SHARED_GRFPU=y
 #
 # Synthesis      
 #
-# CONFIG_SYN_VIRTEX7 is not set
-CONFIG_SYN_VIRTEXUP=y
-# CONFIG_SYN_NO_ASYNC is not set
-# CONFIG_SYN_SCAN is not set
 
 #
 # Processor            

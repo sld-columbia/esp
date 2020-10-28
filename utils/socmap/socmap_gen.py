@@ -399,6 +399,7 @@ def print_libs(fp, std_only):
     fp.write("use work.esp_global.all;\n")
     fp.write("use work.stdlib.all;\n")
     fp.write("use work.grlib_config.all;\n")
+    fp.write("use work.gencomp.all;\n")
     fp.write("use work.amba.all;\n")
     fp.write("use work.sld_devices.all;\n")
     fp.write("use work.devices.all;\n")
@@ -406,6 +407,8 @@ def print_libs(fp, std_only):
     fp.write("use work.leon3.all;\n")
     fp.write("use work.nocpackage.all;\n")
     fp.write("use work.allcaches.all;\n")
+
+  fp.write("\n")
 
 def print_global_constants(fp, soc):
   fp.write("  ------ Global architecture parameters\n")
@@ -494,6 +497,8 @@ def print_constants(fp, soc, esp_config):
 
 
 def print_mapping(fp, soc, esp_config):
+
+  fp.write("  constant CFG_FABTECH : integer := " + soc.TECH  + ";\n\n")
 
   #
   fp.write("  ------ Maximum number of slaves on both HP bus and I/O-bus\n")
@@ -2146,7 +2151,6 @@ def create_socmap(esp_config, soc):
   fp.close()
 
   print("Created global constants definition into 'esp_global.vhd'")
-
 
   # SoC map
   fp = open('socmap.vhd', 'w')
