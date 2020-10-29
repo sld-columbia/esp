@@ -68,11 +68,6 @@ void system_t::config_proc()
 		  stride_h, stride_w, dilation_h, dilation_w, num_filters, sw_weights, sw_output);
     ESP_REPORT_INFO("SW done");
 
-#ifdef TINY
-    print_hw_image("output-hw", hw_output, num_filters, height, width);
-    print_sw_image("output-sw", sw_output, num_filters, height, width);
-#endif
-
     // printf("Performance: data-in : moved %u (%u bytes) / memory footprint %u (%u bytes) / PLM locality %.2f%%",
     // 	   data_in_movement, data_in_movement * sizeof(FPDATA), channels * height * width, channels * height *
     // 	   width * sizeof(FPDATA),100*(channels * height * width)/((float)data_in_movement));
@@ -88,6 +83,12 @@ void system_t::config_proc()
     // Validate
     {
         dump_memory(); // store the output in more suitable data structure if needed
+
+#ifdef TINY
+	print_hw_image("output-hw", hw_output, num_filters, height, width);
+	print_sw_image("output-sw", sw_output, num_filters, height, width);
+#endif
+
         // check the results with the golden model
         if (validate())
         {
@@ -133,9 +134,9 @@ void system_t::load_memory()
     weights_size = weights_words_adj * (1);
     out_size = out_words_adj * (1);
 
-    hw_input = (FPDATA*)malloc(in_size * sizeof(FPDATA));
-    hw_weights = (FPDATA*)malloc(weights_size * sizeof(FPDATA));
-    hw_output = (FPDATA*)malloc(out_size * sizeof(FPDATA));
+    hw_input = (float*)malloc(in_size * sizeof(float));
+    hw_weights = (float*)malloc(weights_size * sizeof(float));
+    hw_output = (float*)malloc(out_size * sizeof(float));
 
     sw_input = (float*) malloc(in_size * sizeof(float));
     sw_weights = (float*) malloc(weights_size * sizeof(float));
@@ -153,13 +154,13 @@ void system_t::load_memory()
     // Memory initialization:
 #if (DMA_WORD_PER_BEAT == 0)
     for (i = 0; i < in_size; i++)  {
-        sc_dt::sc_bv<DATA_WIDTH> data_bv = fp2bv<FPDATA, DATA_WIDTH>(hw_input[i]);
+        sc_dt::sc_bv<DATA_WIDTH> data_bv = fp2bv<FPDATA, DATA_WIDTH>(FPDATA(hw_input[i]));
         for (j = 0; j < DMA_BEAT_PER_WORD; j++)
             mem[DMA_BEAT_PER_WORD * i + j] =
 		data_bv.range((j + 1) * DMA_WIDTH - 1, j * DMA_WIDTH);
     }
     for (; i < in_size + weights_size; i++)  {
-        sc_dt::sc_bv<DATA_WIDTH> data_bv = fp2bv<FPDATA, DATA_WIDTH>(hw_weights[i - in_size]);
+        sc_dt::sc_bv<DATA_WIDTH> data_bv = fp2bv<FPDATA, DATA_WIDTH>(FPDATA(hw_weights[i - in_size]));
         for (j = 0; j < DMA_BEAT_PER_WORD; j++)
             mem[DMA_BEAT_PER_WORD * i + j] =
 		data_bv.range((j + 1) * DMA_WIDTH - 1, j * DMA_WIDTH);
@@ -167,18 +168,18 @@ void system_t::load_memory()
 #else
     for (i = 0; i < in_size / DMA_WORD_PER_BEAT; i++)  {
 	// ESP_REPORT_INFO("tb load in %i : %f", i, (float) hw_input[i]);
-        sc_dt::sc_bv<DMA_WIDTH> data_bv = fp2bv<FPDATA, DATA_WIDTH>(hw_input[i]);
+        sc_dt::sc_bv<DMA_WIDTH> data_bv = fp2bv<FPDATA, DATA_WIDTH>(FPDATA(hw_input[i]));
         for (j = 0; j < DMA_WORD_PER_BEAT; j++)
             data_bv.range((j+1) * DATA_WIDTH - 1, j * DATA_WIDTH) =
-		fp2bv<FPDATA, DATA_WIDTH>(hw_input[i * DMA_WORD_PER_BEAT + j]);
+		fp2bv<FPDATA, DATA_WIDTH>(FPDATA(hw_input[i * DMA_WORD_PER_BEAT + j]));
         mem[i] = data_bv;
     }
     for (; i < (in_size + weights_size) / DMA_WORD_PER_BEAT; i++)  {
 	// ESP_REPORT_INFO("tb load we %i : %f", i, (float) hw_weights[i - in_size / DMA_WORD_PER_BEAT]);
-        sc_dt::sc_bv<DMA_WIDTH> data_bv = fp2bv<FPDATA, DATA_WIDTH>(hw_weights[i - in_size / DMA_WORD_PER_BEAT]);
+        sc_dt::sc_bv<DMA_WIDTH> data_bv = fp2bv<FPDATA, DATA_WIDTH>(FPDATA(hw_weights[i - in_size / DMA_WORD_PER_BEAT]));
         for (j = 0; j < DMA_WORD_PER_BEAT; j++)
             data_bv.range((j+1) * DATA_WIDTH - 1, j * DATA_WIDTH) =
-		fp2bv<FPDATA, DATA_WIDTH>(hw_weights[i * DMA_WORD_PER_BEAT + j - in_size]);
+		fp2bv<FPDATA, DATA_WIDTH>(FPDATA(hw_weights[i * DMA_WORD_PER_BEAT + j - in_size]));
         mem[i] = data_bv;
     }
 #endif
@@ -201,14 +202,18 @@ void system_t::dump_memory()
             data_bv.range((j + 1) * DMA_WIDTH - 1, j * DMA_WIDTH) =
 		mem[offset + DMA_BEAT_PER_WORD * i + j];
 
-        hw_output[i] = bv2fp<FPDATA, DATA_WIDTH>(data_bv);
+        FPDATA fpdata_elem = bv2fp<FPDATA, DATA_WIDTH>(data_bv);
+        hw_output[i] = (float) fpdata_elem.to_double();
     }
 #else
     offset = offset / DMA_WORD_PER_BEAT;
-    for (int i = 0; i < out_size / DMA_WORD_PER_BEAT; i++)
-        for (int j = 0; j < DMA_WORD_PER_BEAT; j++)
-            hw_output[i * DMA_WORD_PER_BEAT + j] = bv2fp<FPDATA, DATA_WIDTH>
+    for (int i = 0; i < out_size / DMA_WORD_PER_BEAT; i++) {
+        for (int j = 0; j < DMA_WORD_PER_BEAT; j++) {
+            FPDATA fpdata_elem = bv2fp<FPDATA, DATA_WIDTH>
 		(mem[offset + i].range((j + 1) * DATA_WIDTH - 1, j * DATA_WIDTH));
+            hw_output[i * DMA_WORD_PER_BEAT + j] = (float) fpdata_elem.to_double();
+	}
+    }
 #endif
 
     ESP_REPORT_INFO("dump memory completed");

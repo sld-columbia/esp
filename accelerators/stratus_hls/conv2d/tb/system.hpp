@@ -117,9 +117,9 @@ public:
     uint32_t weights_size;
     uint32_t out_size;
 
-    FPDATA* hw_input;
-    FPDATA* hw_weights;
-    FPDATA* hw_output;
+    float* hw_input;
+    float* hw_weights;
+    float* hw_output;
     float* sw_input;
     float* sw_weights;
     float* sw_output;
