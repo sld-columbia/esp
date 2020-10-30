@@ -126,15 +126,56 @@
 #define CONV_K_OUT_CHANNELS	(CONV5_3_W_OUT_CHANNELS)
 
 
-#elif defined(TINY)
+#elif defined(XSMALL)
 #define CONV_F_HEIGHT		(6)
 #define CONV_F_WIDTH		(6)
 #define CONV_F_CHANNELS		(2)
 
 #define CONV_K_HEIGHT		(3)
 #define CONV_K_WIDTH		(3)
-#define CONV_K_IN_CHANNELS	(2)
-#define CONV_K_OUT_CHANNELS	(2)
+#define CONV_K_IN_CHANNELS	(CONV_F_CHANNELS)
+#define CONV_K_OUT_CHANNELS	(4)
+
+#elif defined(SMALL)
+#define CONV_F_HEIGHT		(22)
+#define CONV_F_WIDTH		(22)
+#define CONV_F_CHANNELS		(4)
+
+#define CONV_K_HEIGHT		(3)
+#define CONV_K_WIDTH		(3)
+#define CONV_K_IN_CHANNELS	(CONV_F_CHANNELS)
+#define CONV_K_OUT_CHANNELS	(8)
+
+#elif defined(MEDIUM)
+#define CONV_F_HEIGHT		(28)
+#define CONV_F_WIDTH		(28)
+#define CONV_F_CHANNELS		(16)
+
+#define CONV_K_HEIGHT		(3)
+#define CONV_K_WIDTH		(3)
+#define CONV_K_IN_CHANNELS	(CONV_F_CHANNELS)
+#define CONV_K_OUT_CHANNELS	(4)
+
+#elif defined(LARGE)
+#define CONV_F_HEIGHT		(40)
+#define CONV_F_WIDTH		(40)
+#define CONV_F_CHANNELS		(16)
+
+#define CONV_K_HEIGHT		(3)
+#define CONV_K_WIDTH		(3)
+#define CONV_K_IN_CHANNELS	(CONV_F_CHANNELS)
+#define CONV_K_OUT_CHANNELS	(32)
+
+#elif defined(XLARGE)
+#define CONV_F_HEIGHT		(224)
+#define CONV_F_WIDTH		(224)
+#define CONV_F_CHANNELS		(3)
+
+#define CONV_K_HEIGHT		(3)
+#define CONV_K_WIDTH		(3)
+#define CONV_K_IN_CHANNELS	(CONV_F_CHANNELS)
+#define CONV_K_OUT_CHANNELS	(8)
+
 
 #else
 #error "Layer not defined"

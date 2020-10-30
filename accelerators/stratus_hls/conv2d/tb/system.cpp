@@ -84,7 +84,7 @@ void system_t::config_proc()
     {
         dump_memory(); // store the output in more suitable data structure if needed
 
-#ifdef TINY
+#ifdef XSMALL
 	print_hw_image("output-hw", hw_output, num_filters, height, width);
 	print_sw_image("output-sw", sw_output, num_filters, height, width);
 #endif
@@ -145,11 +145,13 @@ void system_t::load_memory()
     init_image(hw_input, sw_input, channels, height, width, true);
     init_weights(hw_weights, sw_weights, num_filters, channels, kernel_h, kernel_w, true);
 
+#ifdef XSMALL
     print_hw_image("input-hw", hw_input, channels, height, width);
     print_sw_image("input-sw", sw_input, channels, height, width);
 
     print_hw_weights("weights-hw", hw_weights, num_filters, channels, kernel_h, kernel_w);
     print_sw_weights("weights-sw", sw_weights, num_filters, channels, kernel_h, kernel_w);
+#endif
 
     // Memory initialization:
 #if (DMA_WORD_PER_BEAT == 0)

@@ -64,24 +64,15 @@ public:
 			    uint8_t pad_w, uint8_t stride_h, uint8_t stride_w, uint8_t dilation_h,
 			    uint8_t dilation_w, uint8_t filter_height, uint8_t filter_width,
 			    uint16_t num_filters, uint16_t *output_h, uint16_t *output_w,
-			    uint16_t *filter_size, uint8_t *max_cacheable_rows,
-			    uint8_t *max_cacheable_filters, uint16_t *total_input_chunks,
+			    uint16_t *filter_size, uint16_t *max_cacheable_rows, uint16_t *max_cacheable_size,
+			    uint16_t *max_cacheable_filters, uint16_t *total_input_chunks,
 			    uint16_t *total_filters_chunks);
-    void template_patch_extractor_3_3(const uint16_t channels, const uint16_t height,
-				      const uint16_t width, const uint16_t channel_size,
-				      const uint16_t ping_input,
-				      const uint16_t output_row, const uint16_t output_col,
-				      const uint16_t pad_h, const uint16_t pad_w,
-				      const uint16_t dilation_h, const uint16_t dilation_w);
     void patch_extractor(const uint16_t channels, const uint16_t height, const uint16_t width,
 			 const uint16_t channel_size, const uint16_t ping_input,
 			 const uint16_t output_row,  const uint16_t output_col,
 			 const uint16_t pad_h, const uint16_t pad_w,
 			 const uint16_t dilation_h, const uint16_t dilation_w,
 			 const uint16_t kernel_h, const uint16_t kernel_w);
-    void elementwise_multiplier(const uint16_t ping_weights,
-				const uint16_t filter_size, const uint16_t filter_count);
-    void accumulator(const uint16_t size, FPDATA* result);
     void multiple_multiplier_accumulator(const uint16_t ping_weights, const uint16_t ping_output,
 					 const uint16_t filter_size, const uint16_t num_filters,
 					 const uint16_t filter_chunk,

@@ -22,10 +22,14 @@
  * CONV5_1
  * CONV5_2
  * CONV5_3
- * TINY
+ * XSMALL
+ * SMALL
+ * MEDIUM
+ * LARGE
+ * XLARGE
  */
 
-#define TINY
+#define XLARGE
 #endif
 
 #endif
