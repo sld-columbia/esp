@@ -33,7 +33,7 @@ inline void conv2d::compute_dimensions(uint16_t height, uint16_t width, uint16_t
 
     /* Max number of input rows cacheable in the input PLM */
     unsigned tmp = WEIGHTS_PLM_SIZE / (*filter_size);
-    *max_cacheable_filters = min(min(tmp, num_filters), channels);
+    *max_cacheable_filters = (min(min(tmp, num_filters), channels) >> 1) << 1;
 
     /* Amount of input chunks to be loaded in the input PLM */
     *total_input_chunks = ((height - 3)/((*max_cacheable_rows) - 2)) + 1;

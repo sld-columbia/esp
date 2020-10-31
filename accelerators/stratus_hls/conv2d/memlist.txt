@@ -1,8 +1,8 @@
 conv2d_plm_block_in_dma32 8192 32 1w:0r 0w:1r
 conv2d_plm_block_in_dma64 8192 32 2w:0r 0w:1r
-conv2d_plm_block_weights_dma32 9216 32 1w:0r 0w:1r
-conv2d_plm_block_weights_dma64 9216 32 2w:0r 0w:1r
+conv2d_plm_block_weights_dma32 8192 32 1w:0r 0w:1r
+conv2d_plm_block_weights_dma64 8192 32 2w:0r 0w:1r
 conv2d_plm_block_out_dma32 8192 32 1w:0r 0w:1r
 conv2d_plm_block_out_dma64 8192 32 1w:0r 0w:2r
-conv2d_plm_patch 288 32 1w:0r 0w:1r
-conv2d_plm_mac 288 32 1w:0r 0w:1r
+conv2d_plm_patch 512 32 1w:0r 0w:1r
+conv2d_plm_mac 512 32 1w:0r 0w:1r

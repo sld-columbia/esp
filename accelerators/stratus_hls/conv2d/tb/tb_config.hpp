@@ -29,7 +29,7 @@
  * XLARGE
  */
 
-#define XLARGE
+#define SMALL
 #endif
 
 #endif

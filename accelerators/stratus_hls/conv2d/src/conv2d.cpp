@@ -98,19 +98,19 @@ void conv2d::load_input()
         HLS_PROTO("load-dma");
         wait();
 
-	ESP_REPORT_INFO("output_h %u", output_h);
-	ESP_REPORT_INFO("output_w %u", output_w);
-	ESP_REPORT_INFO("filter_size %u", filter_size);
-	ESP_REPORT_INFO("max_cacheable_rows %u", max_cacheable_rows);
-	ESP_REPORT_INFO("max_cacheable_size %u", max_cacheable_size);
-	ESP_REPORT_INFO("max_cacheable_filters %u", max_cacheable_filters);
-	ESP_REPORT_INFO("total_input_chunks %u", total_input_chunks);
-	ESP_REPORT_INFO("total_filters_chunks %u", total_filters_chunks);
-	ESP_REPORT_INFO("feature_offset_incr %u", feature_offset_incr);
-	ESP_REPORT_INFO("feature_size %u", feature_size);
-	ESP_REPORT_INFO("channel_offset_incr %u", channel_offset_incr);
-	ESP_REPORT_INFO("filters_size %u", filters_size);
-	ESP_REPORT_INFO("max_cacheable_filters_size %u", max_cacheable_filters_size);
+	// ESP_REPORT_INFO("output_h %u", output_h);
+	// ESP_REPORT_INFO("output_w %u", output_w);
+	// ESP_REPORT_INFO("filter_size %u", filter_size);
+	// ESP_REPORT_INFO("max_cacheable_rows %u", max_cacheable_rows);
+	// ESP_REPORT_INFO("max_cacheable_size %u", max_cacheable_size);
+	// ESP_REPORT_INFO("max_cacheable_filters %u", max_cacheable_filters);
+	// ESP_REPORT_INFO("total_input_chunks %u", total_input_chunks);
+	// ESP_REPORT_INFO("total_filters_chunks %u", total_filters_chunks);
+	// ESP_REPORT_INFO("feature_offset_incr %u", feature_offset_incr);
+	// ESP_REPORT_INFO("feature_size %u", feature_size);
+	// ESP_REPORT_INFO("channel_offset_incr %u", channel_offset_incr);
+	// ESP_REPORT_INFO("filters_size %u", filters_size);
+	// ESP_REPORT_INFO("max_cacheable_filters_size %u", max_cacheable_filters_size);
 
         // Batching
         for (uint16_t b = 0; b < 1; b++)
@@ -129,8 +129,8 @@ void conv2d::load_input()
 		dma_info_t dma_info(filters_offset_start_phys / DMA_WORD_PER_BEAT,
 				    n_words_to_load / DMA_WORD_PER_BEAT, DMA_SIZE);
 
-		ESP_REPORT_INFO("load_input load filters dma_info. offset: %u len %u",
-				filters_offset_start_phys, n_words_to_load);
+		// ESP_REPORT_INFO("load_input load filters dma_info. offset: %u len %u",
+		// 		filters_offset_start_phys, n_words_to_load);
 
 		this->dma_read_ctrl.put(dma_info);
 
@@ -186,8 +186,8 @@ void conv2d::load_input()
 			dma_info_t dma_info(offset_start / DMA_WORD_PER_BEAT,
 					    n_words_to_load / DMA_WORD_PER_BEAT, DMA_SIZE);
 
-			ESP_REPORT_INFO("load_input load features dma_info. offset: %u len %u",
-					offset_start, n_words_to_load);
+			// ESP_REPORT_INFO("load_input load features dma_info. offset: %u len %u",
+			// 		offset_start, n_words_to_load);
 
 			this->dma_read_ctrl.put(dma_info);
 
@@ -359,8 +359,8 @@ void conv2d::store_output()
 			dma_info_t dma_info(offset_start / DMA_WORD_PER_BEAT,
 					    n_words_to_store / DMA_WORD_PER_BEAT, DMA_SIZE);
 
-			ESP_REPORT_INFO("store dma info. offset: %u len %u",
-					offset_start, n_words_to_store);
+			// ESP_REPORT_INFO("store dma info. offset: %u len %u",
+			// 		offset_start, n_words_to_store);
 
 			this->dma_write_ctrl.put(dma_info);
 
@@ -494,6 +494,9 @@ void conv2d::compute_kernel()
 	    for (uint16_t input_chunk = 0; input_chunk < total_input_chunks; input_chunk++)
 	    {
 		this->compute_load_handshake();
+
+		// ESP_REPORT_INFO("compute_load_handshake %u %u",
+		// 		filter_chunk, input_chunk);
 
 		bool no_first_row = (input_chunk != 0);
 		bool no_last_row = (input_chunk != total_input_chunks - 1);
