@@ -31,3 +31,6 @@
 [submodule "rtl/src/sld/caches/esp-caches"]
 	path = rtl/src/sld/caches/esp-caches
 	url = https://github.com/sld-columbia/esp-caches.git
+[submodule "third-party/ibex"]
+	path = third-party/ibex
+	url = https://github.com/lowRISC/ibex.git
