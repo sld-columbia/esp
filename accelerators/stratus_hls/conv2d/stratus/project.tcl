@@ -69,6 +69,16 @@ define_system_module tb ../tb/system.cpp ../tb/sc_main.cpp
 # HLS and Simulation configurations
 ######################################################################
 
+#
+# Testbench configuration
+#
+
+set TESTBENCHES "XS S M L XL"
+
+#
+# Common options for all configurations
+#
+
 # append COMMON_HLS_FLAGS \
 #     " -DFIXED_POINT --clock_period=$CLOCK_PERIOD"
 # set COMMON_CFG_FLAGS \
@@ -83,6 +93,10 @@ if {$TECH_IS_XILINX == 1} {
     append COMMON_HLS_FLAGS " -DTECH_IS_FPGA "
     append COMMON_CFG_FLAGS " -DTECH_IS_FPGA "
 }
+
+#
+# DSE configuration
+#
 
 set data_width 32
 set input_plm_size 8192
@@ -100,22 +114,35 @@ append COMMON_CFG_FLAGS \
       -DWEIGHTS_PLM_SIZE=$weights_plm_size -DOUTPUT_PLM_SIZE=$output_plm_size \
       -DPATCH_PLM_SIZE=$patch_plm_size -DMAC_PLM_SIZE=$mac_plm_size"
 
-set DEFAULT_ARGV ""
-
 foreach dma [list 64] {
     define_io_config * IOCFG_DMA$dma -DDMA_WIDTH=$dma $COMMON_CFG_FLAGS
 
     define_system_config tb TESTBENCH_DMA$dma -io_config IOCFG_DMA$dma
 
-    define_sim_config "BEHAV_DMA$dma" "conv2d BEH" "tb TESTBENCH_DMA$dma" -io_config IOCFG_DMA$dma -argv $DEFAULT_ARGV
+    foreach tb $TESTBENCHES {
+	set ARGV ""
+	append ARGV "$tb";  # argv[1]
+
+	define_sim_config "BEHAV_DMA$dma\_$tb" "conv2d BEH" "tb TESTBENCH_DMA$dma" \
+	    -io_config IOCFG_DMA$dma -argv $ARGV
+    }
 
     foreach cfg [list BASIC] {
 	set cname $cfg\_DMA$dma
-	define_hls_config conv2d $cname -io_config IOCFG_DMA$dma --clock_period=$CLOCK_PERIOD $COMMON_HLS_FLAGS -DHLS_DIRECTIVES_$cfg
-	if {$TECH_IS_XILINX == 1} {
-	    define_sim_config "$cname\_V" "conv2d RTL_V $cname" "tb TESTBENCH_DMA$dma" -io_config IOCFG_DMA$dma -argv $DEFAULT_ARGV -verilog_top_modules glbl
-	} else {
-	    define_sim_config "$cname\_V" "conv2d RTL_V $cname" "tb TESTBENCH_DMA$dma" -io_config IOCFG_DMA$dma -argv $DEFAULT_ARGV
+	define_hls_config conv2d $cname -io_config IOCFG_DMA$dma \
+	    --clock_period=$CLOCK_PERIOD $COMMON_HLS_FLAGS -DHLS_DIRECTIVES_$cfg
+
+	foreach tb $TESTBENCHES {
+	    set ARGV ""
+	    append ARGV "$tb";  # argv[1]
+
+	    if {$TECH_IS_XILINX == 1} {
+		define_sim_config "$cname\_$tb\_V" "conv2d RTL_V $cname" "tb TESTBENCH_DMA$dma" \
+		    -io_config IOCFG_DMA$dma -argv $ARGV -verilog_top_modules glbl
+	    } else {
+		define_sim_config "$cname\_$tb\_V" "conv2d RTL_V $cname" "tb TESTBENCH_DMA$dma" \
+		    -io_config IOCFG_DMA$dma -argv $ARGV
+	    }
 	}
     }
 }

@@ -11,11 +11,9 @@
 #include "conv2d.hpp"
 #include "conv2d_directives.hpp"
 
-// #include "tb_config.hpp"
 // #include "conv_layer.hpp"
 #include "golden.hpp"
 #include "sizes.h"
-#include "layers.hpp"
 #include "esp_templates.hpp"
 #include "utils.hpp"
 
@@ -65,20 +63,6 @@ public:
         acc->conf_done(conf_done);
         acc->acc_done(acc_done);
         acc->debug(debug);
-
-        /* <<--params-default-->> */
-        channels = CONV_F_CHANNELS;
-        height = CONV_F_HEIGHT;
-        width = CONV_F_WIDTH;
-        num_filters = CONV_K_OUT_CHANNELS;
-        kernel_h = CONV_K_HEIGHT;
-        kernel_w = CONV_K_WIDTH;
-        pad_h = CONV_K_HEIGHT/2;
-        pad_w = CONV_K_WIDTH/2;
-        stride_h = 1;
-        stride_w = 1;
-        dilation_h = 1;
-        dilation_w = 1;
     }
 
     // Processes

@@ -163,14 +163,15 @@ int _validate(float* hw_data_array, float* sw_data_array, int num_elements) {
 
     for (unsigned i = 0; i < num_elements; i++) {
         if (check_error_threshold_for_neuron(float(hw_data_array[i]), float(sw_data_array[i]), rel_error)) {
-            // if (tot_errors < REPORT_THRESHOLD) {
+            if (tot_errors < REPORT_THRESHOLD) {
                 float hw_fdata = hw_data_array[i];
-                printf("[ERROR] Validation: Element %d wrong [%.4f - %.4f]\n", i, float(hw_fdata), float(sw_data_array[i]));
-            // }
+                printf("Validation: Element %d wrong [%.4f - %.4f]\n",
+		       i, float(hw_fdata), float(sw_data_array[i]));
+            }
             tot_errors++;
         } else {
 	    float hw_fdata = hw_data_array[i];
-	    printf("Validation: Element %d wrong [%.4f - %.4f]\n", i, float(hw_fdata), float(sw_data_array[i]));
+	    // printf("Validation: Element %d wrong [%.4f - %.4f]\n", i, float(hw_fdata), float(sw_data_array[i]));
 	}
 
         if (rel_error > max_error) max_error = rel_error;

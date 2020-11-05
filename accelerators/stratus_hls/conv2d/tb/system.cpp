@@ -4,10 +4,11 @@
 #include <sstream>
 #include "system.hpp"
 
+
+
 // Process
 void system_t::config_proc()
 {
-
     // Reset
     {
         conf_done.write(false);
@@ -16,6 +17,70 @@ void system_t::config_proc()
     }
 
     ESP_REPORT_INFO("reset done");
+
+    // Arguments
+    {
+	int CONV_F_HEIGHT;
+	int CONV_F_WIDTH;
+	int CONV_F_CHANNELS;
+	int CONV_K_HEIGHT;
+	int CONV_K_WIDTH;
+	int CONV_K_IN_CHANNELS;
+	int CONV_K_OUT_CHANNELS;
+
+	ESP_REPORT_INFO("Argv[1] = %s", esc_argv()[1]);
+
+	if (!strcmp(esc_argv()[1], "XL")) {
+	    CONV_F_HEIGHT = 224;
+	    CONV_F_WIDTH = 224;
+	    CONV_F_CHANNELS = 3;
+	    CONV_K_HEIGHT = 3;
+	    CONV_K_WIDTH = 3;
+	    CONV_K_OUT_CHANNELS = 8;
+	} else if (!strcmp(esc_argv()[1], "L")) {
+	    CONV_F_HEIGHT = 40;
+	    CONV_F_WIDTH = 40;
+	    CONV_F_CHANNELS = 16;
+	    CONV_K_HEIGHT = 3;
+	    CONV_K_WIDTH = 3;
+	    CONV_K_OUT_CHANNELS = 4;
+	} else if (!strcmp(esc_argv()[1], "M")) {
+	    CONV_F_HEIGHT = 28;
+	    CONV_F_WIDTH = 28;
+	    CONV_F_CHANNELS = 16;
+	    CONV_K_HEIGHT = 3;
+	    CONV_K_WIDTH = 3;
+	    CONV_K_OUT_CHANNELS = 4;
+	} else if (!strcmp(esc_argv()[1], "S")) {
+	    CONV_F_HEIGHT = 22;
+	    CONV_F_WIDTH = 22;
+	    CONV_F_CHANNELS = 4;
+	    CONV_K_HEIGHT = 3;
+	    CONV_K_WIDTH = 3;
+	    CONV_K_OUT_CHANNELS = 8;
+	} else { // if (!strcmp(esc_argv()[1], "XS")) {
+	    CONV_F_HEIGHT = 6;
+	    CONV_F_WIDTH = 6;
+	    CONV_F_CHANNELS = 2;
+	    CONV_K_HEIGHT = 3;
+	    CONV_K_WIDTH = 3;
+	    CONV_K_OUT_CHANNELS = 4;
+	}
+	CONV_K_IN_CHANNELS = CONV_F_CHANNELS;
+
+	channels = CONV_F_CHANNELS;
+        height = CONV_F_HEIGHT;
+        width = CONV_F_WIDTH;
+        num_filters = CONV_K_OUT_CHANNELS;
+        kernel_h = CONV_K_HEIGHT;
+        kernel_w = CONV_K_WIDTH;
+        pad_h = CONV_K_HEIGHT/2;
+        pad_w = CONV_K_WIDTH/2;
+        stride_h = 1;
+        stride_w = 1;
+        dilation_h = 1;
+        dilation_w = 1;
+    }
 
     // Config
     load_memory();
@@ -112,9 +177,9 @@ void system_t::load_memory()
 
     // Optional usage check
 #ifdef CADENCE
-    if (esc_argc() != 1)
+    if (esc_argc() != 2)
     {
-        ESP_REPORT_INFO("usage: %s\n", esc_argv()[0]);
+        ESP_REPORT_INFO("usage: %s <testbench-name>\n", esc_argv()[0]);
         sc_stop();
     }
 #endif
