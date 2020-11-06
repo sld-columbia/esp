@@ -24,7 +24,7 @@ inline void conv2d::compute_dimensions(
 
     /* Spatial dimensions of the output activation map */
     *pad = is_padded ? (filter_dim >> 1) : 0;
-    *output_w = (width  + 2 * *pad - filter_dim) / stride + 1;
+    *output_w = ((uint16_t) (width + 2 * *pad - filter_dim)) / stride + 1;
 
     /* Size (in number of words) of an input */
     *feature_size = height * width;
@@ -34,20 +34,20 @@ inline void conv2d::compute_dimensions(
     *filters_size = *filter_size * n_filters;
 
     /* Max number of input rows cacheable in the input PLM */
-    *max_cacheable_rows = min(INPUT_PLM_SIZE / (n_channels * width), height);
+    *max_cacheable_rows = min(INPUT_PLM_SIZE / ((uint16_t) (n_channels * width)), height);
     *max_cacheable_size = *max_cacheable_rows * width;
 
     /* Max number of input rows cacheable in the input PLM */
-    unsigned tmp = WEIGHTS_PLM_SIZE / (*filter_size);
+    uint16_t tmp = WEIGHTS_PLM_SIZE / (*filter_size);
     *max_cacheable_filters = (min(min(tmp, n_filters), n_channels) >> 1) << 1;
     *max_cacheable_filters_size = *filter_size * *max_cacheable_filters;
 
     /* Amount of input chunks to be loaded in the input PLM */
     uint16_t max_cacheable_rows_norm = (*max_cacheable_rows) - filter_dim + 1;
-    *total_input_chunks = (height - filter_dim) / max_cacheable_rows_norm + 1;
+    *total_input_chunks = ((uint16_t) (height - filter_dim)) / max_cacheable_rows_norm + 1;
 
     /* Amount of filter chunks to be loaded in the filter PLM */
-    *total_filters_chunks = ((n_filters - 1) / (*max_cacheable_filters)) + 1;
+    *total_filters_chunks = ((uint16_t) (n_filters - 1)) / (*max_cacheable_filters) + 1;
 
     /* Load offsets */
     *channel_offset_incr = *feature_size;

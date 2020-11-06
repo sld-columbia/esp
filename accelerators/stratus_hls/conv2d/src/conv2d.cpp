@@ -109,6 +109,7 @@ void conv2d::load_input()
         HLS_PROTO("load-dma");
         wait();
 
+#ifndef STRATUS_HLS
 	ESP_REPORT_INFO("output_w %u", output_w);
 	ESP_REPORT_INFO("filter_size %u", filter_size);
 	ESP_REPORT_INFO("max_cacheable_rows %u", max_cacheable_rows);
@@ -121,7 +122,7 @@ void conv2d::load_input()
 	ESP_REPORT_INFO("channel_offset_incr %u", channel_offset_incr);
 	ESP_REPORT_INFO("filters_size %u", filters_size);
 	ESP_REPORT_INFO("max_cacheable_filters_size %u", max_cacheable_filters_size);
-
+#endif
         // Batching
         for (uint16_t b = 0; b < 1; b++)
         {
@@ -136,8 +137,8 @@ void conv2d::load_input()
 		uint16_t n_words_to_load = min(filters_size - filters_offset_start_virt,
 					       max_cacheable_filters_size);
 
-		dma_info_t dma_info(filters_offset_start_phys / DMA_WORD_PER_BEAT,
-				    n_words_to_load / DMA_WORD_PER_BEAT, DMA_SIZE);
+		dma_info_t dma_info(filters_offset_start_phys >> DMA_WORD_PER_BEAT_LOG2,
+				    n_words_to_load >> DMA_WORD_PER_BEAT_LOG2, DMA_SIZE);
 
 		// ESP_REPORT_INFO("load_input load filters dma_info. offset: %u len %u",
 		// 		filters_offset_start_phys, n_words_to_load);
@@ -193,8 +194,8 @@ void conv2d::load_input()
 			uint16_t n_words_to_load = min(feature_size - feature_offset_start,
 						       max_cacheable_size);
 			uint32_t offset_start = channel_offset + feature_offset_start;
-			dma_info_t dma_info(offset_start / DMA_WORD_PER_BEAT,
-					    n_words_to_load / DMA_WORD_PER_BEAT, DMA_SIZE);
+			dma_info_t dma_info(offset_start >> DMA_WORD_PER_BEAT_LOG2,
+					    n_words_to_load >> DMA_WORD_PER_BEAT_LOG2, DMA_SIZE);
 
 			// ESP_REPORT_INFO("load_input load features dma_info. offset: %u len %u",
 			// 		offset_start, n_words_to_load);
@@ -353,8 +354,8 @@ void conv2d::store_output()
 
 			uint32_t offset_start = channel_offset + feature_offset_start_phys;
 	
-			dma_info_t dma_info(offset_start / DMA_WORD_PER_BEAT,
-					    n_words_to_store / DMA_WORD_PER_BEAT, DMA_SIZE);
+			dma_info_t dma_info(offset_start >> DMA_WORD_PER_BEAT_LOG2,
+					    n_words_to_store >> DMA_WORD_PER_BEAT_LOG2, DMA_SIZE);
 
 			// ESP_REPORT_INFO("store dma info. offset: %u len %u",
 			// 		offset_start, n_words_to_store);

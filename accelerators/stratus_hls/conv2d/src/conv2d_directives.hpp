@@ -7,12 +7,16 @@
 #if (DMA_WIDTH == 32)
 #define DMA_BEAT_PER_WORD 1
 #define DMA_WORD_PER_BEAT 1
+#define DMA_BEAT_PER_WORD_LOG2 0
+#define DMA_WORD_PER_BEAT_LOG2 0
 #define PLM_IN_NAME "conv2d_plm_block_in_dma32"
 #define PLM_WEIGHTS_NAME "conv2d_plm_block_weights_dma32"
 #define PLM_OUT_NAME "conv2d_plm_block_out_dma32"
 #elif (DMA_WIDTH == 64)
 #define DMA_BEAT_PER_WORD 1
 #define DMA_WORD_PER_BEAT 2
+#define DMA_BEAT_PER_WORD_LOG2 0
+#define DMA_WORD_PER_BEAT_LOG2 1
 #define PLM_IN_NAME "conv2d_plm_block_in_dma64"
 #define PLM_WEIGHTS_NAME "conv2d_plm_block_weights_dma64"
 #define PLM_OUT_NAME "conv2d_plm_block_out_dma64"
