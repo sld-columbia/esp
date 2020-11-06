@@ -24,6 +24,8 @@ void conv2d::load_input()
         HLS_PROTO("load-reset");
 
         this->reset_load_input();
+	load_compute_cfg_done.req.reset_req();
+	load_store_cfg_done.req.reset_req();
 
         // explicit PLM ports reset if any
 
@@ -34,18 +36,13 @@ void conv2d::load_input()
 
     // Config
     /* <<--params-->> */
-    int16_t n_channels;
-    int16_t n_filters;
-    int8_t filter_height;
-    int8_t dilation_h;
-    int8_t stride_w;
-    int8_t pad_w;
-    int16_t feature_map_height;
-    int8_t pad_h;
-    int8_t stride_h;
-    int8_t filter_width;
-    int8_t dilation_w;
-    int16_t feature_map_width;
+    uint16_t n_channels;
+    uint16_t n_filters;
+    uint4_t filter_dim;
+    uint4_t stride;
+    bool is_padded;
+    uint16_t height;
+    uint16_t width;
     {
         HLS_PROTO("load-config");
 
@@ -56,61 +53,74 @@ void conv2d::load_input()
         /* <<--local-params-->> */
         n_channels = config.n_channels;
         n_filters = config.n_filters;
-        filter_height = config.filter_height;
-        dilation_h = config.dilation_h;
-        stride_w = config.stride_w;
-        pad_w = config.pad_w;
-        feature_map_height = config.feature_map_height;
-        pad_h = config.pad_h;
-        stride_h = config.stride_h;
-        filter_width = config.filter_width;
-        dilation_w = config.dilation_w;
-        feature_map_width = config.feature_map_width;
+        filter_dim = config.filter_dim;
+        stride = config.stride;
+        is_padded = config.is_padded;
+        height = config.feature_map_height;
+        width = config.feature_map_width;
     }
 
     // Precompute sizes
-    uint16_t output_h;
+    bool ping_input = true;
+    bool ping_weights = true;
+    uint4_t pad;
     uint16_t output_w;
+    uint16_t feature_size;
     uint16_t filter_size;
+    uint32_t filters_size;
     uint16_t max_cacheable_rows;
     uint16_t max_cacheable_size;
     uint16_t max_cacheable_filters;
+    uint16_t max_cacheable_filters_size;
     uint16_t total_input_chunks;
     uint16_t total_filters_chunks;
-    compute_dimensions(feature_map_height, feature_map_width, n_channels, pad_h, pad_w,
-		       stride_h, stride_w, dilation_h, dilation_w, (uint8_t) filter_height,
-		       (uint8_t) filter_width, n_filters, &output_h, &output_w, &filter_size,
-		       &max_cacheable_rows, &max_cacheable_size, &max_cacheable_filters, &total_input_chunks,
-		       &total_filters_chunks);
+    uint16_t feature_offset_incr;
+    uint16_t channel_offset_incr;
+    uint32_t filters_offset_start_base;
+    uint32_t feature_offset_start_base;
 
+    compute_dimensions(height, width, n_channels, (bool) is_padded,
+		       stride, (uint8_t) filter_dim, n_filters,
+		       &output_w, &pad, &feature_size, &filter_size, &filters_size,
+		       &max_cacheable_rows, &max_cacheable_size, &max_cacheable_filters,
+		       &max_cacheable_filters_size, &total_input_chunks, &total_filters_chunks,
+		       &feature_offset_incr, &channel_offset_incr,
+		       &filters_offset_start_base, &feature_offset_start_base);
 
-    bool ping_input = true;
-    bool ping_weights = true;
-    uint16_t feature_offset_incr = (max_cacheable_rows - 2) * feature_map_width;
-    uint16_t feature_size = feature_map_height * feature_map_width;
-    uint16_t channel_offset_incr = feature_size;
-    uint32_t filters_size = filter_size * n_filters;
-    uint16_t max_cacheable_filters_size = filter_size * max_cacheable_filters;
-    uint32_t filters_offset_start_base = feature_size * n_channels;
+    {
+	HLS_DEFINE_PROTOCOL("load-config-sig");
+	pad_sig.write(pad);
+	output_w_sig.write(output_w);
+	filter_size_sig.write(filter_size);
+	total_filters_chunks_sig.write(total_filters_chunks);
+	total_input_chunks_sig.write(total_input_chunks);
+	max_cacheable_rows_sig.write(max_cacheable_rows);
+	max_cacheable_filters_sig.write(max_cacheable_filters);
+	channel_offset_incr_sig.write(channel_offset_incr);
+	feature_offset_start_base_sig.write(feature_offset_start_base);
+	wait();
+    }
+
+    load_compute_cfg_handshake();
+    load_store_cfg_handshake();
 
     // Load
     {
         HLS_PROTO("load-dma");
         wait();
 
-	// ESP_REPORT_INFO("output_h %u", output_h);
-	// ESP_REPORT_INFO("output_w %u", output_w);
-	// ESP_REPORT_INFO("filter_size %u", filter_size);
-	// ESP_REPORT_INFO("max_cacheable_rows %u", max_cacheable_rows);
-	// ESP_REPORT_INFO("max_cacheable_size %u", max_cacheable_size);
-	// ESP_REPORT_INFO("max_cacheable_filters %u", max_cacheable_filters);
-	// ESP_REPORT_INFO("total_input_chunks %u", total_input_chunks);
-	// ESP_REPORT_INFO("total_filters_chunks %u", total_filters_chunks);
-	// ESP_REPORT_INFO("feature_offset_incr %u", feature_offset_incr);
-	// ESP_REPORT_INFO("feature_size %u", feature_size);
-	// ESP_REPORT_INFO("channel_offset_incr %u", channel_offset_incr);
-	// ESP_REPORT_INFO("filters_size %u", filters_size);
-	// ESP_REPORT_INFO("max_cacheable_filters_size %u", max_cacheable_filters_size);
+	ESP_REPORT_INFO("output_w %u", output_w);
+	ESP_REPORT_INFO("filter_size %u", filter_size);
+	ESP_REPORT_INFO("max_cacheable_rows %u", max_cacheable_rows);
+	ESP_REPORT_INFO("max_cacheable_size %u", max_cacheable_size);
+	ESP_REPORT_INFO("max_cacheable_filters %u", max_cacheable_filters);
+	ESP_REPORT_INFO("total_input_chunks %u", total_input_chunks);
+	ESP_REPORT_INFO("total_filters_chunks %u", total_filters_chunks);
+	ESP_REPORT_INFO("feature_offset_incr %u", feature_offset_incr);
+	ESP_REPORT_INFO("feature_size %u", feature_size);
+	ESP_REPORT_INFO("channel_offset_incr %u", channel_offset_incr);
+	ESP_REPORT_INFO("filters_size %u", filters_size);
+	ESP_REPORT_INFO("max_cacheable_filters_size %u", max_cacheable_filters_size);
 
         // Batching
         for (uint16_t b = 0; b < 1; b++)
@@ -249,7 +259,7 @@ void conv2d::store_output()
         HLS_PROTO("store-reset");
 
         this->reset_store_output();
-
+	load_store_cfg_done.ack.reset_ack();
         // explicit PLM ports reset if any
 
         // User-defined reset code
@@ -259,18 +269,10 @@ void conv2d::store_output()
 
     // Config
     /* <<--params-->> */
-    int16_t n_channels;
-    int16_t n_filters;
-    int8_t filter_height;
-    int8_t dilation_h;
-    int8_t stride_w;
-    int8_t pad_w;
-    int16_t feature_map_height;
-    int8_t pad_h;
-    int8_t stride_h;
-    int8_t filter_width;
-    int8_t dilation_w;
-    int16_t feature_map_width;
+    uint16_t n_filters;
+    uint4_t filter_dim;
+    uint4_t stride;
+    uint16_t height;
 
     {
         HLS_PROTO("store-config");
@@ -280,42 +282,37 @@ void conv2d::store_output()
 
         // User-defined config code
         /* <<--local-params-->> */
-        n_channels = config.n_channels;
         n_filters = config.n_filters;
-        filter_height = config.filter_height;
-        dilation_h = config.dilation_h;
-        stride_w = config.stride_w;
-        pad_w = config.pad_w;
-        feature_map_height = config.feature_map_height;
-        pad_h = config.pad_h;
-        stride_h = config.stride_h;
-        filter_width = config.filter_width;
-        dilation_w = config.dilation_w;
-        feature_map_width = config.feature_map_width;
+        filter_dim = config.filter_dim;
+        stride = config.stride;
+        height = config.feature_map_height;
     }
 
-    // Precompute sizes
-    uint16_t output_h;
+    store_load_cfg_handshake();
+
+    uint4_t pad;
     uint16_t output_w;
-    uint16_t filter_size;
     uint16_t max_cacheable_rows;
-    uint16_t max_cacheable_size;
     uint16_t max_cacheable_filters;
     uint16_t total_input_chunks;
     uint16_t total_filters_chunks;
-    compute_dimensions(feature_map_height, feature_map_width, n_channels, pad_h, pad_w,
-		       stride_h, stride_w, dilation_h, dilation_w, (uint8_t) filter_height,
-		       (uint8_t) filter_width, n_filters, &output_h, &output_w, &filter_size,
-		       &max_cacheable_rows, &max_cacheable_size, &max_cacheable_filters, &total_input_chunks,
-		       &total_filters_chunks);
+    uint16_t channel_offset_incr;
+    uint32_t feature_offset_start_base;
 
+    {
+	HLS_DEFINE_PROTOCOL("store-config-sig");
+	pad = pad_sig.read();
+	output_w = output_w_sig.read();
+	total_filters_chunks = total_filters_chunks_sig.read();
+	total_input_chunks = total_input_chunks_sig.read();
+	max_cacheable_rows = max_cacheable_rows_sig.read();
+	max_cacheable_filters = max_cacheable_filters_sig.read();
+	channel_offset_incr = channel_offset_incr_sig.read();
+	feature_offset_start_base = feature_offset_start_base_sig.read();
+	wait();
+    }
 
     bool ping_output = true;
-    uint16_t feature_size = feature_map_height * feature_map_width;
-    uint16_t channel_offset_incr = feature_size;
-    uint32_t filters_size = filter_size * n_filters;
-    uint16_t max_cacheable_filters_size = filter_size * max_cacheable_filters;
-    uint32_t feature_offset_start_base = feature_size * n_channels + filters_size;
 
     // Store
     {
@@ -339,7 +336,7 @@ void conv2d::store_output()
 		    bool no_first_row = (input_chunk != 0);
 		    bool no_last_row = (input_chunk != total_input_chunks - 1);
 		    uint16_t first_row_to_load = (max_cacheable_rows - 2) * input_chunk;
-		    uint16_t loadable_rows = min(feature_map_height - first_row_to_load,
+		    uint16_t loadable_rows = min(height - first_row_to_load,
 						 max_cacheable_rows);
 		    uint16_t rows_to_load = loadable_rows - no_first_row - no_last_row;
 		    uint16_t n_words_to_store = rows_to_load * output_w;
@@ -418,6 +415,7 @@ void conv2d::compute_kernel()
         HLS_PROTO("compute-reset");
 
         this->reset_compute_kernel();
+	load_compute_cfg_done.ack.reset_ack();
 
         // explicit PLM ports reset if any
 
@@ -428,18 +426,12 @@ void conv2d::compute_kernel()
 
     // Config
     /* <<--params-->> */
-    int16_t n_channels;
-    int16_t n_filters;
-    int8_t filter_height;
-    int8_t dilation_h;
-    int8_t stride_w;
-    int8_t pad_w;
-    int16_t feature_map_height;
-    int8_t pad_h;
-    int8_t stride_h;
-    int8_t filter_width;
-    int8_t dilation_w;
-    int16_t feature_map_width;
+    uint16_t n_channels;
+    uint16_t n_filters;
+    uint4_t filter_dim;
+    uint4_t stride;
+    uint16_t height;
+    uint16_t width;
 
     {
         HLS_PROTO("compute-config");
@@ -451,32 +443,33 @@ void conv2d::compute_kernel()
         /* <<--local-params-->> */
         n_channels = config.n_channels;
         n_filters = config.n_filters;
-        filter_height = config.filter_height;
-        dilation_h = config.dilation_h;
-        stride_w = config.stride_w;
-        pad_w = config.pad_w;
-        feature_map_height = config.feature_map_height;
-        pad_h = config.pad_h;
-        stride_h = config.stride_h;
-        filter_width = config.filter_width;
-        dilation_w = config.dilation_w;
-        feature_map_width = config.feature_map_width;
+        filter_dim = config.filter_dim;
+        stride = config.stride;
+        height = config.feature_map_height;
+        width = config.feature_map_width;
     }
 
-    // Precompute sizes
-    uint16_t output_h;
+    compute_load_cfg_handshake();
+
+    uint4_t pad;
     uint16_t output_w;
     uint16_t filter_size;
     uint16_t max_cacheable_rows;
-    uint16_t max_cacheable_size;
     uint16_t max_cacheable_filters;
     uint16_t total_input_chunks;
     uint16_t total_filters_chunks;
-    compute_dimensions(feature_map_height, feature_map_width, n_channels, pad_h, pad_w,
-		       stride_h, stride_w, dilation_h, dilation_w, (uint8_t) filter_height,
-		       (uint8_t) filter_width, n_filters, &output_h, &output_w, &filter_size,
-		       &max_cacheable_rows, &max_cacheable_size, &max_cacheable_filters, &total_input_chunks,
-		       &total_filters_chunks);
+
+    {
+	HLS_DEFINE_PROTOCOL("compute-config-sig");
+	pad = pad_sig.read();
+	output_w = output_w_sig.read();
+	filter_size = filter_size_sig.read();
+	total_filters_chunks = total_filters_chunks_sig.read();
+	total_input_chunks = total_input_chunks_sig.read();
+	max_cacheable_rows = max_cacheable_rows_sig.read();
+	max_cacheable_filters = max_cacheable_filters_sig.read();
+	wait();
+    }
 
     // Compute
     bool ping_input = true;
@@ -501,7 +494,7 @@ void conv2d::compute_kernel()
 		bool no_first_row = (input_chunk != 0);
 		bool no_last_row = (input_chunk != total_input_chunks - 1);
 		uint16_t first_row_to_load = (max_cacheable_rows - 2) * input_chunk;
-		uint16_t loadable_rows = min(feature_map_height - first_row_to_load,
+		uint16_t loadable_rows = min(height - first_row_to_load,
 					     max_cacheable_rows);
 		uint16_t rows_to_load = loadable_rows - no_first_row - no_last_row;
 		uint16_t loadable_output_size = rows_to_load * output_w;
@@ -512,11 +505,10 @@ void conv2d::compute_kernel()
 			// ESP_REPORT_INFO("compute_kernel most inner loop %u %u %u %u",
 			// 		filter_chunk, input_chunk, output_row, output_col);
 
-			patch_extractor(n_channels, loadable_rows, feature_map_width,
-					loadable_rows * feature_map_width, ping_input,
+			patch_extractor(n_channels, loadable_rows, width,
+					loadable_rows * width, ping_input,
 					output_row + no_first_row, output_col,
-					pad_h, pad_w, dilation_h, dilation_w,
-					filter_height, filter_width);
+					pad, filter_dim);
 
 			multiple_multiplier_accumulator(ping_weights, ping_output,
 							filter_size, n_filters, filter_chunk,

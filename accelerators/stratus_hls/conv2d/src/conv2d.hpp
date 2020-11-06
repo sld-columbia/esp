@@ -29,9 +29,13 @@ public:
     conv2d(const sc_module_name& name)
     : esp_accelerator_3P<DMA_WIDTH>(name)
         , cfg("config")
+	, load_compute_cfg_done("load_compute_cfg_done")
+	, load_store_cfg_done("load_store_cfg_done")
     {
         // Signal binding
         cfg.bind_with(*this);
+	load_compute_cfg_done.bind_with<DMA_WIDTH>(*this);
+	load_store_cfg_done.bind_with<DMA_WIDTH>(*this);
 
         // Map arrays to memories
         /* <<--plm-bind-->> */
@@ -59,26 +63,39 @@ public:
     // Configure conv2d
     esp_config_proc cfg;
 
+    // Custom handshakes
+    handshake_t load_compute_cfg_done;
+    handshake_t load_store_cfg_done;
+
     // Functions
-    void compute_dimensions(uint16_t height, uint16_t width, uint16_t channels, uint8_t pad_h,
-			    uint8_t pad_w, uint8_t stride_h, uint8_t stride_w, uint8_t dilation_h,
-			    uint8_t dilation_w, uint8_t filter_height, uint8_t filter_width,
-			    uint16_t num_filters, uint16_t *output_h, uint16_t *output_w,
-			    uint16_t *filter_size, uint16_t *max_cacheable_rows, uint16_t *max_cacheable_size,
-			    uint16_t *max_cacheable_filters, uint16_t *total_input_chunks,
-			    uint16_t *total_filters_chunks);
-    void patch_extractor(const uint16_t channels, const uint16_t height, const uint16_t width,
-			 const uint16_t channel_size, const uint16_t ping_input,
-			 const uint16_t output_row,  const uint16_t output_col,
-			 const uint16_t pad_h, const uint16_t pad_w,
-			 const uint16_t dilation_h, const uint16_t dilation_w,
-			 const uint16_t kernel_h, const uint16_t kernel_w);
-    void multiple_multiplier_accumulator(const uint16_t ping_weights, const uint16_t ping_output,
-					 const uint16_t filter_size, const uint16_t num_filters,
-					 const uint16_t filter_chunk,
-					 const uint16_t max_cacheable_filters,
-					 const uint16_t output_plm_offset,
-					 const uint16_t loadable_output_size);
+    void compute_dimensions(
+	const uint16_t height, const uint16_t width, const uint16_t n_channels,
+	const bool is_padded, const uint4_t stride, const uint4_t filter_dim,
+	const uint16_t n_filters, uint16_t *output_w, uint4_t *pad,
+	uint16_t *feature_size, uint16_t *filter_size, uint32_t *filters_size, 
+	uint16_t *max_cacheable_rows, uint16_t *max_cacheable_size,
+	uint16_t *max_cacheable_filters, uint16_t *max_cacheable_filters_size,
+	uint16_t *total_input_chunks, uint16_t *total_filters_chunks,
+	uint16_t *feature_offset_incr, uint16_t *channel_offset_incr,
+	uint32_t *filters_offset_start_base, uint32_t *feature_offset_start_base);
+    void patch_extractor(
+	const uint16_t channels, const uint16_t height, const uint16_t width,
+	const uint16_t channel_size, const uint16_t ping_input,
+	const uint16_t output_row,  const uint16_t output_col,
+	const uint4_t pad, const uint4_t kernel_dim);
+    void multiple_multiplier_accumulator(
+	const uint16_t ping_weights, const uint16_t ping_output,
+	const uint16_t filter_size, const uint16_t num_filters,
+	const uint16_t filter_chunk,
+	const uint16_t max_cacheable_filters,
+	const uint16_t output_plm_offset,
+	const uint16_t loadable_output_size);
+
+    // Configuration handshakes
+    inline void load_compute_cfg_handshake();
+    inline void compute_load_cfg_handshake();
+    inline void load_store_cfg_handshake();
+    inline void store_load_cfg_handshake();
 
     // Private local memories
     FPDATA_WORD plm_in_ping[INPUT_PLM_SIZE];
@@ -89,6 +106,17 @@ public:
     FPDATA_WORD plm_out_pong[OUTPUT_PLM_SIZE];
     FPDATA_WORD plm_patch[PATCH_PLM_SIZE];
     FPDATA_WORD plm_mac[MAC_PLM_SIZE];
+
+    // Custom configuration signals
+    sc_signal<uint4_t> pad_sig;
+    sc_signal<uint16_t> output_w_sig;
+    sc_signal<uint16_t> filter_size_sig;
+    sc_signal<uint16_t> total_filters_chunks_sig;
+    sc_signal<uint16_t> total_input_chunks_sig;
+    sc_signal<uint16_t> max_cacheable_rows_sig;
+    sc_signal<uint16_t> max_cacheable_filters_sig;
+    sc_signal<uint16_t> channel_offset_incr_sig;
+    sc_signal<uint32_t> feature_offset_start_base_sig;
 };
 
 

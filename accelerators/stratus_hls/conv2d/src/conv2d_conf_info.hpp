@@ -21,15 +21,10 @@ public:
         /* <<--ctor-->> */
         this->n_channels = 1;
         this->n_filters = 1;
-        this->filter_height = 1;
-        this->dilation_h = 1;
-        this->stride_w = 1;
-        this->pad_w = 1;
+        this->filter_dim = 1;
+        this->stride = 1;
+        this->is_padded = 1;
         this->feature_map_height = 1;
-        this->pad_h = 1;
-        this->stride_h = 1;
-        this->filter_width = 1;
-        this->dilation_w = 1;
         this->feature_map_width = 1;
     }
 
@@ -37,30 +32,20 @@ public:
         /* <<--ctor-args-->> */
         int32_t n_channels, 
         int32_t n_filters, 
-        int32_t filter_height, 
-        int32_t dilation_h, 
-        int32_t stride_w, 
-        int32_t pad_w, 
+        int32_t filter_dim, 
+        int32_t stride, 
+        int32_t is_padded, 
         int32_t feature_map_height, 
-        int32_t pad_h, 
-        int32_t stride_h, 
-        int32_t filter_width, 
-        int32_t dilation_w, 
         int32_t feature_map_width
         )
     {
         /* <<--ctor-custom-->> */
         this->n_channels = n_channels;
         this->n_filters = n_filters;
-        this->filter_height = filter_height;
-        this->dilation_h = dilation_h;
-        this->stride_w = stride_w;
-        this->pad_w = pad_w;
+        this->filter_dim = filter_dim;
+        this->stride = stride;
+        this->is_padded = is_padded;
         this->feature_map_height = feature_map_height;
-        this->pad_h = pad_h;
-        this->stride_h = stride_h;
-        this->filter_width = filter_width;
-        this->dilation_w = dilation_w;
         this->feature_map_width = feature_map_width;
     }
 
@@ -70,15 +55,10 @@ public:
         /* <<--eq-->> */
         if (n_channels != rhs.n_channels) return false;
         if (n_filters != rhs.n_filters) return false;
-        if (filter_height != rhs.filter_height) return false;
-        if (dilation_h != rhs.dilation_h) return false;
-        if (stride_w != rhs.stride_w) return false;
-        if (pad_w != rhs.pad_w) return false;
+        if (filter_dim != rhs.filter_dim) return false;
+        if (stride != rhs.stride) return false;
+        if (is_padded != rhs.is_padded) return false;
         if (feature_map_height != rhs.feature_map_height) return false;
-        if (pad_h != rhs.pad_h) return false;
-        if (stride_h != rhs.stride_h) return false;
-        if (filter_width != rhs.filter_width) return false;
-        if (dilation_w != rhs.dilation_w) return false;
         if (feature_map_width != rhs.feature_map_width) return false;
         return true;
     }
@@ -89,15 +69,10 @@ public:
         /* <<--assign-->> */
         n_channels = other.n_channels;
         n_filters = other.n_filters;
-        filter_height = other.filter_height;
-        dilation_h = other.dilation_h;
-        stride_w = other.stride_w;
-        pad_w = other.pad_w;
+        filter_dim = other.filter_dim;
+        stride = other.stride;
+        is_padded = other.is_padded;
         feature_map_height = other.feature_map_height;
-        pad_h = other.pad_h;
-        stride_h = other.stride_h;
-        filter_width = other.filter_width;
-        dilation_w = other.dilation_w;
         feature_map_width = other.feature_map_width;
         return *this;
     }
@@ -113,15 +88,10 @@ public:
         /* <<--print-->> */
         os << "n_channels = " << conf_info.n_channels << ", ";
         os << "n_filters = " << conf_info.n_filters << ", ";
-        os << "filter_height = " << conf_info.filter_height << ", ";
-        os << "dilation_h = " << conf_info.dilation_h << ", ";
-        os << "stride_w = " << conf_info.stride_w << ", ";
-        os << "pad_w = " << conf_info.pad_w << ", ";
+        os << "filter_dim = " << conf_info.filter_dim << ", ";
+        os << "stride = " << conf_info.stride << ", ";
+        os << "is_padded = " << conf_info.is_padded << ", ";
         os << "feature_map_height = " << conf_info.feature_map_height << ", ";
-        os << "pad_h = " << conf_info.pad_h << ", ";
-        os << "stride_h = " << conf_info.stride_h << ", ";
-        os << "filter_width = " << conf_info.filter_width << ", ";
-        os << "dilation_w = " << conf_info.dilation_w << ", ";
         os << "feature_map_width = " << conf_info.feature_map_width << "";
         os << "}";
         return os;
@@ -130,15 +100,10 @@ public:
         /* <<--params-->> */
         int32_t n_channels;
         int32_t n_filters;
-        int32_t filter_height;
-        int32_t dilation_h;
-        int32_t stride_w;
-        int32_t pad_w;
+        int32_t filter_dim;
+        int32_t stride;
+        int32_t is_padded;
         int32_t feature_map_height;
-        int32_t pad_h;
-        int32_t stride_h;
-        int32_t filter_width;
-        int32_t dilation_w;
         int32_t feature_map_width;
 };
 

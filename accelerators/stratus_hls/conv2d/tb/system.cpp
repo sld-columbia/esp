@@ -92,14 +92,9 @@ void system_t::config_proc()
         config.feature_map_height = height;
         config.feature_map_width = width;
         config.n_filters = num_filters;
-        config.filter_height = kernel_h;
-        config.filter_width = kernel_w;
-        config.pad_h = pad_h;
-        config.pad_w = pad_w;
-        config.stride_h = stride_h;
-        config.stride_w = stride_w;
-        config.dilation_h = dilation_h;
-        config.dilation_w = dilation_w;
+        config.filter_dim = kernel_h;
+        config.is_padded = (pad_h != 0);
+        config.stride = stride_h;
 
         wait(); conf_info.write(config);
         conf_done.write(true);

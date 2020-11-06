@@ -5,60 +5,72 @@
 
 // Optional application-specific helper functions
 
-inline void conv2d::compute_dimensions(uint16_t height, uint16_t width, uint16_t channels, uint8_t pad_h,
-				       uint8_t pad_w, uint8_t stride_h, uint8_t stride_w,
-				       uint8_t dilation_h, uint8_t dilation_w,
-				       uint8_t filter_height, uint8_t filter_width, uint16_t num_filters,
-				       uint16_t *output_h, uint16_t *output_w,
-				       uint16_t *filter_size, uint16_t *max_cacheable_rows, uint16_t *max_cacheable_size,
-				       uint16_t *max_cacheable_filters, uint16_t *total_input_chunks,
-				       uint16_t *total_filters_chunks) {
-
+inline void conv2d::compute_dimensions(
+    const uint16_t height, const uint16_t width, const uint16_t n_channels,
+    const bool is_padded, const uint4_t stride, const uint4_t filter_dim,
+    const uint16_t n_filters, uint16_t *output_w, uint4_t *pad,
+    uint16_t *feature_size, uint16_t *filter_size, uint32_t *filters_size, 
+    uint16_t *max_cacheable_rows, uint16_t *max_cacheable_size,
+    uint16_t *max_cacheable_filters, uint16_t *max_cacheable_filters_size,
+    uint16_t *total_input_chunks, uint16_t *total_filters_chunks,
+    uint16_t *feature_offset_incr, uint16_t *channel_offset_incr,
+    uint32_t *filters_offset_start_base, uint32_t *feature_offset_start_base)
+{
     /* Check if configuration is valid */
 #ifndef STRATUS_HLS
-    assert(height * channels * 3 <= INPUT_PLM_SIZE);
-    assert(filter_height * filter_width * channels <= WEIGHTS_PLM_SIZE);
+    assert(height * n_channels * filter_dim <= INPUT_PLM_SIZE);
+    assert(filter_dim * filter_dim * n_channels <= WEIGHTS_PLM_SIZE);
 #endif
 
     /* Spatial dimensions of the output activation map */
-    *output_h = (height + 2 * pad_h - (dilation_h * (filter_height - 1) + 1)) / stride_h + 1;
-    *output_w = (width  + 2 * pad_w - (dilation_w * (filter_width  - 1) + 1)) / stride_w + 1;
+    *pad = is_padded ? (filter_dim >> 1) : 0;
+    *output_w = (width  + 2 * *pad - filter_dim) / stride + 1;
+
+    /* Size (in number of words) of an input */
+    *feature_size = height * width;
 
     /* Size (in number of weights) of each filter */
-    *filter_size = channels * filter_width * filter_height;
+    *filter_size = n_channels * filter_dim * filter_dim;
+    *filters_size = *filter_size * n_filters;
 
     /* Max number of input rows cacheable in the input PLM */
-    *max_cacheable_rows = min(INPUT_PLM_SIZE / (channels * width), height);
+    *max_cacheable_rows = min(INPUT_PLM_SIZE / (n_channels * width), height);
     *max_cacheable_size = *max_cacheable_rows * width;
 
     /* Max number of input rows cacheable in the input PLM */
     unsigned tmp = WEIGHTS_PLM_SIZE / (*filter_size);
-    *max_cacheable_filters = (min(min(tmp, num_filters), channels) >> 1) << 1;
+    *max_cacheable_filters = (min(min(tmp, n_filters), n_channels) >> 1) << 1;
+    *max_cacheable_filters_size = *filter_size * *max_cacheable_filters;
 
     /* Amount of input chunks to be loaded in the input PLM */
-    *total_input_chunks = ((height - 3)/((*max_cacheable_rows) - 2)) + 1;
+    uint16_t max_cacheable_rows_norm = (*max_cacheable_rows) - filter_dim + 1;
+    *total_input_chunks = (height - filter_dim) / max_cacheable_rows_norm + 1;
 
     /* Amount of filter chunks to be loaded in the filter PLM */
-    *total_filters_chunks = ((num_filters - 1) / (*max_cacheable_filters)) + 1;
+    *total_filters_chunks = ((n_filters - 1) / (*max_cacheable_filters)) + 1;
+
+    /* Load offsets */
+    *channel_offset_incr = *feature_size;
+    *feature_offset_incr = max_cacheable_rows_norm * width;
+    *filters_offset_start_base = *feature_size * n_channels;
+    *feature_offset_start_base = *filters_offset_start_base + *filters_size;
 }
 
-inline void conv2d::patch_extractor(const uint16_t channels, const uint16_t height, const uint16_t width,
-		     const uint16_t channel_size, const uint16_t ping_input,
-		     const uint16_t output_row,  const uint16_t output_col,
-		     const uint16_t pad_h, const uint16_t pad_w,
-		     const uint16_t dilation_h, const uint16_t dilation_w,
-		     const uint16_t kernel_h, const uint16_t kernel_w)
+inline void conv2d::patch_extractor(
+    const uint16_t channels, const uint16_t height, const uint16_t width,
+    const uint16_t channel_size, const uint16_t ping_input,
+    const uint16_t output_row,  const uint16_t output_col,
+    const uint4_t pad, const uint4_t kernel_dim)
 {
-    // const uint16_t kernel_h = 3;
-    // const uint16_t kernel_w = 3;
+    // const uint16_t kernel_dim = 3;
 
     uint16_t index = 0;
     uint16_t channel_base = 0;
     for(uint16_t channel = 0; channel < channels; channel++) {
-        for (uint16_t kernel_row = 0; kernel_row < kernel_h; kernel_row++) {
-            for (uint16_t kernel_col = 0; kernel_col < kernel_w; kernel_col++) {
-                int input_row = output_row - pad_h + kernel_row * dilation_h;
-                int input_col = output_col - pad_w + kernel_col * dilation_w;
+        for (uint16_t kernel_row = 0; kernel_row < kernel_dim; kernel_row++) {
+            for (uint16_t kernel_col = 0; kernel_col < kernel_dim; kernel_col++) {
+                int input_row = output_row - pad + kernel_row;
+                int input_col = output_col - pad + kernel_col;
 
 		FPDATA_WORD value;
 		if (input_row >=0 && input_row < height && input_col >= 0 && input_col < width)
@@ -140,4 +152,32 @@ inline void conv2d::multiple_multiplier_accumulator(
 
 	wait();
     }
+}
+
+inline void conv2d::load_compute_cfg_handshake()
+{
+    HLS_DEFINE_PROTOCOL("load-compute-cfg-handshake");
+
+    load_compute_cfg_done.req.req();
+}
+
+inline void conv2d::compute_load_cfg_handshake()
+{
+    HLS_DEFINE_PROTOCOL("compute-load-cfg-handshake");
+
+    load_compute_cfg_done.ack.ack();
+}
+
+inline void conv2d::load_store_cfg_handshake()
+{
+    HLS_DEFINE_PROTOCOL("load-store-cfg-handshake");
+
+    load_store_cfg_done.req.req();
+}
+
+inline void conv2d::store_load_cfg_handshake()
+{
+    HLS_DEFINE_PROTOCOL("store-load-cfg-handshake");
+
+    load_store_cfg_done.ack.ack();
 }

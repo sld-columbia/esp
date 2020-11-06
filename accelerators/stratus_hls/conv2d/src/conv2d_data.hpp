@@ -22,11 +22,19 @@ const unsigned int FPDATA_ML = 23;
 const unsigned int FPDATA_EL = 8;
 #elif (DATA_WIDTH == 64)
 const unsigned int FPDATA_ML = 52;
-const unsigned int FPDATA_EL = 12;
+const unsigned int FPDATA_EL = 11;
 #endif
 
 typedef sc_dt::sc_uint<DMA_WIDTH> PLM_WORD;
 
 #endif
+
+// Custom SC data types
+typedef sc_dt::sc_uint<2> uint2_t;
+typedef sc_dt::sc_uint<4> uint4_t;
+typedef sc_dt::sc_uint<12> uint12_t;
+typedef sc_dt::sc_uint<20> uint20_t;
+typedef sc_dt::sc_uint<24> uint24_t;
+typedef sc_dt::sc_uint<28> uint28_t;
 
 #endif // __CONV2D_DATA_HPP__
