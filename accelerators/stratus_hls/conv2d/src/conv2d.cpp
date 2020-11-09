@@ -12,7 +12,6 @@
 
 // TODO
 // - DMA 64 bits cannot do DMA with 32 bit alignment
-// - size of PLMs may affect others, output that fits may affect how many filters to load
 // - we used uint16_t for all unsigned numbers, for some we may need more bits! make sure
 //   of that and add asserts
 
@@ -414,10 +413,10 @@ void conv2d::store_output()
 		{
 		    bool no_first_row = (input_chunk != 0);
 		    bool no_last_row = (input_chunk != total_input_chunks - 1);
-		    uint16_t first_row_to_load = (max_cacheable_rows - 2) * input_chunk;
+		    uint16_t first_row_to_load = (max_cacheable_rows - (filter_dim - 1)) * input_chunk;
 		    uint16_t loadable_rows = min(height - first_row_to_load,
 						 max_cacheable_rows);
-		    uint16_t rows_to_load = loadable_rows - no_first_row - no_last_row;
+		    uint16_t rows_to_load = loadable_rows - (no_first_row * pad) - (no_last_row * pad);
 		    uint16_t n_words_to_store = rows_to_load * output_w;
 
 		    uint16_t plm_out_index = 0;
@@ -579,10 +578,10 @@ void conv2d::compute_kernel()
 
 		bool no_first_row = (input_chunk != 0);
 		bool no_last_row = (input_chunk != total_input_chunks - 1);
-		uint16_t first_row_to_load = (max_cacheable_rows - 2) * input_chunk;
+		uint16_t first_row_to_load = (max_cacheable_rows - (filter_dim - 1)) * input_chunk;
 		uint16_t loadable_rows = min(height - first_row_to_load,
 					     max_cacheable_rows);
-		uint16_t rows_to_load = loadable_rows - no_first_row - no_last_row;
+		uint16_t rows_to_load = loadable_rows - (no_first_row * pad) - (no_last_row * pad);
 		uint16_t loadable_output_size = rows_to_load * output_w;
 
 		for (uint16_t output_row = 0; output_row < rows_to_load; output_row++)
@@ -594,7 +593,7 @@ void conv2d::compute_kernel()
 
 			patch_extractor(n_channels, loadable_rows, width,
 					loadable_rows * width, ping_input,
-					output_row + no_first_row, output_col,
+					output_row + (no_first_row * pad), output_col,
 					pad, filter_dim);
 
 			multiple_multiplier_accumulator(ping_weights, ping_bias, ping_output,

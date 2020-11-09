@@ -20,6 +20,15 @@ void system_t::config_proc()
 
     // Arguments
     {
+	// Optional usage check
+#ifdef CADENCE
+	if (esc_argc() != 3)
+	{
+	    ESP_REPORT_INFO("usage: %s <testbench-name>\n", esc_argv()[0]);
+	    sc_stop();
+	}
+#endif
+
 	uint32_t CONV_F_HEIGHT;
 	uint32_t CONV_F_WIDTH;
 	uint32_t CONV_F_CHANNELS;
@@ -30,43 +39,46 @@ void system_t::config_proc()
 	uint32_t DO_RELU;
 
 	ESP_REPORT_INFO("Argv[1] = %s", esc_argv()[1]);
+	ESP_REPORT_INFO("Argv[2] = %s", esc_argv()[2]);
 
 	if (!strcmp(esc_argv()[1], "XL")) {
 	    CONV_F_HEIGHT = 224;
 	    CONV_F_WIDTH = 224;
 	    CONV_F_CHANNELS = 3;
-	    CONV_K_HEIGHT = 3;
-	    CONV_K_WIDTH = 3;
 	    CONV_K_OUT_CHANNELS = 8;
 	} else if (!strcmp(esc_argv()[1], "L")) {
 	    CONV_F_HEIGHT = 40;
 	    CONV_F_WIDTH = 40;
 	    CONV_F_CHANNELS = 16;
-	    CONV_K_HEIGHT = 3;
-	    CONV_K_WIDTH = 3;
 	    CONV_K_OUT_CHANNELS = 4;
 	} else if (!strcmp(esc_argv()[1], "M")) {
 	    CONV_F_HEIGHT = 28;
 	    CONV_F_WIDTH = 28;
 	    CONV_F_CHANNELS = 16;
-	    CONV_K_HEIGHT = 3;
-	    CONV_K_WIDTH = 3;
 	    CONV_K_OUT_CHANNELS = 4;
 	} else if (!strcmp(esc_argv()[1], "S")) {
 	    CONV_F_HEIGHT = 22;
 	    CONV_F_WIDTH = 22;
 	    CONV_F_CHANNELS = 4;
-	    CONV_K_HEIGHT = 3;
-	    CONV_K_WIDTH = 3;
 	    CONV_K_OUT_CHANNELS = 8;
 	} else { // if (!strcmp(esc_argv()[1], "XS")) {
 	    CONV_F_HEIGHT = 6;
 	    CONV_F_WIDTH = 6;
 	    CONV_F_CHANNELS = 2;
-	    CONV_K_HEIGHT = 3;
-	    CONV_K_WIDTH = 3;
 	    CONV_K_OUT_CHANNELS = 8;
 	}
+
+	if (!strcmp(esc_argv()[2], "1x1")) {
+	    CONV_K_HEIGHT = 1;
+	    CONV_K_WIDTH = 1;
+	} else if (!strcmp(esc_argv()[2], "3x3")) {
+	    CONV_K_HEIGHT = 3;
+	    CONV_K_WIDTH = 3;
+	} else { // if (!strcmp(esc_argv()[2], "5x5")) {
+	    CONV_K_HEIGHT = 5;
+	    CONV_K_WIDTH = 5;
+	}
+
 	CONV_K_IN_CHANNELS = CONV_F_CHANNELS;
 	DO_RELU = 1;
 
@@ -176,15 +188,6 @@ void system_t::config_proc()
 void system_t::load_memory()
 {
     int i, j;
-
-    // Optional usage check
-#ifdef CADENCE
-    if (esc_argc() != 2)
-    {
-        ESP_REPORT_INFO("usage: %s <testbench-name>\n", esc_argv()[0]);
-        sc_stop();
-    }
-#endif
 
     // Input data and golden output (aligned to DMA_WIDTH makes your life easier)
 #if (DMA_WORD_PER_BEAT == 0)

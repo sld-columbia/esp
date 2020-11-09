@@ -78,7 +78,8 @@ define_system_module tb ../tb/system.cpp ../tb/sc_main.cpp
 # Testbench configuration
 #
 
-set TESTBENCHES "XS S M L XL"
+set TB_INOUT_SIZE "XS S M L XL"
+set TB_FILTER_SIZE "1x1 3x3 5x5"
 
 #
 # Common options for all configurations
@@ -127,12 +128,15 @@ foreach dma [list 64] {
 
     define_system_config tb TESTBENCH_DMA$dma -io_config IOCFG_DMA$dma
 
-    foreach tb $TESTBENCHES {
-	set ARGV ""
-	append ARGV "$tb";  # argv[1]
+    foreach iosz $TB_INOUT_SIZE {
+	foreach fsz $TB_FILTER_SIZE {
+	    set ARGV ""
+	    append ARGV "$iosz "; # argv[1]
+	    append ARGV "$fsz ";  # argv[2]
 
-	define_sim_config "BEHAV_DMA$dma\_$tb" "conv2d BEH" "tb TESTBENCH_DMA$dma" \
-	    -io_config IOCFG_DMA$dma -argv $ARGV
+	    define_sim_config "BEHAV_DMA$dma\_$iosz\_$fsz" "conv2d BEH" \
+		"tb TESTBENCH_DMA$dma" -io_config IOCFG_DMA$dma -argv $ARGV
+	}
     }
 
     foreach cfg [list BASIC] {
@@ -140,16 +144,21 @@ foreach dma [list 64] {
 	define_hls_config conv2d $cname -io_config IOCFG_DMA$dma \
 	    --clock_period=$CLOCK_PERIOD $COMMON_HLS_FLAGS -DHLS_DIRECTIVES_$cfg
 
-	foreach tb $TESTBENCHES {
-	    set ARGV ""
-	    append ARGV "$tb";  # argv[1]
+	foreach iosz $TB_INOUT_SIZE {
+	    foreach fsz $TB_FILTER_SIZE {
+		set ARGV ""
+		append ARGV "$iosz "; # argv[1]
+		append ARGV "$fsz ";  # argv[2]
 
-	    if {$TECH_IS_XILINX == 1} {
-		define_sim_config "$cname\_$tb\_V" "conv2d RTL_V $cname" "tb TESTBENCH_DMA$dma" \
-		    -io_config IOCFG_DMA$dma -argv $ARGV -verilog_top_modules glbl
-	    } else {
-		define_sim_config "$cname\_$tb\_V" "conv2d RTL_V $cname" "tb TESTBENCH_DMA$dma" \
-		    -io_config IOCFG_DMA$dma -argv $ARGV
+		if {$TECH_IS_XILINX == 1} {
+		    define_sim_config "$cname\_$iosz\_$fsz\_V" "conv2d RTL_V $cname" \
+			"tb TESTBENCH_DMA$dma" -io_config IOCFG_DMA$dma \
+			-argv $ARGV -verilog_top_modules glbl
+		} else {
+		    define_sim_config "$cname\_$iosz\_$fsz\_V" "conv2d RTL_V $cname" \
+			"tb TESTBENCH_DMA$dma" -io_config IOCFG_DMA$dma \
+			-argv $ARGV
+		}
 	    }
 	}
     }

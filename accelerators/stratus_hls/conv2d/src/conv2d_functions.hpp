@@ -18,12 +18,6 @@ inline void conv2d::compute_dimensions(
     uint32_t *filters_offset_start_base, uint32_t *bias_offset_start_base,
     uint32_t *feature_offset_start_base)
 {
-    /* Check if configuration is valid */
-#ifndef STRATUS_HLS
-    assert(height * n_channels * filter_dim <= INPUT_PLM_SIZE);
-    assert(filter_dim * filter_dim * n_channels <= WEIGHTS_PLM_SIZE);
-#endif
-
     /* Spatial dimensions of the output activation map */
     *pad = is_padded ? (filter_dim >> 1) : 0;
     *output_w = ((uint16_t) (width + 2 * *pad - filter_dim)) / stride + 1;
@@ -64,6 +58,14 @@ inline void conv2d::compute_dimensions(
     *filters_offset_start_base = *feature_size * n_channels;
     *bias_offset_start_base = *filters_offset_start_base + *filters_size;
     *feature_offset_start_base = *filters_offset_start_base + *filters_size + n_filters;
+
+    /* Check if configuration is valid */
+#ifndef STRATUS_HLS
+    assert(height * n_channels * filter_dim <= INPUT_PLM_SIZE);
+    assert(*filter_size <= WEIGHTS_PLM_SIZE);
+    assert(*filter_size <= PATCH_PLM_SIZE);
+    assert(*filter_size <= MAC_PLM_SIZE);
+#endif
 }
 
 inline void conv2d::patch_extractor(
@@ -72,8 +74,6 @@ inline void conv2d::patch_extractor(
     const uint16_t output_row,  const uint16_t output_col,
     const uint4_t pad, const uint4_t kernel_dim)
 {
-    // const uint16_t kernel_dim = 3;
-
     uint16_t index = 0;
     uint16_t channel_base = 0;
     for(uint16_t channel = 0; channel < channels; channel++) {
@@ -83,14 +83,16 @@ inline void conv2d::patch_extractor(
                 int input_col = output_col - pad + kernel_col;
 
 		FPDATA_WORD value;
-		if (input_row >=0 && input_row < height && input_col >= 0 && input_col < width)
+		if (input_row >=0 && input_row < height && input_col >= 0 && input_col < width) {
+		    uint16_t plm_index = (uint16_t) channel_base +
+			((uint16_t) input_row * width) + input_col;
 		    if (ping_input)
-			value = plm_in_ping[channel_base + input_row * width + input_col];
+			value = plm_in_ping[plm_index];
 		    else
-			value = plm_in_pong[channel_base + input_row * width + input_col];
-		else
+			value = plm_in_pong[plm_index];
+		} else {
 		    value = 0;
-
+		}
 
 		// ESP_REPORT_INFO("PATCH %u %f", index, (float) value);
 
