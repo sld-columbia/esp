@@ -12,9 +12,11 @@ inline void conv2d::compute_dimensions(
     uint16_t *feature_size, uint16_t *filter_size, uint32_t *filters_size, 
     uint16_t *max_cacheable_rows, uint16_t *max_cacheable_size,
     uint16_t *max_cacheable_filters, uint16_t *max_cacheable_filters_size,
+    uint16_t *max_cacheable_bias_chunks, uint16_t *max_cacheable_bias_size,
     uint16_t *total_input_chunks, uint16_t *total_filters_chunks,
     uint16_t *feature_offset_incr, uint16_t *channel_offset_incr,
-    uint32_t *filters_offset_start_base, uint32_t *feature_offset_start_base)
+    uint32_t *filters_offset_start_base, uint32_t *bias_offset_start_base,
+    uint32_t *feature_offset_start_base)
 {
     /* Check if configuration is valid */
 #ifndef STRATUS_HLS
@@ -38,8 +40,9 @@ inline void conv2d::compute_dimensions(
     *max_cacheable_size = *max_cacheable_rows * width;
 
     /* Max number of input rows cacheable in the input PLM */
-    uint16_t tmp = WEIGHTS_PLM_SIZE / (*filter_size);
-    *max_cacheable_filters = (min(min(tmp, n_filters), n_channels) >> 1) << 1;
+    uint16_t cacheable_outputs = OUTPUT_PLM_SIZE / ((uint16_t) *output_w * *max_cacheable_rows);
+    uint16_t cacheable_filters = WEIGHTS_PLM_SIZE / (*filter_size);
+    *max_cacheable_filters = (min(min(cacheable_filters, n_filters), min(cacheable_outputs, BIAS_PLM_SIZE)) >> 1) << 1;
     *max_cacheable_filters_size = *filter_size * *max_cacheable_filters;
 
     /* Amount of input chunks to be loaded in the input PLM */
@@ -49,11 +52,18 @@ inline void conv2d::compute_dimensions(
     /* Amount of filter chunks to be loaded in the filter PLM */
     *total_filters_chunks = ((uint16_t) (n_filters - 1)) / (*max_cacheable_filters) + 1;
 
+    *max_cacheable_bias_chunks = BIAS_PLM_SIZE / *max_cacheable_filters;
+    if (*max_cacheable_bias_chunks >= *total_filters_chunks)
+	*max_cacheable_bias_size = n_filters;
+    else
+	*max_cacheable_bias_size = *max_cacheable_bias_chunks * *max_cacheable_filters;
+
     /* Load offsets */
     *channel_offset_incr = *feature_size;
     *feature_offset_incr = max_cacheable_rows_norm * width;
     *filters_offset_start_base = *feature_size * n_channels;
-    *feature_offset_start_base = *filters_offset_start_base + *filters_size;
+    *bias_offset_start_base = *filters_offset_start_base + *filters_size;
+    *feature_offset_start_base = *filters_offset_start_base + *filters_size + n_filters;
 }
 
 inline void conv2d::patch_extractor(
@@ -93,19 +103,21 @@ inline void conv2d::patch_extractor(
 }
 
 inline void conv2d::multiple_multiplier_accumulator(
-    const uint16_t ping_weights, const uint16_t ping_output,
+    const uint16_t ping_weights, const uint16_t ping_bias, const uint16_t ping_output,
     const uint16_t filter_size, const uint16_t num_filters,
-    const uint16_t filter_chunk, const uint16_t max_cacheable_filters,
-    const uint16_t output_plm_offset, const uint16_t loadable_output_size)
+    const uint16_t filter_chunk, const uint16_t cacheable_filters, const uint16_t plm_bias_index,
+    const uint16_t output_plm_offset, const uint16_t loadable_output_size,
+    const bool do_relu)
 {
     uint16_t output_plm_address;
-    uint16_t cacheable_filters = min(num_filters - filter_chunk * max_cacheable_filters,
-				     max_cacheable_filters);
 
     output_plm_address = output_plm_offset;
     for (uint16_t f = 0; f < cacheable_filters; f++) {
 
-        FPDATA mmac_plm;
+        FPDATA result_relu;
+	FPDATA bias;
+	FPDATA result_bias;
+	FPDATA result_mac = 0;
 
         // elementwise_multiplier(ping_weights, filter_size, f);
 	uint16_t start_address = filter_size * f;
@@ -129,24 +141,31 @@ inline void conv2d::multiple_multiplier_accumulator(
 
 
 	// accumulator(filter_size, &result);
-	FPDATA result = 0;
-	FPDATA result_local = 0;
 	for(uint16_t i = 0; i < filter_size; i++) {
-	    result_local += INT2FP(plm_mac[i]);
+	    result_mac += INT2FP(plm_mac[i]);
 	    // ESP_REPORT_INFO("ACCUM i %u val %f res %f", i, (float) plm_mac[i], (float) result_local);
 	    wait();
 	}
-	result = result_local;
 
-	mmac_plm = result;
+	if (ping_bias)
+	    bias = INT2FP(plm_bias_ping[plm_bias_index + f]);
+	else
+	    bias = INT2FP(plm_bias_pong[plm_bias_index + f]);
 
-	// ESP_REPORT_INFO("MAC out value %f", (float) mmac_plm.to_double());
+	result_bias = result_mac + bias;
+
+	if (do_relu && result_bias < 0)
+	    result_relu = FPDATA(0);
+	else
+	    result_relu = result_bias;
+
+	// ESP_REPORT_INFO("MAC out value %f", (float) result_relu.to_double());
 	// ESP_REPORT_INFO("MAC out plm i: %u", output_plm_address);
 
 	if (ping_output)
-	    plm_out_ping[output_plm_address] = FP2INT(mmac_plm);
+	    plm_out_ping[output_plm_address] = FP2INT(result_relu);
 	else
-	    plm_out_pong[output_plm_address] = FP2INT(mmac_plm);
+	    plm_out_pong[output_plm_address] = FP2INT(result_relu);
 
 	output_plm_address += loadable_output_size;
 

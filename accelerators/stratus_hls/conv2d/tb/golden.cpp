@@ -4,14 +4,13 @@
 #include "golden.hpp"
 #include <stdio.h>
 
-void sw_conv_layer (const float* input,
-        const int channels, const int height, const int width,
-        const int kernel_h, const int kernel_w,
-        const int pad_h, const int pad_w,
-        const int stride_h, const int stride_w,
-        const int dilation_h, const int dilation_w,
-        const int num_filters, const float* weights,
-        float* output) {
+void sw_conv_layer (
+    const float* input, const int channels, const int height, const int width,
+    const int kernel_h, const int kernel_w, const int pad_h, const int pad_w,
+    const int stride_h, const int stride_w, const int dilation_h, const int dilation_w,
+    const int num_filters, const float* weights, const float* biases, float* output,
+    const bool do_relu)
+{
 
     const int channel_size = height * width;
     const int filter_size = channels * kernel_w * kernel_h;
@@ -29,28 +28,35 @@ void sw_conv_layer (const float* input,
                         for (int kernel_col = 0; kernel_col < kernel_w; kernel_col++) {
                             int input_row = output_row - pad_h + kernel_row * dilation_h;
                             int input_col = output_col - pad_w + kernel_col * dilation_w;
-                            if (!(!sw_is_a_ge_zero_and_a_lt_b(input_row, height) || (sw_is_a_ge_zero_and_a_lt_b(input_row, height) && !sw_is_a_ge_zero_and_a_lt_b(input_col, width)))) {
-                                out_value += input[channel * channel_size + input_row * width + input_col] * weights[num_filter * filter_size + k];
+                            if (!(!sw_is_a_ge_zero_and_a_lt_b(input_row, height) ||
+				  (sw_is_a_ge_zero_and_a_lt_b(input_row, height) &&
+				   !sw_is_a_ge_zero_and_a_lt_b(input_col, width)))) {
+                                out_value += input[channel * channel_size + input_row * width +
+						   input_col] * weights[num_filter * filter_size + k];
                             }
                             k++;
                         }
                     }
                 }
-                output[num_filter * output_w * output_h + output_row * output_w + output_col] = out_value;
+		out_value += biases[num_filter];
+
+		if (do_relu && out_value < 0)
+		    out_value = 0;
+
+                output[num_filter * output_w * output_h +
+		       output_row * output_w + output_col] = out_value;
             }
         }
     }
 }
 
-void sw_conv_layer_fpdata (const FPDATA* input,
-        const int channels, const int height, const int width,
-        const int kernel_h, const int kernel_w,
-        const int pad_h, const int pad_w,
-        const int stride_h, const int stride_w,
-        const int dilation_h, const int dilation_w,
-        const int num_filters, const FPDATA* weights,
-        FPDATA* output) {
-
+void sw_conv_layer_fpdata (
+    const FPDATA* input, const int channels, const int height, const int width,
+    const int kernel_h, const int kernel_w, const int pad_h, const int pad_w,
+    const int stride_h, const int stride_w,  const int dilation_h, const int dilation_w,
+    const int num_filters, const FPDATA* weights, const FPDATA* biases, FPDATA* output,
+    const bool do_relu)
+{
     const int channel_size = height * width;
     const int filter_size = channels * kernel_w * kernel_h;
     const int output_h = (height + 2 * pad_h - (dilation_h * (kernel_h - 1) + 1)) / stride_h + 1;
@@ -67,14 +73,23 @@ void sw_conv_layer_fpdata (const FPDATA* input,
                         for (int kernel_col = 0; kernel_col < kernel_w; kernel_col++) {
                             int input_row = output_row - pad_h + kernel_row * dilation_h;
                             int input_col = output_col - pad_w + kernel_col * dilation_w;
-                            if (!(!sw_is_a_ge_zero_and_a_lt_b(input_row, height) || (sw_is_a_ge_zero_and_a_lt_b(input_row, height) && !sw_is_a_ge_zero_and_a_lt_b(input_col, width)))) {
-                                out_value += input[channel * channel_size + input_row * width + input_col] * weights[num_filter * filter_size + k];
+                            if (!(!sw_is_a_ge_zero_and_a_lt_b(input_row, height) ||
+				  (sw_is_a_ge_zero_and_a_lt_b(input_row, height) &&
+				   !sw_is_a_ge_zero_and_a_lt_b(input_col, width)))) {
+                                out_value += input[channel * channel_size + input_row * width +
+						   input_col] * weights[num_filter * filter_size + k];
                             }
                             k++;
                         }
                     }
                 }
-                output[num_filter * output_w * output_h + output_row * output_w + output_col] = out_value;
+		out_value += biases[num_filter];
+
+		if (do_relu && out_value < FPDATA(0.0))
+		    out_value = FPDATA(0.0);
+
+                output[num_filter * output_w * output_h +
+		       output_row * output_w + output_col] = out_value;
             }
         }
     }
@@ -122,8 +137,14 @@ void conv_3x3(float *matrix, float *kernel, float *out, unsigned size) {
     }
 }
 
-void sw_conv_layer_ver2(float* input, const int channels, const int height, const int width, const int kernel_h, const int kernel_w, const int pad_h, const int pad_w, const int stride_h, const int stride_w, const int dilation_h, const int dilation_w, const int num_filters, float* weights, float* output) {
-    int i, j;
+void sw_conv_layer_ver2(
+    float* input, const int channels, const int height, const int width,
+    const int kernel_h, const int kernel_w, const int pad_h, const int pad_w,
+    const int stride_h, const int stride_w, const int dilation_h, const int dilation_w,
+    const int num_filters, float* weights, float* biases, float* output,
+    const bool do_relu)
+{
+    int i, j, k;
 
     memset(output, 0, num_filters*height*width * sizeof(float));
 
@@ -131,7 +152,15 @@ void sw_conv_layer_ver2(float* input, const int channels, const int height, cons
         printf("F: %u\n", i);
         for (j = 0; j < channels; j++) {
             printf("C: %u\n", j);
-            conv_3x3(input + j * height * width, weights + i * channels * kernel_h * kernel_w + j * kernel_h * kernel_w, output + i * height * width, height);
+            conv_3x3(input + j * height * width,
+		     weights + i * channels * kernel_h * kernel_w + j * kernel_h * kernel_w,
+		     output + i * height * width,
+		     height);
         }
+	for (k = 0; k < height * height; k++) {	
+	    output[i * height * width + k] += biases[i];
+	    if (do_relu && output[i * height * width + k] < 0)
+		output[i * height * width + k] = 0;
+	}
     }
 }

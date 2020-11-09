@@ -8,5 +8,6 @@
     <param name="filter_dim" desc="filter_dim" />
     <param name="is_padded" desc="is_padded" />
     <param name="stride" desc="stride" />
+    <param name="do_relu" desc="do ReLU" />
   </accelerator>
 </sld>

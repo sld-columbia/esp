@@ -36,10 +36,14 @@ void init_weights(float* hw_weights, float* sw_weights, const int filters, const
     }
 }
 
-//void init_array(FPDATA* matrix, const int length, bool random) {
-//    init_image(matrix, 1, 1, length, random);
-//}
-
+void init_bias(float* hw_bias, float* sw_bias, const int n_filters, bool random) {
+    int i = 0;
+    for (int f = 0; f < n_filters; f++) {
+	hw_bias[f] = float(i % 8);
+	sw_bias[f] = float(i % 8);
+	i++;
+    }
+}
 
 void print_hw_image(const char * name, float* image, const int channels, const int height, const int width) {
     printf("%s: C x H x W = %u x %u x %u\n", name, channels, height, width);
@@ -61,7 +65,7 @@ void print_hw_image(const char * name, float* image, const int channels, const i
 
 
 void print_sw_image(const char * name, float* image, const int channels, const int height, const int width) {
-       printf("%s: C x H x W = %u x %u x %u\n", name, channels, height, width);
+    printf("%s: C x H x W = %u x %u x %u\n", name, channels, height, width);
     if (channels * height * width < 256)
     {
         for (int c = 0; c < channels; c++) {
@@ -78,10 +82,8 @@ void print_sw_image(const char * name, float* image, const int channels, const i
     }
 }
 
-
-
 void print_hw_weights(const char * name, float* weights, const int filters, const int channels, const int height, const int width) {
-       printf("%s: F x C x H x W = %u x %u x %u x %u\n", name, filters, channels, height, width);
+    printf("%s: F x C x H x W = %u x %u x %u x %u\n", name, filters, channels, height, width);
     if (channels * height * width < 256)
     {
         for (int f = 0; f < filters; f++) {
@@ -101,7 +103,7 @@ void print_hw_weights(const char * name, float* weights, const int filters, cons
 }
 
 void print_sw_weights(const char * name, float* weights, const int filters, const int channels, const int height, const int width) {
-       printf("%s: F x C x H x W = %u x %u x %u x %u\n", name, filters, channels, height, width);
+    printf("%s: F x C x H x W = %u x %u x %u x %u\n", name, filters, channels, height, width);
     if (channels * height * width < 256)
     {
         for (int f = 0; f < filters; f++) {
@@ -117,6 +119,32 @@ void print_sw_weights(const char * name, float* weights, const int filters, cons
                 printf("%s: F %u, C %u: %s\n", name, f, c, ss.str().c_str());
             }
         }
+    }
+}
+
+void print_hw_bias(const char * name, float* bias, const int n_filters) {
+    printf("%s: F = %u\n", name, n_filters);
+    if (n_filters < 64) {
+	std::stringstream ss;
+	ss << "| ";
+        for (int f = 0; f < n_filters; f++) {
+	    ss << FPDATA(bias[f]) << "  ";
+	}
+	ss << "| ";
+	printf("%s: %s\n", name, ss.str().c_str());
+    }
+}
+
+void print_sw_bias(const char * name, float* bias, const int n_filters) {
+    printf("%s: F = %u\n", name, n_filters);
+    if (n_filters < 64) {
+	std::stringstream ss;
+	ss << "| ";
+        for (int f = 0; f < n_filters; f++) {
+	    ss << (float) bias[f] << "  ";
+	}
+	ss << "| ";
+	printf("%s: %s\n", name, ss.str().c_str());
     }
 }
 
@@ -163,11 +191,11 @@ int _validate(float* hw_data_array, float* sw_data_array, int num_elements) {
 
     for (unsigned i = 0; i < num_elements; i++) {
         if (check_error_threshold_for_neuron(float(hw_data_array[i]), float(sw_data_array[i]), rel_error)) {
-            if (tot_errors < REPORT_THRESHOLD) {
+            // if (tot_errors < REPORT_THRESHOLD) {
                 float hw_fdata = hw_data_array[i];
-                printf("Validation: Element %d wrong [%.4f - %.4f]\n",
+                printf("[ERROR] Validation: Element %d wrong [%.4f - %.4f]\n",
 		       i, float(hw_fdata), float(sw_data_array[i]));
-            }
+            // }
             tot_errors++;
         } else {
 	    float hw_fdata = hw_data_array[i];

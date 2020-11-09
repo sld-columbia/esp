@@ -43,6 +43,8 @@ public:
         HLS_MAP_plm(plm_out_ping, PLM_OUT_NAME);
         HLS_MAP_plm(plm_weights_pong, PLM_WEIGHTS_NAME);
         HLS_MAP_plm(plm_weights_ping, PLM_WEIGHTS_NAME);
+        HLS_MAP_plm(plm_bias_pong, PLM_BIAS_NAME);
+        HLS_MAP_plm(plm_bias_ping, PLM_BIAS_NAME);
         HLS_MAP_plm(plm_in_pong, PLM_IN_NAME);
         HLS_MAP_plm(plm_in_ping, PLM_IN_NAME);
         HLS_MAP_plm(plm_patch, PLM_PATCH_NAME);
@@ -75,21 +77,22 @@ public:
 	uint16_t *feature_size, uint16_t *filter_size, uint32_t *filters_size, 
 	uint16_t *max_cacheable_rows, uint16_t *max_cacheable_size,
 	uint16_t *max_cacheable_filters, uint16_t *max_cacheable_filters_size,
+	uint16_t *max_cacheable_bias_chunks, uint16_t *max_cacheable_bias_size,
 	uint16_t *total_input_chunks, uint16_t *total_filters_chunks,
 	uint16_t *feature_offset_incr, uint16_t *channel_offset_incr,
-	uint32_t *filters_offset_start_base, uint32_t *feature_offset_start_base);
+	uint32_t *filters_offset_start_base, uint32_t *bias_offset_start_base,
+	uint32_t *feature_offset_start_base);
     void patch_extractor(
 	const uint16_t channels, const uint16_t height, const uint16_t width,
 	const uint16_t channel_size, const uint16_t ping_input,
 	const uint16_t output_row,  const uint16_t output_col,
 	const uint4_t pad, const uint4_t kernel_dim);
     void multiple_multiplier_accumulator(
-	const uint16_t ping_weights, const uint16_t ping_output,
-	const uint16_t filter_size, const uint16_t num_filters,
-	const uint16_t filter_chunk,
-	const uint16_t max_cacheable_filters,
-	const uint16_t output_plm_offset,
-	const uint16_t loadable_output_size);
+    const uint16_t ping_weights, const uint16_t ping_bias, const uint16_t ping_output,
+    const uint16_t filter_size, const uint16_t num_filters,
+    const uint16_t filter_chunk, const uint16_t cacheable_filters, const uint16_t plm_bias_index,
+    const uint16_t output_plm_offset, const uint16_t loadable_output_size,
+    const bool do_relu);
 
     // Configuration handshakes
     inline void load_compute_cfg_handshake();
@@ -102,6 +105,8 @@ public:
     FPDATA_WORD plm_in_pong[INPUT_PLM_SIZE];
     FPDATA_WORD plm_weights_ping[WEIGHTS_PLM_SIZE];
     FPDATA_WORD plm_weights_pong[WEIGHTS_PLM_SIZE];
+    FPDATA_WORD plm_bias_ping[BIAS_PLM_SIZE];
+    FPDATA_WORD plm_bias_pong[BIAS_PLM_SIZE];
     FPDATA_WORD plm_out_ping[OUTPUT_PLM_SIZE];
     FPDATA_WORD plm_out_pong[OUTPUT_PLM_SIZE];
     FPDATA_WORD plm_patch[PATCH_PLM_SIZE];
@@ -115,6 +120,7 @@ public:
     sc_signal<uint16_t> total_input_chunks_sig;
     sc_signal<uint16_t> max_cacheable_rows_sig;
     sc_signal<uint16_t> max_cacheable_filters_sig;
+    sc_signal<uint16_t> max_cacheable_bias_chunks_sig;
     sc_signal<uint16_t> channel_offset_incr_sig;
     sc_signal<uint32_t> feature_offset_start_base_sig;
 };

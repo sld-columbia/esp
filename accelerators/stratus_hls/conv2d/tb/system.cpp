@@ -20,13 +20,14 @@ void system_t::config_proc()
 
     // Arguments
     {
-	int CONV_F_HEIGHT;
-	int CONV_F_WIDTH;
-	int CONV_F_CHANNELS;
-	int CONV_K_HEIGHT;
-	int CONV_K_WIDTH;
-	int CONV_K_IN_CHANNELS;
-	int CONV_K_OUT_CHANNELS;
+	uint32_t CONV_F_HEIGHT;
+	uint32_t CONV_F_WIDTH;
+	uint32_t CONV_F_CHANNELS;
+	uint32_t CONV_K_HEIGHT;
+	uint32_t CONV_K_WIDTH;
+	uint32_t CONV_K_IN_CHANNELS;
+	uint32_t CONV_K_OUT_CHANNELS;
+	uint32_t DO_RELU;
 
 	ESP_REPORT_INFO("Argv[1] = %s", esc_argv()[1]);
 
@@ -64,9 +65,10 @@ void system_t::config_proc()
 	    CONV_F_CHANNELS = 2;
 	    CONV_K_HEIGHT = 3;
 	    CONV_K_WIDTH = 3;
-	    CONV_K_OUT_CHANNELS = 4;
+	    CONV_K_OUT_CHANNELS = 8;
 	}
 	CONV_K_IN_CHANNELS = CONV_F_CHANNELS;
+	DO_RELU = 1;
 
 	channels = CONV_F_CHANNELS;
         height = CONV_F_HEIGHT;
@@ -80,6 +82,7 @@ void system_t::config_proc()
         stride_w = 1;
         dilation_h = 1;
         dilation_w = 1;
+	do_relu = DO_RELU;
     }
 
     // Config
@@ -95,6 +98,7 @@ void system_t::config_proc()
         config.filter_dim = kernel_h;
         config.is_padded = (pad_h != 0);
         config.stride = stride_h;
+        config.do_relu = do_relu;
 
         wait(); conf_info.write(config);
         conf_done.write(true);
@@ -120,12 +124,14 @@ void system_t::config_proc()
         wait(); conf_done.write(false);
     }
     // sw_conv_layer_fpdata(hw_input, channels, height, width, kernel_h, kernel_w, pad_h, pad_w,
-    // 		  stride_h, stride_w, dilation_h, dilation_w, num_filters, hw_weights, hw_output);
+    // 		  stride_h, stride_w, dilation_h, dilation_w, num_filters,
+    //            hw_weights, hw_bias, hw_output, do_relu);
     ESP_REPORT_INFO("HW Accelerator done");
 
     // Compute in SW
     sw_conv_layer(sw_input, channels, height, width, kernel_h, kernel_w, pad_h, pad_w,
-		  stride_h, stride_w, dilation_h, dilation_w, num_filters, sw_weights, sw_output);
+		  stride_h, stride_w, dilation_h, dilation_w, num_filters,
+		  sw_weights, sw_bias, sw_output, do_relu);
     ESP_REPORT_INFO("SW done");
 
     // printf("Performance: data-in : moved %u (%u bytes) / memory footprint %u (%u bytes) / PLM locality %.2f%%",
@@ -147,6 +153,7 @@ void system_t::config_proc()
 #ifdef XSMALL
 	print_hw_image("output-hw", hw_output, num_filters, height, width);
 	print_sw_image("output-sw", sw_output, num_filters, height, width);
+	printf("\n");
 #endif
 
         // check the results with the golden model
@@ -183,27 +190,33 @@ void system_t::load_memory()
 #if (DMA_WORD_PER_BEAT == 0)
     in_words_adj = channels * height * width;
     weights_words_adj = num_filters * channels * kernel_h * kernel_w;
+    bias_words_adj = num_filters;
     out_words_adj = num_filters * height * width;
 #else
     in_words_adj = round_up(channels * height * width, DMA_WORD_PER_BEAT);
     weights_words_adj = round_up(num_filters * channels * kernel_h * kernel_w, DMA_WORD_PER_BEAT);
+    bias_words_adj = round_up(num_filters, DMA_WORD_PER_BEAT);
     out_words_adj = round_up(num_filters * height * width, DMA_WORD_PER_BEAT);
 #endif
 
     in_size = in_words_adj * (1);
     weights_size = weights_words_adj * (1);
+    bias_size = bias_words_adj * (1);
     out_size = out_words_adj * (1);
 
     hw_input = (float*)malloc(in_size * sizeof(float));
     hw_weights = (float*)malloc(weights_size * sizeof(float));
+    hw_bias = (float*)malloc(bias_size * sizeof(float));
     hw_output = (float*)malloc(out_size * sizeof(float));
 
     sw_input = (float*) malloc(in_size * sizeof(float));
     sw_weights = (float*) malloc(weights_size * sizeof(float));
+    sw_bias = (float*) malloc(bias_size * sizeof(float));
     sw_output = (float*) malloc(out_size * sizeof(float));
 
     init_image(hw_input, sw_input, channels, height, width, true);
     init_weights(hw_weights, sw_weights, num_filters, channels, kernel_h, kernel_w, true);
+    init_bias(hw_bias, sw_bias, num_filters, true);
 
 #ifdef XSMALL
     print_hw_image("input-hw", hw_input, channels, height, width);
@@ -211,18 +224,31 @@ void system_t::load_memory()
 
     print_hw_weights("weights-hw", hw_weights, num_filters, channels, kernel_h, kernel_w);
     print_sw_weights("weights-sw", sw_weights, num_filters, channels, kernel_h, kernel_w);
+
+    print_hw_bias("bias-hw", hw_bias, num_filters);
+    print_sw_bias("bias-sw", sw_bias, num_filters);
+    printf("\n");
 #endif
 
     // Memory initialization:
 #if (DMA_WORD_PER_BEAT == 0)
     for (i = 0; i < in_size; i++)  {
-        sc_dt::sc_bv<DATA_WIDTH> data_bv = fp2bv<FPDATA, DATA_WIDTH>(FPDATA(hw_input[i]));
+        sc_dt::sc_bv<DATA_WIDTH> data_bv =
+	    fp2bv<FPDATA, DATA_WIDTH>(FPDATA(hw_input[i]));
         for (j = 0; j < DMA_BEAT_PER_WORD; j++)
             mem[DMA_BEAT_PER_WORD * i + j] =
 		data_bv.range((j + 1) * DMA_WIDTH - 1, j * DMA_WIDTH);
     }
     for (; i < in_size + weights_size; i++)  {
-        sc_dt::sc_bv<DATA_WIDTH> data_bv = fp2bv<FPDATA, DATA_WIDTH>(FPDATA(hw_weights[i - in_size]));
+        sc_dt::sc_bv<DATA_WIDTH> data_bv =
+	    fp2bv<FPDATA, DATA_WIDTH>(FPDATA(hw_weights[i - in_size]));
+        for (j = 0; j < DMA_BEAT_PER_WORD; j++)
+            mem[DMA_BEAT_PER_WORD * i + j] =
+		data_bv.range((j + 1) * DMA_WIDTH - 1, j * DMA_WIDTH);
+    }
+    for (; i < in_size + weights_size + bias_size; i++)  {
+        sc_dt::sc_bv<DATA_WIDTH> data_bv =
+	    fp2bv<FPDATA, DATA_WIDTH>(FPDATA(hw_bias[i - in_size - weights_size]));
         for (j = 0; j < DMA_BEAT_PER_WORD; j++)
             mem[DMA_BEAT_PER_WORD * i + j] =
 		data_bv.range((j + 1) * DMA_WIDTH - 1, j * DMA_WIDTH);
@@ -237,11 +263,25 @@ void system_t::load_memory()
         mem[i] = data_bv;
     }
     for (; i < (in_size + weights_size) / DMA_WORD_PER_BEAT; i++)  {
-	// ESP_REPORT_INFO("tb load we %i : %f", i, (float) hw_weights[i - in_size / DMA_WORD_PER_BEAT]);
-        sc_dt::sc_bv<DMA_WIDTH> data_bv = fp2bv<FPDATA, DATA_WIDTH>(FPDATA(hw_weights[i - in_size / DMA_WORD_PER_BEAT]));
+	// ESP_REPORT_INFO("tb load we %i : %f",
+	// i, (float) hw_weights[i - in_size / DMA_WORD_PER_BEAT]);
+        sc_dt::sc_bv<DMA_WIDTH> data_bv =
+	    fp2bv<FPDATA, DATA_WIDTH>(FPDATA(hw_weights[i - in_size / DMA_WORD_PER_BEAT]));
         for (j = 0; j < DMA_WORD_PER_BEAT; j++)
             data_bv.range((j+1) * DATA_WIDTH - 1, j * DATA_WIDTH) =
 		fp2bv<FPDATA, DATA_WIDTH>(FPDATA(hw_weights[i * DMA_WORD_PER_BEAT + j - in_size]));
+        mem[i] = data_bv;
+    }
+    for (; i < (in_size + weights_size + bias_size) / DMA_WORD_PER_BEAT; i++)  {
+	// ESP_REPORT_INFO("tb load we %i : %f",
+	// i, (float) hw_bias[i - (in_size + weights_size) / DMA_WORD_PER_BEAT]);
+        sc_dt::sc_bv<DMA_WIDTH> data_bv =
+	    fp2bv<FPDATA, DATA_WIDTH>(
+		FPDATA(hw_bias[i - (in_size + weights_size) / DMA_WORD_PER_BEAT]));
+        for (j = 0; j < DMA_WORD_PER_BEAT; j++)
+            data_bv.range((j+1) * DATA_WIDTH - 1, j * DATA_WIDTH) =
+		fp2bv<FPDATA, DATA_WIDTH>(
+		    FPDATA(hw_bias[i * DMA_WORD_PER_BEAT + j - in_size - weights_size]));
         mem[i] = data_bv;
     }
 #endif
@@ -252,7 +292,7 @@ void system_t::load_memory()
 void system_t::dump_memory()
 {
     // Get results from memory
-    uint32_t offset = in_size + weights_size;
+    uint32_t offset = in_size + weights_size + bias_size;
     // ESP_REPORT_INFO("DUMP MEM: offset %u", offset);
 
 #if (DMA_WORD_PER_BEAT == 0)
@@ -299,9 +339,11 @@ int system_t::validate()
 
     free(sw_input);
     free(sw_weights);
+    free(sw_bias);
     free(sw_output);
     free(hw_input);
     free(hw_weights);
+    free(hw_bias);
     free(hw_output);
 
     return errors;

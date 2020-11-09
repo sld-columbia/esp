@@ -19,9 +19,10 @@
 
 const size_t input_max_size = 3211264; // TODO: it should not be hardcoded
 const size_t weights_max_size = 2359296; // TODO: it should not be hardcoded
+const size_t bias_max_size = 29296; // TODO: it should not be hardcoded
 const size_t output_max_size = 3211264; // TODO: it should not be hardcoded
 // Hard-coded 8 because the data word will never be more than 8 bytes
-const size_t MEM_SIZE = (input_max_size + weights_max_size + output_max_size) * 8;
+const size_t MEM_SIZE = (input_max_size + weights_max_size + bias_max_size + output_max_size) * 8;
 
 #include "core/systems/esp_system.hpp"
 
@@ -93,19 +94,24 @@ public:
     int32_t stride_w;
     int32_t dilation_h;
     int32_t dilation_w;
+    int32_t do_relu;
     
     uint32_t in_words_adj;
     uint32_t weights_words_adj;
+    uint32_t bias_words_adj;
     uint32_t out_words_adj;
     uint32_t in_size;
     uint32_t weights_size;
+    uint32_t bias_size;
     uint32_t out_size;
 
     float* hw_input;
     float* hw_weights;
+    float* hw_bias;
     float* hw_output;
     float* sw_input;
     float* sw_weights;
+    float* sw_bias;
     float* sw_output;
 
     // Other Functions
