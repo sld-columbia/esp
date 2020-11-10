@@ -3,6 +3,9 @@ CFLAGS += $(EXTRA_CFLAGS)
 CFLAGS += -Wall
 CFLAGS += -I../../include
 CFLAGS += -L../../probe
+CFLAGS += -I$(DESIGN_PATH)
+CFLAGS +=-std=gnu99
+CFLAGS +=-O2
 
 LIBS := -lm -lprobe
 
@@ -20,7 +23,7 @@ fft_test.o: ../../test/fft_test.c
 	$(CC) $(CFLAGS) -c $<
 
 %.exe: %.c $(wildcard ../../probe/*.c) fft_test.o
-	CROSS_COMPILE=$(CROSS_COMPILE) $(MAKE) -C ../../probe
+	CROSS_COMPILE=$(CROSS_COMPILE) DESIGN_PATH=$(DESIGN_PATH) $(MAKE) -C ../../probe
 	$(CC) $(CFLAGS) -o $@ $< fft_test.o $(LIBS)
 
 %.bin: %.exe

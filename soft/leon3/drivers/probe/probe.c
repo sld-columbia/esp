@@ -215,7 +215,7 @@ static void esp_prop(const struct fdt_scan_prop *prop, void *extra)
 	else if (!strcmp(prop->name, "reg"))
 		fdt_get_address(prop->node->parent, prop->value, (uint64_t *) &(*espdevs)[ndev].addr);
 	else if (!strcmp(prop->name, "interrupts"))
-		fdt_get_value(prop->value, &(*espdevs)[ndev].irq);
+		fdt_get_value(prop->value, (uint32_t *) &(*espdevs)[ndev].irq);
 }
 
 static void esp_done(const struct fdt_scan_node *node, void *extra)
@@ -225,7 +225,7 @@ static void esp_done(const struct fdt_scan_node *node, void *extra)
 
 	if ((*espdevs)[ndev].compat != 0) {
 		printf("[probe] %s.%d registered\n", name, ndev);
-		printf("        Address   : 0x%08x\n", (uint32_t) (*espdevs)[ndev].addr);
+		printf("        Address   : 0x%08x\n", (unsigned) (*espdevs)[ndev].addr);
 		printf("        Interrupt : %d\n", (*espdevs)[ndev].irq);
 		ndev++;
 

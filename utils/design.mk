@@ -55,7 +55,14 @@ ifeq ("$(CPU_ARCH)", "ariane")
 ARCH=riscv
 CROSS_COMPILE_ELF = riscv64-unknown-elf-
 CROSS_COMPILE_LINUX = riscv64-unknown-linux-gnu-
-else
+endif
+
+ifeq ("$(CPU_ARCH)", "ibex")
+ARCH=riscv
+CROSS_COMPILE_ELF = riscv32-unknown-elf-
+endif
+
+ifeq ("$(CPU_ARCH)", "leon3")
 ARCH=sparc
 CROSS_COMPILE_ELF = sparc-elf-
 CROSS_COMPILE_LINUX = sparc-linux-
@@ -125,7 +132,6 @@ ARIANE_VLOGOPT += -permissive
 ARIANE_VLOGOPT += +define+WT_DCACHE
 ARIANE_VLOGOPT += -pedanticerrors
 ARIANE_VLOGOPT += -sv
-ARIANE_VLOGOPT += +incdir+${ARIANE}/src/common_cells/include
 ARIANE_VLOGOPT += -suppress 2583
 
 ARIANE_XMLOGOPT  =
@@ -134,7 +140,20 @@ ARIANE_XMLOGOPT += -DEFINE VERILATOR
 ARIANE_XMLOGOPT += -UNCLOCKEDSVA
 ARIANE_XMLOGOPT += -DEFINE WT_DCACHE=1
 ARIANE_XMLOGOPT += -SV
+
+
+IBEX_VLOGOPT  = $(ARIANE_VLOGOPT)
+IBEX_VLOGOPT += -suppress 13314
+
+IBEX_XMLOGOPT = $(ARIANE_XMLOGOPT)
+
+
+ARIANE_VLOGOPT  += +incdir+${ARIANE}/src/common_cells/include
 ARIANE_XMLOGOPT += -INCDIR ${ARIANE}/src/common_cells/include
+
+IBEX_VLOGOPT  += +incdir+${IBEX}/vendor/lowrisc_ip/prim/rtl
+IBEX_XMLOGOPT += -INCDIR ${ARIANE}/vendor/lowrisc_ip/prim/rtl
+
 
 # Simulator switches
 ifeq ("$(CPU_ARCH)", "ariane")

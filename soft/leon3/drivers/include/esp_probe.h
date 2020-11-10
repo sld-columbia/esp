@@ -12,6 +12,8 @@
 #include <uart.h>
 #endif
 
+#include "socmap.h"
+
 #ifndef __ESP_PROBE_H__
 #define __ESP_PROBE_H__
 
@@ -20,7 +22,7 @@
 #define APB_BASE_ADDR 0x80000000
 #define APB_PLUGNPLAY (APB_BASE_ADDR + 0xff000)
 #elif __riscv
-#define DTB_ADDRESS 0x10400
+#define DTB_ADDRESS RODATA_START_ADDR
 #else
 #error Unsupported ISA
 #endif

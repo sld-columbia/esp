@@ -44,6 +44,13 @@ package sld_devices is
   constant SIFIVE_PLIC0  : devid_t := 16#001#;
   constant SIFIVE_CLINT0 : devid_t := 16#002#;
 
+
+  constant VENDOR_LOWRISC : vendor_t := 16#ED#;
+
+  constant LOWRISC_IBEX_SMALL : devid_t := 16#001#;
+  constant LOWRISC_IBEX_TIMER : devid_t := 16#002#;
+
+
 -- pragma translate_off
 
   constant SLD_DESC : vdesc_t := "Columbia University SLD ";
@@ -79,6 +86,20 @@ package sld_devices is
     vendorid     => VENDOR_SIFIVE,
     vendordesc   => SIFIVE_DESC,
     device_table => sifive_device_table
+    );
+
+
+  constant LOWRISC_DESC : vdesc_t := "Lowrisc                 ";
+
+  constant lowrisc_device_table : dtable_t := (
+    LOWRISC_IBEX_SMALL  => "RISC-V IBEX (small,  RV32IMC)  ",
+    LOWRISC_IBEX_TIMER  => "IBEX timer                     ",
+    others              => "Unknown Device                 ");
+
+  constant lowrisc_lib : vlib_t := (
+    vendorid     => VENDOR_LOWRISC,
+    vendordesc   => LOWRISC_DESC,
+    device_table => lowrisc_device_table
     );
 
 -- pragma translate_on

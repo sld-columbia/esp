@@ -9,6 +9,8 @@
 #include <esp_accelerator.h>
 #include <esp_probe.h>
 
+#include "do_decoding.h"
+
 typedef int8_t token_t;
 
 static unsigned DMA_WORD_PER_BEAT(unsigned _st)
@@ -82,8 +84,6 @@ static const unsigned char PARTAB[256] = {
          0, 1, 1, 0, 1, 0, 0, 1,
          1, 0, 0, 1, 0, 1, 1, 0,
 }; 
-
-#include "do_decoding.c" 
 
 
 static int validate_buf(token_t *out, token_t *gold)

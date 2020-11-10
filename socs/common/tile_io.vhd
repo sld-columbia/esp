@@ -33,6 +33,7 @@ use work.grlib_config.all;
 use work.socmap.all;
 use work.memoryctrl.all;
 use work.ariane_esp_pkg.all;
+use work.ibex_esp_pkg.all;
 
 entity tile_io is
   generic (
@@ -245,6 +246,9 @@ architecture rtl of tile_io is
   signal noc_pirq           : std_logic_vector(NAHBIRQ-1 downto 0);  -- interrupt result bus from noc
   signal plic_pready        : std_ulogic;  -- PLIC APB3
   signal plic_pslverr       : std_ulogic;  -- PLIC APB3
+  signal ibex_timer_pready  : std_ulogic;  -- IBEX Timer APB3
+  signal ibex_timer_pslverr : std_ulogic;  -- IBEX Timer APB3
+  signal ibex_timer_irq     : std_ulogic;
   signal irq_sources        : std_logic_vector(29 downto 0);  -- PLIC0 interrupt lines
   signal irq                : std_logic_vector(CFG_NCPU_TILE * 2 - 1 downto 0);
   signal timer_irq          : std_logic_vector(CFG_NCPU_TILE - 1 downto 0);  --CLINT
@@ -342,8 +346,10 @@ architecture rtl of tile_io is
   signal interrupt_ack_full        : std_ulogic;
 
   -- ESPLink
+  signal init_done : std_ulogic;
   signal srst : std_ulogic;             -- soft reset
   signal soft_reset : std_ulogic;       -- local soft reset
+  signal ibex_reset : std_ulogic;       -- local
 
   -- bus
   signal ahbsi            : ahb_slv_in_type;
@@ -401,7 +407,7 @@ architecture rtl of tile_io is
   constant this_local_ahb_en : std_logic_vector(0 to NAHBSLV - 1) := (
     0      => '1',                            -- bootrom
     1      => '1',                            -- ahb2apb
-    2      => to_std_logic(GLOB_CPU_AXI),     -- risc-v clint
+    2      => to_std_logic(GLOB_CPU_RISCV * GLOB_CPU_AXI),  -- risc-v clint
     12     => to_std_logic(CFG_SVGA_ENABLE),  -- frame buffer
     others => '0');
 
@@ -1047,6 +1053,7 @@ begin
       clk    => clk,
       noinit => '0',
       srst   => srst,
+      init_done  => init_done,
       ahbmi  => ahbmi,
       ahbmo  => ahbmo(CFG_GRETH + CFG_DSU_ETH + 1));
 
@@ -1176,7 +1183,7 @@ begin
   end generate;
 
   irq_sources <= noc_apbi_wirq.pirq(29 downto 0);
-  riscv_plic_gen: if GLOB_CPU_ARCH = ariane generate
+  riscv_plic_gen: if GLOB_CPU_ARCH = ariane or GLOB_CPU_ARCH = ibex generate
 
     x : for i in 0 to CFG_NCPU_TILE-1 generate
       riscv_irqinfo_proc : process (irq, timer_irq, ipi) is
@@ -1209,18 +1216,27 @@ begin
         pready      => plic_pready,
         pslverr     => plic_pslverr);
 
-    riscv_clint_ahb_wrap_1: riscv_clint_ahb_wrap
-      generic map (
-        hindex  => clint_hindex,
-        hconfig => clint_hconfig,
-        NHARTS  => CFG_NCPU_TILE)
-      port map (
-        clk       => clk,
-        rstn      => soft_reset,
-        timer_irq => timer_irq,
-        ipi       => ipi,
-        ahbsi     => ahbsi,
-        ahbso     => ahbso(clint_hindex));
+    riscv_clint_gen: if GLOB_CPU_ARCH /= ibex generate
+      riscv_clint_ahb_wrap_1: riscv_clint_ahb_wrap
+        generic map (
+          hindex  => clint_hindex,
+          hconfig => clint_hconfig,
+          NHARTS  => CFG_NCPU_TILE)
+        port map (
+          clk       => clk,
+          rstn      => soft_reset,
+          timer_irq => timer_irq,
+          ipi       => ipi,
+          ahbsi     => ahbsi,
+          ahbso     => ahbso(clint_hindex));
+    end generate riscv_clint_gen;
+
+    ibex_no_clint_gen: if GLOB_CPU_ARCH = ibex generate
+      ipi <= (others => '0');
+      multi_ibex_timer_irq_gen: if CFG_NCPU_TILE > 1 generate
+        timer_irq(CFG_NCPU_TILE - 1 downto 1) <= (others =>  timer_irq(0));
+      end generate multi_ibex_timer_irq_gen;
+    end generate ibex_no_clint_gen;
 
     -- TODO: if the interrupt_ack queue is full this entity may miss some irq
     -- restore message to the interrupt controller
@@ -1298,7 +1314,7 @@ begin
    
   end generate;
 
-  unused_riscv_irq_gen: if GLOB_CPU_ARCH /= ariane generate
+  unused_riscv_irq_gen: if GLOB_CPU_ARCH /= ariane and GLOB_CPU_ARCH /= ibex generate
     irq <= (others => '0');
     timer_irq <= (others => '0');
     ipi <= (others => '0');
@@ -1315,7 +1331,7 @@ begin
 
   leon3_gpt_gen: if GLOB_CPU_ARCH = leon3 generate
 
-    leon3_gpt : if CFG_GPT_ENABLE /= 0 generate
+    leon3_gpt_gen : if CFG_GPT_ENABLE /= 0 generate
       timer0 : gptimer                    -- timer unit
         generic map (pindex => 3, paddr => 3, pirq => CFG_GPT_IRQ,
                      sepirq => CFG_GPT_SEPIRQ, sbits => CFG_GPT_SW, ntimers => CFG_GPT_NTIM,
@@ -1324,13 +1340,32 @@ begin
       gpti.dhalt <= '0'; gpti.extclk <= '0';
     end generate;
 
-    leon3_nogpt : if CFG_GPT_ENABLE = 0 generate
+    leon3_nogpt_gen : if CFG_GPT_ENABLE = 0 generate
       noc_apbo(3) <= apb_none;
     end generate;
 
   end generate;
 
-  ariane_nogpt : if GLOB_CPU_ARCH = ariane generate
+  ibex_timer_gen : if GLOB_CPU_ARCH = ibex generate
+    ibex_timer_apb_wrap_1: ibex_timer_apb_wrap
+      generic map (
+        pindex  => 3,
+        pconfig => ibex_timer_pconfig)
+      port map (
+        clk       => clk,
+        rstn      => ibex_reset,
+        timer_irq => ibex_timer_irq,
+        apbi      => noc_apbi,
+        apbo      => noc_apbo(3),
+        pready    => ibex_timer_pready,
+        pslverr   => ibex_timer_pslverr);
+
+    ibex_reset <= soft_reset and init_done;
+    timer_irq(0) <= ibex_timer_irq;
+  end generate;
+
+
+  ariane_nogpt_gen : if GLOB_CPU_ARCH = ariane  generate
     noc_apbo(3) <= apb_none;
   end generate;
 
@@ -1537,15 +1572,15 @@ begin
 
 
   -- Connect pready for APB3 devices
-  pready_gen: process (plic_pready, noc_apbi) is
+  pready_gen: process (plic_pready, ibex_timer_pready, noc_apbi) is
   begin  -- process pready_gen
-
-    pready <= '1';
-
-    if noc_apbi.psel(2) = '1' and GLOB_CPU_ARCH = ariane then
+    if noc_apbi.psel(2) = '1' and (GLOB_CPU_ARCH = ariane or GLOB_CPU_ARCH = ibex) then
       pready <= plic_pready;
+    elsif noc_apbi.psel(3) = '1' and GLOB_CPU_ARCH = ibex then
+      pready <= ibex_timer_pready;
+    else
+      pready <= '1';
     end if;
-
   end process pready_gen;
 
   misc_noc2apb_1 : misc_noc2apb
@@ -1622,7 +1657,7 @@ begin
       tech        => CFG_FABTECH,
       hindex      => CFG_GRETH + CFG_DSU_ETH,
       axitran     => GLOB_CPU_AXI,
-      little_end  => GLOB_CPU_AXI,
+      little_end  => GLOB_CPU_RISCV,
       narrow_noc  => 1,
       eth_dma     => 0,
       cacheline   => 1,

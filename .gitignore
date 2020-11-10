@@ -6,3 +6,4 @@ tmp
 __pycache__
 _leon3_build
 _riscv_build
+_riscv32imc_build

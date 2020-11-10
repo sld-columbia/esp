@@ -286,6 +286,7 @@ package sldcommon is
       clk    : in  std_ulogic;
       noinit : in  std_ulogic;
       srst   : in  std_ulogic;
+      init_done : out std_ulogic;
       ahbmi  : in  ahb_mst_in_type;
       ahbmo  : out ahb_mst_out_type);
   end component esp_init;
