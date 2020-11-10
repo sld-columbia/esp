@@ -62,4 +62,15 @@ linux-build:
 barec:
 	$(QUIET_MKDIR)mkdir -p $@
 
+barec-all:
+	@mkdir -p barec/dvi
+	@DESIGN_PATH=$(DESIGN_PATH) $(MAKE) -C $(DRIVERS)/dvi/barec
+	@cp $(DRIVERS)/dvi/barec/*.bin barec/dvi
+	@DESIGN_PATH=$(DESIGN_PATH) $(MAKE) accelerators-barec
+
+barec-distclean:
+	$(QUIET_CLEAN)$(RM) barec
+	@$(MAKE) --quiet -C $(DRIVERS)/dvi/barec clean
+	@$(MAKE) --quiet accelerators-barec-clean
+
 .PHONY: barec-distclean barec-all

@@ -171,16 +171,3 @@ linux-clean: sysroot-clean
 
 linux-distclean: sysroot-distclean
 	$(QUIET_CLEAN)$(RM) linux-build pk-build linux.bin
-
-
-barec-all:
-	@mkdir -p barec/dvi
-	@$(MAKE) -C $(DRIVERS)/dvi/barec
-	@cp $(DRIVERS)/dvi/barec/*.bin barec/dvi
-	@$(MAKE) accelerators-barec
-
-
-barec-distclean:
-	$(QUIET_CLEAN)$(RM) barec
-	@$(MAKE) --quiet -C $(DRIVERS)/dvi/barec clean
-	@$(MAKE) --quiet accelerators-barec-clean

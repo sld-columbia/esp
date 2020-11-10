@@ -126,15 +126,3 @@ linux-clean: sysroot-clean
 
 linux-distclean: sysroot-distclean
 	$(QUIET_CLEAN)$(RM) linux-build linux.dsu linux.bin
-
-barec-all: barec
-	@mkdir -p barec/dvi
-	@$(MAKE) -C $(DRIVERS)/dvi/barec
-	@cp $(DRIVERS)/dvi/barec/*.exe barec/dvi
-	@$(MAKE) accelerators-barec
-
-
-barec-distclean:
-	$(QUIET_CLEAN)$(RM) barec
-	@CROSS_COMPILE=sparc-elf- $(MAKE) --quiet -C $(DRIVERS)/dvi/barec clean
-	@$(MAKE) --quiet accelerators-barec-clean
