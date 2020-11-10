@@ -6,6 +6,7 @@
 
 #include <math.h>
 
+#include "log2.h"
 #include "conv2d_data.hpp"
 #include "fpdata.hpp"
 #include "common.hpp"
@@ -80,8 +81,8 @@ public:
 	uint16_t *max_cacheable_bias_chunks, uint16_t *max_cacheable_bias_size,
 	uint16_t *total_input_chunks, uint16_t *total_filters_chunks,
 	uint16_t *feature_offset_incr, uint16_t *channel_offset_incr,
-	uint32_t *filters_offset_start_base, uint32_t *bias_offset_start_base,
-	uint32_t *feature_offset_start_base);
+	uint16_t *out_channel_offset_incr, uint32_t *filters_offset_start_base,
+	uint32_t *bias_offset_start_base, uint32_t *feature_offset_start_base);
     void patch_extractor(
 	const uint16_t channels, const uint16_t height, const uint16_t width,
 	const uint16_t channel_size, const uint16_t ping_input,
@@ -121,7 +122,7 @@ public:
     sc_signal<uint16_t> max_cacheable_rows_sig;
     sc_signal<uint16_t> max_cacheable_filters_sig;
     sc_signal<uint16_t> max_cacheable_bias_chunks_sig;
-    sc_signal<uint16_t> channel_offset_incr_sig;
+    sc_signal<uint16_t> out_channel_offset_incr_sig;
     sc_signal<uint32_t> feature_offset_start_base_sig;
 };
 

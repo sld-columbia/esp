@@ -78,6 +78,7 @@ void conv2d::load_input()
     uint16_t total_filters_chunks;
     uint16_t feature_offset_incr;
     uint16_t channel_offset_incr;
+    uint16_t out_channel_offset_incr;
     uint32_t filters_offset_start_base;
     uint32_t feature_offset_start_base;
     uint32_t bias_offset_start_base;
@@ -88,7 +89,8 @@ void conv2d::load_input()
 		       &max_cacheable_rows, &max_cacheable_size, &max_cacheable_filters,
 		       &max_cacheable_filters_size, &max_cacheable_bias_chunks,
 		       &max_cacheable_bias_size, &total_input_chunks, &total_filters_chunks,
-		       &feature_offset_incr, &channel_offset_incr, &filters_offset_start_base,
+		       &feature_offset_incr, &channel_offset_incr, &out_channel_offset_incr,
+		       &filters_offset_start_base,
 		       &bias_offset_start_base, &feature_offset_start_base);
 
     {
@@ -101,7 +103,7 @@ void conv2d::load_input()
 	max_cacheable_rows_sig.write(max_cacheable_rows);
 	max_cacheable_filters_sig.write(max_cacheable_filters);
 	max_cacheable_bias_chunks_sig.write(max_cacheable_bias_chunks);
-	channel_offset_incr_sig.write(channel_offset_incr);
+	out_channel_offset_incr_sig.write(out_channel_offset_incr);
 	feature_offset_start_base_sig.write(feature_offset_start_base);
 	wait();
     }
@@ -374,7 +376,7 @@ void conv2d::store_output()
     uint16_t max_cacheable_filters;
     uint16_t total_input_chunks;
     uint16_t total_filters_chunks;
-    uint16_t channel_offset_incr;
+    uint16_t out_channel_offset_incr;
     uint32_t feature_offset_start_base;
 
     {
@@ -385,7 +387,7 @@ void conv2d::store_output()
 	total_input_chunks = total_input_chunks_sig.read();
 	max_cacheable_rows = max_cacheable_rows_sig.read();
 	max_cacheable_filters = max_cacheable_filters_sig.read();
-	channel_offset_incr = channel_offset_incr_sig.read();
+	out_channel_offset_incr = out_channel_offset_incr_sig.read();
 	feature_offset_start_base = feature_offset_start_base_sig.read();
 	wait();
     }
@@ -402,7 +404,7 @@ void conv2d::store_output()
         {
             wait();
 
-	    uint32_t channel_offset_base = 0;
+	    uint32_t out_channel_offset_base = 0;
 	    for (uint16_t filter_chunk = 0; filter_chunk < total_filters_chunks; filter_chunk++)
 	    {
 		wait();
@@ -417,19 +419,20 @@ void conv2d::store_output()
 		    uint16_t loadable_rows = min(height - first_row_to_load,
 						 max_cacheable_rows);
 		    uint16_t rows_to_load = loadable_rows - (no_first_row * pad) - (no_last_row * pad);
-		    uint16_t n_words_to_store = rows_to_load * output_w;
+		    uint16_t n_words_to_store =
+			((uint16_t) (rows_to_load + 1) >> ilog2(stride)) * (uint16_t) output_w;
 
 		    uint16_t plm_out_index = 0;
 		    uint16_t cached_filters = min(max_cacheable_filters,
 						  n_filters - filter_chunk * max_cacheable_filters);
 
-		    uint32_t channel_offset = channel_offset_base;
+		    uint32_t out_channel_offset = out_channel_offset_base;
 
 		    this->store_compute_handshake();
 
 		    for (uint16_t filter_i = 0; filter_i < cached_filters; filter_i++) {
 
-			uint32_t offset_start = channel_offset + feature_offset_start_phys;
+			uint32_t offset_start = out_channel_offset + feature_offset_start_phys;
 	
 			dma_info_t dma_info(offset_start >> DMA_WORD_PER_BEAT_LOG2,
 					    n_words_to_store >> DMA_WORD_PER_BEAT_LOG2, DMA_SIZE);
@@ -467,13 +470,13 @@ void conv2d::store_output()
 			    this->dma_write_chnl.put(dataBv);
 			}
 
-			channel_offset += channel_offset_incr;
+			out_channel_offset += out_channel_offset_incr;
 		    }
 		    ping_output = !ping_output;
 		    feature_offset_start_phys += n_words_to_store;
 		    feature_offset_start_virt += n_words_to_store;
 		}
-		channel_offset_base += (channel_offset_incr * max_cacheable_filters);
+		out_channel_offset_base += (out_channel_offset_incr * max_cacheable_filters);
 	    }
 	}
     }         
@@ -507,7 +510,7 @@ void conv2d::compute_kernel()
     uint16_t n_channels;
     uint16_t n_filters;
     uint4_t filter_dim;
-    uint4_t stride;
+    uint2_t stride;
     uint16_t height;
     uint16_t width;
     bool do_relu;
@@ -582,11 +585,14 @@ void conv2d::compute_kernel()
 		uint16_t loadable_rows = min(height - first_row_to_load,
 					     max_cacheable_rows);
 		uint16_t rows_to_load = loadable_rows - (no_first_row * pad) - (no_last_row * pad);
-		uint16_t loadable_output_size = rows_to_load * output_w;
+		uint16_t loadable_output_size =
+		    ((uint16_t) (rows_to_load + 1) >> ilog2(stride)) * output_w;
 
-		for (uint16_t output_row = 0; output_row < rows_to_load; output_row++)
+		uint16_t output_plm_offset = 0;
+		for (uint16_t output_row = 0; output_row < rows_to_load; output_row += stride)
 		{
-		    for (uint16_t output_col = 0; output_col < output_w; output_col++)
+		    for (uint16_t output_col = 0; output_col < (output_w << ilog2(stride));
+			 output_col += stride)
 		    {
 			// ESP_REPORT_INFO("compute_kernel most inner loop %u %u %u %u",
 			// 		filter_chunk, input_chunk, output_row, output_col);
@@ -599,8 +605,9 @@ void conv2d::compute_kernel()
 			multiple_multiplier_accumulator(ping_weights, ping_bias, ping_output,
 							filter_size, n_filters, filter_chunk,
 							loadable_filters, plm_bias_index,
-							output_row * output_w + output_col,
+							output_plm_offset,
 							loadable_output_size, do_relu);
+			output_plm_offset++;
 			wait();
 		    }
 		}

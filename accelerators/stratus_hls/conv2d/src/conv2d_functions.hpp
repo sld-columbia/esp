@@ -15,8 +15,8 @@ inline void conv2d::compute_dimensions(
     uint16_t *max_cacheable_bias_chunks, uint16_t *max_cacheable_bias_size,
     uint16_t *total_input_chunks, uint16_t *total_filters_chunks,
     uint16_t *feature_offset_incr, uint16_t *channel_offset_incr,
-    uint32_t *filters_offset_start_base, uint32_t *bias_offset_start_base,
-    uint32_t *feature_offset_start_base)
+    uint16_t *out_channel_offset_incr, uint32_t *filters_offset_start_base,
+    uint32_t *bias_offset_start_base, uint32_t *feature_offset_start_base)
 {
     /* Spatial dimensions of the output activation map */
     *pad = is_padded ? (filter_dim >> 1) : 0;
@@ -54,6 +54,8 @@ inline void conv2d::compute_dimensions(
 
     /* Load offsets */
     *channel_offset_incr = *feature_size;
+    *out_channel_offset_incr = *output_w * *output_w;
+
     *feature_offset_incr = max_cacheable_rows_norm * width;
     *filters_offset_start_base = *feature_size * n_channels;
     *bias_offset_start_base = *filters_offset_start_base + *filters_size;
@@ -103,7 +105,7 @@ inline void conv2d::patch_extractor(
 	channel_base += channel_size;
     }
 }
-
+ 
 inline void conv2d::multiple_multiplier_accumulator(
     const uint16_t ping_weights, const uint16_t ping_bias, const uint16_t ping_output,
     const uint16_t filter_size, const uint16_t num_filters,

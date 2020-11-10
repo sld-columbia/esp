@@ -199,7 +199,7 @@ int _validate(float* hw_data_array, float* sw_data_array, int num_elements) {
             tot_errors++;
         } else {
 	    float hw_fdata = hw_data_array[i];
-	    // printf("Validation: Element %d wrong [%.4f - %.4f]\n", i, float(hw_fdata), float(sw_data_array[i]));
+	    printf("Validation: Element %d wrong [%.4f - %.4f]\n", i, float(hw_fdata), float(sw_data_array[i]));
 	}
 
         if (rel_error > max_error) max_error = rel_error;

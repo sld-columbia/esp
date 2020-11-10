@@ -57,13 +57,13 @@ void system_t::config_proc()
 	    CONV_F_CHANNELS = 16;
 	    CONV_K_OUT_CHANNELS = 4;
 	} else if (!strcmp(esc_argv()[1], "S")) {
-	    CONV_F_HEIGHT = 22;
-	    CONV_F_WIDTH = 22;
+	    CONV_F_HEIGHT = 24;
+	    CONV_F_WIDTH = 24;
 	    CONV_F_CHANNELS = 4;
 	    CONV_K_OUT_CHANNELS = 8;
 	} else { // if (!strcmp(esc_argv()[1], "XS")) {
-	    CONV_F_HEIGHT = 6;
-	    CONV_F_WIDTH = 6;
+	    CONV_F_HEIGHT = 12;
+	    CONV_F_WIDTH = 12;
 	    CONV_F_CHANNELS = 2;
 	    CONV_K_OUT_CHANNELS = 8;
 	}
@@ -90,8 +90,8 @@ void system_t::config_proc()
         kernel_w = CONV_K_WIDTH;
         pad_h = CONV_K_HEIGHT/2;
         pad_w = CONV_K_WIDTH/2;
-        stride_h = 1;
-        stride_w = 1;
+        stride_h = 2;
+        stride_w = 2;
         dilation_h = 1;
         dilation_w = 1;
 	do_relu = DO_RELU;
@@ -189,17 +189,20 @@ void system_t::load_memory()
 {
     int i, j;
 
+    const int output_h = (height + 2 * pad_h - (dilation_h * (kernel_h - 1) + 1)) / stride_h + 1;
+    const int output_w = (width + 2 * pad_w - (dilation_w * (kernel_w - 1) + 1)) / stride_w + 1;
+
     // Input data and golden output (aligned to DMA_WIDTH makes your life easier)
 #if (DMA_WORD_PER_BEAT == 0)
     in_words_adj = channels * height * width;
     weights_words_adj = num_filters * channels * kernel_h * kernel_w;
     bias_words_adj = num_filters;
-    out_words_adj = num_filters * height * width;
+    out_words_adj = num_filters * output_h * output_w;
 #else
     in_words_adj = round_up(channels * height * width, DMA_WORD_PER_BEAT);
     weights_words_adj = round_up(num_filters * channels * kernel_h * kernel_w, DMA_WORD_PER_BEAT);
     bias_words_adj = round_up(num_filters, DMA_WORD_PER_BEAT);
-    out_words_adj = round_up(num_filters * height * width, DMA_WORD_PER_BEAT);
+    out_words_adj = round_up(num_filters * output_h * output_w, DMA_WORD_PER_BEAT);
 #endif
 
     in_size = in_words_adj * (1);
@@ -329,7 +332,7 @@ int system_t::validate()
     // Check for mismatches
     uint32_t errors = 0;
 
-    errors = _validate(hw_output, sw_output, num_filters * height * width);
+    errors = _validate(hw_output, sw_output, out_size);
 
     // for (int i = 0; i < 1; i++)
     //     for (int j = 0; j < channels * height * width; j++)
