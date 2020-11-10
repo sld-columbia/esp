@@ -164,11 +164,7 @@ int main(int argc, char * argv[])
 		iowrite32(dev, SELECT_REG, ioread32(dev, DEVID_REG));
 		iowrite32(dev, COHERENCE_REG, ACC_COH_NONE);
 
-#ifndef __sparc
-		iowrite32(dev, PT_ADDRESS_REG, (unsigned long long) ptable);
-#else
-		iowrite32(dev, PT_ADDRESS_REG, (unsigned) ptable);
-#endif
+		iowrite32(dev, PT_ADDRESS_REG, (unsigned long) ptable);
 		iowrite32(dev, PT_NCHUNK_REG, NCHUNK(mem_size));
 		iowrite32(dev, PT_SHIFT_REG, CHUNK_SHIFT);
 
