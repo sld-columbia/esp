@@ -119,7 +119,7 @@ class CpuFrame(Frame):
     general_config_frame = Frame(self)
     general_config_frame.pack(side=TOP, pady=5)
 
-    cpu_choices = ["leon3", "ariane"]
+    cpu_choices = ["leon3", "ariane", "ibex"]
 
     Label(general_config_frame, text = "Core: ").grid(row=1, column=1)
     Pmw.OptionMenu(general_config_frame, menubutton_font="TkDefaultFont 12", menubutton_textvariable=soc.CPU_ARCH,

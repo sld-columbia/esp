@@ -33,6 +33,11 @@ ifeq ("$(CPU_ARCH)", "ariane")
 VERILOG_ARIANE += $(DESIGN_PATH)/plic_regmap.sv
 endif
 
+VERILOG_IBEX += $(foreach f, $(shell strings $(ESP_ROOT)/utils/ibex_verilog.txt), $(IBEX)/$(f))
+ifeq ("$(CPU_ARCH)", "ibex")
+VERILOG_IBEX += $(DESIGN_PATH)/plic_regmap.sv
+endif
+
 PKG_LIST  = $(shell (find $(ESP_ROOT)/rtl -name "*.txt" ))
 PKG_LIST += $(shell (find $(ESP_ROOT)/sim -name "*.txt" ))
 

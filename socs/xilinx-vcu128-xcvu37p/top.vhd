@@ -355,7 +355,7 @@ begin
         pmask        => 16#f00#,
         pirq         => 12,
         memtech      => CFG_FABTECH,
-        little_end   => GLOB_CPU_AXI * CFG_L2_DISABLE,
+        little_end   => GLOB_CPU_RISCV * CFG_L2_DISABLE,
         rmii         => 0,
         enable_mdio  => 1,
         fifosize     => CFG_ETH_FIFO,

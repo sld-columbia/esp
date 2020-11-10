@@ -852,7 +852,7 @@ begin
         paddr => 16#800#,
         pmask => 16#f00#,
         pirq => 12,
-        little_end => GLOB_CPU_AXI * CFG_L2_DISABLE,
+        little_end => GLOB_CPU_RISCV * CFG_L2_DISABLE,
         memtech => CFG_FABTECH,
         enable_mdio => 1,
         fifosize => CFG_ETH_FIFO,

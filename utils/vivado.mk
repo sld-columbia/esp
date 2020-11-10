@@ -28,6 +28,10 @@ endif
 		rtl=$$ver; \
 		echo "read_verilog -sv $$rtl" >> $@; \
 	done;
+	@for ver in $(VERILOG_IBEX); do \
+		rtl=$$ver; \
+		echo "read_verilog -sv $$rtl" >> $@; \
+	done;
 	@for rtl in $(SLDGEN_VHDL_RTL_PKGS); do \
 		echo "read_vhdl $$rtl" >> $@; \
 	done;
@@ -51,9 +55,9 @@ vivado/setup.tcl: vivado $(XDC) $(BOARD_FILES)
 	@echo "create_project $(DESIGN) -part ${DEVICE} -force" > $@
 	@echo "set_property target_language verilog [current_project]" >> $@
 ifneq ($(findstring profpga, $(BOARD)),)
-	@echo "set_property include_dirs {$(ESP_CACHES_INCDIR) $(PROFPGA_INCDIR) $(THIRDPARTY_INCDIR) $(ARIANE)/src/common_cells/include} [get_filesets {sim_1 sources_1}]" >> $@
+	@echo "set_property include_dirs {$(ESP_CACHES_INCDIR) $(PROFPGA_INCDIR) $(THIRDPARTY_INCDIR) $(ARIANE)/src/common_cells/include ${IBEX}/vendor/lowrisc_ip/prim/rtl} [get_filesets {sim_1 sources_1}]" >> $@
 else
-	@echo "set_property include_dirs {$(ESP_CACHES_INCDIR) $(THIRDPARTY_INCDIR) $(ARIANE)/src/common_cells/include} [get_filesets {sim_1 sources_1}]" >> $@
+	@echo "set_property include_dirs {$(ESP_CACHES_INCDIR) $(THIRDPARTY_INCDIR) $(ARIANE)/src/common_cells/include ${IBEX}/vendor/lowrisc_ip/prim/rtl} [get_filesets {sim_1 sources_1}]" >> $@
 endif
 	@echo "set_property verilog_define {XILINX_FPGA=1 WT_DCACHE=1} [get_filesets {sim_1 sources_1}]" >> $@
 	@echo "source ./srcs.tcl" >> $@

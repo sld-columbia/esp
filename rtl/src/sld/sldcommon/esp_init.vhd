@@ -23,6 +23,7 @@ entity esp_init is
     clk    : in  std_ulogic;
     noinit : in  std_ulogic;
     srst   : in  std_ulogic;
+    init_done  : out std_ulogic;
     ahbmi  : in  ahb_mst_in_type;
     ahbmo  : out ahb_mst_out_type);
 
@@ -92,10 +93,13 @@ begin  -- architecture rtl
       srst_reg <= '0';
       req_reg <= req_none;
       timer <= 0;
+      init_done <= '0';
     elsif clk'event and clk = '1' then  -- rising clock edge
       init_state <= init_next;
       if clear = '1' then
         count <= 0;
+        -- Set init done after the first sequence completes
+        init_done <= '1';
       elsif incr = '1' then
         count <= count + 1;
       end if;

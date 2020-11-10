@@ -30,6 +30,7 @@ CONTIG_ALLOC_PATH = $(DRIVERS)/contig_alloc
 ESP_CORE_PATH     = $(DRIVERS)/esp
 
 ARIANE           ?= $(ESP_ROOT)/third-party/ariane
+IBEX             ?= $(ESP_ROOT)/third-party/ibex
 
 
 ### Include targets to generate accelerators RTL with HLS ###
@@ -75,10 +76,15 @@ ifeq ("$(CPU_ARCH)", "ariane")
 include $(ESP_ROOT)/utils/ariane.mk
 endif
 
+ifeq ("$(CPU_ARCH)", "ibex")
+### Ibex Software targets ###
+include $(ESP_ROOT)/utils/ibex.mk
+endif
 
 ### Other architectures not integrated ###
 ifneq ("$(CPU_ARCH)", "leon3")
 ifneq ("$(CPU_ARCH)", "ariane")
+ifneq ("$(CPU_ARCH)", "ibex")
 
 soft:
 
@@ -96,6 +102,7 @@ barec-all:
 
 barec-distclean:
 
+endif
 endif
 endif
 

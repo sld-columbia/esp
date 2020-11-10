@@ -64,6 +64,12 @@ endif
 		echo $(SPACES)"$(VLOG) $(ARIANE_VLOGOPT) $$rtl"; \
 		$(VLOG) $(ARIANE_VLOGOPT) $$rtl || exit; \
 	done; \
+	echo $(SPACES)"### Compile Ibex source files ###"; \
+	for ver in $(VERILOG_IBEX); do \
+		rtl=$$ver; \
+		echo $(SPACES)"$(VLOG) $(IBEX_VLOGOPT) $$rtl"; \
+		$(VLOG) $(IBEX_VLOGOPT) $$rtl || exit; \
+	done; \
 	echo $(SPACES)"### Compile VHDL packages ###"; \
 	for rtl in $(THIRDPARTY_VHDL_PKGS); do \
 		echo $(SPACES)"$(VCOM) -work work $$rtl"; \

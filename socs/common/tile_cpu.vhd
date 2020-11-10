@@ -17,6 +17,7 @@ use work.devices.all;
 use work.gencomp.all;
 use work.leon3.all;
 use work.ariane_esp_pkg.all;
+use work.ibex_esp_pkg.all;
 use work.misc.all;
 -- pragma translate_off
 use work.sim.all;
@@ -231,6 +232,9 @@ architecture rtl of tile_cpu is
   signal irq       : std_logic_vector(1 downto 0);
   signal timer_irq : std_ulogic;
   signal ipi       : std_ulogic;
+
+  -- IBEX Idle
+  signal core_idle : std_ulogic;
 
 
   -- Queues
@@ -869,7 +873,7 @@ begin
   -- Bus
   -----------------------------------------------------------------------------
 
-  leon3_bus_gen: if GLOB_CPU_ARCH = leon3 generate
+  leon3_bus_gen: if GLOB_CPU_ARCH = leon3 or GLOB_CPU_ARCH = ibex generate
 
   hbus_pnp_gen : process (ahbso, noc_ahbso, noc_ahbso_2) is
   begin  -- process hbus_pnp_gen
@@ -912,7 +916,7 @@ begin
   -- Drive unused bus ports
   -----------------------------------------------------------------------------
 
-  leon3_bus_not_driven_gen: if GLOB_CPU_ARCH = leon3 generate
+  leon3_bus_not_driven_gen: if GLOB_CPU_ARCH = leon3 or GLOB_CPU_ARCH = ibex generate
 
   -- Master hindex must match cpu_id. This restriction only applies to LEON3
   nam1 : for i in 1 to CFG_NCPU_TILE - 1 generate
@@ -948,7 +952,7 @@ begin
   process(clk_feedthru, rst)
   begin  -- process
     if rst = '1' then
-      assert (GLOB_CPU_ARCH = leon3 or GLOB_CPU_ARCH = ariane) report "Processor core architecture not supported!" severity failure;
+      assert (GLOB_CPU_ARCH = leon3 or GLOB_CPU_ARCH = ariane or GLOB_CPU_ARCH = ibex) report "Processor core architecture not supported!" severity failure;
     end if;
   end process;
   --pragma translate_on
@@ -1100,6 +1104,40 @@ begin
 
   end generate leon3_cpu_gen;
 
+  -- Ibex
+  ibex_cpu_gen: if GLOB_CPU_ARCH = ibex generate
+    ibex_ahb_wrap_1: ibex_ahb_wrap
+      generic map (
+        hindex     => 0,
+        ROMBase    => X"0000_0000")
+      port map (
+        rstn      => cpurstn,
+        clk       => clk_feedthru,
+        HART_ID   => this_cpu_id_lv(31 downto 0),
+        irq       => irq,
+        timer_irq => timer_irq,
+        ipi       => ipi,
+        core_idle => core_idle,
+        ahbmi     => ahbmi,
+        ahbmo     => ahbmo(0));
+
+    -- We handle I/O with a model of the UART. Therefore when core writes
+    -- `to_host` we've reached the call to exit
+    cpuerr <= '1' when  ahbmo(0).htrans /= HTRANS_IDLE and ahbmo(0).haddr = X"8000149C" else '0';
+
+    -- L1 is only present optionally for instructions; no need to flush it
+    -- L2 can be flushed immediately when necessary.
+    dflush <= '1';
+
+    -- RISC-V PLIC/CLINT outputs
+    irq       <= irqi.irl(1 downto 0);
+    timer_irq <= irqi.irl(2);
+    ipi       <= irqi.irl(3);
+
+    -- IRQ claim/ack occurs via memory-mapped registers
+    irqo <= irq_out_none;
+  end generate ibex_cpu_gen;
+
   -- Ariane
   ariane_cpu_gen: if GLOB_CPU_ARCH = ariane generate
 
@@ -1212,7 +1250,7 @@ begin
 
   end generate with_cache_coherence;
 
-  leon3_cpu_tile_services_gen: if GLOB_CPU_ARCH = leon3 generate
+  leon3_cpu_tile_services_gen: if GLOB_CPU_ARCH = leon3 or GLOB_CPU_ARCH = ibex generate
 
   leon3_no_cache_coherence : if CFG_L2_ENABLE = 0 generate
     coherence_rsp_snd_data_in <= (others => '0');
@@ -1509,7 +1547,16 @@ begin
   end generate dvfs_no_master_or_no_dvfs;
 
   --Monitors
-  mon_dvfs_int.acc_idle <= irqo_int.pwd when GLOB_CPU_ARCH = leon3 else '0';
+  cpu_monitor_gen: process (irqo_int, core_idle) is
+  begin  -- process cpu_monitor_gen
+    if GLOB_CPU_ARCH = leon3 then
+      mon_dvfs_int.acc_idle <= irqo_int.pwd;
+    elsif GLOB_CPU_ARCH = ibex then
+      mon_dvfs_int.acc_idle <= core_idle;
+    else
+      mon_dvfs_int.acc_idle <= '0';
+    end if;
+  end process cpu_monitor_gen;
   mon_dvfs_int.traffic  <= '0';
   mon_dvfs_int.burst    <= '0';
 
