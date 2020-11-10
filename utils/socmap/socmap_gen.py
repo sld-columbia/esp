@@ -2181,13 +2181,13 @@ def create_socmap(esp_config, soc):
   # Device tree
   if esp_config.cpu_arch == "ariane":
 
-    fp = open('ariane.dts', 'w')
+    fp = open('riscv.dts', 'w')
 
     print_ariane_devtree(fp, esp_config)
 
     fp.close()
 
-    print("Created device-tree into 'ariane.dts'")
+    print("Created device-tree into 'riscv.dts'")
 
 
   # RTL Caches configuration
