@@ -7,23 +7,20 @@
 #include <stdint.h>
 #include "conv2d_data.hpp"
 #include "fpdata.hpp"
+#include "conv2d_directives.hpp"
+#include "conv2d.hpp"
 
 // Initialization functions
-void init_image(float* image, float* golden_image, const int channels, const int height, const int width, bool random);
-
-void init_weights(float* weights, float* golden_weights, const int filters, const int channels, const int height, const int width, bool random);
-
-void init_bias(float* hw_bias, float* sw_bias, const int n_filters, bool random);
+void init_tensor(float* tensor, const int size, bool random);
 
 // Print functions
-void print_hw_image(const char* name, float* matrix, const int channels, const int height, const int width);
-void print_sw_image(const char* name, float* matrix, const int channels, const int height, const int width);
+void print_image(const char * name, float* image, const int channels,
+		 const int height, const int width, const bool fpdata);
 
-void print_hw_weights(const char* name, float* matrix, const int filters, const int channels, const int height, const int width);
-void print_sw_weights(const char* name, float* matrix, const int filters, const int channels, const int height, const int width);
+void print_weights(const char * name, float* weights, const int filters, const int channels,
+		   const int height, const int width, const bool fpdata);
 
-void print_hw_bias(const char * name, float* bias, const int n_filters);
-void print_sw_bias(const char * name, float* bias, const int n_filters);
+void print_bias(const char * name, float* bias, const int n_filters, const bool fpdata);
 
 void print_array(const char* name, float* image, const int length);
 
@@ -31,7 +28,7 @@ void print_array(const char* name, float* image, const int length);
 void transpose_matrix(float* image, const int height, const int width);
 
 // Comparison functions
-int _validate(float* hw_data_array, float* sw_data_array, int num_elements);
+int _validate(float* hw_data_array, float* sw_data_array, int filters, int output_h, int output_w);
 
 typedef union
 {

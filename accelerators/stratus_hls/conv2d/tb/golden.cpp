@@ -12,7 +12,7 @@ void sw_conv_layer (
     const bool do_relu)
 {
 
-    const int channel_size = height * width;
+    const int channel_size = round_up(height * width, DMA_WORD_PER_BEAT);
     const int filter_size = channels * kernel_w * kernel_h;
     const int output_h = (height + 2 * pad_h - (dilation_h * (kernel_h - 1) + 1)) / stride_h + 1;
     const int output_w = (width + 2 * pad_w - (dilation_w * (kernel_w - 1) + 1)) / stride_w + 1;
@@ -43,9 +43,9 @@ void sw_conv_layer (
 		if (do_relu && out_value < 0)
 		    out_value = 0;
 
-                output[num_filter * output_w * output_h +
+                output[num_filter * round_up(output_w * output_h, DMA_WORD_PER_BEAT) +
 		       output_row * output_w + output_col] = out_value;
-            }
+           }
         }
     }
 }

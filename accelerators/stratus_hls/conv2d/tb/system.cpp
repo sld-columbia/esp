@@ -62,8 +62,8 @@ void system_t::config_proc()
 	    CONV_F_CHANNELS = 4;
 	    CONV_K_OUT_CHANNELS = 8;
 	} else { // if (!strcmp(esc_argv()[1], "XS")) {
-	    CONV_F_HEIGHT = 12;
-	    CONV_F_WIDTH = 12;
+	    CONV_F_HEIGHT = 10;
+	    CONV_F_WIDTH = 10;
 	    CONV_F_CHANNELS = 2;
 	    CONV_K_OUT_CHANNELS = 8;
 	}
@@ -80,7 +80,7 @@ void system_t::config_proc()
 	}
 
 	CONV_K_IN_CHANNELS = CONV_F_CHANNELS;
-	DO_RELU = 1;
+	DO_RELU = 0;
 
 	channels = CONV_F_CHANNELS;
         height = CONV_F_HEIGHT;
@@ -95,6 +95,8 @@ void system_t::config_proc()
         dilation_h = 1;
         dilation_w = 1;
 	do_relu = DO_RELU;
+	output_h = (height + 2 * pad_h - (dilation_h * (kernel_h - 1) + 1)) / stride_h + 1;
+	output_w = (width + 2 * pad_w - (dilation_w * (kernel_w - 1) + 1)) / stride_w + 1;
     }
 
     // Config
@@ -135,15 +137,15 @@ void system_t::config_proc()
         esc_log_latency(sc_object::basename(), clock_cycle(end_time - begin_time));
         wait(); conf_done.write(false);
     }
-    // sw_conv_layer_fpdata(hw_input, channels, height, width, kernel_h, kernel_w, pad_h, pad_w,
+    // sw_conv_layer_fpdata(input, channels, height, width, kernel_h, kernel_w, pad_h, pad_w,
     // 		  stride_h, stride_w, dilation_h, dilation_w, num_filters,
-    //            hw_weights, hw_bias, hw_output, do_relu);
+    //            weights, bias, hw_output, do_relu);
     ESP_REPORT_INFO("HW Accelerator done");
 
     // Compute in SW
-    sw_conv_layer(sw_input, channels, height, width, kernel_h, kernel_w, pad_h, pad_w,
+    sw_conv_layer(input, channels, height, width, kernel_h, kernel_w, pad_h, pad_w,
 		  stride_h, stride_w, dilation_h, dilation_w, num_filters,
-		  sw_weights, sw_bias, sw_output, do_relu);
+		  weights, bias, sw_output, do_relu);
     ESP_REPORT_INFO("SW done");
 
     // printf("Performance: data-in : moved %u (%u bytes) / memory footprint %u (%u bytes) / PLM locality %.2f%%",
@@ -162,9 +164,9 @@ void system_t::config_proc()
     {
         dump_memory(); // store the output in more suitable data structure if needed
 
-#ifdef XSMALL
-	print_hw_image("output-hw", hw_output, num_filters, height, width);
-	print_sw_image("output-sw", sw_output, num_filters, height, width);
+#ifdef XS
+	print_image("output-hw", hw_output, num_filters, height, width, true);
+	print_image("output-sw", sw_output, num_filters, height, width, false);
 	printf("\n");
 #endif
 
@@ -189,9 +191,6 @@ void system_t::load_memory()
 {
     int i, j;
 
-    const int output_h = (height + 2 * pad_h - (dilation_h * (kernel_h - 1) + 1)) / stride_h + 1;
-    const int output_w = (width + 2 * pad_w - (dilation_w * (kernel_w - 1) + 1)) / stride_w + 1;
-
     // Input data and golden output (aligned to DMA_WIDTH makes your life easier)
 #if (DMA_WORD_PER_BEAT == 0)
     in_words_adj = channels * height * width;
@@ -199,10 +198,10 @@ void system_t::load_memory()
     bias_words_adj = num_filters;
     out_words_adj = num_filters * output_h * output_w;
 #else
-    in_words_adj = round_up(channels * height * width, DMA_WORD_PER_BEAT);
+    in_words_adj = round_up(channels * round_up(height * width, DMA_WORD_PER_BEAT), DMA_WORD_PER_BEAT);
     weights_words_adj = round_up(num_filters * channels * kernel_h * kernel_w, DMA_WORD_PER_BEAT);
     bias_words_adj = round_up(num_filters, DMA_WORD_PER_BEAT);
-    out_words_adj = round_up(num_filters * output_h * output_w, DMA_WORD_PER_BEAT);
+    out_words_adj = round_up(num_filters * round_up(output_h * output_w, DMA_WORD_PER_BEAT), DMA_WORD_PER_BEAT);
 #endif
 
     in_size = in_words_adj * (1);
@@ -210,29 +209,20 @@ void system_t::load_memory()
     bias_size = bias_words_adj * (1);
     out_size = out_words_adj * (1);
 
-    hw_input = (float*)malloc(in_size * sizeof(float));
-    hw_weights = (float*)malloc(weights_size * sizeof(float));
-    hw_bias = (float*)malloc(bias_size * sizeof(float));
-    hw_output = (float*)malloc(out_size * sizeof(float));
-
-    sw_input = (float*) malloc(in_size * sizeof(float));
-    sw_weights = (float*) malloc(weights_size * sizeof(float));
-    sw_bias = (float*) malloc(bias_size * sizeof(float));
+    input = (float*) malloc(in_size * sizeof(float));
+    weights = (float*) malloc(weights_size * sizeof(float));
+    bias = (float*) malloc(bias_size * sizeof(float));
     sw_output = (float*) malloc(out_size * sizeof(float));
+    hw_output = (float*) malloc(out_size * sizeof(float));
 
-    init_image(hw_input, sw_input, channels, height, width, true);
-    init_weights(hw_weights, sw_weights, num_filters, channels, kernel_h, kernel_w, true);
-    init_bias(hw_bias, sw_bias, num_filters, true);
+    init_tensor(input, in_size, false);
+    init_tensor(weights, weights_size, true);
+    init_tensor(bias, bias_size, false);
 
-#ifdef XSMALL
-    print_hw_image("input-hw", hw_input, channels, height, width);
-    print_sw_image("input-sw", sw_input, channels, height, width);
-
-    print_hw_weights("weights-hw", hw_weights, num_filters, channels, kernel_h, kernel_w);
-    print_sw_weights("weights-sw", sw_weights, num_filters, channels, kernel_h, kernel_w);
-
-    print_hw_bias("bias-hw", hw_bias, num_filters);
-    print_sw_bias("bias-sw", sw_bias, num_filters);
+#ifdef XS
+    print_image("input-hw", input, channels, height, width, false);
+    print_weights("weights-hw", weights, num_filters, channels, kernel_h, kernel_w, false);
+    print_bias("bias-hw", bias, num_filters, false);
     printf("\n");
 #endif
 
@@ -240,54 +230,54 @@ void system_t::load_memory()
 #if (DMA_WORD_PER_BEAT == 0)
     for (i = 0; i < in_size; i++)  {
         sc_dt::sc_bv<DATA_WIDTH> data_bv =
-	    fp2bv<FPDATA, DATA_WIDTH>(FPDATA(hw_input[i]));
+	    fp2bv<FPDATA, DATA_WIDTH>(FPDATA(input[i]));
         for (j = 0; j < DMA_BEAT_PER_WORD; j++)
             mem[DMA_BEAT_PER_WORD * i + j] =
 		data_bv.range((j + 1) * DMA_WIDTH - 1, j * DMA_WIDTH);
     }
     for (; i < in_size + weights_size; i++)  {
         sc_dt::sc_bv<DATA_WIDTH> data_bv =
-	    fp2bv<FPDATA, DATA_WIDTH>(FPDATA(hw_weights[i - in_size]));
+	    fp2bv<FPDATA, DATA_WIDTH>(FPDATA(weights[i - in_size]));
         for (j = 0; j < DMA_BEAT_PER_WORD; j++)
             mem[DMA_BEAT_PER_WORD * i + j] =
 		data_bv.range((j + 1) * DMA_WIDTH - 1, j * DMA_WIDTH);
     }
     for (; i < in_size + weights_size + bias_size; i++)  {
         sc_dt::sc_bv<DATA_WIDTH> data_bv =
-	    fp2bv<FPDATA, DATA_WIDTH>(FPDATA(hw_bias[i - in_size - weights_size]));
+	    fp2bv<FPDATA, DATA_WIDTH>(FPDATA(bias[i - in_size - weights_size]));
         for (j = 0; j < DMA_BEAT_PER_WORD; j++)
             mem[DMA_BEAT_PER_WORD * i + j] =
 		data_bv.range((j + 1) * DMA_WIDTH - 1, j * DMA_WIDTH);
     }
 #else
     for (i = 0; i < in_size / DMA_WORD_PER_BEAT; i++)  {
-	// ESP_REPORT_INFO("tb load in %i : %f", i, (float) hw_input[i]);
-        sc_dt::sc_bv<DMA_WIDTH> data_bv = fp2bv<FPDATA, DATA_WIDTH>(FPDATA(hw_input[i]));
+	// ESP_REPORT_INFO("tb load in %i : %f", i, (float) input[i]);
+        sc_dt::sc_bv<DMA_WIDTH> data_bv = fp2bv<FPDATA, DATA_WIDTH>(FPDATA(input[i]));
         for (j = 0; j < DMA_WORD_PER_BEAT; j++)
             data_bv.range((j+1) * DATA_WIDTH - 1, j * DATA_WIDTH) =
-		fp2bv<FPDATA, DATA_WIDTH>(FPDATA(hw_input[i * DMA_WORD_PER_BEAT + j]));
+		fp2bv<FPDATA, DATA_WIDTH>(FPDATA(input[i * DMA_WORD_PER_BEAT + j]));
         mem[i] = data_bv;
     }
     for (; i < (in_size + weights_size) / DMA_WORD_PER_BEAT; i++)  {
 	// ESP_REPORT_INFO("tb load we %i : %f",
-	// i, (float) hw_weights[i - in_size / DMA_WORD_PER_BEAT]);
+	// i, (float) weights[i - in_size / DMA_WORD_PER_BEAT]);
         sc_dt::sc_bv<DMA_WIDTH> data_bv =
-	    fp2bv<FPDATA, DATA_WIDTH>(FPDATA(hw_weights[i - in_size / DMA_WORD_PER_BEAT]));
+	    fp2bv<FPDATA, DATA_WIDTH>(FPDATA(weights[i - in_size / DMA_WORD_PER_BEAT]));
         for (j = 0; j < DMA_WORD_PER_BEAT; j++)
             data_bv.range((j+1) * DATA_WIDTH - 1, j * DATA_WIDTH) =
-		fp2bv<FPDATA, DATA_WIDTH>(FPDATA(hw_weights[i * DMA_WORD_PER_BEAT + j - in_size]));
+		fp2bv<FPDATA, DATA_WIDTH>(FPDATA(weights[i * DMA_WORD_PER_BEAT + j - in_size]));
         mem[i] = data_bv;
     }
     for (; i < (in_size + weights_size + bias_size) / DMA_WORD_PER_BEAT; i++)  {
 	// ESP_REPORT_INFO("tb load we %i : %f",
-	// i, (float) hw_bias[i - (in_size + weights_size) / DMA_WORD_PER_BEAT]);
+	// i, (float) bias[i - (in_size + weights_size) / DMA_WORD_PER_BEAT]);
         sc_dt::sc_bv<DMA_WIDTH> data_bv =
 	    fp2bv<FPDATA, DATA_WIDTH>(
-		FPDATA(hw_bias[i - (in_size + weights_size) / DMA_WORD_PER_BEAT]));
+		FPDATA(bias[i - (in_size + weights_size) / DMA_WORD_PER_BEAT]));
         for (j = 0; j < DMA_WORD_PER_BEAT; j++)
             data_bv.range((j+1) * DATA_WIDTH - 1, j * DATA_WIDTH) =
 		fp2bv<FPDATA, DATA_WIDTH>(
-		    FPDATA(hw_bias[i * DMA_WORD_PER_BEAT + j - in_size - weights_size]));
+		    FPDATA(bias[i * DMA_WORD_PER_BEAT + j - in_size - weights_size]));
         mem[i] = data_bv;
     }
 #endif
@@ -332,7 +322,7 @@ int system_t::validate()
     // Check for mismatches
     uint32_t errors = 0;
 
-    errors = _validate(hw_output, sw_output, out_size);
+    errors = _validate(hw_output, sw_output, num_filters, output_h, output_w);
 
     // for (int i = 0; i < 1; i++)
     //     for (int j = 0; j < channels * height * width; j++)
@@ -343,13 +333,10 @@ int system_t::validate()
     // delete [] out;
     // delete [] gold;
 
-    free(sw_input);
-    free(sw_weights);
-    free(sw_bias);
+    free(input);
+    free(weights);
+    free(bias);
     free(sw_output);
-    free(hw_input);
-    free(hw_weights);
-    free(hw_bias);
     free(hw_output);
 
     return errors;

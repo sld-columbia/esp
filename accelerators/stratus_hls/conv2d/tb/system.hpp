@@ -95,6 +95,8 @@ public:
     int32_t dilation_h;
     int32_t dilation_w;
     int32_t do_relu;
+    int32_t output_h;
+    int32_t output_w;
     
     uint32_t in_words_adj;
     uint32_t weights_words_adj;
@@ -105,13 +107,10 @@ public:
     uint32_t bias_size;
     uint32_t out_size;
 
-    float* hw_input;
-    float* hw_weights;
-    float* hw_bias;
+    float* input;
+    float* weights;
+    float* bias;
     float* hw_output;
-    float* sw_input;
-    float* sw_weights;
-    float* sw_bias;
     float* sw_output;
 
     // Other Functions

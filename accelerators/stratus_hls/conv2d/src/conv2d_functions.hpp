@@ -10,13 +10,15 @@ inline void conv2d::compute_dimensions(
     const bool is_padded, const uint4_t stride, const uint4_t filter_dim,
     const uint16_t n_filters, uint16_t *output_w, uint4_t *pad,
     uint16_t *feature_size, uint16_t *filter_size, uint32_t *filters_size, 
-    uint16_t *max_cacheable_rows, uint16_t *max_cacheable_size,
+    uint16_t *max_cacheable_rows, uint16_t *max_cacheable_rows_init,
+    uint16_t *max_cacheable_size,  uint16_t *max_cacheable_size_init,
     uint16_t *max_cacheable_filters, uint16_t *max_cacheable_filters_size,
     uint16_t *max_cacheable_bias_chunks, uint16_t *max_cacheable_bias_size,
     uint16_t *total_input_chunks, uint16_t *total_filters_chunks,
-    uint16_t *feature_offset_incr, uint16_t *channel_offset_incr,
-    uint16_t *out_channel_offset_incr, uint32_t *filters_offset_start_base,
-    uint32_t *bias_offset_start_base, uint32_t *feature_offset_start_base)
+    uint16_t *feature_offset_incr, uint16_t *feature_offset_incr_init,
+    uint16_t *channel_offset_incr, uint16_t *out_channel_offset_incr,
+    uint32_t *filters_offset_start_base, uint32_t *bias_offset_start_base,
+    uint32_t *feature_offset_start_base)
 {
     /* Spatial dimensions of the output activation map */
     *pad = is_padded ? (filter_dim >> 1) : 0;
@@ -31,17 +33,40 @@ inline void conv2d::compute_dimensions(
 
     /* Max number of input rows cacheable in the input PLM */
     *max_cacheable_rows = min(INPUT_PLM_SIZE / ((uint16_t) (n_channels * width)), height);
-    *max_cacheable_size = *max_cacheable_rows * width;
+    *max_cacheable_rows_init = *max_cacheable_rows;
 
     /* Max number of input rows cacheable in the input PLM */
+    // TODO optimize
     uint16_t cacheable_outputs = OUTPUT_PLM_SIZE / ((uint16_t) *output_w * *max_cacheable_rows);
     uint16_t cacheable_filters = WEIGHTS_PLM_SIZE / (*filter_size);
-    *max_cacheable_filters = (min(min(cacheable_filters, n_filters), min(cacheable_outputs, BIAS_PLM_SIZE)) >> 1) << 1;
+    *max_cacheable_filters = (min(min(cacheable_filters, n_filters),
+				  min(cacheable_outputs, BIAS_PLM_SIZE)) >> 1) << 1;
     *max_cacheable_filters_size = *filter_size * *max_cacheable_filters;
+
+    if (*max_cacheable_rows < height) {
+	if ((*max_cacheable_rows & 1) == 1) {
+	    *max_cacheable_rows -= 1;
+	    if (!is_padded)
+		*max_cacheable_rows_init -= 1;
+	} else {
+	    if (is_padded)
+		*max_cacheable_rows_init -= 1;
+	}
+    }
+
+    *max_cacheable_size = *max_cacheable_rows * width;
+    *max_cacheable_size_init = *max_cacheable_rows_init * width;
 
     /* Amount of input chunks to be loaded in the input PLM */
     uint16_t max_cacheable_rows_norm = (*max_cacheable_rows) - filter_dim + 1;
-    *total_input_chunks = ((uint16_t) (height - filter_dim)) / max_cacheable_rows_norm + 1;
+    uint16_t max_cacheable_rows_norm_init = (*max_cacheable_rows_init) - filter_dim + 1;
+    ESP_REPORT_INFO("DAVIDE %u %u %u", height, *max_cacheable_rows_init, max_cacheable_rows_norm);
+    if (*max_cacheable_rows == height) {
+	*total_input_chunks = 1;
+    } else {
+	*total_input_chunks = ((uint16_t) (height - *max_cacheable_rows_init - 1)) /
+	max_cacheable_rows_norm + 2;
+    }
 
     /* Amount of filter chunks to be loaded in the filter PLM */
     *total_filters_chunks = ((uint16_t) (n_filters - 1)) / (*max_cacheable_filters) + 1;
@@ -53,17 +78,18 @@ inline void conv2d::compute_dimensions(
 	*max_cacheable_bias_size = *max_cacheable_bias_chunks * *max_cacheable_filters;
 
     /* Load offsets */
-    *channel_offset_incr = *feature_size;
-    *out_channel_offset_incr = *output_w * *output_w;
+    *channel_offset_incr = round_up(*feature_size, DMA_WORD_PER_BEAT);
+    *out_channel_offset_incr = round_up(*output_w * *output_w, DMA_WORD_PER_BEAT);
 
-    *feature_offset_incr = max_cacheable_rows_norm * width;
-    *filters_offset_start_base = *feature_size * n_channels;
+    *feature_offset_incr = max_cacheable_rows_norm * width; // TODO
+    *feature_offset_incr_init = max_cacheable_rows_norm_init * width; // TODO
+    *filters_offset_start_base =  *channel_offset_incr * n_channels;
     *bias_offset_start_base = *filters_offset_start_base + *filters_size;
     *feature_offset_start_base = *filters_offset_start_base + *filters_size + n_filters;
 
     /* Check if configuration is valid */
 #ifndef STRATUS_HLS
-    assert(height * n_channels * filter_dim <= INPUT_PLM_SIZE);
+    assert(width * n_channels * filter_dim <= INPUT_PLM_SIZE);
     assert(*filter_size <= WEIGHTS_PLM_SIZE);
     assert(*filter_size <= PATCH_PLM_SIZE);
     assert(*filter_size <= MAC_PLM_SIZE);
@@ -96,7 +122,7 @@ inline void conv2d::patch_extractor(
 		    value = 0;
 		}
 
-		// ESP_REPORT_INFO("PATCH %u %f", index, (float) value);
+		// std::cout << "PATCH " << index << " " << INT2FP(value) << std::endl;
 
                 plm_patch[index++] = value;
 		wait();
@@ -137,8 +163,8 @@ inline void conv2d::multiple_multiplier_accumulator(
 
 	    plm_mac[i] = FP2INT(INT2FP(plm_patch[i]) * weight);
 
-	    // ESP_REPORT_INFO("MULTIPLY patch * weight = res : %f * %f = %f",
-	    // 		    (float) plm_patch[i], (float) weight, (float) plm_mac[i]);
+	    // std::cout << "MULTIPLY patch * weight = res : " << INT2FP(plm_patch[i]) <<
+	    // 	" " << INT2FP(weight) << " " << INT2FP(plm_mac[i]) << std::endl;
 
 	    wait();
 	}
@@ -147,7 +173,10 @@ inline void conv2d::multiple_multiplier_accumulator(
 	// accumulator(filter_size, &result);
 	for(uint16_t i = 0; i < filter_size; i++) {
 	    result_mac += INT2FP(plm_mac[i]);
-	    // ESP_REPORT_INFO("ACCUM i %u val %f res %f", i, (float) plm_mac[i], (float) result_local);
+
+	    // std::cout << "ACCUM i " << i << " val " << INT2FP(plm_mac[i]) <<
+	    // 	" res " << INT2FP(result_mac) << std::endl;
+
 	    wait();
 	}
 

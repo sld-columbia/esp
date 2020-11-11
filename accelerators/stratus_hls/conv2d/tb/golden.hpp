@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include "conv2d_data.hpp"
 #include "fpdata.hpp"
+#include "conv2d.hpp"
 
 inline bool sw_is_a_ge_zero_and_a_lt_b(int a, int b) {
     return static_cast<unsigned>(a) < static_cast<unsigned>(b);
