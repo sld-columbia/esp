@@ -38,7 +38,7 @@ entity l2_wrapper is
     mem_hindex  : integer := 4;
     mem_hconfig : ahb_config_type;
     mem_num     : integer := 1;
-    mem_info    : tile_mem_info_vector(0 to CFG_NMEM_TILE - 1);
+    mem_info    : tile_mem_info_vector(0 to MEM_ID_RANGE_MSB);
     cache_y     : yx_vec(0 to 2**NL2_MAX_LOG2 - 1);
     cache_x     : yx_vec(0 to 2**NL2_MAX_LOG2 - 1);
     cache_tile_id : cache_attribute_array);

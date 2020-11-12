@@ -2,14 +2,20 @@
 #
 #
 #include <smp.h>
+#include "socmap.h"
 #define DRAM_BASE 0x80000000
+#ifdef OVERRIDE_DRAM_SIZE
+#define SP_MAX (DRAM_BASE + (OVERRIDE_DRAM_SIZE >> 1) - 0x10)
+#else
+#define SP_MAX 0x9fff0000
+#endif
 
   .section .text.init
   .option norvc
   .globl _prog_start
 _prog_start:
   smp_pause(s1, s2)
-  li sp, 0x9ff00000
+  li sp, SP_MAX
   call main
   smp_resume(s1, s2)
   csrr a0, mhartid

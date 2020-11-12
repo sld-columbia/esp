@@ -517,6 +517,7 @@ class NoCFrame(Pmw.ScrolledFrame):
     tot_clkbuf = self.noc.get_clkbuf_num(self.soc)
     tot_mem = self.noc.get_mem_num(self.soc)
     tot_slm = self.noc.get_slm_num(self.soc)
+    tot_slm_size = tot_slm * self.soc.slm_kbytes.get()
     tot_acc = self.noc.get_acc_num(self.soc)
     regions = self.noc.get_clk_regions()
     for y in range(0, self.noc.rows):
@@ -588,7 +589,26 @@ class NoCFrame(Pmw.ScrolledFrame):
     self.message.delete(0.0, END)
     self.cfg_frame.sync_label.config(text="With synchronizers",fg="darkgreen")
     self.cfg_frame.set_cpu_specific_labels(self.soc)
-    if tot_cpu > 0 and tot_cpu <= NCPU_MAX and tot_mem > 0 and tot_mem <= NMEM_MAX and tot_slm <= NSLM_MAX and tot_acc <= NACC_MAX and not tot_mem == 3 and tot_io == 1 and pll_ok == True and clkbuf_ok == True and clk_region_skip == 0 and tot_tiles <= NTILE_MAX and tot_full_coherent <= NFULL_COHERENT_MAX and tot_llc_coherent <= NLLC_COHERENT_MAX and not (self.soc.TECH != "gf12" and self.soc.TECH != "virtexu" and tot_mem == 4) and not (self.soc.TECH == "virtexu" and tot_mem >= 2 and (self.noc.rows < 3 or self.noc.cols < 3)) and (self.noc.cols <= 8 and self.noc.rows <= 8) and (tot_cpu <= 1 or self.soc.cache_en.get()) and (self.soc.llc_sets.get() < 8192 or self.soc.llc_ways.get() < 16 or tot_mem > 1):
+    if (tot_cpu > 0) and \
+       (tot_cpu <= NCPU_MAX) and \
+       (tot_mem > 0 or (tot_slm > 0 and (self.soc.cache_en.get() == 0) and self.soc.CPU_ARCH.get() == "ibex")) and \
+       (tot_mem <= NMEM_MAX) and \
+       (tot_mem != 3) and \
+       (tot_slm <= NSLM_MAX) and \
+       (tot_slm <= 1 or self.soc.slm_kbytes.get() >= 1024) and \
+       (tot_acc <= NACC_MAX) and \
+       (tot_io == 1 ) and \
+       (pll_ok) and \
+       (clkbuf_ok) and \
+       (clk_region_skip == 0) and \
+       (tot_tiles <= NTILE_MAX) and \
+       (self.noc.cols <= 8 and self.noc.rows <= 8) and \
+       (tot_full_coherent <= NFULL_COHERENT_MAX) and \
+       (tot_llc_coherent <= NLLC_COHERENT_MAX) and \
+       (not (self.soc.TECH != "gf12" and self.soc.TECH != "virtexu" and tot_mem == 4)) and \
+       (not (self.soc.TECH == "virtexu" and tot_mem >= 2 and (self.noc.rows < 3 or self.noc.cols < 3))) and \
+       (tot_cpu == 1 or self.soc.cache_en.get()) and \
+       (self.soc.llc_sets.get() < 8192 or self.soc.llc_ways.get() < 16 or tot_mem > 1):
       self.done.config(state=NORMAL)
     else:
       string = ""
@@ -605,12 +625,20 @@ class NoCFrame(Pmw.ScrolledFrame):
         string += new_err
       if (tot_io > 1):
         string += "Multiple I/O tiles are not supported\n"
-      if (tot_mem < 1 or tot_mem > NMEM_MAX):
-        string += "There must be at least 1 memory tile and no more than " + str(NMEM_MAX) + ".\n"
+      if (tot_mem < 1 and tot_slm < 1):
+        string += "There must be at least 1 memory tile or 1 SLM tile and no more than " + str(NMEM_MAX) + ".\n"
+      if (tot_mem > NMEM_MAX):
+        string += "There must be no more than " + str(NMEM_MAX) + ".\n"
+      if (tot_mem == 0 and (self.soc.CPU_ARCH.get() != "ibex")):
+        string += "SLM tiles can be used in place of memory tiles only with the lowRISC ibex core.\n"
+      if (tot_mem == 0 and (self.soc.cache_en.get() == 1)):
+        string += "There must be at least 1 memory tile to enable the ESP cache hierarchy. " + self.soc.CPU_ARCH.get() + "\n"
       if (tot_mem == 3): 
         string += "Number of memory tiles must be a power of 2.\n" 
       if (tot_slm > NSLM_MAX):
         string += "There must be no more than " + str(NSLM_MAX) + ".\n"
+      if (tot_slm > 1 and self.soc.slm_kbytes.get() < 1024):
+        string += "SLM size must be 1024 KB or more if placing more than one SLM tile"
       if (self.soc.TECH != "gf12" and self.soc.TECH != "virtexu" and tot_mem == 4): 
         string += "4 memory tiles is only supported for virtexu (profpga-xcvu440).\n"
       if (self.soc.llc_sets.get() >= 8192 and self.soc.llc_ways.get() >= 16 and tot_mem == 1): 

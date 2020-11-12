@@ -21,6 +21,7 @@ use work.sldcommon.all;
 use work.sldacc.all;
 use work.tile.all;
 use work.nocpackage.all;
+use work.cachepackage.all;
 use work.coretypes.all;
 use work.grlib_config.all;
 use work.socmap.all;
@@ -31,7 +32,7 @@ entity esp is
     SIMULATION : boolean := false);
   port (
     rst             : in    std_logic;
-    sys_clk         : in    std_logic_vector(0 to CFG_NMEM_TILE - 1);
+    sys_clk         : in    std_logic_vector(0 to MEM_ID_RANGE_MSB);
     refclk          : in    std_logic;
     pllbypass       : in    std_logic_vector(CFG_TILES_NUM - 1 downto 0);
     uart_rxd        : in    std_logic;  -- UART1_RX (u1i.rxd)
@@ -39,8 +40,8 @@ entity esp is
     uart_ctsn       : in    std_logic;  -- UART1_RTSN (u1i.ctsn)
     uart_rtsn       : out   std_logic;  -- UART1_RTSN (u1o.rtsn)
     cpuerr          : out   std_logic;
-    ddr_ahbsi      : out ahb_slv_in_vector_type(0 to CFG_NMEM_TILE - 1);
-    ddr_ahbso      : in  ahb_slv_out_vector_type(0 to CFG_NMEM_TILE - 1);
+    ddr_ahbsi      : out ahb_slv_in_vector_type(0 to MEM_ID_RANGE_MSB);
+    ddr_ahbso      : in  ahb_slv_out_vector_type(0 to MEM_ID_RANGE_MSB);
     eth0_apbi       : out apb_slv_in_type;
     eth0_apbo       : in  apb_slv_out_type;
     sgmii0_apbi     : out apb_slv_in_type;
@@ -72,7 +73,7 @@ type noc_ctrl_matrix is array (1 to nocs_num) of std_logic_vector(CFG_TILES_NUM-
 type handshake_vec is array (CFG_TILES_NUM-1 downto 0) of std_logic_vector(3 downto 0);
 
 signal rst_int       : std_logic;
-signal sys_clk_int   : std_logic_vector(0 to CFG_NMEM_TILE - 1);
+signal sys_clk_int   : std_logic_vector(0 to MEM_ID_RANGE_MSB);
 signal refclk_int    : std_logic_vector(CFG_TILES_NUM -1 downto 0);
 signal pllbypass_int : std_logic_vector(CFG_TILES_NUM - 1 downto 0);
 signal cpuerr_vec    : std_logic_vector(0 to CFG_NCPU_TILE-1);
@@ -163,7 +164,7 @@ signal noc6_stop_out        : handshake_vec;
 begin
 
   rst_int <= rst;
-  clk_int_gen: for i in 0 to CFG_NMEM_TILE - 1 generate
+  clk_int_gen: for i in 0 to MEM_ID_RANGE_MSB generate
     sys_clk_int(i) <= sys_clk(i);
   end generate clk_int_gen;
   pllbypass_int <= pllbypass;
@@ -994,6 +995,7 @@ begin
     slm_tile: if tile_type(i) = 5 generate
       tile_slm_i: tile_slm
         generic map (
+          SIMULATION   => SIMULATION,
           ROUTER_PORTS => set_router_ports(CFG_FABTECH, CFG_XLEN, CFG_YLEN, tile_x(i), tile_y(i)),
           HAS_SYNC     => CFG_HAS_SYNC)
         port map (
@@ -1097,6 +1099,9 @@ begin
 
   end generate tiles_gen;
 
+  no_mem_tile_gen: if CFG_NMEM_TILE = 0 generate
+    ddr_ahbsi(0) <= ahbs_in_none;
+  end generate no_mem_tile_gen;
 
   monitor_noc_gen: for i in 1 to nocs_num generate
     monitor_noc_tiles_gen: for j in 0 to CFG_TILES_NUM-1 generate

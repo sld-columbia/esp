@@ -215,7 +215,7 @@ end;
   constant ahbslv_proxy_hindex : hindex_vector(0 to NAHBSLV - 1) := (
     others => 0);
 
-  constant cacheable_mem_info : tile_mem_info_vector(0 to CFG_NMEM_TILE - 1) := mem_info(0 to CFG_NMEM_TILE - 1);
+  constant cacheable_mem_info : tile_mem_info_vector(0 to MEM_ID_RANGE_MSB) := mem_info(0 to MEM_ID_RANGE_MSB);
 
   -- add attribute 'keep' to fix a bug with Vivado HLS accelerators
   attribute keep : string;

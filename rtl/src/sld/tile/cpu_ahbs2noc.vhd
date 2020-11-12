@@ -144,7 +144,7 @@ begin  -- rtl
     if retarget_for_dma = 1 then
       snd_to_mem := dma_selected;
     else
-      if ahbsi.hsel(mem_hindex) = '1' then
+      if ahbsi.hsel(mem_hindex) = '1' and mem_num /= 0 then
         snd_to_mem := '1';
       else
         snd_to_mem := '0';

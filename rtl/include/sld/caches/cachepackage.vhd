@@ -119,6 +119,11 @@ package cachepackage is
 
   constant dma32_words : integer := ARCH_BITS / 32;
 
+  -- Constants to handle special case in which there is no memory tile
+  -- In this case LLC and memory-related components won't be present in the
+  -- system. This constant simply fixes CAD tools complains about null ranges
+  constant MEM_ID_RANGE_MSB : integer := set_mem_id_range;
+
   -----------------------------------------------------------------------------
   -- Functions
   -----------------------------------------------------------------------------
@@ -131,7 +136,7 @@ package cachepackage is
   function read_word32 (line : line_t; w_off : integer; w32_off : integer)
     return word_t;
 
-  function make_header (coh_msg     : coh_msg_t; mem_info : tile_mem_info_vector(0 to CFG_NMEM_TILE - 1);
+  function make_header (coh_msg     : coh_msg_t; mem_info : tile_mem_info_vector(0 to MEM_ID_RANGE_MSB);
                         mem_num     : integer; hprot : hprot_t; addr : line_addr_t;
                         local_x     : local_yx; local_y : local_yx;
                         to_req      : std_ulogic; req_id : cache_id_t;
@@ -157,7 +162,7 @@ package cachepackage is
       mem_hindex  : integer := 4;
       mem_hconfig : ahb_config_type;
       mem_num     : integer := 1;
-      mem_info    : tile_mem_info_vector(0 to CFG_NMEM_TILE - 1);
+      mem_info    : tile_mem_info_vector(0 to MEM_ID_RANGE_MSB);
       cache_y     : yx_vec(0 to 2**NL2_MAX_LOG2 - 1);
       cache_x     : yx_vec(0 to 2**NL2_MAX_LOG2 - 1);
       cache_tile_id : cache_attribute_array);
@@ -209,7 +214,7 @@ package cachepackage is
       sets        : integer := 256;
       ways        : integer := 8;
       mem_num     : integer := 1;
-      mem_info    : tile_mem_info_vector(0 to CFG_NMEM_TILE - 1);
+      mem_info    : tile_mem_info_vector(0 to MEM_ID_RANGE_MSB);
       cache_y     : yx_vec(0 to 2**NL2_MAX_LOG2 - 1);
       cache_x     : yx_vec(0 to 2**NL2_MAX_LOG2 - 1);
       cache_tile_id : cache_attribute_array);
@@ -401,7 +406,7 @@ package body cachepackage is
 
   end function read_word32;
 
-  function make_header (coh_msg     : coh_msg_t; mem_info : tile_mem_info_vector(0 to CFG_NMEM_TILE - 1);
+  function make_header (coh_msg     : coh_msg_t; mem_info : tile_mem_info_vector(0 to MEM_ID_RANGE_MSB);
                         mem_num     : integer; hprot : hprot_t; addr : line_addr_t;
                         local_x     : local_yx; local_y : local_yx;
                         to_req      : std_ulogic; req_id : cache_id_t;

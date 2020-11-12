@@ -28,6 +28,7 @@ use work.sldcommon.all;
 use work.sldacc.all;
 use work.tile.all;
 use work.nocpackage.all;
+use work.cachepackage.all;
 use work.coretypes.all;
 use work.config.all;
 use work.esp_global.all;
@@ -211,8 +212,8 @@ architecture rtl of top is
     constant n : integer range 0 to 3)
     return integer is
   begin
-    if n > (CFG_NMEM_TILE - 1) then
-      return CFG_NMEM_TILE - 1;
+    if n > (MEM_ID_RANGE_MSB) then
+      return MEM_ID_RANGE_MSB;
     else
       return n;
     end if;
@@ -224,28 +225,6 @@ architecture rtl of top is
     2 => set_ddr_index(2),
     3 => set_ddr_index(3)
     );
-
--- pragma translate_off
--- Memory model for simulation purposes only
-  component ahbram_sim
-    generic (
-      hindex : integer := 0;
-      haddr  : integer := 0;
-      hmask  : integer := 16#fff#;
-      tech   : integer := DEFMEMTECH;
-      kbytes : integer := 1;
-      pipe   : integer := 0;
-      maccsz : integer := AHBDW;
-      fname  : string  := "ram.dat"
-      );
-    port (
-      rst   : in  std_ulogic;
-      clk   : in  std_ulogic;
-      ahbsi : in  ahb_slv_in_type;
-      ahbso : out ahb_slv_out_type
-      );
-  end component;
--- pragma translate_on
 
 -- Switches
   signal sel0, sel1, sel2, sel3, sel4 : std_ulogic;
@@ -381,8 +360,8 @@ constant CPU_FREQ : integer := 78125;  -- cpu frequency in KHz
 
 -- MMI64
   signal user_rstn      : std_ulogic;
-  signal mon_ddr        : monitor_ddr_vector(0 to CFG_NMEM_TILE - 1);
-  signal mon_ddr_reg    : monitor_ddr_vector(0 to CFG_NMEM_TILE - 1);
+  signal mon_ddr        : monitor_ddr_vector(0 to MEM_ID_RANGE_MSB);
+  signal mon_ddr_reg    : monitor_ddr_vector(0 to MEM_ID_RANGE_MSB);
   signal mon_noc        : monitor_noc_matrix(1 to 6, 0 to CFG_TILES_NUM-1);
   signal mon_noc_actual : monitor_noc_matrix(0 to 1, 0 to CFG_TILES_NUM-1);
   signal mon_mem        : monitor_mem_vector(0 to CFG_NMEM_TILE + CFG_NSLM_TILE - 1);
@@ -686,8 +665,6 @@ begin
     mig_ahbram : ahbram_sim
       generic map (
         hindex => 0,
-        haddr  => ddr_haddr(this_ddr_index(0)),
-        hmask  => ddr_hmask(this_ddr_index(0)),
         tech   => 0,
         kbytes => 1000,
         pipe   => 0,
@@ -697,6 +674,8 @@ begin
       port map(
         rst   => rstn,
         clk   => clkm,
+        haddr => ddr_haddr(this_ddr_index(0)),
+        hmask => ddr_hmask(this_ddr_index(0)),
         ahbsi => ddr_ahbsi(0),
         ahbso => ddr_ahbso(0)
         );
@@ -704,8 +683,6 @@ begin
     mig_ahbram1 : ahbram_sim
       generic map (
         hindex => 0,
-        haddr  => ddr_haddr(this_ddr_index(1)),
-        hmask  => ddr_hmask(this_ddr_index(1)),
         tech   => 0,
         kbytes => 1000,
         pipe   => 0,
@@ -715,6 +692,8 @@ begin
       port map(
         rst   => rstn,
         clk   => clkm,
+        haddr => ddr_haddr(this_ddr_index(1)),
+        hmask => ddr_hmask(this_ddr_index(1)),
         ahbsi => ddr_ahbsi(1),
         ahbso => ddr_ahbso(1)
         );
@@ -722,8 +701,6 @@ begin
     mig_ahbram2 : ahbram_sim
       generic map (
         hindex => 0,
-        haddr  => ddr_haddr(this_ddr_index(2)),
-        hmask  => ddr_hmask(this_ddr_index(2)),
         tech   => 0,
         kbytes => 1000,
         pipe   => 0,
@@ -733,6 +710,8 @@ begin
       port map(
         rst   => rstn,
         clk   => clkm,
+        haddr => ddr_haddr(this_ddr_index(2)),
+        hmask => ddr_hmask(this_ddr_index(2)),
         ahbsi => ddr_ahbsi(2),
         ahbso => ddr_ahbso(2)
         );
@@ -740,8 +719,6 @@ begin
     mig_ahbram3 : ahbram_sim
       generic map (
         hindex => 0,
-        haddr  => ddr_haddr(this_ddr_index(3)),
-        hmask  => ddr_hmask(this_ddr_index(3)),
         tech   => 0,
         kbytes => 1000,
         pipe   => 0,
@@ -751,6 +728,8 @@ begin
       port map(
         rst   => rstn,
         clk   => clkm,
+        haddr => ddr_haddr(this_ddr_index(3)),
+        hmask => ddr_hmask(this_ddr_index(3)),
         ahbsi => ddr_ahbsi(3),
         ahbso => ddr_ahbso(3)
         );
@@ -1042,7 +1021,7 @@ begin
       SIMULATION => SIMULATION)
     port map (
       rst         => chip_rst,
-      sys_clk     => sys_clk(0 to CFG_NMEM_TILE - 1),
+      sys_clk     => sys_clk(0 to MEM_ID_RANGE_MSB),
       refclk      => chip_refclk,
       pllbypass   => chip_pllbypass,
       uart_rxd    => uart_rxd_int,
@@ -1050,8 +1029,8 @@ begin
       uart_ctsn   => uart_ctsn_int,
       uart_rtsn   => uart_rtsn_int,
       cpuerr      => cpuerr,
-      ddr_ahbsi   => ddr_ahbsi(0 to CFG_NMEM_TILE - 1),
-      ddr_ahbso   => ddr_ahbso(0 to CFG_NMEM_TILE - 1),
+      ddr_ahbsi   => ddr_ahbsi(0 to MEM_ID_RANGE_MSB),
+      ddr_ahbso   => ddr_ahbso(0 to MEM_ID_RANGE_MSB),
       eth0_apbi   => eth0_apbi,
       eth0_apbo   => eth0_apbo,
       edcl_ahbmo  => edcl_ahbmo,
@@ -1077,7 +1056,7 @@ begin
     -- MMI64
     user_rstn <= rstn;
     
-    gen_mon_ddr : for i in 0 to CFG_NMEM_TILE - 1 generate
+    gen_mon_ddr : for i in 0 to MEM_ID_RANGE_MSB generate
         mon_ddr(i).clk <= sys_clk(i);
         detect_ddr_access : process (ddr_ahbsi)
         begin  -- process detect_mem_access
@@ -1092,7 +1071,7 @@ begin
         end process detect_ddr_access;
     end generate gen_mon_ddr;
     
-    gen_mon_regs : for i in 0 to CFG_NMEM_TILE - 1 generate
+    gen_mon_regs : for i in 0 to MEM_ID_RANGE_MSB generate
         mon_mem_reg(i).clk <= mon_mem(i).clk;
         mon_mem_reg_gen : process(mon_mem(i).clk, rstn) 
         begin 

@@ -24,6 +24,7 @@ use work.sldcommon.all;
 use work.sldacc.all;
 use work.tile.all;
 use work.nocpackage.all;
+use work.cachepackage.all;
 use work.coretypes.all;
 use work.config.all;
 use work.esp_global.all;
@@ -154,8 +155,8 @@ architecture rtl of top is
   signal uart_rtsn_int : std_logic;       -- UART1_RTSN (u1o.rtsn)
 
 -- Memory controller DDR4
-  signal ddr_ahbsi   : ahb_slv_in_vector_type(0 to CFG_NMEM_TILE - 1);
-  signal ddr_ahbso   : ahb_slv_out_vector_type(0 to CFG_NMEM_TILE - 1);
+  signal ddr_ahbsi   : ahb_slv_in_vector_type(0 to MEM_ID_RANGE_MSB);
+  signal ddr_ahbso   : ahb_slv_out_vector_type(0 to MEM_ID_RANGE_MSB);
   signal c0_ddr4_cs_n_vec : std_logic_vector(1 downto 0);
 
 -- DVI (unused on this board)
@@ -332,8 +333,6 @@ begin
     mig_ahbram : ahbram_sim
       generic map (
         hindex => 0,
-        haddr  => ddr_haddr(0),
-        hmask  => ddr_hmask(0),
         tech   => 0,
         kbytes => 2048,
         pipe   => 0,
@@ -343,6 +342,8 @@ begin
       port map(
         rst   => rstn,
         clk   => clkm,
+        haddr => ddr_haddr(0),
+        hmask => ddr_hmask(0),
         ahbsi => ddr_ahbsi(0),
         ahbso => ddr_ahbso(0)
         );
@@ -486,7 +487,7 @@ begin
       SIMULATION => SIMULATION)
     port map (
       rst         => chip_rst,
-      sys_clk     => sys_clk(0 to CFG_NMEM_TILE - 1),
+      sys_clk     => sys_clk(0 to MEM_ID_RANGE_MSB),
       refclk      => chip_refclk,
       pllbypass   => chip_pllbypass,
       uart_rxd    => uart_rxd_int,

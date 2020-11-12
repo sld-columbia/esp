@@ -25,6 +25,7 @@ use work.sldcommon.all;
 use work.sldacc.all;
 use work.tile.all;
 use work.nocpackage.all;
+use work.cachepackage.all;
 use work.coretypes.all;
 use work.config.all;
 use work.esp_global.all;
@@ -138,28 +139,6 @@ component ahb2mig_7series
    );
 end component ;
 
--- pragma translate_off
--- Memory model for simulation purposes only
-component ahbram_sim
-  generic (
-    hindex  : integer := 0;
-    haddr   : integer := 0;
-    hmask   : integer := 16#fff#;
-    tech    : integer := DEFMEMTECH; 
-    kbytes  : integer := 1;
-    pipe    : integer := 0;
-    maccsz  : integer := AHBDW;
-    fname   : string  := "ram.dat"
-   );
-  port (
-    rst     : in  std_ulogic;
-    clk     : in  std_ulogic;
-    ahbsi   : in  ahb_slv_in_type;
-    ahbso   : out ahb_slv_out_type
-  );
-end component ;
--- pragma translate_on
-
 
 -- constants
 signal vcc, gnd   : std_logic_vector(31 downto 0);
@@ -186,8 +165,8 @@ signal uart_ctsn_int : std_logic;       -- UART1_RTSN (u1i.ctsn)
 signal uart_rtsn_int : std_logic;       -- UART1_RTSN (u1o.rtsn)
 
 -- Memory controller DDR3
-signal ddr_ahbsi   : ahb_slv_in_vector_type(0 to CFG_NMEM_TILE - 1);
-signal ddr_ahbso   : ahb_slv_out_vector_type(0 to CFG_NMEM_TILE - 1);
+signal ddr_ahbsi   : ahb_slv_in_vector_type(0 to MEM_ID_RANGE_MSB);
+signal ddr_ahbso   : ahb_slv_out_vector_type(0 to MEM_ID_RANGE_MSB);
 
 -- DVI (unused on this board)
 signal dvi_apbi  : apb_slv_in_type;
@@ -369,8 +348,6 @@ begin
     mig_ahbram : ahbram_sim
       generic map (
         hindex => 0,
-        haddr  => ddr_haddr(0),
-        hmask  => ddr_hmask(0),
         tech   => 0,
         kbytes => 2 * 1024,
         pipe   => 0,
@@ -380,6 +357,8 @@ begin
       port map(
         rst     => rstn,
         clk     => clkm,
+        haddr   => ddr_haddr(0),
+        hmask   => ddr_hmask(0),
         ahbsi   => ddr_ahbsi(0),
         ahbso   => ddr_ahbso(0)
         );
@@ -520,7 +499,7 @@ begin
       SIMULATION => SIMULATION)
     port map (
       rst           => chip_rst,
-      sys_clk       => sys_clk(0 to CFG_NMEM_TILE - 1),
+      sys_clk       => sys_clk(0 to MEM_ID_RANGE_MSB),
       refclk        => chip_refclk,
       pllbypass      => chip_pllbypass,
       uart_rxd       => uart_rxd_int,

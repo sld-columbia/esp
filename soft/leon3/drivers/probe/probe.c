@@ -10,7 +10,10 @@
 
 #include <esp_probe.h>
 
+#include "socmap.h"
+
 #ifdef __riscv
+
 uintptr_t dtb = DTB_ADDRESS;
 /*
  * The RISC-V bare-metal toolchain does not have support for malloc
@@ -19,8 +22,13 @@ uintptr_t dtb = DTB_ADDRESS;
  * Note that The RISC-V core in ESP is unthethered and cannot rely
  * proxy kernel running on a host system.
  */
+#ifdef OVERRIDE_DRAM_SIZE
+static uintptr_t uncached_area_ptr = DRAM_BASE + (OVERRIDE_DRAM_SIZE >> 1);
+#else
 static uintptr_t uncached_area_ptr = 0xa0100000;
 #endif
+
+#endif /* __riscv */
 
 #ifdef __sparc
 asm(

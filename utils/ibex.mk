@@ -31,6 +31,7 @@ startup.o: $(BOOTROM_PATH)/startup.S riscv.dtb
 		-mcmodel=medany -mexplicit-relocs \
 		-march=rv32imc -mabi=ilp32 \
 		-mstrict-align \
+		-I$(DESIGN_PATH) \
 		-I$(BOOTROM_PATH) \
 		-c $< -o $@
 

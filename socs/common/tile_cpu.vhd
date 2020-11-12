@@ -1213,7 +1213,7 @@ begin
         mem_hindex    => ddr_hindex(0),
         mem_hconfig   => cpu_tile_mig7_hconfig,
         mem_num       => CFG_NMEM_TILE,
-        mem_info      => tile_mem_list(0 to CFG_NMEM_TILE - 1),
+        mem_info      => tile_mem_list(0 to MEM_ID_RANGE_MSB),
         cache_y       => cache_y,
         cache_x       => cache_x,
         cache_tile_id => cache_tile_id)

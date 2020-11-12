@@ -27,7 +27,7 @@ package soctiles is
       SIMULATION : boolean := false);
     port (
       rst                : in  std_logic;
-      sys_clk            : in    std_logic_vector(0 to CFG_NMEM_TILE - 1);
+      sys_clk            : in    std_logic_vector(0 to MEM_ID_RANGE_MSB);
       refclk             : in  std_logic;
       pllbypass          : in  std_logic_vector(CFG_TILES_NUM - 1 downto 0);
       uart_rxd           : in  std_logic;
@@ -35,8 +35,8 @@ package soctiles is
       uart_ctsn          : in  std_logic;
       uart_rtsn          : out std_logic;
       cpuerr             : out   std_logic;
-      ddr_ahbsi          : out ahb_slv_in_vector_type(0 to CFG_NMEM_TILE - 1);
-      ddr_ahbso          : in  ahb_slv_out_vector_type(0 to CFG_NMEM_TILE - 1);
+      ddr_ahbsi          : out ahb_slv_in_vector_type(0 to MEM_ID_RANGE_MSB);
+      ddr_ahbso          : in  ahb_slv_out_vector_type(0 to MEM_ID_RANGE_MSB);
       eth0_apbi          : out apb_slv_in_type;
       eth0_apbo          : in  apb_slv_out_type;
       sgmii0_apbi        : out apb_slv_in_type;
@@ -639,6 +639,7 @@ package soctiles is
 
   component tile_slm is
     generic (
+      SIMULATION   : boolean := false;
       this_has_dco : integer range 0 to 1 := 0;
       test_if_en   : integer range 0 to 1 := 0;
       ROUTER_PORTS : ports_vec            := "11111";
