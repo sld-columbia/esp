@@ -1,3 +1,4 @@
+#include "do_decoding.h"
 #include "libesp.h"
 #include "cfg.h"
 
@@ -47,7 +48,6 @@ static const unsigned char PARTAB[256] = {
          1, 0, 0, 1, 0, 1, 1, 0,
 }; 
 
-#include "do_decoding.c" 
 
 #define ABS(x) ((x > 0) ? x : -x)
 
