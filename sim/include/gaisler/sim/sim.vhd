@@ -605,8 +605,6 @@ package sim is
   component ahbram_sim
   generic (
     hindex  : integer := 0;
-    haddr   : integer := 0;
-    hmask   : integer := 16#fff#;
     tech    : integer := DEFMEMTECH; 
     kbytes  : integer := 1;
     pipe    : integer := 0;
@@ -616,6 +614,8 @@ package sim is
   port (
     rst     : in  std_ulogic;
     clk     : in  std_ulogic;
+    haddr   : in  integer := 0;
+    hmask   : in  integer := 16#fff#;
     ahbsi   : in  ahb_slv_in_type;
     ahbso   : out ahb_slv_out_type
   );

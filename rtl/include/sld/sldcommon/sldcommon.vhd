@@ -296,9 +296,10 @@ package sldcommon is
 
   component ahbslm is
     generic (
+      SIMULATION : boolean := false;
       hindex : integer;
       tech   : integer;
-      mbytes : integer);
+      kbytes : integer);
     port (
       rst   : in  std_ulogic;
       clk   : in  std_ulogic;

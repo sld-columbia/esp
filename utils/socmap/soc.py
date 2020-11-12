@@ -171,10 +171,10 @@ class SoC_Config():
     item = line.split()
     self.acc_l2_sets.set(int(item[2]))
     self.acc_l2_ways.set(int(item[3]))
-    # CONFIG_SLM_MBYTES
+    # CONFIG_SLM_KBYTES
     line = fp.readline()
     item = line.split()
-    self.slm_mbytes.set(int(item[2]))
+    self.slm_kbytes.set(int(item[2]))
     # Monitors
     line = fp.readline()
     if line.find("CONFIG_MON_DDR = y") != -1:
@@ -261,7 +261,7 @@ class SoC_Config():
       fp.write("#CONFIG_CACHE_RTL is not set\n")
     fp.write("CONFIG_CPU_CACHES = " + str(self.l2_sets.get()) + " " + str(self.l2_ways.get()) + " " + str(self.llc_sets.get()) + " " + str(self.llc_ways.get()) + "\n")
     fp.write("CONFIG_ACC_CACHES = " + str(self.acc_l2_sets.get()) + " " + str(self.acc_l2_ways.get()) + "\n")
-    fp.write("CONFIG_SLM_MBYTES = " + str(self.slm_mbytes.get()) + "\n")
+    fp.write("CONFIG_SLM_KBYTES = " + str(self.slm_kbytes.get()) + "\n")
     if self.noc.monitor_ddr.get() == 1:
       fp.write("CONFIG_MON_DDR = y\n")
     else:
@@ -407,7 +407,7 @@ class SoC_Config():
     self.llc_ways = IntVar()
     self.acc_l2_sets = IntVar()
     self.acc_l2_ways = IntVar()
-    self.slm_mbytes = IntVar()
+    self.slm_kbytes = IntVar()
     # CPU architecture
     self.CPU_ARCH = StringVar()
     self.cache_en = IntVar()

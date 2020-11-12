@@ -33,6 +33,7 @@ use work.socmap.all;
 
 entity tile_slm is
   generic (
+    SIMULATION   : boolean := false;
     this_has_dco : integer range 0 to 1 := 0;
     test_if_en   : integer range 0 to 1 := 0;
     ROUTER_PORTS : ports_vec := "11111";
@@ -661,9 +662,10 @@ begin
   -- Shared Local Memory (SLM)
   ahbslm_1: ahbslm
     generic map (
+      SIMULATION => SIMULATION,
       hindex => 0,
       tech   => CFG_FABTECH,
-      mbytes => CFG_SLM_MBYTES)
+      kbytes => CFG_SLM_KBYTES)
     port map (
       rst    => rst,
       clk    => clk,
@@ -745,13 +747,13 @@ begin
 
   -- FROM NoC
 
-  -- Hendle CPU requests accelerator DMA and Ethernet (non coherent only)
+  -- Handle CPU requests accelerator DMA
   mem_noc2ahbm_1 : mem_noc2ahbm
     generic map (
       tech        => CFG_FABTECH,
       hindex      => 0,
       axitran     => GLOB_CPU_AXI,
-      little_end  => 0,
+      little_end  => GLOB_CPU_RISCV,
       eth_dma     => 0,
       narrow_noc  => 0,
       cacheline   => 1,
