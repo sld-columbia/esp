@@ -669,13 +669,11 @@ end;
 
 library ieee;
 use ieee.std_logic_1164.all;
-use work.stdlib.orv;
+use work.stdlib.all;
 use work.config_types.all;
 use work.config.all;
 library unisim;
-use unisim.vcomponents.RAMB36;
-use unisim.vcomponents.RAMB18;
-use unisim.vcomponents.RAMB18SDP;
+use unisim.vcomponents.RAMB16_S9_S9;
 
 entity unisim_syncram_be is
   generic ( abits : integer := 9; dbits : integer := 32; tech : integer := 0);
@@ -701,329 +699,508 @@ architecture behav of unisim_syncram_be is
     write    : in std_ulogic);
   end component;
 
-signal gnd, xenable : std_ulogic;
-signal do, di : std_logic_vector(dbits+32 downto 0);
-signal xa : std_logic_vector(19 downto 0);
+  component unisim_sram_b_6abits is
+    port (
+      CLK : in std_ulogic;
+      CE0 : in std_ulogic;
+      A0  : in std_logic_vector(5 downto 0);
+      D0  : in std_logic_vector(7 downto 0);
+      WE0 : in std_ulogic;
+      WEM0 : in std_logic_vector(7 downto 0);
+      CE1 : in std_ulogic;
+      A1  : in std_logic_vector(5 downto 0);
+      Q1  : out std_logic_vector(7 downto 0)
+      );
+  end component unisim_sram_b_6abits;
 
-type xd_type is array (0 to 255) of std_logic_vector(15 downto 0);
-signal xdi, xdo : xd_type;
-type xd36_type is array (0 to 255) of std_logic_vector(31 downto 0);
-signal xdi36, xdo36 : xd36_type;
-signal xwen : std_logic;
-type xwen_type is array (0 to 255) of std_logic_vector(1 downto 0);
-signal xwen18 : xwen_type;
-type xwen36_type is array (0 to 255) of std_logic_vector(3 downto 0);
-signal xwen36 : xwen36_type;
+  component unisim_sram_b_7abits is
+    port (
+      CLK : in std_ulogic;
+      CE0 : in std_ulogic;
+      A0  : in std_logic_vector(6 downto 0);
+      D0  : in std_logic_vector(7 downto 0);
+      WE0 : in std_ulogic;
+      WEM0 : in std_logic_vector(7 downto 0);
+      CE1 : in std_ulogic;
+      A1  : in std_logic_vector(6 downto 0);
+      Q1  : out std_logic_vector(7 downto 0)
+      );
+  end component unisim_sram_b_7abits;
+
+  component unisim_sram_b_8abits is
+    port (
+      CLK : in std_ulogic;
+      CE0 : in std_ulogic;
+      A0  : in std_logic_vector(7 downto 0);
+      D0  : in std_logic_vector(7 downto 0);
+      WE0 : in std_ulogic;
+      WEM0 : in std_logic_vector(7 downto 0);
+      CE1 : in std_ulogic;
+      A1  : in std_logic_vector(7 downto 0);
+      Q1  : out std_logic_vector(7 downto 0)
+      );
+  end component unisim_sram_b_8abits;
+
+  component unisim_sram_b_9abits is
+    port (
+      CLK : in std_ulogic;
+      CE0 : in std_ulogic;
+      A0  : in std_logic_vector(8 downto 0);
+      D0  : in std_logic_vector(7 downto 0);
+      WE0 : in std_ulogic;
+      WEM0 : in std_logic_vector(7 downto 0);
+      CE1 : in std_ulogic;
+      A1  : in std_logic_vector(8 downto 0);
+      Q1  : out std_logic_vector(7 downto 0)
+      );
+  end component unisim_sram_b_9abits;
+
+  component unisim_sram_b_10abits is
+    port (
+      CLK : in std_ulogic;
+      CE0 : in std_ulogic;
+      A0  : in std_logic_vector(9 downto 0);
+      D0  : in std_logic_vector(7 downto 0);
+      WE0 : in std_ulogic;
+      WEM0 : in std_logic_vector(7 downto 0);
+      CE1 : in std_ulogic;
+      A1  : in std_logic_vector(9 downto 0);
+      Q1  : out std_logic_vector(7 downto 0)
+      );
+  end component unisim_sram_b_10abits;
+
+  component unisim_sram_b_11abits is
+    port (
+      CLK : in std_ulogic;
+      CE0 : in std_ulogic;
+      A0  : in std_logic_vector(10 downto 0);
+      D0  : in std_logic_vector(7 downto 0);
+      WE0 : in std_ulogic;
+      WEM0 : in std_logic_vector(7 downto 0);
+      CE1 : in std_ulogic;
+      A1  : in std_logic_vector(10 downto 0);
+      Q1  : out std_logic_vector(7 downto 0)
+      );
+  end component unisim_sram_b_11abits;
+
+  component unisim_sram_b_12abits is
+    port (
+      CLK : in std_ulogic;
+      CE0 : in std_ulogic;
+      A0  : in std_logic_vector(11 downto 0);
+      D0  : in std_logic_vector(7 downto 0);
+      WE0 : in std_ulogic;
+      WEM0 : in std_logic_vector(7 downto 0);
+      CE1 : in std_ulogic;
+      A1  : in std_logic_vector(11 downto 0);
+      Q1  : out std_logic_vector(7 downto 0)
+      );
+  end component unisim_sram_b_12abits;
+
+  component unisim_sram_b_13abits is
+    port (
+      CLK : in std_ulogic;
+      CE0 : in std_ulogic;
+      A0  : in std_logic_vector(12 downto 0);
+      D0  : in std_logic_vector(7 downto 0);
+      WE0 : in std_ulogic;
+      WEM0 : in std_logic_vector(7 downto 0);
+      CE1 : in std_ulogic;
+      A1  : in std_logic_vector(12 downto 0);
+      Q1  : out std_logic_vector(7 downto 0)
+      );
+  end component unisim_sram_b_13abits;
+
+  component unisim_sram_b_14abits is
+    port (
+      CLK : in std_ulogic;
+      CE0 : in std_ulogic;
+      A0  : in std_logic_vector(13 downto 0);
+      D0  : in std_logic_vector(7 downto 0);
+      WE0 : in std_ulogic;
+      WEM0 : in std_logic_vector(7 downto 0);
+      CE1 : in std_ulogic;
+      A1  : in std_logic_vector(13 downto 0);
+      Q1  : out std_logic_vector(7 downto 0)
+      );
+  end component unisim_sram_b_14abits;
+
+  component unisim_sram_b_15abits is
+    port (
+      CLK : in std_ulogic;
+      CE0 : in std_ulogic;
+      A0  : in std_logic_vector(14 downto 0);
+      D0  : in std_logic_vector(7 downto 0);
+      WE0 : in std_ulogic;
+      WEM0 : in std_logic_vector(7 downto 0);
+      CE1 : in std_ulogic;
+      A1  : in std_logic_vector(14 downto 0);
+      Q1  : out std_logic_vector(7 downto 0)
+      );
+  end component unisim_sram_b_15abits;
+
+  component unisim_sram_b_16abits is
+    port (
+      CLK : in std_ulogic;
+      CE0 : in std_ulogic;
+      A0  : in std_logic_vector(15 downto 0);
+      D0  : in std_logic_vector(7 downto 0);
+      WE0 : in std_ulogic;
+      WEM0 : in std_logic_vector(7 downto 0);
+      CE1 : in std_ulogic;
+      A1  : in std_logic_vector(15 downto 0);
+      Q1  : out std_logic_vector(7 downto 0)
+      );
+  end component unisim_sram_b_16abits;
+
+  component unisim_sram_b_17abits is
+    port (
+      CLK : in std_ulogic;
+      CE0 : in std_ulogic;
+      A0  : in std_logic_vector(16 downto 0);
+      D0  : in std_logic_vector(7 downto 0);
+      WE0 : in std_ulogic;
+      WEM0 : in std_logic_vector(7 downto 0);
+      CE1 : in std_ulogic;
+      A1  : in std_logic_vector(16 downto 0);
+      Q1  : out std_logic_vector(7 downto 0)
+      );
+  end component unisim_sram_b_17abits;
+
+  component unisim_sram_b_18abits is
+    port (
+      CLK : in std_ulogic;
+      CE0 : in std_ulogic;
+      A0  : in std_logic_vector(17 downto 0);
+      D0  : in std_logic_vector(7 downto 0);
+      WE0 : in std_ulogic;
+      WEM0 : in std_logic_vector(7 downto 0);
+      CE1 : in std_ulogic;
+      A1  : in std_logic_vector(17 downto 0);
+      Q1  : out std_logic_vector(7 downto 0)
+      );
+  end component unisim_sram_b_18abits;
+
+  component unisim_sram_b_19abits is
+    port (
+      CLK : in std_ulogic;
+      CE0 : in std_ulogic;
+      A0  : in std_logic_vector(18 downto 0);
+      D0  : in std_logic_vector(7 downto 0);
+      WE0 : in std_ulogic;
+      WEM0 : in std_logic_vector(7 downto 0);
+      CE1 : in std_ulogic;
+      A1  : in std_logic_vector(18 downto 0);
+      Q1  : out std_logic_vector(7 downto 0)
+      );
+  end component unisim_sram_b_19abits;
+
+  component unisim_sram_b_20abits is
+    port (
+      CLK : in std_ulogic;
+      CE0 : in std_ulogic;
+      A0  : in std_logic_vector(19 downto 0);
+      D0  : in std_logic_vector(7 downto 0);
+      WE0 : in std_ulogic;
+      WEM0 : in std_logic_vector(7 downto 0);
+      CE1 : in std_ulogic;
+      A1  : in std_logic_vector(19 downto 0);
+      Q1  : out std_logic_vector(7 downto 0)
+      );
+  end component unisim_sram_b_20abits;
+
+signal gnd : std_ulogic;
+signal do, di : std_logic_vector(dbits+8 downto 0);
+signal xa : std_logic_vector(19 downto 0);
+signal xrden : std_logic_vector (dbits/8-1 downto 0);
+signal xwren : std_logic_vector (dbits/8-1 downto 0);
 
 begin
   gnd <= '0';
   dataout <= do(dbits-1 downto 0);
   di(dbits-1 downto 0) <= datain;
-  di(dbits+32 downto dbits) <= (others => '0');
+  di(dbits+8 downto dbits) <= (others => '0');
 
-  a0 : if (abits <= 5) and (GRLIB_CONFIG_ARRAY(grlib_techmap_strict_ram) = 0) generate
+  a0 : if abits <= 5 generate
     x : for i in 0 to ((dbits-1)/8) generate
       r : generic_syncram generic map (abits, 8)
         port map (clk, address, di(i*8+8-1 downto i*8), do(i*8+8-1 downto i*8), write(i));
     end generate;
-    do(dbits+32 downto 8*(((dbits-1)/8)+1)) <= (others => '0');
+    do(dbits+8 downto 8*(((dbits-1)/8)+1)) <= (others => '0');
   end generate;
 
-  a8 : if ((abits > 5 or GRLIB_CONFIG_ARRAY(grlib_techmap_strict_ram) /= 0) and
-           (abits <= 9)) generate
-    
-    xa(19 downto abits) <= (others => '0'); 
-    xa(abits-1 downto 0) <= address;
-    xenable <= orv(enable);
-    xwen <= orv(write);
+  xa(19 downto abits) <= (others => '0');
+  xa(abits-1 downto 0) <= address;
+  xrden <= enable and (not write);
+  xwren <= enable and write;
 
-    x : for i in 0 to ((dbits-1)/32) generate
-      r0 : RAMB18SDP
-        generic map (SIM_COLLISION_CHECK => "GENERATE_X_ONLY")
+  a6 : if abits = 6 generate
+    x : for i in 0 to ((dbits-1)/8) generate
+      r0 : unisim_sram_b_6abits
         port map (
-          DO  => do(i*32+32-1 downto i*32),
-          DOP => open,
-          DI => di(i*32+32-1 downto i*32),
-          DIP => x"F",
-          RDADDR  => xa(8 downto 0),
-          WRADDR  => xa(8 downto 0),
-          RDCLK => clk,
-          WRCLK => clk,
-          RDEN => xenable,
-          REGCE => gnd,
-          SSR => gnd,
-          WE => write(i*4+4-1 downto i*4),
-          WREN => xwen);
+          CLK  => clk,
+          CE0  => xwren(i),
+          A0   => xa(5 downto 0),
+          D0   => di(i*8+8-1 downto i*8),
+          WE0  => write(i),
+          WEM0 => x"ff",
+          CE1  => xrden(i),
+          A1   => xa(5 downto 0),
+          Q1   => do(i*8+8-1 downto i*8));
     end generate;
-    do(dbits+32 downto 32*(((dbits-1)/32)+1)) <= (others => '0');
+    do(dbits+8 downto 8*(((dbits-1)/8)+1)) <= (others => '0');
   end generate;
 
-  a10 : if (abits = 10) generate
-
-    xa(19 downto 14) <= (others => '0'); 
-    xa(3 downto 0) <= (others => '0'); 
-    xa(13 downto 4) <= address;
-    xenable <= orv(enable);
-
-    x : for i in 0 to ((dbits-1)/16) generate
-      r : RAMB18 generic map (READ_WIDTH_A => 18, READ_WIDTH_B => 18,
-                      SIM_COLLISION_CHECK => "GENERATE_X_ONLY",
-                      WRITE_WIDTH_A => 18, WRITE_WIDTH_B => 18)
-          port map(
-            DOA => open, 
-            DOB => do(i*16+16-1 downto i*16),
-            DOPA => open, 
-            DOPB => open, 
-            ADDRA => xa(13 downto 0),
-            ADDRB => xa(13 downto 0),
-            CLKA => clk,
-            CLKB => clk,
-            DIA => di(i*16+16-1 downto i*16),
-            DIB => x"FFFF",
-            DIPA => "11",
-            DIPB => "11",
-            ENA => xenable,
-            ENB => xenable,
-            REGCEA => '0',
-            REGCEB => '0',
-            SSRA => '0',
-            SSRB => '0',
-            WEA => write(i*2+2-1 downto i*2),
-            WEB => "00");
+  a7 : if abits = 7 generate
+    x : for i in 0 to ((dbits-1)/8) generate
+      r0 : unisim_sram_b_7abits
+        port map (
+          CLK  => clk,
+          CE0  => xwren(i),
+          A0   => xa(6 downto 0),
+          D0   => di(i*8+8-1 downto i*8),
+          WE0  => write(i),
+          WEM0 => x"ff",
+          CE1  => xrden(i),
+          A1   => xa(6 downto 0),
+          Q1   => do(i*8+8-1 downto i*8));
     end generate;
-    do(dbits+32 downto 16*(((dbits-1)/16)+1)) <= (others => '0');
+    do(dbits+8 downto 8*(((dbits-1)/8)+1)) <= (others => '0');
+  end generate;
+
+  a8 : if abits = 8 generate
+    x : for i in 0 to ((dbits-1)/8) generate
+      r0 : unisim_sram_b_8abits
+        port map (
+          CLK  => clk,
+          CE0  => xwren(i),
+          A0   => xa(7 downto 0),
+          D0   => di(i*8+8-1 downto i*8),
+          WE0  => write(i),
+          WEM0 => x"ff",
+          CE1  => xrden(i),
+          A1   => xa(7 downto 0),
+          Q1   => do(i*8+8-1 downto i*8));
+    end generate;
+    do(dbits+8 downto 8*(((dbits-1)/8)+1)) <= (others => '0');
+  end generate;
+
+  a9 : if abits = 9 generate
+    x : for i in 0 to ((dbits-1)/8) generate
+      r0 : unisim_sram_b_9abits
+        port map (
+          CLK  => clk,
+          CE0  => xwren(i),
+          A0   => xa(8 downto 0),
+          D0   => di(i*8+8-1 downto i*8),
+          WE0  => write(i),
+          WEM0 => x"ff",
+          CE1  => xrden(i),
+          A1   => xa(8 downto 0),
+          Q1   => do(i*8+8-1 downto i*8));
+    end generate;
+    do(dbits+8 downto 8*(((dbits-1)/8)+1)) <= (others => '0');
+  end generate;
+
+  a10 : if abits = 10 generate
+    x : for i in 0 to ((dbits-1)/8) generate
+      r0 : unisim_sram_b_10abits
+        port map (
+          CLK  => clk,
+          CE0  => xwren(i),
+          A0   => xa(9 downto 0),
+          D0   => di(i*8+8-1 downto i*8),
+          WE0  => write(i),
+          WEM0 => x"ff",
+          CE1  => xrden(i),
+          A1   => xa(9 downto 0),
+          Q1   => do(i*8+8-1 downto i*8));
+    end generate;
+    do(dbits+8 downto 8*(((dbits-1)/8)+1)) <= (others => '0');
   end generate;
 
   a11 : if abits = 11 generate
-
-    xa(19 downto 14) <= (others => '0'); 
-    xa(2 downto 0) <= (others => '0'); 
-    xa(13 downto 3) <= address;
-    xenable <= orv(enable);
-
     x : for i in 0 to ((dbits-1)/8) generate
-
-      xwen18(i) <= '0'&write(i);
-      xdi(i) <= x"00"&di(i*8+8-1 downto i*8);
-      do(i*8+8-1 downto i*8) <= xdo(i)(7 downto 0);
-
-      r : RAMB18 generic map (READ_WIDTH_A => 9, READ_WIDTH_B => 9,
-                    SIM_COLLISION_CHECK => "GENERATE_X_ONLY",
-                    WRITE_WIDTH_A => 9, WRITE_WIDTH_B => 9)
-        port map(
-          DOA => open, 
-          DOB => xdo(i),
-          DOPA => open, 
-          DOPB => open, 
-          ADDRA => xa(13 downto 0),
-          ADDRB => xa(13 downto 0),
-          CLKA => clk,
-          CLKB => clk,
-          DIA => xdi(i),
-          DIB => x"FFFF",
-          DIPA => "11",
-          DIPB => "11",
-          ENA => xenable,
-          ENB => xenable,
-          REGCEA => '0',
-          REGCEB => '0',
-          SSRA => '0',
-          SSRB => '0',
-          WEA => xwen18(i),
-          WEB => "00");
+      r0 : unisim_sram_b_11abits
+        port map (
+          CLK  => clk,
+          CE0  => xwren(i),
+          A0   => xa(10 downto 0),
+          D0   => di(i*8+8-1 downto i*8),
+          WE0  => write(i),
+          WEM0 => x"ff",
+          CE1  => xrden(i),
+          A1   => xa(10 downto 0),
+          Q1   => do(i*8+8-1 downto i*8));
     end generate;
-    do(dbits+32 downto 8*(((dbits-1)/8)+1)) <= (others => '0');
+    do(dbits+8 downto 8*(((dbits-1)/8)+1)) <= (others => '0');
   end generate;
 
   a12 : if abits = 12 generate
-
-    xa(19 downto 14) <= (others => '0'); 
-    xa(1 downto 0) <= (others => '0'); 
-    xa(13 downto 2) <= address;
-    xenable <= orv(enable);
-
-    x : for i in 0 to ((dbits-1)/4) generate
-
-      xwen18(i) <= '0'&write(i/2);
-      xdi(i) <= x"000"&di(i*4+4-1 downto i*4);
-      do(i*4+4-1 downto i*4) <= xdo(i)(3 downto 0);
-
-      r : RAMB18 generic map (READ_WIDTH_A => 4, READ_WIDTH_B => 4,
-                    SIM_COLLISION_CHECK => "GENERATE_X_ONLY",
-                    WRITE_WIDTH_A => 4, WRITE_WIDTH_B => 4)
-        port map(
-          DOA => open, 
-          DOB => xdo(i),
-          DOPA => open, 
-          DOPB => open, 
-          ADDRA => xa(13 downto 0),
-          ADDRB => xa(13 downto 0),
-          CLKA => clk,
-          CLKB => clk,
-          DIA => xdi(i),
-          DIB => x"FFFF",
-          DIPA => "11",
-          DIPB => "11",
-          ENA => xenable,
-          ENB => xenable,
-          REGCEA => '0',
-          REGCEB => '0',
-          SSRA => '0',
-          SSRB => '0',
-          WEA => xwen18(i),
-          WEB => "00");
+    x : for i in 0 to ((dbits-1)/8) generate
+      r0 : unisim_sram_b_12abits
+        port map (
+          CLK  => clk,
+          CE0  => xwren(i),
+          A0   => xa(11 downto 0),
+          D0   => di(i*8+8-1 downto i*8),
+          WE0  => write(i),
+          WEM0 => x"ff",
+          CE1  => xrden(i),
+          A1   => xa(11 downto 0),
+          Q1   => do(i*8+8-1 downto i*8));
     end generate;
-    do(dbits+32 downto 4*(((dbits-1)/4)+1)) <= (others => '0');
+    do(dbits+8 downto 8*(((dbits-1)/8)+1)) <= (others => '0');
   end generate;
 
   a13 : if abits = 13 generate
-
-    xa(19 downto 14) <= (others => '0'); 
-    xa(0) <= '0'; 
-    xa(13 downto 1) <= address;
-    xenable <= orv(enable);
-
-    x : for i in 0 to ((dbits-1)/2) generate
-
-      xwen18(i) <= '0'&write(i/4);
-      xdi(i)(15 downto 2) <= (others=>'0');
-      xdi(i)(1 downto 0) <= di(i*2+2-1 downto i*2);
-      do(i*2+2-1 downto i*2) <= xdo(i)(1 downto 0);
-
-      r : RAMB18 generic map (READ_WIDTH_A => 2, READ_WIDTH_B => 2,
-                    SIM_COLLISION_CHECK => "GENERATE_X_ONLY",
-                    WRITE_WIDTH_A => 2, WRITE_WIDTH_B => 2)
-        port map(
-          DOA => open, 
-          DOB => xdo(i),
-          DOPA => open, 
-          DOPB => open, 
-          ADDRA => xa(13 downto 0),
-          ADDRB => xa(13 downto 0),
-          CLKA => clk,
-          CLKB => clk,
-          DIA => xdi(i),
-          DIB => x"FFFF",
-          DIPA => "11",
-          DIPB => "11",
-          ENA => xenable,
-          ENB => xenable,
-          REGCEA => '0',
-          REGCEB => '0',
-          SSRA => '0',
-          SSRB => '0',
-          WEA => xwen18(i),
-          WEB => "00");
+    x : for i in 0 to ((dbits-1)/8) generate
+      r0 : unisim_sram_b_13abits
+        port map (
+          CLK  => clk,
+          CE0  => xwren(i),
+          A0   => xa(12 downto 0),
+          D0   => di(i*8+8-1 downto i*8),
+          WE0  => write(i),
+          WEM0 => x"ff",
+          CE1  => xrden(i),
+          A1   => xa(12 downto 0),
+          Q1   => do(i*8+8-1 downto i*8));
     end generate;
-    do(dbits+32 downto 2*(((dbits-1)/2)+1)) <= (others => '0');
+    do(dbits+8 downto 8*(((dbits-1)/8)+1)) <= (others => '0');
   end generate;
 
   a14 : if abits = 14 generate
-
-    xa(19 downto 14) <= (others => '0'); 
-    xa(13 downto 0) <= address;
-    xenable <= orv(enable);
-
-    x : for i in 0 to (dbits-1) generate
-
-      xwen18(i) <= '0'&write(i/8);
-      xdi(i)(15 downto 1) <= (others=>'0');
-      xdi(i)(0) <= di(i);
-      do(i) <= xdo(i)(0);
-
-      r : RAMB18 generic map (READ_WIDTH_A => 1, READ_WIDTH_B => 1,
-                    SIM_COLLISION_CHECK => "GENERATE_X_ONLY",
-                    WRITE_WIDTH_A => 1, WRITE_WIDTH_B => 1)
-        port map(
-          DOA => open, 
-          DOB => xdo(i),
-          DOPA => open, 
-          DOPB => open, 
-          ADDRA => xa(13 downto 0),
-          ADDRB => xa(13 downto 0),
-          CLKA => clk,
-          CLKB => clk,
-          DIA => xdi(i),
-          DIB => x"FFFF",
-          DIPA => "11",
-          DIPB => "11",
-          ENA => xenable,
-          ENB => xenable,
-          REGCEA => '0',
-          REGCEB => '0',
-          SSRA => '0',
-          SSRB => '0',
-          WEA => xwen18(i),
-          WEB => "00");
+    x : for i in 0 to ((dbits-1)/8) generate
+      r0 : unisim_sram_b_14abits
+        port map (
+          CLK  => clk,
+          CE0  => xwren(i),
+          A0   => xa(13 downto 0),
+          D0   => di(i*8+8-1 downto i*8),
+          WE0  => write(i),
+          WEM0 => x"ff",
+          CE1  => xrden(i),
+          A1   => xa(13 downto 0),
+          Q1   => do(i*8+8-1 downto i*8));
     end generate;
-    do(dbits+32 downto dbits) <= (others => '0');
+    do(dbits+8 downto 8*(((dbits-1)/8)+1)) <= (others => '0');
   end generate;
 
   a15 : if abits = 15 generate
-
-    xa(19 downto 15) <= (others => '0'); 
-    xa(14 downto 0) <= address;
-    xenable <= orv(enable);
-
-    x : for i in 0 to (dbits-1) generate
-
-      xwen36(i) <= "000"&write(i/8);
-      xdi36(i)(31 downto 1) <= (others=>'0');
-      xdi36(i)(0) <= di(i);
-      do(i) <= xdo36(i)(0);
-
-      r : RAMB36 generic map(READ_WIDTH_A => 1, READ_WIDTH_B => 1,
-                    SIM_COLLISION_CHECK => "GENERATE_X_ONLY",
-                    WRITE_WIDTH_A => 1, WRITE_WIDTH_B => 1)
-        port map(
-          CASCADEOUTLATA => open,
-          CASCADEOUTLATB => open,
-          CASCADEOUTREGA => open,
-          CASCADEOUTREGB => open,
-          CASCADEINLATA => '0', 
-          CASCADEINLATB => '0', 
-          CASCADEINREGA => '0', 
-          CASCADEINREGB => '0', 
-          DOA => open, 
-          DOB => xdo36(i),
-          DOPA => open, 
-          DOPB => open, 
-          ADDRA => xa(15 downto 0),
-          ADDRB => xa(15 downto 0),
-          CLKA => clk,
-          CLKB => clk,
-          DIA => xdi36(i),
-          DIB => x"FFFFFFFF",
-          DIPA => "1111",
-          DIPB => "1111",
-          ENA => xenable,
-          ENB => xenable,
-          REGCEA => '0',
-          REGCEB => '0',
-          SSRA => '0',
-          SSRB => '0',
-          WEA => xwen36(i),
-          WEB => "0000");
-    end generate;
-    do(dbits+32 downto dbits) <= (others => '0');
-  end generate;
-
-  a16 : if (abits > 15) generate
     x : for i in 0 to ((dbits-1)/8) generate
-      r : generic_syncram generic map (abits, 8)
-        port map (clk, address, di(i*8+8-1 downto i*8), do(i*8+8-1 downto i*8), write(i));
+      r0 : unisim_sram_b_15abits
+        port map (
+          CLK  => clk,
+          CE0  => xwren(i),
+          A0   => xa(14 downto 0),
+          D0   => di(i*8+8-1 downto i*8),
+          WE0  => write(i),
+          WEM0 => x"ff",
+          CE1  => xrden(i),
+          A1   => xa(14 downto 0),
+          Q1   => do(i*8+8-1 downto i*8));
     end generate;
-    do(dbits+32 downto 8*(((dbits-1)/8)+1)) <= (others => '0');
+    do(dbits+8 downto 8*(((dbits-1)/8)+1)) <= (others => '0');
   end generate;
 
-  --pragma translate_off
-   gen_sram : if abits > 15 generate
-     x : process
-     begin
-       report  "Address depth larger than 15 not supported for unisim_syncram_be. It will be implemented using inferred syncram.";
-       wait;
-     end process;
-   end generate;
-  --pragma translate_on
+  a16 : if abits = 16 generate
+    x : for i in 0 to ((dbits-1)/8) generate
+      r0 : unisim_sram_b_16abits
+        port map (
+          CLK  => clk,
+          CE0  => xwren(i),
+          A0   => xa(15 downto 0),
+          D0   => di(i*8+8-1 downto i*8),
+          WE0  => write(i),
+          WEM0 => x"ff",
+          CE1  => xrden(i),
+          A1   => xa(15 downto 0),
+          Q1   => do(i*8+8-1 downto i*8));
+    end generate;
+    do(dbits+8 downto 8*(((dbits-1)/8)+1)) <= (others => '0');
+  end generate;
+
+  a17 : if abits = 17 generate
+    x : for i in 0 to ((dbits-1)/8) generate
+      r0 : unisim_sram_b_17abits
+        port map (
+          CLK  => clk,
+          CE0  => xwren(i),
+          A0   => xa(16 downto 0),
+          D0   => di(i*8+8-1 downto i*8),
+          WE0  => write(i),
+          WEM0 => x"ff",
+          CE1  => xrden(i),
+          A1   => xa(16 downto 0),
+          Q1   => do(i*8+8-1 downto i*8));
+    end generate;
+    do(dbits+8 downto 8*(((dbits-1)/8)+1)) <= (others => '0');
+  end generate;
+
+  a18 : if abits = 18 generate
+    x : for i in 0 to ((dbits-1)/8) generate
+      r0 : unisim_sram_b_18abits
+        port map (
+          CLK  => clk,
+          CE0  => xwren(i),
+          A0   => xa(17 downto 0),
+          D0   => di(i*8+8-1 downto i*8),
+          WE0  => write(i),
+          WEM0 => x"ff",
+          CE1  => xrden(i),
+          A1   => xa(17 downto 0),
+          Q1   => do(i*8+8-1 downto i*8));
+    end generate;
+    do(dbits+8 downto 8*(((dbits-1)/8)+1)) <= (others => '0');
+  end generate;
+
+  a19 : if abits = 19 generate
+    x : for i in 0 to ((dbits-1)/8) generate
+      r0 : unisim_sram_b_19abits
+        port map (
+          CLK  => clk,
+          CE0  => xwren(i),
+          A0   => xa(18 downto 0),
+          D0   => di(i*8+8-1 downto i*8),
+          WE0  => write(i),
+          WEM0 => x"ff",
+          CE1  => xrden(i),
+          A1   => xa(18 downto 0),
+          Q1   => do(i*8+8-1 downto i*8));
+    end generate;
+    do(dbits+8 downto 8*(((dbits-1)/8)+1)) <= (others => '0');
+  end generate;
+
+  a20 : if abits = 20 generate
+    x : for i in 0 to ((dbits-1)/8) generate
+      r0 : unisim_sram_b_20abits
+        port map (
+          CLK  => clk,
+          CE0  => xwren(i),
+          A0   => xa(19 downto 0),
+          D0   => di(i*8+8-1 downto i*8),
+          WE0  => write(i),
+          WEM0 => x"ff",
+          CE1  => xrden(i),
+          A1   => xa(19 downto 0),
+          Q1   => do(i*8+8-1 downto i*8));
+    end generate;
+    do(dbits+8 downto 8*(((dbits-1)/8)+1)) <= (others => '0');
+  end generate;
+
+
+
+  -- pragma translate_off
+  a_to_high : if abits > 20 generate
+    x : process
+    begin
+      assert false
+        report  "Address depth larger than 20 not supported for unisim_syncram_be"
+        severity failure;
+      wait;
+    end process;
+  end generate;
+-- pragma translate_on
 
 end;

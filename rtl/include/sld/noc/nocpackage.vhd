@@ -307,6 +307,9 @@ package nocpackage is
   end component;
 
   -- Helper functions
+  function set_mem_id_range
+    return integer;
+
   function get_origin_y (
     constant flit_sz : integer;
     flit : noc_flit_type)
@@ -415,6 +418,16 @@ package nocpackage is
 end nocpackage;
 
 package body nocpackage is
+
+  function set_mem_id_range
+    return integer is
+  begin
+    if CFG_NMEM_TILE = 0 then
+      return 0;
+    else
+      return CFG_NMEM_TILE - 1;
+    end if;
+  end;
 
   function get_origin_y (
     constant flit_sz : integer;

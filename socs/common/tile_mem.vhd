@@ -299,7 +299,7 @@ architecture rtl of tile_mem is
 
   signal tile_id : integer range 0 to CFG_TILES_NUM - 1;
 
-  signal this_mem_id       : integer range 0 to CFG_NMEM_TILE - 1;
+  signal this_mem_id       : integer range 0 to MEM_ID_RANGE_MSB;
   signal this_ddr_hindex   : integer range 0 to NAHBSLV - 1;
   signal this_ddr_hconfig  : ahb_config_type;
 

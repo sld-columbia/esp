@@ -108,8 +108,6 @@ package misc is
   component ahbram
   generic (
     hindex  : integer := 0;
-    haddr   : integer := 0;
-    hmask   : integer := 16#fff#;
     tech    : integer := DEFMEMTECH;
     kbytes  : integer := 1;
     pipe    : integer := 0;
@@ -118,6 +116,8 @@ package misc is
   port (
     rst    : in  std_ulogic;
     clk    : in  std_ulogic;
+    haddr  : in  integer;
+    hmask  : in  integer;
     ahbsi  : in  ahb_slv_in_type;
     ahbso  : out ahb_slv_out_type);
   end component;

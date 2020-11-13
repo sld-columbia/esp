@@ -212,9 +212,8 @@ class soc_config:
   nacc = 0
   nmem = 0
   nslm = 0
-  slm_mbytes = 0
-  slm_size = 0
-  slm_tot_size = 0
+  slm_kbytes = 0
+  slm_tot_kbytes = 0
   slm_full_mask = 0
   ntiles = 0
   coherence = True
@@ -251,11 +250,13 @@ class soc_config:
     self.ncpu = soc.noc.get_cpu_num(soc)
     self.nmem = soc.noc.get_mem_num(soc)
     self.nslm = soc.noc.get_slm_num(soc)
-    self.slm_mbytes = soc.slm_mbytes.get()
-    self.slm_size = self.slm_mbytes
+    self.slm_kbytes = soc.slm_kbytes.get()
     if self.nslm != 0:
-      self.slm_tot_size = self.slm_size * (2**(math.ceil(math.log(self.nslm) / math.log(2))))
-    self.slm_full_mask = 0xfff & ~(self.slm_tot_size - 1)
+      self.slm_tot_kbytes = self.slm_kbytes * self.nslm
+    if self.slm_tot_kbytes > 1024:
+      self.slm_full_mask = 0xfff & ~(int(self.slm_tot_kbytes / 1024) - 1)
+    else:
+      self.slm_full_mask = 0xfff
     self.nacc = soc.noc.get_acc_num(soc)
     self.ntiles = soc.noc.rows * soc.noc.cols
     if soc.cache_en.get() == 0:
@@ -415,6 +416,7 @@ def print_libs(fp, std_only):
     fp.write("use work.sldcommon.all;\n")
     fp.write("use work.leon3.all;\n")
     fp.write("use work.nocpackage.all;\n")
+    fp.write("use work.cachepackage.all;\n")
     fp.write("use work.allcaches.all;\n")
 
   fp.write("\n")
@@ -492,7 +494,7 @@ def print_constants(fp, soc, esp_config):
   fp.write("  constant CFG_NL2 : integer := " + str(esp_config.nl2) + ";\n")
   fp.write("  constant CFG_NLLC : integer := " + str(esp_config.nllc) + ";\n")
   fp.write("  constant CFG_NLLC_COHERENT : integer := " + str(esp_config.ncdma) + ";\n")
-  fp.write("  constant CFG_SLM_MBYTES : integer := " + str(esp_config.slm_mbytes) + ";\n\n")
+  fp.write("  constant CFG_SLM_KBYTES : integer := " + str(esp_config.slm_kbytes) + ";\n\n")
 
   #
   fp.write("  ------ Local-port Synchronizers are always present)\n")
@@ -613,7 +615,7 @@ def print_mapping(fp, soc, esp_config):
   fp.write("    4 => ahb_membar(ahbrom_haddr, '1', '1', ahbrom_hmask),\n")
   fp.write("    others => zero32);\n")
 
-  #
+  
   fp.write("  -- AHB2APB bus bridge slave\n")
   fp.write("  constant CFG_APBADDR : integer := 16#" + format(AHB2APB_HADDR[esp_config.cpu_arch], '03X') + "#;\n")
   fp.write("  constant ahb2apb_hindex : integer := " + str(AHB2APB_HINDEX) + ";\n")
@@ -641,10 +643,19 @@ def print_mapping(fp, soc, esp_config):
   #
   fp.write("  ----  Shared Local Memory\n")
   # Reserve 64MB (no need to check total size!)
-  # 0x04000000 - 0x08000000
+  # If memory tiles are present: 0x04000000 - 0x08000000 
+  # If no memory tile is present:
+  #  - RISC-V   : 0x80000000 - 0x88000000
+  #  - SPARC V8 : 0x40000000 - 0x48000000
   # Smaller alowed size for an SLM tile is 1 MB
+  if esp_config.nmem == 0:
+    # Use SLM in as main memory
+    global SLM_HADDR
+    SLM_HADDR = DDR_HADDR[esp_config.cpu_arch]
   offset = SLM_HADDR;
-  mask = 0xfff & ~(esp_config.slm_size - 1)
+  mask = 0xfff
+  if esp_config.slm_kbytes >= 1024:
+    mask = 0xfff & ~(int(esp_config.slm_kbytes / 1024) - 1)
   # Use any available hindex
   hindex = SLM_HINDEX
 
@@ -665,7 +676,7 @@ def print_mapping(fp, soc, esp_config):
     fp.write("  constant slm_haddr : attribute_vector(0 to CFG_NSLM_TILE - 1) := (\n")
   for i in range(0, esp_config.nslm):
     fp.write("    " + str(i) + " => 16#" + format(offset, '03X') + "#,\n")
-    offset = offset + esp_config.slm_size
+    offset = offset + int(esp_config.slm_kbytes / 1024)
   fp.write("    others => 0);\n")
 
   if esp_config.nslm == 0:
@@ -696,7 +707,10 @@ def print_mapping(fp, soc, esp_config):
   #
   fp.write("  ----  Memory controllers\n")
   offset = DDR_HADDR[esp_config.cpu_arch];
-  size = int(DDR_SIZE / esp_config.nmem)
+  if esp_config.nmem > 0:
+    size = int(DDR_SIZE / esp_config.nmem)
+  else:
+    size = DDR_SIZE
   mask = 0xfff & ~(size - 1)
   full_mask = 0xfff & ~(DDR_SIZE - 1)
 
@@ -709,19 +723,24 @@ def print_mapping(fp, soc, esp_config):
   fp.write("    others => zero32);\n")
 
   #
+  if esp_config.nmem == 0:
+    ddr_vec_attribute_msb = "0"
+  else:
+    ddr_vec_attribute_msb = "CFG_NMEM_TILE - 1"
+
   fp.write("  -- Network interfaces and ESP proxies, instead, need to know how to route packets\n")
-  fp.write("  constant ddr_hindex : attribute_vector(0 to CFG_NMEM_TILE - 1) := (\n")
+  fp.write("  constant ddr_hindex : attribute_vector(0 to " + ddr_vec_attribute_msb  + ") := (\n")
   for i in range(0, esp_config.nmem):
     fp.write("    " + str(i) + " => " + str(DDR_HINDEX[i]) + ",\n")
   fp.write("    others => 0);\n")
 
-  fp.write("  constant ddr_haddr : attribute_vector(0 to CFG_NMEM_TILE - 1) := (\n")
+  fp.write("  constant ddr_haddr : attribute_vector(0 to " + ddr_vec_attribute_msb  + ") := (\n")
   for i in range(0, esp_config.nmem):
     fp.write("    " + str(i) + " => 16#" + format(offset, '03X') + "#,\n")
     offset = offset + size
   fp.write("    others => 0);\n")
 
-  fp.write("  constant ddr_hmask : attribute_vector(0 to CFG_NMEM_TILE - 1) := (\n")
+  fp.write("  constant ddr_hmask : attribute_vector(0 to " + ddr_vec_attribute_msb  + ") := (\n")
   for i in range(0, esp_config.nmem):
     fp.write("    " + str(i) + " => 16#" + format(mask, '03X') + "#,\n")
   fp.write("    others => 0);\n")
@@ -778,7 +797,8 @@ def print_mapping(fp, soc, esp_config):
   fp.write("    " + str(AHB2APB_HINDEX) + " => ahb2apb_hconfig,\n")
   if esp_config.cpu_arch == "ariane" or esp_config.cpu_arch == "ibex":
     fp.write("    " + str(RISCV_CLINT_HINDEX) + " => clint_hconfig,\n")
-  fp.write("    " + str(DDR_HINDEX[0]) + " => cpu_tile_mig7_hconfig,\n")
+  if esp_config.nmem != 0:
+    fp.write("    " + str(DDR_HINDEX[0]) + " => cpu_tile_mig7_hconfig,\n")
   fp.write("    " + str(SLM_HINDEX) + " => cpu_tile_slm_hconfig,\n")
   fp.write("    " + str(FB_HINDEX) + " => fb_hconfig,\n")
   fp.write("    others => hconfig_none);\n\n")
@@ -1085,7 +1105,7 @@ def print_mapping(fp, soc, esp_config):
 
   #
   fp.write("  -- Get tile ID from LLC-split ID\n")
-  fp.write("  constant llc_tile_id : attribute_vector(0 to CFG_NMEM_TILE - 1) := (\n")
+  fp.write("  constant llc_tile_id : attribute_vector(0 to " + ddr_vec_attribute_msb  + ") := (\n")
   for i in  range(0, esp_config.ntiles):
     llc = esp_config.tiles[i].llc
     if llc.id != -1:
@@ -1124,7 +1144,7 @@ def print_mapping(fp, soc, esp_config):
 
   #
   fp.write("  -- Get tile ID from memory ID\n")
-  fp.write("  constant mem_tile_id : attribute_vector(0 to CFG_NMEM_TILE - 1) := (\n")
+  fp.write("  constant mem_tile_id : attribute_vector(0 to " + ddr_vec_attribute_msb  + ") := (\n")
   for i in  range(0, esp_config.ntiles):
     t = esp_config.tiles[i]
     if t.mem_id != -1:
@@ -1432,7 +1452,13 @@ def print_mapping(fp, soc, esp_config):
   for i in range(esp_config.ntiles - 1, -1, -1):
     t =  esp_config.tiles[i]
     if t.type == "cpu":
-      fp.write(", " + str(i))
+      if first:
+        first = False
+        if esp_config.tiles[i].cpu_id == 0:
+          fp.write("0 => ")
+      else:
+        fp.write(", ")
+      fp.write(str(i))
   fp.write(");\n\n")
 
 
@@ -1676,6 +1702,8 @@ def print_esplink_header(fp, esp_config, soc):
   fp.write("#define BOOTROM_BASE_ADDR " + hex(RST_ADDR[esp_config.cpu_arch]) + "\n")
   fp.write("#define RODATA_START_ADDR " + hex(RODATA_ADDR[esp_config.cpu_arch]) + "\n")
   fp.write("#define DRAM_BASE_ADDR 0x" + format(DDR_HADDR[esp_config.cpu_arch], '03X') + "00000\n")
+  if esp_config.nmem == 0:
+    fp.write("#define OVERRIDE_DRAM_SIZE 0x" + format(esp_config.slm_tot_kbytes * 1024, '08X') + "\n")
   fp.write("#define ESPLINK_BASE_ADDR 0x" + format(AHB2APB_HADDR[esp_config.cpu_arch], '03X') + "00400\n")
   fp.write("#define TARGET_BYTE_ORDER __ORDER_BIG_ENDIAN__\n")
   fp.write("\n")
@@ -1739,48 +1767,55 @@ def print_devtree(fp, esp_config):
   fp.write("  memory@" + format(DDR_HADDR[esp_config.cpu_arch], '03X') + "00000 {\n")
   fp.write("    device_type = \"memory\";\n")
   # TODO: increase memory address space.
-  fp.write("    reg = <0x0 0x" + format(DDR_HADDR[esp_config.cpu_arch], '03X') + "00000 0x0 0x20000000>;\n")
+  if esp_config.nmem != 0:
+    fp.write("    reg = <0x0 0x" + format(DDR_HADDR[esp_config.cpu_arch], '03X') + "00000 0x0 0x20000000>;\n")
+  else:
+    # Use SLM as main memory
+    fp.write("    reg = <0x0 0x" + format(DDR_HADDR[esp_config.cpu_arch], '03X') + "00000 0x0 0x" + format(esp_config.slm_tot_kbytes * 1024, '08X') + ">;\n")
   fp.write("  };\n")
-  fp.write("  reserved-memory {\n")
-  fp.write("    #address-cells = <2>;\n")
-  fp.write("    #size-cells = <2>;\n")
-  fp.write("    ranges;\n")
-  fp.write("\n")
-  fp.write("    greth_reserved: buffer@A0000000 {\n")
-  fp.write("      compatible = \"shared-dma-pool\";\n")
-  fp.write("      no-map;\n")
-  fp.write("      reg = <0x0 0xA0000000 0x0 0x200000>;\n")
-  fp.write("    };\n")
-  
-  # Add only one memory region for all third-party accelerator instances
-  acc_mem_address = format(ACC_MEM_RESERVED_START_ADDR, "08X")
-  acc_mem_size = format(ACC_MEM_RESERVED_TOTAL_SIZE, "08X")
-  if esp_config.nacc > esp_config.nthirdparty:
-    tp_mem_address = format(THIRDPARTY_MEM_RESERVED_ADDR, "08X")
-    tp_mem_size = format(THIRDPARTY_MEM_RESERVED_SIZE, "08X")
-  else: 
-    tp_mem_address = format(ACC_MEM_RESERVED_START_ADDR, "08X")
-    tp_mem_size = format(ACC_MEM_RESERVED_TOTAL_SIZE, "08X")
-   
-  if esp_config.nthirdparty > 0:
-    acc_mem_size = format(ACC_MEM_RESERVED_TOTAL_SIZE - THIRDPARTY_MEM_RESERVED_SIZE, "08X")
-  
-  if esp_config.nacc > esp_config.nthirdparty:
+
+  # OS reserved memory regions
+  if esp_config.nmem != 0:
+    fp.write("  reserved-memory {\n")
+    fp.write("    #address-cells = <2>;\n")
+    fp.write("    #size-cells = <2>;\n")
+    fp.write("    ranges;\n")
     fp.write("\n")
-    fp.write("    accelerator_reserved: buffer@" + acc_mem_address + " {\n")
+    fp.write("    greth_reserved: buffer@A0000000 {\n")
     fp.write("      compatible = \"shared-dma-pool\";\n")
     fp.write("      no-map;\n")
-    fp.write("      reg = <0x0 0x" + acc_mem_address + " 0x0 0x" + acc_mem_size + ">;\n")
+    fp.write("      reg = <0x0 0xA0000000 0x0 0x200000>;\n")
     fp.write("    };\n")
-  if esp_config.nthirdparty > 0:
-    fp.write("\n")
-    fp.write("    thirdparty_reserved: buffer@" + tp_mem_address + " {\n")
-    fp.write("      compatible = \"shared-dma-pool\";\n")
-    fp.write("      no-map;\n")
-    fp.write("      reg = <0x0 0x" + tp_mem_address + " 0x0 0x" + tp_mem_size + ">;\n")
-    fp.write("    };\n")
-  fp.write("  };\n")
-  
+
+    # Add only one memory region for all third-party accelerator instances
+    acc_mem_address = format(ACC_MEM_RESERVED_START_ADDR, "08X")
+    acc_mem_size = format(ACC_MEM_RESERVED_TOTAL_SIZE, "08X")
+    if esp_config.nacc > esp_config.nthirdparty:
+      tp_mem_address = format(THIRDPARTY_MEM_RESERVED_ADDR, "08X")
+      tp_mem_size = format(THIRDPARTY_MEM_RESERVED_SIZE, "08X")
+    else:
+      tp_mem_address = format(ACC_MEM_RESERVED_START_ADDR, "08X")
+      tp_mem_size = format(ACC_MEM_RESERVED_TOTAL_SIZE, "08X")
+
+    if esp_config.nthirdparty > 0:
+      acc_mem_size = format(ACC_MEM_RESERVED_TOTAL_SIZE - THIRDPARTY_MEM_RESERVED_SIZE, "08X")
+
+    if esp_config.nacc > esp_config.nthirdparty:
+      fp.write("\n")
+      fp.write("    accelerator_reserved: buffer@" + acc_mem_address + " {\n")
+      fp.write("      compatible = \"shared-dma-pool\";\n")
+      fp.write("      no-map;\n")
+      fp.write("      reg = <0x0 0x" + acc_mem_address + " 0x0 0x" + acc_mem_size + ">;\n")
+      fp.write("    };\n")
+    if esp_config.nthirdparty > 0:
+      fp.write("\n")
+      fp.write("    thirdparty_reserved: buffer@" + tp_mem_address + " {\n")
+      fp.write("      compatible = \"shared-dma-pool\";\n")
+      fp.write("      no-map;\n")
+      fp.write("      reg = <0x0 0x" + tp_mem_address + " 0x0 0x" + tp_mem_size + ">;\n")
+      fp.write("    };\n")
+    fp.write("  };\n")
+
   fp.write("  L26: soc {\n")
   fp.write("    #address-cells = <2>;\n")
   fp.write("    #size-cells = <2>;\n")
@@ -1835,7 +1870,8 @@ def print_devtree(fp, esp_config):
   fp.write("      reg = <0x0 0x" + format(AHB2APB_HADDR[esp_config.cpu_arch], '03X') + "80000 0x0 0x10000>;\n")
   fp.write("      phy-handle = <&phy0>;\n")
   fp.write("      phy-connection-type = \"sgmii\";\n")
-  fp.write("      memory-region = <&greth_reserved>;\n")
+  if esp_config.nmem != 0:
+    fp.write("      memory-region = <&greth_reserved>;\n")
   fp.write("\n")
   fp.write("      phy0: mdio@60001000 {\n")
   fp.write("            #address-cells = <1>;\n")
@@ -1914,7 +1950,7 @@ def print_devtree(fp, esp_config):
     fp.write("      interrupts = <" + str(acc.irq + 1) + ">;\n")
     fp.write("      reg-shift = <2>; // regs are spaced on 32 bit boundary\n")
     fp.write("      reg-io-width = <4>; // only 32-bit access are supported\n")
-    if acc.vendor != "sld":
+    if acc.vendor != "sld" and esp_config.nmem != 0:
       fp.write("      memory-region = <&thirdparty_reserved>;\n")
     fp.write("    };\n")
   fp.write("  };\n")
@@ -1942,7 +1978,10 @@ def print_cache_config(fp, soc, esp_config):
   fp.write("`define L2_WAYS      " + str(soc.l2_ways.get()) + "\n")
   fp.write("`define L2_SETS      " + str(soc.l2_sets.get()) + "\n")
   fp.write("`define LLC_WAYS     " + str(soc.llc_ways.get()) + "\n")
-  fp.write("`define LLC_SETS     " + str(int(soc.llc_sets.get() / esp_config.nmem)) + "\n")
+  if esp_config.nmem == 0:
+    fp.write("`define LLC_SETS     " + str(int(soc.llc_sets.get())) + "\n")
+  else:
+    fp.write("`define LLC_SETS     " + str(int(soc.llc_sets.get() / esp_config.nmem)) + "\n")
   fp.write("\n")
   fp.write("`endif // __CACHES_CFG_SVH__\n")
 
@@ -2118,7 +2157,8 @@ def print_load_script(fp, soc, esp_config):
   fp.write("insmod contig_alloc.ko ")
   nmem = esp_config.nmem
   ddr_size = int(str(DDR_SIZE)) * int(0x100000)
-  size = int(ddr_size / nmem)
+  if nmem > 0:
+    size = int(ddr_size / nmem)
   sizes = []
   starts = []
   start = int(str(DDR_HADDR[soc.CPU_ARCH.get()])) * int(0x100000)
@@ -2250,10 +2290,11 @@ def create_socmap(esp_config, soc):
     
     print("Created floorplanning constraints for profgpa-xcvu440 into 'mem_tile_floorplanning.xdc'")
   
-  fp = open('S64esp', 'w')
+  if esp_config.nmem != 0:
+    fp = open('S64esp', 'w')
 
-  print_load_script(fp, soc, esp_config)
+    print_load_script(fp, soc, esp_config)
 
-  fp.close()
+    fp.close()
   
-  print("Created kernel module load script into 'S64esp'")
+    print("Created kernel module load script into 'S64esp'")

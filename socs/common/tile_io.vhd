@@ -1099,8 +1099,6 @@ begin
     ahbram_1 : ahbram_sim
       generic map (
         hindex   => ahbrom_hindex,
-        haddr    => ahbrom_haddr,
-        hmask    => ahbrom_hmask,
         tech     => 0,
         kbytes   => 128,
         pipe     => 0,
@@ -1110,6 +1108,8 @@ begin
       port map(
         rst     => rst,
         clk     => clk,
+        haddr   => ahbrom_haddr,
+        hmask   => ahbrom_hmask,
         ahbsi   => ahbsi,
         ahbso   => ahbso(ahbrom_hindex)
         );
@@ -1120,8 +1120,6 @@ begin
     ahbram_2: ahbram
       generic map (
         hindex   => ahbrom_hindex,
-        haddr    => ahbrom_haddr,
-        hmask    => ahbrom_hmask,
         tech     => CFG_FABTECH,
         kbytes   => 128,
         pipe     => 0,
@@ -1129,6 +1127,8 @@ begin
       port map (
         rst   => rst,
         clk   => clk,
+        haddr => ahbrom_haddr,
+        hmask => ahbrom_hmask,
         ahbsi => ahbsi,
         ahbso => ahbso(ahbrom_hindex));
   end generate bootram_gen;

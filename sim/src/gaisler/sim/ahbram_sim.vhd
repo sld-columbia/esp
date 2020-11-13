@@ -45,8 +45,6 @@ use work.gencomp.all;
 entity ahbram_sim is
   generic (
     hindex      : integer := 0;
-    haddr       : integer := 0;
-    hmask       : integer := 16#fff#;
     tech        : integer := DEFMEMTECH;
     kbytes      : integer := 1;
     pipe        : integer := 0;
@@ -58,6 +56,8 @@ entity ahbram_sim is
   port (
     rst     : in  std_ulogic;
     clk     : in  std_ulogic;
+    haddr   : in  integer := 0;
+    hmask   : in  integer := 16#fff#;
     ahbsi   : in  ahb_slv_in_type;
     ahbso   : out ahb_slv_out_type
   );
@@ -69,11 +69,7 @@ constant dw : integer := maccsz;
 
 constant abits : integer := log2ext(kbytes) + 10 - log2(dw/8);
 
-constant hconfig : ahb_config_type := (
-  0 => ahb_device_reg ( VENDOR_GAISLER, GAISLER_AHBRAM, 0, abits+2+maccsz/64, 0),
-  4 => ahb_membar(haddr, '1', '1', hmask),
-  others => zero32);
-
+signal hconfig : ahb_config_type;
 
 type reg_type is record
   hwrite : std_ulogic;
@@ -105,6 +101,11 @@ signal ram : ram_type;
 signal read_address : std_logic_vector(ramaddr'range);
 
 begin
+
+  hconfig <= (
+    0 => ahb_device_reg ( VENDOR_GAISLER, GAISLER_AHBRAM, 0, abits+2+maccsz/64, 0),
+    4 => ahb_membar(haddr, '1', '1', hmask),
+    others => zero32);
 
   comb : process (ahbsi, r, rst, ramdata)
   variable bs      : std_logic_vector(dw/8-1 downto 0);

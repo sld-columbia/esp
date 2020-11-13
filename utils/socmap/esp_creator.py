@@ -132,10 +132,10 @@ class CpuFrame(Frame):
     slm_config_frame = Frame(self)
     slm_config_frame.pack(side=TOP, pady=5)
 
-    slm_mbytes_choices = [1, 2, 4]
+    slm_kbytes_choices = [64, 128, 256, 512, 1024, 2048, 4096]
 
-    Label(slm_config_frame, text = "MB per tile: ").grid(row=1, column=1)
-    OptionMenu(slm_config_frame, soc.slm_mbytes, *slm_mbytes_choices, command=main_frame.update_noc_config).grid(row=1, column=2)
+    Label(slm_config_frame, text = "KB per tile: ").grid(row=1, column=1)
+    OptionMenu(slm_config_frame, soc.slm_kbytes, *slm_kbytes_choices, command=main_frame.update_noc_config).grid(row=1, column=2)
 
     ttk.Separator(self, orient="horizontal").pack(anchor="nw", fill=X, pady=10)
 

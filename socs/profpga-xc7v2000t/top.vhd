@@ -28,6 +28,7 @@ use work.sldcommon.all;
 use work.sldacc.all;
 use work.tile.all;
 use work.nocpackage.all;
+use work.cachepackage.all;
 use work.coretypes.all;
 use work.config.all;
 use work.esp_global.all;
@@ -250,8 +251,8 @@ end component mig;
     constant n : integer range 0 to 1)
     return integer is
   begin
-    if n > (CFG_NMEM_TILE - 1) then
-      return CFG_NMEM_TILE - 1;
+    if n > (MEM_ID_RANGE_MSB) then
+      return MEM_ID_RANGE_MSB;
     else
       return n;
     end if;
@@ -261,28 +262,6 @@ end component mig;
     0 => set_ddr_index(0),
     1 => set_ddr_index(1)
     );
-
--- pragma translate_off
--- Memory model for simulation purposes only
-component ahbram_sim
-  generic (
-    hindex  : integer := 0;
-    haddr   : integer := 0;
-    hmask   : integer := 16#fff#;
-    tech    : integer := DEFMEMTECH; 
-    kbytes  : integer := 1;
-    pipe    : integer := 0;
-    maccsz  : integer := AHBDW;
-    fname   : string  := "ram.dat"
-   );
-  port (
-    rst     : in  std_ulogic;
-    clk     : in  std_ulogic;
-    ahbsi   : in  ahb_slv_in_type;
-    ahbso   : out ahb_slv_out_type
-  );
-end component ;
--- pragma translate_on
 
 -- Switches
 signal sel0, sel1, sel2, sel3, sel4 : std_ulogic;
@@ -344,8 +323,8 @@ signal uart_ctsn_int : std_logic;       -- UART1_RTSN (u1i.ctsn)
 signal uart_rtsn_int : std_logic;       -- UART1_RTSN (u1o.rtsn)
 
 -- Memory controller DDR3
-signal ddr_ahbsi   : ahb_slv_in_vector_type(0 to CFG_NMEM_TILE - 1);
-signal ddr_ahbso   : ahb_slv_out_vector_type(0 to CFG_NMEM_TILE - 1);
+signal ddr_ahbsi   : ahb_slv_in_vector_type(0 to MEM_ID_RANGE_MSB);
+signal ddr_ahbso   : ahb_slv_out_vector_type(0 to MEM_ID_RANGE_MSB);
 
 -- Ethernet
 constant CPU_FREQ : integer := 50000;
@@ -437,7 +416,7 @@ signal c1_diagnostic_toggle : std_ulogic;
 
 -- MMI64
 signal user_rstn        : std_ulogic;
-signal mon_ddr          : monitor_ddr_vector(0 to CFG_NMEM_TILE - 1);
+signal mon_ddr          : monitor_ddr_vector(0 to MEM_ID_RANGE_MSB);
 signal mon_noc          : monitor_noc_matrix(1 to 6, 0 to CFG_TILES_NUM-1);
 signal mon_noc_actual   : monitor_noc_matrix(0 to 1, 0 to CFG_TILES_NUM-1);
 signal mon_mem          : monitor_mem_vector(0 to CFG_NMEM_TILE + CFG_NSLM_TILE - 1);
@@ -741,8 +720,6 @@ begin
       mig_ahbram1 : ahbram_sim
         generic map (
           hindex   => 0,
-          haddr    => ddr_haddr(this_ddr_index(0)),
-          hmask    => ddr_hmask(this_ddr_index(0)),
           tech     => 0,
           kbytes   => 2048,
           pipe     => 0,
@@ -752,6 +729,8 @@ begin
         port map(
           rst     => rstn,
           clk     => clkm,
+          haddr   => ddr_haddr(this_ddr_index(0)),
+          hmask   => ddr_hmask(this_ddr_index(0)),
           ahbsi   => ddr_ahbsi(0),
           ahbso   => ddr_ahbso(0)
           );
@@ -759,8 +738,6 @@ begin
       mig_ahbram2 : ahbram_sim
         generic map (
           hindex   => 0,
-          haddr    => ddr_haddr(this_ddr_index(1)),
-          hmask    => ddr_hmask(this_ddr_index(1)),
           tech     => 0,
           kbytes   => 2048,
           pipe     => 0,
@@ -770,6 +747,8 @@ begin
         port map(
           rst     => rstn,
           clk     => clkm_2,
+          haddr   => ddr_haddr(this_ddr_index(1)),
+          hmask   => ddr_hmask(this_ddr_index(1)),
           ahbsi   => ddr_ahbsi(1),
           ahbso   => ddr_ahbso(1)
           );
@@ -779,8 +758,6 @@ begin
       mig_ahbram1 : ahbram_sim
         generic map (
           hindex   => 0,
-          haddr    => ddr_haddr(this_ddr_index(0)),
-          hmask    => ddr_hmask(this_ddr_index(0)),
           tech     => 0,
           kbytes   => 2048,
           pipe     => 0,
@@ -790,6 +767,8 @@ begin
         port map(
           rst     => rstn,
           clk     => clkm,
+          haddr   => ddr_haddr(this_ddr_index(0)),
+          hmask   => ddr_hmask(this_ddr_index(0)),
           ahbsi   => ddr_ahbsi(0),
           ahbso   => ddr_ahbso(0)
           );
@@ -1048,7 +1027,7 @@ begin
       SIMULATION => SIMULATION)
     port map (
       rst           => chip_rst,
-      sys_clk       => sys_clk(0 to CFG_NMEM_TILE - 1),
+      sys_clk       => sys_clk(0 to MEM_ID_RANGE_MSB),
       refclk        => chip_refclk,
       pllbypass     => chip_pllbypass,
       uart_rxd      => uart_rxd_int,
