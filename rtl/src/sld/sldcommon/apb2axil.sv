@@ -65,7 +65,6 @@ module apb2axil
    localparam apb2axil_write_ack         = 3'b011;
    localparam apb2axil_read              = 3'b100;
    localparam apb2axil_read_data         = 3'b101;
-   localparam apb2axil_go                = 3'b110;
 
    // APB2AXI-Lite
    reg [2:0] 	     apb2axil_state;
@@ -77,6 +76,15 @@ module apb2axil
    assign s_axil_araddr = paddr[31:0];
 
    always @ (*) begin
+      pready = 1'b0;
+      pslverr = 1'b0;
+      prdata = '0;
+      s_axil_awvalid = 1'b0;
+      s_axil_wvalid = 1'b0;
+      s_axil_arvalid = 1'b0;
+      s_axil_rready = 1'b0;
+      s_axil_bready = 1'b0;
+
       case (apb2axil_state)
 	apb2axil_idle : begin
 	   pready = 1'b0;
@@ -87,30 +95,17 @@ module apb2axil
 	   s_axil_arvalid = 1'b0;
 	   s_axil_rready = 1'b0;
 	   s_axil_bready = 1'b0;
-	   // If writing to register at paddr == 0, that's just start fir Vivado HLS IPs.
+
 	   if ((psel & penable) == 1'b1) begin
 	      if (pwrite == 1'b1) begin
-		 if (paddr[11:0] == '0) begin
-		    apb2axil_next = apb2axil_go;
-		 end else begin
-		    apb2axil_next = apb2axil_write;
-		 end
+		 apb2axil_next = apb2axil_write;
 	      end else begin
-		 if (paddr[11:0] == '0) begin
-		    apb2axil_next = apb2axil_idle;
-		 end else begin
-		    apb2axil_next = apb2axil_read;
-		 end
+		 apb2axil_next = apb2axil_read;
 	      end
 	   end else begin
 	      apb2axil_next = apb2axil_idle;
 	   end
 	end // case: idle
-
-	apb2axil_go : begin
-	   pready = 1'b1;
-	   apb2axil_next = apb2axil_idle;
-	end
 
 	apb2axil_write : begin
 	   s_axil_awvalid = 1'b1;
