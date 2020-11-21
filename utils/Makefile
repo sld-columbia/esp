@@ -132,6 +132,7 @@ include $(ESP_ROOT)/utils/xilinx.mk
 
 ### Vivado targets ###
 include $(ESP_ROOT)/utils/vivado.mk
+include $(ESP_ROOT)/utils/zynq.mk
 
 
 ### Genus Targets
@@ -160,6 +161,7 @@ clean: 		soft-clean		\
 		esp-config-clean	\
 		grlib-config-clean	\
 		vivado-clean		\
+		zynq-clean		\
 		genus-clean		\
 		sldgen-clean		\
 		espmon-clean		\
@@ -178,6 +180,7 @@ distclean:	check_all_srcs-distclean 	\
 		esp-config-distclean		\
 		grlib-config-distclean		\
 		vivado-distclean		\
+		zynq-distclean			\
 		genus-distclean			\
 		sldgen-distclean		\
 		espmon-distclean		\
