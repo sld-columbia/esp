@@ -37,6 +37,7 @@ void system_t::config_proc()
 	uint32_t CONV_K_IN_CHANNELS;
 	uint32_t CONV_K_OUT_CHANNELS;
 	uint32_t DO_RELU;
+	uint32_t POOL_TYPE;
 
 	ESP_REPORT_INFO("Argv[1] = %s", esc_argv()[1]);
 	ESP_REPORT_INFO("Argv[2] = %s", esc_argv()[2]);
@@ -80,7 +81,8 @@ void system_t::config_proc()
 	}
 
 	CONV_K_IN_CHANNELS = CONV_F_CHANNELS;
-	DO_RELU = 0;
+	DO_RELU = 1;
+	POOL_TYPE = 0;
 
 	channels = CONV_F_CHANNELS;
         height = CONV_F_HEIGHT;
@@ -95,8 +97,11 @@ void system_t::config_proc()
         dilation_h = 1;
         dilation_w = 1;
 	do_relu = DO_RELU;
+	pool_type = POOL_TYPE;
 	output_h = (height + 2 * pad_h - (dilation_h * (kernel_h - 1) + 1)) / stride_h + 1;
 	output_w = (width + 2 * pad_w - (dilation_w * (kernel_w - 1) + 1)) / stride_w + 1;
+	output_pool_h = pool_type ? output_h / 2 : output_h;
+	output_pool_w = pool_type ? output_w / 2 : output_w;
     }
 
     // Config
@@ -113,6 +118,7 @@ void system_t::config_proc()
         config.is_padded = (pad_h != 0);
         config.stride = stride_h;
         config.do_relu = do_relu;
+        config.pool_type = pool_type;
 
         wait(); conf_info.write(config);
         conf_done.write(true);
@@ -145,7 +151,7 @@ void system_t::config_proc()
     // Compute in SW
     sw_conv_layer(input, channels, height, width, kernel_h, kernel_w, pad_h, pad_w,
 		  stride_h, stride_w, dilation_h, dilation_w, num_filters,
-		  weights, bias, sw_output, do_relu);
+		  weights, bias, sw_output, do_relu, pool_type);
     ESP_REPORT_INFO("SW done");
 
     // printf("Performance: data-in : moved %u (%u bytes) / memory footprint %u (%u bytes) / PLM locality %.2f%%",
@@ -165,8 +171,8 @@ void system_t::config_proc()
         dump_memory(); // store the output in more suitable data structure if needed
 
 #ifdef XS
-	print_image("output-hw", hw_output, num_filters, height, width, true);
-	print_image("output-sw", sw_output, num_filters, height, width, false);
+	print_image("output-hw", hw_output, num_filters, output_pool_h, output_pool_w, true);
+	print_image("output-sw", sw_output, num_filters, output_pool_h, output_pool_w, false);
 	printf("\n");
 #endif
 
@@ -216,7 +222,7 @@ void system_t::load_memory()
     hw_output = (float*) malloc(out_size * sizeof(float));
 
     init_tensor(input, in_size, false);
-    init_tensor(weights, weights_size, true);
+    init_tensor(weights, weights_size, false);
     init_tensor(bias, bias_size, false);
 
 #ifdef XS
@@ -322,7 +328,7 @@ int system_t::validate()
     // Check for mismatches
     uint32_t errors = 0;
 
-    errors = _validate(hw_output, sw_output, num_filters, output_h, output_w);
+    errors = _validate(hw_output, sw_output, num_filters, output_pool_h, output_pool_w);
 
     // for (int i = 0; i < 1; i++)
     //     for (int j = 0; j < channels * height * width; j++)

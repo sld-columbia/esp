@@ -16,7 +16,7 @@ void init_tensor(float* tensor, const int size, bool random) {
 	if (random)
 	    value = rand() / float(RAND_MAX);
 	else
-	    value = float(i % 8);
+	    value = float(i % 1024 - 512);
 	    
 	tensor[i] = value;
     }

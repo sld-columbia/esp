@@ -8,7 +8,7 @@
 inline void conv2d::compute_dimensions(
     const uint16_t height, const uint16_t width, const uint16_t n_channels,
     const bool is_padded, const uint4_t stride, const uint4_t filter_dim,
-    const uint16_t n_filters, uint16_t *output_w, uint4_t *pad,
+    const uint16_t n_filters, const uint2_t pool_type, uint16_t *output_w, uint4_t *pad,
     uint16_t *feature_size, uint16_t *filter_size, uint32_t *filters_size, 
     uint16_t *max_cacheable_rows, uint16_t *max_cacheable_rows_init,
     uint16_t *max_cacheable_size,  uint16_t *max_cacheable_size_init,
@@ -17,6 +17,7 @@ inline void conv2d::compute_dimensions(
     uint16_t *total_input_chunks, uint16_t *total_filters_chunks,
     uint16_t *feature_offset_incr, uint16_t *feature_offset_incr_init,
     uint16_t *channel_offset_incr, uint16_t *out_channel_offset_incr,
+    uint16_t *out_channel_pool_offset_incr,
     uint32_t *filters_offset_start_base, uint32_t *bias_offset_start_base,
     uint32_t *feature_offset_start_base)
 {
@@ -49,7 +50,7 @@ inline void conv2d::compute_dimensions(
 	    if (!is_padded)
 		*max_cacheable_rows_init -= 1;
 	} else {
-	    if (is_padded)
+	    if (is_padded && (filter_dim == 3))
 		*max_cacheable_rows_init -= 1;
 	}
     }
@@ -60,7 +61,7 @@ inline void conv2d::compute_dimensions(
     /* Amount of input chunks to be loaded in the input PLM */
     uint16_t max_cacheable_rows_norm = (*max_cacheable_rows) - filter_dim + 1;
     uint16_t max_cacheable_rows_norm_init = (*max_cacheable_rows_init) - filter_dim + 1;
-    ESP_REPORT_INFO("DAVIDE %u %u %u", height, *max_cacheable_rows_init, max_cacheable_rows_norm);
+
     if (*max_cacheable_rows == height) {
 	*total_input_chunks = 1;
     } else {
@@ -80,6 +81,8 @@ inline void conv2d::compute_dimensions(
     /* Load offsets */
     *channel_offset_incr = round_up(*feature_size, DMA_WORD_PER_BEAT);
     *out_channel_offset_incr = round_up(*output_w * *output_w, DMA_WORD_PER_BEAT);
+    uint16_t output_pool_w = pool_type ? *output_w >> 1 : *output_w;
+    *out_channel_pool_offset_incr = round_up(output_pool_w * output_pool_w, DMA_WORD_PER_BEAT);
 
     *feature_offset_incr = max_cacheable_rows_norm * width; // TODO
     *feature_offset_incr_init = max_cacheable_rows_norm_init * width; // TODO

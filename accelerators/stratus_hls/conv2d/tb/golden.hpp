@@ -12,12 +12,9 @@
 inline bool sw_is_a_ge_zero_and_a_lt_b(int a, int b) {
     return static_cast<unsigned>(a) < static_cast<unsigned>(b);
 }
-
-
-void sw_conv_layer(const float* input, const int channels, const int height, const int width, const int kernel_h, const int kernel_w, const int pad_h, const int pad_w, const int stride_h, const int stride_w, const int dilation_h, const int dilation_w, const int num_filters, const float* weights, const float* biases, float* output, const bool do_relu);
-
-void sw_conv_layer_fpdata(const FPDATA* input, const int channels, const int height, const int width, const int kernel_h, const int kernel_w, const int pad_h, const int pad_w, const int stride_h, const int stride_w, const int dilation_h, const int dilation_w, const int num_filters, const FPDATA* weights, const FPDATA* biases, FPDATA* output, const bool do_relu);
-
-void sw_conv_layer_ver2(float* input, const int channels, const int height, const int width, const int kernel_h, const int kernel_w, const int pad_h, const int pad_w, const int stride_h, const int stride_w, const int dilation_h, const int dilation_w, const int num_filters, float* weights, float* biases, float* output, const bool do_relu);
+inline float max_of_4(float a, float b, float c, float d);
+inline float avg_of_4(float a, float b, float c, float d);
+inline void pooling_2x2(float *in, float *out, unsigned size, bool type);
+void sw_conv_layer(const float* input, const int channels, const int height, const int width, const int kernel_h, const int kernel_w, const int pad_h, const int pad_w, const int stride_h, const int stride_w, const int dilation_h, const int dilation_w, const int num_filters, const float* weights, const float* biases, float* output, const bool do_relu, const int pool_type);
 
 #endif /* SRC_GOLDEN_CONV_LAYER_H_ */

@@ -95,8 +95,11 @@ public:
     int32_t dilation_h;
     int32_t dilation_w;
     int32_t do_relu;
+    int32_t pool_type;
     int32_t output_h;
     int32_t output_w;
+    int32_t output_pool_h;
+    int32_t output_pool_w;
     
     uint32_t in_words_adj;
     uint32_t weights_words_adj;

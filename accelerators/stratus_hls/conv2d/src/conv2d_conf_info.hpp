@@ -27,6 +27,7 @@ public:
         this->feature_map_height = 1;
         this->feature_map_width = 1;
         this->do_relu = 1;
+        this->pool_type = 1;
     }
 
     conf_info_t(
@@ -38,7 +39,8 @@ public:
         int32_t is_padded, 
         int32_t feature_map_height, 
         int32_t feature_map_width,
-        int32_t do_relu
+        int32_t do_relu,
+        int32_t pool_type
         )
     {
         /* <<--ctor-custom-->> */
@@ -50,6 +52,7 @@ public:
         this->feature_map_height = feature_map_height;
         this->feature_map_width = feature_map_width;
         this->do_relu = do_relu;
+        this->pool_type = pool_type;
     }
 
     // equals operator
@@ -64,6 +67,7 @@ public:
         if (feature_map_height != rhs.feature_map_height) return false;
         if (feature_map_width != rhs.feature_map_width) return false;
         if (do_relu != rhs.do_relu) return false;
+        if (pool_type != rhs.pool_type) return false;
         return true;
     }
 
@@ -79,6 +83,7 @@ public:
         feature_map_height = other.feature_map_height;
         feature_map_width = other.feature_map_width;
         do_relu = other.do_relu;
+        pool_type = other.pool_type;
         return *this;
     }
 
@@ -99,6 +104,7 @@ public:
         os << "feature_map_height = " << conf_info.feature_map_height << ", ";
         os << "feature_map_width = " << conf_info.feature_map_width << "";
         os << "do_relu = " << conf_info.do_relu << "";
+        os << "pool_type = " << conf_info.pool_type << "";
         os << "}";
         return os;
     }
@@ -112,6 +118,7 @@ public:
         int32_t feature_map_height;
         int32_t feature_map_width;
         int32_t do_relu;
+        int32_t pool_type; // 0: no pooling, 1: 2x2 max pooling, 2: 2x2 average pooling
 };
 
 #endif // __CONV2D_CONF_INFO_HPP__

@@ -10,10 +10,8 @@
 
 // Processes
 
-// TODO
-// - DMA 64 bits cannot do DMA with 32 bit alignment
-// - we used uint16_t for all unsigned numbers, for some we may need more bits! make sure
-//   of that and add asserts
+// NOTE
+// - most datatypes are custom (e.g. uint4_t), make sure you don't need more bits!
 
 void conv2d::load_input()
 {
@@ -42,6 +40,7 @@ void conv2d::load_input()
     bool is_padded;
     uint16_t height;
     uint16_t width;
+    uint2_t pool_type;
     {
         HLS_PROTO("load-config");
 
@@ -57,6 +56,7 @@ void conv2d::load_input()
         is_padded = config.is_padded;
         height = config.feature_map_height;
         width = config.feature_map_width;
+        pool_type = config.pool_type;
     }
 
     // Precompute sizes
@@ -82,12 +82,13 @@ void conv2d::load_input()
     uint16_t feature_offset_incr_init;
     uint16_t channel_offset_incr;
     uint16_t out_channel_offset_incr;
+    uint16_t out_channel_pool_offset_incr;
     uint32_t filters_offset_start_base;
     uint32_t feature_offset_start_base;
     uint32_t bias_offset_start_base;
 
     compute_dimensions(height, width, n_channels, (bool) is_padded,
-		       stride, (uint8_t) filter_dim, n_filters,
+		       stride, (uint8_t) filter_dim, n_filters, pool_type,
 		       &output_w, &pad, &feature_size, &filter_size, &filters_size,
 		       &max_cacheable_rows, &max_cacheable_rows_init,
 		       &max_cacheable_size, &max_cacheable_size_init,
@@ -95,7 +96,7 @@ void conv2d::load_input()
 		       &max_cacheable_filters_size, &max_cacheable_bias_chunks,
 		       &max_cacheable_bias_size, &total_input_chunks, &total_filters_chunks,
 		       &feature_offset_incr, &feature_offset_incr_init,
-		       &channel_offset_incr, &out_channel_offset_incr,
+		       &channel_offset_incr, &out_channel_offset_incr, &out_channel_pool_offset_incr,
 		       &filters_offset_start_base,
 		       &bias_offset_start_base, &feature_offset_start_base);
 
@@ -111,6 +112,7 @@ void conv2d::load_input()
 	max_cacheable_filters_sig.write(max_cacheable_filters);
 	max_cacheable_bias_chunks_sig.write(max_cacheable_bias_chunks);
 	out_channel_offset_incr_sig.write(out_channel_offset_incr);
+	out_channel_pool_offset_incr_sig.write(out_channel_pool_offset_incr);
 	feature_offset_start_base_sig.write(feature_offset_start_base);
 	wait();
     }
@@ -392,6 +394,7 @@ void conv2d::store_output()
     uint4_t filter_dim;
     uint4_t stride;
     uint16_t height;
+    uint2_t pool_type;
 
     {
         HLS_PROTO("store-config");
@@ -405,6 +408,7 @@ void conv2d::store_output()
         filter_dim = config.filter_dim;
         stride = config.stride;
         height = config.feature_map_height;
+	pool_type = config.pool_type;
     }
 
     store_load_cfg_handshake();
@@ -417,6 +421,7 @@ void conv2d::store_output()
     uint16_t total_input_chunks;
     uint16_t total_filters_chunks;
     uint16_t out_channel_offset_incr;
+    uint16_t out_channel_pool_offset_incr;
     uint32_t feature_offset_start_base;
 
     {
@@ -429,15 +434,17 @@ void conv2d::store_output()
 	max_cacheable_rows_init = max_cacheable_rows_init_sig.read();
 	max_cacheable_filters = max_cacheable_filters_sig.read();
 	out_channel_offset_incr = out_channel_offset_incr_sig.read();
+	out_channel_pool_offset_incr = out_channel_pool_offset_incr_sig.read();
 	feature_offset_start_base = feature_offset_start_base_sig.read();
 	wait();
     }
 
     bool ping_output = true;
+    bool is_pool = pool_type ? true : false;
 
     // Store
     {
-        HLS_PROTO("store-dma");
+        //HLS_PROTO("store-dma");
         wait();
 
         // Batching
@@ -467,67 +474,142 @@ void conv2d::store_output()
 		    uint16_t loadable_rows = min(height - first_row_to_load,
 						 max_cacheable_rows_i);
 		    uint16_t rows_to_load = loadable_rows - (no_first_row * pad) - (no_last_row * pad);
-		    uint16_t n_words_to_store =
-			((uint16_t) (rows_to_load + stride - 1) >> ilog2(stride)) * (uint16_t) output_w;
+		    uint16_t rows_to_load_adj = (uint16_t) (rows_to_load + stride - 1)
+			>> ilog2(stride);
+		    uint16_t rows_to_load_adj_pool = (uint16_t) rows_to_load_adj >> is_pool;
+		    uint16_t n_words_to_store = rows_to_load_adj_pool *
+			((uint16_t) output_w >> is_pool);
 
 		    uint16_t plm_out_index = 0;
 		    uint16_t cached_filters = min(max_cacheable_filters,
 						  n_filters - filter_chunk * max_cacheable_filters);
-
 		    uint32_t out_channel_offset = out_channel_offset_base;
 
 		    this->store_compute_handshake();
 
+		    // pooling step
 		    for (uint16_t filter_i = 0; filter_i < cached_filters; filter_i++) {
-
 			uint32_t offset_start = out_channel_offset + feature_offset_start_phys;
-	
-			dma_info_t dma_info(offset_start >> DMA_WORD_PER_BEAT_LOG2,
-					    (n_words_to_store + 1) >> DMA_WORD_PER_BEAT_LOG2,
-					    DMA_SIZE);
-			ESP_REPORT_INFO("store dma info. offset: %u len %u",
-					offset_start, n_words_to_store);
 
-			this->dma_write_ctrl.put(dma_info);
+			if (pool_type) {
+			    uint16_t pool_i_in1_base = filter_i * round_up(rows_to_load_adj * output_w,
+									   DMA_WORD_PER_BEAT);
+			    uint16_t pool_i_in2_base = pool_i_in1_base + output_w;
+			    uint16_t pool_i_out = filter_i * round_up(n_words_to_store,
+								      DMA_WORD_PER_BEAT);
 
-			for (uint16_t i = 0; i < n_words_to_store; i += DMA_WORD_PER_BEAT)
-			{
-			    HLS_BREAK_DEP(plm_out_ping);
-			    HLS_BREAK_DEP(plm_out_pong);
+			    std::cout << "pool_i_in1_base " << pool_i_in1_base << " pool_i_out_base "
+				      << pool_i_out <<std::endl;
 
-			    wait();
+			    for (uint16_t out_h = 0; out_h < rows_to_load_adj - 1; out_h += 2) {
+				uint16_t pool_i_in1 = pool_i_in1_base;
+				uint16_t pool_i_in2 = pool_i_in2_base;
+				for (uint16_t out_w = 0; out_w < output_w - 1; out_w += 2) {
+				    HLS_BREAK_DEP(plm_out_ping);
+				    HLS_BREAK_DEP(plm_out_pong);
+				    //HLS_PIPELINE_LOOP(HARD_STALL, 2, "pool-pipeline");
 
-			    sc_dt::sc_bv<DMA_WIDTH> dataBv;
+				    FPDATA a, b, c, d, res;
 
-			    // Write to PLM (all DMA_WORD_PER_BEAT words in one cycle)
-			    for (uint16_t k = 0; k < DMA_WORD_PER_BEAT; k++)
-			    {
-				HLS_UNROLL_SIMPLE;
+				    std::cout << "pool_i_in1 " << pool_i_in1 << " pool_i_in2 " << pool_i_in2
+					      << " pool_i_out " << pool_i_out <<std::endl;
 
-				if (ping_output) {
-				    // std::cout << "store ping " << INT2FP(plm_out_ping[plm_out_index])
-				    // 	      << std::endl;
-				    dataBv.range((k+1) * DATA_WIDTH - 1, k * DATA_WIDTH) =
-					plm_out_ping[plm_out_index++];
-				} else {
-				    // std::cout << "store pong " << INT2FP(plm_out_pong[plm_out_index])
-				    // 	      << std::endl;
-				    dataBv.range((k+1) * DATA_WIDTH - 1, k * DATA_WIDTH) =
-					plm_out_pong[plm_out_index++];
+				    if (ping_output) {
+					a = INT2FP(plm_out_ping[pool_i_in1++]);
+					b = INT2FP(plm_out_ping[pool_i_in1++]);
+					c = INT2FP(plm_out_ping[pool_i_in2++]);
+					d = INT2FP(plm_out_ping[pool_i_in2++]);
+				    } else {
+					a = INT2FP(plm_out_pong[pool_i_in1++]);
+					b = INT2FP(plm_out_pong[pool_i_in1++]);
+					c = INT2FP(plm_out_pong[pool_i_in2++]);
+					d = INT2FP(plm_out_pong[pool_i_in2++]);
+				    }
+
+				    if (pool_type == 1) {
+					if (a >= b && a >= c && a >= d) {
+					    res = a;
+					} else if (b >= c && b >= d) {
+					    res = b;
+					} else if (c >= d) {
+					    res = c;
+					} else {
+					    res = d;
+					}
+				    } else { // pool_type == 2
+					res = (a + b + c + d) / FPDATA(4);
+				    }
+				    
+				    if (ping_output) {
+					plm_out_ping[pool_i_out++] = FP2INT(res);
+				    } else {
+					plm_out_pong[pool_i_out++] = FP2INT(res);
+				    }
+				    // std::cout <<
+				    // 	" a " << a <<
+				    // 	" b " << b <<
+				    // 	" c " << c <<
+				    // 	" d " << d <<
+				    // 	" res " << res <<
+				    // 	" out_h " << out_h <<
+				    // 	" out_w " << out_w <<
+				    // 	std::endl;
+
 				}
-				wait();
+				pool_i_in1_base += (output_w << 1);
+				pool_i_in2_base += (output_w << 1);
 			    }
-			    this->dma_write_chnl.put(dataBv);
 			}
 
-			out_channel_offset += out_channel_offset_incr;
+			{
+			    HLS_DEFINE_PROTOCOL();
+
+			    dma_info_t dma_info(offset_start >> DMA_WORD_PER_BEAT_LOG2,
+						(n_words_to_store + 1) >> DMA_WORD_PER_BEAT_LOG2,
+						DMA_SIZE);
+			    ESP_REPORT_INFO("store dma info. offset: %u len %u",
+			    		offset_start, n_words_to_store);
+
+			    this->dma_write_ctrl.put(dma_info);
+
+			    for (uint16_t i = 0; i < n_words_to_store; i += DMA_WORD_PER_BEAT)
+			    {
+				HLS_BREAK_DEP(plm_out_ping);
+				HLS_BREAK_DEP(plm_out_pong);
+
+				wait();
+
+				sc_dt::sc_bv<DMA_WIDTH> dataBv;
+
+				// Write to PLM (all DMA_WORD_PER_BEAT words in one cycle)
+				for (uint16_t k = 0; k < DMA_WORD_PER_BEAT; k++)
+				{
+				    HLS_UNROLL_SIMPLE;
+
+				    if (ping_output) {
+					// std::cout << "store ping " <<
+					// 	INT2FP(plm_out_ping[plm_out_index]) << std::endl;
+					dataBv.range((k+1) * DATA_WIDTH - 1, k * DATA_WIDTH) =
+					    plm_out_ping[plm_out_index++];
+				    } else {
+					// std::cout << "store pong " <<
+					// 	INT2FP(plm_out_pong[plm_out_index]) << std::endl;
+					dataBv.range((k+1) * DATA_WIDTH - 1, k * DATA_WIDTH) =
+					    plm_out_pong[plm_out_index++];
+				    }
+				    wait();
+				}
+				this->dma_write_chnl.put(dataBv);
+			    }
+			}
+			out_channel_offset += out_channel_pool_offset_incr;
 		    }
 		    ping_output = !ping_output;
 		    feature_offset_start_phys += n_words_to_store;
 		    feature_offset_start_virt += n_words_to_store;
 		    first_row_to_load += max_cacheable_rows_i - (filter_dim - 1);
 		}
-		out_channel_offset_base += (out_channel_offset_incr * max_cacheable_filters);
+		out_channel_offset_base += (out_channel_pool_offset_incr * max_cacheable_filters);
 	    }
 	}
     }         
@@ -565,6 +647,7 @@ void conv2d::compute_kernel()
     uint16_t height;
     uint16_t width;
     bool do_relu;
+    uint2_t pool_type;
 
     {
         HLS_PROTO("compute-config");
@@ -581,6 +664,7 @@ void conv2d::compute_kernel()
         height = config.feature_map_height;
         width = config.feature_map_width;
 	do_relu = config.do_relu;
+	pool_type = config.pool_type;
     }
 
     compute_load_cfg_handshake();
@@ -645,8 +729,9 @@ void conv2d::compute_kernel()
 		uint16_t loadable_rows = min(height - first_row_to_load,
 					     max_cacheable_rows_i);
 		uint16_t rows_to_load = loadable_rows - (no_first_row * pad) - (no_last_row * pad);
-		uint16_t loadable_output_size = round_up(((uint16_t) (rows_to_load + stride - 1) >>
-							  ilog2(stride)) * output_w, DMA_WORD_PER_BEAT);
+		uint16_t loadable_output_size =
+		    round_up(((uint16_t) (rows_to_load + stride - 1) >>
+			      ilog2(stride)) * output_w, DMA_WORD_PER_BEAT);
 
 		uint16_t output_plm_offset = 0;
 		for (uint16_t output_row = 0; output_row < rows_to_load; output_row += stride)
@@ -657,16 +742,15 @@ void conv2d::compute_kernel()
 			// ESP_REPORT_INFO("compute_kernel most inner loop %u %u %u %u",
 			// 		filter_chunk, input_chunk, output_row, output_col);
 
-			patch_extractor(n_channels, loadable_rows, width,
-					loadable_rows * width, ping_input,
-					output_row + (no_first_row * pad), output_col,
-					pad, filter_dim);
+			patch_extractor(
+			    n_channels, loadable_rows, width, loadable_rows * width, ping_input,
+			    output_row + (no_first_row * pad), output_col, pad, filter_dim);
 
-			multiple_multiplier_accumulator(ping_weights, ping_bias, ping_output,
-							filter_size, n_filters, filter_chunk,
-							loadable_filters, plm_bias_index,
-							output_plm_offset,
-							loadable_output_size, do_relu);
+			multiple_multiplier_accumulator(
+			    ping_weights, ping_bias, ping_output, filter_size, n_filters,
+			    filter_chunk, loadable_filters, plm_bias_index, output_plm_offset,
+			    loadable_output_size, do_relu);
+
 			output_plm_offset++;
 			wait();
 		    }
