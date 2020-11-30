@@ -14,7 +14,7 @@
 void init_tensor(float* tensor, const int size, bool random);
 
 // Print functions
-void print_image(const char * name, float* image, const int channels,
+void print_image(const char * name, float* image, const int batch_size, const int channels,
 		 const int height, const int width, const bool fpdata);
 
 void print_weights(const char * name, float* weights, const int filters, const int channels,
@@ -28,7 +28,7 @@ void print_array(const char* name, float* image, const int length);
 void transpose_matrix(float* image, const int height, const int width);
 
 // Comparison functions
-int _validate(float* hw_data_array, float* sw_data_array, int filters, int output_h, int output_w);
+int _validate(float* hw_data_array, float* sw_data_array, int batch_size, int filters, int output_h, int output_w);
 
 typedef union
 {

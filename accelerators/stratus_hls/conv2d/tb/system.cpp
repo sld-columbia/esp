@@ -38,6 +38,7 @@ void system_t::config_proc()
 	uint32_t CONV_K_OUT_CHANNELS;
 	uint32_t DO_RELU;
 	uint32_t POOL_TYPE;
+	uint32_t BATCH_SIZE;
 
 	ESP_REPORT_INFO("Argv[1] = %s", esc_argv()[1]);
 	ESP_REPORT_INFO("Argv[2] = %s", esc_argv()[2]);
@@ -81,8 +82,9 @@ void system_t::config_proc()
 	}
 
 	CONV_K_IN_CHANNELS = CONV_F_CHANNELS;
-	DO_RELU = 1;
+	DO_RELU = 0;
 	POOL_TYPE = 0;
+	BATCH_SIZE = 256;
 
 	channels = CONV_F_CHANNELS;
         height = CONV_F_HEIGHT;
@@ -102,6 +104,7 @@ void system_t::config_proc()
 	output_w = (width + 2 * pad_w - (dilation_w * (kernel_w - 1) + 1)) / stride_w + 1;
 	output_pool_h = pool_type ? output_h / 2 : output_h;
 	output_pool_w = pool_type ? output_w / 2 : output_w;
+	batch_size = BATCH_SIZE;
     }
 
     // Config
@@ -119,6 +122,7 @@ void system_t::config_proc()
         config.stride = stride_h;
         config.do_relu = do_relu;
         config.pool_type = pool_type;
+        config.batch_size = batch_size;
 
         wait(); conf_info.write(config);
         conf_done.write(true);
@@ -151,7 +155,7 @@ void system_t::config_proc()
     // Compute in SW
     sw_conv_layer(input, channels, height, width, kernel_h, kernel_w, pad_h, pad_w,
 		  stride_h, stride_w, dilation_h, dilation_w, num_filters,
-		  weights, bias, sw_output, do_relu, pool_type);
+		  weights, bias, sw_output, do_relu, pool_type, batch_size);
     ESP_REPORT_INFO("SW done");
 
     // printf("Performance: data-in : moved %u (%u bytes) / memory footprint %u (%u bytes) / PLM locality %.2f%%",
@@ -171,8 +175,8 @@ void system_t::config_proc()
         dump_memory(); // store the output in more suitable data structure if needed
 
 #ifdef XS
-	print_image("output-hw", hw_output, num_filters, output_pool_h, output_pool_w, true);
-	print_image("output-sw", sw_output, num_filters, output_pool_h, output_pool_w, false);
+	print_image("output-hw", hw_output, batch_size, num_filters, output_pool_h, output_pool_w, true);
+	print_image("output-sw", sw_output, batch_size, num_filters, output_pool_h, output_pool_w, false);
 	printf("\n");
 #endif
 
@@ -199,15 +203,15 @@ void system_t::load_memory()
 
     // Input data and golden output (aligned to DMA_WIDTH makes your life easier)
 #if (DMA_WORD_PER_BEAT == 0)
-    in_words_adj = channels * height * width;
+    in_words_adj = batch_size * channels * height * width;
     weights_words_adj = num_filters * channels * kernel_h * kernel_w;
     bias_words_adj = num_filters;
     out_words_adj = num_filters * output_h * output_w;
 #else
-    in_words_adj = round_up(channels * round_up(height * width, DMA_WORD_PER_BEAT), DMA_WORD_PER_BEAT);
+    in_words_adj = round_up(batch_size * round_up(channels * round_up(height * width, DMA_WORD_PER_BEAT), DMA_WORD_PER_BEAT), DMA_WORD_PER_BEAT);
     weights_words_adj = round_up(num_filters * channels * kernel_h * kernel_w, DMA_WORD_PER_BEAT);
     bias_words_adj = round_up(num_filters, DMA_WORD_PER_BEAT);
-    out_words_adj = round_up(num_filters * round_up(output_h * output_w, DMA_WORD_PER_BEAT), DMA_WORD_PER_BEAT);
+    out_words_adj = round_up(batch_size * round_up(num_filters * round_up(output_h * output_w, DMA_WORD_PER_BEAT), DMA_WORD_PER_BEAT), DMA_WORD_PER_BEAT);
 #endif
 
     in_size = in_words_adj * (1);
@@ -226,7 +230,7 @@ void system_t::load_memory()
     init_tensor(bias, bias_size, false);
 
 #ifdef XS
-    print_image("input-hw", input, channels, height, width, false);
+    print_image("input-hw", input, batch_size, channels, height, width, false);
     print_weights("weights-hw", weights, num_filters, channels, kernel_h, kernel_w, false);
     print_bias("bias-hw", bias, num_filters, false);
     printf("\n");
@@ -328,7 +332,7 @@ int system_t::validate()
     // Check for mismatches
     uint32_t errors = 0;
 
-    errors = _validate(hw_output, sw_output, num_filters, output_pool_h, output_pool_w);
+    errors = _validate(hw_output, sw_output, batch_size, num_filters, output_pool_h, output_pool_w);
 
     // for (int i = 0; i < 1; i++)
     //     for (int j = 0; j < channels * height * width; j++)

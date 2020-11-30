@@ -22,29 +22,31 @@ void init_tensor(float* tensor, const int size, bool random) {
     }
 }
 
-void print_image(const char * name, float* image, const int channels,
+void print_image(const char * name, float* image, const int batch_size, const int channels,
 		 const int height, const int width, const bool fpdata) {
 
     printf("%s: C x H x W = %u x %u x %u\n", name, channels, height, width);
 
     int rounded_image = round_up(height * width, DMA_WORD_PER_BEAT);
 
-    if (channels * height * width < 256)
+    if (batch_size * channels * height * width < 256)
     {
-        for (int c = 0; c < channels; c++) {
-            std::stringstream ss;
-            ss << "| ";
-            for (int h = 0; h < height; h++) {
-                for (int w = 0; w < width; w++) {
-		    if (fpdata)
-			ss << FPDATA(image[c *  + h * width + w]) << "  ";
-		    else
-			ss << (float) image[c * rounded_image + h * width + w] << "  ";
-                }
-                ss << "| ";
-            }
-            printf("%s: C %u: %s\n", name, c, ss.str().c_str());
-        }
+        for (int b = 0; b < batch_size; b++) {
+	    for (int c = 0; c < channels; c++) {
+		std::stringstream ss;
+		ss << "| ";
+		for (int h = 0; h < height; h++) {
+		    for (int w = 0; w < width; w++) {
+			if (fpdata)
+			    ss << FPDATA(image[c *  + h * width + w]) << "  ";
+			else
+			    ss << (float) image[c * rounded_image + h * width + w] << "  ";
+		    }
+		    ss << "| ";
+		}
+		printf("%s: B %u C %u: %s\n", name, b, c, ss.str().c_str());
+	    }
+	}
     }
 }
 
@@ -120,7 +122,7 @@ bool check_error_threshold_for_neuron(float hw_data, float sw_data, float &error
     return (error > NEURON_MAX_ERROR_THRESHOLD);
 }
 
-int _validate(float* hw_data_array, float* sw_data_array, int filters, int output_h, int output_w) {
+int _validate(float* hw_data_array, float* sw_data_array, int batch_size, int filters, int output_h, int output_w) {
     unsigned tot_errors = 0;
     float rel_error = 0.;
     float avg_error = 0.;
@@ -132,33 +134,36 @@ int _validate(float* hw_data_array, float* sw_data_array, int filters, int outpu
     printf("Maximum error threshold per volume %.5f%%\n", float(VOLUME_MAX_ERROR_THRESHOLD)*100);
     printf("Maximum reported error threshold %u\n", REPORT_THRESHOLD);
 
-    for (int f = 0; f < filters; f++) {
-	for (int h = 0; h < output_h; h++) {
-	    for (int w = 0; w < output_w; w++) {
-		int idx = f * round_up(output_h * output_w, DMA_WORD_PER_BEAT) +
-		    h * output_w + w;
-		if (check_error_threshold_for_neuron(
-			float(hw_data_array[idx]),
-			float(sw_data_array[idx]), rel_error)) {
+    for (int b = 0; b < batch_size; b++) {
+	for (int f = 0; f < filters; f++) {
+	    for (int h = 0; h < output_h; h++) {
+		for (int w = 0; w < output_w; w++) {
+		    int idx = b * filters * round_up(output_h * output_w, DMA_WORD_PER_BEAT) +
+			f * round_up(output_h * output_w, DMA_WORD_PER_BEAT) + h * output_w + w;
+		    if (check_error_threshold_for_neuron(
+			    float(hw_data_array[idx]),
+			    float(sw_data_array[idx]), rel_error)) {
 
-		    // if (tot_errors < REPORT_THRESHOLD) {
-		    float hw_fdata = hw_data_array[idx];
-		    printf("[ERROR] Validation: Element %d wrong [%.4f - %.4f]\n",
-			   idx, float(hw_fdata), float(sw_data_array[idx]));
-		    // }
-		    tot_errors++;
-		} else {
-		    float hw_fdata = hw_data_array[idx];
-		    printf("Validation: Element %d wrong [%.4f - %.4f]\n", idx, float(hw_fdata), float(sw_data_array[idx]));
+			if (tot_errors < REPORT_THRESHOLD) {
+			float hw_fdata = hw_data_array[idx];
+			printf("[ERROR] Validation: Element %d wrong [%.4f - %.4f]\n",
+			       idx, float(hw_fdata), float(sw_data_array[idx]));
+			}
+			tot_errors++;
+		    } else {
+			float hw_fdata = hw_data_array[idx];
+			// printf("Validation: Element %d wrong [%.4f - %.4f]\n",
+			//        idx, float(hw_fdata), float(sw_data_array[idx]));
+		    }
+		    if (rel_error > max_error) max_error = rel_error;
+
+		    avg_error += rel_error;
 		}
-		if (rel_error > max_error) max_error = rel_error;
-
-		avg_error += rel_error;
 	    }
 	}
     }
 
-    int num_elements = filters * output_h * output_w;
+    int num_elements = batch_size * filters * output_h * output_w;
 
     avg_error /= num_elements;
 

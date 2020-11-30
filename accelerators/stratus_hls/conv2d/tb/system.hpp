@@ -100,6 +100,7 @@ public:
     int32_t output_w;
     int32_t output_pool_h;
     int32_t output_pool_w;
+    int32_t batch_size;
     
     uint32_t in_words_adj;
     uint32_t weights_words_adj;

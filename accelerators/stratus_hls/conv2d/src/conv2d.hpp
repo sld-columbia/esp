@@ -74,7 +74,8 @@ public:
     void compute_dimensions(
 	const uint16_t height, const uint16_t width, const uint16_t n_channels,
 	const bool is_padded, const uint4_t stride, const uint4_t filter_dim,
-	const uint16_t n_filters, const uint2_t pool_type, uint16_t *output_w, uint4_t *pad,
+	const uint16_t n_filters, const uint2_t pool_type, const uint16_t batch_size,
+	uint16_t *output_w, uint4_t *pad,
 	uint16_t *feature_size, uint16_t *filter_size, uint32_t *filters_size, 
 	uint16_t *max_cacheable_rows, uint16_t *max_cacheable_rows_init,
 	uint16_t *max_cacheable_size, uint16_t *max_cacheable_size_init,

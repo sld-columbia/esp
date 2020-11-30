@@ -8,7 +8,8 @@
 inline void conv2d::compute_dimensions(
     const uint16_t height, const uint16_t width, const uint16_t n_channels,
     const bool is_padded, const uint4_t stride, const uint4_t filter_dim,
-    const uint16_t n_filters, const uint2_t pool_type, uint16_t *output_w, uint4_t *pad,
+    const uint16_t n_filters, const uint2_t pool_type, const uint16_t batch_size,
+    uint16_t *output_w, uint4_t *pad,
     uint16_t *feature_size, uint16_t *filter_size, uint32_t *filters_size, 
     uint16_t *max_cacheable_rows, uint16_t *max_cacheable_rows_init,
     uint16_t *max_cacheable_size,  uint16_t *max_cacheable_size_init,
@@ -86,7 +87,8 @@ inline void conv2d::compute_dimensions(
 
     *feature_offset_incr = max_cacheable_rows_norm * width; // TODO
     *feature_offset_incr_init = max_cacheable_rows_norm_init * width; // TODO
-    *filters_offset_start_base =  *channel_offset_incr * n_channels;
+
+    *filters_offset_start_base =  *channel_offset_incr * n_channels * batch_size;
     *bias_offset_start_base = *filters_offset_start_base + *filters_size;
     *feature_offset_start_base = *filters_offset_start_base + *filters_size + n_filters;
 

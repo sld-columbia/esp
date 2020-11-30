@@ -10,5 +10,6 @@
     <param name="stride" desc="stride" />
     <param name="do_relu" desc="do ReLU" />
     <param name="pool_type" desc="0: no pooling, 1: 2x2 max pooling, 2: 2x2 avg pooling" />
+    <param name="batch_size" desc="number of input feature batches" />
   </accelerator>
 </sld>

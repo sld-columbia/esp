@@ -28,6 +28,7 @@ public:
         this->feature_map_width = 1;
         this->do_relu = 1;
         this->pool_type = 1;
+        this->batch_size = 1;
     }
 
     conf_info_t(
@@ -40,7 +41,8 @@ public:
         int32_t feature_map_height, 
         int32_t feature_map_width,
         int32_t do_relu,
-        int32_t pool_type
+        int32_t pool_type,
+        int32_t batch_size
         )
     {
         /* <<--ctor-custom-->> */
@@ -53,6 +55,7 @@ public:
         this->feature_map_width = feature_map_width;
         this->do_relu = do_relu;
         this->pool_type = pool_type;
+        this->batch_size = batch_size;
     }
 
     // equals operator
@@ -68,6 +71,7 @@ public:
         if (feature_map_width != rhs.feature_map_width) return false;
         if (do_relu != rhs.do_relu) return false;
         if (pool_type != rhs.pool_type) return false;
+        if (batch_size != rhs.batch_size) return false;
         return true;
     }
 
@@ -84,6 +88,7 @@ public:
         feature_map_width = other.feature_map_width;
         do_relu = other.do_relu;
         pool_type = other.pool_type;
+        batch_size = other.batch_size;
         return *this;
     }
 
@@ -105,6 +110,7 @@ public:
         os << "feature_map_width = " << conf_info.feature_map_width << "";
         os << "do_relu = " << conf_info.do_relu << "";
         os << "pool_type = " << conf_info.pool_type << "";
+        os << "batch_size = " << conf_info.batch_size << "";
         os << "}";
         return os;
     }
@@ -119,6 +125,7 @@ public:
         int32_t feature_map_width;
         int32_t do_relu;
         int32_t pool_type; // 0: no pooling, 1: 2x2 max pooling, 2: 2x2 average pooling
+        int32_t batch_size;
 };
 
 #endif // __CONV2D_CONF_INFO_HPP__
