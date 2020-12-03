@@ -42,7 +42,7 @@ HLS4ML_ACC-sim       = $(addsuffix -sim, $(HLS4ML_ACC))
 HLS4ML_ACC-plot      = $(addsuffix -plot, $(HLS4ML_ACC))
 HLS4ML_ACC-exe       = $(addsuffix -exe, $(HLS4ML_ACC))
 
-CHISEL_PATH                   = $(ESP_ROOT)/chisel
+CHISEL_PATH                   = $(ESP_ROOT)/accelerators/chisel/hw
 CHISEL_ACC_PATH               = $(CHISEL_PATH)/src/main/scala/esp/examples
 CHISEL_ACCELERATORS           = $(shell ls $(CHISEL_ACC_PATH)/*.scala | awk -F/ '{print $$(NF)}' | sed 's/\.scala//g')
 CHISEL_ACCELERATORS-clean     = $(addsuffix -clean, $(CHISEL_ACCELERATORS))

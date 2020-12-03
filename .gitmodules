@@ -2,9 +2,10 @@
 	path = soft/leon3/linux
 	url = https://github.com/sld-columbia/linux.git
 	branch = leon3
-[submodule "chisel"]
-	path = chisel
-	url = https://github.com/IBM/esp-chisel-accelerators.git
+[submodule "accelerators/chisel/hw"]
+	path = accelerators/chisel/hw
+	url = https://github.com/sld-columbia/esp-chisel-accelerators.git
+	branch = restructuring
 [submodule "accelerators/stratus_hls/common/syn-templates"]
 	path = accelerators/stratus_hls/common/syn-templates
 	url = https://github.com/sld-columbia/esp-accelerator-templates.git
