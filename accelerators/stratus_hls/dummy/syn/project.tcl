@@ -8,7 +8,7 @@
 #
 # Source the common configurations
 #
-source ../../common/stratus/project.tcl
+source ../../common/syn/project.tcl
 
 
 #

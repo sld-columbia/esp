@@ -17,7 +17,7 @@ INCDIR += -I../src
 INCDIR += -I../tb
 INCDIR += -I$(SYSTEMC)/include
 INCDIR += -I$(STRATUS_PATH)/share/stratus/include
-INCDIR += -I$(ESP_ROOT)/accelerators/stratus_hls/common/syn-templates
+INCDIR += -I$(ESP_ROOT)/accelerators/stratus_hls/common/inc
 
 CXXFLAGS ?=
 CXXFLAGS += -O3

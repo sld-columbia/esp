@@ -20,11 +20,10 @@ INCDIR ?=
 INCDIR += -I../tb
 INCDIR += -I../tb/tests
 INCDIR += -I../inc
-INCDIR += -I../../common
+INCDIR += -I../../common/inc
 INCDIR += -I$(SYSTEMC)/include
 #INCDIR += -I$(CATAPULT_PATH)/shared/include
 INCDIR += -I$(MGC_HOME)/shared/include
-INCDIR += -I$(ESP_ROOT)/accelerators/catapult_hls/common/syn-templates
 INCDIR += -I$(ESP_ROOT)/accelerators/catapult_hls/common/matchlib/cmod/include
 INCDIR += -I$(BOOST_HOME)/include
 
@@ -61,12 +60,12 @@ VPATH += ../tb
 VPATH += ../tb/tests
 VPATH += ../inc
 VPATH += ../src
-VPATH += ../../common
-#VPATH += $(ESP_ROOT)/accelerators/catapult_hls/common/syn-templates/core/systems
+VPATH += ../../common/inc
+#VPATH += $(ESP_ROOT)/accelerators/catapult_hls/common/inc/core/systems
 
 SRCS ?=
 SRCS += $(foreach s, $(wildcard ../src/*.cpp) $(wildcard ../tb/*.cpp), $(shell basename $(s)))
-#SRCS += $(foreach s, $(wildcard $(ESP_ROOT)/accelerators/catapult_hls/common/syn-templates/core/systems/*.cpp), $(shell basename $(s)))
+#SRCS += $(foreach s, $(wildcard $(ESP_ROOT)/accelerators/catapult_hls/common/inc/core/systems/*.cpp), $(shell basename $(s)))
 
 OBJS := $(SRCS:.cpp=.o)
 -include $(OBJS:.o=.d)

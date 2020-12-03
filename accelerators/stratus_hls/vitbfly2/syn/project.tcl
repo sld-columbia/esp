@@ -8,7 +8,7 @@
 #
 # Source the common configurations
 #
-source ../../common/stratus/project.tcl
+source ../../common/syn/project.tcl
 
 
 #
@@ -40,8 +40,8 @@ if {$TECH eq "virtexu"} {
 }
 if {$TECH eq "virtexup"} {
     # Library is in ns, but simulation uses ps!
-    set CLOCK_PERIOD 10
-    set SIM_CLOCK_PERIOD 10000.0
+    set CLOCK_PERIOD 6.4
+    set SIM_CLOCK_PERIOD 6400.0
     set_attr default_input_delay      0.1
 }
 if {$TECH eq "cmos32soi"} {
@@ -50,16 +50,17 @@ if {$TECH eq "cmos32soi"} {
     set_attr default_input_delay      100.0
 }
 if {$TECH eq "gf12"} {
-    set CLOCK_PERIOD 750.0
-    set SIM_CLOCK_PERIOD 2000.0
+    set CLOCK_PERIOD 1000.0
+    set SIM_CLOCK_PERIOD 1000.0
     set_attr default_input_delay      100.0
 }
 set_attr clock_period $CLOCK_PERIOD
 
+
 #
 # System level modules to be synthesized
 #
-define_hls_module nightvision ../src/nightvision.cpp
+define_hls_module vitbfly2 ../src/vitbfly2.cpp
 
 
 #
@@ -72,32 +73,20 @@ define_system_module tb ../tb/system.cpp ../tb/sc_main.cpp
 ######################################################################
 set DEFAULT_ARGV ""
 
-foreach dma [list 64] {
-    foreach plm_img_size [list 1024] {
-	foreach max_pxl_width_log [list 3] {
+foreach dma [list 32 64] {
+    define_io_config * IOCFG_DMA$dma -DDMA_WIDTH=$dma
 
-	    # # Skip these configurations
-	    # if {$plm_img_size == 1024 && $max_pxl_width_log == 4} {continue}
-	    # if {$plm_img_size == 307200 && $max_pxl_width_log == 3} {continue}
+    define_system_config tb TESTBENCH_DMA$dma -io_config IOCFG_DMA$dma
 
-	    set ext DMA$dma\_IMG$plm_img_size\_PXL$max_pxl_width_log
+    define_sim_config "BEHAV_DMA$dma" "vitbfly2 BEH" "tb TESTBENCH_DMA$dma" -io_config IOCFG_DMA$dma -argv $DEFAULT_ARGV
 
-	    define_io_config * IOCFG_$ext -DDMA_WIDTH=$dma \
-		-DPLM_IMG_SIZE=$plm_img_size -DMAX_PXL_WIDTH_LOG=$max_pxl_width_log
-
-	    define_system_config tb TESTBENCH_$ext -io_config IOCFG_$ext
-
-	    define_sim_config "BEHAV_$ext" "nightvision BEH" "tb TESTBENCH_$ext" -io_config IOCFG_$ext -argv $DEFAULT_ARGV
-
-	    foreach cfg [list FAST] {
-		set cname $cfg\_$ext
-		define_hls_config nightvision $cname -io_config IOCFG_$ext --clock_period=$CLOCK_PERIOD $COMMON_HLS_FLAGS -DHLS_DIRECTIVES_$cfg
-		if {$TECH_IS_XILINX == 1} {
-		    define_sim_config "$cname\_V" "nightvision RTL_V $cname" "tb TESTBENCH_$ext" -io_config IOCFG_$ext -argv $DEFAULT_ARGV -verilog_top_modules glbl
-		} else {
-		    define_sim_config "$cname\_V" "nightvision RTL_V $cname" "tb TESTBENCH_$ext" -io_config IOCFG_$ext -argv $DEFAULT_ARGV
-		}
-	    }
+    foreach cfg [list BASIC] {
+	set cname $cfg\_DMA$dma
+	define_hls_config vitbfly2 $cname -io_config IOCFG_DMA$dma --clock_period=$CLOCK_PERIOD --flatten_arrays=all $COMMON_HLS_FLAGS -DHLS_DIRECTIVES_$cfg
+	if {$TECH_IS_XILINX == 1} {
+	    define_sim_config "$cname\_V" "vitbfly2 RTL_V $cname" "tb TESTBENCH_DMA$dma" -io_config IOCFG_DMA$dma -argv $DEFAULT_ARGV -verilog_top_modules glbl
+	} else {
+	    define_sim_config "$cname\_V" "vitbfly2 RTL_V $cname" "tb TESTBENCH_DMA$dma" -io_config IOCFG_DMA$dma -argv $DEFAULT_ARGV
 	}
     }
 }

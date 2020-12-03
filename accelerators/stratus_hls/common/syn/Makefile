@@ -28,7 +28,7 @@ memlib: ../memlist.txt $(MEMGEN)
 		bdw_memgen ./memlib/*.bdm; \
 	fi;
 
-Makefile.prj: memlib project.tcl ../../common/stratus/project.tcl
+Makefile.prj: memlib project.tcl ../../common/syn/project.tcl
 	@bdw_makegen
 
 -include Makefile.prj
@@ -61,11 +61,11 @@ endif
 	done
 
 nimbus.csv: Makefile.prj sim_all
-	@bdw_shell ../../common/stratus/nimbus.tcl
+	@bdw_shell ../../common/syn/nimbus.tcl
 	@sed -i 's/_/\\_/g' $@
 
 plot: nimbus.csv
-	@octave -qf ../../common/stratus/plot_results_octave.m $<
+	@octave -qf ../../common/syn/plot_results_octave.m $<
 
 # Clean out undesirable junk files from the project directory
 # Uses the automatically created clean_all target from Makefile.prj

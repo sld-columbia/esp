@@ -164,11 +164,11 @@ $(ACCELERATORS-wdir):
 	$(QUIET_MKDIR)mkdir -p $(ACCELERATORS_PATH)/$(@:-wdir=)/hls-work-$(TECHLIB)
 	@cd $(ACCELERATORS_PATH)/$(@:-wdir=)/hls-work-$(TECHLIB); \
 	if ! test -e project.tcl; then \
-		cp ../stratus/* .; \
+		cp ../syn/* .; \
 		rm -f project.tcl; \
 		rm -f Makefile; \
-		ln -s ../stratus/project.tcl; \
-		ln -s ../stratus/Makefile; \
+		ln -s ../syn/project.tcl; \
+		ln -s ../syn/Makefile; \
 	fi;
 
 $(ACCELERATORS-hls): %-hls : %-wdir

@@ -1,5 +1,5 @@
-#  Copyright (c) 2011-2019 Columbia University, System Level Design Group
-#  SPDX-License-Identifier: Apache-2.0
+# Copyright (c) 2011-2019 Columbia University, System Level Design Group
+# SPDX-License-Identifier: Apache-2.0
 
 ############################################################
 # Design Parameters
@@ -8,12 +8,14 @@
 #
 # Source the common configurations
 #
-source ../../common/stratus/project.tcl
+source ../../common/syn/project.tcl
+
 
 #
 # Set the private memory library
 #
 use_hls_lib "./memlib"
+
 
 #
 # Local synthesis attributes
@@ -32,7 +34,7 @@ if {$TECH eq "zynq7000"} {
 }
 if {$TECH eq "virtexu"} {
     # Library is in ns, but simulation uses ps!
-    set CLOCK_PERIOD 8
+    set CLOCK_PERIOD 8.0
     set SIM_CLOCK_PERIOD 8000.0
     set_attr default_input_delay      0.1
 }
@@ -48,19 +50,17 @@ if {$TECH eq "cmos32soi"} {
     set_attr default_input_delay      100.0
 }
 if {$TECH eq "gf12"} {
-    set CLOCK_PERIOD 1000.0
-    set SIM_CLOCK_PERIOD 1000.0
-    set_attr default_input_delay      100.0
+    set CLOCK_PERIOD 1.0
+    set SIM_CLOCK_PERIOD 1.0
+    set_attr default_input_delay      0.1
 }
 set_attr clock_period $CLOCK_PERIOD
-# set_attr dpopt_auto all
-# set_attr dpopt_effort high
 
 
 #
 # System level modules to be synthesized
 #
-define_hls_module sort ../src/sort.cpp
+define_hls_module <accelerator_name> ../src/<accelerator_name>.cpp
 
 
 #
@@ -71,22 +71,22 @@ define_system_module tb ../tb/system.cpp ../tb/sc_main.cpp
 ######################################################################
 # HLS and Simulation configurations
 ######################################################################
-set DEFAULT_ARGV "1024 16"
+set DEFAULT_ARGV ""
 
 foreach dma [list 32 64] {
     define_io_config * IOCFG_DMA$dma -DDMA_WIDTH=$dma
 
     define_system_config tb TESTBENCH_DMA$dma -io_config IOCFG_DMA$dma
 
-    define_sim_config "BEHAV_DMA$dma" "sort BEH" "tb TESTBENCH_DMA$dma" -io_config IOCFG_DMA$dma -argv $DEFAULT_ARGV
+    define_sim_config "BEHAV_DMA$dma" "<accelerator_name> BEH" "tb TESTBENCH_DMA$dma" -io_config IOCFG_DMA$dma -argv $DEFAULT_ARGV
 
     foreach cfg [list BASIC] {
 	set cname $cfg\_DMA$dma
-	define_hls_config sort $cname -io_config IOCFG_DMA$dma --clock_period=$CLOCK_PERIOD $COMMON_HLS_FLAGS -DHLS_DIRECTIVES_$cfg
+	define_hls_config <accelerator_name> $cname -io_config IOCFG_DMA$dma --clock_period=$CLOCK_PERIOD $COMMON_HLS_FLAGS -DHLS_DIRECTIVES_$cfg
 	if {$TECH_IS_XILINX == 1} {
-	    define_sim_config "$cname\_V" "sort RTL_V $cname" "tb TESTBENCH_DMA$dma" -io_config IOCFG_DMA$dma -argv $DEFAULT_ARGV -verilog_top_modules glbl
+	    define_sim_config "$cname\_V" "<accelerator_name> RTL_V $cname" "tb TESTBENCH_DMA$dma" -io_config IOCFG_DMA$dma -argv $DEFAULT_ARGV -verilog_top_modules glbl
 	} else {
-	    define_sim_config "$cname\_V" "sort RTL_V $cname" "tb TESTBENCH_DMA$dma" -io_config IOCFG_DMA$dma -argv $DEFAULT_ARGV
+	    define_sim_config "$cname\_V" "<accelerator_name> RTL_V $cname" "tb TESTBENCH_DMA$dma" -io_config IOCFG_DMA$dma -argv $DEFAULT_ARGV
 	}
     }
 }

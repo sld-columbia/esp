@@ -8,12 +8,14 @@
 #
 # Source the common configurations
 #
-source ../../common/stratus/project.tcl
+source ../../common/syn/project.tcl
+
 
 #
 # Set the private memory library
 #
 use_hls_lib "./memlib"
+
 
 #
 # Local synthesis attributes
@@ -53,14 +55,12 @@ if {$TECH eq "gf12"} {
     set_attr default_input_delay      100.0
 }
 set_attr clock_period $CLOCK_PERIOD
-# set_attr dpopt_auto all
-# set_attr dpopt_effort high
 
 
 #
 # System level modules to be synthesized
 #
-define_hls_module spmv ../src/spmv.cpp
+define_hls_module synth ../src/synth.cpp
 
 
 #
@@ -71,22 +71,22 @@ define_system_module tb ../tb/system.cpp ../tb/sc_main.cpp
 ######################################################################
 # HLS and Simulation configurations
 ######################################################################
-set DEFAULT_ARGV "1024 16"
+set DEFAULT_ARGV ""
 
 foreach dma [list 32] {
     define_io_config * IOCFG_DMA$dma -DDMA_WIDTH=$dma
 
     define_system_config tb TESTBENCH_DMA$dma -io_config IOCFG_DMA$dma
 
-    define_sim_config "BEHAV_DMA$dma" "spmv BEH" "tb TESTBENCH_DMA$dma" -io_config IOCFG_DMA$dma -argv $DEFAULT_ARGV
+    define_sim_config "BEHAV_DMA$dma" "synth BEH" "tb TESTBENCH_DMA$dma" -io_config IOCFG_DMA$dma -argv $DEFAULT_ARGV
 
     foreach cfg [list BASIC] {
 	set cname $cfg\_DMA$dma
-	define_hls_config spmv $cname -io_config IOCFG_DMA$dma --clock_period=$CLOCK_PERIOD $COMMON_HLS_FLAGS -DHLS_DIRECTIVES_$cfg
+	define_hls_config synth $cname -io_config IOCFG_DMA$dma --clock_period=$CLOCK_PERIOD $COMMON_HLS_FLAGS -DHLS_DIRECTIVES_$cfg
 	if {$TECH_IS_XILINX == 1} {
-	    define_sim_config "$cname\_V" "spmv RTL_V $cname" "tb TESTBENCH_DMA$dma" -io_config IOCFG_DMA$dma -argv $DEFAULT_ARGV -verilog_top_modules glbl
+	    define_sim_config "$cname\_V" "synth RTL_V $cname" "tb TESTBENCH_DMA$dma" -io_config IOCFG_DMA$dma -argv $DEFAULT_ARGV -verilog_top_modules glbl
 	} else {
-	    define_sim_config "$cname\_V" "spmv RTL_V $cname" "tb TESTBENCH_DMA$dma" -io_config IOCFG_DMA$dma -argv $DEFAULT_ARGV
+	    define_sim_config "$cname\_V" "synth RTL_V $cname" "tb TESTBENCH_DMA$dma" -io_config IOCFG_DMA$dma -argv $DEFAULT_ARGV
 	}
     }
 }
@@ -100,6 +100,6 @@ set_attr hls_cc_options "$INCLUDES"
 # Simulation Options
 #
 use_systemc_simulator incisive
-set_attr cc_options "$INCLUDES -DCLOCK_PERIOD=$SIM_CLOCK_PERIOD"
+set_attr cc_options "$INCLUDES -DCLOCK_PERIOD=$CLOCK_PERIOD"
 # enable_waveform_logging -vcd
 set_attr end_of_sim_command "make saySimPassed"

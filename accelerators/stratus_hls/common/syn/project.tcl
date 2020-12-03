@@ -80,7 +80,7 @@ set COMMON_HLS_FLAGS "--prints=$PRINT"
 #
 # Templates for synthesis
 #
-set ESP_HDRS_PATH "$ESP_ROOT/accelerators/stratus_hls/common/syn-templates"
+set ESP_HDRS_PATH "$ESP_ROOT/accelerators/stratus_hls/common/inc"
 
 #
 # Compiling Options

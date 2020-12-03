@@ -284,7 +284,7 @@ mkdir -p $ACC_DIR
 
 if [ "$FLOW" == "stratus_hls" ]; then
 
-    dirs="src  stratus  tb"
+    dirs="src  syn  tb"
 
 elif [ "$FLOW" == "vivado_hls" ]; then
 
@@ -313,8 +313,8 @@ for d in $dirs; do
     sed -i "s/<accelerator_name>/$LOWER/g" *
     sed -i "s/<ACCELERATOR_NAME>/$UPPER/g" *
 
-    if [[ "$FLOW" == "stratus_hls" && "$d" == "stratus" ]]; then
-	ln -s ../../common/stratus/Makefile
+    if [[ "$FLOW" == "stratus_hls" && "$d" == "syn" ]]; then
+	ln -s ../../common/syn/Makefile
     fi
 
     if [[ "$FLOW" == "vivado_hls" && "$d" == "syn" ]]; then
