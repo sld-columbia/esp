@@ -40,7 +40,7 @@
 #include "sort.h"
 #include "spmv.h"
 #include "synth.h"
-#include "visionchip.h"
+#include "nightvision.h"
 #include "vitbfly2.h"
 
 unsigned DMA_WORD_PER_BEAT(unsigned _st);
@@ -57,7 +57,7 @@ enum esp_accelerator_type {
 	sort,
 	spmv,
 	synth,
-	visionchip,
+	nightvision,
 	vitbfly2,
 };
 
@@ -73,7 +73,7 @@ union esp_accelerator_descriptor {
 	struct sort_access sort_desc;
 	struct spmv_access spmv_desc;
 	struct synth_access synth_desc;
-	struct visionchip_access visionchip_desc;
+	struct nightvision_access nightvision_desc;
 	struct vitbfly2_access vitbfly2_desc;
 };
 

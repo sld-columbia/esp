@@ -88,9 +88,9 @@ bool thread_is_p2p(esp_thread_info_t *thread)
         case synth:
             return (thread->desc.synth_desc.esp.p2p_store 
                     || thread->desc.synth_desc.esp.p2p_nsrcs);
-        case visionchip:
-            return (thread->desc.visionchip_desc.esp.p2p_store 
-                    || thread->desc.visionchip_desc.esp.p2p_nsrcs);
+        case nightvision:
+            return (thread->desc.nightvision_desc.esp.p2p_store 
+                    || thread->desc.nightvision_desc.esp.p2p_nsrcs);
         case vitbfly2:
             return (thread->desc.vitbfly2_desc.esp.p2p_store 
                     || thread->desc.vitbfly2_desc.esp.p2p_nsrcs);
@@ -146,8 +146,8 @@ void *accelerator_thread( void *ptr )
 	case synth :
 		rc = ioctl(info->fd, SYNTH_IOC_ACCESS, info->desc.synth_desc);
 		break;
-	case visionchip :
-		rc = ioctl(info->fd, VISIONCHIP_IOC_ACCESS, info->desc.visionchip_desc);
+	case nightvision :
+		rc = ioctl(info->fd, NIGHTVISION_IOC_ACCESS, info->desc.nightvision_desc);
 		break;
 	case vitbfly2 :
 		rc = ioctl(info->fd, VITBFLY2_IOC_ACCESS, info->desc.vitbfly2_desc);
@@ -244,8 +244,8 @@ void *accelerator_thread_serial(void *ptr)
         case synth :
             rc = ioctl(info->fd, SYNTH_IOC_ACCESS, info->desc.synth_desc);
             break;
-        case visionchip :
-            rc = ioctl(info->fd, VISIONCHIP_IOC_ACCESS, info->desc.visionchip_desc);
+        case nightvision :
+            rc = ioctl(info->fd, NIGHTVISION_IOC_ACCESS, info->desc.nightvision_desc);
             break;
         case vitbfly2 :
             rc = ioctl(info->fd, VITBFLY2_IOC_ACCESS, info->desc.vitbfly2_desc);
@@ -328,8 +328,8 @@ static void esp_config(esp_thread_info_t* cfg[], unsigned nthreads, unsigned *na
             case synth:
                 esp_prepare(&info->desc.synth_desc.esp, handle, policy);
                 break;
-            case visionchip:
-                esp_prepare(&info->desc.visionchip_desc.esp, handle, policy);
+            case nightvision:
+                esp_prepare(&info->desc.nightvision_desc.esp, handle, policy);
                 break;
             case vitbfly2:
                 esp_prepare(&info->desc.vitbfly2_desc.esp, handle, policy);
