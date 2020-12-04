@@ -1736,7 +1736,7 @@ def print_devtree(fp, esp_config):
     fp.write("  compatible = \"lowrisc,ibex\";\n")
     fp.write("  model = \"lowrisc,ibex-small\";\n")
   fp.write("  chosen {\n")
-  fp.write("    stdout-path = \"/soc/uart@" + format(AHB2APB_HADDR[esp_config.cpu_arch], '03X') + "00100:38400\";\n")
+  fp.write("    stdout-path = \"/soc/uart@" + format(AHB2APB_HADDR[esp_config.cpu_arch], '03x') + "00100:38400\";\n")
   fp.write("  };\n")
   fp.write("  cpus {\n")
   fp.write("    #address-cells = <1>;\n")
@@ -1764,14 +1764,14 @@ def print_devtree(fp, esp_config):
     fp.write("      };\n")
     fp.write("    };\n")
   fp.write("  };\n")
-  fp.write("  memory@" + format(DDR_HADDR[esp_config.cpu_arch], '03X') + "00000 {\n")
+  fp.write("  memory@" + format(DDR_HADDR[esp_config.cpu_arch], '03x') + "00000 {\n")
   fp.write("    device_type = \"memory\";\n")
   # TODO: increase memory address space.
   if esp_config.nmem != 0:
-    fp.write("    reg = <0x0 0x" + format(DDR_HADDR[esp_config.cpu_arch], '03X') + "00000 0x0 0x20000000>;\n")
+    fp.write("    reg = <0x0 0x" + format(DDR_HADDR[esp_config.cpu_arch], '03x') + "00000 0x0 0x20000000>;\n")
   else:
     # Use SLM as main memory
-    fp.write("    reg = <0x0 0x" + format(DDR_HADDR[esp_config.cpu_arch], '03X') + "00000 0x0 0x" + format(esp_config.slm_tot_kbytes * 1024, '08X') + ">;\n")
+    fp.write("    reg = <0x0 0x" + format(DDR_HADDR[esp_config.cpu_arch], '03x') + "00000 0x0 0x" + format(esp_config.slm_tot_kbytes * 1024, '08x') + ">;\n")
   fp.write("  };\n")
 
   # OS reserved memory regions
@@ -1781,24 +1781,24 @@ def print_devtree(fp, esp_config):
     fp.write("    #size-cells = <2>;\n")
     fp.write("    ranges;\n")
     fp.write("\n")
-    fp.write("    greth_reserved: buffer@A0000000 {\n")
+    fp.write("    greth_reserved: buffer@a0000000 {\n")
     fp.write("      compatible = \"shared-dma-pool\";\n")
     fp.write("      no-map;\n")
-    fp.write("      reg = <0x0 0xA0000000 0x0 0x200000>;\n")
+    fp.write("      reg = <0x0 0xa0000000 0x0 0x200000>;\n")
     fp.write("    };\n")
 
     # Add only one memory region for all third-party accelerator instances
-    acc_mem_address = format(ACC_MEM_RESERVED_START_ADDR, "08X")
-    acc_mem_size = format(ACC_MEM_RESERVED_TOTAL_SIZE, "08X")
+    acc_mem_address = format(ACC_MEM_RESERVED_START_ADDR, "08x")
+    acc_mem_size = format(ACC_MEM_RESERVED_TOTAL_SIZE, "08x")
     if esp_config.nacc > esp_config.nthirdparty:
-      tp_mem_address = format(THIRDPARTY_MEM_RESERVED_ADDR, "08X")
-      tp_mem_size = format(THIRDPARTY_MEM_RESERVED_SIZE, "08X")
+      tp_mem_address = format(THIRDPARTY_MEM_RESERVED_ADDR, "08x")
+      tp_mem_size = format(THIRDPARTY_MEM_RESERVED_SIZE, "08x")
     else:
-      tp_mem_address = format(ACC_MEM_RESERVED_START_ADDR, "08X")
-      tp_mem_size = format(ACC_MEM_RESERVED_TOTAL_SIZE, "08X")
+      tp_mem_address = format(ACC_MEM_RESERVED_START_ADDR, "08x")
+      tp_mem_size = format(ACC_MEM_RESERVED_TOTAL_SIZE, "08x")
 
     if esp_config.nthirdparty > 0:
-      acc_mem_size = format(ACC_MEM_RESERVED_TOTAL_SIZE - THIRDPARTY_MEM_RESERVED_SIZE, "08X")
+      acc_mem_size = format(ACC_MEM_RESERVED_TOTAL_SIZE - THIRDPARTY_MEM_RESERVED_SIZE, "08x")
 
     if esp_config.nacc > esp_config.nthirdparty:
       fp.write("\n")
@@ -1848,16 +1848,16 @@ def print_devtree(fp, esp_config):
   fp.write("      riscv,ndev = <16>;\n")
   fp.write("    };\n")
   # TODO add GPTIMER/Accelerators/Caches/SVGA/DVFS to devtree (and remove leon3 IRQ from socmap
-  fp.write("    uart@" + format(AHB2APB_HADDR[esp_config.cpu_arch], '03X') + "00100 {\n")
+  fp.write("    uart@" + format(AHB2APB_HADDR[esp_config.cpu_arch], '03x') + "00100 {\n")
   fp.write("      compatible = \"gaisler,apbuart\";\n")
-  fp.write("      reg = <0x0 0x" + format(AHB2APB_HADDR[esp_config.cpu_arch], '03X') + "00100 0x0 0x100>;\n")
+  fp.write("      reg = <0x0 0x" + format(AHB2APB_HADDR[esp_config.cpu_arch], '03x') + "00100 0x0 0x100>;\n")
   fp.write("      freq = <" + str(CPU_FREQ) + "000>;\n")
   fp.write("      interrupt-parent = <&PLIC0>;\n")
   fp.write("      interrupts = <3>;\n")
   fp.write("      reg-shift = <2>; // regs are spaced on 32 bit boundary\n")
   fp.write("      reg-io-width = <4>; // only 32-bit access are supported\n")
   fp.write("    };\n")
-  fp.write("    eth: greth@" + format(AHB2APB_HADDR[esp_config.cpu_arch], '03X') + "80000 {\n")
+  fp.write("    eth: greth@" + format(AHB2APB_HADDR[esp_config.cpu_arch], '03x') + "80000 {\n")
   fp.write("      #address-cells = <1>;\n")
   fp.write("      #size-cells = <1>;\n")
   fp.write("      compatible = \"gaisler,ethmac\";\n")
@@ -1867,7 +1867,7 @@ def print_devtree(fp, esp_config):
   # Use randomly generated MAC address
   mac = " ".join(esp_config.linux_mac[i:i+2] for i in range(0, len(esp_config.linux_mac), 2))
   fp.write("      local-mac-address = [" + mac + "];\n")
-  fp.write("      reg = <0x0 0x" + format(AHB2APB_HADDR[esp_config.cpu_arch], '03X') + "80000 0x0 0x10000>;\n")
+  fp.write("      reg = <0x0 0x" + format(AHB2APB_HADDR[esp_config.cpu_arch], '03x') + "80000 0x0 0x10000>;\n")
   fp.write("      phy-handle = <&phy0>;\n")
   fp.write("      phy-connection-type = \"sgmii\";\n")
   if esp_config.nmem != 0:
@@ -1877,7 +1877,7 @@ def print_devtree(fp, esp_config):
   fp.write("            #address-cells = <1>;\n")
   fp.write("            #size-cells = <0>;\n")
   fp.write("            compatible = \"gaisler,sgmii\";\n")
-  fp.write("            reg = <0x0 0x" + format(AHB2APB_HADDR[esp_config.cpu_arch], '03X') + "01000 0x0 0x1000>;\n")
+  fp.write("            reg = <0x0 0x" + format(AHB2APB_HADDR[esp_config.cpu_arch], '03x') + "01000 0x0 0x1000>;\n")
   fp.write("            interrupt-parent = <&PLIC0>;\n")
   fp.write("            interrupts = <12 0>;\n")
   fp.write("      };\n")
@@ -1889,9 +1889,9 @@ def print_devtree(fp, esp_config):
     l2 = esp_config.l2s[i]
     if l2.idx != -1:
       address = base + 0xD000 + (l2.idx << 8)
-      address_str = format(address, "X")
+      address_str = format(address, "x")
       size_str = "100"
-      fp.write("      espl2cache" + str(l2.id) + "@" + address_str + " {\n")
+      fp.write("    espl2cache" + str(l2.id) + "@" + address_str + " {\n")
       fp.write("      compatible = \"sld,l2_cache\";\n")
       fp.write("      reg = <0x0 0x" + address_str + " 0x0 0x" + size_str + ">;\n")
       fp.write("      reg-shift = <2>; // regs are spaced on 32 bit boundary\n")
@@ -1904,9 +1904,9 @@ def print_devtree(fp, esp_config):
     llc = esp_config.llcs[i]
     if llc.idx != -1:
       address = base + 0xD000 + (llc.idx << 8)
-      address_str = format(address, "X")
+      address_str = format(address, "x")
       size_str = "100"
-      fp.write("      espllccache" + str(llc.id) + "@" + address_str + " {\n")
+      fp.write("    espllccache" + str(llc.id) + "@" + address_str + " {\n")
       fp.write("      compatible = \"sld,llc_cache\";\n")
       fp.write("      reg = <0x0 0x" + address_str + " 0x0 0x" + size_str + ">;\n")
       fp.write("      reg-shift = <2>; // regs are spaced on 32 bit boundary\n")
@@ -1937,8 +1937,8 @@ def print_devtree(fp, esp_config):
       # Increment count
       THIRDPARTY_N = n + 1;
 
-    address_str = format(address, "X")
-    size_str = format(size, "X")
+    address_str = format(address, "x")
+    size_str = format(size, "x")
 
     fp.write("    " + acc.lowercase_name + "@" + address_str + " {\n")
     if acc.vendor == "sld":
