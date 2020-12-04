@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 CURRENT_DIR=${PWD}
 export SCRIPT_PATH=$(realpath $(dirname "$0"))
 ESP_ROOT=$(realpath ${SCRIPT_PATH}/../..)
@@ -7,7 +9,7 @@ RISCV_GNU_TOOLCHAIN_SHA=afcc8bc655d30cf6af054ac1d3f5f89d0627aa79
 
 DEFAULT_TARGET_DIR="/opt/riscv32imc"
 SRC_MIRROR="http://espdev.cs.columbia.edu/stuff/riscv"
-TMP=${PWD}/_riscv32imc_build
+TMP=/tmp/_riscv32imc_build
 
 # Helper functions
 yesno () {
@@ -106,10 +108,11 @@ cd $TMP
 #Riscv
 echo ""
 echo ""
-echo "=== Use the following to load RISCV environment ==="
+echo "=== Use the following to load RISC-V environment ==="
 echo -n "  export PATH=${RISCV}/bin:"; echo '$PATH'
 echo "  export RISCV=${RISCV}"
 echo ""
 
 cd $CURRENT_DIR
+
 echo "*** Successfully installed RISC-V (rv32imc) toolchain to $TARGET_DIR ***"

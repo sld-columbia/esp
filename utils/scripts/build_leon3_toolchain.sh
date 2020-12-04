@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 CURRENT_DIR=${PWD}
 export SCRIPT_PATH=$(realpath $(dirname "$0"))
 ESP_ROOT=$(realpath ${SCRIPT_PATH}/../..)
@@ -8,7 +10,7 @@ export SYSROOT=${ESP_ROOT}/soft/leon3/sysroot
 BUILDROOT_SHA=d6fa6a45e196665d6607b522f290b1451b949c2c
 
 DEFAULT_TARGET_DIR="/opt/leon"
-TMP=${PWD}/_leon3_build
+TMP=/tmp/_leon3_build
 
 # Prebuilt from Cobham Gaisler
 SRC_MIRROR="http://espdev.cs.columbia.edu/stuff/leon3"
@@ -192,7 +194,7 @@ if [ $(noyes "Skip Linux toolchain") == "n" ]; then
 	git checkout .
 	git pull
     else
-    	git clone --recursive git://git.buildroot.net/buildroot
+    	git clone git://git.buildroot.net/buildroot
 	cd $src
     fi
 
@@ -211,14 +213,17 @@ src=buildroot
 echo "*** Populating root file system w/ buildroot ... ***"
 if [ $(noyes "Skip buildroot?") == "n" ]; then
     # Reset sysroot overlay to committed content TODO: restore
+    cd $ESP_ROOT
     rm -rf ${SYSROOT}/*
     git checkout ${SYSROOT}
+    cd $TMP
+
     if test -e $src; then
 	cd $src
 	git checkout .
 	git pull
     else
-    	git clone --recursive git://git.buildroot.net/buildroot
+    	git clone git://git.buildroot.net/buildroot
 	cd $src
     fi
 
@@ -247,4 +252,6 @@ echo -n "  export PATH=${LEON}/bin:"; echo '$PATH'
 echo ""
 
 cd $CURRENT_DIR
+
 echo "*** Successfully installed LEON toolchain to $TARGET_DIR ***"
+

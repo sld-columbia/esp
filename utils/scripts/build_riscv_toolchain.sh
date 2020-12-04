@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 CURRENT_DIR=${PWD}
 export SCRIPT_PATH=$(realpath $(dirname "$0"))
 ESP_ROOT=$(realpath ${SCRIPT_PATH}/../..)
@@ -11,7 +13,7 @@ BUILDROOT_SHA=d6fa6a45e196665d6607b522f290b1451b949c2c
 
 DEFAULT_TARGET_DIR="/opt/riscv"
 SRC_MIRROR="http://espdev.cs.columbia.edu/stuff/riscv"
-TMP=${PWD}/_riscv_build
+TMP=/tmp/_riscv_build
 
 # Helper functions
 yesno () {
@@ -101,9 +103,8 @@ if [ $(noyes "Skip ${src}") == "n" ]; then
     if test -e $src; then
 	cd $src
 	git checkout .
-	git submodule update --init --recursive
     else
-	git clone --recursive https://github.com/riscv/riscv-gnu-toolchain.git
+	git clone https://github.com/riscv/riscv-gnu-toolchain.git
 	cd $src
     fi
 
@@ -122,9 +123,8 @@ if [ $(noyes "Skip ${src}") == "n" ]; then
     if test -e $src; then
 	cd $src
 	git checkout .
-	git submodule update --init --recursive
     else
-	git clone --recursive https://github.com/riscv/riscv-gnu-toolchain.git
+	git clone https://github.com/riscv/riscv-gnu-toolchain.git
 	cd $src
     fi
 
@@ -143,16 +143,17 @@ src=buildroot
 echo "*** Populating root file system w/ buildroot ... ***"
 if [ $(noyes "Skip buildroot?") == "n" ]; then
     # Reset sysroot overlay to committed content
+    cd $ESP_ROOT
     rm -rf ${SYSROOT}/*
     git checkout ${SYSROOT}
-
+    cd $TMP
 
     if test -e $src; then
     	cd $src
     	git checkout .
     	git pull
     else
-    	git clone --recursive https://git.buildroot.net/buildroot
+    	git clone https://git.buildroot.net/buildroot
     	cd $src
     fi
 
@@ -176,10 +177,11 @@ fi
 #Riscv
 echo ""
 echo ""
-echo "=== Use the following to load RISCV environment ==="
+echo "=== Use the following to load RISC-V environment ==="
 echo -n "  export PATH=${RISCV}/bin:"; echo '$PATH'
 echo "  export RISCV=${RISCV}"
 echo ""
 
 cd $CURRENT_DIR
-echo "*** Successfully installed RISCV toolchain to $TARGET_DIR ***"
+
+echo "*** Successfully installed RISC-V toolchain to $TARGET_DIR ***"
