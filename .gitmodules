@@ -22,12 +22,12 @@
 [submodule "soft/ariane/riscv-tests"]
 	path = soft/ariane/riscv-tests
 	url = https://github.com/riscv/riscv-tests.git
-[submodule "third-party/accelerators/dma64/NV_NVDLA/ip"]
-	path = third-party/accelerators/dma64/NV_NVDLA/ip
+[submodule "accelerators/third-party/NV_NVDLA/ip"]
+	path = accelerators/third-party/NV_NVDLA/ip
 	url = https://github.com/sld-columbia/nvdla-hw.git
 	branch = master
-[submodule "third-party/accelerators/dma64/NV_NVDLA/sw"]
-	path = third-party/accelerators/dma64/NV_NVDLA/sw
+[submodule "accelerators/third-party/NV_NVDLA/sw"]
+	path = accelerators/third-party/NV_NVDLA/sw
 	url = https://github.com/sld-columbia/nvdla-sw.git
 [submodule "rtl/src/sld/caches/esp-caches"]
 	path = rtl/src/sld/caches/esp-caches

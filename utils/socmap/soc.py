@@ -17,7 +17,7 @@ def get_immediate_subdirectories(a_dir):
 
 class Components():
 
-  def __init__(self, TECH, DMA_WIDTH):
+  def __init__(self, TECH, DMA_WIDTH, CPU_ARCH):
     self.EMPTY = [
       "empty",
     ]
@@ -64,17 +64,24 @@ class Components():
       if len(self.POINTS[acc.upper()]) != 0:
         self.ACCELERATORS.append(acc.upper())
 
-    acc_dir = ESP_ROOT + "/third-party/accelerators/dma" + str(DMA_WIDTH)
+    acc_dir = ESP_ROOT + "/accelerators/third-party"
     dirs = get_immediate_subdirectories(acc_dir)
     dirs = sorted(dirs, key=str.upper)
     for acc in dirs:
-      self.POINTS[acc.upper()] = []
-      with open(acc_dir + "/" + acc + "/vendor") as f:
-        vendor = f.readline().strip()
-      self.VENDOR[acc.upper()] = vendor
-      dp = ""
-      self.POINTS[acc.upper()].append(dp)
-      self.ACCELERATORS.append(acc.upper())
+      cpu_support = False
+      with open(acc_dir + "/" + acc + "/" + acc + ".hosts") as f:
+        for line in f:
+          if line.find(str(CPU_ARCH)) != -1:
+            cpu_support = True
+
+      if cpu_support == True:
+        self.POINTS[acc.upper()] = []
+        with open(acc_dir + "/" + acc + "/vendor") as f:
+          vendor = f.readline().strip()
+        self.VENDOR[acc.upper()] = vendor
+        dp = ""
+        self.POINTS[acc.upper()].append(dp)
+        self.ACCELERATORS.append(acc.upper())
 
 #board configuration
 class SoC_Config():
@@ -87,6 +94,7 @@ class SoC_Config():
   IP_ADDR = ""
   TECH = "virtex7"
   DMA_WIDTH = 32
+  CPU_ARCH = "ariane"
 
   def changed(self, *args): 
     if self.cache_impl.get() == "SystemVerilog":
@@ -364,11 +372,12 @@ class SoC_Config():
   def set_IP(self):
     self.IP_ADDR = str(int('0x' + self.IPM[:2], 16)) + "." + str(int('0x' + self.IPM[2:], 16)) + "." + str(int('0x' + self.IPL[:2], 16)) + "." + str(int('0x' + self.IPL[2:], 16))
 
-  def __init__(self, DMA_WIDTH, TECH, LINUX_MAC, LEON3_STACK):
+  def __init__(self, DMA_WIDTH, TECH, LINUX_MAC, LEON3_STACK, CPU_ARCH):
     self.DMA_WIDTH = DMA_WIDTH
     self.TECH = TECH
     self.LINUX_MAC = LINUX_MAC
     self.LEON3_STACK = LEON3_STACK
+    self.CPU_ARCH = CPU_ARCH
     #define whether SGMII has to be used or not: it is not used for PROFPGA boards
     with open("Makefile") as fp:
       for line in fp:
@@ -396,7 +405,7 @@ class SoC_Config():
         #check if the SoC uses SVGA
         if line.find("CFG_SVGA_ENABLE ") != -1:
           self.HAS_SVGA = int(self.check_cfg(line, "integer := ", ";"))
-    self.IPs = Components(self.TECH, self.DMA_WIDTH)
+    self.IPs = Components(self.TECH, self.DMA_WIDTH, self.CPU_ARCH)
     #post process configuration
     self.set_IP()
     #0 = Bigphysical area ; 1 = Scatter/Gather

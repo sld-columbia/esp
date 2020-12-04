@@ -231,7 +231,7 @@ class EspCreator(Frame):
       self.soc.DMA_WIDTH = 64
     else:
       self.soc.DMA_WIDTH = 32
-    self.soc.IPs = Components(self.soc.TECH, self.soc.DMA_WIDTH)
+    self.soc.IPs = Components(self.soc.TECH, self.soc.DMA_WIDTH, soc.CPU_ARCH.get())
     self.soc.update_list_of_ips()
     self.bottom_frame_noccfg.changed()
     self.soc.changed()
@@ -260,7 +260,7 @@ class EspCreator(Frame):
   def generate_mmi64_regs(self):
       create_mmi64_regs(soc)
 
-if len(sys.argv) != 5:
+if len(sys.argv) != 6:
     print_usage()
     sys.exit(1)
 
@@ -268,10 +268,11 @@ DMA_WIDTH = int(sys.argv[1])
 TECH = sys.argv[2]
 LINUX_MAC = sys.argv[3]
 LEON3_STACK = sys.argv[4]
+CPU_ARCH = sys.argv[5]
 
 root = Tk()
 root.title("ESP SoC Generator")
-soc = SoC_Config(DMA_WIDTH, TECH, LINUX_MAC, LEON3_STACK)
+soc = SoC_Config(DMA_WIDTH, TECH, LINUX_MAC, LEON3_STACK, CPU_ARCH)
 
 root.geometry("1024x768")
 w, h = root.winfo_screenwidth(), root.winfo_screenheight()
