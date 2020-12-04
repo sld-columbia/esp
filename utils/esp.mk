@@ -20,7 +20,7 @@ socmap.vhd: .esp_config grlib_config.vhd top.vhd Makefile
 	fi
 	@echo ""
 	@echo "Generating ESP configuration..."
-	@python3 $(ESP_ROOT)/utils/socmap/esp_creator_batch.py $(NOC_WIDTH) $(TECHLIB) $(LINUX_MAC) $(LEON3_STACK)
+	@LD_LIBRARY_PATH="" python3 $(ESP_ROOT)/utils/socmap/esp_creator_batch.py $(NOC_WIDTH) $(TECHLIB) $(LINUX_MAC) $(LEON3_STACK)
 
 socmap.h: socmap.vhd
 
@@ -37,7 +37,7 @@ esp-config: socmap.vhd
 esp-xconfig: grlib_config.vhd
 	@echo ""
 	@echo "Running interactive ESP configuration..."
-	@python3 $(ESP_ROOT)/utils/socmap/esp_creator.py $(NOC_WIDTH) $(TECHLIB) $(LINUX_MAC) $(LEON3_STACK)
+	@LD_LIBRARY_PATH="" python3 $(ESP_ROOT)/utils/socmap/esp_creator.py $(NOC_WIDTH) $(TECHLIB) $(LINUX_MAC) $(LEON3_STACK)
 
 esp-config-clean:
 	$(QUIET_CLEAN)$(RM) \

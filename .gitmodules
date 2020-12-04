@@ -34,3 +34,6 @@
 [submodule "third-party/ibex"]
 	path = third-party/ibex
 	url = https://github.com/lowRISC/ibex.git
+[submodule "utils/zynq"]
+	path = utils/zynq
+	url = git@github.com:sld-columbia/zynq-template.git

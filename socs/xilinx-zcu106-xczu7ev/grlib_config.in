@@ -1,0 +1,68 @@
+#
+# LEON3 configuration written in linux configuration language
+#
+# Written by Jiri Gaisler, Gaisler Research
+#
+# Comments and bug reports to support@gaisler.com
+#
+#
+
+#define_bool CONFIG_MCTRL_RMW y
+define_bool CONFIG_LEON3FT_PRESENT y
+define_bool CONFIG_HAS_SHARED_GRFPU y
+
+mainmenu_name "LEON3MP Design Configuration"
+
+mainmenu_option next_comment
+  comment 'Synthesis      '
+  source tech.in
+endmenu
+
+source leon3.in
+source amba.in
+
+mainmenu_option next_comment
+  comment 'Debug Link           '
+  source jtag.in
+  source edcl.in
+endmenu
+
+mainmenu_option next_comment
+comment 'Peripherals             '
+
+  mainmenu_option next_comment
+  comment 'Memory controller             '
+    source mctrl.in
+    source mig_7series.in
+    source ahbstat.in
+  endmenu
+
+  mainmenu_option next_comment
+  comment 'On-chip RAM/ROM                 '
+    source ahbrom.in
+    source ahbram.in
+  endmenu
+
+  mainmenu_option next_comment
+  comment 'Ethernet             '
+    source greth.in
+  endmenu
+
+  mainmenu_option next_comment
+  comment 'UARTs, timers and irq control         '
+    source uart1.in
+    source irqmp.in
+    source gptimer.in
+  endmenu
+
+  mainmenu_option next_comment
+  comment 'Keybord and VGA interface'
+    source ps2vga.in
+  endmenu
+
+endmenu
+
+mainmenu_option next_comment
+comment 'VHDL Debugging        '
+  source debug.in
+endmenu
