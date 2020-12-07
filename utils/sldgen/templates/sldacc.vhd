@@ -8,7 +8,7 @@ use work.esp_global.all;
 use work.amba.all;
 use work.sld_devices.all;
 use work.devices.all;
-use work.sldcommon.all;
+use work.monitor_pkg.all;
 use work.nocpackage.all;
 use work.allcaches.all;
 use work.cachepackage.all;

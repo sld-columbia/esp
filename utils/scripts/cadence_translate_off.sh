@@ -1,0 +1,13 @@
+#!/bin/bash
+
+set -e
+
+vlog="$(strings $1) $(find . -name "*.svh")"
+
+for v in $vlog; do
+    if grep -q "translate_off" $v; then
+	echo "Patching $v"
+	sed -i '/translate_off/a \/\/cadence translate_off' $v
+	sed -i '/translate_on/a \/\/cadence translate_on' $v
+    fi
+done

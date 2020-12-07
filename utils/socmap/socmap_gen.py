@@ -413,7 +413,7 @@ def print_libs(fp, std_only):
     fp.write("use work.amba.all;\n")
     fp.write("use work.sld_devices.all;\n")
     fp.write("use work.devices.all;\n")
-    fp.write("use work.sldcommon.all;\n")
+    fp.write("use work.misc.all;\n")
     fp.write("use work.leon3.all;\n")
     fp.write("use work.nocpackage.all;\n")
     fp.write("use work.cachepackage.all;\n")

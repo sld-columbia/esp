@@ -1,4 +1,0 @@
-version.vhd
-config_types.vhd
-config.vhd
-stdlib.vhd

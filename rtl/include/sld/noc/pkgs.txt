@@ -1,2 +1,0 @@
-genram_pkg.vhd
-nocpackage.vhd

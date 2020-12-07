@@ -1,2 +1,0 @@
-jtag.vhd
-libjtagcom.vhd

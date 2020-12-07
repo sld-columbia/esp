@@ -13,8 +13,8 @@
 	path = soft/ariane/linux
 	url = https://github.com/sld-columbia/linux.git
 	branch = ariane
-[submodule "third-party/ariane"]
-	path = third-party/ariane
+[submodule "rtl/cores/ariane/ariane"]
+	path = rtl/cores/ariane/ariane
 	url = https://github.com/sld-columbia/ariane.git
 [submodule "soft/ariane/riscv-pk"]
 	path = soft/ariane/riscv-pk
@@ -29,11 +29,11 @@
 [submodule "accelerators/third-party/NV_NVDLA/sw"]
 	path = accelerators/third-party/NV_NVDLA/sw
 	url = https://github.com/sld-columbia/nvdla-sw.git
-[submodule "rtl/src/sld/caches/esp-caches"]
-	path = rtl/src/sld/caches/esp-caches
+[submodule "rtl/caches/esp-caches"]
+	path = rtl/caches/esp-caches
 	url = https://github.com/sld-columbia/esp-caches.git
-[submodule "third-party/ibex"]
-	path = third-party/ibex
+[submodule "rtl/cores/ibex/ibex"]
+	path = rtl/cores/ibex/ibex
 	url = https://github.com/lowRISC/ibex.git
 [submodule "utils/zynq"]
 	path = utils/zynq

@@ -17,7 +17,7 @@ use work.cachepackage.all;
 use work.config.all;
 use work.esp_global.all;
 use work.socmap.all;
-use work.soctiles.all;
+use work.tiles_pkg.all;
 
 entity top is
   generic (
