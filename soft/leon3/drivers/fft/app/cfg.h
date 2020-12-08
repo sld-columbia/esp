@@ -2,6 +2,7 @@
 #define __ESP_CFG_000_H__
 
 #include "libesp.h"
+#include "fft.h"
 
 #if (FFT_FX_WIDTH == 64)
 typedef unsigned long long token_t;
@@ -29,20 +30,26 @@ const int32_t log_len = LOG_LEN;
 
 #define NACC 1
 
+struct fft_access fft_cfg_000[] = {
+	{
+		/* <<--descriptor-->> */
+		.do_bitrev = DO_BITREV,
+		.log_len = LOG_LEN,
+		.src_offset = 0,
+		.dst_offset = 0,
+		.esp.coherence = ACC_COH_NONE,
+		.esp.p2p_store = 0,
+		.esp.p2p_nsrcs = 0,
+		.esp.p2p_srcs = {"", "", "", ""},
+	}
+};
+
 esp_thread_info_t cfg_000[] = {
 	{
 		.run = true,
 		.devname = "fft.0",
-		.type = fft,
-		/* <<--descriptor-->> */
-		.desc.fft_desc.do_bitrev = DO_BITREV,
-		.desc.fft_desc.log_len = LOG_LEN,
-		.desc.fft_desc.src_offset = 0,
-		.desc.fft_desc.dst_offset = 0,
-		.desc.fft_desc.esp.coherence = ACC_COH_NONE,
-		.desc.fft_desc.esp.p2p_store = 0,
-		.desc.fft_desc.esp.p2p_nsrcs = 0,
-		.desc.fft_desc.esp.p2p_srcs = {"", "", "", ""},
+		.ioctl_req = FFT_IOC_ACCESS,
+		.esp_desc = &(fft_cfg_000[0].esp),
 	}
 };
 

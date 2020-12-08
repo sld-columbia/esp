@@ -661,24 +661,8 @@ for key in ${!values[@]}; do
     sed -i "s/\/\* <<--data_width-->> \*\//$data_width/g" app/cfg.h
     sed -i "s/\/\* <<--data_width-->> \*\//$data_width/g" barec/${LOWER}.c
     sed -i "/\/\* <<--print-params-->> \*\//a ${indent}printf(\"  .${key} = %d\\\n\", ${key});" app/${LOWER}.c
-    sed -i "/\/\* <<--descriptor-->> \*\//a ${indent}${indent}.desc.${LOWER}_desc.${key} = ${key_upper}," app/cfg.h
+    sed -i "/\/\* <<--descriptor-->> \*\//a ${indent}${indent}.${key} = ${key_upper}," app/cfg.h
 done
-
-## ESP library update
-cd $SOFT_DIR/leon3/drivers/libesp
-sed -i "/\/\/ <<--esp-p2p-thread-->>/a ${indent}${indent}${indent}${indent}|| thread->desc.${LOWER}_desc.esp.p2p_nsrcs);" libesp.c
-sed -i "/\/\/ <<--esp-p2p-thread-->>/a ${indent}${indent}${indent}return (thread->desc.${LOWER}_desc.esp.p2p_store" libesp.c
-sed -i "/\/\/ <<--esp-p2p-thread-->>/a ${indent}${indent}case ${LOWER} :" libesp.c
-sed -i "/\/\/ <<--esp-ioctl-->>/a ${indent}${indent}break;" libesp.c
-sed -i "/\/\/ <<--esp-ioctl-->>/a ${indent}${indent}rc = ioctl(info->fd, ${UPPER}_IOC_ACCESS, info->desc.${LOWER}_desc);" libesp.c
-sed -i "/\/\/ <<--esp-ioctl-->>/a ${indent}case ${LOWER} :" libesp.c
-sed -i "/\/\/ <<--esp-prepare-->>/a ${indent}${indent}${indent}break;" libesp.c
-sed -i "/\/\/ <<--esp-prepare-->>/a ${indent}${indent}${indent}esp_prepare(&info->desc.${LOWER}_desc.esp, handle, policy);" libesp.c
-sed -i "/\/\/ <<--esp-prepare-->>/a ${indent}${indent}case ${LOWER} :" libesp.c
-cd $SOFT_DIR/leon3/drivers/include
-sed -i "/\/\/ <<--esp-include-->>/a #include \"${LOWER}.h\"" libesp.h
-sed -i "/\/\/ <<--esp-enum-->>/a ${indent}${LOWER}," libesp.h
-sed -i "/\/\/ <<--esp-descriptor-->>/a ${indent}struct ${LOWER}_access ${LOWER}_desc;" libesp.h
 
 ## Prepare input and golden output files
 if [ $FLOW == "hls4ml" ]; then

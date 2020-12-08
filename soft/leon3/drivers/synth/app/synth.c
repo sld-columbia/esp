@@ -129,12 +129,13 @@ static void read_soc_config(FILE* f, soc_config_t* soc_config){
     }  
 }
 
-static void config_threads(FILE* f, accelerator_thread_info_t **thread_info, esp_thread_info_t ***cfg, int phase, int* nthreads, int coherence_mode, enum accelerator_coherence coherence, unsigned **nacc){
+static void config_threads(FILE* f, accelerator_thread_info_t **thread_info, esp_thread_info_t ***cfg, struct synth_access ***synth_cfg, int phase, int* nthreads, int coherence_mode, enum accelerator_coherence coherence, unsigned **nacc){
     fscanf(f, "%d", nthreads); 
     dprintf("%d threads in phase %d\n", *nthreads, phase); 
     *cfg = malloc(sizeof(esp_thread_info_t*) * *nthreads);
     *nacc = malloc(sizeof(esp_thread_info_t*) * *nthreads);
-    
+    *synth_cfg = malloc(sizeof(struct synth_access*) * *nthreads);
+
     for (int t = 0; t < *nthreads; t++){
         thread_info[t] = malloc(sizeof(accelerator_thread_info_t));
         thread_info[t]->tid = t;
@@ -144,6 +145,7 @@ static void config_threads(FILE* f, accelerator_thread_info_t **thread_info, esp
         dprintf("%d devices in thread %d.%d\n", thread_info[t]->ndev, phase, t);
  
         (*cfg)[t] = malloc(sizeof(esp_thread_info_t) * thread_info[t]->ndev);
+        (*synth_cfg)[t] = malloc(sizeof(struct synth_access) * thread_info[t]->ndev);
         (*nacc)[t] = thread_info[t]->ndev;
 
         char flow_choice[7];
@@ -185,91 +187,93 @@ static void config_threads(FILE* f, accelerator_thread_info_t **thread_info, esp
             int devid = thread_info[t]->chain[d];
             (*cfg)[t][d].run = true;
             (*cfg)[t][d].devname = devnames[devid];
-            (*cfg)[t][d].type = synth;
-            (*cfg)[t][d].desc.synth_desc.src_offset = 0;
-            (*cfg)[t][d].desc.synth_desc.dst_offset = 0;
+            (*cfg)[t][d].ioctl_req = SYNTH_IOC_ACCESS;
+            (*cfg)[t][d].esp_desc = &((*synth_cfg)[t][d].esp);
+            
+            (*synth_cfg)[t][d].src_offset = 0;
+            (*synth_cfg)[t][d].dst_offset = 0;
             
             if (thread_info[t]->p2p && d != thread_info[t]->ndev - 1){
-                (*cfg)[t][d].desc.synth_desc.esp.p2p_store = 1;
+                (*synth_cfg)[t][d].esp.p2p_store = 1;
             } else {
-                (*cfg)[t][d].desc.synth_desc.esp.p2p_store = 0;
+                (*synth_cfg)[t][d].esp.p2p_store = 0;
             }
 
             if (thread_info[t]->p2p && d != 0){
-                (*cfg)[t][d].desc.synth_desc.esp.p2p_nsrcs = 1;
-                strcpy((*cfg)[t][d].desc.synth_desc.esp.p2p_srcs[0], devnames[prev_devid]);
+                (*synth_cfg)[t][d].esp.p2p_nsrcs = 1;
+                strcpy((*synth_cfg)[t][d].esp.p2p_srcs[0], devnames[prev_devid]);
             } else {
-                (*cfg)[t][d].desc.synth_desc.esp.p2p_nsrcs = 0;
+                (*synth_cfg)[t][d].esp.p2p_nsrcs = 0;
             }
             
             //read parameters into esp_thread_info_t     
             fscanf(f, "%s", pattern); 
             if (!strncmp(pattern, "STREAMING", 9)){
-                (*cfg)[t][d].desc.synth_desc.pattern = PATTERN_STREAMING;
+                (*synth_cfg)[t][d].pattern = PATTERN_STREAMING;
             } else if (!strncmp(pattern, "STRIDED", 7)){
-                (*cfg)[t][d].desc.synth_desc.pattern = PATTERN_STRIDED;
+                (*synth_cfg)[t][d].pattern = PATTERN_STRIDED;
             } else if (!strncmp(pattern, "IRREGULAR", 9)){
-                (*cfg)[t][d].desc.synth_desc.pattern = PATTERN_IRREGULAR;
+                (*synth_cfg)[t][d].pattern = PATTERN_IRREGULAR;
             }
             fscanf(f, "%d %d %d %d %d %d %d %d %d %s", 
-                &(*cfg)[t][d].desc.synth_desc.access_factor,
-                &(*cfg)[t][d].desc.synth_desc.burst_len,
-                &(*cfg)[t][d].desc.synth_desc.compute_bound_factor,
-                &(*cfg)[t][d].desc.synth_desc.reuse_factor,
-                &(*cfg)[t][d].desc.synth_desc.ld_st_ratio,
-                &(*cfg)[t][d].desc.synth_desc.stride_len,
-                &(*cfg)[t][d].desc.synth_desc.in_place,
-                &(*cfg)[t][d].desc.synth_desc.wr_data,
-                &(*cfg)[t][d].desc.synth_desc.rd_data,
+                &(*synth_cfg)[t][d].access_factor,
+                &(*synth_cfg)[t][d].burst_len,
+                &(*synth_cfg)[t][d].compute_bound_factor,
+                &(*synth_cfg)[t][d].reuse_factor,
+                &(*synth_cfg)[t][d].ld_st_ratio,
+                &(*synth_cfg)[t][d].stride_len,
+                &(*synth_cfg)[t][d].in_place,
+                &(*synth_cfg)[t][d].wr_data,
+                &(*synth_cfg)[t][d].rd_data,
                 coh_choice);
             
-            if ((*cfg)[t][d].desc.synth_desc.pattern == PATTERN_IRREGULAR)
-                (*cfg)[t][d].desc.synth_desc.irregular_seed = rand() % IRREGULAR_SEED_MAX;
+            if ((*synth_cfg)[t][d].pattern == PATTERN_IRREGULAR)
+                (*synth_cfg)[t][d].irregular_seed = rand() % IRREGULAR_SEED_MAX;
         
             //calculate output size, offset, and memsize
-            (*cfg)[t][d].desc.synth_desc.in_size = in_size;  
-            unsigned int out_size = (in_size >> (*cfg)[t][d].desc.synth_desc.access_factor) 
-                / (*cfg)[t][d].desc.synth_desc.ld_st_ratio;
-            (*cfg)[t][d].desc.synth_desc.out_size = out_size;        
-            (*cfg)[t][d].desc.synth_desc.offset = offset; 
+            (*synth_cfg)[t][d].in_size = in_size;  
+            unsigned int out_size = (in_size >> (*synth_cfg)[t][d].access_factor) 
+                / (*synth_cfg)[t][d].ld_st_ratio;
+            (*synth_cfg)[t][d].out_size = out_size;        
+            (*synth_cfg)[t][d].offset = offset; 
            
-            if((*cfg)[t][d].desc.synth_desc.in_place == 0 && !thread_info[t]->p2p){
+            if((*synth_cfg)[t][d].in_place == 0 && !thread_info[t]->p2p){
                 memsz += out_size;
                 offset += in_size;
             }
 
             if (thread_info[t]->p2p && d == thread_info[t]->ndev - 1){
                 memsz += out_size;
-                (*cfg)[t][d].desc.synth_desc.offset = (*cfg)[t][0].desc.synth_desc.in_size - in_size;
+                (*synth_cfg)[t][d].offset = (*synth_cfg)[t][0].in_size - in_size;
             }
            
-            unsigned int footprint = in_size >> (*cfg)[t][d].desc.synth_desc.access_factor;
+            unsigned int footprint = in_size >> (*synth_cfg)[t][d].access_factor;
 
-            if (!(*cfg)[t][d].desc.synth_desc.in_place && (!thread_info[t]->p2p || d == thread_info[t]->ndev - 1))
+            if (!(*synth_cfg)[t][d].in_place && (!thread_info[t]->p2p || d == thread_info[t]->ndev - 1))
                 footprint += out_size;
                     
             if (thread_info[t]->p2p){
-                (*cfg)[t][d].desc.synth_desc.esp.coherence = ACC_COH_NONE;
+                (*synth_cfg)[t][d].esp.coherence = ACC_COH_NONE;
             } 
             else if (coherence_mode == FIXED){
-                (*cfg)[t][d].desc.synth_desc.esp.coherence = coherence;
+                (*synth_cfg)[t][d].esp.coherence = coherence;
             }
             else if (!strcmp(coh_choice, "none")){
-                (*cfg)[t][d].desc.synth_desc.esp.coherence = ACC_COH_NONE;
+                (*synth_cfg)[t][d].esp.coherence = ACC_COH_NONE;
             }
             else if (!strcmp(coh_choice, "llc")){
-                (*cfg)[t][d].desc.synth_desc.esp.coherence = ACC_COH_LLC;
+                (*synth_cfg)[t][d].esp.coherence = ACC_COH_LLC;
             }
             else if (!strcmp(coh_choice, "recall")){
-                (*cfg)[t][d].desc.synth_desc.esp.coherence = ACC_COH_RECALL;
+                (*synth_cfg)[t][d].esp.coherence = ACC_COH_RECALL;
             }
             else if (!strcmp(coh_choice, "full")){
-                (*cfg)[t][d].desc.synth_desc.esp.coherence = ACC_COH_FULL;
+                (*synth_cfg)[t][d].esp.coherence = ACC_COH_FULL;
             }
 
-            (*cfg)[t][d].desc.synth_desc.esp.footprint = footprint * 4; 
-            (*cfg)[t][d].desc.synth_desc.esp.in_place = (*cfg)[t][d].desc.synth_desc.in_place; 
-            (*cfg)[t][d].desc.synth_desc.esp.reuse_factor = (*cfg)[t][d].desc.synth_desc.reuse_factor;
+            (*synth_cfg)[t][d].esp.footprint = footprint * 4; 
+            (*synth_cfg)[t][d].esp.in_place = (*synth_cfg)[t][d].in_place; 
+            (*synth_cfg)[t][d].esp.reuse_factor = (*synth_cfg)[t][d].reuse_factor;
 
             in_size = out_size; 
             prev_devid = devid;
@@ -278,7 +282,7 @@ static void config_threads(FILE* f, accelerator_thread_info_t **thread_info, esp
     }
 }
 
-static void alloc_phase(accelerator_thread_info_t **thread_info, esp_thread_info_t ***cfg, int nthreads, soc_config_t soc_config, int alloc_mode, enum alloc_effort alloc, uint32_t **buffers, int phase){
+static void alloc_phase(accelerator_thread_info_t **thread_info, esp_thread_info_t ***cfg, struct synth_access ***synth_cfg, int nthreads, soc_config_t soc_config, int alloc_mode, enum alloc_effort alloc, uint32_t **buffers, int phase){
     int largest_thread = 0;
     size_t largest_sz = 0;
     int* ddr_node_cost = malloc(sizeof(int)*soc_config.nmem);
@@ -355,8 +359,8 @@ static void alloc_phase(accelerator_thread_info_t **thread_info, esp_thread_info
             die_errno("error: cannot allocate %zu contig bytes", thread_info[i]->memsz);   
         }
 
-        for (int j = 0; j < (*cfg)[i][0].desc.synth_desc.in_size; j++){
-            buffers[i][j] = (*cfg)[i][0].desc.synth_desc.rd_data;
+        for (int j = 0; j < (*synth_cfg)[i][0].in_size; j++){
+            buffers[i][j] = (*synth_cfg)[i][0].rd_data;
         }
 
         for (int acc = 0; acc < thread_info[i]->ndev; acc++){
@@ -366,22 +370,22 @@ static void alloc_phase(accelerator_thread_info_t **thread_info, esp_thread_info
     free(ddr_node_cost);
 }
 
-static int validate_buffer(accelerator_thread_info_t *thread_info, esp_thread_info_t **cfg, uint32_t *buf){
+static int validate_buffer(accelerator_thread_info_t *thread_info, struct synth_access **synth_cfg, uint32_t *buf){
     int errors = 0; 
     for (int i = 0; i < thread_info->ndev; i++){
         if (thread_info->p2p && i != thread_info->ndev - 1)
             continue;
 
         int t = thread_info->tid;
-        int offset = cfg[t][i].desc.synth_desc.offset;
-        int in_size = cfg[t][i].desc.synth_desc.in_size;
-        int out_size = cfg[t][i].desc.synth_desc.out_size;
-        int in_place = cfg[t][i].desc.synth_desc.in_place;
-        int wr_data = cfg[t][i].desc.synth_desc.wr_data;
+        int offset = synth_cfg[t][i].offset;
+        int in_size = synth_cfg[t][i].in_size;
+        int out_size = synth_cfg[t][i].out_size;
+        int in_place = synth_cfg[t][i].in_place;
+        int wr_data = synth_cfg[t][i].wr_data;
         int next_in_place;
         
         if (i != thread_info->ndev - 1){
-           next_in_place = cfg[t][i+1].desc.synth_desc.in_place;
+           next_in_place = synth_cfg[t][i+1].in_place;
            if (next_in_place)
                continue;
         }
@@ -389,7 +393,7 @@ static int validate_buffer(accelerator_thread_info_t *thread_info, esp_thread_in
         if (!in_place && !thread_info->p2p)
             offset += in_size; 
         else if (thread_info->p2p)
-            offset = cfg[t][0].desc.synth_desc.in_size;
+            offset = synth_cfg[t][0].in_size;
 
         for (int j = offset; j < offset + out_size; j++){
             if (j == offset + out_size - 1 && buf[j] != wr_data){
@@ -404,16 +408,18 @@ static int validate_buffer(accelerator_thread_info_t *thread_info, esp_thread_in
     return errors;
 }
 
-static void free_phase(accelerator_thread_info_t **thread_info, esp_thread_info_t **cfg, int nthreads){
+static void free_phase(accelerator_thread_info_t **thread_info, esp_thread_info_t **cfg, struct synth_access **synth_cfg, int nthreads){
     for (int i = 0; i < nthreads; i++){
         esp_free(cfg[i]->hw_buf); 
         free(thread_info[i]);
         free(cfg[i]);
+        free(synth_cfg[i]);
     }
+    free(synth_cfg);
     free(cfg);
 }
 
-static void dump_results(FILE* out_file, accelerator_thread_info_t **thread_info, esp_thread_info_t ** cfg, soc_config_t *soc_config, int phase, int nthreads, char** argv, int test_no){
+static void dump_results(FILE* out_file, accelerator_thread_info_t **thread_info, esp_thread_info_t **cfg, struct synth_access **synth_cfg, soc_config_t *soc_config, int phase, int nthreads, char** argv, int test_no){
     int t, d;
     unsigned long long thread_ns;
     unsigned long long phase_size = 0;
@@ -426,15 +432,15 @@ static void dump_results(FILE* out_file, accelerator_thread_info_t **thread_info
             phase_ns += cfg[t][d].hw_ns;
             fprintf(out_file,"%d-%d-%d,", phase_adj, t, d);
             fprintf(out_file,"%d,", thread_info[t]->chain[d]);
-            if (cfg[t][d].desc.synth_desc.esp.coherence == ACC_COH_FULL)
+            if (synth_cfg[t][d].esp.coherence == ACC_COH_FULL)
                 fprintf(out_file,"full,");
-            else if (cfg[t][d].desc.synth_desc.esp.coherence == ACC_COH_LLC)
+            else if (synth_cfg[t][d].esp.coherence == ACC_COH_LLC)
                 fprintf(out_file,"llc,");
-            else if (cfg[t][d].desc.synth_desc.esp.coherence == ACC_COH_RECALL)
+            else if (synth_cfg[t][d].esp.coherence == ACC_COH_RECALL)
                 fprintf(out_file,"recall,");
-            else if (cfg[t][d].desc.synth_desc.esp.coherence == ACC_COH_NONE)
+            else if (synth_cfg[t][d].esp.coherence == ACC_COH_NONE)
                 fprintf(out_file,"none,");
-            else if (cfg[t][d].desc.synth_desc.esp.coherence == ACC_COH_AUTO)
+            else if (synth_cfg[t][d].esp.coherence == ACC_COH_AUTO)
                 fprintf(out_file,"auto,");
 
             if (thread_info[t]->alloc_choice == CONTIG_ALLOC_BALANCED)
@@ -444,9 +450,9 @@ static void dump_results(FILE* out_file, accelerator_thread_info_t **thread_info
             else if (thread_info[t]->alloc_choice == CONTIG_ALLOC_LEAST_LOADED)
                 fprintf(out_file,"lloaded,");
 
-            fprintf(out_file, "%d,", cfg[t][d].desc.synth_desc.esp.footprint); 
+            fprintf(out_file, "%d,", synth_cfg[t][d].esp.footprint); 
 
-            fprintf(out_file,"%d,", cfg[t][d].desc.synth_desc.esp.ddr_node);
+            fprintf(out_file,"%d,", synth_cfg[t][d].esp.ddr_node);
             fprintf(out_file,"%llu\n", cfg[t][d].hw_ns);
         }
         fprintf(out_file, "%d-%d,", phase_adj, t);
@@ -462,7 +468,7 @@ static void dump_results(FILE* out_file, accelerator_thread_info_t **thread_info
         fprintf(out_file, "%zu,", thread_info[t]->memsz);
         phase_size += thread_info[t]->memsz; 
         
-        fprintf(out_file,"%d,", cfg[t][0].desc.synth_desc.esp.ddr_node);
+        fprintf(out_file,"%d,", synth_cfg[t][0].esp.ddr_node);
         fprintf(out_file, "%llu\n", thread_ns);
     }
     fprintf(out_file, "%d,", phase_adj);
@@ -574,12 +580,13 @@ int main (int argc, char** argv)
     accelerator_thread_info_t *thread_info[NPHASES_MAX][NTHREADS_MAX];
     uint32_t *buffers[NTHREADS_MAX];
     esp_thread_info_t **cfg = NULL;
+    struct synth_access **synth_cfg;
     unsigned *nacc = NULL;
 
     //loop over phases - config, alloc, spawn thread, validate, and free
     for (int p = 0; p < nphases; p++){
-        config_threads(f, thread_info[p], &cfg, p, &nthreads, coherence_mode, coherence, &nacc); 
-        alloc_phase(thread_info[p], &cfg, nthreads, *soc_config, alloc_mode, alloc, buffers, p); 
+        config_threads(f, thread_info[p], &cfg, &synth_cfg, p, &nthreads, coherence_mode, coherence, &nacc); 
+        alloc_phase(thread_info[p], &cfg, &synth_cfg, nthreads, *soc_config, alloc_mode, alloc, buffers, p); 
         
         gettime(&th_start);
         
@@ -587,7 +594,7 @@ int main (int argc, char** argv)
 
         gettime(&th_end); 
         for (int t = 0; t < nthreads; t++){
-            int errors = validate_buffer(thread_info[p][t], cfg, buffers[t]);
+            int errors = validate_buffer(thread_info[p][t], synth_cfg, buffers[t]);
             if (errors)
                 printf("[FAIL] Thread %d.%d : %u errors\n", p, t, errors);
             else 
@@ -600,9 +607,9 @@ int main (int argc, char** argv)
 
         printf("PHASE.%d %.4f s\n", p, hw_s);
       
-        dump_results(out_file, thread_info[p], cfg, soc_config, p, nthreads, argv, test_no);
+        dump_results(out_file, thread_info[p], cfg, synth_cfg, soc_config, p, nthreads, argv, test_no);
 
-        free_phase(thread_info[p], cfg, nthreads);
+        free_phase(thread_info[p], cfg, synth_cfg, nthreads);
         free(nacc); 
     }
     hw_s_total = (float) hw_ns_total / 1000000000;

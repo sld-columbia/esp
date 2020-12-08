@@ -2,6 +2,7 @@
 #define __ESP_CFG_000_H__
 
 #include "libesp.h"
+#include "<accelerator_name>.h"
 
 typedef /* <<--token-type-->> */ token_t;
 
@@ -11,18 +12,24 @@ typedef /* <<--token-type-->> */ token_t;
 
 #define NACC 1
 
+struct <accelerator_name>_access <accelerator_name>_cfg_000[] = {
+	{
+		/* <<--descriptor-->> */
+		.src_offset = 0,
+		.dst_offset = 0,
+		.esp.coherence = ACC_COH_NONE,
+		.esp.p2p_store = 0,
+		.esp.p2p_nsrcs = 0,
+		.esp.p2p_srcs = {"", "", "", ""},
+	}
+};
+
 esp_thread_info_t cfg_000[] = {
 	{
 		.run = true,
 		.devname = "<accelerator_name>.0",
-		.type = <accelerator_name>,
-		/* <<--descriptor-->> */
-		.desc.<accelerator_name>_desc.src_offset = 0,
-		.desc.<accelerator_name>_desc.dst_offset = 0,
-		.desc.<accelerator_name>_desc.esp.coherence = ACC_COH_NONE,
-		.desc.<accelerator_name>_desc.esp.p2p_store = 0,
-		.desc.<accelerator_name>_desc.esp.p2p_nsrcs = 0,
-		.desc.<accelerator_name>_desc.esp.p2p_srcs = {"", "", "", ""},
+		.ioctl_req = <ACCELERATOR_NAME>_IOC_ACCESS,
+		.esp_desc = &(<accelerator_name>_cfg_000[0].esp),
 	}
 };
 

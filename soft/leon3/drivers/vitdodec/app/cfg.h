@@ -2,6 +2,7 @@
 #define __ESP_CFG_000_H__
 
 #include "libesp.h"
+#include "vitdodec.h"
 
 typedef int8_t token_t;
 
@@ -17,21 +18,27 @@ const int32_t data_bits = DATA_BITS;
 
 #define NACC 1
 
+struct vitdodec_access vitdodec_cfg_000[] = {
+	{
+		/* <<--descriptor-->> */
+		.cbps = CBPS,
+		.ntraceback = NTRACEBACK,
+		.data_bits = DATA_BITS,
+		.src_offset = 0,
+		.dst_offset = 0,
+		.esp.coherence = ACC_COH_NONE,
+		.esp.p2p_store = 0,
+		.esp.p2p_nsrcs = 0,
+		.esp.p2p_srcs = {"", "", "", ""},
+	}
+};
+
 esp_thread_info_t cfg_000[] = {
 	{
 		.run = true,
 		.devname = "vitdodec.0",
-		.type = vitdodec,
-		/* <<--descriptor-->> */
-		.desc.vitdodec_desc.cbps = CBPS,
-		.desc.vitdodec_desc.ntraceback = NTRACEBACK,
-		.desc.vitdodec_desc.data_bits = DATA_BITS,
-		.desc.vitdodec_desc.src_offset = 0,
-		.desc.vitdodec_desc.dst_offset = 0,
-		.desc.vitdodec_desc.esp.coherence = ACC_COH_NONE,
-		.desc.vitdodec_desc.esp.p2p_store = 0,
-		.desc.vitdodec_desc.esp.p2p_nsrcs = 0,
-		.desc.vitdodec_desc.esp.p2p_srcs = {"", "", "", ""},
+		.ioctl_req = VITDODEC_IOC_ACCESS,
+		.esp_desc = &(vitdodec_cfg_000[0].esp),
 	}
 };
 

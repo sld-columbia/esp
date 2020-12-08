@@ -29,67 +29,19 @@
 #include <esp.h>
 #include <esp_accelerator.h>
 
-// <<--esp-include-->>
-#include "vitdodec.h"
-#include "FFTAccelerator.h"
-#include "AdderAccelerator.h"
-#include "fft.h"
-#include "adder.h"
-#include "CounterAccelerator.h"
-#include "dummy.h"
-#include "sort.h"
-#include "spmv.h"
-#include "synth.h"
-#include "nightvision.h"
-#include "vitbfly2.h"
-
 unsigned DMA_WORD_PER_BEAT(unsigned _st);
 
-enum esp_accelerator_type {
-	// <<--esp-enum-->>
-	vitdodec,
-	fftaccelerator,
-	adderaccelerator,
-	fft,
-	adder,
-	CounterAccelerator,
-	dummy,
-	sort,
-	spmv,
-	synth,
-	nightvision,
-	vitbfly2,
-};
-
-union esp_accelerator_descriptor {
-	// <<--esp-descriptor-->>
-	struct vitdodec_access vitdodec_desc;
-	struct fftaccelerator_access fftaccelerator_desc;
-	struct adderaccelerator_access adderaccelerator_desc;
-	struct fft_access fft_desc;
-	struct adder_access adder_desc;
-	struct CounterAccelerator_access CounterAccelerator_desc;
-	struct dummy_access dummy_desc;
-	struct sort_access sort_desc;
-	struct spmv_access spmv_desc;
-	struct synth_access synth_desc;
-	struct nightvision_access nightvision_desc;
-	struct vitbfly2_access vitbfly2_desc;
-};
-
-struct esp_accelerator_thread_info {
+typedef struct esp_accelerator_thread_info {
 	bool run;
 	char *devname;
-	enum esp_accelerator_type type;
 	void *hw_buf;
+	int ioctl_req;
 	/* Partially Filled-in by ESPLIB */
-	union esp_accelerator_descriptor desc;
+	struct esp_access *esp_desc;
 	/* Filled-in by ESPLIB */
 	int fd;
 	unsigned long long hw_ns;
-};
-
-typedef struct esp_accelerator_thread_info esp_thread_info_t;
+} esp_thread_info_t;
 
 typedef struct buf2handle_node {
 	void *buf;

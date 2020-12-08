@@ -59,49 +59,7 @@ void remove_buf(void *buf)
 
 bool thread_is_p2p(esp_thread_info_t *thread)
 {
-	switch (thread->type) {
-	// <<--esp-p2p-thread-->>
-	case vitdodec :
-		return (thread->desc.vitdodec_desc.esp.p2p_store
-			|| thread->desc.vitdodec_desc.esp.p2p_nsrcs);
-	case fftaccelerator :
-		return (thread->desc.fftaccelerator_desc.esp.p2p_store
-			|| thread->desc.fftaccelerator_desc.esp.p2p_nsrcs);
-	case adderaccelerator :
-		return (thread->desc.adderaccelerator_desc.esp.p2p_store
-			|| thread->desc.adderaccelerator_desc.esp.p2p_nsrcs);
-	case fft :
-		return (thread->desc.fft_desc.esp.p2p_store
-			|| thread->desc.fft_desc.esp.p2p_nsrcs);
-	case adder:
-		return (thread->desc.adder_desc.esp.p2p_store
-			|| thread->desc.adder_desc.esp.p2p_nsrcs);
-	case CounterAccelerator:
-		return (thread->desc.CounterAccelerator_desc.esp.p2p_store
-			|| thread->desc.CounterAccelerator_desc.esp.p2p_nsrcs);
-	case dummy:
-		return (thread->desc.dummy_desc.esp.p2p_store
-			|| thread->desc.dummy_desc.esp.p2p_nsrcs);
-	case sort:
-		return (thread->desc.sort_desc.esp.p2p_store
-			|| thread->desc.sort_desc.esp.p2p_nsrcs);
-	case spmv:
-		return (thread->desc.spmv_desc.esp.p2p_store
-			|| thread->desc.spmv_desc.esp.p2p_nsrcs);
-	case synth:
-		return (thread->desc.synth_desc.esp.p2p_store
-			|| thread->desc.synth_desc.esp.p2p_nsrcs);
-	case nightvision:
-		return (thread->desc.nightvision_desc.esp.p2p_store
-			|| thread->desc.nightvision_desc.esp.p2p_nsrcs);
-	case vitbfly2:
-		return (thread->desc.vitbfly2_desc.esp.p2p_store
-			|| thread->desc.vitbfly2_desc.esp.p2p_nsrcs);
-	default :
-		die("Error: accelerator type specified for accelerator %s not supported\n", thread->devname);
-		break;
-	}
-
+	return ((thread->esp_desc)->p2p_store || (thread->esp_desc)->p2p_nsrcs);
 }
 
 unsigned DMA_WORD_PER_BEAT(unsigned _st)
@@ -117,49 +75,12 @@ void *accelerator_thread( void *ptr )
 	int rc = 0;
 
 	gettime(&th_start);
-	switch (info->type) {
-	// <<--esp-ioctl-->>
-	case vitdodec :
-		rc = ioctl(info->fd, VITDODEC_IOC_ACCESS, info->desc.vitdodec_desc);
-		break;
-	case fftaccelerator :
-		rc = ioctl(info->fd, FFTACCELERATOR_IOC_ACCESS, info->desc.fftaccelerator_desc);
-		break;
-	case adderaccelerator :
-		rc = ioctl(info->fd, ADDERACCELERATOR_IOC_ACCESS, info->desc.adderaccelerator_desc);
-		break;
-	case fft :
-		rc = ioctl(info->fd, FFT_IOC_ACCESS, info->desc.fft_desc);
-		break;
-	case adder :
-		rc = ioctl(info->fd, ADDER_IOC_ACCESS, info->desc.adder_desc);
-		break;
-	case CounterAccelerator :
-		rc = ioctl(info->fd, COUNTERACCELERATOR_IOC_ACCESS, info->desc.CounterAccelerator_desc);
-		break;
-	case dummy :
-		rc = ioctl(info->fd, DUMMY_IOC_ACCESS, info->desc.dummy_desc);
-		break;
-	case sort :
-		rc = ioctl(info->fd, SORT_IOC_ACCESS, info->desc.sort_desc);
-		break;
-	case spmv :
-		rc = ioctl(info->fd, SPMV_IOC_ACCESS, info->desc.spmv_desc);
-		break;
-	case synth :
-		rc = ioctl(info->fd, SYNTH_IOC_ACCESS, info->desc.synth_desc);
-		break;
-	case nightvision :
-		rc = ioctl(info->fd, NIGHTVISION_IOC_ACCESS, info->desc.nightvision_desc);
-		break;
-	case vitbfly2 :
-		rc = ioctl(info->fd, VITBFLY2_IOC_ACCESS, info->desc.vitbfly2_desc);
-		break;
-	}
+	rc = ioctl(info->fd, info->ioctl_req, info->esp_desc);
 	gettime(&th_end);
 	if (rc < 0) {
 		perror("ioctl");
 	}
+
 	info->hw_ns = ts_subtract(&th_start, &th_end);
 
 	return NULL;
@@ -215,49 +136,12 @@ void *accelerator_thread_serial(void *ptr)
 			continue;
 
 		gettime(&th_start);
-		switch (info->type) {
-		// <<--esp-ioctl-->>
-		case vitdodec :
-			rc = ioctl(info->fd, VITDODEC_IOC_ACCESS, info->desc.vitdodec_desc);
-			break;
-		case fftaccelerator :
-			rc = ioctl(info->fd, FFTACCELERATOR_IOC_ACCESS, info->desc.fftaccelerator_desc);
-			break;
-		case adderaccelerator :
-			rc = ioctl(info->fd, ADDERACCELERATOR_IOC_ACCESS, info->desc.adderaccelerator_desc);
-			break;
-		case fft :
-			rc = ioctl(info->fd, FFT_IOC_ACCESS, info->desc.fft_desc);
-			break;
-		case adder :
-			rc = ioctl(info->fd, ADDER_IOC_ACCESS, info->desc.adder_desc);
-			break;
-		case CounterAccelerator :
-			rc = ioctl(info->fd, COUNTERACCELERATOR_IOC_ACCESS, info->desc.CounterAccelerator_desc);
-			break;
-		case dummy :
-			rc = ioctl(info->fd, DUMMY_IOC_ACCESS, info->desc.dummy_desc);
-			break;
-		case sort :
-			rc = ioctl(info->fd, SORT_IOC_ACCESS, info->desc.sort_desc);
-			break;
-		case spmv :
-			rc = ioctl(info->fd, SPMV_IOC_ACCESS, info->desc.spmv_desc);
-			break;
-		case synth :
-			rc = ioctl(info->fd, SYNTH_IOC_ACCESS, info->desc.synth_desc);
-			break;
-		case nightvision :
-			rc = ioctl(info->fd, NIGHTVISION_IOC_ACCESS, info->desc.nightvision_desc);
-			break;
-		case vitbfly2 :
-			rc = ioctl(info->fd, VITBFLY2_IOC_ACCESS, info->desc.vitbfly2_desc);
-			break;
-		}
+		rc = ioctl(info->fd, info->ioctl_req, info->esp_desc);
 		gettime(&th_end);
 		if (rc < 0) {
 			perror("ioctl");
 		}
+
 		info->hw_ns = ts_subtract(&th_start, &th_end);
 		close(info->fd);
 	}
@@ -281,14 +165,6 @@ void *esp_alloc(size_t size)
 	return contig_ptr;
 }
 
-static void esp_prepare(struct esp_access *esp, contig_handle_t *handle, enum contig_alloc_policy policy)
-{
-	esp->contig = contig_to_khandle(*handle);
-	esp->ddr_node = contig_to_most_allocated(*handle);
-	esp->alloc_policy = policy;
-	esp->run = true;
-}
-
 static void esp_config(esp_thread_info_t* cfg[], unsigned nthreads, unsigned *nacc)
 {
 	int i, j;
@@ -298,51 +174,14 @@ static void esp_config(esp_thread_info_t* cfg[], unsigned nthreads, unsigned *na
 			esp_thread_info_t *info = cfg[i] + j;
 			if (!info->run)
 				continue;
+
 			enum contig_alloc_policy policy;
 			contig_handle_t *handle = lookup_handle(info->hw_buf, &policy);
-			switch (info->type) {
-			// <<--esp-prepare-->>
-			case vitdodec :
-				esp_prepare(&info->desc.vitdodec_desc.esp, handle, policy);
-				break;
-			case fftaccelerator :
-				esp_prepare(&info->desc.fftaccelerator_desc.esp, handle, policy);
-				break;
-			case adderaccelerator :
-				esp_prepare(&info->desc.adderaccelerator_desc.esp, handle, policy);
-				break;
-			case fft :
-				esp_prepare(&info->desc.fft_desc.esp, handle, policy);
-				break;
-			case adder:
-				esp_prepare(&info->desc.adder_desc.esp, handle, policy);
-				break;
-			case CounterAccelerator:
-				esp_prepare(&info->desc.CounterAccelerator_desc.esp, handle, policy);
-				break;
-			case dummy:
-				esp_prepare(&info->desc.dummy_desc.esp, handle, policy);
-				break;
-			case sort:
-				esp_prepare(&info->desc.sort_desc.esp, handle, policy);
-				break;
-			case spmv:
-				esp_prepare(&info->desc.spmv_desc.esp, handle, policy);
-				break;
-			case synth:
-				esp_prepare(&info->desc.synth_desc.esp, handle, policy);
-				break;
-			case nightvision:
-				esp_prepare(&info->desc.nightvision_desc.esp, handle, policy);
-				break;
-			case vitbfly2:
-				esp_prepare(&info->desc.vitbfly2_desc.esp, handle, policy);
-				break;
-			default :
-				contig_free(*handle);
-				die("Error: accelerator type specified for accelerator %s not supported\n", info->devname);
-				break;
-			}
+
+			(info->esp_desc)->contig = contig_to_khandle(*handle);
+			(info->esp_desc)->ddr_node = contig_to_most_allocated(*handle);
+			(info->esp_desc)->alloc_policy = policy;
+			(info->esp_desc)->run = true;
 		}
 	}
 }
@@ -363,7 +202,7 @@ static void print_time_info(esp_thread_info_t *info[], unsigned long long hw_ns,
 }
 
 void esp_run(esp_thread_info_t cfg[], unsigned nacc)
-{ 
+{
 	int i;
 
 	if (thread_is_p2p(&cfg[0])) {
@@ -371,7 +210,7 @@ void esp_run(esp_thread_info_t cfg[], unsigned nacc)
 		cfg_ptrs[0] = cfg;
 
 		esp_run_parallel(cfg_ptrs, 1, &nacc);
-	} else {
+	} else{
 		esp_thread_info_t **cfg_ptrs = malloc(sizeof(esp_thread_info_t*) * nacc);
 		unsigned *nacc_arr = malloc(sizeof(unsigned) * nacc);
 
@@ -383,7 +222,6 @@ void esp_run(esp_thread_info_t cfg[], unsigned nacc)
 		free(nacc_arr);
 		free(cfg_ptrs);
 	}
-
 }
 
 void esp_run_parallel(esp_thread_info_t* cfg[], unsigned nthreads, unsigned* nacc)
@@ -401,17 +239,18 @@ void esp_run_parallel(esp_thread_info_t* cfg[], unsigned nthreads, unsigned* nac
 			const char *prefix = "/dev/";
 			char path[70];
 
-			contig_handle_t *handle = lookup_handle(info->hw_buf, NULL);
-
 			if (strlen(info->devname) > 64) {
+				contig_handle_t *handle = lookup_handle(info->hw_buf, NULL);
 				contig_free(*handle);
-				die("Error: device name %s exceeds maximum length of 64 characters\n", info->devname);
+				die("Error: device name %s exceeds maximum length of 64 characters\n",
+				    info->devname);
 			}
 
 			sprintf(path, "%s%s", prefix, info->devname);
 
 			info->fd = open(path, O_RDWR, 0);
 			if (info->fd < 0) {
+				contig_handle_t *handle = lookup_handle(info->hw_buf, NULL);
 				contig_free(*handle);
 				die_errno("fopen failed\n");
 			}
@@ -447,6 +286,7 @@ void esp_run_parallel(esp_thread_info_t* cfg[], unsigned nthreads, unsigned* nac
 
 	free(thread);
 }
+
 
 void esp_free(void *buf)
 {
