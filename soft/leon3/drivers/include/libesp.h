@@ -81,8 +81,8 @@ struct esp_accelerator_thread_info {
 	bool run;
 	char *devname;
 	enum esp_accelerator_type type;
-    void *hw_buf;
-    /* Partially Filled-in by ESPLIB */
+	void *hw_buf;
+	/* Partially Filled-in by ESPLIB */
 	union esp_accelerator_descriptor desc;
 	/* Filled-in by ESPLIB */
 	int fd;
@@ -92,15 +92,15 @@ struct esp_accelerator_thread_info {
 typedef struct esp_accelerator_thread_info esp_thread_info_t;
 
 typedef struct buf2handle_node {
-    void *buf;
-    contig_handle_t *handle;
-    enum contig_alloc_policy policy;
-    struct buf2handle_node *next;
+	void *buf;
+	contig_handle_t *handle;
+	enum contig_alloc_policy policy;
+	struct buf2handle_node *next;
 } buf2handle_node;
 
 struct thread_args {
-    esp_thread_info_t* info; 
-    unsigned nacc; 
+	esp_thread_info_t* info;
+	unsigned nacc;
 };
 
 void *esp_alloc_policy(struct contig_alloc_params params, size_t size);

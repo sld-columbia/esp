@@ -88,8 +88,8 @@ int main(int argc, char **argv)
 
 	init_parameters();
 
-    buf = (token_t *) esp_alloc(size);
-    cfg_000[0].hw_buf = buf;
+	buf = (token_t *) esp_alloc(size);
+	cfg_000[0].hw_buf = buf;
 	gold = malloc(out_len * sizeof(float));
 
 	init_buffer(buf, gold);

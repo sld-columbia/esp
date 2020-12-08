@@ -118,7 +118,7 @@ int main(int argc, char **argv)
 	buf = (token_t *) esp_alloc(size);
 	cfg_000.hw_buf = buf;
     
-    gold = malloc(out_size);
+	gold = malloc(out_size);
 
 	init_buffer(buf, gold);
 

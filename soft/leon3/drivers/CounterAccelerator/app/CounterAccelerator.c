@@ -94,5 +94,3 @@ int main(int argc, char *argv[])
 	 */
 	return test_main(&CounterAccelerator_test.info, "full", "hw");
 }
-
-
