@@ -51,7 +51,6 @@ include $(ESP_ROOT)/utils/esp.mk
 ### RTL simulator executables ###
 include $(ESP_ROOT)/utils/rtl.mk
 
-
 ### Paths shortcuts ###
 UTILS_GRLIB = $(ESP_ROOT)/utils/grlib
 TKCONFIG   = $(UTILS_GRLIB)/tkconfig

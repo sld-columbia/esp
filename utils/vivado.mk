@@ -47,6 +47,11 @@ endif
 	@for dat in $(DAT_SRCS); do \
 		echo "add_files $$dat" >> $@; \
 	done;
+### Replace tile with a blackbox if a DPR implementation is chosen
+	@if [ "$(DPR_ENABLED)" == "y" ]; then \
+        $(QUIET_INFO_ALT)echo "generating bbox sources"; \
+        sh $(ESP_ROOT)/socs/common/process_dpr.sh $(ESP_ROOT) $(BOARD) $(DEVICE) BBOX; \
+    fi;
 
 
 vivado/setup.tcl: vivado $(XDC) $(BOARD_FILES)
@@ -152,10 +157,12 @@ vivado/syn.tcl: vivado
 	@echo "get_ips" >> $@
 	@echo "wait_on_run -timeout 360 synth_1" >> $@
 	@echo "set_msg_config -suppress -id {Drc 23-20}" >> $@
-	@echo "launch_runs impl_1 -jobs 12" >> $@
-	@echo "wait_on_run -timeout 360 impl_1" >> $@
-	@echo "launch_runs impl_1 -to_step write_bitstream" >> $@
-	@echo "wait_on_run -timeout 60 impl_1" >> $@
+	@if [ "$(DPR_ENABLED)" != "y" ]; then \
+        echo "launch_runs impl_1 -jobs 12" >> $@; \
+        echo "wait_on_run -timeout 360 impl_1" >> $@; \
+        echo "launch_runs impl_1 -to_step write_bitstream" >> $@; \
+        echo "wait_on_run -timeout 60 impl_1" >> $@; \
+    fi;
 
 vivado/program.tcl: vivado
 	$(QUIET_INFO)echo "generating programming script for $(PART)"
@@ -221,18 +228,71 @@ vivado-gui: vivado-setup
 	vivado $(DESIGN).xpr; \
 	cd ../;
 
-vivado-syn: vivado-setup
+vivado-syn:
 	$(QUIET_INFO)echo "launching Vivado implementation script"
-	@cd vivado; \
-	vivado $(VIVADO_BATCH_OPT) -source syn.tcl | tee ../vivado_syn.log; \
-	cd ../;
-	@bit=vivado/$(DESIGN).runs/impl_1/$(TOP).bit; \
-	if test -r $$bit; then \
-		rm -rf $(TOP).bit; \
-		ln -s $$bit; \
-	else \
-		echo $(SPACES)"ERROR: bistream not found; synthesis failed"; \
-	fi; \
+	@cd vivado; 
+	#vivado $(VIVADO_BATCH_OPT) -source syn.tcl | tee ../vivado_syn.log;
+	@if [ "$(DPR_ENABLED)" != "y" ]; then \
+		bit=vivado/$(DESIGN).runs/impl_1/$(TOP).bit; \
+		if  test -r $$bit; then \
+			rm -rf $(TOP).bit; \
+			ln -s $$bit; \
+        else \
+            echo $(SPACES)"ERROR: bistream not found; synthesis failed"; \
+        fi; \
+    else \
+        $(QUIET_INFO_ALT)echo "starting DPR implementation"; \
+        $(QUIET_INFO_ALT)echo "assembling top level static design"; \
+        $(RM) static_config.tcl; \
+        echo "set part $(DEVICE) " >> static_config.tcl; \
+        echo "set board $(BOARD) " >> static_config.tcl; \
+        echo "add_files $(ESP_ROOT)/socs/$(BOARD)/vivado/$(DESIGN).runs/synth_1/top.dcp" >> static_config.tcl; \
+        if [ $(BOARD) == xilinx-vcu128-xcvu37p ]; then \
+            echo "read_ip -quiet $(ESP_ROOT)/socs/$(BOARD)/vivado/$(DESIGN).srcs/sources_1/ip/mig_clamshell/mig_clamshell.xci" >> static_config.tcl; \
+            echo "read_ip -quiet $(ESP_ROOT)/socs/$(BOARD)/vivado/$(DESIGN).srcs/sources_1/ip/sgmii_vcu128/sgmii_vcu128.xci" >> static_config.tcl; \
+        else \
+            echo "read_ip -quiet $(ESP_ROOT)/socs/$(BOARD)/vivado/$(DESIGN).srcs/sources_1/ip/mig/mig.xci" >> static_config.tcl; \
+            echo "read_ip -quiet $(ESP_ROOT)/socs/$(BOARD)/vivado/$(DESIGN).srcs/sources_1/ip/sgmii/sgmii.xci" >> static_config.tcl; \
+        fi; \
+        echo "link_design -top $(TOP) -part $(DEVICE)" >> static_config.tcl; \
+        echo "write_checkpoint -force $(ESP_ROOT)/socs/$(BOARD)/vivado/$(DESIGN).runs/synth_1/top_dpr.dcp" >> static_config.tcl; \
+        echo "close_project" >> static_config.tcl; \
+        echo "exit" >> static_config.tcl; \
+        $(QUIET_INFO_ALT)echo "Assembling sgmii and mig into static part"; \
+        vivado $(VIVADO_BATCH_OPT) -source static_config.tcl | tee ../vivado_syn.log; \
+        $(QUIET_INFO_ALT)echo "creating Vivado dpr directory"; \
+        $(RM) vivado_dpr; \
+        mkdir -p vivado_dpr; \
+        mkdir -p vivado_dpr/Bitstreams; \
+        mkdir -p vivado_dpr/Checkpoint; \
+        mkdir -p vivado_dpr/Implement; \
+        mkdir -p vivado_dpr/Synth; \
+        mkdir -p vivado_dpr/Synth/Static; \
+        cp .esp_config vivado_dpr/; \
+        cp $(ESP_ROOT)/socs/$(BOARD)/vivado/$(DESIGN).runs/synth_1/top_dpr.dcp vivado_dpr/Synth/Static/top_synth.dcp; \
+        $(QUIET_INFO_ALT)echo "launching setup script for Vivado DPR flow";  \
+        sh $(ESP_ROOT)/socs/common/process_dpr.sh $(ESP_ROOT) $(BOARD) $(DEVICE) DPR;  \
+        cd vivado_dpr; \
+        vivado $(VIVADO_BATCH_OPT) -source ooc_syn.tcl | tee ../vivado_syn_dpr.log; \
+    fi;
+
+vivado-syn-dpr: DPR_ENABLED = y
+vivado-syn-dpr: vivado-syn
+
+vivado-syn-dpr-acc:
+	$(QUIET_INFO)echo "launching setup script for Vivado DPR flow"  
+	@if ! test -d vivado_dpr; then \
+        $(QUIET_INFO_ALT)echo "vivado_dpr directory not found"; \
+        $(QUIET_INFO_ALT)echo "you should run vivado-syn-dpr first"; \
+    else \
+        $(QUIET_INFO)echo "starting DPR flow"; \
+        sh $(ESP_ROOT)/socs/common/process_dpr.sh $(ESP_ROOT) $(BOARD) $(DEVICE) ACC;  \
+        cp .esp_config vivado_dpr/; \
+        cd vivado_dpr; \
+        vivado $(VIVADO_BATCH_OPT) -source ooc_syn.tcl | tee ../vivado_syn_dpr.log; \
+        cp Bitstreams/top.bit ../vivado/$(DESIGN).runs/impl_1/top.bit; \
+    fi;
+
 
 vivado-update: vivado vivado/syn.tcl
 	$(QUIET_INFO)echo "Updating implementaiton with Vivado"
@@ -255,13 +315,20 @@ endif # ifneq ($(filter $(TECHLIB),$(FPGALIBS)),)
 
 vivado-prog-fpga: vivado/program.tcl
 	@cd vivado; \
-	bit=$(DESIGN).runs/impl_1/$(TOP).bit; \
-	if test -r $$bit; then \
-		vivado $(VIVADO_BATCH_OPT) -source program.tcl -tclargs $(FPGA_HOST) $(XIL_HW_SERVER_PORT) $(PART) $$bit; \
-	else \
-		echo $(SPACES)"ERROR: bistream not found; please run target vivado-syn first"; \
-	fi; \
-	cd ../;
+    if [ "$(DPR_ENABLED)" != "y" ]; then \
+        bit=$(DESIGN).runs/impl_1/$(TOP).bit; \
+    else \
+        $(QUIET_INFO_ALT) echo "copying partial bitstream";\
+        mkdir -p $(ESP_ROOT)/socs/$(BOARD)/vivado/$(DESIGN).runs/impl_1; \
+        cp $(ESP_ROOT)/socs/$(BOARD)/vivado_dpr/Bitstreams/top_dpr.bit $(ESP_ROOT)/socs/$(BOARD)/vivado/$(DESIGN).runs/impl_1/$(TOP).bit; \
+        bit=$(DESIGN).runs/impl_1/top.bit; \
+    fi;\
+    if test -r $$bit; then \
+        vivado $(VIVADO_BATCH_OPT) -source program.tcl -tclargs $(FPGA_HOST) $(XIL_HW_SERVER_PORT) $(PART) $$bit; \
+    else \
+        echo $(SPACES)"ERROR: bistream not found; please run target vivado-syn first"; \
+    fi; \
+    cd ../;
 
 vivado-clean:
 	$(QUIET_CLEAN)$(RM) \
