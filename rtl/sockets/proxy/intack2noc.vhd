@@ -19,7 +19,7 @@ use work.coretypes.all;
 
 use work.esp_global.all;
 
-entity cpu_irq2noc is
+entity intack2noc is
   generic (
     tech  : integer := virtex7;
     irq_y : local_yx;
@@ -46,9 +46,9 @@ entity cpu_irq2noc is
     remote_irq_ack_data_in : out misc_noc_flit_type;
     remote_irq_ack_full    : in  std_ulogic);
 
-end cpu_irq2noc;
+end intack2noc;
 
-architecture rtl of cpu_irq2noc is
+architecture rtl of intack2noc is
 
   constant IRQ_FIFO_DEPTH : integer := 8;
 

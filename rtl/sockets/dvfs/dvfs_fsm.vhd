@@ -23,7 +23,7 @@ use work.nocpackage.all;
 use work.tile.all;
 use work.dvfs.all;
 
-use work.acctypes.all;
+use work.esp_acc_regmap.all;
 
 entity dvfs_fsm is
 

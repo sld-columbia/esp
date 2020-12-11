@@ -36,7 +36,7 @@ cores/leon3/libcache.vhd
 cores/leon3/libleon3.vhd
 cores/ibex/ibex_esp_pkg.vhd
 cores/ariane/ariane_esp_pkg.vhd
-sockets/proxy/acctypes.vhd
+sockets/proxy/esp_acc_regmap.vhd
 sockets/monitor/monitor_pkg.vhd
 sockets/csr/esp_csr_pkg.vhd
 noc/genram_pkg.vhd

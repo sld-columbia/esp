@@ -43,9 +43,9 @@ use work.nocpackage.all;
 use work.cachepackage.all;
 use work.tile.all;
 
-use work.acctypes.all;
+use work.esp_acc_regmap.all;
 
-entity acc_dma2noc is
+entity esp_acc_dma is
   generic (
     tech               : integer                              := virtex7;
     extra_clk_buf      : integer range 0 to 1;
@@ -131,9 +131,9 @@ entity acc_dma2noc is
     interrupt_data_in                   : out misc_noc_flit_type;
     interrupt_full                      : in  std_ulogic);
 
-end acc_dma2noc;
+end esp_acc_dma;
 
-architecture rtl of acc_dma2noc is
+architecture rtl of esp_acc_dma is
 
   -- plug & play info
   signal pconfig : apb_config_type;
@@ -339,7 +339,7 @@ begin  -- rtl
   -----------------------------------------------------------------------------
 
   tlb_gen: if tlb_entries /= 0 generate
-    acc_tlb_1 : acc_tlb
+    esp_acc_tlb_1 : esp_acc_tlb
       generic map (
         tech           => tech,
         scatter_gather => scatter_gather,

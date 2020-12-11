@@ -20,7 +20,7 @@ use work.genacc.all;
 use work.nocpackage.all;
 use work.dvfs.all;
 
-use work.acctypes.all;
+use work.esp_acc_regmap.all;
 
 entity tile_dvfs is
   generic (

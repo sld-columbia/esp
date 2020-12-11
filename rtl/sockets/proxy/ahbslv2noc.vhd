@@ -32,7 +32,7 @@ use work.genacc.all;
 
 use work.nocpackage.all;
 
-entity cpu_ahbs2noc is
+entity ahbslv2noc is
   generic (
     tech             : integer;
     hindex           : std_logic_vector(0 to NAHBSLV - 1);
@@ -68,9 +68,9 @@ entity cpu_ahbs2noc is
     remote_ahbs_rcv_rdreq      : out std_ulogic;
     remote_ahbs_rcv_data_out   : in  misc_noc_flit_type;
     remote_ahbs_rcv_empty      : in  std_ulogic);
-end cpu_ahbs2noc;
+end ahbslv2noc;
 
-architecture rtl of cpu_ahbs2noc is
+architecture rtl of ahbslv2noc is
 
   type ahbs_fsm is (idle, request_header, request_address,
                     request_data, reply_header, reply_data,

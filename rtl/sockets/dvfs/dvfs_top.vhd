@@ -21,7 +21,7 @@ use work.monitor_pkg.all;
 use work.nocpackage.all;
 use work.tile.all;
 
-use work.acctypes.all;
+use work.esp_acc_regmap.all;
 
 entity dvfs_top is
 

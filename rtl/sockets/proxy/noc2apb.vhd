@@ -18,7 +18,7 @@ use work.genacc.all;
 
 use work.nocpackage.all;
 
-entity misc_noc2apb is
+entity noc2apb is
   generic (
     tech         : integer := virtex7;
     local_apb_en : std_logic_vector(0 to NAPBSLV - 1));
@@ -40,9 +40,9 @@ entity misc_noc2apb is
     apb_rcv_data_out    : in  misc_noc_flit_type;
     apb_rcv_empty       : in  std_ulogic);
 
-end misc_noc2apb;
+end noc2apb;
 
-architecture rtl of misc_noc2apb is
+architecture rtl of noc2apb is
 
   type apb_fsm is (rcv_header, rcv_address, apb_write_strobe,
                    rcv_data, snd_data, snd_data_delay);

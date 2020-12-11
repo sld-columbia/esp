@@ -22,7 +22,7 @@ use work.nocpackage.all;
 use work.cachepackage.all;
 use work.tile.all;
 use work.coretypes.all;
-use work.acctypes.all;
+use work.esp_acc_regmap.all;
 use work.socmap.all;
 use work.grlib_config.all;
 
@@ -838,7 +838,7 @@ begin
   end process pready_gen;
 
   -- APB proxy
-  misc_noc2apb_1 : misc_noc2apb
+  noc2apb_1 : noc2apb
     generic map (
       tech         => CFG_FABTECH,
       local_apb_en => this_local_apb_en)

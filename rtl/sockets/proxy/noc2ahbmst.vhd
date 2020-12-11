@@ -23,7 +23,7 @@ use work.genacc.all;
 use work.nocpackage.all;
 use work.cachepackage.all;
 
-entity mem_noc2ahbm is
+entity noc2ahbmst is
   generic (
     tech        : integer;
     hindex      : integer range 0 to NAHBSLV - 1;
@@ -64,9 +64,9 @@ entity mem_noc2ahbm is
     dma_snd_atleast_4slots    : in  std_ulogic;
     dma_snd_exactly_3slots    : in  std_ulogic);
 
-end mem_noc2ahbm;
+end noc2ahbmst;
 
-architecture rtl of mem_noc2ahbm is
+architecture rtl of noc2ahbmst is
 
   constant hconfig : ahb_config_type := (
     0      => ahb_device_reg (VENDOR_SLD, SLD_MST_PROXY, 0, 0, 0),

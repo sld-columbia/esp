@@ -34,7 +34,7 @@ use work.genacc.all;
 use work.nocpackage.all;
 
 
-entity cpu_axi2noc is
+entity axislv2noc is
   generic (
     tech             : integer;
     nmst             : integer;
@@ -67,9 +67,9 @@ entity cpu_axi2noc is
     remote_ahbs_rcv_rdreq      : out std_ulogic;
     remote_ahbs_rcv_data_out   : in  misc_noc_flit_type;
     remote_ahbs_rcv_empty      : in  std_ulogic);
-end cpu_axi2noc;
+end axislv2noc;
 
-architecture rtl of cpu_axi2noc is
+architecture rtl of axislv2noc is
 
   type axi_fsm is (idle, request_header, request_address,
                    request_length, request_data, reply_header,
@@ -253,7 +253,7 @@ begin  -- rtl
     if tran.write = '1' then
       if retarget_for_dma = 1 then
         tran.msg_type := REQ_DMA_WRITE;  -- This request is non coherent, but
-                                         -- mem_noc2ahbm must skip
+                                         -- noc2ahbmst must skip
                                          -- receive_wrlength, which only exists
                                          -- for DMA_FROM_DEV from accelerators.
                                          -- We use this workaround because

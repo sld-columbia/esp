@@ -5,7 +5,7 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
-package acctypes is
+package esp_acc_regmap is
 
   constant MAXREGNUM : integer := 32;
   type bank_type is array (natural range <>) of std_logic_vector(31 downto 0);
@@ -101,9 +101,9 @@ package acctypes is
     signal amount  : std_logic_vector(4 downto 0))
     return std_logic_vector;
 
-end acctypes;
+end esp_acc_regmap;
 
-package body acctypes is
+package body esp_acc_regmap is
 
   function right_shift (
     signal in_vect : std_logic_vector(31 downto 0);
@@ -181,4 +181,4 @@ package body acctypes is
     return after1;
   end left_shift;
 
-end acctypes;
+end esp_acc_regmap;

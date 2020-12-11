@@ -14,7 +14,7 @@ use work.genacc.all;
 
 use work.nocpackage.all;
 
-entity misc_noc2interrupt is
+entity noc2intreq is
   generic (
     tech         : integer := virtex7);
   port (
@@ -27,9 +27,9 @@ entity misc_noc2interrupt is
     interrupt_data_out                  : in  misc_noc_flit_type;
     interrupt_empty                     : in  std_ulogic);
 
-end misc_noc2interrupt;
+end noc2intreq;
 
-architecture rtl of misc_noc2interrupt is
+architecture rtl of noc2intreq is
 
 
 begin  -- rtl

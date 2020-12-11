@@ -58,9 +58,9 @@ use work.devices.all;
 use work.gencomp.all;
 use work.genacc.all;
 
-use work.acctypes.all;
+use work.esp_acc_regmap.all;
 
-entity acc_tlb is
+entity esp_acc_tlb is
 
   generic (
     tech            : integer := virtex7;
@@ -91,10 +91,10 @@ entity acc_tlb is
     dma_length           : out std_logic_vector(31 downto 0)
     );
 
-end acc_tlb;
+end esp_acc_tlb;
 
 
-architecture tlb of acc_tlb is
+architecture tlb of esp_acc_tlb is
 
   -- Page table
   -- Dependent on configuration registers only

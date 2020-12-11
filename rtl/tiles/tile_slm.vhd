@@ -750,7 +750,7 @@ begin
   -- FROM NoC
 
   -- Handle CPU requests accelerator DMA
-  mem_noc2ahbm_1 : mem_noc2ahbm
+  noc2ahbmst_1 : noc2ahbmst
     generic map (
       tech        => CFG_FABTECH,
       hindex      => 0,
@@ -786,7 +786,7 @@ begin
       dma_snd_exactly_3slots    => dma_snd_exactly_3slots);
 
   -- Handle JTAG or EDCL requests to memory as well as Ethernet coherent DMA
-  mem_noc2ahbm_2 : mem_noc2ahbm
+  noc2ahbmst_2 : noc2ahbmst
     generic map (
       tech        => CFG_FABTECH,
       hindex      => 1,
@@ -839,7 +839,7 @@ begin
 
 
   -- Handle APB requests for CSRs
-  misc_noc2apb_1 : misc_noc2apb
+  noc2apb_1 : noc2apb
     generic map (
       tech         => CFG_FABTECH,
       local_apb_en => this_local_apb_en)

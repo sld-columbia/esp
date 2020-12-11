@@ -40,7 +40,7 @@ use work.nocpackage.all;
 use work.cachepackage.all;
 use work.tile.all;
 
-use work.acctypes.all;
+use work.esp_acc_regmap.all;
 
 entity fixen_64to32 is
 

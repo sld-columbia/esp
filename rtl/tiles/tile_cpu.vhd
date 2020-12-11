@@ -1261,7 +1261,7 @@ begin
 
     -- Remote uncached slaves, including memory
     -- Memory request/response sue planes 1 and 3; other slaves use plane 5
-    cpu_ahbs2noc_1 : cpu_ahbs2noc
+    ahbslv2noc_1 : ahbslv2noc
       generic map (
         tech             => CFG_FABTECH,
         hindex           => this_remote_ahb_slv_en,
@@ -1303,7 +1303,7 @@ begin
 
 
     -- Remote uncached slaves
-    cpu_ahbs2noc_1 : cpu_ahbs2noc
+    ahbslv2noc_1 : ahbslv2noc
       generic map (
         tech             => CFG_FABTECH,
         hindex           => this_remote_ahb_slv_en,
@@ -1339,7 +1339,7 @@ begin
   end generate leon3_with_cache_coherence;
 
   -- Remote uncached slaves: shared-local memory; using DMA planes
-  cpu_ahbs2noc_3 : cpu_ahbs2noc
+  ahbslv2noc_3 : ahbslv2noc
     generic map (
       tech             => CFG_FABTECH,
       hindex           => slm_ahb_mask,
@@ -1385,7 +1385,7 @@ begin
 
       cache_ahbsi <= ahbs_in_none;
 
-      cpu_axi2noc_1: cpu_axi2noc
+      axislv2noc_1: axislv2noc
         generic map (
           tech         => CFG_FABTECH,
           nmst         => 3,
@@ -1428,7 +1428,7 @@ begin
       coherence_fwd_rdreq       <= '0';
       mon_cache_int             <= monitor_cache_none;
 
-      cpu_axi2noc_1: cpu_axi2noc
+      axislv2noc_1: axislv2noc
         generic map (
           tech         => CFG_FABTECH,
           nmst         => 3,
@@ -1461,7 +1461,7 @@ begin
     end generate ariane_no_cache_coherence;
 
     -- Remote uncached slaves: shared-local memory; using DMA planes
-    cpu_axi2noc_3: cpu_axi2noc
+    axislv2noc_3: axislv2noc
       generic map (
         tech         => CFG_FABTECH,
         nmst         => 1,
@@ -1624,7 +1624,7 @@ begin
       remote_apb_rcv_empty    => remote_apb_rcv_empty);
 
   -- I/O bus proxy - local memory-mapped I/O accessed from remote masters
-  misc_noc2apb_1 : misc_noc2apb
+  noc2apb_1 : noc2apb
     generic map (
       tech         => CFG_FABTECH,
       local_apb_en => this_local_apb_en)
@@ -1645,7 +1645,7 @@ begin
       apb_rcv_empty    => apb_rcv_empty);
 
   -- Interrupt level acknowledge - remote interrupt controller
-  cpu_irq2noc_1 : cpu_irq2noc
+  intack2noc_1 : intack2noc
     generic map (
       tech  => CFG_FABTECH,
       irq_y => tile_y(io_tile_id),

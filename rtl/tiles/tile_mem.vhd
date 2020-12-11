@@ -933,7 +933,7 @@ begin
   no_cache_coherence : if CFG_LLC_ENABLE = 0 generate
 
     -- Hendle CPU coherent requests and accelerator non-coherent DMA
-    mem_noc2ahbm_1 : mem_noc2ahbm
+    noc2ahbmst_1 : noc2ahbmst
       generic map (
         tech        => CFG_FABTECH,
         hindex      => 0,
@@ -980,7 +980,7 @@ begin
     fpga_credit_out <= '0';
 
     -- Handle JTAG or EDCL requests to memory as well as ETH DMA
-    mem_noc2ahbm_2 : mem_noc2ahbm
+    noc2ahbmst_2 : noc2ahbmst
       generic map (
         tech        => CFG_FABTECH,
         hindex      => 1,
@@ -1022,7 +1022,7 @@ begin
 
     non_coh_dma_proxy_gen: if this_has_ddr /= 0 generate
     -- Handle accelerators non-coherent DMA
-    mem_noc2ahbm_1 : mem_noc2ahbm
+    noc2ahbmst_1 : noc2ahbmst
       generic map (
         tech        => CFG_FABTECH,
         hindex      => 0,
@@ -1174,7 +1174,7 @@ begin
 
     esplink_proxy_gen: if this_has_ddr /= 0 generate
     -- Handle JTAG or EDCL requests to memory
-    mem_noc2ahbm_2 : mem_noc2ahbm
+    noc2ahbmst_2 : noc2ahbmst
       generic map (
         tech        => CFG_FABTECH,
         hindex      => 1,
@@ -1228,7 +1228,7 @@ begin
   end generate std_bus;
 
   -- APB to LLC cache and CSRs
-  misc_noc2apb_1 : misc_noc2apb
+  noc2apb_1 : noc2apb
     generic map (
       tech         => CFG_FABTECH,
       local_apb_en => this_local_apb_en)

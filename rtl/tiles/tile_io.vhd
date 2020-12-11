@@ -1476,7 +1476,7 @@ begin
 
   end process coh_dma_selector;
 
-  cpu_ahbs2noc_1 : cpu_ahbs2noc
+  ahbslv2noc_1 : ahbslv2noc
     generic map (
       tech             => CFG_FABTECH,
       hindex           => this_remote_ahb_slv_en,
@@ -1584,7 +1584,7 @@ begin
     end if;
   end process pready_gen;
 
-  misc_noc2apb_1 : misc_noc2apb
+  noc2apb_1 : noc2apb
     generic map (
       tech         => CFG_FABTECH,
       local_apb_en => this_local_apb_en)
@@ -1616,7 +1616,7 @@ begin
     cpu_loc_y(i) <= tile_config(ESP_CSR_CPU_LOC_OVR_LSB + 1 + i * 6 + 3 + 2 downto ESP_CSR_CPU_LOC_OVR_LSB + 1 + i * 6 + 3);
   end generate cpu_loc_ovr_gen;
 
-  misc_irq2noc_1 : misc_irq2noc
+  intreq2noc_1 : intreq2noc
     generic map (
       tech  => CFG_FABTECH,
       ncpu  => CFG_NCPU_TILE,
@@ -1640,7 +1640,7 @@ begin
       irq_data_in        => irq_data_in,
       irq_full           => irq_full);
 
-  misc_noc2interrupt_1 : misc_noc2interrupt
+  noc2intreq_1 : noc2intreq
     generic map (
       tech    => CFG_FABTECH)
     port map (
@@ -1653,7 +1653,7 @@ begin
 
   -- Remote uncached slave and non-coherent DMA requests
   -- Requestes may be directed to the frame buffer or the boot ROM
-  mem_noc2ahbm_1 : mem_noc2ahbm
+  noc2ahbmst_1 : noc2ahbmst
     generic map (
       tech        => CFG_FABTECH,
       hindex      => CFG_GRETH + CFG_DSU_ETH,

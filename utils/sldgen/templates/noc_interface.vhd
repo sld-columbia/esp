@@ -14,7 +14,7 @@ use work.allcaches.all;
 use work.cachepackage.all;
 use work.tile.all;
 use work.genacc.all;
-use work.acctypes.all;
+use work.esp_acc_regmap.all;
 
 --pragma translate_off
 use std.textio.all;
@@ -325,7 +325,7 @@ begin
 
 
   -- DMA controller for NoC
-  acc_dma2noc_1 : acc_dma2noc
+  esp_acc_dma_1 : esp_acc_dma
     generic map (
       tech               => tech,
       extra_clk_buf      => extra_clk_buf,

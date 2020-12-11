@@ -15,7 +15,7 @@ use work.gencomp.all;
 use work.genacc.all;
 
 use work.coretypes.all;
-use work.acctypes.all;
+use work.esp_acc_regmap.all;
 
 package monitor_pkg is
 

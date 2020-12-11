@@ -15,7 +15,7 @@ use work.allcaches.all;
 use work.cachepackage.all;
 use work.tile.all;
 use work.genacc.all;
-use work.acctypes.all;
+use work.esp_acc_regmap.all;
 use work.amba.all;
 
 --pragma translate_off
@@ -169,7 +169,7 @@ begin
   coherent_dma_snd_wrreq <= '0';
   coherent_dma_snd_data_in <= (others => '0');
 
-  axi2noc_1: cpu_axi2noc
+  axi2noc_1: axislv2noc
     generic map (
       tech             => tech,
       nmst             => 1,

@@ -19,7 +19,7 @@ use work.nocpackage.all;
 use work.cachepackage.all;
 
 use work.coretypes.all;
-use work.acctypes.all;
+use work.esp_acc_regmap.all;
 
 package tile is
 
@@ -529,7 +529,7 @@ package tile is
       remote_apb_rcv_empty    : in  std_ulogic);
   end component;
 
-  component cpu_irq2noc is
+  component intack2noc is
     generic (
       tech  : integer;
       irq_y : local_yx;
@@ -549,9 +549,9 @@ package tile is
       remote_irq_ack_wrreq   : out std_ulogic;
       remote_irq_ack_data_in : out misc_noc_flit_type;
       remote_irq_ack_full    : in  std_ulogic);
-  end component cpu_irq2noc;
+  end component intack2noc;
 
-  component cpu_ahbs2noc
+  component ahbslv2noc
     generic (
       tech        : integer;
       hindex      : std_logic_vector(0 to NAHBSLV - 1);
@@ -585,7 +585,7 @@ package tile is
       remote_ahbs_rcv_empty      : in  std_ulogic);
   end component;
 
-  component cpu_axi2noc is
+  component axislv2noc is
     generic (
       tech         : integer;
       nmst         : integer;
@@ -614,9 +614,9 @@ package tile is
       remote_ahbs_rcv_rdreq      : out std_ulogic;
       remote_ahbs_rcv_data_out   : in  misc_noc_flit_type;
       remote_ahbs_rcv_empty      : in  std_ulogic);
-  end component cpu_axi2noc;
+  end component axislv2noc;
 
-  component misc_noc2apb
+  component noc2apb
     generic (
       tech         : integer;
       local_apb_en : in  std_logic_vector(0 to NAPBSLV - 1));
@@ -637,7 +637,7 @@ package tile is
       apb_rcv_empty    : in  std_ulogic);
   end component;
 
-  component misc_irq2noc is
+  component intreq2noc is
     generic (
       tech  : integer;
       ncpu  : integer;
@@ -660,9 +660,9 @@ package tile is
       irq_wrreq          : out std_ulogic;
       irq_data_in        : out misc_noc_flit_type;
       irq_full           : in  std_ulogic);
-  end component misc_irq2noc;
+  end component intreq2noc;
 
-  component misc_noc2interrupt
+  component noc2intreq
     generic (
       tech    : integer);
     port (
@@ -674,7 +674,7 @@ package tile is
       interrupt_empty    : in  std_ulogic);
   end component;
 
-  component mem_noc2ahbm
+  component noc2ahbmst
     generic (
       tech        : integer;
       hindex      : integer range 0 to NAHBSLV - 1;
@@ -710,7 +710,7 @@ package tile is
       dma_snd_exactly_3slots : in  std_ulogic);
   end component;
 
-  component acc_dma2noc
+  component esp_acc_dma
     generic (
       tech               : integer;
       extra_clk_buf      : integer range 0 to 1;
@@ -800,7 +800,7 @@ package tile is
       out_ready_i : in  std_ulogic);
   end component fixen_64to32;
 
-  component acc_tlb
+  component esp_acc_tlb
     generic (
       tech           : integer;
       scatter_gather : integer range 0 to 1;
