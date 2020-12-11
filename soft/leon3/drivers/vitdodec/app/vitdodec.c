@@ -1,5 +1,4 @@
 #include "do_decoding.h"
-#include "libesp.h"
 #include "cfg.h"
 
 static unsigned in_words_adj;

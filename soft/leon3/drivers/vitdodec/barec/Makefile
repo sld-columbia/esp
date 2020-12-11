@@ -1,10 +1,10 @@
-target: vitdodec.exe
+target: $(BUILD_PATH)/vitdodec.exe
 
 include ../../common_bare.mk
 
-vitdodec.exe: vitdodec.c $(wildcard ../../probe/*.c) do_decoding.o
-	CROSS_COMPILE=$(CROSS_COMPILE) DESIGN_PATH=$(DESIGN_PATH) $(MAKE) -C ../../probe
-	$(CC) -I./ $(CFLAGS) -o $@  $(LDFLAGS) $< do_decoding.o ../../probe/libprobe.a
+$(BUILD_PATH)/vitdodec.exe: vitdodec.c $(wildcard ../../probe/*.c) $(BUILD_PATH)/do_decoding.o
+	CROSS_COMPILE=$(CROSS_COMPILE) DESIGN_PATH=$(DESIGN_PATH) BUILD_PATH=$(BUILD_PATH)/../../probe $(MAKE) -C ../../probe
+	$(CC) -I./ $(CFLAGS) -o $@  $(LDFLAGS) $< $(BUILD_PATH)/do_decoding.o $(BUILD_PATH)/../../probe/libprobe.a
 
-do_decoding.o: do_decoding.c
-	$(CC) $(CFLAGS) -c $<
+$(BUILD_PATH)/do_decoding.o: do_decoding.c
+	$(CC) $(CFLAGS) -c $< -o $@

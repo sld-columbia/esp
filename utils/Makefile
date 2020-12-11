@@ -180,7 +180,8 @@ clean: 		soft-clean		\
 		genus-clean		\
 		sldgen-clean		\
 		espmon-clean		\
-		mmi64-clean
+		mmi64-clean		\
+		soft-build-clean
 
 distclean:	check_all_srcs-distclean 	\
 		check_all_rtl_srcs-distclean	\
@@ -200,7 +201,8 @@ distclean:	check_all_srcs-distclean 	\
 		genus-distclean			\
 		sldgen-distclean		\
 		espmon-distclean		\
-		mmi64-distclean
+		mmi64-distclean			\
+		soft-build-distclean
 	$(QUIET_CLEAN)$(RM) *.log
 
 

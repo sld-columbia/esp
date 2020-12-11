@@ -55,6 +55,8 @@ moc_predefs.h
 
 boards
 
+soft-build/
+
 linux-build/
 linux.dsu
 sysroot.cpio

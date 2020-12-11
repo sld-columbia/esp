@@ -1,4 +1,3 @@
-
 CROSS_COMPILE ?= sparc-linux-
 ARCH ?= sparc
 
@@ -7,12 +6,13 @@ CFLAGS += -fno-builtin-cos -fno-builtin-sin
 CFLAGS += -Wall -Werror
 CFLAGS += -I../include
 
-OUT := libtest.a
+OUT := $(BUILD_PATH)/libtest.a
 OBJS := test.o le.o wami.o fft_test.o
+OBJS := $(addprefix  $(BUILD_PATH)/, $(OBJS))
 
 all: $(OUT)
 
-%.o: %.c
+$(BUILD_PATH)/%.o: %.c
 	$(CROSS_COMPILE)gcc $(CFLAGS) -c $< -o $@
 
 $(OUT): $(OBJS)
@@ -20,7 +20,6 @@ $(OUT): $(OBJS)
 	$(CROSS_COMPILE)ranlib $@
 
 clean:
-	$(RM) *.o
-	$(RM) $(OUT)
+	rm -rf  $(BUILD_PATH)
 
 .PHONY: all clean

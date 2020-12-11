@@ -2,7 +2,7 @@
 CFLAGS += $(EXTRA_CFLAGS)
 CFLAGS += -Wall
 CFLAGS += -I../../include
-CFLAGS += -L../../probe
+CFLAGS += -L$(BUILD_PATH)/../../probe
 CFLAGS += -I$(DESIGN_PATH)
 CFLAGS +=-std=gnu99
 CFLAGS +=-O2
@@ -14,21 +14,22 @@ CC := $(CROSS_COMPILE)gcc
 LD := $(CROSS_COMPILE)$(LD)
 
 SRCS := $(wildcard *.c)
+HEADERS := $(wildcard *.h)
 OBJS := $(SRCS:.c=.exe)
+OBJS := $(addprefix  $(BUILD_PATH)/, $(OBJS))
 BINS := $(OBJS:.exe=.bin)
 
 all: $(OBJS) $(BINS)
 
-fft_test.o: ../../test/fft_test.c
-	$(CC) $(CFLAGS) -c $<
+$(BUILD_PATH)/fft_test.o: ../../test/fft_test.c
+	$(CC) $(CFLAGS) -c $< -o $@
 
-%.exe: %.c $(wildcard ../../probe/*.c) fft_test.o
-	CROSS_COMPILE=$(CROSS_COMPILE) DESIGN_PATH=$(DESIGN_PATH) $(MAKE) -C ../../probe
-	$(CC) $(CFLAGS) -o $@ $< fft_test.o $(LIBS)
+$(BUILD_PATH)/%.exe: %.c $(wildcard ../../probe/*.c) $(BUILD_PATH)/fft_test.o $(HEADERS)
+	CROSS_COMPILE=$(CROSS_COMPILE) DESIGN_PATH=$(DESIGN_PATH) BUILD_PATH=$(BUILD_PATH)/../../probe $(MAKE) -C ../../probe
+	$(CC) $(CFLAGS) -o $@ $< $(BUILD_PATH)/fft_test.o $(LIBS)
 
-%.bin: %.exe
+$(BUILD_PATH)/%.bin: $(BUILD_PATH)/%.exe
 	$(CROSS_COMPILE)objcopy -O binary --change-addresses -0x40000000 $< $@
 
 clean:
-	$(RM) $(OBJS) $(BINS) *.o *.a
-
+	rm -rf $(BUILD_PATH)

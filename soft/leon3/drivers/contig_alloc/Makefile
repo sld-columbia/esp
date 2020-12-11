@@ -1,6 +1,4 @@
-
-
-CFLAGS := -Wall -Werror -O3 -I../include -L./
+CFLAGS := -Wall -Werror -O3 -I$(DRIVERS)/include -L./
 LIBCONTIG := libcontig.a
 
 target: driver $(LIBCONTIG) contig_alloc-libtest

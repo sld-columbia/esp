@@ -1,7 +1,5 @@
-
 INCDIR  =
 INCDIR += -I../include
-INCDIR += -I../dummy/linux
 
 CROSS_COMPILE ?= sparc-linux-
 ARCH ?= sparc
@@ -12,14 +10,14 @@ CFLAGS += -O3
 CFLAGS += -Wall
 CFLAGS += -Werror
 
-OUT := libesp.a
-OBJS := libesp.o
+OUT := $(BUILD_PATH)/libesp.a
+OBJS := $(BUILD_PATH)/libesp.o
 
 all: $(OUT)
 
 .SUFFIX: .c .o
 
-%.o: %.c
+$(BUILD_PATH)/%.o: %.c
 	$(CROSS_COMPILE)gcc $(CFLAGS) -c $^ -o $@
 
 $(OUT): $(OBJS)
@@ -27,9 +25,7 @@ $(OUT): $(OBJS)
 	$(CROSS_COMPILE)ranlib $@
 
 clean:
-	$(RM) *.o
-	$(RM) $(OUT)
-
+	rm -rf $(BUILD_PATH)
 
 .PHONY: all clean
 

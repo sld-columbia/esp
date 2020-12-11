@@ -1,12 +1,9 @@
-
 include ../driver.mk
 
-CONTIG_ALLOC_PATH := ../contig_alloc
-
-CFLAGS := -Wall -Werror -O3 -I../include -L.
+CFLAGS := -Wall -Werror -O3 -I$(DRIVERS)/include -L.
 
 Module.symvers:
-	$(MAKE) -C ../esp_cache ARCH=$(ARCH) CROSS_COMPILE=$(CROSS_COMPILE)
-	$(MAKE) -C $(CONTIG_ALLOC_PATH) ARCH=$(ARCH) CROSS_COMPILE=$(CROSS_COMPILE)
+	$(MAKE) -C ../esp_cache ARCH=$(ARCH) CROSS_COMPILE=$(CROSS_COMPILE) DRIVERS=$(DRIVERS)
+	$(MAKE) -C ../contig_alloc ARCH=$(ARCH) CROSS_COMPILE=$(CROSS_COMPILE) DRIVERS=$(DRIVERS)
 	cat ../esp_cache/$@ > $@
-	cat $(CONTIG_ALLOC_PATH)/$@ >> $@
+	cat ../contig_alloc/$@ >> $@
