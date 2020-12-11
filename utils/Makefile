@@ -36,7 +36,7 @@ include $(ESP_ROOT)/utils/make/accelerators.mk
 
 
 ### Include targets to generate caches RTL with HLS ###
-include $(ESP_ROOT)/utils/make/sc_components.mk
+include $(ESP_ROOT)/utils/make/sc_caches.mk
 
 
 ### Include targets to compile example applications ###

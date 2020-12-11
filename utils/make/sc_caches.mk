@@ -1,7 +1,7 @@
 # Copyright (c) 2011-2019 Columbia University, System Level Design Group
 # SPDX-License-Identifier: Apache-2.0
 
-SCCS_PATH		= $(ESP_ROOT)/systemc/
+SCCS_PATH		= $(ESP_ROOT)/rtl/caches/esp-caches/systemc
 SCCS			= $(filter-out common, $(shell ls -d $(SCCS_PATH)/*/ | awk -F/ '{print $$(NF-1)}'))
 SCCS-wdir		= $(addsuffix -wdir, $(SCCS))
 SCCS-hls		= $(addsuffix -hls, $(SCCS))
