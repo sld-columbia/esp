@@ -31,7 +31,7 @@ SIM_VHDL_SRCS += $(foreach f, $(shell strings $(FLISTS)/sim_vhdl.flist), $(ESP_R
 SIM_VHDL_SRCS += $(TOP_VHDL_SIM_SRCS)
 
 ## Verilog Source
-RTL_TECH_FOLDERS = $(filter-out $(ESP_ROOT)/tech/$(TECHLIB)/verilog/, $(shell ls -d $(ESP_ROOT)/tech/$(TECHLIB)/*/))
+RTL_TECH_FOLDERS = $(shell ls -d $(ESP_ROOT)/tech/$(TECHLIB)/*/)
 
 VLOG_SRCS += $(foreach f, $(shell strings $(FLISTS)/vlog.flist), $(ESP_ROOT)/rtl/$(f))
 VLOG_SRCS += $(foreach f, $(shell strings $(FLISTS)/cores_vlog.flist), $(if $(findstring cores/$(CPU_ARCH), $(f)), $(ESP_ROOT)/rtl/$(f),))
@@ -43,8 +43,8 @@ VLOG_SRCS += $(TOP_VLOG_RTL_SRCS)
 
 SIM_VLOG_SRCS += $(VLOG_SRCS)
 SIM_VLOG_SRCS += $(foreach f, $(shell strings $(FLISTS)/sim_vlog.flist), $(ESP_ROOT)/rtl/$(f))
-SIM_VLOG_SRCS += $(shell (find $(ESP_ROOT)/tech/$(TECHLIB)/verilog/ -name "*.v" ))
-SIM_VLOG_SRCS += $(shell (find $(ESP_ROOT)/tech/$(TECHLIB)/verilog/ -name "*.sv" ))
+SIM_VLOG_SRCS += $(shell (find $(ESP_ROOT)/rtl/sim/$(TECHLIB)/verilog/ -name "*.v" ))
+SIM_VLOG_SRCS += $(shell (find $(ESP_ROOT)/rtl/sim/$(TECHLIB)/verilog/ -name "*.sv" ))
 SIM_VLOG_SRCS += $(TOP_VLOG_SIM_SRCS)
 
 ## Vivado HLS generated files

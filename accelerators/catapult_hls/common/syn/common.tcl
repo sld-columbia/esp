@@ -5,6 +5,7 @@ set TECH $::env(TECH)
 set ESP_ROOT $::env(ESP_ROOT)
 set ACCELERATOR $::env(ACCELERATOR)
 set TECH_PATH "$ESP_ROOT/tech/$TECH"
+set MEMTECH_PATH = "$ESP_ROOT/rtl/techmap/$TECH/mem"
 set DMA_WIDTH $::env(DMA_WIDTH)
 
 #
