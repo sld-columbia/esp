@@ -1,1 +1,0 @@
-../../../../leon3/drivers/nightvision/barec/nightvision.c

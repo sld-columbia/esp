@@ -1,1 +1,0 @@
-../../riscv-pk/machine/fdt.h

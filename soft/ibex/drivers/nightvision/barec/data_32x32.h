@@ -1,1 +1,0 @@
-../../../../leon3/drivers/nightvision/barec/data_32x32.h

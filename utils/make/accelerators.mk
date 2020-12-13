@@ -406,8 +406,7 @@ $(ACCELERATORS-driver): sysroot linux-build/vmlinux soft-build
 	fi;
 
 $(ACCELERATORS-driver-clean):
-	$(QUIET_CLEAN) ARCH=$(ARCH) CROSS_COMPILE=$(CROSS_COMPILE_LINUX) KSRC=$(PWD)/linux-build DRIVERS=$(DRIVERS) $(MAKE) ESP_CORE_PATH=$(ESP_CORE_PATH) -C $(BUILD_DRIVERS)/$(@:-driver-clean=)/linux clean
-
+	$(QUIET_CLEAN)$(RM) $(BUILD_DRIVERS)/$(@:-driver-clean=)/linux
 
 $(ACCELERATORS-app): sysroot soft-build
 	@BUILD_PATH=$(BUILD_DRIVERS)/$(@:-app=)/app; \
@@ -415,7 +414,7 @@ $(ACCELERATORS-app): sysroot soft-build
 		echo '   ' MAKE $@; \
 		mkdir -p sysroot/applications/test/; \
 		mkdir -p $$BUILD_PATH; \
-		CROSS_COMPILE=$(CROSS_COMPILE_LINUX) DRIVERS=$(DRIVERS) BUILD_PATH=$$BUILD_PATH $(MAKE) -C $(DRIVERS)/$(@:-app=)/app; \
+		CROSS_COMPILE=$(CROSS_COMPILE_LINUX) CPU_ARCH=$(CPU_ARCH) DRIVERS=$(DRIVERS) BUILD_PATH=$$BUILD_PATH $(MAKE) -C $(DRIVERS)/$(@:-app=)/app; \
 		if [ `ls -1 $$BUILD_PATH/*.exe 2>/dev/null | wc -l ` -gt 0 ]; then \
 			echo '   ' CP $@; cp  $$BUILD_PATH/*.exe sysroot/applications/test/; \
 		else \
@@ -426,14 +425,14 @@ $(ACCELERATORS-app): sysroot soft-build
 	fi;
 
 $(ACCELERATORS-app-clean):
-	$(QUIET_CLEAN) CROSS_COMPILE=$(CROSS_COMPILE_LINUX) BUILD_PATH=$(BUILD_DRIVERS)/$(@:-app-clean=)/app $(MAKE) -C $(DRIVERS)/$(@:-app-clean=)/app clean
+	$(QUIET_CLEAN) CROSS_COMPILE=$(CROSS_COMPILE_LINUX) CPU_ARCH=$(CPU_ARCH) BUILD_PATH=$(BUILD_DRIVERS)/$(@:-app-clean=)/app $(MAKE) -C $(DRIVERS)/$(@:-app-clean=)/app clean
 
 $(ACCELERATORS-barec): barec soft-build
 	@BUILD_PATH=$(BUILD_DRIVERS)/$(@:-barec=)/barec; \
 	if [ `ls -1 $(DRIVERS)/$(@:-barec=)/barec/*.c 2>/dev/null | wc -l ` -gt 0 ]; then \
 		echo '   ' MAKE $@; \
 		mkdir -p $$BUILD_PATH; \
-		CROSS_COMPILE=$(CROSS_COMPILE_ELF) DESIGN_PATH=$(DESIGN_PATH) BUILD_PATH=$$BUILD_PATH $(MAKE) -C $(DRIVERS)/$(@:-barec=)/barec; \
+		CROSS_COMPILE=$(CROSS_COMPILE_ELF) CPU_ARCH=$(CPU_ARCH) DESIGN_PATH=$(DESIGN_PATH) BUILD_PATH=$$BUILD_PATH $(MAKE) -C $(DRIVERS)/$(@:-barec=)/barec; \
 		if [ `ls -1 $$BUILD_PATH/*.bin 2>/dev/null | wc -l ` -gt 0 ]; then \
 			echo '   ' CP $@; cp $$BUILD_PATH/*.bin barec; \
 		fi; \
@@ -447,7 +446,7 @@ $(ACCELERATORS-barec): barec soft-build
 	fi;
 
 $(ACCELERATORS-barec-clean):
-	$(QUIET_CLEAN) CROSS_COMPILE=$(CROSS_COMPILE_ELF) BUILD_PATH=$(BUILD_DRIVERS)/$(@:-barec-clean=)/barec $(MAKE) -C $(DRIVERS)/$(@:-barec-clean=)/barec clean
+	$(QUIET_CLEAN) CROSS_COMPILE=$(CROSS_COMPILE_ELF) CPU_ARCH=$(CPU_ARCH) BUILD_PATH=$(BUILD_DRIVERS)/$(@:-barec-clean=)/barec $(MAKE) -C $(DRIVERS)/$(@:-barec-clean=)/barec clean
 
 
 .PHONY: $(ACCELERATORS-driver) $(ACCELERATORS-driver-clean) $(ACCELERATORS-app) $(ACCELERATORS-app-clean) $(ACCELERATORS-barec) $(ACCELERATORS-barec-clean)
@@ -465,13 +464,13 @@ accelerators-barec: $(ACCELERATORS-barec)
 accelerators-barec-clean: $(ACCELERATORS-barec-clean) probe-clean
 
 esp-clean:
-	$(QUIET_CLEAN) CROSS_COMPILE=$(CROSS_COMPILE_LINUX) ARCH=$(ARCH) KSRC=$(PWD)/linux-build $(MAKE) -C $(BUILD_DRIVERS)/esp clean
+	$(QUIET_CLEAN)$(RM) $(BUILD_DRIVERS)/esp
 
 esp-cache-clean:
-	$(QUIET_CLEAN) CROSS_COMPILE=$(CROSS_COMPILE_LINUX) ARCH=$(ARCH) KSRC=$(PWD)/linux-build $(MAKE) -C $(BUILD_DRIVERS)/esp_cache clean
+	$(QUIET_CLEAN)$(RM) $(BUILD_DRIVERS)/esp_cache
 
 contig-clean:
-	$(QUIET_CLEAN) CROSS_COMPILE=$(CROSS_COMPILE_LINUX) ARCH=$(ARCH) KSRC=$(PWD)/linux-build $(MAKE) -C $(BUILD_DRIVERS)/contig_alloc clean-libcontig
+	$(QUIET_CLEAN)$(RM) $(BUILD_DRIVERS)/contig_alloc
 
 probe-clean:
 	$(QUIET_CLEAN) CROSS_COMPILE=$(CROSS_COMPILE_ELF) BUILD_PATH=$(BUILD_DRIVERS)/probe $(MAKE) -C $(DRIVERS)/probe clean

@@ -86,13 +86,13 @@ barec:
 barec-all: soft-build
 	@mkdir -p barec/dvi
 	@mkdir -p $(BUILD_DRIVERS)/dvi/barec
-	@BUILD_PATH=$(BUILD_DRIVERS)/dvi/barec $(MAKE) -C $(DRIVERS)/dvi/barec
+	@CPU_ARCH=$(CPU_ARCH) DESIGN_PATH=$(DESIGN_PATH) BUILD_PATH=$(BUILD_DRIVERS)/dvi/barec $(MAKE) -C $(DRIVERS)/dvi/barec
 	@cp $(BUILD_DRIVERS)/dvi/barec/*.bin barec/dvi
 	@$(MAKE) accelerators-barec
 
 barec-distclean:
 	$(QUIET_CLEAN)$(RM) barec
-	@BUILD_PATH=$(BUILD_DRIVERS)/dvi/barec $(MAKE) --quiet -C $(DRIVERS)/dvi/barec clean
+	@CPU_ARCH=$(CPU_ARCH) BUILD_PATH=$(BUILD_DRIVERS)/dvi/barec $(MAKE) --quiet -C $(DRIVERS)/dvi/barec clean
 	@$(MAKE) --quiet accelerators-barec-clean
 
 
@@ -104,4 +104,3 @@ barec-distclean:
 .PHONY: barec-distclean barec-all
 # The following PHONY guarantees that we execute the program set by TEST_PROGRAM
 .PHONY: systest.bin ram.srec
-
