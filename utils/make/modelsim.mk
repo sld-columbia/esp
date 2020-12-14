@@ -5,6 +5,7 @@
 INCDIR_MODELSIM = $(foreach dir, $(INCDIR), +incdir+$(dir))
 
 VCOMOPT +=
+VCOMOPT += -suppress vcom-1491
 VLOGOPT += -suppress 2275
 VLOGOPT += -suppress 2583
 ifneq ($(filter $(TECHLIB),$(FPGALIBS)),)
