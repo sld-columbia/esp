@@ -1,4 +1,4 @@
-include ../../common/common.mk
+include ../../../common/common.mk
 
 ifeq ("$(CATAPULT_PATH)", "")
 $(error please define CATAPULT_PATH required for Catapult HLS library headers)
@@ -20,7 +20,7 @@ INCDIR ?=
 INCDIR += -I../tb
 INCDIR += -I../tb/tests
 INCDIR += -I../inc
-INCDIR += -I../../common/inc
+INCDIR += -I../../../common/inc
 INCDIR += -I$(SYSTEMC)/include
 #INCDIR += -I$(CATAPULT_PATH)/shared/include
 INCDIR += -I$(MGC_HOME)/shared/include
@@ -60,7 +60,7 @@ VPATH += ../tb
 VPATH += ../tb/tests
 VPATH += ../inc
 VPATH += ../src
-VPATH += ../../common/inc
+VPATH += ../../../common/inc
 #VPATH += $(ESP_ROOT)/accelerators/catapult_hls/common/inc/core/systems
 
 SRCS ?=

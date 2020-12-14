@@ -6,7 +6,7 @@ CROSS_COMPILE ?= sparc-linux-
 ARCH ?= sparc
 endif
 
-ESP_CORE_PATH ?= ../../esp
+ESP_CORE_PATH ?= $(DRIVERS)/esp
 
 all: check Module.symvers
 	make -C $(KSRC) M=`pwd` CROSS_COMPILE=$(CROSS_COMPILE) ARCH=$(ARCH)

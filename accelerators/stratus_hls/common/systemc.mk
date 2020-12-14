@@ -1,4 +1,4 @@
-include ../../common/common.mk
+include ../../../common/common.mk
 
 ifeq ("$(STRATUS_PATH)", "")
 $(error please define STRATUS_PATH required for FlexChannels and FixedPoint library headers)

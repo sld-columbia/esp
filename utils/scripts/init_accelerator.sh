@@ -88,11 +88,15 @@ NAME=${NAME:-$NAME_DEFAULT}
 read -p "  * Select design flow (${bold}S${normal}tratus HLS, ${bold}V${normal}ivado HLS, ${bold}h${normal}ls4ml) ${def}[S]${normal}: " FLOW_SELECT
 FLOW_SELECT=${FLOW_SELECT:-S}
 case $FLOW_SELECT in
-    [Ss]* ) FLOW="stratus_hls";;
-    [Vv]* ) FLOW="vivado_hls";;
-    [Hh]* ) FLOW="hls4ml";;
-    * ) FLOW="stratus_hls";;
+    [Ss]* ) FLOW="stratus_hls" FLOWSUFFIX="stratus";;
+    [Vv]* ) FLOW="vivado_hls" FLOWSUFFIX="vivado";;
+    [Hh]* ) FLOW="hls4ml" FLOWSUFFIX="hls4ml";;
+    * ) FLOW="stratus_hls" FLOWSUFFIX="stratus";;
 esac
+
+NAMEFULL="$NAME"
+NAMEFULL+="_"
+NAMEFULL+="$FLOWSUFFIX"
 
 read -p "  * Enter ESP path ${def}[${ESP_ROOT_DEFAULT}]${normal}: " ESP_ROOT
 ESP_ROOT=${ESP_ROOT:-$ESP_ROOT_DEFAULT}
@@ -100,14 +104,14 @@ ESP_ROOT=${ESP_ROOT:-$ESP_ROOT_DEFAULT}
 if  ! test -e ${ESP_ROOT}/accelerators/$FLOW; then
     die "${ESP_ROOT}/accelerators/$FLOW not found; ESP_ROOT not pointing to the ESP repository"
 fi
-if  test -e ${ESP_ROOT}/accelerators/stratus_hls/$NAME; then
-    die "accelerator ${NAME} already defined"
+if  test -e ${ESP_ROOT}/accelerators/stratus_hls/$NAMEFULL; then
+    die "accelerator ${NAMEFULL} already defined"
 fi
-if  test -e ${ESP_ROOT}/accelerators/vivado_hls/$NAME; then
-    die "accelerator ${NAME} already defined"
+if  test -e ${ESP_ROOT}/accelerators/vivado_hls/$NAMEFULL; then
+    die "accelerator ${NAMEFULL} already defined"
 fi
-if  test -e ${ESP_ROOT}/accelerators/hls4ml/$NAME; then
-    die "accelerator ${NAME} already defined"
+if  test -e ${ESP_ROOT}/accelerators/hls4ml/$NAMEFULL; then
+    die "accelerator ${NAMEFULL} already defined"
 fi
 
 ## TODO adjust based on what hls4ml generates, paths names. Give a path example...
@@ -275,31 +279,33 @@ FLOW_DIR=$FLOW
 
 LOWER=$(echo $NAME | awk '{print tolower($0)}')
 UPPER=$(echo $LOWER | awk '{print toupper($0)}')
+LOWERFULL=$(echo $NAMEFULL | awk '{print tolower($0)}')
+UPPERFULL=$(echo $LOWERFULL | awk '{print toupper($0)}')
 
-ACC_DIR=$ESP_ROOT/accelerators/$FLOW_DIR/$LOWER
+ACC_DIR=$ESP_ROOT/accelerators/$FLOW_DIR/$LOWERFULL
 
 TEMPLATES_DIR=$ESP_ROOT/utils/scripts/templates/$FLOW
 
-mkdir -p $ACC_DIR
+mkdir -p $ACC_DIR/hw
 
 if [ "$FLOW" == "stratus_hls" ]; then
 
-    dirs="src  syn  tb"
+    dirs="src  hls  tb"
 
 elif [ "$FLOW" == "vivado_hls" ]; then
 
-    dirs="src  inc  syn  tb"
+    dirs="src  inc  hls  tb"
 
 elif [ "$FLOW" == "hls4ml" ]; then
 
-    dirs="src  inc  syn  tb"
+    dirs="src  inc  hls  tb"
 
 fi
 
 ## initialize all design folders
 for d in $dirs; do
-    mkdir -p $ACC_DIR/$d
-    cd $ACC_DIR/$d
+    mkdir -p $ACC_DIR/hw/$d
+    cd $ACC_DIR/hw/$d
     cp $TEMPLATES_DIR/$d/* .
 
     if cat /etc/os-release | grep -q -i ubuntu; then
@@ -312,47 +318,49 @@ for d in $dirs; do
 
     sed -i "s/<accelerator_name>/$LOWER/g" *
     sed -i "s/<ACCELERATOR_NAME>/$UPPER/g" *
+    sed -i "s/<acc_full_name>/$LOWERFULL/g" *
+    sed -i "s/<ACC_FULL_NAME>/$UPPERFULL/g" *
 
-    if [[ "$FLOW" == "stratus_hls" && "$d" == "syn" ]]; then
-	ln -s ../../common/syn/Makefile
+    if [[ "$FLOW" == "stratus_hls" && "$d" == "hls" ]]; then
+	ln -s ../../../common/hls/Makefile
     fi
 
-    if [[ "$FLOW" == "vivado_hls" && "$d" == "syn" ]]; then
-	ln -s ../../common/syn/Makefile
-	ln -s ../../common/syn/common.tcl
+    if [[ "$FLOW" == "vivado_hls" && "$d" == "hls" ]]; then
+	ln -s ../../../common/hls/Makefile
+	ln -s ../../../common/hls/common.tcl
     fi
-    if [[ "$FLOW" == "hls4ml" && "$d" == "syn" ]]; then
-	ln -s ../../common/syn/Makefile
-	ln -s ../../common/syn/common.tcl
+    if [[ "$FLOW" == "hls4ml" && "$d" == "hls" ]]; then
+	ln -s ../../../common/hls/Makefile
+	ln -s ../../../common/hls/common.tcl
     fi
 done
 
 
 if [ "$FLOW" == "stratus_hls" ]; then
     ## Initialize SystemC execution folder (no HLS license required)
-    mkdir -p $ACC_DIR/sim
-    cd $ACC_DIR/sim
-    echo "include ../../common/systemc.mk" > Makefile
+    mkdir -p $ACC_DIR/hw/sim
+    cd $ACC_DIR/hw/sim
+    echo "include ../../../common/systemc.mk" > Makefile
     echo "$LOWER" > .gitignore
 fi
 
 if [ "$FLOW" == "vivado_hls" ]; then
     ## Initialize gitignore
-    cd $ACC_DIR
+    cd $ACC_DIR/hw
     echo "$LOWER" > .gitignore
     echo "*.log" >> .gitignore
 fi
 if [ "$FLOW" == "hls4ml" ]; then
     ## Initialize gitignore
-    cd $ACC_DIR
+    cd $ACC_DIR/hw
     echo "$LOWER" > .gitignore
     echo "*.log" >> .gitignore
-    echo "  * Copying hls4ml project folder ($HLS4ML_PRJ_PATH) to accelerator directory ($ACC_DIR). Renaming it 'hls4ml'."
-    cp -r $HLS4ML_PRJ_PATH $ACC_DIR/hls4ml
+    echo "  * Copying hls4ml project folder ($HLS4ML_PRJ_PATH) to accelerator directory ($ACC_DIR/hw). Renaming it 'hls4ml'."
+    cp -r $HLS4ML_PRJ_PATH $ACC_DIR/hw/hls4ml
 fi
 
 ## initialize xml file
-cd $ACC_DIR
+cd $ACC_DIR/hw
 echo '<?xml version="1.0" encoding="UTF-8"?>' > $LOWER.xml
 echo '<sld>' >> $LOWER.xml
 echo -n  "  <accelerator name=\"${LOWER}\" " >> $LOWER.xml
@@ -372,7 +380,7 @@ echo '</sld>' >> $LOWER.xml
 ## customize configuration registers
 indent="\ \ \ \ \ \ \ \ "
 if [ "$FLOW" == "stratus_hls" ]; then
-    cd $ACC_DIR/src
+    cd $ACC_DIR/hw/src
     for key in ${!values[@]}; do
 	if [ $key == $(first_key) ]; then sep=""; else sep=", "; fi
 	sed -i "/\/\* <<--ctor-->> \*\//a ${indent}this->${key} = ${values[$key]};" ${LOWER}_conf_info.hpp
@@ -391,7 +399,7 @@ dma_width=(32 64)
 if [ "$FLOW" == "stratus_hls" ]; then
 
     # accelerator.hpp
-    cd $ACC_DIR/src
+    cd $ACC_DIR/hw/src
     indent="\ \ \ \ \ \ \ \ "
     sed -i "/\/\* <<--defines-->> \*\//a #define PLM_IN_WORD $in_word" ${LOWER}.hpp
     sed -i "/\/\* <<--defines-->> \*\//a #define PLM_OUT_WORD $out_word" ${LOWER}.hpp
@@ -407,14 +415,14 @@ if [ "$FLOW" == "stratus_hls" ]; then
 	p=$(( (d+data_width-1)/data_width ))
 
 	# memlist.txt
-	cd $ACC_DIR
+	cd $ACC_DIR/hw
 	plm_in_name=${LOWER}_plm_block_in_dma${d}
 	plm_out_name=${LOWER}_plm_block_out_dma${d}
 	echo "${plm_in_name} $in_word $data_width ${p}w:0r 0w:1r" >> memlist.txt
 	echo "${plm_out_name} $out_word $data_width 1w:0r 0w:${p}r" >> memlist.txt
 
 	# accelerator_directives.hpp
-	cd $ACC_DIR/src
+	cd $ACC_DIR/hw/src
 	dbpw=$(( (data_width+d-1)/d ))
 	dwpb=$(( d/data_width )) # Zero on 32-bit DMA and 64-bit word
 	sed -i "s/\/\* <<--dbpw${d}-->> \*\//${dbpw}/g" ${LOWER}_directives.hpp
@@ -428,13 +436,13 @@ fi
 if [ "$FLOW" == "vivado_hls" ]; then
 
     # espacc_config.h
-    cd $ACC_DIR/inc
+    cd $ACC_DIR/hw/inc
     sed -i "s/\/\* <<--plm-in-word-->> \*\//$in_word/g" espacc_config.h
     sed -i "s/\/\* <<--plm-out-word-->> \*\//$out_word/g" espacc_config.h
 
     # espacc.h espacc.cc tb.cc
     indent="\	\ "
-    cd $ACC_DIR
+    cd $ACC_DIR/hw
     for key in ${!values[@]}; do
 	for f in "inc/espacc.h src/espacc.cc"; do
 	    sed -i "/\/\* <<--params-->> \*\//a ${indent}const unsigned conf_info_${key}," ${f}
@@ -464,23 +472,23 @@ if [ "$FLOW" == "vivado_hls" ]; then
 	sed -i "s/\/\* <<--chunking-factor-->> \*\//${chunking_factor}/g" ${f}
     done
 
-    # syn/custom.tcl syn/directives.tcl
-    cd $ACC_DIR
+    # hls/custom.tcl hls/directives.tcl
+    cd $ACC_DIR/hw
     if [ $data_width == 64 ]; then
 	dma_allowed="64"
     else
 	dma_allowed="32 64"
     fi
-    sed -i "s/<<--dma-width-->>/${dma_allowed}/g" syn/custom.tcl
-    sed -i "s/<<--data-widths-->>/${data_width}/g" syn/custom.tcl
+    sed -i "s/<<--dma-width-->>/${dma_allowed}/g" hls/custom.tcl
+    sed -i "s/<<--data-widths-->>/${data_width}/g" hls/custom.tcl
     for key in ${!values[@]}; do
-	sed -i "/<<--directives-param-->>/a set_directive_interface -mode ap_none \"top\" conf_info_${key}" syn/directives.tcl
+	sed -i "/<<--directives-param-->>/a set_directive_interface -mode ap_none \"top\" conf_info_${key}" hls/directives.tcl
     done
 fi
 
 if [ "$FLOW" == "hls4ml" ]; then
 
-    cd $ACC_DIR
+    cd $ACC_DIR/hw
     
     # espacc_config.h
     sed -i "s/\/\* <<--frac-bits-->> \*\//$frac_bits/g" inc/espacc_config.h
@@ -490,21 +498,21 @@ if [ "$FLOW" == "hls4ml" ]; then
     # tb.cc
     sed -i "s/\/\* <<--tb-inputs-->> \*\//$batching_factor_expr/g" tb/tb.cc
 
-    # syn/custom.tcl
+    # hls/custom.tcl
     if [ $data_width == 64 ]; then
 	dma_allowed="64"
     else
 	dma_allowed="32 64"
     fi
-    sed -i "s/<<--dma-width-->>/${dma_allowed}/g" syn/custom.tcl
-    sed -i "s/<<--data-widths-->>/${data_width}/g" syn/custom.tcl
+    sed -i "s/<<--dma-width-->>/${dma_allowed}/g" hls/custom.tcl
+    sed -i "s/<<--data-widths-->>/${data_width}/g" hls/custom.tcl
 fi
 
 ## Load/Store
 if [ "$FLOW" == "stratus_hls" ]; then
 
     # accelerator.cpp
-    cd $ACC_DIR/src
+    cd $ACC_DIR/hw/src
     for key in ${!values[@]}; do
 	indent="\ \ \ \ "
 	sed -i "/\/\* <<--params-->> \*\//a ${indent}int32_t ${key};" ${LOWER}.cpp
@@ -526,7 +534,7 @@ fi
 if [ "$FLOW" == "stratus_hls" ]; then
 
     # system.hpp
-    cd $ACC_DIR/tb
+    cd $ACC_DIR/hw/tb
     sed -i "s/\/\* <<--mem-footprint-->> \*\//${memory_footprint}/g" system.hpp
     sed -i "s/\/\* <<--data-width-->> \*\//${data_width}/g" system.hpp
     for key in ${!values[@]}; do
@@ -559,26 +567,12 @@ if [ $FLOW == "hls4ml" ]; then
 else
     TEMPLATES_DIR=$ESP_ROOT/utils/scripts/templates/drivers
 fi
-SOFT_DIR=$ESP_ROOT/soft
-CORE_MAIN="leon3"
-dirs="barec app linux"
+SOFT_DIR=$ACC_DIR/sw
+dirs="baremetal linux/app linux/driver linux/include"
 
 ## initialize all driver folders
-cd $SOFT_DIR/leon3/drivers/include
-cp $TEMPLATES_DIR/include/accelerator.h .
-
-if cat /etc/os-release | grep -q -i ubuntu; then
-    rename "s/accelerator/$LOWER/g" accelerator.h
-elif cat /etc/os-release | grep -q -i centos; then
-    rename accelerator $LOWER accelerator.h
-elif cat /etc/os-release | grep -q -i rhel; then
-    rename accelerator $LOWER accelerator.h
-fi
-
-sed -i "s/<accelerator_name>/$LOWER/g" ${LOWER}.h
-sed -i "s/<ACCELERATOR_NAME>/$UPPER/g" ${LOWER}.h
 for d in $dirs; do
-    new_dir=$SOFT_DIR/leon3/drivers/$LOWER/$d
+    new_dir=$SOFT_DIR/$d
     mkdir -p $new_dir
     cd $new_dir
     cp $TEMPLATES_DIR/$d/* .
@@ -593,32 +587,21 @@ for d in $dirs; do
 
     sed -i "s/<accelerator_name>/$LOWER/g" *
     sed -i "s/<ACCELERATOR_NAME>/$UPPER/g" *
-done
-
-for core in "ariane"; do
-    cd $SOFT_DIR/$core/drivers/include
-    ln -s ../../../leon3/drivers/include/${LOWER}.h
-    for d in $dirs; do
-	new_dir=$SOFT_DIR/$core/drivers/$LOWER/$d
-	mkdir -p $new_dir
-	cd $new_dir
-	for f in $(ls ../../../../leon3/drivers/$LOWER/$d); do
-	    ln -s ../../../../leon3/drivers/$LOWER/$d/$f
-	done
-    done
+    sed -i "s/<acc_full_name>/$LOWERFULL/g" *
+    sed -i "s/<ACC_FULL_NAME>/$UPPERFULL/g" *
 done
 
 ## Linux driver include file
-cd $SOFT_DIR/leon3/drivers/include
+cd $SOFT_DIR/linux/include
 indent="\	"
 for key in ${!values[@]}; do
     sed -i "/\/\* <<--regs-->> \*\//a ${indent}unsigned ${key};" ${LOWER}.h
 done
 
 ## Linux and baremetal drivers
-cd $SOFT_DIR/leon3/drivers/$LOWER
+cd $SOFT_DIR
 indent="\	"
-sed -i "s/\/\* <<--id-->> \*\//${ID}/g" linux/${LOWER}.c
+sed -i "s/\/\* <<--id-->> \*\//${ID}/g" linux/driver/${LOWER}.c
 
 user_reg_offset=64
 for key in ${!values[@]}; do
@@ -626,21 +609,21 @@ for key in ${!values[@]}; do
     reg_offset_hex=$(printf '%x\n' ${user_reg_offset})
     register_name="${UPPER}_${key_upper}_REG"
 
-    for f in "linux/${LOWER}.c barec/${LOWER}.c"; do
+    for f in "linux/driver/${LOWER}.c baremetal/${LOWER}.c"; do
 	sed -i "/\/\* <<--regs-->> \*\//a #define ${register_name} 0x${reg_offset_hex}" ${f}
     done
-    sed -i "/\/\* <<--regs-config-->> \*\//a ${indent}iowrite32be(a->${key}, esp->iomem + ${register_name});" linux/${LOWER}.c
-    sed -i "/\/\* <<--regs-config-->> \*\//a ${indent}${indent}iowrite32(dev, ${register_name}, ${key});" barec/${LOWER}.c
+    sed -i "/\/\* <<--regs-config-->> \*\//a ${indent}iowrite32be(a->${key}, esp->iomem + ${register_name});" linux/driver/${LOWER}.c
+    sed -i "/\/\* <<--regs-config-->> \*\//a ${indent}${indent}iowrite32(dev, ${register_name}, ${key});" baremetal/${LOWER}.c
     user_reg_offset=$((user_reg_offset + 4))
 done
 
-for f in "barec/${LOWER}.c app/cfg.h"; do
+for f in "baremetal/${LOWER}.c linux/app/cfg.h"; do
     sed -i "s/\/\* <<--token-type-->> \*\//int${data_width}_t/g" ${f}
 done
 
-sed -i "s/\/\* <<--id-->> \*\//0x${ID}/g" barec/${LOWER}.c
+sed -i "s/\/\* <<--id-->> \*\//0x${ID}/g" baremetal/${LOWER}.c
 
-for f in "barec/${LOWER}.c app/${LOWER}.c app/cfg.h"; do
+for f in "baremetal/${LOWER}.c linux/app/${LOWER}.c linux/app/cfg.h"; do
     sed -i "s/\/\* <<--number of transfers-->> \*\//${batching_factor_expr}/g" ${f}
     sed -i "s/\/\* <<--data_in_size-->> \*\//${data_in_size_expr}/g" ${f}
     sed -i "s/\/\* <<--data_out_size-->> \*\//${data_out_size_expr}/g" ${f}
@@ -653,36 +636,34 @@ done
 
 for key in ${!values[@]}; do
     key_upper=$(echo $key | awk '{print toupper($0)}')
-    sed -i "/\/\* <<--params-def-->> \*\//a #define ${key_upper} ${values[$key]}" app/cfg.h
-    sed -i "/\/\* <<--params-->> \*\//a const int32_t ${key} = ${key_upper};" app/cfg.h
-    sed -i "/\/\* <<--params-->> \*\//a const int32_t ${key} = ${values[$key]};" barec/${LOWER}.c
-    sed -i "s/\/\* <<--int_bits-->> \*\//$int_bits/g" app/cfg.h
-    sed -i "s/\/\* <<--int_bits-->> \*\//$int_bits/g" barec/${LOWER}.c
-    sed -i "s/\/\* <<--data_width-->> \*\//$data_width/g" app/cfg.h
-    sed -i "s/\/\* <<--data_width-->> \*\//$data_width/g" barec/${LOWER}.c
-    sed -i "/\/\* <<--print-params-->> \*\//a ${indent}printf(\"  .${key} = %d\\\n\", ${key});" app/${LOWER}.c
-    sed -i "/\/\* <<--descriptor-->> \*\//a ${indent}${indent}.${key} = ${key_upper}," app/cfg.h
+    sed -i "/\/\* <<--params-def-->> \*\//a #define ${key_upper} ${values[$key]}" linux/app/cfg.h
+    sed -i "/\/\* <<--params-->> \*\//a const int32_t ${key} = ${key_upper};" linux/app/cfg.h
+    sed -i "/\/\* <<--params-->> \*\//a const int32_t ${key} = ${values[$key]};" baremetal/${LOWER}.c
+    sed -i "s/\/\* <<--int_bits-->> \*\//$int_bits/g" linux/app/cfg.h
+    sed -i "s/\/\* <<--int_bits-->> \*\//$int_bits/g" baremetal/${LOWER}.c
+    sed -i "s/\/\* <<--data_width-->> \*\//$data_width/g" linux/app/cfg.h
+    sed -i "s/\/\* <<--data_width-->> \*\//$data_width/g" baremetal/${LOWER}.c
+    sed -i "/\/\* <<--print-params-->> \*\//a ${indent}printf(\"  .${key} = %d\\\n\", ${key});" linux/app/${LOWER}.c
+    sed -i "/\/\* <<--descriptor-->> \*\//a ${indent}${indent}.${key} = ${key_upper}," linux/app/cfg.h
 done
 
 ## Prepare input and golden output files
 if [ $FLOW == "hls4ml" ]; then
-    if test -e $ACC_DIR/hls4ml/tb_data/tb_output_predictions.dat; then
-	if test -e $ACC_DIR/hls4ml/tb_data/csim_results.log; then
-	    mv $ACC_DIR/hls4ml/tb_data/tb_output_predictions.dat \
-	       $ACC_DIR/hls4ml/tb_data/tb_output_predictions_float.dat
-	    mv $ACC_DIR/hls4ml/tb_data/csim_results.log \
-	       $ACC_DIR/hls4ml/tb_data/tb_output_predictions_fixed.dat
+    if test -e $ACC_DIR/hw/hls4ml/tb_data/tb_output_predictions.dat; then
+	if test -e $ACC_DIR/hw/hls4ml/tb_data/csim_results.log; then
+	    mv $ACC_DIR/hw/hls4ml/tb_data/tb_output_predictions.dat \
+	       $ACC_DIR/hw/hls4ml/tb_data/tb_output_predictions_float.dat
+	    mv $ACC_DIR/hw/hls4ml/tb_data/csim_results.log \
+	       $ACC_DIR/hw/hls4ml/tb_data/tb_output_predictions_fixed.dat
 
-	    cd  $SOFT_DIR/leon3/drivers/$LOWER/app
+	    cd  $SOFT_DIR/linux/app
 	    mkdir -p data
-	    cp -r $ACC_DIR/hls4ml/tb_data/* data
+	    cp -r $ACC_DIR/hw/hls4ml/tb_data/* data
 
-	    cd  $SOFT_DIR/ariane/drivers/$LOWER/barec
-	    ln -s ../../../../leon3/drivers/$LOWER/barec/data
-	    cd  $SOFT_DIR/leon3/drivers/$LOWER/barec
+	    cd  $SOFT_DIR/baremetal
 	    mkdir -p data
-	    cat $ACC_DIR/hls4ml/tb_data/tb_input_features.dat | tr " " "\n" > data/input.c
-	    cat $ACC_DIR/hls4ml/tb_data/tb_output_predictions_fixed.dat | \
+	    cat $ACC_DIR/hw/hls4ml/tb_data/tb_input_features.dat | tr " " "\n" > data/input.c
+	    cat $ACC_DIR/hw/hls4ml/tb_data/tb_output_predictions_fixed.dat | \
 		tr " " "\n" > data/output_gold.c
 	    sed -e '/^$/d' -i data/input.c
 	    sed -e '/^$/d' -i data/output_gold.c
@@ -699,4 +680,3 @@ echo "=== Generated accelerator skeleton for $NAME ==="
 
 
 cd $CURR_DIR
-

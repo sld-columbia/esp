@@ -1594,8 +1594,6 @@ for acc in accelerators:
   e = elem.getroot()
   for xmlacc in e.findall('accelerator'):
     acc_name = xmlacc.get('name')
-    if acc_name != acc:
-      continue
 
     print("    INFO: Retrieving information for " + acc)
     if "desc" in xmlacc.attrib:

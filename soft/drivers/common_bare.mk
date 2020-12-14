@@ -1,4 +1,4 @@
-CPU_SOFT_PATH := ../../../$(CPU_ARCH)
+CPU_SOFT_PATH := $(DRIVERS)/../$(CPU_ARCH)
 
 ifeq ("$(CPU_ARCH)", "leon3")
 CFLAGS += -Wall
@@ -37,7 +37,7 @@ endif
 endif
 
 CFLAGS += $(EXTRA_CFLAGS)
-CFLAGS += -I../../include
+CFLAGS += -I$(DRIVERS)/include
 CFLAGS += -I$(DESIGN_PATH)
 CFLAGS +=-std=gnu99
 CFLAGS +=-O2
@@ -53,11 +53,11 @@ BINS := $(OBJS:.exe=.bin)
 
 all: $(OBJS) $(BINS)
 
-$(BUILD_PATH)/fft_test.o: ../../test/fft_test.c
+$(BUILD_PATH)/fft_test.o: $(DRIVERS)/test/fft_test.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
-$(BUILD_PATH)/%.exe: %.c $(wildcard ../../probe/*.c) $(BUILD_PATH)/fft_test.o $(HEADERS)
-	CPU_ARCH=$(CPU_ARCH) DESIGN_PATH=$(DESIGN_PATH) BUILD_PATH=$(BUILD_PATH)/../../probe $(MAKE) -C ../../probe
+$(BUILD_PATH)/%.exe: %.c $(wildcard $(DRIVERS)/probe/*.c) $(BUILD_PATH)/fft_test.o $(HEADERS)
+	CPU_ARCH=$(CPU_ARCH) DESIGN_PATH=$(DESIGN_PATH) BUILD_PATH=$(BUILD_PATH)/../../probe $(MAKE) -C $(DRIVERS)/probe
 	$(CC) $(CFLAGS) -o $@ $< $(BUILD_PATH)/fft_test.o $(LDFLAGS) $(BUILD_PATH)/../../probe/libprobe.a
 
 $(BUILD_PATH)/%.bin: $(BUILD_PATH)/%.exe
