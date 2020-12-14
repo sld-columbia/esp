@@ -78,6 +78,7 @@ sysroot-distclean: sysroot-clean
 linux-build:
 	$(QUIET_MKDIR)mkdir -p $@
 
+
 ### Bare-metal ###
 
 barec:
@@ -92,7 +93,7 @@ barec-all: soft-build
 
 barec-distclean:
 	$(QUIET_CLEAN)$(RM) barec
-	@CPU_ARCH=$(CPU_ARCH) BUILD_PATH=$(BUILD_DRIVERS)/dvi/barec $(MAKE) --quiet -C $(DRIVERS)/dvi/barec clean
+	@DRIVERS=$(DRIVERS) CPU_ARCH=$(CPU_ARCH) BUILD_PATH=$(BUILD_DRIVERS)/dvi/barec $(MAKE) --quiet -C $(DRIVERS)/dvi/barec clean
 	@$(MAKE) --quiet accelerators-barec-clean
 
 

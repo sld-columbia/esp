@@ -25,7 +25,7 @@ endif
 SOFT              = $(ESP_ROOT)/soft/$(CPU_ARCH)
 BOOTROM_PATH      = $(SOFT)/bootrom
 LINUXSRC          = $(SOFT)/linux
-DRIVERS           = $(SOFT)/../drivers
+DRIVERS           = $(ESP_ROOT)/soft/drivers
 CONTIG_ALLOC_PATH = $(DRIVERS)/contig_alloc
 ESP_CORE_PATH     = $(DRIVERS)/esp
 FLISTS            = $(ESP_ROOT)/utils/flist
@@ -43,11 +43,6 @@ include $(ESP_ROOT)/utils/make/sc_caches.mk
 include $(ESP_ROOT)/utils/make/examples.mk
 
 
-### Paths shortcuts ###
-UTILS_GRLIB = $(ESP_ROOT)/utils/grlib
-TKCONFIG   = $(UTILS_GRLIB)/tkconfig
-
-
 ### Board files ###
 BOARD_FILES = $(wildcard $(ESP_ROOT)/constraints/$(BOARD)/*)
 
@@ -56,9 +51,12 @@ BOARD_FILES = $(wildcard $(ESP_ROOT)/constraints/$(BOARD)/*)
 TEST_PROGRAM ?= systest.exe
 
 
+### GRLIB config targets ###
+include $(ESP_ROOT)/utils/make/grlib.mk
+
+
 ifeq ("$(CPU_ARCH)", "leon3")
 ### Leon3 Software targets ###
-include $(UTILS_GRLIB)/leon3_sw.mk
 include $(ESP_ROOT)/utils/make/leon3.mk
 endif
 
@@ -77,21 +75,9 @@ ifneq ("$(CPU_ARCH)", "leon3")
 ifneq ("$(CPU_ARCH)", "ariane")
 ifneq ("$(CPU_ARCH)", "ibex")
 
-soft:
-
-soft-clean:
-
-soft-distclean:
-
-linux:
-
-linux-clean:
-
-linux-distclean:
-
-barec-all:
-
-barec-distclean:
+ifneq ("$(CPU_ARCH)", "")
+$(error Unsupported target processor: $(CPU_ARCH))
+endif
 
 endif
 endif
@@ -104,10 +90,6 @@ include $(ESP_ROOT)/utils/make/esp.mk
 
 ### Common software targets ###
 include $(ESP_ROOT)/utils/make/soft_common.mk
-
-
-### GRLIB config targets ###
-include $(ESP_ROOT)/utils/make/grlib.mk
 
 
 ### PROFPGA targets ###
@@ -189,7 +171,7 @@ distclean:	check_all_srcs-distclean 	\
 		profpga-distclean		\
 		soft-distclean 			\
 		linux-distclean			\
-		barec-distclean			\
+		baremetal-distclean		\
 		examples-clean			\
 		sim-distclean			\
 		ncsim-distclean			\

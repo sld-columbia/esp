@@ -1,6 +1,10 @@
 # Copyright (c) 2011-2020 Columbia University, System Level Design Group
 # SPDX-License-Identifier: Apache-2.0
 
+### Paths shortcuts ###
+UTILS_GRLIB = $(ESP_ROOT)/soft/leon3/grlib
+TKCONFIG   = $(ESP_ROOT)/utils/grlib_tkconfig
+
 GRLIB_DEFCONFIG ?= $(ESP_ROOT)/socs/defconfig/grlib_$(BOARD)_defconfig
 
 TKCONFIG_DEP   = $(TKCONFIG)/config.vhd

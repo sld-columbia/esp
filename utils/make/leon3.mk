@@ -1,6 +1,8 @@
 # Copyright (c) 2011-2020 Columbia University, System Level Design Group
 # SPDX-License-Identifier: Apache-2.0
 
+include $(ESP_ROOT)/utils/make/leon3_sw.mk
+
 soft: leon3-soft prom.srec ram.srec prom.bin systest.bin
 
 systest.bin: $(TEST_PROGRAM)

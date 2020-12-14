@@ -1,11 +1,10 @@
-CROSS_COMPILE = sparc-elf-
 
 VPATH  += $(UTILS_GRLIB)/software/leon3
 XINC   +=-I$(UTILS_GRLIB)/software/leon3 -I../common
 
-XCC     = $(CROSS_COMPILE)gcc $(XINC) $(BOPT)
-XAS     = $(CROSS_COMPILE)gcc -c -I. $(XINC) $(BOPT)
-XAR     = $(CROSS_COMPILE)ar
+XCC     = $(CROSS_COMPILE_ELF)gcc $(XINC) $(BOPT)
+XAS     = $(CROSS_COMPILE_ELF)gcc -c -I. $(XINC) $(BOPT)
+XAR     = $(CROSS_COMPILE_ELF)ar
 XCFLAGS = -O2 -g -msoft-float
 
 LDFLAGS = -lm
@@ -26,7 +25,7 @@ PROGS = report_device apbuart divtest multest regtest \
 	cgtest privtest privtest_asm mmudmap leon4_tsc mem_test grspwtdp \
 	rextest rextest_asm awptest \
 	cache_fill false_sharing rand_rw cache_evict assembly \
-        lock mesi_test combined_test report data_structs	
+        lock mesi_test combined_test report data_structs
 
 FPROGS=$(shell for i in $(PROGS); do \
 			if [ -r $(UTILS_GRLIB)/software/leon3/$$i.c -o -r $(UTILS_GRLIB)/software/leon3/$$i.S ]; then \
@@ -78,7 +77,7 @@ systest.exe: systest.c lib3tests.a
 	$(QUIET_CC)$(XCC) $(XCFLAGS) systest.c $(XLDFLAGS) -o systest.exe
 
 ram.srec: $(TEST_PROGRAM)
-	$(QUIET_OBJCP)$(CROSS_COMPILE)objcopy -O srec --gap-fill 0 $< ram.srec
+	$(QUIET_OBJCP)$(CROSS_COMPILE_ELF)objcopy -O srec --gap-fill 0 $< ram.srec
 
 leon3-soft-clean:
 	$(QUIET_CLEAN)$(RM) $(OFILES) lib3tests.a prom.o
