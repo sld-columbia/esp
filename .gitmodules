@@ -37,4 +37,4 @@
 	url = https://github.com/lowRISC/ibex.git
 [submodule "utils/zynq"]
 	path = utils/zynq
-	url = git@github.com:sld-columbia/zynq-template.git
+	url = https://github.com/sld-columbia/zynq-template.git
