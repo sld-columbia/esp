@@ -279,7 +279,7 @@ vivado-syn: vivado-setup
 vivado-syn-dpr: DPR_ENABLED = y
 vivado-syn-dpr: vivado-syn
 
-vivado-syn-dpr-acc: vivado/srcs.tcl
+vivado-syn-dpr-acc: vivado/srcs.tcl sldgen
 	$(QUIET_INFO)echo "launching setup script for Vivado DPR flow"  
 	@if ! test -d vivado_dpr; then \
         $(QUIET_INFO_ALT)echo "vivado_dpr directory not found"; \
