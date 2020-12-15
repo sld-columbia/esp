@@ -113,6 +113,9 @@ include $(ESP_ROOT)/utils/make/zynq.mk
 ### Modelsim targets ###
 include $(ESP_ROOT)/utils/make/modelsim.mk
 
+### Modelsim targets ###
+include $(ESP_ROOT)/utils/make/questa.mk
+
 
 # ### Xcelium targets ###
 include $(ESP_ROOT)/utils/make/xmsim.mk
@@ -158,6 +161,7 @@ clean: 		soft-clean		\
 		linux-clean		\
 		xilinx_lib-clean 	\
 		sim-clean		\
+		qsim-clean		\
 		ncsim-clean 		\
 		xmsim-clean 		\
 		esp-config-clean	\
@@ -179,6 +183,7 @@ distclean:	check_all_srcs-distclean 	\
 		baremetal-distclean		\
 		examples-clean			\
 		sim-distclean			\
+		qsim-distclean			\
 		ncsim-distclean			\
 		xmsim-distclean			\
 		esp-config-distclean		\

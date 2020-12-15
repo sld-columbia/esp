@@ -10,6 +10,7 @@ modelsim.ini
 xilinx_lib
 
 modelsim
+questa
 vsim.mk
 *.wlf
 *.do
