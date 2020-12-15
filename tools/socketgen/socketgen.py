@@ -22,7 +22,7 @@ def get_immediate_subdirectories(a_dir):
         if os.path.isdir(os.path.join(a_dir, name))]
 
 def print_usage():
-  print("Usage                    : ./sld_generate.py <dma_width> <rtl_path> <template_path> <out_path>")
+  print("Usage                    : ./socketgen.py <dma_width> <rtl_path> <template_path> <out_path>")
   print("")
   print("")
   print("      <dma_width>        : Bit-width for the DMA channel (currently supporting 32 bits only)")

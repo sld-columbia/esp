@@ -9,7 +9,7 @@ import os.path
 import glob
 import sys
 
-from NoCConfiguration import *
+import NoCConfiguration as ncfg
 
 def get_immediate_subdirectories(a_dir):
   return [name for name in os.listdir(a_dir)
@@ -83,6 +83,7 @@ class Components():
         self.POINTS[acc.upper()].append(dp)
         self.ACCELERATORS.append(acc.upper())
 
+
 #board configuration
 class SoC_Config():
   HAS_FPU = "0"
@@ -94,7 +95,6 @@ class SoC_Config():
   IP_ADDR = ""
   TECH = "virtex7"
   DMA_WIDTH = 32
-  CPU_ARCH = "ariane"
 
   def changed(self, *args): 
     if self.cache_impl.get() == "SystemVerilog":
@@ -372,12 +372,11 @@ class SoC_Config():
   def set_IP(self):
     self.IP_ADDR = str(int('0x' + self.IPM[:2], 16)) + "." + str(int('0x' + self.IPM[2:], 16)) + "." + str(int('0x' + self.IPL[:2], 16)) + "." + str(int('0x' + self.IPL[2:], 16))
 
-  def __init__(self, DMA_WIDTH, TECH, LINUX_MAC, LEON3_STACK, CPU_ARCH):
+  def __init__(self, DMA_WIDTH, TECH, LINUX_MAC, LEON3_STACK, temporary):
     self.DMA_WIDTH = DMA_WIDTH
     self.TECH = TECH
     self.LINUX_MAC = LINUX_MAC
     self.LEON3_STACK = LEON3_STACK
-    self.CPU_ARCH = CPU_ARCH
     #define whether SGMII has to be used or not: it is not used for PROFPGA boards
     with open("Makefile") as fp:
       for line in fp:
@@ -405,7 +404,6 @@ class SoC_Config():
         #check if the SoC uses SVGA
         if line.find("CFG_SVGA_ENABLE ") != -1:
           self.HAS_SVGA = int(self.check_cfg(line, "integer := ", ";"))
-    self.IPs = Components(self.TECH, self.DMA_WIDTH, self.CPU_ARCH)
     #post process configuration
     self.set_IP()
     #0 = Bigphysical area ; 1 = Scatter/Gather
@@ -422,5 +420,9 @@ class SoC_Config():
     self.cache_en = IntVar()
     self.cache_rtl = IntVar()
     self.cache_impl = StringVar()
+    # Read configuration
+    self.noc = ncfg.NoC()
+    self.read_config(temporary)
+    # Discover compoenets
+    self.IPs = Components(self.TECH, self.DMA_WIDTH, self.CPU_ARCH.get())
     self.update_list_of_ips()
-

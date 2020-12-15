@@ -95,10 +95,10 @@ endif
 		$(NCLOG) -work work $$rtl || exit; \
 	done; \
 	if ! test -e prom.srec; then \
-		ln -s ../prom.srec; \
+		ln -s $(SOFT_BUILD)/prom.srec; \
 	fi; \
 	if ! test -e ram.srec; then \
-		ln -s ../ram.srec; \
+		ln -s $(SOFT_BUILD)/ram.srec; \
 	fi; \
 	echo $(SPACES)"$(NCELAB) $(SIMTOP) $(EXTRA_SIMTOP)"; \
 	$(NCELAB) $(SIMTOP) $(EXTRA_SIMTOP) && touch ncready; \
@@ -110,7 +110,7 @@ incisive/ncsim.in:
 	@echo set pack_assert_off { std_logic_arith numeric_std } >> $@
 	@echo set intovf_severity_level {ignore} >> $@
 
-ncsim-compile: sldgen check_all_srcs soft incisive/ncready incisive/ncsim.in
+ncsim-compile: socketgen check_all_srcs soft incisive/ncready incisive/ncsim.in
 	@for dat in $(DAT_SRCS); do \
 		cp $$dat incisive; \
 	done; \

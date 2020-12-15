@@ -97,10 +97,10 @@ endif
 		$(XMLOG) -work work $$rtl || exit; \
 	done; \
 	if ! test -e prom.srec; then \
-		ln -s ../prom.srec; \
+		ln -s $(SOFT_BUILD)/prom.srec; \
 	fi; \
 	if ! test -e ram.srec; then \
-		ln -s ../ram.srec; \
+		ln -s $(SOFT_BUILD)/ram.srec; \
 	fi; \
 	echo $(SPACES)"$(XMELAB) $(SIMTOP) $(EXTRA_SIMTOP)"; \
 	$(XMELAB) $(SIMTOP) $(EXTRA_SIMTOP) && touch xmready; \
@@ -112,7 +112,7 @@ xcelium/xmsim.in:
 	@echo set pack_assert_off { std_logic_arith numeric_std } >> $@
 	@echo set intovf_severity_level {ignore} >> $@
 
-xmsim-compile: sldgen check_all_srcs soft xcelium/xmready xcelium/xmsim.in
+xmsim-compile: socketgen check_all_srcs soft xcelium/xmready xcelium/xmsim.in
 	$(QUIET_MAKE) \
 	cd xcelium; \
 	echo $(SPACES)"$(XMUPDATE) $(SIMTOP)"; \

@@ -17,7 +17,7 @@ profpga-distclean:
 
 mmi64_regs.h: socmap.vhd
 
-MMI64_DESP  = $(ESP_ROOT)/utils/mmi64/mmi64.c
+MMI64_DESP  = $(ESP_ROOT)/tools/mmi64/mmi64.c
 MMI64_DESP += mmi64_regs.h
 
 mmi64: $(MMI64_DESP)
@@ -25,7 +25,7 @@ ifeq ("$(PROFPGA)","")
 	@echo "Path to proFPGA installation (\$PROFPGA) not set - terminating!"
 else
 	$(QUIET_CC)gcc -I ${PROFPGA}/include/ -I./ -fpic -rdynamic -o mmi64 \
-		$(ESP_ROOT)/utils/mmi64/mmi64.c -Wl,--whole-archive ${PROFPGA}/lib/linux_x86_64/libprofpga.a \
+		$(ESP_ROOT)/tools/mmi64/mmi64.c -Wl,--whole-archive ${PROFPGA}/lib/linux_x86_64/libprofpga.a \
 		${PROFPGA}/lib/linux_x86_64/libmmi64.a \
 		${PROFPGA}/lib/linux_x86_64/libconfig.a -Wl,--no-whole-archive -lpthread \
 		-lrt -ldl
@@ -44,15 +44,15 @@ mmi64-distclean: mmi64-clean
 
 
 ### ESP Monitor targets ###
-ESPMON_DEPS  = $(ESP_ROOT)/utils/espmon/espmonmain.ui
-ESPMON_DEPS += $(ESP_ROOT)/utils/espmon/espmonmain.h  $(ESP_ROOT)/utils/espmon/mmi64_mon.h
-ESPMON_DEPS += $(ESP_ROOT)/utils/espmon/espmonmain.cpp  $(ESP_ROOT)/utils/espmon/main.cpp  $(ESP_ROOT)/utils/espmon/mmi64_mon.cpp
+ESPMON_DEPS  = $(ESP_ROOT)/tools/espmon/espmonmain.ui
+ESPMON_DEPS += $(ESP_ROOT)/tools/espmon/espmonmain.h  $(ESP_ROOT)/tools/espmon/mmi64_mon.h
+ESPMON_DEPS += $(ESP_ROOT)/tools/espmon/espmonmain.cpp  $(ESP_ROOT)/tools/espmon/main.cpp  $(ESP_ROOT)/tools/espmon/mmi64_mon.cpp
 
 mmi64_regs.h: esp-config
 
 power.h: esp-config
 
-espmon.mk: $(ESP_ROOT)/utils/espmon/espmon.pro
+espmon.mk: $(ESP_ROOT)/tools/espmon/espmon.pro
 	@DESIGN_DIR=$(DESIGN_PATH) qmake -o $@ $<
 
 espmon: $(ESPMON_DEPS) mmi64_regs.h power.h espmon.mk

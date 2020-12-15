@@ -83,24 +83,24 @@ LINUX_MAC ?= $(shell echo 0000$$(dd if=/dev/urandom count=1 2>/dev/null | md5sum
 
 
 ### Common design files ###
-SLDGEN_VHDL_RTL_PKGS += $(DESIGN_PATH)/esp_global.vhd
-SLDGEN_VHDL_RTL_PKGS += $(DESIGN_PATH)/sldgen/sld_devices.vhd
-SLDGEN_VHDL_RTL_PKGS += $(DESIGN_PATH)/sldgen/allacc.vhd
-SLDGEN_VHDL_RTL_PKGS += $(DESIGN_PATH)/sldgen/genacc.vhd
-SLDGEN_VHDL_RTL_PKGS += $(DESIGN_PATH)/sldgen/allcaches.vhd
+SOCKETGEN_VHDL_RTL_PKGS += $(DESIGN_PATH)/esp_global.vhd
+SOCKETGEN_VHDL_RTL_PKGS += $(DESIGN_PATH)/socketgen/sld_devices.vhd
+SOCKETGEN_VHDL_RTL_PKGS += $(DESIGN_PATH)/socketgen/allacc.vhd
+SOCKETGEN_VHDL_RTL_PKGS += $(DESIGN_PATH)/socketgen/genacc.vhd
+SOCKETGEN_VHDL_RTL_PKGS += $(DESIGN_PATH)/socketgen/allcaches.vhd
 
 TOP_VHDL_RTL_PKGS += $(DESIGN_PATH)/grlib_config.vhd
 TOP_VHDL_RTL_PKGS += $(DESIGN_PATH)/socmap.vhd
-TOP_VHDL_RTL_PKGS += $(DESIGN_PATH)/sldgen/sldacc.vhd
+TOP_VHDL_RTL_PKGS += $(DESIGN_PATH)/socketgen/sldacc.vhd
 TOP_VHDL_RTL_PKGS += $(ESP_ROOT)/rtl/tiles/tiles_pkg.vhd
 TOP_VHDL_RTL_PKGS += $(EXTRA_TOP_VHDL_RTL_PKGS)
 
 TOP_VHDL_SIM_PKGS +=
 
-TOP_VHDL_RTL_SRCS += $(DESIGN_PATH)/sldgen/accelerators.vhd
-TOP_VHDL_RTL_SRCS += $(DESIGN_PATH)/sldgen/caches.vhd
-TOP_VHDL_RTL_SRCS += $(wildcard $(DESIGN_PATH)/sldgen/noc_*.vhd)
-TOP_VHDL_RTL_SRCS += $(DESIGN_PATH)/sldgen/tile_acc.vhd
+TOP_VHDL_RTL_SRCS += $(DESIGN_PATH)/socketgen/accelerators.vhd
+TOP_VHDL_RTL_SRCS += $(DESIGN_PATH)/socketgen/caches.vhd
+TOP_VHDL_RTL_SRCS += $(wildcard $(DESIGN_PATH)/socketgen/noc_*.vhd)
+TOP_VHDL_RTL_SRCS += $(DESIGN_PATH)/socketgen/tile_acc.vhd
 TOP_VHDL_RTL_SRCS += $(DESIGN_PATH)/$(TOP).vhd
 
 TOP_VHDL_SIM_SRCS += $(DESIGN_PATH)/$(SIMTOP).vhd

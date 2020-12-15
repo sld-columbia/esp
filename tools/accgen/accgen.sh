@@ -284,7 +284,7 @@ UPPERFULL=$(echo $LOWERFULL | awk '{print toupper($0)}')
 
 ACC_DIR=$ESP_ROOT/accelerators/$FLOW_DIR/$LOWERFULL
 
-TEMPLATES_DIR=$ESP_ROOT/utils/scripts/templates/$FLOW
+TEMPLATES_DIR=$ESP_ROOT/tools/accgen/templates/$FLOW
 
 mkdir -p $ACC_DIR/hw
 
@@ -563,9 +563,9 @@ fi
 
 ### Device driver folders initialization
 if [ $FLOW == "hls4ml" ]; then
-    TEMPLATES_DIR=$ESP_ROOT/utils/scripts/templates/drivers_hls4ml
+    TEMPLATES_DIR=$ESP_ROOT/tools/accgen/templates/drivers_hls4ml
 else
-    TEMPLATES_DIR=$ESP_ROOT/utils/scripts/templates/drivers
+    TEMPLATES_DIR=$ESP_ROOT/tools/accgen/templates/drivers
 fi
 SOFT_DIR=$ACC_DIR/sw
 dirs="baremetal linux/app linux/driver linux/include"

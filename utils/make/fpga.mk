@@ -14,14 +14,14 @@ endif
 
 fpga-run: esplink soft
 	@./esplink --reset
-	@./esplink --brom -i prom.bin
-	@./esplink --dram -i systest.bin
+	@./esplink --brom -i $(SOFT_BUILD)/prom.bin
+	@./esplink --dram -i $(SOFT_BUILD)/systest.bin
 	@./esplink --reset
 
 fpga-run-linux: esplink fpga-program soft
 	@./esplink --reset
-	@./esplink --brom -i prom.bin
-	@./esplink --dram -i linux.bin
+	@./esplink --brom -i $(SOFT_BUILD)/prom.bin
+	@./esplink --dram -i $(SOFT_BUILD)/linux.bin
 	@./esplink --reset
 
 

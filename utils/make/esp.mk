@@ -20,16 +20,16 @@ socmap.vhd: .esp_config grlib_config.vhd top.vhd Makefile
 	fi
 	@echo ""
 	@echo "Generating ESP configuration..."
-	@LD_LIBRARY_PATH="" xvfb-run -a python3 $(ESP_ROOT)/utils/socmap/esp_creator_batch.py $(NOC_WIDTH) $(TECHLIB) $(LINUX_MAC) $(LEON3_STACK)
+	@LD_LIBRARY_PATH="" xvfb-run -a python3 $(ESP_ROOT)/tools/socgen/esp_creator_batch.py $(NOC_WIDTH) $(TECHLIB) $(LINUX_MAC) $(LEON3_STACK)
 
 socmap.h: socmap.vhd
 
-ESPLINK_SRCS = $(wildcard $(ESP_ROOT)/utils/esplink/src/*.c)
-ESPLINK_HDRS = $(wildcard $(ESP_ROOT)/utils/esplink/src/*.h)
+ESPLINK_SRCS = $(wildcard $(ESP_ROOT)/tools/esplink/src/*.c)
+ESPLINK_HDRS = $(wildcard $(ESP_ROOT)/tools/esplink/src/*.h)
 esplink: socmap.h $(ESPLINK_HDRS) $(ESPLINK_SRCS)
 	$(QUIET_CC) gcc -O3 -Wall -Werror -fmax-errors=5 \
 		-DESPLINK_IP=\"$(ESPLINK_IP)\" -DPORT=$(ESPLINK_PORT) \
-		-I$(ESP_ROOT)/utils/esplink/src/ -I$(DESIGN_PATH) \
+		-I$(ESP_ROOT)/tools/esplink/src/ -I$(DESIGN_PATH) \
 		$(ESPLINK_SRCS) -o $@
 
 esp-config: socmap.vhd
@@ -37,7 +37,7 @@ esp-config: socmap.vhd
 esp-xconfig: grlib_config.vhd
 	@echo ""
 	@echo "Running interactive ESP configuration..."
-	@LD_LIBRARY_PATH="" python3 $(ESP_ROOT)/utils/socmap/esp_creator.py $(NOC_WIDTH) $(TECHLIB) $(LINUX_MAC) $(LEON3_STACK)
+	@LD_LIBRARY_PATH="" python3 $(ESP_ROOT)/tools/socgen/esp_creator.py $(NOC_WIDTH) $(TECHLIB) $(LINUX_MAC) $(LEON3_STACK)
 
 esp-config-clean:
 	$(QUIET_CLEAN)$(RM) \

@@ -137,7 +137,7 @@ class Tile():
     if self.energy_values == None or len(self.energy_values.vf_points) == 0:
        self.create_characterization(soc, num_points)
     if self.energy_values.ip != selection and soc.IPs.ACCELERATORS.count(selection):
-      e = xml.etree.ElementTree.parse(ESP_ROOT + "/utils/socmap/power.xml").getroot()
+      e = xml.etree.ElementTree.parse(ESP_ROOT + "/tools/socgen/power.xml").getroot()
       self.energy_values.ip = selection
       for atype in e.findall('accelerator'):
         if atype.get('name') == self.ip_type.get():

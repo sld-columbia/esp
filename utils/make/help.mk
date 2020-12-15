@@ -70,7 +70,7 @@ help:
 	@echo " make thirdparty-acc                    : make <accelerator> for all available third-party accelerators."
 	@echo " make thirdparty-acc-clean              : make <accelerator>-clean for all available third-party accelerators."
 	@echo " make thirdparty-acc-distclean          : make <accelerator>-distclean for all available third-party accelerators."
-	@echo " make sldgen                            : generate RTL wrappers for scheduled acc; this"
+	@echo " make socketgen                         : generate RTL wrappers for scheduled acc; this"
 	@echo "                                          target is always called as a dependency before ESP"
 	@echo "                                          simulaiton and synthesis."
 	@echo

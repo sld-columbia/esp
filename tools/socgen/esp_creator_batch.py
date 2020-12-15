@@ -28,7 +28,7 @@ def print_usage():
   print("      <LEON3_STACK>      : Stack Pointer for LEON3)")
   print("")
 
-if len(sys.argv) != 6:
+if len(sys.argv) != 5:
     print_usage()
     sys.exit(1)
 
@@ -36,15 +36,9 @@ DMA_WIDTH = int(sys.argv[1])
 TECH = sys.argv[2]
 LINUX_MAC = sys.argv[3]
 LEON3_STACK = sys.argv[4]
-CPU_ARCH = sys.argv[5]
 
 root = Tk()
-soc = SoC_Config(DMA_WIDTH, TECH, LINUX_MAC, LEON3_STACK, CPU_ARCH)
-soc.noc = NoC()
-x = soc.read_config(False)
-if x == -1:
-  print("Configuration is not available")
-  sys.exit(-1)
+soc = SoC_Config(DMA_WIDTH, TECH, LINUX_MAC, LEON3_STACK, False)
 
 esp_config = soc_config(soc)
 create_socmap(esp_config, soc)

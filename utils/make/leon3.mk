@@ -3,86 +3,72 @@
 
 include $(ESP_ROOT)/utils/make/leon3_sw.mk
 
-soft: leon3-soft prom.srec ram.srec prom.bin systest.bin
+soft: leon3-soft $(SOFT_BUILD)/prom.srec $(SOFT_BUILD)/ram.srec $(SOFT_BUILD)/prom.bin $(SOFT_BUILD)/systest.bin
 
-systest.bin: $(TEST_PROGRAM)
+$(SOFT_BUILD)/systest.bin: $(TEST_PROGRAM)
 	$(QUIET_OBJCP) $(CROSS_COMPILE_ELF)objcopy -O binary --change-addresses -0x40000000 $< $@
 
-soft-clean: leon3-soft-clean ahbrom-clean
-	@$(RM)			\
-	prom.out		\
-	xdump.s			\
-	mkprom2			\
-	lib			\
-	linkprom		\
-	linkbch			\
-	linkpromerc32		\
-	linkpromecos		\
-	linkpromflash		\
-	linkpromerc32flash	\
-	linkpromecosflash	\
-	dummy.exe
+soft-clean: leon3-soft-clean
+	@$(RM)					\
+	$(SOFT_BUILD)/prom.out			\
+	$(SOFT_BUILD)/xdump.s			\
+	$(SOFT_BUILD)/mkprom2			\
+	$(SOFT_BUILD)/lib			\
+	$(SOFT_BUILD)/linkprom			\
+	$(SOFT_BUILD)/linkbch			\
+	$(SOFT_BUILD)/linkpromerc32		\
+	$(SOFT_BUILD)/linkpromecos		\
+	$(SOFT_BUILD)/linkpromflash		\
+	$(SOFT_BUILD)/linkpromerc32flash	\
+	$(SOFT_BUILD)/linkpromecosflash		\
+	$(SOFT_BUILD)/dummy.exe
 
 
-soft-distclean: leon3-soft-distclean ahbrom-distclean
-	@$(RM) 		\
-	prom.bin	\
-	systest.bin
+soft-distclean: leon3-soft-distclean
+	@$(RM) 				\
+	$(SOFT_BUILD)/prom.bin		\
+	$(SOFT_BUILD)/systest.bin
 
 .PHONY: leon3-soft-clean leon3-soft-distclean
 
 
 ### Leon3 prom ###
 
-prom.o: $(BOOTROM_PATH)/prom.S $(BOOTROM_PATH)/prom.h
-	$(QUIET_AS) $(CROSS_COMPILE_ELF)gcc -c -I$(BOOTROM_PATH) $<
+$(SOFT_BUILD)/prom.o: $(BOOTROM_PATH)/prom.S $(BOOTROM_PATH)/prom.h
+	@mkdir -p $(SOFT_BUILD)
+	$(QUIET_AS) $(CROSS_COMPILE_ELF)gcc -c -I$(BOOTROM_PATH) $< -o $@
 
-prom.exe: prom.o
+$(SOFT_BUILD)/prom.exe: $(SOFT_BUILD)/prom.o
 	$(QUIET_CC) $(CROSS_COMPILE_ELF)gcc \
 		-nostdlib \
 		-Tlinkprom -N \
 		-nostartfiles \
 		-o $@ $<
 
-prom.srec: prom.exe
+$(SOFT_BUILD)/prom.srec: $(SOFT_BUILD)/prom.exe
 	$(QUIET_OBJCP)$(CROSS_COMPILE_ELF)objcopy -O srec $< $@
 
-dummy.exe: $(UTILS_GRLIB)/mkprom2/dummy.c
+$(SOFT_BUILD)/dummy.exe: $(UTILS_GRLIB)/mkprom2/dummy.c
 	$(QUIET_MAKE) $(CROSS_COMPILE_ELF)gcc $< -o $@
 
-mkprom2: $(wildcard $(UTILS_GRLIB)/mkprom2/*.S) $(wildcard $(UTILS_GRLIB)/mkprom2/*.c) $(wildcard $(UTILS_GRLIB)/mkprom2/*.h)
-	$(QUIET_MAKE) $(MAKE) --quiet -C $(UTILS_GRLIB)/mkprom2 PREFIX=$(DESIGN_PATH)
+$(SOFT_BUILD)/mkprom2: $(wildcard $(UTILS_GRLIB)/mkprom2/*.S) $(wildcard $(UTILS_GRLIB)/mkprom2/*.c) $(wildcard $(UTILS_GRLIB)/mkprom2/*.h)
+	@mkdir -p $(SOFT_BUILD)
+	$(QUIET_MAKE) $(MAKE) --quiet -C $(UTILS_GRLIB)/mkprom2 PREFIX=$(SOFT_BUILD)
 
-prom.out: dummy.exe mkprom2
-	./mkprom2 -leon3 -freq $(LEON3_BASE_FREQ_MHZ) -nomsg -baud 38343 -stack $(LEON3_STACK) dummy.exe
+$(SOFT_BUILD)/prom.out: $(SOFT_BUILD)/dummy.exe $(SOFT_BUILD)/mkprom2
+	@cd $(SOFT_BUILD); \
+	./mkprom2 -leon3 -freq $(LEON3_BASE_FREQ_MHZ) -nomsg -baud 38343 -stack $(LEON3_STACK) dummy.exe;
 
-prom.bin: prom.out
+$(SOFT_BUILD)/prom.bin: $(SOFT_BUILD)/prom.out
 	$(QUIET_OBJCP) $(CROSS_COMPILE_ELF)objcopy -O binary --change-addresses -0x40000000 $< $@
-
-ahbrom: $(UTILS_GRLIB)/ahbrom.c
-	$(QUIET_CC)$(CC) $< -o $@
-
-ahbrom.bin: prom.exe
-	$(QUIET_OBJCP)$(CROSS_COMPILE)objcopy -O binary $< $@
-
-ahbrom.vhd: ahbrom.bin ahbrom
-	$(QUIET_BUILD)./ahbrom $< $@
-
-ahbrom-clean:
-	$(QUIET_CLEAN)$(RM) ahbrom ahbrom.bin
-
-ahbrom-distclean: ahbrom-clean
-	$(QUIET_CLEAN)$(RM) ahbrom.vhd
-
-.PHONY: ahbrom-clean ahbrom-distclean
-
 
 ### Leon3 Linux ###
 
-sysroot:
-	$(QUIET_CP)cp -r $(ESP_ROOT)/soft/leon3/sysroot .
+$(SOFT_BUILD)/sysroot:
+	@mkdir -p $(SOFT_BUILD)
+	$(QUIET_CP)cp -r $(ESP_ROOT)/soft/leon3/sysroot $(SOFT_BUILD)/
 
-sysroot.files: sysroot
+$(SOFT_BUILD)/sysroot.files: $(SOFT_BUILD)/sysroot
 	$(QUIET_MAKE)$(MAKE) -C ${LINUXSRC}/usr gen_init_cpio
 	$(QUIET_INFO)echo "Generating root file-system list..."
 	@sh ${LINUXSRC}/scripts/gen_initramfs_list.sh -u `id -u` -g `id -g` $< \
@@ -101,30 +87,30 @@ sysroot.files: sysroot
 	@echo "nod /dev/console 600 0 0 c 5 1" >> $@
 	@touch $@
 
-sysroot.cpio: sysroot.files
+$(SOFT_BUILD)/sysroot.cpio: $(SOFT_BUILD)/sysroot.files
 	$(QUIET_BUILD)${LINUXSRC}/usr/gen_init_cpio $< > $@
 
 
-linux-build/.config: $(LINUXSRC)/arch/sparc/configs/$(LINUX_CONFIG)
-	@$(MAKE) linux-build
-	$(QUIET_MAKE)ARCH=sparc CROSS_COMPILE=$(CROSS_COMPILE_LINUX) $(MAKE)  O=${PWD}/linux-build -C ${LINUXSRC} $(LINUX_CONFIG)
+$(SOFT_BUILD)/linux-build/.config: $(LINUXSRC)/arch/sparc/configs/$(LINUX_CONFIG)
+	@$(MAKE) $(SOFT_BUILD)/linux-build
+	$(QUIET_MAKE)ARCH=sparc CROSS_COMPILE=$(CROSS_COMPILE_LINUX) $(MAKE)  O=$(SOFT_BUILD)/linux-build -C ${LINUXSRC} $(LINUX_CONFIG)
 
-linux-build/vmlinux: sysroot.cpio linux-build/.config
-	$(QUIET_MAKE)ARCH=sparc CROSS_COMPILE=$(CROSS_COMPILE_LINUX) $(MAKE) -C linux-build
+$(SOFT_BUILD)/linux-build/vmlinux: $(SOFT_BUILD)/sysroot.cpio $(SOFT_BUILD)/linux-build/.config
+	$(QUIET_MAKE)ARCH=sparc CROSS_COMPILE=$(CROSS_COMPILE_LINUX) $(MAKE) -C $(SOFT_BUILD)/linux-build
 
-linux.dsu: sysroot-update
-	$(QUIET_BUILD)mklinuximg -ethmac $(LINUX_MAC) linux-build/vmlinux $@
+$(SOFT_BUILD)/linux.dsu: sysroot-update
+	$(QUIET_BUILD)mklinuximg -ethmac $(LINUX_MAC) $(SOFT_BUILD)/linux-build/vmlinux $@
 
-linux.bin: linux.dsu
+$(SOFT_BUILD)/linux.bin: $(SOFT_BUILD)/linux.dsu
 	$(QUIET_OBJCP) $(CROSS_COMPILE_LINUX)objcopy -S -O binary --change-addresses -0x40000000 $< $@
 
-linux: linux.bin
+linux: $(SOFT_BUILD)/linux.bin
 
 linux-clean: sysroot-clean
 	$(QUIET_CLEAN)
-	@if test -e linux-build; then \
-		ARCH=sparc CROSS_COMPILE=$(CROSS_COMPILE_LINUX) $(MAKE) --quiet -C linux-build clean; \
+	@if test -e $(SOFT_BUILD)/linux-build; then \
+		ARCH=sparc CROSS_COMPILE=$(CROSS_COMPILE_LINUX) $(MAKE) --quiet -C $(SOFT_BUILD)/linux-build clean; \
 	fi;
 
 linux-distclean: sysroot-distclean
-	$(QUIET_CLEAN)$(RM) linux-build linux.dsu linux.bin
+	$(QUIET_CLEAN)$(RM) $(SOFT_BUILD)/linux-build $(SOFT_BUILD)/linux.dsu $(SOFT_BUILD)/linux.bin

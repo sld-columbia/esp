@@ -1,6 +1,6 @@
 
 VPATH  += $(UTILS_GRLIB)/software/leon3
-XINC   +=-I$(UTILS_GRLIB)/software/leon3 -I../common
+XINC   +=-I$(UTILS_GRLIB)/software/leon3
 
 XCC     = $(CROSS_COMPILE_ELF)gcc $(XINC) $(BOPT)
 XAS     = $(CROSS_COMPILE_ELF)gcc -c -I. $(XINC) $(BOPT)
@@ -9,7 +9,7 @@ XCFLAGS = -O2 -g -msoft-float
 
 LDFLAGS = -lm
 #LDFLAGS=-qnoambapp
-XLDFLAGS=-L./ lib3tests.a $(LDFLAGS)
+XLDFLAGS=-L$(SOFT_BUILD)/ $(SOFT_BUILD)/lib3tests.a $(LDFLAGS)
 
 PROGS = report_device apbuart divtest multest regtest \
 	cache gpio ramfill ramtest irqmp leon3_test gptimer \
@@ -37,53 +37,62 @@ FPROGS=$(shell for i in $(PROGS); do \
 		fi; )
 FPROGS+=$(EXTRA_PROGS)
 
-OFILES = $(FPROGS:%=%.o)
+OFILES = $(foreach of, $(FPROGS:%=%.o), $(SOFT_BUILD)/$(of))
 
 all:
 
-%.o: %.c
-	$(QUIET_CC)$(XCC) $(XCFLAGS) -c  $<
+$(SOFT_BUILD)/%.o: %.c
+	@mkdir -p $(SOFT_BUILD)
+	$(QUIET_CC)$(XCC) $(XCFLAGS) -c  $< -o $@
 
-%.o: %.S
-	$(QUIET_CC)$(XCC) $(XCFLAGS) -c  $<
+$(SOFT_BUILD)/%.o: %.S
+	@mkdir -p $(SOFT_BUILD)
+	$(QUIET_CC)$(XCC) $(XCFLAGS) -c  $< -o $@
 
-fpu.o: fpu.c
-	$(QUIET_CC)$(XCC) -ffast-math -O3 -c  $<
+$(SOFT_BUILD)/fpu.o: fpu.c
+	@mkdir -p $(SOFT_BUILD)
+	$(QUIET_CC)$(XCC) -ffast-math -O3 -c  $< -o $@
 
-multest.o: multest.c
-	$(QUIET_CC)$(XCC) -O2 -c -mcpu=v8  $<
+$(SOFT_BUILD)/multest.o: multest.c
+	@mkdir -p $(SOFT_BUILD)
+	$(QUIET_CC)$(XCC) -O2 -c -mcpu=v8  $< -o $@
 
-divtest.o: divtest.c
-	$(QUIET_CC)$(XCC) -O2 -c -mcpu=v8  $<
+$(SOFT_BUILD)/divtest.o: divtest.c
+	@mkdir -p $(SOFT_BUILD)
+	$(QUIET_CC)$(XCC) -O2 -c -mcpu=v8  $< -o $@
 
-greth_api.o : $(UTILS_GRLIB)/software/greth/greth_api.c
-	$(QUIET_CC)$(XCC) -g -msoft-float -c $(UTILS_GRLIB)/software/greth/greth_api.c
+$(SOFT_BUILD)/greth_api.o : $(UTILS_GRLIB)/software/greth/greth_api.c
+	@mkdir -p $(SOFT_BUILD)
+	$(QUIET_CC)$(XCC) -g -msoft-float -c $< -o $@
 
-cgtest.o : cgtest.c
-	$(QUIET_CC)$(XCC) -c  $<
+$(SOFT_BUILD)/cgtest.o : cgtest.c
+	@mkdir -p $(SOFT_BUILD)
+	$(QUIET_CC)$(XCC) -c  $<  -o $@
 
-gptimer.o : gptimer.c gptimer.h gpio.h
-	$(QUIET_CC)$(XCC) -c -g -O2 $<
+$(SOFT_BUILD)/gptimer.o : gptimer.c gptimer.h gpio.h
+	@mkdir -p $(SOFT_BUILD)
+	$(QUIET_CC)$(XCC) -c -g -O2 $< -o $@
 
-grspwtdp.o : grspwtdp.c grspwtdp.h grspwtdp-regs.h
-	$(QUIET_CC)$(XCC) -c -g -Wall -O2 $<
+$(SOFT_BUILD)/grspwtdp.o : grspwtdp.c grspwtdp.h grspwtdp-regs.h
+	@mkdir -p $(SOFT_BUILD)
+	$(QUIET_CC)$(XCC) -c -g -Wall -O2 $< -o $@
 
-lib3tests.a: $(OFILES)
-	$(QUIET_AR)$(XAR) -cr lib3tests.a $(OFILES)
+$(SOFT_BUILD)/lib3tests.a: $(OFILES)
+	$(QUIET_AR)$(XAR) -cr $@ $(OFILES)
 
-leon3-soft: prom.srec ram.srec
+leon3-soft: $(SOFT_BUILD)/prom.srec $(SOFT_BUILD)/ram.srec
 
-systest.exe: systest.c lib3tests.a
-	$(QUIET_CC)$(XCC) $(XCFLAGS) systest.c $(XLDFLAGS) -o systest.exe
+$(SOFT_BUILD)/systest.exe: systest.c $(SOFT_BUILD)/lib3tests.a
+	$(QUIET_CC)$(XCC) $(XCFLAGS) systest.c $(XLDFLAGS) -o $@
 
-ram.srec: $(TEST_PROGRAM)
-	$(QUIET_OBJCP)$(CROSS_COMPILE_ELF)objcopy -O srec --gap-fill 0 $< ram.srec
+$(SOFT_BUILD)/ram.srec: $(TEST_PROGRAM)
+	$(QUIET_OBJCP)$(CROSS_COMPILE_ELF)objcopy -O srec --gap-fill 0 $< $@
 
 leon3-soft-clean:
-	$(QUIET_CLEAN)$(RM) $(OFILES) lib3tests.a prom.o
+	$(QUIET_CLEAN)$(RM) $(OFILES) $(SOFT_BUILD)/lib3tests.a $(SOFT_BUILD)/prom.o
 
 leon3-soft-distclean: soft-clean
-	$(QUIET_CLEAN)$(RM) prom.exe systest.exe standalone.exe prom.srec ram.srec prom.bin
+	$(QUIET_CLEAN)$(RM) $(SOFT_BUILD)/prom.exe $(SOFT_BUILD)/systest.exe $(SOFT_BUILD)/standalone.exe $(SOFT_BUILD)/prom.srec $(SOFT_BUILD)/ram.srec $(SOFT_BUILD)/prom.bin
 
-standalone.exe: systest.c standalone.c lib3tests.a
+$(SOFT_BUILD)/standalone.exe: systest.c standalone.c $(SOFT_BUILD)/lib3tests.a
 	$(QUIET_CC)$(XCC) $(XCFLAGS) systest.c $(VPATH)/standalone.c $(XLDFLAGS) -o standalone.exe

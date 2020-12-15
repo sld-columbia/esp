@@ -29,6 +29,9 @@ DRIVERS           = $(ESP_ROOT)/soft/drivers
 CONTIG_ALLOC_PATH = $(DRIVERS)/contig_alloc
 ESP_CORE_PATH     = $(DRIVERS)/esp
 FLISTS            = $(ESP_ROOT)/utils/flist
+SOFT_BUILD        = $(DESIGN_PATH)/soft-build/$(CPU_ARCH)
+BUILD_DRIVERS     = $(SOFT_BUILD)/drivers
+BAREMETAL_BIN     = $(SOFT_BUILD)/baremetal
 
 
 ### Include targets to generate accelerators RTL with HLS ###
@@ -48,7 +51,7 @@ BOARD_FILES = $(wildcard $(ESP_ROOT)/constraints/$(BOARD)/*)
 
 
 ### Default test program ###
-TEST_PROGRAM ?= systest.exe
+TEST_PROGRAM ?= $(SOFT_BUILD)/systest.exe
 
 
 ### GRLIB config targets ###
@@ -160,7 +163,7 @@ clean: 		soft-clean		\
 		vivado-clean		\
 		zynq-clean		\
 		genus-clean		\
-		sldgen-clean		\
+		socketgen-clean		\
 		espmon-clean		\
 		mmi64-clean		\
 		soft-build-clean
@@ -181,7 +184,7 @@ distclean:	check_all_srcs-distclean 	\
 		vivado-distclean		\
 		zynq-distclean			\
 		genus-distclean			\
-		sldgen-distclean		\
+		socketgen-distclean		\
 		espmon-distclean		\
 		mmi64-distclean			\
 		soft-build-distclean

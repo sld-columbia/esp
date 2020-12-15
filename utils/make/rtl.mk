@@ -8,12 +8,12 @@ INCDIR += $(THIRDPARTY_INCDIR)
 INCDIR += $(ESP_ROOT)/rtl/caches/esp-caches/common/defs
 
 ## VHDL Packages
-SIM_VHDL_PKGS += $(SLDGEN_VHDL_RTL_PKGS)
+SIM_VHDL_PKGS += $(SOCKETGEN_VHDL_RTL_PKGS)
 SIM_VHDL_PKGS += $(foreach f, $(shell strings $(FLISTS)/vhdl_pkgs.flist), $(ESP_ROOT)/rtl/$(f))
 SIM_VHDL_PKGS += $(THIRDPARTY_VHDL_PKGS)
 SIM_VHDL_PKGS += $(TOP_VHDL_RTL_PKGS) $(TOP_VHDL_SIM_PKGS)
 
-VHDL_PKGS += $(SLDGEN_VHDL_RTL_PKGS)
+VHDL_PKGS += $(SOCKETGEN_VHDL_RTL_PKGS)
 VHDL_PKGS += $(foreach f, $(shell strings $(FLISTS)/vhdl_pkgs.flist), $(if $(findstring rtl/sim, $(f)),, $(ESP_ROOT)/rtl/$(f)))
 VHDL_PKGS += $(THIRDPARTY_VHDL_PKGS)
 VHDL_PKGS += $(TOP_VHDL_RTL_PKGS)
@@ -56,7 +56,7 @@ DAT_SRCS = $(shell (find $(ESP_ROOT)/tech/$(TECHLIB)/ -name "*.dat" ))
 ALL_SIM_SRCS  = $(SIM_VHDL_PKGS) $(SIM_VHDL_SRCS) $(SIM_VLOG_SRCS) $(IP_XCI_SRCS) $(DAT_SRCS)
 ALL_RTL_SRCS  = $(VHDL_PKGS) $(VHDL_SRCS) $(VLOG_SRCS) $(IP_XCI_SRCS) $(DAT_SRCS)
 
-check_all_srcs: grlib_config.vhd socmap.vhd sldgen plic_regmap.sv
+check_all_srcs: grlib_config.vhd socmap.vhd socketgen plic_regmap.sv
 	@echo $(ALL_SIM_SRCS) > $@.new; \
 	if test -f $@.old; then \
 		/usr/bin/diff -q $@.old $@.new > /dev/null; \
@@ -78,7 +78,7 @@ check_all_srcs-distclean:
 
 .PHONY: check_all_srcs check_all_srcs-distclean
 
-check_all_rtl_srcs: grlib_config.vhd socmap.vhd sldgen plic_regmap.sv
+check_all_rtl_srcs: grlib_config.vhd socmap.vhd socketgen plic_regmap.sv
 	@echo $(ALL_RTL_SRCS) > $@.new; \
 	if test -f $@.old; then \
 		/usr/bin/diff -q $@.old $@.new > /dev/null; \

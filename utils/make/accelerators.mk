@@ -125,24 +125,23 @@ chisel-acc-distclean: chisel-acc-clean $(CHISEL_ACC-distclean)
 
 
 ### Third-Party ###
-$(THIRDPARTY_ACC):
+$(THIRDPARTY_ACC): $(BAREMETAL_BIN)
 	$(QUIET_BUILD)
 	@cd $(THIRDPARTY_PATH)/$@; \
 	if ! test -e $(THIRDPARTY_PATH)/$@/out; then \
-		$(MAKE) CROSS_COMPILE_ELF=$(CROSS_COMPILE_ELF) CROSS_COMPILE=$(CROSS_COMPILE_LINUX) ARCH=$(ARCH) KSRC=$(PWD)/linux-build hw; \
+		$(MAKE) CROSS_COMPILE_ELF=$(CROSS_COMPILE_ELF) CROSS_COMPILE=$(CROSS_COMPILE_LINUX) ARCH=$(ARCH) KSRC=$(SOFT_BUILD)/linux-build hw; \
 	fi;
 	@cd $(THIRDPARTY_PATH)/$@; \
-	$(MAKE) ESP_ROOT=$(ESP_ROOT) DESIGN_PATH=$(DESIGN_PATH) CPU_ARCH=$(CPU_ARCH) CROSS_COMPILE_ELF=$(CROSS_COMPILE_ELF) CROSS_COMPILE=$(CROSS_COMPILE_LINUX) ARCH=$(ARCH) KSRC=$(PWD)/linux-build sw;
+	$(MAKE) ESP_ROOT=$(ESP_ROOT) DESIGN_PATH=$(DESIGN_PATH) CPU_ARCH=$(CPU_ARCH) CROSS_COMPILE_ELF=$(CROSS_COMPILE_ELF) CROSS_COMPILE=$(CROSS_COMPILE_LINUX) ARCH=$(ARCH) KSRC=$(SOFT_BUILD)/linux-build sw;
 	@for f in $$(cat $(THIRDPARTY_PATH)/$@/$@.kmd); do \
-		cp -r $(THIRDPARTY_PATH)/$@/sw/$$f sysroot/opt/drivers/; \
+		cp -r $(THIRDPARTY_PATH)/$@/sw/$$f $(SOFT_BUILD)/sysroot/opt/drivers/; \
 	done;
-	@mkdir -p sysroot/root/$@
+	@mkdir -p $(SOFT_BUILD)/sysroot/root/$@
 	@for f in $$(cat $(THIRDPARTY_PATH)/$@/$@.umd); do \
-		cp -r $(THIRDPARTY_PATH)/$@/sw/$$f sysroot/root/$@/; \
+		cp -r $(THIRDPARTY_PATH)/$@/sw/$$f $(SOFT_BUILD)/sysroot/root/$@/; \
 	done;
-	@mkdir -p baremetal
 	@for f in $$(cat $(THIRDPARTY_PATH)/$@/$@.bc); do \
-		cp -r $(THIRDPARTY_PATH)/$@/sw/$$f baremetal/; \
+		cp -r $(THIRDPARTY_PATH)/$@/sw/$$f $(BAREMETAL_BIN); \
 	done;
 
 
@@ -151,12 +150,12 @@ thirdparty-acc: $(THIRDPARTY_ACC)
 $(THIRDPARTY_ACC-clean):
 	$(QUIET_CLEAN)
 	@cd $(THIRDPARTY_PATH)/$(@:-clean=); \
-	$(MAKE) CROSS_COMPILE_ELF=$(CROSS_COMPILE_ELF) CROSS_COMPILE=$(CROSS_COMPILE_LINUX) ARCH=$(ARCH) KSRC=$(PWD)/linux-build clean;
+	$(MAKE) CROSS_COMPILE_ELF=$(CROSS_COMPILE_ELF) CROSS_COMPILE=$(CROSS_COMPILE_LINUX) ARCH=$(ARCH) KSRC=$(SOFT_BUILD)/linux-build clean;
 
 $(THIRDPARTY_ACC-distclean): %-distclean : %-clean
 	$(QUIET_CLEAN)
 	@cd $(THIRDPARTY_PATH)/$(@:-distclean=); \
-	$(MAKE) CROSS_COMPILE_ELF=$(CROSS_COMPILE_ELF) CROSS_COMPILE=$(CROSS_COMPILE_LINUX) ARCH=$(ARCH) KSRC=$(PWD)/linux-build distclean;
+	$(MAKE) CROSS_COMPILE_ELF=$(CROSS_COMPILE_ELF) CROSS_COMPILE=$(CROSS_COMPILE_LINUX) ARCH=$(ARCH) KSRC=$(SOFT_BUILD)/linux-build distclean;
 
 thirdparty-acc-clean: $(THIRDPARTY_ACC-clean)
 
@@ -376,35 +375,35 @@ catapulthls_acc-distclean: $(CATAPULTHLS_ACC-distclean)
 $(ESP_ROOT)/tech/$(TECHLIB)/acc/installed.log:
 	touch $@
 
-SLDGEN_DEPS  = $(ESP_ROOT)/tech/$(TECHLIB)/acc/installed.log
-SLDGEN_DEPS += $(ESP_ROOT)/utils/sldgen/sld_generate.py
-SLDGEN_DEPS += $(wildcard $(ESP_ROOT)/utils/sldgen/templates/*.vhd)
-SLDGEN_DEPS += socmap.vhd esp_global.vhd
+SOCKETGEN_DEPS  = $(ESP_ROOT)/tech/$(TECHLIB)/acc/installed.log
+SOCKETGEN_DEPS += $(ESP_ROOT)/tools/socketgen/socketgen.py
+SOCKETGEN_DEPS += $(wildcard $(ESP_ROOT)/tools/socketgen/templates/*.vhd)
+SOCKETGEN_DEPS += socmap.vhd esp_global.vhd
 
 ### ESP Wrappers ###
-sldgen: $(SLDGEN_DEPS)
+socketgen: $(SOCKETGEN_DEPS)
 	$(QUIET_MKDIR) $(RM) $@; mkdir -p $@
-	$(QUIET_RUN)$(ESP_ROOT)/utils/sldgen/sld_generate.py $(NOC_WIDTH) $(ESP_ROOT)/tech/$(TECHLIB) $(ESP_ROOT)/accelerators/third-party $(ESP_ROOT)/utils/sldgen/templates ./sldgen
+	$(QUIET_RUN)$(ESP_ROOT)/tools/socketgen/socketgen.py $(NOC_WIDTH) $(ESP_ROOT)/tech/$(TECHLIB) $(ESP_ROOT)/accelerators/third-party $(ESP_ROOT)/tools/socketgen/templates ./socketgen
 	@touch $@
 
-sldgen-clean:
+socketgen-clean:
 
-sldgen-distclean: sldgen-clean
-	$(QUIET_CLEAN)$(RM) sldgen
+socketgen-distclean: socketgen-clean
+	$(QUIET_CLEAN)$(RM) socketgen
 
-.PHONY: sldgen-clean sldgen-distclean
+.PHONY: socketgen-clean socketgen-distclean
 
 ## Device Drivers ##
-$(ACC-driver): sysroot linux-build/vmlinux soft-build
+$(ACC-driver): $(SOFT_BUILD)/sysroot $(SOFT_BUILD)/linux-build/vmlinux
 	@BUILD_PATH=$(BUILD_DRIVERS)/$(@:-driver=)/linux/driver; \
 	ACC_PATH=$(filter %/$(@:-driver=), $(ACC_PATHS)); \
 	mkdir -p $$BUILD_PATH; \
 	ln -sf $$ACC_PATH/sw/linux/driver/* $$BUILD_PATH; \
 	if test -e $$BUILD_PATH/Makefile; then \
-		echo '   ' MAKE $@; mkdir -p sysroot/opt/drivers; \
-		ARCH=$(ARCH) CROSS_COMPILE=$(CROSS_COMPILE_LINUX) KSRC=$(PWD)/linux-build DRIVERS=$(DRIVERS) ACC_SW=$$ACC_PATH/sw $(MAKE) ESP_CORE_PATH=$(BUILD_DRIVERS)/esp -C $$BUILD_PATH; \
+		echo '   ' MAKE $@; mkdir -p $(SOFT_BUILD)/sysroot/opt/drivers; \
+		ARCH=$(ARCH) CROSS_COMPILE=$(CROSS_COMPILE_LINUX) KSRC=$(SOFT_BUILD)/linux-build DRIVERS=$(DRIVERS) ACC_SW=$$ACC_PATH/sw $(MAKE) ESP_CORE_PATH=$(BUILD_DRIVERS)/esp -C $$BUILD_PATH; \
 		if test -e $$BUILD_PATH/*.ko; then \
-			echo '   ' CP $@; cp $$BUILD_PATH/*.ko sysroot/opt/drivers/$(@:-driver=).ko; \
+			echo '   ' CP $@; cp $$BUILD_PATH/*.ko $(SOFT_BUILD)/sysroot/opt/drivers/$(@:-driver=).ko; \
 		else \
 			echo '   ' WARNING $@ compilation failed!; \
 		fi; \
@@ -415,16 +414,16 @@ $(ACC-driver): sysroot linux-build/vmlinux soft-build
 $(ACC-driver-clean):
 	$(QUIET_CLEAN)$(RM) $(BUILD_DRIVERS)/$(@:-driver-clean=)/linux/driver
 
-$(ACC-app): sysroot soft-build
+$(ACC-app): $(SOFT_BUILD)/sysroot
 	@BUILD_PATH=$(BUILD_DRIVERS)/$(@:-app=)/linux/app; \
 	ACC_PATH=$(filter %/$(@:-app=), $(ACC_PATHS)); \
 	if [ `ls -1 $$ACC_PATH/sw/linux/app/*.c 2>/dev/null | wc -l ` -gt 0 ]; then \
 		echo '   ' MAKE $@; \
-		mkdir -p sysroot/applications/test/; \
+		mkdir -p $(SOFT_BUILD)/sysroot/applications/test/; \
 		mkdir -p $$BUILD_PATH; \
 		CROSS_COMPILE=$(CROSS_COMPILE_LINUX) CPU_ARCH=$(CPU_ARCH) DRIVERS=$(DRIVERS) BUILD_PATH=$$BUILD_PATH $(MAKE) -C $$ACC_PATH/sw/linux/app; \
 		if [ `ls -1 $$BUILD_PATH/*.exe 2>/dev/null | wc -l ` -gt 0 ]; then \
-			echo '   ' CP $@; cp  $$BUILD_PATH/*.exe sysroot/applications/test/$(@:-app=).exe; \
+			echo '   ' CP $@; cp  $$BUILD_PATH/*.exe $(SOFT_BUILD)/sysroot/applications/test/$(@:-app=).exe; \
 		else \
 			echo '   ' WARNING $@ compilation failed!; \
 		fi; \
@@ -435,7 +434,7 @@ $(ACC-app): sysroot soft-build
 $(ACC-app-clean):
 	$(QUIET_CLEAN)$(RM) $(BUILD_DRIVERS)/$(@:-app-clean=)/linux/app
 
-$(ACC-baremetal): baremetal soft-build
+$(ACC-baremetal): $(BAREMETAL_BIN) soft-build socmap.vhd
 	@BUILD_PATH=$(BUILD_DRIVERS)/$(@:-baremetal=)/baremetal; \
         ACC_PATH=$(filter %/$(@:-baremetal=), $(ACC_PATHS)); \
 	echo $(ACC_PATHS); \
@@ -446,10 +445,10 @@ $(ACC-baremetal): baremetal soft-build
 		mkdir -p $$BUILD_PATH; \
 		CROSS_COMPILE=$(CROSS_COMPILE_ELF) CPU_ARCH=$(CPU_ARCH) DRIVERS=$(DRIVERS) DESIGN_PATH=$(DESIGN_PATH) BUILD_PATH=$$BUILD_PATH $(MAKE) -C  $$ACC_PATH/sw/baremetal; \
 		if [ `ls -1 $$BUILD_PATH/*.bin 2>/dev/null | wc -l ` -gt 0 ]; then \
-			echo '   ' CP $@; cp $$BUILD_PATH/*.bin baremetal/$(@:-baremetal=).bin; \
+			echo '   ' CP $@; cp $$BUILD_PATH/*.bin $(BAREMETAL_BIN)/$(@:-baremetal=).bin; \
 		fi; \
 		if [ `ls -1 $$BUILD_PATH/*.exe 2>/dev/null | wc -l ` -gt 0 ]; then \
-			echo '   ' CP $@; cp $$BUILD_PATH/*.exe baremetal/$(@:-baremetal=).exe; \
+			echo '   ' CP $@; cp $$BUILD_PATH/*.exe $(BAREMETAL_BIN)/$(@:-baremetal=).exe; \
 		else \
 			echo '   ' WARNING $@ compilation failed!; \
 		fi; \

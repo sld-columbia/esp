@@ -147,12 +147,8 @@ class EspCreator(Frame):
 
   def __init__(self, master, _soc):
     self.soc = _soc
-    self.soc.noc = NoC()
     self.noc = self.soc.noc
     self.master = master
-    
-    # Read configuration file
-    self.soc.read_config(True)
 
     # Create scroll bar
     self.y_axis_scrollbar = Scrollbar(self.master)
@@ -260,7 +256,7 @@ class EspCreator(Frame):
   def generate_mmi64_regs(self):
       create_mmi64_regs(soc)
 
-if len(sys.argv) != 6:
+if len(sys.argv) != 5:
     print_usage()
     sys.exit(1)
 
@@ -268,11 +264,10 @@ DMA_WIDTH = int(sys.argv[1])
 TECH = sys.argv[2]
 LINUX_MAC = sys.argv[3]
 LEON3_STACK = sys.argv[4]
-CPU_ARCH = sys.argv[5]
 
 root = Tk()
 root.title("ESP SoC Generator")
-soc = SoC_Config(DMA_WIDTH, TECH, LINUX_MAC, LEON3_STACK, CPU_ARCH)
+soc = SoC_Config(DMA_WIDTH, TECH, LINUX_MAC, LEON3_STACK, True)
 
 root.geometry("1024x768")
 w, h = root.winfo_screenwidth(), root.winfo_screenheight()

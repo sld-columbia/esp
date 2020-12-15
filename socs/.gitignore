@@ -36,7 +36,7 @@ mmi64_regs.h
 power.h
 cache_cfg.svh
 plic_regmap.sv
-sldgen
+socketgen
 
 *.exe
 *.bin

@@ -10,7 +10,7 @@ import math
 
 ### Helpers ###
 def print_usage():
-    print("Usage                    : ./memgen.py <tech_path> <infile> <out_path>")
+    print("Usage                    : ./plmgen.py <tech_path> <infile> <out_path>")
     print("")
     print("")
     print("      <tech_path>        : Path to technology liraries for memories. A list of available SRAMS should")

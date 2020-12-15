@@ -103,14 +103,14 @@ endif
 	echo $(SPACES)"vmake > vsim.mk"; \
 	vmake 2> /dev/null > vsim.mk; \
 	if ! test -e prom.srec; then \
-		ln -s ../prom.srec; \
+		ln -s $(SOFT_BUILD)/prom.srec; \
 	fi; \
 	if ! test -e ram.srec; then \
-		ln -s ../ram.srec; \
+		ln -s $(SOFT_BUILD)/ram.srec; \
 	fi; \
 	cd ../;
 
-sim-compile: sldgen check_all_srcs modelsim/vsim.mk soft
+sim-compile: socketgen check_all_srcs modelsim/vsim.mk soft
 	@for dat in $(DAT_SRCS); do \
 		cp $$dat modelsim; \
 	done;
