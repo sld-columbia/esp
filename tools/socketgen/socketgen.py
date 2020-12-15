@@ -286,13 +286,19 @@ def bind_axi(f, acc, dma_width):
 
 
 def tie_unused_axi(f, acc, dma_width):
-  f.write("      mosi(0).aw.id(XID_WIDTH - 1 downto " + str(acc.id_width) + ") <= (others => '0');\n")
-  f.write("      mosi(0).aw.addr(GLOB_PHYS_ADDR_BITS - 1 downto " + str(acc.addr_width) + ") <= (others => '0');\n")
-  f.write("      mosi(0).aw.user(XUSER_WIDTH - 1 downto " + str(acc.user_width) + ") <= (others => '0');\n")
-  f.write("      mosi(0).w.user(XUSER_WIDTH - 1 downto " + str(acc.user_width) + ") <= (others => '0');\n")
-  f.write("      mosi(0).ar.id(XID_WIDTH - 1 downto " + str(acc.id_width) + ") <= (others => '0');\n")
-  f.write("      mosi(0).ar.addr(GLOB_PHYS_ADDR_BITS - 1 downto " + str(acc.addr_width) + ") <= (others => '0');\n")
-  f.write("      mosi(0).ar.user(XUSER_WIDTH - 1 downto " + str(acc.user_width) + ") <= (others => '0');\n")
+  f.write("  pad_id_gen : if XID_WIDTH > " + str(acc.id_width) + " generate\n")
+  f.write("    mosi(0).aw.id(XID_WIDTH - 1 downto " + str(acc.id_width) + ") <= (others => '0');\n")
+  f.write("    mosi(0).ar.id(XID_WIDTH - 1 downto " + str(acc.id_width) + ") <= (others => '0');\n")
+  f.write("  end generate;\n")
+  f.write("  pad_paddr_gen : if GLOB_PHYS_ADDR_BITS > " + str(acc.addr_width) + " generate\n")
+  f.write("    mosi(0).aw.addr(GLOB_PHYS_ADDR_BITS - 1 downto " + str(acc.addr_width) + ") <= (others => '0');\n")
+  f.write("    mosi(0).ar.addr(GLOB_PHYS_ADDR_BITS - 1 downto " + str(acc.addr_width) + ") <= (others => '0');\n")
+  f.write("  end generate;\n")
+  f.write("  pad_user_gen : if XUSER_WIDTH > " + str(acc.user_width) + " generate\n")
+  f.write("    mosi(0).aw.user(XUSER_WIDTH - 1 downto " + str(acc.user_width) + ") <= (others => '0');\n")
+  f.write("    mosi(0).w.user(XUSER_WIDTH - 1 downto " + str(acc.user_width) + ") <= (others => '0');\n")
+  f.write("    mosi(0).ar.user(XUSER_WIDTH - 1 downto " + str(acc.user_width) + ") <= (others => '0');\n")
+  f.write("  end generate;\n")
 
 
 def write_axi_acc_port_map(f, acc, dma_width):
