@@ -327,7 +327,6 @@ vivado-gui: vivado-setup
 	vivado $(DESIGN).xpr; \
 	cd ../;
 
-<<<<<<< HEAD:utils/make/vivado.mk
 vivado-gui-emu: vivado-setup-emu
 	$(QUIET_RUN)
 	@cd vivado; \
@@ -337,6 +336,7 @@ vivado-gui-emu: vivado-setup-emu
 vivado-syn: vivado-setup
 	$(QUIET_INFO)echo "launching Vivado implementation script"
 	@cd vivado; \
+	vivado $(VIVADO_BATCH_OPT) -source syn.tcl | tee ../vivado_syn.log;
 	@if [ "$(DPR_ENABLED)" != "y" ]; then \
 		vivado $(VIVADO_BATCH_OPT) -source syn.tcl | tee ../$(VIVADO_LOGS)/vivado_syn.log; \
 		cd ../;
