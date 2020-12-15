@@ -84,7 +84,7 @@ int main(int argc, char * argv[])
 	    struct esp_device *dev = &espdevs[n];
 	    int done;
 	    int i;
-	    unsigned **ptable;
+	    unsigned **ptable = NULL;
 	    word_t *mem;
 	    unsigned errors = 0;
 	    int scatter_gather = 1;

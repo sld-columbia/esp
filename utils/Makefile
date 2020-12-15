@@ -25,9 +25,11 @@ endif
 SOFT              = $(ESP_ROOT)/soft/$(CPU_ARCH)
 BOOTROM_PATH      = $(SOFT)/bootrom
 LINUXSRC          = $(SOFT)/linux
-DRIVERS           = $(ESP_ROOT)/soft/drivers
-CONTIG_ALLOC_PATH = $(DRIVERS)/contig_alloc
-ESP_CORE_PATH     = $(DRIVERS)/esp
+DRIVERS           = $(ESP_ROOT)/soft/common/drivers
+DRV_BARE          = $(DRIVERS)/baremetal
+DRV_LINUX         = $(DRIVERS)/linux
+CONTIG_ALLOC_PATH = $(DRV_LINUX)/contig_alloc
+ESP_CORE_PATH     = $(DRV_LINUX)/esp
 FLISTS            = $(ESP_ROOT)/utils/flist
 SOFT_BUILD        = $(DESIGN_PATH)/soft-build/$(CPU_ARCH)
 BUILD_DRIVERS     = $(SOFT_BUILD)/drivers

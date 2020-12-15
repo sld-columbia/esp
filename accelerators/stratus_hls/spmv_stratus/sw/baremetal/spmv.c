@@ -213,7 +213,7 @@ int main(int argc, char * argv[])
 			struct esp_device *dev = &espdevs[n];
 
 			unsigned done;
-			unsigned **ptable;
+			unsigned **ptable = NULL;
 			unsigned *mem;
 			unsigned errors = 0;
 			int scatter_gather = 1;

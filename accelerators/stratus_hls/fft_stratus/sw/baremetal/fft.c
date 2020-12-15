@@ -8,7 +8,7 @@
 
 #include <esp_accelerator.h>
 #include <esp_probe.h>
-#include "test/fft_test.h"
+#include "utils/fft_utils.h"
 
 #if (FFT_FX_WIDTH == 64)
 typedef long long token_t;
@@ -114,7 +114,7 @@ int main(int argc, char * argv[])
 	struct esp_device *espdevs;
 	struct esp_device *dev;
 	unsigned done;
-	unsigned **ptable;
+	unsigned **ptable = NULL;
 	token_t *mem;
 	float *gold;
 	unsigned errors = 0;

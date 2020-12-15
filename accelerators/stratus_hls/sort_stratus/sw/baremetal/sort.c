@@ -93,7 +93,7 @@ int main(int argc, char * argv[])
 			unsigned sort_len_min;
 			unsigned done;
 			int i, j;
-			unsigned **ptable;
+			unsigned **ptable = NULL;
 			unsigned *mem;
 			unsigned errors = 0;
 			int scatter_gather = 1;

@@ -1,5 +1,5 @@
 #include "cfg.h"
-#include "test/fft_test.h"
+#include "utils/fft_utils.h"
 
 static unsigned in_words_adj;
 static unsigned out_words_adj;

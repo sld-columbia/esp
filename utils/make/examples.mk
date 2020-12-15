@@ -1,5 +1,5 @@
 
-EXAMPLES_PATH = $(ESP_ROOT)/soft/examples/
+EXAMPLES_PATH = $(ESP_ROOT)/soft/common/apps/examples/
 EXAMPLES_OUT_PATH = $(DESIGN_PATH)/examples
 
 EXAMPLES = $(filter-out common, $(shell ls -d $(EXAMPLES_PATH)/*/ | awk -F/ '{print $$(NF-1)}'))
@@ -14,14 +14,15 @@ endif
 
 EXAMPLE_CFLAGS += -O3
 EXAMPLE_CFLAGS += -Wall
-EXAMPLE_CFLAGS += -I$(DRIVERS)/include
+EXAMPLE_CFLAGS += -I$(DRV_LINUX)/include -I$(DRIVERS)/common/include
 EXAMPLE_CFLAGS += -I$(EXAMPLES_PATH)/$(EXAMPLE)
 
-EXAMPLE_LDLIBS += -L$(DRIVERS)/contig_alloc
-EXAMPLE_LDLIBS += -L$(DRIVERS)/test
-EXAMPLE_LDLIBS += -L$(DRIVERS)/libesp
+EXAMPLE_LDLIBS += -L$(BUILD_DRIVERS)/contig_alloc
+EXAMPLE_LDLIBS += -L$(BUILD_DRIVERS)/test
+EXAMPLE_LDLIBS += -L$(BUILD_DRIVERS)/libesp
+EXAMPLE_LDLIBS += -L$(BUILD_DRIVERS)/utils/linux
 
-EXAMPLE_LDFLAGS += -lm -lrt -lpthread -lesp -ltest -lcontig
+EXAMPLE_LDFLAGS += -lm -lrt -lpthread -lesp -ltest -lcontig -lutils
 
 EXAMPLE_CC = gcc
 EXAMPLE_LD = $(CROSS_COMPILE_LINUX)$(LD)

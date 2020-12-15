@@ -71,7 +71,7 @@ int main(int argc, char * argv[])
 	struct esp_device *espdevs;
 	struct esp_device *dev;
 	unsigned done;
-	unsigned **ptable;
+	unsigned **ptable = NULL;
 	token_t *mem;
 	int *gold;
 	unsigned errors = 0;

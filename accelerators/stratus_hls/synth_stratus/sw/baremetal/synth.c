@@ -80,7 +80,7 @@ int main(int argc, char * argv[])
 			coherence = ACC_COH_NONE;
 /* #endif */
 			struct esp_device *dev;
-			unsigned **ptable;
+			unsigned **ptable = NULL;
 			unsigned *mem;
 			int scatter_gather = 1;
 			for (n = 0; n < ndev; n++){

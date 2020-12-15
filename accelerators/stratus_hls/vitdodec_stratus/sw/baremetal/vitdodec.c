@@ -219,7 +219,7 @@ int main(int argc, char * argv[])
 	struct esp_device *espdevs;
 	struct esp_device *dev;
 	unsigned done;
-	unsigned **ptable;
+	unsigned **ptable = NULL;
 	token_t *mem;
 	token_t *gold;
 	unsigned errors = 0;

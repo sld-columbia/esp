@@ -73,7 +73,7 @@ int main(int argc, char * argv[])
 	struct esp_device *dev;
 	struct esp_device *srcs[4];
 	unsigned all_done;
-	unsigned **ptable;
+	unsigned **ptable = NULL;
 	token_t *mem;
 	unsigned errors = 0;
 
