@@ -9,25 +9,20 @@ $(SOFT_BUILD)/systest.bin: $(TEST_PROGRAM)
 	$(QUIET_OBJCP) $(CROSS_COMPILE_ELF)objcopy -O binary --change-addresses -0x40000000 $< $@
 
 soft-clean: leon3-soft-clean
-	@$(RM)					\
-	$(SOFT_BUILD)/prom.out			\
-	$(SOFT_BUILD)/xdump.s			\
-	$(SOFT_BUILD)/mkprom2			\
-	$(SOFT_BUILD)/lib			\
-	$(SOFT_BUILD)/linkprom			\
-	$(SOFT_BUILD)/linkbch			\
-	$(SOFT_BUILD)/linkpromerc32		\
-	$(SOFT_BUILD)/linkpromecos		\
-	$(SOFT_BUILD)/linkpromflash		\
-	$(SOFT_BUILD)/linkpromerc32flash	\
-	$(SOFT_BUILD)/linkpromecosflash		\
-	$(SOFT_BUILD)/dummy.exe
+	@$(RM)			\
+	$(SOFT_BUILD)/prom.out	\
+	$(SOFT_BUILD)/dummy.exe \
+	$(SOFT_BUILD)/xdump.s
 
 
 soft-distclean: leon3-soft-distclean
 	@$(RM) 				\
+	$(SOFT_BUILD)/mkprom/		\
+	$(SOFT_BUILD)/grlib/		\
 	$(SOFT_BUILD)/prom.bin		\
-	$(SOFT_BUILD)/systest.bin
+	$(SOFT_BUILD)/systest.bin	\
+	$(SOFT_BUILD)/prom.srec 	\
+	$(SOFT_BUILD)/ram.srec
 
 .PHONY: leon3-soft-clean leon3-soft-distclean
 
@@ -51,13 +46,13 @@ $(SOFT_BUILD)/prom.srec: $(SOFT_BUILD)/prom.exe
 $(SOFT_BUILD)/dummy.exe: $(UTILS_GRLIB)/mkprom2/dummy.c
 	$(QUIET_MAKE) $(CROSS_COMPILE_ELF)gcc $< -o $@
 
-$(SOFT_BUILD)/mkprom2: $(wildcard $(UTILS_GRLIB)/mkprom2/*.S) $(wildcard $(UTILS_GRLIB)/mkprom2/*.c) $(wildcard $(UTILS_GRLIB)/mkprom2/*.h)
-	@mkdir -p $(SOFT_BUILD)
-	$(QUIET_MAKE) $(MAKE) --quiet -C $(UTILS_GRLIB)/mkprom2 PREFIX=$(SOFT_BUILD)
+$(SOFT_BUILD)/mkprom/mkprom2: $(wildcard $(UTILS_GRLIB)/mkprom2/*.S) $(wildcard $(UTILS_GRLIB)/mkprom2/*.c) $(wildcard $(UTILS_GRLIB)/mkprom2/*.h)
+	@mkdir -p $(SOFT_BUILD)/mkprom
+	$(QUIET_MAKE) $(MAKE) --quiet -C $(UTILS_GRLIB)/mkprom2 PREFIX=$(SOFT_BUILD)/mkprom
 
-$(SOFT_BUILD)/prom.out: $(SOFT_BUILD)/dummy.exe $(SOFT_BUILD)/mkprom2
+$(SOFT_BUILD)/prom.out: $(SOFT_BUILD)/dummy.exe $(SOFT_BUILD)/mkprom/mkprom2
 	@cd $(SOFT_BUILD); \
-	./mkprom2 -leon3 -freq $(LEON3_BASE_FREQ_MHZ) -nomsg -baud 38343 -stack $(LEON3_STACK) dummy.exe;
+	./mkprom/mkprom2 -leon3 -freq $(LEON3_BASE_FREQ_MHZ) -nomsg -baud 38343 -stack $(LEON3_STACK) dummy.exe;
 
 $(SOFT_BUILD)/prom.bin: $(SOFT_BUILD)/prom.out
 	$(QUIET_OBJCP) $(CROSS_COMPILE_ELF)objcopy -O binary --change-addresses -0x40000000 $< $@

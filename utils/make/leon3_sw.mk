@@ -37,44 +37,44 @@ FPROGS=$(shell for i in $(PROGS); do \
 		fi; )
 FPROGS+=$(EXTRA_PROGS)
 
-OFILES = $(foreach of, $(FPROGS:%=%.o), $(SOFT_BUILD)/$(of))
+OFILES = $(foreach of, $(FPROGS:%=%.o), $(SOFT_BUILD)/grlib/$(of))
 
 all:
 
-$(SOFT_BUILD)/%.o: %.c
-	@mkdir -p $(SOFT_BUILD)
+$(SOFT_BUILD)/grlib/%.o: %.c
+	@mkdir -p $(SOFT_BUILD)/grlib
 	$(QUIET_CC)$(XCC) $(XCFLAGS) -c  $< -o $@
 
-$(SOFT_BUILD)/%.o: %.S
-	@mkdir -p $(SOFT_BUILD)
+$(SOFT_BUILD)/grlib/%.o: %.S
+	@mkdir -p $(SOFT_BUILD)/grlib
 	$(QUIET_CC)$(XCC) $(XCFLAGS) -c  $< -o $@
 
-$(SOFT_BUILD)/fpu.o: fpu.c
-	@mkdir -p $(SOFT_BUILD)
+$(SOFT_BUILD)/grlib/fpu.o: fpu.c
+	@mkdir -p $(SOFT_BUILD)/grlib
 	$(QUIET_CC)$(XCC) -ffast-math -O3 -c  $< -o $@
 
-$(SOFT_BUILD)/multest.o: multest.c
-	@mkdir -p $(SOFT_BUILD)
+$(SOFT_BUILD)/grlib/multest.o: multest.c
+	@mkdir -p $(SOFT_BUILD)/grlib
 	$(QUIET_CC)$(XCC) -O2 -c -mcpu=v8  $< -o $@
 
-$(SOFT_BUILD)/divtest.o: divtest.c
-	@mkdir -p $(SOFT_BUILD)
+$(SOFT_BUILD)/grlib/divtest.o: divtest.c
+	@mkdir -p $(SOFT_BUILD)/grlib
 	$(QUIET_CC)$(XCC) -O2 -c -mcpu=v8  $< -o $@
 
-$(SOFT_BUILD)/greth_api.o : $(UTILS_GRLIB)/software/greth/greth_api.c
-	@mkdir -p $(SOFT_BUILD)
+$(SOFT_BUILD)/grlib/greth_api.o : $(UTILS_GRLIB)/software/greth/greth_api.c
+	@mkdir -p $(SOFT_BUILD)/grlib
 	$(QUIET_CC)$(XCC) -g -msoft-float -c $< -o $@
 
-$(SOFT_BUILD)/cgtest.o : cgtest.c
-	@mkdir -p $(SOFT_BUILD)
+$(SOFT_BUILD)/grlib/cgtest.o : cgtest.c
+	@mkdir -p $(SOFT_BUILD)/grlib
 	$(QUIET_CC)$(XCC) -c  $<  -o $@
 
-$(SOFT_BUILD)/gptimer.o : gptimer.c gptimer.h gpio.h
-	@mkdir -p $(SOFT_BUILD)
+$(SOFT_BUILD)/grlib/gptimer.o : gptimer.c gptimer.h gpio.h
+	@mkdir -p $(SOFT_BUILD)/grlib
 	$(QUIET_CC)$(XCC) -c -g -O2 $< -o $@
 
-$(SOFT_BUILD)/grspwtdp.o : grspwtdp.c grspwtdp.h grspwtdp-regs.h
-	@mkdir -p $(SOFT_BUILD)
+$(SOFT_BUILD)/grlib/grspwtdp.o : grspwtdp.c grspwtdp.h grspwtdp-regs.h
+	@mkdir -p $(SOFT_BUILD)/grlib
 	$(QUIET_CC)$(XCC) -c -g -Wall -O2 $< -o $@
 
 $(SOFT_BUILD)/lib3tests.a: $(OFILES)
@@ -92,7 +92,7 @@ leon3-soft-clean:
 	$(QUIET_CLEAN)$(RM) $(OFILES) $(SOFT_BUILD)/lib3tests.a $(SOFT_BUILD)/prom.o
 
 leon3-soft-distclean: soft-clean
-	$(QUIET_CLEAN)$(RM) $(SOFT_BUILD)/prom.exe $(SOFT_BUILD)/systest.exe $(SOFT_BUILD)/standalone.exe $(SOFT_BUILD)/prom.srec $(SOFT_BUILD)/ram.srec $(SOFT_BUILD)/prom.bin
+	$(QUIET_CLEAN)$(RM) $(SOFT_BUILD)/prom.exe $(SOFT_BUILD)/systest.exe $(SOFT_BUILD)/standalone.exe
 
 $(SOFT_BUILD)/standalone.exe: systest.c standalone.c $(SOFT_BUILD)/lib3tests.a
 	$(QUIET_CC)$(XCC) $(XCFLAGS) systest.c $(VPATH)/standalone.c $(XLDFLAGS) -o standalone.exe
