@@ -228,10 +228,10 @@ vivado-gui: vivado-setup
 	vivado $(DESIGN).xpr; \
 	cd ../;
 
-vivado-syn:
+vivado-syn: vivado-setup
 	$(QUIET_INFO)echo "launching Vivado implementation script"
-	@cd vivado; 
-	#vivado $(VIVADO_BATCH_OPT) -source syn.tcl | tee ../vivado_syn.log;
+	@cd vivado; \
+	vivado $(VIVADO_BATCH_OPT) -source syn.tcl | tee ../vivado_syn.log;
 	@if [ "$(DPR_ENABLED)" != "y" ]; then \
 		bit=vivado/$(DESIGN).runs/impl_1/$(TOP).bit; \
 		if  test -r $$bit; then \
@@ -279,7 +279,7 @@ vivado-syn:
 vivado-syn-dpr: DPR_ENABLED = y
 vivado-syn-dpr: vivado-syn
 
-vivado-syn-dpr-acc:
+vivado-syn-dpr-acc: vivado/srcs.tcl
 	$(QUIET_INFO)echo "launching setup script for Vivado DPR flow"  
 	@if ! test -d vivado_dpr; then \
         $(QUIET_INFO_ALT)echo "vivado_dpr directory not found"; \

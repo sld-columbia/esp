@@ -32,7 +32,7 @@ do
             tile_type=${_line[3]}
             acc_name=${_line[4]}
             acc_name+="_$tile_index"
-            if [ $tile_type == "acc" ]; then
+            if [[ $tile_type == "acc" ]]; then
                 new_accelerators["$num_acc_tiles,0"]=$tile_index;
                 new_accelerators["$num_acc_tiles,1"]=$(echo ${acc_name} | awk '{print tolower($0)}');
                 ((num_acc_tiles++));
@@ -61,7 +61,7 @@ do
             tile_type=${_line[3]}
             acc_name=${_line[4]}
             acc_name+="_$tile_index"
-            if [ $tile_type == "acc" ]; then
+            if [[ $tile_type == "acc" ]]; then
                 old_accelerators["$num_old_acc_tiles,0"]=$tile_index;
                 old_accelerators["$num_old_acc_tiles,1"]=$(echo ${acc_name} | awk '{print tolower($0)}');
                 ((num_old_acc_tiles++));
