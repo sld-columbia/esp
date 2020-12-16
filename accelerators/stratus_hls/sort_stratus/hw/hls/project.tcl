@@ -8,7 +8,7 @@
 #
 # Source the common configurations
 #
-source ../../common/syn/project.tcl
+source ../../../common/hls/project.tcl
 
 #
 # Set the private memory library

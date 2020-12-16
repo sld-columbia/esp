@@ -1,1 +1,1 @@
-../stratus/gold-30x40.txt
+../hls/gold-30x40.txt

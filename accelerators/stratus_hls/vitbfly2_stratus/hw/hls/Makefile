@@ -1,1 +1,1 @@
-../../common/syn/Makefile
+../../../common/hls/Makefile
