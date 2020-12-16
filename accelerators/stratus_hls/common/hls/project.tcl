@@ -46,7 +46,7 @@ if {[lsearch $fpga_techs $TECH] >= 0} {
 
 }
 if {[lsearch $asic_techs $TECH] >= 0} {
-    set_attr verilog_files "$TECH_PATH/verilog/*v $ESP_ROOT/rtl/techmap/$TECH/mem/*v"
+    set_attr verilog_files "$ESP_ROOT/rtl/sim/$TECH/verilog/*v $ESP_ROOT/rtl/techmap/$TECH/mem/*v"
     set LIB_PATH "$TECH_PATH/lib"
     set LIB_NAME "$TECH.lib"
     use_tech_lib "$LIB_PATH/$LIB_NAME"

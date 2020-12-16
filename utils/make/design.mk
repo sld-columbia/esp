@@ -93,6 +93,7 @@ TOP_VHDL_RTL_PKGS += $(DESIGN_PATH)/$(GRLIB_CFG_BUILD)/grlib_config.vhd
 TOP_VHDL_RTL_PKGS += $(DESIGN_PATH)/$(ESP_CFG_BUILD)/socmap.vhd
 TOP_VHDL_RTL_PKGS += $(DESIGN_PATH)/socketgen/sldacc.vhd
 TOP_VHDL_RTL_PKGS += $(ESP_ROOT)/rtl/tiles/tiles_pkg.vhd
+TOP_VHDL_RTL_PKGS += $(ESP_ROOT)/rtl/tiles/asic/tiles_asic_pkg.vhd
 TOP_VHDL_RTL_PKGS += $(EXTRA_TOP_VHDL_RTL_PKGS)
 
 TOP_VHDL_SIM_PKGS +=
@@ -101,8 +102,17 @@ TOP_VHDL_RTL_SRCS += $(DESIGN_PATH)/socketgen/accelerators.vhd
 TOP_VHDL_RTL_SRCS += $(DESIGN_PATH)/socketgen/caches.vhd
 TOP_VHDL_RTL_SRCS += $(wildcard $(DESIGN_PATH)/socketgen/noc_*.vhd)
 TOP_VHDL_RTL_SRCS += $(DESIGN_PATH)/socketgen/tile_acc.vhd
+ifeq ($(filter $(TECHLIB),$(FPGALIBS)),)
+# ASIC flow: the top module of the hierarchy connects the FPGA design
+# for testing with the chip desing and is used only for simulation
+TOP_VHDL_RTL_SRCS += $(DESIGN_PATH)/$(CHIP_TOP).vhd
+TOP_VHDL_SIM_SRCS += $(DESIGN_PATH)/$(TOP).vhd
+else
+# FPGA flow: add FPGA top module
 TOP_VHDL_RTL_SRCS += $(DESIGN_PATH)/$(TOP).vhd
+endif
 
+# Testbench
 TOP_VHDL_SIM_SRCS += $(DESIGN_PATH)/$(SIMTOP).vhd
 
 TOP_VLOG_RTL_SRCS +=
