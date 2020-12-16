@@ -38,3 +38,6 @@
 [submodule "utils/zynq"]
 	path = utils/zynq
 	url = https://github.com/sld-columbia/zynq-template.git
+[submodule "rtl/peripherals/bsg"]
+	path = rtl/peripherals/bsg
+	url = https://github.com/bespoke-silicon-group/basejump_stl.git
