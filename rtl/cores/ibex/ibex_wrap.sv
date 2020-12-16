@@ -8,7 +8,7 @@ module ibex_wrap
    (
     input logic 	clk,
     input logic 	rstn,
-    input logic [31:0] 	HART_ID = '0,
+    input logic [31:0] 	HART_ID,
 
     // Instruction memory interface
     output logic 	instr_req_o,
