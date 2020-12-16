@@ -29,6 +29,10 @@ VHDL_SRCS += $(THIRDPARTY_VHDL)
 VHDL_SRCS += $(TOP_VHDL_RTL_SRCS)
 
 SIM_VHDL_SRCS += $(VHDL_SRCS)
+ifeq ($(filter $(TECHLIB),$(FPGALIBS)),)
+# ADD FPGA techlib to simulation files
+SIM_VHDL_SRCS += $(foreach f, $(shell strings $(FLISTS)/techmap_vhdl.flist), $(if $(findstring techmap/$(FPGA_TECHLIB), $(f)), $(ESP_ROOT)/rtl/$(f),))
+endif
 SIM_VHDL_SRCS += $(foreach f, $(shell strings $(FLISTS)/sim_vhdl.flist), $(ESP_ROOT)/rtl/$(f))
 SIM_VHDL_SRCS += $(TOP_VHDL_SIM_SRCS)
 
