@@ -1,2 +1,0 @@
-gencomp.vhd
-netcomp.vhd

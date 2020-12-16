@@ -1,5 +1,0 @@
-stdlib
-sparc
-modgen
-amba
-dftlib

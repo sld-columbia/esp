@@ -14,13 +14,13 @@ use work.leon3.all;
 use work.uart.all;
 use work.misc.all;
 use work.net.all;
-use work.jtag.all;
+use work.svga_pkg.all;
+library unisim;
 -- pragma translate_off
 use work.sim.all;
-library unisim;
-use unisim.all;
 -- pragma translate_on
-use work.sldcommon.all;
+use unisim.VCOMPONENTS.all;
+use work.monitor_pkg.all;
 use work.sldacc.all;
 use work.tile.all;
 use work.nocpackage.all;
@@ -29,7 +29,7 @@ use work.coretypes.all;
 use work.config.all;
 use work.esp_global.all;
 use work.socmap.all;
-use work.soctiles.all;
+use work.tiles_pkg.all;
 
 entity top is
   generic (

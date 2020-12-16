@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sld>
+  <accelerator name="nightvision" desc="NIGHTVISION" data_size="100" device_id="011" hls_tool="stratus_hls">
+    <param name="n_Images" desc="number of input images to process"/>
+    <param name="n_Rows" desc="number of rows of input image"/>
+    <param name="n_Cols" desc="number of columns of input image"/>
+    <param name="do_dwt" desc="enable/disable the DWT stage"/>
+  </accelerator>
+</sld>

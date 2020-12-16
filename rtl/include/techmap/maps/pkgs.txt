@@ -1,8 +1,0 @@
-allclkgen.vhd
-allddr.vhd
-allmem.vhd
-allmul.vhd
-allpads.vhd
-alltap.vhd
-allpll.vhd
-alldco.vhd

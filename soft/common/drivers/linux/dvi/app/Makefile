@@ -1,0 +1,1 @@
+include $(DRIVERS)/common.mk

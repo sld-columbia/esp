@@ -10,6 +10,7 @@ modelsim.ini
 xilinx_lib
 
 modelsim
+questa
 vsim.mk
 *.wlf
 *.do
@@ -36,7 +37,7 @@ mmi64_regs.h
 power.h
 cache_cfg.svh
 plic_regmap.sv
-sldgen
+socketgen
 
 *.exe
 *.bin
@@ -54,6 +55,8 @@ moc_predefs.h
 .qmake.stash
 
 boards
+
+soft-build/
 
 linux-build/
 linux.dsu

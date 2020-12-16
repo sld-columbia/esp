@@ -1,3 +1,0 @@
-ddrpkg.vhd
-ddrintpkg.vhd
-ahb2mig_7series_pkg.vhd
