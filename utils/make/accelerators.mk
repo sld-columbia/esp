@@ -437,9 +437,6 @@ $(ACC-app-clean):
 $(ACC-baremetal): $(BAREMETAL_BIN) soft-build socmap.vhd
 	@BUILD_PATH=$(BUILD_DRIVERS)/$(@:-baremetal=)/baremetal; \
         ACC_PATH=$(filter %/$(@:-baremetal=), $(ACC_PATHS)); \
-	echo $(ACC_PATHS); \
-	echo $(ACC_PATH); \
-	echo $$ACC_PATH; \
 	if [ `ls -1 $$ACC_PATH/sw/baremetal/*.c 2>/dev/null | wc -l ` -gt 0 ]; then \
 		echo '   ' MAKE $@; \
 		mkdir -p $$BUILD_PATH; \

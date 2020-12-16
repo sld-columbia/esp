@@ -21,9 +21,9 @@ CFLAGS += -fno-common
 CFLAGS += -fno-builtin-printf
 CFLAGS += -nostartfiles
 LDFLAGS += -lgcc
-LDFLAGS += $(COMMON)/syscalls.c
-LDFLAGS += $(RISCV_TESTS)/benchmarks/common/crt.S
-LDFLAGS += -T $(RISCV_TESTS)/benchmarks/common/test.ld
+LDFLAGS_RISCV = $(COMMON)/syscalls.c
+LDFLAGS_RISCV += $(RISCV_TESTS)/benchmarks/common/crt.S
+LDFLAGS_RISCV += -T $(RISCV_TESTS)/benchmarks/common/test.ld
 OBJCPFLAGS :=
 ifeq ("$(CPU_ARCH)", "ariane")
 CFLAGS += -nostdlib
@@ -36,28 +36,45 @@ CROSS_COMPILE ?= riscv32-unknown-elf-
 endif
 endif
 
+SRCS := $(wildcard *.c)
+HEADERS := $(wildcard *.h) $(wildcard $(DRIVERS)/include/*.h)
+HEADERS += $(wildcard $(DRIVERS)/../common/include/*.h) $(wildcard $(DESIGN_PATH)/*.h)
+SRCS_PROBE := $(wildcard $(DRIVERS)/probe/*.c) 
+ifeq ($(APPNAME),)
+EXES := $(SRCS:.c=.exe)
+EXES := $(addprefix  $(BUILD_PATH)/, $(EXES))
+BINS := $(EXES:.exe=.bin)
+else
+SRCS := $(filter-out $(APPNAME).c, $(SRCS))
+OBJS := $(SRCS:.c=.o)
+OBJS := $(addprefix  $(BUILD_PATH)/, $(OBJS))
+SRC := $(APPNAME).c
+EXE := $(BUILD_PATH)/$(APPNAME).exe
+BIN := $(BUILD_PATH)/$(APPNAME).bin
+endif
 CFLAGS += $(EXTRA_CFLAGS)
-CFLAGS += -I$(DRIVERS)/include
-CFLAGS += -I$(DRIVERS)/../common/include
-CFLAGS += -I$(DESIGN_PATH)
+CFLAGS += -I$(DRIVERS)/include -I$(DRIVERS)/../common/include -I$(DESIGN_PATH)
 CFLAGS +=-std=gnu99
 CFLAGS +=-O2
 LDFLAGS += -lm
+LDFLAGS += $(BUILD_PATH)/../../probe/libprobe.a
+LDFLAGS += $(BUILD_PATH)/../../utils/baremetal/libutils.a
 CC := $(CROSS_COMPILE)gcc
 LD := $(CROSS_COMPILE)$(LD)
 
-SRCS := $(wildcard *.c)
-HEADERS := $(wildcard *.h)
-OBJS := $(SRCS:.c=.exe)
-OBJS := $(addprefix  $(BUILD_PATH)/, $(OBJS))
-BINS := $(OBJS:.exe=.bin)
+all: $(OBJS) $(EXES) $(EXE) $(BINS) $(BIN)
 
-all: $(OBJS) $(BINS)
-
-$(BUILD_PATH)/%.exe: %.c $(wildcard $(DRIVERS)/probe/*.c) $(HEADERS)
+ifneq ($(APPNAME),)
+$(BUILD_PATH)/%.o: %.c $(HEADERS)
 	CPU_ARCH=$(CPU_ARCH) DESIGN_PATH=$(DESIGN_PATH) BUILD_PATH=$(BUILD_PATH)/../../probe $(MAKE) -C $(DRIVERS)/probe
 	CPU_ARCH=$(CPU_ARCH) DESIGN_PATH=$(DESIGN_PATH) BUILD_PATH=$(BUILD_PATH)/../../utils/baremetal $(MAKE) -C $(DRIVERS)/utils
-	$(CC) $(CFLAGS) -o $@ $< $(LDFLAGS) $(BUILD_PATH)/../../probe/libprobe.a $(BUILD_PATH)/../../utils/baremetal/libutils.a
+	$(CC) $(CFLAGS) -c $< -o $@ $(LDFLAGS)
+endif
+
+$(BUILD_PATH)/%.exe: %.c $(OBJS) $(SRCS_PROBE) $(HEADERS)
+	CPU_ARCH=$(CPU_ARCH) DESIGN_PATH=$(DESIGN_PATH) BUILD_PATH=$(BUILD_PATH)/../../probe $(MAKE) -C $(DRIVERS)/probe
+	CPU_ARCH=$(CPU_ARCH) DESIGN_PATH=$(DESIGN_PATH) BUILD_PATH=$(BUILD_PATH)/../../utils/baremetal $(MAKE) -C $(DRIVERS)/utils
+	$(CC) $(CFLAGS) -o $@ $< $(LDFLAGS_RISCV) $(LDFLAGS) $(OBJS)
 
 $(BUILD_PATH)/%.bin: $(BUILD_PATH)/%.exe
 	$(CROSS_COMPILE)objcopy -O binary $(OBJCPFLAGS) $< $@

@@ -1,3 +1,3 @@
-OBJS := adder.exe
-
+EXTRA_CFLAGS ?=
+APPNAME := adder
 include $(DRIVERS)/common.mk

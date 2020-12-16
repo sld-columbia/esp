@@ -1,3 +1,3 @@
-OBJS := spmv.exe
-
+EXTRA_CFLAGS ?=
+APPNAME := spmv
 include $(DRIVERS)/common.mk

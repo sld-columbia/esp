@@ -1,3 +1,3 @@
-OBJS := dummy.exe
-
+EXTRA_CFLAGS ?=
+APPNAME := dummy
 include $(DRIVERS)/common.mk

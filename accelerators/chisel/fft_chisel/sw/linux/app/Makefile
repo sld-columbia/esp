@@ -1,3 +1,3 @@
-OBJS := fft.exe
-
+EXTRA_CFLAGS ?=
+APPNAME := fft
 include $(DRIVERS)/common.mk
