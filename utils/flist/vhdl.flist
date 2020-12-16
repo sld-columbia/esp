@@ -115,3 +115,9 @@ tiles/tile_mem.vhd
 tiles/tile_cpu.vhd
 tiles/tile_io.vhd
 tiles/esp.vhd
+tiles/asic/asic_tile_acc.vhd
+tiles/asic/asic_tile_cpu.vhd
+tiles/asic/asic_tile_empty.vhd
+tiles/asic/asic_tile_io.vhd
+tiles/asic/asic_tile_mem.vhd
+tiles/asic/asic_tile_slm.vhd

@@ -100,3 +100,6 @@ mem_tile_floorplanning.xdc
 S64esp
 
 zynq/
+
+sdf_dco.list
+genus/
