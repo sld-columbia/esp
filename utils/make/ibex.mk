@@ -24,7 +24,7 @@ soft-clean:
 
 soft-distclean: soft-clean
 
-$(SOFT_BUILD)/riscv.dtb: riscv.dts socmap.vhd
+$(SOFT_BUILD)/riscv.dtb: $(ESP_CFG_BUILD)/riscv.dts $(ESP_CFG_BUILD)/socmap.vhd
 	$(QUIET_BUILD) mkdir -p $(SOFT_BUILD)
 	$(QUIET_BUILD) dtc -I dts $< -O dtb -o $@
 
@@ -36,11 +36,11 @@ $(SOFT_BUILD)/startup.o: $(BOOTROM_PATH)/startup.S $(SOFT_BUILD)/riscv.dtb
 		-mcmodel=medany -mexplicit-relocs \
 		-march=rv32imc -mabi=ilp32 \
 		-mstrict-align \
-		-I$(DESIGN_PATH) \
+		-I$(DESIGN_PATH)/$(ESP_CFG_BUILD) \
 		-I$(BOOTROM_PATH) \
 		-c $< -o $@
 
-$(SOFT_BUILD)/main.o: $(BOOTROM_PATH)/main.c socmap.h
+$(SOFT_BUILD)/main.o: $(BOOTROM_PATH)/main.c $(ESP_CFG_BUILD)/socmap.h
 	$(QUIET_BUILD) mkdir -p $(SOFT_BUILD)
 	$(QUIET_CC) $(CROSS_COMPILE_ELF)gcc \
 		-Os \
@@ -49,10 +49,10 @@ $(SOFT_BUILD)/main.o: $(BOOTROM_PATH)/main.c socmap.h
 		-march=rv32imc -mabi=ilp32 \
 		-mstrict-align \
 		-I$(BOOTROM_PATH) \
-		-I$(DESIGN_PATH) \
+		-I$(DESIGN_PATH)/$(ESP_CFG_BUILD) \
 		-c $< -o $@
 
-$(SOFT_BUILD)/uart.o: $(BOOTROM_PATH)/uart.c socmap.h
+$(SOFT_BUILD)/uart.o: $(BOOTROM_PATH)/uart.c $(ESP_CFG_BUILD)/socmap.h
 	$(QUIET_BUILD) mkdir -p $(SOFT_BUILD)
 	$(QUIET_CC) $(CROSS_COMPILE_ELF)gcc \
 		-Os \
@@ -61,7 +61,7 @@ $(SOFT_BUILD)/uart.o: $(BOOTROM_PATH)/uart.c socmap.h
 		-march=rv32imc -mabi=ilp32 \
 		-mstrict-align \
 		-I$(BOOTROM_PATH) \
-		-I$(DESIGN_PATH) \
+		-I$(DESIGN_PATH)/$(ESP_CFG_BUILD) \
 		-c $< -o $@
 
 $(SOFT_BUILD)/prom.exe: $(SOFT_BUILD)/startup.o $(SOFT_BUILD)/uart.o $(SOFT_BUILD)/main.o $(BOOTROM_PATH)/linker.lds
@@ -72,7 +72,7 @@ $(SOFT_BUILD)/prom.exe: $(SOFT_BUILD)/startup.o $(SOFT_BUILD)/uart.o $(SOFT_BUIL
 		-march=rv32imc -mabi=ilp32 \
 		-mstrict-align \
 		-I$(BOOTROM_PATH) \
-		-I$(DESIGN_PATH) \
+		-I$(DESIGN_PATH)/$(ESP_CFG_BUILD) \
 		-nodefaultlibs -nostartfiles \
 		-T$(BOOTROM_PATH)/linker.lds \
 		$(SOFT_BUILD)/startup.o $(SOFT_BUILD)/uart.o $(SOFT_BUILD)/main.o -lgcc\
@@ -104,7 +104,7 @@ $(SOFT_BUILD)/systest.exe: systest.c $(SOFT_BUILD)/uart.o
 	$(SOFT)/common/syscalls.c \
 	$(RISCV_TESTS)/benchmarks/common/crt.S  \
 	-T $(RISCV_TESTS)/benchmarks/common/test.ld -o $@ \
-	-I$(DESIGN_PATH) \
+	-I$(DESIGN_PATH)/$(ESP_CFG_BUILD) \
 	$(SOFT_BUILD)/uart.o -lm -lgcc $<
 
 $(SOFT_BUILD)/systest.bin: $(TEST_PROGRAM)
@@ -161,6 +161,6 @@ XMLOGOPT += -UNCLOCKEDSVA
 ifeq ("$(CPU_ARCH)", "ibex")
 INCDIR  += $(IBEX)/vendor/lowrisc_ip/ip/prim/rtl
 VERILOG_IBEX += $(foreach f, $(shell strings $(FLISTS)/ibex_vlog.flist), $(IBEX)/$(f))
-VERILOG_IBEX += $(DESIGN_PATH)/plic_regmap.sv
+VERILOG_IBEX += $(DESIGN_PATH)/$(ESP_CFG_BUILD)/plic_regmap.sv
 THIRDPARTY_VLOG += $(VERILOG_IBEX)
 endif

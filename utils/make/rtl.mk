@@ -4,6 +4,8 @@
 
 ### Include paths ###
 INCDIR += $(DESIGN_PATH)
+INCDIR += $(DESIGN_PATH)/$(GRLIB_CFG_BUILD)
+INCDIR += $(DESIGN_PATH)/$(ESP_CFG_BUILD)
 INCDIR += $(THIRDPARTY_INCDIR)
 INCDIR += $(ESP_ROOT)/rtl/caches/esp-caches/common/defs
 
@@ -56,42 +58,48 @@ DAT_SRCS = $(shell (find $(ESP_ROOT)/tech/$(TECHLIB)/ -name "*.dat" ))
 ALL_SIM_SRCS  = $(SIM_VHDL_PKGS) $(SIM_VHDL_SRCS) $(SIM_VLOG_SRCS) $(IP_XCI_SRCS) $(DAT_SRCS)
 ALL_RTL_SRCS  = $(VHDL_PKGS) $(VHDL_SRCS) $(VLOG_SRCS) $(IP_XCI_SRCS) $(DAT_SRCS)
 
-check_all_srcs: grlib_config.vhd socmap.vhd socketgen plic_regmap.sv
+$(RTL_CFG_BUILD):
+	$(QUIET_MKDIR)mkdir -p $(RTL_CFG_BUILD)
+
+check_all_srcs: $(GRLIB_CFG_BUILD)/grlib_config.vhd $(ESP_CFG_BUILD)/socmap.vhd socketgen $(ESP_CFG_BUILD)/plic_regmap.sv $(RTL_CFG_BUILD)
 	@echo $(ALL_SIM_SRCS) > $@.new; \
-	if test -f $@.old; then \
-		/usr/bin/diff -q $@.old $@.new > /dev/null; \
+	if test -f $(RTL_CFG_BUILD)/$@.old; then \
+		/usr/bin/diff -q $(RTL_CFG_BUILD)/$@.old $@.new > /dev/null; \
 		if [ $$? -eq 0 ]; then \
 			rm $@.new; \
 		else \
 			rm -rf modelsim/work; \
 			rm -rf modelsim/vsim.mk; \
-			mv $@.new $@.old; \
+			mv $@.new $(RTL_CFG_BUILD)/$@.old; \
 		fi; \
 	else \
 		rm -rf modelsim/work; \
 		rm -rf modelsim/vsim.mk; \
-		mv $@.new $@.old; \
+		mv $@.new $(RTL_CFG_BUILD)/$@.old; \
 	fi;
 
 check_all_srcs-distclean:
-	$(QUIET_CLEAN)rm -rf check_all_srcs.old
+	$(QUIET_CLEAN)rm -rf $(RTL_CFG_BUILD)/check_all_srcs.old
 
 .PHONY: check_all_srcs check_all_srcs-distclean
 
-check_all_rtl_srcs: grlib_config.vhd socmap.vhd socketgen plic_regmap.sv
+check_all_rtl_srcs: $(GRLIB_CFG_BUILD)/grlib_config.vhd $(ESP_CFG_BUILD)/socmap.vhd socketgen $(ESP_CFG_BUILD)/plic_regmap.sv $(RTL_CFG_BUILD)
 	@echo $(ALL_RTL_SRCS) > $@.new; \
 	if test -f $@.old; then \
-		/usr/bin/diff -q $@.old $@.new > /dev/null; \
+		/usr/bin/diff -q $(RTL_CFG_BUILD)/$@.old $@.new > /dev/null; \
 		if [ $$? -eq 0 ]; then \
 			rm $@.new; \
 		else \
-			mv $@.new $@.old; \
+			mv $@.new $(RTL_CFG_BUILD)/$@.old; \
 		fi; \
 	else \
-		mv $@.new $@.old; \
+		mv $@.new $(RTL_CFG_BUILD)/$@.old; \
 	fi;
 
 check_all_rtl_srcs-distclean:
-	$(QUIET_CLEAN)rm -rf check_all_rtl_srcs.old
+	$(QUIET_CLEAN)rm -rf $(RTL_CFG_BUILD)/check_all_rtl_srcs.old
 
-.PHONY: check_all_rtl_srcs check_all_rtl_srcs-distclean
+check_srcs-distclean:
+	$(QUIET_CLEAN)rm -rf $(RTL_CFG_BUILD)
+
+.PHONY: check_all_rtl_srcs check_all_rtl_srcs-distclean check_srcs-distclean

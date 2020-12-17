@@ -13,16 +13,16 @@ endif
 
 
 fpga-run: esplink soft
-	@./esplink --reset
-	@./esplink --brom -i $(SOFT_BUILD)/prom.bin
-	@./esplink --dram -i $(SOFT_BUILD)/systest.bin
-	@./esplink --reset
+	@./$(ESP_CFG_BUILD)/esplink --reset
+	@./$(ESP_CFG_BUILD)/esplink --brom -i $(SOFT_BUILD)/prom.bin
+	@./$(ESP_CFG_BUILD)/esplink --dram -i $(SOFT_BUILD)/systest.bin
+	@./$(ESP_CFG_BUILD)/esplink --reset
 
-fpga-run-linux: esplink fpga-program soft
-	@./esplink --reset
-	@./esplink --brom -i $(SOFT_BUILD)/prom.bin
-	@./esplink --dram -i $(SOFT_BUILD)/linux.bin
-	@./esplink --reset
+fpga-run-linux: esplink soft
+	@./$(ESP_CFG_BUILD)/esplink --reset
+	@./$(ESP_CFG_BUILD)/esplink --brom -i $(SOFT_BUILD)/prom.bin
+	@./$(ESP_CFG_BUILD)/esplink --dram -i $(SOFT_BUILD)/linux.bin
+	@./$(ESP_CFG_BUILD)/esplink --reset
 
 
 .PHONY: fpga-run fpga-run-linux fpga-program

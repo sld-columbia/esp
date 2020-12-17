@@ -5,6 +5,30 @@
 ###    ESP Makefile    ###
 ##########################
 
+### Set variables needed before including the other makefiles
+SOFT              = $(ESP_ROOT)/soft/$(CPU_ARCH)
+BOOTROM_PATH      = $(SOFT)/bootrom
+LINUXSRC          = $(SOFT)/linux
+DRIVERS           = $(ESP_ROOT)/soft/common/drivers
+DRV_BARE          = $(DRIVERS)/baremetal
+DRV_LINUX         = $(DRIVERS)/linux
+CONTIG_ALLOC_PATH = $(DRV_LINUX)/contig_alloc
+ESP_CORE_PATH     = $(DRV_LINUX)/esp
+FLISTS            = $(ESP_ROOT)/utils/flist
+SOFT_BUILD        = $(DESIGN_PATH)/soft-build/$(CPU_ARCH)
+BUILD_DRIVERS     = $(SOFT_BUILD)/drivers
+BAREMETAL_BIN     = $(SOFT_BUILD)/baremetal
+
+CFG_BUILD       = socgen
+GRLIB_CFG_BUILD = $(CFG_BUILD)/grlib
+ESP_CFG_BUILD   = $(CFG_BUILD)/esp
+RTL_CFG_BUILD   = $(CFG_BUILD)/flist
+ESPMON_BUILD    = espmon
+
+LOGS = logs
+HLS_LOGS = $(LOGS)/hls
+VIVADO_LOGS = $(LOGS)/vivado
+
 ### Quick help ###
 include $(ESP_ROOT)/utils/make/help.mk
 
@@ -19,21 +43,6 @@ NOC_WIDTH = 64
 else
 NOC_WIDTH = 32
 endif
-
-
-### Set variables needed before including accelerators.mk
-SOFT              = $(ESP_ROOT)/soft/$(CPU_ARCH)
-BOOTROM_PATH      = $(SOFT)/bootrom
-LINUXSRC          = $(SOFT)/linux
-DRIVERS           = $(ESP_ROOT)/soft/common/drivers
-DRV_BARE          = $(DRIVERS)/baremetal
-DRV_LINUX         = $(DRIVERS)/linux
-CONTIG_ALLOC_PATH = $(DRV_LINUX)/contig_alloc
-ESP_CORE_PATH     = $(DRV_LINUX)/esp
-FLISTS            = $(ESP_ROOT)/utils/flist
-SOFT_BUILD        = $(DESIGN_PATH)/soft-build/$(CPU_ARCH)
-BUILD_DRIVERS     = $(SOFT_BUILD)/drivers
-BAREMETAL_BIN     = $(SOFT_BUILD)/baremetal
 
 
 ### Include targets to generate accelerators RTL with HLS ###
@@ -174,8 +183,7 @@ clean: 		soft-clean		\
 		mmi64-clean		\
 		soft-build-clean
 
-distclean:	check_all_srcs-distclean 	\
-		check_all_rtl_srcs-distclean	\
+distclean:	check_srcs-distclean     	\
 		xilinx_lib-clean 		\
 		profpga-distclean		\
 		soft-distclean 			\
@@ -186,8 +194,7 @@ distclean:	check_all_srcs-distclean 	\
 		qsim-distclean			\
 		ncsim-distclean			\
 		xmsim-distclean			\
-		esp-config-distclean		\
-		grlib-config-distclean		\
+		config-distclean		\
 		vivado-distclean		\
 		zynq-distclean			\
 		genus-distclean			\
@@ -195,7 +202,7 @@ distclean:	check_all_srcs-distclean 	\
 		espmon-distclean		\
 		mmi64-distclean			\
 		soft-build-distclean
-	$(QUIET_CLEAN)$(RM) *.log
+	$(QUIET_CLEAN)$(RM) $(LOGS)
 
 
 .PHONY: clean distclean

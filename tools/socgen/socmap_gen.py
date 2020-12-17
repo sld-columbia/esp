@@ -1685,7 +1685,7 @@ def print_tiles(fp, esp_config):
 def print_esplink_header(fp, esp_config, soc):
 
   # Get CPU base frequency
-  with open("top.vhd") as top_fp:
+  with open("../../top.vhd") as top_fp:
     for line in top_fp:
       if line.find("constant CPU_FREQ : integer") != -1:
         line.strip();
@@ -1714,7 +1714,7 @@ def print_esplink_header(fp, esp_config, soc):
 def print_devtree(fp, esp_config):
 
   # Get CPU base frequency
-  with open("top.vhd") as top_fp:
+  with open("../../top.vhd") as top_fp:
     for line in top_fp:
       if line.find("constant CPU_FREQ : integer") != -1:
         line.strip();

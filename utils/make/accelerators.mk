@@ -132,7 +132,7 @@ $(THIRDPARTY_ACC): $(BAREMETAL_BIN)
 		$(MAKE) CROSS_COMPILE_ELF=$(CROSS_COMPILE_ELF) CROSS_COMPILE=$(CROSS_COMPILE_LINUX) ARCH=$(ARCH) KSRC=$(SOFT_BUILD)/linux-build hw; \
 	fi;
 	@cd $(THIRDPARTY_PATH)/$@; \
-	$(MAKE) ESP_ROOT=$(ESP_ROOT) DESIGN_PATH=$(DESIGN_PATH) CPU_ARCH=$(CPU_ARCH) CROSS_COMPILE_ELF=$(CROSS_COMPILE_ELF) CROSS_COMPILE=$(CROSS_COMPILE_LINUX) ARCH=$(ARCH) KSRC=$(SOFT_BUILD)/linux-build sw;
+	$(MAKE) ESP_ROOT=$(ESP_ROOT) DESIGN_PATH=$(DESIGN_PATH)/$(ESP_CFG_BUILD) CPU_ARCH=$(CPU_ARCH) CROSS_COMPILE_ELF=$(CROSS_COMPILE_ELF) CROSS_COMPILE=$(CROSS_COMPILE_LINUX) ARCH=$(ARCH) KSRC=$(SOFT_BUILD)/linux-build sw;
 	@for f in $$(cat $(THIRDPARTY_PATH)/$@/$@.kmd); do \
 		cp -r $(THIRDPARTY_PATH)/$@/sw/$$f $(SOFT_BUILD)/sysroot/opt/drivers/; \
 	done;
@@ -163,9 +163,11 @@ thirdparty-acc-distclean: $(THIRDPARTY_ACC-distclean)
 
 .PHONY: thirdparty-acc thirdparty-acc-clean thirdparty-acc-distclean $(THIRDPARTY_ACC) $(THIRDPARTY_ACC-clean) $(THIRDPARTY_ACC-distclean)
 
+$(HLS_LOGS):
+	$(QUIET_MKDIR)mkdir -p $(HLS_LOGS)
 
 ### Stratus HLS ###
-$(STRATUSHLS_ACC-wdir):
+$(STRATUSHLS_ACC-wdir): $(HLS_LOGS)
 	$(QUIET_MKDIR)mkdir -p $(STRATUSHLS_ACC_PATH)/$(@:-wdir=)/hw/hls-work-$(TECHLIB)
 	@cd $(STRATUSHLS_ACC_PATH)/$(@:-wdir=)/hw/hls-work-$(TECHLIB); \
 	if ! test -e project.tcl; then \
@@ -177,9 +179,9 @@ $(STRATUSHLS_ACC-wdir):
 	fi;
 
 $(STRATUSHLS_ACC-hls): %-hls : %-wdir
-	$(QUIET_MAKE)ACCELERATOR=$(@:-hls=) TECH=$(TECHLIB) ESP_ROOT=$(ESP_ROOT) make -C $(STRATUSHLS_ACC_PATH)/$(@:-hls=)/hw/hls-work-$(TECHLIB) memlib | tee $(@:-hls=)_memgen.log
+	$(QUIET_MAKE)ACCELERATOR=$(@:-hls=) TECH=$(TECHLIB) ESP_ROOT=$(ESP_ROOT) make -C $(STRATUSHLS_ACC_PATH)/$(@:-hls=)/hw/hls-work-$(TECHLIB) memlib | tee $(HLS_LOGS)/$(@:-hls=)_memgen.log
 	$(QUIET_INFO)echo "Running HLS for available implementations of $(@:-hls=)"
-	$(QUIET_MAKE)ACCELERATOR=$(@:-hls=) TECH=$(TECHLIB) ESP_ROOT=$(ESP_ROOT) make -C $(STRATUSHLS_ACC_PATH)/$(@:-hls=)/hw/hls-work-$(TECHLIB) hls_all | tee $(@:-hls=)_hls.log
+	$(QUIET_MAKE)ACCELERATOR=$(@:-hls=) TECH=$(TECHLIB) ESP_ROOT=$(ESP_ROOT) make -C $(STRATUSHLS_ACC_PATH)/$(@:-hls=)/hw/hls-work-$(TECHLIB) hls_all | tee $(HLS_LOGS)/$(@:-hls=)_hls.log
 	$(QUIET_INFO)echo "Installing available implementations for $(@:-hls=) to $(ESP_ROOT)/tech/$(TECHLIB)/acc/$(@:-hls=)"
 	$(QUIET_MAKE)ACCELERATOR=$(@:-hls=) TECH=$(TECHLIB) ESP_ROOT=$(ESP_ROOT) make -C $(STRATUSHLS_ACC_PATH)/$(@:-hls=)/hw/hls-work-$(TECHLIB) install
 	@if test -e $(ESP_ROOT)/tech/$(TECHLIB)/acc/installed.log; then \
@@ -188,7 +190,7 @@ $(STRATUSHLS_ACC-hls): %-hls : %-wdir
 	@echo "$(@:-hls=)" >> $(ESP_ROOT)/tech/$(TECHLIB)/acc/installed.log
 
 $(STRATUSHLS_ACC-sim): %-sim : %-wdir
-	$(QUIET_RUN)ACCELERATOR=$(@:-sim=) TECH=$(TECHLIB) ESP_ROOT=$(ESP_ROOT) make -C $(STRATUSHLS_ACC_PATH)/$(@:-sim=)/hw/hls-work-$(TECHLIB) sim_all | tee $(@:-sim=)_sim.log
+	$(QUIET_RUN)ACCELERATOR=$(@:-sim=) TECH=$(TECHLIB) ESP_ROOT=$(ESP_ROOT) make -C $(STRATUSHLS_ACC_PATH)/$(@:-sim=)/hw/hls-work-$(TECHLIB) sim_all | tee $(HLS_LOGS)/$(@:-sim=)_sim.log
 
 $(STRATUSHLS_ACC-plot): %-plot : %-wdir
 	$(QUIET_RUN)ACCELERATOR=$(@:-plot=) TECH=$(TECHLIB) ESP_ROOT=$(ESP_ROOT) make -C $(STRATUSHLS_ACC_PATH)/$(@:-plot=)/hw/hls-work-$(TECHLIB) plot
@@ -199,11 +201,11 @@ $(STRATUSHLS_ACC-exe):
 $(STRATUSHLS_ACC-clean): %-clean : %-wdir
 	$(QUIET_CLEAN)ACCELERATOR=$(@:-clean=) TECH=$(TECHLIB) ESP_ROOT=$(ESP_ROOT) make -C $(STRATUSHLS_ACC_PATH)/$(@:-clean=)/hw/hls-work-$(TECHLIB) clean
 	@ACCELERATOR=$(@:-clean=) TECH=$(TECHLIB) ESP_ROOT=$(ESP_ROOT) DMA_WIDTH=$(NOC_WIDTH) $(MAKE) -C $(STRATUSHLS_ACC_PATH)/$(@:-clean=)/hw/sim clean
-	@$(RM) $(@:-clean=)*.log
+	@$(RM) $(HLS_LOGS)/$(@:-clean=)*.log
 
 $(STRATUSHLS_ACC-distclean): %-distclean : %-wdir
 	$(QUIET_CLEAN)ACCELERATOR=$(@:-distclean=) TECH=$(TECHLIB) ESP_ROOT=$(ESP_ROOT) make -C $(STRATUSHLS_ACC_PATH)/$(@:-distclean=)/hw/hls-work-$(TECHLIB) distclean
-	@$(RM) $(@:-distclean=)*.log
+	@$(RM) $(HLS_LOGS)/$(@:-distclean=)*.log
 	@if test -e $(ESP_ROOT)/tech/$(TECHLIB)/acc/installed.log; then \
 		sed -i '/$(@:-distclean=)/d' $(ESP_ROOT)/tech/$(TECHLIB)/acc/installed.log; \
 	fi;
@@ -219,7 +221,7 @@ acc-distclean: $(STRATUSHLS_ACC-distclean)
 .PHONY: acc acc-clean acc-distclean
 
 ### Vivado HLS ###
-$(VIVADOHLS_ACC-wdir):
+$(VIVADOHLS_ACC-wdir): $(HLS_LOGS)
 	$(QUIET_MKDIR) if ! test -e $(VIVADOHLS_ACC_PATH)/$(@:-wdir=)/hw/hls-work-$(TECHLIB); then \
 		mkdir -p $(VIVADOHLS_ACC_PATH)/$(@:-wdir=)/hw/hls-work-$(TECHLIB); \
 		cd $(VIVADOHLS_ACC_PATH)/$(@:-wdir=)/hw/hls-work-$(TECHLIB); \
@@ -236,7 +238,7 @@ $(VIVADOHLS_ACC-wdir):
 
 $(VIVADOHLS_ACC-hls): %-hls : %-wdir
 	$(QUIET_INFO)echo "Running HLS for available implementations of $(@:-hls=)"
-	$(QUIET_MAKE)ACCELERATOR=$(@:-hls=) TECH=$(TECHLIB) ESP_ROOT=$(ESP_ROOT) make -C $(VIVADOHLS_ACC_PATH)/$(@:-hls=)/hw/hls-work-$(TECHLIB) hls | tee $(@:-hls=)_hls.log
+	$(QUIET_MAKE)ACCELERATOR=$(@:-hls=) TECH=$(TECHLIB) ESP_ROOT=$(ESP_ROOT) make -C $(VIVADOHLS_ACC_PATH)/$(@:-hls=)/hw/hls-work-$(TECHLIB) hls | tee $(HLS_LOGS)/$(@:-hls=)_hls.log
 	$(QUIET_INFO)echo "Installing available implementations for $(@:-hls=) to $(ESP_ROOT)/tech/$(TECHLIB)/acc/$(@:-hls=)"
 	$(QUIET_MAKE)ACCELERATOR=$(@:-hls=) TECH=$(TECHLIB) ESP_ROOT=$(ESP_ROOT) make -C $(VIVADOHLS_ACC_PATH)/$(@:-hls=)/hw/hls-work-$(TECHLIB) install
 	@if test -e $(ESP_ROOT)/tech/$(TECHLIB)/acc/installed.log; then \
@@ -244,20 +246,13 @@ $(VIVADOHLS_ACC-hls): %-hls : %-wdir
 	fi;
 	@echo "$(@:-hls=)" >> $(ESP_ROOT)/tech/$(TECHLIB)/acc/installed.log
 
-
-# $(VIVADOHLS_ACC-sim): %-sim : %-wdir
-# 	$(QUIET_RUN)ACCELERATOR=$(@:-sim=) TECH=$(TECHLIB) ESP_ROOT=$(ESP_ROOT) make -C $(VIVADOHLS_ACC_PATH)/$(@:-sim=)/hw/hls-work-$(TECHLIB) sim_all | tee $(@:-sim=)_sim.log
-
-# $(VIVADOHLS_ACC-exe):
-# 	$(QUIET_RUN) ACCELERATOR=$(@:-exe=) TECH=$(TECHLIB) ESP_ROOT=$(ESP_ROOT) DMA_WIDTH=$(NOC_WIDTH) RUN_ARGS="$(RUN_ARGS)" $(MAKE) -C $(VIVADOHLS_ACC_PATH)/$(@:-exe=)/hw/sim run
-
 $(VIVADOHLS_ACC-clean): %-clean : %-wdir
 	$(QUIET_CLEAN)ACCELERATOR=$(@:-clean=) TECH=$(TECHLIB) ESP_ROOT=$(ESP_ROOT) make -C $(VIVADOHLS_ACC_PATH)/$(@:-clean=)/hw/hls-work-$(TECHLIB) clean
-	@$(RM) $(@:-clean=)*.log
+	@$(RM) $(HLS_LOGS)/$(@:-clean=)*.log
 
 $(VIVADOHLS_ACC-distclean): %-distclean : %-wdir
 	$(QUIET_CLEAN)ACCELERATOR=$(@:-distclean=) TECH=$(TECHLIB) ESP_ROOT=$(ESP_ROOT) make -C $(VIVADOHLS_ACC_PATH)/$(@:-distclean=)/hw/hls-work-$(TECHLIB) distclean
-	@$(RM) $(@:-distclean=)*.log
+	@$(RM) $(HLS_LOGS)/$(@:-distclean=)*.log
 	@if test -e $(ESP_ROOT)/tech/$(TECHLIB)/acc/installed.log; then \
 		sed -i '/$(@:-distclean=)/d' $(ESP_ROOT)/tech/$(TECHLIB)/acc/installed.log; \
 	fi;
@@ -273,7 +268,7 @@ vivadohls_acc-distclean: $(VIVADOHLS_ACC-distclean)
 .PHONY: vivadohls_acc vivadohls_acc-clean vivadohls_acc-distclean
 
 ### hls4ml ###
-$(HLS4ML_ACC-wdir):
+$(HLS4ML_ACC-wdir): $(HLS_LOGS)
 	$(QUIET_MKDIR)mkdir -p $(HLS4ML_ACC_PATH)/$(@:-wdir=)/hw/hls-work-$(TECHLIB)
 	@cd $(HLS4ML_ACC_PATH)/$(@:-wdir=)/hw/hls-work-$(TECHLIB); \
 	if ! test -e project.tcl; then \
@@ -288,7 +283,7 @@ $(HLS4ML_ACC-wdir):
 
 $(HLS4ML_ACC-hls): %-hls : %-wdir
 	$(QUIET_INFO)echo "Running HLS for available implementations of $(@:-hls=)"
-	$(QUIET_MAKE)ACCELERATOR=$(@:-hls=) TECH=$(TECHLIB) ESP_ROOT=$(ESP_ROOT) make -C $(HLS4ML_ACC_PATH)/$(@:-hls=)/hw/hls-work-$(TECHLIB) hls | tee $(@:-hls=)_hls.log
+	$(QUIET_MAKE)ACCELERATOR=$(@:-hls=) TECH=$(TECHLIB) ESP_ROOT=$(ESP_ROOT) make -C $(HLS4ML_ACC_PATH)/$(@:-hls=)/hw/hls-work-$(TECHLIB) hls | tee $(HLS_LOGS)/$(@:-hls=)_hls.log
 	$(QUIET_INFO)echo "Installing available implementations for $(@:-hls=) to $(ESP_ROOT)/tech/$(TECHLIB)/acc/$(@:-hls=)"
 	$(QUIET_MAKE)ACCELERATOR=$(@:-hls=) TECH=$(TECHLIB) ESP_ROOT=$(ESP_ROOT) make -C $(HLS4ML_ACC_PATH)/$(@:-hls=)/hw/hls-work-$(TECHLIB) install
 	@if test -e $(ESP_ROOT)/tech/$(TECHLIB)/acc/installed.log; then \
@@ -296,20 +291,13 @@ $(HLS4ML_ACC-hls): %-hls : %-wdir
 	fi;
 	@echo "$(@:-hls=)" >> $(ESP_ROOT)/tech/$(TECHLIB)/acc/installed.log
 
-
-# $(HLS4ML_ACC-sim): %-sim : %-wdir
-# 	$(QUIET_RUN)ACCELERATOR=$(@:-sim=) TECH=$(TECHLIB) ESP_ROOT=$(ESP_ROOT) make -C $(HLS4ML_ACC_PATH)/$(@:-sim=)/hw/hls-work-$(TECHLIB) sim_all | tee $(@:-sim=)_sim.log
-
-# $(HLS4ML_ACC-exe):
-# 	$(QUIET_RUN) ACCELERATOR=$(@:-exe=) TECH=$(TECHLIB) ESP_ROOT=$(ESP_ROOT) DMA_WIDTH=$(NOC_WIDTH) RUN_ARGS="$(RUN_ARGS)" $(MAKE) -C $(HLS4ML_ACC_PATH)/$(@:-exe=)/hw/sim run
-
 $(HLS4ML_ACC-clean): %-clean : %-wdir
 	$(QUIET_CLEAN)ACCELERATOR=$(@:-clean=) TECH=$(TECHLIB) ESP_ROOT=$(ESP_ROOT) make -C $(HLS4ML_ACC_PATH)/$(@:-clean=)/hw/hls-work-$(TECHLIB) clean
-	@$(RM) $(@:-clean=)*.log
+	@$(RM) $(HLS_LOGS)/$(@:-clean=)*.log
 
 $(HLS4ML_ACC-distclean): %-distclean : %-wdir
 	$(QUIET_CLEAN)ACCELERATOR=$(@:-distclean=) TECH=$(TECHLIB) ESP_ROOT=$(ESP_ROOT) make -C $(HLS4ML_ACC_PATH)/$(@:-distclean=)/hw/hls-work-$(TECHLIB) distclean
-	@$(RM) $(@:-distclean=)*.log
+	@$(RM) $(HLS_LOGS)/$(@:-distclean=)*.log
 	@if test -e $(ESP_ROOT)/tech/$(TECHLIB)/acc/installed.log; then \
 		sed -i '/$(@:-distclean=)/d' $(ESP_ROOT)/tech/$(TECHLIB)/acc/installed.log; \
 	fi;
@@ -325,7 +313,7 @@ hls4ml_acc-distclean: $(HLS4ML_ACC-distclean)
 .PHONY: hls4ml_acc hls4ml_acc-clean hls4ml_acc-distclean
 
 ### Catapult HLS ###
-$(CATAPULTHLS_ACC-wdir):
+$(CATAPULTHLS_ACC-wdir): $(HLS_LOGS)
 	$(QUIET_MKDIR) if ! test -e $(CATAPULTHLS_ACC_PATH)/$(@:-wdir=)/hw/hls-work-$(TECHLIB); then \
 		mkdir -p $(CATAPULTHLS_ACC_PATH)/$(@:-wdir=)/hw/hls-work-$(TECHLIB); \
 		cd $(CATAPULTHLS_ACC_PATH)/$(@:-wdir=)/hw/hls-work-$(TECHLIB); \
@@ -336,7 +324,7 @@ $(CATAPULTHLS_ACC-wdir):
 
 $(CATAPULTHLS_ACC-hls): %-hls : %-wdir
 	$(QUIET_INFO)echo "Running HLS for available implementations of $(@:-hls=)"
-	$(QUIET_MAKE)ACCELERATOR=$(@:-hls=) TECH=$(TECHLIB) ESP_ROOT=$(ESP_ROOT) make -C $(CATAPULTHLS_ACC_PATH)/$(@:-hls=)/hw/hls-work-$(TECHLIB) hls | tee $(@:-hls=)_hls.log
+	$(QUIET_MAKE)ACCELERATOR=$(@:-hls=) TECH=$(TECHLIB) ESP_ROOT=$(ESP_ROOT) make -C $(CATAPULTHLS_ACC_PATH)/$(@:-hls=)/hw/hls-work-$(TECHLIB) hls | tee $(HLS_LOGS)/$(@:-hls=)_hls.log
 	$(QUIET_INFO)echo "Installing available implementations for $(@:-hls=) to $(ESP_ROOT)/tech/$(TECHLIB)/acc/$(@:-hls=)"
 	$(QUIET_MAKE)ACCELERATOR=$(@:-hls=) TECH=$(TECHLIB) ESP_ROOT=$(ESP_ROOT) make -C $(CATAPULTHLS_ACC_PATH)/$(@:-hls=)/hw/hls-work-$(TECHLIB) install
 	@if test -e $(ESP_ROOT)/tech/$(TECHLIB)/acc/installed.log; then \
@@ -344,19 +332,13 @@ $(CATAPULTHLS_ACC-hls): %-hls : %-wdir
 	fi;
 	@echo "$(@:-hls=)" >> $(ESP_ROOT)/tech/$(TECHLIB)/acc/installed.log
 
-# $(CATAPULTHLS_ACC-sim): %-sim : %-wdir
-# 	$(QUIET_RUN)ACCELERATOR=$(@:-sim=) TECH=$(TECHLIB) ESP_ROOT=$(ESP_ROOT) make -C $(CATAPULTHLS_ACC_PATH)/$(@:-sim=)/hw/hls-work-$(TECHLIB) sim_all | tee $(@:-sim=)_sim.log
-
-# $(CATAPULTHLS_ACC-exe):
-# 	$(QUIET_RUN) ACCELERATOR=$(@:-exe=) TECH=$(TECHLIB) ESP_ROOT=$(ESP_ROOT) DMA_WIDTH=$(NOC_WIDTH) RUN_ARGS="$(RUN_ARGS)" $(MAKE) -C $(CATAPULTHLS_ACC_PATH)/$(@:-exe=)/hw/sim run
-
 $(CATAPULTHLS_ACC-clean): %-clean : %-wdir
 	$(QUIET_CLEAN)ACCELERATOR=$(@:-clean=) TECH=$(TECHLIB) ESP_ROOT=$(ESP_ROOT) make -C $(CATAPULTHLS_ACC_PATH)/$(@:-clean=)/hw/hls-work-$(TECHLIB) clean
-	@$(RM) $(@:-clean=)*.log
+	@$(RM) $(HLS_LOGS)/$(@:-clean=)*.log
 
 $(CATAPULTHLS_ACC-distclean): %-distclean : %-wdir
 	$(QUIET_CLEAN)ACCELERATOR=$(@:-distclean=) TECH=$(TECHLIB) ESP_ROOT=$(ESP_ROOT) make -C $(CATAPULTHLS_ACC_PATH)/$(@:-distclean=)/hw/hls-work-$(TECHLIB) distclean
-	@$(RM) $(@:-distclean=)*.log
+	@$(RM) $(HLS_LOGS)/$(@:-distclean=)*.log
 	@if test -e $(ESP_ROOT)/tech/$(TECHLIB)/acc/installed.log; then \
 		sed -i '/$(@:-distclean=)/d' $(ESP_ROOT)/tech/$(TECHLIB)/acc/installed.log; \
 	fi;
@@ -378,7 +360,7 @@ $(ESP_ROOT)/tech/$(TECHLIB)/acc/installed.log:
 SOCKETGEN_DEPS  = $(ESP_ROOT)/tech/$(TECHLIB)/acc/installed.log
 SOCKETGEN_DEPS += $(ESP_ROOT)/tools/socketgen/socketgen.py
 SOCKETGEN_DEPS += $(wildcard $(ESP_ROOT)/tools/socketgen/templates/*.vhd)
-SOCKETGEN_DEPS += socmap.vhd esp_global.vhd
+SOCKETGEN_DEPS += $(ESP_CFG_BUILD)/socmap.vhd $(ESP_CFG_BUILD)/esp_global.vhd
 
 ### ESP Wrappers ###
 socketgen: $(SOCKETGEN_DEPS)
@@ -434,13 +416,13 @@ $(ACC-app): $(SOFT_BUILD)/sysroot soft-build
 $(ACC-app-clean):
 	$(QUIET_CLEAN)$(RM) $(BUILD_DRIVERS)/$(@:-app-clean=)/linux/app
 
-$(ACC-baremetal): $(BAREMETAL_BIN) soft-build socmap.vhd
+$(ACC-baremetal): $(BAREMETAL_BIN) soft-build $(ESP_CFG_BUILD)/socmap.vhd
 	@BUILD_PATH=$(BUILD_DRIVERS)/$(@:-baremetal=)/baremetal; \
         ACC_PATH=$(filter %/$(@:-baremetal=), $(ACC_PATHS)); \
 	if [ `ls -1 $$ACC_PATH/sw/baremetal/*.c 2>/dev/null | wc -l ` -gt 0 ]; then \
 		echo '   ' MAKE $@; \
 		mkdir -p $$BUILD_PATH; \
-		CROSS_COMPILE=$(CROSS_COMPILE_ELF) CPU_ARCH=$(CPU_ARCH) DRIVERS=$(DRV_BARE) DESIGN_PATH=$(DESIGN_PATH) BUILD_PATH=$$BUILD_PATH $(MAKE) -C  $$ACC_PATH/sw/baremetal; \
+		CROSS_COMPILE=$(CROSS_COMPILE_ELF) CPU_ARCH=$(CPU_ARCH) DRIVERS=$(DRV_BARE) DESIGN_PATH=$(DESIGN_PATH)/$(ESP_CFG_BUILD) BUILD_PATH=$$BUILD_PATH $(MAKE) -C  $$ACC_PATH/sw/baremetal; \
 		if [ `ls -1 $$BUILD_PATH/*.bin 2>/dev/null | wc -l ` -gt 0 ]; then \
 			echo '   ' CP $@; cp $$BUILD_PATH/*.bin $(BAREMETAL_BIN)/$(@:-baremetal=).bin; \
 		fi; \
