@@ -1,19 +1,21 @@
 #include <linux/of_device.h>
 #include <linux/mm.h>
-#include <linux/log2.h>
 
 #include <asm/io.h>
 
 #include <esp_accelerator.h>
 #include <esp.h>
 
-#include "adder.h"
+#include "adder_chisel.h"
 
-#define DRV_NAME	"adder_vivado"
+#define DRV_NAME	"adder_chisel"
 
-#define ADDER_NBURSTS_REG 0x40
+/* <<--regs-->> */
+#define ADDER_WRITEADDR_REG 0x48
+#define ADDER_SIZE_REG 0x44
+#define ADDER_READADDR_REG 0x40
 
-struct adder_device {
+struct adder_chisel_device {
 	struct esp_device esp;
 };
 
@@ -21,39 +23,49 @@ static struct esp_driver adder_driver;
 
 static struct of_device_id adder_device_ids[] = {
 	{
-		.name = "SLD_ADDER_VIVADO",
+		.name = "SLD_ADDER_CHISEL",
 	},
 	{
-		.name = "eb_040",
+		.name = "eb_013",
 	},
 	{
-		.compatible = "sld,adder_vivado",
+		.compatible = "sld,adder_chisel",
 	},
 	{ },
 };
 
 static int adder_devs;
 
-static inline struct adder_device *to_adder(struct esp_device *esp)
+static inline struct adder_chisel_device *to_adder(struct esp_device *esp)
 {
-	return container_of(esp, struct adder_device, esp);
+	return container_of(esp, struct adder_chisel_device, esp);
 }
 
 static void adder_prep_xfer(struct esp_device *esp, void *arg)
 {
-	struct adder_access *a = arg;
+	struct adder_chisel_access *a = arg;
 
-	iowrite32be(a->nbursts, esp->iomem + ADDER_NBURSTS_REG);
+	/* <<--regs-config-->> */
+	iowrite32be(a->readAddr, esp->iomem + ADDER_READADDR_REG);
+	iowrite32be(a->size, esp->iomem + ADDER_SIZE_REG);
+	iowrite32be(a->writeAddr, esp->iomem + ADDER_WRITEADDR_REG);
+
+	iowrite32be(a->src_offset, esp->iomem + SRC_OFFSET_REG);
+	iowrite32be(a->dst_offset, esp->iomem + DST_OFFSET_REG);
+
 }
 
 static bool adder_xfer_input_ok(struct esp_device *esp, void *arg)
 {
+	/* struct adder_chisel_device *adder = to_adder(esp); */
+	/* struct adder_chisel_access *a = arg; */
+
 	return true;
 }
 
 static int adder_probe(struct platform_device *pdev)
 {
-	struct adder_device *adder;
+	struct adder_chisel_device *adder;
 	struct esp_device *esp;
 	int rc;
 
@@ -78,7 +90,7 @@ static int adder_probe(struct platform_device *pdev)
 static int __exit adder_remove(struct platform_device *pdev)
 {
 	struct esp_device *esp = platform_get_drvdata(pdev);
-	struct adder_device *adder = to_adder(esp);
+	struct adder_chisel_device *adder = to_adder(esp);
 
 	esp_device_unregister(esp);
 	kfree(adder);
@@ -97,8 +109,8 @@ static struct esp_driver adder_driver = {
 	},
 	.xfer_input_ok	= adder_xfer_input_ok,
 	.prep_xfer	= adder_prep_xfer,
-	.ioctl_cm	= ADDER_IOC_ACCESS,
-	.arg_size	= sizeof(struct adder_access),
+	.ioctl_cm	= ADDER_CHISEL_IOC_ACCESS,
+	.arg_size	= sizeof(struct adder_chisel_access),
 };
 
 static int __init adder_init(void)
@@ -118,4 +130,4 @@ MODULE_DEVICE_TABLE(of, adder_device_ids);
 
 MODULE_AUTHOR("Emilio G. Cota <cota@braap.org>");
 MODULE_LICENSE("GPL");
-MODULE_DESCRIPTION("adder driver");
+MODULE_DESCRIPTION("adder_chisel driver");

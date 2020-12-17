@@ -51,7 +51,7 @@ xcelium/hdl.var: xcelium/cds.lib
 
 
 ### Compile simulation source files ###
-xcelium/xmready: xcelium/hdl.var check_all_srcs.old $(PKG_LIST)
+xcelium/xmready: xcelium/hdl.var $(RTL_CFG_BUILD)/check_all_srcs.old $(PKG_LIST)
 	$(QUIET_MKDIR)mkdir -p xcelium
 	@cd xcelium; \
 	if ! grep --quiet "DEFINE profpga" cds.lib; then \

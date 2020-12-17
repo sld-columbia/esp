@@ -1,5 +1,5 @@
-#ifndef _SORT_H_
-#define _SORT_H_
+#ifndef _COUNTER_CHISEL_H_
+#define _COUNTER_CHISEL_H_
 
 #ifdef __KERNEL__
 #include <linux/ioctl.h>
@@ -15,12 +15,11 @@
 #include <esp.h>
 #include <esp_accelerator.h>
 
-struct sort_access {
+struct counter_chisel_access {
 	struct esp_access esp;
-	unsigned int size;
-	unsigned int batch;
+	unsigned int ticks;
 };
 
-#define SORT_IOC_ACCESS	_IOW ('S', 0, struct sort_access)
+#define COUNTER_CHISEL_IOC_ACCESS	_IOW ('S', 0, struct counter_chisel_access)
 
-#endif /* _SORT_H_ */
+#endif /* _COUNTER_CHISEL_H_ */

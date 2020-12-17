@@ -3,75 +3,79 @@
 
 ESP_DEFCONFIG ?= $(ESP_ROOT)/socs/defconfig/esp_$(BOARD)_defconfig
 
-.esp_config:
+$(ESP_CFG_BUILD):
+	$(QUIET_MKDIR)mkdir -p $(ESP_CFG_BUILD)
+
+$(ESP_CFG_BUILD)/.esp_config:
+	$(QUIET_MKDIR)mkdir -p $(ESP_CFG_BUILD)
 	$(QUIET_CP)cp $(ESP_DEFCONFIG) $@
 
-esp-defconfig: $(ESP_DEFCONFIG)
-	$(QUIET_CP)cp $< .esp_config
-	$(QUIET_MAKE)$(MAKE) esp-config
+esp-defconfig: $(ESP_CFG_BUILD) $(ESP_DEFCONFIG)
+	$(QUIET_CP) \
+	cd $(ESP_CFG_BUILD); \
+	cp $< .esp_config
+	$(QUIET_MAKE) \
+	cd $(ESP_CFG_BUILD); \
+	$(MAKE) esp-config
 
-socmap.vhd: .esp_config grlib_config.vhd top.vhd Makefile
+$(ESP_CFG_BUILD)/socmap.vhd: $(ESP_CFG_BUILD)/.esp_config $(GRLIB_CFG_BUILD)/grlib_config.vhd top.vhd Makefile
 	$(QUIET_DIFF)echo "checking .esp_config..."
-	@/usr/bin/diff .esp_config $(ESP_DEFCONFIG) -q > /dev/null; \
+	@cd $(ESP_CFG_BUILD); \
+	/usr/bin/diff .esp_config $(ESP_DEFCONFIG) -q > /dev/null; \
 	if test $$? = "0"; then \
 		echo $(SPACES)"INFO Using default configuration file for ESP"; \
 	else \
 		echo $(SPACES)"INFO Using custom configuration found in \".esp_config\" for ESP"; \
-	fi
-	@echo ""
-	@echo "Generating ESP configuration..."
-	@LD_LIBRARY_PATH="" xvfb-run -a python3 $(ESP_ROOT)/tools/socgen/esp_creator_batch.py $(NOC_WIDTH) $(TECHLIB) $(LINUX_MAC) $(LEON3_STACK)
+	fi; \
+	echo ""; \
+	echo "Generating ESP configuration..."; \
+	LD_LIBRARY_PATH="" xvfb-run -a python3 $(ESP_ROOT)/tools/socgen/esp_creator_batch.py $(NOC_WIDTH) $(TECHLIB) $(LINUX_MAC) $(LEON3_STACK)
 
-socmap.h: socmap.vhd
+$(ESP_CFG_BUILD)/socmap.h: $(ESP_CFG_BUILD)/socmap.vhd
 
 ESPLINK_SRCS = $(wildcard $(ESP_ROOT)/tools/esplink/src/*.c)
 ESPLINK_HDRS = $(wildcard $(ESP_ROOT)/tools/esplink/src/*.h)
-esplink: socmap.h $(ESPLINK_HDRS) $(ESPLINK_SRCS)
-	$(QUIET_CC) gcc -O3 -Wall -Werror -fmax-errors=5 \
+esplink: $(ESP_CFG_BUILD)/socmap.h $(ESPLINK_HDRS) $(ESPLINK_SRCS)
+	$(QUIET_CC) \
+	cd $(ESP_CFG_BUILD); \
+	gcc -O3 -Wall -Werror -fmax-errors=5 \
 		-DESPLINK_IP=\"$(ESPLINK_IP)\" -DPORT=$(ESPLINK_PORT) \
-		-I$(ESP_ROOT)/tools/esplink/src/ -I$(DESIGN_PATH) \
+		-I$(ESP_ROOT)/tools/esplink/src/ -I$(DESIGN_PATH)/$(ESP_CFG_BUILD) \
 		$(ESPLINK_SRCS) -o $@
 
-esp-config: socmap.vhd
+esp-config: $(ESP_CFG_BUILD)/socmap.vhd
 
-esp-xconfig: grlib_config.vhd
+esp-xconfig: $(ESP_CFG_BUILD) $(GRLIB_CFG_BUILD)/grlib_config.vhd
 	@echo ""
 	@echo "Running interactive ESP configuration..."
-	@LD_LIBRARY_PATH="" python3 $(ESP_ROOT)/tools/socgen/esp_creator.py $(NOC_WIDTH) $(TECHLIB) $(LINUX_MAC) $(LEON3_STACK)
+	@cd $(ESP_CFG_BUILD); \
+	LD_LIBRARY_PATH="" python3 $(ESP_ROOT)/tools/socgen/esp_creator.py $(NOC_WIDTH) $(TECHLIB) $(LINUX_MAC) $(LEON3_STACK)
 
 esp-config-clean:
 	$(QUIET_CLEAN)$(RM) \
-		.esp_config.bak
+		$(ESP_CFG_BUILD)/.esp_config.bak
 
 ifneq ("$(CPU_ARCH)", "leon3")
-riscv.dts: .esp_config grlib_config.vhd top.vhd
-	$(QUIET_MAKE) $(MAKE) socmap.vhd
+$(ESP_CFG_BUILD)/riscv.dts: $(ESP_CFG_BUILD)/.esp_config $(GRLIB_CFG_BUILD)/grlib_config.vhd top.vhd
+	$(QUIET_MAKE) \
+	cd $(ESP_CFG_BUILD); \
+	$(MAKE) socmap.vhd
 
 ARIANE_RV_PLIC_REGMAP_GEN = $(ESP_ROOT)/rtl/cores/ariane/ariane/src/rv_plic/rtl/gen_plic_addrmap.py
 
-plic_regmap.sv: $(ARIANE_RV_PLIC_REGMAP_GEN) .esp_config
+$(ESP_CFG_BUILD)/plic_regmap.sv: $(ARIANE_RV_PLIC_REGMAP_GEN) $(ESP_CFG_BUILD)/.esp_config
 	$(QUIET_MAKE)$< -t $$(($(NCPU_TILE)*2)) > $@
 endif
 
 ifeq ("$(CPU_ARCH)", "leon3")
-plic_regmap.sv:
+$(ESP_CFG_BUILD)/plic_regmap.sv:
 
 endif
 
-esp-config-distclean: esp-config-clean
-	$(QUIET_CLEAN)$(RM)	\
-		socmap.vhd	\
-		esp_global.vhd	\
-		.esp_config	\
-		.soft_config	\
-		riscv.dts	\
-		plic_regmap.sv	\
-		mmi64_regs.h	\
-		power.h		\
-		socmap.h	\
-		cache_cfg.svh	\
-		S64esp		\
-		esplink
+esp-config-distclean:
+	$(QUIET_CLEAN)$(RM) $(ESP_CFG_BUILD)
 
+config-distclean:
+	$(QUIET_CLEAN)$(RM) $(CFG_BUILD)
 
-.PHONY: esplink esp-xconfig esp-defconfig esp-config-clean esp-config-distclean
+.PHONY: esplink esp-xconfig esp-defconfig esp-config-clean esp-config-distclean config-distclean

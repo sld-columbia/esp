@@ -6,14 +6,14 @@
 #include <esp_accelerator.h>
 #include <esp.h>
 
-#include "counter.h"
+#include "counter_chisel.h"
 
 #define DRV_NAME	"counter_chisel"
 
 #define COUNTER_GITHASH_REG		0x40
 #define COUNTER_TICKS_REG		0x44
 
-struct counter_device {
+struct counter_chisel_device {
 	struct esp_device esp;
 };
 
@@ -34,21 +34,21 @@ static struct of_device_id counter_device_ids[] = {
 
 static int counter_devs;
 
-static inline struct counter_device *to_counter(struct esp_device *esp)
+static inline struct counter_chisel_device *to_counter(struct esp_device *esp)
 {
-	return container_of(esp, struct counter_device, esp);
+	return container_of(esp, struct counter_chisel_device, esp);
 }
 
 static void counter_prep_xfer(struct esp_device *esp, void *arg)
 {
-	struct counter_access *a = arg;
+	struct counter_chisel_access *a = arg;
 
 	iowrite32be(a->ticks, esp->iomem + COUNTER_TICKS_REG);
 }
 
 static bool counter_xfer_input_ok(struct esp_device *esp, void *arg)
 {
-	struct counter_access *a = arg;
+	struct counter_chisel_access *a = arg;
 
 	if (a->ticks >= (1<<16) || a->ticks < 1)
 		return false;
@@ -57,7 +57,7 @@ static bool counter_xfer_input_ok(struct esp_device *esp, void *arg)
 
 static int counter_probe(struct platform_device *pdev)
 {
-	struct counter_device *counter;
+	struct counter_chisel_device *counter;
 	struct esp_device *esp;
 	int rc;
 
@@ -82,7 +82,7 @@ static int counter_probe(struct platform_device *pdev)
 static int __exit counter_remove(struct platform_device *pdev)
 {
 	struct esp_device *esp = platform_get_drvdata(pdev);
-	struct counter_device *counter = to_counter(esp);
+	struct counter_chisel_device *counter = to_counter(esp);
 
 	esp_device_unregister(esp);
 	kfree(counter);
@@ -101,8 +101,8 @@ static struct esp_driver counter_driver = {
 	},
 	.xfer_input_ok	= counter_xfer_input_ok,
 	.prep_xfer	= counter_prep_xfer,
-	.ioctl_cm	= COUNTER_IOC_ACCESS,
-	.arg_size	= sizeof(struct counter_access),
+	.ioctl_cm	= COUNTER_CHISEL_IOC_ACCESS,
+	.arg_size	= sizeof(struct counter_chisel_access),
 };
 
 static int __init counter_init(void)
@@ -122,4 +122,4 @@ MODULE_DEVICE_TABLE(of, counter_device_ids);
 
 MODULE_AUTHOR("Emilio G. Cota <cota@braap.org>");
 MODULE_LICENSE("GPL");
-MODULE_DESCRIPTION("counter driver");
+MODULE_DESCRIPTION("counter_chisel driver");

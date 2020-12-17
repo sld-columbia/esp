@@ -6,13 +6,13 @@
 #include <esp_accelerator.h>
 #include <esp.h>
 
-#include "<accelerator_name>.h"
+#include "<acc_full_name>.h"
 
 #define DRV_NAME	"<acc_full_name>"
 
 /* <<--regs-->> */
 
-struct <accelerator_name>_device {
+struct <acc_full_name>_device {
 	struct esp_device esp;
 };
 
@@ -33,14 +33,14 @@ static struct of_device_id <accelerator_name>_device_ids[] = {
 
 static int <accelerator_name>_devs;
 
-static inline struct <accelerator_name>_device *to_<accelerator_name>(struct esp_device *esp)
+static inline struct <acc_full_name>_device *to_<accelerator_name>(struct esp_device *esp)
 {
-	return container_of(esp, struct <accelerator_name>_device, esp);
+	return container_of(esp, struct <acc_full_name>_device, esp);
 }
 
 static void <accelerator_name>_prep_xfer(struct esp_device *esp, void *arg)
 {
-	struct <accelerator_name>_access *a = arg;
+	struct <acc_full_name>_access *a = arg;
 
 	/* <<--regs-config-->> */
 	iowrite32be(a->src_offset, esp->iomem + SRC_OFFSET_REG);
@@ -50,15 +50,15 @@ static void <accelerator_name>_prep_xfer(struct esp_device *esp, void *arg)
 
 static bool <accelerator_name>_xfer_input_ok(struct esp_device *esp, void *arg)
 {
-	/* struct <accelerator_name>_device *<accelerator_name> = to_<accelerator_name>(esp); */
-	/* struct <accelerator_name>_access *a = arg; */
+	/* struct <acc_full_name>_device *<accelerator_name> = to_<accelerator_name>(esp); */
+	/* struct <acc_full_name>_access *a = arg; */
 
 	return true;
 }
 
 static int <accelerator_name>_probe(struct platform_device *pdev)
 {
-	struct <accelerator_name>_device *<accelerator_name>;
+	struct <acc_full_name>_device *<accelerator_name>;
 	struct esp_device *esp;
 	int rc;
 
@@ -83,7 +83,7 @@ static int <accelerator_name>_probe(struct platform_device *pdev)
 static int __exit <accelerator_name>_remove(struct platform_device *pdev)
 {
 	struct esp_device *esp = platform_get_drvdata(pdev);
-	struct <accelerator_name>_device *<accelerator_name> = to_<accelerator_name>(esp);
+	struct <acc_full_name>_device *<accelerator_name> = to_<accelerator_name>(esp);
 
 	esp_device_unregister(esp);
 	kfree(<accelerator_name>);
@@ -102,8 +102,8 @@ static struct esp_driver <accelerator_name>_driver = {
 	},
 	.xfer_input_ok	= <accelerator_name>_xfer_input_ok,
 	.prep_xfer	= <accelerator_name>_prep_xfer,
-	.ioctl_cm	= <ACCELERATOR_NAME>_IOC_ACCESS,
-	.arg_size	= sizeof(struct <accelerator_name>_access),
+	.ioctl_cm	= <ACC_FULL_NAME>_IOC_ACCESS,
+	.arg_size	= sizeof(struct <acc_full_name>_access),
 };
 
 static int __init <accelerator_name>_init(void)
@@ -123,4 +123,4 @@ MODULE_DEVICE_TABLE(of, <accelerator_name>_device_ids);
 
 MODULE_AUTHOR("Emilio G. Cota <cota@braap.org>");
 MODULE_LICENSE("GPL");
-MODULE_DESCRIPTION("<accelerator_name> driver");
+MODULE_DESCRIPTION("<acc_full_name> driver");

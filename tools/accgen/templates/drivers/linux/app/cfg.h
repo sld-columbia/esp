@@ -2,7 +2,7 @@
 #define __ESP_CFG_000_H__
 
 #include "libesp.h"
-#include "<accelerator_name>.h"
+#include "<acc_full_name>.h"
 
 typedef /* <<--token-type-->> */ token_t;
 
@@ -12,7 +12,7 @@ typedef /* <<--token-type-->> */ token_t;
 
 #define NACC 1
 
-struct <accelerator_name>_access <accelerator_name>_cfg_000[] = {
+struct <acc_full_name>_access <accelerator_name>_cfg_000[] = {
 	{
 		/* <<--descriptor-->> */
 		.src_offset = 0,
@@ -28,7 +28,7 @@ esp_thread_info_t cfg_000[] = {
 	{
 		.run = true,
 		.devname = "<acc_full_name>.0",
-		.ioctl_req = <ACCELERATOR_NAME>_IOC_ACCESS,
+		.ioctl_req = <ACC_FULL_NAME>_IOC_ACCESS,
 		.esp_desc = &(<accelerator_name>_cfg_000[0].esp),
 	}
 };

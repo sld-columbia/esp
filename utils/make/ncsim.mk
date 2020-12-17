@@ -48,7 +48,7 @@ incisive/cds.lib: $(ESP_ROOT)/.cache/incisive/xilinx_lib
 incisive/hdl.var: incisive/cds.lib
 	@cp $(ESP_ROOT)/.cache/incisive/hdl.var $@
 
-incisive/ncready: incisive/hdl.var check_all_srcs.old $(PKG_LIST)
+incisive/ncready: incisive/hdl.var $(RTL_CFG_BUILD)/check_all_srcs.old $(PKG_LIST)
 	$(QUIET_MKDIR)mkdir -p incisive
 	@echo $(SPACES)"WARNING: The source code for Ariane cannot be compiled with Incisive!!! If you need Ariane, please switch to Modelsim or Xcelium";
 	@cd incisive; \

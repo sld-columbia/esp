@@ -208,10 +208,10 @@ int main(int argc, char **argv)
 	printf("  ** Press ENTER to START ** ");
 	scanf("%c", &key);
 
-    for (k = 0; k < NACC; k++)
-	    cfg_parallel[k].hw_buf = buf;
+	for (k = 0; k < NACC; k++)
+		cfg_parallel[k].hw_buf = buf;
 
-    esp_run(cfg_parallel, NACC);
+	esp_run(cfg_parallel, NACC);
 
 	printf("\n  ** DONE **\n");
 
@@ -236,8 +236,9 @@ int main(int argc, char **argv)
 	printf("  ** Press ENTER to START ** ");
 	scanf("%c", &key);
 
-    for (k = 0; k < NACC; k++)
-        cfg_p2p[k].hw_buf = buf;
+	for (k = 0; k < NACC; k++)
+		cfg_p2p[k].hw_buf = buf;
+
 	esp_run(cfg_p2p, NACC);
 
 	printf("\n  ** DONE **\n");

@@ -1,5 +1,5 @@
-#ifndef _ADDER_H_
-#define _ADDER_H_
+#ifndef _DUMMY_STRATUS_H_
+#define _DUMMY_STRATUS_H_
 
 #ifdef __KERNEL__
 #include <linux/ioctl.h>
@@ -15,16 +15,14 @@
 #include <esp.h>
 #include <esp_accelerator.h>
 
-struct adder_access {
+struct dummy_stratus_access {
 	struct esp_access esp;
-	/* <<--regs-->> */
-	unsigned size;
-	unsigned readAddr;
-	unsigned writeAddr;
+	unsigned tokens;
+	unsigned batch;
 	unsigned src_offset;
 	unsigned dst_offset;
 };
 
-#define ADDER_IOC_ACCESS	_IOW ('S', 0, struct adder_access)
+#define DUMMY_STRATUS_IOC_ACCESS	_IOW ('S', 0, struct dummy_stratus_access)
 
-#endif /* _ADDER_H_ */
+#endif /* _DUMMY_STRATUS_H_ */

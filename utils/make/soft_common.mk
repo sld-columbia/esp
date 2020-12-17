@@ -46,7 +46,7 @@ $(SOFT_BUILD)/sysroot/opt/drivers-esp/esp.ko: $(SOFT_BUILD)/linux-build/vmlinux 
 # This is a PHONY to guarantee sysroot is always updated when apps or drivers change
 # Most targets won't actually do anything if their dependencies have not changed.
 # Linux is compiled twice if necessary to ensure drivers are compiled against the most recent kernel
-sysroot-update: $(SOFT_BUILD)/linux-build/vmlinux socmap.vhd soft-build
+sysroot-update: $(SOFT_BUILD)/linux-build/vmlinux $(ESP_CFG_BUILD)/socmap.vhd soft-build
 	@touch $(SOFT_BUILD)/sysroot
 	@$(MAKE) $(SOFT_BUILD)/sysroot/opt/drivers-esp/contig_alloc.ko
 	@$(MAKE) $(SOFT_BUILD)/sysroot/opt/drivers-esp/esp_cache.ko
@@ -58,7 +58,7 @@ sysroot-update: $(SOFT_BUILD)/linux-build/vmlinux socmap.vhd soft-build
 	@$(MAKE) acc-driver
 	@$(MAKE) acc-app
 	@touch $(SOFT_BUILD)/sysroot
-	@chmod a+x S64esp; cp S64esp $(SOFT_BUILD)/sysroot/etc/init.d/
+	@chmod a+x $(ESP_CFG_BUILD)/S64esp; cp $(ESP_CFG_BUILD)/S64esp $(SOFT_BUILD)/sysroot/etc/init.d/
 	$(QUIET_MAKE)$(MAKE) $(SOFT_BUILD)/linux-build/vmlinux
 
 sysroot-clean:
@@ -84,10 +84,10 @@ $(SOFT_BUILD)/linux-build:
 $(BAREMETAL_BIN):
 	$(QUIET_MKDIR)mkdir -p $@
 
-baremetal-all: soft-build socmap.vhd
+baremetal-all: soft-build $(ESP_CFG_BUILD)/socmap.vhd
 	@mkdir -p $(BAREMETAL_BIN)/dvi
 	@mkdir -p $(BUILD_DRIVERS)/dvi/baremetal
-	@CPU_ARCH=$(CPU_ARCH) DESIGN_PATH=$(DESIGN_PATH) DRIVERS=$(DRV_BARE) BUILD_PATH=$(BUILD_DRIVERS)/dvi/baremetal $(MAKE) -C $(DRV_BARE)/dvi
+	@CPU_ARCH=$(CPU_ARCH) DESIGN_PATH=$(DESIGN_PATH)/$(ESP_CFG_BUILD) DRIVERS=$(DRV_BARE) BUILD_PATH=$(BUILD_DRIVERS)/dvi/baremetal $(MAKE) -C $(DRV_BARE)/dvi
 	@cp $(BUILD_DRIVERS)/dvi/baremetal/*.bin $(BAREMETAL_BIN)/dvi
 	@$(MAKE) acc-baremetal
 

@@ -8,7 +8,7 @@
 #include <my_stringify.h>
 #include <test/test.h>
 #include <test/time.h>
-#include <adder.h>
+#include <adder_vivado.h>
 
 #define DEVNAME "/dev/adder_vivado.0"
 #define NAME "adder_vivado"
@@ -79,7 +79,7 @@ typedef int32_t word_t;
 
 
 static const char usage_str[] =
-	"usage: ./adder.exe coherence [size] [-v]\n"
+	"usage: ./adder_vivado.exe coherence [size] [-v]\n"
 	"  coherence: non-coh-dma|llc-coh-dma|coh-dma|coh\n"
 	"\n"
 	"Optional arguments:.\n"
@@ -90,7 +90,7 @@ static const char usage_str[] =
 
 struct adder_test {
 	struct test_info info;
-	struct adder_access desc;
+	struct adder_vivado_access desc;
 	unsigned int nbursts;
         word_t *hbuf;
 	word_t *sbuf;
@@ -232,7 +232,7 @@ static struct adder_test adder_test = {
 		.comp		= adder_comp,
 		.diff_ok	= adder_diff_ok,
 		.esp		= &adder_test.desc.esp,
-		.cm		= ADDER_IOC_ACCESS,
+		.cm		= ADDER_VIVADO_IOC_ACCESS,
 	},
 };
 

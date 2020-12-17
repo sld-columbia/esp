@@ -9,7 +9,7 @@
 #include <my_stringify.h>
 #include <test/test.h>
 #include <test/time.h>
-#include <dummy.h>
+#include <dummy_stratus.h>
 
 #define TOKENS 8
 #define BATCH 2
@@ -21,7 +21,7 @@ static unsigned size;
 
 struct accelerator_thread_info {
 	int fd;
-	struct dummy_access desc;
+	struct dummy_stratus_access desc;
 	unsigned long long hw_ns;
 };
 
@@ -35,7 +35,7 @@ void *accelerator_thread( void *ptr )
 	int rc;
 
 	gettime(&th_start);
-	rc = ioctl(info->fd, DUMMY_IOC_ACCESS, info->desc);
+	rc = ioctl(info->fd, DUMMY_STRATUS_IOC_ACCESS, info->desc);
 	gettime(&th_end);
 	if(rc < 0) {
 		perror("ioctl");
@@ -46,7 +46,7 @@ void *accelerator_thread( void *ptr )
 	return NULL;
 }
 
-static void prepare_dummy(int *fd, contig_handle_t *mem, accelerator_thread_info_t *info, struct dummy_access *desc, const char *device_name, unsigned id, unsigned do_p2p)
+static void prepare_dummy(int *fd, contig_handle_t *mem, accelerator_thread_info_t *info, struct dummy_stratus_access *desc, const char *device_name, unsigned id, unsigned do_p2p)
 {
 		*fd = open(device_name, O_RDWR, 0);
 		if (*fd < 0) {
@@ -148,7 +148,7 @@ int main(int argc, char *argv[])
 
 	pthread_t thread[3];
 	accelerator_thread_info_t info[3];
-	struct dummy_access desc[3];
+	struct dummy_stratus_access desc[3];
 
 	void *rp;
 

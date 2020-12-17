@@ -22,6 +22,7 @@ FORMS    += espmonmain.ui
 
 INCLUDEPATH += $(PROFPGA)/include
 INCLUDEPATH += $(DESIGN_DIR)
+INCLUDEPATH += $(ESP_CFG_DIR)
 DEPENDPATH += $(PROFPGA)/include
 
 unix:!macx: QMAKE_CXXFLAGS += -Wno-narrowing

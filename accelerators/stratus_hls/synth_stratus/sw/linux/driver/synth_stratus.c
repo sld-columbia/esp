@@ -6,7 +6,7 @@
 #include <esp_accelerator.h>
 #include <esp.h>
 
-#include "synth.h"
+#include "synth_stratus.h"
 
 #define DRV_NAME	"synth_stratus"
 
@@ -24,7 +24,7 @@
 #define SYNTH_IN_PLACE_REG		0x6c
 #define SYNTH_WR_DATA_REG       0x70
 #define SYNTH_RD_DATA_REG       0x74
-struct synth_device {
+struct synth_stratus_device {
 	struct esp_device esp;
 };
 
@@ -45,14 +45,14 @@ static struct of_device_id synth_device_ids[] = {
 
 static int synth_devs; // TODO this is never initialized
 
-static inline struct synth_device *to_synth(struct esp_device *esp)
+static inline struct synth_stratus_device *to_synth(struct esp_device *esp)
 {
-	return container_of(esp, struct synth_device, esp);
+	return container_of(esp, struct synth_stratus_device, esp);
 }
 
 static void synth_prep_xfer(struct esp_device *esp, void *arg)
 {
-	struct synth_access *a = arg;
+	struct synth_stratus_access *a = arg;
 
 	iowrite32be(a->offset, esp->iomem + SYNTH_OFFSET_REG);
 	iowrite32be(a->pattern, esp->iomem + SYNTH_PATTERN_REG);
@@ -77,7 +77,7 @@ static bool synth_xfer_input_ok(struct esp_device *esp, void *arg)
 
 static int synth_probe(struct platform_device *pdev)
 {
-	struct synth_device *synth;
+	struct synth_stratus_device *synth;
 	struct esp_device *esp;
 	int rc;
 
@@ -102,7 +102,7 @@ static int synth_probe(struct platform_device *pdev)
 static int __exit synth_remove(struct platform_device *pdev)
 {
 	struct esp_device *esp = platform_get_drvdata(pdev);
-	struct synth_device *synth = to_synth(esp);
+	struct synth_stratus_device *synth = to_synth(esp);
 
 	esp_device_unregister(esp);
 	kfree(synth);
@@ -121,8 +121,8 @@ static struct esp_driver synth_driver = {
 	},
 	.xfer_input_ok	= synth_xfer_input_ok,
 	.prep_xfer	= synth_prep_xfer,
-	.ioctl_cm	= SYNTH_IOC_ACCESS,
-	.arg_size	= sizeof(struct synth_access),
+	.ioctl_cm	= SYNTH_STRATUS_IOC_ACCESS,
+	.arg_size	= sizeof(struct synth_stratus_access),
 };
 
 static int __init synth_init(void)
@@ -142,4 +142,4 @@ MODULE_DEVICE_TABLE(of, synth_device_ids);
 
 MODULE_AUTHOR("Emilio G. Cota <cota@braap.org>");
 MODULE_LICENSE("GPL");
-MODULE_DESCRIPTION("synth driver");
+MODULE_DESCRIPTION("synth_stratus driver");

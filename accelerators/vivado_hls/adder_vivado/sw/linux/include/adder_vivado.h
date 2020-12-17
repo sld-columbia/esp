@@ -1,5 +1,5 @@
-#ifndef _VITBFLY2_H_
-#define _VITBFLY2_H_
+#ifndef _ADDER_VIVADO_H_
+#define _ADDER_VIVADO_H_
 
 #ifdef __KERNEL__
 #include <linux/ioctl.h>
@@ -15,10 +15,11 @@
 #include <esp.h>
 #include <esp_accelerator.h>
 
-struct vitbfly2_access {
+struct adder_vivado_access {
 	struct esp_access esp;
+	unsigned int nbursts;
 };
 
-#define VITBFLY2_IOC_ACCESS	_IOW ('S', 0, struct vitbfly2_access)
+#define ADDER_VIVADO_IOC_ACCESS _IOW ('S', 0, struct adder_vivado_access)
 
-#endif /* _VITBFLY2_H_ */
+#endif /* _ADDER_VIVADO_H_ */

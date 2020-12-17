@@ -40,7 +40,7 @@
 #include <unistd.h>
 
 #include "contig.h"
-#include "vitbfly2.h"
+#include "vitbfly2_stratus.h"
 
 #include "viterbi_decoder_generic.h"
 #include "viterbi_standalone.h"
@@ -179,14 +179,14 @@ uint8_t* depuncture(uint8_t *in) {
 
 #define DEVNAME	"/dev/vitbfly2_stratus.0"
 
-static void viterbi_butterfly2_hw(unsigned char *inMemory, int *fd, contig_handle_t *mem, size_t size, size_t out_size, struct vitbfly2_access *desc)
+static void viterbi_butterfly2_hw(unsigned char *inMemory, int *fd, contig_handle_t *mem, size_t size, size_t out_size, struct vitbfly2_stratus_access *desc)
 {
 
 
 	contig_copy_to(*mem, 0, inMemory, size);
 
 
-	if (ioctl(*fd, VITBFLY2_IOC_ACCESS, *desc)) {
+	if (ioctl(*fd, VITBFLY2_STRATUS_IOC_ACCESS, *desc)) {
 		perror("IOCTL:");
 		exit(EXIT_FAILURE);
 	}
@@ -436,7 +436,7 @@ uint8_t* decode(ofdm_param *ofdm, frame_param *frame, uint8_t *in) {
   contig_handle_t mem;
   const size_t size = 6 * 64 * sizeof(unsigned char);
   const size_t out_size = 4 * 64 * sizeof(unsigned char);
-  struct vitbfly2_access desc;
+  struct vitbfly2_stratus_access desc;
   unsigned invocations = 0;
 
   printf("Open device %s\n", DEVNAME);

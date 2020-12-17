@@ -21,11 +21,11 @@ genus:
 	$(QUIET_MKDIR)mkdir -p genus
 
 
-genus/incdir.tcl: genus check_all_rtl_srcs.old
+genus/incdir.tcl: genus $(RTL_CFG_BUILD)/check_all_rtl_srcs.old
 	$(QUIET_MAKE) \
 	echo "set log_syn(hdl_search_path) \"$(INCDIR)\"" > $@
 
-genus/srcs.tcl: genus check_all_rtl_srcs.old
+genus/srcs.tcl: genus $(RTL_CFG_BUILD)/check_all_rtl_srcs.old
 	$(QUIET_MAKE) $(RM) $@
 	@echo "### Compile VHDL packages ###" >> $@; \
 	for vhd in $(VHDL_PKGS); do \

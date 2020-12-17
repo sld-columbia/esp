@@ -2,7 +2,7 @@
 #define __ESP_CFG_000_H__
 
 #include "libesp.h"
-#include "fft.h"
+#include "fft_stratus.h"
 
 #if (FFT_FX_WIDTH == 64)
 typedef unsigned long long token_t;
@@ -30,7 +30,7 @@ const int32_t log_len = LOG_LEN;
 
 #define NACC 1
 
-struct fft_access fft_cfg_000[] = {
+struct fft_stratus_access fft_cfg_000[] = {
 	{
 		/* <<--descriptor-->> */
 		.do_bitrev = DO_BITREV,
@@ -48,7 +48,7 @@ esp_thread_info_t cfg_000[] = {
 	{
 		.run = true,
 		.devname = "fft_stratus.0",
-		.ioctl_req = FFT_IOC_ACCESS,
+		.ioctl_req = FFT_STRATUS_IOC_ACCESS,
 		.esp_desc = &(fft_cfg_000[0].esp),
 	}
 };

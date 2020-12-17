@@ -39,7 +39,7 @@ questa/modelsim.ini: $(ESP_ROOT)/.cache/questa/xilinx_lib
 # Note that vmake fails to find unisim.vcomponents, however produces the correct
 # makefile for future compilation and all components are properly bound in simulation.
 # Please keep 2> /dev/null until the bug is fixed with a newer Modelsim release.
-questa/vsim.mk: questa/modelsim.ini check_all_srcs.old $(PKG_LIST)
+questa/vsim.mk: questa/modelsim.ini $(RTL_CFG_BUILD)/check_all_srcs.old $(PKG_LIST)
 	@cd questa; \
 	if ! test -e profpga; then \
 		vlib -type directory profpga; \

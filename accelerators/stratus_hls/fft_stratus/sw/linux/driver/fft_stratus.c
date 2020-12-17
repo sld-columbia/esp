@@ -6,7 +6,7 @@
 #include <esp_accelerator.h>
 #include <esp.h>
 
-#include "fft.h"
+#include "fft_stratus.h"
 
 #define DRV_NAME	"fft_stratus"
 
@@ -15,7 +15,7 @@
 #define FFT_DO_BITREV_REG 0x44
 #define FFT_LOG_LEN_REG 0x40
 
-struct fft_device {
+struct fft_stratus_device {
 	struct esp_device esp;
 };
 
@@ -36,14 +36,14 @@ static struct of_device_id fft_device_ids[] = {
 
 static int fft_devs;
 
-static inline struct fft_device *to_fft(struct esp_device *esp)
+static inline struct fft_stratus_device *to_fft(struct esp_device *esp)
 {
-	return container_of(esp, struct fft_device, esp);
+	return container_of(esp, struct fft_stratus_device, esp);
 }
 
 static void fft_prep_xfer(struct esp_device *esp, void *arg)
 {
-	struct fft_access *a = arg;
+	struct fft_stratus_access *a = arg;
 
 	/* <<--regs-config-->> */
 	iowrite32be(0, esp->iomem + FFT_DO_PEAK_REG);
@@ -56,15 +56,15 @@ static void fft_prep_xfer(struct esp_device *esp, void *arg)
 
 static bool fft_xfer_input_ok(struct esp_device *esp, void *arg)
 {
-	/* struct fft_device *fft = to_fft(esp); */
-	/* struct fft_access *a = arg; */
+	/* struct fft_stratus_device *fft = to_fft(esp); */
+	/* struct fft_stratus_access *a = arg; */
 
 	return true;
 }
 
 static int fft_probe(struct platform_device *pdev)
 {
-	struct fft_device *fft;
+	struct fft_stratus_device *fft;
 	struct esp_device *esp;
 	int rc;
 
@@ -89,7 +89,7 @@ static int fft_probe(struct platform_device *pdev)
 static int __exit fft_remove(struct platform_device *pdev)
 {
 	struct esp_device *esp = platform_get_drvdata(pdev);
-	struct fft_device *fft = to_fft(esp);
+	struct fft_stratus_device *fft = to_fft(esp);
 
 	esp_device_unregister(esp);
 	kfree(fft);
@@ -108,8 +108,8 @@ static struct esp_driver fft_driver = {
 	},
 	.xfer_input_ok	= fft_xfer_input_ok,
 	.prep_xfer	= fft_prep_xfer,
-	.ioctl_cm	= FFT_IOC_ACCESS,
-	.arg_size	= sizeof(struct fft_access),
+	.ioctl_cm	= FFT_STRATUS_IOC_ACCESS,
+	.arg_size	= sizeof(struct fft_stratus_access),
 };
 
 static int __init fft_init(void)
@@ -129,4 +129,4 @@ MODULE_DEVICE_TABLE(of, fft_device_ids);
 
 MODULE_AUTHOR("Emilio G. Cota <cota@braap.org>");
 MODULE_LICENSE("GPL");
-MODULE_DESCRIPTION("fft driver");
+MODULE_DESCRIPTION("fft_stratus driver");

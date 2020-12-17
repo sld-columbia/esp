@@ -24,7 +24,7 @@ soft-clean:
 
 soft-distclean: soft-clean
 
-$(SOFT_BUILD)/riscv.dtb: riscv.dts socmap.vhd
+$(SOFT_BUILD)/riscv.dtb: $(ESP_CFG_BUILD)/riscv.dts $(ESP_CFG_BUILD)/socmap.vhd
 	$(QUIET_BUILD) mkdir -p $(SOFT_BUILD)
 	@dtc -I dts $< -O dtb -o $@
 
@@ -37,24 +37,24 @@ $(SOFT_BUILD)/startup.o: $(BOOTROM_PATH)/startup.S $(SOFT_BUILD)/riscv.dtb
 		-I$(BOOTROM_PATH) \
 		-c $< -o startup.o
 
-$(SOFT_BUILD)/main.o: $(BOOTROM_PATH)/main.c socmap.h
+$(SOFT_BUILD)/main.o: $(BOOTROM_PATH)/main.c $(ESP_CFG_BUILD)/socmap.h
 	@mkdir -p $(SOFT_BUILD)
 	$(QUIET_CC) $(CROSS_COMPILE_ELF)gcc \
 		-Os \
 		-Wall -Werror \
 		-mcmodel=medany -mexplicit-relocs \
 		-I$(BOOTROM_PATH) \
-		-I$(DESIGN_PATH) \
+		-I$(DESIGN_PATH)/$(ESP_CFG_BUILD) \
 		-c $< -o $@
 
-$(SOFT_BUILD)/uart.o: $(BOOTROM_PATH)/uart.c socmap.h
+$(SOFT_BUILD)/uart.o: $(BOOTROM_PATH)/uart.c $(ESP_CFG_BUILD)/socmap.h
 	@mkdir -p $(SOFT_BUILD)
 	$(QUIET_CC) $(CROSS_COMPILE_ELF)gcc \
 		-Os \
 		-Wall -Werror \
 		-mcmodel=medany -mexplicit-relocs \
 		-I$(BOOTROM_PATH) \
-		-I$(DESIGN_PATH) \
+		-I$(DESIGN_PATH)/$(ESP_CFG_BUILD) \
 		-c $< -o $@
 
 $(SOFT_BUILD)/prom.exe: $(SOFT_BUILD)/startup.o $(SOFT_BUILD)/uart.o $(SOFT_BUILD)/main.o $(BOOTROM_PATH)/linker.lds
@@ -64,7 +64,7 @@ $(SOFT_BUILD)/prom.exe: $(SOFT_BUILD)/startup.o $(SOFT_BUILD)/uart.o $(SOFT_BUIL
 		-Wall -Werror \
 		-mcmodel=medany -mexplicit-relocs \
 		-I$(BOOTROM_PATH) \
-		-I$(DESIGN_PATH) \
+		-I$(DESIGN_PATH)/$(ESP_CFG_BUILD) \
 		-nostdlib -nodefaultlibs -nostartfiles \
 		-T$(BOOTROM_PATH)/linker.lds \
 		$(SOFT_BUILD)/startup.o $(SOFT_BUILD)/uart.o $(SOFT_BUILD)/main.o \
@@ -98,7 +98,7 @@ $(SOFT_BUILD)/systest.exe: systest.c $(SOFT_BUILD)/uart.o
 	$(SOFT)/common/syscalls.c \
 	$(RISCV_TESTS)/benchmarks/common/crt.S  \
 	-T $(RISCV_TESTS)/benchmarks/common/test.ld -o $@ \
-	-I$(DESIGN_PATH) \
+	-I$(DESIGN_PATH)/$(ESP_CFG_BUILD) \
 	$(SOFT_BUILD)/uart.o $<
 
 $(SOFT_BUILD)/systest.bin: $(TEST_PROGRAM)
@@ -208,7 +208,7 @@ XMLOGOPT += -DEFINE WT_DCACHE=1
 ifeq ("$(CPU_ARCH)", "ariane")
 INCDIR += $(ARIANE)/src/common_cells/include
 VERILOG_ARIANE += $(foreach f, $(shell strings $(FLISTS)/ariane_vlog.flist), $(ARIANE)/$(f))
-VERILOG_ARIANE += $(DESIGN_PATH)/plic_regmap.sv
+VERILOG_ARIANE += $(DESIGN_PATH)/$(ESP_CFG_BUILD)/plic_regmap.sv
 ifneq ($(filter $(TECHLIB),$(FPGALIBS)),)
 VERILOG_ARIANE += $(foreach f, $(shell strings $(FLISTS)/ariane_fpga_vlog.flist), $(ARIANE)/$(f))
 endif

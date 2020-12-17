@@ -8,7 +8,7 @@
 #include <my_stringify.h>
 #include <test/test.h>
 #include <test/time.h>
-#include <sort.h>
+#include <sort_stratus.h>
 
 #define DEVNAME "/dev/sort_stratus.0"
 #define NAME "sort_stratus"
@@ -26,7 +26,7 @@ static const char usage_str[] = "usage: sort coherence cmd [n_elems] [n_batches]
 
 struct sort_test {
 	struct test_info info;
-	struct sort_access desc;
+	struct sort_stratus_access desc;
 	float *hbuf;
 	float *sbuf;
 	unsigned int n_elems;
@@ -260,7 +260,7 @@ static struct sort_test sort_test = {
 		.comp		= sort_comp,
 		.diff_ok	= sort_diff_ok,
 		.esp		= &sort_test.desc.esp,
-		.cm		= SORT_IOC_ACCESS,
+		.cm		= SORT_STRATUS_IOC_ACCESS,
 	},
 };
 

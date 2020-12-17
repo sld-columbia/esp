@@ -1,5 +1,5 @@
-#ifndef _COUNTER_H_
-#define _COUNTER_H_
+#ifndef _SORT_STRATUS_H_
+#define _SORT_STRATUS_H_
 
 #ifdef __KERNEL__
 #include <linux/ioctl.h>
@@ -15,11 +15,12 @@
 #include <esp.h>
 #include <esp_accelerator.h>
 
-struct counter_access {
+struct sort_stratus_access {
 	struct esp_access esp;
-	unsigned int ticks;
+	unsigned int size;
+	unsigned int batch;
 };
 
-#define COUNTER_IOC_ACCESS	_IOW ('S', 0, struct counter_access)
+#define SORT_STRATUS_IOC_ACCESS	_IOW ('S', 0, struct sort_stratus_access)
 
-#endif /* _COUNTER_H_ */
+#endif /* _SORT_STRATUS_H_ */

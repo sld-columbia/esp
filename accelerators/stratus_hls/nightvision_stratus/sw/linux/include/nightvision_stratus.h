@@ -1,5 +1,5 @@
-#ifndef _NIGHTVISION_H_
-#define _NIGHTVISION_H_
+#ifndef _NIGHTVISION_STRATUS_H_
+#define _NIGHTVISION_STRATUS_H_
 
 #ifdef __KERNEL__
 #include <linux/ioctl.h>
@@ -19,7 +19,7 @@
 #define MAX_ROWS 2048
 #define MAX_COLS 2048
 
-struct nightvision_access {
+struct nightvision_stratus_access {
 	struct esp_access esp;
 	// Number of images to be processed
 	unsigned int nimages;
@@ -35,6 +35,6 @@ struct nightvision_access {
 	unsigned dst_offset;
 };
 
-#define NIGHTVISION_IOC_ACCESS	_IOW ('S', 0, struct nightvision_access)
+#define NIGHTVISION_STRATUS_IOC_ACCESS	_IOW ('S', 0, struct nightvision_stratus_access)
 
-#endif /* _NIGHTVISION_H_ */
+#endif /* _NIGHTVISION_STRATUS_H_ */

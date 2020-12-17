@@ -14,37 +14,43 @@ TKCONFIG_DEP  += $(wildcard $(TKCONFIG)/in/*.in.h)
 TKCONFIG_DEP  += $(wildcard $(TKCONFIG)/in/*.in.help)
 TKCONFIG_DEP  += grlib_config.in
 
-.grlib_config:
+$(GRLIB_CFG_BUILD)/.grlib_config:
+	$(QUIET_MKDIR)mkdir -p $(GRLIB_CFG_BUILD)
 	$(QUIET_CP)cp $(GRLIB_DEFCONFIG) $@
 
 grlib-defconfig: $(GRLIB_DEFCONFIG)
-	$(QUIET_CP)cp $< .grlib_config
-	$(QUIET_MAKE)$(MAKE) grlib_config.vhd
+	$(QUIET_CP)cp $< $(GRLIB_CFG_BUILD)/.grlib_config
+	$(QUIET_MAKE) \
+	cd $(GRLIB_CFG_BUILD); \
+	$(MAKE) grlib_config.vhd
 
 .PHONY: grlib-defconfig
 
-tkparse.o: $(TKCONFIG)/tkparse.c
-	$(QUIET_CC)$(CC) -g -c $<
+$(GRLIB_CFG_BUILD)/tkparse.o: $(TKCONFIG)/tkparse.c
+	$(QUIET_CC)$(CC) -g -c $< -o $@
 
-tkcond.o: $(TKCONFIG)/tkcond.c
-	$(QUIET_CC)$(CC) -g -c $<
+$(GRLIB_CFG_BUILD)/tkcond.o: $(TKCONFIG)/tkcond.c
+	$(QUIET_CC)$(CC) -g -c $< -o $@
 
-tkgen.o: $(TKCONFIG)/tkgen.c
-	$(QUIET_CC)$(CC) -g -c $<
+$(GRLIB_CFG_BUILD)/tkgen.o: $(TKCONFIG)/tkgen.c
+	$(QUIET_CC)$(CC) -g -c $< -o $@
 
-tkparse: tkparse.o tkcond.o tkgen.o
-	$(QUIET_LINK)$(CC) -g tkparse.o tkcond.o tkgen.o -o $@
+$(GRLIB_CFG_BUILD)/tkparse: $(GRLIB_CFG_BUILD)/tkparse.o $(GRLIB_CFG_BUILD)/tkcond.o $(GRLIB_CFG_BUILD)/tkgen.o
+	$(QUIET_LINK)$(CC) -g $(GRLIB_CFG_BUILD)/tkparse.o $(GRLIB_CFG_BUILD)/tkcond.o $(GRLIB_CFG_BUILD)/tkgen.o -o $@
 
-main.tk: tkparse grlib_config.in $(TKCONFIG_DEP)
-	$(QUIET_BUILD) ./$< grlib_config.in $(TKCONFIG)/in > $@
+$(GRLIB_CFG_BUILD)/main.tk: $(GRLIB_CFG_BUILD)/tkparse grlib_config.in $(TKCONFIG_DEP)
+	$(QUIET_BUILD) \
+	cd $(GRLIB_CFG_BUILD); \
+	./tkparse $(DESIGN_PATH)/grlib_config.in $(TKCONFIG)/in > main.tk
 
-lconfig.tk: main.tk $(TKCONFIG_DEP) grlib_config.in
+$(GRLIB_CFG_BUILD)/lconfig.tk: $(GRLIB_CFG_BUILD)/main.tk $(TKCONFIG_DEP) grlib_config.in
 	$(QUIET_BUILD)cat $(TKCONFIG)/header.tk $< $(TKCONFIG)/tail.tk > $@
-	$(QUIET_CHMOD)chmod a+x lconfig.tk
+	$(QUIET_CHMOD)chmod a+x $(GRLIB_CFG_BUILD)/lconfig.tk
 
-grlib_config.vhd: lconfig.tk .grlib_config
+$(GRLIB_CFG_BUILD)/grlib_config.vhd: $(GRLIB_CFG_BUILD)/.grlib_config $(GRLIB_CFG_BUILD)/lconfig.tk
 	$(QUIET_DIFF)echo "checking .grlib_config..."
-	@/usr/bin/diff .grlib_config $(GRLIB_DEFCONFIG) -q > /dev/null; \
+	@cd $(GRLIB_CFG_BUILD); \
+	/usr/bin/diff .grlib_config $(GRLIB_DEFCONFIG) -q > /dev/null; \
 	if test $$? = "0"; then \
 		echo $(SPACES)"INFO Using default configuration file for GRLIB"; \
 	else \
@@ -52,17 +58,19 @@ grlib_config.vhd: lconfig.tk .grlib_config
 	fi
 	$(QUIET_RUN)
 	$(QUIET_INFO)echo "Creating grlib_config.vhd";
-	@unset LD_LIBRARY_PATH ; \
+	@cd $(GRLIB_CFG_BUILD); \
+	unset LD_LIBRARY_PATH ; \
 	xvfb-run -a wish -f lconfig.tk -regen; \
 	if test $$? = "2" ; then \
 	   cpp -P -I$$PWD $(TKCONFIG)/config.vhd > grlib_config.vhd; \
 	   echo $(SPACES)"INFO grlib_config.vhd written"; \
 	fi
 
-grlib-xconfig: lconfig.tk
+grlib-xconfig: $(GRLIB_CFG_BUILD)/lconfig.tk
 	$(QUIET_RUN)
 	$(QUIET_INFO)echo "Creating grlib_config.vhd";
-	@unset LD_LIBRARY_PATH ; \
+	@cd $(GRLIB_CFG_BUILD); \
+	unset LD_LIBRARY_PATH ; \
 	wish -f lconfig.tk; \
 	if test $$? = "2" ; then \
 	   cpp -P -I$$PWD $(TKCONFIG)/config.vhd > grlib_config.vhd; \
@@ -70,22 +78,18 @@ grlib-xconfig: lconfig.tk
 	fi
 
 grlib-config-clean:
-	$(QUIET_CLEAN)$(RM)        \
-		tkparse.o          \
-		tkcond.o           \
-		tkgen.o            \
-		tkparse            \
-		main.tk            \
-		grlib_config.h     \
-		grlib_config.help  \
-		grlib_config.vhd.h \
-		.grlib_config.old
+	$(QUIET_CLEAN) $(RM)       \
+		$(GRLIB_CFG_BUILD)/tkparse.o          \
+		$(GRLIB_CFG_BUILD)/tkcond.o           \
+		$(GRLIB_CFG_BUILD)/tkgen.o            \
+		$(GRLIB_CFG_BUILD)/tkparse            \
+		$(GRLIB_CFG_BUILD)/main.tk            \
+		$(GRLIB_CFG_BUILD)/grlib_config.h     \
+		$(GRLIB_CFG_BUILD)/grlib_config.help  \
+		$(GRLIB_CFG_BUILD)/grlib_config.vhd.h \
+		$(GRLIB_CFG_BUILD)/.grlib_config.old
 
 grlib-config-distclean: grlib-config-clean
-	$(QUIET_CLEAN)$(RM)      \
-		lconfig.tk       \
-		tkconfig.h       \
-		grlib_config.vhd \
-		.grlib_config
+	$(QUIET_CLEAN)$(RM) $(GRLIB_CFG_BUILD)
 
 .PHONY: grlib-xconfig grlib-config-clean grlib-config-distclean

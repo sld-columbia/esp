@@ -59,7 +59,7 @@ modelsim/modelsim.ini: $(ESP_ROOT)/.cache/modelsim/xilinx_lib
 # Note that vmake fails to find unisim.vcomponents, however produces the correct
 # makefile for future compilation and all components are properly bound in simulation.
 # Please keep 2> /dev/null until the bug is fixed with a newer Modelsim release.
-modelsim/vsim.mk: modelsim/modelsim.ini check_all_srcs.old $(PKG_LIST)
+modelsim/vsim.mk: modelsim/modelsim.ini $(RTL_CFG_BUILD)/check_all_srcs.old $(PKG_LIST)
 	@cd modelsim; \
 	if ! test -e profpga; then \
 		vlib -type directory profpga; \

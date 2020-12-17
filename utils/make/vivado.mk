@@ -26,12 +26,15 @@ endif
 ### Options for Vivado batch mode ###
 VIVADO_BATCH_OPT = -mode batch -quiet -notrace
 
-vivado:
+$(VIVADO_LOGS):
+	$(QUIET_MKDIR)mkdir -p $(VIVADO_LOGS)
+
+vivado: $(VIVADO_LOGS)
 	$(QUIET_MKDIR)mkdir -p vivado
 
 ifneq ($(filter $(TECHLIB),$(FPGALIBS)),)
 
-vivado/srcs.tcl: vivado check_all_rtl_srcs.old
+vivado/srcs.tcl: vivado $(RTL_CFG_BUILD)/check_all_rtl_srcs.old
 	$(QUIET_INFO)echo "generating source list for Vivado"
 	@$(RM) $@
 ifneq ($(findstring profpga, $(BOARD)),)
@@ -205,7 +208,7 @@ vivado/$(DESIGN): vivado vivado/srcs.tcl vivado/setup.tcl vivado/syn.tcl
 			case $$yn in \
 				[Yy] ) \
 					$(RM) $(DESIGN); \
-					vivado $(VIVADO_BATCH_OPT) -source setup.tcl | tee ../vivado_setup.log; \
+					vivado $(VIVADO_BATCH_OPT) -source setup.tcl | tee ../$(VIVADO_LOGS)/vivado_setup.log; \
 					break;; \
 				[Nn] ) \
 					echo $(SPACES)"INFO aborting $@"; \
@@ -214,7 +217,7 @@ vivado/$(DESIGN): vivado vivado/srcs.tcl vivado/setup.tcl vivado/syn.tcl
 			esac; \
 		done; \
 	else \
-		vivado $(VIVADO_BATCH_OPT) -source setup.tcl | tee ../vivado_setup.log; \
+		vivado $(VIVADO_BATCH_OPT) -source setup.tcl | tee ../$(VIVADO_LOGS)/vivado_setup.log; \
 	fi; \
 	cd ../;
 
@@ -229,7 +232,7 @@ vivado-gui: vivado-setup
 vivado-syn: vivado-setup
 	$(QUIET_INFO)echo "launching Vivado implementation script"
 	@cd vivado; \
-	vivado $(VIVADO_BATCH_OPT) -source syn.tcl | tee ../vivado_syn.log; \
+	vivado $(VIVADO_BATCH_OPT) -source syn.tcl | tee ../$(VIVADO_LOGS)/vivado_syn.log; \
 	cd ../;
 	@bit=vivado/$(DESIGN).runs/impl_1/$(TOP).bit; \
 	if test -r $$bit; then \
@@ -245,7 +248,7 @@ vivado-update: vivado vivado/syn.tcl
 	if ! test -r $(DESIGN).xpr; then \
 		echo -n $(SPACES)"Error: Vivado project \"$(DESIGN)\" does not exist. Please run 'make vivado-syn' first"; \
 	else \
-		vivado $(VIVADO_BATCH_OPT) -source syn.tcl | tee ../vivado_syn.log; \
+		vivado $(VIVADO_BATCH_OPT) -source syn.tcl | tee ../$(VIVADO_LOGS)/vivado_syn.log; \
 		cd ../; \
 		bit=vivado/$(DESIGN).runs/impl_1/$(TOP).bit; \
 		if test -r $$bit; then \
@@ -269,8 +272,7 @@ vivado-prog-fpga: vivado/program.tcl
 	cd ../;
 
 vivado-clean:
-	$(QUIET_CLEAN)$(RM) \
-		vivado_*.log
+	$(QUIET_CLEAN)$(RM) $(VIVADO_LOGS)
 
 vivado-distclean: vivado-clean
 	$(QUIET_CLEAN)$(RM) \

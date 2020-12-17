@@ -378,14 +378,14 @@ class SoC_Config():
     self.LINUX_MAC = LINUX_MAC
     self.LEON3_STACK = LEON3_STACK
     #define whether SGMII has to be used or not: it is not used for PROFPGA boards
-    with open("Makefile") as fp:
+    with open("../../Makefile") as fp:
       for line in fp:
         if line.find("BOARD") != -1 and line.find("profpga") != -1:
           self.HAS_SGMII = False
     IPM = ""
     IPL = ""
     #determine other parameters
-    with open("grlib_config.vhd") as fp:
+    with open("../grlib/grlib_config.vhd") as fp:
       for line in fp:
         #check if the CPU is configured to used the CPU
         if line.find("CFG_FPU : integer") != -1:

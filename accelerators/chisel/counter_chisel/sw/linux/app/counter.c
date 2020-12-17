@@ -8,18 +8,18 @@
 #include <my_stringify.h>
 #include <test/test.h>
 #include <test/time.h>
-#include <counter.h>
+#include <counter_chisel.h>
 
 #define DEVNAME "/dev/counter_chisel.0"
 #define NAME "counter_chisel"
 
-static const char usage_str[] = "usage: counter <ticks>\n"
+static const char usage_str[] = "usage: counter_chisel <ticks>\n"
 	"  ticks: counter initialization\n"
 	"\n";
 
 struct counter_test {
 	struct test_info info;
-	struct counter_access desc;
+	struct counter_chisel_access desc;
 	unsigned int ticks;
 };
 
@@ -70,7 +70,7 @@ static struct counter_test counter_test = {
 		.set_access	= counter_set_access,
 		.diff_ok	= counter_diff_ok,
 		.esp		= &counter_test.desc.esp,
-		.cm		= COUNTER_IOC_ACCESS,
+		.cm		= COUNTER_CHISEL_IOC_ACCESS,
 	},
 };
 

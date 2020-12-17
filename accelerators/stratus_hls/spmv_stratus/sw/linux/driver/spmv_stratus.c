@@ -7,7 +7,7 @@
 #include <esp_accelerator.h>
 #include <esp.h>
 
-#include "spmv.h"
+#include "spmv_stratus.h"
 
 #define DRV_NAME	"spmv_stratus"
 
@@ -18,7 +18,7 @@
 #define SPMV_VALS_PLM_SIZE_REG	0x50
 #define SPMV_VECT_FITS_PLM_REG	0x54
 
-struct spmv_device {
+struct spmv_stratus_device {
 	struct esp_device esp;
 };
 
@@ -39,14 +39,14 @@ static struct of_device_id spmv_device_ids[] = {
 
 static int spmv_devs;
 
-static inline struct spmv_device *to_spmv(struct esp_device *esp)
+static inline struct spmv_stratus_device *to_spmv(struct esp_device *esp)
 {
-	return container_of(esp, struct spmv_device, esp);
+	return container_of(esp, struct spmv_stratus_device, esp);
 }
 
 static void spmv_prep_xfer(struct esp_device *esp, void *arg)
 {
-	struct spmv_access *a = arg;
+	struct spmv_stratus_access *a = arg;
 
 	iowrite32be(a->nrows, esp->iomem + SPMV_NROWS_REG);
 	iowrite32be(a->ncols, esp->iomem + SPMV_NCOLS_REG);
@@ -58,7 +58,7 @@ static void spmv_prep_xfer(struct esp_device *esp, void *arg)
 
 static bool spmv_xfer_input_ok(struct esp_device *esp, void *arg)
 {
-	struct spmv_access *a = arg;
+	struct spmv_stratus_access *a = arg;
 	long long unsigned mtx_max = ((long long unsigned) a->nrows) * ((long long unsigned) a->ncols);
 
 	if (!is_power_of_2(a->nrows))
@@ -90,7 +90,7 @@ static bool spmv_xfer_input_ok(struct esp_device *esp, void *arg)
 
 static int spmv_probe(struct platform_device *pdev)
 {
-	struct spmv_device *spmv;
+	struct spmv_stratus_device *spmv;
 	struct esp_device *esp;
 	int rc;
 
@@ -115,7 +115,7 @@ static int spmv_probe(struct platform_device *pdev)
 static int __exit spmv_remove(struct platform_device *pdev)
 {
 	struct esp_device *esp = platform_get_drvdata(pdev);
-	struct spmv_device *spmv = to_spmv(esp);
+	struct spmv_stratus_device *spmv = to_spmv(esp);
 
 	esp_device_unregister(esp);
 	kfree(spmv);
@@ -134,8 +134,8 @@ static struct esp_driver spmv_driver = {
 	},
 	.xfer_input_ok	= spmv_xfer_input_ok,
 	.prep_xfer	= spmv_prep_xfer,
-	.ioctl_cm	= SPMV_IOC_ACCESS,
-	.arg_size	= sizeof(struct spmv_access),
+	.ioctl_cm	= SPMV_STRATUS_IOC_ACCESS,
+	.arg_size	= sizeof(struct spmv_stratus_access),
 };
 
 static int __init spmv_init(void)
@@ -155,4 +155,4 @@ MODULE_DEVICE_TABLE(of, spmv_device_ids);
 
 MODULE_AUTHOR("Emilio G. Cota <cota@braap.org>");
 MODULE_LICENSE("GPL");
-MODULE_DESCRIPTION("spmv driver");
+MODULE_DESCRIPTION("spmv_stratus driver");

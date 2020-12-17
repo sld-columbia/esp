@@ -7,11 +7,11 @@
 #include <esp_accelerator.h>
 #include <esp.h>
 
-#include "vitbfly2.h"
+#include "vitbfly2_stratus.h"
 
 #define DRV_NAME	"vitbfly2_stratus"
 
-struct vitbfly2_device {
+struct vitbfly2_stratus_device {
 	struct esp_device esp;
 };
 
@@ -32,9 +32,9 @@ static struct of_device_id vitbfly2_device_ids[] = {
 
 static int vitbfly2_devs;
 
-static inline struct vitbfly2_device *to_vitbfly2(struct esp_device *esp)
+static inline struct vitbfly2_stratus_device *to_vitbfly2(struct esp_device *esp)
 {
-	return container_of(esp, struct vitbfly2_device, esp);
+	return container_of(esp, struct vitbfly2_stratus_device, esp);
 }
 
 static void vitbfly2_prep_xfer(struct esp_device *esp, void *arg)
@@ -48,7 +48,7 @@ static bool vitbfly2_xfer_input_ok(struct esp_device *esp, void *arg)
 
 static int vitbfly2_probe(struct platform_device *pdev)
 {
-	struct vitbfly2_device *vitbfly2;
+	struct vitbfly2_stratus_device *vitbfly2;
 	struct esp_device *esp;
 	int rc;
 
@@ -73,7 +73,7 @@ static int vitbfly2_probe(struct platform_device *pdev)
 static int __exit vitbfly2_remove(struct platform_device *pdev)
 {
 	struct esp_device *esp = platform_get_drvdata(pdev);
-	struct vitbfly2_device *vitbfly2 = to_vitbfly2(esp);
+	struct vitbfly2_stratus_device *vitbfly2 = to_vitbfly2(esp);
 
 	esp_device_unregister(esp);
 	kfree(vitbfly2);
@@ -92,8 +92,8 @@ static struct esp_driver vitbfly2_driver = {
 	},
 	.xfer_input_ok	= vitbfly2_xfer_input_ok,
 	.prep_xfer	= vitbfly2_prep_xfer,
-	.ioctl_cm	= VITBFLY2_IOC_ACCESS,
-	.arg_size	= sizeof(struct vitbfly2_access),
+	.ioctl_cm	= VITBFLY2_STRATUS_IOC_ACCESS,
+	.arg_size	= sizeof(struct vitbfly2_stratus_access),
 };
 
 static int __init vitbfly2_init(void)
@@ -113,4 +113,4 @@ MODULE_DEVICE_TABLE(of, vitbfly2_device_ids);
 
 MODULE_AUTHOR("Emilio G. Cota <cota@braap.org>");
 MODULE_LICENSE("GPL");
-MODULE_DESCRIPTION("vitbfly2 driver");
+MODULE_DESCRIPTION("vitbfly2_stratus driver");

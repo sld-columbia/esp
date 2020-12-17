@@ -8,6 +8,8 @@ ARCH ?= sparc
 CFLAGS += -fno-builtin-cos -fno-builtin-sin
 endif
 
+BUILD_DRIVERS ?= $(BUILD_PATH)/../../..
+
 SRCS := $(wildcard *.c)
 HEADERS := $(wildcard *.h) $(wildcard $(DRIVERS)/include/*.h)
 HEADERS += $(wildcard $(DRIVERS)/../common/include/*.h) $(wildcard ../include/*.h)
@@ -26,8 +28,8 @@ CFLAGS += $(EXTRA_CFLAGS)
 CFLAGS += -O3
 CFLAGS += -Wall
 CFLAGS += -I$(DRIVERS)/include -I$(DRIVERS)/../common/include -I../include
-CFLAGS += -L$(BUILD_PATH)/../../../contig_alloc -L$(BUILD_PATH)/../../../test
-CFLAGS += -L$(BUILD_PATH)/../../../libesp -L$(BUILD_PATH)/../../../utils/linux
+CFLAGS += -L$(BUILD_DRIVERS)/contig_alloc -L$(BUILD_DRIVERS)/test
+CFLAGS += -L$(BUILD_DRIVERS)/libesp -L$(BUILD_DRIVERS)/utils/linux
 LDFLAGS += -lm -lrt -lpthread -lesp -ltest -lcontig -lutils
 
 CC := $(CROSS_COMPILE)gcc
@@ -37,18 +39,18 @@ all: $(OBJS) $(EXES) $(EXE) $(BINS) $(BIN)
 
 ifneq ($(APPNAME),)
 $(BUILD_PATH)/%.o: %.c $(HEADERS)
-	CROSS_COMPILE=$(CROSS_COMPILE) DRIVERS=$(DRIVERS) $(MAKE) -C $(BUILD_PATH)/../../../contig_alloc/ libcontig.a
-	CROSS_COMPILE=$(CROSS_COMPILE) BUILD_PATH=$(BUILD_PATH)/../../../test $(MAKE) -C $(DRIVERS)/test
-	CROSS_COMPILE=$(CROSS_COMPILE) BUILD_PATH=$(BUILD_PATH)/../../../libesp $(MAKE) -C $(DRIVERS)/libesp
-	CROSS_COMPILE=$(CROSS_COMPILE) BUILD_PATH=$(BUILD_PATH)/../../../utils/linux $(MAKE) -C $(DRIVERS)/utils
+	CROSS_COMPILE=$(CROSS_COMPILE) DRIVERS=$(DRIVERS) $(MAKE) -C $(BUILD_DRIVERS)/contig_alloc/ libcontig.a
+	CROSS_COMPILE=$(CROSS_COMPILE) BUILD_PATH=$(BUILD_DRIVERS)/test $(MAKE) -C $(DRIVERS)/test
+	CROSS_COMPILE=$(CROSS_COMPILE) BUILD_PATH=$(BUILD_DRIVERS)/libesp $(MAKE) -C $(DRIVERS)/libesp
+	CROSS_COMPILE=$(CROSS_COMPILE) BUILD_PATH=$(BUILD_DRIVERS)/utils/linux $(MAKE) -C $(DRIVERS)/utils
 	$(CC) $(CFLAGS) -c $< -o $@ $(LDFLAGS)
 endif
 
 $(BUILD_PATH)/%.exe: %.c $(OBJS) $(HEADERS)
-	CROSS_COMPILE=$(CROSS_COMPILE) DRIVERS=$(DRIVERS) $(MAKE) -C $(BUILD_PATH)/../../../contig_alloc/ libcontig.a
-	CROSS_COMPILE=$(CROSS_COMPILE) BUILD_PATH=$(BUILD_PATH)/../../../test $(MAKE) -C $(DRIVERS)/test
-	CROSS_COMPILE=$(CROSS_COMPILE) BUILD_PATH=$(BUILD_PATH)/../../../libesp $(MAKE) -C $(DRIVERS)/libesp
-	CROSS_COMPILE=$(CROSS_COMPILE) BUILD_PATH=$(BUILD_PATH)/../../../utils/linux $(MAKE) -C $(DRIVERS)/utils
+	CROSS_COMPILE=$(CROSS_COMPILE) DRIVERS=$(DRIVERS) $(MAKE) -C $(BUILD_DRIVERS)/contig_alloc/ libcontig.a
+	CROSS_COMPILE=$(CROSS_COMPILE) BUILD_PATH=$(BUILD_DRIVERS)/test $(MAKE) -C $(DRIVERS)/test
+	CROSS_COMPILE=$(CROSS_COMPILE) BUILD_PATH=$(BUILD_DRIVERS)/libesp $(MAKE) -C $(DRIVERS)/libesp
+	CROSS_COMPILE=$(CROSS_COMPILE) BUILD_PATH=$(BUILD_DRIVERS)/utils/linux $(MAKE) -C $(DRIVERS)/utils
 	$(CC) $(CFLAGS) -o $@ $< $(OBJS) $(LDFLAGS)
 
 clean:

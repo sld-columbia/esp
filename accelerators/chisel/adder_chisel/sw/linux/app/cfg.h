@@ -2,7 +2,7 @@
 #define __ESP_CFG_000_H__
 
 #include "libesp.h"
-#include "adder.h"
+#include "adder_chisel.h"
 
 typedef int32_t token_t;
 
@@ -15,7 +15,7 @@ const int32_t writeAddr = 0;
 
 #define NACC 1
 
-struct adder_access adder_cfg_000[] = {
+struct adder_chisel_access adder_cfg_000[] = {
 	{
 		/* <<--descriptor-->> */
 		.size = SIZE,
@@ -34,7 +34,7 @@ esp_thread_info_t cfg_000[] = {
 	{
 		.run = true,
 		.devname = "adder_chisel.0",
-		.ioctl_req = ADDER_IOC_ACCESS,
+		.ioctl_req = ADDER_CHISEL_IOC_ACCESS,
 		.esp_desc = &(adder_cfg_000[0].esp),
 	}
 };

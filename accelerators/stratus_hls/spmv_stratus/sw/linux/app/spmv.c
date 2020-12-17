@@ -10,12 +10,12 @@
 #include <test/test.h>
 #include <test/time.h>
 #include <fixed_point.h>
-#include <spmv.h>
+#include <spmv_stratus.h>
 
 #define DEVNAME "/dev/spmv_stratus.0"
 #define NAME "spmv_stratus"
 
-static const char usage_str[] = "usage: spmv coherence cmd [plm_size] [fit_plm] [in_file] [-v]\n"
+static const char usage_str[] = "usage: spmv_stratus coherence cmd [plm_size] [fit_plm] [in_file] [-v]\n"
 	"  coherence : none|llc-coh-dma|coh-dma|coh\n"
 	"  cmd       : config|test|run|hw\n"
 	"\n"
@@ -29,7 +29,7 @@ static const char usage_str[] = "usage: spmv coherence cmd [plm_size] [fit_plm] 
 
 struct spmv_test {
 	struct test_info info;
-	struct spmv_access desc;
+	struct spmv_stratus_access desc;
 
 	unsigned int nrows;
 	unsigned int ncols;
@@ -357,7 +357,7 @@ static struct spmv_test spmv_test = {
 		.diff_ok	= spmv_diff_ok,
 		.comp           = spmv_comp,
 		.esp		= &spmv_test.desc.esp,
-		.cm		= SPMV_IOC_ACCESS,
+		.cm		= SPMV_STRATUS_IOC_ACCESS,
 	},
 };
 
