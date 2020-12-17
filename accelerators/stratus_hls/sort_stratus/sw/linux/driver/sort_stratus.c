@@ -6,7 +6,7 @@
 #include <esp_accelerator.h>
 #include <esp.h>
 
-#include "sort.h"
+#include "sort_stratus.h"
 
 #define DRV_NAME	"sort_stratus"
 
@@ -16,7 +16,7 @@
 #define SORT_LEN_MAX_REG	0x4c
 #define SORT_BATCH_MAX_REG	0x50
 
-struct sort_device {
+struct sort_stratus_device {
 	struct esp_device esp;
 	size_t max_size; /* Maximum buffer size to be DMA'd to/from in bytes */
 	unsigned min_len;
@@ -41,14 +41,14 @@ static struct of_device_id sort_device_ids[] = {
 
 static int sort_devs;
 
-static inline struct sort_device *to_sort(struct esp_device *esp)
+static inline struct sort_stratus_device *to_sort(struct esp_device *esp)
 {
-	return container_of(esp, struct sort_device, esp);
+	return container_of(esp, struct sort_stratus_device, esp);
 }
 
 static void sort_prep_xfer(struct esp_device *esp, void *arg)
 {
-	struct sort_access *a = arg;
+	struct sort_stratus_access *a = arg;
 
 	iowrite32be(a->size, esp->iomem + SORT_LEN_REG);
 	iowrite32be(a->batch, esp->iomem + SORT_BATCH_REG);
@@ -56,8 +56,8 @@ static void sort_prep_xfer(struct esp_device *esp, void *arg)
 
 static bool sort_xfer_input_ok(struct esp_device *esp, void *arg)
 {
-	struct sort_device *sort = to_sort(esp);
-	struct sort_access *a = arg;
+	struct sort_stratus_device *sort = to_sort(esp);
+	struct sort_stratus_access *a = arg;
 	unsigned size_mask = 0x0000001f;
 
 	if (a->size & size_mask ||
@@ -71,7 +71,7 @@ static bool sort_xfer_input_ok(struct esp_device *esp, void *arg)
 
 static int sort_probe(struct platform_device *pdev)
 {
-	struct sort_device *sort;
+	struct sort_stratus_device *sort;
 	struct esp_device *esp;
 	size_t max_size;
 	int rc;
@@ -102,7 +102,7 @@ static int sort_probe(struct platform_device *pdev)
 static int __exit sort_remove(struct platform_device *pdev)
 {
 	struct esp_device *esp = platform_get_drvdata(pdev);
-	struct sort_device *sort = to_sort(esp);
+	struct sort_stratus_device *sort = to_sort(esp);
 
 	esp_device_unregister(esp);
 	kfree(sort);
@@ -121,8 +121,8 @@ static struct esp_driver sort_driver = {
 	},
 	.xfer_input_ok	= sort_xfer_input_ok,
 	.prep_xfer	= sort_prep_xfer,
-	.ioctl_cm	= SORT_IOC_ACCESS,
-	.arg_size	= sizeof(struct sort_access),
+	.ioctl_cm	= SORT_STRATUS_IOC_ACCESS,
+	.arg_size	= sizeof(struct sort_stratus_access),
 };
 
 static int __init sort_init(void)
@@ -142,4 +142,4 @@ MODULE_DEVICE_TABLE(of, sort_device_ids);
 
 MODULE_AUTHOR("Emilio G. Cota <cota@braap.org>");
 MODULE_LICENSE("GPL");
-MODULE_DESCRIPTION("sort driver");
+MODULE_DESCRIPTION("sort_stratus driver");

@@ -1,5 +1,5 @@
-#ifndef _DUMMY_H_
-#define _DUMMY_H_
+#ifndef _FFT_CHISEL_H_
+#define _FFT_CHISEL_H_
 
 #ifdef __KERNEL__
 #include <linux/ioctl.h>
@@ -15,14 +15,14 @@
 #include <esp.h>
 #include <esp_accelerator.h>
 
-struct dummy_access {
+struct fft_chisel_access {
 	struct esp_access esp;
-	unsigned tokens;
-	unsigned batch;
+	/* <<--regs-->> */
+	unsigned stride;
 	unsigned src_offset;
 	unsigned dst_offset;
 };
 
-#define DUMMY_IOC_ACCESS	_IOW ('S', 0, struct dummy_access)
+#define FFT_CHISEL_IOC_ACCESS	_IOW ('S', 0, struct fft_chisel_access)
 
-#endif /* _DUMMY_H_ */
+#endif /* _FFT_CHISEL_H_ */

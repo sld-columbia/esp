@@ -1,5 +1,5 @@
-#ifndef _<ACCELERATOR_NAME>_H_
-#define _<ACCELERATOR_NAME>_H_
+#ifndef _VITDODEC_STRATUS_H_
+#define _VITDODEC_STRATUS_H_
 
 #ifdef __KERNEL__
 #include <linux/ioctl.h>
@@ -15,13 +15,16 @@
 #include <esp.h>
 #include <esp_accelerator.h>
 
-struct <accelerator_name>_access {
+struct vitdodec_stratus_access {
 	struct esp_access esp;
 	/* <<--regs-->> */
+	unsigned cbps;
+	unsigned ntraceback;
+	unsigned data_bits;
 	unsigned src_offset;
 	unsigned dst_offset;
 };
 
-#define <ACCELERATOR_NAME>_IOC_ACCESS	_IOW ('S', 0, struct <accelerator_name>_access)
+#define VITDODEC_STRATUS_IOC_ACCESS	_IOW ('S', 0, struct vitdodec_stratus_access)
 
-#endif /* _<ACCELERATOR_NAME>_H_ */
+#endif /* _VITDODEC_STRATUS_H_ */

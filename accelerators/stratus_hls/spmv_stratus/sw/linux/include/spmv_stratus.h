@@ -1,5 +1,5 @@
-#ifndef _SPMV_H_
-#define _SPMV_H_
+#ifndef _SPMV_STRATUS_H_
+#define _SPMV_STRATUS_H_
 
 #ifdef __KERNEL__
 #include <linux/ioctl.h>
@@ -15,7 +15,7 @@
 #include <esp.h>
 #include <esp_accelerator.h>
 
-struct spmv_access {
+struct spmv_stratus_access {
 	struct esp_access esp;
 	// Rows of input matrix. Rows of output vector.
 	// Powers of 2
@@ -37,6 +37,6 @@ struct spmv_access {
 	unsigned int vect_fits_plm;
 };
 
-#define SPMV_IOC_ACCESS	_IOW ('S', 0, struct spmv_access)
+#define SPMV_STRATUS_IOC_ACCESS	_IOW ('S', 0, struct spmv_stratus_access)
 
-#endif /* _SPMV_H_ */
+#endif /* _SPMV_STRATUS_H_ */

@@ -1,5 +1,5 @@
-#ifndef _FFT_H_
-#define _FFT_H_
+#ifndef _<ACC_FULL_NAME>_H_
+#define _<ACC_FULL_NAME>_H_
 
 #ifdef __KERNEL__
 #include <linux/ioctl.h>
@@ -15,14 +15,13 @@
 #include <esp.h>
 #include <esp_accelerator.h>
 
-struct fft_access {
+struct <acc_full_name>_access {
 	struct esp_access esp;
 	/* <<--regs-->> */
-	unsigned stride;
 	unsigned src_offset;
 	unsigned dst_offset;
 };
 
-#define FFT_IOC_ACCESS	_IOW ('S', 0, struct fft_access)
+#define <ACC_FULL_NAME>_IOC_ACCESS	_IOW ('S', 0, struct <acc_full_name>_access)
 
-#endif /* _FFT_H_ */
+#endif /* _<ACC_FULL_NAME>_H_ */

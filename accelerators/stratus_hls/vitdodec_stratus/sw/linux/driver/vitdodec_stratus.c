@@ -6,7 +6,7 @@
 #include <esp_accelerator.h>
 #include <esp.h>
 
-#include "vitdodec.h"
+#include "vitdodec_stratus.h"
 
 #define DRV_NAME	"vitdodec_stratus"
 
@@ -15,7 +15,7 @@
 #define VITDODEC_NTRACEBACK_REG 0x44
 #define VITDODEC_DATA_BITS_REG 0x40
 
-struct vitdodec_device {
+struct vitdodec_stratus_device {
 	struct esp_device esp;
 };
 
@@ -36,14 +36,14 @@ static struct of_device_id vitdodec_device_ids[] = {
 
 static int vitdodec_devs;
 
-static inline struct vitdodec_device *to_vitdodec(struct esp_device *esp)
+static inline struct vitdodec_stratus_device *to_vitdodec(struct esp_device *esp)
 {
-	return container_of(esp, struct vitdodec_device, esp);
+	return container_of(esp, struct vitdodec_stratus_device, esp);
 }
 
 static void vitdodec_prep_xfer(struct esp_device *esp, void *arg)
 {
-	struct vitdodec_access *a = arg;
+	struct vitdodec_stratus_access *a = arg;
 
 	/* <<--regs-config-->> */
 	iowrite32be(a->cbps, esp->iomem + VITDODEC_CBPS_REG);
@@ -56,15 +56,15 @@ static void vitdodec_prep_xfer(struct esp_device *esp, void *arg)
 
 static bool vitdodec_xfer_input_ok(struct esp_device *esp, void *arg)
 {
-	/* struct vitdodec_device *vitdodec = to_vitdodec(esp); */
-	/* struct vitdodec_access *a = arg; */
+	/* struct vitdodec_stratus_device *vitdodec = to_vitdodec(esp); */
+	/* struct vitdodec_stratus_access *a = arg; */
 
 	return true;
 }
 
 static int vitdodec_probe(struct platform_device *pdev)
 {
-	struct vitdodec_device *vitdodec;
+	struct vitdodec_stratus_device *vitdodec;
 	struct esp_device *esp;
 	int rc;
 
@@ -89,7 +89,7 @@ static int vitdodec_probe(struct platform_device *pdev)
 static int __exit vitdodec_remove(struct platform_device *pdev)
 {
 	struct esp_device *esp = platform_get_drvdata(pdev);
-	struct vitdodec_device *vitdodec = to_vitdodec(esp);
+	struct vitdodec_stratus_device *vitdodec = to_vitdodec(esp);
 
 	esp_device_unregister(esp);
 	kfree(vitdodec);
@@ -108,8 +108,8 @@ static struct esp_driver vitdodec_driver = {
 	},
 	.xfer_input_ok	= vitdodec_xfer_input_ok,
 	.prep_xfer	= vitdodec_prep_xfer,
-	.ioctl_cm	= VITDODEC_IOC_ACCESS,
-	.arg_size	= sizeof(struct vitdodec_access),
+	.ioctl_cm	= VITDODEC_STRATUS_IOC_ACCESS,
+	.arg_size	= sizeof(struct vitdodec_stratus_access),
 };
 
 static int __init vitdodec_init(void)
@@ -129,4 +129,4 @@ MODULE_DEVICE_TABLE(of, vitdodec_device_ids);
 
 MODULE_AUTHOR("Emilio G. Cota <cota@braap.org>");
 MODULE_LICENSE("GPL");
-MODULE_DESCRIPTION("vitdodec driver");
+MODULE_DESCRIPTION("vitdodec_stratus driver");

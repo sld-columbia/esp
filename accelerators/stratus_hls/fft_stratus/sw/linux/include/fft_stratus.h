@@ -1,5 +1,5 @@
-#ifndef _FFT_H_
-#define _FFT_H_
+#ifndef _FFT_STRATUS_H_
+#define _FFT_STRATUS_H_
 
 #ifdef __KERNEL__
 #include <linux/ioctl.h>
@@ -15,7 +15,7 @@
 #include <esp.h>
 #include <esp_accelerator.h>
 
-struct fft_access {
+struct fft_stratus_access {
 	struct esp_access esp;
 	/* <<--regs-->> */
 	unsigned log_len;
@@ -25,6 +25,6 @@ struct fft_access {
 
 };
 
-#define FFT_IOC_ACCESS	_IOW ('S', 0, struct fft_access)
+#define FFT_STRATUS_IOC_ACCESS	_IOW ('S', 0, struct fft_stratus_access)
 
-#endif /* _FFT_H_ */
+#endif /* _FFT_STRATUS_H_ */

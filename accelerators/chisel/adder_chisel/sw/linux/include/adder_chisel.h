@@ -1,5 +1,5 @@
-#ifndef _VITDODEC_H_
-#define _VITDODEC_H_
+#ifndef _ADDER_CHISEL_H_
+#define _ADDER_CHISEL_H_
 
 #ifdef __KERNEL__
 #include <linux/ioctl.h>
@@ -15,16 +15,16 @@
 #include <esp.h>
 #include <esp_accelerator.h>
 
-struct vitdodec_access {
+struct adder_chisel_access {
 	struct esp_access esp;
 	/* <<--regs-->> */
-	unsigned cbps;
-	unsigned ntraceback;
-	unsigned data_bits;
+	unsigned size;
+	unsigned readAddr;
+	unsigned writeAddr;
 	unsigned src_offset;
 	unsigned dst_offset;
 };
 
-#define VITDODEC_IOC_ACCESS	_IOW ('S', 0, struct vitdodec_access)
+#define ADDER_CHISEL_IOC_ACCESS	_IOW ('S', 0, struct adder_chisel_access)
 
-#endif /* _VITDODEC_H_ */
+#endif /* _ADDER_CHISEL_H_ */

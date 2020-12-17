@@ -310,10 +310,13 @@ for d in $dirs; do
 
     if cat /etc/os-release | grep -q -i ubuntu; then
         rename "s/accelerator/$LOWER/g" *
+	rename "s/acc_full/$LOWERFULL/g" *
     elif cat /etc/os-release | grep -q -i centos; then
         rename accelerator $LOWER *
+	rename acc_full $LOWERFULL *
     elif cat /etc/os-release | grep -q -i rhel; then
         rename accelerator $LOWER *
+	rename acc_full $LOWERFULL *
     fi
 
     sed -i "s/<accelerator_name>/$LOWER/g" *
@@ -579,10 +582,13 @@ for d in $dirs; do
 
     if cat /etc/os-release | grep -q -i ubuntu; then
         rename "s/accelerator/$LOWER/g" *
+	rename "s/acc_full/$LOWERFULL/g" *
     elif cat /etc/os-release | grep -q -i centos; then
 	rename accelerator $LOWER *
+	rename acc_full $LOWERFULL *
     elif cat /etc/os-release | grep -q -i rhel; then
 	rename accelerator $LOWER *
+	rename acc_full $LOWERFULL *
     fi
 
     sed -i "s/<accelerator_name>/$LOWER/g" *
@@ -595,13 +601,13 @@ done
 cd $SOFT_DIR/linux/include
 indent="\	"
 for key in ${!values[@]}; do
-    sed -i "/\/\* <<--regs-->> \*\//a ${indent}unsigned ${key};" ${LOWER}.h
+    sed -i "/\/\* <<--regs-->> \*\//a ${indent}unsigned ${key};" ${LOWERFULL}.h
 done
 
 ## Linux and baremetal drivers
 cd $SOFT_DIR
 indent="\	"
-sed -i "s/\/\* <<--id-->> \*\//${ID}/g" linux/driver/${LOWER}.c
+sed -i "s/\/\* <<--id-->> \*\//${ID}/g" linux/driver/${LOWERFULL}.c
 
 user_reg_offset=64
 for key in ${!values[@]}; do
@@ -609,10 +615,10 @@ for key in ${!values[@]}; do
     reg_offset_hex=$(printf '%x\n' ${user_reg_offset})
     register_name="${UPPER}_${key_upper}_REG"
 
-    for f in "linux/driver/${LOWER}.c baremetal/${LOWER}.c"; do
+    for f in "linux/driver/${LOWERFULL}.c baremetal/${LOWER}.c"; do
 	sed -i "/\/\* <<--regs-->> \*\//a #define ${register_name} 0x${reg_offset_hex}" ${f}
     done
-    sed -i "/\/\* <<--regs-config-->> \*\//a ${indent}iowrite32be(a->${key}, esp->iomem + ${register_name});" linux/driver/${LOWER}.c
+    sed -i "/\/\* <<--regs-config-->> \*\//a ${indent}iowrite32be(a->${key}, esp->iomem + ${register_name});" linux/driver/${LOWERFULL}.c
     sed -i "/\/\* <<--regs-config-->> \*\//a ${indent}${indent}iowrite32(dev, ${register_name}, ${key});" baremetal/${LOWER}.c
     user_reg_offset=$((user_reg_offset + 4))
 done

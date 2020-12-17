@@ -7,7 +7,7 @@
 #include <esp_accelerator.h>
 #include <esp.h>
 
-#include "nightvision.h"
+#include "nightvision_stratus.h"
 
 #define DRV_NAME	"nightvision_stratus"
 
@@ -16,7 +16,7 @@
 #define NIGHTVISION_COLS_REG	0x48
 #define NIGHTVISION_DO_DWT_REG	0x4C
 
-struct nightvision_device {
+struct nightvision_stratus_device {
 	struct esp_device esp;
 };
 
@@ -37,14 +37,14 @@ static struct of_device_id nightvision_device_ids[] = {
 
 static int nightvision_devs;
 
-static inline struct nightvision_device *to_nightvision(struct esp_device *esp)
+static inline struct nightvision_stratus_device *to_nightvision(struct esp_device *esp)
 {
-	return container_of(esp, struct nightvision_device, esp);
+	return container_of(esp, struct nightvision_stratus_device, esp);
 }
 
 static void nightvision_prep_xfer(struct esp_device *esp, void *arg)
 {
-	struct nightvision_access *a = arg;
+	struct nightvision_stratus_access *a = arg;
 
 	iowrite32be(a->nimages, esp->iomem + NIGHTVISION_NIMAGES_REG);
 	iowrite32be(a->rows, esp->iomem + NIGHTVISION_ROWS_REG);
@@ -56,7 +56,7 @@ static void nightvision_prep_xfer(struct esp_device *esp, void *arg)
 
 static bool nightvision_xfer_input_ok(struct esp_device *esp, void *arg)
 {
-	struct nightvision_access *a = arg;
+	struct nightvision_stratus_access *a = arg;
 
         if (a->nimages > MAX_NIMAGES)
 	        return false;
@@ -75,7 +75,7 @@ static bool nightvision_xfer_input_ok(struct esp_device *esp, void *arg)
 
 static int nightvision_probe(struct platform_device *pdev)
 {
-	struct nightvision_device *nightvision;
+	struct nightvision_stratus_device *nightvision;
 	struct esp_device *esp;
 	int rc;
 
@@ -100,7 +100,7 @@ static int nightvision_probe(struct platform_device *pdev)
 static int __exit nightvision_remove(struct platform_device *pdev)
 {
 	struct esp_device *esp = platform_get_drvdata(pdev);
-	struct nightvision_device *nightvision = to_nightvision(esp);
+	struct nightvision_stratus_device *nightvision = to_nightvision(esp);
 
 	esp_device_unregister(esp);
 	kfree(nightvision);
@@ -119,8 +119,8 @@ static struct esp_driver nightvision_driver = {
 	},
 	.xfer_input_ok	= nightvision_xfer_input_ok,
 	.prep_xfer	= nightvision_prep_xfer,
-	.ioctl_cm	= NIGHTVISION_IOC_ACCESS,
-	.arg_size	= sizeof(struct nightvision_access),
+	.ioctl_cm	= NIGHTVISION_STRATUS_IOC_ACCESS,
+	.arg_size	= sizeof(struct nightvision_stratus_access),
 };
 
 static int __init nightvision_init(void)
@@ -140,4 +140,4 @@ MODULE_DEVICE_TABLE(of, nightvision_device_ids);
 
 MODULE_AUTHOR("Emilio G. Cota <cota@braap.org>");
 MODULE_LICENSE("GPL");
-MODULE_DESCRIPTION("nightvision driver");
+MODULE_DESCRIPTION("nightvision_stratus driver");

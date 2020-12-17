@@ -1,5 +1,5 @@
-#ifndef _ADDER_H_
-#define _ADDER_H_
+#ifndef _VITBFLY2_STRATUS_H_
+#define _VITBFLY2_STRATUS_H_
 
 #ifdef __KERNEL__
 #include <linux/ioctl.h>
@@ -15,11 +15,10 @@
 #include <esp.h>
 #include <esp_accelerator.h>
 
-struct adder_access {
+struct vitbfly2_stratus_access {
 	struct esp_access esp;
-	unsigned int nbursts;
 };
 
-#define ADDER_IOC_ACCESS _IOW ('S', 0, struct adder_access)
+#define VITBFLY2_STRATUS_IOC_ACCESS	_IOW ('S', 0, struct vitbfly2_stratus_access)
 
-#endif /* _ADDER_H_ */
+#endif /* _VITBFLY2_STRATUS_H_ */

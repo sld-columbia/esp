@@ -2,7 +2,7 @@
 #define __ESP_CFG_000_H__
 
 #include "libesp.h"
-#include "fft.h"
+#include "fft_chisel.h"
 
 typedef int32_t token_t;
 
@@ -16,7 +16,7 @@ const int32_t log_len = LOG_LEN;
 
 #define NACC 1
 
-struct fft_access fft_cfg_000[] = {
+struct fft_chisel_access fft_cfg_000[] = {
 	{
 		/* <<--descriptor-->> */
 		.stride = LEN,
@@ -34,7 +34,7 @@ esp_thread_info_t cfg_000[] = {
 	{
 		.run = true,
 		.devname = "fft_chisel.0",
-		.ioctl_req = FFT_IOC_ACCESS,
+		.ioctl_req = FFT_CHISEL_IOC_ACCESS,
 		.esp_desc = &(fft_cfg_000[0].esp),
 	}
 };

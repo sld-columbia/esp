@@ -1,5 +1,5 @@
 #include "libesp.h"
-#include "synth.h"
+#include "synth_stratus.h"
 #include "string.h"
 
 #define DEBUG 1
@@ -129,12 +129,12 @@ static void read_soc_config(FILE* f, soc_config_t* soc_config){
     }  
 }
 
-static void config_threads(FILE* f, accelerator_thread_info_t **thread_info, esp_thread_info_t ***cfg, struct synth_access ***synth_cfg, int phase, int* nthreads, int coherence_mode, enum accelerator_coherence coherence, unsigned **nacc){
+static void config_threads(FILE* f, accelerator_thread_info_t **thread_info, esp_thread_info_t ***cfg, struct synth_stratus_access ***synth_cfg, int phase, int* nthreads, int coherence_mode, enum accelerator_coherence coherence, unsigned **nacc){
     fscanf(f, "%d", nthreads); 
     dprintf("%d threads in phase %d\n", *nthreads, phase); 
     *cfg = malloc(sizeof(esp_thread_info_t*) * *nthreads);
     *nacc = malloc(sizeof(esp_thread_info_t*) * *nthreads);
-    *synth_cfg = malloc(sizeof(struct synth_access*) * *nthreads);
+    *synth_cfg = malloc(sizeof(struct synth_stratus_access*) * *nthreads);
 
     for (int t = 0; t < *nthreads; t++){
         thread_info[t] = malloc(sizeof(accelerator_thread_info_t));
@@ -145,7 +145,7 @@ static void config_threads(FILE* f, accelerator_thread_info_t **thread_info, esp
         dprintf("%d devices in thread %d.%d\n", thread_info[t]->ndev, phase, t);
  
         (*cfg)[t] = malloc(sizeof(esp_thread_info_t) * thread_info[t]->ndev);
-        (*synth_cfg)[t] = malloc(sizeof(struct synth_access) * thread_info[t]->ndev);
+        (*synth_cfg)[t] = malloc(sizeof(struct synth_stratus_access) * thread_info[t]->ndev);
         (*nacc)[t] = thread_info[t]->ndev;
 
         char flow_choice[7];
@@ -187,7 +187,7 @@ static void config_threads(FILE* f, accelerator_thread_info_t **thread_info, esp
             int devid = thread_info[t]->chain[d];
             (*cfg)[t][d].run = true;
             (*cfg)[t][d].devname = devnames[devid];
-            (*cfg)[t][d].ioctl_req = SYNTH_IOC_ACCESS;
+            (*cfg)[t][d].ioctl_req = SYNTH_STRATUS_IOC_ACCESS;
             (*cfg)[t][d].esp_desc = &((*synth_cfg)[t][d].esp);
             
             (*synth_cfg)[t][d].src_offset = 0;
@@ -282,7 +282,7 @@ static void config_threads(FILE* f, accelerator_thread_info_t **thread_info, esp
     }
 }
 
-static void alloc_phase(accelerator_thread_info_t **thread_info, esp_thread_info_t ***cfg, struct synth_access ***synth_cfg, int nthreads, soc_config_t soc_config, int alloc_mode, enum alloc_effort alloc, uint32_t **buffers, int phase){
+static void alloc_phase(accelerator_thread_info_t **thread_info, esp_thread_info_t ***cfg, struct synth_stratus_access ***synth_cfg, int nthreads, soc_config_t soc_config, int alloc_mode, enum alloc_effort alloc, uint32_t **buffers, int phase){
     int largest_thread = 0;
     size_t largest_sz = 0;
     int* ddr_node_cost = malloc(sizeof(int)*soc_config.nmem);
@@ -370,7 +370,7 @@ static void alloc_phase(accelerator_thread_info_t **thread_info, esp_thread_info
     free(ddr_node_cost);
 }
 
-static int validate_buffer(accelerator_thread_info_t *thread_info, struct synth_access **synth_cfg, uint32_t *buf){
+static int validate_buffer(accelerator_thread_info_t *thread_info, struct synth_stratus_access **synth_cfg, uint32_t *buf){
     int errors = 0; 
     for (int i = 0; i < thread_info->ndev; i++){
         if (thread_info->p2p && i != thread_info->ndev - 1)
@@ -408,7 +408,7 @@ static int validate_buffer(accelerator_thread_info_t *thread_info, struct synth_
     return errors;
 }
 
-static void free_phase(accelerator_thread_info_t **thread_info, esp_thread_info_t **cfg, struct synth_access **synth_cfg, int nthreads){
+static void free_phase(accelerator_thread_info_t **thread_info, esp_thread_info_t **cfg, struct synth_stratus_access **synth_cfg, int nthreads){
     for (int i = 0; i < nthreads; i++){
         esp_free(cfg[i]->hw_buf); 
         free(thread_info[i]);
@@ -419,7 +419,7 @@ static void free_phase(accelerator_thread_info_t **thread_info, esp_thread_info_
     free(cfg);
 }
 
-static void dump_results(FILE* out_file, accelerator_thread_info_t **thread_info, esp_thread_info_t **cfg, struct synth_access **synth_cfg, soc_config_t *soc_config, int phase, int nthreads, char** argv, int test_no){
+static void dump_results(FILE* out_file, accelerator_thread_info_t **thread_info, esp_thread_info_t **cfg, struct synth_stratus_access **synth_cfg, soc_config_t *soc_config, int phase, int nthreads, char** argv, int test_no){
     int t, d;
     unsigned long long thread_ns;
     unsigned long long phase_size = 0;
@@ -580,7 +580,7 @@ int main (int argc, char** argv)
     accelerator_thread_info_t *thread_info[NPHASES_MAX][NTHREADS_MAX];
     uint32_t *buffers[NTHREADS_MAX];
     esp_thread_info_t **cfg = NULL;
-    struct synth_access **synth_cfg;
+    struct synth_stratus_access **synth_cfg;
     unsigned *nacc = NULL;
 
     //loop over phases - config, alloc, spawn thread, validate, and free

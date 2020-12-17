@@ -1,5 +1,5 @@
-#ifndef _SYNTH_H_
-#define _SYNTH_H_
+#ifndef _SYNTH_STRATUS_H_
+#define _SYNTH_STRATUS_H_
 
 #ifdef __KERNEL__
 #include <linux/ioctl.h>
@@ -17,7 +17,7 @@
 
 enum synth_pattern {PATTERN_STREAMING = 0, PATTERN_STRIDED, PATTERN_IRREGULAR};
 
-struct synth_access {
+struct synth_stratus_access {
 	struct esp_access esp;
     unsigned int offset;                    /* Memory offset when chaining dependent accelerators */
     enum synth_pattern pattern;             /* load pattern: streaming, strided, irregular */
@@ -39,6 +39,6 @@ struct synth_access {
 
 enum alloc_effort {ALLOC_NONE, ALLOC_AUTO};
 
-#define SYNTH_IOC_ACCESS	_IOW ('S', 0, struct synth_access)
+#define SYNTH_STRATUS_IOC_ACCESS	_IOW ('S', 0, struct synth_stratus_access)
 
-#endif /* _SYNTH_H_ */
+#endif /* _SYNTH_STRATUS_H_ */

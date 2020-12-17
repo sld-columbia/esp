@@ -8,7 +8,7 @@
 #include <my_stringify.h>
 #include <test/test.h>
 #include <test/time.h>
-#include <nightvision.h>
+#include <nightvision_stratus.h>
 
 #include <assert.h>
 #include <errno.h>
@@ -591,7 +591,7 @@ int ensemble_1(algPixel_t *streamA, algPixel_t *out, int nRows, int nCols,
 }
 
 static const char usage_str[] =
-	"usage: ./nightvision.exe coherence infile [nimages] [ncols] [nrows] [-v]\n"
+	"usage: ./nightvision_stratus.exe coherence infile [nimages] [ncols] [nrows] [-v]\n"
 	"  coherence: none|llc-coh-dma|coh-dma|coh\n"
 	"  infile : input file name (includes the path)\n"
 	"\n"
@@ -609,7 +609,7 @@ static const char usage_str[] =
 
 struct nightvision_test {
 	struct test_info info;
-	struct nightvision_access desc;
+	struct nightvision_stratus_access desc;
 	char *infile;
         bool infile_is_raw;
 	unsigned nimages;
@@ -879,7 +879,7 @@ static struct nightvision_test nightvision_test = {
 		.comp		= nightvision_comp,
 		.diff_ok	= nightvision_diff_ok,
 		.esp		= &nightvision_test.desc.esp,
-		.cm		= NIGHTVISION_IOC_ACCESS,
+		.cm		= NIGHTVISION_STRATUS_IOC_ACCESS,
 	},
 };
 
