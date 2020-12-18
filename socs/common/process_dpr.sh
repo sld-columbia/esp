@@ -175,34 +175,122 @@ done
 }
 
 #generate flooplan
+#This is a simplistic floorplanner. It simply stacks 1 clock region wide pblocks
+#on top of eachother. For few number of acc tiles, this should not cause any violation, 
+#except errors related to lack of enough resources in the pblock. Eventually this simple 
+#floorplanner needs to be replaced with a more agressive floorplanner customized for each
+#FPGA.
 function gen_fplan() {
 fplan_pblock="$1/constraints/$2/pblocks_dpr.xdc";
+
+slice_start_y_default=0;
+bram36_start_y_default=0;
+bram18_start_y_default=0;
+dsp_start_y_default=0;
+
 slice_start_x=10;
 slice_start_y=0;
-slice_width=59;
+slice_width=119;
 slice_height=100;
-bram36_start_x=0;
+bram36_start_x=1;
 bram36_start_y=0;
-bram36_width=3;
+bram36_width=8;
 bram36_height=20;
-bram18_start_x=0;
+bram18_start_x=1;
 bram18_start_y=0;
-bram18_width=3;
 bram18_height=40;
-dsp_start_x=0;
+bram18_width=8;
+dsp_start_x=1;
 dsp_start_y=0;
-dsp_width=5;
+dsp_width=8;
 dsp_height=40;
-threshold=180;
+threshold=400;
+
+slice_start_y_vc707=0;
+slice_height_vc707=50;
+bram36_start_y_vc707=0;
+bram36_height_vc707=10;
+bram18_start_y_vc707=0;
+bram18_height_vc707=20;
+dsp_start_y_vc707=0;
+dsp_height_vc707=20;
+threshold_vc707=350;
+
+slice_start_y_vc118=0;
+slice_height_vc118=60;
+bram36_start_y_vc118=0;
+bram36_height_vc118=12;
+bram18_start_y_vc118=0;
+bram18_height_vc118=24;
+dsp_start_y_vc118=0;
+dsp_height_vc118=24;
+threshold_vc118=480;
+
+slice_start_y_vc128=60;
+slice_height_vc128=60;
+bram36_start_y_vc128=12;
+bram36_height_vc128=12;
+bram18_start_y_vc128=24;
+bram18_height_vc128=24;
+dsp_start_y_vc128=18;
+dsp_height_vc128=24;
+threshold_vc128=540;
 
 echo " " > $fplan_pblock;
+
+if [ "$2" == "xilinx-vcu128-xcvu37p" ]; then
+    slice_start_y=$slice_start_y_vc128;
+    slice_start_y_default=$slice_start_y_vc128;
+    slice_height=$slice_height_vc128;
+    bram36_start_y=$bram36_start_y_vc128;
+    bram36_start_y_default=$bram36_start_y_vc128;
+    bram36_height=$bram36_height_vc128;
+    bram18_start_y=$bram18_start_y_vc128;
+    bram18_start_y_default=$bram18_start_y_vc128;
+    bram18_height=$bram18_height_vc128;
+    dsp_start_y=$dsp_start_y_vc128;
+    dsp_start_y_default=$dsp_start_y_vc128;
+    dsp_height=$dsp_height_vc128;
+    threshold=$threshold_vc128;
+
+elif [ "$2" == "xilinx-vcu118-xcvu9p" ]; then
+    slice_start_y=$slice_start_y_vc118;
+    slice_start_y_default=$slice_start_y_vc118;
+    slice_height=$slice_height_vc118;
+    bram36_start_y=$bram36_start_y_vc118;
+    bram36_start_y_default=$bram36_start_y_vc118;
+    bram36_height=$bram36_height_vc118;
+    bram18_start_y=$bram18_start_y_vc118;
+    bram18_start_y_default=$bram18_start_y_vc118;
+    bram18_height=$bram18_height_vc118;
+    dsp_start_y=$dsp_start_y_vc118;
+    dsp_start_y_default=$dsp_start_y_vc118;
+    dsp_height=$dsp_height_vc118;
+    threshold=$threshold_vc128;
+
+elif [ "$2" == "xilinx-vc707-xc7vx485t" ]; then
+    slice_start_y=$slice_start_y_vc707;
+    slice_start_y_default=$slice_start_y_vc707;
+    slice_height=$slice_height_vc707;
+    bram36_start_y=$bram36_start_y_vc707;
+    bram36_start_y_default=$bram36_start_y_vc707;
+    bram36_height=$bram36_height_vc707;
+    bram18_start_y=$bram18_start_y_vc707;
+    bram18_start_y_default=$bram18_start_y_vc707;
+    bram18_height=$bram18_height_vc707;
+    dsp_start_y=$dsp_start_y_vc707;
+    dsp_start_y_default=$dsp_start_y_vc707;
+    dsp_height=$dsp_height_vc707;
+    threshold=$threshold_vc707;
+
+fi;
 
 for ((i=0; i<$num_acc_tiles; i++))
 do
     echo "set_property HD.RECONFIGURABLE true [get_cells esp_1/tiles_gen[${new_accelerators["$i,0"]}].accelerator_tile.tile_acc_i]" >> $fplan_pblock;
     echo "create_pblock pblock_$i" >> $fplan_pblock;
     echo "add_cells_to_pblock [get_pblocks pblock_$i] [get_cells -quiet [list esp_1/tiles_gen[${new_accelerators["$i,0"]}].accelerator_tile.tile_acc_i]]" >> $fplan_pblock;
-    echo "resize_pblock [get_pblocks pblock_$i] -add {SLICE_X"$slice_start_x"Y"$slice_start_y":SLICE_X"$(($slice_start_x+$slice_width))"Y"$((slice_start_y+ +$slice_height-1))"}" >> $fplan_pblock;
+    echo "resize_pblock [get_pblocks pblock_$i] -add {SLICE_X"$slice_start_x"Y"$slice_start_y":SLICE_X"$(($slice_start_x+$slice_width))"Y"$((slice_start_y+$slice_height-1))"}" >> $fplan_pblock;
     echo "resize_pblock [get_pblocks pblock_$i] -add {RAMB18_X"$bram18_start_x"Y"$bram18_start_y":RAMB18_X"$(($bram18_start_x+$bram18_width))"Y"$(($bram18_start_y+$bram18_height-1))"}" >> $fplan_pblock;
     echo "resize_pblock [get_pblocks pblock_$i] -add {RAMB36_X"$bram36_start_x"Y"$bram36_start_y":RAMB36_X"$(($bram36_start_x+$bram36_width))"Y"$(($bram36_start_y+$bram36_height-1))"}" >> $fplan_pblock;
     if [ "$2" == "xilinx-vcu118-xcvu9p" ] || [ "$2" == "xilinx-vcu128-xcvu37p" ]; then 
@@ -214,15 +302,15 @@ do
     echo "set_property SNAPPING_MODE ON [get_pblocks pblock_$i]" >> $fplan_pblock;
     echo "set_property SEVERITY {Warning} [get_drc_checks NSTD-1]" >> $fplan_pblock;
     echo "set_property SEVERITY {Warning} [get_drc_checks UCIO-1]" >> $fplan_pblock;
-    
-    if [ $slice_start_y -ge $threshold ]; then 
-        slice_start_y=0;
+
+    if [ $slice_start_y -ge $(($threshold-$slice_height-1)) ]; then 
+        slice_start_y=$slice_start_y_default;
         slice_start_x=$(($slice_start_x+$slice_width+1));
-        bram18_start_y=0;
+        bram18_start_y=$bram18_start_y_default;
         bram18_start_x=$(($bram18_start_x+$bram18_width+1));\
-        bram36_start_y=0;\
-        bram36_start_y=$(($bram36_start_y+$bram36_height+1));\
-        dsp_start_y=0\
+        bram36_start_y=$bram36_start_y_default;\
+        bram36_start_x=$(($bram36_start_x+$bram36_width+1));\
+        dsp_start_y=$dsp_start_y_default;\
         dsp_start_x=$(($dsp_start_x+$dsp_width+1)); \
     else
         slice_start_y=$(($slice_start_y+$slice_height));
@@ -233,6 +321,7 @@ do
         #dsp_start_x=$(($dsp_start_x+$dsp_width));
         dsp_start_y=$(($dsp_start_y+$dsp_height));
     fi;
+   # echo "slice y  $slice_start_y ";
 done
 }
 
