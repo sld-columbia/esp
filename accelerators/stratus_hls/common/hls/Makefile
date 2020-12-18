@@ -1,4 +1,4 @@
-# Copyright (c) 2011-2019 Columbia University, System Level Design Group
+# Copyright (c) 2011-2021 Columbia University, System Level Design Group
 # SPDX-License-Identifier: Apache-2.0
 
 COMMON_PATH = $(ESP_ROOT)/accelerators/stratus_hls/common
