@@ -83,8 +83,8 @@ void system_t::config_proc()
 
 	CONV_K_IN_CHANNELS = CONV_F_CHANNELS;
 	DO_RELU = 0;
-	POOL_TYPE = 0;
-	BATCH_SIZE = 256;
+	POOL_TYPE = 1;
+	BATCH_SIZE = 2;
 
 	channels = CONV_F_CHANNELS;
         height = CONV_F_HEIGHT;
@@ -94,8 +94,8 @@ void system_t::config_proc()
         kernel_w = CONV_K_WIDTH;
         pad_h = CONV_K_HEIGHT/2;
         pad_w = CONV_K_WIDTH/2;
-        stride_h = 2;
-        stride_w = 2;
+        stride_h = 1;
+        stride_w = 1;
         dilation_h = 1;
         dilation_w = 1;
 	do_relu = DO_RELU;

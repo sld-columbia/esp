@@ -48,6 +48,7 @@ public:
         HLS_MAP_plm(plm_bias_ping, PLM_BIAS_NAME);
         HLS_MAP_plm(plm_in_pong, PLM_IN_NAME);
         HLS_MAP_plm(plm_in_ping, PLM_IN_NAME);
+        //HLS_FLATTEN_ARRAY(plm_patch);
         HLS_MAP_plm(plm_patch, PLM_PATCH_NAME);
         HLS_MAP_plm(plm_mac, PLM_MAC_NAME);
     }

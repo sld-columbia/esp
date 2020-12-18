@@ -42,18 +42,18 @@ inline void conv2d::compute_dimensions(
     uint16_t cacheable_outputs = OUTPUT_PLM_SIZE / ((uint16_t) *output_w * *max_cacheable_rows);
     uint16_t cacheable_filters = WEIGHTS_PLM_SIZE / (*filter_size);
     *max_cacheable_filters = (min(min(cacheable_filters, n_filters),
-				  min(cacheable_outputs, BIAS_PLM_SIZE)) >> 1) << 1;
+    				  min(cacheable_outputs, BIAS_PLM_SIZE)) >> 1) << 1;
     *max_cacheable_filters_size = *filter_size * *max_cacheable_filters;
 
     if (*max_cacheable_rows < height) {
-	if ((*max_cacheable_rows & 1) == 1) {
-	    *max_cacheable_rows -= 1;
-	    if (!is_padded)
-		*max_cacheable_rows_init -= 1;
-	} else {
-	    if (is_padded && (filter_dim == 3))
-		*max_cacheable_rows_init -= 1;
-	}
+    	if ((*max_cacheable_rows & 1) == 1) {
+    	    *max_cacheable_rows -= 1;
+    	    if (!is_padded)
+    		*max_cacheable_rows_init -= 1;
+    	} else {
+    	    if (is_padded && (filter_dim == 3))
+    		*max_cacheable_rows_init -= 1;
+    	}
     }
 
     *max_cacheable_size = *max_cacheable_rows * width;
@@ -64,10 +64,10 @@ inline void conv2d::compute_dimensions(
     uint16_t max_cacheable_rows_norm_init = (*max_cacheable_rows_init) - filter_dim + 1;
 
     if (*max_cacheable_rows == height) {
-	*total_input_chunks = 1;
+    	*total_input_chunks = 1;
     } else {
-	*total_input_chunks = ((uint16_t) (height - *max_cacheable_rows_init - 1)) /
-	max_cacheable_rows_norm + 2;
+    	*total_input_chunks = ((uint16_t) (height - *max_cacheable_rows_init - 1)) /
+	    max_cacheable_rows_norm + 2;
     }
 
     /* Amount of filter chunks to be loaded in the filter PLM */
@@ -75,9 +75,9 @@ inline void conv2d::compute_dimensions(
 
     *max_cacheable_bias_chunks = BIAS_PLM_SIZE / *max_cacheable_filters;
     if (*max_cacheable_bias_chunks >= *total_filters_chunks)
-	*max_cacheable_bias_size = n_filters;
+    	*max_cacheable_bias_size = n_filters;
     else
-	*max_cacheable_bias_size = *max_cacheable_bias_chunks * *max_cacheable_filters;
+    	*max_cacheable_bias_size = *max_cacheable_bias_chunks * *max_cacheable_filters;
 
     /* Load offsets */
     *channel_offset_incr = round_up(*feature_size, DMA_WORD_PER_BEAT);
@@ -85,9 +85,8 @@ inline void conv2d::compute_dimensions(
     uint16_t output_pool_w = pool_type ? *output_w >> 1 : *output_w;
     *out_channel_pool_offset_incr = round_up(output_pool_w * output_pool_w, DMA_WORD_PER_BEAT);
 
-    *feature_offset_incr = max_cacheable_rows_norm * width; // TODO
-    *feature_offset_incr_init = max_cacheable_rows_norm_init * width; // TODO
-
+    *feature_offset_incr = max_cacheable_rows_norm * width;
+    *feature_offset_incr_init = max_cacheable_rows_norm_init * width;
     *filters_offset_start_base =  *channel_offset_incr * n_channels * batch_size;
     *bias_offset_start_base = *filters_offset_start_base + *filters_size;
     *feature_offset_start_base = *filters_offset_start_base + *filters_size + n_filters;
@@ -111,14 +110,21 @@ inline void conv2d::patch_extractor(
     uint16_t channel_base = 0;
     for(uint16_t channel = 0; channel < channels; channel++) {
         for (uint16_t kernel_row = 0; kernel_row < kernel_dim; kernel_row++) {
-            for (uint16_t kernel_col = 0; kernel_col < kernel_dim; kernel_col++) {
-                int input_row = output_row - pad + kernel_row;
-                int input_col = output_col - pad + kernel_col;
+	    int input_row = output_row - pad + kernel_row;
+	    int input_col = output_col - pad;
+	    uint16_t plm_index = (uint16_t) channel_base +
+		((uint16_t) input_row * width) + input_col;
+
+            for (uint16_t kernel_col = 0; kernel_col < 8; kernel_col++) {
+		// HLS_UNROLL_LOOP(ON, "patch-extract-unroll");
+		// HLS_BREAK_ARRAY_DEPENDENCY(plm_in_ping);
+		// HLS_BREAK_ARRAY_DEPENDENCY(plm_in_pong);
+
+		if (kernel_col >= kernel_dim)
+		    break;
 
 		FPDATA_WORD value;
 		if (input_row >=0 && input_row < height && input_col >= 0 && input_col < width) {
-		    uint16_t plm_index = (uint16_t) channel_base +
-			((uint16_t) input_row * width) + input_col;
 		    if (ping_input)
 			value = plm_in_ping[plm_index];
 		    else
@@ -130,6 +136,10 @@ inline void conv2d::patch_extractor(
 		// std::cout << "PATCH " << index << " " << INT2FP(value) << std::endl;
 
                 plm_patch[index++] = value;
+
+		input_col++;
+		plm_index++;
+
 		wait();
             }
         }

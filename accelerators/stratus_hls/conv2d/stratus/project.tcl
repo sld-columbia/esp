@@ -50,7 +50,7 @@ if {$TECH eq "cmos32soi"} {
     set_attr default_input_delay      100.0
 }
 if {$TECH eq "gf12"} {
-    set CLOCK_PERIOD 750.0
+    set CLOCK_PERIOD 670.0
     set SIM_CLOCK_PERIOD 2000.0
     set_attr default_input_delay      100.0
 }
@@ -105,10 +105,10 @@ if {$TECH_IS_XILINX == 1} {
 #
 
 set data_width 32
-set input_plm_size 8192
-set weights_plm_size 8192
+set input_plm_size 4096
+set weights_plm_size 4096
 set bias_plm_size 16
-set output_plm_size 8192
+set output_plm_size 4096
 set patch_plm_size 512
 set mac_plm_size 512
 
