@@ -73,13 +73,6 @@ proc add_prj { prj } {
       set errMsg "\nERROR: Could not find PRJ file $prj"
       error $errMsg
    }
-#set_property include_dirs {
-#  /home/sholmes/esp/rtl/src/sld/caches/esp-caches/common/defs
-#  /home/sholmes/esp/socs/xilinx-vc707-xc7vx485t
-#  /home/sholmes/esp/third-party/accelerators/dma64/NV_NVDLA/vlog_incdir
-#  /home/sholmes/esp/third-party/ariane/src/common_cells/include
-#} [current_fileset]
-
 }
 
 ###############################################################

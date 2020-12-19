@@ -475,7 +475,6 @@ echo "set_attribute impl top_dpr impl       \${run.prImpl}" >> $dpr_syn_tcl;
 echo "set_attribute impl top_dpr verify     \${run.prVerify}" >> $dpr_syn_tcl;
 echo "set_attribute impl top_dpr bitstream  \${run.writeBitstream}" >> $dpr_syn_tcl;
 
-
 echo "source \$tclDir/run.tcl" >> $dpr_syn_tcl;
 echo "exit" >> $dpr_syn_tcl;
 }
