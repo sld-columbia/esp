@@ -8,7 +8,8 @@ proc synthesize { module } {
    global synthDir
    global srcDir
    global verbose
-   
+   global tclDir
+
    set moduleName  [get_attribute module $module moduleName]
    set topLevel    [get_attribute module $module top_level]
    set prj         [get_attribute module $module prj]
@@ -57,16 +58,9 @@ proc synthesize { module } {
    if {[info exists board] && [llength $board]} {
       command "set_property board_part $board \[current_project\]"
    }
- 
-  source /home/sholmes/esp_new/esp/socs/common/Tcl/synth_include.tcl
-
-#    set_property include_dirs {
-#    /home/sholmes/esp/rtl/src/sld/caches/esp-caches/common/defs
-#    /home/sholmes/esp/socs/xilinx-vc707-xc7vx485t
-#    /home/sholmes/esp/third-party/accelerators/dma64/NV_NVDLA/vlog_incdir
-#    /home/sholmes/esp/third-party/ariane/src/common_cells/include
-#   /home/sholmes/esp_new/esp/third-party/ibex/vendor/lowrisc_ip/prim/rtl
-#   } [current_fileset]
+   
+   puts "tcl dir in synth is $tclDir"
+   source $tclDir/synth_include.tcl
 
    #### Setup any IP Repositories 
    if {$ipRepo != ""} {
