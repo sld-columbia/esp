@@ -1,3 +1,5 @@
+# Copyright (c) 2011-2021 Columbia University, System Level Design Group
+# SPDX-License-Identifier: Apache-2.0
 #TODO: Fix these constraints for all FPGA boards
 
 set clkm_elab [get_clocks -of_objects [get_nets clkm]]

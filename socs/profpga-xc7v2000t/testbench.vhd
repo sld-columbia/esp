@@ -1,3 +1,5 @@
+-- Copyright (c) 2011-2021 Columbia University, System Level Design Group
+-- SPDX-License-Identifier: Apache-2.0
 -----------------------------------------------------------------------------
 --  Testbench for ESP on proFPGA xc7v2000t with dual DDR3, Ethernet and DVI
 ------------------------------------------------------------------------------

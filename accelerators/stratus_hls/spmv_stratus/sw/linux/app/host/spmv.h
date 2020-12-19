@@ -1,3 +1,5 @@
+// Copyright (c) 2011-2021 Columbia University, System Level Design Group
+// SPDX-License-Identifier: Apache-2.0
 /*
 Based on algorithm described here:
 http://www.cs.berkeley.edu/~mhoemmen/matrix-seminar/slides/UCB_sparse_tutorial_1.pdf

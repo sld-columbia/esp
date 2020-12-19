@@ -1,3 +1,5 @@
+// Copyright (c) 2011-2021 Columbia University, System Level Design Group
+// SPDX-License-Identifier: Apache-2.0
 #ifndef INC_ESPACC_CONFIG_H
 #define INC_ESPACC_CONFIG_H
 

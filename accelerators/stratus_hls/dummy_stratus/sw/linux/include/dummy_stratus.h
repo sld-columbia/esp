@@ -1,3 +1,5 @@
+// Copyright (c) 2011-2021 Columbia University, System Level Design Group
+// SPDX-License-Identifier: Apache-2.0
 #ifndef _DUMMY_STRATUS_H_
 #define _DUMMY_STRATUS_H_
 
