@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <sld>
-  <accelerator name="gemm" desc="GEMM" data_size="64" device_id="051" hls_tool="stratus_hls">
+  <accelerator name="gemm" desc="GEMM" data_size="128" device_id="051" hls_tool="stratus_hls">
     <param name="ninputs" desc="Number of inputs"/>
     <param name="d1" desc="Size d1 of the matrix 1"/>
     <param name="d2" desc="Size d2 of the matrix 1"/>

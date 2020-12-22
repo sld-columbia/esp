@@ -94,8 +94,8 @@
 #endif
 
 #elif (DMA_CHUNK == 2048)
-#define OUT_DMA_CHUNK 512
-#define OUT_PLM_NAME "plm_w32_d64_chk512"
+#define OUT_DMA_CHUNK 128
+#define OUT_PLM_NAME "plm_w32_d64_chk128"
 #if (PARALLELISM == 1)
 #define IN_PLM_NAME "plm_w32_d64_chk2048_p1"
 #elif (PARALLELISM == 4)
@@ -104,6 +104,19 @@
 #define IN_PLM_NAME "plm_w32_d64_chk2048_p8"
 #else // (PARALLELISM == 16)
 #define IN_PLM_NAME "plm_w32_d64_chk2048_p16"
+#endif
+
+#elif (DMA_CHUNK == 4096)
+#define OUT_DMA_CHUNK 256
+#define OUT_PLM_NAME "plm_w32_d64_chk256"
+#if (PARALLELISM == 1)
+#define IN_PLM_NAME "plm_w32_d64_chk4096_p1"
+#elif (PARALLELISM == 4)
+#define IN_PLM_NAME "plm_w32_d64_chk4096_p4"
+#elif (PARALLELISM == 8)
+#define IN_PLM_NAME "plm_w32_d64_chk4096_p8"
+#else // (PARALLELISM == 16)
+#define IN_PLM_NAME "plm_w32_d64_chk4096_p16"
 #endif
 
 #else // (DMA_CHUNK == 8192)

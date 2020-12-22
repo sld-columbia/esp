@@ -34,8 +34,8 @@ if {$TECH eq "zynq7000"} {
 }
 if {$TECH eq "virtexup"} {
     # Library is in ns, but simulation uses ps!
-    set CLOCK_PERIOD 6.4
-    set SIM_CLOCK_PERIOD 6400.0
+    set CLOCK_PERIOD 10
+    set SIM_CLOCK_PERIOD 10000.0
     set_attr default_input_delay      0.1
 }
 if {$TECH eq "cmos32soi"} {
@@ -44,7 +44,7 @@ if {$TECH eq "cmos32soi"} {
     set_attr default_input_delay      100.0
 }
 if {$TECH eq "gf12"} {
-    set CLOCK_PERIOD 750.0
+    set CLOCK_PERIOD 670.0
     set SIM_CLOCK_PERIOD 2000.0
     set_attr default_input_delay      100.0
 }
@@ -70,7 +70,8 @@ define_system_module tb ../tb/system.cpp ../tb/sc_main.cpp
 #
 set INPUT_PATH  "../datagen/input"
 set OUTPUT_PATH "../datagen/output"
-set TESTBENCHES "testS testM testL testR testC testNTS testNTM testNTL"
+# set TESTBENCHES "testS testM testL testR testC testNTS testNTM testNTL"
+set TESTBENCHES "testS"
 
 #
 # Common options for all configurations
@@ -95,12 +96,15 @@ if {$TECH_IS_XILINX == 1} {
 # DSE configuration
 #
 
-# 0 = fixed point, 1 = float point
-
 set DMA_WIDTH "64"
-set DMA_CHUNK "8 16 32 64 128 512 2048 8192" 
+set DMA_CHUNK "4096" 
 set WORD_SIZE "32"
-set PARALLELISM "1 2 4 8 16"
+set PARALLELISM "8"
+# set DMA_WIDTH "64"
+# set DMA_CHUNK "8 16 32 64 128 512 2048 4096 8192" 
+# set WORD_SIZE "32"
+# set PARALLELISM "1 2 4 8 16"
+
 set_attr split_multiply 32
 set_attr split_add 32
 
