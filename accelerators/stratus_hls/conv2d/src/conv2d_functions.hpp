@@ -34,12 +34,15 @@ inline void conv2d::compute_dimensions(
     *filters_size = *filter_size * n_filters;
 
     /* Max number of input rows cacheable in the input PLM */
-    *max_cacheable_rows = min(INPUT_PLM_SIZE / ((uint16_t) (n_channels * width)), height);
+    uint16_t max_io_channels = max(n_channels, n_filters);
+    *max_cacheable_rows = min(INPUT_PLM_SIZE / ((uint16_t) (max_io_channels * width)),
+			      height);
     *max_cacheable_rows_init = *max_cacheable_rows;
 
     /* Max number of input rows cacheable in the input PLM */
     // TODO optimize
-    uint16_t cacheable_outputs = OUTPUT_PLM_SIZE / ((uint16_t) *output_w * *max_cacheable_rows);
+    uint16_t cacheable_outputs = OUTPUT_PLM_SIZE / ((uint16_t) *output_w *
+						    *max_cacheable_rows);
     uint16_t cacheable_filters = WEIGHTS_PLM_SIZE / (*filter_size);
     *max_cacheable_filters = (min(min(cacheable_filters, n_filters),
     				  min(cacheable_outputs, BIAS_PLM_SIZE)) >> 1) << 1;
