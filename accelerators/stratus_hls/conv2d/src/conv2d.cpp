@@ -96,10 +96,11 @@ void conv2d::load_input()
 		       &max_cacheable_size, &max_cacheable_size_init,
 		       &max_cacheable_filters,
 		       &max_cacheable_filters_size, &max_cacheable_bias_chunks,
-		       &max_cacheable_bias_size, &total_input_chunks, &total_filters_chunks,
+		       &max_cacheable_bias_size, &total_input_chunks,
+		       &total_filters_chunks,
 		       &feature_offset_incr, &feature_offset_incr_init,
-		       &channel_offset_incr, &out_channel_offset_incr, &out_channel_pool_offset_incr,
-		       &filters_offset_start_base,
+		       &channel_offset_incr, &out_channel_offset_incr,
+		       &out_channel_pool_offset_incr, &filters_offset_start_base,
 		       &bias_offset_start_base, &feature_offset_start_base);
 
     {
@@ -156,7 +157,8 @@ void conv2d::load_input()
 	uint32_t bias_offset_start_virt = 0;
 	uint16_t bias_chunk = 0;
 	uint16_t plm_bias_index = 0;
-	for (uint16_t filter_chunk = 0; filter_chunk < total_filters_chunks; filter_chunk++)
+	for (uint16_t filter_chunk = 0; filter_chunk < total_filters_chunks; 
+	     filter_chunk++)
 	{
 	    uint16_t plm_weights_index = 0;
 	    uint16_t n_words_to_load = min(filters_size - filters_offset_start_virt,
@@ -165,8 +167,8 @@ void conv2d::load_input()
 	    uint16_t adj_words_to_load = n_words_to_load + misaligned;
 
 	    dma_info_t dma_info(filters_offset_start_phys >> DMA_WORD_PER_BEAT_LOG2,
-				(n_words_to_load + misaligned + 1) >> DMA_WORD_PER_BEAT_LOG2,
-				DMA_SIZE);
+				(n_words_to_load + misaligned + 1) >>
+				DMA_WORD_PER_BEAT_LOG2, DMA_SIZE);
 
 	    // ESP_REPORT_INFO("load_input load filters dma_info. offset: %u len %u",
 	    // 		filters_offset_start_phys, n_words_to_load);
@@ -186,13 +188,17 @@ void conv2d::load_input()
 
 		if (!(!i && misaligned)) { // TODO check correctness
 		    if (ping_weights) {
-			plm_weights_ping[plm_weights_index++] = dataBv.range(31,0).to_int();
+			plm_weights_ping[plm_weights_index++] =
+			    dataBv.range(31,0).to_int();
 			if (i + 1 < adj_words_to_load)
-			    plm_weights_ping[plm_weights_index++] = dataBv.range(63,32).to_int();
+			    plm_weights_ping[plm_weights_index++] =
+				dataBv.range(63,32).to_int();
 		    } else {
-			plm_weights_pong[plm_weights_index++] = dataBv.range(31,0).to_int();
+			plm_weights_pong[plm_weights_index++] =
+			    dataBv.range(31,0).to_int();
 			if (i + 1 < adj_words_to_load)
-			    plm_weights_pong[plm_weights_index++] = dataBv.range(63,32).to_int();
+			    plm_weights_pong[plm_weights_index++] =
+				dataBv.range(63,32).to_int();
 		    }
 		}
 	    }
@@ -231,13 +237,17 @@ void conv2d::load_input()
 		    // Write to PLM (all DMA_WORD_PER_BEAT words in one cycle)
 		    if (!(!i && misaligned)) {
 			if (ping_bias) {
-			    plm_bias_ping[plm_bias_index++] = dataBv.range(31, 0).to_int();
+			    plm_bias_ping[plm_bias_index++] =
+				dataBv.range(31, 0).to_int();
 			    if (i + 1 < adj_words_to_load)
-				plm_bias_ping[plm_bias_index++] = dataBv.range(63, 32).to_int();
+				plm_bias_ping[plm_bias_index++] =
+				    dataBv.range(63, 32).to_int();
 			} else {
-			    plm_bias_pong[plm_bias_index++] = dataBv.range(31, 0).to_int();
+			    plm_bias_pong[plm_bias_index++] =
+				dataBv.range(31, 0).to_int();
 			    if (i + 1 < adj_words_to_load)
-				plm_bias_pong[plm_bias_index++] = dataBv.range(63, 32).to_int();
+				plm_bias_pong[plm_bias_index++] =
+				    dataBv.range(63, 32).to_int();
 			}
 		    }
 		}
@@ -259,7 +269,8 @@ void conv2d::load_input()
 	    {
 		uint32_t infeature_offset_start_virt = 0;
 		uint32_t infeature_offset_start = infeature_offset_start_base;
-		for (uint16_t input_chunk = 0; input_chunk < total_input_chunks; input_chunk++)
+		for (uint16_t input_chunk = 0; input_chunk < total_input_chunks;
+		     input_chunk++)
 		{
 		    uint32_t channel_offset = 0;
 		    uint16_t plm_in_index = 0;
@@ -271,8 +282,10 @@ void conv2d::load_input()
 			break;
 		    }
 
-		    if (total_input_chunks == 1 && batch_size == 1) // optimize if multiple batches all fit in PLM
+		    if (total_input_chunks == 1 && batch_size == 1) {
+                        // optimize if multiple batches all fit in PLM
 			single_chunk_done = true;
+		    }
 
 		    if (!input_chunk) {
 			max_cacheable_size_i = max_cacheable_size_init;
@@ -288,20 +301,24 @@ void conv2d::load_input()
 
 			// Configure DMA transaction
 			uint32_t offset_start = channel_offset + infeature_offset_start;
-			uint16_t n_words_to_load = min(feature_size - infeature_offset_start_virt,
-						       max_cacheable_size_i);
+			uint16_t n_words_to_load =
+			    min(feature_size - infeature_offset_start_virt,
+				max_cacheable_size_i);
 			bool misaligned = offset_start & 1 & (DMA_WORD_PER_BEAT - 1);
 			uint16_t adj_words_to_load = n_words_to_load + misaligned;
 
 			dma_info_t dma_info(offset_start >> DMA_WORD_PER_BEAT_LOG2,
-					    (n_words_to_load + 1) >> DMA_WORD_PER_BEAT_LOG2, DMA_SIZE);
+					    (n_words_to_load + 1) >>
+					    DMA_WORD_PER_BEAT_LOG2, DMA_SIZE);
 
-			// ESP_REPORT_INFO("load_input load features dma_info. offset: %u len %u",
-			// 		offset_start, n_words_to_load);
+			// ESP_REPORT_INFO("load_input load features dma_info.
+		        // offset: %u len %u",
+			// offset_start, n_words_to_load);
 
 			this->dma_read_ctrl.put(dma_info);
 
-			for (uint16_t i = 0; i < adj_words_to_load; i += DMA_WORD_PER_BEAT)
+			for (uint16_t i = 0; i < adj_words_to_load;
+			     i += DMA_WORD_PER_BEAT)
 			{
 			    HLS_PROTO("load-dma-in-features");
 			    HLS_BREAK_DEP(plm_in_ping);
@@ -315,13 +332,17 @@ void conv2d::load_input()
 			    // Write to PLM (all DMA_WORD_PER_BEAT words in one cycle)
 			    if (!(!i && misaligned)) {
 				if (ping_input) {
-				    plm_in_ping[plm_in_index++] = dataBv.range(31, 0).to_int();
+				    plm_in_ping[plm_in_index++] =
+					dataBv.range(31, 0).to_int();
 				    if (i + 1 < adj_words_to_load)
-					plm_in_ping[plm_in_index++] = dataBv.range(63, 32).to_int();
+					plm_in_ping[plm_in_index++] =
+					    dataBv.range(63, 32).to_int();
 				} else {
-				    plm_in_pong[plm_in_index++] = dataBv.range(31, 0).to_int();
+				    plm_in_pong[plm_in_index++] =
+					dataBv.range(31, 0).to_int();
 				    if (i + 1 < adj_words_to_load)
-					plm_in_pong[plm_in_index++] = dataBv.range(63, 32).to_int();
+					plm_in_pong[plm_in_index++] =
+					    dataBv.range(63, 32).to_int();
 				}
 			    }
 			}
@@ -430,7 +451,8 @@ void conv2d::store_output()
 	    uint32_t feature_offset_start_phys = feature_offset_start_base_tmp;
 	    uint32_t feature_offset_start_virt = 0;
 	    uint16_t first_row_to_load = 0;
-	    for (uint16_t input_chunk = 0; input_chunk < total_input_chunks; input_chunk++)
+	    for (uint16_t input_chunk = 0; input_chunk < total_input_chunks;
+		 input_chunk++)
 	    {
 		uint16_t max_cacheable_rows_i;
 		if (!input_chunk) {
@@ -443,7 +465,8 @@ void conv2d::store_output()
 		bool no_last_row = (input_chunk != total_input_chunks - 1);
 		uint16_t loadable_rows = min(height - first_row_to_load,
 					     max_cacheable_rows_i);
-		uint16_t rows_to_load = loadable_rows - (no_first_row * pad) - (no_last_row * pad);
+		uint16_t rows_to_load = loadable_rows - (no_first_row * pad) -
+		    (no_last_row * pad);
 		uint16_t rows_to_load_adj = (uint16_t) (rows_to_load + stride - 1)
 		    >> ilog2(stride);
 		uint16_t rows_to_load_adj_pool = (uint16_t) rows_to_load_adj >> is_pool;
@@ -451,27 +474,29 @@ void conv2d::store_output()
 		    ((uint16_t) output_w >> is_pool);
 
 		uint16_t plm_out_index = 0;
-		uint16_t cached_filters = min(max_cacheable_filters,
-					      n_filters - filter_chunk * max_cacheable_filters);
+		uint16_t cached_filters = min(max_cacheable_filters, n_filters -
+					      filter_chunk * max_cacheable_filters);
 		uint32_t out_channel_offset = out_channel_offset_base;
 
 		this->store_compute_handshake();
 
 		// pooling step
 		for (uint16_t filter_i = 0; filter_i < cached_filters; filter_i++) {
-		    uint32_t offset_start = out_channel_offset + feature_offset_start_phys;
+		    uint32_t offset_start = out_channel_offset +
+			feature_offset_start_phys;
 
 		    if (pool_type) {
-			uint16_t pool_i_in1_base = filter_i * round_up(rows_to_load_adj * output_w,
-								       DMA_WORD_PER_BEAT);
+			uint16_t pool_i_in1_base = filter_i *
+			    round_up(rows_to_load_adj * output_w, DMA_WORD_PER_BEAT);
 			uint16_t pool_i_in2_base = pool_i_in1_base + output_w;
-			uint16_t pool_i_out = filter_i * round_up(n_words_to_store,
-								  DMA_WORD_PER_BEAT);
+			uint16_t pool_i_out = filter_i *
+			    round_up(n_words_to_store, DMA_WORD_PER_BEAT);
 
-			// std::cout << "pool_i_in1_base " << pool_i_in1_base << " pool_i_out_base "
-			// 	  << pool_i_out <<std::endl;
+			// std::cout << "pool_i_in1_base " << pool_i_in1_base <<
+			// " pool_i_out_base " << pool_i_out <<std::endl;
 
-			for (uint16_t out_h = 0; out_h < rows_to_load_adj - 1; out_h += 2) {
+			for (uint16_t out_h = 0; out_h < rows_to_load_adj - 1;
+			     out_h += 2) {
 			    uint16_t pool_i_in1 = pool_i_in1_base;
 			    uint16_t pool_i_in2 = pool_i_in2_base;
 			    for (uint16_t out_w = 0; out_w < output_w - 1; out_w += 2) {
@@ -523,14 +548,15 @@ void conv2d::store_output()
 			HLS_DEFINE_PROTOCOL();
 
 			dma_info_t dma_info(offset_start >> DMA_WORD_PER_BEAT_LOG2,
-					    (n_words_to_store + 1) >> DMA_WORD_PER_BEAT_LOG2,
-					    DMA_SIZE);
+					    (n_words_to_store + 1) >>
+					    DMA_WORD_PER_BEAT_LOG2, DMA_SIZE);
 			// ESP_REPORT_INFO("store dma info. offset: %u len %u",
 			// 		offset_start, n_words_to_store);
 
 			this->dma_write_ctrl.put(dma_info);
 
-			for (uint16_t i = 0; i < n_words_to_store; i += DMA_WORD_PER_BEAT)
+			for (uint16_t i = 0; i < n_words_to_store;
+			     i += DMA_WORD_PER_BEAT)
 			{
 			    HLS_PROTO("store-dma-out-features");
 			    HLS_BREAK_DEP(plm_out_ping);
@@ -543,12 +569,12 @@ void conv2d::store_output()
 			    // Write to PLM (all DMA_WORD_PER_BEAT words in one cycle)
 			    if (ping_output) {
 				// std::cout << "store ping " <<
-				// 	INT2FP(plm_out_ping[plm_out_index]) << std::endl;
+				// INT2FP(plm_out_ping[plm_out_index]) << std::endl;
 				dataBv.range(31, 0) = plm_out_ping[plm_out_index++];
 				dataBv.range(63, 32) = plm_out_ping[plm_out_index++];
 			    } else {
 				// std::cout << "store pong " <<
-				// 	INT2FP(plm_out_pong[plm_out_index]) << std::endl;
+				// INT2FP(plm_out_pong[plm_out_index]) << std::endl;
 				dataBv.range(31, 0) = plm_out_pong[plm_out_index++];
 				dataBv.range(63, 32) = plm_out_pong[plm_out_index++];
 			    }
@@ -565,7 +591,8 @@ void conv2d::store_output()
 	    }
 	    feature_offset_start_base_tmp += (n_filters * out_channel_pool_offset_incr);
 	}
-	out_channel_offset_base += (out_channel_pool_offset_incr * max_cacheable_filters);
+	out_channel_offset_base +=
+	    (out_channel_pool_offset_incr * max_cacheable_filters);
     }
 
     // Conclude
@@ -659,12 +686,13 @@ void conv2d::compute_kernel()
     uint16_t plm_bias_index = 0;
     for (uint16_t filter_chunk = 0; filter_chunk < total_filters_chunks; filter_chunk++)
     {
-	uint16_t loadable_filters = min(n_filters - filter_chunk * max_cacheable_filters,
-					max_cacheable_filters);
+	uint16_t loadable_filters = min(n_filters - filter_chunk *
+					max_cacheable_filters, max_cacheable_filters);
 	for (uint16_t b = 0; b < batch_size; b++)
 	{
 	    uint16_t first_row_to_load = 0;
-	    for (uint16_t input_chunk = 0; input_chunk < total_input_chunks; input_chunk++)
+	    for (uint16_t input_chunk = 0; input_chunk < total_input_chunks;
+		 input_chunk++)
 	    {
 		this->compute_load_handshake();
 
@@ -682,28 +710,32 @@ void conv2d::compute_kernel()
 		bool no_last_row = (input_chunk != total_input_chunks - 1);
 		uint16_t loadable_rows = min(height - first_row_to_load,
 					     max_cacheable_rows_i);
-		uint16_t rows_to_load = loadable_rows - (no_first_row * pad) - (no_last_row * pad);
+		uint16_t rows_to_load = loadable_rows - (no_first_row * pad) -
+		    (no_last_row * pad);
 		uint16_t loadable_output_size =
 		    round_up(((uint16_t) (rows_to_load + stride - 1) >>
 			      ilog2(stride)) * output_w, DMA_WORD_PER_BEAT);
 
 		uint16_t output_plm_offset = 0;
-		for (uint16_t output_row = 0; output_row < rows_to_load; output_row += stride)
+		for (uint16_t output_row = 0; output_row < rows_to_load;
+		     output_row += stride)
 		{
-		    for (uint16_t output_col = 0; output_col < (output_w << ilog2(stride));
+		    for (uint16_t output_col = 0;
+			 output_col < (output_w << ilog2(stride));
 			 output_col += stride)
 		    {
 			// ESP_REPORT_INFO("compute_kernel most inner loop %u %u %u %u",
-			// 		filter_chunk, input_chunk, output_row, output_col);
+			// filter_chunk, input_chunk, output_row, output_col);
 
 			patch_extractor(
-			    n_channels, loadable_rows, width, loadable_rows * width, ping_input,
-			    output_row + (no_first_row * pad), output_col, pad, filter_dim);
+			    n_channels, loadable_rows, width, loadable_rows * width,
+			    ping_input, output_row + (no_first_row * pad), output_col,
+			    pad, filter_dim);
 
 			multiple_multiplier_accumulator(
-			    ping_weights, ping_bias, ping_output, filter_size, n_filters,
-			    filter_chunk, loadable_filters, plm_bias_index, output_plm_offset,
-			    loadable_output_size, do_relu);
+			    ping_weights, ping_bias, ping_output, filter_size,
+			    n_filters, filter_chunk, loadable_filters, plm_bias_index,
+			    output_plm_offset, loadable_output_size, do_relu);
 
 			output_plm_offset++;
 			wait();
