@@ -97,12 +97,13 @@ inline void conv2d::compute_dimensions(
     /* Check if configuration is valid */
 #ifndef STRATUS_HLS
     assert(width * n_channels * filter_dim <= INPUT_PLM_SIZE);
-    assert(*filter_size <= WEIGHTS_PLM_SIZE);
+    assert(*filter_size <= WEIGHTS_PLM_SIZE - PARALLELISM);
     assert(*filter_size <= PATCH_PLM_SIZE);
     assert(*filter_size <= MAC_PLM_SIZE);
 #endif
 }
 
+#ifndef NEWCOMPUTE
 inline void conv2d::patch_extractor(
     const uint16_t channels, const uint16_t height, const uint16_t width,
     const uint16_t channel_size, const uint16_t ping_input,
@@ -204,6 +205,7 @@ inline void conv2d::multiple_multiplier_accumulator(
 	wait();
     }
 }
+#endif
 
 inline void conv2d::load_compute_cfg_handshake()
 {

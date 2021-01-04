@@ -203,6 +203,16 @@ void conv2d::load_input()
 		}
 	    }
 
+	    for (uint8_t i = 0; i < PARALLELISM; i += DMA_WORD_PER_BEAT) {
+		if (ping_weights) {
+		    plm_weights_ping[plm_weights_index++] = 0;
+		    plm_weights_ping[plm_weights_index++] = 0;
+		} else {
+		    plm_weights_pong[plm_weights_index++] = 0;
+		    plm_weights_pong[plm_weights_index++] = 0;
+		}
+	    }
+
 	    filters_offset_start_phys += n_words_to_load;
 	    filters_offset_start_virt += n_words_to_load;
 
@@ -628,7 +638,6 @@ void conv2d::compute_kernel()
     uint16_t height;
     uint16_t width;
     bool do_relu;
-    uint2_t pool_type;
     uint16_t batch_size;
 
     {
@@ -646,7 +655,6 @@ void conv2d::compute_kernel()
         height = config.feature_map_height;
         width = config.feature_map_width;
 	do_relu = config.do_relu;
-	pool_type = config.pool_type;
 	batch_size = config.batch_size;
     }
 
@@ -688,6 +696,7 @@ void conv2d::compute_kernel()
     {
 	uint16_t loadable_filters = min(n_filters - filter_chunk *
 					max_cacheable_filters, max_cacheable_filters);
+
 	for (uint16_t b = 0; b < batch_size; b++)
 	{
 	    uint16_t first_row_to_load = 0;
@@ -728,12 +737,11 @@ void conv2d::compute_kernel()
 			// ESP_REPORT_INFO("compute_kernel most inner loop %u %u %u %u",
 			// filter_chunk, input_chunk, out_r, out_c);
 			uint16_t ch = 0, ch_base = 0, ch_size = loadable_rows * width;
-			uint16_t k_r = 0, k_c = 0, in_r, in_c, plm_i;
-			uint16_t in_r_base = out_r + (no_first_row * pad) - pad, in_c_base =  out_c - pad;
-			uint16_t out_r_i = out_r + (no_first_row * pad);
+			uint16_t k_r = 0, k_c = 0;
+			int16_t in_r_base = out_r + (no_first_row * pad) - pad, in_c_base =  out_c - pad;
+			int16_t out_r_i = out_r + (no_first_row * pad);
 			uint16_t start_addr_base1 = 0;
-			uint16_t compute_iters = ((uint16_t) (filter_size - 1) /
-						 (uint4_t) PARALLELISM) + 1;
+			uint16_t compute_iters = ((uint16_t) (filter_size - 1) >> (uint4_t) PARAL_LOG2) + 1;
 			for (uint16_t i = 0; i < compute_iters; i++) {
 
 			    // patch extractor
@@ -743,12 +751,12 @@ void conv2d::compute_kernel()
 			    	HLS_PIPELINE_LOOP(HARD_STALL, 1, "patch-pipeline");
 
 			    	FPDATA_WORD val;
-			    	uint16_t in_r = in_r_base + k_r;
-			    	uint16_t in_c = in_c_base + k_c;
+			    	int16_t in_r = in_r_base + k_r;
+			    	int16_t in_c = in_c_base + k_c;
 			    	uint16_t plm_i = (uint16_t) ch_base +
-			    	    ((uint16_t) in_r * width) + in_c;
+			    	    ((int16_t) in_r * width) + in_c;
 
-			    	if (in_r >=0 && in_r < loadable_rows &&
+  			    	if (in_r >= 0 && in_r < loadable_rows &&
 			    	    in_c >= 0 && in_c < width && ch < n_channels) {
 			    	    if (ping_input)
 			    		val = plm_in_ping[plm_i];
@@ -777,50 +785,11 @@ void conv2d::compute_kernel()
 			    uint16_t start_addr_base2 = 0;
 			    uint16_t out_plm_addr = out_plm_offset;
 			    for (uint16_t f = 0; f < loadable_filters; f++) {	
-
  				HLS_BREAK_ARRAY_DEPENDENCY(plm_weights_ping);
 				HLS_BREAK_ARRAY_DEPENDENCY(plm_weights_pong);
 				HLS_PIPELINE_LOOP(HARD_STALL, 1, "mac-pipeline");
-				HLS_CONSTRAIN_ARRAY_MAX_DISTANCE(plm_out_ping, 4);
-				HLS_CONSTRAIN_ARRAY_MAX_DISTANCE(plm_out_pong, 4);
-
-				// if (!f) {
-				//     for (uint16_t j = 0; j < PARALLELISM; j++) {
-				// 	HLS_BREAK_ARRAY_DEPENDENCY(plm_in_ping);
-				// 	HLS_BREAK_ARRAY_DEPENDENCY(plm_in_pong);
-				// 	HLS_PIPELINE_LOOP(HARD_STALL, 1, "patch-pipeline");
-
-				// 	FPDATA_WORD val;
-				// 	uint16_t in_r = in_r_base + k_r;
-				// 	uint16_t in_c = in_c_base + k_c;
-				// 	uint16_t plm_i = (uint16_t) ch_base +
-				// 	    ((uint16_t) in_r * width) + in_c;
-
-				// 	if (in_r >=0 && in_r < loadable_rows &&
-				// 	    in_c >= 0 && in_c < width && ch < n_channels) {
-				// 	    if (ping_input)
-				// 		val = plm_in_ping[plm_i];
-				// 	    else
-				// 		val = plm_in_pong[plm_i];
-				// 	} else {
-				// 	    val = 0;
-				// 	}
-
-				// 	reg_patch[j] = INT2FP(val);
-
-				// 	k_c++;
-				// 	if (k_c == filter_dim) {
-				// 	    k_c = 0;
-				// 	    k_r++;
-				// 	    if (k_r == filter_dim)  {
-				// 		k_r = 0;
-				// 		ch++;
-				// 		ch_base += ch_size;
-				// 	    }
-				// 	}
-				// 	wait();
-				//     }
-				// }
+				HLS_CONSTRAIN_ARRAY_MAX_DISTANCE(plm_out_ping, 13);
+				HLS_CONSTRAIN_ARRAY_MAX_DISTANCE(plm_out_pong, 13);
 
 				FPDATA bias, res_relu, res_bias, res_partial, res_mac = 0;
 				uint16_t start_addr = start_addr_base1 + start_addr_base2;
@@ -833,7 +802,6 @@ void conv2d::compute_kernel()
 				    reg_w[5] = INT2FP(plm_weights_ping[start_addr+5]);
 				    reg_w[6] = INT2FP(plm_weights_ping[start_addr+6]);
 				    reg_w[7] = INT2FP(plm_weights_ping[start_addr+7]);
-				    reg_w[8] = INT2FP(plm_weights_ping[start_addr+8]);
 				} else {
 				    reg_w[0] = INT2FP(plm_weights_pong[start_addr]);
 				    reg_w[1] = INT2FP(plm_weights_pong[start_addr+1]);
@@ -843,7 +811,6 @@ void conv2d::compute_kernel()
 				    reg_w[5] = INT2FP(plm_weights_pong[start_addr+5]);
 				    reg_w[6] = INT2FP(plm_weights_pong[start_addr+6]);
 				    reg_w[7] = INT2FP(plm_weights_pong[start_addr+7]);
-				    reg_w[8] = INT2FP(plm_weights_pong[start_addr+8]);
 				}
 
 				if (!i) {
@@ -864,13 +831,25 @@ void conv2d::compute_kernel()
 				reg_mac[5] = reg_patch[5] * reg_w[5];
 				reg_mac[6] = reg_patch[6] * reg_w[6];
 				reg_mac[7] = reg_patch[7] * reg_w[7];
-				reg_mac[8] = reg_patch[8] * reg_w[8];
+
+			       // 	std::cout <<
+			       // 	    reg_mac[0] << " = " << reg_patch[0] << " * " << reg_w[0] << std::endl <<
+			       // 	    reg_mac[1] << " = " << reg_patch[1] << " * " << reg_w[1] << std::endl <<
+			       // 	    reg_mac[2] << " = " << reg_patch[2] << " * " << reg_w[2] << std::endl <<
+			       // 	    reg_mac[3] << " = " << reg_patch[3] << " * " << reg_w[3] << std::endl <<
+			       // 	    reg_mac[4] << " = " << reg_patch[4] << " * " << reg_w[4] << std::endl <<
+			       // 	    reg_mac[5] << " = " << reg_patch[5] << " * " << reg_w[5] << std::endl <<
+			       // 	    reg_mac[6] << " = " << reg_patch[6] << " * " << reg_w[6] << std::endl <<
+			       // 	    reg_mac[7] << " = " << reg_patch[7] << " * " << reg_w[7] << std::endl;
 
 				res_mac = ((reg_mac[0] + reg_mac[1]) +
 					   (reg_mac[2] + reg_mac[3])) +
 				    ((reg_mac[4] + reg_mac[5]) +
 				     (reg_mac[6] + reg_mac[7])) +
-				    (reg_mac[8] + res_partial);
+				    res_partial;
+
+				// res_mac = reg_mac[0] + reg_mac[1] + reg_mac[2] + reg_mac[3] + reg_mac[4] +
+				//     reg_mac[5] + reg_mac[6] + reg_mac[7] + res_partial;
 
 				if (i + 1 == compute_iters) {
 				    if (ping_bias)
@@ -887,9 +866,6 @@ void conv2d::compute_kernel()
 				    res_relu = res_mac;
 				}
 
-				// std::cout << "MULTIPLY patch * weight = res : " <<
-				// INT2FP(plm_patch[i]) << " " << INT2FP(weight) <<
-                                // " " << INT2FP(plm_mac[i]) << std::endl;
 				if (ping_output) {
 				    plm_out_ping[out_plm_addr] = FP2INT(res_relu);
 				} else {
@@ -898,15 +874,15 @@ void conv2d::compute_kernel()
 
 				// std::cout << "i: " << i <<
 				//     ". f: " << f <<
-				//     ". start_addr: " << start_addr <<
 				//     ". out_plm_addr: " << out_plm_addr <<
+				//     ". start_addr: " << start_addr <<
 				//     ". res_partial: " << res_partial <<
 				//     ". res_mac : "  << res_mac <<
-				//     ". res_relu : "  << res_relu <<
 				//     ". res_bias : "  << res_bias <<
-				//     ". ping_bias : "  << ping_bias <<
+				//     ". res_relu : "  << res_relu <<
 				//     ". ping_input : "  << ping_input <<
 				//     ". ping_weights : "  << ping_weights <<
+				//     ". ping_bias : "  << ping_bias <<
 				//     ". ping_output : "  << ping_output <<
 				//     std::endl;
 
@@ -917,8 +893,7 @@ void conv2d::compute_kernel()
 			    }
 			    start_addr_base1 += PARALLELISM;
 			}
-#endif
-#ifdef OLDCOMPUTE
+#else
 			patch_extractor(
 			    n_channels, loadable_rows, width, loadable_rows * width,
 			    ping_input, out_r + (no_first_row * pad), out_c,

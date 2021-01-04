@@ -36,5 +36,11 @@ typedef sc_dt::sc_uint<12> uint12_t;
 typedef sc_dt::sc_uint<20> uint20_t;
 typedef sc_dt::sc_uint<24> uint24_t;
 typedef sc_dt::sc_uint<28> uint28_t;
+typedef sc_dt::sc_int<2> int2_t;
+typedef sc_dt::sc_int<4> int4_t;
+typedef sc_dt::sc_int<12> int12_t;
+typedef sc_dt::sc_int<20> int20_t;
+typedef sc_dt::sc_int<24> int24_t;
+typedef sc_dt::sc_int<28> int28_t;
 
 #endif // __CONV2D_DATA_HPP__

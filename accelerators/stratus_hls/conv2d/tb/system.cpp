@@ -225,9 +225,9 @@ void system_t::load_memory()
     sw_output = (float*) malloc(out_size * sizeof(float));
     hw_output = (float*) malloc(out_size * sizeof(float));
 
-    init_tensor(input, in_size, false);
-    init_tensor(weights, weights_size, false);
-    init_tensor(bias, bias_size, false);
+    init_tensor(input, in_size, true);
+    init_tensor(weights, weights_size, true);
+    init_tensor(bias, bias_size, true);
 
 #ifdef XS
     print_image("input-hw", input, batch_size, channels, height, width, false);
