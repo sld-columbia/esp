@@ -21,6 +21,9 @@
 #define round_up(x, y) ((((x)-1) | __round_mask(x, y))+1)
 /* <<--defines-->> */
 #define DMA_SIZE SIZE_WORD
+#define PARALLELISM 9
+#define NEWCOMPUTE
+//#define OLDCOMPUTE
 
 class conv2d : public esp_accelerator_3P<DMA_WIDTH>
 {
@@ -48,9 +51,11 @@ public:
         HLS_MAP_plm(plm_bias_ping, PLM_BIAS_NAME);
         HLS_MAP_plm(plm_in_pong, PLM_IN_NAME);
         HLS_MAP_plm(plm_in_ping, PLM_IN_NAME);
-        //HLS_FLATTEN_ARRAY(plm_patch);
         HLS_MAP_plm(plm_patch, PLM_PATCH_NAME);
         HLS_MAP_plm(plm_mac, PLM_MAC_NAME);
+        HLS_FLATTEN_ARRAY(reg_patch);
+        HLS_FLATTEN_ARRAY(reg_mac);
+        HLS_FLATTEN_ARRAY(reg_w);
     }
 
     // Processes
@@ -116,6 +121,9 @@ public:
     FPDATA_WORD plm_out_pong[OUTPUT_PLM_SIZE];
     FPDATA_WORD plm_patch[PATCH_PLM_SIZE];
     FPDATA_WORD plm_mac[MAC_PLM_SIZE];
+    FPDATA      reg_patch[PARALLELISM];
+    FPDATA      reg_mac[PARALLELISM];
+    FPDATA      reg_w[PARALLELISM];
 
     // Custom configuration signals
     sc_signal<uint4_t> pad_sig;

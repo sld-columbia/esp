@@ -119,7 +119,7 @@ bool check_error_threshold_for_neuron(float hw_data, float sw_data, float &error
     else
         error = fabs((float(hw_fdata) - float(sw_data)) / float(hw_fdata));
 
-    return (error > NEURON_MAX_ERROR_THRESHOLD);
+    return (error > 0); //NEURON_MAX_ERROR_THRESHOLD);
 }
 
 int _validate(float* hw_data_array, float* sw_data_array, int batch_size, int filters, int output_h, int output_w) {
@@ -143,11 +143,10 @@ int _validate(float* hw_data_array, float* sw_data_array, int batch_size, int fi
 		    if (check_error_threshold_for_neuron(
 			    float(hw_data_array[idx]),
 			    float(sw_data_array[idx]), rel_error)) {
-
 			if (tot_errors < REPORT_THRESHOLD) {
-			float hw_fdata = hw_data_array[idx];
-			printf("[ERROR] Validation: Element %d wrong [%.4f - %.4f]\n",
-			       idx, float(hw_fdata), float(sw_data_array[idx]));
+			    float hw_fdata = hw_data_array[idx];
+			    printf("[ERROR] Validation: Element %d wrong [%.4f - %.4f]\n",
+				   idx, float(hw_fdata), float(sw_data_array[idx]));
 			}
 			tot_errors++;
 		    } else {

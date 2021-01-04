@@ -118,16 +118,11 @@ inline void conv2d::patch_extractor(
 	    uint16_t plm_index = (uint16_t) channel_base +
 		((uint16_t) input_row * width) + input_col;
 
-            for (uint16_t kernel_col = 0; kernel_col < 8; kernel_col++) {
-		// HLS_UNROLL_LOOP(ON, "patch-extract-unroll");
-		// HLS_BREAK_ARRAY_DEPENDENCY(plm_in_ping);
-		// HLS_BREAK_ARRAY_DEPENDENCY(plm_in_pong);
-
-		if (kernel_col >= kernel_dim)
-		    break;
+            for (uint16_t kernel_col = 0; kernel_col < kernel_dim; kernel_col++) {
 
 		FPDATA_WORD value;
-		if (input_row >=0 && input_row < height && input_col >= 0 && input_col < width) {
+		if (input_row >=0 && input_row < height && input_col >= 0 &&
+		    input_col < width) {
 		    if (ping_input)
 			value = plm_in_ping[plm_index];
 		    else
@@ -153,15 +148,13 @@ inline void conv2d::patch_extractor(
 inline void conv2d::multiple_multiplier_accumulator(
     const uint16_t ping_weights, const uint16_t ping_bias, const uint16_t ping_output,
     const uint16_t filter_size, const uint16_t num_filters,
-    const uint16_t filter_chunk, const uint16_t cacheable_filters, const uint16_t plm_bias_index,
-    const uint16_t output_plm_offset, const uint16_t loadable_output_size,
-    const bool do_relu)
+    const uint16_t filter_chunk, const uint16_t cacheable_filters,
+    const uint16_t plm_bias_index, const uint16_t output_plm_offset,
+    const uint16_t loadable_output_size, const bool do_relu)
 {
     uint16_t output_plm_address;
-
     output_plm_address = output_plm_offset;
     for (uint16_t f = 0; f < cacheable_filters; f++) {
-
         FPDATA result_relu;
 	FPDATA bias;
 	FPDATA result_bias;
@@ -171,30 +164,22 @@ inline void conv2d::multiple_multiplier_accumulator(
 	uint16_t start_address = filter_size * f;
 
 	for (uint16_t i = 0; i < filter_size; i++) {
-
 	    FPDATA weight;
-
 	    if (ping_weights)
 		weight = INT2FP(plm_weights_ping[start_address++]);
 	    else
 		weight = INT2FP(plm_weights_pong[start_address++]);
-
 	    plm_mac[i] = FP2INT(INT2FP(plm_patch[i]) * weight);
-
 	    // std::cout << "MULTIPLY patch * weight = res : " << INT2FP(plm_patch[i]) <<
 	    // 	" " << INT2FP(weight) << " " << INT2FP(plm_mac[i]) << std::endl;
-
 	    wait();
 	}
-
 
 	// accumulator(filter_size, &result);
 	for(uint16_t i = 0; i < filter_size; i++) {
 	    result_mac += INT2FP(plm_mac[i]);
-
 	    // std::cout << "ACCUM i " << i << " val " << INT2FP(plm_mac[i]) <<
 	    // 	" res " << INT2FP(result_mac) << std::endl;
-
 	    wait();
 	}
 
@@ -202,9 +187,7 @@ inline void conv2d::multiple_multiplier_accumulator(
 	    bias = INT2FP(plm_bias_ping[plm_bias_index + f]);
 	else
 	    bias = INT2FP(plm_bias_pong[plm_bias_index + f]);
-
 	result_bias = result_mac + bias;
-
 	if (do_relu && result_bias < 0)
 	    result_relu = FPDATA(0);
 	else
@@ -217,9 +200,7 @@ inline void conv2d::multiple_multiplier_accumulator(
 	    plm_out_ping[output_plm_address] = FP2INT(result_relu);
 	else
 	    plm_out_pong[output_plm_address] = FP2INT(result_relu);
-
 	output_plm_address += loadable_output_size;
-
 	wait();
     }
 }
