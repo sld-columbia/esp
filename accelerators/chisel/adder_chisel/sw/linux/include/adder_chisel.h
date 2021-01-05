@@ -1,3 +1,5 @@
+// Copyright (c) 2011-2021 Columbia University, System Level Design Group
+// SPDX-License-Identifier: Apache-2.0
 #ifndef _ADDER_CHISEL_H_
 #define _ADDER_CHISEL_H_
 

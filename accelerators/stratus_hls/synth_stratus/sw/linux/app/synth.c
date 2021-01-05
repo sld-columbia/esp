@@ -1,3 +1,5 @@
+// Copyright (c) 2011-2021 Columbia University, System Level Design Group
+// SPDX-License-Identifier: Apache-2.0
 #include "libesp.h"
 #include "synth_stratus.h"
 #include "string.h"

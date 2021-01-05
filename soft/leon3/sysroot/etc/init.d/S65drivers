@@ -1,3 +1,5 @@
+# Copyright (c) 2011-2021 Columbia University, System Level Design Group
+# SPDX-License-Identifier: Apache-2.0
 #!/bin/sh
 # below comments pertain to content in S64esp
 # start (per DDR node): contig_alloc starting address

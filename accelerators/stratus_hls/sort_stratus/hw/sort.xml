@@ -1,3 +1,5 @@
+<!-- Copyright (c) 2011-2021 Columbia University, System Level Design Group -->
+<!-- SPDX-License-Identifier: Apache-2.0 -->
 <?xml version="1.0" encoding="UTF-8"?>
 <sld>
   <accelerator name="sort" desc="SORT float[32:1024][1:1024]" data_size="4" device_id="00b" hls_tool="stratus_hls">

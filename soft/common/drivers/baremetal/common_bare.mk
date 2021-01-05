@@ -1,3 +1,5 @@
+# Copyright (c) 2011-2021 Columbia University, System Level Design Group
+# SPDX-License-Identifier: Apache-2.0
 CPU_SOFT_PATH := $(DRIVERS)/../../../$(CPU_ARCH)
 
 ifeq ("$(CPU_ARCH)", "leon3")

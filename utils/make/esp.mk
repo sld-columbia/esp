@@ -1,4 +1,4 @@
-# Copyright (c) 2011-2020 Columbia University, System Level Design Group
+# Copyright (c) 2011-2021 Columbia University, System Level Design Group
 # SPDX-License-Identifier: Apache-2.0
 
 ESP_DEFCONFIG ?= $(ESP_ROOT)/socs/defconfig/esp_$(BOARD)_defconfig
@@ -10,13 +10,11 @@ $(ESP_CFG_BUILD)/.esp_config:
 	$(QUIET_MKDIR)mkdir -p $(ESP_CFG_BUILD)
 	$(QUIET_CP)cp $(ESP_DEFCONFIG) $@
 
-esp-defconfig: $(ESP_CFG_BUILD) $(ESP_DEFCONFIG)
+esp-defconfig: $(ESP_DEFCONFIG) $(ESP_CFG_BUILD)
 	$(QUIET_CP) \
 	cd $(ESP_CFG_BUILD); \
 	cp $< .esp_config
-	$(QUIET_MAKE) \
-	cd $(ESP_CFG_BUILD); \
-	$(MAKE) esp-config
+	$(QUIET_MAKE)$(MAKE) esp-config
 
 $(ESP_CFG_BUILD)/socmap.vhd: $(ESP_CFG_BUILD)/.esp_config $(GRLIB_CFG_BUILD)/grlib_config.vhd top.vhd Makefile
 	$(QUIET_DIFF)echo "checking .esp_config..."
@@ -57,9 +55,7 @@ esp-config-clean:
 
 ifneq ("$(CPU_ARCH)", "leon3")
 $(ESP_CFG_BUILD)/riscv.dts: $(ESP_CFG_BUILD)/.esp_config $(GRLIB_CFG_BUILD)/grlib_config.vhd top.vhd
-	$(QUIET_MAKE) \
-	cd $(ESP_CFG_BUILD); \
-	$(MAKE) socmap.vhd
+	$(QUIET_MAKE)$(MAKE) $(ESP_CFG_BUILD)/socmap.vhd
 
 ARIANE_RV_PLIC_REGMAP_GEN = $(ESP_ROOT)/rtl/cores/ariane/ariane/src/rv_plic/rtl/gen_plic_addrmap.py
 

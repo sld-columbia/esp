@@ -1,3 +1,5 @@
+// Copyright (c) 2011-2021 Columbia University, System Level Design Group
+// SPDX-License-Identifier: Apache-2.0
 mem[0] = 221;
 mem[1] = 277;
 mem[2] = 270;

@@ -1,3 +1,5 @@
+// Copyright (c) 2011-2021 Columbia University, System Level Design Group
+// SPDX-License-Identifier: Apache-2.0
 #ifndef __MULTIFFT_CFG_H__
 #define __MULTIFFT_CFG_H__
 

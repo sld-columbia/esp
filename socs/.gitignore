@@ -1,6 +1,7 @@
 *.old
 
 .cxl.*
+logs
 *.log
 *.bak
 *.jou
@@ -38,6 +39,7 @@ power.h
 cache_cfg.svh
 plic_regmap.sv
 socketgen
+socgen
 
 *.exe
 *.bin

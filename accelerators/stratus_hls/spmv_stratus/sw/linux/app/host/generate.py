@@ -1,3 +1,5 @@
+# Copyright (c) 2011-2021 Columbia University, System Level Design Group
+# SPDX-License-Identifier: Apache-2.0
 #!/usr/bin/env python
 
 # Generate a sparse matrices and a dense vector.

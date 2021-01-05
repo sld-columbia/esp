@@ -1,3 +1,5 @@
+<!-- Copyright (c) 2011-2021 Columbia University, System Level Design Group -->
+<!-- SPDX-License-Identifier: Apache-2.0 -->
 <?xml version="1.0" encoding="UTF-8"?>
 <sld>
   <accelerator name="vitbfly2" desc="VITBFLY2" data_size="4" device_id="016" hls_tool="stratus_hls">
