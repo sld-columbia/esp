@@ -55,9 +55,7 @@ esp-config-clean:
 
 ifneq ("$(CPU_ARCH)", "leon3")
 $(ESP_CFG_BUILD)/riscv.dts: $(ESP_CFG_BUILD)/.esp_config $(GRLIB_CFG_BUILD)/grlib_config.vhd top.vhd
-	$(QUIET_MAKE) \
-	cd $(ESP_CFG_BUILD); \
-	$(MAKE) socmap.vhd
+	$(QUIET_MAKE)$(MAKE) $(ESP_CFG_BUILD)/socmap.vhd
 
 ARIANE_RV_PLIC_REGMAP_GEN = $(ESP_ROOT)/rtl/cores/ariane/ariane/src/rv_plic/rtl/gen_plic_addrmap.py
 
