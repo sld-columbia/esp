@@ -40,7 +40,9 @@ install: Makefile.prj hls_all
 	@mkdir -p $(RTL_OUT)
 ifneq ("$(ACCELERATOR)","")
 	@NAME_SHORT=$(TARGET_NAME:_stratus=); \
-	cp ../$$NAME_SHORT.xml $(RTL_OUT)/$(TARGET_NAME).xml; \
+	cp ../$$NAME_SHORT.xml $(RTL_OUT)/$(TARGET_NAME).xml;
+endif
+	@NAME_SHORT=$(TARGET_NAME:_stratus=); \
 	for dir in $$(ls bdw_work/modules/$$NAME_SHORT); do \
 		indir=bdw_work/modules/$$NAME_SHORT/$$dir; \
 		infile=$$indir/$$NAME_SHORT\_rtl.v; \
@@ -62,7 +64,6 @@ ifneq ("$(ACCELERATOR)","")
 			fi; \
 		fi; \
 	done
-endif
 
 nimbus.csv: Makefile.prj sim_all
 	@bdw_shell $(COMMON_HLS_PATH)/nimbus.tcl
