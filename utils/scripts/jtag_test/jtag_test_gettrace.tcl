@@ -18,7 +18,7 @@ set target_ports { \
 
 
 proc inst_to_tile_name { inst } {
-    set RE /testbench/top_1/epochs_0/
+    set RE /testbench/top_1/chip_i/
     set tmp1 [regsub -all $RE $inst ""]
     set RE /.*/.*/.*/jtag_test_i
     set tmp2 [regsub -all $RE $tmp1 ""]
