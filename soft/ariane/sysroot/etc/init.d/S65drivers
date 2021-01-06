@@ -1,6 +1,6 @@
+#!/bin/sh
 # Copyright (c) 2011-2021 Columbia University, System Level Design Group
 # SPDX-License-Identifier: Apache-2.0
-#!/bin/sh
 
 # start (per DDR node): contig_alloc starting address
 # size (per DDR node): contig_alloc region size

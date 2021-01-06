@@ -1,6 +1,6 @@
+#!/bin/bash
 # Copyright (c) 2011-2021 Columbia University, System Level Design Group
 # SPDX-License-Identifier: Apache-2.0
-#!/bin/bash
 
 INPUTS='../tb/inputs/in'
 OUTPUTS='../tb/outputs/chk'
