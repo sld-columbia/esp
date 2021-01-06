@@ -28,28 +28,7 @@ VSIMOPT += $(SIMTOP) $(EXTRA_SIMTOP)
 VLIB = vlib
 VCOM = vcom -quiet -93 $(VCOMOPT)
 VLOG = vlog -sv -quiet $(VLOGOPT)
-VSIM = vsim $(VSIMOPT)
-
-
-### SDF annotation for DCO simulation ###
-
-# Generate list of DCOs in the current design
-sdf_dco.list: .esp_config socketgen modelsim/vsim.mk
-	$(QUIET_RUN) rm -f $@
-	@if test -e $(DESIGN_PATH)/sdf_gen.do; then \
-		cd modelsim; \
-		echo $(SPACES)"vsim -c $(VSIMOPT) -do \"do $(DESIGN_PATH)/sdf_gen.do\""; \
-		vsim -c $(VSIMOPT) -do "do $(DESIGN_PATH)/sdf_gen.do"; \
-		cd ../; \
-		tail -n 3 modelsim/transcript | head -n 1 | sed 's/# //g' | sed 's/(/[/g' | sed 's/)/]/g' > $@; \
-	else \
-		touch $@; \
-	fi;
-
-# DCO SDF annotation flags (supported for Modelsim only for now)
-# SDF back-annotation is required to simulate the DCO
-VSIMOPT_DCO = $(foreach f,  $(shell if test -e $(DESIGN_PATH)/sdf_dco.list; then strings sdf_dco.list; fi), -sdfmax $(f)=$(ESP_ROOT)/rtl/techmap/$(TECHLIB)/wrappers/DCO_tt.sdf)
-VSIMOPT_DCO += -suppress 3438
+VSIM = VSIMOPT='$(VSIMOPT)' TECHLIB=$(TECHLIB) ESP_ROOT=$(ESP_ROOT) vsim $(VSIMOPT)
 
 
 ### Xilinx Simulation libs targets ###
@@ -138,20 +117,24 @@ sim-compile: socketgen check_all_srcs modelsim/vsim.mk soft
 	done;
 	$(QUIET_MAKE)make -C modelsim -f vsim.mk
 
-sim: sim-compile sdf_dco.list
-	@cd modelsim; \
-	echo $(SPACES)"vsim -c $(VSIMOPT) $(VSIMOPT_DCO)"; \
-	vsim -c $(VSIMOPT) $(VSIMOPT_DCO); \
-	cd ../
+sim: sim-compile
+	$(QUIET_RUN)cd modelsim; \
+	if test -e $(DESIGN_PATH)/vsim.tcl; then \
+		$(VSIM) -c -do "do $(DESIGN_PATH)/vsim.tcl"; \
+	else \
+		$(VSIM) -c; \
+	fi;
 
-sim-gui: sim-compile sdf_dco.list
-	@cd modelsim; \
-	echo $(SPACES)"$(VSIM) $(VSIMOPT_DCO)"; \
-	$(VSIM) $(VSIMOPT_DCO); \
-	cd ../
+sim-gui: sim-compile
+	$(QUIET_RUN)cd modelsim; \
+	if test -e $(DESIGN_PATH)/vsim.tcl; then \
+		$(VSIM) -do "do $(DESIGN_PATH)/vsim.tcl"; \
+	else \
+		$(VSIM); \
+	fi;
 
 sim-clean:
-	$(QUIET_CLEAN)rm -rf transcript *.wlf sdf_dco.list
+	$(QUIET_CLEAN)rm -rf transcript *.wlf
 
 sim-distclean: sim-clean
 	$(QUIET_CLEAN)rm -rf modelsim
@@ -164,11 +147,13 @@ sim-distclean: sim-clean
 JTAG_TEST_SCRIPTS_DIR = $(ESP_ROOT)/utils/scripts/jtag_test
 JTAG_TEST_TILE ?= 0
 
-jtag-trace: sim-compile sdf_dco.list
+jtag-trace: sim-compile
 	$(QUIET_RUN)cd modelsim; \
-	echo $(SPACES)"$(VSIM) $(VSIMOPT_DCO) -do \"do $(JTAG_TEST_SCRIPTS_DIR)/jtag_test_gettrace.tcl\""; \
-	$(VSIM) $(VSIMOPT_DCO) -do "do $(JTAG_TEST_SCRIPTS_DIR)/jtag_test_gettrace.tcl"; \
-	cd ../
+	if test -e $(DESIGN_PATH)/vsim.tcl; then \
+		VSIMOPT='$(VSIMOPT) -do "do $(JTAG_TEST_SCRIPTS_DIR)/jtag_test_gettrace.tcl"' TECHLIB=$(TECHLIB) ESP_ROOT=$(ESP_ROOT) vsim $(VSIMOPT) -do "do $(DESIGN_PATH)/vsim.tcl"; \
+	else \
+		$(VSIM) -do "do $(JTAG_TEST_SCRIPTS_DIR)/jtag_test_gettrace.tcl"; \
+	fi;
 
 jtag-trace-pretty:
 	$(QUIET_BUILD)cd modelsim; \
@@ -176,12 +161,14 @@ jtag-trace-pretty:
 
 jtag-stim: jtag-trace-pretty
 	$(QUIET_BUILD)cd modelsim; \
-	$(JTAG_TEST_SCRIPTS_DIR)/jtag_test_stim.py $(JTAG_TEST_TILE)
+	LD_LIBRARY_PATH="" $(JTAG_TEST_SCRIPTS_DIR)/jtag_test_stim.py $(JTAG_TEST_TILE)
 
-sim-jtag: sim-compile jtag-stim sdf_dco.list
+sim-jtag: sim-compile jtag-stim
 	$(QUIET_RUN)cd modelsim; \
-	echo $(SPACES)"$(VSIM) $(VSIMOPT_DCO) -g JTAG_TRACE=$(JTAG_TEST_TILE)"; \
-	$(VSIM) $(VSIMOPT_DCO) -g JTAG_TRACE=$(JTAG_TEST_TILE); \
-	cd ../; \
+	if test -e $(DESIGN_PATH)/vsim.tcl; then \
+		VSIMOPT='$(VSIMOPT) -g JTAG_TRACE=$(JTAG_TEST_TILE)' TECHLIB=$(TECHLIB) ESP_ROOT=$(ESP_ROOT) vsim $(VSIMOPT) -do "do $(DESIGN_PATH)/vsim.tcl"; \
+	else \
+		$(VSIM) -g JTAG_TRACE=$(JTAG_TEST_TILE); \
+	fi;
 
 .PHONY: jtag-trace jtag-trace-pretty jtag-stim
