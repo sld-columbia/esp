@@ -1,25 +1,28 @@
 #!/bin/bash
 
+# Copyright (c) 2011-2019 Columbia University, System Level Design Group
+# SPDX-License-Identifier: Apache-2.0
+
 #variables related to srcs of accelerators
 tile_acc="$1/socs/$2/sldgen/tile_acc.vhd"
 dpr_srcs="$1/socs/$2/sldgen/dpr_srcs"
 dpr_bbox="$dpr_srcs/tile_acc_bbox.vhd"
 original_src="$1/socs/$2/vivado/srcs.tcl"
 temp_srcs="/tmp/temp_srcs.tcl"
+esp_config="$1/socs/$2/.esp_config"
+esp_config_old="$1/socs/$2/vivado_dpr/.esp_config"
 
 #variables related to accelerator tiles
 num_acc_tiles=0
 num_old_acc_tiles=0
 num_modified_acc_tiles=0
-esp_config="$1/socs/$2/.esp_config"
-esp_config_old="$1/socs/$2/vivado_dpr/.esp_config"
+
 DEVICE=$3
 device=$(echo ${DEVICE} | awk '{print tolower($0)}')
-#acc_id_match="this_device        : devid_t"
 acc_id_match="this_hls_conf      : hlscfg_t"
 declare -A new_accelerators old_accelerators modified_accelerators
 
-#extract the number of accelerator tiles from esp_config
+#function to extract the number and types of accelerator tiles from current esp_config
 function extract_acc() {
 while read line
 do
@@ -37,18 +40,19 @@ do
                 new_accelerators["$num_acc_tiles,1"]=$(echo ${acc_name} | awk '{print tolower($0)}');
                 ((num_acc_tiles++));
             fi
-            echo $tile_token $tile_index $tile_type $acc_name $1 $2 $3;
+            echo "$tile_token $tile_index $tile_type $acc_name $1 $2 $3 ";
         fi
     done
 done < $esp_config
 
-for ((i=0; i<num_acc_tiles; i++)) 
-do
-echo " new accelerator $i is ${new_accelerators[${i},0]}  ${new_accelerators[${i},1]};"
-done
+#for ((i=0; i<num_acc_tiles; i++)) 
+#do
+#echo " new accelerator $i is ${new_accelerators[${i},0]}  ${new_accelerators[${i},1]};"
+#done
 
 }
 
+#function to extract the number and types of accelerator tiles from the old esp_config in vivado_dpr dir
 function extract_acc_old() {
 while read line
 do
@@ -72,6 +76,9 @@ do
 done < $esp_config_old
 }
 
+#function to figure out which acc_tile is changed in the new .esp_config
+#TODO: this func relies on name change of acc_tiles to mark change, this is 
+#obvioulsy insufficient when the same acc_tile is modified without a name change
 function diff_accelerators() {
 for ((i=0; i<$num_acc_tiles; i++))
 do
@@ -85,7 +92,10 @@ done
 
     echo "number modified tiles is equal to $num_modified_acc_tiles "
 }
-#initialize the accelerator tiles
+
+#This function initializes the specific accelerator tiles from the template tile_acc.vhd
+#initialization refers to replacing the default parameters of the template acc with 
+#acc specific parameters
 function initialize_acc_tiles() {
 for ((i=0; i<$num_acc_tiles; i++))
 do
@@ -147,7 +157,7 @@ done < $original_src
 mv $temp_srcs $original_src;
 }
 
-#initialize tiles with accelerators
+#add acc source to prj file
 function add_acc_prj_file() {
 for ((i=0; i<$num_acc_tiles; i++))
 do
@@ -155,8 +165,6 @@ do
     acc_dir="$dpr_srcs/tile_${new_accelerators[$i,0]}_acc";
     #acc_dir="$dpr_srcs/accelerator_$i";
     output="$acc_dir/src.prj"
-
-#elif [ "$type" == "read_verilog" ] && [ "$ext" == "-sv" ] && [[ "$addr" != *"nbdcache"* ]] && [[ "$addr" != *"miss_handler"* ]]  && [[ "$addr" != *"llc_rtl_top"* ]]; then
 
 echo " " > $output
 while read -r type ext addr
@@ -325,7 +333,7 @@ do
 done
 }
 
-#generate dpr script
+#generate the tcl script to synthesise and implement the design
 function gen_dpr() {
 syn_include="$1/socs/common/Tcl/synth_include.tcl";
 rm -r $syn_include;
