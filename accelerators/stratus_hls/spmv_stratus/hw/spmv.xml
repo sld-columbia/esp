@@ -1,5 +1,3 @@
-<!-- Copyright (c) 2011-2021 Columbia University, System Level Design Group -->
-<!-- SPDX-License-Identifier: Apache-2.0 -->
 <?xml version="1.0" encoding="UTF-8"?>
 <sld>
   <accelerator name="spmv" desc="SPMV" data_size="32" device_id="00c" hls_tool="stratus_hls">
