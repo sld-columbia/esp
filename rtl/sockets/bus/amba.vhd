@@ -53,7 +53,7 @@ package amba is
 --
 constant AHBDW     : integer := CFG_AHBDW;
 constant AXIDW     : integer := AHBDW;
-constant XID_WIDTH : integer := 8;
+constant XID_WIDTH : integer := 10;
 constant XUSER_WIDTH : integer := 1;
 
 -- CORE_ACDM - Enable AMBA Compliant Data Muxing in cores
