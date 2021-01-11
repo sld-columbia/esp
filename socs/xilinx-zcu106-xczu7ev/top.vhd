@@ -1,7 +1,5 @@
--- Copyright (c) 2011-2021 Columbia University, System Level Design Group
--- SPDX-License-Identifier: Apache-2.0
 ------------------------------------------------------------------------------
---  ESP - xilinx - zcu106
+--  ESP - xilinx - zcu102
 ------------------------------------------------------------------------------
 
 library ieee;
@@ -72,15 +70,15 @@ constant CPU_FREQ : integer := 75000;  -- cpu frequency in KHz
   signal rstn      : std_ulogic;
   signal lock  : std_ulogic;
 
-  -- Memory controller DDR4
-  signal ddr_ahbsi        : ahb_slv_in_vector_type(0 to MEM_ID_RANGE_MSB);
-  signal ddr_ahbso        : ahb_slv_out_vector_type(0 to MEM_ID_RANGE_MSB);
-
   -- UART
   signal uart_rxd_int  : std_logic;       -- UART1_RX (u1i.rxd)
   signal uart_txd_int  : std_logic;       -- UART1_TX (u1o.txd)
   signal uart_ctsn_int : std_logic;       -- UART1_RTSN (u1i.ctsn)
   signal uart_rtsn_int : std_logic;       -- UART1_RTSN (u1o.rtsn)
+
+  -- Memory controller DDR4
+  signal ddr_ahbsi        : ahb_slv_in_vector_type(0 to MEM_ID_RANGE_MSB);
+  signal ddr_ahbso        : ahb_slv_out_vector_type(0 to MEM_ID_RANGE_MSB);
 
   -- DVI (unused on this board)
   signal dvi_apbi  : apb_slv_in_type;
@@ -112,10 +110,13 @@ constant CPU_FREQ : integer := 75000;  -- cpu frequency in KHz
   constant edcl_hconfig : ahb_config_type := (
     0      => ahb_device_reg (VENDOR_GAISLER, GAISLER_EDCLMST, 0, 0, 0),
     others => zero32);
-
+    constant CACHABLE :std_logic_vector(3 downto 0):= "1000";
+    constant BUFF :std_logic_vector(3 downto 0):= "0100";
+    constant PRIV :std_logic_vector(3 downto 0):= "0010";
+    constant DATA :std_logic_vector(3 downto 0):= "0001";
+    constant ADDRANG :std_logic_vector(1 downto 0):= "01";
 begin
-
-  ----------------------------------------------------------------------
+  -----------egin-----------------------------------------------------------
   --- FPGA Reset and Clock generation  ---------------------------------
   ----------------------------------------------------------------------
 
@@ -129,7 +130,7 @@ begin
   -----------------------------------------------------------------------------
 
   -- From CPU 0
-  led0_pad : outpad generic map (tech => CFG_FABTECH, level => cmos, voltage => x12v, strength => 8)
+  led0_pad : outpad generic map (tech => CFG_FABTECH, level => cmos, voltage => x33v)
     port map (led(0), cpuerr);
   --pragma translate_off
   process(chip_refclk, rstn)
@@ -141,19 +142,19 @@ begin
   --pragma translate_on
 
   -- From DDR controller (on FPGA)
-  led2_pad : outpad generic map (tech => CFG_FABTECH, level => cmos, voltage => x12v, strength => 8)
+  led2_pad : outpad generic map (tech => CFG_FABTECH, level => cmos, voltage => x33v)
     port map (led(2), '0');
-  led3_pad : outpad generic map (tech => CFG_FABTECH, level => cmos, voltage => x12v, strength => 8)
+  led3_pad : outpad generic map (tech => CFG_FABTECH, level => cmos, voltage => x33v)
     port map (led(3), '0');
-  led4_pad : outpad generic map (tech => CFG_FABTECH, level => cmos, voltage => x12v, strength => 8)
+  led4_pad : outpad generic map (tech => CFG_FABTECH, level => cmos, voltage => x33v)
     port map (led(4), ddr_ahbso(0).hready);
 
   -- unused
-  led1_pad : outpad generic map (tech => CFG_FABTECH, level => cmos, voltage => x12v, strength => 8)
+  led1_pad : outpad generic map (tech => CFG_FABTECH, level => cmos, voltage => x33v)
     port map (led(1), '0');
-  led5_pad : outpad generic map (tech => CFG_FABTECH, level => cmos, voltage => x12v, strength => 8)
+  led5_pad : outpad generic map (tech => CFG_FABTECH, level => cmos, voltage => x33v)
     port map (led(5), '0');
-  led6_pad : outpad generic map (tech => CFG_FABTECH, level => cmos, voltage => x12v, strength => 8)
+  led6_pad : outpad generic map (tech => CFG_FABTECH, level => cmos, voltage => x33v)
     port map (led(6), '0');
 
 
@@ -161,10 +162,10 @@ begin
   -- UART pads
   -----------------------------------------------------------------------------
 
-  uart_rxd_pad   : inpad  generic map (level => cmos, voltage => x12v, strength => 8, tech => CFG_FABTECH) port map (uart_rxd, uart_rxd_int);
-  uart_txd_pad   : outpad generic map (level => cmos, voltage => x12v, strength => 8, tech => CFG_FABTECH) port map (uart_txd, uart_txd_int);
-  uart_ctsn_pad : inpad  generic map (level => cmos, voltage => x12v, strength => 8, tech => CFG_FABTECH) port map (uart_ctsn, uart_ctsn_int);
-  uart_rtsn_pad : outpad generic map (level => cmos, voltage => x12v, strength => 8, tech => CFG_FABTECH) port map (uart_rtsn, uart_rtsn_int);
+  uart_rxd_pad   : inpad  generic map (level => cmos, voltage => x33v, tech => CFG_FABTECH) port map (uart_rxd, uart_rxd_int);
+  uart_txd_pad   : outpad generic map (level => cmos, voltage => x33v, tech => CFG_FABTECH) port map (uart_txd, uart_txd_int);
+  uart_ctsn_pad : inpad  generic map (level => cmos, voltage => x33v, tech => CFG_FABTECH) port map (uart_ctsn, uart_ctsn_int);
+  uart_rtsn_pad : outpad generic map (level => cmos, voltage => x33v, tech => CFG_FABTECH) port map (uart_rtsn, uart_rtsn_int);
 
   ----------------------------------------------------------------------
   --- PS-side DDR4 interface through Xilinx AHB-L-to-AXI adapter
@@ -172,12 +173,12 @@ begin
   si_hready             <= ddr_ahbsi(0).hready;
   si_hsel               <= ddr_ahbsi(0).hsel(0);
   si_htrans             <= ddr_ahbsi(0).htrans;
-  si_haddr(31)          <= '0'; -- ZCU102 has fixed address map
-  si_haddr(30 downto 0) <= ddr_ahbsi(0).haddr(30 downto 0);
+  si_haddr(31 downto 30)<= ADDRANG; -- ZCU102 has fixed address map
+  si_haddr(29 downto 0) <= ddr_ahbsi(0).haddr(29 downto 0);
   si_hwrite             <= ddr_ahbsi(0).hwrite;
   si_hsize              <= ddr_ahbsi(0).hsize;
   si_hburst             <= ddr_ahbsi(0).hburst;
-  si_hprot              <= ddr_ahbsi(0).hprot;
+  si_hprot              <= ddr_ahbsi(0).hprot OR CACHABLE OR PRIV;
   si_hwdata             <= ddr_ahbsi(0).hwdata;
 
   ddr_ahbso(0).hready  <= so_hready;

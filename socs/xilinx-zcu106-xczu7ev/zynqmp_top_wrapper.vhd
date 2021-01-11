@@ -1,5 +1,3 @@
--- Copyright (c) 2011-2021 Columbia University, System Level Design Group
--- SPDX-License-Identifier: Apache-2.0
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
@@ -119,14 +117,35 @@ architecture rtl of zynqmp_top_wrapper is
 
   -- AHB master outputs
   signal mo_hlock  : std_ulogic;                          -- lock request
-  signal mo_htrans : std_logic_vector(1 downto 0);        -- transfer type
-  signal mo_haddr  : std_logic_vector(31 downto 0);       -- address bus (byte)
+  signal mo_htrans : std_logic_vector(1 downto 0);        -- transfer type d
+  signal mo_haddr  : std_logic_vector(31 downto 0);       -- address bus (byte) d
   signal mo_hwrite : std_ulogic;                          -- read/write
   signal mo_hsize  : std_logic_vector(2 downto 0);        -- transfer size
   signal mo_hburst : std_logic_vector(2 downto 0);        -- burst type
-  signal mo_hprot  : std_logic_vector(3 downto 0);        -- protection control
-  signal mo_hwdata : std_logic_vector(31 downto 0);       -- write data bus
+  signal mo_hprot  : std_logic_vector(3 downto 0);        -- protection control d
+  signal mo_hwdata : std_logic_vector(31 downto 0);       -- write data bus d
 
+attribute mark_debug : string;
+attribute mark_debug of mo_haddr: signal is "true";
+attribute mark_debug of mo_hwdata: signal is "true";
+attribute mark_debug of mo_htrans: signal is "true";
+attribute mark_debug of mo_hprot: signal is "true";
+attribute mark_debug of mo_hwrite: signal is "true";
+attribute mark_debug of mi_hrdata: signal is "true";
+attribute mark_debug of mi_hresp: signal is "true";
+attribute mark_debug of mi_hready: signal is "true";
+attribute mark_debug of si_haddr: signal is "true";
+attribute mark_debug of si_hwdata: signal is "true";
+attribute mark_debug of si_htrans: signal is "true";
+attribute mark_debug of si_hprot: signal is "true";
+attribute mark_debug of si_hwrite: signal is "true";
+attribute mark_debug of so_hrdata: signal is "true";
+attribute mark_debug of so_hresp: signal is "true";
+attribute mark_debug of so_hready: signal is "true";
+attribute mark_debug of si_hready: signal is "true";
+
+
+constant FOUR_ONES :std_logic_vector(3 downto 0):= "1111";
 begin
 
   esptop_i : top
