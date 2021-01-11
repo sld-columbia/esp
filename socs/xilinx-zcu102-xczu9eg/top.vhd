@@ -178,7 +178,7 @@ begin
   si_hwrite             <= ddr_ahbsi(0).hwrite;
   si_hsize              <= ddr_ahbsi(0).hsize;
   si_hburst             <= ddr_ahbsi(0).hburst;
-  si_hprot              <= ddr_ahbsi(0).hprot OR CACHABLE OR PRIV;
+  si_hprot              <= ddr_ahbsi(0).hprot;
   si_hwdata             <= ddr_ahbsi(0).hwdata;
 
   ddr_ahbso(0).hready  <= so_hready;
