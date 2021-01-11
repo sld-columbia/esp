@@ -194,8 +194,8 @@ int main(int argc, char **argv)
 
 	/* Parallel test */
 	for (k = 0; k < NACC; k++) {
-		((struct fft_access*) cfg_parallel[k].esp_desc)->src_offset = size * k;
-		((struct fft_access*) cfg_parallel[k].esp_desc)->dst_offset = size * k;
+		((struct fft_stratus_access*) cfg_parallel[k].esp_desc)->src_offset = size * k;
+		((struct fft_stratus_access*) cfg_parallel[k].esp_desc)->dst_offset = size * k;
 	}
 
 	init_buffer(buf, gold, true, false);
