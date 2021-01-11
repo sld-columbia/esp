@@ -1,0 +1,100 @@
+#-----------------------------------------------------------
+# Vivado v2019.2.1 (64-bit)
+# SW Build 2729669 on Thu Dec  5 04:48:12 MST 2019
+# IP Build 2729494 on Thu Dec  5 07:38:25 MST 2019
+# Start of session at: Mon Jan 11 10:34:37 2021
+# Process ID: 27117
+# Current directory: /home/jescobedo/repos/juanesp/socs/xilinx-zcu102-xczu9eg/vivado
+# Command line: vivado esp-xilinx-zcu102-xczu9eg.xpr
+# Log file: /home/jescobedo/repos/juanesp/socs/xilinx-zcu102-xczu9eg/vivado/vivado.log
+# Journal file: /home/jescobedo/repos/juanesp/socs/xilinx-zcu102-xczu9eg/vivado/vivado.jou
+#-----------------------------------------------------------
+start_gui
+xterm: cannot load font "-Misc-Fixed-bold-R-*-*-13-120-75-75-C-60-ISO8859-1"
+xterm: cannot load font "-Misc-Fixed-medium-R-*-*-13-120-75-75-C-120-ISO10646-1"
+xterm: cannot load font "-Misc-Fixed-bold-R-*-*-13-120-75-75-C-120-ISO10646-1"
+open_project esp-xilinx-zcu102-xczu9eg.xpr
+Scanning sources...
+Finished scanning sources
+INFO: [IP_Flow 19-234] Refreshing IP repositories
+INFO: [IP_Flow 19-1704] No user IP repositories specified
+INFO: [IP_Flow 19-2313] Loaded Vivado IP repository '/opt/Xilinx/Vivado/2019.2/data/ip'.
+open_project: Time (s): cpu = 00:00:21 ; elapsed = 00:00:15 . Memory (MB): peak = 6712.113 ; gain = 147.621 ; free physical = 14749 ; free virtual = 125250
+WARNING: [filemgmt 56-315] Source scanning failed during design analysis. To get more details run synthesis or simulation and check the log.
+update_compile_order -fileset sources_1
+WARNING: [filemgmt 56-315] Source scanning failed during design analysis. To get more details run synthesis or simulation and check the log.
+launch_runs synth_1 -jobs 16
+Excluding slave segment /zynq_ultra_ps_e_0/SAXIGP0/HPC0_DDR_HIGH from address space /AHB_INTERFACE_0.
+Excluding slave segment /zynq_ultra_ps_e_0/SAXIGP0/HPC0_LPS_OCM from address space /AHB_INTERFACE_0.
+Excluding slave segment /zynq_ultra_ps_e_0/SAXIGP0/HPC0_PCIE_LOW from address space /AHB_INTERFACE_0.
+Excluding slave segment /zynq_ultra_ps_e_0/SAXIGP0/HPC0_QSPI from address space /AHB_INTERFACE_0.
+INFO: [PSU-1]  DP_AUDIO clock source: RPLL is also being used by other peripheral clocks. Their outputs may get impacted if any driver changes DP_AUDIO PLL source to support runtime audio change 
+INFO: [PSU-1]  DP_AUDIO clock source: RPLL is also being used by other peripheral clocks. Their outputs may get impacted if any driver changes DP_AUDIO PLL source to support runtime audio change 
+INFO: [PSU-1]  DP_AUDIO clock source: RPLL is also being used by other peripheral clocks. Their outputs may get impacted if any driver changes DP_AUDIO PLL source to support runtime audio change 
+INFO: [PSU-1]  DP_AUDIO clock source: RPLL is also being used by other peripheral clocks. Their outputs may get impacted if any driver changes DP_AUDIO PLL source to support runtime audio change 
+INFO: [PSU-1]  DP_AUDIO clock source: RPLL is also being used by other peripheral clocks. Their outputs may get impacted if any driver changes DP_AUDIO PLL source to support runtime audio change 
+WARNING: [BD 41-237] Bus Interface property AWUSER_WIDTH does not match between /axi_ahblite_bridge_0/AXI4(0) and /zynq_ultra_ps_e_0/M_AXI_HPM0_FPD(16)
+WARNING: [BD 41-237] Bus Interface property ARUSER_WIDTH does not match between /axi_ahblite_bridge_0/AXI4(0) and /zynq_ultra_ps_e_0/M_AXI_HPM0_FPD(16)
+WARNING: [BD 41-237] Bus Interface property AWUSER_WIDTH does not match between /ps8_0_axi_periph/s00_couplers/auto_pc/S_AXI(0) and /zynq_ultra_ps_e_0/M_AXI_HPM1_FPD(16)
+WARNING: [BD 41-237] Bus Interface property ARUSER_WIDTH does not match between /ps8_0_axi_periph/s00_couplers/auto_pc/S_AXI(0) and /zynq_ultra_ps_e_0/M_AXI_HPM1_FPD(16)
+WARNING: [BD 41-237] Bus Interface property AWUSER_WIDTH does not match between /zynq_ultra_ps_e_0/S_AXI_HPC0_FPD(1) and /ahblite_axi_bridge_0/M_AXI(0)
+WARNING: [BD 41-237] Bus Interface property ARUSER_WIDTH does not match between /zynq_ultra_ps_e_0/S_AXI_HPC0_FPD(1) and /ahblite_axi_bridge_0/M_AXI(0)
+Wrote  : </home/jescobedo/repos/juanesp/socs/xilinx-zcu102-xczu9eg/vivado/esp-xilinx-zcu102-xczu9eg.srcs/sources_1/bd/zynqmpsoc/zynqmpsoc.bd> 
+WARNING: [BD 41-235] Width mismatch when connecting pin: '/ahblite_axi_bridge_0/m_axi_rid'(4) to net 'ahblite_axi_bridge_0_M_AXI_RID'(6) - Only lower order bits will be connected.
+WARNING: [BD 41-235] Width mismatch when connecting pin: '/ahblite_axi_bridge_0/m_axi_bid'(4) to net 'ahblite_axi_bridge_0_M_AXI_BID'(6) - Only lower order bits will be connected.
+WARNING: [BD 41-235] Width mismatch when connecting pin: '/zynq_ultra_ps_e_0/saxigp0_arid'(6) to net 'ahblite_axi_bridge_0_M_AXI_ARID'(4) - Only lower order bits will be connected.
+WARNING: [BD 41-235] Width mismatch when connecting pin: '/zynq_ultra_ps_e_0/saxigp0_awid'(6) to net 'ahblite_axi_bridge_0_M_AXI_AWID'(4) - Only lower order bits will be connected.
+VHDL Output written to : /home/jescobedo/repos/juanesp/socs/xilinx-zcu102-xczu9eg/vivado/esp-xilinx-zcu102-xczu9eg.srcs/sources_1/bd/zynqmpsoc/synth/zynqmpsoc.v
+WARNING: [BD 41-235] Width mismatch when connecting pin: '/ahblite_axi_bridge_0/m_axi_rid'(4) to net 'ahblite_axi_bridge_0_M_AXI_RID'(6) - Only lower order bits will be connected.
+WARNING: [BD 41-235] Width mismatch when connecting pin: '/ahblite_axi_bridge_0/m_axi_bid'(4) to net 'ahblite_axi_bridge_0_M_AXI_BID'(6) - Only lower order bits will be connected.
+WARNING: [BD 41-235] Width mismatch when connecting pin: '/zynq_ultra_ps_e_0/saxigp0_arid'(6) to net 'ahblite_axi_bridge_0_M_AXI_ARID'(4) - Only lower order bits will be connected.
+WARNING: [BD 41-235] Width mismatch when connecting pin: '/zynq_ultra_ps_e_0/saxigp0_awid'(6) to net 'ahblite_axi_bridge_0_M_AXI_AWID'(4) - Only lower order bits will be connected.
+VHDL Output written to : /home/jescobedo/repos/juanesp/socs/xilinx-zcu102-xczu9eg/vivado/esp-xilinx-zcu102-xczu9eg.srcs/sources_1/bd/zynqmpsoc/sim/zynqmpsoc.v
+VHDL Output written to : /home/jescobedo/repos/juanesp/socs/xilinx-zcu102-xczu9eg/vivado/esp-xilinx-zcu102-xczu9eg.srcs/sources_1/bd/zynqmpsoc/hdl/zynqmpsoc_wrapper.v
+INFO: [xilinx.com:ip:zynq_ultra_ps_e:3.3-0] zynqmpsoc_zynq_ultra_ps_e_0_0: 
+Changes in your design (including the PCW configuration settings) are not automatically exported from Vivado to Xilinx's SDK, Petalinux or Yocto.
+This is by design to avoid disrupting existing embedded development efforts. To have any changes of your design taking effect in the embedded software flow please export your
+design by going through Vivado's main menu, click on File, then Export finally select Export Hardware, please ensure you click on the Include BitStream option.
+The auto-generated HDF file is all you need to import in Xilinx's SDK, Petalinux or Yocto for your changes to be reflected in the Embedded Software Flow.
+For more information, please consult PG201, section: Exporting PCW Settings to Embedded Software Flows
+INFO: [PSU-0] Address Range of DDR (0x7ff00000 to 0x7fffffff) is reserved by PMU for internal purpose.
+WARNING: [IP_Flow 19-5611] Unable to find an associated reset port for the interface 'M_AXI_HPM0_FPD'. A default connection has been created.
+WARNING: [IP_Flow 19-5611] Unable to find an associated reset port for the interface 'M_AXI_HPM1_FPD'. A default connection has been created.
+WARNING: [IP_Flow 19-5611] Unable to find an associated reset port for the interface 'S_AXI_HPC0_FPD'. A default connection has been created.
+INFO: [BD 41-1029] Generation completed for the IP Integrator block zynq_ultra_ps_e_0 .
+INFO: [BD 41-1029] Generation completed for the IP Integrator block axi_ahblite_bridge_0 .
+INFO: [BD 41-1029] Generation completed for the IP Integrator block ahblite_axi_bridge_0 .
+INFO: [BD 41-1029] Generation completed for the IP Integrator block rst_ps8_0_75M .
+Exporting to file /home/jescobedo/repos/juanesp/socs/xilinx-zcu102-xczu9eg/vivado/esp-xilinx-zcu102-xczu9eg.srcs/sources_1/bd/zynqmpsoc/ip/zynqmpsoc_system_ila_0_0/bd_0/hw_handoff/zynqmpsoc_system_ila_0_0.hwh
+Generated Block Design Tcl file /home/jescobedo/repos/juanesp/socs/xilinx-zcu102-xczu9eg/vivado/esp-xilinx-zcu102-xczu9eg.srcs/sources_1/bd/zynqmpsoc/ip/zynqmpsoc_system_ila_0_0/bd_0/hw_handoff/zynqmpsoc_system_ila_0_0_bd.tcl
+Generated Hardware Definition File /home/jescobedo/repos/juanesp/socs/xilinx-zcu102-xczu9eg/vivado/esp-xilinx-zcu102-xczu9eg.srcs/sources_1/bd/zynqmpsoc/ip/zynqmpsoc_system_ila_0_0/bd_0/synth/zynqmpsoc_system_ila_0_0.hwdef
+INFO: [BD 41-1029] Generation completed for the IP Integrator block system_ila_0 .
+INFO: [BD 41-1029] Generation completed for the IP Integrator block axi_gpio_0 .
+WARNING: [IP_Flow 19-4994] Overwriting existing constraint file '/home/jescobedo/repos/juanesp/socs/xilinx-zcu102-xczu9eg/vivado/esp-xilinx-zcu102-xczu9eg.srcs/sources_1/bd/zynqmpsoc/ip/zynqmpsoc_auto_pc_0/zynqmpsoc_auto_pc_0_ooc.xdc'
+INFO: [BD 41-1029] Generation completed for the IP Integrator block ps8_0_axi_periph/s00_couplers/auto_pc .
+Exporting to file /home/jescobedo/repos/juanesp/socs/xilinx-zcu102-xczu9eg/vivado/esp-xilinx-zcu102-xczu9eg.srcs/sources_1/bd/zynqmpsoc/hw_handoff/zynqmpsoc.hwh
+Generated Block Design Tcl file /home/jescobedo/repos/juanesp/socs/xilinx-zcu102-xczu9eg/vivado/esp-xilinx-zcu102-xczu9eg.srcs/sources_1/bd/zynqmpsoc/hw_handoff/zynqmpsoc_bd.tcl
+Generated Hardware Definition File /home/jescobedo/repos/juanesp/socs/xilinx-zcu102-xczu9eg/vivado/esp-xilinx-zcu102-xczu9eg.srcs/sources_1/bd/zynqmpsoc/synth/zynqmpsoc.hwdef
+INFO: [IP_Flow 19-5642] Done with IP cache export for multiple IPs
+WARNING: [filemgmt 20-644] Circular Reference Found: '.xil_defaultlib.popcount' [/home/jescobedo/repos/juanesp/rtl/cores/ariane/ariane/src/common_cells/src/popcount.sv:0] -->> '.xil_defaultlib.popcount' [/home/jescobedo/repos/juanesp/rtl/cores/ariane/ariane/src/common_cells/src/popcount.sv:19]
+[Mon Jan 11 10:39:35 2021] Launched zynqmpsoc_zynq_ultra_ps_e_0_0_synth_1, zynqmpsoc_axi_ahblite_bridge_0_0_synth_1, zynqmpsoc_ahblite_axi_bridge_0_0_synth_1, zynqmpsoc_rst_ps8_0_75M_0_synth_1, zynqmpsoc_system_ila_0_0_synth_1, zynqmpsoc_axi_gpio_0_0_synth_1, zynqmpsoc_auto_pc_0_synth_1...
+Run output will be captured here:
+zynqmpsoc_zynq_ultra_ps_e_0_0_synth_1: /home/jescobedo/repos/juanesp/socs/xilinx-zcu102-xczu9eg/vivado/esp-xilinx-zcu102-xczu9eg.runs/zynqmpsoc_zynq_ultra_ps_e_0_0_synth_1/runme.log
+zynqmpsoc_axi_ahblite_bridge_0_0_synth_1: /home/jescobedo/repos/juanesp/socs/xilinx-zcu102-xczu9eg/vivado/esp-xilinx-zcu102-xczu9eg.runs/zynqmpsoc_axi_ahblite_bridge_0_0_synth_1/runme.log
+zynqmpsoc_ahblite_axi_bridge_0_0_synth_1: /home/jescobedo/repos/juanesp/socs/xilinx-zcu102-xczu9eg/vivado/esp-xilinx-zcu102-xczu9eg.runs/zynqmpsoc_ahblite_axi_bridge_0_0_synth_1/runme.log
+zynqmpsoc_rst_ps8_0_75M_0_synth_1: /home/jescobedo/repos/juanesp/socs/xilinx-zcu102-xczu9eg/vivado/esp-xilinx-zcu102-xczu9eg.runs/zynqmpsoc_rst_ps8_0_75M_0_synth_1/runme.log
+zynqmpsoc_system_ila_0_0_synth_1: /home/jescobedo/repos/juanesp/socs/xilinx-zcu102-xczu9eg/vivado/esp-xilinx-zcu102-xczu9eg.runs/zynqmpsoc_system_ila_0_0_synth_1/runme.log
+zynqmpsoc_axi_gpio_0_0_synth_1: /home/jescobedo/repos/juanesp/socs/xilinx-zcu102-xczu9eg/vivado/esp-xilinx-zcu102-xczu9eg.runs/zynqmpsoc_axi_gpio_0_0_synth_1/runme.log
+zynqmpsoc_auto_pc_0_synth_1: /home/jescobedo/repos/juanesp/socs/xilinx-zcu102-xczu9eg/vivado/esp-xilinx-zcu102-xczu9eg.runs/zynqmpsoc_auto_pc_0_synth_1/runme.log
+[Mon Jan 11 10:40:00 2021] Launched synth_1...
+Run output will be captured here: /home/jescobedo/repos/juanesp/socs/xilinx-zcu102-xczu9eg/vivado/esp-xilinx-zcu102-xczu9eg.runs/synth_1/runme.log
+launch_runs: Time (s): cpu = 00:01:32 ; elapsed = 00:02:51 . Memory (MB): peak = 7358.059 ; gain = 440.406 ; free physical = 11474 ; free virtual = 122034
+launch_runs impl_1 -jobs 16
+[Mon Jan 11 11:00:27 2021] Launched impl_1...
+Run output will be captured here: /home/jescobedo/repos/juanesp/socs/xilinx-zcu102-xczu9eg/vivado/esp-xilinx-zcu102-xczu9eg.runs/impl_1/runme.log
+launch_runs impl_1 -to_step write_bitstream -jobs 16
+[Mon Jan 11 11:37:41 2021] Launched impl_1...
+Run output will be captured here: /home/jescobedo/repos/juanesp/socs/xilinx-zcu102-xczu9eg/vivado/esp-xilinx-zcu102-xczu9eg.runs/impl_1/runme.log
+launch_runs: Time (s): cpu = 00:00:01 ; elapsed = 00:00:05 . Memory (MB): peak = 7380.211 ; gain = 0.000 ; free physical = 16173 ; free virtual = 124807
+exit
+INFO: [Common 17-206] Exiting Vivado at Mon Jan 11 11:41:56 2021...

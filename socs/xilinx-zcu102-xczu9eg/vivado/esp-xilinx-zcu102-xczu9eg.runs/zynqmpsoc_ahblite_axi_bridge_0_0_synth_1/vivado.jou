@@ -1,0 +1,12 @@
+#-----------------------------------------------------------
+# Vivado v2019.2.1 (64-bit)
+# SW Build 2729669 on Thu Dec  5 04:48:12 MST 2019
+# IP Build 2729494 on Thu Dec  5 07:38:25 MST 2019
+# Start of session at: Mon Jan 11 12:07:03 2021
+# Process ID: 131684
+# Current directory: /home/jescobedo/repos/juanesp/socs/xilinx-zcu102-xczu9eg/vivado/esp-xilinx-zcu102-xczu9eg.runs/zynqmpsoc_ahblite_axi_bridge_0_0_synth_1
+# Command line: vivado -log zynqmpsoc_ahblite_axi_bridge_0_0.vds -product Vivado -mode batch -messageDb vivado.pb -notrace -source zynqmpsoc_ahblite_axi_bridge_0_0.tcl
+# Log file: /home/jescobedo/repos/juanesp/socs/xilinx-zcu102-xczu9eg/vivado/esp-xilinx-zcu102-xczu9eg.runs/zynqmpsoc_ahblite_axi_bridge_0_0_synth_1/zynqmpsoc_ahblite_axi_bridge_0_0.vds
+# Journal file: /home/jescobedo/repos/juanesp/socs/xilinx-zcu102-xczu9eg/vivado/esp-xilinx-zcu102-xczu9eg.runs/zynqmpsoc_ahblite_axi_bridge_0_0_synth_1/vivado.jou
+#-----------------------------------------------------------
+source zynqmpsoc_ahblite_axi_bridge_0_0.tcl -notrace

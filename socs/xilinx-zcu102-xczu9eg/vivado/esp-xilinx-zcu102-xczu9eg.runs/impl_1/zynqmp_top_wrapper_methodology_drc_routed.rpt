@@ -1,0 +1,243 @@
+Copyright 1986-2019 Xilinx, Inc. All Rights Reserved.
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+| Tool Version : Vivado v.2019.2.1 (lin64) Build 2729669 Thu Dec  5 04:48:12 MST 2019
+| Date         : Mon Jan 11 13:02:47 2021
+| Host         : skie running 64-bit Ubuntu 18.04.5 LTS
+| Command      : report_methodology -file zynqmp_top_wrapper_methodology_drc_routed.rpt -pb zynqmp_top_wrapper_methodology_drc_routed.pb -rpx zynqmp_top_wrapper_methodology_drc_routed.rpx
+| Design       : zynqmp_top_wrapper
+| Device       : xczu9eg-ffvb1156-2-e
+| Speed File   : -2
+| Design State : Fully Routed
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Report Methodology
+
+Table of Contents
+-----------------
+1. REPORT SUMMARY
+2. REPORT DETAILS
+
+1. REPORT SUMMARY
+-----------------
+            Netlist: netlist
+          Floorplan: design_1
+      Design limits: <entire design considered>
+             Max violations: <unlimited>
+             Violations found: 41
++-----------+----------+---------------------------------------------+------------+
+| Rule      | Severity | Description                                 | Violations |
++-----------+----------+---------------------------------------------+------------+
+| LUTAR-1   | Warning  | LUT drives async reset alert                | 8          |
+| SYNTH-10  | Warning  | Wide multiplier                             | 24         |
+| TIMING-18 | Warning  | Missing input or output delay               | 8          |
+| ULMTCS-1  | Warning  | Control Sets use limits recommend reduction | 1          |
++-----------+----------+---------------------------------------------+------------+
+
+2. REPORT DETAILS
+-----------------
+LUTAR-1#1 Warning
+LUT drives async reset alert  
+LUT cell dbg_hub/inst/BSCANID.u_xsdbm_id/CORE_XSDB.UUT_MASTER/U_ICON_INTERFACE/U_CMD6_RD/U_RD_FIFO/SUBCORE_FIFO.xsdbm_v3_0_0_rdfifo_inst/inst_fifo_gen/gconvfifo.rf/grf.rf/rstblk/ngwrdrst.grst.g7serrst.gwrrd_rst_sync_stage[2].rrst_inst/ngwrdrst.grst.g7serrst.rd_rst_reg[2]_i_1, with 2 or more inputs, drives asynchronous preset/clear pin(s) dbg_hub/inst/BSCANID.u_xsdbm_id/CORE_XSDB.UUT_MASTER/U_ICON_INTERFACE/U_CMD6_RD/U_RD_FIFO/SUBCORE_FIFO.xsdbm_v3_0_0_rdfifo_inst/inst_fifo_gen/gconvfifo.rf/grf.rf/rstblk/ngwrdrst.grst.g7serrst.rd_rst_reg_reg[0]/PRE, dbg_hub/inst/BSCANID.u_xsdbm_id/CORE_XSDB.UUT_MASTER/U_ICON_INTERFACE/U_CMD6_RD/U_RD_FIFO/SUBCORE_FIFO.xsdbm_v3_0_0_rdfifo_inst/inst_fifo_gen/gconvfifo.rf/grf.rf/rstblk/ngwrdrst.grst.g7serrst.rd_rst_reg_reg[1]/PRE, dbg_hub/inst/BSCANID.u_xsdbm_id/CORE_XSDB.UUT_MASTER/U_ICON_INTERFACE/U_CMD6_RD/U_RD_FIFO/SUBCORE_FIFO.xsdbm_v3_0_0_rdfifo_inst/inst_fifo_gen/gconvfifo.rf/grf.rf/rstblk/ngwrdrst.grst.g7serrst.rd_rst_reg_reg[2]/PRE. The LUT may glitch and trigger an unexpected reset, even if it is a properly timed path.
+Related violations: <none>
+
+LUTAR-1#2 Warning
+LUT drives async reset alert  
+LUT cell dbg_hub/inst/BSCANID.u_xsdbm_id/CORE_XSDB.UUT_MASTER/U_ICON_INTERFACE/U_CMD6_RD/U_RD_FIFO/SUBCORE_FIFO.xsdbm_v3_0_0_rdfifo_inst/inst_fifo_gen/gconvfifo.rf/grf.rf/rstblk/ngwrdrst.grst.g7serrst.gwrrd_rst_sync_stage[2].wrst_inst/ngwrdrst.grst.g7serrst.wr_rst_reg[2]_i_1, with 2 or more inputs, drives asynchronous preset/clear pin(s) dbg_hub/inst/BSCANID.u_xsdbm_id/CORE_XSDB.UUT_MASTER/U_ICON_INTERFACE/U_CMD6_RD/U_RD_FIFO/SUBCORE_FIFO.xsdbm_v3_0_0_rdfifo_inst/inst_fifo_gen/gconvfifo.rf/grf.rf/rstblk/ngwrdrst.grst.g7serrst.wr_rst_reg_reg[0]/PRE, dbg_hub/inst/BSCANID.u_xsdbm_id/CORE_XSDB.UUT_MASTER/U_ICON_INTERFACE/U_CMD6_RD/U_RD_FIFO/SUBCORE_FIFO.xsdbm_v3_0_0_rdfifo_inst/inst_fifo_gen/gconvfifo.rf/grf.rf/rstblk/ngwrdrst.grst.g7serrst.wr_rst_reg_reg[1]/PRE, dbg_hub/inst/BSCANID.u_xsdbm_id/CORE_XSDB.UUT_MASTER/U_ICON_INTERFACE/U_CMD6_RD/U_RD_FIFO/SUBCORE_FIFO.xsdbm_v3_0_0_rdfifo_inst/inst_fifo_gen/gconvfifo.rf/grf.rf/rstblk/ngwrdrst.grst.g7serrst.wr_rst_reg_reg[2]/PRE. The LUT may glitch and trigger an unexpected reset, even if it is a properly timed path.
+Related violations: <none>
+
+LUTAR-1#3 Warning
+LUT drives async reset alert  
+LUT cell dbg_hub/inst/BSCANID.u_xsdbm_id/CORE_XSDB.UUT_MASTER/U_ICON_INTERFACE/U_CMD6_WR/U_WR_FIFO/SUBCORE_FIFO.xsdbm_v3_0_0_wrfifo_inst/inst_fifo_gen/gconvfifo.rf/grf.rf/rstblk/ngwrdrst.grst.g7serrst.gwrrd_rst_sync_stage[2].rrst_inst/ngwrdrst.grst.g7serrst.rd_rst_reg[2]_i_1, with 2 or more inputs, drives asynchronous preset/clear pin(s) dbg_hub/inst/BSCANID.u_xsdbm_id/CORE_XSDB.UUT_MASTER/U_ICON_INTERFACE/U_CMD6_WR/U_WR_FIFO/SUBCORE_FIFO.xsdbm_v3_0_0_wrfifo_inst/inst_fifo_gen/gconvfifo.rf/grf.rf/rstblk/ngwrdrst.grst.g7serrst.rd_rst_reg_reg[0]/PRE, dbg_hub/inst/BSCANID.u_xsdbm_id/CORE_XSDB.UUT_MASTER/U_ICON_INTERFACE/U_CMD6_WR/U_WR_FIFO/SUBCORE_FIFO.xsdbm_v3_0_0_wrfifo_inst/inst_fifo_gen/gconvfifo.rf/grf.rf/rstblk/ngwrdrst.grst.g7serrst.rd_rst_reg_reg[1]/PRE, dbg_hub/inst/BSCANID.u_xsdbm_id/CORE_XSDB.UUT_MASTER/U_ICON_INTERFACE/U_CMD6_WR/U_WR_FIFO/SUBCORE_FIFO.xsdbm_v3_0_0_wrfifo_inst/inst_fifo_gen/gconvfifo.rf/grf.rf/rstblk/ngwrdrst.grst.g7serrst.rd_rst_reg_reg[2]/PRE. The LUT may glitch and trigger an unexpected reset, even if it is a properly timed path.
+Related violations: <none>
+
+LUTAR-1#4 Warning
+LUT drives async reset alert  
+LUT cell dbg_hub/inst/BSCANID.u_xsdbm_id/CORE_XSDB.UUT_MASTER/U_ICON_INTERFACE/U_CMD6_WR/U_WR_FIFO/SUBCORE_FIFO.xsdbm_v3_0_0_wrfifo_inst/inst_fifo_gen/gconvfifo.rf/grf.rf/rstblk/ngwrdrst.grst.g7serrst.gwrrd_rst_sync_stage[2].wrst_inst/ngwrdrst.grst.g7serrst.wr_rst_reg[2]_i_1, with 2 or more inputs, drives asynchronous preset/clear pin(s) dbg_hub/inst/BSCANID.u_xsdbm_id/CORE_XSDB.UUT_MASTER/U_ICON_INTERFACE/U_CMD6_WR/U_WR_FIFO/SUBCORE_FIFO.xsdbm_v3_0_0_wrfifo_inst/inst_fifo_gen/gconvfifo.rf/grf.rf/rstblk/ngwrdrst.grst.g7serrst.wr_rst_reg_reg[0]/PRE, dbg_hub/inst/BSCANID.u_xsdbm_id/CORE_XSDB.UUT_MASTER/U_ICON_INTERFACE/U_CMD6_WR/U_WR_FIFO/SUBCORE_FIFO.xsdbm_v3_0_0_wrfifo_inst/inst_fifo_gen/gconvfifo.rf/grf.rf/rstblk/ngwrdrst.grst.g7serrst.wr_rst_reg_reg[1]/PRE, dbg_hub/inst/BSCANID.u_xsdbm_id/CORE_XSDB.UUT_MASTER/U_ICON_INTERFACE/U_CMD6_WR/U_WR_FIFO/SUBCORE_FIFO.xsdbm_v3_0_0_wrfifo_inst/inst_fifo_gen/gconvfifo.rf/grf.rf/rstblk/ngwrdrst.grst.g7serrst.wr_rst_reg_reg[2]/PRE. The LUT may glitch and trigger an unexpected reset, even if it is a properly timed path.
+Related violations: <none>
+
+LUTAR-1#5 Warning
+LUT drives async reset alert  
+LUT cell dbg_hub/inst/BSCANID.u_xsdbm_id/SWITCH_N_EXT_BSCAN.bscan_switch/m_bscan_sel[0]_INST_0, with 2 or more inputs, drives asynchronous preset/clear pin(s) dbg_hub/inst/BSCANID.u_xsdbm_id/CORE_XSDB.U_ICON/U_CMD/iTARGET_reg[10]/CLR, dbg_hub/inst/BSCANID.u_xsdbm_id/CORE_XSDB.U_ICON/U_CMD/iTARGET_reg[11]/CLR, dbg_hub/inst/BSCANID.u_xsdbm_id/CORE_XSDB.U_ICON/U_CMD/iTARGET_reg[12]/CLR, dbg_hub/inst/BSCANID.u_xsdbm_id/CORE_XSDB.U_ICON/U_CMD/iTARGET_reg[13]/CLR, dbg_hub/inst/BSCANID.u_xsdbm_id/CORE_XSDB.U_ICON/U_CMD/iTARGET_reg[14]/CLR, dbg_hub/inst/BSCANID.u_xsdbm_id/CORE_XSDB.U_ICON/U_CMD/iTARGET_reg[15]/CLR, dbg_hub/inst/BSCANID.u_xsdbm_id/CORE_XSDB.U_ICON/U_CMD/iTARGET_reg[6]/CLR, dbg_hub/inst/BSCANID.u_xsdbm_id/CORE_XSDB.U_ICON/U_CMD/iTARGET_reg[7]/CLR, dbg_hub/inst/BSCANID.u_xsdbm_id/CORE_XSDB.U_ICON/U_CMD/iTARGET_reg[8]/CLR, dbg_hub/inst/BSCANID.u_xsdbm_id/CORE_XSDB.U_ICON/U_CMD/iTARGET_reg[9]/CLR. The LUT may glitch and trigger an unexpected reset, even if it is a properly timed path.
+Related violations: <none>
+
+LUTAR-1#6 Warning
+LUT drives async reset alert  
+LUT cell esptop_i/esp_1/tiles_gen[1].cpu_tile.tile_cpu_i/cpu_tile_csr/FSM_sequential_current_state[3]_i_3, with 2 or more inputs, drives asynchronous preset/clear pin(s) esptop_i/esp_1/tiles_gen[1].cpu_tile.tile_cpu_i/intack2noc_1/geneirc_irqi_gen.irqi_reg_reg[irl][0]/CLR, esptop_i/esp_1/tiles_gen[1].cpu_tile.tile_cpu_i/intack2noc_1/geneirc_irqi_gen.irqi_reg_reg[irl][1]/CLR, esptop_i/esp_1/tiles_gen[1].cpu_tile.tile_cpu_i/intack2noc_1/geneirc_irqi_gen.irqi_reg_reg[irl][3]/CLR, esptop_i/esp_1/tiles_gen[1].cpu_tile.tile_cpu_i/intack2noc_1/geneirc_irqi_gen.irqi_reg_reg[irl][2]/PRE, esptop_i/esp_1/tiles_gen[1].cpu_tile.tile_cpu_i/ariane_cpu_tile_services_gen.ariane_no_cache_coherence.axislv2noc_1/FSM_sequential_current_state_reg[0]/CLR, esptop_i/esp_1/tiles_gen[1].cpu_tile.tile_cpu_i/ariane_cpu_tile_services_gen.ariane_no_cache_coherence.axislv2noc_1/FSM_sequential_current_state_reg[1]/CLR, esptop_i/esp_1/tiles_gen[1].cpu_tile.tile_cpu_i/ariane_cpu_tile_services_gen.ariane_no_cache_coherence.axislv2noc_1/FSM_sequential_current_state_reg[2]/CLR, esptop_i/esp_1/tiles_gen[1].cpu_tile.tile_cpu_i/ariane_cpu_tile_services_gen.ariane_no_cache_coherence.axislv2noc_1/FSM_sequential_current_state_reg[3]/CLR, esptop_i/esp_1/tiles_gen[1].cpu_tile.tile_cpu_i/ariane_cpu_tile_services_gen.ariane_no_cache_coherence.axislv2noc_1/remote_ahbs_rcv_data_out_hold_reg[0]/CLR, esptop_i/esp_1/tiles_gen[1].cpu_tile.tile_cpu_i/ariane_cpu_tile_services_gen.ariane_no_cache_coherence.axislv2noc_1/remote_ahbs_rcv_data_out_hold_reg[10]/CLR, esptop_i/esp_1/tiles_gen[1].cpu_tile.tile_cpu_i/ariane_cpu_tile_services_gen.ariane_no_cache_coherence.axislv2noc_1/remote_ahbs_rcv_data_out_hold_reg[11]/CLR, esptop_i/esp_1/tiles_gen[1].cpu_tile.tile_cpu_i/ariane_cpu_tile_services_gen.ariane_no_cache_coherence.axislv2noc_1/remote_ahbs_rcv_data_out_hold_reg[12]/CLR, esptop_i/esp_1/tiles_gen[1].cpu_tile.tile_cpu_i/ariane_cpu_tile_services_gen.ariane_no_cache_coherence.axislv2noc_1/remote_ahbs_rcv_data_out_hold_reg[13]/CLR, esptop_i/esp_1/tiles_gen[1].cpu_tile.tile_cpu_i/ariane_cpu_tile_services_gen.ariane_no_cache_coherence.axislv2noc_1/remote_ahbs_rcv_data_out_hold_reg[14]/CLR, esptop_i/esp_1/tiles_gen[1].cpu_tile.tile_cpu_i/ariane_cpu_tile_services_gen.ariane_no_cache_coherence.axislv2noc_1/remote_ahbs_rcv_data_out_hold_reg[15]/CLR (the first 15 of 151 listed). The LUT may glitch and trigger an unexpected reset, even if it is a properly timed path.
+Related violations: <none>
+
+LUTAR-1#7 Warning
+LUT drives async reset alert  
+LUT cell esptop_i/esp_1/tiles_gen[3].io_tile.tile_io_i/esplink_1/ia[29]_i_2, with 2 or more inputs, drives asynchronous preset/clear pin(s) esptop_i/esp_1/tiles_gen[3].io_tile.tile_io_i/riscv_plic_gen.riscv_plic0/riscv_plic_wrap_1/i_plic/ie_q_reg[0][0]/CLR, esptop_i/esp_1/tiles_gen[3].io_tile.tile_io_i/riscv_plic_gen.riscv_plic0/riscv_plic_wrap_1/i_plic/ie_q_reg[0][10]/CLR, esptop_i/esp_1/tiles_gen[3].io_tile.tile_io_i/riscv_plic_gen.riscv_plic0/riscv_plic_wrap_1/i_plic/ie_q_reg[0][11]/CLR, esptop_i/esp_1/tiles_gen[3].io_tile.tile_io_i/riscv_plic_gen.riscv_plic0/riscv_plic_wrap_1/i_plic/ie_q_reg[0][12]/CLR, esptop_i/esp_1/tiles_gen[3].io_tile.tile_io_i/riscv_plic_gen.riscv_plic0/riscv_plic_wrap_1/i_plic/ie_q_reg[0][13]/CLR, esptop_i/esp_1/tiles_gen[3].io_tile.tile_io_i/riscv_plic_gen.riscv_plic0/riscv_plic_wrap_1/i_plic/ie_q_reg[0][14]/CLR, esptop_i/esp_1/tiles_gen[3].io_tile.tile_io_i/riscv_plic_gen.riscv_plic0/riscv_plic_wrap_1/i_plic/ie_q_reg[0][15]/CLR, esptop_i/esp_1/tiles_gen[3].io_tile.tile_io_i/riscv_plic_gen.riscv_plic0/riscv_plic_wrap_1/i_plic/ie_q_reg[0][16]/CLR, esptop_i/esp_1/tiles_gen[3].io_tile.tile_io_i/riscv_plic_gen.riscv_plic0/riscv_plic_wrap_1/i_plic/ie_q_reg[0][17]/CLR, esptop_i/esp_1/tiles_gen[3].io_tile.tile_io_i/riscv_plic_gen.riscv_plic0/riscv_plic_wrap_1/i_plic/ie_q_reg[0][18]/CLR, esptop_i/esp_1/tiles_gen[3].io_tile.tile_io_i/riscv_plic_gen.riscv_plic0/riscv_plic_wrap_1/i_plic/ie_q_reg[0][19]/CLR, esptop_i/esp_1/tiles_gen[3].io_tile.tile_io_i/riscv_plic_gen.riscv_plic0/riscv_plic_wrap_1/i_plic/ie_q_reg[0][1]/CLR, esptop_i/esp_1/tiles_gen[3].io_tile.tile_io_i/riscv_plic_gen.riscv_plic0/riscv_plic_wrap_1/i_plic/ie_q_reg[0][20]/CLR, esptop_i/esp_1/tiles_gen[3].io_tile.tile_io_i/riscv_plic_gen.riscv_plic0/riscv_plic_wrap_1/i_plic/ie_q_reg[0][21]/CLR, esptop_i/esp_1/tiles_gen[3].io_tile.tile_io_i/riscv_plic_gen.riscv_plic0/riscv_plic_wrap_1/i_plic/ie_q_reg[0][22]/CLR (the first 15 of 214 listed). The LUT may glitch and trigger an unexpected reset, even if it is a properly timed path.
+Related violations: <none>
+
+LUTAR-1#8 Warning
+LUT drives async reset alert  
+LUT cell esptop_i/rst0/FSM_sequential_syncregs.r[state][1]_i_1, with 2 or more inputs, drives asynchronous preset/clear pin(s) esptop_i/esp_1/tiles_gen[3].io_tile.tile_io_i/riscv_plic_gen.riscv_clint_gen.riscv_clint_ahb_wrap_1/riscv_clint_wrap_1/rtc_reg/CLR, esptop_i/esp_1/tiles_gen[3].io_tile.tile_io_i/riscv_plic_gen.riscv_clint_gen.riscv_clint_ahb_wrap_1/riscv_clint_wrap_1/i_clint/msip_q_reg[0]/CLR, esptop_i/esp_1/tiles_gen[3].io_tile.tile_io_i/riscv_plic_gen.riscv_clint_gen.riscv_clint_ahb_wrap_1/riscv_clint_wrap_1/i_clint/mtime_q_reg[0]/CLR, esptop_i/esp_1/tiles_gen[3].io_tile.tile_io_i/riscv_plic_gen.riscv_clint_gen.riscv_clint_ahb_wrap_1/riscv_clint_wrap_1/i_clint/mtime_q_reg[10]/CLR, esptop_i/esp_1/tiles_gen[3].io_tile.tile_io_i/riscv_plic_gen.riscv_clint_gen.riscv_clint_ahb_wrap_1/riscv_clint_wrap_1/i_clint/mtime_q_reg[11]/CLR, esptop_i/esp_1/tiles_gen[3].io_tile.tile_io_i/riscv_plic_gen.riscv_clint_gen.riscv_clint_ahb_wrap_1/riscv_clint_wrap_1/i_clint/mtime_q_reg[12]/CLR, esptop_i/esp_1/tiles_gen[3].io_tile.tile_io_i/riscv_plic_gen.riscv_clint_gen.riscv_clint_ahb_wrap_1/riscv_clint_wrap_1/i_clint/mtime_q_reg[13]/CLR, esptop_i/esp_1/tiles_gen[3].io_tile.tile_io_i/riscv_plic_gen.riscv_clint_gen.riscv_clint_ahb_wrap_1/riscv_clint_wrap_1/i_clint/mtime_q_reg[14]/CLR, esptop_i/esp_1/tiles_gen[3].io_tile.tile_io_i/riscv_plic_gen.riscv_clint_gen.riscv_clint_ahb_wrap_1/riscv_clint_wrap_1/i_clint/mtime_q_reg[15]/CLR, esptop_i/esp_1/tiles_gen[3].io_tile.tile_io_i/riscv_plic_gen.riscv_clint_gen.riscv_clint_ahb_wrap_1/riscv_clint_wrap_1/i_clint/mtime_q_reg[16]/CLR, esptop_i/esp_1/tiles_gen[3].io_tile.tile_io_i/riscv_plic_gen.riscv_clint_gen.riscv_clint_ahb_wrap_1/riscv_clint_wrap_1/i_clint/mtime_q_reg[17]/CLR, esptop_i/esp_1/tiles_gen[3].io_tile.tile_io_i/riscv_plic_gen.riscv_clint_gen.riscv_clint_ahb_wrap_1/riscv_clint_wrap_1/i_clint/mtime_q_reg[18]/CLR, esptop_i/esp_1/tiles_gen[3].io_tile.tile_io_i/riscv_plic_gen.riscv_clint_gen.riscv_clint_ahb_wrap_1/riscv_clint_wrap_1/i_clint/mtime_q_reg[19]/CLR, esptop_i/esp_1/tiles_gen[3].io_tile.tile_io_i/riscv_plic_gen.riscv_clint_gen.riscv_clint_ahb_wrap_1/riscv_clint_wrap_1/i_clint/mtime_q_reg[1]/CLR, esptop_i/esp_1/tiles_gen[3].io_tile.tile_io_i/riscv_plic_gen.riscv_clint_gen.riscv_clint_ahb_wrap_1/riscv_clint_wrap_1/i_clint/mtime_q_reg[20]/CLR (the first 15 of 151 listed). The LUT may glitch and trigger an unexpected reset, even if it is a properly timed path.
+Related violations: <none>
+
+SYNTH-10#1 Warning
+Wide multiplier  
+Detected multiplier at esptop_i/esp_1/tiles_gen[1].cpu_tile.tile_cpu_i/ariane_cpu_gen.ariane_axi_wrap_1/ariane_wrap_1/i_ariane/ex_stage_i/fpu_gen.fpu_i/fpu_gen.i_fpnew_bulk/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/product of size 18x20, it is decomposed from a wide multipler into 10 DSP blocks.
+Related violations: <none>
+
+SYNTH-10#2 Warning
+Wide multiplier  
+Detected multiplier at esptop_i/esp_1/tiles_gen[1].cpu_tile.tile_cpu_i/ariane_cpu_gen.ariane_axi_wrap_1/ariane_wrap_1/i_ariane/ex_stage_i/fpu_gen.fpu_i/fpu_gen.i_fpnew_bulk/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/product__0 of size 20x18, it is decomposed from a wide multipler into 10 DSP blocks.
+Related violations: <none>
+
+SYNTH-10#3 Warning
+Wide multiplier  
+Detected multiplier at esptop_i/esp_1/tiles_gen[1].cpu_tile.tile_cpu_i/ariane_cpu_gen.ariane_axi_wrap_1/ariane_wrap_1/i_ariane/ex_stage_i/fpu_gen.fpu_i/fpu_gen.i_fpnew_bulk/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/product__2 of size 18x20, it is decomposed from a wide multipler into 10 DSP blocks.
+Related violations: <none>
+
+SYNTH-10#4 Warning
+Wide multiplier  
+Detected multiplier at esptop_i/esp_1/tiles_gen[1].cpu_tile.tile_cpu_i/ariane_cpu_gen.ariane_axi_wrap_1/ariane_wrap_1/i_ariane/ex_stage_i/fpu_gen.fpu_i/fpu_gen.i_fpnew_bulk/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/product__3 of size 18x18, it is decomposed from a wide multipler into 10 DSP blocks.
+Related violations: <none>
+
+SYNTH-10#5 Warning
+Wide multiplier  
+Detected multiplier at esptop_i/esp_1/tiles_gen[1].cpu_tile.tile_cpu_i/ariane_cpu_gen.ariane_axi_wrap_1/ariane_wrap_1/i_ariane/ex_stage_i/fpu_gen.fpu_i/fpu_gen.i_fpnew_bulk/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/product__4 of size 20x18, it is decomposed from a wide multipler into 10 DSP blocks.
+Related violations: <none>
+
+SYNTH-10#6 Warning
+Wide multiplier  
+Detected multiplier at esptop_i/esp_1/tiles_gen[1].cpu_tile.tile_cpu_i/ariane_cpu_gen.ariane_axi_wrap_1/ariane_wrap_1/i_ariane/ex_stage_i/fpu_gen.fpu_i/fpu_gen.i_fpnew_bulk/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/product__5 of size 18x18, it is decomposed from a wide multipler into 10 DSP blocks.
+Related violations: <none>
+
+SYNTH-10#7 Warning
+Wide multiplier  
+Detected multiplier at esptop_i/esp_1/tiles_gen[1].cpu_tile.tile_cpu_i/ariane_cpu_gen.ariane_axi_wrap_1/ariane_wrap_1/i_ariane/ex_stage_i/fpu_gen.fpu_i/fpu_gen.i_fpnew_bulk/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/product__6 of size 18x18, it is decomposed from a wide multipler into 10 DSP blocks.
+Related violations: <none>
+
+SYNTH-10#8 Warning
+Wide multiplier  
+Detected multiplier at esptop_i/esp_1/tiles_gen[1].cpu_tile.tile_cpu_i/ariane_cpu_gen.ariane_axi_wrap_1/ariane_wrap_1/i_ariane/ex_stage_i/fpu_gen.fpu_i/fpu_gen.i_fpnew_bulk/gen_operation_groups[0].i_opgroup_block/gen_parallel_slices[1].active_format.i_fmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fma/product__7 of size 18x18, it is decomposed from a wide multipler into 10 DSP blocks.
+Related violations: <none>
+
+SYNTH-10#9 Warning
+Wide multiplier  
+Detected multiplier at esptop_i/esp_1/tiles_gen[1].cpu_tile.tile_cpu_i/ariane_cpu_gen.ariane_axi_wrap_1/ariane_wrap_1/i_ariane/ex_stage_i/i_mult/i_multiplier/mult_result_d of size 14x18, it is decomposed from a wide multipler into 16 DSP blocks.
+Related violations: <none>
+
+SYNTH-10#10 Warning
+Wide multiplier  
+Detected multiplier at esptop_i/esp_1/tiles_gen[1].cpu_tile.tile_cpu_i/ariane_cpu_gen.ariane_axi_wrap_1/ariane_wrap_1/i_ariane/ex_stage_i/i_mult/i_multiplier/mult_result_d__0 of size 18x14, it is decomposed from a wide multipler into 16 DSP blocks.
+Related violations: <none>
+
+SYNTH-10#11 Warning
+Wide multiplier  
+Detected multiplier at esptop_i/esp_1/tiles_gen[1].cpu_tile.tile_cpu_i/ariane_cpu_gen.ariane_axi_wrap_1/ariane_wrap_1/i_ariane/ex_stage_i/i_mult/i_multiplier/mult_result_d__1 of size 14x18, it is decomposed from a wide multipler into 16 DSP blocks.
+Related violations: <none>
+
+SYNTH-10#12 Warning
+Wide multiplier  
+Detected multiplier at esptop_i/esp_1/tiles_gen[1].cpu_tile.tile_cpu_i/ariane_cpu_gen.ariane_axi_wrap_1/ariane_wrap_1/i_ariane/ex_stage_i/i_mult/i_multiplier/mult_result_d__10 of size 18x18, it is decomposed from a wide multipler into 16 DSP blocks.
+Related violations: <none>
+
+SYNTH-10#13 Warning
+Wide multiplier  
+Detected multiplier at esptop_i/esp_1/tiles_gen[1].cpu_tile.tile_cpu_i/ariane_cpu_gen.ariane_axi_wrap_1/ariane_wrap_1/i_ariane/ex_stage_i/i_mult/i_multiplier/mult_result_d__11 of size 18x18, it is decomposed from a wide multipler into 16 DSP blocks.
+Related violations: <none>
+
+SYNTH-10#14 Warning
+Wide multiplier  
+Detected multiplier at esptop_i/esp_1/tiles_gen[1].cpu_tile.tile_cpu_i/ariane_cpu_gen.ariane_axi_wrap_1/ariane_wrap_1/i_ariane/ex_stage_i/i_mult/i_multiplier/mult_result_d__12 of size 18x18, it is decomposed from a wide multipler into 16 DSP blocks.
+Related violations: <none>
+
+SYNTH-10#15 Warning
+Wide multiplier  
+Detected multiplier at esptop_i/esp_1/tiles_gen[1].cpu_tile.tile_cpu_i/ariane_cpu_gen.ariane_axi_wrap_1/ariane_wrap_1/i_ariane/ex_stage_i/i_mult/i_multiplier/mult_result_d__13 of size 18x18, it is decomposed from a wide multipler into 16 DSP blocks.
+Related violations: <none>
+
+SYNTH-10#16 Warning
+Wide multiplier  
+Detected multiplier at esptop_i/esp_1/tiles_gen[1].cpu_tile.tile_cpu_i/ariane_cpu_gen.ariane_axi_wrap_1/ariane_wrap_1/i_ariane/ex_stage_i/i_mult/i_multiplier/mult_result_d__14 of size 18x18, it is decomposed from a wide multipler into 16 DSP blocks.
+Related violations: <none>
+
+SYNTH-10#17 Warning
+Wide multiplier  
+Detected multiplier at esptop_i/esp_1/tiles_gen[1].cpu_tile.tile_cpu_i/ariane_cpu_gen.ariane_axi_wrap_1/ariane_wrap_1/i_ariane/ex_stage_i/i_mult/i_multiplier/mult_result_d__2 of size 14x14, it is decomposed from a wide multipler into 16 DSP blocks.
+Related violations: <none>
+
+SYNTH-10#18 Warning
+Wide multiplier  
+Detected multiplier at esptop_i/esp_1/tiles_gen[1].cpu_tile.tile_cpu_i/ariane_cpu_gen.ariane_axi_wrap_1/ariane_wrap_1/i_ariane/ex_stage_i/i_mult/i_multiplier/mult_result_d__3 of size 18x18, it is decomposed from a wide multipler into 16 DSP blocks.
+Related violations: <none>
+
+SYNTH-10#19 Warning
+Wide multiplier  
+Detected multiplier at esptop_i/esp_1/tiles_gen[1].cpu_tile.tile_cpu_i/ariane_cpu_gen.ariane_axi_wrap_1/ariane_wrap_1/i_ariane/ex_stage_i/i_mult/i_multiplier/mult_result_d__4 of size 14x18, it is decomposed from a wide multipler into 16 DSP blocks.
+Related violations: <none>
+
+SYNTH-10#20 Warning
+Wide multiplier  
+Detected multiplier at esptop_i/esp_1/tiles_gen[1].cpu_tile.tile_cpu_i/ariane_cpu_gen.ariane_axi_wrap_1/ariane_wrap_1/i_ariane/ex_stage_i/i_mult/i_multiplier/mult_result_d__5 of size 18x14, it is decomposed from a wide multipler into 16 DSP blocks.
+Related violations: <none>
+
+SYNTH-10#21 Warning
+Wide multiplier  
+Detected multiplier at esptop_i/esp_1/tiles_gen[1].cpu_tile.tile_cpu_i/ariane_cpu_gen.ariane_axi_wrap_1/ariane_wrap_1/i_ariane/ex_stage_i/i_mult/i_multiplier/mult_result_d__6 of size 18x18, it is decomposed from a wide multipler into 16 DSP blocks.
+Related violations: <none>
+
+SYNTH-10#22 Warning
+Wide multiplier  
+Detected multiplier at esptop_i/esp_1/tiles_gen[1].cpu_tile.tile_cpu_i/ariane_cpu_gen.ariane_axi_wrap_1/ariane_wrap_1/i_ariane/ex_stage_i/i_mult/i_multiplier/mult_result_d__7 of size 18x18, it is decomposed from a wide multipler into 16 DSP blocks.
+Related violations: <none>
+
+SYNTH-10#23 Warning
+Wide multiplier  
+Detected multiplier at esptop_i/esp_1/tiles_gen[1].cpu_tile.tile_cpu_i/ariane_cpu_gen.ariane_axi_wrap_1/ariane_wrap_1/i_ariane/ex_stage_i/i_mult/i_multiplier/mult_result_d__8 of size 18x18, it is decomposed from a wide multipler into 16 DSP blocks.
+Related violations: <none>
+
+SYNTH-10#24 Warning
+Wide multiplier  
+Detected multiplier at esptop_i/esp_1/tiles_gen[1].cpu_tile.tile_cpu_i/ariane_cpu_gen.ariane_axi_wrap_1/ariane_wrap_1/i_ariane/ex_stage_i/i_mult/i_multiplier/mult_result_d__9 of size 18x14, it is decomposed from a wide multipler into 16 DSP blocks.
+Related violations: <none>
+
+TIMING-18#1 Warning
+Missing input or output delay  
+An input delay is missing on switch[0] relative to clock(s) clk_pl_0
+Related violations: <none>
+
+TIMING-18#2 Warning
+Missing input or output delay  
+An input delay is missing on switch[1] relative to clock(s) clk_pl_0
+Related violations: <none>
+
+TIMING-18#3 Warning
+Missing input or output delay  
+An input delay is missing on switch[2] relative to clock(s) clk_pl_0
+Related violations: <none>
+
+TIMING-18#4 Warning
+Missing input or output delay  
+An input delay is missing on switch[3] relative to clock(s) clk_pl_0
+Related violations: <none>
+
+TIMING-18#5 Warning
+Missing input or output delay  
+An input delay is missing on switch[4] relative to clock(s) clk_pl_0
+Related violations: <none>
+
+TIMING-18#6 Warning
+Missing input or output delay  
+An input delay is missing on switch[5] relative to clock(s) clk_pl_0
+Related violations: <none>
+
+TIMING-18#7 Warning
+Missing input or output delay  
+An input delay is missing on switch[6] relative to clock(s) clk_pl_0
+Related violations: <none>
+
+TIMING-18#8 Warning
+Missing input or output delay  
+An input delay is missing on switch[7] relative to clock(s) clk_pl_0
+Related violations: <none>
+
+ULMTCS-1#1 Warning
+Control Sets use limits recommend reduction  
+This design uses 2782 control sets (vs. available limit of 34260, determined by 1 control set per CLB). This exceeds the control set use guideline of 7.5 percent. This is at a level where reduction is RECOMMENDED (see UG949). Use report_control_sets to get more details.
+Related violations: <none>
+
+

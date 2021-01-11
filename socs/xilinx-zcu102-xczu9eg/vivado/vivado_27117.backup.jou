@@ -1,0 +1,20 @@
+#-----------------------------------------------------------
+# Vivado v2019.2.1 (64-bit)
+# SW Build 2729669 on Thu Dec  5 04:48:12 MST 2019
+# IP Build 2729494 on Thu Dec  5 07:38:25 MST 2019
+# Start of session at: Mon Jan 11 10:34:37 2021
+# Process ID: 27117
+# Current directory: /home/jescobedo/repos/juanesp/socs/xilinx-zcu102-xczu9eg/vivado
+# Command line: vivado esp-xilinx-zcu102-xczu9eg.xpr
+# Log file: /home/jescobedo/repos/juanesp/socs/xilinx-zcu102-xczu9eg/vivado/vivado.log
+# Journal file: /home/jescobedo/repos/juanesp/socs/xilinx-zcu102-xczu9eg/vivado/vivado.jou
+#-----------------------------------------------------------
+start_gui
+open_project esp-xilinx-zcu102-xczu9eg.xpr
+update_compile_order -fileset sources_1
+launch_runs synth_1 -jobs 16
+wait_on_run synth_1
+launch_runs impl_1 -jobs 16
+wait_on_run impl_1
+launch_runs impl_1 -to_step write_bitstream -jobs 16
+wait_on_run impl_1

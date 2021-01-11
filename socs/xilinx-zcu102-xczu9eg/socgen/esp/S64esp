@@ -1,0 +1,5 @@
+cd /opt/drivers-esp
+insmod contig_alloc.ko nddr=1 start=0xa0200000 size=0x1fe00000 chunk_log=20
+insmod esp_cache.ko
+insmod esp_private_cache.ko
+insmod esp.ko line_bytes=16 l2_sets=512 l2_ways=4 llc_sets=1024 llc_ways=16 llc_banks=1 rtl_cache=1

@@ -1,0 +1,104 @@
+/dts-v1/;
+
+/ {
+  #address-cells = <2>;
+  #size-cells = <2>;
+  compatible = "eth,ariane-bare-dev";
+  model = "eth,ariane-bare";
+  chosen {
+    stdout-path = "/soc/uart@60000100:38400";
+  };
+  cpus {
+    #address-cells = <1>;
+    #size-cells = <0>;
+    timebase-frequency = <37500000>; // CPU_FREQ / 2
+    CPU0: cpu@0 {
+      clock-frequency = <75000000>;
+      device_type = "cpu";
+      reg = <0>;
+      status = "okay";
+      compatible = "eth, ariane", "riscv";
+      riscv,isa = "rv64imafdc";
+      mmu-type = "riscv,sv39";
+      tlb-split;
+      // HLIC - hart local interrupt controller
+      CPU0_intc: interrupt-controller {
+        #interrupt-cells = <1>;
+        interrupt-controller;
+        compatible = "riscv,cpu-intc";
+      };
+    };
+  };
+  memory@80000000 {
+    device_type = "memory";
+    reg = <0x0 0x80000000 0x0 0x20000000>;
+  };
+  reserved-memory {
+    #address-cells = <2>;
+    #size-cells = <2>;
+    ranges;
+
+    greth_reserved: buffer@a0000000 {
+      compatible = "shared-dma-pool";
+      no-map;
+      reg = <0x0 0xa0000000 0x0 0x200000>;
+    };
+  };
+  L26: soc {
+    #address-cells = <2>;
+    #size-cells = <2>;
+    compatible = "eth,ariane-bare-soc", "simple-bus";
+    ranges;
+    clint@2000000 {
+      compatible = "riscv,clint0";
+      interrupts-extended = <
+                             &CPU0_intc 3 &CPU0_intc 7
+                            >;
+      reg = <0x0 0x2000000 0x0 0xc0000>;
+      reg-names = "control";
+    };
+    PLIC0: interrupt-controller@6c000000 {
+      #address-cells = <0>;
+      #interrupt-cells = <1>;
+      compatible = "riscv,plic0";
+      interrupt-controller;
+      interrupts-extended = <
+                             &CPU0_intc 11 &CPU0_intc 9
+                            >;
+      reg = <0x0 0x6c000000 0x0 0x4000000>;
+      riscv,max-priority = <7>;
+      riscv,ndev = <16>;
+    };
+    uart@60000100 {
+      compatible = "gaisler,apbuart";
+      reg = <0x0 0x60000100 0x0 0x100>;
+      freq = <75000000>;
+      interrupt-parent = <&PLIC0>;
+      interrupts = <3>;
+      reg-shift = <2>; // regs are spaced on 32 bit boundary
+      reg-io-width = <4>; // only 32-bit access are supported
+    };
+    eth: greth@60080000 {
+      #address-cells = <1>;
+      #size-cells = <1>;
+      compatible = "gaisler,ethmac";
+      device_type = "network";
+      interrupt-parent = <&PLIC0>;
+      interrupts = <13 0>;
+      local-mac-address = [00 00 f9 a8 4f 70];
+      reg = <0x0 0x60080000 0x0 0x10000>;
+      phy-handle = <&phy0>;
+      phy-connection-type = "sgmii";
+      memory-region = <&greth_reserved>;
+
+      phy0: mdio@60001000 {
+            #address-cells = <1>;
+            #size-cells = <0>;
+            compatible = "gaisler,sgmii";
+            reg = <0x0 0x60001000 0x0 0x1000>;
+            interrupt-parent = <&PLIC0>;
+            interrupts = <12 0>;
+      };
+    };
+  };
+};

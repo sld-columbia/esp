@@ -1,0 +1,550 @@
+{
+  "design": {
+    "design_info": {
+      "boundary_crc": "0xD91B2A36C4E54ABC",
+      "design_src": "SBD",
+      "device": "xczu9eg-ffvb1156-2-e",
+      "name": "bd_c007",
+      "scoped": "true",
+      "synth_flow_mode": "None",
+      "tool_version": "2019.2.1",
+      "validated": "true"
+    },
+    "design_tree": {
+      "ila_lib": ""
+    },
+    "interface_ports": {
+      "SLOT_0_AHBLITE": {
+        "mode": "Monitor",
+        "vlnv": "xilinx.com:interface:ahblite_rtl:2.0",
+        "port_maps": {
+          "HADDR": {
+            "physical_name": "SLOT_0_AHBLITE_haddr",
+            "direction": "I"
+          },
+          "HBURST": {
+            "physical_name": "SLOT_0_AHBLITE_hburst",
+            "direction": "I"
+          },
+          "HMASTLOCK": {
+            "physical_name": "SLOT_0_AHBLITE_hmastlock",
+            "direction": "I"
+          },
+          "HPROT": {
+            "physical_name": "SLOT_0_AHBLITE_hprot",
+            "direction": "I"
+          },
+          "HRDATA": {
+            "physical_name": "SLOT_0_AHBLITE_hrdata",
+            "direction": "I"
+          },
+          "HREADY": {
+            "physical_name": "SLOT_0_AHBLITE_hready",
+            "direction": "I"
+          },
+          "HRESP": {
+            "physical_name": "SLOT_0_AHBLITE_hresp",
+            "direction": "I"
+          },
+          "HSIZE": {
+            "physical_name": "SLOT_0_AHBLITE_hsize",
+            "direction": "I"
+          },
+          "HTRANS": {
+            "physical_name": "SLOT_0_AHBLITE_htrans",
+            "direction": "I"
+          },
+          "HWDATA": {
+            "physical_name": "SLOT_0_AHBLITE_hwdata",
+            "direction": "I"
+          },
+          "HWRITE": {
+            "physical_name": "SLOT_0_AHBLITE_hwrite",
+            "direction": "I"
+          }
+        }
+      },
+      "SLOT_1_AHBLITE": {
+        "mode": "Monitor",
+        "vlnv": "xilinx.com:interface:ahblite_rtl:2.0",
+        "port_maps": {
+          "HADDR": {
+            "physical_name": "SLOT_1_AHBLITE_haddr",
+            "direction": "I"
+          },
+          "HBURST": {
+            "physical_name": "SLOT_1_AHBLITE_hburst",
+            "direction": "I"
+          },
+          "HPROT": {
+            "physical_name": "SLOT_1_AHBLITE_hprot",
+            "direction": "I"
+          },
+          "HRDATA": {
+            "physical_name": "SLOT_1_AHBLITE_hrdata",
+            "direction": "I"
+          },
+          "HREADY_IN": {
+            "physical_name": "SLOT_1_AHBLITE_hready_in",
+            "direction": "I"
+          },
+          "HREADY_OUT": {
+            "physical_name": "SLOT_1_AHBLITE_hready_out",
+            "direction": "I"
+          },
+          "HRESP": {
+            "physical_name": "SLOT_1_AHBLITE_hresp",
+            "direction": "I"
+          },
+          "HSIZE": {
+            "physical_name": "SLOT_1_AHBLITE_hsize",
+            "direction": "I"
+          },
+          "HTRANS": {
+            "physical_name": "SLOT_1_AHBLITE_htrans",
+            "direction": "I"
+          },
+          "HWDATA": {
+            "physical_name": "SLOT_1_AHBLITE_hwdata",
+            "direction": "I"
+          },
+          "HWRITE": {
+            "physical_name": "SLOT_1_AHBLITE_hwrite",
+            "direction": "I"
+          },
+          "SEL": {
+            "physical_name": "SLOT_1_AHBLITE_sel",
+            "direction": "I"
+          }
+        }
+      }
+    },
+    "ports": {
+      "clk": {
+        "type": "clk",
+        "direction": "I",
+        "parameters": {
+          "CLK_DOMAIN": {
+            "value": "zynqmpsoc_zynq_ultra_ps_e_0_0_pl_clk0",
+            "value_src": "default_prop"
+          },
+          "FREQ_HZ": {
+            "value": "75000000",
+            "value_src": "default_prop"
+          },
+          "INSERT_VIP": {
+            "value": "0",
+            "value_src": "default"
+          },
+          "PHASE": {
+            "value": "0.000",
+            "value_src": "default"
+          }
+        }
+      },
+      "SLOT_0_AHBLITE_haddr": {
+        "direction": "I"
+      },
+      "SLOT_0_AHBLITE_hburst": {
+        "direction": "I"
+      },
+      "SLOT_0_AHBLITE_hmastlock": {
+        "direction": "I"
+      },
+      "SLOT_0_AHBLITE_hprot": {
+        "direction": "I"
+      },
+      "SLOT_0_AHBLITE_hrdata": {
+        "direction": "I"
+      },
+      "SLOT_0_AHBLITE_hready": {
+        "direction": "I"
+      },
+      "SLOT_0_AHBLITE_hresp": {
+        "direction": "I"
+      },
+      "SLOT_0_AHBLITE_hsize": {
+        "direction": "I"
+      },
+      "SLOT_0_AHBLITE_htrans": {
+        "direction": "I"
+      },
+      "SLOT_0_AHBLITE_hwdata": {
+        "direction": "I"
+      },
+      "SLOT_0_AHBLITE_hwrite": {
+        "direction": "I"
+      },
+      "SLOT_1_AHBLITE_haddr": {
+        "direction": "I"
+      },
+      "SLOT_1_AHBLITE_hburst": {
+        "direction": "I"
+      },
+      "SLOT_1_AHBLITE_hprot": {
+        "direction": "I"
+      },
+      "SLOT_1_AHBLITE_hrdata": {
+        "direction": "I"
+      },
+      "SLOT_1_AHBLITE_hready_in": {
+        "direction": "I"
+      },
+      "SLOT_1_AHBLITE_hready_out": {
+        "direction": "I"
+      },
+      "SLOT_1_AHBLITE_hresp": {
+        "direction": "I"
+      },
+      "SLOT_1_AHBLITE_hsize": {
+        "direction": "I"
+      },
+      "SLOT_1_AHBLITE_htrans": {
+        "direction": "I"
+      },
+      "SLOT_1_AHBLITE_hwdata": {
+        "direction": "I"
+      },
+      "SLOT_1_AHBLITE_hwrite": {
+        "direction": "I"
+      },
+      "SLOT_1_AHBLITE_sel": {
+        "direction": "I"
+      }
+    },
+    "components": {
+      "ila_lib": {
+        "vlnv": "xilinx.com:ip:ila:6.2",
+        "xci_name": "bd_c007_ila_lib_0",
+        "parameters": {
+          "ALL_PROBE_SAME_MU": {
+            "value": "TRUE"
+          },
+          "ALL_PROBE_SAME_MU_CNT": {
+            "value": "1"
+          },
+          "C_ADV_TRIGGER": {
+            "value": "FALSE"
+          },
+          "C_DATA_DEPTH": {
+            "value": "1024"
+          },
+          "C_EN_STRG_QUAL": {
+            "value": "0"
+          },
+          "C_EN_TIME_TAG": {
+            "value": "0"
+          },
+          "C_ILA_CLK_FREQ": {
+            "value": "75000000"
+          },
+          "C_INPUT_PIPE_STAGES": {
+            "value": "0"
+          },
+          "C_MONITOR_TYPE": {
+            "value": "Native"
+          },
+          "C_NUM_OF_PROBES": {
+            "value": "23"
+          },
+          "C_PROBE0_TYPE": {
+            "value": "0"
+          },
+          "C_PROBE0_WIDTH": {
+            "value": "1"
+          },
+          "C_PROBE10_TYPE": {
+            "value": "0"
+          },
+          "C_PROBE10_WIDTH": {
+            "value": "1"
+          },
+          "C_PROBE11_TYPE": {
+            "value": "0"
+          },
+          "C_PROBE11_WIDTH": {
+            "value": "1"
+          },
+          "C_PROBE12_TYPE": {
+            "value": "0"
+          },
+          "C_PROBE12_WIDTH": {
+            "value": "1"
+          },
+          "C_PROBE13_TYPE": {
+            "value": "0"
+          },
+          "C_PROBE13_WIDTH": {
+            "value": "1"
+          },
+          "C_PROBE14_TYPE": {
+            "value": "0"
+          },
+          "C_PROBE14_WIDTH": {
+            "value": "1"
+          },
+          "C_PROBE15_TYPE": {
+            "value": "0"
+          },
+          "C_PROBE15_WIDTH": {
+            "value": "1"
+          },
+          "C_PROBE16_TYPE": {
+            "value": "0"
+          },
+          "C_PROBE16_WIDTH": {
+            "value": "1"
+          },
+          "C_PROBE17_TYPE": {
+            "value": "0"
+          },
+          "C_PROBE17_WIDTH": {
+            "value": "1"
+          },
+          "C_PROBE18_TYPE": {
+            "value": "0"
+          },
+          "C_PROBE18_WIDTH": {
+            "value": "1"
+          },
+          "C_PROBE19_TYPE": {
+            "value": "0"
+          },
+          "C_PROBE19_WIDTH": {
+            "value": "1"
+          },
+          "C_PROBE1_TYPE": {
+            "value": "0"
+          },
+          "C_PROBE1_WIDTH": {
+            "value": "1"
+          },
+          "C_PROBE20_TYPE": {
+            "value": "0"
+          },
+          "C_PROBE20_WIDTH": {
+            "value": "1"
+          },
+          "C_PROBE21_TYPE": {
+            "value": "0"
+          },
+          "C_PROBE21_WIDTH": {
+            "value": "1"
+          },
+          "C_PROBE22_TYPE": {
+            "value": "0"
+          },
+          "C_PROBE22_WIDTH": {
+            "value": "1"
+          },
+          "C_PROBE2_TYPE": {
+            "value": "0"
+          },
+          "C_PROBE2_WIDTH": {
+            "value": "1"
+          },
+          "C_PROBE3_TYPE": {
+            "value": "0"
+          },
+          "C_PROBE3_WIDTH": {
+            "value": "1"
+          },
+          "C_PROBE4_TYPE": {
+            "value": "0"
+          },
+          "C_PROBE4_WIDTH": {
+            "value": "1"
+          },
+          "C_PROBE5_TYPE": {
+            "value": "0"
+          },
+          "C_PROBE5_WIDTH": {
+            "value": "1"
+          },
+          "C_PROBE6_TYPE": {
+            "value": "0"
+          },
+          "C_PROBE6_WIDTH": {
+            "value": "1"
+          },
+          "C_PROBE7_TYPE": {
+            "value": "0"
+          },
+          "C_PROBE7_WIDTH": {
+            "value": "1"
+          },
+          "C_PROBE8_TYPE": {
+            "value": "0"
+          },
+          "C_PROBE8_WIDTH": {
+            "value": "1"
+          },
+          "C_PROBE9_TYPE": {
+            "value": "0"
+          },
+          "C_PROBE9_WIDTH": {
+            "value": "1"
+          },
+          "C_TIME_TAG_WIDTH": {
+            "value": "32"
+          },
+          "C_TRIGIN_EN": {
+            "value": "false"
+          },
+          "C_TRIGOUT_EN": {
+            "value": "false"
+          },
+          "C_XLNX_HW_PROBE_INFO": {
+            "value": "DEFAULT"
+          }
+        }
+      }
+    },
+    "nets": {
+      "clk_1": {
+        "ports": [
+          "clk",
+          "ila_lib/clk"
+        ]
+      },
+      "SLOT_0_AHBLITE_haddr_1": {
+        "ports": [
+          "SLOT_0_AHBLITE_haddr",
+          "ila_lib/probe0"
+        ]
+      },
+      "SLOT_0_AHBLITE_hburst_1": {
+        "ports": [
+          "SLOT_0_AHBLITE_hburst",
+          "ila_lib/probe1"
+        ]
+      },
+      "SLOT_0_AHBLITE_hmastlock_1": {
+        "ports": [
+          "SLOT_0_AHBLITE_hmastlock",
+          "ila_lib/probe2"
+        ]
+      },
+      "SLOT_0_AHBLITE_hprot_1": {
+        "ports": [
+          "SLOT_0_AHBLITE_hprot",
+          "ila_lib/probe3"
+        ]
+      },
+      "SLOT_0_AHBLITE_hrdata_1": {
+        "ports": [
+          "SLOT_0_AHBLITE_hrdata",
+          "ila_lib/probe4"
+        ]
+      },
+      "SLOT_0_AHBLITE_hready_1": {
+        "ports": [
+          "SLOT_0_AHBLITE_hready",
+          "ila_lib/probe5"
+        ]
+      },
+      "SLOT_0_AHBLITE_hresp_1": {
+        "ports": [
+          "SLOT_0_AHBLITE_hresp",
+          "ila_lib/probe6"
+        ]
+      },
+      "SLOT_0_AHBLITE_hsize_1": {
+        "ports": [
+          "SLOT_0_AHBLITE_hsize",
+          "ila_lib/probe7"
+        ]
+      },
+      "SLOT_0_AHBLITE_htrans_1": {
+        "ports": [
+          "SLOT_0_AHBLITE_htrans",
+          "ila_lib/probe8"
+        ]
+      },
+      "SLOT_0_AHBLITE_hwdata_1": {
+        "ports": [
+          "SLOT_0_AHBLITE_hwdata",
+          "ila_lib/probe9"
+        ]
+      },
+      "SLOT_0_AHBLITE_hwrite_1": {
+        "ports": [
+          "SLOT_0_AHBLITE_hwrite",
+          "ila_lib/probe10"
+        ]
+      },
+      "SLOT_1_AHBLITE_haddr_1": {
+        "ports": [
+          "SLOT_1_AHBLITE_haddr",
+          "ila_lib/probe11"
+        ]
+      },
+      "SLOT_1_AHBLITE_hburst_1": {
+        "ports": [
+          "SLOT_1_AHBLITE_hburst",
+          "ila_lib/probe12"
+        ]
+      },
+      "SLOT_1_AHBLITE_hprot_1": {
+        "ports": [
+          "SLOT_1_AHBLITE_hprot",
+          "ila_lib/probe13"
+        ]
+      },
+      "SLOT_1_AHBLITE_hrdata_1": {
+        "ports": [
+          "SLOT_1_AHBLITE_hrdata",
+          "ila_lib/probe14"
+        ]
+      },
+      "SLOT_1_AHBLITE_hready_in_1": {
+        "ports": [
+          "SLOT_1_AHBLITE_hready_in",
+          "ila_lib/probe15"
+        ]
+      },
+      "SLOT_1_AHBLITE_hready_out_1": {
+        "ports": [
+          "SLOT_1_AHBLITE_hready_out",
+          "ila_lib/probe16"
+        ]
+      },
+      "SLOT_1_AHBLITE_hresp_1": {
+        "ports": [
+          "SLOT_1_AHBLITE_hresp",
+          "ila_lib/probe17"
+        ]
+      },
+      "SLOT_1_AHBLITE_hsize_1": {
+        "ports": [
+          "SLOT_1_AHBLITE_hsize",
+          "ila_lib/probe18"
+        ]
+      },
+      "SLOT_1_AHBLITE_htrans_1": {
+        "ports": [
+          "SLOT_1_AHBLITE_htrans",
+          "ila_lib/probe19"
+        ]
+      },
+      "SLOT_1_AHBLITE_hwdata_1": {
+        "ports": [
+          "SLOT_1_AHBLITE_hwdata",
+          "ila_lib/probe20"
+        ]
+      },
+      "SLOT_1_AHBLITE_hwrite_1": {
+        "ports": [
+          "SLOT_1_AHBLITE_hwrite",
+          "ila_lib/probe21"
+        ]
+      },
+      "SLOT_1_AHBLITE_sel_1": {
+        "ports": [
+          "SLOT_1_AHBLITE_sel",
+          "ila_lib/probe22"
+        ]
+      }
+    }
+  }
+}

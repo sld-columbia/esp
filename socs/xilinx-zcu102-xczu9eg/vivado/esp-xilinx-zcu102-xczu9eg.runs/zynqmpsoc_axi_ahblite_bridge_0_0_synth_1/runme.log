@@ -1,0 +1,502 @@
+
+*** Running vivado
+    with args -log zynqmpsoc_axi_ahblite_bridge_0_0.vds -m64 -product Vivado -mode batch -messageDb vivado.pb -notrace -source zynqmpsoc_axi_ahblite_bridge_0_0.tcl
+
+
+****** Vivado v2019.2.1 (64-bit)
+  **** SW Build 2729669 on Thu Dec  5 04:48:12 MST 2019
+  **** IP Build 2729494 on Thu Dec  5 07:38:25 MST 2019
+    ** Copyright 1986-2019 Xilinx, Inc. All Rights Reserved.
+
+source zynqmpsoc_axi_ahblite_bridge_0_0.tcl -notrace
+Command: synth_design -top zynqmpsoc_axi_ahblite_bridge_0_0 -part xczu9eg-ffvb1156-2-e -mode out_of_context
+Starting synth_design
+Attempting to get a license for feature 'Synthesis' and/or device 'xczu9eg'
+INFO: [Common 17-349] Got license for feature 'Synthesis' and/or device 'xczu9eg'
+INFO: [Device 21-403] Loading part xczu9eg-ffvb1156-2-e
+INFO: Launching helper process for spawning children vivado processes
+INFO: Helper process launched with PID 132002 
+---------------------------------------------------------------------------------
+Starting RTL Elaboration : Time (s): cpu = 00:00:04 ; elapsed = 00:00:06 . Memory (MB): peak = 2455.098 ; gain = 0.000 ; free physical = 7641 ; free virtual = 116259
+---------------------------------------------------------------------------------
+INFO: [Synth 8-638] synthesizing module 'zynqmpsoc_axi_ahblite_bridge_0_0' [/home/jescobedo/repos/juanesp/socs/xilinx-zcu102-xczu9eg/vivado/esp-xilinx-zcu102-xczu9eg.srcs/sources_1/bd/zynqmpsoc/ip/zynqmpsoc_axi_ahblite_bridge_0_0/synth/zynqmpsoc_axi_ahblite_bridge_0_0.vhd:112]
+	Parameter C_FAMILY bound to: zynquplus - type: string 
+	Parameter C_INSTANCE bound to: zynqmpsoc_axi_ahblite_bridge_0_0 - type: string 
+	Parameter C_S_AXI_ADDR_WIDTH bound to: 32 - type: integer 
+	Parameter C_S_AXI_DATA_WIDTH bound to: 32 - type: integer 
+	Parameter C_S_AXI_SUPPORTS_NARROW_BURST bound to: 1 - type: integer 
+	Parameter C_S_AXI_ID_WIDTH bound to: 16 - type: integer 
+	Parameter C_M_AHB_ADDR_WIDTH bound to: 32 - type: integer 
+	Parameter C_M_AHB_DATA_WIDTH bound to: 32 - type: integer 
+	Parameter C_DPHASE_TIMEOUT bound to: 0 - type: integer 
+INFO: [Synth 8-3491] module 'axi_ahblite_bridge' declared at '/home/jescobedo/repos/juanesp/socs/xilinx-zcu102-xczu9eg/vivado/esp-xilinx-zcu102-xczu9eg.srcs/sources_1/bd/zynqmpsoc/ipshared/dbde/hdl/axi_ahblite_bridge_v3_0_vh_rfs.vhd:3634' bound to instance 'U0' of component 'axi_ahblite_bridge' [/home/jescobedo/repos/juanesp/socs/xilinx-zcu102-xczu9eg/vivado/esp-xilinx-zcu102-xczu9eg.srcs/sources_1/bd/zynqmpsoc/ip/zynqmpsoc_axi_ahblite_bridge_0_0/synth/zynqmpsoc_axi_ahblite_bridge_0_0.vhd:239]
+INFO: [Synth 8-638] synthesizing module 'axi_ahblite_bridge' [/home/jescobedo/repos/juanesp/socs/xilinx-zcu102-xczu9eg/vivado/esp-xilinx-zcu102-xczu9eg.srcs/sources_1/bd/zynqmpsoc/ipshared/dbde/hdl/axi_ahblite_bridge_v3_0_vh_rfs.vhd:3729]
+	Parameter C_FAMILY bound to: zynquplus - type: string 
+	Parameter C_INSTANCE bound to: zynqmpsoc_axi_ahblite_bridge_0_0 - type: string 
+	Parameter C_S_AXI_ADDR_WIDTH bound to: 32 - type: integer 
+	Parameter C_S_AXI_DATA_WIDTH bound to: 32 - type: integer 
+	Parameter C_S_AXI_SUPPORTS_NARROW_BURST bound to: 1 - type: integer 
+	Parameter C_S_AXI_ID_WIDTH bound to: 16 - type: integer 
+	Parameter C_M_AHB_ADDR_WIDTH bound to: 32 - type: integer 
+	Parameter C_M_AHB_DATA_WIDTH bound to: 32 - type: integer 
+	Parameter C_DPHASE_TIMEOUT bound to: 0 - type: integer 
+INFO: [Synth 8-638] synthesizing module 'ahb_skid_buf' [/home/jescobedo/repos/juanesp/socs/xilinx-zcu102-xczu9eg/vivado/esp-xilinx-zcu102-xczu9eg.srcs/sources_1/bd/zynqmpsoc/ipshared/dbde/hdl/axi_ahblite_bridge_v3_0_vh_rfs.vhd:535]
+	Parameter C_WDATA_WIDTH bound to: 32 - type: integer 
+	Parameter C_S_AXI_ID_WIDTH bound to: 16 - type: integer 
+	Parameter C_TUSER_WIDTH bound to: 1 - type: integer 
+INFO: [Synth 8-5534] Detected attribute (* keep = "TRUE" *) [/home/jescobedo/repos/juanesp/socs/xilinx-zcu102-xczu9eg/vivado/esp-xilinx-zcu102-xczu9eg.srcs/sources_1/bd/zynqmpsoc/ipshared/dbde/hdl/axi_ahblite_bridge_v3_0_vh_rfs.vhd:566]
+INFO: [Synth 8-5534] Detected attribute (* keep = "TRUE" *) [/home/jescobedo/repos/juanesp/socs/xilinx-zcu102-xczu9eg/vivado/esp-xilinx-zcu102-xczu9eg.srcs/sources_1/bd/zynqmpsoc/ipshared/dbde/hdl/axi_ahblite_bridge_v3_0_vh_rfs.vhd:567]
+INFO: [Synth 8-5534] Detected attribute (* keep = "TRUE" *) [/home/jescobedo/repos/juanesp/socs/xilinx-zcu102-xczu9eg/vivado/esp-xilinx-zcu102-xczu9eg.srcs/sources_1/bd/zynqmpsoc/ipshared/dbde/hdl/axi_ahblite_bridge_v3_0_vh_rfs.vhd:570]
+INFO: [Synth 8-5534] Detected attribute (* keep = "TRUE" *) [/home/jescobedo/repos/juanesp/socs/xilinx-zcu102-xczu9eg/vivado/esp-xilinx-zcu102-xczu9eg.srcs/sources_1/bd/zynqmpsoc/ipshared/dbde/hdl/axi_ahblite_bridge_v3_0_vh_rfs.vhd:571]
+INFO: [Synth 8-256] done synthesizing module 'ahb_skid_buf' (1#1) [/home/jescobedo/repos/juanesp/socs/xilinx-zcu102-xczu9eg/vivado/esp-xilinx-zcu102-xczu9eg.srcs/sources_1/bd/zynqmpsoc/ipshared/dbde/hdl/axi_ahblite_bridge_v3_0_vh_rfs.vhd:535]
+INFO: [Synth 8-638] synthesizing module 'axi_slv_if' [/home/jescobedo/repos/juanesp/socs/xilinx-zcu102-xczu9eg/vivado/esp-xilinx-zcu102-xczu9eg.srcs/sources_1/bd/zynqmpsoc/ipshared/dbde/hdl/axi_ahblite_bridge_v3_0_vh_rfs.vhd:1178]
+	Parameter C_FAMILY bound to: zynquplus - type: string 
+	Parameter C_S_AXI_ID_WIDTH bound to: 16 - type: integer 
+	Parameter C_S_AXI_ADDR_WIDTH bound to: 32 - type: integer 
+	Parameter C_S_AXI_DATA_WIDTH bound to: 32 - type: integer 
+	Parameter C_DPHASE_TIMEOUT bound to: 0 - type: integer 
+WARNING: [Synth 8-6014] Unused sequential element axi_wlast_reg was removed.  [/home/jescobedo/repos/juanesp/socs/xilinx-zcu102-xczu9eg/vivado/esp-xilinx-zcu102-xczu9eg.srcs/sources_1/bd/zynqmpsoc/ipshared/dbde/hdl/axi_ahblite_bridge_v3_0_vh_rfs.vhd:1780]
+INFO: [Synth 8-4471] merging register 'ahb_wr_request_reg' into 'AWREADY_i_reg' [/home/jescobedo/repos/juanesp/socs/xilinx-zcu102-xczu9eg/vivado/esp-xilinx-zcu102-xczu9eg.srcs/sources_1/bd/zynqmpsoc/ipshared/dbde/hdl/axi_ahblite_bridge_v3_0_vh_rfs.vhd:2051]
+INFO: [Synth 8-4471] merging register 'ahb_rd_request_reg' into 'ARREADY_i_reg' [/home/jescobedo/repos/juanesp/socs/xilinx-zcu102-xczu9eg/vivado/esp-xilinx-zcu102-xczu9eg.srcs/sources_1/bd/zynqmpsoc/ipshared/dbde/hdl/axi_ahblite_bridge_v3_0_vh_rfs.vhd:2050]
+WARNING: [Synth 8-6014] Unused sequential element ahb_rd_request_reg was removed.  [/home/jescobedo/repos/juanesp/socs/xilinx-zcu102-xczu9eg/vivado/esp-xilinx-zcu102-xczu9eg.srcs/sources_1/bd/zynqmpsoc/ipshared/dbde/hdl/axi_ahblite_bridge_v3_0_vh_rfs.vhd:2050]
+WARNING: [Synth 8-6014] Unused sequential element ahb_wr_request_reg was removed.  [/home/jescobedo/repos/juanesp/socs/xilinx-zcu102-xczu9eg/vivado/esp-xilinx-zcu102-xczu9eg.srcs/sources_1/bd/zynqmpsoc/ipshared/dbde/hdl/axi_ahblite_bridge_v3_0_vh_rfs.vhd:2051]
+INFO: [Synth 8-256] done synthesizing module 'axi_slv_if' (2#1) [/home/jescobedo/repos/juanesp/socs/xilinx-zcu102-xczu9eg/vivado/esp-xilinx-zcu102-xczu9eg.srcs/sources_1/bd/zynqmpsoc/ipshared/dbde/hdl/axi_ahblite_bridge_v3_0_vh_rfs.vhd:1178]
+INFO: [Synth 8-638] synthesizing module 'ahb_mstr_if' [/home/jescobedo/repos/juanesp/socs/xilinx-zcu102-xczu9eg/vivado/esp-xilinx-zcu102-xczu9eg.srcs/sources_1/bd/zynqmpsoc/ipshared/dbde/hdl/axi_ahblite_bridge_v3_0_vh_rfs.vhd:2220]
+	Parameter C_M_AHB_ADDR_WIDTH bound to: 32 - type: integer 
+	Parameter C_M_AHB_DATA_WIDTH bound to: 32 - type: integer 
+	Parameter C_S_AXI_DATA_WIDTH bound to: 32 - type: integer 
+	Parameter C_S_AXI_SUPPORTS_NARROW_BURST bound to: 1 - type: integer 
+INFO: [Synth 8-256] done synthesizing module 'ahb_mstr_if' (3#1) [/home/jescobedo/repos/juanesp/socs/xilinx-zcu102-xczu9eg/vivado/esp-xilinx-zcu102-xczu9eg.srcs/sources_1/bd/zynqmpsoc/ipshared/dbde/hdl/axi_ahblite_bridge_v3_0_vh_rfs.vhd:2220]
+INFO: [Synth 8-638] synthesizing module 'time_out' [/home/jescobedo/repos/juanesp/socs/xilinx-zcu102-xczu9eg/vivado/esp-xilinx-zcu102-xczu9eg.srcs/sources_1/bd/zynqmpsoc/ipshared/dbde/hdl/axi_ahblite_bridge_v3_0_vh_rfs.vhd:314]
+	Parameter C_FAMILY bound to: zynquplus - type: string 
+	Parameter C_DPHASE_TIMEOUT bound to: 0 - type: integer 
+INFO: [Synth 8-256] done synthesizing module 'time_out' (4#1) [/home/jescobedo/repos/juanesp/socs/xilinx-zcu102-xczu9eg/vivado/esp-xilinx-zcu102-xczu9eg.srcs/sources_1/bd/zynqmpsoc/ipshared/dbde/hdl/axi_ahblite_bridge_v3_0_vh_rfs.vhd:314]
+INFO: [Synth 8-256] done synthesizing module 'axi_ahblite_bridge' (5#1) [/home/jescobedo/repos/juanesp/socs/xilinx-zcu102-xczu9eg/vivado/esp-xilinx-zcu102-xczu9eg.srcs/sources_1/bd/zynqmpsoc/ipshared/dbde/hdl/axi_ahblite_bridge_v3_0_vh_rfs.vhd:3729]
+INFO: [Synth 8-256] done synthesizing module 'zynqmpsoc_axi_ahblite_bridge_0_0' (6#1) [/home/jescobedo/repos/juanesp/socs/xilinx-zcu102-xczu9eg/vivado/esp-xilinx-zcu102-xczu9eg.srcs/sources_1/bd/zynqmpsoc/ip/zynqmpsoc_axi_ahblite_bridge_0_0/synth/zynqmpsoc_axi_ahblite_bridge_0_0.vhd:112]
+WARNING: [Synth 8-3331] design time_out has unconnected port S_AXI_ACLK
+WARNING: [Synth 8-3331] design time_out has unconnected port S_AXI_ARESETN
+WARNING: [Synth 8-3331] design time_out has unconnected port M_AHB_HREADY
+WARNING: [Synth 8-3331] design time_out has unconnected port load_cntr
+WARNING: [Synth 8-3331] design time_out has unconnected port cntr_enable
+WARNING: [Synth 8-3331] design ahb_mstr_if has unconnected port axi_prot[1]
+WARNING: [Synth 8-3331] design ahb_mstr_if has unconnected port axi_cache[1]
+WARNING: [Synth 8-3331] design axi_slv_if has unconnected port timeout_i
+---------------------------------------------------------------------------------
+Finished RTL Elaboration : Time (s): cpu = 00:00:06 ; elapsed = 00:00:08 . Memory (MB): peak = 2516.844 ; gain = 61.746 ; free physical = 7775 ; free virtual = 116396
+---------------------------------------------------------------------------------
+
+Report Check Netlist: 
++------+------------------+-------+---------+-------+------------------+
+|      |Item              |Errors |Warnings |Status |Description       |
++------+------------------+-------+---------+-------+------------------+
+|1     |multi_driven_nets |      0|        0|Passed |Multi driven nets |
++------+------------------+-------+---------+-------+------------------+
+---------------------------------------------------------------------------------
+Start Handling Custom Attributes
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Handling Custom Attributes : Time (s): cpu = 00:00:07 ; elapsed = 00:00:09 . Memory (MB): peak = 2520.812 ; gain = 65.715 ; free physical = 7731 ; free virtual = 116352
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished RTL Optimization Phase 1 : Time (s): cpu = 00:00:07 ; elapsed = 00:00:09 . Memory (MB): peak = 2520.812 ; gain = 65.715 ; free physical = 7731 ; free virtual = 116352
+---------------------------------------------------------------------------------
+Netlist sorting complete. Time (s): cpu = 00:00:00.02 ; elapsed = 00:00:00.02 . Memory (MB): peak = 2520.812 ; gain = 0.000 ; free physical = 7727 ; free virtual = 116348
+INFO: [Project 1-570] Preparing netlist for logic optimization
+
+Processing XDC Constraints
+Initializing timing engine
+Parsing XDC File [/home/jescobedo/repos/juanesp/socs/xilinx-zcu102-xczu9eg/vivado/esp-xilinx-zcu102-xczu9eg.srcs/sources_1/bd/zynqmpsoc/ip/zynqmpsoc_axi_ahblite_bridge_0_0/zynqmpsoc_axi_ahblite_bridge_0_0_ooc.xdc] for cell 'U0'
+create_clock: Time (s): cpu = 00:00:05 ; elapsed = 00:00:06 . Memory (MB): peak = 2697.469 ; gain = 0.000 ; free physical = 7444 ; free virtual = 116064
+Finished Parsing XDC File [/home/jescobedo/repos/juanesp/socs/xilinx-zcu102-xczu9eg/vivado/esp-xilinx-zcu102-xczu9eg.srcs/sources_1/bd/zynqmpsoc/ip/zynqmpsoc_axi_ahblite_bridge_0_0/zynqmpsoc_axi_ahblite_bridge_0_0_ooc.xdc] for cell 'U0'
+Parsing XDC File [/home/jescobedo/repos/juanesp/socs/xilinx-zcu102-xczu9eg/vivado/esp-xilinx-zcu102-xczu9eg.runs/zynqmpsoc_axi_ahblite_bridge_0_0_synth_1/dont_touch.xdc]
+Finished Parsing XDC File [/home/jescobedo/repos/juanesp/socs/xilinx-zcu102-xczu9eg/vivado/esp-xilinx-zcu102-xczu9eg.runs/zynqmpsoc_axi_ahblite_bridge_0_0_synth_1/dont_touch.xdc]
+Completed Processing XDC Constraints
+
+Netlist sorting complete. Time (s): cpu = 00:00:00.01 ; elapsed = 00:00:00 . Memory (MB): peak = 2697.469 ; gain = 0.000 ; free physical = 7444 ; free virtual = 116064
+INFO: [Project 1-111] Unisim Transformation Summary:
+No Unisim elements were transformed.
+
+Constraint Validation Runtime : Time (s): cpu = 00:00:00.05 ; elapsed = 00:00:00.05 . Memory (MB): peak = 2697.469 ; gain = 0.000 ; free physical = 7440 ; free virtual = 116060
+---------------------------------------------------------------------------------
+Finished Constraint Validation : Time (s): cpu = 00:00:21 ; elapsed = 00:00:30 . Memory (MB): peak = 2697.469 ; gain = 242.371 ; free physical = 7528 ; free virtual = 116159
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Loading Part and Timing Information
+---------------------------------------------------------------------------------
+Loading part: xczu9eg-ffvb1156-2-e
+INFO: [Synth 8-6742] Reading net delay rules and data
+---------------------------------------------------------------------------------
+Finished Loading Part and Timing Information : Time (s): cpu = 00:00:21 ; elapsed = 00:00:30 . Memory (MB): peak = 2697.469 ; gain = 242.371 ; free physical = 7527 ; free virtual = 116160
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Applying 'set_property' XDC Constraints
+---------------------------------------------------------------------------------
+Applied set_property DONT_TOUCH = true for U0. (constraint file  /home/jescobedo/repos/juanesp/socs/xilinx-zcu102-xczu9eg/vivado/esp-xilinx-zcu102-xczu9eg.runs/zynqmpsoc_axi_ahblite_bridge_0_0_synth_1/dont_touch.xdc, line 9).
+---------------------------------------------------------------------------------
+Finished applying 'set_property' XDC Constraints : Time (s): cpu = 00:00:21 ; elapsed = 00:00:30 . Memory (MB): peak = 2697.469 ; gain = 242.371 ; free physical = 7525 ; free virtual = 116158
+---------------------------------------------------------------------------------
+INFO: [Synth 8-802] inferred FSM for state register 'axi_write_cs_reg' in module 'axi_slv_if'
+INFO: [Synth 8-802] inferred FSM for state register 'axi_read_cs_reg' in module 'axi_slv_if'
+INFO: [Synth 8-5818] HDL ADVISOR - The operator resource <adder> is shared. To prevent sharing consider applying a KEEP on the output of the operator [/home/jescobedo/repos/juanesp/socs/xilinx-zcu102-xczu9eg/vivado/esp-xilinx-zcu102-xczu9eg.srcs/sources_1/bd/zynqmpsoc/ipshared/dbde/hdl/axi_ahblite_bridge_v3_0_vh_rfs.vhd:2823]
+INFO: [Synth 8-802] inferred FSM for state register 'ahb_wr_rd_cs_reg' in module 'ahb_mstr_if'
+---------------------------------------------------------------------------------------------------
+                   State |                     New Encoding |                Previous Encoding 
+---------------------------------------------------------------------------------------------------
+             axi_rd_idle |                              000 |                              000
+           axi_read_last |                              001 |                              001
+             axi_reading |                              010 |                              010
+                 rd_resp |                              011 |                              100
+         axi_wait_rready |                              100 |                              011
+---------------------------------------------------------------------------------------------------
+INFO: [Synth 8-3354] encoded FSM with state register 'axi_read_cs_reg' using encoding 'sequential' in module 'axi_slv_if'
+---------------------------------------------------------------------------------------------------
+                   State |                     New Encoding |                Previous Encoding 
+---------------------------------------------------------------------------------------------------
+             axi_wr_idle |                              000 |                              000
+        axi_wvalids_wait |                              001 |                              010
+             axi_writing |                              010 |                              001
+        axi_wr_resp_wait |                              011 |                              101
+          axi_write_last |                              100 |                              100
+             axi_wr_resp |                              101 |                              110
+         axi_wvalid_wait |                              110 |                              011
+---------------------------------------------------------------------------------------------------
+INFO: [Synth 8-3354] encoded FSM with state register 'axi_write_cs_reg' using encoding 'sequential' in module 'axi_slv_if'
+---------------------------------------------------------------------------------------------------
+                   State |                     New Encoding |                Previous Encoding 
+---------------------------------------------------------------------------------------------------
+                ahb_idle |                             0000 |                             0000
+             ahb_wr_addr |                             0001 |                             0110
+           ahb_wr_single |                             0010 |                             0111
+             ahb_wr_incr |                             0011 |                             1001
+           ahb_last_wait |                             0100 |                             1101
+          ahb_onekb_last |                             0101 |                             1100
+                ahb_last |                             0110 |                             1110
+           ahb_last_addr |                             0111 |                             1011
+             ahb_wr_wait |                             1000 |                             1000
+           ahb_incr_addr |                             1001 |                             1010
+           ahb_rd_single |                             1010 |                             0010
+             ahb_rd_addr |                             1011 |                             0001
+             ahb_rd_last |                             1100 |                             0100
+        ahb_rd_data_incr |                             1101 |                             0011
+             ahb_rd_wait |                             1110 |                             0101
+---------------------------------------------------------------------------------------------------
+INFO: [Synth 8-3354] encoded FSM with state register 'ahb_wr_rd_cs_reg' using encoding 'sequential' in module 'ahb_mstr_if'
+---------------------------------------------------------------------------------
+Finished RTL Optimization Phase 2 : Time (s): cpu = 00:00:22 ; elapsed = 00:00:31 . Memory (MB): peak = 2697.469 ; gain = 242.371 ; free physical = 7484 ; free virtual = 116121
+---------------------------------------------------------------------------------
+
+Report RTL Partitions: 
++-+--------------+------------+----------+
+| |RTL Partition |Replication |Instances |
++-+--------------+------------+----------+
++-+--------------+------------+----------+
+---------------------------------------------------------------------------------
+Start RTL Component Statistics 
+---------------------------------------------------------------------------------
+Detailed RTL Component Info : 
++---Adders : 
+	   2 Input     32 Bit       Adders := 3     
+	   2 Input     12 Bit       Adders := 1     
+	   2 Input      8 Bit       Adders := 1     
+	   2 Input      6 Bit       Adders := 1     
+	   2 Input      5 Bit       Adders := 2     
+	   2 Input      4 Bit       Adders := 3     
+	   2 Input      3 Bit       Adders := 3     
+	   2 Input      2 Bit       Adders := 2     
++---Registers : 
+	               32 Bit    Registers := 7     
+	               16 Bit    Registers := 6     
+	                8 Bit    Registers := 2     
+	                4 Bit    Registers := 5     
+	                3 Bit    Registers := 4     
+	                2 Bit    Registers := 4     
+	                1 Bit    Registers := 33    
++---Muxes : 
+	   2 Input     32 Bit        Muxes := 10    
+	  15 Input     32 Bit        Muxes := 1     
+	   5 Input     32 Bit        Muxes := 2     
+	   8 Input     32 Bit        Muxes := 1     
+	   4 Input     32 Bit        Muxes := 1     
+	   2 Input     16 Bit        Muxes := 1     
+	   2 Input     12 Bit        Muxes := 1     
+	   4 Input     12 Bit        Muxes := 1     
+	   2 Input      8 Bit        Muxes := 2     
+	   2 Input      4 Bit        Muxes := 2     
+	  27 Input      4 Bit        Muxes := 1     
+	   3 Input      4 Bit        Muxes := 1     
+	   5 Input      3 Bit        Muxes := 1     
+	   2 Input      3 Bit        Muxes := 16    
+	   7 Input      3 Bit        Muxes := 1     
+	   4 Input      3 Bit        Muxes := 1     
+	   2 Input      2 Bit        Muxes := 9     
+	   5 Input      2 Bit        Muxes := 2     
+	   2 Input      1 Bit        Muxes := 46    
+	   5 Input      1 Bit        Muxes := 6     
+	   7 Input      1 Bit        Muxes := 7     
+	  15 Input      1 Bit        Muxes := 18    
+---------------------------------------------------------------------------------
+Finished RTL Component Statistics 
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start RTL Hierarchical Component Statistics 
+---------------------------------------------------------------------------------
+Hierarchical RTL Component report 
+Module ahb_skid_buf 
+Detailed RTL Component Info : 
++---Registers : 
+	               32 Bit    Registers := 2     
+	               16 Bit    Registers := 2     
+	                4 Bit    Registers := 3     
+	                2 Bit    Registers := 2     
+	                1 Bit    Registers := 12    
++---Muxes : 
+	   2 Input     32 Bit        Muxes := 1     
+	   2 Input     16 Bit        Muxes := 1     
+	   2 Input      4 Bit        Muxes := 1     
+	   2 Input      2 Bit        Muxes := 1     
+	   2 Input      1 Bit        Muxes := 3     
+Module axi_slv_if 
+Detailed RTL Component Info : 
++---Registers : 
+	               32 Bit    Registers := 3     
+	               16 Bit    Registers := 4     
+	                8 Bit    Registers := 1     
+	                4 Bit    Registers := 1     
+	                3 Bit    Registers := 2     
+	                2 Bit    Registers := 1     
+	                1 Bit    Registers := 14    
++---Muxes : 
+	   2 Input     32 Bit        Muxes := 2     
+	   2 Input      8 Bit        Muxes := 1     
+	   2 Input      4 Bit        Muxes := 1     
+	   5 Input      3 Bit        Muxes := 1     
+	   2 Input      3 Bit        Muxes := 9     
+	   7 Input      3 Bit        Muxes := 1     
+	   4 Input      3 Bit        Muxes := 1     
+	   2 Input      2 Bit        Muxes := 1     
+	   2 Input      1 Bit        Muxes := 15    
+	   5 Input      1 Bit        Muxes := 6     
+	   7 Input      1 Bit        Muxes := 7     
+Module ahb_mstr_if 
+Detailed RTL Component Info : 
++---Adders : 
+	   2 Input     32 Bit       Adders := 3     
+	   2 Input     12 Bit       Adders := 1     
+	   2 Input      8 Bit       Adders := 1     
+	   2 Input      6 Bit       Adders := 1     
+	   2 Input      5 Bit       Adders := 2     
+	   2 Input      4 Bit       Adders := 3     
+	   2 Input      3 Bit       Adders := 3     
+	   2 Input      2 Bit       Adders := 2     
++---Registers : 
+	               32 Bit    Registers := 2     
+	                8 Bit    Registers := 1     
+	                4 Bit    Registers := 1     
+	                3 Bit    Registers := 2     
+	                2 Bit    Registers := 1     
+	                1 Bit    Registers := 7     
++---Muxes : 
+	   2 Input     32 Bit        Muxes := 7     
+	  15 Input     32 Bit        Muxes := 1     
+	   5 Input     32 Bit        Muxes := 2     
+	   8 Input     32 Bit        Muxes := 1     
+	   4 Input     32 Bit        Muxes := 1     
+	   2 Input     12 Bit        Muxes := 1     
+	   4 Input     12 Bit        Muxes := 1     
+	   2 Input      8 Bit        Muxes := 1     
+	  27 Input      4 Bit        Muxes := 1     
+	   3 Input      4 Bit        Muxes := 1     
+	   2 Input      3 Bit        Muxes := 7     
+	   2 Input      2 Bit        Muxes := 7     
+	   5 Input      2 Bit        Muxes := 2     
+	   2 Input      1 Bit        Muxes := 28    
+	  15 Input      1 Bit        Muxes := 18    
+---------------------------------------------------------------------------------
+Finished RTL Hierarchical Component Statistics
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Part Resource Summary
+---------------------------------------------------------------------------------
+Part Resources:
+DSPs: 2520 (col length:168)
+BRAMs: 1824 (col length: RAMB18 168 RAMB36 84)
+---------------------------------------------------------------------------------
+Finished Part Resource Summary
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Cross Boundary and Area Optimization
+---------------------------------------------------------------------------------
+Warning: Parallel synthesis criteria is not met 
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (U0/\VALID_READY_SKID/sig_stop_request_reg )
+INFO: [Synth 8-3886] merging instance 'U0/VALID_READY_SKID/sig_user_skid_reg_reg[0]' (FDRE) to 'U0/VALID_READY_SKID/sig_resp_skid_reg_reg[0]'
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (U0/\VALID_READY_SKID/sig_resp_skid_reg_reg[0] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (U0/\AHB_MSTR_IF_MODULE/HPROT_i_reg[3] )
+---------------------------------------------------------------------------------
+Finished Cross Boundary and Area Optimization : Time (s): cpu = 00:00:26 ; elapsed = 00:00:35 . Memory (MB): peak = 2697.469 ; gain = 242.371 ; free physical = 7445 ; free virtual = 116087
+---------------------------------------------------------------------------------
+
+Report RTL Partitions: 
++-+--------------+------------+----------+
+| |RTL Partition |Replication |Instances |
++-+--------------+------------+----------+
++-+--------------+------------+----------+
+---------------------------------------------------------------------------------
+Start Applying XDC Timing Constraints
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Applying XDC Timing Constraints : Time (s): cpu = 00:01:01 ; elapsed = 00:01:47 . Memory (MB): peak = 3141.422 ; gain = 686.324 ; free physical = 3143 ; free virtual = 111788
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Timing Optimization
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Timing Optimization : Time (s): cpu = 00:01:03 ; elapsed = 00:01:49 . Memory (MB): peak = 3180.945 ; gain = 725.848 ; free physical = 3259 ; free virtual = 111904
+---------------------------------------------------------------------------------
+
+Report RTL Partitions: 
++-+--------------+------------+----------+
+| |RTL Partition |Replication |Instances |
++-+--------------+------------+----------+
++-+--------------+------------+----------+
+---------------------------------------------------------------------------------
+Start Technology Mapping
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Technology Mapping : Time (s): cpu = 00:01:03 ; elapsed = 00:01:49 . Memory (MB): peak = 3188.953 ; gain = 733.855 ; free physical = 3329 ; free virtual = 111970
+---------------------------------------------------------------------------------
+
+Report RTL Partitions: 
++-+--------------+------------+----------+
+| |RTL Partition |Replication |Instances |
++-+--------------+------------+----------+
++-+--------------+------------+----------+
+---------------------------------------------------------------------------------
+Start IO Insertion
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Flattening Before IO Insertion
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Flattening Before IO Insertion
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Final Netlist Cleanup
+---------------------------------------------------------------------------------
+INFO: [Synth 8-5365] Flop AXI_SLV_IF_MODULE/axi_prot_reg[2] is being inverted and renamed to AXI_SLV_IF_MODULE/axi_prot_reg[2]_inv.
+---------------------------------------------------------------------------------
+Finished Final Netlist Cleanup
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished IO Insertion : Time (s): cpu = 00:01:07 ; elapsed = 00:01:53 . Memory (MB): peak = 3194.891 ; gain = 739.793 ; free physical = 6843 ; free virtual = 115481
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Renaming Generated Instances
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Renaming Generated Instances : Time (s): cpu = 00:01:07 ; elapsed = 00:01:53 . Memory (MB): peak = 3194.891 ; gain = 739.793 ; free physical = 6843 ; free virtual = 115481
+---------------------------------------------------------------------------------
+
+Report RTL Partitions: 
++-+--------------+------------+----------+
+| |RTL Partition |Replication |Instances |
++-+--------------+------------+----------+
++-+--------------+------------+----------+
+
+Report Check Netlist: 
++------+------------------+-------+---------+-------+------------------+
+|      |Item              |Errors |Warnings |Status |Description       |
++------+------------------+-------+---------+-------+------------------+
+|1     |multi_driven_nets |      0|        0|Passed |Multi driven nets |
++------+------------------+-------+---------+-------+------------------+
+---------------------------------------------------------------------------------
+Start Rebuilding User Hierarchy
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Rebuilding User Hierarchy : Time (s): cpu = 00:01:07 ; elapsed = 00:01:53 . Memory (MB): peak = 3194.891 ; gain = 739.793 ; free physical = 6848 ; free virtual = 115486
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Renaming Generated Ports
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Renaming Generated Ports : Time (s): cpu = 00:01:07 ; elapsed = 00:01:53 . Memory (MB): peak = 3194.891 ; gain = 739.793 ; free physical = 6848 ; free virtual = 115486
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Handling Custom Attributes
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Handling Custom Attributes : Time (s): cpu = 00:01:07 ; elapsed = 00:01:53 . Memory (MB): peak = 3194.891 ; gain = 739.793 ; free physical = 6854 ; free virtual = 115491
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Renaming Generated Nets
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Renaming Generated Nets : Time (s): cpu = 00:01:07 ; elapsed = 00:01:53 . Memory (MB): peak = 3194.891 ; gain = 739.793 ; free physical = 6855 ; free virtual = 115492
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Writing Synthesis Report
+---------------------------------------------------------------------------------
+
+Report BlackBoxes: 
++-+--------------+----------+
+| |BlackBox name |Instances |
++-+--------------+----------+
++-+--------------+----------+
+
+Report Cell Usage: 
++------+-------+------+
+|      |Cell   |Count |
++------+-------+------+
+|1     |CARRY8 |    15|
+|2     |LUT1   |     3|
+|3     |LUT2   |    50|
+|4     |LUT3   |   122|
+|5     |LUT4   |    30|
+|6     |LUT5   |    50|
+|7     |LUT6   |   160|
+|8     |FDRE   |   394|
+|9     |FDSE   |     3|
++------+-------+------+
+
+Report Instance Areas: 
++------+-----------------------+-------------------+------+
+|      |Instance               |Module             |Cells |
++------+-----------------------+-------------------+------+
+|1     |top                    |                   |   827|
+|2     |  U0                   |axi_ahblite_bridge |   827|
+|3     |    AHB_MSTR_IF_MODULE |ahb_mstr_if        |   249|
+|4     |    AXI_SLV_IF_MODULE  |axi_slv_if         |   419|
+|5     |    VALID_READY_SKID   |ahb_skid_buf       |   159|
++------+-----------------------+-------------------+------+
+---------------------------------------------------------------------------------
+Finished Writing Synthesis Report : Time (s): cpu = 00:01:07 ; elapsed = 00:01:53 . Memory (MB): peak = 3194.891 ; gain = 739.793 ; free physical = 6855 ; free virtual = 115492
+---------------------------------------------------------------------------------
+Synthesis finished with 0 errors, 0 critical warnings and 0 warnings.
+Synthesis Optimization Runtime : Time (s): cpu = 00:00:57 ; elapsed = 00:01:39 . Memory (MB): peak = 3194.891 ; gain = 563.137 ; free physical = 6949 ; free virtual = 115587
+Synthesis Optimization Complete : Time (s): cpu = 00:01:07 ; elapsed = 00:01:53 . Memory (MB): peak = 3194.898 ; gain = 739.793 ; free physical = 6951 ; free virtual = 115588
+INFO: [Project 1-571] Translating synthesized netlist
+Netlist sorting complete. Time (s): cpu = 00:00:00.01 ; elapsed = 00:00:00.01 . Memory (MB): peak = 3206.859 ; gain = 0.000 ; free physical = 8722 ; free virtual = 117359
+INFO: [Netlist 29-17] Analyzing 15 Unisim elements for replacement
+INFO: [Netlist 29-28] Unisim Transformation completed in 0 CPU seconds
+INFO: [Project 1-570] Preparing netlist for logic optimization
+INFO: [Opt 31-138] Pushed 0 inverter(s) to 0 load pin(s).
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 3252.750 ; gain = 0.000 ; free physical = 8667 ; free virtual = 117304
+INFO: [Project 1-111] Unisim Transformation Summary:
+No Unisim elements were transformed.
+
+INFO: [Common 17-83] Releasing license: Synthesis
+43 Infos, 11 Warnings, 0 Critical Warnings and 0 Errors encountered.
+synth_design completed successfully
+synth_design: Time (s): cpu = 00:01:24 ; elapsed = 00:02:24 . Memory (MB): peak = 3252.750 ; gain = 1701.375 ; free physical = 8818 ; free virtual = 117456
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 3252.750 ; gain = 0.000 ; free physical = 8818 ; free virtual = 117456
+WARNING: [Constraints 18-5210] No constraints selected for write.
+Resolution: This message can indicate that there are no constraints for the design, or it can indicate that the used_in flags are set such that the constraints are ignored. This later case is used when running synth_design to not write synthesis constraints to the resulting checkpoint. Instead, project constraints are read when the synthesized design is opened.
+INFO: [Common 17-1381] The checkpoint '/home/jescobedo/repos/juanesp/socs/xilinx-zcu102-xczu9eg/vivado/esp-xilinx-zcu102-xczu9eg.runs/zynqmpsoc_axi_ahblite_bridge_0_0_synth_1/zynqmpsoc_axi_ahblite_bridge_0_0.dcp' has been generated.
+WARNING: [Common 17-576] 'use_project_ipc' is deprecated. This option is deprecated and no longer used.
+INFO: [Coretcl 2-1648] Added synthesis output to IP cache for IP zynqmpsoc_axi_ahblite_bridge_0_0, cache-ID = f2dd0f14b6e63e5d
+INFO: [Coretcl 2-1174] Renamed 4 cell refs.
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 3276.762 ; gain = 0.000 ; free physical = 8751 ; free virtual = 117390
+WARNING: [Constraints 18-5210] No constraints selected for write.
+Resolution: This message can indicate that there are no constraints for the design, or it can indicate that the used_in flags are set such that the constraints are ignored. This later case is used when running synth_design to not write synthesis constraints to the resulting checkpoint. Instead, project constraints are read when the synthesized design is opened.
+INFO: [Common 17-1381] The checkpoint '/home/jescobedo/repos/juanesp/socs/xilinx-zcu102-xczu9eg/vivado/esp-xilinx-zcu102-xczu9eg.runs/zynqmpsoc_axi_ahblite_bridge_0_0_synth_1/zynqmpsoc_axi_ahblite_bridge_0_0.dcp' has been generated.
+INFO: [runtcl-4] Executing : report_utilization -file zynqmpsoc_axi_ahblite_bridge_0_0_utilization_synth.rpt -pb zynqmpsoc_axi_ahblite_bridge_0_0_utilization_synth.pb
+INFO: [Common 17-206] Exiting Vivado at Mon Jan 11 12:09:47 2021...
