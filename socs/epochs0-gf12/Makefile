@@ -48,7 +48,7 @@ VSIMOPT += -g SIMULATION=true
 
 
 # Genus flags
-GENUS_SVLOGOPT += -define GF12
+GENUS_VLOGOPT += -define GF12
 
 
 ### Additional design files ###
