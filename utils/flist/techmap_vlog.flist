@@ -1,6 +1,9 @@
 techmap/gf12/pads_gf12_wrap.v
 techmap/gf12/wrappers/SyncSpRamBeNx64.sv
+techmap/gf12/wrappers/DCO_common.v
 techmap/gf12/wrappers/DCO.v
+techmap/gf12/wrappers/DCO_LPDDR.v
+techmap/gf12/wrappers/DELAY_CELL.v
 techmap/gf12/mem/GF12_SRAM_SP_2048x4.v
 techmap/gf12/mem/GF12_SRAM_SP_8192x64_PG.v
 techmap/gf12/mem/GF12_SRAM_SP_8192x16_PG.v
@@ -18,6 +21,9 @@ techmap/gf12/mem/GF12_SRAM_SP_4096x8_PG.v
 techmap/gf12/mem/GF12_SRAM_SP_256x32_PG.v
 techmap/gf12/mem/GF12_SRAM_SP_256x64.v
 techmap/gf12/mem/GF12_RF_2P_4096x16.v
+techmap/gf12/mem/GF12_SRAM_SP_512x64.v
+techmap/gf12/mem/GF12_SRAM_SP_512x28.v
+techmap/gf12/mem/GF12_SRAM_SP_512x24.v
 techmap/gf12/mem/GF12_SRAM_SP_512x16.v
 techmap/gf12/mem/GF12_SRAM_SP_2048x16_PG.v
 techmap/gf12/mem/GF12_SRAM_SP_4096x4.v
