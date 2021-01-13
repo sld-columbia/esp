@@ -145,6 +145,18 @@ package allmem is
       datain   : in  std_logic_vector((dbits -1) downto 0));
   end component gf12_syncram_2p;
 
+  component gf12_syncram_be is
+    generic (
+      abits : integer;
+      dbits : integer);
+    port (
+      clk     : in  std_ulogic;
+      address : in  std_logic_vector(abits -1 downto 0);
+      datain  : in  std_logic_vector(dbits -1 downto 0);
+      dataout : out std_logic_vector(dbits -1 downto 0);
+      enable  : in  std_logic_vector(dbits/8-1 downto 0);
+      write   : in  std_logic_vector(dbits/8-1 downto 0));
+  end component gf12_syncram_be;
 
   -- Inferred
   component generic_syncram

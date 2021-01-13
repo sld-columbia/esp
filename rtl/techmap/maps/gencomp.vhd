@@ -138,7 +138,7 @@ constant has_sram_2pbw : tech_ability_type :=
         (others => 0);
 
 constant has_srambw : tech_ability_type :=
-	(virtex7 => 1, virtexup => 1, virtexu => 1, others => 0);
+	(virtex7 => 1, virtexup => 1, virtexu => 1, gf12 => 1, others => 0);
 
 constant has_2pfifo : tech_ability_type :=
         (others => 0);
