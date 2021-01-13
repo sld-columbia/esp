@@ -2,7 +2,7 @@
 ###   Main flow - Do Not Edit
 ###############################################################
 #TODO: For now define the script version here... find a better home like the README or design.tcl?
-set scriptVer "2019.1"
+set scriptVer "2019.2"
 set vivado [exec which vivado]
 if {[llength $vivado]} {
    set vivadoVer [version -short]
