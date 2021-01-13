@@ -1,1 +1,0 @@
-../../../accelerators/stratus_hls/common/stratus/Makefile

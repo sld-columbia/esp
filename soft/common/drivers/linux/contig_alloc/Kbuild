@@ -1,0 +1,4 @@
+EXTRA_CFLAGS += \
+	     -I$(DRIVERS)/include
+
+obj-m := contig_alloc.o

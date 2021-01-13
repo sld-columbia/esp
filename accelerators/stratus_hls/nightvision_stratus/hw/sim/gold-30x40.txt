@@ -1,0 +1,1 @@
+../hls/gold-30x40.txt

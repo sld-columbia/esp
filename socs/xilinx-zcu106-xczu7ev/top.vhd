@@ -1,3 +1,5 @@
+-- Copyright (c) 2011-2021 Columbia University, System Level Design Group
+-- SPDX-License-Identifier: Apache-2.0
 ------------------------------------------------------------------------------
 --  ESP - xilinx - zcu106
 ------------------------------------------------------------------------------
@@ -17,7 +19,7 @@ use work.cachepackage.all;
 use work.config.all;
 use work.esp_global.all;
 use work.socmap.all;
-use work.soctiles.all;
+use work.tiles_pkg.all;
 
 entity top is
   generic (

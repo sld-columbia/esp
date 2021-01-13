@@ -1,0 +1,1 @@
+../ariane/riscv_plic_wrap.sv

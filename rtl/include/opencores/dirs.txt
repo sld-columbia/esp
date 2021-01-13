@@ -1,3 +1,0 @@
-can
-ge_1000baseX
-i2c

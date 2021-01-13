@@ -1,4 +1,4 @@
--- Copyright (c) 2011-2020 Columbia University, System Level Design Group
+-- Copyright (c) 2011-2021 Columbia University, System Level Design Group
 -- SPDX-License-Identifier: Apache-2.0
 
 ------------------------------------------------------------------------------
@@ -13,18 +13,17 @@ use work.amba.all;
 use work.stdlib.all;
 use work.devices.all;
 use work.gencomp.all;
-use work.memoryctrl.all;
 use work.leon3.all;
 use work.uart.all;
 use work.misc.all;
 use work.net.all;
-use work.jtag.all;
+use work.svga_pkg.all;
 library unisim;
 -- pragma translate_off
 use work.sim.all;
 -- pragma translate_on
 use unisim.VCOMPONENTS.all;
-use work.sldcommon.all;
+use work.monitor_pkg.all;
 use work.sldacc.all;
 use work.tile.all;
 use work.nocpackage.all;
@@ -33,7 +32,7 @@ use work.coretypes.all;
 use work.config.all;
 use work.esp_global.all;
 use work.socmap.all;
-use work.soctiles.all;
+use work.tiles_pkg.all;
 
 entity top is
   generic (
