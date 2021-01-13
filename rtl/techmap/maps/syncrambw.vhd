@@ -96,6 +96,11 @@ begin
         port map (clk, address, datain, dataoutx, xenable, xwrite);
     end generate;
 
+    g12 : if tech = gf12 generate
+      x0 : gf12_syncram_be generic map (abits, dbits)
+        port map (clk, address, datain, dataoutx, xenable, xwrite);
+    end generate;
+
 
 -- pragma translate_off
     dmsg : if GRLIB_CONFIG_ARRAY(grlib_debug_level) >= 2 generate
