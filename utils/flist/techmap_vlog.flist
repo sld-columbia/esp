@@ -6,6 +6,7 @@ techmap/gf12/wrappers/DCO_LPDDR.v
 techmap/gf12/wrappers/DELAY_CELL.v
 techmap/gf12/mem/GF12_SRAM_SP_2048x4.v
 techmap/gf12/mem/GF12_SRAM_SP_8192x64_PG.v
+techmap/gf12/mem/GF12_SRAM_SP_8192x64_HD.v
 techmap/gf12/mem/GF12_SRAM_SP_8192x16_PG.v
 techmap/gf12/mem/GF12_SRAM_SP_512x32_PG.v
 techmap/gf12/mem/GF12_SRAM_SP_16384x32_PG.v
@@ -45,6 +46,14 @@ techmap/gf12/mem/GF12_RF_2P_256x32.v
 techmap/gf12/mem/GF12_SRAM_SP_1024x32_PG.v
 techmap/gf12/mem/GF12_SRAM_SP_256x8_PG.v
 techmap/gf12/mem/GF12_SRAM_SP_8192x8_PG.v
+techmap/gf12/sram_dw/gf12_sram64_be_13abits.v
+techmap/gf12/sram_dw/gf12_sram64_be_14abits.v
+techmap/gf12/sram_dw/gf12_sram64_be_15abits.v
+techmap/gf12/sram_dw/gf12_sram64_be_16abits.v
+techmap/gf12/sram_dw/gf12_sram64_be_17abits.v
+techmap/gf12/sram_dw/gf12_sram64_be_18abits.v
+techmap/gf12/sram_dw/gf12_sram64_be_19abits.v
+techmap/gf12/sram_dw/gf12_sram64_be_20abits.v
 techmap/virtex7/sram_b/unisim_sram_b_10abits.v
 techmap/virtex7/sram_b/unisim_sram_b_16abits.v
 techmap/virtex7/sram_b/unisim_sram_b_14abits.v
