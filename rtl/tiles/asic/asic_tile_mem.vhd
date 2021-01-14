@@ -157,6 +157,7 @@ begin
       this_has_dco => 1,
       test_if_en   => 1,
       this_has_ddr => 0,
+      dco_rst_cfg  => (others => '0'),
       ROUTER_PORTS => ROUTER_PORTS,
       HAS_SYNC     => 1)
     port map (
@@ -168,8 +169,14 @@ begin
       pllclk             => clk_div,
       dco_clk            => dco_clk,
       dco_clk_lock       => dco_clk_lock,
+      dco_clk_div2       => open,
+      dco_clk_div2_90    => open,
       ddr_ahbsi          => open,
       ddr_ahbso          => ahbs_none,
+      ddr_cfg0           => open,
+      ddr_cfg1           => open,
+      ddr_cfg2           => open,
+      mem_id             => open,
       fpga_data_in       => fpga_data_in,
       fpga_data_out      => fpga_data_out,
       fpga_oen           => fpga_oen,

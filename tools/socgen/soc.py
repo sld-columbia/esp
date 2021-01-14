@@ -221,6 +221,8 @@ class SoC_Config():
           tile.has_clkbuf.set(int(tokens[7]))
           if tokens[3] == "cpu" and self.cache_en.get() == 1:
             tile.has_l2.set(1)
+          if tokens[3] == "slm":
+            tile.has_ddr.set(tokens[8])
           if tokens[3] == "acc":
             tile.point.set(tokens[8])
             tile.has_l2.set(tokens[9])
@@ -308,10 +310,11 @@ class SoC_Config():
         tile = self.noc.topology[y][x]
         selection = tile.ip_type.get()
         is_accelerator = False
+        is_slm = False
         fp.write("TILE_" + str(y) + "_" + str(x) + " = ")
-		# Tile number
+        # Tile number
         fp.write(str(i) + " ")
-		# Tile type
+        # Tile type
         if self.IPs.PROCESSORS.count(selection):
           fp.write("cpu")
         elif self.IPs.MISC.count(selection):
@@ -319,15 +322,16 @@ class SoC_Config():
         elif self.IPs.MEM.count(selection):
           fp.write("mem")
         elif self.IPs.SLM.count(selection):
+          is_slm = True
           fp.write("slm")
         elif self.IPs.ACCELERATORS.count(selection):
           is_accelerator = True
           fp.write("acc")
         else:
           fp.write("empty")
-		# Selected accelerator or tile type repeated
+        # Selected accelerator or tile type repeated
         fp.write(" " + selection)
-		# Clock region info
+        # Clock region info
         try:
           clk_region = tile.clk_region.get()
           fp.write(" " + str(clk_region))
@@ -337,6 +341,10 @@ class SoC_Config():
           fp.write(" " + str(0))
         fp.write(" " + str(tile.has_pll.get()))
         fp.write(" " + str(tile.has_clkbuf.get()))
+        # SLM tile configuration
+        if is_slm:
+          fp.write(" " + str(tile.has_ddr.get()))
+        # Acceleator tile configuration
         if is_accelerator:
           fp.write(" " + str(tile.point.get()))
           fp.write(" " + str(tile.has_l2.get()))

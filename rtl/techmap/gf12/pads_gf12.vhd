@@ -159,6 +159,84 @@ begin
 end;
 
 
+
+
+library ieee;
+use ieee.std_logic_1164.all;
+use work.gencomp.all;
+
+entity gf12_iopadien is
+  generic (
+    PAD_TYPE : std_logic := '0');
+  port (
+    pad : inout std_logic;
+    i   : in    std_ulogic;
+    en  : in    std_ulogic;
+    o   : out   std_logic;
+    ien : in    std_ulogic;
+    sr  : in    std_ulogic;
+    ds0 : in    std_ulogic;
+    ds1 : in    std_ulogic
+    );
+end;
+
+architecture rtl of gf12_iopadien is
+
+  component PBIDIRN_18_18_H is
+    port (
+      PAD : inout std_logic;
+      Y   : out   std_ulogic;
+      A   : in    std_ulogic;
+      OE  : in    std_ulogic;
+      DS0 : in    std_ulogic;
+      DS1 : in    std_ulogic;
+      SR  : in    std_ulogic;
+      IE  : in    std_ulogic);
+  end component PBIDIRN_18_18_H;
+
+  component PBIDIRN_18_18_V is
+    port (
+      PAD : inout std_logic;
+      Y   : out   std_ulogic;
+      A   : in    std_ulogic;
+      OE  : in    std_ulogic;
+      DS0 : in    std_ulogic;
+      DS1 : in    std_ulogic;
+      SR  : in    std_ulogic;
+      IE  : in    std_ulogic);
+  end component PBIDIRN_18_18_V;
+
+begin
+
+  pad_v_gen: if PAD_TYPE = '0' generate
+    p_i: PBIDIRN_18_18_V
+      port map (
+        PAD => pad,
+        Y   => o,
+        A   => i,
+        OE  => en,
+        DS0 => ds0,
+        DS1 => ds1,
+        SR  => sr,
+        IE  => ien);
+  end generate pad_v_gen;
+
+  pad_h_gen: if PAD_TYPE = '1' generate
+    p_i: PBIDIRN_18_18_H
+      port map (
+        PAD => pad,
+        Y   => o,
+        A   => i,
+        OE  => en,
+        DS0 => ds0,
+        DS1 => ds1,
+        SR  => sr,
+        IE  => ien);
+  end generate pad_h_gen;
+
+end;
+
+
 -------------------------------------------------------------------------------
 -- Outpad
 -------------------------------------------------------------------------------

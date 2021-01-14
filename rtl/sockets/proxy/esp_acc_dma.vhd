@@ -50,7 +50,7 @@ entity esp_acc_dma is
     tech               : integer                              := virtex7;
     extra_clk_buf      : integer range 0 to 1;
     mem_num            : integer                              := 1;
-    mem_info           : tile_mem_info_vector(0 to CFG_NMEM_TILE + CFG_NSLM_TILE);
+    mem_info           : tile_mem_info_vector(0 to CFG_NMEM_TILE + CFG_NSLM_TILE + CFG_NSLMDDR_TILE);
     io_y               : local_yx;
     io_x               : local_yx;
     pindex             : integer                              := 0;
