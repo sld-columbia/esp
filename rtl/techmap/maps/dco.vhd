@@ -17,6 +17,7 @@ entity dco is
 
   generic (
     tech : integer;
+    enable_div2 : integer range 0 to 1 := 0;
     dlog : integer range 0 to 15 := 10);      -- log2(delay raw reset to lock)
   port (
     rstn     : in  std_ulogic;
@@ -29,6 +30,8 @@ entity dco is
     freq_sel : in  std_logic_vector(1 downto 0);
     clk      : out std_logic;
     clk_div  : out std_logic;
+    clk_div2 : out std_logic;
+    clk_div2_90 : out std_logic;
     lock     : out std_ulogic);
 
 end entity dco;
@@ -63,6 +66,8 @@ begin  -- architecture rtl
   gf12_gen : if (tech = gf12) generate
 
     x0 : gf12_dco
+      generic map (
+        enable_div2 => enable_div2)
       port map (
         RSTN     => rstn,
         EXT_CLK  => ext_clk,
@@ -73,6 +78,8 @@ begin  -- architecture rtl
         DIV_SEL  => div_sel,
         FREQ_SEL => freq_sel,
         CLK      => clk_int,
+        CLK_DIV2    => clk_div2,
+        CLK_DIV2_90 => clk_div2_90,
         CLK_DIV  => clk_div);
 
     clk <= clk_int;

@@ -694,6 +694,7 @@ begin
     dco_noc_i : dco
       generic map (
         tech => CFG_FABTECH,
+        enable_div2 => 0,
         dlog => 8)                      -- NoC is the first to come out of reset
       port map (
         rstn     => raw_rstn,
@@ -718,6 +719,7 @@ begin
     dco_i: dco
       generic map (
         tech => CFG_FABTECH,
+        enable_div2 => 0,
         dlog => 10)                     -- Tile I/O is the first sending NoC
                                         -- packets; last reset to be released
       port map (
@@ -733,10 +735,10 @@ begin
         clk_div  => pllclk,
         lock     => dco_clk_lock);
 
-    dco_freq_sel <= tile_config(ESP_CSR_DCO_CFG_MSB - 0  downto ESP_CSR_DCO_CFG_MSB - 0  - 1);
-    dco_div_sel  <= tile_config(ESP_CSR_DCO_CFG_MSB - 2  downto ESP_CSR_DCO_CFG_MSB - 2  - 2);
-    dco_fc_sel   <= tile_config(ESP_CSR_DCO_CFG_MSB - 5  downto ESP_CSR_DCO_CFG_MSB - 5  - 5);
-    dco_cc_sel   <= tile_config(ESP_CSR_DCO_CFG_MSB - 11 downto ESP_CSR_DCO_CFG_MSB - 11 - 5);
+    dco_freq_sel <= tile_config(ESP_CSR_DCO_CFG_MSB - 4 - 0  downto ESP_CSR_DCO_CFG_MSB - 4 - 0  - 1);
+    dco_div_sel  <= tile_config(ESP_CSR_DCO_CFG_MSB - 4 - 2  downto ESP_CSR_DCO_CFG_MSB - 4 - 2  - 2);
+    dco_fc_sel   <= tile_config(ESP_CSR_DCO_CFG_MSB - 4 - 5  downto ESP_CSR_DCO_CFG_MSB - 4 - 5  - 5);
+    dco_cc_sel   <= tile_config(ESP_CSR_DCO_CFG_MSB - 4 - 11 downto ESP_CSR_DCO_CFG_MSB - 4 - 11 - 5);
     dco_clk_sel  <= tile_config(ESP_CSR_DCO_CFG_LSB + 1);
     dco_en       <= raw_rstn and tile_config(ESP_CSR_DCO_CFG_LSB);
 
@@ -1006,7 +1008,8 @@ begin
   ahb0 : ahbctrl                        -- AHB arbiter/multiplexer
     generic map (defmast => CFG_DEFMST, split => CFG_SPLIT,
                  rrobin  => CFG_RROBIN, ioaddr => CFG_AHBIO, fpnpen => CFG_FPNPEN,
-                 nahbm   => CFG_GRETH + CFG_DSU_ETH + 2, nahbs => maxahbs)
+                 nahbm   => CFG_GRETH + CFG_DSU_ETH + 2, nahbs => maxahbs,
+                 cfgmask => 0)
     port map (rst, clk, ahbmi, ahbmo, ahbsi, ctrl_ahbso);
 
 
@@ -1434,7 +1437,8 @@ begin
     ahb2 : ahbctrl                      -- AHB arbiter/multiplexer
       generic map (defmast => CFG_DEFMST, split => CFG_SPLIT,
                    rrobin  => CFG_RROBIN, ioaddr => CFG_AHBIO, fpnpen => CFG_FPNPEN,
-                   nahbm   => 1, nahbs => 1)
+                   nahbm   => 1, nahbs => 1,
+                   cfgmask => 0)
       port map (rst, clk, ahbmi2, ahbmo2, ahbsi2, ahbso2);
 
   end generate svga_on_apb;
@@ -1482,8 +1486,8 @@ begin
       hindex           => this_remote_ahb_slv_en,
       hconfig          => fixed_ahbso_hconfig,
       mem_hindex       => ddr_hindex(0),
-      mem_num          => CFG_NMEM_TILE + CFG_NSLM_TILE,
-      mem_info         => tile_acc_mem_list(0 to CFG_NMEM_TILE + CFG_NSLM_TILE - 1),
+      mem_num          => CFG_NMEM_TILE + CFG_NSLM_TILE + CFG_NSLMDDR_TILE,
+      mem_info         => tile_acc_mem_list(0 to CFG_NMEM_TILE + CFG_NSLM_TILE + CFG_NSLMDDR_TILE - 1),
       slv_y            => tile_y(io_tile_id),
       slv_x            => tile_x(io_tile_id),
       retarget_for_dma => 1,

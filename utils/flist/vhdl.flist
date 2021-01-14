@@ -49,6 +49,7 @@ peripherals/ddr/ahb2mig_7series.vhd
 peripherals/ddr/ahb2mig_7series_profpga.vhd
 peripherals/ddr/ahb2mig_up.vhd
 peripherals/ddr/ahb2mig_ebddr4r5.vhd
+peripherals/ddr/ahb2bsg_dmc.vhd
 caches/l2_wrapper.vhd
 caches/llc_wrapper.vhd
 caches/l2_acc_wrapper.vhd
@@ -121,3 +122,4 @@ tiles/asic/asic_tile_empty.vhd
 tiles/asic/asic_tile_io.vhd
 tiles/asic/asic_tile_mem.vhd
 tiles/asic/asic_tile_slm.vhd
+tiles/asic/asic_tile_slm_ddr.vhd

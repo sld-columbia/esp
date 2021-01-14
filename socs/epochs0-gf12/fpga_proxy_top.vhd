@@ -874,7 +874,8 @@ begin  -- architecture rtl
     ahbctrl_ddr_i : ahbctrl                        -- AHB arbiter/multiplexer
       generic map (defmast => CFG_DEFMST, split => CFG_SPLIT,
                    rrobin  => CFG_RROBIN, ioaddr => CFG_AHBIO, fpnpen => CFG_FPNPEN,
-                   nahbm   => 2, nahbs => 1)
+                   nahbm   => 2, nahbs => 1,
+                   cfgmask => 0)
       port map (rstn, sys_clk(i), ahb_mst_in_ddr(i), ahb_mst_out_ddr(i), ahb_slv_in_ddr(i), ahb_slv_out_ddr(i));
 
     -- Unused bus ports
@@ -1072,7 +1073,7 @@ begin  -- architecture rtl
       hconfig          => fixed_ahbso_hconfig,
       mem_hindex       => ddr_hindex(0),
       mem_num          => CFG_NMEM_TILE,
-      mem_info         => tile_acc_mem_list(0 to CFG_NMEM_TILE - 1),
+      mem_info         => tile_acc_mem_list(0 to CFG_NMEM_TILE + CFG_NSLM_TILE + CFG_NSLMDDR_TILE - 1),
       slv_y            => tile_y(io_tile_id),
       slv_x            => tile_x(io_tile_id),
       retarget_for_dma => 1,
@@ -1102,7 +1103,8 @@ begin  -- architecture rtl
   ahbctrl_edcl_1 : ahbctrl                        -- AHB arbiter/multiplexer
     generic map (defmast => CFG_DEFMST, split => CFG_SPLIT,
                  rrobin  => CFG_RROBIN, ioaddr => CFG_AHBIO, fpnpen => CFG_FPNPEN,
-                 nahbm   => 1, nahbs => NAHBSLV)
+                 nahbm   => 1, nahbs => NAHBSLV,
+                 cfgmask => 0)
     port map (rstn, main_clk, ahbmi, ahbmo, ahbsi, ahbso);
 
   -- Unused bus ports
