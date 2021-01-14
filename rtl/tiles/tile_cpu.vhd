@@ -284,6 +284,19 @@ architecture rtl of tile_cpu is
   signal remote_irq_ack_full        : std_ulogic;
 
   -- Bus (AHB-based processor core)
+  function set_ahb_cfgmask
+    return ahb_addr_type is
+  begin
+    if GLOB_CPU_ARCH = leon3 then
+      return 16#ff0#;
+    else
+      -- Disable Leon3-specific plug&play area and recover full address space range
+      return 16#000#;
+    end if;
+  end function;
+
+  constant ahb_cfgmask : ahb_addr_type := set_ahb_cfgmask;
+
   signal ahbsi      : ahb_slv_in_type;
   signal ahbso      : ahb_slv_out_vector;
   signal noc_ahbso  : ahb_slv_out_vector;
@@ -297,8 +310,8 @@ architecture rtl of tile_cpu is
   signal noc_apbo   : apb_slv_out_vector;
   signal apb_req    : std_ulogic;
   signal apb_ack    : std_ulogic;
-  signal mosi       : axi_mosi_vector(0 to 3);
-  signal somi       : axi_somi_vector(0 to 3);
+  signal mosi       : axi_mosi_vector(0 to 4);
+  signal somi       : axi_somi_vector(0 to 4);
 
   signal ariane_drami : axi_mosi_type;
   signal ariane_dramo : axi_somi_type;
@@ -582,6 +595,7 @@ begin
     dco_i: dco
       generic map (
         tech => CFG_FABTECH,
+        enable_div2 => 0,
         dlog => 9)                      -- come out of reset after NoC, but
                                         -- before tile_io.
       port map (
@@ -597,11 +611,11 @@ begin
         clk_div  => pllclk,
         lock     => dco_clk_lock);
 
-    dco_freq_sel <= tile_config(ESP_CSR_DCO_CFG_MSB - 0  downto ESP_CSR_DCO_CFG_MSB - 0  - 1);
-    dco_div_sel  <= tile_config(ESP_CSR_DCO_CFG_MSB - 2  downto ESP_CSR_DCO_CFG_MSB - 2  - 2);
-    dco_fc_sel   <= tile_config(ESP_CSR_DCO_CFG_MSB - 5  downto ESP_CSR_DCO_CFG_MSB - 5  - 5);
-    dco_cc_sel   <= tile_config(ESP_CSR_DCO_CFG_MSB - 11 downto ESP_CSR_DCO_CFG_MSB - 11 - 5);
-    dco_clk_sel  <= tile_config(ESP_CSR_DCO_CFG_LSB + 1);
+    dco_freq_sel <= tile_config(ESP_CSR_DCO_CFG_MSB - 4  - 0  downto ESP_CSR_DCO_CFG_MSB - 4  - 0  - 1);
+    dco_div_sel  <= tile_config(ESP_CSR_DCO_CFG_MSB - 4  - 2  downto ESP_CSR_DCO_CFG_MSB - 4  - 2  - 2);
+    dco_fc_sel   <= tile_config(ESP_CSR_DCO_CFG_MSB - 4  - 5  downto ESP_CSR_DCO_CFG_MSB - 4  - 5  - 5);
+    dco_cc_sel   <= tile_config(ESP_CSR_DCO_CFG_MSB - 4  - 11 downto ESP_CSR_DCO_CFG_MSB - 4  - 11 - 5);
+    dco_clk_sel  <= tile_config(ESP_CSR_DCO_CFG_LSB  + 1);
     dco_en       <= raw_rstn and tile_config(ESP_CSR_DCO_CFG_LSB);
 
     -- PLL reference clock comes from DCO
@@ -895,7 +909,8 @@ begin
   ahb0 : ahbctrl                        -- AHB arbiter/multiplexer
     generic map (defmast => CFG_DEFMST, split => CFG_SPLIT,
                  rrobin  => CFG_RROBIN, ioaddr => CFG_AHBIO, fpnpen => CFG_FPNPEN,
-                 nahbm   => maxahbm, nahbs => maxahbs)
+                 nahbm   => maxahbm, nahbs => maxahbs,
+                 cfgmask => ahb_cfgmask)
     port map (rst, clk_feedthru, ahbmi, ahbmo, ahbsi, ctrl_ahbso);
 
 
@@ -1145,7 +1160,7 @@ begin
     ariane_axi_wrap_1: ariane_axi_wrap
       generic map (
         NMST             => 2,
-        NSLV             => 5,
+        NSLV             => 6,
         ROMBase          => X"0000_0000_0001_0000",
         ROMLength        => X"0000_0000_0001_0000",
         APBBase          => X"0000_0000" & conv_std_logic_vector(CFG_APBADDR, 12) & X"0_0000",
@@ -1154,8 +1169,10 @@ begin
         CLINTLength      => X"0000_0000_000C_0000",
         SLMBase          => X"0000_0000_0400_0000",
         SLMLength        => X"0000_0000_0400_0000",  -- Reserving up to 64MB; devtree can set less
+        SLMDDRBase       => X"0000_0000_C000_0000",
+        SLMDDRLength     => X"0000_0000_4000_0000",  -- Reserving up to 1GB; devtree can set less
         DRAMBase         => X"0000_0000" & conv_std_logic_vector(ddr_haddr(0), 12) & X"0_0000",
-        DRAMLength       => X"0000_0000_6000_0000",
+        DRAMLength       => X"0000_0000_4000_0000",
         DRAMCachedLength => X"0000_0000_2000_0000")  -- TODO: length set automatically to match devtree
       port map (
         clk         => clk_feedthru,
@@ -1172,6 +1189,8 @@ begin
         clinto      => somi(2),
         slmi        => mosi(3),
         slmo        => somi(3),
+        slmddri     => mosi(4),
+        slmddro     => somi(4),
         apbi        => apbi,
         apbo        => apbo,
         apb_req     => apb_req,
@@ -1344,8 +1363,8 @@ begin
       tech             => CFG_FABTECH,
       hindex           => slm_ahb_mask,
       hconfig          => cpu_tile_fixed_ahbso_hconfig,
-      mem_hindex       => slm_hindex(0),
-      mem_num          => CFG_NSLM_TILE,
+      mem_hindex       => -1,
+      mem_num          => CFG_NSLM_TILE + CFG_NSLMDDR_TILE,
       mem_info         => tile_slm_list,
       slv_y            => tile_y(io_tile_id),
       slv_x            => tile_x(io_tile_id),
@@ -1464,10 +1483,10 @@ begin
     axislv2noc_3: axislv2noc
       generic map (
         tech         => CFG_FABTECH,
-        nmst         => 1,
+        nmst         => 2,
         retarget_for_dma => 0,
-        mem_axi_port => 0,
-        mem_num      => CFG_NSLM_TILE,
+        mem_axi_port => -1,
+        mem_num      => CFG_NSLM_TILE + CFG_NSLMDDR_TILE,
         mem_info     => tile_slm_list,
         slv_y        => tile_y(io_tile_id),
         slv_x        => tile_x(io_tile_id))
@@ -1476,8 +1495,8 @@ begin
         clk                        => clk_feedthru,
         local_y                    => this_local_y,
         local_x                    => this_local_x,
-        mosi                       => mosi(3 to 3),
-        somi                       => somi(3 to 3),
+        mosi                       => mosi(3 to 4),
+        somi                       => somi(3 to 4),
         coherence_req_wrreq        => dma_snd_wrreq,
         coherence_req_data_in      => dma_snd_data_in_cpu,
         coherence_req_full         => dma_snd_full,

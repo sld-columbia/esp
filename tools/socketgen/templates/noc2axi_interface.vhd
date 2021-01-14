@@ -29,7 +29,7 @@ use std.textio.all;
     tech           : integer;
     mem_num        : integer;
     cacheable_mem_num : integer;
-    mem_info       : tile_mem_info_vector(0 to CFG_NMEM_TILE + CFG_NSLM_TILE);
+    mem_info       : tile_mem_info_vector(0 to CFG_NMEM_TILE + CFG_NSLM_TILE + CFG_NSLMDDR_TILE);
     io_y           : local_yx;
     io_x           : local_yx;
     pindex         : integer := 0;
@@ -140,7 +140,7 @@ end;
   signal pllclk_int        : std_ulogic;
   signal mon_dvfs_feedthru : monitor_dvfs_type;
 
-  constant nofb_mem_info : tile_mem_info_vector(0 to CFG_NSLM_TILE + CFG_NMEM_TILE - 1) := mem_info(0 to CFG_NSLM_TILE + CFG_NMEM_TILE - 1);
+  constant nofb_mem_info : tile_mem_info_vector(0 to CFG_NSLM_TILE + CFG_NSLMDDR_TILE + CFG_NMEM_TILE - 1) := mem_info(0 to CFG_NSLM_TILE + CFG_NSLMDDR_TILE + CFG_NMEM_TILE - 1);
 
 begin
 
@@ -175,7 +175,7 @@ begin
       nmst             => 1,
       retarget_for_dma => 1,
       mem_axi_port     => 0,
-      mem_num          => CFG_NSLM_TILE + CFG_NMEM_TILE,
+      mem_num          => CFG_NSLM_TILE + CFG_NSLMDDR_TILE + CFG_NMEM_TILE,
       mem_info         => nofb_mem_info,
       slv_y            => io_y,
       slv_x            => io_x)

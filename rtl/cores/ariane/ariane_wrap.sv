@@ -4,7 +4,7 @@
 module ariane_wrap
   # (
      parameter NMST = 2,
-     parameter NSLV = 5,
+     parameter NSLV = 6,
      parameter AXI_ID_WIDTH = ariane_soc::IdWidth,
      parameter AXI_ID_WIDTH_SLV = ariane_soc::IdWidthSlave + $clog2(NMST),
      parameter AXI_ADDR_WIDTH = 64,
@@ -24,6 +24,9 @@ module ariane_wrap
      parameter logic [63:0] SLMBase             = 64'h0000_0000_0400_0000,
      parameter logic [63:0] SLMLength           = 64'h0000_0000_0400_0000,
      // Slave 4
+     parameter logic [63:0] SLMDDRBase          = 64'h0000_0000_C000_0000,
+     parameter logic [63:0] SLMDDRLength        = 64'h0000_0000_4000_0000,
+     // Slave 5
      parameter logic [63:0] DRAMBase            = 64'h0000_0000_8000_0000,
      parameter logic [63:0] DRAMLength          = 64'h0000_0000_2000_0000,
      parameter logic [63:0] DRAMCachedLength    = 64'h0000_0000_2000_0000
@@ -239,6 +242,57 @@ module ariane_wrap
     input logic [AXI_USER_WIDTH-1:0] 	slm_r_user,
     input logic 			slm_r_valid,
     output logic 			slm_r_ready,
+    // -- SLMDDR
+    //    AW
+    output logic [AXI_ID_WIDTH_SLV-1:0] slmddr_aw_id,
+    output logic [AXI_ADDR_WIDTH-1:0] 	slmddr_aw_addr,
+    output logic [7:0] 			slmddr_aw_len,
+    output logic [2:0] 			slmddr_aw_size,
+    output logic [1:0] 			slmddr_aw_burst,
+    output logic 			slmddr_aw_lock,
+    output logic [3:0] 			slmddr_aw_cache,
+    output logic [2:0] 			slmddr_aw_prot,
+    output logic [3:0] 			slmddr_aw_qos,
+    output logic [5:0] 			slmddr_aw_atop,
+    output logic [3:0] 			slmddr_aw_region,
+    output logic [AXI_USER_WIDTH-1:0] 	slmddr_aw_user,
+    output logic 			slmddr_aw_valid,
+    input logic 			slmddr_aw_ready,
+    //    W
+    output logic [AXI_DATA_WIDTH-1:0] 	slmddr_w_data,
+    output logic [AXI_STRB_WIDTH-1:0] 	slmddr_w_strb,
+    output logic 			slmddr_w_last,
+    output logic [AXI_USER_WIDTH-1:0] 	slmddr_w_user,
+    output logic 			slmddr_w_valid,
+    input logic 			slmddr_w_ready,
+    //    B
+    input logic [AXI_ID_WIDTH_SLV-1:0] 	slmddr_b_id,
+    input logic [1:0] 			slmddr_b_resp,
+    input logic [AXI_USER_WIDTH-1:0] 	slmddr_b_user,
+    input logic 			slmddr_b_valid,
+    output logic 			slmddr_b_ready,
+    //    AR
+    output logic [AXI_ID_WIDTH_SLV-1:0] slmddr_ar_id,
+    output logic [AXI_ADDR_WIDTH-1:0] 	slmddr_ar_addr,
+    output logic [7:0] 			slmddr_ar_len,
+    output logic [2:0] 			slmddr_ar_size,
+    output logic [1:0] 			slmddr_ar_burst,
+    output logic 			slmddr_ar_lock,
+    output logic [3:0] 			slmddr_ar_cache,
+    output logic [2:0] 			slmddr_ar_prot,
+    output logic [3:0] 			slmddr_ar_qos,
+    output logic [3:0] 			slmddr_ar_region,
+    output logic [AXI_USER_WIDTH-1:0] 	slmddr_ar_user,
+    output logic 			slmddr_ar_valid,
+    input logic 			slmddr_ar_ready,
+    //    R
+    input logic [AXI_ID_WIDTH_SLV-1:0] 	slmddr_r_id,
+    input logic [AXI_DATA_WIDTH-1:0] 	slmddr_r_data,
+    input logic [1:0] 			slmddr_r_resp,
+    input logic 			slmddr_r_last,
+    input logic [AXI_USER_WIDTH-1:0] 	slmddr_r_user,
+    input logic 			slmddr_r_valid,
+    output logic 			slmddr_r_ready,
     // APB
     output logic 			penable,
     output logic 			pwrite,
@@ -281,7 +335,8 @@ module ariane_wrap
       APB      = 1,
       CLINT    = 2,
       SLM      = 3,
-      DRAM     = 4
+      SLMDDR   = 4,
+      DRAM     = 5
    } axi_slaves_t;
 
    AXI_BUS
@@ -329,6 +384,7 @@ module ariane_wrap
 	.master       ( master  ),
 	.start_addr_i ({
 			DRAMBase[AXI_ADDR_WIDTH-1:0],
+			SLMDDRBase[AXI_ADDR_WIDTH-1:0],
 			SLMBase[AXI_ADDR_WIDTH-1:0],
 			CLINTBase[AXI_ADDR_WIDTH-1:0],
 			APBBase[AXI_ADDR_WIDTH-1:0],
@@ -336,6 +392,7 @@ module ariane_wrap
 			}),
 	.end_addr_i   ({
 			DRAMBase[AXI_ADDR_WIDTH-1:0]  + DRAMLength[AXI_ADDR_WIDTH-1:0] - 1,
+			SLMDDRBase[AXI_ADDR_WIDTH-1:0] + SLMDDRLength[AXI_ADDR_WIDTH-1:0] - 1,
 			SLMBase[AXI_ADDR_WIDTH-1:0]   + SLMLength[AXI_ADDR_WIDTH-1:0] - 1,
 			CLINTBase[AXI_ADDR_WIDTH-1:0] + CLINTLength[AXI_ADDR_WIDTH-1:0] - 1,
 			APBBase[AXI_ADDR_WIDTH-1:0]   + APBLength[AXI_ADDR_WIDTH-1:0] - 1,
@@ -606,6 +663,60 @@ module ariane_wrap
    assign master[SLM].r_user = slm_r_user;
    assign master[SLM].r_valid = slm_r_valid;
    assign slm_r_ready = master[SLM].r_ready;
+
+   // ---------------
+   // SLMDDR
+   // ---------------
+   //    AW
+   assign slmddr_aw_id = master[SLMDDR].aw_id;
+   assign slmddr_aw_addr = master[SLMDDR].aw_addr;
+   assign slmddr_aw_len = master[SLMDDR].aw_len;
+   assign slmddr_aw_size = master[SLMDDR].aw_size;
+   assign slmddr_aw_burst = master[SLMDDR].aw_burst;
+   assign slmddr_aw_lock = master[SLMDDR].aw_lock;
+   assign slmddr_aw_cache = master[SLMDDR].aw_cache;
+   assign slmddr_aw_prot = master[SLMDDR].aw_prot;
+   assign slmddr_aw_qos = master[SLMDDR].aw_qos;
+   assign slmddr_aw_atop = master[SLMDDR].aw_atop;
+   assign slmddr_aw_region = master[SLMDDR].aw_region;
+   assign slmddr_aw_user = master[SLMDDR].aw_user;
+   assign slmddr_aw_valid = master[SLMDDR].aw_valid;
+   assign master[SLMDDR].aw_ready = slmddr_aw_ready;
+   //    W
+   assign slmddr_w_data = master[SLMDDR].w_data;
+   assign slmddr_w_strb = master[SLMDDR].w_strb;
+   assign slmddr_w_last = master[SLMDDR].w_last;
+   assign slmddr_w_user = master[SLMDDR].w_user;
+   assign slmddr_w_valid = master[SLMDDR].w_valid;
+   assign master[SLMDDR].w_ready = slmddr_w_ready;
+   //    B
+   assign master[SLMDDR].b_id = slmddr_b_id;
+   assign master[SLMDDR].b_resp = slmddr_b_resp;
+   assign master[SLMDDR].b_user = slmddr_b_user;
+   assign master[SLMDDR].b_valid = slmddr_b_valid;
+   assign slmddr_b_ready = master[SLMDDR].b_ready;
+   //    AR
+   assign slmddr_ar_id = master[SLMDDR].ar_id;
+   assign slmddr_ar_addr = master[SLMDDR].ar_addr;
+   assign slmddr_ar_len = master[SLMDDR].ar_len;
+   assign slmddr_ar_size = master[SLMDDR].ar_size;
+   assign slmddr_ar_burst = master[SLMDDR].ar_burst;
+   assign slmddr_ar_lock = master[SLMDDR].ar_lock;
+   assign slmddr_ar_cache = master[SLMDDR].ar_cache;
+   assign slmddr_ar_prot = master[SLMDDR].ar_prot;
+   assign slmddr_ar_qos = master[SLMDDR].ar_qos;
+   assign slmddr_ar_region = master[SLMDDR].ar_region;
+   assign slmddr_ar_user = master[SLMDDR].ar_user;
+   assign slmddr_ar_valid = master[SLMDDR].ar_valid;
+   assign master[SLMDDR].ar_ready = slmddr_ar_ready;
+   //    R
+   assign master[SLMDDR].r_id = slmddr_r_id;
+   assign master[SLMDDR].r_data = slmddr_r_data;
+   assign master[SLMDDR].r_resp = slmddr_r_resp;
+   assign master[SLMDDR].r_last = slmddr_r_last;
+   assign master[SLMDDR].r_user = slmddr_r_user;
+   assign master[SLMDDR].r_valid = slmddr_r_valid;
+   assign slmddr_r_ready = master[SLMDDR].r_ready;
 
 
    // ---------------

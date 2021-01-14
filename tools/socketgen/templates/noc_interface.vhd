@@ -27,7 +27,7 @@ use std.textio.all;
     tech           : integer;
     mem_num        : integer;
     cacheable_mem_num : integer;
-    mem_info       : tile_mem_info_vector(0 to CFG_NMEM_TILE + CFG_NSLM_TILE);
+    mem_info       : tile_mem_info_vector(0 to CFG_NMEM_TILE + CFG_NSLM_TILE + CFG_NSLMDDR_TILE);
     io_y           : local_yx;
     io_x           : local_yx;
     pindex         : integer := 0;

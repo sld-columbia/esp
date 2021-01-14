@@ -10,7 +10,8 @@ use work.monitor_pkg.all;
 
 package esp_csr_pkg is
 
-  constant ESP_CSR_WIDTH : integer := 67 + CFG_NCPU_TILE * 2 * 3;
+  constant ESP_CSR_8_LSB : integer := 71 + CFG_NCPU_TILE * 2 * 3;
+  constant ESP_CSR_WIDTH : integer := 96 + ESP_CSR_8_LSB;
 
   constant ESP_CSR_VALID_ADDR : integer range 0 to 31 := 0;
   constant ESP_CSR_VALID_LSB  : integer range 0 to ESP_CSR_WIDTH-1 := 0;
@@ -26,29 +27,42 @@ package esp_csr_pkg is
 
   constant ESP_CSR_DCO_CFG_ADDR : integer range 0 to 31 := 3;
   constant ESP_CSR_DCO_CFG_LSB : integer range 0 to ESP_CSR_WIDTH - 1 := 12;
-  constant ESP_CSR_DCO_CFG_MSB : integer range 0 to ESP_CSR_WIDTH - 1 := 30;
+  constant ESP_CSR_DCO_CFG_MSB : integer range 0 to ESP_CSR_WIDTH - 1 := 34;
 
   constant ESP_CSR_DCO_NOC_CFG_ADDR : integer range 0 to 31 := 4;
-  constant ESP_CSR_DCO_NOC_CFG_LSB : integer range 0 to ESP_CSR_WIDTH - 1 := 31;
-  constant ESP_CSR_DCO_NOC_CFG_MSB : integer range 0 to ESP_CSR_WIDTH - 1 := 49;
+  constant ESP_CSR_DCO_NOC_CFG_LSB : integer range 0 to ESP_CSR_WIDTH - 1 := 35;
+  constant ESP_CSR_DCO_NOC_CFG_MSB : integer range 0 to ESP_CSR_WIDTH - 1 := 53;
 
   constant ESP_CSR_MDC_SCALER_CFG_ADDR : integer range 0 to 31 := 5;
-  constant ESP_CSR_MDC_SCALER_CFG_LSB : integer range 0 to ESP_CSR_WIDTH - 1 := 50;
-  constant ESP_CSR_MDC_SCALER_CFG_MSB : integer range 0 to ESP_CSR_WIDTH - 1 := 60;
+  constant ESP_CSR_MDC_SCALER_CFG_LSB : integer range 0 to ESP_CSR_WIDTH - 1 := 54;
+  constant ESP_CSR_MDC_SCALER_CFG_MSB : integer range 0 to ESP_CSR_WIDTH - 1 := 64;
 
   constant ESP_CSR_ARIANE_HARTID_ADDR : integer range 0 to 31 := 6;
-  constant ESP_CSR_ARIANE_HARTID_LSB : integer range 0 to ESP_CSR_WIDTH - 1 := 61;
-  constant ESP_CSR_ARIANE_HARTID_MSB : integer range 0 to ESP_CSR_WIDTH - 1 := 65;
+  constant ESP_CSR_ARIANE_HARTID_LSB : integer range 0 to ESP_CSR_WIDTH - 1 := 65;
+  constant ESP_CSR_ARIANE_HARTID_MSB : integer range 0 to ESP_CSR_WIDTH - 1 := 69;
 
   constant ESP_CSR_CPU_LOC_OVR_ADDR : integer range 0 to 31 := 7;
-  constant ESP_CSR_CPU_LOC_OVR_LSB : integer range 0 to ESP_CSR_WIDTH - 1 := 66;
-  constant ESP_CSR_CPU_LOC_OVR_MSB : integer range 0 to ESP_CSR_WIDTH - 1 := 66 + CFG_NCPU_TILE * 2 * 3;
+  constant ESP_CSR_CPU_LOC_OVR_LSB : integer range 0 to ESP_CSR_WIDTH - 1 := 70;
+  constant ESP_CSR_CPU_LOC_OVR_MSB : integer range 0 to ESP_CSR_WIDTH - 1 := 70 + CFG_NCPU_TILE * 2 * 3;
+
+  constant ESP_CSR_DDR_CFG0_ADDR : integer range 0 to 31 := 8;
+  constant ESP_CSR_DDR_CFG0_LSB : integer range 0 to ESP_CSR_WIDTH - 1 := ESP_CSR_8_LSB;
+  constant ESP_CSR_DDR_CFG0_MSB : integer range 0 to ESP_CSR_WIDTH - 1 := 31 + ESP_CSR_8_LSB;
+
+  constant ESP_CSR_DDR_CFG1_ADDR : integer range 0 to 31 := 9;
+  constant ESP_CSR_DDR_CFG1_LSB : integer range 0 to ESP_CSR_WIDTH - 1 := 32 + ESP_CSR_8_LSB;
+  constant ESP_CSR_DDR_CFG1_MSB : integer range 0 to ESP_CSR_WIDTH - 1 := 63 + ESP_CSR_8_LSB;
+
+  constant ESP_CSR_DDR_CFG2_ADDR : integer range 0 to 31 := 10;
+  constant ESP_CSR_DDR_CFG2_LSB : integer range 0 to ESP_CSR_WIDTH - 1 := 64 + ESP_CSR_8_LSB;
+  constant ESP_CSR_DDR_CFG2_MSB : integer range 0 to ESP_CSR_WIDTH - 1 := 95 + ESP_CSR_8_LSB;
 
   constant ESP_CSR_SRST_ADDR : integer range 0 to 31 := 31;  -- reserved address
 
   component esp_tile_csr
     generic (
-      pindex : integer range 0 to NAPBSLV - 1);
+      pindex : integer range 0 to NAPBSLV - 1;
+      dco_rst_cfg : std_logic_vector(22 downto 0) := (others => '0'));
     port (
       clk         : in std_logic;
       rstn        : in std_logic;

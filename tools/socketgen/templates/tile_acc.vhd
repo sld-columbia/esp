@@ -526,6 +526,7 @@ begin
     dco_i: dco
       generic map (
         tech => CFG_FABTECH,
+        enable_div2 => 0,
         dlog => 9)                      -- come out of reset after NoC, but
                                         -- before tile_io.
       port map (

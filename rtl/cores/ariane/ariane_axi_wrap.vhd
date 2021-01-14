@@ -13,7 +13,7 @@ use work.ariane_esp_pkg.all;
 entity ariane_axi_wrap is
   generic (
     NMST             : integer                       := 2;
-    NSLV             : integer                       := 5;
+    NSLV             : integer                       := 6;
     ROMBase          : std_logic_vector(63 downto 0) := X"0000_0000_0001_0000";
     ROMLength        : std_logic_vector(63 downto 0) := X"0000_0000_0001_0000";
     APBBase          : std_logic_vector(63 downto 0) := X"0000_0000_6000_0000";
@@ -22,6 +22,8 @@ entity ariane_axi_wrap is
     CLINTLength      : std_logic_vector(63 downto 0) := X"0000_0000_000C_0000";
     SLMBase          : std_logic_vector(63 downto 0) := X"0000_0000_0400_0000";
     SLMLength        : std_logic_vector(63 downto 0) := X"0000_0000_0400_0000";
+    SLMDDRBase       : std_logic_vector(63 downto 0) := X"0000_0000_C000_0000";
+    SLMDDRLength     : std_logic_vector(63 downto 0) := X"0000_0000_4000_0000";
     DRAMBase         : std_logic_vector(63 downto 0) := X"0000_0000_8000_0000";
     DRAMLength       : std_logic_vector(63 downto 0) := X"0000_0000_2000_0000";
     DRAMCachedLength : std_logic_vector(63 downto 0) := X"0000_0000_2000_0000");
@@ -40,6 +42,8 @@ entity ariane_axi_wrap is
     clinto      : in  axi_somi_type;
     slmi        : out axi_mosi_type;
     slmo        : in  axi_somi_type;
+    slmddri     : out axi_mosi_type;
+    slmddro     : in  axi_somi_type;
     apbi        : out apb_slv_in_type;
     apbo        : in  apb_slv_out_vector;
     apb_req     : out std_ulogic;
@@ -68,6 +72,8 @@ architecture rtl of ariane_axi_wrap is
       CLINTLength      : std_logic_vector(63 downto 0);
       SLMBase          : std_logic_vector(63 downto 0);
       SLMLength        : std_logic_vector(63 downto 0);
+      SLMDDRBase       : std_logic_vector(63 downto 0);
+      SLMDDRLength     : std_logic_vector(63 downto 0);
       DRAMBase         : std_logic_vector(63 downto 0);
       DRAMLength       : std_logic_vector(63 downto 0);
       DRAMCachedLength : std_logic_vector(63 downto 0));
@@ -258,6 +264,51 @@ architecture rtl of ariane_axi_wrap is
       slm_r_user      : in  std_logic_vector(AXI_USER_WIDTH-1 downto 0);
       slm_r_valid     : in  std_logic;
       slm_r_ready     : out std_logic;
+      slmddr_aw_id     : out std_logic_vector(AXI_ID_WIDTH_SLV-1 downto 0);
+      slmddr_aw_addr   : out std_logic_vector(AXI_ADDR_WIDTH-1 downto 0);
+      slmddr_aw_len    : out std_logic_vector(7 downto 0);
+      slmddr_aw_size   : out std_logic_vector(2 downto 0);
+      slmddr_aw_burst  : out std_logic_vector(1 downto 0);
+      slmddr_aw_lock   : out std_logic;
+      slmddr_aw_cache  : out std_logic_vector(3 downto 0);
+      slmddr_aw_prot   : out std_logic_vector(2 downto 0);
+      slmddr_aw_qos    : out std_logic_vector(3 downto 0);
+      slmddr_aw_atop   : out std_logic_vector(5 downto 0);
+      slmddr_aw_region : out std_logic_vector(3 downto 0);
+      slmddr_aw_user   : out std_logic_vector(AXI_USER_WIDTH-1 downto 0);
+      slmddr_aw_valid  : out std_logic;
+      slmddr_aw_ready  : in  std_logic;
+      slmddr_w_data    : out std_logic_vector(AXI_DATA_WIDTH-1 downto 0);
+      slmddr_w_strb    : out std_logic_vector(AXI_STRB_WIDTH-1 downto 0);
+      slmddr_w_last    : out std_logic;
+      slmddr_w_user    : out std_logic_vector(AXI_USER_WIDTH-1 downto 0);
+      slmddr_w_valid   : out std_logic;
+      slmddr_w_ready   : in  std_logic;
+      slmddr_b_id      : in  std_logic_vector(AXI_ID_WIDTH_SLV-1 downto 0);
+      slmddr_b_resp    : in  std_logic_vector(1 downto 0);
+      slmddr_b_user    : in  std_logic_vector(AXI_USER_WIDTH-1 downto 0);
+      slmddr_b_valid   : in  std_logic;
+      slmddr_b_ready   : out std_logic;
+      slmddr_ar_id     : out std_logic_vector(AXI_ID_WIDTH_SLV-1 downto 0);
+      slmddr_ar_addr   : out std_logic_vector(AXI_ADDR_WIDTH-1 downto 0);
+      slmddr_ar_len    : out std_logic_vector(7 downto 0);
+      slmddr_ar_size   : out std_logic_vector(2 downto 0);
+      slmddr_ar_burst  : out std_logic_vector(1 downto 0);
+      slmddr_ar_lock   : out std_logic;
+      slmddr_ar_cache  : out std_logic_vector(3 downto 0);
+      slmddr_ar_prot   : out std_logic_vector(2 downto 0);
+      slmddr_ar_qos    : out std_logic_vector(3 downto 0);
+      slmddr_ar_region : out std_logic_vector(3 downto 0);
+      slmddr_ar_user   : out std_logic_vector(AXI_USER_WIDTH-1 downto 0);
+      slmddr_ar_valid  : out std_logic;
+      slmddr_ar_ready  : in  std_logic;
+      slmddr_r_id      : in  std_logic_vector(AXI_ID_WIDTH_SLV-1 downto 0);
+      slmddr_r_data    : in  std_logic_vector(AXI_DATA_WIDTH-1 downto 0);
+      slmddr_r_resp    : in  std_logic_vector(1 downto 0);
+      slmddr_r_last    : in  std_logic;
+      slmddr_r_user    : in  std_logic_vector(AXI_USER_WIDTH-1 downto 0);
+      slmddr_r_valid   : in  std_logic;
+      slmddr_r_ready   : out std_logic;
       penable         : out std_logic;
       pwrite          : out std_logic;
       paddr           : out std_logic_vector(31 downto 0);
@@ -301,6 +352,8 @@ begin  -- architecture rtl
       CLINTLength      => CLINTLength,
       SLMBase          => SLMBase,
       SLMLength        => SLMLength,
+      SLMDDRBase       => SLMDDRBase,
+      SLMDDRLength     => SLMDDRLength,
       DRAMBase         => DRAMBase,
       DRAMLength       => DRAMLength,
       DRAMCachedLength => DRAMCachedLength)
@@ -491,6 +544,51 @@ begin  -- architecture rtl
       slm_r_user      => slmo.r.user,
       slm_r_valid     => slmo.r.valid,
       slm_r_ready     => slmi.r.ready,
+      slmddr_aw_id     => slmddri.aw.id(ARIANE_AXI_ID_WIDTH_SLV - 1 downto 0),
+      slmddr_aw_addr   => slmddri.aw.addr,
+      slmddr_aw_len    => slmddri.aw.len,
+      slmddr_aw_size   => slmddri.aw.size,
+      slmddr_aw_burst  => slmddri.aw.burst,
+      slmddr_aw_lock   => slmddri.aw.lock,
+      slmddr_aw_cache  => slmddri.aw.cache,
+      slmddr_aw_prot   => slmddri.aw.prot,
+      slmddr_aw_qos    => slmddri.aw.qos,
+      slmddr_aw_atop   => slmddri.aw.atop,
+      slmddr_aw_region => slmddri.aw.region,
+      slmddr_aw_user   => slmddri.aw.user,
+      slmddr_aw_valid  => slmddri.aw.valid,
+      slmddr_aw_ready  => slmddro.aw.ready,
+      slmddr_w_data    => slmddri.w.data,
+      slmddr_w_strb    => slmddri.w.strb,
+      slmddr_w_last    => slmddri.w.last,
+      slmddr_w_user    => slmddri.w.user,
+      slmddr_w_valid   => slmddri.w.valid,
+      slmddr_w_ready   => slmddro.w.ready,
+      slmddr_b_id      => slmddro.b.id(ARIANE_AXI_ID_WIDTH_SLV - 1 downto 0),
+      slmddr_b_resp    => slmddro.b.resp,
+      slmddr_b_user    => slmddro.b.user,
+      slmddr_b_valid   => slmddro.b.valid,
+      slmddr_b_ready   => slmddri.b.ready,
+      slmddr_ar_id     => slmddri.ar.id(ARIANE_AXI_ID_WIDTH_SLV - 1 downto 0),
+      slmddr_ar_addr   => slmddri.ar.addr,
+      slmddr_ar_len    => slmddri.ar.len,
+      slmddr_ar_size   => slmddri.ar.size,
+      slmddr_ar_burst  => slmddri.ar.burst,
+      slmddr_ar_lock   => slmddri.ar.lock,
+      slmddr_ar_cache  => slmddri.ar.cache,
+      slmddr_ar_prot   => slmddri.ar.prot,
+      slmddr_ar_qos    => slmddri.ar.qos,
+      slmddr_ar_region => slmddri.ar.region,
+      slmddr_ar_user   => slmddri.ar.user,
+      slmddr_ar_valid  => slmddri.ar.valid,
+      slmddr_ar_ready  => slmddro.ar.ready,
+      slmddr_r_id      => slmddro.r.id(ARIANE_AXI_ID_WIDTH_SLV - 1 downto 0),
+      slmddr_r_data    => slmddro.r.data,
+      slmddr_r_resp    => slmddro.r.resp,
+      slmddr_r_last    => slmddro.r.last,
+      slmddr_r_user    => slmddro.r.user,
+      slmddr_r_valid   => slmddro.r.valid,
+      slmddr_r_ready   => slmddri.r.ready,
       penable         => penable,
       pwrite          => pwrite,
       paddr           => paddr,
@@ -509,6 +607,8 @@ begin  -- architecture rtl
   clinti.ar.id(XID_WIDTH - 1 downto ARIANE_AXI_ID_WIDTH_SLV)  <= (others => '0');
   slmi.aw.id(XID_WIDTH - 1 downto ARIANE_AXI_ID_WIDTH_SLV)  <= (others => '0');
   slmi.ar.id(XID_WIDTH - 1 downto ARIANE_AXI_ID_WIDTH_SLV)  <= (others => '0');
+  slmddri.aw.id(XID_WIDTH - 1 downto ARIANE_AXI_ID_WIDTH_SLV)  <= (others => '0');
+  slmddri.ar.id(XID_WIDTH - 1 downto ARIANE_AXI_ID_WIDTH_SLV)  <= (others => '0');
 
   -- Unused
   apbi.pirq    <= (others => '0');
