@@ -96,6 +96,7 @@ DDR_HADDR["ibex"] = 0x800
 
 # SLM base address
 SLM_HADDR = 0x040
+SLMDDR_HADDR = 0xC00
 
 # Main memory size (12 MSBs)
 DDR_SIZE = 0x400
@@ -180,6 +181,7 @@ class tile_info:
   cpu_id = -1
   mem_id = -1
   slm_id = -1
+  slmddr_id = -1
   l2 = cache_info()
   llc = cache_info()
   dvfs = cache_info()
@@ -215,6 +217,10 @@ class soc_config:
   slm_kbytes = 0
   slm_tot_kbytes = 0
   slm_full_mask = 0
+  nslmddr = 0
+  slmddr_kbytes = 0
+  slmddr_tot_kbytes = 0
+  slmddr_full_mask = 0
   ntiles = 0
   coherence = True
   has_dvfs = False
@@ -257,6 +263,11 @@ class soc_config:
       self.slm_full_mask = 0xfff & ~(int(self.slm_tot_kbytes / 1024) - 1)
     else:
       self.slm_full_mask = 0xfff
+    self.nslmddr = soc.noc.get_slmddr_num(soc)
+    self.slmddr_kbytes = 512 * 1024
+    if self.nslmddr != 0:
+      self.slmddr_tot_kbytes = self.slmddr_kbytes * self.nslmddr
+    self.slmddr_full_mask = 0xfff & ~(int(self.slmddr_tot_kbytes / 1024) - 1)
     self.nacc = soc.noc.get_acc_num(soc)
     self.ntiles = soc.noc.rows * soc.noc.cols
     if soc.cache_en.get() == 0:
@@ -298,6 +309,7 @@ class soc_config:
     mem_id = 0
     # SLM ID assigned dynamically to each shared-local memory tile
     slm_id = 0
+    slmddr_id = 0
     # Accelerator/DMA ID assigned dynamically to each accelerator tile
     acc_id = 0
     # Accelerator interrupt dynamically to each accelerator tile because RISC-V PLIC does not work properly with shared lines
@@ -319,6 +331,7 @@ class soc_config:
         self.tiles[t].has_pll = soc.noc.topology[x][y].has_pll.get()
         self.tiles[t].has_clkbuf = soc.noc.topology[x][y].has_clkbuf.get()
         self.tiles[t].has_l2 = soc.noc.topology[x][y].has_l2.get()
+        self.tiles[t].has_ddr = soc.noc.topology[x][y].has_ddr.get()
 
         # Assign IDs
         if selection == "cpu":
@@ -340,10 +353,14 @@ class soc_config:
             self.ndvfs = self.ndvfs + 1
             cpu_dvfs_id = cpu_dvfs_id + 1
           cpu_id = cpu_id + 1
-        if selection == "slm":
+        if selection == "slm" and self.tiles[t].has_ddr == 0:
           self.tiles[t].type = "slm"
           self.tiles[t].slm_id = slm_id
           slm_id = slm_id + 1
+        if selection == "slm" and self.tiles[t].has_ddr != 0:
+          self.tiles[t].type = "slmddr"
+          self.tiles[t].slmddr_id = slmddr_id
+          slmddr_id = slmddr_id + 1
         if selection == "mem":
           self.tiles[t].type = "mem"
           self.tiles[t].mem_id = mem_id
@@ -491,10 +508,12 @@ def print_constants(fp, soc, esp_config):
   fp.write("  constant CFG_NCPU_TILE : integer := " + str(esp_config.ncpu) + ";\n")
   fp.write("  constant CFG_NMEM_TILE : integer := " + str(esp_config.nmem) + ";\n")
   fp.write("  constant CFG_NSLM_TILE : integer := " + str(esp_config.nslm) + ";\n")
+  fp.write("  constant CFG_NSLMDDR_TILE : integer := " + str(esp_config.nslmddr) + ";\n")
   fp.write("  constant CFG_NL2 : integer := " + str(esp_config.nl2) + ";\n")
   fp.write("  constant CFG_NLLC : integer := " + str(esp_config.nllc) + ";\n")
   fp.write("  constant CFG_NLLC_COHERENT : integer := " + str(esp_config.ncdma) + ";\n")
   fp.write("  constant CFG_SLM_KBYTES : integer := " + str(esp_config.slm_kbytes) + ";\n\n")
+  fp.write("  constant CFG_SLMDDR_KBYTES : integer := " + str(esp_config.slmddr_kbytes) + ";\n\n")
 
   #
   fp.write("  ------ Local-port Synchronizers are always present)\n")
@@ -704,6 +723,59 @@ def print_mapping(fp, soc, esp_config):
   fp.write("    others => zero32);\n\n")
 
 
+  # SLM Tiles with off-chip DDR memory
+  global SLMDDR_HADDR
+  offset = SLMDDR_HADDR;
+  mask = 0xfff
+  mask = 0xfff & ~(int(esp_config.slmddr_kbytes / 1024) - 1)
+  # Use any available hindex
+  hindex = SLM_HINDEX + esp_config.nslm
+
+  if esp_config.nslmddr == 0:
+    fp.write("  constant slmddr_hindex : attribute_vector(0 to 0) := (\n")
+  else:
+    fp.write("  constant slmddr_hindex : attribute_vector(0 to CFG_NSLMDDR_TILE - 1) := (\n")
+  for i in range(0, esp_config.nslmddr):
+    fp.write("    " + str(i) + " => " + str(hindex) + ",\n")
+    hindex = hindex + 1;
+    if hindex == 12:
+      hindex = 13
+  fp.write("    others => 0);\n")
+
+  if esp_config.nslmddr == 0:
+    fp.write("  constant slmddr_haddr : attribute_vector(0 to 0) := (\n")
+  else:
+    fp.write("  constant slmddr_haddr : attribute_vector(0 to CFG_NSLMDDR_TILE - 1) := (\n")
+  for i in range(0, esp_config.nslmddr):
+    fp.write("    " + str(i) + " => 16#" + format(offset, '03X') + "#,\n")
+    offset = offset + int(esp_config.slmddr_kbytes / 1024)
+  fp.write("    others => 0);\n")
+
+  if esp_config.nslmddr == 0:
+    fp.write("  constant slmddr_hmask : attribute_vector(0 to 0) := (\n")
+  else:
+    fp.write("  constant slmddr_hmask : attribute_vector(0 to CFG_NSLMDDR_TILE - 1) := (\n")
+  for i in range(0, esp_config.nslmddr):
+    fp.write("    " + str(i) + " => 16#" + format(mask, '03X') + "#,\n")
+  fp.write("    others => 0);\n")
+
+  fp.write("  constant slmddr_hconfig : ahb_slv_config_vector := (\n")
+  for i in range(0, esp_config.nslmddr):
+    fp.write("    " + str(i) + " => (\n")
+    fp.write("      0 => ahb_device_reg (VENDOR_GAISLER, GAISLER_MIG_7SERIES, 0, 0, 0),\n")
+    fp.write("      4 => ahb_membar(slmddr_haddr(" + str(i) + "), '0', '0', slmddr_hmask(" + str(i) + ")),\n")
+    fp.write("      others => zero32),\n")
+  fp.write("    others => hconfig_none);\n\n")
+
+  fp.write("  -- CPU tiles don't need to know how the address space is split across shared\n")
+  fp.write("  -- local memory tiles and each CPU should be able to address any region\n")
+  fp.write("  -- transparently.\n")
+  fp.write("  constant cpu_tile_slmddr_hconfig : ahb_config_type := (\n")
+  fp.write("    0 => ahb_device_reg ( VENDOR_GAISLER, GAISLER_MIG_7SERIES, 0, 0, 0),\n")
+  fp.write("    4 => ahb_membar(16#" + format(SLMDDR_HADDR, '03X') + "#, '0', '0', 16#" + format(esp_config.slmddr_full_mask, '03X')  + "#),\n")
+  fp.write("    others => zero32);\n\n")
+
+
   #
   fp.write("  ----  Memory controllers\n")
   offset = DDR_HADDR[esp_config.cpu_arch];
@@ -786,6 +858,11 @@ def print_mapping(fp, soc, esp_config):
     if index >= 12:
       index = index + 1
     fp.write("    " + str(index) + " => slm_hconfig(" + str(i) + "),\n")
+  for i in range(0, esp_config.nslmddr):
+    index = SLM_HINDEX + esp_config.nslm + i
+    if index >= 12:
+      index = index + 1
+    fp.write("    " + str(index) + " => slmddr_hconfig(" + str(i) + "),\n")
   fp.write("    " + str(FB_HINDEX) + " => fb_hconfig,\n")
   fp.write("    others => hconfig_none);\n\n")
 
@@ -800,6 +877,7 @@ def print_mapping(fp, soc, esp_config):
   if esp_config.nmem != 0:
     fp.write("    " + str(DDR_HINDEX[0]) + " => cpu_tile_mig7_hconfig,\n")
   fp.write("    " + str(SLM_HINDEX) + " => cpu_tile_slm_hconfig,\n")
+  fp.write("    " + str(SLM_HINDEX + 1) + " => cpu_tile_slmddr_hconfig,\n")
   fp.write("    " + str(FB_HINDEX) + " => fb_hconfig,\n")
   fp.write("    others => hconfig_none);\n\n")
 
@@ -1101,7 +1179,7 @@ def print_mapping(fp, soc, esp_config):
     llc = esp_config.tiles[i].llc
     if llc.id != -1:
       fp.write("    " + str(i) + " => " + str(llc.id) + ",\n")
-  fp.write("    others => -1);\n\n")
+  fp.write("    others => 0);\n\n")
 
   #
   fp.write("  -- Get tile ID from LLC-split ID\n")
@@ -1140,6 +1218,27 @@ def print_mapping(fp, soc, esp_config):
     t = esp_config.tiles[i]
     if t.slm_id != -1:
       fp.write("    " + str(i) + " => " + str(t.slm_id) + ",\n")
+  fp.write("    others => 0);\n\n")
+
+  #
+  fp.write("  -- Get tile ID from shared-local memory with DDR ID ID\n")
+  if esp_config.nslmddr == 0:
+    fp.write("  constant slmddr_tile_id : attribute_vector(0 to 0) := (\n")
+  else:
+    fp.write("  constant slmddr_tile_id : attribute_vector(0 to CFG_NSLMDDR_TILE - 1) := (\n")
+  for i in  range(0, esp_config.ntiles):
+    t = esp_config.tiles[i]
+    if t.slmddr_id != -1:
+      fp.write("    " + str(t.slmddr_id) + " => " + str(i) + ",\n")
+  fp.write("    others => 0);\n\n")
+
+  #
+  fp.write("  -- Get shared-local memory tile ID from tile ID\n")
+  fp.write("  constant tile_slmddr_id : attribute_vector(0 to CFG_TILES_NUM - 1) := (\n")
+  for i in  range(0, esp_config.ntiles):
+    t = esp_config.tiles[i]
+    if t.slmddr_id != -1:
+      fp.write("    " + str(i) + " => " + str(t.slmddr_id) + ",\n")
   fp.write("    others => 0);\n\n")
 
   #
@@ -1225,6 +1324,8 @@ def print_mapping(fp, soc, esp_config):
       type = 4
     if esp_config.tiles[i].type == "slm":
       type = 5
+    if esp_config.tiles[i].type == "slmddr":
+      type = 6
     fp.write("    " + str(i) + " => " + str(type) + ",\n")
   fp.write("    others => 0);\n\n")
 
@@ -1530,7 +1631,7 @@ def print_tiles(fp, esp_config):
 
   #
   fp.write("  -- SLM YX coordinates and tiles routing info\n")
-  fp.write("  constant tile_slm_list : tile_mem_info_vector(0 to CFG_NSLM_TILE + CFG_NMEM_TILE - 1):= (\n")
+  fp.write("  constant tile_slm_list : tile_mem_info_vector(0 to CFG_NSLM_TILE + CFG_NSLMDDR_TILE + CFG_NMEM_TILE - 1):= (\n")
   for i in range(0, esp_config.nslm):
     fp.write("    " + str(i) + " => (\n")
     fp.write("      x => tile_x(slm_tile_id(" + str(i) + ")),\n")
@@ -1538,11 +1639,18 @@ def print_tiles(fp, esp_config):
     fp.write("      haddr => slm_haddr(" + str(i)  + "),\n")
     fp.write("      hmask => slm_hmask(" + str(i)  + ")\n")
     fp.write("    ),\n")
+  for i in range(0, esp_config.nslmddr):
+    fp.write("    " + str(esp_config.nslm + i) + " => (\n")
+    fp.write("      x => tile_x(slmddr_tile_id(" + str(i) + ")),\n")
+    fp.write("      y => tile_y(slmddr_tile_id(" + str(i) + ")),\n")
+    fp.write("      haddr => slmddr_haddr(" + str(i)  + "),\n")
+    fp.write("      hmask => slmddr_hmask(" + str(i)  + ")\n")
+    fp.write("    ),\n")
   fp.write("    others => tile_mem_info_none);\n\n")
 
   #
   fp.write("  -- LLC YX coordinates and memory tiles routing info\n")
-  fp.write("  constant tile_mem_list : tile_mem_info_vector(0 to CFG_NSLM_TILE + CFG_NMEM_TILE - 1) := (\n")
+  fp.write("  constant tile_mem_list : tile_mem_info_vector(0 to CFG_NSLM_TILE + CFG_NSLMDDR_TILE + CFG_NMEM_TILE - 1) := (\n")
   for i in range(0, esp_config.nmem):
     fp.write("    " + str(i) + " => (\n")
     fp.write("      x => tile_x(mem_tile_id(" + str(i) + ")),\n")
@@ -1556,7 +1664,7 @@ def print_tiles(fp, esp_config):
   fp.write("  -- Add the frame buffer and SLM tiles entries for accelerators' DMA.\n")
   fp.write("  -- NB: accelerators can only access the frame buffer and SLM if\n")
   fp.write("  -- non-coherent DMA is selected from software.\n")
-  fp.write("  constant tile_acc_mem_list : tile_mem_info_vector(0 to CFG_NSLM_TILE + CFG_NMEM_TILE) := (\n")
+  fp.write("  constant tile_acc_mem_list : tile_mem_info_vector(0 to CFG_NSLM_TILE + CFG_NSLMDDR_TILE + CFG_NMEM_TILE) := (\n")
   for i in range(0, esp_config.nmem):
     fp.write("    " + str(i) + " => (\n")
     fp.write("      x => tile_x(mem_tile_id(" + str(i) + ")),\n")
@@ -1571,8 +1679,15 @@ def print_tiles(fp, esp_config):
     fp.write("      haddr => slm_haddr(" + str(i)  + "),\n")
     fp.write("      hmask => slm_hmask(" + str(i)  + ")\n")
     fp.write("    ),\n")
+  for i in range(0, esp_config.nslmddr):
+    fp.write("    " + str(i + esp_config.nmem + esp_config.nslm) + " => (\n")
+    fp.write("      x => tile_x(slmddr_tile_id(" + str(i) + ")),\n")
+    fp.write("      y => tile_y(slmddr_tile_id(" + str(i) + ")),\n")
+    fp.write("      haddr => slmddr_haddr(" + str(i)  + "),\n")
+    fp.write("      hmask => slmddr_hmask(" + str(i)  + ")\n")
+    fp.write("    ),\n")
   if esp_config.has_svga:
-    fp.write("    " + str(esp_config.nmem + esp_config.nslm) + " => (\n")
+    fp.write("    " + str(esp_config.nmem + esp_config.nslm + esp_config.nslmddr) + " => (\n")
     fp.write("      x => tile_x(io_tile_id),\n")
     fp.write("      y => tile_y(io_tile_id),\n")
     fp.write("      haddr => fb_haddr,\n")
@@ -1660,7 +1775,7 @@ def print_tiles(fp, esp_config):
   fp.write("  constant remote_ahb_mask_misc : std_logic_vector(0 to NAHBSLV - 1) := (\n")
   for j in range(0, esp_config.nmem):
     fp.write("    " + str(DDR_HINDEX[j]) + " => '1',\n")
-  for j in range(0, esp_config.nslm):
+  for j in range(0, esp_config.nslm + esp_config.nslmddr):
     index = SLM_HINDEX + j
     if index >= 12:
       index = index + 1
@@ -1674,7 +1789,7 @@ def print_tiles(fp, esp_config):
   fp.write("    others => '0');\n\n")
 
   fp.write("  constant slm_ahb_mask : std_logic_vector(0 to NAHBSLV - 1) := (\n")
-  for j in range(0, esp_config.nslm):
+  for j in range(0, esp_config.nslm + esp_config.nslmddr):
     index = SLM_HINDEX + j
     if index >= 12:
       index = index + 1

@@ -56,7 +56,7 @@ entity esp is
     -- Monitor signals
     mon_noc         : out monitor_noc_matrix(1 to 6, 0 to CFG_TILES_NUM-1);
     mon_acc         : out monitor_acc_vector(0 to relu(accelerators_num-1));
-    mon_mem         : out monitor_mem_vector(0 to CFG_NMEM_TILE + CFG_NSLM_TILE - 1);
+    mon_mem         : out monitor_mem_vector(0 to CFG_NMEM_TILE + CFG_NSLM_TILE + CFG_NSLMDDR_TILE - 1);
     mon_l2          : out monitor_cache_vector(0 to relu(CFG_NL2 - 1));
     mon_llc         : out monitor_cache_vector(0 to relu(CFG_NLLC - 1));
     mon_dvfs        : out monitor_dvfs_vector(0 to CFG_TILES_NUM-1));
@@ -890,8 +890,16 @@ begin
         pllclk             => open,
         dco_clk            => open,
         dco_clk_lock       => open,
+        -- DDR controller ports (this_has_ddr -> 1)
+        dco_clk_div2       => open,
+        dco_clk_div2_90    => open,
 	ddr_ahbsi          => ddr_ahbsi(tile_mem_id(i)),
 	ddr_ahbso          => ddr_ahbso(tile_mem_id(i)),
+        ddr_cfg0           => open,
+        ddr_cfg1           => open,
+        ddr_cfg2           => open,
+        mem_id             => open,
+        -- FPGA proxy memory link (this_has_ddr -> 0)
         fpga_data_in       => (others => '0'),
         fpga_data_out      => open,
         fpga_oen           => open,
@@ -1007,6 +1015,15 @@ begin
           pllclk             => open,
           dco_clk            => open,
           dco_clk_lock       => open,
+          -- DDR controller ports (disaled in generic ESP top)
+          dco_clk_div2       => open,
+          dco_clk_div2_90    => open,
+          ddr_ahbsi          => open,
+          ddr_ahbso          => ahbs_none,
+          ddr_cfg0           => open,
+          ddr_cfg1           => open,
+          ddr_cfg2           => open,
+          slmddr_id          => open,
           -- Test interface
           tdi                => '0',
           tdo                => open,

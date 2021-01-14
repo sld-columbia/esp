@@ -31,6 +31,10 @@ VLOG = vlog -sv -quiet $(VLOGOPT)
 VSIM = VSIMOPT='$(VSIMOPT)' TECHLIB=$(TECHLIB) ESP_ROOT=$(ESP_ROOT) vsim $(VSIMOPT)
 
 
+### Support for BSG DDR controller simulation
+include $(ESP_ROOT)/utils/make/bsg.mk
+
+
 ### Xilinx Simulation libs targets ###
 $(ESP_ROOT)/.cache/modelsim/xilinx_lib:
 	$(QUIET_MKDIR)mkdir -p $@
@@ -100,6 +104,8 @@ endif
 			echo $(SPACES)"$(VLOG) -work work $$rtl"; \
 			$(VLOG) -work work $$rtl || exit; \
 		done;
+	@echo $(SPACES)"### Compile BSG Verilog source files ###";
+	@$(MAKE) bsg-sim-compile
 	@cd modelsim; \
 	echo $(SPACES)"vmake > vsim.mk"; \
 	vmake 2> /dev/null > vsim.mk; \

@@ -37,9 +37,9 @@ entity ahbslv2noc is
     tech             : integer;
     hindex           : std_logic_vector(0 to NAHBSLV - 1);
     hconfig          : ahb_slv_config_vector;
-    mem_hindex       : integer range 0 to NAHBSLV - 1;
+    mem_hindex       : integer range -1 to NAHBSLV - 1;
     mem_num          : integer;
-    mem_info         : tile_mem_info_vector(0 to CFG_NMEM_TILE + CFG_NSLM_TILE - 1);
+    mem_info         : tile_mem_info_vector(0 to CFG_NMEM_TILE + CFG_NSLM_TILE + CFG_NSLMDDR_TILE - 1);
     slv_y            : local_yx;
     slv_x            : local_yx;
     retarget_for_dma : integer range 0 to 1 := 0;
@@ -125,6 +125,7 @@ begin  -- rtl
     variable reserved : reserved_field_type;
     variable mem_x, mem_y : local_yx;
     variable snd_to_mem : std_ulogic;
+    variable adj_mem_hindex : integer range 0 to NAHBSLV - 1;
   begin  -- process make_packet
     -- Get routing info
     mem_x := mem_info(0).x;
@@ -141,10 +142,18 @@ begin  -- rtl
     end if;
 
     -- Determine whether memory is selected
+    if mem_hindex = -1 then
+      adj_mem_hindex := 0;
+    else
+      adj_mem_hindex := mem_hindex;
+    end if;
+
     if retarget_for_dma = 1 then
       snd_to_mem := dma_selected;
+    elsif mem_hindex = -1 then
+      snd_to_mem := '1';
     else
-      if ahbsi.hsel(mem_hindex) = '1' and mem_num /= 0 then
+      if ahbsi.hsel(adj_mem_hindex) = '1' and mem_num /= 0 then
         snd_to_mem := '1';
       else
         snd_to_mem := '0';

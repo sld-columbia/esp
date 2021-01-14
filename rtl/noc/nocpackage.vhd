@@ -310,6 +310,9 @@ package nocpackage is
   function set_mem_id_range
     return integer;
 
+  function set_slmddr_id_range
+    return integer;
+
   function get_origin_y (
     constant flit_sz : integer;
     flit : noc_flit_type)
@@ -426,6 +429,16 @@ package body nocpackage is
       return 0;
     else
       return CFG_NMEM_TILE - 1;
+    end if;
+  end;
+
+  function set_slmddr_id_range
+    return integer is
+  begin
+    if CFG_NSLMDDR_TILE = 0 then
+      return 0;
+    else
+      return CFG_NSLMDDR_TILE - 1;
     end if;
   end;
 

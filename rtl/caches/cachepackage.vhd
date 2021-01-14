@@ -124,6 +124,7 @@ package cachepackage is
   -- In this case LLC and memory-related components won't be present in the
   -- system. This constant simply fixes CAD tools complains about null ranges
   constant MEM_ID_RANGE_MSB : integer := set_mem_id_range;
+  constant SLMDDR_ID_RANGE_MSB : integer := set_slmddr_id_range;
 
   -----------------------------------------------------------------------------
   -- Functions
