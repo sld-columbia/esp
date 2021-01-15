@@ -21,6 +21,7 @@ DEVICE=$3
 device=$(echo ${DEVICE} | awk '{print tolower($0)}')
 acc_id_match="this_hls_conf      : hlscfg_t"
 declare -A new_accelerators old_accelerators modified_accelerators
+declare -A res_consumption
 
 #function to extract the number and types of accelerator tiles from current esp_config
 function extract_acc() {
@@ -487,6 +488,79 @@ echo "source \$tclDir/run.tcl" >> $dpr_syn_tcl;
 echo "exit" >> $dpr_syn_tcl;
 }
 
+function parse_synth_report(){
+synth_report_base=$1/socs/$2/vivado_dpr/Synth;
+flora_input=$1/socs/$2/res_reqs.csv;
+
+lut_keyword=LUTs*;
+bram_keyword=Block;
+dsp_keyword=""DSPs;
+
+LUT_TOLERANCE=250;
+BRAM_TOLERANCE=20;
+DSP_TOLERANCE=20;
+
+echo -e "\t DPR: Parsing synthesis report";
+for ((i=0; i<$num_acc_tiles; i++))
+do
+    while read line
+    do
+    lut_match=$(echo ${line} | awk '{print($3)}'); 
+    dsp_match=$(echo ${line} | awk '{print($2)}'); 
+    bram_match=$(echo ${line} | awk '{print($2)}');
+
+    if [[ "$lut_match" == "$lut_keyword" ]]; then
+        lut=$(echo ${line} | awk '{print($5)}');
+        clb=$((($lut / 8) + LUT_TOLERANCE));
+        res_consumption["$i,0"]=$clb;
+        echo "found one $lut $clb";
+    fi;
+    
+    if [[ "$dsp_aux_match" == "$dsp_keyword" ]] && [[ $dsp_match == "DSP48E2" ]]; then
+        dsp=$(echo ${dsp_line} | awk '{print($4)}');
+        dsp=$((dsp + DSP_TOLERANCE ));
+        res_consumption["$i,2"]=$dsp;
+        echo "found one $dsp";
+    fi;
+    
+    if [[ "$bram_aux_match" == "$bram_keyword" ]] && [[ $bram_match == "RAMB36/FIFO*" ]]; then
+        bram=$(echo ${bram_line} | awk '{print($6)}');
+        #bram=$(bram%.*);
+        bram=$(echo $bram $BRAM_TOLERANCE | awk '{print $1 + $2}');
+        res_consumption["$i,1"]=$bram;
+        echo "found one $bram";
+    fi; 
+    
+    dsp_aux_match=$dsp_match;
+    dsp_line=$line;
+    bram_aux_match=$bram_match;
+    bram_line=$line;
+    done < $synth_report_base/${new_accelerators[$i,1]}/tile_acc_utilization_synth.rpt;
+done
+
+for ((i=0; i<$num_acc_tiles; i++))
+do
+    if [[ "$i" == "0" ]]; then
+        echo ${res_consumption["$i,0"]} , ${res_consumption["$i,1"]} , ${res_consumption["$i,2"]} , ${new_accelerators[$i,1]} , ${new_accelerators[$i,0]} > $flora_input;
+    else
+        echo ${res_consumption["$i,0"]} , ${res_consumption["$i,1"]} , ${res_consumption["$i,2"]} , ${new_accelerators[$i,1]} , ${new_accelerators[$i,0]} > $flora_input;
+    fi;
+done
+
+
+}
+
+function gen_floorplan(){
+    src_dir=$1/socs/$2;
+    fplan_dir=$1/socs/common/dpr_tools/dpr_floor_planner;
+
+    #TODO:type of FPGA must be a variable of $2
+    cd $fplan_dir;
+    make flora FPGA=VC707;
+    ./bin/flora $num_acc_tiles $1/socs/$2/res_reqs.csv;
+    cd $src_dir;
+}
+
 if [ "$4" == "BBOX" ]; then
     extract_acc $1 $2 $3 
     initialize_acc_tiles $1 $2 $3
@@ -511,4 +585,7 @@ elif [ $4 == "test" ]; then
     initialize_acc_tiles $1 $2 $3
     #diff_accelerators $1 $2 $3 
     #gen_fplan $1 $2 $3;
+    parse_synth_report $1 $2 $3 $4
+    gen_floorplan $1 $2 $3 $4
+
 fi;
