@@ -11,11 +11,13 @@ original_src="$1/socs/$2/vivado/srcs.tcl"
 temp_srcs="/tmp/temp_srcs.tcl"
 esp_config="$1/socs/$2/.esp_config"
 esp_config_old="$1/socs/$2/vivado_dpr/.esp_config"
+tcl_dir="$1/socs/common/dpr_tools/Tcl"
 
 #variables related to accelerator tiles
 num_acc_tiles=0
 num_old_acc_tiles=0
 num_modified_acc_tiles=0
+regenerate_fplan=0;
 
 DEVICE=$3
 device=$(echo ${DEVICE} | awk '{print tolower($0)}')
@@ -334,10 +336,12 @@ do
 done
 }
 
+
 #generate the tcl script to synthesise and implement the design
-function gen_dpr() {
-syn_include="$1/socs/common/Tcl/synth_include.tcl";
-rm -r $syn_include;
+function gen_synth_script() {
+
+syn_include="$tcl_dir/synth_include.tcl";
+rm -rf $syn_include;
 echo "set_property include_dirs {" >> $syn_include;
 echo "$1/socs/$2 " >> $syn_include;
 echo "$1/rtl/src/sld/caches/esp-caches/common/defs" >> $syn_include;
@@ -349,7 +353,7 @@ echo "} [current_fileset]" >> $syn_include;
 #generate the imlementation script
 dpr_syn_tcl="vivado_dpr/ooc_syn.tcl"
 echo "set tclParams [list hd.visual 1]" > $dpr_syn_tcl;
-echo "set tclHome \"$1/socs/common/Tcl\" " >> $dpr_syn_tcl;
+echo "set tclHome \"$tcl_dir\" " >> $dpr_syn_tcl; #\"$1/socs/common/Tcl\" " >> $dpr_syn_tcl;
 echo "set tclDir \$tclHome " >> $dpr_syn_tcl;
 echo "set projDir \"$1/socs/$2/vivado_dpr\" " >> $dpr_syn_tcl;
 echo "source \$tclDir/design_utils.tcl" >> $dpr_syn_tcl;
@@ -439,6 +443,116 @@ elif [[ "$4" == "ACC" ]] && [[ "$num_modified_acc_tiles" != "0" ]]; then
     done
 fi;
 
+echo "source \$tclDir/run.tcl" >> $dpr_syn_tcl;
+echo "exit" >> $dpr_syn_tcl;
+}
+
+
+#generate the tcl script to synthesise and implement the design
+function gen_impl_script() {
+syn_include="$tcl_dir/synth_include.tcl"; #"$1/socs/common/Tcl/synth_include.tcl";
+rm -r $syn_include;
+echo "set_property include_dirs {" >> $syn_include;
+echo "$1/socs/$2 " >> $syn_include;
+echo "$1/rtl/src/sld/caches/esp-caches/common/defs" >> $syn_include;
+echo "$1/third-party/accelerators/dma64/NV_NVDLA/vlog_incdir" >> $syn_include;
+echo "$1/third-party/ariane/src/common_cells/include" >> $syn_include;
+echo "$1/third-party/ibex/vendor/lowrisc_ip/prim/rtl" >> $syn_include;
+echo "} [current_fileset]" >> $syn_include;
+
+#generate the imlementation script
+dpr_syn_tcl="vivado_dpr/impl.tcl"
+echo "set tclParams [list hd.visual 1]" > $dpr_syn_tcl;
+echo "set tclHome \"$tcl_dir\" ">> $dpr_syn_tcl; # \"$1/socs/common/Tcl\" " >> $dpr_syn_tcl;
+echo "set tclDir \$tclHome " >> $dpr_syn_tcl;
+echo "set projDir \"$1/socs/$2/vivado_dpr\" " >> $dpr_syn_tcl;
+echo "source \$tclDir/design_utils.tcl" >> $dpr_syn_tcl;
+echo "source \$tclDir/log_utils.tcl" >> $dpr_syn_tcl;
+echo "source \$tclDir/synth_utils.tcl" >> $dpr_syn_tcl;
+echo "source \$tclDir/impl_utils.tcl" >> $dpr_syn_tcl;
+echo "source \$tclDir/pr_utils.tcl" >> $dpr_syn_tcl;
+echo "source \$tclDir/log_utils.tcl" >> $dpr_syn_tcl;
+echo "source \$tclDir/hd_floorplan_utils.tcl" >> $dpr_syn_tcl;
+
+echo " " >> $dpr_syn_tcl;
+
+echo "####### FPGA type #######" >> $dpr_syn_tcl;
+echo "set part $device" >> $dpr_syn_tcl;
+echo "check_part \$part" >> $dpr_syn_tcl;
+
+echo "set run.topSynth  0" >> $dpr_syn_tcl;
+echo "set run.rmSynth   0" >> $dpr_syn_tcl;
+echo "set run.prImpl    1" >> $dpr_syn_tcl;
+echo "set run.prVerify  1" >> $dpr_syn_tcl;
+echo "set run.writeBitstream 1" >> $dpr_syn_tcl;
+
+echo "####Report and DCP controls - values: 0-required min; 1-few extra; 2-all" >> $dpr_syn_tcl;
+echo "set verbose      1" >> $dpr_syn_tcl;
+echo "set dcpLevel     1" >> $dpr_syn_tcl;
+
+echo " " >> $dpr_syn_tcl;
+
+echo "####Output Directories" >> $dpr_syn_tcl;
+echo "set synthDir  \$projDir/Synth" >> $dpr_syn_tcl;
+echo "set implDir   \$projDir/Implement" >> $dpr_syn_tcl;
+echo "set dcpDir    \$projDir/Checkpoint" >> $dpr_syn_tcl;
+echo "set bitDir    \$projDir/Bitstreams" >> $dpr_syn_tcl;
+
+echo " " >> $dpr_syn_tcl;
+
+echo "####Input Directories " >> $dpr_syn_tcl;
+echo "set srcDir     \$projDir/Sources" >> $dpr_syn_tcl;
+echo "set rtlDir     \$srcDir/hdl" >> $dpr_syn_tcl;
+echo "set prjDir     \$srcDir/project" >> $dpr_syn_tcl;
+echo "set xdcDir     \$srcDir/xdc" >> $dpr_syn_tcl;
+echo "set coreDir    \$srcDir/cores" >> $dpr_syn_tcl;
+echo "set netlistDir \$srcDir/netlist" >> $dpr_syn_tcl;
+
+echo " " >> $dpr_syn_tcl;
+
+echo "#################################################################### " >> $dpr_syn_tcl;
+echo "### Top Module Definitions" >> $dpr_syn_tcl;
+echo "#################################################################### " >> $dpr_syn_tcl;
+echo "set top \"top\" " >> $dpr_syn_tcl;
+echo "set static \"Static\" " >> $dpr_syn_tcl;
+echo "add_module \$static " >> $dpr_syn_tcl;
+echo "set_attribute module \$static moduleName    \$top" >> $dpr_syn_tcl;
+echo "set_attribute module \$static top_level     1 " >> $dpr_syn_tcl;
+echo "#set_attribute module \$static synthCheckpoint \$synthDir/\$static/top_synth.dcp " >> $dpr_syn_tcl;
+#echo "set_attribute module \$static synth         \${run.topSynth} " >> $dpr_syn_tcl;
+
+
+echo "####################################################################" >> $dpr_syn_tcl;
+echo "### RP Module Definitions " >> $dpr_syn_tcl;
+echo "#################################################################### " >> $dpr_syn_tcl;
+
+echo "number of acc tiles inside dpr gen is $num_acc_tiles ";
+#if [[ "$4" == "IMPL_DPR" ]]; then
+    for ((i=0; i<num_acc_tiles; i++))
+    do
+        acc_dir="$dpr_srcs/tile_${new_accelerators[$i,0]}_acc";
+        #acc_dir="$dpr_srcs/accelerator_$i";
+        prj_src="$acc_dir/src.prj"
+        echo "add_module ${new_accelerators[$i,1]} " >> $dpr_syn_tcl;
+        echo "set_attribute module ${new_accelerators[$i,1]} moduleName tile_acc" >> $dpr_syn_tcl;
+        echo "set_attribute module ${new_accelerators[$i,1]} prj $prj_src" >> $dpr_syn_tcl;
+        #echo "set_attribute module ${new_accelerators[$i,1]} synth  \${run.rmSynth}" >> $dpr_syn_tcl;
+    done
+#elif [[ "$4" == "ACC" ]] && [[ "$num_modified_acc_tiles" != "0" ]]; then
+#    for ((i=0; i<$num_acc_tiles; i++))
+#    do
+#        acc_dir="$dpr_srcs/tile_${new_accelerators[$i,0]}_acc";
+        #acc_dir="$dpr_srcs/accelerator_$i";
+#        prj_src="$acc_dir/src.prj"
+#        echo "add_module ${new_accelerators[$i,1]} " >> $dpr_syn_tcl;
+#        echo "set_attribute module ${new_accelerators[$i,1]} moduleName tile_acc" >> $dpr_syn_tcl;
+#        echo "set_attribute module ${new_accelerators[$i,1]} prj $prj_src" >> $dpr_syn_tcl;
+#        if [[ ${modified_accelerators[$i,0]} == ${new_accelerators[$i,0]} ]]; then
+#            echo "set_attribute module ${new_accelerators[$i,1]} synth  \${run.rmSynth}" >> $dpr_syn_tcl;
+#        fi;
+#    done
+#fi;
+
 echo "####################################################################" >> $dpr_syn_tcl;
 echo "### Implementation " >> $dpr_syn_tcl;
 echo "#################################################################### " >> $dpr_syn_tcl;
@@ -455,20 +569,25 @@ else
 fi;
 echo "set_property SEVERITY {Warning} [get_drc_checks HDPR-41]" >> $dpr_syn_tcl;
 
-if [[ "$4" == "DPR" ]]; then
+if [[ "$4" == "IMPL_DPR" ]]; then
     echo "set_attribute impl top_dpr partitions  [list [list \$static \$top  implement ] \\" >> $dpr_syn_tcl;
     for ((i=0; i<$num_acc_tiles; i++))
     do
         echo "[list ${new_accelerators[$i,1]}  esp_1/tiles_gen[${new_accelerators[$i,0]}].accelerator_tile.tile_acc_i implement ] \\" >>  $dpr_syn_tcl;
     done
     echo "]"  >> $dpr_syn_tcl;
-elif [[ "$4" == "ACC" ]] && [[ "$num_modified_acc_tiles" != "0" ]]; then
-    
+elif [[ "$4" == "IMPL_ACC" ]] && [[ "$num_modified_acc_tiles" != "0" ]]; then
     echo "set_attribute impl top_dpr partitions  [list [list \$static \$top  import ] \\" >> $dpr_syn_tcl; 
     
     for ((i=0, j=0; j<$num_acc_tiles; j++))
     do
-        if [[ ${modified_accelerators[$i,0]} == ${new_accelerators[$i,0]} ]]; then
+        if  [[ $regenerate_fplan == 1 ]]; then
+            for ((i=0; i<$num_acc_tiles; i++))
+            do
+                echo "[list ${new_accelerators[$i,1]}  esp_1/tiles_gen[${new_accelerators[$i,0]}].accelerator_tile.tile_acc_i implement ] \\" >>  $dpr_syn_tcl;
+            done
+
+        elif [[ ${modified_accelerators[$i,0]} == ${new_accelerators[$i,0]} ]]; then
             echo "[list ${modified_accelerators[$i,1]}  esp_1/tiles_gen[${modified_accelerators[$i,0]}].accelerator_tile.tile_acc_i implement ] \\" >>  $dpr_syn_tcl;
             ((i++));
         else
@@ -488,7 +607,7 @@ echo "source \$tclDir/run.tcl" >> $dpr_syn_tcl;
 echo "exit" >> $dpr_syn_tcl;
 }
 
-function parse_synth_report(){
+function parse_synth_report() {
 synth_report_base=$1/socs/$2/vivado_dpr/Synth;
 flora_input=$1/socs/$2/res_reqs.csv;
 
@@ -546,11 +665,9 @@ do
         echo ${res_consumption["$i,0"]} , ${res_consumption["$i,1"]} , ${res_consumption["$i,2"]} , ${new_accelerators[$i,1]} , ${new_accelerators[$i,0]} > $flora_input;
     fi;
 done
-
-
 }
 
-function gen_floorplan(){
+function gen_floorplan() {
     src_dir=$1/socs/$2;
     fplan_dir=$1/socs/common/dpr_tools/dpr_floor_planner;
 
@@ -561,31 +678,94 @@ function gen_floorplan(){
     cd $src_dir;
 }
 
+function acc_fplan() {
+res_req_new=$1/socs/$2/res_reqs.csv;
+res_req_old=$1/socs/$2/vivado_dpr/res_reqs.csv;
+regenerate_fplan=0;
+
+    for((i=0; i<$num_modified_acc_tiles; i++))
+    do
+        while read line
+        do
+            lut_new=$(echo ${line} | awk '{print($1)}');
+            bram_new=$(echo ${line} | awk '{print($3)}');
+            dsp_new=$(echo ${line} | awk '{print($5)}');
+            tile_id_new=$(echo ${line} | awk '{print($9)}');
+
+            while read line2
+            do
+                lut_old=$(echo ${line2} | awk '{print($1)}');
+                bram_old=$(echo ${line2} | awk '{print($3)}');
+                dsp_old=$(echo ${line2} | awk '{print($5)}');
+                tile_id_old=$(echo ${line2} | awk '{print($9)}');
+                if [[ "$tile_id_new" == "$tile_id_old" ]]; then
+                    if [[ "$lut_new" -gt "$lut_old" ]] || [[ "$bram_new" -gt "$bram_old" ]] || [[ "$dsp_new" -gt "$dsp_old" ]]; then
+                        regenerate_fplan=1;
+                        break;    
+                    fi;
+                fi;
+            done < $res_req_old;
+        done < $res_req_new;
+    done 
+
+}
+
 if [ "$4" == "BBOX" ]; then
     extract_acc $1 $2 $3 
     initialize_acc_tiles $1 $2 $3
     initialize_bbox_tiles $1 $2 $3
+
 elif [ "$4" == "DPR" ]; then 
     extract_acc $1 $2 $3
     initialize_acc_tiles $1 $2 $3
     add_acc_prj_file $1 $2 $3
-    gen_fplan $1 $2 $3
-    gen_dpr $1 $2 $3 $4
+    gen_synth_script $1 $2 $3 $4
+
+elif [ "$4" == "IMPL_DPR" ]; then 
+    extract_acc $1 $2 $3
+    initialize_acc_tiles $1 $2 $3
+    add_acc_prj_file $1 $2 $3
+    parse_synth_report $1 $2 $3 $4
+    gen_floorplan $1 $2 $3 $4
+    gen_impl_script $1 $2 $3 $4
+
+    #gen_dpr $1 $2 $3 $4
 elif [ $4 == "ACC" ]; then
     extract_acc $1 $2 $3; 
     extract_acc_old $1 $2 $3; 
     diff_accelerators $1 $2 $3; 
     initialize_acc_tiles $1 $2 $3
     add_acc_prj_file $1 $2 $3
-    gen_fplan $1 $2 $3
-    gen_dpr $1 $2 $3 $4;
+    gen_synth_script $1 $2 $3 $4
+
+    #gen_fplan $1 $2 $3
+    #gen_dpr $1 $2 $3 $4;
+
+elif [ $4 == "IMPL_ACC" ]; then
+    extract_acc $1 $2 $3; 
+    extract_acc_old $1 $2 $3; 
+    diff_accelerators $1 $2 $3; 
+    initialize_acc_tiles $1 $2 $3;
+    add_acc_prj_file $1 $2 $3;
+    parse_synth_report $1 $2 $3 $4;
+    acc_fplan $1 $2 $3 $4;
+    if [ "$regenerate_fplan" == "1" ]; then
+        gen_floorplan $1 $2 $3 $4;      
+    fi;
+    echo " regenarate after parse is $regenerate_fplan";
+    gen_impl_script $1 $2 $3 $4;
+   
+
 elif [ $4 == "test" ]; then
     extract_acc $1 $2 $3
-    #extract_acc_old $1 $2 $3
+    extract_acc_old $1 $2 $3
+    diff_accelerators $1 $2 $3 
     initialize_acc_tiles $1 $2 $3
-    #diff_accelerators $1 $2 $3 
     #gen_fplan $1 $2 $3;
+    echo " regenarate before parse is $regenerate_fplan";
     parse_synth_report $1 $2 $3 $4
-    gen_floorplan $1 $2 $3 $4
+    acc_fplan $1 $2 $3 $4;
+    echo " regenarate after parse is $regenerate_fplan";
+    #gen_floorplan $1 $2 $3 $4
 
 fi;
