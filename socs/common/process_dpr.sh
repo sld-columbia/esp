@@ -43,7 +43,7 @@ do
                 new_accelerators["$num_acc_tiles,1"]=$(echo ${acc_name} | awk '{print tolower($0)}');
                 ((num_acc_tiles++));
             fi
-            echo "$tile_token $tile_index $tile_type $acc_name $1 $2 $3 ";
+            #echo "$tile_token $tile_index $tile_type $acc_name $1 $2 $3 ";
         fi
     done
 done < $esp_config
@@ -93,7 +93,7 @@ do
        
 done 
 
-    echo "number modified tiles is equal to $num_modified_acc_tiles "
+    echo -e "\t DPR: number modified tiles is equal to $num_modified_acc_tiles "
 }
 
 #This function initializes the specific accelerator tiles from the template tile_acc.vhd
@@ -416,7 +416,7 @@ echo "####################################################################" >> $
 echo "### RP Module Definitions " >> $dpr_syn_tcl;
 echo "#################################################################### " >> $dpr_syn_tcl;
 
-echo "number of acc tiles inside dpr gen is $num_acc_tiles ";
+echo -e "\t DPR: number of acc tiles inside dpr gen is $num_acc_tiles ";
 if [[ "$4" == "DPR" ]]; then
     for ((i=0; i<num_acc_tiles; i++))
     do
@@ -526,7 +526,7 @@ echo "####################################################################" >> $
 echo "### RP Module Definitions " >> $dpr_syn_tcl;
 echo "#################################################################### " >> $dpr_syn_tcl;
 
-echo "number of acc tiles inside dpr gen is $num_acc_tiles ";
+echo -e "\t DPR: number of acc tiles inside dpr gen is $num_acc_tiles ";
 #if [[ "$4" == "IMPL_DPR" ]]; then
     for ((i=0; i<num_acc_tiles; i++))
     do
@@ -582,10 +582,7 @@ elif [[ "$4" == "IMPL_ACC" ]] && [[ "$num_modified_acc_tiles" != "0" ]]; then
     for ((i=0, j=0; j<$num_acc_tiles; j++))
     do
         if  [[ $regenerate_fplan == 1 ]]; then
-            for ((i=0; i<$num_acc_tiles; i++))
-            do
-                echo "[list ${new_accelerators[$i,1]}  esp_1/tiles_gen[${new_accelerators[$i,0]}].accelerator_tile.tile_acc_i implement ] \\" >>  $dpr_syn_tcl;
-            done
+            echo "[list ${new_accelerators[$i,1]}  esp_1/tiles_gen[${new_accelerators[$i,0]}].accelerator_tile.tile_acc_i implement ] \\" >>  $dpr_syn_tcl;
 
         elif [[ ${modified_accelerators[$i,0]} == ${new_accelerators[$i,0]} ]]; then
             echo "[list ${modified_accelerators[$i,1]}  esp_1/tiles_gen[${modified_accelerators[$i,0]}].accelerator_tile.tile_acc_i implement ] \\" >>  $dpr_syn_tcl;
@@ -596,7 +593,8 @@ elif [[ "$4" == "IMPL_ACC" ]] && [[ "$num_modified_acc_tiles" != "0" ]]; then
     done
     echo "]"  >> $dpr_syn_tcl;
 else
-    echo "No accelerator tile was modified ";
+
+echo -e "\t DPR: No accelerator tile was modified ";
     exit;
 fi;
 echo "set_attribute impl top_dpr impl       \${run.prImpl}" >> $dpr_syn_tcl;
@@ -632,14 +630,14 @@ do
         lut=$(echo ${line} | awk '{print($5)}');
         clb=$((($lut / 8) + LUT_TOLERANCE));
         res_consumption["$i,0"]=$clb;
-        echo "found one $lut $clb";
+        #echo "found one $lut $clb";
     fi;
     
     if [[ "$dsp_aux_match" == "$dsp_keyword" ]] && [[ $dsp_match == "DSP48E2" ]]; then
         dsp=$(echo ${dsp_line} | awk '{print($4)}');
         dsp=$((dsp + DSP_TOLERANCE ));
         res_consumption["$i,2"]=$dsp;
-        echo "found one $dsp";
+        #echo "found one $dsp";
     fi;
     
     if [[ "$bram_aux_match" == "$bram_keyword" ]] && [[ $bram_match == "RAMB36/FIFO*" ]]; then
@@ -647,7 +645,7 @@ do
         #bram=$(bram%.*);
         bram=$(echo $bram $BRAM_TOLERANCE | awk '{print $1 + $2}');
         res_consumption["$i,1"]=$bram;
-        echo "found one $bram";
+        #echo "found one $bram";
     fi; 
     
     dsp_aux_match=$dsp_match;
@@ -662,7 +660,7 @@ do
     if [[ "$i" == "0" ]]; then
         echo ${res_consumption["$i,0"]} , ${res_consumption["$i,1"]} , ${res_consumption["$i,2"]} , ${new_accelerators[$i,1]} , ${new_accelerators[$i,0]} > $flora_input;
     else
-        echo ${res_consumption["$i,0"]} , ${res_consumption["$i,1"]} , ${res_consumption["$i,2"]} , ${new_accelerators[$i,1]} , ${new_accelerators[$i,0]} > $flora_input;
+        echo ${res_consumption["$i,0"]} , ${res_consumption["$i,1"]} , ${res_consumption["$i,2"]} , ${new_accelerators[$i,1]} , ${new_accelerators[$i,0]} >> $flora_input;
     fi;
 done
 }
@@ -752,7 +750,6 @@ elif [ $4 == "IMPL_ACC" ]; then
     if [ "$regenerate_fplan" == "1" ]; then
         gen_floorplan $1 $2 $3 $4;      
     fi;
-    echo " regenarate after parse is $regenerate_fplan";
     gen_impl_script $1 $2 $3 $4;
    
 
