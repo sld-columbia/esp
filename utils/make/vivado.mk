@@ -238,10 +238,10 @@ vivado-gui: vivado-setup
 	cd ../;
 
 vivado-syn: vivado-setup
-    $(QUIET_INFO)echo "launching Vivado implementation script"
-    @cd vivado; \
+	$(QUIET_INFO)echo "launching Vivado implementation script"
+	@cd vivado; \
     vivado $(VIVADO_BATCH_OPT) -source syn.tcl | tee ../vivado_syn.log;
-    @if [ "$(DPR_ENABLED)" != "y" ]; then \
+	@if [ "$(DPR_ENABLED)" != "y" ]; then \
         bit=vivado/$(DESIGN).runs/impl_1/$(TOP).bit; \
         if  test -r $$bit; then \
             rm -rf $(TOP).bit; \
@@ -277,29 +277,41 @@ vivado-syn: vivado-setup
         mkdir -p vivado_dpr/Implement; \
         mkdir -p vivado_dpr/Synth; \
         mkdir -p vivado_dpr/Synth/Static; \
-        cp .esp_config vivado_dpr/; \
+        cp ./socgen/esp/.esp_config vivado_dpr/; \
         cp $(ESP_ROOT)/socs/$(BOARD)/vivado/$(DESIGN).runs/synth_1/top_dpr.dcp vivado_dpr/Synth/Static/top_synth.dcp; \
         $(QUIET_INFO_ALT)echo "launching setup script for Vivado DPR flow";  \
         sh $(ESP_ROOT)/socs/common/process_dpr.sh $(ESP_ROOT) $(BOARD) $(DEVICE) DPR;  \
         cd vivado_dpr; \
         vivado $(VIVADO_BATCH_OPT) -source ooc_syn.tcl | tee ../vivado_syn_dpr.log; \
+        cd ../; \
+		sh $(ESP_ROOT)/socs/common/process_dpr.sh $(ESP_ROOT) $(BOARD) $(DEVICE) IMPL_DPR;  \
+        cd vivado_dpr; \
+        vivado $(VIVADO_BATCH_OPT) -source impl.tcl | tee ../vivado_syn_dpr.log; \
+		cd ../ ; \
+		cp res_reqs.csv vivado_dpri/ ; \
     fi;
 
 vivado-syn-dpr: DPR_ENABLED = y
 vivado-syn-dpr: vivado-syn
 
 vivado-syn-dpr-acc: vivado/srcs.tcl sldgen
-    $(QUIET_INFO)echo "launching setup script for Vivado DPR flow"  
-    @if ! test -d vivado_dpr; then \
+	$(QUIET_INFO)echo "launching setup script for Vivado DPR flow"  
+	@if ! test -d vivado_dpr; then \
         $(QUIET_INFO_ALT)echo "vivado_dpr directory not found"; \
         $(QUIET_INFO_ALT)echo "you should run vivado-syn-dpr first"; \
     else \
         $(QUIET_INFO)echo "starting DPR flow"; \
         sh $(ESP_ROOT)/socs/common/process_dpr.sh $(ESP_ROOT) $(BOARD) $(DEVICE) ACC;  \
-        cp .esp_config vivado_dpr/; \
+        cp ./socgen/esp/.esp_config vivado_dpr/; \
         cd vivado_dpr; \
         vivado $(VIVADO_BATCH_OPT) -source ooc_syn.tcl | tee ../vivado_syn_dpr.log; \
-        cp Bitstreams/top.bit ../vivado/$(DESIGN).runs/impl_1/top.bit; \
+        cd ../ ; \
+		sh $(ESP_ROOT)/socs/common/process_dpr.sh $(ESP_ROOT) $(BOARD) $(DEVICE) IMPL_ACC;  \
+        cd vivado_dpr; \
+        vivado $(VIVADO_BATCH_OPT) -source impl.tcl | tee ../vivado_impl_dpr.log; \
+		cp Bitstreams/top.bit ../vivado/$(DESIGN).runs/impl_1/top.bit; \
+        cd ../ ; \
+		cp res_reqs.csv vivado_dpri/ ; \
     fi;
 
 
@@ -323,7 +335,7 @@ vivado-update: vivado vivado/syn.tcl
 endif # ifneq ($(filter $(TECHLIB),$(FPGALIBS)),)
 
 vivado-prog-fpga: vivado/program.tcl
-    @cd vivado; \
+	@cd vivado; \
     if [ "$(DPR_ENABLED)" != "y" ]; then \
         bit=$(DESIGN).runs/impl_1/$(TOP).bit; \
     else \
