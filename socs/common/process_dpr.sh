@@ -9,7 +9,7 @@ dpr_srcs="$1/socs/$2/sldgen/dpr_srcs"
 dpr_bbox="$dpr_srcs/tile_acc_bbox.vhd"
 original_src="$1/socs/$2/vivado/srcs.tcl"
 temp_srcs="/tmp/temp_srcs.tcl"
-esp_config="$1/socs/$2/.esp_config"
+esp_config="$1/socs/$2/./socgen/esp/.esp_config"
 esp_config_old="$1/socs/$2/vivado_dpr/.esp_config"
 tcl_dir="$1/socs/common/dpr_tools/Tcl"
 
