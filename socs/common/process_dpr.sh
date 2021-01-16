@@ -4,8 +4,8 @@
 # SPDX-License-Identifier: Apache-2.0
 
 #variables related to srcs of accelerators
-tile_acc="$1/socs/$2/sldgen/tile_acc.vhd"
-dpr_srcs="$1/socs/$2/sldgen/dpr_srcs"
+tile_acc="$1/socs/$2/socketgen/tile_acc.vhd"
+dpr_srcs="$1/socs/$2/socket/dpr_srcs"
 dpr_bbox="$dpr_srcs/tile_acc_bbox.vhd"
 original_src="$1/socs/$2/vivado/srcs.tcl"
 temp_srcs="/tmp/temp_srcs.tcl"
@@ -151,7 +151,7 @@ done < $tile_acc
 while read src_list
 do
     if [[ $src_list == *"tile_acc.vhd" ]]; then
-        echo "read_vhdl $1/socs/$2/sldgen/dpr_srcs/tile_acc_bbox.vhd" >> $temp_srcs;
+        echo "read_vhdl $dpr_srcs/tile_acc_bbox.vhd" >> $temp_srcs;
     else
         echo "$src_list" >> $temp_srcs;
     fi
@@ -632,9 +632,17 @@ do
         res_consumption["$i,0"]=$clb;
         #echo "found one $lut $clb";
     fi;
+   
+    #TODO this should be for DSP matching for VCU118 and VCu128
+    #if [[ "$dsp_aux_match" == "$dsp_keyword" ]] && [[ $dsp_match == "DSP48E2" ]]; then
+    #    dsp=$(echo ${dsp_line} | awk '{print($4)}');
+    #    dsp=$((dsp + DSP_TOLERANCE ));
+    #    res_consumption["$i,2"]=$dsp;
+    #    #echo "found one $dsp";
+    #fi;
     
-    if [[ "$dsp_aux_match" == "$dsp_keyword" ]] && [[ $dsp_match == "DSP48E2" ]]; then
-        dsp=$(echo ${dsp_line} | awk '{print($4)}');
+    if [[ "$dsp_match" == "$dsp_keyword" ]]; then
+        dsp=$(echo ${line} | awk '{print($4)}');
         dsp=$((dsp + DSP_TOLERANCE ));
         res_consumption["$i,2"]=$dsp;
         #echo "found one $dsp";
@@ -658,9 +666,9 @@ done
 for ((i=0; i<$num_acc_tiles; i++))
 do
     if [[ "$i" == "0" ]]; then
-        echo ${res_consumption["$i,0"]} , ${res_consumption["$i,1"]} , ${res_consumption["$i,2"]} , ${new_accelerators[$i,1]} , ${new_accelerators[$i,0]} > $flora_input;
+        echo ${res_consumption["$i,0"]} , ${res_consumption["$i,1"]} , ${res_consumption["$i,2"]} , esp_1/tiles_gen[${new_accelerators[$i,0]}].accelerator_tile.tile_acc_i , ${new_accelerators[$i,0]} > $flora_input;
     else
-        echo ${res_consumption["$i,0"]} , ${res_consumption["$i,1"]} , ${res_consumption["$i,2"]} , ${new_accelerators[$i,1]} , ${new_accelerators[$i,0]} >> $flora_input;
+        echo ${res_consumption["$i,0"]} , ${res_consumption["$i,1"]} , ${res_consumption["$i,2"]} , esp_1/tiles_gen[${new_accelerators[$i,0]}].accelerator_tile.tile_acc_i , ${new_accelerators[$i,0]} >> $flora_input;
     fi;
 done
 }
@@ -673,6 +681,7 @@ function gen_floorplan() {
     cd $fplan_dir;
     make flora FPGA=VC707;
     ./bin/flora $num_acc_tiles $1/socs/$2/res_reqs.csv;
+    cp pblocks.xdc $1/constraints/$2/;
     cd $src_dir;
 }
 
@@ -761,8 +770,9 @@ elif [ $4 == "test" ]; then
     #gen_fplan $1 $2 $3;
     echo " regenarate before parse is $regenerate_fplan";
     parse_synth_report $1 $2 $3 $4
-    acc_fplan $1 $2 $3 $4;
-    echo " regenarate after parse is $regenerate_fplan";
+    gen_floorplan $1 $2 $3 $4;
+    #acc_fplan $1 $2 $3 $4;
+    #echo " regenarate after parse is $regenerate_fplan";
     #gen_floorplan $1 $2 $3 $4
 
 fi;
