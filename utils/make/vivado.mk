@@ -336,6 +336,7 @@ vivado-gui-emu: vivado-setup-emu
 vivado-syn: vivado-setup
 	$(QUIET_INFO)echo "launching Vivado implementation script"
 	@cd vivado; \
+<<<<<<< HEAD
 	vivado $(VIVADO_BATCH_OPT) -source syn.tcl | tee ../vivado_syn.log;
 	@if [ "$(DPR_ENABLED)" != "y" ]; then \
 		vivado $(VIVADO_BATCH_OPT) -source syn.tcl | tee ../$(VIVADO_LOGS)/vivado_syn.log; \
@@ -347,6 +348,17 @@ vivado-syn: vivado-setup
 		else \
 			echo $(SPACES)"ERROR: bistream not found; synthesis failed"; \
 		fi; \
+=======
+    vivado $(VIVADO_BATCH_OPT) -source syn.tcl | tee ../vivado_syn.log;
+	@if [ "$(DPR_ENABLED)" != "y" ]; then \
+        bit=vivado/$(DESIGN).runs/impl_1/$(TOP).bit; \
+        if  test -r $$bit; then \
+            rm -rf $(TOP).bit; \
+            ln -s $$bit; \
+        else \
+            echo $(SPACES)"ERROR: bistream not found; synthesis failed"; \
+        fi; \
+>>>>>>> updated make for DPR
     else \
         $(QUIET_INFO_ALT)echo "starting DPR implementation"; \
         $(QUIET_INFO_ALT)echo "assembling top level static design"; \
@@ -375,12 +387,18 @@ vivado-syn: vivado-setup
         mkdir -p vivado_dpr/Implement; \
         mkdir -p vivado_dpr/Synth; \
         mkdir -p vivado_dpr/Synth/Static; \
-        cp .esp_config vivado_dpr/; \
+        cp ./socgen/esp/.esp_config vivado_dpr/; \
         cp $(ESP_ROOT)/socs/$(BOARD)/vivado/$(DESIGN).runs/synth_1/top_dpr.dcp vivado_dpr/Synth/Static/top_synth.dcp; \
         $(QUIET_INFO_ALT)echo "launching setup script for Vivado DPR flow";  \
         sh $(ESP_ROOT)/socs/common/process_dpr.sh $(ESP_ROOT) $(BOARD) $(DEVICE) DPR;  \
         cd vivado_dpr; \
         vivado $(VIVADO_BATCH_OPT) -source ooc_syn.tcl | tee ../vivado_syn_dpr.log; \
+        cd ../; \
+		sh $(ESP_ROOT)/socs/common/process_dpr.sh $(ESP_ROOT) $(BOARD) $(DEVICE) IMPL_DPR;  \
+        cd vivado_dpr; \
+        vivado $(VIVADO_BATCH_OPT) -source impl.tcl | tee ../vivado_syn_dpr.log; \
+		cd ../ ; \
+		cp res_reqs.csv vivado_dpri/ ; \
     fi;
 
 vivado-syn-dpr: DPR_ENABLED = y
@@ -394,10 +412,16 @@ vivado-syn-dpr-acc: vivado/srcs.tcl sldgen
     else \
         $(QUIET_INFO)echo "starting DPR flow"; \
         sh $(ESP_ROOT)/socs/common/process_dpr.sh $(ESP_ROOT) $(BOARD) $(DEVICE) ACC;  \
-        cp .esp_config vivado_dpr/; \
+        cp ./socgen/esp/.esp_config vivado_dpr/; \
         cd vivado_dpr; \
         vivado $(VIVADO_BATCH_OPT) -source ooc_syn.tcl | tee ../vivado_syn_dpr.log; \
-        cp Bitstreams/top.bit ../vivado/$(DESIGN).runs/impl_1/top.bit; \
+        cd ../ ; \
+		sh $(ESP_ROOT)/socs/common/process_dpr.sh $(ESP_ROOT) $(BOARD) $(DEVICE) IMPL_ACC;  \
+        cd vivado_dpr; \
+        vivado $(VIVADO_BATCH_OPT) -source impl.tcl | tee ../vivado_impl_dpr.log; \
+		cp Bitstreams/top.bit ../vivado/$(DESIGN).runs/impl_1/top.bit; \
+        cd ../ ; \
+		cp res_reqs.csv vivado_dpri/ ; \
     fi;
 
 vivado-syn-emu: vivado-setup-emu
