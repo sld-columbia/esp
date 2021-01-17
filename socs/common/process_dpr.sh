@@ -5,7 +5,7 @@
 
 #variables related to srcs of accelerators
 tile_acc="$1/socs/$2/socketgen/tile_acc.vhd"
-dpr_srcs="$1/socs/$2/socket/dpr_srcs"
+dpr_srcs="$1/socs/$2/socketgen/dpr_srcs"
 dpr_bbox="$dpr_srcs/tile_acc_bbox.vhd"
 original_src="$1/socs/$2/vivado/srcs.tcl"
 temp_srcs="/tmp/temp_srcs.tcl"
@@ -43,7 +43,7 @@ do
                 new_accelerators["$num_acc_tiles,1"]=$(echo ${acc_name} | awk '{print tolower($0)}');
                 ((num_acc_tiles++));
             fi
-            #echo "$tile_token $tile_index $tile_type $acc_name $1 $2 $3 ";
+#            echo "$tile_token $tile_index $tile_type $acc_name $1 $2 $3 ";
         fi
     done
 done < $esp_config
@@ -73,7 +73,7 @@ do
                 old_accelerators["$num_old_acc_tiles,1"]=$(echo ${acc_name} | awk '{print tolower($0)}');
                 ((num_old_acc_tiles++));
             fi
-#            echo $tile_token $tile_index $tile_type $acc_name $1 $2 $3;
+ #           echo $tile_token $tile_index $tile_type $acc_name $1 $2 $3;
         fi
     done
 done < $esp_config_old
@@ -85,7 +85,7 @@ done < $esp_config_old
 function diff_accelerators() {
 for ((i=0; i<$num_acc_tiles; i++))
 do
-    if [ ${new_accelerators[$i,1]} != ${old_accelerators[$i,1]} ]; then
+    if [ "${new_accelerators[$i,1]}" != "${old_accelerators[$i,1]}" ]; then
         modified_accelerators[$num_modified_acc_tiles,0]=${new_accelerators[$i,0]};
         modified_accelerators[$num_modified_acc_tiles,1]=${new_accelerators[$i,1]};
         ((num_modified_acc_tiles++));
@@ -93,7 +93,7 @@ do
        
 done 
 
-    echo -e "\t DPR: number modified tiles is equal to $num_modified_acc_tiles "
+    echo -e "\t DPR: number of modified tiles is equal to $num_modified_acc_tiles "
 }
 
 #This function initializes the specific accelerator tiles from the template tile_acc.vhd
@@ -192,7 +192,7 @@ done
 #floorplanner needs to be replaced with a more agressive floorplanner customized for each
 #FPGA.
 function gen_fplan() {
-fplan_pblock="$1/constraints/$2/pblocks_dpr.xdc";
+fplan_pblock="$1/constraints/$2/pblocks.xdc";
 
 slice_start_y_default=0;
 bram36_start_y_default=0;
@@ -429,7 +429,7 @@ if [[ "$4" == "DPR" ]]; then
         echo "set_attribute module ${new_accelerators[$i,1]} synth  \${run.rmSynth}" >> $dpr_syn_tcl;
     done
 elif [[ "$4" == "ACC" ]] && [[ "$num_modified_acc_tiles" != "0" ]]; then
-    for ((i=0; i<$num_acc_tiles; i++))
+    for ((i=0, j=0; i<$num_acc_tiles; i++))
     do
         acc_dir="$dpr_srcs/tile_${new_accelerators[$i,0]}_acc";
         #acc_dir="$dpr_srcs/accelerator_$i";
@@ -437,8 +437,9 @@ elif [[ "$4" == "ACC" ]] && [[ "$num_modified_acc_tiles" != "0" ]]; then
         echo "add_module ${new_accelerators[$i,1]} " >> $dpr_syn_tcl;
         echo "set_attribute module ${new_accelerators[$i,1]} moduleName tile_acc" >> $dpr_syn_tcl;
         echo "set_attribute module ${new_accelerators[$i,1]} prj $prj_src" >> $dpr_syn_tcl;
-        if [[ ${modified_accelerators[$i,0]} == ${new_accelerators[$i,0]} ]]; then
+        if [[ ${modified_accelerators[$j,0]} == ${new_accelerators[$i,0]} ]]; then
             echo "set_attribute module ${new_accelerators[$i,1]} synth  \${run.rmSynth}" >> $dpr_syn_tcl;
+            ((j++));
         fi;
     done
 fi;
@@ -561,11 +562,11 @@ echo "add_implementation top_dpr " >> $dpr_syn_tcl;
 echo "set_attribute impl top_dpr top        \$top" >> $dpr_syn_tcl;
 echo "set_attribute impl top_dpr pr.impl      1" >> $dpr_syn_tcl;
 if [[ "$2" == "xilinx-vcu118-xcvu9p" ]]; then
-    echo "set_attribute impl top_dpr implXDC     [list [ list $1/constraints/$2/pblocks_dpr.xdc $1/constraints/$2/$2.xdc $1/constraints/$2/$2-eth-constraints.xdc $1/constraints/$2/$2-eth-pins.xdc  $1/socs/$2/vivado/esp-$2.srcs/sources_1/ip/mig/par/mig.xdc $1/constraints/$2/$2-mig-pins.xdc $1/socs/$2/vivado/esp-$2.srcs/sources_1/ip/sgmii/synth/sgmii.xdc ] ]" >> $dpr_syn_tcl;
+    echo "set_attribute impl top_dpr implXDC     [list [ list $1/constraints/$2/pblocks.xdc $1/constraints/$2/$2.xdc $1/constraints/$2/$2-eth-constraints.xdc $1/constraints/$2/$2-eth-pins.xdc  $1/socs/$2/vivado/esp-$2.srcs/sources_1/ip/mig/par/mig.xdc $1/constraints/$2/$2-mig-pins.xdc $1/socs/$2/vivado/esp-$2.srcs/sources_1/ip/sgmii/synth/sgmii.xdc ] ]" >> $dpr_syn_tcl;
 elif [[ $2 == "xilinx-vcu128-xcvu37p" ]]; then
-echo "set_attribute impl top_dpr implXDC     [list [ list $1/constraints/$2/pblocks_dpr.xdc $1/constraints/$2/$2.xdc $1/constraints/$2/$2-eth-constraints.xdc $1/constraints/$2/$2-eth-pins.xdc  $1/socs/$2/vivado/esp-$2.srcs/sources_1/ip/mig_clamshell/par/mig_clamshell.xdc $1/constraints/$2/$2-mig-pins.xdc $1/socs/$2/vivado/esp-$2.srcs/sources_1/ip/sgmii_vcu128/synth/sgmii_vcu128.xdc ] ]" >> $dpr_syn_tcl;
+echo "set_attribute impl top_dpr implXDC     [list [ list $1/constraints/$2/pblocks.xdc $1/constraints/$2/$2.xdc $1/constraints/$2/$2-eth-constraints.xdc $1/constraints/$2/$2-eth-pins.xdc  $1/socs/$2/vivado/esp-$2.srcs/sources_1/ip/mig_clamshell/par/mig_clamshell.xdc $1/constraints/$2/$2-mig-pins.xdc $1/socs/$2/vivado/esp-$2.srcs/sources_1/ip/sgmii_vcu128/synth/sgmii_vcu128.xdc ] ]" >> $dpr_syn_tcl;
 else    
-    echo "set_attribute impl top_dpr implXDC     [list [ list $1/constraints/$2/pblocks_dpr.xdc $1/constraints/$2/$2.xdc $1/constraints/$2/$2-eth-constraints.xdc $1/constraints/$2/$2-eth-pins.xdc  $1/socs/$2/vivado/esp-$2.srcs/sources_1/ip/mig/mig/user_design/constraints/mig.xdc $1/socs/$2/vivado/esp-$2.srcs/sources_1/ip/sgmii/synth/sgmii.xdc ] ]" >> $dpr_syn_tcl;
+    echo "set_attribute impl top_dpr implXDC     [list [ list $1/constraints/$2/pblocks.xdc $1/constraints/$2/$2.xdc $1/constraints/$2/$2-eth-constraints.xdc $1/constraints/$2/$2-eth-pins.xdc  $1/socs/$2/vivado/esp-$2.srcs/sources_1/ip/mig/mig/user_design/constraints/mig.xdc $1/socs/$2/vivado/esp-$2.srcs/sources_1/ip/sgmii/synth/sgmii.xdc ] ]" >> $dpr_syn_tcl;
 fi;
 echo "set_property SEVERITY {Warning} [get_drc_checks HDPR-41]" >> $dpr_syn_tcl;
 
@@ -584,7 +585,7 @@ elif [[ "$4" == "IMPL_ACC" ]] && [[ "$num_modified_acc_tiles" != "0" ]]; then
         if  [[ $regenerate_fplan == 1 ]]; then
             echo "[list ${new_accelerators[$i,1]}  esp_1/tiles_gen[${new_accelerators[$i,0]}].accelerator_tile.tile_acc_i implement ] \\" >>  $dpr_syn_tcl;
 
-        elif [[ ${modified_accelerators[$i,0]} == ${new_accelerators[$i,0]} ]]; then
+        elif [[ ${modified_accelerators[$i,0]} == ${new_accelerators[$j,0]} ]]; then
             echo "[list ${modified_accelerators[$i,1]}  esp_1/tiles_gen[${modified_accelerators[$i,0]}].accelerator_tile.tile_acc_i implement ] \\" >>  $dpr_syn_tcl;
             ((i++));
         else
