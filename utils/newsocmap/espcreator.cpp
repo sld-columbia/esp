@@ -461,70 +461,70 @@ void espcreator::addressMapChanged()
 	ui->pushButton_pow_confirm->setEnabled(false);
 }
 
-void espcreator::on_pushButton_cfg_clicked()
-{
-	std::vector<QString> error_msg;
-	QString ok_bullet = get_ok_bullet();
-	QString err_bullet = get_err_bullet();
-
-	if (cpu_arch == "leon3") {
-		if (!check_present(TILE_CPU, CFG_LEON3_NCPU_MAX)) {
-			QString error = err_bullet;
-			error.append(ECPUCOUNT(1)"</span><br>");
-			error_msg.push_back(error);
-		}
-		if (!check_present(TILE_MEMDBG, 1)) {
-			QString error = err_bullet;
-			error.append(EMEMDBGCOUNT(1)"</span><br>");
-			error_msg.push_back(error);
-		}
-		if (!check_present(TILE_MISC, 1)) {
-			QString error = err_bullet;
-			error.append(EMISCCOUNT(1)"</span><br>");
-			error_msg.push_back(error);
-		}
-	}
-
-	if (!check_clock_domains()) {
-		QString error = err_bullet;
-		error.append(ECLKDOMAINS"</span><br>");
-		error_msg.push_back(error);
-	}
-
-	FOREACH_TILE(y, x)
-		if (frame_tile[y][x]->type == TILE_ACC && frame_tile[y][x]->impl == "") {
-			QString error = err_bullet;
-			std::string s = EACCNOIMPL + (" " + to_string(frame_tile[y][x]->id)) + "</span><br>";
-			error.append(s.c_str());
-			error_msg.push_back(error);
-		}
-
-	if (error_msg.size() == 0) {
-		ok_bullet.append("SoC configuration is valid.</span><br>");
-		/* ui->textBrowser_msg->setHtml(ok_bullet); */
-		/* ui->pushButton_gen->setEnabled(false); */
-        ui->pushButton_gen->setEnabled(true);
-		ui->pushButton_pow_confirm->setEnabled(false);
-		ui->tab_addr->setEnabled(true);
-		ui->pushButton_addr_reset->setEnabled(true);
-		ui->pushButton_addr_validate->setEnabled(true);
-		update_address_map();
-		ui->tab_pow->setEnabled(true);
-		update_power_info();
-		ui->tabWidget->setCurrentIndex(ui->tabWidget->indexOf(ui->tab_addr));
-		ui->tabWidget->setCurrentWidget(ui->tab_addr);
-	} else {
-		QString err = "";
-		for (int i = 0; i < (int) error_msg.size(); i++)
-			err.append(error_msg[i]);
-		/* ui->textBrowser_msg->setHtml(err); */
-		ui->pushButton_gen->setEnabled(true);
-		/* ui->pushButton_gen->setEnabled(true); */
-		ui->pushButton_pow_confirm->setEnabled(false);
-		ui->tab_addr->setEnabled(false);
-		ui->tab_pow->setEnabled(false);
-	}
-}
+// void espcreator::on_pushButton_cfg_clicked()
+// {
+// 	std::vector<QString> error_msg;
+// 	QString ok_bullet = get_ok_bullet();
+// 	QString err_bullet = get_err_bullet();
+// 
+// 	if (cpu_arch == "leon3") {
+// 		if (!check_present(TILE_CPU, CFG_LEON3_NCPU_MAX)) {
+// 			QString error = err_bullet;
+// 			error.append(ECPUCOUNT(1)"</span><br>");
+// 			error_msg.push_back(error);
+// 		}
+// 		if (!check_present(TILE_MEMDBG, 1)) {
+// 			QString error = err_bullet;
+// 			error.append(EMEMDBGCOUNT(1)"</span><br>");
+// 			error_msg.push_back(error);
+// 		}
+// 		if (!check_present(TILE_MISC, 1)) {
+// 			QString error = err_bullet;
+// 			error.append(EMISCCOUNT(1)"</span><br>");
+// 			error_msg.push_back(error);
+// 		}
+// 	}
+// 
+// 	if (!check_clock_domains()) {
+// 		QString error = err_bullet;
+// 		error.append(ECLKDOMAINS"</span><br>");
+// 		error_msg.push_back(error);
+// 	}
+// 
+// 	FOREACH_TILE(y, x)
+// 		if (frame_tile[y][x]->type == TILE_ACC && frame_tile[y][x]->impl == "") {
+// 			QString error = err_bullet;
+// 			std::string s = EACCNOIMPL + (" " + to_string(frame_tile[y][x]->id)) + "</span><br>";
+// 			error.append(s.c_str());
+// 			error_msg.push_back(error);
+// 		}
+// 
+// 	if (error_msg.size() == 0) {
+// 		ok_bullet.append("SoC configuration is valid.</span><br>");
+// 		/* ui->textBrowser_msg->setHtml(ok_bullet); */
+// 		/* ui->pushButton_gen->setEnabled(false); */
+//         ui->pushButton_gen->setEnabled(true);
+// 		ui->pushButton_pow_confirm->setEnabled(false);
+// 		ui->tab_addr->setEnabled(true);
+// 		ui->pushButton_addr_reset->setEnabled(true);
+// 		ui->pushButton_addr_validate->setEnabled(true);
+// 		update_address_map();
+// 		ui->tab_pow->setEnabled(true);
+// 		update_power_info();
+// 		ui->tabWidget->setCurrentIndex(ui->tabWidget->indexOf(ui->tab_addr));
+// 		ui->tabWidget->setCurrentWidget(ui->tab_addr);
+// 	} else {
+// 		QString err = "";
+// 		for (int i = 0; i < (int) error_msg.size(); i++)
+// 			err.append(error_msg[i]);
+// 		/* ui->textBrowser_msg->setHtml(err); */
+// 		ui->pushButton_gen->setEnabled(true);
+// 		/* ui->pushButton_gen->setEnabled(true); */
+// 		ui->pushButton_pow_confirm->setEnabled(false);
+// 		ui->tab_addr->setEnabled(false);
+// 		ui->tab_pow->setEnabled(false);
+// 	}
+// }
 
 void espcreator::on_pushButton_addr_reset_clicked()
 {
