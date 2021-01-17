@@ -336,20 +336,8 @@ vivado-gui-emu: vivado-setup-emu
 vivado-syn: vivado-setup
 	$(QUIET_INFO)echo "launching Vivado implementation script"
 	@cd vivado; \
-<<<<<<< HEAD
-	vivado $(VIVADO_BATCH_OPT) -source syn.tcl | tee ../vivado_syn.log;
-	@if [ "$(DPR_ENABLED)" != "y" ]; then \
-		vivado $(VIVADO_BATCH_OPT) -source syn.tcl | tee ../$(VIVADO_LOGS)/vivado_syn.log; \
-		cd ../;
-		@bit=vivado/$(DESIGN).runs/impl_1/$(TOP).bit; \
-		if test -r $$bit; then \
-			rm -rf $(TOP).bit; \
-			ln -s $$bit; \
-		else \
-			echo $(SPACES)"ERROR: bistream not found; synthesis failed"; \
-		fi; \
-=======
-    vivado $(VIVADO_BATCH_OPT) -source syn.tcl | tee ../vivado_syn.log;
+	vivado $(VIVADO_BATCH_OPT) -source syn.tcl | tee ../$(VIVADO_LOGS)/vivado_syn.log; \
+	cd ../;
 	@if [ "$(DPR_ENABLED)" != "y" ]; then \
         bit=vivado/$(DESIGN).runs/impl_1/$(TOP).bit; \
         if  test -r $$bit; then \
@@ -358,7 +346,6 @@ vivado-syn: vivado-setup
         else \
             echo $(SPACES)"ERROR: bistream not found; synthesis failed"; \
         fi; \
->>>>>>> updated make for DPR
     else \
         $(QUIET_INFO_ALT)echo "starting DPR implementation"; \
         $(QUIET_INFO_ALT)echo "assembling top level static design"; \
@@ -412,7 +399,6 @@ vivado-syn-dpr-acc: vivado/srcs.tcl sldgen
     else \
         $(QUIET_INFO)echo "starting DPR flow"; \
         sh $(ESP_ROOT)/socs/common/process_dpr.sh $(ESP_ROOT) $(BOARD) $(DEVICE) ACC;  \
-        cp ./socgen/esp/.esp_config vivado_dpr/; \
         cd vivado_dpr; \
         vivado $(VIVADO_BATCH_OPT) -source ooc_syn.tcl | tee ../vivado_syn_dpr.log; \
         cd ../ ; \
@@ -421,7 +407,8 @@ vivado-syn-dpr-acc: vivado/srcs.tcl sldgen
         vivado $(VIVADO_BATCH_OPT) -source impl.tcl | tee ../vivado_impl_dpr.log; \
 		cp Bitstreams/top.bit ../vivado/$(DESIGN).runs/impl_1/top.bit; \
         cd ../ ; \
-		cp res_reqs.csv vivado_dpri/ ; \
+        cp ./socgen/esp/.esp_config vivado_dpr/; \
+		cp res_reqs.csv vivado_dpr/ ; \
     fi;
 
 vivado-syn-emu: vivado-setup-emu
