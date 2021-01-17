@@ -294,7 +294,7 @@ vivado-syn: vivado-setup
 vivado-syn-dpr: DPR_ENABLED = y
 vivado-syn-dpr: vivado-syn
 
-vivado-syn-dpr-acc: vivado/srcs.tcl sldgen
+vivado-syn-dpr-acc: vivado/srcs.tcl 
 	$(QUIET_INFO)echo "launching setup script for Vivado DPR flow"  
 	@if ! test -d vivado_dpr; then \
         $(QUIET_INFO_ALT)echo "vivado_dpr directory not found"; \
@@ -302,7 +302,6 @@ vivado-syn-dpr-acc: vivado/srcs.tcl sldgen
     else \
         $(QUIET_INFO)echo "starting DPR flow"; \
         sh $(ESP_ROOT)/socs/common/process_dpr.sh $(ESP_ROOT) $(BOARD) $(DEVICE) ACC;  \
-        cp ./socgen/esp/.esp_config vivado_dpr/; \
         cd vivado_dpr; \
         vivado $(VIVADO_BATCH_OPT) -source ooc_syn.tcl | tee ../vivado_syn_dpr.log; \
         cd ../ ; \
@@ -311,7 +310,8 @@ vivado-syn-dpr-acc: vivado/srcs.tcl sldgen
         vivado $(VIVADO_BATCH_OPT) -source impl.tcl | tee ../vivado_impl_dpr.log; \
 		cp Bitstreams/top.bit ../vivado/$(DESIGN).runs/impl_1/top.bit; \
         cd ../ ; \
-		cp res_reqs.csv vivado_dpri/ ; \
+        cp ./socgen/esp/.esp_config vivado_dpr/; \
+		cp res_reqs.csv vivado_dpr/ ; \
     fi;
 
 
