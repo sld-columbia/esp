@@ -205,6 +205,16 @@ socmap.vhd: .esp_config grlib_config.vhd top.vhd
 	@echo ""
 	@echo "Generating ESP configuration..."
 	@python3 $(ESP_ROOT)/utils/socmap/esp_creator_batch.py $(NOC_WIDTH) $(TECHLIB) $(LINUX_MAC)
+	@python3 $(ESP_ROOT)/utils/socmap/generate_socmap_vhd.py $(NOC_WIDTH) $(TECHLIB) $(LINUX_MAC)
+	@python3 $(ESP_ROOT)/utils/socmap/generate_power_h.py $(NOC_WIDTH) $(TECHLIB) $(LINUX_MAC)
+	@python3 $(ESP_ROOT)/utils/socmap/generate_mmi64_regs_h.py $(NOC_WIDTH) $(TECHLIB) $(LINUX_MAC)
+	@python3 $(ESP_ROOT)/utils/socmap/generate_cache_config_svh.py $(NOC_WIDTH) $(TECHLIB) $(LINUX_MAC)
+	@python3 $(ESP_ROOT)/utils/socmap/generate_esp_global_vhd.py $(NOC_WIDTH) $(TECHLIB) $(LINUX_MAC)
+	@python3 $(ESP_ROOT)/utils/socmap/generate_mem_tile_floorplanning_xdc.py $(NOC_WIDTH) $(TECHLIB) $(LINUX_MAC)
+	@python3 $(ESP_ROOT)/utils/socmap/generate_ariane_dts.py $(NOC_WIDTH) $(TECHLIB) $(LINUX_MAC)
+
+
+
 
 socmap.h: socmap.vhd
 
@@ -217,6 +227,105 @@ esplink: socmap.h $(ESPLINK_HDRS) $(ESPLINK_SRCS)
 		$(ESPLINK_SRCS) -o $@
 
 esp-config: socmap.vhd
+
+###########################
+
+NEWSOCMAP_DEPS  = $(ESP_ROOT)/utils/newsocmap/main.cpp
+NEWSOCMAP_DEPS += $(ESP_ROOT)/utils/newsocmap/tile.cpp
+NEWSOCMAP_DEPS += $(ESP_ROOT)/utils/newsocmap/tile.h
+NEWSOCMAP_DEPS += $(ESP_ROOT)/utils/newsocmap/espcreator.ui
+NEWSOCMAP_DEPS += $(ESP_ROOT)/utils/newsocmap/espcreator.h
+NEWSOCMAP_DEPS += $(ESP_ROOT)/utils/newsocmap/address_map.h
+NEWSOCMAP_DEPS += $(ESP_ROOT)/utils/newsocmap/power_info.h
+NEWSOCMAP_DEPS += $(ESP_ROOT)/utils/newsocmap/socmap_utils.h
+NEWSOCMAP_DEPS += $(ESP_ROOT)/utils/newsocmap/espcreator.cpp
+NEWSOCMAP_DEPS += $(ESP_ROOT)/utils/newsocmap/socmap_utils.cpp
+NEWSOCMAP_DEPS += $(ESP_ROOT)/utils/newsocmap/address_map.cpp
+NEWSOCMAP_DEPS += $(ESP_ROOT)/utils/newsocmap/power_info.cpp
+
+esp_constants.h: $(ESP_ROOT)/utils/esp_constants.inc .grlib_config
+	$(QUIET_BUILD)
+	@echo "#ifndef ESP_CONSTANTS_H" > $@
+	@echo "" >> $@
+	@echo "#define ESP_CONSTANTS_H" >> $@
+	@cat $< | sed 's/#/\/\//g' | sed 's/\./#define /g' | sed 's/=/ /g' | sed 's/\(#define.*\)$$/\1ULL/g' >> $@
+	@echo "" >> $@
+	@echo "// GRLIB" >> $@
+	@cat .grlib_config | grep 'CONFIG_SVGA_ENABLE' | grep -q -v '#'; \
+	if [ $$? -eq 0 ]; then \
+	    echo '#define CFG_GRLIB_SVGA_ENABLE 1' >> $@; \
+	fi;
+	@cat .grlib_config | grep 'CONFIG_GRETH_ENABLE' | grep -q -v '#'; \
+	if [ $$? -eq 0 ]; then \
+	    echo '#define CFG_GRLIB_GRETH_ENABLE 1' >> $@; \
+	fi;
+	@cat .grlib_config | grep 'CONFIG_DSU_ENABLE' | grep -q -v '#'; \
+	if [ $$? -eq 0 ]; then \
+	    echo '#define CFG_GRLIB_DSU_ENABLE 1' >> $@; \
+	fi;
+	@cat .grlib_config | grep 'CONFIG_DSU_ETH' | grep -q -v '#'; \
+	if [ $$? -eq 0 ]; then \
+	    echo '#define CFG_GRLIB_DSU_ETH 1' >> $@; \
+	fi;
+	@cat .grlib_config | grep 'CONFIG_DSU_JTAG' | grep -q -v '#'; \
+	if [ $$? -eq 0 ]; then \
+	    echo '#define CFG_GRLIB_DSU_JTAG 1' >> $@; \
+	fi;
+	@cat .grlib_config | grep 'CONFIG_UART1_ENABLE' | grep -q -v '#'; \
+	if [ $$? -eq 0 ]; then \
+	    echo '#define CFG_GRLIB_UART_ENABLE 1' >> $@; \
+	fi;
+	@cat .grlib_config | grep 'CONFIG_GPT_ENABLE' | grep -q -v '#'; \
+	if [ $$? -eq 0 ]; then \
+	    echo '#define CFG_GRLIB_GPT_ENABLE 1' >> $@; \
+	fi;
+	@cat .grlib_config | grep 'CONFIG_IRQ3_ENABLE' | grep -q -v '#'; \
+	if [ $$? -eq 0 ]; then \
+	    echo '#define CFG_GRLIB_IRQ3_ENABLE 1' >> $@; \
+	fi;
+	@echo "" >> $@
+	@echo "#endif /* ESP_CONSTANTS_H */" >> $@
+
+#POWER_ESTIMATION_RTPS=$(shell find $(ESP_ROOT)/tech/$(POW_TECHLIB)/acc -name "power*.rpt")
+
+#esp_power_db.cpp: $(ESP_ROOT)/utils/scripts/update_power_db.py $(POWER_ESTIMATION_RTPS)
+#	$(QUIET_BUILD) $< $(ESP_ROOT)/tech/$(POW_TECHLIB) > $@
+
+
+newsocmap.mk: $(ESP_ROOT)/utils/newsocmap/socmap.pro
+	DESIGN_PATH=$(DESIGN_PATH) 			\
+	TECH_PATH=$(ESP_ROOT)/tech/$(TECHLIB) 		\
+	POW_TECH_PATH=$(ESP_ROOT)/tech/$(POW_TECHLIB) 	\
+	TECH=$(TECHLIB) 				\
+	BOARD=$(BOARD) 					\
+	CPU_ARCH=$(CPU_ARCH) 				\
+	DMA_WIDTH=$(NOC_WIDTH)				\
+	qmake -o $@ $<
+
+#esp_power_db.cpp
+newsocmap: newsocmap.mk $(NEWSOCMAP_DEPS) esp_constants.h
+	$(QUIET_MAKE) make --quiet -f $<
+
+newsocmap-run: newsocmap
+	$(QUIET_RUN)./$< $(NOC_WIDTH) $(TECHLIB) $(LINUX_MAC)
+
+newsocmap-clean:
+	$(QUIET_CLEAN) $(RM) 		\
+		espcreator.o		\
+		main.o			\
+		tile.o			\
+		address_map.o		\
+		socmap_utils.o		\
+		newsocmap.mk		\
+		moc_*			\
+		ui_espcreator.h
+
+newsocmap-distclean: newsocmap-clean
+	$(QUIET_CLEAN) $(RM) newsocmap
+
+.PHONY: newsocmap-clean newsocmap-distclean newsocmap-run
+
+###########################
 
 esp-xconfig: grlib_config.vhd
 	@echo ""
