@@ -47,6 +47,7 @@ flora: CFLAGS += -DRUN_FLORA
 flora: build
 
 build:
+	mkdir -p bin	
 	$(CC) -o bin/$(BIN) $(CFLAGS) $(SOURCES_SHARED) $(SOURCES_MILP) $(SOURCES) $(LDFLAGS)
 
 .PHONY: clean
