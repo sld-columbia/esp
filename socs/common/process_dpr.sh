@@ -583,7 +583,7 @@ elif [[ "$4" == "IMPL_ACC" ]] && [[ "$num_modified_acc_tiles" != "0" ]]; then
     for ((i=0, j=0; j<$num_acc_tiles; j++))
     do
         if  [[ $regenerate_fplan == 1 ]]; then
-            echo "[list ${new_accelerators[$i,1]}  esp_1/tiles_gen[${new_accelerators[$i,0]}].accelerator_tile.tile_acc_i implement ] \\" >>  $dpr_syn_tcl;
+            echo "[list ${new_accelerators[$j,1]}  esp_1/tiles_gen[${new_accelerators[$j,0]}].accelerator_tile.tile_acc_i implement ] \\" >>  $dpr_syn_tcl;
 
         elif [[ ${modified_accelerators[$i,0]} == ${new_accelerators[$j,0]} ]]; then
             echo "[list ${modified_accelerators[$i,1]}  esp_1/tiles_gen[${modified_accelerators[$i,0]}].accelerator_tile.tile_acc_i implement ] \\" >>  $dpr_syn_tcl;
