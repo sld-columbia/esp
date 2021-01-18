@@ -512,6 +512,47 @@ int solve_milp_vc707(param_from_solver *to_sim)
                   wasted[i][k] = model.addVar(0.0,  GRB_INFINITY, 0.0, GRB_INTEGER);
           }
 
+        /**********************************************************************
+          name: centroid
+          type: integer
+          func: centroid[i][k] represents the centroid of a slot i.
+                centroid[i]0] is the centroid on the x axis while
+                centroid [i][1] is the centroid on the y axis
+         ***********************************************************************/
+
+         GRBVar2DArray centroid (num_slots);
+         for(i = 0; i < num_slots; i++) {
+             GRBVarArray each_slot(2);
+             centroid[i] = each_slot;
+
+             for(k = 0; k < 2; k++)
+                 centroid[i][k] = model.addVar(0.0,  GRB_INFINITY, 0.0, GRB_CONTINUOUS);
+         }
+
+         /**********************************************************************
+           name: dist
+           type: integer
+           func: this variable represents the distance between the centroids of
+                 two regions. dist[i][k][0] represents the distance on the x axis
+                 between slots i and slot k while dist[i][k][1] represents the
+                 distance on the y axis between slots i and k.
+          ***********************************************************************/
+         GRBVar3DArray dist (num_slots);
+         for(j = 0; j < num_slots; j++) {
+             GRBVar2DArray each_slot(num_slots);
+
+             dist[j] = each_slot;
+             for(i = 0; i < num_slots; i++) {
+                 GRBVarArray each_slot_1(2);
+
+                 dist[j][i] = each_slot_1;
+                 for(k = 0; k < 2; k++)
+                     dist[j][i][k] = model.addVar(0, GRB_INFINITY, 0.0, GRB_CONTINUOUS);
+             }
+         }
+
+
+
        model.update();
 
         /********************************************************************
@@ -1476,12 +1517,39 @@ int solve_milp_vc707(param_from_solver *to_sim)
         unsigned long wl_max = 0;
         
         for(i = 0; i < num_slots; i++) {
+            model.addConstr(centroid[i][0] == x[i][0] + w[i] / 2, "84");
+            model.addConstr(centroid[i][1] == y[i] * 10 + h[i] * 10 / 2, "86");
+        }    
+
+       for(i =0; i < num_slots; i++){
+            for(j = 0; j < num_slots; j++) {
+                if(i >= j ) {
+                    continue;
+                }
+                model.addConstr(dist[i][j][0] >= (centroid[i][0] - centroid[j][0]), "87");
+                model.addConstr(dist[i][j][0] >= (centroid[j][0] - centroid[i][0]), "88");
+                model.addConstr(dist[i][j][1] >= (centroid[i][1] - centroid[j][1]), "89");
+                model.addConstr(dist[i][j][1] >= (centroid[j][1] - centroid[i][1]), "90");
+            }
+        }
+
+        for(i = 0; i < num_slots; i++) {
+            for(j = 0; j < num_slots; j++) {
+                if(i >= j)
+                    continue;
+                obj_x += dist[i][j][0];
+                obj_y += dist[i][j][1];
+            }
+    }
+        
+        for(i = 0; i < num_slots; i++) {
             obj_wasted_clb  += wasted[i][0];
             obj_wasted_bram += wasted[i][1];
             obj_wasted_dsp  += wasted[i][2];
         }
         
-        // model.setObjective((obj_x + obj_y ) / wl_max, GRB_MINIMIZE);
+
+         model.setObjective((obj_x), GRB_MINIMIZE);
         //model.setObjective(obj_wasted_clb,  GRB_MINIMIZE);
         //model.setObjective(obj_wasted_bram, GRB_MINIMIZE);
          //model.setObjective(0.1 * obj_wasted_dsp,  GRB_MINIMIZE);
