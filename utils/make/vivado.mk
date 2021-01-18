@@ -288,7 +288,7 @@ vivado-syn: vivado-setup
         cd vivado_dpr; \
         vivado $(VIVADO_BATCH_OPT) -source impl.tcl | tee ../vivado_syn_dpr.log; \
 		cd ../ ; \
-		cp res_reqs.csv vivado_dpri/ ; \
+		cp res_reqs.csv vivado_dpr/ ; \
     fi;
 
 vivado-syn-dpr: DPR_ENABLED = y
@@ -308,7 +308,6 @@ vivado-syn-dpr-acc: vivado/srcs.tcl
 		sh $(ESP_ROOT)/socs/common/process_dpr.sh $(ESP_ROOT) $(BOARD) $(DEVICE) IMPL_ACC;  \
         cd vivado_dpr; \
         vivado $(VIVADO_BATCH_OPT) -source impl.tcl | tee ../vivado_impl_dpr.log; \
-		cp Bitstreams/top.bit ../vivado/$(DESIGN).runs/impl_1/top.bit; \
         cd ../ ; \
         cp ./socgen/esp/.esp_config vivado_dpr/; \
 		cp res_reqs.csv vivado_dpr/ ; \
