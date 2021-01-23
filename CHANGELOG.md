@@ -63,7 +63,7 @@ adheres to [Calendar Versioning](https://calver.org/) with format
 		- Accelerator (see accelerator design flow options above)
 		- Accelerator socket
 			- Accelerator configuration registers (default registers + user-defined registers)
-			- Miss-free accelerator TLB for low overhead virtual memory support
+			- Miss-free accelerator TLB for low-overhead virtual memory support
 			- Accelerator DMA engine
 			- Private cache (optional)
 				- Same as the L2 private cache in the processor tile
@@ -80,14 +80,14 @@ adheres to [Calendar Versioning](https://calver.org/) with format
 				- Memory-mapped IO requests bus options: AXI-Lite, APB
 		- Support for SoCs with multiple third-party accelerator tiles
 	- Memory tile
-		- Last-level cache slice (optional)
+		- Last-level cache (LLC) slice (optional)
 			- NoC-based directory-based MESI protocol
 			- Support for coherent DMA and LLC-coherent DMA
 			- Available implementations: [SystemVerilog](https://github.com/sld-columbia/esp-caches/tree/master/llc), [SystemC](https://github.com/sld-columbia/esp-caches/tree/master/systemc/llc)
 		- Memory channel
 			- Optionally include AHB bus and memory controller in the memory tile
 		- Memory simulation model for full-system RTL simulation
-		- Support for all accelerator cache coherence options
+		- Support for all accelerator cache-coherence options
 		- Support for SoCs with multiple memory tiles
 			- Up to 2 memory tiles on proFPGA Virtex7 XC7V2000T FPGA module and up to 4 memory tiles on proFPGA Virtex UltraScale XCVU440 FPGA module
 	- Auxiliary tile

@@ -3,7 +3,7 @@
 This is the list of present and past contributors to the ESP project and
 repository, including co-authors of portions of code from the first commit.
 
-### Core ESP Team Members
+### Core Team Members
 
  - Luca P. Carloni (principal investigator)
  - Kuan-lin Chiu
@@ -15,7 +15,7 @@ repository, including co-authors of portions of code from the first commit.
  - Gabriele Tombesi
  - Joseph Zuckerman
 
-### Former ESP Team Members
+### Former Team Members
 
  - Emilio G. Cota
  - Michele Petracca
