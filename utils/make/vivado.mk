@@ -61,7 +61,7 @@ endif
 	done;
 ### Replace tile with a blackbox if a DPR implementation is chosen
 	@if [ "$(DPR_ENABLED)" == "y" ]; then \
-		$(QUIET_INFO_ALT)echo "generating bbox sources"; \
+		echo $(SPACES)"DPR generating bbox sources"; \
         sh $(ESP_ROOT)/socs/common/process_dpr.sh $(ESP_ROOT) $(BOARD) $(DEVICE) BBOX; \
 	fi;
 
@@ -250,8 +250,8 @@ vivado-syn: vivado-setup
             echo $(SPACES)"ERROR: bistream not found; synthesis failed"; \
         fi; \
     else \
-        $(QUIET_INFO_ALT)echo "starting DPR implementation"; \
-        $(QUIET_INFO_ALT)echo "assembling top level static design"; \
+        echo $(SPACES)"DPR: starting DPR implementation"; \
+        echo $(SPACES)"DPR: assembling top level static design"; \
         $(RM) static_config.tcl; \
         echo "set part $(DEVICE) " >> static_config.tcl; \
         echo "set board $(BOARD) " >> static_config.tcl; \
@@ -267,9 +267,9 @@ vivado-syn: vivado-setup
         echo "write_checkpoint -force $(ESP_ROOT)/socs/$(BOARD)/vivado/$(DESIGN).runs/synth_1/top_dpr.dcp" >> static_config.tcl; \
         echo "close_project" >> static_config.tcl; \
         echo "exit" >> static_config.tcl; \
-        $(QUIET_INFO_ALT)echo "Assembling sgmii and mig into static part"; \
+        echo $(SPACES)"DPR: Assembling sgmii and mig into static part"; \
         vivado $(VIVADO_BATCH_OPT) -source static_config.tcl | tee ../vivado_syn.log; \
-        $(QUIET_INFO_ALT)echo "creating Vivado dpr directory"; \
+        echo $(SPACES)"DPR: creating Vivado dpr directory"; \
         $(RM) vivado_dpr; \
         mkdir -p vivado_dpr; \
         mkdir -p vivado_dpr/Bitstreams; \
@@ -279,7 +279,7 @@ vivado-syn: vivado-setup
         mkdir -p vivado_dpr/Synth/Static; \
         cp ./socgen/esp/.esp_config vivado_dpr/; \
         cp $(ESP_ROOT)/socs/$(BOARD)/vivado/$(DESIGN).runs/synth_1/top_dpr.dcp vivado_dpr/Synth/Static/top_synth.dcp; \
-        $(QUIET_INFO_ALT)echo "launching setup script for Vivado DPR flow";  \
+        echo $(SPACES)"DPR : launching setup script for Vivado DPR flow";  \
         sh $(ESP_ROOT)/socs/common/process_dpr.sh $(ESP_ROOT) $(BOARD) $(DEVICE) DPR;  \
         cd vivado_dpr; \
         vivado $(VIVADO_BATCH_OPT) -source ooc_syn.tcl | tee ../vivado_syn_dpr.log; \
@@ -297,10 +297,10 @@ vivado-syn-dpr: vivado-syn
 vivado-syn-dpr-acc: vivado/srcs.tcl 
 	$(QUIET_INFO)echo "launching setup script for Vivado DPR flow"  
 	@if ! test -d vivado_dpr; then \
-        $(QUIET_INFO_ALT)echo "vivado_dpr directory not found"; \
-        $(QUIET_INFO_ALT)echo "you should run vivado-syn-dpr first"; \
+        echo $(SPACES)"DPR: vivado_dpr directory not found"; \
+        echo $(SPACES)"DPR: you should run vivado-syn-dpr first"; \
     else \
-        $(QUIET_INFO)echo "starting DPR flow"; \
+        echo $(SPACES)"INFO starting DPR flow"; \
         sh $(ESP_ROOT)/socs/common/process_dpr.sh $(ESP_ROOT) $(BOARD) $(DEVICE) ACC;  \
         cd vivado_dpr; \
         vivado $(VIVADO_BATCH_OPT) -source ooc_syn.tcl | tee ../vivado_syn_dpr.log; \
@@ -338,7 +338,7 @@ vivado-prog-fpga: vivado/program.tcl
     if [ "$(DPR_ENABLED)" != "y" ]; then \
         bit=$(DESIGN).runs/impl_1/$(TOP).bit; \
     else \
-        $(QUIET_INFO_ALT) echo "copying partial bitstream";\
+        echo $(SPACES)"DPR: copying partial bitstream";\
         mkdir -p $(ESP_ROOT)/socs/$(BOARD)/vivado/$(DESIGN).runs/impl_1; \
         cp $(ESP_ROOT)/socs/$(BOARD)/vivado_dpr/Bitstreams/top_dpr.bit $(ESP_ROOT)/socs/$(BOARD)/vivado/$(DESIGN).runs/impl_1/$(TOP).bit; \
         bit=$(DESIGN).runs/impl_1/top.bit; \

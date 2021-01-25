@@ -11,9 +11,9 @@ all:
 	@echo "Please run the make file using the following format"
 	@echo ""
 	@echo "make flora FPGA=type_of_FPGA"
-	@echo "for type of FPGA please use ZYNQ or PYNQ"
+	@echo "for type of FPGA please use VC707, VCU118 or VCU128"
 	@echo " "
-	@echo "For example make flora FPGA=PYNQ"
+	@echo "For example make flora FPGA=VC707"
 
 
 SOURCES_SHARED = src/csv_data_manipulator.cpp include/fpga.h without_gui/src/main.cpp
@@ -33,11 +33,7 @@ CFLAGS += -DFPGA_ZYNQ
 endif
 
 
-ifeq ($(FPGA),PYNQ)
-flora: SOURCES_MILP = src/milp_model_pynq.cpp
-else ifeq ($(FPGA),ZYNQ)
-flora: SOURCES_MILP = src/milp_model_zynq.cpp
-else ifeq ($(FPGA),VC707)
+ifeq ($(FPGA),VC707)
 flora: SOURCES_MILP = src/milp_model_vc707.cpp
 endif
 
