@@ -1,0 +1,14 @@
+mriq_x_dma32 128 32 1w:0r 0w:1r
+mriq_x_dma64 128 32 2w:0r 0w:2r
+mriq_LK_P4_k_dma32 1024 32 1w:0r 0w:4r
+mriq_LK_P8_k_dma32 1024 32 1w:0r 0w:8r
+mriq_LK_P16_k_dma32 1024 32 1w:0r 0w:16r
+mriq_SK_P4_k_dma32 3072 32 1w:0r 0w:4r
+mriq_SK_P8_k_dma32 3072 32 1w:0r 0w:8r
+mriq_SK_P16_k_dma32 3072 32 1w:0r 0w:16r
+mriq_LK_P4_k_dma64 1024 32 2w:0r 0w:4r
+mriq_LK_P8_k_dma64 1024 32 2w:0r 0w:8r
+mriq_LK_P16_k_dma64 1024 32 2w:0r 0w:16r
+mriq_SK_P4_k_dma64 3072 32 2w:0r 0w:4r
+mriq_SK_P8_k_dma64 3072 32 2w:0r 0w:8r
+mriq_SK_P16_k_dma64 3072 32 2w:0r 0w:16r

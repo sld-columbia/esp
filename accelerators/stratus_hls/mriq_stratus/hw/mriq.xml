@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sld>
+  <accelerator name="mriq" desc="Accelerator MRIQ" data_size="6" device_id="079" hls_tool="stratus_hls">
+    <param name="batch_size_x" desc="batch_size_x" />
+    <param name="num_batch_x" desc="num_batch_x" />
+    <param name="batch_size_k" desc="batch_size_k" />
+    <param name="num_batch_k" desc="num_batch_k" />
+  </accelerator>
+</sld>
