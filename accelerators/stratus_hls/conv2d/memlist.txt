@@ -1,5 +1,5 @@
 conv2d_plm_block_in_dma64 2048 32 2w:0r 0w:1r
-conv2d_plm_block_weights_dma64 4096 32 2w:0r 0w:8r
+conv2d_plm_block_weights_dma64 2048 32 2w:0r 0w:8r
 #conv2d_plm_block_bias_dma64 64 32 2w:0r 0w:1r
 conv2d_plm_block_out_dma64 2048 32 1w:0r 0w:2r
 conv2d_plm_patch 512 32 1w:0r 0w:1r
