@@ -35,7 +35,7 @@ use work.stdlib.all;
 
 entity syncrambw is
   generic (tech : integer := 0; abits : integer := 6; dbits : integer := 8;
-    testen : integer := 0; custombits: integer := 1);
+    testen : integer := 0; custombits: integer := 1; large_banks : integer := 0);
   port (
     clk     : in  std_ulogic;
     address : in  std_logic_vector (abits-1 downto 0);
@@ -96,7 +96,7 @@ begin
         port map (clk, address, datain, dataoutx, xenable, xwrite);
     end generate;
 
-    g12 : if tech = gf12 generate
+    g12 : if tech = gf12 and large_banks /= 0 generate
       x0 : gf12_syncram_be generic map (abits, dbits)
         port map (clk, address, datain, dataoutx, xenable, xwrite);
     end generate;
@@ -115,7 +115,7 @@ begin
 -- pragma translate_on
   end generate;
 
-  nosbw : if has_srambw(tech) = 0 generate
+  nosbw : if has_srambw(tech) = 0 or (tech = gf12 and large_banks = 0) generate
     rx : for i in 0 to dbits/8-1 generate
       x0 : syncram generic map (tech, abits, 8, testen, custombits)
          port map (clk, address, datain(i*8+7 downto i*8),
