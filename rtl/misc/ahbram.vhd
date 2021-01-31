@@ -38,7 +38,8 @@ use work.gencomp.all;
 entity ahbram is
   generic (
     hindex      : integer := 0;
-    tech        : integer := DEFMEMTECH; 
+    tech        : integer := DEFMEMTECH;
+    large_banks : integer := 0;
     kbytes      : integer := 1;
     pipe        : integer := 0;
     maccsz      : integer := AHBDW;
@@ -271,8 +272,22 @@ begin
   ahbso.hconfig <= hconfig;
   ahbso.hindex  <= hindex;
   
-  aram : syncrambw generic map (tech, abits, dw, scantest) port map (
-	clk, ramaddr, hwdata, ramdata, ramsel, write, ahbsi.testin);
+  aram : syncrambw
+    generic map (
+      tech => tech,
+      abits => abits,
+      dbits => dw,
+      testen => scantest,
+      custombits => 1,
+      large_banks => large_banks)
+    port map (
+	clk => clk,
+        address => ramaddr,
+        datain => hwdata,
+        dataout => ramdata,
+        enable => ramsel,
+        write => write,
+        testin => ahbsi.testin);
   
   reg : process (clk)
   begin
