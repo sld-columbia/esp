@@ -46,6 +46,7 @@ begin
       generic map (
         hindex     => hindex,
         tech       => tech,
+        large_banks => 1,
         kbytes     => kbytes,
         pipe       => 0,
         maccsz     => ARCH_BITS

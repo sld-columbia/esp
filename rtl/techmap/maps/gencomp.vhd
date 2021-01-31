@@ -571,7 +571,7 @@ constant m010     : integer := 13;
 
   component syncrambw
   generic (tech : integer := 0; abits : integer := 6; dbits : integer := 8;
-    testen : integer := 0; custombits : integer := 1);
+    testen : integer := 0; custombits : integer := 1; large_banks : integer := 0);
   port (
     clk     : in  std_ulogic;
     address : in  std_logic_vector (abits-1 downto 0);
