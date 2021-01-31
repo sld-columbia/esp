@@ -68,6 +68,7 @@ package misc is
   generic (
     hindex  : integer := 0;
     tech    : integer := DEFMEMTECH;
+    large_banks : integer := 0;
     kbytes  : integer := 1;
     pipe    : integer := 0;
     maccsz  : integer := AHBDW;
