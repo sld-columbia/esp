@@ -1,0 +1,4 @@
+vgg
+*.txt
+!LICENSE.txt
+*.log
