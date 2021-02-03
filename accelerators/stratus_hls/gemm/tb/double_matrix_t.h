@@ -50,6 +50,7 @@ static int store_double_matrix_t(double_matrix_t *matrix, const char *file)
     unsigned int i, size = 1;
 
     FILE *fp = fopen(file, "w");
+    FILE *fp_barec = fopen("golden.h", "w");
 
     if (!fp) { return -1; }
 
@@ -64,12 +65,15 @@ static int store_double_matrix_t(double_matrix_t *matrix, const char *file)
 
     fprintf(fp, "\n");
 
-    for (i = 0; i < size; ++i)
+    for (i = 0; i < size; ++i) {
         fprintf(fp, "%lf ", matrix->data[i]);
+        fprintf(fp_barec, "golden[%d] = %f;\n", i, matrix->data[i]);
+    }
 
     fprintf(fp, "\n");
 
     fclose(fp);
+    fclose(fp_barec);
 
     return 0;
 }
