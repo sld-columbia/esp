@@ -39,8 +39,8 @@ plm_w32_d64_chk256 256 32 1w:0r 0w:2r
 # plm_w32_d64_chk64_p8 64 32 2w:0r 0w:8r
 # plm_w32_d64_chk128_p8 128 32 2w:0r 0w:8r
 # plm_w32_d64_chk512_p8 512 32 2w:0r 0w:8r
-# plm_w32_d64_chk2048_p8 2048 32 2w:0r 0w:8r
-plm_w32_d64_chk4096_p8 4096 32 2w:0r 0w:8r
+plm_w32_d64_chk2048_p8 2048 32 2w:0r 0w:8r
+# plm_w32_d64_chk4096_p8 4096 32 2w:0r 0w:8r
 # plm_w32_d64_chk8192_p8 8192 32 2w:0r 0w:8r
 # plm_w32_d64_chk32_p16 32 32 2w:0r 0w:16r
 # plm_w32_d64_chk128_p16 128 32 2w:0r 0w:16r

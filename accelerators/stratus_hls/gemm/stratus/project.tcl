@@ -50,7 +50,8 @@ if {$TECH eq "gf12"} {
 }
 
 set_attr clock_period $CLOCK_PERIOD
-
+set_attr output_style_reset_all on
+set_attr output_style_reset_all_sync on
 set_attr dpopt_effort high
 
 #
@@ -97,7 +98,7 @@ if {$TECH_IS_XILINX == 1} {
 #
 
 set DMA_WIDTH "64"
-set DMA_CHUNK "4096" 
+set DMA_CHUNK "2048" 
 set WORD_SIZE "32"
 set PARALLELISM "8"
 # set DMA_WIDTH "64"
