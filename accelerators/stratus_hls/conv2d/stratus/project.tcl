@@ -56,7 +56,9 @@ if {$TECH eq "gf12"} {
 }
 
 set_attr clock_period $CLOCK_PERIOD
-
+set_attr output_style_reset_all on
+set_attr output_style_reset_all_sync on
+set_attr dpopt_effort high
 
 #
 # System level modules to be synthesized

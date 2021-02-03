@@ -20,8 +20,11 @@ inline void conv2d::compute_dimensions(
     uint16_t *channel_offset_incr, uint16_t *out_channel_offset_incr,
     uint16_t *out_channel_pool_offset_incr,
     uint32_t *filters_offset_start_base, uint32_t *bias_offset_start_base,
-    uint32_t *feature_offset_start_base)
+    uint32_t *feature_offset_start_base,
+    uint12_t *loadable_chan, uint12_t *chan_iters, uint12_t *chan_rem,
+    uint16_t *loadable_chan_sz, uint16_t *chan_rem_sz)
 {
+    uint8_t filter_dim2 = (uint8_t) filter_dim * filter_dim;
     /* Spatial dimensions of the output activation map */
     *pad = is_padded ? (filter_dim >> 1) : 0;
     *output_w = ((uint16_t) (width + 2 * *pad - filter_dim)) / stride + 1;
@@ -30,13 +33,26 @@ inline void conv2d::compute_dimensions(
     *feature_size = height * width;
 
     /* Size (in number of weights) of each filter */
-    *filter_size = n_channels * filter_dim * filter_dim;
+    *filter_size = n_channels * filter_dim2;
     *filters_size = *filter_size * n_filters;
 
     /* Max number of input rows cacheable in the input PLM */
     uint16_t max_io_channels = max(n_channels, n_filters);
-    *max_cacheable_rows = min(INPUT_PLM_SIZE / ((uint16_t) (max_io_channels * width)),
-			      height);
+    uint16_t io_channel_size = max_io_channels * width;
+    *max_cacheable_rows = min(((uint16_t) INPUT_PLM_SIZE) / ((uint16_t) io_channel_size), height);
+
+    *chan_iters = 1;
+    *chan_rem = n_channels;
+    *loadable_chan = n_channels;
+    if (*max_cacheable_rows < filter_dim + 1) {
+	*loadable_chan = ((uint16_t) INPUT_PLM_SIZE) / ((uint16_t) (width * (filter_dim + 1)));
+	*chan_iters = ((uint16_t) (n_channels - 1)) / ((uint12_t) *loadable_chan) + 1;
+	*chan_rem = n_channels - (*loadable_chan * (*chan_iters - 1));
+	*max_cacheable_rows = filter_dim + 1;
+    }
+    *loadable_chan_sz = (uint16_t) *loadable_chan * filter_dim2;
+    *chan_rem_sz = (uint16_t) *chan_rem * filter_dim2;
+
     *max_cacheable_rows_init = *max_cacheable_rows;
 
     /* Max number of input rows cacheable in the input PLM */
@@ -96,7 +112,7 @@ inline void conv2d::compute_dimensions(
 
     /* Check if configuration is valid */
 #ifndef STRATUS_HLS
-    assert(width * n_channels * filter_dim <= INPUT_PLM_SIZE);
+    // assert(width * n_channels * filter_dim <= INPUT_PLM_SIZE);
     assert(*filter_size <= WEIGHTS_PLM_SIZE - PARALLELISM);
     assert(*filter_size <= PATCH_PLM_SIZE);
     assert(*filter_size <= MAC_PLM_SIZE);

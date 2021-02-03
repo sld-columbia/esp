@@ -70,10 +70,12 @@ set_attr lsb_trimming             true
 #
 #set_attr sched_effort to get lowest possible latency
 set_attr sched_asap on
-set_attr sharing_effort_parts low
+set_attr sharing_effort_parts high
 set_attr sharing_effort_regs low
 
 set PRINT on
+#set BALANCE_EXPR delay
+# --balance_expr=$BALANCE_EXPR
 set COMMON_HLS_FLAGS "--prints=$PRINT"
 
 #

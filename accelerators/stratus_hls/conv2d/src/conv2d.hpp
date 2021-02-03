@@ -96,7 +96,9 @@ public:
 	uint16_t *feature_offset_incr, uint16_t *feature_offset_incr_init,
 	uint16_t *channel_offset_incr, uint16_t *out_channel_offset_incr,
 	uint16_t *out_channel_pool_offset_incr, uint32_t *filters_offset_start_base,
-	uint32_t *bias_offset_start_base, uint32_t *feature_offset_start_base);
+	uint32_t *bias_offset_start_base, uint32_t *feature_offset_start_base,
+	uint12_t *loadable_chan, uint12_t *chan_iters, uint12_t *chan_rem,
+	uint16_t *loadable_chan_sz, uint16_t *chan_rem_sz);
     void patch_extractor(
 	const uint16_t channels, const uint16_t height, const uint16_t width,
 	const uint16_t channel_size, const uint16_t ping_input,
@@ -146,6 +148,11 @@ public:
     sc_signal<uint16_t> out_channel_offset_incr_sig;
     sc_signal<uint16_t> out_channel_pool_offset_incr_sig;
     sc_signal<uint32_t> feature_offset_start_base_sig;
+    sc_signal<uint12_t> loadable_chan_sig;
+    sc_signal<uint12_t> chan_iters_sig;
+    sc_signal<uint12_t> chan_rem_sig;
+    sc_signal<uint16_t> loadable_chan_sz_sig;
+    sc_signal<uint16_t> chan_rem_sz_sig;
 };
 
 
