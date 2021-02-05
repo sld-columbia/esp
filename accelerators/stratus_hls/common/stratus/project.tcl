@@ -17,7 +17,7 @@ set TECH_PATH "$ESP_ROOT/tech/$TECH"
 #
 # Setup technology and include behavioral models and/or libraries
 #
-set fpga_techs [list "virtex7" "zynq7000" "virtexu" "virtexup"]
+set fpga_techs [list "virtex7" "zynq7000" "virtexu" "virtexup" "kintex7"]
 set asic_techs [list "cmos32soi" "gf12"]
 
 if {[lsearch $fpga_techs $TECH] >= 0} {
@@ -41,6 +41,9 @@ if {[lsearch $fpga_techs $TECH] >= 0} {
     if {$TECH eq "virtexup"} {
 	set_attr fpga_part "xcvu9p-flga2104-2L-e"
     }
+    if {$TECH eq "kintex7"} {
+	set_attr fpga_part "xc7k325tffg900-2"
+    }
 
     set TECH_IS_XILINX 1
 
@@ -63,7 +66,9 @@ set_attr message_detail           2
 set_attr default_protocol         false
 set_attr inline_partial_constants true
 set_attr output_style_reset_all   true
+#set_attr output_style_reset_all_sync on
 set_attr lsb_trimming             true
+#set_attr dpopt_effort high
 
 #
 # Speedup scheduling for high-perf design (disable most area-minimization techniques)

@@ -10,12 +10,10 @@
 #
 source ../../common/stratus/project.tcl
 
-
 #
 # Set the private memory library
 #
 use_hls_lib "./memlib"
-
 
 #
 # Local synthesis attributes
@@ -44,6 +42,12 @@ if {$TECH eq "virtexup"} {
     set SIM_CLOCK_PERIOD 6400.0
     set_attr default_input_delay      0.1
 }
+if {$TECH eq "kintex7"} {
+    # Library is in ns, but simulation uses ps!
+    set CLOCK_PERIOD 10.0
+    set SIM_CLOCK_PERIOD 10000.0
+    set_attr default_input_delay      0.1
+}
 if {$TECH eq "cmos32soi"} {
     set CLOCK_PERIOD 1000.0
     set SIM_CLOCK_PERIOD 1000.0
@@ -56,15 +60,11 @@ if {$TECH eq "gf12"} {
 }
 
 set_attr clock_period $CLOCK_PERIOD
-set_attr output_style_reset_all on
-set_attr output_style_reset_all_sync on
-set_attr dpopt_effort high
 
 #
 # System level modules to be synthesized
 #
 define_hls_module conv2d ../src/conv2d.cpp
-
 
 #
 # Testbench or system level modules
@@ -79,7 +79,6 @@ define_system_module tb ../tb/system.cpp ../tb/sc_main.cpp
 #
 # Testbench configuration
 #
-
 set TB_INOUT_SIZE "XS S M L XL"
 set TB_FILTER_SIZE "1x1 3x3 5x5"
 
@@ -127,7 +126,6 @@ append COMMON_CFG_FLAGS \
 
 foreach dma [list 64] {
     define_io_config * IOCFG_DMA$dma -DDMA_WIDTH=$dma $COMMON_CFG_FLAGS
-
     define_system_config tb TESTBENCH_DMA$dma -io_config IOCFG_DMA$dma
 
     foreach iosz $TB_INOUT_SIZE {
@@ -135,7 +133,6 @@ foreach dma [list 64] {
 	    set ARGV ""
 	    append ARGV "$iosz "; # argv[1]
 	    append ARGV "$fsz ";  # argv[2]
-
 	    define_sim_config "BEHAV_DMA$dma\_$iosz\_$fsz" "conv2d BEH" \
 		"tb TESTBENCH_DMA$dma" -io_config IOCFG_DMA$dma -argv $ARGV
 	}

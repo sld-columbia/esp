@@ -10,12 +10,10 @@
 #
 source ../../common/stratus/project.tcl
 
-
 #
 # Set the private memory library
 #
 use_hls_lib "./memlib"
-
 
 #
 # Local synthesis attributes
@@ -35,6 +33,12 @@ if {$TECH eq "zynq7000"} {
 if {$TECH eq "virtexup"} {
     # Library is in ns, but simulation uses ps!
     set CLOCK_PERIOD 10
+    set SIM_CLOCK_PERIOD 10000.0
+    set_attr default_input_delay      0.1
+}
+if {$TECH eq "kintex7"} {
+    # Library is in ns, but simulation uses ps!
+    set CLOCK_PERIOD 10.0
     set SIM_CLOCK_PERIOD 10000.0
     set_attr default_input_delay      0.1
 }
@@ -58,7 +62,6 @@ set_attr dpopt_effort high
 # System level modules to be synthesized
 #
 define_hls_module gemm ../src/gemm.cpp
-
 
 #
 # Testbench or system level modules
@@ -96,7 +99,6 @@ if {$TECH_IS_XILINX == 1} {
 #
 # DSE configuration
 #
-
 set DMA_WIDTH "64"
 set DMA_CHUNK "2048" 
 set WORD_SIZE "32"
