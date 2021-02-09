@@ -42,6 +42,7 @@ package allcaches is
 
   constant HSIZE_WIDTH           : integer := 3;
   constant HPROT_WIDTH           : integer := 2;
+  constant BRESP_WIDTH           : integer := 2;
   constant INVACK_CNT_WIDTH      : integer := NL2_MAX_LOG2;
   constant INVACK_CNT_CALC_WIDTH : integer := INVACK_CNT_WIDTH + 1;
 
@@ -87,6 +88,7 @@ package allcaches is
       l2_inval_ready            : in  std_ulogic;
       l2_req_out_ready          : in  std_ulogic;
       l2_rsp_out_ready          : in  std_ulogic;
+      l2_bresp_ready            : in  std_ulogic;
       l2_stats_ready            : in  std_ulogic;
       flush_done                : out std_ulogic;
       l2_cpu_req_ready          : out std_ulogic;
@@ -108,6 +110,8 @@ package allcaches is
       l2_rsp_out_data_to_req    : out std_logic_vector(1 downto 0);
       l2_rsp_out_data_addr      : out std_logic_vector(ADDR_BITS - OFFSET_BITS - 1 downto 0);
       l2_rsp_out_data_line      : out std_logic_vector(BITS_PER_LINE - 1 downto 0);
+      l2_bresp_valid            : out std_ulogic;
+      l2_bresp_data             : out std_logic_vector(BRESP_WIDTH - 1 downto 0);
       l2_stats_valid            : out std_ulogic;
       l2_stats_data             : out std_ulogic
       );
