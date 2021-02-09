@@ -459,6 +459,10 @@ def print_global_constants(fp, soc):
     fp.write("  constant GLOB_CPU_RISCV : integer range 0 to 1 := 0;\n")
   else:
     fp.write("  constant GLOB_CPU_RISCV : integer range 0 to 1 := 1;\n")
+  if soc.CPU_ARCH.get() == "ariane":
+    fp.write("  constant GLOB_CPU_LLSC : integer range 0 to 1 := 1;\n")
+  else:
+    fp.write("  constant GLOB_CPU_LLSC : integer range 0 to 1 := 0;\n")
   fp.write("\n")
   # RTL caches
   if soc.cache_rtl.get() == 1:
@@ -2083,6 +2087,7 @@ def print_cache_config(fp, soc, esp_config):
     addr_bits = 32
     byte_bits = 3
     word_bits = 1
+    fp.write("`define LLSC\n")
   if soc.CPU_ARCH.get() == "leon3":
     fp.write("`define BIG_ENDIAN\n")
   else:

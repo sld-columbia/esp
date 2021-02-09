@@ -776,6 +776,7 @@ def write_cache_interface(f, cac, is_llc):
     f.write("      l2_flush_data             : in  std_ulogic;\n")
     f.write("      l2_rd_rsp_ready           : in  std_ulogic;\n")
     f.write("      l2_inval_ready            : in  std_ulogic;\n")
+    f.write("      l2_bresp_ready            : in  std_ulogic;\n")
     f.write("      l2_req_out_ready          : in  std_ulogic;\n")
     f.write("      l2_rsp_out_ready          : in  std_ulogic;\n")
     f.write("      l2_stats_ready            : in  std_ulogic;\n")
@@ -788,6 +789,8 @@ def write_cache_interface(f, cac, is_llc):
     f.write("      l2_rd_rsp_data_line       : out std_logic_vector(" + str(bits_per_line - 1) + " downto 0);\n")
     f.write("      l2_inval_valid            : out std_ulogic;\n")
     f.write("      l2_inval_data             : out std_logic_vector(" + str(phys_addr_bits - offset_bits - 1) + " downto 0);\n")
+    f.write("      l2_bresp_valid            : out std_ulogic;\n")
+    f.write("      l2_bresp_data             : out std_logic_vector(1 downto 0);\n")
     f.write("      l2_req_out_valid          : out std_ulogic;\n")
     f.write("      l2_req_out_data_coh_msg   : out std_logic_vector(1 downto 0);\n")
     f.write("      l2_req_out_data_hprot     : out std_logic_vector(1 downto 0);\n")
@@ -897,6 +900,7 @@ def write_cache_port_map(f, cac, is_llc):
     f.write("      l2_flush_data             => l2_flush_data,\n")
     f.write("      l2_rd_rsp_ready           => l2_rd_rsp_ready,\n")
     f.write("      l2_inval_ready            => l2_inval_ready,\n")
+    f.write("      l2_bresp_ready            => l2_bresp_ready,\n")
     f.write("      l2_req_out_ready          => l2_req_out_ready,\n")
     f.write("      l2_rsp_out_ready          => l2_rsp_out_ready,\n")
     f.write("      l2_stats_ready            => l2_stats_ready,\n")
@@ -909,6 +913,8 @@ def write_cache_port_map(f, cac, is_llc):
     f.write("      l2_rd_rsp_data_line       => l2_rd_rsp_data_line,\n")
     f.write("      l2_inval_valid            => l2_inval_valid,\n")
     f.write("      l2_inval_data             => l2_inval_data,\n")
+    f.write("      l2_bresp_valid            => l2_bresp_valid,\n")
+    f.write("      l2_bresp_data             => l2_bresp_data,\n")
     f.write("      l2_req_out_valid          => l2_req_out_valid,\n")
     f.write("      l2_req_out_data_coh_msg   => l2_req_out_data_coh_msg,\n")
     f.write("      l2_req_out_data_hprot     => l2_req_out_data_hprot,\n")
@@ -1192,6 +1198,8 @@ def gen_tech_indep_impl(accelerator_list, cache_list, dma_width, template_dir, o
         f.write("      use_rtl          : integer;\n")
         if (not is_llc):
           f.write("      little_end       : integer range 0 to 1;\n")
+          if 'spandex' not in cac.name:
+            f.write("      llsc             : integer range 0 to 1;\n")
         f.write("      sets             : integer;\n")
         f.write("      ways             : integer\n")
         f.write("    );\n")
@@ -1217,6 +1225,7 @@ def gen_tech_indep_impl(accelerator_list, cache_list, dma_width, template_dir, o
           this_addr_bits = 0
           this_word_offset_bits = 0
           this_offset_bits = 0
+          this_llsc = 0
           this_endian = "le"
           for item in info:
             if re.match(r'[0-9]+sets', item, re.M|re.I):
@@ -1229,6 +1238,11 @@ def gen_tech_indep_impl(accelerator_list, cache_list, dma_width, template_dir, o
               this_offset_bits = int(int(math.log2((int(item.replace("line", "")))/8) + word_offset_bits))
             elif re.match(r'[0-9]+addr', item, re.M|re.I):
               this_addr_bits = int(item.replace("addr", ""))
+            elif re.match(r'(no)?llsc', item, re.M|re.I):
+              if item == "llsc":
+                this_llsc = 1
+              else:
+                this_llsc = 0
             elif re.match(r'[b|l]e', item, re.M|re.I):
               if item == "le":
                 this_endian = 1
@@ -1245,8 +1259,10 @@ def gen_tech_indep_impl(accelerator_list, cache_list, dma_width, template_dir, o
           f.write("\n")
           if is_llc:
             f.write("  " + impl + "_gen: if sets = " + str(sets) + " and ways = " + str(ways) + " generate\n")
-          else:
+          elif 'spandex' in cac.name:
             f.write("  " + impl + "_gen: if little_end = " + str(this_endian) + " and sets = " + str(sets) + " and ways = " + str(ways) + " generate\n")
+          else:
+            f.write("  " + impl + "_gen: if little_end = " + str(this_endian) + " and llsc = " + str(this_llsc) + " and sets = " + str(sets) + " and ways = " + str(ways) + " generate\n")
           f.write("    " + cac.name + "_" + impl + "_i: " + cac.name + "_" + impl + "\n")
           write_cache_port_map(f, cac, is_llc)
           f.write("  end generate " +  impl + "_gen;\n\n")
