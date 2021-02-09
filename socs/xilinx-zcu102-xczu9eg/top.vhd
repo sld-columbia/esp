@@ -1,3 +1,5 @@
+-- Copyright (c) 2011-2021 Columbia University, System Level Design Group
+-- SPDX-License-Identifier: Apache-2.0
 ------------------------------------------------------------------------------
 --  ESP - xilinx - zcu102
 ------------------------------------------------------------------------------
@@ -110,13 +112,10 @@ constant CPU_FREQ : integer := 75000;  -- cpu frequency in KHz
   constant edcl_hconfig : ahb_config_type := (
     0      => ahb_device_reg (VENDOR_GAISLER, GAISLER_EDCLMST, 0, 0, 0),
     others => zero32);
-    constant CACHABLE :std_logic_vector(3 downto 0):= "1000";
-    constant BUFF :std_logic_vector(3 downto 0):= "0100";
-    constant PRIV :std_logic_vector(3 downto 0):= "0010";
-    constant DATA :std_logic_vector(3 downto 0):= "0001";
-    constant ADDRANG :std_logic_vector(1 downto 0):= "01";
+
 begin
-  -----------egin-----------------------------------------------------------
+
+  ----------------------------------------------------------------------
   --- FPGA Reset and Clock generation  ---------------------------------
   ----------------------------------------------------------------------
 
@@ -173,12 +172,12 @@ begin
   si_hready             <= ddr_ahbsi(0).hready;
   si_hsel               <= ddr_ahbsi(0).hsel(0);
   si_htrans             <= ddr_ahbsi(0).htrans;
-  si_haddr(31 downto 30)<= ADDRANG; -- ZCU102 has fixed address map
+  si_haddr(31 downto 30)          <= "01"; -- ZCU102 has fixed address map
   si_haddr(29 downto 0) <= ddr_ahbsi(0).haddr(29 downto 0);
   si_hwrite             <= ddr_ahbsi(0).hwrite;
   si_hsize              <= ddr_ahbsi(0).hsize;
   si_hburst             <= ddr_ahbsi(0).hburst;
-  si_hprot              <= ddr_ahbsi(0).hprot;
+  si_hprot              <= ddr_ahbsi(0).hprot+"1000";
   si_hwdata             <= ddr_ahbsi(0).hwdata;
 
   ddr_ahbso(0).hready  <= so_hready;
