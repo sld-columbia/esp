@@ -39,6 +39,7 @@ package gencaches is
       l2_flush_data : in std_ulogic;
       l2_rd_rsp_ready : in std_ulogic;
       l2_inval_ready : in std_ulogic;
+      l2_bresp_ready : in std_ulogic;
       l2_req_out_ready : in std_ulogic;
       l2_rsp_out_ready : in std_ulogic;
       l2_stats_ready : in std_ulogic;
@@ -51,6 +52,8 @@ package gencaches is
       l2_rd_rsp_data_line : out line_t;
       l2_inval_valid : out std_ulogic;
       l2_inval_data : out line_addr_t;
+      l2_bresp_valid : out std_ulogic;
+      l2_bresp_data : out bresp_t;
       l2_req_out_valid : out std_ulogic;
       l2_req_out_data_coh_msg : out coh_msg_t;
       l2_req_out_data_hprot : out hprot_t;

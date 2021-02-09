@@ -408,6 +408,9 @@ begin  -- architecture rtl of l2_acc_wrapper
       l2_inval_ready            => inval_ready,
       l2_inval_valid            => inval_valid,
       l2_inval_data             => inval_data,
+      l2_bresp_ready            => '1',
+      l2_bresp_valid            => open,
+      l2_bresp_data             => open,
       -- cache to NoC
       l2_req_out_ready          => req_out_ready,
       l2_req_out_valid          => req_out_valid,

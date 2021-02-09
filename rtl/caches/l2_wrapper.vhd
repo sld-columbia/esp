@@ -108,6 +108,9 @@ architecture rtl of l2_wrapper is
   signal inval_ready            : std_ulogic;
   signal inval_valid            : std_ulogic;
   signal inval_data             : line_addr_t;
+  signal bresp_ready            : std_ulogic;
+  signal bresp_valid            : std_ulogic;
+  signal bresp_data             : bresp_t;
   -- cache to NoC
   signal req_out_ready          : std_ulogic;
   signal req_out_valid          : std_ulogic;
@@ -404,8 +407,10 @@ architecture rtl of l2_wrapper is
   --signal led_cache_asserts   : std_ulogic;
   --signal led_wrapper_asserts : std_ulogic;
 
-  -- attribute mark_debug : string;
-
+   --attribute mark_debug : string;
+   --attribute mark_debug of somi : signal is "true";
+   --attribute mark_debug of mosi : signal is "true";
+----
   -- attribute mark_debug of ahbs_reg_state   : signal is "true";
   -- attribute mark_debug of ahbm_reg_state   : signal is "true";
   -- attribute mark_debug of req_reg_state    : signal is "true";
@@ -515,6 +520,9 @@ begin  -- architecture rtl of l2_wrapper
       l2_inval_ready            => inval_ready,
       l2_inval_valid            => inval_valid,
       l2_inval_data             => inval_data,
+      l2_bresp_ready            => bresp_ready,
+      l2_bresp_valid            => bresp_valid,
+      l2_bresp_data             => bresp_data,
       -- cache to NoC
       l2_req_out_ready          => req_out_ready,
       l2_req_out_valid          => req_out_valid,
@@ -1634,7 +1642,7 @@ begin  -- architecture rtl of l2_wrapper
   fsm_axi : process (mosi, flush, ahbs_reg, axi_reg,
                      cpu_req_ready, flush_ready, flush_due,
                      rd_rsp_valid, rd_rsp_data_line, load_alloc_reg,
-                     inv_fifo_full)
+                     inv_fifo_full, bresp_valid, bresp_data)
 
     variable reg           : ahbs_reg_type;
     variable xreg          : axi_reg_type;
@@ -1681,6 +1689,8 @@ begin  -- architecture rtl of l2_wrapper
     flush_valid <= '0';
 
     rd_rsp_ready <= '0';
+    
+    bresp_ready <= mosi.b.ready;
 
     -- check if memory is selected
     selected := mosi.aw.valid or mosi.ar.valid;
@@ -1995,7 +2005,7 @@ begin  -- architecture rtl of l2_wrapper
 
         if mosi.w.valid = '1' then
 
-          if mosi.w.last = '1' then
+          if mosi.w.last = '1' and (reg.cpu_msg /= CPU_WRITE_ATOM or bresp_valid = '1') then
             somi.b.valid <= '1';
           end if;
 
@@ -2008,7 +2018,7 @@ begin  -- architecture rtl of l2_wrapper
 
           if cpu_req_ready = '1' then
 
-            if valid_axi_req = '1' and mosi.w.last = '1' and mosi.b.ready = '1' then
+            if valid_axi_req = '1' and mosi.w.last = '1' and mosi.b.ready = '1' and (reg.cpu_msg /= CPU_WRITE_ATOM or bresp_valid  = '1') then
               if valid_axi_req = '1' then
                 if mosi.aw.valid = '0' then
                   reg.cpu_msg := '0' & mosi.ar.lock;
@@ -2041,7 +2051,7 @@ begin  -- architecture rtl of l2_wrapper
 
             if mosi.w.last = '1' then
 
-              if mosi.b.ready = '0' then
+              if mosi.b.ready = '0' or (reg.cpu_msg = CPU_WRITE_ATOM and bresp_valid = '0') then
                 reg.state := send_wr_ack;
 
               elsif flush_due = '1' and xreg.lock = '0' and
@@ -2089,9 +2099,15 @@ begin  -- architecture rtl of l2_wrapper
 
       -- STORE ACK
       when send_wr_ack =>
-        somi.b.valid <= '1';
+        if reg.cpu_msg /= CPU_WRITE_ATOM or bresp_valid = '1' then
+            somi.b.valid <= '1';
+        end if;
 
-        if mosi.b.ready = '1' then
+        if reg.cpu_msg = CPU_WRITE_ATOM then
+            somi.b.resp <= bresp_data;
+        end if;
+        
+        if mosi.b.ready = '1' and (reg.cpu_msg /= CPU_WRITE_ATOM or bresp_valid = '1') then
 
           if valid_axi_req = '1' then
             if mosi.aw.valid = '0' then
@@ -2152,16 +2168,17 @@ begin  -- architecture rtl of l2_wrapper
               reg.state := store_req;
 
             end if;
+          else
+            reg.state := idle;
+        
           end if;
 
           cpu_req_data_cpu_msg <= reg.cpu_msg;
           cpu_req_data_hsize   <= reg.hsize;
           cpu_req_data_hprot   <= reg.hprot;
           cpu_req_data_addr    <= reg.haddr;
-
-        else
-
-          reg.state := idle;
+        
+          --reg.state := idle;
 
         end if;
 
