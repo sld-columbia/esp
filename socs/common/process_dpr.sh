@@ -620,7 +620,7 @@ elif [ $4 == "test" ]; then
     #gen_fplan $1 $2 $3;
     echo " regenarate before parse is $regenerate_fplan";
     parse_synth_report $1 $2 $3 $4
-    #gen_floorplan $1 $2 $3 $4;
+    gen_floorplan $1 $2 $3 $4;
     acc_fplan $1 $2 $3 $4;
     #echo " regenarate after parse is $regenerate_fplan";
     #gen_floorplan $1 $2 $3 $4
