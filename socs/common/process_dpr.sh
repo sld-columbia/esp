@@ -188,15 +188,20 @@ done
 #generate the tcl script to synthesise and implement the design
 function gen_synth_script() {
 
+syn_include_file="$1/socs/$2/vivado/setup.tcl";
 syn_include="$tcl_dir/synth_include.tcl";
 rm -rf $syn_include;
-echo "set_property include_dirs {" >> $syn_include;
-echo "$1/socs/$2 " >> $syn_include;
-echo "$1/rtl/src/sld/caches/esp-caches/common/defs" >> $syn_include;
-echo "$1/third-party/accelerators/dma64/NV_NVDLA/vlog_incdir" >> $syn_include;
-echo "$1/third-party/ariane/src/common_cells/include" >> $syn_include;
-echo "$1/third-party/ibex/vendor/lowrisc_ip/prim/rtl" >> $syn_include;
-echo "} [current_fileset]" >> $syn_include;
+
+while read line 
+do
+    for word in $line
+    do
+        if [[ "$word" == "include_dirs" ]]; then
+            echo "$line" >> $syn_include;
+            break;
+        fi;
+    done
+done < $syn_include_file;
 
 #generate the imlementation script
 dpr_syn_tcl="vivado_dpr/ooc_syn.tcl"
@@ -299,15 +304,20 @@ echo "exit" >> $dpr_syn_tcl;
 
 #generate the tcl script to synthesise and implement the design
 function gen_impl_script() {
-syn_include="$tcl_dir/synth_include.tcl"; #"$1/socs/common/Tcl/synth_include.tcl";
-rm -r $syn_include;
-echo "set_property include_dirs {" >> $syn_include;
-echo "$1/socs/$2 " >> $syn_include;
-echo "$1/rtl/src/sld/caches/esp-caches/common/defs" >> $syn_include;
-echo "$1/third-party/accelerators/dma64/NV_NVDLA/vlog_incdir" >> $syn_include;
-echo "$1/third-party/ariane/src/common_cells/include" >> $syn_include;
-echo "$1/third-party/ibex/vendor/lowrisc_ip/prim/rtl" >> $syn_include;
-echo "} [current_fileset]" >> $syn_include;
+syn_include_file="$1/socs/$2/vivado/setup.tcl";
+syn_include="$tcl_dir/synth_include.tcl";
+rm -rf $syn_include;
+
+while read line 
+do
+    for word in $line
+    do
+        if [[ "$word" == "include_dirs" ]]; then
+            echo "$line" >> $syn_include;
+            break;
+        fi;
+    done
+done < $syn_include_file;
 
 #generate the imlementation script
 dpr_syn_tcl="vivado_dpr/impl.tcl"
@@ -614,14 +624,16 @@ elif [ $4 == "IMPL_ACC" ]; then
 
 elif [ $4 == "test" ]; then
     extract_acc $1 $2 $3
-    extract_acc_old $1 $2 $3
-    diff_accelerators $1 $2 $3 
+#    extract_acc_old $1 $2 $3
+#    diff_accelerators $1 $2 $3 
     initialize_acc_tiles $1 $2 $3
+    add_acc_prj_file $1 $2 $3
+    gen_synth_script $1 $2 $3 $4
     #gen_fplan $1 $2 $3;
-    echo " regenarate before parse is $regenerate_fplan";
-    parse_synth_report $1 $2 $3 $4
-    gen_floorplan $1 $2 $3 $4;
-    acc_fplan $1 $2 $3 $4;
+#    echo " regenarate before parse is $regenerate_fplan";
+#    parse_synth_report $1 $2 $3 $4
+#    gen_floorplan $1 $2 $3 $4;
+#    acc_fplan $1 $2 $3 $4;
     #echo " regenarate after parse is $regenerate_fplan";
     #gen_floorplan $1 $2 $3 $4
 
