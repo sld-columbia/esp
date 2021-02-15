@@ -240,7 +240,7 @@ vivado-gui: vivado-setup
 vivado-syn: vivado-setup
 	$(QUIET_INFO)echo "launching Vivado implementation script"
 	@cd vivado; \
-    vivado $(VIVADO_BATCH_OPT) -source syn.tcl | tee ../vivado_syn.log;
+	vivado $(VIVADO_BATCH_OPT) -source syn.tcl | tee ../vivado_syn.log;
 	@if [ "$(DPR_ENABLED)" != "y" ]; then \
         bit=vivado/$(DESIGN).runs/impl_1/$(TOP).bit; \
         if  test -r $$bit; then \
