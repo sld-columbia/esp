@@ -12,6 +12,8 @@ def gen(is_transposed, batch_size, rowsA, colsA, colsB, name):
     value_range = 5
 
     matrixA = open("../input/" + name + "_A.txt", 'w')
+    barec_in = open("../input/" + name + "_barec_in.h", 'w')
+    barec_i = 0
 
     matrixA.write("3 ")           # dim
     matrixA.write("0 ")  # is_transposed
@@ -20,7 +22,10 @@ def gen(is_transposed, batch_size, rowsA, colsA, colsB, name):
     matrixA.write(str(colsA) + "\n") # colsA
 
     for i in range(0, batch_size * rowsA * colsA):
-        matrixA.write(str(random.randint(-value_range, value_range)) + " ")
+        val = random.randint(-value_range, value_range)
+        matrixA.write(str(val) + " ")
+        barec_in.write("in[" + str(barec_i) + "] = " + str(val) + ";\n")
+        barec_i += 1
 
     matrixA.close()
 
@@ -33,7 +38,10 @@ def gen(is_transposed, batch_size, rowsA, colsA, colsB, name):
     matrixB.write(str(colsB) + "\n") # colsB
 
     for i in range(0, batch_size * colsA * colsB):
-        matrixB.write(str(random.randint(-value_range, value_range)) + " ")
+        val = random.randint(-value_range, value_range)
+        matrixB.write(str(val) + " ")
+        barec_in.write("in[" + str(barec_i) + "] = " + str(val) + ";\n")
+        barec_i += 1
 
     matrixB.close()
 
@@ -41,7 +49,7 @@ def main():
 
     # Generate small sized matrices
     gen(1,
-        random.randint(1, 1),
+        random.randint(2, 2),
         random.randint(4, 4) * 2,
         random.randint(4, 4) * 2,
         random.randint(4, 4) * 2,

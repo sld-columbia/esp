@@ -664,7 +664,7 @@ void gemm::compute_kernel()
 			    {
 				//HLS_CONSTRAIN_LATENCY(0, HLS_ACHIEVABLE, "constrain-mac");
 #ifdef FIXED_POINT
- 				HLS_PIPELINE_LOOP(HARD_STALL, 1, "pipeline-mac-fixed");
+ 				HLS_PIPELINE_LOOP(HARD_STALL, 2, "pipeline-mac-fixed");
 #else
  				HLS_PIPELINE_LOOP(HARD_STALL, 2, "pipeline-mac-float");
 #endif

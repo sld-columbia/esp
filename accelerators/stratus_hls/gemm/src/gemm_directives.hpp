@@ -94,8 +94,8 @@
 #endif
 
 #elif (DMA_CHUNK == 2048)
-#define OUT_DMA_CHUNK 128
-#define OUT_PLM_NAME "plm_w32_d64_chk128"
+#define OUT_DMA_CHUNK 256
+#define OUT_PLM_NAME "plm_w32_d64_chk256"
 #if (PARALLELISM == 1)
 #define IN_PLM_NAME "plm_w32_d64_chk2048_p1"
 #elif (PARALLELISM == 4)
