@@ -15,6 +15,8 @@
 
 void _gemm_pv(double *mtx_inA, double *mtx_inB, double *mtx_out,
 	      size_t is_trans, size_t rowsA, size_t colsA, size_t colsB)
+// void _gemm_pv(float *mtx_inA, float *mtx_inB, float *mtx_out,
+// 	      size_t is_trans, size_t rowsA, size_t colsA, size_t colsB)
 {
 
 #if defined(USE_CBLAS)
@@ -59,6 +61,7 @@ void _gemm_pv(double *mtx_inA, double *mtx_inB, double *mtx_out,
 
     unsigned d1, d2, d3, mtx_inA_i, mtx_inB_i;
     double accumulator;
+    // double accumulator;
     for (d1 = 0; d1 < rowsA; ++d1)
 	{
 		/* std::cout<<"rowa_no : "<<d1<<std::endl; */
@@ -124,16 +127,18 @@ void gemm_pvt(int l_n,float* layer_node,float* layer_bias,bool relu,float*w,int 
 	
 	double rel_error=0;
 	int tot_errors1=0;
-
 	
 	create_double_matrix_t(&matrixA, sizeA, 3);
 	create_double_matrix_t(&matrixB, sizeB, 3);
 
+
 	for( int i = 0; i <ws; i = i + 1 ) {
 		in1[i]=(double)w[i];}
 
+	
 	for( int i = 0; i <wc; i = i + 1 ) {
 		in2[i]=(double)layer_node[i];}
+
 
 	matrixA->data=in1;
 	matrixB->data=in2;
@@ -179,7 +184,7 @@ void gemm_pvt(int l_n,float* layer_node,float* layer_bias,bool relu,float*w,int 
 	printf("Layer %d validation \n",l_n);
 	for (int i=0;i<wr;i++)
 	{
-		if (check_error_threshold((double)out[i], (double)gold[i], rel_error)){
+		if (check_error_threshold((double)out[i],(double)gold[i], rel_error)){
 			tot_errors1++;
 			std::cout<<"Mismatch "<<tot_errors1<<" (index "<<i<<"): ref|gemm_pv     "<<
 				gold[i]<<"|"<<out[i]<<std::endl;
@@ -191,12 +196,6 @@ void gemm_pvt(int l_n,float* layer_node,float* layer_bias,bool relu,float*w,int 
 	else
 		std::cout<<"Validated"<<std::endl;
 
-
-	/* int c =cnn.layer_sets[5]->node.get_size(); */
-	/* std::cout << "Length of array = " << c <<std::endl; */
-	/* for( int i = 0; i < 64; i = i + 1 ) { */
-	/* 	cnn.layer_sets[5]->node.x[i]=out1[i]; */
-	/* 	std::cout<<out1[i]<<" ";} */
 
 	
 

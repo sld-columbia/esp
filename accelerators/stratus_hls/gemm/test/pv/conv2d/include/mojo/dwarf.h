@@ -43,7 +43,7 @@ int get_pool_stride(int cols, int rows, bool do_pool, bool do_pad) {
 void convolution_compute(float *dst, float *bias, float *src, float *w, int cols, int rows, int src_chans,
                          int dst_chans, int pool_size, int pool_stride, bool do_pool, bool do_pad) {
 
-    const int chan_stride = cols * rows;
+	const int chan_stride = cols*rows;// (cols-2) * (rows-2);
     const int kernel_size = 9;
 
     // Convolution
@@ -52,7 +52,7 @@ void convolution_compute(float *dst, float *bias, float *src, float *w, int cols
         if (k == src_chans - 1)
             last = true;
 
-        const float *img = &src[k * chan_stride];
+        const float *img = &src[k * cols*rows];//chan_stride];
 
         for (int c = 0; c < dst_chans; c++) {
             const float *filter = &w[k * dst_chans * kernel_size + c * kernel_size];
@@ -67,36 +67,77 @@ void convolution_compute(float *dst, float *bias, float *src, float *w, int cols
 	    /* }/ */
             
 	    float *out_pool = &dst[pool_stride * c];
+	    
+	    /* if (k==0 && c==0) { */
+	    /* 	    float in[9]={img[0],img[1],img[2],img[0+cols],img[1+cols],img[2+cols],img[0+2*cols],img[1+2*cols],img[2+2*cols]}; */
+	    /* 	    for(int i=0;i<9;i++) */
+	    /* 		    printf("channel 0:filterindex filter_ref | input_ref input_index: %d %f | %f %d\n",k * dst_chans * kernel_size + c * kernel_size,filter[i],in[i],k*cols*rows); */
+		
+	    /* 	    //	printf("input_ref: %f %f %f %f %f %f %f %f %f \n",img[0],img[1],img[2],img[0+cols],img[1+cols],img[2+cols],img[0+2*cols],img[1+2*cols],img[2+2*cols]); */
+	    /* 	float res=0; */
+	    /* 	for(int i=0;i<9;i++) */
+	    /* 		res+=filter[i]*in[i]; */
+	    /* 	printf("res_ref: %f \n",res); */
+	    /* } */
+
+
+	    /* if (k==1 && c==0) { */
+	    /* 	    float in[9]={img[0],img[1],img[2],img[0+cols],img[1+cols],img[2+cols],img[0+2*cols],img[1+2*cols],img[2+2*cols]}; */
+	    /* 	    for(int i=0;i<9;i++) */
+	    /* 		    printf("channel1:filter_index filter_ref | input_ref input_index:%d  %f | %f %d\n",k * dst_chans * kernel_size + c * kernel_size,filter[i],in[i],k*cols*rows); */
+		
+	    /* 	    //	printf("input_ref: %f %f %f %f %f %f %f %f %f \n",img[0],img[1],img[2],img[0+cols],img[1+cols],img[2+cols],img[0+2*cols],img[1+2*cols],img[2+2*cols]); */
+	    /* 	float res=0; */
+	    /* 	for(int i=0;i<9;i++) */
+	    /* 		res+=filter[i]*in[i]; */
+	    /* 	printf("res_ref: %f \n",res); */
+	    /* } */
 
             // dotsum_3x3
-            for (int j = 1; j < cols - 1; j++)     // intput h
-                for (int i = 1; i < cols - 1; i++) // intput w
+            for (int j = 1; j < cols-1 ; j++)     // intput h
+                for (int i = 1; i < cols-1 ; i++) // intput w
                 {
                     const int index_out_p0 = (j - 1) * cols + i - 1;
                     const int index_out_p1 = j * cols + i - 1;
                     const int index_out_p2 = (j - 1) * cols + i;
                     const int index_out_p3 = j * cols + i;
-                    const int index_out = index_out_p3;
-
-                    int index_out_pool;
+                    int index_out=index_out_p3;
+		    //const int ind_out=(j-1)*(cols-2)+(i-1);
+                    int indx_out=index_out;
+                    int index_out_pool; 
                     if (do_pad)
                         index_out_pool = j / 2 * pool_size + i / 2;
                     else
                         index_out_pool = (j / 2 - 1) * pool_size + i / 2 - 1;
 
-                    out[index_out] +=
-                        img[index_out - 1 - 1 * cols] * filter[0] + img[index_out + 0 - 1 * cols] * filter[1] +
-                        img[index_out + 1 - 1 * cols] * filter[2] + img[index_out - 1] * filter[3] +
-                        img[index_out + 0] * filter[4] + img[index_out + 1] * filter[5] +
-                        img[index_out - 1 + 1 * cols] * filter[6] + img[index_out + 0 + 1 * cols] * filter[7] +
-                        img[index_out + 1 + 1 * cols] * filter[8];
+		    /* if (do_pad) */
+		    /* 	    indx_out=index_out_p3; */
+		    /* else */
+		    /* 	    indx_out=ind_out; */
 
+		    /* if (do_pad) */
+		    /* 	    out[index_out] += */
+		    /* 		    img[index_out - 1 - 1 * cols] * filter[0] + img[index_out + 0 - 1 * cols] * filter[1] + */
+		    /* 		    img[index_out + 1 - 1 * cols] * filter[2] + img[index_out - 1] * filter[3] + */
+		    /* 		    img[index_out + 0] * filter[4] + img[index_out + 1] * filter[5] + */
+		    /* 		    img[index_out - 1 + 1 * cols] * filter[6] + img[index_out + 0 + 1 * cols] * filter[7] + */
+		    /* 		    img[index_out + 1 + 1 * cols] * filter[8]; */
+		    /* else */
+		    out[indx_out] +=
+			    img[index_out - 1 - 1 * cols] * filter[0] + img[index_out + 0 - 1 * cols] * filter[1] +
+			    img[index_out + 1 - 1 * cols] * filter[2] + img[index_out - 1] * filter[3] +
+			    img[index_out + 0] * filter[4] + img[index_out + 1] * filter[5] +
+			    img[index_out - 1 + 1 * cols] * filter[6] + img[index_out + 0 + 1 * cols] * filter[7] +
+			    img[index_out + 1 + 1 * cols] * filter[8];
+
+
+		   
                     // Activation
                     if (last) {
-                        if (out[index_out] + b < 0)
-                            out[index_out] = 0;
-                        else
-                            out[index_out] = out[index_out] + b;
+			    if (out[indx_out] + b < 0)
+				    out[indx_out] = 0;
+			    else
+				    out[indx_out] = out[indx_out] + b;
 
                         // Max Pool 2x2
                         if ((j % 2 == 0) && (i % 2 == 0) && do_pool) {
@@ -117,8 +158,9 @@ void convolution_compute(float *dst, float *bias, float *src, float *w, int cols
                     }
                 }
 
-            // Pad (resize)
-            if (last && do_pad) {
+//            Pad (resize)
+            if (last && do_pad ) {
+//	    	    printf("doing pad\n");
                 for (int i = 0; i < pool_size; i++)
                     // first row
                     out_pool[i] = 0.0;
@@ -146,11 +188,6 @@ void convolution_compute(float *dst, float *bias, float *src, float *w, int cols
 void fc_compute(float *dst, float *src, float *w, float *b, int w_cols, int w_rows, bool relu) {
 
     // Multiply the input with the weight matrix
-    
-    /* for (int i=0;i<100;i++){ */
-    /* 	    printf("%f ",src[i]); */
-    /* } */
-
     for (int j = 0; j < w_rows; j++) {
         const int w_index = j * w_cols;
         dst[j] = 0;
