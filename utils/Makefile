@@ -110,6 +110,10 @@ include $(ESP_ROOT)/utils/make/soft_common.mk
 include $(ESP_ROOT)/utils/make/profpga.mk
 
 
+### Support for BSG DDR controller simulation on Modelsim and Genus synthesis
+include $(ESP_ROOT)/utils/make/bsg.mk
+
+
 ### RTL ###
 include $(ESP_ROOT)/utils/make/rtl.mk
 
