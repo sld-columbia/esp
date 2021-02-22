@@ -23,7 +23,7 @@ genus:
 
 genus/incdir.tcl: genus $(RTL_CFG_BUILD)/check_all_rtl_srcs.old
 	$(QUIET_MAKE) \
-	echo "set log_syn(hdl_search_path) \"$(INCDIR)\"" > $@
+	echo "set log_syn(hdl_search_path) \"$(INCDIR) $(BSG_INCDIR)\"" > $@
 
 genus/srcs.tcl: genus $(RTL_CFG_BUILD)/check_all_rtl_srcs.old
 	$(QUIET_MAKE) $(RM) $@
@@ -40,13 +40,16 @@ genus/srcs.tcl: genus $(RTL_CFG_BUILD)/check_all_rtl_srcs.old
 			[[ $$rtl =~ techmap/virtex  ]] || echo "$(GENUS_VHDL) $$rtl" >> $@; \
 		fi; \
 	done; \
+	echo "### Compile Verilog source files ###" >> $@; \
 	for rtl in $(VLOG_SRCS); do \
 		if echo "$(GENUS_EXCLUDE_VLOG)" | grep -q $$rtl; then \
 			echo "# skip $$rtl" >> $@; \
 		else \
 			[[ $$rtl =~ techmap/virtex  ]] || echo "$(GENUS_VLOG) $$rtl" >> $@; \
 		fi; \
-	done;
+	done; \
+	echo "### Compile BSG Verilog source files ###" >> $@; \
+		echo "$(GENUS_VLOG) $(GENUS_BSG_VLOGOPT) $(BSG_VLOG_SRCS)" >> $@; \
 
 
 genus/$(DESIGN): genus genus/srcs.tcl genus/incdir.tcl
