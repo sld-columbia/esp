@@ -660,7 +660,7 @@ void gemm::compute_kernel()
 
 			    uint16_t plm_i_row = plm_offset_m1;
 			    uint16_t plm_i_col = plm_offset_m2;
-			    for (uint16_t k = 0; k < length / PARALLELISM; ++k)
+			    for (uint16_t k = 0; k < (length + PARALLELISM - 1) / PARALLELISM; ++k)
 			    {
 				//HLS_CONSTRAIN_LATENCY(0, HLS_ACHIEVABLE, "constrain-mac");
 #ifdef FIXED_POINT
