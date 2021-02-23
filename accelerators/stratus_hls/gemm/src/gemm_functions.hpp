@@ -36,14 +36,17 @@ inline void gemm::calculate_config(uint24_t ninputs,
     m2_loop_iters = 1;
     m2_plm_incr = 1;
 
-    if (matrix_d2 > DMA_CHUNK) {
+    bool d3_odd = matrix_d3 % 2;
+    bool is_less_than_matrix2 = (size_matrix2 > DMA_CHUNK || !transpose);
+
+    if ((matrix_d2 > DMA_CHUNK) || (is_less_than_matrix2 && d3_odd)) {
 	load_cfg = LESS_THAN_ROW;
 	loadable_rows = 1;
 	loadable_chunk = DMA_CHUNK;
 	calculate_chunks(matrix_chk_in, matrix_rem_in1, matrix_d2, 0);
 	matrix_rem_in2 = matrix_rem_in1;
 	index_d1_incr = matrix_d2;
-    } else if (size_matrix2 > DMA_CHUNK || !transpose) {
+    } else if (is_less_than_matrix2) {
 	load_cfg = LESS_THAN_MATRIX2;
 	if (size_matrix2 > DMA_CHUNK) {
 	    loadable_rows = DMA_CHUNK / matrix_d2;
@@ -66,7 +69,7 @@ inline void gemm::calculate_config(uint24_t ninputs,
 	loadable_rows = matrix_d3;
 	loadable_chunk = size_matrix2;
 	matrix_chk_in = 1;
-	matrix_rem_in1 = size_matrix1;
+	matrix_rem_in1 = size_matrix1 % loadable_chunk;
 	matrix_rem_in2 = size_matrix2;
 	index_d1_incr = loadable_chunk;
     }

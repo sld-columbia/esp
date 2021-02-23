@@ -194,8 +194,8 @@ void gemm::load_input()
 						SIZE_WORD);
     			    this->dma_read_ctrl.put(dma_info);
 
-    			    // ESP_REPORT_INFO("load m1 %u %u",
-    			    // 		    (unsigned) index_d1_tmp >> WORDS_PER_DMA_LOG, (unsigned) round_up(length1, WORDS_PER_DMA));
+                            // ESP_REPORT_INFO("load m1 %u %u",
+                            // 		    (unsigned) index_d1_tmp, (unsigned) round_up(length1, WORDS_PER_DMA));
     			}
 
     			i = 0;
@@ -286,8 +286,7 @@ void gemm::load_input()
 
 			    {
 				// This ensures the maximum throughput
-				//HLS_DEFINE_PROTOCOL("protocol-load-matrix2");
-				HLS_CONSTRAIN_LATENCY(0, HLS_ACHIEVABLE, "load-matrix2");
+				HLS_DEFINE_PROTOCOL("protocol-load-matrix2");
 				HLS_BREAK_ARRAY_DEPENDENCY(input2);
 				HLS_BREAK_ARRAY_DEPENDENCY(input3);
 
@@ -596,7 +595,7 @@ void gemm::compute_kernel()
 
 	wait();
 
-    	// ESP_REPORT_INFO("COMPUTE %u %u %u %u",
+        // ESP_REPORT_INFO("COMPUTE %u %u %u %u %u",
     	// 		(unsigned) matrix_chk_in, (unsigned) matrix_rem_in1, (unsigned) matrix_rem_in2,
     	// 		(unsigned) load_cfg, (unsigned) loadable_rows);
     }
@@ -769,7 +768,7 @@ void gemm::compute_kernel()
 #endif
 				}
 
-				uint16_t plm_i = (k << 1) + 1;
+				uint16_t plm_i = k * PARALLELISM + 1;
 				mult_out[0] = row[0] * col[0];
 				if (plm_i < length)
 				    mult_out[1] =  row[1] * col[1];
