@@ -39,6 +39,14 @@ entity misc_tile_q is
     remote_ahbs_snd_wrreq           : in  std_ulogic;
     remote_ahbs_snd_data_in         : in  misc_noc_flit_type;
     remote_ahbs_snd_full            : out std_ulogic;
+
+    prc_dma_rcv_rdreq             : std_ulogic;
+    prc_dma_rcv_data_out          : noc_flit_type;
+    prc_dma_rcv_empty             : std_ulogic;
+    prc_dma_snd_wrreq             : std_ulogic;
+    prc_dma_snd_data_in           : noc_flit_type;
+    prc_dma_snd_full              : std_ulogic;
+
     -- non-coherent DMA requests from masters
     -- NoC6->tile
     dma_rcv_rdreq                   : in  std_ulogic;
