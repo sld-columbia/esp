@@ -301,6 +301,15 @@ architecture rtl of tile_io is
   signal remote_ahbs_snd_wrreq     : std_ulogic;
   signal remote_ahbs_snd_data_in   : misc_noc_flit_type;
   signal remote_ahbs_snd_full      : std_ulogic;
+
+  -- DPR DMA queue entries
+  signal prc_dma_rcv_rdreq             : std_ulogic;
+  signal prc_dma_rcv_data_out          : noc_flit_type;
+  signal prc_dma_rcv_empty             : std_ulogic;
+  signal prc_dma_snd_wrreq             : std_ulogic;
+  signal prc_dma_snd_data_in           : noc_flit_type;
+  signal prc_dma_snd_full              : std_ulogic;
+
   signal dma_rcv_rdreq             : std_ulogic;
   signal dma_rcv_data_out          : noc_flit_type;
   signal dma_rcv_empty             : std_ulogic;
@@ -1907,6 +1916,36 @@ begin
       icap_prdone   => icap_prdone,                                                                                                                       
       icap_prerror  => icap_prerror);   
 
+  axi2noc_1: axislv2noc
+    generic map (
+      tech             => tech,
+      nmst             => 1,
+      retarget_for_dma => 1,
+      mem_axi_port     => 0,
+      mem_num          => CFG_NSLM_TILE + CFG_NMEM_TILE,
+      mem_info         => nofb_mem_info,
+      slv_y            => io_y,
+      slv_x            => io_x)
+    port map (
+      rst                        => rst,
+      clk                        => clk,
+      local_y                    => local_y,
+      local_x                    => local_x,
+      mosi                       => mosi,
+      somi                       => somi,
+      coherence_req_wrreq        => prc_dma_snd_wrreq,
+      coherence_req_data_in      => prc_dma_snd_data_in,
+      coherence_req_full         => prc_dma_snd_full,
+      coherence_rsp_rcv_rdreq    => prc_dma_rcv_rdreq,
+      coherence_rsp_rcv_data_out => prc_dma_rcv_data_out,
+      coherence_rsp_rcv_empty    => prc_dma_rcv_empty,
+      remote_ahbs_snd_wrreq      => open,
+      remote_ahbs_snd_data_in    => open,
+      remote_ahbs_snd_full       => '0',
+      remote_ahbs_rcv_rdreq      => open,
+      remote_ahbs_rcv_data_out   => (others => '0'),
+      remote_ahbs_rcv_empty      => '1');
+
 -----------------------------------------------------------------------------
   -- Tile queues
   -----------------------------------------------------------------------------
@@ -1929,6 +1968,12 @@ begin
       remote_ahbs_snd_wrreq     => remote_ahbs_snd_wrreq,
       remote_ahbs_snd_data_in   => remote_ahbs_snd_data_in,
       remote_ahbs_snd_full      => remote_ahbs_snd_full,
+      prc_dma_rcv_rdreq         => prc_dma_rcv_rdreq,
+      prc_dma_rcv_data_out      => prc_dma_rcv_data_out,
+      prc_dma_rcv_empty         => prc_dma_rcv_empty,
+      prc_dma_snd_wrreq         => prc_dma_snd_wrreq,
+      prc_dma_snd_data_in       => prc_dma_snd_data_in,
+      prc_dma_snd_full          => prc_dma_snd_full,
       dma_rcv_rdreq             => dma_rcv_rdreq,
       dma_rcv_data_out          => dma_rcv_data_out,
       dma_rcv_empty             => dma_rcv_empty,
