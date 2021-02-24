@@ -3,15 +3,15 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-
+#include <math.h>
 #include <assert.h>
 
 #if defined(USE_CBLAS)
 #include "cblas.h"
 #endif // USE_CBLAS
 
-#include "gemm_pv.h"
-#include "gemm_pvt.hpp"
+#include "gemm_pvt.h"
+//#include "gemm_pvt.hpp"
 
 void _gemm_pv(double *mtx_inA, double *mtx_inB, double *mtx_out,
 	      size_t is_trans, size_t rowsA, size_t colsA, size_t colsB)
@@ -94,14 +94,14 @@ void gemm_pv(double_matrix_t *mtx_inA, double_matrix_t *mtx_inB, double_matrix_t
     unsigned size_inA = rowsA * colsA;
     unsigned size_inB = colsA * colsB;
     unsigned size_out = rowsA * colsB;
-    size_t out_sizes[M_DIMS] = {batch_size, rowsA, colsB};
+    size_t out_sizes[3] = {batch_size, rowsA, colsB};
 
-    assert(mtx_inA->dim == M_DIMS);
-    assert(mtx_inB->dim == M_DIMS);
+    assert(mtx_inA->dim == 3);
+    assert(mtx_inB->dim == 3);
     assert(mtx_inA->dims[0] == mtx_inB->dims[0]);
     assert(mtx_inA->dims[2] == mtx_inB->dims[1]);
 
-    create_double_matrix_t(mtx_out, out_sizes, M_DIMS);
+    create_double_matrix_t(mtx_out, out_sizes, 3);
 
     for (i = 0; i < batch_size; ++i) {
         _gemm_pv(&(mtx_inA->data[i * size_inA]),
@@ -113,7 +113,7 @@ void gemm_pv(double_matrix_t *mtx_inA, double_matrix_t *mtx_inB, double_matrix_t
 }
 
 
-void gemm_pvt(int l_n,float* layer_node,float* layer_bias,bool relu,float*w,int wr,int wc,int ws,float* out,float* gold)
+void gemm_pvt(int l_n,float* layer_node,float* layer_bias,bool relu,float*w,int wr,int wc,int ws,float* out)
 {
 	size_t sizeA[3]={(size_t)1,(size_t)wr,(size_t)wc};
 	size_t sizeB[3]={(size_t)1,(size_t)wc,(size_t)1};
@@ -149,7 +149,6 @@ void gemm_pvt(int l_n,float* layer_node,float* layer_bias,bool relu,float*w,int 
 
 	for( int i = 0; i < wr; i = i + 1 ) {
 		out[i]=(float)matrixC->data[i];
-		//		std::cout<<out[i]<<std::endl;
 	}
 	printf("\n");
 
@@ -182,20 +181,20 @@ void gemm_pvt(int l_n,float* layer_node,float* layer_bias,bool relu,float*w,int 
 
 	printf("\n");
 
-	printf("Layer %d validation \n",l_n);
-	for (int i=0;i<wr;i++)
-	{
-		if (check_error_threshold((double)out[i],(double)gold[i], rel_error)){
-			tot_errors1++;
-			std::cout<<"Mismatch "<<tot_errors1<<" (index "<<i<<"): ref|gemm_pv     "<<
-				gold[i]<<"|"<<out[i]<<std::endl;
-		}
-	}
+	// printf("Layer %d validation \n",l_n);
+	// for (int i=0;i<wr;i++)
+	// {
+	// 	if (check_error_threshold((double)out[i],(double)gold[i], rel_error)){
+	// 		tot_errors1++;
+	// 		std::cout<<"Mismatch "<<tot_errors1<<" (index "<<i<<"): ref|gemm_pv     "<<
+	// 			gold[i]<<"|"<<out[i]<<std::endl;
+	// 	}
+	// }
 
-	if (tot_errors1>0)
-		std::cout<<"Total amount of mismatches :"<<tot_errors1<<std::endl;
-	else
-		std::cout<<"Validated"<<std::endl;
+	// if (tot_errors1>0)
+	// 	std::cout<<"Total amount of mismatches :"<<tot_errors1<<std::endl;
+	// else
+	// 	std::cout<<"Validated"<<std::endl;
 
 
 	

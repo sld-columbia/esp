@@ -1,5 +1,5 @@
 #include "double_matrix_t.h"
-
+#define M_DIMS 3
 void gemm_pvt(
 	int l_n,
 	float* layer_node,
@@ -9,5 +9,4 @@ void gemm_pvt(
 	int wr,
 	int wc,
 	int ws,
-	float* out,
-	float* gold);
+	float* out);

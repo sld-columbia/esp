@@ -36,23 +36,11 @@
 
 #include "validation.hpp"
 
-//#include "conv2d_data.hpp"
-// #include "fpdata.hpp"
-// #include "conv2d_conf_info.hpp"
-// #include "conv2d_debug_info.hpp"
-// #include "conv2d.hpp"
-// #include "conv2d_directives.hpp"
-
 #include "contrast_adj.h"
 
-
-// #include "conv_layer.hpp"
 #include "conv_pvt.cpp"
 #include "golden.hpp"
 #include "golden.cpp"
-// #include "sizes.h"
-// #include "esp_templates.hpp"
-// #include "utils.hpp"
 
 
 std::ofstream ofs;
@@ -79,13 +67,6 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-    // resize to 32x32 BGR format
-    // cv::resize(im,im,cv::Size(32,32));
-    // make 3 chan
-    // if (im.channels()<3) cv::cvtColor(im,im,CV_GRAY2BGR);
-
-    // convert packed BGR to planar BGR, apply contrast_adj
-    // and subtract DWARF mean (while converting to float)
     cv::Mat bgr[3];
     cv::split(im, bgr);
 

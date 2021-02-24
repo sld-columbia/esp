@@ -41,9 +41,9 @@ void conv_pvt(int l_n,int previous_soft,float *Gold,float *Cnn_W,int W_size,int 
 	if (out_pad_h>0)
 	{
 	
-		//	myfilex<<"input reshape";
+		//input reshape
 
-		if (pool_in==1)
+		if (pool_in==1)                     //input reshape if the input is padded and pooling has been perfomed in the previous layer executed in software
 		{
 			int rows=(layer_in_rows+2*in_pad_h)/2;
 			int cols=(layer_in_cols+2*in_pad_h)/2;
@@ -55,21 +55,8 @@ void conv_pvt(int l_n,int previous_soft,float *Gold,float *Cnn_W,int W_size,int 
 						int ind_out=k*(rows-2*in_pad_h)*(cols-2*in_pad_w)+(j-1)*(cols-2*in_pad_w)+(i-1);
 						cnn[ind_out] =layer_in_soft[index_out];
 					}
-			// std::ofstream myfile_;
-			// myfile_.open("check.txt");
-			// if (myfile_.is_open())
-			// 	{
-			// 		myfile_<<l_n<<" \n";
-			// 		for (int i=0;i<200;i++)
-			// 			myfile_<<" "<<cnn[i]<<" "<<layer_in[i]<<"\n";
-			// 	}
-				
-			// myfile_.close();
-
-
-	
 		}
-		else
+		else                              //input reshape if input padded
 		{
 		for (int k=0;k<in_ch;k++)
 			for (int j = 1; j < layer_in_cols-in_pad_h ; j++)     // intput h
@@ -83,7 +70,8 @@ void conv_pvt(int l_n,int previous_soft,float *Gold,float *Cnn_W,int W_size,int 
 
 		//output reshape
 
-		if (pool_out==1)
+		if (pool_out==1)                 //Golden output reshape if the layer performs both pooling and padding
+
 		{
 			for (int k=0;k<out_ch;k++)
 				for (int j = 1; j < (layer_out_cols+2*out_pad_h)/2-out_pad_h ; j++)     // output h
@@ -97,7 +85,7 @@ void conv_pvt(int l_n,int previous_soft,float *Gold,float *Cnn_W,int W_size,int 
 					}
 		
 		}
-		else
+		else                             //Golden output reshape if hte layer performs both pooling and padding 
 		{
 			for (int k=0;k<out_ch;k++)
 				for (int j = 1; j < layer_out_cols-out_pad_h ; j++)     // output h
@@ -113,7 +101,7 @@ void conv_pvt(int l_n,int previous_soft,float *Gold,float *Cnn_W,int W_size,int 
 	else
 	{
 		//input reshape
-		if (pool_in==1)
+		if (pool_in==1)               //same input reshape as above
 		{
 			int rows=(layer_in_rows+2*in_pad_h)/2;
 			int cols=(layer_in_cols+2*in_pad_h)/2;
@@ -125,19 +113,7 @@ void conv_pvt(int l_n,int previous_soft,float *Gold,float *Cnn_W,int W_size,int 
 						int ind_out=k*(rows-2*in_pad_h)*(cols-2*in_pad_w)+(j-1)*(cols-2*in_pad_w)+(i-1);
 						cnn[ind_out] =layer_in_soft[index_out];
 					}
-			// std::ofstream myfile_;
-			// myfile_.open("check.txt");
-			// if (myfile_.is_open())
-			// 	{
-			// 		myfile_<<l_n<<" \n";
-			// 		for (int i=0;i<200;i++)
-			// 			myfile_<<" "<<cnn[i]<<" "<<layer_in[i]<<"\n";
-			// 	}
-				
-			// myfile_.close();
 
-
-	
 		}
 		else
 		{
@@ -151,7 +127,7 @@ void conv_pvt(int l_n,int previous_soft,float *Gold,float *Cnn_W,int W_size,int 
 				}
 		}
 
-		cnn_out=Gold;
+		cnn_out=Gold;            //golden output remain untouched 
 	}
 
 

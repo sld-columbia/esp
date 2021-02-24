@@ -38,11 +38,11 @@
 #include "contrast_adj.h"
 
 #include "gemm_pvt.cpp"
-//#include "gemm_pv.h"
+//#include "gemm_pvt.hpp"
 
 std::ofstream ofs;
 
-std::string image_path = "include/data/bird.bmp";
+std::string image_path = "include/data/truck.bmp";
 std::string model_file = "../models/dwarf7.mojo";
 int target_layer = 5;
 int target_test= 1;
@@ -196,7 +196,6 @@ int main(int argc, char **argv) {
 		     cnn.W[4]->rows, cnn.W[4]->cols, cnn.W[4]->get_size(),out1,cnn.layer_sets[5]->node.x);	        
     }
 
-  
     // fc (dense) #2: 1x1, 64 channels, relu
     fc_compute(cnn.layer_sets[6]->node.x, cnn.layer_sets[5]->node.x, cnn.W[5]->x, cnn.layer_sets[6]->bias.x,
                 cnn.W[5]->cols, cnn.W[5]->rows, cnn.layer_sets[6]->relu);

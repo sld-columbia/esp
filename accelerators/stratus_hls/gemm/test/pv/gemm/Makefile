@@ -40,7 +40,7 @@ endif
 
 RM = rm -rf
 
-IMAGE ?= bird
+IMAGE ?= truck
 INPUT = ./include/data/$(IMAGE).bmp
 TARGET_LAYER ?= 5
 TARGET_TEST ?= 1

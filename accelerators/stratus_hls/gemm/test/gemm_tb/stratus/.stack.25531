@@ -1,0 +1,1 @@
+/opt/cad/stratus/tools.lnx86/stratus/gdb/bin/gdb: error while loading shared libraries: libexpat.so.0: cannot open shared object file: No such file or directory
