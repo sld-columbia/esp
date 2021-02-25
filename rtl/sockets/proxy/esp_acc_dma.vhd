@@ -912,7 +912,7 @@ begin  -- rtl
         elsif pending_acc_done = '1' then
           if USE_SPANDEX /= 0 and coherence = ACC_COH_FULL then
             flush <= '1';
-            dma_next <= wait_flush_done; 
+            dma_next <= wait_flush_done;
           else
             status <= (others => '0');
             status(STATUS_BIT_DONE) <= '1';
@@ -920,7 +920,7 @@ begin  -- rtl
             if coherence = ACC_COH_FULL then
               flush <= '1';
             end if;
-            dma_next <= wait_for_completion; 
+            dma_next <= wait_for_completion;
           end if;
         elsif rd_request = '1' then
           if scatter_gather = 0 then
@@ -941,7 +941,7 @@ begin  -- rtl
           status <= (others => '0');
           status(STATUS_BIT_DONE) <= '1';
           sample_status <= '1';
-          dma_next <= wait_for_completion; 
+          dma_next <= wait_for_completion;
         end if;
 
       when wait_for_completion =>
