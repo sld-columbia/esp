@@ -843,9 +843,9 @@ begin
   port map (        
   rst               => rst,
   clk               => clk_feedthru,                                                                                                 
-  refclk            => dvfs_clk,
-  pllbypass         => pllbypass,
-  pllclk            => clk_feedthru, 
+  --refclk            => dvfs_clk,
+  --pllbypass         => pllbypass,
+  --pllclk            => clk_feedthru, 
   local_y           => this_local_y,
   local_x           => this_local_x,
   paddr             => this_paddr,
@@ -892,7 +892,9 @@ begin
   mon_cache         => mon_cache_int,
   mon_dvfs          => mon_dvfs_int
   );
-
+  
+  -- loopbback pllclk with refclk
+  pllclk <= refclk;
 
   -- PR_decoupler
     pr_decoupler_1 : pr_decoupler
@@ -906,7 +908,13 @@ begin
       coherence_rsp_snd_wrreq   => coherence_rsp_snd_wrreq,
       dma_rcv_rdreq             => dma_rcv_rdreq,
       dma_snd_wrreq             => dma_snd_wrreq,
-      decouple_acc              => decouple_acc);
+      decouple_acc              => decouple_acc,
+      interrupt_wrreq           => interrupt_wrreq,
+      interrupt_data_in         => interrupt_data_in,
+      interrupt_full            => interrupt_full,
+      interrupt_ack_rdreq       => interrupt_ack_rdreq,
+      interrupt_ack_empty       => interrupt_ack_empty,
+      pready                    => pready);
 
       -- CSR map for decouple 
       decouple_acc <= tile_config(TBD);
