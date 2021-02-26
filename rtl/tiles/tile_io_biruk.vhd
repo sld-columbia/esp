@@ -385,7 +385,7 @@ architecture rtl of tile_io is
   signal s_axil_awready     : std_logic;
   signal s_axil_awaddr      : std_logic_vector(31 downto 0);
   signal s_axil_wvalid      : std_logic;
-  signal s_axil_wready      : std_logic;;
+  signal s_axil_wready      : std_logic;
   signal s_axil_wdata       : std_logic_vector(31 downto 0);
   signal s_axil_wstrb       : std_logic_vector((3 downto 0);
   signal s_axil_arvalid     : std_logic;
@@ -396,8 +396,14 @@ architecture rtl of tile_io is
   signal s_axil_rdata       : std_logic_vector(31 downto 0);
   signal s_axil_rresp       : std_logic_vector(1 downto 0);
   signal s_axil_bvalid      : std_logic;
-  signal s_axil_bready      : std_logic;;
-  signal s_axil_bresp       : std_logic_vector(1 downto 0);;
+  signal s_axil_bready      : std_logic;
+  signal s_axil_bresp       : std_logic_vector(1 downto 0);
+
+  signal prc_pready         : std_logic;
+  
+  -- AXI4 Master
+  signal mosi : axi_mosi_vector(0 to 0);
+  signal somi : axi_somi_vector(0 to 0);
 
   -- PRC axi master bus
   signal m_axi_mem_araddr   : std_logic_vector(31 downto 0);
@@ -1463,7 +1469,7 @@ begin
   noc_apbo(4).pindex <= 4;
 
   -----------------------------------------------------------------------------
-  -- APB 20: apb2axi 
+  -- APB 127: apb2axi 
   -----------------------------------------------------------------------------
   apb2axil_1: apb2axil
     port map (
@@ -1471,10 +1477,10 @@ begin
       rstn              => rst,
       paddr             => noc_apbi.paddr,
       penable           => noc_apbi.penable,
-      psel              => noc_apbi.psel(20),
+      psel              => noc_apbi.psel(127),
       pwdata            => noc_apbi.pwdata,
-      prdata            => noc_apbo(20).prdata,
-      pready            => open,                  -- temporary assignement
+      prdata            => noc_apbo(127).prdata,
+      pready            => prc_pready,                 
       pslverr           => open,                  -- temporary assignement
       s_axil_awvalid    => s_axil_awvalid,  
       s_axil_awready    => s_axil_awready,
@@ -1495,9 +1501,9 @@ begin
       s_axil_bresp      => s_axil_bresp);
 
   -- tie off the other apbo signals
-  noc_apbo(20).pirq <= (others => '0');
-  noc_apbo(20).pconfig <= fixed_apbo_pconfig(20);
-  noc_apbo(20).pindex <= 4;
+  noc_apbo(127).pirq <= (others => '0');
+  noc_apbo(127).pconfig <= fixed_apbo_pconfig(127);
+  noc_apbo(127).pindex <= 127;
 
   -----------------------------------------------------------------------------
   -- APB 13: DVI
@@ -1674,12 +1680,14 @@ begin
 
 
   -- Connect pready for APB3 devices
-  pready_gen: process (plic_pready, ibex_timer_pready, noc_apbi) is
+  pready_gen: process (plic_pready, ibex_timer_pready, noc_apbi, prc_pready) is
   begin  -- process pready_gen
     if noc_apbi.psel(2) = '1' and (GLOB_CPU_ARCH = ariane or GLOB_CPU_ARCH = ibex) then
       pready <= plic_pready;
     elsif noc_apbi.psel(3) = '1' and GLOB_CPU_ARCH = ibex then
       pready <= ibex_timer_pready;
+    elsif noc_apbi.psel(127) = '1' then
+      pready <= prc_pready;
     else
       pready <= '1';
     end if;
@@ -1903,6 +1911,8 @@ begin
       s_axi_reg_rvalid          => s_axi_reg_rvalid,
       s_axi_reg_rready          => s_axi_reg_rready);
 
+    prc_pready <= s_axi_reg_rvalid;
+
   -- ICAPE3 instance
   icape3__inst_1: icape3_inst
     port map (
@@ -1933,6 +1943,19 @@ begin
       local_x                    => local_x,
       mosi                       => mosi,
       somi                       => somi,
+      mosi(0).ar.addr(32 - 1 downto 0)  => m_axi_mem_araddr,
+      mosi(0).ar.len                    => m_axi_mem_arlen,
+      mosi(0).ar.size                   => m_axi_mem_arsize,
+      mosi(0).ar.burst                  => m_axi_mem_arburst,
+      mosi(0).ar.prot                   => m_axi_mem_arprot,
+      mosi(0).ar.cache                  => m_axi_mem_arcache,
+      mosi(0).ar.valid                  => m_axi_mem_arvalid,
+      somi(0).ar.ready                  => m_axi_mem_arready,
+      somi(0).r.data                    => m_axi_mem_rdata,
+      somi(0).r.resp                    => m_axi_mem_rresp,
+      somi(0).r.last                    => m_axi_mem_rlast,
+      somi(0).r.valid                   => m_axi_mem_rvalid,
+      mosi(0).r.ready                   => m_axi_mem_rready
       coherence_req_wrreq        => prc_dma_snd_wrreq,
       coherence_req_data_in      => prc_dma_snd_data_in,
       coherence_req_full         => prc_dma_snd_full,
