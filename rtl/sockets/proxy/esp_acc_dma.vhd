@@ -128,7 +128,9 @@ entity esp_acc_dma is
     -- tile->NoC5
     interrupt_wrreq                     : out std_ulogic;
     interrupt_data_in                   : out misc_noc_flit_type;
-    interrupt_full                      : in  std_ulogic);
+    interrupt_full                      : in  std_ulogic,
+    -- Transient
+    dvfs_transient                      : in std_ulogic);    --prevent DMA transaction while DVFS is switching
 
 end esp_acc_dma;
 
