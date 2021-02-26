@@ -21,7 +21,7 @@ inline float avg_of_4(float a, float b, float c, float d) {
     return (a + b + c + d) / 4;
 }
 
-inline void pooling_2x2(float *in, float *out, unsigned size, bool type) {
+inline void pooling_2x2(float *in, float *out, unsigned size, unsigned type) {
 
     assert(type >= 1 && type <= 2);
 
