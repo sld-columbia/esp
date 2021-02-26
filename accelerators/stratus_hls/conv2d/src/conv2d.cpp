@@ -827,7 +827,9 @@ void conv2d::compute_kernel()
 				for (uint16_t f = 0; f < loadable_filters; f++) {	
 				    HLS_BREAK_ARRAY_DEPENDENCY(plm_weights_ping);
 				    HLS_BREAK_ARRAY_DEPENDENCY(plm_weights_pong);
-				    HLS_PIPELINE_LOOP(HARD_STALL, 1, "mac-pipeline");
+				    // HLS_PIPELINE_LOOP(HARD_STALL, 1, "mac-pipeline");
+				    // Port conflict fix:
+				    HLS_PIPELINE_LOOP(HARD_STALL, 2, "mac-pipeline");
 				    HLS_CONSTRAIN_ARRAY_MAX_DISTANCE(plm_out_ping, 13);
 				    HLS_CONSTRAIN_ARRAY_MAX_DISTANCE(plm_out_pong, 13);
 

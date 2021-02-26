@@ -113,9 +113,9 @@ inline void conv2d::compute_dimensions(
     /* Check if configuration is valid */
 #ifndef STRATUS_HLS
     // assert(width * n_channels * filter_dim <= INPUT_PLM_SIZE);
-    assert(*filter_size <= WEIGHTS_PLM_SIZE - PARALLELISM);
-    assert(*filter_size <= PATCH_PLM_SIZE);
-    assert(*filter_size <= MAC_PLM_SIZE);
+    // assert(*filter_size <= WEIGHTS_PLM_SIZE - PARALLELISM);
+    // assert(*filter_size <= PATCH_PLM_SIZE);
+    // assert(*filter_size <= MAC_PLM_SIZE);
 #endif
 }
 
