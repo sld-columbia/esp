@@ -66,9 +66,6 @@ entity esp_acc_dma is
   port (
     rst           : in  std_ulogic;
     clk           : in  std_ulogic;
---    refclk        : in  std_ulogic;
---    pllbypass     : in  std_ulogic;
---    pllclk        : out std_ulogic;
     local_y       : in  local_yx;
     local_x       : in  local_yx;
     paddr         : in  integer;
@@ -129,7 +126,9 @@ entity esp_acc_dma is
     -- tile->NoC5
     interrupt_wrreq                     : out std_ulogic;
     interrupt_data_in                   : out misc_noc_flit_type;
-    interrupt_full                      : in  std_ulogic);
+    interrupt_full                      : in  std_ulogic,
+    -- Transient
+    dvfs_transient                      : in std_ulogic);    --prevent DMA transaction while DVFS is switching
 
 end esp_acc_dma;
 
@@ -250,7 +249,7 @@ architecture rtl of esp_acc_dma is
   signal dma_tran_done        : std_ulogic;
   signal dma_tran_header_sent : std_ulogic;
   signal dma_tran_start       : std_ulogic;
-  signal dvfs_transient       : std_ulogic;  -- prevent DMA transaction while DVFS is switching
+  --signal dvfs_transient       : std_ulogic;  -- prevent DMA transaction while DVFS is switching
 
   -- TLB
   signal pending_dma_read, pending_dma_write : std_ulogic;
@@ -1144,55 +1143,4 @@ begin  -- rtl
       bankreg(i) <= (others => '0');
     end generate not_available;
   end generate unused_registers;
-
---  no_dvfs: if has_dvfs = 0 generate
---    pllclk <= refclk;
---    dvfs_apbo <= apb_none;
---    mon_dvfs.clk <= refclk;
---    mon_dvfs.vf <= "1000";
---    mon_dvfs.transient <= '0';
---    dvfs_transient <= '0';
---  end generate;
-
---  dvfs_no_master: if has_dvfs /= 0 and has_pll = 0 generate
---    pllclk <= refclk;
---    dvfs_apbo <= apb_none;
---    mon_dvfs.clk <= refclk;
---    mon_dvfs.vf <= mon_dvfs_in.vf;
---    mon_dvfs.transient <= mon_dvfs_in.transient;
---    dvfs_transient <= mon_dvfs_in.transient;
---  end generate dvfs_no_master;
-
---  noc_delay <= dma_snd_delay or dma_rcv_delay;
---  acc_idle <= '1' when dma_state = idle and bankreg(CMD_REG)(CMD_BIT_START) = '0' else '0';
---  mon_dvfs.acc_idle <= acc_idle;
---  mon_dvfs.traffic <= noc_delay;
---  mon_dvfs.burst <= burst;
-
---  with_dvfs: if has_dvfs /= 0 and has_pll /= 0 generate
---  dvfs_top_1: dvfs_top
---    generic map (
---      tech          => tech,
---      extra_clk_buf => extra_clk_buf,
---      pindex        => pindex)
---    port map (
---      rst       => rst,
---      clk       => clk,
---      paddr     => paddr,
---      pmask     => pmask,
---      refclk    => refclk,
---      pllbypass => pllbypass,
---      pllclk    => pllclk,
---      apbi      => apbi,
---      apbo      => dvfs_apbo,
---      acc_idle  => mon_dvfs_in.acc_idle,
---      traffic   => mon_dvfs_in.traffic,
---      burst     => mon_dvfs_in.burst,
---      mon_dvfs  => mon_dvfs_ctrl);
---  mon_dvfs.clk <= mon_dvfs_ctrl.clk;
---  mon_dvfs.vf  <= mon_dvfs_ctrl.vf;
---  mon_dvfs.transient <= mon_dvfs_ctrl.transient;
---  dvfs_transient <= mon_dvfs_ctrl.transient;
---  end generate;
-
 end rtl;
