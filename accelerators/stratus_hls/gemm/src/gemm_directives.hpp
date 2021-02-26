@@ -176,24 +176,8 @@
 #define ACCUMULATE(add1, add2)		\
     add1 = (add1 + add2)
 
-
-// use this to substitute fixed-point from Stratus
-// add = (PLM_WORD) fixed32_add((int32_t) add, fixed32_mul((int32_t) mul1, (int32_t) mul2, FPDATA_FL))
-
 #else // FLOAT_POINT
 
-#ifdef TECH_IS_FPGA
-
-#define MAC(add, mul1, mul2)			\
-    add = esp_f32_add(add, esp_f32_mul(mul1, mul2))
-
-#define MULTIPLY(mul_out, mul1, mul2)		\
-    mul_out = esp_f32_mul(mul1, mul2)
-
-#define ACCUMULATE(add1, add2)		\
-    add1 = esp_f32_add(add1, add2)
-
-#else // ASIC
 #define MAC(add, mul1, mul2)		\
     add = add + (mul1 * mul2)
 
@@ -203,7 +187,6 @@
 #define ACCUMULATE(add1, add2)		\
     add1 = (add1 + add2)
 
-#endif
 #endif
 
 #endif /* __GEMM_DIRECTIVES_HPP_ */

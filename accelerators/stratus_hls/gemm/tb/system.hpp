@@ -6,8 +6,6 @@
 
 #include "gemm_data.hpp"
 #include "fpdata.hpp"
-#include "fplib/include/esp_float.hpp"
-#include "fixed_lib.hpp"
 #include "gemm_conf_info.hpp"
 #include "gemm_debug_info.hpp"
 #include "gemm.hpp"

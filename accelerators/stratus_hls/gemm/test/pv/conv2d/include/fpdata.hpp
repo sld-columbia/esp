@@ -163,16 +163,6 @@ void fp2int(sc_dt::sc_int<N> &data_out, T data_in)
 
 #elif defined(FLOAT_POINT)
 
-#ifdef TECH_IS_FPGA
-
-#include "fplib/include/esp_float.hpp"
-
-typedef sc_dt::sc_uint<WORD_SIZE> FPDATA_WORD;
-
-typedef FPDATA_WORD FPDATA;
-
-#else
-
 // Stratus floating point
 
 #include "cynw_cm_float.h"
@@ -272,8 +262,6 @@ void fp2bv(sc_dt::sc_bv<N> &data_out, T data_in)
         data_out = sc_dt::sc_bv<N>(data_in.raw_bits());
     }
 }
-
-#endif // ifdef TECH_IS_FPGA
 
 #endif // defined(FIXED_POINT)
 
