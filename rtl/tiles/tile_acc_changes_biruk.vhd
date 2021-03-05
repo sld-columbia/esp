@@ -824,6 +824,7 @@ begin
   acc_dpr_top_inst : acc_dpr_top
   generic map (
     hls_conf       => this_hls_conf,
+    this_device    => this_device,
     tech           => CFG_FABTECH,
     mem_num        => CFG_NMEM_TILE + CFG_NSLM_TILE + CFG_SVGA_ENABLE,
     cacheable_mem_num => CFG_NMEM_TILE,
@@ -845,9 +846,6 @@ begin
     port map (        
         rst               => rst,
         clk               => clk_feedthru,                                                                                                 
-        --refclk            => dvfs_clk,
-        --pllbypass         => pllbypass,
-        --pllclk            => clk_feedthru, 
         local_y           => this_local_y,
         local_x           => this_local_x,
         paddr             => this_paddr,
