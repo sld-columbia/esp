@@ -40,12 +40,16 @@ entity misc_tile_q is
     remote_ahbs_snd_data_in         : in  misc_noc_flit_type;
     remote_ahbs_snd_full            : out std_ulogic;
 
+    -- NoC6->tile
     prc_dma_rcv_rdreq             : std_ulogic;
     prc_dma_rcv_data_out          : noc_flit_type;
     prc_dma_rcv_empty             : std_ulogic;
+    -- tile->NoC4 
     prc_dma_snd_wrreq             : std_ulogic;
     prc_dma_snd_data_in           : noc_flit_type;
     prc_dma_snd_full              : std_ulogic;
+    prc_dma_snd_atleast_4slots    : out std_ulogic;
+    prc_dma_snd_exactly_3slots    : out std_ulogic;
 
     -- non-coherent DMA requests from masters
     -- NoC6->tile
@@ -183,6 +187,14 @@ architecture rtl of misc_tile_q is
   signal remote_ahbs_snd_data_out  : misc_noc_flit_type;
   signal remote_ahbs_snd_empty     : std_ulogic;
   -- NoC6->tile
+  signal prc_dma_rcv_wrreq             : std_ulogic;
+  signal prc_dma_rcv_data_in           : noc_flit_type;
+  signal prc_dma_rcv_full              : std_ulogic;
+  -- tile->NoC4
+  signal prc_dma_snd_rdreq             : std_ulogic;
+  signal prc_dma_snd_data_out          : noc_flit_type;
+  signal prc_dma_snd_empty             : std_ulogic;
+  -- NoC6->tile
   signal dma_rcv_wrreq             : std_ulogic;
   signal dma_rcv_data_in           : noc_flit_type;
   signal dma_rcv_full              : std_ulogic;
@@ -244,6 +256,7 @@ architecture rtl of misc_tile_q is
 
   type to_noc4_packet_fsm is (none,
                               packet_dma_snd,
+                              packet_dma_snd_prc,
                               packet_coherent_dma_snd);
   signal to_noc4_fifos_current, to_noc4_fifos_next : to_noc4_packet_fsm;
 
@@ -272,6 +285,7 @@ architecture rtl of misc_tile_q is
 
   type noc6_packet_fsm is (none,
                            packet_dma_rcv,
+                           packet_dma_rcv_prc, 
                            packet_coherent_dma_rcv);
   signal noc6_fifos_current, noc6_fifos_next : noc6_packet_fsm;
 
@@ -305,7 +319,8 @@ architecture rtl of misc_tile_q is
   -- attribute mark_debug of noc5_fifos_next : signal is "true";
   -- attribute mark_debug of to_noc5_fifos_current : signal is "true";
   -- attribute mark_debug of to_noc5_fifos_next : signal is "true";
-  
+
+DMA_TO_PRC
 begin  -- rtl
 
   fifo_rst <= rst;                      --FIFO rst active low
@@ -332,6 +347,7 @@ begin  -- rtl
                                    coherent_dma_rcv_full)
   begin  -- process noc5_get_packet
     dma_rcv_wrreq          <= '0';
+    prc_dma_rcv_wrreq      <= '0';
     coherent_dma_rcv_wrreq <= '0';
 
     noc6_fifos_next <= noc6_fifos_current;
@@ -347,6 +363,13 @@ begin  -- rtl
             else
               noc6_out_stop <= '1';
             end if;
+          elsif (noc6_msg_type = DMA_FROM_PRC and noc6_preamble = PREAMBLE_HEADER) then
+            if prc_dma_rcv_full = '0' then
+              prc_dma_rcv_wrreq   <= '1';
+              noc6_fifos_next <= packet_dma_rcv_prc;
+            else
+              noc6_out_stop <= '1';
+            end if; 
           elsif (noc6_msg_type = RSP_DATA_DMA and noc6_preamble = PREAMBLE_HEADER) then
             if coherent_dma_rcv_full = '0' then
               coherent_dma_rcv_wrreq <= '1';
@@ -365,6 +388,14 @@ begin  -- rtl
           noc6_fifos_next <= none;
         end if;
 
+      when packet_dma_rcv_prc =>
+        prc_dma_rcv_wrreq <= not noc6_out_void and (not prc_dma_rcv_full);
+        noc6_out_stop <= prc_dma_rcv_full and (not noc6_out_void);
+        if (noc6_preamble = PREAMBLE_TAIL and noc6_out_void = '0' and
+            prc_dma_rcv_full = '0') then
+          noc6_fifos_next <= none;
+        end if;
+
       when packet_coherent_dma_rcv =>
         coherent_dma_rcv_wrreq <= not noc6_out_void and (not coherent_dma_rcv_full);
         noc6_out_stop          <= coherent_dma_rcv_full and (not noc6_out_void);
@@ -377,6 +408,22 @@ begin  -- rtl
         noc6_fifos_next <= none;
     end case;
   end process noc6_fifos_get_packet;
+
+  prc_dma_rcv_data_in <= noc6_out_data;
+  fifo_98 : fifo0
+    generic map (
+      depth => 18,                      --Header, address, [data]
+      width => NOC_FLIT_SIZE)
+    port map (
+      clk      => clk,
+      rst      => fifo_rst,
+      rdreq    => prc_dma_rcv_rdreq,
+      wrreq    => prc_dma_rcv_wrreq,
+      data_in  => prc_dma_rcv_data_in,
+      empty    => prc_dma_rcv_empty,
+      full     => prc_dma_rcv_full,
+      data_out => prc_dma_rcv_data_out);
+
 
   dma_rcv_data_in <= noc6_out_data;
   fifo_18 : fifo0
@@ -431,6 +478,7 @@ begin  -- rtl
     noc4_in_void <= '1';
 
     dma_snd_rdreq          <= '0';
+    prc_dma_snd_rdreq          <= '0';
     coherent_dma_snd_rdreq <= '0';
 
     to_noc4_fifos_next <= to_noc4_fifos_current;
@@ -444,6 +492,13 @@ begin  -- rtl
           if noc4_in_stop = '0' then
             dma_snd_rdreq      <= '1';
             to_noc4_fifos_next <= packet_dma_snd;
+          end if;
+        elsif prc_dma_snd_empty = '0' then
+          noc4_in_data <= prc_dma_snd_data_out;
+          noc4_in_void <= prc_dma_snd_empty;
+          if noc4_in_stop = '0' then
+            prc_dma_snd_rdreq      <= '1';
+            to_noc4_fifos_next <= packet_dma_snd_prc;
           end if;
         elsif coherent_dma_snd_empty = '0' then
           noc4_in_data <= coherent_dma_snd_data_out;
@@ -465,6 +520,17 @@ begin  -- rtl
           end if;
         end if;
 
+      when packet_dma_snd_prc =>
+        to_noc4_preamble := get_preamble(NOC_FLIT_SIZE, prc_dma_snd_data_out);
+        if (noc4_in_stop = '0' and prc_dma_snd_empty = '0') then
+          noc4_in_data  <= prc_dma_snd_data_out;
+          noc4_in_void  <= prc_dma_snd_empty;
+          dma_snd_rdreq <= not noc4_in_stop;
+          if to_noc4_preamble = PREAMBLE_TAIL then
+            to_noc4_fifos_next <= none;
+          end if;
+        end if;
+
       when packet_coherent_dma_snd =>
         to_noc4_preamble := get_preamble(NOC_FLIT_SIZE, coherent_dma_snd_data_out);
         if (noc4_in_stop = '0' and coherent_dma_snd_empty = '0') then
@@ -480,6 +546,23 @@ begin  -- rtl
         to_noc4_fifos_next <= none;
     end case;
   end process to_noc4_select_packet;
+
+  fifo_99 : fifo2
+    generic map (
+      depth => 18,                      --Header, address, [data]
+      width => NOC_FLIT_SIZE)
+    port map (
+      clk            => clk,
+      rst            => fifo_rst,
+      rdreq          => prc_dma_snd_rdreq,
+      wrreq          => prc_dma_snd_wrreq,
+      data_in        => prc_dma_snd_data_in,
+      empty          => prc_dma_snd_empty,
+      full           => prc_dma_snd_full,
+      atleast_4slots => prc_dma_snd_atleast_4slots,
+      exactly_3slots => prc_dma_snd_exactly_3slots,
+      data_out       => prc_dma_snd_data_out);
+
 
   fifo_19 : fifo2
     generic map (

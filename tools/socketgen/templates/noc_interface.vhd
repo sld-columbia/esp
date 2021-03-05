@@ -187,6 +187,8 @@ end;
   signal dma_snd_data         : noc_flit_type;
   signal dma_snd_ready        : std_ulogic;
 
+  signal acc_dvfs_transient   : std_ulogic := 0;
+
   -- Accelerator signals
   signal acc_rst                    : std_ulogic;
   signal conf_done                  : std_ulogic;
@@ -399,7 +401,8 @@ begin
       dma_snd_full                  => dma_snd_full_int,
       interrupt_wrreq               => interrupt_wrreq,
       interrupt_data_in             => interrupt_data_in,
-      interrupt_full                => interrupt_full
+      interrupt_full                => interrupt_full,
+      dvfs_transient                => acc_dvfs_transient
       );
 
   pready <= '1';
