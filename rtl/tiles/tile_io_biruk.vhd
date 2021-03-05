@@ -1894,22 +1894,22 @@ begin
       icap_avail                => icap_avail,
       icap_prdone               => icap_prdone,
       icap_prerror              => icap_prerror,
-      s_axi_reg_awaddr          => s_axi_reg_awaddr,
-      s_axi_reg_awvalid         => s_axi_reg_awvalid,
-      s_axi_reg_awready         => s_axi_reg_awready,
-      s_axi_reg_wdata           => s_axi_reg_wdata,
-      s_axi_reg_wvalid          => s_axi_reg_wvalid,
-      s_axi_reg_wready          => s_axi_reg_wready,
-      s_axi_reg_bresp           => s_axi_reg_bresp,
-      s_axi_reg_bvalid          => s_axi_reg_bvalid,
-      s_axi_reg_bready          => s_axi_reg_bready,
-      s_axi_reg_araddr          => s_axi_reg_araddr,
-      s_axi_reg_arvalid         => s_axi_reg_arvalid,
-      s_axi_reg_arready         => s_axi_reg_arready,
-      s_axi_reg_rdata           => s_axi_reg_rdata,
-      s_axi_reg_rresp           => s_axi_reg_rresp,
-      s_axi_reg_rvalid          => s_axi_reg_rvalid,
-      s_axi_reg_rready          => s_axi_reg_rready);
+      s_axi_reg_awaddr          => s_axil_awaddr,
+      s_axi_reg_awvalid         => s_axil_awvalid,
+      s_axi_reg_awready         => s_axil_awready,
+      s_axi_reg_wdata           => s_axil_wdata,
+      s_axi_reg_wvalid          => s_axil_wvalid,
+      s_axi_reg_wready          => s_axil_wready,
+      s_axi_reg_bresp           => s_axil_bresp,
+      s_axi_reg_bvalid          => s_axil_bvalid,
+      s_axi_reg_bready          => s_axil_bready,
+      s_axi_reg_araddr          => s_axil_araddr,
+      s_axi_reg_arvalid         => s_axil_arvalid,
+      s_axi_reg_arready         => s_axil_arready,
+      s_axi_reg_rdata           => s_axil_rdata,
+      s_axi_reg_rresp           => s_axil_rresp,
+      s_axi_reg_rvalid          => s_axil_rvalid,
+      s_axi_reg_rready          => s_axil_rready);
 
     prc_pready <= s_axi_reg_rvalid;
 
@@ -1930,7 +1930,7 @@ begin
     generic map (
       tech             => tech,
       nmst             => 1,
-      retarget_for_dma => 1,
+      retarget_for_dma => 1,    --enable retarget_for_dma
       mem_axi_port     => 0,
       mem_num          => CFG_NSLM_TILE + CFG_NMEM_TILE,
       mem_info         => nofb_mem_info,
