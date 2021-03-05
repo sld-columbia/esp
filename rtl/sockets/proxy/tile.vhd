@@ -254,6 +254,12 @@ package tile is
       remote_ahbs_snd_wrreq           : in  std_ulogic;
       remote_ahbs_snd_data_in         : in  misc_noc_flit_type;
       remote_ahbs_snd_full            : out std_ulogic;
+      prc_dma_rcv_rdreq               : in  std_ulogic;
+      prc_dma_rcv_data_out            : out noc_flit_type;
+      prc_dma_rcv_empty               : out std_ulogic;
+      prc_dma_snd_wrreq               : in  std_ulogic;
+      prc_dma_snd_data_in             : in  noc_flit_type;
+      prc_dma_snd_full                : out std_ulogic;
       apb_rcv_rdreq                   : in  std_ulogic;
       apb_rcv_data_out                : out misc_noc_flit_type;
       apb_rcv_empty                   : out std_ulogic;
