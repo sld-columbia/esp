@@ -17,7 +17,7 @@ std::string image_path = "truck.bin";
 
 
 #define IMAGE_SIZE 3 * 32 * 32
-#define TARGET_LAYER_6
+#define TARGET_LAYER_5
 
 int l=0;
 
@@ -513,7 +513,7 @@ int system_t::validate()
 
 
 
-    std::cout << "Accelerators'based network results:" << std::endl;
+    std::cout << "Accelerators-based network results:" << std::endl;
     int first = mojo::arg_max(outacc, cnn->out_size());
     std::cout << "  1: label|score: \t\"" << labels[first] << "\" | " << outacc[first] << std::endl;
 
@@ -523,7 +523,7 @@ int system_t::validate()
     std::cout << "  2: label|score: \t\"" << labels[second] << "\" | " << outacc[second] << std::endl;
 
 
-    std::cout << " \nPv's based network results:" << std::endl;
+    std::cout << " \nPv-based network results:" << std::endl;
     int first_g = mojo::arg_max(cnn->layer_sets[6]->node.x, cnn->out_size());
     std::cout << "  1: label|score: \t\"" << labels[first_g] << "\" | " << cnn->layer_sets[6]->node.x[first_g] << std::endl;
 

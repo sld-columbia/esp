@@ -45,10 +45,12 @@
 
 std::ofstream ofs;
 
-std::string image_path = "include/data/bird.bmp";
+std::string image_path = "include/data/truck.bmp";
 std::string model_file = "../models/dwarf7.mojo";
 int target_layer = 5;
 int target_test= 2;
+
+
 int main(int argc, char **argv) {
     if (argc > 1)
         image_path = std::string(argv[1]);
@@ -136,17 +138,13 @@ int main(int argc, char **argv) {
     // input 34x34 (including pad of 2 pixels), 3 channels
 
    // std::vector<float> outf(cnn.layer_sets[1]->node.get_size(), 0);
+    float* out0=new float[36991]{0};//cnn.layer_sets[1]->node.get_size()]{0};
     float* out1=new float[36991]{0};//cnn.layer_sets[1]->node.get_size()]{0};
     float* out2=new float[36991]{0};//cnn.layer_sets[1]->node.get_size()]{0};
     float* out3=new float[65535]{0};//cnn.layer_sets[1]->node.get_size()]{0};
     float* out4=new float[32767]{0};//cnn.layer_sets[1]->node.get_size()]{0};
-    
-    cnn.layer_sets[1]->do_pad=0;
 
-
-
-
-
+    mojo::network * cnn_ptr=&cnn;
 
     // conv2d #1: 34x34 (including pad of 2 pixels), kernel size 3x3, 32 channels, relu
     convolution_compute(cnn.layer_sets[1]->node.x, cnn.layer_sets[1]->bias.x, cnn.layer_sets[0]->node.x, cnn.W[0]->x,
@@ -158,16 +156,8 @@ int main(int argc, char **argv) {
                                         cnn.layer_sets[1]->do_pool,cnn.layer_sets[1]->do_pad),
                         cnn.layer_sets[1]->do_pool, cnn.layer_sets[1]->do_pad);
 
+    //conv2d #2: 34x34 (including pad of 2 pixels), kernel size 3x3, 32 channels, relu, max pooling 2x2 (pad on output//    -> 18x18)
 
-
-    // void conv_pvt(int l_n,float *Gold,float *Cnn_W,int W_size,int W_cols,int W_rows,int in_ch,int out_ch, float* out,int out_size,float* layer_in,float* layer_out_bias,int layer_in_cols,int layer_in_rows,int in_pad_h,int in_pad_w,int stride_h,int stride_w,int dilation_h,int dilation_w,float* bias, int relu, int batch_size,int pool)
-
-    conv_pvt(1,1,cnn.layer_sets[1]->node.x,cnn.W[0]->x,cnn.W[0]->get_size(),cnn.W[0]->cols,cnn.W[0]->rows,cnn.layer_sets[0]->node.chans,cnn.layer_sets[1]->node.chans,out1,cnn.layer_sets[1]->node.get_size(),cnn.layer_sets[0]->node.x,out1,cnn.layer_sets[1]->bias.x,cnn.layer_sets[0]->node.cols,cnn.layer_sets[0]->node.rows,cnn.layer_sets[1]->node.cols,cnn.layer_sets[1]->node.rows,1,1,1,1,1,1,1,1,1,1,0,0);
-
-
-
-    //conv2d #2: 34x34 (including pad of 2 pixels), kernel size 3x3, 32 channels, relu, max pooling 2x2 (pad on output
-//    -> 18x18)
     convolution_compute(cnn.layer_sets[2]->node.x, cnn.layer_sets[2]->bias.x, cnn.layer_sets[1]->node.x, cnn.W[1]->x,
                         cnn.layer_sets[2]->node.cols, cnn.layer_sets[2]->node.rows, cnn.layer_sets[1]->node.chans,
                         cnn.layer_sets[2]->node.chans,
@@ -176,10 +166,6 @@ int main(int argc, char **argv) {
                         get_pool_stride(cnn.layer_sets[2]->node.cols, cnn.layer_sets[2]->node.rows,
                                         cnn.layer_sets[2]->do_pool,cnn.layer_sets[2]->do_pad),
                         cnn.layer_sets[2]->do_pool,cnn.layer_sets[2]->do_pad);
-
-
-    conv_pvt(2,0,cnn.layer_sets[2]->node.x,cnn.W[1]->x,cnn.W[1]->get_size(),cnn.W[1]->cols,cnn.W[1]->rows,cnn.layer_sets[1]->node.chans,cnn.layer_sets[2]->node.chans,out2,cnn.layer_sets[2]->node.get_size(),cnn.layer_sets[1]->node.x,out1,cnn.layer_sets[2]->bias.x,cnn.layer_sets[1]->node.cols,cnn.layer_sets[1]->node.rows,cnn.layer_sets[2]->node.cols,cnn.layer_sets[2]->node.rows,1,1,1,1,1,1,1,1,1,1,1,0);
-
 
     // conv2d #3: 18x18 (including pad of 2 pixels), kernel size 3x3, 64 channels, relu, max pooling 2x2 (pad on output
     // -> 10x10)
@@ -193,9 +179,6 @@ int main(int argc, char **argv) {
                         cnn.layer_sets[3]->do_pool,cnn.layer_sets[3]->do_pad);
 
 
-    conv_pvt(3,0,cnn.layer_sets[3]->node.x,cnn.W[2]->x,cnn.W[2]->get_size(),cnn.W[2]->cols,cnn.W[2]->rows,cnn.layer_sets[2]->node.chans,cnn.layer_sets[3]->node.chans,out3,cnn.layer_sets[3]->node.get_size(),cnn.layer_sets[2]->node.x,out2,cnn.layer_sets[3]->bias.x,cnn.layer_sets[2]->node.cols,cnn.layer_sets[2]->node.rows,cnn.layer_sets[3]->node.cols,cnn.layer_sets[3]->node.rows,1,1,1,1,1,1,1,1,1,1,1,1);
-
-
     
     // conv2d #4: 10x10 (including pad of 2 pixels), kernel size 3x3, 128 channels, relu, max pooling 2x2
     convolution_compute(cnn.layer_sets[4]->node.x, cnn.layer_sets[4]->bias.x, cnn.layer_sets[3]->node.x, cnn.W[3]->x,
@@ -206,10 +189,13 @@ int main(int argc, char **argv) {
 					cnn.layer_sets[4]->do_pool, cnn.layer_sets[4]->do_pad),
 			cnn.layer_sets[4]->do_pool, cnn.layer_sets[4]->do_pad);
 
+    //Run programmer's view:run_pv->conv_pvt->sw_conv_layer
+
+    run_pv(cnn_ptr,1,1,out0,out1);
+    run_pv(cnn_ptr,1,2,out1,out2);
+    run_pv(cnn_ptr,1,3,out2,out3);
+    run_pv(cnn_ptr,1,4,out3,out4);
     
-    conv_pvt(4,0,cnn.layer_sets[4]->node.x,cnn.W[3]->x,cnn.W[3]->get_size(),cnn.W[3]->cols,cnn.W[3]->rows,cnn.layer_sets[3]->node.chans,cnn.layer_sets[4]->node.chans,out4,cnn.layer_sets[4]->node.get_size(),cnn.layer_sets[3]->node.x,out3,cnn.layer_sets[4]->bias.x,cnn.layer_sets[3]->node.cols,cnn.layer_sets[3]->node.rows,cnn.layer_sets[4]->node.cols,cnn.layer_sets[4]->node.rows,1,1,0,0,1,1,1,1,1,1,1,1);
-
-
    //  fc (dense) #1: 1x1, 2048 channels, relu
     fc_compute(cnn.layer_sets[5]->node.x, out4, cnn.W[4]->x, cnn.layer_sets[5]->bias.x,
                cnn.W[4]->cols, cnn.W[4]->rows, cnn.layer_sets[5]->relu);

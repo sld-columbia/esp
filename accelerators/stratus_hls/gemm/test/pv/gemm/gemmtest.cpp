@@ -210,7 +210,6 @@ int main(int argc, char **argv) {
 
     float *out = cnn.layer_sets[6]->node.x;
 
-//    std::cout<<"is trans:"<<matrixB->is_transposed<<std::endl;
 
     std::cout << "TARGET_LAYER: " << target_layer << std::endl;
     ofs.open("test.txt", std::ofstream::out);
