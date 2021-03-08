@@ -1,7 +1,1 @@
-set_property include_dirs {
-/home/sholmes/esp_new/esp/socs/xilinx-vc707-xc7vx485t 
-/home/sholmes/esp_new/esp/rtl/src/sld/caches/esp-caches/common/defs
-/home/sholmes/esp_new/esp/third-party/accelerators/dma64/NV_NVDLA/vlog_incdir
-/home/sholmes/esp_new/esp/third-party/ariane/src/common_cells/include
-/home/sholmes/esp_new/esp/third-party/ibex/vendor/lowrisc_ip/prim/rtl
-} [current_fileset]
+set_property include_dirs {/tmp/esp_test/esp/rtl/cores/ariane/ariane/src/common_cells/include /tmp/esp_test/esp/socs/xilinx-vc707-xc7vx485t /tmp/esp_test/esp/socs/xilinx-vc707-xc7vx485t/socgen/grlib /tmp/esp_test/esp/socs/xilinx-vc707-xc7vx485t/socgen/esp  /tmp/esp_test/esp/accelerators/third-party/NV_NVDLA/vlog_incdir /tmp/esp_test/esp/rtl/caches/esp-caches/common/defs} [get_filesets {sim_1 sources_1}]
