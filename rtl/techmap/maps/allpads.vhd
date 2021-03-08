@@ -51,6 +51,27 @@ component gf12_outpad
   port (pad : out std_ulogic; i : in std_ulogic; sr, ds0, ds1 : in std_ulogic);
 end component;
 
+-- GF22
+component gf22_inpad
+  generic (PAD_TYPE : std_logic := '0');
+  port (pad : in std_ulogic; o : out std_ulogic);
+end component;
+
+component gf22_iopad
+  generic (PAD_TYPE : std_logic := '0');
+  port (pad : inout std_logic; i, en : in std_ulogic; o : out std_logic; sr, ds0, ds1 : in std_ulogic);
+end component;
+
+component gf22_iopadien
+  generic (PAD_TYPE : std_logic := '0');
+  port (pad : inout std_logic; i, en : in std_ulogic; o : out std_logic; ien : in std_ulogic; sr, ds0, ds1 : in std_ulogic);
+end component;
+
+component gf22_outpad
+  generic (PAD_TYPE : std_logic := '0');
+  port (pad : out std_ulogic; i : in std_ulogic; sr, ds0, ds1 : in std_ulogic);
+end component;
+
 -- Xilinx
 component unisim_inpad
   generic (level : integer := 0; voltage : integer := x33v);

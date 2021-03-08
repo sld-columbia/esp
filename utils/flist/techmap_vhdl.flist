@@ -1,6 +1,9 @@
 techmap/gf12/memory_gf12.vhd
 techmap/gf12/clkgen_gf12.vhd
 techmap/gf12/pads_gf12.vhd
+techmap/gf22/memory_gf22.vhd
+techmap/gf22/clkgen_gf22.vhd
+techmap/gf22/pads_gf22.vhd
 techmap/virtex7/mul_unisim.vhd
 techmap/virtex7/ddr_unisim.vhd
 techmap/virtex7/memory_unisim.vhd

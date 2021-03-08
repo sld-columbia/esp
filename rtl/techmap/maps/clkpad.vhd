@@ -45,6 +45,10 @@ begin
     x0 : gf12_inpad generic map (PAD_TYPE => loc) port map (pad, o);
     lock <= '1';
   end generate;
+  gf22p : if (tech = gf22) generate
+    x0 : gf22_inpad generic map (PAD_TYPE => loc) port map (pad, o);
+    lock <= '1';
+  end generate;
   xcv2 : if (is_unisim(tech) = 1) generate
     u0 : unisim_clkpad generic map (level, voltage, arch, hf, tech) port map (pad, o, rstn, lock);
   end generate;
