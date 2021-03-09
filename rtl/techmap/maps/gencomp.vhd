@@ -37,7 +37,7 @@ package gencomp is
 
 -- technologies and libraries
 
-constant NTECH : integer := 4;
+constant NTECH : integer := 5;
 type tech_ability_type is array (0 to NTECH) of integer;
 
 constant inferred    : integer := 0;
