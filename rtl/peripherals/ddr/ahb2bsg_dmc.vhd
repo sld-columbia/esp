@@ -179,7 +179,7 @@ architecture rtl of ahb2bsg_dmc is
     wdf_wren : std_logic;
     wdf_end : std_logic;
     wdf_data : std_Logic_vector(64 - 1 downto 0);
-    wdf_mask : std_logic_vector(AHBDW/8 - 1 downto 0);
+    wdf_mask : std_logic_vector(8 - 1 downto 0);
     -- AHB slv
     valid : std_logic;
     hwrite : std_logic;
@@ -278,7 +278,7 @@ architecture rtl of ahb2bsg_dmc is
   begin
     if AHBDW = 32 then
       data(31 downto 0) := hwdata(31 downto 0);
-      data(63 downto 0) := data(31 downto 0);
+      data(63 downto 32) := data(31 downto 0);
     else
       data := hwdata;
     end if;
@@ -527,7 +527,7 @@ begin
   bsg_dmc_wrap_1 : bsg_dmc_wrap
     generic map (
       ui_addr_width_p => 28,
-      ui_data_width_p => AHBDW,
+      ui_data_width_p => 64,
       ui_burst_length_p => 1,
       dq_data_width_p => 32,
       cmd_afifo_depth_p => 4,
