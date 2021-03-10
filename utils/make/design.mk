@@ -106,7 +106,9 @@ TOP_VHDL_SIM_PKGS +=
 TOP_VHDL_RTL_SRCS += $(DESIGN_PATH)/socketgen/accelerators.vhd
 TOP_VHDL_RTL_SRCS += $(DESIGN_PATH)/socketgen/caches.vhd
 TOP_VHDL_RTL_SRCS += $(wildcard $(DESIGN_PATH)/socketgen/noc_*.vhd)
-TOP_VHDL_RTL_SRCS += $(DESIGN_PATH)/socketgen/tile_acc.vhd
+<<<<<<< HEAD
+#TOP_VHDL_RTL_SRCS += $(DESIGN_PATH)/socketgen/tile_acc.vhd
+TOP_VHDL_RTL_SRCS += $(DESIGN_PATH)/socketgen/acc_top.vhd
 ifeq ($(filter $(TECHLIB),$(FPGALIBS)),)
 # ASIC flow: the top module of the hierarchy connects the FPGA design
 # for testing with the chip desing and is used only for simulation
@@ -123,6 +125,8 @@ TOP_VHDL_RTL_SRCS += $(DESIGN_PATH)/$(TOP).vhd
 #TODO: emulation and proxy on single FPGA
 else
 # FPGA flow: add FPGA top module
+#TOP_VHDL_RTL_SRCS += $(DESIGN_PATH)/socketgen/tile_acc.vhd
+TOP_VHDL_RTL_SRCS += $(DESIGN_PATH)/socketgen/acc_top.vhd
 TOP_VHDL_RTL_SRCS += $(DESIGN_PATH)/$(TOP).vhd
 endif
 endif

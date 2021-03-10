@@ -195,7 +195,7 @@ end;
   signal dma_snd_data         : dma_noc_flit_type;
   signal dma_snd_ready        : std_ulogic;
 
-  signal acc_dvfs_transient   : std_ulogic := 0;
+  --signal acc_dvfs_transient   : std_ulogic;
 
   -- Accelerator signals
   signal acc_rst                    : std_ulogic;
