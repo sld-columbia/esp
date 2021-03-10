@@ -159,7 +159,9 @@ architecture rtl of tile_acc is
   signal dco_fc_sel   : std_logic_vector(5 downto 0);
   signal dco_div_sel  : std_logic_vector(2 downto 0);
   signal dco_freq_sel : std_logic_vector(1 downto 0);
-
+  
+  signal acc_dvfs_transient   : std_ulogic := '0';
+  
   -- Test interface / bypass
   signal test1_output_port   : noc_flit_type;
   signal test1_data_void_out : std_ulogic;
@@ -554,7 +556,7 @@ begin
     -- PLL reference clock comes from DCO
     dvfs_clk <= dco_clk_int;
     dco_clk <= dco_clk_int;
-    clk_feedthru <= clk_int;
+    clk_feedthru <= dco_clk_int;
   end generate dco_gen;
 
   no_dco_gen: if this_has_dco = 0 generate
@@ -887,9 +889,10 @@ begin
         interrupt_ack_data_out => interrupt_ack_data_out,                                                                                  
         interrupt_ack_empty    => interrupt_ack_empty,                                                                                     
         mon_dvfs_in       => mon_dvfs_in,
+        dvfs_transient_in   => acc_dvfs_transient,
         -- Monitor signals
         mon_acc           => mon_acc_int,
-        mon_cache         => mon_cache_int,
+        mon_cache         => mon_cache_int
         --mon_dvfs          => mon_dvfs_int
   );
   
@@ -901,6 +904,7 @@ begin
     port map (
       rst                       => rst,
       clk                       => clk_feedthru,
+      decouple_acc              => decouple_acc,
       coherence_req_wrreq       => coherence_req_wrreq,
       coherence_fwd_rdreq       => coherence_fwd_rdreq,
       coherent_dma_snd_wrreq    => coherent_dma_snd_wrreq,
@@ -908,7 +912,6 @@ begin
       coherence_rsp_snd_wrreq   => coherence_rsp_snd_wrreq,
       dma_rcv_rdreq             => dma_rcv_rdreq,
       dma_snd_wrreq             => dma_snd_wrreq,
-      decouple_acc              => decouple_acc,
       interrupt_wrreq           => interrupt_wrreq,
       interrupt_data_in         => interrupt_data_in,
       interrupt_full            => interrupt_full,

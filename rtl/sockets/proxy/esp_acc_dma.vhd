@@ -126,9 +126,9 @@ entity esp_acc_dma is
     -- tile->NoC5
     interrupt_wrreq                     : out std_ulogic;
     interrupt_data_in                   : out misc_noc_flit_type;
-    interrupt_full                      : in  std_ulogic,
+    interrupt_full                      : in  std_ulogic;
     -- Transient
-    dvfs_transient                      : in std_ulogic);    --prevent DMA transaction while DVFS is switching
+    dvfs_transient_in                   : in std_ulogic);    --prevent DMA transaction while DVFS is switching
 
 end esp_acc_dma;
 
@@ -249,7 +249,7 @@ architecture rtl of esp_acc_dma is
   signal dma_tran_done        : std_ulogic;
   signal dma_tran_header_sent : std_ulogic;
   signal dma_tran_start       : std_ulogic;
-  --signal dvfs_transient       : std_ulogic;  -- prevent DMA transaction while DVFS is switching
+  signal dvfs_transient       : std_ulogic;  -- prevent DMA transaction while DVFS is switching
 
   -- TLB
   signal pending_dma_read, pending_dma_write : std_ulogic;
@@ -332,6 +332,11 @@ begin  -- rtl
   irq_header(MISC_NOC_FLIT_SIZE-1 downto MISC_NOC_FLIT_SIZE-PREAMBLE_WIDTH) <= PREAMBLE_1FLIT;
   irq_header(MISC_NOC_FLIT_SIZE-PREAMBLE_WIDTH-1 downto 0) <=
     irq_header_i(MISC_NOC_FLIT_SIZE-PREAMBLE_WIDTH-1 downto 0);
+
+  ----------------------------------------------------------------------------- 
+  -- DVFS transient init
+  ----------------------------------------------------------------------------- 
+    dvfs_transient  <= dvfs_transient_in;
 
   -----------------------------------------------------------------------------
   -- TLB

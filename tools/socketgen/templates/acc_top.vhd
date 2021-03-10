@@ -96,10 +96,11 @@ entity acc_dpr_top is
     interrupt_ack_data_out : in  misc_noc_flit_type;
     interrupt_ack_empty    : in  std_ulogic;
     mon_dvfs_in       : in  monitor_dvfs_type;
+    dvfs_transient_in    : in std_ulogic
     --Monitor signals
     mon_acc           : out monitor_acc_type;
-    mon_cache         : out monitor_cache_type;
-    mon_dvfs          : out monitor_dvfs_type
+    mon_cache         : out monitor_cache_type
+--    mon_dvfs          : out monitor_dvfs_type;
     );
 
 end;

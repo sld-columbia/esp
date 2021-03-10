@@ -431,7 +431,7 @@ begin  -- rtl
   -- From noc4: PRC non-coherent DMA read response from memory
   noc4_out_stop       <= prc_dma_rcv_full and (not noc4_out_void);
   prc_dma_rcv_data_in <= noc4_out_data;
-  prc_dma_rcv_wrreq   <= (not noc4_out_void;) and (not prc_dma_rcv_full);
+  prc_dma_rcv_wrreq   <= (not noc4_out_void) and (not prc_dma_rcv_full);
   fifo_98 : fifo0
     generic map (
       depth => 8,                       --Header, address, [data]

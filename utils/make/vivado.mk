@@ -116,6 +116,13 @@ endif
 		echo "unset argv" >> $@; \
 		echo "set argc 0" >> $@; \
 	fi;
+	@if test -r $(ESP_ROOT)/constraints/$(BOARD)/prc.tcl; then \
+		echo $(SPACES)"INFO including PRC"; \
+		mkdir -p vivado/prc; \
+		cp $(ESP_ROOT)/constraints/$(BOARD)/prc.tcl ./vivado/prc; \
+		echo "set_property target_language verilog [current_project]" >> $@; \
+		echo "source ./prc/prc.tcl" >> $@; \
+	fi;
 ifeq ($(CONFIG_GRETH_ENABLE),y)
 	@if test -r $(ESP_ROOT)/constraints/$(BOARD)/sgmii.xci; then \
 		echo $(SPACES)"INFO including SGMII IP"; \

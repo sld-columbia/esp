@@ -103,7 +103,8 @@ use std.textio.all;
     --Monitor signals
     mon_acc           : out monitor_acc_type;
     mon_cache         : out monitor_cache_type;
-    mon_dvfs          : out monitor_dvfs_type
+    mon_dvfs          : out monitor_dvfs_type;
+    dvfs_transient_acc    : in std_ulogic
     );
 
 end;
@@ -187,7 +188,7 @@ end;
   signal dma_snd_data         : noc_flit_type;
   signal dma_snd_ready        : std_ulogic;
 
-  signal acc_dvfs_transient   : std_ulogic := 0;
+  --signal acc_dvfs_transient   : std_ulogic;
 
   -- Accelerator signals
   signal acc_rst                    : std_ulogic;
@@ -382,6 +383,7 @@ begin
       flush                         => flush,
       mon_dvfs_in                   => mon_dvfs_in,
       mon_dvfs                      => mon_dvfs_feedthru,
+      dvfs_transient_in             => dvfs_transient_acc,
       llc_coherent_dma_rcv_rdreq    => coherent_dma_rcv_rdreq,
       llc_coherent_dma_rcv_data_out => coherent_dma_rcv_data_out,
       llc_coherent_dma_rcv_empty    => coherent_dma_rcv_empty,
@@ -401,8 +403,7 @@ begin
       dma_snd_full                  => dma_snd_full_int,
       interrupt_wrreq               => interrupt_wrreq,
       interrupt_data_in             => interrupt_data_in,
-      interrupt_full                => interrupt_full,
-      dvfs_transient                => acc_dvfs_transient
+      interrupt_full                => interrupt_full
       );
 
   pready <= '1';

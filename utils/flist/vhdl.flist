@@ -114,4 +114,5 @@ tiles/tile_slm.vhd
 tiles/tile_mem.vhd
 tiles/tile_cpu.vhd
 tiles/tile_io.vhd
+tiles/tile_acc.vhd
 tiles/esp.vhd
