@@ -433,10 +433,10 @@ architecture rtl of tile_io is
   signal icap_prerror   : std_logic; 
 
   --PRC configuration signals
-  signal vsm_VS_0_rm_shutdown_req       : std_logic;
-  signal vsm_VS_0_rm_shutdown_ack       : std_logic;
-  signal vsm_VS_0_rm_decouple           : std_logic;
-  signal vsm_VS_0_rm_reset              : std_logic;
+  signal vsm_VS_0_rm_shutdown_req       : std_logic := '0';
+  signal vsm_VS_0_rm_shutdown_ack       : std_logic := '1';
+  signal vsm_VS_0_rm_decouple           : std_logic := '0';
+  signal vsm_VS_0_rm_reset              : std_logic := '0';
   signal vsm_VS_0_event_error           : std_logic;
   signal vsm_VS_0_sw_shutdown_req       : std_logic;
   signal vsm_VS_0_sw_startup_req        : std_logic;  --interrupt
@@ -1891,9 +1891,9 @@ begin
       vsm_VS_0_event_error      => vsm_VS_0_event_error,
       vsm_VS_0_sw_shutdown_req  => vsm_VS_0_sw_shutdown_req,
       vsm_VS_0_sw_startup_req   => vsm_VS_0_sw_startup_req,
---      icap_avail                => icap_avail,
---      icap_prdone               => icap_prdone,
---      icap_prerror              => icap_prerror,
+      --icap_avail                => 1; --icap_avail,
+      --icap_prdone               => open; --icap_prdone,
+      --icap_prerror              => 0; --icap_prerror,
       s_axi_reg_awaddr          => s_axil_awaddr,
       s_axi_reg_awvalid         => s_axil_awvalid,
       s_axi_reg_awready         => s_axil_awready,
@@ -1942,19 +1942,6 @@ begin
       local_x                    => tile_x(io_tile_id), --local_x,
       mosi                       => mosi,
       somi                       => somi,
---      mosi(0).ar.addr(31 downto 0)      => m_axi_mem_araddr,
---      mosi(0).ar.len                    => m_axi_mem_arlen,
---      mosi(0).ar.size                   => m_axi_mem_arsize,
---      mosi(0).ar.burst                  => m_axi_mem_arburst,
---      mosi(0).ar.prot                   => m_axi_mem_arprot,
---      mosi(0).ar.cache                  => m_axi_mem_arcache,
---      mosi(0).ar.valid                  => m_axi_mem_arvalid,
---      somi(0).ar.ready                  => m_axi_mem_arready,
---      somi(0).r.data                    => m_axi_mem_rdata,
---      somi(0).r.resp                    => m_axi_mem_rresp,
---      somi(0).r.last                    => m_axi_mem_rlast,
---      somi(0).r.valid                   => m_axi_mem_rvalid,
---      mosi(0).r.ready                   => m_axi_mem_rready,
       coherence_req_wrreq        => prc_dma_snd_wrreq,
       coherence_req_data_in      => prc_dma_snd_data_in,
       coherence_req_full         => prc_dma_snd_full,
