@@ -45,9 +45,6 @@ use std.textio.all;
   port (
     rst       : in  std_ulogic;
     clk       : in  std_ulogic;
-    refclk    : in  std_ulogic;
-    pllbypass : in  std_ulogic;
-    pllclk    : out std_ulogic;
     local_y   : in  local_yx;
     local_x   : in  local_yx;
     paddr     : in  integer range 0 to 4095;
@@ -349,9 +346,6 @@ begin
     port map (
       rst                           => rst,
       clk                           => clk,
-      refclk                        => refclk,
-      pllbypass                     => pllbypass,
-      pllclk                        => pllclk_int,
       local_y                       => local_y,
       local_x                       => local_x,
       paddr                         => paddr,
@@ -447,7 +441,7 @@ begin
 
   end process coherence_model_select;
 
-  mon_acc.clk   <= pllclk_int; pllclk <= pllclk_int;
+  mon_acc.clk   <= pllclk_int; 
   mon_acc.go    <= bank(CMD_REG)(0);
   mon_acc.run   <= bank(STATUS_REG)(STATUS_BIT_RUN);
   mon_acc.done  <= bank(STATUS_REG)(STATUS_BIT_DONE);
