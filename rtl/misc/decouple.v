@@ -15,8 +15,6 @@ module pr_decoupler (
   output dma_rcv_rdreq,
   output dma_snd_wrreq ,
   output interrupt_wrreq, 
-  output interrupt_data_in,
-  output interrupt_full,
   output interrupt_ack_rdreq,
   output interrupt_ack_empty,
   output pready  
@@ -30,8 +28,6 @@ module pr_decoupler (
   reg dma_rcv_rdreq_reg;
   reg dma_snd_wrreq_reg; 
   reg interrupt_wrreq_reg;
-  reg interrupt_full_reg;
-  reg interrupt_data_in_reg;
   reg interrupt_ack_rdreq_reg;
   reg interrupt_ack_empty_reg;
   reg pready_reg;
@@ -46,8 +42,6 @@ module pr_decoupler (
             dma_rcv_rdreq_reg           <= 0;
             dma_snd_wrreq_reg           <= 0; 
             interrupt_wrreq_reg         <= 0;
-            interrupt_full_reg          <= 0;
-            interrupt_data_in_reg       <= 0;
             interrupt_ack_rdreq_reg     <= 0;
             interrupt_ack_empty_reg     <= 0;
             pready_reg                  <= 0;
@@ -62,8 +56,6 @@ module pr_decoupler (
     assign dma_rcv_rdreq            = dma_rcv_rdreq_reg;
     assign dma_snd_wrreq            = dma_snd_wrreq_reg;
     assign interrupt_wrreq          = interrupt_wrreq_reg;
-    assign interrupt_full           = interrupt_full_reg;
-    assign interrupt_data_in        = interrupt_data_in_reg;
     assign interrupt_ack_rdreq      = interrupt_ack_rdreq_reg;
     assign interrupt_ack_empty      = interrupt_ack_empty_reg;
     assign pready                   = pready_reg;
