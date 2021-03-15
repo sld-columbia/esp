@@ -913,8 +913,6 @@ begin
       dma_rcv_rdreq             => dma_rcv_rdreq,
       dma_snd_wrreq             => dma_snd_wrreq,
       interrupt_wrreq           => interrupt_wrreq,
-      interrupt_data_in         => interrupt_data_in,
-      interrupt_full            => interrupt_full,
       interrupt_ack_rdreq       => interrupt_ack_rdreq,
       interrupt_ack_empty       => interrupt_ack_empty,
       pready                    => pready);
