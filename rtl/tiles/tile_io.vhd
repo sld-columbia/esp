@@ -1476,7 +1476,10 @@ begin
       mosi(0).ar.cache                  <= m_axi_mem_arcache;
       mosi(0).ar.valid                  <= m_axi_mem_arvalid;
       somi(0).ar.ready                  <= m_axi_mem_arready;
-      somi(0).r.data                    <= m_axi_mem_rdata;
+      somi(0).r.data(31 downto 0)       <= m_axi_mem_rdata;
+      gen_somi_0_rdata_pad : if AXIDW > 32 generate
+        somi(0).r.data(AXIDW-1 downto 32) <= (others => '0');
+      end generate gen_somi_0_rdata_pad;
       somi(0).r.resp                    <= m_axi_mem_rresp;
       somi(0).r.last                    <= m_axi_mem_rlast;
       somi(0).r.valid                   <= m_axi_mem_rvalid;
