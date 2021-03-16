@@ -704,7 +704,7 @@ begin  -- architecture rtl
     ahbmo.hsize <= HSIZE_DWORD;
   end generate ariane_cache_word_gen;
 
-  leon3_cache_word_gen: if GLOB_CPU_ARCH = leon3 generate
+  leon3_cache_word_gen: if GLOB_CPU_ARCH = leon3 or GLOB_CPU_ARCH = ibex generate
     ahbmo.hsize <= HSIZE_WORD;
   end generate leon3_cache_word_gen;
 
