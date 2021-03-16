@@ -1968,9 +1968,10 @@ def print_cache_config(fp, soc, esp_config):
     addr_bits = 32
     byte_bits = 3
     word_bits = 1
-    fp.write("`define LITTLE_ENDIAN\n")
-  else: 
+  if soc.CPU_ARCH.get() == "leon3":
     fp.write("`define BIG_ENDIAN\n")
+  else:
+    fp.write("`define LITTLE_ENDIAN\n")
 
   fp.write("`define ADDR_BITS    " + str(addr_bits) + "\n")
   fp.write("`define BYTE_BITS    " + str(byte_bits) + "\n")
