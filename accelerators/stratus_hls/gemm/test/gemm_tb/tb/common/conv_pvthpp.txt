@@ -1,0 +1,46 @@
+// Copyright (c) 2011-2020 Columbia University, System Level Design Group
+// SPDX-License-Identifier: Apache-2.0
+
+#include <stdio.h>
+#include <stdlib.h>
+
+#include <assert.h>
+
+#if defined(USE_CBLAS)
+#include "cblas.h"
+#endif // USE_CBLAS
+
+#include "reshape_weights.hpp"
+#include "reshape_input.hpp"
+#include "golden.hpp"
+#ifdef __GEMM_DATA_HPP__
+#include "golden.cpp"
+#endif
+
+
+void conv_pvt(int l_n,float*layer_in,float*out,float *W,float* bias,int in_ch,int out_ch,int out_size,int in_cols,int in_rows,int out_cols,int out_rows,int in_pad_h,int in_pad_w,int out_pad_h,int out_pad_w,int W_size,int W_cols,int W_rows,int stride_h,int stride_w,int dilation_h,int dilation_w, int batch_size,int pool_out,int pool_in)
+{ 
+	
+	float* w_pv=new float[W_size];
+	int k_size=W_cols*W_rows;
+	
+	//weights matrix reshape 
+
+	reshape_weights(w_pv,W,in_ch,out_ch,k_size);
+
+	//remove padding from input stored in the zero-layer of the CNN 
+
+	if (l_n==1)
+		{
+			std::cout<<"reshape"<<std::endl;
+			reshape_input(layer_in,pool_in,in_rows,in_cols,in_pad_h,in_pad_w,in_ch);
+		}
+
+	//call to the accelerator programmer's view
+
+	sw_conv_layer(layer_in,in_ch,out_rows-2*in_pad_h,out_cols-2*in_pad_w,W_rows,W_cols,
+		      in_pad_h,in_pad_w,stride_h,stride_w,dilation_h,dilation_w,out_ch,w_pv,
+		      bias,out,1,pool_out,batch_size);
+	
+}
+

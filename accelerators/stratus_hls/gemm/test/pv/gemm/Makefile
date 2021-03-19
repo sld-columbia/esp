@@ -59,7 +59,7 @@ OPENCV ?= /opt/opencv
 #
 
 # Include folders for header files
-INCDIR = -I$(OPENCV)/include -I./include/mojo -I./include/contrast_adj -I../../../tb/  -I./include -I./ 
+INCDIR = -I$(OPENCV)/include -I./include/mojo -I./include/contrast_adj -I../../../tb/  -I./include/pv_wrap  
 
 # Compile flags
 CXXFLAGS ?=  -O0 -g -Wall -Werror -fmax-errors=5 -std=c++11
@@ -84,14 +84,10 @@ LDFLAGS = \
 	-lopencv_core
 
 # List of source files.
-SRCS := gemmtest.cpp convtest.cpp gemm_pvt.cpp
+SRCS := pvtest.cpp   
 
 # In this Makefile each source produces a corresponding executable.
 OBJS := $(SRCS:.cpp=)
-
-# Find all headers for dependency (i.e. recompile if one header changes)
-HDRS := $(wildcard ./mojo/*.h) $(wildcard ./*.h)  $(wildcard ./*.hpp)  
-
 
 # The first target gets executed by default when typing simply make.
 all: $(OBJS)
@@ -105,12 +101,9 @@ all: $(OBJS)
 .cpp:
 	$(QUIET_CXX) $(CXX) $(CXXFLAGS) $< -o $@ $(LDLIBS) $(LDFLAGS)
 
-# Add header files dependency
-$(OBJS): $(HDRS)
-
 # Create a target to clean from compiled objects
 clean:
-	$(QUIET_CLEAN) $(RM) $(OBJS) test.txt gemmtest
+	$(QUIET_CLEAN) $(RM) $(OBJS) test.txt 
 
 # Create a target to also clean from data and or results
 distclean: clean
@@ -144,7 +137,7 @@ data: $(INPUT) $(MOJO_PRETRAINED)
 #
 
 # Declare specific dependency for each target executable
-gemmtest-data: data
+pvtest-data: data
 convtest-data: data
 
 #

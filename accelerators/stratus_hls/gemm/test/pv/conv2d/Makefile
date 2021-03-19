@@ -59,7 +59,7 @@ OPENCV ?= /opt/opencv
 #
 
 # Include folders for header files
-INCDIR = -I$(OPENCV)/include -I./include/mojo -I./include/contrast_adj -I../../../tb  -I./include -I./include/contrast_adj #-I./include -I./ -I../../../../conv2d/src 
+INCDIR = -I$(OPENCV)/include -I./include/mojo -I./include/contrast_adj -I../../../tb  -I./include -I./include/contrast_adj -I./include/pv_wrap #-I./ -I../../../../conv2d/src 
 #-I ../../../../common/syn-templates -I/opt/cad/incisive/tools/systemc/include -I../../../../common/utils /opt/cad/stratus/share/stratus/include/cynw_fixed.h
 
 # Compile flags

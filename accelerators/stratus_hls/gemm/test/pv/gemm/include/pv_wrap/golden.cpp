@@ -61,12 +61,15 @@ void sw_conv_layer (
     const bool do_relu, const int pool_type, const int batch_size)
 {
 
-    const int channel_size = round_up(height * width, DMA_WORD_PER_BEAT);
-    const int filter_size = channels * kernel_w * kernel_h;
-    const int output_h = (height + 2 * pad_h - (dilation_h * (kernel_h - 1) + 1)) / stride_h + 1;
-    const int output_w = (width + 2 * pad_w - (dilation_w * (kernel_w - 1) + 1)) / stride_w + 1;
-    const int out_channel_size = round_up(output_w * output_h, DMA_WORD_PER_BEAT);
-    const int pool_channel_size = round_up((output_w/2) * (output_h/2), DMA_WORD_PER_BEAT);
+	const int channel_size = height*width;//round_up(height * width, DMA_WORD_PER_BEAT);
+	const int filter_size = channels * kernel_w * kernel_h;
+	const int output_h = (height + 2 * pad_h - (dilation_h * (kernel_h - 1) + 1)) / stride_h + 1;
+	const int output_w = (width + 2 * pad_w - (dilation_w * (kernel_w - 1) + 1)) / stride_w + 1;
+	const int out_channel_size = output_w * output_h; //round_up(output_w * output_h, DMA_WORD_PER_BEAT);
+	const int pool_channel_size = output_w/2 * output_h/2;//round_up((output_w/2) * (output_h/2), DMA_WORD_PER_BEAT);
+
+
+
 
     for (int batch_i = 0;  batch_i < batch_size; batch_i++) {
 	for (int num_filter = 0; num_filter < num_filters; num_filter++) {
@@ -86,6 +89,16 @@ void sw_conv_layer (
 						       input_row * width + input_col] *
 					weights[num_filter * filter_size + k];
 				}
+
+                                // if (num_filter==0 && output_row==0 && output_col==0 && channel==0)
+                                //         printf("channel 0: %d %d %d %d %d %f %f \n",k,input_row,input_col,channel*channel_size+input_row * width + input_col,
+                                //                channel* filter_size +num_filter*(kernel_h*kernel_w)+ k,weights[num_filter*filter_size+ k],input[ channel * channel_size +input_row * width + input_col]);
+
+                                // if (num_filter==0 && output_row==0 && output_col==0 && channel==1)
+                                //         printf("channel 1:%d %d %d %d %d %f %f \n",k,input_row,input_col,channel*channel_size+input_row * width + input_col,
+                                //                channel* filter_size +num_filter*(kernel_h*kernel_w)+ k,weights[num_filter* filter_size + k],input[ channel * channel_size +input_row * width + input_col]);
+
+
 				k++;
 			    }
 			}
@@ -97,12 +110,13 @@ void sw_conv_layer (
 
 		    output[batch_i * num_filters * out_channel_size + num_filter * out_channel_size +
 			   output_row * output_w + output_col] = out_value;
-
+		    // printf("output_index %d \n",batch_i * num_filters * out_channel_size + num_filter * out_channel_size +
+		    // 	   output_row * output_w + output_col);
 		    // std::cout << "out_value[" << num_filter << "," << output_row <<
 		    //     "," << output_col << "]: " << out_value << std::endl;
 		}
 	    }
-
+	    // printf("end output \n \n \n");
 	    // std::cout << "pool_channel_size " << pool_channel_size << std::endl;
 
 	    if (pool_type)

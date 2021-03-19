@@ -8,6 +8,7 @@
 #
 # Technology Libraries
 #
+set ACCELERATOR $::env(ACCELERATOR)
 set TECH $::env(TECH)
 set ESP_ROOT $::env(ESP_ROOT)
 

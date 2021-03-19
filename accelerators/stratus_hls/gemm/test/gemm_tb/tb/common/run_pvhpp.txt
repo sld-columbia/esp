@@ -1,0 +1,28 @@
+// #include "golden.cpp"
+// #include "mojo.h"
+#include "reshape_input.hpp" //_input.hpp"
+#include "reshape_weights.hpp"
+#include "system.hpp"
+#include "mojo.h"
+#include "dwarf.h"
+#include "conv_pvt.hpp"
+#include "gemm_pvt.hpp"
+
+void system_t::run_pv(mojo::network* cnn,int layer, bool fully_connected = false)
+{
+
+        if (fully_connected)
+
+                gemm_pvt(layer,0,cnn->layer_sets[layer-1]->node.x,cnn->layer_sets[layer-1]->node.x,cnn->layer_sets[layer]->node.x, cnn->W[layer-1]->x,cnn->layer_sets[layer]->bias.x, cnn->layer_sets[layer]->relu,cnn->W[layer-1]->rows, cnn->W[layer-1]->cols, cnn->W[layer-1]->get_size());
+        else //to modify with conv2d_pv
+        {
+                int prev_soft;
+                if (layer==1)
+                        prev_soft=1;
+                else
+                        prev_soft=0;
+
+                conv_pvt(layer,prev_soft,cnn->layer_sets[layer-1]->node.x,cnn->layer_sets[layer-1]->node.x,cnn->layer_sets[layer]->node.x,cnn->W[layer-1]->x,cnn->layer_sets[layer]->bias.x,cnn->layer_sets[layer-1]->node.chans,cnn->layer_sets[layer]->node.chans,cnn->layer_sets[layer-1]->node.cols,cnn->layer_sets[layer-1]->node.rows,cnn->layer_sets[layer]->node.cols,cnn->layer_sets[layer]->node.rows,1,1,cnn->layer_sets[layer]->do_pad,cnn->layer_sets[layer]->do_pad,cnn->W[layer-1]->get_size(),cnn->W[layer-1]->cols,cnn->W[layer-1]->rows,1,1,1,1,1,cnn->layer_sets[layer]->do_pool,cnn->layer_sets[layer-1]->do_pool);
+        }
+
+}
