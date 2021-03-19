@@ -1,6 +1,6 @@
 // Copyright (c) 2011-2019 Columbia University, System Level Design Group
 // SPDX-License-Identifier: Apache-2.0
-
+#ifndef __GEMM_CONF_INFO_HPP__
 #ifndef __CONV2D_CONF_INFO_HPP__
 #define __CONV2D_CONF_INFO_HPP__
 
@@ -129,3 +129,4 @@ public:
 };
 
 #endif // __CONV2D_CONF_INFO_HPP__
+#endif

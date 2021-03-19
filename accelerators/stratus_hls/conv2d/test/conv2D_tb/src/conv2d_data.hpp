@@ -6,10 +6,11 @@
 
 #include <systemc.h>
 
+
 // Data types
 
+#ifndef __GEMM_DATA_HPP__
 #if defined(FIXED_POINT)
-
 const unsigned int FPDATA_WL = DATA_WIDTH;
 const unsigned int FPDATA_IL = DATA_WIDTH / 2;
 const unsigned int FPDATA_FL = DATA_WIDTH - FPDATA_IL;
@@ -28,7 +29,7 @@ const unsigned int FPDATA_EL = 11;
 typedef sc_dt::sc_uint<DMA_WIDTH> PLM_WORD;
 
 #endif
-
+#endif
 // Custom SC data types
 typedef sc_dt::sc_uint<2> uint2_t;
 typedef sc_dt::sc_uint<4> uint4_t;

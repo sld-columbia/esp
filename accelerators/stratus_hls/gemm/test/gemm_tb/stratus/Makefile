@@ -28,8 +28,9 @@ BDW_DEBUG = 1
 # Environment variables
 #
 
-OPENCV ?= /opt/opencv
+OPENCV ?= /opt/openc
 
+TARGET_LAYER= 5
 
 # Link flags
 LDLIBS = -L$(OPENCV)/lib64
@@ -61,8 +62,6 @@ saySimPassed:
 # # Compile flags
 # CXXFLAGS ?=  -O0 -g -Wall -Werror -fmax-errors=5 -std=c++11
 # CXXFLAGS += $(INCDIR)
-
-
 
 all :
 	$(HDRS) 

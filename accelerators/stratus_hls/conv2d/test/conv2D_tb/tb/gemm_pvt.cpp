@@ -10,8 +10,8 @@
 /* #include "cblas.h" */
 /* #endif // USE_CBLAS */
 
-// #include "gemm_pvt.h"
-//#include "gemm_pvt.hpp"
+#include "gemm_pvt.h"
+// #include "gemm_pvt.hpp"
 
 void _gemm_pv(double *mtx_inA, double *mtx_inB, double *mtx_out,
 	      size_t is_trans, size_t rowsA, size_t colsA, size_t colsB)

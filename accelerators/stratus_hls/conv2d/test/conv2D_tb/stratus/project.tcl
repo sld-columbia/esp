@@ -86,15 +86,15 @@ set TB_FILTER_SIZE "1x1 3x3 5x5"
 # Common options for all configurations
 #
 
-# append COMMON_HLS_FLAGS \
-#     " -DFIXED_POINT --clock_period=$CLOCK_PERIOD"
-# set COMMON_CFG_FLAGS \
-#     "-DFIXED_POINT -DCLOCK_PERIOD=$SIM_CLOCK_PERIOD"
-
 append COMMON_HLS_FLAGS \
-    " -DFLOAT_POINT --clock_period=$CLOCK_PERIOD"
+    " -DFIXED_POINT --clock_period=$CLOCK_PERIOD"
 set COMMON_CFG_FLAGS \
-    "-DFLOAT_POINT -DCLOCK_PERIOD=$SIM_CLOCK_PERIOD"
+    "-DFIXED_POINT -DCLOCK_PERIOD=$SIM_CLOCK_PERIOD"
+
+# append COMMON_HLS_FLAGS \
+#     " -DFLOAT_POINT --clock_period=$CLOCK_PERIOD"
+# set COMMON_CFG_FLAGS \
+#     "-DFLOAT_POINT -DCLOCK_PERIOD=$SIM_CLOCK_PERIOD"
 
 if {$TECH_IS_XILINX == 1} {
     append COMMON_HLS_FLAGS " -DTECH_IS_FPGA "

@@ -6,11 +6,12 @@
 #include "validation.hpp"
 #include "system.hpp"
 #include "mojo.h"
-#include "conv_pvt.cpp"
+#include "conv_pvt.hpp"
 //#include <math.h>
 //#include "mojo_utils.h"
 #include "dwarf.h"
-#include "gemm_pvt.cpp"
+//#include "gemm_pvt.cpp"
+#include "gemm_pvt.c"
 // Mojo network
 mojo::network *cnn;
 
@@ -246,51 +247,28 @@ void system_t::load_memory()
 {
 
 #ifndef TARGET_LAYER_1
-        // convolution 34x34 (including pad of 2 pixels), kernel
-        //  size 3x3, 32 output channels, relu
         run_pv(1,false);
 
 #ifndef TARGET_LAYER_2
-        // convolution 34x34 (including pad of 2 pixels), kernel
-        // size 3x3, 32 output channels, relu, max pooling 2x2 (pad on output -> 18x18)
 	run_pv(2,false);
 
 #ifndef TARGET_LAYER_3
-        // convolution 18x18 (including pad of 2 pixels), kernel
-        //  size 3x3, 64 output channels, relu, max pooling 2x2 (pad on output -> 10x10)
 	run_pv(3,false);
 
 #ifndef TARGET_LAYER_4
-        // convolution 10x10 (including pad of 2 pixels), kernel
-        //  size 3x3, 128 output channels, relu, max pooling 2x2 (no pad on output -> 4x4)
         run_pv(4,false);
-
-        // Fully Connected
-// #ifndef TARGET_LAYER_5
-//         // fully_connected 1x1, 2048 to 64 channels, relu
-//         run_pv(5, true);
-
-// #ifndef TARGET_LAYER_6
-//         // fully_connected 1x1, 64 to 10 channels, brokemax
-//         run_pv(6, true);
-// #else
-//         setup_memory(6, true);
-// #endif // TARGET_LAYER_6
-// #else
-//         setup_memory(5, true);
-// #endif // TARGET_LAYER_5
 #else
         setup_memory(4, false);
-#endif // TARGET_LAYER_4
+#endif 
 #else
         setup_memory(3, false);
-#endif // TARGET_LAYER_3
+#endif 
 #else
         setup_memory(2, false);
-#endif // TARGET_LAYER_2
+#endif  
 #else
         setup_memory(1, false);
-#endif // TARGET_LAYER_1
+#endif 
 
 }
 
@@ -300,7 +278,6 @@ void system_t::run_pv(int layer, bool fully_connected = false)
 
         if (fully_connected)
 
-                // gemm_pvt(layer,cnn->layer_sets[layer-1]->node.x, cnn->layer_sets[layer]->bias.x, cnn->layer_sets[layer]->relu, cnn->W[layer-1]->x,cnn->W[layer-1]->rows, cnn->W[layer-1]->cols, cnn->W[layer-1]->get_size(),cnn->layer_sets[layer]->node.x);
                 gemm_pvt(layer,cnn->layer_sets[layer-1]->node.x, cnn->layer_sets[layer]->bias.x, cnn->layer_sets[layer]->relu, cnn->W[layer-1]->x,cnn->W[layer-1]->rows, cnn->W[layer-1]->cols, cnn->W[layer-1]->get_size(),cnn->layer_sets[layer]->node.x);
         else 	
 		run_pv_conv(cnn,layer);
