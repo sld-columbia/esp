@@ -900,22 +900,22 @@ begin
   pllclk <= refclk;
 
   -- PR_decoupler
-  pr_decoupler_1 : pr_decoupler
-    port map (
-      rst                       => rst,
-      clk                       => clk_feedthru,
-      decouple_acc              => decouple_acc,
-      coherence_req_wrreq       => coherence_req_wrreq,
-      coherence_fwd_rdreq       => coherence_fwd_rdreq,
-      coherent_dma_snd_wrreq    => coherent_dma_snd_wrreq,
-      coherence_rsp_rcv_rdreq   => coherence_rsp_rcv_rdreq,
-      coherence_rsp_snd_wrreq   => coherence_rsp_snd_wrreq,
-      dma_rcv_rdreq             => dma_rcv_rdreq,
-      dma_snd_wrreq             => dma_snd_wrreq,
-      interrupt_wrreq           => interrupt_wrreq,
-      interrupt_ack_rdreq       => interrupt_ack_rdreq,
-      interrupt_ack_empty       => interrupt_ack_empty,
-      pready                    => pready);
+--pr_decoupler_1 : pr_decoupler
+-- port map (
+--    rst                       => rst,
+--    clk                       => clk_feedthru,
+--    decouple_acc              => decouple_acc,
+--    coherence_req_wrreq       => coherence_req_wrreq,
+--    coherence_fwd_rdreq       => coherence_fwd_rdreq,
+--    coherent_dma_snd_wrreq    => coherent_dma_snd_wrreq,
+--    coherence_rsp_rcv_rdreq   => coherence_rsp_rcv_rdreq,
+--    coherence_rsp_snd_wrreq   => coherence_rsp_snd_wrreq,
+--    dma_rcv_rdreq             => dma_rcv_rdreq,
+--    dma_snd_wrreq             => dma_snd_wrreq,
+--    interrupt_wrreq           => interrupt_wrreq,
+--    interrupt_ack_rdreq       => interrupt_ack_rdreq,
+--    interrupt_ack_empty       => interrupt_ack_empty);
+  --  pready                    => pready);
 
       -- CSR map for decoupler 
       decouple_acc <= tile_config(0);
