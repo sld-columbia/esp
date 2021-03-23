@@ -1123,10 +1123,23 @@ begin  -- architecture rtl of l2_wrapper
 -------------------------------------------------------------------------------
 -- FSM: Bridge from L2 cache frontend output to AHB master (L1 invalidation)
 -------------------------------------------------------------------------------
-  -- put writes of invalidate addresses coming from the L2 cache into a FIFO
-  inval_ready      <= inval_valid when inv_fifo_full = '0' else '0';  -- ADD
-  inv_fifo_wrreq   <= inval_valid when inv_fifo_full = '0' else '0';  -- ADD
-  inv_fifo_data_in <= inval_data;
+  ahb_no_inval_gen: if GLOB_CPU_ARCH = ibex generate
+    inval_ready      <= '1';
+    inv_fifo_rdreq   <= '0';
+    inv_fifo_wrreq   <= '0';
+    inv_fifo_data_in <= (others => '0');
+
+    ahbmo.hbusreq    <= '0';
+    ahbmo.htrans     <=  HTRANS_IDLE;
+    ahbmo.hlock      <= '0';
+    ahbmo.haddr      <= (others => '0');
+  end generate ahb_no_inval_gen;
+
+  ahb_inval_gen: if GLOB_CPU_ARCH /= ibex generate
+    -- put writes of invalidate addresses coming from the L2 cache into a FIFO
+    inval_ready      <= inval_valid when inv_fifo_full = '0' else '0';  -- ADD
+    inv_fifo_wrreq   <= inval_valid when inv_fifo_full = '0' else '0';  -- ADD
+    inv_fifo_data_in <= inval_data;
 
   fsm_ahbm : process (ahbm_reg, ahbmi, inv_fifo_empty, inv_fifo_almost_empty, inv_fifo_data_out)
 
@@ -1210,6 +1223,7 @@ begin  -- architecture rtl of l2_wrapper
     ahbm_reg_next <= reg;
 
   end process fsm_ahbm;
+  end generate ahb_inval_gen;
   end generate ahb_frontend_gen;
 
 -------------------------------------------------------------------------------
