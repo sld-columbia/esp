@@ -148,6 +148,10 @@ VLOGOPT += -suppress 13262
 VLOGOPT += -suppress 2286
 VLOGOPT += -permissive
 VLOGOPT += +define+WT_DCACHE
+ifneq ($(filter $(TECHLIB),$(FPGALIBS)),)
+# use Xilinx-based primitives for FPGA
+VLOGOPT += +define+PRIM_DEFAULT_IMPL=prim_pkg::ImplXilinx
+endif
 VLOGOPT += -pedanticerrors
 VLOGOPT += -suppress 2583
 VLOGOPT += -suppress 13314
