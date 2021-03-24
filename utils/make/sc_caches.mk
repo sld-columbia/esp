@@ -13,7 +13,7 @@ print-available-sccs:
 	$(QUIET_INFO)echo "Available sccs: $(SCCS)"
 
 
-$(SCCS-wdir):
+$(SCCS-wdir): $(HLS_LOGS)
 	$(QUIET_MKDIR)mkdir -p $(SCCS_PATH)/$(@:-wdir=)/hls-work-$(TECHLIB)
 	@cd $(SCCS_PATH)/$(@:-wdir=)/hls-work-$(TECHLIB); \
 	if test ! -e project.tcl; then \
@@ -24,9 +24,9 @@ $(SCCS-wdir):
 	fi;
 
 $(SCCS-hls): %-hls : %-wdir
-	$(QUIET_MAKE)COMPONENT=$(@:-hls=) TECH=$(TECHLIB) ESP_ROOT=$(ESP_ROOT) make -C $(SCCS_PATH)/$(@:-hls=)/hls-work-$(TECHLIB) memlib | tee $(@:-hls=)_memgen.log
+	$(QUIET_MAKE)COMPONENT=$(@:-hls=) TECH=$(TECHLIB) ESP_ROOT=$(ESP_ROOT) make -C $(SCCS_PATH)/$(@:-hls=)/hls-work-$(TECHLIB) memlib | tee $(HLS_LOGS)/$(@:-hls=)_memgen.log
 	$(QUIET_INFO)echo "Running HLS for available implementations of $(@:-hls=)"
-	$(QUIET_MAKE)COMPONENT=$(@:-hls=) TECH=$(TECHLIB) ESP_ROOT=$(ESP_ROOT) make -C $(SCCS_PATH)/$(@:-hls=)/hls-work-$(TECHLIB) hls_all | tee $(@:-hls=)_hls.log
+	$(QUIET_MAKE)COMPONENT=$(@:-hls=) TECH=$(TECHLIB) ESP_ROOT=$(ESP_ROOT) make -C $(SCCS_PATH)/$(@:-hls=)/hls-work-$(TECHLIB) hls_all | tee $(HLS_LOGS)/$(@:-hls=)_hls.log
 	$(QUIET_INFO)echo "Installing available implementations for $(@:-hls=) to $(ESP_ROOT)/tech/$(TECHLIB)/sccs/$(@:-hls=)"
 	$(QUIET_MAKE)COMPONENT=$(@:-hls=) TECH=$(TECHLIB) ESP_ROOT=$(ESP_ROOT) make -C $(SCCS_PATH)/$(@:-hls=)/hls-work-$(TECHLIB) install
 	@if test -e $(ESP_ROOT)/tech/$(TECHLIB)/sccs/installed.log; then \
@@ -35,15 +35,15 @@ $(SCCS-hls): %-hls : %-wdir
 	@echo "$(@:-hls=)" >> $(ESP_ROOT)/tech/$(TECHLIB)/sccs/installed.log
 
 $(SCCS-sim): %-sim : %-wdir
-	$(QUIET_RUN)COMPONENT=$(@:-sim=) TECH=$(TECHLIB) ESP_ROOT=$(ESP_ROOT) make -C $(SCCS_PATH)/$(@:-sim=)/hls-work-$(TECHLIB) sim_all | tee $(@:-sim=)_sim.log
+	$(QUIET_RUN)COMPONENT=$(@:-sim=) TECH=$(TECHLIB) ESP_ROOT=$(ESP_ROOT) make -C $(SCCS_PATH)/$(@:-sim=)/hls-work-$(TECHLIB) sim_all | tee $(HLS_LOGS)/$(@:-sim=)_sim.log
 
 $(SCCS-clean): %-clean : %-wdir
 	$(QUIET_CLEAN)COMPONENT=$(@:-clean=) TECH=$(TECHLIB) ESP_ROOT=$(ESP_ROOT) make -C $(SCCS_PATH)/$(@:-clean=)/hls-work-$(TECHLIB) clean
-	@$(RM) $(@:-clean=)*.log
+	@$(RM) $(HLS_LOGS)/$(@:-clean=)*.log
 
 $(SCCS-distclean): %-distclean : %-wdir
 	$(QUIET_CLEAN)COMPONENT=$(@:-distclean=) TECH=$(TECHLIB) ESP_ROOT=$(ESP_ROOT) make -C $(SCCS_PATH)/$(@:-distclean=)/hls-work-$(TECHLIB) distclean
-	@$(RM) $(@:-distclean=)*.log
+	@$(RM) $(HLS_LOGS)/$(@:-distclean=)*.log
 	@if test -e $(ESP_ROOT)/tech/$(TECHLIB)/sccs/installed.log; then \
 		sed -i '/$(@:-distclean=)/d' $(ESP_ROOT)/tech/$(TECHLIB)/sccs/installed.log; \
 	fi;
