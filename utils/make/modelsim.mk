@@ -102,12 +102,6 @@ endif
 	@cd modelsim; \
 	echo $(SPACES)"vmake > vsim.mk"; \
 	vmake 2> /dev/null > vsim.mk; \
-	if ! test -e prom.srec; then \
-		ln -s $(SOFT_BUILD)/prom.srec; \
-	fi; \
-	if ! test -e ram.srec; then \
-		ln -s $(SOFT_BUILD)/ram.srec; \
-	fi; \
 	cd ../;
 
 sim-compile: socketgen check_all_srcs modelsim/vsim.mk soft
@@ -115,6 +109,10 @@ sim-compile: socketgen check_all_srcs modelsim/vsim.mk soft
 		cp $$dat modelsim; \
 	done;
 	$(QUIET_MAKE)make -C modelsim -f vsim.mk
+	@cd modelsim; \
+	rm -f prom.srec ram.srec; \
+	ln -s $(SOFT_BUILD)/prom.srec; \
+	ln -s $(SOFT_BUILD)/ram.srec;
 
 sim: sim-compile
 	@cd modelsim; \

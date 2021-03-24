@@ -96,12 +96,6 @@ endif
 		echo $(SPACES)"$(XMLOG) -work work $$rtl"; \
 		$(XMLOG) -work work $$rtl || exit; \
 	done; \
-	if ! test -e prom.srec; then \
-		ln -s $(SOFT_BUILD)/prom.srec; \
-	fi; \
-	if ! test -e ram.srec; then \
-		ln -s $(SOFT_BUILD)/ram.srec; \
-	fi; \
 	echo $(SPACES)"$(XMELAB) $(SIMTOP) $(EXTRA_SIMTOP)"; \
 	$(XMELAB) $(SIMTOP) $(EXTRA_SIMTOP) && touch xmready; \
 	cd ../;
@@ -118,6 +112,10 @@ xmsim-compile: socketgen check_all_srcs soft xcelium/xmready xcelium/xmsim.in
 	echo $(SPACES)"$(XMUPDATE) $(SIMTOP)"; \
 	$(XMUPDATE) $(SIMTOP); \
 	cd ../;
+	@cd xcelium; \
+	rm -f prom.srec ram.srec; \
+	ln -s $(SOFT_BUILD)/prom.srec; \
+	ln -s $(SOFT_BUILD)/ram.srec;
 
 xmsim: xmsim-compile
 	@cd xcelium; \
