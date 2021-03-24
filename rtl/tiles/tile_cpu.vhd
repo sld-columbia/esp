@@ -1208,6 +1208,7 @@ begin
         tech          => CFG_FABTECH,
         sets          => CFG_L2_SETS,
         ways          => CFG_L2_WAYS,
+        little_end    => GLOB_CPU_RISCV,
         hindex_mst    => CFG_NCPU_TILE,
         pindex        => 1,
         pirq          => CFG_SLD_L2_CACHE_IRQ,

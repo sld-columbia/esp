@@ -36,6 +36,7 @@ entity l2_wrapper is
     hindex_mst  : integer := 0;
     pindex      : integer range 0 to NAPBSLV - 1 := 6;
     pirq        : integer := 4;
+    little_end  : integer range 0 to 1 := 1;
     mem_hindex  : integer := 4;
     mem_hconfig : ahb_config_type;
     mem_num     : integer := 1;
@@ -491,6 +492,7 @@ begin  -- architecture rtl of l2_wrapper
   l2_cache_i : l2
     generic map (
       use_rtl => CFG_CACHE_RTL,
+      little_end => little_end,
       sets => sets,
       ways => ways)
     port map (

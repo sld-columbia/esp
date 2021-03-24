@@ -35,6 +35,7 @@ use std.textio.all;
     scatter_gather : integer := 1;
     sets           : integer := 256;
     ways           : integer := 8;
+    little_end     : integer range 0 to 1 := 1;
     cache_tile_id  : cache_attribute_array;
     cache_y        : yx_vec(0 to 2**NL2_MAX_LOG2 - 1);
     cache_x        : yx_vec(0 to 2**NL2_MAX_LOG2 - 1);
@@ -272,6 +273,7 @@ begin
         tech          => tech,
         sets          => sets,
         ways          => ways,
+        little_end    => little_end,
         mem_num       => cacheable_mem_num,
         mem_info      => cacheable_mem_info,
         cache_y       => cache_y,

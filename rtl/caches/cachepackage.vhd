@@ -157,6 +157,7 @@ package cachepackage is
       tech        : integer := virtex7;
       sets        : integer := 256;
       ways        : integer := 8;
+      little_end  : integer range 0 to 1 := 1;
       hindex_mst  : integer := 0;
       pindex      : integer range 0 to NAPBSLV - 1 := 6;
       pirq        : integer := 4;
@@ -214,6 +215,7 @@ package cachepackage is
       tech        : integer := virtex7;
       sets        : integer := 256;
       ways        : integer := 8;
+      little_end  : integer range 0 to 1 := 1;
       mem_num     : integer := 1;
       mem_info    : tile_mem_info_vector(0 to MEM_ID_RANGE_MSB);
       cache_y     : yx_vec(0 to 2**NL2_MAX_LOG2 - 1);
