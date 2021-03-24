@@ -275,7 +275,9 @@ architecture rtl of tile_acc is
   constant io_x                : local_yx                           := tile_x(io_tile_id);
   constant this_scatter_gather : integer range 0 to 1               := CFG_SCATTER_GATHER;
 
-   -- Noc signals
+  constant little_end          : integer range 0 to 1               := GLOB_CPU_RISCV;
+
+  -- Noc signals
   signal noc1_stop_in_s         : std_logic_vector(4 downto 0);
   signal noc1_stop_out_s        : std_logic_vector(4 downto 0);
   signal noc1_acc_stop_in       : std_ulogic;
