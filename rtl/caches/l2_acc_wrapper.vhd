@@ -34,6 +34,7 @@ entity l2_acc_wrapper is
     tech        : integer := virtex7;
     sets        : integer := 256;
     ways        : integer := 8;
+    little_end  : integer range 0 to 1 := 1;
     mem_num     : integer := 1;
     mem_info    : tile_mem_info_vector(0 to MEM_ID_RANGE_MSB);
     cache_y     : yx_vec(0 to 2**NL2_MAX_LOG2 - 1);
@@ -383,6 +384,7 @@ begin  -- architecture rtl of l2_acc_wrapper
 
     generic map (
       use_rtl => CFG_CACHE_RTL,
+      little_end => little_end,
       sets => sets,
       ways => ways)
 
