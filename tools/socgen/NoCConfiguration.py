@@ -631,6 +631,7 @@ class NoCFrame(Pmw.ScrolledFrame):
        (tot_llc_coherent <= NLLC_COHERENT_MAX) and \
        (not (self.soc.TECH != "gf12" and self.soc.TECH != "virtexu" and tot_mem == 4)) and \
        (not (self.soc.TECH == "virtexu" and tot_mem >= 2 and (self.noc.rows < 3 or self.noc.cols < 3))) and \
+       (self.soc.cache_spandex.get() == 0 or self.soc.CPU_ARCH.get() == "ariane" or self.soc.cache_en.get() == 0) and \
        (tot_cpu == 1 or self.soc.cache_en.get()) and \
        (self.soc.llc_sets.get() < 8192 or self.soc.llc_ways.get() < 16 or tot_mem > 1):
       self.done.config(state=NORMAL)
@@ -677,6 +678,8 @@ class NoCFrame(Pmw.ScrolledFrame):
         string += "Maximum number of supported fully-coherent devices is " + str(NFULL_COHERENT_MAX) + ".\n"
       if (tot_llc_coherent > NLLC_COHERENT_MAX):
         string += "Maximum number of supported LLC-coherent devices is " + str(NLLC_COHERENT_MAX) + ".\n"
+      if (self.soc.cache_spandex.get() != 0 and self.soc.CPU_ARCH.get() != "ariane" and self.soc.cache_en.get() == 1):
+        string += "Spandex currently supports only RISC-V Ariane processor core"
       if (tot_clkbuf > 9):
         string += "The FPGA board supports no more than 9 CLKBUF's.\n"
       string += pll_string

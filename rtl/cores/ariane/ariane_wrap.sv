@@ -11,6 +11,7 @@ module ariane_wrap
      parameter AXI_DATA_WIDTH = 64,
      parameter AXI_USER_WIDTH = 1,
      parameter AXI_STRB_WIDTH = AXI_DATA_WIDTH / 8,
+     parameter USE_SPANDEX = 0,
      // Slave 0
      parameter logic [63:0] ROMBase             = 64'h0000_0000_0001_0000,
      parameter logic [63:0] ROMLength           = 64'h0000_0000_0001_0000,
@@ -730,21 +731,41 @@ module ariane_wrap
        .AXI_USER_WIDTH ( AXI_USER_WIDTH   )
        ) dram();
 
-   axi_riscv_atomics_wrap
-     #(
-       .AXI_ADDR_WIDTH ( AXI_ADDR_WIDTH   ),
-       .AXI_DATA_WIDTH ( AXI_DATA_WIDTH   ),
-       .AXI_ID_WIDTH   ( AXI_ID_WIDTH_SLV ),
-       .AXI_USER_WIDTH ( AXI_USER_WIDTH   ),
-       .AXI_MAX_WRITE_TXNS ( 1  ),
-       .RISCV_WORD_WIDTH   ( 64 )
-       ) i_axi_riscv_atomics
-       (
-	.clk_i  ( clk          ),
-	.rst_ni ( rstn         ),
-	.slv    ( master[DRAM] ),
-	.mst    ( dram         )
-	);
+   generate
+     if (USE_SPANDEX) begin : axi_riscv_lrsc_gen
+        axi_riscv_lrsc_wrap
+          #(
+            .AXI_ADDR_WIDTH ( AXI_ADDR_WIDTH   ),
+            .AXI_DATA_WIDTH ( AXI_DATA_WIDTH   ),
+            .AXI_ID_WIDTH   ( AXI_ID_WIDTH_SLV ),
+            .AXI_USER_WIDTH ( AXI_USER_WIDTH   )
+            ) i_axi_riscv_lrsc
+            (
+             .clk_i  ( clk          ),
+             .rst_ni ( rstn         ),
+             .slv    ( master[DRAM] ),
+             .mst    ( dram         )
+             );
+     end // block: axi_riscv_lrsc_gen
+     else begin : axi_riscv_atomics_gen
+        axi_riscv_atomics_wrap
+          #(
+            .AXI_ADDR_WIDTH ( AXI_ADDR_WIDTH   ),
+            .AXI_DATA_WIDTH ( AXI_DATA_WIDTH   ),
+            .AXI_ID_WIDTH   ( AXI_ID_WIDTH_SLV ),
+            .AXI_USER_WIDTH ( AXI_USER_WIDTH   ),
+            .AXI_MAX_WRITE_TXNS ( 1  ),
+            .RISCV_WORD_WIDTH   ( 64 )
+            ) i_axi_riscv_atomics
+            (
+             .clk_i  ( clk          ),
+             .rst_ni ( rstn         ),
+             .slv    ( master[DRAM] ),
+             .mst    ( dram         )
+             );
+     end // block: axi_riscv_atomics_gen
+   endgenerate
+
 
    //    AW
    assign dram_aw_id = dram.aw_id;

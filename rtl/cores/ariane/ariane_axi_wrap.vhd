@@ -64,6 +64,7 @@ architecture rtl of ariane_axi_wrap is
       AXI_DATA_WIDTH   : integer;
       AXI_USER_WIDTH   : integer;
       AXI_STRB_WIDTH   : integer;
+      USE_SPANDEX      : integer;
       ROMBase          : std_logic_vector(63 downto 0);
       ROMLength        : std_logic_vector(63 downto 0);
       APBBase          : std_logic_vector(63 downto 0);
@@ -344,6 +345,7 @@ begin  -- architecture rtl
       AXI_DATA_WIDTH   => ARCH_BITS,
       AXI_USER_WIDTH   => XUSER_WIDTH,
       AXI_STRB_WIDTH   => ARCH_BITS / 8,
+      USE_SPANDEX      => USE_SPANDEX,
       ROMBase          => ROMBase,
       ROMLength        => ROMLength,
       APBBase          => APBBase,

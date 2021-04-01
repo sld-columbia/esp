@@ -483,8 +483,8 @@ INPUT_FIFO : for i in 0 to 4 generate
 			--move the destination address at the begining of the head flit - there were 2 bits for command
 			--destx	=> fifo_head(i)(width-6 downto width-8),
 			--desty	=> fifo_head(i)(width-3 downto width-5),
-                        destx	=> fifo_head(i)(width-20 downto width-22),
-			desty	=> fifo_head(i)(width-15 downto width-17),
+			destx => fifo_head(i)(width-12 downto width-14), -- 14 - 12
+			desty => fifo_head(i)(width-9 downto width-11), -- 17 - 15
 
 			--response registers; one-hot encoded like the parameter
 			next_routing => next_hop_routing(i));
