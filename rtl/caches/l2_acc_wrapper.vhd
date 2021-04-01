@@ -27,6 +27,7 @@ use work.allcaches.all;
 use work.cachepackage.all;              -- contains l2 cache component
 use work.monitor_pkg.all;
 use work.misc.all;
+use work.socmap.all;
 
 
 entity l2_acc_wrapper is
@@ -38,7 +39,8 @@ entity l2_acc_wrapper is
     mem_info    : tile_mem_info_vector(0 to MEM_ID_RANGE_MSB);
     cache_y     : yx_vec(0 to 2**NL2_MAX_LOG2 - 1);
     cache_x     : yx_vec(0 to 2**NL2_MAX_LOG2 - 1);
-    cache_tile_id : cache_attribute_array);
+    cache_tile_id : cache_attribute_array;
+    tile_id     : integer := 0);
   port (
     rst : in std_ulogic;
     clk : in std_ulogic;
@@ -97,6 +99,7 @@ end l2_acc_wrapper;
 architecture rtl of l2_acc_wrapper is
 
   -- Interface with L2 cache
+  constant USE_SPANDEX : integer := 1;
 
   -- AHB to cache
   signal cpu_req_ready          : std_ulogic;
@@ -445,8 +448,8 @@ begin  -- architecture rtl of l2_acc_wrapper
   -----------------------------------------------------------------------------
   -- Instantiations
   -----------------------------------------------------------------------------
-  l2_gen: if SPANDEX_L2_CONFIG(tile_id) = 0 generate
-    l2_cache_i : l2
+  l2_gen: if USE_SPANDEX = 0 generate
+  l2_cache_i : l2
     generic map (
       use_rtl => CFG_CACHE_RTL,
       sets => sets,
@@ -463,13 +466,6 @@ begin  -- architecture rtl of l2_acc_wrapper
       l2_cpu_req_data_hprot     => cpu_req_data_hprot,
       l2_cpu_req_data_addr      => cpu_req_data_addr,
       l2_cpu_req_data_word      => cpu_req_data_word,
-      l2_cpu_req_data_amo       => (others => '0'),
-      l2_cpu_req_data_dcs_en    => cpu_req_data_dcs_en,
-      l2_cpu_req_data_use_owner_pred => cpu_req_data_use_owner_pred,
-      l2_cpu_req_data_dcs       => cpu_req_data_dcs,
-      l2_cpu_req_data_pred_cid  => cpu_req_data_pred_cid,
-      l2_cpu_req_data_aq        => '0',
-      l2_cpu_req_data_rl        => '0',
       l2_flush_ready            => flush_ready,
       l2_flush_valid            => flush_valid,
       l2_flush_data             => flush_data,
@@ -480,6 +476,9 @@ begin  -- architecture rtl of l2_acc_wrapper
       l2_inval_ready            => inval_ready,
       l2_inval_valid            => inval_valid,
       l2_inval_data             => inval_data,
+      l2_bresp_ready            => '1',
+      l2_bresp_valid            => open,
+      l2_bresp_data             => open,
       -- cache to NoC
       l2_req_out_ready          => req_out_ready,
       l2_req_out_valid          => req_out_valid,
@@ -487,7 +486,6 @@ begin  -- architecture rtl of l2_acc_wrapper
       l2_req_out_data_hprot     => req_out_data_hprot,
       l2_req_out_data_addr      => req_out_data_addr,
       l2_req_out_data_line      => req_out_data_line,
-      l2_req_out_data_word_mask => req_out_data_word_mask,
       l2_rsp_out_ready          => rsp_out_ready,
       l2_rsp_out_valid          => rsp_out_valid,
       l2_rsp_out_data_coh_msg   => rsp_out_data_coh_msg,
@@ -495,38 +493,26 @@ begin  -- architecture rtl of l2_acc_wrapper
       l2_rsp_out_data_to_req    => rsp_out_data_to_req,
       l2_rsp_out_data_addr      => rsp_out_data_addr,
       l2_rsp_out_data_line      => rsp_out_data_line,
-      l2_rsp_out_data_word_mask => rsp_out_data_word_mask,
-      l2_fwd_out_ready          => fwd_out_ready,
-      l2_fwd_out_valid          => fwd_out_valid,
-      l2_fwd_out_data_coh_msg   => fwd_out_data_coh_msg,
-      l2_fwd_out_data_req_id    => fwd_out_data_req_id,
-      l2_fwd_out_data_to_req    => fwd_out_data_to_req,
-      l2_fwd_out_data_addr      => fwd_out_data_addr,
-      l2_fwd_out_data_line      => fwd_out_data_line,
-      l2_fwd_out_data_word_mask => fwd_out_data_word_mask,
       -- NoC to cache
       l2_fwd_in_ready           => fwd_in_ready,
       l2_fwd_in_valid           => fwd_in_valid,
       l2_fwd_in_data_coh_msg    => fwd_in_data_coh_msg,
       l2_fwd_in_data_addr       => fwd_in_data_addr,
       l2_fwd_in_data_req_id     => fwd_in_data_req_id,
-      l2_fwd_in_data_word_mask  => fwd_in_data_word_mask,
-      l2_fwd_in_data_line       => fwd_in_data_line,
       l2_rsp_in_ready           => rsp_in_ready,
       l2_rsp_in_valid           => rsp_in_valid,
       l2_rsp_in_data_coh_msg    => rsp_in_data_coh_msg,
       l2_rsp_in_data_addr       => rsp_in_data_addr,
       l2_rsp_in_data_line       => rsp_in_data_line,
-      l2_rsp_in_data_word_mask  => rsp_in_data_word_mask,
       l2_rsp_in_data_invack_cnt => rsp_in_data_invack_cnt,
       flush_done                => flush_done,
       l2_stats_ready            => stats_ready,
       l2_stats_valid            => stats_valid,
       l2_stats_data             => stats_data
-    );
+      );
   end generate l2_gen;
 
-  l2_spandex_gen: if SPANDEX_L2_CONFIG(tile_id) = 3 generate
+  l2_spandex_gen: if USE_SPANDEX = 1 generate
     l2_cache_i : l2_spandex
     generic map (
       use_rtl => CFG_CACHE_RTL,
@@ -561,6 +547,9 @@ begin  -- architecture rtl of l2_acc_wrapper
       l2_inval_ready            => inval_ready,
       l2_inval_valid            => inval_valid,
       l2_inval_data             => inval_data,
+      l2_bresp_ready            => '1',
+      l2_bresp_valid            => open,
+      l2_bresp_data             => open,
       -- cache to NoC
       l2_req_out_ready          => req_out_ready,
       l2_req_out_valid          => req_out_valid,
