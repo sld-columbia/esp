@@ -730,7 +730,8 @@ module ariane_wrap
        .AXI_USER_WIDTH ( AXI_USER_WIDTH   )
        ) dram();
 
-   axi_riscv_atomics_wrap
+
+   axi_riscv_lrsc_wrap
      #(
        .AXI_ADDR_WIDTH ( AXI_ADDR_WIDTH   ),
        .AXI_DATA_WIDTH ( AXI_DATA_WIDTH   ),
@@ -738,7 +739,7 @@ module ariane_wrap
        .AXI_USER_WIDTH ( AXI_USER_WIDTH   ),
        .AXI_MAX_WRITE_TXNS ( 1  ),
        .RISCV_WORD_WIDTH   ( 64 )
-       ) i_axi_riscv_atomics
+       ) i_axi_riscv_lrsc
        (
 	.clk_i  ( clk          ),
 	.rst_ni ( rstn         ),

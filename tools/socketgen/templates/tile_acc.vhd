@@ -36,6 +36,7 @@ entity tile_acc is
     this_has_pll       : integer range 0 to 1 := 0;
     this_has_dco       : integer range 0 to 1 := 0;
     this_extra_clk_buf : integer range 0 to 1 := 0;
+    this_tile_id       : integer range 0 to CFG_TILES_NUM - 1 := 0;
     test_if_en         : integer range 0 to 1 := 0;
     ROUTER_PORTS       : ports_vec            := "11111";
     HAS_SYNC           : integer range 0 to 1 := 1);
@@ -223,6 +224,9 @@ architecture rtl of tile_acc is
   signal coherence_rsp_snd_wrreq    : std_ulogic;
   signal coherence_rsp_snd_data_in  : noc_flit_type;
   signal coherence_rsp_snd_full     : std_ulogic;
+  signal coherence_fwd_snd_wrreq    : std_ulogic;
+  signal coherence_fwd_snd_data_in  : noc_flit_type;
+  signal coherence_fwd_snd_full     : std_ulogic;
   signal dma_rcv_rdreq              : std_ulogic;
   signal dma_rcv_data_out           : noc_flit_type;
   signal dma_rcv_empty              : std_ulogic;
@@ -920,6 +924,9 @@ begin
       coherence_rsp_snd_wrreq    => coherence_rsp_snd_wrreq,
       coherence_rsp_snd_data_in  => coherence_rsp_snd_data_in,
       coherence_rsp_snd_full     => coherence_rsp_snd_full,
+      coherence_fwd_snd_wrreq    => coherence_fwd_snd_wrreq,
+      coherence_fwd_snd_data_in  => coherence_fwd_snd_data_in,
+      coherence_fwd_snd_full     => coherence_fwd_snd_full,
       dma_rcv_rdreq              => dma_rcv_rdreq,
       dma_rcv_data_out           => dma_rcv_data_out,
       dma_rcv_empty              => dma_rcv_empty,

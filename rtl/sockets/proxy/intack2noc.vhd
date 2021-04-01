@@ -327,7 +327,7 @@ begin  -- rtl
             irq_rcv_next     <= irq_rcv_req_1;
           else
             -- reserved field is 4 bits; reused for RISC-V -> {clint.ipi, clint.timer_irq, plic.irq}
-            irqi_noc.irl <= get_reserved_field(MISC_NOC_FLIT_SIZE, noc_flit_pad & remote_irq_data_out);
+            irqi_noc.irl <= get_reserved_field(MISC_NOC_FLIT_SIZE, noc_flit_pad & remote_irq_data_out)(3 downto 0);
             sample_irq_1 <= '1';
             irq_rcv_next <= idle;
           end if;

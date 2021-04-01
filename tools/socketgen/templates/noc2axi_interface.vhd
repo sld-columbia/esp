@@ -44,7 +44,8 @@ use std.textio.all;
     has_l2         : integer := 1;
     has_dvfs       : integer := 1;
     has_pll        : integer;
-    extra_clk_buf  : integer);
+    extra_clk_buf  : integer;
+    tile_id        : integer := 0);
   port (
     rst       : in  std_ulogic;
     clk       : in  std_ulogic;
