@@ -37,6 +37,10 @@ entity cpu_tile_q is
     coherence_rsp_snd_wrreq    : in  std_ulogic;
     coherence_rsp_snd_data_in  : in  noc_flit_type;
     coherence_rsp_snd_full     : out std_ulogic;
+    -- tile->Noc2
+    coherence_fwd_snd_wrreq    : in  std_ulogic;
+    coherence_fwd_snd_data_in  : in  noc_flit_type;
+    coherence_fwd_snd_full     : out std_ulogic;
     -- NoC5->tile
     remote_ahbs_snd_wrreq      : in  std_ulogic;
     remote_ahbs_snd_data_in    : in  misc_noc_flit_type;
@@ -143,6 +147,10 @@ architecture rtl of cpu_tile_q is
   signal coherence_rsp_snd_rdreq    : std_ulogic;
   signal coherence_rsp_snd_data_out : noc_flit_type;
   signal coherence_rsp_snd_empty    : std_ulogic;
+  -- tile->NoC2
+  signal coherence_fwd_snd_rdreq    : std_ulogic;
+  signal coherence_fwd_snd_data_out : noc_flit_type;
+  signal coherence_fwd_snd_empty    : std_ulogic;
   -- NoC4->tile
   signal dma_rcv_wrreq              : std_ulogic;
   signal dma_rcv_data_in            : noc_flit_type;
@@ -223,7 +231,6 @@ architecture rtl of cpu_tile_q is
   signal local_remote_apb_rcv_preamble : noc_preamble_type;
   signal local_apb_rcv_preamble : noc_preamble_type;
 
-  signal noc2_dummy_in_stop   : std_ulogic;
   signal noc4_dummy_in_stop   : std_ulogic;
   signal noc6_dummy_out_data  : noc_flit_type;
   signal noc6_dummy_out_void  : std_ulogic;
@@ -256,9 +263,6 @@ begin  -- rtl
   noc2_out_stop <= coherence_fwd_full and (not noc2_out_void);
   coherence_fwd_data_in <= noc2_out_data;
   coherence_fwd_wrreq <= (not noc2_out_void) and (not coherence_fwd_full);
-  noc2_in_data <= (others => '0');
-  noc2_in_void <= '1';
-  noc2_dummy_in_stop <= noc2_in_stop;
 
   fifo_2: fifo0
     generic map (
@@ -314,6 +318,24 @@ begin  -- rtl
       empty    => coherence_rsp_snd_empty,
       full     => coherence_rsp_snd_full,
       data_out => coherence_rsp_snd_data_out);
+
+  -- To noc2: dcs l2_fwd_out
+  noc2_in_data          <= coherence_fwd_snd_data_out;
+  noc2_in_void          <= coherence_fwd_snd_empty or noc2_in_stop;
+  coherence_fwd_snd_rdreq   <= (not coherence_fwd_snd_empty) and (not noc2_in_stop);
+  fifo_5: fifo0
+    generic map (
+      depth => 5,                       --Header
+      width => NOC_FLIT_SIZE)
+    port map (
+      clk      => clk,
+      rst      => fifo_rst,
+      rdreq    => coherence_fwd_snd_rdreq,
+      wrreq    => coherence_fwd_snd_wrreq,
+      data_in  => coherence_fwd_snd_data_in,
+      empty    => coherence_fwd_snd_empty,
+      full     => coherence_fwd_snd_full,
+      data_out => coherence_fwd_snd_data_out);
 
 
   -- From noc5: remote APB response to core (APB rcv)

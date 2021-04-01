@@ -42,6 +42,7 @@ entity tile_cpu is
     this_has_pll       : integer range 0 to 1 := 0;
     this_has_dco       : integer range 0 to 1 := 0;
     this_extra_clk_buf : integer range 0 to 1 := 0;
+    this_tile_id       : integer range 0 to CFG_TILES_NUM - 1 := 0;
     test_if_en         : integer range 0 to 1 := 0;
     ROUTER_PORTS       : ports_vec := "11111";
     HAS_SYNC           : integer range 0 to 1 := 1);
@@ -251,6 +252,9 @@ architecture rtl of tile_cpu is
   signal coherence_rsp_snd_wrreq    : std_ulogic;
   signal coherence_rsp_snd_data_in  : noc_flit_type;
   signal coherence_rsp_snd_full     : std_ulogic;
+  signal coherence_fwd_snd_wrreq    : std_ulogic;
+  signal coherence_fwd_snd_data_in  : noc_flit_type;
+  signal coherence_fwd_snd_full     : std_ulogic;
   signal dma_rcv_rdreq              : std_ulogic;
   signal dma_rcv_data_out           : noc_flit_type;
   signal dma_rcv_empty              : std_ulogic;
@@ -1236,7 +1240,9 @@ begin
         mem_info      => tile_mem_list(0 to MEM_ID_RANGE_MSB),
         cache_y       => cache_y,
         cache_x       => cache_x,
-        cache_tile_id => cache_tile_id)
+        cache_tile_id => cache_tile_id,
+        tile_id       => this_tile_id
+        )
       port map (
         rst                        => l2_rstn,
         clk                        => clk_feedthru,
@@ -1265,6 +1271,9 @@ begin
         coherence_rsp_snd_wrreq    => coherence_rsp_snd_wrreq,
         coherence_rsp_snd_data_in  => coherence_rsp_snd_data_in,
         coherence_rsp_snd_full     => coherence_rsp_snd_full,
+        coherence_fwd_snd_wrreq    => coherence_fwd_snd_wrreq,
+        coherence_fwd_snd_data_in  => coherence_fwd_snd_data_in,
+        coherence_fwd_snd_full     => coherence_fwd_snd_full,
         mon_cache                  => mon_cache_int
         );
 
@@ -1694,7 +1703,7 @@ begin
   begin
     dma_snd_data_in <= dma_snd_data_in_cpu;
     if get_preamble(NOC_FLIT_SIZE, dma_snd_data_in_cpu) = PREAMBLE_HEADER then
-      dma_snd_data_in(NOC_FLIT_SIZE - PREAMBLE_WIDTH - 4*YX_WIDTH - MSG_TYPE_WIDTH - 2 downto
+      dma_snd_data_in(NOC_FLIT_SIZE - PREAMBLE_WIDTH - 4*YX_WIDTH - MSG_TYPE_WIDTH - 4 downto
                       NOC_FLIT_SIZE - PREAMBLE_WIDTH - 4*YX_WIDTH - MSG_TYPE_WIDTH - RESERVED_WIDTH) <= CPU_DMA;
     end if;
   end process set_cpu_dma;
@@ -1717,6 +1726,9 @@ begin
       coherence_rsp_snd_wrreq    => coherence_rsp_snd_wrreq,
       coherence_rsp_snd_data_in  => coherence_rsp_snd_data_in,
       coherence_rsp_snd_full     => coherence_rsp_snd_full,
+      coherence_fwd_snd_wrreq    => coherence_fwd_snd_wrreq,
+      coherence_fwd_snd_data_in  => coherence_fwd_snd_data_in,
+      coherence_fwd_snd_full     => coherence_fwd_snd_full,
       dma_rcv_rdreq              => dma_rcv_rdreq,
       dma_rcv_data_out           => dma_rcv_data_out,
       dma_rcv_empty              => dma_rcv_empty,
