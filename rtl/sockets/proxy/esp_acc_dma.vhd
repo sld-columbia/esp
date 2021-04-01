@@ -137,7 +137,7 @@ architecture rtl of esp_acc_dma is
 
   -- plug & play info
   signal pconfig : apb_config_type;
-  constant hprot : std_logic_vector(3 downto 0) := "0011";
+  constant hprot : std_logic_vector(7 downto 0) := "00000011";
 
   constant len_pad : std_logic_vector(GLOB_BYTE_OFFSET_BITS - 1 downto 0) := (others => '0');
 
@@ -329,7 +329,7 @@ begin  -- rtl
   -- IRQ packet
   -----------------------------------------------------------------------------
   irq_info <= conv_std_logic_vector(pirq, 4);
-  irq_header_i <= create_header(MISC_NOC_FLIT_SIZE, local_y, local_x, io_y, io_x, INTERRUPT, irq_info)(MISC_NOC_FLIT_SIZE - 1 downto 0);
+  irq_header_i <= create_header(MISC_NOC_FLIT_SIZE, local_y, local_x, io_y, io_x, INTERRUPT, "0000" & irq_info)(MISC_NOC_FLIT_SIZE - 1 downto 0);
   irq_header(MISC_NOC_FLIT_SIZE-1 downto MISC_NOC_FLIT_SIZE-PREAMBLE_WIDTH) <= PREAMBLE_1FLIT;
   irq_header(MISC_NOC_FLIT_SIZE-PREAMBLE_WIDTH-1 downto 0) <=
     irq_header_i(MISC_NOC_FLIT_SIZE-PREAMBLE_WIDTH-1 downto 0);
