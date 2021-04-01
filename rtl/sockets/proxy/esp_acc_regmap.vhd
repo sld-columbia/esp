@@ -69,7 +69,8 @@ package esp_acc_regmap is
   -- bank(13)       : DST_OFFSET (offset in bytes from beginning of physical buffer)
   constant DST_OFFSET_REG : integer range 0 to MAXREGNUM - 1 := 13;
 
-  -- bank(14)       : RESERVED
+  -- bank(14)       : SPANDEX_REG
+  constant SPANDEX_REG : integer range 0 to MAXREGNUM - 1 := 14;
 
   -- bank(15)       : RESERVED
 

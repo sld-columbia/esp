@@ -251,6 +251,9 @@ architecture rtl of tile_cpu is
   signal coherence_rsp_snd_wrreq    : std_ulogic;
   signal coherence_rsp_snd_data_in  : noc_flit_type;
   signal coherence_rsp_snd_full     : std_ulogic;
+  signal coherence_fwd_snd_wrreq    : std_ulogic;
+  signal coherence_fwd_snd_data_in  : noc_flit_type;
+  signal coherence_fwd_snd_full     : std_ulogic;
   signal dma_rcv_rdreq              : std_ulogic;
   signal dma_rcv_data_out           : noc_flit_type;
   signal dma_rcv_empty              : std_ulogic;
@@ -1245,6 +1248,7 @@ begin
         local_x                    => this_local_x,
         pconfig                    => this_l2_pconfig,
         cache_id                   => this_cache_id,
+        tile_id                    => tile_id,
         ahbsi                      => cache_ahbsi,
         ahbso                      => cache_ahbso,
         ahbmi                      => ahbmi,
@@ -1266,6 +1270,9 @@ begin
         coherence_rsp_snd_wrreq    => coherence_rsp_snd_wrreq,
         coherence_rsp_snd_data_in  => coherence_rsp_snd_data_in,
         coherence_rsp_snd_full     => coherence_rsp_snd_full,
+        coherence_fwd_snd_wrreq    => coherence_fwd_snd_wrreq,
+        coherence_fwd_snd_data_in  => coherence_fwd_snd_data_in,
+        coherence_fwd_snd_full     => coherence_fwd_snd_full,
         mon_cache                  => mon_cache_int
         );
 
@@ -1695,7 +1702,7 @@ begin
   begin
     dma_snd_data_in <= dma_snd_data_in_cpu;
     if get_preamble(NOC_FLIT_SIZE, dma_snd_data_in_cpu) = PREAMBLE_HEADER then
-      dma_snd_data_in(NOC_FLIT_SIZE - PREAMBLE_WIDTH - 4*YX_WIDTH - MSG_TYPE_WIDTH - 2 downto
+      dma_snd_data_in(NOC_FLIT_SIZE - PREAMBLE_WIDTH - 4*YX_WIDTH - MSG_TYPE_WIDTH - 4 downto
                       NOC_FLIT_SIZE - PREAMBLE_WIDTH - 4*YX_WIDTH - MSG_TYPE_WIDTH - RESERVED_WIDTH) <= CPU_DMA;
     end if;
   end process set_cpu_dma;
@@ -1718,6 +1725,9 @@ begin
       coherence_rsp_snd_wrreq    => coherence_rsp_snd_wrreq,
       coherence_rsp_snd_data_in  => coherence_rsp_snd_data_in,
       coherence_rsp_snd_full     => coherence_rsp_snd_full,
+      coherence_fwd_snd_wrreq    => coherence_fwd_snd_wrreq,
+      coherence_fwd_snd_data_in  => coherence_fwd_snd_data_in,
+      coherence_fwd_snd_full     => coherence_fwd_snd_full,
       dma_rcv_rdreq              => dma_rcv_rdreq,
       dma_rcv_data_out           => dma_rcv_data_out,
       dma_rcv_empty              => dma_rcv_empty,

@@ -468,7 +468,12 @@ def print_global_constants(fp, soc):
   if soc.cache_rtl.get() == 1:
     fp.write("  constant CFG_CACHE_RTL   : integer := 1;\n")
   else:
-    fp.write("  constant CFG_CACHE_RTL   : integer := 0;\n\n")
+    fp.write("  constant CFG_CACHE_RTL   : integer := 0;\n")
+  if soc.cache_spandex.get() == 1:
+    fp.write("  constant USE_SPANDEX     : integer := 1;\n")
+  else:
+    fp.write("  constant USE_SPANDEX     : integer := 0;\n")
+  fp.write("\n")
 
 
 def print_constants(fp, soc, esp_config):
