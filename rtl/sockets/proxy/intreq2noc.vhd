@@ -174,7 +174,7 @@ begin  -- rtl
       msg_type := IRQ_MSG;
 
       if GLOB_CPU_ARCH = ariane or GLOB_CPU_ARCH = ibex then
-        reserved := irqi(cpuid).irl;
+        reserved := "0000" & irqi(cpuid).irl;
       else
         reserved := (others => '0');
       end if;

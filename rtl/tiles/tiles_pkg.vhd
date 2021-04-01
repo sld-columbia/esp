@@ -302,7 +302,7 @@ package tiles_pkg is
       tms                : in  std_logic;
       tclk               : in  std_logic;
       -- Ethernet MDC Scaler configuration
-      mdcscaler          : out integer range 0 to 1023;
+      mdcscaler          : out integer range 0 to 2047;
       -- I/O bus interfaces
       eth0_apbi          : out apb_slv_in_type;
       eth0_apbo          : in  apb_slv_out_type;

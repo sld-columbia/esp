@@ -1114,6 +1114,7 @@ begin
         nl2           => CFG_NL2,
         nllc          => CFG_NLLC_COHERENT,
         noc_xlen      => CFG_XLEN,
+        noc_ylen      => CFG_YLEN,
         hindex        => 2,
         pindex        => 1,
         pirq          => CFG_SLD_LLC_CACHE_IRQ,

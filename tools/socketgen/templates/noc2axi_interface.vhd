@@ -53,6 +53,7 @@ use std.textio.all;
     pllclk    : out std_ulogic;
     local_y   : in  local_yx;
     local_x   : in  local_yx;
+    tile_id   : in  integer;
     paddr     : in  integer range 0 to 4095;
     pmask     : in  integer range 0 to 4095;
     paddr_ext : in  integer range 0 to 4095;
@@ -78,6 +79,9 @@ use std.textio.all;
     coherence_rsp_snd_wrreq    : out std_ulogic;
     coherence_rsp_snd_data_in  : out noc_flit_type;
     coherence_rsp_snd_full     : in  std_ulogic;
+    coherence_fwd_snd_wrreq    : out std_ulogic;
+    coherence_fwd_snd_data_in  : out noc_flit_type;
+    coherence_fwd_snd_full     : in  std_ulogic;
     -- NoC plane MEM2DEV
     dma_rcv_rdreq     : out std_ulogic;
     dma_rcv_data_out  : in  noc_flit_type;
@@ -128,7 +132,7 @@ end;
   type irq_fsm is (idle, pending, wait_for_clear_irq);
   signal irq_state, irq_next : irq_fsm;
   signal irq_header_i, irq_header : misc_noc_flit_type;
-  signal irq_info : std_logic_vector(3 downto 0);
+  signal irq_info : std_logic_vector(RESERVED_WIDTH - 1 downto 0);
 
   -- Other signals
   signal acc_go : std_ulogic;
@@ -150,7 +154,7 @@ begin
     1 => apb_iobar(paddr, pmask),
     2 => apb_iobar(paddr_ext, pmask_ext));
 
-  irq_info <= conv_std_logic_vector(pirq, 4);
+  irq_info <= conv_std_logic_vector(pirq, RESERVED_WIDTH);
 
   apbi_paddr <= apbi.paddr and X"0FFFFFFF";
 
@@ -165,6 +169,8 @@ begin
   coherence_rsp_rcv_rdreq <= '0';
   coherence_rsp_snd_wrreq <= '0';
   coherence_rsp_snd_data_in <= (others => '0');
+  coherence_fwd_snd_wrreq <= '0';
+  coherence_fwd_snd_data_in <= (others => '0');
 
   coherent_dma_rcv_rdreq <= '0';
   coherent_dma_snd_wrreq <= '0';

@@ -217,7 +217,7 @@ begin  -- rtl
     case noc6_fifos_current is
       when none =>
         if noc6_out_void = '0' then
-          if ((noc6_reserved_field(2 downto 0) /= CPU_DMA)
+          if ((noc6_reserved_field(MSG_TYPE_WIDTH - 1 downto 0) /= CPU_DMA)
               and noc6_preamble = PREAMBLE_HEADER) then
             if dma_rcv_full = '0' then
               dma_rcv_wrreq   <= '1';
