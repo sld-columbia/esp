@@ -2343,6 +2343,33 @@ def create_socmap(esp_config, soc):
   print_global_constants(fp, soc)
   print_constants(fp, soc, esp_config)
 
+  spandex_l2_config = ""
+  import json
+  spandex_config_file = '../../third-party/spandex/spandex-config.json'
+  spandex_config = {}
+  try:
+    f = open(spandex_config_file)
+    spandex_config = json.load(f)
+    f.close()
+  except:
+    print('Spandex Warning: Failed to read Spandex configuration. Using standard MESI cache with Translation Unit.')
+
+  print('Parsing Spandex L2 cache hierarchy')
+
+  for i in range(soc.noc.cols * soc.noc.rows):
+    spandex_l2_type = '0'
+    if str(i) in spandex_config['l2']:
+      if spandex_config['l2'][str(i)] == 'spandex':
+        spandex_l2_type = '3'
+      else:
+        pass
+    spandex_l2_config += ', ' * (i > 0) + spandex_l2_type
+
+  fp.write('  type SPANDEX_L2_CONFIG_T is ARRAY(0 to {}) of integer;\n'.format(str(soc.noc.cols * soc.noc.rows - 1)))
+  fp.write('  constant SPANDEX_L2_CONFIG : SPANDEX_L2_CONFIG_T  := ({});\n'.format(spandex_l2_config))
+  fp.write("  constant USE_DCS               : std_logic := '{}';\n".format(spandex_config['dcs_config']['USE_DCS']))
+  fp.write("  constant USE_OWNER_PRED        : std_logic := '{}';\n\n".format(spandex_config['dcs_config']['USE_OWNER_PRED']))
+
   fp.write("end esp_global;\n")
   fp.close()
 

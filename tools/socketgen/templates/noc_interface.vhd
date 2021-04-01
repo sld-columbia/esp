@@ -41,7 +41,8 @@ use std.textio.all;
     has_l2         : integer := 1;
     has_dvfs       : integer := 1;
     has_pll        : integer;
-    extra_clk_buf  : integer);
+    extra_clk_buf  : integer;
+    tile_id        : integer := 0);
   port (
     rst       : in  std_ulogic;
     clk       : in  std_ulogic;
@@ -75,6 +76,9 @@ use std.textio.all;
     coherence_rsp_snd_wrreq    : out std_ulogic;
     coherence_rsp_snd_data_in  : out noc_flit_type;
     coherence_rsp_snd_full     : in  std_ulogic;
+    coherence_fwd_snd_wrreq    : out std_ulogic;
+    coherence_fwd_snd_data_in  : out noc_flit_type;
+    coherence_fwd_snd_full     : in  std_ulogic;
     -- NoC plane MEM2DEV
     dma_rcv_rdreq     : out std_ulogic;
     dma_rcv_data_out  : in  noc_flit_type;
@@ -144,6 +148,7 @@ end;
     COHERENCE_REG      => '1',
     P2P_REG            => '1',
     YX_REG             => '1',
+    SPANDEX_REG        => '1',
     -- <<user_mask>>
     others             => '0');
 
@@ -276,7 +281,8 @@ begin
         mem_info      => cacheable_mem_info,
         cache_y       => cache_y,
         cache_x       => cache_x,
-        cache_tile_id => cache_tile_id)
+        cache_tile_id => cache_tile_id,
+        tile_id       => tile_id)
       port map (
         rst                        => rst,
         clk                        => clk,
@@ -294,6 +300,9 @@ begin
         dma_snd_data               => dma_snd_data,
         dma_snd_ready              => dma_snd_ready,
         flush                      => flush,
+        aq                         => conf_done,
+        rl                         => acc_done,
+        spandex_conf               => bank(SPANDEX_REG),
         coherence_req_wrreq        => coherence_req_wrreq,
         coherence_req_data_in      => coherence_req_data_in,
         coherence_req_full         => coherence_req_full,
@@ -306,6 +315,9 @@ begin
         coherence_rsp_snd_wrreq    => coherence_rsp_snd_wrreq,
         coherence_rsp_snd_data_in  => coherence_rsp_snd_data_in,
         coherence_rsp_snd_full     => coherence_rsp_snd_full,
+        coherence_fwd_snd_wrreq    => coherence_fwd_snd_wrreq,
+        coherence_fwd_snd_data_in  => coherence_fwd_snd_data_in,
+        coherence_fwd_snd_full     => coherence_fwd_snd_full,
         mon_cache                  => mon_cache);
   end generate l2_gen;
 

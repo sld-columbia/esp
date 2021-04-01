@@ -20,6 +20,17 @@ from socmap_gen import NFULL_COHERENT_MAX
 from socmap_gen import NLLC_COHERENT_MAX
 
 
+import json
+
+SPANDEX_CONFIG = {'l2_types':['spandex'],'l2':{}}
+SPANDEX_CONFIG_FILE = '../../third-party/spandex/spandex-config.json'
+try:
+  f = open(SPANDEX_CONFIG_FILE)
+  SPANDEX_CONFIG.update(json.load(f))
+  f.close()
+except:
+  pass
+
 def isInt(s):
   try:
     int(s)
@@ -44,9 +55,11 @@ class Tile():
     self.label.config(text=selection)
     self.point_label.forget()
     self.point_select.forget()
+    self.spandex_select.forget()
     self.ip_list.forget()
     self.ip_list.setitems(soc.list_of_ips)
     self.ip_list.pack(side=LEFT)
+    self.spandex_select.setitems(["mesi", "spandex"])
     if soc.IPs.PROCESSORS.count(selection):
        self.label.config(bg="#ef6865")
     elif soc.IPs.MISC.count(selection):
@@ -64,7 +77,7 @@ class Tile():
        for p in soc.IPs.POINTS[selection]:
          if point == p:
            self.point_select.setvalue(point)
-           break;
+           break
          else:
            self.point_select.setvalue(str(soc.IPs.POINTS[selection][0]))
        self.point_select.pack(side=LEFT)
@@ -117,7 +130,12 @@ class Tile():
         self.has_ddr_selection.config(state=DISABLED)
     except:
       pass
-
+    if self.has_l2.get() == 1:
+      self.spandex_select.pack(side=LEFT)
+      SPANDEX_CONFIG['l2'][str(self.tile_id)] = self.spandex.get()
+      f = open(SPANDEX_CONFIG_FILE, 'w')
+      json.dump(SPANDEX_CONFIG, f, indent=4)
+      f.close()
     self.load_characterization(soc, soc.noc.vf_points)
 
   def get_clk_region(self):
@@ -217,6 +235,7 @@ class Tile():
     self.col = y
     self.ip_type = StringVar()
     self.point = StringVar()
+    self.spandex = StringVar()
     self.vendor = ""
     self.clk_region = IntVar()
     self.has_l2 = IntVar()
@@ -226,6 +245,7 @@ class Tile():
     self.clk_reg_active = StringVar()
     self.label = Label(top)
     self.energy_values = None
+    self.tile_id = 0
 
 class NoC():
 
@@ -254,6 +274,12 @@ class NoC():
           new_topology[y][x].point.set(self.topology[y][x].point.get())
           new_topology[y][x].vendor = self.topology[y][x].vendor
           new_topology[y][x].energy_values = self.topology[y][x].energy_values
+          new_topology[y][x].tile_id = y * _C + x
+          new_topology[y][x].spandex.set('mesi')
+          try:
+            new_topology[y][x].spandex.set(SPANDEX_CONFIG['l2'][str(new_topology[y][x].tile_id)])
+          except:
+            pass
     self.topology = new_topology
     self.rows = _R
     self.cols = _C
@@ -440,6 +466,11 @@ class NoCFrame(Pmw.ScrolledFrame):
     tile.has_ddr_selection = Checkbutton(config_frame, text="Has DDR", variable=tile.has_ddr, onvalue = 1, offvalue = 0, command=self.changed);
     tile.has_ddr_selection.grid(row=1, column=3, columnspan=2)
     Separator(config_frame, orient="horizontal").grid(row=2, column=1, columnspan=4, ipadx=140, pady=3)
+    tile.spandex_select = Pmw.OptionMenu(select_frame, menubutton_font="TkDefaultFont 8",
+                   menubutton_textvariable=tile.spandex,
+                   menubutton_width = 10,
+                   items=[]
+                  )
 
     tile.label.bind("<Double-Button-1>", lambda event:tile.power_window(event, self.soc, self))
     Label(config_frame, text="Clk Reg: ").grid(row=3, column=1)

@@ -29,6 +29,8 @@ package allcaches is
   constant OFFSET_BITS    : integer := WORD_OFFSET_BITS + BYTE_OFFSET_BITS;
   constant LINE_ADDR_BITS : integer := ADDR_BITS - OFFSET_BITS;
   constant WORDS_PER_LINE : integer := 2**WORD_OFFSET_BITS;
+  constant AMO_BITS       : integer := 6;
+  constant DCS_BITS       : integer := 2;
   constant BYTES_PER_WORD : integer := 2**BYTE_OFFSET_BITS;
   constant BYTES_PER_LINE : integer := WORDS_PER_LINE * BYTES_PER_WORD;
   constant BITS_PER_WORD  : integer := (BYTES_PER_WORD * 8);
@@ -37,8 +39,8 @@ package allcaches is
 
   -- Cache data types width
   constant CPU_MSG_TYPE_WIDTH : integer := 2;
-  constant COH_MSG_TYPE_WIDTH : integer := 2;
-  constant MIX_MSG_TYPE_WIDTH : integer := 3;
+  constant COH_MSG_TYPE_WIDTH : integer := 4;
+  constant MIX_MSG_TYPE_WIDTH : integer := 5;
 
   constant HSIZE_WIDTH           : integer := 3;
   constant HPROT_WIDTH           : integer := 2;
@@ -73,15 +75,25 @@ package allcaches is
       l2_cpu_req_data_hprot     : in  std_logic_vector(HPROT_WIDTH - 1 downto 0);
       l2_cpu_req_data_addr      : in  std_logic_vector(ADDR_BITS - 1 downto 0);
       l2_cpu_req_data_word      : in  std_logic_vector(BITS_PER_WORD - 1 downto 0);
+      l2_cpu_req_data_amo       : in  std_logic_vector(5 downto 0);
+      l2_cpu_req_data_aq        : in  std_ulogic;
+      l2_cpu_req_data_rl        : in  std_ulogic;
+      l2_cpu_req_data_dcs_en    : in  std_ulogic;
+      l2_cpu_req_data_use_owner_pred : in  std_ulogic;
+      l2_cpu_req_data_dcs       : in  std_logic_vector(DCS_BITS - 1 downto 0);
+      l2_cpu_req_data_pred_cid  : in  std_logic_vector(NL2_MAX_LOG2 - 1 downto 0);
       l2_fwd_in_valid           : in  std_ulogic;
       l2_fwd_in_data_coh_msg    : in  std_logic_vector(MIX_MSG_TYPE_WIDTH - 1 downto 0);
       l2_fwd_in_data_addr       : in  std_logic_vector(ADDR_BITS - OFFSET_BITS - 1 downto 0);
       l2_fwd_in_data_req_id     : in  std_logic_vector(NL2_MAX_LOG2 - 1 downto 0);
+      l2_fwd_in_data_word_mask  : in  std_logic_vector(WORDS_PER_LINE - 1 downto 0);
+      l2_fwd_in_data_line       : in  std_logic_vector(BITS_PER_LINE - 1 downto 0);
       l2_rsp_in_valid           : in  std_ulogic;
       l2_rsp_in_data_coh_msg    : in  std_logic_vector(COH_MSG_TYPE_WIDTH - 1 downto 0);
       l2_rsp_in_data_addr       : in  std_logic_vector(ADDR_BITS - OFFSET_BITS - 1 downto 0);
       l2_rsp_in_data_line       : in  std_logic_vector(BITS_PER_LINE - 1 downto 0);
       l2_rsp_in_data_invack_cnt : in  std_logic_vector(INVACK_CNT_WIDTH - 1 downto 0);
+      l2_rsp_in_data_word_mask  : in  std_logic_vector(WORDS_PER_LINE - 1 downto 0);
       l2_flush_valid            : in  std_ulogic;
       l2_flush_data             : in  std_ulogic;
       l2_rd_rsp_ready           : in  std_ulogic;
@@ -89,6 +101,7 @@ package allcaches is
       l2_req_out_ready          : in  std_ulogic;
       l2_rsp_out_ready          : in  std_ulogic;
       l2_bresp_ready            : in  std_ulogic;
+      l2_fwd_out_ready          : in  std_ulogic;
       l2_stats_ready            : in  std_ulogic;
       flush_done                : out std_ulogic;
       l2_cpu_req_ready          : out std_ulogic;
@@ -101,17 +114,26 @@ package allcaches is
       l2_inval_data             : out std_logic_vector(ADDR_BITS - OFFSET_BITS - 1 downto 0);
       l2_req_out_valid          : out std_ulogic;
       l2_req_out_data_coh_msg   : out std_logic_vector(COH_MSG_TYPE_WIDTH - 1 downto 0);
+      l2_req_out_data_WORD_MASK : out std_logic_vector(WORDS_PER_LINE - 1 downto 0);
       l2_req_out_data_hprot     : out std_logic_vector(HPROT_WIDTH - 1 downto 0);
       l2_req_out_data_addr      : out std_logic_vector(ADDR_BITS - OFFSET_BITS - 1 downto 0);
       l2_req_out_data_line      : out std_logic_vector(BITS_PER_LINE - 1 downto 0);
       l2_rsp_out_valid          : out std_ulogic;
       l2_rsp_out_data_coh_msg   : out std_logic_vector(COH_MSG_TYPE_WIDTH - 1 downto 0);
       l2_rsp_out_data_req_id    : out std_logic_vector(NL2_MAX_LOG2 - 1 downto 0);
+      l2_rsp_out_data_word_mask : out std_logic_vector(WORDS_PER_LINE - 1 downto 0);
       l2_rsp_out_data_to_req    : out std_logic_vector(1 downto 0);
       l2_rsp_out_data_addr      : out std_logic_vector(ADDR_BITS - OFFSET_BITS - 1 downto 0);
       l2_rsp_out_data_line      : out std_logic_vector(BITS_PER_LINE - 1 downto 0);
       l2_bresp_valid            : out std_ulogic;
       l2_bresp_data             : out std_logic_vector(BRESP_WIDTH - 1 downto 0);
+      l2_fwd_out_valid          : out std_ulogic;
+      l2_fwd_out_data_coh_msg   : out std_logic_vector(COH_MSG_TYPE_WIDTH - 1 downto 0);
+      l2_fwd_out_data_req_id    : out std_logic_vector(NL2_MAX_LOG2 - 1 downto 0);
+      l2_fwd_out_data_word_mask : out std_logic_vector(WORDS_PER_LINE - 1 downto 0);
+      l2_fwd_out_data_to_req    : out std_logic_vector(1 downto 0);
+      l2_fwd_out_data_addr      : out std_logic_vector(ADDR_BITS - OFFSET_BITS - 1 downto 0);
+      l2_fwd_out_data_line      : out std_logic_vector(BITS_PER_LINE - 1 downto 0);
       l2_stats_valid            : out std_ulogic;
       l2_stats_data             : out std_ulogic
       );
@@ -129,6 +151,7 @@ package allcaches is
       llc_req_in_data_valid_words      : in  std_logic_vector(WORD_OFFSET_BITS - 1 downto 0);
       llc_req_in_data_line             : in  std_logic_vector(BITS_PER_LINE - 1 downto 0);
       llc_req_in_data_req_id           : in  std_logic_vector(NL2_MAX_LOG2 - 1 downto 0);
+      llc_req_in_data_word_mask        : in  std_logic_vector(WORDS_PER_LINE - 1 downto 0);
       llc_dma_req_in_valid             : in  std_ulogic;
       llc_dma_req_in_data_coh_msg      : in  std_logic_vector(MIX_MSG_TYPE_WIDTH - 1 downto 0);
       llc_dma_req_in_data_hprot        : in  std_logic_vector(HPROT_WIDTH - 1 downto 0);
@@ -137,11 +160,13 @@ package allcaches is
       llc_dma_req_in_data_valid_words  : in  std_logic_vector(WORD_OFFSET_BITS - 1 downto 0);
       llc_dma_req_in_data_line         : in  std_logic_vector(BITS_PER_LINE - 1 downto 0);
       llc_dma_req_in_data_req_id       : in  std_logic_vector(NLLC_MAX_LOG2 - 1 downto 0);
+      llc_dma_req_in_data_word_mask    : in  std_logic_vector(WORDS_PER_LINE - 1 downto 0);
       llc_rsp_in_valid                 : in  std_ulogic;
       llc_rsp_in_data_coh_msg          : in  std_logic_vector(COH_MSG_TYPE_WIDTH - 1 downto 0);
       llc_rsp_in_data_addr             : in  std_logic_vector(ADDR_BITS - OFFSET_BITS - 1 downto 0);
       llc_rsp_in_data_line             : in  std_logic_vector(BITS_PER_LINE - 1 downto 0);
       llc_rsp_in_data_req_id           : in  std_logic_vector(NL2_MAX_LOG2 - 1 downto 0);
+      llc_rsp_in_data_word_mask        : in  std_logic_vector(WORDS_PER_LINE - 1 downto 0);
       llc_mem_rsp_valid                : in  std_ulogic;
       llc_mem_rsp_data_line            : in  std_logic_vector(BITS_PER_LINE - 1 downto 0);
       llc_rst_tb_valid                 : in  std_ulogic;
@@ -165,6 +190,7 @@ package allcaches is
       llc_rsp_out_data_req_id          : out std_logic_vector(NL2_MAX_LOG2 - 1 downto 0);
       llc_rsp_out_data_dest_id         : out std_logic_vector(NL2_MAX_LOG2 - 1 downto 0);
       llc_rsp_out_data_word_offset     : out std_logic_vector(WORD_OFFSET_BITS - 1 downto 0);
+      llc_rsp_out_data_word_mask       : out std_logic_vector(WORDS_PER_LINE - 1 downto 0);
       llc_dma_rsp_out_valid            : out std_ulogic;
       llc_dma_rsp_out_data_coh_msg     : out std_logic_vector(COH_MSG_TYPE_WIDTH - 1 downto 0);
       llc_dma_rsp_out_data_addr        : out std_logic_vector(ADDR_BITS - OFFSET_BITS - 1 downto 0);
@@ -173,11 +199,14 @@ package allcaches is
       llc_dma_rsp_out_data_req_id      : out std_logic_vector(NLLC_MAX_LOG2 - 1 downto 0);
       llc_dma_rsp_out_data_dest_id     : out std_logic_vector(NL2_MAX_LOG2 - 1 downto 0);
       llc_dma_rsp_out_data_word_offset : out std_logic_vector(WORD_OFFSET_BITS - 1 downto 0);
+      llc_dma_rsp_out_data_word_mask   : out std_logic_vector(WORDS_PER_LINE - 1 downto 0);
       llc_fwd_out_valid                : out std_ulogic;
       llc_fwd_out_data_coh_msg         : out std_logic_vector(MIX_MSG_TYPE_WIDTH - 1 downto 0);
       llc_fwd_out_data_addr            : out std_logic_vector(ADDR_BITS - OFFSET_BITS - 1 downto 0);
       llc_fwd_out_data_req_id          : out std_logic_vector(NL2_MAX_LOG2 - 1 downto 0);
       llc_fwd_out_data_dest_id         : out std_logic_vector(NL2_MAX_LOG2 - 1 downto 0);
+      llc_fwd_out_data_word_mask       : out std_logic_vector(WORDS_PER_LINE - 1 downto 0);
+      llc_fwd_out_data_line            : out std_logic_vector(BITS_PER_LINE - 1 downto 0);
       llc_mem_req_valid                : out std_ulogic;
       llc_mem_req_data_hwrite          : out std_ulogic;
       llc_mem_req_data_hsize           : out std_logic_vector(HSIZE_WIDTH - 1 downto 0);
