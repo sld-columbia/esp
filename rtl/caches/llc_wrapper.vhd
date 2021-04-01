@@ -104,6 +104,8 @@ end llc_wrapper;
 
 architecture rtl of llc_wrapper is
 
+  constant USE_SPANDEX : integer := 1;
+
   -- Helpers
   function fix_endian (
     le : std_logic_vector(ARCH_BITS - 1 downto 0))
@@ -2070,7 +2072,102 @@ begin  -- architecture rtl
 -------------------------------------------------------------------------------
 
   -- instantiation of llc cache on cpu tile
+  llc_gen: if USE_SPANDEX = 0 generate
   llc_cache_i : llc
+    generic map (
+      use_rtl => CFG_CACHE_RTL,
+      sets => sets,
+      ways => ways)
+    port map (
+      clk => clk,
+      rst => rst,
+
+      llc_rst_tb_valid      => llc_flush_resetn_req,
+      llc_rst_tb_data       => llc_flush_resetn,
+      llc_rst_tb_ready      => llc_flush_resetn_ack,
+      llc_rst_tb_done_valid => llc_flush_resetn_done,
+      llc_rst_tb_done_data  => open,
+      llc_rst_tb_done_ready => std_logic' ('1'),
+
+      -- NoC to cache
+      llc_req_in_ready        => llc_req_in_ready,
+      llc_req_in_valid        => llc_req_in_valid,
+      llc_req_in_data_coh_msg => llc_req_in_data_coh_msg,
+      llc_req_in_data_hprot   => llc_req_in_data_hprot,
+      llc_req_in_data_addr    => llc_req_in_data_addr,
+      llc_req_in_data_line    => llc_req_in_data_line,
+      llc_req_in_data_req_id  => llc_req_in_data_req_id,
+      llc_req_in_data_word_offset => llc_req_in_data_word_offset,
+      llc_req_in_data_valid_words => llc_req_in_data_valid_words,
+
+      llc_dma_req_in_ready        => llc_dma_req_in_ready,
+      llc_dma_req_in_valid        => llc_dma_req_in_valid,
+      llc_dma_req_in_data_coh_msg => llc_dma_req_in_data_coh_msg,
+      llc_dma_req_in_data_hprot   => llc_dma_req_in_data_hprot,
+      llc_dma_req_in_data_addr    => llc_dma_req_in_data_addr,
+      llc_dma_req_in_data_line    => llc_dma_req_in_data_line,
+      llc_dma_req_in_data_req_id  => llc_dma_req_in_data_req_id,
+      llc_dma_req_in_data_word_offset => llc_dma_req_in_data_word_offset,
+      llc_dma_req_in_data_valid_words => llc_dma_req_in_data_valid_words,
+
+      llc_rsp_in_ready        => llc_rsp_in_ready,
+      llc_rsp_in_valid        => llc_rsp_in_valid,
+      llc_rsp_in_data_coh_msg => llc_rsp_in_data_coh_msg,
+      llc_rsp_in_data_addr    => llc_rsp_in_data_addr,
+      llc_rsp_in_data_line    => llc_rsp_in_data_line,
+      llc_rsp_in_data_req_id  => llc_rsp_in_data_req_id,
+
+      -- cache to NoC
+      llc_rsp_out_ready           => llc_rsp_out_ready,
+      llc_rsp_out_valid           => llc_rsp_out_valid,
+      llc_rsp_out_data_coh_msg    => llc_rsp_out_data_coh_msg,
+      llc_rsp_out_data_addr       => llc_rsp_out_data_addr,
+      llc_rsp_out_data_line       => llc_rsp_out_data_line,
+      llc_rsp_out_data_invack_cnt => llc_rsp_out_data_invack_cnt,
+      llc_rsp_out_data_req_id     => llc_rsp_out_data_req_id,
+      llc_rsp_out_data_dest_id    => llc_rsp_out_data_dest_id,
+      llc_rsp_out_data_word_offset => llc_rsp_out_data_word_offset,
+
+      llc_dma_rsp_out_ready           => llc_dma_rsp_out_ready,
+      llc_dma_rsp_out_valid           => llc_dma_rsp_out_valid,
+      llc_dma_rsp_out_data_coh_msg    => llc_dma_rsp_out_data_coh_msg,
+      llc_dma_rsp_out_data_addr       => llc_dma_rsp_out_data_addr,
+      llc_dma_rsp_out_data_line       => llc_dma_rsp_out_data_line,
+      llc_dma_rsp_out_data_invack_cnt => llc_dma_rsp_out_data_invack_cnt,
+      llc_dma_rsp_out_data_req_id     => llc_dma_rsp_out_data_req_id,
+      llc_dma_rsp_out_data_dest_id    => llc_dma_rsp_out_data_dest_id,
+      llc_dma_rsp_out_data_word_offset => llc_dma_rsp_out_data_word_offset,
+
+      llc_fwd_out_ready        => llc_fwd_out_ready,
+      llc_fwd_out_valid        => llc_fwd_out_valid,
+      llc_fwd_out_data_coh_msg => llc_fwd_out_data_coh_msg,
+      llc_fwd_out_data_addr    => llc_fwd_out_data_addr,
+      llc_fwd_out_data_req_id  => llc_fwd_out_data_req_id,
+      llc_fwd_out_data_dest_id => llc_fwd_out_data_dest_id,
+
+      -- AHB to cache
+      llc_mem_rsp_ready     => llc_mem_rsp_ready,
+      llc_mem_rsp_valid     => llc_mem_rsp_valid,
+      llc_mem_rsp_data_line => llc_mem_rsp_data_line,
+
+      -- cache to AHB
+      llc_mem_req_ready       => llc_mem_req_ready,
+      llc_mem_req_valid       => llc_mem_req_valid,
+      llc_mem_req_data_hwrite => llc_mem_req_data_hwrite,
+      llc_mem_req_data_hsize  => llc_mem_req_data_hsize,
+      llc_mem_req_data_hprot  => llc_mem_req_data_hprot,
+      llc_mem_req_data_addr   => llc_mem_req_data_addr,
+      llc_mem_req_data_line   => llc_mem_req_data_line,
+
+      -- statistics
+      llc_stats_ready         => llc_stats_ready,
+      llc_stats_valid         => llc_stats_valid,
+      llc_stats_data          => llc_stats_data
+    );
+  end generate llc_gen;
+
+  llc_spandex_gen: if USE_SPANDEX = 1 generate
+  llc_cache_i : llc_spandex
     generic map (
       use_rtl => CFG_CACHE_RTL,
       sets => sets,
@@ -2167,7 +2264,8 @@ begin  -- architecture rtl
       llc_stats_ready         => llc_stats_ready,
       llc_stats_valid         => llc_stats_valid,
       llc_stats_data          => llc_stats_data
-      );
+    );
+  end generate llc_spandex_gen;
 
 -------------------------------------------------------------------------------
 -- Debug
