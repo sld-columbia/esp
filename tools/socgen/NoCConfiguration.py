@@ -23,7 +23,7 @@ from socmap_gen import NLLC_COHERENT_MAX
 import json
 
 SPANDEX_CONFIG = {'l2_types':['spandex'],'l2':{}}
-SPANDEX_CONFIG_FILE = '../../third-party/spandex/spandex-config.json'
+SPANDEX_CONFIG_FILE = './spandex-config.json'
 try:
   f = open(SPANDEX_CONFIG_FILE)
   SPANDEX_CONFIG.update(json.load(f))
