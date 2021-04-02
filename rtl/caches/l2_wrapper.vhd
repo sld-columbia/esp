@@ -2410,7 +2410,7 @@ end process fsm_fwd_out;
 
         if mosi.w.valid = '1' then
 
-          if mosi.w.last = '1' then
+          if mosi.w.last = '1' and (reg.cpu_msg /= CPU_WRITE_ATOM or bresp_valid = '1') then
             somi.b.valid <= '1';
             if reg.cpu_msg = "11" then
               somi.b.resp <= "01";
@@ -2433,7 +2433,7 @@ end process fsm_fwd_out;
 
           if cpu_req_ready = '1' then
 
-            if valid_axi_req = '1' and mosi.w.last = '1' and mosi.b.ready = '1' then
+            if valid_axi_req = '1' and mosi.w.last = '1' and mosi.b.ready = '1' and (reg.cpu_msg /= CPU_WRITE_ATOM or bresp_valid  = '1') then
               if valid_axi_req = '1' then
                 if mosi.aw.valid = '0' then
                   reg.cpu_msg := '0' & mosi.ar.lock;
@@ -2478,7 +2478,7 @@ end process fsm_fwd_out;
 
             if mosi.w.last = '1' then
 
-              if mosi.b.ready = '0' then
+              if mosi.b.ready = '0' or (reg.cpu_msg = CPU_WRITE_ATOM and bresp_valid = '0') then
                 reg.state := send_wr_ack;
 
               elsif flush_due = '1' and xreg.lock = '0' and
@@ -2534,7 +2534,7 @@ end process fsm_fwd_out;
             somi.b.resp <= bresp_data;
         end if;
         
-        if mosi.b.ready = '1' then
+        if mosi.b.ready = '1' and (reg.cpu_msg /= CPU_WRITE_ATOM or bresp_valid = '1') then
         
           if unsigned(xreg.atop) > 0 then
             reg.state := load_rsp;

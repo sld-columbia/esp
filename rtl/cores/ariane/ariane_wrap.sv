@@ -736,9 +736,7 @@ module ariane_wrap
        .AXI_ADDR_WIDTH ( AXI_ADDR_WIDTH   ),
        .AXI_DATA_WIDTH ( AXI_DATA_WIDTH   ),
        .AXI_ID_WIDTH   ( AXI_ID_WIDTH_SLV ),
-       .AXI_USER_WIDTH ( AXI_USER_WIDTH   ),
-       .AXI_MAX_WRITE_TXNS ( 1  ),
-       .RISCV_WORD_WIDTH   ( 64 )
+       .AXI_USER_WIDTH ( AXI_USER_WIDTH   )
        ) i_axi_riscv_lrsc
        (
 	.clk_i  ( clk          ),
