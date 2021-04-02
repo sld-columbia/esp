@@ -1340,17 +1340,17 @@ end process fsm_fwd_out;
 
               if fwd_in_ready = '1' then
 
-          coherence_fwd_rdreq <= '1';
+                coherence_fwd_rdreq <= '1';
 
-          fwd_in_valid        <= '1';
-          fwd_in_data_coh_msg <= reg.coh_msg;
-          fwd_in_data_addr    <= coherence_fwd_data_out(ADDR_BITS - 1 downto LINE_RANGE_LO);
-          fwd_in_data_req_id  <= reg.req_id;
+                fwd_in_valid        <= '1';
+                fwd_in_data_coh_msg <= reg.coh_msg;
+                fwd_in_data_addr    <= coherence_fwd_data_out(ADDR_BITS - 1 downto LINE_RANGE_LO);
+                fwd_in_data_req_id  <= reg.req_id;
                 fwd_in_data_word_mask    <= reg.word_mask;
 
-          reg.state := rcv_header;
+                reg.state := rcv_header;
 
-        end if;
+              end if;
           end case;
         end if;
 
