@@ -2542,7 +2542,7 @@ end process fsm_fwd_out;
 
       -- STORE ACK
       when send_wr_ack =>
-        if reg.cpu_msg /= CPU_WRITE_ATOM or bresp_valid = '1' then
+        if reg.cpu_msg /= CPU_WRITE_ATOM or bresp_valid = '1' or unsigned(xreg.atop) > 0 then
             somi.b.valid <= '1';
         end if;
 
@@ -2550,12 +2550,13 @@ end process fsm_fwd_out;
             somi.b.resp <= bresp_data;
         end if;
         
-        if mosi.b.ready = '1' and (reg.cpu_msg /= CPU_WRITE_ATOM or bresp_valid = '1') then
+        if mosi.b.ready = '1' and (reg.cpu_msg /= CPU_WRITE_ATOM or bresp_valid = '1' or unsigned(xreg.atop) > 0) then
         
           if unsigned(xreg.atop) > 0 then
             reg.state := load_rsp;
+          else
 
-          elsif valid_axi_req = '1' then
+            if valid_axi_req = '1' then
             if mosi.aw.valid = '0' then
               reg.cpu_msg := '0' & mosi.ar.lock;
               reg.hsize   := mosi.ar.size;
@@ -2640,8 +2641,7 @@ end process fsm_fwd_out;
           cpu_req_data_dcs     <= reg.dcs;
           cpu_req_data_pred_cid<= reg.pred_cid;
 
-        
-          --reg.state := idle;
+          end if;
 
         end if;
 
