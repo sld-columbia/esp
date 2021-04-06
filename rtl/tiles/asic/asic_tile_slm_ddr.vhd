@@ -44,8 +44,31 @@ entity asic_tile_slm_ddr is
     -- ext_clk_sel     : in  std_ulogic;  -- backup tile clock select ??(usign registers otherwise)
     clk_div            : out std_ulogic;  -- tile clock monitor for testing purposes
     -- LPDDR
-    lpddr_o            : out lpddr_out_t;
-    lpddr_i            : in  lpddr_in_t;
+    lpddr_o_calib_done : out std_ulogic;
+    lpddr_o_ck_p       : out std_logic;
+    lpddr_o_ck_n       : out std_logic;
+    lpddr_o_cke        : out std_logic;
+    lpddr_o_ba         : out std_logic_vector(2 downto 0);
+    lpddr_o_addr       : out std_logic_vector(15 downto 0);
+    lpddr_o_cs_n       : out std_logic;
+    lpddr_o_ras_n      : out std_logic;
+    lpddr_o_cas_n      : out std_logic;
+    lpddr_o_we_n       : out std_logic;
+    lpddr_o_reset_n    : out std_logic;
+    lpddr_o_odt        : out std_logic;
+    lpddr_o_dm_oen     : out std_logic_vector(3 downto 0);
+    lpddr_o_dm         : out std_logic_vector(3 downto 0);
+    lpddr_o_dqs_p_oen  : out std_logic_vector(3 downto 0);
+    lpddr_o_dqs_p_ien  : out std_logic_vector(3 downto 0);
+    lpddr_o_dqs_p_o    : out std_logic_vector(3 downto 0);
+    lpddr_o_dqs_n_oen  : out std_logic_vector(3 downto 0);
+    lpddr_o_dqs_n_ien  : out std_logic_vector(3 downto 0);
+    lpddr_o_dqs_n_o    : out std_logic_vector(3 downto 0);
+    lpddr_o_dq_oen     : out std_logic_vector(31 downto 0);
+    lpddr_o_dq_o       : out std_logic_vector(31 downto 0);
+    lpddr_i_dqs_p_i    : in  std_logic_vector(3 downto 0);
+    lpddr_i_dqs_n_i    : in  std_logic_vector(3 downto 0);
+    lpddr_i_dq_i       : in  std_logic_vector(31 downto 0);
     -- Test interface
     tdi                : in  std_logic;
     tdo                : out std_logic;
@@ -223,36 +246,36 @@ begin
       hindex          => 0,
       haddr           => this_slmddr_haddr,
       hmask           => this_slmddr_hmask,
-      lpddr_ck_p      => lpddr_o.ck_p,
-      lpddr_ck_n      => lpddr_o.ck_n,
-      lpddr_cke       => lpddr_o.cke,
-      lpddr_ba        => lpddr_o.ba,
-      lpddr_addr      => lpddr_o.addr,
-      lpddr_cs_n      => lpddr_o.cs_n,
-      lpddr_ras_n     => lpddr_o.ras_n,
-      lpddr_cas_n     => lpddr_o.cas_n,
-      lpddr_we_n      => lpddr_o.we_n,
-      lpddr_reset_n   => lpddr_o.reset_n,
-      lpddr_odt       => lpddr_o.odt,
-      lpddr_dm_oen    => lpddr_o.dm_oen,
-      lpddr_dm        => lpddr_o.dm,
-      lpddr_dqs_p_oen => lpddr_o.dqs_p_oen,
-      lpddr_dqs_p_ien => lpddr_o.dqs_p_ien,
-      lpddr_dqs_p_o   => lpddr_o.dqs_p_o,
-      lpddr_dqs_p_i   => lpddr_i.dqs_p_i,
-      lpddr_dqs_n_oen => lpddr_o.dqs_n_oen,
-      lpddr_dqs_n_ien => lpddr_o.dqs_n_ien,
-      lpddr_dqs_n_o   => lpddr_o.dqs_n_o,
-      lpddr_dqs_n_i   => lpddr_i.dqs_n_i,
-      lpddr_dq_oen    => lpddr_o.dq_oen,
-      lpddr_dq_o      => lpddr_o.dq_o,
-      lpddr_dq_i      => lpddr_i.dq_i,
+      lpddr_ck_p      => lpddr_o_ck_p,
+      lpddr_ck_n      => lpddr_o_ck_n,
+      lpddr_cke       => lpddr_o_cke,
+      lpddr_ba        => lpddr_o_ba,
+      lpddr_addr      => lpddr_o_addr,
+      lpddr_cs_n      => lpddr_o_cs_n,
+      lpddr_ras_n     => lpddr_o_ras_n,
+      lpddr_cas_n     => lpddr_o_cas_n,
+      lpddr_we_n      => lpddr_o_we_n,
+      lpddr_reset_n   => lpddr_o_reset_n,
+      lpddr_odt       => lpddr_o_odt,
+      lpddr_dm_oen    => lpddr_o_dm_oen,
+      lpddr_dm        => lpddr_o_dm,
+      lpddr_dqs_p_oen => lpddr_o_dqs_p_oen,
+      lpddr_dqs_p_ien => lpddr_o_dqs_p_ien,
+      lpddr_dqs_p_o   => lpddr_o_dqs_p_o,
+      lpddr_dqs_p_i   => lpddr_i_dqs_p_i,
+      lpddr_dqs_n_oen => lpddr_o_dqs_n_oen,
+      lpddr_dqs_n_ien => lpddr_o_dqs_n_ien,
+      lpddr_dqs_n_o   => lpddr_o_dqs_n_o,
+      lpddr_dqs_n_i   => lpddr_i_dqs_n_i,
+      lpddr_dq_oen    => lpddr_o_dq_oen,
+      lpddr_dq_o      => lpddr_o_dq_o,
+      lpddr_dq_i      => lpddr_i_dq_i,
       ddr_cfg0        => ddr_cfg0,
       ddr_cfg1        => ddr_cfg1,
       ddr_cfg2        => ddr_cfg2,
       ahbso           => ddr_ahbso,
       ahbsi           => ddr_ahbsi,
-      calib_done      => lpddr_o.calib_done,
+      calib_done      => lpddr_o_calib_done,
       ui_clk          => dco_clk_div2_90,
       ui_rstn         => dco_rstn,
       phy_clk_1x      => dco_clk_div2,
