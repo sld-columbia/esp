@@ -116,8 +116,31 @@ architecture behav of bsg_dmc_tb is
   signal phy_clk_2x : std_logic := '0';
   signal phy_rstn : std_logic := '0';
 
-  signal lpddr_o : lpddr_out_t;
-  signal lpddr_i : lpddr_in_t;
+  signal lpddr_o_calib_done  : std_ulogic;
+  signal lpddr_o_ck_p        : std_logic;
+  signal lpddr_o_ck_n        : std_logic;
+  signal lpddr_o_cke         : std_logic;
+  signal lpddr_o_ba          : std_logic_vector(2 downto 0);
+  signal lpddr_o_addr        : std_logic_vector(15 downto 0);
+  signal lpddr_o_cs_n        : std_logic;
+  signal lpddr_o_ras_n       : std_logic;
+  signal lpddr_o_cas_n       : std_logic;
+  signal lpddr_o_we_n        : std_logic;
+  signal lpddr_o_reset_n     : std_logic;
+  signal lpddr_o_odt         : std_logic;
+  signal lpddr_o_dm_oen      : std_logic_vector(3 downto 0);
+  signal lpddr_o_dm          : std_logic_vector(3 downto 0);
+  signal lpddr_o_dqs_p_oen   : std_logic_vector(3 downto 0);
+  signal lpddr_o_dqs_p_ien   : std_logic_vector(3 downto 0);
+  signal lpddr_o_dqs_p_o     : std_logic_vector(3 downto 0);
+  signal lpddr_o_dqs_n_oen   : std_logic_vector(3 downto 0);
+  signal lpddr_o_dqs_n_ien   : std_logic_vector(3 downto 0);
+  signal lpddr_o_dqs_n_o     : std_logic_vector(3 downto 0);
+  signal lpddr_o_dq_oen      : std_logic_vector(31 downto 0);
+  signal lpddr_o_dq_o        : std_logic_vector(31 downto 0);
+  signal lpddr_i_dqs_p_i     : std_logic_vector(3 downto 0);
+  signal lpddr_i_dqs_n_i     : std_logic_vector(3 downto 0);
+  signal lpddr_i_dq_i        : std_logic_vector(31 downto 0);
 
   signal lpddr0_ck_p        :  std_logic;
   signal lpddr0_ck_n        :  std_logic;
@@ -170,21 +193,21 @@ begin  -- architecture behav
   end process;
 
 
-  lpddr0_ck_p_pad    : outpad    generic map (loc => lpddr0_ck_p_pad_loc, level => cmos, voltage => x18v, tech => CFG_FABTECH)                          port map (lpddr0_ck_p, lpddr_o.ck_p, X"00003");
-  lpddr0_ck_n_pad    : outpad    generic map (loc => lpddr0_ck_n_pad_loc, level => cmos, voltage => x18v, tech => CFG_FABTECH)                          port map (lpddr0_ck_n, lpddr_o.ck_n, X"00003");
-  lpddr0_cke_pad     : outpad    generic map (loc => lpddr0_cke_pad_loc, level => cmos, voltage => x18v, tech => CFG_FABTECH)                           port map (lpddr0_cke, lpddr_o.cke, X"00003");
-  lpddr0_ba_pad      : outpadv   generic map (loc => lpddr0_ba_pad_loc, level => cmos, voltage => x18v, tech => CFG_FABTECH, width => 3)                port map (lpddr0_ba, lpddr_o.ba, X"00003");
-  lpddr0_addr_pad    : outpadv   generic map (loc => lpddr0_addr_pad_loc, level => cmos, voltage => x18v, tech => CFG_FABTECH, width => 16)             port map (lpddr0_addr, lpddr_o.addr, X"00003");
-  lpddr0_cs_n_pad    : outpad    generic map (loc => lpddr0_cs_n_pad_loc, level => cmos, voltage => x18v, tech => CFG_FABTECH)                          port map (lpddr0_cs_n, lpddr_o.cs_n, X"00003");
-  lpddr0_ras_n_pad   : outpad    generic map (loc => lpddr0_ras_n_pad_loc, level => cmos, voltage => x18v, tech => CFG_FABTECH)                         port map (lpddr0_ras_n, lpddr_o.ras_n, X"00003");
-  lpddr0_cas_n_pad   : outpad    generic map (loc => lpddr0_cas_n_pad_loc, level => cmos, voltage => x18v, tech => CFG_FABTECH)                         port map (lpddr0_cas_n, lpddr_o.cas_n, X"00003");
-  lpddr0_we_n_pad    : outpad    generic map (loc => lpddr0_we_n_pad_loc, level => cmos, voltage => x18v, tech => CFG_FABTECH)                          port map (lpddr0_we_n, lpddr_o.we_n, X"00003");
-  lpddr0_reset_n_pad : outpad    generic map (loc => lpddr0_reset_n_pad_loc, level => cmos, voltage => x18v, tech => CFG_FABTECH)                       port map (lpddr0_reset_n, lpddr_o.reset_n, X"00003");
-  lpddr0_odt_pad     : outpad    generic map (loc => lpddr0_odt_pad_loc, level => cmos, voltage => x18v, tech => CFG_FABTECH)                           port map (lpddr0_odt, lpddr_o.odt, X"00003");
-  lpddr0_dm_pad      : iopadvv   generic map (loc => lpddr0_dm_pad_loc, level => cmos, voltage => x18v, tech => CFG_FABTECH, width => 4, oepol => 0)    port map (lpddr0_dm, lpddr_o.dm, lpddr_o.dm_oen, open, X"00003");
-  lpddr0_dqs_p_pad   : iopadienv generic map (loc => lpddr0_dqs_p_pad_loc, level => cmos, voltage => x18v, tech => CFG_FABTECH, width => 4, oepol => 0) port map (lpddr0_dqs_p, lpddr_o.dqs_p_o, lpddr_o.dqs_p_oen, lpddr_i.dqs_p_i, lpddr_o.dqs_p_ien, X"00003");
-  lpddr0_dqs_n_pad   : iopadienv generic map (loc => lpddr0_dqs_n_pad_loc, level => cmos, voltage => x18v, tech => CFG_FABTECH, width => 4, oepol => 0) port map (lpddr0_dqs_n, lpddr_o.dqs_n_o, lpddr_o.dqs_n_oen, lpddr_i.dqs_n_i, lpddr_o.dqs_n_ien, X"00003");
-  lpddr0_dq_pad      : iopadvv   generic map (loc => lpddr0_dq_pad_loc, level => cmos, voltage => x18v, tech => CFG_FABTECH, width => 32, oepol => 0)   port map (lpddr0_dq, lpddr_o.dq_o, lpddr_o.dq_oen, lpddr_i.dq_i, X"00003");
+  lpddr0_ck_p_pad    : outpad    generic map (loc => lpddr0_ck_p_pad_loc, level => cmos, voltage => x18v, tech => CFG_FABTECH)                          port map (lpddr0_ck_p, lpddr_o_ck_p, X"00003");
+  lpddr0_ck_n_pad    : outpad    generic map (loc => lpddr0_ck_n_pad_loc, level => cmos, voltage => x18v, tech => CFG_FABTECH)                          port map (lpddr0_ck_n, lpddr_o_ck_n, X"00003");
+  lpddr0_cke_pad     : outpad    generic map (loc => lpddr0_cke_pad_loc, level => cmos, voltage => x18v, tech => CFG_FABTECH)                           port map (lpddr0_cke, lpddr_o_cke, X"00003");
+  lpddr0_ba_pad      : outpadv   generic map (loc => lpddr0_ba_pad_loc, level => cmos, voltage => x18v, tech => CFG_FABTECH, width => 3)                port map (lpddr0_ba, lpddr_o_ba, X"00003");
+  lpddr0_addr_pad    : outpadv   generic map (loc => lpddr0_addr_pad_loc, level => cmos, voltage => x18v, tech => CFG_FABTECH, width => 16)             port map (lpddr0_addr, lpddr_o_addr, X"00003");
+  lpddr0_cs_n_pad    : outpad    generic map (loc => lpddr0_cs_n_pad_loc, level => cmos, voltage => x18v, tech => CFG_FABTECH)                          port map (lpddr0_cs_n, lpddr_o_cs_n, X"00003");
+  lpddr0_ras_n_pad   : outpad    generic map (loc => lpddr0_ras_n_pad_loc, level => cmos, voltage => x18v, tech => CFG_FABTECH)                         port map (lpddr0_ras_n, lpddr_o_ras_n, X"00003");
+  lpddr0_cas_n_pad   : outpad    generic map (loc => lpddr0_cas_n_pad_loc, level => cmos, voltage => x18v, tech => CFG_FABTECH)                         port map (lpddr0_cas_n, lpddr_o_cas_n, X"00003");
+  lpddr0_we_n_pad    : outpad    generic map (loc => lpddr0_we_n_pad_loc, level => cmos, voltage => x18v, tech => CFG_FABTECH)                          port map (lpddr0_we_n, lpddr_o_we_n, X"00003");
+  lpddr0_reset_n_pad : outpad    generic map (loc => lpddr0_reset_n_pad_loc, level => cmos, voltage => x18v, tech => CFG_FABTECH)                       port map (lpddr0_reset_n, lpddr_o_reset_n, X"00003");
+  lpddr0_odt_pad     : outpad    generic map (loc => lpddr0_odt_pad_loc, level => cmos, voltage => x18v, tech => CFG_FABTECH)                           port map (lpddr0_odt, lpddr_o_odt, X"00003");
+  lpddr0_dm_pad      : iopadvv   generic map (loc => lpddr0_dm_pad_loc, level => cmos, voltage => x18v, tech => CFG_FABTECH, width => 4, oepol => 0)    port map (lpddr0_dm, lpddr_o_dm, lpddr_o_dm_oen, open, X"00003");
+  lpddr0_dqs_p_pad   : iopadienv generic map (loc => lpddr0_dqs_p_pad_loc, level => cmos, voltage => x18v, tech => CFG_FABTECH, width => 4, oepol => 0) port map (lpddr0_dqs_p, lpddr_o_dqs_p_o, lpddr_o_dqs_p_oen, lpddr_i_dqs_p_i, lpddr_o_dqs_p_ien, X"00003");
+  lpddr0_dqs_n_pad   : iopadienv generic map (loc => lpddr0_dqs_n_pad_loc, level => cmos, voltage => x18v, tech => CFG_FABTECH, width => 4, oepol => 0) port map (lpddr0_dqs_n, lpddr_o_dqs_n_o, lpddr_o_dqs_n_oen, lpddr_i_dqs_n_i, lpddr_o_dqs_n_ien, X"00003");
+  lpddr0_dq_pad      : iopadvv   generic map (loc => lpddr0_dq_pad_loc, level => cmos, voltage => x18v, tech => CFG_FABTECH, width => 32, oepol => 0)   port map (lpddr0_dq, lpddr_o_dq_o, lpddr_o_dq_oen, lpddr_i_dq_i, X"00003");
 
 
   ahb2bsg_dmc_1: ahb2bsg_dmc
@@ -192,30 +215,30 @@ begin  -- architecture behav
       hindex          => 0,
       haddr           => 16#000#,
       hmask           => 16#E00#,
-      lpddr_ck_p      => lpddr_o.ck_p,
-      lpddr_ck_n      => lpddr_o.ck_n,
-      lpddr_cke       => lpddr_o.cke,
-      lpddr_ba        => lpddr_o.ba,
-      lpddr_addr      => lpddr_o.addr,
-      lpddr_cs_n      => lpddr_o.cs_n,
-      lpddr_ras_n     => lpddr_o.ras_n,
-      lpddr_cas_n     => lpddr_o.cas_n,
-      lpddr_we_n      => lpddr_o.we_n,
-      lpddr_reset_n   => lpddr_o.reset_n,
-      lpddr_odt       => lpddr_o.odt,
-      lpddr_dm_oen    => lpddr_o.dm_oen,
-      lpddr_dm        => lpddr_o.dm,
-      lpddr_dqs_p_oen => lpddr_o.dqs_p_oen,
-      lpddr_dqs_p_ien => lpddr_o.dqs_p_ien,
-      lpddr_dqs_p_o   => lpddr_o.dqs_p_o,
-      lpddr_dqs_p_i   => lpddr_i.dqs_p_i,
-      lpddr_dqs_n_oen => lpddr_o.dqs_n_oen,
-      lpddr_dqs_n_ien => lpddr_o.dqs_n_ien,
-      lpddr_dqs_n_o   => lpddr_o.dqs_n_o,
-      lpddr_dqs_n_i   => lpddr_i.dqs_n_i,
-      lpddr_dq_oen    => lpddr_o.dq_oen,
-      lpddr_dq_o      => lpddr_o.dq_o,
-      lpddr_dq_i      => lpddr_i.dq_i,
+      lpddr_ck_p      => lpddr_o_ck_p,
+      lpddr_ck_n      => lpddr_o_ck_n,
+      lpddr_cke       => lpddr_o_cke,
+      lpddr_ba        => lpddr_o_ba,
+      lpddr_addr      => lpddr_o_addr,
+      lpddr_cs_n      => lpddr_o_cs_n,
+      lpddr_ras_n     => lpddr_o_ras_n,
+      lpddr_cas_n     => lpddr_o_cas_n,
+      lpddr_we_n      => lpddr_o_we_n,
+      lpddr_reset_n   => lpddr_o_reset_n,
+      lpddr_odt       => lpddr_o_odt,
+      lpddr_dm_oen    => lpddr_o_dm_oen,
+      lpddr_dm        => lpddr_o_dm,
+      lpddr_dqs_p_oen => lpddr_o_dqs_p_oen,
+      lpddr_dqs_p_ien => lpddr_o_dqs_p_ien,
+      lpddr_dqs_p_o   => lpddr_o_dqs_p_o,
+      lpddr_dqs_p_i   => lpddr_i_dqs_p_i,
+      lpddr_dqs_n_oen => lpddr_o_dqs_n_oen,
+      lpddr_dqs_n_ien => lpddr_o_dqs_n_ien,
+      lpddr_dqs_n_o   => lpddr_o_dqs_n_o,
+      lpddr_dqs_n_i   => lpddr_i_dqs_n_i,
+      lpddr_dq_oen    => lpddr_o_dq_oen,
+      lpddr_dq_o      => lpddr_o_dq_o,
+      lpddr_dq_i      => lpddr_i_dq_i,
       ddr_cfg0        => ddr_cfg0,
       ddr_cfg1        => ddr_cfg1,
       ddr_cfg2        => ddr_cfg2,
