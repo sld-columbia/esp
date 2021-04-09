@@ -149,6 +149,8 @@ include $(ESP_ROOT)/utils/make/fpga.mk
 ### Utils ###
 include $(ESP_ROOT)/utils/make/utils.mk
 
+### Spandex SystemC Targets ###
+include $(ESP_ROOT)/utils/make/spandex_caches.mk
 
 ### Clean all ###
 xilinx_lib-clean:
