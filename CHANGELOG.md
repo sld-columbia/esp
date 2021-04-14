@@ -7,6 +7,31 @@ Changelog](https://keepachangelog.com/en/1.0.0/), and this project
 adheres to [Calendar Versioning](https://calver.org/) with format
 `YYYY.MINOR.MICRO`.
 
+## [2021.1.1]
+
+### Added
+
+- **Ibex**
+        - Enable ESP cache hierarchy with Ibex core (#92)
+
+### Fixed
+
+- **Toolchain scripts**
+        - Update URL of Leon3 prebuilt files (#96)
+
+- **Cache hierarchy**
+        - Fix endianness of the SystemC implementation for instances of ESP using a RISC-V core (#92)
+
+- **Ibex**
+        - Use Xilinx primitives for Ibex implementation on FPGA
+        - Disable ESP L2 invalidation master port on AHB bus (#92)
+
+- **Infrastructure*
+        - Fix link update of the object dump used in full-system RTL simulations (#93)
+        - Save HLS log files for the cache hierarchy into log folder
+        - Restore optimized floorplanning for proFPGA XCVU440 (#94)
+
+
 ## [2021.1.0]
 
 ### Added
