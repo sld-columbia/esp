@@ -453,6 +453,7 @@ begin  -- architecture rtl of l2_acc_wrapper
   l2_cache_i : l2
     generic map (
       use_rtl => CFG_CACHE_RTL,
+      little_end => little_end,
       sets => sets,
       ways => ways)
     port map (

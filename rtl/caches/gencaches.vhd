@@ -74,6 +74,7 @@ package gencaches is
   component l2_spandex
     generic (
       use_rtl : integer;
+      little_end : integer range 0 to 1;
       sets : integer;
       ways : integer
       );
