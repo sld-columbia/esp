@@ -398,7 +398,7 @@ begin  -- rtl
       somi(i).w.ready <= '0';
       -- r
       somi(i).r.id    <= transaction_reg.id;
-      somi(i).r.resp  <= HRESP_OKAY;
+      somi(i).r.resp  <= RBRESP_OKAY;
       if rsp_preamble = PREAMBLE_TAIL then
         somi(i).r.last  <= '1';
       else
@@ -408,7 +408,7 @@ begin  -- rtl
       somi(i).r.valid <= '0';
       -- b
       somi(i).b.id    <= transaction_reg.id;
-      somi(i).b.resp  <= HRESP_OKAY;
+      somi(i).b.resp  <= RBRESP_OKAY;
       somi(i).b.user  <= (others => '0');
       somi(i).b.valid <= '0';
     end loop;
@@ -618,6 +618,10 @@ begin  -- rtl
 
       when request_data_ack =>
         somi(transaction_reg.xindex).b.valid <= '1';
+        if transaction_reg.lock = '1' then
+          -- always return success on RISC-V store conditional
+          somi(transaction_reg.xindex).b.resp <= RBRESP_EXOKAY;
+        end if;
         if mst_bready = '1' then
           if selected = '0' then
             next_state <= idle;
