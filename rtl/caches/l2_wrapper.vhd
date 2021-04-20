@@ -922,7 +922,7 @@ begin  -- architecture rtl of l2_wrapper
     somi.w.ready <= '0';
     -- r
     somi.r.id    <= (others => '0');
-    somi.r.resp  <= HRESP_OKAY;
+    somi.r.resp  <= RBRESP_OKAY;
     somi.r.last  <= '0';
     somi.r.user  <= (others => '0');
     somi.r.valid <= '0';
@@ -930,9 +930,12 @@ begin  -- architecture rtl of l2_wrapper
     somi.r.data(31 downto 0) <= x"dadecace";
     -- b
     somi.b.id    <= (others => '0');
-    somi.b.resp  <= HRESP_OKAY;
+    somi.b.resp  <= RBRESP_OKAY;
     somi.b.user  <= (others => '0');
     somi.b.valid <= '0';
+
+    -- Set L2 cache bresp channel as always ready
+    bresp_ready <= '1';
 
 -------------------------------------------------------------------------------
 -- FSM: Bridge from AHB slave to L2 cache frontend input
@@ -2082,14 +2085,14 @@ end process fsm_fwd_out;
     somi.w.ready <= '0';
     -- r
     somi.r.id    <= axi_reg.id;
-    somi.r.resp  <= HRESP_OKAY;
+    somi.r.resp  <= RBRESP_OKAY;
     somi.r.last  <= '0';
     somi.r.user  <= (others => '0');
     somi.r.valid <= '0';
     somi.r.data  <= ahbdrivedata(err_marker);
     -- b
     somi.b.id    <= axi_reg.id;
-    somi.b.resp  <= HRESP_OKAY;
+    somi.b.resp  <= RBRESP_OKAY;
     somi.b.user  <= (others => '0');
     somi.b.valid <= '0';
 
@@ -2469,10 +2472,16 @@ end process fsm_fwd_out;
 
         if mosi.w.valid = '1' then
 
-          if mosi.w.last = '1' and (reg.cpu_msg /= CPU_WRITE_ATOM or bresp_valid = '1') then
-            somi.b.valid <= '1';
-            if reg.cpu_msg = "11" then
-              somi.b.resp <= "01";
+          if mosi.w.last = '1' then
+            if reg.cpu_msg /= CPU_WRITE_ATOM then
+              somi.b.valid <= '1';
+            elsif (reg.cpu_msg = CPU_WRITE_ATOM and bresp_valid = '1') then
+              somi.b.valid <= '1';
+              if USE_SPANDEX = 0 then
+                somi.b.resp <= bresp_data;
+              else
+                somi.b.resp <= RBRESP_EXOKAY;
+              end if;
             end if;
           end if;
 

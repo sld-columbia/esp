@@ -220,6 +220,11 @@ type apb_config_type is array (0 to NAPBCFG-1) of amba_config_word;
   constant HRESP_RETRY:   std_logic_vector(1 downto 0) := "10";
   constant HRESP_SPLIT:   std_logic_vector(1 downto 0) := "11";
 
+  constant RBRESP_OKAY:   std_logic_vector(1 downto 0) := "00";
+  constant RBRESP_EXOKAY: std_logic_vector(1 downto 0) := "01";
+  constant RBRESP_SLVERR: std_logic_vector(1 downto 0) := "10";
+  constant RBRESP_DECERR: std_logic_vector(1 downto 0) := "11";
+
 -- APB slave inputs
   type apb_slv_in_type is record
     psel        : std_logic_vector(0 to NAPBSLV-1);     -- slave select
