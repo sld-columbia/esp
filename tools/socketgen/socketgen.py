@@ -22,10 +22,11 @@ def get_immediate_subdirectories(a_dir):
         if os.path.isdir(os.path.join(a_dir, name))]
 
 def print_usage():
-  print("Usage                    : ./socketgen.py <dma_width> <rtl_path> <template_path> <out_path>")
+  print("Usage                    : ./socketgen.py <dma_width> <cpu_arch> <rtl_path> <template_path> <out_path>")
   print("")
+  print("      <dma_width>        : Bit-width for the DMA channel (32, 64)")
   print("")
-  print("      <dma_width>        : Bit-width for the DMA channel (currently supporting 32 bits only)")
+  print("      <cpu_arch>         : Target processor (ariane, ibex, leon3)")
   print("")
   print("      <rtl_path>         : Path to accelerators' RTL for the target technology")
   print("")
@@ -119,6 +120,7 @@ phys_addr_bits = 32
 word_offset_bits = 2
 byte_offset_bits = 2
 offset_bits = 4
+little_endian = 1
 
 
 #
@@ -1188,6 +1190,8 @@ def gen_tech_indep_impl(accelerator_list, cache_list, dma_width, template_dir, o
         f.write("entity " + cac.name + " is\n\n")
         f.write("    generic (\n")
         f.write("      use_rtl          : integer;\n")
+        if (not is_llc):
+          f.write("      little_end       : integer range 0 to 1;\n")
         f.write("      sets             : integer;\n")
         f.write("      ways             : integer\n")
         f.write("    );\n")
@@ -1213,6 +1217,7 @@ def gen_tech_indep_impl(accelerator_list, cache_list, dma_width, template_dir, o
           this_addr_bits = 0
           this_word_offset_bits = 0
           this_offset_bits = 0
+          this_endian = "le"
           for item in info:
             if re.match(r'[0-9]+sets', item, re.M|re.I):
               sets = int(item.replace("sets", ""))
@@ -1224,14 +1229,24 @@ def gen_tech_indep_impl(accelerator_list, cache_list, dma_width, template_dir, o
               this_offset_bits = int(int(math.log2((int(item.replace("line", "")))/8) + word_offset_bits))
             elif re.match(r'[0-9]+addr', item, re.M|re.I):
               this_addr_bits = int(item.replace("addr", ""))
+            elif re.match(r'[b|l]e', item, re.M|re.I):
+              if item == "le":
+                this_endian = 1
+              else:
+                this_endian = 0
+          if is_llc:
+            this_endian = little_endian
           if sets * ways == 0:
             print("    ERROR: hls config must report number of sets and ways, both different from zero")
             sys.exit(1)
-          if this_word_offset_bits != word_offset_bits or this_offset_bits != offset_bits or this_addr_bits != phys_addr_bits:
+          if this_word_offset_bits != word_offset_bits or this_offset_bits != offset_bits or this_addr_bits != phys_addr_bits or this_endian != little_endian:
             print("    INFO: skipping cache implementation " + impl + " incompatible with SoC architecture")
             continue
           f.write("\n")
-          f.write("  " + impl + "_gen: if sets = " + str(sets) + " and ways = " + str(ways) + " generate\n")
+          if is_llc:
+            f.write("  " + impl + "_gen: if sets = " + str(sets) + " and ways = " + str(ways) + " generate\n")
+          else:
+            f.write("  " + impl + "_gen: if little_end = " + str(this_endian) + " and sets = " + str(sets) + " and ways = " + str(ways) + " generate\n")
           f.write("    " + cac.name + "_" + impl + "_i: " + cac.name + "_" + impl + "\n")
           write_cache_port_map(f, cac, is_llc)
           f.write("  end generate " +  impl + "_gen;\n\n")
@@ -1265,6 +1280,7 @@ def gen_interfaces(accelerator_list, axi_accelerator_list, dma_width, template_d
         f.write("      scatter_gather : integer := 1;\n")
         f.write("      sets           : integer;\n")
         f.write("      ways           : integer;\n")
+        f.write("      little_end     : integer range 0 to 1;\n")
         f.write("      cache_tile_id  : cache_attribute_array;\n")
         f.write("      cache_y        : yx_vec(0 to 2**NL2_MAX_LOG2 - 1);\n")
         f.write("      cache_x        : yx_vec(0 to 2**NL2_MAX_LOG2 - 1);\n")
@@ -1404,6 +1420,7 @@ def gen_tile_acc(accelerator_list, axi_acceleratorlist, template_dir, out_dir):
           f.write("        scatter_gather => this_scatter_gather,\n")
           f.write("        sets           => CFG_ACC_L2_SETS,\n")
           f.write("        ways           => CFG_ACC_L2_WAYS,\n")
+          f.write("        little_end     => little_end,\n")
           f.write("        cache_tile_id  => cache_tile_id,\n")
           f.write("        cache_y        => cache_y,\n")
           f.write("        cache_x        => cache_x,\n")
@@ -1471,16 +1488,21 @@ def gen_tile_acc(accelerator_list, axi_acceleratorlist, template_dir, out_dir):
 ### Main script ###
 #
 
-if len(sys.argv) != 6:
+if len(sys.argv) != 7:
     print_usage()
     sys.exit(1)
 
 dma_width = int(sys.argv[1])
-acc_rtl_dir = sys.argv[2] + "/acc"
-caches_rtl_dir = sys.argv[2] + "/sccs"
-axi_acc_dir = sys.argv[3]
-template_dir = sys.argv[4]
-out_dir = sys.argv[5]
+cpu_arch = sys.argv[2]
+acc_rtl_dir = sys.argv[3] + "/acc"
+caches_rtl_dir = sys.argv[3] + "/sccs"
+axi_acc_dir = sys.argv[4]
+template_dir = sys.argv[5]
+out_dir = sys.argv[6]
+if cpu_arch == "leon3":
+  little_endian = 0
+else:
+  little_endian = 1
 accelerator_list = [ ]
 axi_accelerator_list = [ ]
 cache_list = [ ]

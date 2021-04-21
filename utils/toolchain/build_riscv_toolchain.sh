@@ -14,7 +14,6 @@ RISCV_GNU_TOOLCHAIN_SHA=afcc8bc655d30cf6af054ac1d3f5f89d0627aa79
 BUILDROOT_SHA=d6fa6a45e196665d6607b522f290b1451b949c2c
 
 DEFAULT_TARGET_DIR="/opt/riscv"
-SRC_MIRROR="http://espdev.cs.columbia.edu/stuff/riscv"
 TMP=/tmp/_riscv_build
 
 # Helper functions
