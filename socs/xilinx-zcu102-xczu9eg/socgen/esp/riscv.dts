@@ -85,7 +85,7 @@
       device_type = "network";
       interrupt-parent = <&PLIC0>;
       interrupts = <13 0>;
-      local-mac-address = [00 00 f9 a8 4f 70];
+      local-mac-address = [00 00 1c d7 8f 60];
       reg = <0x0 0x60080000 0x0 0x10000>;
       phy-handle = <&phy0>;
       phy-connection-type = "sgmii";

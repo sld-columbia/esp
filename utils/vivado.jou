@@ -1,0 +1,20 @@
+#-----------------------------------------------------------
+# Vivado v2019.2 (64-bit)
+# SW Build 2708876 on Wed Nov  6 21:39:14 MST 2019
+# IP Build 2700528 on Thu Nov  7 00:09:20 MST 2019
+# Start of session at: Mon Apr 19 10:51:22 2021
+# Process ID: 5064
+# Current directory: /home/juan/repos/esp/utils
+# Command line: vivado
+# Log file: /home/juan/repos/esp/utils/vivado.log
+# Journal file: /home/juan/repos/esp/utils/vivado.jou
+#-----------------------------------------------------------
+start_gui
+open_hw_manager
+connect_hw_server -allow_non_jtag
+open_hw_target
+current_hw_device [get_hw_devices xczu9_0]
+refresh_hw_device -update_hw_probes false [lindex [get_hw_devices xczu9_0] 0]
+current_hw_device [get_hw_devices arm_dap_1]
+refresh_hw_device -update_hw_probes false [lindex [get_hw_devices arm_dap_1] 0]
+current_hw_device [get_hw_devices xczu9_0]
