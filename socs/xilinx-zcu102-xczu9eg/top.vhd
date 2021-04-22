@@ -172,12 +172,12 @@ begin
   si_hready             <= ddr_ahbsi(0).hready;
   si_hsel               <= ddr_ahbsi(0).hsel(0);
   si_htrans             <= ddr_ahbsi(0).htrans;
-  si_haddr(31)          <= '0'; -- ZCU102 has fixed address map
-  si_haddr(30 downto 0) <= ddr_ahbsi(0).haddr(30 downto 0);
+  si_haddr(31 downto 30)          <= "01"; -- ZCU102 has fixed address map
+  si_haddr(29 downto 0) <= ddr_ahbsi(0).haddr(29 downto 0);
   si_hwrite             <= ddr_ahbsi(0).hwrite;
   si_hsize              <= ddr_ahbsi(0).hsize;
   si_hburst             <= ddr_ahbsi(0).hburst;
-  si_hprot              <= ddr_ahbsi(0).hprot;
+  si_hprot              <= ddr_ahbsi(0).hprot+"1000";
   si_hwdata             <= ddr_ahbsi(0).hwdata;
 
   ddr_ahbso(0).hready  <= so_hready;

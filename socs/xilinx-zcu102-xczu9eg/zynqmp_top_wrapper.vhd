@@ -126,6 +126,30 @@ architecture rtl of zynqmp_top_wrapper is
   signal mo_hburst : std_logic_vector(2 downto 0);        -- burst type
   signal mo_hprot  : std_logic_vector(3 downto 0);        -- protection control
   signal mo_hwdata : std_logic_vector(31 downto 0);       -- write data bus
+attribute mark_debug : string;
+attribute mark_debug of mo_hlock : signal is "true";
+attribute mark_debug of mo_htrans : signal is "true";
+attribute mark_debug of mo_haddr : signal is "true";
+attribute mark_debug of mo_hwrite : signal is "true";
+attribute mark_debug of mo_hsize : signal is "true";
+attribute mark_debug of mo_hburst : signal is "true";
+attribute mark_debug of mo_hwdata : signal is "true";
+attribute mark_debug of mo_hprot : signal is "true";
+attribute mark_debug of mi_hready : signal is "true";
+attribute mark_debug of mi_hresp : signal is "true";
+attribute mark_debug of mi_hrdata : signal is "true";
+attribute mark_debug of so_hready : signal is "true";
+attribute mark_debug of so_hresp : signal is "true";
+attribute mark_debug of so_hrdata : signal is "true";
+attribute mark_debug of si_htrans : signal is "true";
+attribute mark_debug of si_haddr : signal is "true";
+attribute mark_debug of si_hsize : signal is "true";
+attribute mark_debug of si_hburst : signal is "true";
+attribute mark_debug of si_hprot : signal is "true";
+attribute mark_debug of si_hwdata : signal is "true";
+attribute mark_debug of si_hsel : signal is "true";
+attribute mark_debug of si_hready : signal is "true";
+attribute mark_debug of si_hwrite : signal is "true";
 
 begin
 
