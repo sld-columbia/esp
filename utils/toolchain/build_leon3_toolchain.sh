@@ -72,7 +72,7 @@ TARGET_DIR=${TARGET_DIR:-${DEFAULT_TARGET_DIR}}
 echo "*** Installing to ${TARGET_DIR} ... ***"
 
 # Prompt number of cores to use
-read -p "Number of threads for Make (defaults to as many as possible)? :" NTHREADS
+read -p "Number of threads for Make (defaults to as many as possible)? : " NTHREADS
 NTHREADS=${NTHREADS:-""}
 
 # Tool chain environment
