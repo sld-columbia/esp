@@ -25,7 +25,7 @@ int main(int argc, char * argv[])
 	int ndev;
 	struct esp_device *espdevs = NULL;
 
-	ndev = probe(&espdevs, SLD_COUNTER, DEV_NAME);
+	ndev = probe(&espdevs, VENDOR_SLD, SLD_COUNTER, DEV_NAME);
 	if (!ndev) {
 		printf("Error: %s device not found!\n", DEV_NAME);
 		exit(EXIT_FAILURE);

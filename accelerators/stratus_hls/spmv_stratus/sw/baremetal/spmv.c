@@ -193,7 +193,7 @@ int main(int argc, char * argv[])
 		in_vect_fx_buf[i] = float_to_fixed32(in_vect_buf[i], 16);
 
 	// Search for the device
-	ndev = probe(&espdevs, SLD_SPMV, DEV_NAME);
+	ndev = probe(&espdevs, VENDOR_SLD, SLD_SPMV, DEV_NAME);
 	if (!ndev) {
 		printf("Error: %s device not found!\n", DEV_NAME);
 		exit(EXIT_FAILURE);
