@@ -17,7 +17,6 @@
 #ifndef __ESP_PROBE_H__
 #define __ESP_PROBE_H__
 
-#define VENDOR_SLD 0xEB
 #ifdef __sparc
 #define APB_BASE_ADDR 0x80000000
 #define APB_PLUGNPLAY (APB_BASE_ADDR + 0xff000)
@@ -50,8 +49,32 @@
 #define NACC_MAX 44
 
 
+#define VENDOR_SLD 0xEB
+
 #define SLD_L2_CACHE 0x020
 #define SLD_LLC_CACHE 0x021
+
+
+#define VENDOR_UIUC 0xEE
+
+#define UIUC_SPANDEX_L2 0x020
+#define UIUC_SPANDEX_LLC 0x021
+
+
+#ifdef USE_SPANDEX
+#define VENDOR_CACHE VENDOR_UIUC
+#define DEVID_L2_CACHE UIUC_SPANDEX_L2
+#define DEVID_LLC_CACHE UIUC_SPANDEX_LLC
+#define DEVNAME_L2_CACHE "uiuc,spandex_l2"
+#define DEVNAME_LLC_CACHE "uiuc,spandex_llc"
+#else
+#define VENDOR_CACHE VENDOR_SLD
+#define DEVID_L2_CACHE SLD_L2_CACHE
+#define DEVID_LLC_CACHE SLD_LLC_CACHE
+#define DEVNAME_L2_CACHE "sld,l2_cache"
+#define DEVNAME_LLC_CACHE "sld,llc_cache"
+#endif
+
 
 #define DEVNAME_MAX_LEN 32
 
@@ -70,7 +93,7 @@ extern const char *const coherence_label[5];
 int get_pid();
 void *aligned_malloc(int size);
 void aligned_free(void *ptr);
-int probe(struct esp_device **espdevs, unsigned devid, const char *name);
+int probe(struct esp_device **espdevs, unsigned vendor, unsigned devid, const char *name);
 unsigned ioread32(struct esp_device *dev, unsigned offset);
 void iowrite32(struct esp_device *dev, unsigned offset, unsigned payload);
 void esp_flush(int coherence);
