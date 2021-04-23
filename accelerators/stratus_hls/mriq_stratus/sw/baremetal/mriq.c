@@ -113,7 +113,7 @@ int main(int argc, char * argv[])
 	// Search for the device
 	printf("Scanning device tree... \n");
 
-	ndev = probe(&espdevs, SLD_MRIQ, DEV_NAME);
+	ndev = probe(&espdevs, VENDOR_SLD, SLD_MRIQ, DEV_NAME);
 	if (ndev == 0) {
 		printf("mriq not found\n");
 		return 0;

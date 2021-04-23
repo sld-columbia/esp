@@ -101,11 +101,11 @@ void esp_flush(int coherence)
 
 	if (coherence == ACC_COH_NONE)
 		/* Look for LLC controller */
-		nllc = probe(&llcs, SLD_LLC_CACHE, "sld,llc_cache");
+		nllc = probe(&llcs, VENDOR_CACHE, DEVID_LLC_CACHE, DEVNAME_LLC_CACHE);
 
 	if (coherence < ACC_COH_RECALL)
 		/* Look for L2 controller */
-		nl2 = probe(&l2s, SLD_L2_CACHE, "sld,l2_cache");
+		nl2 = probe(&l2s, VENDOR_CACHE, DEVID_L2_CACHE, DEVNAME_L2_CACHE);
 
 	if (coherence < ACC_COH_RECALL) {
 
@@ -163,13 +163,13 @@ void esp_flush(int coherence)
 }
 
 #ifdef __sparc
-int probe(struct esp_device **espdevs, unsigned devid, const char *name)
+int probe(struct esp_device **espdevs, unsigned vendor, unsigned devid, const char *name)
 {
 	int i;
 	int ndev = 0;
 	unsigned id_reg, bank_addr_reg;
 	unsigned *devtable = (unsigned *) APB_PLUGNPLAY;
-	unsigned vendor;
+	unsigned vend;
 	unsigned id;
 	unsigned number;
 	unsigned irq;
@@ -177,10 +177,10 @@ int probe(struct esp_device **espdevs, unsigned devid, const char *name)
 	for (i = 0; i < NAPBSLV; i++) {
 		id_reg = devtable[2 * i];
 		bank_addr_reg = devtable[2 * i + 1];
-		vendor = (id_reg >> 24);
-		id     = (id_reg >> 12) & 0x00fff;
+		vend = (id_reg >> 24);
+		id   = (id_reg >> 12) & 0x00fff;
 
-		if (vendor == VENDOR_SLD && id == devid) {
+		if (vend == vendor && id == devid) {
 			number = ndev;
 			addr   = ((bank_addr_reg >> 20) << 8) + APB_BASE_ADDR;
 			irq    = id_reg & 0x0000000f;
@@ -191,7 +191,7 @@ int probe(struct esp_device **espdevs, unsigned devid, const char *name)
 				fprintf(stderr, "Error: cannot allocate esp_device list\n");
 				exit(EXIT_FAILURE);
 			}
-			(*espdevs)[ndev-1].vendor = VENDOR_SLD;
+			(*espdevs)[ndev-1].vendor = vend;
 			(*espdevs)[ndev-1].id = id;
 			(*espdevs)[ndev-1].number = number;
 			(*espdevs)[ndev-1].irq = irq;
@@ -238,7 +238,7 @@ static void esp_done(const struct fdt_scan_node *node, void *extra)
 		ndev++;
 
 		// Initialize new entry (may not be discovered!)
-		(*espdevs)[ndev].vendor = VENDOR_SLD;
+		(*espdevs)[ndev].vendor = (*espdevs)[ndev].vendor;
 		(*espdevs)[ndev].id = (*espdevs)[ndev].id;
 		(*espdevs)[ndev].number = ndev;
 		(*espdevs)[ndev].compat = 0;
@@ -246,7 +246,7 @@ static void esp_done(const struct fdt_scan_node *node, void *extra)
 	}
 }
 
-int probe(struct esp_device **espdevs, unsigned devid, const char *name)
+int probe(struct esp_device **espdevs, unsigned vendor, unsigned devid, const char *name)
 {
 	struct fdt_cb cb;
 	ndev = 0;
@@ -259,7 +259,7 @@ int probe(struct esp_device **espdevs, unsigned devid, const char *name)
 	}
 	memset((*espdevs), 0, NACC_MAX * sizeof(struct esp_device));
 
-	(*espdevs)[0].vendor = VENDOR_SLD;
+	(*espdevs)[0].vendor = vendor;
 	(*espdevs)[0].id = devid;
 	(*espdevs)[0].number = 0;
 	(*espdevs)[0].compat = 0;
