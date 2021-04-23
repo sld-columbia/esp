@@ -204,6 +204,9 @@ package cachepackage is
       apbo  : out apb_slv_out_type;
       flush : in  std_ulogic;           -- flush request from CPU
 
+      -- fence to L2
+      fence_l2 : in std_logic_vector(1 downto 0);
+
       -- backend (cache - NoC)
       -- tile->NoC1
       coherence_req_wrreq        : out std_ulogic;
