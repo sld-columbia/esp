@@ -12,7 +12,7 @@
 
 #include "esp_templates.hpp"
 
-const size_t MEM_SIZE = 262144 / (DMA_WIDTH/8);
+const size_t MEM_SIZE = 262144 * 4 / (DMA_WIDTH/8);
 
 #include "core/systems/esp_system.hpp"
 
@@ -55,7 +55,7 @@ public:
         acc->debug(debug);
 
         /* <<--params-default-->> */
-        log_len = 8;
+        log_len = 15;
         len = (1 << log_len);
         do_peak = 0;
         do_bitrev = 1;

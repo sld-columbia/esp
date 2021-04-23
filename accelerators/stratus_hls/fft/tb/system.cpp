@@ -174,7 +174,7 @@ void system_t::dump_memory()
     for (int i = 0; i < out_size / DMA_WORD_PER_BEAT; i++)
         for (int j = 0; j < DMA_WORD_PER_BEAT; j++) {
             FPDATA out_fx = bv2fp<FPDATA, WORD_SIZE>(mem[offset + i].range((j + 1) * DATA_WIDTH - 1, j * DATA_WIDTH));
-            out[i * DMA_WORD_PER_BEAT + j] = (float) out_fx;
+            out[i * DMA_WORD_PER_BEAT + j] = (float) out_fx.to_double();
         }
 #endif
 

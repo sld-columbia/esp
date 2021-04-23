@@ -63,16 +63,28 @@ define_hls_module fft ../src/fft.cpp
 #
 define_system_module tb ../tb/fft_test.cpp ../tb/system.cpp ../tb/sc_main.cpp
 
+
+# append COMMON_HLS_FLAGS \
+#     " -DFIXED_POINT "
+# set COMMON_CFG_FLAGS \
+#     "-DFIXED_POINT "
+
+append COMMON_HLS_FLAGS \
+    " -DFLOAT_POINT "
+set COMMON_CFG_FLAGS \
+    "-DFLOAT_POINT "
+
+
 ######################################################################
 # HLS and Simulation configurations
 ######################################################################
 set DEFAULT_ARGV ""
 
-set FX_IL "-DFX32_IL=12 -DFX64_IL=42"
+set FX_IL "-DFX32_IL=14 -DFX64_IL=42"
 
-foreach dma [list 32 64] {
-    foreach fx [list 32 64] {
-	define_io_config * IOCFG_FX$fx\_DMA$dma -DFX_WIDTH=$fx -DDMA_WIDTH=$dma
+foreach dma [list  64] {
+    foreach fx [list 32] {
+	define_io_config * IOCFG_FX$fx\_DMA$dma -DFX_WIDTH=$fx -DWORD_SIZE=$fx -DDMA_WIDTH=$dma $COMMON_CFG_FLAGS
 
 	define_system_config tb TESTBENCH_FX$fx\_DMA$dma -io_config IOCFG_FX$fx\_DMA$dma
 

@@ -68,7 +68,7 @@ void fft::load_input()
 
 #if (DMA_WORD_PER_BEAT == 0)
         // data word is wider than NoC links
-        for (uint16_t i = 0; i < length; i++)
+        for (uint32_t i = 0; i < length; i++)
         {
             sc_dt::sc_bv<DATA_WIDTH> dataBv;
 
@@ -82,7 +82,7 @@ void fft::load_input()
             A0[i] = dataBv.to_int64();
         }
 #else
-        for (uint16_t i = 0; i < length; i += DMA_WORD_PER_BEAT)
+        for (uint32_t i = 0; i < length; i += DMA_WORD_PER_BEAT)
         {
             HLS_BREAK_DEP(A0);
 
@@ -172,10 +172,10 @@ void fft::store_output()
 
 #if (DMA_WORD_PER_BEAT == 0)
         // data word is wider than NoC links
-        for (uint16_t i = 0; i < length; i++)
+        for (uint32_t i = 0; i < length; i++)
         {
             // Read from PLM
-            sc_dt::sc_int<DATA_WIDTH> data;
+            FPDATA_WORD data;
             wait();
             data = A0[i];
             sc_dt::sc_bv<DATA_WIDTH> dataBv(data);
@@ -191,7 +191,7 @@ void fft::store_output()
             this->dma_write_chnl.put(dataBv.range((k+1) * DMA_WIDTH - 1, k * DMA_WIDTH));
         }
 #else
-        for (uint16_t i = 0; i < length; i += DMA_WORD_PER_BEAT)
+        for (uint32_t i = 0; i < length; i += DMA_WORD_PER_BEAT)
         {
             sc_dt::sc_bv<DMA_WIDTH> dataBv;
 
@@ -246,7 +246,7 @@ void fft::compute_kernel()
         /* <<--local-params-->> */
         log_len = config.log_len;
 #ifndef STRATUS_HLS
-        sc_assert(log_len < LOG_LEN_MAX);
+        sc_assert(log_len <= LOG_LEN_MAX);
 #endif
         len = 1 << log_len;
         do_peak = config.do_peak;

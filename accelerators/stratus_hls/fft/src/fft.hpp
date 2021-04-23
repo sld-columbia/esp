@@ -4,6 +4,7 @@
 #ifndef __FFT_HPP__
 #define __FFT_HPP__
 
+#include "fft_data.hpp"
 #include "fpdata.hpp"
 #include "fft_conf_info.hpp"
 #include "fft_debug_info.hpp"
@@ -15,7 +16,7 @@
 #define __round_mask(x, y) ((y)-1)
 #define round_up(x, y) ((((x)-1) | __round_mask(x, y))+1)
 /* <<--defines-->> */
-#define LOG_LEN_MAX 14
+#define LOG_LEN_MAX 15
 #define LEN_MAX (1 << LOG_LEN_MAX)
 #define DATA_WIDTH FX_WIDTH
 #if (FX_WIDTH == 64)
@@ -60,9 +61,24 @@ public:
     void fft_bit_reverse(unsigned int n, unsigned int bits);
 
     // Private local memories
-    sc_dt::sc_int<DATA_WIDTH> A0[PLM_IN_WORD];
+    FPDATA_WORD A0[PLM_IN_WORD];
 
 };
 
+class CompNum { // a complex number
+public:
+    FPDATA re;   // the real part
+    FPDATA im;   // the imaginary part
+
+    CompNum() {
+        re = 0;
+        im = 0;
+    }
+
+    CompNum(FPDATA real, FPDATA imaginary) {
+        re = real;
+        im = imaginary;
+    }
+};
 
 #endif /* __FFT_HPP__ */
