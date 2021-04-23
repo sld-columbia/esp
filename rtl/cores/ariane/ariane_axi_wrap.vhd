@@ -47,7 +47,9 @@ entity ariane_axi_wrap is
     apbi        : out apb_slv_in_type;
     apbo        : in  apb_slv_out_vector;
     apb_req     : out std_ulogic;
-    apb_ack     : in  std_ulogic);
+    apb_ack     : in  std_ulogic;
+    fence_l2    : out std_logic_vector(1 downto 0)
+    );
 
 end ariane_axi_wrap;
 
@@ -317,7 +319,9 @@ architecture rtl of ariane_axi_wrap is
       pwdata          : out std_logic_vector(31 downto 0);
       prdata          : in  std_logic_vector(31 downto 0);
       pready          : in  std_logic;
-      pslverr         : in  std_logic);
+      pslverr         : in  std_logic;
+      fence_l2        : out std_logic_vector(1 downto 0)
+      );
   end component ariane_wrap;
 
   signal penable      : std_logic;
@@ -598,7 +602,9 @@ begin  -- architecture rtl
       pwdata          => pwdata,
       prdata          => prdata,
       pready          => apb_ack,
-      pslverr         => '0');
+      pslverr         => '0',
+      fence_l2        => fence_l2
+      );
 
   -- Unused extended AXI ID
   romi.aw.id(XID_WIDTH - 1 downto ARIANE_AXI_ID_WIDTH_SLV)  <= (others => '0');

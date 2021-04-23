@@ -237,6 +237,8 @@ architecture rtl of tile_cpu is
   -- IBEX Idle
   signal core_idle : std_ulogic;
 
+  -- Fence L2
+  signal fence_l2 : std_logic_vector(1 downto 0);
 
   -- Queues
   signal coherence_req_wrreq        : std_ulogic;
@@ -1197,7 +1199,8 @@ begin
         apbi        => apbi,
         apbo        => apbo,
         apb_req     => apb_req,
-        apb_ack     => apb_ack);
+        apb_ack     => apb_ack,
+        fence_l2    => fence_l2);
 
     -- exit() writes to this address right before completing the program
     -- Next instruction is a jump to current PC.
@@ -1273,7 +1276,8 @@ begin
         coherence_fwd_snd_wrreq    => coherence_fwd_snd_wrreq,
         coherence_fwd_snd_data_in  => coherence_fwd_snd_data_in,
         coherence_fwd_snd_full     => coherence_fwd_snd_full,
-        mon_cache                  => mon_cache_int
+        mon_cache                  => mon_cache_int,
+        fence_l2                   => fence_l2
         );
 
   end generate with_cache_coherence;

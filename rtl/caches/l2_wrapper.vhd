@@ -66,6 +66,9 @@ entity l2_wrapper is
     apbo  : out apb_slv_out_type;
     flush : in  std_ulogic;             -- flush request from CPU
 
+    -- fence to L2
+    fence_l2 : in std_logic_vector(1 downto 0);
+
     -- backend (cache - NoC)
     -- tile->NoC1
     coherence_req_wrreq        : out std_ulogic;
@@ -171,6 +174,16 @@ architecture rtl of l2_wrapper is
   signal stats_ready            : std_ulogic;
   signal stats_valid            : std_ulogic;
   signal stats_data             : std_ulogic;
+
+  -- fence to L2
+  signal fence_l2_ready         : std_logic;
+  signal fence_l2_valid         : std_logic;
+  signal fence_l2_data          : std_logic_vector(1 downto 0);
+
+  type fence_state_t is (idle, valid_fence);
+  signal fence_state, fence_next : fence_state_t;
+  signal fence_reg : std_logic_vector(1 downto 0);
+  signal sample_fence : std_logic;
 
 ----------------------------------------------------------------------------
 -- APB slave signals
@@ -734,9 +747,16 @@ begin  -- architecture rtl of l2_wrapper
       flush_done                => flush_done,
       l2_stats_ready            => stats_ready,
       l2_stats_valid            => stats_valid,
-      l2_stats_data             => stats_data
+      l2_stats_data             => stats_data,
+      l2_fence_ready            => fence_l2_ready,
+      l2_fence_valid            => fence_l2_valid,
+      l2_fence_data             => fence_l2_data
       );
   end generate l2_spandex_gen;
+
+  fence_ready_gen: if USE_SPANDEX = 0 generate
+    fence_l2_ready <= '0';
+  end generate fence_ready_gen;
 
   Invalidate_fifo : fifo_custom
     generic map (
@@ -752,6 +772,52 @@ begin  -- architecture rtl of l2_wrapper
       almost_empty => inv_fifo_almost_empty,
       full         => inv_fifo_full,
       data_out     => inv_fifo_data_out);
+
+  ----------------------------------------------------------------------------
+  -- Fence signal state
+  -----------------------------------------------------------------------------
+  fence_update : process (clk, rst) is
+  begin
+    if rst = '0' then
+      fence_state <= idle;
+      fence_reg   <= (others => '0');
+    elsif clk'event and clk = '1' then
+      fence_state <= fence_next;
+      if sample_fence = '1' then
+        fence_reg <= fence_l2_data;
+      end if;
+    end if;
+  end process fence_update;
+
+  fence_state_fsm : process (fence_l2, fence_l2_ready, fence_state, fence_reg) is
+  begin
+    fence_next     <= fence_state;
+    fence_l2_valid <= '0';
+    fence_l2_data  <= (others => '0');
+    sample_fence   <= '0';
+
+    case fence_state is
+      when idle =>
+        fence_l2_data <= fence_l2;
+        if fence_l2 /= "00" and USE_SPANDEX /= 0 then
+          fence_l2_valid <= '1';
+          if fence_l2_ready = '0' then
+            fence_next   <= valid_fence;
+            sample_fence <= '1';
+          end if;
+        end if;
+
+      when valid_fence =>
+        fence_l2_data  <= fence_reg;
+        fence_l2_valid <= '1';
+        if fence_l2_ready = '1' then
+          fence_next <= idle;
+        end if;
+
+      when others =>
+        fence_next <= idle;
+    end case;
+  end process fence_state_fsm;
 
 -------------------------------------------------------------------------------
 -- APB slave interface (flush)

@@ -46,7 +46,8 @@ package ariane_esp_pkg is
       apbi        : out apb_slv_in_type;
       apbo        : in  apb_slv_out_vector;
       apb_req     : out std_ulogic;
-      apb_ack     : in  std_ulogic);
+      apb_ack     : in  std_ulogic;
+      fence_l2    : out std_logic_vector(1 downto 0));
   end component ariane_axi_wrap;
 
   component riscv_plic_apb_wrap is
