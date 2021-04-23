@@ -901,7 +901,10 @@ def write_cache_interface(f, cac, is_llc):
     f.write("      l2_fwd_out_data_line      : out std_logic_vector(" + str(bits_per_line - 1) + " downto 0);\n")
     f.write("      l2_fwd_out_data_word_mask : out std_logic_vector(" + str(words_per_line - 1) + "  downto 0);\n")
     f.write("      l2_stats_valid            : out std_ulogic;\n")
-    f.write("      l2_stats_data             : out std_ulogic\n")
+    f.write("      l2_stats_data             : out std_ulogic;\n")
+    f.write("      l2_fence_ready            : out std_ulogic;\n")
+    f.write("      l2_fence_valid            : in  std_ulogic;\n")
+    f.write("      l2_fence_data             : in  std_logic_vector(1 downto 0)\n")
   elif (not is_llc and 'spandex' not in cac.name):
     f.write("      clk                       : in  std_ulogic;\n")
     f.write("      rst                       : in  std_ulogic;\n")
@@ -1172,7 +1175,10 @@ def write_cache_port_map(f, cac, is_llc):
     f.write("      l2_fwd_out_data_line      => l2_fwd_out_data_line,\n")
     f.write("      l2_fwd_out_data_word_mask => l2_fwd_out_data_word_mask,\n")
     f.write("      l2_stats_valid            => l2_stats_valid,\n")
-    f.write("      l2_stats_data             => l2_stats_data\n")
+    f.write("      l2_stats_data             => l2_stats_data,\n")
+    f.write("      l2_fence_ready            => l2_fence_ready,\n")
+    f.write("      l2_fence_valid            => l2_fence_valid,\n")
+    f.write("      l2_fence_data             => l2_fence_data\n")
   elif not is_llc and 'spandex' not in cac.name:
     f.write("      clk                       => clk,\n")
     f.write("      rst                       => rst,\n")

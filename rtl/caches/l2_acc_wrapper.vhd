@@ -170,6 +170,14 @@ architecture rtl of l2_acc_wrapper is
   signal stats_valid            : std_ulogic;
   signal stats_data             : std_ulogic;
 
+  -- acc_done to L2
+  signal acc_done_l2_ready         : std_logic;
+  signal acc_done_l2_valid         : std_logic;
+  signal acc_done_l2_data          : std_logic_vector(1 downto 0);
+
+  type acc_done_state_t is (idle, valid_acc_done);
+  signal acc_done_state, acc_done_next : acc_done_state_t;
+
   -------------------------------------------------------------------------------
   -- Flush FSM signals
   -------------------------------------------------------------------------------
@@ -620,9 +628,54 @@ begin  -- architecture rtl of l2_acc_wrapper
       --custom_dbg                => custom_dbg,
       l2_stats_ready            => stats_ready,
       l2_stats_valid            => stats_valid,
-      l2_stats_data             => stats_data
+      l2_stats_data             => stats_data,
+      l2_fence_ready            => acc_done_l2_ready,
+      l2_fence_valid            => acc_done_l2_valid,
+      l2_fence_data             => acc_done_l2_data
       );
   end generate l2_spandex_gen;
+
+  acc_ready_gen: if USE_SPANDEX = 0 generate
+    acc_done_l2_ready <= '0';
+  end generate acc_ready_gen;
+
+  ----------------------------------------------------------------------------
+  -- acc_done signal state
+  -----------------------------------------------------------------------------
+  acc_done_update : process (clk, rst) is
+  begin
+    if rst = '0' then
+      acc_done_state <= idle;
+    elsif clk'event and clk = '1' then
+      acc_done_state <= acc_done_next;
+    end if;
+  end process acc_done_update;
+
+  acc_done_state_fsm : process (rl, acc_done_l2_ready, acc_done_state) is
+  begin
+    acc_done_next     <= acc_done_state;
+    acc_done_l2_data  <= "11";
+    acc_done_l2_valid <= '0';
+
+    case acc_done_state is
+      when idle =>
+        if rl = '1' and USE_SPANDEX /= 0 then
+          acc_done_l2_valid <= '1';
+          if acc_done_l2_ready = '0' then
+            acc_done_next <= valid_acc_done;
+          end if;
+        end if;
+
+      when valid_acc_done =>
+        acc_done_l2_valid <= '1';
+        if acc_done_l2_ready = '1' then
+          acc_done_next <= idle;
+        end if;
+
+      when others =>
+        acc_done_next <= idle;
+    end case;
+  end process acc_done_state_fsm;
 
 -------------------------------------------------------------------------------
 -- Static signals
