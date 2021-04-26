@@ -277,8 +277,8 @@ architecture rtl of ahb2bsg_dmc is
     variable data : std_logic_vector(63 downto 0);
   begin
     if AHBDW = 32 then
-      data(31 downto 0) := hwdata(31 downto 0);
-      data(63 downto 0) := data(31 downto 0);
+      data(31 downto 0)  := hwdata(31 downto 0);
+      data(63 downto 32) := data(31 downto 0);
     else
       data := hwdata;
     end if;
@@ -487,7 +487,11 @@ begin
 
   migin.app_wdf_data <= r.wdf_data;
   migin.app_wdf_end <= r.wdf_end;
-  migin.app_wdf_mask <= r.wdf_mask;
+  migin.app_wdf_mask(AHBDW/8 - 1 downto 0) <= r.wdf_mask;
+  broken_32bit_bus_gen : if (AHBDW = 32) generate
+    -- TODO: supporting only 64-bit AHB bus
+    migin.app_wdf_mask(8 - 1 downto 4) <= (others => '0');
+  end generate broken_32bit_bus_gen;
   migin.app_wdf_wren <= r.wdf_wren and migout.app_rdy;
 
   ahbso.hconfig <= hconfig;
