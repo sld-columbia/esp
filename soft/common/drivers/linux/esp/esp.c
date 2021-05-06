@@ -88,13 +88,12 @@ static irqreturn_t esp_irq(int irq, void *dev)
 static int esp_flush(struct esp_device *esp)
 {
 	int rc = 0;
-#ifndef __riscv
 	if (esp->coherence < ACC_COH_RECALL)
 		rc |= esp_private_cache_flush();
 
 	if (esp->coherence < ACC_COH_LLC)
 		rc |= esp_cache_flush();
-#endif
+
 	return rc;
 }
 

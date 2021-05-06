@@ -46,6 +46,13 @@ int esp_cache_flush(void);
 int esp_private_cache_flush(void);
 int esp_private_cache_flush_smp(void);
 
+#ifdef __riscv
+#undef ioread32be
+#define ioread32be ioread32
+#undef iowrite32be
+#define iowrite32be iowrite32
+#endif
+
 #endif /* __KERNEL__ */
 
 #endif /* ESP_CACHE_H */
