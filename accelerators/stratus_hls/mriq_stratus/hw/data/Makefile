@@ -1,3 +1,6 @@
+# Copyright (c) 2011-2021 Columbia University, System Level Design Group
+# SPDX-License-Identifier: Apache-2.0
+
 all: genData wrt_bmData convert2be
 
 genData: genData.c ../../common/helper.h 
