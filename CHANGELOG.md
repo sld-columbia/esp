@@ -7,6 +7,52 @@ Changelog](https://keepachangelog.com/en/1.0.0/), and this project
 adheres to [Calendar Versioning](https://calver.org/) with format
 `YYYY.MINOR.MICRO`.
 
+## [2021.2.0]
+
+### Added
+
+- **Accelerators**
+  - Stratus HLS flow
+    - _MRI-Q_: advanced MRI reconstruction algorithm (#112)
+    - _Cholesky_: Cholesky decomposition (#113)
+    - _Conv2D_: 2D convolution with optional pooling (max or avg), bias addition, and ReLU; supported kernel sizes 1x1, 3x3, or 5x5; supported stride 1x1, or 2x2 (#115)
+    - _GeMM_: dense matrix multiplication supporting arbitrary input size and optional ReLU (#115)
+
+- **Accelerator design flows**
+  - Bump Stratus HLS version to 20.24 (#114)
+  - Bump Xcelium version to 19.03 (#114)
+  - Require Xcelium to run unit test of accelerators for Stratus HLS (#114)
+
+- **Cache hierarchy**
+  - Handle RISC-V atomic operations (#114)
+  - Preliminary support for Spandex caches [[Alsop et al., ISCA'18](https://dl.acm.org/doi/10.1109/ISCA.2018.00031)] (#114)
+    (FPGA implementation needs to improve to meet timing)
+
+- **Scratchpad (shared-local memory) tile**
+  - Optional LPDDR controller from Basejump STL [[Taylor, DAC'18](https://dl.acm.org/doi/10.1145/3195970.3199848)] (#114)
+
+- **ASIC Design**
+  - Template design for ASIC flow (requires access to GF12 technology) (#114)
+  - Chip-to-FPGA link that replaces on-chip DDR controllers when not available for the target technology (#114)
+  - Digital clock oscillator (DCO) instance (#114)
+  - Technology-specific SRAM wrappers (#114)
+  - Technology-specific PAD wrappers with configuration pins and orientation selection (#114)
+  - Preliminary FPGA proxy design to simulate the chip-to-FPGA link (#114)
+  - Single tile, trace-based simulation target to test the chip JTAG debug interface (#114)
+  - SDF back-annotation of user-selected IPs (#114)
+
+- **NoC Architecture**
+  - Increased reserved field of the packet headers from 4 to 8 bits (#114)
+    - Support up to 256 interrupt lines
+    - Support Spandex extended message types
+
+### Fixed
+
+- **Cache hierarchy**
+  - Fix NoC header parsing in LLC wrapper (#103)
+  - Update HLS constraints for the ESP caches in SystemC
+
+
 ## [2021.1.1]
 
 ### Added
