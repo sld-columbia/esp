@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sld>
+  <accelerator name="conv2d" desc="Conv2D Accelerator" data_size="128" device_id="052" hls_tool="stratus_hls">
+    <param name="n_channels" desc="n_channels" />
+    <param name="feature_map_height" desc="feature_map_height" />
+    <param name="feature_map_width" desc="feature_map_width" />
+    <param name="n_filters" desc="n_filters" />
+    <param name="filter_dim" desc="filter_dim" />
+    <param name="is_padded" desc="is_padded" />
+    <param name="stride" desc="stride" />
+    <param name="do_relu" desc="do ReLU" />
+    <param name="pool_type" desc="0: no pooling, 1: 2x2 max pooling, 2: 2x2 avg pooling" />
+    <param name="batch_size" desc="number of input feature batches" />
+  </accelerator>
+</sld>
