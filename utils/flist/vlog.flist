@@ -27,7 +27,6 @@ caches/esp-caches/l2/rtl/l2_core.sv
 caches/esp-caches/l2/rtl/l2_input_decoder.sv
 caches/esp-caches/common/rtl/interface_controller.sv
 misc/esplink.sv
-misc/decouple.v
 misc/icap_inst.v
 sockets/adapters/apb2axil.sv
 noc/router/noc_pkg.sv

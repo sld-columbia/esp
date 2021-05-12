@@ -67,11 +67,11 @@ entity misc_tile_q is
     -- non-coherent DMA requests from PRC (master) to memory
     -- NoC4->tile
     prc_dma_rcv_rdreq               : in  std_ulogic;
-    prc_dma_rcv_data_out            : out noc_flit_type;
+    prc_dma_rcv_data_out            : out dma_noc_flit_type;
     prc_dma_rcv_empty               : out std_ulogic;
-    -- tile->No6
+    -- tile->NoC6
     prc_dma_snd_wrreq               : in  std_ulogic;
-    prc_dma_snd_data_in             : in  noc_flit_type;
+    prc_dma_snd_data_in             : in  dma_noc_flit_type;
     prc_dma_snd_full                : out std_ulogic;
     -- Requests from master
     -- NoC5->tile
@@ -201,11 +201,11 @@ architecture rtl of misc_tile_q is
   signal coherent_dma_snd_empty    : std_ulogic;
   -- NoC4->tile
   signal prc_dma_rcv_wrreq         : std_ulogic;
-  signal prc_dma_rcv_data_in       : noc_flit_type;
+  signal prc_dma_rcv_data_in       : dma_noc_flit_type;
   signal prc_dma_rcv_full          : std_ulogic;
   -- tile->NoC6
   signal prc_dma_snd_rdreq         : std_ulogic;
-  signal prc_dma_snd_data_out      : noc_flit_type;
+  signal prc_dma_snd_data_out      : dma_noc_flit_type;
   signal prc_dma_snd_empty         : std_ulogic;
   -- NoC5->tile
   signal apb_rcv_wrreq             : std_ulogic;
@@ -424,7 +424,7 @@ begin  -- rtl
   fifo_13: fifo0
     generic map (
       depth => 18,                      --Header, address, length or data
-      width => NOC_FLIT_SIZE)
+      width => DMA_NOC_FLIT_SIZE)
     port map (
       clk      => clk,
       rst      => fifo_rst,
@@ -442,7 +442,7 @@ begin  -- rtl
   fifo_98 : fifo0
     generic map (
       depth => 8,                       --Header, address, [data]
-      width => NOC_FLIT_SIZE)
+      width => DMA_NOC_FLIT_SIZE)
     port map (
       clk      => clk,
       rst      => fifo_rst,
