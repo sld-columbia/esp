@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sld>
+  <accelerator name="gemm" desc="GeMM Accelerator" data_size="128" device_id="051" hls_tool="stratus_hls">
+    <param name="ninputs" desc="Number of inputs"/>
+    <param name="d1" desc="Size d1 of the matrix 1"/>
+    <param name="d2" desc="Size d2 of the matrix 1"/>
+    <param name="d3" desc="Size d2 of the matrix 2"/>
+    <param name="ld_offset1" desc="Input offset (matrix 1)"/>
+    <param name="ld_offset2" desc="Input offset (matrix 2)"/>
+    <param name="st_offset" desc="Output offset"/>
+    <param name="do_relu" desc="Do ReLU stage"/>
+    <param name="transpose" desc="True if matrix 2 is transposed"/>
+  </accelerator>
+</sld>
