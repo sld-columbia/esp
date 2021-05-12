@@ -229,12 +229,12 @@ architecture rtl of tile_io is
   signal remote_ahbs_snd_full      : std_ulogic;
 
   -- DPR DMA queue entries
-  signal prc_dma_rcv_rdreq             : std_ulogic;
-  signal prc_dma_rcv_data_out          : noc_flit_type;
-  signal prc_dma_rcv_empty             : std_ulogic;
-  signal prc_dma_snd_wrreq             : std_ulogic;
-  signal prc_dma_snd_data_in           : noc_flit_type;
-  signal prc_dma_snd_full              : std_ulogic;
+  signal prc_dma_rcv_rdreq         : std_ulogic;
+  signal prc_dma_rcv_data_out      : dma_noc_flit_type;
+  signal prc_dma_rcv_empty         : std_ulogic;
+  signal prc_dma_snd_wrreq         : std_ulogic;
+  signal prc_dma_snd_data_in       : dma_noc_flit_type;
+  signal prc_dma_snd_full          : std_ulogic;
 
   signal dma_rcv_rdreq             : std_ulogic;
   signal dma_rcv_data_out          : dma_noc_flit_type;
@@ -997,7 +997,7 @@ begin
   -----------------------------------------------------------------------------
   apb2axil_1: apb2axil
     port map (
-      clk               => clk,
+      clk               => tile_clk,
       rstn              => rst,
       paddr             => noc_apbi.paddr,
       penable           => noc_apbi.penable,
@@ -1375,7 +1375,7 @@ begin
   -- PRC
   prc_1: prc
     port map (
-      clk                       => clk,
+      clk                       => tile_clk,
       reset                     => rst,                 --check reset polarity
       m_axi_mem_araddr          => m_axi_mem_araddr,
       m_axi_mem_arlen           => m_axi_mem_arlen,
@@ -1446,11 +1446,12 @@ begin
       mem_axi_port     => 0,
       mem_num          => CFG_NSLM_TILE + CFG_NMEM_TILE,
       mem_info         => tile_acc_mem_list(0 to CFG_NMEM_TILE + CFG_NSLM_TILE - 1), --nofb_mem_info,
+      this_noc_flit_size => DMA_NOC_FLIT_SIZE,
       slv_y            => tile_y(io_tile_id), --io_y,
       slv_x            => tile_x(io_tile_id)) --, io_x)
     port map (
       rst                        => rst,
-      clk                        => clk,
+      clk                        => tile_clk,
       local_y                    => tile_y(io_tile_id), --local_y,
       local_x                    => tile_x(io_tile_id), --local_x,
       mosi                       => mosi,
@@ -1466,7 +1467,8 @@ begin
       remote_ahbs_snd_full       => '0',
       remote_ahbs_rcv_rdreq      => open,
       remote_ahbs_rcv_data_out   => (others => '0'),
-      remote_ahbs_rcv_empty      => '1');
+      remote_ahbs_rcv_empty      => '1',
+      coherence                  => 0);
 
       mosi(0).ar.addr(31 downto 0)      <= m_axi_mem_araddr;
       mosi(0).ar.len                    <= m_axi_mem_arlen;
