@@ -25,6 +25,7 @@ use work.coretypes.all;
 use work.esp_acc_regmap.all;
 use work.socmap.all;
 use work.grlib_config.all;
+use work.misc.all;
 
 entity tile_acc is
   generic (
@@ -217,35 +218,45 @@ architecture rtl of tile_acc is
   signal noc6_mon_noc_vec_int  : monitor_noc_type;
 
   signal coherence_req_wrreq        : std_ulogic;
+  signal coherence_req_wrreq_acc        : std_ulogic;
   signal coherence_req_data_in      : noc_flit_type;
   signal coherence_req_full         : std_ulogic;
   signal coherence_fwd_rdreq        : std_ulogic;
+  signal coherence_fwd_rdreq_acc    : std_ulogic;
   signal coherence_fwd_data_out     : noc_flit_type;
   signal coherence_fwd_empty        : std_ulogic;
   signal coherence_rsp_rcv_rdreq    : std_ulogic;
+  signal coherence_rsp_rcv_rdreq_acc : std_ulogic;
   signal coherence_rsp_rcv_data_out : noc_flit_type;
   signal coherence_rsp_rcv_empty    : std_ulogic;
   signal coherence_rsp_snd_wrreq    : std_ulogic;
+  signal coherence_rsp_snd_wrreq_acc : std_ulogic;
   signal coherence_rsp_snd_data_in  : noc_flit_type;
   signal coherence_rsp_snd_full     : std_ulogic;
   signal dma_rcv_rdreq              : std_ulogic;
+  signal dma_rcv_rdreq_acc          : std_ulogic;
   signal dma_rcv_data_out           : noc_flit_type;
   signal dma_rcv_empty              : std_ulogic;
   signal dma_snd_wrreq              : std_ulogic;
+  signal dma_snd_wrreq_acc          : std_ulogic;
   signal dma_snd_data_in            : noc_flit_type;
   signal dma_snd_full               : std_ulogic;
   signal coherent_dma_rcv_rdreq     : std_ulogic;
   signal coherent_dma_rcv_data_out  : noc_flit_type;
   signal coherent_dma_rcv_empty     : std_ulogic;
   signal coherent_dma_snd_wrreq     : std_ulogic;
+  signal coherent_dma_snd_wrreq_acc : std_ulogic;
   signal coherent_dma_snd_data_in   : noc_flit_type;
   signal coherent_dma_snd_full      : std_ulogic;
   signal interrupt_wrreq            : std_ulogic;
+  signal interrupt_wrreq_acc        : std_ulogic;
   signal interrupt_data_in          : misc_noc_flit_type;
   signal interrupt_full             : std_ulogic;
   signal interrupt_ack_rdreq        : std_ulogic;
+  signal interrupt_ack_rdreq_acc    : std_ulogic;
   signal interrupt_ack_data_out     : misc_noc_flit_type;
   signal interrupt_ack_empty        : std_ulogic;
+  signal interrupt_ack_empty_acc    : std_ulogic;
   signal apb_snd_wrreq              : std_ulogic;
   signal apb_snd_data_in            : misc_noc_flit_type;
   signal apb_snd_full               : std_ulogic;
@@ -858,36 +869,36 @@ begin
         apbi              => apbi,
         apbo              => apbo(1),
         pready            => pready,
-        coherence_req_wrreq        => coherence_req_wrreq,
+        coherence_req_wrreq        => coherence_req_wrreq_acc,
         coherence_req_data_in      => coherence_req_data_in, 
         coherence_req_full         => coherence_req_full,
         coherent_dma_rcv_rdreq     => coherent_dma_rcv_rdreq,
         coherent_dma_rcv_data_out  => coherent_dma_rcv_data_out,
         coherent_dma_rcv_empty     => coherent_dma_rcv_empty, 
-        coherence_fwd_rdreq        => coherence_fwd_rdreq,
+        coherence_fwd_rdreq        => coherence_fwd_rdreq_acc,
         coherence_fwd_data_out     => coherence_fwd_data_out, 
         coherence_fwd_empty        => coherence_fwd_empty,
-        coherent_dma_snd_wrreq     => coherent_dma_snd_wrreq,
+        coherent_dma_snd_wrreq     => coherent_dma_snd_wrreq_acc,
         coherent_dma_snd_data_in   => coherent_dma_snd_data_in,
         coherent_dma_snd_full      => coherent_dma_snd_full,
-        coherence_rsp_rcv_rdreq    => coherence_rsp_rcv_rdreq,
+        coherence_rsp_rcv_rdreq    => coherence_rsp_rcv_rdreq_acc,
         coherence_rsp_rcv_data_out => coherence_rsp_rcv_data_out,
         coherence_rsp_rcv_empty    => coherence_rsp_rcv_empty,
-        coherence_rsp_snd_wrreq    => coherence_rsp_snd_wrreq,
+        coherence_rsp_snd_wrreq    => coherence_rsp_snd_wrreq_acc,
         coherence_rsp_snd_data_in  => coherence_rsp_snd_data_in,
         coherence_rsp_snd_full     => coherence_rsp_snd_full, 
-        dma_rcv_rdreq     => dma_rcv_rdreq,
+        dma_rcv_rdreq     => dma_rcv_rdreq_acc,
         dma_rcv_data_out  => dma_rcv_data_out,
         dma_rcv_empty     => dma_rcv_empty,     
-        dma_snd_wrreq     => dma_snd_wrreq,
+        dma_snd_wrreq     => dma_snd_wrreq_acc,
         dma_snd_data_in   => dma_snd_data_in,                                                                                              
         dma_snd_full      => dma_snd_full,
-        interrupt_wrreq   => interrupt_wrreq,
+        interrupt_wrreq   => interrupt_wrreq_acc,
         interrupt_data_in => interrupt_data_in,                                                                                            
         interrupt_full    => interrupt_full,
-        interrupt_ack_rdreq    => interrupt_ack_rdreq,
+        interrupt_ack_rdreq    => interrupt_ack_rdreq_acc,
         interrupt_ack_data_out => interrupt_ack_data_out,                                                                                  
-        interrupt_ack_empty    => interrupt_ack_empty,                                                                                     
+        interrupt_ack_empty    => interrupt_ack_empty_acc,                                                                                     
         mon_dvfs_in       => mon_dvfs_in,
         dvfs_transient_in   => acc_dvfs_transient,
         -- Monitor signals
@@ -899,23 +910,33 @@ begin
   -- loopbback pllclk with refclk
   pllclk <= refclk;
 
-  -- PR_decoupler
---pr_decoupler_1 : pr_decoupler
--- port map (
---    rst                       => rst,
---    clk                       => clk_feedthru,
---    decouple_acc              => decouple_acc,
---    coherence_req_wrreq       => coherence_req_wrreq,
---    coherence_fwd_rdreq       => coherence_fwd_rdreq,
---    coherent_dma_snd_wrreq    => coherent_dma_snd_wrreq,
---    coherence_rsp_rcv_rdreq   => coherence_rsp_rcv_rdreq,
---    coherence_rsp_snd_wrreq   => coherence_rsp_snd_wrreq,
---    dma_rcv_rdreq             => dma_rcv_rdreq,
---    dma_snd_wrreq             => dma_snd_wrreq,
---    interrupt_wrreq           => interrupt_wrreq,
---    interrupt_ack_rdreq       => interrupt_ack_rdreq,
---    interrupt_ack_empty       => interrupt_ack_empty);
-  --  pready                    => pready);
+  -- decouple signals if decouple_acc is asserted
+  decoupler_gen: process (decouple_acc) is
+  begin  -- process decoupler_gen
+    if decouple_acc = '1' then
+      coherence_req_wrreq        <= '0';
+      coherence_fwd_rdreq        <= '0';
+      coherent_dma_snd_wrreq     <= '0';
+      coherence_rsp_rcv_rdreq    <= '0';
+      coherence_rsp_snd_wrreq    <= '0';
+      dma_rcv_rdreq              <= '0';
+      dma_snd_wrreq              <= '0';
+      interrupt_wrreq            <= '0';
+      interrupt_ack_rdreq        <= '0';
+      interrupt_ack_empty        <= '0';
+    else 
+      coherence_req_wrreq        <= coherence_req_wrreq_acc;
+      coherence_fwd_rdreq        <= coherence_fwd_rdreq_acc;
+      coherent_dma_snd_wrreq     <= coherent_dma_snd_wrreq_acc;
+      coherence_rsp_rcv_rdreq    <= coherence_rsp_rcv_rdreq_acc;
+      coherence_rsp_snd_wrreq    <= coherence_rsp_snd_wrreq_acc;
+      dma_rcv_rdreq              <= dma_rcv_rdreq_acc;
+      dma_snd_wrreq              <= dma_snd_wrreq_acc;
+      interrupt_wrreq            <= interrupt_wrreq_acc;
+      interrupt_ack_rdreq        <= interrupt_ack_rdreq_acc;
+      interrupt_ack_empty        <= interrupt_ack_empty_acc;
+    end if;
+  end process decoupler_gen;
 
       -- CSR map for decoupler 
       decouple_acc <= tile_config(0);
