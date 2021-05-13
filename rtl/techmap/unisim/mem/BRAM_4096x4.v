@@ -1,5 +1,5 @@
 `timescale 1 ps / 1 ps
-// Copyright (c) 2014-2015, Columbia University
+// Copyright (c) 2014-2021, Columbia University
 module BRAM_4096x4( CLK, A0, D0, Q0, WE0, WEM0, CE0, A1, D1, Q1, WE1, WEM1, CE1 );
 	input CLK;
 	input [11:0] A0;
