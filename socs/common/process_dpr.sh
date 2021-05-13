@@ -4,9 +4,10 @@
 # SPDX-License-Identifier: Apache-2.0
 
 #variables related to srcs of accelerators
-tile_acc="$1/socs/$2/socketgen/tile_acc.vhd"
+#tile_acc="$1/socs/$2/socketgen/tile_acc.vhd"
+tile_acc="$1/socs/$2/socketgen/acc_top.vhd"
 dpr_srcs="$1/socs/$2/socketgen/dpr_srcs"
-dpr_bbox="$dpr_srcs/tile_acc_bbox.vhd"
+dpr_bbox="$dpr_srcs/acc_top_bbox.vhd"
 original_src="$1/socs/$2/vivado/srcs.tcl"
 temp_srcs="/tmp/temp_srcs.tcl"
 esp_config="$1/socs/$2/./socgen/esp/.esp_config"
@@ -21,7 +22,7 @@ regenerate_fplan=0;
 
 DEVICE=$3
 device=$(echo ${DEVICE} | awk '{print tolower($0)}')
-acc_id_match="this_hls_conf      : hlscfg_t"
+acc_id_match="hls_conf       : hlscfg_t"
 declare -A new_accelerators old_accelerators modified_accelerators
 declare -A res_consumption
 
@@ -96,37 +97,45 @@ done
     echo -e "\t DPR: number of modified tiles is equal to $num_modified_acc_tiles "
 }
 
-#This function initializes the specific accelerator tiles from the template tile_acc.vhd
+#This function initializes the specific accelerator tiles from the template acc_dpr.vhd
 #initialization refers to replacing the default parameters of the template acc with 
 #acc specific parameters
 function initialize_acc_tiles() {
 for ((i=0; i<$num_acc_tiles; i++))
 do
     skip_params=0;
-    acc_dir="$dpr_srcs/tile_${new_accelerators[$i,0]}_acc";
+    acc_dir="$dpr_srcs/acc_${new_accelerators[$i,0]}_top";
     mkdir -p $acc_dir;
-    echo " " > $acc_dir/tile_acc_$i.vhd;
+    echo " " > $acc_dir/acc_$i.vhd;
 
     while read acc_src
     do
         if [[ $acc_src == *"$acc_id_match"*  ]]; then
-            #echo "  tile_id : integer range 0 to CFG_TILES_NUM - 1 := ${new_accelerators[$i,0]});" >> $acc_dir/tile_acc_$i.vhd;
-            echo "  this_hls_conf      : hlscfg_t             := tile_design_point(${new_accelerators[$i,0]});" >> $acc_dir/tile_acc_$i.vhd;
-            echo "  this_device        : devid_t  := tile_device(${new_accelerators[$i,0]});" >> $acc_dir/tile_acc_$i.vhd;
-            echo "  this_irq_type      : integer  := tile_irq_type(${new_accelerators[$i,0]});">> $acc_dir/tile_acc_$i.vhd;             
-            echo "  this_has_l2        : integer range 0 to 1 := tile_has_l2(${new_accelerators[$i,0]});">> $acc_dir/tile_acc_$i.vhd;             
-            echo "  this_has_dvfs      : integer range 0 to 1 := tile_has_dvfs(${new_accelerators[$i,0]});">> $acc_dir/tile_acc_$i.vhd;             
-            echo "  this_has_pll       : integer range 0 to 1 := tile_has_pll(${new_accelerators[$i,0]});">> $acc_dir/tile_acc_$i.vhd;             
-            echo "  this_has_dco       : integer range 0 to 1 := 0;">> $acc_dir/tile_acc_$i.vhd;
-            echo "  this_extra_clk_buf : integer range 0 to 1 := extra_clk_buf(${new_accelerators[$i,0]});">> $acc_dir/tile_acc_$i.vhd;             
-            echo "  test_if_en         : integer range 0 to 1 := 0;">> $acc_dir/tile_acc_$i.vhd;
-            echo "  ROUTER_PORTS       : ports_vec            := set_router_ports(CFG_FABTECH, CFG_XLEN, CFG_YLEN, tile_x(${new_accelerators[$i,0]}),tile_y(${new_accelerators[$i,0]}));">> $acc_dir/tile_acc_$i.vhd;             
-            echo "  HAS_SYNC           : integer range 0 to 1 := CFG_HAS_SYNC);">> $acc_dir/tile_acc_$i.vhd;             
-            skip_params=10;
+            echo "  hls_conf           : hlscfg_t := tile_design_point(${new_accelerators[$i,0]});" >> $acc_dir/acc_$i.vhd;
+            echo "  this_device        : devid_t  := tile_device(${new_accelerators[$i,0]});" >> $acc_dir/acc_$i.vhd;
+            echo "  tech               : integer  := CFG_FABTECH;">> $acc_dir/acc_$i.vhd;
+            echo "  mem_num            : integer  := CFG_NMEM_TILE + CFG_NSLM_TILE + CFG_SVGA_ENABLE;">> $acc_dir/acc_$i.vhd;
+            echo "  cacheable_mem_num  : integer  := CFG_NMEM_TILE;">> $acc_dir/acc_$i.vhd;
+            echo "  mem_info           : tile_mem_info_vector(0 to CFG_NMEM_TILE + CFG_NSLM_TILE) := tile_acc_mem_list;">> $acc_dir/acc_$i.vhd;
+            echo "  io_y               : local_yx := tile_y(io_tile_id);">> $acc_dir/acc_$i.vhd;
+            echo "  io_x               : local_yx := tile_x(io_tile_id);">> $acc_dir/acc_$i.vhd;
+            echo "  pindex             : integer  := 1;">> $acc_dir/acc_$i.vhd;
+            echo "  irq_type           : integer  := tile_irq_type(${new_accelerators[$i,0]});">> $acc_dir/acc_$i.vhd; 
+            echo "  scatter_gather     : integer range 0 to 1  := CFG_SCATTER_GATHER;">> $acc_dir/acc_$i.vhd;
+            echo "  sets               : integer  := CFG_ACC_L2_SETS;">> $acc_dir/acc_$i.vhd;
+            echo "  ways               : integer  := CFG_ACC_L2_WAYS;">> $acc_dir/acc_$i.vhd;
+            echo "  cache_tile_id      : cache_attribute_array := cache_tile_id;">> $acc_dir/acc_$i.vhd;
+            echo "  cache_y            : yx_vec(0 to 2**NL2_MAX_LOG2 - 1) := cache_y;">> $acc_dir/acc_$i.vhd;
+            echo "  cache_x            : yx_vec(0 to 2**NL2_MAX_LOG2 - 1) := cache_x;">> $acc_dir/acc_$i.vhd;
+            echo "  has_l2             : integer range 0 to 1 := tile_has_l2(${new_accelerators[$i,0]});">> $acc_dir/acc_$i.vhd;
+            echo "  has_dvfs           : integer range 0 to 1 := tile_has_dvfs(${new_accelerators[$i,0]});">> $acc_dir/acc_$i.vhd; 
+            echo "  has_pll            : integer range 0 to 1 := tile_has_pll(${new_accelerators[$i,0]});">> $acc_dir/acc_$i.vhd; 
+            echo "  extra_clk_buf      : integer range 0 to 1 := extra_clk_buf(${new_accelerators[$i,0]}));">> $acc_dir/acc_$i.vhd; 
+            skip_params=19;
         elif [[ $skip_params -ne 0 ]]; then
             skip_params=$((skip_params-1));
         else
-            echo "  $acc_src" >> $acc_dir/tile_acc_$i.vhd;
+            echo "  $acc_src" >> $acc_dir/acc_$i.vhd;
         fi
     done <$tile_acc
 done
@@ -150,8 +159,8 @@ done < $tile_acc
 
 while read src_list
 do
-    if [[ $src_list == *"tile_acc.vhd" ]]; then
-        echo "read_vhdl $dpr_srcs/tile_acc_bbox.vhd" >> $temp_srcs;
+    if [[ $src_list == *"acc_top.vhd" ]]; then
+        echo "read_vhdl $dpr_srcs/acc_top_bbox.vhd" >> $temp_srcs;
     else
         echo "$src_list" >> $temp_srcs;
     fi
@@ -165,15 +174,14 @@ function add_acc_prj_file() {
 for ((i=0; i<$num_acc_tiles; i++))
 do
     prj_source="$1/socs/$2/vivado/srcs.tcl"
-    acc_dir="$dpr_srcs/tile_${new_accelerators[$i,0]}_acc";
-    #acc_dir="$dpr_srcs/accelerator_$i";
+    acc_dir="$dpr_srcs/acc_${new_accelerators[$i,0]}_top";
     output="$acc_dir/src.prj"
 
 echo " " > $output
 while read -r type ext addr
 do
-    if [[ "$ext" == *"tile_acc.vhd"* ]] || [[ "$ext" == *"tile_acc_bbox.vhd"* ]]; then
-        echo "vhdl xil_defaultlib $acc_dir/tile_acc_$i.vhd" >> $output;
+    if [[ "$ext" == *"acc_top.vhd"* ]] || [[ "$ext" == *"acc_top_bbox.vhd"* ]]; then
+        echo "vhdl xil_defaultlib $acc_dir/acc_$i.vhd" >> $output;
     elif [ "$type" == "read_verilog" ] && [ "$ext" == "-sv" ] && [[ "$addr" != *"nbdcache"* ]] && [[ "$addr" != *"miss_handler"* ]]  && [[ "$addr" != *"llc_rtl_top"* ]]; then
         echo "system xil_defaultlib $addr" >> $output
     elif [ "$type" == "read_vhdl" ]; then
@@ -203,7 +211,7 @@ do
     done
 done < $syn_include_file;
 
-#generate the imlementation script
+#generate the synth script
 dpr_syn_tcl="vivado_dpr/ooc_syn.tcl"
 echo "set tclParams [list hd.visual 1]" > $dpr_syn_tcl;
 echo "set tclHome \"$tcl_dir\" " >> $dpr_syn_tcl; #\"$1/socs/common/Tcl\" " >> $dpr_syn_tcl;
@@ -273,22 +281,20 @@ echo -e "\t DPR: number of acc tiles inside dpr gen is $num_acc_tiles ";
 if [[ "$4" == "DPR" ]]; then
     for ((i=0; i<num_acc_tiles; i++))
     do
-        acc_dir="$dpr_srcs/tile_${new_accelerators[$i,0]}_acc";
-        #acc_dir="$dpr_srcs/accelerator_$i";
+        acc_dir="$dpr_srcs/acc_${new_accelerators[$i,0]}_top";
         prj_src="$acc_dir/src.prj"
         echo "add_module ${new_accelerators[$i,1]} " >> $dpr_syn_tcl;
-        echo "set_attribute module ${new_accelerators[$i,1]} moduleName tile_acc" >> $dpr_syn_tcl;
+        echo "set_attribute module ${new_accelerators[$i,1]} moduleName acc_dpr_top" >> $dpr_syn_tcl;
         echo "set_attribute module ${new_accelerators[$i,1]} prj $prj_src" >> $dpr_syn_tcl;
         echo "set_attribute module ${new_accelerators[$i,1]} synth  \${run.rmSynth}" >> $dpr_syn_tcl;
     done
 elif [[ "$4" == "ACC" ]] && [[ "$num_modified_acc_tiles" != "0" ]]; then
     for ((i=0, j=0; i<$num_acc_tiles; i++))
     do
-        acc_dir="$dpr_srcs/tile_${new_accelerators[$i,0]}_acc";
-        #acc_dir="$dpr_srcs/accelerator_$i";
+        acc_dir="$dpr_srcs/acc_${new_accelerators[$i,0]}_top";
         prj_src="$acc_dir/src.prj"
         echo "add_module ${new_accelerators[$i,1]} " >> $dpr_syn_tcl;
-        echo "set_attribute module ${new_accelerators[$i,1]} moduleName tile_acc" >> $dpr_syn_tcl;
+        echo "set_attribute module ${new_accelerators[$i,1]} moduleName acc_dpr_top" >> $dpr_syn_tcl;
         echo "set_attribute module ${new_accelerators[$i,1]} prj $prj_src" >> $dpr_syn_tcl;
         if [[ ${modified_accelerators[$j,0]} == ${new_accelerators[$i,0]} ]]; then
             echo "set_attribute module ${new_accelerators[$i,1]} synth  \${run.rmSynth}" >> $dpr_syn_tcl;
@@ -389,11 +395,11 @@ echo -e "\t DPR: number of acc tiles inside dpr gen is $num_acc_tiles ";
 #if [[ "$4" == "IMPL_DPR" ]]; then
     for ((i=0; i<num_acc_tiles; i++))
     do
-        acc_dir="$dpr_srcs/tile_${new_accelerators[$i,0]}_acc";
+        acc_dir="$dpr_srcs/acc_${new_accelerators[$i,0]}_top";
         #acc_dir="$dpr_srcs/accelerator_$i";
         prj_src="$acc_dir/src.prj"
         echo "add_module ${new_accelerators[$i,1]} " >> $dpr_syn_tcl;
-        echo "set_attribute module ${new_accelerators[$i,1]} moduleName tile_acc" >> $dpr_syn_tcl;
+        echo "set_attribute module ${new_accelerators[$i,1]} moduleName acc_dpr_top" >> $dpr_syn_tcl;
         echo "set_attribute module ${new_accelerators[$i,1]} prj $prj_src" >> $dpr_syn_tcl;
         #echo "set_attribute module ${new_accelerators[$i,1]} synth  \${run.rmSynth}" >> $dpr_syn_tcl;
     done
@@ -440,7 +446,7 @@ if [[ "$4" == "IMPL_DPR" ]]; then
     echo "set_attribute impl top_dpr partitions  [list [list \$static \$top  implement ] \\" >> $dpr_syn_tcl;
     for ((i=0; i<$num_acc_tiles; i++))
     do
-        echo "[list ${new_accelerators[$i,1]}  esp_1/tiles_gen[${new_accelerators[$i,0]}].accelerator_tile.tile_acc_i implement ] \\" >>  $dpr_syn_tcl;
+        echo "[list ${new_accelerators[$i,1]}  esp_1/tiles_gen[${new_accelerators[$i,0]}].accelerator_tile.tile_acc_i/acc_dpr_top_inst implement ] \\" >>  $dpr_syn_tcl;
     done
     echo "]"  >> $dpr_syn_tcl;
 elif [[ "$4" == "IMPL_ACC" ]] && [[ "$num_modified_acc_tiles" != "0" ]]; then
@@ -449,13 +455,13 @@ elif [[ "$4" == "IMPL_ACC" ]] && [[ "$num_modified_acc_tiles" != "0" ]]; then
     for ((i=0, j=0; j<$num_acc_tiles; j++))
     do
         if  [[ $regenerate_fplan == 1 ]]; then
-            echo "[list ${new_accelerators[$j,1]}  esp_1/tiles_gen[${new_accelerators[$j,0]}].accelerator_tile.tile_acc_i implement ] \\" >>  $dpr_syn_tcl;
+            echo "[list ${new_accelerators[$j,1]}  esp_1/tiles_gen[${new_accelerators[$j,0]}].accelerator_tile.tile_acc_i/acc_dpr_top_inst implement ] \\" >>  $dpr_syn_tcl;
 
         elif [[ ${modified_accelerators[$i,0]} == ${new_accelerators[$j,0]} ]]; then
-            echo "[list ${modified_accelerators[$i,1]}  esp_1/tiles_gen[${modified_accelerators[$i,0]}].accelerator_tile.tile_acc_i implement ] \\" >>  $dpr_syn_tcl;
+            echo "[list ${modified_accelerators[$i,1]}  esp_1/tiles_gen[${modified_accelerators[$i,0]}].accelerator_tile.tile_acc_i/acc_dpr_top_inst implement ] \\" >>  $dpr_syn_tcl;
             ((i++));
         else
-            echo "[list ${new_accelerators[$j,1]}  esp_1/tiles_gen[${new_accelerators[$j,0]}].accelerator_tile.tile_acc_i import ] \\" >>  $dpr_syn_tcl;
+            echo "[list ${new_accelerators[$j,1]}  esp_1/tiles_gen[${new_accelerators[$j,0]}].accelerator_tile.tile_acc_i/acc_dpr_top_inst import ] \\" >>  $dpr_syn_tcl;
         fi
     done
     echo "]"  >> $dpr_syn_tcl;
@@ -528,15 +534,15 @@ do
     dsp_line=$line;
     bram_aux_match=$bram_match;
     bram_line=$line;
-    done < $synth_report_base/${new_accelerators[$i,1]}/tile_acc_utilization_synth.rpt;
+    done < $synth_report_base/${new_accelerators[$i,1]}/acc_dpr_top_utilization_synth.rpt;
 done
 
 for ((i=0; i<$num_acc_tiles; i++))
 do
     if [[ "$i" == "0" ]]; then
-        echo ${res_consumption["$i,0"]} , ${res_consumption["$i,1"]} , ${res_consumption["$i,2"]} , esp_1/tiles_gen[${new_accelerators[$i,0]}].accelerator_tile.tile_acc_i , ${new_accelerators[$i,0]} > $flora_input;
+        echo ${res_consumption["$i,0"]} , ${res_consumption["$i,1"]} , ${res_consumption["$i,2"]} , esp_1/tiles_gen[${new_accelerators[$i,0]}].accelerator_tile.tile_acc_i/acc_dpr_top_inst , ${new_accelerators[$i,0]} > $flora_input;
     else
-        echo ${res_consumption["$i,0"]} , ${res_consumption["$i,1"]} , ${res_consumption["$i,2"]} , esp_1/tiles_gen[${new_accelerators[$i,0]}].accelerator_tile.tile_acc_i , ${new_accelerators[$i,0]} >> $flora_input;
+        echo ${res_consumption["$i,0"]} , ${res_consumption["$i,1"]} , ${res_consumption["$i,2"]} , esp_1/tiles_gen[${new_accelerators[$i,0]}].accelerator_tile.tile_acc_i/acc_dpr_top_inst , ${new_accelerators[$i,0]} >> $flora_input;
     fi;
 done
 }
@@ -636,7 +642,7 @@ elif [ $4 == "test" ]; then
 #    diff_accelerators $1 $2 $3 
     initialize_acc_tiles $1 $2 $3
     add_acc_prj_file $1 $2 $3
-    gen_synth_script $1 $2 $3 $4
+#    gen_synth_script $1 $2 $3 $4
     #gen_fplan $1 $2 $3;
 #    echo " regenarate before parse is $regenerate_fplan";
 #    parse_synth_report $1 $2 $3 $4
