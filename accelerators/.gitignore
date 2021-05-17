@@ -7,7 +7,6 @@ vivado_src
 solver.*
 *final.xml
 cgraph.graphml
-data
 inout
 *.o
 *.opp

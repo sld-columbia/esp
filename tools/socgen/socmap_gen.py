@@ -459,12 +459,21 @@ def print_global_constants(fp, soc):
     fp.write("  constant GLOB_CPU_RISCV : integer range 0 to 1 := 0;\n")
   else:
     fp.write("  constant GLOB_CPU_RISCV : integer range 0 to 1 := 1;\n")
+  if soc.CPU_ARCH.get() == "ariane":
+    fp.write("  constant GLOB_CPU_LLSC : integer range 0 to 1 := 1;\n")
+  else:
+    fp.write("  constant GLOB_CPU_LLSC : integer range 0 to 1 := 0;\n")
   fp.write("\n")
   # RTL caches
   if soc.cache_rtl.get() == 1:
     fp.write("  constant CFG_CACHE_RTL   : integer := 1;\n")
   else:
-    fp.write("  constant CFG_CACHE_RTL   : integer := 0;\n\n")
+    fp.write("  constant CFG_CACHE_RTL   : integer := 0;\n")
+  if soc.cache_spandex.get() == 1:
+    fp.write("  constant USE_SPANDEX     : integer := 1;\n")
+  else:
+    fp.write("  constant USE_SPANDEX     : integer := 0;\n")
+  fp.write("\n")
 
 
 def print_constants(fp, soc, esp_config):
@@ -979,7 +988,10 @@ def print_mapping(fp, soc, esp_config):
     l2 = esp_config.l2s[i]
     if l2.idx != -1:
       fp.write("    " + str(l2.id) + " => (\n")
-      fp.write("      0 => ahb_device_reg (VENDOR_SLD, SLD_L2_CACHE, 0, 0, CFG_SLD_L2_CACHE_IRQ),\n")
+      if soc.cache_spandex.get() == 1:
+        fp.write("      0 => ahb_device_reg (VENDOR_UIUC, UIUC_SPANDEX_L2, 0, 0, CFG_SLD_L2_CACHE_IRQ),\n")
+      else:
+        fp.write("      0 => ahb_device_reg (VENDOR_SLD, SLD_L2_CACHE, 0, 0, CFG_SLD_L2_CACHE_IRQ),\n")
       fp.write("      1 => apb_iobar(16#" + format(0xD0 + l2.idx, '03X') + "#, 16#fff#),\n")
       fp.write("      2 => (others => '0')),\n")
   fp.write("    others => pconfig_none);\n\n")
@@ -990,7 +1002,10 @@ def print_mapping(fp, soc, esp_config):
   for i in range(0, esp_config.nllc):
     llc = esp_config.llcs[i]
     fp.write("    " + str(i) + " => (\n")
-    fp.write("      0 => ahb_device_reg (VENDOR_SLD, SLD_LLC_CACHE, 0, 0, CFG_SLD_LLC_CACHE_IRQ),\n")
+    if soc.cache_spandex.get() == 1:
+      fp.write("      0 => ahb_device_reg (VENDOR_UIUC, UIUC_SPANDEX_LLC, 0, 0, CFG_SLD_LLC_CACHE_IRQ),\n")
+    else:
+      fp.write("      0 => ahb_device_reg (VENDOR_SLD, SLD_LLC_CACHE, 0, 0, CFG_SLD_LLC_CACHE_IRQ),\n")
     fp.write("      1 => apb_iobar(16#" + format(0xD0 + llc.idx, '03X') + "#, 16#fff#),\n")
     fp.write("      2 => (others => '0')),\n")
   fp.write("    others => pconfig_none);\n\n")
@@ -1814,6 +1829,8 @@ def print_esplink_header(fp, esp_config, soc):
   fp.write("\n")
   fp.write("#define EDCL_IP \"" + soc.IP_ADDR + "\"\n")
   fp.write("#define BASE_FREQ " + str(CPU_FREQ) + "\n")
+  if soc.cache_spandex.get() == 1:
+    fp.write("#define USE_SPANDEX\n")
   fp.write("#define BOOTROM_BASE_ADDR " + hex(RST_ADDR[esp_config.cpu_arch]) + "\n")
   fp.write("#define RODATA_START_ADDR " + hex(RODATA_ADDR[esp_config.cpu_arch]) + "\n")
   fp.write("#define DRAM_BASE_ADDR 0x" + format(DDR_HADDR[esp_config.cpu_arch], '03X') + "00000\n")
@@ -1826,7 +1843,7 @@ def print_esplink_header(fp, esp_config, soc):
 
 
 
-def print_devtree(fp, esp_config):
+def print_devtree(fp, soc, esp_config):
 
   # Get CPU base frequency
   with open("../../top.vhd") as top_fp:
@@ -2006,8 +2023,11 @@ def print_devtree(fp, esp_config):
       address = base + 0xD000 + (l2.idx << 8)
       address_str = format(address, "x")
       size_str = "100"
-      fp.write("    espl2cache" + str(l2.id) + "@" + address_str + " {\n")
-      fp.write("      compatible = \"sld,l2_cache\";\n")
+      fp.write("    l2cache" + str(l2.id) + "@" + address_str + " {\n")
+      if soc.cache_spandex.get() == 1:
+        fp.write("      compatible = \"uiuc,spandex_l2\";\n")
+      else:
+        fp.write("      compatible = \"sld,l2_cache\";\n")
       fp.write("      reg = <0x0 0x" + address_str + " 0x0 0x" + size_str + ">;\n")
       fp.write("      reg-shift = <2>; // regs are spaced on 32 bit boundary\n")
       fp.write("      reg-io-width = <4>; // only 32-bit access are supported\n")
@@ -2021,8 +2041,11 @@ def print_devtree(fp, esp_config):
       address = base + 0xD000 + (llc.idx << 8)
       address_str = format(address, "x")
       size_str = "100"
-      fp.write("    espllccache" + str(llc.id) + "@" + address_str + " {\n")
-      fp.write("      compatible = \"sld,llc_cache\";\n")
+      fp.write("    llccache" + str(llc.id) + "@" + address_str + " {\n")
+      if soc.cache_spandex.get() == 1:
+        fp.write("      compatible = \"uiuc,spandex_llc\";\n")
+      else:
+        fp.write("      compatible = \"sld,llc_cache\";\n")
       fp.write("      reg = <0x0 0x" + address_str + " 0x0 0x" + size_str + ">;\n")
       fp.write("      reg-shift = <2>; // regs are spaced on 32 bit boundary\n")
       fp.write("      reg-io-width = <4>; // only 32-bit access are supported\n")
@@ -2083,9 +2106,11 @@ def print_cache_config(fp, soc, esp_config):
     addr_bits = 32
     byte_bits = 3
     word_bits = 1
-    fp.write("`define LITTLE_ENDIAN\n")
-  else: 
+    fp.write("`define LLSC\n")
+  if soc.CPU_ARCH.get() == "leon3":
     fp.write("`define BIG_ENDIAN\n")
+  else:
+    fp.write("`define LITTLE_ENDIAN\n")
 
   fp.write("`define ADDR_BITS    " + str(addr_bits) + "\n")
   fp.write("`define BYTE_BITS    " + str(byte_bits) + "\n")
@@ -2379,7 +2404,7 @@ def create_socmap(esp_config, soc):
 
     fp = open('riscv.dts', 'w')
 
-    print_devtree(fp, esp_config)
+    print_devtree(fp, soc, esp_config)
 
     fp.close()
 

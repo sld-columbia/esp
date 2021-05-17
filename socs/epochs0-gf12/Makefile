@@ -8,11 +8,11 @@ all: help
 DESIGN_PATH = $(PWD)
 ESP_ROOT = $(realpath ../../)
 TECHLIB  = gf12
-FPGA_TECHLIB = virtexu
-BOARD    = profpga-xcvu440-epochs-0
+FPGA_TECHLIB = virtex7
+BOARD    = profpga-xc7v2000t-epochs-0
 DESIGN   = $(BOARD)
 #LINUX_SMP = 1
-LEON3_BASE_FREQ_MHZ ?= 78
+LEON3_BASE_FREQ_MHZ ?= 50
 LEON3_STACK ?= 0x5bfffff0
 
 OVR_TECHLIB ?=
@@ -34,6 +34,12 @@ SIMTOP = testbench
 ### Modelsim Simulation Options ###
 
 # Compile flags
+ifneq ("$(OVR_TECHLIB)", "")
+VCOMOPT +=
+VLOGOPT +=
+XMLOGOPT +=
+NCLOGOPT +=
+else
 VCOMOPT +=
 VLOGOPT += +define+GF12
 XMLOGOPT += -DEFINE GF12

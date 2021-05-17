@@ -57,7 +57,7 @@ entity tile_mem is
     ddr_cfg0           : out std_logic_vector(31 downto 0);
     ddr_cfg1           : out std_logic_vector(31 downto 0);
     ddr_cfg2           : out std_logic_vector(31 downto 0);
-    mem_id             : out integer range 0 to MEM_ID_RANGE_MSB;
+    mem_id             : out integer range 0 to CFG_NMEM_TILE - 1;
     -- FPGA proxy memory link (this_has_ddr -> 0)
     fpga_data_in       : in  std_logic_vector(ARCH_BITS - 1 downto 0);
     fpga_data_out      : out std_logic_vector(ARCH_BITS - 1 downto 0);
@@ -1114,6 +1114,7 @@ begin
         nl2           => CFG_NL2,
         nllc          => CFG_NLLC_COHERENT,
         noc_xlen      => CFG_XLEN,
+        noc_ylen      => CFG_YLEN,
         hindex        => 2,
         pindex        => 1,
         pirq          => CFG_SLD_LLC_CACHE_IRQ,

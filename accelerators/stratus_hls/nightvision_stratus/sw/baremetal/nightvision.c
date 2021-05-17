@@ -54,7 +54,7 @@ int main(int argc, char * argv[])
 	struct esp_device *espdevs = NULL;
 	unsigned coherence;
 
-	ndev = probe(&espdevs, SLD_NIGHTVISION, DEV_NAME);
+	ndev = probe(&espdevs, VENDOR_SLD, SLD_NIGHTVISION, DEV_NAME);
 	if (ndev <= 0) {
 		printf("Error: %s device not found!\n", DEV_NAME);
 		exit(EXIT_FAILURE);

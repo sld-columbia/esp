@@ -41,6 +41,9 @@ package tile is
       coherence_rsp_snd_wrreq      : in  std_ulogic;
       coherence_rsp_snd_data_in    : in  noc_flit_type;
       coherence_rsp_snd_full       : out std_ulogic;
+      coherence_fwd_snd_wrreq      : in  std_ulogic;
+      coherence_fwd_snd_data_in    : in  noc_flit_type;
+      coherence_fwd_snd_full       : out std_ulogic;
       dma_rcv_rdreq              : in  std_ulogic;
       dma_rcv_data_out           : out noc_flit_type;
       dma_rcv_empty              : out std_ulogic;
@@ -391,6 +394,9 @@ package tile is
       coherence_rsp_snd_wrreq    : in  std_ulogic;
       coherence_rsp_snd_data_in  : in  noc_flit_type;
       coherence_rsp_snd_full     : out std_ulogic;
+      coherence_fwd_snd_wrreq    : in  std_ulogic;
+      coherence_fwd_snd_data_in  : in  noc_flit_type;
+      coherence_fwd_snd_full     : out std_ulogic;
       dma_rcv_rdreq     : in  std_ulogic;
       dma_rcv_data_out  : out noc_flit_type;
       dma_rcv_empty     : out std_ulogic;

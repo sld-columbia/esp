@@ -613,6 +613,7 @@ class NoCFrame(Pmw.ScrolledFrame):
     self.message.delete(0.0, END)
     self.cfg_frame.sync_label.config(text="With synchronizers",fg="darkgreen")
     self.cfg_frame.set_cpu_specific_labels(self.soc)
+    string = ""
     if (tot_cpu > 0) and \
        (tot_cpu <= NCPU_MAX) and \
        (tot_mem > 0 or (tot_slm > 0 and (self.soc.cache_en.get() == 0) and self.soc.CPU_ARCH.get() == "ibex")) and \
@@ -631,11 +632,17 @@ class NoCFrame(Pmw.ScrolledFrame):
        (tot_llc_coherent <= NLLC_COHERENT_MAX) and \
        (not (self.soc.TECH != "gf12" and self.soc.TECH != "gf22" and self.soc.TECH != "virtexu" and tot_mem == 4)) and \
        (not (self.soc.TECH == "virtexu" and tot_mem >= 2 and (self.noc.rows < 3 or self.noc.cols < 3))) and \
+       (self.soc.cache_spandex.get() == 0 or self.soc.CPU_ARCH.get() == "ariane" or self.soc.cache_en.get() == 0) and \
        (tot_cpu == 1 or self.soc.cache_en.get()) and \
        (self.soc.llc_sets.get() < 8192 or self.soc.llc_ways.get() < 16 or tot_mem > 1):
+      # Spandex beta warning
+      if self.soc.cache_spandex.get() != 0 and self.soc.cache_en.get() == 1:
+        string += "***              Spandex support is still beta                 ***\n"
+        string += "    The default HLS configuration is 512x4 L2 and 1024x8 LLC\n"
+        if self.soc.TECH != "gf12" and self.soc.TECH != "virtexu" and self.soc.TECH != "virtexup":
+          string += "    Use a smaller implementation if not using a Virtex US/US+\n"
       self.done.config(state=NORMAL)
     else:
-      string = ""
       if (self.noc.cols > 8 or self.noc.rows > 8): 
         string += "Maximum number of rows and columns is 8.\n"
       if (tot_cpu == 0):
@@ -677,12 +684,15 @@ class NoCFrame(Pmw.ScrolledFrame):
         string += "Maximum number of supported fully-coherent devices is " + str(NFULL_COHERENT_MAX) + ".\n"
       if (tot_llc_coherent > NLLC_COHERENT_MAX):
         string += "Maximum number of supported LLC-coherent devices is " + str(NLLC_COHERENT_MAX) + ".\n"
+      if (self.soc.cache_spandex.get() != 0 and self.soc.CPU_ARCH.get() != "ariane" and self.soc.cache_en.get() == 1):
+        string += "Spandex currently supports only RISC-V Ariane processor core"
       if (tot_clkbuf > 9):
         string += "The FPGA board supports no more than 9 CLKBUF's.\n"
       string += pll_string
       if (clk_region_skip > 0):
         string += "Clock-region IDs must be consecutive; skipping region " + str(clk_region_skip) +" intead\n"
-      self.message.insert(0.0, string)
+    # Update message box
+    self.message.insert(0.0, string)
 
   def set_message(self, message, cfg_frame, done):
     self.message = message

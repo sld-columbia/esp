@@ -47,7 +47,9 @@ entity ariane_axi_wrap is
     apbi        : out apb_slv_in_type;
     apbo        : in  apb_slv_out_vector;
     apb_req     : out std_ulogic;
-    apb_ack     : in  std_ulogic);
+    apb_ack     : in  std_ulogic;
+    fence_l2    : out std_logic_vector(1 downto 0)
+    );
 
 end ariane_axi_wrap;
 
@@ -64,6 +66,7 @@ architecture rtl of ariane_axi_wrap is
       AXI_DATA_WIDTH   : integer;
       AXI_USER_WIDTH   : integer;
       AXI_STRB_WIDTH   : integer;
+      USE_SPANDEX      : integer;
       ROMBase          : std_logic_vector(63 downto 0);
       ROMLength        : std_logic_vector(63 downto 0);
       APBBase          : std_logic_vector(63 downto 0);
@@ -316,7 +319,9 @@ architecture rtl of ariane_axi_wrap is
       pwdata          : out std_logic_vector(31 downto 0);
       prdata          : in  std_logic_vector(31 downto 0);
       pready          : in  std_logic;
-      pslverr         : in  std_logic);
+      pslverr         : in  std_logic;
+      fence_l2        : out std_logic_vector(1 downto 0)
+      );
   end component ariane_wrap;
 
   signal penable      : std_logic;
@@ -344,6 +349,7 @@ begin  -- architecture rtl
       AXI_DATA_WIDTH   => ARCH_BITS,
       AXI_USER_WIDTH   => XUSER_WIDTH,
       AXI_STRB_WIDTH   => ARCH_BITS / 8,
+      USE_SPANDEX      => USE_SPANDEX,
       ROMBase          => ROMBase,
       ROMLength        => ROMLength,
       APBBase          => APBBase,
@@ -596,7 +602,9 @@ begin  -- architecture rtl
       pwdata          => pwdata,
       prdata          => prdata,
       pready          => apb_ack,
-      pslverr         => '0');
+      pslverr         => '0',
+      fence_l2        => fence_l2
+      );
 
   -- Unused extended AXI ID
   romi.aw.id(XID_WIDTH - 1 downto ARIANE_AXI_ID_WIDTH_SLV)  <= (others => '0');

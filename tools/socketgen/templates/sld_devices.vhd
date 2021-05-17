@@ -51,6 +51,11 @@ package sld_devices is
   constant LOWRISC_IBEX_TIMER : devid_t := 16#002#;
 
 
+  constant VENDOR_UIUC      : vendor_t := 16#EE#;
+
+  constant UIUC_SPANDEX_L2  : devid_t := 16#020#;
+  constant UIUC_SPANDEX_LLC : devid_t := 16#021#;
+
 -- pragma translate_off
 
   constant SLD_DESC : vdesc_t := "Columbia University SLD ";
@@ -100,6 +105,19 @@ package sld_devices is
     vendorid     => VENDOR_LOWRISC,
     vendordesc   => LOWRISC_DESC,
     device_table => lowrisc_device_table
+    );
+
+  constant UIUC_DESC : vdesc_t := "University of Illinois  ";
+
+  constant uiuc_device_table : dtable_t := (
+    UIUC_SPANDEX_L2    => "Spandex L2 cache               ",
+    UIUC_SPANDEX_LLC   => "Spandex LLC cache              ",
+    others => "Unknown Device                 ");
+
+  constant uiuc_lib : vlib_t := (
+    vendorid     => VENDOR_UIUC,
+    vendordesc   => UIUC_DESC,
+    device_table => uiuc_device_table
     );
 
 -- pragma translate_on

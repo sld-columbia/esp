@@ -1,4 +1,4 @@
--- Copyright (c) 2011-2020 Columbia University, System Level Design Group
+-- Copyright (c) 2011-2021 Columbia University, System Level Design Group
 -- SPDX-License-Identifier: Apache-2.0
 
 -----------------------------------------------------------------------------
@@ -186,8 +186,8 @@ architecture rtl of asic_tile_io is
   signal dco_clk_lock : std_ulogic;
 
   -- Ethernet and Debug link
-  signal mdcscaler : integer range 0 to 1023;
-  signal mdcscaler_reg : integer range 0 to 1023;
+  signal mdcscaler : integer range 0 to 2047;
+  signal mdcscaler_reg : integer range 0 to 2047;
   signal mdcscaler_not_changed : std_ulogic;
   signal eth_rstn : std_ulogic;
 

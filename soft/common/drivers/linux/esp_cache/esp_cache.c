@@ -5,7 +5,7 @@
 
 #include "esp_cache.h"
 
-#define DRV_NAME	"esp_cache"
+#define DRV_NAME	"lastlevel_cache"
 
 static DEFINE_SPINLOCK(esp_cache_list_lock);
 static LIST_HEAD(esp_cache_list);
@@ -28,6 +28,12 @@ static struct of_device_id esp_cache_device_ids[] = {
 	},
 	{
 		.compatible = "sld,llc_cache",
+	},
+	{
+		.name = "ee_021",
+	},
+	{
+		.compatible = "uiuc,spandex_llc",
 	},
 	{ },
 };
@@ -76,6 +82,8 @@ static int esp_cache_probe(struct platform_device *pdev)
 {
 	struct esp_cache_device *esp_cache;
 	struct resource *res;
+	const char *compatible;
+	int cplen;
 	int rc = 0;
 
 	esp_cache = kzalloc(sizeof(*esp_cache), GFP_KERNEL);
@@ -96,7 +104,17 @@ static int esp_cache_probe(struct platform_device *pdev)
 		goto out_iomem;
 	}
 
-	dev_info(esp_cache->pdev, "device registered.\n");
+	/* Determine which type of cache is present */
+#ifdef __sparc
+	compatible = of_get_property(esp_cache->pdev->of_node, "name", &cplen);
+	if (strcmp(compatible, "eb_021") == 0)
+#else
+	compatible = of_get_property(esp_cache->pdev->of_node, "compatible", &cplen);
+	if (strcmp(compatible, "sld,llc_cache") == 0)
+#endif
+		dev_info(esp_cache->pdev, "ESP LLC cache registered.\n");
+	else
+		dev_info(esp_cache->pdev, "Spandex LLC cache registered.\n");
 
 	platform_set_drvdata(pdev, esp_cache);
 

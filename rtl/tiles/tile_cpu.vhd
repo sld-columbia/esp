@@ -237,6 +237,8 @@ architecture rtl of tile_cpu is
   -- IBEX Idle
   signal core_idle : std_ulogic;
 
+  -- Fence L2
+  signal fence_l2 : std_logic_vector(1 downto 0);
 
   -- Queues
   signal coherence_req_wrreq        : std_ulogic;
@@ -251,6 +253,9 @@ architecture rtl of tile_cpu is
   signal coherence_rsp_snd_wrreq    : std_ulogic;
   signal coherence_rsp_snd_data_in  : noc_flit_type;
   signal coherence_rsp_snd_full     : std_ulogic;
+  signal coherence_fwd_snd_wrreq    : std_ulogic;
+  signal coherence_fwd_snd_data_in  : noc_flit_type;
+  signal coherence_fwd_snd_full     : std_ulogic;
   signal dma_rcv_rdreq              : std_ulogic;
   signal dma_rcv_data_out           : noc_flit_type;
   signal dma_rcv_empty              : std_ulogic;
@@ -1194,7 +1199,8 @@ begin
         apbi        => apbi,
         apbo        => apbo,
         apb_req     => apb_req,
-        apb_ack     => apb_ack);
+        apb_ack     => apb_ack,
+        fence_l2    => fence_l2);
 
     -- exit() writes to this address right before completing the program
     -- Next instruction is a jump to current PC.
@@ -1227,6 +1233,7 @@ begin
         tech          => CFG_FABTECH,
         sets          => CFG_L2_SETS,
         ways          => CFG_L2_WAYS,
+        little_end    => GLOB_CPU_RISCV,
         hindex_mst    => CFG_NCPU_TILE,
         pindex        => 1,
         pirq          => CFG_SLD_L2_CACHE_IRQ,
@@ -1244,6 +1251,7 @@ begin
         local_x                    => this_local_x,
         pconfig                    => this_l2_pconfig,
         cache_id                   => this_cache_id,
+        tile_id                    => tile_id,
         ahbsi                      => cache_ahbsi,
         ahbso                      => cache_ahbso,
         ahbmi                      => ahbmi,
@@ -1265,7 +1273,11 @@ begin
         coherence_rsp_snd_wrreq    => coherence_rsp_snd_wrreq,
         coherence_rsp_snd_data_in  => coherence_rsp_snd_data_in,
         coherence_rsp_snd_full     => coherence_rsp_snd_full,
-        mon_cache                  => mon_cache_int
+        coherence_fwd_snd_wrreq    => coherence_fwd_snd_wrreq,
+        coherence_fwd_snd_data_in  => coherence_fwd_snd_data_in,
+        coherence_fwd_snd_full     => coherence_fwd_snd_full,
+        mon_cache                  => mon_cache_int,
+        fence_l2                   => fence_l2
         );
 
   end generate with_cache_coherence;
@@ -1694,7 +1706,7 @@ begin
   begin
     dma_snd_data_in <= dma_snd_data_in_cpu;
     if get_preamble(NOC_FLIT_SIZE, dma_snd_data_in_cpu) = PREAMBLE_HEADER then
-      dma_snd_data_in(NOC_FLIT_SIZE - PREAMBLE_WIDTH - 4*YX_WIDTH - MSG_TYPE_WIDTH - 2 downto
+      dma_snd_data_in(NOC_FLIT_SIZE - PREAMBLE_WIDTH - 4*YX_WIDTH - MSG_TYPE_WIDTH - 4 downto
                       NOC_FLIT_SIZE - PREAMBLE_WIDTH - 4*YX_WIDTH - MSG_TYPE_WIDTH - RESERVED_WIDTH) <= CPU_DMA;
     end if;
   end process set_cpu_dma;
@@ -1717,6 +1729,9 @@ begin
       coherence_rsp_snd_wrreq    => coherence_rsp_snd_wrreq,
       coherence_rsp_snd_data_in  => coherence_rsp_snd_data_in,
       coherence_rsp_snd_full     => coherence_rsp_snd_full,
+      coherence_fwd_snd_wrreq    => coherence_fwd_snd_wrreq,
+      coherence_fwd_snd_data_in  => coherence_fwd_snd_data_in,
+      coherence_fwd_snd_full     => coherence_fwd_snd_full,
       dma_rcv_rdreq              => dma_rcv_rdreq,
       dma_rcv_data_out           => dma_rcv_data_out,
       dma_rcv_empty              => dma_rcv_empty,

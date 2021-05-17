@@ -11,6 +11,7 @@ module ariane_wrap
      parameter AXI_DATA_WIDTH = 64,
      parameter AXI_USER_WIDTH = 1,
      parameter AXI_STRB_WIDTH = AXI_DATA_WIDTH / 8,
+     parameter USE_SPANDEX = 0,
      // Slave 0
      parameter logic [63:0] ROMBase             = 64'h0000_0000_0001_0000,
      parameter logic [63:0] ROMLength           = 64'h0000_0000_0001_0000,
@@ -301,7 +302,9 @@ module ariane_wrap
     output logic [31:0] 		pwdata,
     input logic [31:0] 			prdata,
     input logic 			pready,
-    input logic 			pslverr
+    input logic 			pslverr,
+    // fence indication to l2
+    output logic [1:0]			fence_l2
     );
 
    // Base addresses for Ariane
@@ -422,7 +425,8 @@ module ariane_wrap
 	.time_irq_i   ( timer_irq           ),
 	.debug_req_i  ( 1'b0                ),
 	.axi_req_o    ( axi_ariane_req      ),
-	.axi_resp_i   ( axi_ariane_resp     )
+	.axi_resp_i   ( axi_ariane_resp     ),
+	.fence_l2_o   ( fence_l2            )
 	);
 
    axi_master_connect i_axi_master_connect_ariane (.axi_req_i(axi_ariane_req), .axi_resp_o(axi_ariane_resp), .master(slave[0]));
@@ -730,21 +734,41 @@ module ariane_wrap
        .AXI_USER_WIDTH ( AXI_USER_WIDTH   )
        ) dram();
 
-   axi_riscv_atomics_wrap
-     #(
-       .AXI_ADDR_WIDTH ( AXI_ADDR_WIDTH   ),
-       .AXI_DATA_WIDTH ( AXI_DATA_WIDTH   ),
-       .AXI_ID_WIDTH   ( AXI_ID_WIDTH_SLV ),
-       .AXI_USER_WIDTH ( AXI_USER_WIDTH   ),
-       .AXI_MAX_WRITE_TXNS ( 1  ),
-       .RISCV_WORD_WIDTH   ( 64 )
-       ) i_axi_riscv_atomics
-       (
-	.clk_i  ( clk          ),
-	.rst_ni ( rstn         ),
-	.slv    ( master[DRAM] ),
-	.mst    ( dram         )
-	);
+   generate
+     if (USE_SPANDEX) begin : axi_riscv_lrsc_gen
+        axi_riscv_lrsc_wrap
+          #(
+            .AXI_ADDR_WIDTH ( AXI_ADDR_WIDTH   ),
+            .AXI_DATA_WIDTH ( AXI_DATA_WIDTH   ),
+            .AXI_ID_WIDTH   ( AXI_ID_WIDTH_SLV ),
+            .AXI_USER_WIDTH ( AXI_USER_WIDTH   )
+            ) i_axi_riscv_lrsc
+            (
+             .clk_i  ( clk          ),
+             .rst_ni ( rstn         ),
+             .slv    ( master[DRAM] ),
+             .mst    ( dram         )
+             );
+     end // block: axi_riscv_lrsc_gen
+     else begin : axi_riscv_atomics_gen
+        axi_riscv_atomics_wrap
+          #(
+            .AXI_ADDR_WIDTH ( AXI_ADDR_WIDTH   ),
+            .AXI_DATA_WIDTH ( AXI_DATA_WIDTH   ),
+            .AXI_ID_WIDTH   ( AXI_ID_WIDTH_SLV ),
+            .AXI_USER_WIDTH ( AXI_USER_WIDTH   ),
+            .AXI_MAX_WRITE_TXNS ( 1  ),
+            .RISCV_WORD_WIDTH   ( 64 )
+            ) i_axi_riscv_atomics
+            (
+             .clk_i  ( clk          ),
+             .rst_ni ( rstn         ),
+             .slv    ( master[DRAM] ),
+             .mst    ( dram         )
+             );
+     end // block: axi_riscv_atomics_gen
+   endgenerate
+
 
    //    AW
    assign dram_aw_id = dram.aw_id;

@@ -302,7 +302,7 @@ package tiles_pkg is
       tms                : in  std_logic;
       tclk               : in  std_logic;
       -- Ethernet MDC Scaler configuration
-      mdcscaler          : out integer range 0 to 1023;
+      mdcscaler          : out integer range 0 to 2047;
       -- I/O bus interfaces
       eth0_apbi          : out apb_slv_in_type;
       eth0_apbo          : in  apb_slv_out_type;
@@ -432,7 +432,7 @@ package tiles_pkg is
       ddr_cfg0           : out std_logic_vector(31 downto 0);
       ddr_cfg1           : out std_logic_vector(31 downto 0);
       ddr_cfg2           : out std_logic_vector(31 downto 0);
-      mem_id             : out integer range 0 to MEM_ID_RANGE_MSB;
+      mem_id             : out integer range 0 to CFG_NMEM_TILE - 1;
       -- FPGA proxy memory link (this_has_ddr -> 0)
       fpga_data_in       : in  std_logic_vector(ARCH_BITS - 1 downto 0);
       fpga_data_out      : out std_logic_vector(ARCH_BITS - 1 downto 0);

@@ -97,13 +97,18 @@ class SoC_Config():
   DMA_WIDTH = 32
 
   def changed(self, *args): 
-    if self.cache_impl.get() == "SystemVerilog":
+    if self.cache_impl.get() == "ESP RTL":
       self.acc_l2_ways.set(self.l2_ways.get())
       self.acc_l2_sets.set(self.l2_sets.get())
       self.cache_rtl.set(1)
+      self.cache_spandex.set(0)
+    elif self.cache_impl.get() == "ESP HLS":
+      self.cache_rtl.set(0)
+      self.cache_spandex.set(0)
     else:
       self.cache_rtl.set(0)
-  
+      self.cache_spandex.set(1)
+
   def update_list_of_ips(self):
     self.list_of_ips = tuple(self.IPs.EMPTY) + tuple(self.IPs.PROCESSORS) + tuple(self.IPs.MISC) + tuple(self.IPs.MEM) + tuple(self.IPs.SLM) + tuple(self.IPs.ACCELERATORS)
 
@@ -163,11 +168,21 @@ class SoC_Config():
       self.cache_en.set(0)
     line = fp.readline()
     if line.find("CONFIG_CACHE_RTL = y") != -1:
+      self.cache_spandex.set(0)
       self.cache_rtl.set(1)
-      self.cache_impl.set("SystemVerilog")
+      self.cache_impl.set("ESP RTL")
+      line = fp.readline()
+      if line.find("CONFIG_CACHE_SPANDEX = y") != -1:
+        print("WARNING: Spandex RTL implementation is not available yet. Reverting to ESP RTL caches")
     else:
       self.cache_rtl.set(0)
-      self.cache_impl.set("SystemC + HLS")
+      line = fp.readline()
+      if line.find("CONFIG_CACHE_SPANDEX = y") != -1:
+        self.cache_spandex.set(1)
+        self.cache_impl.set("SPANDEX HLS")
+      else:
+        self.cache_spandex.set(0)
+        self.cache_impl.set("ESP HLS")
     line = fp.readline()
     item = line.split()
     self.l2_sets.set(int(item[2]))
@@ -269,6 +284,10 @@ class SoC_Config():
       fp.write("CONFIG_CACHE_RTL = y\n")
     else:
       fp.write("#CONFIG_CACHE_RTL is not set\n")
+    if self.cache_spandex.get() == 1:
+      fp.write("CONFIG_CACHE_SPANDEX = y\n")
+    else:
+      fp.write("#CONFIG_CACHE_SPANDEX is not set\n")
     fp.write("CONFIG_CPU_CACHES = " + str(self.l2_sets.get()) + " " + str(self.l2_ways.get()) + " " + str(self.llc_sets.get()) + " " + str(self.llc_ways.get()) + "\n")
     fp.write("CONFIG_ACC_CACHES = " + str(self.acc_l2_sets.get()) + " " + str(self.acc_l2_ways.get()) + "\n")
     fp.write("CONFIG_SLM_KBYTES = " + str(self.slm_kbytes.get()) + "\n")
@@ -427,6 +446,7 @@ class SoC_Config():
     self.CPU_ARCH = StringVar()
     self.cache_en = IntVar()
     self.cache_rtl = IntVar()
+    self.cache_spandex = IntVar()
     self.cache_impl = StringVar()
     # Read configuration
     self.noc = ncfg.NoC()

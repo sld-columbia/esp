@@ -67,7 +67,11 @@ vivado/setup.tcl: vivado $(XDC) $(BOARD_FILES)
 	@echo "create_project $(DESIGN) -part ${DEVICE} -force" > $@
 	@echo "set_property target_language verilog [current_project]" >> $@
 	@echo "set_property include_dirs {$(INCDIR)} [get_filesets {sim_1 sources_1}]" >> $@
+ifeq ("$(CPU_ARCH)","ibex")
+	@echo "set_property verilog_define {XILINX_FPGA=1 WT_DCACHE=1 PRIM_DEFAULT_IMPL=prim_pkg::ImplXilinx} [get_filesets {sim_1 sources_1}]" >> $@
+else
 	@echo "set_property verilog_define {XILINX_FPGA=1 WT_DCACHE=1} [get_filesets {sim_1 sources_1}]" >> $@
+endif
 	@echo "source ./srcs.tcl" >> $@
 ifneq ("$(PROTOBOARD)","")
 	@echo "set_property board_part $(PROTOBOARD) [current_project]"  >> $@
@@ -132,10 +136,10 @@ endif
 	@if test -r $(UTILS_GRLIB)/netlists/$(TECHLIB); then \
 		echo "import_files $(UTILS_GRLIB)/netlists/$(TECHLIB)" >> $@; \
 	fi;
-	@if test -r $(DESIGN_PATH)/mem_tile_floorplanning.xdc; then \
-		echo "read_xdc  $(DESIGN_PATH)/mem_tile_floorplanning.xdc" >> $@; \
-	    echo "set_property used_in_synthesis true [get_files $(DESIGN_PATH)/mem_tile_floorplanning.xdc]" >> $@; \
-	    echo "set_property used_in_implementation true [get_files $(DESIGN_PATH)/mem_tile_floorplanning.xdc]" >> $@; \
+	@if test -r $(DESIGN_PATH)/socgen/esp/mem_tile_floorplanning.xdc; then \
+		echo "read_xdc  $(DESIGN_PATH)/socgen/esp/mem_tile_floorplanning.xdc" >> $@; \
+	    echo "set_property used_in_synthesis true [get_files $(DESIGN_PATH)/socgen/esp/mem_tile_floorplanning.xdc]" >> $@; \
+	    echo "set_property used_in_implementation true [get_files $(DESIGN_PATH)/socgen/esp/mem_tile_floorplanning.xdc]" >> $@; \
 	echo "set_property strategy Congestion_SpreadLogic_high [get_runs impl_1]" >> $@; \
 	fi;
 	@for i in $(XDC); do \
@@ -277,7 +281,6 @@ vivado-clean:
 vivado-distclean: vivado-clean
 	$(QUIET_CLEAN)$(RM) \
 		vivado	\
-		mem_tile_floorplanning.xdc \
 		*.bit
 
 .PHONY: vivado-clean vivado-distclean vivado-syn vivado-prog-fpga vivado/$(DESIGN) vivado-setup vivado-gui

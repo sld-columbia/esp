@@ -60,7 +60,7 @@ entity tile_io is
     tms                : in  std_logic;
     tclk               : in  std_logic;
     -- Ethernet MDC Scaler configuration
-    mdcscaler          : out integer range 0 to 1023;
+    mdcscaler          : out integer range 0 to 2047;
     -- I/O bus interfaces
     eth0_apbi          : out apb_slv_in_type;
     eth0_apbo          : in  apb_slv_out_type;
@@ -1290,7 +1290,7 @@ begin
               noc_apbi_wirq.paddr(31 downto 16) = x"0c20" and irq_pwdata_hit = '1') then
 
             header_reg := create_header(MISC_NOC_FLIT_SIZE, this_local_y, this_local_x, dest_y, dest_x,
-                                        INTERRUPT, "0000");
+                                        INTERRUPT, X"00");
             header_reg(MISC_NOC_FLIT_SIZE - 1 downto
                        MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH) := PREAMBLE_1FLIT;
 

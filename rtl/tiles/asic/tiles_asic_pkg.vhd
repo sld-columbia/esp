@@ -1,4 +1,4 @@
--- Copyright (c) 2011-2019 Columbia University, System Level Design Group
+-- Copyright (c) 2011-2021 Columbia University, System Level Design Group
 -- SPDX-License-Identifier: Apache-2.0
 
 library ieee;
@@ -603,8 +603,31 @@ package tiles_asic_pkg is
       sys_clk            : in  std_ulogic;
       ext_clk            : in  std_ulogic;
       clk_div            : out std_ulogic;
-      lpddr_o            : out lpddr_out_t;
-      lpddr_i            : in  lpddr_in_t;
+      lpddr_o_calib_done : out std_ulogic;
+      lpddr_o_ck_p       : out std_logic;
+      lpddr_o_ck_n       : out std_logic;
+      lpddr_o_cke        : out std_logic;
+      lpddr_o_ba         : out std_logic_vector(2 downto 0);
+      lpddr_o_addr       : out std_logic_vector(15 downto 0);
+      lpddr_o_cs_n       : out std_logic;
+      lpddr_o_ras_n      : out std_logic;
+      lpddr_o_cas_n      : out std_logic;
+      lpddr_o_we_n       : out std_logic;
+      lpddr_o_reset_n    : out std_logic;
+      lpddr_o_odt        : out std_logic;
+      lpddr_o_dm_oen     : out std_logic_vector(3 downto 0);
+      lpddr_o_dm         : out std_logic_vector(3 downto 0);
+      lpddr_o_dqs_p_oen  : out std_logic_vector(3 downto 0);
+      lpddr_o_dqs_p_ien  : out std_logic_vector(3 downto 0);
+      lpddr_o_dqs_p_o    : out std_logic_vector(3 downto 0);
+      lpddr_o_dqs_n_oen  : out std_logic_vector(3 downto 0);
+      lpddr_o_dqs_n_ien  : out std_logic_vector(3 downto 0);
+      lpddr_o_dqs_n_o    : out std_logic_vector(3 downto 0);
+      lpddr_o_dq_oen     : out std_logic_vector(31 downto 0);
+      lpddr_o_dq_o       : out std_logic_vector(31 downto 0);
+      lpddr_i_dqs_p_i    : in  std_logic_vector(3 downto 0);
+      lpddr_i_dqs_n_i    : in  std_logic_vector(3 downto 0);
+      lpddr_i_dq_i       : in  std_logic_vector(31 downto 0);
       tdi                : in  std_logic;
       tdo                : out std_logic;
       tms                : in  std_logic;

@@ -27,3 +27,4 @@ dv/uvm/core_ibex/common/prim/prim_pkg.sv
 dv/uvm/core_ibex/common/prim/prim_clock_gating.sv
 vendor/lowrisc_ip/ip/prim_generic/rtl/prim_generic_clock_gating.sv
 shared/rtl/timer.sv
+vendor/lowrisc_ip/ip/prim_xilinx/rtl/prim_xilinx_clock_gating.sv
