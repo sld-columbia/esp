@@ -330,7 +330,7 @@ set_property  PACKAGE_PIN V9 [get_ports {tdo[11]}] # mb1_TD1_IO_028_N_14_mb1_TB3
 set_property  PACKAGE_PIN V10 [get_ports {tdi1[2]}] # mb1_TD1_IO_029_P_14_mb1_TB3_IO_043_P_21
 set_property  PACKAGE_PIN T7 [get_ports {tdo[12]}] # mb1_TD1_IO_030_N_15_mb1_TB3_IO_020_N_10
 set_property  PACKAGE_PIN T8 [get_ports {tdi[13]}] # mb1_TD1_IO_031_P_15_mb1_TB3_IO_021_P_10
-qset_property  PACKAGE_PIN U9 [get_ports {tdo[13]}] # mb1_TD1_IO_032_N_16_mb1_TB3_IO_018_N_09
+set_property  PACKAGE_PIN U9 [get_ports {tdo[13]}] # mb1_TD1_IO_032_N_16_mb1_TB3_IO_018_N_09
 set_property  PACKAGE_PIN U10 [get_ports {tdi[14]}] # mb1_TD1_IO_033_P_16_mb1_TB3_IO_019_P_09
 set_property  PACKAGE_PIN V7 [get_ports {tdo[14]}] # mb1_TD1_IO_034_N_17_mb1_TB3_IO_036_N_18
 set_property  PACKAGE_PIN V8 [get_ports {tdi[15]}] # mb1_TD1_IO_035_P_17_mb1_TB3_IO_037_P_18
