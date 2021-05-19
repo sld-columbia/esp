@@ -61,6 +61,8 @@ static void gemm_prep_xfer(struct esp_device *esp, void *arg)
 	iowrite32be(a->st_offset, esp->iomem + GEMM_ST_OFFSET_REG);
 	iowrite32be(a->ld_offset1, esp->iomem + GEMM_LD_OFFSET1_REG);
 	iowrite32be(a->ld_offset2, esp->iomem + GEMM_LD_OFFSET2_REG);
+	iowrite32be(a->src_offset, esp->iomem + SRC_OFFSET_REG);
+	iowrite32be(a->dst_offset, esp->iomem + DST_OFFSET_REG);
 }
 
 static bool gemm_xfer_input_ok(struct esp_device *esp, void *arg)
