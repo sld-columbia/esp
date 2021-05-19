@@ -60,7 +60,7 @@ GENUS_VLOGOPT += -define GF12
 
 ### Additional design files ###
 TOP_VHDL_RTL_PKGS += $(DESIGN_PATH)/pads_loc.vhd
-TOP_VHDL_RTL_SRCS += $(DESIGN_PATH)/fpga_proxy_top.vhd
+TOP_VHDL_RTL_SRCS +=
 TOP_VLOG_RTL_SRCS +=
 TOP_VHDL_SIM_PKGS +=
 TOP_VHDL_SIM_SRCS += $(DESIGN_PATH)/top.vhd
