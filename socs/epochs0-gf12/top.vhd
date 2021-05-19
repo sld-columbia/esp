@@ -328,7 +328,11 @@ architecture rtl of top is
     port (
       reset             : in    std_ulogic;
       ext_clk_noc       : out   std_logic;
-      ext_clk           : out   std_logic_vector(0 to CFG_TILES_NUM - 1);
+      ext_clk_io        : out   std_logic;
+      ext_clk_cpu       : out   std_logic;
+      ext_clk_mem       : out   std_logic;
+      ext_clk_acc0      : out   std_logic;
+      ext_clk_acc1      : out   std_logic;
       main_clk_p        : in    std_ulogic;
       main_clk_n        : in    std_ulogic;
       fpga_data         : inout std_logic_vector(CFG_NMEM_TILE * (ARCH_BITS) - 1 downto 0);
@@ -455,8 +459,12 @@ architecture rtl of top is
   signal tclk            : std_logic;
 
   -- FPGA-genertated backup external clocks
-  signal ext_clk_noc : std_logic;
-  signal ext_clk     : std_logic_vector(0 to CFG_TILES_NUM - 1);  -- backup tile clock
+  signal ext_clk_noc  : std_logic;
+  signal ext_clk_io   : std_logic;
+  signal ext_clk_cpu  : std_logic;
+  signal ext_clk_mem  : std_logic;
+  signal ext_clk_acc0 : std_logic;
+  signal ext_clk_acc1 : std_logic;
 
   constant CPU_FREQ : integer := 78125;  -- cpu frequency in KHz
                                          -- (TODO: change for device tree)
@@ -473,7 +481,11 @@ begin
     port map (
       reset             => reset,
       ext_clk_noc       => ext_clk_noc,
-      ext_clk           => ext_clk,
+      ext_clk_io        => ext_clk_io,
+      ext_clk_cpu       => ext_clk_cpu,
+      ext_clk_mem       => ext_clk_mem,
+      ext_clk_acc0      => ext_clk_acc0,
+      ext_clk_acc1      => ext_clk_acc1,
       main_clk_p        => main_clk_p,
       main_clk_n        => main_clk_n,
       fpga_data         => fpga_data,
@@ -605,11 +617,11 @@ begin
     port map (
       reset           => reset,
       ext_clk_noc     => ext_clk_noc,
-      ext_clk_io      => ext_clk(io_tile_id),
-      ext_clk_cpu     => ext_clk(cpu_tile_id(0)),
-      ext_clk_mem     => ext_clk(mem_tile_id(0)),
-      ext_clk_acc0    => ext_clk(1),
-      ext_clk_acc1    => ext_clk(12),
+      ext_clk_io      => ext_clk_io,
+      ext_clk_cpu     => ext_clk_cpu,
+      ext_clk_mem     => ext_clk_mem,
+      ext_clk_acc0    => ext_clk_acc0,
+      ext_clk_acc1    => ext_clk_acc1,
       clk_div_noc     => clk_div_noc,
       clk_div_io      => clk_div(io_tile_id),
       clk_div_cpu     => clk_div(cpu_tile_id(0)),

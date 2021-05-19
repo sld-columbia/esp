@@ -43,7 +43,11 @@ entity fpga_proxy_top is
   port (
     reset             : in    std_ulogic;  -- GLobal FPGA reset (active high)
     ext_clk_noc       : out   std_logic;
-    ext_clk           : out   std_logic_vector(0 to CFG_TILES_NUM - 1);
+    ext_clk_io        : out   std_logic;
+    ext_clk_cpu       : out   std_logic;
+    ext_clk_mem       : out   std_logic;
+    ext_clk_acc0      : out   std_logic;
+    ext_clk_acc1      : out   std_logic;
     -- Main clock
     main_clk_p        : in    std_ulogic;  -- 100 MHz clock
     main_clk_n        : in    std_ulogic;  -- 100 MHz clock
@@ -400,6 +404,9 @@ architecture rtl of fpga_proxy_top is
 
   -----------------------------------------------------------------------------
   -- clock and reset
+
+  -- Backup clocks
+  signal ext_clk : std_logic_vector(0 to CFG_TILES_NUM - 1);
 
   -- main clock (EDCL clock)
   signal main_clk                         : std_ulogic;
@@ -1566,6 +1573,13 @@ begin  -- architecture rtl
   end generate ext_clk_gen;
 
   ext_clk <= ext_clk_int;
+
+  ext_clk_io   <= ext_clk(io_tile_id);
+  ext_clk_cpu  <= ext_clk(cpu_tile_id(0));
+  ext_clk_mem  <= ext_clk(mem_tile_id(0));
+  ext_clk_acc0 <= ext_clk(1);
+  ext_clk_acc1 <= ext_clk(12);
+
   ext_clk_noc <= ext_clk_noc_int;
 
   -----------------------------------------------------------------------------
