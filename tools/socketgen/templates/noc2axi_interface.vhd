@@ -105,7 +105,7 @@ use std.textio.all;
     mon_cache         : out monitor_cache_type;
     mon_dvfs          : out monitor_dvfs_type;
     -- Coherence
-	acc_activity	  : out std_ulogic;	
+	acc_activity	  : out std_ulogic;
     coherence         : in integer range 0 to 3;
     tp_acc_rst        : in  std_ulogic);
 
@@ -256,7 +256,7 @@ begin
   irq_header(MISC_NOC_FLIT_SIZE-PREAMBLE_WIDTH-1 downto 0) <=
     irq_header_i(MISC_NOC_FLIT_SIZE-PREAMBLE_WIDTH-1 downto 0);
 
- 
+
   -- Interrupt over NoC
   irq_send: process (acc_done, interrupt_full, irq_state, irq_header,
                      interrupt_ack_empty, interrupt_ack_data_out)
