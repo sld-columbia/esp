@@ -38,19 +38,19 @@ use work.socmap.all;
 entity fpga_proxy_top is
 
   generic (
-    SIMULATION : boolean := false;
+    SIMULATION : boolean                               := false;
     JTAG_TRACE : integer range -1 to CFG_TILES_NUM - 1 := -1);
   port (
     reset             : in    std_ulogic;  -- GLobal FPGA reset (active high)
     ext_clk_noc       : out   std_logic;
     ext_clk           : out   std_logic_vector(0 to CFG_TILES_NUM - 1);
     -- Main clock
-    main_clk_p         : in    std_ulogic;  -- 78.25 MHz clock
-    main_clk_n         : in    std_ulogic;  -- 78.25 MHz clock
+    main_clk_p        : in    std_ulogic;  -- 100 MHz clock
+    main_clk_n        : in    std_ulogic;  -- 100 MHz clock
     -- Memory link
     fpga_data         : inout std_logic_vector(CFG_NMEM_TILE * (ARCH_BITS) - 1 downto 0);
     fpga_valid_in     : out   std_logic_vector(CFG_NMEM_TILE - 1 downto 0);
-    fpga_valid_out    : in  std_logic_vector(CFG_NMEM_TILE - 1 downto 0);
+    fpga_valid_out    : in    std_logic_vector(CFG_NMEM_TILE - 1 downto 0);
     fpga_clk_in       : out   std_logic_vector(CFG_NMEM_TILE - 1 downto 0);
     fpga_clk_out      : in    std_logic_vector(CFG_NMEM_TILE - 1 downto 0);
     fpga_credit_in    : out   std_logic_vector(CFG_NMEM_TILE - 1 downto 0);
@@ -74,80 +74,87 @@ entity fpga_proxy_top is
     etx_er            : out   std_ulogic;
     emdc              : out   std_ulogic;
     emdio             : inout std_logic;
+    -- DDR
+    clk_ref_p         : in    std_ulogic;  -- 200 MHz clock
+    clk_ref_n         : in    std_ulogic;  -- 200 MHz clock
     -- DDR0
-    c0_sys_clk_p      : in    std_logic;   -- 125 MHz clock
-    c0_sys_clk_n      : in    std_logic;   -- 125 MHz clock
-    c0_ddr4_act_n     : out   std_logic;
-    c0_ddr4_adr       : out   std_logic_vector(16 downto 0);
-    c0_ddr4_ba        : out   std_logic_vector(1 downto 0);
-    c0_ddr4_bg        : out   std_logic_vector(1 downto 0);
-    c0_ddr4_cke       : out   std_logic_vector(1 downto 0);
-    c0_ddr4_odt       : out   std_logic_vector(1 downto 0);
-    c0_ddr4_cs_n      : out   std_logic_vector(1 downto 0);
-    c0_ddr4_ck_t      : out   std_logic_vector(0 downto 0);
-    c0_ddr4_ck_c      : out   std_logic_vector(0 downto 0);
-    c0_ddr4_reset_n   : out   std_logic;
-    c0_ddr4_dm_dbi_n  : inout std_logic_vector(8 downto 0);
-    c0_ddr4_dq        : inout std_logic_vector(71 downto 0);
-    c0_ddr4_dqs_c     : inout std_logic_vector(8 downto 0);
-    c0_ddr4_dqs_t     : inout std_logic_vector(8 downto 0);
+    c0_sys_clk_p      : in    std_logic;   -- 200 MHz clock
+    c0_sys_clk_n      : in    std_logic;   -- 200 MHz clock
+    c0_ddr3_dq        : inout std_logic_vector(63 downto 0);
+    c0_ddr3_dqs_p     : inout std_logic_vector(7 downto 0);
+    c0_ddr3_dqs_n     : inout std_logic_vector(7 downto 0);
+    c0_ddr3_addr      : out   std_logic_vector(14 downto 0);
+    c0_ddr3_ba        : out   std_logic_vector(2 downto 0);
+    c0_ddr3_ras_n     : out   std_logic;
+    c0_ddr3_cas_n     : out   std_logic;
+    c0_ddr3_we_n      : out   std_logic;
+    c0_ddr3_reset_n   : out   std_logic;
+    c0_ddr3_ck_p      : out   std_logic_vector(0 downto 0);
+    c0_ddr3_ck_n      : out   std_logic_vector(0 downto 0);
+    c0_ddr3_cke       : out   std_logic_vector(0 downto 0);
+    c0_ddr3_cs_n      : out   std_logic_vector(0 downto 0);
+    c0_ddr3_dm        : out   std_logic_vector(7 downto 0);
+    c0_ddr3_odt       : out   std_logic_vector(0 downto 0);
     c0_calib_complete : out   std_logic;
     c0_diagnostic_led : out   std_ulogic;
     -- DDR1
-    c1_sys_clk_p      : in    std_logic;   -- 125 MHz clock
-    c1_sys_clk_n      : in    std_logic;   -- 125 MHz clock
-    c1_ddr4_act_n     : out   std_logic;
-    c1_ddr4_adr       : out   std_logic_vector(16 downto 0);
-    c1_ddr4_ba        : out   std_logic_vector(1 downto 0);
-    c1_ddr4_bg        : out   std_logic_vector(1 downto 0);
-    c1_ddr4_cke       : out   std_logic_vector(1 downto 0);
-    c1_ddr4_odt       : out   std_logic_vector(1 downto 0);
-    c1_ddr4_cs_n      : out   std_logic_vector(1 downto 0);
-    c1_ddr4_ck_t      : out   std_logic_vector(0 downto 0);
-    c1_ddr4_ck_c      : out   std_logic_vector(0 downto 0);
-    c1_ddr4_reset_n   : out   std_logic;
-    c1_ddr4_dm_dbi_n  : inout std_logic_vector(8 downto 0);
-    c1_ddr4_dq        : inout std_logic_vector(71 downto 0);
-    c1_ddr4_dqs_c     : inout std_logic_vector(8 downto 0);
-    c1_ddr4_dqs_t     : inout std_logic_vector(8 downto 0);
+    c1_sys_clk_p      : in    std_logic;   -- 200 MHz clock
+    c1_sys_clk_n      : in    std_logic;   -- 200 MHz clock
+    c1_ddr3_dq        : inout std_logic_vector(63 downto 0);
+    c1_ddr3_dqs_p     : inout std_logic_vector(7 downto 0);
+    c1_ddr3_dqs_n     : inout std_logic_vector(7 downto 0);
+    c1_ddr3_addr      : out   std_logic_vector(14 downto 0);
+    c1_ddr3_ba        : out   std_logic_vector(2 downto 0);
+    c1_ddr3_ras_n     : out   std_logic;
+    c1_ddr3_cas_n     : out   std_logic;
+    c1_ddr3_we_n      : out   std_logic;
+    c1_ddr3_reset_n   : out   std_logic;
+    c1_ddr3_ck_p      : out   std_logic_vector(0 downto 0);
+    c1_ddr3_ck_n      : out   std_logic_vector(0 downto 0);
+    c1_ddr3_cke       : out   std_logic_vector(0 downto 0);
+    c1_ddr3_cs_n      : out   std_logic_vector(0 downto 0);
+    c1_ddr3_dm        : out   std_logic_vector(7 downto 0);
+    c1_ddr3_odt       : out   std_logic_vector(0 downto 0);
     c1_calib_complete : out   std_logic;
     c1_diagnostic_led : out   std_ulogic;
     -- DDR2
-    c2_sys_clk_p      : in    std_logic;   -- 125 MHz clock
-    c2_sys_clk_n      : in    std_logic;   -- 125 MHz clock
-    c2_ddr4_act_n     : out   std_logic;
-    c2_ddr4_adr       : out   std_logic_vector(16 downto 0);
-    c2_ddr4_ba        : out   std_logic_vector(1 downto 0);
-    c2_ddr4_bg        : out   std_logic_vector(1 downto 0);
-    c2_ddr4_cke       : out   std_logic_vector(1 downto 0);
-    c2_ddr4_odt       : out   std_logic_vector(1 downto 0);
-    c2_ddr4_cs_n      : out   std_logic_vector(1 downto 0);
-    c2_ddr4_ck_t      : out   std_logic_vector(0 downto 0);
-    c2_ddr4_ck_c      : out   std_logic_vector(0 downto 0);
-    c2_ddr4_reset_n   : out   std_logic;
-    c2_ddr4_dm_dbi_n  : inout std_logic_vector(8 downto 0);
-    c2_ddr4_dq        : inout std_logic_vector(71 downto 0);
-    c2_ddr4_dqs_c     : inout std_logic_vector(8 downto 0);
-    c2_ddr4_dqs_t     : inout std_logic_vector(8 downto 0);
+    c2_sys_clk_p      : in    std_logic;   -- 200 MHz clock
+    c2_sys_clk_n      : in    std_logic;   -- 200 MHz clock
+    c2_ddr3_dq        : inout std_logic_vector(63 downto 0);
+    c2_ddr3_dqs_p     : inout std_logic_vector(7 downto 0);
+    c2_ddr3_dqs_n     : inout std_logic_vector(7 downto 0);
+    c2_ddr3_addr      : out   std_logic_vector(14 downto 0);
+    c2_ddr3_ba        : out   std_logic_vector(2 downto 0);
+    c2_ddr3_ras_n     : out   std_logic;
+    c2_ddr3_cas_n     : out   std_logic;
+    c2_ddr3_we_n      : out   std_logic;
+    c2_ddr3_reset_n   : out   std_logic;
+    c2_ddr3_ck_p      : out   std_logic_vector(0 downto 0);
+    c2_ddr3_ck_n      : out   std_logic_vector(0 downto 0);
+    c2_ddr3_cke       : out   std_logic_vector(0 downto 0);
+    c2_ddr3_cs_n      : out   std_logic_vector(0 downto 0);
+    c2_ddr3_dm        : out   std_logic_vector(7 downto 0);
+    c2_ddr3_odt       : out   std_logic_vector(0 downto 0);
     c2_calib_complete : out   std_logic;
     c2_diagnostic_led : out   std_ulogic;
-    -- DDR4
-    c3_sys_clk_p      : in    std_logic;   -- 125 MHz clock
-    c3_sys_clk_n      : in    std_logic;   -- 125 MHz clock
-    c3_ddr4_act_n     : out   std_logic;
-    c3_ddr4_adr       : out   std_logic_vector(16 downto 0);
-    c3_ddr4_ba        : out   std_logic_vector(1 downto 0);
-    c3_ddr4_bg        : out   std_logic_vector(1 downto 0);
-    c3_ddr4_cke       : out   std_logic_vector(1 downto 0);
-    c3_ddr4_odt       : out   std_logic_vector(1 downto 0);
-    c3_ddr4_cs_n      : out   std_logic_vector(1 downto 0);
-    c3_ddr4_ck_t      : out   std_logic_vector(0 downto 0);
-    c3_ddr4_ck_c      : out   std_logic_vector(0 downto 0);
-    c3_ddr4_reset_n   : out   std_logic;
-    c3_ddr4_dm_dbi_n  : inout std_logic_vector(8 downto 0);
-    c3_ddr4_dq        : inout std_logic_vector(71 downto 0);
-    c3_ddr4_dqs_c     : inout std_logic_vector(8 downto 0);
-    c3_ddr4_dqs_t     : inout std_logic_vector(8 downto 0);
+    -- DDR3
+    c3_sys_clk_p      : in    std_logic;   -- 200 MHz clock
+    c3_sys_clk_n      : in    std_logic;   -- 200 MHz clock
+    c3_ddr3_dq        : inout std_logic_vector(63 downto 0);
+    c3_ddr3_dqs_p     : inout std_logic_vector(7 downto 0);
+    c3_ddr3_dqs_n     : inout std_logic_vector(7 downto 0);
+    c3_ddr3_addr      : out   std_logic_vector(14 downto 0);
+    c3_ddr3_ba        : out   std_logic_vector(2 downto 0);
+    c3_ddr3_ras_n     : out   std_logic;
+    c3_ddr3_cas_n     : out   std_logic;
+    c3_ddr3_we_n      : out   std_logic;
+    c3_ddr3_reset_n   : out   std_logic;
+    c3_ddr3_ck_p      : out   std_logic_vector(0 downto 0);
+    c3_ddr3_ck_n      : out   std_logic_vector(0 downto 0);
+    c3_ddr3_cke       : out   std_logic_vector(0 downto 0);
+    c3_ddr3_cs_n      : out   std_logic_vector(0 downto 0);
+    c3_ddr3_dm        : out   std_logic_vector(7 downto 0);
+    c3_ddr3_odt       : out   std_logic_vector(0 downto 0);
     c3_calib_complete : out   std_logic;
     c3_diagnostic_led : out   std_ulogic;
     LED_RED           : out   std_ulogic;
@@ -159,42 +166,199 @@ end entity fpga_proxy_top;
 
 architecture rtl of fpga_proxy_top is
 
-  constant FPGA_PROXY_TECH : integer := virtexu;
-  constant FPGA_PROXY_FREQ : integer := 78125;  -- FPGA frequency in KHz
+  constant FPGA_PROXY_TECH : integer := virtex7;
+  constant FPGA_PROXY_FREQ : integer := 100000;  -- FPGA frequency in KHz
   constant MAX_NMEM_TILES  : integer := 4;
 
-  component ahb2mig_ebddr4r5 is
-    generic (
-      hindex : integer;
-      haddr  : integer;
-      hmask  : integer
+  component ahb2mig_7series_profpga
+    generic(
+      hindex : integer := 0;
+      haddr  : integer := 0;
+      hmask  : integer := 16#f00#
       );
+    port(
+      app_addr          : out std_logic_vector(28 downto 0);
+      app_cmd           : out std_logic_vector(2 downto 0);
+      app_en            : out std_logic;
+      app_wdf_data      : out std_logic_vector(511 downto 0);
+      app_wdf_end       : out std_logic;
+      app_wdf_mask      : out std_logic_vector(63 downto 0);
+      app_wdf_wren      : out std_logic;
+      app_rd_data       : in  std_logic_vector(511 downto 0);
+      app_rd_data_end   : in  std_logic;
+      app_rd_data_valid : in  std_logic;
+      app_rdy           : in  std_logic;
+      app_wdf_rdy       : in  std_logic;
+      ahbso             : out ahb_slv_out_type;
+      ahbsi             : in  ahb_slv_in_type;
+      clk_amba          : in  std_logic;
+      rst_n_syn         : in  std_logic
+      );
+  end component;
+
+  component mig is
     port (
-      c0_sys_clk_p     : in    std_logic;
-      c0_sys_clk_n     : in    std_logic;
-      c0_ddr4_act_n    : out   std_logic;
-      c0_ddr4_adr      : out   std_logic_vector(16 downto 0);
-      c0_ddr4_ba       : out   std_logic_vector(1 downto 0);
-      c0_ddr4_bg       : out   std_logic_vector(1 downto 0);
-      c0_ddr4_cke      : out   std_logic_vector(1 downto 0);
-      c0_ddr4_odt      : out   std_logic_vector(1 downto 0);
-      c0_ddr4_cs_n     : out   std_logic_vector(1 downto 0);
-      c0_ddr4_ck_t     : out   std_logic_vector(0 downto 0);
-      c0_ddr4_ck_c     : out   std_logic_vector(0 downto 0);
-      c0_ddr4_reset_n  : out   std_logic;
-      c0_ddr4_dm_dbi_n : inout std_logic_vector(8 downto 0);
-      c0_ddr4_dq       : inout std_logic_vector(71 downto 0);
-      c0_ddr4_dqs_c    : inout std_logic_vector(8 downto 0);
-      c0_ddr4_dqs_t    : inout std_logic_vector(8 downto 0);
-      ahbso            : out   ahb_slv_out_type;
-      ahbsi            : in    ahb_slv_in_type;
-      calib_done       : out   std_logic;
-      rst_n_syn        : in    std_logic;
-      rst_n_async      : in    std_logic;
-      clk_amba         : in    std_logic;
-      ui_clk           : out   std_logic;
-      ui_clk_sync_rst  : out   std_logic);
-  end component ahb2mig_ebddr4r5;
+      c0_ddr3_dq             : inout std_logic_vector(63 downto 0);
+      c0_ddr3_addr           : out   std_logic_vector(14 downto 0);
+      c0_ddr3_ba             : out   std_logic_vector(2 downto 0);
+      c0_ddr3_ras_n          : out   std_logic;
+      c0_ddr3_cas_n          : out   std_logic;
+      c0_ddr3_we_n           : out   std_logic;
+      c0_ddr3_reset_n        : out   std_logic;
+      c0_ddr3_dqs_n          : inout std_logic_vector(7 downto 0);
+      c0_ddr3_dqs_p          : inout std_logic_vector(7 downto 0);
+      c0_ddr3_ck_p           : out   std_logic_vector(0 downto 0);
+      c0_ddr3_ck_n           : out   std_logic_vector(0 downto 0);
+      c0_ddr3_cke            : out   std_logic_vector(0 downto 0);
+      c0_ddr3_cs_n           : out   std_logic_vector(0 downto 0);
+      c0_ddr3_dm             : out   std_logic_vector(7 downto 0);
+      c0_ddr3_odt            : out   std_logic_vector(0 downto 0);
+      c1_ddr3_dq             : inout std_logic_vector(63 downto 0);
+      c1_ddr3_addr           : out   std_logic_vector(14 downto 0);
+      c1_ddr3_ba             : out   std_logic_vector(2 downto 0);
+      c1_ddr3_ras_n          : out   std_logic;
+      c1_ddr3_cas_n          : out   std_logic;
+      c1_ddr3_we_n           : out   std_logic;
+      c1_ddr3_reset_n        : out   std_logic;
+      c1_ddr3_dqs_n          : inout std_logic_vector(7 downto 0);
+      c1_ddr3_dqs_p          : inout std_logic_vector(7 downto 0);
+      c1_ddr3_ck_p           : out   std_logic_vector(0 downto 0);
+      c1_ddr3_ck_n           : out   std_logic_vector(0 downto 0);
+      c1_ddr3_cke            : out   std_logic_vector(0 downto 0);
+      c1_ddr3_cs_n           : out   std_logic_vector(0 downto 0);
+      c1_ddr3_dm             : out   std_logic_vector(7 downto 0);
+      c1_ddr3_odt            : out   std_logic_vector(0 downto 0);
+      c2_ddr3_dq             : inout std_logic_vector(63 downto 0);
+      c2_ddr3_addr           : out   std_logic_vector(14 downto 0);
+      c2_ddr3_ba             : out   std_logic_vector(2 downto 0);
+      c2_ddr3_ras_n          : out   std_logic;
+      c2_ddr3_cas_n          : out   std_logic;
+      c2_ddr3_we_n           : out   std_logic;
+      c2_ddr3_reset_n        : out   std_logic;
+      c2_ddr3_dqs_n          : inout std_logic_vector(7 downto 0);
+      c2_ddr3_dqs_p          : inout std_logic_vector(7 downto 0);
+      c2_ddr3_ck_p           : out   std_logic_vector(0 downto 0);
+      c2_ddr3_ck_n           : out   std_logic_vector(0 downto 0);
+      c2_ddr3_cke            : out   std_logic_vector(0 downto 0);
+      c2_ddr3_cs_n           : out   std_logic_vector(0 downto 0);
+      c2_ddr3_dm             : out   std_logic_vector(7 downto 0);
+      c2_ddr3_odt            : out   std_logic_vector(0 downto 0);
+      c3_ddr3_dq             : inout std_logic_vector(63 downto 0);
+      c3_ddr3_addr           : out   std_logic_vector(14 downto 0);
+      c3_ddr3_ba             : out   std_logic_vector(2 downto 0);
+      c3_ddr3_ras_n          : out   std_logic;
+      c3_ddr3_cas_n          : out   std_logic;
+      c3_ddr3_we_n           : out   std_logic;
+      c3_ddr3_reset_n        : out   std_logic;
+      c3_ddr3_dqs_n          : inout std_logic_vector(7 downto 0);
+      c3_ddr3_dqs_p          : inout std_logic_vector(7 downto 0);
+      c3_ddr3_ck_p           : out   std_logic_vector(0 downto 0);
+      c3_ddr3_ck_n           : out   std_logic_vector(0 downto 0);
+      c3_ddr3_cke            : out   std_logic_vector(0 downto 0);
+      c3_ddr3_cs_n           : out   std_logic_vector(0 downto 0);
+      c3_ddr3_dm             : out   std_logic_vector(7 downto 0);
+      c3_ddr3_odt            : out   std_logic_vector(0 downto 0);
+      c0_app_addr            : in    std_logic_vector(28 downto 0);
+      c0_app_cmd             : in    std_logic_vector(2 downto 0);
+      c0_app_en              : in    std_logic;
+      c0_app_wdf_data        : in    std_logic_vector(511 downto 0);
+      c0_app_wdf_end         : in    std_logic;
+      c0_app_wdf_mask        : in    std_logic_vector(63 downto 0);
+      c0_app_wdf_wren        : in    std_logic;
+      c0_app_rd_data         : out   std_logic_vector(511 downto 0);
+      c0_app_rd_data_end     : out   std_logic;
+      c0_app_rd_data_valid   : out   std_logic;
+      c0_app_rdy             : out   std_logic;
+      c0_app_wdf_rdy         : out   std_logic;
+      c0_app_sr_req          : in    std_logic;
+      c0_app_ref_req         : in    std_logic;
+      c0_app_zq_req          : in    std_logic;
+      c0_app_sr_active       : out   std_logic;
+      c0_app_ref_ack         : out   std_logic;
+      c0_app_zq_ack          : out   std_logic;
+      c0_sys_clk_p           : in    std_logic;
+      c0_sys_clk_n           : in    std_logic;
+      c1_app_addr            : in    std_logic_vector(28 downto 0);
+      c1_app_cmd             : in    std_logic_vector(2 downto 0);
+      c1_app_en              : in    std_logic;
+      c1_app_wdf_data        : in    std_logic_vector(511 downto 0);
+      c1_app_wdf_end         : in    std_logic;
+      c1_app_wdf_mask        : in    std_logic_vector(63 downto 0);
+      c1_app_wdf_wren        : in    std_logic;
+      c1_app_rd_data         : out   std_logic_vector(511 downto 0);
+      c1_app_rd_data_end     : out   std_logic;
+      c1_app_rd_data_valid   : out   std_logic;
+      c1_app_rdy             : out   std_logic;
+      c1_app_wdf_rdy         : out   std_logic;
+      c1_app_sr_req          : in    std_logic;
+      c1_app_ref_req         : in    std_logic;
+      c1_app_zq_req          : in    std_logic;
+      c1_app_sr_active       : out   std_logic;
+      c1_app_ref_ack         : out   std_logic;
+      c1_app_zq_ack          : out   std_logic;
+      c1_sys_clk_p           : in    std_logic;
+      c1_sys_clk_n           : in    std_logic;
+      c2_app_addr            : in    std_logic_vector(28 downto 0);
+      c2_app_cmd             : in    std_logic_vector(2 downto 0);
+      c2_app_en              : in    std_logic;
+      c2_app_wdf_data        : in    std_logic_vector(511 downto 0);
+      c2_app_wdf_end         : in    std_logic;
+      c2_app_wdf_mask        : in    std_logic_vector(63 downto 0);
+      c2_app_wdf_wren        : in    std_logic;
+      c2_app_rd_data         : out   std_logic_vector(511 downto 0);
+      c2_app_rd_data_end     : out   std_logic;
+      c2_app_rd_data_valid   : out   std_logic;
+      c2_app_rdy             : out   std_logic;
+      c2_app_wdf_rdy         : out   std_logic;
+      c2_app_sr_req          : in    std_logic;
+      c2_app_ref_req         : in    std_logic;
+      c2_app_zq_req          : in    std_logic;
+      c2_app_sr_active       : out   std_logic;
+      c2_app_ref_ack         : out   std_logic;
+      c2_app_zq_ack          : out   std_logic;
+      c2_sys_clk_p           : in    std_logic;
+      c2_sys_clk_n           : in    std_logic;
+      c3_app_addr            : in    std_logic_vector(28 downto 0);
+      c3_app_cmd             : in    std_logic_vector(2 downto 0);
+      c3_app_en              : in    std_logic;
+      c3_app_wdf_data        : in    std_logic_vector(511 downto 0);
+      c3_app_wdf_end         : in    std_logic;
+      c3_app_wdf_mask        : in    std_logic_vector(63 downto 0);
+      c3_app_wdf_wren        : in    std_logic;
+      c3_app_rd_data         : out   std_logic_vector(511 downto 0);
+      c3_app_rd_data_end     : out   std_logic;
+      c3_app_rd_data_valid   : out   std_logic;
+      c3_app_rdy             : out   std_logic;
+      c3_app_wdf_rdy         : out   std_logic;
+      c3_app_sr_req          : in    std_logic;
+      c3_app_ref_req         : in    std_logic;
+      c3_app_zq_req          : in    std_logic;
+      c3_app_sr_active       : out   std_logic;
+      c3_app_ref_ack         : out   std_logic;
+      c3_app_zq_ack          : out   std_logic;
+      c3_sys_clk_p           : in    std_logic;
+      c3_sys_clk_n           : in    std_logic;
+      clk_ref_p              : in    std_logic;  -- 200 MHz clock
+      clk_ref_n              : in    std_logic;  -- 200 MHz clock
+      c0_ui_clk              : out   std_logic;
+      c0_ui_clk_sync_rst     : out   std_logic;
+      c0_init_calib_complete : out   std_logic;
+      c0_device_temp         : out   std_logic_vector(11 downto 0);
+      c1_ui_clk              : out   std_logic;
+      c1_ui_clk_sync_rst     : out   std_logic;
+      c1_init_calib_complete : out   std_logic;
+      c1_device_temp         : out   std_logic_vector(11 downto 0);
+      c2_ui_clk              : out   std_logic;
+      c2_ui_clk_sync_rst     : out   std_logic;
+      c2_init_calib_complete : out   std_logic;
+      c2_device_temp         : out   std_logic_vector(11 downto 0);
+      c3_ui_clk              : out   std_logic;
+      c3_ui_clk_sync_rst     : out   std_logic;
+      c3_init_calib_complete : out   std_logic;
+      c3_device_temp         : out   std_logic_vector(11 downto 0);
+      sys_rst                : in    std_logic
+      );
+  end component mig;
 
   function set_ddr_index (
     constant n : integer range 0 to 3)
@@ -245,7 +409,7 @@ architecture rtl of fpga_proxy_top is
   signal sys_rst  : std_logic_vector(0 to MAX_NMEM_TILES - 1);
 
   -- Resets
-  signal rstn, rstraw, rstraw_1, rstraw_2, rstraw_3 : std_ulogic;
+  signal rstn, rstraw : std_ulogic;
   signal lock, rst                                  : std_ulogic;
   signal migrstn, migrstn_1, migrstn_2, migrstn_3   : std_logic;
 
@@ -256,6 +420,56 @@ architecture rtl of fpga_proxy_top is
 
   -----------------------------------------------------------------------------
   -- DDRs domain
+  -- MIG app
+  signal c0_app_addr          : std_logic_vector(28 downto 0);
+  signal c0_app_cmd           : std_logic_vector(2 downto 0);
+  signal c0_app_en            : std_ulogic;
+  signal c0_app_wdf_data      : std_logic_vector(511 downto 0);
+  signal c0_app_wdf_end       : std_ulogic;
+  signal c0_app_wdf_mask      : std_logic_vector(63 downto 0); 
+  signal c0_app_wdf_wren      : std_ulogic;
+  signal c0_app_rd_data       : std_logic_vector(511 downto 0);
+  signal c0_app_rd_data_end   : std_ulogic;
+  signal c0_app_rd_data_valid : std_ulogic;
+  signal c0_app_rdy           : std_ulogic;
+  signal c0_app_wdf_rdy       : std_ulogic;
+  signal c1_app_addr          : std_logic_vector(28 downto 0);
+  signal c1_app_cmd           : std_logic_vector(2 downto 0);
+  signal c1_app_en            : std_ulogic;
+  signal c1_app_wdf_data      : std_logic_vector(511 downto 0);
+  signal c1_app_wdf_end       : std_ulogic;
+  signal c1_app_wdf_mask      : std_logic_vector(63 downto 0); 
+  signal c1_app_wdf_wren      : std_ulogic;
+  signal c1_app_rd_data       : std_logic_vector(511 downto 0);
+  signal c1_app_rd_data_end   : std_ulogic;
+  signal c1_app_rd_data_valid : std_ulogic;
+  signal c1_app_rdy           : std_ulogic;
+  signal c1_app_wdf_rdy       : std_ulogic;
+  signal c2_app_addr          : std_logic_vector(28 downto 0);
+  signal c2_app_cmd           : std_logic_vector(2 downto 0);
+  signal c2_app_en            : std_ulogic;
+  signal c2_app_wdf_data      : std_logic_vector(511 downto 0);
+  signal c2_app_wdf_end       : std_ulogic;
+  signal c2_app_wdf_mask      : std_logic_vector(63 downto 0); 
+  signal c2_app_wdf_wren      : std_ulogic;
+  signal c2_app_rd_data       : std_logic_vector(511 downto 0);
+  signal c2_app_rd_data_end   : std_ulogic;
+  signal c2_app_rd_data_valid : std_ulogic;
+  signal c2_app_rdy           : std_ulogic;
+  signal c2_app_wdf_rdy       : std_ulogic;
+  signal c3_app_addr          : std_logic_vector(28 downto 0);
+  signal c3_app_cmd           : std_logic_vector(2 downto 0);
+  signal c3_app_en            : std_ulogic;
+  signal c3_app_wdf_data      : std_logic_vector(511 downto 0);
+  signal c3_app_wdf_end       : std_ulogic;
+  signal c3_app_wdf_mask      : std_logic_vector(63 downto 0); 
+  signal c3_app_wdf_wren      : std_ulogic;
+  signal c3_app_rd_data       : std_logic_vector(511 downto 0);
+  signal c3_app_rd_data_end   : std_ulogic;
+  signal c3_app_rd_data_valid : std_ulogic;
+  signal c3_app_rdy           : std_ulogic;
+  signal c3_app_wdf_rdy       : std_ulogic;
+
   -- MIG clock and diagnostic
   signal c0_calib_done        : std_ulogic;
   signal c0_diagnostic_count  : std_logic_vector(26 downto 0);
@@ -470,13 +684,13 @@ begin  -- architecture rtl
     port map (rst, sys_clk(0), lock, migrstn, rstraw);
   mig_rst1 : rstgen                     -- reset generator
     generic map (acthigh => 1)
-    port map (rst, sys_clk(1), lock, migrstn_1, rstraw_1);
+    port map (rst, sys_clk(1), lock, migrstn_1, open);
   mig_rst2 : rstgen                     -- reset generator
     generic map (acthigh => 1)
-    port map (rst, sys_clk(2), lock, migrstn_2, rstraw_2);
+    port map (rst, sys_clk(2), lock, migrstn_2, open);
   mig_rst3 : rstgen                     -- reset generator
     generic map (acthigh => 1)
-    port map (rst, sys_clk(3), lock, migrstn_3, rstraw_3);
+    port map (rst, sys_clk(3), lock, migrstn_3, open);
 
   main_clk_buf : ibufgds
     generic map(
@@ -489,135 +703,267 @@ begin  -- architecture rtl
       );
 
   ----------------------------------------------------------------------
-  ---  DDR4 memory controller
+  ---  DDR3 memory controller
 
   gen_mig : if (SIMULATION /= true) generate
-    ddrc0 : ahb2mig_ebddr4r5
+    ddrc0 : ahb2mig_7series_profpga
       generic map (
         hindex => 0,
         haddr  => ddr_haddr(this_ddr_index(0)),
         hmask  => ddr_hmask(this_ddr_index(0)))
-      port map (
-        c0_sys_clk_p     => c0_sys_clk_p,
-        c0_sys_clk_n     => c0_sys_clk_n,
-        c0_ddr4_act_n    => c0_ddr4_act_n,
-        c0_ddr4_adr      => c0_ddr4_adr,
-        c0_ddr4_ba       => c0_ddr4_ba,
-        c0_ddr4_bg       => c0_ddr4_bg,
-        c0_ddr4_cke      => c0_ddr4_cke,
-        c0_ddr4_odt      => c0_ddr4_odt,
-        c0_ddr4_cs_n     => c0_ddr4_cs_n,
-        c0_ddr4_ck_t     => c0_ddr4_ck_t,
-        c0_ddr4_ck_c     => c0_ddr4_ck_c,
-        c0_ddr4_reset_n  => c0_ddr4_reset_n,
-        c0_ddr4_dm_dbi_n => c0_ddr4_dm_dbi_n,
-        c0_ddr4_dq       => c0_ddr4_dq,
-        c0_ddr4_dqs_c    => c0_ddr4_dqs_c,
-        c0_ddr4_dqs_t    => c0_ddr4_dqs_t,
-        ahbso            => ddr_ahbso(0),
-        ahbsi            => ddr_ahbsi(0),
-        calib_done       => c0_calib_done,
-        rst_n_syn        => migrstn,
-        rst_n_async      => rstraw,
-        clk_amba         => sys_clk(0),
-        ui_clk           => sys_clk(0),
-        ui_clk_sync_rst  => sys_rst(0)
+      port map(
+        app_addr          => c0_app_addr,
+        app_cmd           => c0_app_cmd,
+        app_en            => c0_app_en,
+        app_wdf_data      => c0_app_wdf_data,
+        app_wdf_end       => c0_app_wdf_end,
+        app_wdf_mask      => c0_app_wdf_mask,
+        app_wdf_wren      => c0_app_wdf_wren,
+        app_rd_data       => c0_app_rd_data,
+        app_rd_data_end   => c0_app_rd_data_end,
+        app_rd_data_valid => c0_app_rd_data_valid,
+        app_rdy           => c0_app_rdy,
+        app_wdf_rdy       => c0_app_wdf_rdy,
+        ahbsi             => ddr_ahbsi(0),
+        ahbso             => ddr_ahbso(0),
+        rst_n_syn         => migrstn,
+        clk_amba          => sys_clk(0)
         );
 
-    ddrc1 : ahb2mig_ebddr4r5
+    ddrc1 : ahb2mig_7series_profpga
       generic map (
         hindex => 0,
         haddr  => ddr_haddr(this_ddr_index(1)),
         hmask  => ddr_hmask(this_ddr_index(1)))
-      port map (
-        c0_sys_clk_p     => c1_sys_clk_p,
-        c0_sys_clk_n     => c1_sys_clk_n,
-        c0_ddr4_act_n    => c1_ddr4_act_n,
-        c0_ddr4_adr      => c1_ddr4_adr,
-        c0_ddr4_ba       => c1_ddr4_ba,
-        c0_ddr4_bg       => c1_ddr4_bg,
-        c0_ddr4_cke      => c1_ddr4_cke,
-        c0_ddr4_odt      => c1_ddr4_odt,
-        c0_ddr4_cs_n     => c1_ddr4_cs_n,
-        c0_ddr4_ck_t     => c1_ddr4_ck_t,
-        c0_ddr4_ck_c     => c1_ddr4_ck_c,
-        c0_ddr4_reset_n  => c1_ddr4_reset_n,
-        c0_ddr4_dm_dbi_n => c1_ddr4_dm_dbi_n,
-        c0_ddr4_dq       => c1_ddr4_dq,
-        c0_ddr4_dqs_c    => c1_ddr4_dqs_c,
-        c0_ddr4_dqs_t    => c1_ddr4_dqs_t,
-        ahbso            => ddr_ahbso(1),
-        ahbsi            => ddr_ahbsi(1),
-        calib_done       => c1_calib_done,
-        rst_n_syn        => migrstn_1,
-        rst_n_async      => rstraw_1,
-        clk_amba         => sys_clk(1),
-        ui_clk           => sys_clk(1),
-        ui_clk_sync_rst  => sys_rst(1)
+      port map(
+        app_addr          => c1_app_addr,
+        app_cmd           => c1_app_cmd,
+        app_en            => c1_app_en,
+        app_wdf_data      => c1_app_wdf_data,
+        app_wdf_end       => c1_app_wdf_end,
+        app_wdf_mask      => c1_app_wdf_mask,
+        app_wdf_wren      => c1_app_wdf_wren,
+        app_rd_data       => c1_app_rd_data,
+        app_rd_data_end   => c1_app_rd_data_end,
+        app_rd_data_valid => c1_app_rd_data_valid,
+        app_rdy           => c1_app_rdy,
+        app_wdf_rdy       => c1_app_wdf_rdy,
+        ahbsi             => ddr_ahbsi(1),
+        ahbso             => ddr_ahbso(1),
+        rst_n_syn         => migrstn_1,
+        clk_amba          => sys_clk(1)
         );
 
-    ddrc2 : ahb2mig_ebddr4r5
+    ddrc2 : ahb2mig_7series_profpga
       generic map (
         hindex => 0,
         haddr  => ddr_haddr(this_ddr_index(2)),
         hmask  => ddr_hmask(this_ddr_index(2)))
-      port map (
-        c0_sys_clk_p     => c2_sys_clk_p,
-        c0_sys_clk_n     => c2_sys_clk_n,
-        c0_ddr4_act_n    => c2_ddr4_act_n,
-        c0_ddr4_adr      => c2_ddr4_adr,
-        c0_ddr4_ba       => c2_ddr4_ba,
-        c0_ddr4_bg       => c2_ddr4_bg,
-        c0_ddr4_cke      => c2_ddr4_cke,
-        c0_ddr4_odt      => c2_ddr4_odt,
-        c0_ddr4_cs_n     => c2_ddr4_cs_n,
-        c0_ddr4_ck_t     => c2_ddr4_ck_t,
-        c0_ddr4_ck_c     => c2_ddr4_ck_c,
-        c0_ddr4_reset_n  => c2_ddr4_reset_n,
-        c0_ddr4_dm_dbi_n => c2_ddr4_dm_dbi_n,
-        c0_ddr4_dq       => c2_ddr4_dq,
-        c0_ddr4_dqs_c    => c2_ddr4_dqs_c,
-        c0_ddr4_dqs_t    => c2_ddr4_dqs_t,
-        ahbso            => ddr_ahbso(2),
-        ahbsi            => ddr_ahbsi(2),
-        calib_done       => c2_calib_done,
-        rst_n_syn        => migrstn_2,
-        rst_n_async      => rstraw_2,
-        clk_amba         => sys_clk(2),
-        ui_clk           => sys_clk(2),
-        ui_clk_sync_rst  => sys_rst(2)
+      port map(
+        app_addr          => c2_app_addr,
+        app_cmd           => c2_app_cmd,
+        app_en            => c2_app_en,
+        app_wdf_data      => c2_app_wdf_data,
+        app_wdf_end       => c2_app_wdf_end,
+        app_wdf_mask      => c2_app_wdf_mask,
+        app_wdf_wren      => c2_app_wdf_wren,
+        app_rd_data       => c2_app_rd_data,
+        app_rd_data_end   => c2_app_rd_data_end,
+        app_rd_data_valid => c2_app_rd_data_valid,
+        app_rdy           => c2_app_rdy,
+        app_wdf_rdy       => c2_app_wdf_rdy,
+        ahbsi             => ddr_ahbsi(2),
+        ahbso             => ddr_ahbso(2),
+        rst_n_syn         => migrstn_2,
+        clk_amba          => sys_clk(2)
         );
 
-    ddrc3 : ahb2mig_ebddr4r5
+    ddrc3 : ahb2mig_7series_profpga
       generic map (
         hindex => 0,
         haddr  => ddr_haddr(this_ddr_index(3)),
         hmask  => ddr_hmask(this_ddr_index(3)))
+      port map(
+        app_addr          => c3_app_addr,
+        app_cmd           => c3_app_cmd,
+        app_en            => c3_app_en,
+        app_wdf_data      => c3_app_wdf_data,
+        app_wdf_end       => c3_app_wdf_end,
+        app_wdf_mask      => c3_app_wdf_mask,
+        app_wdf_wren      => c3_app_wdf_wren,
+        app_rd_data       => c3_app_rd_data,
+        app_rd_data_end   => c3_app_rd_data_end,
+        app_rd_data_valid => c3_app_rd_data_valid,
+        app_rdy           => c3_app_rdy,
+        app_wdf_rdy       => c3_app_wdf_rdy,
+        ahbsi             => ddr_ahbsi(3),
+        ahbso             => ddr_ahbso(3),
+        rst_n_syn         => migrstn_3,
+        clk_amba          => sys_clk(3)
+        );
+
+
+    MCB_quad_mig_inst : mig
       port map (
-        c0_sys_clk_p     => c3_sys_clk_p,
-        c0_sys_clk_n     => c3_sys_clk_n,
-        c0_ddr4_act_n    => c3_ddr4_act_n,
-        c0_ddr4_adr      => c3_ddr4_adr,
-        c0_ddr4_ba       => c3_ddr4_ba,
-        c0_ddr4_bg       => c3_ddr4_bg,
-        c0_ddr4_cke      => c3_ddr4_cke,
-        c0_ddr4_odt      => c3_ddr4_odt,
-        c0_ddr4_cs_n     => c3_ddr4_cs_n,
-        c0_ddr4_ck_t     => c3_ddr4_ck_t,
-        c0_ddr4_ck_c     => c3_ddr4_ck_c,
-        c0_ddr4_reset_n  => c3_ddr4_reset_n,
-        c0_ddr4_dm_dbi_n => c3_ddr4_dm_dbi_n,
-        c0_ddr4_dq       => c3_ddr4_dq,
-        c0_ddr4_dqs_c    => c3_ddr4_dqs_c,
-        c0_ddr4_dqs_t    => c3_ddr4_dqs_t,
-        ahbso            => ddr_ahbso(3),
-        ahbsi            => ddr_ahbsi(3),
-        calib_done       => c3_calib_done,
-        rst_n_syn        => migrstn_3,
-        rst_n_async      => rstraw_3,
-        clk_amba         => sys_clk(3),
-        ui_clk           => sys_clk(3),
-        ui_clk_sync_rst  => sys_rst(3)
+        c0_sys_clk_p            => c0_sys_clk_p,
+        c0_sys_clk_n            => c0_sys_clk_n,
+        c0_ddr3_dq              => c0_ddr3_dq,
+        c0_ddr3_dqs_p           => c0_ddr3_dqs_p,
+        c0_ddr3_dqs_n           => c0_ddr3_dqs_n,
+        c0_ddr3_addr            => c0_ddr3_addr,
+        c0_ddr3_ba              => c0_ddr3_ba,
+        c0_ddr3_ras_n           => c0_ddr3_ras_n,
+        c0_ddr3_cas_n           => c0_ddr3_cas_n,
+        c0_ddr3_we_n            => c0_ddr3_we_n,
+        c0_ddr3_reset_n         => c0_ddr3_reset_n,
+        c0_ddr3_ck_p            => c0_ddr3_ck_p,
+        c0_ddr3_ck_n            => c0_ddr3_ck_n,
+        c0_ddr3_cke             => c0_ddr3_cke,
+        c0_ddr3_cs_n            => c0_ddr3_cs_n,
+        c0_ddr3_dm              => c0_ddr3_dm,
+        c0_ddr3_odt             => c0_ddr3_odt,
+        c1_sys_clk_p            => c1_sys_clk_p,
+        c1_sys_clk_n            => c1_sys_clk_n,
+        c1_ddr3_dq              => c1_ddr3_dq,
+        c1_ddr3_dqs_p           => c1_ddr3_dqs_p,
+        c1_ddr3_dqs_n           => c1_ddr3_dqs_n,
+        c1_ddr3_addr            => c1_ddr3_addr,
+        c1_ddr3_ba              => c1_ddr3_ba,
+        c1_ddr3_ras_n           => c1_ddr3_ras_n,
+        c1_ddr3_cas_n           => c1_ddr3_cas_n,
+        c1_ddr3_we_n            => c1_ddr3_we_n,
+        c1_ddr3_reset_n         => c1_ddr3_reset_n,
+        c1_ddr3_ck_p            => c1_ddr3_ck_p,
+        c1_ddr3_ck_n            => c1_ddr3_ck_n,
+        c1_ddr3_cke             => c1_ddr3_cke,
+        c1_ddr3_cs_n            => c1_ddr3_cs_n,
+        c1_ddr3_dm              => c1_ddr3_dm,
+        c1_ddr3_odt             => c1_ddr3_odt,
+        c2_sys_clk_p            => c2_sys_clk_p,
+        c2_sys_clk_n            => c2_sys_clk_n,
+        c2_ddr3_dq              => c2_ddr3_dq,
+        c2_ddr3_dqs_p           => c2_ddr3_dqs_p,
+        c2_ddr3_dqs_n           => c2_ddr3_dqs_n,
+        c2_ddr3_addr            => c2_ddr3_addr,
+        c2_ddr3_ba              => c2_ddr3_ba,
+        c2_ddr3_ras_n           => c2_ddr3_ras_n,
+        c2_ddr3_cas_n           => c2_ddr3_cas_n,
+        c2_ddr3_we_n            => c2_ddr3_we_n,
+        c2_ddr3_reset_n         => c2_ddr3_reset_n,
+        c2_ddr3_ck_p            => c2_ddr3_ck_p,
+        c2_ddr3_ck_n            => c2_ddr3_ck_n,
+        c2_ddr3_cke             => c2_ddr3_cke,
+        c2_ddr3_cs_n            => c2_ddr3_cs_n,
+        c2_ddr3_dm              => c2_ddr3_dm,
+        c2_ddr3_odt             => c2_ddr3_odt,
+        c3_sys_clk_p            => c3_sys_clk_p,
+        c3_sys_clk_n            => c3_sys_clk_n,
+        c3_ddr3_dq              => c3_ddr3_dq,
+        c3_ddr3_dqs_p           => c3_ddr3_dqs_p,
+        c3_ddr3_dqs_n           => c3_ddr3_dqs_n,
+        c3_ddr3_addr            => c3_ddr3_addr,
+        c3_ddr3_ba              => c3_ddr3_ba,
+        c3_ddr3_ras_n           => c3_ddr3_ras_n,
+        c3_ddr3_cas_n           => c3_ddr3_cas_n,
+        c3_ddr3_we_n            => c3_ddr3_we_n,
+        c3_ddr3_reset_n         => c3_ddr3_reset_n,
+        c3_ddr3_ck_p            => c3_ddr3_ck_p,
+        c3_ddr3_ck_n            => c3_ddr3_ck_n,
+        c3_ddr3_cke             => c3_ddr3_cke,
+        c3_ddr3_cs_n            => c3_ddr3_cs_n,
+        c3_ddr3_dm              => c3_ddr3_dm,
+        c3_ddr3_odt             => c3_ddr3_odt,
+        clk_ref_p               => clk_ref_p,
+        clk_ref_n               => clk_ref_n,
+        c0_app_addr             => c0_app_addr,
+        c0_app_cmd              => c0_app_cmd,
+        c0_app_en               => c0_app_en,
+        c0_app_wdf_data         => c0_app_wdf_data,
+        c0_app_wdf_end          => c0_app_wdf_end,
+        c0_app_wdf_mask         => c0_app_wdf_mask,
+        c0_app_wdf_wren         => c0_app_wdf_wren,
+        c0_app_rd_data          => c0_app_rd_data,
+        c0_app_rd_data_end      => c0_app_rd_data_end,
+        c0_app_rd_data_valid    => c0_app_rd_data_valid,
+        c0_app_rdy              => c0_app_rdy,
+        c0_app_wdf_rdy          => c0_app_wdf_rdy,
+        c0_app_sr_req           => '0',
+        c0_app_ref_req          => '0',
+        c0_app_zq_req           => '0',
+        c0_app_sr_active        => open,
+        c0_app_ref_ack          => open,
+        c0_app_zq_ack           => open,
+        c0_ui_clk               => sys_clk(0),
+        c0_ui_clk_sync_rst      => sys_rst(0),
+        c0_init_calib_complete  => c0_calib_done,
+        c0_device_temp          => open,
+        c1_app_addr             => c1_app_addr,
+        c1_app_cmd              => c1_app_cmd,
+        c1_app_en               => c1_app_en,
+        c1_app_wdf_data         => c1_app_wdf_data,
+        c1_app_wdf_end          => c1_app_wdf_end,
+        c1_app_wdf_mask         => c1_app_wdf_mask,
+        c1_app_wdf_wren         => c1_app_wdf_wren,
+        c1_app_rd_data          => c1_app_rd_data,
+        c1_app_rd_data_end      => c1_app_rd_data_end,
+        c1_app_rd_data_valid    => c1_app_rd_data_valid,
+        c1_app_rdy              => c1_app_rdy,
+        c1_app_wdf_rdy          => c1_app_wdf_rdy,
+        c1_app_sr_req           => '0',
+        c1_app_ref_req          => '0',
+        c1_app_zq_req           => '0',
+        c1_app_sr_active        => open,
+        c1_app_ref_ack          => open,
+        c1_app_zq_ack           => open,
+        c1_ui_clk               => sys_clk(1),
+        c1_ui_clk_sync_rst      => sys_rst(1),
+        c1_init_calib_complete  => c1_calib_done,
+        c1_device_temp          => open,
+        c2_app_addr             => c2_app_addr,
+        c2_app_cmd              => c2_app_cmd,
+        c2_app_en               => c2_app_en,
+        c2_app_wdf_data         => c2_app_wdf_data,
+        c2_app_wdf_end          => c2_app_wdf_end,
+        c2_app_wdf_mask         => c2_app_wdf_mask,
+        c2_app_wdf_wren         => c2_app_wdf_wren,
+        c2_app_rd_data          => c2_app_rd_data,
+        c2_app_rd_data_end      => c2_app_rd_data_end,
+        c2_app_rd_data_valid    => c2_app_rd_data_valid,
+        c2_app_rdy              => c2_app_rdy,
+        c2_app_wdf_rdy          => c2_app_wdf_rdy,
+        c2_app_sr_req           => '0',
+        c2_app_ref_req          => '0',
+        c2_app_zq_req           => '0',
+        c2_app_sr_active        => open,
+        c2_app_ref_ack          => open,
+        c2_app_zq_ack           => open,
+        c2_ui_clk               => sys_clk(2),
+        c2_ui_clk_sync_rst      => sys_rst(2),
+        c2_init_calib_complete  => c2_calib_done,
+        c2_device_temp          => open,
+        c3_app_addr             => c3_app_addr,
+        c3_app_cmd              => c3_app_cmd,
+        c3_app_en               => c3_app_en,
+        c3_app_wdf_data         => c3_app_wdf_data,
+        c3_app_wdf_end          => c3_app_wdf_end,
+        c3_app_wdf_mask         => c3_app_wdf_mask,
+        c3_app_wdf_wren         => c3_app_wdf_wren,
+        c3_app_rd_data          => c3_app_rd_data,
+        c3_app_rd_data_end      => c3_app_rd_data_end,
+        c3_app_rd_data_valid    => c3_app_rd_data_valid,
+        c3_app_rdy              => c3_app_rdy,
+        c3_app_wdf_rdy          => c3_app_wdf_rdy,
+        c3_app_sr_req           => '0',
+        c3_app_ref_req          => '0',
+        c3_app_zq_req           => '0',
+        c3_app_sr_active        => open,
+        c3_app_ref_ack          => open,
+        c3_app_zq_ack           => open,
+        c3_ui_clk               => sys_clk(3),
+        c3_ui_clk_sync_rst      => sys_rst(3),
+        c3_init_calib_complete  => c3_calib_done,
+        c3_device_temp          => open,
+        sys_rst                 => rstraw
         );
 
   end generate gen_mig;
@@ -697,72 +1043,84 @@ begin  -- architecture rtl
         ahbso => ddr_ahbso(3)
         );
 
-    c0_ddr4_act_n    <= '1';
-    c0_ddr4_adr      <= (others => '0');
-    c0_ddr4_ba       <= (others => '0');
-    c0_ddr4_bg       <= (others => '0');
-    c0_ddr4_cke      <= (others => '0');
-    c0_ddr4_odt      <= (others => '0');
-    c0_ddr4_cs_n     <= (others => '0');
-    c0_ddr4_ck_t     <= (others => '0');
-    c0_ddr4_ck_c     <= (others => '0');
-    c0_ddr4_reset_n  <= '1';
-    c0_ddr4_dm_dbi_n <= (others => 'Z');
-    c0_ddr4_dq       <= (others => 'Z');
-    c0_ddr4_dqs_c    <= (others => 'Z');
-    c0_ddr4_dqs_t    <= (others => 'Z');
-    c0_calib_done    <= '1';
+    c0_ddr3_dq           <= (others => 'Z');
+    c0_ddr3_dqs_p        <= (others => 'Z');
+    c0_ddr3_dqs_n        <= (others => 'Z');
+    c0_ddr3_addr         <= (others => '0');
+    c0_ddr3_ba           <= (others => '0');
+    c0_ddr3_ras_n        <= '0';
+    c0_ddr3_cas_n        <= '0';
+    c0_ddr3_we_n         <= '0';
+    c0_ddr3_reset_n      <= '1';
+    c0_ddr3_ck_p         <= (others => '0');
+    c0_ddr3_ck_n         <= (others => '0');
+    c0_ddr3_cke          <= (others => '0');
+    c0_ddr3_cs_n         <= (others => '0');
+    c0_ddr3_dm           <= (others => '0');
+    c0_ddr3_odt          <= (others => '0');
+
+    c0_calib_done <= '1';
+
     sys_clk(0)       <= not sys_clk(0) after 3.2 ns;
 
-    c1_ddr4_act_n    <= '1';
-    c1_ddr4_adr      <= (others => '0');
-    c1_ddr4_ba       <= (others => '0');
-    c1_ddr4_bg       <= (others => '0');
-    c1_ddr4_cke      <= (others => '0');
-    c1_ddr4_odt      <= (others => '0');
-    c1_ddr4_cs_n     <= (others => '0');
-    c1_ddr4_ck_t     <= (others => '0');
-    c1_ddr4_ck_c     <= (others => '0');
-    c1_ddr4_reset_n  <= '1';
-    c1_ddr4_dm_dbi_n <= (others => 'Z');
-    c1_ddr4_dq       <= (others => 'Z');
-    c1_ddr4_dqs_c    <= (others => 'Z');
-    c1_ddr4_dqs_t    <= (others => 'Z');
-    c1_calib_done    <= '1';
+    c1_ddr3_dq           <= (others => 'Z');
+    c1_ddr3_dqs_p        <= (others => 'Z');
+    c1_ddr3_dqs_n        <= (others => 'Z');
+    c1_ddr3_addr         <= (others => '0');
+    c1_ddr3_ba           <= (others => '0');
+    c1_ddr3_ras_n        <= '0';
+    c1_ddr3_cas_n        <= '0';
+    c1_ddr3_we_n         <= '0';
+    c1_ddr3_reset_n      <= '1';
+    c1_ddr3_ck_p         <= (others => '0');
+    c1_ddr3_ck_n         <= (others => '0');
+    c1_ddr3_cke          <= (others => '0');
+    c1_ddr3_cs_n         <= (others => '0');
+    c1_ddr3_dm           <= (others => '0');
+    c1_ddr3_odt          <= (others => '0');
+
+    c1_calib_done <= '1';
+
     sys_clk(1)       <= not sys_clk(1) after 3.2 ns;
 
-    c2_ddr4_act_n    <= '1';
-    c2_ddr4_adr      <= (others => '0');
-    c2_ddr4_ba       <= (others => '0');
-    c2_ddr4_bg       <= (others => '0');
-    c2_ddr4_cke      <= (others => '0');
-    c2_ddr4_odt      <= (others => '0');
-    c2_ddr4_cs_n     <= (others => '0');
-    c2_ddr4_ck_t     <= (others => '0');
-    c2_ddr4_ck_c     <= (others => '0');
-    c2_ddr4_reset_n  <= '1';
-    c2_ddr4_dm_dbi_n <= (others => 'Z');
-    c2_ddr4_dq       <= (others => 'Z');
-    c2_ddr4_dqs_c    <= (others => 'Z');
-    c2_ddr4_dqs_t    <= (others => 'Z');
-    c2_calib_done    <= '1';
+    c2_ddr3_dq           <= (others => 'Z');
+    c2_ddr3_dqs_p        <= (others => 'Z');
+    c2_ddr3_dqs_n        <= (others => 'Z');
+    c2_ddr3_addr         <= (others => '0');
+    c2_ddr3_ba           <= (others => '0');
+    c2_ddr3_ras_n        <= '0';
+    c2_ddr3_cas_n        <= '0';
+    c2_ddr3_we_n         <= '0';
+    c2_ddr3_reset_n      <= '1';
+    c2_ddr3_ck_p         <= (others => '0');
+    c2_ddr3_ck_n         <= (others => '0');
+    c2_ddr3_cke          <= (others => '0');
+    c2_ddr3_cs_n         <= (others => '0');
+    c2_ddr3_dm           <= (others => '0');
+    c2_ddr3_odt          <= (others => '0');
+
+    c2_calib_done <= '1';
+
     sys_clk(2)       <= not sys_clk(2) after 3.2 ns;
 
-    c3_ddr4_act_n    <= '1';
-    c3_ddr4_adr      <= (others => '0');
-    c3_ddr4_ba       <= (others => '0');
-    c3_ddr4_bg       <= (others => '0');
-    c3_ddr4_cke      <= (others => '0');
-    c3_ddr4_odt      <= (others => '0');
-    c3_ddr4_cs_n     <= (others => '0');
-    c3_ddr4_ck_t     <= (others => '0');
-    c3_ddr4_ck_c     <= (others => '0');
-    c3_ddr4_reset_n  <= '1';
-    c3_ddr4_dm_dbi_n <= (others => 'Z');
-    c3_ddr4_dq       <= (others => 'Z');
-    c3_ddr4_dqs_c    <= (others => 'Z');
-    c3_ddr4_dqs_t    <= (others => 'Z');
-    c3_calib_done    <= '1';
+    c3_ddr3_dq           <= (others => 'Z');
+    c3_ddr3_dqs_p        <= (others => 'Z');
+    c3_ddr3_dqs_n        <= (others => 'Z');
+    c3_ddr3_addr         <= (others => '0');
+    c3_ddr3_ba           <= (others => '0');
+    c3_ddr3_ras_n        <= '0';
+    c3_ddr3_cas_n        <= '0';
+    c3_ddr3_we_n         <= '0';
+    c3_ddr3_reset_n      <= '1';
+    c3_ddr3_ck_p         <= (others => '0');
+    c3_ddr3_ck_n         <= (others => '0');
+    c3_ddr3_cke          <= (others => '0');
+    c3_ddr3_cs_n         <= (others => '0');
+    c3_ddr3_dm           <= (others => '0');
+    c3_ddr3_odt          <= (others => '0');
+
+    c3_calib_done <= '1';
+
     sys_clk(3)       <= not sys_clk(3) after 3.2 ns;
 
   -- pragma translate_on
