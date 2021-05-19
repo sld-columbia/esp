@@ -8,6 +8,7 @@ XDC  += $(ESP_ROOT)/constraints/$(BOARD)/$(BOARD)-mig-pins.xdc
 XDC  += $(ESP_ROOT)/constraints/$(BOARD)/$(BOARD)-mig-constraints.xdc
 ifneq ($(findstring profpga, $(BOARD)),)
 XDC  += $(ESP_ROOT)/constraints/$(BOARD)/$(BOARD)-mmi64.xdc
+XDC  += $(ESP_ROOT)/constraints/$(BOARD)/$(BOARD)-cable-pins.xdc
 endif
 XDC  += $(ESP_ROOT)/constraints/$(BOARD)/$(BOARD)-eth-pins.xdc
 XDC  += $(ESP_ROOT)/constraints/$(BOARD)/$(BOARD)-dvi-pins.xdc
@@ -61,7 +62,7 @@ endif
 	done;
 
 
-vivado/setup.tcl: vivado $(XDC) $(BOARD_FILES)
+vivado/setup.tcl: vivado $(BOARD_FILES)
 	$(QUIET_INFO)echo "generating project script for Vivado"
 	@$(RM) $@
 	@echo "create_project $(DESIGN) -part ${DEVICE} -force" > $@
@@ -121,14 +122,14 @@ ifeq ($(CONFIG_GRETH_ENABLE),y)
 		cp $(ESP_ROOT)/constraints/$(BOARD)/sgmii.xci ./vivado/sgmii; \
 		echo "set_property target_language verilog [current_project]" >> $@; \
 		echo "import_ip -files ./sgmii/sgmii.xci" >> $@; \
-		echo "generate_target  all [get_ips sgmii] -force " >> $@; \
+		echo "generate_target  all [get_ips sgmii] -force" >> $@; \
 	elif test -r $(ESP_ROOT)/constraints/$(BOARD)/sgmii.tcl; then \
 		echo $(SPACES)"INFO including SGMII IP"; \
 		mkdir -p vivado/sgmii; \
 		cp $(ESP_ROOT)/constraints/$(BOARD)/sgmii.tcl ./vivado/sgmii; \
 		echo "set_property target_language verilog [current_project]" >> $@; \
 		echo "source ./sgmii/sgmii.tcl" >> $@; \
-		echo "generate_target  all [get_ips sgmii] -force " >> $@; \
+		echo "generate_target  all [get_ips sgmii] -force" >> $@; \
 	else \
 		echo $(SPACES)"WARNING: no SGMII IP was found"; \
 	fi;
@@ -143,9 +144,11 @@ endif
 	echo "set_property strategy Congestion_SpreadLogic_high [get_runs impl_1]" >> $@; \
 	fi;
 	@for i in $(XDC); do \
-	  echo "read_xdc $$i" >> $@; \
-	  echo "set_property used_in_synthesis true [get_files $$i]" >> $@; \
-	  echo "set_property used_in_implementation true [get_files $$i]" >> $@; \
+	  if test -e $$i; then \
+	    echo "read_xdc $$i" >> $@; \
+	    echo "set_property used_in_synthesis true [get_files $$i]" >> $@; \
+	    echo "set_property used_in_implementation true [get_files $$i]" >> $@; \
+          fi; \
 	done;
 	@echo "set_property top $(TOP) [current_fileset]" >> $@
 
