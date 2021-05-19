@@ -53,8 +53,6 @@ entity tile_acc is
     tdo                : out std_logic;
     tms                : in  std_logic;
     tclk               : in  std_logic;
-    -- Pads configuration
-    pad_cfg            : out std_logic_vector(ESP_CSR_PAD_CFG_MSB - ESP_CSR_PAD_CFG_LSB downto 0);
     -- NOC
     sys_clk_int        : in  std_logic;
     noc1_data_n_in     : in  noc_flit_type;
@@ -160,9 +158,9 @@ architecture rtl of tile_acc is
   signal dco_fc_sel   : std_logic_vector(5 downto 0);
   signal dco_div_sel  : std_logic_vector(2 downto 0);
   signal dco_freq_sel : std_logic_vector(1 downto 0);
-  
+
   signal acc_dvfs_transient   : std_ulogic := '0';
-  
+
   -- Test interface / bypass
   signal test1_output_port   : noc_flit_type;
   signal test1_data_void_out : std_ulogic;
@@ -256,7 +254,6 @@ architecture rtl of tile_acc is
   signal interrupt_ack_rdreq_acc    : std_ulogic;
   signal interrupt_ack_data_out     : misc_noc_flit_type;
   signal interrupt_ack_empty        : std_ulogic;
-  signal interrupt_ack_empty_acc    : std_ulogic;
   signal apb_snd_wrreq              : std_ulogic;
   signal apb_snd_data_in            : misc_noc_flit_type;
   signal apb_snd_full               : std_ulogic;
@@ -393,7 +390,7 @@ architecture rtl of tile_acc is
   attribute keep of apb_rcv_rdreq              : signal is "true";
   attribute keep of apb_rcv_data_out           : signal is "true";
   attribute keep of apb_rcv_empty              : signal is "true";
-  
+
   attribute keep of noc1_acc_stop_in       : signal is "true";
   attribute keep of noc1_acc_stop_out      : signal is "true";
   attribute keep of noc1_acc_data_void_in  : signal is "true";
@@ -669,7 +666,6 @@ begin
   -- Tile parameters
   -----------------------------------------------------------------------------
   tile_id          <= to_integer(unsigned(tile_config(ESP_CSR_TILE_ID_MSB downto ESP_CSR_TILE_ID_LSB)));
-  pad_cfg          <= tile_config(ESP_CSR_PAD_CFG_MSB downto ESP_CSR_PAD_CFG_LSB);
 
   this_pindex      <= tile_apb_idx(tile_id);
   this_paddr       <= tile_apb_paddr(tile_id);
@@ -841,42 +837,42 @@ begin
     tech           => CFG_FABTECH,
     mem_num        => CFG_NMEM_TILE + CFG_NSLM_TILE + CFG_SVGA_ENABLE,
     cacheable_mem_num => CFG_NMEM_TILE,
-    mem_info       => tile_acc_mem_list,                                                                                               
-    io_y           => io_y,                                                                                                            
-    io_x           => io_x,                                                                                                            
+    mem_info       => tile_acc_mem_list,
+    io_y           => io_y,
+    io_x           => io_x,
     pindex         => 1,
     irq_type       => this_irq_type,
-    scatter_gather => this_scatter_gather,                                                                                             
-    sets           => CFG_ACC_L2_SETS,                                                                                                 
-    ways           => CFG_ACC_L2_WAYS,                                                                                                 
-    cache_tile_id  => cache_tile_id,                                                                                                   
-    cache_y        => cache_y,                                                                                                         
+    scatter_gather => this_scatter_gather,
+    sets           => CFG_ACC_L2_SETS,
+    ways           => CFG_ACC_L2_WAYS,
+    cache_tile_id  => cache_tile_id,
+    cache_y        => cache_y,
     cache_x        => cache_x,
     has_l2         => this_has_l2,
-    has_dvfs       => this_has_dvfs,                                                                                                   
+    has_dvfs       => this_has_dvfs,
     has_pll        => this_has_pll,
-    extra_clk_buf  => this_extra_clk_buf) 
-    port map (        
+    extra_clk_buf  => this_extra_clk_buf)
+    port map (
         rst               => rst,
-        clk               => clk_feedthru,                                                                                                 
+        clk               => clk_feedthru,
         local_y           => this_local_y,
         local_x           => this_local_x,
         paddr             => this_paddr,
         pmask             => this_pmask,
-        paddr_ext         => this_paddr_ext,  
-        pmask_ext         => this_pmask_ext,                                                                                               
-        pirq              => this_pirq,   
+        paddr_ext         => this_paddr_ext,
+        pmask_ext         => this_pmask_ext,
+        pirq              => this_pirq,
         apbi              => apbi,
         apbo              => apbo(1),
         pready            => pready,
         coherence_req_wrreq        => coherence_req_wrreq_acc,
-        coherence_req_data_in      => coherence_req_data_in, 
+        coherence_req_data_in      => coherence_req_data_in,
         coherence_req_full         => coherence_req_full,
         coherent_dma_rcv_rdreq     => coherent_dma_rcv_rdreq,
         coherent_dma_rcv_data_out  => coherent_dma_rcv_data_out,
-        coherent_dma_rcv_empty     => coherent_dma_rcv_empty, 
+        coherent_dma_rcv_empty     => coherent_dma_rcv_empty,
         coherence_fwd_rdreq        => coherence_fwd_rdreq_acc,
-        coherence_fwd_data_out     => coherence_fwd_data_out, 
+        coherence_fwd_data_out     => coherence_fwd_data_out,
         coherence_fwd_empty        => coherence_fwd_empty,
         coherent_dma_snd_wrreq     => coherent_dma_snd_wrreq_acc,
         coherent_dma_snd_data_in   => coherent_dma_snd_data_in,
@@ -886,19 +882,19 @@ begin
         coherence_rsp_rcv_empty    => coherence_rsp_rcv_empty,
         coherence_rsp_snd_wrreq    => coherence_rsp_snd_wrreq_acc,
         coherence_rsp_snd_data_in  => coherence_rsp_snd_data_in,
-        coherence_rsp_snd_full     => coherence_rsp_snd_full, 
+        coherence_rsp_snd_full     => coherence_rsp_snd_full,
         dma_rcv_rdreq     => dma_rcv_rdreq_acc,
         dma_rcv_data_out  => dma_rcv_data_out,
-        dma_rcv_empty     => dma_rcv_empty,     
+        dma_rcv_empty     => dma_rcv_empty,
         dma_snd_wrreq     => dma_snd_wrreq_acc,
-        dma_snd_data_in   => dma_snd_data_in,                                                                                              
+        dma_snd_data_in   => dma_snd_data_in,
         dma_snd_full      => dma_snd_full,
         interrupt_wrreq   => interrupt_wrreq_acc,
-        interrupt_data_in => interrupt_data_in,                                                                                            
+        interrupt_data_in => interrupt_data_in,
         interrupt_full    => interrupt_full,
         interrupt_ack_rdreq    => interrupt_ack_rdreq_acc,
-        interrupt_ack_data_out => interrupt_ack_data_out,                                                                                  
-        interrupt_ack_empty    => interrupt_ack_empty_acc,                                                                                     
+        interrupt_ack_data_out => interrupt_ack_data_out,
+        interrupt_ack_empty    => interrupt_ack_empty,
         mon_dvfs_in       => mon_dvfs_in,
         dvfs_transient_in   => acc_dvfs_transient,
         -- Monitor signals
@@ -906,7 +902,7 @@ begin
         mon_cache         => mon_cache_int
         --mon_dvfs          => mon_dvfs_int
   );
-  
+
   -- loopbback pllclk with refclk
   pllclk <= refclk;
 
@@ -923,8 +919,7 @@ begin
       dma_snd_wrreq              <= '0';
       interrupt_wrreq            <= '0';
       interrupt_ack_rdreq        <= '0';
-      interrupt_ack_empty        <= '0';
-    else 
+    else
       coherence_req_wrreq        <= coherence_req_wrreq_acc;
       coherence_fwd_rdreq        <= coherence_fwd_rdreq_acc;
       coherent_dma_snd_wrreq     <= coherent_dma_snd_wrreq_acc;
@@ -934,11 +929,10 @@ begin
       dma_snd_wrreq              <= dma_snd_wrreq_acc;
       interrupt_wrreq            <= interrupt_wrreq_acc;
       interrupt_ack_rdreq        <= interrupt_ack_rdreq_acc;
-      interrupt_ack_empty        <= interrupt_ack_empty_acc;
     end if;
   end process decoupler_gen;
 
-      -- CSR map for decoupler 
+      -- CSR map for decoupler
       decouple_acc <= tile_config(0);
 
   -- Using only one apbo signal

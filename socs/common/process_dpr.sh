@@ -641,12 +641,12 @@ elif [ $4 == "test" ]; then
 #    extract_acc_old $1 $2 $3
 #    diff_accelerators $1 $2 $3 
     initialize_acc_tiles $1 $2 $3
-    add_acc_prj_file $1 $2 $3
+#    add_acc_prj_file $1 $2 $3
 #    gen_synth_script $1 $2 $3 $4
     #gen_fplan $1 $2 $3;
 #    echo " regenarate before parse is $regenerate_fplan";
-#    parse_synth_report $1 $2 $3 $4
-#    gen_floorplan $1 $2 $3 $4;
+    parse_synth_report $1 $2 $3 $4
+    gen_floorplan $1 $2 $3 $4;
 #    acc_fplan $1 $2 $3 $4;
     #echo " regenarate after parse is $regenerate_fplan";
     #gen_floorplan $1 $2 $3 $4

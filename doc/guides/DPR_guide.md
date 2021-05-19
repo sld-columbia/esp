@@ -122,7 +122,7 @@ accelerator. All the other tiles in the design remain unchanged.
    ```
 
 3. Replace the initialization of the inbuff and outbuff_gold in
-   accelerators/vivado_hls/mac/tb/tb.cc with the following code
+   accelerators/vivado_hls/fir/tb/tb.cc with the following code
    ```c
    //FIR window size
    const unsigned N = 10;
