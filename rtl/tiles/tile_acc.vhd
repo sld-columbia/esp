@@ -256,7 +256,6 @@ architecture rtl of tile_acc is
   signal interrupt_ack_rdreq_acc    : std_ulogic;
   signal interrupt_ack_data_out     : misc_noc_flit_type;
   signal interrupt_ack_empty        : std_ulogic;
-  signal interrupt_ack_empty_acc    : std_ulogic;
   signal apb_snd_wrreq              : std_ulogic;
   signal apb_snd_data_in            : misc_noc_flit_type;
   signal apb_snd_full               : std_ulogic;
@@ -898,7 +897,7 @@ begin
         interrupt_full    => interrupt_full,
         interrupt_ack_rdreq    => interrupt_ack_rdreq_acc,
         interrupt_ack_data_out => interrupt_ack_data_out,                                                                                  
-        interrupt_ack_empty    => interrupt_ack_empty_acc,                                                                                     
+        interrupt_ack_empty    => interrupt_ack_empty,                                                                                     
         mon_dvfs_in       => mon_dvfs_in,
         dvfs_transient_in   => acc_dvfs_transient,
         -- Monitor signals
@@ -923,7 +922,6 @@ begin
       dma_snd_wrreq              <= '0';
       interrupt_wrreq            <= '0';
       interrupt_ack_rdreq        <= '0';
-      interrupt_ack_empty        <= '0';
     else 
       coherence_req_wrreq        <= coherence_req_wrreq_acc;
       coherence_fwd_rdreq        <= coherence_fwd_rdreq_acc;
@@ -934,7 +932,6 @@ begin
       dma_snd_wrreq              <= dma_snd_wrreq_acc;
       interrupt_wrreq            <= interrupt_wrreq_acc;
       interrupt_ack_rdreq        <= interrupt_ack_rdreq_acc;
-      interrupt_ack_empty        <= interrupt_ack_empty_acc;
     end if;
   end process decoupler_gen;
 

@@ -105,7 +105,8 @@ use std.textio.all;
     --Monitor signals
     mon_acc           : out monitor_acc_type;
     mon_cache         : out monitor_cache_type;
-    mon_dvfs          : out monitor_dvfs_type
+    mon_dvfs          : out monitor_dvfs_type;
+    dvfs_transient_acc    : in std_ulogic
     );
 
 end;

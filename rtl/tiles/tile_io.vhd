@@ -1479,6 +1479,7 @@ begin
       penable           => noc_apbi.penable,
       psel              => noc_apbi.psel(127),
       pwdata            => noc_apbi.pwdata,
+      pwrite            => noc_apbi.pwrite,
       prdata            => noc_apbo(127).prdata,
       pready            => prc_pready,                 
       pslverr           => open,                  -- temporary assignement
@@ -1503,7 +1504,7 @@ begin
   -- tie off the other apbo signals
   noc_apbo(127).pirq <= (others => '0');
   noc_apbo(127).pconfig <= fixed_apbo_pconfig(127);
-  noc_apbo(127).pindex <= 127;
+  --noc_apbo(127).pindex <= 127;
 
   -----------------------------------------------------------------------------
   -- APB 13: DVI
@@ -1889,8 +1890,8 @@ begin
       vsm_VS_0_rm_decouple      => vsm_VS_0_rm_decouple,
       vsm_VS_0_rm_reset         => vsm_VS_0_rm_reset,
       vsm_VS_0_event_error      => vsm_VS_0_event_error,
-      vsm_VS_0_sw_shutdown_req  => vsm_VS_0_sw_shutdown_req,
-      vsm_VS_0_sw_startup_req   => vsm_VS_0_sw_startup_req,
+      --vsm_VS_0_sw_shutdown_req  => vsm_VS_0_sw_shutdown_req,
+      --vsm_VS_0_sw_startup_req   => vsm_VS_0_sw_startup_req,
       --icap_avail                => 1; --icap_avail,
       --icap_prdone               => open; --icap_prdone,
       --icap_prerror              => 0; --icap_prerror,
@@ -1914,7 +1915,7 @@ begin
     prc_pready <= s_axil_rvalid;
 
   -- ICAPE3 instance
-  icap2_inst_1: icap2_inst
+  icap3_inst_1: icap3_inst
     port map (
       icap_clk      => icap_clk,
       icap_csib     => icap_csib,
@@ -1924,6 +1925,18 @@ begin
       icap_avail    => icap_avail,
       icap_prdone   => icap_prdone,
       icap_prerror  => icap_prerror);
+
+--   icap3_inst : ICAPE3
+--   port map (
+--      AVAIL => icap_avail,
+--      O     => icap_o,
+  --    PRDONE => icap_prdone, 
+    --  PRERROR => icap_prerror,
+     -- CLK  => icap_clk,      
+     -- CSIB => icap_csib,    
+     -- I => icap_i,    
+      --RDWRB => icap_rdwrb     
+   --);
 
   axi2noc_1: axislv2noc
     generic map (
