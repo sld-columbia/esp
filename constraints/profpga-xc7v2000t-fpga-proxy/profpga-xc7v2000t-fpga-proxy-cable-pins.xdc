@@ -1,5 +1,5 @@
-# pins which are connected to motherboard connector TC1 
-# and connector BA2 on x-board IC-PDS-CABLE-R1 
+# pins which are connected to motherboard connector TC1
+# and connector BA2 on x-board IC-PDS-CABLE-R1
 set_property  PACKAGE_PIN J40 [get_ports {fpga_data[128]}] #mb1_TC1_CLKIO_N_0_mb1_TA3_CLKIO_N_7
 set_property  PACKAGE_PIN L42 [get_ports {fpga_credit_out[2]}] #mb1_TC1_CLKIO_N_1_mb1_TA3_CLKIO_N_6
 set_property  PACKAGE_PIN C39 [get_ports {fpga_credit_out[3]}] #mb1_TC1_CLKIO_N_2_mb1_TA3_CLKIO_N_4
@@ -141,8 +141,8 @@ set_property  PACKAGE_PIN M36 [get_ports {fpga_data[251]}] # mb1_TC1_IO_127_P_63
 set_property  PACKAGE_PIN N34 [get_ports {fpga_data[246]}] # mb1_TC1_IO_130_mb1_TA3_IO_120_N_60
 set_property  PACKAGE_PIN T32 [get_ports {fpga_data[247]}] # mb1_TC1_IO_131_mb1_TA3_IO_121_P_60
 
-# pins which are connected to motherboard connector TC2 
-# and connector BA2 on x-board IC-PDS-CABLE-R1 
+# pins which are connected to motherboard connector TC2
+# and connector BA2 on x-board IC-PDS-CABLE-R1
 set_property  PACKAGE_PIN AU27 [get_ports {fpga_data[0]}] #mb1_TC2_CLKIO_N_0_mb1_TA4_CLKIO_N_7
 set_property  PACKAGE_PIN AR27 [get_ports {fpga_credit_out[0]}] #mb1_TC2_CLKIO_N_1_mb1_TA4_CLKIO_N_6
 set_property  PACKAGE_PIN AU31 [get_ports {fpga_credit_out[1]}] #mb1_TC2_CLKIO_N_2_mb1_TA4_CLKIO_N_4
@@ -284,145 +284,153 @@ set_property  PACKAGE_PIN AL25 [get_ports {fpga_data[123]}] # mb1_TC2_IO_127_P_6
 set_property  PACKAGE_PIN AW25 [get_ports {fpga_data[118]}] # mb1_TC2_IO_130_mb1_TA4_IO_120_N_60
 set_property  PACKAGE_PIN AJ21 [get_ports {fpga_data[119]}] # mb1_TC2_IO_131_mb1_TA4_IO_121_P_60
 
-# pins which are connected to motherboard connector TD1 
-# and connector BA1 on x-board IC-PDS-CABLE-R1 
-set_property  PACKAGE_PIN L3 [get_ports {mb1_TD1_CLKIO_N_0_mb1_TB3_CLKIO_N_7}]
-set_property  PACKAGE_PIN N3 [get_ports {mb1_TD1_CLKIO_N_1_mb1_TB3_CLKIO_N_6}]
-set_property  PACKAGE_PIN D6 [get_ports {mb1_TD1_CLKIO_N_2_mb1_TB3_CLKIO_N_4}]
-set_property  PACKAGE_PIN C3 [get_ports {mb1_TD1_CLKIO_N_3_mb1_TB3_CLKIO_N_3}]
-set_property  PACKAGE_PIN M4 [get_ports {mb1_TD1_CLKIO_N_4_mb1_TB3_CLKIO_N_2}]
-set_property  PACKAGE_PIN P3 [get_ports {mb1_TD1_CLKIO_N_5_mb1_TB3_IO_010_N_05}]
-set_property  PACKAGE_PIN D5 [get_ports {mb1_TD1_CLKIO_N_6_mb1_TB3_CLKIO_N_1}]
-set_property  PACKAGE_PIN C4 [get_ports {mb1_TD1_CLKIO_N_7_mb1_TB3_CLKIO_N_0}]
-set_property  PACKAGE_PIN L4 [get_ports {mb1_TD1_CLKIO_P_0_mb1_TB3_CLKIO_P_7}]
-set_property  PACKAGE_PIN N4 [get_ports {mb1_TD1_CLKIO_P_1_mb1_TB3_CLKIO_P_6}]
-set_property  PACKAGE_PIN E6 [get_ports {mb1_TD1_CLKIO_P_2_mb1_TB3_CLKIO_P_4}]
-set_property  PACKAGE_PIN D3 [get_ports {mb1_TD1_CLKIO_P_3_mb1_TB3_CLKIO_P_3}]
-set_property  PACKAGE_PIN M5 [get_ports {mb1_TD1_CLKIO_P_4_mb1_TB3_CLKIO_P_2}]
-set_property  PACKAGE_PIN P4 [get_ports {mb1_TD1_CLKIO_P_5_mb1_TB3_IO_011_P_05}]
-set_property  PACKAGE_PIN E5 [get_ports {mb1_TD1_CLKIO_P_6_mb1_TB3_CLKIO_P_1}]
-set_property  PACKAGE_PIN D4 [get_ports {mb1_TD1_CLKIO_P_7_mb1_TB3_CLKIO_P_0}]
-set_property  PACKAGE_PIN H7 [get_ports {mb1_TD1_IO_004_N_02_mb1_TB3_IO_006_N_03}]
-set_property  PACKAGE_PIN H8 [get_ports {mb1_TD1_IO_005_P_02_mb1_TB3_IO_007_P_03}]
-set_property  PACKAGE_PIN F5 [get_ports {mb1_TD1_IO_006_N_03_mb1_TB3_IO_004_N_02}]
-set_property  PACKAGE_PIN G5 [get_ports {mb1_TD1_IO_007_P_03_mb1_TB3_IO_005_P_02}]
-set_property  PACKAGE_PIN H6 [get_ports {mb1_TD1_IO_008_N_04_mb1_TB3_IO_022_N_11}]
-set_property  PACKAGE_PIN J6 [get_ports {mb1_TD1_IO_009_P_04_mb1_TB3_IO_023_P_11}]
-set_property  PACKAGE_PIN E7 [get_ports {mb1_TD1_IO_010_N_05_mb1_TB3_CLKIO_N_5}]
-set_property  PACKAGE_PIN F7 [get_ports {mb1_TD1_IO_011_P_05_mb1_TB3_CLKIO_P_5}]
-set_property  PACKAGE_PIN F4 [get_ports {mb1_TD1_IO_012_N_06_mb1_TB3_IO_012_N_06}]
-set_property  PACKAGE_PIN G4 [get_ports {mb1_TD1_IO_013_P_06_mb1_TB3_IO_013_P_06}]
-set_property  PACKAGE_PIN E1 [get_ports {mb1_TD1_IO_014_N_07_mb1_TB3_IO_016_N_08}]
-set_property  PACKAGE_PIN E2 [get_ports {mb1_TD1_IO_015_P_07_mb1_TB3_IO_017_P_08}]
-set_property  PACKAGE_PIN H2 [get_ports {mb1_TD1_IO_016_N_08_mb1_TB3_IO_014_N_07}]
-set_property  PACKAGE_PIN H3 [get_ports {mb1_TD1_IO_017_P_08_mb1_TB3_IO_015_P_07}]
-set_property  PACKAGE_PIN G1 [get_ports {mb1_TD1_IO_018_N_09_mb1_TB3_IO_032_N_16}]
-set_property  PACKAGE_PIN H1 [get_ports {mb1_TD1_IO_019_P_09_mb1_TB3_IO_033_P_16}]
-set_property  PACKAGE_PIN F2 [get_ports {mb1_TD1_IO_020_N_10_mb1_TB3_IO_030_N_15}]
-set_property  PACKAGE_PIN G2 [get_ports {mb1_TD1_IO_021_P_10_mb1_TB3_IO_031_P_15}]
-set_property  PACKAGE_PIN E3 [get_ports {mb1_TD1_IO_022_N_11_mb1_TB3_IO_008_N_04}]
-set_property  PACKAGE_PIN F3 [get_ports {mb1_TD1_IO_023_P_11_mb1_TB3_IO_009_P_04}]
-set_property  PACKAGE_PIN U6 [get_ports {mb1_TD1_IO_024_N_12_mb1_TB3_IO_026_N_13}]
-set_property  PACKAGE_PIN U7 [get_ports {mb1_TD1_IO_025_P_12_mb1_TB3_IO_027_P_13}]
-set_property  PACKAGE_PIN R8 [get_ports {mb1_TD1_IO_026_N_13_mb1_TB3_IO_024_N_12}]
-set_property  PACKAGE_PIN T9 [get_ports {mb1_TD1_IO_027_P_13_mb1_TB3_IO_025_P_12}]
-set_property  PACKAGE_PIN V9 [get_ports {mb1_TD1_IO_028_N_14_mb1_TB3_IO_042_N_21}]
-set_property  PACKAGE_PIN V10 [get_ports {mb1_TD1_IO_029_P_14_mb1_TB3_IO_043_P_21}]
-set_property  PACKAGE_PIN T7 [get_ports {mb1_TD1_IO_030_N_15_mb1_TB3_IO_020_N_10}]
-set_property  PACKAGE_PIN T8 [get_ports {mb1_TD1_IO_031_P_15_mb1_TB3_IO_021_P_10}]
-set_property  PACKAGE_PIN U9 [get_ports {mb1_TD1_IO_032_N_16_mb1_TB3_IO_018_N_09}]
-set_property  PACKAGE_PIN U10 [get_ports {mb1_TD1_IO_033_P_16_mb1_TB3_IO_019_P_09}]
-set_property  PACKAGE_PIN V7 [get_ports {mb1_TD1_IO_034_N_17_mb1_TB3_IO_036_N_18}]
-set_property  PACKAGE_PIN V8 [get_ports {mb1_TD1_IO_035_P_17_mb1_TB3_IO_037_P_18}]
-set_property  PACKAGE_PIN U1 [get_ports {mb1_TD1_IO_036_N_18_mb1_TB3_IO_034_N_17}]
-set_property  PACKAGE_PIN U2 [get_ports {mb1_TD1_IO_037_P_18_mb1_TB3_IO_035_P_17}]
-set_property  PACKAGE_PIN T4 [get_ports {mb1_TD1_IO_038_N_19_mb1_TB3_IO_052_N_26}]
-set_property  PACKAGE_PIN T5 [get_ports {mb1_TD1_IO_039_P_19_mb1_TB3_IO_053_P_26}]
-set_property  PACKAGE_PIN T2 [get_ports {mb1_TD1_IO_040_N_20_mb1_TB3_IO_050_N_25}]
-set_property  PACKAGE_PIN T3 [get_ports {mb1_TD1_IO_041_P_20_mb1_TB3_IO_051_P_25}]
-set_property  PACKAGE_PIN V3 [get_ports {mb1_TD1_IO_042_N_21_mb1_TB3_IO_028_N_14}]
-set_property  PACKAGE_PIN V4 [get_ports {mb1_TD1_IO_043_P_21_mb1_TB3_IO_029_P_14}]
-set_property  PACKAGE_PIN U4 [get_ports {mb1_TD1_IO_044_N_22_mb1_TB3_IO_046_N_23}]
-set_property  PACKAGE_PIN U5 [get_ports {mb1_TD1_IO_045_P_22_mb1_TB3_IO_047_P_23}]
-set_property  PACKAGE_PIN V1 [get_ports {mb1_TD1_IO_046_N_23_mb1_TB3_IO_044_N_22}]
-set_property  PACKAGE_PIN V2 [get_ports {mb1_TD1_IO_047_P_23_mb1_TB3_IO_045_P_22}]
-set_property  PACKAGE_PIN W3 [get_ports {mb1_TD1_IO_048_N_24_mb1_TB3_IO_062_N_31}]
-set_property  PACKAGE_PIN W4 [get_ports {mb1_TD1_IO_049_P_24_mb1_TB3_IO_063_P_31}]
-set_property  PACKAGE_PIN W5 [get_ports {mb1_TD1_IO_050_N_25_mb1_TB3_IO_040_N_20}]
-set_property  PACKAGE_PIN Y5 [get_ports {mb1_TD1_IO_051_P_25_mb1_TB3_IO_041_P_20}]
-set_property  PACKAGE_PIN AA4 [get_ports {mb1_TD1_IO_052_N_26_mb1_TB3_IO_038_N_19}]
-set_property  PACKAGE_PIN AA5 [get_ports {mb1_TD1_IO_053_P_26_mb1_TB3_IO_039_P_19}]
-set_property  PACKAGE_PIN W1 [get_ports {mb1_TD1_IO_054_N_27_mb1_TB3_IO_056_N_28}]
-set_property  PACKAGE_PIN Y1 [get_ports {mb1_TD1_IO_055_P_27_mb1_TB3_IO_057_P_28}]
-set_property  PACKAGE_PIN AA2 [get_ports {mb1_TD1_IO_056_N_28_mb1_TB3_IO_054_N_27}]
-set_property  PACKAGE_PIN AA3 [get_ports {mb1_TD1_IO_057_P_28_mb1_TB3_IO_055_P_27}]
-set_property  PACKAGE_PIN Y2 [get_ports {mb1_TD1_IO_058_N_29_mb1_TB3_IO_072_N_36}]
-set_property  PACKAGE_PIN Y3 [get_ports {mb1_TD1_IO_059_P_29_mb1_TB3_IO_073_P_36}]
-set_property  PACKAGE_PIN W9 [get_ports {mb1_TD1_IO_060_N_30_mb1_TB3_IO_070_N_35}]
-set_property  PACKAGE_PIN W10 [get_ports {mb1_TD1_IO_061_P_30_mb1_TB3_IO_071_P_35}]
-set_property  PACKAGE_PIN AA9 [get_ports {mb1_TD1_IO_062_N_31_mb1_TB3_IO_048_N_24}]
-set_property  PACKAGE_PIN AA10 [get_ports {mb1_TD1_IO_063_P_31_mb1_TB3_IO_049_P_24}]
-set_property  PACKAGE_PIN AA7 [get_ports {mb1_TD1_IO_064_N_32_mb1_TB3_IO_066_N_33}]
-set_property  PACKAGE_PIN AA8 [get_ports {mb1_TD1_IO_065_P_32_mb1_TB3_IO_067_P_33}]
-set_property  PACKAGE_PIN W8 [get_ports {mb1_TD1_IO_066_N_33_mb1_TB3_IO_064_N_32}]
-set_property  PACKAGE_PIN Y8 [get_ports {mb1_TD1_IO_067_P_33_mb1_TB3_IO_065_P_32}]
-set_property  PACKAGE_PIN Y6 [get_ports {mb1_TD1_IO_068_N_34_mb1_TB3_IO_082_N_41}]
-set_property  PACKAGE_PIN Y7 [get_ports {mb1_TD1_IO_069_P_34_mb1_TB3_IO_083_P_41}]
-set_property  PACKAGE_PIN V6 [get_ports {mb1_TD1_IO_070_N_35_mb1_TB3_IO_060_N_30}]
-set_property  PACKAGE_PIN W6 [get_ports {mb1_TD1_IO_071_P_35_mb1_TB3_IO_061_P_30}]
-set_property  PACKAGE_PIN C6 [get_ports {mb1_TD1_IO_072_N_36_mb1_TB3_IO_058_N_29}]
-set_property  PACKAGE_PIN C7 [get_ports {mb1_TD1_IO_073_P_36_mb1_TB3_IO_059_P_29}]
-set_property  PACKAGE_PIN A7 [get_ports {mb1_TD1_IO_074_N_37_mb1_TB3_IO_076_N_38}]
-set_property  PACKAGE_PIN B7 [get_ports {mb1_TD1_IO_075_P_37_mb1_TB3_IO_077_P_38}]
-set_property  PACKAGE_PIN P1 [get_ports {mb1_TD1_IO_076_N_38_mb1_TB3_IO_074_N_37}]
-set_property  PACKAGE_PIN R1 [get_ports {mb1_TD1_IO_077_P_38_mb1_TB3_IO_075_P_37}]
-set_property  PACKAGE_PIN C8 [get_ports {mb1_TD1_IO_078_N_39_mb1_TB3_IO_092_N_46}]
-set_property  PACKAGE_PIN D8 [get_ports {mb1_TD1_IO_079_P_39_mb1_TB3_IO_093_P_46}]
-set_property  PACKAGE_PIN N1 [get_ports {mb1_TD1_IO_080_N_40_mb1_TB3_IO_090_N_45}]
-set_property  PACKAGE_PIN N2 [get_ports {mb1_TD1_IO_081_P_40_mb1_TB3_IO_091_P_45}]
-set_property  PACKAGE_PIN B5 [get_ports {mb1_TD1_IO_082_N_41_mb1_TB3_IO_068_N_34}]
-set_property  PACKAGE_PIN B6 [get_ports {mb1_TD1_IO_083_P_41_mb1_TB3_IO_069_P_34}]
-set_property  PACKAGE_PIN A3 [get_ports {mb1_TD1_IO_084_N_42_mb1_TB3_IO_086_N_43}]
-set_property  PACKAGE_PIN B4 [get_ports {mb1_TD1_IO_085_P_42_mb1_TB3_IO_087_P_43}]
-set_property  PACKAGE_PIN C1 [get_ports {mb1_TD1_IO_086_N_43_mb1_TB3_IO_084_N_42}]
-set_property  PACKAGE_PIN D1 [get_ports {mb1_TD1_IO_087_P_43_mb1_TB3_IO_085_P_42}]
-set_property  PACKAGE_PIN R2 [get_ports {mb1_TD1_IO_088_N_44_mb1_TB3_IO_102_N_51}]
-set_property  PACKAGE_PIN R3 [get_ports {mb1_TD1_IO_089_P_44_mb1_TB3_IO_103_P_51}]
-set_property  PACKAGE_PIN A4 [get_ports {mb1_TD1_IO_090_N_45_mb1_TB3_IO_080_N_40}]
-set_property  PACKAGE_PIN A5 [get_ports {mb1_TD1_IO_091_P_45_mb1_TB3_IO_081_P_40}]
-set_property  PACKAGE_PIN M1 [get_ports {mb1_TD1_IO_092_N_46_mb1_TB3_IO_078_N_39}]
-set_property  PACKAGE_PIN M2 [get_ports {mb1_TD1_IO_093_P_46_mb1_TB3_IO_079_P_39}]
-set_property  PACKAGE_PIN B2 [get_ports {mb1_TD1_IO_094_N_47_mb1_TB3_IO_096_N_48}]
-set_property  PACKAGE_PIN C2 [get_ports {mb1_TD1_IO_095_P_47_mb1_TB3_IO_097_P_48}]
-set_property  PACKAGE_PIN K8 [get_ports {mb1_TD1_IO_096_N_48_mb1_TB3_IO_094_N_47}]
-set_property  PACKAGE_PIN L9 [get_ports {mb1_TD1_IO_097_P_48_mb1_TB3_IO_095_P_47}]
-set_property  PACKAGE_PIN K6 [get_ports {mb1_TD1_IO_098_N_49_mb1_TB3_IO_112_N_56}]
-set_property  PACKAGE_PIN K7 [get_ports {mb1_TD1_IO_099_P_49_mb1_TB3_IO_113_P_56}]
-set_property  PACKAGE_PIN K5 [get_ports {mb1_TD1_IO_100_N_50_mb1_TB3_IO_110_N_55}]
-set_property  PACKAGE_PIN L5 [get_ports {mb1_TD1_IO_101_P_50_mb1_TB3_IO_111_P_55}]
-set_property  PACKAGE_PIN M9 [get_ports {mb1_TD1_IO_102_N_51_mb1_TB3_IO_088_N_44}]
-set_property  PACKAGE_PIN M10 [get_ports {mb1_TD1_IO_103_P_51_mb1_TB3_IO_089_P_44}]
-set_property  PACKAGE_PIN L7 [get_ports {mb1_TD1_IO_104_N_52_mb1_TB3_IO_106_N_53}]
-set_property  PACKAGE_PIN L8 [get_ports {mb1_TD1_IO_105_P_52_mb1_TB3_IO_107_P_53}]
-set_property  PACKAGE_PIN M6 [get_ports {mb1_TD1_IO_106_N_53_mb1_TB3_IO_104_N_52}]
-set_property  PACKAGE_PIN M7 [get_ports {mb1_TD1_IO_107_P_53_mb1_TB3_IO_105_P_52}]
-set_property  PACKAGE_PIN K2 [get_ports {mb1_TD1_IO_108_N_54_mb1_TB3_IO_122_N_61}]
-set_property  PACKAGE_PIN L2 [get_ports {mb1_TD1_IO_109_P_54_mb1_TB3_IO_123_P_61}]
-set_property  PACKAGE_PIN J4 [get_ports {mb1_TD1_IO_110_N_55_mb1_TB3_IO_100_N_50}]
-set_property  PACKAGE_PIN J5 [get_ports {mb1_TD1_IO_111_P_55_mb1_TB3_IO_101_P_50}]
-set_property  PACKAGE_PIN J1 [get_ports {mb1_TD1_IO_112_N_56_mb1_TB3_IO_098_N_49}]
-set_property  PACKAGE_PIN K1 [get_ports {mb1_TD1_IO_113_P_56_mb1_TB3_IO_099_P_49}]
-set_property  PACKAGE_PIN J3 [get_ports {mb1_TD1_IO_114_N_57_mb1_TB3_IO_116_N_58}]
-set_property  PACKAGE_PIN K3 [get_ports {mb1_TD1_IO_115_P_57_mb1_TB3_IO_117_P_58}]
-set_property  PACKAGE_PIN N8 [get_ports {mb1_TD1_IO_116_N_58_mb1_TB3_IO_114_N_57}]
-set_property  PACKAGE_PIN N9 [get_ports {mb1_TD1_IO_117_P_58_mb1_TB3_IO_115_P_57}]
-set_property  PACKAGE_PIN P9 [get_ports {mb1_TD1_IO_120_N_60_mb1_TB3_IO_130}]
-set_property  PACKAGE_PIN P10 [get_ports {mb1_TD1_IO_121_P_60_mb1_TB3_IO_131}]
-set_property  PACKAGE_PIN P5 [get_ports {mb1_TD1_IO_122_N_61_mb1_TB3_IO_108_N_54}]
-set_property  PACKAGE_PIN R5 [get_ports {mb1_TD1_IO_123_P_61_mb1_TB3_IO_109_P_54}]
-set_property  PACKAGE_PIN N6 [get_ports {mb1_TD1_IO_124_N_62_mb1_TB3_IO_126_N_63}]
-set_property  PACKAGE_PIN P6 [get_ports {mb1_TD1_IO_125_P_62_mb1_TB3_IO_127_P_63}]
-set_property  PACKAGE_PIN N7 [get_ports {mb1_TD1_IO_126_N_63_mb1_TB3_IO_124_N_62}]
-set_property  PACKAGE_PIN P8 [get_ports {mb1_TD1_IO_127_P_63_mb1_TB3_IO_125_P_62}]
-set_property  PACKAGE_PIN T10 [get_ports {mb1_TD1_IO_130_mb1_TB3_IO_120_N_60}]
-set_property  PACKAGE_PIN Y10 [get_ports {mb1_TD1_IO_131_mb1_TB3_IO_121_P_60}]
+# pins which are connected to motherboard connector TD1
+# and connector BA1 on x-board IC-PDS-CABLE-R1
+# set_property  PACKAGE_PIN L3 [get_ports {mb1_TD1_CLKIO_N_0_mb1_TB3_CLKIO_N_7}]
+# set_property  PACKAGE_PIN N3 [get_ports {mb1_TD1_CLKIO_N_1_mb1_TB3_CLKIO_N_6}]
+# set_property  PACKAGE_PIN D6 [get_ports {mb1_TD1_CLKIO_N_2_mb1_TB3_CLKIO_N_4}]
+# set_property  PACKAGE_PIN C3 [get_ports {mb1_TD1_CLKIO_N_3_mb1_TB3_CLKIO_N_3}]
+# set_property  PACKAGE_PIN M4 [get_ports {mb1_TD1_CLKIO_N_4_mb1_TB3_CLKIO_N_2}]
+# set_property  PACKAGE_PIN P3 [get_ports {mb1_TD1_CLKIO_N_5_mb1_TB3_IO_010_N_05}]
+# set_property  PACKAGE_PIN D5 [get_ports {mb1_TD1_CLKIO_N_6_mb1_TB3_CLKIO_N_1}]
+# set_property  PACKAGE_PIN C4 [get_ports {mb1_TD1_CLKIO_N_7_mb1_TB3_CLKIO_N_0}]
+set_property  PACKAGE_PIN L4 [get_ports {ext_clk_noc}] # mb1_TD1_CLKIO_P_0_mb1_TB3_CLKIO_P_7
+set_property  PACKAGE_PIN N4 [get_ports {ext_clk_io}] # mb1_TD1_CLKIO_P_1_mb1_TB3_CLKIO_P_6
+set_property  PACKAGE_PIN E6 [get_ports {ext_clk_cpu}] # mb1_TD1_CLKIO_P_2_mb1_TB3_CLKIO_P_4
+set_property  PACKAGE_PIN D3 [get_ports {ext_clk_mem}] # mb1_TD1_CLKIO_P_3_mb1_TB3_CLKIO_P_3
+set_property  PACKAGE_PIN M5 [get_ports {ext_clk_acc0}] # mb1_TD1_CLKIO_P_4_mb1_TB3_CLKIO_P_2
+set_property  PACKAGE_PIN P4 [get_ports {ext_clk_acc1}] # mb1_TD1_CLKIO_P_5_mb1_TB3_IO_011_P_05
+set_property  PACKAGE_PIN E5 [get_ports {tclk}] # mb1_TD1_CLKIO_P_6_mb1_TB3_CLKIO_P_1
+# set_property  PACKAGE_PIN D4 [get_ports {mb1_TD1_CLKIO_P_7_mb1_TB3_CLKIO_P_0}]
+set_property  PACKAGE_PIN H7 [get_ports {tms}] # mb1_TD1_IO_004_N_02_mb1_TB3_IO_006_N_03
+set_property  PACKAGE_PIN H8 [get_ports {tdi[0]}] # mb1_TD1_IO_005_P_02_mb1_TB3_IO_007_P_03
+set_property  PACKAGE_PIN F5 [get_ports {tdo[0]}] # mb1_TD1_IO_006_N_03_mb1_TB3_IO_004_N_02
+set_property  PACKAGE_PIN G5 [get_ports {tdi[1]}] # mb1_TD1_IO_007_P_03_mb1_TB3_IO_005_P_02
+set_property  PACKAGE_PIN H6 [get_ports {tdo[1]}] # mb1_TD1_IO_008_N_04_mb1_TB3_IO_022_N_11
+set_property  PACKAGE_PIN J6 [get_ports {tdi[2]}] # mb1_TD1_IO_009_P_04_mb1_TB3_IO_023_P_11
+set_property  PACKAGE_PIN E7 [get_ports {tdo[2]}] # mb1_TD1_IO_010_N_05_mb1_TB3_CLKIO_N_5
+set_property  PACKAGE_PIN F7 [get_ports {tdi[3]}] # mb1_TD1_IO_011_P_05_mb1_TB3_CLKIO_P_5
+set_property  PACKAGE_PIN F4 [get_ports {tdo[3]}] # mb1_TD1_IO_012_N_06_mb1_TB3_IO_012_N_06
+set_property  PACKAGE_PIN G4 [get_ports {tdi[4]}] # mb1_TD1_IO_013_P_06_mb1_TB3_IO_013_P_06
+set_property  PACKAGE_PIN E1 [get_ports {tdo[4]}] # mb1_TD1_IO_014_N_07_mb1_TB3_IO_016_N_08
+set_property  PACKAGE_PIN E2 [get_ports {tdi[5]}] # mb1_TD1_IO_015_P_07_mb1_TB3_IO_017_P_08
+set_property  PACKAGE_PIN H2 [get_ports {tdo[5]}] # mb1_TD1_IO_016_N_08_mb1_TB3_IO_014_N_07
+set_property  PACKAGE_PIN H3 [get_ports {tdi[6]}] # mb1_TD1_IO_017_P_08_mb1_TB3_IO_015_P_07
+set_property  PACKAGE_PIN G1 [get_ports {tdo[6]}] # mb1_TD1_IO_018_N_09_mb1_TB3_IO_032_N_16
+set_property  PACKAGE_PIN H1 [get_ports {tdi[7]}] # mb1_TD1_IO_019_P_09_mb1_TB3_IO_033_P_16
+set_property  PACKAGE_PIN F2 [get_ports {tdo[7]}] # mb1_TD1_IO_020_N_10_mb1_TB3_IO_030_N_15
+set_property  PACKAGE_PIN G2 [get_ports {tdi[8]}] # mb1_TD1_IO_021_P_10_mb1_TB3_IO_031_P_15
+set_property  PACKAGE_PIN E3 [get_ports {tdo[8]}] # mb1_TD1_IO_022_N_11_mb1_TB3_IO_008_N_04
+set_property  PACKAGE_PIN F3 [get_ports {tdi[9]}] # mb1_TD1_IO_023_P_11_mb1_TB3_IO_009_P_04
+set_property  PACKAGE_PIN U6 [get_ports {tdo[9]}] # mb1_TD1_IO_024_N_12_mb1_TB3_IO_026_N_13
+set_property  PACKAGE_PIN U7 [get_ports {tdi[10]}] # mb1_TD1_IO_025_P_12_mb1_TB3_IO_027_P_13
+set_property  PACKAGE_PIN R8 [get_ports {tdo[10]}] # mb1_TD1_IO_026_N_13_mb1_TB3_IO_024_N_12
+set_property  PACKAGE_PIN T9 [get_ports {tdi[11]}] # mb1_TD1_IO_027_P_13_mb1_TB3_IO_025_P_12
+set_property  PACKAGE_PIN V9 [get_ports {tdo[11]}] # mb1_TD1_IO_028_N_14_mb1_TB3_IO_042_N_21
+set_property  PACKAGE_PIN V10 [get_ports {tdi1[2]}] # mb1_TD1_IO_029_P_14_mb1_TB3_IO_043_P_21
+set_property  PACKAGE_PIN T7 [get_ports {tdo[12]}] # mb1_TD1_IO_030_N_15_mb1_TB3_IO_020_N_10
+set_property  PACKAGE_PIN T8 [get_ports {tdi[13]}] # mb1_TD1_IO_031_P_15_mb1_TB3_IO_021_P_10
+qset_property  PACKAGE_PIN U9 [get_ports {tdo[13]}] # mb1_TD1_IO_032_N_16_mb1_TB3_IO_018_N_09
+set_property  PACKAGE_PIN U10 [get_ports {tdi[14]}] # mb1_TD1_IO_033_P_16_mb1_TB3_IO_019_P_09
+set_property  PACKAGE_PIN V7 [get_ports {tdo[14]}] # mb1_TD1_IO_034_N_17_mb1_TB3_IO_036_N_18
+set_property  PACKAGE_PIN V8 [get_ports {tdi[15]}] # mb1_TD1_IO_035_P_17_mb1_TB3_IO_037_P_18
+set_property  PACKAGE_PIN U1 [get_ports {tdo[15]}] # mb1_TD1_IO_036_N_18_mb1_TB3_IO_034_N_17
+# set_property  PACKAGE_PIN U2 [get_ports {mb1_TD1_IO_037_P_18_mb1_TB3_IO_035_P_17}]
+# set_property  PACKAGE_PIN T4 [get_ports {mb1_TD1_IO_038_N_19_mb1_TB3_IO_052_N_26}]
+# set_property  PACKAGE_PIN T5 [get_ports {mb1_TD1_IO_039_P_19_mb1_TB3_IO_053_P_26}]
+# set_property  PACKAGE_PIN T2 [get_ports {mb1_TD1_IO_040_N_20_mb1_TB3_IO_050_N_25}]
+# set_property  PACKAGE_PIN T3 [get_ports {mb1_TD1_IO_041_P_20_mb1_TB3_IO_051_P_25}]
+# set_property  PACKAGE_PIN V3 [get_ports {mb1_TD1_IO_042_N_21_mb1_TB3_IO_028_N_14}]
+# set_property  PACKAGE_PIN V4 [get_ports {mb1_TD1_IO_043_P_21_mb1_TB3_IO_029_P_14}]
+# set_property  PACKAGE_PIN U4 [get_ports {mb1_TD1_IO_044_N_22_mb1_TB3_IO_046_N_23}]
+# set_property  PACKAGE_PIN U5 [get_ports {mb1_TD1_IO_045_P_22_mb1_TB3_IO_047_P_23}]
+# set_property  PACKAGE_PIN V1 [get_ports {mb1_TD1_IO_046_N_23_mb1_TB3_IO_044_N_22}]
+# set_property  PACKAGE_PIN V2 [get_ports {mb1_TD1_IO_047_P_23_mb1_TB3_IO_045_P_22}]
+# set_property  PACKAGE_PIN W3 [get_ports {mb1_TD1_IO_048_N_24_mb1_TB3_IO_062_N_31}]
+# set_property  PACKAGE_PIN W4 [get_ports {mb1_TD1_IO_049_P_24_mb1_TB3_IO_063_P_31}]
+# set_property  PACKAGE_PIN W5 [get_ports {mb1_TD1_IO_050_N_25_mb1_TB3_IO_040_N_20}]
+# set_property  PACKAGE_PIN Y5 [get_ports {mb1_TD1_IO_051_P_25_mb1_TB3_IO_041_P_20}]
+# set_property  PACKAGE_PIN AA4 [get_ports {mb1_TD1_IO_052_N_26_mb1_TB3_IO_038_N_19}]
+# set_property  PACKAGE_PIN AA5 [get_ports {mb1_TD1_IO_053_P_26_mb1_TB3_IO_039_P_19}]
+# set_property  PACKAGE_PIN W1 [get_ports {mb1_TD1_IO_054_N_27_mb1_TB3_IO_056_N_28}]
+# set_property  PACKAGE_PIN Y1 [get_ports {mb1_TD1_IO_055_P_27_mb1_TB3_IO_057_P_28}]
+# set_property  PACKAGE_PIN AA2 [get_ports {mb1_TD1_IO_056_N_28_mb1_TB3_IO_054_N_27}]
+# set_property  PACKAGE_PIN AA3 [get_ports {mb1_TD1_IO_057_P_28_mb1_TB3_IO_055_P_27}]
+# set_property  PACKAGE_PIN Y2 [get_ports {mb1_TD1_IO_058_N_29_mb1_TB3_IO_072_N_36}]
+# set_property  PACKAGE_PIN Y3 [get_ports {mb1_TD1_IO_059_P_29_mb1_TB3_IO_073_P_36}]
+# set_property  PACKAGE_PIN W9 [get_ports {mb1_TD1_IO_060_N_30_mb1_TB3_IO_070_N_35}]
+# set_property  PACKAGE_PIN W10 [get_ports {mb1_TD1_IO_061_P_30_mb1_TB3_IO_071_P_35}]
+# set_property  PACKAGE_PIN AA9 [get_ports {mb1_TD1_IO_062_N_31_mb1_TB3_IO_048_N_24}]
+# set_property  PACKAGE_PIN AA10 [get_ports {mb1_TD1_IO_063_P_31_mb1_TB3_IO_049_P_24}]
+# set_property  PACKAGE_PIN AA7 [get_ports {mb1_TD1_IO_064_N_32_mb1_TB3_IO_066_N_33}]
+# set_property  PACKAGE_PIN AA8 [get_ports {mb1_TD1_IO_065_P_32_mb1_TB3_IO_067_P_33}]
+# set_property  PACKAGE_PIN W8 [get_ports {mb1_TD1_IO_066_N_33_mb1_TB3_IO_064_N_32}]
+# set_property  PACKAGE_PIN Y8 [get_ports {mb1_TD1_IO_067_P_33_mb1_TB3_IO_065_P_32}]
+# set_property  PACKAGE_PIN Y6 [get_ports {mb1_TD1_IO_068_N_34_mb1_TB3_IO_082_N_41}]
+# set_property  PACKAGE_PIN Y7 [get_ports {mb1_TD1_IO_069_P_34_mb1_TB3_IO_083_P_41}]
+# set_property  PACKAGE_PIN V6 [get_ports {mb1_TD1_IO_070_N_35_mb1_TB3_IO_060_N_30}]
+# set_property  PACKAGE_PIN W6 [get_ports {mb1_TD1_IO_071_P_35_mb1_TB3_IO_061_P_30}]
+# set_property  PACKAGE_PIN C6 [get_ports {mb1_TD1_IO_072_N_36_mb1_TB3_IO_058_N_29}]
+# set_property  PACKAGE_PIN C7 [get_ports {mb1_TD1_IO_073_P_36_mb1_TB3_IO_059_P_29}]
+# set_property  PACKAGE_PIN A7 [get_ports {mb1_TD1_IO_074_N_37_mb1_TB3_IO_076_N_38}]
+# set_property  PACKAGE_PIN B7 [get_ports {mb1_TD1_IO_075_P_37_mb1_TB3_IO_077_P_38}]
+# set_property  PACKAGE_PIN P1 [get_ports {mb1_TD1_IO_076_N_38_mb1_TB3_IO_074_N_37}]
+# set_property  PACKAGE_PIN R1 [get_ports {mb1_TD1_IO_077_P_38_mb1_TB3_IO_075_P_37}]
+# set_property  PACKAGE_PIN C8 [get_ports {mb1_TD1_IO_078_N_39_mb1_TB3_IO_092_N_46}]
+# set_property  PACKAGE_PIN D8 [get_ports {mb1_TD1_IO_079_P_39_mb1_TB3_IO_093_P_46}]
+# set_property  PACKAGE_PIN N1 [get_ports {mb1_TD1_IO_080_N_40_mb1_TB3_IO_090_N_45}]
+# set_property  PACKAGE_PIN N2 [get_ports {mb1_TD1_IO_081_P_40_mb1_TB3_IO_091_P_45}]
+# set_property  PACKAGE_PIN B5 [get_ports {mb1_TD1_IO_082_N_41_mb1_TB3_IO_068_N_34}]
+# set_property  PACKAGE_PIN B6 [get_ports {mb1_TD1_IO_083_P_41_mb1_TB3_IO_069_P_34}]
+# set_property  PACKAGE_PIN A3 [get_ports {mb1_TD1_IO_084_N_42_mb1_TB3_IO_086_N_43}]
+# set_property  PACKAGE_PIN B4 [get_ports {mb1_TD1_IO_085_P_42_mb1_TB3_IO_087_P_43}]
+# set_property  PACKAGE_PIN C1 [get_ports {mb1_TD1_IO_086_N_43_mb1_TB3_IO_084_N_42}]
+# set_property  PACKAGE_PIN D1 [get_ports {mb1_TD1_IO_087_P_43_mb1_TB3_IO_085_P_42}]
+# set_property  PACKAGE_PIN R2 [get_ports {mb1_TD1_IO_088_N_44_mb1_TB3_IO_102_N_51}]
+# set_property  PACKAGE_PIN R3 [get_ports {mb1_TD1_IO_089_P_44_mb1_TB3_IO_103_P_51}]
+# set_property  PACKAGE_PIN A4 [get_ports {mb1_TD1_IO_090_N_45_mb1_TB3_IO_080_N_40}]
+# set_property  PACKAGE_PIN A5 [get_ports {mb1_TD1_IO_091_P_45_mb1_TB3_IO_081_P_40}]
+# set_property  PACKAGE_PIN M1 [get_ports {mb1_TD1_IO_092_N_46_mb1_TB3_IO_078_N_39}]
+# set_property  PACKAGE_PIN M2 [get_ports {mb1_TD1_IO_093_P_46_mb1_TB3_IO_079_P_39}]
+# set_property  PACKAGE_PIN B2 [get_ports {mb1_TD1_IO_094_N_47_mb1_TB3_IO_096_N_48}]
+# set_property  PACKAGE_PIN C2 [get_ports {mb1_TD1_IO_095_P_47_mb1_TB3_IO_097_P_48}]
+# set_property  PACKAGE_PIN K8 [get_ports {mb1_TD1_IO_096_N_48_mb1_TB3_IO_094_N_47}]
+# set_property  PACKAGE_PIN L9 [get_ports {mb1_TD1_IO_097_P_48_mb1_TB3_IO_095_P_47}]
+# set_property  PACKAGE_PIN K6 [get_ports {mb1_TD1_IO_098_N_49_mb1_TB3_IO_112_N_56}]
+# set_property  PACKAGE_PIN K7 [get_ports {mb1_TD1_IO_099_P_49_mb1_TB3_IO_113_P_56}]
+# set_property  PACKAGE_PIN K5 [get_ports {mb1_TD1_IO_100_N_50_mb1_TB3_IO_110_N_55}]
+# set_property  PACKAGE_PIN L5 [get_ports {mb1_TD1_IO_101_P_50_mb1_TB3_IO_111_P_55}]
+# set_property  PACKAGE_PIN M9 [get_ports {mb1_TD1_IO_102_N_51_mb1_TB3_IO_088_N_44}]
+# set_property  PACKAGE_PIN M10 [get_ports {mb1_TD1_IO_103_P_51_mb1_TB3_IO_089_P_44}]
+# set_property  PACKAGE_PIN L7 [get_ports {mb1_TD1_IO_104_N_52_mb1_TB3_IO_106_N_53}]
+# set_property  PACKAGE_PIN L8 [get_ports {mb1_TD1_IO_105_P_52_mb1_TB3_IO_107_P_53}]
+# set_property  PACKAGE_PIN M6 [get_ports {mb1_TD1_IO_106_N_53_mb1_TB3_IO_104_N_52}]
+# set_property  PACKAGE_PIN M7 [get_ports {mb1_TD1_IO_107_P_53_mb1_TB3_IO_105_P_52}]
+# set_property  PACKAGE_PIN K2 [get_ports {mb1_TD1_IO_108_N_54_mb1_TB3_IO_122_N_61}]
+# set_property  PACKAGE_PIN L2 [get_ports {mb1_TD1_IO_109_P_54_mb1_TB3_IO_123_P_61}]
+# set_property  PACKAGE_PIN J4 [get_ports {mb1_TD1_IO_110_N_55_mb1_TB3_IO_100_N_50}]
+# set_property  PACKAGE_PIN J5 [get_ports {mb1_TD1_IO_111_P_55_mb1_TB3_IO_101_P_50}]
+# set_property  PACKAGE_PIN J1 [get_ports {mb1_TD1_IO_112_N_56_mb1_TB3_IO_098_N_49}]
+# set_property  PACKAGE_PIN K1 [get_ports {mb1_TD1_IO_113_P_56_mb1_TB3_IO_099_P_49}]
+# set_property  PACKAGE_PIN J3 [get_ports {mb1_TD1_IO_114_N_57_mb1_TB3_IO_116_N_58}]
+# set_property  PACKAGE_PIN K3 [get_ports {mb1_TD1_IO_115_P_57_mb1_TB3_IO_117_P_58}]
+# set_property  PACKAGE_PIN N8 [get_ports {mb1_TD1_IO_116_N_58_mb1_TB3_IO_114_N_57}]
+# set_property  PACKAGE_PIN N9 [get_ports {mb1_TD1_IO_117_P_58_mb1_TB3_IO_115_P_57}]
+# set_property  PACKAGE_PIN P9 [get_ports {mb1_TD1_IO_120_N_60_mb1_TB3_IO_130}]
+# set_property  PACKAGE_PIN P10 [get_ports {mb1_TD1_IO_121_P_60_mb1_TB3_IO_131}]
+# set_property  PACKAGE_PIN P5 [get_ports {mb1_TD1_IO_122_N_61_mb1_TB3_IO_108_N_54}]
+# set_property  PACKAGE_PIN R5 [get_ports {mb1_TD1_IO_123_P_61_mb1_TB3_IO_109_P_54}]
+# set_property  PACKAGE_PIN N6 [get_ports {mb1_TD1_IO_124_N_62_mb1_TB3_IO_126_N_63}]
+# set_property  PACKAGE_PIN P6 [get_ports {mb1_TD1_IO_125_P_62_mb1_TB3_IO_127_P_63}]
+# set_property  PACKAGE_PIN N7 [get_ports {mb1_TD1_IO_126_N_63_mb1_TB3_IO_124_N_62}]
+# set_property  PACKAGE_PIN P8 [get_ports {mb1_TD1_IO_127_P_63_mb1_TB3_IO_125_P_62}]
+# set_property  PACKAGE_PIN T10 [get_ports {mb1_TD1_IO_130_mb1_TB3_IO_120_N_60}]
+# set_property  PACKAGE_PIN Y10 [get_ports {mb1_TD1_IO_131_mb1_TB3_IO_121_P_60}]
+
+# IO Standards
+set_property IOSTANDARD LVCMOS18 [get_ports {fpga_*}]
+set_property IOSTANDARD LVCMOS18 [get_ports {ext_clk__*}]
+set_property IOSTANDARD LVCMOS18 [get_ports {tclk}]
+set_property IOSTANDARD LVCMOS18 [get_ports {tms}]
+set_property IOSTANDARD LVCMOS18 [get_ports {tdi[*]}]
+set_property IOSTANDARD LVCMOS18 [get_ports {tdo[*]}]
