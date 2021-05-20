@@ -131,14 +131,14 @@ set_property PACKAGE_PIN AR15 [get_ports reset]
 #              Timing constraints                          -
 #-----------------------------------------------------------
 
-create_clock -period 5.0 [get_ports c0_sys_clk_p]
-create_clock -period 5.0 [get_ports c1_sys_clk_p]
-create_clock -period 5.0 [get_ports c2_sys_clk_p]
-create_clock -period 5.0 [get_ports c3_sys_clk_p]
+# create_clock -period 5.0 [get_ports c0_sys_clk_p]
+# create_clock -period 5.0 [get_ports c1_sys_clk_p]
+# create_clock -period 5.0 [get_ports c2_sys_clk_p]
+# create_clock -period 5.0 [get_ports c3_sys_clk_p]
 
 create_clock -period 10.0 [get_ports main_clk_p]
 
-create_clock -period 5 [get_ports clk_ref_p]
+# create_clock -period 5 [get_ports clk_ref_p]
 
 # Note: the following CLOCK_DEDICATED_ROUTE constraint will cause a warning in place similar
 # to the following:
@@ -150,12 +150,10 @@ set_property CLOCK_DEDICATED_ROUTE BACKBONE [get_nets c0_sys_clk_p]
 set_property CLOCK_DEDICATED_ROUTE BACKBONE [get_nets c1_sys_clk_p]
 set_property CLOCK_DEDICATED_ROUTE BACKBONE [get_nets c2_sys_clk_p]
 set_property CLOCK_DEDICATED_ROUTE BACKBONE [get_nets c3_sys_clk_p]
-#set_property CLOCK_DEDICATED_ROUTE FALSE [get_nets eth0_inpads.etxc_pad/xcv2.u0/ol]
-#set_property CLOCK_DEDICATED_ROUTE BACKBONE [get_pins -hierarchical *pll*CLKIN1]
 
 # Recover elaborated clock name
 set main_clk_elab [get_clocks -of_objects [get_nets main_clk]]
-et_property CLOCK_DEDICATED_ROUTE BACKBONE
+
 set sys_clk_elab0 [get_clocks -of_objects [get_nets sys_clk[0]]]
 set sys_clk_elab1 [get_clocks -of_objects [get_nets sys_clk[1]]]
 set sys_clk_elab2 [get_clocks -of_objects [get_nets sys_clk[2]]]
@@ -163,13 +161,13 @@ set sys_clk_elab3 [get_clocks -of_objects [get_nets sys_clk[3]]]
 
 # Both memory controllers impose their user clock. Make them asynchronous
 set_clock_groups -asynchronous -group [get_clocks clk_ref_p] -group [get_clocks $main_clk_elab]
-set_clock_groups -asynchronous -group [get_clocks clk_ref_p] -group [get_clocks $sys_clk_elab0})]
+set_clock_groups -asynchronous -group [get_clocks clk_ref_p] -group [get_clocks $sys_clk_elab0]
 set_clock_groups -asynchronous -group [get_clocks $sys_clk_elab0] -group [get_clocks $main_clk_elab]
-set_clock_groups -asynchronous -group [get_clocks clk_ref_p] -group [get_clocks $sys_clk_elab1})]
+set_clock_groups -asynchronous -group [get_clocks clk_ref_p] -group [get_clocks $sys_clk_elab1]
 set_clock_groups -asynchronous -group [get_clocks $sys_clk_elab1] -group [get_clocks $main_clk_elab]
-set_clock_groups -asynchronous -group [get_clocks clk_ref_p] -group [get_clocks $sys_clk_elab2})]
+set_clock_groups -asynchronous -group [get_clocks clk_ref_p] -group [get_clocks $sys_clk_elab2]
 set_clock_groups -asynchronous -group [get_clocks $sys_clk_elab2] -group [get_clocks $main_clk_elab]
-set_clock_groups -asynchronous -group [get_clocks clk_ref_p] -group [get_clocks $sys_clk_elab3})]
+set_clock_groups -asynchronous -group [get_clocks clk_ref_p] -group [get_clocks $sys_clk_elab3]
 set_clock_groups -asynchronous -group [get_clocks $sys_clk_elab3] -group [get_clocks $main_clk_elab]
 
 set_clock_groups -asynchronous -group [get_clocks $sys_clk_elab0] -group [get_clocks $sys_clk_elab1]

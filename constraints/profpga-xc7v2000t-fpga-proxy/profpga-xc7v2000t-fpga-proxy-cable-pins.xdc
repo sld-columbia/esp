@@ -640,7 +640,7 @@ set_property  PACKAGE_PIN T9 [get_ports {tdi[11]}]
 # mb1_TD1_IO_028_N_14_mb1_TB3_IO_042_N_21
 set_property  PACKAGE_PIN V9 [get_ports {tdo[11]}]
 # mb1_TD1_IO_029_P_14_mb1_TB3_IO_043_P_21
-set_property  PACKAGE_PIN V10 [get_ports {tdi1[2]}]
+set_property  PACKAGE_PIN V10 [get_ports {tdi[12]}]
 # mb1_TD1_IO_030_N_15_mb1_TB3_IO_020_N_10
 set_property  PACKAGE_PIN T7 [get_ports {tdo[12]}]
 # mb1_TD1_IO_031_P_15_mb1_TB3_IO_021_P_10
@@ -749,7 +749,7 @@ set_property  PACKAGE_PIN U1 [get_ports {tdo[15]}]
 
 # IO Standards
 set_property IOSTANDARD LVCMOS18 [get_ports {fpga_*}]
-set_property IOSTANDARD LVCMOS18 [get_ports {ext_clk__*}]
+set_property IOSTANDARD LVCMOS18 [get_ports {ext_clk_*}]
 set_property IOSTANDARD LVCMOS18 [get_ports {tclk}]
 set_property IOSTANDARD LVCMOS18 [get_ports {tms}]
 set_property IOSTANDARD LVCMOS18 [get_ports {tdi[*]}]

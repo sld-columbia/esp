@@ -52,7 +52,7 @@ set_property  PACKAGE_PIN AP35 [get_ports {c0_ddr3_ck_n}]
 #bc2_eb1_CLK_200MHZn
 #set_property  PACKAGE_PIN AU40 [get_ports {c0_sys_clk_n}]
 #bc2_eb1_20CSn
-set_property  PACKAGE_PIN AT42 [get_ports {c0_ddr3_sc_n}]
+set_property  PACKAGE_PIN AT42 [get_ports {c0_ddr3_cs_n}]
 #bc2_eb1_DQ00_D0
 set_property  PACKAGE_PIN AK41 [get_ports {c0_ddr3_dq[0]}]
 #bc2_eb1_DQ00_D1
@@ -293,7 +293,7 @@ set_property  PACKAGE_PIN R27 [get_ports {c1_ddr3_ck_n}]
 #bc1_eb1_CLK_200MHZn
 #set_property  PACKAGE_PIN D29 [get_ports {c1_sys_clk_n}]
 #bc1_eb1_20CSn
-set_property  PACKAGE_PIN E28 [get_ports {c1_ddr3_sc_n}]
+set_property  PACKAGE_PIN E28 [get_ports {c1_ddr3_cs_n}]
 #bc1_eb1_DQ00_D0
 set_property  PACKAGE_PIN N24 [get_ports {c1_ddr3_dq[0]}]
 #bc1_eb1_DQ00_D1
@@ -535,7 +535,7 @@ set_property  PACKAGE_PIN G16 [get_ports {c2_ddr3_ck_n}]
 #bd1_eb1_CLK_200MHZn
 #set_property  PACKAGE_PIN E15 [get_ports {c2_sys_clk_n}]
 #bd1_eb1_20CSn
-set_property  PACKAGE_PIN D14 [get_ports {c2_ddr3_sc_n}]
+set_property  PACKAGE_PIN D14 [get_ports {c2_ddr3_cs_n}]
 #bd1_eb1_DQ00_D0
 set_property  PACKAGE_PIN N13 [get_ports {c2_ddr3_dq[0]}]
 #bd1_eb1_DQ00_D1
@@ -776,7 +776,7 @@ set_property  PACKAGE_PIN BC16 [get_ports {c3_ddr3_ck_n}]
 #td2_eb1_CLK_200MHZn
 #set_property  PACKAGE_PIN AU15 [get_ports {c3_sys_clk_n}]
 #td2_eb1_20CSn
-set_property  PACKAGE_PIN AY16 [get_ports {c3_ddr3_sc_n}]
+set_property  PACKAGE_PIN AY16 [get_ports {c3_ddr3_cs_n}]
 #td2_eb1_DQ00_D0
 set_property  PACKAGE_PIN BC21 [get_ports {c3_ddr3_dq[0]}]
 #td2_eb1_DQ00_D1

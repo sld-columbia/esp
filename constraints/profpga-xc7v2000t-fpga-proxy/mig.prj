@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
 <Project DDR2Count="0" DDR3Count="4" NoOfControllers="4" QDRIIPCount="0" RLDIICount="0">
 
   
@@ -64,7 +64,6 @@
     <MemoryVoltage>1.5V</MemoryVoltage>
     <UserMemoryAddressMap>BANK_ROW_COLUMN</UserMemoryAddressMap>
     <PinSelection>
-      <Pin IN_TERM="" IOSTANDARD="" PADName="AT37" SLEW="" VCCAUX_IO="" name="calib_complete"/>
       <Pin IN_TERM="" IOSTANDARD="" PADName="AN41" SLEW="" VCCAUX_IO="" name="ddr3_addr[0]"/>
       <Pin IN_TERM="" IOSTANDARD="" PADName="AP38" SLEW="" VCCAUX_IO="" name="ddr3_addr[10]"/>
       <Pin IN_TERM="" IOSTANDARD="" PADName="AN38" SLEW="" VCCAUX_IO="" name="ddr3_addr[11]"/>
@@ -180,7 +179,6 @@
       <Pin IN_TERM="" IOSTANDARD="" PADName="AR40" SLEW="" VCCAUX_IO="" name="ddr3_ras_n"/>
       <Pin IN_TERM="" IOSTANDARD="" PADName="BC37" SLEW="" VCCAUX_IO="" name="ddr3_reset_n"/>
       <Pin IN_TERM="" IOSTANDARD="" PADName="AR42" SLEW="" VCCAUX_IO="" name="ddr3_we_n"/>
-      <Pin IN_TERM="" IOSTANDARD="" PADName="AV34" SLEW="" VCCAUX_IO="" name="diagnostic_led"/>
     </PinSelection>
     <Reference_Clock>
       <Pin Bank="14" PADName="AD41/AE41(CC_P/N)" name="clk_ref_p/n"/>
@@ -533,7 +531,6 @@
       <Pin IN_TERM="" IOSTANDARD="" PADName="C14" SLEW="" VCCAUX_IO="" name="ddr3_ras_n"/>
       <Pin IN_TERM="" IOSTANDARD="" PADName="F10" SLEW="" VCCAUX_IO="" name="ddr3_reset_n"/>
       <Pin IN_TERM="" IOSTANDARD="" PADName="D15" SLEW="" VCCAUX_IO="" name="ddr3_we_n"/>
-      <Pin IN_TERM="" IOSTANDARD="" PADName="M14" SLEW="" VCCAUX_IO="" name="diagnostic_led"/>
     </PinSelection>
     <System_Clock>
       <Pin Bank="14" PADName="AE42/AF42(CC_P/N)" name="c2_sys_clk_p/n"/>
@@ -706,8 +703,6 @@
       <Pin IN_TERM="" IOSTANDARD="" PADName="AV16" SLEW="" VCCAUX_IO="" name="ddr3_ras_n"/>
       <Pin IN_TERM="" IOSTANDARD="" PADName="AP18" SLEW="" VCCAUX_IO="" name="ddr3_reset_n"/>
       <Pin IN_TERM="" IOSTANDARD="" PADName="AW16" SLEW="" VCCAUX_IO="" name="ddr3_we_n"/>
-      <Pin IN_TERM="" IOSTANDARD="" PADName="AJ15" SLEW="" VCCAUX_IO="" name="diagnostic_led"/>
-      <Pin IN_TERM="" IOSTANDARD="" PADName="AR15" SLEW="" VCCAUX_IO="" name="reset"/>
     </PinSelection>
     <System_Clock>
       <Pin Bank="15" PADName="AC39/AB39(CC_P/N)" name="c3_sys_clk_p/n"/>
