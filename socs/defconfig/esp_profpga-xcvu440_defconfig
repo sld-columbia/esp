@@ -25,4 +25,5 @@ CONFIG_VF_POINTS = 4
 POWER_0_0 = mem 0 0 0 0 0 0 0 0 0 0 0 0 
 POWER_0_1 = cpu 0 0 0 0 0 0 0 0 0 0 0 0 
 POWER_1_0 = IO 0 0 0 0 0 0 0 0 0 0 0 0 
-POWER_1_1 = empty 0 0 0 0 0 0 0 0 0 0 0 0 
+POWER_1_1 = empty 0 0 0 0 0 0 0 0 0 0 0 0
+#CONFIG_PRC = y

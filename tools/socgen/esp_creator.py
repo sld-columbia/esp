@@ -108,6 +108,21 @@ class CacheFrame(Frame):
     Label(cache_config_frame, text = "ACC L2 WAYS: ").grid(row=8, column=1)
     OptionMenu(cache_config_frame, soc.acc_l2_ways, *l2_ways_choices, command=main_frame.update_noc_config).grid(row=8, column=2)
 
+class PRCFrame(Frame):
+
+    def __init__(self, soc, top_frame, main_frame):
+        self.soc = soc
+        Frame.__init__(self, top_frame, width=80, borderwidth=2, relief=RIDGE)
+        self.pack(side=LEFT, expand=NO, fill=Y)
+        Label(self, text = "Partial-reconfiguration: ", font="TkDefaultFont 11 bold").pack(side = TOP)
+    
+        prc_config_frame = Frame(self)
+        prc_config_frame.pack(side=TOP)
+
+        Label(prc_config_frame, text = "Enable Partial-reconf: ", font="TkDefaultFont 9 bold").grid(row=1, column=1)
+        Checkbutton(prc_config_frame, text="", variable=soc.prc, 
+                onvalue = 1, offvalue = 0, command=main_frame.update_noc_config).grid(row=1, column=2)
+
 class CpuFrame(Frame):
 
   def __init__(self, soc, top_frame, main_frame):
@@ -200,6 +215,8 @@ class EspCreator(Frame):
     self.cpu_frame = CpuFrame(self.soc, self.top_frame, self)
     #.:: creating the cache frame
     self.cache_frame = CacheFrame(self.soc, self.top_frame, self)
+    #prc frame
+    self.prc_frame = PRCFrame(self.soc, self.top_frame, self)
 
     #noc frame
     self.bottom_frame_noccfg = NoCFrame(self.soc, self.bottom_frame) 

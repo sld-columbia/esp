@@ -448,7 +448,11 @@ def print_global_constants(fp, soc):
     fp.write("  constant CFG_CACHE_RTL   : integer := 1;\n")
   else:
     fp.write("  constant CFG_CACHE_RTL   : integer := 0;\n\n")
-
+  #prc config
+  if soc.prc.get() == 1:
+    fp.write("  constant CFG_PRC   : integer := 1;\n")
+  else:
+    fp.write("  constant CFG_PRC   : integer := 0;\n")
 
 def print_constants(fp, soc, esp_config):
   fp.write("  ------ NoC parameters\n")

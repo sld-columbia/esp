@@ -245,6 +245,10 @@ class SoC_Config():
             tile.energy_values.vf_points[vf].voltage = float(tokens[3 + vf * 3])
             tile.energy_values.vf_points[vf].frequency = float(tokens[3 + vf * 3 + 1])
             tile.energy_values.vf_points[vf].energy = float(tokens[3 + vf * 3 + 2])
+    #PRC configuration
+    line = fp.readline()
+    if line.find("CONFIG_PRC = y") != -1:
+        self.prc.set(1)
     return 0
 
   def write_config(self):
@@ -362,6 +366,11 @@ class SoC_Config():
           for vf in range(self.noc.vf_points):
             fp.write(str(tile.energy_values.vf_points[vf].voltage) + " " + str(tile.energy_values.vf_points[vf].frequency) + " " + str(tile.energy_values.vf_points[vf].energy) + " ")
           fp.write("\n")
+     #write prc config
+    if self.prc.get() == 1:
+        fp.write("CONFIG_PRC = y")
+    else:
+        fp.write("#CONFIG_PRC = y")
 
   def check_cfg(self, line, token, end):
     line = line[line.find(token)+len(token):]
@@ -420,6 +429,8 @@ class SoC_Config():
     self.cache_en = IntVar()
     self.cache_rtl = IntVar()
     self.cache_impl = StringVar()
+    # Partial-reconfiguration Ctrlr
+    self.prc = IntVar() 
     # Read configuration
     self.noc = ncfg.NoC()
     self.read_config(temporary)
