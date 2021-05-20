@@ -37,3 +37,12 @@ TILE_0_1 = 1 cpu cpu
 TILE_1_0 = 2 empty empty
 TILE_1_1 = 3 misc IO
 #CONFIG_HAS_DVFS is not set
+<<<<<<< HEAD
+=======
+CONFIG_VF_POINTS = 4
+POWER_0_0 = mem 0 0 0 0 0 0 0 0 0 0 0 0 
+POWER_0_1 = cpu 0 0 0 0 0 0 0 0 0 0 0 0 
+POWER_1_0 = empty 0 0 0 0 0 0 0 0 0 0 0 0 
+POWER_1_1 = IO 0 0 0 0 0 0 0 0 0 0 0 0
+#CONFIG_PRC = y
+>>>>>>> added auto option generation for prc

@@ -333,8 +333,12 @@ class SoC_Config():
                         tile.vendor = tokens[8]
         # DVFS (skip whether it has it or not; we know that already)
         line = fp.readline()
+        # PRC configuration
         line = fp.readline()
-        item = line.split()
+        if line.find("CONFIG_PRC = y") != -1:
+            self.prc.set(1)
+        else:
+            self.prc.set(0)
         return 0
 
     def write_config(self, dsu_ip, dsu_eth):
@@ -492,6 +496,12 @@ class SoC_Config():
         else:
             fp.write("#CONFIG_HAS_DVFS is not set\n")
 
+        #write prc config
+        if self.prc.get() == 1:
+            fp.write("CONFIG_PRC = y")
+        else:
+            fp.write("#CONFIG_PRC is not set")
+
     def check_cfg(self, line, token, end):
         line = line[line.find(token) + len(token):]
         line = line[:line.find(end)]
@@ -555,6 +565,8 @@ class SoC_Config():
         # Advanced Configuration
         self.clk_str = IntVar()
         self.sync_en = IntVar()
+        # PRC
+        self.prc = IntVar()
 
         # Define whether SGMII has to be used or not: it is not used for
         # ProFPGA boards

@@ -1374,6 +1374,7 @@ begin
     );
 
   -- PRC
+  generate_prc : if has_prc(CFG_FABTECH) = 1 and CFG_PRC = 1 generate
   prc_1: prc
     port map (
       clk                       => tile_clk,
@@ -1438,18 +1439,7 @@ begin
       icap_avail    => icap_avail,
       icap_prdone   => icap_prdone,
       icap_prerror  => icap_prerror);
-
---   icap3_inst : ICAPE3
---   port map (
---      AVAIL => icap_avail,
---      O     => icap_o,
-  --    PRDONE => icap_prdone, 
-    --  PRERROR => icap_prerror,
-     -- CLK  => icap_clk,      
-     -- CSIB => icap_csib,    
-     -- I => icap_i,    
-      --RDWRB => icap_rdwrb     
-   --);
+ end generate generate_prc;
 
   axi2noc_1: axislv2noc
     generic map (

@@ -695,6 +695,12 @@ def print_constants(fp, soc, esp_config):
     else:
         fp.write("  constant CFG_HAS_DVFS : integer := 0;\n\n")
 
+    # Partial reconfiguration enable
+    if soc.prc.get() == 1:
+        fp.write("  constant CFG_PRC   : integer := 1;\n")
+    else:
+        fp.write("  constant CFG_PRC   : integer := 0;\n")
+
     #
     fp.write("  ------ Synthesis options\n")
     fp.write("  constant CFG_SCAN : integer := 0;\n\n")

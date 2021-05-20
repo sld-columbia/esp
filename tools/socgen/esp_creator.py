@@ -23,7 +23,6 @@ from soc import *
 from socmap_gen import *
 from mmi64_gen import *
 
-
 def print_usage():
     print("Usage                    : ./esp_creator.py <arch_bits> <tech_type> <tech> <linux_mac> <leon3_stack> <fpga_board> <emu_tech> <emu_freq>")
     print("")
@@ -38,9 +37,22 @@ def print_usage():
     print("      <emu_freq>         : Ethernet MDC scaler override for FPGA emulation of ASIC design")
     print("")
 
+class PRCFrame(Frame):
+
+    def __init__(self, soc, top_frame, main_frame):
+        self.soc = soc
+        Frame.__init__(self, top_frame, width=80, borderwidth=2, relief=RIDGE)
+        self.pack(side=LEFT, expand=NO, fill=Y)
+        Label(self, text = "Partial-reconfiguration: ", font="TkDefaultFont 11 bold").pack(side = TOP)
+
+        prc_config_frame = Frame(self)
+        prc_config_frame.pack(side=TOP)
+
+        Label(prc_config_frame, text = "Enable Partial-reconf: ", font="TkDefaultFont 9 bold").grid(row=1, column=1)
+        Checkbutton(prc_config_frame, text="", variable=soc.prc,
+                onvalue = 1, offvalue = 0, command=main_frame.update_noc_config).grid(row=1, column=2)
+
 # Configuration Frame (top-left)
-
-
 class ConfigFrame(Frame):
 
     def __init__(self, soc, top_frame):
@@ -671,6 +683,8 @@ class EspCreator(Frame):
         # .:: creating the advanced configuration frame
         self.advanced_config_frame = AdvancedFrame(
             self.soc, self.top_frame, self)
+        # .:: creating the PRC frame
+        self.prc_frame = PRCFrame(self.soc, self.top_frame, self)
 
         # noc frame
         self.bottom_frame_noccfg = NoCFrame(self.soc, self.bottom_frame)
