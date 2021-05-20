@@ -603,6 +603,44 @@ class AdvancedConfigFrame:
             self.clk_value.pack(anchor="center", padx=3, pady=3)
 
 
+class PRCFrame(Frame):
+
+    def __init__(self, soc, left_panel, main_frame):
+        self.soc = soc
+        self.left_panel = left_panel
+        self.main_frame = main_frame
+
+        if soc.TECH_TYPE == "asic" or soc.TECH == "inferred" or soc.ESP_EMU_TECH != "none":
+            return
+
+        self.adv_frame = ctk.CTkFrame(self.left_panel, fg_color="#ebebeb")
+        self.adv_frame.pack(padx=(8, 3), pady=(10, 20), fill="x")
+        self.title_label = StyledComponents.Header(
+            self.adv_frame, "Partial Reconfiguration", 0, 0)
+        # self.title_label.grid(row=0, column=0, columnspan=2, pady=10)
+
+        self.prc_value_frame = ctk.CTkFrame(self.adv_frame)
+        self.prc_value_frame.grid(row=1, column=1, pady=5, padx=20)
+        self.enable_prc_cb = ctk.CTkCheckBox(
+            self.prc_value_frame,
+            variable=self.soc.prc,
+            text="Enable Partial Reconfiguration",
+            fg_color="green",
+            border_color="grey",
+            width=0,
+            corner_radius=0,
+            checkbox_width=18,
+            checkbox_height=18,
+            onvalue=1,
+            offvalue=0,
+            font=(
+                "Arial",
+                10),
+            hover=False,
+            command=main_frame.update_noc_config)
+        self.enable_prc_cb.pack(anchor="center", padx=3, pady=3)
+
+
 class EspCreator:
     def __init__(self, root, _soc):
         self.soc = _soc
@@ -672,6 +710,8 @@ class EspCreator:
             self.soc, self.left_panel)
         self.debug_link_config_frame.update_frame()
         self.adv_config_frame = AdvancedConfigFrame(
+            self.soc, self.left_panel, self)
+        self.prc_frame = PRCFrame(
             self.soc, self.left_panel, self)
         self.caches_config_frame = CachesConfigFrame(
             self.soc, self.left_panel, self)
