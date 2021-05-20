@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+﻿<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
 <Project DDR2Count="0" DDR3Count="4" NoOfControllers="4" QDRIIPCount="0" RLDIICount="0">
 
   
@@ -38,7 +38,7 @@
   <dci_cascade>1</dci_cascade>
 
   <Controller number="0">
-    <MemoryDevice>DDR3_SDRAM/Components/MT41J128M16XX-125</MemoryDevice>
+    <MemoryDevice>DDR3_SDRAM/Components/MT41J256m16XX-125</MemoryDevice>
     <TimePeriod>2500</TimePeriod>
     <VccAuxIO>1.8V</VccAuxIO>
     <PHYRatio>4:1</PHYRatio>
@@ -58,12 +58,13 @@
     <BankMachineCnt>4</BankMachineCnt>
     <CustomPart>FALSE</CustomPart>
     <NewPartName/>
-    <RowAddress>14</RowAddress>
+    <RowAddress>15</RowAddress>
     <ColAddress>10</ColAddress>
     <BankAddress>3</BankAddress>
     <MemoryVoltage>1.5V</MemoryVoltage>
     <UserMemoryAddressMap>BANK_ROW_COLUMN</UserMemoryAddressMap>
     <PinSelection>
+      <Pin IN_TERM="" IOSTANDARD="" PADName="AT37" SLEW="" VCCAUX_IO="" name="calib_complete"/>
       <Pin IN_TERM="" IOSTANDARD="" PADName="AN41" SLEW="" VCCAUX_IO="" name="ddr3_addr[0]"/>
       <Pin IN_TERM="" IOSTANDARD="" PADName="AP38" SLEW="" VCCAUX_IO="" name="ddr3_addr[10]"/>
       <Pin IN_TERM="" IOSTANDARD="" PADName="AN38" SLEW="" VCCAUX_IO="" name="ddr3_addr[11]"/>
@@ -179,6 +180,7 @@
       <Pin IN_TERM="" IOSTANDARD="" PADName="AR40" SLEW="" VCCAUX_IO="" name="ddr3_ras_n"/>
       <Pin IN_TERM="" IOSTANDARD="" PADName="BC37" SLEW="" VCCAUX_IO="" name="ddr3_reset_n"/>
       <Pin IN_TERM="" IOSTANDARD="" PADName="AR42" SLEW="" VCCAUX_IO="" name="ddr3_we_n"/>
+      <Pin IN_TERM="" IOSTANDARD="" PADName="AV34" SLEW="" VCCAUX_IO="" name="diagnostic_led"/>
     </PinSelection>
     <Reference_Clock>
       <Pin Bank="14" PADName="AD41/AE41(CC_P/N)" name="clk_ref_p/n"/>
@@ -192,7 +194,7 @@
       <Pin Bank="Select Bank" PADName="No connect" name="tg_compare_error"/>
     </System_Control>
     <TimingParameters>
-      <Parameters tcke="5" tfaw="40" tras="35" trcd="13.75" trefi="7.8" trfc="160" trp="13.75" trrd="7.5" trtp="7.5" twtr="7.5"/>
+      <Parameters tcke="5" tfaw="40" tras="35" trcd="13.75" trefi="7.8" trfc="260" trp="13.75" trrd="7.5" trtp="7.5" twtr="7.5"/>
     </TimingParameters>
     <mrBurstLength name="Burst Length">8 - Fixed</mrBurstLength>
     <mrBurstType name="Read Burst Type and Length">Sequential</mrBurstType>
@@ -218,7 +220,7 @@
   </Controller>
 
   <Controller number="1">
-    <MemoryDevice>DDR3_SDRAM/Components/MT41J128M16XX-125</MemoryDevice>
+    <MemoryDevice>DDR3_SDRAM/Components/MT41J256m16XX-125</MemoryDevice>
     <TimePeriod>2500</TimePeriod>
     <VccAuxIO>1.8V</VccAuxIO>
     <PHYRatio>4:1</PHYRatio>
@@ -238,7 +240,7 @@
     <BankMachineCnt>4</BankMachineCnt>
     <CustomPart>FALSE</CustomPart>
     <NewPartName/>
-    <RowAddress>14</RowAddress>
+    <RowAddress>15</RowAddress>
     <ColAddress>10</ColAddress>
     <BankAddress>3</BankAddress>
     <MemoryVoltage>1.5V</MemoryVoltage>
@@ -364,7 +366,7 @@
       <Pin Bank="14" PADName="AF39/AG40(CC_P/N)" name="c1_sys_clk_p/n"/>
     </System_Clock>
     <TimingParameters>
-      <Parameters tcke="5" tfaw="40" tras="35" trcd="13.75" trefi="7.8" trfc="160" trp="13.75" trrd="7.5" trtp="7.5" twtr="7.5"/>
+      <Parameters tcke="5" tfaw="40" tras="35" trcd="13.75" trefi="7.8" trfc="260" trp="13.75" trrd="7.5" trtp="7.5" twtr="7.5"/>
     </TimingParameters>
     <mrBurstLength name="Burst Length">8 - Fixed</mrBurstLength>
     <mrBurstType name="Read Burst Type and Length">Sequential</mrBurstType>
@@ -390,7 +392,7 @@
   </Controller>
 
   <Controller number="2">
-    <MemoryDevice>DDR3_SDRAM/Components/MT41J128M16XX-125</MemoryDevice>
+    <MemoryDevice>DDR3_SDRAM/Components/MT41J256m16XX-125</MemoryDevice>
     <TimePeriod>2500</TimePeriod>
     <VccAuxIO>1.8V</VccAuxIO>
     <PHYRatio>4:1</PHYRatio>
@@ -410,7 +412,7 @@
     <BankMachineCnt>4</BankMachineCnt>
     <CustomPart>FALSE</CustomPart>
     <NewPartName/>
-    <RowAddress>14</RowAddress>
+    <RowAddress>15</RowAddress>
     <ColAddress>10</ColAddress>
     <BankAddress>3</BankAddress>
     <MemoryVoltage>1.5V</MemoryVoltage>
@@ -531,12 +533,13 @@
       <Pin IN_TERM="" IOSTANDARD="" PADName="C14" SLEW="" VCCAUX_IO="" name="ddr3_ras_n"/>
       <Pin IN_TERM="" IOSTANDARD="" PADName="F10" SLEW="" VCCAUX_IO="" name="ddr3_reset_n"/>
       <Pin IN_TERM="" IOSTANDARD="" PADName="D15" SLEW="" VCCAUX_IO="" name="ddr3_we_n"/>
+      <Pin IN_TERM="" IOSTANDARD="" PADName="M14" SLEW="" VCCAUX_IO="" name="diagnostic_led"/>
     </PinSelection>
     <System_Clock>
       <Pin Bank="14" PADName="AE42/AF42(CC_P/N)" name="c2_sys_clk_p/n"/>
     </System_Clock>
     <TimingParameters>
-      <Parameters tcke="5" tfaw="40" tras="35" trcd="13.75" trefi="7.8" trfc="160" trp="13.75" trrd="7.5" trtp="7.5" twtr="7.5"/>
+      <Parameters tcke="5" tfaw="40" tras="35" trcd="13.75" trefi="7.8" trfc="260" trp="13.75" trrd="7.5" trtp="7.5" twtr="7.5"/>
     </TimingParameters>
     <mrBurstLength name="Burst Length">8 - Fixed</mrBurstLength>
     <mrBurstType name="Read Burst Type and Length">Sequential</mrBurstType>
@@ -562,7 +565,7 @@
   </Controller>
 
   <Controller number="3">
-    <MemoryDevice>DDR3_SDRAM/Components/MT41J128M16XX-125</MemoryDevice>
+    <MemoryDevice>DDR3_SDRAM/Components/MT41J256m16XX-125</MemoryDevice>
     <TimePeriod>2500</TimePeriod>
     <VccAuxIO>1.8V</VccAuxIO>
     <PHYRatio>4:1</PHYRatio>
@@ -582,7 +585,7 @@
     <BankMachineCnt>4</BankMachineCnt>
     <CustomPart>FALSE</CustomPart>
     <NewPartName/>
-    <RowAddress>14</RowAddress>
+    <RowAddress>15</RowAddress>
     <ColAddress>10</ColAddress>
     <BankAddress>3</BankAddress>
     <MemoryVoltage>1.5V</MemoryVoltage>
@@ -703,12 +706,14 @@
       <Pin IN_TERM="" IOSTANDARD="" PADName="AV16" SLEW="" VCCAUX_IO="" name="ddr3_ras_n"/>
       <Pin IN_TERM="" IOSTANDARD="" PADName="AP18" SLEW="" VCCAUX_IO="" name="ddr3_reset_n"/>
       <Pin IN_TERM="" IOSTANDARD="" PADName="AW16" SLEW="" VCCAUX_IO="" name="ddr3_we_n"/>
+      <Pin IN_TERM="" IOSTANDARD="" PADName="AJ15" SLEW="" VCCAUX_IO="" name="diagnostic_led"/>
+      <Pin IN_TERM="" IOSTANDARD="" PADName="AR15" SLEW="" VCCAUX_IO="" name="reset"/>
     </PinSelection>
     <System_Clock>
-      <Pin Bank="32" PADName="AC39/AB39(CC_P/N)" name="c3_sys_clk_p/n"/>
+      <Pin Bank="15" PADName="AC39/AB39(CC_P/N)" name="c3_sys_clk_p/n"/>
     </System_Clock>
     <TimingParameters>
-      <Parameters tcke="5" tfaw="40" tras="35" trcd="13.75" trefi="7.8" trfc="160" trp="13.75" trrd="7.5" trtp="7.5" twtr="7.5"/>
+      <Parameters tcke="5" tfaw="40" tras="35" trcd="13.75" trefi="7.8" trfc="260" trp="13.75" trrd="7.5" trtp="7.5" twtr="7.5"/>
     </TimingParameters>
     <mrBurstLength name="Burst Length">8 - Fixed</mrBurstLength>
     <mrBurstType name="Read Burst Type and Length">Sequential</mrBurstType>

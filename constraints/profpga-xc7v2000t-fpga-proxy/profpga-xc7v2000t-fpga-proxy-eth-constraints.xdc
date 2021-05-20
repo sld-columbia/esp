@@ -24,17 +24,22 @@ set_max_delay -from [get_clocks erx_clk] -to [get_clocks -include_generated_cloc
 
 # Other domains
 set main_clk_elab [get_clocks -of_objects [get_nets main_clk]]
-for {set i 0} {$i<4} {incr i} {
-set sys_clk_elab(${i}) [get_clocks -of_objects [get_nets sys_clk[${i}]]
-}
+set sys_clk_elab0 [get_clocks -of_objects [get_nets sys_clk[0]]]
+set sys_clk_elab1 [get_clocks -of_objects [get_nets sys_clk[1]]]
+set sys_clk_elab2 [get_clocks -of_objects [get_nets sys_clk[2]]]
+set sys_clk_elab3 [get_clocks -of_objects [get_nets sys_clk[3]]]
 
 set_clock_groups -asynchronous -group [get_clocks erx_clk] -group [get_clocks $main_clk_elab]
 
-foreach clk [array names sys_clk_elab] {
-    set_clock_groups -asynchronous -group [get_clocks erx_clk] -group [get_clocks $clk]
-    set_clock_groups -asynchronous -group [get_clocks etx_clk] -group [get_clocks $clk]
-}
+set_clock_groups -asynchronous -group [get_clocks erx_clk] -group [get_clocks $sys_clk_elab0]
+set_clock_groups -asynchronous -group [get_clocks etx_clk] -group [get_clocks $sys_clk_elab0]
+set_clock_groups -asynchronous -group [get_clocks erx_clk] -group [get_clocks $sys_clk_elab1]
+set_clock_groups -asynchronous -group [get_clocks etx_clk] -group [get_clocks $sys_clk_elab1]
+set_clock_groups -asynchronous -group [get_clocks erx_clk] -group [get_clocks $sys_clk_elab2]
+set_clock_groups -asynchronous -group [get_clocks etx_clk] -group [get_clocks $sys_clk_elab2]
+set_clock_groups -asynchronous -group [get_clocks erx_clk] -group [get_clocks $sys_clk_elab3]
+set_clock_groups -asynchronous -group [get_clocks etx_clk] -group [get_clocks $sys_clk_elab3]
 
 set_clock_groups -asynchronous -group [get_clocks etx_clk] -group [get_clocks $main_clk_elab]
 set_clock_groups -asynchronous -group [get_clocks etx_clk] -group [get_clocks {c0_* c1_* c2_* c3_*}]
-set_clock_groups -asynchronous -group [get_clocks etx_clk] -group [get_clocks oserdes*]
+#set_clock_groups -asynchronous -group [get_clocks etx_clk] -group [get_clocks oserdes*]

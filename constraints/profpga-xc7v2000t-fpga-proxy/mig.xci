@@ -1179,7 +1179,7 @@
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.C0_DDR2_USE_ODT_PORT">1</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.C0_DDR2_nCK_PER_CLK">2</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.C0_DDR2_nCS_PER_RANK">1</spirit:configurableElementValue>
-        <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.C0_DDR3_ADDR_WIDTH">28</spirit:configurableElementValue>
+        <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.C0_DDR3_ADDR_WIDTH">29</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.C0_DDR3_BANK_WIDTH">3</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.C0_DDR3_CKE_WIDTH">1</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.C0_DDR3_CK_WIDTH">1</spirit:configurableElementValue>
@@ -1192,7 +1192,7 @@
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.C0_DDR3_DQ_WIDTH">64</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.C0_DDR3_ODT_WIDTH">1</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.C0_DDR3_REG_CTRL">OFF</spirit:configurableElementValue>
-        <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.C0_DDR3_ROW_WIDTH">14</spirit:configurableElementValue>
+        <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.C0_DDR3_ROW_WIDTH">15</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.C0_DDR3_USE_CS_PORT">1</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.C0_DDR3_USE_DM_PORT">1</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.C0_DDR3_USE_ODT_PORT">1</spirit:configurableElementValue>
@@ -1306,7 +1306,7 @@
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.C1_DDR2_USE_ODT_PORT">1</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.C1_DDR2_nCK_PER_CLK">2</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.C1_DDR2_nCS_PER_RANK">1</spirit:configurableElementValue>
-        <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.C1_DDR3_ADDR_WIDTH">28</spirit:configurableElementValue>
+        <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.C1_DDR3_ADDR_WIDTH">29</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.C1_DDR3_BANK_WIDTH">3</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.C1_DDR3_CKE_WIDTH">1</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.C1_DDR3_CK_WIDTH">1</spirit:configurableElementValue>
@@ -1319,7 +1319,7 @@
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.C1_DDR3_DQ_WIDTH">64</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.C1_DDR3_ODT_WIDTH">1</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.C1_DDR3_REG_CTRL">OFF</spirit:configurableElementValue>
-        <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.C1_DDR3_ROW_WIDTH">14</spirit:configurableElementValue>
+        <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.C1_DDR3_ROW_WIDTH">15</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.C1_DDR3_USE_CS_PORT">1</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.C1_DDR3_USE_DM_PORT">1</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.C1_DDR3_USE_ODT_PORT">1</spirit:configurableElementValue>
@@ -1433,7 +1433,7 @@
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.C2_DDR2_USE_ODT_PORT">1</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.C2_DDR2_nCK_PER_CLK">2</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.C2_DDR2_nCS_PER_RANK">1</spirit:configurableElementValue>
-        <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.C2_DDR3_ADDR_WIDTH">28</spirit:configurableElementValue>
+        <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.C2_DDR3_ADDR_WIDTH">29</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.C2_DDR3_BANK_WIDTH">3</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.C2_DDR3_CKE_WIDTH">1</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.C2_DDR3_CK_WIDTH">1</spirit:configurableElementValue>
@@ -1446,7 +1446,7 @@
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.C2_DDR3_DQ_WIDTH">64</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.C2_DDR3_ODT_WIDTH">1</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.C2_DDR3_REG_CTRL">OFF</spirit:configurableElementValue>
-        <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.C2_DDR3_ROW_WIDTH">14</spirit:configurableElementValue>
+        <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.C2_DDR3_ROW_WIDTH">15</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.C2_DDR3_USE_CS_PORT">1</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.C2_DDR3_USE_DM_PORT">1</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.C2_DDR3_USE_ODT_PORT">1</spirit:configurableElementValue>
@@ -1560,7 +1560,7 @@
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.C3_DDR2_USE_ODT_PORT">1</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.C3_DDR2_nCK_PER_CLK">2</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.C3_DDR2_nCS_PER_RANK">1</spirit:configurableElementValue>
-        <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.C3_DDR3_ADDR_WIDTH">28</spirit:configurableElementValue>
+        <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.C3_DDR3_ADDR_WIDTH">29</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.C3_DDR3_BANK_WIDTH">3</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.C3_DDR3_CKE_WIDTH">1</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.C3_DDR3_CK_WIDTH">1</spirit:configurableElementValue>
@@ -1573,7 +1573,7 @@
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.C3_DDR3_DQ_WIDTH">64</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.C3_DDR3_ODT_WIDTH">1</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.C3_DDR3_REG_CTRL">OFF</spirit:configurableElementValue>
-        <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.C3_DDR3_ROW_WIDTH">14</spirit:configurableElementValue>
+        <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.C3_DDR3_ROW_WIDTH">15</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.C3_DDR3_USE_CS_PORT">1</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.C3_DDR3_USE_DM_PORT">1</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.C3_DDR3_USE_ODT_PORT">1</spirit:configurableElementValue>

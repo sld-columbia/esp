@@ -54,34 +54,15 @@ set_property VCCAUX_IO DONTCARE [get_ports {main_clk_n}]
 set_property IOSTANDARD LVDS [get_ports {main_clk_n}]
 set_property PACKAGE_PIN AA39 [get_ports {main_clk_n}]
 
-# {CLK_P_2}
+# {CLK_P_1}
 set_property VCCAUX_IO DONTCARE [get_ports {clk_ref_p}]
 set_property IOSTANDARD LVDS [get_ports {clk_ref_p}]
-set_property PACKAGE_PIN AA38 [get_ports {clk_ref_p}]
+set_property PACKAGE_PIN AD41 [get_ports {clk_ref_p}]
 
-# {CLK_N_2}
+# {CLK_N_1}
 set_property VCCAUX_IO DONTCARE [get_ports {clk_ref_n}]
 set_property IOSTANDARD LVDS [get_ports {clk_ref_n}]
-set_property PACKAGE_PIN AA39 [get_ports {clk_ref_n}]
-
-
-#-----------------------------------------------------------
-#              UART                                        -
-#-----------------------------------------------------------
-
-# {eb_ba2_1_USB2UART_PVIO_A3_NCTS}
-set_property PACKAGE_PIN N33 [get_ports uart_rtsn]
-
-# {eb_ba2_1_USB2UART_PVIO_A2_NRTS}
-set_property PACKAGE_PIN L29 [get_ports uart_ctsn]
-
-# {eb_ba2_1_USB2UART_PVIO_A1_RXD}
-set_property PACKAGE_PIN L30 [get_ports uart_txd]
-
-# {eb_ba2_1_USB2UART_PVIO_A0_TXD}
-set_property PACKAGE_PIN L32 [get_ports uart_rxd]
-
-set_property IOSTANDARD LVCMOS18 [get_ports {uart_*}]
+set_property PACKAGE_PIN AE41 [get_ports {clk_ref_n}]
 
 #-----------------------------------------------------------
 #              LEDs                                        -
@@ -169,23 +150,34 @@ set_property CLOCK_DEDICATED_ROUTE BACKBONE [get_nets c0_sys_clk_p]
 set_property CLOCK_DEDICATED_ROUTE BACKBONE [get_nets c1_sys_clk_p]
 set_property CLOCK_DEDICATED_ROUTE BACKBONE [get_nets c2_sys_clk_p]
 set_property CLOCK_DEDICATED_ROUTE BACKBONE [get_nets c3_sys_clk_p]
-set_property CLOCK_DEDICATED_ROUTE BACKBONE [get_pins -hierarchical *pll*CLKIN1]
+#set_property CLOCK_DEDICATED_ROUTE FALSE [get_nets eth0_inpads.etxc_pad/xcv2.u0/ol]
+#set_property CLOCK_DEDICATED_ROUTE BACKBONE [get_pins -hierarchical *pll*CLKIN1]
 
 # Recover elaborated clock name
 set main_clk_elab [get_clocks -of_objects [get_nets main_clk]]
-for {set i 0} {$i<4} {incr i} {
-set sys_clk_elab(${i}) [get_clocks -of_objects [get_nets sys_clk[${i}]]
-}
+et_property CLOCK_DEDICATED_ROUTE BACKBONE
+set sys_clk_elab0 [get_clocks -of_objects [get_nets sys_clk[0]]]
+set sys_clk_elab1 [get_clocks -of_objects [get_nets sys_clk[1]]]
+set sys_clk_elab2 [get_clocks -of_objects [get_nets sys_clk[2]]]
+set sys_clk_elab3 [get_clocks -of_objects [get_nets sys_clk[3]]]
 
 # Both memory controllers impose their user clock. Make them asynchronous
-set_clock_groups -asynchronous -group [get_clocks clk_ref_p] -group [get_clocks $refclk_elab]
-foreach {set i 0} {$i<4} {incr i} {
-    set_clock_groups -asynchronous -group [get_clocks clk_ref_p] -group [get_clocks $sys_clk_elab(${i})]
-    set_clock_groups -asynchronous -group [get_clocks $sys_clk_elab(${i})] -group [get_clocks $refclk_elab]
-    foreach {set j $i} {$j<4} {incr j} {
-        set_clock_groups -asynchronous -group [get_clocks $sys_clk_elab(${i})] -group [get_clocks $sys_clk_elab(${j})]
-    }
-}
+set_clock_groups -asynchronous -group [get_clocks clk_ref_p] -group [get_clocks $main_clk_elab]
+set_clock_groups -asynchronous -group [get_clocks clk_ref_p] -group [get_clocks $sys_clk_elab0})]
+set_clock_groups -asynchronous -group [get_clocks $sys_clk_elab0] -group [get_clocks $main_clk_elab]
+set_clock_groups -asynchronous -group [get_clocks clk_ref_p] -group [get_clocks $sys_clk_elab1})]
+set_clock_groups -asynchronous -group [get_clocks $sys_clk_elab1] -group [get_clocks $main_clk_elab]
+set_clock_groups -asynchronous -group [get_clocks clk_ref_p] -group [get_clocks $sys_clk_elab2})]
+set_clock_groups -asynchronous -group [get_clocks $sys_clk_elab2] -group [get_clocks $main_clk_elab]
+set_clock_groups -asynchronous -group [get_clocks clk_ref_p] -group [get_clocks $sys_clk_elab3})]
+set_clock_groups -asynchronous -group [get_clocks $sys_clk_elab3] -group [get_clocks $main_clk_elab]
+
+set_clock_groups -asynchronous -group [get_clocks $sys_clk_elab0] -group [get_clocks $sys_clk_elab1]
+set_clock_groups -asynchronous -group [get_clocks $sys_clk_elab0] -group [get_clocks $sys_clk_elab2]
+set_clock_groups -asynchronous -group [get_clocks $sys_clk_elab0] -group [get_clocks $sys_clk_elab3]
+set_clock_groups -asynchronous -group [get_clocks $sys_clk_elab1] -group [get_clocks $sys_clk_elab2]
+set_clock_groups -asynchronous -group [get_clocks $sys_clk_elab1] -group [get_clocks $sys_clk_elab3]
+set_clock_groups -asynchronous -group [get_clocks $sys_clk_elab2] -group [get_clocks $sys_clk_elab3]
 
 #-----------------------------------------------------------
 #              False Paths                                 -
