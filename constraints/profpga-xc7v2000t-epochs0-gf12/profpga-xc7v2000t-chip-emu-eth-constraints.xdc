@@ -24,21 +24,12 @@ set_max_delay -from [get_clocks erx_clk] -to [get_clocks -include_generated_cloc
 
 # Other domains
 
-#TODO
+# Recover elaborated clock name
+set clk_emu_elab [get_clocks -of_objects [get_nets clk_emu_p]]
 
-set clkm_elab [get_clocks -of_objects [get_nets clkm]]
-set clkm2_elab [get_clocks -of_objects [get_nets clkm_2]]
-set refclk_elab [get_clocks -of_objects [get_nets chip_refclk]]
+set_clock_groups -asynchronous -group [get_clocks erx_clk] -group [get_clocks $clk_emu_elab]
 
-set_clock_groups -asynchronous -group [get_clocks erx_clk] -group [get_clocks $clkm_elab]
-set_clock_groups -asynchronous -group [get_clocks erx_clk] -group [get_clocks $clkm2_elab]
-set_clock_groups -asynchronous -group [get_clocks erx_clk] -group [get_clocks $refclk_elab]
-
-set_clock_groups -asynchronous -group [get_clocks etx_clk] -group [get_clocks $clkm_elab]
-set_clock_groups -asynchronous -group [get_clocks etx_clk] -group [get_clocks $clkm2_elab]
-set_clock_groups -asynchronous -group [get_clocks etx_clk] -group [get_clocks $refclk_elab]
-set_clock_groups -asynchronous -group [get_clocks etx_clk] -group [get_clocks {*_dmbi* *_mmi64}]
-set_clock_groups -asynchronous -group [get_clocks etx_clk] -group [get_clocks {c0_* c1_*}]
+set_clock_groups -asynchronous -group [get_clocks etx_clk] -group [get_clocks $clk_emu_elab]
 set_clock_groups -asynchronous -group [get_clocks etx_clk] -group [get_clocks oserdes*]
 
 

@@ -563,11 +563,11 @@ set_property PACKAGE_PIN AJ25 [get_ports {fpga_data[123]}]
 set_property PACKAGE_PIN AK26 [get_ports {fpga_data[118]}]
 #mb1_TC2_IO_131_mb1_TA4_IO_121_P_60
 set_property PACKAGE_PIN AJ26 [get_ports {fpga_data[119]}]
-#mb1_TD1_CLKIO_P_0_mb1_TB3_CLKIO_P_7
-set_property PACKAGE_PIN D4 [get_ports {ext_clk_noc}]
 
 # pins which are connected to motherboard connector TB3
 # and connector BA1 on x-board IC-PDS-CABLE-R1
+#mb1_TD1_CLKIO_P_0_mb1_TB3_CLKIO_P_7
+set_property PACKAGE_PIN D4 [get_ports {ext_clk_noc}]
 #mb1_TD1_CLKIO_P_1_mb1_TB3_CLKIO_P_6
 set_property PACKAGE_PIN E5 [get_ports {ext_clk_io}]
 #mb1_TD1_CLKIO_P_2_mb1_TB3_CLKIO_P_4
@@ -648,3 +648,12 @@ set_property PACKAGE_PIN U2 [get_ports {tdi[15]}]
 set_property PACKAGE_PIN V7 [get_ports {tdo[15]}]
 #mb1_TD1_IO_037_P_18_mb1_TB3_IO_035_P_17
 set_property PACKAGE_PIN V8 [get_ports {chip_reset}]
+
+# IO Standards
+set_property IOSTANDARD LVCMOS18 [get_ports {fpga_*}]
+set_property IOSTANDARD LVCMOS18 [get_ports {ext_clk_*}]
+set_property IOSTANDARD LVCMOS18 [get_ports {tclk}]
+set_property IOSTANDARD LVCMOS18 [get_ports {tms}]
+set_property IOSTANDARD LVCMOS18 [get_ports {tdi[*]}]
+set_property IOSTANDARD LVCMOS18 [get_ports {tdo[*]}]
+set_property IOSTANDARD LVCMOS18 [get_ports {chip_reset}]

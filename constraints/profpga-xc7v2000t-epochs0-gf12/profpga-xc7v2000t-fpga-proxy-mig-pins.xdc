@@ -229,10 +229,6 @@ set_property  PACKAGE_PIN BA34 [get_ports {c0_ddr3_dm[7]}]
 set_property  PACKAGE_PIN BD35 [get_ports {c0_ddr3_dqs_p[7]}]
 #bc2_eb1_DQ07_DQSn
 set_property  PACKAGE_PIN BD36 [get_ports {c0_ddr3_dqs_n[7]}]
-#bc2_eb1_LED01
-set_property  PACKAGE_PIN AT37 [get_ports {c0_calib_complete}]
-#bc2_eb1_LED02
-set_property  PACKAGE_PIN AV34 [get_ports {c0_diagnostic_led}]
 #bc2_eb1_ODT
 set_property  PACKAGE_PIN AV41 [get_ports {c0_ddr3_odt}]
 #bc2_eb1_RASn
@@ -470,10 +466,6 @@ set_property  PACKAGE_PIN L23 [get_ports {c1_ddr3_dm[7]}]
 set_property  PACKAGE_PIN M24 [get_ports {c1_ddr3_dqs_p[7]}]
 #bc1_eb1_DQ07_DQSn
 set_property  PACKAGE_PIN L24 [get_ports {c1_ddr3_dqs_n[7]}]
-#bc1_eb1_LED01
-set_property  PACKAGE_PIN M27 [get_ports {c1_calib_complete}]
-#bc1_eb1_LED02
-set_property  PACKAGE_PIN K27 [get_ports {c1_diagnostic_led}]
 #bc1_eb1_ODT
 set_property  PACKAGE_PIN C26 [get_ports {c1_ddr3_odt}]
 #bc1_eb1_RASn
@@ -712,10 +704,6 @@ set_property  PACKAGE_PIN P19 [get_ports {c2_ddr3_dm[7]}]
 set_property  PACKAGE_PIN T20 [get_ports {c2_ddr3_dqs_p[7]}]
 #bd1_eb1_DQ07_DQSn
 set_property  PACKAGE_PIN T19 [get_ports {c2_ddr3_dqs_n[7]}]
-#bd1_eb1_LED01
-set_property  PACKAGE_PIN R16 [get_ports {c2_calib_complete}]
-#bd1_eb1_LED02
-set_property  PACKAGE_PIN M14 [get_ports {c2_diagnostic_led}]
 #bd1_eb1_ODT
 set_property  PACKAGE_PIN E17 [get_ports {c2_ddr3_odt}]
 #bd1_eb1_RASn
@@ -953,17 +941,11 @@ set_property  PACKAGE_PIN BA10 [get_ports {c3_ddr3_dm[7]}]
 set_property  PACKAGE_PIN AY12 [get_ports {c3_ddr3_dqs_p[7]}]
 #td2_eb1_DQ07_DQSn
 set_property  PACKAGE_PIN BA12 [get_ports {c3_ddr3_dqs_n[7]}]
-#td2_eb1_LED01
-set_property  PACKAGE_PIN AM17 [get_ports {c3_calib_complete}]
-#td2_eb1_LED02
-set_property  PACKAGE_PIN AJ15 [get_ports {c3_diagnostic_led}]
 #td2_eb1_ODT
 set_property  PACKAGE_PIN AP15 [get_ports {c3_ddr3_odt}]
 #td2_eb1_RASn
 set_property  PACKAGE_PIN AV16 [get_ports {c3_ddr3_ras_n}]
 #td2_eb1_RESETn
 set_property  PACKAGE_PIN AP18 [get_ports {c3_ddr3_reset_n}]
-#td2_eb1_SW
-set_property  PACKAGE_PIN AR15 [get_ports {reset}]
 #td2_eb1_WEn
 set_property  PACKAGE_PIN AW16 [get_ports {c3_ddr3_we_n}]
