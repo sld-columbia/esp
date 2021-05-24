@@ -50,8 +50,10 @@ NTILE_MAX = 256
 # 8-23 - Processors' private cache controller (must change with NCPU_MAX)
 # 24-39 - LLC cache controller (must change with NMEM_MAX)
 # 40-295 - Distributed monitors (equal to the number of tiles NTILE_MAX)
+# 127 - PRC
 # 296-(NAPBS-1) - Accelerators
 NACC_MAX = NAPBS - NCPU_MAX - NMEM_MAX - NTILE_MAX - 8
+#NACC_MAX = NAPBS - 2 * NCPU_MAX - NMEM_MAX - NTILE_MAX - 8 # PRC
 
 # Default device mapping
 RST_ADDR = dict()
@@ -699,10 +701,12 @@ def print_constants(fp, soc, esp_config):
         fp.write("  constant CFG_HAS_DVFS : integer := 0;\n\n")
 
     # Partial reconfiguration enable
+    fp.write("  ------ PRC interrupt line\n")
     if soc.prc.get() == 1:
         fp.write("  constant CFG_PRC   : integer := 1;\n")
     else:
         fp.write("  constant CFG_PRC   : integer := 0;\n")
+    fp.write("  constant CFG_PRC_IRQ : integer := 5;\n")
 
     #
     fp.write("  ------ Synthesis options\n")
@@ -843,6 +847,13 @@ def print_mapping(fp, soc, esp_config):
     fp.write("    0 => ahb_device_reg ( VENDOR_GAISLER, GAISLER_AHBROM, 0, 0, 0),\n")
     fp.write("    4 => ahb_membar(ahbrom_haddr, '1', '1', ahbrom_hmask),\n")
     fp.write("    others => zero32);\n")
+
+    #
+    fp.write("  -- PRC \n")
+    fp.write("  constant prc_pconfig : apb_config_type := (\n")
+    fp.write("  0 => ahb_device_reg ( VENDOR_XILINX, XILINX_PRC, 0, 1, CFG_PRC_IRQ),\n") #define device
+    fp.write("  1 => apb_iobar(16#0E4#, 16#fff#),\n")
+    fp.write("  2 => (others => '0'));\n\n")
 
     fp.write("  -- AHB2APB bus bridge slave\n")
     fp.write("  constant CFG_APBADDR : integer := 16#" +
@@ -1516,6 +1527,7 @@ def print_mapping(fp, soc, esp_config):
                  "_" +
                  str(acc.id) +
                  "_pconfig,\n")
+    fp.write("    127 => prc_pconfig,\n")
     fp.write("    others => pconfig_none);\n\n")
 
     #
@@ -1977,6 +1989,7 @@ def print_mapping(fp, soc, esp_config):
 
 
 def print_tiles(fp, esp_config):
+
     #
     fp.write("  -- Tiles YX coordinates\n")
     fp.write("  constant tile_x : yx_vec(0 to " +
@@ -2214,6 +2227,7 @@ def print_tiles(fp, esp_config):
     for j in range(0, esp_config.nacc):
         acc = esp_config.accelerators[j]
         fp.write("    " + str(acc.idx) + " => '1',\n")
+    fp.write("    127 => to_std_logic(CFG_PRC),\n")
     fp.write("    others => '0');\n")
 
     #
@@ -2569,6 +2583,14 @@ def print_devtree(fp, soc, esp_config):
     fp.write("      freq = <" + str(CPU_FREQ) + "000>;\n")
     fp.write("      interrupt-parent = <&PLIC0>;\n")
     fp.write("      interrupts = <3>;\n")
+    fp.write("      reg-shift = <2>; // regs are spaced on 32 bit boundary\n")
+    fp.write("      reg-io-width = <4>; // only 32-bit access are supported\n")
+    fp.write("    };\n")
+    fp.write("    prc@" + format(AHB2APB_HADDR[esp_config.cpu_arch], '03x') + "0E400 {\n")
+    fp.write("      compatible = \"vendor_xilinx,xilinx_prc\";\n")
+    fp.write("      reg = <0x0 0x" + format(AHB2APB_HADDR[esp_config.cpu_arch], '03x') + "0E400 0x0 0x100>;\n")
+    fp.write("      interrupt-parent = <&PLIC0>;\n")
+    fp.write("      interrupts = <5>;\n")
     fp.write("      reg-shift = <2>; // regs are spaced on 32 bit boundary\n")
     fp.write("      reg-io-width = <4>; // only 32-bit access are supported\n")
     fp.write("    };\n")
