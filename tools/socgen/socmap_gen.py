@@ -407,16 +407,6 @@ def print_header(fp, package):
   fp.write("-- Copyright (c) 2011-2021 Columbia University, System Level Design Group\n")
   fp.write("-- SPDX-License-Identifier: Apache-2.0\n\n")
 
-  fp.write("------------------------------------------------------------------------------\n")
-  fp.write("--  This file is a configuration file for the ESP NoC-based architecture\n")
-  fp.write("-----------------------------------------------------------------------------\n")
-  fp.write("-- Package:     " + package + "\n")
-  fp.write("-- File:        " + package + ".vhd\n")
-  fp.write("-- Author:      Paolo Mantovani - SLD @ Columbia University\n")
-  fp.write("-- Author:      Christian Pilato - SLD @ Columbia University\n")
-  fp.write("-- Description: System address mapping and NoC tiles configuration\n")
-  fp.write("------------------------------------------------------------------------------\n\n")
-
 def print_libs(fp, std_only):
   fp.write("library ieee;\n")
   fp.write("use ieee.std_logic_1164.all;\n")
@@ -439,6 +429,16 @@ def print_libs(fp, std_only):
   fp.write("\n")
 
 def print_global_constants(fp, soc):
+
+  fp.write("  ------ Emulation parameters for ASIC designs\n")
+  if soc.ESP_EMU_TECH != "none":
+    fp.write("  constant ESP_EMU : integer := 1;\n")
+    fp.write("  constant ESP_EMU_FREQ : integer := " + str(soc.ESP_EMU_FREQ) + ";\n")
+  else:
+    fp.write("  constant ESP_EMU : integer := 0;\n")
+    fp.write("  constant ESP_EMU_FREQ : integer := 0;\n")
+  fp.write("\n")
+
   fp.write("  ------ Global architecture parameters\n")
   fp.write("  constant ARCH_BITS : integer := " + str(soc.DMA_WIDTH) + ";\n")
   fp.write("  constant GLOB_MAXIOSLV : integer := " + str(NAPBS) + ";\n")
@@ -541,7 +541,11 @@ def print_constants(fp, soc, esp_config):
 
 def print_mapping(fp, soc, esp_config):
 
-  fp.write("  constant CFG_FABTECH : integer := " + soc.TECH  + ";\n\n")
+  if soc.ESP_EMU_TECH != "none":
+    fp.write("  constant CFG_FABTECH : integer := " + soc.ESP_EMU_TECH  + ";\n\n")
+  else:
+    fp.write("  constant CFG_FABTECH : integer := " + soc.TECH  + ";\n\n")
+  fp.write("\n")
 
   #
   fp.write("  ------ Maximum number of slaves on both HP bus and I/O-bus\n")

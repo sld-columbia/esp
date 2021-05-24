@@ -135,7 +135,21 @@ architecture rtl of asic_tile_slm is
   signal dco_rstn     : std_ulogic;
   signal dco_clk_lock : std_ulogic;
 
+  signal refclk : std_ulogic;
+
 begin
+
+  -- On FPGA we don't have a DCO and we cannot instantiate a PLL on every tile
+  -- for large designs. Therefore, we must use the external clock and disable
+  -- the generic this_has_dco. I addition, since the chip top level may not
+  -- have neough pins to connect a backup clock for each tile, we use the NoC
+  -- clock as the main tile clock, because this clock is guaranteed to be connected.
+  regular_ext_clk_gen: if ESP_EMU = 0 generate
+    refclk <= ext_clk;
+  end generate;
+  emu_ext_clk_gen: if ESP_EMU /= 0 generate
+    refclk <= sys_clk;
+  end generate;
 
   rst1 : rstgen                         -- reset generator
     generic map (acthigh => 1, syncin => 0)
@@ -143,7 +157,7 @@ begin
 
   tile_slm_1: tile_slm
     generic map (
-      this_has_dco => 1,
+      this_has_dco => 1 - ESP_EMU,
       test_if_en   => 1,
       this_has_ddr => 0,
       dco_rst_cfg  => (others => '0'),
@@ -153,7 +167,7 @@ begin
       raw_rstn           => raw_rstn,
       rst                => dco_rstn,
       clk                => dco_clk,
-      refclk             => ext_clk,
+      refclk             => refclk,
       pllbypass          => ext_clk_sel_default,  --ext_clk_sel,
       pllclk             => clk_div,
       dco_clk            => dco_clk,

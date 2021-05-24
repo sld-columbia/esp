@@ -25,13 +25,15 @@ from mmi64_gen import *
 from power_gen import *
 
 def print_usage():
-  print("Usage                    : ./esp_creator.py <dma_width> <tech> <MAC>")
+  print("Usage                    : ./esp_creator.py <dma_width> <tech> <MAC> <EMU_TECH> <EMU_FREQ>")
   print("")
   print("")
   print("      <dma_width>        : Bit-width for the DMA channel (currently supporting 32 bits only)")
   print("      <tech>             : Target technology (e.g. virtex7, virtexu, virtexup, ...)")
   print("      <MAC>              : MAC Address for Linux network interface)")
   print("      <LEON3_STACK>      : Stack Pointer for Leon3)")
+  print("      <EMU_TECH>         : Target technology override for FPGA emulation of ASIC design")
+  print("      <EMU_FREQ>         : Ethernet MDC scaler override for FPGA emulation of ASIC design")
   print("")
 
 #Configuration Frame (top-left)
@@ -256,7 +258,7 @@ class EspCreator(Frame):
   def generate_mmi64_regs(self):
       create_mmi64_regs(soc)
 
-if len(sys.argv) != 5:
+if len(sys.argv) != 7:
     print_usage()
     sys.exit(1)
 
@@ -264,10 +266,12 @@ DMA_WIDTH = int(sys.argv[1])
 TECH = sys.argv[2]
 LINUX_MAC = sys.argv[3]
 LEON3_STACK = sys.argv[4]
+EMU_TECH = sys.argv[5]
+EMU_FREQ = sys.argv[6]
 
 root = Tk()
 root.title("ESP SoC Generator")
-soc = SoC_Config(DMA_WIDTH, TECH, LINUX_MAC, LEON3_STACK, True)
+soc = SoC_Config(DMA_WIDTH, TECH, LINUX_MAC, LEON3_STACK, EMU_TECH, EMU_FREQ, True)
 
 root.geometry("1024x768")
 w, h = root.winfo_screenwidth(), root.winfo_screenheight()

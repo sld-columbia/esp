@@ -185,8 +185,11 @@ architecture rtl of asic_tile_io is
   signal dco_rstn     : std_ulogic;
   signal dco_clk_lock : std_ulogic;
 
+  signal refclk : std_ulogic;
+
   -- Ethernet and Debug link
   signal mdcscaler : integer range 0 to 2047;
+  signal mdcscaler_int : integer range 0 to 2047;
   signal mdcscaler_reg : integer range 0 to 2047;
   signal mdcscaler_not_changed : std_ulogic;
   signal eth_rstn : std_ulogic;
@@ -216,6 +219,18 @@ architecture rtl of asic_tile_io is
 
 begin
 
+  -- On FPGA we don't have a DCO and we cannot instantiate a PLL on every tile
+  -- for large designs. Therefore, we must use the external clock and disable
+  -- the generic this_has_dco. I addition, since the chip top level may not
+  -- have neough pins to connect a backup clock for each tile, we use the NoC
+  -- clock as the main tile clock, because this clock is guaranteed to be connected.
+  regular_ext_clk_gen: if ESP_EMU = 0 generate
+    refclk <= ext_clk;
+  end generate;
+  emu_ext_clk_gen: if ESP_EMU /= 0 generate
+    refclk <= sys_clk;
+  end generate;
+
   rst0 : rstgen                         -- reset generator
     generic map (acthigh => 1, syncin => 0)
     port map (rst, sys_clk, sys_clk_lock, sys_rstn, raw_rstn);
@@ -231,15 +246,25 @@ begin
   ---  ETHERNET ---------------------------------------------------------
   -----------------------------------------------------------------------
   -- Reset Ethernet if MDC scaler value changes
-  eth_rstn_gen: process (dco_clk) is
-  begin  -- process eth_rstn_gen
-    if dco_clk'event and dco_clk = '1' then  -- rising clock edge
-      mdcscaler_reg <= mdcscaler;
-    end if;
-  end process eth_rstn_gen;
+  mdcscaler_asic_gen: if ESP_EMU = 0 generate
+    eth_rstn_gen: process (dco_clk) is
+    begin  -- process eth_rstn_gen
+      if dco_clk'event and dco_clk = '1' then  -- rising clock edge
+        mdcscaler_reg <= mdcscaler;
+      end if;
+    end process eth_rstn_gen;
 
-  mdcscaler_not_changed <= '1' when mdcscaler_reg = mdcscaler else '0';
-  eth_rstn <= dco_rstn and mdcscaler_not_changed;
+    mdcscaler_int <= mdcscaler;
+    mdcscaler_not_changed <= '1' when mdcscaler_reg = mdcscaler else '0';
+    eth_rstn <= dco_rstn and mdcscaler_not_changed;
+  end generate mdcscaler_asic_gen;
+
+  mdcscaler_fpga_gen: if ESP_EMU /= 0 generate
+    mdcscaler_reg <=  ESP_EMU_FREQ;
+    mdcscaler_int <= ESP_EMU_FREQ;
+    eth_rstn <= dco_rstn;
+  end generate mdcscaler_fpga_gen;
+
 
   e1 : grethm
     generic map(
@@ -267,7 +292,7 @@ begin
     port map(
       rst    => dco_rstn,
       clk    => dco_clk,                -- Fixed I/O tile frequency
-      mdcscaler => mdcscaler,
+      mdcscaler => mdcscaler_int,
       ahbmi  => eth0_ahbmi,
       ahbmo  => eth0_ahbmo,
       eahbmo => edcl_ahbmo,
@@ -326,7 +351,7 @@ begin
   tile_io_1 : tile_io
     generic map (
       SIMULATION   => SIMULATION,
-      this_has_dco => 1,
+      this_has_dco => 1 - ESP_EMU,
       test_if_en   => 1,
       ROUTER_PORTS => ROUTER_PORTS,
       HAS_SYNC     => 1)
@@ -336,7 +361,7 @@ begin
       clk                => dco_clk,    -- Local DCO clock
       refclk_noc         => ext_clk_noc,  -- Backup NoC clock when DCO is enabled
       pllclk_noc         => clk_div_noc,  -- NoC DCO clock out
-      refclk             => ext_clk,    -- Local backup ext clock
+      refclk             => refclk,    -- Local backup ext clock
       pllbypass          => ext_clk_sel_default,  --ext_clk_sel,
       pllclk             => clk_div,    -- DCO clock monitor
       dco_clk            => dco_clk,    -- Local DCO clock out (fixed @ TILE_FREQ)

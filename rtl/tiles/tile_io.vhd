@@ -747,8 +747,8 @@ begin
   no_dco_gen: if this_has_dco = 0 generate
     pllclk       <= '0';
     pllclk_noc   <= '0';
-    dco_clk      <= '0';
-    sys_clk_out  <= '0';
+    dco_clk      <= refclk;
+    sys_clk_out  <= refclk_noc;
     dco_clk_lock <= '1';
     sys_clk_lock <= '1';
   end generate no_dco_gen;

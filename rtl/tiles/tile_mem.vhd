@@ -570,6 +570,8 @@ begin
 
   no_dco_gen: if this_has_dco = 0 generate
     pllclk <= '0';
+    dco_clk <= refclk;
+    dco_clk_lock <= '1';
   end generate no_dco_gen;
 
   -- DDR Controller configuration

@@ -28,7 +28,7 @@ def print_usage():
   print("      <LEON3_STACK>      : Stack Pointer for LEON3)")
   print("")
 
-if len(sys.argv) != 5:
+if len(sys.argv) != 7:
     print_usage()
     sys.exit(1)
 
@@ -36,9 +36,11 @@ DMA_WIDTH = int(sys.argv[1])
 TECH = sys.argv[2]
 LINUX_MAC = sys.argv[3]
 LEON3_STACK = sys.argv[4]
+EMU_TECH = sys.argv[5]
+EMU_FREQ = sys.argv[6]
 
 root = Tk()
-soc = SoC_Config(DMA_WIDTH, TECH, LINUX_MAC, LEON3_STACK, False)
+soc = SoC_Config(DMA_WIDTH, TECH, LINUX_MAC, LEON3_STACK, EMU_TECH, EMU_FREQ, False)
 
 esp_config = soc_config(soc)
 create_socmap(esp_config, soc)
