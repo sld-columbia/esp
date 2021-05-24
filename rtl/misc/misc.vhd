@@ -116,6 +116,8 @@ package misc is
   end component ahbslm;
 
   component icap3_inst
+    generic (
+        tech : integer);
   port (
      icap_avail     : out std_logic;
      icap_o         : out std_logic_vector(31 downto 0);

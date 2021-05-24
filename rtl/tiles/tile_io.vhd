@@ -473,6 +473,7 @@ architecture rtl of tile_io is
     13     => to_std_logic(CFG_SVGA_ENABLE),        -- svga
     14     => to_std_logic(CFG_GRETH),              -- eth mac
     15     => to_std_logic(CFG_SGMII * CFG_GRETH),  -- eth phy
+    127    => to_std_logic(CFG_PRC),                -- prc
     others => '0');
 
   constant this_local_ahb_en : std_logic_vector(0 to NAHBSLV - 1) := (
@@ -1861,7 +1862,7 @@ begin
     );
 
   -- PRC 
-  generate_prc : if has_prc(CFG_FABTECH) = 1 and CFG_PRC = 1 generate
+  generate_prc : if has_prc(CFG_FABTECH) = 1 and CFG_PRC = 1 and SIMULATION = false generate
   prc_1: prc
     port map (
       clk                       => clk,
@@ -1893,9 +1894,9 @@ begin
       vsm_VS_0_event_error      => vsm_VS_0_event_error,
       --vsm_VS_0_sw_shutdown_req  => vsm_VS_0_sw_shutdown_req,
       --vsm_VS_0_sw_startup_req   => vsm_VS_0_sw_startup_req,
-      --icap_avail                => 1; --icap_avail,
-      --icap_prdone               => open; --icap_prdone,
-      --icap_prerror              => 0; --icap_prerror,
+      --icap_avail                => icap_avail,
+      --icap_prdone               => icap_prdone,
+      --icap_prerror              => icap_prerror,
       s_axi_reg_awaddr          => s_axil_awaddr,
       s_axi_reg_awvalid         => s_axil_awvalid,
       s_axi_reg_awready         => s_axil_awready,
@@ -1913,10 +1914,12 @@ begin
       s_axi_reg_rvalid          => s_axil_rvalid,
       s_axi_reg_rready          => s_axil_rready);
 
-    prc_pready <= s_axil_rvalid;
+    --prc_pready <= s_axil_rvalid;
 
   -- ICAPE3 instance
   icap3_inst_1: icap3_inst
+    generic map (
+      tech  =>  CFG_FABTECH)
     port map (
       icap_clk      => icap_clk,
       icap_csib     => icap_csib,

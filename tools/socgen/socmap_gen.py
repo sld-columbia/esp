@@ -52,6 +52,7 @@ NTILE_MAX = 64
 # 16-19 - LLC cache controller (must change with NMEM_MAX)
 # 20-83 - Distributed monitors (equal to the number of tiles NTILE_MAX)
 # 84-(NAPBS-1) - Accelerators
+# 127 - PRC
 NACC_MAX = NAPBS - 2 * NCPU_MAX - NMEM_MAX - NTILE_MAX - 8
 
 
@@ -166,7 +167,7 @@ class acc_info:
   vendor = ""
   id = -1
   idx = -1
-  irq = 5
+  irq = 6
 
 class cache_info:
   id = -1
@@ -513,6 +514,10 @@ def print_constants(fp, soc, esp_config):
   fp.write("  ------ Caches interrupt line\n")
   fp.write("  constant CFG_SLD_LLC_CACHE_IRQ : integer := " + str(LLC_CACHE_PIRQ) + ";\n\n")
   fp.write("  constant CFG_SLD_L2_CACHE_IRQ : integer := " + str(L2_CACHE_PIRQ) + ";\n\n")
+  
+  #
+  fp.write("  ------ PRC interrupt line\n")
+  fp.write("  constant CFG_PRC_IRQ : integer := 5;\n")
 
 
 def print_mapping(fp, soc, esp_config):
@@ -818,6 +823,13 @@ def print_mapping(fp, soc, esp_config):
   fp.write("  2 => (others => '0'));\n\n")
 
   #
+  fp.write("  -- PRC \n") 
+  fp.write("  constant prc_pconfig : apb_config_type := (\n")
+  fp.write("  0 => ahb_device_reg ( VENDOR_XILINX, XILINX_PRC, 0, 1, CFG_PRC_IRQ),\n") #define device 
+  fp.write("  1 => apb_iobar(16#0E4#, 16#fff#),\n")
+  fp.write("  2 => (others => '0'));\n\n")
+
+  #
   fp.write("  -- Interrupt controller (Architecture-dependent)\n")
   fp.write("  -- RISC-V PLIC is using the extended APB address space\n")
   fp.write("  constant irqmp_pconfig : apb_config_type := (\n")
@@ -1032,6 +1044,7 @@ def print_mapping(fp, soc, esp_config):
   for i in range(0, esp_config.nacc):
     acc = esp_config.accelerators[i]
     fp.write("    " + str(acc.idx) + " => " + str(acc.lowercase_name) + "_" + str(acc.id) + "_pconfig,\n")
+  fp.write("   127 => prc_pconfig,\n")
   fp.write("    others => pconfig_none);\n\n")
 
 
@@ -1635,6 +1648,8 @@ def print_tiles(fp, esp_config):
   for j in range(0, esp_config.nacc):
     acc = esp_config.accelerators[j]
     fp.write("    " + str(acc.idx) + " => '1',\n")
+  #PRC apb_mask
+  fp.write("    127 => to_std_logic(CFG_PRC),\n")
   fp.write("    others => '0');\n\n")
 
 
@@ -1861,6 +1876,15 @@ def print_devtree(fp, esp_config):
   fp.write("      reg-shift = <2>; // regs are spaced on 32 bit boundary\n")
   fp.write("      reg-io-width = <4>; // only 32-bit access are supported\n")
   fp.write("    };\n")
+  #PRC dts
+  fp.write("    prc@" + format(AHB2APB_HADDR[esp_config.cpu_arch], '03x') + "0E400 {\n")
+  fp.write("      compatible = \"vendor_xilinx,xilinx_prc\";\n")                
+  fp.write("      reg = <0x0 0x" + format(AHB2APB_HADDR[esp_config.cpu_arch], '03x') + "0E400 0x0 0x100>;\n")                        
+  fp.write("      interrupt-parent = <&PLIC0>;\n")                                                                                   
+  fp.write("      interrupts = <5>;\n")
+  fp.write("      reg-shift = <2>; // regs are spaced on 32 bit boundary\n")                                                         
+  fp.write("      reg-io-width = <4>; // only 32-bit access are supported\n")                                                        
+  fp.write("    };\n") 
   fp.write("    eth: greth@" + format(AHB2APB_HADDR[esp_config.cpu_arch], '03x') + "80000 {\n")
   fp.write("      #address-cells = <1>;\n")
   fp.write("      #size-cells = <1>;\n")
