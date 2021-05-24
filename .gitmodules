@@ -44,3 +44,6 @@
 [submodule "rtl/caches/spandex-caches"]
 	path = rtl/caches/spandex-caches
 	url = https://github.com/zzhu35/spandex-caches.git
+[submodule "accelerators/catapult_hls/cryo-ai-models"]
+	path = accelerators/catapult_hls/cryo-ai-models
+	url = https://github.com/sld-columbia/cryo-ai-models.git
