@@ -42,6 +42,8 @@ entity fpga_proxy_top is
     JTAG_TRACE : integer range -1 to CFG_TILES_NUM - 1 := -1);
   port (
     reset             : in    std_ulogic;  -- GLobal FPGA reset (active high)
+    chip_reset        : out   std_ulogic;  -- Chip reset (active high)
+    -- Backup clocks
     ext_clk_noc       : out   std_logic;
     ext_clk_io        : out   std_logic;
     ext_clk_cpu       : out   std_logic;
@@ -708,6 +710,14 @@ begin  -- architecture rtl
       IB => main_clk_n,
       O  => main_clk
       );
+
+  -- Chip reset
+  chip_rst_gen: process (sys_clk(0)) is
+  begin  -- process chip_rst_gen
+    if sys_clk(0)'event and sys_clk(0) = '1' then  -- rising clock edge
+      chip_reset <= not rstn;
+    end if;
+  end process chip_rst_gen;
 
   ----------------------------------------------------------------------
   ---  DDR3 memory controller

@@ -77,6 +77,10 @@ architecture behav of testbench is
   signal c3_sys_clk_p : std_ulogic := '0';
   signal c3_sys_clk_n : std_ulogic := '1';
 
+    -- Chip clock used for emulation on FPGA only
+  signal clk_emu_p    : std_logic := '0';
+  signal clk_emu_n    : std_logic := '1';
+
   -- FPGA Ethernet
   signal fpga_reset_o2     : std_ulogic;
   signal fpga_etx_clk      : std_ulogic;
@@ -166,39 +170,6 @@ architecture behav of testbench is
   signal c3_diagnostic_led : std_ulogic;
 
 
-  -- LPDDR
-  signal lpddr0_ck_p        :  std_logic;
-  signal lpddr0_ck_n        :  std_logic;
-  signal lpddr0_cke         :  std_logic;
-  signal lpddr0_ba          :  std_logic_vector(2 downto 0);
-  signal lpddr0_addr        :  std_logic_vector(15 downto 0);
-  signal lpddr0_cs_n        :  std_logic;
-  signal lpddr0_ras_n       :  std_logic;
-  signal lpddr0_cas_n       :  std_logic;
-  signal lpddr0_we_n        :  std_logic;
-  signal lpddr0_reset_n     :  std_logic;
-  signal lpddr0_odt         :  std_logic;
-  signal lpddr0_dm          :  std_logic_vector(3 downto 0);
-  signal lpddr0_dqs_p       :  std_logic_vector(3 downto 0);
-  signal lpddr0_dqs_n       :  std_logic_vector(3 downto 0);
-  signal lpddr0_dq          :  std_logic_vector(31 downto 0);
-  signal lpddr1_ck_p        :  std_logic;
-  signal lpddr1_ck_n        :  std_logic;
-  signal lpddr1_cke         :  std_logic;
-  signal lpddr1_ba          :  std_logic_vector(2 downto 0);
-  signal lpddr1_addr        :  std_logic_vector(15 downto 0);
-  signal lpddr1_cs_n        :  std_logic;
-  signal lpddr1_ras_n       :  std_logic;
-  signal lpddr1_cas_n       :  std_logic;
-  signal lpddr1_we_n        :  std_logic;
-  signal lpddr1_reset_n     :  std_logic;
-  signal lpddr1_odt         :  std_logic;
-  signal lpddr1_dm          :  std_logic_vector(3 downto 0);
-  signal lpddr1_dqs_p       :  std_logic_vector(3 downto 0);
-  signal lpddr1_dqs_n       :  std_logic_vector(3 downto 0);
-  signal lpddr1_dq          :  std_logic_vector(31 downto 0);
-
-
   -- UART
   signal uart_rxd  : std_ulogic;
   signal uart_txd  : std_ulogic;
@@ -213,7 +184,9 @@ architecture behav of testbench is
     port (
       -- Main reset
       reset             : in    std_ulogic;
-      clk_div           : out   std_logic_vector(0 to CFG_TILES_NUM - 1);  -- tile clock monitor for testing purposes
+      -- Chip clock used for emulation on FPGA only
+      clk_emu_p         : in    std_logic;
+      clk_emu_n         : in    std_logic;
       -- Ethernet signals
       reset_o2          : out   std_ulogic;
       etx_clk           : in    std_ulogic;
@@ -228,55 +201,6 @@ architecture behav of testbench is
       etx_er            : out   std_ulogic;
       emdc              : out   std_ulogic;
       emdio             : inout std_logic;
-      -- DVI
-      -- tft_nhpd          : in    std_ulogic;  -- Hot plug
-      -- tft_clk_p         : out   std_ulogic;
-      -- tft_clk_n         : out   std_ulogic;
-      -- tft_data          : out   std_logic_vector(23 downto 0);
-      -- tft_hsync         : out   std_ulogic;
-      -- tft_vsync         : out   std_ulogic;
-      -- tft_de            : out   std_ulogic;
-      -- tft_dken          : out   std_ulogic;
-      -- tft_ctl1_a1_dk1   : out   std_ulogic;
-      -- tft_ctl2_a2_dk2   : out   std_ulogic;
-      -- tft_a3_dk3        : out   std_ulogic;
-      -- tft_isel          : out   std_ulogic;
-      -- tft_bsel          : out   std_logic;
-      -- tft_dsel          : out   std_logic;
-      -- tft_edge          : out   std_ulogic;
-      -- tft_npd           : out   std_ulogic;
-      -- LPDDR0
-      lpddr0_ck_p        : out   std_logic;
-      lpddr0_ck_n        : out   std_logic;
-      lpddr0_cke         : out   std_logic;
-      lpddr0_ba          : out   std_logic_vector(2 downto 0);
-      lpddr0_addr        : out   std_logic_vector(15 downto 0);
-      lpddr0_cs_n        : out   std_logic;
-      lpddr0_ras_n       : out   std_logic;
-      lpddr0_cas_n       : out   std_logic;
-      lpddr0_we_n        : out   std_logic;
-      lpddr0_reset_n     : out   std_logic;
-      lpddr0_odt         : out   std_logic;
-      lpddr0_dm          : out   std_logic_vector(3 downto 0);
-      lpddr0_dqs_p       : inout std_logic_vector(3 downto 0);
-      lpddr0_dqs_n       : inout std_logic_vector(3 downto 0);
-      lpddr0_dq          : inout std_logic_vector(31 downto 0);
-      -- LPDDR1
-      lpddr1_ck_p        : out   std_logic;
-      lpddr1_ck_n        : out   std_logic;
-      lpddr1_cke         : out   std_logic;
-      lpddr1_ba          : out   std_logic_vector(2 downto 0);
-      lpddr1_addr        : out   std_logic_vector(15 downto 0);
-      lpddr1_cs_n        : out   std_logic;
-      lpddr1_ras_n       : out   std_logic;
-      lpddr1_cas_n       : out   std_logic;
-      lpddr1_we_n        : out   std_logic;
-      lpddr1_reset_n     : out   std_logic;
-      lpddr1_odt         : out   std_logic;
-      lpddr1_dm          : out   std_logic_vector(3 downto 0);
-      lpddr1_dqs_p       : inout std_logic_vector(3 downto 0);
-      lpddr1_dqs_n       : inout std_logic_vector(3 downto 0);
-      lpddr1_dq          : inout std_logic_vector(31 downto 0);
       -- UART
       uart_rxd          : in    std_ulogic;
       uart_txd          : out   std_ulogic;
@@ -407,6 +331,9 @@ begin
   c3_sys_clk_p <= not c3_sys_clk_p after 2.5 ns;
   c3_sys_clk_n <= not c3_sys_clk_n after 2.5 ns;
 
+  clk_emu_p <= not clk_emu_p after 10 ns;
+  clk_emu_n <= not clk_emu_n after 10 ns;
+
   -- UART
   uart_rxd  <= '0';
   uart_ctsn <= '0';
@@ -445,17 +372,6 @@ begin
   erx_crs           <= '0';
   emdio             <= 'Z';
 
-  -- DVI
-  -- tft_nhpd <= '0';
-
-  -- LPDDR
-  lpddr0_dqs_p <= (others => 'Z');
-  lpddr0_dqs_n <= (others => 'Z');
-  lpddr0_dq    <= (others => 'Z');
-  lpddr1_dqs_p <= (others => 'Z');
-  lpddr1_dqs_n <= (others => 'Z');
-  lpddr1_dq    <= (others => 'Z');
-
   top_1 : top
     generic map (
       SIMULATION => SIMULATION,
@@ -463,7 +379,8 @@ begin
       )
     port map (
       reset             => reset,
-      clk_div           => open,
+      clk_emu_p         => clk_emu_p,
+      clk_emu_n         => clk_emu_n,
       uart_rxd          => uart_rxd,
       uart_txd          => uart_txd,
       uart_ctsn         => uart_ctsn,
@@ -481,52 +398,6 @@ begin
       etx_er            => etx_er,
       emdc              => emdc,
       emdio             => emdio,
-      -- tft_nhpd          => tft_nhpd,
-      -- tft_clk_p         => tft_clk_p,
-      -- tft_clk_n         => tft_clk_n,
-      -- tft_data          => tft_data,
-      -- tft_hsync         => tft_hsync,
-      -- tft_vsync         => tft_vsync,
-      -- tft_de            => tft_de,
-      -- tft_dken          => tft_dken,
-      -- tft_ctl1_a1_dk1   => tft_ctl1_a1_dk1,
-      -- tft_ctl2_a2_dk2   => tft_ctl2_a2_dk2,
-      -- tft_a3_dk3        => tft_a3_dk3,
-      -- tft_isel          => tft_isel,
-      -- tft_bsel          => tft_bsel,
-      -- tft_dsel          => tft_dsel,
-      -- tft_edge          => tft_edge,
-      -- tft_npd           => tft_npd,
-      lpddr0_ck_p        => lpddr0_ck_p,
-      lpddr0_ck_n        => lpddr0_ck_n,
-      lpddr0_cke         => lpddr0_cke,
-      lpddr0_ba          => lpddr0_ba,
-      lpddr0_addr        => lpddr0_addr,
-      lpddr0_cs_n        => lpddr0_cs_n,
-      lpddr0_ras_n       => lpddr0_ras_n,
-      lpddr0_cas_n       => lpddr0_cas_n,
-      lpddr0_we_n        => lpddr0_we_n,
-      lpddr0_reset_n     => lpddr0_reset_n,
-      lpddr0_odt         => lpddr0_odt,
-      lpddr0_dm          => lpddr0_dm,
-      lpddr0_dqs_p       => lpddr0_dqs_p,
-      lpddr0_dqs_n       => lpddr0_dqs_n,
-      lpddr0_dq          => lpddr0_dq,
-      lpddr1_ck_p        => lpddr1_ck_p,
-      lpddr1_ck_n        => lpddr1_ck_n,
-      lpddr1_cke         => lpddr1_cke,
-      lpddr1_ba          => lpddr1_ba,
-      lpddr1_addr        => lpddr1_addr,
-      lpddr1_cs_n        => lpddr1_cs_n,
-      lpddr1_ras_n       => lpddr1_ras_n,
-      lpddr1_cas_n       => lpddr1_cas_n,
-      lpddr1_we_n        => lpddr1_we_n,
-      lpddr1_reset_n     => lpddr1_reset_n,
-      lpddr1_odt         => lpddr1_odt,
-      lpddr1_dm          => lpddr1_dm,
-      lpddr1_dqs_p       => lpddr1_dqs_p,
-      lpddr1_dqs_n       => lpddr1_dqs_n,
-      lpddr1_dq          => lpddr1_dq,
       fpga_reset_o2     => fpga_reset_o2,
       fpga_etx_clk      => fpga_etx_clk,
       fpga_erx_clk      => fpga_erx_clk,
