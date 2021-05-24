@@ -110,10 +110,12 @@ TOP_VHDL_SIM_SRCS += $(DESIGN_PATH)/chip_emu_top.vhd
 TOP_VHDL_SIM_SRCS += $(DESIGN_PATH)/$(TOP).vhd
 else
 ifneq ("$(OVR_TECHLIB)", "")
-# FPGA emulation of design for ASIC flow
+# FPGA emulation top of design for ASIC flow
 TOP_VHDL_RTL_SRCS += $(DESIGN_PATH)/$(CHIP_TOP).vhd
 TOP_VHDL_RTL_SRCS += $(DESIGN_PATH)/chip_emu_top.vhd
-TOP_VHDL_SIM_SRCS += $(DESIGN_PATH)/$(TOP).vhd
+# FPGA proxy top for emulation or testing of design for ASIC flow
+TOP_VHDL_RTL_SRCS += $(DESIGN_PATH)/$(TOP).vhd
+#TODO: emulation and proxy on single FPGA
 else
 # FPGA flow: add FPGA top module
 TOP_VHDL_RTL_SRCS += $(DESIGN_PATH)/$(TOP).vhd
