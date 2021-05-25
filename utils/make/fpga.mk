@@ -5,6 +5,10 @@ ifneq ($(findstring profpga, $(BOARD)),)
 fpga-program: profpga-prog-fpga
 	$(QUIET_INFO) echo "Waiting for DDR calibration..."
 	@sleep 5
+
+fpga-program-emu: profpga-prog-fpga-emu
+	$(QUIET_INFO) echo "Waiting for DDR calibration..."
+	@sleep 5
 else
 fpga-program: vivado-prog-fpga
 	$(QUIET_INFO) echo "Waiting for DDR calibration..."
