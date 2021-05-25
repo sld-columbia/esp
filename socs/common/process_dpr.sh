@@ -124,6 +124,7 @@ do
             echo "  scatter_gather     : integer range 0 to 1  := CFG_SCATTER_GATHER;">> $acc_dir/acc_$i.vhd;
             echo "  sets               : integer  := CFG_ACC_L2_SETS;">> $acc_dir/acc_$i.vhd;
             echo "  ways               : integer  := CFG_ACC_L2_WAYS;">> $acc_dir/acc_$i.vhd;
+            echo "  little_end     : integer range 0 to 1 := 0;">> $acc_dir/acc_$i.vhd;
             echo "  cache_tile_id      : cache_attribute_array := cache_tile_id;">> $acc_dir/acc_$i.vhd;
             echo "  cache_y            : yx_vec(0 to 2**NL2_MAX_LOG2 - 1) := cache_y;">> $acc_dir/acc_$i.vhd;
             echo "  cache_x            : yx_vec(0 to 2**NL2_MAX_LOG2 - 1) := cache_x;">> $acc_dir/acc_$i.vhd;
@@ -131,7 +132,7 @@ do
             echo "  has_dvfs           : integer range 0 to 1 := tile_has_dvfs(${new_accelerators[$i,0]});">> $acc_dir/acc_$i.vhd; 
             echo "  has_pll            : integer range 0 to 1 := tile_has_pll(${new_accelerators[$i,0]});">> $acc_dir/acc_$i.vhd; 
             echo "  extra_clk_buf      : integer range 0 to 1 := extra_clk_buf(${new_accelerators[$i,0]}));">> $acc_dir/acc_$i.vhd; 
-            skip_params=19;
+            skip_params=20;
         elif [[ $skip_params -ne 0 ]]; then
             skip_params=$((skip_params-1));
         else
@@ -645,8 +646,8 @@ elif [ $4 == "test" ]; then
 #    gen_synth_script $1 $2 $3 $4
     #gen_fplan $1 $2 $3;
 #    echo " regenarate before parse is $regenerate_fplan";
-    parse_synth_report $1 $2 $3 $4
-    gen_floorplan $1 $2 $3 $4;
+    #parse_synth_report $1 $2 $3 $4
+    #gen_floorplan $1 $2 $3 $4;
 #    acc_fplan $1 $2 $3 $4;
     #echo " regenarate after parse is $regenerate_fplan";
     #gen_floorplan $1 $2 $3 $4

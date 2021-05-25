@@ -1755,6 +1755,7 @@ def gen_tile_acc(accelerator_list, axi_acceleratorlist, template_dir, out_dir):
           f.write("        clk               => clk,\n")
           f.write("        local_y           => local_y,\n")
           f.write("        local_x           => local_x,\n")
+          f.write("        tile_id           => tile_id,\n")
           f.write("        paddr             => paddr,\n")
           f.write("        pmask             => pmask,\n")
           f.write("        paddr_ext         => paddr_ext,\n")

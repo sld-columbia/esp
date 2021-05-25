@@ -44,6 +44,7 @@ entity acc_dpr_top is
     scatter_gather : integer := 1;
     sets           : integer := 256;
     ways           : integer := 8;
+    little_end     : integer range 0 to 1 := 0;
     cache_tile_id  : cache_attribute_array;
     cache_y        : yx_vec(0 to 2**NL2_MAX_LOG2 - 1);
     cache_x        : yx_vec(0 to 2**NL2_MAX_LOG2 - 1);
@@ -56,6 +57,7 @@ entity acc_dpr_top is
     clk       : in  std_ulogic;
     local_y   : in  local_yx;
     local_x   : in  local_yx;
+    tile_id   : in  integer;
     paddr     : in  integer range 0 to 4095;
     pmask     : in  integer range 0 to 4095;
     paddr_ext : in  integer range 0 to 4095;
@@ -81,6 +83,9 @@ entity acc_dpr_top is
     coherence_rsp_snd_wrreq    : out std_ulogic;
     coherence_rsp_snd_data_in  : out noc_flit_type;
     coherence_rsp_snd_full     : in  std_ulogic;
+    coherence_fwd_snd_wrreq    : out std_ulogic; 
+    coherence_fwd_snd_data_in  : out noc_flit_type;
+    coherence_fwd_snd_full     : in  std_ulogic;
     -- NoC plane MEM2DEV
     dma_rcv_rdreq     : out std_ulogic;
     dma_rcv_data_out  : in  noc_flit_type;
