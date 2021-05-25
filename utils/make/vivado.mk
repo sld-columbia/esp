@@ -188,7 +188,9 @@ endif
 	    echo "set_property used_in_implementation true [get_files $$i]" >> $@; \
           fi; \
 	done;
-	@echo "set_property top chip_emu_top [current_fileset]" >> $@
+	@echo "set_property top chip_emu_top [get_filesets {sim_1 sources_1}]" >> $@
+	@echo "update_compile_order -fileset sources_1" >> $@
+	@echo "update_compile_order -fileset sim_1" >> $@
 
 
 vivado/syn.tcl: vivado
