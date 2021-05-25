@@ -548,8 +548,8 @@ architecture rtl of fpga_proxy_top is
   signal mux_ahbs_snd_data_in   : misc_noc_flit_type;
   signal mux_ahbs_snd_full      : std_ulogic;
 
-  signal sending_packet : std_logic_vector(0 to CFG_NMEM_TILE - 1);
-  signal receiving_packet : std_logic_vector(0 to CFG_NMEM_TILE - 1);
+  signal sending_packet : std_logic_vector(CFG_NMEM_TILE - 1 downto 0);
+  signal receiving_packet : std_logic_vector(CFG_NMEM_TILE - 1 downto 0);
 
   signal target_y : local_yx;
   signal target_x : local_yx;
