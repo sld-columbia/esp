@@ -44,8 +44,8 @@ package jtag_pkg is
       clear     : in  std_ulogic;
       en_in     : in  std_ulogic;
       serial_in : in  std_ulogic;
-      test_comp : out std_logic_vector(DIM-3 downto 0);
-      data_out  : out std_logic_vector(DIM-6 downto 0);
+      test_comp : out std_logic_vector(DIM-1 downto 0);
+      data_out  : out std_logic_vector(DIM-10 downto 0);
       op        : out std_ulogic;
       done      : out std_ulogic;
       end_trace : out std_ulogic);
