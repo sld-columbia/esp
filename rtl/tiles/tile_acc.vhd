@@ -233,6 +233,9 @@ architecture rtl of tile_acc is
   signal coherence_rsp_snd_wrreq_acc : std_ulogic;
   signal coherence_rsp_snd_data_in  : noc_flit_type;
   signal coherence_rsp_snd_full     : std_ulogic;
+  signal coherence_fwd_snd_wrreq    : std_ulogic;
+  signal coherence_fwd_snd_data_in  : noc_flit_type; 
+  signal coherence_fwd_snd_full     : std_ulogic;
   signal dma_rcv_rdreq              : std_ulogic;
   signal dma_rcv_rdreq_acc          : std_ulogic;
   signal dma_rcv_data_out           : noc_flit_type;
@@ -290,7 +293,9 @@ architecture rtl of tile_acc is
   constant io_x                : local_yx                           := tile_x(io_tile_id);
   constant this_scatter_gather : integer range 0 to 1               := CFG_SCATTER_GATHER;
 
-   -- Noc signals
+  constant little_end          : integer range 0 to 1               := GLOB_CPU_RISCV;
+  
+  -- Noc signals
   signal noc1_stop_in_s         : std_logic_vector(4 downto 0);
   signal noc1_stop_out_s        : std_logic_vector(4 downto 0);
   signal noc1_acc_stop_in       : std_ulogic;
@@ -541,6 +546,7 @@ begin
     dco_i: dco
       generic map (
         tech => CFG_FABTECH,
+        enable_div2 => 0,
         dlog => 9)                      -- come out of reset after NoC, but
                                         -- before tile_io.
       port map (
@@ -556,10 +562,10 @@ begin
         clk_div  => pllclk,
         lock     => dco_clk_lock);
 
-    dco_freq_sel <= tile_config(ESP_CSR_DCO_CFG_MSB - 0  downto ESP_CSR_DCO_CFG_MSB - 0  - 1);
-    dco_div_sel  <= tile_config(ESP_CSR_DCO_CFG_MSB - 2  downto ESP_CSR_DCO_CFG_MSB - 2  - 2);
-    dco_fc_sel   <= tile_config(ESP_CSR_DCO_CFG_MSB - 5  downto ESP_CSR_DCO_CFG_MSB - 5  - 5);
-    dco_cc_sel   <= tile_config(ESP_CSR_DCO_CFG_MSB - 11 downto ESP_CSR_DCO_CFG_MSB - 11 - 5);
+    dco_freq_sel <= tile_config(ESP_CSR_DCO_CFG_MSB - 4 - 0  downto ESP_CSR_DCO_CFG_MSB - 4 - 0  - 1);
+    dco_div_sel  <= tile_config(ESP_CSR_DCO_CFG_MSB - 4 - 2  downto ESP_CSR_DCO_CFG_MSB - 4 - 2  - 2);
+    dco_fc_sel   <= tile_config(ESP_CSR_DCO_CFG_MSB - 4 - 5  downto ESP_CSR_DCO_CFG_MSB - 4 - 5  - 5);
+    dco_cc_sel   <= tile_config(ESP_CSR_DCO_CFG_MSB - 4 - 11 downto ESP_CSR_DCO_CFG_MSB - 4 - 11 - 5);
     dco_clk_sel  <= tile_config(ESP_CSR_DCO_CFG_LSB + 1);
     dco_en       <= raw_rstn and tile_config(ESP_CSR_DCO_CFG_LSB);
 
@@ -838,33 +844,34 @@ begin
     hls_conf       => this_hls_conf,
     this_device    => this_device,
     tech           => CFG_FABTECH,
-    mem_num        => CFG_NMEM_TILE + CFG_NSLM_TILE + CFG_SVGA_ENABLE,
+    mem_num        => CFG_NMEM_TILE + CFG_NSLM_TILE + CFG_NSLMDDR_TILE + CFG_SVGA_ENABLE,
     cacheable_mem_num => CFG_NMEM_TILE,
-    mem_info       => tile_acc_mem_list,                                                                                               
-    io_y           => io_y,                                                                                                            
-    io_x           => io_x,                                                                                                            
+    mem_info       => tile_acc_mem_list,
+    io_y           => io_y,
+    io_x           => io_x,
     pindex         => 1,
     irq_type       => this_irq_type,
-    scatter_gather => this_scatter_gather,                                                                                             
-    sets           => CFG_ACC_L2_SETS,                                                                                                 
-    ways           => CFG_ACC_L2_WAYS,                                                                                                 
-    cache_tile_id  => cache_tile_id,                                                                                                   
-    cache_y        => cache_y,                                                                                                         
+    scatter_gather => this_scatter_gather,
+    sets           => CFG_ACC_L2_SETS,
+    ways           => CFG_ACC_L2_WAYS,
+    little_end     => little_end,
+    cache_tile_id  => cache_tile_id,
+    cache_y        => cache_y,
     cache_x        => cache_x,
     has_l2         => this_has_l2,
-    has_dvfs       => this_has_dvfs,                                                                                                   
+    has_dvfs       => this_has_dvfs,
     has_pll        => this_has_pll,
-    extra_clk_buf  => this_extra_clk_buf) 
+    extra_clk_buf  => this_extra_clk_buf)
     port map (        
         rst               => rst,
-        clk               => clk_feedthru,                                                                                                 
+        clk               => clk_feedthru,
         local_y           => this_local_y,
         local_x           => this_local_x,
         paddr             => this_paddr,
         pmask             => this_pmask,
-        paddr_ext         => this_paddr_ext,  
-        pmask_ext         => this_pmask_ext,                                                                                               
-        pirq              => this_pirq,   
+        paddr_ext         => this_paddr_ext,
+        pmask_ext         => this_pmask_ext,
+        pirq              => this_pirq,
         apbi              => apbi,
         apbo              => apbo(1),
         pready            => pready,
@@ -1036,6 +1043,9 @@ begin
       coherence_rsp_snd_wrreq    => coherence_rsp_snd_wrreq,
       coherence_rsp_snd_data_in  => coherence_rsp_snd_data_in,
       coherence_rsp_snd_full     => coherence_rsp_snd_full,
+      coherence_fwd_snd_wrreq    => coherence_fwd_snd_wrreq,
+      coherence_fwd_snd_data_in  => coherence_fwd_snd_data_in,
+      coherence_fwd_snd_full     => coherence_fwd_snd_full,
       dma_rcv_rdreq              => dma_rcv_rdreq,
       dma_rcv_data_out           => dma_rcv_data_out,
       dma_rcv_empty              => dma_rcv_empty,
