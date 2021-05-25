@@ -38,24 +38,6 @@ set_property  PACKAGE_PIN K20 [get_ports {uart_rxd}]
 
 set_property IOSTANDARD LVCMOS18 [get_ports {uart_*}]
 
-#-----------------------------------------------------------
-#              LEDs                                        -
-#-----------------------------------------------------------
-
-# {LED_RED}
-set_property PACKAGE_PIN AD31 [get_ports LED_RED]
-
-# {LED_GREEN}
-set_property PACKAGE_PIN AD30 [get_ports LED_GREEN]
-
-# {LED_BLUE}
-set_property PACKAGE_PIN AC29 [get_ports LED_BLUE]
-
-# {LED_YELLOW}
-set_property PACKAGE_PIN AD29 [get_ports LED_YELLOW]
-
-set_property IOSTANDARD LVCMOS18 [get_ports {LED_*}]
-
 
 #-----------------------------------------------------------
 #              Timing constraints                          -
@@ -67,8 +49,4 @@ create_clock -period 20.0 [get_ports clk_emu_p]
 #              False Paths                                 -
 #-----------------------------------------------------------
 set_false_path -from [get_ports reset]
-set_false_path -to [get_ports LED_YELLOW]
-set_false_path -to [get_ports LED_BLUE]
-set_false_path -to [get_ports LED_GREEN]
-set_false_path -to [get_ports LED_RED]
 
