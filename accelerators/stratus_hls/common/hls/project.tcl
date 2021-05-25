@@ -46,7 +46,7 @@ if {[lsearch $fpga_techs $TECH] >= 0} {
 
 }
 if {[lsearch $asic_techs $TECH] >= 0} {
-    set_attr verilog_files "$TECH_PATH/verilog/*v $ESP_ROOT/rtl/techmap/$TECH/mem/*v"
+    set_attr verilog_files "$ESP_ROOT/rtl/sim/$TECH/verilog/*v $ESP_ROOT/rtl/techmap/$TECH/mem/*v"
     set LIB_PATH "$TECH_PATH/lib"
     set LIB_NAME "$TECH.lib"
     use_tech_lib "$LIB_PATH/$LIB_NAME"
@@ -81,9 +81,10 @@ set COMMON_HLS_FLAGS "--prints=$PRINT"
 # Templates for synthesis
 #
 set ESP_HDRS_PATH "$ESP_ROOT/accelerators/stratus_hls/common/inc"
+set ESP_UTILS_PATH "$ESP_ROOT/accelerators/stratus_hls/common/utils"
 
 #
 # Compiling Options
 #
-set INCLUDES "-I$ESP_HDRS_PATH -I../src -I./memlib"
+set INCLUDES "-I$ESP_HDRS_PATH -I$ESP_UTILS_PATH -I../src -I./memlib"
 

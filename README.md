@@ -1,6 +1,6 @@
-
-
 ![Open-ESP](esp-logo-small.png)
+
+[![DOI](https://zenodo.org/badge/190284572.svg)](https://zenodo.org/badge/latestdoi/190284572)
 
 The [ESP website](https://www.esp.cs.columbia.edu) contains the most
 up-to-date information on the ESP project. The

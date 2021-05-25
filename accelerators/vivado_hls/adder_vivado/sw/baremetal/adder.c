@@ -70,7 +70,7 @@ int main(int argc, char * argv[])
 
     printf("STARTING!\n");
 
-    ndev = probe(&espdevs, SLD_ADDER, DEV_NAME);
+    ndev = probe(&espdevs, VENDOR_SLD, SLD_ADDER, DEV_NAME);
     if (!ndev) {
 	    printf("Error: device not found!");
 	    printf(DEV_NAME);

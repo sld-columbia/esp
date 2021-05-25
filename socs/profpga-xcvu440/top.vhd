@@ -363,8 +363,8 @@ constant CPU_FREQ : integer := 78125;  -- cpu frequency in KHz
   signal mon_ddr_reg    : monitor_ddr_vector(0 to MEM_ID_RANGE_MSB);
   signal mon_noc        : monitor_noc_matrix(1 to 6, 0 to CFG_TILES_NUM-1);
   signal mon_noc_actual : monitor_noc_matrix(0 to 1, 0 to CFG_TILES_NUM-1);
-  signal mon_mem        : monitor_mem_vector(0 to CFG_NMEM_TILE + CFG_NSLM_TILE - 1);
-  signal mon_mem_reg    : monitor_mem_vector(0 to CFG_NMEM_TILE + CFG_NSLM_TILE - 1);
+  signal mon_mem        : monitor_mem_vector(0 to CFG_NMEM_TILE + CFG_NSLM_TILE + CFG_NSLMDDR_TILE - 1);
+  signal mon_mem_reg    : monitor_mem_vector(0 to CFG_NMEM_TILE + CFG_NSLM_TILE + CFG_NSLMDDR_TILE - 1);
   signal mon_l2         : monitor_cache_vector(0 to relu(CFG_NL2 - 1));
   signal mon_llc        : monitor_cache_vector(0 to relu(CFG_NLLC - 1));
   signal mon_acc        : monitor_acc_vector(0 to relu(accelerators_num-1));
@@ -1070,7 +1070,7 @@ begin
         end process detect_ddr_access;
     end generate gen_mon_ddr;
     
-    gen_mon_regs : for i in 0 to MEM_ID_RANGE_MSB generate
+    gen_mon_regs : for i in 0 to CFG_NMEM_TILE + CFG_NSLM_TILE + CFG_NSLMDDR_TILE - 1 generate
         mon_mem_reg(i).clk <= mon_mem(i).clk;
         mon_mem_reg_gen : process(mon_mem(i).clk, rstn) 
         begin 
@@ -1120,7 +1120,7 @@ begin
         memtech                => CFG_FABTECH,
         mmi64_width            => 32,
         ddrs_num               => CFG_NMEM_TILE,
-        slms_num               => CFG_NSLM_TILE,
+        slms_num               => CFG_NSLM_TILE + CFG_NSLMDDR_TILE,
         nocs_num               => 2,
         tiles_num              => CFG_TILES_NUM,
         accelerators_num       => accelerators_num,

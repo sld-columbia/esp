@@ -47,7 +47,7 @@ int main(int argc, char * argv[])
 	printf("Exiting...\n");
 	return 0;
 
-	ndev = probe(&espdevs, SLD_VITBFLY2, DEV_NAME);
+	ndev = probe(&espdevs, VENDOR_SLD, SLD_VITBFLY2, DEV_NAME);
 	if (ndev <= 0) {
 		printf("Error: %s device not found!\n", DEV_NAME);
 		exit(EXIT_FAILURE);

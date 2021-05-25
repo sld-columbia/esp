@@ -973,3 +973,302 @@ begin
 -- pragma translate_on
 
 end;
+
+
+-------------------------
+-- gf12_syncram with byte enable
+
+library ieee;
+use ieee.std_logic_1164.all;
+use work.stdlib.all;
+use work.config_types.all;
+use work.config.all;
+
+entity gf12_syncram_be is
+  generic ( abits : integer := 17; dbits : integer := 64);
+  port (
+    clk     : in std_ulogic;
+    address : in std_logic_vector (abits -1 downto 0);
+    datain  : in std_logic_vector (dbits -1 downto 0);
+    dataout : out std_logic_vector (dbits -1 downto 0);
+    enable  : in std_logic_vector (dbits/8-1 downto 0);
+    write   : in std_logic_vector(dbits/8-1 downto 0)
+  );
+end;
+
+architecture behav of gf12_syncram_be is
+
+
+  component gf12_sram64_be_13abits is
+    port (
+      CLK : in std_ulogic;
+      CE0 : in std_ulogic;
+      A0  : in std_logic_vector(12 downto 0);
+      D0  : in std_logic_vector(63 downto 0);
+      WE0 : in std_ulogic;
+      WEM0 : in std_logic_vector(63 downto 0);
+      CE1 : in std_ulogic;
+      A1  : in std_logic_vector(12 downto 0);
+      Q1  : out std_logic_vector(63 downto 0)
+      );
+  end component gf12_sram64_be_13abits;
+
+  component gf12_sram64_be_14abits is
+    port (
+      CLK : in std_ulogic;
+      CE0 : in std_ulogic;
+      A0  : in std_logic_vector(13 downto 0);
+      D0  : in std_logic_vector(63 downto 0);
+      WE0 : in std_ulogic;
+      WEM0 : in std_logic_vector(63 downto 0);
+      CE1 : in std_ulogic;
+      A1  : in std_logic_vector(13 downto 0);
+      Q1  : out std_logic_vector(63 downto 0)
+      );
+  end component gf12_sram64_be_14abits;
+
+  component gf12_sram64_be_15abits is
+    port (
+      CLK : in std_ulogic;
+      CE0 : in std_ulogic;
+      A0  : in std_logic_vector(14 downto 0);
+      D0  : in std_logic_vector(63 downto 0);
+      WE0 : in std_ulogic;
+      WEM0 : in std_logic_vector(63 downto 0);
+      CE1 : in std_ulogic;
+      A1  : in std_logic_vector(14 downto 0);
+      Q1  : out std_logic_vector(63 downto 0)
+      );
+  end component gf12_sram64_be_15abits;
+
+  component gf12_sram64_be_16abits is
+    port (
+      CLK : in std_ulogic;
+      CE0 : in std_ulogic;
+      A0  : in std_logic_vector(15 downto 0);
+      D0  : in std_logic_vector(63 downto 0);
+      WE0 : in std_ulogic;
+      WEM0 : in std_logic_vector(63 downto 0);
+      CE1 : in std_ulogic;
+      A1  : in std_logic_vector(15 downto 0);
+      Q1  : out std_logic_vector(63 downto 0)
+      );
+  end component gf12_sram64_be_16abits;
+
+  component gf12_sram64_be_17abits is
+    port (
+      CLK : in std_ulogic;
+      CE0 : in std_ulogic;
+      A0  : in std_logic_vector(16 downto 0);
+      D0  : in std_logic_vector(63 downto 0);
+      WE0 : in std_ulogic;
+      WEM0 : in std_logic_vector(63 downto 0);
+      CE1 : in std_ulogic;
+      A1  : in std_logic_vector(16 downto 0);
+      Q1  : out std_logic_vector(63 downto 0)
+      );
+  end component gf12_sram64_be_17abits;
+
+  component gf12_sram64_be_18abits is
+    port (
+      CLK : in std_ulogic;
+      CE0 : in std_ulogic;
+      A0  : in std_logic_vector(17 downto 0);
+      D0  : in std_logic_vector(63 downto 0);
+      WE0 : in std_ulogic;
+      WEM0 : in std_logic_vector(63 downto 0);
+      CE1 : in std_ulogic;
+      A1  : in std_logic_vector(17 downto 0);
+      Q1  : out std_logic_vector(63 downto 0)
+      );
+  end component gf12_sram64_be_18abits;
+
+  component gf12_sram64_be_19abits is
+    port (
+      CLK : in std_ulogic;
+      CE0 : in std_ulogic;
+      A0  : in std_logic_vector(18 downto 0);
+      D0  : in std_logic_vector(63 downto 0);
+      WE0 : in std_ulogic;
+      WEM0 : in std_logic_vector(63 downto 0);
+      CE1 : in std_ulogic;
+      A1  : in std_logic_vector(18 downto 0);
+      Q1  : out std_logic_vector(63 downto 0)
+      );
+  end component gf12_sram64_be_19abits;
+
+  component gf12_sram64_be_20abits is
+    port (
+      CLK : in std_ulogic;
+      CE0 : in std_ulogic;
+      A0  : in std_logic_vector(19 downto 0);
+      D0  : in std_logic_vector(63 downto 0);
+      WE0 : in std_ulogic;
+      WEM0 : in std_logic_vector(63 downto 0);
+      CE1 : in std_ulogic;
+      A1  : in std_logic_vector(19 downto 0);
+      Q1  : out std_logic_vector(63 downto 0)
+      );
+  end component gf12_sram64_be_20abits;
+
+signal gnd : std_ulogic;
+signal do, di : std_logic_vector(dbits+8 downto 0);
+signal xa : std_logic_vector(19 downto 0);
+signal xenable : std_logic;
+signal xrden : std_logic;
+signal xwren : std_logic;
+signal xwmsk : std_logic_vector(dbits-1 downto 0);
+constant zeroen : std_logic_vector(dbits/8-1 downto 0) := (others => '0');
+
+begin
+  gnd <= '0';
+  dataout <= do(dbits-1 downto 0);
+  di(dbits-1 downto 0) <= datain;
+  di(dbits+8 downto dbits) <= (others => '0');
+
+  xa(19 downto abits) <= (others => '0');
+  xa(abits-1 downto 0) <= address;
+
+  wmask_gen : for i in 0 to ((dbits-1)/8) generate
+    wmask_bit_gen: for j in 0 to 7 generate
+      xwmsk(i*8+j) <= write(i);
+    end generate wmask_bit_gen;
+  end generate;
+
+  xenable <= '1' when enable /= zeroen else '0';
+  xrden <= xenable when write  = zeroen else '0';
+  xwren <= xenable when write /= zeroen else '0';
+
+  a13 : if abits = 13 generate
+    r0 : gf12_sram64_be_13abits
+      port map (
+        CLK  => clk,
+        CE0  => xenable,
+        A0   => xa(12 downto 0),
+        D0   => di(dbits-1 downto 0),
+        WE0  => xwren,
+        WEM0 => xwmsk,
+        CE1  => xrden,
+        A1   => xa(12 downto 0),
+        Q1   => do(dbits-1 downto 0));
+    do(dbits+8 downto 8*(((dbits-1)/8)+1)) <= (others => '0');
+  end generate;
+
+  a14 : if abits = 14 generate
+    r0 : gf12_sram64_be_14abits
+      port map (
+        CLK  => clk,
+        CE0  => xenable,
+        A0   => xa(13 downto 0),
+        D0   => di(dbits-1 downto 0),
+        WE0  => xwren,
+        WEM0 => xwmsk,
+        CE1  => xrden,
+        A1   => xa(13 downto 0),
+        Q1   => do(dbits-1 downto 0));
+    do(dbits+8 downto 8*(((dbits-1)/8)+1)) <= (others => '0');
+  end generate;
+
+  a15 : if abits = 15 generate
+    r0 : gf12_sram64_be_15abits
+      port map (
+        CLK  => clk,
+        CE0  => xenable,
+        A0   => xa(14 downto 0),
+        D0   => di(dbits-1 downto 0),
+        WE0  => xwren,
+        WEM0 => xwmsk,
+        CE1  => xrden,
+        A1   => xa(14 downto 0),
+        Q1   => do(dbits-1 downto 0));
+    do(dbits+8 downto 8*(((dbits-1)/8)+1)) <= (others => '0');
+  end generate;
+
+  a16 : if abits = 16 generate
+    r0 : gf12_sram64_be_16abits
+      port map (
+        CLK  => clk,
+        CE0  => xenable,
+        A0   => xa(15 downto 0),
+        D0   => di(dbits-1 downto 0),
+        WE0  => xwren,
+        WEM0 => xwmsk,
+        CE1  => xrden,
+        A1   => xa(15 downto 0),
+        Q1   => do(dbits-1 downto 0));
+    do(dbits+8 downto 8*(((dbits-1)/8)+1)) <= (others => '0');
+  end generate;
+
+  a17 : if abits = 17 generate
+    r0 : gf12_sram64_be_17abits
+      port map (
+        CLK  => clk,
+        CE0  => xenable,
+        A0   => xa(16 downto 0),
+        D0   => di(dbits-1 downto 0),
+        WE0  => xwren,
+        WEM0 => xwmsk,
+        CE1  => xrden,
+        A1   => xa(16 downto 0),
+        Q1   => do(dbits-1 downto 0));
+    do(dbits+8 downto 8*(((dbits-1)/8)+1)) <= (others => '0');
+  end generate;
+
+  a18 : if abits = 18 generate
+    r0 : gf12_sram64_be_18abits
+      port map (
+        CLK  => clk,
+        CE0  => xenable,
+        A0   => xa(17 downto 0),
+        D0   => di(dbits-1 downto 0),
+        WE0  => xwren,
+        WEM0 => xwmsk,
+        CE1  => xrden,
+        A1   => xa(17 downto 0),
+        Q1   => do(dbits-1 downto 0));
+    do(dbits+8 downto 8*(((dbits-1)/8)+1)) <= (others => '0');
+  end generate;
+
+  a19 : if abits = 19 generate
+    r0 : gf12_sram64_be_19abits
+      port map (
+        CLK  => clk,
+        CE0  => xenable,
+        A0   => xa(18 downto 0),
+        D0   => di(dbits-1 downto 0),
+        WE0  => xwren,
+        WEM0 => xwmsk,
+        CE1  => xrden,
+        A1   => xa(18 downto 0),
+        Q1   => do(dbits-1 downto 0));
+    do(dbits+8 downto 8*(((dbits-1)/8)+1)) <= (others => '0');
+  end generate;
+
+  a20 : if abits = 20 generate
+    r0 : gf12_sram64_be_20abits
+      port map (
+        CLK  => clk,
+        CE0  => xenable,
+        A0   => xa(19 downto 0),
+        D0   => di(dbits-1 downto 0),
+        WE0  => xwren,
+        WEM0 => xwmsk,
+        CE1  => xrden,
+        A1   => xa(19 downto 0),
+        Q1   => do(dbits-1 downto 0));
+    do(dbits+8 downto 8*(((dbits-1)/8)+1)) <= (others => '0');
+  end generate;
+
+  -- pragma translate_off
+  a_to_high : if abits < 13 or abits > 20 or dbits /= 64 generate
+    x : process
+    begin
+      assert false
+        report  "Data width must be 64 and address width must be between 13 and 20 gf12_syncram_be"
+        severity failure;
+      wait;
+    end process;
+  end generate;
+-- pragma translate_on
+
+end;

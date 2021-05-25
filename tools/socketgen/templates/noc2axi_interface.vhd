@@ -29,7 +29,7 @@ use std.textio.all;
     tech           : integer;
     mem_num        : integer;
     cacheable_mem_num : integer;
-    mem_info       : tile_mem_info_vector(0 to CFG_NMEM_TILE + CFG_NSLM_TILE);
+    mem_info       : tile_mem_info_vector(0 to CFG_NMEM_TILE + CFG_NSLM_TILE + CFG_NSLMDDR_TILE);
     io_y           : local_yx;
     io_x           : local_yx;
     pindex         : integer := 0;
@@ -37,6 +37,7 @@ use std.textio.all;
     scatter_gather : integer := 1;
     sets           : integer := 256;
     ways           : integer := 8;
+    little_end     : integer range 0 to 1 := 1;
     cache_tile_id  : cache_attribute_array;
     cache_y        : yx_vec(0 to 2**NL2_MAX_LOG2 - 1);
     cache_x        : yx_vec(0 to 2**NL2_MAX_LOG2 - 1);
@@ -52,6 +53,7 @@ use std.textio.all;
     pllclk    : out std_ulogic;
     local_y   : in  local_yx;
     local_x   : in  local_yx;
+    tile_id   : in  integer;
     paddr     : in  integer range 0 to 4095;
     pmask     : in  integer range 0 to 4095;
     paddr_ext : in  integer range 0 to 4095;
@@ -77,6 +79,9 @@ use std.textio.all;
     coherence_rsp_snd_wrreq    : out std_ulogic;
     coherence_rsp_snd_data_in  : out noc_flit_type;
     coherence_rsp_snd_full     : in  std_ulogic;
+    coherence_fwd_snd_wrreq    : out std_ulogic;
+    coherence_fwd_snd_data_in  : out noc_flit_type;
+    coherence_fwd_snd_full     : in  std_ulogic;
     -- NoC plane MEM2DEV
     dma_rcv_rdreq     : out std_ulogic;
     dma_rcv_data_out  : in  noc_flit_type;
@@ -128,7 +133,7 @@ end;
   type irq_fsm is (idle, pending, wait_for_clear_irq);
   signal irq_state, irq_next : irq_fsm;
   signal irq_header_i, irq_header : misc_noc_flit_type;
-  signal irq_info : std_logic_vector(3 downto 0);
+  signal irq_info : std_logic_vector(RESERVED_WIDTH - 1 downto 0);
 
   -- Other signals
   signal acc_go : std_ulogic;
@@ -141,7 +146,7 @@ end;
   signal pllclk_int        : std_ulogic;
   signal mon_dvfs_feedthru : monitor_dvfs_type;
 
-  constant nofb_mem_info : tile_mem_info_vector(0 to CFG_NSLM_TILE + CFG_NMEM_TILE - 1) := mem_info(0 to CFG_NSLM_TILE + CFG_NMEM_TILE - 1);
+  constant nofb_mem_info : tile_mem_info_vector(0 to CFG_NSLM_TILE + CFG_NSLMDDR_TILE + CFG_NMEM_TILE - 1) := mem_info(0 to CFG_NSLM_TILE + CFG_NSLMDDR_TILE + CFG_NMEM_TILE - 1);
 
 begin
 
@@ -150,7 +155,7 @@ begin
     1 => apb_iobar(paddr, pmask),
     2 => apb_iobar(paddr_ext, pmask_ext));
 
-  irq_info <= conv_std_logic_vector(pirq, 4);
+  irq_info <= conv_std_logic_vector(pirq, RESERVED_WIDTH);
 
   apbi_paddr <= apbi.paddr and X"0FFFFFFF";
 
@@ -165,6 +170,8 @@ begin
   coherence_rsp_rcv_rdreq <= '0';
   coherence_rsp_snd_wrreq <= '0';
   coherence_rsp_snd_data_in <= (others => '0');
+  coherence_fwd_snd_wrreq <= '0';
+  coherence_fwd_snd_data_in <= (others => '0');
 
   coherent_dma_rcv_rdreq <= '0';
   coherent_dma_snd_wrreq <= '0';
@@ -176,7 +183,7 @@ begin
       nmst             => 1,
       retarget_for_dma => 1,
       mem_axi_port     => 0,
-      mem_num          => CFG_NSLM_TILE + CFG_NMEM_TILE,
+      mem_num          => CFG_NSLM_TILE + CFG_NSLMDDR_TILE + CFG_NMEM_TILE,
       mem_info         => nofb_mem_info,
       slv_y            => io_y,
       slv_x            => io_x)

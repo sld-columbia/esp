@@ -10,7 +10,6 @@ ESP_ROOT=$(realpath ${SCRIPT_PATH}/../..)
 RISCV_GNU_TOOLCHAIN_SHA=afcc8bc655d30cf6af054ac1d3f5f89d0627aa79
 
 DEFAULT_TARGET_DIR="/opt/riscv32imc"
-SRC_MIRROR="http://espdev.cs.columbia.edu/stuff/riscv"
 TMP=/tmp/_riscv32imc_build
 
 # Helper functions

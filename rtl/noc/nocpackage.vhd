@@ -7,6 +7,7 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 use work.esp_global.all;
+use work.stdlib.all;
 use work.gencomp.all;
 use work.monitor_pkg.all;
 
@@ -26,8 +27,11 @@ package nocpackage is
   --
   -- Let W be the global constant ARCH_BITS
   --
-  -- |W+1        W|W-1     W-5|W-6    W-10|W-11   W-15|W-16   W-20|W-21     W-23|W-24      W-27|W-28       5|4   0|
+  -- |W+1        W|W-1     W-3|W-4     W-6|W-7     W-9|W-10   W-12|W-13     W-17|W-18      W-25|W-26       5|4   0|
   -- |  PREAMBLE  |   Src Y   |   Src X   |   Dst Y   |   Dst X   |  Msg. type  |   Reserved   |  [Unused]  |LEWSN|
+
+  -- |mmmm00xx|
+  -- |reserved|
   --
 
   constant HEADER_ROUTE_L : natural := 4;
@@ -37,9 +41,9 @@ package nocpackage is
   constant HEADER_ROUTE_N : natural := 0;
 
   constant PREAMBLE_WIDTH      : natural := 2;
-  constant YX_WIDTH            : natural := 5;
-  constant MSG_TYPE_WIDTH      : natural := 3;
-  constant RESERVED_WIDTH      : natural := 4;
+  constant YX_WIDTH            : natural := 3;
+  constant MSG_TYPE_WIDTH      : natural := 5;
+  constant RESERVED_WIDTH      : natural := 8;
   constant NEXT_ROUTING_WIDTH  : natural := 5;
   constant NOC_FLIT_SIZE       : natural := PREAMBLE_WIDTH + ARCH_BITS;
   constant MISC_NOC_FLIT_SIZE  : natural := PREAMBLE_WIDTH + 32;
@@ -64,46 +68,95 @@ package nocpackage is
   constant PREAMBLE_BODY   : noc_preamble_type := "00";
   constant PREAMBLE_1FLIT  : noc_preamble_type := "11";
 
+  -- -- Message type preamble
+  constant MSG_T_PR : std_logic := to_std_logic(1 - USE_SPANDEX);
+
   -- -- Message type encoding
   -- -- Cachable data plane 1 -> request messages
-  constant REQ_GETS_W   : noc_msg_type := "000";  --Get Shared (word)
-  constant REQ_GETM_W   : noc_msg_type := "001";  --Get Modified (word)
-  constant REQ_PUTS     : noc_msg_type := "010";  --Put Shared/Exclusive
-  constant REQ_PUTM     : noc_msg_type := "011";  --Put Modified
-  constant REQ_GETS_B   : noc_msg_type := "100";  --Get Shared (Byte)
-  constant REQ_GETS_HW  : noc_msg_type := "101";  --Get Shared (Half Word)
-  constant REQ_GETM_B   : noc_msg_type := "110";  --Get Modified (Byte)
-  constant REQ_GETM_HW  : noc_msg_type := "111";  --Get Modified (Half word)
+  constant REQ_S          : noc_msg_type := "00000";  -- Writer-invalidated Read
+  constant REQ_Odata      : noc_msg_type := "00001";  -- Ownership Write (overwrites all requested data)
+  constant REQ_WT         : noc_msg_type := "00010";  -- Write-through Write (overwrites all requested data)
+  constant REQ_WB         : noc_msg_type := "00011";  -- Write-back owned data
+  constant REQ_O          : noc_msg_type := "00100";  -- Ownership Write (returns the value before update)
+  constant REQ_V          : noc_msg_type := "00101";  -- Self-invalidated Read
+  constant REQ_WTdata     : noc_msg_type := "00110";  -- Write-through Write (returns the value before update)
+  constant REQ_AMO_SWAP   : noc_msg_type := "00110";
+  constant REQ_AMO_ADD    : noc_msg_type := "00111";
+  constant REQ_AMO_AND    : noc_msg_type := "01000";
+  constant REQ_AMO_OR     : noc_msg_type := "01001";
+  constant REQ_AMO_XOR    : noc_msg_type := "01010";
+  constant REQ_AMO_MAX    : noc_msg_type := "01011";
+  constant REQ_AMO_MAXU   : noc_msg_type := "01100";
+  constant REQ_AMO_MIN    : noc_msg_type := "01101";
+  constant REQ_AMO_MINU   : noc_msg_type := "01110";
+  constant REQ_WTfwd      : noc_msg_type := "01111";
   -- Cachable data plane 2 -> forwarded messages
-  constant FWD_GETS       : noc_msg_type := "000";
-  constant FWD_GETM       : noc_msg_type := "001";
-  constant FWD_INV        : noc_msg_type := "010";  --Invalidation
-  constant FWD_PUT_ACK    : noc_msg_type := "011";  --Put Acknowledge
-  constant FWD_GETM_NOCOH : noc_msg_type := "100";  --Recall on exclusive/modified
-  constant FWD_INV_NOCOH  : noc_msg_type := "101";  --Recall on shared
+  constant FWD_REQ_S      : noc_msg_type := "00000";
+  constant FWD_REQ_Odata  : noc_msg_type := "00001";
+  constant FWD_INV_SPDX   : noc_msg_type := "00010";
+  constant FWD_WB_ACK     : noc_msg_type := "00011";
+  constant FWD_RVK_O      : noc_msg_type := "00100";
+  constant FWD_REQ_V      : noc_msg_type := "00111";
+  constant FWD_REQ_O      : noc_msg_type := "00110";
+  constant FWD_WTfwd      : noc_msg_type := "00101";
   -- Cachable data plane 3 -> response messages
-  constant RSP_DATA     : noc_msg_type := "000";  --CacheLine
-  constant RSP_EDATA    : noc_msg_type := "001";  --Cache Line (Exclusive)
-  constant RSP_INV_ACK  : noc_msg_type := "010";  --Invalidation Acknowledge
+  constant RSP_S              : noc_msg_type := "00000";
+  constant RSP_Odata          : noc_msg_type := "00001";
+  constant RSP_INV_ACK_SPDX   : noc_msg_type := "00010";
+  constant RSP_NACK           : noc_msg_type := "00011";
+  constant RSP_RVK_O          : noc_msg_type := "00100";
+  constant RSP_V              : noc_msg_type := "00101";
+  constant RSP_O              : noc_msg_type := "00110";
+  constant RSP_WT             : noc_msg_type := "00111";
+  constant RSP_WTdata         : noc_msg_type := "01000";
+  constant RSP_DATA_DMA       : noc_msg_type := MSG_T_PR & MSG_T_PR & "011"; -- message type in common with original ESP caches
+
+-- ********
+-- Original ESP
+-- ********
+
+
+-- -- Message type encoding
+  -- -- Cachable data plane 1 -> request messages
+  constant REQ_GETS_W   : noc_msg_type := "11000";  --Get Shared (word)
+  constant REQ_GETM_W   : noc_msg_type := "11001";  --Get Modified (word)
+  constant REQ_PUTS     : noc_msg_type := "11010";  --Put Shared/Exclusive
+  constant REQ_PUTM     : noc_msg_type := "11011";  --Put Modified
+  constant REQ_GETS_B   : noc_msg_type := "11100";  --Get Shared (Byte)
+  constant REQ_GETS_HW  : noc_msg_type := "11101";  --Get Shared (Half Word)
+  constant REQ_GETM_B   : noc_msg_type := "11110";  --Get Modified (Byte)
+  constant REQ_GETM_HW  : noc_msg_type := "11111";  --Get Modified (Half word)
+  -- Cachable data plane 2 -> forwarded messages
+  constant FWD_GETS       : noc_msg_type := "11000";
+  constant FWD_GETM       : noc_msg_type := "11001";
+  constant FWD_INV        : noc_msg_type := "11010";  --Invalidation
+  constant FWD_PUT_ACK    : noc_msg_type := "11011";  --Put Acknowledge
+  constant FWD_GETM_NOCOH : noc_msg_type := "11100";  --Recall on exclusive/modified
+  constant FWD_INV_NOCOH  : noc_msg_type := "11101";  --Recall on shared
+  -- Cachable data plane 3 -> response messages
+  constant RSP_DATA     : noc_msg_type := "11000";  --CacheLine
+  constant RSP_EDATA    : noc_msg_type := "11001";  --Cache Line (Exclusive)
+  constant RSP_INV_ACK  : noc_msg_type := "11010";  --Invalidation Acknowledge
   -- [LLC|Non]-Coherent DMA request plane 6 and response plane 4
-  constant DMA_TO_PRC    : noc_msg_type := "000";
-  constant DMA_TO_DEV    : noc_msg_type := "001";
-  constant DMA_FROM_DEV  : noc_msg_type := "010";
-  constant RSP_DATA_DMA  : noc_msg_type := "011";  --CacheLine (DMA)
-  constant RSP_P2P       : noc_msg_type := "100";
-  constant REQ_P2P       : noc_msg_type := "101";
-  constant REQ_DMA_READ  : noc_msg_type := "110";  -- Read coherent with LLC
-  constant REQ_DMA_WRITE : noc_msg_type := "111";  -- Write coherent with LLC
-  constant CPU_DMA       : std_logic_vector(2 downto 0) := "100";  -- identify DMA from CPU
+  constant DMA_TO_PRC    : noc_msg_type := "11000";
+  constant DMA_TO_DEV    : noc_msg_type := "11001";
+  constant DMA_FROM_DEV  : noc_msg_type := "11010";
+  -- constant RSP_DATA_DMA  : noc_msg_type := "11011";  --CacheLine (DMA)
+  constant RSP_P2P       : noc_msg_type := "11100";
+  constant REQ_P2P       : noc_msg_type := "11101";
+  constant REQ_DMA_READ  : noc_msg_type := "11110";  -- Read coherent with LLC
+  constant REQ_DMA_WRITE : noc_msg_type := "11111";  -- Write coherent with LLC
+  constant CPU_DMA       : noc_msg_type := "11100";  -- identify DMA from CPU
+
   -- Configuration plane 5 -> RD/WR registers
-  constant REQ_REG_RD   : noc_msg_type := "000";
-  constant REQ_REG_WR   : noc_msg_type := "001";
-  constant AHB_RD       : noc_msg_type := "010";
-  constant AHB_WR       : noc_msg_type := "011";
-  constant IRQ_MSG      : noc_msg_type := "100";
-  constant RSP_REG_RD   : noc_msg_type := "101";
-  constant RSP_AHB_RD   : noc_msg_type := "110";
-  constant INTERRUPT    : noc_msg_type := "111";
+  constant REQ_REG_RD   : noc_msg_type := "11000";
+  constant REQ_REG_WR   : noc_msg_type := "11001";
+  constant AHB_RD       : noc_msg_type := "11010";
+  constant AHB_WR       : noc_msg_type := "11011";
+  constant IRQ_MSG      : noc_msg_type := "11100";
+  constant RSP_REG_RD   : noc_msg_type := "11101";
+  constant RSP_AHB_RD   : noc_msg_type := "11110";
+  constant INTERRUPT    : noc_msg_type := "11111";
 
   constant ROUTE_NOC3 : std_logic_vector(1 downto 0) := "01";
   constant ROUTE_NOC4 : std_logic_vector(1 downto 0) := "10";
@@ -311,6 +364,9 @@ package nocpackage is
   function set_mem_id_range
     return integer;
 
+  function set_slmddr_id_range
+    return integer;
+
   function get_origin_y (
     constant flit_sz : integer;
     flit : noc_flit_type)
@@ -427,6 +483,16 @@ package body nocpackage is
       return 0;
     else
       return CFG_NMEM_TILE - 1;
+    end if;
+  end;
+
+  function set_slmddr_id_range
+    return integer is
+  begin
+    if CFG_NSLMDDR_TILE = 0 then
+      return 0;
+    else
+      return CFG_NSLMDDR_TILE - 1;
     end if;
   end;
 
@@ -556,13 +622,13 @@ package body nocpackage is
     header(flit_sz - 1 downto
            flit_sz - PREAMBLE_WIDTH) := PREAMBLE_HEADER;
     header(flit_sz - PREAMBLE_WIDTH - 1 downto
-           flit_sz - PREAMBLE_WIDTH - YX_WIDTH) := "00" & local_y;
+           flit_sz - PREAMBLE_WIDTH - YX_WIDTH) := local_y;
     header(flit_sz - PREAMBLE_WIDTH - YX_WIDTH - 1 downto
-           flit_sz - PREAMBLE_WIDTH - 2*YX_WIDTH) := "00" & local_x;
+           flit_sz - PREAMBLE_WIDTH - 2*YX_WIDTH) := local_x;
     header(flit_sz - PREAMBLE_WIDTH - 2*YX_WIDTH - 1 downto
-           flit_sz - PREAMBLE_WIDTH - 3*YX_WIDTH) := "00" & remote_y;
+           flit_sz - PREAMBLE_WIDTH - 3*YX_WIDTH) := remote_y;
     header(flit_sz - PREAMBLE_WIDTH - 3*YX_WIDTH - 1 downto
-           flit_sz - PREAMBLE_WIDTH - 4*YX_WIDTH) := "00" & remote_x;
+           flit_sz - PREAMBLE_WIDTH - 4*YX_WIDTH) := remote_x;
     header(flit_sz - PREAMBLE_WIDTH - 4*YX_WIDTH - 1 downto
            flit_sz - PREAMBLE_WIDTH - 4*YX_WIDTH - MSG_TYPE_WIDTH) := msg_type;
     header(flit_sz - PREAMBLE_WIDTH - 4*YX_WIDTH - MSG_TYPE_WIDTH - 1 downto

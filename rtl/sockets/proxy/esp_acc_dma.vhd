@@ -50,7 +50,7 @@ entity esp_acc_dma is
     tech               : integer                              := virtex7;
     extra_clk_buf      : integer range 0 to 1;
     mem_num            : integer                              := 1;
-    mem_info           : tile_mem_info_vector(0 to CFG_NMEM_TILE + CFG_NSLM_TILE);
+    mem_info           : tile_mem_info_vector(0 to CFG_NMEM_TILE + CFG_NSLM_TILE + CFG_NSLMDDR_TILE);
     io_y               : local_yx;
     io_x               : local_yx;
     pindex             : integer                              := 0;
@@ -136,7 +136,7 @@ architecture rtl of esp_acc_dma is
 
   -- plug & play info
   signal pconfig : apb_config_type;
-  constant hprot : std_logic_vector(3 downto 0) := "0011";
+  constant hprot : std_logic_vector(7 downto 0) := "00000011";
 
   constant len_pad : std_logic_vector(GLOB_BYTE_OFFSET_BITS - 1 downto 0) := (others => '0');
 
@@ -223,7 +223,7 @@ architecture rtl of esp_acc_dma is
   signal sample_rd_size, sample_wr_size      : std_ulogic;
   signal size_r                              : std_logic_vector(2 downto 0);
   signal irq_header_i, irq_header            : misc_noc_flit_type;
-  signal irq_info                            : std_logic_vector(3 downto 0);
+  signal irq_info                            : std_logic_vector(RESERVED_WIDTH - 1 downto 0);
 
   -- DMA
   type dma_fsm is (idle, request_header, request_address, request_length,
@@ -327,7 +327,7 @@ begin  -- rtl
   -----------------------------------------------------------------------------
   -- IRQ packet
   -----------------------------------------------------------------------------
-  irq_info <= conv_std_logic_vector(pirq, 4);
+  irq_info <= conv_std_logic_vector(pirq, RESERVED_WIDTH);
   irq_header_i <= create_header(MISC_NOC_FLIT_SIZE, local_y, local_x, io_y, io_x, INTERRUPT, irq_info)(MISC_NOC_FLIT_SIZE - 1 downto 0);
   irq_header(MISC_NOC_FLIT_SIZE-1 downto MISC_NOC_FLIT_SIZE-PREAMBLE_WIDTH) <= PREAMBLE_1FLIT;
   irq_header(MISC_NOC_FLIT_SIZE-PREAMBLE_WIDTH-1 downto 0) <=

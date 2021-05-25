@@ -27,7 +27,7 @@ use std.textio.all;
     tech           : integer;
     mem_num        : integer;
     cacheable_mem_num : integer;
-    mem_info       : tile_mem_info_vector(0 to CFG_NMEM_TILE + CFG_NSLM_TILE);
+    mem_info       : tile_mem_info_vector(0 to CFG_NMEM_TILE + CFG_NSLM_TILE + CFG_NSLMDDR_TILE);
     io_y           : local_yx;
     io_x           : local_yx;
     pindex         : integer := 0;
@@ -35,6 +35,7 @@ use std.textio.all;
     scatter_gather : integer := 1;
     sets           : integer := 256;
     ways           : integer := 8;
+    little_end     : integer range 0 to 1 := 1;
     cache_tile_id  : cache_attribute_array;
     cache_y        : yx_vec(0 to 2**NL2_MAX_LOG2 - 1);
     cache_x        : yx_vec(0 to 2**NL2_MAX_LOG2 - 1);
@@ -47,6 +48,7 @@ use std.textio.all;
     clk       : in  std_ulogic;
     local_y   : in  local_yx;
     local_x   : in  local_yx;
+    tile_id   : in  integer;
     paddr     : in  integer range 0 to 4095;
     pmask     : in  integer range 0 to 4095;
     paddr_ext : in  integer range 0 to 4095;
@@ -72,6 +74,9 @@ use std.textio.all;
     coherence_rsp_snd_wrreq    : out std_ulogic;
     coherence_rsp_snd_data_in  : out noc_flit_type;
     coherence_rsp_snd_full     : in  std_ulogic;
+    coherence_fwd_snd_wrreq    : out std_ulogic;
+    coherence_fwd_snd_data_in  : out noc_flit_type;
+    coherence_fwd_snd_full     : in  std_ulogic;
     -- NoC plane MEM2DEV
     dma_rcv_rdreq     : out std_ulogic;
     dma_rcv_data_out  : in  noc_flit_type;
@@ -142,6 +147,7 @@ end;
     COHERENCE_REG      => '1',
     P2P_REG            => '1',
     YX_REG             => '1',
+    SPANDEX_REG        => '1',
     -- <<user_mask>>
     others             => '0');
 
@@ -272,6 +278,7 @@ begin
         tech          => tech,
         sets          => sets,
         ways          => ways,
+        little_end    => little_end,
         mem_num       => cacheable_mem_num,
         mem_info      => cacheable_mem_info,
         cache_y       => cache_y,
@@ -282,6 +289,7 @@ begin
         clk                        => clk,
         local_y                    => local_y,
         local_x                    => local_x,
+        tile_id                    => tile_id,
         dma_read                   => dma_read,
         dma_write                  => dma_write,
         dma_length                 => dma_length,
@@ -294,6 +302,9 @@ begin
         dma_snd_data               => dma_snd_data,
         dma_snd_ready              => dma_snd_ready,
         flush                      => flush,
+        aq                         => conf_done,
+        rl                         => acc_done,
+        spandex_conf               => bank(SPANDEX_REG),
         coherence_req_wrreq        => coherence_req_wrreq,
         coherence_req_data_in      => coherence_req_data_in,
         coherence_req_full         => coherence_req_full,
@@ -306,6 +317,9 @@ begin
         coherence_rsp_snd_wrreq    => coherence_rsp_snd_wrreq,
         coherence_rsp_snd_data_in  => coherence_rsp_snd_data_in,
         coherence_rsp_snd_full     => coherence_rsp_snd_full,
+        coherence_fwd_snd_wrreq    => coherence_fwd_snd_wrreq,
+        coherence_fwd_snd_data_in  => coherence_fwd_snd_data_in,
+        coherence_fwd_snd_full     => coherence_fwd_snd_full,
         mon_cache                  => mon_cache);
   end generate l2_gen;
 
@@ -320,6 +334,8 @@ begin
     coherence_rsp_rcv_rdreq <= '0';
     coherence_rsp_snd_wrreq <= '0';
     coherence_rsp_snd_data_in <= (others => '0');
+    coherence_fwd_snd_wrreq <= '0';
+    coherence_fwd_snd_data_in <= (others => '0');
     mon_cache <= monitor_cache_none;
   end generate no_l2_gen;
 

@@ -84,7 +84,7 @@ int main(int argc, char * argv[])
 
 	printf("Scanning device tree... \n");
 
-	ndev = probe(&espdevs, SLD_DUMMY, DEV_NAME);
+	ndev = probe(&espdevs, VENDOR_SLD, SLD_DUMMY, DEV_NAME);
 	if (ndev < 1) {
 		printf("This test requires a dummy device!\n");
 		return 0;

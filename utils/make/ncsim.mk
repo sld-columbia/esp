@@ -94,15 +94,11 @@ endif
 		echo $(SPACES)"$(NCLOG) $$rtl"; \
 		$(NCLOG) -work work $$rtl || exit; \
 	done; \
-	if ! test -e prom.srec; then \
-		ln -s $(SOFT_BUILD)/prom.srec; \
-	fi; \
-	if ! test -e ram.srec; then \
-		ln -s $(SOFT_BUILD)/ram.srec; \
-	fi; \
+	rm -f prom.srec ram.srec; \
+	ln -s $(SOFT_BUILD)/prom.srec; \
+	ln -s $(SOFT_BUILD)/ram.srec; \
 	echo $(SPACES)"$(NCELAB) $(SIMTOP) $(EXTRA_SIMTOP)"; \
-	$(NCELAB) $(SIMTOP) $(EXTRA_SIMTOP) && touch ncready; \
-	cd ../;
+	$(NCELAB) $(SIMTOP) $(EXTRA_SIMTOP) && touch ncready;
 
 
 incisive/ncsim.in:
@@ -116,9 +112,11 @@ ncsim-compile: socketgen check_all_srcs soft incisive/ncready incisive/ncsim.in
 	done; \
 	$(QUIET_MAKE) \
 	cd incisive; \
+	rm -f prom.srec ram.srec; \
+	ln -s $(SOFT_BUILD)/prom.srec; \
+	ln -s $(SOFT_BUILD)/ram.srec; \
 	echo $(SPACES)"$(NCUPDATE) $(SIMTOP)"; \
-	$(NCUPDATE) $(SIMTOP); \
-	cd ../;
+	$(NCUPDATE) $(SIMTOP);
 
 ncsim: ncsim-compile
 	@cd incisive; \

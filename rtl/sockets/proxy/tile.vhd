@@ -42,6 +42,9 @@ package tile is
       coherence_rsp_snd_wrreq      : in  std_ulogic;
       coherence_rsp_snd_data_in    : in  noc_flit_type;
       coherence_rsp_snd_full       : out std_ulogic;
+      coherence_fwd_snd_wrreq      : in  std_ulogic;
+      coherence_fwd_snd_data_in    : in  noc_flit_type;
+      coherence_fwd_snd_full       : out std_ulogic;
       dma_rcv_rdreq              : in  std_ulogic;
       dma_rcv_data_out           : out noc_flit_type;
       dma_rcv_empty              : out std_ulogic;
@@ -398,6 +401,9 @@ package tile is
       coherence_rsp_snd_wrreq    : in  std_ulogic;
       coherence_rsp_snd_data_in  : in  noc_flit_type;
       coherence_rsp_snd_full     : out std_ulogic;
+      coherence_fwd_snd_wrreq    : in  std_ulogic;
+      coherence_fwd_snd_data_in  : in  noc_flit_type;
+      coherence_fwd_snd_full     : out std_ulogic;
       dma_rcv_rdreq     : in  std_ulogic;
       dma_rcv_data_out  : out noc_flit_type;
       dma_rcv_empty     : out std_ulogic;
@@ -563,9 +569,9 @@ package tile is
       tech        : integer;
       hindex      : std_logic_vector(0 to NAHBSLV - 1);
       hconfig     : ahb_slv_config_vector;
-      mem_hindex  : integer range 0 to NAHBSLV - 1;
+      mem_hindex  : integer range -1 to NAHBSLV - 1;
       mem_num     : integer;
-      mem_info    : tile_mem_info_vector(0 to CFG_NMEM_TILE + CFG_NSLM_TILE - 1);
+      mem_info    : tile_mem_info_vector(0 to CFG_NMEM_TILE + CFG_NSLM_TILE + CFG_NSLMDDR_TILE - 1);
       slv_y       : local_yx;
       slv_x       : local_yx;
       retarget_for_dma : integer range 0 to 1;
@@ -597,9 +603,9 @@ package tile is
       tech         : integer;
       nmst         : integer;
       retarget_for_dma : integer range 0 to 1;
-      mem_axi_port : integer range 0 to NAHBSLV - 1;
+      mem_axi_port : integer range -1 to NAHBSLV - 1;
       mem_num      : integer;
-      mem_info     : tile_mem_info_vector(0 to CFG_NMEM_TILE + CFG_NSLM_TILE - 1);
+      mem_info     : tile_mem_info_vector(0 to CFG_NMEM_TILE + CFG_NSLM_TILE + CFG_NSLMDDR_TILE - 1);
       slv_y        : local_yx;
       slv_x        : local_yx);
     port (
@@ -722,7 +728,7 @@ package tile is
       tech               : integer;
       extra_clk_buf      : integer range 0 to 1;
       mem_num            : integer := 1;
-      mem_info           : tile_mem_info_vector(0 to CFG_NMEM_TILE + CFG_NSLM_TILE);
+      mem_info           : tile_mem_info_vector(0 to CFG_NMEM_TILE + CFG_NSLM_TILE + CFG_NSLMDDR_TILE);
       io_y               : local_yx;
       io_x               : local_yx;
       pindex             : integer;

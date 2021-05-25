@@ -138,7 +138,7 @@ constant has_sram_2pbw : tech_ability_type :=
         (others => 0);
 
 constant has_srambw : tech_ability_type :=
-	(virtex7 => 1, virtexup => 1, virtexu => 1, others => 0);
+	(virtex7 => 1, virtexup => 1, virtexu => 1, gf12 => 1, others => 0);
 
 constant has_2pfifo : tech_ability_type :=
         (others => 0);
@@ -359,6 +359,7 @@ constant m010     : integer := 13;
   component dco is
     generic (
       tech : integer;
+      enable_div2 : integer range 0 to 1;
       dlog : integer range 0 to 15);
     port (
       rstn     : in  std_ulogic;
@@ -371,6 +372,8 @@ constant m010     : integer := 13;
       freq_sel : in  std_logic_vector(1 downto 0);
       clk      : out std_logic;
       clk_div  : out std_logic;
+      clk_div2 : out std_logic;
+      clk_div2_90 : out std_logic;
       lock     : out std_ulogic);
   end component dco;
 
@@ -571,7 +574,7 @@ constant m010     : integer := 13;
 
   component syncrambw
   generic (tech : integer := 0; abits : integer := 6; dbits : integer := 8;
-    testen : integer := 0; custombits : integer := 1);
+    testen : integer := 0; custombits : integer := 1; large_banks : integer := 0);
   port (
     clk     : in  std_ulogic;
     address : in  std_logic_vector (abits-1 downto 0);
@@ -689,6 +692,14 @@ component iopad
         cfgi: in std_logic_vector(19 downto 0) := "00000000000000000000");
 end component;
 
+component iopadien
+  generic (tech : integer := 0; level : integer := 0; slew : integer := 0;
+	   voltage : integer := x33v; strength : integer := 12;
+	   oepol : integer := 0; filter : integer := 0; loc : std_logic := '0');
+  port (pad : inout std_ulogic; i, en : in std_ulogic; o : out std_ulogic; ien : in std_ulogic;
+        cfgi: in std_logic_vector(19 downto 0) := "00000000000000000000");
+end component;
+
 component iopadv
   generic (tech : integer := 0; level : integer := 0; slew : integer := 0;
 	voltage : integer := x33v; strength : integer := 12; width : integer := 1;
@@ -698,6 +709,19 @@ component iopadv
     i   : in  std_logic_vector(width-1 downto 0);
     en  : in  std_ulogic;
     o   : out std_logic_vector(width-1 downto 0);
+    cfgi: in std_logic_vector(19 downto 0) := "00000000000000000000");
+end component;
+
+component iopadienv
+  generic (tech : integer := 0; level : integer := 0; slew : integer := 0;
+           voltage : integer := x33v; strength : integer := 12; width : integer := 1;
+	   oepol : integer := 0; filter : integer := 0; loc : std_logic_vector := (31 downto 0 => '0'));
+  port (
+    pad : inout std_logic_vector(width-1 downto 0);
+    i   : in  std_logic_vector(width-1 downto 0);
+    en  : in  std_logic_vector(width-1 downto 0);
+    o   : out std_logic_vector(width-1 downto 0);
+    ien : in  std_logic_vector(width-1 downto 0);
     cfgi: in std_logic_vector(19 downto 0) := "00000000000000000000");
 end component;
 

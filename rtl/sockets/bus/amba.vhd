@@ -53,8 +53,8 @@ package amba is
 --
 constant AHBDW     : integer := CFG_AHBDW;
 constant AXIDW     : integer := AHBDW;
-constant XID_WIDTH : integer := 8;
-constant XUSER_WIDTH : integer := 1;
+constant XID_WIDTH : integer := 10;
+constant XUSER_WIDTH : integer := 10;
 
 -- CORE_ACDM - Enable AMBA Compliant Data Muxing in cores
 --
@@ -219,6 +219,11 @@ type apb_config_type is array (0 to NAPBCFG-1) of amba_config_word;
   constant HRESP_ERROR:   std_logic_vector(1 downto 0) := "01";
   constant HRESP_RETRY:   std_logic_vector(1 downto 0) := "10";
   constant HRESP_SPLIT:   std_logic_vector(1 downto 0) := "11";
+
+  constant RBRESP_OKAY:   std_logic_vector(1 downto 0) := "00";
+  constant RBRESP_EXOKAY: std_logic_vector(1 downto 0) := "01";
+  constant RBRESP_SLVERR: std_logic_vector(1 downto 0) := "10";
+  constant RBRESP_DECERR: std_logic_vector(1 downto 0) := "11";
 
 -- APB slave inputs
   type apb_slv_in_type is record

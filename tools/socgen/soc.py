@@ -97,13 +97,18 @@ class SoC_Config():
   DMA_WIDTH = 32
 
   def changed(self, *args): 
-    if self.cache_impl.get() == "SystemVerilog":
+    if self.cache_impl.get() == "ESP RTL":
       self.acc_l2_ways.set(self.l2_ways.get())
       self.acc_l2_sets.set(self.l2_sets.get())
       self.cache_rtl.set(1)
+      self.cache_spandex.set(0)
+    elif self.cache_impl.get() == "ESP HLS":
+      self.cache_rtl.set(0)
+      self.cache_spandex.set(0)
     else:
       self.cache_rtl.set(0)
-  
+      self.cache_spandex.set(1)
+
   def update_list_of_ips(self):
     self.list_of_ips = tuple(self.IPs.EMPTY) + tuple(self.IPs.PROCESSORS) + tuple(self.IPs.MISC) + tuple(self.IPs.MEM) + tuple(self.IPs.SLM) + tuple(self.IPs.ACCELERATORS)
 
@@ -163,11 +168,21 @@ class SoC_Config():
       self.cache_en.set(0)
     line = fp.readline()
     if line.find("CONFIG_CACHE_RTL = y") != -1:
+      self.cache_spandex.set(0)
       self.cache_rtl.set(1)
-      self.cache_impl.set("SystemVerilog")
+      self.cache_impl.set("ESP RTL")
+      line = fp.readline()
+      if line.find("CONFIG_CACHE_SPANDEX = y") != -1:
+        print("WARNING: Spandex RTL implementation is not available yet. Reverting to ESP RTL caches")
     else:
       self.cache_rtl.set(0)
-      self.cache_impl.set("SystemC + HLS")
+      line = fp.readline()
+      if line.find("CONFIG_CACHE_SPANDEX = y") != -1:
+        self.cache_spandex.set(1)
+        self.cache_impl.set("SPANDEX HLS")
+      else:
+        self.cache_spandex.set(0)
+        self.cache_impl.set("ESP HLS")
     line = fp.readline()
     item = line.split()
     self.l2_sets.set(int(item[2]))
@@ -221,6 +236,8 @@ class SoC_Config():
           tile.has_clkbuf.set(int(tokens[7]))
           if tokens[3] == "cpu" and self.cache_en.get() == 1:
             tile.has_l2.set(1)
+          if tokens[3] == "slm":
+            tile.has_ddr.set(tokens[8])
           if tokens[3] == "acc":
             tile.point.set(tokens[8])
             tile.has_l2.set(tokens[9])
@@ -271,6 +288,10 @@ class SoC_Config():
       fp.write("CONFIG_CACHE_RTL = y\n")
     else:
       fp.write("#CONFIG_CACHE_RTL is not set\n")
+    if self.cache_spandex.get() == 1:
+      fp.write("CONFIG_CACHE_SPANDEX = y\n")
+    else:
+      fp.write("#CONFIG_CACHE_SPANDEX is not set\n")
     fp.write("CONFIG_CPU_CACHES = " + str(self.l2_sets.get()) + " " + str(self.l2_ways.get()) + " " + str(self.llc_sets.get()) + " " + str(self.llc_ways.get()) + "\n")
     fp.write("CONFIG_ACC_CACHES = " + str(self.acc_l2_sets.get()) + " " + str(self.acc_l2_ways.get()) + "\n")
     fp.write("CONFIG_SLM_KBYTES = " + str(self.slm_kbytes.get()) + "\n")
@@ -312,10 +333,11 @@ class SoC_Config():
         tile = self.noc.topology[y][x]
         selection = tile.ip_type.get()
         is_accelerator = False
+        is_slm = False
         fp.write("TILE_" + str(y) + "_" + str(x) + " = ")
-		# Tile number
+        # Tile number
         fp.write(str(i) + " ")
-		# Tile type
+        # Tile type
         if self.IPs.PROCESSORS.count(selection):
           fp.write("cpu")
         elif self.IPs.MISC.count(selection):
@@ -323,15 +345,16 @@ class SoC_Config():
         elif self.IPs.MEM.count(selection):
           fp.write("mem")
         elif self.IPs.SLM.count(selection):
+          is_slm = True
           fp.write("slm")
         elif self.IPs.ACCELERATORS.count(selection):
           is_accelerator = True
           fp.write("acc")
         else:
           fp.write("empty")
-		# Selected accelerator or tile type repeated
+        # Selected accelerator or tile type repeated
         fp.write(" " + selection)
-		# Clock region info
+        # Clock region info
         try:
           clk_region = tile.clk_region.get()
           fp.write(" " + str(clk_region))
@@ -341,6 +364,10 @@ class SoC_Config():
           fp.write(" " + str(0))
         fp.write(" " + str(tile.has_pll.get()))
         fp.write(" " + str(tile.has_clkbuf.get()))
+        # SLM tile configuration
+        if is_slm:
+          fp.write(" " + str(tile.has_ddr.get()))
+        # Acceleator tile configuration
         if is_accelerator:
           fp.write(" " + str(tile.point.get()))
           fp.write(" " + str(tile.has_l2.get()))
@@ -428,6 +455,7 @@ class SoC_Config():
     self.CPU_ARCH = StringVar()
     self.cache_en = IntVar()
     self.cache_rtl = IntVar()
+    self.cache_spandex = IntVar()
     self.cache_impl = StringVar()
     # Partial-reconfiguration Ctrlr
     self.prc = IntVar() 

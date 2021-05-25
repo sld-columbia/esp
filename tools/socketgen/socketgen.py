@@ -22,10 +22,11 @@ def get_immediate_subdirectories(a_dir):
         if os.path.isdir(os.path.join(a_dir, name))]
 
 def print_usage():
-  print("Usage                    : ./socketgen.py <dma_width> <rtl_path> <template_path> <out_path>")
+  print("Usage                    : ./socketgen.py <dma_width> <cpu_arch> <rtl_path> <template_path> <out_path>")
   print("")
+  print("      <dma_width>        : Bit-width for the DMA channel (32, 64)")
   print("")
-  print("      <dma_width>        : Bit-width for the DMA channel (currently supporting 32 bits only)")
+  print("      <cpu_arch>         : Target processor (ariane, ibex, leon3)")
   print("")
   print("      <rtl_path>         : Path to accelerators' RTL for the target technology")
   print("")
@@ -115,10 +116,12 @@ class Component():
 ### Globals (updated based on DMA_WIDTH)
 #
 bits_per_line = 128
+words_per_line = 4
 phys_addr_bits = 32
 word_offset_bits = 2
 byte_offset_bits = 2
 offset_bits = 4
+little_endian = 1
 
 
 #
@@ -682,7 +685,7 @@ def write_acc_port_map(f, acc, dma_width, datatype, rst, is_noc_interface, is_vi
 
 # TODO replace all hardcoded vector lengths with constants
 def write_cache_interface(f, cac, is_llc):
-  if (is_llc):
+  if (is_llc and 'spandex' not in cac.name):
     f.write("      clk                          : in std_ulogic;\n")
     f.write("      rst                          : in std_ulogic;\n")
     f.write("      llc_req_in_valid             : in std_ulogic;\n")
@@ -752,7 +755,157 @@ def write_cache_interface(f, cac, is_llc):
     f.write("      llc_stats_data               : out std_ulogic;\n")
     f.write("      llc_rst_tb_done_valid        : out std_ulogic;\n")
     f.write("      llc_rst_tb_done_data         : out std_ulogic\n")
-  else:
+  elif (is_llc and 'spandex' in cac.name):
+    f.write("      clk                          : in std_ulogic;\n")
+    f.write("      rst                          : in std_ulogic;\n")
+    f.write("      llc_req_in_valid             : in std_ulogic;\n")
+    f.write("      llc_req_in_data_coh_msg      : in std_logic_vector(4 downto 0);\n")
+    f.write("      llc_req_in_data_hprot        : in std_logic_vector(1 downto 0);\n")
+    f.write("      llc_req_in_data_addr         : in std_logic_vector(" + str(phys_addr_bits - offset_bits - 1) + " downto 0);\n")
+    f.write("      llc_req_in_data_word_offset  : in std_logic_vector(" + str(word_offset_bits - 1) + " downto 0);\n")
+    f.write("      llc_req_in_data_valid_words  : in std_logic_vector(" + str(word_offset_bits - 1) + " downto 0);\n")
+    f.write("      llc_req_in_data_line         : in std_logic_vector(" + str(bits_per_line - 1) + "  downto 0);\n")
+    f.write("      llc_req_in_data_word_mask    : in std_logic_vector(" + str(words_per_line - 1) + "  downto 0);\n")
+    f.write("      llc_req_in_data_req_id       : in std_logic_vector(3 downto 0);\n")
+    f.write("      llc_dma_req_in_valid             : in std_ulogic;\n")
+    f.write("      llc_dma_req_in_data_coh_msg      : in std_logic_vector(4 downto 0);\n")
+    f.write("      llc_dma_req_in_data_hprot        : in std_logic_vector(1 downto 0);\n")
+    f.write("      llc_dma_req_in_data_addr         : in std_logic_vector(" + str(phys_addr_bits - offset_bits - 1) + " downto 0);\n")
+    f.write("      llc_dma_req_in_data_word_offset  : in std_logic_vector(" + str(word_offset_bits - 1) + " downto 0);\n")
+    f.write("      llc_dma_req_in_data_valid_words  : in std_logic_vector(" + str(word_offset_bits - 1) + " downto 0);\n")
+    f.write("      llc_dma_req_in_data_line         : in std_logic_vector(" + str(bits_per_line - 1) + " downto 0);\n")
+    f.write("      llc_dma_req_in_data_req_id       : in std_logic_vector(5 downto 0);\n")
+    f.write("      llc_dma_req_in_data_word_mask    : in std_logic_vector(" + str(words_per_line - 1) + "  downto 0);\n")
+    f.write("      llc_rsp_in_valid             : in std_ulogic;\n")
+    f.write("      llc_rsp_in_data_coh_msg      : in std_logic_vector(3 downto 0);\n")
+    f.write("      llc_rsp_in_data_addr         : in std_logic_vector(" + str(phys_addr_bits - offset_bits - 1) + " downto 0);\n")
+    f.write("      llc_rsp_in_data_line         : in std_logic_vector(" + str(bits_per_line - 1) + " downto 0);\n")
+    f.write("      llc_rsp_in_data_word_mask    : in std_logic_vector(" + str(words_per_line - 1) + "  downto 0);\n")
+    f.write("      llc_rsp_in_data_req_id       : in std_logic_vector(3 downto 0);\n")
+    f.write("      llc_mem_rsp_valid            : in std_ulogic;\n")
+    f.write("      llc_mem_rsp_data_line        : in std_logic_vector(" + str(bits_per_line - 1) + " downto 0);\n")
+    f.write("      llc_rst_tb_valid             : in std_ulogic;\n")
+    f.write("      llc_rst_tb_data              : in std_ulogic;\n")
+    f.write("      llc_rsp_out_ready            : in std_ulogic;\n")
+    f.write("      llc_dma_rsp_out_ready            : in std_ulogic;\n")
+    f.write("      llc_fwd_out_ready            : in std_ulogic;\n")
+    f.write("      llc_mem_req_ready            : in std_ulogic;\n")
+    f.write("      llc_rst_tb_done_ready        : in std_ulogic;\n")
+    f.write("      llc_stats_ready              : in std_ulogic;\n")
+    f.write("      llc_req_in_ready             : out std_ulogic;\n")
+    f.write("      llc_dma_req_in_ready             : out std_ulogic;\n")
+    f.write("      llc_rsp_in_ready             : out std_ulogic;\n")
+    f.write("      llc_mem_rsp_ready            : out std_ulogic;\n")
+    f.write("      llc_rst_tb_ready             : out std_ulogic;\n")
+    f.write("      llc_rsp_out_valid            : out std_ulogic;\n")
+    f.write("      llc_rsp_out_data_coh_msg     : out std_logic_vector(3 downto 0);\n")
+    f.write("      llc_rsp_out_data_addr        : out std_logic_vector(" + str(phys_addr_bits - offset_bits - 1) + " downto 0);\n")
+    f.write("      llc_rsp_out_data_line        : out std_logic_vector(" + str(bits_per_line - 1) + " downto 0);\n")
+    f.write("      llc_rsp_out_data_word_mask   : out std_logic_vector(" + str(words_per_line - 1) + "  downto 0);\n")
+    f.write("      llc_rsp_out_data_invack_cnt  : out std_logic_vector(3 downto 0);\n")
+    f.write("      llc_rsp_out_data_req_id      : out std_logic_vector(3 downto 0);\n")
+    f.write("      llc_rsp_out_data_dest_id     : out std_logic_vector(3 downto 0);\n")
+    f.write("      llc_rsp_out_data_word_offset : out std_logic_vector(" + str(word_offset_bits - 1) + " downto 0);\n")
+    f.write("      llc_dma_rsp_out_valid            : out std_ulogic;\n")
+    f.write("      llc_dma_rsp_out_data_coh_msg     : out std_logic_vector(3 downto 0);\n")
+    f.write("      llc_dma_rsp_out_data_addr        : out std_logic_vector(" + str(phys_addr_bits - offset_bits - 1) + " downto 0);\n")
+    f.write("      llc_dma_rsp_out_data_line        : out std_logic_vector(" + str(bits_per_line - 1) + " downto 0);\n")
+    f.write("      llc_dma_rsp_out_data_invack_cnt  : out std_logic_vector(3 downto 0);\n")
+    f.write("      llc_dma_rsp_out_data_req_id      : out std_logic_vector(5 downto 0);\n")
+    f.write("      llc_dma_rsp_out_data_dest_id     : out std_logic_vector(3 downto 0);\n")
+    f.write("      llc_dma_rsp_out_data_word_offset : out std_logic_vector(" + str(word_offset_bits - 1) + " downto 0);\n")
+    f.write("      llc_dma_rsp_out_data_word_mask   : out std_logic_vector(" + str(words_per_line - 1) + "  downto 0);\n")
+    f.write("      llc_fwd_out_valid            : out std_ulogic;\n")
+    f.write("      llc_fwd_out_data_coh_msg     : out std_logic_vector(4 downto 0);\n")
+    f.write("      llc_fwd_out_data_addr        : out std_logic_vector(" + str(phys_addr_bits - offset_bits - 1) + " downto 0);\n")
+    f.write("      llc_fwd_out_data_req_id      : out std_logic_vector(3 downto 0);\n")
+    f.write("      llc_fwd_out_data_dest_id     : out std_logic_vector(3 downto 0);\n")
+    f.write("      llc_fwd_out_data_word_mask   : out std_logic_vector(" + str(words_per_line - 1) + "  downto 0);\n")
+    f.write("      llc_fwd_out_data_line        : out std_logic_vector(" + str(bits_per_line - 1) + "  downto 0);\n")
+    f.write("      llc_mem_req_valid            : out std_ulogic;\n")
+    f.write("      llc_mem_req_data_hwrite      : out std_ulogic;\n")
+    f.write("      llc_mem_req_data_hsize       : out std_logic_vector(2 downto 0);\n")
+    f.write("      llc_mem_req_data_hprot       : out std_logic_vector(1 downto 0);\n")
+    f.write("      llc_mem_req_data_addr        : out std_logic_vector(" + str(phys_addr_bits - offset_bits - 1) + " downto 0);\n")
+    f.write("      llc_mem_req_data_line        : out std_logic_vector(" + str(bits_per_line - 1) + " downto 0);\n")
+    f.write("      llc_stats_valid              : out std_ulogic;\n")
+    f.write("      llc_stats_data               : out std_ulogic;\n")
+    f.write("      llc_rst_tb_done_valid        : out std_ulogic;\n")
+    f.write("      llc_rst_tb_done_data         : out std_ulogic\n")
+  elif (not is_llc and 'spandex' in cac.name):
+    f.write("      clk                       : in  std_ulogic;\n")
+    f.write("      rst                       : in  std_ulogic;\n")
+    f.write("      l2_cpu_req_valid          : in  std_ulogic;\n")
+    f.write("      l2_cpu_req_data_cpu_msg   : in  std_logic_vector(1 downto 0);\n")
+    f.write("      l2_cpu_req_data_hsize     : in  std_logic_vector(2 downto 0);\n")
+    f.write("      l2_cpu_req_data_hprot     : in  std_logic_vector(1 downto 0);\n")
+    f.write("      l2_cpu_req_data_addr      : in  std_logic_vector(" + str(phys_addr_bits - 1) + " downto 0);\n")
+    f.write("      l2_cpu_req_data_word      : in  std_logic_vector(" + str(dma_width - 1) + " downto 0);\n")
+    f.write("      l2_cpu_req_data_amo       : in  std_logic_vector(5 downto 0);\n")
+    f.write("      l2_cpu_req_data_aq        : in  std_ulogic;\n")
+    f.write("      l2_cpu_req_data_rl        : in  std_ulogic;\n")
+    f.write("      l2_cpu_req_data_dcs_en    : in  std_ulogic;\n")
+    f.write("      l2_cpu_req_data_use_owner_pred : in  std_ulogic;\n")
+    f.write("      l2_cpu_req_data_dcs       : in  std_logic_vector(1 downto 0);\n")
+    f.write("      l2_cpu_req_data_pred_cid  : in  std_logic_vector(3 downto 0);\n")
+    f.write("      l2_fwd_in_valid           : in  std_ulogic;\n")
+    f.write("      l2_fwd_in_data_coh_msg    : in  std_logic_vector(4 downto 0);\n")
+    f.write("      l2_fwd_in_data_addr       : in  std_logic_vector(" + str(phys_addr_bits - offset_bits - 1) + " downto 0);\n")
+    f.write("      l2_fwd_in_data_req_id     : in  std_logic_vector(3 downto 0);\n")
+    f.write("      l2_fwd_in_data_word_mask  : in std_logic_vector(" + str(words_per_line - 1) + "  downto 0);\n")
+    f.write("      l2_fwd_in_data_line       : in std_logic_vector(" + str(bits_per_line - 1) + "  downto 0);\n")
+    f.write("      l2_rsp_in_valid           : in  std_ulogic;\n")
+    f.write("      l2_rsp_in_data_coh_msg    : in  std_logic_vector(3 downto 0);\n")
+    f.write("      l2_rsp_in_data_addr       : in  std_logic_vector(" + str(phys_addr_bits - offset_bits - 1) + " downto 0);\n")
+    f.write("      l2_rsp_in_data_line       : in  std_logic_vector(" + str(bits_per_line - 1) + " downto 0);\n")
+    f.write("      l2_rsp_in_data_word_mask  : in std_logic_vector(" + str(words_per_line - 1) + "  downto 0);\n")
+    f.write("      l2_rsp_in_data_invack_cnt : in  std_logic_vector(3 downto 0);\n")
+    f.write("      l2_flush_valid            : in  std_ulogic;\n")
+    f.write("      l2_flush_data             : in  std_ulogic;\n")
+    f.write("      l2_rd_rsp_ready           : in  std_ulogic;\n")
+    f.write("      l2_inval_ready            : in  std_ulogic;\n")
+    f.write("      l2_bresp_ready            : in  std_ulogic;\n")
+    f.write("      l2_req_out_ready          : in  std_ulogic;\n")
+    f.write("      l2_rsp_out_ready          : in  std_ulogic;\n")
+    f.write("      l2_fwd_out_ready          : in  std_ulogic;\n")
+    f.write("      l2_stats_ready            : in  std_ulogic;\n")
+    f.write("      flush_done                : out std_ulogic;\n")
+    f.write("      l2_cpu_req_ready          : out std_ulogic;\n")
+    f.write("      l2_fwd_in_ready           : out std_ulogic;\n")
+    f.write("      l2_rsp_in_ready           : out std_ulogic;\n")
+    f.write("      l2_flush_ready            : out std_ulogic;\n")
+    f.write("      l2_rd_rsp_valid           : out std_ulogic;\n")
+    f.write("      l2_rd_rsp_data_line       : out std_logic_vector(" + str(bits_per_line - 1) + " downto 0);\n")
+    f.write("      l2_inval_valid            : out std_ulogic;\n")
+    f.write("      l2_inval_data             : out std_logic_vector(" + str(phys_addr_bits - offset_bits - 1) + " downto 0);\n")
+    f.write("      l2_bresp_valid            : out std_ulogic;\n")
+    f.write("      l2_bresp_data             : out std_logic_vector(1 downto 0);\n")
+    f.write("      l2_req_out_valid          : out std_ulogic;\n")
+    f.write("      l2_req_out_data_coh_msg   : out std_logic_vector(3 downto 0);\n")
+    f.write("      l2_req_out_data_hprot     : out std_logic_vector(1 downto 0);\n")
+    f.write("      l2_req_out_data_addr      : out std_logic_vector(" + str(phys_addr_bits - offset_bits - 1) + " downto 0);\n")
+    f.write("      l2_req_out_data_line      : out std_logic_vector(" + str(bits_per_line - 1) + " downto 0);\n")
+    f.write("      l2_req_out_data_word_mask : out std_logic_vector(" + str(words_per_line - 1) + "  downto 0);\n")
+    f.write("      l2_rsp_out_valid          : out std_ulogic;\n")
+    f.write("      l2_rsp_out_data_coh_msg   : out std_logic_vector(3 downto 0);\n")
+    f.write("      l2_rsp_out_data_req_id    : out std_logic_vector(3 downto 0);\n")
+    f.write("      l2_rsp_out_data_to_req    : out std_logic_vector(1 downto 0);\n")
+    f.write("      l2_rsp_out_data_addr      : out std_logic_vector(" + str(phys_addr_bits - offset_bits - 1) + " downto 0);\n")
+    f.write("      l2_rsp_out_data_line      : out std_logic_vector(" + str(bits_per_line - 1) + " downto 0);\n")
+    f.write("      l2_rsp_out_data_word_mask : out std_logic_vector(" + str(words_per_line - 1) + "  downto 0);\n")
+    f.write("      l2_fwd_out_valid          : out std_ulogic;\n")
+    f.write("      l2_fwd_out_data_coh_msg   : out std_logic_vector(3 downto 0);\n")
+    f.write("      l2_fwd_out_data_req_id    : out std_logic_vector(3 downto 0);\n")
+    f.write("      l2_fwd_out_data_to_req    : out std_logic_vector(1 downto 0);\n")
+    f.write("      l2_fwd_out_data_addr      : out std_logic_vector(" + str(phys_addr_bits - offset_bits - 1) + " downto 0);\n")
+    f.write("      l2_fwd_out_data_line      : out std_logic_vector(" + str(bits_per_line - 1) + " downto 0);\n")
+    f.write("      l2_fwd_out_data_word_mask : out std_logic_vector(" + str(words_per_line - 1) + "  downto 0);\n")
+    f.write("      l2_stats_valid            : out std_ulogic;\n")
+    f.write("      l2_stats_data             : out std_ulogic;\n")
+    f.write("      l2_fence_ready            : out std_ulogic;\n")
+    f.write("      l2_fence_valid            : in  std_ulogic;\n")
+    f.write("      l2_fence_data             : in  std_logic_vector(1 downto 0)\n")
+  elif (not is_llc and 'spandex' not in cac.name):
     f.write("      clk                       : in  std_ulogic;\n")
     f.write("      rst                       : in  std_ulogic;\n")
     f.write("      l2_cpu_req_valid          : in  std_ulogic;\n")
@@ -774,6 +927,7 @@ def write_cache_interface(f, cac, is_llc):
     f.write("      l2_flush_data             : in  std_ulogic;\n")
     f.write("      l2_rd_rsp_ready           : in  std_ulogic;\n")
     f.write("      l2_inval_ready            : in  std_ulogic;\n")
+    f.write("      l2_bresp_ready            : in  std_ulogic;\n")
     f.write("      l2_req_out_ready          : in  std_ulogic;\n")
     f.write("      l2_rsp_out_ready          : in  std_ulogic;\n")
     f.write("      l2_stats_ready            : in  std_ulogic;\n")
@@ -786,6 +940,8 @@ def write_cache_interface(f, cac, is_llc):
     f.write("      l2_rd_rsp_data_line       : out std_logic_vector(" + str(bits_per_line - 1) + " downto 0);\n")
     f.write("      l2_inval_valid            : out std_ulogic;\n")
     f.write("      l2_inval_data             : out std_logic_vector(" + str(phys_addr_bits - offset_bits - 1) + " downto 0);\n")
+    f.write("      l2_bresp_valid            : out std_ulogic;\n")
+    f.write("      l2_bresp_data             : out std_logic_vector(1 downto 0);\n")
     f.write("      l2_req_out_valid          : out std_ulogic;\n")
     f.write("      l2_req_out_data_coh_msg   : out std_logic_vector(1 downto 0);\n")
     f.write("      l2_req_out_data_hprot     : out std_logic_vector(1 downto 0);\n")
@@ -803,7 +959,84 @@ def write_cache_interface(f, cac, is_llc):
 
 def write_cache_port_map(f, cac, is_llc):
   f.write("    port map(\n")
-  if is_llc:
+  if is_llc and 'spandex' in cac.name:
+    f.write("      clk                          => clk,\n")
+    f.write("      rst                          => rst,\n")
+    f.write("      llc_req_in_valid             => llc_req_in_valid,\n")
+    f.write("      llc_req_in_data_coh_msg      => llc_req_in_data_coh_msg,\n")
+    f.write("      llc_req_in_data_hprot        => llc_req_in_data_hprot,\n")
+    f.write("      llc_req_in_data_addr         => llc_req_in_data_addr,\n")
+    f.write("      llc_req_in_data_word_offset  => llc_req_in_data_word_offset,\n")
+    f.write("      llc_req_in_data_valid_words  => llc_req_in_data_valid_words,\n")
+    f.write("      llc_req_in_data_line         => llc_req_in_data_line,\n")
+    f.write("      llc_req_in_data_word_mask    => llc_req_in_data_word_mask,\n")
+    f.write("      llc_req_in_data_req_id       => llc_req_in_data_req_id,\n")
+    f.write("      llc_dma_req_in_valid             => llc_dma_req_in_valid,\n")
+    f.write("      llc_dma_req_in_data_coh_msg      => llc_dma_req_in_data_coh_msg,\n")
+    f.write("      llc_dma_req_in_data_hprot        => llc_dma_req_in_data_hprot,\n")
+    f.write("      llc_dma_req_in_data_addr         => llc_dma_req_in_data_addr,\n")
+    f.write("      llc_dma_req_in_data_word_offset  => llc_dma_req_in_data_word_offset,\n")
+    f.write("      llc_dma_req_in_data_valid_words  => llc_dma_req_in_data_valid_words,\n")
+    f.write("      llc_dma_req_in_data_line         => llc_dma_req_in_data_line,\n")
+    f.write("      llc_dma_req_in_data_req_id       => llc_dma_req_in_data_req_id,\n")
+    f.write("      llc_dma_req_in_data_word_mask    => llc_dma_req_in_data_word_mask,\n")
+    f.write("      llc_rsp_in_valid             => llc_rsp_in_valid,\n")
+    f.write("      llc_rsp_in_data_coh_msg      => llc_rsp_in_data_coh_msg,\n")
+    f.write("      llc_rsp_in_data_addr         => llc_rsp_in_data_addr,\n")
+    f.write("      llc_rsp_in_data_line         => llc_rsp_in_data_line,\n")
+    f.write("      llc_rsp_in_data_word_mask    => llc_rsp_in_data_word_mask,\n")
+    f.write("      llc_rsp_in_data_req_id       => llc_rsp_in_data_req_id,\n")
+    f.write("      llc_mem_rsp_valid            => llc_mem_rsp_valid,\n")
+    f.write("      llc_mem_rsp_data_line        => llc_mem_rsp_data_line,\n")
+    f.write("      llc_rst_tb_valid             => llc_rst_tb_valid,\n")
+    f.write("      llc_rst_tb_data              => llc_rst_tb_data,\n")
+    f.write("      llc_rsp_out_ready            => llc_rsp_out_ready,\n")
+    f.write("      llc_dma_rsp_out_ready            => llc_dma_rsp_out_ready,\n")
+    f.write("      llc_fwd_out_ready            => llc_fwd_out_ready,\n")
+    f.write("      llc_mem_req_ready            => llc_mem_req_ready,\n")
+    f.write("      llc_rst_tb_done_ready        => llc_rst_tb_done_ready,\n")
+    f.write("      llc_stats_ready              => llc_stats_ready,\n")
+    f.write("      llc_req_in_ready             => llc_req_in_ready,\n")
+    f.write("      llc_dma_req_in_ready             => llc_dma_req_in_ready,\n")
+    f.write("      llc_rsp_in_ready             => llc_rsp_in_ready,\n")
+    f.write("      llc_mem_rsp_ready            => llc_mem_rsp_ready,\n")
+    f.write("      llc_rst_tb_ready             => llc_rst_tb_ready,\n")
+    f.write("      llc_rsp_out_valid            => llc_rsp_out_valid,\n")
+    f.write("      llc_rsp_out_data_coh_msg     => llc_rsp_out_data_coh_msg,\n")
+    f.write("      llc_rsp_out_data_addr        => llc_rsp_out_data_addr,\n")
+    f.write("      llc_rsp_out_data_line        => llc_rsp_out_data_line,\n")
+    f.write("      llc_rsp_out_data_invack_cnt  => llc_rsp_out_data_invack_cnt,\n")
+    f.write("      llc_rsp_out_data_req_id      => llc_rsp_out_data_req_id,\n")
+    f.write("      llc_rsp_out_data_dest_id     => llc_rsp_out_data_dest_id,\n")
+    f.write("      llc_rsp_out_data_word_offset => llc_rsp_out_data_word_offset,\n")
+    f.write("      llc_rsp_out_data_word_mask   => llc_rsp_out_data_word_mask,\n")
+    f.write("      llc_dma_rsp_out_valid            => llc_dma_rsp_out_valid,\n")
+    f.write("      llc_dma_rsp_out_data_coh_msg     => llc_dma_rsp_out_data_coh_msg,\n")
+    f.write("      llc_dma_rsp_out_data_addr        => llc_dma_rsp_out_data_addr,\n")
+    f.write("      llc_dma_rsp_out_data_line        => llc_dma_rsp_out_data_line,\n")
+    f.write("      llc_dma_rsp_out_data_invack_cnt  => llc_dma_rsp_out_data_invack_cnt,\n")
+    f.write("      llc_dma_rsp_out_data_req_id      => llc_dma_rsp_out_data_req_id,\n")
+    f.write("      llc_dma_rsp_out_data_dest_id     => llc_dma_rsp_out_data_dest_id,\n")
+    f.write("      llc_dma_rsp_out_data_word_offset => llc_dma_rsp_out_data_word_offset,\n")
+    f.write("      llc_dma_rsp_out_data_word_mask   => llc_dma_rsp_out_data_word_mask,\n")
+    f.write("      llc_fwd_out_valid            => llc_fwd_out_valid,\n")
+    f.write("      llc_fwd_out_data_coh_msg     => llc_fwd_out_data_coh_msg,\n")
+    f.write("      llc_fwd_out_data_addr        => llc_fwd_out_data_addr,\n")
+    f.write("      llc_fwd_out_data_req_id      => llc_fwd_out_data_req_id,\n")
+    f.write("      llc_fwd_out_data_dest_id     => llc_fwd_out_data_dest_id,\n")
+    f.write("      llc_fwd_out_data_word_mask   => llc_fwd_out_data_word_mask,\n")
+    f.write("      llc_fwd_out_data_line        => llc_fwd_out_data_line,\n")
+    f.write("      llc_mem_req_valid            => llc_mem_req_valid,\n")
+    f.write("      llc_mem_req_data_hwrite      => llc_mem_req_data_hwrite,\n")
+    f.write("      llc_mem_req_data_hsize       => llc_mem_req_data_hsize,\n")
+    f.write("      llc_mem_req_data_hprot       => llc_mem_req_data_hprot,\n")
+    f.write("      llc_mem_req_data_addr        => llc_mem_req_data_addr,\n")
+    f.write("      llc_mem_req_data_line        => llc_mem_req_data_line,\n")
+    f.write("      llc_stats_valid              => llc_stats_valid,\n")
+    f.write("      llc_stats_data               => llc_stats_data,\n")
+    f.write("      llc_rst_tb_done_valid        => llc_rst_tb_done_valid,\n")
+    f.write("      llc_rst_tb_done_data         => llc_rst_tb_done_data\n")
+  elif is_llc and 'spandex' not in cac.name:
     f.write("      clk                          => clk,\n")
     f.write("      rst                          => rst,\n")
     f.write("      llc_req_in_valid             => llc_req_in_valid,\n")
@@ -873,7 +1106,80 @@ def write_cache_port_map(f, cac, is_llc):
     f.write("      llc_stats_data               => llc_stats_data,\n")
     f.write("      llc_rst_tb_done_valid        => llc_rst_tb_done_valid,\n")
     f.write("      llc_rst_tb_done_data         => llc_rst_tb_done_data\n")
-  else:
+  elif not is_llc and 'spandex' in cac.name:
+    f.write("      clk                       => clk,\n")
+    f.write("      rst                       => rst,\n")
+    f.write("      l2_cpu_req_valid          => l2_cpu_req_valid,\n")
+    f.write("      l2_cpu_req_data_cpu_msg   => l2_cpu_req_data_cpu_msg,\n")
+    f.write("      l2_cpu_req_data_hsize     => l2_cpu_req_data_hsize,\n")
+    f.write("      l2_cpu_req_data_hprot     => l2_cpu_req_data_hprot,\n")
+    f.write("      l2_cpu_req_data_addr      => l2_cpu_req_data_addr,\n")
+    f.write("      l2_cpu_req_data_word      => l2_cpu_req_data_word,\n")
+    f.write("      l2_cpu_req_data_amo       => l2_cpu_req_data_amo,\n")
+    f.write("      l2_cpu_req_data_aq        => l2_cpu_req_data_aq,\n")
+    f.write("      l2_cpu_req_data_rl        => l2_cpu_req_data_rl,\n")
+    f.write("      l2_cpu_req_data_dcs_en    => l2_cpu_req_data_dcs_en,\n")
+    f.write("      l2_cpu_req_data_use_owner_pred => l2_cpu_req_data_use_owner_pred,\n")
+    f.write("      l2_cpu_req_data_dcs       => l2_cpu_req_data_dcs,\n")
+    f.write("      l2_cpu_req_data_pred_cid  => l2_cpu_req_data_pred_cid,\n")
+    f.write("      l2_fwd_in_valid           => l2_fwd_in_valid,\n")
+    f.write("      l2_fwd_in_data_coh_msg    => l2_fwd_in_data_coh_msg,\n")
+    f.write("      l2_fwd_in_data_addr       => l2_fwd_in_data_addr,\n")
+    f.write("      l2_fwd_in_data_req_id     => l2_fwd_in_data_req_id,\n")
+    f.write("      l2_fwd_in_data_word_mask  => l2_fwd_in_data_word_mask,\n")
+    f.write("      l2_fwd_in_data_line       => l2_fwd_in_data_line,\n")
+    f.write("      l2_rsp_in_valid           => l2_rsp_in_valid,\n")
+    f.write("      l2_rsp_in_data_coh_msg    => l2_rsp_in_data_coh_msg,\n")
+    f.write("      l2_rsp_in_data_addr       => l2_rsp_in_data_addr,\n")
+    f.write("      l2_rsp_in_data_line       => l2_rsp_in_data_line,\n")
+    f.write("      l2_rsp_in_data_invack_cnt => l2_rsp_in_data_invack_cnt,\n")
+    f.write("      l2_rsp_in_data_word_mask  => l2_rsp_in_data_word_mask,\n")
+    f.write("      l2_flush_valid            => l2_flush_valid,\n")
+    f.write("      l2_flush_data             => l2_flush_data,\n")
+    f.write("      l2_rd_rsp_ready           => l2_rd_rsp_ready,\n")
+    f.write("      l2_inval_ready            => l2_inval_ready,\n")
+    f.write("      l2_bresp_ready            => l2_bresp_ready,\n")
+    f.write("      l2_req_out_ready          => l2_req_out_ready,\n")
+    f.write("      l2_rsp_out_ready          => l2_rsp_out_ready,\n")
+    f.write("      l2_fwd_out_ready          => l2_rsp_out_ready,\n")
+    f.write("      l2_stats_ready            => l2_stats_ready,\n")
+    f.write("      flush_done                => flush_done,\n")
+    f.write("      l2_cpu_req_ready          => l2_cpu_req_ready,\n")
+    f.write("      l2_fwd_in_ready           => l2_fwd_in_ready,\n")
+    f.write("      l2_rsp_in_ready           => l2_rsp_in_ready,\n")
+    f.write("      l2_flush_ready            => l2_flush_ready,\n")
+    f.write("      l2_rd_rsp_valid           => l2_rd_rsp_valid,\n")
+    f.write("      l2_rd_rsp_data_line       => l2_rd_rsp_data_line,\n")
+    f.write("      l2_inval_valid            => l2_inval_valid,\n")
+    f.write("      l2_inval_data             => l2_inval_data,\n")
+    f.write("      l2_bresp_valid            => l2_bresp_valid,\n")
+    f.write("      l2_bresp_data             => l2_bresp_data,\n")
+    f.write("      l2_req_out_valid          => l2_req_out_valid,\n")
+    f.write("      l2_req_out_data_coh_msg   => l2_req_out_data_coh_msg,\n")
+    f.write("      l2_req_out_data_hprot     => l2_req_out_data_hprot,\n")
+    f.write("      l2_req_out_data_addr      => l2_req_out_data_addr,\n")
+    f.write("      l2_req_out_data_line      => l2_req_out_data_line,\n")
+    f.write("      l2_req_out_data_word_mask => l2_req_out_data_word_mask,\n")
+    f.write("      l2_rsp_out_valid          => l2_rsp_out_valid,\n")
+    f.write("      l2_rsp_out_data_coh_msg   => l2_rsp_out_data_coh_msg,\n")
+    f.write("      l2_rsp_out_data_req_id    => l2_rsp_out_data_req_id,\n")
+    f.write("      l2_rsp_out_data_to_req    => l2_rsp_out_data_to_req,\n")
+    f.write("      l2_rsp_out_data_addr      => l2_rsp_out_data_addr,\n")
+    f.write("      l2_rsp_out_data_line      => l2_rsp_out_data_line,\n")
+    f.write("      l2_rsp_out_data_word_mask => l2_rsp_out_data_word_mask,\n")
+    f.write("      l2_fwd_out_valid          => l2_fwd_out_valid,\n")
+    f.write("      l2_fwd_out_data_coh_msg   => l2_fwd_out_data_coh_msg,\n")
+    f.write("      l2_fwd_out_data_req_id    => l2_fwd_out_data_req_id,\n")
+    f.write("      l2_fwd_out_data_to_req    => l2_fwd_out_data_to_req,\n")
+    f.write("      l2_fwd_out_data_addr      => l2_fwd_out_data_addr,\n")
+    f.write("      l2_fwd_out_data_line      => l2_fwd_out_data_line,\n")
+    f.write("      l2_fwd_out_data_word_mask => l2_fwd_out_data_word_mask,\n")
+    f.write("      l2_stats_valid            => l2_stats_valid,\n")
+    f.write("      l2_stats_data             => l2_stats_data,\n")
+    f.write("      l2_fence_ready            => l2_fence_ready,\n")
+    f.write("      l2_fence_valid            => l2_fence_valid,\n")
+    f.write("      l2_fence_data             => l2_fence_data\n")
+  elif not is_llc and 'spandex' not in cac.name:
     f.write("      clk                       => clk,\n")
     f.write("      rst                       => rst,\n")
     f.write("      l2_cpu_req_valid          => l2_cpu_req_valid,\n")
@@ -895,6 +1201,7 @@ def write_cache_port_map(f, cac, is_llc):
     f.write("      l2_flush_data             => l2_flush_data,\n")
     f.write("      l2_rd_rsp_ready           => l2_rd_rsp_ready,\n")
     f.write("      l2_inval_ready            => l2_inval_ready,\n")
+    f.write("      l2_bresp_ready            => l2_bresp_ready,\n")
     f.write("      l2_req_out_ready          => l2_req_out_ready,\n")
     f.write("      l2_rsp_out_ready          => l2_rsp_out_ready,\n")
     f.write("      l2_stats_ready            => l2_stats_ready,\n")
@@ -907,6 +1214,8 @@ def write_cache_port_map(f, cac, is_llc):
     f.write("      l2_rd_rsp_data_line       => l2_rd_rsp_data_line,\n")
     f.write("      l2_inval_valid            => l2_inval_valid,\n")
     f.write("      l2_inval_data             => l2_inval_data,\n")
+    f.write("      l2_bresp_valid            => l2_bresp_valid,\n")
+    f.write("      l2_bresp_data             => l2_bresp_data,\n")
     f.write("      l2_req_out_valid          => l2_req_out_valid,\n")
     f.write("      l2_req_out_data_coh_msg   => l2_req_out_data_coh_msg,\n")
     f.write("      l2_req_out_data_hprot     => l2_req_out_data_hprot,\n")
@@ -962,7 +1271,7 @@ def gen_tech_dep(accelerator_list, cache_list, dma_width, template_dir, out_dir)
         f.write(tline)
         continue
       for cac in cache_list:
-        is_llc = cac.name == "llc"
+        is_llc = "llc" in cac.name
         for impl in cac.hlscfg:
           f.write("\n")
           f.write("  component " + cac.name + "_" + impl + "\n")
@@ -1179,7 +1488,7 @@ def gen_tech_indep_impl(accelerator_list, cache_list, dma_width, template_dir, o
         f.write(tline)
         continue
       for cac in cache_list:
-        is_llc = cac.name == "llc"
+        is_llc = "llc" in cac.name
         f.write("library ieee;\n")
         f.write("use ieee.std_logic_1164.all;\n")
         f.write("use work.sld_devices.all;\n")
@@ -1188,6 +1497,10 @@ def gen_tech_indep_impl(accelerator_list, cache_list, dma_width, template_dir, o
         f.write("entity " + cac.name + " is\n\n")
         f.write("    generic (\n")
         f.write("      use_rtl          : integer;\n")
+        if (not is_llc):
+          f.write("      little_end       : integer range 0 to 1;\n")
+          if 'spandex' not in cac.name:
+            f.write("      llsc             : integer range 0 to 1;\n")
         f.write("      sets             : integer;\n")
         f.write("      ways             : integer\n")
         f.write("    );\n")
@@ -1200,11 +1513,14 @@ def gen_tech_indep_impl(accelerator_list, cache_list, dma_width, template_dir, o
         f.write("\n")
         f.write("architecture mapping of " + cac.name + " is\n\n")
         f.write("begin  -- mapping\n\n")
-        f.write("  rtl_gen: if use_rtl /= 0 generate\n")
-        f.write("    " + cac.name + "_rtl_top_i: " + cac.name + "_rtl_top\n")
-        write_cache_port_map(f, cac, is_llc)
-        f.write("  end generate rtl_gen;\n\n")
-        f.write("\n");
+        if 'spandex' in cac.name:
+          pass
+        else:
+          f.write("  rtl_gen: if use_rtl /= 0 generate\n")
+          f.write("    " + cac.name + "_rtl_top_i: " + cac.name + "_rtl_top\n")
+          write_cache_port_map(f, cac, is_llc)
+          f.write("  end generate rtl_gen;\n\n")
+        f.write("\n")
         f.write("  hls_gen: if use_rtl = 0 generate\n")
         for impl in cac.hlscfg:
           info = re.split('_|x', impl)
@@ -1213,6 +1529,8 @@ def gen_tech_indep_impl(accelerator_list, cache_list, dma_width, template_dir, o
           this_addr_bits = 0
           this_word_offset_bits = 0
           this_offset_bits = 0
+          this_llsc = 0
+          this_endian = "le"
           for item in info:
             if re.match(r'[0-9]+sets', item, re.M|re.I):
               sets = int(item.replace("sets", ""))
@@ -1224,14 +1542,31 @@ def gen_tech_indep_impl(accelerator_list, cache_list, dma_width, template_dir, o
               this_offset_bits = int(int(math.log2((int(item.replace("line", "")))/8) + word_offset_bits))
             elif re.match(r'[0-9]+addr', item, re.M|re.I):
               this_addr_bits = int(item.replace("addr", ""))
+            elif re.match(r'(no)?llsc', item, re.M|re.I):
+              if item == "llsc":
+                this_llsc = 1
+              else:
+                this_llsc = 0
+            elif re.match(r'[b|l]e', item, re.M|re.I):
+              if item == "le":
+                this_endian = 1
+              else:
+                this_endian = 0
+          if is_llc:
+            this_endian = little_endian
           if sets * ways == 0:
             print("    ERROR: hls config must report number of sets and ways, both different from zero")
             sys.exit(1)
-          if this_word_offset_bits != word_offset_bits or this_offset_bits != offset_bits or this_addr_bits != phys_addr_bits:
+          if this_word_offset_bits != word_offset_bits or this_offset_bits != offset_bits or this_addr_bits != phys_addr_bits or this_endian != little_endian:
             print("    INFO: skipping cache implementation " + impl + " incompatible with SoC architecture")
             continue
           f.write("\n")
-          f.write("  " + impl + "_gen: if sets = " + str(sets) + " and ways = " + str(ways) + " generate\n")
+          if is_llc:
+            f.write("  " + impl + "_gen: if sets = " + str(sets) + " and ways = " + str(ways) + " generate\n")
+          elif 'spandex' in cac.name:
+            f.write("  " + impl + "_gen: if little_end = " + str(this_endian) + " and sets = " + str(sets) + " and ways = " + str(ways) + " generate\n")
+          else:
+            f.write("  " + impl + "_gen: if little_end = " + str(this_endian) + " and llsc = " + str(this_llsc) + " and sets = " + str(sets) + " and ways = " + str(ways) + " generate\n")
           f.write("    " + cac.name + "_" + impl + "_i: " + cac.name + "_" + impl + "\n")
           write_cache_port_map(f, cac, is_llc)
           f.write("  end generate " +  impl + "_gen;\n\n")
@@ -1257,7 +1592,7 @@ def gen_interfaces(accelerator_list, axi_accelerator_list, dma_width, template_d
         f.write("      tech           : integer;\n")
         f.write("      mem_num        : integer;\n")
         f.write("      cacheable_mem_num : integer;\n")
-        f.write("      mem_info       : tile_mem_info_vector(0 to CFG_NMEM_TILE + CFG_NSLM_TILE);\n")
+        f.write("      mem_info       : tile_mem_info_vector(0 to CFG_NMEM_TILE + CFG_NSLM_TILE + CFG_NSLMDDR_TILE);\n")
         f.write("      io_y           : local_yx;\n")
         f.write("      io_x           : local_yx;\n")
         f.write("      pindex         : integer;\n")
@@ -1265,6 +1600,7 @@ def gen_interfaces(accelerator_list, axi_accelerator_list, dma_width, template_d
         f.write("      scatter_gather : integer := 1;\n")
         f.write("      sets           : integer;\n")
         f.write("      ways           : integer;\n")
+        f.write("      little_end     : integer range 0 to 1;\n")
         f.write("      cache_tile_id  : cache_attribute_array;\n")
         f.write("      cache_y        : yx_vec(0 to 2**NL2_MAX_LOG2 - 1);\n")
         f.write("      cache_x        : yx_vec(0 to 2**NL2_MAX_LOG2 - 1);\n")
@@ -1279,6 +1615,7 @@ def gen_interfaces(accelerator_list, axi_accelerator_list, dma_width, template_d
         f.write("      clk               : in  std_ulogic;\n")
         f.write("      local_y           : in  local_yx;\n")
         f.write("      local_x           : in  local_yx;\n")
+        f.write("      tile_id           : in  integer;\n")
         f.write("      paddr             : in  integer range 0 to 4095;\n")
         f.write("      pmask             : in  integer range 0 to 4095;\n")
         f.write("      paddr_ext         : in  integer range 0 to 4095;\n")
@@ -1299,6 +1636,9 @@ def gen_interfaces(accelerator_list, axi_accelerator_list, dma_width, template_d
         f.write("      coherence_rsp_snd_wrreq    : out std_ulogic;\n")
         f.write("      coherence_rsp_snd_data_in  : out noc_flit_type;\n")
         f.write("      coherence_rsp_snd_full     : in  std_ulogic;\n")
+        f.write("      coherence_fwd_snd_wrreq    : out std_ulogic;\n")
+        f.write("      coherence_fwd_snd_data_in  : out noc_flit_type;\n")
+        f.write("      coherence_fwd_snd_full     : in  std_ulogic;\n")
         f.write("      dma_rcv_rdreq     : out std_ulogic;\n")
         f.write("      dma_rcv_data_out  : in  noc_flit_type;\n")
         f.write("      dma_rcv_empty     : in  std_ulogic;\n")
@@ -1402,6 +1742,7 @@ def gen_tile_acc(accelerator_list, axi_acceleratorlist, template_dir, out_dir):
           f.write("        scatter_gather => scatter_gather,\n")
           f.write("        sets           => sets,\n")
           f.write("        ways           => ways,\n")
+          f.write("        little_end     => little_end,\n")
           f.write("        cache_tile_id  => cache_tile_id,\n")
           f.write("        cache_y        => cache_y,\n")
           f.write("        cache_x        => cache_x,\n")
@@ -1440,6 +1781,9 @@ def gen_tile_acc(accelerator_list, axi_acceleratorlist, template_dir, out_dir):
           f.write("        coherence_rsp_snd_wrreq    => coherence_rsp_snd_wrreq,\n")
           f.write("        coherence_rsp_snd_data_in  => coherence_rsp_snd_data_in,\n")
           f.write("        coherence_rsp_snd_full     => coherence_rsp_snd_full,\n")
+          f.write("        coherence_fwd_snd_wrreq    => coherence_fwd_snd_wrreq,\n")
+          f.write("        coherence_fwd_snd_data_in  => coherence_fwd_snd_data_in,\n")
+          f.write("        coherence_fwd_snd_full     => coherence_fwd_snd_full,\n")
           f.write("        dma_rcv_rdreq     => dma_rcv_rdreq,\n")
           f.write("        dma_rcv_data_out  => dma_rcv_data_out,\n")
           f.write("        dma_rcv_empty     => dma_rcv_empty,\n")
@@ -1467,16 +1811,21 @@ def gen_tile_acc(accelerator_list, axi_acceleratorlist, template_dir, out_dir):
 ### Main script ###
 #
 
-if len(sys.argv) != 6:
+if len(sys.argv) != 7:
     print_usage()
     sys.exit(1)
 
 dma_width = int(sys.argv[1])
-acc_rtl_dir = sys.argv[2] + "/acc"
-caches_rtl_dir = sys.argv[2] + "/sccs"
-axi_acc_dir = sys.argv[3]
-template_dir = sys.argv[4]
-out_dir = sys.argv[5]
+cpu_arch = sys.argv[2]
+acc_rtl_dir = sys.argv[3] + "/acc"
+caches_rtl_dir = sys.argv[3] + "/sccs"
+axi_acc_dir = sys.argv[4]
+template_dir = sys.argv[5]
+out_dir = sys.argv[6]
+if cpu_arch == "leon3":
+  little_endian = 0
+else:
+  little_endian = 1
 accelerator_list = [ ]
 axi_accelerator_list = [ ]
 cache_list = [ ]
@@ -1486,10 +1835,15 @@ accelerators = next(os.walk(acc_rtl_dir))[1]
 axi_accelerators = next(os.walk(axi_acc_dir))[1]
 
 caches = [ ]
+
 tmp_l2_dir = caches_rtl_dir + '/l2'
+tmp_l2_spandex_dir = caches_rtl_dir + '/l2_spandex'
 tmp_llc_dir = caches_rtl_dir + '/llc'
+tmp_llc_spandex_dir = caches_rtl_dir + '/llc_spandex'
 caches.append('l2')
+caches.append('l2_spandex')
 caches.append('llc')
+caches.append('llc_spandex')
 
 
 if (len(accelerators) == 0):
@@ -1657,7 +2011,8 @@ for acc in accelerators:
 # Compute relevan bitwidths for cache interfaces
 # based on DMA_WIDTH and a fixed 128-bits cache line
 bits_per_line = 128
-word_offset_bits = int(math.log2(128/dma_width))
+words_per_line = int(bits_per_line/dma_width)
+word_offset_bits = int(math.log2(words_per_line))
 byte_offset_bits = int(math.log2(dma_width/8))
 offset_bits = word_offset_bits + byte_offset_bits
 

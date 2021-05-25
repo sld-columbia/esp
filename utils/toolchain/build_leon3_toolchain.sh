@@ -15,7 +15,7 @@ DEFAULT_TARGET_DIR="/opt/leon"
 TMP=/tmp/_leon3_build
 
 # Prebuilt from Cobham Gaisler
-SRC_MIRROR="http://espdev.cs.columbia.edu/stuff/leon3"
+SRC_MIRROR="https://espdev.cs.columbia.edu/stuff/leon3"
 BAREC_GCC_VERSION="4.4.2"
 MKLINUXIMG_VERSION="2.0.10"
 

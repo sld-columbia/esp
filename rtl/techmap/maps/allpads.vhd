@@ -41,6 +41,11 @@ component gf12_iopad
   port (pad : inout std_logic; i, en : in std_ulogic; o : out std_logic; sr, ds0, ds1 : in std_ulogic);
 end component;
 
+component gf12_iopadien
+  generic (PAD_TYPE : std_logic := '0');
+  port (pad : inout std_logic; i, en : in std_ulogic; o : out std_logic; ien : in std_ulogic; sr, ds0, ds1 : in std_ulogic);
+end component;
+
 component gf12_outpad
   generic (PAD_TYPE : std_logic := '0');
   port (pad : out std_ulogic; i : in std_ulogic; sr, ds0, ds1 : in std_ulogic);

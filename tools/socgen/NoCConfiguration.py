@@ -109,6 +109,12 @@ class Tile():
         else:
           self.has_l2.set(0)
         self.has_l2_selection.config(state=DISABLED)
+      if soc.IPs.SLM.count(selection) and soc.TECH == "gf12":
+        self.has_ddr_selection.config(state=NORMAL)
+      else:
+        # DDR SLM tile only supported w/ GF12 technology
+        self.has_ddr.set(0)
+        self.has_ddr_selection.config(state=DISABLED)
     except:
       pass
 
@@ -214,6 +220,7 @@ class Tile():
     self.vendor = ""
     self.clk_region = IntVar()
     self.has_l2 = IntVar()
+    self.has_ddr = IntVar()
     self.has_pll = IntVar()
     self.has_clkbuf = IntVar()
     self.clk_reg_active = StringVar()
@@ -240,6 +247,7 @@ class NoC():
         if x < self.cols and y < self.rows:
           new_topology[y][x].ip_type.set(self.topology[y][x].ip_type.get())
           new_topology[y][x].has_l2.set(self.topology[y][x].has_l2.get())
+          new_topology[y][x].has_ddr.set(self.topology[y][x].has_ddr.get())
           new_topology[y][x].clk_region.set(self.topology[y][x].clk_region.get())
           new_topology[y][x].has_pll.set(self.topology[y][x].has_pll.get())
           new_topology[y][x].has_clkbuf.set(self.topology[y][x].has_clkbuf.get())
@@ -342,9 +350,19 @@ class NoC():
       for x in range(0, self.cols):
          tile = self.topology[y][x]
          selection = tile.ip_type.get()
-         if soc.IPs.SLM.count(selection):
+         if soc.IPs.SLM.count(selection) and tile.has_ddr.get() == 0:
             tot_slm += 1
     return tot_slm
+
+  def get_slmddr_num(self, soc):
+    tot_slmddr = 0
+    for y in range(0, self.rows):
+      for x in range(0, self.cols):
+         tile = self.topology[y][x]
+         selection = tile.ip_type.get()
+         if soc.IPs.SLM.count(selection) and tile.has_ddr.get() != 0:
+            tot_slmddr += 1
+    return tot_slmddr
 
   # WARNING: Geometry in this class only uses x=rows, y=cols, but socmap uses y=row, x=cols!
   def __init__(self):
@@ -417,18 +435,20 @@ class NoCFrame(Pmw.ScrolledFrame):
     tile.label.config(height=4,bg='white', width=width+25)
     tile.label.pack()
 
-    tile.has_l2_selection = Checkbutton(config_frame, text="Has L2", variable=tile.has_l2, onvalue = 1, offvalue = 0, command=self.changed);
-    tile.has_l2_selection.pack(side=LEFT)
-    Separator(config_frame, orient="vertical").pack(side=LEFT, fill=Y, padx=6)
+    tile.has_l2_selection = Checkbutton(config_frame, text="Has cache", variable=tile.has_l2, onvalue = 1, offvalue = 0, command=self.changed);
+    tile.has_l2_selection.grid(row=1, column=1, columnspan=2)
+    tile.has_ddr_selection = Checkbutton(config_frame, text="Has DDR", variable=tile.has_ddr, onvalue = 1, offvalue = 0, command=self.changed);
+    tile.has_ddr_selection.grid(row=1, column=3, columnspan=2)
+    Separator(config_frame, orient="horizontal").grid(row=2, column=1, columnspan=4, ipadx=140, pady=3)
 
     tile.label.bind("<Double-Button-1>", lambda event:tile.power_window(event, self.soc, self))
-    Label(config_frame, text="Clk Reg: ").pack(side=LEFT)
+    Label(config_frame, text="Clk Reg: ").grid(row=3, column=1)
     tile.clk_reg_selection = Spinbox(config_frame, state='readonly', from_=0, to=len(self.soc.noc.get_clk_regions()), wrap=True, textvariable=tile.clk_region,width=3);
-    tile.clk_reg_selection.pack(side=LEFT)
+    tile.clk_reg_selection.grid(row=3, column=2)
     tile.pll_selection = Checkbutton(config_frame, text="Has PLL", variable=tile.has_pll, onvalue = 1, offvalue = 0, command=self.changed);
-    tile.pll_selection.pack(side=LEFT)
+    tile.pll_selection.grid(row=3, column=3)
     tile.clkbuf_selection = Checkbutton(config_frame, text="CLK BUF", variable=tile.has_clkbuf, onvalue = 1, offvalue = 0, command=self.changed);
-    tile.clkbuf_selection.pack(side=LEFT)
+    tile.clkbuf_selection.grid(row=3, column=4)
     try:
       int(self.vf_points_entry.get())
       tile.load_characterization(self.soc, int(self.vf_points_entry.get()))
@@ -468,6 +488,7 @@ class NoCFrame(Pmw.ScrolledFrame):
     self.TOT_CPU = Label(self.noc_config_frame, anchor=W, width=20)
     self.TOT_MEM = Label(self.noc_config_frame, anchor=W, width=25)
     self.TOT_SLM = Label(self.noc_config_frame, anchor=W, width=25)
+    self.TOT_SLMDDR = Label(self.noc_config_frame, anchor=W, width=25)
     self.TOT_MISC = Label(self.noc_config_frame, anchor=W, width=20)
     self.TOT_ACC = Label(self.noc_config_frame, anchor=W, width=20)
     self.TOT_IVR = Label(self.noc_config_frame, anchor=W, width=20)
@@ -475,6 +496,7 @@ class NoCFrame(Pmw.ScrolledFrame):
     self.TOT_CPU.pack(side=TOP, fill=BOTH)
     self.TOT_MEM.pack(side=TOP, fill=BOTH)
     self.TOT_SLM.pack(side=TOP, fill=BOTH)
+    self.TOT_SLMDDR.pack(side=TOP, fill=BOTH)
     self.TOT_MISC.pack(side=TOP, fill=BOTH)
     self.TOT_ACC.pack(side=TOP, fill=BOTH)
     Label(self.noc_config_frame, height=1).pack()
@@ -518,6 +540,7 @@ class NoCFrame(Pmw.ScrolledFrame):
     tot_mem = self.noc.get_mem_num(self.soc)
     tot_slm = self.noc.get_slm_num(self.soc)
     tot_slm_size = tot_slm * self.soc.slm_kbytes.get()
+    tot_slmddr = self.noc.get_slmddr_num(self.soc)
     tot_acc = self.noc.get_acc_num(self.soc)
     regions = self.noc.get_clk_regions()
     for y in range(0, self.noc.rows):
@@ -529,7 +552,8 @@ class NoCFrame(Pmw.ScrolledFrame):
     #update statistics
     self.TOT_CPU.config(text=" Num CPUs: " + str(tot_cpu))
     self.TOT_MEM.config(text=" Num memory controllers: " + str(tot_mem))
-    self.TOT_SLM.config(text=" Num local memory tiles: " + str(tot_slm))
+    self.TOT_SLM.config(text=" Num local memory tiles using on-chip memory: " + str(tot_slm))
+    self.TOT_SLMDDR.config(text=" Num local memory tiles using off-chip DDR memory: " + str(tot_slmddr))
     self.TOT_MISC.config(text=" Num I/O tiles: " + str(tot_io))
     self.TOT_ACC.config(text=" Num accelerators: " + str(tot_acc))
     self.TOT_IVR.config(text=" Num CLK regions: " + str(len(regions)))
@@ -589,6 +613,7 @@ class NoCFrame(Pmw.ScrolledFrame):
     self.message.delete(0.0, END)
     self.cfg_frame.sync_label.config(text="With synchronizers",fg="darkgreen")
     self.cfg_frame.set_cpu_specific_labels(self.soc)
+    string = ""
     if (tot_cpu > 0) and \
        (tot_cpu <= NCPU_MAX) and \
        (tot_mem > 0 or (tot_slm > 0 and (self.soc.cache_en.get() == 0) and self.soc.CPU_ARCH.get() == "ibex")) and \
@@ -607,11 +632,17 @@ class NoCFrame(Pmw.ScrolledFrame):
        (tot_llc_coherent <= NLLC_COHERENT_MAX) and \
        (not (self.soc.TECH != "gf12" and self.soc.TECH != "virtexu" and tot_mem == 4)) and \
        (not (self.soc.TECH == "virtexu" and tot_mem >= 2 and (self.noc.rows < 3 or self.noc.cols < 3))) and \
+       (self.soc.cache_spandex.get() == 0 or self.soc.CPU_ARCH.get() == "ariane" or self.soc.cache_en.get() == 0) and \
        (tot_cpu == 1 or self.soc.cache_en.get()) and \
        (self.soc.llc_sets.get() < 8192 or self.soc.llc_ways.get() < 16 or tot_mem > 1):
+      # Spandex beta warning
+      if self.soc.cache_spandex.get() != 0 and self.soc.cache_en.get() == 1:
+        string += "***              Spandex support is still beta                 ***\n"
+        string += "    The default HLS configuration is 512x4 L2 and 1024x8 LLC\n"
+        if self.soc.TECH != "gf12" and self.soc.TECH != "virtexu" and self.soc.TECH != "virtexup":
+          string += "    Use a smaller implementation if not using a Virtex US/US+\n"
       self.done.config(state=NORMAL)
     else:
-      string = ""
       if (self.noc.cols > 8 or self.noc.rows > 8): 
         string += "Maximum number of rows and columns is 8.\n"
       if (tot_cpu == 0):
@@ -653,12 +684,15 @@ class NoCFrame(Pmw.ScrolledFrame):
         string += "Maximum number of supported fully-coherent devices is " + str(NFULL_COHERENT_MAX) + ".\n"
       if (tot_llc_coherent > NLLC_COHERENT_MAX):
         string += "Maximum number of supported LLC-coherent devices is " + str(NLLC_COHERENT_MAX) + ".\n"
+      if (self.soc.cache_spandex.get() != 0 and self.soc.CPU_ARCH.get() != "ariane" and self.soc.cache_en.get() == 1):
+        string += "Spandex currently supports only RISC-V Ariane processor core"
       if (tot_clkbuf > 9):
         string += "The FPGA board supports no more than 9 CLKBUF's.\n"
       string += pll_string
       if (clk_region_skip > 0):
         string += "Clock-region IDs must be consecutive; skipping region " + str(clk_region_skip) +" intead\n"
-      self.message.insert(0.0, string)
+    # Update message box
+    self.message.insert(0.0, string)
 
   def set_message(self, message, cfg_frame, done):
     self.message = message

@@ -35,7 +35,8 @@ entity llc_wrapper is
     ahb_if_en     : integer range 0 to 1         := 1;
     nl2           : integer                      := 4;
     nllc          : integer                      := 0;
-    noc_xlen      : integer                      := 3;
+    noc_xlen      : integer                      := 2;
+    noc_ylen      : integer                      := 2;
     hindex        : integer range 0 to NAHBSLV - 1 := 4;
     pindex        : integer range 0 to NAPBSLV - 1 := 5;
     pirq          : integer                      := 4;
@@ -131,6 +132,7 @@ architecture rtl of llc_wrapper is
   signal llc_req_in_data_word_offset : word_offset_t;
   signal llc_req_in_data_valid_words : word_offset_t;
   signal llc_req_in_data_line        : line_t;
+  signal llc_req_in_data_word_mask   : word_mask_t;
   signal llc_req_in_data_req_id      : cache_id_t;
 
   signal llc_dma_req_in_ready            : std_ulogic;
@@ -142,12 +144,14 @@ architecture rtl of llc_wrapper is
   signal llc_dma_req_in_data_valid_words : word_offset_t;
   signal llc_dma_req_in_data_line        : line_t;
   signal llc_dma_req_in_data_req_id      : llc_coh_dev_id_t;
+  signal llc_dma_req_in_data_word_mask   : word_mask_t;
 
   signal llc_rsp_in_ready        : std_ulogic;
   signal llc_rsp_in_valid        : std_ulogic;
   signal llc_rsp_in_data_coh_msg : coh_msg_t;
   signal llc_rsp_in_data_addr    : line_addr_t;
   signal llc_rsp_in_data_line    : line_t;
+  signal llc_rsp_in_data_word_mask : word_mask_t;
   signal llc_rsp_in_data_req_id  : cache_id_t;
 
   -- cache to NoC
@@ -156,6 +160,7 @@ architecture rtl of llc_wrapper is
   signal llc_rsp_out_data_coh_msg     : coh_msg_t;
   signal llc_rsp_out_data_addr        : line_addr_t;
   signal llc_rsp_out_data_line        : line_t;
+  signal llc_rsp_out_data_word_mask   : word_mask_t;
   signal llc_rsp_out_data_invack_cnt  : invack_cnt_t;
   signal llc_rsp_out_data_req_id      : cache_id_t;
   signal llc_rsp_out_data_dest_id     : cache_id_t;
@@ -170,6 +175,7 @@ architecture rtl of llc_wrapper is
   signal llc_dma_rsp_out_data_req_id      : llc_coh_dev_id_t;
   signal llc_dma_rsp_out_data_dest_id     : cache_id_t;  -- not used
   signal llc_dma_rsp_out_data_word_offset : word_offset_t;
+  signal llc_dma_rsp_out_data_word_mask   : word_mask_t;
 
   signal llc_fwd_out_ready        : std_ulogic;
   signal llc_fwd_out_valid        : std_ulogic;
@@ -177,6 +183,8 @@ architecture rtl of llc_wrapper is
   signal llc_fwd_out_data_addr    : line_addr_t;
   signal llc_fwd_out_data_req_id  : cache_id_t;
   signal llc_fwd_out_data_dest_id : cache_id_t;
+  signal llc_fwd_out_data_word_mask : word_mask_t;
+  signal llc_fwd_out_data_line    : line_t;
 
   -- AHB to cache
   signal llc_mem_rsp_ready     : std_ulogic;
@@ -286,18 +294,25 @@ architecture rtl of llc_wrapper is
   -------------------------------------------------------------------------------
   -- FSM: Forward to NoC
   -------------------------------------------------------------------------------
-  type fwd_out_fsm is (send_header, send_addr);
+  type fwd_out_fsm is (send_header, send_addr, send_data);
 
   type fwd_out_reg_type is record
     state   : fwd_out_fsm;
     addr    : line_addr_t;
+    word_cnt : natural range 0 to 3;
+    coh_msg : mix_msg_t;
+    line    : line_t;
     asserts : asserts_fwd_t;
   end record fwd_out_reg_type;
 
   constant FWD_OUT_REG_DEFAULT : fwd_out_reg_type := (
     state   => send_header,
     addr    => (others => '0'),
-    asserts => (others => '0'));
+    asserts => (others => '0'),
+    line    => (others => '0'),
+    coh_msg => (others => '0'),
+    word_cnt => 0
+  );
 
   signal fwd_out_reg      : fwd_out_reg_type;
   signal fwd_out_reg_next : fwd_out_reg_type;
@@ -315,6 +330,7 @@ architecture rtl of llc_wrapper is
     addr       : line_addr_t;
     woffset    : word_offset_t;
     line       : line_t;
+    word_mask  : word_mask_t;
     word_cnt   : natural range 0 to 3;
     invack_cnt : invack_cnt_t;
     dest_x     : local_yx;
@@ -347,6 +363,7 @@ architecture rtl of llc_wrapper is
     addr       => (others => '0'),
     woffset    => (others => '0'),
     line       => (others => '0'),
+    word_mask  => (others => '0'),
     word_cnt   => 0,
     invack_cnt => (others => '0'),
     dest_x     => (others => '0'),
@@ -391,6 +408,7 @@ architecture rtl of llc_wrapper is
     addr     : line_addr_t;
     woffset  : word_offset_t;
     line     : line_t;
+    word_mask : word_mask_t;
     req_id   : cache_id_t;
     word_cnt : natural range 0 to 3;
     origin_x : local_yx;
@@ -423,6 +441,7 @@ architecture rtl of llc_wrapper is
     addr     => (others => '0'),
     woffset  => (others => '0'),
     line     => (others => '0'),
+    word_mask => (others => '0'),
     req_id   => (others => '0'),
     word_cnt => 0,
     origin_x => (others => '0'),
@@ -462,6 +481,7 @@ architecture rtl of llc_wrapper is
     coh_msg  : noc_msg_type;
     addr     : line_addr_t;
     line     : line_t;
+    word_mask : word_mask_t;
     req_id   : cache_id_t;
     word_cnt : natural range 0 to 3;
     origin_x : local_yx;
@@ -475,6 +495,7 @@ architecture rtl of llc_wrapper is
     coh_msg  => (others => '0'),
     addr     => (others => '0'),
     line     => (others => '0'),
+    word_mask => (others => '0'),
     req_id   => (others => '0'),
     word_cnt => 0,
     origin_x => (others => '0'),
@@ -704,7 +725,7 @@ begin  -- architecture rtl
     ahbmo.hsize <= HSIZE_DWORD;
   end generate ariane_cache_word_gen;
 
-  leon3_cache_word_gen: if GLOB_CPU_ARCH = leon3 generate
+  leon3_cache_word_gen: if GLOB_CPU_ARCH = leon3 or GLOB_CPU_ARCH = ibex generate
     ahbmo.hsize <= HSIZE_WORD;
   end generate leon3_cache_word_gen;
 
@@ -1108,6 +1129,7 @@ begin  -- architecture rtl
     llc_req_in_data_valid_words <= (others => '0');
     llc_req_in_data_line        <= (others => '0');
     llc_req_in_data_req_id      <= (others => '0');
+    llc_req_in_data_word_mask   <= (others => '0');
 
     -- initialize signals toward noc (receive from noc)
     coherence_req_rdreq <= '0';
@@ -1129,11 +1151,12 @@ begin  -- architecture rtl
           reg.coh_msg := get_msg_type(NOC_FLIT_SIZE, coherence_req_data_out);
           reserved    := get_reserved_field(NOC_FLIT_SIZE, coherence_req_data_out);
           reg.hprot   := reserved(HPROT_WIDTH - 1 downto 0);
+          reg.word_mask := reserved(RESERVED_WIDTH - 1 downto RESERVED_WIDTH - WORDS_PER_LINE);
 
           reg.origin_x                                              := get_origin_x(NOC_FLIT_SIZE, coherence_req_data_out);
           reg.origin_y                                              := get_origin_y(NOC_FLIT_SIZE, coherence_req_data_out);
-          if unsigned(reg.origin_x) >= 0 and unsigned(reg.origin_x) <= noc_xlen and
-             unsigned(reg.origin_y) >= 0 and unsigned(reg.origin_y) <= noc_xlen
+          if unsigned(reg.origin_x) >= 0 and unsigned(reg.origin_x) < noc_xlen and
+             unsigned(reg.origin_y) >= 0 and unsigned(reg.origin_y) < noc_ylen
           then
 
             reg.tile_id := to_integer(unsigned(reg.origin_x)) +
@@ -1154,7 +1177,8 @@ begin  -- architecture rtl
 
         if coherence_req_empty = '0' then
 
-          if reg.coh_msg = REQ_PUTM then
+          case reg.coh_msg is
+            when REQ_PUTM | REQ_WB | REQ_WTdata | REQ_WT | REQ_WTfwd | REQ_AMO_ADD | REQ_AMO_AND | REQ_AMO_OR | REQ_AMO_XOR | REQ_AMO_MAX | REQ_AMO_MAXU | REQ_AMO_MIN | REQ_AMO_MINU =>
 
             coherence_req_rdreq <= '1';
 
@@ -1162,7 +1186,8 @@ begin  -- architecture rtl
             reg.word_cnt := 0;
             reg.state    := rcv_data;
 
-          elsif llc_req_in_ready = '1' then
+            when others =>
+            if llc_req_in_ready = '1' then
 
             coherence_req_rdreq <= '1';
 
@@ -1171,11 +1196,12 @@ begin  -- architecture rtl
             llc_req_in_data_addr    <= coherence_req_data_out(ADDR_BITS - 1 downto LINE_RANGE_LO);
             llc_req_in_data_hprot   <= reg.hprot;
             llc_req_in_data_req_id  <= reg.req_id;
+            llc_req_in_data_word_mask    <= reg.word_mask;
 
             reg.state := rcv_header;
 
           end if;
-
+          end case;
         end if;
 
       -- RECEIVE DATA
@@ -1196,6 +1222,7 @@ begin  -- architecture rtl
               llc_req_in_data_addr    <= reg.addr;
               llc_req_in_data_line    <= reg.line;
               llc_req_in_data_req_id  <= reg.req_id;
+              llc_req_in_data_word_mask    <= reg.word_mask;
             end if;
 
           else
@@ -1265,8 +1292,8 @@ begin  -- architecture rtl
           reg.origin_x := get_origin_x(NOC_FLIT_SIZE, dma_rcv_data_out);
           reg.origin_y := get_origin_y(NOC_FLIT_SIZE, dma_rcv_data_out);
 
-          if unsigned(reg.origin_x) >= 0 and unsigned(reg.origin_x) <= noc_xlen and
-             unsigned(reg.origin_y) >= 0 and unsigned(reg.origin_y) <= noc_xlen
+          if unsigned(reg.origin_x) >= 0 and unsigned(reg.origin_x) < noc_xlen and
+             unsigned(reg.origin_y) >= 0 and unsigned(reg.origin_y) < noc_ylen
           then
             reg.tile_id := to_integer(unsigned(reg.origin_x)) +
                            to_integer(unsigned(reg.origin_y)) * noc_xlen;
@@ -1436,6 +1463,7 @@ begin  -- architecture rtl
     variable reg : rsp_in_reg_type;
     variable msg : noc_msg_type;
     variable preamble : noc_preamble_type;
+    variable reserved : reserved_field_type;
     
   begin  -- process fsm_rsp_in
     -- initialize variables
@@ -1448,6 +1476,7 @@ begin  -- architecture rtl
     llc_rsp_in_data_addr    <= (others => '0');
     llc_rsp_in_data_line    <= (others => '0');
     llc_rsp_in_data_req_id  <= (others => '0');
+    llc_rsp_in_data_word_mask <= (others => '0');
 
     -- initialize signals toward noc (receive from noc)
     coherence_rsp_rcv_rdreq <= '0';
@@ -1468,9 +1497,11 @@ begin  -- architecture rtl
           reg.coh_msg := get_msg_type(NOC_FLIT_SIZE, coherence_rsp_rcv_data_out);
           reg.origin_x := get_origin_x(NOC_FLIT_SIZE, coherence_rsp_rcv_data_out);
           reg.origin_y := get_origin_y(NOC_FLIT_SIZE, coherence_rsp_rcv_data_out);
+          reserved    := get_reserved_field(NOC_FLIT_SIZE, coherence_rsp_rcv_data_out);
+          reg.word_mask := reserved(RESERVED_WIDTH - 1 downto RESERVED_WIDTH - WORDS_PER_LINE);
 
-          if unsigned(reg.origin_x) >= 0 and unsigned(reg.origin_x) <= noc_xlen and
-             unsigned(reg.origin_y) >= 0 and unsigned(reg.origin_y) <= noc_xlen
+          if unsigned(reg.origin_x) >= 0 and unsigned(reg.origin_x) < noc_xlen and
+             unsigned(reg.origin_y) >= 0 and unsigned(reg.origin_y) < noc_ylen
           then
             reg.tile_id := to_integer(unsigned(reg.origin_x)) + to_integer(unsigned(reg.origin_y)) * noc_xlen;
             if tile_cache_id(reg.tile_id) >= 0 then
@@ -1490,17 +1521,20 @@ begin  -- architecture rtl
 
             reg.addr := coherence_rsp_rcv_data_out(ADDR_BITS - 1 downto LINE_RANGE_LO);
 
-          if reg.coh_msg = RSP_DATA then
+          case reg.coh_msg is
           
+            when RSP_DATA | RSP_S | RSP_Odata | RSP_RVK_O | RSP_WTdata | RSP_V =>
+            
             reg.word_cnt := 0;
             reg.state    := rcv_data;
 
-          else
+            when others =>
 
             llc_rsp_in_valid        <= '1';
             llc_rsp_in_data_coh_msg <= reg.coh_msg(COH_MSG_TYPE_WIDTH - 1 downto 0);
             llc_rsp_in_data_addr    <= reg.addr;
             llc_rsp_in_data_req_id  <= reg.req_id;
+              llc_rsp_in_data_word_mask <= reg.word_mask;
 
             if llc_rsp_in_ready = '1' then
 
@@ -1512,7 +1546,7 @@ begin  -- architecture rtl
                 
             end if;
 
-          end if;
+          end case;
 
         end if;
 
@@ -1523,6 +1557,7 @@ begin  -- architecture rtl
         llc_rsp_in_data_coh_msg <= reg.coh_msg(COH_MSG_TYPE_WIDTH - 1 downto 0);
         llc_rsp_in_data_addr    <= reg.addr;
         llc_rsp_in_data_req_id  <= reg.req_id;
+        llc_rsp_in_data_word_mask <= reg.word_mask;
 
         if llc_rsp_in_ready = '1' then
 
@@ -1549,6 +1584,7 @@ begin  -- architecture rtl
               llc_rsp_in_data_addr    <= reg.addr;
               llc_rsp_in_data_line    <= reg.line;
               llc_rsp_in_data_req_id  <= reg.req_id;
+              llc_rsp_in_data_word_mask <= reg.word_mask;
             end if;
 
           else
@@ -1574,8 +1610,8 @@ begin  -- architecture rtl
 -------------------------------------------------------------------------------
   fsm_fwd_out : process (fwd_out_reg, coherence_fwd_full,
                          llc_fwd_out_valid, llc_fwd_out_data_coh_msg, llc_fwd_out_data_addr,
-                         llc_fwd_out_data_req_id, llc_fwd_out_data_dest_id,
-                         local_y, local_x) is
+                         llc_fwd_out_data_req_id, llc_fwd_out_data_dest_id, llc_fwd_out_data_word_mask,
+                         llc_fwd_out_data_line, local_y, local_x) is
 
     variable reg       : fwd_out_reg_type;
     variable dest_init : integer;
@@ -1611,6 +1647,8 @@ begin  -- architecture rtl
           if llc_fwd_out_valid = '1' then
 
             reg.addr := llc_fwd_out_data_addr;
+            reg.coh_msg := llc_fwd_out_data_coh_msg;
+            reg.line := llc_fwd_out_data_line;
 
             if llc_fwd_out_data_dest_id >= "0" then
               dest_init := to_integer(unsigned(llc_fwd_out_data_dest_id));
@@ -1623,11 +1661,12 @@ begin  -- architecture rtl
             if llc_fwd_out_data_req_id'length < RESERVED_WIDTH then
               req_id(RESERVED_WIDTH-1 downto llc_fwd_out_data_req_id'length) := (others => '0');
             end if;
+            req_id(RESERVED_WIDTH-1 downto RESERVED_WIDTH - WORDS_PER_LINE) := llc_fwd_out_data_word_mask;
             req_id(llc_fwd_out_data_req_id'length - 1 downto 0)            := llc_fwd_out_data_req_id;
 
             coherence_fwd_wrreq <= '1';
             coherence_fwd_data_in <= create_header(NOC_FLIT_SIZE, local_y, local_x, dest_y, dest_x,
-                                                   llc_fwd_out_data_coh_msg, req_id);
+                                                   reg.coh_msg, req_id);
 
             reg.state := send_addr;
 
@@ -1639,9 +1678,46 @@ begin  -- architecture rtl
         if coherence_fwd_full = '0' then
 
           coherence_fwd_wrreq <= '1';
+
+          case reg.coh_msg is
+
+            when FWD_WTfwd =>
+
+              coherence_fwd_data_in(NOC_FLIT_SIZE - 1 downto NOC_FLIT_SIZE - PREAMBLE_WIDTH) <= PREAMBLE_BODY;
+              coherence_fwd_data_in(GLOB_PHYS_ADDR_BITS - 1 downto 0) <= reg.addr & empty_offset;
+              reg.state             := send_data;
+              reg.word_cnt          := 0;
+
+            when others =>
+
           coherence_fwd_data_in(NOC_FLIT_SIZE - 1 downto NOC_FLIT_SIZE - PREAMBLE_WIDTH) <= PREAMBLE_TAIL;
           coherence_fwd_data_in(GLOB_PHYS_ADDR_BITS - 1 downto 0) <= reg.addr & empty_offset;
           reg.state := send_header;
+
+          end case;
+
+        end if;
+
+      when send_data =>
+        if coherence_fwd_full = '0' then
+
+          coherence_fwd_wrreq <= '1';
+
+          if reg.word_cnt = WORDS_PER_LINE - 1 then
+
+            coherence_fwd_data_in <= PREAMBLE_TAIL & reg.line((BITS_PER_WORD * reg.word_cnt) + BITS_PER_WORD - 1 downto
+                                                              (BITS_PER_WORD * reg.word_cnt));
+
+            reg.state := send_header;
+
+          else
+
+            coherence_fwd_data_in <= PREAMBLE_BODY & reg.line((BITS_PER_WORD * reg.word_cnt) + BITS_PER_WORD - 1 downto
+                                                              (BITS_PER_WORD * reg.word_cnt));
+
+            reg.word_cnt := reg.word_cnt + 1;
+
+          end if;
 
         end if;
 
@@ -1657,8 +1733,7 @@ begin  -- architecture rtl
   fsm_rsp_out : process (rsp_out_reg, coherence_rsp_snd_full,
                          llc_rsp_out_valid, llc_rsp_out_data_coh_msg, llc_rsp_out_data_addr,
                          llc_rsp_out_data_line, llc_rsp_out_data_invack_cnt, llc_rsp_out_data_word_offset,
-                         llc_rsp_out_data_req_id, llc_rsp_out_data_dest_id,
-                         local_y, local_x) is
+                         llc_rsp_out_data_req_id, llc_rsp_out_data_dest_id, llc_rsp_out_data_word_mask, local_y, local_x) is
 
     variable reg       : rsp_out_reg_type;
     variable dest_init : integer;
@@ -1668,6 +1743,7 @@ begin  -- architecture rtl
     variable preamble  : noc_preamble_type;
     variable last_lv   : std_logic_vector(WORD_OFFSET_BITS - 1 downto 0);
     variable last      : integer range 0 to WORDS_PER_LINE - 1;
+    variable mix_msg   : mix_msg_t;
 
   begin  -- process fsm_rsp_out
     -- initialize variables
@@ -1700,6 +1776,7 @@ begin  -- architecture rtl
           reg.coh_msg := llc_rsp_out_data_coh_msg;
           reg.addr    := llc_rsp_out_data_addr;
           reg.line    := llc_rsp_out_data_line;
+          reg.word_mask := llc_rsp_out_data_word_mask;
 
           dest_init := to_integer(unsigned(llc_rsp_out_data_req_id));
           dest_x := cache_x(dest_init);
@@ -1708,12 +1785,22 @@ begin  -- architecture rtl
           reserved := std_logic_vector(resize(unsigned(
             llc_rsp_out_data_invack_cnt), RESERVED_WIDTH));
 
+          reserved(RESERVED_WIDTH-1 downto RESERVED_WIDTH - WORDS_PER_LINE) := reg.word_mask;
+
+          if USE_SPANDEX = 0 then
+            -- Set ESP legacy coherence message types
+            mix_msg := '1' & reg.coh_msg;
+          else
+            -- Use Spandex coherence message types
+            mix_msg := '0' & reg.coh_msg;
+          end if;
+
           if coherence_rsp_snd_full = '0' then
 
             coherence_rsp_snd_wrreq <= '1';
             coherence_rsp_snd_data_in <=
               create_header(NOC_FLIT_SIZE, local_y, local_x, dest_y, dest_x,
-                            '0' & reg.coh_msg, reserved);
+                            mix_msg, reserved);
 
             reg.state := send_addr;
 
@@ -1732,12 +1819,20 @@ begin  -- architecture rtl
       -- SEND HEADER STALL
       when send_header_stall =>
 
+        if USE_SPANDEX = 0 then
+          -- Set ESP legacy coherence message types
+          mix_msg := '1' & reg.coh_msg;
+        else
+          -- Use Spandex coherence message types
+          mix_msg := '0' & reg.coh_msg;
+        end if;
+
         if coherence_rsp_snd_full = '0' then
 
           coherence_rsp_snd_wrreq <= '1';
           coherence_rsp_snd_data_in <=
             create_header(NOC_FLIT_SIZE, local_y, local_x, reg.dest_y, reg.dest_x,
-                          '0' & reg.coh_msg, reg.reserved);
+                          mix_msg, reg.reserved);
 
           reg.state := send_addr;
 
@@ -1747,12 +1842,33 @@ begin  -- architecture rtl
       when send_addr =>
         if coherence_rsp_snd_full = '0' then
 
+          if USE_SPANDEX = 0 then
+            -- Set ESP legacy coherence message types
+            mix_msg := '1' & reg.coh_msg;
+          else
+            -- Use Spandex coherence message types
+            mix_msg := '0' & reg.coh_msg;
+          end if;
+
+          case mix_msg is
+
+            when RSP_DATA | RSP_EDATA | RSP_S | RSP_Odata | RSP_RVK_O | RSP_WTdata | RSP_V =>
+
           coherence_rsp_snd_wrreq   <= '1';
           coherence_rsp_snd_data_in(NOC_FLIT_SIZE - 1 downto NOC_FLIT_SIZE - PREAMBLE_WIDTH) <= PREAMBLE_BODY;
           coherence_rsp_snd_data_in(GLOB_PHYS_ADDR_BITS - 1 downto 0) <= reg.addr & empty_offset;
           reg.state                 := send_data;
           reg.word_cnt              := 0;
 
+            when others =>
+              -- RSP_INV_ACK
+
+              coherence_rsp_snd_wrreq   <= '1';
+              coherence_rsp_snd_data_in(NOC_FLIT_SIZE - 1 downto NOC_FLIT_SIZE - PREAMBLE_WIDTH) <= PREAMBLE_TAIL;
+              coherence_rsp_snd_data_in(GLOB_PHYS_ADDR_BITS - 1 downto 0) <= reg.addr & empty_offset;
+              reg.state                 := send_header;
+
+          end case;
         end if;
 
       -- SEND DATA
@@ -1799,10 +1915,10 @@ begin  -- architecture rtl
     variable dest_init : integer;
     variable dest_x    : local_yx;
     variable dest_y    : local_yx;
-    variable reserved  : reserved_field_type;
     variable preamble  : noc_preamble_type;
     variable last_lv   : std_logic_vector(WORD_OFFSET_BITS - 1 downto 0);
     variable last      : integer range 0 to WORDS_PER_LINE - 1;
+    variable mix_msg   : mix_msg_t;
 
   begin  -- process dma_fsm_rsp_out
     -- initialize variables
@@ -1855,13 +1971,19 @@ begin  -- architecture rtl
             reg.dma32 := '0';
           end if;
 
-          --reserved := std_logic_vector(0, RESERVED_WIDTH);
+          if USE_SPANDEX = 0 then
+            -- Set ESP legacy coherence message types
+            mix_msg := '1' & reg.coh_msg;
+          else
+            -- Use Spandex coherence message types
+            mix_msg := '0' & reg.coh_msg;
+          end if;
 
           if dma_snd_full = '0' then
 
             dma_snd_wrreq <= '1';
             dma_snd_data_in <= create_header(NOC_FLIT_SIZE, local_y, local_x, dest_y,
-                                             dest_x, '0' & reg.coh_msg, (others => '0'));
+                                             dest_x, mix_msg, (others => '0'));
 
             reg.state := send_data_dma;
 
@@ -1879,10 +2001,18 @@ begin  -- architecture rtl
       -- SEND HEADER DMA STALL
       when send_header_dma_stall =>
 
+        if USE_SPANDEX = 0 then
+          -- Set ESP legacy coherence message types
+          mix_msg := '1' & reg.coh_msg;
+        else
+          -- Use Spandex coherence message types
+          mix_msg := '0' & reg.coh_msg;
+        end if;
+
         if dma_snd_full = '0' then
 
           dma_snd_wrreq   <= '1';
-          dma_snd_data_in <= create_header(NOC_FLIT_SIZE, local_y, local_x, reg.dest_y, reg.dest_x, '0' & reg.coh_msg, (others => '0'));
+          dma_snd_data_in <= create_header(NOC_FLIT_SIZE, local_y, local_x, reg.dest_y, reg.dest_x, mix_msg, (others => '0'));
 
           reg.state := send_data_dma;
 
@@ -1977,6 +2107,7 @@ begin  -- architecture rtl
 -------------------------------------------------------------------------------
 
   -- instantiation of llc cache on cpu tile
+  llc_gen: if USE_SPANDEX = 0 generate
   llc_cache_i : llc
     generic map (
       use_rtl => CFG_CACHE_RTL,
@@ -1996,7 +2127,7 @@ begin  -- architecture rtl
       -- NoC to cache
       llc_req_in_ready        => llc_req_in_ready,
       llc_req_in_valid        => llc_req_in_valid,
-      llc_req_in_data_coh_msg => llc_req_in_data_coh_msg,
+      llc_req_in_data_coh_msg => llc_req_in_data_coh_msg(2 downto 0),
       llc_req_in_data_hprot   => llc_req_in_data_hprot,
       llc_req_in_data_addr    => llc_req_in_data_addr,
       llc_req_in_data_line    => llc_req_in_data_line,
@@ -2006,7 +2137,7 @@ begin  -- architecture rtl
 
       llc_dma_req_in_ready        => llc_dma_req_in_ready,
       llc_dma_req_in_valid        => llc_dma_req_in_valid,
-      llc_dma_req_in_data_coh_msg => llc_dma_req_in_data_coh_msg,
+      llc_dma_req_in_data_coh_msg => llc_dma_req_in_data_coh_msg(2 downto 0),
       llc_dma_req_in_data_hprot   => llc_dma_req_in_data_hprot,
       llc_dma_req_in_data_addr    => llc_dma_req_in_data_addr,
       llc_dma_req_in_data_line    => llc_dma_req_in_data_line,
@@ -2016,7 +2147,7 @@ begin  -- architecture rtl
 
       llc_rsp_in_ready        => llc_rsp_in_ready,
       llc_rsp_in_valid        => llc_rsp_in_valid,
-      llc_rsp_in_data_coh_msg => llc_rsp_in_data_coh_msg,
+      llc_rsp_in_data_coh_msg => llc_rsp_in_data_coh_msg(1 downto 0),
       llc_rsp_in_data_addr    => llc_rsp_in_data_addr,
       llc_rsp_in_data_line    => llc_rsp_in_data_line,
       llc_rsp_in_data_req_id  => llc_rsp_in_data_req_id,
@@ -2024,7 +2155,7 @@ begin  -- architecture rtl
       -- cache to NoC
       llc_rsp_out_ready           => llc_rsp_out_ready,
       llc_rsp_out_valid           => llc_rsp_out_valid,
-      llc_rsp_out_data_coh_msg    => llc_rsp_out_data_coh_msg,
+      llc_rsp_out_data_coh_msg    => llc_rsp_out_data_coh_msg(1 downto 0),
       llc_rsp_out_data_addr       => llc_rsp_out_data_addr,
       llc_rsp_out_data_line       => llc_rsp_out_data_line,
       llc_rsp_out_data_invack_cnt => llc_rsp_out_data_invack_cnt,
@@ -2034,7 +2165,7 @@ begin  -- architecture rtl
 
       llc_dma_rsp_out_ready           => llc_dma_rsp_out_ready,
       llc_dma_rsp_out_valid           => llc_dma_rsp_out_valid,
-      llc_dma_rsp_out_data_coh_msg    => llc_dma_rsp_out_data_coh_msg,
+      llc_dma_rsp_out_data_coh_msg    => llc_dma_rsp_out_data_coh_msg(1 downto 0),
       llc_dma_rsp_out_data_addr       => llc_dma_rsp_out_data_addr,
       llc_dma_rsp_out_data_line       => llc_dma_rsp_out_data_line,
       llc_dma_rsp_out_data_invack_cnt => llc_dma_rsp_out_data_invack_cnt,
@@ -2044,7 +2175,7 @@ begin  -- architecture rtl
 
       llc_fwd_out_ready        => llc_fwd_out_ready,
       llc_fwd_out_valid        => llc_fwd_out_valid,
-      llc_fwd_out_data_coh_msg => llc_fwd_out_data_coh_msg,
+      llc_fwd_out_data_coh_msg => llc_fwd_out_data_coh_msg(2 downto 0),
       llc_fwd_out_data_addr    => llc_fwd_out_data_addr,
       llc_fwd_out_data_req_id  => llc_fwd_out_data_req_id,
       llc_fwd_out_data_dest_id => llc_fwd_out_data_dest_id,
@@ -2067,7 +2198,128 @@ begin  -- architecture rtl
       llc_stats_ready         => llc_stats_ready,
       llc_stats_valid         => llc_stats_valid,
       llc_stats_data          => llc_stats_data
-      );
+    );
+
+  -- ESP (USE_SPANDEX = 0) cache coherence messages begin with "110" on the NoC
+  -- We append the additional '1' in the FSM based on USE_SPANDEX
+  llc_rsp_out_data_coh_msg(COH_MSG_TYPE_WIDTH - 1 downto COH_MSG_TYPE_WIDTH - 2) <= "10";
+  llc_dma_rsp_out_data_coh_msg(COH_MSG_TYPE_WIDTH - 1 downto COH_MSG_TYPE_WIDTH - 2) <= "10";
+  llc_fwd_out_data_coh_msg(MIX_MSG_TYPE_WIDTH - 1 downto MIX_MSG_TYPE_WIDTH - 2) <= "11";
+
+  -- Spandex concatenates hprot with a word mask to forward writes of
+  -- granularity smaller than a cache line to the next levels of hierarchy.
+  -- When USE_SPANDEX is set to zero, word_mask is ignored, but we set all
+  -- bits to '1' to indicate that the entire line is going to be written.
+  llc_rsp_out_data_word_mask <= (others => '1');
+  llc_dma_rsp_out_data_word_mask <= (others => '1');
+  llc_fwd_out_data_word_mask <= (others => '1');
+
+  -- Spandex sends data responses on the FWD plane
+  -- Set fwd_out_data_line to when USE_SPANDEX is 0
+  llc_fwd_out_data_line  <= (others => '0');
+
+  end generate llc_gen;
+
+  llc_spandex_gen: if USE_SPANDEX = 1 generate
+  llc_cache_i : llc_spandex
+    generic map (
+      use_rtl => CFG_CACHE_RTL,
+      sets => sets,
+      ways => ways)
+    port map (
+      clk => clk,
+      rst => rst,
+
+      llc_rst_tb_valid      => llc_flush_resetn_req,
+      llc_rst_tb_data       => llc_flush_resetn,
+      llc_rst_tb_ready      => llc_flush_resetn_ack,
+      llc_rst_tb_done_valid => llc_flush_resetn_done,
+      llc_rst_tb_done_data  => open,
+      llc_rst_tb_done_ready => std_logic' ('1'),
+
+      -- NoC to cache
+      llc_req_in_ready        => llc_req_in_ready,
+      llc_req_in_valid        => llc_req_in_valid,
+      llc_req_in_data_coh_msg => llc_req_in_data_coh_msg,
+      llc_req_in_data_hprot   => llc_req_in_data_hprot,
+      llc_req_in_data_addr    => llc_req_in_data_addr,
+      llc_req_in_data_line    => llc_req_in_data_line,
+      llc_req_in_data_word_mask => llc_req_in_data_word_mask,
+      llc_req_in_data_req_id  => llc_req_in_data_req_id,
+      llc_req_in_data_word_offset => llc_req_in_data_word_offset,
+      llc_req_in_data_valid_words => llc_req_in_data_valid_words,
+
+      llc_dma_req_in_ready        => llc_dma_req_in_ready,
+      llc_dma_req_in_valid        => llc_dma_req_in_valid,
+      llc_dma_req_in_data_coh_msg => llc_dma_req_in_data_coh_msg,
+      llc_dma_req_in_data_hprot   => llc_dma_req_in_data_hprot,
+      llc_dma_req_in_data_addr    => llc_dma_req_in_data_addr,
+      llc_dma_req_in_data_line    => llc_dma_req_in_data_line,
+      llc_dma_req_in_data_req_id  => llc_dma_req_in_data_req_id,
+      llc_dma_req_in_data_word_offset => llc_dma_req_in_data_word_offset,
+      llc_dma_req_in_data_valid_words => llc_dma_req_in_data_valid_words,
+      llc_dma_req_in_data_word_mask => llc_dma_req_in_data_word_mask,
+
+      llc_rsp_in_ready        => llc_rsp_in_ready,
+      llc_rsp_in_valid        => llc_rsp_in_valid,
+      llc_rsp_in_data_coh_msg => llc_rsp_in_data_coh_msg,
+      llc_rsp_in_data_addr    => llc_rsp_in_data_addr,
+      llc_rsp_in_data_line    => llc_rsp_in_data_line,
+      llc_rsp_in_data_word_mask => llc_rsp_in_data_word_mask,
+      llc_rsp_in_data_req_id  => llc_rsp_in_data_req_id,
+
+      -- cache to NoC
+      llc_rsp_out_ready           => llc_rsp_out_ready,
+      llc_rsp_out_valid           => llc_rsp_out_valid,
+      llc_rsp_out_data_coh_msg    => llc_rsp_out_data_coh_msg,
+      llc_rsp_out_data_addr       => llc_rsp_out_data_addr,
+      llc_rsp_out_data_line       => llc_rsp_out_data_line,
+      llc_rsp_out_data_word_mask  => llc_rsp_out_data_word_mask,
+      llc_rsp_out_data_invack_cnt => llc_rsp_out_data_invack_cnt,
+      llc_rsp_out_data_req_id     => llc_rsp_out_data_req_id,
+      llc_rsp_out_data_dest_id    => llc_rsp_out_data_dest_id,
+      llc_rsp_out_data_word_offset => llc_rsp_out_data_word_offset,
+
+      llc_dma_rsp_out_ready           => llc_dma_rsp_out_ready,
+      llc_dma_rsp_out_valid           => llc_dma_rsp_out_valid,
+      llc_dma_rsp_out_data_coh_msg    => llc_dma_rsp_out_data_coh_msg,
+      llc_dma_rsp_out_data_addr       => llc_dma_rsp_out_data_addr,
+      llc_dma_rsp_out_data_line       => llc_dma_rsp_out_data_line,
+      llc_dma_rsp_out_data_invack_cnt => llc_dma_rsp_out_data_invack_cnt,
+      llc_dma_rsp_out_data_req_id     => llc_dma_rsp_out_data_req_id,
+      llc_dma_rsp_out_data_dest_id    => llc_dma_rsp_out_data_dest_id,
+      llc_dma_rsp_out_data_word_offset => llc_dma_rsp_out_data_word_offset,
+      llc_dma_rsp_out_data_word_mask  => llc_dma_rsp_out_data_word_mask,
+
+      llc_fwd_out_ready        => llc_fwd_out_ready,
+      llc_fwd_out_valid        => llc_fwd_out_valid,
+      llc_fwd_out_data_coh_msg => llc_fwd_out_data_coh_msg,
+      llc_fwd_out_data_addr    => llc_fwd_out_data_addr,
+      llc_fwd_out_data_req_id  => llc_fwd_out_data_req_id,
+      llc_fwd_out_data_dest_id => llc_fwd_out_data_dest_id,
+      llc_fwd_out_data_word_mask => llc_fwd_out_data_word_mask,
+      llc_fwd_out_data_line    => llc_fwd_out_data_line,
+
+      -- AHB to cache
+      llc_mem_rsp_ready     => llc_mem_rsp_ready,
+      llc_mem_rsp_valid     => llc_mem_rsp_valid,
+      llc_mem_rsp_data_line => llc_mem_rsp_data_line,
+
+      -- cache to AHB
+      llc_mem_req_ready       => llc_mem_req_ready,
+      llc_mem_req_valid       => llc_mem_req_valid,
+      llc_mem_req_data_hwrite => llc_mem_req_data_hwrite,
+      llc_mem_req_data_hsize  => llc_mem_req_data_hsize,
+      llc_mem_req_data_hprot  => llc_mem_req_data_hprot,
+      llc_mem_req_data_addr   => llc_mem_req_data_addr,
+      llc_mem_req_data_line   => llc_mem_req_data_line,
+
+      -- statistics
+      llc_stats_ready         => llc_stats_ready,
+      llc_stats_valid         => llc_stats_valid,
+      llc_stats_data          => llc_stats_data
+    );
+  end generate llc_spandex_gen;
 
 -------------------------------------------------------------------------------
 -- Debug

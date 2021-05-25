@@ -39,9 +39,9 @@ entity axislv2noc is
     tech             : integer;
     nmst             : integer;
     retarget_for_dma : integer range 0 to 1 := 0;
-    mem_axi_port     : integer range 0 to NAHBSLV - 1;
+    mem_axi_port     : integer range -1 to NAHBSLV - 1;
     mem_num          : integer;
-    mem_info         : tile_mem_info_vector(0 to CFG_NMEM_TILE + CFG_NSLM_TILE - 1);
+    mem_info         : tile_mem_info_vector(0 to CFG_NMEM_TILE + CFG_NSLM_TILE + CFG_NSLMDDR_TILE - 1);
     slv_y            : local_yx;
     slv_x            : local_yx);
   port (
@@ -172,6 +172,7 @@ begin  -- rtl
 
   make_packet: process (mosi, local_y, local_x)
     variable tran : transaction_type;
+    variable adj_mem_axi_port : integer range 0 to NAHBSLV - 1;
   begin  -- process make_packet
 
     -- Default
@@ -238,7 +239,12 @@ begin  -- rtl
     end if;
 
     -- Determine whether memory is selected
-    if tran.xindex = mem_axi_port then
+    if mem_axi_port = -1 then
+      adj_mem_axi_port := 0;
+    else
+      adj_mem_axi_port := mem_axi_port;
+    end if;
+    if tran.xindex = adj_mem_axi_port or mem_axi_port = -1 then
       tran.dst_is_mem :=  '1';
     else
       tran.mem_x := slv_x;
@@ -392,7 +398,7 @@ begin  -- rtl
       somi(i).w.ready <= '0';
       -- r
       somi(i).r.id    <= transaction_reg.id;
-      somi(i).r.resp  <= HRESP_OKAY;
+      somi(i).r.resp  <= RBRESP_OKAY;
       if rsp_preamble = PREAMBLE_TAIL then
         somi(i).r.last  <= '1';
       else
@@ -402,7 +408,7 @@ begin  -- rtl
       somi(i).r.valid <= '0';
       -- b
       somi(i).b.id    <= transaction_reg.id;
-      somi(i).b.resp  <= HRESP_OKAY;
+      somi(i).b.resp  <= RBRESP_OKAY;
       somi(i).b.user  <= (others => '0');
       somi(i).b.valid <= '0';
     end loop;
@@ -612,6 +618,10 @@ begin  -- rtl
 
       when request_data_ack =>
         somi(transaction_reg.xindex).b.valid <= '1';
+        if transaction_reg.lock = '1' then
+          -- always return success on RISC-V store conditional
+          somi(transaction_reg.xindex).b.resp <= RBRESP_EXOKAY;
+        end if;
         if mst_bready = '1' then
           if selected = '0' then
             next_state <= idle;

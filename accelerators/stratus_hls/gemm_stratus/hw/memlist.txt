@@ -1,0 +1,52 @@
+# plm_w32_d64_chk8 8 32 1w:0r 0w:2r
+# plm_w32_d64_chk16 16 32 1w:0r 0w:2r
+# plm_w32_d64_chk32 32 32 1w:0r 0w:2r
+# plm_w32_d64_chk64 64 32 1w:0r 0w:2r
+# plm_w32_d64_chk128 128 32 1w:0r 0w:2r
+plm_w32_d64_chk256 256 32 1w:0r 0w:2r
+plm_w32_d32_chk256 256 32 1w:0r 0w:1r
+# plm_w32_d64_chk512 512 32 1w:0r 0w:2r
+# plm_w32_d64_chk2048 2048 32 1w:0r 0w:2r
+# plm_w32_d64_chk4096 4096 32 1w:0r 0w:2r
+# plm_w32_d64_chk8192 8192 32 1w:0r 0w:2r
+# plm_w32_d64_chk8_p1 8 32 2w:0r 0w:1r
+# plm_w32_d64_chk16_p1 16 32 2w:0r 0w:1r
+# plm_w32_d64_chk32_p1 32 32 2w:0r 0w:1r
+# plm_w32_d64_chk64_p1 64 32 2w:0r 0w:1r
+# plm_w32_d64_chk128_p1 128 32 2w:0r 0w:1r
+# plm_w32_d64_chk512_p1 512 32 2w:0r 0w:1r
+# plm_w32_d64_chk2048_p1 2048 32 2w:0r 0w:1r
+# plm_w32_d64_chk4096_p1 4096 32 2w:0r 0w:1r
+# plm_w32_d64_chk8192_p1 8192 32 2w:0r 0w:1r
+# plm_w32_d64_chk8_p2 8 32 2w:0r 0w:2r
+# plm_w32_d64_chk16_p2 16 32 2w:0r 0w:2r
+# plm_w32_d64_chk32_p2 32 32 2w:0r 0w:2r
+# plm_w32_d64_chk64_p2 64 32 2w:0r 0w:2r
+# plm_w32_d64_chk128_p2 128 32 2w:0r 0w:2r
+# plm_w32_d64_chk512_p2 512 32 2w:0r 0w:2r
+# plm_w32_d64_chk2048_p2 2048 32 2w:0r 0w:2r
+# plm_w32_d64_chk4096_p2 4096 32 2w:0r 0w:2r
+# plm_w32_d64_chk8192_p2 8192 32 2w:0r 0w:2r
+# plm_w32_d64_chk8_p4 8 32 2w:0r 0w:4r
+# plm_w32_d64_chk16_p4 16 32 2w:0r 0w:4r
+# plm_w32_d64_chk32_p4 32 32 2w:0r 0w:4r
+# plm_w32_d64_chk64_p4 64 32 2w:0r 0w:4r
+# plm_w32_d64_chk128_p4 128 32 2w:0r 0w:4r
+# plm_w32_d64_chk512_p4 512 32 2w:0r 0w:4r
+# plm_w32_d64_chk2048_p4 2048 32 2w:0r 0w:4r
+# plm_w32_d64_chk4096_p4 4096 32 2w:0r 0w:4r
+# plm_w32_d64_chk8192_p4 8192 32 2w:0r 0w:4r
+# plm_w32_d64_chk32_p8 32 32 2w:0r 0w:8r
+# plm_w32_d64_chk64_p8 64 32 2w:0r 0w:8r
+# plm_w32_d64_chk128_p8 128 32 2w:0r 0w:8r
+# plm_w32_d64_chk512_p8 512 32 2w:0r 0w:8r
+plm_w32_d64_chk2048_p8 2048 32 2w:0r 0w:8r
+plm_w32_d32_chk2048_p8 2048 32 1w:0r 0w:8r
+# plm_w32_d64_chk4096_p8 4096 32 2w:0r 0w:8r
+# plm_w32_d64_chk8192_p8 8192 32 2w:0r 0w:8r
+# plm_w32_d64_chk32_p16 32 32 2w:0r 0w:16r
+# plm_w32_d64_chk128_p16 128 32 2w:0r 0w:16r
+# plm_w32_d64_chk512_p16 512 32 2w:0r 0w:16r
+# plm_w32_d64_chk2048_p16 2048 32 2w:0r 0w:16r
+# plm_w32_d64_chk4096_p16 4096 32 2w:0r 0w:16r
+# plm_w32_d64_chk8192_p16 8192 32 2w:0r 0w:16r

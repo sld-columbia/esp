@@ -75,6 +75,7 @@ enum accelerator_coherence {ACC_COH_NONE = 0, ACC_COH_LLC, ACC_COH_RECALL, ACC_C
 #define DST_OFFSET_REG 0x34
 
 /* bank(14)       : RESERVED */
+#define SPANDEX_REG 0x38
 
 /* bank(15)       : RESERVED */
 

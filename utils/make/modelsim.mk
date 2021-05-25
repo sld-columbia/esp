@@ -28,7 +28,8 @@ VSIMOPT += $(SIMTOP) $(EXTRA_SIMTOP)
 VLIB = vlib
 VCOM = vcom -quiet -93 $(VCOMOPT)
 VLOG = vlog -sv -quiet $(VLOGOPT)
-VSIM = vsim $(VSIMOPT)
+VSIM = VSIMOPT='$(VSIMOPT)' TECHLIB=$(TECHLIB) ESP_ROOT=$(ESP_ROOT) vsim $(VSIMOPT)
+
 
 ### Xilinx Simulation libs targets ###
 $(ESP_ROOT)/.cache/modelsim/xilinx_lib:
@@ -99,15 +100,11 @@ endif
 			echo $(SPACES)"$(VLOG) -work work $$rtl"; \
 			$(VLOG) -work work $$rtl || exit; \
 		done;
+	@echo $(SPACES)"### Compile BSG Verilog source files ###";
+	@$(MAKE) bsg-sim-compile
 	@cd modelsim; \
 	echo $(SPACES)"vmake > vsim.mk"; \
 	vmake 2> /dev/null > vsim.mk; \
-	if ! test -e prom.srec; then \
-		ln -s $(SOFT_BUILD)/prom.srec; \
-	fi; \
-	if ! test -e ram.srec; then \
-		ln -s $(SOFT_BUILD)/ram.srec; \
-	fi; \
 	cd ../;
 
 sim-compile: socketgen check_all_srcs modelsim/vsim.mk soft
@@ -115,18 +112,26 @@ sim-compile: socketgen check_all_srcs modelsim/vsim.mk soft
 		cp $$dat modelsim; \
 	done;
 	$(QUIET_MAKE)make -C modelsim -f vsim.mk
+	@cd modelsim; \
+	rm -f prom.srec ram.srec; \
+	ln -s $(SOFT_BUILD)/prom.srec; \
+	ln -s $(SOFT_BUILD)/ram.srec;
 
 sim: sim-compile
-	@cd modelsim; \
-	echo $(SPACES)"vsim -c $(VSIMOPT)"; \
-	vsim -c $(VSIMOPT); \
-	cd ../
+	$(QUIET_RUN)cd modelsim; \
+	if test -e $(DESIGN_PATH)/vsim.tcl; then \
+		$(VSIM) -c -do "do $(DESIGN_PATH)/vsim.tcl"; \
+	else \
+		$(VSIM) -c; \
+	fi;
 
 sim-gui: sim-compile
-	@cd modelsim; \
-	echo $(SPACES)"$(VSIM)"; \
-	$(VSIM); \
-	cd ../
+	$(QUIET_RUN)cd modelsim; \
+	if test -e $(DESIGN_PATH)/vsim.tcl; then \
+		$(VSIM) -do "do $(DESIGN_PATH)/vsim.tcl"; \
+	else \
+		$(VSIM); \
+	fi;
 
 sim-clean:
 	$(QUIET_CLEAN)rm -rf transcript *.wlf
@@ -144,9 +149,11 @@ JTAG_TEST_TILE ?= 0
 
 jtag-trace: sim-compile
 	$(QUIET_RUN)cd modelsim; \
-	echo $(SPACES)"$(VSIM)" -do "do $(JTAG_TEST_SCRIPTS_DIR)/jtag_test_gettrace.tcl"; \
-	$(VSIM) -do "do $(JTAG_TEST_SCRIPTS_DIR)/jtag_test_gettrace.tcl"; \
-	cd ../
+	if test -e $(DESIGN_PATH)/vsim.tcl; then \
+		VSIMOPT='$(VSIMOPT) -do "do $(JTAG_TEST_SCRIPTS_DIR)/jtag_test_gettrace.tcl"' TECHLIB=$(TECHLIB) ESP_ROOT=$(ESP_ROOT) vsim $(VSIMOPT) -do "do $(DESIGN_PATH)/vsim.tcl"; \
+	else \
+		$(VSIM) -do "do $(JTAG_TEST_SCRIPTS_DIR)/jtag_test_gettrace.tcl"; \
+	fi;
 
 jtag-trace-pretty:
 	$(QUIET_BUILD)cd modelsim; \
@@ -154,12 +161,14 @@ jtag-trace-pretty:
 
 jtag-stim: jtag-trace-pretty
 	$(QUIET_BUILD)cd modelsim; \
-	$(JTAG_TEST_SCRIPTS_DIR)/jtag_test_stim.py $(JTAG_TEST_TILE)
+	LD_LIBRARY_PATH="" $(JTAG_TEST_SCRIPTS_DIR)/jtag_test_stim.py $(JTAG_TEST_TILE)
 
 sim-jtag: sim-compile jtag-stim
 	$(QUIET_RUN)cd modelsim; \
-	echo $(SPACES)"$(VSIM) -g JTAG_TRACE=$(JTAG_TEST_TILE)"; \
-	$(VSIM) -g JTAG_TRACE=$(JTAG_TEST_TILE); \
-	cd ../; \
+	if test -e $(DESIGN_PATH)/vsim.tcl; then \
+		VSIMOPT='$(VSIMOPT) -g JTAG_TRACE=$(JTAG_TEST_TILE)' TECHLIB=$(TECHLIB) ESP_ROOT=$(ESP_ROOT) vsim $(VSIMOPT) -do "do $(DESIGN_PATH)/vsim.tcl"; \
+	else \
+		$(VSIM) -g JTAG_TRACE=$(JTAG_TEST_TILE); \
+	fi;
 
 .PHONY: jtag-trace jtag-trace-pretty jtag-stim

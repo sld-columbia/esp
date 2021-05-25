@@ -100,14 +100,6 @@ void esp_driver_unregister(struct esp_driver *driver);
 int esp_device_register(struct esp_device *esp, struct platform_device *pdev);
 void esp_device_unregister(struct esp_device *device);
 
-#ifdef __riscv
-#undef ioread32be
-#define ioread32be ioread32
-#undef iowrite32be
-#define iowrite32be iowrite32
-
-#endif
-
 #endif /* __KERNEL__ */
 
 #endif /* ESP_H */

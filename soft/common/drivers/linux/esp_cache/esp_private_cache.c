@@ -18,7 +18,7 @@
 
 #include <esp_cache.h>
 
-#define DRV_NAME	"esp_private_cache"
+#define DRV_NAME	"private_cache"
 
 static DEFINE_MUTEX(esp_private_cache_list_lock);
 static LIST_HEAD(esp_private_cache_list);
@@ -40,6 +40,12 @@ static struct of_device_id esp_private_cache_device_ids[] = {
 	},
 	{
 		.compatible = "sld,l2_cache",
+	},
+	{
+		.name = "ee_020",
+	},
+	{
+		.compatible = "uiuc,spandex_l2",
 	},
 	{ },
 };
@@ -141,6 +147,8 @@ static int esp_private_cache_probe(struct platform_device *pdev)
 {
 	struct esp_private_cache_device *esp_private_cache;
 	struct resource *res;
+	const char *compatible;
+	int cplen;
 	int rc = 0;
 
 	esp_private_cache = kzalloc(sizeof(*esp_private_cache), GFP_KERNEL);
@@ -159,7 +167,17 @@ static int esp_private_cache_probe(struct platform_device *pdev)
 		goto out_iomem;
 	}
 
-	dev_info(esp_private_cache->pdev, "device registered.\n");
+	/* Determine which type of cache is present */
+#ifdef __sparc
+	compatible = of_get_property(esp_private_cache->pdev->of_node, "name", &cplen);
+	if (strcmp(compatible, "eb_020") == 0)
+#else
+	compatible = of_get_property(esp_private_cache->pdev->of_node, "compatible", &cplen);
+	if (strcmp(compatible, "sld,l2_cache") == 0)
+#endif
+		dev_info(esp_private_cache->pdev, "ESP L2 cache registered.\n");
+	else
+		dev_info(esp_private_cache->pdev, "Spandex L2 cache registered.\n");
 
 	platform_set_drvdata(pdev, esp_private_cache);
 
