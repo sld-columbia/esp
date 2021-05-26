@@ -192,6 +192,24 @@ set_clock_groups -asynchronous -group [get_clocks fpga_clk_out[0]] -group [get_c
 set_clock_groups -asynchronous -group [get_clocks fpga_clk_out[1]] -group [get_clocks fpga_clk_out[2]]
 set_clock_groups -asynchronous -group [get_clocks fpga_clk_out[1]] -group [get_clocks fpga_clk_out[3]]
 set_clock_groups -asynchronous -group [get_clocks fpga_clk_out[2]] -group [get_clocks fpga_clk_out[3]]
+
+set_clock_groups -asynchronous -group [get_clocks fpga_clk_out[0]] -group [get_clocks $sys_clk_elab0]
+set_clock_groups -asynchronous -group [get_clocks fpga_clk_out[0]] -group [get_clocks $sys_clk_elab1]
+set_clock_groups -asynchronous -group [get_clocks fpga_clk_out[0]] -group [get_clocks $sys_clk_elab2]
+set_clock_groups -asynchronous -group [get_clocks fpga_clk_out[0]] -group [get_clocks $sys_clk_elab3]
+set_clock_groups -asynchronous -group [get_clocks fpga_clk_out[1]] -group [get_clocks $sys_clk_elab0]
+set_clock_groups -asynchronous -group [get_clocks fpga_clk_out[1]] -group [get_clocks $sys_clk_elab1]
+set_clock_groups -asynchronous -group [get_clocks fpga_clk_out[1]] -group [get_clocks $sys_clk_elab2]
+set_clock_groups -asynchronous -group [get_clocks fpga_clk_out[1]] -group [get_clocks $sys_clk_elab3]
+set_clock_groups -asynchronous -group [get_clocks fpga_clk_out[2]] -group [get_clocks $sys_clk_elab0]
+set_clock_groups -asynchronous -group [get_clocks fpga_clk_out[2]] -group [get_clocks $sys_clk_elab1]
+set_clock_groups -asynchronous -group [get_clocks fpga_clk_out[2]] -group [get_clocks $sys_clk_elab2]
+set_clock_groups -asynchronous -group [get_clocks fpga_clk_out[2]] -group [get_clocks $sys_clk_elab3]
+set_clock_groups -asynchronous -group [get_clocks fpga_clk_out[3]] -group [get_clocks $sys_clk_elab0]
+set_clock_groups -asynchronous -group [get_clocks fpga_clk_out[3]] -group [get_clocks $sys_clk_elab1]
+set_clock_groups -asynchronous -group [get_clocks fpga_clk_out[3]] -group [get_clocks $sys_clk_elab2]
+set_clock_groups -asynchronous -group [get_clocks fpga_clk_out[3]] -group [get_clocks $sys_clk_elab3]
+
 #-----------------------------------------------------------
 #              False Paths                                 -
 #-----------------------------------------------------------
