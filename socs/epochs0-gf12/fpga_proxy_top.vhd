@@ -1322,24 +1322,24 @@ begin  -- architecture rtl
 
     case sending_packet is
       when "0001" =>
-        ahbs_snd_wrreq(0)   <= not mux_ahbs_snd_empty;
+        ahbs_snd_wrreq(0)   <= (not mux_ahbs_snd_empty) and (not ahbs_snd_full(0));
         ahbs_snd_data_in(0) <= mux_ahbs_snd_data_out;
-        mux_ahbs_snd_rdreq  <= not ahbs_snd_full(0);
+        mux_ahbs_snd_rdreq  <= (not mux_ahbs_snd_empty) and (not ahbs_snd_full(0));
 
       when "0010" =>
-        ahbs_snd_wrreq(1)   <= not mux_ahbs_snd_empty;
+        ahbs_snd_wrreq(1)   <= (not mux_ahbs_snd_empty) and (not ahbs_snd_full(1));
         ahbs_snd_data_in(1) <= mux_ahbs_snd_data_out;
-        mux_ahbs_snd_rdreq  <= not ahbs_snd_full(1);
+        mux_ahbs_snd_rdreq  <= (not mux_ahbs_snd_empty) and (not ahbs_snd_full(1));
 
       when "0100" =>
-        ahbs_snd_wrreq(2)   <= not mux_ahbs_snd_empty;
+        ahbs_snd_wrreq(2)   <= (not mux_ahbs_snd_empty) and (not ahbs_snd_full(2));
         ahbs_snd_data_in(2) <= mux_ahbs_snd_data_out;
-        mux_ahbs_snd_rdreq  <= not ahbs_snd_full(2);
+        mux_ahbs_snd_rdreq  <= (not mux_ahbs_snd_empty) and (not ahbs_snd_full(2));
 
       when "1000" =>
-        ahbs_snd_wrreq(3)   <= not mux_ahbs_snd_empty;
+        ahbs_snd_wrreq(3)   <= (not mux_ahbs_snd_empty) and (not ahbs_snd_full(3));
         ahbs_snd_data_in(3) <= mux_ahbs_snd_data_out;
-        mux_ahbs_snd_rdreq  <= not ahbs_snd_full(3);
+        mux_ahbs_snd_rdreq  <= (not mux_ahbs_snd_empty) and (not ahbs_snd_full(3));
 
       when others => null;
     end case;
@@ -1369,24 +1369,24 @@ begin  -- architecture rtl
 
     case receiving_packet is
       when "0001" =>
-        mux_ahbs_rcv_wrreq   <= not ahbs_rcv_empty(0);
+        mux_ahbs_rcv_wrreq   <= (not mux_ahbs_rcv_full) and (not ahbs_rcv_empty(0));
         mux_ahbs_rcv_data_in <= ahbs_rcv_data_out(0);
-        ahbs_rcv_rdreq(0)    <= not mux_ahbs_rcv_full;
+        ahbs_rcv_rdreq(0)    <= (not mux_ahbs_rcv_full) and (not ahbs_rcv_empty(0));
 
       when "0010" =>
-        mux_ahbs_rcv_wrreq   <= not ahbs_rcv_empty(1);
+        mux_ahbs_rcv_wrreq   <= (not mux_ahbs_rcv_full) and (not ahbs_rcv_empty(1));
         mux_ahbs_rcv_data_in <= ahbs_rcv_data_out(1);
-        ahbs_rcv_rdreq(1)    <= not mux_ahbs_rcv_full;
+        ahbs_rcv_rdreq(1)    <= (not mux_ahbs_rcv_full) and (not ahbs_rcv_empty(1));
 
       when "0100" =>
-        mux_ahbs_rcv_wrreq   <= not ahbs_rcv_empty(2);
+        mux_ahbs_rcv_wrreq   <= (not mux_ahbs_rcv_full) and (not ahbs_rcv_empty(2));
         mux_ahbs_rcv_data_in <= ahbs_rcv_data_out(2);
-        ahbs_rcv_rdreq(2)    <= not mux_ahbs_rcv_full;
+        ahbs_rcv_rdreq(2)    <= (not mux_ahbs_rcv_full) and (not ahbs_rcv_empty(2));
 
       when "1000" =>
-        mux_ahbs_rcv_wrreq   <= not ahbs_rcv_empty(3);
+        mux_ahbs_rcv_wrreq   <= (not mux_ahbs_rcv_full) and (not ahbs_rcv_empty(3));
         mux_ahbs_rcv_data_in <= ahbs_rcv_data_out(3);
-        ahbs_rcv_rdreq(3)    <= not mux_ahbs_rcv_full;
+        ahbs_rcv_rdreq(3)    <= (not mux_ahbs_rcv_full) and (not ahbs_rcv_empty(3));
 
       when others => null;
     end case;
