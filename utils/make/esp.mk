@@ -48,6 +48,14 @@ esplink: $(ESP_CFG_BUILD)/socmap.h $(ESPLINK_HDRS) $(ESPLINK_SRCS)
 		-I$(ESP_ROOT)/tools/esplink/src/ -I$(DESIGN_PATH)/$(ESP_CFG_BUILD) \
 		$(ESPLINK_SRCS) -o $@
 
+esplink-fpga-proxy: $(ESP_CFG_BUILD)/socmap.h $(ESPLINK_HDRS) $(ESPLINK_SRCS)
+	$(QUIET_CC) \
+	cd $(ESP_CFG_BUILD); \
+	gcc -O3 -Wall -Werror -fmax-errors=5 \
+		-DESPLINK_IP=\"$(FPGA_PROXY_IP)\" -DPORT=$(FPGA_PROXY_PORT) \
+		-I$(ESP_ROOT)/tools/esplink/src/ -I$(DESIGN_PATH)/$(ESP_CFG_BUILD) \
+		$(ESPLINK_SRCS) -o $@
+
 esp-config: $(ESP_CFG_BUILD)/socmap.vhd
 
 esp-xconfig: $(ESP_CFG_BUILD) $(GRLIB_CFG_BUILD)/grlib_config.vhd

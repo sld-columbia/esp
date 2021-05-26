@@ -84,6 +84,8 @@ SSH_PORT ?= 22
 ESPLINK_IP ?=
 ESPLINK_PORT ?= 46392
 
+FPGA_PROXY_IP ?= "128.59.22.75"
+FPGA_PROXY_PORT ?= 46320
 # MAC address for Linux if using IP address reservation (e.g. 00aabb33cc77)
 # LINUX_MAC ?=
 
