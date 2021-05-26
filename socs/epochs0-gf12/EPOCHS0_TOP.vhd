@@ -612,7 +612,7 @@ begin
     port map (fpga_valid_in, fpga_valid_in_swap);
   fpga_valid_out_pad : outpadvvv generic map (loc => fpga_valid_out_pad_loc, level => cmos, voltage => x18v, tech => CFG_FABTECH, width => 4)
     port map (fpga_valid_out, fpga_valid_out_swap, fpga_c_pad_cfg);
-  fpga_clk_in_pad : inpadv generic map (loc => fpga_clk_in_pad_loc, level => cmos, voltage => x18v, tech => CFG_FABTECH, width => 4)
+  fpga_clk_in_pad : clkpadv generic map (loc => fpga_clk_in_pad_loc, level => cmos, voltage => x18v, tech => CFG_FABTECH, width => 4)
     port map (fpga_clk_in, fpga_clk_in_swap);
   fpga_clk_out_pad : outpadvvv generic map (loc => fpga_clk_out_pad_loc, level => cmos, voltage => x18v, tech => CFG_FABTECH, width => 4)
     port map (fpga_clk_out, fpga_clk_out_swap, fpga_c_pad_cfg);
