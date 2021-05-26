@@ -44,6 +44,22 @@ set_property IOSTANDARD LVCMOS18 [get_ports {uart_*}]
 #-----------------------------------------------------------
 
 create_clock -period 20.0 [get_ports clk_emu_p]
+create_clock -period 10.0 [get_ports fpga_clk_in[0]]
+create_clock -period 10.0 [get_ports fpga_clk_in[1]]
+create_clock -period 10.0 [get_ports fpga_clk_in[2]]
+create_clock -period 10.0 [get_ports fpga_clk_in[3]]
+
+set_clock_groups -asynchronous -group [get_clocks fpga_clk_in[0]] -group [get_clocks clk_emu_p]
+set_clock_groups -asynchronous -group [get_clocks fpga_clk_in[1]] -group [get_clocks clk_emu_p]
+set_clock_groups -asynchronous -group [get_clocks fpga_clk_in[2]] -group [get_clocks clk_emu_p]
+set_clock_groups -asynchronous -group [get_clocks fpga_clk_in[3]] -group [get_clocks clk_emu_p]
+
+set_clock_groups -asynchronous -group [get_clocks fpga_clk_in[0]] -group [get_clocks fpga_clk_in[1]]
+set_clock_groups -asynchronous -group [get_clocks fpga_clk_in[0]] -group [get_clocks fpga_clk_in[2]]
+set_clock_groups -asynchronous -group [get_clocks fpga_clk_in[0]] -group [get_clocks fpga_clk_in[3]]
+set_clock_groups -asynchronous -group [get_clocks fpga_clk_in[1]] -group [get_clocks fpga_clk_in[2]]
+set_clock_groups -asynchronous -group [get_clocks fpga_clk_in[1]] -group [get_clocks fpga_clk_in[3]]
+set_clock_groups -asynchronous -group [get_clocks fpga_clk_in[2]] -group [get_clocks fpga_clk_in[3]]
 
 #-----------------------------------------------------------
 #              False Paths                                 -

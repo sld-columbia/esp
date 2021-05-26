@@ -137,6 +137,10 @@ set_property PACKAGE_PIN AR15 [get_ports reset]
 # create_clock -period 5.0 [get_ports c3_sys_clk_p]
 
 create_clock -period 10.0 [get_ports main_clk_p]
+create_clock -period 10.0 [get_ports fpga_clk_out[0]]
+create_clock -period 10.0 [get_ports fpga_clk_out[1]]
+create_clock -period 10.0 [get_ports fpga_clk_out[2]]
+create_clock -period 10.0 [get_ports fpga_clk_out[3]]
 
 # create_clock -period 5 [get_ports clk_ref_p]
 
@@ -177,6 +181,17 @@ set_clock_groups -asynchronous -group [get_clocks $sys_clk_elab1] -group [get_cl
 set_clock_groups -asynchronous -group [get_clocks $sys_clk_elab1] -group [get_clocks $sys_clk_elab3]
 set_clock_groups -asynchronous -group [get_clocks $sys_clk_elab2] -group [get_clocks $sys_clk_elab3]
 
+set_clock_groups -asynchronous -group [get_clocks fpga_clk_out[0]] -group [get_clocks main_clk_p]
+set_clock_groups -asynchronous -group [get_clocks fpga_clk_out[1]] -group [get_clocks main_clk_p]
+set_clock_groups -asynchronous -group [get_clocks fpga_clk_out[2]] -group [get_clocks main_clk_p]
+set_clock_groups -asynchronous -group [get_clocks fpga_clk_out[3]] -group [get_clocks main_clk_p]
+
+set_clock_groups -asynchronous -group [get_clocks fpga_clk_out[0]] -group [get_clocks fpga_clk_out[1]]
+set_clock_groups -asynchronous -group [get_clocks fpga_clk_out[0]] -group [get_clocks fpga_clk_out[2]]
+set_clock_groups -asynchronous -group [get_clocks fpga_clk_out[0]] -group [get_clocks fpga_clk_out[3]]
+set_clock_groups -asynchronous -group [get_clocks fpga_clk_out[1]] -group [get_clocks fpga_clk_out[2]]
+set_clock_groups -asynchronous -group [get_clocks fpga_clk_out[1]] -group [get_clocks fpga_clk_out[3]]
+set_clock_groups -asynchronous -group [get_clocks fpga_clk_out[2]] -group [get_clocks fpga_clk_out[3]]
 #-----------------------------------------------------------
 #              False Paths                                 -
 #-----------------------------------------------------------
