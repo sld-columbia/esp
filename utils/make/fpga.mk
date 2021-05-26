@@ -28,17 +28,17 @@ fpga-run-linux: esplink soft
 	@./$(ESP_CFG_BUILD)/esplink --dram -i $(SOFT_BUILD)/linux.bin
 	@./$(ESP_CFG_BUILD)/esplink --reset
 
-fpga-run-epochs: esplink esplink-fpga-proxy soft
+fpga-run-proxy: esplink esplink-fpga-proxy soft
 	@./$(ESP_CFG_BUILD)/esplink --reset
 	@./$(ESP_CFG_BUILD)/esplink --brom -i $(SOFT_BUILD)/prom.bin
 	@./$(ESP_CFG_BUILD)/esplink-fpga-proxy --dram -i $(SOFT_BUILD)/systest.bin
 	@./$(ESP_CFG_BUILD)/esplink --reset
 
-fpga-run-linux-epochs: esplink esplink-fpga-proxy soft
+fpga-run-linux-proxy: esplink esplink-fpga-proxy soft
 	@./$(ESP_CFG_BUILD)/esplink --reset
 	@./$(ESP_CFG_BUILD)/esplink --brom -i $(SOFT_BUILD)/prom.bin
 	@./$(ESP_CFG_BUILD)/esplink-fpga-proxy --dram -i $(SOFT_BUILD)/linux.bin
 	@./$(ESP_CFG_BUILD)/esplink --reset
 
 
-.PHONY: fpga-run fpga-run-linux fpga-program fpga-run-epochs fpga-run-linux-epochs
+.PHONY: fpga-run fpga-run-linux fpga-program fpga-run-proxy fpga-run-linux-proxy
