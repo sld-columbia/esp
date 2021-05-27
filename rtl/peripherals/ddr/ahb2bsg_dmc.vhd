@@ -179,7 +179,7 @@ architecture rtl of ahb2bsg_dmc is
     wdf_wren : std_logic;
     wdf_end : std_logic;
     wdf_data : std_Logic_vector(64 - 1 downto 0);
-    wdf_mask : std_logic_vector(8 - 1 downto 0);
+    wdf_mask : std_logic_vector(AHBDW/8 - 1 downto 0);
     -- AHB slv
     valid : std_logic;
     hwrite : std_logic;
