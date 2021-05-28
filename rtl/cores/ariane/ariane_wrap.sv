@@ -141,6 +141,12 @@ module ariane_wrap
     input logic [AXI_USER_WIDTH-1:0] 	dram_r_user,
     input logic 			dram_r_valid,
     output logic 			dram_r_ready,
+    //   AC
+    input logic [AXI_ADDR_WIDTH-1:0] dram_ac_addr,
+    input logic [2:0]                dram_ac_prot,
+    input logic [3:0]                dram_ac_snoop,
+    input logic                      dram_ac_valid,
+    output logic                     dram_ac_ready,
     // -- CLINT
     //    AW
     output logic [AXI_ID_WIDTH_SLV-1:0] clint_aw_id,
@@ -304,7 +310,9 @@ module ariane_wrap
     input logic 			pready,
     input logic 			pslverr,
     // fence indication to l2
-    output logic [1:0]			fence_l2
+    output logic [1:0]			fence_l2,
+    input logic                 flush_l1,
+    output logic                flush_done
     );
 
    // Base addresses for Ariane
@@ -408,26 +416,32 @@ module ariane_wrap
    // Core
    // ---------------
 
-   ariane_axi::req_t    axi_ariane_req;
-   ariane_axi::resp_t   axi_ariane_resp;
+   ariane_axi::req_t           axi_ariane_req;
+   ariane_axi::resp_t          axi_ariane_resp;
+   ariane_axi::snoop_req_t     ace_req;
+   ariane_axi::snoop_resp_t    ace_resp;
 
    ariane
      #(
        .ArianeCfg ( ArianeSocCfg )
        ) i_ariane
        (
-	.clk_i        ( clk                 ),
-	.rst_ni       ( rstn                ),
-	.boot_addr_i  ( ROMBase             ),
-	.hart_id_i    ( HART_ID             ),
-	.irq_i        ( irq                 ),
-	.ipi_i        ( ipi	            ),
-	.time_irq_i   ( timer_irq           ),
-	.debug_req_i  ( 1'b0                ),
-	.axi_req_o    ( axi_ariane_req      ),
-	.axi_resp_i   ( axi_ariane_resp     ),
-	.fence_l2_o   ( fence_l2            )
-	);
+    .clk_i        ( clk                 ),
+    .rst_ni       ( rstn                ),
+    .boot_addr_i  ( ROMBase             ),
+    .hart_id_i    ( HART_ID             ),
+    .irq_i        ( irq                 ),
+    .ipi_i        ( ipi                 ),
+    .time_irq_i   ( timer_irq           ),
+    .debug_req_i  ( 1'b0                ),
+    .axi_req_o    ( axi_ariane_req      ),
+    .axi_resp_i   ( axi_ariane_resp     ),
+    .ace_req_i    ( ace_req             ),
+    .ace_resp_o   ( ace_resp            ),
+    .fence_l2_o   ( fence_l2            ),
+    .flush_l1_i   ( flush_l1            ),
+    .flush_done_o ( flush_done          )
+    );
 
    axi_master_connect i_axi_master_connect_ariane (.axi_req_i(axi_ariane_req), .axi_resp_o(axi_ariane_resp), .master(slave[0]));
 
@@ -820,5 +834,10 @@ module ariane_wrap
    assign dram.r_user = dram_r_user;
    assign dram.r_valid = dram_r_valid;
    assign dram_r_ready = dram.r_ready;
-
+   //    AC (TODO: connect through the AXI crossbar!)
+   assign ace_req.ac_valid = dram_ac_valid;
+   assign ace_req.ac.addr  = dram_ac_addr;
+   assign ace_req.ac.prot  = dram_ac_prot;
+   assign ace_req.ac.snoop = dram_ac_snoop;
+   assign dram_ac_ready = ace_resp.ac_ready;
 endmodule
