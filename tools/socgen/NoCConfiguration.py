@@ -611,13 +611,13 @@ class NoCFrame(Pmw.ScrolledFrame):
 
     #update message box
     self.message.delete(0.0, END)
-    self.cfg_frame.sync_label.config(text="With synchronizers",fg="darkgreen")
-    self.cfg_frame.set_cpu_specific_labels(self.soc)
+    self.cpu_frame.set_cpu_specific_labels(self.soc)
+
     string = ""
     if (tot_cpu > 0) and \
        (tot_cpu <= NCPU_MAX) and \
        (tot_mem > 0 or (tot_slm > 0 and (self.soc.cache_en.get() == 0) and self.soc.CPU_ARCH.get() == "ibex")) and \
-       (tot_mem <= NMEM_MAX) and \
+       (tot_mem <= self.soc.nmem_max) and \
        (tot_mem != 3) and \
        (tot_slm <= NSLM_MAX) and \
        (tot_slm <= 1 or self.soc.slm_kbytes.get() >= 1024) and \
@@ -630,7 +630,6 @@ class NoCFrame(Pmw.ScrolledFrame):
        (self.noc.cols <= 8 and self.noc.rows <= 8) and \
        (tot_full_coherent <= NFULL_COHERENT_MAX) and \
        (tot_llc_coherent <= NLLC_COHERENT_MAX) and \
-       (not (self.soc.TECH != "gf12" and self.soc.TECH != "gf22" and self.soc.TECH != "virtexu" and tot_mem == 4)) and \
        (not (self.soc.TECH == "virtexu" and tot_mem >= 2 and (self.noc.rows < 3 or self.noc.cols < 3))) and \
        (self.soc.cache_spandex.get() == 0 or self.soc.CPU_ARCH.get() == "ariane" or self.soc.cache_en.get() == 0) and \
        (tot_cpu == 1 or self.soc.cache_en.get()) and \
@@ -657,9 +656,9 @@ class NoCFrame(Pmw.ScrolledFrame):
       if (tot_io > 1):
         string += "Multiple I/O tiles are not supported\n"
       if (tot_mem < 1 and tot_slm < 1):
-        string += "There must be at least 1 memory tile or 1 SLM tile and no more than " + str(NMEM_MAX) + ".\n"
-      if (tot_mem > NMEM_MAX):
-        string += "There must be no more than " + str(NMEM_MAX) + ".\n"
+        string += "There must be at least 1 memory tile or 1 SLM tile.\n"
+      if (tot_mem > self.soc.nmem_max):
+        string += "There must be no more than " + str(self.soc.nmem_max) + " memory tiles.\n"
       if (tot_mem == 0 and (self.soc.CPU_ARCH.get() != "ibex")):
         string += "SLM tiles can be used in place of memory tiles only with the lowRISC ibex core.\n"
       if (tot_mem == 0 and (self.soc.cache_en.get() == 1)):
@@ -667,15 +666,13 @@ class NoCFrame(Pmw.ScrolledFrame):
       if (tot_mem == 3): 
         string += "Number of memory tiles must be a power of 2.\n" 
       if (tot_slm > NSLM_MAX):
-        string += "There must be no more than " + str(NSLM_MAX) + ".\n"
+        string += "There must be no more than " + str(NSLM_MAX) + " SLD tiles.\n"
       if (tot_slm > 1 and self.soc.slm_kbytes.get() < 1024):
         string += "SLM size must be 1024 KB or more if placing more than one SLM tile"
-      if (self.soc.TECH != "gf12" and self.soc.TECH != "gf22" and self.soc.TECH != "virtexu" and tot_mem == 4): 
-        string += "4 memory tiles is only supported for virtexu (profpga-xcvu440).\n"
       if (self.soc.llc_sets.get() >= 8192 and self.soc.llc_ways.get() >= 16 and tot_mem == 1): 
         string += "A 2MB LLC (8192 sets and 16 ways) requires multiple memory tiles.\n"
       if (self.soc.TECH == "virtexu" and tot_mem >= 2 and (self.noc.rows < 3 or self.noc.cols < 3)):
-        string += "a 3x3 NoC or larger is recommended for multiple memory tiles for virtexu (profpga-xcvu440).\n" 
+        string += "A 3x3 NoC or larger is recommended for multiple memory tiles for virtexu (profpga-xcvu440).\n" 
       if (tot_acc > NACC_MAX):
         string += "There must no more than " + str(NACC_MAX) + " (can be relaxed).\n"
       if (tot_tiles > NTILE_MAX):
@@ -694,9 +691,10 @@ class NoCFrame(Pmw.ScrolledFrame):
     # Update message box
     self.message.insert(0.0, string)
 
-  def set_message(self, message, cfg_frame, done):
+  def set_message(self, message, cfg_frame, cpu_frame, done):
     self.message = message
     self.cfg_frame = cfg_frame
+    self.cpu_frame = cpu_frame
     self.done = done
 
   def create_noc(self):

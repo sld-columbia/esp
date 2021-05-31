@@ -21,7 +21,6 @@ TECHLIB = $(OVR_TECHLIB)
 endif
 
 ### Chip-specific configuration ####
-GRLIB_DEFCONFIG = $(DESIGN_PATH)/grlib_epochs0_defconfig
 ESP_DEFCONFIG = $(DESIGN_PATH)/esp_epochs0_defconfig
 
 

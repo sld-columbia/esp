@@ -1,2 +1,0 @@
-  bool 'Disable asynchronous reset' CONFIG_SYN_NO_ASYNC
-  bool 'Enable scan support       ' CONFIG_SYN_SCAN

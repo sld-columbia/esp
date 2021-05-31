@@ -5,14 +5,14 @@
 UTILS_GRLIB = $(ESP_ROOT)/soft/leon3/grlib
 TKCONFIG   = $(ESP_ROOT)/utils/grlib_tkconfig
 
-GRLIB_DEFCONFIG ?= $(ESP_ROOT)/socs/defconfig/grlib_$(BOARD)_defconfig
+GRLIB_DEFCONFIG ?= $(ESP_ROOT)/socs/defconfig/grlib_defconfig
 
 TKCONFIG_DEP   = $(TKCONFIG)/config.vhd
 TKCONFIG_DEP  += $(wildcard $(TKCONFIG)/in/*.in)
 TKCONFIG_DEP  += $(wildcard $(TKCONFIG)/in/*.in.vhd)
 TKCONFIG_DEP  += $(wildcard $(TKCONFIG)/in/*.in.h)
 TKCONFIG_DEP  += $(wildcard $(TKCONFIG)/in/*.in.help)
-TKCONFIG_DEP  += grlib_config.in
+TKCONFIG_DEP  += $(TKCONFIG)/grlib_config.in
 
 $(GRLIB_CFG_BUILD)/.grlib_config:
 	$(QUIET_MKDIR)mkdir -p $(GRLIB_CFG_BUILD)
@@ -38,12 +38,12 @@ $(GRLIB_CFG_BUILD)/tkgen.o: $(TKCONFIG)/tkgen.c
 $(GRLIB_CFG_BUILD)/tkparse: $(GRLIB_CFG_BUILD)/tkparse.o $(GRLIB_CFG_BUILD)/tkcond.o $(GRLIB_CFG_BUILD)/tkgen.o
 	$(QUIET_LINK)$(CC) -g $(GRLIB_CFG_BUILD)/tkparse.o $(GRLIB_CFG_BUILD)/tkcond.o $(GRLIB_CFG_BUILD)/tkgen.o -o $@
 
-$(GRLIB_CFG_BUILD)/main.tk: $(GRLIB_CFG_BUILD)/tkparse grlib_config.in $(TKCONFIG_DEP)
+$(GRLIB_CFG_BUILD)/main.tk: $(GRLIB_CFG_BUILD)/tkparse $(TKCONFIG)/grlib_config.in $(TKCONFIG_DEP)
 	$(QUIET_BUILD) \
 	cd $(GRLIB_CFG_BUILD); \
-	./tkparse $(DESIGN_PATH)/grlib_config.in $(TKCONFIG)/in > main.tk
+	./tkparse $(TKCONFIG)/grlib_config.in $(TKCONFIG)/in > main.tk
 
-$(GRLIB_CFG_BUILD)/lconfig.tk: $(GRLIB_CFG_BUILD)/main.tk $(TKCONFIG_DEP) grlib_config.in
+$(GRLIB_CFG_BUILD)/lconfig.tk: $(GRLIB_CFG_BUILD)/main.tk $(TKCONFIG_DEP) $(TKCONFIG)/grlib_config.in
 	$(QUIET_BUILD)cat $(TKCONFIG)/header.tk $< $(TKCONFIG)/tail.tk > $@
 	$(QUIET_CHMOD)chmod a+x $(GRLIB_CFG_BUILD)/lconfig.tk
 
