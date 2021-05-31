@@ -63,6 +63,8 @@ static void conv2d_prep_xfer(struct esp_device *esp, void *arg)
 	iowrite32be(a->do_relu, esp->iomem + CONV2D_DO_RELU_REG);
 	iowrite32be(a->pool_type, esp->iomem + CONV2D_POOL_TYPE_REG);
 	iowrite32be(a->batch_size, esp->iomem + CONV2D_BATCH_SIZE_REG);
+	iowrite32be(a->src_offset, esp->iomem + SRC_OFFSET_REG);
+	iowrite32be(a->dst_offset, esp->iomem + DST_OFFSET_REG);
 }
 
 static bool conv2d_xfer_input_ok(struct esp_device *esp, void *arg)
