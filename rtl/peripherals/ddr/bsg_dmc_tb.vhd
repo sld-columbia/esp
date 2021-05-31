@@ -192,7 +192,6 @@ begin  -- architecture behav
     end loop;
   end process;
 
-
   lpddr0_ck_p_pad    : outpad    generic map (loc => lpddr0_ck_p_pad_loc, level => cmos, voltage => x18v, tech => CFG_FABTECH)                          port map (lpddr0_ck_p, lpddr_o_ck_p, X"00003");
   lpddr0_ck_n_pad    : outpad    generic map (loc => lpddr0_ck_n_pad_loc, level => cmos, voltage => x18v, tech => CFG_FABTECH)                          port map (lpddr0_ck_n, lpddr_o_ck_n, X"00003");
   lpddr0_cke_pad     : outpad    generic map (loc => lpddr0_cke_pad_loc, level => cmos, voltage => x18v, tech => CFG_FABTECH)                           port map (lpddr0_cke, lpddr_o_cke, X"00003");
@@ -208,7 +207,6 @@ begin  -- architecture behav
   lpddr0_dqs_p_pad   : iopadienv generic map (loc => lpddr0_dqs_p_pad_loc, level => cmos, voltage => x18v, tech => CFG_FABTECH, width => 4, oepol => 0) port map (lpddr0_dqs_p, lpddr_o_dqs_p_o, lpddr_o_dqs_p_oen, lpddr_i_dqs_p_i, lpddr_o_dqs_p_ien, X"00003");
   lpddr0_dqs_n_pad   : iopadienv generic map (loc => lpddr0_dqs_n_pad_loc, level => cmos, voltage => x18v, tech => CFG_FABTECH, width => 4, oepol => 0) port map (lpddr0_dqs_n, lpddr_o_dqs_n_o, lpddr_o_dqs_n_oen, lpddr_i_dqs_n_i, lpddr_o_dqs_n_ien, X"00003");
   lpddr0_dq_pad      : iopadvv   generic map (loc => lpddr0_dq_pad_loc, level => cmos, voltage => x18v, tech => CFG_FABTECH, width => 32, oepol => 0)   port map (lpddr0_dq, lpddr_o_dq_o, lpddr_o_dq_oen, lpddr_i_dq_i, X"00003");
-
 
   ahb2bsg_dmc_1: ahb2bsg_dmc
     port map (

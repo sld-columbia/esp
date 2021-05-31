@@ -158,6 +158,49 @@ package allmem is
       write   : in  std_logic_vector(dbits/8-1 downto 0));
   end component gf12_syncram_be;
 
+  -- GF22
+
+  component gf22_syncram is
+    generic (
+      abits : integer;
+      dbits : integer);
+    port (
+      clk     : in  std_ulogic;
+      address : in  std_logic_vector (abits -1 downto 0);
+      datain  : in  std_logic_vector (dbits -1 downto 0);
+      dataout : out std_logic_vector (dbits -1 downto 0);
+      enable  : in  std_ulogic;
+      write   : in  std_ulogic);
+  end component gf22_syncram;
+
+  component gf22_syncram_2p is
+    generic (
+      abits : integer;
+      dbits : integer);
+    port (
+      rclk     : in  std_ulogic;
+      renable  : in  std_ulogic;
+      raddress : in  std_logic_vector((abits -1) downto 0);
+      dataout  : out std_logic_vector((dbits -1) downto 0);
+      wclk     : in  std_ulogic;
+      write    : in  std_ulogic;
+      waddress : in  std_logic_vector((abits -1) downto 0);
+      datain   : in  std_logic_vector((dbits -1) downto 0));
+  end component gf22_syncram_2p;
+
+  component gf22_syncram_be is
+    generic (
+      abits : integer;
+      dbits : integer);
+    port (
+      clk     : in  std_ulogic;
+      address : in  std_logic_vector(abits -1 downto 0);
+      datain  : in  std_logic_vector(dbits -1 downto 0);
+      dataout : out std_logic_vector(dbits -1 downto 0);
+      enable  : in  std_logic_vector(dbits/8-1 downto 0);
+      write   : in  std_logic_vector(dbits/8-1 downto 0));
+  end component gf22_syncram_be;
+
   -- Inferred
   component generic_syncram
     generic (abits : integer := 10; dbits : integer := 8);

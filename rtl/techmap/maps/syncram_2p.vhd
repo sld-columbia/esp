@@ -178,6 +178,12 @@ begin
                 wclk, xwrite, waddress, datain);
   end generate;
 
+  gf22x : if tech = gf22 generate
+    x0 : gf22_syncram_2p generic map (abits, dbits)
+      port map (rclk, renable2, raddress, dataoutx,
+                wclk, xwrite, waddress, datain);
+  end generate;
+
 -- pragma translate_off
   noram : if has_2pram(tech) = 0 generate
     x : process

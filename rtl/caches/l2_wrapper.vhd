@@ -2549,6 +2549,7 @@ end process fsm_fwd_out;
                 somi.b.resp <= RBRESP_EXOKAY;
               end if;
             end if;
+
           end if;
 
           cpu_req_data_cpu_msg <= reg.cpu_msg;

@@ -87,6 +87,30 @@ begin  -- architecture rtl
 
   end generate;
 
+  gf22_gen : if (tech = gf22) generate
+
+    x0 : gf22_dco
+      generic map (
+        enable_div2 => enable_div2)
+      port map (
+        RSTN     => rstn,
+        EXT_CLK  => ext_clk,
+        EN       => en,
+        CLK_SEL  => clk_sel,
+        CC_SEL   => cc_sel,
+        FC_SEL   => fc_sel,
+        DIV_SEL  => div_sel,
+        FREQ_SEL => freq_sel,
+        CLK      => clk_int,
+        CLK_DIV2    => clk_div2,
+        CLK_DIV2_90 => clk_div2_90,
+        CLK_DIV  => clk_div);
+
+    clk <= clk_int;
+    lock <= count(dlog);
+
+  end generate;
+
 -- pragma translate_off
   noram : if has_dco(tech) = 0 generate
     x : process

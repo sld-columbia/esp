@@ -115,6 +115,11 @@ begin
       port map (clk, address, datain, dataoutx, xenable, xwrite);
   end generate;
 
+  gf22x : if tech = gf22 generate
+    x0 : gf22_syncram generic map (abits, dbits)
+      port map (clk, address, datain, dataoutx, xenable, xwrite);
+  end generate;
+
 -- pragma translate_off
   noram : if has_sram(tech) = 0 generate
     x : process

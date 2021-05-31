@@ -630,7 +630,7 @@ class NoCFrame(Pmw.ScrolledFrame):
        (self.noc.cols <= 8 and self.noc.rows <= 8) and \
        (tot_full_coherent <= NFULL_COHERENT_MAX) and \
        (tot_llc_coherent <= NLLC_COHERENT_MAX) and \
-       (not (self.soc.TECH != "gf12" and self.soc.TECH != "virtexu" and tot_mem == 4)) and \
+       (not (self.soc.TECH != "gf12" and self.soc.TECH != "gf22" and self.soc.TECH != "virtexu" and tot_mem == 4)) and \
        (not (self.soc.TECH == "virtexu" and tot_mem >= 2 and (self.noc.rows < 3 or self.noc.cols < 3))) and \
        (self.soc.cache_spandex.get() == 0 or self.soc.CPU_ARCH.get() == "ariane" or self.soc.cache_en.get() == 0) and \
        (tot_cpu == 1 or self.soc.cache_en.get()) and \
@@ -670,7 +670,7 @@ class NoCFrame(Pmw.ScrolledFrame):
         string += "There must be no more than " + str(NSLM_MAX) + ".\n"
       if (tot_slm > 1 and self.soc.slm_kbytes.get() < 1024):
         string += "SLM size must be 1024 KB or more if placing more than one SLM tile"
-      if (self.soc.TECH != "gf12" and self.soc.TECH != "virtexu" and tot_mem == 4): 
+      if (self.soc.TECH != "gf12" and self.soc.TECH != "gf22" and self.soc.TECH != "virtexu" and tot_mem == 4): 
         string += "4 memory tiles is only supported for virtexu (profpga-xcvu440).\n"
       if (self.soc.llc_sets.get() >= 8192 and self.soc.llc_ways.get() >= 16 and tot_mem == 1): 
         string += "A 2MB LLC (8192 sets and 16 ways) requires multiple memory tiles.\n"
