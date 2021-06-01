@@ -9,7 +9,7 @@ create_ip -name prc -vendor xilinx.com -library ip -module_name $ip_name
             CONFIG.CP_FIFO_TYPE                         lutram \
             CONFIG.CP_ARBITRATION_PROTOCOL              0 \
             CONFIG.CP_COMPRESSION                       0 \
-            CONFIG.CP_FAMILY                            7series \
+            CONFIG.CP_FAMILY                            ultrascale \
             CONFIG.CDC_STAGES                           6 \
             CONFIG.VS.VS_0.START_IN_SHUTDOWN            0 \
             CONFIG.VS.VS_0.NUM_TRIGGERS_ALLOCATED       2 \

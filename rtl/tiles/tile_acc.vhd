@@ -804,7 +804,7 @@ begin
   -- Accelerator Top
   -------------------------------------------------------------------------------
 
-  acc_dpr_top_inst : acc_dpr_top
+  acc_top_inst : acc_top
     generic map (
       hls_conf       => this_hls_conf,
       this_device    => this_device,
