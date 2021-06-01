@@ -118,24 +118,23 @@ package misc is
 
   component icap3_inst
     generic (
-        tech : integer);
-  port (
-     icap_avail     : out std_logic;
-     icap_o         : out std_logic_vector(31 downto 0);
-     icap_prdone    : out std_logic;
-     icap_prerror   : out std_logic;
-     icap_clk       : in std_logic;
-     icap_csib      : in std_logic;
-     icap_i         : in std_logic_vector(31 downto 0);
-     icap_rdwrb     : in std_logic
-    );
-    end component icap3_inst;
+      tech : integer);
+    port (
+      icap_avail     : out std_logic;
+      icap_o         : out std_logic_vector(31 downto 0);
+      icap_prdone    : out std_logic;
+      icap_prerror   : out std_logic;
+      icap_clk       : in std_logic;
+      icap_csib      : in std_logic;
+      icap_i         : in std_logic_vector(31 downto 0);
+      icap_rdwrb     : in std_logic
+      );
+  end component icap3_inst;
 
   component prc is
     port (
       clk                               : in  std_logic;
       reset                             : in  std_logic;
-      --vsm_vs_shift_hw_triggers          : in  std_logic_vector(3 downto 0);
       vsm_VS_0_rm_shutdown_req          : out std_logic;
       vsm_VS_0_rm_shutdown_ack          : in  std_logic;
       vsm_VS_0_rm_decouple              : out std_logic;
@@ -147,9 +146,6 @@ package misc is
       icap_o                            : out std_logic_vector(31 downto 0);
       icap_csib                         : out std_logic;
       icap_rdwrb                        : out std_logic;
-      --icap_avail                        : in  std_logic;
-      --icap_prdone                       : in  std_logic;
-      --icap_prerror                      : in  std_logic;
       s_axi_reg_awaddr                  : in  std_logic_vector(31 downto 0);
       s_axi_reg_awvalid                 : in  std_logic;
       s_axi_reg_awready                 : out std_logic;
