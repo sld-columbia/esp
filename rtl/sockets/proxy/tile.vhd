@@ -1299,6 +1299,6 @@ package tile is
    s_axil_bready    : out std_ulogic;
    s_axil_bresp     : in std_logic_vector(1 downto 0)
   );
-end component apb2axil;
+  end component apb2axil;
 
 end tile;

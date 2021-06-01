@@ -505,37 +505,6 @@ architecture rtl of tile_acc is
   attribute keep of noc6_data_void_out : signal is "true";
   attribute keep of noc6_stop_out      : signal is "true";
 
---  attribute mark_debug : string;
---  attribute mark_debug of noc5_acc_stop_in       : signal is "true";
---  attribute mark_debug of noc5_acc_stop_out      : signal is "true";
---  attribute mark_debug of noc5_acc_data_void_in  : signal is "true";
---  attribute mark_debug of noc5_acc_data_void_out : signal is "true";
---  attribute mark_debug of noc5_input_port        : signal is "true";
---  attribute mark_debug of noc5_output_port       : signal is "true";
---  attribute mark_debug of interrupt_wrreq            : signal is "true";
---  attribute mark_debug of interrupt_data_in          : signal is "true";
---  attribute mark_debug of interrupt_full             : signal is "true";
---  attribute mark_debug of interrupt_ack_rdreq        : signal is "true";
---  attribute mark_debug of interrupt_ack_data_out     : signal is "true";
---  attribute mark_debug of interrupt_ack_empty        : signal is "true";
---  attribute mark_debug of apb_snd_wrreq              : signal is "true";
---  attribute mark_debug of apb_snd_data_in            : signal is "true";
--- attribute mark_debug of apb_snd_full               : signal is "true";
---  attribute mark_debug of apb_rcv_rdreq              : signal is "true";
---  attribute mark_debug of apb_rcv_data_out           : signal is "true";
---  attribute mark_debug of apb_rcv_empty              : signal is "true";
---  attribute mark_debug of noc5_data_n_in     : signal is "true";
---  attribute mark_debug of noc5_data_s_in     : signal is "true";
---  attribute mark_debug of noc5_data_w_in     : signal is "true";
- -- attribute mark_debug of noc5_data_e_in     : signal is "true";
---  attribute mark_debug of noc5_data_void_in  : signal is "true";
---  attribute mark_debug of noc5_stop_in       : signal is "true";
---  attribute mark_debug of noc5_data_n_out    : signal is "true";
--- attribute mark_debug of noc5_data_s_out    : signal is "true";
---  attribute mark_debug of noc5_data_w_out    : signal is "true";
---  attribute mark_debug of noc5_data_e_out    : signal is "true";
---  attribute mark_debug of noc5_data_void_out : signal is "true";
---  attribute mark_debug of noc5_stop_out      : signal is "true";
 begin
 
   -- DCO
@@ -826,15 +795,11 @@ begin
      noc4_mon_noc_vec   => noc4_mon_noc_vec_int,
      noc5_mon_noc_vec   => noc5_mon_noc_vec_int,
      noc6_mon_noc_vec   => noc6_mon_noc_vec_int
-
      );
 
--------------------------------------------------------------------------------
--- NEW ACCELERATOR TOP --------------------------------------------------------
--------------------------------------------------------------------------------
-
--- Instance of the new accelerator top
--- This is the part that gets partially reconfigured
+  -------------------------------------------------------------------------------
+  -- Accelerator Top
+  -------------------------------------------------------------------------------
 
   acc_top_inst : acc_top
   generic map (
@@ -943,8 +908,8 @@ begin
     end if;
   end process decoupler_gen;
 
-      -- CSR map for decoupler
-      decouple_acc <= tile_config(0);
+  -- CSR map for decoupler
+  decouple_acc <= tile_config(0);
 
   -- Using only one apbo signal
   no_apb : for i in 0 to NAPBSLV - 1 generate
