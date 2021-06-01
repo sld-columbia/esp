@@ -1030,37 +1030,37 @@ package tile is
     mon_cache         : out monitor_cache_type
     );
 end component acc_top;
-
+  
   component apb2axil is 
-  port (
-   clk              : in std_ulogic;
-   rstn             : in std_ulogic;
-   paddr            : in std_logic_vector(31 downto 0);
-   penable          : in std_ulogic;     
-   psel             : in std_ulogic;   
-   pwdata           : in std_logic_vector(31 downto 0);
-   pwrite           : in std_ulogic;
-   prdata           : out std_logic_vector(31 downto 0);
-   pready           : out std_ulogic;
-   pslverr          : out std_ulogic;
-   s_axil_awvalid   : out std_ulogic; 
-   s_axil_awready   : in std_ulogic;
-   s_axil_awaddr    : out std_logic_vector(31 downto 0);
-   s_axil_wvalid    : out std_ulogic;
-   s_axil_wready    : in std_ulogic;
-   s_axil_wdata     : out std_logic_vector(31 downto 0);
-   s_axil_wstrb     : out std_logic_vector(3 downto 0);
-   s_axil_arvalid   : out std_ulogic;
-   s_axil_arready   : in std_ulogic;
-   s_axil_araddr    : out std_logic_vector(31 downto 0);
-   s_axil_rvalid    : in std_ulogic;
-   s_axil_rready    : out std_ulogic;
-   s_axil_rdata     : in std_logic_vector(31 downto 0);
-   s_axil_rresp     : in std_logic_vector(1 downto 0);
-   s_axil_bvalid    : in std_ulogic;
-   s_axil_bready    : out std_ulogic;
-   s_axil_bresp     : in std_logic_vector(1 downto 0)
-  );
+    port (
+      clk              : in std_ulogic;
+      rstn             : in std_ulogic;
+      paddr            : in std_logic_vector(31 downto 0);
+      penable          : in std_ulogic;     
+      psel             : in std_ulogic;   
+      pwdata           : in std_logic_vector(31 downto 0);
+      pwrite           : in std_ulogic;
+      prdata           : out std_logic_vector(31 downto 0);
+      pready           : out std_ulogic;
+      pslverr          : out std_ulogic;
+      s_axil_awvalid   : out std_ulogic; 
+      s_axil_awready   : in std_ulogic;
+      s_axil_awaddr    : out std_logic_vector(31 downto 0);
+      s_axil_wvalid    : out std_ulogic;
+      s_axil_wready    : in std_ulogic;
+      s_axil_wdata     : out std_logic_vector(31 downto 0);
+      s_axil_wstrb     : out std_logic_vector(3 downto 0);
+      s_axil_arvalid   : out std_ulogic;
+      s_axil_arready   : in std_ulogic;
+      s_axil_araddr    : out std_logic_vector(31 downto 0);
+      s_axil_rvalid    : in std_ulogic;
+      s_axil_rready    : out std_ulogic;
+      s_axil_rdata     : in std_logic_vector(31 downto 0);
+      s_axil_rresp     : in std_logic_vector(1 downto 0);
+      s_axil_bvalid    : in std_ulogic;
+      s_axil_bready    : out std_ulogic;
+      s_axil_bresp     : in std_logic_vector(1 downto 0)
+      );
 end component apb2axil;
 
 end tile;

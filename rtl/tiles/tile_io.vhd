@@ -421,7 +421,7 @@ architecture rtl of tile_io is
   signal m_axi_mem_rvalid   : std_logic;
   signal m_axi_mem_rready   : std_logic;
   
-  --ICAPE3 
+  --ICAP3 
   signal icap_clk       : std_logic;
   signal icap_reset     : std_logic;
   signal icap_csib      : std_logic;
@@ -1921,7 +1921,7 @@ begin
 
     --prc_pready <= s_axil_rvalid;
 
-  -- ICAPE3 instance
+  -- ICAP3 instance
   icap3_inst_1: icap3_inst
     generic map (
       tech  =>  CFG_FABTECH)

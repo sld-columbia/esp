@@ -215,7 +215,7 @@ class EspCreator(Frame):
     self.cpu_frame = CpuFrame(self.soc, self.top_frame, self)
     #.:: creating the cache frame
     self.cache_frame = CacheFrame(self.soc, self.top_frame, self)
-    #prc frame
+    # PRC frame
     self.prc_frame = PRCFrame(self.soc, self.top_frame, self)
 
     #noc frame
