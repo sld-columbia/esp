@@ -1430,7 +1430,7 @@ begin
     --prc_pready <= s_axil_rvalid;
 
   -- ICAP3 instance
-  icap3_inst_1: icap3_inst
+  icap_inst_1: icap
     generic map (
       tech  =>  CFG_FABTECH)
     port map (
