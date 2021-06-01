@@ -1193,7 +1193,7 @@ package tile is
       noc6_stop_out_tile     : out std_ulogic);
   end component noc_domain_socket;
 
-  component acc_dpr_top is
+  component acc_top is
   generic (
     hls_conf       : hlscfg_t;
     this_device    : devid_t;
@@ -1244,7 +1244,7 @@ package tile is
     coherence_rsp_snd_full     : in  std_ulogic;
     coherence_fwd_snd_wrreq    : out  std_ulogic;
     coherence_fwd_snd_data_in  : out  noc_flit_type;
-    coherence_fwd_snd_full : in  std_ulogic; 
+    coherence_fwd_snd_full : in  std_ulogic;
     dma_rcv_rdreq     : out std_ulogic;
     dma_rcv_data_out  : in  misc_noc_flit_type;
     dma_rcv_empty     : in  std_ulogic;
@@ -1268,21 +1268,21 @@ package tile is
     mon_acc           : out monitor_acc_type;
     mon_cache         : out monitor_cache_type
     );
-end component acc_dpr_top;
+  end component acc_top;
 
-  component apb2axil is 
+  component apb2axil is
   port (
    clk              : in std_ulogic;
    rstn             : in std_ulogic;
    paddr            : in std_logic_vector(31 downto 0);
-   penable          : in std_ulogic;     
-   psel             : in std_ulogic;   
+   penable          : in std_ulogic;
+   psel             : in std_ulogic;
    pwdata           : in std_logic_vector(31 downto 0);
    pwrite           : in std_ulogic;
    prdata           : out std_logic_vector(31 downto 0);
    pready           : out std_ulogic;
    pslverr          : out std_ulogic;
-   s_axil_awvalid   : out std_ulogic; 
+   s_axil_awvalid   : out std_ulogic;
    s_axil_awready   : in std_ulogic;
    s_axil_awaddr    : out std_logic_vector(31 downto 0);
    s_axil_wvalid    : out std_ulogic;
