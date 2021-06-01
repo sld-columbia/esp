@@ -285,7 +285,7 @@ if [[ "$4" == "DPR" ]]; then
         acc_dir="$dpr_srcs/acc_${new_accelerators[$i,0]}_top";
         prj_src="$acc_dir/src.prj"
         echo "add_module ${new_accelerators[$i,1]} " >> $dpr_syn_tcl;
-        echo "set_attribute module ${new_accelerators[$i,1]} moduleName acc_dpr_top" >> $dpr_syn_tcl;
+        echo "set_attribute module ${new_accelerators[$i,1]} moduleName acc_top" >> $dpr_syn_tcl;
         echo "set_attribute module ${new_accelerators[$i,1]} prj $prj_src" >> $dpr_syn_tcl;
         echo "set_attribute module ${new_accelerators[$i,1]} synth  \${run.rmSynth}" >> $dpr_syn_tcl;
     done
@@ -295,7 +295,7 @@ elif [[ "$4" == "ACC" ]] && [[ "$num_modified_acc_tiles" != "0" ]]; then
         acc_dir="$dpr_srcs/acc_${new_accelerators[$i,0]}_top";
         prj_src="$acc_dir/src.prj"
         echo "add_module ${new_accelerators[$i,1]} " >> $dpr_syn_tcl;
-        echo "set_attribute module ${new_accelerators[$i,1]} moduleName acc_dpr_top" >> $dpr_syn_tcl;
+        echo "set_attribute module ${new_accelerators[$i,1]} moduleName acc_top" >> $dpr_syn_tcl;
         echo "set_attribute module ${new_accelerators[$i,1]} prj $prj_src" >> $dpr_syn_tcl;
         if [[ ${modified_accelerators[$j,0]} == ${new_accelerators[$i,0]} ]]; then
             echo "set_attribute module ${new_accelerators[$i,1]} synth  \${run.rmSynth}" >> $dpr_syn_tcl;
@@ -400,7 +400,7 @@ echo -e "\t DPR: number of acc tiles inside dpr gen is $num_acc_tiles ";
         #acc_dir="$dpr_srcs/accelerator_$i";
         prj_src="$acc_dir/src.prj"
         echo "add_module ${new_accelerators[$i,1]} " >> $dpr_syn_tcl;
-        echo "set_attribute module ${new_accelerators[$i,1]} moduleName acc_dpr_top" >> $dpr_syn_tcl;
+        echo "set_attribute module ${new_accelerators[$i,1]} moduleName acc_top" >> $dpr_syn_tcl;
         echo "set_attribute module ${new_accelerators[$i,1]} prj $prj_src" >> $dpr_syn_tcl;
         #echo "set_attribute module ${new_accelerators[$i,1]} synth  \${run.rmSynth}" >> $dpr_syn_tcl;
     done
@@ -447,7 +447,7 @@ if [[ "$4" == "IMPL_DPR" ]]; then
     echo "set_attribute impl top_dpr partitions  [list [list \$static \$top  implement ] \\" >> $dpr_syn_tcl;
     for ((i=0; i<$num_acc_tiles; i++))
     do
-        echo "[list ${new_accelerators[$i,1]}  esp_1/tiles_gen[${new_accelerators[$i,0]}].accelerator_tile.tile_acc_i/acc_dpr_top_inst implement ] \\" >>  $dpr_syn_tcl;
+        echo "[list ${new_accelerators[$i,1]}  esp_1/tiles_gen[${new_accelerators[$i,0]}].accelerator_tile.tile_acc_i/acc_top_inst implement ] \\" >>  $dpr_syn_tcl;
     done
     echo "]"  >> $dpr_syn_tcl;
 elif [[ "$4" == "IMPL_ACC" ]] && [[ "$num_modified_acc_tiles" != "0" ]]; then
@@ -456,13 +456,13 @@ elif [[ "$4" == "IMPL_ACC" ]] && [[ "$num_modified_acc_tiles" != "0" ]]; then
     for ((i=0, j=0; j<$num_acc_tiles; j++))
     do
         if  [[ $regenerate_fplan == 1 ]]; then
-            echo "[list ${new_accelerators[$j,1]}  esp_1/tiles_gen[${new_accelerators[$j,0]}].accelerator_tile.tile_acc_i/acc_dpr_top_inst implement ] \\" >>  $dpr_syn_tcl;
+            echo "[list ${new_accelerators[$j,1]}  esp_1/tiles_gen[${new_accelerators[$j,0]}].accelerator_tile.tile_acc_i/acc_top_inst implement ] \\" >>  $dpr_syn_tcl;
 
         elif [[ ${modified_accelerators[$i,0]} == ${new_accelerators[$j,0]} ]]; then
-            echo "[list ${modified_accelerators[$i,1]}  esp_1/tiles_gen[${modified_accelerators[$i,0]}].accelerator_tile.tile_acc_i/acc_dpr_top_inst implement ] \\" >>  $dpr_syn_tcl;
+            echo "[list ${modified_accelerators[$i,1]}  esp_1/tiles_gen[${modified_accelerators[$i,0]}].accelerator_tile.tile_acc_i/acc_top_inst implement ] \\" >>  $dpr_syn_tcl;
             ((i++));
         else
-            echo "[list ${new_accelerators[$j,1]}  esp_1/tiles_gen[${new_accelerators[$j,0]}].accelerator_tile.tile_acc_i/acc_dpr_top_inst import ] \\" >>  $dpr_syn_tcl;
+            echo "[list ${new_accelerators[$j,1]}  esp_1/tiles_gen[${new_accelerators[$j,0]}].accelerator_tile.tile_acc_i/acc_top_inst import ] \\" >>  $dpr_syn_tcl;
         fi
     done
     echo "]"  >> $dpr_syn_tcl;
@@ -535,15 +535,15 @@ do
     dsp_line=$line;
     bram_aux_match=$bram_match;
     bram_line=$line;
-    done < $synth_report_base/${new_accelerators[$i,1]}/acc_dpr_top_utilization_synth.rpt;
+    done < $synth_report_base/${new_accelerators[$i,1]}/acc_top_utilization_synth.rpt;
 done
 
 for ((i=0; i<$num_acc_tiles; i++))
 do
     if [[ "$i" == "0" ]]; then
-        echo ${res_consumption["$i,0"]} , ${res_consumption["$i,1"]} , ${res_consumption["$i,2"]} , esp_1/tiles_gen[${new_accelerators[$i,0]}].accelerator_tile.tile_acc_i/acc_dpr_top_inst , ${new_accelerators[$i,0]} > $flora_input;
+        echo ${res_consumption["$i,0"]} , ${res_consumption["$i,1"]} , ${res_consumption["$i,2"]} , esp_1/tiles_gen[${new_accelerators[$i,0]}].accelerator_tile.tile_acc_i/acc_top_inst , ${new_accelerators[$i,0]} > $flora_input;
     else
-        echo ${res_consumption["$i,0"]} , ${res_consumption["$i,1"]} , ${res_consumption["$i,2"]} , esp_1/tiles_gen[${new_accelerators[$i,0]}].accelerator_tile.tile_acc_i/acc_dpr_top_inst , ${new_accelerators[$i,0]} >> $flora_input;
+        echo ${res_consumption["$i,0"]} , ${res_consumption["$i,1"]} , ${res_consumption["$i,2"]} , esp_1/tiles_gen[${new_accelerators[$i,0]}].accelerator_tile.tile_acc_i/acc_top_inst , ${new_accelerators[$i,0]} >> $flora_input;
     fi;
 done
 }

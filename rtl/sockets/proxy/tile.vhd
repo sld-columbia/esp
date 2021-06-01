@@ -954,7 +954,7 @@ package tile is
       ahbmi           : in  ahb_mst_in_type);
   end component ext2ahbm;
 
-  component acc_dpr_top is
+  component acc_top is
   generic (
     hls_conf       : hlscfg_t;
     this_device    : devid_t;
@@ -1029,7 +1029,7 @@ package tile is
     mon_acc           : out monitor_acc_type;
     mon_cache         : out monitor_cache_type
     );
-end component acc_dpr_top;
+end component acc_top;
 
   component apb2axil is 
   port (

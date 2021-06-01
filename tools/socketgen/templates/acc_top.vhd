@@ -28,7 +28,7 @@ use work.grlib_config.all;
 use work.genacc.all;
 use work.allcaches.all;
 
-entity acc_dpr_top is 
+entity acc_top is 
 
   generic (
     hls_conf       : hlscfg_t;
@@ -120,7 +120,7 @@ entity acc_dpr_top is
 
 end;
 
-architecture rtl of acc_dpr_top is
+architecture rtl of acc_top is
 
   attribute keep : string; 
   

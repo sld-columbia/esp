@@ -1486,7 +1486,7 @@ begin
       pwdata            => noc_apbi.pwdata,
       pwrite            => noc_apbi.pwrite,
       prdata            => noc_apbo(127).prdata,
-      pready            => prc_pready,                 
+      pready            => prc_pready,            -- prc_pready -->axil_rvalid      
       pslverr           => open,                  -- temporary assignement
       s_axil_awvalid    => s_axil_awvalid,  
       s_axil_awready    => s_axil_awready,
