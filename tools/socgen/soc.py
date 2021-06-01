@@ -197,7 +197,11 @@ class SoC_Config():
     # CONFIG_SLM_KBYTES
     line = fp.readline()
     item = line.split()
-    self.slm_kbytes.set(int(item[2]))
+    self.slm_kbytes.set(int(item[2])) 
+    # PRC configuration
+    line = fp.readline()
+    if line.find("CONFIG_PRC_EN = y") != -1:
+        self.prc.set(1)
     # Monitors
     line = fp.readline()
     if line.find("CONFIG_MON_DDR = y") != -1:
@@ -262,10 +266,6 @@ class SoC_Config():
             tile.energy_values.vf_points[vf].voltage = float(tokens[3 + vf * 3])
             tile.energy_values.vf_points[vf].frequency = float(tokens[3 + vf * 3 + 1])
             tile.energy_values.vf_points[vf].energy = float(tokens[3 + vf * 3 + 2])
-    # PRC configuration
-    line = fp.readline()
-    if line.find("CONFIG_PRC = y") != -1:
-        self.prc.set(1)
     return 0
 
   def write_config(self):
@@ -294,7 +294,12 @@ class SoC_Config():
       fp.write("#CONFIG_CACHE_SPANDEX is not set\n")
     fp.write("CONFIG_CPU_CACHES = " + str(self.l2_sets.get()) + " " + str(self.l2_ways.get()) + " " + str(self.llc_sets.get()) + " " + str(self.llc_ways.get()) + "\n")
     fp.write("CONFIG_ACC_CACHES = " + str(self.acc_l2_sets.get()) + " " + str(self.acc_l2_ways.get()) + "\n")
-    fp.write("CONFIG_SLM_KBYTES = " + str(self.slm_kbytes.get()) + "\n")
+    fp.write("CONFIG_SLM_KBYTES = " + str(self.slm_kbytes.get()) + "\n") 
+    # Write prc config
+    if self.prc.get() == 1:
+        fp.write("CONFIG_PRC_EN = y")
+    else:
+        fp.write("#CONFIG_PRC_EN is not set")
     if self.noc.monitor_ddr.get() == 1:
       fp.write("CONFIG_MON_DDR = y\n")
     else:
@@ -393,11 +398,6 @@ class SoC_Config():
           for vf in range(self.noc.vf_points):
             fp.write(str(tile.energy_values.vf_points[vf].voltage) + " " + str(tile.energy_values.vf_points[vf].frequency) + " " + str(tile.energy_values.vf_points[vf].energy) + " ")
           fp.write("\n")
-    # Write prc config
-    if self.prc.get() == 1:
-        fp.write("CONFIG_PRC = y")
-    else:
-        fp.write("#CONFIG_PRC is not set")
 
   def check_cfg(self, line, token, end):
     line = line[line.find(token)+len(token):]

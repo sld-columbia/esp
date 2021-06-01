@@ -3,7 +3,7 @@
 
 `timescale 1 ps / 1 ps
 
-module icap3_inst 
+module icap 
     #( parameter tech = 1)
     (
     input  icap_clk,

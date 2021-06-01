@@ -116,7 +116,7 @@ package misc is
       ahbso : out ahb_slv_out_type);
   end component ahbslm;
 
-  component icap3_inst
+  component icap
     generic (
       tech : integer);
     port (
@@ -129,7 +129,7 @@ package misc is
       icap_i         : in std_logic_vector(31 downto 0);
       icap_rdwrb     : in std_logic
       );
-  end component icap3_inst;
+  end component icap;
 
   component prc is
     port (
