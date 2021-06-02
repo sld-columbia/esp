@@ -297,9 +297,9 @@ class SoC_Config():
     fp.write("CONFIG_SLM_KBYTES = " + str(self.slm_kbytes.get()) + "\n") 
     # Write prc config
     if self.prc.get() == 1:
-        fp.write("CONFIG_PRC_EN = y")
+        fp.write("CONFIG_PRC_EN = y\n")
     else:
-        fp.write("#CONFIG_PRC_EN is not set")
+        fp.write("#CONFIG_PRC_EN is not set\n")
     if self.noc.monitor_ddr.get() == 1:
       fp.write("CONFIG_MON_DDR = y\n")
     else:
