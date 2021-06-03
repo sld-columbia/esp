@@ -133,6 +133,14 @@ ifeq ($(CONFIG_GRETH_ENABLE),y)
 		echo $(SPACES)"WARNING: no SGMII IP was found"; \
 	fi;
 endif
+	@if test -r $(ESP_ROOT)/constraints/$(BOARD)/prc.tcl; then \
+		echo $(SPACES)"INFO including PRC"; \
+		mkdir -p vivado/prc; \
+		cp $(ESP_ROOT)/constraints/$(BOARD)/prc.tcl ./vivado/prc; \
+		echo "set_property target_language verilog [current_project]" >> $@; \
+		echo "source ./prc/prc.tcl" >> $@; \
+		echo "generate_target  all [get_ips prc] -force " >> $@; \
+	fi;
 	@if test -r $(UTILS_GRLIB)/netlists/$(TECHLIB); then \
 		echo "import_files $(UTILS_GRLIB)/netlists/$(TECHLIB)" >> $@; \
 	fi;

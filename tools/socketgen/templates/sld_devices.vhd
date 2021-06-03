@@ -28,14 +28,14 @@ package sld_devices is
   constant VENDOR_SLD : vendor_t := 16#EB#;
 
   constant SLD_POWERCTRL : devid_t := 16#00F#;
-  constant SLD_ESPLINK : devid_t := 16#017#;
+  constant SLD_ESPLINK   : devid_t := 16#017#;
   constant SLD_AHBRAM_DP : devid_t := 16#01f#;
   constant SLD_L2_CACHE  : devid_t := 16#020#;
-  constant SLD_LLC_CACHE  : devid_t := 16#021#;
+  constant SLD_LLC_CACHE : devid_t := 16#021#;
   constant SLD_MST_PROXY : devid_t := 16#022#;
-  constant SLD_SLM : devid_t := 16#023#;
-  constant SLD_TILE_CSR : devid_t := 16#024#;
-  constant SLD_ESP_INIT : devid_t := 16#025#;
+  constant SLD_SLM       : devid_t := 16#023#;
+  constant SLD_TILE_CSR  : devid_t := 16#024#;
+  constant SLD_ESP_INIT  : devid_t := 16#025#;
   constant SLD_EXTMEM_LINK : devid_t := 16#026#;
   -- <<devid>>
 
@@ -50,6 +50,8 @@ package sld_devices is
   constant LOWRISC_IBEX_SMALL : devid_t := 16#001#;
   constant LOWRISC_IBEX_TIMER : devid_t := 16#002#;
 
+  constant VENDOR_XILINX       : vendor_t := 16#EF#;
+  constant XILINX_PRC          : devid_t  := 16#030#;
 
   constant VENDOR_UIUC      : vendor_t := 16#EE#;
 

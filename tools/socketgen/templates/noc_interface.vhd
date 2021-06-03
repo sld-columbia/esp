@@ -46,9 +46,6 @@ use std.textio.all;
   port (
     rst       : in  std_ulogic;
     clk       : in  std_ulogic;
-    refclk    : in  std_ulogic;
-    pllbypass : in  std_ulogic;
-    pllclk    : out std_ulogic;
     local_y   : in  local_yx;
     local_x   : in  local_yx;
     tile_id   : in  integer;
@@ -108,7 +105,8 @@ use std.textio.all;
     --Monitor signals
     mon_acc           : out monitor_acc_type;
     mon_cache         : out monitor_cache_type;
-    mon_dvfs          : out monitor_dvfs_type
+    mon_dvfs          : out monitor_dvfs_type;
+    dvfs_transient_acc    : in std_ulogic
     );
 
 end;
@@ -192,6 +190,8 @@ end;
   signal dma_snd_valid        : std_ulogic;
   signal dma_snd_data         : noc_flit_type;
   signal dma_snd_ready        : std_ulogic;
+
+  --signal acc_dvfs_transient   : std_ulogic;
 
   -- Accelerator signals
   signal acc_rst                    : std_ulogic;
@@ -362,9 +362,6 @@ begin
     port map (
       rst                           => rst,
       clk                           => clk,
-      refclk                        => refclk,
-      pllbypass                     => pllbypass,
-      pllclk                        => pllclk_int,
       local_y                       => local_y,
       local_x                       => local_x,
       paddr                         => paddr,
@@ -396,6 +393,7 @@ begin
       flush                         => flush,
       mon_dvfs_in                   => mon_dvfs_in,
       mon_dvfs                      => mon_dvfs_feedthru,
+      dvfs_transient_in             => dvfs_transient_acc,
       llc_coherent_dma_rcv_rdreq    => coherent_dma_rcv_rdreq,
       llc_coherent_dma_rcv_data_out => coherent_dma_rcv_data_out,
       llc_coherent_dma_rcv_empty    => coherent_dma_rcv_empty,
@@ -459,7 +457,7 @@ begin
 
   end process coherence_model_select;
 
-  mon_acc.clk   <= pllclk_int; pllclk <= pllclk_int;
+  mon_acc.clk   <= pllclk_int; 
   mon_acc.go    <= bank(CMD_REG)(0);
   mon_acc.run   <= bank(STATUS_REG)(STATUS_BIT_RUN);
   mon_acc.done  <= bank(STATUS_REG)(STATUS_BIT_DONE);

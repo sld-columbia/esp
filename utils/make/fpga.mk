@@ -12,13 +12,13 @@ fpga-program: vivado-prog-fpga
 endif
 
 
-fpga-run: esplink soft
+fpga-run: esplink fpga-program soft
 	@./$(ESP_CFG_BUILD)/esplink --reset
 	@./$(ESP_CFG_BUILD)/esplink --brom -i $(SOFT_BUILD)/prom.bin
 	@./$(ESP_CFG_BUILD)/esplink --dram -i $(SOFT_BUILD)/systest.bin
 	@./$(ESP_CFG_BUILD)/esplink --reset
 
-fpga-run-linux: esplink soft
+fpga-run-linux: esplink fpga-program soft
 	@./$(ESP_CFG_BUILD)/esplink --reset
 	@./$(ESP_CFG_BUILD)/esplink --brom -i $(SOFT_BUILD)/prom.bin
 	@./$(ESP_CFG_BUILD)/esplink --dram -i $(SOFT_BUILD)/linux.bin

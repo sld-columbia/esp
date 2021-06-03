@@ -116,4 +116,66 @@ package misc is
       ahbso : out ahb_slv_out_type);
   end component ahbslm;
 
+  component icap
+    generic (
+      tech : integer);
+    port (
+      icap_avail     : out std_logic;
+      icap_o         : out std_logic_vector(31 downto 0);
+      icap_prdone    : out std_logic;
+      icap_prerror   : out std_logic;
+      icap_clk       : in std_logic;
+      icap_csib      : in std_logic;
+      icap_i         : in std_logic_vector(31 downto 0);
+      icap_rdwrb     : in std_logic
+      );
+  end component icap;
+
+  component prc is
+    port (
+      clk                               : in  std_logic;
+      reset                             : in  std_logic;
+      vsm_VS_0_rm_shutdown_req          : out std_logic;
+      vsm_VS_0_rm_shutdown_ack          : in  std_logic;
+      vsm_VS_0_rm_decouple              : out std_logic;
+      vsm_VS_0_rm_reset                 : out std_logic;
+      vsm_VS_0_event_error              : out std_logic;
+      icap_clk                          : in  std_logic;
+      icap_reset                        : in  std_logic;
+      icap_i                            : in  std_logic_vector(31 downto 0);
+      icap_o                            : out std_logic_vector(31 downto 0);
+      icap_csib                         : out std_logic;
+      icap_rdwrb                        : out std_logic;
+      s_axi_reg_awaddr                  : in  std_logic_vector(31 downto 0);
+      s_axi_reg_awvalid                 : in  std_logic;
+      s_axi_reg_awready                 : out std_logic;
+      s_axi_reg_wdata                   : in  std_logic_vector(31 downto 0);
+      s_axi_reg_wvalid                  : in  std_logic;
+      s_axi_reg_wready                  : out std_logic;
+      s_axi_reg_bresp                   : out std_logic_vector(1 downto 0);
+      s_axi_reg_bvalid                  : out std_logic;
+      s_axi_reg_bready                  : in  std_logic;
+      s_axi_reg_araddr                  : in  std_logic_vector(31 downto 0);
+      s_axi_reg_arvalid                 : in  std_logic;
+      s_axi_reg_arready                 : out std_logic;
+      s_axi_reg_rdata                   : out std_logic_vector(31 downto 0);
+      s_axi_reg_rresp                   : out std_logic_vector(1 downto 0);
+      s_axi_reg_rvalid                  : out std_logic;
+      s_axi_reg_rready                  : in  std_logic;
+      m_axi_mem_araddr                  : out std_logic_vector(31 downto 0);
+      m_axi_mem_arlen                   : out std_logic_vector(7 downto 0);
+      m_axi_mem_arsize                  : out std_logic_vector(2 downto 0);
+      m_axi_mem_arburst                 : out std_logic_vector(1 downto 0);
+      m_axi_mem_arprot                  : out std_logic_vector(2 downto 0);
+      m_axi_mem_arcache                 : out std_logic_vector(3 downto 0);
+      m_axi_mem_aruser                  : out std_logic_vector(3 downto 0);
+      m_axi_mem_arvalid                 : out std_logic;
+      m_axi_mem_arready                 : in  std_logic;
+      m_axi_mem_rdata                   : in  std_logic_vector(31 downto 0);
+      m_axi_mem_rresp                   : in  std_logic_vector(1 downto 0);
+      m_axi_mem_rlast                   : in  std_logic;
+      m_axi_mem_rvalid                  : in  std_logic;
+      m_axi_mem_rready                  : out std_logic);
+  end component;
+
 end;

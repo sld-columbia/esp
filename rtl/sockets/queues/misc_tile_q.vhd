@@ -64,6 +64,15 @@ entity misc_tile_q is
     coherent_dma_snd_wrreq          : in  std_ulogic;
     coherent_dma_snd_data_in        : in  noc_flit_type;
     coherent_dma_snd_full           : out std_ulogic;
+    -- non-coherent DMA requests from PRC (master) to memory
+    -- NoC4->tile
+    prc_dma_rcv_rdreq               : in  std_ulogic;
+    prc_dma_rcv_data_out            : out noc_flit_type;
+    prc_dma_rcv_empty               : out std_ulogic;
+    -- tile->No6
+    prc_dma_snd_wrreq               : in  std_ulogic;
+    prc_dma_snd_data_in             : in  noc_flit_type;
+    prc_dma_snd_full                : out std_ulogic;
     -- Requests from master
     -- NoC5->tile
     apb_rcv_rdreq                   : in  std_ulogic;
@@ -190,6 +199,14 @@ architecture rtl of misc_tile_q is
   signal coherent_dma_snd_rdreq    : std_ulogic;
   signal coherent_dma_snd_data_out : noc_flit_type;
   signal coherent_dma_snd_empty    : std_ulogic;
+  -- NoC4->tile
+  signal prc_dma_rcv_wrreq         : std_ulogic;
+  signal prc_dma_rcv_data_in       : noc_flit_type;
+  signal prc_dma_rcv_full          : std_ulogic;
+  -- tile->NoC6
+  signal prc_dma_snd_rdreq         : std_ulogic;
+  signal prc_dma_snd_data_out      : noc_flit_type;
+  signal prc_dma_snd_empty         : std_ulogic;
   -- NoC5->tile
   signal apb_rcv_wrreq             : std_ulogic;
   signal apb_rcv_data_in           : misc_noc_flit_type;
@@ -279,9 +296,6 @@ architecture rtl of misc_tile_q is
   signal noc3_dummy_in_stop  : std_ulogic;
   signal noc3_dummy_out_data : noc_flit_type;
   signal noc3_dummy_out_void : std_ulogic;
-  signal noc4_dummy_out_data : noc_flit_type;
-  signal noc4_dummy_out_void : std_ulogic;
-  signal noc6_dummy_in_stop  : std_ulogic;
 
   -- attribute mark_debug : string;
 
@@ -304,10 +318,6 @@ begin  -- rtl
 
   -- From noc6: DMA requests from accelerators to frame buffer
   -- From noc6: coherent DMA responses from LLC to Ethernet
-  noc6_in_data       <= (others => '0');
-  noc6_in_void       <= '1';
-  noc6_dummy_in_stop <= noc6_in_stop;
-
   noc6_msg_type <= get_msg_type(NOC_FLIT_SIZE, noc6_out_data);
   noc6_preamble <= get_preamble(NOC_FLIT_SIZE, noc6_out_data);
   process (clk, rst)
@@ -400,11 +410,44 @@ begin  -- rtl
       full     => coherent_dma_rcv_full,
       data_out => coherent_dma_rcv_data_out);
 
+  -- To noc6 : PRC non-coherent DMA read request to memory
+  noc6_in_data <= prc_dma_snd_data_out;
+  noc6_in_void <= prc_dma_snd_empty or noc6_in_stop;
+  prc_dma_snd_rdreq <= (not prc_dma_snd_empty) and (not noc6_in_stop);
+  fifo_13: fifo0
+    generic map (
+      depth => 18,                      --Header, address, length or data
+      width => NOC_FLIT_SIZE)
+    port map (
+      clk      => clk,
+      rst      => fifo_rst,
+      rdreq    => prc_dma_snd_rdreq,
+      wrreq    => prc_dma_snd_wrreq,
+      data_in  => prc_dma_snd_data_in,
+      empty    => prc_dma_snd_empty,
+      full     => prc_dma_snd_full,
+      data_out => prc_dma_snd_data_out);
+
+  -- From noc4: PRC non-coherent DMA read response from memory
+  noc4_out_stop       <= prc_dma_rcv_full and (not noc4_out_void);
+  prc_dma_rcv_data_in <= noc4_out_data;
+  prc_dma_rcv_wrreq   <= (not noc4_out_void) and (not prc_dma_rcv_full);
+  fifo_98 : fifo0
+    generic map (
+      depth => 8,                       --Header, address, [data]
+      width => NOC_FLIT_SIZE)
+    port map (
+      clk      => clk,
+      rst      => fifo_rst,
+      rdreq    => prc_dma_rcv_rdreq,
+      wrreq    => prc_dma_rcv_wrreq,
+      data_in  => prc_dma_rcv_data_in,
+      empty    => prc_dma_rcv_empty,
+      full     => prc_dma_rcv_full,
+      data_out => prc_dma_rcv_data_out);
+
   -- To noc4: DMA response to accelerators
   -- To noc4: coherent DMA request to LLC from Ethernet (causes recalls)
-  noc4_out_stop       <= '0';
-  noc4_dummy_out_data <= noc4_out_data;
-  noc4_dummy_out_void <= noc4_out_void;
   process (clk, rst)
   begin  -- process
     if rst = '0' then                   -- asynchronous reset (active low)
