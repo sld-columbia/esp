@@ -197,7 +197,11 @@ class SoC_Config():
     # CONFIG_SLM_KBYTES
     line = fp.readline()
     item = line.split()
-    self.slm_kbytes.set(int(item[2]))
+    self.slm_kbytes.set(int(item[2])) 
+    # PRC configuration
+    line = fp.readline()
+    if line.find("CONFIG_PRC_EN = y") != -1:
+        self.prc.set(1)
     # Monitors
     line = fp.readline()
     if line.find("CONFIG_MON_DDR = y") != -1:
@@ -290,7 +294,12 @@ class SoC_Config():
       fp.write("#CONFIG_CACHE_SPANDEX is not set\n")
     fp.write("CONFIG_CPU_CACHES = " + str(self.l2_sets.get()) + " " + str(self.l2_ways.get()) + " " + str(self.llc_sets.get()) + " " + str(self.llc_ways.get()) + "\n")
     fp.write("CONFIG_ACC_CACHES = " + str(self.acc_l2_sets.get()) + " " + str(self.acc_l2_ways.get()) + "\n")
-    fp.write("CONFIG_SLM_KBYTES = " + str(self.slm_kbytes.get()) + "\n")
+    fp.write("CONFIG_SLM_KBYTES = " + str(self.slm_kbytes.get()) + "\n") 
+    # Write prc config
+    if self.prc.get() == 1:
+        fp.write("CONFIG_PRC_EN = y\n")
+    else:
+        fp.write("#CONFIG_PRC_EN is not set\n")
     if self.noc.monitor_ddr.get() == 1:
       fp.write("CONFIG_MON_DDR = y\n")
     else:
@@ -448,6 +457,8 @@ class SoC_Config():
     self.cache_rtl = IntVar()
     self.cache_spandex = IntVar()
     self.cache_impl = StringVar()
+    # Partial-reconfiguration ctrl
+    self.prc = IntVar() 
     # Read configuration
     self.noc = ncfg.NoC()
     self.read_config(temporary)
