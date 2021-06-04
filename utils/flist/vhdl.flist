@@ -115,7 +115,6 @@ tiles/tile_slm.vhd
 tiles/tile_mem.vhd
 tiles/tile_cpu.vhd
 tiles/tile_io.vhd
-tiles/esp.vhd
 tiles/asic/asic_tile_acc.vhd
 tiles/asic/asic_tile_cpu.vhd
 tiles/asic/asic_tile_empty.vhd
@@ -123,3 +122,10 @@ tiles/asic/asic_tile_io.vhd
 tiles/asic/asic_tile_mem.vhd
 tiles/asic/asic_tile_slm.vhd
 tiles/asic/asic_tile_slm_ddr.vhd
+tiles/fpga/fpga_tile_acc.vhd
+tiles/fpga/fpga_tile_cpu.vhd
+tiles/fpga/fpga_tile_empty.vhd
+tiles/fpga/fpga_tile_io.vhd
+tiles/fpga/fpga_tile_mem.vhd
+tiles/fpga/fpga_tile_slm.vhd
+tiles/esp.vhd

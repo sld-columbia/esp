@@ -26,6 +26,7 @@ use work.coretypes.all;
 use work.grlib_config.all;
 use work.socmap.all;
 use work.tiles_pkg.all;
+use work.tiles_fpga_pkg.all;
 
 entity esp is
   generic (
@@ -414,7 +415,7 @@ begin
   tiles_gen: for i in 0 to CFG_TILES_NUM - 1  generate
 
     empty_tile: if tile_type(i) = 0 generate
-    tile_empty_i: tile_empty
+    tile_empty_i: fpga_tile_empty
       generic map (
         SIMULATION   => SIMULATION,
         ROUTER_PORTS => set_router_ports(CFG_FABTECH, CFG_XLEN, CFG_YLEN, tile_x(i), tile_y(i)),
@@ -522,7 +523,7 @@ begin
 -- pragma translate_off
       assert tile_cpu_id(i) /= -1 report "Undefined CPU ID for CPU tile" severity error;
 -- pragma translate_on
-      tile_cpu_i: tile_cpu
+      tile_cpu_i: fpga_tile_cpu
 
       generic map (
         SIMULATION         => SIMULATION,
@@ -635,7 +636,7 @@ begin
 -- pragma translate_off
       assert tile_device(i) /= 0 report "Undefined device ID for accelerator tile" severity error;
 -- pragma translate_on
-      tile_acc_i: tile_acc
+      tile_acc_i: fpga_tile_acc
       generic map (
         this_hls_conf      => tile_design_point(i),
         this_device        => tile_device(i),
@@ -749,7 +750,7 @@ begin
 
 
     io_tile: if tile_type(i) = 3 generate
-      tile_io_i : tile_io
+      tile_io_i : fpga_tile_io
       generic map (
         SIMULATION   => SIMULATION,
         ROUTER_PORTS => set_router_ports(CFG_FABTECH, CFG_XLEN, CFG_YLEN, tile_x(i), tile_y(i)),
@@ -877,7 +878,7 @@ begin
 
 
     mem_tile: if tile_type(i) = 4 generate
-      tile_mem_i: tile_mem
+      tile_mem_i: fpga_tile_mem
       generic map (
         ROUTER_PORTS => set_router_ports(CFG_FABTECH, CFG_XLEN, CFG_YLEN, tile_x(i), tile_y(i)),
         HAS_SYNC     => CFG_HAS_SYNC)
@@ -1001,7 +1002,7 @@ begin
     end generate mem_tile;
 
     slm_tile: if tile_type(i) = 5 generate
-      tile_slm_i: tile_slm
+      tile_slm_i: fpga_tile_slm
         generic map (
           SIMULATION   => SIMULATION,
           ROUTER_PORTS => set_router_ports(CFG_FABTECH, CFG_XLEN, CFG_YLEN, tile_x(i), tile_y(i)),
