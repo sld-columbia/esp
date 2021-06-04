@@ -35,23 +35,27 @@ use work.grlib_config.all;
 use work.socmap.all;
 use work.tiles_pkg.all;
 
-entity asic_tile_empty is
+entity fpga_tile_empty is
   generic (
     SIMULATION   : boolean              := false;
+    HAS_SYNC     : integer range 0 to 1 := 1;
     ROUTER_PORTS : ports_vec            := "11111");
   port (
+    raw_rstn           : in  std_ulogic;
     rst                : in  std_logic;
-    sys_clk            : in  std_ulogic;  -- NoC clock
-    ext_clk            : in  std_ulogic;  -- backup tile clock
-    clk_div            : out std_ulogic;  -- tile clock monitor for testing purposes
+    clk                : in  std_logic;
+    refclk             : in  std_ulogic;
+    pllbypass          : in  std_ulogic;
+    pllclk             : out std_ulogic;
+    dco_clk            : out std_ulogic;
+    dco_clk_lock       : out std_ulogic;
     -- Test interface
     tdi                : in  std_logic;
     tdo                : out std_logic;
     tms                : in  std_logic;
     tclk               : in  std_logic;
-    -- Pad configuratio
-    pad_cfg            : out std_logic_vector(ESP_CSR_PAD_CFG_MSB - ESP_CSR_PAD_CFG_LSB downto 0);
     -- NOC
+    sys_clk_int        : in  std_logic;
     noc1_data_n_in     : in  noc_flit_type;
     noc1_data_s_in     : in  noc_flit_type;
     noc1_data_w_in     : in  noc_flit_type;
@@ -123,19 +127,17 @@ entity asic_tile_empty is
     noc6_data_w_out    : out noc_flit_type;
     noc6_data_e_out    : out noc_flit_type;
     noc6_data_void_out : out std_logic_vector(3 downto 0);
-    noc6_stop_out      : out std_logic_vector(3 downto 0));
-
+    noc6_stop_out      : out std_logic_vector(3 downto 0);
+    noc1_mon_noc_vec   : out monitor_noc_type;
+    noc2_mon_noc_vec   : out monitor_noc_type;
+    noc3_mon_noc_vec   : out monitor_noc_type;
+    noc4_mon_noc_vec   : out monitor_noc_type;
+    noc5_mon_noc_vec   : out monitor_noc_type;
+    noc6_mon_noc_vec   : out monitor_noc_type;
+    mon_dvfs_out       : out monitor_dvfs_type);
 end;
 
-architecture rtl of asic_tile_empty is
-
-  constant ext_clk_sel_default : std_ulogic := '0';
-
-  -- Tile clock and reset (only for I/O tile)
-  signal raw_rstn     : std_ulogic;
-  signal dco_clk      : std_ulogic;
-  signal dco_rstn     : std_ulogic;
-  signal dco_clk_lock : std_ulogic;
+architecture rtl of fpga_tile_empty is
 
   -- Tile parameters
   signal this_local_y : local_yx;
@@ -359,19 +361,22 @@ architecture rtl of asic_tile_empty is
 
 begin
 
-  rst1 : rstgen                         -- reset generator
-    generic map (acthigh => 1, syncin => 0)
-    port map (rst, dco_clk, dco_clk_lock, dco_rstn, raw_rstn);
+  noc1_mon_noc_vec <= noc1_mon_noc_vec_int;
+  noc2_mon_noc_vec <= noc2_mon_noc_vec_int;
+  noc3_mon_noc_vec <= noc3_mon_noc_vec_int;
+  noc4_mon_noc_vec <= noc4_mon_noc_vec_int;
+  noc5_mon_noc_vec <= noc5_mon_noc_vec_int;
+  noc6_mon_noc_vec <= noc6_mon_noc_vec_int;
 
   -----------------------------------------------------------------------------
   -- JTAG for single tile testing / bypass when test_if_en = 0
   -----------------------------------------------------------------------------
   jtag_test_i : jtag_test
     generic map (
-      test_if_en => 1)
+      test_if_en => 0)
     port map (
-      rst                 => dco_rstn,
-      refclk              => dco_clk,
+      rst                 => rst,
+      refclk              => clk,
       tdi                 => tdi,
       tdo                 => tdo,
       tms                 => tms,
@@ -492,11 +497,11 @@ begin
   sync_noc_set_empty: sync_noc_set
   generic map (
      PORTS    => ROUTER_PORTS,
-     HAS_SYNC => 1 )
+     HAS_SYNC => HAS_SYNC)
    port map (
-     clk                => sys_clk,
-     clk_tile           => dco_clk,
-     rst                => dco_rstn,
+     clk                => sys_clk_int,
+     clk_tile           => clk,
+     rst                => rst,
      CONST_local_x      => this_local_x,
      CONST_local_y      => this_local_y,
      noc1_data_n_in     => noc1_data_n_in,
@@ -596,17 +601,17 @@ begin
   tile_empty_1: tile_empty
     generic map (
       SIMULATION   => SIMULATION,
-      this_has_dco => 1)
+      this_has_dco => 0)
     port map (
       raw_rstn           => raw_rstn,
-      rst                => dco_rstn,
-      clk                => dco_clk,
-      refclk             => ext_clk,
-      pllbypass          => ext_clk_sel_default,  --ext_clk_sel,
-      pllclk             => clk_div,
+      rst                => rst,
+      clk                => clk,
+      refclk             => refclk,
+      pllbypass          => pllbypass,
+      pllclk             => pllclk,
       dco_clk            => dco_clk,
       dco_clk_lock       => dco_clk_lock,
-      pad_cfg            => pad_cfg,
+      pad_cfg            => open,
       local_x            => this_local_x,
       local_y            => this_local_y,
       test1_output_port   => test1_output_port_s,
@@ -645,12 +650,12 @@ begin
       test6_input_port    => test6_input_port_s,
       test6_data_void_in  => test6_data_void_in_s,
       test6_stop_out      => test6_stop_in_s,
-      noc1_mon_noc_vec   => noc1_mon_noc_vec_int,
-      noc2_mon_noc_vec   => noc2_mon_noc_vec_int,
-      noc3_mon_noc_vec   => noc3_mon_noc_vec_int,
-      noc4_mon_noc_vec   => noc4_mon_noc_vec_int,
-      noc5_mon_noc_vec   => noc5_mon_noc_vec_int,
-      noc6_mon_noc_vec   => noc6_mon_noc_vec_int,
-      mon_dvfs_out       => open);
+      noc1_mon_noc_vec    => noc1_mon_noc_vec_int,
+      noc2_mon_noc_vec    => noc2_mon_noc_vec_int,
+      noc3_mon_noc_vec    => noc3_mon_noc_vec_int,
+      noc4_mon_noc_vec    => noc4_mon_noc_vec_int,
+      noc5_mon_noc_vec    => noc5_mon_noc_vec_int,
+      noc6_mon_noc_vec    => noc6_mon_noc_vec_int,
+      mon_dvfs_out        => mon_dvfs_out);
 
 end;
