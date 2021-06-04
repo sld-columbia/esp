@@ -2,13 +2,12 @@
 -- SPDX-License-Identifier: Apache-2.0
 
 -----------------------------------------------------------------------------
---  EMPTY tile
+--  Memory interface tile
 ------------------------------------------------------------------------------
 
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
-
 use work.esp_global.all;
 use work.amba.all;
 use work.stdlib.all;
@@ -16,7 +15,6 @@ use work.sld_devices.all;
 use work.devices.all;
 use work.gencomp.all;
 use work.leon3.all;
-use work.ariane_esp_pkg.all;
 use work.misc.all;
 -- pragma translate_off
 use work.sim.all;
@@ -31,27 +29,51 @@ use work.nocpackage.all;
 use work.tile.all;
 use work.cachepackage.all;
 use work.coretypes.all;
+
 use work.grlib_config.all;
 use work.socmap.all;
 use work.tiles_pkg.all;
 
-entity asic_tile_empty is
+entity fpga_tile_mem is
   generic (
-    SIMULATION   : boolean              := false;
-    ROUTER_PORTS : ports_vec            := "11111");
+    SIMULATION   : boolean   := false;
+    ROUTER_PORTS : ports_vec := "11111";
+    HAS_SYNC     : integer range 0 to 1 := 1);
   port (
-    rst                : in  std_logic;
-    sys_clk            : in  std_ulogic;  -- NoC clock
-    ext_clk            : in  std_ulogic;  -- backup tile clock
-    clk_div            : out std_ulogic;  -- tile clock monitor for testing purposes
+    raw_rstn           : in  std_ulogic;
+    rst                : in  std_ulogic;
+    refclk             : in  std_ulogic;
+    clk                : in  std_ulogic;
+    pllbypass          : in  std_ulogic;
+    pllclk             : out std_ulogic;
+    dco_clk            : out std_ulogic;
+    dco_clk_lock       : out std_ulogic;
+    -- DDR controller ports (this_has_ddr -> 1)
+    dco_clk_div2       : out std_ulogic;
+    dco_clk_div2_90    : out std_ulogic;
+    ddr_ahbsi          : out ahb_slv_in_type;
+    ddr_ahbso          : in  ahb_slv_out_type;
+    ddr_cfg0           : out std_logic_vector(31 downto 0);
+    ddr_cfg1           : out std_logic_vector(31 downto 0);
+    ddr_cfg2           : out std_logic_vector(31 downto 0);
+    mem_id             : out integer range 0 to CFG_NMEM_TILE + CFG_NSLM_TILE + CFG_NSLMDDR_TILE - 1;
+    -- FPGA proxy memory link
+    fpga_data_in       : in  std_logic_vector(ARCH_BITS - 1 downto 0);
+    fpga_data_out      : out std_logic_vector(ARCH_BITS - 1 downto 0);
+    fpga_oen           : out std_ulogic;
+    fpga_valid_in      : in  std_ulogic;
+    fpga_valid_out     : out std_ulogic;
+    fpga_clk_in        : in  std_ulogic;
+    fpga_clk_out       : out std_ulogic;
+    fpga_credit_in     : in  std_ulogic;
+    fpga_credit_out    : out std_ulogic;
     -- Test interface
     tdi                : in  std_logic;
     tdo                : out std_logic;
     tms                : in  std_logic;
     tclk               : in  std_logic;
-    -- Pad configuratio
-    pad_cfg            : out std_logic_vector(ESP_CSR_PAD_CFG_MSB - ESP_CSR_PAD_CFG_LSB downto 0);
     -- NOC
+    sys_clk_int        : in  std_logic;
     noc1_data_n_in     : in  noc_flit_type;
     noc1_data_s_in     : in  noc_flit_type;
     noc1_data_w_in     : in  noc_flit_type;
@@ -123,19 +145,21 @@ entity asic_tile_empty is
     noc6_data_w_out    : out noc_flit_type;
     noc6_data_e_out    : out noc_flit_type;
     noc6_data_void_out : out std_logic_vector(3 downto 0);
-    noc6_stop_out      : out std_logic_vector(3 downto 0));
-
+    noc6_stop_out      : out std_logic_vector(3 downto 0);
+    noc1_mon_noc_vec   : out monitor_noc_type;
+    noc2_mon_noc_vec   : out monitor_noc_type;
+    noc3_mon_noc_vec   : out monitor_noc_type;
+    noc4_mon_noc_vec   : out monitor_noc_type;
+    noc5_mon_noc_vec   : out monitor_noc_type;
+    noc6_mon_noc_vec   : out monitor_noc_type;
+    mon_mem            : out monitor_mem_type;
+    mon_cache          : out monitor_cache_type;
+    mon_dvfs           : out monitor_dvfs_type
+    );
 end;
 
-architecture rtl of asic_tile_empty is
 
-  constant ext_clk_sel_default : std_ulogic := '0';
-
-  -- Tile clock and reset (only for I/O tile)
-  signal raw_rstn     : std_ulogic;
-  signal dco_clk      : std_ulogic;
-  signal dco_rstn     : std_ulogic;
-  signal dco_clk_lock : std_ulogic;
+architecture rtl of fpga_tile_mem is
 
   -- Tile parameters
   signal this_local_y : local_yx;
@@ -188,52 +212,52 @@ architecture rtl of asic_tile_empty is
   -- Noc signals
   signal noc1_stop_in_s         : std_logic_vector(4 downto 0);
   signal noc1_stop_out_s        : std_logic_vector(4 downto 0);
-  signal noc1_empty_stop_in       : std_ulogic;
-  signal noc1_empty_stop_out      : std_ulogic;
+  signal noc1_mem_stop_in       : std_ulogic;
+  signal noc1_mem_stop_out      : std_ulogic;
   signal noc1_data_void_in_s    : std_logic_vector(4 downto 0);
   signal noc1_data_void_out_s   : std_logic_vector(4 downto 0);
-  signal noc1_empty_data_void_in  : std_ulogic;
-  signal noc1_empty_data_void_out : std_ulogic;
+  signal noc1_mem_data_void_in  : std_ulogic;
+  signal noc1_mem_data_void_out : std_ulogic;
   signal noc2_stop_in_s         : std_logic_vector(4 downto 0);
   signal noc2_stop_out_s        : std_logic_vector(4 downto 0);
-  signal noc2_empty_stop_in       : std_ulogic;
-  signal noc2_empty_stop_out      : std_ulogic;
+  signal noc2_mem_stop_in       : std_ulogic;
+  signal noc2_mem_stop_out      : std_ulogic;
   signal noc2_data_void_in_s    : std_logic_vector(4 downto 0);
   signal noc2_data_void_out_s   : std_logic_vector(4 downto 0);
-  signal noc2_empty_data_void_in  : std_ulogic;
-  signal noc2_empty_data_void_out : std_ulogic;
+  signal noc2_mem_data_void_in  : std_ulogic;
+  signal noc2_mem_data_void_out : std_ulogic;
   signal noc3_stop_in_s         : std_logic_vector(4 downto 0);
   signal noc3_stop_out_s        : std_logic_vector(4 downto 0);
-  signal noc3_empty_stop_in       : std_ulogic;
-  signal noc3_empty_stop_out      : std_ulogic;
+  signal noc3_mem_stop_in       : std_ulogic;
+  signal noc3_mem_stop_out      : std_ulogic;
   signal noc3_data_void_in_s    : std_logic_vector(4 downto 0);
   signal noc3_data_void_out_s   : std_logic_vector(4 downto 0);
-  signal noc3_empty_data_void_in  : std_ulogic;
-  signal noc3_empty_data_void_out : std_ulogic;
+  signal noc3_mem_data_void_in  : std_ulogic;
+  signal noc3_mem_data_void_out : std_ulogic;
   signal noc4_stop_in_s         : std_logic_vector(4 downto 0);
   signal noc4_stop_out_s        : std_logic_vector(4 downto 0);
-  signal noc4_empty_stop_in       : std_ulogic;
-  signal noc4_empty_stop_out      : std_ulogic;
+  signal noc4_mem_stop_in       : std_ulogic;
+  signal noc4_mem_stop_out      : std_ulogic;
   signal noc4_data_void_in_s    : std_logic_vector(4 downto 0);
   signal noc4_data_void_out_s   : std_logic_vector(4 downto 0);
-  signal noc4_empty_data_void_in  : std_ulogic;
-  signal noc4_empty_data_void_out : std_ulogic;
+  signal noc4_mem_data_void_in  : std_ulogic;
+  signal noc4_mem_data_void_out : std_ulogic;
   signal noc5_stop_in_s         : std_logic_vector(4 downto 0);
   signal noc5_stop_out_s        : std_logic_vector(4 downto 0);
-  signal noc5_empty_stop_in       : std_ulogic;
-  signal noc5_empty_stop_out      : std_ulogic;
+  signal noc5_mem_stop_in       : std_ulogic;
+  signal noc5_mem_stop_out      : std_ulogic;
   signal noc5_data_void_in_s    : std_logic_vector(4 downto 0);
   signal noc5_data_void_out_s   : std_logic_vector(4 downto 0);
-  signal noc5_empty_data_void_in  : std_ulogic;
-  signal noc5_empty_data_void_out : std_ulogic;
+  signal noc5_mem_data_void_in  : std_ulogic;
+  signal noc5_mem_data_void_out : std_ulogic;
   signal noc6_stop_in_s         : std_logic_vector(4 downto 0);
   signal noc6_stop_out_s        : std_logic_vector(4 downto 0);
-  signal noc6_empty_stop_in       : std_ulogic;
-  signal noc6_empty_stop_out      : std_ulogic;
+  signal noc6_mem_stop_in       : std_ulogic;
+  signal noc6_mem_stop_out      : std_ulogic;
   signal noc6_data_void_in_s    : std_logic_vector(4 downto 0);
   signal noc6_data_void_out_s   : std_logic_vector(4 downto 0);
-  signal noc6_empty_data_void_in  : std_ulogic;
-  signal noc6_empty_data_void_out : std_ulogic;
+  signal noc6_mem_data_void_in  : std_ulogic;
+  signal noc6_mem_data_void_out : std_ulogic;
   signal noc1_input_port        : noc_flit_type;
   signal noc2_input_port        : noc_flit_type;
   signal noc3_input_port        : noc_flit_type;
@@ -248,10 +272,10 @@ architecture rtl of asic_tile_empty is
   signal noc6_output_port       : noc_flit_type;
 
   attribute keep              : string;
-  attribute keep of noc1_empty_stop_in       : signal is "true";
-  attribute keep of noc1_empty_stop_out      : signal is "true";
-  attribute keep of noc1_empty_data_void_in  : signal is "true";
-  attribute keep of noc1_empty_data_void_out : signal is "true";
+  attribute keep of noc1_mem_stop_in       : signal is "true";
+  attribute keep of noc1_mem_stop_out      : signal is "true";
+  attribute keep of noc1_mem_data_void_in  : signal is "true";
+  attribute keep of noc1_mem_data_void_out : signal is "true";
   attribute keep of noc1_input_port        : signal is "true";
   attribute keep of noc1_output_port       : signal is "true";
   attribute keep of noc1_data_n_in     : signal is "true";
@@ -266,10 +290,10 @@ architecture rtl of asic_tile_empty is
   attribute keep of noc1_data_e_out    : signal is "true";
   attribute keep of noc1_data_void_out : signal is "true";
   attribute keep of noc1_stop_out      : signal is "true";
-  attribute keep of noc2_empty_stop_in       : signal is "true";
-  attribute keep of noc2_empty_stop_out      : signal is "true";
-  attribute keep of noc2_empty_data_void_in  : signal is "true";
-  attribute keep of noc2_empty_data_void_out : signal is "true";
+  attribute keep of noc2_mem_stop_in       : signal is "true";
+  attribute keep of noc2_mem_stop_out      : signal is "true";
+  attribute keep of noc2_mem_data_void_in  : signal is "true";
+  attribute keep of noc2_mem_data_void_out : signal is "true";
   attribute keep of noc2_input_port        : signal is "true";
   attribute keep of noc2_output_port       : signal is "true";
   attribute keep of noc2_data_n_in     : signal is "true";
@@ -284,10 +308,10 @@ architecture rtl of asic_tile_empty is
   attribute keep of noc2_data_e_out    : signal is "true";
   attribute keep of noc2_data_void_out : signal is "true";
   attribute keep of noc2_stop_out      : signal is "true";
-  attribute keep of noc3_empty_stop_in       : signal is "true";
-  attribute keep of noc3_empty_stop_out      : signal is "true";
-  attribute keep of noc3_empty_data_void_in  : signal is "true";
-  attribute keep of noc3_empty_data_void_out : signal is "true";
+  attribute keep of noc3_mem_stop_in       : signal is "true";
+  attribute keep of noc3_mem_stop_out      : signal is "true";
+  attribute keep of noc3_mem_data_void_in  : signal is "true";
+  attribute keep of noc3_mem_data_void_out : signal is "true";
   attribute keep of noc3_input_port        : signal is "true";
   attribute keep of noc3_output_port       : signal is "true";
   attribute keep of noc3_data_n_in     : signal is "true";
@@ -302,10 +326,10 @@ architecture rtl of asic_tile_empty is
   attribute keep of noc3_data_e_out    : signal is "true";
   attribute keep of noc3_data_void_out : signal is "true";
   attribute keep of noc3_stop_out      : signal is "true";
-  attribute keep of noc4_empty_stop_in       : signal is "true";
-  attribute keep of noc4_empty_stop_out      : signal is "true";
-  attribute keep of noc4_empty_data_void_in  : signal is "true";
-  attribute keep of noc4_empty_data_void_out : signal is "true";
+  attribute keep of noc4_mem_stop_in       : signal is "true";
+  attribute keep of noc4_mem_stop_out      : signal is "true";
+  attribute keep of noc4_mem_data_void_in  : signal is "true";
+  attribute keep of noc4_mem_data_void_out : signal is "true";
   attribute keep of noc4_input_port        : signal is "true";
   attribute keep of noc4_output_port       : signal is "true";
   attribute keep of noc4_data_n_in     : signal is "true";
@@ -320,10 +344,10 @@ architecture rtl of asic_tile_empty is
   attribute keep of noc4_data_e_out    : signal is "true";
   attribute keep of noc4_data_void_out : signal is "true";
   attribute keep of noc4_stop_out      : signal is "true";
-  attribute keep of noc5_empty_stop_in       : signal is "true";
-  attribute keep of noc5_empty_stop_out      : signal is "true";
-  attribute keep of noc5_empty_data_void_in  : signal is "true";
-  attribute keep of noc5_empty_data_void_out : signal is "true";
+  attribute keep of noc5_mem_stop_in       : signal is "true";
+  attribute keep of noc5_mem_stop_out      : signal is "true";
+  attribute keep of noc5_mem_data_void_in  : signal is "true";
+  attribute keep of noc5_mem_data_void_out : signal is "true";
   attribute keep of noc5_input_port        : signal is "true";
   attribute keep of noc5_output_port       : signal is "true";
   attribute keep of noc5_data_n_in     : signal is "true";
@@ -338,10 +362,10 @@ architecture rtl of asic_tile_empty is
   attribute keep of noc5_data_e_out    : signal is "true";
   attribute keep of noc5_data_void_out : signal is "true";
   attribute keep of noc5_stop_out      : signal is "true";
-  attribute keep of noc6_empty_stop_in       : signal is "true";
-  attribute keep of noc6_empty_stop_out      : signal is "true";
-  attribute keep of noc6_empty_data_void_in  : signal is "true";
-  attribute keep of noc6_empty_data_void_out : signal is "true";
+  attribute keep of noc6_mem_stop_in       : signal is "true";
+  attribute keep of noc6_mem_stop_out      : signal is "true";
+  attribute keep of noc6_mem_data_void_in  : signal is "true";
+  attribute keep of noc6_mem_data_void_out : signal is "true";
   attribute keep of noc6_input_port        : signal is "true";
   attribute keep of noc6_output_port       : signal is "true";
   attribute keep of noc6_data_n_in     : signal is "true";
@@ -357,43 +381,47 @@ architecture rtl of asic_tile_empty is
   attribute keep of noc6_data_void_out : signal is "true";
   attribute keep of noc6_stop_out      : signal is "true";
 
+
 begin
 
-  rst1 : rstgen                         -- reset generator
-    generic map (acthigh => 1, syncin => 0)
-    port map (rst, dco_clk, dco_clk_lock, dco_rstn, raw_rstn);
+  noc1_mon_noc_vec <= noc1_mon_noc_vec_int;
+  noc2_mon_noc_vec <= noc2_mon_noc_vec_int;
+  noc3_mon_noc_vec <= noc3_mon_noc_vec_int;
+  noc4_mon_noc_vec <= noc4_mon_noc_vec_int;
+  noc5_mon_noc_vec <= noc5_mon_noc_vec_int;
+  noc6_mon_noc_vec <= noc6_mon_noc_vec_int;
 
   -----------------------------------------------------------------------------
   -- JTAG for single tile testing / bypass when test_if_en = 0
   -----------------------------------------------------------------------------
   jtag_test_i : jtag_test
     generic map (
-      test_if_en => 1)
+      test_if_en => 0)
     port map (
-      rst                 => dco_rstn,
-      refclk              => dco_clk,
+      rst                 => rst,
+      refclk              => clk,
       tdi                 => tdi,
       tdo                 => tdo,
       tms                 => tms,
       tclk                => tclk,
       noc1_output_port    => noc1_output_port,
-      noc1_data_void_out  => noc1_empty_data_void_out,
-      noc1_stop_in        => noc1_empty_stop_in,
+      noc1_data_void_out  => noc1_mem_data_void_out,
+      noc1_stop_in        => noc1_mem_stop_in,
       noc2_output_port    => noc2_output_port,
-      noc2_data_void_out  => noc2_empty_data_void_out,
-      noc2_stop_in        => noc2_empty_stop_in,
+      noc2_data_void_out  => noc2_mem_data_void_out,
+      noc2_stop_in        => noc2_mem_stop_in,
       noc3_output_port    => noc3_output_port,
-      noc3_data_void_out  => noc3_empty_data_void_out,
-      noc3_stop_in        => noc3_empty_stop_in,
+      noc3_data_void_out  => noc3_mem_data_void_out,
+      noc3_stop_in        => noc3_mem_stop_in,
       noc4_output_port    => noc4_output_port,
-      noc4_data_void_out  => noc4_empty_data_void_out,
-      noc4_stop_in        => noc4_empty_stop_in,
+      noc4_data_void_out  => noc4_mem_data_void_out,
+      noc4_stop_in        => noc4_mem_stop_in,
       noc5_output_port    => noc5_output_port,
-      noc5_data_void_out  => noc5_empty_data_void_out,
-      noc5_stop_in        => noc5_empty_stop_in,
+      noc5_data_void_out  => noc5_mem_data_void_out,
+      noc5_stop_in        => noc5_mem_stop_in,
       noc6_output_port    => noc6_output_port,
-      noc6_data_void_out  => noc6_empty_data_void_out,
-      noc6_stop_in        => noc6_empty_stop_in,
+      noc6_data_void_out  => noc6_mem_data_void_out,
+      noc6_stop_in        => noc6_mem_stop_in,
       test1_output_port   => test1_output_port_s,
       test1_data_void_out => test1_data_void_out_s,
       test1_stop_in       => test1_stop_in_s,
@@ -431,72 +459,72 @@ begin
       test6_data_void_in  => test6_data_void_in_s,
       test6_stop_out      => test6_stop_out_s,
       noc1_input_port     => noc1_input_port,
-      noc1_data_void_in   => noc1_empty_data_void_in,
-      noc1_stop_out       => noc1_empty_stop_out,
+      noc1_data_void_in   => noc1_mem_data_void_in,
+      noc1_stop_out       => noc1_mem_stop_out,
       noc2_input_port     => noc2_input_port,
-      noc2_data_void_in   => noc2_empty_data_void_in,
-      noc2_stop_out       => noc2_empty_stop_out,
+      noc2_data_void_in   => noc2_mem_data_void_in,
+      noc2_stop_out       => noc2_mem_stop_out,
       noc3_input_port     => noc3_input_port,
-      noc3_data_void_in   => noc3_empty_data_void_in,
-      noc3_stop_out       => noc3_empty_stop_out,
+      noc3_data_void_in   => noc3_mem_data_void_in,
+      noc3_stop_out       => noc3_mem_stop_out,
       noc4_input_port     => noc4_input_port,
-      noc4_data_void_in   => noc4_empty_data_void_in,
-      noc4_stop_out       => noc4_empty_stop_out,
+      noc4_data_void_in   => noc4_mem_data_void_in,
+      noc4_stop_out       => noc4_mem_stop_out,
       noc5_input_port     => noc5_input_port,
-      noc5_data_void_in   => noc5_empty_data_void_in,
-      noc5_stop_out       => noc5_empty_stop_out,
+      noc5_data_void_in   => noc5_mem_data_void_in,
+      noc5_stop_out       => noc5_mem_stop_out,
       noc6_input_port     => noc6_input_port,
-      noc6_data_void_in   => noc6_empty_data_void_in,
-      noc6_stop_out       => noc6_empty_stop_out);
+      noc6_data_void_in   => noc6_mem_data_void_in,
+      noc6_stop_out       => noc6_mem_stop_out);
 
   -----------------------------------------------------------------------------
   -- NOC Connections
   ----------------------------------------------------------------------------
-  noc1_stop_in_s         <= noc1_empty_stop_in  & noc1_stop_in;
+  noc1_stop_in_s         <= noc1_mem_stop_in  & noc1_stop_in;
   noc1_stop_out          <= noc1_stop_out_s(3 downto 0);
-  noc1_empty_stop_out      <= noc1_stop_out_s(4);
-  noc1_data_void_in_s    <= noc1_empty_data_void_in & noc1_data_void_in;
+  noc1_mem_stop_out      <= noc1_stop_out_s(4);
+  noc1_data_void_in_s    <= noc1_mem_data_void_in & noc1_data_void_in;
   noc1_data_void_out     <= noc1_data_void_out_s(3 downto 0);
-  noc1_empty_data_void_out <= noc1_data_void_out_s(4);
-  noc2_stop_in_s         <= noc2_empty_stop_in  & noc2_stop_in;
+  noc1_mem_data_void_out <= noc1_data_void_out_s(4);
+  noc2_stop_in_s         <= noc2_mem_stop_in  & noc2_stop_in;
   noc2_stop_out          <= noc2_stop_out_s(3 downto 0);
-  noc2_empty_stop_out      <= noc2_stop_out_s(4);
-  noc2_data_void_in_s    <= noc2_empty_data_void_in & noc2_data_void_in;
+  noc2_mem_stop_out      <= noc2_stop_out_s(4);
+  noc2_data_void_in_s    <= noc2_mem_data_void_in & noc2_data_void_in;
   noc2_data_void_out     <= noc2_data_void_out_s(3 downto 0);
-  noc2_empty_data_void_out <= noc2_data_void_out_s(4);
-  noc3_stop_in_s         <= noc3_empty_stop_in  & noc3_stop_in;
+  noc2_mem_data_void_out <= noc2_data_void_out_s(4);
+  noc3_stop_in_s         <= noc3_mem_stop_in  & noc3_stop_in;
   noc3_stop_out          <= noc3_stop_out_s(3 downto 0);
-  noc3_empty_stop_out      <= noc3_stop_out_s(4);
-  noc3_data_void_in_s    <= noc3_empty_data_void_in & noc3_data_void_in;
+  noc3_mem_stop_out      <= noc3_stop_out_s(4);
+  noc3_data_void_in_s    <= noc3_mem_data_void_in & noc3_data_void_in;
   noc3_data_void_out     <= noc3_data_void_out_s(3 downto 0);
-  noc3_empty_data_void_out <= noc3_data_void_out_s(4);
-  noc4_stop_in_s         <= noc4_empty_stop_in  & noc4_stop_in;
+  noc3_mem_data_void_out <= noc3_data_void_out_s(4);
+  noc4_stop_in_s         <= noc4_mem_stop_in  & noc4_stop_in;
   noc4_stop_out          <= noc4_stop_out_s(3 downto 0);
-  noc4_empty_stop_out      <= noc4_stop_out_s(4);
-  noc4_data_void_in_s    <= noc4_empty_data_void_in & noc4_data_void_in;
+  noc4_mem_stop_out      <= noc4_stop_out_s(4);
+  noc4_data_void_in_s    <= noc4_mem_data_void_in & noc4_data_void_in;
   noc4_data_void_out     <= noc4_data_void_out_s(3 downto 0);
-  noc4_empty_data_void_out <= noc4_data_void_out_s(4);
-  noc5_stop_in_s         <= noc5_empty_stop_in  & noc5_stop_in;
+  noc4_mem_data_void_out <= noc4_data_void_out_s(4);
+  noc5_stop_in_s         <= noc5_mem_stop_in  & noc5_stop_in;
   noc5_stop_out          <= noc5_stop_out_s(3 downto 0);
-  noc5_empty_stop_out      <= noc5_stop_out_s(4);
-  noc5_data_void_in_s    <= noc5_empty_data_void_in & noc5_data_void_in;
+  noc5_mem_stop_out      <= noc5_stop_out_s(4);
+  noc5_data_void_in_s    <= noc5_mem_data_void_in & noc5_data_void_in;
   noc5_data_void_out     <= noc5_data_void_out_s(3 downto 0);
-  noc5_empty_data_void_out <= noc5_data_void_out_s(4);
-  noc6_stop_in_s         <= noc6_empty_stop_in  & noc6_stop_in;
+  noc5_mem_data_void_out <= noc5_data_void_out_s(4);
+  noc6_stop_in_s         <= noc6_mem_stop_in  & noc6_stop_in;
   noc6_stop_out          <= noc6_stop_out_s(3 downto 0);
-  noc6_empty_stop_out      <= noc6_stop_out_s(4);
-  noc6_data_void_in_s    <= noc6_empty_data_void_in & noc6_data_void_in;
+  noc6_mem_stop_out      <= noc6_stop_out_s(4);
+  noc6_data_void_in_s    <= noc6_mem_data_void_in & noc6_data_void_in;
   noc6_data_void_out     <= noc6_data_void_out_s(3 downto 0);
-  noc6_empty_data_void_out <= noc6_data_void_out_s(4);
+  noc6_mem_data_void_out <= noc6_data_void_out_s(4);
 
-  sync_noc_set_empty: sync_noc_set
+  sync_noc_set_mem: sync_noc_set
   generic map (
      PORTS    => ROUTER_PORTS,
-     HAS_SYNC => 1 )
+     HAS_SYNC => HAS_SYNC )
    port map (
-     clk                => sys_clk,
-     clk_tile           => dco_clk,
-     rst                => dco_rstn,
+     clk                => sys_clk_int,
+     clk_tile           => clk,
+     rst                => rst,
      CONST_local_x      => this_local_x,
      CONST_local_y      => this_local_y,
      noc1_data_n_in     => noc1_data_n_in,
@@ -592,23 +620,47 @@ begin
      );
 
 
-
-  tile_empty_1: tile_empty
+  tile_mem_1: tile_mem
     generic map (
       SIMULATION   => SIMULATION,
-      this_has_dco => 1)
+      this_has_dco => 0,
+      this_has_ddr => 1,
+      dco_rst_cfg  => (others => '0'))
     port map (
       raw_rstn           => raw_rstn,
-      rst                => dco_rstn,
-      clk                => dco_clk,
-      refclk             => ext_clk,
-      pllbypass          => ext_clk_sel_default,  --ext_clk_sel,
-      pllclk             => clk_div,
+      rst                => rst,
+      refclk             => refclk,
+      clk                => clk,
+      pllbypass          => pllbypass, 
+      pllclk             => pllclk,
       dco_clk            => dco_clk,
       dco_clk_lock       => dco_clk_lock,
-      pad_cfg            => pad_cfg,
+      dco_clk_div2       => dco_clk_div2,
+      dco_clk_div2_90    => dco_clk_div2_90,
+      ddr_ahbsi          => ddr_ahbsi,
+      ddr_ahbso          => ddr_ahbso,
+      ddr_cfg0           => ddr_cfg0,
+      ddr_cfg1           => ddr_cfg1,
+      ddr_cfg2           => ddr_cfg2,
+      mem_id             => mem_id,
+      fpga_data_in       => fpga_data_in,
+      fpga_data_out      => fpga_data_out,
+      fpga_oen           => fpga_oen,
+      fpga_valid_in      => fpga_valid_in,
+      fpga_valid_out     => fpga_valid_out,
+      fpga_clk_in        => fpga_clk_in,
+      fpga_clk_out       => fpga_clk_out,
+      fpga_credit_in     => fpga_credit_in,
+      fpga_credit_out    => fpga_credit_out,
+      pad_cfg            => open,
       local_x            => this_local_x,
       local_y            => this_local_y,
+      noc1_mon_noc_vec    => noc1_mon_noc_vec_int,
+      noc2_mon_noc_vec    => noc2_mon_noc_vec_int,
+      noc3_mon_noc_vec    => noc3_mon_noc_vec_int,
+      noc4_mon_noc_vec    => noc4_mon_noc_vec_int,
+      noc5_mon_noc_vec    => noc5_mon_noc_vec_int,
+      noc6_mon_noc_vec    => noc6_mon_noc_vec_int,
       test1_output_port   => test1_output_port_s,
       test1_data_void_out => test1_data_void_out_s,
       test1_stop_in       => test1_stop_out_s,
@@ -645,12 +697,8 @@ begin
       test6_input_port    => test6_input_port_s,
       test6_data_void_in  => test6_data_void_in_s,
       test6_stop_out      => test6_stop_in_s,
-      noc1_mon_noc_vec   => noc1_mon_noc_vec_int,
-      noc2_mon_noc_vec   => noc2_mon_noc_vec_int,
-      noc3_mon_noc_vec   => noc3_mon_noc_vec_int,
-      noc4_mon_noc_vec   => noc4_mon_noc_vec_int,
-      noc5_mon_noc_vec   => noc5_mon_noc_vec_int,
-      noc6_mon_noc_vec   => noc6_mon_noc_vec_int,
-      mon_dvfs_out       => open);
+      mon_mem             => mon_mem,
+      mon_cache           => mon_cache,
+      mon_dvfs            => mon_dvfs);
 
 end;
