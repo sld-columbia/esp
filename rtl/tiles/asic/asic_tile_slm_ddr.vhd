@@ -184,8 +184,8 @@ architecture rtl of asic_tile_slm_ddr is
   signal tile_id : integer range 0 to CFG_TILES_NUM - 1;
   signal tile_id_s : std_logic_vector(ESP_CSR_TILE_ID_MSB - ESP_CSR_TILE_ID_LSB downto 0);
   signal this_slmddr_id : integer range 0 to SLMDDR_ID_RANGE_MSB;
-  signal this_slmddr_haddr  : integer range 0 to 4095;
-  signal this_slmddr_hmask  : integer range 0 to 4095;
+  signal this_slmddr_haddr  : integer;
+  signal this_slmddr_hmask  : integer;
 
   -- Tile clock and reset (only for I/O tile)
   signal tile_rstn_s     : std_ulogic;
