@@ -30,7 +30,7 @@ class Address : public QWidget
 {
     Q_OBJECT
 
-public:
+  public:
     Address(QGridLayout *parent_layout,
             unsigned address_line_number,
             unsigned cpu_arch_bits,
@@ -41,7 +41,7 @@ public:
 
     ~Address();
 
-public:
+  public:
     unsigned cpu_arch_bits;
     unsigned tile_id;
     std::string ip;
@@ -59,11 +59,12 @@ public:
 signals:
     void addressMapChanged();
 
-private slots:
+  private
+slots:
     void on_address_size_currentIndexChanged(int arg1);
     void on_address_base_addressChanged();
 
-private:
+  private:
     QLabel *name;
     QFrame *address_base_f;
     QHBoxLayout *address_base_lay;
@@ -87,6 +88,5 @@ private:
     void update_address_base();
     void update_address_info();
 };
-
 
 #endif // ADDRESS_H

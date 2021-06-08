@@ -300,7 +300,7 @@ newsocmap.mk: $(ESP_ROOT)/utils/newsocmap/socmap.pro
 	BOARD=$(BOARD) 					\
 	CPU_ARCH=$(CPU_ARCH) 				\
 	DMA_WIDTH=$(NOC_WIDTH)				\
-	qmake -o $@ $<
+	qmake-qt5 -o $@ $<
 
 #esp_power_db.cpp
 newsocmap: newsocmap.mk $(NEWSOCMAP_DEPS) esp_constants.h

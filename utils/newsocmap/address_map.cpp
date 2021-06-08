@@ -9,7 +9,8 @@ Address::~Address()
 
     delete address_base_head_l;
 
-    for (int i = (int) address_base.size() - 1; i >= 0; i--) {
+    for (int i = (int)address_base.size() - 1; i >= 0; i--)
+    {
         delete address_base[i];
         address_base.pop_back();
     }
@@ -73,7 +74,6 @@ Address::Address(QGridLayout *parent_layout,
     name->setFont(fixedFont);
     parent_layout->addWidget(name, address_line_number, 0, 1, 1, Qt::AlignLeft);
 
-
     std::stringstream stm;
     unsigned addr_range_size_log_min = lsb;
     unsigned addr_range_size_log_max = msb;
@@ -85,16 +85,18 @@ Address::Address(QGridLayout *parent_layout,
     address_base_head_l = new QLabel("0x", address_base_f);
     address_base_head_l->setFont(fixedFont);
     address_base_lay->addWidget(address_base_head_l);
-    for (int i = cpu_arch_bits / 4 - 1; i >= 0; i--) {
+    for (int i = cpu_arch_bits / 4 - 1; i >= 0; i--)
+    {
         QLineEdit *le = new QLineEdit(address_base_f);
         le->setMaxLength(1);
         le->setMaximumWidth(20);
         stm.str("");
-        stm << std::hex << std::uppercase << std::setw(1) << std::setfill('0') << get_digit(this->base, (unsigned ) i);
+        stm << std::hex << std::uppercase << std::setw(1) << std::setfill('0')
+            << get_digit(this->base, (unsigned)i);
         le->setText(stm.str().c_str());
         le->setAlignment(Qt::AlignRight);
-        le->setTextMargins(0,0,0,0);
-        if ((unsigned) i >= ((msb + 1) / 4) || (unsigned ) i < (lsb / 4))
+        le->setTextMargins(0, 0, 0, 0);
+        if ((unsigned)i >= ((msb + 1) / 4) || (unsigned)i < (lsb / 4))
             le->setEnabled(false);
         else
             le->setEnabled(true);
@@ -105,26 +107,34 @@ Address::Address(QGridLayout *parent_layout,
     address_base_lay->setSpacing(0);
     address_base_lay->setMargin(0);
 
-    parent_layout->addWidget(address_base_f, address_line_number, 1, 1, 1, Qt::AlignRight);
-
+    parent_layout->addWidget(
+        address_base_f, address_line_number, 1, 1, 1, Qt::AlignRight);
 
     // size
     address_size_f = new QFrame(this);
     address_size_lay = new QHBoxLayout(address_size_f);
     address_size = new QComboBox(address_size_f);
-    for (unsigned i = addr_range_size_log_min; i <= addr_range_size_log_max; i++) {
+    for (unsigned i = addr_range_size_log_min; i <= addr_range_size_log_max; i++)
+    {
         unsigned div_factor;
         std::string unit;
-        if (i < 10) {
+        if (i < 10)
+        {
             div_factor = 0;
             unit = " B";
-        } else if (i < 20) {
+        }
+        else if (i < 20)
+        {
             div_factor = 10;
             unit = " KB";
-        } else if (i < 30) {
+        }
+        else if (i < 30)
+        {
             div_factor = 20;
             unit = " MB";
-        } else {
+        }
+        else
+        {
             div_factor = 30;
             unit = " GB";
         }
@@ -136,11 +146,13 @@ Address::Address(QGridLayout *parent_layout,
     }
     address_size_lay->addWidget(address_size);
     address_size->setFont(fixedFont);
-    parent_layout->addWidget(address_size_f, address_line_number, 2, 1, 1, Qt::AlignRight);
+    parent_layout->addWidget(
+        address_size_f, address_line_number, 2, 1, 1, Qt::AlignRight);
 
     // end
     stm.str("");
-    stm << "0x" << std::hex << std::uppercase << std::setw(cpu_arch_bits / 4) << std::setfill('0') << this->end;
+    stm << "0x" << std::hex << std::uppercase << std::setw(cpu_arch_bits / 4)
+        << std::setfill('0') << this->end;
     address_end_f = new QFrame(this);
     address_end_lay = new QHBoxLayout(address_end_f);
     address_end = new QLabel(address_end_f);
@@ -152,7 +164,8 @@ Address::Address(QGridLayout *parent_layout,
 
     // mask
     stm.str("");
-    stm << "0x" << std::hex << std::uppercase << std::setw(cpu_arch_bits / 4) << std::setfill('0') << this->mask;
+    stm << "0x" << std::hex << std::uppercase << std::setw(cpu_arch_bits / 4)
+        << std::setfill('0') << this->mask;
     address_mask_f = new QFrame(this);
     address_mask_lay = new QHBoxLayout(address_mask_f);
     address_mask = new QLabel(address_mask_f);
@@ -160,25 +173,34 @@ Address::Address(QGridLayout *parent_layout,
     address_mask->setAlignment(Qt::AlignRight);
     address_mask_lay->addWidget(address_mask);
     address_mask->setFont(fixedFont);
-    parent_layout->addWidget(address_mask_f, address_line_number, 4, 1, 1, Qt::AlignRight);
+    parent_layout->addWidget(
+        address_mask_f, address_line_number, 4, 1, 1, Qt::AlignRight);
 
     // Connect signals to slot
-    connect(this->address_size, SIGNAL(currentIndexChanged(int)), this, SLOT(on_address_size_currentIndexChanged(int)));
-    for (int i = 0; i < (int) cpu_arch_bits / 4; i++) {
-        connect(this->address_base[i], SIGNAL(textChanged(QString)), this, SLOT(on_address_base_addressChanged()));
+    connect(this->address_size,
+            SIGNAL(currentIndexChanged(int)),
+            this,
+            SLOT(on_address_size_currentIndexChanged(int)));
+    for (int i = 0; i < (int)cpu_arch_bits / 4; i++)
+    {
+        connect(this->address_base[i],
+                SIGNAL(textChanged(QString)),
+                this,
+                SLOT(on_address_base_addressChanged()));
     }
-
 }
 
 void Address::set_conflicting(bool set)
 {
     QPalette valid;
     QPalette non_valid;
-    valid.setColor(QPalette::Base,color_ok);
-    non_valid.setColor(QPalette::Base,color_error);
-    for (int i = 0; i < (int) cpu_arch_bits / 4; i++) {
+    valid.setColor(QPalette::Base, color_ok);
+    non_valid.setColor(QPalette::Base, color_error);
+    for (int i = 0; i < (int)cpu_arch_bits / 4; i++)
+    {
         QLineEdit *le = this->address_base[i];
-        if (le->isEnabled()) {
+        if (le->isEnabled())
+        {
             if (set)
                 le->setPalette(non_valid);
             else
@@ -190,9 +212,10 @@ void Address::set_conflicting(bool set)
 void Address::read_current_address()
 {
     this->base = 0;
-    for (int i = 0; i < (int) cpu_arch_bits / 4; i++) {
+    for (int i = 0; i < (int)cpu_arch_bits / 4; i++)
+    {
         QLineEdit *le = this->address_base[i];
-        unsigned digit = (unsigned) cpu_arch_bits / 4 - i - 1;
+        unsigned digit = (unsigned)cpu_arch_bits / 4 - i - 1;
         this->base |= le->text().toUInt(0, 16) << (digit << 2);
     };
 }
@@ -201,13 +224,16 @@ void Address::update_address_base()
 {
     std::stringstream stm;
 
-    for (int i = 0; i < (int) cpu_arch_bits / 4; i++) {
+    for (int i = 0; i < (int)cpu_arch_bits / 4; i++)
+    {
         QLineEdit *le = this->address_base[i];
-        unsigned digit = (unsigned) cpu_arch_bits / 4 - i - 1;
+        unsigned digit = (unsigned)cpu_arch_bits / 4 - i - 1;
         stm.str("");
-        stm << std::hex << std::uppercase << std::setw(1) << std::setfill('0') << get_digit(this->base, digit);
+        stm << std::hex << std::uppercase << std::setw(1) << std::setfill('0')
+            << get_digit(this->base, digit);
         le->setText(stm.str().c_str());
-        if ((unsigned) digit * 4 >= round_up(this->msb, 4) || (unsigned ) digit * 4 < round_down(this->lsb, 4))
+        if ((unsigned)digit * 4 >= round_up(this->msb, 4) ||
+            (unsigned)digit * 4 < round_down(this->lsb, 4))
             le->setEnabled(false);
         else
             le->setEnabled(true);
@@ -218,7 +244,8 @@ void Address::update_address_info()
 {
     this->range = this->size - 1;
     this->lsb = msb64(this->range) + 1;
-    this->mask = ~((0xffffffffffffffffULL << (this->msb + 1)) | (0xffffffffffffffffULL >> (64 - this->lsb)));
+    this->mask = ~((0xffffffffffffffffULL << (this->msb + 1)) |
+                   (0xffffffffffffffffULL >> (64 - this->lsb)));
 
     // Check base address alignment and fix it if necessary
     this->base = this->base & ((0xffffffffffffffffULL << (this->msb + 1)) | this->mask);
@@ -229,12 +256,14 @@ void Address::update_address_info()
     // Update end address label
     std::stringstream stm;
     stm.str("");
-    stm << "0x" << std::hex << std::uppercase << std::setw(cpu_arch_bits / 4) << std::setfill('0') << this->end;
+    stm << "0x" << std::hex << std::uppercase << std::setw(cpu_arch_bits / 4)
+        << std::setfill('0') << this->end;
     this->address_end->setText(stm.str().c_str());
 
     // Update mask label
     stm.str("");
-    stm << "0x" << std::hex << std::uppercase << std::setw(cpu_arch_bits / 4) << std::setfill('0') << this->mask;
+    stm << "0x" << std::hex << std::uppercase << std::setw(cpu_arch_bits / 4)
+        << std::setfill('0') << this->mask;
     this->address_mask->setText(stm.str().c_str());
 
     // Emit addressChanged

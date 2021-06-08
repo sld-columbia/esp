@@ -11,7 +11,8 @@ void die(std::string msg)
 
 std::string tile_t_to_string(tile_t type)
 {
-    switch (type) {
+    switch (type)
+    {
     case TILE_ACC:
         return "Accelerator";
         break;
@@ -55,10 +56,12 @@ void get_subdirs(const std::string path, std::vector<std::string> &list)
     DIR *dirp;
     struct dirent *directory;
     dirp = opendir(path.c_str());
-    if (dirp) {
+    if (dirp)
+    {
         while ((directory = readdir(dirp)) != NULL)
             if (directory->d_type == DT_DIR)
-                if (strcmp(directory->d_name, ".") && strcmp(directory->d_name, "..")) {
+                if (strcmp(directory->d_name, ".") && strcmp(directory->d_name, ".."))
+                {
                     std::string s(directory->d_name);
                     list.push_back(s);
                 }
@@ -71,9 +74,11 @@ void get_files(const std::string path, std::vector<std::string> &list)
     DIR *dirp;
     struct dirent *directory;
     dirp = opendir(path.c_str());
-    if (dirp) {
+    if (dirp)
+    {
         while ((directory = readdir(dirp)) != NULL)
-            if (directory->d_type == DT_REG) {\
+            if (directory->d_type == DT_REG)
+            {
                 std::string s(directory->d_name);
                 list.push_back(s);
             }
@@ -81,9 +86,11 @@ void get_files(const std::string path, std::vector<std::string> &list)
     closedir(dirp);
 }
 
-void parse_implementations(std::vector<std::string> &inlist, std::vector<std::string> &outlist)
+void parse_implementations(std::vector<std::string> &inlist,
+                           std::vector<std::string> &outlist)
 {
-    for (unsigned i = 0; i < inlist.size(); i++) {
+    for (unsigned i = 0; i < inlist.size(); i++)
+    {
         std::ostringstream stm;
         size_t len = strlen(inlist[i].c_str());
         char *tmp = new char[len];
@@ -92,24 +99,27 @@ void parse_implementations(std::vector<std::string> &inlist, std::vector<std::st
         unsigned width;
 
         // IP name (discard)
-        pch = strtok (tmp,"_");
+        pch = strtok(tmp, "_");
         if (pch == NULL)
             // Invalid implementation name
             return;
 
         // Start implementation name parse
-        pch = strtok (NULL,"_");
+        pch = strtok(NULL, "_");
 
-        while(pch != NULL) {
+        while (pch != NULL)
+        {
             stm << pch;
-            if (sscanf(pch, "dma%d", &width) == 1) {
-                if (width == DMA_WIDTH) {
+            if (sscanf(pch, "dma%d", &width) == 1)
+            {
+                if (width == DMA_WIDTH)
+                {
                     outlist.push_back(stm.str());
                     break;
                 }
             }
             stm << "_";
-            pch = strtok (NULL,"_");
+            pch = strtok(NULL, "_");
         }
         delete tmp;
     }
@@ -122,17 +132,17 @@ void parse_implementations(std::vector<std::string> &inlist, std::vector<std::st
  * @precondition bb != 0
  * @return index (0..63) of most significant one bit
  */
-unsigned msb64(unsigned long long bb) {
-   const unsigned long long debruijn64 = 0x03f79d71b4cb0a89;
-   bb |= bb >> 1;
-   bb |= bb >> 2;
-   bb |= bb >> 4;
-   bb |= bb >> 8;
-   bb |= bb >> 16;
-   bb |= bb >> 32;
-   return (unsigned) msb_64_table[(bb * debruijn64) >> 58];
+unsigned msb64(unsigned long long bb)
+{
+    const unsigned long long debruijn64 = 0x03f79d71b4cb0a89;
+    bb |= bb >> 1;
+    bb |= bb >> 2;
+    bb |= bb >> 4;
+    bb |= bb >> 8;
+    bb |= bb >> 16;
+    bb |= bb >> 32;
+    return (unsigned)msb_64_table[(bb * debruijn64) >> 58];
 }
-
 
 /**
  * bitScanForward
@@ -141,11 +151,11 @@ unsigned msb64(unsigned long long bb) {
  * @precondition bb != 0
  * @return index (0..63) of least significant one bit
  */
-unsigned lsb64(unsigned long long bb) {
-   unsigned int folded;
-   bb ^= bb - 1;
-   folded = (int) bb ^ (bb >> 32);
-   return (unsigned) lsb_64_table[folded * 0x78291ACF >> 26];
+unsigned lsb64(unsigned long long bb)
+{
+    unsigned int folded;
+    bb ^= bb - 1;
+    folded = (int)bb ^ (bb >> 32);
+    return (unsigned)lsb_64_table[folded * 0x78291ACF >> 26];
 }
-
 }
