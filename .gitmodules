@@ -44,3 +44,7 @@
 [submodule "rtl/caches/spandex-caches"]
 	path = rtl/caches/spandex-caches
 	url = https://github.com/zzhu35/spandex-caches.git
+[submodule "accelerators/catapult_hls/extras/hardroid"]
+	path = accelerators/catapult_hls/extras/hardroid
+	url = git@github.com:lucapiccolboni/hardroid.git
+	branch = epochs
