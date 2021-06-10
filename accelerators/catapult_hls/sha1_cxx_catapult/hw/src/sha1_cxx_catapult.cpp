@@ -152,21 +152,24 @@ STORE_LOOP:
             // |<--- 0 --->|<--- 1 --->|
             //  ...
 
-            ac_int<32, false> data_0(plm_out.data[i+0]);
-            ac_int<32, false> data_1(plm_out.data[i+1]);
-
             // Output PLM / results are an even number of words (5)
             // Zeros the 64-bit DMA word when necessary
             ac_int<DMA_WIDTH, false> data_ac = 0;
+            
+            ac_int<32, false> data_0(plm_out.data[i+0]);
             data_ac.set_slc(WL*1, data_0.template slc<WL>(0));
-            if (i+1 < dma_write_data_length)
+            
+            ESP_REPORT_INFO(VON, "plm_out[%u] = %02X", ESP_TO_UINT32(i)+0, data_0.to_uint());
+
+            if (i+1 < dma_write_data_length) {
+                ac_int<32, false> data_1(plm_out.data[i+1]);
                 data_ac.set_slc(WL*0, data_1.template slc<WL>(0));
+                
+                ESP_REPORT_INFO(VON, "plm_out[%u] = %02X", ESP_TO_UINT32(i)+1, data_1.to_uint());
+            }
 
             dma_write_chnl.write(data_ac);
-
-            ESP_REPORT_INFO(VON, "plm_out[%u] = %02X", ESP_TO_UINT32(i)+0, data_0.to_uint());
-            if (i+1 < dma_write_data_length)
-                ESP_REPORT_INFO(VON, "plm_out[%u] = %02X", ESP_TO_UINT32(i)+1, data_1.to_uint());
+                
         }
     }
 
