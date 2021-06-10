@@ -223,7 +223,7 @@ static void esp_prop(const struct fdt_scan_prop *prop, void *extra)
 	else if (!strcmp(prop->name, "reg"))
 		fdt_get_address(prop->node->parent, prop->value, (uint64_t *) &(*espdevs)[ndev].addr);
 	else if (!strcmp(prop->name, "interrupts"))
-		fdt_get_value(prop->value, (uint32_t *) &(*espdevs)[ndev].irq);
+		(*espdevs)[ndev].irq = fdt_get_value(prop, 0); // TODO sending proper index instead of always 0
 }
 
 static void esp_done(const struct fdt_scan_node *node, void *extra)
