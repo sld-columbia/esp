@@ -1,4 +1,4 @@
-// Copyright (c) 2011-2020 Columbia University, System Level Design Group
+// Copyright (c) 2011-2021 Columbia University, System Level Design Group
 // SPDX-License-Identifier: Apache-2.0
 
 #include "esp_headers.hpp"
@@ -8,7 +8,7 @@
 
 #include <mc_scverify.h>
 
-// TODO: workaround
+// TODO: workaround to make sha1 visible
 #include "sha1.cpp"
 
 template <class T1, class T2>
@@ -71,12 +71,13 @@ void CCS_BLOCK(sha1_cxx_catapult)(
     ESP_REPORT_INFO(VOFF, "conf_info.in_bytes = %u", ESP_TO_UINT32(in_bytes));
 
     // Configure DMA read channel (CTRL)
-    // DMA_WIDTH for EPOCHS is 64 bits
-    // SHA1 input word is 32 bits
-    // Each DMA transaction is 2 input words
+    // - DMA_WIDTH for EPOCHS is 64 bits
+    // - SHA1 input word is 32 bits
+    // - Each DMA transaction is 2 input words
+    // - Do some math (ceil) to get the number of data and DMA words given in_bytes
     dma_read_data_length = (in_bytes + 4 - 1) / 4; // ceil(in_bytes / 4)
-    dma_read_data_index = (dma_read_data_length / 2);
-    dma_read_info = {dma_read_data_index, (dma_read_data_length / 2), SIZE_WORD};
+    dma_read_data_index = 0; //(dma_read_data_length / 2);
+    dma_read_info = {dma_read_data_index, (dma_read_data_length + 2 - 1) / 2, SIZE_WORD}; // ceil(dma_read_data_legnth / 2)
     bool dma_read_ctrl_done = false;
 LOAD_CTRL_LOOP:
     do { dma_read_ctrl_done = dma_read_ctrl.nb_write(dma_read_info); } while (!dma_read_ctrl_done);
@@ -117,17 +118,17 @@ LOAD_LOOP:
         }
     }
 
-    //compute_wrapper<plm_in_t, plm_out_t>(in_bytes, plm_in, plm_out);
-    for (unsigned i = 0; i < PLM_OUT_SIZE; i++) {
-        plm_out.data[i] = plm_in.data[0];
-    }
-
+    compute_wrapper<plm_in_t, plm_out_t>(in_bytes, plm_in, plm_out);
+    //for (unsigned i = 0; i < PLM_OUT_SIZE; i++) {
+    //    plm_out.data[i] = plm_in.data[0];
+    //}
 
     // Configure DMA write channel (CTRL)
-    // DMA_WIDTH for EPOCHS is 64 bits
-    // SHA1 output word is 32 bits
-    // Each DMA transaction is 2 output words
-    dma_write_data_index = (dma_read_data_length / 2) + (dma_write_data_length / 2);
+    // - DMA_WIDTH for EPOCHS is 64 bits
+    // - SHA1 output word is 32 bits
+    // - Each DMA transaction is 2 output words
+    // - There are 3 DMA-word as output (last 32bits are zeros)
+    dma_write_data_index = (dma_read_data_length / 2);//(dma_read_data_length / 2) + (dma_write_data_length / 2);
     dma_write_info = {dma_write_data_index, (dma_write_data_length / 2), SIZE_WORD};
     bool dma_write_ctrl_done = false;
 STORE_CTRL_LOOP:
@@ -139,9 +140,11 @@ STORE_CTRL_LOOP:
 STORE_LOOP:
         for (uint16_t i = 0; i < PLM_OUT_SIZE; i+=2) {
 
-            if (i >= dma_write_data_length) break;
+            // TODO: not necessary because PLM_OUT_SIZE == dma_write_data_lenght == 6 == 5 + 1
+            //if (i >= dma_write_data_length) break;
 
-            assert(DMA_WIDTH == 64 && "DMA_WIDTH should be 32 bits");
+            assert(DMA_WIDTH == 64 && "DMA_WIDTH should be 64 bits");
+            assert(PLM_OUT_SIZE == 6 && "PLM_OUT_SIZE should be 6 32-bit words (5 + 1 extra dummy word)");
 
             // PLM (in)
             // |<--- 0 --->|
@@ -152,24 +155,21 @@ STORE_LOOP:
             // |<--- 0 --->|<--- 1 --->|
             //  ...
 
+            // TODO: The PLM now is 6 words
             // Output PLM / results are an even number of words (5)
             // Zeros the 64-bit DMA word when necessary
             ac_int<DMA_WIDTH, false> data_ac = 0;
-            
-            ac_int<32, false> data_0(plm_out.data[i+0]);
-            data_ac.set_slc(WL*1, data_0.template slc<WL>(0));
-            
-            ESP_REPORT_INFO(VON, "plm_out[%u] = %02X", ESP_TO_UINT32(i)+0, data_0.to_uint());
 
-            if (i+1 < dma_write_data_length) {
-                ac_int<32, false> data_1(plm_out.data[i+1]);
-                data_ac.set_slc(WL*0, data_1.template slc<WL>(0));
-                
-                ESP_REPORT_INFO(VON, "plm_out[%u] = %02X", ESP_TO_UINT32(i)+1, data_1.to_uint());
-            }
+            ac_int<32, false> data_0(plm_out.data[i+0]);
+            ac_int<32, false> data_1(plm_out.data[i+1]);
+
+            data_ac.set_slc(WL*1, data_0.template slc<WL>(0));
+            data_ac.set_slc(WL*0, data_1.template slc<WL>(0));
+
+            ESP_REPORT_INFO(VOFF, "plm_out[%u] = %02X", ESP_TO_UINT32(i)+0, data_0.to_uint());
+            ESP_REPORT_INFO(VOFF, "plm_out[%u] = %02X", ESP_TO_UINT32(i)+1, data_1.to_uint());
 
             dma_write_chnl.write(data_ac);
-                
         }
     }
 
