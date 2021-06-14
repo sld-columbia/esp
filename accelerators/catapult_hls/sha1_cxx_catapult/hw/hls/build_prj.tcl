@@ -259,31 +259,28 @@ if {$opt(hsynth)} {
 
     directive set /$ACCELERATOR/core/plm_in.data:rsc -MAP_TO_MODULE {[Register]}
     directive set /$ACCELERATOR/core/plm_out.data:rsc -MAP_TO_MODULE {[Register]}
-    #directive set /$ACCELERATOR/core/sha1:h:rsc -MAP_TO_MODULE {[Register]}
-    #directive set /$ACCELERATOR/core/sha1:data:rsc -MAP_TO_MODULE {[Register]}
+    directive set /$ACCELERATOR/core/sha1:h:rsc -MAP_TO_MODULE {[Register]}
+    directive set /$ACCELERATOR/core/sha1:data:rsc -MAP_TO_MODULE {[Register]}
 
 
     # Loops
-    #directive set /${ACCELERATOR}/core/SHA1_L_1 -PIPELINE_INIT_INTERVAL 17
-
-    #directive set /${ACCELERATOR}/core/SHA1_L_1 -ITERATIONS 1024
-    #directive set /${ACCELERATOR}/core/SHA1_L_1_1 -UNROLL yes
-    #directive set /${ACCELERATOR}/core/SHA1_L_1_2 -UNROLL yes
-    ## Not needed: it is optimized away (automatically unrolled)
-    ## directive set /${ACCELERATOR}/core/SHA1_L_1_3 -UNROLL yes
-    #directive set /${ACCELERATOR}/core/SHA1_L_1_4 -PIPELINE_INIT_INTERVAL 1
-    #directive set /${ACCELERATOR}/core/SHA1_L_1_4 -ITERATIONS 16
-    #directive set /${ACCELERATOR}/core/SHA1_L_1_5 -UNROLL yes
-    #directive set /${ACCELERATOR}/core/SHA1_L_1_6 -UNROLL 13
-    #directive set /${ACCELERATOR}/core/SHA1_L_1_6 -ITERATIONS 13
-    #directive set /${ACCELERATOR}/core/SHA1_L_1_7 -UNROLL yes
-    #directive set /${ACCELERATOR}/core/SHA1_L_1_8 -PIPELINE_INIT_INTERVAL 1
-
-    #directive set /${ACCELERATOR}/sha1_block/core/main -UNROLL no
+    directive set /$ACCELERATOR/core/SHA1_L_1 -PIPELINE_INIT_INTERVAL 1
+    directive set /$ACCELERATOR/core/SHA1_L_1_4 -PIPELINE_INIT_INTERVAL 1
+    directive set /$ACCELERATOR/core/SHA1_BLOCK_L_1#1 -PIPELINE_INIT_INTERVAL 1
+    directive set /$ACCELERATOR/core/SHA1_BLOCK_L_2#1 -PIPELINE_INIT_INTERVAL 1
+    directive set /$ACCELERATOR/core/SHA1_BLOCK_L_3#1 -PIPELINE_INIT_INTERVAL 1
+    directive set /$ACCELERATOR/core/SHA1_BLOCK_L_4#1 -PIPELINE_INIT_INTERVAL 1
+    directive set /$ACCELERATOR/core/SHA1_BLOCK_L_5#1 -PIPELINE_INIT_INTERVAL 1
+    directive set /$ACCELERATOR/core/SHA1_L_1_6 -PIPELINE_INIT_INTERVAL 1
+    directive set /$ACCELERATOR/core/SHA1_BLOCK_L_1#2 -PIPELINE_INIT_INTERVAL 1
+    directive set /$ACCELERATOR/core/SHA1_BLOCK_L_2#2 -PIPELINE_INIT_INTERVAL 1
+    directive set /$ACCELERATOR/core/SHA1_BLOCK_L_3#2 -PIPELINE_INIT_INTERVAL 1
+    directive set /$ACCELERATOR/core/SHA1_BLOCK_L_4#2 -PIPELINE_INIT_INTERVAL 1
+    directive set /$ACCELERATOR/core/SHA1_BLOCK_L_5#2 -PIPELINE_INIT_INTERVAL 1
+    directive set /$ACCELERATOR/core/SHA1_L_1_8 -PIPELINE_INIT_INTERVAL 1
 
 
     # Loops performance tracing
-
 
     # Area vs Latency Goals
     directive set /$ACCELERATOR/core -EFFORT_LEVEL high
