@@ -366,7 +366,7 @@ int main(int argc, char * argv[])
 
     printf("   sizeof(token_t) = %u\n", sizeof(token_t));
 
-    for (unsigned idx = 9; idx < N_TESTS; idx++) {
+    for (unsigned idx = 1; idx < N_TESTS; idx++) {
 
         in_bytes = raw_in_bytes[idx];
         in_words = raw_words[idx];
