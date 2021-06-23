@@ -246,6 +246,7 @@ class soc_config:
   dvfs_ctrls = []
   tiles = []
   regions = []
+  contig_alloc_ddr = []
 
   def __init__(self, soc):
     #components
@@ -1841,7 +1842,89 @@ def print_esplink_header(fp, esp_config, soc):
   fp.write("\n")
   fp.write("#endif /* __SOCMAP_H__ */\n")
 
+def print_soc_defines(fp, esp_config, soc):
+  fp.write("#ifndef __SOC_DEFS_H__\n")
+  fp.write("#define __SOC_DEFS_H__\n")
+  fp.write("\n")
+  fp.write("#define SOC_ROWS " + str(soc.noc.rows) + "\n");
+  fp.write("#define SOC_COLS " + str(soc.noc.cols) + "\n");
+  fp.write("#define SOC_NCPU " + str(esp_config.ncpu) + "\n");
+  fp.write("#define SOC_NMEM " + str(esp_config.nmem) + "\n");
+  fp.write("#define SOC_NDDR_CONTIG " + str(len(esp_config.contig_alloc_ddr)) +"\n")
+  if esp_config.nacc > 0:
+      fp.write("#define ACCS_PRESENT 1\n")
+  fp.write("#define SOC_NACC " + str(esp_config.nacc) + "\n");
 
+  if esp_config.cpu_arch == "leon3":
+      fp.write("#define MONITOR_BASE_ADDR 0x80090000\n")
+  else:
+      fp.write("#define MONITOR_BASE_ADDR 0x60090000\n")
+  fp.write("#define MONITOR_TILE_SIZE 0x200\n\n")
+
+  fp.write("#endif /* __SOC_DEFS_H__ */\n")
+
+def print_soc_locations(fp, esp_config, soc):
+  fp.write("soc_loc_t cpu_locs[" + str(esp_config.ncpu) + "] = {")
+  for i in range(0, esp_config.ntiles):
+    t = esp_config.tiles[i]
+    if t.type == "cpu":
+        fp.write("{" + str(t.row) + "," + str(t.col) + "}")
+        if not t.cpu_id == esp_config.ncpu - 1:
+            fp.write(", ")
+  fp.write("};\n\n")
+
+  fp.write("soc_loc_t mem_locs[" + str(esp_config.nmem) + "] = {")
+  for i in range(0, esp_config.ntiles):
+    t = esp_config.tiles[i]
+    if t.type == "mem":
+        fp.write("{" + str(t.row) + "," + str(t.col) + "}")
+        if not t.mem_id == esp_config.nmem - 1:
+            fp.write(", ")
+  fp.write("};\n\n")
+
+  #fp.write("soc_loc_t contig_alloc_locs[" + str(len(esp_config.contig_alloc_ddr)) + "] = {")
+  #for i in range(0, esp_config.ntiles):
+  #  t = esp_config.tiles[i]
+  #  if t.type == "mem" and t.mem_id in esp_config.contig_alloc_ddr:
+  #      fp.write("{" + str(t.row) + "," + str(t.col) + "}")
+  #      if not t.mem_id == esp_config.nmem - 1:
+  #          fp.write(", ")
+  #fp.write("};\n\n")
+
+  #fp.write("soc_loc_t io_loc = ")
+  #for i in range(0, esp_config.ntiles):
+  #  t = esp_config.tiles[i]
+  #  if t.type == "misc":
+  #      fp.write("{" + str(t.row) + "," + str(t.col) + "};")
+  #      break
+  #fp.write("\n\n")
+
+  if esp_config.nacc > 0:
+      acc_counts = {}
+      fp.write("soc_loc_t acc_locs[" + str(esp_config.nacc) + "] = {")
+      for i in range(0, esp_config.ntiles):
+        t = esp_config.tiles[i]
+        if t.type == "acc":
+            if not t.acc.lowercase_name in acc_counts:
+                acc_counts[t.acc.lowercase_name] = 0
+            else:
+                acc_counts[t.acc.lowercase_name] += 1
+
+            fp.write("{" + str(t.row) + "," + str(t.col) + "}")
+            if not t.acc.id == esp_config.nacc - 1:
+                fp.write(", ")
+      fp.write("};\n\n")
+      fp.write("unsigned int acc_has_l2[" + str(esp_config.nacc) + "] = {")
+      for i in range(0, esp_config.ntiles):
+        t = esp_config.tiles[i]
+        if t.type == "acc":
+            if t.has_l2:
+                fp.write("1")
+            else:
+                fp.write("0")
+            if not t.acc.id == esp_config.nacc - 1:
+                fp.write(", ")
+      fp.write("};\n")
 
 def print_devtree(fp, soc, esp_config):
 
@@ -2286,7 +2369,7 @@ def print_floorplan_constraints(fp, soc, esp_config):
     fp.write("resize_pblock [get_pblocks {pblock_mem_tile_3}] -add {DSP48E2_X5Y258:DSP48E2_X5Y323}\n")
     fp.write("resize_pblock [get_pblocks {pblock_mem_tile_3}] -add {RAMB18_X7Y258:RAMB18_X8Y323}\n")
     fp.write("resize_pblock [get_pblocks {pblock_mem_tile_3}] -add {RAMB36_X7Y129:RAMB36_X8Y161}\n")
-  
+
   fp.write("set_property C_CLK_INPUT_FREQ_HZ 300000000 [get_debug_cores dbg_hub]\n")
   fp.write("set_property C_ENABLE_CLK_DIVIDER false [get_debug_cores dbg_hub]\n")
   fp.write("set_property C_USER_SCAN_CHAIN 1 [get_debug_cores dbg_hub]\n")
@@ -2304,23 +2387,24 @@ def print_load_script(fp, soc, esp_config):
   start = int(str(DDR_HADDR[soc.CPU_ARCH.get()])) * int(0x100000)
   nddr = 0
   line_size = int(0x10)
-  
+
   end = start + ddr_size
   if soc.CPU_ARCH.get() == "ariane" or soc.CPU_ARCH.get() == "ibex":
-    sp = int(0xa0200000) - line_size 
-    if esp_config.nthirdparty > 0:        
+    sp = int(0xa0200000) - line_size
+    if esp_config.nthirdparty > 0:
         end = int(0xb0000000)
-  else: 
+  else:
     sp = int(str(soc.LEON3_STACK), 16)
 
   addr = start
-  for _ in range(nmem):
+  for m in range(nmem):
     if addr >= (sp + line_size) and addr < end:
         starts.append(hex(addr))
-        if addr + size <= end: 
+        if addr + size <= end:
             sizes.append(hex(size))
         else:
             size.append(hex(end - addr))
+        esp_config.contig_alloc_ddr.append(m)
         nddr += 1
     elif (addr + size) > (sp + line_size) and addr < end:
         starts.append(hex(sp + line_size))
@@ -2328,6 +2412,7 @@ def print_load_script(fp, soc, esp_config):
             sizes.append(hex((addr + size) - (sp + line_size)))
         else:
             sizes.append(hex(end - (sp + line_size)))
+        esp_config.contig_alloc_ddr.append(m)
         nddr += 1
     addr += size
 
@@ -2389,14 +2474,40 @@ def create_socmap(esp_config, soc):
   print("Created configuration into 'socmap.vhd'")
 
   # ESPLink header
-  fp = open('socmap.h', 'w')
+  fp = open('esplink.h', 'w')
 
   print_esplink_header(fp, esp_config, soc)
 
   fp.close()
 
-  print("Created ESPLink header into 'socmap.h'")
+  print("Created ESPLink header into 'esplink.h'")
 
+  if esp_config.nmem != 0:
+    fp = open('S64esp', 'w')
+
+    print_load_script(fp, soc, esp_config)
+
+    fp.close()
+
+    print("Created kernel module load script into 'S64esp'")
+
+  # socmap defines
+  fp = open('soc_defs.h', 'w')
+
+  print_soc_defines(fp, esp_config, soc)
+
+  fp.close()
+
+  print("Created soc defines into 'soc_defs.h'")
+
+  # soc tile locations
+  fp = open('soc_locs.h', 'w')
+
+  print_soc_locations(fp, esp_config, soc)
+
+  fp.close()
+
+  print("Created soc locations into 'soc_locs.h'")
 
 
   # Device tree
@@ -2410,31 +2521,21 @@ def create_socmap(esp_config, soc):
 
     print("Created device-tree into 'riscv.dts'")
 
-
   # RTL Caches configuration
   fp = open('cache_cfg.svh', 'w')
 
   print_cache_config(fp, soc, esp_config)
 
   fp.close()
-  
+
   print("Created RTL caches configuration into 'cache_cfg.svh'")
 
   #memory floorplanning for profpga-xcvu440
   if (soc.TECH == "virtexu") and esp_config.nmem > 1:
-    fp = open('mem_tile_floorplanning.xdc', 'w')  
-    
+    fp = open('mem_tile_floorplanning.xdc', 'w')
+
     print_floorplan_constraints(fp, soc, esp_config)
-    
+
     fp.close()
-    
+
     print("Created floorplanning constraints for profgpa-xcvu440 into 'mem_tile_floorplanning.xdc'")
-  
-  if esp_config.nmem != 0:
-    fp = open('S64esp', 'w')
-
-    print_load_script(fp, soc, esp_config)
-
-    fp.close()
-  
-    print("Created kernel module load script into 'S64esp'")

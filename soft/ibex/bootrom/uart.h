@@ -1,7 +1,7 @@
 #pragma once
 
 #include <stdint.h>
-#include "socmap.h"
+#include "esplink.h"
 
 #define UART_BASE 0x60000100
 

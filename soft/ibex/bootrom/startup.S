@@ -2,7 +2,7 @@
 #
 #
 #include <smp.h>
-#include "socmap.h"
+#include "esplink.h"
 #define DRAM_BASE 0x80000000
 #ifdef OVERRIDE_DRAM_SIZE
 #define SP_MAX (DRAM_BASE + (OVERRIDE_DRAM_SIZE >> 1) - 0x10)
