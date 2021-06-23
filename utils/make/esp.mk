@@ -29,11 +29,11 @@ $(ESP_CFG_BUILD)/socmap.vhd: $(ESP_CFG_BUILD)/.esp_config $(GRLIB_CFG_BUILD)/grl
 	echo "Generating ESP configuration..."; \
 	LD_LIBRARY_PATH="" xvfb-run -a python3 $(ESP_ROOT)/tools/socgen/esp_creator_batch.py $(NOC_WIDTH) $(TECHLIB) $(LINUX_MAC) $(LEON3_STACK)
 
-$(ESP_CFG_BUILD)/socmap.h: $(ESP_CFG_BUILD)/socmap.vhd
+$(ESP_CFG_BUILD)/esplink.h: $(ESP_CFG_BUILD)/socmap.vhd
 
 ESPLINK_SRCS = $(wildcard $(ESP_ROOT)/tools/esplink/src/*.c)
 ESPLINK_HDRS = $(wildcard $(ESP_ROOT)/tools/esplink/src/*.h)
-esplink: $(ESP_CFG_BUILD)/socmap.h $(ESPLINK_HDRS) $(ESPLINK_SRCS)
+esplink: $(ESP_CFG_BUILD)/esplink.h $(ESPLINK_HDRS) $(ESPLINK_SRCS)
 	$(QUIET_CC) \
 	cd $(ESP_CFG_BUILD); \
 	gcc -O3 -Wall -Werror -fmax-errors=5 \

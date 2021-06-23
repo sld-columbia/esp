@@ -5,7 +5,7 @@
 #include <string.h>
 
 #include <le.h>
-#include "socmap.h"
+#include "esplink.h"
 
 /**
  * fread()  and  fwrite()  return  the number of items successfully read

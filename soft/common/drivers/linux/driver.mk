@@ -11,7 +11,7 @@ endif
 ESP_CORE_PATH ?= $(DRIVERS)/esp
 
 all: check Module.symvers
-	make -C $(KSRC) M=`pwd` CROSS_COMPILE=$(CROSS_COMPILE) ARCH=$(ARCH)
+	make -C $(KSRC) M=`pwd` CROSS_COMPILE=$(CROSS_COMPILE) ARCH=$(ARCH) DESIGN_PATH=$(DESIGN_PATH)
 
 check:
 ifeq ($(KSRC),)

@@ -196,7 +196,7 @@ static void print_time_info(esp_thread_info_t *info[], unsigned long long hw_ns,
 		for (j = 0; j < len; j++) {
 			esp_thread_info_t* cur = info[i] + j;
 			if (cur->run)
-				printf("    - %s time: %llu ns\n", cur->devname, cur->hw_ns);
+				printf("	- %s time: %llu ns\n", cur->devname, cur->hw_ns);
 		}
 	}
 }
@@ -243,7 +243,7 @@ void esp_run_parallel(esp_thread_info_t* cfg[], unsigned nthreads, unsigned* nac
 				contig_handle_t *handle = lookup_handle(info->hw_buf, NULL);
 				contig_free(*handle);
 				die("Error: device name %s exceeds maximum length of 64 characters\n",
-				    info->devname);
+					info->devname);
 			}
 
 			sprintf(path, "%s%s", prefix, info->devname);
@@ -286,7 +286,6 @@ void esp_run_parallel(esp_thread_info_t* cfg[], unsigned nthreads, unsigned* nac
 
 	free(thread);
 }
-
 
 void esp_free(void *buf)
 {

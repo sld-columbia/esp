@@ -40,13 +40,11 @@ entity esp_tile_csr is
 end esp_tile_csr;
 
 architecture rtl of esp_tile_csr is
-    constant MONITOR_APB_OFFSET : integer := 4;
+    --burst register is at offset 0 in APB region, monitors start right after
+    constant BURST_REG_INDEX : integer := 0;
+    constant MONITOR_APB_OFFSET : integer := 1;
 
-    constant CRTL_RESET : integer := 0;
-    constant CTRL_WINDOW_SIZE_OFFSET : integer := 1;
-    constant CTRL_WINDOW_COUNT_LO_OFFSET : integer := 2;
-    constant CTRL_WINDOW_COUNT_HI_OFFSET : integer := 3;
-
+    --offsets of each monitor type into monitor APB region
     constant MON_DDR_WORD_TRANSFER_INDEX    : integer := 0;
     constant MON_MEM_COH_REQ_INDEX          : integer := 1;
     constant MON_MEM_COH_FWD_INDEX          : integer := 2;
@@ -76,19 +74,17 @@ architecture rtl of esp_tile_csr is
 
     constant MONITOR_REG_COUNT : integer := MON_NOC_QUEUES_FULL_BASE_INDEX + NOCS_NUM * NOC_QUEUES; --58
     constant REGISTER_WIDTH : integer := 32;
-    constant DEFAULT_WINDOW : std_logic_vector(REGISTER_WIDTH-1 downto 0) := conv_std_logic_vector(65536, REGISTER_WIDTH);
 
-    signal window_size  : std_logic_vector(REGISTER_WIDTH-1 downto 0);
-    signal time_counter : std_logic_vector(REGISTER_WIDTH-1 downto 0);
-    signal window_reset : std_logic;
-    signal new_window   : std_logic;
-    signal updated      : std_logic;
-    signal window_count : std_logic_vector(63 downto 0);
-    signal ctrl_rst     : std_logic_vector(REGISTER_WIDTH-1 downto 0);
-    signal readdata     : std_logic_vector(REGISTER_WIDTH-1 downto 0);
-    signal wdata        : std_logic_vector(REGISTER_WIDTH-1 downto 0);
-    signal ctrl_rst_sample         : std_ulogic;
-    signal ctrl_window_size_sample : std_ulogic;
+    signal burst                  : std_logic_vector(REGISTER_WIDTH-1 downto 0);
+    signal readdata               : std_logic_vector(REGISTER_WIDTH-1 downto 0);
+    signal wdata                  : std_logic_vector(REGISTER_WIDTH-1 downto 0);
+    signal burst_sample           : std_ulogic;
+    signal burst_start            : std_ulogic;
+    signal burst_state            : std_ulogic;
+    signal burst_state_next       : std_ulogic;
+    signal acc_state              : std_ulogic;
+    signal acc_state_next         : std_ulogic;
+    signal acc_rst                : std_ulogic;
 
     type counter_type is array (0 to MONITOR_REG_COUNT-1) of std_logic_vector(REGISTER_WIDTH-1 downto 0);
     signal count : counter_type;
@@ -169,7 +165,7 @@ architecture rtl of esp_tile_csr is
   tile_config <= config_r;
   csr_addr <= conv_integer(apbi.paddr(6 downto 2));
 
-  rd_registers : process(apbi, count_value, ctrl_rst, window_size, window_count, config_r, csr_addr)
+  rd_registers : process(apbi, count, count_value, burst, config_r, csr_addr)
     --TODO
     variable addr : integer range 0 to 127;
   begin
@@ -178,55 +174,60 @@ architecture rtl of esp_tile_csr is
 
     wdata <= apbi.pwdata;
 
-    ctrl_rst_sample <= '0';
-    ctrl_window_size_sample <= '0';
+    burst_sample <= '0';
     if addr = 0  then
-        ctrl_rst_sample <= apbi.psel(pindex) and apbi.penable and apbi.pwrite;
-    end if;
-    if addr = 1 then
-        ctrl_window_size_sample <= apbi.psel(pindex) and apbi.penable and apbi.pwrite;
+        burst_sample <= apbi.psel(pindex) and apbi.penable and apbi.pwrite;
     end if;
 
     if apbi.paddr(8 downto 7) = "11" then
       -- Config read access
       case csr_addr is
         when ESP_CSR_VALID_ADDR =>
-          readdata(ESP_CSR_VALID_MSB - ESP_CSR_VALID_LSB downto 0) <= config_r(ESP_CSR_VALID_MSB downto ESP_CSR_VALID_LSB);
+          readdata(ESP_CSR_VALID_MSB - ESP_CSR_VALID_LSB downto 0) <=
+            config_r(ESP_CSR_VALID_MSB downto ESP_CSR_VALID_LSB);
         when ESP_CSR_TILE_ID_ADDR =>
-          readdata(ESP_CSR_TILE_ID_MSB - ESP_CSR_TILE_ID_LSB downto 0) <= config_r(ESP_CSR_TILE_ID_MSB downto ESP_CSR_TILE_ID_LSB);
+          readdata(ESP_CSR_TILE_ID_MSB - ESP_CSR_TILE_ID_LSB downto 0) <=
+            config_r(ESP_CSR_TILE_ID_MSB downto ESP_CSR_TILE_ID_LSB);
         when ESP_CSR_PAD_CFG_ADDR =>
-          readdata(ESP_CSR_PAD_CFG_MSB - ESP_CSR_PAD_CFG_LSB downto 0) <= config_r(ESP_CSR_PAD_CFG_MSB downto ESP_CSR_PAD_CFG_LSB);
+          readdata(ESP_CSR_PAD_CFG_MSB - ESP_CSR_PAD_CFG_LSB downto 0) <=
+            config_r(ESP_CSR_PAD_CFG_MSB downto ESP_CSR_PAD_CFG_LSB);
         when ESP_CSR_DCO_CFG_ADDR =>
-          readdata(ESP_CSR_DCO_CFG_MSB - ESP_CSR_DCO_CFG_LSB downto 0) <= config_r(ESP_CSR_DCO_CFG_MSB downto ESP_CSR_DCO_CFG_LSB);
+          readdata(ESP_CSR_DCO_CFG_MSB - ESP_CSR_DCO_CFG_LSB downto 0) <=
+            config_r(ESP_CSR_DCO_CFG_MSB downto ESP_CSR_DCO_CFG_LSB);
         when ESP_CSR_DCO_NOC_CFG_ADDR =>
-          readdata(ESP_CSR_DCO_NOC_CFG_MSB - ESP_CSR_DCO_NOC_CFG_LSB downto 0) <= config_r(ESP_CSR_DCO_NOC_CFG_MSB downto ESP_CSR_DCO_NOC_CFG_LSB);
+          readdata(ESP_CSR_DCO_NOC_CFG_MSB - ESP_CSR_DCO_NOC_CFG_LSB downto 0) <=
+            config_r(ESP_CSR_DCO_NOC_CFG_MSB downto ESP_CSR_DCO_NOC_CFG_LSB);
         when ESP_CSR_MDC_SCALER_CFG_ADDR =>
-          readdata(ESP_CSR_MDC_SCALER_CFG_MSB - ESP_CSR_MDC_SCALER_CFG_LSB downto 0) <= config_r(ESP_CSR_MDC_SCALER_CFG_MSB downto ESP_CSR_MDC_SCALER_CFG_LSB);
+          readdata(ESP_CSR_MDC_SCALER_CFG_MSB - ESP_CSR_MDC_SCALER_CFG_LSB downto 0) <=
+            config_r(ESP_CSR_MDC_SCALER_CFG_MSB downto ESP_CSR_MDC_SCALER_CFG_LSB);
         when ESP_CSR_ARIANE_HARTID_ADDR =>
-          readdata(ESP_CSR_ARIANE_HARTID_MSB - ESP_CSR_ARIANE_HARTID_LSB downto 0) <= config_r(ESP_CSR_ARIANE_HARTID_MSB downto ESP_CSR_ARIANE_HARTID_LSB);
+          readdata(ESP_CSR_ARIANE_HARTID_MSB - ESP_CSR_ARIANE_HARTID_LSB downto 0) <=
+            config_r(ESP_CSR_ARIANE_HARTID_MSB downto ESP_CSR_ARIANE_HARTID_LSB);
         when ESP_CSR_CPU_LOC_OVR_ADDR =>
-          readdata(ESP_CSR_CPU_LOC_OVR_MSB - ESP_CSR_CPU_LOC_OVR_LSB downto 0) <= config_r(ESP_CSR_CPU_LOC_OVR_MSB downto ESP_CSR_CPU_LOC_OVR_LSB);
+          readdata(ESP_CSR_CPU_LOC_OVR_MSB - ESP_CSR_CPU_LOC_OVR_LSB downto 0) <=
+            config_r(ESP_CSR_CPU_LOC_OVR_MSB downto ESP_CSR_CPU_LOC_OVR_LSB);
         when ESP_CSR_DDR_CFG0_ADDR =>
-          readdata(ESP_CSR_DDR_CFG0_MSB - ESP_CSR_DDR_CFG0_LSB downto 0) <= config_r(ESP_CSR_DDR_CFG0_MSB downto ESP_CSR_DDR_CFG0_LSB);
+          readdata(ESP_CSR_DDR_CFG0_MSB - ESP_CSR_DDR_CFG0_LSB downto 0) <=
+            config_r(ESP_CSR_DDR_CFG0_MSB downto ESP_CSR_DDR_CFG0_LSB);
         when ESP_CSR_DDR_CFG1_ADDR =>
-          readdata(ESP_CSR_DDR_CFG1_MSB - ESP_CSR_DDR_CFG1_LSB downto 0) <= config_r(ESP_CSR_DDR_CFG1_MSB downto ESP_CSR_DDR_CFG1_LSB);
+          readdata(ESP_CSR_DDR_CFG1_MSB - ESP_CSR_DDR_CFG1_LSB downto 0) <=
+            config_r(ESP_CSR_DDR_CFG1_MSB downto ESP_CSR_DDR_CFG1_LSB);
         when ESP_CSR_DDR_CFG2_ADDR =>
-          readdata(ESP_CSR_DDR_CFG2_MSB - ESP_CSR_DDR_CFG2_LSB downto 0) <= config_r(ESP_CSR_DDR_CFG2_MSB downto ESP_CSR_DDR_CFG2_LSB);
+          readdata(ESP_CSR_DDR_CFG2_MSB - ESP_CSR_DDR_CFG2_LSB downto 0) <=
+            config_r(ESP_CSR_DDR_CFG2_MSB downto ESP_CSR_DDR_CFG2_LSB);
        when others =>
           readdata <= (others => '0');
       end case;
     else
       -- Monitors read access
       if addr = 0 then
-        readdata <= ctrl_rst;
-      elsif addr = 1 then
-        readdata <= window_size;
-      elsif addr = 2 then
-        readdata <= window_count(REGISTER_WIDTH-1 downto 0);
-      elsif addr = 3 then
-        readdata <= window_count(2*REGISTER_WIDTH-1 downto REGISTER_WIDTH);
+        readdata <= burst;
       elsif addr < MONITOR_REG_COUNT + MONITOR_APB_OFFSET then
-        readdata <= count_value(addr - MONITOR_APB_OFFSET);
+        if burst_state = '0' then
+            readdata <= count(addr - MONITOR_APB_OFFSET);
+        else
+            readdata <= count_value(addr - MONITOR_APB_OFFSET);
+        end if;
       end if;
     end if;
   end process rd_registers;
@@ -234,47 +235,50 @@ architecture rtl of esp_tile_csr is
   wr_registers : process(clk, rstn)
   begin
     if rstn =  '0' then
-        ctrl_rst <= (others => '0');
-        window_size <= DEFAULT_WINDOW;
-        window_reset <= '0';
+        burst <= (others => '0');
         config_r <= DEFAULT_CONFIG;
         srst <= '0';
     elsif clk'event and clk = '1' then
         -- Monitors
-        window_reset <= '0';
-        ctrl_rst <= (others => '0');
-        if ctrl_rst_sample = '1' then
-            ctrl_rst <= wdata;
-        end if;
-        if ctrl_window_size_sample = '1' then
-            window_size  <= wdata;
-            window_reset <= '1';
+        if burst_sample = '1' then
+            burst <= wdata;
         end if;
         -- Config write
         if apbi.paddr(8 downto 7) = "11" and (apbi.psel(pindex) and apbi.penable and apbi.pwrite) = '1' then
           case csr_addr is
             when ESP_CSR_VALID_ADDR =>
-              config_r(ESP_CSR_VALID_MSB downto ESP_CSR_VALID_LSB) <= apbi.pwdata(ESP_CSR_VALID_MSB - ESP_CSR_VALID_LSB downto 0);
+              config_r(ESP_CSR_VALID_MSB downto ESP_CSR_VALID_LSB) <=
+                apbi.pwdata(ESP_CSR_VALID_MSB - ESP_CSR_VALID_LSB downto 0);
             when ESP_CSR_TILE_ID_ADDR =>
-              config_r(ESP_CSR_TILE_ID_MSB downto ESP_CSR_TILE_ID_LSB) <= apbi.pwdata(ESP_CSR_TILE_ID_MSB - ESP_CSR_TILE_ID_LSB downto 0);
+              config_r(ESP_CSR_TILE_ID_MSB downto ESP_CSR_TILE_ID_LSB) <=
+                apbi.pwdata(ESP_CSR_TILE_ID_MSB - ESP_CSR_TILE_ID_LSB downto 0);
             when ESP_CSR_PAD_CFG_ADDR =>
-              config_r(ESP_CSR_PAD_CFG_MSB downto ESP_CSR_PAD_CFG_LSB) <= apbi.pwdata(ESP_CSR_PAD_CFG_MSB - ESP_CSR_PAD_CFG_LSB downto 0);
+              config_r(ESP_CSR_PAD_CFG_MSB downto ESP_CSR_PAD_CFG_LSB) <=
+                apbi.pwdata(ESP_CSR_PAD_CFG_MSB - ESP_CSR_PAD_CFG_LSB downto 0);
             when ESP_CSR_DCO_CFG_ADDR =>
-              config_r(ESP_CSR_DCO_CFG_MSB downto ESP_CSR_DCO_CFG_LSB) <= apbi.pwdata(ESP_CSR_DCO_CFG_MSB - ESP_CSR_DCO_CFG_LSB downto 0);
+              config_r(ESP_CSR_DCO_CFG_MSB downto ESP_CSR_DCO_CFG_LSB) <=
+                apbi.pwdata(ESP_CSR_DCO_CFG_MSB - ESP_CSR_DCO_CFG_LSB downto 0);
             when ESP_CSR_DCO_NOC_CFG_ADDR =>
-              config_r(ESP_CSR_DCO_NOC_CFG_MSB downto ESP_CSR_DCO_NOC_CFG_LSB) <= apbi.pwdata(ESP_CSR_DCO_NOC_CFG_MSB - ESP_CSR_DCO_NOC_CFG_LSB downto 0);
+              config_r(ESP_CSR_DCO_NOC_CFG_MSB downto ESP_CSR_DCO_NOC_CFG_LSB) <=
+                apbi.pwdata(ESP_CSR_DCO_NOC_CFG_MSB - ESP_CSR_DCO_NOC_CFG_LSB downto 0);
             when ESP_CSR_MDC_SCALER_CFG_ADDR =>
-              config_r(ESP_CSR_MDC_SCALER_CFG_MSB downto ESP_CSR_MDC_SCALER_CFG_LSB) <= apbi.pwdata(ESP_CSR_MDC_SCALER_CFG_MSB - ESP_CSR_MDC_SCALER_CFG_LSB downto 0);
+              config_r(ESP_CSR_MDC_SCALER_CFG_MSB downto ESP_CSR_MDC_SCALER_CFG_LSB) <=
+                apbi.pwdata(ESP_CSR_MDC_SCALER_CFG_MSB - ESP_CSR_MDC_SCALER_CFG_LSB downto 0);
             when ESP_CSR_ARIANE_HARTID_ADDR =>
-              config_r(ESP_CSR_ARIANE_HARTID_MSB downto ESP_CSR_ARIANE_HARTID_LSB) <= apbi.pwdata(ESP_CSR_ARIANE_HARTID_MSB - ESP_CSR_ARIANE_HARTID_LSB downto 0);
+              config_r(ESP_CSR_ARIANE_HARTID_MSB downto ESP_CSR_ARIANE_HARTID_LSB) <=
+                apbi.pwdata(ESP_CSR_ARIANE_HARTID_MSB - ESP_CSR_ARIANE_HARTID_LSB downto 0);
             when ESP_CSR_CPU_LOC_OVR_ADDR =>
-              config_r(ESP_CSR_CPU_LOC_OVR_MSB downto ESP_CSR_CPU_LOC_OVR_LSB) <= apbi.pwdata(ESP_CSR_CPU_LOC_OVR_MSB - ESP_CSR_CPU_LOC_OVR_LSB downto 0);
+              config_r(ESP_CSR_CPU_LOC_OVR_MSB downto ESP_CSR_CPU_LOC_OVR_LSB) <=
+                apbi.pwdata(ESP_CSR_CPU_LOC_OVR_MSB - ESP_CSR_CPU_LOC_OVR_LSB downto 0);
             when ESP_CSR_DDR_CFG0_ADDR =>
-              config_r(ESP_CSR_DDR_CFG0_MSB downto ESP_CSR_DDR_CFG0_LSB) <= apbi.pwdata(ESP_CSR_DDR_CFG0_MSB - ESP_CSR_DDR_CFG0_LSB downto 0);
+              config_r(ESP_CSR_DDR_CFG0_MSB downto ESP_CSR_DDR_CFG0_LSB) <=
+                apbi.pwdata(ESP_CSR_DDR_CFG0_MSB - ESP_CSR_DDR_CFG0_LSB downto 0);
             when ESP_CSR_DDR_CFG1_ADDR =>
-              config_r(ESP_CSR_DDR_CFG1_MSB downto ESP_CSR_DDR_CFG1_LSB) <= apbi.pwdata(ESP_CSR_DDR_CFG1_MSB - ESP_CSR_DDR_CFG1_LSB downto 0);
+              config_r(ESP_CSR_DDR_CFG1_MSB downto ESP_CSR_DDR_CFG1_LSB) <=
+                apbi.pwdata(ESP_CSR_DDR_CFG1_MSB - ESP_CSR_DDR_CFG1_LSB downto 0);
             when ESP_CSR_DDR_CFG2_ADDR =>
-              config_r(ESP_CSR_DDR_CFG2_MSB downto ESP_CSR_DDR_CFG2_LSB) <= apbi.pwdata(ESP_CSR_DDR_CFG2_MSB - ESP_CSR_DDR_CFG2_LSB downto 0);
+              config_r(ESP_CSR_DDR_CFG2_MSB downto ESP_CSR_DDR_CFG2_LSB) <=
+                apbi.pwdata(ESP_CSR_DDR_CFG2_MSB - ESP_CSR_DDR_CFG2_LSB downto 0);
             when ESP_CSR_SRST_ADDR =>
               srst <= wdata(0);
             when others => null;
@@ -283,46 +287,53 @@ architecture rtl of esp_tile_csr is
     end if;
   end process wr_registers;
 
-  time_stamp_update: process (clk, rstn)
-    variable new_window_setup : std_logic_vector(REGISTER_WIDTH-1 downto 0);
-  begin -- process time_stamp_update
-    if rstn = '0' then         -- asynchronous reset (active low)
-      new_window <= '0';
-      window_count <= (others => '0');
-      time_counter <= (others => '0');
-      new_window_setup := (others => '0');
-    elsif clk'event and clk = '1' then -- rising clock edge
-      new_window_setup := window_size - conv_std_logic_vector(64, REGISTER_WIDTH);
-      -- Advance time
-      time_counter <= time_counter + 1;
-      -- Advance window count
-      if time_counter = window_size or window_reset = '1' or ctrl_rst(0) = '1' then
-        time_counter <= (others => '0');
-        window_count <= window_count + 1;
-        new_window <= '1';
-      end if;
-
-      if time_counter = conv_std_logic_vector(10, REGISTER_WIDTH) then
-        -- hold new_window for 10 cycles to make sure perf. counters get the reset.
-        new_window <= '0';
-      end if;
-
+  --reset accelerator cycle counters at start of invoation
+  acc_state_reg : process(clk, rstn)
+  begin
+    if rstn = '0' then
+      acc_state <= '0';
+    elsif clk'event and clk = '1' then
+      acc_state <= acc_state_next;
     end if;
-  end process time_stamp_update;
+  end process acc_state_reg;
 
-  update : process(clk, rstn)
-  begin --process
-      if rstn = '0' then
-        updated <= '0';
-      elsif clk'event and clk = '1' then
-        if new_window = '1' and updated = '0' then
-          updated <= '1';
-        elsif new_window = '0' then
-          updated <= '0';
-        end if;
+  acc_reset  : process(mon_acc, acc_state)
+  begin
+    acc_state_next <= acc_state;
+    acc_rst <= '0';
+    if acc_state = '0' then
+      if mon_acc.go = '1' and mon_acc.done = '0' then
+        acc_state_next <= '1';
+        acc_rst <= '1';
       end if;
-  end process;
+    else
+      if mon_acc.done = '1' then
+        acc_state_next <= '0';
+      end if;
+    end if;
+  end process acc_reset;
 
+  --"burst" mode provides synchronization to all monitors in a tile
+  --by sampling all counters to a different set of registers, while
+  --the counters continue to increment. Any queries are served to this
+  --second set of monitors until burst mode is cleared
+  burst_state_reg : process(clk, rstn)
+  begin
+    if rstn = '0' then
+        burst_state <= '0';
+    elsif clk'event and clk = '1' then
+        burst_state <= burst_state_next;
+    end if;
+  end process burst_state_reg;
+
+  burst_fsm : process(burst, burst_state)
+  begin
+    burst_start <= '0';
+    burst_state_next <= burst(0);
+    if burst(0) = '1' and burst_state = '0' then
+      burst_start <= '1';
+    end if;
+  end process burst_fsm;
 
   counters : process (clk, rstn)
     variable accelerator_mem_count : std_logic_vector(2*REGISTER_WIDTH-1 downto 0);
@@ -367,7 +378,6 @@ architecture rtl of esp_tile_csr is
       if mon_mem.coherent_dma_rsp = '1' then
         count(MON_MEM_COH_DMA_RSP_INDEX) <= count(MON_MEM_COH_DMA_RSP_INDEX) + 1;
       end if;
-
       --L2
       if mon_l2.hit = '1' then
         count(MON_L2_HIT_INDEX) <= count(MON_L2_HIT_INDEX) + 1;
@@ -417,16 +427,19 @@ architecture rtl of esp_tile_csr is
 
         for Q in 0 to NOC_QUEUES -1 loop
           if mon_noc(N).queue_full(Q)  = '1' then
-            count(MON_NOC_QUEUES_FULL_BASE_INDEX + NOC_QUEUES*(N-1) + Q) <= count(MON_NOC_QUEUES_FULL_BASE_INDEX + NOC_QUEUES*(N-1) + Q) + 1;
+            count(MON_NOC_QUEUES_FULL_BASE_INDEX + NOC_QUEUES*(N-1) + Q) <=
+                count(MON_NOC_QUEUES_FULL_BASE_INDEX + NOC_QUEUES*(N-1) + Q) + 1;
           end if;
         end loop;
       end loop;
 
-      if new_window = '1' and updated = '0' then
+      if burst_start = '1' then
         for R in 0 to MONITOR_REG_COUNT - 1 loop
-          count(R) <= (others => '0');
           count_value(R) <= count(R);
         end loop;
+      end if;
+
+      if acc_rst = '1' then
         accelerator_tlb_count := (others => '0');
         accelerator_mem_count := (others => '0');
         accelerator_tot_count := (others => '0');
