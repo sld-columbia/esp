@@ -5,7 +5,7 @@
 #include <stdlib.h>
 #include <getopt.h>
 
-#include "socmap.h"
+#include "esplink.h"
 #include "edcl.h"
 
 static char *exe;

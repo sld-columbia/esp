@@ -12,7 +12,7 @@
 #include <uart.h>
 #endif
 
-#include "socmap.h"
+#include "esplink.h"
 
 #ifndef __ESP_PROBE_H__
 #define __ESP_PROBE_H__
