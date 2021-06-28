@@ -577,55 +577,79 @@ module ariane_wrap
    // CLINT
    // ---------------
    //    AW
-   assign clint_aw_id = master[CLINT].aw_id;
-   assign clint_aw_addr = master[CLINT].aw_addr;
-   assign clint_aw_len = master[CLINT].aw_len;
-   assign clint_aw_size = master[CLINT].aw_size;
-   assign clint_aw_burst = master[CLINT].aw_burst;
-   assign clint_aw_lock = master[CLINT].aw_lock;
-   assign clint_aw_cache = master[CLINT].aw_cache;
-   assign clint_aw_prot = master[CLINT].aw_prot;
-   assign clint_aw_qos = master[CLINT].aw_qos;
-   assign clint_aw_atop = master[CLINT].aw_atop;
-   assign clint_aw_region = master[CLINT].aw_region;
-   assign clint_aw_user = master[CLINT].aw_user;
-   assign clint_aw_valid = master[CLINT].aw_valid;
-   assign master[CLINT].aw_ready = clint_aw_ready;
+   AXI_BUS
+     #(
+       .AXI_ADDR_WIDTH ( AXI_ADDR_WIDTH   ),
+       .AXI_DATA_WIDTH ( AXI_DATA_WIDTH   ),
+       .AXI_ID_WIDTH   ( AXI_ID_WIDTH_SLV ),
+       .AXI_USER_WIDTH ( AXI_USER_WIDTH   )
+       ) clint();
+
+   axi_riscv_atomics_wrap
+          #(
+            .AXI_ADDR_WIDTH ( AXI_ADDR_WIDTH   ),
+            .AXI_DATA_WIDTH ( AXI_DATA_WIDTH   ),
+            .AXI_ID_WIDTH   ( AXI_ID_WIDTH_SLV ),
+            .AXI_USER_WIDTH ( AXI_USER_WIDTH   ),
+            .AXI_MAX_WRITE_TXNS ( 1  ),
+            .RISCV_WORD_WIDTH   ( 64 )
+            ) i_axi_riscv_atomics
+            (
+             .clk_i  ( clk          ),
+             .rst_ni ( rstn         ),
+             .slv    ( master[CLINT] ),
+             .mst    ( clint         )
+             );
+
+   assign clint_aw_id = clint.aw_id;
+   assign clint_aw_addr = clint.aw_addr;
+   assign clint_aw_len = clint.aw_len;
+   assign clint_aw_size = clint.aw_size;
+   assign clint_aw_burst = clint.aw_burst;
+   assign clint_aw_lock = clint.aw_lock;
+   assign clint_aw_cache = clint.aw_cache;
+   assign clint_aw_prot = clint.aw_prot;
+   assign clint_aw_qos = clint.aw_qos;
+   assign clint_aw_atop = clint.aw_atop;
+   assign clint_aw_region = clint.aw_region;
+   assign clint_aw_user = clint.aw_user;
+   assign clint_aw_valid = clint.aw_valid;
+   assign clint.aw_ready = clint_aw_ready;
    //    W
-   assign clint_w_data = master[CLINT].w_data;
-   assign clint_w_strb = master[CLINT].w_strb;
-   assign clint_w_last = master[CLINT].w_last;
-   assign clint_w_user = master[CLINT].w_user;
-   assign clint_w_valid = master[CLINT].w_valid;
-   assign master[CLINT].w_ready = clint_w_ready;
+   assign clint_w_data = clint.w_data;
+   assign clint_w_strb = clint.w_strb;
+   assign clint_w_last = clint.w_last;
+   assign clint_w_user = clint.w_user;
+   assign clint_w_valid = clint.w_valid;
+   assign clint.w_ready = clint_w_ready;
    //    B
-   assign master[CLINT].b_id = clint_b_id;
-   assign master[CLINT].b_resp = clint_b_resp;
-   assign master[CLINT].b_user = clint_b_user;
-   assign master[CLINT].b_valid = clint_b_valid;
-   assign clint_b_ready = master[CLINT].b_ready;
+   assign clint.b_id = clint_b_id;
+   assign clint.b_resp = 2'b01;
+   assign clint.b_user = clint_b_user;
+   assign clint.b_valid = clint_b_valid;
+   assign clint_b_ready = clint.b_ready;
    //    AR
-   assign clint_ar_id = master[CLINT].ar_id;
-   assign clint_ar_addr = master[CLINT].ar_addr;
-   assign clint_ar_len = master[CLINT].ar_len;
-   assign clint_ar_size = master[CLINT].ar_size;
-   assign clint_ar_burst = master[CLINT].ar_burst;
-   assign clint_ar_lock = master[CLINT].ar_lock;
-   assign clint_ar_cache = master[CLINT].ar_cache;
-   assign clint_ar_prot = master[CLINT].ar_prot;
-   assign clint_ar_qos = master[CLINT].ar_qos;
-   assign clint_ar_region = master[CLINT].ar_region;
-   assign clint_ar_user = master[CLINT].ar_user;
-   assign clint_ar_valid = master[CLINT].ar_valid;
-   assign master[CLINT].ar_ready = clint_ar_ready;
+   assign clint_ar_id = clint.ar_id;
+   assign clint_ar_addr = clint.ar_addr;
+   assign clint_ar_len = clint.ar_len;
+   assign clint_ar_size = clint.ar_size;
+   assign clint_ar_burst = clint.ar_burst;
+   assign clint_ar_lock = clint.ar_lock;
+   assign clint_ar_cache = clint.ar_cache;
+   assign clint_ar_prot = clint.ar_prot;
+   assign clint_ar_qos = clint.ar_qos;
+   assign clint_ar_region = clint.ar_region;
+   assign clint_ar_user = clint.ar_user;
+   assign clint_ar_valid = clint.ar_valid;
+   assign clint.ar_ready = clint_ar_ready;
    //    R
-   assign master[CLINT].r_id = clint_r_id;
-   assign master[CLINT].r_data = clint_r_data;
-   assign master[CLINT].r_resp = clint_r_resp;
-   assign master[CLINT].r_last = clint_r_last;
-   assign master[CLINT].r_user = clint_r_user;
-   assign master[CLINT].r_valid = clint_r_valid;
-   assign clint_r_ready = master[CLINT].r_ready;
+   assign clint.r_id = clint_r_id;
+   assign clint.r_data = clint_r_data;
+   assign clint.r_resp = clint_r_resp;
+   assign clint.r_last = clint_r_last;
+   assign clint.r_user = clint_r_user;
+   assign clint.r_valid = clint_r_valid;
+   assign clint_r_ready = clint.r_ready;
 
 
    // ---------------
