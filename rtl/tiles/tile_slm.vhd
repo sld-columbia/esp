@@ -41,16 +41,17 @@ entity tile_slm is
     dco_rst_cfg  : std_logic_vector(22 downto 0) := (others => '0'));
   port (
     raw_rstn           : in  std_ulogic;
-    rst                : in  std_ulogic;
+    tile_rst           : in  std_ulogic;
     clk                : in  std_ulogic;
     refclk             : in  std_ulogic;
     pllbypass          : in  std_ulogic;
     pllclk             : out std_ulogic;
     dco_clk            : out std_ulogic;
-    dco_clk_lock       : out std_ulogic;
     -- DDR controller ports (this_has_ddr -> 1)
     dco_clk_div2       : out std_ulogic;
     dco_clk_div2_90    : out std_ulogic;
+    dco_rstn           : out std_ulogic;
+    phy_rstn           : out std_ulogic;
     ddr_ahbsi          : out ahb_slv_in_type;
     ddr_ahbso          : in  ahb_slv_out_type;
     ddr_cfg0           : out std_logic_vector(31 downto 0);
@@ -111,6 +112,8 @@ end;
 
 architecture rtl of tile_slm is
 
+  -- Tile synchronous reset
+  signal rst : std_ulogic;
 
   -- DCO
   signal dco_en       : std_ulogic;
@@ -119,10 +122,13 @@ architecture rtl of tile_slm is
   signal dco_fc_sel   : std_logic_vector(5 downto 0);
   signal dco_div_sel  : std_logic_vector(2 downto 0);
   signal dco_freq_sel : std_logic_vector(1 downto 0);
+  signal dco_clk_lock : std_ulogic;
+  signal dco_clk_int  : std_ulogic;
 
   -- Delay line for DDR ui_clk delay
-  signal dco_clk_div2_int : std_logic;
-  signal dco_clk_delay_sel : std_logic_vector(3 downto 0);
+  signal dco_clk_div2_int    : std_logic;
+  signal dco_clk_div2_90_int : std_logic;
+  signal dco_clk_delay_sel   : std_logic_vector(3 downto 0);
   component DELAY_CELL_GF12_C14 is
     port (
       data_in : in std_logic;
@@ -220,6 +226,35 @@ begin
   local_x <= this_local_x;
   local_y <= this_local_y;
 
+  -- DCO Reset synchronizer
+  rst_gen : if this_has_dco /= 0 generate
+    rst_ddr : if this_has_ddr /= 0 generate
+      tile_rstn : rstgen
+        generic map (acthigh => 1, syncin => 0)
+        port map (tile_rst, dco_clk_div2_90_int, dco_clk_lock, rst, open);
+
+      -- DDR PHY reset
+      ddr_rstn : rstgen
+        generic map (acthigh => 1, syncin => 0)
+        port map (tile_rst, dco_clk_div2_int, dco_clk_lock, phy_rstn, open);
+    end generate rst_ddr;
+
+    rst_slm: if this_has_ddr = 0 generate 
+      tile_rstn : rstgen
+        generic map (acthigh => 1, syncin => 0)
+        port map (tile_rst, dco_clk_int, dco_clk_lock, rst, open);
+      phy_rstn <= rst;
+    end generate rst_slm;
+
+  end generate rst_gen;
+
+  no_rst_gen: if this_has_dco = 0 generate
+    rst <= tile_rst;
+    phy_rstn <= tile_rst;
+  end generate no_rst_gen;
+
+  dco_rstn <= rst;
+
   -- DCO
   dco_gen: if this_has_dco /= 0 generate
 
@@ -238,24 +273,22 @@ begin
         fc_sel   => dco_fc_sel,
         div_sel  => dco_div_sel,
         freq_sel => dco_freq_sel,
-        clk      => dco_clk,
+        clk      => dco_clk_int,
         clk_div2 => dco_clk_div2_int,
         clk_div2_90 => open,
         clk_div  => pllclk,
         lock     => dco_clk_lock);
-
-    dco_clk_div2 <= dco_clk_div2_int;
 
     clk_delay_gf12_gen: if CFG_FABTECH = gf12 generate
       DELAY_CELL_GF12_C14_1: DELAY_CELL_GF12_C14
         port map (
           data_in  => dco_clk_div2_int,
           sel      => dco_clk_delay_sel,
-          data_out => dco_clk_div2_90);
+          data_out => dco_clk_div2_90_int);
     end generate clk_delay_gf12_gen;
 
     noc_clk_delay_gen: if CFG_FABTECH /= gf12 generate
-      dco_clk_div2_90 <= dco_clk_div2_int;
+      dco_clk_div2_90_int <= dco_clk_div2_int;
     end generate noc_clk_delay_gen;
 
   end generate dco_gen;
@@ -269,12 +302,16 @@ begin
   dco_en       <= raw_rstn and tile_config(ESP_CSR_DCO_CFG_LSB);
 
   no_dco_gen: if this_has_dco = 0 generate
-    pllclk          <= '0';
-    dco_clk         <= '0';
-    dco_clk_lock    <= '1';
-    dco_clk_div2    <= '0';
-    dco_clk_div2_90 <= '0';
+    pllclk              <= '0';
+    dco_clk_int         <= '0';
+    dco_clk_lock        <= '1';
+    dco_clk_div2_int    <= '0';
+    dco_clk_div2_90_int <= '0';
   end generate no_dco_gen;
+
+  dco_clk         <= dco_clk_int;
+  dco_clk_div2    <= dco_clk_div2_int;
+  dco_clk_div2_90 <= dco_clk_div2_90_int;
 
   -- DDR Controller configuration
   ddr_cfg0 <= tile_config(ESP_CSR_DDR_CFG0_MSB downto ESP_CSR_DDR_CFG0_LSB);

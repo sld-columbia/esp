@@ -32,7 +32,6 @@ package tiles_fpga_pkg is
       pllbypass          : in  std_ulogic;
       pllclk             : out std_ulogic;
       dco_clk            : out std_ulogic;
-      dco_clk_lock       : out std_ulogic;
       cpuerr             : out std_ulogic;
       -- Test interface
       tdi                : in  std_logic;
@@ -142,7 +141,6 @@ package tiles_fpga_pkg is
       pllbypass          : in  std_ulogic;
       pllclk             : out std_ulogic;
       dco_clk            : out std_ulogic;
-      dco_clk_lock       : out std_ulogic;
       -- Test interface
       tdi                : in  std_logic;
       tdo                : out std_logic;
@@ -251,7 +249,6 @@ package tiles_fpga_pkg is
       pllbypass          : in  std_ulogic;
       pllclk             : out std_ulogic;
       dco_clk            : out std_ulogic;
-      dco_clk_lock       : out std_ulogic;
       -- Test interface
       tdi                : in  std_logic;
       tdo                : out std_logic;
@@ -374,7 +371,6 @@ package tiles_fpga_pkg is
       pllbypass          : in  std_ulogic;
       pllclk             : out std_ulogic;
       dco_clk            : out std_ulogic;
-      dco_clk_lock       : out std_ulogic;
       -- DDR controller ports (this_has_ddr -> 1)
       dco_clk_div2       : out std_ulogic;
       dco_clk_div2_90    : out std_ulogic;
@@ -497,7 +493,6 @@ package tiles_fpga_pkg is
       pllbypass          : in  std_ulogic;
       pllclk             : out std_ulogic;
       dco_clk            : out std_ulogic;
-      dco_clk_lock       : out std_ulogic;
       -- Test interface
       tdi                : in  std_logic;
       tdo                : out std_logic;
@@ -599,7 +594,6 @@ package tiles_fpga_pkg is
       pllbypass          : in  std_ulogic;
       pllclk             : out std_ulogic;
       dco_clk            : out std_ulogic;
-      dco_clk_lock       : out std_ulogic;
       -- DDR controller ports (this_has_ddr -> 1)
       dco_clk_div2       : out std_ulogic;
       dco_clk_div2_90    : out std_ulogic;

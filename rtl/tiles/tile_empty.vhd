@@ -40,13 +40,13 @@ entity tile_empty is
     this_has_dco : integer range 0 to 1 := 0);
   port (
     raw_rstn           : in  std_ulogic;
-    rst                : in  std_logic;
+    tile_rst           : in  std_logic;
     clk                : in  std_logic;
     refclk             : in  std_ulogic;
     pllbypass          : in  std_ulogic;
     pllclk             : out std_ulogic;
     dco_clk            : out std_ulogic;
-    dco_clk_lock       : out std_ulogic;
+    dco_rstn           : out std_ulogic;
     -- Pads configuration
     pad_cfg            : out std_logic_vector(ESP_CSR_PAD_CFG_MSB - ESP_CSR_PAD_CFG_LSB downto 0);
     -- NoC
@@ -100,6 +100,9 @@ end;
 
 architecture rtl of tile_empty is
 
+  -- Tile synchronous reset
+  signal rst : std_ulogic;
+
   -- DCO
   signal dco_en       : std_ulogic;
   signal dco_clk_sel  : std_ulogic;
@@ -107,6 +110,8 @@ architecture rtl of tile_empty is
   signal dco_fc_sel   : std_logic_vector(5 downto 0);
   signal dco_div_sel  : std_logic_vector(2 downto 0);
   signal dco_freq_sel : std_logic_vector(1 downto 0);
+  signal dco_clk_lock : std_ulogic;
+  signal dco_clk_int  : std_ulogic;
 
   -- Queues
   signal apb_rcv_rdreq    : std_ulogic;
@@ -146,6 +151,21 @@ begin
   local_x <= this_local_x;
   local_y <= this_local_y;
 
+  -- DCO Reset synchronizer
+  dco_clk <= dco_clk_int;
+
+  rst_gen: if this_has_dco /= 0 generate
+    tile_rstn : rstgen
+      generic map (acthigh => 1, syncin => 0)
+      port map (tile_rst, dco_clk_int, dco_clk_lock, rst, open);
+  end generate rst_gen;
+
+  no_rst_gen: if this_has_dco = 0 generate
+    rst <= tile_rst;
+  end generate no_rst_gen;
+
+  dco_rstn <= rst;
+
   -- DCO
   dco_gen: if this_has_dco /= 0 generate
 
@@ -164,7 +184,7 @@ begin
         fc_sel   => dco_fc_sel,
         div_sel  => dco_div_sel,
         freq_sel => dco_freq_sel,
-        clk      => dco_clk,
+        clk      => dco_clk_int,
         clk_div  => pllclk,
         lock     => dco_clk_lock);
 
@@ -179,7 +199,7 @@ begin
 
   no_dco_gen: if this_has_dco = 0 generate
     pllclk       <= '0';
-    dco_clk      <= '0';
+    dco_clk_int  <= '0';
     dco_clk_lock <= '1';
   end generate no_dco_gen;
 

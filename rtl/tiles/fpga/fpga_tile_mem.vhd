@@ -47,7 +47,6 @@ entity fpga_tile_mem is
     pllbypass          : in  std_ulogic;
     pllclk             : out std_ulogic;
     dco_clk            : out std_ulogic;
-    dco_clk_lock       : out std_ulogic;
     -- DDR controller ports (this_has_ddr -> 1)
     dco_clk_div2       : out std_ulogic;
     dco_clk_div2_90    : out std_ulogic;
@@ -164,6 +163,9 @@ architecture rtl of fpga_tile_mem is
   -- Tile parameters
   signal this_local_y : local_yx;
   signal this_local_x : local_yx;
+
+  -- DCO reset -> keeping the logic compliant with the asic flow
+  signal dco_rstn : std_ulogic;
 
   signal test1_output_port_s   : noc_flit_type;
   signal test1_data_void_out_s : std_ulogic;
@@ -400,6 +402,7 @@ begin
     port map (
       rst                 => rst,
       refclk              => clk,
+      tile_rst            => dco_rstn,
       tdi                 => tdi,
       tdo                 => tdo,
       tms                 => tms,
@@ -525,6 +528,7 @@ begin
      clk                => sys_clk_int,
      clk_tile           => clk,
      rst                => rst,
+     rst_tile           => dco_rstn,
      CONST_local_x      => this_local_x,
      CONST_local_y      => this_local_y,
      noc1_data_n_in     => noc1_data_n_in,
@@ -628,15 +632,16 @@ begin
       dco_rst_cfg  => (others => '0'))
     port map (
       raw_rstn           => raw_rstn,
-      rst                => rst,
+      tile_rst           => rst,
       refclk             => refclk,
       clk                => clk,
       pllbypass          => pllbypass, 
       pllclk             => pllclk,
       dco_clk            => dco_clk,
-      dco_clk_lock       => dco_clk_lock,
       dco_clk_div2       => dco_clk_div2,
       dco_clk_div2_90    => dco_clk_div2_90,
+      dco_rstn           => dco_rstn,
+      phy_rstn           => open,
       ddr_ahbsi          => ddr_ahbsi,
       ddr_ahbso          => ddr_ahbso,
       ddr_cfg0           => ddr_cfg0,

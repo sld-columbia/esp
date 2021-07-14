@@ -132,7 +132,7 @@ architecture rtl of asic_tile_acc is
   signal raw_rstn     : std_ulogic;
   signal dco_clk      : std_ulogic;
   signal dco_rstn     : std_ulogic;
-  signal dco_clk_lock : std_ulogic;
+--  signal dco_clk_lock : std_ulogic;
 
   -- Tile parameters
   signal this_local_y : local_yx;
@@ -140,6 +140,7 @@ architecture rtl of asic_tile_acc is
 
 
   -- Tile interface signals
+  signal test_rstn             : std_ulogic;
   signal test1_output_port_s   : noc_flit_type;
   signal test1_data_void_out_s : std_ulogic;
   signal test1_stop_in_s       : std_ulogic;
@@ -185,6 +186,7 @@ architecture rtl of asic_tile_acc is
   signal noc6_mon_noc_vec_int  : monitor_noc_type;
 
   -- Noc signals
+  signal noc_rstn               : std_ulogic;
   signal noc1_stop_in_s         : std_logic_vector(4 downto 0);
   signal noc1_stop_out_s        : std_logic_vector(4 downto 0);
   signal noc1_acc_stop_in       : std_ulogic;
@@ -358,9 +360,19 @@ architecture rtl of asic_tile_acc is
 
 begin
 
-  rst1 : rstgen                         -- reset generator
+--  rst1 : rstgen                         -- reset generator
+--    generic map (acthigh => 1, syncin => 0)
+--    port map (rst, dco_clk, dco_clk_lock, dco_rstn, raw_rstn);
+
+  raw_rstn <= not rst;
+
+  rst_noc : rstgen                         -- reset generator
     generic map (acthigh => 1, syncin => 0)
-    port map (rst, dco_clk, dco_clk_lock, dco_rstn, raw_rstn);
+    port map (rst, sys_clk, '1', noc_rstn, open);
+
+  rst_jtag : rstgen                         -- reset generator
+    generic map (acthigh => 1, syncin => 0)
+    port map (rst, tclk, '1', test_rstn, open);
 
   -----------------------------------------------------------------------------
   -- JTAG for single tile testing / bypass when test_if_en = 0
@@ -369,8 +381,9 @@ begin
     generic map (
       test_if_en => 1)
     port map (
-      rst                 => dco_rstn,
+      rst                 => test_rstn,
       refclk              => dco_clk,
+      tile_rst            => dco_rstn,
       tdi                 => tdi,
       tdo                 => tdo,
       tms                 => tms,
@@ -495,7 +508,8 @@ begin
    port map (
      clk                => sys_clk,
      clk_tile           => dco_clk,
-     rst                => dco_rstn,
+     rst                => noc_rstn,
+     rst_tile           => dco_rstn,
      CONST_local_x      => this_local_x,
      CONST_local_y      => this_local_y,
      noc1_data_n_in     => noc1_data_n_in,
@@ -602,12 +616,12 @@ begin
       this_extra_clk_buf => 0)
     port map (
       raw_rstn           => raw_rstn,
-      rst                => dco_rstn,
+      tile_rst           => rst,
       refclk             => ext_clk,
       pllbypass          => ext_clk_sel_default,  --ext_clk_sel,
       pllclk             => clk_div,
       dco_clk            => dco_clk,
-      dco_clk_lock       => dco_clk_lock,
+      dco_rstn           => dco_rstn,
       pad_cfg            => pad_cfg,
       local_x            => this_local_x,
       local_y            => this_local_y,
