@@ -42,7 +42,7 @@ entity tile_io is
     this_has_dco : integer range 0 to 1 := 0);
   port (
     raw_rstn           : in  std_ulogic;  -- active low raw reset (connect to DCO if present)
-    rst                : in  std_ulogic;  -- active low tile reset synch on clk
+    tile_rst           : in  std_ulogic;  -- active low tile reset synch on clk
     clk                : in  std_ulogic;  -- tile clock (connect to external clock or DCO clock)
     refclk_noc         : in  std_ulogic;  -- NoC DCO external backup clock
     pllclk_noc         : out std_ulogic;  -- NoC DCO test out clock
@@ -50,7 +50,7 @@ entity tile_io is
     pllbypass          : in  std_ulogic;  -- unused
     pllclk             : out std_ulogic;  -- tile DCO test out clock
     dco_clk            : out std_ulogic;  -- tile clock (if DCO is present)
-    dco_clk_lock       : out std_ulogic;  -- tile DCO lock
+    dco_rstn           : out std_ulogic;  -- tile reset output (if DCO is present)
     local_x            : out local_yx;
     local_y            : out local_yx;
     -- Ethernet MDC Scaler configuration
@@ -125,6 +125,8 @@ end;
 
 architecture rtl of tile_io is
 
+  -- Tile synchronous reset
+  signal rst : std_ulogic;
 
   -- DCO
   signal dco_noc_en       : std_ulogic;
@@ -140,6 +142,8 @@ architecture rtl of tile_io is
   signal dco_fc_sel   : std_logic_vector(5 downto 0);
   signal dco_div_sel  : std_logic_vector(2 downto 0);
   signal dco_freq_sel : std_logic_vector(1 downto 0);
+  signal dco_clk_lock : std_ulogic;
+  signal dco_clk_int  : std_ulogic;
 
   -- Bootrom
   component ahbrom is
@@ -375,6 +379,19 @@ begin
   local_x <= this_local_x;
   local_y <= this_local_y;
 
+  -- DCO Reset synchronizer
+  rst_gen: if this_has_dco /= 0 generate
+    tile_rstn : rstgen
+      generic map (acthigh => 1, syncin => 0)
+      port map (tile_rst, dco_clk_int, dco_clk_lock, rst, open);
+  end generate rst_gen;
+
+  no_rst_gen: if this_has_dco = 0 generate
+    rst <= tile_rst;
+  end generate no_rst_gen;
+
+  dco_rstn <= rst;
+
   -- DCO
   dco_gen: if this_has_dco /= 0 generate
     dco_noc_i : dco
@@ -417,7 +434,7 @@ begin
         fc_sel   => dco_fc_sel,
         div_sel  => dco_div_sel,
         freq_sel => dco_freq_sel,
-        clk      => dco_clk,
+        clk      => dco_clk_int,
         clk_div  => pllclk,
         lock     => dco_clk_lock);
 
@@ -433,11 +450,13 @@ begin
   no_dco_gen: if this_has_dco = 0 generate
     pllclk       <= '0';
     pllclk_noc   <= '0';
-    dco_clk      <= '0';
+    dco_clk_int  <= '0';
     sys_clk_out  <= '0';
     dco_clk_lock <= '1';
     sys_clk_lock <= '1';
   end generate no_dco_gen;
+
+  dco_clk <= dco_clk_int;
 
   -- MDC scaler configuration
   mdcscaler              <= conv_integer(tile_config(ESP_CSR_MDC_SCALER_CFG_MSB downto ESP_CSR_MDC_SCALER_CFG_LSB));

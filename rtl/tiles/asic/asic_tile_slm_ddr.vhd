@@ -205,8 +205,8 @@ architecture rtl of asic_tile_slm_ddr is
   signal ddr_ahbso : ahb_slv_out_type;
 
   signal this_slmddr_id : integer range 0 to SLMDDR_ID_RANGE_MSB;
-  signal this_slmddr_haddr  : integer;
-  signal this_slmddr_hmask  : integer;
+  signal this_slmddr_haddr  : integer range 0 to 4096;
+  signal this_slmddr_hmask  : integer range 0 to 4096;
 
   constant ext_clk_sel_default : std_ulogic := '0';
 
@@ -220,7 +220,7 @@ architecture rtl of asic_tile_slm_ddr is
   signal dco_clk_div2    : std_ulogic;
   signal dco_clk_div2_90 : std_ulogic;
   signal dco_rstn        : std_ulogic;
-  signal dco_clk_lock    : std_ulogic;
+  --signal dco_clk_lock    : std_ulogic;
 
   signal phy_rstn, phy_raw_rstn : std_logic;
 
@@ -229,6 +229,7 @@ architecture rtl of asic_tile_slm_ddr is
   signal this_local_x : local_yx;
 
   -- JTAG signals
+  signal test_rstn             : std_ulogic;
   signal test1_output_port_s   : noc_flit_type;
   signal test1_data_void_out_s : std_ulogic;
   signal test1_stop_in_s       : std_ulogic;
@@ -274,6 +275,7 @@ architecture rtl of asic_tile_slm_ddr is
   signal noc6_mon_noc_vec_int  : monitor_noc_type;
 
   -- Noc signals
+  signal noc_rstn               : std_ulogic;
   signal noc1_stop_in_s         : std_logic_vector(4 downto 0);
   signal noc1_stop_out_s        : std_logic_vector(4 downto 0);
   signal noc1_mem_stop_in       : std_ulogic;
@@ -449,19 +451,28 @@ architecture rtl of asic_tile_slm_ddr is
 begin
 
   -- Tile main clock and reset
-  rst_tile : rstgen                         -- reset generator
-    generic map (acthigh => 1, syncin => 0)
-    port map (rst, dco_clk_div2_90, dco_clk_lock, dco_rstn, raw_rstn);
+  --rst_tile : rstgen                         -- reset generator
+  --  generic map (acthigh => 1, syncin => 0)
+  --  port map (rst, dco_clk_div2_90, dco_clk_lock, dco_rstn, raw_rstn);
 
   -- DDR PHY reset
-  rst_ddr : rstgen                         -- reset generator
+  --rst_ddr : rstgen                         -- reset generator
+  --  generic map (acthigh => 1, syncin => 0)
+  --  port map (rst, dco_clk_div2, dco_clk_lock, phy_rstn, phy_raw_rstn);
+
+  raw_rstn <= not rst;
+
+  rst_noc : rstgen
     generic map (acthigh => 1, syncin => 0)
-    port map (rst, dco_clk_div2, dco_clk_lock, phy_rstn, phy_raw_rstn);
+    port map (rst, sys_clk, '1', noc_rstn, open);
+
+  rst_jtag : rstgen
+    generic map (acthigh => 1, syncin => 0)
+    port map (rst, tclk, '1', test_rstn, open);
 
   -- DDR Controller address range
   this_slmddr_haddr    <= slmddr_haddr(this_slmddr_id);
   this_slmddr_hmask    <= slmddr_hmask(this_slmddr_id);
-
 
   -- DDR controller
   ahb2bsg_dmc_1 : ahb2bsg_dmc
@@ -512,8 +523,9 @@ begin
     generic map (
       test_if_en => 1)
     port map (
-      rst                 => dco_rstn,
+      rst                 => test_rstn,
       refclk              => dco_clk,
+      tile_rst            => dco_rstn,
       tdi                 => tdi,
       tdo                 => tdo,
       tms                 => tms,
@@ -631,14 +643,15 @@ begin
   noc6_data_void_out     <= noc6_data_void_out_s(3 downto 0);
   noc6_mem_data_void_out <= noc6_data_void_out_s(4);
 
-  sync_noc_set_mem: sync_noc_set
+  sync_noc_set_slm: sync_noc_set
   generic map (
      PORTS    => ROUTER_PORTS,
      HAS_SYNC => 1 )
    port map (
      clk                => sys_clk,
      clk_tile           => dco_clk,
-     rst                => dco_rstn,
+     rst                => noc_rstn,
+     rst_tile           => dco_rstn,
      CONST_local_x      => this_local_x,
      CONST_local_y      => this_local_y,
      noc1_data_n_in     => noc1_data_n_in,
@@ -742,15 +755,16 @@ begin
       dco_rst_cfg  => DEFAULT_DCO_LPDDR_CFG)
     port map (
       raw_rstn           => raw_rstn,   -- DCO raw reset
-      rst                => dco_rstn,   -- tile main synchronouse reset
+      tile_rst           => rst,        -- tile main synchronouse reset
       clk                => dco_clk_div2_90,      -- tile main clock
       refclk             => ext_clk,    -- external backup clock
       pllbypass          => ext_clk_sel_default,  -- ext_clk_sel,
       pllclk             => clk_div,    -- test clock output to PCB
       dco_clk            => dco_clk,    -- DDR PHY 2x clock
-      dco_clk_lock       => dco_clk_lock,
       dco_clk_div2       => dco_clk_div2,         -- DDR PHY 1x clock
       dco_clk_div2_90    => dco_clk_div2_90,      -- user clock
+      dco_rstn           => dco_rstn,
+      phy_rstn           => phy_rstn,
       ddr_ahbsi          => ddr_ahbsi,
       ddr_ahbso          => ddr_ahbso,
       ddr_cfg0           => ddr_cfg0,

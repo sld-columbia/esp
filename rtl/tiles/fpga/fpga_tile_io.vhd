@@ -50,7 +50,6 @@ entity fpga_tile_io is
     pllbypass          : in    std_ulogic;
     pllclk             : out   std_ulogic; 
     dco_clk            : out   std_ulogic;
-    dco_clk_lock       : out   std_ulogic;
     -- Ethernet
     mdcscaler          : out   integer range 0 to 2047;
     eth0_apbi          : out   apb_slv_in_type;
@@ -167,6 +166,9 @@ architecture rtl of fpga_tile_io is
   attribute keep                        : string;
   attribute syn_keep                    : boolean;
   attribute syn_preserve                : boolean;
+
+  -- DCO reset -> keeping the logic compliant with the asic flow
+  signal dco_rstn : std_ulogic;
 
   -- JTAG signals
   signal test1_output_port_s   : noc_flit_type;
@@ -405,6 +407,7 @@ begin
     port map (
       rst                 => rst,
       refclk              => clk,
+      tile_rst            => dco_rstn,
       tdi                 => tdi,
       tdo                 => tdo,
       tms                 => tms,
@@ -530,6 +533,7 @@ begin
      clk                => sys_clk_int,
      clk_tile           => clk,
      rst                => sys_rstn,
+     rst_tile           => dco_rstn,
      CONST_local_x      => this_local_x,
      CONST_local_y      => this_local_y,
      noc1_data_n_in     => noc1_data_n_in,
@@ -633,7 +637,7 @@ begin
       this_has_dco => 0)
     port map (
       raw_rstn           => raw_rstn,
-      rst                => rst,
+      tile_rst           => rst,
       clk                => clk,    -- Local DCO clock
       refclk_noc         => refclk_noc,  -- Backup NoC clock when DCO is enabled
       pllclk_noc         => pllclk_noc,  -- NoC DCO clock out
@@ -641,7 +645,7 @@ begin
       pllbypass          => pllbypass,  --ext_clk_sel,
       pllclk             => pllclk,    -- DCO clock monitor
       dco_clk            => dco_clk,    -- Local DCO clock out (fixed @ TILE_FREQ)
-      dco_clk_lock       => dco_clk_lock,
+      dco_rstn           => dco_rstn,
       local_x            => this_local_x,
       local_y            => this_local_y,
       -- Ethernet MDC Scaler configuration
