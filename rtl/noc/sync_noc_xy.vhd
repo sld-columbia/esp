@@ -19,6 +19,7 @@ entity sync_noc_xy is
     clk           : in  std_logic;
     clk_tile      : in  std_logic;
     rst           : in  std_logic;
+    rst_tile      : in  std_logic;
 --    CONST_PORTS   : in  std_logic_vector(4 downto 0);
     CONST_local_x : in  std_logic_vector(2 downto 0);
     CONST_local_y : in  std_logic_vector(2 downto 0);
@@ -192,11 +193,12 @@ architecture mesh of sync_noc_xy is
           g_data_width => NOC_FLIT_SIZE,
           g_size       => 8)
         port map (
-          rst_n_i    => rst,
+          rst_wr_n_i => rst_tile,
           clk_wr_i   => clk_tile,
           we_i       => fwd_we_i,
           d_i        => input_port,
           wr_full_o  => fwd_wr_full_o,
+          rst_rd_n_i => rst,
           clk_rd_i   => clk,
           rd_i       => fwd_rd_i,
           q_o        => sync_input_port,
@@ -211,11 +213,12 @@ architecture mesh of sync_noc_xy is
           g_data_width => NOC_FLIT_SIZE,
           g_size       => 8)
         port map (
-          rst_n_i      => rst,
+          rst_wr_n_i   => rst,
           clk_wr_i     => clk,
           we_i         => rev_we_i,
           d_i          => sync_output_port,
           wr_full_o    => rev_wr_full_o,
+          rst_rd_n_i   => rst_tile,
           clk_rd_i     => clk_tile,
           rd_i         => rev_rd_i,
           q_o          => output_port,

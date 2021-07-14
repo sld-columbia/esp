@@ -48,7 +48,6 @@ entity fpga_tile_empty is
     pllbypass          : in  std_ulogic;
     pllclk             : out std_ulogic;
     dco_clk            : out std_ulogic;
-    dco_clk_lock       : out std_ulogic;
     -- Test interface
     tdi                : in  std_logic;
     tdo                : out std_logic;
@@ -142,6 +141,9 @@ architecture rtl of fpga_tile_empty is
   -- Tile parameters
   signal this_local_y : local_yx;
   signal this_local_x : local_yx;
+
+  -- DCO reset -> keeping the logic compliant with the asic flow
+  signal dco_rstn : std_ulogic;
 
   signal test1_output_port_s   : noc_flit_type;
   signal test1_data_void_out_s : std_ulogic;
@@ -377,6 +379,7 @@ begin
     port map (
       rst                 => rst,
       refclk              => clk,
+      tile_rst            => dco_rstn,
       tdi                 => tdi,
       tdo                 => tdo,
       tms                 => tms,
@@ -502,6 +505,7 @@ begin
      clk                => sys_clk_int,
      clk_tile           => clk,
      rst                => rst,
+     rst_tile           => dco_rstn,
      CONST_local_x      => this_local_x,
      CONST_local_y      => this_local_y,
      noc1_data_n_in     => noc1_data_n_in,
@@ -604,13 +608,13 @@ begin
       this_has_dco => 0)
     port map (
       raw_rstn           => raw_rstn,
-      rst                => rst,
+      tile_rst           => rst,
       clk                => clk,
       refclk             => refclk,
       pllbypass          => pllbypass,
       pllclk             => pllclk,
       dco_clk            => dco_clk,
-      dco_clk_lock       => dco_clk_lock,
+      dco_rstn           => dco_rstn,
       pad_cfg            => open,
       local_x            => this_local_x,
       local_y            => this_local_y,

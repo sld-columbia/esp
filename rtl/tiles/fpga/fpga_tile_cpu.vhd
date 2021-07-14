@@ -50,7 +50,6 @@ entity fpga_tile_cpu is
     pllbypass          : in  std_ulogic;
     pllclk             : out std_ulogic;
     dco_clk            : out std_ulogic;
-    dco_clk_lock       : out std_ulogic;
     cpuerr             : out std_ulogic;
     -- Test interface
     tdi                : in  std_logic;
@@ -149,6 +148,9 @@ architecture rtl of fpga_tile_cpu is
   -- Tile parameters
   signal this_local_y : local_yx;
   signal this_local_x : local_yx;
+
+  -- DCO reset -> keeping the logic compliant with the asic flow
+  signal dco_rstn : std_ulogic;
 
   -- JTAG signals
   signal test1_output_port_s   : noc_flit_type;
@@ -385,6 +387,7 @@ begin
     port map (
       rst                 => rst,
       refclk              => refclk,
+      tile_rst            => dco_rstn,
       tdi                 => tdi,
       tdo                 => tdo,
       tms                 => tms,
@@ -510,6 +513,7 @@ begin
      clk                => sys_clk_int,
      clk_tile           => refclk,
      rst                => rst,
+     rst_tile           => dco_rstn,
      CONST_local_x      => this_local_x,
      CONST_local_y      => this_local_y,
      noc1_data_n_in     => noc1_data_n_in,
@@ -614,12 +618,12 @@ begin
       this_extra_clk_buf  => this_extra_clk_buf)
     port map (
       raw_rstn            => raw_rstn,
-      rst                 => rst,
+      tile_rst            => rst,
       refclk              => refclk,
       pllbypass           => pllbypass,
       pllclk              => pllclk,
       dco_clk             => dco_clk,
-      dco_clk_lock        => dco_clk_lock,
+      dco_rstn            => dco_rstn,
       cpuerr              => cpuerr,
       -- Pad configuration
       pad_cfg             => open,

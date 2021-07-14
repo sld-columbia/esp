@@ -429,7 +429,6 @@ begin
         pllclk             => open,
 	sys_clk_int        => sys_clk_int(0),
         dco_clk            => open,
-        dco_clk_lock       => open,
         -- Test interface
         tdi                => '0',
         tdo                => open,
@@ -539,7 +538,6 @@ begin
         pllbypass          => pllbypass_int(i),
         pllclk             => clk_tile(i),
         dco_clk            => open,
-        dco_clk_lock       => open,
         cpuerr             => cpuerr_vec(tile_cpu_id(i)),
         -- Test interface
         tdi                => '0',
@@ -654,7 +652,6 @@ begin
         pllbypass          => pllbypass_int(i),
         pllclk             => clk_tile(i),
         dco_clk            => open,
-        dco_clk_lock       => open,
         -- Test interface
         tdi                => '0',
         tdo                => open,
@@ -765,7 +762,6 @@ begin
         pllbypass          => '0',
         pllclk             => open,
         dco_clk            => open,
-        dco_clk_lock       => open,
         -- Test interface
         tdi                => '0',
         tdo                => open,
@@ -890,7 +886,6 @@ begin
         pllbypass          => '0',
         pllclk             => open,
         dco_clk            => open,
-        dco_clk_lock       => open,
         -- DDR controller ports (this_has_ddr -> 1)
         dco_clk_div2       => open,
         dco_clk_div2_90    => open,
@@ -1015,7 +1010,6 @@ begin
           pllbypass          => '0',
           pllclk             => open,
           dco_clk            => open,
-          dco_clk_lock       => open,
           -- DDR controller ports (disaled in generic ESP top)
           dco_clk_div2       => open,
           dco_clk_div2_90    => open,

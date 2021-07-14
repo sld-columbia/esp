@@ -16,6 +16,7 @@ use work.devices.all;
 use work.gencomp.all;
 use work.monitor_pkg.all;
 use work.esp_csr_pkg.all;
+use work.misc.all;
 use work.jtag_pkg.all;
 use work.sldacc.all;
 use work.nocpackage.all;
@@ -38,12 +39,12 @@ entity tile_acc is
     this_extra_clk_buf : integer range 0 to 1 := 0);
   port (
     raw_rstn           : in  std_ulogic;
-    rst                : in  std_ulogic;
+    tile_rst           : in  std_ulogic;
     refclk             : in  std_ulogic;
     pllbypass          : in  std_ulogic;
     pllclk             : out std_ulogic;
     dco_clk            : out std_ulogic;
-    dco_clk_lock       : out std_ulogic;
+    dco_rstn           : out std_ulogic;
     -- Pads configuration
     pad_cfg            : out std_logic_vector(ESP_CSR_PAD_CFG_MSB - ESP_CSR_PAD_CFG_LSB downto 0);
     -- NOC
@@ -105,6 +106,9 @@ architecture rtl of tile_acc is
   signal clk_feedthru : std_ulogic;
   signal dvfs_clk     : std_ulogic;
 
+  -- Tile synchronous reset
+  signal rst          : std_ulogic;
+
   -- DCO
   signal dco_clk_int  : std_ulogic;
   signal dco_en       : std_ulogic;
@@ -113,6 +117,7 @@ architecture rtl of tile_acc is
   signal dco_fc_sel   : std_logic_vector(5 downto 0);
   signal dco_div_sel  : std_logic_vector(2 downto 0);
   signal dco_freq_sel : std_logic_vector(1 downto 0);
+  signal dco_clk_lock : std_ulogic;
 
   -- BUS
   signal apbi           : apb_slv_in_type;
@@ -237,6 +242,19 @@ begin
 
   local_x <= this_local_x;
   local_y <= this_local_y;
+
+  -- DCO Reset synchronizer
+  rst_gen: if this_has_dco /= 0 generate
+    tile_rstn : rstgen
+      generic map (acthigh => 1, syncin => 0)
+      port map (tile_rst, dco_clk_int, dco_clk_lock, rst, open);
+  end generate rst_gen;
+
+  no_rst_gen: if this_has_dco = 0 generate
+    rst <= tile_rst;
+  end generate no_rst_gen;
+
+  dco_rstn <= rst;
 
   -- DCO
   dco_gen: if this_has_dco /= 0 generate
