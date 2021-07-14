@@ -101,6 +101,10 @@ begin
         port map (clk, address, datain, dataoutx, xenable, xwrite);
     end generate;
 
+    g22 : if tech = gf22 and large_banks /= 0 generate
+      x0 : gf22_syncram_be generic map (abits, dbits)
+        port map (clk, address, datain, dataoutx, xenable, xwrite);
+    end generate;
 
 -- pragma translate_off
     dmsg : if GRLIB_CONFIG_ARRAY(grlib_debug_level) >= 2 generate
