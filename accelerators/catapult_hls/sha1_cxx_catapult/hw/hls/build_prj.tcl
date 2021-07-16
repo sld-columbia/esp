@@ -121,6 +121,10 @@ solution options set /Input/SearchPath { \
     ../src \
     ../../../common/inc }
 
+solution options set ComponentLibs/SearchPath { \
+    ../../../../../tech/gf12/lib-catapult
+}
+
 # Add source files.
 solution file add ../inc/properties.h -type C++
 solution file add ../inc/defines.h -type C++
@@ -196,17 +200,19 @@ if {$opt(csim)} {
 if {$opt(hsynth)} {
 
     # TODO: Disable FPGA target and use Generic Library
-    solution library \
-        add mgc_Xilinx-$FPGA_FAMILY$FPGA_SPEED_GRADE\_beh -- \
-        -rtlsyntool Vivado \
-        -manufacturer Xilinx \
-        -family $FPGA_FAMILY \
-        -speed $FPGA_SPEED_GRADE \
-        -part $FPGA_PART_NUM
-    solution library add Xilinx_RAMS
-    solution library add Xilinx_ROMS
-    solution library add Xilinx_FIFO
+    #solution library \
+    #    add mgc_Xilinx-$FPGA_FAMILY$FPGA_SPEED_GRADE\_beh -- \
+    #    -rtlsyntool Vivado \
+    #    -manufacturer Xilinx \
+    #    -family $FPGA_FAMILY \
+    #    -speed $FPGA_SPEED_GRADE \
+    #    -part $FPGA_PART_NUM
+    #solution library add Xilinx_RAMS
+    #solution library add Xilinx_ROMS
+    #solution library add Xilinx_FIFO
 
+    solution library remove *
+    solution library add sc9mcpp84_12lp_base_rvt_c14_tt_nominal_max_0p80v_25c_dc -- -rtlsyntool DesignCompiler -vendor GlobalFoundries -technology gf12nm
     #solution library add nangate-45nm_beh -- -rtlsyntool DesignCompiler -vendor Nangate -technology 045nm
 
     # For Catapult 10.5: disable all sequential clock-gating
