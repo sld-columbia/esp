@@ -62,13 +62,13 @@ const unsigned aes_tag_size = 4;
 
          /* User defined registers */
          /* <<--regs-->> */
-#define AES_CXX_TAG_BYTES_REG 0x40
-#define AES_CXX_AAD_BYTES_REG 0x44
-#define AES_CXX_INPUT_BYTES_REG 0x48
-#define AES_CXX_IV_BYTES_REG 0x52
-#define AES_CXX_KEY_BYTES_REG 0x56
-#define AES_CXX_ENCRYPTION_REG 0x60
-#define AES_CXX_OPER_MODE_REG 0x64
+//#define AES_CXX_TAG_BYTES_REG 0x40
+//#define AES_CXX_AAD_BYTES_REG 0x44
+#define AES_CXX_INPUT_BYTES_REG 0x40
+//#define AES_CXX_IV_BYTES_REG 0x52
+#define AES_CXX_KEY_BYTES_REG 0x44
+//#define AES_CXX_ENCRYPTION_REG 0x60
+//#define AES_CXX_OPER_MODE_REG 0x64
 
 #if 0
 #define N_TESTS 10
@@ -180,20 +180,20 @@ static void init_buf (unsigned idx, token_t *inputs, token_t * gold_outputs)
     for (j = 0; j < raw_encrypt_key_words[idx]; j++)
     {
         inputs[j] = raw_encrypt_key[idx][j];
-        //printf("  raw_encrypt_key[%u][%u] %x\n", idx, j, raw_encrypt_key[idx][j]);
+        printf("  raw_encrypt_key[%u][%u] @%p %x\n", idx, j, inputs + j, raw_encrypt_key[idx][j]);
     }
 
     for (i = 0; i < raw_encrypt_plaintext_words[idx]; i++, j++)
     {
         inputs[j] = raw_encrypt_plaintext[idx][i];
-        //printf("  raw_encrypt_plaintext[%u][%u] %x\n", idx, i, raw_encrypt_plaintext[idx][i]);
+        printf("  raw_encrypt_plaintext[%u][%u] @%p %x\n", idx, i, inputs + i, raw_encrypt_plaintext[idx][i]);
     }
 
     printf("  gold output data @%p\n", gold_outputs);
 
     for (j = 0; j < raw_encrypt_ciphertext_words[idx]; j++) {
         gold_outputs[j] = raw_encrypt_ciphertext[idx][j];
-        //printf("  raw_encrypt_ciphertext[%u][%u] %x\n", idx, j, raw_encrypt_ciphertext[idx][j]);
+        printf("  raw_encrypt_ciphertext[%u][%u] %x\n", idx, j, raw_encrypt_ciphertext[idx][j]);
     }
 }
 
@@ -295,8 +295,15 @@ int main(int argc, char * argv[])
 
             // Pass accelerator-specific configuration parameters
             /* <<--regs-config-->> */
+            printf("%s:%u\n", __func__, __LINE__);
+            //iowrite32(dev, AES_CXX_ENCRYPTION_REG, 1);
+            printf("%s:%u\n", __func__, __LINE__);
+            //iowrite32(dev, AES_CXX_OPER_MODE_REG, 1);
+            printf("%s:%u\n", __func__, __LINE__);
             iowrite32(dev, AES_CXX_INPUT_BYTES_REG, in_bytes);
-            //iowrite32(dev, AES_CXX_KEY_BYTES_REG, key_bytes);
+            printf("%s:%u\n", __func__, __LINE__);
+            iowrite32(dev, AES_CXX_KEY_BYTES_REG, key_bytes);
+            printf("%s:%u\n", __func__, __LINE__);
 
             // Flush (customize coherence model here)
             esp_flush(ACC_COH_NONE);
