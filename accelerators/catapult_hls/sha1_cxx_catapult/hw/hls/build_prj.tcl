@@ -122,7 +122,26 @@ solution options set /Input/SearchPath { \
     ../../../common/inc }
 
 solution options set ComponentLibs/SearchPath { \
-    ../../../../../tech/gf12/lib-catapult
+    ../../../../../tech/gf12/lib-catapult \
+    ../../../common/memgen/GF12_SRAM_SP_256x32 \
+    ../../../common/memgen/GF12_SRAM_SP_256x64 \
+    ../../../common/memgen/GF12_SRAM_SP_256x16 \
+    ../../../common/memgen/GF12_SRAM_SP_256x64 \
+    ../../../common/memgen/GF12_SRAM_SP_512x16 \
+    ../../../common/memgen/GF12_SRAM_SP_512x24 \
+    ../../../common/memgen/GF12_SRAM_SP_512x28 \
+    ../../../common/memgen/GF12_SRAM_SP_512x64 \
+    ../../../common/memgen/GF12_SRAM_SP_1024x8 \
+    ../../../common/memgen/GF12_SRAM_SP_2048x4 \
+    ../../../common/memgen/GF12_SRAM_SP_2048x8 \
+    ../../../common/memgen/GF12_SRAM_SP_2048x32 \
+    ../../../common/memgen/GF12_SRAM_SP_4096x4 \
+    ../../../common/memgen/GF12_SRAM_SP_4096x32 \
+    ../../../common/memgen/GF12_SRAM_SP_4096x64 \
+    ../../../common/memgen/GF12_SRAM_SP_8192x32 \
+    ../../../common/memgen/GF12_SRAM_SP_8192x64 \
+    ../../../common/memgen/GF12_SRAM_SP_16384x32 \
+    ../../../common/memgen/GF12_SRAM_SP_16384x64 \
 }
 
 # Add source files.
@@ -213,6 +232,21 @@ if {$opt(hsynth)} {
 
     solution library remove *
     solution library add sc9mcpp84_12lp_base_rvt_c14_tt_nominal_max_0p80v_25c_dc -- -rtlsyntool DesignCompiler -vendor GlobalFoundries -technology gf12nm
+    solution library add GF12_SRAM_SP_1024x8
+    solution library add GF12_SRAM_SP_16384x32
+    solution library add GF12_SRAM_SP_16384x64
+    solution library add GF12_SRAM_SP_2048x32
+    solution library add GF12_SRAM_SP_2048x4
+    solution library add GF12_SRAM_SP_2048x8
+    solution library add GF12_SRAM_SP_256x16
+    solution library add GF12_SRAM_SP_256x64
+    solution library add GF12_SRAM_SP_4096x4
+    solution library add GF12_SRAM_SP_512x16
+    solution library add GF12_SRAM_SP_512x24
+    solution library add GF12_SRAM_SP_512x28
+    solution library add GF12_SRAM_SP_512x64
+    solution library add GF12_SRAM_SP_8192x32
+
     #solution library add nangate-45nm_beh -- -rtlsyntool DesignCompiler -vendor Nangate -technology 045nm
 
     # For Catapult 10.5: disable all sequential clock-gating
@@ -226,9 +260,9 @@ if {$opt(hsynth)} {
 
     directive set -CLOCKS { \
         clk { \
-            -CLOCK_PERIOD 4.0 \
+            -CLOCK_PERIOD 1.25 \
             -CLOCK_EDGE rising \
-            -CLOCK_HIGH_TIME 2.0 \
+            -CLOCK_HIGH_TIME 0.625 \
             -CLOCK_OFFSET 0.000000 \
             -CLOCK_UNCERTAINTY 0.0 \
             -RESET_KIND sync \
@@ -263,27 +297,28 @@ if {$opt(hsynth)} {
     #directive set /$ACCELERATOR/core/plm_in.data:rsc -MAP_TO_MODULE Xilinx_RAMS.BLOCK_1R1W_RBW
     #directive set /$ACCELERATOR/core/plm_out.data:rsc -MAP_TO_MODULE Xilinx_RAMS.BLOCK_1R1W_RBW
 
-    directive set /$ACCELERATOR/core/plm_in.data:rsc -MAP_TO_MODULE {[Register]}
+    directive set /$ACCELERATOR/core/plm_in.data:rsc -MAP_TO_MODULE GF12_SRAM_SP_2048x32.GF12_SRAM_SP_2048x32
+    #directive set /$ACCELERATOR/core/plm_in.data:rsc -MAP_TO_MODULE {[Register]}
     directive set /$ACCELERATOR/core/plm_out.data:rsc -MAP_TO_MODULE {[Register]}
     directive set /$ACCELERATOR/core/sha1:h:rsc -MAP_TO_MODULE {[Register]}
     directive set /$ACCELERATOR/core/sha1:data:rsc -MAP_TO_MODULE {[Register]}
 
 
     # Loops
-    directive set /$ACCELERATOR/core/SHA1_L_1 -PIPELINE_INIT_INTERVAL 1
-    directive set /$ACCELERATOR/core/SHA1_L_1_4 -PIPELINE_INIT_INTERVAL 1
-    directive set /$ACCELERATOR/core/SHA1_BLOCK_L_1#1 -PIPELINE_INIT_INTERVAL 1
-    directive set /$ACCELERATOR/core/SHA1_BLOCK_L_2#1 -PIPELINE_INIT_INTERVAL 1
-    directive set /$ACCELERATOR/core/SHA1_BLOCK_L_3#1 -PIPELINE_INIT_INTERVAL 1
-    directive set /$ACCELERATOR/core/SHA1_BLOCK_L_4#1 -PIPELINE_INIT_INTERVAL 1
-    directive set /$ACCELERATOR/core/SHA1_BLOCK_L_5#1 -PIPELINE_INIT_INTERVAL 1
-    directive set /$ACCELERATOR/core/SHA1_L_1_6 -PIPELINE_INIT_INTERVAL 1
-    directive set /$ACCELERATOR/core/SHA1_BLOCK_L_1#2 -PIPELINE_INIT_INTERVAL 1
-    directive set /$ACCELERATOR/core/SHA1_BLOCK_L_2#2 -PIPELINE_INIT_INTERVAL 1
-    directive set /$ACCELERATOR/core/SHA1_BLOCK_L_3#2 -PIPELINE_INIT_INTERVAL 1
-    directive set /$ACCELERATOR/core/SHA1_BLOCK_L_4#2 -PIPELINE_INIT_INTERVAL 1
-    directive set /$ACCELERATOR/core/SHA1_BLOCK_L_5#2 -PIPELINE_INIT_INTERVAL 1
-    directive set /$ACCELERATOR/core/SHA1_L_1_8 -PIPELINE_INIT_INTERVAL 1
+    #directive set /$ACCELERATOR/core/SHA1_L_1 -PIPELINE_INIT_INTERVAL 1
+    #directive set /$ACCELERATOR/core/SHA1_L_1_4 -PIPELINE_INIT_INTERVAL 1
+    #directive set /$ACCELERATOR/core/SHA1_BLOCK_L_1#1 -PIPELINE_INIT_INTERVAL 1
+    #directive set /$ACCELERATOR/core/SHA1_BLOCK_L_2#1 -PIPELINE_INIT_INTERVAL 1
+    #directive set /$ACCELERATOR/core/SHA1_BLOCK_L_3#1 -PIPELINE_INIT_INTERVAL 1
+    #directive set /$ACCELERATOR/core/SHA1_BLOCK_L_4#1 -PIPELINE_INIT_INTERVAL 1
+    #directive set /$ACCELERATOR/core/SHA1_BLOCK_L_5#1 -PIPELINE_INIT_INTERVAL 1
+    #directive set /$ACCELERATOR/core/SHA1_L_1_6 -PIPELINE_INIT_INTERVAL 1
+    #directive set /$ACCELERATOR/core/SHA1_BLOCK_L_1#2 -PIPELINE_INIT_INTERVAL 1
+    #directive set /$ACCELERATOR/core/SHA1_BLOCK_L_2#2 -PIPELINE_INIT_INTERVAL 1
+    #directive set /$ACCELERATOR/core/SHA1_BLOCK_L_3#2 -PIPELINE_INIT_INTERVAL 1
+    #directive set /$ACCELERATOR/core/SHA1_BLOCK_L_4#2 -PIPELINE_INIT_INTERVAL 1
+    #directive set /$ACCELERATOR/core/SHA1_BLOCK_L_5#2 -PIPELINE_INIT_INTERVAL 1
+    #directive set /$ACCELERATOR/core/SHA1_L_1_8 -PIPELINE_INIT_INTERVAL 1
 
 
     # Loops performance tracing
