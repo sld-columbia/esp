@@ -122,6 +122,29 @@ solution options set /Input/SearchPath { \
     ../src \
     ../../../common/inc }
 
+solution options set ComponentLibs/SearchPath { \
+    ../../../../../tech/gf12/lib-catapult \
+    ../../../common/memgen/GF12_SRAM_SP_256x32 \
+    ../../../common/memgen/GF12_SRAM_SP_256x64 \
+    ../../../common/memgen/GF12_SRAM_SP_256x16 \
+    ../../../common/memgen/GF12_SRAM_SP_256x64 \
+    ../../../common/memgen/GF12_SRAM_SP_512x16 \
+    ../../../common/memgen/GF12_SRAM_SP_512x24 \
+    ../../../common/memgen/GF12_SRAM_SP_512x28 \
+    ../../../common/memgen/GF12_SRAM_SP_512x64 \
+    ../../../common/memgen/GF12_SRAM_SP_1024x8 \
+    ../../../common/memgen/GF12_SRAM_SP_2048x4 \
+    ../../../common/memgen/GF12_SRAM_SP_2048x8 \
+    ../../../common/memgen/GF12_SRAM_SP_2048x32 \
+    ../../../common/memgen/GF12_SRAM_SP_4096x4 \
+    ../../../common/memgen/GF12_SRAM_SP_4096x32 \
+    ../../../common/memgen/GF12_SRAM_SP_4096x64 \
+    ../../../common/memgen/GF12_SRAM_SP_8192x32 \
+    ../../../common/memgen/GF12_SRAM_SP_8192x64 \
+    ../../../common/memgen/GF12_SRAM_SP_16384x32 \
+    ../../../common/memgen/GF12_SRAM_SP_16384x64 \
+}
+
 # Add source files.
 solution file add ../inc/properties.h -type C++
 solution file add ../inc/defines.h -type C++
@@ -200,17 +223,34 @@ if {$opt(csim)} {
 # Run HLS.
 if {$opt(hsynth)} {
 
-    # TODO: Disable FPGA target and use Generic Library
-    solution library \
-        add mgc_Xilinx-$FPGA_FAMILY$FPGA_SPEED_GRADE\_beh -- \
-        -rtlsyntool Vivado \
-        -manufacturer Xilinx \
-        -family $FPGA_FAMILY \
-        -speed $FPGA_SPEED_GRADE \
-        -part $FPGA_PART_NUM
-    solution library add Xilinx_RAMS
-    solution library add Xilinx_ROMS
-    solution library add Xilinx_FIFO
+    ## TODO: Disable FPGA target and use Generic Library
+    #solution library \
+    #    add mgc_Xilinx-$FPGA_FAMILY$FPGA_SPEED_GRADE\_beh -- \
+    #    -rtlsyntool Vivado \
+    #    -manufacturer Xilinx \
+    #    -family $FPGA_FAMILY \
+    #    -speed $FPGA_SPEED_GRADE \
+    #    -part $FPGA_PART_NUM
+    #solution library add Xilinx_RAMS
+    #solution library add Xilinx_ROMS
+    #solution library add Xilinx_FIFO
+
+    solution library remove *
+    solution library add sc9mcpp84_12lp_base_rvt_c14_tt_nominal_max_0p80v_25c_dc -- -rtlsyntool DesignCompiler -vendor GlobalFoundries -technology gf12nm
+    solution library add GF12_SRAM_SP_1024x8
+    solution library add GF12_SRAM_SP_16384x32
+    solution library add GF12_SRAM_SP_16384x64
+    solution library add GF12_SRAM_SP_2048x32
+    solution library add GF12_SRAM_SP_2048x4
+    solution library add GF12_SRAM_SP_2048x8
+    solution library add GF12_SRAM_SP_256x16
+    solution library add GF12_SRAM_SP_256x64
+    solution library add GF12_SRAM_SP_4096x4
+    solution library add GF12_SRAM_SP_512x16
+    solution library add GF12_SRAM_SP_512x24
+    solution library add GF12_SRAM_SP_512x28
+    solution library add GF12_SRAM_SP_512x64
+    solution library add GF12_SRAM_SP_8192x32
 
     #solution library add nangate-45nm_beh -- -rtlsyntool DesignCompiler -vendor Nangate -technology 045nm
 
@@ -225,9 +265,9 @@ if {$opt(hsynth)} {
 
     directive set -CLOCKS { \
         clk { \
-            -CLOCK_PERIOD 4.0 \
+            -CLOCK_PERIOD 1.25 \
             -CLOCK_EDGE rising \
-            -CLOCK_HIGH_TIME 2.0 \
+            -CLOCK_HIGH_TIME 0.625 \
             -CLOCK_OFFSET 0.000000 \
             -CLOCK_UNCERTAINTY 0.0 \
             -RESET_KIND sync \
@@ -264,8 +304,9 @@ if {$opt(hsynth)} {
     # Arrays
     directive set /sha2_cxx_catapult/sha256_block/K256.rom:rsc -MAP_TO_MODULE {[Register]}
     directive set /sha2_cxx_catapult/sha256:h.rom:rsc -MAP_TO_MODULE {[Register]}
-    
-    directive set /sha2_cxx_catapult/core/plm_in.data:rsc -MAP_TO_MODULE {[Register]}
+ 
+    directive set /sha2_cxx_catapult/core/plm_in.data:rsc -MAP_TO_MODULE GF12_SRAM_SP_2048x32.GF12_SRAM_SP_2048x32   
+    #directive set /sha2_cxx_catapult/core/plm_in.data:rsc -MAP_TO_MODULE {[Register]}
     directive set /sha2_cxx_catapult/core/plm_out.data:rsc -MAP_TO_MODULE {[Register]}
     directive set /sha2_cxx_catapult/core/sha256:h:rsc -MAP_TO_MODULE {[Register]}
     directive set /sha2_cxx_catapult/core/sha256:data:rsc -MAP_TO_MODULE {[Register]}

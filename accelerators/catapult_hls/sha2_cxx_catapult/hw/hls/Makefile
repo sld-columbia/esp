@@ -9,8 +9,8 @@ all: hls
 .PHONY: all
 
 hls:
-	catapult -product $(CATAPULT_PRODUCT) -f ./build_prj_top.tcl &
-	#catapult -product $(CATAPULT_PRODUCT) -shell -f ./build_prj_top.tcl &
+	#catapult -product $(CATAPULT_PRODUCT) -f ./build_prj_top.tcl &
+	catapult -product $(CATAPULT_PRODUCT) -shell -f ./build_prj_top.tcl &
 .PHONY: hls
 
 SHELL = /bin/bash
