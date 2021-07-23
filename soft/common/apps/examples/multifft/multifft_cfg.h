@@ -102,13 +102,13 @@ esp_thread_info_t cfg_parallel[] = {
 		.run = true,
 		.devname = "fft_stratus.0",
 		.ioctl_req = FFT_STRATUS_IOC_ACCESS,
-		.esp_desc = &(fft_cfg_coh[0].esp),
+		.esp_desc = &(fft_cfg_coh[2].esp),
 	},
 	{
 		.run = true,
 		.devname = "fft_stratus.1",
 		.ioctl_req = FFT_STRATUS_IOC_ACCESS,
-		.esp_desc = &(fft_cfg_coh[0].esp),
+		.esp_desc = &(fft_cfg_coh[1].esp),
 	},
 	{
 		.run = true,
