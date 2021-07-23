@@ -63,8 +63,9 @@ void fft2_bit_reverse(float *w, unsigned int offset, unsigned int n, unsigned in
 void fft2_do_shift(float *A0, unsigned int offset, unsigned int num_samples, unsigned int bits)
 {
     int md = (num_samples/2);
+    unsigned oi;
     /* shift: */
-    for(unsigned oi = 0; oi < md; oi++) {
+    for(oi = 0; oi < md; oi++) {
         unsigned int iidx = 2*(offset + oi);
         unsigned int midx = 2*(offset + md + oi);
         //printf("TEST: DO_SHIFT: offset %u : iidx %u %u midx %u %u\n", offset, iidx, (iidx+1), midx, (midx+1));
@@ -82,7 +83,8 @@ void fft2_do_shift(float *A0, unsigned int offset, unsigned int num_samples, uns
 
 int fft2_comp(float *data, unsigned nffts, unsigned int n, unsigned int logn, int do_inverse, int do_shift)
 {
-    for (int nf = 0; nf < nffts; nf++) {
+    int nf;
+    for (nf = 0; nf < nffts; nf++) {
 	unsigned int transform_length;
 	unsigned int a, b, i, j, bit;
 	float theta, t_real, t_imag, w_real, w_imag, s, t, s2, z_real, z_imag;

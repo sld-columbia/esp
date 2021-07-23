@@ -147,7 +147,7 @@ int main(int argc, char * argv[])
 	// Search for the device
 	printf("Scanning device tree... \n");
 
-	ndev = probe(&espdevs, SLD_FFT2, DEV_NAME);
+	ndev = probe(&espdevs, VENDOR_SLD, SLD_FFT2, DEV_NAME);
 	if (ndev == 0) {
 		printf("%s not found\n", DEV_NAME);
 		return 0;
