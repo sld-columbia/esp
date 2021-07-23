@@ -47,6 +47,9 @@ entity tile_acc is
     dco_rstn           : out std_ulogic;
     -- Pads configuration
     pad_cfg            : out std_logic_vector(ESP_CSR_PAD_CFG_MSB - ESP_CSR_PAD_CFG_LSB downto 0);
+    -- Power management
+    pm_config           : out pm_config_type;
+    pm_status           : in pm_status_type;
     -- NOC
     local_x             : out local_yx;
     local_y             : out local_yx;
@@ -397,6 +400,8 @@ begin
       mon_acc => mon_acc_int,
       mon_dvfs => mon_dvfs_int,
       tile_config => tile_config,
+      pm_config => pm_config,
+      pm_status => pm_status,
       srst => open,
       apbi => apbi,
       apbo => apbo(0)

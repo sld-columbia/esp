@@ -241,7 +241,8 @@ class SoC_Config():
           if tokens[3] == "acc":
             tile.point.set(tokens[8])
             tile.has_l2.set(tokens[9])
-            tile.vendor = tokens[10]
+            tile.has_tdvfs.set(tokens[10])
+            tile.vendor = tokens[11]
     # DVFS (skip whether it has it or not; we know that already)
     line = fp.readline()
     line = fp.readline()
@@ -367,6 +368,7 @@ class SoC_Config():
         if is_accelerator:
           fp.write(" " + str(tile.point.get()))
           fp.write(" " + str(tile.has_l2.get()))
+          fp.write(" " + str(tile.has_tdvfs.get()))
           fp.write(" " + str(tile.vendor))
         fp.write("\n")
         i += 1

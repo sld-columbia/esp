@@ -1001,10 +1001,12 @@ begin
 -- pragma translate_on
       tile_acc_i : asic_tile_acc
         generic map (
+          SIMULATION         => SIMULATION,
           this_hls_conf => tile_design_point(i),
           this_device   => tile_device(i),
           this_irq_type => tile_irq_type(i),
           this_has_l2   => tile_has_l2(i),
+          this_has_token_pm  => tils_has_tdvfs(i),
           ROUTER_PORTS  => set_router_ports(CFG_FABTECH, CFG_XLEN, CFG_YLEN, tile_x(i), tile_y(i)))
         port map (
           rst                => reset_int,

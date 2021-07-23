@@ -1218,6 +1218,8 @@ begin
       mon_acc => monitor_acc_none,
       mon_dvfs => mon_dvfs_int,
       tile_config => tile_config,
+      pm_config => open,
+      pm_status => (others => (others => '0')),
       srst => open,
       apbi => noc_apbi,
       apbo => noc_apbo(0)
