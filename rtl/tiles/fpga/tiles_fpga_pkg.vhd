@@ -125,6 +125,7 @@ package tiles_fpga_pkg is
 
   component fpga_tile_acc is
     generic (
+      SIMULATION         : boolean              := false;
       this_hls_conf      : hlscfg_t             := 0;
       this_device        : devid_t              := 0;
       this_irq_type      : integer              := 0;
@@ -132,6 +133,7 @@ package tiles_fpga_pkg is
       this_has_dvfs      : integer range 0 to 1 := 0;
       this_has_pll       : integer range 0 to 1 := 0;
       this_extra_clk_buf : integer range 0 to 1 := 0;
+      this_has_token_pm  : integer range 0 to 1 := 0;
       ROUTER_PORTS       : ports_vec            := "11111";
       HAS_SYNC           : integer range 0 to 1 := 1);
     port (

@@ -22,21 +22,23 @@ entity esp_tile_csr is
     pindex      : integer range 0 to NAPBSLV -1 := 0;
     dco_rst_cfg : std_logic_vector(30 downto 0) := (others => '0'));
   port (
-    clk         : in std_logic;
-    rstn        : in std_logic;
-    pconfig     : in apb_config_type;
-    mon_ddr     : in monitor_ddr_type;
-    mon_mem     : in monitor_mem_type;
-    mon_noc     : in monitor_noc_vector(1 to 6);
-    mon_l2      : in monitor_cache_type;
-    mon_llc     : in monitor_cache_type;
-    mon_acc     : in monitor_acc_type;
-    mon_dvfs    : in monitor_dvfs_type;
+    clk         : in  std_logic;
+    rstn        : in  std_logic;
+    pconfig     : in  apb_config_type;
+    mon_ddr     : in  monitor_ddr_type;
+    mon_mem     : in  monitor_mem_type;
+    mon_noc     : in  monitor_noc_vector(1 to 6);
+    mon_l2      : in  monitor_cache_type;
+    mon_llc     : in  monitor_cache_type;
+    mon_acc     : in  monitor_acc_type;
+    mon_dvfs    : in  monitor_dvfs_type;
     tile_config : out std_logic_vector(ESP_CSR_WIDTH - 1 downto 0);
+    pm_config   : out pm_config_type;
+    pm_status   : in  pm_status_type;
     srst        : out std_ulogic;
-    apbi        : in apb_slv_in_type;
+    apbi        : in  apb_slv_in_type;
     apbo        : out apb_slv_out_type
-  );
+    );
 end esp_tile_csr;
 
 architecture rtl of esp_tile_csr is
@@ -90,6 +92,9 @@ architecture rtl of esp_tile_csr is
 
     -- CSRs
     signal config_r : std_logic_vector(ESP_CSR_WIDTH - 1 downto 0);
+    -- CSRs
+    signal pm_config_r : pm_config_type;
+    signal pm_status_r : pm_status_type;
 
     -- DDR_CFG0
     constant DEFAULT_DDR_CFG0 : std_logic_vector(31 downto 0) :=
@@ -153,23 +158,38 @@ architecture rtl of esp_tile_csr is
         DEFAULT_ACC_COH & DEFAULT_DDR_CFG2 & DEFAULT_DDR_CFG1 & DEFAULT_DDR_CFG0 & DEFAULT_CPU_LOC_OVR & DEFAULT_ARIANE_HARTID &
         DEFAULT_MDC_SCALER_CFG & DEFAULT_DCO_NOC_CFG & RESET_DCO_CFG & DEFAULT_PAD_CFG & DEFAULT_TILE_ID & "0";
 
-    signal csr_addr : integer range 0 to 31;
+  signal csr_addr : integer range 0 to 31;
 
     begin
 
-      apbo.prdata   <= readdata;
-      apbo.pirq     <= (others => '0');
-      apbo.pindex   <= pindex;
-      apbo.pconfig  <= pconfig;
+      apbo.prdata  <= readdata;
+      apbo.pirq    <= (others => '0');
+      apbo.pindex  <= pindex;
+      apbo.pconfig <= pconfig;
 
       tile_config <= config_r;
-      csr_addr <= conv_integer(apbi.paddr(6 downto 2));
+      csr_addr    <= conv_integer(apbi.paddr(6 downto 2));
 
-      rd_registers : process(apbi, count, count_value, burst, config_r, csr_addr)
+      pm_config <= pm_config_r;
+
+      pm_status_update : process(clk, rstn)
+      begin  --process
+        if rstn = '0' then
+          for i in 0 to PM_REGNUM_STATUS - 1 loop
+            pm_status_r(i) <= (others => '0');
+          end loop;
+        elsif clk'event and clk = '1' then
+          for i in 0 to PM_REGNUM_STATUS - 1 loop
+            pm_status_r(i) <= pm_status(i);
+          end loop;
+        end if;
+      end process;
+
+      rd_registers : process(apbi, count, count_value, burst, config_r, pm_config_r, csr_addr)
         --TODO
         variable addr : integer range 0 to 127;
       begin
-        addr := conv_integer(apbi.paddr(8 downto 2));
+        addr     := conv_integer(apbi.paddr(8 downto 2));
         readdata <= (others => '0');
 
         wdata <= apbi.pwdata;
@@ -216,6 +236,10 @@ architecture rtl of esp_tile_csr is
               readdata(ESP_CSR_DDR_CFG2_MSB - ESP_CSR_DDR_CFG2_LSB downto 0) <= config_r(ESP_CSR_DDR_CFG2_MSB downto ESP_CSR_DDR_CFG2_LSB);
             when ESP_CSR_ACC_COH_ADDR =>
               readdata(ESP_CSR_ACC_COH_MSB - ESP_CSR_ACC_COH_LSB downto 0) <= config_r(ESP_CSR_ACC_COH_MSB downto ESP_CSR_ACC_COH_LSB);
+            when ESP_CSR_PM_MIN to ESP_CSR_PM_MIN + PM_REGNUM_CONFIG - 1 =>
+              readdata(31 downto 0) <= pm_config_r(csr_addr - ESP_CSR_PM_MIN);
+            when ESP_CSR_PM_MIN + PM_REGNUM_CONFIG to ESP_CSR_PM_MAX =>
+              readdata(31 downto 0) <= pm_status_r(csr_addr - ESP_CSR_PM_MIN - PM_REGNUM_CONFIG);
             when others =>
               readdata <= (others => '0');
           end case;
@@ -239,6 +263,7 @@ architecture rtl of esp_tile_csr is
             burst <= (others => '0');
             config_r <= DEFAULT_CONFIG;
             srst <= '0';
+            pm_config_r <= (others => (others => '0'));
         elsif clk'event and clk = '1' then
           -- Monitors
           if burst_sample = '1' then
@@ -271,6 +296,9 @@ architecture rtl of esp_tile_csr is
                 config_r(ESP_CSR_DDR_CFG2_MSB downto ESP_CSR_DDR_CFG2_LSB) <= apbi.pwdata(ESP_CSR_DDR_CFG2_MSB - ESP_CSR_DDR_CFG2_LSB downto 0);
               when ESP_CSR_ACC_COH_ADDR =>
                 config_r(ESP_CSR_ACC_COH_MSB downto ESP_CSR_ACC_COH_LSB) <= apbi.pwdata(ESP_CSR_ACC_COH_MSB - ESP_CSR_ACC_COH_LSB downto 0);
+              -- Power management
+              when ESP_CSR_PM_MIN to ESP_CSR_PM_MIN + PM_REGNUM_CONFIG - 1 =>
+                pm_config_r(csr_addr - ESP_CSR_PM_MIN) <= apbi.pwdata(31 downto 0);
               when ESP_CSR_SRST_ADDR =>
                 srst <= wdata(0);
               when others => null;
@@ -309,7 +337,7 @@ architecture rtl of esp_tile_csr is
   begin
     if rstn = '0' then
       for R in 0 to MONITOR_REG_COUNT-1 loop
-        count(R) <= (others => '0');
+        count(R)       <= (others => '0');
         count_value(R) <= (others => '0');
       end loop;
       accelerator_tlb_count := (others => '0');
@@ -369,16 +397,16 @@ architecture rtl of esp_tile_csr is
           started := '1';
         end if;
         if mon_acc.go = '1' and mon_acc.run = '0' then
-          accelerator_tlb_count := accelerator_tlb_count + 1;
+          accelerator_tlb_count    := accelerator_tlb_count + 1;
           count(MON_ACC_TLB_INDEX) <= accelerator_tlb_count;
         end if;
         if mon_acc.run = '1' or mon_acc.go = '1' then
-          accelerator_tot_count := accelerator_tot_count + 1;
+          accelerator_tot_count       := accelerator_tot_count + 1;
           count(MON_ACC_TOT_LO_INDEX) <= accelerator_tot_count(REGISTER_WIDTH-1 downto 0);
           count(MON_ACC_TOT_HI_INDEX) <= accelerator_tot_count(2*REGISTER_WIDTH-1 downto REGISTER_WIDTH);
         end if;
         if mon_acc.run = '1' and mon_acc.burst = '1' then
-          accelerator_mem_count := accelerator_mem_count + 1;
+          accelerator_mem_count       := accelerator_mem_count + 1;
           count(MON_ACC_MEM_LO_INDEX) <= accelerator_mem_count(REGISTER_WIDTH-1 downto 0);
           count(MON_ACC_MEM_HI_INDEX) <= accelerator_mem_count(2*REGISTER_WIDTH-1 downto REGISTER_WIDTH);
         end if;
@@ -389,13 +417,13 @@ architecture rtl of esp_tile_csr is
       --DVFS
       for V in 0 to VF_OP_POINTS - 1 loop
         if mon_dvfs.vf(V) = '1' then
-            count(MON_DVFS_BASE_INDEX + V) <= count(MON_DVFS_BASE_INDEX + V) + 1;
+          count(MON_DVFS_BASE_INDEX + V) <= count(MON_DVFS_BASE_INDEX + V) + 1;
         end if;
       end loop;
 
       --NoC
       for N in 1 to NOCS_NUM loop
-        if mon_noc(N).tile_inject  = '1' then
+        if mon_noc(N).tile_inject = '1' then
           count(MON_NOC_TILE_INJECT_BASE_INDEX + (N-1)) <= count(MON_NOC_TILE_INJECT_BASE_INDEX + (N-1)) + 1;
         end if;
 

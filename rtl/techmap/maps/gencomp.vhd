@@ -1186,6 +1186,16 @@ component clkrand is
   );
 end component;
 
+component clkdiv1234 is
+  port(
+    rstn     :  in  std_ulogic;
+    clkin    :  in  std_ulogic;
+    clk_div1 :  out std_ulogic;
+    clk_div2 :  out std_ulogic;
+    clk_div3 :  out std_ulogic;
+    clk_div4 :  out std_ulogic
+  );
+end component;
 
 ---------------------------------------------------------------------------
 -- DDR registers and PHY

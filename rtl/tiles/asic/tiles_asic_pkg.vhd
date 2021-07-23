@@ -111,13 +111,15 @@ package tiles_asic_pkg is
 
   component asic_tile_acc is
     generic (
-      this_hls_conf : hlscfg_t;
-      this_device   : devid_t;
-      this_irq_type : integer;
-      this_has_l2   : integer range 0 to 1;
-      HAS_SYNC      : integer range 0 to 1 := 1;
-      ROUTER_PORTS  : ports_vec;
-      this_has_dco  : integer range 0 to 1);
+      SIMULATION        : boolean := false;
+      this_hls_conf     : hlscfg_t;
+      this_device       : devid_t;
+      this_irq_type     : integer;
+      this_has_l2       : integer range 0 to 1;
+      this_has_token_pm : integer range 0 to 1;
+      HAS_SYNC : integer range 0 to 1 := 1;
+      ROUTER_PORTS      : ports_vec;
+      this_has_dco : integer range 0 to 1);
     port (
       rst                : in  std_ulogic;
       sys_clk            : in  std_ulogic;

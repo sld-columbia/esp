@@ -635,6 +635,7 @@ begin
 -- pragma translate_on
       tile_acc_i: fpga_tile_acc
       generic map (
+        SIMULATION         => SIMULATION,
         this_hls_conf      => tile_design_point(i),
         this_device        => tile_device(i),
         this_irq_type      => tile_irq_type(i),
@@ -642,6 +643,7 @@ begin
         this_has_dvfs      => tile_has_dvfs(i),
         this_has_pll       => tile_has_pll(i),
         this_extra_clk_buf => extra_clk_buf(i),
+        this_has_token_pm  => tile_has_tdvfs(i),
         ROUTER_PORTS       => set_router_ports(CFG_FABTECH, CFG_XLEN, CFG_YLEN, tile_x(i), tile_y(i)),
         HAS_SYNC           => CFG_HAS_SYNC)
       port map (

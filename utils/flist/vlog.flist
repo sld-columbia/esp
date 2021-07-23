@@ -34,3 +34,4 @@ noc/router/router_arbiter.sv
 noc/router/lookahead_routing.sv
 noc/router/lookahead_router.sv
 noc/router/lookahead_router_wrapper.sv
+techmap/maps/clkdiv1234.v

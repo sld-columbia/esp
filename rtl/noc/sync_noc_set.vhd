@@ -12,15 +12,12 @@ use work.nocpackage.all;
 entity sync_noc_set is
   generic (
     PORTS     : std_logic_vector(4 downto 0);
---    local_x   : std_logic_vector(2 downto 0);
---    local_y   : std_logic_vector(2 downto 0);
     HAS_SYNC  : integer range 0 to 1 := 0);
   port (
     clk           : in  std_logic;
     clk_tile      : in  std_logic;
     rst           : in  std_logic;
     rst_tile      : in  std_logic;
---    CONST_PORTS   : in  std_logic_vector(4 downto 0);
     CONST_local_x : in  std_logic_vector(2 downto 0);
     CONST_local_y : in  std_logic_vector(2 downto 0);
     noc1_data_n_in     : in  coh_noc_flit_type;
@@ -134,7 +131,6 @@ architecture mesh of sync_noc_set is
       clk_tile      : in  std_logic;
       rst           : in  std_logic;
       rst_tile      : in  std_logic;
---      CONST_PORTS   : in  std_logic_vector(4 downto 0);
       CONST_local_x : in  std_logic_vector(2 downto 0);
       CONST_local_y : in  std_logic_vector(2 downto 0);
       data_n_in     : in  std_logic_vector(this_noc_flit_size - 1 downto 0);
@@ -170,7 +166,6 @@ begin
       clk_tile      => clk_tile,
       rst           => rst,
       rst_tile      => rst_tile,
---      CONST_PORTS   => CONST_PORTS,
       CONST_local_x => CONST_local_x,
       CONST_local_y => CONST_local_y,
       data_n_in     => noc1_data_n_in,
@@ -202,7 +197,6 @@ begin
       clk_tile      => clk_tile,
       rst           => rst,
       rst_tile      => rst_tile,
---      CONST_PORTS   => CONST_PORTS,
       CONST_local_x => CONST_local_x,
       CONST_local_y => CONST_local_y,
       data_n_in     => noc2_data_n_in,
@@ -234,7 +228,6 @@ begin
       clk_tile      => clk_tile,
       rst           => rst,
       rst_tile      => rst_tile,
---      CONST_PORTS   => CONST_PORTS,
       CONST_local_x => CONST_local_x,
       CONST_local_y => CONST_local_y,
       data_n_in     => noc3_data_n_in,
@@ -265,7 +258,6 @@ begin
       clk_tile      => clk_tile,
       rst           => rst,
       rst_tile      => rst_tile,
---      CONST_PORTS   => CONST_PORTS,
       CONST_local_x => CONST_local_x,
       CONST_local_y => CONST_local_y,
       data_n_in     => noc4_data_n_in,
@@ -297,7 +289,6 @@ begin
       clk_tile      => clk_tile,
       rst           => rst,
       rst_tile      => rst_tile,
---      CONST_PORTS   => CONST_PORTS,
       CONST_local_x => CONST_local_x,
       CONST_local_y => CONST_local_y,
       data_n_in     => noc5_data_n_in,
@@ -329,7 +320,6 @@ begin
       clk_tile      => clk_tile,
       rst           => rst,
       rst_tile      => rst_tile,
---      CONST_PORTS   => CONST_PORTS,
       CONST_local_x => CONST_local_x,
       CONST_local_y => CONST_local_y,
       data_n_in     => noc6_data_n_in,
