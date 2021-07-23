@@ -1006,7 +1006,7 @@ begin
           this_device   => tile_device(i),
           this_irq_type => tile_irq_type(i),
           this_has_l2   => tile_has_l2(i),
-          this_has_token_pm  => tils_has_tdvfs(i),
+          this_has_token_pm  => tile_has_tdvfs(i),
           ROUTER_PORTS  => set_router_ports(CFG_FABTECH, CFG_XLEN, CFG_YLEN, tile_x(i), tile_y(i)))
         port map (
           rst                => reset_int,
