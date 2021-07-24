@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sld>
+  <accelerator name="crypto_cxx" desc="Accelerator Crypto Catapult C++" data_size="4" device_id="091" hls_tool="catapult_hls_cxx">
+      <param name="crypto_algo" desc="crypto_algo" />
+      <param name="sha1_in_bytes" desc="sha1_in_bytes" />
+  </accelerator>
+</sld>
