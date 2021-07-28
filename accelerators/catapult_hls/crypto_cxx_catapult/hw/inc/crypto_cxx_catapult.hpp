@@ -5,6 +5,7 @@
 #define __CRYPTO_CXX_CATAPULT_HPP__
 
 #include "sha1.h"
+#include "sha2.h"
 #include "data.hpp" // Fixed-point data types
 #include "conf_info.hpp" // Configuration-port data type
 
@@ -14,11 +15,16 @@
 
 typedef ac_int<DMA_WIDTH, false> dma_data_t;
 
-// PLM and data dimensions
+// SHA1 PLM and data dimensions
 #define SHA1_PLM_WIDTH 32
 #define SHA1_PLM_IN_SIZE SHA1_MAX_BLOCK_SIZE
 // TODO: workaround, make PLM 1 word bigger 5 -> 6
 #define SHA1_PLM_OUT_SIZE (SHA1_DIGEST_WORDS+1)
+
+// SHA2 PLM and data dimensions
+#define SHA2_PLM_WIDTH 32
+#define SHA2_PLM_IN_SIZE SHA2_MAX_BLOCK_SIZE
+#define SHA2_PLM_OUT_SIZE (SHA2_MAX_DIGEST_WORDS)
 
 // Encapsulate the PLM array in a templated struct
 template <class T, unsigned S>
@@ -27,9 +33,17 @@ public:
    T data[S];
 };
 
+template <class T, unsigned S>
+struct sha2_plm_t {
+public:
+   T data[S];
+};
+
 // PLM typedefs
 typedef sha1_plm_t<data_t, SHA1_PLM_IN_SIZE> sha1_plm_in_t;
 typedef sha1_plm_t<data_t, SHA1_PLM_OUT_SIZE> sha1_plm_out_t;
+typedef sha2_plm_t<data_t, SHA2_PLM_IN_SIZE> sha2_plm_in_t;
+typedef sha2_plm_t<data_t, SHA2_PLM_OUT_SIZE> sha2_plm_out_t;
 
 // Accelerator top module
 void crypto_cxx_catapult(

@@ -7,7 +7,16 @@
 #define N_TESTS 13
 
 static unsigned sha1_raw_in_bytes[N_TESTS] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 64, 262, 6400};
-static unsigned sha1_raw_in_words[N_TESTS] =    {0, 2, 2, 2, 2, 2, 2, 2, 2, 4, 16,  66, 1600};
+
+// ATTENTION: SHA1 output is 5 32-bit words, DMA is 64 bits
+// Add an extra word of zeros at the end.
+static unsigned sha1_raw_out_bytes[N_TESTS] = {24+4, 24+4, 24+4, 24+4, 24+4, 24+4, 24+4, 24+4, 24+4, 24+4, 24+4, 24+4, 24+4};
+
+static unsigned sha1_raw_in_words[N_TESTS] = {0, 2, 2, 2, 2, 2, 2, 2, 2, 4, 16,  66, 1600};
+
+// ATTENTION: SHA1 output is 5 32-bit words, DMA is 64 bits
+// Add an extra word of zeros at the end.
+static unsigned sha1_raw_out_words[N_TESTS] = {5+1, 5+1, 5+1, 5+1, 5+1, 5+1, 5+1, 5+1, 5+1, 5+1, 5+1, 5+1, 5+1};
 
 static unsigned sha1_raw_inputs[N_TESTS][1600] = {
     {0x00000000, 0x00000000}, // SHA1ShortMsg 0

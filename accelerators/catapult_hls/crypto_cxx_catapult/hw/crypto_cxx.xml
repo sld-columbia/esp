@@ -3,5 +3,7 @@
   <accelerator name="crypto_cxx" desc="Accelerator Crypto Catapult C++" data_size="4" device_id="091" hls_tool="catapult_hls_cxx">
       <param name="crypto_algo" desc="crypto_algo" />
       <param name="sha1_in_bytes" desc="sha1_in_bytes" />
+      <param name="sha2_in_bytes" desc="sha2_in_bytes" />
+      <param name="sha2_out_bytes" desc="sha2_out_bytes" />
   </accelerator>
 </sld>

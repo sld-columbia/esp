@@ -109,6 +109,7 @@ set can_simulate 1
 solution options set Flows/QuestaSIM/SCCOM_OPTS {-64 -g -x c++ -Wall -Wno-unused-label -Wno-unknown-pragmas}
 set PRE_FLAGS ""
 append PRE_FLAGS " -D__MENTOR_CATAPULT_HLS__"
+append PRE_FLAGS " -DSYN_SHA256"
 solution options set /Input/CompilerFlags ${PRE_FLAGS}
 
 #
@@ -121,6 +122,8 @@ solution options set /Input/SearchPath { \
     ../src \
     ../inc/sha1 \
     ../src/sha1 \
+    ../inc/sha2 \
+    ../src/sha2 \
     ../../../common/inc }
 
 solution options set ComponentLibs/SearchPath { \
@@ -150,13 +153,19 @@ solution options set ComponentLibs/SearchPath { \
 solution file add ../inc/conf_info.hpp -type C++
 solution file add ../inc/crypto_cxx_catapult.hpp -type C++
 solution file add ../inc/data.hpp -type C++
+
 solution file add ../inc/sha1/properties.h -type C++
 solution file add ../inc/sha1/defines.h -type C++
-solution file add ../src/sha1/sha1.cpp -type C++
 solution file add ../inc/sha1/sha1.h -type C++
+solution file add ../inc/sha2/properties.h -type C++
+solution file add ../inc/sha2/defines.h -type C++
+solution file add ../inc/sha2/sha2.h -type C++
+solution file add ../inc/sha2/sha2_256.h -type C++
+solution file add ../inc/sha2/sha2_512.h -type C++
 
 solution file add ../src/crypto_cxx_catapult.cpp -type C++
 solution file add ../src/sha1/sha1.cpp -type C++
+solution file add ../src/sha2/sha2.cpp -type C++
 
 solution file add ../tb/main.cpp -type C++ -exclude true
 
@@ -203,6 +212,11 @@ go analyze
 
 # 10.5
 solution design set $ACCELERATOR -top
+
+solution design set sha1 -block
+solution design set sha2 -block
+
+#solution design set sha256_block -block
 
 #directive set PRESERVE_STRUCTS false
 
@@ -281,6 +295,8 @@ if {$opt(hsynth)} {
         } \
     }
 
+    #directive set /${ACCELERATOR}/sha256_block -MAP_TO_MODULE {[CCORE]}
+
     # BUGFIX: This prevents the creation of the empty module CGHpart. In the
     # next releases of Catapult HLS, this may be fixed.
     directive set /$ACCELERATOR -GATE_EFFORT normal
@@ -299,33 +315,34 @@ if {$opt(hsynth)} {
     directive set /$ACCELERATOR/dma_write_chnl:rsc -MAP_TO_MODULE ccs_ioport.ccs_out_wait
     directive set /$ACCELERATOR/acc_done:rsc -MAP_TO_MODULE ccs_ioport.ccs_sync_out_vld
 
-    ## Arrays
-    ##directive set /$ACCELERATOR/core/plm_in.data:rsc -MAP_TO_MODULE Xilinx_RAMS.BLOCK_1R1W_RBW
-    ##directive set /$ACCELERATOR/core/plm_out.data:rsc -MAP_TO_MODULE Xilinx_RAMS.BLOCK_1R1W_RBW
-
-    #directive set /$ACCELERATOR/core/plm_in.data:rsc -MAP_TO_MODULE GF12_SRAM_SP_2048x32.GF12_SRAM_SP_2048x32
-    ##directive set /$ACCELERATOR/core/plm_in.data:rsc -MAP_TO_MODULE {[Register]}
-    #directive set /$ACCELERATOR/core/plm_out.data:rsc -MAP_TO_MODULE {[Register]}
-    #directive set /$ACCELERATOR/core/sha1:h:rsc -MAP_TO_MODULE {[Register]}
-    #directive set /$ACCELERATOR/core/sha1:data:rsc -MAP_TO_MODULE {[Register]}
-
-
-    ## Loops
-    ##directive set /$ACCELERATOR/core/SHA1_L_1 -PIPELINE_INIT_INTERVAL 1
-    ##directive set /$ACCELERATOR/core/SHA1_L_1_4 -PIPELINE_INIT_INTERVAL 1
-    ##directive set /$ACCELERATOR/core/SHA1_BLOCK_L_1#1 -PIPELINE_INIT_INTERVAL 1
-    ##directive set /$ACCELERATOR/core/SHA1_BLOCK_L_2#1 -PIPELINE_INIT_INTERVAL 1
-    ##directive set /$ACCELERATOR/core/SHA1_BLOCK_L_3#1 -PIPELINE_INIT_INTERVAL 1
-    ##directive set /$ACCELERATOR/core/SHA1_BLOCK_L_4#1 -PIPELINE_INIT_INTERVAL 1
-    ##directive set /$ACCELERATOR/core/SHA1_BLOCK_L_5#1 -PIPELINE_INIT_INTERVAL 1
-    ##directive set /$ACCELERATOR/core/SHA1_L_1_6 -PIPELINE_INIT_INTERVAL 1
-    ##directive set /$ACCELERATOR/core/SHA1_BLOCK_L_1#2 -PIPELINE_INIT_INTERVAL 1
-    ##directive set /$ACCELERATOR/core/SHA1_BLOCK_L_2#2 -PIPELINE_INIT_INTERVAL 1
-    ##directive set /$ACCELERATOR/core/SHA1_BLOCK_L_3#2 -PIPELINE_INIT_INTERVAL 1
-    ##directive set /$ACCELERATOR/core/SHA1_BLOCK_L_4#2 -PIPELINE_INIT_INTERVAL 1
-    ##directive set /$ACCELERATOR/core/SHA1_BLOCK_L_5#2 -PIPELINE_INIT_INTERVAL 1
-    ##directive set /$ACCELERATOR/core/SHA1_L_1_8 -PIPELINE_INIT_INTERVAL 1
-
+    # Arrays
+    directive set /crypto_cxx_catapult/sha256_block:K256.rom:rsc -MAP_TO_MODULE {[Register]}
+    directive set /crypto_cxx_catapult/sha256_block#1:K256.rom:rsc -MAP_TO_MODULE {[Register]}
+    directive set /crypto_cxx_catapult/sha256_block#2:K256.rom:rsc -MAP_TO_MODULE {[Register]}
+    directive set /crypto_cxx_catapult/sha1:h.rom:rsc -MAP_TO_MODULE {[Register]}
+    directive set /crypto_cxx_catapult/sha256:h.rom:rsc -MAP_TO_MODULE {[Register]}
+    directive set /crypto_cxx_catapult/core/sha1_plm_in.data:rsc -MAP_TO_MODULE GF12_SRAM_SP_2048x32.GF12_SRAM_SP_2048x32
+    directive set /crypto_cxx_catapult/core/sha1_plm_out.data:rsc -MAP_TO_MODULE {[Register]}
+    directive set /crypto_cxx_catapult/core/sha2_plm_in.data:rsc -MAP_TO_MODULE GF12_SRAM_SP_2048x32.GF12_SRAM_SP_2048x32
+    directive set /crypto_cxx_catapult/core/sha2_plm_out.data:rsc -MAP_TO_MODULE {[Register]}
+    directive set /crypto_cxx_catapult/core/sha1:h:rsc -MAP_TO_MODULE {[Register]}
+    directive set /crypto_cxx_catapult/core/sha1:data:rsc -MAP_TO_MODULE {[Register]}
+    directive set /crypto_cxx_catapult/core/sha256:h:rsc -MAP_TO_MODULE {[Register]}
+    directive set /crypto_cxx_catapult/core/sha256:data:rsc -MAP_TO_MODULE {[Register]}
+    directive set /crypto_cxx_catapult/core/sha256_block:tmp:rsc -MAP_TO_MODULE {[Register]}
+    directive set /crypto_cxx_catapult/core/sha256_block#1:tmp:rsc -MAP_TO_MODULE {[Register]}
+    directive set /crypto_cxx_catapult/core/sha256_block#2:tmp:rsc -MAP_TO_MODULE {[Register]}
+ 
+    # Loops
+    directive set /crypto_cxx_catapult/core/main -MERGEABLE false
+    directive set /crypto_cxx_catapult/core/SHA1_LOAD_CTRL_LOOP -MERGEABLE false
+    directive set /crypto_cxx_catapult/core/SHA1_LOAD_LOOP -MERGEABLE false
+    directive set /crypto_cxx_catapult/core/SHA1_STORE_CTRL_LOOP -MERGEABLE false
+    directive set /crypto_cxx_catapult/core/SHA1_STORE_LOOP -MERGEABLE false
+    directive set /crypto_cxx_catapult/core/SHA2_LOAD_CTRL_LOOP -MERGEABLE false
+    directive set /crypto_cxx_catapult/core/SHA2_LOAD_LOOP -MERGEABLE false
+    directive set /crypto_cxx_catapult/core/SHA2_STORE_CTRL_LOOP -MERGEABLE false
+    directive set /crypto_cxx_catapult/core/SHA2_STORE_LOOP -MERGEABLE false
 
     # Loops performance tracing
 

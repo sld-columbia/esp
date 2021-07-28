@@ -13,6 +13,8 @@ struct conf_info_t {
     // rsa
     // aes
     // sha2
+    uint32_t sha2_in_bytes;
+    uint32_t sha2_out_bytes;
     // sha1
     uint32_t sha1_in_bytes;
     // global

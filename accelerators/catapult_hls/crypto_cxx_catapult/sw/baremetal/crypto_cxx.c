@@ -24,16 +24,21 @@ static unsigned DMA_WORD_PER_BEAT(unsigned _st)
 /* <<--params-->> */
 static unsigned crypto_algo;
 static unsigned sha1_in_bytes;
+static unsigned sha2_in_bytes;
+static unsigned sha2_out_bytes;
 
 /* Other parameters */
 //const unsigned sha1_in_words = 1600;
 static unsigned sha1_in_words;
-// TODO: SHA1 output is 5 32-bit words, DMA is 64 bits
-// Add an extra word of zeros at the end.
-static unsigned sha1_out_words = 5 + 1;
+static unsigned sha1_out_words;
 static unsigned sha1_out_bytes;
-static unsigned mem_bytes;
+static unsigned sha2_in_words;
+static unsigned sha2_out_words;
 
+static unsigned mem_bytes; /* Total memory buffer size in bytes */
+static unsigned out_offset; /* Output offset in memory buffer */
+static unsigned out_bytes; /* Output buffer size in bytes */
+static unsigned out_words; /* Output buffer size in words */
 
 /* Size of the contiguous chunks for scatter/gather */
 #define CHUNK_SHIFT 20
@@ -46,11 +51,18 @@ static unsigned mem_bytes;
          /* <<--regs-->> */
 #define CRYPTO_CXX_CRYPTO_ALGO_REG 0x40
 #define CRYPTO_CXX_SHA1_IN_BYTES_REG 0x44
+#define CRYPTO_CXX_SHA2_OUT_BYTES_REG 0x48
+#define CRYPTO_CXX_SHA2_IN_BYTES_REG 0x4C
 
-#define SHA1_ALGO 1
+//#define SHA1_ALGO 1
+#define SHA2_ALGO 2
 
 #ifdef SHA1_ALGO
 #include "sha1_tests.h"
+#endif
+
+#ifdef SHA2_ALGO
+#include "sha2_tests.h"
 #endif
 
 static int validate_buf(token_t *out, token_t *gold, unsigned out_words)
@@ -70,7 +82,7 @@ static int validate_buf(token_t *out, token_t *gold, unsigned out_words)
         {
             errors++;
         }
-        printf("[%u] %x (%x)\n", j, out_data, gold_data);
+        printf("[%u] %x (%x) %s\n", j, out_data, gold_data, ((out_data != gold_data)?" !!!":""));
     }
 
     printf("  total errors %u\n", errors);
@@ -107,25 +119,47 @@ int main(int argc, char * argv[])
     printf("   sizeof(token_t) = %u\n", sizeof(token_t));
 
     for (unsigned idx = 1; idx < N_TESTS; idx++) {
-
+	printf("   -> index %u\n", idx); 
 #ifdef SHA1_ALGO
-
-	crypto_algo = SHA1_ALGO;
+        crypto_algo = SHA1_ALGO;
 
         sha1_in_bytes = sha1_raw_in_bytes[idx];
         sha1_in_words = sha1_raw_in_words[idx];
+        sha1_out_bytes = sha1_raw_out_bytes[idx];
+        sha1_out_words = sha1_raw_out_words[idx];
 
-        sha1_out_bytes = sha1_out_words * sizeof(token_t);
         mem_bytes = sha1_in_bytes + sha1_out_bytes;
+
+        out_offset = sha1_in_words;
+        out_bytes = sha1_out_bytes;
+
+	// ATTENTION: SHA1 output is 5 32-bit words, DMA is 64 bits
+	// Discard the last extra word
+        out_words = sha1_out_words - 1;
+#endif
+
+#ifdef SHA2_ALGO
+        crypto_algo = SHA2_ALGO;
+
+        sha2_in_bytes = sha2_raw_in_bytes[idx];
+        sha2_in_words = sha2_raw_in_words[idx];
+        sha2_out_bytes = sha2_raw_out_bytes[idx];
+        sha2_out_words = sha2_raw_out_words[idx];
+
+        mem_bytes = sha2_in_bytes + sha2_out_bytes;
+
+        out_offset = sha2_in_words;
+        out_bytes = sha2_out_bytes;
+        out_words = sha2_out_words;
 #endif
 
         // Allocate memory
-        gold = aligned_malloc(sha1_out_bytes);
+        gold = aligned_malloc(out_bytes);
         mem = aligned_malloc(mem_bytes);
         printf("  memory buffer base-address = %p\n", mem);
-        printf("  memory buffer size = %p\n", mem_bytes);
+        printf("  memory buffer size = %u\n", mem_bytes);
         printf("  golden buffer base-address = %p\n", gold);
-        printf("  golden buffer size = %p\n", sha1_out_bytes);
+        printf("  golden buffer size = %u\n", out_bytes);
 
         // Alocate and populate page table
         ptable = aligned_malloc(NCHUNK(mem_bytes) * sizeof(unsigned *));
@@ -136,7 +170,13 @@ int main(int argc, char * argv[])
 
         printf("  Generate input...\n");
 
+#ifdef SHA1_ALGO
         sha1_init_buf(idx, mem, gold);
+#endif
+
+#ifdef SHA2_ALGO
+        sha2_init_buf(idx, mem, gold);
+#endif
 
         printf("  ... input ready!\n");
 
@@ -173,12 +213,17 @@ int main(int argc, char * argv[])
 #ifdef SHA1_ALGO
             iowrite32(dev, CRYPTO_CXX_SHA1_IN_BYTES_REG, sha1_in_bytes);
 #endif
+#ifdef SHA2_ALGO
+            iowrite32(dev, CRYPTO_CXX_SHA2_IN_BYTES_REG, sha2_in_bytes);
+            iowrite32(dev, CRYPTO_CXX_SHA2_OUT_BYTES_REG, sha2_out_bytes);
+#endif
 
             // Flush (customize coherence model here)
-            esp_flush(ACC_COH_NONE);
+            // esp_flush(ACC_COH_NONE);
+            //esp_flush(ACC_COH_RECALL);
 
             // Start accelerators
-            printf("  Start...\n");
+            //printf("  Start...\n");
 
             iowrite32(dev, CMD_REG, CMD_MASK_START);
 
@@ -198,15 +243,17 @@ int main(int argc, char * argv[])
             //}
 
             /* Validation */
-            errors = validate_buf(mem + sha1_in_words, gold, sha1_out_words);
-            if (errors)
-                printf("  ... FAIL\n");
-            else
-                printf("  ... PASS\n");
+            errors = validate_buf(mem + out_offset, gold, out_words);
 
             aligned_free(ptable);
             aligned_free(mem);
             aligned_free(gold);
+
+            if (errors) {
+                printf("  ... FAIL\n");
+                return 1;
+            } else
+                printf("  ... PASS\n");
         }
     }
 
