@@ -1,94 +1,28 @@
 /* Copyright (c) 2011-2021 Columbia University, System Level Design Group */
 /* SPDX-License-Identifier: Apache-2.0 */
 
-#include <stdio.h>
-#include <stdlib.h>
-
-#include <fixed_point.h>
-#include <math.h>
-
-#include <esp_accelerator.h>
-#include <esp_probe.h>
-
-typedef uint32_t token_t;
-
-static unsigned DMA_WORD_PER_BEAT(unsigned _st)
-{
-    return (sizeof(void *) / _st);
-}
-
-#define SLD_AES_CXX 0x089
-#define DEV_NAME "sld,aes_cxx_catapult"
-
-/* <<--params-->> */
-static unsigned tag_bytes;
-static unsigned aad_bytes;
-static unsigned in_bytes;
-static unsigned out_bytes;
-static unsigned iv_bytes;
-static unsigned key_bytes;
-static unsigned encryption;
-static unsigned oper_mode;
-
-static unsigned key_words;
-static unsigned iv_words;
-static unsigned in_words;
-static unsigned out_words;
-static unsigned aad_words;
-static unsigned tag_words;
-
-static unsigned key_size;
-static unsigned iv_size;
-static unsigned in_size;
-static unsigned out_size;
-static unsigned aad_size;
-static unsigned tag_size;
-
-static unsigned mem_size;
-
-const unsigned aes_key_size = 8;
-const unsigned aes_iv_size = 4;
-const unsigned aes_in_size = 40;
-const unsigned aes_out_size = 40;
-const unsigned aes_aad_size = 32;
-const unsigned aes_tag_size = 4;
-
-/* Size of the contiguous chunks for scatter/gather */
-#define CHUNK_SHIFT 20
-#define CHUNK_SIZE BIT(CHUNK_SHIFT)
-#define NCHUNK(_sz) ((_sz % CHUNK_SIZE == 0) ?        \
-        (_sz / CHUNK_SIZE) :        \
-        (_sz / CHUNK_SIZE) + 1)
-
-/* User defined registers */
-/* <<--regs-->> */
-#define AES_CXX_OPER_MODE_REG 0x40
-#define AES_CXX_ENCRYPTION_REG 0x44
-#define AES_CXX_KEY_BYTES_REG 0x48
-#define AES_CXX_INPUT_BYTES_REG 0x4C
-#define AES_CXX_IV_BYTES_REG 0x50
-#define AES_CXX_AAD_BYTES_REG 0x54
-#define AES_CXX_TAG_BYTES_REG 0x58
+#ifndef AES_TESTS_H
+#define AES_TESTS_H
 
 /* Possible values of 'encryption' */
-//#define ENCRYPTION_MODE 1
-//#define DECRYPTION_MODE 2
+#define AES_ENCRYPTION_MODE 1
+//#define AES_DECRYPTION_MODE 2
 
 /* Possible values of 'oper_mode' */
-//#define ECB_OPERATION_MODE 1
-//#define CTR_OPERATION_MODE 2
-#define CBC_OPERATION_MODE 3
-//#define GCM_OPERATION_MODE 4
+//#define AES_ECB_OPERATION_MODE 1
+//#define AES_CTR_OPERATION_MODE 2
+#define AES_CBC_OPERATION_MODE 3
+//#define AES_GCM_OPERATION_MODE 4
 
-#ifdef ECB_OPERATION_MODE
+#ifdef AES_ECB_OPERATION_MODE
 /* aes32/tests/aesmmt/ECBMMT128.rsp */
 #define N_TESTS 10
 
-#define OPERATION_MODE ECB_OPERATION_MODE
+#define AES_OPERATION_MODE AES_ECB_OPERATION_MODE
 
-static unsigned ecb_raw_encrypt_count[N_TESTS] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+static unsigned aes_ecb_raw_encrypt_count[N_TESTS] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
 
-static unsigned ecb_raw_encrypt_key[N_TESTS][4] = {
+static unsigned aes_ecb_raw_encrypt_key[N_TESTS][4] = {
     {0xedfdb257, 0xcb37cdf1, 0x82c5455b, 0x0c0efebb},
     {0x7723d87d, 0x773a8bbf, 0xe1ae5b08, 0x1235b566},
     {0x280afe06, 0x3216a10b, 0x9cad9b20, 0x95552b16},
@@ -99,10 +33,10 @@ static unsigned ecb_raw_encrypt_key[N_TESTS][4] = {
     {0x0a53aa7a, 0x3e4a4f36, 0x4e8c6c72, 0x24af5501},
     {0xb80bcc92, 0x9052cb54, 0x50479442, 0xe2b809ce},
     {0xebea9c6a, 0x82213a00, 0xac1d22fa, 0xea22116f}};
-static unsigned ecb_raw_encrypt_key_bytes[N_TESTS] = {4*4, 4*4, 4*4, 4*4, 4*4, 4*4, 4*4, 4*4, 4*4, 4*4};
-static unsigned ecb_raw_encrypt_key_words[N_TESTS] = {4, 4, 4, 4, 4, 4, 4, 4, 4, 4};
+static unsigned aes_ecb_raw_encrypt_key_bytes[N_TESTS] = {4*4, 4*4, 4*4, 4*4, 4*4, 4*4, 4*4, 4*4, 4*4, 4*4};
+static unsigned aes_ecb_raw_encrypt_key_words[N_TESTS] = {4, 4, 4, 4, 4, 4, 4, 4, 4, 4};
 
-static unsigned ecb_raw_encrypt_plaintext[N_TESTS][40] = {
+static unsigned aes_ecb_raw_encrypt_plaintext[N_TESTS][40] = {
     {0x1695fe47, 0x5421cace, 0x3557daca, 0x01f445ff},
     {0x1b0a69b7, 0xbc534c16, 0xcecffae0, 0x2cc53231, 0x90ceb413, 0xf1db3e9f, 0x0f79ba65, 0x4c54b60e},
     {0x6f172bb6, 0xec364833, 0x411841a8, 0xf9ea2051, 0x735d6005, 0x38a9ea5e, 0x8cd2431a, 0x432903c1, 0xd6178988, 0xb616ed76, 0xe00036c5, 0xb28ccd8b},
@@ -113,10 +47,10 @@ static unsigned ecb_raw_encrypt_plaintext[N_TESTS][40] = {
     {0xeaf1760c, 0x0f25310d, 0xada6debe, 0xb966304d, 0xb7a9f1b2, 0xd1c3af92, 0x2623b263, 0x649031d2, 0x99b3c561, 0x46d61d55, 0xb6ebf4cf, 0x8dd04039, 0xa4d1ace3, 0x146f49ee, 0x915f806a, 0xfad64cbb, 0x2d04a641, 0x20de4038, 0x2e2175dc, 0xae9480d1, 0xca8dedc3, 0x8fb64e4a, 0x40112f10, 0xf03a4c35, 0x4fed01f2, 0xc5c7017d, 0xbd514b2d, 0x443a5adf, 0xd2e49c98, 0x6723266c, 0xda41a69e, 0x6e459908},
     {0x8177d79c, 0x8f239178, 0x186b4dc5, 0xf1df2ea7, 0xfee7d0db, 0x535489ef, 0x983aefb3, 0xb2029aeb, 0xa0bb2b46, 0xa2b18c94, 0xa1417a33, 0xcbeb41ca, 0x7ea9c73a, 0x677fccd2, 0xeb5470c3, 0xc500f6d3, 0xf1a6c755, 0xc944ba58, 0x6f88921f, 0x6ae6c9d1, 0x94e78c72, 0x33c40612, 0x6633e144, 0xc3810ad2, 0x3ee1b5af, 0x4c04a22d, 0x49e99e70, 0x17f74c23, 0x09492569, 0xff49be17, 0xd2804920, 0xf2ac5f51, 0x4d13fd3e, 0x7318cc7c, 0xf80ca510, 0x1a465428},
     {0x451f4566, 0x3b44fd00, 0x5f3c288a, 0xe57b3838, 0x83f02d9a, 0xd3dc1715, 0xf9e3d694, 0x8564257b, 0x9b06d7dd, 0x51935fee, 0x580a96bb, 0xdfefb918, 0xb4e6b1da, 0xac809847, 0x465578cb, 0x8b5356ed, 0x38556f80, 0x1ff7c11e, 0xcba9cdd2, 0x63039c15, 0xd05900fc, 0x228e1caf, 0x302d261d, 0x7fb56cee, 0x663595b9, 0x6f192a78, 0xff445539, 0x3a5fe816, 0x2170a066, 0xfdaeac35, 0x019469f2, 0x2b347068, 0x6bced2f0, 0x07a1a2e4, 0x3e01b456, 0x2caaa502, 0xed541b82, 0x05874ec1, 0xffb1c8b2, 0x55766942}};
-static unsigned ecb_raw_encrypt_plaintext_bytes[N_TESTS] = {4*4, 8*4, 12*4, 16*4, 20*4, 24*4, 28*4, 32*4, 36*4, 40*4};
-static unsigned ecb_raw_encrypt_plaintext_words[N_TESTS] = {4, 8, 12, 16, 20, 24, 28, 32, 36, 40};
+static unsigned aes_ecb_raw_encrypt_plaintext_bytes[N_TESTS] = {4*4, 8*4, 12*4, 16*4, 20*4, 24*4, 28*4, 32*4, 36*4, 40*4};
+static unsigned aes_ecb_raw_encrypt_plaintext_words[N_TESTS] = {4, 8, 12, 16, 20, 24, 28, 32, 36, 40};
 
-static unsigned ecb_raw_encrypt_ciphertext[N_TESTS][40] = {
+static unsigned aes_ecb_raw_encrypt_ciphertext[N_TESTS][40] = {
     {0x7888beae, 0x6e7a4263, 0x32a7eaa2, 0xf808e637},
     {0xad5b0895, 0x15e78210, 0x87c61652, 0xdc477ab1, 0xf2cc6331, 0xa70dfc59, 0xc9ffb0c7, 0x23c682f6},
     {0x4cc2a8f1, 0x3c8c7c36, 0xed6a814d, 0xb7f26900, 0xc7e04df4, 0x9cbad916, 0xce6a44d0, 0xae4fe7ed, 0xc0b40279, 0x4675b369, 0x4933ebbc, 0x356525d8},
@@ -127,61 +61,61 @@ static unsigned ecb_raw_encrypt_ciphertext[N_TESTS][40] = {
     {0x5ece70a4, 0x4da41bc7, 0xcfb9b582, 0xea9ce098, 0x0030ec4a, 0xf331e764, 0x99961f88, 0x860aa055, 0x4aba3ecb, 0xf77ca429, 0x3a3fee85, 0x4a2caf3a, 0xe800343f, 0xb4521388, 0xb16b6dc5, 0x99b3d60b, 0xf82777f9, 0x8e1a8d04, 0xab9cd54d, 0xd9a24809, 0x5795d4df, 0xe4858bfd, 0x9a05f54c, 0x795bb086, 0xe15f7c22, 0x228184ec, 0x66a9ca10, 0xb1cf71a6, 0xbb9303c5, 0xcd1dcc05, 0x6460a86d, 0xf651f053},
     {0x5befb306, 0x2a7a7246, 0xaf1f77b0, 0xec0ac614, 0xe28be06a, 0xc2c81b19, 0xe5a0481b, 0xf160f9f2, 0xbc43f28f, 0x65487876, 0x39e4ce3e, 0x0f1e9547, 0x5f0e81ce, 0xb793004c, 0x8e46670e, 0xbd48b866, 0xd5b43d10, 0x4874ead4, 0xbe8a236b, 0xf90b48f8, 0x62f7e252, 0xdec4475f, 0xdbb841a6, 0x62efcd25, 0xed64b291, 0x0e9baaea, 0x9466e413, 0xa4241438, 0xb31df0bd, 0x3df9a16f, 0x46416367, 0x54e25986, 0x1728aa7d, 0xdf435cc5, 0x1f54f79a, 0x1db25f52},
     {0x01043053, 0xf832ef9b, 0x911ed387, 0xba577451, 0xe30d51d4, 0xb6b11f31, 0x9d4cd539, 0xd067b7f4, 0xf9b4f41f, 0x7f3d4e92, 0x0c57cbe2, 0xb5e1885a, 0xa66203ae, 0x493e93a1, 0xdf63793a, 0x9563c176, 0xbc6775dd, 0x09cc9161, 0xe278a01b, 0xeb8fd8a1, 0x9200326b, 0xd95abc5f, 0x716768e3, 0x4f90b505, 0x23d30fda, 0xbb103a3b, 0xc020afbb, 0xb0cb3bd2, 0xad512a6f, 0xea79f8d6, 0x4cef3474, 0x58dec48b, 0xe89451cb, 0x0b807d73, 0x593f273d, 0x9fc521b7, 0x89a77524, 0x404f43e0, 0x0f20b3b7, 0x7b938b1a}};
-static unsigned ecb_raw_encrypt_ciphertext_bytes[N_TESTS] = {4*4, 8*4, 12*4, 16*4, 20*4, 24*4, 28*4, 32*4, 36*4, 40*4};
-static unsigned ecb_raw_encrypt_ciphertext_words[N_TESTS] = {4, 8, 12, 16, 20, 24, 28, 32, 36, 40};
+static unsigned aes_ecb_raw_encrypt_ciphertext_bytes[N_TESTS] = {4*4, 8*4, 12*4, 16*4, 20*4, 24*4, 28*4, 32*4, 36*4, 40*4};
+static unsigned aes_ecb_raw_encrypt_ciphertext_words[N_TESTS] = {4, 8, 12, 16, 20, 24, 28, 32, 36, 40};
 #endif
 
 
-#ifdef CTR_OPERATION_MODE
+#ifdef AES_CTR_OPERATION_MODE
 /* aes32/tests/simple/CTRSimple128.rsp */
 #define N_TESTS 4
 
-#define OPERATION_MODE CTR_OPERATION_MODE
+#define AES_OPERATION_MODE AES_CTR_OPERATION_MODE
 
-static unsigned ctr_raw_encrypt_count[N_TESTS] = {0, 1, 2, 3};
+static unsigned aes_ctr_raw_encrypt_count[N_TESTS] = {0, 1, 2, 3};
 
-static unsigned ctr_raw_encrypt_key[N_TESTS][4] = {
+static unsigned aes_ctr_raw_encrypt_key[N_TESTS][4] = {
     {0x2b7e1516, 0x28aed2a6, 0xabf71588, 0x09cf4f3c},
     {0x2b7e1516, 0x28aed2a6, 0xabf71588, 0x09cf4f3c},
     {0x2b7e1516, 0x28aed2a6, 0xabf71588, 0x09cf4f3c},
     {0x2b7e1516, 0x28aed2a6, 0xabf71588, 0x09cf4f3c}};
-static unsigned ctr_raw_encrypt_key_bytes[N_TESTS] = {4*4, 4*4, 4*4, 4*4};
-static unsigned ctr_raw_encrypt_key_words[N_TESTS] = {4, 4, 4, 4};
+static unsigned aes_ctr_raw_encrypt_key_bytes[N_TESTS] = {4*4, 4*4, 4*4, 4*4};
+static unsigned aes_ctr_raw_encrypt_key_words[N_TESTS] = {4, 4, 4, 4};
 
-static unsigned ctr_raw_encrypt_iv[N_TESTS][4] = {
+static unsigned aes_ctr_raw_encrypt_iv[N_TESTS][4] = {
     {0xf0f1f2f3, 0xf4f5f6f7, 0xf8f9fafb, 0xfcfdfeff},
     {0xf0f1f2f3, 0xf4f5f6f7, 0xf8f9fafb, 0xfcfdfeff},
     {0xf0f1f2f3, 0xf4f5f6f7, 0xf8f9fafb, 0xfcfdfeff},
     {0xf0f1f2f3, 0xf4f5f6f7, 0xf8f9fafb, 0xfcfdfeff}};
-static unsigned ctr_raw_encrypt_iv_bytes[N_TESTS] = {4*4, 4*4, 4*4, 4*4};
-static unsigned ctr_raw_encrypt_iv_words[N_TESTS] = {4, 4, 4, 4};
+static unsigned aes_ctr_raw_encrypt_iv_bytes[N_TESTS] = {4*4, 4*4, 4*4, 4*4};
+static unsigned aes_ctr_raw_encrypt_iv_words[N_TESTS] = {4, 4, 4, 4};
 
-static unsigned ctr_raw_encrypt_plaintext[N_TESTS][40] = {
+static unsigned aes_ctr_raw_encrypt_plaintext[N_TESTS][40] = {
     {0x6bc1bee2, 0x2e409f96, 0xe93d7e11, 0x7393172a},
     {0x6bc1bee2, 0x2e409f96, 0xe93d7e11, 0x7393172a, 0xae2d8a57, 0x1e03ac9c, 0x9eb76fac, 0x45af8e51},
     {0x6bc1bee2, 0x2e409f96, 0xe93d7e11, 0x7393172a, 0xae2d8a57, 0x1e03ac9c, 0x9eb76fac, 0x45af8e51, 0x30c81c46, 0xa35ce411, 0xe5fbc119, 0x1a0a52ef}, 
     {0x6bc1bee2, 0x2e409f96, 0xe93d7e11, 0x7393172a, 0xae2d8a57, 0x1e03ac9c, 0x9eb76fac, 0x45af8e51, 0x30c81c46, 0xa35ce411, 0xe5fbc119, 0x1a0a52ef, 0xf69f2445, 0xdf4f9b17, 0xad2b417b, 0xe66c3710}};
-static unsigned ctr_raw_encrypt_plaintext_bytes[N_TESTS] = {4*4, 8*4, 12*4, 16*4};
-static unsigned ctr_raw_encrypt_plaintext_words[N_TESTS] = {4, 8, 12, 16};
+static unsigned aes_ctr_raw_encrypt_plaintext_bytes[N_TESTS] = {4*4, 8*4, 12*4, 16*4};
+static unsigned aes_ctr_raw_encrypt_plaintext_words[N_TESTS] = {4, 8, 12, 16};
 
-static unsigned ctr_raw_encrypt_ciphertext[N_TESTS][40] = {
+static unsigned aes_ctr_raw_encrypt_ciphertext[N_TESTS][40] = {
     {0x874d6191, 0xb620e326, 0x1bef6864, 0x990db6ce},
     {0x874d6191, 0xb620e326, 0x1bef6864, 0x990db6ce, 0x9806f66b, 0x7970fdff, 0x8617187b, 0xb9fffdff},
     {0x874d6191, 0xb620e326, 0x1bef6864, 0x990db6ce, 0x9806f66b, 0x7970fdff, 0x8617187b, 0xb9fffdff, 0x5ae4df3e, 0xdbd5d35e, 0x5b4f0902, 0x0db03eab},
     {0x874d6191, 0xb620e326, 0x1bef6864, 0x990db6ce, 0x9806f66b, 0x7970fdff, 0x8617187b, 0xb9fffdff, 0x5ae4df3e, 0xdbd5d35e, 0x5b4f0902, 0x0db03eab, 0x1e031dda, 0x2fbe03d1, 0x792170a0, 0xf3009cee}};
-static unsigned ctr_raw_encrypt_ciphertext_bytes[N_TESTS] = {4*4, 8*4, 12*4, 16*4};
-static unsigned ctr_raw_encrypt_ciphertext_words[N_TESTS] = {4, 8, 12, 16};
+static unsigned aes_ctr_raw_encrypt_ciphertext_bytes[N_TESTS] = {4*4, 8*4, 12*4, 16*4};
+static unsigned aes_ctr_raw_encrypt_ciphertext_words[N_TESTS] = {4, 8, 12, 16};
 #endif
 
-#ifdef CBC_OPERATION_MODE
+#ifdef AES_CBC_OPERATION_MODE
 /* aes32/tests/aesmmt/CBCMMT128.rsp */
 #define N_TESTS 10
 
-#define OPERATION_MODE CBC_OPERATION_MODE
+#define AES_OPERATION_MODE AES_CBC_OPERATION_MODE
 
-static unsigned cbc_raw_encrypt_count[N_TESTS] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+static unsigned aes_cbc_raw_encrypt_count[N_TESTS] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
 
-static unsigned cbc_raw_encrypt_key[N_TESTS][4] = {
+static unsigned aes_cbc_raw_encrypt_key[N_TESTS][4] = {
     {0x1f8e4973, 0x953f3fb0, 0xbd6b1666, 0x2e9a3c17},
     {0x0700d603, 0xa1c514e4, 0x6b6191ba, 0x430a3a0c},
     {0x3348aa51, 0xe9a45c2d, 0xbe33ccc4, 0x7f96e8de},
@@ -192,10 +126,10 @@ static unsigned cbc_raw_encrypt_key[N_TESTS][4] = {
     {0xc491ca31, 0xf9170845, 0x8e29a925, 0xec558d78},
     {0xf6e87d71, 0xb0104d6e, 0xb06a68dc, 0x6a71f498},
     {0x2c144137, 0x51c31e27, 0x30570ba3, 0x361c786b}};
-static unsigned cbc_raw_encrypt_key_bytes[N_TESTS] = {4*4, 4*4, 4*4, 4*4, 4*4, 4*4, 4*4, 4*4, 4*4, 4*4};
-static unsigned cbc_raw_encrypt_key_words[N_TESTS] = {4, 4, 4, 4, 4, 4, 4, 4, 4, 4};
+static unsigned aes_cbc_raw_encrypt_key_bytes[N_TESTS] = {4*4, 4*4, 4*4, 4*4, 4*4, 4*4, 4*4, 4*4, 4*4, 4*4};
+static unsigned aes_cbc_raw_encrypt_key_words[N_TESTS] = {4, 4, 4, 4, 4, 4, 4, 4, 4, 4};
 
-static unsigned cbc_raw_encrypt_iv[N_TESTS][4] = {
+static unsigned aes_cbc_raw_encrypt_iv[N_TESTS][4] = {
     {0x2fe2b333, 0xceda8f98, 0xf4a99b40, 0xd2cd34a8},
     {0xaad1583c, 0xd91365e3, 0xbb2f0c34, 0x30d065bb},
     {0x19153c67, 0x3160df2b, 0x1d38c280, 0x60e59b96},
@@ -206,10 +140,10 @@ static unsigned cbc_raw_encrypt_iv[N_TESTS][4] = {
     {0x9ef93494, 0x6e5cd0ae, 0x97bd5853, 0x2cb49381},
     {0x1c245f26, 0x195b76eb, 0xebc2edca, 0xc412a2f8},
     {0x1dbbeb2f, 0x19abb448, 0xaf849796, 0x244a19d7}};
-static unsigned cbc_raw_encrypt_iv_bytes[N_TESTS] = {4*4, 4*4, 4*4, 4*4, 4*4, 4*4, 4*4, 4*4, 4*4, 4*4};
-static unsigned cbc_raw_encrypt_iv_words[N_TESTS] = {4, 4, 4, 4, 4, 4, 4, 4, 4, 4};
+static unsigned aes_cbc_raw_encrypt_iv_bytes[N_TESTS] = {4*4, 4*4, 4*4, 4*4, 4*4, 4*4, 4*4, 4*4, 4*4, 4*4};
+static unsigned aes_cbc_raw_encrypt_iv_words[N_TESTS] = {4, 4, 4, 4, 4, 4, 4, 4, 4, 4};
 
-static unsigned cbc_raw_encrypt_plaintext[N_TESTS][40] = {
+static unsigned aes_cbc_raw_encrypt_plaintext[N_TESTS][40] = {
     {0x45cf1296, 0x4fc824ab, 0x76616ae2, 0xf4bf0822},
     {0x068b25c7, 0xbfb1f8bd, 0xd4cfc908, 0xf69dffc5, 0xddc726a1, 0x97f0e5f7, 0x20f73039, 0x3279be91},
     {0x9b7cee82, 0x7a26575a, 0xfdbb7c7a, 0x329f8872, 0x38052e36, 0x01a79174, 0x56ba6125, 0x1c214763, 0xd5e1847a, 0x6ad5d541, 0x27a399ab, 0x07ee3599},
@@ -220,10 +154,10 @@ static unsigned cbc_raw_encrypt_plaintext[N_TESTS][40] = {
     {0xcb6a787e, 0x0dec56f9, 0xa165957f, 0x81af336c, 0xa6b40785, 0xd9e94093, 0xc6190e51, 0x52649f88, 0x2e874d79, 0xac5e167b, 0xd2a74ce5, 0xae088d2e, 0xe854f653, 0x9e0a9479, 0x6b1e1bd4, 0xc9fcdbc7, 0x9acbef4d, 0x01eeb897, 0x76d18af7, 0x1ae2a4fc, 0x47dd66df, 0x6c4dbe1d, 0x1850e466, 0x549a47b6, 0x36bcc7c2, 0xb3a62495, 0xb56bb67b, 0x6d455f1e, 0xebd9bfef, 0xecbca6c7, 0xf335cfce, 0x9b45cb9d},
     {0xf82bef3c, 0x73a6f7f8, 0x0db28572, 0x6d691db6, 0xbf55eec2, 0x5a859d3b, 0xa0e0445f, 0x26b9bb3b, 0x16a3161e, 0xd1866e4d, 0xd8f2e5f8, 0xecb4e46d, 0x74a7a78c, 0x20cdfc7b, 0xcc9e479b, 0xa7a0caba, 0x9438238a, 0xd0c01651, 0xd5d98de3, 0x7f03ddce, 0x6e6b4bd4, 0xab03cf9e, 0x8ed818ae, 0xdfa1cf96, 0x3b932067, 0xb97d776d, 0xce108719, 0x6e7e913f, 0x7448e382, 0x44509f0c, 0xaf36bd82, 0x17e15336, 0xd35c149f, 0xd4e41707, 0x893fdb84, 0x014f8729},
     {0x40d930f9, 0xa05334d9, 0x816fe204, 0x999c3f82, 0xa03f6a04, 0x57a8c475, 0xc94553d1, 0xd116693a, 0xdc618049, 0xf0a769a2, 0xeed6a6cb, 0x14c0143e, 0xc5cccdbc, 0x8dec4ce5, 0x60cfd206, 0x22570932, 0x6d4de794, 0x8e54d603, 0xd01b12d7, 0xfed752fb, 0x23f1aa44, 0x94fbb001, 0x30e9ded4, 0xe77e37c0, 0x79042d82, 0x8040c325, 0xb1a5efd1, 0x5fc842e4, 0x4014ca43, 0x74bf38f3, 0xc3fc3ee3, 0x27733b0c, 0x8aee1abc, 0xd055772f, 0x18dc0460, 0x3f7b2c1e, 0xa69ff662, 0x361f2be0, 0xa171bbdc, 0xea1e5d3f}};
-static unsigned cbc_raw_encrypt_plaintext_bytes[N_TESTS] = {4*4, 8*4, 12*4, 16*4, 20*4, 24*4, 28*4, 32*4, 36*4, 40*4};
-static unsigned cbc_raw_encrypt_plaintext_words[N_TESTS] = {4, 8, 12, 16, 20, 24, 28, 32, 36, 40};
+static unsigned aes_cbc_raw_encrypt_plaintext_bytes[N_TESTS] = {4*4, 8*4, 12*4, 16*4, 20*4, 24*4, 28*4, 32*4, 36*4, 40*4};
+static unsigned aes_cbc_raw_encrypt_plaintext_words[N_TESTS] = {4, 8, 12, 16, 20, 24, 28, 32, 36, 40};
 
-static unsigned cbc_raw_encrypt_ciphertext[N_TESTS][40] = {
+static unsigned aes_cbc_raw_encrypt_ciphertext[N_TESTS][40] = {
     {0x0f61c4d4, 0x4c5147c0, 0x3c195ad7, 0xe2cc12b2},
     {0xc4dc61d9, 0x725967a3, 0x020104a9, 0x738f2386, 0x8527ce83, 0x9aab1752, 0xfd8bdb95, 0xa82c4d00},
     {0xd5aed6c9, 0x622ec451, 0xa15db128, 0x19952b67, 0x52501cf0, 0x5cdbf8cd, 0xa34a4577, 0x26ded978, 0x18e1f127, 0xa28d72db, 0x5652749f, 0x0c6afee5},
@@ -234,43 +168,18 @@ static unsigned cbc_raw_encrypt_ciphertext[N_TESTS][40] = {
     {0x7b2931f5, 0x855f7171, 0x45e00f15, 0x2a9f4794, 0x359b1ffc, 0xb3e55f59, 0x4e33098b, 0x51c23a6c, 0x74a06c1d, 0x94fded7f, 0xd2ae42c7, 0xdb7acaef, 0x5844cb33, 0xaeddc685, 0x2585ed00, 0x20a6699d, 0x2cb53809, 0xcefd1691, 0x48ce4229, 0x2afab063, 0x44397830, 0x6c582c18, 0xb9ce0da3, 0xd084ce4d, 0x3c482cfd, 0x8fcf1a85, 0x084e89fb, 0x88b40a08, 0x4d5e9724, 0x66d07666, 0x126fb761, 0xf84078f2},
     {0xb09512f3, 0xeff9ed0d, 0x85890983, 0xa73dadbb, 0x7c3678d5, 0x2581be64, 0xa8a8fc58, 0x6f490f25, 0x21297a47, 0x8a059804, 0x0ebd0f55, 0x09fafb09, 0x69f9d9e6, 0x00eaef33, 0xb1b93eed, 0x99687b16, 0x7f89a506, 0x5aac439c, 0xe46f3b8d, 0x22d30865, 0xe64e45ef, 0x8cd30b69, 0x84353a84, 0x4a11c8cd, 0x60dba0e8, 0x866b3ee3, 0x0d24b3fa, 0x8a643b32, 0x8353e060, 0x10fa8273, 0xc8fd54ef, 0x0a2b6930, 0xe5520aae, 0x5cd5902f, 0x9b86a335, 0x92ca4365},
     {0x6be8a128, 0x00455a32, 0x0538853e, 0x0cba31bd, 0x2d80ea0c, 0x85164a4c, 0x5c261ae4, 0x85417d93, 0xeffe2ebc, 0x0d0a0b51, 0xd6ea1863, 0x3d210cf6, 0x3c0c4ddb, 0xc27607f2, 0xe81ed911, 0x3191ef86, 0xd56f3b99, 0xbe6c415a, 0x4150299f, 0xb846ce71, 0x60b40b63, 0xbaf1179d, 0x19275a2e, 0x83698376, 0xd28b9254, 0x8c68e06e, 0x6d994e2c, 0x1501ed29, 0x7014e702, 0xcdefee2f, 0x65644770, 0x6009614d, 0x801de1ca, 0xaf73f8b7, 0xfa56cf1b, 0xa94b6319, 0x33bbe577, 0x62438085, 0x0f117435, 0xa0355b2b}};
-static unsigned cbc_raw_encrypt_ciphertext_bytes[N_TESTS] = {4*4, 8*4, 12*4, 16*4, 20*4, 24*4, 28*4, 32*4, 36*4, 40*4};
-static unsigned cbc_raw_encrypt_ciphertext_words[N_TESTS] = {4, 8, 12, 16, 20, 24, 28, 32, 36, 40};
+static unsigned aes_cbc_raw_encrypt_ciphertext_bytes[N_TESTS] = {4*4, 8*4, 12*4, 16*4, 20*4, 24*4, 28*4, 32*4, 36*4, 40*4};
+static unsigned aes_cbc_raw_encrypt_ciphertext_words[N_TESTS] = {4, 8, 12, 16, 20, 24, 28, 32, 36, 40};
 #endif
 
-static int validate_buf(unsigned idx, token_t *out, token_t *gold, unsigned *raw_encrypt_ciphertext_words)
-{
-    int j;
-    unsigned errors = 0;
-
-    printf("  gold output data @%p\n", gold);
-    printf("       output data @%p\n", out);
-
-    for (j = 0; j < raw_encrypt_ciphertext_words[idx]; j++)
-    {
-        token_t gold_data = gold[j];
-        token_t out_data = out[j];
-
-        if (out_data != gold_data)
-        {
-            errors++;
-        }
-        //printf("[%u] @%p %x (%x)\n", j, out + j, out_data, gold_data);
-    }
-
-    printf("  total errors %u\n", errors);
-
-    return errors;
-}
-
-static void init_buf(unsigned idx, token_t *inputs, token_t * gold_outputs, unsigned *raw_encrypt_key_words, unsigned *raw_encrypt_iv_words, unsigned *raw_encrypt_plaintext_words, unsigned *raw_encrypt_ciphertext_words, unsigned raw_encrypt_key[][4], unsigned raw_encrypt_iv[][4], unsigned raw_encrypt_plaintext[][40], unsigned raw_encrypt_ciphertext[][40])
+static void aes_init_buf(unsigned idx, token_t *inputs, token_t * gold_outputs, unsigned *raw_encrypt_key_words, unsigned *raw_encrypt_iv_words, unsigned *raw_encrypt_plaintext_words, unsigned *raw_encrypt_ciphertext_words, unsigned raw_encrypt_key[][4], unsigned raw_encrypt_iv[][4], unsigned raw_encrypt_plaintext[][40], unsigned raw_encrypt_ciphertext[][40])
 {
     int i, j;
 
     printf("  input data @%p\n", inputs);
-    printf("  key_bytes %u\n", key_bytes);
-    printf("  in_bytes %u\n", in_bytes);
-    printf("  out_bytes %u\n", out_bytes);
+    printf("  key_bytes %u\n", aes_key_bytes);
+    printf("  in_bytes %u\n", aes_in_bytes);
+    printf("  out_bytes %u\n", aes_out_bytes);
 
     printf("  raw_encrypt_key_words %u\n", raw_encrypt_key_words[idx]);
     printf("  raw_encrypt_plaintext_words %u\n", raw_encrypt_plaintext_words[idx]);
@@ -282,7 +191,7 @@ static void init_buf(unsigned idx, token_t *inputs, token_t * gold_outputs, unsi
         printf("  raw_encrypt_key[%u][%u]       | inputs[%u]@%p %x\n", idx, j, j, inputs + j, raw_encrypt_key[idx][j]);
     }
 
-#if defined(CTR_OPERATION_MODE) || defined(CBC_OPERATION_MODE)
+#if defined(AES_CTR_OPERATION_MODE) || defined(AES_CBC_OPERATION_MODE)
     for (i = 0; i < raw_encrypt_iv_words[idx]; i++, j++)
     {
         inputs[j] = raw_encrypt_iv[idx][i];
@@ -304,229 +213,5 @@ static void init_buf(unsigned idx, token_t *inputs, token_t * gold_outputs, unsi
     }
 }
 
-int main(int argc, char * argv[])
-{
-    int i;
-    int n;
-    int ndev;
-    struct esp_device *espdevs;
-    struct esp_device *dev;
-    unsigned done;
-    unsigned **ptable;
-    token_t *mem;
-    token_t *gold;
-    unsigned errors = 0;
 
-    // Search for the device
-    printf("Scanning device tree... \n");
-
-    ndev = probe(&espdevs, VENDOR_SLD, SLD_AES_CXX, DEV_NAME);
-
-    printf("Found %d devices: %s\n", ndev, DEV_NAME);
-
-    if (ndev == 0) {
-        printf("aes_cxx not found\n");
-        return 0;
-    }
-
-    printf("   sizeof(token_t) = %u\n", sizeof(token_t));
-
-    for (unsigned idx = 1; idx < N_TESTS; idx++) {
-
-#ifdef ECB_OPERATION_MODE
-        printf("=== ECB mode ===\n");
-        key_bytes = ecb_raw_encrypt_key_bytes[idx];
-        key_words = ecb_raw_encrypt_key_words[idx];
-        key_size = key_words * sizeof(token_t);
-
-        in_bytes = ecb_raw_encrypt_plaintext_bytes[idx];
-        in_words = ecb_raw_encrypt_plaintext_words[idx];
-        in_size = in_words * sizeof(token_t);
-
-        tag_bytes = 0;
-        aad_bytes = 0;
-        iv_bytes = 0;
-
-        out_bytes = in_bytes;
-        out_words = in_words;
-        out_size = out_words * sizeof(token_t);
-
-        mem_size = key_size + in_size + out_size;
 #endif
-
-#ifdef CTR_OPERATION_MODE
-        printf("=== CTR mode ===\n");
-        key_bytes = ctr_raw_encrypt_key_bytes[idx];
-        key_words = ctr_raw_encrypt_key_words[idx];
-        key_size = key_words * sizeof(token_t);
-
-        iv_bytes = ctr_raw_encrypt_iv_bytes[idx];
-        iv_words = ctr_raw_encrypt_iv_words[idx];
-        iv_size = iv_words * sizeof(token_t);
-
-        in_bytes = ctr_raw_encrypt_plaintext_bytes[idx];
-        in_words = ctr_raw_encrypt_plaintext_words[idx];
-        in_size = in_words * sizeof(token_t);
-
-        tag_bytes = 0;
-        aad_bytes = 0;
-
-        out_bytes = in_bytes;
-        out_words = in_words;
-        out_size = out_words * sizeof(token_t);
-
-        mem_size = key_size + iv_size + in_size + out_size;
-#endif
-
-#ifdef CBC_OPERATION_MODE
-        printf("=== CBC mode ===\n");
-        key_bytes = cbc_raw_encrypt_key_bytes[idx];
-        key_words = cbc_raw_encrypt_key_words[idx];
-        key_size = key_words * sizeof(token_t);
-
-        iv_bytes = cbc_raw_encrypt_iv_bytes[idx];
-        iv_words = cbc_raw_encrypt_iv_words[idx];
-        iv_size = iv_words * sizeof(token_t);
-
-        in_bytes = cbc_raw_encrypt_plaintext_bytes[idx];
-        in_words = cbc_raw_encrypt_plaintext_words[idx];
-        in_size = in_words * sizeof(token_t);
-
-        tag_bytes = 0;
-        aad_bytes = 0;
-
-        out_bytes = in_bytes;
-        out_words = in_words;
-        out_size = out_words * sizeof(token_t);
-
-        mem_size = key_size + iv_size + in_size + out_size;
-#endif
-
-        // Allocate memory
-        gold = aligned_malloc(out_size);
-        mem = aligned_malloc(mem_size);
-        printf("  memory buffer base-address = %p\n", mem);
-        printf("  memory buffer size = %p\n", mem_size);
-        printf("  golden buffer base-address = %p\n", gold);
-        printf("  golden buffer size = %p\n", out_size);
-
-        // Alocate and populate page table
-        ptable = aligned_malloc(NCHUNK(mem_size) * sizeof(unsigned *));
-        for (i = 0; i < NCHUNK(mem_size); i++)
-            ptable[i] = (unsigned *) &mem[i * (CHUNK_SIZE / sizeof(token_t))];
-        printf("  ptable = %p\n", ptable);
-        printf("  nchunk = %lu\n", NCHUNK(mem_size));
-
-        printf("  Generate input...\n");
-
-#ifdef ECB_OPERATION_MODE
-        init_buf(idx, mem, gold, ecb_raw_encrypt_key_words, NULL, ecb_raw_encrypt_plaintext_words, ecb_raw_encrypt_ciphertext_words, ecb_raw_encrypt_key, NULL, ecb_raw_encrypt_plaintext, ecb_raw_encrypt_ciphertext);
-#endif
-
-#ifdef CTR_OPERATION_MODE
-        init_buf(idx, mem, gold, ctr_raw_encrypt_key_words, ctr_raw_encrypt_iv_words, ctr_raw_encrypt_plaintext_words, ctr_raw_encrypt_ciphertext_words, ctr_raw_encrypt_key, ctr_raw_encrypt_iv, ctr_raw_encrypt_plaintext, ctr_raw_encrypt_ciphertext);
-#endif
-
-#ifdef CBC_OPERATION_MODE
-        init_buf(idx, mem, gold, cbc_raw_encrypt_key_words, cbc_raw_encrypt_iv_words, cbc_raw_encrypt_plaintext_words, cbc_raw_encrypt_ciphertext_words, cbc_raw_encrypt_key, cbc_raw_encrypt_iv, cbc_raw_encrypt_plaintext, cbc_raw_encrypt_ciphertext);
-#endif
-
-        printf("  ... input ready!\n");
-
-        // Pass common configuration parameters
-        for (n = 0; n < ndev; n++) {
-
-            dev = &espdevs[n];
-
-            // Check DMA capabilities
-            if (ioread32(dev, PT_NCHUNK_MAX_REG) == 0) {
-                printf("  -> scatter-gather DMA is disabled. Abort.\n");
-                return 0;
-            }
-
-            if (ioread32(dev, PT_NCHUNK_MAX_REG) < NCHUNK(mem_size)) {
-                printf("  -> Not enough TLB entries available. Abort.\n");
-                return 0;
-            }
-
-            // Pass common configuration parameters
-            iowrite32(dev, SELECT_REG, ioread32(dev, DEVID_REG));
-            iowrite32(dev, COHERENCE_REG, ACC_COH_NONE);
-            iowrite32(dev, PT_ADDRESS_REG, (unsigned long) ptable);
-            iowrite32(dev, PT_NCHUNK_REG, NCHUNK(mem_size));
-            iowrite32(dev, PT_SHIFT_REG, CHUNK_SHIFT);
-
-            // Use the following if input and output data are not allocated at the default offsets
-            //iowrite32(dev, SRC_OFFSET_REG, 0x0);
-            //iowrite32(dev, DST_OFFSET_REG, 0x0);
-
-            // Pass accelerator-specific configuration parameters
-            /* <<--regs-config-->> */
-            iowrite32(dev, AES_CXX_OPER_MODE_REG, OPERATION_MODE);
-            iowrite32(dev, AES_CXX_ENCRYPTION_REG, 1);
-            iowrite32(dev, AES_CXX_KEY_BYTES_REG, key_bytes);
-            iowrite32(dev, AES_CXX_INPUT_BYTES_REG, in_bytes);
-            iowrite32(dev, AES_CXX_IV_BYTES_REG, iv_bytes);
-            iowrite32(dev, AES_CXX_AAD_BYTES_REG, aad_bytes);
-            iowrite32(dev, AES_CXX_TAG_BYTES_REG, tag_bytes);
-
-            // Flush (customize coherence model here)
-            esp_flush(ACC_COH_NONE);
-
-            // Start accelerators
-            printf("  Start...\n");
-
-            iowrite32(dev, CMD_REG, CMD_MASK_START);
-
-            // Wait for completion
-            done = 0;
-            while (!done) {
-                done = ioread32(dev, STATUS_REG);
-                done &= STATUS_MASK_DONE;
-            }
-            iowrite32(dev, CMD_REG, 0x0);
-
-            printf("  Done\n");
-            printf("  validating...\n");
-
-            /* Validation */
-#ifdef ECB_OPERATION_MODE
-            for (i = 0; i < key_words + in_words + out_words; i++) {
-                printf("mem[%u] @%p %x\n", i, mem + i, mem[i]);
-            }
-
-            errors = validate_buf(idx, mem + key_words + in_words, gold, ecb_raw_encrypt_ciphertext_words);
-#endif
-
-#ifdef CTR_OPERATION_MODE
-            for (i = 0; i < key_words + iv_words + in_words + out_words; i++) {
-                printf("mem[%u] @%p %x\n", i, mem + i, mem[i]);
-            }
-
-            errors = validate_buf(idx, mem + key_words + iv_words + in_words, gold, ctr_raw_encrypt_ciphertext_words);
-#endif
-
-#ifdef CBC_OPERATION_MODE
-            for (i = 0; i < key_words + iv_words + in_words + out_words; i++) {
-                printf("mem[%u] @%p %x\n", i, mem + i, mem[i]);
-            }
-
-            errors = validate_buf(idx, mem + key_words + iv_words + in_words, gold, cbc_raw_encrypt_ciphertext_words);
-#endif
-
-            aligned_free(ptable);
-            aligned_free(mem);
-            aligned_free(gold);
-
-            if (errors) {
-                printf("  ... FAIL\n");
-                return 1;
-            } else
-                printf("  ... PASS\n");
-        }
-
-    }
-    printf("DONE\n");
-
-    return 0;
-}

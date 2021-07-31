@@ -2,7 +2,7 @@ Catapult*
 *.txt
 *.vcd
 *.sh
-sha1*
+aes*
 catapult.pinfo
 catapult_cache_*
 xilinx_cache

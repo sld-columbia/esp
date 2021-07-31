@@ -23,17 +23,37 @@ static unsigned DMA_WORD_PER_BEAT(unsigned _st)
 
 /* <<--params-->> */
 static unsigned crypto_algo;
+
 static unsigned sha1_in_bytes;
+
 static unsigned sha2_in_bytes;
 static unsigned sha2_out_bytes;
+
+static unsigned aes_tag_bytes;
+static unsigned aes_aad_bytes;
+static unsigned aes_in_bytes;
+static unsigned aes_out_bytes;
+static unsigned aes_iv_bytes;
+static unsigned aes_key_bytes;
+static unsigned aes_encryption;
+static unsigned aes_oper_mode;
+
 
 /* Other parameters */
 //const unsigned sha1_in_words = 1600;
 static unsigned sha1_in_words;
 static unsigned sha1_out_words;
 static unsigned sha1_out_bytes;
+
 static unsigned sha2_in_words;
 static unsigned sha2_out_words;
+
+static unsigned aes_key_words;
+static unsigned aes_iv_words;
+static unsigned aes_in_words;
+static unsigned aes_out_words;
+static unsigned aes_aad_words;
+static unsigned aes_tag_words;
 
 static unsigned mem_bytes; /* Total memory buffer size in bytes */
 static unsigned out_offset; /* Output offset in memory buffer */
@@ -47,15 +67,26 @@ static unsigned out_words; /* Output buffer size in words */
         (_sz / CHUNK_SIZE) :        \
         (_sz / CHUNK_SIZE) + 1)
 
-         /* User defined registers */
-         /* <<--regs-->> */
+/* User defined registers */
+/* <<--regs-->> */
 #define CRYPTO_CXX_CRYPTO_ALGO_REG 0x40
+
 #define CRYPTO_CXX_SHA1_IN_BYTES_REG 0x44
-#define CRYPTO_CXX_SHA2_OUT_BYTES_REG 0x48
-#define CRYPTO_CXX_SHA2_IN_BYTES_REG 0x4C
+
+#define CRYPTO_CXX_SHA2_IN_BYTES_REG 0x48
+#define CRYPTO_CXX_SHA2_OUT_BYTES_REG 0x4C
+
+#define CRYPTO_CXX_AES_OPER_MODE_REG 0x50
+#define CRYPTO_CXX_AES_ENCRYPTION_REG 0x54
+#define CRYPTO_CXX_AES_KEY_BYTES_REG 0x58
+#define CRYPTO_CXX_AES_INPUT_BYTES_REG 0x5C
+#define CRYPTO_CXX_AES_IV_BYTES_REG 0x60
+#define CRYPTO_CXX_AES_AAD_BYTES_REG 0x64
+#define CRYPTO_CXX_AES_TAG_BYTES_REG 0x68
 
 //#define SHA1_ALGO 1
-#define SHA2_ALGO 2
+//#define SHA2_ALGO 2
+#define AES_ALGO 3
 
 #ifdef SHA1_ALGO
 #include "sha1_tests.h"
@@ -63,6 +94,10 @@ static unsigned out_words; /* Output buffer size in words */
 
 #ifdef SHA2_ALGO
 #include "sha2_tests.h"
+#endif
+
+#ifdef AES_ALGO
+#include "aes_tests.h"
 #endif
 
 static int validate_buf(token_t *out, token_t *gold, unsigned out_words)
@@ -82,7 +117,7 @@ static int validate_buf(token_t *out, token_t *gold, unsigned out_words)
         {
             errors++;
         }
-        printf("[%u] %x (%x) %s\n", j, out_data, gold_data, ((out_data != gold_data)?" !!!":""));
+        //printf("[%u] @%p %x (%x) %s\n", j, out + j, out_data, gold_data, ((out_data != gold_data)?" !!!":""));
     }
 
     printf("  total errors %u\n", errors);
@@ -116,12 +151,14 @@ int main(int argc, char * argv[])
     }
 
 
-    printf("   sizeof(token_t) = %u\n", sizeof(token_t));
+    printf("   sizeof(token_:t) = %u\n", sizeof(token_t));
 
     for (unsigned idx = 1; idx < N_TESTS; idx++) {
 	printf("   -> index %u\n", idx); 
 #ifdef SHA1_ALGO
         crypto_algo = SHA1_ALGO;
+
+        printf("=== AES CBC mode ===\n");
 
         sha1_in_bytes = sha1_raw_in_bytes[idx];
         sha1_in_words = sha1_raw_in_words[idx];
@@ -141,6 +178,8 @@ int main(int argc, char * argv[])
 #ifdef SHA2_ALGO
         crypto_algo = SHA2_ALGO;
 
+        printf("=== SHA2 ===\n");
+
         sha2_in_bytes = sha2_raw_in_bytes[idx];
         sha2_in_words = sha2_raw_in_words[idx];
         sha2_out_bytes = sha2_raw_out_bytes[idx];
@@ -151,6 +190,76 @@ int main(int argc, char * argv[])
         out_offset = sha2_in_words;
         out_bytes = sha2_out_bytes;
         out_words = sha2_out_words;
+#endif
+
+#if defined(AES_ALGO) && defined(AES_ECB_OPERATION_MODE)
+        crypto_algo = AES_ALGO;
+
+        printf("=== AES ECB mode ===\n");
+
+        aes_key_bytes = aes_ecb_raw_encrypt_key_bytes[idx];
+        aes_key_words = aes_ecb_raw_encrypt_key_words[idx];
+
+        aes_in_bytes = aes_ecb_raw_encrypt_plaintext_bytes[idx];
+        aes_in_words = aes_ecb_raw_encrypt_plaintext_words[idx];
+
+        aes_tag_bytes = 0;
+        aes_aad_bytes = 0;
+        aes_iv_bytes = 0;
+
+        mem_bytes = aes_key_bytes + aes_in_bytes + aes_out_bytes;
+
+	out_offset = aes_key_words + aes_in_words;
+        out_bytes = aes_in_bytes;
+        out_words = aes_in_words;
+#endif
+
+#if defined(AES_ALGO) && defined(AES_CTR_OPERATION_MODE)
+        crypto_algo = AES_ALGO;
+
+        printf("=== AES CTR mode ===\n");
+
+        aes_key_bytes = aes_ctr_raw_encrypt_key_bytes[idx];
+        aes_key_words = aes_ctr_raw_encrypt_key_words[idx];
+
+        aes_iv_bytes = aes_ctr_raw_encrypt_iv_bytes[idx];
+        aes_iv_words = aes_ctr_raw_encrypt_iv_words[idx];
+
+        aes_in_bytes = aes_ctr_raw_encrypt_plaintext_bytes[idx];
+        aes_in_words = aes_ctr_raw_encrypt_plaintext_words[idx];
+
+        aes_tag_bytes = 0;
+        aes_aad_bytes = 0;
+
+        mem_bytes = aes_key_bytes + aes_iv_bytes + aes_in_bytes + out_bytes;
+
+	out_offset = aes_key_words + aes_iv_words + aes_in_words;
+        out_bytes = aes_in_bytes;
+        out_words = aes_in_words;
+#endif
+
+#if defined(AES_ALGO) && defined(AES_CBC_OPERATION_MODE)
+        crypto_algo = AES_ALGO;
+
+        printf("=== AES CBC mode ===\n");
+
+        aes_key_bytes = aes_cbc_raw_encrypt_key_bytes[idx];
+        aes_key_words = aes_cbc_raw_encrypt_key_words[idx];
+
+        aes_iv_bytes = aes_cbc_raw_encrypt_iv_bytes[idx];
+        aes_iv_words = aes_cbc_raw_encrypt_iv_words[idx];
+
+        aes_in_bytes = aes_cbc_raw_encrypt_plaintext_bytes[idx];
+        aes_in_words = aes_cbc_raw_encrypt_plaintext_words[idx];
+
+        aes_tag_bytes = 0;
+        aes_aad_bytes = 0;
+
+        mem_bytes = aes_key_bytes + aes_iv_bytes + aes_in_bytes + out_bytes;
+
+	out_offset = aes_key_words + aes_iv_words + aes_in_words;
+        out_bytes = aes_in_bytes;
+        out_words = aes_in_words;
 #endif
 
         // Allocate memory
@@ -176,6 +285,18 @@ int main(int argc, char * argv[])
 
 #ifdef SHA2_ALGO
         sha2_init_buf(idx, mem, gold);
+#endif
+
+#if defined(AES_ALGO) && defined(AES_ECB_OPERATION_MODE)
+        aes_init_buf(idx, mem, gold, aes_ecb_raw_encrypt_key_words, NULL, aes_ecb_raw_encrypt_plaintext_words, aes_ecb_raw_encrypt_ciphertext_words, aes_ecb_raw_encrypt_key, NULL, aes_ecb_raw_encrypt_plaintext, aes_ecb_raw_encrypt_ciphertext);
+#endif
+
+#if defined(AES_ALGO) && defined(AES_CTR_OPERATION_MODE)
+        aes_init_buf(idx, mem, gold, aes_ctr_raw_encrypt_key_words, aes_ctr_raw_encrypt_iv_words, aes_ctr_raw_encrypt_plaintext_words, aes_ctr_raw_encrypt_ciphertext_words, aes_ctr_raw_encrypt_key, aes_ctr_raw_encrypt_iv, aes_ctr_raw_encrypt_plaintext, aes_ctr_raw_encrypt_ciphertext);
+#endif
+
+#if defined(AES_ALGO) && defined(AES_CBC_OPERATION_MODE)
+        aes_init_buf(idx, mem, gold, aes_cbc_raw_encrypt_key_words, aes_cbc_raw_encrypt_iv_words, aes_cbc_raw_encrypt_plaintext_words, aes_cbc_raw_encrypt_ciphertext_words, aes_cbc_raw_encrypt_key, aes_cbc_raw_encrypt_iv, aes_cbc_raw_encrypt_plaintext, aes_cbc_raw_encrypt_ciphertext);
 #endif
 
         printf("  ... input ready!\n");
@@ -217,7 +338,15 @@ int main(int argc, char * argv[])
             iowrite32(dev, CRYPTO_CXX_SHA2_IN_BYTES_REG, sha2_in_bytes);
             iowrite32(dev, CRYPTO_CXX_SHA2_OUT_BYTES_REG, sha2_out_bytes);
 #endif
-
+#ifdef AES_ALGO
+            iowrite32(dev, CRYPTO_CXX_AES_OPER_MODE_REG, AES_OPERATION_MODE);
+            iowrite32(dev, CRYPTO_CXX_AES_ENCRYPTION_REG, AES_ENCRYPTION_MODE);
+            iowrite32(dev, CRYPTO_CXX_AES_KEY_BYTES_REG, aes_key_bytes);
+            iowrite32(dev, CRYPTO_CXX_AES_INPUT_BYTES_REG, aes_in_bytes);
+            iowrite32(dev, CRYPTO_CXX_AES_IV_BYTES_REG, aes_iv_bytes);
+            iowrite32(dev, CRYPTO_CXX_AES_AAD_BYTES_REG, aes_aad_bytes);
+            iowrite32(dev, CRYPTO_CXX_AES_TAG_BYTES_REG, aes_tag_bytes);
+#endif
             // Flush (customize coherence model here)
             // esp_flush(ACC_COH_NONE);
             //esp_flush(ACC_COH_RECALL);

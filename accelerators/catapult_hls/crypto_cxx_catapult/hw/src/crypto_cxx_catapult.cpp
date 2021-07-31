@@ -6,12 +6,14 @@
 #include "crypto_cxx_catapult.hpp"
 #include "sha1.h"
 #include "sha2.h"
+#include "aes.h"
 
 #include <mc_scverify.h>
 
-// TODO: workaround to make sha1 visible
-#include "sha2.cpp"
+// TODO: workaround to make sha1, sha2, aes visible
 #include "sha1.cpp"
+#include "sha2.cpp"
+#include "aes.cpp"
 
 #define ZERO data_t(0)
 
@@ -52,6 +54,47 @@ void sha2_compute_wrapper(uint32_t in_bytes, uint32_t out_bytes, T1 &input, T2 &
     ESP_REPORT_INFO(VOFF, "out %02X", ESP_TO_UINT32(output.data[4]));
 }
 
+void aes_compute_wrapper(uint32_t oper_mode, uint32_t encryption, uint32_t key_bytes, uint32_t iv_bytes, uint32_t in_bytes, uint32_t aad_bytes, uint32_t tag_bytes, aes_plm_key_t &key, aes_plm_iv_t &iv, aes_plm_in_t &in, aes_plm_out_t &out, aes_plm_aad_t &aad, aes_plm_tag_t &tag) {
+    ESP_REPORT_INFO(VON, "aes_oper_mode: %u", ESP_TO_UINT32(oper_mode));
+    ESP_REPORT_INFO(VON, "aes_encryption: %u", ESP_TO_UINT32(encryption));
+    ESP_REPORT_INFO(VON, "aes_key_bytes: %u", ESP_TO_UINT32(key_bytes));
+    ESP_REPORT_INFO(VON, "aes_in_bytes: %u", ESP_TO_UINT32(in_bytes));
+    
+    aes(oper_mode, encryption, key_bytes, iv_bytes, in_bytes, aad_bytes, tag_bytes, key.data, iv.data, in.data, out.data, aad.data, tag.data);
+
+    ESP_REPORT_INFO(VOFF, "key[0]  %02X", ESP_TO_UINT32(key.data[0]));
+    ESP_REPORT_INFO(VOFF, "key[1]  %02X", ESP_TO_UINT32(key.data[1]));
+    ESP_REPORT_INFO(VOFF, "key[2]  %02X", ESP_TO_UINT32(key.data[2]));
+    ESP_REPORT_INFO(VOFF, "key[3]  %02X", ESP_TO_UINT32(key.data[3]));
+    
+    ESP_REPORT_INFO(VOFF, "in[0]  %02X", ESP_TO_UINT32(in.data[0]));
+    ESP_REPORT_INFO(VOFF, "in[1]  %02X", ESP_TO_UINT32(in.data[1]));
+    ESP_REPORT_INFO(VOFF, "in[2]  %02X", ESP_TO_UINT32(in.data[2]));
+    ESP_REPORT_INFO(VOFF, "in[3]  %02X", ESP_TO_UINT32(in.data[3]));
+    ESP_REPORT_INFO(VOFF, "in[4]  %02X", ESP_TO_UINT32(in.data[4]));
+    ESP_REPORT_INFO(VOFF, "in[5]  %02X", ESP_TO_UINT32(in.data[5]));
+    ESP_REPORT_INFO(VOFF, "in[6]  %02X", ESP_TO_UINT32(in.data[6]));
+    ESP_REPORT_INFO(VOFF, "in[7]  %02X", ESP_TO_UINT32(in.data[7]));
+
+    ESP_REPORT_INFO(VOFF, "out[0] %02X", ESP_TO_UINT32(out.data[0]));
+    ESP_REPORT_INFO(VOFF, "out[1] %02X", ESP_TO_UINT32(out.data[1]));
+    ESP_REPORT_INFO(VOFF, "out[2] %02X", ESP_TO_UINT32(out.data[2]));
+    ESP_REPORT_INFO(VOFF, "out[3] %02X", ESP_TO_UINT32(out.data[3]));
+    ESP_REPORT_INFO(VOFF, "out[4] %02X", ESP_TO_UINT32(out.data[4]));
+    ESP_REPORT_INFO(VOFF, "out[5] %02X", ESP_TO_UINT32(out.data[5]));
+    ESP_REPORT_INFO(VOFF, "out[6] %02X", ESP_TO_UINT32(out.data[6]));
+    ESP_REPORT_INFO(VOFF, "out[7] %02X", ESP_TO_UINT32(out.data[7]));
+}
+
+#define CRYPTO_SHA1_MODE 1
+#define CRYPTO_SHA2_MODE 2
+#define CRYPTO_AES_MODE 3
+#define CRYPTO_RSA_MODE 4
+
+#define AES_ECB_OPERATION_MODE 1
+#define AES_CTR_OPERATION_MODE 2
+#define AES_CBC_OPERATION_MODE 3
+#define AES_GCM_OPERATION_MODE 4
 
 #pragma hls_design top
 #ifdef __CUSTOM_SIM__
@@ -82,12 +125,26 @@ void CCS_BLOCK(crypto_cxx_catapult)(
     uint32_t sha1_in_bytes = 0;
     uint32_t sha2_in_bytes = 0;
     uint32_t sha2_out_bytes = 0;
+    uint32_t aes_oper_mode = 0;
+    uint32_t aes_encryption = 0;
+    uint32_t aes_key_bytes = 0;
+    uint32_t aes_iv_bytes = 0;
+    uint32_t aes_in_bytes = 0;
+    uint32_t aes_output_bytes = 0;
+    uint32_t aes_aad_bytes = 0;
+    uint32_t aes_tag_bytes = 0;
 
     // Private Local Memories
     sha1_plm_in_t sha1_plm_in;
     sha1_plm_out_t sha1_plm_out;
     sha2_plm_in_t sha2_plm_in;
     sha2_plm_out_t sha2_plm_out;
+    aes_plm_key_t aes_plm_key;
+    aes_plm_iv_t aes_plm_iv;
+    aes_plm_in_t aes_plm_in;
+    aes_plm_out_t aes_plm_out;
+    aes_plm_aad_t aes_plm_aad;
+    aes_plm_tag_t aes_plm_tag;
 
     // Read accelerator configuration
 #ifndef __SYNTHESIS__
@@ -97,7 +154,7 @@ void CCS_BLOCK(crypto_cxx_catapult)(
     config = conf_info.read();
     crypto_algo = config.crypto_algo;
 
-    if (crypto_algo == 1) {
+    if (crypto_algo == CRYPTO_SHA1_MODE) {
 
         sha1_in_bytes = config.sha1_in_bytes;
 
@@ -203,7 +260,8 @@ SHA1_STORE_LOOP:
                 dma_write_chnl.write(data_dma);
             }
         }
-    } else if (crypto_algo == 2) {
+    } else if (crypto_algo == CRYPTO_SHA2_MODE) {
+
         sha2_in_bytes = config.sha2_in_bytes;
         sha2_out_bytes = config.sha2_out_bytes;
 
@@ -306,9 +364,223 @@ SHA2_STORE_LOOP:
             }
         }
 
-    } else if (crypto_algo == 3) {
+    } else if (crypto_algo == CRYPTO_AES_MODE) {
 
-    } else if (crypto_algo == 4) {
+        aes_oper_mode = config.aes_oper_mode;
+        aes_encryption = config.aes_encryption;
+        aes_key_bytes = config.aes_key_bytes; 
+        aes_in_bytes = config.aes_in_bytes;
+        aes_iv_bytes = config.aes_iv_bytes;
+        aes_aad_bytes = config.aes_aad_bytes;
+        aes_tag_bytes = config.aes_tag_bytes;
+    
+        aes_output_bytes = aes_in_bytes;
+    
+        ESP_REPORT_INFO(VON, "conf_info.aes_oper_mode = %u", ESP_TO_UINT32(aes_oper_mode));
+        ESP_REPORT_INFO(VON, "conf_info.aes_encryption = %u", ESP_TO_UINT32(aes_encryption));
+        ESP_REPORT_INFO(VON, "conf_info.aes_key_bytes = %u", ESP_TO_UINT32(aes_key_bytes));
+        ESP_REPORT_INFO(VON, "conf_info.aes_iv_bytes = %u", ESP_TO_UINT32(aes_iv_bytes));
+        ESP_REPORT_INFO(VON, "conf_info.aes_in_bytes = %u", ESP_TO_UINT32(aes_in_bytes));
+        ESP_REPORT_INFO(VON, "conf_info.aes_aad_bytes = %u", ESP_TO_UINT32(aes_aad_bytes));
+        ESP_REPORT_INFO(VON, "conf_info.aes_tag_bytes = %u", ESP_TO_UINT32(aes_tag_bytes));
+    
+        // Configure DMA read channel (CTRL)
+        // - DMA_WIDTH for EPOCHS is 64 bits
+        // - AES input word is 32 bits
+        // - Each DMA transaction is 2 input words
+        // - Do some math (ceil) to get the number of data and DMA words given key_bytes
+        dma_read_data_index = 0;
+        dma_read_data_length = (aes_key_bytes + 4 - 1) / 4; // ceil(aes_key_bytes / 4)
+        dma_read_info = {(dma_read_data_index + 2 - 1) / 2, (dma_read_data_length + 2 - 1) / 2, SIZE_WORD}; // ceil(dma_read_data_legnth / 2)
+        bool dma_read_ctrl_done = false;
+AES_LOAD_KEY_CTRL_LOOP:
+        do { dma_read_ctrl_done = dma_read_ctrl.nb_write(dma_read_info); } while (!dma_read_ctrl_done);
+    
+        ESP_REPORT_INFO(VON, "DMA read ctrl: data index = %u, data length = %u, size [0=8b, 1=16b, 2=32b, 3=64b] = %llu", ESP_TO_UINT32(dma_read_info.index), ESP_TO_UINT32(dma_read_info.length), dma_read_info.size.to_uint64());
+    
+        if (dma_read_ctrl_done) { // Force serialization between DMA control and DATA data transfer
+AES_LOAD_KEY_LOOP:
+            for (uint16_t i = 0; i < AES_PLM_KEY_SIZE; i+=2) {
+    
+                if (i >= dma_read_data_length) break;
+    
+                assert(DMA_WIDTH == 64 && "DMA_WIDTH should be 64 bits");
+    
+                ac_int<DMA_WIDTH, false> data_dma;
+#ifndef __SYNTHESIS__
+                while (!dma_read_chnl.available(1)) {}; // Hardware stalls until data ready
+#endif
+                data_dma = dma_read_chnl.read().template slc<DMA_WIDTH>(0);
+    
+                // DMA word
+                // |<--- 0 --->|<--- 1 --->|
+                //  ...
+                //
+                // PLM (in)
+                // |<--- 0 --->|
+                // |<--- 1 --->|
+                //  ...
+                data_t data_0;
+                data_t data_1;
+                data_0 = data_dma.template slc<WL>(WL*0).to_uint();
+                data_1 = data_dma.template slc<WL>(WL*1).to_uint();
+                aes_plm_key.data[i+0] = data_0;
+                aes_plm_key.data[i+1] = data_1;
+    
+                ESP_REPORT_INFO(VOFF, "aes_plm_in[%u] = %02X", ESP_TO_UINT32(i)+0, data_0.to_uint());
+                ESP_REPORT_INFO(VOFF, "aes_plm_in[%u] = %02X", ESP_TO_UINT32(i)+1, data_1.to_uint());
+            }
+        }
+
+        // Configure DMA read channel (CTRL)
+        // - DMA_WIDTH for EPOCHS is 64 bits
+        // - AES input word is 32 bits
+        // - Each DMA transaction is 2 input words
+        // - Do some math (ceil) to get the number of data and DMA words given iv_bytes
+        if (aes_oper_mode == AES_CTR_OPERATION_MODE || aes_oper_mode == AES_CBC_OPERATION_MODE) {
+            dma_read_data_index = (aes_key_bytes + 4 - 1) / 4;
+            dma_read_data_length = (aes_iv_bytes + 4 - 1) / 4; // ceil(aes_iv_bytes / 4)
+            dma_read_info = {(dma_read_data_index + 2 - 1) / 2, (dma_read_data_length + 2 - 1) / 2, SIZE_WORD}; // ceil(dma_read_data_legnth / 2)
+            bool dma_read_ctrl_done = false;
+AES_LOAD_IV_CTRL_LOOP:
+            do { dma_read_ctrl_done = dma_read_ctrl.nb_write(dma_read_info); } while (!dma_read_ctrl_done);
+    
+            ESP_REPORT_INFO(VON, "DMA read ctrl: data index = %u, data length = %u, size [0=8b, 1=16b, 2=32b, 3=64b] = %llu", ESP_TO_UINT32(dma_read_info.index), ESP_TO_UINT32(dma_read_info.length), dma_read_info.size.to_uint64());
+    
+            if (dma_read_ctrl_done) { // Force serialization between DMA control and DATA data transfer
+AES_LOAD_IV_LOOP:
+                for (uint16_t i = 0; i < AES_PLM_IV_SIZE; i+=2) {
+    
+                    if (i >= dma_read_data_length) break;
+    
+                    assert(DMA_WIDTH == 64 && "DMA_WIDTH should be 64 bits");
+    
+                    ac_int<DMA_WIDTH, false> data_dma;
+#ifndef __SYNTHESIS__
+                    while (!dma_read_chnl.available(1)) {}; // Hardware stalls until data ready
+#endif
+                    data_dma = dma_read_chnl.read().template slc<DMA_WIDTH>(0);
+    
+                    // DMA word
+                    // |<--- 0 --->|<--- 1 --->|
+                    //  ...
+                    //
+                    // PLM (in)
+                    // |<--- 0 --->|
+                    // |<--- 1 --->|
+                    //  ...
+                    data_t data_0;
+                    data_t data_1;
+                    data_0 = data_dma.template slc<WL>(WL*0).to_uint();
+                    data_1 = data_dma.template slc<WL>(WL*1).to_uint();
+                    aes_plm_iv.data[i+0] = data_0;
+                    aes_plm_iv.data[i+1] = data_1;
+    
+                    ESP_REPORT_INFO(VOFF, "aes_plm_in[%u] = %02X", ESP_TO_UINT32(i)+0, data_0.to_uint());
+                    ESP_REPORT_INFO(VOFF, "aes_plm_in[%u] = %02X", ESP_TO_UINT32(i)+1, data_1.to_uint());
+                }
+            }
+        }
+    
+        // Configure DMA read channel (CTRL)
+        // - DMA_WIDTH for EPOCHS is 64 bits
+        // - AES input word is 32 bits
+        // - Each DMA transaction is 2 input words
+        // - Do some math (ceil) to get the number of data and DMA words given key_bytes
+        dma_read_data_index = (aes_key_bytes + 4 - 1) / 4 + (aes_iv_bytes + 4 - 1) / 4;
+        dma_read_data_length = (aes_in_bytes + 4 - 1) / 4; // ceil(key_bytes / 4)
+        dma_read_info = {(dma_read_data_index + 2 - 1) / 2, (dma_read_data_length + 2 - 1) / 2, SIZE_WORD}; // ceil(dma_read_data_legnth / 2)
+        dma_read_ctrl_done = false;
+AES_LOAD_INPUT_CTRL_LOOP:
+        do { dma_read_ctrl_done = dma_read_ctrl.nb_write(dma_read_info); } while (!dma_read_ctrl_done);
+    
+        ESP_REPORT_INFO(VON, "DMA read ctrl: data index = %u, data length = %u, size [0=8b, 1=16b, 2=32b, 3=64b] = %llu", ESP_TO_UINT32(dma_read_info.index), ESP_TO_UINT32(dma_read_info.length), dma_read_info.size.to_uint64());
+    
+        if (dma_read_ctrl_done) { // Force serialization between DMA control and DATA data transfer
+AES_LOAD_INPUT_LOOP:
+            for (uint16_t i = 0; i < AES_PLM_IN_SIZE; i+=2) {
+    
+                if (i >= dma_read_data_length) break;
+    
+                assert(DMA_WIDTH == 64 && "DMA_WIDTH should be 64 bits");
+    
+                ac_int<DMA_WIDTH, false> data_dma;
+#ifndef __SYNTHESIS__
+                while (!dma_read_chnl.available(1)) {}; // Hardware stalls until data ready
+#endif
+                data_dma = dma_read_chnl.read().template slc<DMA_WIDTH>(0);
+    
+                // DMA word
+                // |<--- 0 --->|<--- 1 --->|
+                //  ...
+                //
+                // PLM (in)
+                // |<--- 0 --->|
+                // |<--- 1 --->|
+                //  ...
+                data_t data_0;
+                data_t data_1;
+                data_0 = data_dma.template slc<WL>(WL*0).to_uint();
+                data_1 = data_dma.template slc<WL>(WL*1).to_uint();
+                aes_plm_in.data[i+0] = data_0;
+                aes_plm_in.data[i+1] = data_1;
+    
+                ESP_REPORT_INFO(VOFF, "aes_plm_in[%u] = %02X", ESP_TO_UINT32(i)+0, data_0.to_uint());
+                ESP_REPORT_INFO(VOFF, "aes_plm_in[%u] = %02X", ESP_TO_UINT32(i)+1, data_1.to_uint());
+            }
+        }
+    
+        aes_compute_wrapper(aes_oper_mode, aes_encryption, aes_key_bytes, aes_iv_bytes, aes_in_bytes, aes_aad_bytes, aes_tag_bytes, aes_plm_key, aes_plm_iv, aes_plm_in, aes_plm_out, aes_plm_aad, aes_plm_tag);
+    
+        // Configure DMA write channel (CTRL)
+        // - DMA_WIDTH for EPOCHS is 64 bits
+        // - AES output word is 32 bits
+        // - Each DMA transaction is 2 output words
+        // - Do some math (ceil) to get the number of data and DMA words given out_bytes
+        dma_write_data_index = (aes_key_bytes + 4 - 1) / 4 + (aes_iv_bytes + 4 - 1) / 4 + (aes_in_bytes + 4 - 1) / 4;
+        dma_write_data_length = (aes_output_bytes + 4 - 1) / 4; // ceil(out_bytes / 4)
+        dma_write_info = {(dma_write_data_index + 2 - 1) / 2, (dma_write_data_length + 2 - 1) / 2, SIZE_WORD};
+        bool dma_write_ctrl_done = false;
+AES_STORE_CTRL_LOOP:
+        do { dma_write_ctrl_done = dma_write_ctrl.nb_write(dma_write_info); } while (!dma_write_ctrl_done);
+    
+        ESP_REPORT_INFO(VON, "DMA write ctrl: data index = %u, data length = %u, size [0=8b, 1=16b, 2=32b, 3=64b] = %llu", ESP_TO_UINT32(dma_write_info.index), ESP_TO_UINT32(dma_write_info.length), dma_write_info.size.to_uint64());
+    
+        if (dma_write_ctrl_done) { // Force serialization between DMA control and DATA data transfer
+AES_STORE_LOOP:
+            for (uint16_t i = 0; i < AES_PLM_OUT_SIZE; i+=2) {
+    
+                if (i >= dma_write_data_length) break;
+    
+                assert(DMA_WIDTH == 64 && "DMA_WIDTH should be 64 bits");
+    
+                // PLM (in)
+                // |<--- 0 --->|
+                // |<--- 1 --->|
+                //  ...
+                //
+                // DMA word
+                // |<--- 0 --->|<--- 1 --->|
+                //  ...
+    
+                ac_int<DMA_WIDTH, false> data_dma = 0;
+    
+                data_t data_0(aes_plm_out.data[i+0]);
+                //data_t data_1((i+1 >= dma_write_data_length)?ZERO:plm_out.data[i+1]);
+                data_t data_1(aes_plm_out.data[i+1]);
+    
+                data_dma.set_slc(WL*0, data_0.template slc<WL>(0));
+                data_dma.set_slc(WL*1, data_1.template slc<WL>(0));
+    
+                ESP_REPORT_INFO(VOFF, "aes_plm_out[%u] = %02X", ESP_TO_UINT32(i)+0, data_0.to_uint());
+                ESP_REPORT_INFO(VOFF, "aes_plm_out[%u] = %02X", ESP_TO_UINT32(i)+1, data_1.to_uint());
+    
+                dma_write_chnl.write(data_dma);
+            }
+        }
+
+
+    } else if (crypto_algo == CRYPTO_RSA_MODE) {
 
     }
 
