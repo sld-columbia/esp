@@ -56,12 +56,19 @@
 #define TOKEN_PM_CONFIG1_REG_DEFAULT 0
 #define TOKEN_PM_CONFIG2_REG_DEFAULT 0
 #define TOKEN_PM_CONFIG3_REG_DEFAULT 0
-#define TOKEN_PM_CONFIG4_REG_DEFAULT 0x0A3D70A3
-#define TOKEN_PM_CONFIG5_REG_DEFAULT 0xD70A3D80
-//#define TOKEN_PM_CONFIG6_REG_DEFAULT 0xC800000
-#define TOKEN_PM_CONFIG6_REG_DEFAULT 0x0000000
-#define TOKEN_PM_CONFIG7_REG_DEFAULT 0x00000000
-#define TOKEN_PM_CONFIG8_REG_DEFAULT 0x07fffaa9
+
+#define TOKEN_PM_CONFIG4_REG_DEFAULT 0x66666666
+#define TOKEN_PM_CONFIG5_REG_DEFAULT 0x666663E0
+#define TOKEN_PM_CONFIG6_REG_DEFAULT 0x7CFFFFFF
+#define TOKEN_PM_CONFIG7_REG_DEFAULT 0xFFFFF830
+#define TOKEN_PM_CONFIG8_REG_DEFAULT 0x07FFFAA7
+
+/* #define TOKEN_PM_CONFIG4_REG_DEFAULT 0x0A3D70A3 */
+/* #define TOKEN_PM_CONFIG5_REG_DEFAULT 0xD70A3D80 */
+/* #define TOKEN_PM_CONFIG6_REG_DEFAULT 0xC800000 */
+/* //#define TOKEN_PM_CONFIG6_REG_DEFAULT 0x0000000 */
+/* #define TOKEN_PM_CONFIG7_REG_DEFAULT 0x00000000 */
+/* #define TOKEN_PM_CONFIG8_REG_DEFAULT 0x07fffaa9 */
 
 ///////////////////////
 // Accelerator Tiles and Address Map
@@ -94,14 +101,23 @@ const unsigned lut_data_const[LUT_SIZE] = {  0,   4,   8,  12,  16,  20,  24,  2
 					   160, 164, 168, 172, 176, 180, 184, 188,
 					   192, 196, 200, 204, 208, 212, 216, 220,
 					   224, 228, 232, 236, 240, 244, 248, 252};
-const unsigned lut_data_const_vc707[LUT_SIZE] = {1, 1, 1, 1, 1, 1, 1, 1,
-						 1, 1, 1, 1, 1, 1, 1, 1,
+const unsigned lut_data_const_vc707[LUT_SIZE] = {2, 2, 2, 2, 2, 2, 2, 2,
+						 2, 2, 2, 2, 2, 2, 2, 2,
 						 3, 3, 3, 3, 3, 3, 3, 3,
 						 3, 3, 3, 3, 3, 3, 3, 3,
-						 4, 4, 4, 4, 4, 4, 4, 4,
-						 4, 4, 4, 4, 4, 4, 4, 4,
+						 5, 5, 5, 5, 5, 5, 5, 5,
+						 5, 5, 5, 5, 5, 5, 5, 5,
 						 10, 10, 10, 10, 10, 10, 10, 10,
 						 10, 10, 10, 10, 10, 10, 10, 10};
+/* const unsigned lut_data_const_vc707[LUT_SIZE] = {1, 1, 1, 1, 1, 1, 1, 1, */
+/* 						 1, 1, 1, 1, 1, 1, 1, 1, */
+/* 						 3, 3, 3, 3, 3, 3, 3, 3, */
+/* 						 3, 3, 3, 3, 3, 3, 3, 3, */
+/* 						 4, 4, 4, 4, 4, 4, 4, 4, */
+/* 						 4, 4, 4, 4, 4, 4, 4, 4, */
+/* 						 10, 10, 10, 10, 10, 10, 10, 10, */
+/* 						 10, 10, 10, 10, 10, 10, 10, 10}; */
+
 const unsigned random_rate_const = 0;
 const unsigned neighbors_id_const[N_ACC] = {33825, 0}; // 00001 00001 00001 00001, 00000 00000 00000 00000 
 const unsigned pm_network_const = 0;
@@ -115,9 +131,9 @@ const unsigned pm_network_const = 0;
 
 // Set of tests of the bare-metal app.
 // Uncomment the tests that you want to execute
-#define TEST_0 1
+// #define TEST_0 1
 // basic test for vc707 FPGA
-// #define TEST_1 1
+#define TEST_1 1
 // test for vc707 FPGA including FFT accelerator execution
 // #define TEST_2 1
 

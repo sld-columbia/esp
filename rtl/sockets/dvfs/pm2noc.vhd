@@ -2,7 +2,9 @@
 -- SPDX-License-Identifier: Apache-2.0
 
 -----------------------------------------------------------------------------
---  Bridge from token-based power management unit to NoC
+-- Bridge from token-based DVFS core unit to NoC
+--
+-- Author: Davide Giri
 ------------------------------------------------------------------------------
 
 library ieee;

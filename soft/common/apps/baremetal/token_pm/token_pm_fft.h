@@ -28,7 +28,7 @@ static unsigned DMA_WORD_PER_BEAT(unsigned _st)
 #define DEV_NAME "sld,fft_stratus"
 
 /* <<--params-->> */
-const int32_t log_len = 12;
+const int32_t log_len = 14;
 int32_t len;
 int32_t do_bitrev = 1;
 
@@ -115,14 +115,14 @@ static void fft_init_params()
     mem_size = (out_offset * sizeof(token_t)) + out_size;
 }
 
-/* static void fft_probe(struct esp_device **espdevs_fft) */
-/* { */
-/*     // Search for the device */
-/*     printf("Scanning device tree... \n"); */
+static void fft_probe(struct esp_device **espdevs_fft)
+{
+    int ndev;
 
-/*     ndev = probe(espdevs_fft, VENDOR_SLD, SLD_FFT, DEV_NAME); */
-/*     if (ndev == 0) { */
-/* 	printf("fft not found\n"); */
-/* 	return 0; */
-/*     } */
-/* } */
+    // Search for the device
+    printf("Scanning device tree... \n");
+
+    ndev = probe(espdevs_fft, VENDOR_SLD, SLD_FFT, DEV_NAME);
+    if (ndev == 0)
+	printf("fft not found\n");
+}

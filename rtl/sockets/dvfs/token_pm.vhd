@@ -2,7 +2,11 @@
 -- SPDX-License-Identifier: Apache-2.0
 
 -----------------------------------------------------------------------------
---  Token-based power management unit
+--  Token-based DVFS integration unit
+--  - To be inserted in the NoC clock domain, between NoC routers and NoC-tile
+--    synchronizers
+--
+--  Author: Davide Giri
 ------------------------------------------------------------------------------
 
 library ieee;
@@ -13,19 +17,14 @@ use work.amba.all;
 use work.stdlib.all;
 use work.sld_devices.all;
 use work.devices.all;
+use work.allclkgen.all;
 use work.gencomp.all;
---use work.monitor_pkg.all;
 use work.esp_csr_pkg.all;
---use work.jtag_pkg.all;
 use work.sldacc.all;
 use work.nocpackage.all;
---use work.cachepackage.all;
 use work.tile.all;
---use work.misc.all;
---use work.coretypes.all;
 use work.esp_acc_regmap.all;
 use work.socmap.all;
---use work.grlib_config.all;
 use work.tiles_pkg.all;
 use work.dvfs.all;
 
@@ -39,6 +38,7 @@ entity token_pm is
     noc_rstn              : in  std_ulogic;
     tile_rstn             : in  std_ulogic;
     noc_clk               : in  std_ulogic;
+    refclk                : in  std_ulogic;
     tile_clk              : in  std_ulogic;
     -- runtime configuration for LDO ctrl and token FSM
     pm_config             : in  pm_config_type;
@@ -68,8 +68,6 @@ end entity token_pm;
 
 architecture rtl of token_pm is
 
-  signal freq_target : std_logic_vector(7 downto 0);
-
   -- token FSM interface towards NoC
   signal packet_in        : std_ulogic;
   signal packet_in_val    : std_logic_vector(31 downto 0);
@@ -86,6 +84,25 @@ architecture rtl of token_pm is
   signal noc5_output_port_int   : misc_noc_flit_type;
   signal noc5_data_void_out_int : std_ulogic;
   signal noc5_stop_in_int       : std_ulogic;
+
+  -------------------------------------------------------------------------------
+  -- FSM: Clock gating
+  -------------------------------------------------------------------------------
+
+  type clk_gate_fsm is (idle, gate);
+
+  type clk_gate_reg_type is record
+    state : clk_gate_fsm;
+    sel   : std_logic_vector(1 downto 0);
+  end record clk_gate_reg_type;
+
+  constant CLK_GATE_REG_DEFAULT : clk_gate_reg_type := (
+    state => idle,
+    sel   => (others => '0'));
+
+  signal clk_gate_reg, clk_gate_reg_next : clk_gate_reg_type;
+
+  signal clk_gate, clk_gate_latch : std_ulogic;
 
   -------------------------------------------------------------------------------
   -- FSM: Incoming packets from NoC5
@@ -127,107 +144,101 @@ architecture rtl of token_pm is
   signal pm_status_array, pm_status_array_sync : std_logic_vector(PM_REGNUM_STATUS*32-1 downto 0);
   signal pm_status_sync                        : pm_status_type;
 
-  signal freq_sel                              : std_logic_vector(1 downto 0);
-  signal freq_sel_onehot, freq_sel_onehot_sync : std_logic_vector(4 downto 0);
+  signal freq_target                                    : std_logic_vector(7 downto 0);
+  signal freq_sel, freq_sel_sync                        : std_logic_vector(1 downto 0);
+  signal freq_sel0, freq_sel1                           : std_ulogic;
   signal LDO0, LDO1, LDO2, LDO3, LDO4, LDO5, LDO6, LDO7 : std_ulogic;
 
-  attribute mark_debug                         : string;
-  attribute mark_debug of freq_target          : signal is "true";
-  attribute mark_debug of packet_in            : signal is "true";
-  attribute mark_debug of packet_in_val        : signal is "true";
-  attribute mark_debug of packet_in_addr       : signal is "true";
-  attribute mark_debug of packet_out_ready     : signal is "true";
-  attribute mark_debug of packet_out           : signal is "true";
-  attribute mark_debug of packet_out_val       : signal is "true";
-  attribute mark_debug of packet_out_addr      : signal is "true";
-  attribute mark_debug of noc5_rcv_reg         : signal is "true";
-  attribute mark_debug of pm_rcv_en            : signal is "true";
-  attribute mark_debug of acc_rcv_en           : signal is "true";
-  attribute mark_debug of noc5_snd_reg         : signal is "true";
-  attribute mark_debug of pm_snd_en            : signal is "true";
-  attribute mark_debug of LDO0                 : signal is "true";
-  attribute mark_debug of LDO1                 : signal is "true";
-  attribute mark_debug of LDO2                 : signal is "true";
-  attribute mark_debug of LDO3                 : signal is "true";
-  attribute mark_debug of LDO4                 : signal is "true";
-  attribute mark_debug of LDO5                 : signal is "true";
-  attribute mark_debug of LDO6                 : signal is "true";
-  attribute mark_debug of LDO7                 : signal is "true";
-  -- attribute mark_debug of freq_sel             : signal is "true";
-  -- attribute mark_debug of freq_sel_onehot      : signal is "true";
-  -- attribute mark_debug of freq_sel_onehot_sync : signal is "true";
+  signal acc_clk_div1, acc_clk_div2, acc_clk_div3, acc_clk_div4 : std_ulogic;
+  signal acc_clk_div12, acc_clk_div34                           : std_ulogic;
+  signal acc_clk_int                                            : std_ulogic;
+
+  attribute mark_debug                     : string;
+  attribute mark_debug of freq_target      : signal is "true";
+  attribute mark_debug of packet_in        : signal is "true";
+  attribute mark_debug of packet_in_val    : signal is "true";
+  attribute mark_debug of packet_in_addr   : signal is "true";
+  attribute mark_debug of packet_out_ready : signal is "true";
+  attribute mark_debug of packet_out       : signal is "true";
+  attribute mark_debug of packet_out_val   : signal is "true";
+  attribute mark_debug of packet_out_addr  : signal is "true";
+  attribute mark_debug of noc5_rcv_reg     : signal is "true";
+  attribute mark_debug of pm_rcv_en        : signal is "true";
+  attribute mark_debug of acc_rcv_en       : signal is "true";
+  attribute mark_debug of noc5_snd_reg     : signal is "true";
+  attribute mark_debug of pm_snd_en        : signal is "true";
+  attribute mark_debug of LDO0             : signal is "true";
+  attribute mark_debug of LDO1             : signal is "true";
+  attribute mark_debug of LDO2             : signal is "true";
+  attribute mark_debug of LDO3             : signal is "true";
+  attribute mark_debug of LDO4             : signal is "true";
+  attribute mark_debug of LDO5             : signal is "true";
+  attribute mark_debug of LDO6             : signal is "true";
+  attribute mark_debug of LDO7             : signal is "true";
+  attribute mark_debug of freq_sel         : signal is "true";
+  attribute mark_debug of freq_sel_sync    : signal is "true";
 
 begin
 
-  no_clk_mux_fpga : if (SIMULATION = true) generate
-    acc_clk <= tile_clk;
+  -----------------------------------------------------------------------------
+  --  Clock multiplexing
+  --
+  --  Enabled only in simulation and on FPGA to have dynamic frequency scaling
+  --  (voltage scaling is not possible). On ASIC there is full DVFS by controlling
+  --  an LDO.
+  ------------------------------------------------------------------------------
+
+  acc_clk <= acc_clk_int;
+
+  no_clk_mux : if (is_asic = true) generate
+    acc_clk_int <= refclk;
   end generate;
 
-  -- TODO implement the clock mux for FPGA
-  clk_mux_fpga : if (SIMULATION = false and is_asic = false) generate
-    acc_clk <= tile_clk;
-    -- bin_to_onehot : process (freq_sel)
-    -- begin  -- process bin_to_onehot
+  clk_mux : if (is_asic = false) generate
 
-    --   if freq_sel = "00" then
-    --     freq_sel_onehot <= "00001";
-    --   elsif freq_sel = "01" then
-    --     freq_sel_onehot <= "00010";
-    --   elsif freq_sel = "10" then
-    --     freq_sel_onehot <= "00100";
-    --   elsif freq_sel = "11" then
-    --     freq_sel_onehot <= "01000";
-    --   else
-    --     freq_sel_onehot <= "00001";
-    --   end if;
+    clkdiv1234_i : clkdiv1234
+      port map (
+        rstn     => tile_rstn,
+        clkin    => refclk,
+        clk_div1 => acc_clk_div1,
+        clk_div2 => acc_clk_div2,
+        clk_div3 => acc_clk_div3,
+        clk_div4 => acc_clk_div4);
 
-    -- end process bin_to_onehot;
+    freq_sel(0) <= LDO6;
+    freq_sel(1) <= LDO7;
 
-    -- clkand_unisim_1 : clkand_unisim
-    --   port map (
-    --     i      => pllouta,
-    --     en     => '1',
-    --     o      => acc_clk);
-    
-    -- pll_i : pll
-    --   generic map (
-    --     tech => CFG_FABTECH)
-    --   port map (
-    --     plllock   => plllock,                  -- (unused)
-    --     pllouta   => pllouta,               -- output clock
-    --     reset     => tile_rstn,
-    --     divchange => '0',                   -- (unused)
-    --     rangea    => freq_sel_onehot_sync,  -- one hot encoding
-    --     refclk    => tile_clk,              -- input clock
-    --     pllbypass => '0',                   -- (unused)
-    --     stopclka  => '0',                   -- (unused)
-    --     framestop => '1',                   -- (unused)
-    --     locksel   => '0',                   -- (unused)
-    --     lftune    => '0' & x"00004800f8",   -- (unused)
-    --     startup   => (others => '0'),       -- (unused)
-    --     locktune  => (others => '0'),       -- (unused)
-    --     vergtune  => "100");                -- (unused)
+    freq_sel_synchronizer : inferred_async_fifo
+      generic map (
+        g_data_width => 2,
+        g_size       => 2)
+      port map (
+        -- write port
+        rst_wr_n_i => noc_rstn,
+        clk_wr_i   => noc_clk,
+        we_i       => '1',
+        d_i        => freq_sel,
+        wr_full_o  => open,
+        -- read port
+        rst_rd_n_i => tile_rstn,
+        clk_rd_i   => refclk,
+        rd_i       => '1',
+        q_o        => freq_sel_sync,
+        rd_empty_o => open);
 
-    -- freq_sel_synchronizer : inferred_async_fifo
-    --   generic map (
-    --     g_data_width => 5,
-    --     g_size       => 2)
-    --   port map (
-    --     -- write port
-    --     rst_wr_n_i => noc_rstn,
-    --     clk_wr_i   => noc_clk,
-    --     we_i       => '1',
-    --     d_i        => freq_sel_onehot,
-    --     wr_full_o  => open,
-    --     -- read port
-    --     rst_rd_n_i => tile_rstn,
-    --     clk_rd_i   => tile_clk,
-    --     rd_i       => '1',
-    --     q_o        => freq_sel_onehot_sync,
-    --     rd_empty_o => open);
+    freq_sel0 <= '1' when freq_sel_sync(0) = '1' else '0';  -- avoid X propagation
+    freq_sel1 <= '1' when freq_sel_sync(1) = '1' else '0';  -- avoid X propagation
+
+    acc_clk_div12 <= acc_clk_div1 when freq_sel0 = '0' else acc_clk_div2;
+    acc_clk_div34 <= acc_clk_div3 when freq_sel0 = '0' else acc_clk_div4;
+    clkmux_1234 : clkmux
+      port map (acc_clk_div12, acc_clk_div34, freq_sel1, acc_clk_int, tile_rstn);
 
   end generate;
 
+  -----------------------------------------------------------------------------
+  --  Token-based DVFS core
+  ------------------------------------------------------------------------------
 
   pm_status_sync(0)(31 downto 15) <= (others => '0');
   Token_FSM_i : Token_FSM
@@ -255,11 +266,11 @@ begin
       LUT_read               => pm_status_sync(0)(14 downto 7),  -- LUT_read
       freq_target            => freq_target);
 
-  -- TO DO add the second reset?
+  -- TO DO add the second reset
   Tile_LDO_Ctrl_i : Tile_LDO_Ctrl
     port map (
       clk         => noc_clk,
-      DCO_clk     => tile_clk,
+      DCO_clk     => acc_clk_int,
       reset       => noc_rstn,
       freq_target => freq_target,
       LDO_setup_0 => pm_config_sync(4),
@@ -276,8 +287,10 @@ begin
       LDO5        => LDO5,
       LDO6        => LDO6,
       LDO7        => LDO7);
-      -- LDO6        => freq_sel(0),
-      -- LDO7        => freq_sel(1));
+
+  -----------------------------------------------------------------------------
+  --  Bridge between DVFS core and NoC5
+  ------------------------------------------------------------------------------
 
   pm2noc_i : pm2noc
     port map (
@@ -304,6 +317,10 @@ begin
   noc5_output_port_pm    <= noc5_output_port;
   noc5_data_void_out_int <= noc5_data_void_out when pm_rcv_en = '1'  else '1';
   noc5_data_void_out_pm  <= noc5_data_void_out when acc_rcv_en = '1' else '1';
+
+  -----------------------------------------------------------------------------
+  --  Bidirectional NoC5 Multiplexing between DVFS core and accelerator tile
+  ------------------------------------------------------------------------------
 
   fsm_noc5_rcv : process (noc5_rcv_reg,
                           noc5_output_port, noc5_data_void_out,
@@ -450,6 +467,10 @@ begin
     end if;
   end process fsms_state_update;
 
+  -----------------------------------------------------------------------------
+  --  Connection to CSRs of the accelerator tile (read and write)
+  ------------------------------------------------------------------------------
+
   pm_config_vector_gen : for i in 0 to PM_REGNUM_CONFIG - 1 generate
     pm_config_array((i+1)*32-1 downto i*32) <= pm_config(i);
   end generate pm_config_vector_gen;
@@ -473,7 +494,7 @@ begin
     port map (
       -- write port
       rst_wr_n_i => tile_rstn,
-      clk_wr_i   => tile_clk,
+      clk_wr_i   => acc_clk_int,
       we_i       => '1',
       d_i        => pm_config_array,
       wr_full_o  => open,
@@ -497,7 +518,7 @@ begin
       wr_full_o  => open,
       -- read port
       rst_rd_n_i => tile_rstn,
-      clk_rd_i   => tile_clk,
+      clk_rd_i   => acc_clk_int,
       rd_i       => '1',
       q_o        => pm_status_array,
       rd_empty_o => open);

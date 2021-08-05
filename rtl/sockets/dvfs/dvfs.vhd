@@ -168,6 +168,7 @@ package dvfs is
       noc_rstn               : in  std_ulogic;
       tile_rstn              : in  std_ulogic;
       noc_clk                : in  std_ulogic;
+      refclk                : in  std_ulogic;
       tile_clk               : in  std_ulogic;
       -- runtime configuration for LDO ctrl and token FSM
       pm_config              : in  pm_config_type;

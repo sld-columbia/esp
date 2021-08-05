@@ -866,6 +866,7 @@ begin
         noc_rstn              => noc_rstn,
         tile_rstn             => dco_rstn,
         noc_clk               => sys_clk,
+        refclk                => dco_clk,
         tile_clk              => dco_clk,
         local_x               => this_local_x,
         local_y               => this_local_y,

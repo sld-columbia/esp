@@ -152,6 +152,9 @@ architecture rtl of fpga_tile_acc is
   signal pm_config : pm_config_type;
   signal pm_status : pm_status_type;
 
+  -- -- Token-based power management clock for accelerator tile
+  signal acc_clk : std_ulogic;
+
   -- DCO reset -> keeping the logic compliant with the asic flow
   signal dco_rstn : std_ulogic;
 
@@ -448,7 +451,7 @@ begin
       test_if_en => 0)
     port map (
       rst                 => rst,
-      refclk              => refclk,
+      refclk              => acc_clk,
       tile_rst            => dco_rstn,
       tdi                 => tdi,
       tdo                 => tdo,
@@ -620,7 +623,7 @@ begin
         noc_rstn  => rst,
         tile_rstn => dco_rstn,
         noc_clk   => sys_clk_int,
-        tile_clk  => refclk,
+        tile_clk  => acc_clk,
 
         noc1_output_port   => noc1_output_port,
         noc1_data_void_out => noc1_acc_data_void_out,
@@ -703,11 +706,11 @@ begin
     generic map (
       PORTS    => ROUTER_PORTS,
       HAS_SYNC => 0)                    -- no synchronizers in the NoC because
-                                        -- they are already explicitly added in
-                                        -- this asic_tile_acc entity (noc_synchronizers)
+    -- they are already explicitly added in
+    -- this asic_tile_acc entity (noc_synchronizers)
     port map (
       clk                => sys_clk_int,
-      clk_tile           => refclk,
+      clk_tile           => acc_clk,
       rst                => rst,
       rst_tile           => dco_rstn,
       CONST_local_x      => this_local_x,
@@ -817,7 +820,7 @@ begin
     port map (
       raw_rstn            => raw_rstn,
       tile_rst            => rst,
-      refclk              => refclk,
+      refclk              => acc_clk,
       pllbypass           => pllbypass,
       pllclk              => pllclk,
       dco_clk             => dco_clk,
@@ -885,7 +888,8 @@ begin
         noc_rstn              => rst,
         tile_rstn             => dco_rstn,
         noc_clk               => sys_clk_int,
-        tile_clk              => refclk,
+        refclk                => refclk,
+        tile_clk              => acc_clk,
         local_x               => this_local_x,
         local_y               => this_local_y,
         pm_config             => pm_config,
@@ -902,11 +906,12 @@ begin
         noc5_output_port_pm   => noc5_output_port_pm,
         noc5_data_void_out_pm => noc5_acc_data_void_out_pm,
         noc5_stop_in_pm       => noc5_acc_stop_in_pm,
-        acc_clk               => open);
+        acc_clk               => acc_clk);
 
   end generate;
 
   no_token_pm_gen : if this_has_token_pm = 0 generate
+    acc_clk                   <= refclk;
     pm_status                 <= (others => (others => '0'));
     noc5_input_port           <= noc5_input_port_pm;
     noc5_acc_data_void_in     <= noc5_acc_data_void_in_pm;

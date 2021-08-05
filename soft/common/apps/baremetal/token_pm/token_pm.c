@@ -132,7 +132,6 @@ int main(int argc, char * argv[])
 
 #ifdef TEST_2
 
-    int ndev;
     struct esp_device *espdevs_fft;
     struct esp_device *dev;
     unsigned done;
