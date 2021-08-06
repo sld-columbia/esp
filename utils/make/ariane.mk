@@ -6,6 +6,7 @@ ARIANE ?= $(ESP_ROOT)/rtl/cores/ariane/ariane
 
 RISCV_TESTS = $(SOFT)/riscv-tests
 RISCV_PK = $(SOFT)/riscv-pk
+OPENSBI = $(SOFT)/opensbi
 
 soft: $(SOFT_BUILD)/prom.srec $(SOFT_BUILD)/ram.srec $(SOFT_BUILD)/prom.bin $(SOFT_BUILD)/systest.bin
 
@@ -153,10 +154,19 @@ $(SOFT_BUILD)/pk-build/bbl: $(SOFT_BUILD)/pk-build sysroot-update
 		fi;
 	$(QUIET_MAKE) $(MAKE) -C $(SOFT_BUILD)/pk-build
 
+$(SOFT_BUILD)/opensbi-build:
+	$(QUIET_MKDIR)mkdir -p $@
 
-$(SOFT_BUILD)/linux.bin: $(SOFT_BUILD)/pk-build/bbl
-	$(QUIET_OBJCP) riscv64-unknown-elf-objcopy -S -O binary --change-addresses -0x80000000 $< $@
+$(SOFT_BUILD)/opensbi-build/platform/esp-fpga/firmware/fw_payload.bin: $(SOFT_BUILD)/opensbi-build sysroot-update
+	$(QUIET_MAKE) CROSS_COMPILE=$(CROSS_COMPILE_LINUX) $(MAKE) -C $(OPENSBI) PLATFORM=esp-fpga \
+		FW_PAYLOAD_PATH=$(SOFT_BUILD)/linux-build/arch/riscv/boot/Image O=$<
 
+$(SOFT_BUILD)/linux.bin: $(SOFT_BUILD)/opensbi-build/platform/esp-fpga/firmware/fw_payload.bin
+	$(QUIET_CP) cp $< $@
+
+# can switch between openSBI and riscv-pk by uncommenting this and commenting above
+#$(SOFT_BUILD)/linux.bin: $(SOFT_BUILD)/pk-build/bbl
+	#$(QUIET_OBJCP) riscv64-unknown-elf-objcopy -S -O binary --change-addresses -0x80000000 $< $@
 
 linux: $(SOFT_BUILD)/linux.bin $(SOFT_BUILD)/prom.bin
 
