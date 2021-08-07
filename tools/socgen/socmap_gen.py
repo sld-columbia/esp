@@ -2135,10 +2135,7 @@ def print_cache_config(fp, soc, esp_config):
   fp.write("`define L2_WAYS      " + str(soc.l2_ways.get()) + "\n")
   fp.write("`define L2_SETS      " + str(soc.l2_sets.get()) + "\n")
   fp.write("`define LLC_WAYS     " + str(soc.llc_ways.get()) + "\n")
-  if esp_config.nmem == 0:
-    fp.write("`define LLC_SETS     " + str(int(soc.llc_sets.get())) + "\n")
-  else:
-    fp.write("`define LLC_SETS     " + str(int(soc.llc_sets.get() / esp_config.nmem)) + "\n")
+  fp.write("`define LLC_SETS     " + str(int(soc.llc_sets.get())) + "\n")
   fp.write("\n")
   fp.write("`endif // __CACHES_CFG_SVH__\n")
 
