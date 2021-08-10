@@ -33,491 +33,492 @@ use work.tile.all;
 use work.coretypes.all;
 use work.grlib_config.all;
 use work.socmap.all;
+use work.jtag_pkg.all;
 
 
-entity fpga_proxy_top is
+ENTITY FPGA_PROXY_TOP IS
 
-  generic (
-    SIMULATION : boolean                               := false;
-    JTAG_TRACE : integer range -1 to CFG_TILES_NUM - 1 := -1);
-  port (
-    reset             : in    std_ulogic;  -- GLobal FPGA reset (active high)
-    chip_reset        : out   std_ulogic;  -- Chip reset (active high)
-    -- Backup clocks
-    ext_clk_noc       : out   std_logic;
-    ext_clk_io        : out   std_logic;
-    ext_clk_cpu       : out   std_logic;
-    ext_clk_mem       : out   std_logic;
-    ext_clk_acc0      : out   std_logic;
-    ext_clk_acc1      : out   std_logic;
-    -- Main clock
-    main_clk_p        : in    std_ulogic;  -- 100 MHz clock
-    main_clk_n        : in    std_ulogic;  -- 100 MHz clock
-    -- Memory link
-    fpga_data         : inout std_logic_vector(CFG_NMEM_TILE * (ARCH_BITS) - 1 downto 0);
-    fpga_valid_in     : out   std_logic_vector(CFG_NMEM_TILE - 1 downto 0);
-    fpga_valid_out    : in    std_logic_vector(CFG_NMEM_TILE - 1 downto 0);
-    fpga_clk_in       : out   std_logic_vector(CFG_NMEM_TILE - 1 downto 0);
-    fpga_clk_out      : in    std_logic_vector(CFG_NMEM_TILE - 1 downto 0);
-    fpga_credit_in    : out   std_logic_vector(CFG_NMEM_TILE - 1 downto 0);
-    fpga_credit_out   : in    std_logic_vector(CFG_NMEM_TILE - 1 downto 0);
-    -- Test interface
-    tdi               : out   std_logic_vector(0 to CFG_TILES_NUM - 1);
-    tdo               : in    std_logic_vector(0 to CFG_TILES_NUM - 1);
-    tms               : out   std_logic;
-    tclk              : out   std_logic;
-    -- Ethernet signals
-    reset_o2          : out   std_ulogic;
-    etx_clk           : in    std_ulogic;
-    erx_clk           : in    std_ulogic;
-    erxd              : in    std_logic_vector(3 downto 0);
-    erx_dv            : in    std_ulogic;
-    erx_er            : in    std_ulogic;
-    erx_col           : in    std_ulogic;
-    erx_crs           : in    std_ulogic;
-    etxd              : out   std_logic_vector(3 downto 0);
-    etx_en            : out   std_ulogic;
-    etx_er            : out   std_ulogic;
-    emdc              : out   std_ulogic;
-    emdio             : inout std_logic;
+  GENERIC (
+    SIMULATION : BOOLEAN                               := FALSE;
+    JTAG_TRACE : INTEGER RANGE -1 TO CFG_TILES_NUM - 1 := -1);
+  PORT (
+    RESET             : IN    STD_ULOGIC;  -- GLOBAL FPGA RESET (ACTIVE HIGH)
+    CHIP_RESET        : OUT   STD_ULOGIC;  -- CHIP RESET (ACTIVE HIGH)
+    -- BACKUP CLOCKS
+    EXT_CLK_NOC       : OUT   STD_LOGIC;
+    EXT_CLK_IO        : OUT   STD_LOGIC;
+    EXT_CLK_CPU       : OUT   STD_LOGIC;
+    EXT_CLK_MEM       : OUT   STD_LOGIC;
+    EXT_CLK_ACC0      : OUT   STD_LOGIC;
+    EXT_CLK_ACC1      : OUT   STD_LOGIC;
+    -- MAIN CLOCK
+    MAIN_CLK_P        : IN    STD_ULOGIC;  -- 100 MHZ CLOCK
+    MAIN_CLK_N        : IN    STD_ULOGIC;  -- 100 MHZ CLOCK
+    -- MEMORY LINK
+    FPGA_DATA         : INOUT STD_LOGIC_VECTOR(CFG_NMEM_TILE * (ARCH_BITS) - 1 DOWNTO 0);
+    FPGA_VALID_IN     : OUT   STD_LOGIC_VECTOR(CFG_NMEM_TILE - 1 DOWNTO 0);
+    FPGA_VALID_OUT    : IN    STD_LOGIC_VECTOR(CFG_NMEM_TILE - 1 DOWNTO 0);
+    FPGA_CLK_IN       : OUT   STD_LOGIC_VECTOR(CFG_NMEM_TILE - 1 DOWNTO 0);
+    FPGA_CLK_OUT      : IN    STD_LOGIC_VECTOR(CFG_NMEM_TILE - 1 DOWNTO 0);
+    FPGA_CREDIT_IN    : OUT   STD_LOGIC_VECTOR(CFG_NMEM_TILE - 1 DOWNTO 0);
+    FPGA_CREDIT_OUT   : IN    STD_LOGIC_VECTOR(CFG_NMEM_TILE - 1 DOWNTO 0);
+    -- TEST INTERFACE
+    TDI               : OUT   STD_LOGIC_VECTOR(0 TO CFG_TILES_NUM - 1);
+    TDO               : IN    STD_LOGIC_VECTOR(0 TO CFG_TILES_NUM - 1);
+    TMS               : OUT   STD_LOGIC;
+    TCLK              : OUT   STD_LOGIC;
+    -- ETHERNET SIGNALS
+    RESET_O2          : OUT   STD_ULOGIC;
+    ETX_CLK           : IN    STD_ULOGIC;
+    ERX_CLK           : IN    STD_ULOGIC;
+    ERXD              : IN    STD_LOGIC_VECTOR(3 DOWNTO 0);
+    ERX_DV            : IN    STD_ULOGIC;
+    ERX_ER            : IN    STD_ULOGIC;
+    ERX_COL           : IN    STD_ULOGIC;
+    ERX_CRS           : IN    STD_ULOGIC;
+    ETXD              : OUT   STD_LOGIC_VECTOR(3 DOWNTO 0);
+    ETX_EN            : OUT   STD_ULOGIC;
+    ETX_ER            : OUT   STD_ULOGIC;
+    EMDC              : OUT   STD_ULOGIC;
+    EMDIO             : INOUT STD_LOGIC;
     -- DDR
-    clk_ref_p         : in    std_ulogic;  -- 200 MHz clock
-    clk_ref_n         : in    std_ulogic;  -- 200 MHz clock
+    CLK_REF_P         : IN    STD_ULOGIC;  -- 200 MHZ CLOCK
+    CLK_REF_N         : IN    STD_ULOGIC;  -- 200 MHZ CLOCK
     -- DDR0
-    c0_sys_clk_p      : in    std_logic;   -- 200 MHz clock
-    c0_sys_clk_n      : in    std_logic;   -- 200 MHz clock
-    c0_ddr3_dq        : inout std_logic_vector(63 downto 0);
-    c0_ddr3_dqs_p     : inout std_logic_vector(7 downto 0);
-    c0_ddr3_dqs_n     : inout std_logic_vector(7 downto 0);
-    c0_ddr3_addr      : out   std_logic_vector(14 downto 0);
-    c0_ddr3_ba        : out   std_logic_vector(2 downto 0);
-    c0_ddr3_ras_n     : out   std_logic;
-    c0_ddr3_cas_n     : out   std_logic;
-    c0_ddr3_we_n      : out   std_logic;
-    c0_ddr3_reset_n   : out   std_logic;
-    c0_ddr3_ck_p      : out   std_logic_vector(0 downto 0);
-    c0_ddr3_ck_n      : out   std_logic_vector(0 downto 0);
-    c0_ddr3_cke       : out   std_logic_vector(0 downto 0);
-    c0_ddr3_cs_n      : out   std_logic_vector(0 downto 0);
-    c0_ddr3_dm        : out   std_logic_vector(7 downto 0);
-    c0_ddr3_odt       : out   std_logic_vector(0 downto 0);
-    c0_calib_complete : out   std_logic;
-    c0_diagnostic_led : out   std_ulogic;
+    C0_SYS_CLK_P      : IN    STD_LOGIC;   -- 200 MHZ CLOCK
+    C0_SYS_CLK_N      : IN    STD_LOGIC;   -- 200 MHZ CLOCK
+    C0_DDR3_DQ        : INOUT STD_LOGIC_VECTOR(63 DOWNTO 0);
+    C0_DDR3_DQS_P     : INOUT STD_LOGIC_VECTOR(7 DOWNTO 0);
+    C0_DDR3_DQS_N     : INOUT STD_LOGIC_VECTOR(7 DOWNTO 0);
+    C0_DDR3_ADDR      : OUT   STD_LOGIC_VECTOR(14 DOWNTO 0);
+    C0_DDR3_BA        : OUT   STD_LOGIC_VECTOR(2 DOWNTO 0);
+    C0_DDR3_RAS_N     : OUT   STD_LOGIC;
+    C0_DDR3_CAS_N     : OUT   STD_LOGIC;
+    C0_DDR3_WE_N      : OUT   STD_LOGIC;
+    C0_DDR3_RESET_N   : OUT   STD_LOGIC;
+    C0_DDR3_CK_P      : OUT   STD_LOGIC_VECTOR(0 DOWNTO 0);
+    C0_DDR3_CK_N      : OUT   STD_LOGIC_VECTOR(0 DOWNTO 0);
+    C0_DDR3_CKE       : OUT   STD_LOGIC_VECTOR(0 DOWNTO 0);
+    C0_DDR3_CS_N      : OUT   STD_LOGIC_VECTOR(0 DOWNTO 0);
+    C0_DDR3_DM        : OUT   STD_LOGIC_VECTOR(7 DOWNTO 0);
+    C0_DDR3_ODT       : OUT   STD_LOGIC_VECTOR(0 DOWNTO 0);
+    C0_CALIB_COMPLETE : OUT   STD_LOGIC;
+    C0_DIAGNOSTIC_LED : OUT   STD_ULOGIC;
     -- DDR1
-    c1_sys_clk_p      : in    std_logic;   -- 200 MHz clock
-    c1_sys_clk_n      : in    std_logic;   -- 200 MHz clock
-    c1_ddr3_dq        : inout std_logic_vector(63 downto 0);
-    c1_ddr3_dqs_p     : inout std_logic_vector(7 downto 0);
-    c1_ddr3_dqs_n     : inout std_logic_vector(7 downto 0);
-    c1_ddr3_addr      : out   std_logic_vector(14 downto 0);
-    c1_ddr3_ba        : out   std_logic_vector(2 downto 0);
-    c1_ddr3_ras_n     : out   std_logic;
-    c1_ddr3_cas_n     : out   std_logic;
-    c1_ddr3_we_n      : out   std_logic;
-    c1_ddr3_reset_n   : out   std_logic;
-    c1_ddr3_ck_p      : out   std_logic_vector(0 downto 0);
-    c1_ddr3_ck_n      : out   std_logic_vector(0 downto 0);
-    c1_ddr3_cke       : out   std_logic_vector(0 downto 0);
-    c1_ddr3_cs_n      : out   std_logic_vector(0 downto 0);
-    c1_ddr3_dm        : out   std_logic_vector(7 downto 0);
-    c1_ddr3_odt       : out   std_logic_vector(0 downto 0);
-    c1_calib_complete : out   std_logic;
-    c1_diagnostic_led : out   std_ulogic;
+    C1_SYS_CLK_P      : IN    STD_LOGIC;   -- 200 MHZ CLOCK
+    C1_SYS_CLK_N      : IN    STD_LOGIC;   -- 200 MHZ CLOCK
+    C1_DDR3_DQ        : INOUT STD_LOGIC_VECTOR(63 DOWNTO 0);
+    C1_DDR3_DQS_P     : INOUT STD_LOGIC_VECTOR(7 DOWNTO 0);
+    C1_DDR3_DQS_N     : INOUT STD_LOGIC_VECTOR(7 DOWNTO 0);
+    C1_DDR3_ADDR      : OUT   STD_LOGIC_VECTOR(14 DOWNTO 0);
+    C1_DDR3_BA        : OUT   STD_LOGIC_VECTOR(2 DOWNTO 0);
+    C1_DDR3_RAS_N     : OUT   STD_LOGIC;
+    C1_DDR3_CAS_N     : OUT   STD_LOGIC;
+    C1_DDR3_WE_N      : OUT   STD_LOGIC;
+    C1_DDR3_RESET_N   : OUT   STD_LOGIC;
+    C1_DDR3_CK_P      : OUT   STD_LOGIC_VECTOR(0 DOWNTO 0);
+    C1_DDR3_CK_N      : OUT   STD_LOGIC_VECTOR(0 DOWNTO 0);
+    C1_DDR3_CKE       : OUT   STD_LOGIC_VECTOR(0 DOWNTO 0);
+    C1_DDR3_CS_N      : OUT   STD_LOGIC_VECTOR(0 DOWNTO 0);
+    C1_DDR3_DM        : OUT   STD_LOGIC_VECTOR(7 DOWNTO 0);
+    C1_DDR3_ODT       : OUT   STD_LOGIC_VECTOR(0 DOWNTO 0);
+    C1_CALIB_COMPLETE : OUT   STD_LOGIC;
+    C1_DIAGNOSTIC_LED : OUT   STD_ULOGIC;
     -- DDR2
-    c2_sys_clk_p      : in    std_logic;   -- 200 MHz clock
-    c2_sys_clk_n      : in    std_logic;   -- 200 MHz clock
-    c2_ddr3_dq        : inout std_logic_vector(63 downto 0);
-    c2_ddr3_dqs_p     : inout std_logic_vector(7 downto 0);
-    c2_ddr3_dqs_n     : inout std_logic_vector(7 downto 0);
-    c2_ddr3_addr      : out   std_logic_vector(14 downto 0);
-    c2_ddr3_ba        : out   std_logic_vector(2 downto 0);
-    c2_ddr3_ras_n     : out   std_logic;
-    c2_ddr3_cas_n     : out   std_logic;
-    c2_ddr3_we_n      : out   std_logic;
-    c2_ddr3_reset_n   : out   std_logic;
-    c2_ddr3_ck_p      : out   std_logic_vector(0 downto 0);
-    c2_ddr3_ck_n      : out   std_logic_vector(0 downto 0);
-    c2_ddr3_cke       : out   std_logic_vector(0 downto 0);
-    c2_ddr3_cs_n      : out   std_logic_vector(0 downto 0);
-    c2_ddr3_dm        : out   std_logic_vector(7 downto 0);
-    c2_ddr3_odt       : out   std_logic_vector(0 downto 0);
-    c2_calib_complete : out   std_logic;
-    c2_diagnostic_led : out   std_ulogic;
+    C2_SYS_CLK_P      : IN    STD_LOGIC;   -- 200 MHZ CLOCK
+    C2_SYS_CLK_N      : IN    STD_LOGIC;   -- 200 MHZ CLOCK
+    C2_DDR3_DQ        : INOUT STD_LOGIC_VECTOR(63 DOWNTO 0);
+    C2_DDR3_DQS_P     : INOUT STD_LOGIC_VECTOR(7 DOWNTO 0);
+    C2_DDR3_DQS_N     : INOUT STD_LOGIC_VECTOR(7 DOWNTO 0);
+    C2_DDR3_ADDR      : OUT   STD_LOGIC_VECTOR(14 DOWNTO 0);
+    C2_DDR3_BA        : OUT   STD_LOGIC_VECTOR(2 DOWNTO 0);
+    C2_DDR3_RAS_N     : OUT   STD_LOGIC;
+    C2_DDR3_CAS_N     : OUT   STD_LOGIC;
+    C2_DDR3_WE_N      : OUT   STD_LOGIC;
+    C2_DDR3_RESET_N   : OUT   STD_LOGIC;
+    C2_DDR3_CK_P      : OUT   STD_LOGIC_VECTOR(0 DOWNTO 0);
+    C2_DDR3_CK_N      : OUT   STD_LOGIC_VECTOR(0 DOWNTO 0);
+    C2_DDR3_CKE       : OUT   STD_LOGIC_VECTOR(0 DOWNTO 0);
+    C2_DDR3_CS_N      : OUT   STD_LOGIC_VECTOR(0 DOWNTO 0);
+    C2_DDR3_DM        : OUT   STD_LOGIC_VECTOR(7 DOWNTO 0);
+    C2_DDR3_ODT       : OUT   STD_LOGIC_VECTOR(0 DOWNTO 0);
+    C2_CALIB_COMPLETE : OUT   STD_LOGIC;
+    C2_DIAGNOSTIC_LED : OUT   STD_ULOGIC;
     -- DDR3
-    c3_sys_clk_p      : in    std_logic;   -- 200 MHz clock
-    c3_sys_clk_n      : in    std_logic;   -- 200 MHz clock
-    c3_ddr3_dq        : inout std_logic_vector(63 downto 0);
-    c3_ddr3_dqs_p     : inout std_logic_vector(7 downto 0);
-    c3_ddr3_dqs_n     : inout std_logic_vector(7 downto 0);
-    c3_ddr3_addr      : out   std_logic_vector(14 downto 0);
-    c3_ddr3_ba        : out   std_logic_vector(2 downto 0);
-    c3_ddr3_ras_n     : out   std_logic;
-    c3_ddr3_cas_n     : out   std_logic;
-    c3_ddr3_we_n      : out   std_logic;
-    c3_ddr3_reset_n   : out   std_logic;
-    c3_ddr3_ck_p      : out   std_logic_vector(0 downto 0);
-    c3_ddr3_ck_n      : out   std_logic_vector(0 downto 0);
-    c3_ddr3_cke       : out   std_logic_vector(0 downto 0);
-    c3_ddr3_cs_n      : out   std_logic_vector(0 downto 0);
-    c3_ddr3_dm        : out   std_logic_vector(7 downto 0);
-    c3_ddr3_odt       : out   std_logic_vector(0 downto 0);
-    c3_calib_complete : out   std_logic;
-    c3_diagnostic_led : out   std_ulogic;
-    LED_RED           : out   std_ulogic;
-    LED_GREEN         : out   std_ulogic;
-    LED_BLUE          : out   std_ulogic;
-    LED_YELLOW        : out   std_ulogic
+    C3_SYS_CLK_P      : IN    STD_LOGIC;   -- 200 MHZ CLOCK
+    C3_SYS_CLK_N      : IN    STD_LOGIC;   -- 200 MHZ CLOCK
+    C3_DDR3_DQ        : INOUT STD_LOGIC_VECTOR(63 DOWNTO 0);
+    C3_DDR3_DQS_P     : INOUT STD_LOGIC_VECTOR(7 DOWNTO 0);
+    C3_DDR3_DQS_N     : INOUT STD_LOGIC_VECTOR(7 DOWNTO 0);
+    C3_DDR3_ADDR      : OUT   STD_LOGIC_VECTOR(14 DOWNTO 0);
+    C3_DDR3_BA        : OUT   STD_LOGIC_VECTOR(2 DOWNTO 0);
+    C3_DDR3_RAS_N     : OUT   STD_LOGIC;
+    C3_DDR3_CAS_N     : OUT   STD_LOGIC;
+    C3_DDR3_WE_N      : OUT   STD_LOGIC;
+    C3_DDR3_RESET_N   : OUT   STD_LOGIC;
+    C3_DDR3_CK_P      : OUT   STD_LOGIC_VECTOR(0 DOWNTO 0);
+    C3_DDR3_CK_N      : OUT   STD_LOGIC_VECTOR(0 DOWNTO 0);
+    C3_DDR3_CKE       : OUT   STD_LOGIC_VECTOR(0 DOWNTO 0);
+    C3_DDR3_CS_N      : OUT   STD_LOGIC_VECTOR(0 DOWNTO 0);
+    C3_DDR3_DM        : OUT   STD_LOGIC_VECTOR(7 DOWNTO 0);
+    C3_DDR3_ODT       : OUT   STD_LOGIC_VECTOR(0 DOWNTO 0);
+    C3_CALIB_COMPLETE : OUT   STD_LOGIC;
+    C3_DIAGNOSTIC_LED : OUT   STD_ULOGIC;
+    LED_RED           : OUT   STD_ULOGIC;
+    LED_GREEN         : OUT   STD_ULOGIC;
+    LED_BLUE          : OUT   STD_ULOGIC;
+    LED_YELLOW        : OUT   STD_ULOGIC
     );
-end entity fpga_proxy_top;
+END ENTITY FPGA_PROXY_TOP;
 
-architecture rtl of fpga_proxy_top is
+ARCHITECTURE RTL OF FPGA_PROXY_TOP IS
 
-  constant FPGA_PROXY_TECH : integer := virtex7;
-  constant FPGA_PROXY_FREQ : integer := 100000;  -- FPGA frequency in KHz
-  constant MAX_NMEM_TILES  : integer := 4;
+  CONSTANT FPGA_PROXY_TECH : INTEGER := VIRTEX7;
+  CONSTANT FPGA_PROXY_FREQ : INTEGER := 100000;  -- FPGA FREQUENCY IN KHZ
+  CONSTANT MAX_NMEM_TILES  : INTEGER := 4;
 
-  component ahb2mig_7series_profpga
-    generic(
-      hindex : integer := 0;
-      haddr  : integer := 0;
-      hmask  : integer := 16#f00#
+  COMPONENT AHB2MIG_7SERIES_PROFPGA
+    GENERIC(
+      HINDEX : INTEGER := 0;
+      HADDR  : INTEGER := 0;
+      HMASK  : INTEGER := 16#F00#
       );
-    port(
-      app_addr          : out std_logic_vector(28 downto 0);
-      app_cmd           : out std_logic_vector(2 downto 0);
-      app_en            : out std_logic;
-      app_wdf_data      : out std_logic_vector(511 downto 0);
-      app_wdf_end       : out std_logic;
-      app_wdf_mask      : out std_logic_vector(63 downto 0);
-      app_wdf_wren      : out std_logic;
-      app_rd_data       : in  std_logic_vector(511 downto 0);
-      app_rd_data_end   : in  std_logic;
-      app_rd_data_valid : in  std_logic;
-      app_rdy           : in  std_logic;
-      app_wdf_rdy       : in  std_logic;
-      ahbso             : out ahb_slv_out_type;
-      ahbsi             : in  ahb_slv_in_type;
-      clk_amba          : in  std_logic;
-      rst_n_syn         : in  std_logic
+    PORT(
+      APP_ADDR          : OUT STD_LOGIC_VECTOR(28 DOWNTO 0);
+      APP_CMD           : OUT STD_LOGIC_VECTOR(2 DOWNTO 0);
+      APP_EN            : OUT STD_LOGIC;
+      APP_WDF_DATA      : OUT STD_LOGIC_VECTOR(511 DOWNTO 0);
+      APP_WDF_END       : OUT STD_LOGIC;
+      APP_WDF_MASK      : OUT STD_LOGIC_VECTOR(63 DOWNTO 0);
+      APP_WDF_WREN      : OUT STD_LOGIC;
+      APP_RD_DATA       : IN  STD_LOGIC_VECTOR(511 DOWNTO 0);
+      APP_RD_DATA_END   : IN  STD_LOGIC;
+      APP_RD_DATA_VALID : IN  STD_LOGIC;
+      APP_RDY           : IN  STD_LOGIC;
+      APP_WDF_RDY       : IN  STD_LOGIC;
+      AHBSO             : OUT AHB_SLV_OUT_TYPE;
+      AHBSI             : IN  AHB_SLV_IN_TYPE;
+      CLK_AMBA          : IN  STD_LOGIC;
+      RST_N_SYN         : IN  STD_LOGIC
       );
-  end component;
+  END COMPONENT;
 
-  component mig is
-    port (
-      c0_ddr3_dq             : inout std_logic_vector(63 downto 0);
-      c0_ddr3_addr           : out   std_logic_vector(14 downto 0);
-      c0_ddr3_ba             : out   std_logic_vector(2 downto 0);
-      c0_ddr3_ras_n          : out   std_logic;
-      c0_ddr3_cas_n          : out   std_logic;
-      c0_ddr3_we_n           : out   std_logic;
-      c0_ddr3_reset_n        : out   std_logic;
-      c0_ddr3_dqs_n          : inout std_logic_vector(7 downto 0);
-      c0_ddr3_dqs_p          : inout std_logic_vector(7 downto 0);
-      c0_ddr3_ck_p           : out   std_logic_vector(0 downto 0);
-      c0_ddr3_ck_n           : out   std_logic_vector(0 downto 0);
-      c0_ddr3_cke            : out   std_logic_vector(0 downto 0);
-      c0_ddr3_cs_n           : out   std_logic_vector(0 downto 0);
-      c0_ddr3_dm             : out   std_logic_vector(7 downto 0);
-      c0_ddr3_odt            : out   std_logic_vector(0 downto 0);
-      c1_ddr3_dq             : inout std_logic_vector(63 downto 0);
-      c1_ddr3_addr           : out   std_logic_vector(14 downto 0);
-      c1_ddr3_ba             : out   std_logic_vector(2 downto 0);
-      c1_ddr3_ras_n          : out   std_logic;
-      c1_ddr3_cas_n          : out   std_logic;
-      c1_ddr3_we_n           : out   std_logic;
-      c1_ddr3_reset_n        : out   std_logic;
-      c1_ddr3_dqs_n          : inout std_logic_vector(7 downto 0);
-      c1_ddr3_dqs_p          : inout std_logic_vector(7 downto 0);
-      c1_ddr3_ck_p           : out   std_logic_vector(0 downto 0);
-      c1_ddr3_ck_n           : out   std_logic_vector(0 downto 0);
-      c1_ddr3_cke            : out   std_logic_vector(0 downto 0);
-      c1_ddr3_cs_n           : out   std_logic_vector(0 downto 0);
-      c1_ddr3_dm             : out   std_logic_vector(7 downto 0);
-      c1_ddr3_odt            : out   std_logic_vector(0 downto 0);
-      c2_ddr3_dq             : inout std_logic_vector(63 downto 0);
-      c2_ddr3_addr           : out   std_logic_vector(14 downto 0);
-      c2_ddr3_ba             : out   std_logic_vector(2 downto 0);
-      c2_ddr3_ras_n          : out   std_logic;
-      c2_ddr3_cas_n          : out   std_logic;
-      c2_ddr3_we_n           : out   std_logic;
-      c2_ddr3_reset_n        : out   std_logic;
-      c2_ddr3_dqs_n          : inout std_logic_vector(7 downto 0);
-      c2_ddr3_dqs_p          : inout std_logic_vector(7 downto 0);
-      c2_ddr3_ck_p           : out   std_logic_vector(0 downto 0);
-      c2_ddr3_ck_n           : out   std_logic_vector(0 downto 0);
-      c2_ddr3_cke            : out   std_logic_vector(0 downto 0);
-      c2_ddr3_cs_n           : out   std_logic_vector(0 downto 0);
-      c2_ddr3_dm             : out   std_logic_vector(7 downto 0);
-      c2_ddr3_odt            : out   std_logic_vector(0 downto 0);
-      c3_ddr3_dq             : inout std_logic_vector(63 downto 0);
-      c3_ddr3_addr           : out   std_logic_vector(14 downto 0);
-      c3_ddr3_ba             : out   std_logic_vector(2 downto 0);
-      c3_ddr3_ras_n          : out   std_logic;
-      c3_ddr3_cas_n          : out   std_logic;
-      c3_ddr3_we_n           : out   std_logic;
-      c3_ddr3_reset_n        : out   std_logic;
-      c3_ddr3_dqs_n          : inout std_logic_vector(7 downto 0);
-      c3_ddr3_dqs_p          : inout std_logic_vector(7 downto 0);
-      c3_ddr3_ck_p           : out   std_logic_vector(0 downto 0);
-      c3_ddr3_ck_n           : out   std_logic_vector(0 downto 0);
-      c3_ddr3_cke            : out   std_logic_vector(0 downto 0);
-      c3_ddr3_cs_n           : out   std_logic_vector(0 downto 0);
-      c3_ddr3_dm             : out   std_logic_vector(7 downto 0);
-      c3_ddr3_odt            : out   std_logic_vector(0 downto 0);
-      c0_app_addr            : in    std_logic_vector(28 downto 0);
-      c0_app_cmd             : in    std_logic_vector(2 downto 0);
-      c0_app_en              : in    std_logic;
-      c0_app_wdf_data        : in    std_logic_vector(511 downto 0);
-      c0_app_wdf_end         : in    std_logic;
-      c0_app_wdf_mask        : in    std_logic_vector(63 downto 0);
-      c0_app_wdf_wren        : in    std_logic;
-      c0_app_rd_data         : out   std_logic_vector(511 downto 0);
-      c0_app_rd_data_end     : out   std_logic;
-      c0_app_rd_data_valid   : out   std_logic;
-      c0_app_rdy             : out   std_logic;
-      c0_app_wdf_rdy         : out   std_logic;
-      c0_app_sr_req          : in    std_logic;
-      c0_app_ref_req         : in    std_logic;
-      c0_app_zq_req          : in    std_logic;
-      c0_app_sr_active       : out   std_logic;
-      c0_app_ref_ack         : out   std_logic;
-      c0_app_zq_ack          : out   std_logic;
-      c0_sys_clk_p           : in    std_logic;
-      c0_sys_clk_n           : in    std_logic;
-      c1_app_addr            : in    std_logic_vector(28 downto 0);
-      c1_app_cmd             : in    std_logic_vector(2 downto 0);
-      c1_app_en              : in    std_logic;
-      c1_app_wdf_data        : in    std_logic_vector(511 downto 0);
-      c1_app_wdf_end         : in    std_logic;
-      c1_app_wdf_mask        : in    std_logic_vector(63 downto 0);
-      c1_app_wdf_wren        : in    std_logic;
-      c1_app_rd_data         : out   std_logic_vector(511 downto 0);
-      c1_app_rd_data_end     : out   std_logic;
-      c1_app_rd_data_valid   : out   std_logic;
-      c1_app_rdy             : out   std_logic;
-      c1_app_wdf_rdy         : out   std_logic;
-      c1_app_sr_req          : in    std_logic;
-      c1_app_ref_req         : in    std_logic;
-      c1_app_zq_req          : in    std_logic;
-      c1_app_sr_active       : out   std_logic;
-      c1_app_ref_ack         : out   std_logic;
-      c1_app_zq_ack          : out   std_logic;
-      c1_sys_clk_p           : in    std_logic;
-      c1_sys_clk_n           : in    std_logic;
-      c2_app_addr            : in    std_logic_vector(28 downto 0);
-      c2_app_cmd             : in    std_logic_vector(2 downto 0);
-      c2_app_en              : in    std_logic;
-      c2_app_wdf_data        : in    std_logic_vector(511 downto 0);
-      c2_app_wdf_end         : in    std_logic;
-      c2_app_wdf_mask        : in    std_logic_vector(63 downto 0);
-      c2_app_wdf_wren        : in    std_logic;
-      c2_app_rd_data         : out   std_logic_vector(511 downto 0);
-      c2_app_rd_data_end     : out   std_logic;
-      c2_app_rd_data_valid   : out   std_logic;
-      c2_app_rdy             : out   std_logic;
-      c2_app_wdf_rdy         : out   std_logic;
-      c2_app_sr_req          : in    std_logic;
-      c2_app_ref_req         : in    std_logic;
-      c2_app_zq_req          : in    std_logic;
-      c2_app_sr_active       : out   std_logic;
-      c2_app_ref_ack         : out   std_logic;
-      c2_app_zq_ack          : out   std_logic;
-      c2_sys_clk_p           : in    std_logic;
-      c2_sys_clk_n           : in    std_logic;
-      c3_app_addr            : in    std_logic_vector(28 downto 0);
-      c3_app_cmd             : in    std_logic_vector(2 downto 0);
-      c3_app_en              : in    std_logic;
-      c3_app_wdf_data        : in    std_logic_vector(511 downto 0);
-      c3_app_wdf_end         : in    std_logic;
-      c3_app_wdf_mask        : in    std_logic_vector(63 downto 0);
-      c3_app_wdf_wren        : in    std_logic;
-      c3_app_rd_data         : out   std_logic_vector(511 downto 0);
-      c3_app_rd_data_end     : out   std_logic;
-      c3_app_rd_data_valid   : out   std_logic;
-      c3_app_rdy             : out   std_logic;
-      c3_app_wdf_rdy         : out   std_logic;
-      c3_app_sr_req          : in    std_logic;
-      c3_app_ref_req         : in    std_logic;
-      c3_app_zq_req          : in    std_logic;
-      c3_app_sr_active       : out   std_logic;
-      c3_app_ref_ack         : out   std_logic;
-      c3_app_zq_ack          : out   std_logic;
-      c3_sys_clk_p           : in    std_logic;
-      c3_sys_clk_n           : in    std_logic;
-      clk_ref_p              : in    std_logic;  -- 200 MHz clock
-      clk_ref_n              : in    std_logic;  -- 200 MHz clock
-      c0_ui_clk              : out   std_logic;
-      c0_ui_clk_sync_rst     : out   std_logic;
-      c0_init_calib_complete : out   std_logic;
-      c0_device_temp         : out   std_logic_vector(11 downto 0);
-      c1_ui_clk              : out   std_logic;
-      c1_ui_clk_sync_rst     : out   std_logic;
-      c1_init_calib_complete : out   std_logic;
-      c1_device_temp         : out   std_logic_vector(11 downto 0);
-      c2_ui_clk              : out   std_logic;
-      c2_ui_clk_sync_rst     : out   std_logic;
-      c2_init_calib_complete : out   std_logic;
-      c2_device_temp         : out   std_logic_vector(11 downto 0);
-      c3_ui_clk              : out   std_logic;
-      c3_ui_clk_sync_rst     : out   std_logic;
-      c3_init_calib_complete : out   std_logic;
-      c3_device_temp         : out   std_logic_vector(11 downto 0);
-      sys_rst                : in    std_logic
+  COMPONENT MIG IS
+    PORT (
+      C0_DDR3_DQ             : INOUT STD_LOGIC_VECTOR(63 DOWNTO 0);
+      C0_DDR3_ADDR           : OUT   STD_LOGIC_VECTOR(14 DOWNTO 0);
+      C0_DDR3_BA             : OUT   STD_LOGIC_VECTOR(2 DOWNTO 0);
+      C0_DDR3_RAS_N          : OUT   STD_LOGIC;
+      C0_DDR3_CAS_N          : OUT   STD_LOGIC;
+      C0_DDR3_WE_N           : OUT   STD_LOGIC;
+      C0_DDR3_RESET_N        : OUT   STD_LOGIC;
+      C0_DDR3_DQS_N          : INOUT STD_LOGIC_VECTOR(7 DOWNTO 0);
+      C0_DDR3_DQS_P          : INOUT STD_LOGIC_VECTOR(7 DOWNTO 0);
+      C0_DDR3_CK_P           : OUT   STD_LOGIC_VECTOR(0 DOWNTO 0);
+      C0_DDR3_CK_N           : OUT   STD_LOGIC_VECTOR(0 DOWNTO 0);
+      C0_DDR3_CKE            : OUT   STD_LOGIC_VECTOR(0 DOWNTO 0);
+      C0_DDR3_CS_N           : OUT   STD_LOGIC_VECTOR(0 DOWNTO 0);
+      C0_DDR3_DM             : OUT   STD_LOGIC_VECTOR(7 DOWNTO 0);
+      C0_DDR3_ODT            : OUT   STD_LOGIC_VECTOR(0 DOWNTO 0);
+      C1_DDR3_DQ             : INOUT STD_LOGIC_VECTOR(63 DOWNTO 0);
+      C1_DDR3_ADDR           : OUT   STD_LOGIC_VECTOR(14 DOWNTO 0);
+      C1_DDR3_BA             : OUT   STD_LOGIC_VECTOR(2 DOWNTO 0);
+      C1_DDR3_RAS_N          : OUT   STD_LOGIC;
+      C1_DDR3_CAS_N          : OUT   STD_LOGIC;
+      C1_DDR3_WE_N           : OUT   STD_LOGIC;
+      C1_DDR3_RESET_N        : OUT   STD_LOGIC;
+      C1_DDR3_DQS_N          : INOUT STD_LOGIC_VECTOR(7 DOWNTO 0);
+      C1_DDR3_DQS_P          : INOUT STD_LOGIC_VECTOR(7 DOWNTO 0);
+      C1_DDR3_CK_P           : OUT   STD_LOGIC_VECTOR(0 DOWNTO 0);
+      C1_DDR3_CK_N           : OUT   STD_LOGIC_VECTOR(0 DOWNTO 0);
+      C1_DDR3_CKE            : OUT   STD_LOGIC_VECTOR(0 DOWNTO 0);
+      C1_DDR3_CS_N           : OUT   STD_LOGIC_VECTOR(0 DOWNTO 0);
+      C1_DDR3_DM             : OUT   STD_LOGIC_VECTOR(7 DOWNTO 0);
+      C1_DDR3_ODT            : OUT   STD_LOGIC_VECTOR(0 DOWNTO 0);
+      C2_DDR3_DQ             : INOUT STD_LOGIC_VECTOR(63 DOWNTO 0);
+      C2_DDR3_ADDR           : OUT   STD_LOGIC_VECTOR(14 DOWNTO 0);
+      C2_DDR3_BA             : OUT   STD_LOGIC_VECTOR(2 DOWNTO 0);
+      C2_DDR3_RAS_N          : OUT   STD_LOGIC;
+      C2_DDR3_CAS_N          : OUT   STD_LOGIC;
+      C2_DDR3_WE_N           : OUT   STD_LOGIC;
+      C2_DDR3_RESET_N        : OUT   STD_LOGIC;
+      C2_DDR3_DQS_N          : INOUT STD_LOGIC_VECTOR(7 DOWNTO 0);
+      C2_DDR3_DQS_P          : INOUT STD_LOGIC_VECTOR(7 DOWNTO 0);
+      C2_DDR3_CK_P           : OUT   STD_LOGIC_VECTOR(0 DOWNTO 0);
+      C2_DDR3_CK_N           : OUT   STD_LOGIC_VECTOR(0 DOWNTO 0);
+      C2_DDR3_CKE            : OUT   STD_LOGIC_VECTOR(0 DOWNTO 0);
+      C2_DDR3_CS_N           : OUT   STD_LOGIC_VECTOR(0 DOWNTO 0);
+      C2_DDR3_DM             : OUT   STD_LOGIC_VECTOR(7 DOWNTO 0);
+      C2_DDR3_ODT            : OUT   STD_LOGIC_VECTOR(0 DOWNTO 0);
+      C3_DDR3_DQ             : INOUT STD_LOGIC_VECTOR(63 DOWNTO 0);
+      C3_DDR3_ADDR           : OUT   STD_LOGIC_VECTOR(14 DOWNTO 0);
+      C3_DDR3_BA             : OUT   STD_LOGIC_VECTOR(2 DOWNTO 0);
+      C3_DDR3_RAS_N          : OUT   STD_LOGIC;
+      C3_DDR3_CAS_N          : OUT   STD_LOGIC;
+      C3_DDR3_WE_N           : OUT   STD_LOGIC;
+      C3_DDR3_RESET_N        : OUT   STD_LOGIC;
+      C3_DDR3_DQS_N          : INOUT STD_LOGIC_VECTOR(7 DOWNTO 0);
+      C3_DDR3_DQS_P          : INOUT STD_LOGIC_VECTOR(7 DOWNTO 0);
+      C3_DDR3_CK_P           : OUT   STD_LOGIC_VECTOR(0 DOWNTO 0);
+      C3_DDR3_CK_N           : OUT   STD_LOGIC_VECTOR(0 DOWNTO 0);
+      C3_DDR3_CKE            : OUT   STD_LOGIC_VECTOR(0 DOWNTO 0);
+      C3_DDR3_CS_N           : OUT   STD_LOGIC_VECTOR(0 DOWNTO 0);
+      C3_DDR3_DM             : OUT   STD_LOGIC_VECTOR(7 DOWNTO 0);
+      C3_DDR3_ODT            : OUT   STD_LOGIC_VECTOR(0 DOWNTO 0);
+      C0_APP_ADDR            : IN    STD_LOGIC_VECTOR(28 DOWNTO 0);
+      C0_APP_CMD             : IN    STD_LOGIC_VECTOR(2 DOWNTO 0);
+      C0_APP_EN              : IN    STD_LOGIC;
+      C0_APP_WDF_DATA        : IN    STD_LOGIC_VECTOR(511 DOWNTO 0);
+      C0_APP_WDF_END         : IN    STD_LOGIC;
+      C0_APP_WDF_MASK        : IN    STD_LOGIC_VECTOR(63 DOWNTO 0);
+      C0_APP_WDF_WREN        : IN    STD_LOGIC;
+      C0_APP_RD_DATA         : OUT   STD_LOGIC_VECTOR(511 DOWNTO 0);
+      C0_APP_RD_DATA_END     : OUT   STD_LOGIC;
+      C0_APP_RD_DATA_VALID   : OUT   STD_LOGIC;
+      C0_APP_RDY             : OUT   STD_LOGIC;
+      C0_APP_WDF_RDY         : OUT   STD_LOGIC;
+      C0_APP_SR_REQ          : IN    STD_LOGIC;
+      C0_APP_REF_REQ         : IN    STD_LOGIC;
+      C0_APP_ZQ_REQ          : IN    STD_LOGIC;
+      C0_APP_SR_ACTIVE       : OUT   STD_LOGIC;
+      C0_APP_REF_ACK         : OUT   STD_LOGIC;
+      C0_APP_ZQ_ACK          : OUT   STD_LOGIC;
+      C0_SYS_CLK_P           : IN    STD_LOGIC;
+      C0_SYS_CLK_N           : IN    STD_LOGIC;
+      C1_APP_ADDR            : IN    STD_LOGIC_VECTOR(28 DOWNTO 0);
+      C1_APP_CMD             : IN    STD_LOGIC_VECTOR(2 DOWNTO 0);
+      C1_APP_EN              : IN    STD_LOGIC;
+      C1_APP_WDF_DATA        : IN    STD_LOGIC_VECTOR(511 DOWNTO 0);
+      C1_APP_WDF_END         : IN    STD_LOGIC;
+      C1_APP_WDF_MASK        : IN    STD_LOGIC_VECTOR(63 DOWNTO 0);
+      C1_APP_WDF_WREN        : IN    STD_LOGIC;
+      C1_APP_RD_DATA         : OUT   STD_LOGIC_VECTOR(511 DOWNTO 0);
+      C1_APP_RD_DATA_END     : OUT   STD_LOGIC;
+      C1_APP_RD_DATA_VALID   : OUT   STD_LOGIC;
+      C1_APP_RDY             : OUT   STD_LOGIC;
+      C1_APP_WDF_RDY         : OUT   STD_LOGIC;
+      C1_APP_SR_REQ          : IN    STD_LOGIC;
+      C1_APP_REF_REQ         : IN    STD_LOGIC;
+      C1_APP_ZQ_REQ          : IN    STD_LOGIC;
+      C1_APP_SR_ACTIVE       : OUT   STD_LOGIC;
+      C1_APP_REF_ACK         : OUT   STD_LOGIC;
+      C1_APP_ZQ_ACK          : OUT   STD_LOGIC;
+      C1_SYS_CLK_P           : IN    STD_LOGIC;
+      C1_SYS_CLK_N           : IN    STD_LOGIC;
+      C2_APP_ADDR            : IN    STD_LOGIC_VECTOR(28 DOWNTO 0);
+      C2_APP_CMD             : IN    STD_LOGIC_VECTOR(2 DOWNTO 0);
+      C2_APP_EN              : IN    STD_LOGIC;
+      C2_APP_WDF_DATA        : IN    STD_LOGIC_VECTOR(511 DOWNTO 0);
+      C2_APP_WDF_END         : IN    STD_LOGIC;
+      C2_APP_WDF_MASK        : IN    STD_LOGIC_VECTOR(63 DOWNTO 0);
+      C2_APP_WDF_WREN        : IN    STD_LOGIC;
+      C2_APP_RD_DATA         : OUT   STD_LOGIC_VECTOR(511 DOWNTO 0);
+      C2_APP_RD_DATA_END     : OUT   STD_LOGIC;
+      C2_APP_RD_DATA_VALID   : OUT   STD_LOGIC;
+      C2_APP_RDY             : OUT   STD_LOGIC;
+      C2_APP_WDF_RDY         : OUT   STD_LOGIC;
+      C2_APP_SR_REQ          : IN    STD_LOGIC;
+      C2_APP_REF_REQ         : IN    STD_LOGIC;
+      C2_APP_ZQ_REQ          : IN    STD_LOGIC;
+      C2_APP_SR_ACTIVE       : OUT   STD_LOGIC;
+      C2_APP_REF_ACK         : OUT   STD_LOGIC;
+      C2_APP_ZQ_ACK          : OUT   STD_LOGIC;
+      C2_SYS_CLK_P           : IN    STD_LOGIC;
+      C2_SYS_CLK_N           : IN    STD_LOGIC;
+      C3_APP_ADDR            : IN    STD_LOGIC_VECTOR(28 DOWNTO 0);
+      C3_APP_CMD             : IN    STD_LOGIC_VECTOR(2 DOWNTO 0);
+      C3_APP_EN              : IN    STD_LOGIC;
+      C3_APP_WDF_DATA        : IN    STD_LOGIC_VECTOR(511 DOWNTO 0);
+      C3_APP_WDF_END         : IN    STD_LOGIC;
+      C3_APP_WDF_MASK        : IN    STD_LOGIC_VECTOR(63 DOWNTO 0);
+      C3_APP_WDF_WREN        : IN    STD_LOGIC;
+      C3_APP_RD_DATA         : OUT   STD_LOGIC_VECTOR(511 DOWNTO 0);
+      C3_APP_RD_DATA_END     : OUT   STD_LOGIC;
+      C3_APP_RD_DATA_VALID   : OUT   STD_LOGIC;
+      C3_APP_RDY             : OUT   STD_LOGIC;
+      C3_APP_WDF_RDY         : OUT   STD_LOGIC;
+      C3_APP_SR_REQ          : IN    STD_LOGIC;
+      C3_APP_REF_REQ         : IN    STD_LOGIC;
+      C3_APP_ZQ_REQ          : IN    STD_LOGIC;
+      C3_APP_SR_ACTIVE       : OUT   STD_LOGIC;
+      C3_APP_REF_ACK         : OUT   STD_LOGIC;
+      C3_APP_ZQ_ACK          : OUT   STD_LOGIC;
+      C3_SYS_CLK_P           : IN    STD_LOGIC;
+      C3_SYS_CLK_N           : IN    STD_LOGIC;
+      CLK_REF_P              : IN    STD_LOGIC;  -- 200 MHZ CLOCK
+      CLK_REF_N              : IN    STD_LOGIC;  -- 200 MHZ CLOCK
+      C0_UI_CLK              : OUT   STD_LOGIC;
+      C0_UI_CLK_SYNC_RST     : OUT   STD_LOGIC;
+      C0_INIT_CALIB_COMPLETE : OUT   STD_LOGIC;
+      C0_DEVICE_TEMP         : OUT   STD_LOGIC_VECTOR(11 DOWNTO 0);
+      C1_UI_CLK              : OUT   STD_LOGIC;
+      C1_UI_CLK_SYNC_RST     : OUT   STD_LOGIC;
+      C1_INIT_CALIB_COMPLETE : OUT   STD_LOGIC;
+      C1_DEVICE_TEMP         : OUT   STD_LOGIC_VECTOR(11 DOWNTO 0);
+      C2_UI_CLK              : OUT   STD_LOGIC;
+      C2_UI_CLK_SYNC_RST     : OUT   STD_LOGIC;
+      C2_INIT_CALIB_COMPLETE : OUT   STD_LOGIC;
+      C2_DEVICE_TEMP         : OUT   STD_LOGIC_VECTOR(11 DOWNTO 0);
+      C3_UI_CLK              : OUT   STD_LOGIC;
+      C3_UI_CLK_SYNC_RST     : OUT   STD_LOGIC;
+      C3_INIT_CALIB_COMPLETE : OUT   STD_LOGIC;
+      C3_DEVICE_TEMP         : OUT   STD_LOGIC_VECTOR(11 DOWNTO 0);
+      SYS_RST                : IN    STD_LOGIC
       );
-  end component mig;
+  END COMPONENT MIG;
 
-  function set_ddr_index (
-    constant n : integer range 0 to 3)
-    return integer is
-  begin
-    if n > (CFG_NMEM_TILE - 1) then
-      return CFG_NMEM_TILE - 1;
-    else
-      return n;
-    end if;
-  end set_ddr_index;
+  FUNCTION SET_DDR_INDEX (
+    CONSTANT N : INTEGER RANGE 0 TO 3)
+    RETURN INTEGER IS
+  BEGIN
+    IF N > (CFG_NMEM_TILE - 1) THEN
+      RETURN CFG_NMEM_TILE - 1;
+    ELSE
+      RETURN N;
+    END IF;
+  END SET_DDR_INDEX;
 
-  constant this_ddr_index : attribute_vector(0 to 3) := (
-    0 => set_ddr_index(0),
-    1 => set_ddr_index(1),
-    2 => set_ddr_index(2),
-    3 => set_ddr_index(3)
+  CONSTANT THIS_DDR_INDEX : ATTRIBUTE_VECTOR(0 TO 3) := (
+    0 => SET_DDR_INDEX(0),
+    1 => SET_DDR_INDEX(1),
+    2 => SET_DDR_INDEX(2),
+    3 => SET_DDR_INDEX(3)
     );
 
 
-  -- Create socmap array for this inversion as well as for selected clock div/backup and tdi/tdo
-  -- EPOCHS-0/1 specific
-  -- Memory tile 0 - FPGA link 0
-  -- Memory tile 1 - FPGA link 1
-  -- Memory tile 2 - FPGA link 3
-  -- Memory tile 3 - FPGA link 2
-  function memswap (
-    constant n : integer range 0 to 3)
-    return integer is
-  begin
-    if n = 2 then
-      return 3;
-    elsif n = 3 then
-      return 2;
-    else
-      return n;
-    end if;
-  end memswap;
+  -- CREATE SOCMAP ARRAY FOR THIS INVERSION AS WELL AS FOR SELECTED CLOCK DIV/BACKUP AND TDI/TDO
+  -- EPOCHS-0/1 SPECIFIC
+  -- MEMORY TILE 0 - FPGA LINK 0
+  -- MEMORY TILE 1 - FPGA LINK 1
+  -- MEMORY TILE 2 - FPGA LINK 3
+  -- MEMORY TILE 3 - FPGA LINK 2
+  FUNCTION MEMSWAP (
+    CONSTANT N : INTEGER RANGE 0 TO 3)
+    RETURN INTEGER IS
+  BEGIN
+    IF N = 2 THEN
+      RETURN 3;
+    ELSIF N = 3 THEN
+      RETURN 2;
+    ELSE
+      RETURN N;
+    END IF;
+  END MEMSWAP;
 
   -----------------------------------------------------------------------------
-  -- clock and reset
+  -- CLOCK AND RESET
 
-  -- Backup clocks
-  signal ext_clk : std_logic_vector(0 to CFG_TILES_NUM - 1);
+  -- BACKUP CLOCKS
+  SIGNAL EXT_CLK : STD_LOGIC_VECTOR(0 TO CFG_TILES_NUM - 1);
 
-  -- main clock (EDCL clock)
-  signal main_clk                         : std_ulogic;
+  -- MAIN CLOCK (EDCL CLOCK)
+  SIGNAL MAIN_CLK                         : STD_ULOGIC;
 
-  -- DDR clocks
-  signal sys_clk  : std_logic_vector(0 to MAX_NMEM_TILES - 1) := (others => '0');
-  signal sys_rst  : std_logic_vector(0 to MAX_NMEM_TILES - 1);
+  -- DDR CLOCKS
+  SIGNAL SYS_CLK  : STD_LOGIC_VECTOR(0 TO MAX_NMEM_TILES - 1) := (OTHERS => '0');
+  SIGNAL SYS_RST  : STD_LOGIC_VECTOR(0 TO MAX_NMEM_TILES - 1);
 
-  -- Resets
-  signal rstn, rstraw : std_ulogic;
-  signal lock, rst                                  : std_ulogic;
-  signal migrstn, migrstn_1, migrstn_2, migrstn_3   : std_logic;
+  -- RESETS
+  SIGNAL RSTN, RSTRAW : STD_ULOGIC;
+  SIGNAL LOCK, RST                                  : STD_ULOGIC;
+  SIGNAL MIGRSTN, MIGRSTN_1, MIGRSTN_2, MIGRSTN_3   : STD_LOGIC;
 
-  -- ESP backup clocks
-  signal ext_clk_noc_int : std_logic := '0';
-  -- ESP clock monitors
-  signal ext_clk_int : std_logic_vector(0 to CFG_TILES_NUM - 1) := (others  => '0');
+  -- ESP BACKUP CLOCKS
+  SIGNAL EXT_CLK_NOC_INT : STD_LOGIC := '0';
+  -- ESP CLOCK MONITORS
+  SIGNAL EXT_CLK_INT : STD_LOGIC_VECTOR(0 TO CFG_TILES_NUM - 1) := (OTHERS  => '0');
 
   -----------------------------------------------------------------------------
-  -- DDRs domain
-  -- MIG app
-  signal c0_app_addr          : std_logic_vector(28 downto 0);
-  signal c0_app_cmd           : std_logic_vector(2 downto 0);
-  signal c0_app_en            : std_ulogic;
-  signal c0_app_wdf_data      : std_logic_vector(511 downto 0);
-  signal c0_app_wdf_end       : std_ulogic;
-  signal c0_app_wdf_mask      : std_logic_vector(63 downto 0); 
-  signal c0_app_wdf_wren      : std_ulogic;
-  signal c0_app_rd_data       : std_logic_vector(511 downto 0);
-  signal c0_app_rd_data_end   : std_ulogic;
-  signal c0_app_rd_data_valid : std_ulogic;
-  signal c0_app_rdy           : std_ulogic;
-  signal c0_app_wdf_rdy       : std_ulogic;
-  signal c1_app_addr          : std_logic_vector(28 downto 0);
-  signal c1_app_cmd           : std_logic_vector(2 downto 0);
-  signal c1_app_en            : std_ulogic;
-  signal c1_app_wdf_data      : std_logic_vector(511 downto 0);
-  signal c1_app_wdf_end       : std_ulogic;
-  signal c1_app_wdf_mask      : std_logic_vector(63 downto 0); 
-  signal c1_app_wdf_wren      : std_ulogic;
-  signal c1_app_rd_data       : std_logic_vector(511 downto 0);
-  signal c1_app_rd_data_end   : std_ulogic;
-  signal c1_app_rd_data_valid : std_ulogic;
-  signal c1_app_rdy           : std_ulogic;
-  signal c1_app_wdf_rdy       : std_ulogic;
-  signal c2_app_addr          : std_logic_vector(28 downto 0);
-  signal c2_app_cmd           : std_logic_vector(2 downto 0);
-  signal c2_app_en            : std_ulogic;
-  signal c2_app_wdf_data      : std_logic_vector(511 downto 0);
-  signal c2_app_wdf_end       : std_ulogic;
-  signal c2_app_wdf_mask      : std_logic_vector(63 downto 0); 
-  signal c2_app_wdf_wren      : std_ulogic;
-  signal c2_app_rd_data       : std_logic_vector(511 downto 0);
-  signal c2_app_rd_data_end   : std_ulogic;
-  signal c2_app_rd_data_valid : std_ulogic;
-  signal c2_app_rdy           : std_ulogic;
-  signal c2_app_wdf_rdy       : std_ulogic;
-  signal c3_app_addr          : std_logic_vector(28 downto 0);
-  signal c3_app_cmd           : std_logic_vector(2 downto 0);
-  signal c3_app_en            : std_ulogic;
-  signal c3_app_wdf_data      : std_logic_vector(511 downto 0);
-  signal c3_app_wdf_end       : std_ulogic;
-  signal c3_app_wdf_mask      : std_logic_vector(63 downto 0); 
-  signal c3_app_wdf_wren      : std_ulogic;
-  signal c3_app_rd_data       : std_logic_vector(511 downto 0);
-  signal c3_app_rd_data_end   : std_ulogic;
-  signal c3_app_rd_data_valid : std_ulogic;
-  signal c3_app_rdy           : std_ulogic;
-  signal c3_app_wdf_rdy       : std_ulogic;
+  -- DDRS DOMAIN
+  -- MIG APP
+  SIGNAL C0_APP_ADDR          : STD_LOGIC_VECTOR(28 DOWNTO 0);
+  SIGNAL C0_APP_CMD           : STD_LOGIC_VECTOR(2 DOWNTO 0);
+  SIGNAL C0_APP_EN            : STD_ULOGIC;
+  SIGNAL C0_APP_WDF_DATA      : STD_LOGIC_VECTOR(511 DOWNTO 0);
+  SIGNAL C0_APP_WDF_END       : STD_ULOGIC;
+  SIGNAL C0_APP_WDF_MASK      : STD_LOGIC_VECTOR(63 DOWNTO 0); 
+  SIGNAL C0_APP_WDF_WREN      : STD_ULOGIC;
+  SIGNAL C0_APP_RD_DATA       : STD_LOGIC_VECTOR(511 DOWNTO 0);
+  SIGNAL C0_APP_RD_DATA_END   : STD_ULOGIC;
+  SIGNAL C0_APP_RD_DATA_VALID : STD_ULOGIC;
+  SIGNAL C0_APP_RDY           : STD_ULOGIC;
+  SIGNAL C0_APP_WDF_RDY       : STD_ULOGIC;
+  SIGNAL C1_APP_ADDR          : STD_LOGIC_VECTOR(28 DOWNTO 0);
+  SIGNAL C1_APP_CMD           : STD_LOGIC_VECTOR(2 DOWNTO 0);
+  SIGNAL C1_APP_EN            : STD_ULOGIC;
+  SIGNAL C1_APP_WDF_DATA      : STD_LOGIC_VECTOR(511 DOWNTO 0);
+  SIGNAL C1_APP_WDF_END       : STD_ULOGIC;
+  SIGNAL C1_APP_WDF_MASK      : STD_LOGIC_VECTOR(63 DOWNTO 0); 
+  SIGNAL C1_APP_WDF_WREN      : STD_ULOGIC;
+  SIGNAL C1_APP_RD_DATA       : STD_LOGIC_VECTOR(511 DOWNTO 0);
+  SIGNAL C1_APP_RD_DATA_END   : STD_ULOGIC;
+  SIGNAL C1_APP_RD_DATA_VALID : STD_ULOGIC;
+  SIGNAL C1_APP_RDY           : STD_ULOGIC;
+  SIGNAL C1_APP_WDF_RDY       : STD_ULOGIC;
+  SIGNAL C2_APP_ADDR          : STD_LOGIC_VECTOR(28 DOWNTO 0);
+  SIGNAL C2_APP_CMD           : STD_LOGIC_VECTOR(2 DOWNTO 0);
+  SIGNAL C2_APP_EN            : STD_ULOGIC;
+  SIGNAL C2_APP_WDF_DATA      : STD_LOGIC_VECTOR(511 DOWNTO 0);
+  SIGNAL C2_APP_WDF_END       : STD_ULOGIC;
+  SIGNAL C2_APP_WDF_MASK      : STD_LOGIC_VECTOR(63 DOWNTO 0); 
+  SIGNAL C2_APP_WDF_WREN      : STD_ULOGIC;
+  SIGNAL C2_APP_RD_DATA       : STD_LOGIC_VECTOR(511 DOWNTO 0);
+  SIGNAL C2_APP_RD_DATA_END   : STD_ULOGIC;
+  SIGNAL C2_APP_RD_DATA_VALID : STD_ULOGIC;
+  SIGNAL C2_APP_RDY           : STD_ULOGIC;
+  SIGNAL C2_APP_WDF_RDY       : STD_ULOGIC;
+  SIGNAL C3_APP_ADDR          : STD_LOGIC_VECTOR(28 DOWNTO 0);
+  SIGNAL C3_APP_CMD           : STD_LOGIC_VECTOR(2 DOWNTO 0);
+  SIGNAL C3_APP_EN            : STD_ULOGIC;
+  SIGNAL C3_APP_WDF_DATA      : STD_LOGIC_VECTOR(511 DOWNTO 0);
+  SIGNAL C3_APP_WDF_END       : STD_ULOGIC;
+  SIGNAL C3_APP_WDF_MASK      : STD_LOGIC_VECTOR(63 DOWNTO 0); 
+  SIGNAL C3_APP_WDF_WREN      : STD_ULOGIC;
+  SIGNAL C3_APP_RD_DATA       : STD_LOGIC_VECTOR(511 DOWNTO 0);
+  SIGNAL C3_APP_RD_DATA_END   : STD_ULOGIC;
+  SIGNAL C3_APP_RD_DATA_VALID : STD_ULOGIC;
+  SIGNAL C3_APP_RDY           : STD_ULOGIC;
+  SIGNAL C3_APP_WDF_RDY       : STD_ULOGIC;
 
-  -- MIG clock and diagnostic
-  signal c0_calib_done        : std_ulogic;
-  signal c0_diagnostic_count  : std_logic_vector(26 downto 0);
-  signal c0_diagnostic_toggle : std_ulogic;
-  signal c1_calib_done        : std_ulogic;
-  signal c1_diagnostic_count  : std_logic_vector(26 downto 0);
-  signal c1_diagnostic_toggle : std_ulogic;
-  signal c2_calib_done        : std_ulogic;
-  signal c2_diagnostic_count  : std_logic_vector(26 downto 0);
-  signal c2_diagnostic_toggle : std_ulogic;
-  signal c3_calib_done        : std_ulogic;
-  signal c3_diagnostic_count  : std_logic_vector(26 downto 0);
-  signal c3_diagnostic_toggle : std_ulogic;
+  -- MIG CLOCK AND DIAGNOSTIC
+  SIGNAL C0_CALIB_DONE        : STD_ULOGIC;
+  SIGNAL C0_DIAGNOSTIC_COUNT  : STD_LOGIC_VECTOR(26 DOWNTO 0);
+  SIGNAL C0_DIAGNOSTIC_TOGGLE : STD_ULOGIC;
+  SIGNAL C1_CALIB_DONE        : STD_ULOGIC;
+  SIGNAL C1_DIAGNOSTIC_COUNT  : STD_LOGIC_VECTOR(26 DOWNTO 0);
+  SIGNAL C1_DIAGNOSTIC_TOGGLE : STD_ULOGIC;
+  SIGNAL C2_CALIB_DONE        : STD_ULOGIC;
+  SIGNAL C2_DIAGNOSTIC_COUNT  : STD_LOGIC_VECTOR(26 DOWNTO 0);
+  SIGNAL C2_DIAGNOSTIC_TOGGLE : STD_ULOGIC;
+  SIGNAL C3_CALIB_DONE        : STD_ULOGIC;
+  SIGNAL C3_DIAGNOSTIC_COUNT  : STD_LOGIC_VECTOR(26 DOWNTO 0);
+  SIGNAL C3_DIAGNOSTIC_TOGGLE : STD_ULOGIC;
 
-  -- AHB proxy extended
-  type noc_flit_vector is array (natural range <>) of noc_flit_type;
-  signal extended_ahbm_rcv_rdreq    : std_logic_vector(0 to CFG_NMEM_TILE - 1);
-  signal extended_ahbm_rcv_data_out : noc_flit_vector(0 to CFG_NMEM_TILE - 1);
-  signal extended_ahbm_rcv_empty    : std_logic_vector(0 to CFG_NMEM_TILE - 1);
-  signal extended_ahbm_snd_wrreq    : std_logic_vector(0 to CFG_NMEM_TILE - 1);
-  signal extended_ahbm_snd_data_in  : noc_flit_vector(0 to CFG_NMEM_TILE - 1);
-  signal extended_ahbm_snd_full     : std_logic_vector(0 to CFG_NMEM_TILE - 1);
+  -- AHB PROXY EXTENDED
+  TYPE NOC_FLIT_VECTOR IS ARRAY (NATURAL RANGE <>) OF NOC_FLIT_TYPE;
+  SIGNAL EXTENDED_AHBM_RCV_RDREQ    : STD_LOGIC_VECTOR(0 TO CFG_NMEM_TILE - 1);
+  SIGNAL EXTENDED_AHBM_RCV_DATA_OUT : NOC_FLIT_VECTOR(0 TO CFG_NMEM_TILE - 1);
+  SIGNAL EXTENDED_AHBM_RCV_EMPTY    : STD_LOGIC_VECTOR(0 TO CFG_NMEM_TILE - 1);
+  SIGNAL EXTENDED_AHBM_SND_WRREQ    : STD_LOGIC_VECTOR(0 TO CFG_NMEM_TILE - 1);
+  SIGNAL EXTENDED_AHBM_SND_DATA_IN  : NOC_FLIT_VECTOR(0 TO CFG_NMEM_TILE - 1);
+  SIGNAL EXTENDED_AHBM_SND_FULL     : STD_LOGIC_VECTOR(0 TO CFG_NMEM_TILE - 1);
 
-  -- AHB proxy queues
-  type misc_noc_flit_vector is array (natural range <>) of misc_noc_flit_type;
-  signal ahbm_rcv_rdreq    : std_logic_vector(0 to CFG_NMEM_TILE - 1);
-  signal ahbm_rcv_data_out : misc_noc_flit_vector(0 to CFG_NMEM_TILE - 1);
-  signal ahbm_rcv_empty    : std_logic_vector(0 to CFG_NMEM_TILE - 1);
-  signal ahbm_snd_wrreq    : std_logic_vector(0 to CFG_NMEM_TILE - 1);
-  signal ahbm_snd_data_in  : misc_noc_flit_vector(0 to CFG_NMEM_TILE - 1);
-  signal ahbm_snd_full     : std_logic_vector(0 to CFG_NMEM_TILE - 1);
+  -- AHB PROXY QUEUES
+  TYPE MISC_NOC_FLIT_VECTOR IS ARRAY (NATURAL RANGE <>) OF MISC_NOC_FLIT_TYPE;
+  SIGNAL AHBM_RCV_RDREQ    : STD_LOGIC_VECTOR(0 TO CFG_NMEM_TILE - 1);
+  SIGNAL AHBM_RCV_DATA_OUT : MISC_NOC_FLIT_VECTOR(0 TO CFG_NMEM_TILE - 1);
+  SIGNAL AHBM_RCV_EMPTY    : STD_LOGIC_VECTOR(0 TO CFG_NMEM_TILE - 1);
+  SIGNAL AHBM_SND_WRREQ    : STD_LOGIC_VECTOR(0 TO CFG_NMEM_TILE - 1);
+  SIGNAL AHBM_SND_DATA_IN  : MISC_NOC_FLIT_VECTOR(0 TO CFG_NMEM_TILE - 1);
+  SIGNAL AHBM_SND_FULL     : STD_LOGIC_VECTOR(0 TO CFG_NMEM_TILE - 1);
 
-  -- Dual-clock queues
-  signal ahbs_rcv_rdreq    : std_logic_vector(0 to CFG_NMEM_TILE - 1);
-  signal ahbs_rcv_data_out : misc_noc_flit_vector(0 to CFG_NMEM_TILE - 1);
-  signal ahbs_rcv_empty    : std_logic_vector(0 to CFG_NMEM_TILE - 1);
-  signal ahbs_snd_wrreq    : std_logic_vector(0 to CFG_NMEM_TILE - 1);
-  signal ahbs_snd_data_in  : misc_noc_flit_vector(0 to CFG_NMEM_TILE - 1);
-  signal ahbs_snd_full     : std_logic_vector(0 to CFG_NMEM_TILE - 1);
+  -- DUAL-CLOCK QUEUES
+  SIGNAL AHBS_RCV_RDREQ    : STD_LOGIC_VECTOR(0 TO CFG_NMEM_TILE - 1);
+  SIGNAL AHBS_RCV_DATA_OUT : MISC_NOC_FLIT_VECTOR(0 TO CFG_NMEM_TILE - 1);
+  SIGNAL AHBS_RCV_EMPTY    : STD_LOGIC_VECTOR(0 TO CFG_NMEM_TILE - 1);
+  SIGNAL AHBS_SND_WRREQ    : STD_LOGIC_VECTOR(0 TO CFG_NMEM_TILE - 1);
+  SIGNAL AHBS_SND_DATA_IN  : MISC_NOC_FLIT_VECTOR(0 TO CFG_NMEM_TILE - 1);
+  SIGNAL AHBS_SND_FULL     : STD_LOGIC_VECTOR(0 TO CFG_NMEM_TILE - 1);
 
   -- AHB bus
   type ahb_mst_out_ddr_matrix is array (natural range <>) of ahb_mst_out_vector;
@@ -559,6 +560,9 @@ architecture rtl of fpga_proxy_top is
   signal ahbmo : ahb_mst_out_vector;
   signal ahbsi : ahb_slv_in_type;
   signal ahbso : ahb_slv_out_vector;
+  signal ahbso_edcl : ahb_slv_out_vector;
+  signal ahbsi_in, ahbsi_sim : ahb_slv_in_type;
+  signal ahbso_sim, ahbso_apb : ahb_slv_out_type;
 
   function set_remote_ahb_mask (
     constant N : in integer range 1 to CFG_NMEM_TILE)
@@ -598,14 +602,20 @@ architecture rtl of fpga_proxy_top is
 
   -----------------------------------------------------------------------------
   -- JTAG
+
+  signal tclk_in : std_logic := '0';
+  signal tms_in : std_logic := '0';
   signal tclk_sim : std_logic := '0';
 
-  -- pragma translate_off
-  type jtag_trace_count_t is array (1 to 6) of integer;
-  -- pragma translate_on
+  type source_t is array (1 to 6) of std_logic_vector(5 downto 0);
+  type addr_t is array (17 downto 0) of std_logic_vector(31 downto 0);
+
+  -- control
+  signal rst_l : std_logic;
+
+  signal tdi_jtag, tdo_jtag : std_logic;
 
   attribute keep : boolean;
-
   attribute keep of main_clk : signal is true;
   attribute keep of sys_clk  : signal is true;
 
@@ -1459,7 +1469,7 @@ begin  -- architecture rtl
       local_y                    => tile_y(io_tile_id),
       local_x                    => tile_x(io_tile_id),
       ahbsi                      => ahbsi,
-      ahbso                      => ahbso,
+      ahbso                      => ahbso_edcl,
       dma_selected               => '0',
       coherence_req_wrreq        => open,
       coherence_req_data_in      => open,
@@ -1595,215 +1605,1042 @@ begin  -- architecture rtl
   -----------------------------------------------------------------------------
   -- JTAG interface
 
-  jtag_driver_gen: if SIMULATION = false generate
-    -- TODO: ADD synthesizable TB for JTAG interface. This will run on proxy FPGA.
+  rst_l <= not(rst);
+
+  fpga_proxy_jtag0: fpga_proxy_jtag
+      port map (
+        rst    => rst_l,
+        tdi    => tdi_jtag,
+        tdo    => tdo_jtag,
+        tms    => tms_in,
+        tclk   => tclk_in,
+        ahbsi  => ahbsi_in,
+        ahbso  => ahbso_apb);
+
+  ahbso(0)<= ahbso_apb;
+  ahbso(1 to NAHBSLV-1) <= ahbso_edcl(1 to NAHBSLV-1);
+
+  normal_mode_gen: if JTAG_TRACE = -1 generate
     tdi <= (others => '0');
     tms <= '0';
     tclk <= '0';
-  end generate jtag_driver_gen;
+    tdo_jtag <= '0';
+  end generate normal_mode_gen;
 
-  -- pragma translate_off
-  jtag_sim_gen: if SIMULATION = true and JTAG_TRACE /= -1 generate
+  jtag_driver_gen: if JTAG_TRACE /= -1 generate
 
-    tclk_sim <= not tclk_sim after 10 ns;
-    tclk <= tclk_sim;
-    tms <= '1';
-
-    tdi_sim_gen: for i in 0 to CFG_TILES_NUM - 1 generate
-      tdi_inactive_tile_sim_gen: if i /= JTAG_TRACE generate
+    tdi(JTAG_TRACE) <= tdi_jtag;
+    tdo_jtag <= tdo(JTAG_TRACE);
+    
+    tdi_gen: for i in 0 to CFG_TILES_NUM - 1 generate
+      tdi_inactive_tile_gen: if i /= JTAG_TRACE generate
         tdi(i) <= '0';
-      end generate tdi_inactive_tile_sim_gen;
-    end generate tdi_sim_gen;
+      end generate tdi_inactive_tile_gen;
+    end generate tdi_gen;
+  
+    tms_in <= '1';
+    tclk_in <= not tclk_in after 10 ns;
+    tclk <= tclk_in;
+    tms <= tms_in;
+    
+    jtag_gen_norm: if SIMULATION= false generate 
+      ahbsi_in<=ahbsi;
+    end generate jtag_gen_norm;
 
-    PROC_SEQUENCER : process
-      file text_file1 : text open read_mode is "stim1.txt";
-      file text_file2 : text open read_mode is "stim2.txt";
-      file text_file3 : text open read_mode is "stim3.txt";
-      file text_file4 : text open read_mode is "stim4.txt";
-      file text_file5 : text open read_mode is "stim5.txt";
-      file text_file6 : text open read_mode is "stim6.txt";
-      file out_file : text open write_mode is "test_out.txt";
-      variable text_line :line ;
-      variable out_line :line;
-      variable ok : boolean;
-      variable testin : std_logic_vector(74 downto 0);
-      variable flit66 : std_logic_vector(71 downto 0);
-      variable flit34 : std_logic_vector(39 downto 0);
-      variable source : std_logic_vector(5 downto 0);
-      variable source_bin : integer range 1 to 6;
-      variable injection_counter : jtag_trace_count_t;
-      variable end_trace : std_logic_vector(1 to 6);
-      variable testout : std_logic_vector(73 downto 0);
-    begin
+    jtag_gen_sim: if SIMULATION= true generate 
 
-      source := "000000";
-      testout := (others => '0');
-      injection_counter := (others => 0);
-      source_bin := 5;
-      end_trace := (others => '0');
+      tclk_sim <= not tclk_sim after 10 ns;
 
-      while true loop
+      
+      ahbsi_in<=ahbsi_sim;
+      ahbso_sim<=ahbso_apb;
 
-        assert end_trace /= "111111"  report "JTAG mode test complete!" severity failure;
+      -- pragma translate_off
+      PROC_SEQUENCER : process
+        file text_file1 : text open read_mode is "stim1.txt";
+        file text_file2 : text open read_mode is "stim2.txt";
+        file text_file3 : text open read_mode is "stim3.txt";
+        file text_file4 : text open read_mode is "stim4.txt";
+        file text_file5 : text open read_mode is "stim5.txt";
+        file text_file6 : text open read_mode is "stim6.txt";
+        file out_file0 : text open write_mode is "stim5_origin.txt";
+        file out_file1 : text open write_mode is "stim5_fin.txt";
+        file out_file : text open write_mode is "test_out.txt";
+        variable text_line :line ;
+        variable out_line :line;
+        variable ok : boolean;
+        variable testin1 : std_logic_vector(31 downto 0); --replace with sipo
+        variable testin2 : std_logic_vector(31 downto 0); --replace with sipo
+        variable testin3 : std_logic_vector(31 downto 0); --replace with sipo
 
-        wait until rising_edge(tclk_sim);
-        if tdo(JTAG_TRACE)= '1' then
-          assert false report "TDO_RISE" severity note;
+        variable testout1 : std_logic_vector(31 downto 0); --replace with sipo
+        variable testout2 : std_logic_vector(31 downto 0); --replace with sipo
+        variable testout3 : std_logic_vector(31 downto 0); --replace with sipo
+        variable testfin : std_logic_vector(33 downto 0); --replace with sipo
+
+        constant ZERO_20 : std_logic_vector(19 downto 0) := (others => '0');
+        constant ZERO_32 : std_logic_vector(31 downto 0) := (others => '0');
+        variable testin_addr : std_logic_vector(31 downto 0); --replace
+                                                              --with sipo
+        variable flit66 : std_logic_vector(71 downto 0);--(103 downto 0);
+        variable flit34 : std_logic_vector(39 downto 0);--(71 downto 0);
+
+        variable source : source_t ;
+        variable addr,addr_r : addr_t;
+
+        variable end_trace : std_logic_vector(1 to 6);
+        variable testout : std_logic_vector(73 downto 0);
+
+      begin
+
+        ahbsi_sim.hsel       <= (others=>'0');
+        ahbsi_sim.haddr      <= (others=>'0');
+        ahbsi_sim.hwrite     <= '0';
+        ahbsi_sim.htrans     <= HTRANS_NONSEQ;
+        ahbsi_sim.hsize      <= (others=>'0');
+        ahbsi_sim.hburst     <= (others=>'0');
+        ahbsi_sim.hwdata     <= (others=>'0');
+        ahbsi_sim.hprot      <= (others=>'0');
+        ahbsi_sim.hready     <= '1';
+        ahbsi_sim.hmaster    <= (others=>'0');
+        ahbsi_sim.hmastlock  <= '0';
+        ahbsi_sim.hmbsel     <= (others=>'0');
+        ahbsi_sim.hirq       <= (others=>'0');
+        ahbsi_sim.testen     <= '0';
+        ahbsi_sim.testrst    <= '0';
+        ahbsi_sim.scanen     <= '0';
+        ahbsi_sim.testoen    <= '0';
+        ahbsi_sim.testin     <= (others=>'0');
+
+        source(1) := "100000";
+        source(2) := "010000";
+        source(3) := "001000";
+        source(4) := "000100";
+        source(5) := "000010";
+        source(6) := "000001";
+
+
+        addr(0):= std_logic_vector(to_unsigned(16#00010000#, 32));
+        addr(1):= std_logic_vector(to_unsigned(16#00010001#, 32));
+        addr(2):= std_logic_vector(to_unsigned(16#00010002#, 32));
+        addr(3):= std_logic_vector(to_unsigned(16#00010003#, 32));
+        addr(4):= std_logic_vector(to_unsigned(16#00010004#, 32));
+        addr(5):= std_logic_vector(to_unsigned(16#00010005#, 32));
+        addr(6):= std_logic_vector(to_unsigned(16#00010006#, 32));
+        addr(7):= std_logic_vector(to_unsigned(16#00010007#, 32));
+        addr(8):= std_logic_vector(to_unsigned(16#00010008#, 32));
+        addr(9):= std_logic_vector(to_unsigned(16#00010009#, 32));
+        addr(10):= std_logic_vector(to_unsigned(16#0001000A#, 32));
+        addr(11):= std_logic_vector(to_unsigned(16#0001000B#, 32));
+        addr(12):= std_logic_vector(to_unsigned(16#0001000C#, 32));
+        addr(13):= std_logic_vector(to_unsigned(16#0001000D#, 32));
+        addr(14):= std_logic_vector(to_unsigned(16#0001000E#, 32));
+        addr(15):= std_logic_vector(to_unsigned(16#0001000F#, 32));
+        addr(16):= std_logic_vector(to_unsigned(16#00010010#, 32));
+        addr(17):= std_logic_vector(to_unsigned(16#00010011#, 32));
+
+        addr_r(0):= std_logic_vector(to_unsigned(16#00010100#, 32));
+        addr_r(1):= std_logic_vector(to_unsigned(16#00010101#, 32));
+        addr_r(2):= std_logic_vector(to_unsigned(16#00010102#, 32));
+        addr_r(3):= std_logic_vector(to_unsigned(16#00010103#, 32));
+        addr_r(4):= std_logic_vector(to_unsigned(16#00010104#, 32));
+        addr_r(5):= std_logic_vector(to_unsigned(16#00010105#, 32));
+        addr_r(6):= std_logic_vector(to_unsigned(16#00010106#, 32));
+        addr_r(7):= std_logic_vector(to_unsigned(16#00010107#, 32));
+        addr_r(8):= std_logic_vector(to_unsigned(16#00010108#, 32));
+        addr_r(9):= std_logic_vector(to_unsigned(16#00010109#, 32));
+        addr_r(10):= std_logic_vector(to_unsigned(16#0001010A#, 32));
+        addr_r(11):= std_logic_vector(to_unsigned(16#0001010B#, 32));
+        addr_r(12):= std_logic_vector(to_unsigned(16#0001010C#, 32));
+        addr_r(13):= std_logic_vector(to_unsigned(16#0001010D#, 32));
+        addr_r(14):= std_logic_vector(to_unsigned(16#0001010E#, 32));
+        addr_r(15):= std_logic_vector(to_unsigned(16#0001010F#, 32));
+        addr_r(16):= std_logic_vector(to_unsigned(16#00010110#, 32));
+        addr_r(17):= std_logic_vector(to_unsigned(16#00010111#, 32));
+
+
+
+        testout := (others => '0');
+        end_trace := (others => '0');
+
+        wait for 2600 ns;
+
+        while true loop
+
+          ahbsi_sim.hsel(0)<='1';
+          ahbsi_sim.hwrite<='1';
+
+
+          if not endfile(text_file1) then
+            readline(text_file1, text_line);
+            hread(text_line, flit66, ok);
+            testin1 := flit66(NOC_FLIT_SIZE + 4 -1 downto 38);
+            testin2 := flit66(37 downto 6);
+            testin3 := flit66(6 downto 4) & source(1) & "0" & flit66(0) & "1" & ZERO_20;
+            -- WRITE FLIT1
+
+            ahbsi_sim.haddr(31 downto 0)<= addr(0);
+            ahbsi_sim.hwdata <= ZERO_32 & testin1;
+
+            wait until rising_edge(tclk_sim);
+            wait until rising_edge(tclk_sim);
+            wait until rising_edge(tclk_sim);
+            wait until rising_edge(tclk_sim);
+
+            -- WRITE FLIT2
+
+            ahbsi_sim.haddr(31 downto 0)<= addr(1);
+            ahbsi_sim.hwdata <= ZERO_32 & testin2;
+
+            wait until rising_edge(tclk_sim);
+            wait until rising_edge(tclk_sim);
+            wait until rising_edge(tclk_sim);
+            wait until rising_edge(tclk_sim);
+
+            -- WRITE FLIT3
+            ahbsi_sim.haddr(31 downto 0)<= addr(2);
+            ahbsi_sim.hwdata <= ZERO_32 & testin3;
+
+            wait until rising_edge(tclk_sim);
+            wait until rising_edge(tclk_sim);
+            wait until rising_edge(tclk_sim);
+            wait until rising_edge(tclk_sim);
+
+          elsif (end_trace(1)/='1') then
+            assert false report "end trace " & integer'image(1)  severity note;
+            end_trace(1) := '1';
+
+            ---
+            testin1 := ZERO_32;
+            testin2 := ZERO_32;
+            testin3 := X"0000000" & "0001";
+
+            -- WRITE FLIT1
+
+            ahbsi_sim.hsel(0)<='1';
+            ahbsi_sim.haddr(31 downto 0)<= addr(0);
+            ahbsi_sim.hwrite <='1';
+            ahbsi_sim.hwdata <= ZERO_32 & testin1;
+
+            if ahbso_sim.hready='0' then
+              wait until rising_edge(ahbso_sim.hready);
+              ahbsi_sim.hready <='1';
+            else
+              ahbsi_sim.hready <='1';
+            end if ;
+
+            wait until rising_edge(tclk_sim);
+            ahbsi_sim.hsel(0)<='0';
+            ahbsi_sim.hwrite <='0';
+            ahbsi_sim.hready <='0';
+
+            wait until rising_edge(tclk_sim);
+            wait until rising_edge(tclk_sim);
+            wait until rising_edge(tclk_sim);
+
+            -- WRITE FLIT2
+
+            ahbsi_sim.hsel(0)<='1';
+            ahbsi_sim.haddr(31 downto 0)<= addr(1);
+            ahbsi_sim.hwrite <='1';
+            ahbsi_sim.hwdata <= ZERO_32 & testin2;
+
+            if ahbso_sim.hready='0' then
+              wait until rising_edge(ahbso_sim.hready);
+              ahbsi_sim.hready <='1';
+            else
+              ahbsi_sim.hready <='1';
+            end if ;
+
+            wait until rising_edge(tclk_sim);
+
+            ahbsi_sim.hsel(0)<='0';
+            ahbsi_sim.hwrite <='0';
+            ahbsi_sim.hready <='0';
+
+            wait until rising_edge(tclk_sim);
+            wait until rising_edge(tclk_sim);
+            wait until rising_edge(tclk_sim);
+
+            -- WRITE FLIT3
+
+            ahbsi_sim.hsel(0)<='1';
+            ahbsi_sim.haddr(31 downto 0)<= addr(2);
+            ahbsi_sim.hwrite <='1';
+            ahbsi_sim.hwdata <= ZERO_32 & testin3;
+
+            if ahbso_sim.hready='0' then
+              wait until rising_edge(ahbso_sim.hready);
+            else
+              ahbsi_sim.hready <='1';
+            end if ;
+
+            wait until rising_edge(tclk_sim);
+
+            ahbsi_sim.hsel(0)<='0';
+            ahbsi_sim.hwrite <='0';
+            ahbsi_sim.hready <='0';
+
+            wait until rising_edge(tclk_sim);
+            wait until rising_edge(tclk_sim);
+            wait until rising_edge(tclk_sim);
+
+          end if;
+          assert false report "end trace " & integer'image(1)  severity note;
+
+          if not endfile(text_file2) then
+            readline(text_file2, text_line);
+            hread(text_line, flit66, ok);
+            testin1 := flit66(NOC_FLIT_SIZE + 4 -1 downto 38);
+            testin2 := flit66(37 downto 6);
+            testin3 := flit66(6 downto 4) & source(2) & "0" & flit66(0) & "1" & ZERO_20;
+
+            -- WRITE FLIT1
+
+            ahbsi_sim.haddr(31 downto 0)<= addr(3);
+            ahbsi_sim.hwdata <= ZERO_32 & testin1;
+
+            wait until rising_edge(tclk_sim);
+            wait until rising_edge(tclk_sim);
+            wait until rising_edge(tclk_sim);
+            wait until rising_edge(tclk_sim);
+            -- WRITE FLIT2
+
+            ahbsi_sim.haddr(31 downto 0)<= addr(4);
+            ahbsi_sim.hwdata <= ZERO_32 & testin2;
+
+            wait until rising_edge(tclk_sim);
+            wait until rising_edge(tclk_sim);
+            wait until rising_edge(tclk_sim);
+            wait until rising_edge(tclk_sim);
+
+            -- WRITE FLIT3
+
+            ahbsi_sim.haddr(31 downto 0)<= addr(5);
+            ahbsi_sim.hwdata <= ZERO_32 & testin3;
+
+            wait until rising_edge(tclk_sim);
+            wait until rising_edge(tclk_sim);
+            wait until rising_edge(tclk_sim);
+            wait until rising_edge(tclk_sim);
+          elsif (end_trace(2)/='1') then
+            assert false report "end trace " & integer'image(2)  severity note;
+            end_trace(2) := '1';
+
+            ---
+            testin1 := ZERO_32;
+            testin2 := ZERO_32;
+            testin3 := X"0000000" & "0001";
+
+            -- WRITE FLIT1
+
+            ahbsi_sim.hsel(0)<='1';
+            ahbsi_sim.haddr(31 downto 0)<= addr(3);
+            ahbsi_sim.hwrite <='1';
+            ahbsi_sim.hwdata <= ZERO_32 & testin1;
+
+            if ahbso_sim.hready='0' then
+              wait until rising_edge(ahbso_sim.hready);
+              ahbsi_sim.hready <='1';
+            else
+              ahbsi_sim.hready <='1';
+            end if ;
+
+            wait until rising_edge(tclk_sim);
+
+            ahbsi_sim.hsel(0)<='0';
+            ahbsi_sim.hwrite <='0';
+            ahbsi_sim.hready <='0';
+
+            wait until rising_edge(tclk_sim);
+            wait until rising_edge(tclk_sim);
+            wait until rising_edge(tclk_sim);
+
+            -- WRITE FLIT2
+
+            ahbsi_sim.hsel(0)<='1';
+            ahbsi_sim.haddr(31 downto 0)<= addr(4);
+            ahbsi_sim.hwrite <='1';
+            ahbsi_sim.hwdata <= ZERO_32 & testin2;
+
+            if ahbso_sim.hready='0' then
+              wait until rising_edge(ahbso_sim.hready);
+              ahbsi_sim.hready <='1';
+            else
+              ahbsi_sim.hready <='1';
+            end if ;
+            wait until rising_edge(tclk_sim);
+
+            ahbsi_sim.hsel(0)<='0';
+            ahbsi_sim.hwrite <='0';
+            ahbsi_sim.hready <='0';
+
+            wait until rising_edge(tclk_sim);
+            wait until rising_edge(tclk_sim);
+            wait until rising_edge(tclk_sim);
+
+            -- WRITE FLIT3
+
+            ahbsi_sim.hsel(0)<='1';
+            ahbsi_sim.haddr(31 downto 0)<= addr(5);
+            ahbsi_sim.hwrite <='1';
+            ahbsi_sim.hwdata <= ZERO_32 & testin3;
+
+            if ahbso_sim.hready='0' then
+              wait until rising_edge(ahbso_sim.hready);
+              ahbsi_sim.hready <='1';
+            else
+              ahbsi_sim.hready <='1';
+            end if ;
+
+            wait until rising_edge(tclk_sim);
+
+            ahbsi_sim.hsel(0)<='0';
+            ahbsi_sim.hwrite <='0';
+            ahbsi_sim.hready <='0';
+
+            wait until rising_edge(tclk_sim);
+            wait until rising_edge(tclk_sim);
+            wait until rising_edge(tclk_sim);
+
+          end if;
+          assert false report "end trace " & integer'image(2)  severity note;
+          if not endfile(text_file3) then
+            readline(text_file3, text_line);
+            hread(text_line, flit66, ok);
+            testin1 := flit66(NOC_FLIT_SIZE + 4 -1 downto 38);
+            testin2 := flit66(37 downto 6);
+            testin3 := flit66(6 downto 4) & source(2) & "0" & flit66(0) & "1" & ZERO_20;
+
+            -- WRITE FLIT1
+
+            ahbsi_sim.haddr(31 downto 0)<= addr(6);
+            ahbsi_sim.hwdata <= ZERO_32 & testin1;
+
+            wait until rising_edge(tclk_sim);
+            wait until rising_edge(tclk_sim);
+            wait until rising_edge(tclk_sim);
+            wait until rising_edge(tclk_sim);
+
+            -- WRITE FLIT2
+
+            ahbsi_sim.haddr(31 downto 0)<= addr(7);
+            ahbsi_sim.hwdata <= ZERO_32 & testin2;
+
+            wait until rising_edge(tclk_sim);
+            wait until rising_edge(tclk_sim);
+            wait until rising_edge(tclk_sim);
+            wait until rising_edge(tclk_sim);
+
+            -- WRITE FLIT3
+
+            ahbsi_sim.haddr(31 downto 0)<= addr(8);
+            ahbsi_sim.hwdata <= ZERO_32 & testin3;
+
+            wait until rising_edge(tclk_sim);
+            wait until rising_edge(tclk_sim);
+            wait until rising_edge(tclk_sim);
+            wait until rising_edge(tclk_sim);
+
+          elsif (end_trace(3)/='1') then
+            assert false report "end trace " & integer'image(3)  severity note;
+            end_trace(3) := '1';
+
+            ---
+            testin1 := ZERO_32;
+            testin2 := ZERO_32;
+            testin3 := X"0000000" & "0001";
+
+            -- WRITE FLIT1
+
+            ahbsi_sim.hsel(0)<='1';
+            ahbsi_sim.haddr(31 downto 0)<= addr(6);
+            ahbsi_sim.hwrite <='1';
+            ahbsi_sim.hwdata <= ZERO_32 & testin1;
+
+            if ahbso_sim.hready='0' then
+              wait until rising_edge(ahbso_sim.hready);
+              ahbsi_sim.hready <='1';
+            else
+              ahbsi_sim.hready <='1';
+            end if ;
+
+            wait until rising_edge(tclk_sim);
+
+            ahbsi_sim.hsel(0)<='0';
+            ahbsi_sim.hwrite <='0';
+            ahbsi_sim.hready <='0';
+
+            wait until rising_edge(tclk_sim);
+            wait until rising_edge(tclk_sim);
+            wait until rising_edge(tclk_sim);
+
+            -- WRITE FLIT2
+
+            ahbsi_sim.hsel(0)<='1';
+            ahbsi_sim.haddr(31 downto 0)<= addr(7);
+            ahbsi_sim.hwrite <='1';
+            ahbsi_sim.hwdata <= ZERO_32 & testin2;
+
+            if ahbso_sim.hready='0' then
+              wait until rising_edge(ahbso_sim.hready);
+              ahbsi_sim.hready <='1';
+            else
+              ahbsi_sim.hready <='1';
+            end if ;
+
+            wait until rising_edge(tclk_sim);
+
+            -- --free the bus and wait for 4 clock cycles
+
+            ahbsi_sim.hsel(0)<='0';
+            ahbsi_sim.hwrite <='0';
+            ahbsi_sim.hready <='0';
+
+            wait until rising_edge(tclk_sim);
+            wait until rising_edge(tclk_sim);
+            wait until rising_edge(tclk_sim);
+            -- WRITE FLIT3
+
+            ahbsi_sim.hsel(0)<='1';
+            ahbsi_sim.haddr(31 downto 0)<= addr(8);
+            ahbsi_sim.hwrite <='1';
+            ahbsi_sim.hwdata <= ZERO_32 & testin3;
+
+            if ahbso_sim.hready='0' then
+              wait until rising_edge(ahbso_sim.hready);
+              ahbsi_sim.hready <='1';
+            else
+              ahbsi_sim.hready <='1';
+            end if ;
+
+            wait until rising_edge(tclk_sim);
+
+            -- --free the bus and wait for 4 clock cycles
+
+            ahbsi_sim.hsel(0)<='0';
+            ahbsi_sim.hwrite <='0';
+            ahbsi_sim.hready <='0';
+
+            wait until rising_edge(tclk_sim);
+            wait until rising_edge(tclk_sim);
+            wait until rising_edge(tclk_sim);
+
+          end if;
+          assert false report "end trace " & integer'image(3)  severity note;
+
+          if not endfile(text_file4) then
+            readline(text_file4, text_line);
+            hread(text_line, flit66, ok);
+            testin1 := flit66(NOC_FLIT_SIZE + 4 -1 downto 38);
+            testin2 := flit66(37 downto 6);
+            testin3 := flit66(6 downto 4) & source(4) & "0" & flit66(0) & "1" & ZERO_20;
+
+            -- WRITE FLIT1
+
+            ahbsi_sim.haddr(31 downto 0)<= addr(9);
+            ahbsi_sim.hwdata <= ZERO_32 & testin1;
+
+            wait until rising_edge(tclk_sim);
+            wait until rising_edge(tclk_sim);
+            wait until rising_edge(tclk_sim);
+            wait until rising_edge(tclk_sim);
+
+            -- WRITE FLIT2
+
+            ahbsi_sim.haddr(31 downto 0)<= addr(10);
+            ahbsi_sim.hwdata <= ZERO_32 & testin2;
+
+            wait until rising_edge(tclk_sim);
+            wait until rising_edge(tclk_sim);
+            wait until rising_edge(tclk_sim);
+            wait until rising_edge(tclk_sim);
+
+            -- WRITE FLIT3
+
+            ahbsi_sim.haddr(31 downto 0)<= addr(11);
+            ahbsi_sim.hwdata <= ZERO_32 & testin3;
+
+            wait until rising_edge(tclk_sim);
+            wait until rising_edge(tclk_sim);
+            wait until rising_edge(tclk_sim);
+            wait until rising_edge(tclk_sim);
+
+          elsif (end_trace(4)/='1') then
+            assert false report "end trace " & integer'image(4)  severity note;
+            end_trace(4) := '1';
+
+            ---
+            testin1 := ZERO_32;
+            testin2 := ZERO_32;
+            testin3 := X"0000000" & "0001";
+
+            -- WRITE FLIT1
+
+            ahbsi_sim.hsel(0)<='1';
+            ahbsi_sim.haddr(31 downto 0)<= addr(9);
+            ahbsi_sim.hwrite <='1';
+            ahbsi_sim.hwdata <= ZERO_32 & testin1;
+
+            if ahbso_sim.hready='0' then
+              wait until rising_edge(ahbso_sim.hready);
+              ahbsi_sim.hready <='1';
+            else
+              ahbsi_sim.hready <='1';
+            end if ;
+
+            wait until rising_edge(tclk_sim);
+
+            ahbsi_sim.hsel(0)<='0';
+            ahbsi_sim.hwrite <='0';
+            ahbsi_sim.hready <='0';
+
+            wait until rising_edge(tclk_sim);
+            wait until rising_edge(tclk_sim);
+            wait until rising_edge(tclk_sim);
+
+            -- WRITE FLIT2
+
+            ahbsi_sim.hsel(0)<='1';
+            ahbsi_sim.haddr(31 downto 0)<= addr(10);
+            ahbsi_sim.hwrite <='1';
+            ahbsi_sim.hwdata <= ZERO_32 & testin2;
+
+            if ahbso_sim.hready='0' then
+              wait until rising_edge(ahbso_sim.hready);
+              ahbsi_sim.hready <='1';
+            else
+              ahbsi_sim.hready <='1';
+            end if ;
+
+            wait until rising_edge(tclk_sim);
+
+
+            ahbsi_sim.hsel(0)<='0';
+            ahbsi_sim.hwrite <='0';
+            ahbsi_sim.hready <='0';
+
+            wait until rising_edge(tclk_sim);
+            wait until rising_edge(tclk_sim);
+            wait until rising_edge(tclk_sim);
+
+            -- WRITE FLIT3
+
+            ahbsi_sim.hsel(0)<='1';
+            ahbsi_sim.haddr(31 downto 0)<= addr(11);
+            ahbsi_sim.hwrite <='1';
+            ahbsi_sim.hwdata <= ZERO_32 & testin3;
+
+            if ahbso_sim.hready='0' then
+              wait until rising_edge(ahbso_sim.hready);
+              ahbsi_sim.hready <='1';
+            else
+              ahbsi_sim.hready <='1';
+            end if ;
+
+            wait until rising_edge(tclk_sim);
+
+            ahbsi_sim.hsel(0)<='0';
+            ahbsi_sim.hwrite <='0';
+            ahbsi_sim.hready <='0';
+
+            wait until rising_edge(tclk_sim);
+            wait until rising_edge(tclk_sim);
+            wait until rising_edge(tclk_sim);
+
+          end if;
+          assert false report "end trace " & integer'image(4)  severity note;
+
+          if not endfile(text_file5) then
+            readline(text_file5, text_line);
+            hread(text_line, flit34, ok);
+            testin1 := ZERO_32;
+            testin2 := X"00000" & "0" & flit34( MISC_NOC_FLIT_SIZE + 4 - 1 downto 27);
+            testin3 := flit34(26 downto 4)& source(5) & "0" & flit34(0) & "1";
+
+            if flit34(0)='0' then
+
+              hwrite(out_line, flit34(MISC_NOC_FLIT_SIZE + 4 - 1 downto 4),right, 4);
+              hwrite(out_line, flit34(0 downto 0), right, 4);
+              writeline(out_file0,out_line);
+
+            end if;
+
+            -- WRITE FLIT1
+
+            ahbsi_sim.hsel(0)<='1';
+            ahbsi_sim.haddr(31 downto 0)<= addr(12);
+            ahbsi_sim.hwrite <='1';
+            ahbsi_sim.hwdata <= ZERO_32 & testin1;
+
+            if ahbso_sim.hready='0' then
+              wait until rising_edge(ahbso_sim.hready);
+              ahbsi_sim.hready <='1';
+            else
+              ahbsi_sim.hready <='1';
+            end if ;
+
+            wait until rising_edge(tclk_sim);
+
+
+            ahbsi_sim.hsel(0)<='0';
+            ahbsi_sim.hwrite <='0';
+            ahbsi_sim.hready <='0';
+
+            wait until rising_edge(tclk_sim);
+            wait until rising_edge(tclk_sim);
+            wait until rising_edge(tclk_sim);
+            -- WRITE FLIT2
+
+            ahbsi_sim.hsel(0)<='1';
+            ahbsi_sim.haddr(31 downto 0)<= addr(13);
+            ahbsi_sim.hwrite <='1';
+            ahbsi_sim.hwdata <= ZERO_32 & testin2;
+
+            if ahbso_sim.hready='0' then
+              wait until rising_edge(ahbso_sim.hready);
+              ahbsi_sim.hready <='1';
+            else
+              ahbsi_sim.hready <='1';
+            end if ;
+
+            wait until rising_edge(tclk_sim);
+
+
+            ahbsi_sim.hsel(0)<='0';
+            ahbsi_sim.hwrite <='0';
+            ahbsi_sim.hready <='0';
+
+            wait until rising_edge(tclk_sim);
+            wait until rising_edge(tclk_sim);
+            wait until rising_edge(tclk_sim);
+
+            -- WRITE FLIT3
+
+            ahbsi_sim.hsel(0)<='1';
+            ahbsi_sim.haddr(31 downto 0)<= addr(14);
+            ahbsi_sim.hwrite <='1';
+            ahbsi_sim.hwdata <= ZERO_32 & testin3;
+
+            if ahbso_sim.hready='0' then
+              wait until rising_edge(ahbso_sim.hready);
+              ahbsi_sim.hready <='1';
+            else
+              ahbsi_sim.hready <='1';
+            end if ;
+
+            wait until rising_edge(tclk_sim);
+
+            ahbsi_sim.hsel(0)<='0';
+            ahbsi_sim.hwrite <='0';
+            ahbsi_sim.hready <='0';
+
+            wait until rising_edge(tclk_sim);
+            wait until rising_edge(tclk_sim);
+            wait until rising_edge(tclk_sim);
+
+          elsif (end_trace(5)/='1') then
+            assert false report "end trace " & integer'image(5)  severity note;
+            end_trace(5) := '1';
+
+            ---
+            testin1 := ZERO_32;
+            testin2 := ZERO_32;
+            testin3 := X"0000000" & "0001";
+
+            -- WRITE FLIT1
+
+            ahbsi_sim.hsel(0)<='1';
+            ahbsi_sim.haddr(31 downto 0)<= addr(12);
+            ahbsi_sim.hwrite <='1';
+            ahbsi_sim.hwdata <= ZERO_32 & testin1;
+
+            if ahbso_sim.hready='0' then
+              wait until rising_edge(ahbso_sim.hready);
+              ahbsi_sim.hready <='1';
+            else
+              ahbsi_sim.hready <='1';
+            end if ;
+
+            wait until rising_edge(tclk_sim);
+
+            ahbsi_sim.hsel(0)<='0';
+            ahbsi_sim.hwrite <='0';
+            ahbsi_sim.hready <='0';
+            wait until rising_edge(tclk_sim);
+            wait until rising_edge(tclk_sim);
+
+            -- WRITE FLIT2
+
+            ahbsi_sim.hsel(0)<='1';
+            ahbsi_sim.haddr(31 downto 0)<= addr(13);
+            ahbsi_sim.hwrite <='1';
+            ahbsi_sim.hwdata <= ZERO_32 & testin2;
+
+            if ahbso_sim.hready='0' then
+              wait until rising_edge(ahbso_sim.hready);
+              ahbsi_sim.hready <='1';
+            else
+              ahbsi_sim.hready <='1';
+            end if ;
+
+            wait until rising_edge(tclk_sim);
+
+
+            ahbsi_sim.hsel(0)<='0';
+            ahbsi_sim.hwrite <='0';
+            ahbsi_sim.hready <='0';
+
+            wait until rising_edge(tclk_sim);
+            wait until rising_edge(tclk_sim);
+            wait until rising_edge(tclk_sim);
+
+            -- WRITE FLIT3
+
+            ahbsi_sim.hsel(0)<='1';
+            ahbsi_sim.haddr(31 downto 0)<= addr(14);
+            ahbsi_sim.hwrite <='1';
+            ahbsi_sim.hwdata <= ZERO_32 & testin3;
+
+            if ahbso_sim.hready='0' then
+              wait until rising_edge(ahbso_sim.hready);
+              ahbsi_sim.hready <='1';
+            else
+              ahbsi_sim.hready <='1';
+            end if ;
+
+            wait until rising_edge(tclk_sim);
+
+            ahbsi_sim.hsel(0)<='0';
+            ahbsi_sim.hwrite <='0';
+            ahbsi_sim.hready <='0';
+
+            wait until rising_edge(tclk_sim);
+            wait until rising_edge(tclk_sim);
+            wait until rising_edge(tclk_sim);
+
+          end if;
+          assert false report "end trace " & integer'image(5)  severity note;
+
+          if not endfile(text_file6) then
+            readline(text_file6, text_line);
+            hread(text_line, flit66, ok);
+            testin1 := flit66(NOC_FLIT_SIZE + 4 -1 downto 38);
+            testin2 := flit66(37 downto 6);
+            testin3 := flit66(6 downto 4) & source(6) & "0" & flit66(0) & "1" & ZERO_20;
+
+
+            -- WRITE FLIT1
+
+            ahbsi_sim.haddr(31 downto 0)<= addr(15);
+            ahbsi_sim.hwdata <= ZERO_32 & testin1;
+
+            wait until rising_edge(tclk_sim);
+            wait until rising_edge(tclk_sim);
+            wait until rising_edge(tclk_sim);
+            wait until rising_edge(tclk_sim);
+
+            -- WRITE FLIT2
+
+            ahbsi_sim.haddr(31 downto 0)<= addr(16);
+
+            ahbsi_sim.hwdata <= ZERO_32 & testin2;
+
+            wait until rising_edge(tclk_sim);
+            wait until rising_edge(tclk_sim);
+            wait until rising_edge(tclk_sim);
+            wait until rising_edge(tclk_sim);
+
+            -- WRITE FLIT3
+
+
+            ahbsi_sim.haddr(31 downto 0)<= addr(17);
+            ahbsi_sim.hwdata <= ZERO_32 & testin3;
+
+            wait until rising_edge(tclk_sim);
+            wait until rising_edge(tclk_sim);
+            wait until rising_edge(tclk_sim);
+            wait until rising_edge(tclk_sim);
+
+
+          elsif (end_trace(6)/='1') then
+            assert false report "end trace " & integer'image(6)  severity note;
+            end_trace(6) := '1';
+
+            ---
+            testin1 := ZERO_32;
+            testin2 := ZERO_32;
+            testin3 := X"0000000" & "0001";
+
+            -- WRITE FLIT1
+
+            ahbsi_sim.hsel(0)<='1';
+            ahbsi_sim.haddr(31 downto 0)<= addr(15);
+            ahbsi_sim.hwrite <='1';
+            ahbsi_sim.hwdata <= ZERO_32 & testin1;
+
+            if ahbso_sim.hready='0' then
+              wait until rising_edge(ahbso_sim.hready);
+              ahbsi_sim.hready <='1';
+            else
+              ahbsi_sim.hready <='1';
+            end if ;
+
+            wait until rising_edge(tclk_sim);
+            ahbsi_sim.hsel(0)<='0';
+            ahbsi_sim.hwrite <='0';
+            ahbsi_sim.hready <='0';
+
+            wait until rising_edge(tclk_sim);
+            wait until rising_edge(tclk_sim);
+            wait until rising_edge(tclk_sim);
+
+            -- WRITE FLIT2
+
+            ahbsi_sim.hsel(0)<='1';
+            ahbsi_sim.haddr(31 downto 0)<= addr(16);
+            ahbsi_sim.hwrite <='1';
+            ahbsi_sim.hwdata <= ZERO_32 & testin2;
+
+            if ahbso_sim.hready='0' then
+              wait until rising_edge(ahbso_sim.hready);
+              ahbsi_sim.hready <='1';
+            else
+              ahbsi_sim.hready <='1';
+            end if ;
+
+            wait until rising_edge(tclk_sim);
+
+            ahbsi_sim.hsel(0)<='0';
+            ahbsi_sim.hwrite <='0';
+            ahbsi_sim.hready <='0';
+
+            wait until rising_edge(tclk_sim);
+            wait until rising_edge(tclk_sim);
+            wait until rising_edge(tclk_sim);
+
+            -- WRITE FLIT3
+
+            ahbsi_sim.hsel(0)<='1';
+            ahbsi_sim.haddr(31 downto 0)<= addr(17);
+            ahbsi_sim.hwrite <='1';
+            ahbsi_sim.hwdata <= ZERO_32 & testin3;
+            if ahbso_sim.hready='0' then
+              wait until rising_edge(ahbso_sim.hready);
+              ahbsi_sim.hready <='1';
+            else
+              ahbsi_sim.hready <='1';
+            end if ;
+
+            wait until rising_edge(tclk_sim);
+
+            ahbsi_sim.hsel(0)<='0';
+            ahbsi_sim.hwrite <='0';
+            ahbsi_sim.hready <='0';
+
+            wait until rising_edge(tclk_sim);
+            wait until rising_edge(tclk_sim);
+            wait until rising_edge(tclk_sim);
+
+          end if;
+          assert false report "end trace " & integer'image(6)  severity note;
 
           wait until rising_edge(tclk_sim);
 
-          if tdo(JTAG_TRACE)= '0' then
-            --extract
-            assert false report "start_extract " severity note;
+          ahbsi_sim.haddr(31 downto 0)<= (others=>'0');
+
+          wait until rising_edge(tclk_sim);
+
+          ahbsi_sim.hsel(0)<='1';
+          ahbsi_sim.hready<='1';
+
+          wait until rising_edge(tclk_sim);
+
+          ahbsi_sim.hsel(0)<='0';
+          ahbsi_sim.hready<='0';
+
+          wait until rising_edge(tclk_sim);
+
+          for i in 1 to 6 loop
+
+            -- READ FLIT1
+
+            ahbsi_sim.hsel(0)<='1';
+            ahbsi_sim.haddr(31 downto 0)<= addr_r((i-1)*3);
+            ahbsi_sim.hready <='1';
 
             wait until rising_edge(tclk_sim);
 
-            for i in 0 to 72 loop
-              testout(72 - i) := tdo(JTAG_TRACE);
-              wait until rising_edge(tclk_sim);
-            end loop;
+            ahbsi_sim.hsel(0)<='0';
+            ahbsi_sim.hready<='0';
 
-            hwrite(out_line, testout(5 downto 0), right, 5);
-            hwrite(out_line, testout(NOC_FLIT_SIZE - 1 downto 7), right, 18);
+            wait until rising_edge(ahbso_sim.hready);
 
-            if testout(6) = '1' then
-              -- Mismatch detected
-              assert false report "*** mismatch *** on NoC " & tost(testout(5 downto 0)) & " " & tost(testout(NOC_FLIT_SIZE + 7 - 1 downto 7)) severity note;
-              hwrite(out_line, "1", right, 4);
-            else
-              hwrite(out_line, "0", right, 4);
+            testout1 := ahbso_sim.hrdata(31 downto 0);
+
+
+
+            wait until rising_edge(tclk_sim);
+            wait until rising_edge(tclk_sim);
+            wait until rising_edge(tclk_sim);
+
+
+            -- READ FLIT2
+
+            ahbsi_sim.hsel(0)<='1';
+            ahbsi_sim.haddr(31 downto 0)<= addr_r((i-1)*3+1);
+            ahbsi_sim.hready <='1';
+
+            wait until rising_edge(tclk_sim);
+
+            ahbsi_sim.hsel(0)<='0';
+            ahbsi_sim.hready<='0';
+
+            wait until rising_edge(ahbso_sim.hready);
+
+            testout2 := ahbso_sim.hrdata(31 downto 0);
+
+
+            wait until rising_edge(tclk_sim);
+            wait until rising_edge(tclk_sim);
+            wait until rising_edge(tclk_sim);
+
+            -- READ FLIT3
+
+            ahbsi_sim.hsel(0)<='1';
+            ahbsi_sim.haddr(31 downto 0)<= addr_r((i-1)*3+2);
+            ahbsi_sim.hready <='1';
+
+            ahbsi_sim.hsel(0)<='1';
+            ahbsi_sim.haddr(31 downto 0)<= addr_r((i-1)*3+2);
+            ahbsi_sim.hready <='1';
+
+            wait until rising_edge(tclk_sim);
+
+            ahbsi_sim.hsel(0)<='0';
+            ahbsi_sim.hready<='0';
+
+            wait until rising_edge(ahbso_sim.hready) ;
+            testout3 := ahbso_sim.hrdata(31 downto 0);
+
+            wait until rising_edge(tclk_sim);
+            wait until rising_edge(tclk_sim);
+            wait until rising_edge(tclk_sim);
+
+            if testout1/=X"00000000" or testout2/=X"00000000" or testout3/=X"00000000" then
+              testfin:=testout2(8 downto 0) &  testout1(31 downto 7);
+              hwrite(out_line, testfin, right, 4);
+              hwrite(out_line, testout1(6 downto 6), right, 4);
+              writeline(out_file1, out_line);
             end if;
 
-            writeline(out_file,out_line);
-
-            assert false report "end_extract " severity note;
-
-          else
-            --- update plane+inject
-            wait until rising_edge(tclk_sim);
-
-            for i in 0 to 5 loop
-              source(5 - i) := tdo(JTAG_TRACE);
-              wait until rising_edge(tclk_sim);
-            end loop;
-
-            assert false report " update plane+inject " & tost(source)  severity note;
-
-            case source is
-              when "100000" =>  if not endfile(text_file1) then
-                                  readline(text_file1, text_line);
-                                  hread(text_line, flit66, ok);
-                                  testin := flit66(NOC_FLIT_SIZE + 4 - 1 downto 4) & source & "0" & flit66(0) & '1';
-                                else
-                                  assert false report "End trace 1" severity note;
-                                  testin := (others => '0');
-                                  testin(8 downto 3) := (others => '1');
-                                  testin(0) := '1';
-                                  end_trace(1) := '1';
-                                end if;
-                                source_bin := 1;
-                                injection_counter(1) := injection_counter(1) + 1;
-
-              when "010000" =>  if not endfile(text_file2) then
-                                  readline(text_file2, text_line);
-                                  hread(text_line, flit66, ok);
-                                  testin := flit66(NOC_FLIT_SIZE + 4 - 1 downto 4) & source & "0" &  flit66(0) & '1';
-                                else
-                                  assert false report "End trace 2" severity note;
-                                  testin := (others => '0');
-                                  testin(8 downto 3) := (others => '1');
-                                  testin(0) := '1';
-                                  end_trace(2) := '1';
-                                end if;
-                                source_bin := 2;
-                                injection_counter(2) := injection_counter(2) + 1;
-
-              when "001000" => if not endfile(text_file3) then
-                                 readline(text_file3, text_line);
-                                 hread(text_line, flit66, ok);
-                                 testin := flit66(NOC_FLIT_SIZE + 4 - 1 downto 4) & source & "0" &  flit66(0) & '1';
-                               else
-                                  assert false report "End trace 3" severity note;
-                                  testin := (others => '0');
-                                  testin(8 downto 3) := (others => '1');
-                                  testin(0) := '1';
-                                  end_trace(3) := '1';
-                               end if;
-                               source_bin := 3;
-                               injection_counter(3) := injection_counter(3) + 1;
-
-              when "000100" =>  if not endfile(text_file4) then
-                                  readline(text_file4, text_line);
-                                  hread(text_line, flit66, ok);
-                                  testin := flit66(NOC_FLIT_SIZE + 4 - 1 downto 4) & source & "0" &  flit66(0) & '1';
-                                else
-                                  assert false report "End trace 4" severity note;
-                                  testin := (others => '0');
-                                  testin(8 downto 3) := (others => '1');
-                                  testin(0) := '1';
-                                  end_trace(4) := '1';
-                                end if;
-                                source_bin := 4;
-                                injection_counter(4) := injection_counter(4) + 1;
-
-              when "000010" =>  if not endfile(text_file5) then
-                                  readline(text_file5, text_line);
-                                  hread(text_line, flit34, ok);
-                                  testin := X"00000000" & flit34(MISC_NOC_FLIT_SIZE + 4 - 1 downto 4) & source & "0" & flit34(0) & '1';
-                                else
-                                  assert false report "End trace 5" severity note;
-                                  testin := (others => '0');
-                                  testin(8 downto 3) := (others => '1');
-                                  testin(0) := '1';
-                                  end_trace(5) := '1';
-                                end if;
-                                source_bin := 5;
-                                injection_counter(5) := injection_counter(5) + 1;
-
-              when "000001" =>  if not endfile(text_file6) then
-                                  readline(text_file6, text_line);
-                                  hread(text_line, flit66, ok);
-                                  testin := flit66(NOC_FLIT_SIZE + 4 - 1 downto 4) & source & "0" &  flit66(0) & '1';
-                                else
-                                  assert false report "End trace 6" severity note;
-                                  testin := (others => '0');
-                                  testin(8 downto 3) := (others => '1');
-                                  testin(0) := '1';
-                                  end_trace(6) := '1';
-                                end if;
-                                source_bin := 6;
-                                injection_counter(6) := injection_counter(6) + 1;
-
-              when others => assert false report "invalid NoC plane for injection" severity failure;
-
-            end case ;
-
-            assert false report "start_injection N" & tost(source_bin) & "[" & tost(injection_counter(source_bin)) & "]: " & tost(testin(74 downto 9)) & " - " & tost(testin(1)) severity note;
-
-
-            for i in 0 to 74 loop
-              wait until rising_edge(tclk_sim);
-              tdi(JTAG_TRACE) <= testin(i);
-            end loop;
-
-            wait until rising_edge(tclk_sim);
-            tdi(JTAG_TRACE) <= '0';
-
-            assert false report "end_injection" severity note;
-
-          end if;
-        end if ;
-      end loop;
-    end process;
-
-  end generate jtag_sim_gen;
-  -- pragma translate_on
-
-  normal_mode_sim_gen: if SIMULATION = true and JTAG_TRACE = -1 generate
-    tdi <= (others => '0');
-    tms <= '0';
-    tclk <= '0';
-  end generate normal_mode_sim_gen;
-
-
+          end loop;
+        end loop;
+      end process;
+      -- pragma translate_on
+      
+    end generate jtag_gen_sim;
+    
+  end generate jtag_driver_gen;
+  
 end architecture rtl;

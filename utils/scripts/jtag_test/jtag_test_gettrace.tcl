@@ -1,11 +1,12 @@
 # Copyright (c) 2011-2021 Columbia University, System Level Design Group
 # SPDX-License-Identifier: Apache-2.0
 
-# ## Use the following for single tile
-# # set target_tile [lindex $argv 1]
-# # set target_instance [lsearch -all -inline -regexp [find instances -bydu -nodu jtag_test] "tiles_gen\\($target_tile\\)"]
+## Use the following for single tile
+set target_tile 0
+set target_instance [lsearch -all -inline -regexp [find instances -bydu -nodu jtag_test] "tiles_gen\\($target_tile\\)"]
 
-set target_instance [find instances -bydu -nodu jtag_test]
+## Use the following for multiple tiles
+# set target_instance [find instances -bydu -nodu jtag_test]
 
 set target_ports { \
 		       input_port \

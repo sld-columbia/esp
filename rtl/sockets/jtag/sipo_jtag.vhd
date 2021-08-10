@@ -5,8 +5,11 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 
-entity sipo is
-  generic (DIM : integer);
+entity sipo_jtag is
+  generic (
+    DIM       : integer;
+    en_mo     : integer := 0;
+    shift_dir : integer := 0);
   port(
     rst       : in  std_logic;
     clk       : in  std_logic;
@@ -18,29 +21,32 @@ entity sipo is
     op        : out std_logic;
     done      : out std_logic;
     end_trace : out std_logic);
-end sipo;
+end sipo_jtag;
 
 
-architecture arch of sipo is
-  signal q      : std_logic_vector(DIM-1 downto 0);
-  signal data   : std_logic_vector(DIM-10 downto 0);
-  signal source : std_logic_vector(5 downto 0);
-
-  signal end_trace_i  : std_ulogic;
+architecture arch of sipo_jtag is
+  signal q           : std_logic_vector(DIM-1 downto 0);
+  signal source      : std_logic_vector(5 downto 0);
+  signal end_trace_i : std_ulogic;
 
 begin
 
-  process(clk, rst)
+  process(clk, rst, en_in)
   begin
     if rst = '0' then
-      q <= (others => '0');
+      q         <= (others => '0');
       end_trace <= '0';
     elsif clk'event and clk = '1' then
       if clear = '1' then
         q <= (others => '0');
       elsif en_in = '1' then
-        q(DIM-2 downto 0) <= q(DIM-1 downto 1);
-        q(DIM-1)          <= serial_in;
+        if shift_dir = 0 then
+          q(DIM-2 downto 0) <= q(DIM-1 downto 1);
+          q(DIM-1)          <= serial_in;
+        elsif shift_dir = 1 then
+          q(DIM-1 downto 1) <= q(DIM-2 downto 0);
+          q(0)              <= serial_in;
+        end if;
       end if;
 
       if end_trace_i = '1' then
@@ -52,10 +58,20 @@ begin
 
   end_trace_i <= '0' when source /= "111111" else q(0);
 
-  source    <= q(8 downto 3);
+  process(q)
+  begin
+    if en_mo = 1 then
+      source   <= q(8 downto 3);
+      data_out <= q(DIM-1 downto 9);
+    else
+      source   <= (others => '0');
+      data_out <= (others => '0');
+    end if;
+  end process;
+
   done      <= q(0);
   op        <= q(1);
   test_comp <= q(DIM-1 downto 0);
-  data      <= q(DIM-1 downto 9);
-  data_out  <= data;
+
+
 end;

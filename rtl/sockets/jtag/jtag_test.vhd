@@ -206,7 +206,6 @@ architecture rtl of jtag_test is
   signal test_comp, sipo_c : std_logic_vector(NOC_FLIT_SIZE-1 downto 0);
   signal mismatch_detected : std_ulogic;
   signal data              : std_logic_vector(NOC_FLIT_SIZE+7 downto 0);
-  signal data0             : std_logic_vector(7 downto 0);
   type t_comp is array (1 to 6) of std_logic_vector(NOC_FLIT_SIZE+8 downto 0);
   signal sipo_comp_i       : t_comp;
 
@@ -656,8 +655,9 @@ begin
 
     GEN_SIPO : for i in 1 to 6 generate
 
-      sipo_i : sipo
-        generic map (DIM => NOC_FLIT_SIZE+9)
+      sipo_i : sipo_jtag
+        generic map (DIM => NOC_FLIT_SIZE+9,
+                     en_mo => 1)
         port map (
           rst       => rst,
           clk       => tclk,
@@ -1078,7 +1078,7 @@ begin
     piso_in  <= "0" & test_out & r.compare;
     piso0_in <= "11" & r.compare;
 
-    piso_0 : piso
+    piso_0 : piso_jtag
       generic map(sz => 8)
       port map(
         rst      => rst,
@@ -1086,14 +1086,13 @@ begin
         clear    => r.piso_clear0,
         load     => r.piso_load0,
         A        => piso0_in,
-        B        => data0,
         shift_en => r.piso_en0,
         Y        => tdo_data0,
         done     => piso_done0);
 
     test_comp <= piso_in(NOC_FLIT_SIZE+6 downto 7);
 
-    piso_1 : piso
+    piso_1 : piso_jtag
       generic map(sz => NOC_FLIT_SIZE+8)
       port map(
         rst      => rst,
@@ -1101,7 +1100,6 @@ begin
         clear    => r.piso_clear,
         load     => piso_load,
         A        => piso_in,
-        B        => data,
         shift_en => r.piso_en,
         Y        => tdo_data,
         done     => piso_done);
