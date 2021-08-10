@@ -5,13 +5,12 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.std_logic_arith.all;
 
-use work.reg_package.all;
 use work.esp_acc_regmap.all;
 use work.amba.all;
 
 entity apb2jtag_reg is
   generic (
-    pindex : integer range 0 to NAPBSLV_FP -1 := 0);
+    pindex : integer range 0 to 1 := 0);
   port(
     clk     : in  std_logic;
     rstn    : in  std_logic;
