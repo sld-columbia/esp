@@ -80,6 +80,16 @@ architecture rtl of jtag2apb is
   type fifout_t is array(0 to 5) of std_logic_vector(73 downto 0);
   signal fifo_out_data : fifout_t;
 
+  attribute mark_debug : string;
+
+  attribute mark_debug of in_p : signal is "true";
+  attribute mark_debug of fifo_out_data : signal is "true";
+
+  attribute mark_debug of fifo_c : signal is "true";
+  attribute mark_debug of req_fifo : signal is "true";
+  attribute mark_debug of req_fifo1 : signal is "true";
+  attribute mark_debug of empty_fifo_out : signal is "true";
+
 begin
 
   sipo1_out <= sipo1out;

@@ -80,15 +80,47 @@ architecture rtl of fpga_proxy_jtag is
 
   signal test_out : std_logic_vector(73 downto 0);
 
-  signal source_sipo_en_in, test_out_sipo_en : std_logic;
+  signal source_sipo_en, testout_sipo_en : std_logic;
 
-  signal sipo_en_in, testin_piso_clear, testin_piso_load : std_logic;
+  signal testin_piso_clear, testin_piso_load : std_logic;
   signal testin_piso_en, count_clear, source_sipo_clear  : std_logic;
   signal testout_sipo_clear, count_en, ack2apb           : std_logic;
   signal ack2apb_r, apbreq                               : std_logic;
   signal sel_tdo                                         : std_logic_vector(1 downto 0);
 
   signal source_sipo_out, req_flit, wr_flit, ack : std_logic_vector(5 downto 0);
+
+  attribute mark_debug : string;
+
+  attribute mark_debug of apbi : signal is "true";
+  attribute mark_debug of apbo : signal is "true";
+
+  attribute mark_debug of r : signal is "true";
+
+  attribute mark_debug of source_sipo_en : signal is "true";
+  attribute mark_debug of source_sipo_clear : signal is "true";
+  attribute mark_debug of source_sipo_out : signal is "true";
+
+  attribute mark_debug of testout_sipo_en : signal is "true";
+  attribute mark_debug of testout_sipo_clear : signal is "true";
+  attribute mark_debug of test_out : signal is "true";
+
+  attribute mark_debug of testin_piso_en : signal is "true";
+  attribute mark_debug of testin_piso_clear : signal is "true";
+  attribute mark_debug of testin_piso_load : signal is "true";
+
+
+  attribute mark_debug of ack2apb_r : signal is "true";
+  attribute mark_debug of ack2apb : signal is "true";
+  attribute mark_debug of apb_req : signal is "true";
+  attribute mark_debug of req_flit : signal is "true";
+  attribute mark_debug of wr_flit : signal is "true";
+  attribute mark_debug of ack : signal is "true";
+
+
+  attribute mark_debug of count_clear : signal is "true";
+  attribute mark_debug of count_en : signal is "true";
+
 
 begin
 
@@ -147,9 +179,9 @@ begin
       ack2apb   => ack2apb_r,
       wr_flit   => wr_flit,
       sipo1_c   => source_sipo_clear,
-      sipo1_en  => source_sipo_en_in,
+      sipo1_en  => source_sipo_en,
       sipo2_c   => testout_sipo_clear,
-      sipo2_en  => test_out_sipo_en,
+      sipo2_en  => testout_sipo_en,
       tdo       => tdo,
       sel_tdo   => sel_tdo,
       sipo1_out => source_sipo_out,
@@ -174,13 +206,11 @@ begin
     v := r;
     --
 
-    sipo_en_in <= '0';
-
     testin_piso_clear <= '0';
     testin_piso_load  <= '0';
     testin_piso_en    <= '0';
 
-    test_out_sipo_en   <= '0';
+    testout_sipo_en   <= '0';
     testout_sipo_clear <= '0';
 
     sel_tdo <= "00";
@@ -192,7 +222,7 @@ begin
     wr_flit  <= (others => '0');
 
     source_sipo_clear <= '0';
-    source_sipo_en_in <= '0';
+    source_sipo_en <= '0';
 
     case r.state is
 
@@ -212,10 +242,10 @@ begin
         count_en <= '1';
 
       when extract_source => sel_tdo <= "10";
-                             source_sipo_en_in <= '1';
+                             source_sipo_en <= '1';
                              count_en          <= '1';
                              if count = 7 then
-                               source_sipo_en_in <= '0';
+                               source_sipo_en <= '0';
                                count_clear       <= '1';
                                v.state           := pop_fifo;
                              end if;
@@ -235,12 +265,12 @@ begin
                      end if;
 
       when extract_flit => sel_tdo <= "01";
-                           test_out_sipo_en <= '1';
+                           testout_sipo_en <= '1';
                            count_en         <= '1';
                            if count = 74 then
                              wr_flit          <= test_out(5 downto 0);
                              count_clear      <= '1';
-                             test_out_sipo_en <= '0';
+                             testout_sipo_en <= '0';
                              v.state          := push_fifo;
                            end if;
 

@@ -615,9 +615,20 @@ ARCHITECTURE RTL OF FPGA_PROXY_TOP IS
 
   signal tdi_jtag, tdo_jtag : std_logic;
 
+
   attribute keep : boolean;
   attribute keep of main_clk : signal is true;
   attribute keep of sys_clk  : signal is true;
+
+  attribute mark_debug : string;
+
+  attribute mark_debug of ahbsi : signal is "true";
+  attribute mark_debug of ahbso : signal is "true";
+
+  attribute mark_debug of tdi_jtag : signal is "true";
+  attribute mark_debug of tdo_jtag : signal is "true";
+
+  attribute mark_debug of tms_in : signal is "true";
 
 begin  -- architecture rtl
 
@@ -1625,6 +1636,7 @@ begin  -- architecture rtl
     tms <= '0';
     tclk <= '0';
     tdo_jtag <= '0';
+
   end generate normal_mode_gen;
 
   jtag_driver_gen: if JTAG_TRACE /= -1 generate

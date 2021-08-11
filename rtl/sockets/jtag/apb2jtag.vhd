@@ -68,6 +68,17 @@ architecture rtl of apb2jtag is
   signal full_fifo, en_fifo_in, ack : std_logic_vector(5 downto 0);
   signal trace_in, fifo_out         : std_logic_vector(74 downto 0);
 
+  attribute mark_debug : string;
+
+  attribute mark_debug of trace_in : signal is "true";
+  attribute mark_debug of en_fifo_in : signal is "true";
+
+  attribute mark_debug of full_fifo : signal is "true";
+
+  attribute mark_debug of tracein : signal is "true";
+  attribute mark_debug of tracein1 : signal is "true";
+  attribute mark_debug of fifo_out : signal is "true";
+
 begin
 
   this_paddr <= reg_a2j_paddr;
