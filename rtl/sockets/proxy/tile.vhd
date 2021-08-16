@@ -727,8 +727,8 @@ package tile is
       pindex             : integer;
       revision           : integer;
       devid              : devid_t;
-      available_reg_mask : std_logic_vector(0 to 31);
-      rdonly_reg_mask    : std_logic_vector(0 to 31);
+      available_reg_mask : std_logic_vector(0 to MAXREGNUM - 1);
+      rdonly_reg_mask    : std_logic_vector(0 to MAXREGNUM - 1);
       exp_registers      : integer range 0 to 1;
       scatter_gather     : integer range 0 to 1;
       tlb_entries        : integer;
