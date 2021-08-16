@@ -188,6 +188,7 @@ class tile_info:
   acc = acc_info()
   clk_region = 0
   has_l2 = 0
+  has_tdvfs = 0
   design_point = 0
   has_pll = 0
   has_clkbuf = 0
@@ -331,6 +332,7 @@ class soc_config:
         self.tiles[t].has_pll = soc.noc.topology[x][y].has_pll.get()
         self.tiles[t].has_clkbuf = soc.noc.topology[x][y].has_clkbuf.get()
         self.tiles[t].has_l2 = soc.noc.topology[x][y].has_l2.get()
+        self.tiles[t].has_tdvfs = soc.noc.topology[x][y].has_tdvfs.get()
         self.tiles[t].has_ddr = soc.noc.topology[x][y].has_ddr.get()
 
         # Assign IDs
@@ -537,7 +539,6 @@ def print_constants(fp, soc, esp_config):
   fp.write("  ------ Caches interrupt line\n")
   fp.write("  constant CFG_SLD_LLC_CACHE_IRQ : integer := " + str(LLC_CACHE_PIRQ) + ";\n\n")
   fp.write("  constant CFG_SLD_L2_CACHE_IRQ : integer := " + str(L2_CACHE_PIRQ) + ";\n\n")
-
 
 def print_mapping(fp, soc, esp_config):
 
@@ -1188,6 +1189,13 @@ def print_mapping(fp, soc, esp_config):
   fp.write("    others => 0);\n\n")
 
   #
+  fp.write("  -- Flag tiles that have a token-based DVFS\n")
+  fp.write("  constant tile_has_tdvfs : attribute_vector(0 to CFG_TILES_NUM - 1) := (\n")
+  for i in range(0, esp_config.ntiles):
+    fp.write("    " + str(i) + " => " + str(esp_config.tiles[i].has_tdvfs) + ",\n")
+  fp.write("    others => 0);\n\n")
+
+  #
   fp.write("  -- Get LLC ID from tile ID\n")
   fp.write("  constant tile_llc_id : attribute_vector(0 to CFG_TILES_NUM - 1) := (\n")
   for i in range(0, esp_config.ntiles):
@@ -1288,6 +1296,15 @@ def print_mapping(fp, soc, esp_config):
     t = esp_config.tiles[i]
     if t.acc.id != -1:
       fp.write("    " + str(i) + " => " + str(t.acc.id) + ",\n")
+  fp.write("    others => 0);\n\n")
+
+  #
+  fp.write("  -- Get tile ID from accelerator ID\n")
+  fp.write("  constant acc_tile_id : attribute_vector(0 to CFG_TILES_NUM - 1) := (\n")
+  for i in range(0, esp_config.ntiles):
+    t = esp_config.tiles[i]
+    if t.acc.id != -1:
+      fp.write("    " + str(t.acc.id) + " => " + str(i) + ",\n")
   fp.write("    others => 0);\n\n")
 
   #
@@ -2118,10 +2135,7 @@ def print_cache_config(fp, soc, esp_config):
   fp.write("`define L2_WAYS      " + str(soc.l2_ways.get()) + "\n")
   fp.write("`define L2_SETS      " + str(soc.l2_sets.get()) + "\n")
   fp.write("`define LLC_WAYS     " + str(soc.llc_ways.get()) + "\n")
-  if esp_config.nmem == 0:
-    fp.write("`define LLC_SETS     " + str(int(soc.llc_sets.get())) + "\n")
-  else:
-    fp.write("`define LLC_SETS     " + str(int(soc.llc_sets.get() / esp_config.nmem)) + "\n")
+  fp.write("`define LLC_SETS     " + str(int(soc.llc_sets.get())) + "\n")
   fp.write("\n")
   fp.write("`endif // __CACHES_CFG_SVH__\n")
 

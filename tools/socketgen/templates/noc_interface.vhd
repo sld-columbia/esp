@@ -130,7 +130,8 @@ end;
     STATUS_REG         => '1',
     DEVID_REG          => '1',
     PT_NCHUNK_MAX_REG  => '1',
-    EXP_DO_REG         => '1',
+    -- EXP_DO_REG         => '1', -- uncomment if re-enabling regs for SRAM
+                                  -- expansion to reg bank
     YX_REG             => '1',
     -- <<user_read_only>>
     others             => '0');
