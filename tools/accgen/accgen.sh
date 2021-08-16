@@ -153,8 +153,8 @@ if [ $FLOW != "hls4ml" ]; then
 
 	NPARAMS=$((NPARAMS+1))
 
-	if [ $NPARAMS == 14 ]; then
-	    echo "    # Cannot specify more than 14 configuration registers"
+	if [ $NPARAMS == 48 ]; then
+	    echo "    # Cannot specify more than 48 configuration registers"
 	    break;
 	fi
 
