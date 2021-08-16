@@ -244,11 +244,12 @@ package nocpackage is
       g_data_width : natural := NOC_FLIT_SIZE;
       g_size       : natural := 6);
     port (
-      rst_n_i    : in  std_logic := '1';
+      rst_wr_n_i : in  std_logic := '1';
       clk_wr_i   : in  std_logic;
       we_i       : in  std_logic;
       d_i        : in  std_logic_vector(g_data_width-1 downto 0);
       wr_full_o  : out std_logic;
+      rst_rd_n_i : in  std_logic := '1';
       clk_rd_i   : in  std_logic;
       rd_i       : in  std_logic;
       q_o        : out std_logic_vector(g_data_width-1 downto 0);
@@ -263,6 +264,7 @@ package nocpackage is
       clk                : in  std_logic;
       clk_tile           : in  std_logic;
       rst                : in  std_logic;
+      rst_tile           : in  std_logic;
       CONST_local_x      : in  std_logic_vector(2 downto 0);
       CONST_local_y      : in  std_logic_vector(2 downto 0);
       noc1_data_n_in     : in  noc_flit_type;

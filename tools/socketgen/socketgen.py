@@ -1243,7 +1243,7 @@ def gen_tech_dep(accelerator_list, cache_list, dma_width, template_dir, out_dir)
       for acc in accelerator_list:
         for impl in acc.hlscfg:
           f.write("\n")
-          if acc.hls_tool == 'stratus_hls':
+          if acc.hls_tool == 'stratus_hls' or acc.hls_tool == 'rtl':
             f.write("  component " + acc.name + "_" + impl.name + "\n")
             f.write("    port (\n")
             write_acc_interface(f, acc, dma_width, impl.datatype, "rst", False, False, False)
@@ -1471,7 +1471,7 @@ def gen_tech_indep_impl(accelerator_list, cache_list, dma_width, template_dir, o
           for impl in acc.hlscfg:
             f.write("\n")
             f.write("  impl_" + impl.name + "_gen: if hls_conf = HLSCFG_" + acc.name.upper() + "_" + impl.name.upper() + " generate\n")
-            if acc.hls_tool == 'stratus_hls':
+            if acc.hls_tool == 'stratus_hls' or acc.hls_tool == 'rtl':
               f.write("    " + acc.name + "_" + impl.name + "_i: " + acc.name + "_" + impl.name + "\n")
               write_acc_port_map(f, acc, dma_width, impl.datatype, "rst", False, False, False, False)
             else:
@@ -1981,7 +1981,7 @@ for acc in accelerators:
       # hls4ml accelerators are implemented as Vivado HLS accelerators
       if accd.hls_tool in ('hls4ml'):
         accd.hls_tool = 'vivado_hls'
-      if not accd.hls_tool in ('stratus_hls', 'vivado_hls', 'catapult_hls_cxx', 'catapult_hls_sysc'):
+      if not accd.hls_tool in ('stratus_hls', 'vivado_hls', 'catapult_hls_cxx', 'catapult_hls_sysc', 'rtl'):
         print("    ERROR: Wrong HLS tool for " + acc)
         sys.exit(1)
 

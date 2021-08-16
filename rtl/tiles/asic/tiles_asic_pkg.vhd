@@ -199,6 +199,7 @@ package tiles_asic_pkg is
 
   component asic_tile_mem is
     generic (
+      SIMULATION   : boolean := false;
       ROUTER_PORTS : ports_vec);
     port (
       rst                : in    std_ulogic;
@@ -321,22 +322,6 @@ package tiles_asic_pkg is
       emdio_i            : in  std_ulogic;
       emdio_o            : out std_ulogic;
       emdio_oe           : out std_ulogic;
-      -- dvi_nhpd           : in  std_ulogic;
-      -- clkvga_p           : out std_ulogic;
-      -- clkvga_n           : out std_ulogic;
-      -- dvi_data           : out std_logic_vector(23 downto 0);
-      -- dvi_hsync          : out std_ulogic;
-      -- dvi_vsync          : out std_ulogic;
-      -- dvi_de             : out std_ulogic;
-      -- dvi_dken           : out std_ulogic;
-      -- dvi_ctl1_a1_dk1    : out std_ulogic;
-      -- dvi_ctl2_a2_dk2    : out std_ulogic;
-      -- dvi_a3_dk3         : out std_ulogic;
-      -- dvi_isel           : out std_ulogic;
-      -- dvi_bsel           : out std_ulogic;
-      -- dvi_dsel           : out std_ulogic;
-      -- dvi_edge           : out std_ulogic;
-      -- dvi_npd            : out std_ulogic;
       uart_rxd           : in  std_ulogic;
       uart_txd           : out std_ulogic;
       uart_ctsn          : in  std_ulogic;
@@ -510,6 +495,7 @@ package tiles_asic_pkg is
 
   component asic_tile_slm is
     generic (
+      SIMULATION   : boolean := false;
       ROUTER_PORTS : ports_vec);
     port (
       rst                : in  std_ulogic;
@@ -597,6 +583,7 @@ package tiles_asic_pkg is
 
   component asic_tile_slm_ddr is
     generic (
+      SIMULATION   : boolean := false;
       ROUTER_PORTS : ports_vec);
     port (
       rst                : in  std_ulogic;
