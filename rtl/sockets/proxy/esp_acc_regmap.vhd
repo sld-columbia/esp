@@ -7,7 +7,7 @@ use ieee.numeric_std.all;
 
 package esp_acc_regmap is
 
-  constant MAXREGNUM : integer := 32;
+  constant MAXREGNUM : integer := 64;
   type bank_type is array (natural range <>) of std_logic_vector(31 downto 0);
 
   -- bank(0): CMD (reset if cleared)
@@ -74,18 +74,19 @@ package esp_acc_regmap is
 
   -- bank(15)       : RESERVED
 
-  -- bank(16 to 28) : USR (user defined)
+  -- bank(16 to 63) : USR (user defined)
 
-  -- bank(29)       : EXP_ADDR (bits 29:0 address an SRAM expanding the register bank)
-  constant EXP_ADDR_REG : integer range 0 to MAXREGNUM - 1 := 29;
-  constant EXT_BIT_R : integer range 0 to 31 := 30;
-  constant EXT_BIT_W : integer range 0 to 31 := 31;
+  -- Re-enable the following 3 registers if adding an SRAM expanding the register bank
+  -- -- bank(29)       : EXP_ADDR (bits 29:0 address an SRAM expanding the register bank)
+  -- constant EXP_ADDR_REG : integer range 0 to MAXREGNUM - 1 := 29;
+  -- constant EXT_BIT_R : integer range 0 to 31 := 30;
+  -- constant EXT_BIT_W : integer range 0 to 31 := 31;
 
-  -- bank(30)       : EXP_DI (data to be written to the expansion SRAM)
-  constant EXP_DI_REG : integer range 0 to MAXREGNUM - 1 := 30;
+  -- -- bank(30)       : EXP_DI (data to be written to the expansion SRAM)
+  -- constant EXP_DI_REG : integer range 0 to MAXREGNUM - 1 := 30;
 
-  -- bank(31)       : EXP_DO (data read from the exansion SRAM)
-  constant EXP_DO_REG : integer range 0 to MAXREGNUM - 1 := 31;
+  -- -- bank(31)       : EXP_DO (data read from the exansion SRAM)
+  -- constant EXP_DO_REG : integer range 0 to MAXREGNUM - 1 := 31;
 
   -- Helper functions
   constant zero : std_logic_vector(31 downto 0) := (others => '0');

@@ -79,17 +79,16 @@ enum accelerator_coherence {ACC_COH_NONE = 0, ACC_COH_LLC, ACC_COH_RECALL, ACC_C
 
 /* bank(15)       : RESERVED */
 
-/* bank(16 to 28) : USR (user defined) */
+/* bank(16 to 63) : USR (user defined) */
 
-/* bank(29)       : EXP_ADDR (bits 29:0 address an SRAM expanding the register bank) */
-#define EXP_ADDR_REG 0x74
-#define EXT_MASK_R BIT(30)
-#define EXT_MASK_W BIT(31)
-
-/* bank(30)       : EXP_DI (data to be written to the expansion SRAM) */
-#define EXP_DI_REG 0x78
-
-/* bank(31)       : EXP_DO (data read from the exansion SRAM) */
-#define EXP_DO_REG 0x7c
+// Re-enable the following 3 registers if adding an SRAM expanding the register bank
+// /* bank(29)       : EXP_ADDR (bits 29:0 address an SRAM expanding the register bank) */
+// #define EXP_ADDR_REG 0x74
+// #define EXT_MASK_R BIT(30)
+// #define EXT_MASK_W BIT(31)
+// /* bank(30)       : EXP_DI (data to be written to the expansion SRAM) */
+// #define EXP_DI_REG 0x78
+// /* bank(31)       : EXP_DO (data read from the exansion SRAM) */
+// #define EXP_DO_REG 0x7c
 
 #endif /* __ESP_ACCELERATOR_H__ */
