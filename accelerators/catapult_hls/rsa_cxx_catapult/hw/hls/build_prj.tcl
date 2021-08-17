@@ -212,7 +212,7 @@ solution design set $ACCELERATOR -top
 #
 #
 
-go compile
+#go compile
 
 # Run C simulation.
 if {$opt(csim)} {

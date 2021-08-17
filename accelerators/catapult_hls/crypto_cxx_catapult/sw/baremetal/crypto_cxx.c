@@ -38,6 +38,12 @@ static unsigned aes_key_bytes;
 static unsigned aes_encryption;
 static unsigned aes_oper_mode;
 
+static unsigned rsa_in_bytes;
+static unsigned rsa_e_bytes;
+static unsigned rsa_n_bytes;
+static unsigned rsa_pubpriv;
+static unsigned rsa_padding;
+static unsigned rsa_encryption;
 
 /* Other parameters */
 //const unsigned sha1_in_words = 1600;
@@ -54,6 +60,14 @@ static unsigned aes_in_words;
 static unsigned aes_out_words;
 static unsigned aes_aad_words;
 static unsigned aes_tag_words;
+
+static unsigned rsa_r_bytes;
+static unsigned rsa_out_bytes;
+static unsigned rsa_in_words;
+static unsigned rsa_e_words;
+static unsigned rsa_n_words;
+static unsigned rsa_r_words;
+static unsigned rsa_out_words;
 
 static unsigned mem_bytes; /* Total memory buffer size in bytes */
 static unsigned out_offset; /* Output offset in memory buffer */
@@ -84,9 +98,17 @@ static unsigned out_words; /* Output buffer size in words */
 #define CRYPTO_CXX_AES_AAD_BYTES_REG 0x64
 #define CRYPTO_CXX_AES_TAG_BYTES_REG 0x68
 
+#define CRYPTO_CXX_RSA_ENCRYPTION_REG 0x6C
+#define CRYPTO_CXX_RSA_PADDING_REG 0x70
+#define CRYPTO_CXX_RSA_PUBPRIV_REG 0x74
+#define CRYPTO_CXX_RSA_N_BYTES_REG 0x78
+#define CRYPTO_CXX_RSA_E_BYTES_REG 0x7C
+#define CRYPTO_CXX_RSA_IN_BYTES_REG 0x80
+
 //#define SHA1_ALGO 1
 //#define SHA2_ALGO 2
-#define AES_ALGO 3
+//#define AES_ALGO 3
+#define RSA_ALGO 4
 
 #ifdef SHA1_ALGO
 #include "sha1_tests.h"
@@ -99,6 +121,13 @@ static unsigned out_words; /* Output buffer size in words */
 #ifdef AES_ALGO
 #include "aes_tests.h"
 #endif
+
+#ifdef RSA_ALGO
+#include "rsa_tests.h"
+
+#define ROUND_UP(a) ((a+4-1)/4)*4
+#endif
+
 
 static int validate_buf(token_t *out, token_t *gold, unsigned out_words)
 {
@@ -257,9 +286,33 @@ int main(int argc, char * argv[])
 
         mem_bytes = aes_key_bytes + aes_iv_bytes + aes_in_bytes + out_bytes;
 
-	out_offset = aes_key_words + aes_iv_words + aes_in_words;
+        out_offset = aes_key_words + aes_iv_words + aes_in_words;
         out_bytes = aes_in_bytes;
         out_words = aes_in_words;
+#endif
+
+#ifdef RSA_ALGO
+        crypto_algo = RSA_ALGO;
+
+        printf("=== RSA ===\n");
+
+        rsa_in_bytes = rsa_raw_encrypt_EM_bytes[idx];
+        rsa_in_words = rsa_raw_encrypt_EM_words[idx];
+
+        rsa_e_bytes = rsa_raw_encrypt_e_bytes[idx];
+        rsa_e_words = rsa_raw_encrypt_e_words[idx];
+
+        rsa_n_bytes = rsa_raw_encrypt_n_bytes[idx];
+        rsa_n_words = rsa_raw_encrypt_n_words[idx];
+
+        rsa_r_bytes = rsa_raw_encrypt_r_bytes[idx];
+        rsa_r_words = rsa_raw_encrypt_r_words[idx];
+
+        out_bytes = rsa_n_bytes;
+        out_words = rsa_n_words;
+
+        mem_bytes = ROUND_UP(rsa_in_bytes) + rsa_e_bytes + rsa_n_bytes + rsa_r_bytes + ROUND_UP(rsa_out_bytes); // TODO: cleanup byte rounding
+        out_offset = rsa_in_words + rsa_e_words + rsa_n_words + rsa_r_words;
 #endif
 
         // Allocate memory
@@ -297,6 +350,10 @@ int main(int argc, char * argv[])
 
 #if defined(AES_ALGO) && defined(AES_CBC_OPERATION_MODE)
         aes_init_buf(idx, mem, gold, aes_cbc_raw_encrypt_key_words, aes_cbc_raw_encrypt_iv_words, aes_cbc_raw_encrypt_plaintext_words, aes_cbc_raw_encrypt_ciphertext_words, aes_cbc_raw_encrypt_key, aes_cbc_raw_encrypt_iv, aes_cbc_raw_encrypt_plaintext, aes_cbc_raw_encrypt_ciphertext);
+#endif
+
+#ifdef RSA_ALGO
+        rsa_init_buf(idx, mem, gold, rsa_raw_encrypt_EM_words, rsa_raw_encrypt_e_words, rsa_raw_encrypt_n_words, rsa_raw_encrypt_S_words, rsa_raw_encrypt_EM, rsa_raw_encrypt_e, rsa_raw_encrypt_n, rsa_raw_encrypt_S);
 #endif
 
         printf("  ... input ready!\n");
@@ -347,6 +404,18 @@ int main(int argc, char * argv[])
             iowrite32(dev, CRYPTO_CXX_AES_AAD_BYTES_REG, aes_aad_bytes);
             iowrite32(dev, CRYPTO_CXX_AES_TAG_BYTES_REG, aes_tag_bytes);
 #endif
+#ifdef RSA_ALGO
+            iowrite32(dev, CRYPTO_CXX_RSA_ENCRYPTION_REG, RSA_ENCRYPTION_MODE);
+            iowrite32(dev, CRYPTO_CXX_RSA_PADDING_REG, RSA_PKCS1_PADDING);
+            iowrite32(dev, CRYPTO_CXX_RSA_PUBPRIV_REG, RSA_PRIVATE_KEY);
+            iowrite32(dev, CRYPTO_CXX_RSA_N_BYTES_REG, rsa_n_bytes);
+            //iowrite32(dev, CRYPTO_CXX_RSA_E_BYTES_REG, rsa_e_bytes);
+            //iowrite32(dev, CRYPTO_CXX_RSA_IN_BYTES_REG, rsa_in_bytes);
+            // FLIP TO DEBUG
+            iowrite32(dev, CRYPTO_CXX_RSA_E_BYTES_REG, rsa_in_bytes);
+            iowrite32(dev, CRYPTO_CXX_RSA_IN_BYTES_REG, rsa_e_bytes);
+#endif
+
             // Flush (customize coherence model here)
             // esp_flush(ACC_COH_NONE);
             //esp_flush(ACC_COH_RECALL);

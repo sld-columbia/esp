@@ -132,6 +132,8 @@ solution options set /Input/SearchPath { \
     ../src/aes \
     ../inc/aes/modes \
     ../src/aes/modes \
+    ../inc/rsa \
+    ../src/rsa \
     ../../../common/inc }
 
 solution options set ComponentLibs/SearchPath { \
@@ -176,11 +178,16 @@ solution file add ../inc/aes/defines.h -type C++
 solution file add ../inc/aes/properties.h -type C++
 solution file add ../inc/aes/properties_utils.h -type C++
 solution file add ../inc/aes/modes/gcm.h -type C++
+solution file add ../inc/rsa/defines.h -type C++
+solution file add ../inc/rsa/padding.h -type C++
+solution file add ../inc/rsa/properties.h -type C++
+solution file add ../inc/rsa/rsa.h -type C++
 
 solution file add ../src/crypto_cxx_catapult.cpp -type C++
 solution file add ../src/sha1/sha1.cpp -type C++
 solution file add ../src/sha2/sha2.cpp -type C++
 solution file add ../src/aes/aes.cpp -type C++
+solution file add ../src/rsa/rsa.cpp -type C++
 
 solution file add ../tb/main.cpp -type C++ -exclude true
 
@@ -228,8 +235,16 @@ go analyze
 # 10.5
 solution design set $ACCELERATOR -top
 
-solution design set sha1 -block
-solution design set sha2 -block
+#solution design set sha1 -block
+#solution design set sha2 -block
+#solution design set aes -block
+#solution design set rsa -block
+#solution design set add_padding -block
+#solution design set rm_padding -block
+#solution design set mont_red -block
+#solution design set mont_red2 -block
+#solution design set mont_exp -block
+#solution design set adjust_last_input_shift -block
 
 #solution design set sha256_block -block
 
@@ -239,7 +254,7 @@ solution design set sha2 -block
 #
 #
 
-go compile
+#go compile
 
 # Run C simulation.
 if {$opt(csim)} {
@@ -334,11 +349,11 @@ if {$opt(hsynth)} {
     directive set /crypto_cxx_catapult/sha1:h.rom:rsc -MAP_TO_MODULE {[Register]}
     directive set /crypto_cxx_catapult/core/sha1_plm_in.data:rsc -MAP_TO_MODULE GF12_SRAM_SP_2048x32.GF12_SRAM_SP_2048x32
     directive set /crypto_cxx_catapult/core/sha1_plm_out.data:rsc -MAP_TO_MODULE {[Register]}
-    directive set /crypto_cxx_catapult/core/sha2_plm_in.data:rsc -MAP_TO_MODULE GF12_SRAM_SP_2048x32.GF12_SRAM_SP_2048x32
-    directive set /crypto_cxx_catapult/core/sha2_plm_out.data:rsc -MAP_TO_MODULE {[Register]}
     directive set /crypto_cxx_catapult/core/sha1:h:rsc -MAP_TO_MODULE {[Register]}
     directive set /crypto_cxx_catapult/core/sha1:data:rsc -MAP_TO_MODULE {[Register]}
 
+    directive set /crypto_cxx_catapult/core/sha2_plm_in.data:rsc -MAP_TO_MODULE GF12_SRAM_SP_2048x32.GF12_SRAM_SP_2048x32
+    directive set /crypto_cxx_catapult/core/sha2_plm_out.data:rsc -MAP_TO_MODULE {[Register]}
     directive set /crypto_cxx_catapult/sha256_block:K256.rom:rsc -MAP_TO_MODULE {[Register]}
     directive set /crypto_cxx_catapult/sha256_block#1:K256.rom:rsc -MAP_TO_MODULE {[Register]}
     directive set /crypto_cxx_catapult/sha256_block#2:K256.rom:rsc -MAP_TO_MODULE {[Register]}
@@ -381,6 +396,12 @@ if {$opt(hsynth)} {
     directive set /crypto_cxx_catapult/core/aes_gcm_cipher:L:rsc -MAP_TO_MODULE {[Register]}
     directive set /crypto_cxx_catapult/core/aes_gcm_cipher:J:rsc -MAP_TO_MODULE {[Register]}
 
+    directive set /crypto_cxx_catapult/core/rsa_plm_in.data:rsc -MAP_TO_MODULE {[Register]}
+    directive set /crypto_cxx_catapult/core/rsa_plm_e.data:rsc -MAP_TO_MODULE {[Register]}
+    directive set /crypto_cxx_catapult/core/rsa_plm_n.data:rsc -MAP_TO_MODULE {[Register]}
+    directive set /crypto_cxx_catapult/core/rsa_plm_r.data:rsc -MAP_TO_MODULE {[Register]}
+    directive set /crypto_cxx_catapult/core/rsa_plm_out.data:rsc -MAP_TO_MODULE {[Register]}
+
     # Loops
     directive set /crypto_cxx_catapult/core/main -MERGEABLE false
 
@@ -402,6 +423,17 @@ if {$opt(hsynth)} {
     directive set /crypto_cxx_catapult/core/AES_LOAD_INPUT_LOOP -MERGEABLE false
     directive set /crypto_cxx_catapult/core/AES_STORE_CTRL_LOOP -MERGEABLE false
     directive set /crypto_cxx_catapult/core/AES_STORE_LOOP -MERGEABLE false
+
+    directive set /crypto_cxx_catapult/core/RSA_LOAD_IN_CTRL_LOOP -MERGEABLE false
+    directive set /crypto_cxx_catapult/core/RSA_LOAD_IN_LOOP -MERGEABLE false
+    directive set /crypto_cxx_catapult/core/RSA_LOAD_E_CTRL_LOOP -MERGEABLE false
+    directive set /crypto_cxx_catapult/core/RSA_LOAD_E_LOOP -MERGEABLE false
+    directive set /crypto_cxx_catapult/core/RSA_LOAD_N_CTRL_LOOP -MERGEABLE false
+    directive set /crypto_cxx_catapult/core/RSA_LOAD_N_LOOP -MERGEABLE false
+    directive set /crypto_cxx_catapult/core/RSA_LOAD_R_CTRL_LOOP -MERGEABLE false
+    directive set /crypto_cxx_catapult/core/RSA_LOAD_R_LOOP -MERGEABLE false
+    directive set /crypto_cxx_catapult/core/RSA_STORE_CTRL_LOOP -MERGEABLE false
+    directive set /crypto_cxx_catapult/core/RSA_STORE_LOOP -MERGEABLE false
 
     # Loops performance tracing
 

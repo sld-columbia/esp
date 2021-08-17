@@ -7,12 +7,12 @@
 #include "sha1.h"
 #include "sha2.h"
 #include "aes.h"
+#include "rsa.h"
 #include "data.hpp" // Fixed-point data types
 #include "conf_info.hpp" // Configuration-port data type
 
 #include <ac_channel.h> // Algorithmic C channel class
 #include <ac_sync.h>
-
 
 typedef ac_int<DMA_WIDTH, false> dma_data_t;
 
@@ -36,36 +36,37 @@ typedef ac_int<DMA_WIDTH, false> dma_data_t;
 #define AES_PLM_AAD_SIZE (AES_MAX_IN_WORDS)
 #define AES_PLM_TAG_SIZE (AES_MAX_IN_WORDS)
 
+// RSA PLM and data dimensions
+#define RSA_PLM_WIDTH 32
+#define RSA_PLM_R_SIZE (RSA_MAX_WORDS)
+#define RSA_PLM_N_SIZE (RSA_MAX_WORDS)
+#define RSA_PLM_E_SIZE (RSA_MAX_WORDS)
+#define RSA_PLM_IN_SIZE (RSA_MAX_WORDS)
+#define RSA_PLM_OUT_SIZE (RSA_MAX_WORDS)
+
 // Encapsulate the PLM array in a templated struct
 template <class T, unsigned S>
-struct sha1_plm_t {
-public:
-   T data[S];
-};
-
-template <class T, unsigned S>
-struct sha2_plm_t {
-public:
-   T data[S];
-};
-
-template <class T, unsigned S>
-struct aes_plm_t {
+struct plm_t {
 public:
    T data[S];
 };
 
 // PLM typedefs
-typedef sha1_plm_t<data_t, SHA1_PLM_IN_SIZE> sha1_plm_in_t;
-typedef sha1_plm_t<data_t, SHA1_PLM_OUT_SIZE> sha1_plm_out_t;
-typedef sha2_plm_t<data_t, SHA2_PLM_IN_SIZE> sha2_plm_in_t;
-typedef sha2_plm_t<data_t, SHA2_PLM_OUT_SIZE> sha2_plm_out_t;
-typedef aes_plm_t<data_t, AES_PLM_KEY_SIZE> aes_plm_key_t;
-typedef aes_plm_t<data_t, AES_PLM_IV_SIZE> aes_plm_iv_t;
-typedef aes_plm_t<data_t, AES_PLM_IN_SIZE> aes_plm_in_t;
-typedef aes_plm_t<data_t, AES_PLM_OUT_SIZE> aes_plm_out_t;
-typedef aes_plm_t<data_t, AES_PLM_AAD_SIZE> aes_plm_aad_t;
-typedef aes_plm_t<data_t, AES_PLM_TAG_SIZE> aes_plm_tag_t;
+typedef plm_t<data_t, SHA1_PLM_IN_SIZE> sha1_plm_in_t;
+typedef plm_t<data_t, SHA1_PLM_OUT_SIZE> sha1_plm_out_t;
+typedef plm_t<data_t, SHA2_PLM_IN_SIZE> sha2_plm_in_t;
+typedef plm_t<data_t, SHA2_PLM_OUT_SIZE> sha2_plm_out_t;
+typedef plm_t<data_t, AES_PLM_KEY_SIZE> aes_plm_key_t;
+typedef plm_t<data_t, AES_PLM_IV_SIZE> aes_plm_iv_t;
+typedef plm_t<data_t, AES_PLM_IN_SIZE> aes_plm_in_t;
+typedef plm_t<data_t, AES_PLM_OUT_SIZE> aes_plm_out_t;
+typedef plm_t<data_t, AES_PLM_AAD_SIZE> aes_plm_aad_t;
+typedef plm_t<data_t, AES_PLM_TAG_SIZE> aes_plm_tag_t;
+typedef plm_t<data_t, RSA_PLM_R_SIZE> rsa_plm_r_t;
+typedef plm_t<data_t, RSA_PLM_N_SIZE> rsa_plm_n_t;
+typedef plm_t<data_t, RSA_PLM_E_SIZE> rsa_plm_e_t;
+typedef plm_t<data_t, RSA_PLM_IN_SIZE> rsa_plm_in_t;
+typedef plm_t<data_t, RSA_PLM_OUT_SIZE> rsa_plm_out_t;
 
 // Accelerator top module
 void crypto_cxx_catapult(

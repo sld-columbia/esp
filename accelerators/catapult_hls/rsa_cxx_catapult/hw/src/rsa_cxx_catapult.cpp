@@ -9,11 +9,11 @@
 #include <mc_scverify.h>
 
 // TODO: workaround to make rsa visible
-#include "rsa.cpp"
+//#include "rsa.cpp"
 
 #define ZERO data_t(0)
 
-void compute_wrapper(uint32_t encryption, uint32_t padding, uint32_t pubpriv, uint32_t n_bytes, uint32_t e_bytes, uint32_t in_bytes, plm_r_t &r, plm_n_t &n, plm_e_t &e, plm_in_t &in, plm_out_t &out) {
+void compute_wrapper(uint32 encryption, uint32 padding, uint32 pubpriv, uint32 n_bytes, uint32 e_bytes, uint32 in_bytes, plm_r_t &r, plm_n_t &n, plm_e_t &e, plm_in_t &in, plm_out_t &out) {
     //ESP_REPORT_INFO(VON, "encryption: %u", ESP_TO_UINT32(encryption));
     //ESP_REPORT_INFO(VON, "padding: %u", ESP_TO_UINT32(padding));
     //ESP_REPORT_INFO(VON, "pubpriv: %u", ESP_TO_UINT32(pubpriv));
@@ -21,7 +21,7 @@ void compute_wrapper(uint32_t encryption, uint32_t padding, uint32_t pubpriv, ui
     //ESP_REPORT_INFO(VON, "e_bytes: %u", ESP_TO_UINT32(e_bytes));
     //ESP_REPORT_INFO(VON, "in_bytes: %u", ESP_TO_UINT32(in_bytes));
 
-    rsa(encryption, padding, pubpriv, n_bytes, e_bytes, in_bytes, r.data, n.data, e.data, in.data, out.data); 
+    rsa(encryption, padding, pubpriv, n_bytes, e_bytes, in_bytes, r.data, n.data, e.data, in.data, out.data);
 }
 
 #pragma hls_design top
@@ -38,10 +38,10 @@ void CCS_BLOCK(rsa_cxx_catapult)(
     ac_sync &acc_done) {
 
     // Bookkeeping variables
-    uint32_t dma_read_data_index = 0;
-    uint32_t dma_read_data_length = 0;
-    uint32_t dma_write_data_index= 0;
-    uint32_t dma_write_data_length = 0;
+    uint32 dma_read_data_index = 0;
+    uint32 dma_read_data_length = 0;
+    uint32 dma_write_data_index= 0;
+    uint32 dma_write_data_length = 0;
     bool dma_read_ctrl_done = false;
     bool dma_write_ctrl_done = false;
 
@@ -51,16 +51,16 @@ void CCS_BLOCK(rsa_cxx_catapult)(
 
     // Accelerator configuration
     conf_info_t config;
-    uint32_t in_bytes = 0;
-    uint32_t e_bytes = 0;
-    uint32_t n_bytes = 0;
-    uint32_t pubpriv = 0;
-    uint32_t padding = 0;
-    uint32_t encryption = 0;
+    uint32 in_bytes = 0;
+    uint32 e_bytes = 0;
+    uint32 n_bytes = 0;
+    uint32 pubpriv = 0;
+    uint32 padding = 0;
+    uint32 encryption = 0;
 
-    uint32_t out_bytes = 0;
+    uint32 out_bytes = 0;
 
-    // Private Local Memories 
+    // Private Local Memories
     plm_in_t plm_in;
     plm_e_t plm_e;
     plm_n_t plm_n;
@@ -75,7 +75,7 @@ void CCS_BLOCK(rsa_cxx_catapult)(
     config = conf_info.read();
     in_bytes = config.in_bytes;
     e_bytes = config.e_bytes;
-    n_bytes = config.n_bytes; 
+    n_bytes = config.n_bytes;
     pubpriv = config.pubpriv;
     padding = config.padding;
     encryption = config.encryption;
@@ -281,7 +281,7 @@ LOAD_R_LOOP:
         }
     }
 
-    compute_wrapper(encryption, padding, pubpriv, n_bytes, e_bytes, in_bytes, plm_r, plm_n, plm_e, plm_in, plm_out); 
+    compute_wrapper(encryption, padding, pubpriv, n_bytes, e_bytes, in_bytes, plm_r, plm_n, plm_e, plm_in, plm_out);
 
     // Configure DMA write channel (CTRL)
     // - DMA_WIDTH for EPOCHS is 64 bits

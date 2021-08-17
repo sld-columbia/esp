@@ -10,8 +10,6 @@
 
 const unsigned int WL = 32;
 
-//typedef ac_int<WL, false> data_t;
-typedef uint32_t data_t;
-//typedef unsigned data_t;
+typedef uint32 data_t;
 
 #endif // __DATA_HPP__

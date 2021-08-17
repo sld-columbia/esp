@@ -10,12 +10,12 @@
 // Configuration parameters for the accelerator
 //
 struct conf_info_t {
-    uint32_t in_bytes;
-    uint32_t e_bytes;
-    uint32_t n_bytes;
-    uint32_t pubpriv;
-    uint32_t padding;
-    uint32_t encryption;
+    uint32 in_bytes;
+    uint32 e_bytes;
+    uint32 n_bytes;
+    uint32 pubpriv;
+    uint32 padding;
+    uint32 encryption;
 };
 
 #endif // __CONF_INFO_HPP__

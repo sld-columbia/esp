@@ -8,7 +8,7 @@ array set opt {
     # The 'lsynth' flag enables logic synthesis.
     # The 'debug' flag stops Catapult HLS before the architect step.
     csim       1
-    hsynth     1
+    hsynth     0
     rtlsim     0
     lsynth     0
     debug      0

@@ -12,7 +12,7 @@
 #include "sha1.cpp"
 
 template <class T1, class T2>
-void compute_wrapper(uint32_t in_bytes, T1 &input, T2 &output) {
+void compute_wrapper(uint32 in_bytes, T1 &input, T2 &output) {
     ESP_REPORT_INFO(VOFF, "in_bytes: %u", ESP_TO_UINT32(in_bytes));
 
     sha1(in_bytes, input.data, output.data);
@@ -44,10 +44,10 @@ void CCS_BLOCK(sha1_cxx_catapult)(
     ac_sync &acc_done) {
 
     // Bookkeeping variables
-    uint32_t dma_read_data_index = 0;
-    uint32_t dma_read_data_length = 0;
-    uint32_t dma_write_data_index= 0;
-    uint32_t dma_write_data_length = PLM_OUT_SIZE;
+    uint32 dma_read_data_index = 0;
+    uint32 dma_read_data_length = 0;
+    uint32 dma_write_data_index= 0;
+    uint32 dma_write_data_length = PLM_OUT_SIZE;
 
     // DMA configuration
     dma_info_t dma_read_info = {0, 0, 0};
@@ -55,7 +55,7 @@ void CCS_BLOCK(sha1_cxx_catapult)(
 
     // Accelerator configuration
     conf_info_t config;
-    uint32_t in_bytes = 0;
+    uint32 in_bytes = 0;
 
     // Private Local Memories
     plm_in_t plm_in;

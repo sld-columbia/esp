@@ -6,6 +6,6 @@
 
 #include <ac_int.h>
 
-typedef uint32_t debug_info_t;
+typedef uint32 debug_info_t;
 
 #endif // __DEBUG_INFO_HPP__
