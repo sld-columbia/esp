@@ -29,6 +29,8 @@ static unsigned out_words;
 static unsigned in_size;
 static unsigned out_size;
 static unsigned mem_size;
+static unsigned mem_words;
+
 
 const unsigned sha2_in_size = 1600;
 const unsigned sha2_out_size = 32;
@@ -47,13 +49,13 @@ const unsigned sha2_out_size = 32;
 
 #define N_TESTS 12
 
-static unsigned raw_in_bytes[N_TESTS] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 64, 6400};
-static unsigned raw_out_bytes[N_TESTS] = {28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28};
+static unsigned sha2_raw_in_bytes[N_TESTS] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 64, 6400};
+static unsigned sha2_raw_out_bytes[N_TESTS] = {28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28};
 
-static unsigned raw_in_words[N_TESTS] = {0, 2, 2, 2, 2, 2, 2, 2, 2, 4, 16, 1600};
-static unsigned raw_out_words[N_TESTS] = {8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8};
+static unsigned sha2_raw_in_words[N_TESTS] = {0, 2, 2, 2, 2, 2, 2, 2, 2, 4, 16, 1600};
+static unsigned sha2_raw_out_words[N_TESTS] = {8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8};
 
-static unsigned raw_inputs[N_TESTS][1600] = {
+static unsigned sha2_raw_inputs[N_TESTS][1600] = {
     {0x00000000, 0x00000000}, // 0, SHA224ShortMsg.rsp
     {0x84000000, 0x00000000},
     {0x5c7b0000, 0x00000000},
@@ -267,7 +269,7 @@ static unsigned raw_inputs[N_TESTS][1600] = {
      0x9e09b362, 0x030290b9, 0x6fa722bd, 0x7d7af987, 0x69125c18, 0xc6079956, 0x730e9952, 0xcb65b7cc, 
      0x1c72d2f9, 0x5aa7a184, 0x15a847d2, 0xa9b0288a, 0xb531fa55, 0xceba1fe2, 0x741e322e, 0x44d3e002}};
 
-static unsigned raw_outputs[N_TESTS][8] = {
+static unsigned sha2_raw_outputs[N_TESTS][8] = {
     {0xd14a028c, 0x2a3a2bc9, 0x476102bb, 0x288234c4, 0x15a2b01f, 0x828ea62a, 0xc5b3e42f, 0x0}, // 0, SHA224ShortMsg.rsp
     {0x3cd36921, 0xdf5d6963, 0xe73739cf, 0x4d20211e, 0x2d8877c1, 0x9cff087a, 0xde9d0e3a, 0x0},
     {0xdaff9bce, 0x685eb831, 0xf97fc122, 0x5b03c275, 0xa6c112e2, 0xd6e76f5f, 0xaf7a36e6, 0x0},
@@ -281,15 +283,42 @@ static unsigned raw_outputs[N_TESTS][8] = {
     {0xb2a5586d, 0x9cbf0baa, 0x999157b4, 0xaf06d88a, 0xe08d7c9f, 0xaab4bc1a, 0x96829d65, 0x0}, // 512, SHA224ShortMsg.rsp
     {0x45ae4c1a, 0xa7ab5c5e, 0xb3ef6ed9, 0xbcd706fc, 0xfebf72bd, 0xb5f8f327, 0xe1f0bc02, 0x0}}; // 51200, SHA224LongMsg.rsp
 
+static void init_buf(unsigned idx, token_t *inputs, token_t *gold_outputs, unsigned *raw_in_words, unsigned *raw_out_words, unsigned raw_inputs[][1600], unsigned raw_outputs[][8])
+{
+    int j;
+
+    printf("INFO: raw_in_words[%u] %u\n", idx, raw_in_words[idx]);
+    printf("INFO: raw_out_words[%u] %u\n", idx, raw_out_words[idx]);
+
+    for (j = 0; j < raw_in_words[idx]; j++)
+    {
+        inputs[j] = raw_inputs[idx][j];
+#ifdef __DEBUG__
+        printf("INFO: raw_inputs[%u][%u] %x\n", idx, j, raw_inputs[idx][j]);
+#endif
+    }
+
+#ifdef __DEBUG__
+    printf("INFO: gold output data @%p\n", gold_outputs);
+#endif
+
+    for (j = 0; j < raw_out_words[idx]; j++) {
+        gold_outputs[j] = raw_outputs[idx][j];
+#ifdef __DEBUG__
+        printf("INFO: raw_outputs[%u][%u] %x\n", idx, j, raw_outputs[idx][j]);
+#endif
+    }
+}
+
 static int validate_buf(unsigned idx, token_t *out, token_t *gold)
 {
     int j;
     unsigned errors = 0;
 
-    printf("  gold output data @%p\n", gold);
-    printf("       output data @%p\n", out);
+    printf("INFO: gold output data @%p\n", gold);
+    printf("INFO:      output data @%p\n", out);
 
-    for (j = 0; j < raw_out_words[idx]; j++)
+    for (j = 0; j < sha2_raw_out_words[idx]; j++)
     {
         token_t gold_data = gold[j];
         token_t out_data = out[j];
@@ -297,40 +326,42 @@ static int validate_buf(unsigned idx, token_t *out, token_t *gold)
         if (out_data != gold_data)
         {
             errors++;
+#ifdef __DEBUG__
+            printf("[%u] @%p %x (%x) %s\n", j, out + j, out_data, gold_data, ((out_data != gold_data)?" !!!":""));
+#endif
         }
-        printf("[%u] %x (%x)\n", j, out_data, gold_data);
     }
 
-    printf("  total errors %u\n", errors);
+    printf("INFO: total errors %u\n", errors);
 
     return errors;
 }
 
-static void init_buf (unsigned idx, token_t *inputs, token_t * gold_outputs)
-{
-    int j;
-
-    printf("  input data @%p\n", inputs);
-
-    printf("  in_bytes %u\n", in_bytes);
-    printf("  out_bytes %u\n", out_bytes);
-
-    printf("  raw_in_words %u\n", raw_in_words[idx]);
-    printf("  raw_out_words %u\n", raw_out_words[idx]);
-
-    for (j = 0; j < raw_in_words[idx]; j++)
-    {
-        inputs[j] = raw_inputs[idx][j];
-        printf("  raw_inputs[%u][%u] %x\n", idx, j, raw_inputs[idx][j]);
-    }
-
-    printf("  gold output data @%p\n", gold_outputs);
-
-    for (j = 0; j < raw_out_words[idx]; j++) {
-        gold_outputs[j] = raw_outputs[idx][j];
-        printf("  raw_outputs[%u][%u] %x\n", idx, j, raw_outputs[idx][j]);
-    }
-}
+//static void init_buf (unsigned idx, token_t *inputs, token_t * gold_outputs)
+//{
+//    int j;
+//
+//    printf("INFO:   input data @%p\n", inputs);
+//
+//    printf("INFO:   in_bytes %u\n", in_bytes);
+//    printf("INFO:   out_bytes %u\n", out_bytes);
+//
+//    printf("INFO:   raw_in_words %u\n", raw_in_words[idx]);
+//    printf("INFO:   raw_out_words %u\n", raw_out_words[idx]);
+//
+//    for (j = 0; j < raw_in_words[idx]; j++)
+//    {
+//        inputs[j] = raw_inputs[idx][j];
+//        //printf("INFO:   raw_inputs[%u][%u] %x\n", idx, j, raw_inputs[idx][j]);
+//    }
+//
+//    printf("INFO:   gold output data @%p\n", gold_outputs);
+//
+//    for (j = 0; j < raw_out_words[idx]; j++) {
+//        gold_outputs[j] = raw_outputs[idx][j];
+//        //printf("INFO:   raw_outputs[%u][%u] %x\n", idx, j, raw_outputs[idx][j]);
+//    }
+//}
 
 int main(int argc, char * argv[])
 {
@@ -346,51 +377,56 @@ int main(int argc, char * argv[])
     unsigned errors = 0;
 
     // Search for the device
-    printf("Scanning device tree... \n");
+    printf("INFO: Scanning device tree... \n");
 
     ndev = probe(&espdevs, VENDOR_SLD, SLD_SHA2_CXX, DEV_NAME);
 
-    printf("Found %d devices: %s\n", ndev, DEV_NAME);
+    printf("INFO: Found %d devices: %s\n", ndev, DEV_NAME);
 
     if (ndev == 0) {
-        printf("sha2_cxx not found\n");
+        printf("ERROR: sha2_cxx not found\n");
         return 0;
     }
 
-    printf("   sizeof(token_t) = %u\n", sizeof(token_t));
+    printf("INFO: sizeof(token_t) = %u\n", sizeof(token_t));
 
     for (unsigned idx = 1; idx < N_TESTS; idx++) {
 
-        in_bytes = raw_in_bytes[idx];
-        in_words = raw_in_words[idx];
+        printf("INFO: Test: %u / %u\n", idx, N_TESTS-1);
 
-        out_bytes = raw_out_bytes[idx];
+        in_bytes = sha2_raw_in_bytes[idx];
+        in_words = sha2_raw_in_words[idx];
+
+        out_bytes = sha2_raw_out_bytes[idx];
         out_words = sha2_out_size;
 
         in_size = in_words * sizeof(token_t);
         out_size = out_words * sizeof(token_t);
         mem_size = in_size + out_size;
+        mem_words = in_words + out_words;
 
         // Allocate memory
         gold = aligned_malloc(out_size);
         mem = aligned_malloc(mem_size);
-        printf("  memory buffer base-address = %p\n", mem);
-        printf("  memory buffer size = %p\n", mem_size);
-        printf("  golden buffer base-address = %p\n", gold);
-        printf("  golden buffer size = %p\n", out_size);
+        printf("INFO: Memory buffer\n");
+        printf("INFO:   - base address = %p\n", mem);
+        printf("INFO:   - size = %u B\n", mem_size);
+        printf("INFO: Golden buffer\n");
+        printf("INFO:   - base address = %p\n", gold);
+        printf("INFO:   - size = %u B\n", out_size);
 
         // Alocate and populate page table
         ptable = aligned_malloc(NCHUNK(mem_size) * sizeof(unsigned *));
         for (i = 0; i < NCHUNK(mem_size); i++)
             ptable[i] = (unsigned *) &mem[i * (CHUNK_SIZE / sizeof(token_t))];
-        printf("  ptable = %p\n", ptable);
-        printf("  nchunk = %lu\n", NCHUNK(mem_size));
+        //printf("INFO:   ptable = %p\n", ptable);
+        //printf("INFO:   nchunk = %lu\n", NCHUNK(mem_size));
 
-        printf("  Generate input...\n");
+        printf("INFO: Generate input...\n");
 
-        init_buf(idx, mem, gold);
+        init_buf(idx, mem, gold, sha2_raw_in_words, sha2_raw_out_words, sha2_raw_inputs, sha2_raw_outputs);
 
-        printf("  ... input ready!\n");
+        printf("INFO: Input ready!\n");
 
         // Pass common configuration parameters
         for (n = 0; n < ndev; n++) {
@@ -399,12 +435,12 @@ int main(int argc, char * argv[])
 
             // Check DMA capabilities
             if (ioread32(dev, PT_NCHUNK_MAX_REG) == 0) {
-                printf("  -> scatter-gather DMA is disabled. Abort.\n");
+                printf("ERROR: Scatter-gather DMA is disabled. Abort.\n");
                 return 0;
             }
 
             if (ioread32(dev, PT_NCHUNK_MAX_REG) < NCHUNK(mem_size)) {
-                printf("  -> Not enough TLB entries available. Abort.\n");
+                printf("ERROR: Not enough TLB entries available. Abort.\n");
                 return 0;
             }
 
@@ -425,10 +461,10 @@ int main(int argc, char * argv[])
             iowrite32(dev, SHA2_CXX_OUT_BYTES_REG, out_bytes);
 
             // Flush (customize coherence model here)
-            esp_flush(ACC_COH_NONE);
+            //esp_flush(ACC_COH_NONE);
 
             // Start accelerators
-            printf("  Start...\n");
+            printf("INFO: Accelerator start...\n");
 
             iowrite32(dev, CMD_REG, CMD_MASK_START);
 
@@ -440,27 +476,35 @@ int main(int argc, char * argv[])
             }
             iowrite32(dev, CMD_REG, 0x0);
 
-            printf("  Done\n");
-            printf("  validating...\n");
+            printf("INFO: Accelerator done\n");
+            printf("INFO: Validating...\n");
 
-            //for (i = 0; i < in_words + out_words; i++) {
-            //    printf("mem[%u] @%p %x\n", i, mem + i, mem[i]);
-            //}
+#ifdef __DEBUG__
+            for (i = 0; i < mem_words; i++) {
+                printf("INFO: mem[%u] @%p %x\n", i, mem + i, mem[i]);
+            }
+#endif
 
             /* Validation */
             errors = validate_buf(idx, mem + in_words, gold);
-            if (errors)
-                printf("  ... FAIL\n");
-            else
-                printf("  ... PASS\n");
 
-            aligned_free(ptable);
-            aligned_free(mem);
-            aligned_free(gold);
+            if (errors) {
+                printf("INFO: FAIL\n");
+                aligned_free(ptable);
+                aligned_free(mem);
+                aligned_free(gold);
+                return 1;
+            } else
+                printf("INFO: PASS\n");
         }
+
+        aligned_free(ptable);
+        aligned_free(mem);
+        aligned_free(gold);
+
     }
 
-    printf("DONE\n");
+    printf("INFO: DONE\n");
 
     return 0;
 }

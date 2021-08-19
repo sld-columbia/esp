@@ -27,13 +27,14 @@ static unsigned in_bytes;
 static unsigned in_words;
 static unsigned out_words;
 static unsigned in_size;
-static unsigned out_size;
-static unsigned mem_size;
+static unsigned out_bytes;
+static unsigned mem_bytes;
+static unsigned mem_words;
 
 const unsigned sha1_in_size = 1600;
 // TODO: SHA1 output is 5 32-bit words, DMA is 64 bits
 // Add an extra word of zeros at the end.
-const unsigned sha1_out_size = 5 + 1;
+const unsigned sha1_out_bytes = 5 + 1;
 
 /* Size of the contiguous chunks for scatter/gather */
 #define CHUNK_SHIFT 20
@@ -294,10 +295,10 @@ static int validate_buf(token_t *out, token_t *gold)
     int j;
     unsigned errors = 0;
 
-    printf("  gold output data @%p\n", gold);
-    printf("       output data @%p\n", out);
+    printf("INFO: gold output data @%p\n", gold);
+    printf("INFO:      output data @%p\n", out);
 
-    for (j = 0; j < sha1_out_size; j++)
+    for (j = 0; j < sha1_out_bytes; j++)
     {
         token_t gold_data = gold[j];
         token_t out_data = out[j];
@@ -305,11 +306,13 @@ static int validate_buf(token_t *out, token_t *gold)
         if (out_data != gold_data)
         {
             errors++;
+#ifdef __DEBUG__
+            printf("INFO: [%u] @%p %x (%x) %s\n", j, out + j, out_data, gold_data, ((out_data != gold_data)?" !!!":""));
+#endif
         }
-        printf("[%u] %x (%x)\n", j, out_data, gold_data);
     }
 
-    printf("  total errors %u\n", errors);
+    printf("INFO: Total errors %u\n", errors);
 
     return errors;
 }
@@ -318,22 +321,29 @@ static void init_buf (unsigned idx, token_t *inputs, token_t * gold_outputs)
 {
     int j;
 
-    printf("  input data @%p\n", inputs);
-
-    printf("  in_bytes %u\n", raw_in_bytes[idx]);
-    printf("  raw_words %u\n", raw_words[idx]);
+    //printf("  input data @%p\n", inputs);
+    //printf("  in_bytes %u\n", raw_in_bytes[idx]);
+#ifdef __DEBUG__
+    printf("INFO: raw_words %u\n", raw_words[idx]);
+#endif
 
     for (j = 0; j < raw_words[idx]; j++)
     {
         inputs[j] = raw_inputs[idx][j];
-        //printf("  raw_inputs[%u][%u] %x\n", idx, j, raw_inputs[t][j]);
+#ifdef __DEBUG__
+        printf("INFO: raw_inputs[%2u][%2u] %08x\n", idx, j, raw_inputs[t][j]);
+#endif
     }
 
-    printf("  gold output data @%p\n", gold_outputs);
+#ifdef __DEBUG__
+    printf("INFO: gold output data @%p\n", gold_outputs);
+#endif
 
-    for (j = 0; j < sha1_out_size; j++) {
+    for (j = 0; j < sha1_out_bytes; j++) {
         gold_outputs[j] = raw_outputs[idx][j];
-        //printf("  raw_outputs[%u][%u] %x\n", idx, j, raw_outputs[t][j]);
+#ifdef __DEBUG__
+        printf("INFO: raw_outputs[%u][%u] %x\n", idx, j, raw_outputs[t][j]);
+#endif
     }
 }
 
@@ -352,50 +362,55 @@ int main(int argc, char * argv[])
     unsigned errors = 0;
 
     // Search for the device
-    printf("Scanning device tree... \n");
+    printf("INFO: Scanning device tree... \n");
 
     ndev = probe(&espdevs, VENDOR_SLD, SLD_SHA1_CXX, DEV_NAME);
 
-    printf("Found %d devices: %s\n", ndev, DEV_NAME);
+    printf("INFO: Found %d devices: %s\n", ndev, DEV_NAME);
 
     if (ndev == 0) {
-        printf("sha1_cxx not found\n");
+        printf("ERROR: sha1_cxx not found\n");
         return 0;
     }
 
 
-    printf("   sizeof(token_t) = %u\n", sizeof(token_t));
+    printf("INFO: sizeof(token_t) = %u B\n", sizeof(token_t));
 
     for (unsigned idx = 1; idx < N_TESTS; idx++) {
 
+        printf("INFO: Test: %u / %u\n", idx, N_TESTS-1);
+
         in_bytes = raw_in_bytes[idx];
         in_words = raw_words[idx];
-        out_words = sha1_out_size;
+        out_words = sha1_out_bytes;
 
         in_size = in_words * sizeof(token_t);
-        out_size = out_words * sizeof(token_t);
-        mem_size = in_size + out_size;
+        out_bytes = out_words * sizeof(token_t);
+        mem_bytes = in_size + out_bytes;
+        mem_words = in_words + out_words;
 
         // Allocate memory
-        gold = aligned_malloc(out_size);
-        mem = aligned_malloc(mem_size);
-        printf("  memory buffer base-address = %p\n", mem);
-        printf("  memory buffer size = %p\n", mem_size);
-        printf("  golden buffer base-address = %p\n", gold);
-        printf("  golden buffer size = %p\n", out_size);
+        gold = aligned_malloc(out_bytes);
+        mem = aligned_malloc(mem_bytes);
+        printf("INFO: Memory buffer\n");
+        printf("INFO:   - base address = %p\n", mem);
+        printf("INFO:   - size = %u B\n", mem_bytes);
+        printf("INFO: Golden buffer\n");
+        printf("INFO:   - base address = %p\n", gold);
+        printf("INFO:   - size = %u B\n", out_bytes);
 
         // Alocate and populate page table
-        ptable = aligned_malloc(NCHUNK(mem_size) * sizeof(unsigned *));
-        for (i = 0; i < NCHUNK(mem_size); i++)
+        ptable = aligned_malloc(NCHUNK(mem_bytes) * sizeof(unsigned *));
+        for (i = 0; i < NCHUNK(mem_bytes); i++)
             ptable[i] = (unsigned *) &mem[i * (CHUNK_SIZE / sizeof(token_t))];
-        printf("  ptable = %p\n", ptable);
-        printf("  nchunk = %lu\n", NCHUNK(mem_size));
+        //printf("  ptable = %p\n", ptable);
+        //printf("  nchunk = %lu\n", NCHUNK(mem_bytes));
 
-        printf("  Generate input...\n");
+        printf("INFO: Generate input...\n");
 
         init_buf(idx, mem, gold);
 
-        printf("  ... input ready!\n");
+        printf("INFO: Input ready!\n");
 
         // Pass common configuration parameters
         for (n = 0; n < ndev; n++) {
@@ -404,12 +419,12 @@ int main(int argc, char * argv[])
 
             // Check DMA capabilities
             if (ioread32(dev, PT_NCHUNK_MAX_REG) == 0) {
-                printf("  -> scatter-gather DMA is disabled. Abort.\n");
+                printf("ERROR: Scatter-gather DMA is disabled. Abort.\n");
                 return 0;
             }
 
-            if (ioread32(dev, PT_NCHUNK_MAX_REG) < NCHUNK(mem_size)) {
-                printf("  -> Not enough TLB entries available. Abort.\n");
+            if (ioread32(dev, PT_NCHUNK_MAX_REG) < NCHUNK(mem_bytes)) {
+                printf("ERROR: Not enough TLB entries available. Abort.\n");
                 return 0;
             }
 
@@ -417,7 +432,7 @@ int main(int argc, char * argv[])
             iowrite32(dev, SELECT_REG, ioread32(dev, DEVID_REG));
             iowrite32(dev, COHERENCE_REG, ACC_COH_NONE);
             iowrite32(dev, PT_ADDRESS_REG, (unsigned long) ptable);
-            iowrite32(dev, PT_NCHUNK_REG, NCHUNK(mem_size));
+            iowrite32(dev, PT_NCHUNK_REG, NCHUNK(mem_bytes));
             iowrite32(dev, PT_SHIFT_REG, CHUNK_SHIFT);
 
             // Use the following if input and output data are not allocated at the default offsets
@@ -429,10 +444,10 @@ int main(int argc, char * argv[])
             iowrite32(dev, SHA1_CXX_IN_BYTES_REG, in_bytes);
 
             // Flush (customize coherence model here)
-            esp_flush(ACC_COH_NONE);
+            //esp_flush(ACC_COH_NONE);
 
             // Start accelerators
-            printf("  Start...\n");
+            printf("INFO: Accelerator start...\n");
 
             iowrite32(dev, CMD_REG, CMD_MASK_START);
 
@@ -444,27 +459,35 @@ int main(int argc, char * argv[])
             }
             iowrite32(dev, CMD_REG, 0x0);
 
-            printf("  Done\n");
-            printf("  validating...\n");
+            printf("INFO: Accelerator done\n");
+            printf("INFO: Validating...\n");
 
-            //for (i = 0; i < in_words + out_words; i++) {
-            //    printf("mem[%u] @%p %x\n", i, mem + i, mem[i]);
-            //}
+#ifdef __DEBUG__
+            for (i = 0; i < mem_words; i++) {
+                printf("INFO: mem[%u] @%p %x\n", i, mem + i, mem[i]);
+            }
+#endif
 
             /* Validation */
             errors = validate_buf(mem + in_words, gold);
-            if (errors)
-                printf("  ... FAIL\n");
-            else
-                printf("  ... PASS\n");
 
-            aligned_free(ptable);
-            aligned_free(mem);
-            aligned_free(gold);
+            if (errors) {
+                printf("ERROR: FAIL\n");
+                aligned_free(ptable);
+                aligned_free(mem);
+                aligned_free(gold);
+                return 1;
+            } else
+                printf("INFO: PASS\n");
         }
+
+        aligned_free(ptable);
+        aligned_free(mem);
+        aligned_free(gold);
+
     }
 
-    printf("DONE\n");
+    printf("INFO: DONE\n");
 
     return 0;
 }

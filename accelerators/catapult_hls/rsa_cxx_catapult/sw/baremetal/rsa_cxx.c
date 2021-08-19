@@ -123,8 +123,8 @@ static int validate_buf(unsigned idx, token_t *out, token_t *gold, unsigned *raw
     int j;
     unsigned errors = 0;
 
-    printf("  gold output data @%p\n", gold);
-    printf("       output data @%p\n", out);
+    printf("INFO: gold output data @%p\n", gold);
+    printf("INFO:      output data @%p\n", out);
 
     for (j = 0; j < rsa_raw_encrypt_S_words[idx]; j++)
     {
@@ -134,11 +134,13 @@ static int validate_buf(unsigned idx, token_t *out, token_t *gold, unsigned *raw
         if (out_data != gold_data)
         {
             errors++;
+#ifdef __DEBUG__
+            printf("INFO: [%u] @%p %x (%x) %s\n", j, out + j, out_data, gold_data, ((out_data != gold_data)?" !!!":""));
+#endif
         }
-        //printf("[%u] @%p %x (%x)\n", j, out + j, out_data, gold_data);
     }
 
-    printf("  total errors %u\n", errors);
+    printf("INFO: Total errors %u\n", errors);
 
     return errors;
 }
@@ -147,32 +149,38 @@ static void init_buf(unsigned idx, token_t *inputs, token_t *gold_outputs, unsig
 {
     int i, j;
 
-    printf("  input data @%p\n", inputs);
-    //printf("  key_bytes %u\n", key_bytes);
-    //printf("  in_bytes %u\n", in_bytes);
-    //printf("  out_bytes %u\n", out_bytes);
+    printf("INFO:   input data @%p\n", inputs);
+    //printf("INFO:   key_bytes %u\n", key_bytes);
+    //printf("INFO:   in_bytes %u\n", in_bytes);
+    //printf("INFO:   out_bytes %u\n", out_bytes);
 
-    printf("  rsa_raw_encrypt_EM_words %u\n", rsa_raw_encrypt_EM_words[idx]);
-    printf("  rsa_raw_encrypt_e_words %u\n", rsa_raw_encrypt_e_words[idx]);
-    printf("  rsa_raw_encrypt_n_words %u\n", rsa_raw_encrypt_n_words[idx]);
-    printf("  rsa_raw_encrypt_S_words %u\n", rsa_raw_encrypt_S_words[idx]);
+    printf("INFO:   rsa_raw_encrypt_EM_words %u\n", rsa_raw_encrypt_EM_words[idx]);
+    printf("INFO:   rsa_raw_encrypt_e_words %u\n", rsa_raw_encrypt_e_words[idx]);
+    printf("INFO:   rsa_raw_encrypt_n_words %u\n", rsa_raw_encrypt_n_words[idx]);
+    printf("INFO:   rsa_raw_encrypt_S_words %u\n", rsa_raw_encrypt_S_words[idx]);
 
     for (j = 0; j < rsa_raw_encrypt_EM_words[idx]; j++)
     {
         inputs[j] = rsa_raw_encrypt_EM[idx][j];
-        //printf("  rsa_raw_encrypt_EM[%2u][%2u]       | inputs[%3u]@%p %8x\n", idx, j, j, inputs + j, rsa_raw_encrypt_EM[idx][j]);
+#ifdef __DEBUG__
+        printf("INFO:   rsa_raw_encrypt_EM[%2u][%2u]       | inputs[%3u]@%p %8x\n", idx, j, j, inputs + j, rsa_raw_encrypt_EM[idx][j]);
+#endif
     }
 
     for (i = 0; i < rsa_raw_encrypt_e_words[idx]; i++, j++)
     {
         inputs[j] = rsa_raw_encrypt_e[idx][i];
-        //printf("  rsa_raw_encrypt_e [%2u][%2u]       | inputs[%3u]@%p %8x\n", idx, i, j, inputs + j, rsa_raw_encrypt_e[idx][i]);
+#ifdef __DEBUG__
+        printf("INFO:   rsa_raw_encrypt_e [%2u][%2u]       | inputs[%3u]@%p %8x\n", idx, i, j, inputs + j, rsa_raw_encrypt_e[idx][i]);
+#endif
     }
 
     for (i = 0; i < rsa_raw_encrypt_n_words[idx]; i++, j++)
     {
         inputs[j] = rsa_raw_encrypt_n[idx][i];
-        //printf("  rsa_raw_encrypt_n [%2u][%2u]       | inputs[%3u]@%p %8x\n", idx, i, j, inputs + j, rsa_raw_encrypt_n[idx][i]);
+#ifdef __DEBUG__
+        printf("INFO:   rsa_raw_encrypt_n [%2u][%2u]       | inputs[%3u]@%p %8x\n", idx, i, j, inputs + j, rsa_raw_encrypt_n[idx][i]);
+#endif
     }
 
     // hardcoded
@@ -181,20 +189,28 @@ static void init_buf(unsigned idx, token_t *inputs, token_t *gold_outputs, unsig
     for (i = 0; i < rsa_raw_encrypt_r_words[idx]; i++, j++)
     {
         inputs[j] = rsa_raw_encrypt_r[idx][i];
-        //printf("  rsa_raw_encrypt_r [%2u][%2u]       | inputs[%3u]@%p %8x\n", idx, i, j, inputs + j, rsa_raw_encrypt_r[idx][i]);
+#ifdef __DEBUG__
+        printf("INFO:   rsa_raw_encrypt_r [%2u][%2u]       | inputs[%3u]@%p %8x\n", idx, i, j, inputs + j, rsa_raw_encrypt_r[idx][i]);
+#endif
     }
 
     for (i = 0; i < rsa_raw_encrypt_S_words[idx]; i++, j++)
     {
         inputs[j] = 0xdeadbeef;
-        //printf("                                   | inputs[%3u]@%p %8x\n", j, inputs + j, 0xdeadbeef);
+#ifdef __DEBUG__
+        printf("INFO:                                    | inputs[%3u]@%p %8x\n", j, inputs + j, 0xdeadbeef);
+#endif
     }
 
-    printf("  gold output data @%p\n", gold_outputs);
+#ifdef __DEBUG__
+    printf("INFO:   gold output data @%p\n", gold_outputs);
+#endif
 
     for (j = 0; j < rsa_raw_encrypt_S_words[idx]; j++) {
         gold_outputs[j] = rsa_raw_encrypt_S[idx][j];
-        //printf("  rsa_raw_encrypt_S [%2u][%2u]       | gold[%3u]  @%p %8x\n", idx, j, j, gold_outputs + j, rsa_raw_encrypt_S[idx][j]);
+#ifdef __DEBUG__
+        printf("INFO:   rsa_raw_encrypt_S [%2u][%2u]       | gold[%3u]  @%p %8x\n", idx, j, j, gold_outputs + j, rsa_raw_encrypt_S[idx][j]);
+#endif
     }
 }
 
@@ -214,18 +230,18 @@ int main(int argc, char * argv[])
     unsigned errors = 0;
 
     // Search for the device
-    printf("Scanning device tree... \n");
+    printf("INFO: Scanning device tree... \n");
 
     ndev = probe(&espdevs, VENDOR_SLD, SLD_RSA_CXX, DEV_NAME);
 
-    printf("Found %d devices: %s\n", ndev, DEV_NAME);
+    printf("INFO: Found %d devices: %s\n", ndev, DEV_NAME);
 
     if (ndev == 0) {
-        printf("rsa_cxx not found\n");
+        printf("ERROR: rsa_cxx not found\n");
         return 0;
     }
 
-    printf("   sizeof(token_t) = %u\n", sizeof(token_t));
+    printf("INFO: sizeof(token_t) = %u\n", sizeof(token_t));
 
     for (unsigned idx = 1; idx < N_TESTS; idx++) {
 
@@ -251,23 +267,25 @@ int main(int argc, char * argv[])
         // Allocate memory
         gold = aligned_malloc(out_bytes);
         mem = aligned_malloc(mem_bytes);
-        printf("  memory buffer base-address = %p\n", mem);
-        printf("  golden buffer base-address = %p\n", gold);
-        printf("  memory buffer size = %u B\n", mem_bytes);
-        printf("  golden buffer size = %u B\n", out_bytes);
+        printf("INFO: Memory buffer\n");
+        printf("INFO:   - base address = %p\n", mem);
+        printf("INFO:   - size = %u B\n", mem_bytes);
+        printf("INFO: Golden buffer\n");
+        printf("INFO:   - base address = %p\n", gold);
+        printf("INFO:   - size = %u B\n", out_bytes);
 
         // Alocate and populate page table
         ptable = aligned_malloc(NCHUNK(mem_bytes) * sizeof(unsigned *));
         for (i = 0; i < NCHUNK(mem_bytes); i++)
             ptable[i] = (unsigned *) &mem[i * (CHUNK_SIZE / sizeof(token_t))];
-        printf("  ptable = %p\n", ptable);
-        printf("  nchunk = %lu\n", NCHUNK(mem_bytes));
+        //printf("INFO:   ptable = %p\n", ptable);
+        //printf("INFO:   nchunk = %lu\n", NCHUNK(mem_bytes));
 
-        printf("  Generate input...\n");
+        printf("INFO: Generate input...\n");
 
         init_buf(idx, mem, gold, rsa_raw_encrypt_EM_words, rsa_raw_encrypt_e_words, rsa_raw_encrypt_n_words, rsa_raw_encrypt_S_words, rsa_raw_encrypt_EM, rsa_raw_encrypt_e, rsa_raw_encrypt_n, rsa_raw_encrypt_S);
 
-        printf("  ... input ready!\n");
+        printf("INFO: Input ready!\n");
 
         // Pass common configuration parameters
         for (n = 0; n < ndev; n++) {
@@ -276,12 +294,12 @@ int main(int argc, char * argv[])
 
             // Check DMA capabilities
             if (ioread32(dev, PT_NCHUNK_MAX_REG) == 0) {
-                printf("  -> scatter-gather DMA is disabled. Abort.\n");
+                printf("INFO: Scatter-gather DMA is disabled. Abort.\n");
                 return 0;
             }
 
             if (ioread32(dev, PT_NCHUNK_MAX_REG) < NCHUNK(mem_bytes)) {
-                printf("  -> Not enough TLB entries available. Abort.\n");
+                printf("ERROR: Not enough TLB entries available. Abort.\n");
                 return 0;
             }
 
@@ -309,7 +327,7 @@ int main(int argc, char * argv[])
             //esp_flush(ACC_COH_NONE);
 
             // Start accelerators
-            printf("  Start...\n");
+            printf("INFO: Accelerator start...\n");
 
             iowrite32(dev, CMD_REG, CMD_MASK_START);
 
@@ -321,29 +339,32 @@ int main(int argc, char * argv[])
             }
             iowrite32(dev, CMD_REG, 0x0);
 
-            printf("  Done\n");
-            printf("  validating...\n");
+            printf("INFO: Accelerator done\n");
+            printf("INFO: Validating...\n");
 
             /* Validation */
             //for (i = 0; i < mem_words; i++) {
-            //    printf("mem[%u] @%p %x\n", i, mem + i, mem[i]);
+            //    printf("INFO: mem[%u] @%p %x\n", i, mem + i, mem[i]);
             //}
 
             errors = validate_buf(idx, mem + out_offset, gold, rsa_raw_encrypt_S_words);
 
-            aligned_free(ptable);
-            aligned_free(mem);
-            aligned_free(gold);
-
             if (errors) {
-                printf("  ... FAIL\n");
+                printf("ERROR: FAIL\n");
+                aligned_free(ptable);
+                aligned_free(mem);
+                aligned_free(gold);
                 return 1;
             } else
-                printf("  ... PASS\n");
+                printf("INFO: PASS\n");
         }
 
+        aligned_free(ptable);
+        aligned_free(mem);
+        aligned_free(gold);
+
     }
-    printf("DONE\n");
+    printf("INFO: DONE\n");
 
     return 0;
 }

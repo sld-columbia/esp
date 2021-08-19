@@ -77,8 +77,13 @@ const unsigned aes_tag_size = 4;
 /* Possible values of 'oper_mode' */
 //#define ECB_OPERATION_MODE 1
 //#define CTR_OPERATION_MODE 2
-#define CBC_OPERATION_MODE 3
+//#define CBC_OPERATION_MODE 3
 //#define GCM_OPERATION_MODE 4
+
+#if !(defined(ECB_OPERATION_MODE) || defined(CTR_OPERATION_MODE) || defined(CBC_OPERATION_MODE) || defined(GCM_OPERATION_MODE))
+#error "AES mode is not defined!"
+#error "Compilation flags: [-DECB_OPERATION_MODE=1 | -DCTR_OPERATION_MODE=2 | -DCBC_OPERATION_MODE=3 | -DGCM_OPERATION_MODE=4]"
+#endif
 
 #ifdef ECB_OPERATION_MODE
 /* aes32/tests/aesmmt/ECBMMT128.rsp */
@@ -238,13 +243,67 @@ static unsigned cbc_raw_encrypt_ciphertext_bytes[N_TESTS] = {4*4, 8*4, 12*4, 16*
 static unsigned cbc_raw_encrypt_ciphertext_words[N_TESTS] = {4, 8, 12, 16, 20, 24, 28, 32, 36, 40};
 #endif
 
+static void init_buf(unsigned idx, token_t *inputs, token_t * gold_outputs, unsigned *raw_encrypt_key_words, unsigned *raw_encrypt_iv_words, unsigned *raw_encrypt_plaintext_words, unsigned *raw_encrypt_ciphertext_words, unsigned raw_encrypt_key[][4], unsigned raw_encrypt_iv[][4], unsigned raw_encrypt_plaintext[][40], unsigned raw_encrypt_ciphertext[][40])
+{
+    int i, j;
+
+    //printf("INFO:  input data @%p\n", inputs);
+    //printf("INFO:  key_bytes %u\n", key_bytes);
+    //printf("INFO:  in_bytes %u\n", in_bytes);
+    //printf("INFO:  out_bytes %u\n", out_bytes);
+
+    printf("INFO: raw_encrypt_key_words[%u] %u\n", idx, raw_encrypt_key_words[idx]);
+#if defined(CTR_OPERATION_MODE) || defined(CBC_OPERATION_MODE)
+    printf("INFO: raw_encrypt_iv_words[%u] %u\n", idx, raw_encrypt_iv_words[idx]);
+#endif
+    printf("INFO: raw_encrypt_plaintext_words[%u] %u\n", idx, raw_encrypt_plaintext_words[idx]);
+    printf("INFO: raw_encrypt_ciphertext_words[%u] %u\n", idx, raw_encrypt_ciphertext_words[idx]);
+
+    for (j = 0; j < raw_encrypt_key_words[idx]; j++)
+    {
+        inputs[j] = raw_encrypt_key[idx][j];
+#ifdef __DEBUG__
+        printf("INFO:  raw_encrypt_key[%u][%u]       | inputs[%u]@%p %x\n", idx, j, j, inputs + j, raw_encrypt_key[idx][j]);
+#endif
+    }
+
+#if defined(CTR_OPERATION_MODE) || defined(CBC_OPERATION_MODE)
+    for (i = 0; i < raw_encrypt_iv_words[idx]; i++, j++)
+    {
+        inputs[j] = raw_encrypt_iv[idx][i];
+#ifdef __DEBUG__
+        printf("INFO:  raw_encrypt_iv[%u][%u]        | inputs[%u]@%p %x\n", idx, i, j, inputs + j, raw_encrypt_iv[idx][i]);
+#endif
+    }
+#endif
+
+    for (i = 0; i < raw_encrypt_plaintext_words[idx]; i++, j++)
+    {
+        inputs[j] = raw_encrypt_plaintext[idx][i];
+#ifdef __DEBUG__
+        printf("INFO: raw_encrypt_plaintext[%u][%u] | inputs[%u]@%p %x\n", idx, i, j, inputs + j, raw_encrypt_plaintext[idx][i]);
+#endif
+    }
+
+#ifdef __DEBUG__
+    printf("INFO: gold output data @%p\n", gold_outputs);
+#endif
+
+    for (j = 0; j < raw_encrypt_ciphertext_words[idx]; j++) {
+        gold_outputs[j] = raw_encrypt_ciphertext[idx][j];
+#ifdef __DEBUG__
+        printf("INFO: raw_encrypt_ciphertext[%u][%u] %x\n", idx, j, raw_encrypt_ciphertext[idx][j]);
+#endif
+    }
+}
+
 static int validate_buf(unsigned idx, token_t *out, token_t *gold, unsigned *raw_encrypt_ciphertext_words)
 {
     int j;
     unsigned errors = 0;
 
-    printf("  gold output data @%p\n", gold);
-    printf("       output data @%p\n", out);
+    printf("INFO:  gold output data @%p\n", gold);
+    printf("INFO:       output data @%p\n", out);
 
     for (j = 0; j < raw_encrypt_ciphertext_words[idx]; j++)
     {
@@ -254,55 +313,17 @@ static int validate_buf(unsigned idx, token_t *out, token_t *gold, unsigned *raw
         if (out_data != gold_data)
         {
             errors++;
+#ifdef __DEBUG__
+            printf("INFO: [%u] @%p %x (%x) %s\n", j, out + j, out_data, gold_data, ((out_data != gold_data)?" !!!":""));
+#endif
         }
-        //printf("[%u] @%p %x (%x)\n", j, out + j, out_data, gold_data);
     }
 
-    printf("  total errors %u\n", errors);
+    printf("INFO: total errors %u\n", errors);
 
     return errors;
 }
 
-static void init_buf(unsigned idx, token_t *inputs, token_t * gold_outputs, unsigned *raw_encrypt_key_words, unsigned *raw_encrypt_iv_words, unsigned *raw_encrypt_plaintext_words, unsigned *raw_encrypt_ciphertext_words, unsigned raw_encrypt_key[][4], unsigned raw_encrypt_iv[][4], unsigned raw_encrypt_plaintext[][40], unsigned raw_encrypt_ciphertext[][40])
-{
-    int i, j;
-
-    printf("  input data @%p\n", inputs);
-    printf("  key_bytes %u\n", key_bytes);
-    printf("  in_bytes %u\n", in_bytes);
-    printf("  out_bytes %u\n", out_bytes);
-
-    printf("  raw_encrypt_key_words %u\n", raw_encrypt_key_words[idx]);
-    printf("  raw_encrypt_plaintext_words %u\n", raw_encrypt_plaintext_words[idx]);
-    printf("  raw_encrypt_ciphertext_words %u\n", raw_encrypt_ciphertext_words[idx]);
-
-    for (j = 0; j < raw_encrypt_key_words[idx]; j++)
-    {
-        inputs[j] = raw_encrypt_key[idx][j];
-        printf("  raw_encrypt_key[%u][%u]       | inputs[%u]@%p %x\n", idx, j, j, inputs + j, raw_encrypt_key[idx][j]);
-    }
-
-#if defined(CTR_OPERATION_MODE) || defined(CBC_OPERATION_MODE)
-    for (i = 0; i < raw_encrypt_iv_words[idx]; i++, j++)
-    {
-        inputs[j] = raw_encrypt_iv[idx][i];
-        printf("  raw_encrypt_iv[%u][%u]        | inputs[%u]@%p %x\n", idx, i, j, inputs + j, raw_encrypt_iv[idx][i]);
-    }
-#endif
-
-    for (i = 0; i < raw_encrypt_plaintext_words[idx]; i++, j++)
-    {
-        inputs[j] = raw_encrypt_plaintext[idx][i];
-        printf("  raw_encrypt_plaintext[%u][%u] | inputs[%u]@%p %x\n", idx, i, j, inputs + j, raw_encrypt_plaintext[idx][i]);
-    }
-
-    printf("  gold output data @%p\n", gold_outputs);
-
-    for (j = 0; j < raw_encrypt_ciphertext_words[idx]; j++) {
-        gold_outputs[j] = raw_encrypt_ciphertext[idx][j];
-        printf("  raw_encrypt_ciphertext[%u][%u] %x\n", idx, j, raw_encrypt_ciphertext[idx][j]);
-    }
-}
 
 int main(int argc, char * argv[])
 {
@@ -318,23 +339,25 @@ int main(int argc, char * argv[])
     unsigned errors = 0;
 
     // Search for the device
-    printf("Scanning device tree... \n");
+    printf("INFO: Scanning device tree... \n");
 
     ndev = probe(&espdevs, VENDOR_SLD, SLD_AES_CXX, DEV_NAME);
 
-    printf("Found %d devices: %s\n", ndev, DEV_NAME);
+    printf("INFO: Found %d devices: %s\n", ndev, DEV_NAME);
 
     if (ndev == 0) {
-        printf("aes_cxx not found\n");
+        printf("INFO: aes_cxx not found\n");
         return 0;
     }
 
-    printf("   sizeof(token_t) = %u\n", sizeof(token_t));
+    printf("INFO:   sizeof(token_t) = %u\n", sizeof(token_t));
 
     for (unsigned idx = 1; idx < N_TESTS; idx++) {
 
+        printf("INFO: Test: %u / %u\n", idx, N_TESTS-1);
+
 #ifdef ECB_OPERATION_MODE
-        printf("=== ECB mode ===\n");
+        printf("INFO: === ECB mode ===\n");
         key_bytes = ecb_raw_encrypt_key_bytes[idx];
         key_words = ecb_raw_encrypt_key_words[idx];
         key_size = key_words * sizeof(token_t);
@@ -355,7 +378,7 @@ int main(int argc, char * argv[])
 #endif
 
 #ifdef CTR_OPERATION_MODE
-        printf("=== CTR mode ===\n");
+        printf("INFO: === CTR mode ===\n");
         key_bytes = ctr_raw_encrypt_key_bytes[idx];
         key_words = ctr_raw_encrypt_key_words[idx];
         key_size = key_words * sizeof(token_t);
@@ -379,7 +402,7 @@ int main(int argc, char * argv[])
 #endif
 
 #ifdef CBC_OPERATION_MODE
-        printf("=== CBC mode ===\n");
+        printf("INFO: === CBC mode ===\n");
         key_bytes = cbc_raw_encrypt_key_bytes[idx];
         key_words = cbc_raw_encrypt_key_words[idx];
         key_size = key_words * sizeof(token_t);
@@ -405,19 +428,21 @@ int main(int argc, char * argv[])
         // Allocate memory
         gold = aligned_malloc(out_size);
         mem = aligned_malloc(mem_size);
-        printf("  memory buffer base-address = %p\n", mem);
-        printf("  memory buffer size = %p\n", mem_size);
-        printf("  golden buffer base-address = %p\n", gold);
-        printf("  golden buffer size = %p\n", out_size);
+        printf("INFO: Memory buffer\n");
+        printf("INFO:   - base address = %p\n", mem);
+        printf("INFO:   - size = %u B\n", mem_size);
+        printf("INFO: Golden buffer\n");
+        printf("INFO:   - base address = %p\n", gold);
+        printf("INFO:   - size = %u B\n", out_size);
 
         // Alocate and populate page table
         ptable = aligned_malloc(NCHUNK(mem_size) * sizeof(unsigned *));
         for (i = 0; i < NCHUNK(mem_size); i++)
             ptable[i] = (unsigned *) &mem[i * (CHUNK_SIZE / sizeof(token_t))];
-        printf("  ptable = %p\n", ptable);
-        printf("  nchunk = %lu\n", NCHUNK(mem_size));
+        //printf("INFO:  ptable = %p\n", ptable);
+        //printf("INFO:  nchunk = %lu\n", NCHUNK(mem_size));
 
-        printf("  Generate input...\n");
+        printf("INFO: Generate input...\n");
 
 #ifdef ECB_OPERATION_MODE
         init_buf(idx, mem, gold, ecb_raw_encrypt_key_words, NULL, ecb_raw_encrypt_plaintext_words, ecb_raw_encrypt_ciphertext_words, ecb_raw_encrypt_key, NULL, ecb_raw_encrypt_plaintext, ecb_raw_encrypt_ciphertext);
@@ -431,7 +456,7 @@ int main(int argc, char * argv[])
         init_buf(idx, mem, gold, cbc_raw_encrypt_key_words, cbc_raw_encrypt_iv_words, cbc_raw_encrypt_plaintext_words, cbc_raw_encrypt_ciphertext_words, cbc_raw_encrypt_key, cbc_raw_encrypt_iv, cbc_raw_encrypt_plaintext, cbc_raw_encrypt_ciphertext);
 #endif
 
-        printf("  ... input ready!\n");
+        printf("INFO: Input ready!\n");
 
         // Pass common configuration parameters
         for (n = 0; n < ndev; n++) {
@@ -440,12 +465,12 @@ int main(int argc, char * argv[])
 
             // Check DMA capabilities
             if (ioread32(dev, PT_NCHUNK_MAX_REG) == 0) {
-                printf("  -> scatter-gather DMA is disabled. Abort.\n");
+                printf("ERROR: Scatter-gather DMA is disabled. Abort.\n");
                 return 0;
             }
 
             if (ioread32(dev, PT_NCHUNK_MAX_REG) < NCHUNK(mem_size)) {
-                printf("  -> Not enough TLB entries available. Abort.\n");
+                printf("ERROR: Not enough TLB entries available. Abort.\n");
                 return 0;
             }
 
@@ -471,10 +496,10 @@ int main(int argc, char * argv[])
             iowrite32(dev, AES_CXX_TAG_BYTES_REG, tag_bytes);
 
             // Flush (customize coherence model here)
-            esp_flush(ACC_COH_NONE);
+            //esp_flush(ACC_COH_NONE);
 
             // Start accelerators
-            printf("  Start...\n");
+            printf("INFO: Accelerator start...\n");
 
             iowrite32(dev, CMD_REG, CMD_MASK_START);
 
@@ -486,47 +511,52 @@ int main(int argc, char * argv[])
             }
             iowrite32(dev, CMD_REG, 0x0);
 
-            printf("  Done\n");
-            printf("  validating...\n");
+            printf("INFO: Accelerator done\n");
+            printf("INFO: Validating...\n");
 
             /* Validation */
 #ifdef ECB_OPERATION_MODE
+#ifdef __DEBUG__
             for (i = 0; i < key_words + in_words + out_words; i++) {
-                printf("mem[%u] @%p %x\n", i, mem + i, mem[i]);
+                printf("INFO: mem[%u] @%p %x\n", i, mem + i, mem[i]);
             }
-
+#endif
             errors = validate_buf(idx, mem + key_words + in_words, gold, ecb_raw_encrypt_ciphertext_words);
 #endif
 
 #ifdef CTR_OPERATION_MODE
+#ifdef __DEBUG__
             for (i = 0; i < key_words + iv_words + in_words + out_words; i++) {
-                printf("mem[%u] @%p %x\n", i, mem + i, mem[i]);
+                printf("INFO: mem[%u] @%p %x\n", i, mem + i, mem[i]);
             }
-
+#endif
             errors = validate_buf(idx, mem + key_words + iv_words + in_words, gold, ctr_raw_encrypt_ciphertext_words);
 #endif
 
 #ifdef CBC_OPERATION_MODE
+#ifdef __DEBUG__
             for (i = 0; i < key_words + iv_words + in_words + out_words; i++) {
-                printf("mem[%u] @%p %x\n", i, mem + i, mem[i]);
+                printf("INFO: mem[%u] @%p %x\n", i, mem + i, mem[i]);
             }
-
+#endif
             errors = validate_buf(idx, mem + key_words + iv_words + in_words, gold, cbc_raw_encrypt_ciphertext_words);
 #endif
 
-            aligned_free(ptable);
-            aligned_free(mem);
-            aligned_free(gold);
-
             if (errors) {
-                printf("  ... FAIL\n");
+                printf("ERROR: FAIL\n");
+                aligned_free(ptable);
+                aligned_free(mem);
+                aligned_free(gold);
                 return 1;
             } else
-                printf("  ... PASS\n");
+                printf("INFO: PASS\n");
         }
 
+        aligned_free(ptable);
+        aligned_free(mem);
+        aligned_free(gold);
     }
-    printf("DONE\n");
+    printf("INFO: DONE\n");
 
     return 0;
 }
