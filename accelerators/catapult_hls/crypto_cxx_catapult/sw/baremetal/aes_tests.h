@@ -11,8 +11,16 @@
 /* Possible values of 'oper_mode' */
 //#define AES_ECB_OPERATION_MODE 1
 //#define AES_CTR_OPERATION_MODE 2
-#define AES_CBC_OPERATION_MODE 3
+//#define AES_CBC_OPERATION_MODE 3
 //#define AES_GCM_OPERATION_MODE 4
+
+#if !(defined(AES_ECB_OPERATION_MODE) || defined(AES_CTR_OPERATION_MODE) || defined(AES_CBC_OPERATION_MODE) || defined(AES_GCM_OPERATION_MODE))
+#error "AES mode is not defined!"
+#error "Compilation flags: [-DAES_ECB_OPERATION_MODE=1 | -DAES_CTR_OPERATION_MODE=2 | -DAES_CBC_OPERATION_MODE=3 | -DAES_GCM_OPERATION_MODE=4]"
+
+#define N_TESTS 0
+#define AES_OPERATION_MODE 0
+#endif
 
 #ifdef AES_ECB_OPERATION_MODE
 /* aes32/tests/aesmmt/ECBMMT128.rsp */
@@ -176,40 +184,50 @@ static void aes_init_buf(unsigned idx, token_t *inputs, token_t * gold_outputs, 
 {
     int i, j;
 
-    printf("  input data @%p\n", inputs);
-    printf("  key_bytes %u\n", aes_key_bytes);
-    printf("  in_bytes %u\n", aes_in_bytes);
-    printf("  out_bytes %u\n", aes_out_bytes);
-
-    printf("  raw_encrypt_key_words %u\n", raw_encrypt_key_words[idx]);
-    printf("  raw_encrypt_plaintext_words %u\n", raw_encrypt_plaintext_words[idx]);
-    printf("  raw_encrypt_ciphertext_words %u\n", raw_encrypt_ciphertext_words[idx]);
+//    printf("  input data @%p\n", inputs);
+//    printf("  key_bytes %u\n", aes_key_bytes);
+//    printf("  in_bytes %u\n", aes_in_bytes);
+//    printf("  out_bytes %u\n", aes_out_bytes);
+//
+//    printf("  raw_encrypt_key_words %u\n", raw_encrypt_key_words[idx]);
+//    printf("  raw_encrypt_plaintext_words %u\n", raw_encrypt_plaintext_words[idx]);
+//    printf("  raw_encrypt_ciphertext_words %u\n", raw_encrypt_ciphertext_words[idx]);
 
     for (j = 0; j < raw_encrypt_key_words[idx]; j++)
     {
         inputs[j] = raw_encrypt_key[idx][j];
+#ifdef __DEBUG__
         printf("  raw_encrypt_key[%u][%u]       | inputs[%u]@%p %x\n", idx, j, j, inputs + j, raw_encrypt_key[idx][j]);
+#endif
     }
 
 #if defined(AES_CTR_OPERATION_MODE) || defined(AES_CBC_OPERATION_MODE)
     for (i = 0; i < raw_encrypt_iv_words[idx]; i++, j++)
     {
         inputs[j] = raw_encrypt_iv[idx][i];
+#ifdef __DEBUG__
         printf("  raw_encrypt_iv[%u][%u]        | inputs[%u]@%p %x\n", idx, i, j, inputs + j, raw_encrypt_iv[idx][i]);
+#endif
     }
 #endif
 
     for (i = 0; i < raw_encrypt_plaintext_words[idx]; i++, j++)
     {
         inputs[j] = raw_encrypt_plaintext[idx][i];
+#ifdef __DEBUG__
         printf("  raw_encrypt_plaintext[%u][%u] | inputs[%u]@%p %x\n", idx, i, j, inputs + j, raw_encrypt_plaintext[idx][i]);
+#endif
     }
 
+#ifdef __DEBUG__
     printf("  gold output data @%p\n", gold_outputs);
+#endif
 
     for (j = 0; j < raw_encrypt_ciphertext_words[idx]; j++) {
         gold_outputs[j] = raw_encrypt_ciphertext[idx][j];
+#ifdef __DEBUG__
         printf("  raw_encrypt_ciphertext[%u][%u] %x\n", idx, j, raw_encrypt_ciphertext[idx][j]);
+#endif
     }
 }
 

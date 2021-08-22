@@ -9,7 +9,7 @@
 #include <mc_scverify.h>
 
 // TODO: workaround to make aes visible
-#include "aes.cpp"
+//#include "aes.cpp"
 
 #define ZERO data_t(0)
 

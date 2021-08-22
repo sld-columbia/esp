@@ -461,7 +461,7 @@ int main(int argc, char * argv[])
             iowrite32(dev, SHA2_CXX_OUT_BYTES_REG, out_bytes);
 
             // Flush (customize coherence model here)
-            //esp_flush(ACC_COH_NONE);
+            esp_flush(ACC_COH_NONE);
 
             // Start accelerators
             printf("INFO: Accelerator start...\n");
@@ -504,7 +504,7 @@ int main(int argc, char * argv[])
 
     }
 
-    printf("INFO: DONE\n");
+    printf("INFO: SHA2 DONE\n");
 
     return 0;
 }

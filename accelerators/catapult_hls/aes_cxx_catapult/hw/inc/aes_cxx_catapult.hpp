@@ -16,12 +16,12 @@ typedef ac_int<DMA_WIDTH, false> dma_data_t;
 
 // PLM and data dimensions
 #define PLM_WIDTH 32
-#define PLM_KEY_SIZE (MAX_KEY_WORDS)
-#define PLM_IV_SIZE (MAX_IV_WORDS)
-#define PLM_IN_SIZE (MAX_IN_WORDS)
-#define PLM_OUT_SIZE (MAX_IN_WORDS)
-#define PLM_AAD_SIZE (MAX_IN_WORDS)
-#define PLM_TAG_SIZE (MAX_IN_WORDS)
+#define PLM_KEY_SIZE (AES_MAX_KEY_WORDS)
+#define PLM_IV_SIZE (AES_MAX_IV_WORDS)
+#define PLM_IN_SIZE (AES_MAX_IN_WORDS)
+#define PLM_OUT_SIZE (AES_MAX_IN_WORDS)
+#define PLM_AAD_SIZE (AES_MAX_IN_WORDS)
+#define PLM_TAG_SIZE (AES_MAX_IN_WORDS)
 
 // Encapsulate the PLM array in a templated struct
 template <class T, unsigned S>

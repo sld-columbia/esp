@@ -240,29 +240,61 @@ static unsigned sha2_raw_outputs[N_TESTS][8] = {
     {0xb2a5586d, 0x9cbf0baa, 0x999157b4, 0xaf06d88a, 0xe08d7c9f, 0xaab4bc1a, 0x96829d65, 0x0}, // 512, SHA224ShortMsg.rsp
     {0x45ae4c1a, 0xa7ab5c5e, 0xb3ef6ed9, 0xbcd706fc, 0xfebf72bd, 0xb5f8f327, 0xe1f0bc02, 0x0}}; // 51200, SHA224LongMsg.rsp
 
-static void sha2_init_buf (unsigned idx, token_t *mem, token_t *gold_outputs)
+//static void sha2_init_buf (unsigned idx, token_t *mem, token_t *gold_outputs)
+//{
+//    int j;
+//
+////    printf("  mem @%p\n", mem);
+////
+////    printf("  sha2_in_bytes %u\n", sha2_in_bytes);
+////    printf("  sha2_out_bytes %u\n", sha2_out_bytes);
+////
+////    printf("  sha2_raw_in_words %u\n", sha2_raw_in_words[idx]);
+////    printf("  sha2_raw_out_words %u\n", sha2_raw_out_words[idx]);
+//
+//    for (j = 0; j < sha2_raw_in_words[idx]; j++)
+//    {
+//        mem[j] = sha2_raw_inputs[idx][j];
+//#ifdef __DEBUG__
+//        printf("  sha2_raw_inputs[%u][%u] %x\n", idx, j, sha2_raw_inputs[idx][j]);
+//#endif
+//    }
+//
+//    printf("  gold output data @%p\n", gold_outputs);
+//
+//    for (j = 0; j < sha2_raw_out_words[idx]; j++) {
+//        gold_outputs[j] = sha2_raw_outputs[idx][j];
+//#ifdef __DEBUG__
+//        printf("  raw_outputs[%u][%u] %x\n", idx, j, raw_outputs[idx][j]);
+//#endif
+//    }
+//}
+
+static void sha2_init_buf(unsigned idx, token_t *mem, token_t *gold_outputs, unsigned *raw_in_words, unsigned *raw_out_words, unsigned raw_inputs[][1600], unsigned raw_outputs[][8])
 {
     int j;
 
-    printf("  mem @%p\n", mem);
+    printf("INFO: mem @%p\n", mem);
+    printf("INFO: raw_in_words[%u] %u\n", idx, raw_in_words[idx]);
+    printf("INFO: raw_out_words[%u] %u\n", idx, raw_out_words[idx]);
 
-    printf("  sha2_in_bytes %u\n", sha2_in_bytes);
-    printf("  sha2_out_bytes %u\n", sha2_out_bytes);
-
-    printf("  sha2_raw_in_words %u\n", sha2_raw_in_words[idx]);
-    printf("  sha2_raw_out_words %u\n", sha2_raw_out_words[idx]);
-
-    for (j = 0; j < sha2_raw_in_words[idx]; j++)
+    for (j = 0; j < raw_in_words[idx]; j++)
     {
-        mem[j] = sha2_raw_inputs[idx][j];
-        //printf("  sha2_raw_inputs[%u][%u] %x\n", idx, j, sha2_raw_inputs[idx][j]);
+        mem[j] = raw_inputs[idx][j];
+#ifdef __DEBUG__
+        printf("INFO: raw_inputs[%u][%u] %x\n", idx, j, raw_inputs[idx][j]);
+#endif
     }
 
-    printf("  gold output data @%p\n", gold_outputs);
+#ifdef __DEBUG__
+    printf("INFO: gold output data @%p\n", gold_outputs);
+#endif
 
-    for (j = 0; j < sha2_raw_out_words[idx]; j++) {
-        gold_outputs[j] = sha2_raw_outputs[idx][j];
-        //printf("  raw_outputs[%u][%u] %x\n", idx, j, raw_outputs[idx][j]);
+    for (j = 0; j < raw_out_words[idx]; j++) {
+        gold_outputs[j] = raw_outputs[idx][j];
+#ifdef __DEBUG__
+        printf("INFO: raw_outputs[%u][%u] %x\n", idx, j, raw_outputs[idx][j]);
+#endif
     }
 }
 

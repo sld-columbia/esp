@@ -16,14 +16,14 @@ struct conf_info_t {
     uint32 rsa_n_bytes;
     uint32 rsa_pubpriv;
     uint32 rsa_padding;
-    uint32 rsa_encryption;
+    //uint32 rsa_encryption;
     // aes
     uint32 aes_tag_bytes;
     uint32 aes_aad_bytes;
     uint32 aes_iv_bytes;
     uint32 aes_in_bytes;
     uint32 aes_key_bytes;
-    uint32 aes_encryption;
+    //uint32 aes_encryption;
     uint32 aes_oper_mode;
     // sha2
     uint32 sha2_out_bytes;
@@ -31,6 +31,7 @@ struct conf_info_t {
     // sha1
     uint32 sha1_in_bytes;
     // global
+    uint32 encryption;
     uint32 crypto_algo;
 };
 

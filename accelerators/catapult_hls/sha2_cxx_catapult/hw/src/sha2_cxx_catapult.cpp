@@ -9,7 +9,7 @@
 #include <mc_scverify.h>
 
 // TODO: workaround to make sha2 visible
-#include "sha2.cpp"
+//#include "sha2.cpp"
 
 #define ZERO data_t(0)
 

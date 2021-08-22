@@ -75,21 +75,21 @@ const unsigned aes_tag_size = 4;
 //#define DECRYPTION_MODE 2
 
 /* Possible values of 'oper_mode' */
-//#define ECB_OPERATION_MODE 1
-//#define CTR_OPERATION_MODE 2
-//#define CBC_OPERATION_MODE 3
+//#define AES_ECB_OPERATION_MODE 1
+//#define AES_CTR_OPERATION_MODE 2
+//#define AES_CBC_OPERATION_MODE 3
 //#define GCM_OPERATION_MODE 4
 
-#if !(defined(ECB_OPERATION_MODE) || defined(CTR_OPERATION_MODE) || defined(CBC_OPERATION_MODE) || defined(GCM_OPERATION_MODE))
+#if !(defined(AES_ECB_OPERATION_MODE) || defined(AES_CTR_OPERATION_MODE) || defined(AES_CBC_OPERATION_MODE) || defined(GCM_OPERATION_MODE))
 #error "AES mode is not defined!"
-#error "Compilation flags: [-DECB_OPERATION_MODE=1 | -DCTR_OPERATION_MODE=2 | -DCBC_OPERATION_MODE=3 | -DGCM_OPERATION_MODE=4]"
+#error "Compilation flags: [-DAES_ECB_OPERATION_MODE=1 | -DAES_CTR_OPERATION_MODE=2 | -DAES_CBC_OPERATION_MODE=3 | -DGCM_OPERATION_MODE=4]"
 #endif
 
-#ifdef ECB_OPERATION_MODE
+#ifdef AES_ECB_OPERATION_MODE
 /* aes32/tests/aesmmt/ECBMMT128.rsp */
 #define N_TESTS 10
 
-#define OPERATION_MODE ECB_OPERATION_MODE
+#define OPERATION_MODE AES_ECB_OPERATION_MODE
 
 static unsigned ecb_raw_encrypt_count[N_TESTS] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
 
@@ -137,11 +137,11 @@ static unsigned ecb_raw_encrypt_ciphertext_words[N_TESTS] = {4, 8, 12, 16, 20, 2
 #endif
 
 
-#ifdef CTR_OPERATION_MODE
+#ifdef AES_CTR_OPERATION_MODE
 /* aes32/tests/simple/CTRSimple128.rsp */
 #define N_TESTS 4
 
-#define OPERATION_MODE CTR_OPERATION_MODE
+#define OPERATION_MODE AES_CTR_OPERATION_MODE
 
 static unsigned ctr_raw_encrypt_count[N_TESTS] = {0, 1, 2, 3};
 
@@ -178,11 +178,11 @@ static unsigned ctr_raw_encrypt_ciphertext_bytes[N_TESTS] = {4*4, 8*4, 12*4, 16*
 static unsigned ctr_raw_encrypt_ciphertext_words[N_TESTS] = {4, 8, 12, 16};
 #endif
 
-#ifdef CBC_OPERATION_MODE
+#ifdef AES_CBC_OPERATION_MODE
 /* aes32/tests/aesmmt/CBCMMT128.rsp */
 #define N_TESTS 10
 
-#define OPERATION_MODE CBC_OPERATION_MODE
+#define OPERATION_MODE AES_CBC_OPERATION_MODE
 
 static unsigned cbc_raw_encrypt_count[N_TESTS] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
 
@@ -253,7 +253,7 @@ static void init_buf(unsigned idx, token_t *inputs, token_t * gold_outputs, unsi
     //printf("INFO:  out_bytes %u\n", out_bytes);
 
     printf("INFO: raw_encrypt_key_words[%u] %u\n", idx, raw_encrypt_key_words[idx]);
-#if defined(CTR_OPERATION_MODE) || defined(CBC_OPERATION_MODE)
+#if defined(AES_CTR_OPERATION_MODE) || defined(AES_CBC_OPERATION_MODE)
     printf("INFO: raw_encrypt_iv_words[%u] %u\n", idx, raw_encrypt_iv_words[idx]);
 #endif
     printf("INFO: raw_encrypt_plaintext_words[%u] %u\n", idx, raw_encrypt_plaintext_words[idx]);
@@ -267,7 +267,7 @@ static void init_buf(unsigned idx, token_t *inputs, token_t * gold_outputs, unsi
 #endif
     }
 
-#if defined(CTR_OPERATION_MODE) || defined(CBC_OPERATION_MODE)
+#if defined(AES_CTR_OPERATION_MODE) || defined(AES_CBC_OPERATION_MODE)
     for (i = 0; i < raw_encrypt_iv_words[idx]; i++, j++)
     {
         inputs[j] = raw_encrypt_iv[idx][i];
@@ -356,7 +356,7 @@ int main(int argc, char * argv[])
 
         printf("INFO: Test: %u / %u\n", idx, N_TESTS-1);
 
-#ifdef ECB_OPERATION_MODE
+#ifdef AES_ECB_OPERATION_MODE
         printf("INFO: === ECB mode ===\n");
         key_bytes = ecb_raw_encrypt_key_bytes[idx];
         key_words = ecb_raw_encrypt_key_words[idx];
@@ -377,7 +377,7 @@ int main(int argc, char * argv[])
         mem_size = key_size + in_size + out_size;
 #endif
 
-#ifdef CTR_OPERATION_MODE
+#ifdef AES_CTR_OPERATION_MODE
         printf("INFO: === CTR mode ===\n");
         key_bytes = ctr_raw_encrypt_key_bytes[idx];
         key_words = ctr_raw_encrypt_key_words[idx];
@@ -401,7 +401,7 @@ int main(int argc, char * argv[])
         mem_size = key_size + iv_size + in_size + out_size;
 #endif
 
-#ifdef CBC_OPERATION_MODE
+#ifdef AES_CBC_OPERATION_MODE
         printf("INFO: === CBC mode ===\n");
         key_bytes = cbc_raw_encrypt_key_bytes[idx];
         key_words = cbc_raw_encrypt_key_words[idx];
@@ -444,15 +444,15 @@ int main(int argc, char * argv[])
 
         printf("INFO: Generate input...\n");
 
-#ifdef ECB_OPERATION_MODE
+#ifdef AES_ECB_OPERATION_MODE
         init_buf(idx, mem, gold, ecb_raw_encrypt_key_words, NULL, ecb_raw_encrypt_plaintext_words, ecb_raw_encrypt_ciphertext_words, ecb_raw_encrypt_key, NULL, ecb_raw_encrypt_plaintext, ecb_raw_encrypt_ciphertext);
 #endif
 
-#ifdef CTR_OPERATION_MODE
+#ifdef AES_CTR_OPERATION_MODE
         init_buf(idx, mem, gold, ctr_raw_encrypt_key_words, ctr_raw_encrypt_iv_words, ctr_raw_encrypt_plaintext_words, ctr_raw_encrypt_ciphertext_words, ctr_raw_encrypt_key, ctr_raw_encrypt_iv, ctr_raw_encrypt_plaintext, ctr_raw_encrypt_ciphertext);
 #endif
 
-#ifdef CBC_OPERATION_MODE
+#ifdef AES_CBC_OPERATION_MODE
         init_buf(idx, mem, gold, cbc_raw_encrypt_key_words, cbc_raw_encrypt_iv_words, cbc_raw_encrypt_plaintext_words, cbc_raw_encrypt_ciphertext_words, cbc_raw_encrypt_key, cbc_raw_encrypt_iv, cbc_raw_encrypt_plaintext, cbc_raw_encrypt_ciphertext);
 #endif
 
@@ -515,7 +515,7 @@ int main(int argc, char * argv[])
             printf("INFO: Validating...\n");
 
             /* Validation */
-#ifdef ECB_OPERATION_MODE
+#ifdef AES_ECB_OPERATION_MODE
 #ifdef __DEBUG__
             for (i = 0; i < key_words + in_words + out_words; i++) {
                 printf("INFO: mem[%u] @%p %x\n", i, mem + i, mem[i]);
@@ -524,7 +524,7 @@ int main(int argc, char * argv[])
             errors = validate_buf(idx, mem + key_words + in_words, gold, ecb_raw_encrypt_ciphertext_words);
 #endif
 
-#ifdef CTR_OPERATION_MODE
+#ifdef AES_CTR_OPERATION_MODE
 #ifdef __DEBUG__
             for (i = 0; i < key_words + iv_words + in_words + out_words; i++) {
                 printf("INFO: mem[%u] @%p %x\n", i, mem + i, mem[i]);
@@ -533,7 +533,7 @@ int main(int argc, char * argv[])
             errors = validate_buf(idx, mem + key_words + iv_words + in_words, gold, ctr_raw_encrypt_ciphertext_words);
 #endif
 
-#ifdef CBC_OPERATION_MODE
+#ifdef AES_CBC_OPERATION_MODE
 #ifdef __DEBUG__
             for (i = 0; i < key_words + iv_words + in_words + out_words; i++) {
                 printf("INFO: mem[%u] @%p %x\n", i, mem + i, mem[i]);
@@ -556,7 +556,13 @@ int main(int argc, char * argv[])
         aligned_free(mem);
         aligned_free(gold);
     }
-    printf("INFO: DONE\n");
+#if defined(AES_ECB_OPERATION_MODE)
+    printf("INFO: AES ECB DONE\n");
+#elif defined(AES_CTR_OPERATION_MODE)
+    printf("INFO: AES CTR DONE\n");
+#elif defined(AES_CBC_OPERATION_MODE)
+    printf("INFO: AES CBC DONE\n");
+#endif
 
     return 0;
 }

@@ -62,58 +62,73 @@ static unsigned rsa_raw_encrypt_S[N_TESTS][64] = {
 static unsigned rsa_raw_encrypt_S_bytes[N_TESTS] = {16*4, 16*4};
 static unsigned rsa_raw_encrypt_S_words[N_TESTS] = {16, 16};
 
-static void rsa_init_buf(unsigned idx, token_t *inputs, token_t *gold_outputs, unsigned *raw_encrypt_EM_words, unsigned *raw_encrypt_e_words, unsigned *raw_encrypt_n_words, unsigned *raw_encrypt_S_words, unsigned rsa_raw_encrypt_EM[][64], unsigned rsa_raw_encrypt_e[][64], unsigned rsa_raw_encrypt_n[][64], unsigned rsa_raw_encrypt_S[][64])
+static void rsa_init_buf(unsigned idx, token_t *inputs, token_t *gold_outputs, unsigned *raw_encrypt_EM_words, unsigned *raw_encrypt_e_words, unsigned *raw_encrypt_n_words, unsigned *raw_encrypt_r_words, unsigned *raw_encrypt_S_words, unsigned raw_encrypt_EM[][64], unsigned raw_encrypt_e[][64], unsigned raw_encrypt_n[][64], unsigned raw_encrypt_r[][64], unsigned raw_encrypt_S[][64])
 {
     int i, j;
 
-    printf("  input data @%p\n", inputs);
-    //printf("  key_bytes %u\n", key_bytes);
-    //printf("  in_bytes %u\n", in_bytes);
-    //printf("  out_bytes %u\n", out_bytes);
+//    printf("INFO:  input data @%p\n", inputs);
+//    //printf("INFO:  key_bytes %u\n", key_bytes);
+//    //printf("INFO:  in_bytes %u\n", in_bytes);
+//    //printf("INFO:  out_bytes %u\n", out_bytes);
 
-    printf("  rsa_raw_encrypt_EM_words %u\n", rsa_raw_encrypt_EM_words[idx]);
-    printf("  rsa_raw_encrypt_e_words %u\n", rsa_raw_encrypt_e_words[idx]);
-    printf("  rsa_raw_encrypt_n_words %u\n", rsa_raw_encrypt_n_words[idx]);
-    printf("  rsa_raw_encrypt_S_words %u\n", rsa_raw_encrypt_S_words[idx]);
+    printf("INFO: raw_encrypt_EM_words[%u] %u\n", idx, raw_encrypt_EM_words[idx]);
+    printf("INFO: raw_encrypt_e_words[%u] %u\n", idx, raw_encrypt_e_words[idx]);
+    printf("INFO: raw_encrypt_n_words[%u] %u\n", idx, raw_encrypt_n_words[idx]);
+    printf("INFO: raw_encrypt_r_words[%u] %u\n", idx, raw_encrypt_r_words[idx]);
+    printf("INFO: raw_encrypt_S_words[%u] %u\n", idx, raw_encrypt_S_words[idx]);
 
-    for (j = 0; j < rsa_raw_encrypt_EM_words[idx]; j++)
+    for (j = 0; j < raw_encrypt_EM_words[idx]; j++)
     {
-        inputs[j] = rsa_raw_encrypt_EM[idx][j];
-        //printf("  rsa_raw_encrypt_EM[%2u][%2u]       | inputs[%3u]@%p %8x\n", idx, j, j, inputs + j, rsa_raw_encrypt_EM[idx][j]);
+        inputs[j] = raw_encrypt_EM[idx][j];
+#ifdef __DEBUG__
+        printf("INFO:  raw_encrypt_EM[%2u][%2u]       | inputs[%3u]@%p %8x\n", idx, j, j, inputs + j, raw_encrypt_EM[idx][j]);
+#endif
     }
 
-    for (i = 0; i < rsa_raw_encrypt_e_words[idx]; i++, j++)
+    for (i = 0; i < raw_encrypt_e_words[idx]; i++, j++)
     {
-        inputs[j] = rsa_raw_encrypt_e[idx][i];
-        //printf("  rsa_raw_encrypt_e [%2u][%2u]       | inputs[%3u]@%p %8x\n", idx, i, j, inputs + j, rsa_raw_encrypt_e[idx][i]);
+        inputs[j] = raw_encrypt_e[idx][i];
+#ifdef __DEBUG__
+        printf("INFO:  raw_encrypt_e [%2u][%2u]       | inputs[%3u]@%p %8x\n", idx, i, j, inputs + j, raw_encrypt_e[idx][i]);
+#endif
     }
 
-    for (i = 0; i < rsa_raw_encrypt_n_words[idx]; i++, j++)
+    for (i = 0; i < raw_encrypt_n_words[idx]; i++, j++)
     {
-        inputs[j] = rsa_raw_encrypt_n[idx][i];
-        //printf("  rsa_raw_encrypt_n [%2u][%2u]       | inputs[%3u]@%p %8x\n", idx, i, j, inputs + j, rsa_raw_encrypt_n[idx][i]);
+        inputs[j] = raw_encrypt_n[idx][i];
+#ifdef __DEBUG__
+        printf("INFO:  raw_encrypt_n [%2u][%2u]       | inputs[%3u]@%p %8x\n", idx, i, j, inputs + j, raw_encrypt_n[idx][i]);
+#endif
     }
 
     // hardcoded
-    //calc_res(rsa_raw_encrypt_n_bytes[idx], (unsigned char*)rsa_raw_encrypt_n[idx], (unsigned char*)rsa_raw_encrypt_r[idx]);
+    //calc_res(raw_encrypt_n_bytes[idx], (unsigned char*)raw_encrypt_n[idx], (unsigned char*)raw_encrypt_r[idx]);
 
-    for (i = 0; i < rsa_raw_encrypt_r_words[idx]; i++, j++)
+    for (i = 0; i < raw_encrypt_r_words[idx]; i++, j++)
     {
-        inputs[j] = rsa_raw_encrypt_r[idx][i];
-        //printf("  rsa_raw_encrypt_r [%2u][%2u]       | inputs[%3u]@%p %8x\n", idx, i, j, inputs + j, rsa_raw_encrypt_r[idx][i]);
+        inputs[j] = raw_encrypt_r[idx][i];
+#ifdef __DEBUG__
+        printf("INFO:  raw_encrypt_r [%2u][%2u]       | inputs[%3u]@%p %8x\n", idx, i, j, inputs + j, raw_encrypt_r[idx][i]);
+#endif
     }
 
-    for (i = 0; i < rsa_raw_encrypt_S_words[idx]; i++, j++)
+    for (i = 0; i < raw_encrypt_S_words[idx]; i++, j++)
     {
         inputs[j] = 0xdeadbeef;
-        //printf("                                   | inputs[%3u]@%p %8x\n", j, inputs + j, 0xdeadbeef);
+#ifdef __DEBUG__
+        printf("INFO:                                   | inputs[%3u]@%p %8x\n", j, inputs + j, 0xdeadbeef);
+#endif
     }
 
-    printf("  gold output data @%p\n", gold_outputs);
+#ifdef __DEBUG__
+    printf("INFO:  gold output data @%p\n", gold_outputs);
+#endif
 
-    for (j = 0; j < rsa_raw_encrypt_S_words[idx]; j++) {
-        gold_outputs[j] = rsa_raw_encrypt_S[idx][j];
-        //printf("  rsa_raw_encrypt_S [%2u][%2u]       | gold[%3u]  @%p %8x\n", idx, j, j, gold_outputs + j, rsa_raw_encrypt_S[idx][j]);
+    for (j = 0; j < raw_encrypt_S_words[idx]; j++) {
+        gold_outputs[j] = raw_encrypt_S[idx][j];
+#ifdef __DEBUG__
+        printf("INFO:  raw_encrypt_S [%2u][%2u]       | gold[%3u]  @%p %8x\n", idx, j, j, gold_outputs + j, raw_encrypt_S[idx][j]);
+#endif
     }
 }
 

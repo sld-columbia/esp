@@ -347,7 +347,8 @@ SHA2_STORE_LOOP:
     } else if (crypto_algo == CRYPTO_AES_MODE) {
 
         aes_oper_mode = config.aes_oper_mode;
-        aes_encryption = config.aes_encryption;
+        //aes_encryption = config.aes_encryption;
+        aes_encryption = config.encryption;
         aes_key_bytes = config.aes_key_bytes;
         aes_in_bytes = config.aes_in_bytes;
         aes_iv_bytes = config.aes_iv_bytes;
@@ -565,7 +566,8 @@ AES_STORE_LOOP:
         rsa_n_bytes = config.rsa_n_bytes;
         rsa_pubpriv = config.rsa_pubpriv;
         rsa_padding = config.rsa_padding;
-        rsa_encryption = config.rsa_encryption;
+        //rsa_encryption = config.rsa_encryption;
+        rsa_encryption = config.encryption;
 
         rsa_out_bytes = rsa_n_bytes;
 

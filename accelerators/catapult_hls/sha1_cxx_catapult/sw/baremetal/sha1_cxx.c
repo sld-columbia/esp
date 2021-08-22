@@ -331,7 +331,7 @@ static void init_buf (unsigned idx, token_t *inputs, token_t * gold_outputs)
     {
         inputs[j] = raw_inputs[idx][j];
 #ifdef __DEBUG__
-        printf("INFO: raw_inputs[%2u][%2u] %08x\n", idx, j, raw_inputs[t][j]);
+        printf("INFO: raw_inputs[%2u][%2u] %08x\n", idx, j, raw_inputs[idx][j]);
 #endif
     }
 
@@ -342,7 +342,7 @@ static void init_buf (unsigned idx, token_t *inputs, token_t * gold_outputs)
     for (j = 0; j < sha1_out_bytes; j++) {
         gold_outputs[j] = raw_outputs[idx][j];
 #ifdef __DEBUG__
-        printf("INFO: raw_outputs[%u][%u] %x\n", idx, j, raw_outputs[t][j]);
+        printf("INFO: raw_outputs[%u][%u] %x\n", idx, j, raw_outputs[idx][j]);
 #endif
     }
 }
@@ -350,6 +350,7 @@ static void init_buf (unsigned idx, token_t *inputs, token_t * gold_outputs)
 
 int main(int argc, char * argv[])
 {
+
     int i;
     int n;
     int ndev;
@@ -444,7 +445,7 @@ int main(int argc, char * argv[])
             iowrite32(dev, SHA1_CXX_IN_BYTES_REG, in_bytes);
 
             // Flush (customize coherence model here)
-            //esp_flush(ACC_COH_NONE);
+            esp_flush(ACC_COH_NONE);
 
             // Start accelerators
             printf("INFO: Accelerator start...\n");
@@ -487,7 +488,7 @@ int main(int argc, char * argv[])
 
     }
 
-    printf("INFO: DONE\n");
+    printf("INFO: SHA1 DONE\n");
 
     return 0;
 }

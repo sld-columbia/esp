@@ -70,6 +70,7 @@ static unsigned rsa_r_words;
 static unsigned rsa_out_words;
 
 static unsigned mem_bytes; /* Total memory buffer size in bytes */
+static unsigned mem_words; /* Total memory buffer size in words */
 static unsigned out_offset; /* Output offset in memory buffer */
 static unsigned out_bytes; /* Output buffer size in bytes */
 static unsigned out_words; /* Output buffer size in words */
@@ -83,49 +84,68 @@ static unsigned out_words; /* Output buffer size in words */
 
 /* User defined registers */
 /* <<--regs-->> */
+//#define CRYPTO_CXX_CRYPTO_ALGO_REG 0x40
+//
+//#define CRYPTO_CXX_SHA1_IN_BYTES_REG 0x44
+//
+//#define CRYPTO_CXX_SHA2_IN_BYTES_REG 0x48
+//#define CRYPTO_CXX_SHA2_OUT_BYTES_REG 0x4C
+//
+//#define CRYPTO_CXX_AES_OPER_MODE_REG 0x50
+//#define CRYPTO_CXX_AES_ENCRYPTION_REG 0x54
+//#define CRYPTO_CXX_AES_KEY_BYTES_REG 0x58
+//#define CRYPTO_CXX_AES_INPUT_BYTES_REG 0x5C
+//#define CRYPTO_CXX_AES_IV_BYTES_REG 0x60
+//#define CRYPTO_CXX_AES_AAD_BYTES_REG 0x64
+//#define CRYPTO_CXX_AES_TAG_BYTES_REG 0x68
+//
+//#define CRYPTO_CXX_RSA_ENCRYPTION_REG 0x6C
+//#define CRYPTO_CXX_RSA_PADDING_REG 0x70
+//#define CRYPTO_CXX_RSA_PUBPRIV_REG 0x74
+//#define CRYPTO_CXX_RSA_N_BYTES_REG 0x78
+//#define CRYPTO_CXX_RSA_E_BYTES_REG 0x7C
+//#define CRYPTO_CXX_RSA_IN_BYTES_REG 0x80
+
 #define CRYPTO_CXX_CRYPTO_ALGO_REG 0x40
+#define CRYPTO_CXX_ENCRYPTION_REG 0x44
 
-#define CRYPTO_CXX_SHA1_IN_BYTES_REG 0x44
+#define CRYPTO_CXX_SHA1_IN_BYTES_REG 0x48
 
-#define CRYPTO_CXX_SHA2_IN_BYTES_REG 0x48
-#define CRYPTO_CXX_SHA2_OUT_BYTES_REG 0x4C
+#define CRYPTO_CXX_SHA2_IN_BYTES_REG 0x4C
+#define CRYPTO_CXX_SHA2_OUT_BYTES_REG 0x50
 
-#define CRYPTO_CXX_AES_OPER_MODE_REG 0x50
-#define CRYPTO_CXX_AES_ENCRYPTION_REG 0x54
+#define CRYPTO_CXX_AES_OPER_MODE_REG 0x54
+//#define CRYPTO_CXX_AES_ENCRYPTION_REG 0x54
 #define CRYPTO_CXX_AES_KEY_BYTES_REG 0x58
 #define CRYPTO_CXX_AES_INPUT_BYTES_REG 0x5C
 #define CRYPTO_CXX_AES_IV_BYTES_REG 0x60
 #define CRYPTO_CXX_AES_AAD_BYTES_REG 0x64
 #define CRYPTO_CXX_AES_TAG_BYTES_REG 0x68
 
-#define CRYPTO_CXX_RSA_ENCRYPTION_REG 0x6C
-#define CRYPTO_CXX_RSA_PADDING_REG 0x70
-#define CRYPTO_CXX_RSA_PUBPRIV_REG 0x74
-#define CRYPTO_CXX_RSA_N_BYTES_REG 0x78
-#define CRYPTO_CXX_RSA_E_BYTES_REG 0x7C
-#define CRYPTO_CXX_RSA_IN_BYTES_REG 0x80
+//#define CRYPTO_CXX_RSA_ENCRYPTION_REG 0x6C
+#define CRYPTO_CXX_RSA_PADDING_REG 0x6C
+#define CRYPTO_CXX_RSA_PUBPRIV_REG 0x70
+#define CRYPTO_CXX_RSA_N_BYTES_REG 0x74
+#define CRYPTO_CXX_RSA_E_BYTES_REG 0x78
+#define CRYPTO_CXX_RSA_IN_BYTES_REG 0x7C
 
 //#define SHA1_ALGO 1
 //#define SHA2_ALGO 2
 //#define AES_ALGO 3
-#define RSA_ALGO 4
+//#define RSA_ALGO 4
 
-#ifdef SHA1_ALGO
+#if defined(SHA1_ALGO)
 #include "sha1_tests.h"
-#endif
-
-#ifdef SHA2_ALGO
+#elif defined(SHA2_ALGO)
 #include "sha2_tests.h"
-#endif
-
-#ifdef AES_ALGO
+#elif defined(AES_ALGO)
 #include "aes_tests.h"
-#endif
-
-#ifdef RSA_ALGO
+#elif defined(RSA_ALGO)
 #include "rsa_tests.h"
-
 #define ROUND_UP(a) ((a+4-1)/4)*4
+#else
+#error "Crypto algo is not defined!"
+#error "Compilation flags: [-DSHA1_ALGO | -DSHA2_ALGO | -DAES_ALGO | -DRSA_ALGO]"
 #endif
 
 
@@ -134,8 +154,8 @@ static int validate_buf(token_t *out, token_t *gold, unsigned out_words)
     int j;
     unsigned errors = 0;
 
-    printf("  gold output data @%p\n", gold);
-    printf("       output data @%p\n", out);
+    printf("INFO: gold output data @%p\n", gold);
+    printf("INFO:      output data @%p\n", out);
 
     for (j = 0; j < out_words; j++)
     {
@@ -145,11 +165,13 @@ static int validate_buf(token_t *out, token_t *gold, unsigned out_words)
         if (out_data != gold_data)
         {
             errors++;
+#ifdef __DEBUG__
+            printf("[%u] @%p %x (%x) %s\n", j, out + j, out_data, gold_data, ((out_data != gold_data)?" !!!":""));
+#endif
         }
-        //printf("[%u] @%p %x (%x) %s\n", j, out + j, out_data, gold_data, ((out_data != gold_data)?" !!!":""));
     }
 
-    printf("  total errors %u\n", errors);
+    printf("INFO: Total errors %u\n", errors);
 
     return errors;
 }
@@ -168,26 +190,27 @@ int main(int argc, char * argv[])
     unsigned errors = 0;
 
     // Search for the device
-    printf("Scanning device tree... \n");
+    printf("INFO: Scanning device tree... \n");
 
     ndev = probe(&espdevs, VENDOR_SLD, SLD_CRYPTO_CXX, DEV_NAME);
 
-    printf("Found %d devices: %s\n", ndev, DEV_NAME);
+    printf("INFO: Found %d devices: %s\n", ndev, DEV_NAME);
 
     if (ndev == 0) {
-        printf("crypto_cxx not found\n");
+        printf("ERROR: crypto_cxx not found\n");
         return 0;
     }
 
-
-    printf("   sizeof(token_:t) = %u\n", sizeof(token_t));
+    printf("INFO: sizeof(token_t) = %u B\n", sizeof(token_t));
 
     for (unsigned idx = 1; idx < N_TESTS; idx++) {
-	printf("   -> index %u\n", idx); 
+
+        printf("INFO: Test: %u / %u\n", idx, N_TESTS-1);
+
 #ifdef SHA1_ALGO
         crypto_algo = SHA1_ALGO;
 
-        printf("=== AES CBC mode ===\n");
+        printf("INFO: === SHA1 ===\n");
 
         sha1_in_bytes = sha1_raw_in_bytes[idx];
         sha1_in_words = sha1_raw_in_words[idx];
@@ -199,15 +222,15 @@ int main(int argc, char * argv[])
         out_offset = sha1_in_words;
         out_bytes = sha1_out_bytes;
 
-	// ATTENTION: SHA1 output is 5 32-bit words, DMA is 64 bits
-	// Discard the last extra word
+        // ATTENTION: SHA1 output is 5 32-bit words, DMA is 64 bits
+        // Discard the last extra word
         out_words = sha1_out_words - 1;
 #endif
 
 #ifdef SHA2_ALGO
         crypto_algo = SHA2_ALGO;
 
-        printf("=== SHA2 ===\n");
+        printf("INFO: === SHA2 ===\n");
 
         sha2_in_bytes = sha2_raw_in_bytes[idx];
         sha2_in_words = sha2_raw_in_words[idx];
@@ -224,7 +247,7 @@ int main(int argc, char * argv[])
 #if defined(AES_ALGO) && defined(AES_ECB_OPERATION_MODE)
         crypto_algo = AES_ALGO;
 
-        printf("=== AES ECB mode ===\n");
+        printf("INFO: === AES - ECB mode ===\n");
 
         aes_key_bytes = aes_ecb_raw_encrypt_key_bytes[idx];
         aes_key_words = aes_ecb_raw_encrypt_key_words[idx];
@@ -238,7 +261,7 @@ int main(int argc, char * argv[])
 
         mem_bytes = aes_key_bytes + aes_in_bytes + aes_out_bytes;
 
-	out_offset = aes_key_words + aes_in_words;
+        out_offset = aes_key_words + aes_in_words;
         out_bytes = aes_in_bytes;
         out_words = aes_in_words;
 #endif
@@ -246,7 +269,7 @@ int main(int argc, char * argv[])
 #if defined(AES_ALGO) && defined(AES_CTR_OPERATION_MODE)
         crypto_algo = AES_ALGO;
 
-        printf("=== AES CTR mode ===\n");
+        printf("INFO: === AES - CTR mode ===\n");
 
         aes_key_bytes = aes_ctr_raw_encrypt_key_bytes[idx];
         aes_key_words = aes_ctr_raw_encrypt_key_words[idx];
@@ -262,7 +285,7 @@ int main(int argc, char * argv[])
 
         mem_bytes = aes_key_bytes + aes_iv_bytes + aes_in_bytes + out_bytes;
 
-	out_offset = aes_key_words + aes_iv_words + aes_in_words;
+        out_offset = aes_key_words + aes_iv_words + aes_in_words;
         out_bytes = aes_in_bytes;
         out_words = aes_in_words;
 #endif
@@ -270,7 +293,7 @@ int main(int argc, char * argv[])
 #if defined(AES_ALGO) && defined(AES_CBC_OPERATION_MODE)
         crypto_algo = AES_ALGO;
 
-        printf("=== AES CBC mode ===\n");
+        printf("INFO: === AES - CBC mode ===\n");
 
         aes_key_bytes = aes_cbc_raw_encrypt_key_bytes[idx];
         aes_key_words = aes_cbc_raw_encrypt_key_words[idx];
@@ -294,7 +317,7 @@ int main(int argc, char * argv[])
 #ifdef RSA_ALGO
         crypto_algo = RSA_ALGO;
 
-        printf("=== RSA ===\n");
+        printf("INFO: === RSA ===\n");
 
         rsa_in_bytes = rsa_raw_encrypt_EM_bytes[idx];
         rsa_in_words = rsa_raw_encrypt_EM_words[idx];
@@ -311,33 +334,39 @@ int main(int argc, char * argv[])
         out_bytes = rsa_n_bytes;
         out_words = rsa_n_words;
 
+        rsa_out_bytes = out_bytes;
+        rsa_out_words = out_words;
+
         mem_bytes = ROUND_UP(rsa_in_bytes) + rsa_e_bytes + rsa_n_bytes + rsa_r_bytes + ROUND_UP(rsa_out_bytes); // TODO: cleanup byte rounding
+        mem_words = rsa_in_words + rsa_e_words + rsa_n_words + rsa_r_words + rsa_out_words;
         out_offset = rsa_in_words + rsa_e_words + rsa_n_words + rsa_r_words;
 #endif
 
         // Allocate memory
         gold = aligned_malloc(out_bytes);
         mem = aligned_malloc(mem_bytes);
-        printf("  memory buffer base-address = %p\n", mem);
-        printf("  memory buffer size = %u\n", mem_bytes);
-        printf("  golden buffer base-address = %p\n", gold);
-        printf("  golden buffer size = %u\n", out_bytes);
+        printf("INFO: Memory buffer\n");
+        printf("INFO:   - base address = %p\n", mem);
+        printf("INFO:   - size = %u B\n", mem_bytes);
+        printf("INFO: Golden buffer\n");
+        printf("INFO:   - base address = %p\n", gold);
+        printf("INFO:   - size = %u B\n", out_bytes);
 
         // Alocate and populate page table
         ptable = aligned_malloc(NCHUNK(mem_bytes) * sizeof(unsigned *));
         for (i = 0; i < NCHUNK(mem_bytes); i++)
             ptable[i] = (unsigned *) &mem[i * (CHUNK_SIZE / sizeof(token_t))];
-        printf("  ptable = %p\n", ptable);
-        printf("  nchunk = %lu\n", NCHUNK(mem_bytes));
+        //printf("  ptable = %p\n", ptable);
+        //printf("  nchunk = %lu\n", NCHUNK(mem_bytes));
 
-        printf("  Generate input...\n");
+        printf("INFO: Generate input...\n");
 
 #ifdef SHA1_ALGO
-        sha1_init_buf(idx, mem, gold);
+        sha1_init_buf(idx, mem, gold, sha1_raw_in_words, sha1_raw_out_words, sha1_raw_inputs, sha1_raw_outputs);
 #endif
 
 #ifdef SHA2_ALGO
-        sha2_init_buf(idx, mem, gold);
+        sha2_init_buf(idx, mem, gold, sha2_raw_in_words, sha2_raw_out_words, sha2_raw_inputs, sha2_raw_outputs);
 #endif
 
 #if defined(AES_ALGO) && defined(AES_ECB_OPERATION_MODE)
@@ -353,10 +382,10 @@ int main(int argc, char * argv[])
 #endif
 
 #ifdef RSA_ALGO
-        rsa_init_buf(idx, mem, gold, rsa_raw_encrypt_EM_words, rsa_raw_encrypt_e_words, rsa_raw_encrypt_n_words, rsa_raw_encrypt_S_words, rsa_raw_encrypt_EM, rsa_raw_encrypt_e, rsa_raw_encrypt_n, rsa_raw_encrypt_S);
+        rsa_init_buf(idx, mem, gold, rsa_raw_encrypt_EM_words, rsa_raw_encrypt_e_words, rsa_raw_encrypt_n_words, rsa_raw_encrypt_r_words, rsa_raw_encrypt_S_words, rsa_raw_encrypt_EM, rsa_raw_encrypt_e, rsa_raw_encrypt_n, rsa_raw_encrypt_r, rsa_raw_encrypt_S);
 #endif
 
-        printf("  ... input ready!\n");
+        printf("INFO: Input ready!\n");
 
         // Pass common configuration parameters
         for (n = 0; n < ndev; n++) {
@@ -365,12 +394,12 @@ int main(int argc, char * argv[])
 
             // Check DMA capabilities
             if (ioread32(dev, PT_NCHUNK_MAX_REG) == 0) {
-                printf("  -> scatter-gather DMA is disabled. Abort.\n");
+                printf("ERROR: Scatter-gather DMA is disabled. Abort.\n");
                 return 0;
             }
 
             if (ioread32(dev, PT_NCHUNK_MAX_REG) < NCHUNK(mem_bytes)) {
-                printf("  -> Not enough TLB entries available. Abort.\n");
+                printf("ERROR: Not enough TLB entries available. Abort.\n");
                 return 0;
             }
 
@@ -397,7 +426,8 @@ int main(int argc, char * argv[])
 #endif
 #ifdef AES_ALGO
             iowrite32(dev, CRYPTO_CXX_AES_OPER_MODE_REG, AES_OPERATION_MODE);
-            iowrite32(dev, CRYPTO_CXX_AES_ENCRYPTION_REG, AES_ENCRYPTION_MODE);
+            //iowrite32(dev, CRYPTO_CXX_AES_ENCRYPTION_REG, AES_ENCRYPTION_MODE);
+            iowrite32(dev, CRYPTO_CXX_ENCRYPTION_REG, AES_ENCRYPTION_MODE);
             iowrite32(dev, CRYPTO_CXX_AES_KEY_BYTES_REG, aes_key_bytes);
             iowrite32(dev, CRYPTO_CXX_AES_INPUT_BYTES_REG, aes_in_bytes);
             iowrite32(dev, CRYPTO_CXX_AES_IV_BYTES_REG, aes_iv_bytes);
@@ -405,23 +435,21 @@ int main(int argc, char * argv[])
             iowrite32(dev, CRYPTO_CXX_AES_TAG_BYTES_REG, aes_tag_bytes);
 #endif
 #ifdef RSA_ALGO
-            iowrite32(dev, CRYPTO_CXX_RSA_ENCRYPTION_REG, RSA_ENCRYPTION_MODE);
+            //iowrite32(dev, CRYPTO_CXX_RSA_ENCRYPTION_REG, RSA_ENCRYPTION_MODE);
+            iowrite32(dev, CRYPTO_CXX_ENCRYPTION_REG, RSA_ENCRYPTION_MODE);
             iowrite32(dev, CRYPTO_CXX_RSA_PADDING_REG, RSA_PKCS1_PADDING);
             iowrite32(dev, CRYPTO_CXX_RSA_PUBPRIV_REG, RSA_PRIVATE_KEY);
             iowrite32(dev, CRYPTO_CXX_RSA_N_BYTES_REG, rsa_n_bytes);
-            //iowrite32(dev, CRYPTO_CXX_RSA_E_BYTES_REG, rsa_e_bytes);
-            //iowrite32(dev, CRYPTO_CXX_RSA_IN_BYTES_REG, rsa_in_bytes);
-            // FLIP TO DEBUG
-            iowrite32(dev, CRYPTO_CXX_RSA_E_BYTES_REG, rsa_in_bytes);
-            iowrite32(dev, CRYPTO_CXX_RSA_IN_BYTES_REG, rsa_e_bytes);
+            iowrite32(dev, CRYPTO_CXX_RSA_E_BYTES_REG, rsa_e_bytes);
+            iowrite32(dev, CRYPTO_CXX_RSA_IN_BYTES_REG, rsa_in_bytes);
 #endif
 
             // Flush (customize coherence model here)
-            // esp_flush(ACC_COH_NONE);
+            esp_flush(ACC_COH_NONE);
             //esp_flush(ACC_COH_RECALL);
 
             // Start accelerators
-            //printf("  Start...\n");
+            printf("INFO: Accelerator start...\n");
 
             iowrite32(dev, CMD_REG, CMD_MASK_START);
 
@@ -433,29 +461,47 @@ int main(int argc, char * argv[])
             }
             iowrite32(dev, CMD_REG, 0x0);
 
-            printf("  Done\n");
-            printf("  validating...\n");
+            printf("INFO: Accelerator done!\n");
+            printf("INFO: Validating...\n");
 
-            //for (i = 0; i < sha1_in_words + sha1_out_words; i++) {
-            //    printf("mem[%u] @%p %x\n", i, mem + i, mem[i]);
-            //}
+#ifdef __DEBUG__
+            for (i = 0; i < mem_words; i++) {
+                printf("INFO: mem[%u] @%p %x\n", i, mem + i, mem[i]);
+            }
+#endif
 
             /* Validation */
             errors = validate_buf(mem + out_offset, gold, out_words);
-
-            aligned_free(ptable);
-            aligned_free(mem);
-            aligned_free(gold);
-
             if (errors) {
-                printf("  ... FAIL\n");
+                printf("ERROR: FAIL\n");
+                aligned_free(ptable);
+                aligned_free(mem);
+                aligned_free(gold);
                 return 1;
             } else
-                printf("  ... PASS\n");
+                printf("INFO: PASS\n");
         }
-    }
 
-    printf("DONE\n");
+        aligned_free(ptable);
+        aligned_free(mem);
+        aligned_free(gold);
+
+    }
+#if defined(SHA1_ALGO)
+    printf("INFO: Crypto SHA1 DONE\n");
+#elif defined(SHA2_ALGO)
+    printf("INFO: Crypto SHA2 DONE\n");
+#elif defined(AES_ALGO) && defined(AES_ECB_OPERATION_MODE)
+    printf("INFO: Crypto AES ECB DONE\n");
+#elif defined(AES_ALGO) && defined(AES_CTR_OPERATION_MODE)
+    printf("INFO: Crypto AES CTR DONE\n");
+#elif defined(AES_ALGO) && defined(AES_CBC_OPERATION_MODE)
+    printf("INFO: Crypto AES CBC DONE\n");
+#elif defined(RSA_ALGO)
+    printf("INFO: Crypto RSA DONE\n");
+#endif
+
+    printf("INFO: DONE\n");
 
     return 0;
 }

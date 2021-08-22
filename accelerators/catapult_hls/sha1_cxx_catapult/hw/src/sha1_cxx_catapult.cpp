@@ -9,7 +9,7 @@
 #include <mc_scverify.h>
 
 // TODO: workaround to make sha1 visible
-#include "sha1.cpp"
+//#include "sha1.cpp"
 
 template <class T1, class T2>
 void compute_wrapper(uint32_t in_bytes, T1 &input, T2 &output) {

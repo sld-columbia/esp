@@ -349,8 +349,9 @@ CCS_MAIN(int argc, char **argv) {
 #ifdef AES_ALGO
         conf_info_data.crypto_algo = AES_ALGO;
         conf_info_data.aes_oper_mode = AES_ECB_OPERATION_MODE;
-        conf_info_data.aes_encryption = AES_ENCRYPTION_MODE;
-        conf_info_data.aes_key_bytes = aes_raw_encrypt_key_bytes[t]; 
+        //conf_info_data.aes_encryption = AES_ENCRYPTION_MODE;
+        conf_info_data.encryption = AES_ENCRYPTION_MODE;
+        conf_info_data.aes_key_bytes = aes_raw_encrypt_key_bytes[t];
         conf_info_data.aes_in_bytes = aes_raw_encrypt_plaintext_bytes[t];
         conf_info_data.aes_iv_bytes = 0; // 0 for ECB
         conf_info_data.aes_aad_bytes = 0; // 0 for ECB
@@ -365,8 +366,9 @@ CCS_MAIN(int argc, char **argv) {
 
         ESP_REPORT_INFO(VON, "Configuration:");
         ESP_REPORT_INFO(VON, "  - aes_oper_mode: %u", ESP_TO_UINT32(conf_info_data.aes_oper_mode));
-        ESP_REPORT_INFO(VON, "  - aes_encryption: %u", ESP_TO_UINT32(conf_info_data.aes_encryption));
-        ESP_REPORT_INFO(VON, "  - aes_key_bytes: %u (words %u)", ESP_TO_UINT32(conf_info_data.aes_key_bytes), aes_key_words); 
+        //ESP_REPORT_INFO(VON, "  - aes_encryption: %u", ESP_TO_UINT32(conf_info_data.aes_encryption));
+        ESP_REPORT_INFO(VON, "  - aes_encryption: %u", ESP_TO_UINT32(conf_info_data.encryption));
+        ESP_REPORT_INFO(VON, "  - aes_key_bytes: %u (words %u)", ESP_TO_UINT32(conf_info_data.aes_key_bytes), aes_key_words);
         ESP_REPORT_INFO(VON, "  - aes_in_bytes: %u (words %u)", ESP_TO_UINT32(conf_info_data.aes_in_bytes), aes_in_words);
         ESP_REPORT_INFO(VON, "  - aes_iv_bytes: %u (words %u)", ESP_TO_UINT32(conf_info_data.aes_iv_bytes), aes_iv_words);
         ESP_REPORT_INFO(VON, "  - aes_aad_bytes: %u (words %u)", ESP_TO_UINT32(conf_info_data.aes_aad_bytes), aes_aad_words);
@@ -380,7 +382,8 @@ CCS_MAIN(int argc, char **argv) {
         conf_info_data.rsa_n_bytes = rsa_raw_encrypt_n_bytes[t];
         conf_info_data.rsa_pubpriv = RSA_PRIVATE_KEY;
         conf_info_data.rsa_padding = RSA_PKCS1_PADDING;
-        conf_info_data.rsa_encryption = RSA_ENCRYPTION_MODE;
+        //conf_info_data.rsa_encryption = RSA_ENCRYPTION_MODE;
+        conf_info_data.encryption = RSA_ENCRYPTION_MODE;
 
         unsigned rsa_in_words = rsa_raw_encrypt_EM_words[t];
         unsigned rsa_n_words = rsa_raw_encrypt_n_words[t];
@@ -390,7 +393,8 @@ CCS_MAIN(int argc, char **argv) {
 
         ESP_REPORT_INFO(VON, "Test index: %u", t);
         ESP_REPORT_INFO(VON, "Configuration:");
-        ESP_REPORT_INFO(VON, "  - rsa_encryption: %u", ESP_TO_UINT32(conf_info_data.rsa_encryption));
+        //ESP_REPORT_INFO(VON, "  - rsa_encryption: %u", ESP_TO_UINT32(conf_info_data.rsa_encryption));
+        ESP_REPORT_INFO(VON, "  - rsa_encryption: %u", ESP_TO_UINT32(conf_info_data.encryption));
         ESP_REPORT_INFO(VON, "  - rsa_in_bytes: %u (words %u)", ESP_TO_UINT32(conf_info_data.rsa_in_bytes), rsa_in_words);
         ESP_REPORT_INFO(VON, "  - rsa_e_bytes: %u (words %u)", ESP_TO_UINT32(conf_info_data.rsa_e_bytes), rsa_e_words);
         ESP_REPORT_INFO(VON, "  - rsa_n_bytes: %u (words %u)", ESP_TO_UINT32(conf_info_data.rsa_n_bytes), rsa_n_words);
