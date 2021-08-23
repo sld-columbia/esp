@@ -135,7 +135,7 @@ package misc is
       );
   end component icap;
 
-  component prc is
+  component prc_inst is
     port (
       clk                               : in  std_logic;
       reset                             : in  std_logic;

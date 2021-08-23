@@ -1937,6 +1937,9 @@ def print_mapping(fp, soc, esp_config):
         if t.type == "cpu":
             if esp_config.coherence:
                 fp.write("    " + str(t.l2.idx) + " => " + str(i) + ",\n")
+    # 127 - ICAP
+    if soc.prc.get() == 1:
+        fp.write("    127 => io_tile_id,\n")
     fp.write("    others => 0);\n\n")
 
     #
