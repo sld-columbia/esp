@@ -17,6 +17,21 @@ fpga-run-dpr: fpga-run
 fpga-run-linux-dpr: DPR_ENABLED = y
 fpga-run-linux-dpr: fpga-run-linux
 
+fpga-reconf: esplink
+	@./$(ESP_CFG_BUILD)/esplink --reset	
+	@./$(ESP_CFG_BUILD)/esplink --pbs -i $(ESP_ROOT)/socs/$(BOARD)/partial.bit
+	@./$(ESP_CFG_BUILD)/esplink --reset	
+
+fpga-reset:
+	@./$(ESP_CFG_BUILD)/esplink --reset
+	@./$(ESP_CFG_BUILD)/esplink --brom -i $(SOFT_BUILD)/prom.bin
+	@./$(ESP_CFG_BUILD)/esplink --reset
+
+fpga-run-sw: esplink soft 
+	@./$(ESP_CFG_BUILD)/esplink --reset 
+	@./$(ESP_CFG_BUILD)/esplink --brom -i $(SOFT_BUILD)/prom.bin
+	@./$(ESP_CFG_BUILD)/esplink --dram -i $(SOFT_BUILD)/systest.bin
+	@./$(ESP_CFG_BUILD)/esplink --reset
 
 fpga-run: esplink fpga-program soft
 	@./$(ESP_CFG_BUILD)/esplink --reset

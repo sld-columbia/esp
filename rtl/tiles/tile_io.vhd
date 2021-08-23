@@ -579,6 +579,58 @@ architecture rtl of tile_io is
   attribute keep of timer_irq : signal is "true";
   attribute keep of ipi : signal is "true";
 
+  attribute mark_debug of s_axil_awvalid     : signal is "true";
+  attribute mark_debug of s_axil_awready     : signal is "true";
+  attribute mark_debug of s_axil_awaddr      : signal is "true";
+ -- attribute mark_debug of s_axil_awaddr_masked      : signal is "true";
+  attribute mark_debug of s_axil_wvalid      : signal is "true";
+  attribute mark_debug of s_axil_wready      : signal is "true";
+  attribute mark_debug of s_axil_wdata       : signal is "true";
+  attribute mark_debug of s_axil_wstrb       : signal is "true";
+  attribute mark_debug of s_axil_arvalid     : signal is "true";
+  attribute mark_debug of s_axil_arready     : signal is "true";
+  attribute mark_debug of s_axil_araddr      : signal is "true";
+ -- attribute mark_debug of s_axil_araddr_masked      : signal is "true";
+  attribute mark_debug of s_axil_rvalid      : signal is "true";
+  attribute mark_debug of s_axil_rready      : signal is "true";
+  attribute mark_debug of s_axil_rdata       : signal is "true";
+  attribute mark_debug of s_axil_rresp       : signal is "true";
+  attribute mark_debug of s_axil_bvalid      : signal is "true";
+  attribute mark_debug of s_axil_bready      : signal is "true";
+  attribute mark_debug of s_axil_bresp       : signal is "true";
+
+  attribute mark_debug of icap_clk       : signal is "true";
+  attribute mark_debug of icap_reset     : signal is "true";
+  attribute mark_debug of icap_csib      : signal is "true";
+  attribute mark_debug of icap_rdwrb     : signal is "true";
+  attribute mark_debug of icap_i         : signal is "true";
+  attribute mark_debug of icap_o         : signal is "true";
+  attribute mark_debug of icap_avail     : signal is "true";
+  attribute mark_debug of icap_prdone    : signal is "true";
+  attribute mark_debug of icap_prerror   : signal is "true";
+
+  attribute mark_debug of m_axi_mem_araddr   : signal is "true";
+  attribute mark_debug of m_axi_mem_arlen    : signal is "true";
+  attribute mark_debug of m_axi_mem_arsize   : signal is "true";
+  attribute mark_debug of m_axi_mem_arburst  : signal is "true";
+  attribute mark_debug of m_axi_mem_arprot   : signal is "true";
+  attribute mark_debug of m_axi_mem_arcache  : signal is "true";
+  attribute mark_debug of m_axi_mem_aruser   : signal is "true";
+  attribute mark_debug of m_axi_mem_arvalid  : signal is "true";
+  attribute mark_debug of m_axi_mem_arready  : signal is "true";
+  attribute mark_debug of m_axi_mem_rdata    : signal is "true";
+  attribute mark_debug of m_axi_mem_rresp    : signal is "true";
+  attribute mark_debug of m_axi_mem_rlast    : signal is "true";
+  attribute mark_debug of m_axi_mem_rvalid   : signal is "true";
+  attribute mark_debug of m_axi_mem_rready   : signal is "true";
+
+  attribute mark_debug of prc_dma_rcv_rdreq    : signal is "true";
+  attribute mark_debug of prc_dma_rcv_data_out : signal is "true";
+  attribute mark_debug of prc_dma_rcv_empty    : signal is "true";
+  attribute mark_debug of prc_dma_snd_wrreq    : signal is "true";
+  attribute mark_debug of prc_dma_snd_data_in  : signal is "true";
+  attribute mark_debug of prc_dma_snd_full     : signal is "true";
+
   -- attribute mark_debug of ahbs_rcv_rdreq : signal is "true";
   -- attribute mark_debug of ahbs_rcv_data_out : signal is "true";
   -- attribute mark_debug of ahbs_rcv_empty : signal is "true";
@@ -597,14 +649,14 @@ architecture rtl of tile_io is
   -- attribute mark_debug of remote_ahbs_snd_wrreq : signal is "true";
   -- attribute mark_debug of remote_ahbs_snd_data_in : signal is "true";
   -- attribute mark_debug of remote_ahbs_snd_full : signal is "true";
-  -- attribute mark_debug of dma_rcv_rdreq : signal is "true";
-  -- attribute mark_debug of dma_rcv_data_out : signal is "true";
-  -- attribute mark_debug of dma_rcv_empty : signal is "true";
-  -- attribute mark_debug of dma_snd_wrreq : signal is "true";
-  -- attribute mark_debug of dma_snd_data_in : signal is "true";
-  -- attribute mark_debug of dma_snd_full : signal is "true";
-  -- attribute mark_debug of dma_snd_atleast_4slots : signal is "true";
-  -- attribute mark_debug of dma_snd_exactly_3slots : signal is "true";
+   attribute mark_debug of dma_rcv_rdreq : signal is "true";
+   attribute mark_debug of dma_rcv_data_out : signal is "true";
+   attribute mark_debug of dma_rcv_empty : signal is "true";
+   attribute mark_debug of dma_snd_wrreq : signal is "true";
+   attribute mark_debug of dma_snd_data_in : signal is "true";
+   attribute mark_debug of dma_snd_full : signal is "true";
+   attribute mark_debug of dma_snd_atleast_4slots : signal is "true";
+   attribute mark_debug of dma_snd_exactly_3slots : signal is "true";
   -- attribute mark_debug of coherent_dma_rcv_rdreq : signal is "true";
   -- attribute mark_debug of coherent_dma_rcv_data_out : signal is "true";
   -- attribute mark_debug of coherent_dma_rcv_empty : signal is "true";
@@ -617,6 +669,14 @@ architecture rtl of tile_io is
   attribute keep of apb_snd_wrreq : signal is "true";
   attribute keep of apb_snd_data_in : signal is "true";
   attribute keep of apb_snd_full : signal is "true";
+  
+  attribute mark_debug of apb_rcv_rdreq : signal is "true";
+  attribute mark_debug of apb_rcv_data_out : signal is "true";
+  attribute mark_debug of apb_rcv_empty : signal is "true";
+  attribute mark_debug of apb_snd_wrreq : signal is "true";
+  attribute mark_debug of apb_snd_data_in : signal is "true";
+  attribute mark_debug of apb_snd_full : signal is "true";
+  
   -- attribute mark_debug of remote_apb_rcv_rdreq : signal is "true";
   -- attribute mark_debug of remote_apb_rcv_data_out : signal is "true";
   -- attribute mark_debug of remote_apb_rcv_empty : signal is "true";
@@ -642,7 +702,8 @@ architecture rtl of tile_io is
   attribute keep of interrupt_ack_data_in : signal is "true";
   attribute keep of interrupt_ack_full : signal is "true";
   attribute keep of noc_apbi_wirq : signal is "true";
-  -- attribute mark_debug of noc_apbo : signal is "true";
+  attribute mark_debug of noc_apbo : signal is "true";
+  attribute mark_debug of noc_apbi : signal is "true";
 
   attribute keep of intr_ack_state : signal is "true";
   attribute keep of intr_ack_state_next : signal is "true";
@@ -1486,7 +1547,7 @@ begin
       pwdata            => noc_apbi.pwdata,
       pwrite            => noc_apbi.pwrite,
       prdata            => noc_apbo(127).prdata,
-      pready            => prc_pready,            -- prc_pready -->axil_rvalid      
+      pready            => open, --prc_pready,            -- prc_pready -->axil_rvalid      
       pslverr           => open,                  -- temporary assignement
       s_axil_awvalid    => s_axil_awvalid,  
       s_axil_awready    => s_axil_awready,
@@ -1509,7 +1570,7 @@ begin
   -- tie off the other apbo signals
   noc_apbo(127).pirq <= (others => '0');
   noc_apbo(127).pconfig <= fixed_apbo_pconfig(127);
-  --noc_apbo(127).pindex <= 127;
+  noc_apbo(127).pindex <= 127;
 
   -----------------------------------------------------------------------------
   -- APB 13: DVI
@@ -1868,7 +1929,7 @@ begin
 
   -- PRC 
   generate_prc : if has_prc(CFG_FABTECH) = 1 and CFG_PRC = 1 and SIMULATION = false generate
-  prc_1: prc
+  prc_1: prc_inst
     port map (
       clk                       => clk,
       reset                     => rst,                 --check reset polarity
@@ -1892,11 +1953,11 @@ begin
       icap_rdwrb                => icap_rdwrb,
       icap_i                    => icap_o,
       icap_o                    => icap_i,
-      vsm_VS_0_rm_shutdown_req  => vsm_VS_0_rm_shutdown_req,
+      --vsm_VS_0_rm_shutdown_req  => vsm_VS_0_rm_shutdown_req,
       vsm_VS_0_rm_shutdown_ack  => vsm_VS_0_rm_shutdown_ack,
-      vsm_VS_0_rm_decouple      => vsm_VS_0_rm_decouple,
-      vsm_VS_0_rm_reset         => vsm_VS_0_rm_reset,
-      vsm_VS_0_event_error      => vsm_VS_0_event_error,
+      --vsm_VS_0_rm_decouple      => vsm_VS_0_rm_decouple,
+      --vsm_VS_0_rm_reset         => vsm_VS_0_rm_reset,
+      --vsm_VS_0_event_error      => vsm_VS_0_event_error,
       --vsm_VS_0_sw_shutdown_req  => vsm_VS_0_sw_shutdown_req,
       --vsm_VS_0_sw_startup_req   => vsm_VS_0_sw_startup_req,
       --icap_avail                => icap_avail,

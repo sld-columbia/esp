@@ -1552,6 +1552,8 @@ def print_mapping(fp, soc, esp_config):
         fp.write("    " + str(t.dvfs.idx) + " => " + str(i) + ",\n")
       if esp_config.coherence:
         fp.write("    " + str(t.l2.idx) + " => " + str(i) + ",\n")
+  if soc.prc.get() == 1:
+    fp.write("    127 => io_tile_id,\n")
   fp.write("    others => 0);\n\n")
 
   #
