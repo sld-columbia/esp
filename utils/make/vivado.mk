@@ -268,7 +268,7 @@ vivado-syn: vivado-setup
         echo "set part $(DEVICE) " >> static_config.tcl; \
         echo "set board $(BOARD) " >> static_config.tcl; \
         echo "add_files $(ESP_ROOT)/socs/$(BOARD)/vivado/$(DESIGN).runs/synth_1/top.dcp" >> static_config.tcl; \
-        echo "read_ip -quiet $(ESP_ROOT)/socs/$(BOARD)/vivado/$(DESIGN).srcs/sources_1/ip/prc/prc.xci" >> static_config.tcl; \
+        echo "read_ip -quiet $(ESP_ROOT)/socs/$(BOARD)/vivado/$(DESIGN).srcs/sources_1/ip/prc_inst/prc_inst.xci" >> static_config.tcl; \
         if [ $(BOARD) == xilinx-vcu128-xcvu37p ]; then \
             echo "read_ip -quiet $(ESP_ROOT)/socs/$(BOARD)/vivado/$(DESIGN).srcs/sources_1/ip/mig_clamshell/mig_clamshell.xci" >> static_config.tcl; \
             echo "read_ip -quiet $(ESP_ROOT)/socs/$(BOARD)/vivado/$(DESIGN).srcs/sources_1/ip/sgmii_vcu128/sgmii_vcu128.xci" >> static_config.tcl; \

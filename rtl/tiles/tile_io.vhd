@@ -379,11 +379,12 @@ architecture rtl of tile_io is
   signal local_apb_ack    : std_ulogic;
   signal remote_apb_ack   : std_ulogic;
   signal pready           : std_ulogic;
-
+  
   -- apb2axil
   signal s_axil_awvalid     : std_logic; 
   signal s_axil_awready     : std_logic;
   signal s_axil_awaddr      : std_logic_vector(31 downto 0);
+  signal s_axil_awaddr_masked : std_logic_vector(31 downto 0);
   signal s_axil_wvalid      : std_logic;
   signal s_axil_wready      : std_logic;
   signal s_axil_wdata       : std_logic_vector(31 downto 0);
@@ -391,6 +392,7 @@ architecture rtl of tile_io is
   signal s_axil_arvalid     : std_logic;
   signal s_axil_arready     : std_logic;
   signal s_axil_araddr      : std_logic_vector(31 downto 0);
+  signal s_axil_araddr_masked      : std_logic_vector(31 downto 0);
   signal s_axil_rvalid      : std_logic;
   signal s_axil_rready      : std_logic;
   signal s_axil_rdata       : std_logic_vector(31 downto 0);
@@ -440,6 +442,8 @@ architecture rtl of tile_io is
   signal vsm_VS_0_event_error           : std_logic;
   signal vsm_VS_0_sw_shutdown_req       : std_logic;
   signal vsm_VS_0_sw_startup_req        : std_logic;  --interrupt
+
+  constant prc_mask  : std_logic_vector(31 downto 0) := x"000000FF";
 
   -- Mon
   signal mon_dvfs_int   : monitor_dvfs_type;
@@ -1170,7 +1174,7 @@ begin
   no_pslv_gen_1 : for i in 5 to 12 generate
     noc_apbo(i) <= apb_none;
   end generate no_pslv_gen_1;
-  no_pslv_gen_2 : for i in 16 to NAPBSLV - 1 generate
+  no_pslv_gen_2 : for i in 16 to NAPBSLV - 2 generate
     skip_csr_apb_gen : if i /= this_csr_pindex generate
       noc_apbo(i) <= apb_none;
     end generate skip_csr_apb_gen;
@@ -1547,7 +1551,7 @@ begin
       pwdata            => noc_apbi.pwdata,
       pwrite            => noc_apbi.pwrite,
       prdata            => noc_apbo(127).prdata,
-      pready            => open, --prc_pready,            -- prc_pready -->axil_rvalid      
+      pready            => prc_pready,            -- prc_pready -->axil_rvalid      
       pslverr           => open,                  -- temporary assignement
       s_axil_awvalid    => s_axil_awvalid,  
       s_axil_awready    => s_axil_awready,
@@ -1963,7 +1967,7 @@ begin
       --icap_avail                => icap_avail,
       --icap_prdone               => icap_prdone,
       --icap_prerror              => icap_prerror,
-      s_axi_reg_awaddr          => s_axil_awaddr,
+      s_axi_reg_awaddr          => s_axil_awaddr_masked,
       s_axi_reg_awvalid         => s_axil_awvalid,
       s_axi_reg_awready         => s_axil_awready,
       s_axi_reg_wdata           => s_axil_wdata,
@@ -1972,7 +1976,7 @@ begin
       s_axi_reg_bresp           => s_axil_bresp,
       s_axi_reg_bvalid          => s_axil_bvalid,
       s_axi_reg_bready          => s_axil_bready,
-      s_axi_reg_araddr          => s_axil_araddr,
+      s_axi_reg_araddr          => s_axil_araddr_masked,
       s_axi_reg_arvalid         => s_axil_arvalid,
       s_axi_reg_arready         => s_axil_arready,
       s_axi_reg_rdata           => s_axil_rdata,
@@ -1980,7 +1984,10 @@ begin
       s_axi_reg_rvalid          => s_axil_rvalid,
       s_axi_reg_rready          => s_axil_rready);
 
-    --prc_pready <= s_axil_rvalid;
+    s_axil_araddr_masked <= s_axil_araddr and prc_mask;
+    s_axil_awaddr_masked <= s_axil_awaddr and prc_mask;
+  
+  --prc_pready <= s_axil_rvalid;
 
   -- ICAP3 instance
   icap_inst_1: icap
