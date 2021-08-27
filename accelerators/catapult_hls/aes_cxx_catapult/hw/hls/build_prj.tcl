@@ -1,6 +1,26 @@
 # Copyright (c) 2011-2021 Columbia University, System Level Design Group
 # SPDX-License-Identifier: Apache-2.0
 
+############################################################
+# Design Parameters
+############################################################
+
+#
+# Source the common configurations
+#
+source ../../../common/hls/common.tcl
+
+#
+# Local synthesis attributes
+#
+if {$TECH eq "gf12"} {
+    set CLOCK_PERIOD 1.25
+    set CLOCK_HIGH_TIME 0.625
+} else {
+    set CLOCK_PERIOD 10.0
+    set CLOCK_HIGH_TIME 5.0 
+}
+
 #
 # Accelerator
 #
@@ -95,8 +115,6 @@ directive set -RESET_CLEARS_ALL_REGS true
 #directive set -CLUSTER_TYPE combinational
 #directive set -COMPGRADE fast
 
-#set CLOCK_PERIOD 12.5
-
 # Flag to indicate SCVerify readiness
 set can_simulate 1
 
@@ -127,27 +145,8 @@ solution options set /Input/SearchPath { \
     ../inc/modes \
     ../../../common/inc }
 
-solution options set ComponentLibs/SearchPath { \
-    ../../../../../tech/gf12/lib-catapult \
-    ../../../common/memgen/GF12_SRAM_SP_256x32 \
-    ../../../common/memgen/GF12_SRAM_SP_256x64 \
-    ../../../common/memgen/GF12_SRAM_SP_256x16 \
-    ../../../common/memgen/GF12_SRAM_SP_256x64 \
-    ../../../common/memgen/GF12_SRAM_SP_512x16 \
-    ../../../common/memgen/GF12_SRAM_SP_512x24 \
-    ../../../common/memgen/GF12_SRAM_SP_512x28 \
-    ../../../common/memgen/GF12_SRAM_SP_512x64 \
-    ../../../common/memgen/GF12_SRAM_SP_1024x8 \
-    ../../../common/memgen/GF12_SRAM_SP_2048x4 \
-    ../../../common/memgen/GF12_SRAM_SP_2048x8 \
-    ../../../common/memgen/GF12_SRAM_SP_2048x32 \
-    ../../../common/memgen/GF12_SRAM_SP_4096x4 \
-    ../../../common/memgen/GF12_SRAM_SP_4096x32 \
-    ../../../common/memgen/GF12_SRAM_SP_4096x64 \
-    ../../../common/memgen/GF12_SRAM_SP_8192x32 \
-    ../../../common/memgen/GF12_SRAM_SP_8192x64 \
-    ../../../common/memgen/GF12_SRAM_SP_16384x32 \
-    ../../../common/memgen/GF12_SRAM_SP_16384x64 \
+if {$TECH eq "gf12"} {
+    solution options set ComponentLibs/SearchPath " $COMPONENT_LIBS_SEARCH_PATH "
 }
 
 # Add source files.
@@ -229,10 +228,9 @@ solution design set $ACCELERATOR -top
 #
 #
 
-go compile
-
 # Run C simulation.
 if {$opt(csim)} {
+    go compile
     flow run /SCVerify/launch_make ./scverify/Verify_orig_cxx_osci.mk {} SIMTOOL=osci sim
 }
 
@@ -243,34 +241,36 @@ if {$opt(csim)} {
 # Run HLS.
 if {$opt(hsynth)} {
 
-    # TODO: Disable FPGA target and use Generic Library
-    #solution library \
-    #    add mgc_Xilinx-$FPGA_FAMILY$FPGA_SPEED_GRADE\_beh -- \
-    #    -rtlsyntool Vivado \
-    #    -manufacturer Xilinx \
-    #    -family $FPGA_FAMILY \
-    #    -speed $FPGA_SPEED_GRADE \
-    #    -part $FPGA_PART_NUM
-    #solution library add Xilinx_RAMS
-    #solution library add Xilinx_ROMS
-    #solution library add Xilinx_FIFO
-
     solution library remove *
-    solution library add sc9mcpp84_12lp_base_rvt_c14_tt_nominal_max_0p80v_25c_dc -- -rtlsyntool DesignCompiler -vendor GlobalFoundries -technology gf12nm
-    solution library add GF12_SRAM_SP_1024x8
-    solution library add GF12_SRAM_SP_16384x32
-    solution library add GF12_SRAM_SP_16384x64
-    solution library add GF12_SRAM_SP_2048x32
-    solution library add GF12_SRAM_SP_2048x4
-    solution library add GF12_SRAM_SP_2048x8
-    solution library add GF12_SRAM_SP_256x16
-    solution library add GF12_SRAM_SP_256x64
-    solution library add GF12_SRAM_SP_4096x4
-    solution library add GF12_SRAM_SP_512x16
-    solution library add GF12_SRAM_SP_512x24
-    solution library add GF12_SRAM_SP_512x28
-    solution library add GF12_SRAM_SP_512x64
-    solution library add GF12_SRAM_SP_8192x32
+    if {$TECH eq "gf12"} { 
+        solution library add sc9mcpp84_12lp_base_rvt_c14_tt_nominal_max_0p80v_25c_dc -- -rtlsyntool DesignCompiler -vendor GlobalFoundries -technology gf12nm
+        solution library add GF12_SRAM_SP_1024x8
+        solution library add GF12_SRAM_SP_16384x32
+        solution library add GF12_SRAM_SP_16384x64
+        solution library add GF12_SRAM_SP_2048x32
+        solution library add GF12_SRAM_SP_2048x4
+        solution library add GF12_SRAM_SP_2048x8
+        solution library add GF12_SRAM_SP_256x16
+        solution library add GF12_SRAM_SP_256x64
+        solution library add GF12_SRAM_SP_4096x4
+        solution library add GF12_SRAM_SP_512x16
+        solution library add GF12_SRAM_SP_512x24
+        solution library add GF12_SRAM_SP_512x28
+        solution library add GF12_SRAM_SP_512x64
+        solution library add GF12_SRAM_SP_8192x32
+    } else {
+        solution library \
+            add mgc_Xilinx-$FPGA_FAMILY$FPGA_SPEED_GRADE\_beh -- \
+            -rtlsyntool Vivado \
+            -manufacturer Xilinx \
+            -family $FPGA_FAMILY \
+            -speed $FPGA_SPEED_GRADE \
+            -part $FPGA_PART_NUM
+        solution library add Xilinx_RAMS
+        solution library add Xilinx_ROMS
+        solution library add Xilinx_FIFO
+    }
+
 
     #solution library add nangate-45nm_beh -- -rtlsyntool DesignCompiler -vendor Nangate -technology 045nm
 
@@ -283,11 +283,11 @@ if {$opt(hsynth)} {
     #
     #
 
-    directive set -CLOCKS { \
+    directive set -CLOCKS " \
         clk { \
-            -CLOCK_PERIOD 1.25 \
+            -CLOCK_PERIOD $CLOCK_PERIOD \
             -CLOCK_EDGE rising \
-            -CLOCK_HIGH_TIME 0.625 \
+            -CLOCK_HIGH_TIME $CLOCK_HIGH_TIME \
             -CLOCK_OFFSET 0.000000 \
             -CLOCK_UNCERTAINTY 0.0 \
             -RESET_KIND sync \
@@ -298,7 +298,8 @@ if {$opt(hsynth)} {
             -ENABLE_NAME {} \
             -ENABLE_ACTIVE high \
         } \
-    }
+    "
+
 
     # BUGFIX: This prevents the creation of the empty module CGHpart. In the
     # next releases of Catapult HLS, this may be fixed.

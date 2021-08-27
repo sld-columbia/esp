@@ -136,6 +136,8 @@ static unsigned out_words; /* Output buffer size in words */
 
 #if defined(SHA1_ALGO)
 #include "sha1_tests.h"
+#include "SHA1ShortMsg.h"
+#include "SHA1LongMsg.h"
 #elif defined(SHA2_ALGO)
 #include "sha2_tests.h"
 #elif defined(AES_ALGO)
@@ -174,6 +176,19 @@ static int validate_buf(token_t *out, token_t *gold, unsigned out_words)
     printf("INFO: Total errors %u\n", errors);
 
     return errors;
+}
+
+static inline uint64_t get_counter() {
+        uint64_t counter;
+        asm volatile (
+                "li t0, 0;"
+                "csrr t0, mcycle;"
+                "mv %0, t0"
+                : "=r" ( counter )
+                :
+                : "t0"
+        );
+        return counter;
 }
 
 int main(int argc, char * argv[])
@@ -451,6 +466,8 @@ int main(int argc, char * argv[])
             // Start accelerators
             printf("INFO: Accelerator start...\n");
 
+            uint64_t begin = get_counter();
+
             iowrite32(dev, CMD_REG, CMD_MASK_START);
 
             // Wait for completion
@@ -460,6 +477,7 @@ int main(int argc, char * argv[])
                 done &= STATUS_MASK_DONE;
             }
             iowrite32(dev, CMD_REG, 0x0);
+            uint64_t end = get_counter();
 
             printf("INFO: Accelerator done!\n");
             printf("INFO: Validating...\n");
@@ -478,8 +496,10 @@ int main(int argc, char * argv[])
                 aligned_free(mem);
                 aligned_free(gold);
                 return 1;
-            } else
+            } else {
+                printf("INFO: Latency %lu clks\n", end - begin);
                 printf("INFO: PASS\n");
+           }
         }
 
         aligned_free(ptable);
