@@ -26,6 +26,7 @@ use work.coretypes.all;
 use work.grlib_config.all;
 use work.socmap.all;
 use work.tiles_asic_pkg.all;
+use work.pads_loc.all;
 
 entity ESP_ASIC_TOP is
   generic (
@@ -34,15 +35,23 @@ entity ESP_ASIC_TOP is
     reset           : in    std_logic;
     -- Backup external clocks for selected tiles and NoC
     ext_clk         : in    std_logic;
+    clk_div         : out   std_logic;
     -- FPGA proxy memory link
-    fpga_data_in    : in    std_logic_vector(CFG_NMEM_TILE * 64 - 1 downto 0);
-    fpga_data_out   : out   std_logic_vector(CFG_NMEM_TILE * 64 - 1 downto 0);
+    fpga_data       : inout std_logic_vector(CFG_NMEM_TILE * 64 - 1 downto 0);
     fpga_valid_in   : in    std_logic_vector(CFG_NMEM_TILE - 1 downto 0);
     fpga_valid_out  : out   std_logic_vector(CFG_NMEM_TILE - 1 downto 0);
     fpga_clk_in     : in    std_logic_vector(CFG_NMEM_TILE - 1 downto 0);
     fpga_clk_out    : out   std_logic_vector(CFG_NMEM_TILE - 1 downto 0);
     fpga_credit_in  : in    std_logic_vector(CFG_NMEM_TILE - 1 downto 0);
     fpga_credit_out : out   std_logic_vector(CFG_NMEM_TILE - 1 downto 0);
+    -- I/O link
+    iolink_data       : inout std_logic_vector(CFG_IOLINK_BITS - 1 downto 0);
+    iolink_valid_in   : in    std_ulogic;
+    iolink_valid_out  : out   std_ulogic;
+    iolink_clk_in     : in    std_ulogic;
+    iolink_clk_out    : out   std_ulogic;
+    iolink_credit_in  : in    std_ulogic;
+    iolink_credit_out : out   std_ulogic;
     -- Ethernet signals
     reset_o2        : out   std_ulogic;
     etx_clk         : in    std_ulogic;
@@ -56,14 +65,15 @@ entity ESP_ASIC_TOP is
     etx_en          : out   std_ulogic;
     etx_er          : out   std_ulogic;
     emdc            : out   std_ulogic;
-    emdio_i         : in    std_logic; --for "chip" with no pads to remove inouts
-    emdio_o         : out   std_logic; --DO NOT USE for real ethernet implementation
+    emdio           : inout std_logic;
     -- UART
     uart_rxd        : in    std_logic;  -- UART1_RX (u1i.rxd)
     uart_txd        : out   std_logic;  -- UART1_TX (u1o.txd)
     uart_ctsn       : in    std_logic;  -- UART1_RTSN (u1i.ctsn)
     uart_rtsn       : out   std_logic;  -- UART1_RTSN (u1o.rtsn)
     --JTAG
+    tclk            : in    std_logic;
+    tms             : in    std_logic;
     tdi_io          : in    std_logic;
     tdi_cpu         : in    std_logic;
     tdi_mem         : in    std_logic;
@@ -170,8 +180,10 @@ architecture rtl of ESP_ASIC_TOP is
   signal full_pad_cfg : pad_cfg_full_array;
 
   -- External clocks and reset
-  --signal reset_int   : std_logic;
+  signal reset_int   : std_logic;
+  signal ext_clk_int : std_logic;  -- backup tile clock
   signal clk_div_int : std_logic_vector(0 to CFG_TILES_NUM - 1);  -- tile clock monitor for testing purposes
+  signal ext_clk_noc_int : std_logic;
   signal clk_div_noc_int : std_logic;
 
   -- Test interface
@@ -182,35 +194,149 @@ architecture rtl of ESP_ASIC_TOP is
 
   -- FPGA proxy
   signal fpga_oen            : std_logic_vector(CFG_NMEM_TILE - 1 downto 0);
+  signal fpga_data_in        : std_logic_vector(CFG_NMEM_TILE * (ARCH_BITS) - 1 downto 0);
+  signal fpga_data_out       : std_logic_vector(CFG_NMEM_TILE * (ARCH_BITS) - 1 downto 0);
+  signal fpga_valid_in_int   : std_logic_vector(CFG_NMEM_TILE - 1 downto 0);
+  signal fpga_valid_out_int  : std_logic_vector(CFG_NMEM_TILE - 1 downto 0);
+  signal fpga_clk_in_int     : std_logic_vector(CFG_NMEM_TILE - 1 downto 0);
+  signal fpga_clk_out_int    : std_logic_vector(CFG_NMEM_TILE - 1 downto 0);
+  signal fpga_credit_in_int  : std_logic_vector(CFG_NMEM_TILE - 1 downto 0);
+  signal fpga_credit_out_int : std_logic_vector(CFG_NMEM_TILE - 1 downto 0);
 
-  -- Use thsese signals to swap pads connection based on pin location
-  signal fpga_oen_swap        : std_logic_vector(CFG_NMEM_TILE * 64 - 1 downto 0);
-  signal fpga_data_in_swap    : std_logic_vector(CFG_NMEM_TILE * 64 - 1 downto 0);
-  signal fpga_data_out_swap   : std_logic_vector(CFG_NMEM_TILE * 64 - 1 downto 0);
-  signal fpga_valid_in_swap   : std_logic_vector(CFG_NMEM_TILE - 1 downto 0);
-  signal fpga_valid_out_swap  : std_logic_vector(CFG_NMEM_TILE - 1 downto 0);
-  signal fpga_clk_in_swap     : std_logic_vector(CFG_NMEM_TILE - 1 downto 0);
-  signal fpga_clk_out_swap    : std_logic_vector(CFG_NMEM_TILE - 1 downto 0);
-  signal fpga_credit_in_swap  : std_logic_vector(CFG_NMEM_TILE - 1 downto 0);
-  signal fpga_credit_out_swap : std_logic_vector(CFG_NMEM_TILE - 1 downto 0);
-  signal fpga_data_pad_cfg    : std_logic_vector(CFG_NMEM_TILE * 64 * 20 - 1 downto 0);
-  signal fpga_c_pad_cfg       : std_logic_vector(CFG_NMEM_TILE * 20 - 1 downto 0);
+  -- I/O Link
+  signal iolink_data_ien                             : std_ulogic;
+  signal iolink_data_oen                             : std_ulogic;
+  signal iolink_data_in_int                          : std_logic_vector(CFG_IOLINK_BITS - 1 downto 0);
+  signal iolink_data_out_int                         : std_logic_vector(CFG_IOLINK_BITS - 1 downto 0);
+  signal iolink_valid_in_int                         : std_ulogic;
+  signal iolink_valid_out_int, iolink_valid_out_io   : std_ulogic;
+  signal iolink_clk_in_int                           : std_ulogic;
+  signal iolink_clk_out_int, iolink_clk_out_io       : std_ulogic;
+  signal iolink_credit_in_int                        : std_ulogic;
+  signal iolink_credit_out_int, iolink_credit_out_io : std_ulogic;
 
+  -- Ethernet signals
+  signal reset_o2_int    : std_ulogic;
+  signal etx_clk_int     : std_ulogic;
+  signal erx_clk_int     : std_ulogic;
+  signal erxd_int        : std_logic_vector(3 downto 0);
+  signal erx_dv_int      : std_ulogic;
+  signal erx_er_int      : std_ulogic;
+  signal erx_col_int     : std_ulogic;
+  signal erx_crs_int     : std_ulogic;
+  signal etxd_int        : std_logic_vector(3 downto 0);
+  signal etx_en_int      : std_ulogic;
+  signal etx_er_int      : std_ulogic;
+  signal emdc_int        : std_ulogic;
+  signal emdio_i         : std_logic;
+  signal emdio_o         : std_logic;
   signal emdio_oe        : std_logic;
+
+  -- UART
+  signal uart_rxd_int    : std_logic;   -- UART1_RX (u1i.rxd)
+  signal uart_txd_int    : std_logic;   -- UART1_TX (u1o.txd)
+  signal uart_ctsn_int   : std_logic;   -- UART1_RTSN (u1i.ctsn)
+  signal uart_rtsn_int   : std_logic;   -- UART1_RTSN (u1o.rtsn)
 
 begin
 
-  --JTAG
-  tms_int <= '0';
-  tclk_int <= '0';
-  tdi_int(0) <= tdi_io;
-  tdi_int(1) <= tdi_cpu;
-  tdi_int(2) <= tdi_acc;
-  tdi_int(3) <= tdi_mem;
-  tdo_io  <= tdo_int(0);
-  tdo_cpu <= tdo_int(1);
-  tdo_acc <= tdo_int(2);
-  tdo_mem <= tdo_int(3);
+  -----------------------------------------------------------------------------
+  -- PADS
+  -----------------------------------------------------------------------------
+
+  pad_cfg_gen : for i in 0 to CFG_TILES_NUM - 1 generate
+    full_pad_cfg(i) <= pad_fixed_cfg & pad_cfg(i);
+  end generate pad_cfg_gen;
+
+  reset_pad : inpad generic map (loc => reset_pad_loc, level => cmos, voltage => x18v, tech => CFG_FABTECH) port map (reset, reset_int);
+  -- ext_clk and div_clk for NoC (DCO located in the I/O tile)
+  ext_clk_pad : inpad generic map (loc => ext_clk_pad_loc, level => cmos, voltage => x18v, tech => CFG_FABTECH) port map (ext_clk, ext_clk_int);
+  clk_div_pad : outpad generic map (loc => clk_div_pad_loc, level => cmos, voltage => x18v, tech => CFG_FABTECH) port map (clk_div, clk_div_noc_int, full_pad_cfg(io_tile_id));
+  -- tdi/o_cpu
+  tdi_cpu_pad : inpad generic map (loc => tdi_cpu_pad_loc, level => cmos, voltage => x18v, tech => CFG_FABTECH) port map (tdi_cpu, tdi_int(cpu_tile_id(0)));
+  tdo_cpu_pad : outpad generic map (loc => tdo_cpu_pad_loc, level => cmos, voltage => x18v, tech => CFG_FABTECH) port map (tdo_cpu, tdo_int(cpu_tile_id(0)), full_pad_cfg(cpu_tile_id(0)));
+  -- tdi/o_io
+  tdi_io_pad : inpad generic map (loc => tdi_io_pad_loc, level => cmos, voltage => x18v, tech => CFG_FABTECH) port map (tdi_io, tdi_int(io_tile_id));
+  tdo_io_pad : outpad generic map (loc => tdo_io_pad_loc, level => cmos, voltage => x18v, tech => CFG_FABTECH) port map (tdo_io, tdo_int(io_tile_id), full_pad_cfg(io_tile_id));
+  -- tdi/o_mem pad is close to memory tile 0
+  tdi_mem_pad : inpad generic map (loc => tdi_mem_pad_loc, level => cmos, voltage => x18v, tech => CFG_FABTECH) port map (tdi_mem, tdi_int(mem_tile_id(0)));
+  tdo_mem_pad : outpad generic map (loc => tdo_mem_pad_loc, level => cmos, voltage => x18v, tech => CFG_FABTECH) port map (tdo_mem, tdo_int(mem_tile_id(0)), full_pad_cfg(mem_tile_id(0)));
+  -- tdi/o_acc
+  tdi_acc_pad : inpad generic map (loc => tdi_acc_pad_loc, level => cmos, voltage => x18v, tech => CFG_FABTECH) port map (tdi_acc, tdi_int(2));
+  tdo_acc_pad : outpad generic map (loc => tdo_acc_pad_loc, level => cmos, voltage => x18v, tech => CFG_FABTECH) port map (tdo_acc, tdo_int(2), full_pad_cfg(2));
+
+  tms_pad  : inpad generic map (loc => tms_pad_loc, level => cmos, voltage => x18v, tech => CFG_FABTECH) port map (tms, tms_int);
+  tclk_pad : inpad generic map (loc => tclk_pad_loc, level => cmos, voltage => x18v, tech => CFG_FABTECH) port map (tclk, tclk_int);
+
+  -- Ethernet
+  reset_o2_pad : outpad generic map (tech => CFG_FABTECH, loc => reset_o2_pad_loc, level => cmos, voltage => x18v)
+    port map (reset_o2, reset_o2_int, full_pad_cfg(io_tile_id));
+
+  etx_clk_pad : inpad generic map (tech => CFG_FABTECH, loc => etx_clk_pad_loc, level => cmos, voltage => x18v)
+    port map (etx_clk, etx_clk_int);
+  erx_clk_pad : inpad generic map (tech => CFG_FABTECH, loc => erx_clk_pad_loc, level => cmos, voltage => x18v)
+    port map (erx_clk, erx_clk_int);
+  erxd_pad : inpadv generic map (tech => CFG_FABTECH, loc => erxd_pad_loc, level => cmos, voltage => x18v, width => 4)
+    port map (erxd, erxd_int);
+  erx_dv_pad : inpad generic map (tech => CFG_FABTECH, loc => erx_dv_pad_loc, level => cmos, voltage => x18v)
+    port map (erx_dv, erx_dv_int);
+  erx_er_pad : inpad generic map (tech => CFG_FABTECH, loc => erx_er_pad_loc, level => cmos, voltage => x18v)
+    port map (erx_er, erx_er_int);
+  erx_col_pad : inpad generic map (tech => CFG_FABTECH, loc => erx_col_pad_loc, level => cmos, voltage => x18v)
+    port map (erx_col, erx_col_int);
+  erx_crs_pad : inpad generic map (tech => CFG_FABTECH, loc => erx_crs_pad_loc, level => cmos, voltage => x18v)
+    port map (erx_crs, erx_crs_int);
+
+  emdio_pad : iopad generic map (tech => CFG_FABTECH, loc => emdio_pad_loc, level => cmos, voltage => x18v, oepol => 1)
+    port map (emdio, emdio_o, emdio_oe, emdio_i, full_pad_cfg(io_tile_id));
+
+  etxd_pad : outpadv generic map (tech => CFG_FABTECH, loc => etxd_pad_loc, level => cmos, voltage => x18v, width => 4)
+    port map (etxd, etxd_int, full_pad_cfg(io_tile_id));
+  etx_en_pad : outpad generic map (tech => CFG_FABTECH, loc => etx_en_pad_loc, level => cmos, voltage => x18v)
+    port map (etx_en, etx_en_int, full_pad_cfg(io_tile_id));
+  etx_er_pad : outpad generic map (tech => CFG_FABTECH, loc => etx_er_pad_loc, level => cmos, voltage => x18v)
+    port map (etx_er, etx_er_int, full_pad_cfg(io_tile_id));
+  emdc_pad : outpad generic map (tech => CFG_FABTECH, loc => emdc_pad_loc, level => cmos, voltage => x18v)
+    port map (emdc, emdc_int, full_pad_cfg(io_tile_id));
+
+  fpga_data_pad : iopadv generic map (tech => CFG_FABTECH, loc => fpga_data_pad_loc, level => cmos, voltage => x18v, width => 64, oepol => 1)
+    port map (fpga_data, fpga_data_out, fpga_oen(0), fpga_data_in, full_pad_cfg(mem_tile_id(0)));
+  fpga_valid_in_pad : inpad generic map (loc => fpga_valid_in_pad_loc, level => cmos, voltage => x18v, tech => CFG_FABTECH)
+    port map (fpga_valid_in(0), fpga_valid_in_int(0));
+  fpga_valid_out_pad : outpad generic map (loc => fpga_valid_out_pad_loc, level => cmos, voltage => x18v, tech => CFG_FABTECH)
+    port map (fpga_valid_out(0), fpga_valid_out_int(0), full_pad_cfg(mem_tile_id(0)));
+  fpga_clk_in_pad : inpad generic map (loc => fpga_clk_in_pad_loc, level => cmos, voltage => x18v, tech => CFG_FABTECH)
+    port map (fpga_clk_in(0), fpga_clk_in_int(0));
+  fpga_clk_out_pad : outpad generic map (loc => fpga_clk_out_pad_loc, level => cmos, voltage => x18v, tech => CFG_FABTECH)
+    port map (fpga_clk_out(0), fpga_clk_out_int(0), full_pad_cfg(mem_tile_id(0)));
+  fpga_credit_in_pad : inpad generic map (loc => fpga_credit_in_pad_loc, level => cmos, voltage => x18v, tech => CFG_FABTECH)
+    port map (fpga_credit_in(0), fpga_credit_in_int(0));
+  fpga_credit_out_pad : outpad generic map (loc => fpga_credit_out_pad_loc, level => cmos, voltage => x18v, tech => CFG_FABTECH)
+    port map (fpga_credit_out(0), fpga_credit_out_int(0), full_pad_cfg(mem_tile_id(0)));
+
+  --IO Link
+  iolink_data_pad : iopadv generic map (tech => CFG_FABTECH, loc => iolink_data_pad_loc, level => cmos, voltage => x18v, width => CFG_IOLINK_BITS, oepol => 1)
+    port map (iolink_data, iolink_data_out_int, iolink_data_oen, iolink_data_in_int, full_pad_cfg(io_tile_id));
+  iolink_valid_in_pad : inpad generic map (loc => iolink_valid_in_pad_loc, level => cmos, voltage => x18v, tech => CFG_FABTECH)
+    port map (iolink_valid_in, iolink_valid_in_int);
+  iolink_valid_out_pad : outpad generic map (loc => iolink_valid_out_pad_loc, level => cmos, voltage => x18v, tech => CFG_FABTECH)
+    port map (iolink_valid_out, iolink_valid_out_int, full_pad_cfg(io_tile_id));
+  iolink_clk_in_pad : inpad generic map (loc => iolink_clk_in_pad_loc, level => cmos, voltage => x18v, tech => CFG_FABTECH)
+    port map (iolink_clk_in, iolink_clk_in_int);
+  iolink_clk_out_pad : outpad generic map (loc => iolink_clk_out_pad_loc, level => cmos, voltage => x18v, tech => CFG_FABTECH)
+    port map (iolink_clk_out, iolink_clk_out_int, full_pad_cfg(io_tile_id));
+  iolink_credit_in_pad : inpad generic map (loc => iolink_credit_in_pad_loc, level => cmos, voltage => x18v, tech => CFG_FABTECH)
+    port map (iolink_credit_in, iolink_credit_in_int);
+  iolink_credit_out_pad : outpad generic map (loc => iolink_credit_out_pad_loc, level => cmos, voltage => x18v, tech => CFG_FABTECH)
+    port map (iolink_credit_out, iolink_credit_out_int, full_pad_cfg(io_tile_id));
+
+  -- UART
+  uart_rxd_pad  : inpad generic map (loc => uart_rxd_pad_loc, level => cmos, voltage => x18v, tech => CFG_FABTECH) port map (uart_rxd, uart_rxd_int);
+  uart_txd_pad  : outpad generic map (loc => uart_txd_pad_loc, level => cmos, voltage => x18v, tech => CFG_FABTECH) port map (uart_txd, uart_txd_int, full_pad_cfg(io_tile_id));
+  uart_ctsn_pad : inpad generic map (loc => uart_ctsn_pad_loc, level => cmos, voltage => x18v, tech => CFG_FABTECH) port map (uart_ctsn, uart_ctsn_int);
+  uart_rtsn_pad : outpad generic map (loc => uart_rtsn_pad_loc, level => cmos, voltage => x18v, tech => CFG_FABTECH) port map (uart_rtsn, uart_rtsn_int, full_pad_cfg(io_tile_id));
+
+
   -----------------------------------------------------------------------------
   -- NOC CONNECTIONS
   -----------------------------------------------------------------------------
@@ -704,29 +830,38 @@ begin
           sys_clk_out        => sys_clk,         -- NoC clock out
           sys_clk            => sys_clk,         -- NoC clock in
           sys_clk_lock_out   => sys_clk_lock,
-          ext_clk_noc        => ext_clk,      -- backup NoC clock
+          ext_clk_noc        => ext_clk_int,     -- backup NoC clock
           clk_div_noc        => clk_div_noc_int,
           ext_clk            => sys_clk,  -- backup clock (fixed)
           clk_div            => clk_div_int(i),
-          reset_o2           => reset_o2,
-          etx_clk            => etx_clk,
-          erx_clk            => erx_clk,
-          erxd               => erxd,
-          erx_dv             => erx_dv,
-          erx_er             => erx_er,
-          erx_col            => erx_col,
-          erx_crs            => erx_crs,
-          etxd               => etxd,
-          etx_en             => etx_en,
-          etx_er             => etx_er,
-          emdc               => emdc,
+          reset_o2           => reset_o2_int,
+          etx_clk            => etx_clk_int,
+          erx_clk            => erx_clk_int,
+          erxd               => erxd_int,
+          erx_dv             => erx_dv_int,
+          erx_er             => erx_er_int,
+          erx_col            => erx_col_int,
+          erx_crs            => erx_crs_int,
+          etxd               => etxd_int,
+          etx_en             => etx_en_int,
+          etx_er             => etx_er_int,
+          emdc               => emdc_int,
           emdio_i            => emdio_i,
           emdio_o            => emdio_o,
           emdio_oe           => emdio_oe,
-          uart_rxd           => uart_rxd,
-          uart_txd           => uart_txd,
-          uart_ctsn          => uart_ctsn,
-          uart_rtsn          => uart_rtsn,
+          iolink_data_oen    => iolink_data_oen,
+          iolink_data_in     => iolink_data_in_int,
+          iolink_data_out    => iolink_data_out_int,
+          iolink_valid_in    => iolink_valid_in_int,
+          iolink_valid_out   => iolink_valid_out_int,
+          iolink_clk_in      => iolink_clk_in_int,
+          iolink_clk_out     => iolink_clk_out_int,
+          iolink_credit_in   => iolink_credit_in_int,
+          iolink_credit_out  => iolink_credit_out_int,
+          uart_rxd           => uart_rxd_int,
+          uart_txd           => uart_txd_int,
+          uart_ctsn          => uart_ctsn_int,
+          uart_rtsn          => uart_rtsn_int,
           tdi                => tdi_int(i),
           tdo                => tdo_int(i),
           tms                => tms_int,
@@ -822,12 +957,12 @@ begin
           fpga_data_in       => fpga_data_in((tile_mem_id(i) + 1) * (ARCH_BITS) - 1 downto tile_mem_id(i) * (ARCH_BITS)),
           fpga_data_out      => fpga_data_out((tile_mem_id(i) + 1) * (ARCH_BITS) - 1 downto tile_mem_id(i) * (ARCH_BITS)),
           fpga_oen           => fpga_oen(tile_mem_id(i)),
-          fpga_valid_in      => fpga_valid_in(tile_mem_id(i)),
-          fpga_valid_out     => fpga_valid_out(tile_mem_id(i)),
-          fpga_clk_in        => fpga_clk_in(tile_mem_id(i)),
-          fpga_clk_out       => fpga_clk_out(tile_mem_id(i)),
-          fpga_credit_in     => fpga_credit_in(tile_mem_id(i)),
-          fpga_credit_out    => fpga_credit_out(tile_mem_id(i)),
+          fpga_valid_in      => fpga_valid_in_int(tile_mem_id(i)),
+          fpga_valid_out     => fpga_valid_out_int(tile_mem_id(i)),
+          fpga_clk_in        => fpga_clk_in_int(tile_mem_id(i)),
+          fpga_clk_out       => fpga_clk_out_int(tile_mem_id(i)),
+          fpga_credit_in     => fpga_credit_in_int(tile_mem_id(i)),
+          fpga_credit_out    => fpga_credit_out_int(tile_mem_id(i)),
           tdi                => tdi_int(i),
           tdo                => tdo_int(i),
           tms                => tms_int,

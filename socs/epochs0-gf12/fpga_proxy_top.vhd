@@ -177,7 +177,7 @@ end entity fpga_proxy_top;
 architecture rtl of fpga_proxy_top is
 
   constant DEF_TMS : std_logic_vector(31 downto 0) := conv_std_logic_vector(0, 32);
-  constant DEF_TILE : std_logic_vector(31 downto 0) := conv_std_logic_vector(JTAG_TRACE, 32);
+  constant DEF_TILE : std_logic_vector(31 downto 0) := conv_std_logic_vector(abs(JTAG_TRACE), 32);
   constant FPGA_PROXY_TECH : integer := virtex7;
   constant FPGA_PROXY_FREQ : integer := 100000;  -- FPGA frequency in KHz
   constant MAX_NMEM_TILES  : integer := 4;

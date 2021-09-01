@@ -40,15 +40,22 @@ entity chip_emu_top is
     -- Backup external clocks for selected tiles and NoC (unused for emulation)
     ext_clk         : in    std_logic;
     -- FPGA proxy memory link
-    fpga_data_in    : in    std_logic_vector(CFG_NMEM_TILE * 64 - 1 downto 0);
-    fpga_data_out   : out   std_logic_vector(CFG_NMEM_TILE * 64 - 1 downto 0);
+    fpga_data       : inout std_logic_vector(CFG_NMEM_TILE * 64 - 1 downto 0);
     fpga_valid_in   : in    std_logic_vector(CFG_NMEM_TILE - 1 downto 0);
     fpga_valid_out  : out   std_logic_vector(CFG_NMEM_TILE - 1 downto 0);
     fpga_clk_in     : in    std_logic_vector(CFG_NMEM_TILE - 1 downto 0);
     fpga_clk_out    : out   std_logic_vector(CFG_NMEM_TILE - 1 downto 0);
     fpga_credit_in  : in    std_logic_vector(CFG_NMEM_TILE - 1 downto 0);
     fpga_credit_out : out   std_logic_vector(CFG_NMEM_TILE - 1 downto 0);
-    -- Ethernet signals
+    -- I/O link
+    iolink_data       : inout std_logic_vector(CFG_IOLINK_BITS - 1 downto 0);
+    iolink_valid_in   : in    std_ulogic;
+    iolink_valid_out  : out   std_ulogic;
+    iolink_clk_in     : in    std_ulogic;
+    iolink_clk_out    : out   std_ulogic;
+    iolink_credit_in  : in    std_ulogic;
+    iolink_credit_out : out   std_ulogic;
+-- Ethernet signals
     reset_o2        : out   std_ulogic;
     etx_clk         : in    std_ulogic;
     erx_clk         : in    std_ulogic;
@@ -61,14 +68,15 @@ entity chip_emu_top is
     etx_en          : out   std_ulogic;
     etx_er          : out   std_ulogic;
     emdc            : out   std_ulogic;
-    emdio_i         : in    std_logic;
-    emdio_o         : out   std_logic;
+    emdio           : inout std_logic;
     -- UART
     uart_rxd        : in    std_logic;  -- UART1_RX (u1i.rxd)
     uart_txd        : out   std_logic;  -- UART1_TX (u1o.txd)
     uart_ctsn       : in    std_logic;  -- UART1_RTSN (u1i.ctsn)
     uart_rtsn       : out   std_logic;  -- UART1_RTSN (u1o.rtsn)
     --JTAG
+    tclk            : in    std_logic;
+    tms             : in    std_logic;
     tdi_io          : in    std_logic;
     tdi_cpu         : in    std_logic;
     tdi_mem         : in    std_logic;
@@ -92,8 +100,7 @@ architecture rtl of chip_emu_top is
     port (
       reset           : in    std_logic;
       ext_clk         : in    std_logic;
-      fpga_data_in    : in    std_logic_vector(CFG_NMEM_TILE * 64 - 1 downto 0);
-      fpga_data_out   : out   std_logic_vector(CFG_NMEM_TILE * 64 - 1 downto 0);
+      fpga_data       : inout std_logic_vector(CFG_NMEM_TILE * 64 - 1 downto 0);
       fpga_valid_in   : in    std_logic_vector(CFG_NMEM_TILE - 1 downto 0);
       fpga_valid_out  : out   std_logic_vector(CFG_NMEM_TILE - 1 downto 0);
       fpga_clk_in     : in    std_logic_vector(CFG_NMEM_TILE - 1 downto 0);
@@ -101,6 +108,14 @@ architecture rtl of chip_emu_top is
       fpga_credit_in  : in    std_logic_vector(CFG_NMEM_TILE - 1 downto 0);
       fpga_credit_out : out   std_logic_vector(CFG_NMEM_TILE - 1 downto 0);
       reset_o2        : out   std_ulogic;
+      -- I/O link
+      iolink_data       : inout std_logic_vector(CFG_IOLINK_BITS - 1 downto 0);
+      iolink_valid_in   : in    std_ulogic;
+      iolink_valid_out  : out   std_ulogic;
+      iolink_clk_in     : in    std_ulogic;
+      iolink_clk_out    : out   std_ulogic;
+      iolink_credit_in  : in    std_ulogic;
+      iolink_credit_out : out   std_ulogic;
       --Ethernet signals
       etx_clk         : in    std_ulogic;
       erx_clk         : in    std_ulogic;
@@ -113,13 +128,14 @@ architecture rtl of chip_emu_top is
       etx_en          : out   std_ulogic;
       etx_er          : out   std_ulogic;
       emdc            : out   std_ulogic;
-      emdio_i         : in    std_logic;
-      emdio_o         : out   std_logic;
+      emdio           : inout std_logic;
       uart_rxd        : in    std_logic;
       uart_txd        : out   std_logic;
       uart_ctsn       : in    std_logic;
       uart_rtsn       : out   std_logic;
       --JTAG
+      tclk            : in    std_logic;
+      tms             : in    std_logic;
       tdi_io          : in    std_logic;
       tdi_cpu         : in    std_logic;
       tdi_mem         : in    std_logic;
@@ -162,42 +178,49 @@ begin  -- architecture rtl
     generic map (
       SIMULATION => SIMULATION)
     port map (
-      reset           => reset,
-      ext_clk         => ext_clk_int,
-      fpga_data_in    => fpga_data_in,
-      fpga_data_out   => fpga_data_out,
-      fpga_valid_in   => fpga_valid_in,
-      fpga_valid_out  => fpga_valid_out,
-      fpga_clk_in     => fpga_clk_in,
-      fpga_clk_out    => fpga_clk_out,
-      fpga_credit_in  => fpga_credit_in,
-      fpga_credit_out => fpga_credit_out,
-      reset_o2        => reset_o2,
-      etx_clk         => etx_clk,
-      erx_clk         => erx_clk,
-      erxd            => erxd,
-      erx_dv          => erx_dv,
-      erx_er          => erx_er,
-      erx_col         => erx_col,
-      erx_crs         => erx_crs,
-      etxd            => etxd,
-      etx_en          => etx_en,
-      etx_er          => etx_er,
-      emdc            => emdc,
-      emdio_i         => emdio_i,
-      emdio_o         => emdio_o,
-      uart_rxd        => uart_rxd,
-      uart_txd        => uart_txd,
-      uart_ctsn       => uart_ctsn,
-      uart_rtsn       => uart_rtsn,
-      tdi_io          => tdi_io,
-      tdi_cpu         => tdi_cpu,
-      tdi_mem         => tdi_mem,
-      tdi_acc         => tdi_acc,
-      tdo_io          => tdo_io,
-      tdo_cpu         => tdo_cpu,
-      tdo_mem         => tdo_mem,
-      tdo_acc         => tdo_acc
+      reset              => reset,
+      ext_clk            => ext_clk_int,
+      fpga_data          => fpga_data,
+      fpga_valid_in      => fpga_valid_in,
+      fpga_valid_out     => fpga_valid_out,
+      fpga_clk_in        => fpga_clk_in,
+      fpga_clk_out       => fpga_clk_out,
+      fpga_credit_in     => fpga_credit_in,
+      fpga_credit_out    => fpga_credit_out,
+      iolink_data        => iolink_data,
+      iolink_valid_in    => iolink_valid_in,
+      iolink_valid_out   => iolink_valid_out,
+      iolink_clk_in      => iolink_clk_in,
+      iolink_clk_out     => iolink_clk_out,
+      iolink_credit_in   => iolink_credit_in,
+      iolink_credit_out  => iolink_credit_out,
+      reset_o2           => reset_o2,
+      etx_clk            => etx_clk,
+      erx_clk            => erx_clk,
+      erxd               => erxd,
+      erx_dv             => erx_dv,
+      erx_er             => erx_er,
+      erx_col            => erx_col,
+      erx_crs            => erx_crs,
+      etxd               => etxd,
+      etx_en             => etx_en,
+      etx_er             => etx_er,
+      emdc               => emdc,
+      emdio              => emdio,
+      uart_rxd           => uart_rxd,
+      uart_txd           => uart_txd,
+      uart_ctsn          => uart_ctsn,
+      uart_rtsn          => uart_rtsn,
+      tclk               => tclk,
+      tms                => tms,
+      tdi_io             => tdi_io,
+      tdi_cpu            => tdi_cpu,
+      tdi_mem            => tdi_mem,
+      tdi_acc            => tdi_acc,
+      tdo_io             => tdo_io,
+      tdo_cpu            => tdo_cpu,
+      tdo_mem            => tdo_mem,
+      tdo_acc            => tdo_acc
   );
 
 end architecture rtl;

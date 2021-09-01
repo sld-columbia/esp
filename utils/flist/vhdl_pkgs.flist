@@ -19,6 +19,7 @@ sim/utils/testlib.vhd
 sim/utils/sim.vhd
 sim/utils/sparc_disas.vhd
 sim/utils/cpu_disas.vhd
+sim/tb/tb_pkg.vhd
 cores/leon3/multlib.vhd
 cores/leon3/coretypes.vhd
 cores/leon3/sldfpu/basic.vhd

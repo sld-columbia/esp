@@ -227,6 +227,16 @@ package tiles_pkg is
       uart_txd           : out std_ulogic;
       uart_ctsn          : in  std_ulogic;
       uart_rtsn          : out std_ulogic;
+      -- I/O link
+      iolink_data_oen   : out std_logic;
+      iolink_data_in    : in  std_logic_vector(CFG_IOLINK_BITS - 1 downto 0);
+      iolink_data_out   : out std_logic_vector(CFG_IOLINK_BITS - 1 downto 0);
+      iolink_valid_in   : in  std_ulogic;
+      iolink_valid_out  : out std_ulogic;
+      iolink_clk_in     : in  std_ulogic;
+      iolink_clk_out    : out std_ulogic;
+      iolink_credit_in  : in  std_ulogic;
+      iolink_credit_out : out std_ulogic;
       -- Pads configuration
       pad_cfg            : out std_logic_vector(ESP_CSR_PAD_CFG_MSB - ESP_CSR_PAD_CFG_LSB downto 0);
       -- NOC
