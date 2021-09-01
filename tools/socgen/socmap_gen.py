@@ -54,7 +54,6 @@ NTILE_MAX = 64
 # 84-(NAPBS-1) - Accelerators
 NACC_MAX = NAPBS - 2 * NCPU_MAX - NMEM_MAX - NTILE_MAX - 8
 
-
 # Default device mapping
 RST_ADDR = dict()
 RST_ADDR["leon3"] = 0x0
@@ -134,6 +133,9 @@ SLD_APB_ADDR = 0x100
 
 # default mask for accelerators' registers base address (256 Bytes regions per accelerator)
 SLD_APB_ADDR_MSK = 0xfff
+
+# Number of bits for the custom I/O link interface
+IOLINK_BITS = 8
 
 ###########
 # Constants for third-party accelerators
@@ -553,6 +555,10 @@ def print_constants(fp, soc, esp_config):
   fp.write("  constant CFG_XLEN : integer := " + str(soc.noc.cols) + ";\n")
   fp.write("  constant CFG_YLEN : integer := " + str(soc.noc.rows) + ";\n")
   fp.write("  constant CFG_TILES_NUM : integer := CFG_XLEN * CFG_YLEN;\n\n")
+
+  #
+  fp.write("  ------ Custom I/O link\n")
+  fp.write("  constant CFG_IOLINK_BITS : integer := " + str(IOLINK_BITS) + ";\n")
   
   #
   fp.write("  ------ Monitors (requires proFPGA MMI64)\n")

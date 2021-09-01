@@ -187,13 +187,23 @@ signal etho : eth_out_type;
 signal egtx_clk :std_ulogic;
 signal negtx_clk :std_ulogic;
 constant CPU_FREQ : integer := 50000;  -- cpu frequency in KHz
-signal eth0_apbi : apb_slv_in_type;
-signal eth0_apbo : apb_slv_out_type;
-signal sgmii0_apbi : apb_slv_in_type;
-signal sgmii0_apbo : apb_slv_out_type;
-signal eth0_ahbmi : ahb_mst_in_type;
-signal eth0_ahbmo : ahb_mst_out_type;
-signal edcl_ahbmo : ahb_mst_out_type;
+signal eth0_apbi, eth0_apbi_int : apb_slv_in_type;
+signal eth0_apbo, eth0_apbo_int : apb_slv_out_type;
+signal sgmii0_apbi, sgmii0_apbi_int : apb_slv_in_type;
+signal sgmii0_apbo, sgmii0_apbo_int : apb_slv_out_type;
+signal eth0_ahbmi, eth0_ahbmi_int, eth0_ahbmi_iolink : ahb_mst_in_type;
+signal eth0_ahbmo, eth0_ahbmo_int : ahb_mst_out_type;
+signal edcl_ahbmo, edcl_ahbmo_int, edcl_ahbmo_iolink : ahb_mst_out_type;
+
+-- IO Link
+signal iolink_data_in    : std_logic_vector(CFG_IOLINK_BITS - 1 downto 0);
+signal iolink_data_out   : std_logic_vector(CFG_IOLINK_BITS - 1 downto 0);
+signal iolink_valid_in   : std_ulogic;
+signal iolink_valid_out  : std_ulogic;
+signal iolink_clk_in     : std_logic;
+signal iolink_clk_out    : std_logic;
+signal iolink_credit_in  : std_logic;
+signal iolink_credit_out : std_logic;
 
 -- CPU flags
 signal cpuerr : std_ulogic;
@@ -474,6 +484,7 @@ begin
 
   end generate;
 
+  -- TO DO update to work with new off-chip ethernet option
   no_eth0 : if SIMULATION = true or CFG_GRETH = 0 generate
     eth0_apbo <= apb_none;
     sgmii0_apbo <= apb_none;
@@ -486,6 +497,54 @@ begin
     emdio <= '0';
   end generate;
 
+  no_onchip_eth : if CFG_ETH_EN = 0 generate
+    eth0_ahbmi <= eth0_ahbmi_iolink;
+    eth0_ahbmo_int <= ahbm_none;
+    edcl_ahbmo_iolink <= edcl_ahbmo;
+    edcl_ahbmo_int <= ahbm_none;
+    eth0_apbi <= apb_slv_in_none;
+    eth0_apbo_int <= apb_none;
+    sgmii0_apbi <= apb_slv_in_none;
+    sgmii0_apbo_int <= apb_none;
+
+    ahbm2iolink_i : ahbm2iolink
+      generic map (
+        hindex        => 1, -- TO DO define constant for this
+        io_bitwidth   => CFG_IOLINK_BITS,
+        word_bitwidth => 32,
+        little_end    => GLOB_CPU_AXI)
+      port map (
+        clk           => chip_refclk,
+        rstn          => rstn,
+        io_clk_in     => iolink_clk_in,
+        io_clk_out    => iolink_clk_out,
+        io_valid_in   => iolink_valid_in,
+        io_valid_out  => iolink_valid_out,
+        io_credit_in  => iolink_credit_in,
+        io_credit_out => iolink_credit_out,
+        io_data_oen   => open,
+        io_data_in    => iolink_data_in,
+        io_data_out   => iolink_data_out,
+        ahbmi         => eth0_ahbmi_iolink,
+        ahbmo         => edcl_ahbmo_iolink);
+  end generate;
+
+  onchip_eth : if CFG_ETH_EN = 1 generate
+    eth0_ahbmi <= eth0_ahbmi_int;
+    eth0_ahbmo_int <= eth0_ahbmo;
+    edcl_ahbmo_iolink <= ahbm_none;
+    edcl_ahbmo_int <= edcl_ahbmo;
+    eth0_apbi <= eth0_apbi_int;
+    eth0_apbo_int <= eth0_apbo;
+    sgmii0_apbi <= sgmii0_apbi_int;
+    sgmii0_apbo_int <= sgmii0_apbo;
+
+    iolink_data_in   <= (others => '0');
+    iolink_valid_in  <= '0';
+    iolink_clk_in    <= '0';
+    iolink_credit_in <= '0';
+  end generate;
+  
   -----------------------------------------------------------------------------
   -- CHIP
   -----------------------------------------------------------------------------
@@ -508,17 +567,27 @@ begin
       cpuerr         => cpuerr,
       ddr_ahbsi      => ddr_ahbsi,
       ddr_ahbso      => ddr_ahbso,
-      eth0_ahbmi     => eth0_ahbmi,
-      eth0_ahbmo     => eth0_ahbmo,
-      edcl_ahbmo     => edcl_ahbmo,
-      eth0_apbi      => eth0_apbi,
-      eth0_apbo      => eth0_apbo,
-      sgmii0_apbi    => sgmii0_apbi,
-      sgmii0_apbo    => sgmii0_apbo,
+      eth0_ahbmi     => eth0_ahbmi_int,
+      eth0_ahbmo     => eth0_ahbmo_int,
+      edcl_ahbmo     => edcl_ahbmo_int,
+      eth0_apbi      => eth0_apbi_int,
+      eth0_apbo      => eth0_apbo_int,
+      sgmii0_apbi    => sgmii0_apbi_int,
+      sgmii0_apbo    => sgmii0_apbo_int,
       dvi_apbi       => dvi_apbi,
       dvi_apbo       => dvi_apbo,
       dvi_ahbmi      => dvi_ahbmi,
-      dvi_ahbmo      => dvi_ahbmo);
+      dvi_ahbmo      => dvi_ahbmo,
+      iolink_data_oen   => open,
+      iolink_data_in    => iolink_data_in,
+      iolink_data_out   => iolink_data_out,
+      iolink_valid_in   => iolink_valid_in,
+      iolink_valid_out  => iolink_valid_out,
+      iolink_clk_in     => iolink_clk_in,
+      iolink_clk_out    => iolink_clk_out,
+      iolink_credit_in  => iolink_credit_in,
+      iolink_credit_out => iolink_credit_out
+      );
 
  end;
 

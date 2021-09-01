@@ -43,6 +43,16 @@ package tiles_pkg is
       dvi_apbo           : in  apb_slv_out_type;
       dvi_ahbmi          : out ahb_mst_in_type;
       dvi_ahbmo          : in  ahb_mst_out_type;
+      -- I/O link
+      iolink_data_oen    : out std_logic;
+      iolink_data_in     : in  std_logic_vector(CFG_IOLINK_BITS - 1 downto 0);
+      iolink_data_out    : out std_logic_vector(CFG_IOLINK_BITS - 1 downto 0);
+      iolink_valid_in    : in  std_ulogic;
+      iolink_valid_out   : out std_ulogic;
+      iolink_clk_in      : in  std_ulogic;
+      iolink_clk_out     : out std_ulogic;
+      iolink_credit_in   : in  std_ulogic;
+      iolink_credit_out  : out std_ulogic;
       mon_noc            : out monitor_noc_matrix(1 to 6, 0 to CFG_TILES_NUM-1);
       mon_acc            : out monitor_acc_vector(0 to relu(accelerators_num-1));
       mon_mem            : out monitor_mem_vector(0 to CFG_NMEM_TILE + CFG_NSLM_TILE + CFG_NSLMDDR_TILE - 1);
@@ -319,6 +329,16 @@ package tiles_pkg is
       uart_txd           : out std_ulogic;
       uart_ctsn          : in  std_ulogic;
       uart_rtsn          : out std_ulogic;
+      -- I/O link
+      iolink_data_oen   : out std_logic;
+      iolink_data_in    : in  std_logic_vector(CFG_IOLINK_BITS - 1 downto 0);
+      iolink_data_out   : out std_logic_vector(CFG_IOLINK_BITS - 1 downto 0);
+      iolink_valid_in   : in  std_ulogic;
+      iolink_valid_out  : out std_ulogic;
+      iolink_clk_in     : in  std_ulogic;
+      iolink_clk_out    : out std_ulogic;
+      iolink_credit_in  : in  std_ulogic;
+      iolink_credit_out : out std_ulogic;
       -- Pads configuration
       pad_cfg            : out std_logic_vector(ESP_CSR_PAD_CFG_MSB - ESP_CSR_PAD_CFG_LSB downto 0);
       -- NOC
