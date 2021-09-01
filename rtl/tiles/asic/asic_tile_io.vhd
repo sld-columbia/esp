@@ -73,6 +73,16 @@ entity asic_tile_io is
     uart_txd           : out   std_ulogic;
     uart_ctsn          : in    std_ulogic;
     uart_rtsn          : out   std_ulogic;
+    -- I/O link
+    iolink_data_oen    : out std_logic;
+    iolink_data_in     : in  std_logic_vector(CFG_IOLINK_BITS - 1 downto 0);
+    iolink_data_out    : out std_logic_vector(CFG_IOLINK_BITS - 1 downto 0);
+    iolink_valid_in    : in  std_ulogic;
+    iolink_valid_out   : out std_ulogic;
+    iolink_clk_in      : in  std_ulogic;
+    iolink_clk_out     : out std_ulogic;
+    iolink_credit_in   : in  std_ulogic;
+    iolink_credit_out  : out std_ulogic;
     -- Test interface
     tdi                : in    std_logic;
     tdo                : out   std_logic;
@@ -195,6 +205,13 @@ architecture rtl of asic_tile_io is
   signal dvi_ahbmo : ahb_mst_out_type;
 
   attribute keep                        : string;
+  -- I/O Link
+  signal iolink_data_oen_int   : std_logic;
+  signal iolink_data_out_int   : std_logic_vector(CFG_IOLINK_BITS - 1 downto 0);
+  signal iolink_valid_out_int  : std_ulogic;
+  signal iolink_clk_out_int    : std_logic;
+  signal iolink_credit_out_int : std_logic;
+
   attribute syn_keep                    : boolean;
   attribute syn_preserve                : boolean;
 
@@ -694,60 +711,93 @@ begin
   mdcscaler_not_changed <= '1' when mdcscaler_reg = mdcscaler else '0';
   eth_rstn <= dco_rstn and mdcscaler_not_changed;
 
-  e1 : grethm
-    generic map(
-      hindex      => 0,
-      ehindex     => 1,
-      pindex      => 14,
-      paddr       => 16#800#,
-      pmask       => 16#f00#,
-      pirq        => 12,
-      little_end  => GLOB_CPU_AXI * CFG_L2_DISABLE,
-      memtech     => CFG_FABTECH,
-      enable_mdio => 1,
-      fifosize    => CFG_ETH_FIFO,
-      nsync       => 1,
-      oepol       => 1,
-      edcl        => CFG_DSU_ETH,
-      edclbufsz   => CFG_ETH_BUF,
-      macaddrh    => CFG_ETH_ENM,
-      macaddrl    => CFG_ETH_ENL,
-      phyrstadr   => 1,
-      ipaddrh     => CFG_ETH_IPM,
-      ipaddrl     => CFG_ETH_IPL,
-      giga        => CFG_GRETH1G,
-      edclsepahbg => 1)
-    port map(
-      rst    => dco_rstn,
-      clk    => dco_clk,                -- Fixed I/O tile frequency
-      mdcscaler => mdcscaler,
-      ahbmi  => eth0_ahbmi,
-      ahbmo  => eth0_ahbmo,
-      eahbmo => edcl_ahbmo,
-      apbi   => eth0_apbi,
-      apbo   => eth0_apbo,
-      ethi   => ethi,
-      etho   => etho);
+  onchip_ethernet : if CFG_ETH_EN = 1 generate
+    
+    e1 : grethm
+      generic map(
+        hindex      => 0,
+        ehindex     => 1,
+        pindex      => 14,
+        paddr       => 16#800#,
+        pmask       => 16#f00#,
+        pirq        => 12,
+        little_end  => GLOB_CPU_AXI * CFG_L2_DISABLE,
+        memtech     => CFG_FABTECH,
+        enable_mdio => 1,
+        fifosize    => CFG_ETH_FIFO,
+        nsync       => 1,
+        oepol       => 1,
+        edcl        => CFG_DSU_ETH,
+        edclbufsz   => CFG_ETH_BUF,
+        macaddrh    => CFG_ETH_ENM,
+        macaddrl    => CFG_ETH_ENL,
+        phyrstadr   => 1,
+        ipaddrh     => CFG_ETH_IPM,
+        ipaddrl     => CFG_ETH_IPL,
+        giga        => CFG_GRETH1G,
+        edclsepahbg => 1)
+      port map(
+        rst    => dco_rstn,
+        clk    => dco_clk,                -- Fixed I/O tile frequency
+        mdcscaler => mdcscaler,
+        ahbmi  => eth0_ahbmi,
+        ahbmo  => eth0_ahbmo,
+        eahbmo => edcl_ahbmo,
+        apbi   => eth0_apbi,
+        apbo   => eth0_apbo,
+        ethi   => ethi,
+        etho   => etho);
 
-  ethi.edclsepahb <= '1';
+    ethi.edclsepahb <= '1';
 
-  -- Ethernet I/O
-  reset_o2             <= dco_rstn;
-  ethi.tx_clk          <= etx_clk;
-  ethi.rx_clk          <= erx_clk;
-  ethi.rxd(3 downto 0) <= erxd;
-  ethi.rx_dv           <= erx_dv;
-  ethi.rx_er           <= erx_er;
-  ethi.rx_col          <= erx_col;
-  ethi.rx_crs          <= erx_crs;
-  ethi.mdio_i          <= emdio_i;
+    -- Ethernet I/O
+    reset_o2             <= dco_rstn;
+    ethi.tx_clk          <= etx_clk;
+    ethi.rx_clk          <= erx_clk;
+    ethi.rxd(3 downto 0) <= erxd;
+    ethi.rx_dv           <= erx_dv;
+    ethi.rx_er           <= erx_er;
+    ethi.rx_col          <= erx_col;
+    ethi.rx_crs          <= erx_crs;
+    ethi.mdio_i          <= emdio_i;
 
-  etxd     <= etho.txd(3 downto 0);
-  etx_en   <= etho.tx_en;
-  etx_er   <= etho.tx_er;
-  emdc     <= etho.mdc;
-  emdio_o  <= etho.mdio_o;
-  emdio_oe <= etho.mdio_oe;
+    etxd     <= etho.txd(3 downto 0);
+    etx_en   <= etho.tx_en;
+    etx_er   <= etho.tx_er;
+    emdc     <= etho.mdc;
+    emdio_o  <= etho.mdio_o;
+    emdio_oe <= etho.mdio_oe;
+
+    -- I/O Link
+    iolink_data_oen   <= '0';
+    iolink_data_out   <= (others => '0');
+    iolink_valid_out  <= '0';
+    iolink_clk_out    <= '0';
+    iolink_credit_out <= '0';
+  end generate onchip_ethernet;
+
+  no_onchip_ethernet: if CFG_ETH_EN = 0 generate
+    -- Ethernet bus interface
+    eth0_ahbmo <= ahbm_none;
+    edcl_ahbmo <= ahbm_none;
+    eth0_apbo  <= apb_none;
+
+    -- Ethernet I/O
+    reset_o2 <= '0';
+    etxd <= (others => '0');
+    etx_en <= '0';
+    etx_er <= '0';
+    emdc <= '0';
+    emdio_o <= '0';
+    emdio_oe <= '0';
+
+    -- I/O Link
+    iolink_data_oen   <= iolink_data_oen_int;
+    iolink_data_out   <= iolink_data_out_int;
+    iolink_valid_out  <= iolink_valid_out_int;
+    iolink_clk_out    <= iolink_clk_out_int;
+    iolink_credit_out <= iolink_credit_out_int;
+  end generate no_onchip_ethernet;
 
   -----------------------------------------------------------------------------
   -- DVI (not available for GF12 for now)
@@ -796,6 +846,16 @@ begin
       uart_txd           => uart_txd,
       uart_ctsn          => uart_ctsn,
       uart_rtsn          => uart_rtsn,
+      -- I/O link
+      iolink_data_oen    => iolink_data_oen_int,
+      iolink_data_in     => iolink_data_in,
+      iolink_data_out    => iolink_data_out_int,
+      iolink_valid_in    => iolink_valid_in,
+      iolink_valid_out   => iolink_valid_out_int,
+      iolink_clk_in      => iolink_clk_in,
+      iolink_clk_out     => iolink_clk_out_int,
+      iolink_credit_in   => iolink_credit_in,
+      iolink_credit_out  => iolink_credit_out_int,
       -- Pad configuration
       pad_cfg            => pad_cfg,
       -- NOC

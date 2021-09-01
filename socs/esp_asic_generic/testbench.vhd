@@ -39,8 +39,7 @@ architecture behav of testbench is
   signal etx_en   : std_ulogic;
   signal etx_er   : std_ulogic;
   signal emdc     : std_ulogic;
-  signal emdio_i  : std_logic;
-  signal emdio_o  : std_logic;
+  signal emdio    : std_logic;
 
   -- DVI
   -- signal tft_nhpd        : std_ulogic;
@@ -136,8 +135,7 @@ architecture behav of testbench is
       etx_en            : out   std_ulogic;
       etx_er            : out   std_ulogic;
       emdc              : out   std_ulogic;
-      emdio_i           : in    std_logic;
-      emdio_o           : out    std_logic;
+      emdio             : inout std_logic;
       -- DVI
       -- tft_nhpd          : in    std_ulogic;  -- Hot plug
       -- tft_clk_p         : out   std_ulogic;
@@ -244,7 +242,7 @@ begin
   erx_er            <= '0';
   erx_col           <= '0';
   erx_crs           <= '0';
-  emdio_i           <= '0';
+  emdio             <= 'Z';
 
   -- DVI
   -- tft_nhpd <= '0';
@@ -274,8 +272,7 @@ begin
       etx_en            => etx_en,
       etx_er            => etx_er,
       emdc              => emdc,
-      emdio_i           => emdio_i,
-      emdio_o           => emdio_o,
+      emdio             => emdio,
       -- tft_nhpd          => tft_nhpd,
       -- tft_clk_p         => tft_clk_p,
       -- tft_clk_n         => tft_clk_n,

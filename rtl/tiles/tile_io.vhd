@@ -72,6 +72,16 @@ entity tile_io is
     uart_txd           : out std_ulogic;
     uart_ctsn          : in  std_ulogic;
     uart_rtsn          : out std_ulogic;
+    -- I/O link
+    iolink_data_oen   : out std_logic;
+    iolink_data_in    : in  std_logic_vector(CFG_IOLINK_BITS - 1 downto 0);
+    iolink_data_out   : out std_logic_vector(CFG_IOLINK_BITS - 1 downto 0);
+    iolink_valid_in   : in  std_ulogic;
+    iolink_valid_out  : out std_ulogic;
+    iolink_clk_in     : in  std_ulogic;
+    iolink_clk_out    : out std_ulogic;
+    iolink_credit_in  : in  std_ulogic;
+    iolink_credit_out : out std_ulogic;
     -- Pads configuration
     pad_cfg            : out std_logic_vector(ESP_CSR_PAD_CFG_MSB - ESP_CSR_PAD_CFG_LSB downto 0);
     -- NOC
@@ -294,6 +304,8 @@ architecture rtl of tile_io is
   signal local_apb_ack    : std_ulogic;
   signal remote_apb_ack   : std_ulogic;
   signal pready           : std_ulogic;
+  signal eth0_ahbmi_int   : ahb_mst_in_type;
+  signal edcl_ahbmo_int   : ahb_mst_out_type;
 
   -- Mon
   signal mon_dvfs_int   : monitor_dvfs_type;
@@ -551,9 +563,9 @@ begin
   -- ETH0 and EDCL Master
   -----------------------------------------------------------------------------
 
-  eth0_gen : if CFG_GRETH = 1 generate
-    ahbmo(0) <= eth0_ahbmo;
-    eth0_ahbmi          <= ahbmi;
+  onchip_ethernet : if CFG_ETH_EN = 1 and CFG_GRETH = 1 generate
+    ahbmo(0)   <= eth0_ahbmo;
+    eth0_ahbmi <= ahbmi;
 
     noc_apbo(14) <= eth0_apbo;
     eth0_apbi    <= noc_apbi;
@@ -567,18 +579,53 @@ begin
       ahbmo(1) <= edcl_ahbmo;
     end generate edcl_gen;
 
-  end generate eth0_gen;
+    iolink_data_out   <= (others => '0');
+    iolink_valid_out  <= '0';
+    iolink_data_oen   <= '0';
+    iolink_clk_out    <= '0';
+    iolink_credit_out <= '0';
 
-  no_ethernet : if CFG_GRETH = 0 generate
+  end generate onchip_ethernet;
+
+  no_onchip_ethernet : if CFG_ETH_EN = 0 and CFG_GRETH = 1 generate
+    ahbmo(0)       <= eth0_ahbmo;
+    ahbmo(1)       <= edcl_ahbmo_int;
+    eth0_ahbmi_int <= ahbmi;
+  end generate no_onchip_ethernet;
+
+  no_ethernet : if CFG_ETH_EN = 0 or CFG_GRETH = 0 generate
     eth0_ahbmi   <= ahbm_in_none;
     eth0_apbi    <= apb_slv_in_none;
     noc_apbo(14) <= apb_none;
   end generate no_ethernet;
 
-  no_sgmii_gen : if (CFG_GRETH * CFG_SGMII) = 0 generate
+  no_sgmii_gen : if CFG_ETH_EN = 0 or CFG_GRETH = 0 or CFG_SGMII = 0 generate
     sgmii0_apbi  <= apb_slv_in_none;
     noc_apbo(15) <= apb_none;
   end generate no_sgmii_gen;
+
+  iolink_en: if CFG_ETH_EN = 0 generate
+    iolink2ahbm_i : iolink2ahbm
+      generic map (
+        hindex        => 1, -- TODO define constant
+        io_bitwidth   => CFG_IOLINK_BITS,
+        word_bitwidth => ARCH_BITS,
+        little_end    => 0)
+      port map (
+        clk           => clk,
+        rstn          => rst,
+        io_clk_in     => iolink_clk_in,
+        io_clk_out    => iolink_clk_out,
+        io_data_oen   => iolink_data_oen,
+        io_data_in    => iolink_data_in,
+        io_data_out   => iolink_data_out,
+        io_valid_in   => iolink_valid_in,
+        io_valid_out  => iolink_valid_out,
+        io_credit_in  => iolink_credit_in,
+        io_credit_out => iolink_credit_out,
+        ahbmi         => eth0_ahbmi_int,
+        ahbmo         => edcl_ahbmo_int);
+  end generate iolink_en;
 
   -----------------------------------------------------------------------------
   -- Memory Controller Slave (BOOTROM is implemented as RAM for development)

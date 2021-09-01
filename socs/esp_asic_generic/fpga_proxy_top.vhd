@@ -33,7 +33,7 @@ use work.tile.all;
 use work.coretypes.all;
 use work.grlib_config.all;
 use work.socmap.all;
-
+use work.tb_pkg.all;
 
 entity fpga_proxy_top is
 
@@ -48,14 +48,21 @@ entity fpga_proxy_top is
     main_clk_p         : in    std_ulogic;  -- 78.25 MHz clock
     main_clk_n         : in    std_ulogic;  -- 78.25 MHz clock
     -- Memory link
-    fpga_data_out     : in std_logic_vector(CFG_NMEM_TILE * (ARCH_BITS) - 1 downto 0);
-    fpga_data_in      : out std_logic_vector(CFG_NMEM_TILE * (ARCH_BITS) - 1 downto 0);
+    fpga_data         : inout std_logic_vector(CFG_NMEM_TILE * (ARCH_BITS) - 1 downto 0);
     fpga_valid_in     : out   std_logic_vector(CFG_NMEM_TILE - 1 downto 0);
-    fpga_valid_out    : in  std_logic_vector(CFG_NMEM_TILE - 1 downto 0);
+    fpga_valid_out    : in    std_logic_vector(CFG_NMEM_TILE - 1 downto 0);
     fpga_clk_in       : out   std_logic_vector(CFG_NMEM_TILE - 1 downto 0);
     fpga_clk_out      : in    std_logic_vector(CFG_NMEM_TILE - 1 downto 0);
     fpga_credit_in    : out   std_logic_vector(CFG_NMEM_TILE - 1 downto 0);
     fpga_credit_out   : in    std_logic_vector(CFG_NMEM_TILE - 1 downto 0);
+      -- I/O link
+    iolink_data       : inout std_logic_vector(CFG_IOLINK_BITS - 1 downto 0);
+    iolink_valid_in   : in    std_ulogic;
+    iolink_valid_out  : out   std_ulogic;
+    iolink_clk_in     : in    std_ulogic;
+    iolink_clk_out    : out   std_ulogic;
+    iolink_credit_in  : in    std_ulogic;
+    iolink_credit_out : out   std_ulogic;
     -- Test interface
     tdi               : out   std_logic_vector(0 to CFG_TILES_NUM - 1);
     tdo               : in    std_logic_vector(0 to CFG_TILES_NUM - 1);
@@ -308,14 +315,25 @@ architecture rtl of fpga_proxy_top is
   -----------------------------------------------------------------------------
   -- FPGA proxy
   signal fpga_data_ien       : std_logic_vector(CFG_NMEM_TILE - 1 downto 0);
-  signal fpga_data_in_int    : std_logic_vector(CFG_NMEM_TILE * (ARCH_BITS) - 1 downto 0);
-  signal fpga_data_out_int   : std_logic_vector(CFG_NMEM_TILE * (ARCH_BITS) - 1 downto 0);
+  signal fpga_data_in        : std_logic_vector(CFG_NMEM_TILE * (ARCH_BITS) - 1 downto 0);
+  signal fpga_data_out       : std_logic_vector(CFG_NMEM_TILE * (ARCH_BITS) - 1 downto 0);
   signal fpga_valid_in_int   : std_logic_vector(CFG_NMEM_TILE - 1 downto 0);
   signal fpga_valid_out_int  : std_logic_vector(CFG_NMEM_TILE - 1 downto 0);
   signal fpga_clk_in_int     : std_logic_vector(CFG_NMEM_TILE - 1 downto 0);
   signal fpga_clk_out_int    : std_logic_vector(CFG_NMEM_TILE - 1 downto 0);
   signal fpga_credit_in_int  : std_logic_vector(CFG_NMEM_TILE - 1 downto 0);
   signal fpga_credit_out_int : std_logic_vector(CFG_NMEM_TILE - 1 downto 0);
+
+  -- I/O Link
+  signal iolink_data_oen       : std_ulogic;
+  signal iolink_data_in_int    : std_logic_vector(CFG_IOLINK_BITS - 1 downto 0);
+  signal iolink_data_out_int   : std_logic_vector(CFG_IOLINK_BITS - 1 downto 0);
+  signal iolink_valid_in_int   : std_ulogic;
+  signal iolink_valid_out_int  : std_ulogic;
+  signal iolink_clk_in_int     : std_ulogic;
+  signal iolink_clk_out_int    : std_ulogic;
+  signal iolink_credit_in_int  : std_ulogic;
+  signal iolink_credit_out_int : std_ulogic;
 
   -----------------------------------------------------------------------------
   -- JTAG
@@ -478,8 +496,8 @@ begin  -- architecture rtl
 
     -- Bidirection data pins
     fpga_iopad_data_gen : for j in 0 to ARCH_BITS - 1 generate
-        fpga_data_in_pad  : outpad generic map (level => cmos, voltage => x18v, tech => FPGA_PROXY_TECH) port map (fpga_data_in(memswap(i) * ARCH_BITS + j), fpga_data_in_int(i * ARCH_BITS + j));
-        fpga_data_out_pad : inpad generic map (level  => cmos, voltage => x18v, tech => FPGA_PROXY_TECH) port map (fpga_data_out(memswap(i) * ARCH_BITS + j), fpga_data_out_int(i * ARCH_BITS + j));
+        fpga_data_pad  : iopad generic map (tech => FPGA_PROXY_TECH, level => cmos, voltage => x18v, oepol => 1) 
+          port map (fpga_data(memswap(i) * ARCH_BITS + j), fpga_data_in(i * ARCH_BITS + j), fpga_data_ien(i), fpga_data_out(i * ARCH_BITS + j));
     end generate fpga_iopad_data_gen;
 
     -- Valid bit
@@ -494,6 +512,31 @@ begin  -- architecture rtl
     fpga_credit_in_pad  : outpad generic map (level => cmos, voltage => x18v, tech => FPGA_PROXY_TECH) port map (fpga_credit_in(memswap(i)), fpga_credit_in_int(i));
     fpga_credit_out_pad : inpad generic map (level  => cmos, voltage => x18v, tech => FPGA_PROXY_TECH) port map (fpga_credit_out(memswap(i)), fpga_credit_out_int(i));
 
+   -- I/O link pads
+  iolink_data_pad : iopadv
+    generic map (tech => inferred, level => cmos, voltage => x18v, width => CFG_IOLINK_BITS, oepol => 1)
+    port map (iolink_data, iolink_data_out_int, iolink_data_oen, iolink_data_in_int);
+  iolink_valid_in_pad : inpad
+    generic map (level => cmos, voltage => x18v, tech => inferred)
+    port map (iolink_valid_in, iolink_valid_in_int);
+  iolink_valid_out_pad : outpad
+    generic map (level => cmos, voltage => x18v, tech => inferred)
+    port map (iolink_valid_out, iolink_valid_out_int);
+  iolink_clk_in_pad : inpad
+    generic map (level => cmos, voltage => x18v, tech => inferred)
+    port map (iolink_clk_in, iolink_clk_in_int);
+  iolink_clk_out_pad : outpad
+    generic map (level => cmos, voltage => x18v, tech => inferred)
+    port map (iolink_clk_out, iolink_clk_out_int);
+  iolink_credit_in_pad : inpad
+    generic map (level => cmos, voltage => x18v, tech => inferred)
+    port map (iolink_credit_in, iolink_credit_in_int);
+  iolink_credit_out_pad : outpad
+    generic map (level => cmos, voltage => x18v, tech => inferred)
+    port map (iolink_credit_out, iolink_credit_out_int);
+
+    iolink_clk_out_int <= ext_clk_noc_int;
+
     ahb_slv_out_ddr(i)(0) <= ddr_ahbso(i);
     ddr_ahbsi(i) <= ahb_slv_in_ddr(i);
 
@@ -505,8 +548,8 @@ begin  -- architecture rtl
       port map (
         clk             => sys_clk(i),
         rstn            => rstn,
-        fpga_data_in    => fpga_data_in_int((i + 1) * (ARCH_BITS) - 1 downto i * (ARCH_BITS)),
-        fpga_data_out   => fpga_data_out_int((i + 1) * (ARCH_BITS) - 1 downto i * (ARCH_BITS)),
+        fpga_data_in    => fpga_data_in((i + 1) * (ARCH_BITS) - 1 downto i * (ARCH_BITS)),
+        fpga_data_out   => fpga_data_out((i + 1) * (ARCH_BITS) - 1 downto i * (ARCH_BITS)),
         fpga_valid_in   => fpga_valid_in_int(i),
         fpga_valid_out  => fpga_valid_out_int(i),
         fpga_data_ien   => fpga_data_ien(i),
@@ -1092,6 +1135,17 @@ begin  -- architecture rtl
     tms <= '0';
     tclk <= '0';
   end generate normal_mode_sim_gen;
+
+  tb_iolink_i : tb_iolink port map (
+    reset                 => reset,
+    iolink_clk_in_int     => iolink_clk_in_int,
+    iolink_valid_in_int   => iolink_valid_in_int,
+    iolink_data_in_int    => iolink_data_in_int,
+    iolink_clk_out_int    => iolink_clk_out_int,
+    iolink_credit_out_int => iolink_credit_out_int,
+    iolink_valid_out_int  => iolink_valid_out_int,
+    iolink_data_out_int   => iolink_data_out_int,
+    iolink_data_oen       => iolink_data_oen);
 
 
 end architecture rtl;

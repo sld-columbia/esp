@@ -53,7 +53,7 @@ module esplink
 
    // Timer
    logic 			       timer_en;
-   logic [19:0] 		       timestamp;
+   logic [11:0]  		       timestamp;
 
    genvar 			       i;
 
@@ -118,7 +118,7 @@ module esplink
 
 	 if (timer_en == 1'b1) begin
 	    timestamp <= timestamp + 1;
-	    if (timestamp == 20'hFFFFF)
+	    if (timestamp == 12'hFFF)
 	      timer_en <= 1'b0;
 	 end
       end
