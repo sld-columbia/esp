@@ -23,7 +23,7 @@ package alldco is
       CLK_DIV  : out std_logic);
   end component gf12_dco;
 
-  component gf22_dco is
+  component dco_gf22_wrapper is
     generic (
       enable_div2 : integer range 0 to 1);
     port (
@@ -39,6 +39,6 @@ package alldco is
       CLK_DIV2    : out std_logic;
       CLK_DIV2_90 : out std_logic;
       CLK_DIV  : out std_logic);
-  end component gf22_dco;
+  end component dco_gf22_wrapper;
 
 end package alldco;

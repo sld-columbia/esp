@@ -89,7 +89,7 @@ begin  -- architecture rtl
 
   gf22_gen : if (tech = gf22) generate
 
-    x0 : gf22_dco
+    x0 : dco_gf22_wrapper
       generic map (
         enable_div2 => enable_div2)
       port map (
