@@ -51,9 +51,9 @@ module icap
             .I(icap_i),         // 32-bit input: Configuration data input bus
             .RDWRB(icap_rdwrb)  // 1-bit input: Read/Write Select input
         );
-    assign icap_prerror = 1'b0;
-    assign icap_prdone = 1'b0;
-    assign icap_avail = 1'b1;
+    //assign icap_prerror = 1'b0;
+    //assign icap_prdone = 1'b0;
+    //assign icap_avail = 1'b1;
     endgenerate
 endmodule
 

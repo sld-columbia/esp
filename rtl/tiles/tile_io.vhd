@@ -490,7 +490,10 @@ architecture rtl of tile_io is
   constant this_remote_apb_slv_en : std_logic_vector(0 to NAPBSLV - 1) := remote_apb_slv_mask_misc;
   constant this_apb_en            : std_logic_vector(0 to NAPBSLV - 1) := this_local_apb_en or this_remote_apb_slv_en;
   constant this_remote_ahb_slv_en : std_logic_vector(0 to NAHBSLV - 1) := remote_ahb_mask_misc;
-
+  
+  --constant nofb_mem_info : tile_mem_info_vector(0 to CFG_NSLM_TILE + CFG_NSLMDDR_TILE + CFG_NMEM_TILE - 1) := mem_info(0 to CFG_NSLM_TILE + CFG_NSLMDDR_TILE + CFG_NMEM_TILE - 1);
+  
+  
   function set_local_pconfig (
     constant csr_pconfig   : apb_config_type;
     constant fixed_pconfig : apb_slv_config_vector)
@@ -1951,7 +1954,7 @@ begin
       m_axi_mem_rlast           => m_axi_mem_rlast,
       m_axi_mem_rvalid          => m_axi_mem_rvalid,
       m_axi_mem_rready          => m_axi_mem_rready,
-      icap_clk                  => icap_clk,
+      icap_clk                  => clk,
       icap_reset                => rst,
       icap_csib                 => icap_csib,
       icap_rdwrb                => icap_rdwrb,
@@ -1994,7 +1997,7 @@ begin
     generic map (
       tech  =>  CFG_FABTECH)
     port map (
-      icap_clk      => icap_clk,
+      icap_clk      => clk,
       icap_csib     => icap_csib,
       icap_rdwrb    => icap_rdwrb,
       icap_i        => icap_i,
@@ -2010,8 +2013,8 @@ begin
       nmst             => 1,
       retarget_for_dma => 1,    --enable retarget_for_dma
       mem_axi_port     => 0,
-      mem_num          => CFG_NSLM_TILE + CFG_NMEM_TILE,
-      mem_info         => tile_acc_mem_list(0 to CFG_NMEM_TILE + CFG_NSLM_TILE - 1), --nofb_mem_info,
+      mem_num          => CFG_NSLM_TILE + CFG_NSLMDDR_TILE + CFG_NMEM_TILE,
+      mem_info         => tile_mem_list(0 to CFG_NMEM_TILE + CFG_NSLM_TILE - 1), --tile_mem_list, --nofb_mem_info,
       slv_y            => tile_y(io_tile_id), --io_y,
       slv_x            => tile_x(io_tile_id)) --, io_x)
     port map (
@@ -2041,12 +2044,12 @@ begin
       mosi(0).ar.prot                   <= m_axi_mem_arprot; 
       mosi(0).ar.cache                  <= m_axi_mem_arcache;
       mosi(0).ar.valid                  <= m_axi_mem_arvalid; 
-      somi(0).ar.ready                  <= m_axi_mem_arready;
-      somi(0).r.data(31 downto 0)       <= m_axi_mem_rdata;   
-      somi(0).r.resp                    <= m_axi_mem_rresp; 
-      somi(0).r.last                    <= m_axi_mem_rlast;
-      somi(0).r.valid                   <= m_axi_mem_rvalid;
       mosi(0).r.ready                   <= m_axi_mem_rready;
+      m_axi_mem_arready                 <= somi(0).ar.ready;
+      m_axi_mem_rdata                   <= somi(0).r.data(31 downto 0);
+      m_axi_mem_rresp                   <= somi(0).r.resp;
+      m_axi_mem_rlast                   <= somi(0).r.last;
+      m_axi_mem_rvalid                  <= somi(0).r.valid;
 
 -----------------------------------------------------------------------------
   -- Tile queues

@@ -13,7 +13,7 @@ prc_v1_3::set_property -dict [list                                              
                                     CONFIG.CP_ARBITRATION_PROTOCOL              0\
                                     CONFIG.CP_COMPRESSION                       0\
                                     CONFIG.CP_FAMILY                            7series\
-                                    CONFIG.CDC_STAGES                           6\
+                                    CONFIG.CDC_STAGES                           2\
                                     CONFIG.VS.VS_0.START_IN_SHUTDOWN            0\
                                     CONFIG.VS.VS_0.NUM_TRIGGERS_ALLOCATED       1\
                                     CONFIG.VS.VS_0.NUM_RMS_ALLOCATED            1\
@@ -24,10 +24,10 @@ prc_v1_3::set_property -dict [list                                              
                                     CONFIG.VS.VS_0.HAS_POR_RM                   0\
                                     CONFIG.VS.VS_0.SKIP_RM_STARTUP_AFTER_RESET  0\
                                     CONFIG.VS.VS_0.RM.RM_0.SHUTDOWN_REQUIRED    no\
-                                    CONFIG.VS.VS_0.RM.RM_0.STARTUP_REQUIRED     sw\
+                                    CONFIG.VS.VS_0.RM.RM_0.STARTUP_REQUIRED     no\
                                     CONFIG.VS.VS_0.RM.RM_0.RESET_REQUIRED       no\
                                     CONFIG.VS.VS_0.RM.RM_0.BS.0.ADDRESS         0\
                                     CONFIG.VS.VS_0.RM.RM_0.BS.0.SIZE            0\
                                     CONFIG.VS.VS_0.RM.RM_0.BS.0.CLEAR           0\
                                     ] [get_ips $ip_name]
- generate_target {all} [get_ips $ip_name]
+generate_target {all} [get_ips $ip_name]

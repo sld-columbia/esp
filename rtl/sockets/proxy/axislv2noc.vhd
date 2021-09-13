@@ -149,23 +149,23 @@ architecture rtl of axislv2noc is
   signal remote_ahbs_rcv_data_out_hold  : misc_noc_flit_type;
   signal sample_and_hold : std_ulogic;
 
-  -- attribute mark_debug : string;
+   attribute mark_debug : string;
 
-  -- attribute mark_debug of coherence_req_wrreq : signal is "true";
-  -- attribute mark_debug of coherence_req_data_in : signal is "true";
-  -- attribute mark_debug of coherence_rsp_rcv_rdreq : signal is "true";
-  -- attribute mark_debug of coherence_rsp_rcv_data_out : signal is "true";
-  -- attribute mark_debug of remote_ahbs_snd_wrreq : signal is "true";
-  -- attribute mark_debug of remote_ahbs_snd_data_in : signal is "true";
-  -- attribute mark_debug of remote_ahbs_rcv_rdreq : signal is "true";
-  -- attribute mark_debug of remote_ahbs_rcv_data_out : signal is "true";
-  -- attribute mark_debug of transaction_reg : signal is "true";
-  -- attribute mark_debug of current_state : signal is "true";
-  -- attribute mark_debug of selected : signal is "true";
-  -- attribute mark_debug of sample_flits : signal is "true";
-  -- attribute mark_debug of sample_and_hold : signal is "true";
-  -- attribute mark_debug of mosi : signal is "true";
-  -- attribute mark_debug of somi : signal is "true";
+   attribute mark_debug of coherence_req_wrreq : signal is "true";
+   attribute mark_debug of coherence_req_data_in : signal is "true";
+   attribute mark_debug of coherence_rsp_rcv_rdreq : signal is "true";
+   attribute mark_debug of coherence_rsp_rcv_data_out : signal is "true";
+   attribute mark_debug of remote_ahbs_snd_wrreq : signal is "true";
+   attribute mark_debug of remote_ahbs_snd_data_in : signal is "true";
+   attribute mark_debug of remote_ahbs_rcv_rdreq : signal is "true";
+   attribute mark_debug of remote_ahbs_rcv_data_out : signal is "true";
+   attribute mark_debug of transaction_reg : signal is "true";
+   attribute mark_debug of current_state : signal is "true";
+   attribute mark_debug of selected : signal is "true";
+   attribute mark_debug of sample_flits : signal is "true";
+   attribute mark_debug of sample_and_hold : signal is "true";
+   attribute mark_debug of mosi : signal is "true";
+   attribute mark_debug of somi : signal is "true";
 
 
 begin  -- rtl
@@ -218,7 +218,8 @@ begin  -- rtl
       tran.region := mosi(tran.xindex).ar.region;
       tran.user   := mosi(tran.xindex).ar.user;
     end if;
-    tran.len := mosi(tran.xindex).ar.len + "0000001";
+    --This was commented out to make the burst access mode work
+    --tran.len := mosi(tran.xindex).ar.len + "0000001";
 
     -- Get routing info
     tran.mem_x := mem_info(0).x;
