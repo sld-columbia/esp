@@ -377,7 +377,7 @@ begin
     generic map (
       SIMULATION   => SIMULATION,
       this_has_dco => 1,
-      test_if_en   => 1,
+      test_if_en   => CFG_JTAG_EN,
       ROUTER_PORTS => ROUTER_PORTS,
       HAS_SYNC     => 1)
     port map (

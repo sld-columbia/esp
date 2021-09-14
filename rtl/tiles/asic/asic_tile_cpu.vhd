@@ -152,7 +152,7 @@ begin
       this_has_pll       => 0,
       this_has_dco       => 1,          -- use DCO
       this_extra_clk_buf => 0,
-      test_if_en         => 1,          -- enable test interface
+      test_if_en         => CFG_JTAG_EN, -- enable test interface
       ROUTER_PORTS       => ROUTER_PORTS,
       HAS_SYNC           => 1)
     port map (

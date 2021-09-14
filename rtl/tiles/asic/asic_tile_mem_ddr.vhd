@@ -247,7 +247,7 @@ begin
   tile_mem_1 : tile_mem
     generic map (
       this_has_dco => 1,
-      test_if_en   => 1,
+      test_if_en   => CFG_JTAG_EN,
       this_has_ddr => 1,
       dco_rst_cfg  => DEFAULT_DCO_LPDDR_CFG,
       ROUTER_PORTS => ROUTER_PORTS,
