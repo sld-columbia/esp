@@ -162,7 +162,7 @@ module gf22_sram64_be_15abits(
       for (v = 0; v < 4; v = v + 1) begin : gen_wires_vbanks
         for (hh = 0; hh < 1; hh = hh + 1) begin : gen_wires_hhbanks
 
-          GF22_SRAM_SP_8192x64_HD bank_i(
+          GF22_SRAM_SP_8192x64 bank_i(
               .CLK(CLK),
               .CE0(bank_CE[d][h][v][hh][0]),
               .A0(bank_A[d][h][v][hh][0]),

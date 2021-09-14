@@ -9,7 +9,7 @@
 
 `timescale  1 ps / 1 ps
 
-module gf22_sram64_be_20abits(
+module gf22_sram32_be_20abits(
     CLK,
     CE0,
     A0,
@@ -23,20 +23,20 @@ module gf22_sram64_be_20abits(
   input CLK;
   input CE0;
   input [19:0] A0;
-  input [63:0] D0;
+  input [31:0] D0;
   input WE0;
-  input [63:0] WEM0;
+  input [31:0] WEM0;
   input CE1;
   input [19:0] A1;
-  output [63:0] Q1;
+  output [31:0] Q1;
   genvar d, h, v, hh;
 
   reg               bank_CE  [0:0][0:0][127:0][0:0][0:0];
   reg        [12:0] bank_A   [0:0][0:0][127:0][0:0][0:0];
-  reg        [63:0] bank_D   [0:0][0:0][127:0][0:0][0:0];
+  reg        [31:0] bank_D   [0:0][0:0][127:0][0:0][0:0];
   reg               bank_WE  [0:0][0:0][127:0][0:0][0:0];
-  reg        [63:0] bank_WEM [0:0][0:0][127:0][0:0][0:0];
-  wire       [63:0] bank_Q   [0:0][0:0][127:0][0:0][0:0];
+  reg        [31:0] bank_WEM [0:0][0:0][127:0][0:0][0:0];
+  wire       [31:0] bank_Q   [0:0][0:0][127:0][0:0][0:0];
   wire        [0:0] ctrld    [1:1];
   wire        [0:0] ctrlh    [1:0];
   wire        [6:0] ctrlv    [1:0];
@@ -117,12 +117,12 @@ module gf22_sram64_be_20abits(
                 bank_CE[0][h][v][hh][0]  = CE0;
                 bank_A[0][h][v][hh][0]   = A0[12:0];
               if (hh != 0) begin
-                bank_D[0][h][v][hh][0]   = D0[64 * (hh + 1) - 1:64 * hh];
-                bank_WEM[0][h][v][hh][0] = WEM0[64 * (hh + 1) - 1:64 * hh];
+                bank_D[0][h][v][hh][0]   = D0[32 * (hh + 1) - 1:32 * hh];
+                bank_WEM[0][h][v][hh][0] = WEM0[32 * (hh + 1) - 1:32 * hh];
               end
               else begin
-                bank_D[0][h][v][hh][0]   = D0[63 + 64 * hh:64 * hh];
-                bank_WEM[0][h][v][hh][0] = WEM0[63 + 64 * hh:64 * hh];
+                bank_D[0][h][v][hh][0]   = D0[31 + 32 * hh:32 * hh];
+                bank_WEM[0][h][v][hh][0] = WEM0[31 + 32 * hh:32 * hh];
               end
                 bank_WE[0][h][v][hh][0]  = WE0;
             end
@@ -148,10 +148,10 @@ module gf22_sram64_be_20abits(
 
   generate
   for (hh = 0; hh < 1; hh = hh + 1) begin : gen_q_assign_hhbanks
-    if (hh == 0 && (hh + 1) * 64 > 64) begin : gen_q_assign_hhbanks_last_1 
-       assign Q1[63:64 * hh] = bank_Q[seld[1]][selh[1]][selv[1]][hh][0][63:0];
+    if (hh == 0 && (hh + 1) * 32 > 32) begin : gen_q_assign_hhbanks_last_1 
+       assign Q1[31:32 * hh] = bank_Q[seld[1]][selh[1]][selv[1]][hh][0][31:0];
     end else begin : gen_q_assign_hhbanks_others_1 
-      assign Q1[64 * (hh + 1) - 1:64 * hh] = bank_Q[seld[1]][selh[1]][selv[1]][hh][0];
+      assign Q1[32 * (hh + 1) - 1:32 * hh] = bank_Q[seld[1]][selh[1]][selv[1]][hh][0];
     end
   end
   endgenerate
@@ -162,7 +162,7 @@ module gf22_sram64_be_20abits(
       for (v = 0; v < 128; v = v + 1) begin : gen_wires_vbanks
         for (hh = 0; hh < 1; hh = hh + 1) begin : gen_wires_hhbanks
 
-          GF22_SRAM_SP_8192x64 bank_i(
+          GF22_SRAM_SP_8192x32 bank_i(
               .CLK(CLK),
               .CE0(bank_CE[d][h][v][hh][0]),
               .A0(bank_A[d][h][v][hh][0]),

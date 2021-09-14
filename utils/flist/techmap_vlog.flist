@@ -57,6 +57,17 @@ techmap/gf12/sram_dw/gf12_sram64_be_20abits.v
 techmap/gf22/pads_gf22_wrap.v
 techmap/gf22/wrappers/DCO_GF22_common.v
 techmap/gf22/wrappers/DCO_GF22.v
+techmap/gf22/mem/GF22_SRAM_SP_2048x32.v
+techmap/gf22/mem/GF22_SRAM_SP_4096x32.v
+techmap/gf22/mem/GF22_SRAM_SP_8192x32.v
+techmap/gf22/sram_dw/gf22_sram32_be_14abits.v
+techmap/gf22/sram_dw/gf22_sram32_be_15abits.v
+techmap/gf22/sram_dw/gf22_sram32_be_16abits.v
+techmap/gf22/sram_dw/gf22_sram32_be_17abits.v
+techmap/gf22/sram_dw/gf22_sram32_be_18abits.v
+techmap/gf22/sram_dw/gf22_sram32_be_19abits.v
+techmap/gf22/sram_dw/gf22_sram32_be_20abits.v
+techmap/gf22/sram_dw/gf22_sram32_be_21abits.v
 techmap/gf22/sram_dw/gf22_sram64_be_13abits.v
 techmap/gf22/sram_dw/gf22_sram64_be_14abits.v
 techmap/gf22/sram_dw/gf22_sram64_be_15abits.v

@@ -6,3 +6,11 @@ gf22_sram64_be_16abits 65536 64 1w:0r 0w:1r
 gf22_sram64_be_15abits 32768 64 1w:0r 0w:1r
 gf22_sram64_be_14abits 16384 64 1w:0r 0w:1r
 gf22_sram64_be_13abits 8192 64 1w:0r 0w:1r
+gf22_sram32_be_21abits 2097152 32 1w:0r 0w:1r
+gf22_sram32_be_20abits 1048576 32 1w:0r 0w:1r
+gf22_sram32_be_19abits 524288 32 1w:0r 0w:1r
+gf22_sram32_be_18abits 262144 32 1w:0r 0w:1r
+gf22_sram32_be_17abits 131072 32 1w:0r 0w:1r
+gf22_sram32_be_16abits 65536 32 1w:0r 0w:1r
+gf22_sram32_be_15abits 32768 32 1w:0r 0w:1r
+gf22_sram32_be_14abits 16384 32 1w:0r 0w:1r
