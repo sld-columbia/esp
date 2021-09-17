@@ -37,7 +37,8 @@ use work.tiles_pkg.all;
 entity asic_tile_io is
   generic (
     SIMULATION   : boolean   := false;
-    ROUTER_PORTS : ports_vec := "11111");
+    ROUTER_PORTS : ports_vec := "11111";
+    this_has_dco : integer range 0 to 2 := 0);
   port (
     rst                : in    std_ulogic;  -- Global reset (active high)
     sys_rstn_out       : out   std_ulogic;  -- NoC reset (active low)
@@ -185,6 +186,7 @@ architecture rtl of asic_tile_io is
   constant ext_clk_sel_default : std_ulogic := '0';
 
   -- NoC clock and reset (reset propagates to all tiles)
+  signal clk_int      : std_ulogic;
   signal sys_clk_int  : std_ulogic;
   signal sys_clk_lock : std_ulogic;
   signal sys_rstn     : std_ulogic;
@@ -237,9 +239,17 @@ begin
     generic map (acthigh => 1, syncin => 0)
     port map (rst, sys_clk, sys_clk_lock, sys_rstn, raw_rstn);
 
-  rst1 : rstgen                         -- reset generator
-    generic map (acthigh => 1, syncin => 0)
-    port map (rst, dco_clk, dco_clk_lock, dco_rstn, open);
+  rst_gen: if this_has_dco = 1 generate
+    rst1 : rstgen                         -- reset generator
+      generic map (acthigh => 1, syncin => 0)
+      port map (rst, dco_clk, dco_clk_lock, dco_rstn, open);
+    clk_int <= dco_clk;
+  end generate rst_gen;
+
+  no_rst_gen: if this_has_dco /= 1 generate
+    dco_rstn <= sys_rstn;
+    clk_int <= ext_clk;
+  end generate no_rst_gen;
 
   -- NoC output clock and reset
   sys_rstn_out <= sys_rstn;
@@ -376,14 +386,14 @@ begin
   tile_io_1 : tile_io
     generic map (
       SIMULATION   => SIMULATION,
-      this_has_dco => 1,
+      this_has_dco => this_has_dco,
       test_if_en   => CFG_JTAG_EN,
       ROUTER_PORTS => ROUTER_PORTS,
       HAS_SYNC     => 1)
     port map (
       raw_rstn           => raw_rstn,
       rst                => dco_rstn,
-      clk                => dco_clk,    -- Local DCO clock
+      clk                => clk_int,    -- Local DCO clock
       refclk_noc         => ext_clk_noc,  -- Backup NoC clock when DCO is enabled
       pllclk_noc         => clk_div_noc,  -- NoC DCO clock out
       refclk             => ext_clk,    -- Local backup ext clock

@@ -37,7 +37,8 @@ use work.tiles_pkg.all;
 entity asic_tile_empty is
   generic (
     SIMULATION   : boolean              := false;
-    ROUTER_PORTS : ports_vec            := "11111");
+    ROUTER_PORTS : ports_vec            := "11111";
+    this_has_dco : integer range 0 to 1 := 0);
   port (
     rst                : in  std_logic;
     sys_clk            : in  std_ulogic;  -- NoC clock
@@ -132,6 +133,7 @@ architecture rtl of asic_tile_empty is
   constant ext_clk_sel_default : std_ulogic := '0';
 
   -- Tile clock and reset (only for I/O tile)
+  signal clk_int      : std_ulogic;
   signal raw_rstn     : std_ulogic;
   signal dco_clk      : std_ulogic;
   signal dco_rstn     : std_ulogic;
@@ -139,21 +141,29 @@ architecture rtl of asic_tile_empty is
 
 begin
 
-  rst1 : rstgen                         -- reset generator
-    generic map (acthigh => 1, syncin => 0)
-    port map (rst, dco_clk, dco_clk_lock, dco_rstn, raw_rstn);
+  rst_gen: if this_has_dco /= 0 generate
+    rst1 : rstgen                         -- reset generator
+      generic map (acthigh => 1, syncin => 0)
+      port map (rst, dco_clk, dco_clk_lock, dco_rstn, raw_rstn);
+    clk_int <= dco_clk;
+  end generate rst_gen;
+
+  no_rst_gen: if this_has_dco = 0 generate
+    dco_rstn <= rst;
+    clk_int <= ext_clk;
+  end generate no_rst_gen;
 
   tile_empty_1: tile_empty
     generic map (
       SIMULATION   => SIMULATION,
-      this_has_dco => 1,
+      this_has_dco => this_has_dco,
       test_if_en   => CFG_JTAG_EN,
       ROUTER_PORTS => ROUTER_PORTS,
       HAS_SYNC     => 1)
     port map (
       raw_rstn           => raw_rstn,
       rst                => dco_rstn,
-      clk                => dco_clk,
+      clk                => clk_int,
       refclk             => ext_clk,
       pllbypass          => ext_clk_sel_default,  --ext_clk_sel,
       pllclk             => clk_div,

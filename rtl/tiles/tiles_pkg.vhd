@@ -291,7 +291,7 @@ package tiles_pkg is
   component tile_io is
     generic (
       SIMULATION   : boolean              := false;
-      this_has_dco : integer range 0 to 1 := 0;
+      this_has_dco : integer range 0 to 2 := 0;
       test_if_en   : integer range 0 to 1 := 0;
       ROUTER_PORTS : ports_vec            := "11111";
       HAS_SYNC     : integer range 0 to 1 := 1);

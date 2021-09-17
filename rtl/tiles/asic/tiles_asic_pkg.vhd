@@ -21,7 +21,8 @@ package tiles_asic_pkg is
   component asic_tile_cpu is
     generic (
       SIMULATION   : boolean;
-      ROUTER_PORTS : ports_vec);
+      ROUTER_PORTS : ports_vec;
+      this_has_dco : integer range 0 to 1 := 0);
     port (
       rst                : in  std_ulogic;
       sys_clk            : in  std_ulogic;
@@ -112,7 +113,8 @@ package tiles_asic_pkg is
       this_device   : devid_t;
       this_irq_type : integer;
       this_has_l2   : integer range 0 to 1;
-      ROUTER_PORTS  : ports_vec);
+      ROUTER_PORTS  : ports_vec;
+      this_has_dco  : integer range 0 to 1 := 0);
     port (
       rst                : in  std_ulogic;
       sys_clk            : in  std_ulogic;
@@ -199,7 +201,8 @@ package tiles_asic_pkg is
 
   component asic_tile_mem is
     generic (
-      ROUTER_PORTS : ports_vec);
+      ROUTER_PORTS : ports_vec;
+      this_has_dco : integer range 0 to 1 := 0);
     port (
       rst                : in    std_ulogic;
       sys_clk            : in    std_ulogic;
@@ -296,7 +299,8 @@ package tiles_asic_pkg is
   component asic_tile_io is
     generic (
       SIMULATION   : boolean;
-      ROUTER_PORTS : ports_vec);
+      ROUTER_PORTS : ports_vec;
+      this_has_dco : integer range 0 to 2 := 0);
     port (
       rst                : in  std_ulogic;
       sys_rstn_out       : out std_ulogic;
@@ -433,7 +437,8 @@ package tiles_asic_pkg is
   component asic_tile_empty is
     generic (
       SIMULATION   : boolean;
-      ROUTER_PORTS : ports_vec);
+      ROUTER_PORTS : ports_vec;
+      this_has_dco : integer range 0 to 1 := 0);
     port (
       rst                : in  std_logic;
       sys_clk            : in  std_ulogic;
@@ -520,7 +525,9 @@ package tiles_asic_pkg is
 
   component asic_tile_slm is
     generic (
-      ROUTER_PORTS : ports_vec);
+      SIMULATION   : boolean := false;
+      ROUTER_PORTS : ports_vec;
+      this_has_dco : integer range 0 to 1 := 0);
     port (
       rst                : in  std_ulogic;
       sys_clk            : in  std_ulogic;

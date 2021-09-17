@@ -37,7 +37,8 @@ use work.tiles_pkg.all;
 entity asic_tile_cpu is
   generic (
     SIMULATION   : boolean              := false;
-    ROUTER_PORTS : ports_vec            := "11111");
+    ROUTER_PORTS : ports_vec            := "11111";
+    this_has_dco       : integer range 0 to 1 := 0);
   port (
     rst                : in  std_ulogic;
     sys_clk            : in  std_ulogic;  -- NoC clock
@@ -140,17 +141,22 @@ architecture rtl of asic_tile_cpu is
 
 begin
 
-  rst1 : rstgen                         -- reset generator
-    generic map (acthigh => 1, syncin => 0)
-    port map (rst, dco_clk, dco_clk_lock, dco_rstn, raw_rstn);
+  rst_gen: if this_has_dco /= 0 generate
+    rst1 : rstgen                         -- reset generator
+      generic map (acthigh => 1, syncin => 0)
+      port map (rst, dco_clk, dco_clk_lock, dco_rstn, raw_rstn);
+  end generate rst_gen;
 
+  no_rst_gen: if this_has_dco = 0 generate
+    dco_rstn <= rst;
+  end generate no_rst_gen;
 
   tile_cpu_1: tile_cpu
     generic map (
       SIMULATION         => SIMULATION,
       this_has_dvfs      => 0,          -- no DVFS controller
       this_has_pll       => 0,
-      this_has_dco       => 1,          -- use DCO
+      this_has_dco       => this_has_dco, -- use DCO
       this_extra_clk_buf => 0,
       test_if_en         => CFG_JTAG_EN, -- enable test interface
       ROUTER_PORTS       => ROUTER_PORTS,

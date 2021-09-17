@@ -39,7 +39,8 @@ use work.ibex_esp_pkg.all;
 entity tile_io is
   generic (
     SIMULATION : boolean := false;
-    this_has_dco : integer range 0 to 1 := 0;
+    this_has_dco : integer range 0 to 2 := 0;  -- 0: no dco, 1: tile and noc
+                                               -- dco, 2: noc dco only
     test_if_en   : integer range 0 to 1 := 0;
     ROUTER_PORTS : ports_vec := "11111";
     HAS_SYNC : integer range 0 to 1 := 1 );
@@ -703,57 +704,73 @@ begin
 
   -- DCO
   dco_gen: if this_has_dco /= 0 generate
-    dco_noc_i : dco
-      generic map (
-        tech => CFG_FABTECH,
-        enable_div2 => 0,
-        dlog => 8)                      -- NoC is the first to come out of reset
-      port map (
-        rstn     => raw_rstn,
-        ext_clk  => refclk_noc,
-        en       => dco_noc_en,
-        clk_sel  => dco_noc_clk_sel,
-        cc_sel   => dco_noc_cc_sel,
-        fc_sel   => dco_noc_fc_sel,
-        div_sel  => dco_noc_div_sel,
-        freq_sel => dco_noc_freq_sel,
-        clk      => sys_clk_out,
-        clk_div  => pllclk_noc,
-        lock     => sys_clk_lock);
 
-    dco_noc_freq_sel <= tile_config(ESP_CSR_DCO_NOC_CFG_MSB - 0  downto ESP_CSR_DCO_NOC_CFG_MSB - 0  - 1);
-    dco_noc_div_sel  <= tile_config(ESP_CSR_DCO_NOC_CFG_MSB - 2  downto ESP_CSR_DCO_NOC_CFG_MSB - 2  - 2);
-    dco_noc_fc_sel   <= tile_config(ESP_CSR_DCO_NOC_CFG_MSB - 5  downto ESP_CSR_DCO_NOC_CFG_MSB - 5  - 5);
-    dco_noc_cc_sel   <= tile_config(ESP_CSR_DCO_NOC_CFG_MSB - 11 downto ESP_CSR_DCO_NOC_CFG_MSB - 11 - 5);
-    dco_noc_clk_sel  <= tile_config(ESP_CSR_DCO_NOC_CFG_LSB + 1);
-    dco_noc_en       <= raw_rstn and tile_config(ESP_CSR_DCO_NOC_CFG_LSB);
+    sim_gen: if SIMULATION = true generate
+      sys_clk_out <= refclk_noc;
+      pllclk_noc  <= refclk_noc;
+      sys_clk_lock <= '1';
+    end generate sim_gen;
 
-    dco_i: dco
-      generic map (
-        tech => CFG_FABTECH,
-        enable_div2 => 0,
-        dlog => 10)                     -- Tile I/O is the first sending NoC
-                                        -- packets; last reset to be released
-      port map (
-        rstn     => raw_rstn,
-        ext_clk  => refclk,
-        en       => dco_en,
-        clk_sel  => dco_clk_sel,
-        cc_sel   => dco_cc_sel,
-        fc_sel   => dco_fc_sel,
-        div_sel  => dco_div_sel,
-        freq_sel => dco_freq_sel,
-        clk      => dco_clk,
-        clk_div  => pllclk,
-        lock     => dco_clk_lock);
+    no_sim_gen: if SIMULATION = false generate
+      dco_noc_i : dco
+        generic map (
+          tech => CFG_FABTECH,
+          enable_div2 => 0,
+          dlog => 8)                      -- NoC is the first to come out of reset
+        port map (
+          rstn     => raw_rstn,
+          ext_clk  => refclk_noc,
+          en       => dco_noc_en,
+          clk_sel  => dco_noc_clk_sel,
+          cc_sel   => dco_noc_cc_sel,
+          fc_sel   => dco_noc_fc_sel,
+          div_sel  => dco_noc_div_sel,
+          freq_sel => dco_noc_freq_sel,
+          clk      => sys_clk_out,
+          clk_div  => pllclk_noc,
+          lock     => sys_clk_lock);
 
-    dco_freq_sel <= tile_config(ESP_CSR_DCO_CFG_MSB - 4 - 0  downto ESP_CSR_DCO_CFG_MSB - 4 - 0  - 1);
-    dco_div_sel  <= tile_config(ESP_CSR_DCO_CFG_MSB - 4 - 2  downto ESP_CSR_DCO_CFG_MSB - 4 - 2  - 2);
-    dco_fc_sel   <= tile_config(ESP_CSR_DCO_CFG_MSB - 4 - 5  downto ESP_CSR_DCO_CFG_MSB - 4 - 5  - 5);
-    dco_cc_sel   <= tile_config(ESP_CSR_DCO_CFG_MSB - 4 - 11 downto ESP_CSR_DCO_CFG_MSB - 4 - 11 - 5);
-    dco_clk_sel  <= tile_config(ESP_CSR_DCO_CFG_LSB + 1);
-    dco_en       <= raw_rstn and tile_config(ESP_CSR_DCO_CFG_LSB);
+      dco_noc_freq_sel <= tile_config(ESP_CSR_DCO_NOC_CFG_MSB - 0  downto ESP_CSR_DCO_NOC_CFG_MSB - 0  - 1);
+      dco_noc_div_sel  <= tile_config(ESP_CSR_DCO_NOC_CFG_MSB - 2  downto ESP_CSR_DCO_NOC_CFG_MSB - 2  - 2);
+      dco_noc_fc_sel   <= tile_config(ESP_CSR_DCO_NOC_CFG_MSB - 5  downto ESP_CSR_DCO_NOC_CFG_MSB - 5  - 5);
+      dco_noc_cc_sel   <= tile_config(ESP_CSR_DCO_NOC_CFG_MSB - 11 downto ESP_CSR_DCO_NOC_CFG_MSB - 11 - 5);
+      dco_noc_clk_sel  <= tile_config(ESP_CSR_DCO_NOC_CFG_LSB + 1);
+      dco_noc_en       <= raw_rstn and tile_config(ESP_CSR_DCO_NOC_CFG_LSB);
+    end generate no_sim_gen;
 
+    dco_tile_gen: if this_has_dco = 1 generate
+      dco_tile_i: dco
+        generic map (
+          tech => CFG_FABTECH,
+          enable_div2 => 0,
+          dlog => 10)                     -- Tile I/O is the first sending NoC
+                                          -- packets; last reset to be released
+        port map (
+          rstn     => raw_rstn,
+          ext_clk  => refclk,
+          en       => dco_en,
+          clk_sel  => dco_clk_sel,
+          cc_sel   => dco_cc_sel,
+          fc_sel   => dco_fc_sel,
+          div_sel  => dco_div_sel,
+          freq_sel => dco_freq_sel,
+          clk      => dco_clk,
+          clk_div  => pllclk,
+          lock     => dco_clk_lock);
+
+      dco_freq_sel <= tile_config(ESP_CSR_DCO_CFG_MSB - 4 - 0  downto ESP_CSR_DCO_CFG_MSB - 4 - 0  - 1);
+      dco_div_sel  <= tile_config(ESP_CSR_DCO_CFG_MSB - 4 - 2  downto ESP_CSR_DCO_CFG_MSB - 4 - 2  - 2);
+      dco_fc_sel   <= tile_config(ESP_CSR_DCO_CFG_MSB - 4 - 5  downto ESP_CSR_DCO_CFG_MSB - 4 - 5  - 5);
+      dco_cc_sel   <= tile_config(ESP_CSR_DCO_CFG_MSB - 4 - 11 downto ESP_CSR_DCO_CFG_MSB - 4 - 11 - 5);
+      dco_clk_sel  <= tile_config(ESP_CSR_DCO_CFG_LSB + 1);
+      dco_en       <= raw_rstn and tile_config(ESP_CSR_DCO_CFG_LSB);
+    end generate dco_tile_gen;
+    
+    no_dco_tile_gen: if this_has_dco = 2 generate
+      pllclk       <= '0';
+      dco_clk      <= '0';
+      dco_clk_lock <= '1';
+    end generate no_dco_tile_gen;
   end generate dco_gen;
 
   no_dco_gen: if this_has_dco = 0 generate

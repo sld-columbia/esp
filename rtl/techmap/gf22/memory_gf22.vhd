@@ -1496,7 +1496,9 @@ begin
   end generate d64;
 
   -- pragma translate_off
-  a_to_high : if abits < 13 or abits > 20 or dbits /= 64 generate
+  a_to_high : if (dbits /= 64 and dbits /= 32) or
+                ((abits < 14 or abits > 21) and dbits = 32) or
+                ((abits < 13 or abits > 20) and dbits = 64) generate
     x : process
     begin
       assert false
