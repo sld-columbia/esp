@@ -76,6 +76,7 @@ static struct option long_options[] = {
         {"load",    no_argument,        0,  DO_WRITE_BIN    },
         {"dump",    no_argument,        0,  DO_READ_BIN     },
         {"brom",    no_argument,        0,  DO_LOAD_BOOTROM },
+	    {"pbs",     no_argument,        0,  DO_LOAD_PBS    },
         {"dram",    no_argument,        0,  DO_LOAD_DRAM    },
         {"regw",    no_argument,        0,  DO_SET_WORD     },
         {"regr",    no_argument,        0,  DO_GET_WORD     },
@@ -114,7 +115,8 @@ int main(int argc, char *argv[]) {
 		case DO_WRITE_BIN :
 		case DO_READ_BIN :
 		case DO_LOAD_BOOTROM :
-		case DO_LOAD_DRAM :
+        case DO_LOAD_PBS :
+        case DO_LOAD_DRAM :
 		case DO_RESET :
 		case DO_SET_WORD :
 		case DO_GET_WORD : action = opt; break;
@@ -169,6 +171,12 @@ int main(int argc, char *argv[]) {
 			die("Invalid options for action --dram");
 		load_memory_bin(DRAM_BASE_ADDR, infile);
 		break;
+
+    	case DO_LOAD_PBS :
+        	if (infile == NULL)
+            		die("Invalid options for action --pbs");
+       	 	load_memory_bin(PBS_BASE_ADDR, infile);
+       		break;
 
 	case DO_RESET :
 		reset(ESPLINK_BASE_ADDR);

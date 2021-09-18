@@ -34,7 +34,7 @@ use work.genacc.all;
 use work.nocpackage.all;
 
 
-entity axislv2noc is
+entity axislv2noc_prc is
   generic (
     tech             : integer;
     nmst             : integer;
@@ -67,9 +67,9 @@ entity axislv2noc is
     remote_ahbs_rcv_rdreq      : out std_ulogic;
     remote_ahbs_rcv_data_out   : in  misc_noc_flit_type;
     remote_ahbs_rcv_empty      : in  std_ulogic);
-end axislv2noc;
+end axislv2noc_prc;
 
-architecture rtl of axislv2noc is
+architecture rtl of axislv2noc_prc is
 
   type axi_fsm is (idle, request_header, request_address,
                    request_length, request_data, reply_header,
@@ -218,8 +218,8 @@ begin  -- rtl
       tran.region := mosi(tran.xindex).ar.region;
       tran.user   := mosi(tran.xindex).ar.user;
     end if;
-    
-    tran.len := mosi(tran.xindex).ar.len + "0000001";
+    --This was commented out to make the burst access mode work
+    --tran.len := mosi(tran.xindex).ar.len + "0000001";
 
     -- Get routing info
     tran.mem_x := mem_info(0).x;

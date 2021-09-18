@@ -277,7 +277,8 @@ vivado-syn: vivado-setup
             echo "read_ip -quiet $(ESP_ROOT)/socs/$(BOARD)/vivado/$(DESIGN).srcs/sources_1/ip/sgmii/sgmii.xci" >> static_config.tcl; \
         fi; \
         echo "link_design -top $(TOP) -part $(DEVICE)" >> static_config.tcl; \
-        echo "write_checkpoint -force $(ESP_ROOT)/socs/$(BOARD)/vivado/$(DESIGN).runs/synth_1/top_dpr.dcp" >> static_config.tcl; \
+        echo "read_xdc $(ESP_ROOT)/socs/$(BOARD)/top_latest.xdc" >> static_config.tcl;\
+		echo "write_checkpoint -force $(ESP_ROOT)/socs/$(BOARD)/vivado/$(DESIGN).runs/synth_1/top_dpr.dcp" >> static_config.tcl; \
         echo "close_project" >> static_config.tcl; \
         echo "exit" >> static_config.tcl; \
         echo $(SPACES)"DPR: Assembling sgmii and mig into static part"; \

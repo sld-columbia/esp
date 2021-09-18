@@ -234,6 +234,7 @@ architecture rtl of tile_acc is
   signal coherence_rsp_snd_data_in  : noc_flit_type;
   signal coherence_rsp_snd_full     : std_ulogic;
   signal coherence_fwd_snd_wrreq    : std_ulogic;
+  signal coherence_fwd_snd_wrreq_acc : std_ulogic;
   signal coherence_fwd_snd_data_in  : noc_flit_type; 
   signal coherence_fwd_snd_full     : std_ulogic;
   signal dma_rcv_rdreq              : std_ulogic;
@@ -244,6 +245,7 @@ architecture rtl of tile_acc is
   signal dma_snd_wrreq_acc          : std_ulogic;
   signal dma_snd_data_in            : noc_flit_type;
   signal dma_snd_full               : std_ulogic;
+  signal coherent_dma_rcv_rdreq_acc : std_ulogic; 
   signal coherent_dma_rcv_rdreq     : std_ulogic;
   signal coherent_dma_rcv_data_out  : noc_flit_type;
   signal coherent_dma_rcv_empty     : std_ulogic;
@@ -506,6 +508,56 @@ architecture rtl of tile_acc is
   attribute keep of noc6_data_e_out    : signal is "true";
   attribute keep of noc6_data_void_out : signal is "true";
   attribute keep of noc6_stop_out      : signal is "true";
+
+  attribute mark_debug : string;
+  --attribute keep       : string;
+
+  attribute mark_debug of  interrupt_wrreq    : signal is "true";
+  attribute mark_debug of  interrupt_wrreq_acc      : signal is "true";
+  attribute mark_debug of  interrupt_data_in        : signal is "true";
+  attribute mark_debug of  interrupt_full           : signal is "true";
+  attribute mark_debug of  interrupt_ack_rdreq      : signal is "true";
+  attribute mark_debug of  interrupt_ack_rdreq_acc  : signal is "true";
+  attribute mark_debug of  interrupt_ack_data_out   : signal is "true";
+  attribute mark_debug of  interrupt_ack_empty      : signal is "true";
+  attribute mark_debug of  apb_snd_wrreq            : signal is "true";
+  attribute mark_debug of  apb_snd_data_in          : signal is "true";
+  attribute mark_debug of  apb_snd_full             : signal is "true";
+  attribute mark_debug of  apb_rcv_rdreq            : signal is "true";
+  attribute mark_debug of  apb_rcv_data_out         : signal is "true";
+  attribute mark_debug of  apb_rcv_empty            : signal is "true";
+  attribute mark_debug of  apbi                     : signal is "true";
+  attribute mark_debug of  apbo                     : signal is "true";
+  attribute mark_debug of  pready                   : signal is "true";
+  attribute mark_debug of  pready_noc               : signal is "true";
+  attribute mark_debug of coherence_req_wrreq        : signal is "true";
+  attribute mark_debug of coherence_req_data_in      : signal is "true";
+  attribute mark_debug of coherence_req_full         : signal is "true";
+  attribute mark_debug of coherence_fwd_rdreq        : signal is "true";
+  attribute mark_debug of coherence_fwd_data_out     : signal is "true";
+  attribute mark_debug of coherence_fwd_empty        : signal is "true";
+  attribute mark_debug of coherence_rsp_rcv_rdreq    : signal is "true";
+  attribute mark_debug of coherence_rsp_rcv_data_out : signal is "true";
+  attribute mark_debug of coherence_rsp_rcv_empty    : signal is "true";
+  attribute mark_debug of coherence_rsp_snd_wrreq    : signal is "true";
+  attribute mark_debug of coherence_rsp_snd_data_in  : signal is "true";
+  attribute mark_debug of coherence_rsp_snd_full     : signal is "true";
+  attribute mark_debug of  dma_rcv_rdreq             : signal is "true";
+  attribute mark_debug of dma_rcv_data_out           : signal is "true";
+  attribute mark_debug of dma_rcv_empty              : signal is "true";
+  attribute mark_debug of dma_snd_wrreq              : signal is "true";
+  attribute mark_debug of dma_snd_data_in            : signal is "true";
+  attribute mark_debug of dma_snd_full               : signal is "true";
+  attribute mark_debug of coherent_dma_rcv_rdreq     : signal is "true";
+  attribute mark_debug of coherent_dma_rcv_data_out  : signal is "true";
+  attribute mark_debug of coherent_dma_rcv_empty     : signal is "true";
+  attribute mark_debug of coherent_dma_snd_wrreq     : signal is "true";
+  attribute mark_debug of coherent_dma_snd_data_in   : signal is "true";
+  attribute mark_debug of coherent_dma_snd_full      : signal is "true";
+  attribute mark_debug of tile_config                : signal is "true";
+  attribute mark_debug of acc_dvfs_transient         : signal is "true";
+  attribute mark_debug of decouple_acc               : signal is "true";
+
 
 begin
 
@@ -844,7 +896,7 @@ begin
       coherence_req_wrreq        => coherence_req_wrreq_acc,
       coherence_req_data_in      => coherence_req_data_in, 
       coherence_req_full         => coherence_req_full,
-      coherent_dma_rcv_rdreq     => coherent_dma_rcv_rdreq,
+      coherent_dma_rcv_rdreq     => coherent_dma_rcv_rdreq_acc,
       coherent_dma_rcv_data_out  => coherent_dma_rcv_data_out,
       coherent_dma_rcv_empty     => coherent_dma_rcv_empty, 
       coherence_fwd_rdreq        => coherence_fwd_rdreq_acc,
@@ -859,7 +911,7 @@ begin
       coherence_rsp_snd_wrreq    => coherence_rsp_snd_wrreq_acc,
       coherence_rsp_snd_data_in  => coherence_rsp_snd_data_in,
       coherence_rsp_snd_full     => coherence_rsp_snd_full, 
-      coherence_fwd_snd_wrreq    => coherence_fwd_snd_wrreq,
+      coherence_fwd_snd_wrreq    => coherence_fwd_snd_wrreq_acc,
       coherence_fwd_snd_data_in  => coherence_fwd_snd_data_in,
       coherence_fwd_snd_full     => coherence_fwd_snd_full, 
       dma_rcv_rdreq     => dma_rcv_rdreq_acc,
@@ -886,12 +938,17 @@ begin
   pllclk <= refclk;
 
   -- decouple signals if decouple_acc is asserted
-  decoupler_gen: process (decouple_acc) is
+  decoupler_gen: process (decouple_acc, coherence_req_wrreq_acc, coherence_fwd_rdreq_acc,
+                          coherent_dma_snd_wrreq_acc, coherence_rsp_rcv_rdreq_acc,
+                          coherence_rsp_snd_wrreq_acc, dma_rcv_rdreq_acc, dma_snd_wrreq_acc,
+                          interrupt_wrreq_acc, interrupt_ack_rdreq_acc) is  
   begin  -- process decoupler_gen
     if decouple_acc = '1' then
       coherence_req_wrreq        <= '0';
       coherence_fwd_rdreq        <= '0';
+      coherence_fwd_snd_wrreq    <= '0';
       coherent_dma_snd_wrreq     <= '0';
+      coherent_dma_rcv_rdreq     <= '0';  
       coherence_rsp_rcv_rdreq    <= '0';
       coherence_rsp_snd_wrreq    <= '0';
       dma_rcv_rdreq              <= '0';
@@ -901,7 +958,9 @@ begin
     else 
       coherence_req_wrreq        <= coherence_req_wrreq_acc;
       coherence_fwd_rdreq        <= coherence_fwd_rdreq_acc;
+      coherence_fwd_snd_wrreq    <= coherence_fwd_snd_wrreq_acc;
       coherent_dma_snd_wrreq     <= coherent_dma_snd_wrreq_acc;
+      coherent_dma_rcv_rdreq     <= coherent_dma_rcv_rdreq_acc;
       coherence_rsp_rcv_rdreq    <= coherence_rsp_rcv_rdreq_acc;
       coherence_rsp_snd_wrreq    <= coherence_rsp_snd_wrreq_acc;
       dma_rcv_rdreq              <= dma_rcv_rdreq_acc;
@@ -945,7 +1004,7 @@ begin
       apbi             => apbi,
       apbo             => apbo,
       pready           => pready_noc,
-      dvfs_transient   => mon_dvfs_int.transient,
+      dvfs_transient   => acc_dvfs_transient,
       apb_snd_wrreq    => apb_snd_wrreq,
       apb_snd_data_in  => apb_snd_data_in,
       apb_snd_full     => apb_snd_full,
