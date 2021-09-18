@@ -1000,7 +1000,6 @@ begin
       apbi             => apbi,
       apbo             => apbo,
       pready           => pready_noc,
-      dvfs_transient   => acc_dvfs_transient,
       apb_snd_wrreq    => apb_snd_wrreq,
       apb_snd_data_in  => apb_snd_data_in,
       apb_snd_full     => apb_snd_full,
