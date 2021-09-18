@@ -84,12 +84,46 @@ $(SOFT_BUILD)/linux-build:
 $(BAREMETAL_BIN):
 	$(QUIET_MKDIR)mkdir -p $@
 
+
+BAREMETAL_APPS_PATH      = $(ESP_ROOT)/soft/common/apps/baremetal
+BAREMETAL_APPS           = $(filter-out include, $(shell ls -d $(BAREMETAL_APPS_PATH)/*/ | awk -F/ '{print $$(NF-1)}'))
+BAREMETAL_APPS_PATHS     = $(addprefix $(BAREMETAL_APPS_PATH)/, $(BAREMETAL_APPS))
+BAREMETAL_APPS-baremetal = $(addsuffix -baremetal, $(BAREMETAL_APPS))
+BAREMETAL_APPS-baremetal-clean = $(addsuffix -baremetal-clean, $(BAREMETAL_APPS))
+
+$(BAREMETAL_APPS-baremetal): $(BAREMETAL_BIN) soft-build $(ESP_CFG_BUILD)/socmap.vhd
+	@BUILD_PATH=$(BUILD_DRIVERS)/$(@:-baremetal=)/baremetal; \
+        BAREMETAL_APPS_PATH=$(filter %/$(@:-baremetal=), $(BAREMETAL_APPS_PATHS)); \
+	if [ `ls -1 $$BAREMETAL_APPS_PATH/*.c 2>/dev/null | wc -l ` -gt 0 ]; then \
+		echo '   ' MAKE $@; \
+		mkdir -p $$BUILD_PATH; \
+		CROSS_COMPILE=$(CROSS_COMPILE_ELF) CPU_ARCH=$(CPU_ARCH) DRIVERS=$(DRV_BARE) DESIGN_PATH=$(DESIGN_PATH)/$(ESP_CFG_BUILD) BUILD_PATH=$$BUILD_PATH $(MAKE) -C  $$BAREMETAL_APPS_PATH; \
+		if [ `ls -1 $$BUILD_PATH/*.bin 2>/dev/null | wc -l ` -gt 0 ]; then \
+			echo '   ' CP $@; cp $$BUILD_PATH/*.bin $(BAREMETAL_BIN)/$(@:-baremetal=).bin; \
+		fi; \
+		if [ `ls -1 $$BUILD_PATH/*.exe 2>/dev/null | wc -l ` -gt 0 ]; then \
+			echo '   ' CP $@; cp $$BUILD_PATH/*.exe $(BAREMETAL_BIN)/$(@:-baremetal=).exe; \
+		else \
+			echo '   ' WARNING $@ compilation failed!; \
+		fi; \
+	else \
+		echo '   ' WARNING $@ not found!; \
+	fi;
+
+$(BAREMETAL_APPS-baremetal-clean):
+	$(QUIET_CLEAN)$(RM) $(BUILD_DRIVERS)/$(@:-baremetal-clean=)/baremetal
+
+apps-baremetal: $(BAREMETAL_APPS-baremetal)
+
+apps-baremetal-clean: $(BAREMETAL_APPS-baremetal-clean) probe-clean
+
 baremetal-all: soft-build $(ESP_CFG_BUILD)/socmap.vhd
 	@mkdir -p $(BAREMETAL_BIN)/dvi
 	@mkdir -p $(BUILD_DRIVERS)/dvi/baremetal
 	@CPU_ARCH=$(CPU_ARCH) DESIGN_PATH=$(DESIGN_PATH)/$(ESP_CFG_BUILD) DRIVERS=$(DRV_BARE) BUILD_PATH=$(BUILD_DRIVERS)/dvi/baremetal $(MAKE) -C $(DRV_BARE)/dvi
 	@cp $(BUILD_DRIVERS)/dvi/baremetal/*.bin $(BAREMETAL_BIN)/dvi
-	@$(MAKE) acc-baremetal
+	@$(MAKE) acc-baremetal 
+	@$(MAKE) apps-baremetal 
 
 baremetal-distclean:
 	$(QUIET_CLEAN)$(RM) $(BAREMETAL_BIN)
