@@ -886,7 +886,10 @@ begin
   pllclk <= refclk;
 
   -- decouple signals if decouple_acc is asserted
-  decoupler_gen: process (decouple_acc) is
+  decoupler_gen: process (decouple_acc, coherence_req_wrreq_acc, coherence_fwd_rdreq_acc,
+                          coherent_dma_snd_wrreq_acc, coherence_rsp_rcv_rdreq_acc,
+                          coherence_rsp_snd_wrreq_acc, dma_rcv_rdreq_acc, dma_snd_wrreq_acc,
+                          interrupt_wrreq_acc, interrupt_ack_rdreq_acc) is
   begin  -- process decoupler_gen
     if decouple_acc = '1' then
       coherence_req_wrreq        <= '0';
@@ -945,7 +948,7 @@ begin
       apbi             => apbi,
       apbo             => apbo,
       pready           => pready_noc,
-      dvfs_transient   => mon_dvfs_int.transient,
+      dvfs_transient   => '0',
       apb_snd_wrreq    => apb_snd_wrreq,
       apb_snd_data_in  => apb_snd_data_in,
       apb_snd_full     => apb_snd_full,
