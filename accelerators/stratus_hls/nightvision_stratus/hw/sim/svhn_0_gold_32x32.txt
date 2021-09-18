@@ -1,0 +1,1 @@
+../hls/svhn_0_gold_32x32.txt
