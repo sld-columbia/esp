@@ -12,6 +12,8 @@
 
 /* User defined */
 
+// #define LARGE_WORKLOAD
+
 // Define data type (decomment the one needed)
 // #define __UINT
 // #define __INT
@@ -84,10 +86,19 @@ static unsigned DMA_WORD_PER_BEAT(unsigned _st)
 #define DEV_NAME "sld,conv2d_stratus"
 
 /* <<--params-->> */
+#ifndef LARGE_WORKLOAD
+const int32_t batch_size = 1;
 const int32_t n_channels = 2;
 const int32_t feature_map_height = 6;
 const int32_t feature_map_width = 6;
 const int32_t n_filters = 2;
+#else
+const int32_t batch_size = 16;
+const int32_t n_channels = 16;
+const int32_t feature_map_height = 32;
+const int32_t feature_map_width = 32;
+const int32_t n_filters = 16;
+#endif
 const int32_t filter_height = 3;
 const int32_t filter_width = 3;
 const int32_t pad_h = 1;
@@ -99,7 +110,6 @@ const int32_t dilation_h = 1;
 const int32_t dilation_w = 1;
 const int32_t do_relu = 0;
 const int32_t pool_type = 0;
-const int32_t batch_size = 1;
 
 static unsigned in_words_adj;
 static unsigned weights_words_adj;
@@ -279,7 +289,7 @@ static int validate_buf(token_t *out, native_t *gold)
 
 static void init_buf (token_t *in, native_t *sw_buf)
 {
-#include "input.h"
+//#include "input.h"
 //#include "gold.h"
 
 	int i, size;
@@ -287,8 +297,18 @@ static void init_buf (token_t *in, native_t *sw_buf)
 	(n_channels * n_filters * filter_height * filter_width) +
 	n_filters;
 
-	for (i = 0; i < size; ++i)
-	    sw_buf[i] = fx2float(in[i], FX_IL);
+	for (i = 0; i < weights_offset; ++i) {
+	    in[i] = float2fx(i % 14, FX_IL);
+	    sw_buf[i] = i % 14;
+	}
+	for (; i < bias_offset; ++i) {
+	    in[i] = float2fx((i % 10) / 10, FX_IL);
+	    sw_buf[i] = (i % 10) / 10;
+	}
+	for (; i < out_offset; ++i) {
+	    in[i] = float2fx(0, FX_IL);
+	    sw_buf[i] = 0;
+	}
 }
 
 int main(int argc, char * argv[])
