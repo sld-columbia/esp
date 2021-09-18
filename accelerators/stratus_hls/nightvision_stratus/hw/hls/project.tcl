@@ -72,7 +72,7 @@ define_system_module tb ../tb/system.cpp ../tb/sc_main.cpp
 ######################################################################
 set DEFAULT_ARGV ""
 
-foreach dma [list 64] {
+foreach dma [list 32 64] {
     foreach plm_img_size [list 1024] {
 	foreach max_pxl_width_log [list 3] {
 
