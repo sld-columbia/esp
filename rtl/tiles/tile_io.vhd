@@ -1565,24 +1565,22 @@ begin
     s_axil_araddr_masked <= s_axil_araddr and prc_mask;
     s_axil_awaddr_masked <= s_axil_awaddr and prc_mask;
 
-  --prc_pready <= s_axil_rvalid;
+    -- ICAP3 instance
+    icap_inst_1: icap
+      generic map (
+        tech  =>  CFG_FABTECH)
+      port map (
+        icap_clk      => clk,
+        icap_csib     => icap_csib,
+        icap_rdwrb    => icap_rdwrb,
+        icap_i        => icap_i,
+        icap_o        => icap_o,
+        icap_avail    => icap_avail,
+        icap_prdone   => icap_prdone,
+        icap_prerror  => icap_prerror);
+    end generate generate_prc;
 
-  -- ICAP3 instance
-  icap_inst_1: icap
-    generic map (
-      tech  =>  CFG_FABTECH)
-    port map (
-      icap_clk      => clk,
-      icap_csib     => icap_csib,
-      icap_rdwrb    => icap_rdwrb,
-      icap_i        => icap_i,
-      icap_o        => icap_o,
-      icap_avail    => icap_avail,
-      icap_prdone   => icap_prdone,
-      icap_prerror  => icap_prerror);
- end generate generate_prc;
-
-  axi2noc_1: axislv2noc
+  axi2noc_1: axislv2noc_prc
     generic map (
       tech             => CFG_FABTECH,
       nmst             => 1,

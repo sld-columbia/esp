@@ -43,7 +43,7 @@ ESPLINK_HDRS = $(wildcard $(ESP_ROOT)/tools/esplink/src/*.h)
 esplink: $(ESP_CFG_BUILD)/esplink.h $(ESPLINK_HDRS) $(ESPLINK_SRCS)
 	$(QUIET_CC) \
 	cd $(ESP_CFG_BUILD); \
-	gcc -O3 -Wall -Werror -fmax-errors=5 \
+	gcc -O3 -Wall -Wuninitialized -fmax-errors=5 \
 		-DESPLINK_IP=\"$(ESPLINK_IP)\" -DPORT=$(ESPLINK_PORT) \
 		-I$(ESP_ROOT)/tools/esplink/src/ -I$(DESIGN_PATH)/$(ESP_CFG_BUILD) \
 		$(ESPLINK_SRCS) -o $@
