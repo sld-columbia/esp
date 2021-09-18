@@ -271,7 +271,7 @@ echo "add_module \$static " >> $dpr_syn_tcl;
 echo "set_attribute module \$static moduleName    \$top" >> $dpr_syn_tcl;
 echo "set_attribute module \$static top_level     1 " >> $dpr_syn_tcl;
 echo "#set_attribute module \$static synthCheckpoint \$synthDir/\$static/top_synth.dcp " >> $dpr_syn_tcl;
-echo "set_attribute module \$static synth         \${run.topSynth} " >> $dpr_syn_tcl;
+echo "#set_attribute module \$static synth         \${run.topSynth} " >> $dpr_syn_tcl;
 
 
 echo "####################################################################" >> $dpr_syn_tcl;
@@ -474,6 +474,7 @@ fi;
 echo "set_attribute impl top_dpr impl       \${run.prImpl}" >> $dpr_syn_tcl;
 echo "set_attribute impl top_dpr verify     \${run.prVerify}" >> $dpr_syn_tcl;
 echo "set_attribute impl top_dpr bitstream  \${run.writeBitstream}" >> $dpr_syn_tcl;
+echo "set_attribute impl top_dpr cfgmem.icap     1 " >> $dpr_syn_tcl;
 
 echo "source \$tclDir/run.tcl" >> $dpr_syn_tcl;
 echo "exit" >> $dpr_syn_tcl;
