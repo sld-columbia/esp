@@ -13,13 +13,10 @@ typedef int8_t token_vit_t;
 #define DEV_NAME_VIT "sld,vitdodec_stratus"
 
 /* <<--params-->> */
-int32_t cbps;
-int32_t ntraceback;
-#ifndef LARGE_WORKLOAD
-int32_t data_bits;
-#else
-int32_t data_bits;
-#endif
+static int32_t cbps;
+static int32_t ntraceback;
+static int32_t data_bits;
+
 static unsigned in_len_vit;
 static unsigned out_len_vit;
 static unsigned in_size_vit;
