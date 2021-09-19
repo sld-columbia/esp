@@ -10,7 +10,7 @@
 #include "gemm.h"
 #include "conv2d.h"
 #include "fft2.h"
-#include "vitdodec.h"
+#include "sort.h"
 
 const float ERROR_COUNT_TH = 0.001;
 const float CLOCK_PERIOD = 0.00000002; // seconds, vc707 at 50MHz
@@ -41,12 +41,11 @@ int main(int argc, char * argv[])
     unsigned done;
     unsigned errors = 0;
     unsigned coherence = ACC_COH_NONE;
-    struct esp_device *espdevs_gemm, *espdevs_conv2d, *espdevs_fft2, *espdevs_vit;
-    struct esp_device *dev_gemm, *dev_conv2d, *dev_fft2, *dev_vit;
-    unsigned **ptable_gemm, **ptable_conv2d, **ptable_fft2, **ptable_vit;
-    token_t *mem_gemm, *mem_conv2d, *mem_fft2;
-    native_t *sw_buf_gemm, *sw_buf_conv2d, *sw_buf_fft2;
-    token_vit_t *mem_vit, *sw_buf_vit;
+    struct esp_device *espdevs_gemm, *espdevs_conv2d, *espdevs_fft2, *espdevs_sort;
+    struct esp_device *dev_gemm, *dev_conv2d, *dev_fft2, *dev_sort;
+    unsigned **ptable_gemm, **ptable_conv2d, **ptable_fft2, **ptable_sort;
+    token_t *mem_gemm, *mem_conv2d, *mem_fft2, *mem_sort;
+    native_t *sw_buf_gemm, *sw_buf_conv2d, *sw_buf_fft2, *sw_buf_sort;
     uint64_t time_acc_start, time_acc_stop, time_cpu_start, time_cpu_stop;
     uint64_t time_acc_elapsed, time_cpu_elapsed;
 
@@ -142,22 +141,9 @@ int main(int argc, char * argv[])
     out_offset_fft2  = 0;
     mem_size_fft2 = (out_offset_fft2 * sizeof(token_t)) + out_size_fft2;
 
-    // vitdodec
-    cbps = 48;
-    ntraceback = 5;
-#ifndef LARGE_WORKLOAD
-    data_bits = 288;
-#else
-    data_bits = 18585;
-#endif
-
-    in_len_vit = round_up(24852, DMA_WORD_PER_BEAT(sizeof(token_vit_t)));
-    out_len_vit = round_up(18585, DMA_WORD_PER_BEAT(sizeof(token_vit_t)));
-    in_size_vit = in_len_vit * sizeof(token_vit_t);
-    out_size_vit = out_len_vit * sizeof(token_vit_t);
-    out_offset_vit  = in_len_vit;
-    mem_size_vit = (out_offset_vit * sizeof(token_vit_t)) + out_size_vit;
-	
+    // sort
+    // nothing to do
+    
     ///////////////////////////////////
     // Probing
     printf("  Probing...\n");
@@ -200,35 +186,35 @@ int main(int argc, char * argv[])
     // fft2
     ndev = probe(&espdevs_fft2, VENDOR_SLD, SLD_FFT2, DEV_NAME_FFT2);
     if (ndev == 0) {
-	printf("fft2 not found\n");
-	return 0;
+    	printf("fft2 not found\n");
+    	return 0;
     }
     dev_fft2 = &espdevs_fft2[0];
-    // Check DMA capabilities
+    Check DMA capabilities
     if (ioread32(dev_fft2, PT_NCHUNK_MAX_REG) == 0) {
-	printf("  -> scatter-gather DMA is disabled. Abort.\n");
-	return 0;
+    	printf("  -> scatter-gather DMA is disabled. Abort.\n");
+    	return 0;
     }
     if (ioread32(dev_fft2, PT_NCHUNK_MAX_REG) < NCHUNK(mem_size_fft2)) {
-	printf("  -> Not enough TLB entries available. Abort.\n");
-	return 0;
+    	printf("  -> Not enough TLB entries available. Abort.\n");
+    	return 0;
     }
 
-    // vit
-    ndev = probe(&espdevs_vit, VENDOR_SLD, SLD_VITDODEC, DEV_NAME_VIT);
+    // sort
+    ndev = probe(&espdevs_sort, VENDOR_SLD, SLD_SORT, DEV_NAME_SORT);
     if (ndev == 0) {
-	printf("vit not found\n");
+	printf("sort not found\n");
 	return 0;
     }
-    dev_vit = &espdevs_vit[0];
+    dev_sort = &espdevs_sort[0];
     // Check DMA capabilities
-    if (ioread32(dev_vit, PT_NCHUNK_MAX_REG) == 0) {
+    if (ioread32(dev_sort, PT_NCHUNK_MAX_REG) == 0) {
 	printf("  -> scatter-gather DMA is disabled. Abort.\n");
 	return 0;
     }
-    if (ioread32(dev_vit, PT_NCHUNK_MAX_REG) < NCHUNK(mem_size_vit)) {
-	printf("  -> Not enough TLB entries available. Abort.\n");
-	return 0;
+    if (ioread32(dev_sort, PT_NCHUNK_MAX_REG) < NCHUNK(SORT_BUF_SIZE)) {
+    	printf("  -> Not enough TLB entries available. Abort.\n");
+    	return 0;
     }
 
     ///////////////////////////////////
@@ -268,16 +254,16 @@ int main(int argc, char * argv[])
     // printf("  ptable = %p\n", ptable_fft2);
     // printf("  nchunk = %lu\n", NCHUNK(mem_size_fft2));
 
-    // vit
-    sw_buf_vit = aligned_malloc(out_size_vit);
-    mem_vit = aligned_malloc(mem_size_vit);
-    // printf("  memory buffer base-address = %p\n", mem_vit);
-    // printf("  sw memory buffer base-address = %p\n", sw_buf_vit);
-    ptable_vit = aligned_malloc(NCHUNK(mem_size_vit) * sizeof(unsigned *));
-    for (i = 0; i < NCHUNK(mem_size_vit); i++)
-	ptable_vit[i] = (unsigned *) &mem_vit[i * (CHUNK_SIZE / sizeof(token_t))];
-    // printf("  ptable = %p\n", ptable_vit);
-    // printf("  nchunk = %lu\n", NCHUNK(mem_size_vit));
+    // sort
+    sw_buf_sort = aligned_malloc(SORT_BUF_SIZE);
+    mem_sort = aligned_malloc(SORT_BUF_SIZE);
+    // printf("  memory buffer base-address = %p\n", mem_sort);
+    // printf("  sw memory buffer base-address = %p\n", sw_buf_sort);
+    ptable_sort = aligned_malloc(NCHUNK(SORT_BUF_SIZE) * sizeof(unsigned *));
+    for (i = 0; i < NCHUNK(SORT_BUF_SIZE); i++)
+	ptable_sort[i] = (unsigned *) &mem_sort[i * (CHUNK_SIZE / sizeof(token_t))];
+    // printf("  ptable = %p\n", ptable_sort);
+    // printf("  nchunk = %lu\n", NCHUNK(SORT_BUF_SIZE));
 	
     ///////////////////////////////////
     // Data Initialization
@@ -286,7 +272,8 @@ int main(int argc, char * argv[])
     init_buf_gemm(mem_gemm, sw_buf_gemm);
     init_buf_conv2d(mem_conv2d, sw_buf_conv2d);
     init_buf_fft2(mem_fft2, sw_buf_fft2);
-    init_buf_vitdodec(mem_vit, sw_buf_vit);
+    init_buf_sort((float *) mem_sort, SORT_LEN, SORT_BATCH);
+    init_buf_sort((float *) sw_buf_sort, SORT_LEN, SORT_BATCH);
 
     ///////////////////////////////////
     // Pre-configuration
@@ -316,14 +303,14 @@ int main(int argc, char * argv[])
     iowrite32(dev_fft2, PT_SHIFT_REG, CHUNK_SHIFT);
     iowrite32(dev_fft2, SRC_OFFSET_REG, 0);
     iowrite32(dev_fft2, DST_OFFSET_REG, 0);
-    // vitdodec
-    iowrite32(dev_vit, SELECT_REG, ioread32(dev_vit, DEVID_REG));
-    iowrite32(dev_vit, COHERENCE_REG, coherence);
-    iowrite32(dev_vit, PT_ADDRESS_REG, (unsigned long) ptable_vit);
-    iowrite32(dev_vit, PT_NCHUNK_REG, NCHUNK(mem_size_vit));
-    iowrite32(dev_vit, PT_SHIFT_REG, CHUNK_SHIFT);
-    iowrite32(dev_vit, SRC_OFFSET_REG, 0);
-    iowrite32(dev_vit, DST_OFFSET_REG, 0);
+    // sort
+    iowrite32(dev_sort, SELECT_REG, ioread32(dev_sort, DEVID_REG));
+    iowrite32(dev_sort, COHERENCE_REG, coherence);
+    iowrite32(dev_sort, PT_ADDRESS_REG, (unsigned long) ptable_sort);
+    iowrite32(dev_sort, PT_NCHUNK_REG, NCHUNK(SORT_BUF_SIZE));
+    iowrite32(dev_sort, PT_SHIFT_REG, CHUNK_SHIFT);
+    iowrite32(dev_sort, SRC_OFFSET_REG, 0);
+    iowrite32(dev_sort, DST_OFFSET_REG, 0);
 	
     ///////////////////////////////////
     // Execution on accelerators
@@ -390,26 +377,25 @@ int main(int argc, char * argv[])
     iowrite32(dev_fft2, CMD_REG, CMD_MASK_START);
     done = 0;
     while (!done) {
-	done = ioread32(dev_fft2, STATUS_REG);
-	done &= STATUS_MASK_DONE;
+    	done = ioread32(dev_fft2, STATUS_REG);
+    	done &= STATUS_MASK_DONE;
     }
     iowrite32(dev_fft2, CMD_REG, 0x0);
 
-    // vitdodec
+    // sort
 
-    // TODO BIRUK: RECONFIGURE HERE! FFT2 --> VITDODEC
+    // TODO BIRUK: RECONFIGURE HERE! FFT2 --> SORT
 
-    iowrite32(dev_vit, VITDODEC_CBPS_REG, cbps);
-    iowrite32(dev_vit, VITDODEC_NTRACEBACK_REG, ntraceback);
-    iowrite32(dev_vit, VITDODEC_DATA_BITS_REG, data_bits);
+    iowrite32(dev_sort, SORT_LEN_REG, SORT_LEN);
+    iowrite32(dev_sort, SORT_BATCH_REG, SORT_BATCH);
 
-    iowrite32(dev_vit, CMD_REG, CMD_MASK_START);
+    iowrite32(dev_sort, CMD_REG, CMD_MASK_START);
     done = 0;
     while (!done) {
-	done = ioread32(dev_vit, STATUS_REG);
+	done = ioread32(dev_sort, STATUS_REG);
 	done &= STATUS_MASK_DONE;
     }
-    iowrite32(dev_vit, CMD_REG, 0x0);
+    iowrite32(dev_sort, CMD_REG, 0x0);
 
     // stop measuring accelerator execution time
     time_acc_stop = get_counter();
@@ -436,8 +422,9 @@ int main(int argc, char * argv[])
     // fft2
     fft2_comp(sw_buf_fft2, num_ffts, num_samples, logn_samples, do_inverse, do_shift);
 
-    // vitdodec
-    do_decoding(data_bits, cbps, ntraceback, (unsigned char *)mem_vit, (unsigned char*)sw_buf_vit);
+    // sort
+    for (i = 0; i < SORT_BATCH; i++)
+	quicksort((float*)&sw_buf_sort[i * SORT_LEN], SORT_LEN);
 
     // stop measuring processor execution time
     time_cpu_stop = get_counter();
@@ -467,12 +454,23 @@ int main(int argc, char * argv[])
     else
 	printf("  ... fft2 PASS\n");
 
-    // vitdodec
-    errors = validate_buf_vitdodec(&mem_vit[out_offset_vit], sw_buf_vit);
+    // sort
+    for (i = 0; i < SORT_BATCH; i++) {
+	int err = validate_sorted((float *) &mem_sort[i * SORT_LEN], SORT_LEN);
+	errors += err;
+    }
     if (errors)
-	printf("  ... vit FAIL\n");
+	printf("  ... sort acc FAIL\n");
     else
-	printf("  ... vit PASS\n");
+	printf("  ... sort acc PASS\n");
+    for (i = 0; i < SORT_BATCH; i++) {
+	int err = validate_sorted((float *) &sw_buf_sort[i * SORT_LEN], SORT_LEN);
+	errors += err;
+    }
+    if (errors)
+	printf("  ... sort cpu FAIL\n");
+    else
+	printf("  ... sort cpu PASS\n");
 
     ///////////////////////////////////
     // Free
@@ -489,10 +487,10 @@ int main(int argc, char * argv[])
     aligned_free(ptable_fft2);
     aligned_free(mem_fft2);
     aligned_free(sw_buf_fft2);
-    // vitdodec
-    aligned_free(ptable_vit);
-    aligned_free(mem_vit);
-    aligned_free(sw_buf_vit);
+    // sort
+    aligned_free(ptable_sort);
+    aligned_free(mem_sort);
+    aligned_free(sw_buf_sort);
 
     ///////////////////////////////////
     // Execution time
