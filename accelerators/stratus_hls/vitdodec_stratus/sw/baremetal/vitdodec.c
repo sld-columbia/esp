@@ -11,6 +11,8 @@
 
 #include "do_decoding.h"
 
+// #define LARGE_WORKLOAD
+
 typedef int8_t token_t;
 
 static unsigned DMA_WORD_PER_BEAT(unsigned _st)
@@ -25,8 +27,11 @@ static unsigned DMA_WORD_PER_BEAT(unsigned _st)
 /* <<--params-->> */
 const int32_t cbps = 48;
 const int32_t ntraceback = 5;
+#ifndef LARGE_WORKLOAD
 const int32_t data_bits = 288;
-
+#else
+const int32_t data_bits = 18585;
+#endif
 static unsigned in_words_adj;
 static unsigned out_words_adj;
 static unsigned in_len;

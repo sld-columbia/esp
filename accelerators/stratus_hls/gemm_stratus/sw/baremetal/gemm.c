@@ -12,6 +12,8 @@
 
 /* User defined */
 
+//#define LARGE_WORKLOAD
+
 // Define data type (decomment the one needed)
 // #define __UINT
 // #define __INT
@@ -82,10 +84,17 @@ static unsigned DMA_WORD_PER_BEAT(unsigned _st)
 /* <<--params-->> */
 const int32_t do_relu = 0;
 const int32_t transpose = 1;
+#ifndef LARGE_WORKLOAD
 const int32_t ninputs = 2;
 const int32_t d3 = 8;
 const int32_t d2 = 8;
 const int32_t d1 = 8;
+#else
+const int32_t ninputs = 64;
+const int32_t d3 = 64;
+const int32_t d2 = 64;
+const int32_t d1 = 64;
+#endif
 int32_t st_offset;
 const int32_t ld_offset1 = 0;
 int32_t ld_offset2;
@@ -181,12 +190,12 @@ static void init_buf (token_t *in, native_t *sw_buf)
 {
     int i;
 
-#include "input.h"
+//#include "input.h"
 
 #ifdef __FIXED
     for (i = 0; i < ninputs * (d1*d2 + d2*d3); i++) {
-	sw_buf[i] = in[i];
-        in[i] = float2fx(in[i], FX_IL);
+	sw_buf[i] = i % 14;
+        in[i] = float2fx(i % 14, FX_IL);
     }
 #endif
 
