@@ -9,15 +9,15 @@
 #define SLD_GEMM 0x051
 #define DEV_NAME_GEMM "sld,gemm_stratus"
 
-int32_t do_relu_gemm;
-int32_t transpose;
-int32_t ninputs;
-int32_t d3;
-int32_t d2;
-int32_t d1;
-int32_t st_offset;
-int32_t ld_offset1;
-int32_t ld_offset2;
+static int32_t do_relu_gemm;
+static int32_t transpose;
+static int32_t ninputs;
+static int32_t d3;
+static int32_t d2;
+static int32_t d1;
+static int32_t st_offset;
+static int32_t ld_offset1;
+static int32_t ld_offset2;
 
 static unsigned in_len_gemm, in1_len_gemm;
 static unsigned out_len_gemm;
