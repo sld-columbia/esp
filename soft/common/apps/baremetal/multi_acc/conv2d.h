@@ -9,22 +9,22 @@
 #define SLD_CONV2D 0x052
 #define DEV_NAME_CONV2D "sld,conv2d_stratus"
 
-int32_t batch_size;
-int32_t n_channels;
-int32_t feature_map_height;
-int32_t feature_map_width;
-int32_t n_filters;
-int32_t filter_height;
-int32_t filter_width;
-int32_t pad_h;
-int32_t pad_w;
-int32_t is_padded;
-int32_t stride_h;
-int32_t stride_w;
-int32_t dilation_h;
-int32_t dilation_w;
-int32_t do_relu_conv2d;
-int32_t pool_type;
+static int32_t batch_size;
+static int32_t n_channels;
+static int32_t feature_map_height;
+static int32_t feature_map_width;
+static int32_t n_filters;
+static int32_t filter_height;
+static int32_t filter_width;
+static int32_t pad_h;
+static int32_t pad_w;
+static int32_t is_padded;
+static int32_t stride_h;
+static int32_t stride_w;
+static int32_t dilation_h;
+static int32_t dilation_w;
+static int32_t do_relu_conv2d;
+static int32_t pool_type;
 
 static unsigned in_len_conv2d;
 static unsigned weights_len_conv2d;
