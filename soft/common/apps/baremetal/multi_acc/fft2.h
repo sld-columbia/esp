@@ -10,19 +10,14 @@
 #define SLD_FFT2 0x057
 #define DEV_NAME_FFT2 "sld,fft2_stratus"
 
-#ifndef LARGE_WORKLOAD
-int32_t logn_samples;
-int32_t num_ffts;
-#else
-int32_t logn_samples;
-int32_t num_ffts;
-#endif
-int32_t do_inverse;
-int32_t do_shift;
-int32_t scale_factor;
-int32_t num_samples; // = (1 << logn_samples);
+static int32_t logn_samples;
+static int32_t num_ffts;
+static int32_t do_inverse;
+static int32_t do_shift;
+static int32_t scale_factor;
+static int32_t num_samples; // = (1 << logn_samples);
 
-int32_t len_fft2;
+static int32_t len_fft2;
 static unsigned in_len_fft2;
 static unsigned out_len_fft2;
 static unsigned in_size_fft2;
