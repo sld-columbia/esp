@@ -26,6 +26,7 @@ use work.coretypes.all;
 use work.grlib_config.all;
 use work.socmap.all;
 use work.tiles_pkg.all;
+use work.tiles_fpga_pkg.all;
 
 entity esp is
   generic (
@@ -414,7 +415,7 @@ begin
   tiles_gen: for i in 0 to CFG_TILES_NUM - 1  generate
 
     empty_tile: if tile_type(i) = 0 generate
-    tile_empty_i: tile_empty
+    tile_empty_i: fpga_tile_empty
       generic map (
         SIMULATION   => SIMULATION,
         ROUTER_PORTS => set_router_ports(CFG_FABTECH, CFG_XLEN, CFG_YLEN, tile_x(i), tile_y(i)),
@@ -428,7 +429,6 @@ begin
         pllclk             => open,
 	sys_clk_int        => sys_clk_int(0),
         dco_clk            => open,
-        dco_clk_lock       => open,
         -- Test interface
         tdi                => '0',
         tdo                => open,
@@ -522,7 +522,7 @@ begin
 -- pragma translate_off
       assert tile_cpu_id(i) /= -1 report "Undefined CPU ID for CPU tile" severity error;
 -- pragma translate_on
-      tile_cpu_i: tile_cpu
+      tile_cpu_i: fpga_tile_cpu
 
       generic map (
         SIMULATION         => SIMULATION,
@@ -539,7 +539,6 @@ begin
         pllbypass          => pllbypass_int(i),
         pllclk             => clk_tile(i),
         dco_clk            => open,
-        dco_clk_lock       => open,
         cpuerr             => cpuerr_vec(tile_cpu_id(i)),
         -- Test interface
         tdi                => '0',
@@ -636,8 +635,9 @@ begin
 -- pragma translate_off
       assert tile_device(i) /= 0 report "Undefined device ID for accelerator tile" severity error;
 -- pragma translate_on
-      tile_acc_i: tile_acc
+      tile_acc_i: fpga_tile_acc
       generic map (
+        SIMULATION         => SIMULATION,
         this_hls_conf      => tile_design_point(i),
         this_device        => tile_device(i),
         this_irq_type      => tile_irq_type(i),
@@ -645,6 +645,7 @@ begin
         this_has_dvfs      => tile_has_dvfs(i),
         this_has_pll       => tile_has_pll(i),
         this_extra_clk_buf => extra_clk_buf(i),
+        this_has_token_pm  => tile_has_tdvfs(i),
         ROUTER_PORTS       => set_router_ports(CFG_FABTECH, CFG_XLEN, CFG_YLEN, tile_x(i), tile_y(i)),
         HAS_SYNC           => CFG_HAS_SYNC)
       port map (
@@ -654,7 +655,6 @@ begin
         pllbypass          => pllbypass_int(i),
         pllclk             => clk_tile(i),
         dco_clk            => open,
-        dco_clk_lock       => open,
         -- Test interface
         tdi                => '0',
         tdo                => open,
@@ -750,7 +750,7 @@ begin
 
 
     io_tile: if tile_type(i) = 3 generate
-      tile_io_i : tile_io
+      tile_io_i : fpga_tile_io
       generic map (
         SIMULATION   => SIMULATION,
         ROUTER_PORTS => set_router_ports(CFG_FABTECH, CFG_XLEN, CFG_YLEN, tile_x(i), tile_y(i)),
@@ -765,7 +765,6 @@ begin
         pllbypass          => '0',
         pllclk             => open,
         dco_clk            => open,
-        dco_clk_lock       => open,
         -- Test interface
         tdi                => '0',
         tdo                => open,
@@ -878,7 +877,7 @@ begin
 
 
     mem_tile: if tile_type(i) = 4 generate
-      tile_mem_i: tile_mem
+      tile_mem_i: fpga_tile_mem
       generic map (
         ROUTER_PORTS => set_router_ports(CFG_FABTECH, CFG_XLEN, CFG_YLEN, tile_x(i), tile_y(i)),
         HAS_SYNC     => CFG_HAS_SYNC)
@@ -890,7 +889,6 @@ begin
         pllbypass          => '0',
         pllclk             => open,
         dco_clk            => open,
-        dco_clk_lock       => open,
         -- DDR controller ports (this_has_ddr -> 1)
         dco_clk_div2       => open,
         dco_clk_div2_90    => open,
@@ -1002,7 +1000,7 @@ begin
     end generate mem_tile;
 
     slm_tile: if tile_type(i) = 5 generate
-      tile_slm_i: tile_slm
+      tile_slm_i: fpga_tile_slm
         generic map (
           SIMULATION   => SIMULATION,
           ROUTER_PORTS => set_router_ports(CFG_FABTECH, CFG_XLEN, CFG_YLEN, tile_x(i), tile_y(i)),
@@ -1015,7 +1013,6 @@ begin
           pllbypass          => '0',
           pllclk             => open,
           dco_clk            => open,
-          dco_clk_lock       => open,
           -- DDR controller ports (disaled in generic ESP top)
           dco_clk_div2       => open,
           dco_clk_div2_90    => open,

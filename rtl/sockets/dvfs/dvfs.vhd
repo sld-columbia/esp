@@ -20,6 +20,7 @@ use work.genacc.all;
 use work.nocpackage.all;
 
 use work.esp_acc_regmap.all;
+use work.esp_csr_pkg.all;
 
 package dvfs is
 
@@ -86,6 +87,114 @@ package dvfs is
   constant POLICY_ONDEMAND_TH_REG : integer range 0 to MAXREGNUM-1 := 15;
   constant POLICY_TRAFFIC_TH_REG  : integer range 0 to MAXREGNUM-1 := 16;
   constant POLICY_BALANCE_TH_REG  : integer range 0 to MAXREGNUM-1 := 17;
+
+  component Token_FSM is
+    port (
+      clock                  : in  std_ulogic;
+      reset                  : in  std_ulogic;
+      packet_in              : in  std_ulogic;
+      packet_in_val          : in  std_logic_vector(31 downto 0);
+      packet_in_addr         : in  std_logic_vector(4  downto 0);
+      packet_out_ready       : in  std_ulogic;
+      packet_out             : out std_ulogic;
+      packet_out_val         : out std_logic_vector(31 downto 0);
+      packet_out_addr        : out std_logic_vector(4  downto 0);
+      enable                 : in  std_ulogic;
+      activity               : in  std_ulogic;
+      max_tokens             : in  std_logic_vector(5  downto 0);
+      token_counter_override : in  std_logic_vector(7  downto 0);
+      refresh_rate_min       : in  std_logic_vector(11 downto 0);
+      refresh_rate_max       : in  std_logic_vector(11 downto 0);
+      random_rate            : in  std_logic_vector(4  downto 0);
+      LUT_write              : in  std_logic_vector(17 downto 0);
+      neighbors_ID           : in  std_logic_vector(19 downto 0);
+      PM_network             : in  std_logic_vector(31 downto 0);
+      tokens_next            : out std_logic_vector(6  downto 0);
+      LUT_read               : out std_logic_vector(7  downto 0);
+      freq_target            : out std_logic_vector(7  downto 0));
+  end component Token_FSM;
+
+  component Tile_LDO_Ctrl is
+    port (
+      clk         : in  std_ulogic;
+      DCO_clk     : in  std_ulogic;
+      reset       : in  std_ulogic;
+      freq_target : in  std_logic_vector(7 downto 0);
+      LDO_setup_0 : in  std_logic_vector(31 downto 0);
+      LDO_setup_1 : in  std_logic_vector(31 downto 0);
+      LDO_setup_2 : in  std_logic_vector(31 downto 0);
+      LDO_setup_3 : in  std_logic_vector(31 downto 0);
+      LDO_setup_4 : in  std_logic_vector(31 downto 0);
+      LDO_debug_0 : out std_logic_vector(31 downto 0);
+      LDO0        : out std_ulogic;
+      LDO1        : out std_ulogic;
+      LDO2        : out std_ulogic;
+      LDO3        : out std_ulogic;
+      LDO4        : out std_ulogic;
+      LDO5        : out std_ulogic;
+      LDO6        : out std_ulogic;
+      LDO7        : out std_ulogic);
+  end component Tile_LDO_Ctrl;
+
+  component pm2noc is
+    port (
+      rstn               : in  std_ulogic;
+      clk                : in  std_ulogic;
+      -- tile parameters
+      local_x            : in  local_yx;
+      local_y            : in  local_yx;
+      -- token FSM interface towards NoC
+      packet_in          : out std_ulogic;
+      packet_in_val      : out std_logic_vector(31 downto 0);
+      packet_in_addr     : out std_logic_vector(4 downto 0);
+      packet_out_ready   : out std_ulogic;
+      packet_out         : in  std_ulogic;
+      packet_out_val     : in  std_logic_vector(31 downto 0);
+      packet_out_addr    : in  std_logic_vector(4 downto 0);
+      -- NoC interface
+      noc5_input_port    : out misc_noc_flit_type;
+      noc5_data_void_in  : out std_ulogic;
+      noc5_stop_out      : in  std_ulogic;
+      noc5_output_port   : in  misc_noc_flit_type;
+      noc5_data_void_out : in  std_ulogic;
+      noc5_stop_in       : out std_ulogic);
+  end component pm2noc;
+
+  component token_pm is
+    generic (
+      SIMULATION : boolean := false;
+      is_asic    : boolean := false);
+    port (
+      noc_rstn               : in  std_ulogic;
+      tile_rstn              : in  std_ulogic;
+      noc_clk                : in  std_ulogic;
+      refclk                : in  std_ulogic;
+      tile_clk               : in  std_ulogic;
+      -- runtime configuration for LDO ctrl and token FSM
+      pm_config              : in  pm_config_type;
+      -- runtime status for LDO ctrl and token FSM
+      pm_status              : out pm_status_type;
+      -- tile parameters
+      local_x                : in  local_yx;
+      local_y                : in  local_yx;
+      -- NoC interface
+      noc5_input_port        : out misc_noc_flit_type;
+      noc5_data_void_in      : out std_ulogic;
+      noc5_stop_out          : in  std_ulogic;
+      noc5_output_port       : in  misc_noc_flit_type;
+      noc5_data_void_out     : in  std_ulogic;
+      noc5_stop_in           : out std_ulogic;
+      -- Accelerator tile NoC inferface
+      noc5_input_port_pm     : in  misc_noc_flit_type;
+      noc5_data_void_in_pm   : in  std_ulogic;
+      noc5_stop_out_pm       : out std_ulogic;
+      noc5_output_port_pm    : out misc_noc_flit_type;
+      noc5_data_void_out_pm  : out std_ulogic;
+      noc5_stop_in_pm        : in  std_ulogic;
+      -- LDO switch control
+      acc_clk                : out std_ulogic);
+
+  end component token_pm;
 
 end dvfs;
 

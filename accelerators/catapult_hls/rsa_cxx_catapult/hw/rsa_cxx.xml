@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sld>
+  <accelerator name="rsa_cxx" desc="Accelerator RSA Catapult C++" data_size="4" device_id="090" hls_tool="catapult_hls_cxx">
+    <param name="encryption" desc="encryption" />
+    <param name="padding" desc="padding" />
+    <param name="pubpriv" desc="pubpriv" />
+    <param name="n_bytes" desc="n_bytes" />
+    <param name="e_bytes" desc="e_bytes" />
+    <param name="in_bytes" desc="in_bytes" />
+  </accelerator>
+</sld>

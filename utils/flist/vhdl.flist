@@ -69,6 +69,7 @@ noc/fifo2.vhd
 noc/rtr_arbitration_engine.vhd
 noc/sync_noc_xy.vhd
 noc/inferred_async_fifo.vhd
+noc/noc_synchronizers.vhd
 noc/fifo3.vhd
 noc/fifo1.vhd
 noc/sync_noc32_xy.vhd
@@ -104,6 +105,8 @@ sockets/jtag/piso.vhd
 sockets/jtag/sipo.vhd
 sockets/dvfs/dvfs_top.vhd
 sockets/dvfs/dvfs_fsm.vhd
+sockets/dvfs/pm2noc.vhd
+sockets/dvfs/token_pm.vhd
 sockets/bus/patient_apbctrl.vhd
 sockets/bus/ahbmst.vhd
 sockets/bus/ahbtrace_mb.vhd
@@ -115,7 +118,6 @@ tiles/tile_slm.vhd
 tiles/tile_mem.vhd
 tiles/tile_cpu.vhd
 tiles/tile_io.vhd
-tiles/esp.vhd
 tiles/asic/asic_tile_acc.vhd
 tiles/asic/asic_tile_cpu.vhd
 tiles/asic/asic_tile_empty.vhd
@@ -123,3 +125,10 @@ tiles/asic/asic_tile_io.vhd
 tiles/asic/asic_tile_mem.vhd
 tiles/asic/asic_tile_slm.vhd
 tiles/asic/asic_tile_slm_ddr.vhd
+tiles/fpga/fpga_tile_acc.vhd
+tiles/fpga/fpga_tile_cpu.vhd
+tiles/fpga/fpga_tile_empty.vhd
+tiles/fpga/fpga_tile_io.vhd
+tiles/fpga/fpga_tile_mem.vhd
+tiles/fpga/fpga_tile_slm.vhd
+tiles/esp.vhd

@@ -7,6 +7,7 @@ use ieee.std_logic_1164.all;
 use work.esp_global.all;
 use work.amba.all;
 use work.monitor_pkg.all;
+use work.esp_acc_regmap.all;
 
 package esp_csr_pkg is
 
@@ -57,7 +58,20 @@ package esp_csr_pkg is
   constant ESP_CSR_DDR_CFG2_LSB : integer range 0 to ESP_CSR_WIDTH - 1 := 64 + ESP_CSR_8_LSB;
   constant ESP_CSR_DDR_CFG2_MSB : integer range 0 to ESP_CSR_WIDTH - 1 := 95 + ESP_CSR_8_LSB;
 
+  -- Power management
+  constant PM_REGNUM_CONFIG : integer range 0 to 31 := 9;
+  constant PM_REGNUM_STATUS : integer range 0 to 31 := 2;
+  constant PM_REGNUM : integer range 0 to 31 := PM_REGNUM_CONFIG + PM_REGNUM_STATUS;
+  constant ESP_CSR_PM_MIN : integer range 0 to 31 := 20;
+  constant ESP_CSR_PM_MAX : integer range 0 to 31 := ESP_CSR_PM_MIN + PM_REGNUM - 1;
+
+  -- Soft reset
   constant ESP_CSR_SRST_ADDR : integer range 0 to 31 := 31;  -- reserved address
+
+  -- Power management types
+  type pm_csr_type is array (0 to PM_REGNUM - 1) of std_logic_vector(31 downto 0);
+  type pm_config_type is array(0 to PM_REGNUM_CONFIG - 1) of std_logic_vector(31 downto 0);
+  type pm_status_type is array (0 to PM_REGNUM_STATUS - 1) of std_logic_vector(31 downto 0);
 
   component esp_tile_csr
     generic (
@@ -75,6 +89,8 @@ package esp_csr_pkg is
       mon_acc     : in monitor_acc_type;
       mon_dvfs    : in monitor_dvfs_type;
       tile_config : out std_logic_vector(ESP_CSR_WIDTH - 1 downto 0);
+      pm_config   : out pm_config_type;
+      pm_status   : in pm_status_type;
       srst        : out std_ulogic;
       apbi        : in apb_slv_in_type;
       apbo        : out apb_slv_out_type);

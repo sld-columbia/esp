@@ -113,6 +113,10 @@ class Tile():
         self.has_nfu_selection.config(state=NORMAL)
       else:
         self.has_nfu_selection.config(state=DISABLED)
+      if soc.IPs.ACCELERATORS.count(selection):
+        self.has_tdvfs_selection.config(state=NORMAL)
+      else:
+        self.has_tdvfs_selection.config(state=DISABLED)
       if soc.IPs.SLM.count(selection) and soc.TECH == "gf12":
         self.has_ddr_selection.config(state=NORMAL)
       else:
@@ -225,6 +229,7 @@ class Tile():
     self.clk_region = IntVar()
     self.has_l2 = IntVar()
     self.has_nfu = IntVar()
+    self.has_tdvfs = IntVar()
     self.has_ddr = IntVar()
     self.has_pll = IntVar()
     self.has_clkbuf = IntVar()
@@ -253,6 +258,7 @@ class NoC():
           new_topology[y][x].ip_type.set(self.topology[y][x].ip_type.get())
           new_topology[y][x].has_l2.set(self.topology[y][x].has_l2.get())
           new_topology[y][x].has_nfu.set(self.topology[y][x].has_nfu.get())
+          new_topology[y][x].has_tdvfs.set(self.topology[y][x].has_tdvfs.get())
           new_topology[y][x].has_ddr.set(self.topology[y][x].has_ddr.get())
           new_topology[y][x].clk_region.set(self.topology[y][x].clk_region.get())
           new_topology[y][x].has_pll.set(self.topology[y][x].has_pll.get())
@@ -445,18 +451,20 @@ class NoCFrame(Pmw.ScrolledFrame):
     tile.has_l2_selection.grid(row=1, column=1)
     tile.has_nfu_selection = Checkbutton(config_frame, text="Has NFU", variable=tile.has_nfu, onvalue = 1, offvalue = 0, command=self.changed);
     tile.has_nfu_selection.grid(row=1, column=2)
+    tile.has_tdvfs_selection = Checkbutton(config_frame, text="Has DVFS", variable=tile.has_tdvfs, onvalue = 1, offvalue = 0, command=self.changed);
+    tile.has_tdvfs_selection.grid(row=1, column=3)
     tile.has_ddr_selection = Checkbutton(config_frame, text="Has DDR", variable=tile.has_ddr, onvalue = 1, offvalue = 0, command=self.changed);
-    tile.has_ddr_selection.grid(row=1, column=3)
-    Separator(config_frame, orient="horizontal").grid(row=2, column=1, columnspan=3, ipadx=140, pady=3)
+    tile.has_ddr_selection.grid(row=1, column=4)
+    Separator(config_frame, orient="horizontal").grid(row=2, column=1, columnspan=4, ipadx=140, pady=3)
 
     tile.label.bind("<Double-Button-1>", lambda event:tile.power_window(event, self.soc, self))
-    Label(config_frame, text="Clk Reg: ").grid(row=3, column=1)
-    tile.clk_reg_selection = Spinbox(config_frame, state='readonly', from_=0, to=len(self.soc.noc.get_clk_regions()), wrap=True, textvariable=tile.clk_region,width=3);
-    tile.clk_reg_selection.grid(row=3, column=2)
+    Label(config_frame, text="Clk Reg: ", justify=LEFT, anchor="w").grid(sticky = W, row=3, column=1)
+    tile.clk_reg_selection = Spinbox(config_frame, state='readonly', from_=0, to=len(self.soc.noc.get_clk_regions()), wrap=True, textvariable=tile.clk_region,width=3, justify=RIGHT);
+    tile.clk_reg_selection.grid(sticky = E, row=3, column=1)
     tile.pll_selection = Checkbutton(config_frame, text="Has PLL", variable=tile.has_pll, onvalue = 1, offvalue = 0, command=self.changed);
-    tile.pll_selection.grid(row=3, column=3)
+    tile.pll_selection.grid(row=3, column=2)
     tile.clkbuf_selection = Checkbutton(config_frame, text="CLK BUF", variable=tile.has_clkbuf, onvalue = 1, offvalue = 0, command=self.changed);
-    tile.clkbuf_selection.grid(row=3, column=4)
+    tile.clkbuf_selection.grid(row=3, column=3)
     try:
       int(self.vf_points_entry.get())
       tile.load_characterization(self.soc, int(self.vf_points_entry.get()))

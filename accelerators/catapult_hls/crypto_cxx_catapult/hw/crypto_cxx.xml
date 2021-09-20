@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sld>
+  <accelerator name="crypto_cxx" desc="Accelerator Crypto Catapult C++" data_size="4" device_id="091" hls_tool="catapult_hls_cxx">
+      <param name="crypto_algo" desc="crypto_algo" />
+      <param name="encryption" desc="encryption" />
+      <param name="sha1_in_bytes" desc="sha1_in_bytes" />
+      <param name="sha2_in_bytes" desc="sha2_in_bytes" />
+      <param name="sha2_out_bytes" desc="sha2_out_bytes" />
+      <param name="aes_oper_mode" desc="aes_oper_mode" />
+      <!--param name="aes_encryption" desc="aes_encryption" /-->
+      <param name="aes_key_bytes" desc="aes_key_bytes" />
+      <param name="aes_in_bytes" desc="aes_in_bytes" />
+      <param name="aes_iv_bytes" desc="aes_iv_bytes" />
+      <param name="aes_aad_bytes" desc="aes_aad_bytes" />
+      <param name="aes_tag_bytes" desc="aes_tag_bytes" />
+      <!--param name="rsa_encryption" desc="rsa_encryption" /-->
+      <param name="rsa_padding" desc="rsa_padding" />
+      <param name="rsa_pubpriv" desc="rsa_pubpriv" />
+      <param name="rsa_n_bytes" desc="rsa_n_bytes" />
+      <param name="rsa_e_bytes" desc="rsa_e_bytes" />
+      <param name="rsa_in_bytes" desc="rsa_in_bytes" />
+  </accelerator>
+</sld>

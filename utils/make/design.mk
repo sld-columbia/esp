@@ -94,6 +94,7 @@ TOP_VHDL_RTL_PKGS += $(DESIGN_PATH)/$(ESP_CFG_BUILD)/socmap.vhd
 TOP_VHDL_RTL_PKGS += $(DESIGN_PATH)/socketgen/sldacc.vhd
 TOP_VHDL_RTL_PKGS += $(ESP_ROOT)/rtl/tiles/tiles_pkg.vhd
 TOP_VHDL_RTL_PKGS += $(ESP_ROOT)/rtl/tiles/asic/tiles_asic_pkg.vhd
+TOP_VHDL_RTL_PKGS += $(ESP_ROOT)/rtl/tiles/fpga/tiles_fpga_pkg.vhd
 TOP_VHDL_RTL_PKGS += $(EXTRA_TOP_VHDL_RTL_PKGS)
 
 TOP_VHDL_SIM_PKGS +=

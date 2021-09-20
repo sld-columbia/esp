@@ -128,7 +128,7 @@ package genram_pkg is
       g_almost_empty_threshold : integer := 0;
       g_almost_full_threshold  : integer := 0);
     port (
-      rst_n_i           : in  std_logic := '1';
+      rst_wr_n_i        : in  std_logic := '1';
       clk_wr_i          : in  std_logic;
       d_i               : in  std_logic_vector(g_data_width-1 downto 0);
       we_i              : in  std_logic;
@@ -137,6 +137,7 @@ package genram_pkg is
       wr_almost_empty_o : out std_logic;
       wr_almost_full_o  : out std_logic;
       wr_count_o        : out std_logic_vector(f_log2_size(g_size)-1 downto 0);
+      rst_rd_n_i        : in  std_logic := '1';
       clk_rd_i          : in  std_logic;
       q_o               : out std_logic_vector(g_data_width-1 downto 0);
       rd_i              : in  std_logic;

@@ -73,12 +73,13 @@ OBJS := $(SRCS:.cpp=.o)
 -include $(OBJS:.o=.d)
 
 HDRS ?=
-HDRS += $(wildcard ../inc/*.hpp) $(wildcard ../tb/*.hpp)
+HDRS += $(wildcard ../inc/*.hpp) $(wildcard ../tb/*.hpp) $(wildcard ../tb/*.h)
+
 
 
 all: $(TARGET)
 
-.SUFFIXES: .cpp .hpp .o
+.SUFFIXES: .cpp .hpp .h .o
 
 $(OBJS): $(HDRS)
 

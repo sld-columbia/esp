@@ -72,6 +72,7 @@ package jtag_pkg is
     port (
       rst                 : in  std_ulogic;
       refclk              : in  std_ulogic;
+      tile_rst            : in  std_ulogic;
       tdi                 : in  std_ulogic;
       tdo                 : out std_ulogic;
       tms                 : in  std_ulogic;
