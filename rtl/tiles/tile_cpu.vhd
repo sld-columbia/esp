@@ -43,6 +43,7 @@ entity tile_cpu is
     this_has_dco       : integer range 0 to 1 := 0;
     this_extra_clk_buf : integer range 0 to 1 := 0;
     test_if_en         : integer range 0 to 1 := 0;
+    this_has_nfu       : integer range 0 to 1 := 0;
     ROUTER_PORTS       : ports_vec := "11111";
     HAS_SYNC           : integer range 0 to 1 := 1);
   port (
@@ -1182,7 +1183,8 @@ begin
         SLMDDRLength     => X"0000_0000_4000_0000",  -- Reserving up to 1GB; devtree can set less
         DRAMBase         => X"0000_0000" & conv_std_logic_vector(ddr_haddr(0), 12) & X"0_0000",
         DRAMLength       => X"0000_0000_4000_0000",
-        DRAMCachedLength => X"0000_0000_4000_0000")  -- TODO: length set automatically to match devtree
+        DRAMCachedLength => X"0000_0000_4000_0000",  -- TODO: length set automatically to match devtree
+        NFU_PRESENT      => this_has_nfu)
       port map (
         clk         => clk_feedthru,
         rstn        => cpurstn,

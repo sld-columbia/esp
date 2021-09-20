@@ -236,6 +236,7 @@ class SoC_Config():
           tile.has_clkbuf.set(int(tokens[7]))
           if tokens[3] == "cpu" and self.cache_en.get() == 1:
             tile.has_l2.set(1)
+            tile.has_nfu.set(tokens[8])
           if tokens[3] == "slm":
             tile.has_ddr.set(tokens[8])
           if tokens[3] == "acc":
@@ -328,6 +329,7 @@ class SoC_Config():
       for x in range(0, self.noc.cols):
         tile = self.noc.topology[y][x]
         selection = tile.ip_type.get()
+        is_cpu = False
         is_accelerator = False
         is_slm = False
         fp.write("TILE_" + str(y) + "_" + str(x) + " = ")
@@ -335,6 +337,7 @@ class SoC_Config():
         fp.write(str(i) + " ")
         # Tile type
         if self.IPs.PROCESSORS.count(selection):
+          is_cpu = True
           fp.write("cpu")
         elif self.IPs.MISC.count(selection):
           fp.write("misc")
@@ -361,6 +364,8 @@ class SoC_Config():
         fp.write(" " + str(tile.has_pll.get()))
         fp.write(" " + str(tile.has_clkbuf.get()))
         # SLM tile configuration
+        if is_cpu:
+          fp.write(" " + str(tile.has_nfu.get()))
         if is_slm:
           fp.write(" " + str(tile.has_ddr.get()))
         # Acceleator tile configuration

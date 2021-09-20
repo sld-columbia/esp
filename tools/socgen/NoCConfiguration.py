@@ -109,6 +109,10 @@ class Tile():
         else:
           self.has_l2.set(0)
         self.has_l2_selection.config(state=DISABLED)
+      if soc.IPs.PROCESSORS.count(selection) and soc.CPU_ARCH.get() == "ariane":
+        self.has_nfu_selection.config(state=NORMAL)
+      else:
+        self.has_nfu_selection.config(state=DISABLED)
       if soc.IPs.SLM.count(selection) and soc.TECH == "gf12":
         self.has_ddr_selection.config(state=NORMAL)
       else:
@@ -220,6 +224,7 @@ class Tile():
     self.vendor = ""
     self.clk_region = IntVar()
     self.has_l2 = IntVar()
+    self.has_nfu = IntVar()
     self.has_ddr = IntVar()
     self.has_pll = IntVar()
     self.has_clkbuf = IntVar()
@@ -247,6 +252,7 @@ class NoC():
         if x < self.cols and y < self.rows:
           new_topology[y][x].ip_type.set(self.topology[y][x].ip_type.get())
           new_topology[y][x].has_l2.set(self.topology[y][x].has_l2.get())
+          new_topology[y][x].has_nfu.set(self.topology[y][x].has_nfu.get())
           new_topology[y][x].has_ddr.set(self.topology[y][x].has_ddr.get())
           new_topology[y][x].clk_region.set(self.topology[y][x].clk_region.get())
           new_topology[y][x].has_pll.set(self.topology[y][x].has_pll.get())
@@ -436,10 +442,12 @@ class NoCFrame(Pmw.ScrolledFrame):
     tile.label.pack()
 
     tile.has_l2_selection = Checkbutton(config_frame, text="Has cache", variable=tile.has_l2, onvalue = 1, offvalue = 0, command=self.changed);
-    tile.has_l2_selection.grid(row=1, column=1, columnspan=2)
+    tile.has_l2_selection.grid(row=1, column=1)
+    tile.has_nfu_selection = Checkbutton(config_frame, text="Has NFU", variable=tile.has_nfu, onvalue = 1, offvalue = 0, command=self.changed);
+    tile.has_nfu_selection.grid(row=1, column=2)
     tile.has_ddr_selection = Checkbutton(config_frame, text="Has DDR", variable=tile.has_ddr, onvalue = 1, offvalue = 0, command=self.changed);
-    tile.has_ddr_selection.grid(row=1, column=3, columnspan=2)
-    Separator(config_frame, orient="horizontal").grid(row=2, column=1, columnspan=4, ipadx=140, pady=3)
+    tile.has_ddr_selection.grid(row=1, column=3)
+    Separator(config_frame, orient="horizontal").grid(row=2, column=1, columnspan=3, ipadx=140, pady=3)
 
     tile.label.bind("<Double-Button-1>", lambda event:tile.power_window(event, self.soc, self))
     Label(config_frame, text="Clk Reg: ").grid(row=3, column=1)

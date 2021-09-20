@@ -25,7 +25,8 @@ package ariane_esp_pkg is
       SLMDDRLength     : std_logic_vector(63 downto 0);
       DRAMBase         : std_logic_vector(63 downto 0);
       DRAMLength       : std_logic_vector(63 downto 0);
-      DRAMCachedLength : std_logic_vector(63 downto 0));
+      DRAMCachedLength : std_logic_vector(63 downto 0);
+      NFU_PRESENT      : integer);
     port (
       clk         : in  std_logic;
       rstn        : in  std_logic;

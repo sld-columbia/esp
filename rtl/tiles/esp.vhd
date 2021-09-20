@@ -529,6 +529,7 @@ begin
         this_has_dvfs      => tile_has_dvfs(i),
         this_has_pll       => tile_has_pll(i),
         this_extra_clk_buf => extra_clk_buf(i),
+        this_has_nfu       => tile_has_nfu(i),
         ROUTER_PORTS       => set_router_ports(CFG_FABTECH, CFG_XLEN, CFG_YLEN, tile_x(i), tile_y(i)),
         HAS_SYNC           => CFG_HAS_SYNC)
       port map (

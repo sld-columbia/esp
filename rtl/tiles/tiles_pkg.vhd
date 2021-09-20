@@ -59,6 +59,7 @@ package tiles_pkg is
       this_has_dco       : integer range 0 to 1 := 0;
       this_extra_clk_buf : integer range 0 to 1 := 0;
       test_if_en         : integer range 0 to 1 := 0;
+      this_has_nfu       : integer range 0 to 1 := 0;
       ROUTER_PORTS       : ports_vec            := "11111";
       HAS_SYNC           : integer range 0 to 1 := 1);
     port (
