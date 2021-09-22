@@ -23,6 +23,7 @@ package tiles_fpga_pkg is
       this_has_dvfs      : integer range 0 to 1 := 0;
       this_has_pll       : integer range 0 to 1 := 0;
       this_extra_clk_buf : integer range 0 to 1 := 0;
+      this_has_nfu       : integer range 0 to 1 := 0;
       ROUTER_PORTS       : ports_vec            := "11111";
       HAS_SYNC           : integer range 0 to 1 := 1);
     port (
