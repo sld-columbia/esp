@@ -118,7 +118,8 @@ package dvfs is
     port (
       clk         : in  std_ulogic;
       DCO_clk     : in  std_ulogic;
-      reset       : in  std_ulogic;
+      reset_tile  : in  std_ulogic;
+      reset_noc   : in  std_ulogic;
       freq_target : in  std_logic_vector(7 downto 0);
       LDO_setup_0 : in  std_logic_vector(31 downto 0);
       LDO_setup_1 : in  std_logic_vector(31 downto 0);

@@ -271,7 +271,8 @@ begin
     port map (
       clk         => noc_clk,
       DCO_clk     => acc_clk_int,
-      reset       => noc_rstn,
+      reset_tile  => tile_rstn,
+      reset_noc   => noc_rstn,
       freq_target => freq_target,
       LDO_setup_0 => pm_config_sync(4),
       LDO_setup_1 => pm_config_sync(5),
