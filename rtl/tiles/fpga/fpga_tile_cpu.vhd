@@ -41,6 +41,7 @@ entity fpga_tile_cpu is
     this_has_dvfs      : integer range 0 to 1 := 0;
     this_has_pll       : integer range 0 to 1 := 0;
     this_extra_clk_buf : integer range 0 to 1 := 0;
+    this_has_nfu       : integer range 0 to 1 := 0;
     ROUTER_PORTS       : ports_vec            := "11111";
     HAS_SYNC           : integer range 0 to 1 := 1);
   port (
@@ -615,7 +616,8 @@ begin
       this_has_dvfs       => this_has_dvfs,  -- no DVFS controller
       this_has_pll        => this_has_pll,
       this_has_dco        => 0,
-      this_extra_clk_buf  => this_extra_clk_buf)
+      this_extra_clk_buf  => this_extra_clk_buf,
+      this_has_nfu        => this_has_nfu)
     port map (
       raw_rstn            => raw_rstn,
       tile_rst            => rst,

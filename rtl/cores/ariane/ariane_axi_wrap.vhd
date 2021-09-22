@@ -26,7 +26,8 @@ entity ariane_axi_wrap is
     SLMDDRLength     : std_logic_vector(63 downto 0) := X"0000_0000_4000_0000";
     DRAMBase         : std_logic_vector(63 downto 0) := X"0000_0000_8000_0000";
     DRAMLength       : std_logic_vector(63 downto 0) := X"0000_0000_2000_0000";
-    DRAMCachedLength : std_logic_vector(63 downto 0) := X"0000_0000_2000_0000");
+    DRAMCachedLength : std_logic_vector(63 downto 0) := X"0000_0000_2000_0000";
+    NFU_PRESENT      : integer                       := 0);
   port (
     clk         : in  std_logic;
     rstn        : in  std_logic;
@@ -48,7 +49,11 @@ entity ariane_axi_wrap is
     apbo        : in  apb_slv_out_vector;
     apb_req     : out std_ulogic;
     apb_ack     : in  std_ulogic;
-    fence_l2    : out std_logic_vector(1 downto 0)
+    ace_req     : in  ace_req_type;
+    ace_resp    : out ace_resp_type;
+    fence_l2    : out std_logic_vector(1 downto 0);
+    flush_l1    : in std_logic;
+    flush_done  : out std_logic
     );
 
 end ariane_axi_wrap;
@@ -67,6 +72,7 @@ architecture rtl of ariane_axi_wrap is
       AXI_USER_WIDTH   : integer;
       AXI_STRB_WIDTH   : integer;
       USE_SPANDEX      : integer;
+      NFU_PRESENT      : integer;
       ROMBase          : std_logic_vector(63 downto 0);
       ROMLength        : std_logic_vector(63 downto 0);
       APBBase          : std_logic_vector(63 downto 0);
@@ -146,6 +152,11 @@ architecture rtl of ariane_axi_wrap is
       dram_aw_user    : out std_logic_vector(AXI_USER_WIDTH-1 downto 0);
       dram_aw_valid   : out std_logic;
       dram_aw_ready   : in  std_logic;
+      dram_ac_addr    : in  std_logic_vector(AXI_ADDR_WIDTH-1 downto 0);
+      dram_ac_prot    : in  std_logic_vector(2 downto 0);
+      dram_ac_snoop   : in  std_logic_vector(3 downto 0);
+      dram_ac_valid   : in  std_logic;
+      dram_ac_ready   : out std_logic;
       dram_w_data     : out std_logic_vector(AXI_DATA_WIDTH-1 downto 0);
       dram_w_strb     : out std_logic_vector(AXI_STRB_WIDTH-1 downto 0);
       dram_w_last     : out std_logic;
@@ -320,7 +331,9 @@ architecture rtl of ariane_axi_wrap is
       prdata          : in  std_logic_vector(31 downto 0);
       pready          : in  std_logic;
       pslverr         : in  std_logic;
-      fence_l2        : out std_logic_vector(1 downto 0)
+      fence_l2        : out std_logic_vector(1 downto 0);
+      flush_l1        : in std_logic;
+      flush_done      : out std_logic
       );
   end component ariane_wrap;
 
@@ -350,6 +363,7 @@ begin  -- architecture rtl
       AXI_USER_WIDTH   => XUSER_WIDTH,
       AXI_STRB_WIDTH   => ARCH_BITS / 8,
       USE_SPANDEX      => USE_SPANDEX,
+      NFU_PRESENT      => NFU_PRESENT,
       ROMBase          => ROMBase,
       ROMLength        => ROMLength,
       APBBase          => APBBase,
@@ -429,6 +443,11 @@ begin  -- architecture rtl
       dram_aw_user    => drami.aw.user,
       dram_aw_valid   => drami.aw.valid,
       dram_aw_ready   => dramo.aw.ready,
+      dram_ac_addr    => ace_req.ac.addr,
+      dram_ac_prot    => ace_req.ac.prot,
+      dram_ac_snoop   => ace_req.ac.snoop,
+      dram_ac_valid   => ace_req.ac.valid,
+      dram_ac_ready   => ace_resp.ac.ready,
       dram_w_data     => drami.w.data,
       dram_w_strb     => drami.w.strb,
       dram_w_last     => drami.w.last,
@@ -603,7 +622,9 @@ begin  -- architecture rtl
       prdata          => prdata,
       pready          => apb_ack,
       pslverr         => '0',
-      fence_l2        => fence_l2
+      fence_l2        => fence_l2,
+      flush_l1        => flush_l1,
+      flush_done      => flush_done
       );
 
   -- Unused extended AXI ID

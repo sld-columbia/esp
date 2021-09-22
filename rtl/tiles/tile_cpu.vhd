@@ -41,7 +41,11 @@ entity tile_cpu is
     this_has_dvfs      : integer range 0 to 1 := 0;
     this_has_pll       : integer range 0 to 1 := 0;
     this_has_dco       : integer range 0 to 1 := 0;
-    this_extra_clk_buf : integer range 0 to 1 := 0);
+    this_extra_clk_buf : integer range 0 to 1 := 0;
+    test_if_en         : integer range 0 to 1 := 0;
+    this_has_nfu       : integer range 0 to 1 := 0;
+    ROUTER_PORTS       : ports_vec := "11111";
+    HAS_SYNC           : integer range 0 to 1 := 1);
   port (
     raw_rstn           : in  std_ulogic;
     tile_rst           : in  std_ulogic;
@@ -143,6 +147,7 @@ architecture rtl of tile_cpu is
 
   -- L1 data-cache flush
   signal dflush : std_ulogic;
+  signal flush_l1 : std_logic;
 
   -- L2 wrapper and cache debug reset
   signal l2_rstn : std_ulogic;
@@ -248,6 +253,9 @@ architecture rtl of tile_cpu is
 
   signal cache_ahbsi : ahb_slv_in_type;
   signal cache_ahbso : ahb_slv_out_type;
+
+  signal ace_req  : ace_req_type;
+  signal ace_resp : ace_resp_type;
 
   -- Mon
   signal mon_cache_int  : monitor_cache_type;
@@ -697,7 +705,8 @@ begin
         SLMDDRLength     => X"0000_0000_4000_0000",  -- Reserving up to 1GB; devtree can set less
         DRAMBase         => X"0000_0000" & conv_std_logic_vector(ddr_haddr(0), 12) & X"0_0000",
         DRAMLength       => X"0000_0000_4000_0000",
-        DRAMCachedLength => X"0000_0000_2000_0000")  -- TODO: length set automatically to match devtree
+        DRAMCachedLength => X"0000_0000_4000_0000",  -- TODO: length set automatically to match devtree
+        NFU_PRESENT      => this_has_nfu)
       port map (
         clk         => clk_feedthru,
         rstn        => cpurstn,
@@ -715,18 +724,20 @@ begin
         slmo        => somi(3),
         slmddri     => mosi(4),
         slmddro     => somi(4),
+        ace_req     => ace_req,
+        ace_resp    => ace_resp,
         apbi        => apbi,
         apbo        => apbo,
         apb_req     => apb_req,
         apb_ack     => apb_ack,
-        fence_l2    => fence_l2);
+        fence_l2    => fence_l2,
+        flush_l1    => flush_l1,
+        flush_done  => dflush
+      );
 
     -- exit() writes to this address right before completing the program
     -- Next instruction is a jump to current PC.
     cpuerr <= '1' when ariane_drami.aw.addr = X"80001000" and ariane_drami.aw.valid = '1' else '0';
-
-    -- L1 can't be flushed on Ariane. So flush upon command.
-    dflush <= '1';
 
     -- RISC-V PLIC/CLINT outputs
     irq       <= irqi.irl(1 downto 0);
@@ -777,9 +788,12 @@ begin
         ahbmo                      => ahbmo(CFG_NCPU_TILE),
         mosi                       => cache_drami,
         somi                       => cache_dramo,
+        ace_req                    => ace_req,
+        ace_resp                   => ace_resp,
         apbi                       => noc_apbi,
         apbo                       => noc_apbo(1),
         flush                      => dflush,
+        flush_l1                   => flush_l1,
         coherence_req_wrreq        => coherence_req_wrreq,
         coherence_req_data_in      => coherence_req_data_in,
         coherence_req_full         => coherence_req_full,
@@ -851,6 +865,7 @@ begin
     ahbso(ddr_hindex(0)) <= cache_ahbso;
     cache_ahbsi <= ahbsi;
 
+    ace_resp <= ace_resp_none;
 
     -- Remote uncached slaves
     ahbslv2noc_1 : ahbslv2noc
@@ -969,6 +984,7 @@ begin
 
     ariane_no_cache_coherence : if CFG_L2_ENABLE = 0 generate
       cache_drami <= axi_mosi_none;
+      ace_req     <= ace_req_none;
 
       mosi(1) <= ariane_drami;
       ariane_dramo <= somi(1);

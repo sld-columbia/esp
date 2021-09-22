@@ -75,6 +75,7 @@ package allcaches is
       l2_cpu_req_data_hprot     : in  std_logic_vector(HPROT_WIDTH - 1 downto 0);
       l2_cpu_req_data_addr      : in  std_logic_vector(ADDR_BITS - 1 downto 0);
       l2_cpu_req_data_word      : in  std_logic_vector(BITS_PER_WORD - 1 downto 0);
+      l2_cpu_req_data_amo       : in  std_logic_vector(AMO_BITS - 1 downto 0);
       l2_fwd_in_valid           : in  std_ulogic;
       l2_fwd_in_data_coh_msg    : in  std_logic_vector(MIX_MSG_TYPE_WIDTH - 2 - 1 downto 0);
       l2_fwd_in_data_addr       : in  std_logic_vector(ADDR_BITS - OFFSET_BITS - 1 downto 0);
@@ -100,7 +101,8 @@ package allcaches is
       l2_rd_rsp_valid           : out std_ulogic;
       l2_rd_rsp_data_line       : out std_logic_vector(BITS_PER_LINE - 1 downto 0);
       l2_inval_valid            : out std_ulogic;
-      l2_inval_data             : out std_logic_vector(ADDR_BITS - OFFSET_BITS - 1 downto 0);
+      l2_inval_data_addr        : out std_logic_vector(ADDR_BITS - OFFSET_BITS - 1 downto 0);
+      l2_inval_data_hprot       : out std_logic_vector(HPROT_WIDTH - 1 downto 0);
       l2_req_out_valid          : out std_ulogic;
       l2_req_out_data_coh_msg   : out std_logic_vector(COH_MSG_TYPE_WIDTH - 2 - 1 downto 0);
       l2_req_out_data_hprot     : out std_logic_vector(HPROT_WIDTH - 1 downto 0);

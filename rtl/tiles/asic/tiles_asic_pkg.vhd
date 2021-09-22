@@ -21,7 +21,8 @@ package tiles_asic_pkg is
   component asic_tile_cpu is
     generic (
       SIMULATION   : boolean;
-      ROUTER_PORTS : ports_vec);
+      ROUTER_PORTS : ports_vec;
+      this_has_nfu : integer range 0 to 1);
     port (
       rst                : in  std_ulogic;
       sys_clk            : in  std_ulogic;
