@@ -136,6 +136,7 @@ architecture rtl of tile_io is
   signal dco_noc_fc_sel   : std_logic_vector(5 downto 0);
   signal dco_noc_div_sel  : std_logic_vector(2 downto 0);
   signal dco_noc_freq_sel : std_logic_vector(1 downto 0);
+  signal sys_clk_out_int  : std_ulogic;
 
   signal dco_en       : std_ulogic;
   signal dco_clk_sel  : std_ulogic;
@@ -409,7 +410,7 @@ begin
         fc_sel   => dco_noc_fc_sel,
         div_sel  => dco_noc_div_sel,
         freq_sel => dco_noc_freq_sel,
-        clk      => sys_clk_out,
+        clk      => sys_clk_out_int,
         clk_div  => pllclk_noc,
         lock     => sys_clk_lock);
 
@@ -419,6 +420,8 @@ begin
     dco_noc_cc_sel   <= tile_config(ESP_CSR_DCO_NOC_CFG_MSB - 11 downto ESP_CSR_DCO_NOC_CFG_MSB - 11 - 5);
     dco_noc_clk_sel  <= tile_config(ESP_CSR_DCO_NOC_CFG_LSB + 1);
     dco_noc_en       <= raw_rstn and tile_config(ESP_CSR_DCO_NOC_CFG_LSB);
+
+    sys_clk_out <= sys_clk_out_int;
 
     dco_tile_gen : if this_has_dco = 1 generate
       dco_i: dco
@@ -460,7 +463,7 @@ begin
 
   no_tile_dco_gen: if this_has_dco = 2 generate
     pllclk       <= '0';
-    dco_clk_int  <= refclk;
+    dco_clk_int  <= sys_clk_out_int;
     dco_clk_lock <= '1';
   end generate no_tile_dco_gen;
 
