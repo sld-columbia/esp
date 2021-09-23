@@ -38,6 +38,7 @@ use work.tiles_pkg.all;
 entity asic_tile_cpu is
   generic (
     SIMULATION   : boolean              := false;
+    HAS_SYNC     : integer range 0 to 1 := 1;
     ROUTER_PORTS : ports_vec            := "11111";
     this_has_dco : integer range 0 to 1 := 1);
   port (
@@ -511,7 +512,7 @@ begin
   sync_noc_set_cpu: sync_noc_set
   generic map (
      PORTS    => ROUTER_PORTS,
-     HAS_SYNC => 1 )
+     HAS_SYNC => HAS_SYNC)
    port map (
      clk                => sys_clk,
      clk_tile           => dco_clk,
@@ -617,7 +618,7 @@ begin
       SIMULATION         => SIMULATION,
       this_has_dvfs      => 0,              -- no DVFS controller
       this_has_pll       => 0,
-      this_has_dco       => this_has_dco,   -- use DCO
+      this_has_dco       => this_has_dco, -- use DCO
       this_extra_clk_buf => 0)
     port map (
       raw_rstn           => raw_rstn,

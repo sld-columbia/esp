@@ -39,7 +39,8 @@ entity asic_tile_slm_ddr is
   generic (
     SIMULATION   : boolean   := false;
     ROUTER_PORTS : ports_vec := "11111";
-    this_has_dco : integer range 0 to 1 := 1);
+    this_has_dco : integer range 0 to 1 := 1;
+    HAS_SYNC     : integer range 0 to 1 := 1);
   port (
     rst                : in  std_ulogic;
     sys_clk            : in  std_ulogic;  -- NoC clock
@@ -645,7 +646,7 @@ begin
   sync_noc_set_slm: sync_noc_set
   generic map (
      PORTS    => ROUTER_PORTS,
-     HAS_SYNC => 1 )
+     HAS_SYNC => HAS_SYNC)
    port map (
      clk                => sys_clk,
      clk_tile           => dco_clk_div2_90,
