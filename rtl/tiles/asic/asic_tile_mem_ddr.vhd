@@ -36,6 +36,7 @@ use work.tiles_pkg.all;
 
 entity asic_tile_mem_ddr is
   generic (
+    HAS_SYNC     : integer range 0 to 1 := 1;
     ROUTER_PORTS : ports_vec := "11111");
   port (
     rst                : in  std_ulogic;
@@ -251,7 +252,7 @@ begin
       this_has_ddr => 1,
       dco_rst_cfg  => DEFAULT_DCO_LPDDR_CFG,
       ROUTER_PORTS => ROUTER_PORTS,
-      HAS_SYNC     => 1)
+      HAS_SYNC     => HAS_SYNC)
     port map (
       raw_rstn           => raw_rstn,   -- DCO raw reset
       rst                => dco_rstn,   -- tile main synchronouse reset

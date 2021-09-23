@@ -37,6 +37,7 @@ use work.tiles_pkg.all;
 entity asic_tile_io is
   generic (
     SIMULATION   : boolean   := false;
+    HAS_SYNC     : integer range 0 to 1 := 1;
     ROUTER_PORTS : ports_vec := "11111";
     this_has_dco : integer range 0 to 2 := 0);
   port (
@@ -389,7 +390,7 @@ begin
       this_has_dco => this_has_dco,
       test_if_en   => CFG_JTAG_EN,
       ROUTER_PORTS => ROUTER_PORTS,
-      HAS_SYNC     => 1)
+      HAS_SYNC     => HAS_SYNC)
     port map (
       raw_rstn           => raw_rstn,
       rst                => dco_rstn,

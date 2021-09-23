@@ -33,6 +33,7 @@ entity asic_tile_acc is
     this_device        : devid_t              := 0;
     this_irq_type      : integer              := 0;
     this_has_l2        : integer range 0 to 1 := 0;
+    HAS_SYNC           : integer range 0 to 1 := 1;
     ROUTER_PORTS       : ports_vec            := "11111";
     this_has_dco       : integer range 0 to 1 := 0);
   port (
@@ -159,7 +160,7 @@ begin
       this_extra_clk_buf => 0,
       test_if_en         => CFG_JTAG_EN, -- enable test interface
       ROUTER_PORTS       => ROUTER_PORTS,
-      HAS_SYNC           => 1)
+      HAS_SYNC           => HAS_SYNC)
     port map (
       raw_rstn           => raw_rstn,
       rst                => dco_rstn,

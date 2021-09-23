@@ -36,6 +36,7 @@ use work.tiles_pkg.all;
 entity asic_tile_slm is
   generic (
     SIMULATION   : boolean := false;
+    HAS_SYNC     : integer range 0 to 1 := 1;
     ROUTER_PORTS : ports_vec := "11111";
     this_has_dco : integer range 0 to 1 := 0);
   port (
@@ -160,7 +161,7 @@ begin
       this_has_ddr => 0,
       dco_rst_cfg  => (others => '0'),
       ROUTER_PORTS => ROUTER_PORTS,
-      HAS_SYNC     => 1)
+      HAS_SYNC     => HAS_SYNC)
     port map (
       raw_rstn           => raw_rstn,
       rst                => dco_rstn,

@@ -21,6 +21,7 @@ package tiles_asic_pkg is
   component asic_tile_cpu is
     generic (
       SIMULATION   : boolean;
+      HAS_SYNC     : integer range 0 to 1 := 1;
       ROUTER_PORTS : ports_vec;
       this_has_dco : integer range 0 to 1 := 0);
     port (
@@ -113,6 +114,7 @@ package tiles_asic_pkg is
       this_device   : devid_t;
       this_irq_type : integer;
       this_has_l2   : integer range 0 to 1;
+      HAS_SYNC      : integer range 0 to 1 := 1;
       ROUTER_PORTS  : ports_vec;
       this_has_dco  : integer range 0 to 1 := 0);
     port (
@@ -202,6 +204,7 @@ package tiles_asic_pkg is
   component asic_tile_mem is
     generic (
       ROUTER_PORTS : ports_vec;
+      HAS_SYNC     : integer range 0 to 1 := 1;
       this_has_dco : integer range 0 to 1 := 0);
     port (
       rst                : in    std_ulogic;
@@ -299,6 +302,7 @@ package tiles_asic_pkg is
   component asic_tile_io is
     generic (
       SIMULATION   : boolean;
+      HAS_SYNC     : integer range 0 to 1 := 1;
       ROUTER_PORTS : ports_vec;
       this_has_dco : integer range 0 to 2 := 0);
     port (
@@ -436,7 +440,8 @@ package tiles_asic_pkg is
 
   component asic_tile_empty is
     generic (
-      SIMULATION   : boolean;
+      SIMULATION   : boolean; 
+      HAS_SYNC     : integer range 0 to 1 := 1;
       ROUTER_PORTS : ports_vec;
       this_has_dco : integer range 0 to 1 := 0);
     port (
@@ -526,6 +531,7 @@ package tiles_asic_pkg is
   component asic_tile_slm is
     generic (
       SIMULATION   : boolean := false;
+      HAS_SYNC     : integer range 0 to 1 := 1;
       ROUTER_PORTS : ports_vec;
       this_has_dco : integer range 0 to 1 := 0);
     port (
@@ -614,6 +620,7 @@ package tiles_asic_pkg is
 
   component asic_tile_slm_ddr is
     generic (
+      HAS_SYNC     : integer range 0 to 1 := 1;
       ROUTER_PORTS : ports_vec);
     port (
       rst                : in  std_ulogic;
