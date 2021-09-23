@@ -38,6 +38,7 @@ use work.tiles_pkg.all;
 entity asic_tile_io is
   generic (
     SIMULATION   : boolean   := false;
+    HAS_SYNC     : integer range 0 to 1 := 1;
     ROUTER_PORTS : ports_vec := "11111";
     this_has_dco : integer range 0 to 2 := 1); -- 0: no DCO, 1: tile and NoC DCO
                                                -- 2: NoC DCO only
@@ -578,7 +579,7 @@ begin
   sync_noc_set_io: sync_noc_set
   generic map (
      PORTS    => ROUTER_PORTS,
-     HAS_SYNC => 1 )
+     HAS_SYNC => HAS_SYNC)
    port map (
      clk                => sys_clk,
      clk_tile           => dco_clk,
