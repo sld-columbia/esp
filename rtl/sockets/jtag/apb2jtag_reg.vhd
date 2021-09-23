@@ -1,3 +1,4 @@
+
 -- Copyright (c) 2011-2021 Columbia University, System Level Design Group
 -- SPDX-License-Identifier: Apache-2.0
 
@@ -47,10 +48,19 @@ architecture arch of apb2jtag_reg is
   signal r, rin : ctrl_t;
   signal sample : std_logic_vector(2 downto 0);
 
-  signal addr      : std_logic_vector(4 downto 0);
-  signal curr_addr : integer range 0 to 17;
+  signal addr      : std_logic_vector(6 downto 0);
   signal idx       : integer range 0 to 2;
-  signal DEV_START : integer range 0 to 17;
+  signal DEV_START : integer range 0 to 5;
+
+  attribute mark_debug : string;
+
+  attribute mark_debug of bank_reg : signal is "true";
+  attribute mark_debug of addr : signal is "true";
+  attribute mark_debug of idx : signal is "true";
+  attribute mark_debug of DEV_START : signal is "true";
+  attribute mark_debug of r : signal is "true";
+  attribute mark_debug of sample : signal is "true";
+
 
 begin
 
@@ -63,14 +73,13 @@ begin
   begin
     if rstn = '0' then
       addr <= (others => '0');
-    elsif clk'event and clk = '1' and r.write_en = '1' then
-      addr <= apbi.paddr(4 downto 0);
+    elsif r.write_en = '1' then
+      addr <= apbi.paddr(6 downto 0);
     end if;
   end process IDX_WRITE_EN;
 
-  curr_addr <= conv_integer(unsigned(addr));
-  idx       <= curr_addr mod 3;
-  DEV_START <= curr_addr - (curr_addr mod 3);
+  idx <= conv_integer(unsigned(addr(3 downto 2)));
+  DEV_START <= conv_integer(unsigned(addr(6 downto 4)));
 
   CU_REG : process(clk, rstn)
   begin
@@ -105,8 +114,8 @@ begin
         end if;
 
       when flush => v.write_en := '0';
-                    if ack_w(DEV_START/3) = '1' then
-                      valid(DEV_START/3) <= '1';
+                    if ack_w(DEV_START) = '1' then
+                      valid(DEV_START) <= '1';
                       v.state            := rst;
                     else
                       ack2apb <= '0';
@@ -118,7 +127,7 @@ begin
 
   end process NSL;
 
-  process(apbi, curr_addr, r.write_en, idx)
+  process(apbi, r.write_en, idx)
   begin
     bankin <= (others => (others => '0'));
     sample <= (others => '0');

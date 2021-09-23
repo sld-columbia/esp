@@ -15,7 +15,7 @@ use work.socmap.all;
 entity top is
   generic (
     SIMULATION : boolean                               := false;
-    JTAG_TRACE : integer range -1 to CFG_TILES_NUM - 1 := -1);
+    JTAG_TRACE : integer range -1 to CFG_TILES_NUM - 1 := 4);
   port (
     reset             : in    std_logic;
     -- Chip clock used for emulation on FPGA only
@@ -189,6 +189,9 @@ entity top is
     -- FPGA proxy main clock
     main_clk_p        : in    std_ulogic;
     main_clk_n        : in    std_ulogic;
+    -- FPGA proxy main clock
+    jtag_clk_p        : in    std_ulogic;
+    jtag_clk_n        : in    std_ulogic;
     -- FPGA proxy LEDs
     LED_RED           : out   std_ulogic;
     LED_GREEN         : out   std_ulogic;
@@ -268,6 +271,8 @@ architecture rtl of top is
       ext_clk_acc1      : out   std_logic;
       main_clk_p        : in    std_ulogic;
       main_clk_n        : in    std_ulogic;
+      jtag_clk_p        : in    std_ulogic;
+      jtag_clk_n        : in    std_ulogic;
       fpga_data         : inout std_logic_vector(CFG_NMEM_TILE * (ARCH_BITS) - 1 downto 0);
       fpga_valid_in     : out   std_logic_vector(0 to CFG_NMEM_TILE - 1);
       fpga_valid_out    : in    std_logic_vector(0 to CFG_NMEM_TILE - 1);
@@ -402,6 +407,9 @@ architecture rtl of top is
   signal chip_reset : std_ulogic;
 
   constant CPU_FREQ : integer := 50000;  -- cpu frequency in KHz
+
+  attribute mark_debug : string;
+  attribute mark_debug of tclk : signal is "true";
                                          -- (TODO: change for device tree)
 begin
 
@@ -424,6 +432,8 @@ begin
       ext_clk_acc1      => ext_clk_acc1,
       main_clk_p        => main_clk_p,
       main_clk_n        => main_clk_n,
+      jtag_clk_p        => jtag_clk_p,
+      jtag_clk_n        => jtag_clk_n,
       fpga_data         => fpga_data,
       fpga_valid_in     => fpga_valid_in,
       fpga_valid_out    => fpga_valid_out,

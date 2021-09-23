@@ -21,7 +21,7 @@ use work.esp_global.all;
 entity testbench is
   generic (
     SIMULATION : boolean := true;
-    JTAG_TRACE : integer range -1 to CFG_TILES_NUM - 1 := -1);
+    JTAG_TRACE : integer range -1 to CFG_TILES_NUM - 1 := 4);
 end;
 
 architecture behav of testbench is

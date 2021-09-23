@@ -66,13 +66,16 @@ architecture rtl of fpga_proxy_jtag is
     state => idle
     );
 
-
+  constant ZERO : std_logic_vector := "000000";
+  
   signal r, rin : jtag_ctrl_t;
 
 
 -- APB BUS
   signal apbi : apb_slv_in_type;
   signal apbo : apb_slv_out_vector;
+  signal apbo0 : apb_slv_out_type;
+  signal apbo1 : apb_slv_out_type;
 
   signal count : integer range 0 to 255;
 
@@ -88,12 +91,13 @@ architecture rtl of fpga_proxy_jtag is
   signal ack2apb_r, apbreq                               : std_logic;
   signal sel_tdo                                         : std_logic_vector(1 downto 0);
 
-  signal source_sipo_out, req_flit, wr_flit, ack : std_logic_vector(5 downto 0);
+  signal source_sipo_out, req_flit, wr_flit, empty_fifo : std_logic_vector(5 downto 0);
 
   attribute mark_debug : string;
 
   attribute mark_debug of apbi : signal is "true";
-  attribute mark_debug of apbo : signal is "true";
+  attribute mark_debug of apbo0 : signal is "true";
+  attribute mark_debug of apbo1 : signal is "true";
 
   attribute mark_debug of r : signal is "true";
 
@@ -112,10 +116,9 @@ architecture rtl of fpga_proxy_jtag is
 
   attribute mark_debug of ack2apb_r : signal is "true";
   attribute mark_debug of ack2apb : signal is "true";
-  attribute mark_debug of apb_req : signal is "true";
   attribute mark_debug of req_flit : signal is "true";
   attribute mark_debug of wr_flit : signal is "true";
-  attribute mark_debug of ack : signal is "true";
+  attribute mark_debug of empty_fifo : signal is "true";
 
 
   attribute mark_debug of count_clear : signal is "true";
@@ -141,6 +144,12 @@ begin
      apbreq,
      ack_r);
 
+  no_pslv_gen : for i in 2 to NAPBSLV - 1 generate
+    apbo(i)<=apb_none;
+  end generate no_pslv_gen;
+
+  apbo(0)<=apbo0;
+  apbo(1)<=apbo1;
 
   process (apbi, ack2apb, ack2apb_r)
   begin
@@ -159,11 +168,12 @@ begin
       rst      => rst,
       tclk     => tclk,
       apbi     => apbi,
-      apbo     => apbo(0),
-      ack_w    => ack,
+      apbo     => apbo0,
+      -- ack_w    => ack,
       apbreq   => apbreq,
       ack2apb  => ack2apb,
       req_flit => req_flit,
+      empty_fifo => empty_fifo,
       piso_c   => testin_piso_clear,
       piso_l   => testin_piso_load,
       piso_en  => testin_piso_en,
@@ -174,7 +184,7 @@ begin
       rst       => rst,
       tclk      => tclk,
       apbi      => apbi,
-      apbo      => apbo(1),
+      apbo      => apbo1,
       apbreq    => apbreq,
       ack2apb   => ack2apb_r,
       wr_flit   => wr_flit,
@@ -197,7 +207,7 @@ begin
   end process CU_REG;
 
 
-  NSL : process(r, tdo, tms, count, test_out, source_sipo_out)
+  NSL : process(r, tdo, tms, count, test_out, source_sipo_out, empty_fifo)
 
     variable v : jtag_ctrl_t;
 
@@ -250,9 +260,11 @@ begin
                                v.state           := pop_fifo;
                              end if;
 
-      when pop_fifo => req_flit <= source_sipo_out;
-                       testin_piso_load <= '1';
-                       v.state          := inject;
+      when pop_fifo => if (not(empty_fifo) AND source_sipo_out) /= ZERO then
+                         req_flit <= source_sipo_out;
+                         testin_piso_load <= '1';
+                         v.state          := inject;
+                       end if;
 
       when inject => source_sipo_clear <= '1';
                      count_en       <= '1';

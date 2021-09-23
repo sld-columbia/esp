@@ -172,6 +172,8 @@ architecture rtl of jtag_test is
 
   signal r, rin : jtag_ctrl_t;
 
+  -- signal tclk_int  : std_ulogic ;
+
   -- Main FSM output signals
   signal tdo_data     : std_ulogic;
   signal tdo_data0    : std_ulogic;
@@ -248,15 +250,51 @@ architecture rtl of jtag_test is
   signal t5_cpu_data_void_in    : std_ulogic;
 
   signal rd_i_out : std_logic_vector(1 to 6);
-
   signal we_in_out : std_logic_vector(1 to 6);
 
   signal fwd_rd_empty_o5out : std_ulogic;
   signal fwd_wr_full_o5out  : std_ulogic;
 
---  variable v : jtag_ctrl_t;
+  attribute keep : boolean;
+  -- attribute keep of tclk_int : signal is true;
+
+  attribute mark_debug : string;
+
+  attribute mark_debug of r : signal is "true";
+  attribute mark_debug of tdo_data : signal is "true";
+  attribute mark_debug of tdo_data0 : signal is "true";
+  attribute mark_debug of sipo_done : signal is "true";
+  attribute mark_debug of piso_load : signal is "true";
+  attribute mark_debug of piso_done : signal is "true";
+  attribute mark_debug of piso_done0 : signal is "true";
+  attribute mark_debug of sipo_en_in : signal is "true";
+  attribute mark_debug of sipo_en_i : signal is "true";
+  attribute mark_debug of op_i : signal is "true";
+  attribute mark_debug of sipo_done_i : signal is "true";
+  attribute mark_debug of sipo_clear_i : signal is "true";
+  attribute mark_debug of tdi_i : signal is "true";
+  attribute mark_debug of rd_i : signal is "true";
+  attribute mark_debug of we_in : signal is "true";
+  attribute mark_debug of fwd_wr_full_o : signal is "true";
+  attribute mark_debug of end_trace : signal is "true";
+  attribute mark_debug of sipo_comp : signal is "true";
+  attribute mark_debug of test_comp : signal is "true";
+  attribute mark_debug of sipo_c : signal is "true";
+  attribute mark_debug of mismatch_detected : signal is "true";
+  attribute mark_debug of sipo_comp_i : signal is "true";
+  attribute mark_debug of test_out : signal is "true";
+  attribute mark_debug of piso_in : signal is "true";
+  attribute mark_debug of piso0_in : signal is "true";
+  attribute mark_debug of tms_int : signal is "true";
+  -- attribute mark_debug of tms : signal is "true";
+  -- attribute mark_debug of tclk : signal is "true";
+  -- attribute mark_debug of tclk_int : signal is "true";
+
 
 begin
+
+
+  -- tclk_int <= tclk;
 
   test_if_gen : if test_if_en /= 0 generate
 

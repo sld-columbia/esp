@@ -331,6 +331,13 @@ architecture rtl of EPOCHS0_TOP is
   signal uart_ctsn_int   : std_logic;   -- UART1_RTSN (u1i.ctsn)
   signal uart_rtsn_int   : std_logic;   -- UART1_RTSN (u1o.rtsn)
 
+  attribute mark_debug : string;
+
+  attribute mark_debug of tdi_int : signal is "true";
+  attribute mark_debug of tdo_int : signal is "true";
+  attribute mark_debug of tms_int : signal is "true";
+  attribute mark_debug of tclk_int : signal is "true";
+
 begin
 
   -----------------------------------------------------------------------------

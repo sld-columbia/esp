@@ -37,10 +37,10 @@ entity apb2jtag is
     tclk     : in  std_logic;
     apbi     : in  apb_slv_in_type;
     apbo     : out apb_slv_out_type;
-    ack_w    : in  std_logic_vector(5 downto 0);
     apbreq   : in  std_logic;
     ack2apb  : out std_logic;
     req_flit : in  std_logic_vector(5 downto 0);
+    empty_fifo : out std_logic_vector(5 downto 0);
     piso_c   : in  std_logic;
     piso_l   : in  std_logic;
     piso_en  : in  std_logic;
@@ -78,6 +78,8 @@ architecture rtl of apb2jtag is
   attribute mark_debug of tracein : signal is "true";
   attribute mark_debug of tracein1 : signal is "true";
   attribute mark_debug of fifo_out : signal is "true";
+
+  attribute mark_debug of ack : signal is "true";
 
 begin
 
@@ -133,7 +135,7 @@ begin
         rdreq    => req_flit(i),
         wrreq    => en_fifo_in(i),
         data_in  => tracein(i),
-        empty    => open,
+        empty    => empty_fifo(i),
         full     => full_fifo(i),
         data_out => tracein1(i)
         );

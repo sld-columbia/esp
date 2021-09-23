@@ -10,6 +10,12 @@ use work.amba.all;
 
 package jtag_pkg is
 
+  component jtag_tb
+    port (
+      ahbsi : out ahb_slv_in_type;
+      ahbso : in  ahb_slv_out_type);
+  end component jtag_tb;
+
   component demux_1to6
     port (
       data_in : in  std_ulogic;
@@ -165,10 +171,11 @@ package jtag_pkg is
       tclk     : in  std_logic;
       apbi     : in  apb_slv_in_type;
       apbo     : out apb_slv_out_type;
-      ack_w    : in  std_logic_vector(5 downto 0);
+      -- ack_w    : in  std_logic_vector(5 downto 0);
       apbreq   : in  std_logic;
       ack2apb  : out std_logic;
       req_flit : in  std_logic_vector(5 downto 0);
+      empty_fifo : out std_logic_vector(5 downto 0);
       piso_c   : in  std_logic;
       piso_l   : in  std_logic;
       piso_en  : in  std_logic;

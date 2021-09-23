@@ -51,12 +51,19 @@ architecture arch of jtag2apb_reg is
   signal r, rin : ctrl_t;
 
   signal write_en, read_en : std_logic;
-  signal addr              : std_logic_vector(7 downto 0);
-  signal curr_addr         : integer range 0 to 17;
-  signal DEV_START         : integer range 0 to 17;
-  signal WDEV_START        : integer range 0 to 17;
+  signal addr              : std_logic_vector(6 downto 0);
+  signal DEV_START         : integer range 0 to 5;
   signal idx               : integer range 0 to 2;
 
+
+  attribute mark_debug : string;
+
+  attribute mark_debug of bank_reg : signal is "true";
+  attribute mark_debug of addr : signal is "true";
+  attribute mark_debug of idx : signal is "true";
+  attribute mark_debug of DEV_START : signal is "true";
+  attribute mark_debug of r : signal is "true";
+  
 begin
 
   apbo.prdata  <= readdata;
@@ -69,15 +76,14 @@ begin
   IDX_UPDATE : process(apbi)
   begin
     if apbi.paddr(8) = '1' then
-      addr <= apbi.paddr(7 downto 0);
+      addr <= apbi.paddr(6 downto 0);
     else
       addr <= (others => '0');
     end if;
   end process IDX_UPDATE;
 
-  curr_addr <= conv_integer(unsigned(addr));
-  idx       <= (curr_addr mod 3);
-  DEV_START <= curr_addr - (curr_addr mod 3);
+  idx       <= conv_integer(unsigned(addr(3 downto 2)));
+  DEV_START <= conv_integer(unsigned(addr(6 downto 4)));
 
   CU_REG : process(clk, rstn)
   begin
@@ -108,13 +114,13 @@ begin
 
       when read1 => read_en <= '1';
                     if readd(2) /= '0' then
-                      v.free(DEV_START/3) := '1';
+                      v.free(DEV_START) := '1';
                       v.state             := idle;
                     end if;
 
 
       when idle =>
-        if (r.free(DEV_START/3) = '0' and idx = 0) then
+        if (r.free(DEV_START) = '0' and idx = 0) then
           v.state := read1;
         elsif sendin(0) = '1' then
           req_fifo <= "100000";
@@ -149,7 +155,7 @@ begin
         end if;
 
       when write1 => v.state := start;
-                     v.free(DEV_START/3) := '0';
+                     v.free(DEV_START) := '0';
 
     end case;
 
@@ -166,7 +172,7 @@ begin
     readdata <= (others => '0');
     readd    <= (others => '0');
 
-    if (apbi.psel(pindex) = '1' and apbi.penable = '1' and apbi.pwrite = '0' and read_en = '1' and r.free(DEV_START/3) = '0') then
+    if (apbi.psel(pindex) = '1' and apbi.penable = '1' and apbi.pwrite = '0' and read_en = '1' and r.free(DEV_START) = '0') then
       readd(idx) <= '1';
       readdata   <= bank_reg(idx);
     end if;
