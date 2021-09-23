@@ -576,10 +576,10 @@ set_property PACKAGE_PIN M5 [get_ports {ext_clk_cpu}]
 set_property PACKAGE_PIN D3 [get_ports {ext_clk_mem}]
 #mb1_TD1_CLKIO_P_4_mb1_TB3_CLKIO_P_2
 set_property PACKAGE_PIN E6 [get_ports {ext_clk_acc0}]
-#mb1_TD1_CLKIO_P_5_mb1_TB3_IO_011_P_05
-set_property PACKAGE_PIN F7 [get_ports {ext_clk_acc1}]
 #mb1_TD1_CLKIO_P_6_mb1_TB3_CLKIO_P_1
-set_property PACKAGE_PIN N4 [get_ports {tclk}]
+set_property PACKAGE_PIN N4 [get_ports {ext_clk_acc1}]
+#mb1_TD1_CLKIO_P_7_mb1_TB3_CLKIO_P_0}]
+set_property PACKAGE_PIN L4 [get_ports {tclk}]
 #mb1_TD1_IO_004_N_02_mb1_TB3_IO_006_N_03
 set_property PACKAGE_PIN F5 [get_ports {tms}]
 #mb1_TD1_IO_005_P_02_mb1_TB3_IO_007_P_03
