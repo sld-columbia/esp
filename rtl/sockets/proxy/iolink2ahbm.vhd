@@ -77,8 +77,9 @@ architecture rtl of iolink2ahbm is
 
   constant IO_BEATS : natural range 1 to 64 := word_bitwidth / io_bitwidth;
 
-  signal io_clk_out_int : std_logic;
-  
+  signal io_clk_out_int   : std_logic;
+  signal io_valid_out_int : std_ulogic;
+
   -- I/O link synchronizers 
 
   --   synchronized to clk
@@ -126,7 +127,8 @@ architecture rtl of iolink2ahbm is
   attribute ASYNC_REG of receiving : signal is "TRUE";
   -- attribute ASYNC_REG of sending : signal is "TRUE";
 
-  type iolink2ahbm_state_t is (receive_address, receive_length, bus_req, receive_data, send_data);
+  type iolink2ahbm_state_t is (receive_address, receive_length, bus_req, snd_bus_req,
+                               receive_data, send_data, wait_send_data);
 
   type iolink2ahbm_fsm_t is record
     state  : iolink2ahbm_state_t;
@@ -178,7 +180,25 @@ architecture rtl of iolink2ahbm is
 
   signal io_snd_reg, io_snd_reg_next : io_snd_reg_type;
 
+  -------------------------------------------------------------------------------
+  -- FSM: Output enable
+  -------------------------------------------------------------------------------
+  type oen_fsm_t is (receive_address, receive_length, receive_data, send_data);
 
+  type oen_reg_type is record
+    state  : oen_fsm_t;
+    count  : integer;
+    write  : std_ulogic;
+  end record oen_reg_type;
+
+  constant OEN_REG_DEFAULT : oen_reg_type := (
+    state => receive_address,
+    count => 0,
+    write => '0');
+
+  signal oen_reg, oen_reg_next : oen_reg_type;
+  signal oen_fsm_idle, oen_fsm_idle_sync : std_logic;
+  
   -- AHB bus configuration
   constant hconfig : ahb_config_type := (
     0      => ahb_device_reg (VENDOR_SLD, SLD_IO_LINK, 0, 0, 0),
@@ -227,12 +247,14 @@ architecture rtl of iolink2ahbm is
 
 begin  -- architecture rtl
 
-  io_clk_out <= io_clk_out_int;
+  io_clk_out     <= io_clk_out_int;
   -- if on chip
   io_clk_out_int <= io_clk_in;
   -- if off chip, on FPGA proxy
   -- io_clk_out_int <= clk;
 
+  io_valid_out <= io_valid_out_int;
+  
   -----------------------------------------------------------------------------
   -- Delay FSM state change
   -- Switch from sending (io_data_oen = '1') to receiving (io_data_oen = '0') in 2
@@ -319,9 +341,6 @@ begin  -- architecture rtl
       q_o        => io_rcv_data_out,
       rd_empty_o => io_rcv_empty);
 
-  -- io_rcv_wrreq   <= receiving.sync_clk_io and io_valid_in;
-  -- io_rcv_data_in <= io_data_in;
-
   -----------------------------------------------------------------------------
   -- Sending FIFO (no synchronization: clk is io_clk_out)
 
@@ -355,14 +374,11 @@ begin  -- architecture rtl
       data_out    => io_snd_data_out_int,
       empty       => io_snd_empty_int);
 
-  io_snd_rdreq_int   <= not io_snd_full_int;
-  io_snd_wrreq_int   <= not io_snd_empty_int;
+  io_snd_rdreq_int   <= not io_snd_full_int and not io_snd_empty_int;
+  io_snd_wrreq_int   <= not io_snd_full_int and not io_snd_empty_int;
   io_snd_data_in_int <= io_snd_data_out_int;
 
-  -- io_snd_rdreq <= '0' when credits = 0 else (not io_snd_empty);
-  -- io_data_out  <= io_snd_data_out;
-  io_data_oen <= sending.sync_clk_io or (not io_snd_empty);
-  -- io_valid_out <= io_snd_rdreq;
+  io_data_oen <= sending.sync_clk_io;
 
   -----------------------------------------------------------------------------
   -- Handle I/O link
@@ -381,8 +397,10 @@ begin  -- architecture rtl
   begin  -- process state_update
     if rstn = '0' then                  -- asynchronous reset (active low)
       io_rcv_reg <= IO_RCV_REG_DEFAULT;
+      oen_reg    <= OEN_REG_DEFAULT;
     elsif io_clk_in'event and io_clk_in = '1' then  -- rising clock edge
       io_rcv_reg <= io_rcv_reg_next;
+      oen_reg    <= oen_reg_next;
     end if;
   end process rcv_state_update;
 
@@ -419,30 +437,32 @@ begin  -- architecture rtl
   begin
     reg          := io_snd_reg;
     io_snd_rdreq <= '0';
-    io_valid_out <= '0';
+    io_valid_out_int <= '0';
 
     case io_snd_reg.state is
 
       when idle =>
         reg.cnt := 0;
         if credits /= 0 and io_snd_empty = '0' and sending.sync_clk_io = '1' then
-          io_snd_rdreq <= '1';
           reg.word     := io_snd_data_out;
-          io_valid_out <= '1';
-          io_data_out  <= io_snd_data_out(word_bitwidth - 1 downto 0);
+          io_valid_out_int <= '1';
+          io_data_out  <= io_snd_data_out((reg.cnt + 1) * io_bitwidth - 1 downto reg.cnt * io_bitwidth);
           if IO_BEATS > 1 then
             reg.state := send;
             reg.cnt   := reg.cnt + 1;
+          else
+            io_snd_rdreq <= '1';
           end if;
         end if;
 
       when send =>
         if credits /= 0 and sending.sync_clk_io = '1' then
-          io_valid_out <= '1';
+          io_valid_out_int <= '1';
           io_data_out  <= io_snd_data_out((reg.cnt + 1) * io_bitwidth - 1 downto reg.cnt * io_bitwidth);
           reg.cnt      := reg.cnt + 1;
           if reg.cnt = IO_BEATS then
-            reg.state := idle;
+            reg.state    := idle;
+            io_snd_rdreq <= '1';
           end if;
         end if;
 
@@ -452,6 +472,72 @@ begin  -- architecture rtl
 
   end process io_snd_fsm;
 
+  oen_fsm : process (oen_reg, io_rcv_wrreq, io_rcv_data_in, io_snd_rdreq) is
+    variable reg : oen_reg_type;
+  begin
+    reg := oen_reg;
+
+    receiving.sync_clk <= '1';
+
+    case oen_reg.state is
+
+      when receive_address =>
+        if io_rcv_wrreq = '1' then
+          reg.state := receive_length;
+          reg.write := io_rcv_data_in(0);
+        end if;
+
+      when receive_length =>
+        if io_rcv_wrreq = '1' then
+          reg.count := conv_integer(io_rcv_data_in(31 downto 0));
+          if reg.write = '1' then
+            reg.state := receive_data;
+          else
+            reg.state := send_data;
+          end if;
+        end if;
+
+      when receive_data =>
+        if io_rcv_wrreq = '1' then
+          reg.count := reg.count - 1;
+          if reg.count = 0 then
+            reg.state := receive_address;
+          end if;
+        end if;
+
+      when send_data =>
+        receiving.sync_clk <= '0';
+        if io_snd_rdreq = '1' then
+          reg.count := reg.count - 1;
+          if reg.count = 0 then
+            reg.state := receive_address;
+          end if;
+        end if;
+
+    end case;
+
+    oen_reg_next <= reg;
+  end process oen_fsm;
+
+  oen_fsm_idle <= '1' when oen_reg.state = receive_address else '0';
+  
+  -- Credits in
+  oen_reg_fifo : inferred_async_fifo
+    generic map (
+      g_data_width => 1,
+      g_size       => 2)
+    port map (
+      rst_n_i    => rstn,
+      clk_wr_i   => io_clk_in,
+      we_i       => '1',
+      d_i(0)     => oen_fsm_idle,
+      wr_full_o  => open,
+      clk_rd_i   => clk,
+      rd_i       => '1',
+      q_o(0)     => oen_fsm_idle_sync,
+      rd_empty_o => open);
+
+  
   io_fsm : process (r, ahbmi,
                     io_rcv_data_out, io_rcv_empty,
                     io_snd_full, io_snd_almost_full) is
@@ -461,7 +547,7 @@ begin  -- architecture rtl
 
     v := r;
 
-    receiving.sync_clk <= '1';
+    -- receiving.sync_clk <= '1';
 
     io_rcv_rdreq   <= '0';
     io_snd_wrreq   <= '0';
@@ -496,6 +582,27 @@ begin  -- architecture rtl
         end if;
 
       when bus_req =>
+        if r.hwrite = '1' then
+          -- Write transaction
+          if io_rcv_empty = '0' then
+            -- Data ready: request bus
+            ahbmo.hbusreq <= '1';
+            if (granted and ahbmi.hready) = '1' then
+              v.state := snd_bus_req;
+            end if;
+          end if;
+        else
+          -- Read transaction
+          if (io_snd_almost_full or io_snd_full) = '0' then
+            -- Queue is available: request bus
+            ahbmo.hbusreq <= '1';
+            if (granted and ahbmi.hready) = '1' then
+              v.state := snd_bus_req;
+            end if;
+          end if;
+        end if;
+
+      when snd_bus_req =>
         if r.hwrite = '1' then
           -- Write transaction
           if io_rcv_empty = '0' then
@@ -567,22 +674,22 @@ begin  -- architecture rtl
 
 
       when send_data =>
-        receiving.sync_clk <= '0';
+        -- receiving.sync_clk <= '0';
         if r.count = 0 then
           -- Release address bus
           ahbmo.htrans <= HTRANS_IDLE;
-          if (granted and ahbmi.hready) = '1' then
+          if (ahbmi.hready) = '1' then
             -- Read data is valid
             -- Push io queue
             io_snd_data_in <= fix_endian(ahbmi.hrdata);
             io_snd_wrreq   <= '1';
             -- End of transaction
-            v.state        := receive_address;
+            v.state        := wait_send_data;
           end if;
         elsif (io_snd_almost_full or io_snd_full) = '0' then
           -- Continue with burst transaction
           ahbmo.htrans <= HTRANS_SEQ;
-          if (granted and ahbmi.hready) = '1' then
+          if (ahbmi.hready) = '1' then
             -- Read data is valid
             -- Push io queue
             io_snd_data_in <= fix_endian(ahbmi.hrdata);
@@ -601,6 +708,11 @@ begin  -- architecture rtl
         else
           -- io queue is full
           ahbmo.htrans <= HTRANS_BUSY;
+        end if;
+
+      when wait_send_data =>
+        if oen_fsm_idle_sync = '1' then
+          v.state := receive_address;
         end if;
 
     end case;
