@@ -1022,6 +1022,11 @@ begin  -- architecture rtl of l2_wrapper
     -- Set L2 cache bresp channel as always ready
     bresp_ready <= '1';
 
+    ace_req.ac.addr  <= (others => '0');
+    ace_req.ac.prot  <= (others => '0');
+    ace_req.ac.snoop <= (others => '0');
+    ace_req.ac.valid <= '0';
+
 -------------------------------------------------------------------------------
 -- FSM: Bridge from AHB slave to L2 cache frontend input
 -------------------------------------------------------------------------------
