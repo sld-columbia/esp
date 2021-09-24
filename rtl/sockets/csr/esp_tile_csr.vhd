@@ -42,12 +42,9 @@ entity esp_tile_csr is
 end esp_tile_csr;
 
 architecture rtl of esp_tile_csr is
-  constant MONITOR_APB_OFFSET : integer := 4;
+  constant MONITOR_APB_OFFSET : integer := 1;
 
-  constant CRTL_RESET                  : integer := 0;
-  constant CTRL_WINDOW_SIZE_OFFSET     : integer := 1;
-  constant CTRL_WINDOW_COUNT_LO_OFFSET : integer := 2;
-  constant CTRL_WINDOW_COUNT_HI_OFFSET : integer := 3;
+  constant BURST_REG_INDEX : integer := 0;
 
   constant MON_DDR_WORD_TRANSFER_INDEX : integer := 0;
   constant MON_MEM_COH_REQ_INDEX       : integer := 1;
@@ -78,19 +75,17 @@ architecture rtl of esp_tile_csr is
 
   constant MONITOR_REG_COUNT : integer                                     := MON_NOC_QUEUES_FULL_BASE_INDEX + NOCS_NUM * NOC_QUEUES;  --58
   constant REGISTER_WIDTH    : integer                                     := 32;
-  constant DEFAULT_WINDOW    : std_logic_vector(REGISTER_WIDTH-1 downto 0) := conv_std_logic_vector(65536, REGISTER_WIDTH);
 
-  signal window_size             : std_logic_vector(REGISTER_WIDTH-1 downto 0);
-  signal time_counter            : std_logic_vector(REGISTER_WIDTH-1 downto 0);
-  signal window_reset            : std_logic;
-  signal new_window              : std_logic;
-  signal updated                 : std_logic;
-  signal window_count            : std_logic_vector(63 downto 0);
-  signal ctrl_rst                : std_logic_vector(REGISTER_WIDTH-1 downto 0);
-  signal readdata                : std_logic_vector(REGISTER_WIDTH-1 downto 0);
-  signal wdata                   : std_logic_vector(REGISTER_WIDTH-1 downto 0);
-  signal ctrl_rst_sample         : std_ulogic;
-  signal ctrl_window_size_sample : std_ulogic;
+  signal burst                  : std_logic_vector(REGISTER_WIDTH-1 downto 0);
+  signal readdata               : std_logic_vector(REGISTER_WIDTH-1 downto 0);
+  signal wdata                  : std_logic_vector(REGISTER_WIDTH-1 downto 0);
+  signal burst_sample           : std_ulogic;
+  signal burst_start            : std_ulogic;
+  signal burst_state            : std_ulogic;
+  signal burst_state_next       : std_ulogic;
+  signal acc_state              : std_ulogic;
+  signal acc_state_next         : std_ulogic;
+  signal acc_rst                : std_ulogic;
 
   type counter_type is array (0 to MONITOR_REG_COUNT-1) of std_logic_vector(REGISTER_WIDTH-1 downto 0);
   signal count       : counter_type;
@@ -189,7 +184,7 @@ begin
     end if;
   end process;
 
-  rd_registers : process(apbi, count_value, ctrl_rst, window_size, window_count, config_r, csr_addr)
+  rd_registers : process(apbi, count, count_value, burst, config_r, csr_addr)
     --TODO
     variable addr : integer range 0 to 127;
   begin
@@ -198,13 +193,9 @@ begin
 
     wdata <= apbi.pwdata;
 
-    ctrl_rst_sample         <= '0';
-    ctrl_window_size_sample <= '0';
-    if addr = 0 then
-      ctrl_rst_sample <= apbi.psel(pindex) and apbi.penable and apbi.pwrite;
-    end if;
-    if addr = 1 then
-      ctrl_window_size_sample <= apbi.psel(pindex) and apbi.penable and apbi.pwrite;
+    burst_sample <= '0';
+    if addr = 0  then
+        burst_sample <= apbi.psel(pindex) and apbi.penable and apbi.pwrite;
     end if;
 
     if apbi.paddr(8 downto 7) = "11" then
@@ -245,15 +236,13 @@ begin
     else
       -- Monitors read access
       if addr = 0 then
-        readdata <= ctrl_rst;
-      elsif addr = 1 then
-        readdata <= window_size;
-      elsif addr = 2 then
-        readdata <= window_count(REGISTER_WIDTH-1 downto 0);
-      elsif addr = 3 then
-        readdata <= window_count(2*REGISTER_WIDTH-1 downto REGISTER_WIDTH);
+        readdata <= burst;
       elsif addr < MONITOR_REG_COUNT + MONITOR_APB_OFFSET then
-        readdata <= count_value(addr - MONITOR_APB_OFFSET);
+        if burst_state = '0' then
+            readdata <= count(addr - MONITOR_APB_OFFSET);
+        else
+            readdata <= count_value(addr - MONITOR_APB_OFFSET);
+        end if;
       end if;
     end if;
   end process rd_registers;
@@ -261,22 +250,14 @@ begin
   wr_registers : process(clk, rstn)
   begin
     if rstn = '0' then
-      ctrl_rst     <= (others => '0');
-      window_size  <= DEFAULT_WINDOW;
-      window_reset <= '0';
+      burst <= (others => '0');
       config_r     <= DEFAULT_CONFIG;
       srst         <= '0';
       pm_config_r <= (others => (others => '0'));
     elsif clk'event and clk = '1' then
       -- Monitors
-      window_reset <= '0';
-      ctrl_rst     <= (others => '0');
-      if ctrl_rst_sample = '1' then
-        ctrl_rst <= wdata;
-      end if;
-      if ctrl_window_size_sample = '1' then
-        window_size  <= wdata;
-        window_reset <= '1';
+      if burst_sample = '1' then
+        burst <= wdata;
       end if;
       -- Config write
       if apbi.paddr(8 downto 7) = "11" and (apbi.psel(pindex) and apbi.penable and apbi.pwrite) = '1' then
@@ -316,46 +297,48 @@ begin
     end if;
   end process wr_registers;
 
-  time_stamp_update : process (clk, rstn)
-    variable new_window_setup : std_logic_vector(REGISTER_WIDTH-1 downto 0);
-  begin  -- process time_stamp_update
-    if rstn = '0' then                  -- asynchronous reset (active low)
-      new_window       <= '0';
-      window_count     <= (others => '0');
-      time_counter     <= (others => '0');
-      new_window_setup := (others => '0');
-    elsif clk'event and clk = '1' then  -- rising clock edge
-      new_window_setup := window_size - conv_std_logic_vector(64, REGISTER_WIDTH);
-      -- Advance time
-      time_counter     <= time_counter + 1;
-      -- Advance window count
-      if time_counter = window_size or window_reset = '1' or ctrl_rst(0) = '1' then
-        time_counter <= (others => '0');
-        window_count <= window_count + 1;
-        new_window   <= '1';
-      end if;
-
-      if time_counter = conv_std_logic_vector(10, REGISTER_WIDTH) then
-        -- hold new_window for 10 cycles to make sure perf. counters get the reset.
-        new_window <= '0';
-      end if;
-
-    end if;
-  end process time_stamp_update;
-
-  update : process(clk, rstn)
-  begin  --process
+  acc_state_reg : process(clk, rstn)
+  begin
     if rstn = '0' then
-      updated <= '0';
+      acc_state <= '0';
     elsif clk'event and clk = '1' then
-      if new_window = '1' and updated = '0' then
-        updated <= '1';
-      elsif new_window = '0' then
-        updated <= '0';
+      acc_state <= acc_state_next;
+    end if;
+  end process acc_state_reg;
+
+  acc_reset  : process(mon_acc, acc_state)
+  begin
+    acc_state_next <= acc_state;
+    acc_rst <= '0';
+    if acc_state = '0' then
+      if mon_acc.go = '1' and mon_acc.done = '0' then
+        acc_state_next <= '1';
+        acc_rst <= '1';
+      end if;
+    else
+      if mon_acc.done = '1' then
+        acc_state_next <= '0';
       end if;
     end if;
-  end process;
+  end process acc_reset;
 
+  burst_state_reg : process(clk, rstn)
+  begin
+    if rstn = '0' then
+        burst_state <= '0';
+    elsif clk'event and clk = '1' then
+        burst_state <= burst_state_next;
+    end if;
+  end process burst_state_reg;
+
+  burst_fsm : process(burst, burst_state)
+  begin
+    burst_start <= '0';
+    burst_state_next <= burst(0);
+    if burst(0) = '1' and burst_state = '0' then
+      burst_start <= '1';
+    end if;
+  end process burst_fsm;
 
   counters : process (clk, rstn)
     variable accelerator_mem_count : std_logic_vector(2*REGISTER_WIDTH-1 downto 0);
@@ -364,7 +347,7 @@ begin
   begin
     if rstn = '0' then
       for R in 0 to MONITOR_REG_COUNT-1 loop
-        count(R)       <= (others => '0');
+        count(R) <= (others => '0');
         count_value(R) <= (others => '0');
       end loop;
       accelerator_tlb_count := (others => '0');
@@ -400,7 +383,6 @@ begin
       if mon_mem.coherent_dma_rsp = '1' then
         count(MON_MEM_COH_DMA_RSP_INDEX) <= count(MON_MEM_COH_DMA_RSP_INDEX) + 1;
       end if;
-
       --L2
       if mon_l2.hit = '1' then
         count(MON_L2_HIT_INDEX) <= count(MON_L2_HIT_INDEX) + 1;
@@ -420,16 +402,16 @@ begin
       --ACC
       if mon_acc.done = '0' then
         if mon_acc.go = '1' and mon_acc.run = '0' then
-          accelerator_tlb_count    := accelerator_tlb_count + 1;
+          accelerator_tlb_count := accelerator_tlb_count + 1;
           count(MON_ACC_TLB_INDEX) <= accelerator_tlb_count;
         end if;
         if mon_acc.run = '1' or mon_acc.go = '1' then
-          accelerator_tot_count       := accelerator_tot_count + 1;
+          accelerator_tot_count := accelerator_tot_count + 1;
           count(MON_ACC_TOT_LO_INDEX) <= accelerator_tot_count(REGISTER_WIDTH-1 downto 0);
           count(MON_ACC_TOT_HI_INDEX) <= accelerator_tot_count(2*REGISTER_WIDTH-1 downto REGISTER_WIDTH);
         end if;
         if mon_acc.run = '1' and mon_acc.burst = '1' then
-          accelerator_mem_count       := accelerator_mem_count + 1;
+          accelerator_mem_count := accelerator_mem_count + 1;
           count(MON_ACC_MEM_LO_INDEX) <= accelerator_mem_count(REGISTER_WIDTH-1 downto 0);
           count(MON_ACC_MEM_HI_INDEX) <= accelerator_mem_count(2*REGISTER_WIDTH-1 downto REGISTER_WIDTH);
         end if;
@@ -438,28 +420,30 @@ begin
       --DVFS
       for V in 0 to VF_OP_POINTS - 1 loop
         if mon_dvfs.vf(V) = '1' then
-          count(MON_DVFS_BASE_INDEX + V) <= count(MON_DVFS_BASE_INDEX + V) + 1;
+            count(MON_DVFS_BASE_INDEX + V) <= count(MON_DVFS_BASE_INDEX + V) + 1;
         end if;
       end loop;
 
       --NoC
       for N in 1 to NOCS_NUM loop
-        if mon_noc(N).tile_inject = '1' then
+        if mon_noc(N).tile_inject  = '1' then
           count(MON_NOC_TILE_INJECT_BASE_INDEX + (N-1)) <= count(MON_NOC_TILE_INJECT_BASE_INDEX + (N-1)) + 1;
         end if;
 
         for Q in 0 to NOC_QUEUES -1 loop
-          if mon_noc(N).queue_full(Q) = '1' then
+          if mon_noc(N).queue_full(Q)  = '1' then
             count(MON_NOC_QUEUES_FULL_BASE_INDEX + NOC_QUEUES*(N-1) + Q) <= count(MON_NOC_QUEUES_FULL_BASE_INDEX + NOC_QUEUES*(N-1) + Q) + 1;
           end if;
         end loop;
       end loop;
 
-      if new_window = '1' and updated = '0' then
+      if burst_start = '1' then
         for R in 0 to MONITOR_REG_COUNT - 1 loop
-          count(R)       <= (others => '0');
           count_value(R) <= count(R);
         end loop;
+      end if;
+
+      if acc_rst = '1' then
         accelerator_tlb_count := (others => '0');
         accelerator_mem_count := (others => '0');
         accelerator_tot_count := (others => '0');
