@@ -125,11 +125,11 @@ architecture rtl of esp_tile_csr is
   -- Assume default I/O tile DCO frequency is 490MHz
 
   constant DEFAULT_DCO_NOC_CFG : std_logic_vector(18 downto 0) :=
-    "00" & "100" & "000000" & "100101" & "0" & "1";
+    "11" & "100" & "000000" & "100101" & "0" & "1";
   -- FREQ_SEL    DIV_SEL    FC_SEL      CC_SEL    CLK_SEL   EN
 
   constant DEFAULT_DCO_CFG : std_logic_vector(22 downto 0) :=
-    "0000" & "00" & "100" & "000000" & "100101" & "0" & "1";
+    "0000" & "11" & "100" & "000000" & "100101" & "0" & "1";
   --  reserved LPDDR   FREQ_SEL    DIV_SEL    FC_SEL      CC_SEL    CLK_SEL   EN
 
   constant DEFAULT_PAD_CFG : std_logic_vector(2 downto 0) :=
@@ -185,7 +185,7 @@ begin
     end if;
   end process;
 
-  rd_registers : process(apbi, count, count_value, burst, config_r, csr_addr)
+  rd_registers : process(apbi, count, count_value, burst, config_r, csr_addr, pm_config_r, pm_status_r, burst_state)
     --TODO
     variable addr : integer range 0 to 127;
   begin
