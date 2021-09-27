@@ -32,7 +32,7 @@ use work.gencomp.all;
 use work.genacc.all;
 
 use work.nocpackage.all;
-
+use work.cachepackage.all;
 
 entity axislv2noc is
   generic (
@@ -66,7 +66,9 @@ entity axislv2noc is
     -- NoC5->tile
     remote_ahbs_rcv_rdreq      : out std_ulogic;
     remote_ahbs_rcv_data_out   : in  misc_noc_flit_type;
-    remote_ahbs_rcv_empty      : in  std_ulogic);
+    remote_ahbs_rcv_empty      : in  std_ulogic;
+    -- Coherence
+    coherence                  : in integer range 0 to 3);
 end axislv2noc;
 
 architecture rtl of axislv2noc is
@@ -167,7 +169,6 @@ architecture rtl of axislv2noc is
   -- attribute mark_debug of mosi : signal is "true";
   -- attribute mark_debug of somi : signal is "true";
 
-
 begin  -- rtl
 
   make_packet: process (mosi, local_y, local_x)
@@ -195,7 +196,7 @@ begin  -- rtl
     if tran.write = '1' then
       tran.id     := mosi(tran.xindex).aw.id;
       tran.addr   := mosi(tran.xindex).aw.addr;
-      tran.len    := mosi(tran.xindex).aw.len;
+      tran.len    := mosi(tran.xindex).aw.len + "0000001";
       tran.size   := mosi(tran.xindex).aw.size;
       tran.burst  := mosi(tran.xindex).aw.burst;
       tran.lock   := mosi(tran.xindex).aw.lock;
@@ -208,7 +209,7 @@ begin  -- rtl
     else
       tran.id     := mosi(tran.xindex).ar.id;
       tran.addr   := mosi(tran.xindex).ar.addr;
-      tran.len    := mosi(tran.xindex).ar.len;
+      tran.len    := mosi(tran.xindex).ar.len + "0000001";
       tran.size   := mosi(tran.xindex).ar.size;
       tran.burst  := mosi(tran.xindex).ar.burst;
       tran.lock   := mosi(tran.xindex).ar.lock;
@@ -218,7 +219,6 @@ begin  -- rtl
       tran.region := mosi(tran.xindex).ar.region;
       tran.user   := mosi(tran.xindex).ar.user;
     end if;
-    tran.len := mosi(tran.xindex).ar.len + "0000001";
 
     -- Get routing info
     tran.mem_x := mem_info(0).x;
@@ -258,15 +258,19 @@ begin  -- rtl
 
     if tran.write = '1' then
       if retarget_for_dma = 1 then
-        tran.msg_type := REQ_DMA_WRITE;  -- This request is non coherent, but
-                                         -- noc2ahbmst must skip
-                                         -- receive_wrlength, which only exists
-                                         -- for DMA_FROM_DEV from accelerators.
-                                         -- We use this workaround because
-                                         -- systems without DDR controller are
-                                         -- using a FPGA-to-memory link on
-                                         -- which we do not send the tail bit
-                                         -- to save some I/O pads.
+        if coherence = ACC_COH_LLC or coherence = ACC_COH_RECALL then
+          tran.msg_type := REQ_DMA_WRITE;
+        else
+          tran.msg_type := DMA_FROM_DEV;   -- This request is non coherent, but
+                                           -- noc2ahbmst must skip
+                                           -- receive_wrlength, which only exists
+                                           -- for DMA_FROM_DEV from accelerators.
+                                           -- We use this workaround because
+                                           -- systems without DDR controller are
+                                           -- using a FPGA-to-memory link on
+                                           -- which we do not send the tail bit
+                                           -- to save some I/O pads.
+        end if;
       else -- Processor core request
         if tran.dst_is_mem = '1' then
           -- Send to Memory
@@ -284,7 +288,11 @@ begin  -- rtl
       end if;
     else
       if retarget_for_dma = 1 then
-        tran.msg_type := DMA_TO_DEV;
+        if coherence = ACC_COH_LLC or coherence = ACC_COH_RECALL then
+          tran.msg_type := REQ_DMA_READ;
+        else
+          tran.msg_type := DMA_TO_DEV;
+        end if;
       else -- Processor core request
         if tran.dst_is_mem = '1' then
           -- Send to Memory
@@ -309,10 +317,14 @@ begin  -- rtl
     tran.payload_address_narrow(MISC_NOC_FLIT_SIZE-1 downto MISC_NOC_FLIT_SIZE-PREAMBLE_WIDTH) := PREAMBLE_BODY;
     tran.payload_address_narrow(MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH - 1 downto 0) := tran.addr(MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH - 1 downto 0);
 
-    -- Set length (read transaction only)
-    tran.payload_length(NOC_FLIT_SIZE-1 downto NOC_FLIT_SIZE-PREAMBLE_WIDTH) := PREAMBLE_TAIL;
+    -- Set length
+    if tran.write = '1' then
+      tran.payload_length(NOC_FLIT_SIZE-1 downto NOC_FLIT_SIZE-PREAMBLE_WIDTH) := PREAMBLE_BODY;
+    else
+      tran.payload_length(NOC_FLIT_SIZE-1 downto NOC_FLIT_SIZE-PREAMBLE_WIDTH) := PREAMBLE_TAIL;
+    end if;
     tran.payload_length(7 downto 0) := tran.len;
-
+    -- (read transaction only)
     tran.payload_length_narrow(MISC_NOC_FLIT_SIZE-1 downto MISC_NOC_FLIT_SIZE-PREAMBLE_WIDTH) := PREAMBLE_TAIL;
     tran.payload_length_narrow(7 downto 0) := tran.len;
 
@@ -536,7 +548,7 @@ begin  -- rtl
           if coherence_req_full = '0' then
             coherence_req_data_in <= transaction_reg.payload_address;
             coherence_req_wrreq <= '1';
-            if transaction_reg.write = '1' then
+            if transaction_reg.write = '1' and transaction_reg.msg_type /= DMA_FROM_DEV then
               next_state <= request_data;
             else
               next_state <= request_length;
@@ -564,7 +576,11 @@ begin  -- rtl
             coherence_req_data_in <= transaction_reg.payload_length;
             coherence_req_wrreq <= '1';
             -- Ready transaction only
-            next_state <= reply_header;
+            if transaction_reg.write = '1' then
+              next_state <= request_data;
+            else
+              next_state <= reply_header;
+            end if;
           end if;
         else
           if remote_ahbs_snd_full = '0' then

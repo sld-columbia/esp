@@ -138,6 +138,7 @@ architecture rtl of esp_tile_csr is
 
   constant DEFAULT_TILE_ID : std_logic_vector(7 downto 0) := (others => '0');
 
+  constant DEFAULT_ACC_COH : std_logic_vector(1 downto 0) := (others => '0');
 
   function dco_reset_config_ovr
     return std_logic_vector is
@@ -154,7 +155,7 @@ architecture rtl of esp_tile_csr is
   constant RESET_DCO_CFG : std_logic_vector(22 downto 0) := dco_reset_config_ovr;
 
   constant DEFAULT_CONFIG : std_logic_vector(ESP_CSR_WIDTH - 1 downto 0) :=
-    DEFAULT_DDR_CFG2 & DEFAULT_DDR_CFG1 & DEFAULT_DDR_CFG0 & DEFAULT_CPU_LOC_OVR & DEFAULT_ARIANE_HARTID &
+    DEFAULT_ACC_COH & DEFAULT_DDR_CFG2 & DEFAULT_DDR_CFG1 & DEFAULT_DDR_CFG0 & DEFAULT_CPU_LOC_OVR & DEFAULT_ARIANE_HARTID &
     DEFAULT_MDC_SCALER_CFG & DEFAULT_DCO_NOC_CFG & RESET_DCO_CFG & DEFAULT_PAD_CFG & DEFAULT_TILE_ID & "0";
 
   signal csr_addr : integer range 0 to 31;
@@ -223,6 +224,9 @@ begin
           readdata(ESP_CSR_DDR_CFG1_MSB - ESP_CSR_DDR_CFG1_LSB downto 0) <= config_r(ESP_CSR_DDR_CFG1_MSB downto ESP_CSR_DDR_CFG1_LSB);
         when ESP_CSR_DDR_CFG2_ADDR =>
           readdata(ESP_CSR_DDR_CFG2_MSB - ESP_CSR_DDR_CFG2_LSB downto 0) <= config_r(ESP_CSR_DDR_CFG2_MSB downto ESP_CSR_DDR_CFG2_LSB);
+        when ESP_CSR_ACC_COH_ADDR =>
+          readdata(ESP_CSR_ACC_COH_MSB - ESP_CSR_ACC_COH_LSB downto 0) <= config_r(ESP_CSR_ACC_COH_MSB downto ESP_CSR_ACC_COH_LSB);
+
         -- Power management
         when ESP_CSR_PM_MIN to ESP_CSR_PM_MIN + PM_REGNUM_CONFIG - 1 =>
           readdata(31 downto 0) <= pm_config_r(csr_addr - ESP_CSR_PM_MIN);
@@ -284,6 +288,8 @@ begin
             config_r(ESP_CSR_DDR_CFG1_MSB downto ESP_CSR_DDR_CFG1_LSB) <= apbi.pwdata(ESP_CSR_DDR_CFG1_MSB - ESP_CSR_DDR_CFG1_LSB downto 0);
           when ESP_CSR_DDR_CFG2_ADDR =>
             config_r(ESP_CSR_DDR_CFG2_MSB downto ESP_CSR_DDR_CFG2_LSB) <= apbi.pwdata(ESP_CSR_DDR_CFG2_MSB - ESP_CSR_DDR_CFG2_LSB downto 0);
+          when ESP_CSR_ACC_COH_ADDR =>
+            config_r(ESP_CSR_ACC_COH_MSB downto ESP_CSR_ACC_COH_LSB) <= apbi.pwdata(ESP_CSR_ACC_COH_MSB - ESP_CSR_ACC_COH_LSB downto 0);
           when ESP_CSR_SRST_ADDR =>
             srst <= wdata(0);
 

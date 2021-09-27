@@ -978,7 +978,8 @@ begin
           remote_ahbs_snd_full       => remote_ahbs_snd_full,
           remote_ahbs_rcv_rdreq      => remote_ahbs_rcv_rdreq,
           remote_ahbs_rcv_data_out   => remote_ahbs_rcv_data_out,
-          remote_ahbs_rcv_empty      => remote_ahbs_rcv_empty);
+          remote_ahbs_rcv_empty      => remote_ahbs_rcv_empty,
+          coherence                  => 0);
 
     end generate ariane_with_cache_coherence;
 
@@ -1022,7 +1023,8 @@ begin
           remote_ahbs_snd_full       => remote_ahbs_snd_full,
           remote_ahbs_rcv_rdreq      => remote_ahbs_rcv_rdreq,
           remote_ahbs_rcv_data_out   => remote_ahbs_rcv_data_out,
-          remote_ahbs_rcv_empty      => remote_ahbs_rcv_empty);
+          remote_ahbs_rcv_empty      => remote_ahbs_rcv_empty,
+          coherence                  => 0);
 
     end generate ariane_no_cache_coherence;
 
@@ -1055,7 +1057,8 @@ begin
         remote_ahbs_snd_full       => '0',
         remote_ahbs_rcv_rdreq      => open,
         remote_ahbs_rcv_data_out   => (others => '0'),
-        remote_ahbs_rcv_empty      => '1');
+        remote_ahbs_rcv_empty      => '1',
+        coherence                  => 0);
 
   end generate ariane_cpu_tile_services_gen;
 

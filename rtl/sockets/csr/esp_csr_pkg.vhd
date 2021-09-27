@@ -12,7 +12,7 @@ use work.esp_acc_regmap.all;
 package esp_csr_pkg is
 
   constant ESP_CSR_8_LSB : integer := 71 + CFG_NCPU_TILE * 2 * 3;
-  constant ESP_CSR_WIDTH : integer := 96 + ESP_CSR_8_LSB;
+  constant ESP_CSR_WIDTH : integer := 98 + ESP_CSR_8_LSB;
 
   constant ESP_CSR_VALID_ADDR : integer range 0 to 31 := 0;
   constant ESP_CSR_VALID_LSB  : integer range 0 to ESP_CSR_WIDTH-1 := 0;
@@ -57,6 +57,10 @@ package esp_csr_pkg is
   constant ESP_CSR_DDR_CFG2_ADDR : integer range 0 to 31 := 10;
   constant ESP_CSR_DDR_CFG2_LSB : integer range 0 to ESP_CSR_WIDTH - 1 := 64 + ESP_CSR_8_LSB;
   constant ESP_CSR_DDR_CFG2_MSB : integer range 0 to ESP_CSR_WIDTH - 1 := 95 + ESP_CSR_8_LSB;
+
+  constant ESP_CSR_ACC_COH_ADDR : integer range 0 to 31 := 11;
+  constant ESP_CSR_ACC_COH_LSB : integer range 0 to ESP_CSR_WIDTH - 1 := 96 + ESP_CSR_8_LSB;
+  constant ESP_CSR_ACC_COH_MSB : integer range 0 to ESP_CSR_WIDTH - 1 := 97 + ESP_CSR_8_LSB;
 
   -- Power management
   constant PM_REGNUM_CONFIG : integer range 0 to 31 := 9;
