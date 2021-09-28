@@ -136,8 +136,8 @@ static unsigned out_words; /* Output buffer size in words */
 
 #if defined(SHA1_ALGO)
 #include "sha1_tests.h"
-#include "SHA1ShortMsg.h"
-#include "SHA1LongMsg.h"
+// #include "SHA1ShortMsg.h"
+// #include "SHA1LongMsg.h"
 #elif defined(SHA2_ALGO)
 #include "sha2_tests.h"
 #elif defined(AES_ALGO)
