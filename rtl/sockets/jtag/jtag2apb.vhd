@@ -35,6 +35,7 @@ entity jtag2apb is
   port (
     rst     : in  std_ulogic;
     tclk    : in  std_logic;
+    main_clk: in  std_logic;
     apbi    : in  apb_slv_in_type;
     apbo    : out apb_slv_out_type;
     apbreq  : in  std_logic;
@@ -100,19 +101,20 @@ begin
 
     req_fifo1(i) <= req_fifo(5-i) and not(empty_fifo_out(i));
 
-    fifo_out_ii : fifo0
+    async_fifo_01 : inferred_async_fifo
       generic map (
-        depth => 20,
-        width => NOC_FLIT_SIZE+8)
+        g_data_width => NOC_FLIT_SIZE+8,
+        g_size       => 20)
       port map (
-        clk      => tclk,
-        rst      => rst,
-        rdreq    => req_fifo1(i),
-        wrreq    => wr_flit(5-i),
-        data_in  => test_out,
-        empty    => empty_fifo_out(i),
-        full     => open,
-        data_out => fifo_out_data(i)(73 downto 0));
+        rst_n_i    => rst,
+        clk_wr_i   => tclk,
+        we_i       => wr_flit(5-i),
+        d_i        => test_out,
+        wr_full_o  => open,
+        clk_rd_i   => main_clk,
+        rd_i       => req_fifo1(i),
+        q_o        => fifo_out_data(i)(73 downto 0),
+        rd_empty_o => empty_fifo_out(i));
 
   end generate GEN_FIFOS_jtag2apb;
 
@@ -144,7 +146,7 @@ begin
     generic map (
       pindex => 1)
     port map (
-      clk     => tclk,
+      clk     => main_clk,
       rstn    => rst,
       pconfig => this_pconfig,
       apbi    => apbi,

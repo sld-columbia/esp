@@ -29,7 +29,8 @@ architecture arch of jtag2apb_reg is
 
   -- APB Interface
 
-  type state_type is (start, idle, read1, write1);
+  -- type state_type is (start, idle, read1);
+  type state_type is (idle, read1);
 
   type ctrl_t is record
     state : state_type;
@@ -37,7 +38,7 @@ architecture arch of jtag2apb_reg is
   end record ctrl_t;
 
   constant CTRL_RESET : ctrl_t := (
-    state => start,
+    state => idle,
     free  => (others => '1')
     );
 
@@ -63,7 +64,9 @@ architecture arch of jtag2apb_reg is
   attribute mark_debug of idx : signal is "true";
   attribute mark_debug of DEV_START : signal is "true";
   attribute mark_debug of r : signal is "true";
-  
+  attribute mark_debug of sendin : signal is "true";
+  attribute mark_debug of bankin : signal is "true";
+
 begin
 
   apbo.prdata  <= readdata;
@@ -107,10 +110,10 @@ begin
 
     case r.state is
 
-      when start =>
-        if rstn = '1' and apbi.psel(pindex) = '1' then
-          v.state := idle;
-        end if;
+      -- when start =>
+      --   if rstn = '1' then
+      --     v.state := idle;
+      --   end if;
 
       when read1 => read_en <= '1';
                     if readd(2) /= '0' then
@@ -120,42 +123,48 @@ begin
 
 
       when idle =>
-        if (r.free(DEV_START) = '0' and idx = 0) then
+        if (apbi.psel(pindex) = '1' and r.free(DEV_START) = '0' and idx = 0) then
           v.state := read1;
         elsif sendin(0) = '1' then
           req_fifo <= "100000";
           write_en <= '1';
-          v.state  := write1;
+          -- v.state  := start;
           read_en  <= '0';
+          v.free(0):='0';
         elsif sendin(1) = '1' then
           req_fifo <= "010000";
           write_en <= '1';
-          v.state  := write1;
+          -- v.state  := start;
           read_en  <= '0';
+          v.free(1):='0';
         elsif sendin(2) = '1' then
           req_fifo <= "001000";
           write_en <= '1';
-          v.state  := write1;
+          -- v.state  := start;
+          v.free(2):='0';
           read_en  <= '0';
         elsif sendin(3) = '1' then
           req_fifo <= "000100";
           write_en <= '1';
-          v.state  := write1;
+          -- v.state  := start;
+          v.free(3):='0';
           read_en  <= '0';
         elsif sendin(4) = '1' then
           req_fifo <= "000010";
           write_en <= '1';
-          v.state  := write1;
+          -- v.state  := start;
+          v.free(4):='0';
           read_en  <= '0';
         elsif sendin(5) = '1' then
           req_fifo <= "000001";
           write_en <= '1';
-          v.state  := write1;
+          -- v.state  := start;
+          v.free(5):='0';
           read_en  <= '0';
         end if;
 
-      when write1 => v.state := start;
-                     v.free(DEV_START) := '0';
+      -- when write1 => v.state := start;
+      --                v.free(DEV_START) := '0';
 
     end case;
 
@@ -172,7 +181,9 @@ begin
     readdata <= (others => '0');
     readd    <= (others => '0');
 
-    if (apbi.psel(pindex) = '1' and apbi.penable = '1' and apbi.pwrite = '0' and read_en = '1' and r.free(DEV_START) = '0') then
+    -- if (apbi.psel(pindex) = '1' and apbi.penable = '1' and apbi.pwrite = '0' and read_en = '1' and r.free(DEV_START) = '0') then
+    if (apbi.psel(pindex) = '1' and apbi.penable = '1' and r.free(DEV_START)='0' and apbi.pwrite='0' and read_en='1') then
+
       readd(idx) <= '1';
       readdata   <= bank_reg(idx);
     end if;

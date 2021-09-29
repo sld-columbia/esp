@@ -52,7 +52,7 @@ architecture rtl of jtag_tb is
 
 begin
 
-      tclk_sim <= not tclk_sim after 10 ns;
+      tclk_sim <= not tclk_sim after 5 ns;
 
       ahbsi<=ahbsi_sim;
       ahbso_sim<=ahbso;
@@ -272,6 +272,7 @@ begin
 
             if ahbso_sim.hready='0' then
               wait until rising_edge(ahbso_sim.hready);
+              ahbsi_sim.hready <='1';
             else
               ahbsi_sim.hready <='1';
             end if ;
@@ -962,6 +963,9 @@ begin
 
           wait until rising_edge(tclk_sim);
 
+
+          ahbsi_sim.hwrite <='0';
+
           for i in 1 to 6 loop
 
             -- READ FLIT1
@@ -975,7 +979,13 @@ begin
             ahbsi_sim.hsel(0)<='0';
             ahbsi_sim.hready<='0';
 
-            wait until rising_edge(ahbso_sim.hready);
+
+            --
+            if ahbso_sim.hready='0' then
+              wait until rising_edge(ahbso_sim.hready);
+            end if ;
+            --
+            -- wait until rising_edge(ahbso_sim.hready);
 
             testout1 := ahbso_sim.hrdata(31 downto 0);
 
@@ -997,7 +1007,12 @@ begin
             ahbsi_sim.hsel(0)<='0';
             ahbsi_sim.hready<='0';
 
-            wait until rising_edge(ahbso_sim.hready);
+            --
+            if ahbso_sim.hready='0' then
+              wait until rising_edge(ahbso_sim.hready);
+            end if ;
+            --
+            -- wait until rising_edge(ahbso_sim.hready);
 
             testout2 := ahbso_sim.hrdata(31 downto 0);
 
@@ -1021,7 +1036,12 @@ begin
             ahbsi_sim.hsel(0)<='0';
             ahbsi_sim.hready<='0';
 
-            wait until rising_edge(ahbso_sim.hready) ;
+            --
+            if ahbso_sim.hready='0' then
+              wait until rising_edge(ahbso_sim.hready);
+            end if ;
+            --
+            -- wait until rising_edge(ahbso_sim.hready);
             testout3 := ahbso_sim.hrdata(31 downto 0);
 
             wait until rising_edge(tclk_sim);
@@ -1036,6 +1056,9 @@ begin
             end if;
 
           end loop;
+
+        ahbsi_sim.hwrite <='1';
+
         end loop;
       end process;
       -- pragma translate_on

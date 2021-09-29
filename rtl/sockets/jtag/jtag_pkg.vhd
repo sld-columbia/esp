@@ -147,6 +147,7 @@ package jtag_pkg is
     port (
       rst     : in  std_ulogic;
       tclk    : in  std_logic;
+      main_clk    : in  std_logic;
       apbi    : in  apb_slv_in_type;
       apbo    : out apb_slv_out_type;
       apbreq  : in  std_logic;
@@ -169,6 +170,7 @@ package jtag_pkg is
     port (
       rst      : in  std_ulogic;
       tclk     : in  std_logic;
+      main_clk     : in  std_logic;
       apbi     : in  apb_slv_in_type;
       apbo     : out apb_slv_out_type;
       -- ack_w    : in  std_logic_vector(5 downto 0);
@@ -191,6 +193,7 @@ package jtag_pkg is
       tdo   : in  std_ulogic;
       tms   : in  std_ulogic;
       tclk  : in  std_ulogic;
+      main_clk : in std_ulogic;
       ahbsi : in  ahb_slv_in_type;
       ahbso : out ahb_slv_out_type);
   end component fpga_proxy_jtag;

@@ -564,8 +564,8 @@ architecture rtl of fpga_proxy_top is
   signal ahbsi : ahb_slv_in_type;
   signal ahbso : ahb_slv_out_vector;
   signal ahbso_edcl : ahb_slv_out_vector;
-  signal ahbsi_in, ahbsi_sim : ahb_slv_in_type;
-  signal ahbso_sim, ahbso_apb : ahb_slv_out_type;
+  signal ahbsi_in  : ahb_slv_in_type;
+  signal ahbso_apb : ahb_slv_out_type;
 
   function set_remote_ahb_mask (
     constant N : in integer range 1 to CFG_NMEM_TILE)
@@ -1664,7 +1664,8 @@ begin  -- architecture rtl
         tdi    => tdi_jtag,
         tdo    => tdo_jtag,
         tms    => tms_in,
-        tclk   => main_clk,
+        tclk   => jtag_clk,
+        main_clk   => main_clk,
         ahbsi  => ahbsi_in,
         ahbso  => ahbso_apb);
 
@@ -1691,7 +1692,7 @@ begin  -- architecture rtl
     end generate tdi_gen;
 
     tms_in <= '1';
-    tclk_int <= main_clk;
+    tclk_int <= jtag_clk;
     tms_int <= tms_in;
 
     jtag_gen_norm: if SIMULATION= false generate

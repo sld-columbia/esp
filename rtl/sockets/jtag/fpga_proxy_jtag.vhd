@@ -37,6 +37,7 @@ entity fpga_proxy_jtag is
     tdo   : in  std_ulogic;
     tms   : in  std_ulogic;
     tclk  : in  std_ulogic;
+    main_clk: in  std_ulogic;
     ahbsi : in  ahb_slv_in_type;
     ahbso : out ahb_slv_out_type);
 
@@ -46,7 +47,7 @@ end;
 architecture rtl of fpga_proxy_jtag is
 
   constant CFG_APBADDR_FP    : integer := 16#100#;
-  constant ahb2apb_hmask_fp  : integer := 16#FFF#;
+  constant ahb2apb_hmask_fp  : integer := 16#FFE#;
   constant ahb2apb_hindex_fp : integer := 0;
 
   constant apb_slv_mask : std_logic_vector(0 to NAPBSLV - 1) := (
@@ -113,6 +114,8 @@ architecture rtl of fpga_proxy_jtag is
   attribute mark_debug of testin_piso_clear : signal is "true";
   attribute mark_debug of testin_piso_load : signal is "true";
 
+  attribute mark_debug of apbreq : signal is "true";
+  attribute mark_debug of ack_r : signal is "true";
 
   attribute mark_debug of ack2apb_r : signal is "true";
   attribute mark_debug of ack2apb : signal is "true";
@@ -136,7 +139,7 @@ begin
      remote_apb => apb_slv_mask)
     port map
     (rst,
-     tclk,
+     main_clk,
      ahbsi,
      ahbso,
      apbi,
@@ -151,22 +154,25 @@ begin
   apbo(0)<=apbo0;
   apbo(1)<=apbo1;
 
-  process (apbi, ack2apb, ack2apb_r)
-  begin
-    if apbi.psel(0) = '1' then
-      ack_r <= ack2apb;
-    elsif apbi.psel(1) = '1' then
-      ack_r <= ack2apb_r;
-    else
-      ack_r <= '0';
-    end if;
-  end process;
+  ack_r <= '1';
+  
+  -- process (apbi, ack2apb, ack2apb_r)
+  -- begin
+  --   if apbi.psel(0) = '1' then
+  --     ack_r <= ack2apb;
+  --   elsif apbi.psel(1) = '1' then
+  --     ack_r <= ack2apb_r;
+  --   else
+  --     ack_r <= '0';
+  --   end if;
+  -- end process;
 
 
   apb2jtagdev : apb2jtag
     port map(
       rst      => rst,
       tclk     => tclk,
+      main_clk => main_clk,
       apbi     => apbi,
       apbo     => apbo0,
       -- ack_w    => ack,
@@ -183,6 +189,7 @@ begin
     port map (
       rst       => rst,
       tclk      => tclk,
+      main_clk  => main_clk,
       apbi      => apbi,
       apbo      => apbo1,
       apbreq    => apbreq,

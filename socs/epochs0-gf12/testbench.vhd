@@ -65,6 +65,9 @@ architecture behav of testbench is
   signal main_clk_p : std_ulogic := '0';
   signal main_clk_n : std_ulogic := '1';
 
+  signal jtag_clk_p : std_ulogic := '0';
+  signal jtag_clk_n : std_ulogic := '1';
+
   signal clk_ref_p     : std_ulogic := '0';
   signal clk_ref_n     : std_ulogic := '1';
 
@@ -303,6 +306,9 @@ architecture behav of testbench is
       -- FPGA proxy main clock
       main_clk_p        : in    std_ulogic;  -- 78.25 MHz clock
       main_clk_n        : in    std_ulogic;  -- 78.25 MHz clock
+      -- FPGA proxy main clock
+      jtag_clk_p        : in    std_ulogic;  -- 78.25 MHz clock
+      jtag_clk_n        : in    std_ulogic;  -- 78.25 MHz clock
       -- LEDs
       LED_RED           : out   std_ulogic;
       LED_GREEN         : out   std_ulogic;
@@ -318,6 +324,9 @@ begin
 
   main_clk_p <= not main_clk_p after 5 ns;
   main_clk_n <= not main_clk_n after 5 ns;
+
+  jtag_clk_p <= not jtag_clk_p after 25 ns;
+  jtag_clk_n <= not jtag_clk_n after 25 ns;
 
   clk_ref_p <= not clk_ref_p after 2.5 ns;
   clk_ref_n <= not clk_ref_n after 2.5 ns;
@@ -491,6 +500,8 @@ begin
       c3_diagnostic_led => open,
       main_clk_p        => main_clk_p,
       main_clk_n        => main_clk_n,
+      jtag_clk_p        => jtag_clk_p,
+      jtag_clk_n        => jtag_clk_n,
       LED_RED           => open,
       LED_GREEN         => open,
       LED_BLUE          => open,

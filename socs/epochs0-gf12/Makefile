@@ -15,7 +15,7 @@ DESIGN   = $(BOARD)
 LEON3_BASE_FREQ_MHZ ?= 50
 LEON3_STACK ?= 0x5bfffff0
 
-OVR_TECHLIB ?=
+OVR_TECHLIB ?=virtex7
 ifneq ("$(OVR_TECHLIB)", "")
 TECHLIB = $(OVR_TECHLIB)
 endif
