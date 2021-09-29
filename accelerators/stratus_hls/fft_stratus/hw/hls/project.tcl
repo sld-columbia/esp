@@ -75,8 +75,8 @@ set DEFAULT_ARGV ""
 
 set FX_IL "-DFX32_IL=14 -DFX64_IL=42"
 
-foreach dma [list 32 64] {
-    foreach fx [list 32 64] {
+foreach dma [list 64] {
+    foreach fx [list 32] {
 	define_io_config * IOCFG_FX$fx\_DMA$dma -DFX_WIDTH=$fx -DDMA_WIDTH=$dma
 
 	define_system_config tb TESTBENCH_FX$fx\_DMA$dma -io_config IOCFG_FX$fx\_DMA$dma
