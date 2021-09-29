@@ -1844,6 +1844,8 @@ cache_list = [ ]
 # Get scheduled accelerators
 accelerators = next(os.walk(acc_rtl_dir))[1]
 axi_accelerators = next(os.walk(axi_acc_dir))[1]
+accelerators.sort()
+axi_accelerators.sort()
 
 caches = [ ]
 
