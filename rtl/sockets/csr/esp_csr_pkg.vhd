@@ -12,7 +12,7 @@ use work.esp_acc_regmap.all;
 package esp_csr_pkg is
 
   constant ESP_CSR_8_LSB : integer := 71 + CFG_NCPU_TILE * 2 * 3;
-  constant ESP_CSR_WIDTH : integer := 98 + ESP_CSR_8_LSB;
+  constant ESP_CSR_WIDTH : integer := 106 + ESP_CSR_8_LSB;
 
   constant ESP_CSR_VALID_ADDR : integer range 0 to 31 := 0;
   constant ESP_CSR_VALID_LSB  : integer range 0 to ESP_CSR_WIDTH-1 := 0;
@@ -21,18 +21,6 @@ package esp_csr_pkg is
   constant ESP_CSR_TILE_ID_ADDR : integer range 0 to 31 := 1;
   constant ESP_CSR_TILE_ID_LSB  : integer range 0 to ESP_CSR_WIDTH-1 := 1;
   constant ESP_CSR_TILE_ID_MSB  : integer range 0 to ESP_CSR_WIDTH-1 := 8;
-
-  constant ESP_CSR_PAD_CFG_ADDR : integer range 0 to 31 := 2;
-  constant ESP_CSR_PAD_CFG_LSB  : integer range 0 to ESP_CSR_WIDTH-1 := 9;
-  constant ESP_CSR_PAD_CFG_MSB  : integer range 0 to ESP_CSR_WIDTH-1 := 11;
-
-  constant ESP_CSR_DCO_CFG_ADDR : integer range 0 to 31 := 3;
-  constant ESP_CSR_DCO_CFG_LSB : integer range 0 to ESP_CSR_WIDTH - 1 := 12;
-  constant ESP_CSR_DCO_CFG_MSB : integer range 0 to ESP_CSR_WIDTH - 1 := 34;
-
-  constant ESP_CSR_DCO_NOC_CFG_ADDR : integer range 0 to 31 := 4;
-  constant ESP_CSR_DCO_NOC_CFG_LSB : integer range 0 to ESP_CSR_WIDTH - 1 := 35;
-  constant ESP_CSR_DCO_NOC_CFG_MSB : integer range 0 to ESP_CSR_WIDTH - 1 := 53;
 
   constant ESP_CSR_MDC_SCALER_CFG_ADDR : integer range 0 to 31 := 5;
   constant ESP_CSR_MDC_SCALER_CFG_LSB : integer range 0 to ESP_CSR_WIDTH - 1 := 54;
@@ -62,6 +50,22 @@ package esp_csr_pkg is
   constant ESP_CSR_ACC_COH_LSB : integer range 0 to ESP_CSR_WIDTH - 1 := 96 + ESP_CSR_8_LSB;
   constant ESP_CSR_ACC_COH_MSB : integer range 0 to ESP_CSR_WIDTH - 1 := 97 + ESP_CSR_8_LSB;
 
+  constant ESP_CSR_TILE_ID_NOC_ADDR : integer range 0 to 31 := 16;
+  constant ESP_CSR_TILE_ID_NOC_LSB  : integer range 0 to ESP_CSR_WIDTH-1 := 98 + ESP_CSR_8_LSB;
+  constant ESP_CSR_TILE_ID_NOC_MSB  : integer range 0 to ESP_CSR_WIDTH-1 := 105 + ESP_CSR_8_LSB;
+
+  constant ESP_CSR_PAD_CFG_ADDR : integer range 0 to 31 := 17;
+  constant ESP_CSR_PAD_CFG_LSB  : integer range 0 to ESP_CSR_WIDTH-1 := 9;
+  constant ESP_CSR_PAD_CFG_MSB  : integer range 0 to ESP_CSR_WIDTH-1 := 11;
+
+  constant ESP_CSR_DCO_CFG_ADDR : integer range 0 to 31 := 18;
+  constant ESP_CSR_DCO_CFG_LSB : integer range 0 to ESP_CSR_WIDTH - 1 := 12;
+  constant ESP_CSR_DCO_CFG_MSB : integer range 0 to ESP_CSR_WIDTH - 1 := 34;
+
+  constant ESP_CSR_DCO_NOC_CFG_ADDR : integer range 0 to 31 := 19;
+  constant ESP_CSR_DCO_NOC_CFG_LSB : integer range 0 to ESP_CSR_WIDTH - 1 := 35;
+  constant ESP_CSR_DCO_NOC_CFG_MSB : integer range 0 to ESP_CSR_WIDTH - 1 := 53;
+  
   -- Power management
   constant PM_REGNUM_CONFIG : integer range 0 to 31 := 9;
   constant PM_REGNUM_STATUS : integer range 0 to 31 := 2;
@@ -70,7 +74,7 @@ package esp_csr_pkg is
   constant ESP_CSR_PM_MAX : integer range 0 to 31 := ESP_CSR_PM_MIN + PM_REGNUM - 1;
 
   -- Soft reset
-  constant ESP_CSR_SRST_ADDR : integer range 0 to 31 := 31;  -- reserved address
+  constant ESP_CSR_SRST_ADDR : integer range 0 to 31 := 15;  -- reserved address
 
   -- Power management types
   type pm_csr_type is array (0 to PM_REGNUM - 1) of std_logic_vector(31 downto 0);

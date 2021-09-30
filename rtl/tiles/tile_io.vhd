@@ -51,10 +51,20 @@ entity tile_io is
     pllclk             : out std_ulogic;  -- tile DCO test out clock
     dco_clk            : out std_ulogic;  -- tile clock (if DCO is present)
     dco_rstn           : out std_ulogic;  -- tile reset output (if DCO is present)
-    local_x            : out local_yx;
-    local_y            : out local_yx;
-    -- Ethernet MDC Scaler configuration
-    mdcscaler          : out integer range 0 to 2047;
+    -- DCO config
+    dco_freq_sel       : in std_logic_vector(1 downto 0);
+    dco_div_sel        : in std_logic_vector(2 downto 0);
+    dco_fc_sel         : in std_logic_vector(5 downto 0);
+    dco_cc_sel         : in std_logic_vector(5 downto 0);
+    dco_clk_sel        : in std_ulogic;
+    dco_en             : in std_ulogic;  
+    -- NoC DCO config
+    dco_noc_freq_sel   : in std_logic_vector(1 downto 0);
+    dco_noc_div_sel    : in std_logic_vector(2 downto 0);
+    dco_noc_fc_sel     : in std_logic_vector(5 downto 0);
+    dco_noc_cc_sel     : in std_logic_vector(5 downto 0);
+    dco_noc_clk_sel    : in std_ulogic;
+    dco_noc_en         : in std_ulogic;  
     -- I/O bus interfaces
     eth0_apbi          : out apb_slv_in_type;
     eth0_apbo          : in  apb_slv_out_type;
@@ -71,17 +81,9 @@ entity tile_io is
     uart_txd           : out std_ulogic;
     uart_ctsn          : in  std_ulogic;
     uart_rtsn          : out std_ulogic;
-    -- Pads configuration
-    pad_cfg            : out std_logic_vector(ESP_CSR_PAD_CFG_MSB - ESP_CSR_PAD_CFG_LSB downto 0);
     -- NOC
     sys_clk_out        : out std_ulogic;  -- NoC clock out (if DCO is present)
     sys_clk_lock       : out std_ulogic;  -- NoC DCO lock
-    noc1_mon_noc_vec   : in monitor_noc_type;
-    noc2_mon_noc_vec   : in monitor_noc_type;
-    noc3_mon_noc_vec   : in monitor_noc_type;
-    noc4_mon_noc_vec   : in monitor_noc_type;
-    noc5_mon_noc_vec   : in monitor_noc_type;
-    noc6_mon_noc_vec   : in monitor_noc_type;
     test1_output_port   : in noc_flit_type;
     test1_data_void_out : in std_ulogic;
     test1_stop_in       : in std_ulogic;
@@ -129,19 +131,6 @@ architecture rtl of tile_io is
   signal rst : std_ulogic;
 
   -- DCO
-  signal dco_noc_en       : std_ulogic;
-  signal dco_noc_clk_sel  : std_ulogic;
-  signal dco_noc_cc_sel   : std_logic_vector(5 downto 0);
-  signal dco_noc_fc_sel   : std_logic_vector(5 downto 0);
-  signal dco_noc_div_sel  : std_logic_vector(2 downto 0);
-  signal dco_noc_freq_sel : std_logic_vector(1 downto 0);
-
-  signal dco_en       : std_ulogic;
-  signal dco_clk_sel  : std_ulogic;
-  signal dco_cc_sel   : std_logic_vector(5 downto 0);
-  signal dco_fc_sel   : std_logic_vector(5 downto 0);
-  signal dco_div_sel  : std_logic_vector(2 downto 0);
-  signal dco_freq_sel : std_logic_vector(1 downto 0);
   signal dco_clk_lock : std_ulogic;
   signal dco_clk_int  : std_ulogic;
 
@@ -355,12 +344,12 @@ architecture rtl of tile_io is
   attribute keep of timer_irq : signal is "true";
   attribute keep of ipi : signal is "true";
 
-  attribute keep of apb_rcv_rdreq : signal is "true";
-  attribute keep of apb_rcv_data_out : signal is "true";
-  attribute keep of apb_rcv_empty : signal is "true";
-  attribute keep of apb_snd_wrreq : signal is "true";
-  attribute keep of apb_snd_data_in : signal is "true";
-  attribute keep of apb_snd_full : signal is "true";
+  attribute mark_debug of apb_rcv_rdreq : signal is "true";
+  attribute mark_debug of apb_rcv_data_out : signal is "true";
+  attribute mark_debug of apb_rcv_empty : signal is "true";
+  attribute mark_debug of apb_snd_wrreq : signal is "true";
+  attribute mark_debug of apb_snd_data_in : signal is "true";
+  attribute mark_debug of apb_snd_full : signal is "true";
   attribute keep of interrupt_rdreq : signal is "true";
   attribute keep of interrupt_data_out : signal is "true";
   attribute keep of interrupt_empty : signal is "true";
@@ -374,10 +363,14 @@ architecture rtl of tile_io is
   attribute keep of header : signal is "true";
   attribute keep of header_next : signal is "true";
 
+  attribute mark_debug of remote_apb_rcv_rdreq      : signal is "true";
+  attribute mark_debug of remote_apb_rcv_data_out   : signal is "true";
+  attribute mark_debug of remote_apb_rcv_empty      : signal is "true";
+  attribute mark_debug of remote_apb_snd_wrreq      : signal is "true";
+  attribute mark_debug of remote_apb_snd_data_in    : signal is "true";
+  attribute mark_debug of remote_apb_snd_full       : signal is "true";
+  
 begin
-
-  local_x <= this_local_x;
-  local_y <= this_local_y;
 
   -- DCO Reset synchronizer
   rst_gen: if this_has_dco /= 0 generate
@@ -412,13 +405,6 @@ begin
         clk_div  => pllclk_noc,
         lock     => sys_clk_lock);
 
-    dco_noc_freq_sel <= tile_config(ESP_CSR_DCO_NOC_CFG_MSB - 0  downto ESP_CSR_DCO_NOC_CFG_MSB - 0  - 1);
-    dco_noc_div_sel  <= tile_config(ESP_CSR_DCO_NOC_CFG_MSB - 2  downto ESP_CSR_DCO_NOC_CFG_MSB - 2  - 2);
-    dco_noc_fc_sel   <= tile_config(ESP_CSR_DCO_NOC_CFG_MSB - 5  downto ESP_CSR_DCO_NOC_CFG_MSB - 5  - 5);
-    dco_noc_cc_sel   <= tile_config(ESP_CSR_DCO_NOC_CFG_MSB - 11 downto ESP_CSR_DCO_NOC_CFG_MSB - 11 - 5);
-    dco_noc_clk_sel  <= tile_config(ESP_CSR_DCO_NOC_CFG_LSB + 1);
-    dco_noc_en       <= raw_rstn and tile_config(ESP_CSR_DCO_NOC_CFG_LSB);
-
     dco_i: dco
       generic map (
         tech => CFG_FABTECH,
@@ -437,14 +423,6 @@ begin
         clk      => dco_clk_int,
         clk_div  => pllclk,
         lock     => dco_clk_lock);
-
-    dco_freq_sel <= tile_config(ESP_CSR_DCO_CFG_MSB - 4 - 0  downto ESP_CSR_DCO_CFG_MSB - 4 - 0  - 1);
-    dco_div_sel  <= tile_config(ESP_CSR_DCO_CFG_MSB - 4 - 2  downto ESP_CSR_DCO_CFG_MSB - 4 - 2  - 2);
-    dco_fc_sel   <= tile_config(ESP_CSR_DCO_CFG_MSB - 4 - 5  downto ESP_CSR_DCO_CFG_MSB - 4 - 5  - 5);
-    dco_cc_sel   <= tile_config(ESP_CSR_DCO_CFG_MSB - 4 - 11 downto ESP_CSR_DCO_CFG_MSB - 4 - 11 - 5);
-    dco_clk_sel  <= tile_config(ESP_CSR_DCO_CFG_LSB + 1);
-    dco_en       <= raw_rstn and tile_config(ESP_CSR_DCO_CFG_LSB);
-
   end generate dco_gen;
 
   no_dco_gen: if this_has_dco = 0 generate
@@ -457,12 +435,6 @@ begin
   end generate no_dco_gen;
 
   dco_clk <= dco_clk_int;
-
-  -- MDC scaler configuration
-  mdcscaler              <= conv_integer(tile_config(ESP_CSR_MDC_SCALER_CFG_MSB downto ESP_CSR_MDC_SCALER_CFG_LSB));
-
-  -- Pads configuration
-  pad_cfg                <= tile_config(ESP_CSR_PAD_CFG_MSB downto ESP_CSR_PAD_CFG_LSB);
 
   -----------------------------------------------------------------------------
   -- Bus
@@ -1195,12 +1167,12 @@ begin
 
   mon_dvfs <= mon_dvfs_int;
   
-  mon_noc(1) <= noc1_mon_noc_vec;
-  mon_noc(2) <= noc2_mon_noc_vec;
-  mon_noc(3) <= noc3_mon_noc_vec;
-  mon_noc(4) <= noc4_mon_noc_vec;
-  mon_noc(5) <= noc5_mon_noc_vec;
-  mon_noc(6) <= noc6_mon_noc_vec;
+  mon_noc(1) <= monitor_noc_none;
+  mon_noc(2) <= monitor_noc_none;
+  mon_noc(3) <= monitor_noc_none;
+  mon_noc(4) <= monitor_noc_none;
+  mon_noc(5) <= monitor_noc_none;
+  mon_noc(6) <= monitor_noc_none;
 
   -- Memory mapped registers
   io_tile_csr : esp_tile_csr

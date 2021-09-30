@@ -180,7 +180,7 @@ begin
 -------------------------------------------------------------------------------
 -- FSM: Messages to NoC
 -------------------------------------------------------------------------------
-  snd_fsm : process (snd_reg,
+  snd_fsm : process (snd_reg, local_x, local_y,
                      packet_out, packet_out_val, packet_out_addr,
                      noc5_stop_out) is
 

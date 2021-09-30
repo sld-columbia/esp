@@ -155,8 +155,9 @@ architecture rtl of esp_tile_csr is
   constant RESET_DCO_CFG : std_logic_vector(22 downto 0) := dco_reset_config_ovr;
 
   constant DEFAULT_CONFIG : std_logic_vector(ESP_CSR_WIDTH - 1 downto 0) :=
-    DEFAULT_ACC_COH & DEFAULT_DDR_CFG2 & DEFAULT_DDR_CFG1 & DEFAULT_DDR_CFG0 & DEFAULT_CPU_LOC_OVR & DEFAULT_ARIANE_HARTID &
-    DEFAULT_MDC_SCALER_CFG & DEFAULT_DCO_NOC_CFG & RESET_DCO_CFG & DEFAULT_PAD_CFG & DEFAULT_TILE_ID & "0";
+    DEFAULT_TILE_ID & DEFAULT_ACC_COH & DEFAULT_DDR_CFG2 & DEFAULT_DDR_CFG1 & DEFAULT_DDR_CFG0 & DEFAULT_CPU_LOC_OVR &
+    DEFAULT_ARIANE_HARTID & DEFAULT_MDC_SCALER_CFG & DEFAULT_DCO_NOC_CFG & RESET_DCO_CFG & DEFAULT_PAD_CFG &
+    DEFAULT_TILE_ID & "0";
 
   signal csr_addr : integer range 0 to 31;
 
@@ -206,6 +207,8 @@ begin
           readdata(ESP_CSR_VALID_MSB - ESP_CSR_VALID_LSB downto 0) <= config_r(ESP_CSR_VALID_MSB downto ESP_CSR_VALID_LSB);
         when ESP_CSR_TILE_ID_ADDR =>
           readdata(ESP_CSR_TILE_ID_MSB - ESP_CSR_TILE_ID_LSB downto 0) <= config_r(ESP_CSR_TILE_ID_MSB downto ESP_CSR_TILE_ID_LSB);
+        when ESP_CSR_TILE_ID_NOC_ADDR =>
+          readdata(ESP_CSR_TILE_ID_NOC_MSB - ESP_CSR_TILE_ID_NOC_LSB downto 0) <= config_r(ESP_CSR_TILE_ID_NOC_MSB downto ESP_CSR_TILE_ID_NOC_LSB);
         when ESP_CSR_PAD_CFG_ADDR =>
           readdata(ESP_CSR_PAD_CFG_MSB - ESP_CSR_PAD_CFG_LSB downto 0) <= config_r(ESP_CSR_PAD_CFG_MSB downto ESP_CSR_PAD_CFG_LSB);
         when ESP_CSR_DCO_CFG_ADDR =>
@@ -270,6 +273,8 @@ begin
             config_r(ESP_CSR_VALID_MSB downto ESP_CSR_VALID_LSB) <= apbi.pwdata(ESP_CSR_VALID_MSB - ESP_CSR_VALID_LSB downto 0);
           when ESP_CSR_TILE_ID_ADDR =>
             config_r(ESP_CSR_TILE_ID_MSB downto ESP_CSR_TILE_ID_LSB) <= apbi.pwdata(ESP_CSR_TILE_ID_MSB - ESP_CSR_TILE_ID_LSB downto 0);
+          when ESP_CSR_TILE_ID_NOC_ADDR =>
+            config_r(ESP_CSR_TILE_ID_NOC_MSB downto ESP_CSR_TILE_ID_NOC_LSB) <= apbi.pwdata(ESP_CSR_TILE_ID_NOC_MSB - ESP_CSR_TILE_ID_NOC_LSB downto 0);
           when ESP_CSR_PAD_CFG_ADDR =>
             config_r(ESP_CSR_PAD_CFG_MSB downto ESP_CSR_PAD_CFG_LSB) <= apbi.pwdata(ESP_CSR_PAD_CFG_MSB - ESP_CSR_PAD_CFG_LSB downto 0);
           when ESP_CSR_DCO_CFG_ADDR =>
