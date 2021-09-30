@@ -18,7 +18,7 @@ library unisim;
 use unisim.all;
 -- pragma translate_on
 use work.monitor_pkg.all;
-use work.esp_csr_pkg.all;
+use work.esp_noc_csr_pkg.all;
 use work.sldacc.all;
 use work.tile.all;
 use work.nocpackage.all;

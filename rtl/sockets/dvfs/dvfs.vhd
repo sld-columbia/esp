@@ -20,7 +20,7 @@ use work.genacc.all;
 use work.nocpackage.all;
 
 use work.esp_acc_regmap.all;
-use work.esp_csr_pkg.all;
+use work.esp_noc_csr_pkg.all;
 
 package dvfs is
 
@@ -161,41 +161,33 @@ package dvfs is
       noc5_stop_in       : out std_ulogic);
   end component pm2noc;
 
-  component token_pm is
-    generic (
-      SIMULATION : boolean := false;
-      is_asic    : boolean := false);
-    port (
-      noc_rstn               : in  std_ulogic;
-      tile_rstn              : in  std_ulogic;
-      noc_clk                : in  std_ulogic;
-      refclk                : in  std_ulogic;
-      tile_clk               : in  std_ulogic;
-      -- runtime configuration for LDO ctrl and token FSM
-      pm_config              : in  pm_config_type;
-      -- runtime status for LDO ctrl and token FSM
-      pm_status              : out pm_status_type;
-      -- tile parameters
-      local_x                : in  local_yx;
-      local_y                : in  local_yx;
-      -- NoC interface
-      noc5_input_port        : out misc_noc_flit_type;
-      noc5_data_void_in      : out std_ulogic;
-      noc5_stop_out          : in  std_ulogic;
-      noc5_output_port       : in  misc_noc_flit_type;
-      noc5_data_void_out     : in  std_ulogic;
-      noc5_stop_in           : out std_ulogic;
-      -- Accelerator tile NoC inferface
-      noc5_input_port_pm     : in  misc_noc_flit_type;
-      noc5_data_void_in_pm   : in  std_ulogic;
-      noc5_stop_out_pm       : out std_ulogic;
-      noc5_output_port_pm    : out misc_noc_flit_type;
-      noc5_data_void_out_pm  : out std_ulogic;
-      noc5_stop_in_pm        : in  std_ulogic;
-      -- LDO switch control
-      acc_clk                : out std_ulogic);
-
-  end component token_pm;
+component token_pm is
+  generic (
+    SIMULATION : boolean := false;
+    is_asic    : boolean := false);
+  port (
+    noc_rstn           : in  std_ulogic;
+    tile_rstn          : in  std_ulogic;
+    noc_clk            : in  std_ulogic;
+    refclk             : in  std_ulogic;
+    tile_clk           : in  std_ulogic;
+    -- runtime configuration for LDO ctrl and token FSM
+    pm_config          : in  pm_config_type;
+    -- runtime status for LDO ctrl and token FSM
+    pm_status          : out pm_status_type;
+    -- tile parameters
+    local_x            : in  local_yx;
+    local_y            : in  local_yx;
+    -- NoC inferface
+    noc5_input_port    : out misc_noc_flit_type;
+    noc5_data_void_in  : out std_ulogic;
+    noc5_stop_out      : in  std_ulogic;
+    noc5_output_port   : in  misc_noc_flit_type;
+    noc5_data_void_out : in  std_ulogic;
+    noc5_stop_in       : out std_ulogic;
+    -- LDO switch control
+    acc_clk            : out std_ulogic);
+end component token_pm;
 
 end dvfs;
 

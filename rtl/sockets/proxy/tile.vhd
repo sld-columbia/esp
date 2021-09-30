@@ -15,6 +15,7 @@ use work.gencomp.all;
 use work.genacc.all;
 
 use work.monitor_pkg.all;
+use work.esp_noc_csr_pkg.all;
 use work.nocpackage.all;
 use work.cachepackage.all;
 
@@ -622,7 +623,7 @@ package tile is
       remote_ahbs_rcv_rdreq      : out std_ulogic;
       remote_ahbs_rcv_data_out   : in  misc_noc_flit_type;
       remote_ahbs_rcv_empty      : in  std_ulogic;
-      coherence                  : in integer range 0 to 3);
+      coherence                  : in  integer range 0 to 3);
   end component axislv2noc;
 
   component noc2apb
@@ -773,7 +774,7 @@ package tile is
       bufdout_valid                 : in  std_ulogic;
       acc_done                      : in  std_ulogic;
       flush                         : out std_ulogic;
-      acc_flush_done                : in std_ulogic;
+      acc_flush_done                : in  std_ulogic;
       mon_dvfs_in                   : in  monitor_dvfs_type;
       mon_dvfs                      : out monitor_dvfs_type;
       llc_coherent_dma_rcv_rdreq    : out std_ulogic;
@@ -999,5 +1000,182 @@ package tile is
       ahbsi         : in  ahb_slv_in_type;
       ahbso         : out ahb_slv_out_type);
   end component ahbslv2iolink;
+
+  component noc5_mux is
+    port (
+      rstn                    : in  std_ulogic;
+      clk                     : in  std_ulogic;
+      -- NoC interface
+      noc5_input_port         : out misc_noc_flit_type;
+      noc5_data_void_in       : out std_ulogic;
+      noc5_stop_out           : in  std_ulogic;
+      noc5_output_port        : in  misc_noc_flit_type;
+      noc5_data_void_out      : in  std_ulogic;
+      noc5_stop_in            : out std_ulogic;
+      -- Tile inferface
+      noc5_input_port_tile    : in  misc_noc_flit_type;
+      noc5_data_void_in_tile  : in  std_ulogic;
+      noc5_stop_out_tile      : out std_ulogic;
+      noc5_output_port_tile   : out misc_noc_flit_type;
+      noc5_data_void_out_tile : out std_ulogic;
+      noc5_stop_in_tile       : in  std_ulogic;
+      -- Local CSR inferface
+      noc5_input_port_csr     : in  misc_noc_flit_type;
+      noc5_data_void_in_csr   : in  std_ulogic;
+      noc5_stop_out_csr       : out std_ulogic;
+      noc5_output_port_csr    : out misc_noc_flit_type;
+      noc5_data_void_out_csr  : out std_ulogic;
+      noc5_stop_in_csr        : in  std_ulogic;
+      -- Power Management interface
+      noc5_input_port_pm      : in  misc_noc_flit_type;
+      noc5_data_void_in_pm    : in  std_ulogic;
+      noc5_stop_out_pm        : out std_ulogic;
+      noc5_output_port_pm     : out misc_noc_flit_type;
+      noc5_data_void_out_pm   : out std_ulogic;
+      noc5_stop_in_pm         : in  std_ulogic);
+  end component noc5_mux;
+
+  component noc_domain_socket is
+    generic (
+      this_has_token_pm : integer range 0 to 1 := 0;
+      has_ddr           : boolean              := false;
+      is_tile_io        : boolean              := false;
+      SIMULATION        : boolean              := false;
+      ROUTER_PORTS      : ports_vec            := "11111";
+      HAS_SYNC          : integer range 0 to 1 := 1);
+    port (
+      raw_rstn           : in  std_ulogic;
+      noc_rstn           : in  std_ulogic;
+      dco_rstn           : in  std_ulogic;
+      sys_clk            : in  std_ulogic;  -- NoC clock
+      dco_clk            : in  std_ulogic;
+      acc_clk            : out std_ulogic;
+      refclk             : in  std_ulogic;
+      -- CSRs
+      tile_config        : out std_logic_vector(ESP_NOC_CSR_WIDTH - 1 downto 0);
+      -- DCO config
+      dco_freq_sel       : out  std_logic_vector(1 downto 0);
+      dco_div_sel        : out  std_logic_vector(2 downto 0);
+      dco_fc_sel         : out  std_logic_vector(5 downto 0);
+      dco_cc_sel         : out  std_logic_vector(5 downto 0);
+      dco_clk_sel        : out  std_ulogic;
+      dco_en             : out  std_ulogic;
+      dco_clk_delay_sel  : out std_logic_vector(11 downto 0);
+      -- pad config
+      pad_cfg            : out std_logic_vector(ESP_CSR_PAD_CFG_MSB - ESP_CSR_PAD_CFG_LSB downto 0);
+      -- NoC
+      noc1_data_n_in     : in  coh_noc_flit_type;
+      noc1_data_s_in     : in  coh_noc_flit_type;
+      noc1_data_w_in     : in  coh_noc_flit_type;
+      noc1_data_e_in     : in  coh_noc_flit_type;
+      noc1_data_void_in  : in  std_logic_vector(3 downto 0);
+      noc1_stop_in       : in  std_logic_vector(3 downto 0);
+      noc1_data_n_out    : out coh_noc_flit_type;
+      noc1_data_s_out    : out coh_noc_flit_type;
+      noc1_data_w_out    : out coh_noc_flit_type;
+      noc1_data_e_out    : out coh_noc_flit_type;
+      noc1_data_void_out : out std_logic_vector(3 downto 0);
+      noc1_stop_out      : out std_logic_vector(3 downto 0);
+      noc2_data_n_in     : in  coh_noc_flit_type;
+      noc2_data_s_in     : in  coh_noc_flit_type;
+      noc2_data_w_in     : in  coh_noc_flit_type;
+      noc2_data_e_in     : in  coh_noc_flit_type;
+      noc2_data_void_in  : in  std_logic_vector(3 downto 0);
+      noc2_stop_in       : in  std_logic_vector(3 downto 0);
+      noc2_data_n_out    : out coh_noc_flit_type;
+      noc2_data_s_out    : out coh_noc_flit_type;
+      noc2_data_w_out    : out coh_noc_flit_type;
+      noc2_data_e_out    : out coh_noc_flit_type;
+      noc2_data_void_out : out std_logic_vector(3 downto 0);
+      noc2_stop_out      : out std_logic_vector(3 downto 0);
+      noc3_data_n_in     : in  coh_noc_flit_type;
+      noc3_data_s_in     : in  coh_noc_flit_type;
+      noc3_data_w_in     : in  coh_noc_flit_type;
+      noc3_data_e_in     : in  coh_noc_flit_type;
+      noc3_data_void_in  : in  std_logic_vector(3 downto 0);
+      noc3_stop_in       : in  std_logic_vector(3 downto 0);
+      noc3_data_n_out    : out coh_noc_flit_type;
+      noc3_data_s_out    : out coh_noc_flit_type;
+      noc3_data_w_out    : out coh_noc_flit_type;
+      noc3_data_e_out    : out coh_noc_flit_type;
+      noc3_data_void_out : out std_logic_vector(3 downto 0);
+      noc3_stop_out      : out std_logic_vector(3 downto 0);
+      noc4_data_n_in     : in  dma_noc_flit_type;
+      noc4_data_s_in     : in  dma_noc_flit_type;
+      noc4_data_w_in     : in  dma_noc_flit_type;
+      noc4_data_e_in     : in  dma_noc_flit_type;
+      noc4_data_void_in  : in  std_logic_vector(3 downto 0);
+      noc4_stop_in       : in  std_logic_vector(3 downto 0);
+      noc4_data_n_out    : out dma_noc_flit_type;
+      noc4_data_s_out    : out dma_noc_flit_type;
+      noc4_data_w_out    : out dma_noc_flit_type;
+      noc4_data_e_out    : out dma_noc_flit_type;
+      noc4_data_void_out : out std_logic_vector(3 downto 0);
+      noc4_stop_out      : out std_logic_vector(3 downto 0);
+      noc5_data_n_in     : in  misc_noc_flit_type;
+      noc5_data_s_in     : in  misc_noc_flit_type;
+      noc5_data_w_in     : in  misc_noc_flit_type;
+      noc5_data_e_in     : in  misc_noc_flit_type;
+      noc5_data_void_in  : in  std_logic_vector(3 downto 0);
+      noc5_stop_in       : in  std_logic_vector(3 downto 0);
+      noc5_data_n_out    : out misc_noc_flit_type;
+      noc5_data_s_out    : out misc_noc_flit_type;
+      noc5_data_w_out    : out misc_noc_flit_type;
+      noc5_data_e_out    : out misc_noc_flit_type;
+      noc5_data_void_out : out std_logic_vector(3 downto 0);
+      noc5_stop_out      : out std_logic_vector(3 downto 0);
+      noc6_data_n_in     : in  dma_noc_flit_type;
+      noc6_data_s_in     : in  dma_noc_flit_type;
+      noc6_data_w_in     : in  dma_noc_flit_type;
+      noc6_data_e_in     : in  dma_noc_flit_type;
+      noc6_data_void_in  : in  std_logic_vector(3 downto 0);
+      noc6_stop_in       : in  std_logic_vector(3 downto 0);
+      noc6_data_n_out    : out dma_noc_flit_type;
+      noc6_data_s_out    : out dma_noc_flit_type;
+      noc6_data_w_out    : out dma_noc_flit_type;
+      noc6_data_e_out    : out dma_noc_flit_type;
+      noc6_data_void_out : out std_logic_vector(3 downto 0);
+      noc6_stop_out      : out std_logic_vector(3 downto 0);
+      -- monitors
+      mon_noc            : out monitor_noc_vector(1 to 6);
+      -- synchronizers out to tile
+      noc1_output_port_tile   : out coh_noc_flit_type;
+      noc1_data_void_out_tile : out std_ulogic;
+      noc1_stop_in_tile       : in  std_ulogic;
+      noc2_output_port_tile   : out coh_noc_flit_type;
+      noc2_data_void_out_tile : out std_ulogic;
+      noc2_stop_in_tile       : in  std_ulogic;
+      noc3_output_port_tile   : out coh_noc_flit_type;
+      noc3_data_void_out_tile : out std_ulogic;
+      noc3_stop_in_tile       : in  std_ulogic;
+      noc4_output_port_tile   : out dma_noc_flit_type;
+      noc4_data_void_out_tile : out std_ulogic;
+      noc4_stop_in_tile       : in  std_ulogic;
+      noc5_output_port_tile   : out misc_noc_flit_type;
+      noc5_data_void_out_tile : out std_ulogic;
+      noc5_stop_in_tile       : in  std_ulogic;
+      noc6_output_port_tile   : out dma_noc_flit_type;
+      noc6_data_void_out_tile : out std_ulogic;
+      noc6_stop_in_tile       : in  std_ulogic;
+      -- tile to synchronizers in
+      noc1_input_port_tile   : in  coh_noc_flit_type;
+      noc1_data_void_in_tile : in  std_ulogic;
+      noc1_stop_out_tile     : out std_ulogic;
+      noc2_input_port_tile   : in  coh_noc_flit_type;
+      noc2_data_void_in_tile : in  std_ulogic;
+      noc2_stop_out_tile     : out std_ulogic;
+      noc3_input_port_tile   : in  coh_noc_flit_type;
+      noc3_data_void_in_tile : in  std_ulogic;
+      noc3_stop_out_tile     : out std_ulogic;
+      noc4_input_port_tile   : in  dma_noc_flit_type;
+      noc4_data_void_in_tile : in  std_ulogic;
+      noc4_stop_out_tile     : out std_ulogic;
+      noc5_input_port_tile   : in  misc_noc_flit_type;
+      noc5_data_void_in_tile : in  std_ulogic;
+      noc5_stop_out_tile     : out std_ulogic;
+      noc6_input_port_tile   : in  dma_noc_flit_type;
+      noc6_data_void_in_tile : in  std_ulogic;
+      noc6_stop_out_tile     : out std_ulogic);
+  end component noc_domain_socket;
 
 end tile;

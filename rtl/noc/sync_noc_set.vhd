@@ -282,7 +282,7 @@ begin
       PORTS    =>  PORTS,
 --      local_x  =>  local_x,
 --      local_y  =>  local_y,
-      has_sync =>  HAS_SYNC,
+      has_sync =>  0,
       this_noc_flit_size => MISC_NOC_FLIT_SIZE) --further, pass these param to module through CFG_HAS_SYNC parameter pkg file
     port map (
       clk           => clk,

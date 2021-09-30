@@ -18,18 +18,12 @@ use work.stdlib.all;
 use work.sld_devices.all;
 use work.devices.all;
 use work.gencomp.all;
---use work.monitor_pkg.all;
-use work.esp_csr_pkg.all;
---use work.jtag_pkg.all;
+use work.esp_noc_csr_pkg.all;
 use work.sldacc.all;
 use work.nocpackage.all;
---use work.cachepackage.all;
 use work.tile.all;
---use work.misc.all;
---use work.coretypes.all;
 use work.esp_acc_regmap.all;
 use work.socmap.all;
---use work.grlib_config.all;
 use work.tiles_pkg.all;
 
 entity pm2noc is
@@ -180,7 +174,7 @@ begin
 -------------------------------------------------------------------------------
 -- FSM: Messages to NoC
 -------------------------------------------------------------------------------
-  snd_fsm : process (snd_reg,
+  snd_fsm : process (snd_reg, local_x, local_y,
                      packet_out, packet_out_val, packet_out_addr,
                      noc5_stop_out) is
 

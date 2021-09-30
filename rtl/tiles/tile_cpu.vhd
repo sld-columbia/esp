@@ -50,18 +50,15 @@ entity tile_cpu is
     pllclk             : out std_ulogic;
     dco_clk            : out std_ulogic;
     dco_rstn           : out std_ulogic;
+    -- DCO config
+    dco_freq_sel       : in std_logic_vector(1 downto 0);
+    dco_div_sel        : in std_logic_vector(2 downto 0);
+    dco_fc_sel         : in std_logic_vector(5 downto 0);
+    dco_cc_sel         : in std_logic_vector(5 downto 0);
+    dco_clk_sel        : in std_ulogic;
+    dco_en             : in std_ulogic;
     cpuerr             : out std_ulogic;
-    -- Pads configuration
-    pad_cfg            : out std_logic_vector(ESP_CSR_PAD_CFG_MSB - ESP_CSR_PAD_CFG_LSB downto 0);
     -- NOC
-    local_x            : out local_yx;
-    local_y            : out local_yx;
-    noc1_mon_noc_vec   : in monitor_noc_type;
-    noc2_mon_noc_vec   : in monitor_noc_type;
-    noc3_mon_noc_vec   : in monitor_noc_type;
-    noc4_mon_noc_vec   : in monitor_noc_type;
-    noc5_mon_noc_vec   : in monitor_noc_type;
-    noc6_mon_noc_vec   : in monitor_noc_type;
     test1_output_port   : in coh_noc_flit_type;
     test1_data_void_out : in std_ulogic;
     test1_stop_in       : in std_ulogic;
@@ -98,6 +95,8 @@ entity tile_cpu is
     test6_input_port    : out dma_noc_flit_type;
     test6_data_void_in  : out std_ulogic;
     test6_stop_out      : out std_ulogic;
+    -- monitors
+    mon_noc            : in  monitor_noc_vector(1 to 6);
     mon_cache          : out monitor_cache_type;
     mon_dvfs_in        : in  monitor_dvfs_type;
     mon_dvfs           : out monitor_dvfs_type);
@@ -114,12 +113,6 @@ architecture rtl of tile_cpu is
 
   -- DCO
   signal dco_clk_int  : std_ulogic;
-  signal dco_en       : std_ulogic;
-  signal dco_clk_sel  : std_ulogic;
-  signal dco_cc_sel   : std_logic_vector(5 downto 0);
-  signal dco_fc_sel   : std_logic_vector(5 downto 0);
-  signal dco_div_sel  : std_logic_vector(2 downto 0);
-  signal dco_freq_sel : std_logic_vector(1 downto 0);
   signal dco_clk_lock : std_ulogic;
 
   -- Monitor CPU idle
@@ -256,7 +249,6 @@ architecture rtl of tile_cpu is
   -- Mon
   signal mon_cache_int  : monitor_cache_type;
   signal mon_dvfs_int   : monitor_dvfs_type;
-  signal mon_noc        : monitor_noc_vector(1 to 6);
 
   -- GRLIB parameters
   constant disas : integer := CFG_DISAS;
@@ -329,9 +321,6 @@ architecture rtl of tile_cpu is
 
 begin
 
-  local_x <= this_local_x;
-  local_y <= this_local_y;
-
   -- DCO Reset synchronizer
   rst_gen: if this_has_dco /= 0 generate
     tile_rstn : rstgen
@@ -367,13 +356,6 @@ begin
         clk_div  => pllclk,
         lock     => dco_clk_lock);
 
-    dco_freq_sel <= tile_config(ESP_CSR_DCO_CFG_MSB - DCO_CFG_LPDDR_CTRL_BITS  - 0  downto ESP_CSR_DCO_CFG_MSB - DCO_CFG_LPDDR_CTRL_BITS  - 0  - 1);
-    dco_div_sel  <= tile_config(ESP_CSR_DCO_CFG_MSB - DCO_CFG_LPDDR_CTRL_BITS  - 2  downto ESP_CSR_DCO_CFG_MSB - DCO_CFG_LPDDR_CTRL_BITS  - 2  - 2);
-    dco_fc_sel   <= tile_config(ESP_CSR_DCO_CFG_MSB - DCO_CFG_LPDDR_CTRL_BITS  - 5  downto ESP_CSR_DCO_CFG_MSB - DCO_CFG_LPDDR_CTRL_BITS  - 5  - 5);
-    dco_cc_sel   <= tile_config(ESP_CSR_DCO_CFG_MSB - DCO_CFG_LPDDR_CTRL_BITS  - 11 downto ESP_CSR_DCO_CFG_MSB - DCO_CFG_LPDDR_CTRL_BITS  - 11 - 5);
-    dco_clk_sel  <= tile_config(ESP_CSR_DCO_CFG_LSB  + 1);
-    dco_en       <= raw_rstn and tile_config(ESP_CSR_DCO_CFG_LSB);
-
     -- PLL reference clock comes from DCO
     dvfs_clk <= dco_clk_int;
     dco_clk <= dco_clk_int;
@@ -392,7 +374,6 @@ begin
   -- Tile parameters
   -----------------------------------------------------------------------------
   tile_id                <= to_integer(unsigned(tile_config(ESP_CSR_TILE_ID_MSB downto ESP_CSR_TILE_ID_LSB)));
-  pad_cfg                <= tile_config(ESP_CSR_PAD_CFG_MSB downto ESP_CSR_PAD_CFG_LSB);
 
   this_cpu_id            <= tile_cpu_id(tile_id);
   this_ariane_hartid_cfg <= tile_config(ESP_CSR_ARIANE_HARTID_MSB downto ESP_CSR_ARIANE_HARTID_LSB + 1);
@@ -1136,13 +1117,6 @@ begin
 
   mon_dvfs <= mon_dvfs_int;
 
-  mon_noc(1) <= noc1_mon_noc_vec;
-  mon_noc(2) <= noc2_mon_noc_vec;
-  mon_noc(3) <= noc3_mon_noc_vec;
-  mon_noc(4) <= noc4_mon_noc_vec;
-  mon_noc(5) <= noc5_mon_noc_vec;
-  mon_noc(6) <= noc6_mon_noc_vec;
-
   -- Memory mapped registers
   cpu_tile_csr : esp_tile_csr
     generic map(
@@ -1159,8 +1133,6 @@ begin
       mon_acc => monitor_acc_none,
       mon_dvfs => mon_dvfs_int,
       tile_config => tile_config,
-      pm_config => open,
-      pm_status => (others => (others => '0')),
       srst => srst,
       apbi => noc_apbi,
       apbo => noc_apbo(0)

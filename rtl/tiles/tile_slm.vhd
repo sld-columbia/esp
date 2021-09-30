@@ -37,8 +37,7 @@ entity tile_slm is
   generic (
     SIMULATION   : boolean := false;
     this_has_dco : integer range 0 to 1 := 0;
-    this_has_ddr : integer range 0 to 1 := 0;
-    dco_rst_cfg  : std_logic_vector(30 downto 0) := (others => '0'));
+    this_has_ddr : integer range 0 to 1 := 0);
   port (
     raw_rstn           : in  std_ulogic;
     tile_rst           : in  std_ulogic;
@@ -47,6 +46,14 @@ entity tile_slm is
     pllbypass          : in  std_ulogic;
     pllclk             : out std_ulogic;
     dco_clk            : out std_ulogic;
+    -- DCO config
+    dco_freq_sel       : in std_logic_vector(1 downto 0);
+    dco_div_sel        : in std_logic_vector(2 downto 0);
+    dco_fc_sel         : in std_logic_vector(5 downto 0);
+    dco_cc_sel         : in std_logic_vector(5 downto 0);
+    dco_clk_sel        : in std_ulogic;
+    dco_en             : in std_ulogic;  
+    dco_clk_delay_sel  : in std_logic_vector(11 downto 0);
     -- DDR controller ports (this_has_ddr -> 1)
     dco_clk_div2       : out std_ulogic;
     dco_clk_div2_90    : out std_ulogic;
@@ -54,21 +61,7 @@ entity tile_slm is
     phy_rstn           : out std_ulogic;
     ddr_ahbsi          : out ahb_slv_in_type;
     ddr_ahbso          : in  ahb_slv_out_type;
-    ddr_cfg0           : out std_logic_vector(31 downto 0);
-    ddr_cfg1           : out std_logic_vector(31 downto 0);
-    ddr_cfg2           : out std_logic_vector(31 downto 0);
-    slmddr_id          : out integer range 0 to SLMDDR_ID_RANGE_MSB;
-    -- Pads configuration
-    pad_cfg            : out std_logic_vector(ESP_CSR_PAD_CFG_MSB - ESP_CSR_PAD_CFG_LSB downto 0);
     -- NOC
-    local_x            : out local_yx;
-    local_y            : out local_yx;
-    noc1_mon_noc_vec   : in monitor_noc_type;
-    noc2_mon_noc_vec   : in monitor_noc_type;
-    noc3_mon_noc_vec   : in monitor_noc_type;
-    noc4_mon_noc_vec   : in monitor_noc_type;
-    noc5_mon_noc_vec   : in monitor_noc_type;
-    noc6_mon_noc_vec   : in monitor_noc_type;
     test1_output_port   : in coh_noc_flit_type;
     test1_data_void_out : in std_ulogic;
     test1_stop_in       : in std_ulogic;
@@ -105,8 +98,9 @@ entity tile_slm is
     test6_input_port    : out dma_noc_flit_type;
     test6_data_void_in  : out std_ulogic;
     test6_stop_out      : out std_ulogic;
-    mon_mem            : out monitor_mem_type;
-    mon_dvfs           : out monitor_dvfs_type);
+    mon_noc             : in  monitor_noc_vector(1 to 6);
+    mon_mem             : out monitor_mem_type;
+    mon_dvfs            : out monitor_dvfs_type);
 end;
 
 
@@ -116,12 +110,6 @@ architecture rtl of tile_slm is
   signal rst : std_ulogic;
 
   -- DCO
-  signal dco_en       : std_ulogic;
-  signal dco_clk_sel  : std_ulogic;
-  signal dco_cc_sel   : std_logic_vector(5 downto 0);
-  signal dco_fc_sel   : std_logic_vector(5 downto 0);
-  signal dco_div_sel  : std_logic_vector(2 downto 0);
-  signal dco_freq_sel : std_logic_vector(1 downto 0);
   signal dco_clk_lock : std_ulogic;
   signal dco_clk_int  : std_ulogic;
   signal dco_clk_int_delay      : std_ulogic;
@@ -130,7 +118,7 @@ architecture rtl of tile_slm is
   -- Delay line for DDR ui_clk delay
   signal dco_clk_div2_int    : std_logic;
   signal dco_clk_div2_90_int : std_logic;
-  signal dco_clk_delay_sel   : std_logic_vector(11 downto 0);
+
   component DELAY_CELL_GF12_C14 is
     port (
       data_in : in std_logic;
@@ -197,7 +185,6 @@ architecture rtl of tile_slm is
   -- Mon
   signal mon_mem_int  : monitor_mem_type;
   signal mon_dvfs_int : monitor_dvfs_type;
-  signal mon_noc      : monitor_noc_vector(1 to 6);
 
   -- Tile parameters
   signal tile_config : std_logic_vector(ESP_CSR_WIDTH - 1 downto 0);
@@ -224,9 +211,6 @@ architecture rtl of tile_slm is
     others => '0');
 
 begin
-
-  local_x <= this_local_x;
-  local_y <= this_local_y;
 
   -- DCO Reset synchronizer
   rst_gen : if this_has_dco /= 0 generate
@@ -318,14 +302,6 @@ begin
 
   end generate dco_gen;
 
-  -- DCO runtime reconfiguration
-  dco_freq_sel <= tile_config(ESP_CSR_DCO_CFG_MSB - DCO_CFG_LPDDR_CTRL_BITS - 0  downto ESP_CSR_DCO_CFG_MSB - DCO_CFG_LPDDR_CTRL_BITS - 0  - 1);
-  dco_div_sel  <= tile_config(ESP_CSR_DCO_CFG_MSB - DCO_CFG_LPDDR_CTRL_BITS - 2  downto ESP_CSR_DCO_CFG_MSB - DCO_CFG_LPDDR_CTRL_BITS - 2  - 2);
-  dco_fc_sel   <= tile_config(ESP_CSR_DCO_CFG_MSB - DCO_CFG_LPDDR_CTRL_BITS - 5  downto ESP_CSR_DCO_CFG_MSB - DCO_CFG_LPDDR_CTRL_BITS - 5  - 5);
-  dco_cc_sel   <= tile_config(ESP_CSR_DCO_CFG_MSB - DCO_CFG_LPDDR_CTRL_BITS - 11 downto ESP_CSR_DCO_CFG_MSB - DCO_CFG_LPDDR_CTRL_BITS - 11 - 5);
-  dco_clk_sel  <= tile_config(ESP_CSR_DCO_CFG_LSB + 1);
-  dco_en       <= raw_rstn and tile_config(ESP_CSR_DCO_CFG_LSB);
-
   no_dco_gen: if this_has_dco = 0 generate
     pllclk              <= '0';
     dco_clk_int         <= refclk;
@@ -339,20 +315,10 @@ begin
   dco_clk_div2    <= dco_clk_div2_int_delay;
   dco_clk_div2_90 <= dco_clk_div2_90_int;
 
-  -- DDR Controller configuration
-  ddr_cfg0 <= tile_config(ESP_CSR_DDR_CFG0_MSB downto ESP_CSR_DDR_CFG0_LSB);
-  ddr_cfg1 <= tile_config(ESP_CSR_DDR_CFG1_MSB downto ESP_CSR_DDR_CFG1_LSB);
-  ddr_cfg2 <= tile_config(ESP_CSR_DDR_CFG2_MSB downto ESP_CSR_DDR_CFG2_LSB);
-
-  dco_clk_delay_sel <= tile_config(ESP_CSR_DCO_CFG_MSB downto ESP_CSR_DCO_CFG_MSB - 11);
-
   -----------------------------------------------------------------------------
   -- Tile parameters
   -----------------------------------------------------------------------------
   tile_id           <= to_integer(unsigned(tile_config(ESP_CSR_TILE_ID_MSB downto ESP_CSR_TILE_ID_LSB)));
-  pad_cfg           <= tile_config(ESP_CSR_PAD_CFG_MSB downto ESP_CSR_PAD_CFG_LSB);
-
-  slmddr_id         <= tile_slmddr_id(tile_id);
 
   this_slm_id       <= tile_slm_id(tile_id);
   this_slm_hindex   <= slm_hindex(this_slm_id);
@@ -458,18 +424,10 @@ begin
   
   mon_mem <= mon_mem_int;
 
-  mon_noc(1) <= noc1_mon_noc_vec;
-  mon_noc(2) <= noc2_mon_noc_vec;
-  mon_noc(3) <= noc3_mon_noc_vec;
-  mon_noc(4) <= noc4_mon_noc_vec;
-  mon_noc(5) <= noc5_mon_noc_vec;
-  mon_noc(6) <= noc6_mon_noc_vec;
-
   -- Memory mapped registers
   slm_tile_csr : esp_tile_csr
     generic map(
-      pindex      => 0,
-      dco_rst_cfg => dco_rst_cfg)
+      pindex      => 0)
     port map(
       clk => clk,
       rstn => rst,
@@ -482,8 +440,6 @@ begin
       mon_acc => monitor_acc_none,
       mon_dvfs => mon_dvfs_int,
       tile_config => tile_config,
-      pm_config => open,
-      pm_status => (others => (others => '0')),
       srst => open,
       apbi => apbi,
       apbo => apbo(0)
