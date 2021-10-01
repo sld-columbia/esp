@@ -5,4 +5,4 @@
 set_directive_interface -mode ap_none "top" conf_info_nbursts
 
 # Insert here any custom directive
-
+set_directive_dataflow "top/go"

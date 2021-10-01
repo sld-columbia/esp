@@ -76,7 +76,6 @@ foreach dma $dma_width {
 	set_directive_data_pack "top" in1
 	set_directive_data_pack "top" out
 	set_directive_loop_tripcount -min 256 -max 256 -avg 256 "top/go"
-	set_directive_dataflow "top/go"
 	set_directive_unroll -factor ${unroll_factor} "store/store_label1"
 	set_directive_unroll -factor ${unroll_factor} "load/load_label0"
 	set_directive_array_partition -type cyclic -factor ${unroll_factor} -dim 1 "top" _inbuff
