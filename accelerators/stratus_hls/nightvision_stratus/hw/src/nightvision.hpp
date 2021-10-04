@@ -15,14 +15,13 @@
 
 class nightvision : public esp_accelerator_3P<DMA_WIDTH>
 {
-public:
-
+  public:
     // Output <-> Input
     handshake_t accel_ready;
 
     // Constructor
     SC_HAS_PROCESS(nightvision);
-    nightvision(const sc_module_name& name)
+    nightvision(const sc_module_name &name)
         : esp_accelerator_3P<DMA_WIDTH>(name)
         , cfg("config")
         , accel_ready("accel_ready")
@@ -67,8 +66,8 @@ public:
     void dwt_col_transpose(uint32_t n_Rows, uint32_t n_Cols);
 
     // -- Private local memories
-    int16_t mem_buff_1[PLM_IMG_SIZE];
-    int16_t mem_buff_2[PLM_IMG_SIZE];
+    int16_t  mem_buff_1[PLM_IMG_SIZE];
+    int16_t  mem_buff_2[PLM_IMG_SIZE];
     uint32_t mem_hist_1[PLM_HIST_SIZE];
     uint32_t mem_hist_2[PLM_HIST_SIZE];
 

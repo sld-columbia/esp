@@ -25,8 +25,8 @@ void nightvision::load_input()
 
         // User-defined reset code
         n_Images = 0;
-        n_Rows = 0;
-        n_Cols = 0;
+        n_Rows   = 0;
+        n_Cols   = 0;
 
         wait();
     }
@@ -40,30 +40,26 @@ void nightvision::load_input()
 
         // User-defined config code
         n_Images = config.n_Images;
-        n_Rows = config.n_Rows;
-        n_Cols = config.n_Cols;
+        n_Rows   = config.n_Rows;
+        n_Cols   = config.n_Cols;
     }
 
     // Load
     uint32_t dma_addr = 0;
-    for (uint16_t a = 0; a < n_Images; a++)
-    {
+    for (uint16_t a = 0; a < n_Images; a++) {
         HLS_PROTO("load-dma");
 
         this->load_store_handshake();
 
         uint32_t plm_addr = 0;
 
-        for (uint16_t b = 0; b < n_Rows; b++)
-        {
+        for (uint16_t b = 0; b < n_Rows; b++) {
 
             // Configure DMA transaction
             dma_info_t dma_info(dma_addr, n_Cols / WORDS_PER_DMA, SIZE_HWORD);
             this->dma_read_ctrl.put(dma_info);
 
-
-            for (uint32_t i = plm_addr; i < (plm_addr + n_Cols); i += WORDS_PER_DMA)
-            {
+            for (uint32_t i = plm_addr; i < (plm_addr + n_Cols); i += WORDS_PER_DMA) {
                 sc_bv<DMA_WIDTH> data = this->dma_read_chnl.get();
                 HLS_BREAK_DEP(mem_buff_1);
                 HLS_BREAK_DEP(mem_buff_2);
@@ -72,8 +68,8 @@ void nightvision::load_input()
                 for (uint8_t k = 0; k < WORDS_PER_DMA; k++) {
                     HLS_UNROLL_SIMPLE;
                     // Write to PLM
-                    mem_buff_1[i + k] = data.range(((k + 1) << MAX_PXL_WIDTH_LOG) - 1,
-						   k << MAX_PXL_WIDTH_LOG).to_uint();
+                    mem_buff_1[i + k] =
+                        data.range(((k + 1) << MAX_PXL_WIDTH_LOG) - 1, k << MAX_PXL_WIDTH_LOG).to_uint();
                     mem_buff_2[i + k] = 0;
                 }
             }
@@ -91,8 +87,6 @@ void nightvision::load_input()
     }
 }
 
-
-
 void nightvision::store_output()
 {
     uint32_t n_Images;
@@ -108,8 +102,8 @@ void nightvision::store_output()
 
         // User-defined reset code
         n_Images = 0;
-        n_Rows = 0;
-        n_Cols = 0;
+        n_Rows   = 0;
+        n_Cols   = 0;
 
         wait();
     }
@@ -123,29 +117,26 @@ void nightvision::store_output()
 
         // User-defined config code
         n_Images = config.n_Images;
-        n_Rows = config.n_Rows;
-        n_Cols = config.n_Cols;
+        n_Rows   = config.n_Rows;
+        n_Cols   = config.n_Cols;
     }
 
     // Store
     uint32_t dma_addr = 0;
-    for (uint16_t a = 0; a < n_Images; a++)
-    {
+    for (uint16_t a = 0; a < n_Images; a++) {
         HLS_PROTO("store-dma");
 
         this->store_load_handshake();
         this->store_compute_handshake();
 
         uint32_t plm_addr = 0;
-        for (uint16_t b = 0; b < n_Rows; b++)
-        {
+        for (uint16_t b = 0; b < n_Rows; b++) {
             // Configure DMA transaction
             dma_info_t dma_info(dma_addr, n_Cols / WORDS_PER_DMA, SIZE_HWORD);
 
             this->dma_write_ctrl.put(dma_info);
 
-            for (uint32_t i = plm_addr; i < (plm_addr + n_Cols); i += WORDS_PER_DMA)
-            {
+            for (uint32_t i = plm_addr; i < (plm_addr + n_Cols); i += WORDS_PER_DMA) {
                 sc_bv<DMA_WIDTH> data;
 
                 wait();
@@ -153,7 +144,7 @@ void nightvision::store_output()
                     HLS_UNROLL_SIMPLE;
                     // Read from PLM
                     data.range(((k + 1) << MAX_PXL_WIDTH_LOG) - 1, k << MAX_PXL_WIDTH_LOG) =
-			sc_bv<MAX_PXL_WIDTH>(mem_buff_1[i + k]);
+                        sc_bv<MAX_PXL_WIDTH>(mem_buff_1[i + k]);
                 }
 
                 this->dma_write_chnl.put(data);
@@ -171,7 +162,6 @@ void nightvision::store_output()
     }
 }
 
-
 void nightvision::compute_kernel()
 {
     uint32_t n_Images;
@@ -179,7 +169,7 @@ void nightvision::compute_kernel()
     uint32_t n_Cols;
     uint32_t plm_size;
     uint32_t index_last_row;
-    bool do_dwt;
+    bool     do_dwt;
 
     // Reset
     {
@@ -189,9 +179,9 @@ void nightvision::compute_kernel()
 
         // User-defined reset code
         n_Images = 0;
-        n_Rows = 0;
-        n_Cols = 0;
-	do_dwt = 0;
+        n_Rows   = 0;
+        n_Cols   = 0;
+        do_dwt   = 0;
 
         wait();
     }
@@ -203,27 +193,26 @@ void nightvision::compute_kernel()
         conf_info_t config = this->conf_info.read();
 
         // User-defined config code
-        n_Images = config.n_Images;
-        n_Rows = config.n_Rows;
-        n_Cols = config.n_Cols;
-	do_dwt = config.do_dwt;
-        plm_size = n_Cols * n_Rows;
+        n_Images       = config.n_Images;
+        n_Rows         = config.n_Rows;
+        n_Cols         = config.n_Cols;
+        do_dwt         = config.do_dwt;
+        plm_size       = n_Cols * n_Rows;
         index_last_row = plm_size - n_Cols;
     }
 
-    //Compute
-    for (uint16_t a = 0; a < n_Images; a++)
-    {
-	this->compute_load_handshake();
+    // Compute
+    for (uint16_t a = 0; a < n_Images; a++) {
+        this->compute_load_handshake();
 
         // Computing phase implementation
         kernel_nf(n_Rows, n_Cols);
         kernel_hist(n_Rows, n_Cols);
         kernel_histEq(n_Rows, n_Cols);
-	if (do_dwt)
-	    kernel_dwt(n_Rows, n_Cols);
+        if (do_dwt)
+            kernel_dwt(n_Rows, n_Cols);
 
-	this->compute_store_handshake();
+        this->compute_store_handshake();
     }
 
     // Conclude

@@ -73,8 +73,8 @@ define_system_module tb ../tb/system.cpp ../tb/sc_main.cpp
 set DEFAULT_ARGV ""
 
 foreach dma [list 64] {
-    foreach plm_img_size [list 1024] {
-	foreach max_pxl_width_log [list 3] {
+    foreach plm_img_size [list 19200] {
+	foreach max_pxl_width_log [list 4] {
 
 	    # # Skip these configurations
 	    # if {$plm_img_size == 1024 && $max_pxl_width_log == 4} {continue}
