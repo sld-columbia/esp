@@ -177,6 +177,7 @@ src/nfu/src/nfu_irf.sv
 src/nfu/src/nfu_orf.sv
 src/nfu/src/nfu_top.sv
 src/nfu/src/accelerators/fft_inline.sv
+src/nfu/src/accelerators/fftfmcw_inline.sv
 src/nfu/src/accelerators/popcount_inline.sv
 src/nfu/src/accelerators/viterbi_inline.sv
 src/nfu_wrap.sv
