@@ -144,6 +144,9 @@ architecture rtl of asic_tile_acc is
   signal dco_fc_sel   : std_logic_vector(5 downto 0);
   signal dco_div_sel  : std_logic_vector(2 downto 0);
   signal dco_freq_sel : std_logic_vector(1 downto 0);
+
+  signal ext_dco_cc_sel     : std_logic_vector(5 downto 0);
+  signal ext_ldo_res_sel    : std_logic_vector(7 downto 0);
   
   -- Tile parameters
   signal tile_config : std_logic_vector(ESP_CSR_WIDTH - 1 downto 0);
@@ -356,6 +359,8 @@ begin
       dco_cc_sel          => dco_cc_sel,
       dco_clk_sel         => dco_clk_sel,
       dco_en              => dco_en,
+      ext_dco_cc_sel      => ext_dco_cc_sel,
+      ext_ldo_res_sel     => ext_ldo_res_sel,
       test1_output_port   => test1_output_port_s,
       test1_data_void_out => test1_data_void_out_s,
       test1_stop_in       => test1_stop_out_s,
@@ -422,6 +427,8 @@ begin
       dco_cc_sel              => dco_cc_sel,
       dco_clk_sel             => dco_clk_sel,
       dco_en                  => dco_en,
+      ext_dco_cc_sel          => ext_dco_cc_sel,
+      ext_ldo_res_sel         => ext_ldo_res_sel,
       -- pad config
       pad_cfg                 => pad_cfg,
       -- NoC

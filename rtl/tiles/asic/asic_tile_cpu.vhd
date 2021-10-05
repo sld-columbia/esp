@@ -423,6 +423,8 @@ begin
       dco_cc_sel              => dco_cc_sel,
       dco_clk_sel             => dco_clk_sel,
       dco_en                  => dco_en,
+      ext_dco_cc_sel          => (others => '0'),
+      ext_ldo_res_sel         => (others => '0'),
       -- pad config
       pad_cfg                 => pad_cfg,
       -- NoC

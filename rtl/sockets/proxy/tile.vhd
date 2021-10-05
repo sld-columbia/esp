@@ -1009,6 +1009,8 @@ package tile is
       dco_cc_sel         : out  std_logic_vector(5 downto 0);
       dco_clk_sel        : out  std_ulogic;
       dco_en             : out  std_ulogic;
+      ext_dco_cc_sel     : in  std_logic_vector(5 downto 0);
+      ext_ldo_res_sel    : in  std_logic_vector(7 downto 0);
       -- pad config
       pad_cfg            : out std_logic_vector(ESP_CSR_PAD_CFG_MSB - ESP_CSR_PAD_CFG_LSB downto 0);
       -- NoC

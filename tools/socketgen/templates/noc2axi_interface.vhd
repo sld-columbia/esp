@@ -54,6 +54,8 @@ use std.textio.all;
     local_y   : in  local_yx;
     local_x   : in  local_yx;
     tile_id   : in  integer;
+    ext_dco_cc_sel  : out std_logic_vector(5 downto 0);
+    ext_ldo_res_sel : out std_logic_vector(7 downto 0);
     paddr     : in  integer range 0 to 4095;
     pmask     : in  integer range 0 to 4095;
     paddr_ext : in  integer range 0 to 4095;

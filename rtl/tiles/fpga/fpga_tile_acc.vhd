@@ -367,6 +367,8 @@ begin
       dco_cc_sel          => dco_cc_sel,
       dco_clk_sel         => dco_clk_sel,
       dco_en              => dco_en,
+      ext_dco_cc_sel      => open,
+      ext_ldo_res_sel     => open,
       test1_output_port   => test1_output_port_s,
       test1_data_void_out => test1_data_void_out_s,
       test1_stop_in       => test1_stop_out_s,
@@ -433,6 +435,8 @@ begin
       dco_cc_sel              => dco_cc_sel,
       dco_clk_sel             => dco_clk_sel,
       dco_en                  => dco_en,
+      ext_dco_cc_sel          => (others => '0'),
+      ext_ldo_res_sel         => (others => '0'),
       -- pad config
       pad_cfg                 => open,
       -- NoC

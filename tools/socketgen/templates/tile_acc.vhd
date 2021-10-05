@@ -52,6 +52,8 @@ entity tile_acc is
     dco_cc_sel         : in std_logic_vector(5 downto 0);
     dco_clk_sel        : in std_ulogic;
     dco_en             : in std_ulogic;  
+    ext_dco_cc_sel     : out std_logic_vector(5 downto 0);
+    ext_ldo_res_sel    : out std_logic_vector(7 downto 0);
     -- NOC
     test1_output_port   : in noc_flit_type;
     test1_data_void_out : in std_ulogic;

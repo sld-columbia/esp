@@ -49,6 +49,8 @@ use std.textio.all;
     refclk    : in  std_ulogic;
     pllbypass : in  std_ulogic;
     pllclk    : out std_ulogic;
+    ext_dco_cc_sel  : out std_logic_vector(5 downto 0);
+    ext_ldo_res_sel : out std_logic_vector(7 downto 0);
     local_y   : in  local_yx;
     local_x   : in  local_yx;
     tile_id   : in  integer;
@@ -268,6 +270,10 @@ end;
   attribute keep of pllclk_int : signal is "true";
 
 begin
+
+  -- unused DCO and LDO selectors
+  ext_dco_cc_sel  <= (others => '0');
+  ext_ldo_res_sel <= (others => '0');
 
   interrupt_ack_rdreq <= '0';
   

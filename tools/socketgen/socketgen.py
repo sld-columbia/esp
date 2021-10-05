@@ -158,6 +158,8 @@ def write_axi_acc_interface(f, acc, dma_width):
     f.write("  " + clk + " : in std_logic;\n")
   for rst in acc.resets:
     f.write("  " + rst + " : in std_logic;\n")
+  f.write("  ext_dco_cc_sel  : out std_logic_vector(5 downto 0);\n")
+  f.write("  ext_ldo_res_sel : out std_logic_vector(7 downto 0);\n")
   f.write("  " + acc.apb_prefix + "psel : in std_ulogic;\n")
   f.write("  " + acc.apb_prefix + "penable : in std_ulogic;\n")
   f.write("  " + acc.apb_prefix + "paddr : in std_logic_vector(31 downto 0);\n")
@@ -310,6 +312,8 @@ def write_axi_acc_port_map(f, acc, dma_width):
     f.write("      " + clk + " => clk,\n")
   for rst in acc.resets:
     f.write("      " + rst + " => rst,\n")
+  f.write("      ext_dco_cc_sel => ext_dco_cc_sel,\n")
+  f.write("      ext_ldo_res_sel => ext_ldo_res_sel,\n")
   bind_apb3(f, acc.apb_prefix)
   bind_axi(f, acc, dma_width)
   if acc.interrupt != "":
@@ -1620,6 +1624,8 @@ def gen_interfaces(accelerator_list, axi_accelerator_list, dma_width, template_d
         f.write("      refclk            : in  std_ulogic;\n")
         f.write("      pllbypass         : in  std_ulogic;\n")
         f.write("      pllclk            : out std_ulogic;\n")
+        f.write("      ext_dco_cc_sel    : out std_logic_vector(5 downto 0);\n")
+        f.write("      ext_ldo_res_sel   : out std_logic_vector(7 downto 0);\n")
         f.write("      local_y           : in  local_yx;\n")
         f.write("      local_x           : in  local_yx;\n")
         f.write("      tile_id           : in  integer;\n")
@@ -1762,6 +1768,8 @@ def gen_tile_acc(accelerator_list, axi_acceleratorlist, template_dir, out_dir):
           f.write("        refclk            => dvfs_clk,\n")
           f.write("        pllbypass         => pllbypass,\n")
           f.write("        pllclk            => clk_feedthru,\n")
+          f.write("        ext_dco_cc_sel    => ext_dco_cc_sel,\n")
+          f.write("        ext_ldo_res_sel   => ext_ldo_res_sel,\n")
           f.write("        local_y           => this_local_y,\n")
           f.write("        local_x           => this_local_x,\n")
           f.write("        tile_id           => tile_id,\n")

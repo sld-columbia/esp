@@ -128,10 +128,14 @@ architecture rtl of esp_tile_csr is
     "11" & "100" & "000000" & "100101" & "0" & "1";
   -- FREQ_SEL    DIV_SEL    FC_SEL      CC_SEL    CLK_SEL   EN
 
-  constant DEFAULT_DCO_CFG : std_logic_vector(22 downto 0) :=
-    "0000" & "11" & "100" & "000000" & "100101" & "0" & "1";
-  --  reserved LPDDR   FREQ_SEL    DIV_SEL    FC_SEL      CC_SEL    CLK_SEL   EN
+  constant DEFAULT_DCO_CFG : std_logic_vector(23 downto 0) :=
+    "0" & "0000" & "11" & "100" & "000000" & "100101" & "0" & "1";
+  --  CC_SEL_MUX   reserved LPDDR   FREQ_SEL    DIV_SEL    FC_SEL      CC_SEL    CLK_SEL   EN
 
+  constant DEFAULT_LDO_CFG : std_logic_vector(8 downto 0) :=
+    "0" & "00000000";
+  --  RES_SEL_MUX   RES_SEL
+  
   constant DEFAULT_PAD_CFG : std_logic_vector(2 downto 0) :=
     "0" & "11";
   -- Slew rate   Drive strength
@@ -148,16 +152,16 @@ architecture rtl of esp_tile_csr is
       return DEFAULT_DCO_CFG;
     else
       -- Use override value at reset (used for ASIC DDR tiles)
-      return dco_rst_cfg;
+      return "0" & dco_rst_cfg;
     end if;
   end function;
 
-  constant RESET_DCO_CFG : std_logic_vector(22 downto 0) := dco_reset_config_ovr;
+  constant RESET_DCO_CFG : std_logic_vector(23 downto 0) := dco_reset_config_ovr;
 
   constant DEFAULT_CONFIG : std_logic_vector(ESP_CSR_WIDTH - 1 downto 0) :=
-    DEFAULT_TILE_ID & DEFAULT_ACC_COH & DEFAULT_DDR_CFG2 & DEFAULT_DDR_CFG1 & DEFAULT_DDR_CFG0 & DEFAULT_CPU_LOC_OVR &
-    DEFAULT_ARIANE_HARTID & DEFAULT_MDC_SCALER_CFG & DEFAULT_DCO_NOC_CFG & RESET_DCO_CFG & DEFAULT_PAD_CFG &
-    DEFAULT_TILE_ID & "0";
+    DEFAULT_LDO_CFG & DEFAULT_TILE_ID & DEFAULT_ACC_COH & DEFAULT_DDR_CFG2 & DEFAULT_DDR_CFG1 &
+    DEFAULT_DDR_CFG0 & DEFAULT_CPU_LOC_OVR & DEFAULT_ARIANE_HARTID & DEFAULT_MDC_SCALER_CFG &
+    DEFAULT_DCO_NOC_CFG & RESET_DCO_CFG & DEFAULT_PAD_CFG & DEFAULT_TILE_ID & "0";
 
   signal csr_addr : integer range 0 to 31;
 
@@ -215,6 +219,8 @@ begin
           readdata(ESP_CSR_DCO_CFG_MSB - ESP_CSR_DCO_CFG_LSB downto 0) <= config_r(ESP_CSR_DCO_CFG_MSB downto ESP_CSR_DCO_CFG_LSB);
         when ESP_CSR_DCO_NOC_CFG_ADDR =>
           readdata(ESP_CSR_DCO_NOC_CFG_MSB - ESP_CSR_DCO_NOC_CFG_LSB downto 0) <= config_r(ESP_CSR_DCO_NOC_CFG_MSB downto ESP_CSR_DCO_NOC_CFG_LSB);
+        when ESP_CSR_LDO_CFG_ADDR =>
+          readdata(ESP_CSR_LDO_CFG_MSB - ESP_CSR_LDO_CFG_LSB downto 0) <= config_r(ESP_CSR_LDO_CFG_MSB downto ESP_CSR_LDO_CFG_LSB);
         when ESP_CSR_MDC_SCALER_CFG_ADDR =>
           readdata(ESP_CSR_MDC_SCALER_CFG_MSB - ESP_CSR_MDC_SCALER_CFG_LSB downto 0) <= config_r(ESP_CSR_MDC_SCALER_CFG_MSB downto ESP_CSR_MDC_SCALER_CFG_LSB);
         when ESP_CSR_ARIANE_HARTID_ADDR =>
@@ -281,6 +287,8 @@ begin
             config_r(ESP_CSR_DCO_CFG_MSB downto ESP_CSR_DCO_CFG_LSB) <= apbi.pwdata(ESP_CSR_DCO_CFG_MSB - ESP_CSR_DCO_CFG_LSB downto 0);
           when ESP_CSR_DCO_NOC_CFG_ADDR =>
             config_r(ESP_CSR_DCO_NOC_CFG_MSB downto ESP_CSR_DCO_NOC_CFG_LSB) <= apbi.pwdata(ESP_CSR_DCO_NOC_CFG_MSB - ESP_CSR_DCO_NOC_CFG_LSB downto 0);
+          when ESP_CSR_LDO_CFG_ADDR =>
+            config_r(ESP_CSR_LDO_CFG_MSB downto ESP_CSR_LDO_CFG_LSB) <= apbi.pwdata(ESP_CSR_LDO_CFG_MSB - ESP_CSR_LDO_CFG_LSB downto 0);
           when ESP_CSR_MDC_SCALER_CFG_ADDR =>
             config_r(ESP_CSR_MDC_SCALER_CFG_MSB downto ESP_CSR_MDC_SCALER_CFG_LSB) <= apbi.pwdata(ESP_CSR_MDC_SCALER_CFG_MSB - ESP_CSR_MDC_SCALER_CFG_LSB downto 0);
           when ESP_CSR_ARIANE_HARTID_ADDR =>

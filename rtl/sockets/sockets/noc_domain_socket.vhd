@@ -57,6 +57,8 @@ entity noc_domain_socket is
     dco_cc_sel         : out std_logic_vector(5 downto 0);
     dco_clk_sel        : out std_ulogic;
     dco_en             : out std_ulogic;
+    ext_dco_cc_sel     : in  std_logic_vector(5 downto 0);
+    ext_ldo_res_sel    : in  std_logic_vector(7 downto 0);
     -- pad config
     pad_cfg            : out std_logic_vector(ESP_CSR_PAD_CFG_MSB - ESP_CSR_PAD_CFG_LSB downto 0);
     -- NoC
@@ -192,6 +194,13 @@ architecture rtl of noc_domain_socket is
   signal pm_config : pm_config_type;
   signal pm_status : pm_status_type;
 
+  -- DCO and LDO
+  signal loc_dco_cc_sel               : std_logic_vector(5 downto 0);
+  signal loc_ldo_res_sel              : std_logic_vector(7 downto 0);
+  signal dco_cc_sel_mux               : std_ulogic;
+  signal ldo_res_sel_mux              : std_ulogic;
+  signal ldo_res_sel_to_power_headers : std_logic_vector(7 downto 0);
+
   -- Tile parameters
   signal tile_config_int : std_logic_vector(ESP_CSR_WIDTH - 1 downto 0);
 
@@ -309,97 +318,102 @@ architecture rtl of noc_domain_socket is
   signal noc5_output_port_tile_int   : misc_noc_flit_type;
   signal noc6_output_port            : noc_flit_type;
 
-  attribute mark_debug                                : string;
+  attribute syn_keep : string;
 
-  attribute mark_debug of this_local_y : signal is "true";
-  attribute mark_debug of this_local_x : signal is "true";
-  attribute mark_debug of tile_config_int : signal is "true";
-  attribute mark_debug of tile_id : signal is "true";
-  attribute mark_debug of apbi : signal is "true";
-  attribute mark_debug of apbo : signal is "true";
-  attribute mark_debug of pready : signal is "true";
-  attribute mark_debug of pready_noc : signal is "true";
-  attribute mark_debug of apb_snd_wrreq : signal is "true";
-  attribute mark_debug of apb_rcv_rdreq : signal is "true";
-  attribute mark_debug of noc1_stop_in_s              : signal is "true";
-  attribute mark_debug of noc1_stop_out_s             : signal is "true";
-  attribute mark_debug of noc1_stop_in_noc            : signal is "true";
-  attribute mark_debug of noc1_stop_out_noc           : signal is "true";
-  attribute mark_debug of noc1_data_void_in_s         : signal is "true";
-  attribute mark_debug of noc1_data_void_out_s        : signal is "true";
-  attribute mark_debug of noc1_data_void_in_noc       : signal is "true";
-  attribute mark_debug of noc1_data_void_out_noc      : signal is "true";
-  attribute mark_debug of noc2_stop_in_s              : signal is "true";
-  attribute mark_debug of noc2_stop_out_s             : signal is "true";
-  attribute mark_debug of noc2_stop_in_noc            : signal is "true";
-  attribute mark_debug of noc2_stop_out_noc           : signal is "true";
-  attribute mark_debug of noc2_data_void_in_s         : signal is "true";
-  attribute mark_debug of noc2_data_void_out_s        : signal is "true";
-  attribute mark_debug of noc2_data_void_in_noc       : signal is "true";
-  attribute mark_debug of noc2_data_void_out_noc      : signal is "true";
-  attribute mark_debug of noc3_stop_in_s              : signal is "true";
-  attribute mark_debug of noc3_stop_out_s             : signal is "true";
-  attribute mark_debug of noc3_stop_in_noc            : signal is "true";
-  attribute mark_debug of noc3_stop_out_noc           : signal is "true";
-  attribute mark_debug of noc3_data_void_in_s         : signal is "true";
-  attribute mark_debug of noc3_data_void_out_s        : signal is "true";
-  attribute mark_debug of noc3_data_void_in_noc       : signal is "true";
-  attribute mark_debug of noc3_data_void_out_noc      : signal is "true";
-  attribute mark_debug of noc4_stop_in_s              : signal is "true";
-  attribute mark_debug of noc4_stop_out_s             : signal is "true";
-  attribute mark_debug of noc4_stop_in_noc            : signal is "true";
-  attribute mark_debug of noc4_stop_out_noc           : signal is "true";
-  attribute mark_debug of noc4_data_void_in_s         : signal is "true";
-  attribute mark_debug of noc4_data_void_out_s        : signal is "true";
-  attribute mark_debug of noc4_data_void_in_noc       : signal is "true";
-  attribute mark_debug of noc4_data_void_out_noc      : signal is "true";
-  attribute mark_debug of noc5_stop_in_s              : signal is "true";
-  attribute mark_debug of noc5_stop_out_s             : signal is "true";
-  attribute mark_debug of noc5_stop_in_noc            : signal is "true";
-  attribute mark_debug of noc5_stop_in_pm             : signal is "true";
-  attribute mark_debug of noc5_stop_in_csr            : signal is "true";
-  attribute mark_debug of noc5_stop_in_tile_int       : signal is "true";
-  attribute mark_debug of noc5_stop_out_noc           : signal is "true";
-  attribute mark_debug of noc5_stop_out_pm            : signal is "true";
-  attribute mark_debug of noc5_stop_out_csr           : signal is "true";
-  attribute mark_debug of noc5_stop_out_tile_int      : signal is "true";
-  attribute mark_debug of noc5_data_void_in_s         : signal is "true";
-  attribute mark_debug of noc5_data_void_out_s        : signal is "true";
-  attribute mark_debug of noc5_data_void_in_noc       : signal is "true";
-  attribute mark_debug of noc5_data_void_in_pm        : signal is "true";
-  attribute mark_debug of noc5_data_void_in_csr       : signal is "true";
-  attribute mark_debug of noc5_data_void_in_tile_int  : signal is "true";
-  attribute mark_debug of noc5_data_void_out_noc      : signal is "true";
-  attribute mark_debug of noc5_data_void_out_pm       : signal is "true";
-  attribute mark_debug of noc5_data_void_out_csr      : signal is "true";
-  attribute mark_debug of noc5_data_void_out_tile_int : signal is "true";
-  attribute mark_debug of noc6_stop_in_s              : signal is "true";
-  attribute mark_debug of noc6_stop_out_s             : signal is "true";
-  attribute mark_debug of noc6_stop_in_noc            : signal is "true";
-  attribute mark_debug of noc6_stop_out_noc           : signal is "true";
-  attribute mark_debug of noc6_data_void_in_s         : signal is "true";
-  attribute mark_debug of noc6_data_void_out_s        : signal is "true";
-  attribute mark_debug of noc6_data_void_in_noc       : signal is "true";
-  attribute mark_debug of noc6_data_void_out_noc      : signal is "true";
-  attribute mark_debug of noc1_input_port             : signal is "true";
-  attribute mark_debug of noc2_input_port             : signal is "true";
-  attribute mark_debug of noc3_input_port             : signal is "true";
-  attribute mark_debug of noc4_input_port             : signal is "true";
-  attribute mark_debug of noc5_input_port             : signal is "true";
-  attribute mark_debug of noc5_input_port_pm          : signal is "true";
-  attribute mark_debug of noc5_input_port_csr         : signal is "true";
-  attribute mark_debug of noc5_input_port_tile_int    : signal is "true";
-  attribute mark_debug of noc6_input_port             : signal is "true";
-  attribute mark_debug of noc1_output_port            : signal is "true";
-  attribute mark_debug of noc2_output_port            : signal is "true";
-  attribute mark_debug of noc3_output_port            : signal is "true";
-  attribute mark_debug of noc4_output_port            : signal is "true";
-  attribute mark_debug of noc5_output_port            : signal is "true";
-  attribute mark_debug of noc5_output_port_pm         : signal is "true";
-  attribute mark_debug of noc5_output_port_csr        : signal is "true";
-  attribute mark_debug of noc5_output_port_tile_int   : signal is "true";
-  attribute mark_debug of noc6_output_port            : signal is "true";
-  
+  attribute syn_keep of ldo_res_sel_to_power_headers : signal is "true";
+
+  attribute keep : string;
+
+  attribute keep of ldo_res_sel_to_power_headers : signal is "true";
+  attribute keep of this_local_y                 : signal is "true";
+  attribute keep of this_local_x                 : signal is "true";
+  attribute keep of tile_config_int              : signal is "true";
+  attribute keep of tile_id                      : signal is "true";
+  attribute keep of apbi                         : signal is "true";
+  attribute keep of apbo                         : signal is "true";
+  attribute keep of pready                       : signal is "true";
+  attribute keep of pready_noc                   : signal is "true";
+  attribute keep of apb_snd_wrreq                : signal is "true";
+  attribute keep of apb_rcv_rdreq                : signal is "true";
+  attribute keep of noc1_stop_in_s               : signal is "true";
+  attribute keep of noc1_stop_out_s              : signal is "true";
+  attribute keep of noc1_stop_in_noc             : signal is "true";
+  attribute keep of noc1_stop_out_noc            : signal is "true";
+  attribute keep of noc1_data_void_in_s          : signal is "true";
+  attribute keep of noc1_data_void_out_s         : signal is "true";
+  attribute keep of noc1_data_void_in_noc        : signal is "true";
+  attribute keep of noc1_data_void_out_noc       : signal is "true";
+  attribute keep of noc2_stop_in_s               : signal is "true";
+  attribute keep of noc2_stop_out_s              : signal is "true";
+  attribute keep of noc2_stop_in_noc             : signal is "true";
+  attribute keep of noc2_stop_out_noc            : signal is "true";
+  attribute keep of noc2_data_void_in_s          : signal is "true";
+  attribute keep of noc2_data_void_out_s         : signal is "true";
+  attribute keep of noc2_data_void_in_noc        : signal is "true";
+  attribute keep of noc2_data_void_out_noc       : signal is "true";
+  attribute keep of noc3_stop_in_s               : signal is "true";
+  attribute keep of noc3_stop_out_s              : signal is "true";
+  attribute keep of noc3_stop_in_noc             : signal is "true";
+  attribute keep of noc3_stop_out_noc            : signal is "true";
+  attribute keep of noc3_data_void_in_s          : signal is "true";
+  attribute keep of noc3_data_void_out_s         : signal is "true";
+  attribute keep of noc3_data_void_in_noc        : signal is "true";
+  attribute keep of noc3_data_void_out_noc       : signal is "true";
+  attribute keep of noc4_stop_in_s               : signal is "true";
+  attribute keep of noc4_stop_out_s              : signal is "true";
+  attribute keep of noc4_stop_in_noc             : signal is "true";
+  attribute keep of noc4_stop_out_noc            : signal is "true";
+  attribute keep of noc4_data_void_in_s          : signal is "true";
+  attribute keep of noc4_data_void_out_s         : signal is "true";
+  attribute keep of noc4_data_void_in_noc        : signal is "true";
+  attribute keep of noc4_data_void_out_noc       : signal is "true";
+  attribute keep of noc5_stop_in_s               : signal is "true";
+  attribute keep of noc5_stop_out_s              : signal is "true";
+  attribute keep of noc5_stop_in_noc             : signal is "true";
+  attribute keep of noc5_stop_in_pm              : signal is "true";
+  attribute keep of noc5_stop_in_csr             : signal is "true";
+  attribute keep of noc5_stop_in_tile_int        : signal is "true";
+  attribute keep of noc5_stop_out_noc            : signal is "true";
+  attribute keep of noc5_stop_out_pm             : signal is "true";
+  attribute keep of noc5_stop_out_csr            : signal is "true";
+  attribute keep of noc5_stop_out_tile_int       : signal is "true";
+  attribute keep of noc5_data_void_in_s          : signal is "true";
+  attribute keep of noc5_data_void_out_s         : signal is "true";
+  attribute keep of noc5_data_void_in_noc        : signal is "true";
+  attribute keep of noc5_data_void_in_pm         : signal is "true";
+  attribute keep of noc5_data_void_in_csr        : signal is "true";
+  attribute keep of noc5_data_void_in_tile_int   : signal is "true";
+  attribute keep of noc5_data_void_out_noc       : signal is "true";
+  attribute keep of noc5_data_void_out_pm        : signal is "true";
+  attribute keep of noc5_data_void_out_csr       : signal is "true";
+  attribute keep of noc5_data_void_out_tile_int  : signal is "true";
+  attribute keep of noc6_stop_in_s               : signal is "true";
+  attribute keep of noc6_stop_out_s              : signal is "true";
+  attribute keep of noc6_stop_in_noc             : signal is "true";
+  attribute keep of noc6_stop_out_noc            : signal is "true";
+  attribute keep of noc6_data_void_in_s          : signal is "true";
+  attribute keep of noc6_data_void_out_s         : signal is "true";
+  attribute keep of noc6_data_void_in_noc        : signal is "true";
+  attribute keep of noc6_data_void_out_noc       : signal is "true";
+  attribute keep of noc1_input_port              : signal is "true";
+  attribute keep of noc2_input_port              : signal is "true";
+  attribute keep of noc3_input_port              : signal is "true";
+  attribute keep of noc4_input_port              : signal is "true";
+  attribute keep of noc5_input_port              : signal is "true";
+  attribute keep of noc5_input_port_pm           : signal is "true";
+  attribute keep of noc5_input_port_csr          : signal is "true";
+  attribute keep of noc5_input_port_tile_int     : signal is "true";
+  attribute keep of noc6_input_port              : signal is "true";
+  attribute keep of noc1_output_port             : signal is "true";
+  attribute keep of noc2_output_port             : signal is "true";
+  attribute keep of noc3_output_port             : signal is "true";
+  attribute keep of noc4_output_port             : signal is "true";
+  attribute keep of noc5_output_port             : signal is "true";
+  attribute keep of noc5_output_port_pm          : signal is "true";
+  attribute keep of noc5_output_port_csr         : signal is "true";
+  attribute keep of noc5_output_port_tile_int    : signal is "true";
+  attribute keep of noc6_output_port             : signal is "true";
+
 begin  -- architecture rtl
 
   -----------------------------------------------------------------------------
@@ -748,11 +762,11 @@ begin  -- architecture rtl
 
   tile_config <= tile_config_int;
 
-  is_tile_io_gen: if is_tile_io = true generate
+  is_tile_io_gen : if is_tile_io = true generate
     tile_id <= io_tile_id;
   end generate;
-  is_not_tile_io_gen: if is_tile_io = false generate
-    tile_id <= to_integer(unsigned(tile_config_int(ESP_CSR_TILE_ID_NOC_MSB downto ESP_CSR_TILE_ID_NOC_LSB)));    
+  is_not_tile_io_gen : if is_tile_io = false generate
+    tile_id <= to_integer(unsigned(tile_config_int(ESP_CSR_TILE_ID_NOC_MSB downto ESP_CSR_TILE_ID_NOC_LSB)));
   end generate;
 
   pad_cfg <= tile_config_int(ESP_CSR_PAD_CFG_MSB downto ESP_CSR_PAD_CFG_LSB);
@@ -770,12 +784,19 @@ begin  -- architecture rtl
   this_local_y <= tile_y(tile_id);
   this_local_x <= tile_x(tile_id);
 
-  dco_freq_sel <= tile_config_int(ESP_CSR_DCO_CFG_MSB - 4 - 0 downto ESP_CSR_DCO_CFG_MSB - 4 - 0 - 1);
-  dco_div_sel  <= tile_config_int(ESP_CSR_DCO_CFG_MSB - 4 - 2 downto ESP_CSR_DCO_CFG_MSB - 4 - 2 - 2);
-  dco_fc_sel   <= tile_config_int(ESP_CSR_DCO_CFG_MSB - 4 - 5 downto ESP_CSR_DCO_CFG_MSB - 4 - 5 - 5);
-  dco_cc_sel   <= tile_config_int(ESP_CSR_DCO_CFG_MSB - 4 - 11 downto ESP_CSR_DCO_CFG_MSB - 4 - 11 - 5);
+  dco_freq_sel <= tile_config_int(ESP_CSR_DCO_CFG_MSB - 5 - 0 downto ESP_CSR_DCO_CFG_MSB - 5 - 0 - 1);
+  dco_div_sel  <= tile_config_int(ESP_CSR_DCO_CFG_MSB - 5 - 2 downto ESP_CSR_DCO_CFG_MSB - 5 - 2 - 2);
+  dco_fc_sel   <= tile_config_int(ESP_CSR_DCO_CFG_MSB - 5 - 5 downto ESP_CSR_DCO_CFG_MSB - 5 - 5 - 5);
   dco_clk_sel  <= tile_config_int(ESP_CSR_DCO_CFG_LSB + 1);
   dco_en       <= raw_rstn and tile_config_int(ESP_CSR_DCO_CFG_LSB);
+
+  dco_cc_sel_mux <= tile_config_int(ESP_CSR_DCO_CFG_MSB);
+  loc_dco_cc_sel <= tile_config_int(ESP_CSR_DCO_CFG_MSB - 5 - 11 downto ESP_CSR_DCO_CFG_MSB - 5 - 11 - 5);
+  dco_cc_sel     <= loc_dco_cc_sel when dco_cc_sel_mux = '0' else ext_dco_cc_sel;
+
+  ldo_res_sel_mux              <= tile_config_int(ESP_CSR_LDO_CFG_MSB);
+  loc_ldo_res_sel              <= tile_config_int(ESP_CSR_LDO_CFG_MSB - 1 downto ESP_CSR_LDO_CFG_LSB);
+  ldo_res_sel_to_power_headers <= loc_ldo_res_sel when ldo_res_sel_mux = '0' else ext_ldo_res_sel;
 
   -- Using only one apbo signal
   no_apb : for i in 0 to NAPBSLV - 1 generate
