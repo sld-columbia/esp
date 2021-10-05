@@ -187,24 +187,25 @@ architecture rtl of asic_tile_mem_ddr is
   -- FREQ_SEL    DIV_SEL    FC_SEL      CC_SEL    CLK_SEL   EN
 
   -- Tile clock and reset (only for I/O tile)
-  signal raw_rstn     : std_ulogic;
-  signal noc_rstn     : std_ulogic;
-  signal dco_rstn     : std_ulogic;
-  signal dco_clk      : std_ulogic;
+  signal raw_rstn : std_ulogic;
+  signal noc_rstn : std_ulogic;
+  signal dco_rstn : std_ulogic;
+  signal dco_clk  : std_ulogic;
 
   -- DCO config
-  signal dco_en       : std_ulogic;
-  signal dco_clk_sel  : std_ulogic;
-  signal dco_cc_sel   : std_logic_vector(5 downto 0);
-  signal dco_fc_sel   : std_logic_vector(5 downto 0);
-  signal dco_div_sel  : std_logic_vector(2 downto 0);
-  signal dco_freq_sel : std_logic_vector(1 downto 0);
+  signal dco_en            : std_ulogic;
+  signal dco_clk_sel       : std_ulogic;
+  signal dco_cc_sel        : std_logic_vector(5 downto 0);
+  signal dco_fc_sel        : std_logic_vector(5 downto 0);
+  signal dco_div_sel       : std_logic_vector(2 downto 0);
+  signal dco_freq_sel      : std_logic_vector(1 downto 0);
+  signal dco_clk_delay_sel : std_logic_vector(3 downto 0);
 
   signal phy_rstn, phy_raw_rstn : std_logic;
-  
+
   -- Tile parameters
   signal tile_config : std_logic_vector(ESP_CSR_WIDTH - 1 downto 0);
-  
+
   -- Tile NoC interface
   signal test_rstn             : std_ulogic;
   signal test1_output_port_s   : noc_flit_type;
@@ -243,7 +244,7 @@ architecture rtl of asic_tile_mem_ddr is
   signal test6_input_port_s    : noc_flit_type;
   signal test6_data_void_in_s  : std_ulogic;
   signal test6_stop_out_s      : std_ulogic;
-  
+
   -- Noc interface
   signal noc1_stop_in_tile       : std_ulogic;
   signal noc1_stop_out_tile      : std_ulogic;
@@ -269,26 +270,26 @@ architecture rtl of asic_tile_mem_ddr is
   signal noc6_stop_out_tile      : std_ulogic;
   signal noc6_data_void_in_tile  : std_ulogic;
   signal noc6_data_void_out_tile : std_ulogic;
-  signal noc1_input_port_tile        : noc_flit_type;
-  signal noc2_input_port_tile        : noc_flit_type;
-  signal noc3_input_port_tile        : noc_flit_type;
-  signal noc4_input_port_tile        : noc_flit_type;
-  signal noc5_input_port_tile        : misc_noc_flit_type;
-  signal noc6_input_port_tile        : noc_flit_type;
-  signal noc1_output_port_tile       : noc_flit_type;
-  signal noc2_output_port_tile       : noc_flit_type;
-  signal noc3_output_port_tile       : noc_flit_type;
-  signal noc4_output_port_tile       : noc_flit_type;
-  signal noc5_output_port_tile       : misc_noc_flit_type;
-  signal noc6_output_port_tile       : noc_flit_type;
+  signal noc1_input_port_tile    : noc_flit_type;
+  signal noc2_input_port_tile    : noc_flit_type;
+  signal noc3_input_port_tile    : noc_flit_type;
+  signal noc4_input_port_tile    : noc_flit_type;
+  signal noc5_input_port_tile    : misc_noc_flit_type;
+  signal noc6_input_port_tile    : noc_flit_type;
+  signal noc1_output_port_tile   : noc_flit_type;
+  signal noc2_output_port_tile   : noc_flit_type;
+  signal noc3_output_port_tile   : noc_flit_type;
+  signal noc4_output_port_tile   : noc_flit_type;
+  signal noc5_output_port_tile   : misc_noc_flit_type;
+  signal noc6_output_port_tile   : noc_flit_type;
 
   -- NoC monitors
-  signal noc1_mon_noc_vec_int  : monitor_noc_type;
-  signal noc2_mon_noc_vec_int  : monitor_noc_type;
-  signal noc3_mon_noc_vec_int  : monitor_noc_type;
-  signal noc4_mon_noc_vec_int  : monitor_noc_type;
-  signal noc5_mon_noc_vec_int  : monitor_noc_type;
-  signal noc6_mon_noc_vec_int  : monitor_noc_type;
+  signal noc1_mon_noc_vec_int : monitor_noc_type;
+  signal noc2_mon_noc_vec_int : monitor_noc_type;
+  signal noc3_mon_noc_vec_int : monitor_noc_type;
+  signal noc4_mon_noc_vec_int : monitor_noc_type;
+  signal noc5_mon_noc_vec_int : monitor_noc_type;
+  signal noc6_mon_noc_vec_int : monitor_noc_type;
 
 begin
 
@@ -435,34 +436,35 @@ begin
       this_has_ddr => 1,
       dco_rst_cfg  => DEFAULT_DCO_LPDDR_CFG)
     port map (
-      raw_rstn           => raw_rstn,   -- DCO raw reset
-      tile_rst           => rst,   -- tile main synchronouse reset
-      refclk             => ext_clk,    -- external backup clock
-      clk                => dco_clk_div2_90,      -- tile main clock
-      pllbypass          => ext_clk_sel_default,  -- ext_clk_sel,
-      pllclk             => clk_div,    -- test clock output to PCB
-      dco_clk            => dco_clk,    -- DDR PHY 2x clock
-      dco_rstn           => dco_rstn,
-      phy_rstn           => phy_rstn,
-      dco_clk_div2       => dco_clk_div2,         -- DDR PHY 1x clock
-      dco_clk_div2_90    => dco_clk_div2_90,      -- user clock
-      dco_freq_sel       => dco_freq_sel,
-      dco_div_sel        => dco_div_sel,
-      dco_fc_sel         => dco_fc_sel,
-      dco_cc_sel         => dco_cc_sel,
-      dco_clk_sel        => dco_clk_sel,
-      dco_en             => dco_en,
-      ddr_ahbsi          => ddr_ahbsi,
-      ddr_ahbso          => ddr_ahbso,
-      fpga_data_in       => (others => '0'),
-      fpga_data_out      => open,
-      fpga_oen           => open,
-      fpga_valid_in      => '0',
-      fpga_valid_out     => open,
-      fpga_clk_in        => '0',
-      fpga_clk_out       => open,
-      fpga_credit_in     => '0',
-      fpga_credit_out    => open,
+      raw_rstn            => raw_rstn,  -- DCO raw reset
+      tile_rst            => rst,       -- tile main synchronouse reset
+      refclk              => ext_clk,   -- external backup clock
+      clk                 => dco_clk_div2_90,      -- tile main clock
+      pllbypass           => ext_clk_sel_default,  -- ext_clk_sel,
+      pllclk              => clk_div,   -- test clock output to PCB
+      dco_clk             => dco_clk,   -- DDR PHY 2x clock
+      dco_rstn            => dco_rstn,
+      phy_rstn            => phy_rstn,
+      dco_clk_div2        => dco_clk_div2,         -- DDR PHY 1x clock
+      dco_clk_div2_90     => dco_clk_div2_90,      -- user clock
+      dco_freq_sel        => dco_freq_sel,
+      dco_div_sel         => dco_div_sel,
+      dco_fc_sel          => dco_fc_sel,
+      dco_cc_sel          => dco_cc_sel,
+      dco_clk_sel         => dco_clk_sel,
+      dco_en              => dco_en,
+      dco_clk_delay_sel   => dco_clk_delay_sel,
+      ddr_ahbsi           => ddr_ahbsi,
+      ddr_ahbso           => ddr_ahbso,
+      fpga_data_in        => (others => '0'),
+      fpga_data_out       => open,
+      fpga_oen            => open,
+      fpga_valid_in       => '0',
+      fpga_valid_out      => open,
+      fpga_clk_in         => '0',
+      fpga_clk_out        => open,
+      fpga_credit_in      => '0',
+      fpga_credit_out     => open,
       test1_output_port   => test1_output_port_s,
       test1_data_void_out => test1_data_void_out_s,
       test1_stop_in       => test1_stop_out_s,
@@ -499,9 +501,9 @@ begin
       test6_input_port    => test6_input_port_s,
       test6_data_void_in  => test6_data_void_in_s,
       test6_stop_out      => test6_stop_in_s,
-      mon_mem            => open,
-      mon_cache          => open,
-      mon_dvfs           => open);
+      mon_mem             => open,
+      mon_cache           => open,
+      mon_dvfs            => open);
 
   noc_domain_socket_i : noc_domain_socket
     generic map (
@@ -527,6 +529,7 @@ begin
       dco_cc_sel              => dco_cc_sel,
       dco_clk_sel             => dco_clk_sel,
       dco_en                  => dco_en,
+      dco_clk_delay_sel       => dco_clk_delay_sel,
       ext_dco_cc_sel          => (others => '0'),
       ext_ldo_res_sel         => (others => '0'),
       -- pad config
@@ -656,7 +659,7 @@ begin
   ddr_cfg2 <= tile_config(ESP_CSR_DDR_CFG2_MSB downto ESP_CSR_DDR_CFG2_LSB);
 
   -- IDs
-  tile_id           <= to_integer(unsigned(tile_config(ESP_CSR_TILE_ID_MSB downto ESP_CSR_TILE_ID_LSB)));
-  mem_id       <= tile_mem_id(tile_id);
-  
+  tile_id <= to_integer(unsigned(tile_config(ESP_CSR_TILE_ID_MSB downto ESP_CSR_TILE_ID_LSB)));
+  mem_id  <= tile_mem_id(tile_id);
+
 end;

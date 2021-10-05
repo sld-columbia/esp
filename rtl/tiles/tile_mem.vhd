@@ -54,7 +54,7 @@ entity tile_mem is
     dco_cc_sel         : in std_logic_vector(5 downto 0);
     dco_clk_sel        : in std_ulogic;
     dco_en             : in std_ulogic;  
-    -- DDR controller ports (this_has_ddr -> 1)
+    dco_clk_delay_sel  : in std_logic_vector(3 downto 0);
     dco_clk_div2       : out std_ulogic;
     dco_clk_div2_90    : out std_ulogic;
     dco_rstn           : out std_ulogic;
@@ -126,7 +126,6 @@ architecture rtl of tile_mem is
   -- Delay line for DDR ui_clk delay
   signal dco_clk_div2_int    : std_logic;
   signal dco_clk_div2_90_int : std_logic;
-  signal dco_clk_delay_sel   : std_logic_vector(3 downto 0);
   component DELAY_CELL_GF12_C14 is
     port (
       data_in : in std_logic;
@@ -330,8 +329,6 @@ begin
   dco_clk         <= dco_clk_int;
   dco_clk_div2    <= dco_clk_div2_int;
   dco_clk_div2_90 <= dco_clk_div2_90_int;
-
-  dco_clk_delay_sel <= tile_config(ESP_CSR_DCO_CFG_MSB downto ESP_CSR_DCO_CFG_MSB - 3);
 
   -----------------------------------------------------------------------------
   -- Tile parameters

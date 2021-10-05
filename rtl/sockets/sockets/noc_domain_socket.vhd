@@ -57,6 +57,7 @@ entity noc_domain_socket is
     dco_cc_sel         : out std_logic_vector(5 downto 0);
     dco_clk_sel        : out std_ulogic;
     dco_en             : out std_ulogic;
+    dco_clk_delay_sel  : out std_logic_vector(3 downto 0);
     ext_dco_cc_sel     : in  std_logic_vector(5 downto 0);
     ext_ldo_res_sel    : in  std_logic_vector(7 downto 0);
     -- pad config
@@ -784,11 +785,12 @@ begin  -- architecture rtl
   this_local_y <= tile_y(tile_id);
   this_local_x <= tile_x(tile_id);
 
-  dco_freq_sel <= tile_config_int(ESP_CSR_DCO_CFG_MSB - 5 - 0 downto ESP_CSR_DCO_CFG_MSB - 5 - 0 - 1);
-  dco_div_sel  <= tile_config_int(ESP_CSR_DCO_CFG_MSB - 5 - 2 downto ESP_CSR_DCO_CFG_MSB - 5 - 2 - 2);
-  dco_fc_sel   <= tile_config_int(ESP_CSR_DCO_CFG_MSB - 5 - 5 downto ESP_CSR_DCO_CFG_MSB - 5 - 5 - 5);
-  dco_clk_sel  <= tile_config_int(ESP_CSR_DCO_CFG_LSB + 1);
-  dco_en       <= raw_rstn and tile_config_int(ESP_CSR_DCO_CFG_LSB);
+  dco_clk_delay_sel <= tile_config_int(ESP_CSR_DCO_CFG_MSB - 1 downto ESP_CSR_DCO_CFG_MSB - 4);
+  dco_freq_sel      <= tile_config_int(ESP_CSR_DCO_CFG_MSB - 5 - 0 downto ESP_CSR_DCO_CFG_MSB - 5 - 0 - 1);
+  dco_div_sel       <= tile_config_int(ESP_CSR_DCO_CFG_MSB - 5 - 2 downto ESP_CSR_DCO_CFG_MSB - 5 - 2 - 2);
+  dco_fc_sel        <= tile_config_int(ESP_CSR_DCO_CFG_MSB - 5 - 5 downto ESP_CSR_DCO_CFG_MSB - 5 - 5 - 5);
+  dco_clk_sel       <= tile_config_int(ESP_CSR_DCO_CFG_LSB + 1);
+  dco_en            <= raw_rstn and tile_config_int(ESP_CSR_DCO_CFG_LSB);
 
   dco_cc_sel_mux <= tile_config_int(ESP_CSR_DCO_CFG_MSB);
   loc_dco_cc_sel <= tile_config_int(ESP_CSR_DCO_CFG_MSB - 5 - 11 downto ESP_CSR_DCO_CFG_MSB - 5 - 11 - 5);

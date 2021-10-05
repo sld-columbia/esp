@@ -36,8 +36,8 @@ use work.tiles_pkg.all;
 
 entity fpga_tile_mem is
   generic (
-    SIMULATION   : boolean   := false;
-    ROUTER_PORTS : ports_vec := "11111";
+    SIMULATION   : boolean              := false;
+    ROUTER_PORTS : ports_vec            := "11111";
     HAS_SYNC     : integer range 0 to 1 := 1);
   port (
     raw_rstn           : in  std_ulogic;
@@ -177,7 +177,7 @@ architecture rtl of fpga_tile_mem is
   signal dco_fc_sel   : std_logic_vector(5 downto 0);
   signal dco_div_sel  : std_logic_vector(2 downto 0);
   signal dco_freq_sel : std_logic_vector(1 downto 0);
-  
+
   -- Tile NoC interface
   signal test1_output_port_s   : noc_flit_type;
   signal test1_data_void_out_s : std_ulogic;
@@ -215,7 +215,7 @@ architecture rtl of fpga_tile_mem is
   signal test6_input_port_s    : noc_flit_type;
   signal test6_data_void_in_s  : std_ulogic;
   signal test6_stop_out_s      : std_ulogic;
-  
+
   -- Noc signals
   signal noc1_stop_in_tile       : std_ulogic;
   signal noc1_stop_out_tile      : std_ulogic;
@@ -241,26 +241,26 @@ architecture rtl of fpga_tile_mem is
   signal noc6_stop_out_tile      : std_ulogic;
   signal noc6_data_void_in_tile  : std_ulogic;
   signal noc6_data_void_out_tile : std_ulogic;
-  signal noc1_input_port_tile        : noc_flit_type;
-  signal noc2_input_port_tile        : noc_flit_type;
-  signal noc3_input_port_tile        : noc_flit_type;
-  signal noc4_input_port_tile        : noc_flit_type;
-  signal noc5_input_port_tile        : misc_noc_flit_type;
-  signal noc6_input_port_tile        : noc_flit_type;
-  signal noc1_output_port_tile       : noc_flit_type;
-  signal noc2_output_port_tile       : noc_flit_type;
-  signal noc3_output_port_tile       : noc_flit_type;
-  signal noc4_output_port_tile       : noc_flit_type;
-  signal noc5_output_port_tile       : misc_noc_flit_type;
-  signal noc6_output_port_tile       : noc_flit_type;
+  signal noc1_input_port_tile    : noc_flit_type;
+  signal noc2_input_port_tile    : noc_flit_type;
+  signal noc3_input_port_tile    : noc_flit_type;
+  signal noc4_input_port_tile    : noc_flit_type;
+  signal noc5_input_port_tile    : misc_noc_flit_type;
+  signal noc6_input_port_tile    : noc_flit_type;
+  signal noc1_output_port_tile   : noc_flit_type;
+  signal noc2_output_port_tile   : noc_flit_type;
+  signal noc3_output_port_tile   : noc_flit_type;
+  signal noc4_output_port_tile   : noc_flit_type;
+  signal noc5_output_port_tile   : misc_noc_flit_type;
+  signal noc6_output_port_tile   : noc_flit_type;
 
   -- NoC monitors
-  signal noc1_mon_noc_vec_int  : monitor_noc_type;
-  signal noc2_mon_noc_vec_int  : monitor_noc_type;
-  signal noc3_mon_noc_vec_int  : monitor_noc_type;
-  signal noc4_mon_noc_vec_int  : monitor_noc_type;
-  signal noc5_mon_noc_vec_int  : monitor_noc_type;
-  signal noc6_mon_noc_vec_int  : monitor_noc_type;
+  signal noc1_mon_noc_vec_int : monitor_noc_type;
+  signal noc2_mon_noc_vec_int : monitor_noc_type;
+  signal noc3_mon_noc_vec_int : monitor_noc_type;
+  signal noc4_mon_noc_vec_int : monitor_noc_type;
+  signal noc5_mon_noc_vec_int : monitor_noc_type;
+  signal noc6_mon_noc_vec_int : monitor_noc_type;
 
 begin
 
@@ -358,41 +358,42 @@ begin
       noc6_data_void_in   => noc6_data_void_in_tile,
       noc6_stop_out       => noc6_stop_out_tile);
 
-  tile_mem_1: tile_mem
+  tile_mem_1 : tile_mem
     generic map (
       SIMULATION   => SIMULATION,
       this_has_dco => 0,
       this_has_ddr => 1,
       dco_rst_cfg  => (others => '0'))
     port map (
-      raw_rstn           => raw_rstn,
-      tile_rst           => rst,
-      refclk             => refclk,
-      clk                => clk,
-      pllbypass          => pllbypass, 
-      pllclk             => pllclk,
-      dco_clk            => dco_clk,
-      dco_clk_div2       => dco_clk_div2,
-      dco_clk_div2_90    => dco_clk_div2_90,
-      dco_rstn           => dco_rstn,
-      phy_rstn           => open,
-      dco_freq_sel       => dco_freq_sel,
-      dco_div_sel        => dco_div_sel,
-      dco_fc_sel         => dco_fc_sel,
-      dco_cc_sel         => dco_cc_sel,
-      dco_clk_sel        => dco_clk_sel,
-      dco_en             => dco_en,
-      ddr_ahbsi          => ddr_ahbsi,
-      ddr_ahbso          => ddr_ahbso,
-      fpga_data_in       => fpga_data_in,
-      fpga_data_out      => fpga_data_out,
-      fpga_oen           => fpga_oen,
-      fpga_valid_in      => fpga_valid_in,
-      fpga_valid_out     => fpga_valid_out,
-      fpga_clk_in        => fpga_clk_in,
-      fpga_clk_out       => fpga_clk_out,
-      fpga_credit_in     => fpga_credit_in,
-      fpga_credit_out    => fpga_credit_out,
+      raw_rstn            => raw_rstn,
+      tile_rst            => rst,
+      refclk              => refclk,
+      clk                 => clk,
+      pllbypass           => pllbypass,
+      pllclk              => pllclk,
+      dco_clk             => dco_clk,
+      dco_clk_div2        => dco_clk_div2,
+      dco_clk_div2_90     => dco_clk_div2_90,
+      dco_rstn            => dco_rstn,
+      phy_rstn            => open,
+      dco_freq_sel        => dco_freq_sel,
+      dco_div_sel         => dco_div_sel,
+      dco_fc_sel          => dco_fc_sel,
+      dco_cc_sel          => dco_cc_sel,
+      dco_clk_sel         => dco_clk_sel,
+      dco_en              => dco_en,
+      dco_clk_delay_sel   => (others => '0'),
+      ddr_ahbsi           => ddr_ahbsi,
+      ddr_ahbso           => ddr_ahbso,
+      fpga_data_in        => fpga_data_in,
+      fpga_data_out       => fpga_data_out,
+      fpga_oen            => fpga_oen,
+      fpga_valid_in       => fpga_valid_in,
+      fpga_valid_out      => fpga_valid_out,
+      fpga_clk_in         => fpga_clk_in,
+      fpga_clk_out        => fpga_clk_out,
+      fpga_credit_in      => fpga_credit_in,
+      fpga_credit_out     => fpga_credit_out,
       test1_output_port   => test1_output_port_s,
       test1_data_void_out => test1_data_void_out_s,
       test1_stop_in       => test1_stop_out_s,
@@ -457,6 +458,7 @@ begin
       dco_cc_sel              => dco_cc_sel,
       dco_clk_sel             => dco_clk_sel,
       dco_en                  => dco_en,
+      dco_clk_delay_sel       => open,
       ext_dco_cc_sel          => (others => '0'),
       ext_ldo_res_sel         => (others => '0'),
       -- pad config
