@@ -1732,7 +1732,8 @@ begin  -- architecture rtl of l2_wrapper
 -------------------------------------------------------------------------------
 fsm_fwd_out : process (tile_id, fwd_out_reg, coherence_fwd_snd_full,
 fwd_out_valid, fwd_out_data_coh_msg, fwd_out_data_req_id,
-fwd_out_data_to_req, fwd_out_data_addr, fwd_out_data_line, fwd_out_data_word_mask) is
+fwd_out_data_to_req, fwd_out_data_addr, fwd_out_data_line, fwd_out_data_word_mask,
+local_x, local_y) is
 
 variable reg   : fwd_out_reg_type;
 variable hprot : hprot_t := (others => '0');
