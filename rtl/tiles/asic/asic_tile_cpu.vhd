@@ -38,8 +38,8 @@ use work.tiles_pkg.all;
 entity asic_tile_cpu is
   generic (
     SIMULATION   : boolean              := false;
-    ROUTER_PORTS : ports_vec            := "11111";
-    this_has_nfu : integer range 0 to 1 := 0);
+    this_has_nfu : integer range 0 to 1 := 0;
+    ROUTER_PORTS : ports_vec            := "11111");
   port (
     rst                : in  std_ulogic;
     sys_clk            : in  std_ulogic;  -- NoC clock
