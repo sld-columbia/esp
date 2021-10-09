@@ -1464,7 +1464,7 @@ begin  -- architecture rtl
         end if;
       else
         -- Wait for current transaction to complete (look for tail)
-        if (mux_ahbs_snd_empty = '0') and (mux_ahbs_snd_data_out(MISC_NOC_FLIT_SIZE - 2) = '1') then
+        if (mux_ahbs_snd_empty = '0') and (mux_ahbs_snd_data_out(MISC_NOC_FLIT_SIZE - 2) = '1') and (ahbs_snd_full = "0000") then
           sending_packet <= (others => '0');
         end if;
       end if;
@@ -1480,7 +1480,7 @@ begin  -- architecture rtl
         end loop;  -- i
       else
         -- Wait for current transaction to complete (look for tail)
-        if (mux_ahbs_rcv_empty = '0') and (mux_ahbs_rcv_data_out(MISC_NOC_FLIT_SIZE - 2) = '1') then
+        if (mux_ahbs_rcv_empty = '0') and (mux_ahbs_rcv_data_out(MISC_NOC_FLIT_SIZE - 2) = '1') and (mux_ahbs_rcv_full = '0') then
           receiving_packet <= (others => '0');
         end if;
       end if;
