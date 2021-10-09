@@ -103,16 +103,113 @@ architecture rtl of noc5_mux is
 
   -------------------------------------------------------------------------------
 
+  signal noc5_input_port_int    : misc_noc_flit_type;
+  signal noc5_data_void_in_int  : std_ulogic;
+  signal noc5_stop_out_int      : std_ulogic;
+  signal noc5_output_port_int   : misc_noc_flit_type;
+  signal noc5_data_void_out_int : std_ulogic;
+  signal noc5_stop_in_int       : std_ulogic;
+
+  signal noc5_input_port_csr_int    : misc_noc_flit_type;
+  signal noc5_data_void_in_csr_int  : std_ulogic;
+  signal noc5_stop_out_csr_int      : std_ulogic;
+  signal noc5_output_port_csr_int   : misc_noc_flit_type;
+  signal noc5_data_void_out_csr_int : std_ulogic;
+  signal noc5_stop_in_csr_int       : std_ulogic;
+
+  signal fifo_rcv_full      : std_ulogic;
+  signal fifo_rcv_rdreq     : std_ulogic;
+  signal fifo_rcv_wrreq     : std_ulogic;
+  signal fifo_csr_rcv_rdreq : std_ulogic;
+  signal fifo_csr_rcv_wrreq : std_ulogic;
+
   attribute mark_debug : string;
 
-  attribute mark_debug of noc5_rcv_reg : signal is "true";
-  attribute mark_debug of noc5_snd_reg : signal is "true";
+  attribute mark_debug of noc5_input_port            : signal is "true";
+  attribute mark_debug of noc5_data_void_in          : signal is "true";
+  attribute mark_debug of noc5_stop_out              : signal is "true";
+  attribute mark_debug of noc5_output_port           : signal is "true";
+  attribute mark_debug of noc5_data_void_out         : signal is "true";
+  attribute mark_debug of noc5_stop_in               : signal is "true";
+  attribute mark_debug of noc5_input_port_tile       : signal is "true";
+  attribute mark_debug of noc5_data_void_in_tile     : signal is "true";
+  attribute mark_debug of noc5_stop_out_tile         : signal is "true";
+  attribute mark_debug of noc5_output_port_tile      : signal is "true";
+  attribute mark_debug of noc5_data_void_out_tile    : signal is "true";
+  attribute mark_debug of noc5_stop_in_tile          : signal is "true";
+  attribute mark_debug of noc5_input_port_csr        : signal is "true";
+  attribute mark_debug of noc5_data_void_in_csr      : signal is "true";
+  attribute mark_debug of noc5_stop_out_csr          : signal is "true";
+  attribute mark_debug of noc5_output_port_csr       : signal is "true";
+  attribute mark_debug of noc5_data_void_out_csr     : signal is "true";
+  attribute mark_debug of noc5_stop_in_csr           : signal is "true";
+  attribute mark_debug of noc5_input_port_pm         : signal is "true";
+  attribute mark_debug of noc5_data_void_in_pm       : signal is "true";
+  attribute mark_debug of noc5_stop_out_pm           : signal is "true";
+  attribute mark_debug of noc5_output_port_pm        : signal is "true";
+  attribute mark_debug of noc5_data_void_out_pm      : signal is "true";
+  attribute mark_debug of noc5_stop_in_pm            : signal is "true";
+  attribute mark_debug of noc5_rcv_reg               : signal is "true";
+  attribute mark_debug of noc5_rcv_reg_next          : signal is "true";
+  attribute mark_debug of noc5_snd_reg               : signal is "true";
+  attribute mark_debug of noc5_snd_reg_next          : signal is "true";
+  attribute mark_debug of noc5_input_port_int        : signal is "true";
+  attribute mark_debug of noc5_data_void_in_int      : signal is "true";
+  attribute mark_debug of noc5_stop_out_int          : signal is "true";
+  attribute mark_debug of noc5_output_port_int       : signal is "true";
+  attribute mark_debug of noc5_data_void_out_int     : signal is "true";
+  attribute mark_debug of noc5_stop_in_int           : signal is "true";
+  attribute mark_debug of noc5_input_port_csr_int    : signal is "true";
+  attribute mark_debug of noc5_data_void_in_csr_int  : signal is "true";
+  attribute mark_debug of noc5_stop_out_csr_int      : signal is "true";
+  attribute mark_debug of noc5_output_port_csr_int   : signal is "true";
+  attribute mark_debug of noc5_data_void_out_csr_int : signal is "true";
+  attribute mark_debug of noc5_stop_in_csr_int       : signal is "true";
+  attribute mark_debug of fifo_rcv_rdreq             : signal is "true";
+  attribute mark_debug of fifo_rcv_wrreq             : signal is "true";
+  attribute mark_debug of fifo_csr_rcv_rdreq         : signal is "true";
+  attribute mark_debug of fifo_csr_rcv_wrreq         : signal is "true";
 
 begin
 
+  fifo_rcv : fifo0
+    generic map (
+      depth => 4,
+      width => MISC_NOC_FLIT_SIZE)
+    port map (
+      clk      => clk,
+      rst      => rstn,
+      rdreq    => fifo_rcv_rdreq,
+      wrreq    => fifo_rcv_wrreq,
+      data_in  => noc5_output_port,
+      empty    => noc5_data_void_out_int,
+      full     => fifo_rcv_full,
+      data_out => noc5_output_port_int);
+
+  noc5_stop_in   <= fifo_rcv_full and (not noc5_data_void_out);
+  fifo_rcv_rdreq <= not noc5_stop_in_int;
+  fifo_rcv_wrreq <= (not noc5_data_void_out) and (not fifo_rcv_full);
+
+  fifo_csr_rcv : fifo0
+    generic map (
+      depth => 4,
+      width => MISC_NOC_FLIT_SIZE)
+    port map (
+      clk      => clk,
+      rst      => rstn,
+      rdreq    => fifo_csr_rcv_rdreq,
+      wrreq    => fifo_csr_rcv_wrreq,
+      data_in  => noc5_output_port_csr_int,
+      empty    => noc5_data_void_out_csr,
+      full     => noc5_stop_in_csr_int,
+      data_out => noc5_output_port_csr);
+
+  fifo_csr_rcv_rdreq <= not noc5_stop_in_csr;
+  fifo_csr_rcv_wrreq <= not noc5_data_void_out_csr_int;
+
   fsm_noc5_rcv : process (noc5_rcv_reg,
-                          noc5_output_port, noc5_data_void_out,
-                          noc5_stop_in_tile, noc5_stop_in_pm, noc5_stop_in_csr)
+                          noc5_output_port_int, noc5_data_void_out_int,
+                          noc5_stop_in_tile, noc5_stop_in_pm, noc5_stop_in_csr_int)
 
     variable reg           : noc5_rcv_reg_type;
     variable preamble      : noc_preamble_type;
@@ -123,81 +220,97 @@ begin
   begin  -- process
     reg := noc5_rcv_reg;
 
-    noc5_stop_in <= noc5_stop_in_tile and noc5_stop_in_pm and noc5_stop_in_csr;
+    noc5_stop_in_int <= '1';  -- <= noc5_stop_in_tile and noc5_stop_in_pm and noc5_stop_in_csr;
 
-    noc5_output_port_tile   <= noc5_output_port;
-    noc5_output_port_pm     <= noc5_output_port;
-    noc5_output_port_csr    <= noc5_output_port;
-    noc5_data_void_out_tile <= '1';
-    noc5_data_void_out_pm   <= '1';
-    noc5_data_void_out_csr  <= '1';
+    noc5_output_port_tile      <= noc5_output_port_int;
+    noc5_output_port_pm        <= noc5_output_port_int;
+    noc5_output_port_csr_int   <= noc5_output_port_int;
+    noc5_data_void_out_tile    <= '1';
+    noc5_data_void_out_pm      <= '1';
+    noc5_data_void_out_csr_int <= '1';
 
-    preamble := get_preamble_misc(noc5_output_port);
-    msg_type := get_msg_type_misc(noc5_output_port);
+    preamble := get_preamble_misc(noc5_output_port_int);
+    msg_type := get_msg_type_misc(noc5_output_port_int);
 
-    addr_csr_type := noc5_output_port(8 downto 6);
-    addr_csrs     := noc5_output_port(19 downto 16);
+    addr_csr_type := noc5_output_port_int(8 downto 6);
+    addr_csrs     := noc5_output_port_int(19 downto 16);
 
     case reg.state is
 
       -- IDLE
       when idle =>
-        if noc5_data_void_out = '0' then
+        if noc5_data_void_out_int = '0' then
           if msg_type = DVFS_MSG then
-            noc5_data_void_out_pm <= noc5_data_void_out;
+            noc5_data_void_out_pm <= '0';
             if preamble /= PREAMBLE_1FLIT then
               reg.state := pm_rcv;
             end if;
-            noc5_stop_in <= noc5_stop_in_pm;
+            noc5_stop_in_int <= noc5_stop_in_pm;
           else
             if preamble /= PREAMBLE_1FLIT then
-              reg.state    := addr_rcv;
-              reg.header   := noc5_output_port;
-              reg.msg_type := msg_type;
-              noc5_stop_in <= '0';
+              reg.state        := addr_rcv;
+              reg.header       := noc5_output_port_int;
+              reg.msg_type     := msg_type;
+              noc5_stop_in_int <= '0';
             else
-              noc5_data_void_out_tile <= noc5_data_void_out;
-              noc5_stop_in            <= noc5_stop_in_tile;
+              noc5_data_void_out_tile <= '0';
+              if noc5_stop_in_tile = '0' then
+                noc5_stop_in_int <= '0';
+              end if;
             end if;
           end if;
         end if;
 
       when addr_rcv =>
-        if noc5_data_void_out = '0' then
-          noc5_stop_in <= '1';
+        if noc5_data_void_out_int = '0' then
+          -- noc5_stop_in_int <= '1';
           -- TODO do not hard-code these values
           if (reg.msg_type = REQ_REG_RD or reg.msg_type = REQ_REG_WR) and addr_csrs = csr_base_address and
-            (addr_csr_type = "111" or (noc5_output_port(8 downto 2) <= "0111001" and
-                                       noc5_output_port(8 downto 2) >= "0010110")) then
-            reg.state              := csr_rcv;
-            noc5_data_void_out_csr <= '0';
-            noc5_output_port_csr   <= reg.header;
+            (addr_csr_type = "111" or (noc5_output_port_int(8 downto 2) <= "0111001" and
+                                       noc5_output_port_int(8 downto 2) >= "0010110")) then
+            if noc5_stop_in_csr_int = '0' then
+              reg.state                  := csr_rcv;
+              noc5_data_void_out_csr_int <= '0';
+              noc5_output_port_csr_int   <= reg.header;
+            end if;
           else
-            reg.state               := tile_rcv;
             noc5_data_void_out_tile <= '0';
-            noc5_output_port_tile   <= reg.header;
+            if noc5_stop_in_tile = '0' then
+              reg.state             := tile_rcv;
+              noc5_output_port_tile <= reg.header;
+            end if;
           end if;
         end if;
 
       when pm_rcv =>
-        noc5_data_void_out_pm <= noc5_data_void_out;
-        noc5_stop_in          <= noc5_stop_in_pm;
-        if noc5_data_void_out = '0' and noc5_stop_in_pm = '0' and preamble = PREAMBLE_TAIL then
-          reg.state := idle;
+        noc5_data_void_out_pm <= noc5_data_void_out_int;
+        if noc5_data_void_out_int = '0' and noc5_stop_in_pm = '0' then
+          noc5_stop_in_int <= noc5_stop_in_pm;
+          if preamble = PREAMBLE_TAIL then
+            reg.state := idle;
+          end if;
         end if;
 
       when tile_rcv =>
-        noc5_data_void_out_tile <= noc5_data_void_out;
-        noc5_stop_in            <= noc5_stop_in_tile;
-        if noc5_data_void_out = '0' and noc5_stop_in_tile = '0' and preamble = PREAMBLE_TAIL then
-          reg.state := idle;
+        if noc5_data_void_out_int = '0' then
+          noc5_data_void_out_tile <= '0';
+          if noc5_stop_in_tile = '0' then
+            noc5_stop_in_int <= '0';
+            if preamble = PREAMBLE_TAIL then
+              reg.state := idle;
+            end if;
+          end if;
         end if;
 
       when csr_rcv =>
-        noc5_data_void_out_csr <= noc5_data_void_out;
-        noc5_stop_in           <= noc5_stop_in_csr;
-        if noc5_data_void_out = '0' and noc5_stop_in_csr = '0' and preamble = PREAMBLE_TAIL then
-          reg.state := idle;
+        if noc5_stop_in_csr_int = '0' then
+          noc5_data_void_out_csr_int <= noc5_data_void_out_int;
+          if noc5_data_void_out_int = '0' then
+            noc5_stop_in_int <= '0';
+            if preamble = PREAMBLE_TAIL then
+              reg.state := idle;
+            end if;
+          end if;
         end if;
 
     end case;
@@ -242,13 +355,12 @@ begin
         end if;
 
       when idle_pm =>
-        reg.state := idle_csr;
-
+        reg.state         := idle_csr;
+        noc5_data_void_in <= noc5_data_void_in_pm;
+        noc5_input_port   <= noc5_input_port_pm;
         if noc5_stop_out = '0' then
           noc5_stop_out_pm <= '0';
           if noc5_data_void_in_pm = '0' then
-            noc5_input_port   <= noc5_input_port_pm;
-            noc5_data_void_in <= noc5_data_void_in_pm;
             if preamble_pm /= PREAMBLE_1FLIT then
               reg.state := pm_snd;
             end if;
@@ -256,13 +368,12 @@ begin
         end if;
 
       when idle_csr =>
-        reg.state := idle_tile;
-
+        reg.state         := idle_tile;
+        noc5_data_void_in <= noc5_data_void_in_csr;
+        noc5_input_port   <= noc5_input_port_csr;
         if noc5_stop_out = '0' then
           noc5_stop_out_csr <= '0';
           if noc5_data_void_in_csr = '0' then
-            noc5_input_port   <= noc5_input_port_csr;
-            noc5_data_void_in <= noc5_data_void_in_csr;
             if preamble_csr /= PREAMBLE_1FLIT then
               reg.state := csr_snd;
             end if;
@@ -280,11 +391,11 @@ begin
         end if;
 
       when pm_snd =>
+        noc5_data_void_in <= noc5_data_void_in_pm;
+        noc5_input_port   <= noc5_input_port_pm;
         if noc5_stop_out = '0' then
           noc5_stop_out_pm <= '0';
           if noc5_data_void_in_pm = '0' then
-            noc5_input_port   <= noc5_input_port_pm;
-            noc5_data_void_in <= noc5_data_void_in_pm;
             if preamble_pm = PREAMBLE_TAIL then
               reg.state := idle_csr;
             end if;
@@ -292,11 +403,11 @@ begin
         end if;
 
       when csr_snd =>
+        noc5_data_void_in <= noc5_data_void_in_csr;
+        noc5_input_port   <= noc5_input_port_csr;
         if noc5_stop_out = '0' then
           noc5_stop_out_csr <= '0';
           if noc5_data_void_in_csr = '0' then
-            noc5_input_port   <= noc5_input_port_csr;
-            noc5_data_void_in <= noc5_data_void_in_csr;
             if preamble_csr = PREAMBLE_TAIL then
               reg.state := idle_tile;
             end if;
