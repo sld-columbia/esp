@@ -26,16 +26,14 @@ struct cholesky_stratus_access cholesky_cfg_000[] = {
 		.esp.p2p_store = 0,
 		.esp.p2p_nsrcs = 0,
 		.esp.p2p_srcs = {"", "", "", ""},
-	    .esp.devid = 0,
-        .esp.learn = 0,
     }
 };
 
 esp_thread_info_t cfg_000[] = {
 	{
-		.run = true,
-		.devname = "cholesky_stratus.0",
-		.ioctl_req = CHOLESKY_STRATUS_IOC_ACCESS,
+        .run = true,
+        .devname = "cholesky_stratus.0",
+        .ioctl_req = CHOLESKY_STRATUS_IOC_ACCESS,
         .esp_desc = &(cholesky_cfg_000[0].esp),
     }
 };

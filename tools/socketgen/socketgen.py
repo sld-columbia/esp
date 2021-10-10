@@ -158,6 +158,8 @@ def write_axi_acc_interface(f, acc, dma_width):
     f.write("  " + clk + " : in std_logic;\n")
   for rst in acc.resets:
     f.write("  " + rst + " : in std_logic;\n")
+  f.write("  ext_dco_cc_sel  : out std_logic_vector(5 downto 0);\n")
+  f.write("  ext_ldo_res_sel : out std_logic_vector(7 downto 0);\n")
   f.write("  " + acc.apb_prefix + "psel : in std_ulogic;\n")
   f.write("  " + acc.apb_prefix + "penable : in std_ulogic;\n")
   f.write("  " + acc.apb_prefix + "paddr : in std_logic_vector(31 downto 0);\n")
@@ -310,6 +312,8 @@ def write_axi_acc_port_map(f, acc, dma_width):
     f.write("      " + clk + " => clk,\n")
   for rst in acc.resets:
     f.write("      " + rst + " => rst,\n")
+  f.write("      ext_dco_cc_sel => ext_dco_cc_sel,\n")
+  f.write("      ext_ldo_res_sel => ext_ldo_res_sel,\n")
   bind_apb3(f, acc.apb_prefix)
   bind_axi(f, acc, dma_width)
   if acc.interrupt != "":
@@ -914,6 +918,7 @@ def write_cache_interface(f, cac, is_llc):
     f.write("      l2_cpu_req_data_hprot     : in  std_logic_vector(1 downto 0);\n")
     f.write("      l2_cpu_req_data_addr      : in  std_logic_vector(" + str(phys_addr_bits - 1) + " downto 0);\n")
     f.write("      l2_cpu_req_data_word      : in  std_logic_vector(" + str(dma_width - 1) + " downto 0);\n")
+    f.write("      l2_cpu_req_data_amo       : in  std_logic_vector(5 downto 0);\n")
     f.write("      l2_fwd_in_valid           : in  std_ulogic;\n")
     f.write("      l2_fwd_in_data_coh_msg    : in  std_logic_vector(2 downto 0);\n")
     f.write("      l2_fwd_in_data_addr       : in  std_logic_vector(" + str(phys_addr_bits - offset_bits - 1) + " downto 0);\n")
@@ -939,7 +944,8 @@ def write_cache_interface(f, cac, is_llc):
     f.write("      l2_rd_rsp_valid           : out std_ulogic;\n")
     f.write("      l2_rd_rsp_data_line       : out std_logic_vector(" + str(bits_per_line - 1) + " downto 0);\n")
     f.write("      l2_inval_valid            : out std_ulogic;\n")
-    f.write("      l2_inval_data             : out std_logic_vector(" + str(phys_addr_bits - offset_bits - 1) + " downto 0);\n")
+    f.write("      l2_inval_data_addr        : out std_logic_vector(" + str(phys_addr_bits - offset_bits - 1) + " downto 0);\n")
+    f.write("      l2_inval_data_hprot       : out std_logic_vector(1 downto 0);\n")
     f.write("      l2_bresp_valid            : out std_ulogic;\n")
     f.write("      l2_bresp_data             : out std_logic_vector(1 downto 0);\n")
     f.write("      l2_req_out_valid          : out std_ulogic;\n")
@@ -1188,6 +1194,7 @@ def write_cache_port_map(f, cac, is_llc):
     f.write("      l2_cpu_req_data_hprot     => l2_cpu_req_data_hprot,\n")
     f.write("      l2_cpu_req_data_addr      => l2_cpu_req_data_addr,\n")
     f.write("      l2_cpu_req_data_word      => l2_cpu_req_data_word,\n")
+    f.write("      l2_cpu_req_data_amo       => l2_cpu_req_data_amo,\n")
     f.write("      l2_fwd_in_valid           => l2_fwd_in_valid,\n")
     f.write("      l2_fwd_in_data_coh_msg    => l2_fwd_in_data_coh_msg,\n")
     f.write("      l2_fwd_in_data_addr       => l2_fwd_in_data_addr,\n")
@@ -1213,7 +1220,8 @@ def write_cache_port_map(f, cac, is_llc):
     f.write("      l2_rd_rsp_valid           => l2_rd_rsp_valid,\n")
     f.write("      l2_rd_rsp_data_line       => l2_rd_rsp_data_line,\n")
     f.write("      l2_inval_valid            => l2_inval_valid,\n")
-    f.write("      l2_inval_data             => l2_inval_data,\n")
+    f.write("      l2_inval_data_addr        => l2_inval_data_addr,\n")
+    f.write("      l2_inval_data_hprot       => l2_inval_data_hprot,\n")
     f.write("      l2_bresp_valid            => l2_bresp_valid,\n")
     f.write("      l2_bresp_data             => l2_bresp_data,\n")
     f.write("      l2_req_out_valid          => l2_req_out_valid,\n")
@@ -1243,7 +1251,7 @@ def gen_tech_dep(accelerator_list, cache_list, dma_width, template_dir, out_dir)
       for acc in accelerator_list:
         for impl in acc.hlscfg:
           f.write("\n")
-          if acc.hls_tool == 'stratus_hls':
+          if acc.hls_tool == 'stratus_hls' or acc.hls_tool == 'rtl':
             f.write("  component " + acc.name + "_" + impl.name + "\n")
             f.write("    port (\n")
             write_acc_interface(f, acc, dma_width, impl.datatype, "rst", False, False, False)
@@ -1471,7 +1479,7 @@ def gen_tech_indep_impl(accelerator_list, cache_list, dma_width, template_dir, o
           for impl in acc.hlscfg:
             f.write("\n")
             f.write("  impl_" + impl.name + "_gen: if hls_conf = HLSCFG_" + acc.name.upper() + "_" + impl.name.upper() + " generate\n")
-            if acc.hls_tool == 'stratus_hls':
+            if acc.hls_tool == 'stratus_hls' or acc.hls_tool == 'rtl':
               f.write("    " + acc.name + "_" + impl.name + "_i: " + acc.name + "_" + impl.name + "\n")
               write_acc_port_map(f, acc, dma_width, impl.datatype, "rst", False, False, False, False)
             else:
@@ -1616,6 +1624,8 @@ def gen_interfaces(accelerator_list, axi_accelerator_list, dma_width, template_d
         f.write("      refclk            : in  std_ulogic;\n")
         f.write("      pllbypass         : in  std_ulogic;\n")
         f.write("      pllclk            : out std_ulogic;\n")
+        f.write("      ext_dco_cc_sel    : out std_logic_vector(5 downto 0);\n")
+        f.write("      ext_ldo_res_sel   : out std_logic_vector(7 downto 0);\n")
         f.write("      local_y           : in  local_yx;\n")
         f.write("      local_x           : in  local_yx;\n")
         f.write("      tile_id           : in  integer;\n")
@@ -1663,8 +1673,8 @@ def gen_interfaces(accelerator_list, axi_accelerator_list, dma_width, template_d
         f.write("      mon_dvfs_in       : in  monitor_dvfs_type;\n")
         f.write("      mon_acc           : out monitor_acc_type;\n")
         f.write("      mon_cache         : out monitor_cache_type;\n")
-        f.write("      mon_dvfs          : out monitor_dvfs_type\n")
-        f.write("    );\n")
+        f.write("      mon_dvfs          : out monitor_dvfs_type;\n")
+        f.write("      coherence         : in integer range 0 to 3);\n")
         f.write("  end component;\n\n")
         f.write("\n")
   f.close()
@@ -1758,6 +1768,8 @@ def gen_tile_acc(accelerator_list, axi_acceleratorlist, template_dir, out_dir):
           f.write("        refclk            => dvfs_clk,\n")
           f.write("        pllbypass         => pllbypass,\n")
           f.write("        pllclk            => clk_feedthru,\n")
+          f.write("        ext_dco_cc_sel    => ext_dco_cc_sel,\n")
+          f.write("        ext_ldo_res_sel   => ext_ldo_res_sel,\n")
           f.write("        local_y           => this_local_y,\n")
           f.write("        local_x           => this_local_x,\n")
           f.write("        tile_id           => tile_id,\n")
@@ -1806,7 +1818,9 @@ def gen_tile_acc(accelerator_list, axi_acceleratorlist, template_dir, out_dir):
           f.write("        -- Monitor signals\n")
           f.write("        mon_acc           => mon_acc_int,\n")
           f.write("        mon_cache         => mon_cache_int,\n")
-          f.write("        mon_dvfs          => mon_dvfs_int\n")
+          f.write("        mon_dvfs          => mon_dvfs_int,\n")
+          f.write("        -- Coherence\n")
+          f.write("        coherence         => coherence\n")
           f.write("      );\n")
           f.write("  end generate " + acc.name + "_gen;\n\n")
       else:
@@ -1838,6 +1852,8 @@ cache_list = [ ]
 # Get scheduled accelerators
 accelerators = next(os.walk(acc_rtl_dir))[1]
 axi_accelerators = next(os.walk(axi_acc_dir))[1]
+accelerators.sort()
+axi_accelerators.sort()
 
 caches = [ ]
 
@@ -1981,7 +1997,7 @@ for acc in accelerators:
       # hls4ml accelerators are implemented as Vivado HLS accelerators
       if accd.hls_tool in ('hls4ml'):
         accd.hls_tool = 'vivado_hls'
-      if not accd.hls_tool in ('stratus_hls', 'vivado_hls', 'catapult_hls_cxx', 'catapult_hls_sysc'):
+      if not accd.hls_tool in ('stratus_hls', 'vivado_hls', 'catapult_hls_cxx', 'catapult_hls_sysc', 'rtl'):
         print("    ERROR: Wrong HLS tool for " + acc)
         sys.exit(1)
 

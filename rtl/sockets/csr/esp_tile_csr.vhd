@@ -22,169 +22,186 @@ entity esp_tile_csr is
     pindex      : integer range 0 to NAPBSLV -1 := 0;
     dco_rst_cfg : std_logic_vector(22 downto 0) := (others => '0'));
   port (
-    clk         : in std_logic;
-    rstn        : in std_logic;
-    pconfig     : in apb_config_type;
-    mon_ddr     : in monitor_ddr_type;
-    mon_mem     : in monitor_mem_type;
-    mon_noc     : in monitor_noc_vector(1 to 6);
-    mon_l2      : in monitor_cache_type;
-    mon_llc     : in monitor_cache_type;
-    mon_acc     : in monitor_acc_type;
-    mon_dvfs    : in monitor_dvfs_type;
+    clk         : in  std_logic;
+    rstn        : in  std_logic;
+    pconfig     : in  apb_config_type;
+    mon_ddr     : in  monitor_ddr_type;
+    mon_mem     : in  monitor_mem_type;
+    mon_noc     : in  monitor_noc_vector(1 to 6);
+    mon_l2      : in  monitor_cache_type;
+    mon_llc     : in  monitor_cache_type;
+    mon_acc     : in  monitor_acc_type;
+    mon_dvfs    : in  monitor_dvfs_type;
     tile_config : out std_logic_vector(ESP_CSR_WIDTH - 1 downto 0);
+    pm_config   : out pm_config_type;
+    pm_status   : in  pm_status_type;
     srst        : out std_ulogic;
-    apbi        : in apb_slv_in_type;
+    apbi        : in  apb_slv_in_type;
     apbo        : out apb_slv_out_type
-  );
+    );
 end esp_tile_csr;
 
 architecture rtl of esp_tile_csr is
-    constant MONITOR_APB_OFFSET : integer := 4;
+  constant MONITOR_APB_OFFSET : integer := 1;
 
-    constant CRTL_RESET : integer := 0;
-    constant CTRL_WINDOW_SIZE_OFFSET : integer := 1;
-    constant CTRL_WINDOW_COUNT_LO_OFFSET : integer := 2;
-    constant CTRL_WINDOW_COUNT_HI_OFFSET : integer := 3;
+  constant BURST_REG_INDEX : integer := 0;
 
-    constant MON_DDR_WORD_TRANSFER_INDEX    : integer := 0;
-    constant MON_MEM_COH_REQ_INDEX          : integer := 1;
-    constant MON_MEM_COH_FWD_INDEX          : integer := 2;
-    constant MON_MEM_COH_RSP_RCV_INDEX      : integer := 3;
-    constant MON_MEM_COH_RSP_SND_INDEX      : integer := 4;
-    constant MON_MEM_DMA_REQ_INDEX          : integer := 5;
-    constant MON_MEM_DMA_RSP_INDEX          : integer := 6;
-    constant MON_MEM_COH_DMA_REQ_INDEX      : integer := 7;
-    constant MON_MEM_COH_DMA_RSP_INDEX      : integer := 8;
-    constant MON_L2_HIT_INDEX               : integer := 9;
-    constant MON_L2_MISS_INDEX              : integer := 10;
-    constant MON_LLC_HIT_INDEX              : integer := 11;
-    constant MON_LLC_MISS_INDEX             : integer := 12;
-    constant MON_ACC_TLB_INDEX              : integer := 13;
-    constant MON_ACC_MEM_LO_INDEX           : integer := 14;
-    constant MON_ACC_MEM_HI_INDEX           : integer := 15;
-    constant MON_ACC_TOT_LO_INDEX           : integer := 16;
-    constant MON_ACC_TOT_HI_INDEX           : integer := 17;
+  constant MON_DDR_WORD_TRANSFER_INDEX : integer := 0;
+  constant MON_MEM_COH_REQ_INDEX       : integer := 1;
+  constant MON_MEM_COH_FWD_INDEX       : integer := 2;
+  constant MON_MEM_COH_RSP_RCV_INDEX   : integer := 3;
+  constant MON_MEM_COH_RSP_SND_INDEX   : integer := 4;
+  constant MON_MEM_DMA_REQ_INDEX       : integer := 5;
+  constant MON_MEM_DMA_RSP_INDEX       : integer := 6;
+  constant MON_MEM_COH_DMA_REQ_INDEX   : integer := 7;
+  constant MON_MEM_COH_DMA_RSP_INDEX   : integer := 8;
+  constant MON_L2_HIT_INDEX            : integer := 9;
+  constant MON_L2_MISS_INDEX           : integer := 10;
+  constant MON_LLC_HIT_INDEX           : integer := 11;
+  constant MON_LLC_MISS_INDEX          : integer := 12;
+  constant MON_ACC_TLB_INDEX           : integer := 13;
+  constant MON_ACC_MEM_LO_INDEX        : integer := 14;
+  constant MON_ACC_MEM_HI_INDEX        : integer := 15;
+  constant MON_ACC_TOT_LO_INDEX        : integer := 16;
+  constant MON_ACC_TOT_HI_INDEX        : integer := 17;
 
-    constant MON_DVFS_BASE_INDEX            : integer := 18;
-    constant VF_OP_POINTS                   : integer := 4;
+  constant MON_DVFS_BASE_INDEX : integer := 18;
+  constant VF_OP_POINTS        : integer := 4;
 
-    constant NOCS_NUM                       : integer := 6;
-    constant NOC_QUEUES                     : integer := 5;
-    constant MON_NOC_TILE_INJECT_BASE_INDEX : integer := MON_DVFS_BASE_INDEX + VF_OP_POINTS; --22
-    constant MON_NOC_QUEUES_FULL_BASE_INDEX : integer := MON_NOC_TILE_INJECT_BASE_INDEX + NOCS_NUM; --28
+  constant NOCS_NUM                       : integer := 6;
+  constant NOC_QUEUES                     : integer := 5;
+  constant MON_NOC_TILE_INJECT_BASE_INDEX : integer := MON_DVFS_BASE_INDEX + VF_OP_POINTS;  --22
+  constant MON_NOC_QUEUES_FULL_BASE_INDEX : integer := MON_NOC_TILE_INJECT_BASE_INDEX + NOCS_NUM;  --28
 
-    constant MONITOR_REG_COUNT : integer := MON_NOC_QUEUES_FULL_BASE_INDEX + NOCS_NUM * NOC_QUEUES; --58
-    constant REGISTER_WIDTH : integer := 32;
-    constant DEFAULT_WINDOW : std_logic_vector(REGISTER_WIDTH-1 downto 0) := conv_std_logic_vector(65536, REGISTER_WIDTH);
+  constant MONITOR_REG_COUNT : integer                                     := MON_NOC_QUEUES_FULL_BASE_INDEX + NOCS_NUM * NOC_QUEUES;  --58
+  constant REGISTER_WIDTH    : integer                                     := 32;
 
-    signal window_size  : std_logic_vector(REGISTER_WIDTH-1 downto 0);
-    signal time_counter : std_logic_vector(REGISTER_WIDTH-1 downto 0);
-    signal window_reset : std_logic;
-    signal new_window   : std_logic;
-    signal updated      : std_logic;
-    signal window_count : std_logic_vector(63 downto 0);
-    signal ctrl_rst     : std_logic_vector(REGISTER_WIDTH-1 downto 0);
-    signal readdata     : std_logic_vector(REGISTER_WIDTH-1 downto 0);
-    signal wdata        : std_logic_vector(REGISTER_WIDTH-1 downto 0);
-    signal ctrl_rst_sample         : std_ulogic;
-    signal ctrl_window_size_sample : std_ulogic;
+  signal burst                  : std_logic_vector(REGISTER_WIDTH-1 downto 0);
+  signal readdata               : std_logic_vector(REGISTER_WIDTH-1 downto 0);
+  signal wdata                  : std_logic_vector(REGISTER_WIDTH-1 downto 0);
+  signal burst_sample           : std_ulogic;
+  signal burst_start            : std_ulogic;
+  signal burst_state            : std_ulogic;
+  signal burst_state_next       : std_ulogic;
+  signal acc_state              : std_ulogic;
+  signal acc_state_next         : std_ulogic;
+  signal acc_rst                : std_ulogic;
 
-    type counter_type is array (0 to MONITOR_REG_COUNT-1) of std_logic_vector(REGISTER_WIDTH-1 downto 0);
-    signal count : counter_type;
-    signal count_value : counter_type;
+  type counter_type is array (0 to MONITOR_REG_COUNT-1) of std_logic_vector(REGISTER_WIDTH-1 downto 0);
+  signal count       : counter_type;
+  signal count_value : counter_type;
 
-    -- CSRs
-    signal config_r : std_logic_vector(ESP_CSR_WIDTH - 1 downto 0);
+  -- CSRs
+  signal config_r  : std_logic_vector(ESP_CSR_WIDTH - 1 downto 0);
+  signal pm_config_r : pm_config_type;
+  signal pm_status_r : pm_status_type;
 
-    -- DDR_CFG0
-    constant DEFAULT_DDR_CFG0 : std_logic_vector(31 downto 0) :=
-          X"2" &  X"A" &  X"F" &  X"1" & X"3FF" &   X"4";
-    -- | 31-28 | 27-24 | 23-20 | 19-16 |  15-4  |    3-0    |
-    -- |  trp  |  trc  |  trfc |  tmrd |  trefi | delay_sel |
+  -- DDR_CFG0
+  constant DEFAULT_DDR_CFG0 : std_logic_vector(31 downto 0) :=
+    X"2" & X"A" & X"F" & X"1" & X"3FF" & X"4";
+  -- | 31-28 | 27-24 | 23-20 | 19-16 |  15-4  |    3-0    |
+  -- |  trp  |  trc  |  trfc |  tmrd |  trefi | delay_sel |
 
-    -- DDR_CFG1
-    constant DEFAULT_DDR_CFG1 : std_logic_vector(31 downto 0) :=
-            X"B"   & X"3"  & X"A"  & X"7"  &  X"A" & X"2" & X"1" &  X"7";
-    -- |   31-28   | 27-24 | 23-20 | 19-16 | 15-12 | 11-8 |  7-4 |  3-0 |
-    -- | col_width | tcas  | trtp  | twtr  |  twr  | trcd | trrd | tras |
+  -- DDR_CFG1
+  constant DEFAULT_DDR_CFG1 : std_logic_vector(31 downto 0) :=
+    X"B" & X"3" & X"A" & X"7" & X"A" & X"2" & X"1" & X"7";
+  -- |   31-28   | 27-24 | 23-20 | 19-16 | 15-12 | 11-8 |  7-4 |  3-0 |
+  -- | col_width | tcas  | trtp  | twtr  |  twr  | trcd | trrd | tras |
 
-    -- DDR_CFG2
-    constant DEFAULT_DDR_CFG2 : std_logic_vector(31 downto 0) :=
-        '0' &    X"9C4A"  &    "011"    & "011001" &    "10"    &    X"E";
-    -- | 31 |     30-15   |    14-12    |   11-6   |     5-4    |    3-0    |
-    -- | /  | init_cycles | dqs_sel_cal | bank_pos | bank_width | row_width |
+  -- DDR_CFG2
+  constant DEFAULT_DDR_CFG2 : std_logic_vector(31 downto 0) :=
+    '0' & X"9C4A" & "011" & "011001" & "10" & X"E";
+  -- | 31 |     30-15   |    14-12    |   11-6   |     5-4    |    3-0    |
+  -- | /  | init_cycles | dqs_sel_cal | bank_pos | bank_width | row_width |
 
-    constant DEFAULT_CPU_LOC_OVR : std_logic_vector(CFG_NCPU_TILE * 2 * 3 downto 0) := (others => '0');
-    -- CPU_Y(N-1) CPU_X(N-1) .... CPU_Y(0) CPU_X(0)    OVERWRITE DEFAULT FROM SOCMAP
+  constant DEFAULT_CPU_LOC_OVR : std_logic_vector(CFG_NCPU_TILE * 2 * 3 downto 0) := (others => '0');
+  -- CPU_Y(N-1) CPU_X(N-1) .... CPU_Y(0) CPU_X(0)    OVERWRITE DEFAULT FROM SOCMAP
 
-    constant DEFAULT_ARIANE_HARTID : std_logic_vector(4 downto 0) :=
-      "0000"    & "0";
-    -- HART ID    OVERWRITE DEFAULT FROM SOCMAP
+  constant DEFAULT_ARIANE_HARTID : std_logic_vector(4 downto 0) :=
+    "0000" & "0";
+  -- HART ID    OVERWRITE DEFAULT FROM SOCMAP
 
-    constant DEFAULT_MDC_SCALER_CFG : std_logic_vector(10 downto 0) := conv_std_logic_vector(490, 11);
-    -- Assume default I/O tile DCO frequency is 490MHz
+  constant DEFAULT_MDC_SCALER_CFG : std_logic_vector(10 downto 0) := conv_std_logic_vector(490, 11);
+  -- Assume default I/O tile DCO frequency is 490MHz
 
-    constant DEFAULT_DCO_NOC_CFG : std_logic_vector(18 downto 0) :=
-       "00"     &  "100"   &  "000000" & "100101" & "0"     & "1";
-    -- FREQ_SEL    DIV_SEL    FC_SEL      CC_SEL    CLK_SEL   EN
+  constant DEFAULT_DCO_NOC_CFG : std_logic_vector(18 downto 0) :=
+    "11" & "100" & "000000" & "100101" & "0" & "1";
+  -- FREQ_SEL    DIV_SEL    FC_SEL      CC_SEL    CLK_SEL   EN
 
-    constant DEFAULT_DCO_CFG : std_logic_vector(22 downto 0) :=
-       "0000"          & "00"     &  "100"   &  "000000" & "100101" & "0"     & "1";
-    --  reserved LPDDR   FREQ_SEL    DIV_SEL    FC_SEL      CC_SEL    CLK_SEL   EN
+  constant DEFAULT_DCO_CFG : std_logic_vector(23 downto 0) :=
+    "0" & "0000" & "11" & "100" & "000000" & "100101" & "0" & "1";
+  --  CC_SEL_MUX   reserved LPDDR   FREQ_SEL    DIV_SEL    FC_SEL      CC_SEL    CLK_SEL   EN
 
-    constant DEFAULT_PAD_CFG : std_logic_vector(2 downto 0) :=
-      "0"       &  "11";
-    -- Slew rate   Drive strength
+  constant DEFAULT_LDO_CFG : std_logic_vector(8 downto 0) :=
+    "0" & "00000000";
+  --  RES_SEL_MUX   RES_SEL
+  
+  constant DEFAULT_PAD_CFG : std_logic_vector(2 downto 0) :=
+    "0" & "11";
+  -- Slew rate   Drive strength
 
-    constant DEFAULT_TILE_ID : std_logic_vector(7 downto 0) := (others => '0');
+  constant DEFAULT_TILE_ID : std_logic_vector(7 downto 0) := (others => '0');
 
-    function dco_reset_config_ovr
-      return std_logic_vector is
-    begin
-      if dco_rst_cfg = ("000" & X"00000") then
-        -- Use default
-        return DEFAULT_DCO_CFG;
-      else
-        -- Use override value at reset (used for ASIC DDR tiles)
-        return dco_rst_cfg;
-      end if;
-    end function;
+  constant DEFAULT_ACC_COH : std_logic_vector(1 downto 0) := (others => '0');
 
-    constant RESET_DCO_CFG : std_logic_vector(22 downto 0) := dco_reset_config_ovr;
+  function dco_reset_config_ovr
+    return std_logic_vector is
+  begin
+    if dco_rst_cfg = ("000" & X"00000") then
+      -- Use default
+      return DEFAULT_DCO_CFG;
+    else
+      -- Use override value at reset (used for ASIC DDR tiles)
+      return "0" & dco_rst_cfg;
+    end if;
+  end function;
 
-    constant DEFAULT_CONFIG : std_logic_vector(ESP_CSR_WIDTH - 1 downto 0) :=
-      DEFAULT_DDR_CFG2 & DEFAULT_DDR_CFG1 & DEFAULT_DDR_CFG0 & DEFAULT_CPU_LOC_OVR & DEFAULT_ARIANE_HARTID &
-      DEFAULT_MDC_SCALER_CFG & DEFAULT_DCO_NOC_CFG & RESET_DCO_CFG & DEFAULT_PAD_CFG & DEFAULT_TILE_ID & "0";
+  constant RESET_DCO_CFG : std_logic_vector(23 downto 0) := dco_reset_config_ovr;
 
-    signal csr_addr : integer range 0 to 31;
+  constant DEFAULT_CONFIG : std_logic_vector(ESP_CSR_WIDTH - 1 downto 0) :=
+    DEFAULT_LDO_CFG & DEFAULT_TILE_ID & DEFAULT_ACC_COH & DEFAULT_DDR_CFG2 & DEFAULT_DDR_CFG1 &
+    DEFAULT_DDR_CFG0 & DEFAULT_CPU_LOC_OVR & DEFAULT_ARIANE_HARTID & DEFAULT_MDC_SCALER_CFG &
+    DEFAULT_DCO_NOC_CFG & RESET_DCO_CFG & DEFAULT_PAD_CFG & DEFAULT_TILE_ID & "0";
 
- begin
+  signal csr_addr : integer range 0 to 31;
 
-  apbo.prdata   <= readdata;
-  apbo.pirq     <= (others => '0');
-  apbo.pindex   <= pindex;
-  apbo.pconfig  <= pconfig;
+begin
+
+  apbo.prdata  <= readdata;
+  apbo.pirq    <= (others => '0');
+  apbo.pindex  <= pindex;
+  apbo.pconfig <= pconfig;
 
   tile_config <= config_r;
-  csr_addr <= conv_integer(apbi.paddr(6 downto 2));
+  csr_addr    <= conv_integer(apbi.paddr(6 downto 2));
 
-  rd_registers : process(apbi, count_value, ctrl_rst, window_size, window_count, config_r, csr_addr)
+  pm_config <= pm_config_r;
+
+  pm_status_update : process(clk, rstn)
+  begin  --process
+    if rstn = '0' then
+      for i in 0 to PM_REGNUM_STATUS - 1 loop
+        pm_status_r(i) <= (others => '0');
+      end loop;
+    elsif clk'event and clk = '1' then
+      for i in 0 to PM_REGNUM_STATUS - 1 loop
+        pm_status_r(i) <= pm_status(i);
+      end loop;
+    end if;
+  end process;
+
+  rd_registers : process(apbi, count, count_value, burst, config_r, csr_addr, pm_config_r, pm_status_r, burst_state)
     --TODO
     variable addr : integer range 0 to 127;
   begin
-    addr := conv_integer(apbi.paddr(8 downto 2));
+    addr     := conv_integer(apbi.paddr(8 downto 2));
     readdata <= (others => '0');
 
     wdata <= apbi.pwdata;
 
-    ctrl_rst_sample <= '0';
-    ctrl_window_size_sample <= '0';
+    burst_sample <= '0';
     if addr = 0  then
-        ctrl_rst_sample <= apbi.psel(pindex) and apbi.penable and apbi.pwrite;
-    end if;
-    if addr = 1 then
-        ctrl_window_size_sample <= apbi.psel(pindex) and apbi.penable and apbi.pwrite;
+        burst_sample <= apbi.psel(pindex) and apbi.penable and apbi.pwrite;
     end if;
 
     if apbi.paddr(8 downto 7) = "11" then
@@ -194,12 +211,16 @@ architecture rtl of esp_tile_csr is
           readdata(ESP_CSR_VALID_MSB - ESP_CSR_VALID_LSB downto 0) <= config_r(ESP_CSR_VALID_MSB downto ESP_CSR_VALID_LSB);
         when ESP_CSR_TILE_ID_ADDR =>
           readdata(ESP_CSR_TILE_ID_MSB - ESP_CSR_TILE_ID_LSB downto 0) <= config_r(ESP_CSR_TILE_ID_MSB downto ESP_CSR_TILE_ID_LSB);
+        when ESP_CSR_TILE_ID_NOC_ADDR =>
+          readdata(ESP_CSR_TILE_ID_NOC_MSB - ESP_CSR_TILE_ID_NOC_LSB downto 0) <= config_r(ESP_CSR_TILE_ID_NOC_MSB downto ESP_CSR_TILE_ID_NOC_LSB);
         when ESP_CSR_PAD_CFG_ADDR =>
           readdata(ESP_CSR_PAD_CFG_MSB - ESP_CSR_PAD_CFG_LSB downto 0) <= config_r(ESP_CSR_PAD_CFG_MSB downto ESP_CSR_PAD_CFG_LSB);
         when ESP_CSR_DCO_CFG_ADDR =>
           readdata(ESP_CSR_DCO_CFG_MSB - ESP_CSR_DCO_CFG_LSB downto 0) <= config_r(ESP_CSR_DCO_CFG_MSB downto ESP_CSR_DCO_CFG_LSB);
         when ESP_CSR_DCO_NOC_CFG_ADDR =>
           readdata(ESP_CSR_DCO_NOC_CFG_MSB - ESP_CSR_DCO_NOC_CFG_LSB downto 0) <= config_r(ESP_CSR_DCO_NOC_CFG_MSB downto ESP_CSR_DCO_NOC_CFG_LSB);
+        when ESP_CSR_LDO_CFG_ADDR =>
+          readdata(ESP_CSR_LDO_CFG_MSB - ESP_CSR_LDO_CFG_LSB downto 0) <= config_r(ESP_CSR_LDO_CFG_MSB downto ESP_CSR_LDO_CFG_LSB);
         when ESP_CSR_MDC_SCALER_CFG_ADDR =>
           readdata(ESP_CSR_MDC_SCALER_CFG_MSB - ESP_CSR_MDC_SCALER_CFG_LSB downto 0) <= config_r(ESP_CSR_MDC_SCALER_CFG_MSB downto ESP_CSR_MDC_SCALER_CFG_LSB);
         when ESP_CSR_ARIANE_HARTID_ADDR =>
@@ -212,117 +233,131 @@ architecture rtl of esp_tile_csr is
           readdata(ESP_CSR_DDR_CFG1_MSB - ESP_CSR_DDR_CFG1_LSB downto 0) <= config_r(ESP_CSR_DDR_CFG1_MSB downto ESP_CSR_DDR_CFG1_LSB);
         when ESP_CSR_DDR_CFG2_ADDR =>
           readdata(ESP_CSR_DDR_CFG2_MSB - ESP_CSR_DDR_CFG2_LSB downto 0) <= config_r(ESP_CSR_DDR_CFG2_MSB downto ESP_CSR_DDR_CFG2_LSB);
-       when others =>
+        when ESP_CSR_ACC_COH_ADDR =>
+          readdata(ESP_CSR_ACC_COH_MSB - ESP_CSR_ACC_COH_LSB downto 0) <= config_r(ESP_CSR_ACC_COH_MSB downto ESP_CSR_ACC_COH_LSB);
+
+        -- Power management
+        when ESP_CSR_PM_MIN to ESP_CSR_PM_MIN + PM_REGNUM_CONFIG - 1 =>
+          readdata(31 downto 0) <= pm_config_r(csr_addr - ESP_CSR_PM_MIN);
+
+        when ESP_CSR_PM_MIN + PM_REGNUM_CONFIG to ESP_CSR_PM_MAX =>
+          readdata(31 downto 0) <= pm_status_r(csr_addr - ESP_CSR_PM_MIN - PM_REGNUM_CONFIG);
+
+        when others =>
           readdata <= (others => '0');
       end case;
     else
       -- Monitors read access
       if addr = 0 then
-        readdata <= ctrl_rst;
-      elsif addr = 1 then
-        readdata <= window_size;
-      elsif addr = 2 then
-        readdata <= window_count(REGISTER_WIDTH-1 downto 0);
-      elsif addr = 3 then
-        readdata <= window_count(2*REGISTER_WIDTH-1 downto REGISTER_WIDTH);
+        readdata <= burst;
       elsif addr < MONITOR_REG_COUNT + MONITOR_APB_OFFSET then
-        readdata <= count_value(addr - MONITOR_APB_OFFSET);
+        if burst_state = '0' then
+            readdata <= count(addr - MONITOR_APB_OFFSET);
+        else
+            readdata <= count_value(addr - MONITOR_APB_OFFSET);
+        end if;
       end if;
     end if;
   end process rd_registers;
 
   wr_registers : process(clk, rstn)
   begin
-    if rstn =  '0' then
-        ctrl_rst <= (others => '0');
-        window_size <= DEFAULT_WINDOW;
-        window_reset <= '0';
-        config_r <= DEFAULT_CONFIG;
-        srst <= '0';
+    if rstn = '0' then
+      burst <= (others => '0');
+      config_r     <= DEFAULT_CONFIG;
+      srst         <= '0';
+      pm_config_r <= (others => (others => '0'));
     elsif clk'event and clk = '1' then
-        -- Monitors
-        window_reset <= '0';
-        ctrl_rst <= (others => '0');
-        if ctrl_rst_sample = '1' then
-            ctrl_rst <= wdata;
-        end if;
-        if ctrl_window_size_sample = '1' then
-            window_size  <= wdata;
-            window_reset <= '1';
-        end if;
-        -- Config write
-        if apbi.paddr(8 downto 7) = "11" and (apbi.psel(pindex) and apbi.penable and apbi.pwrite) = '1' then
-          case csr_addr is
-            when ESP_CSR_VALID_ADDR =>
-              config_r(ESP_CSR_VALID_MSB downto ESP_CSR_VALID_LSB) <= apbi.pwdata(ESP_CSR_VALID_MSB - ESP_CSR_VALID_LSB downto 0);
-            when ESP_CSR_TILE_ID_ADDR =>
-              config_r(ESP_CSR_TILE_ID_MSB downto ESP_CSR_TILE_ID_LSB) <= apbi.pwdata(ESP_CSR_TILE_ID_MSB - ESP_CSR_TILE_ID_LSB downto 0);
-            when ESP_CSR_PAD_CFG_ADDR =>
-              config_r(ESP_CSR_PAD_CFG_MSB downto ESP_CSR_PAD_CFG_LSB) <= apbi.pwdata(ESP_CSR_PAD_CFG_MSB - ESP_CSR_PAD_CFG_LSB downto 0);
-            when ESP_CSR_DCO_CFG_ADDR =>
-              config_r(ESP_CSR_DCO_CFG_MSB downto ESP_CSR_DCO_CFG_LSB) <= apbi.pwdata(ESP_CSR_DCO_CFG_MSB - ESP_CSR_DCO_CFG_LSB downto 0);
-            when ESP_CSR_DCO_NOC_CFG_ADDR =>
-              config_r(ESP_CSR_DCO_NOC_CFG_MSB downto ESP_CSR_DCO_NOC_CFG_LSB) <= apbi.pwdata(ESP_CSR_DCO_NOC_CFG_MSB - ESP_CSR_DCO_NOC_CFG_LSB downto 0);
-            when ESP_CSR_MDC_SCALER_CFG_ADDR =>
-              config_r(ESP_CSR_MDC_SCALER_CFG_MSB downto ESP_CSR_MDC_SCALER_CFG_LSB) <= apbi.pwdata(ESP_CSR_MDC_SCALER_CFG_MSB - ESP_CSR_MDC_SCALER_CFG_LSB downto 0);
-            when ESP_CSR_ARIANE_HARTID_ADDR =>
-              config_r(ESP_CSR_ARIANE_HARTID_MSB downto ESP_CSR_ARIANE_HARTID_LSB) <= apbi.pwdata(ESP_CSR_ARIANE_HARTID_MSB - ESP_CSR_ARIANE_HARTID_LSB downto 0);
-            when ESP_CSR_CPU_LOC_OVR_ADDR =>
-              config_r(ESP_CSR_CPU_LOC_OVR_MSB downto ESP_CSR_CPU_LOC_OVR_LSB) <= apbi.pwdata(ESP_CSR_CPU_LOC_OVR_MSB - ESP_CSR_CPU_LOC_OVR_LSB downto 0);
-            when ESP_CSR_DDR_CFG0_ADDR =>
-              config_r(ESP_CSR_DDR_CFG0_MSB downto ESP_CSR_DDR_CFG0_LSB) <= apbi.pwdata(ESP_CSR_DDR_CFG0_MSB - ESP_CSR_DDR_CFG0_LSB downto 0);
-            when ESP_CSR_DDR_CFG1_ADDR =>
-              config_r(ESP_CSR_DDR_CFG1_MSB downto ESP_CSR_DDR_CFG1_LSB) <= apbi.pwdata(ESP_CSR_DDR_CFG1_MSB - ESP_CSR_DDR_CFG1_LSB downto 0);
-            when ESP_CSR_DDR_CFG2_ADDR =>
-              config_r(ESP_CSR_DDR_CFG2_MSB downto ESP_CSR_DDR_CFG2_LSB) <= apbi.pwdata(ESP_CSR_DDR_CFG2_MSB - ESP_CSR_DDR_CFG2_LSB downto 0);
-            when ESP_CSR_SRST_ADDR =>
-              srst <= wdata(0);
-            when others => null;
-          end case;
-        end if;
+      -- Monitors
+      if burst_sample = '1' then
+        burst <= wdata;
+      end if;
+      -- Config write
+      if apbi.paddr(8 downto 7) = "11" and (apbi.psel(pindex) and apbi.penable and apbi.pwrite) = '1' then
+        case csr_addr is
+          when ESP_CSR_VALID_ADDR =>
+            config_r(ESP_CSR_VALID_MSB downto ESP_CSR_VALID_LSB) <= apbi.pwdata(ESP_CSR_VALID_MSB - ESP_CSR_VALID_LSB downto 0);
+          when ESP_CSR_TILE_ID_ADDR =>
+            config_r(ESP_CSR_TILE_ID_MSB downto ESP_CSR_TILE_ID_LSB) <= apbi.pwdata(ESP_CSR_TILE_ID_MSB - ESP_CSR_TILE_ID_LSB downto 0);
+          when ESP_CSR_TILE_ID_NOC_ADDR =>
+            config_r(ESP_CSR_TILE_ID_NOC_MSB downto ESP_CSR_TILE_ID_NOC_LSB) <= apbi.pwdata(ESP_CSR_TILE_ID_NOC_MSB - ESP_CSR_TILE_ID_NOC_LSB downto 0);
+          when ESP_CSR_PAD_CFG_ADDR =>
+            config_r(ESP_CSR_PAD_CFG_MSB downto ESP_CSR_PAD_CFG_LSB) <= apbi.pwdata(ESP_CSR_PAD_CFG_MSB - ESP_CSR_PAD_CFG_LSB downto 0);
+          when ESP_CSR_DCO_CFG_ADDR =>
+            config_r(ESP_CSR_DCO_CFG_MSB downto ESP_CSR_DCO_CFG_LSB) <= apbi.pwdata(ESP_CSR_DCO_CFG_MSB - ESP_CSR_DCO_CFG_LSB downto 0);
+          when ESP_CSR_DCO_NOC_CFG_ADDR =>
+            config_r(ESP_CSR_DCO_NOC_CFG_MSB downto ESP_CSR_DCO_NOC_CFG_LSB) <= apbi.pwdata(ESP_CSR_DCO_NOC_CFG_MSB - ESP_CSR_DCO_NOC_CFG_LSB downto 0);
+          when ESP_CSR_LDO_CFG_ADDR =>
+            config_r(ESP_CSR_LDO_CFG_MSB downto ESP_CSR_LDO_CFG_LSB) <= apbi.pwdata(ESP_CSR_LDO_CFG_MSB - ESP_CSR_LDO_CFG_LSB downto 0);
+          when ESP_CSR_MDC_SCALER_CFG_ADDR =>
+            config_r(ESP_CSR_MDC_SCALER_CFG_MSB downto ESP_CSR_MDC_SCALER_CFG_LSB) <= apbi.pwdata(ESP_CSR_MDC_SCALER_CFG_MSB - ESP_CSR_MDC_SCALER_CFG_LSB downto 0);
+          when ESP_CSR_ARIANE_HARTID_ADDR =>
+            config_r(ESP_CSR_ARIANE_HARTID_MSB downto ESP_CSR_ARIANE_HARTID_LSB) <= apbi.pwdata(ESP_CSR_ARIANE_HARTID_MSB - ESP_CSR_ARIANE_HARTID_LSB downto 0);
+          when ESP_CSR_CPU_LOC_OVR_ADDR =>
+            config_r(ESP_CSR_CPU_LOC_OVR_MSB downto ESP_CSR_CPU_LOC_OVR_LSB) <= apbi.pwdata(ESP_CSR_CPU_LOC_OVR_MSB - ESP_CSR_CPU_LOC_OVR_LSB downto 0);
+          when ESP_CSR_DDR_CFG0_ADDR =>
+            config_r(ESP_CSR_DDR_CFG0_MSB downto ESP_CSR_DDR_CFG0_LSB) <= apbi.pwdata(ESP_CSR_DDR_CFG0_MSB - ESP_CSR_DDR_CFG0_LSB downto 0);
+          when ESP_CSR_DDR_CFG1_ADDR =>
+            config_r(ESP_CSR_DDR_CFG1_MSB downto ESP_CSR_DDR_CFG1_LSB) <= apbi.pwdata(ESP_CSR_DDR_CFG1_MSB - ESP_CSR_DDR_CFG1_LSB downto 0);
+          when ESP_CSR_DDR_CFG2_ADDR =>
+            config_r(ESP_CSR_DDR_CFG2_MSB downto ESP_CSR_DDR_CFG2_LSB) <= apbi.pwdata(ESP_CSR_DDR_CFG2_MSB - ESP_CSR_DDR_CFG2_LSB downto 0);
+          when ESP_CSR_ACC_COH_ADDR =>
+            config_r(ESP_CSR_ACC_COH_MSB downto ESP_CSR_ACC_COH_LSB) <= apbi.pwdata(ESP_CSR_ACC_COH_MSB - ESP_CSR_ACC_COH_LSB downto 0);
+          when ESP_CSR_SRST_ADDR =>
+            srst <= wdata(0);
+
+          -- Power management
+          when ESP_CSR_PM_MIN to ESP_CSR_PM_MIN + PM_REGNUM_CONFIG - 1 =>
+            pm_config_r(csr_addr - ESP_CSR_PM_MIN) <= apbi.pwdata(31 downto 0);
+
+          when others => null;
+        end case;
+      end if;
     end if;
   end process wr_registers;
 
-  time_stamp_update: process (clk, rstn)
-    variable new_window_setup : std_logic_vector(REGISTER_WIDTH-1 downto 0);
-  begin -- process time_stamp_update
-    if rstn = '0' then         -- asynchronous reset (active low)
-      new_window <= '0';
-      window_count <= (others => '0');
-      time_counter <= (others => '0');
-      new_window_setup := (others => '0');
-    elsif clk'event and clk = '1' then -- rising clock edge
-      new_window_setup := window_size - conv_std_logic_vector(64, REGISTER_WIDTH);
-      -- Advance time
-      time_counter <= time_counter + 1;
-      -- Advance window count
-      if time_counter = window_size or window_reset = '1' or ctrl_rst(0) = '1' then
-        time_counter <= (others => '0');
-        window_count <= window_count + 1;
-        new_window <= '1';
-      end if;
-
-      if time_counter = conv_std_logic_vector(10, REGISTER_WIDTH) then
-        -- hold new_window for 10 cycles to make sure perf. counters get the reset.
-        new_window <= '0';
-      end if;
-
+  acc_state_reg : process(clk, rstn)
+  begin
+    if rstn = '0' then
+      acc_state <= '0';
+    elsif clk'event and clk = '1' then
+      acc_state <= acc_state_next;
     end if;
-  end process time_stamp_update;
+  end process acc_state_reg;
 
-  update : process(clk, rstn)
-  begin --process
-      if rstn = '0' then
-        updated <= '0';
-      elsif clk'event and clk = '1' then
-        if new_window = '1' and updated = '0' then
-          updated <= '1';
-        elsif new_window = '0' then
-          updated <= '0';
-        end if;
+  acc_reset  : process(mon_acc, acc_state)
+  begin
+    acc_state_next <= acc_state;
+    acc_rst <= '0';
+    if acc_state = '0' then
+      if mon_acc.go = '1' and mon_acc.done = '0' then
+        acc_state_next <= '1';
+        acc_rst <= '1';
       end if;
-  end process;
+    else
+      if mon_acc.done = '1' then
+        acc_state_next <= '0';
+      end if;
+    end if;
+  end process acc_reset;
 
+  burst_state_reg : process(clk, rstn)
+  begin
+    if rstn = '0' then
+        burst_state <= '0';
+    elsif clk'event and clk = '1' then
+        burst_state <= burst_state_next;
+    end if;
+  end process burst_state_reg;
+
+  burst_fsm : process(burst, burst_state)
+  begin
+    burst_start <= '0';
+    burst_state_next <= burst(0);
+    if burst(0) = '1' and burst_state = '0' then
+      burst_start <= '1';
+    end if;
+  end process burst_fsm;
 
   counters : process (clk, rstn)
     variable accelerator_mem_count : std_logic_vector(2*REGISTER_WIDTH-1 downto 0);
@@ -367,7 +402,6 @@ architecture rtl of esp_tile_csr is
       if mon_mem.coherent_dma_rsp = '1' then
         count(MON_MEM_COH_DMA_RSP_INDEX) <= count(MON_MEM_COH_DMA_RSP_INDEX) + 1;
       end if;
-
       --L2
       if mon_l2.hit = '1' then
         count(MON_L2_HIT_INDEX) <= count(MON_L2_HIT_INDEX) + 1;
@@ -422,11 +456,13 @@ architecture rtl of esp_tile_csr is
         end loop;
       end loop;
 
-      if new_window = '1' and updated = '0' then
+      if burst_start = '1' then
         for R in 0 to MONITOR_REG_COUNT - 1 loop
-          count(R) <= (others => '0');
           count_value(R) <= count(R);
         end loop;
+      end if;
+
+      if acc_rst = '1' then
         accelerator_tlb_count := (others => '0');
         accelerator_mem_count := (others => '0');
         accelerator_tot_count := (others => '0');

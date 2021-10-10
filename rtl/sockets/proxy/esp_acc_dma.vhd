@@ -1091,7 +1091,7 @@ begin  -- rtl
   process(apbi, bankreg)
     variable addr : integer range 0 to MAXREGNUM - 1;
   begin
-    addr := conv_integer(apbi.paddr(6 downto 2));
+    addr := conv_integer(apbi.paddr(7 downto 2));
 
     bankin <= (others => (others => '0'));
     sample <= (others => '0');
@@ -1099,12 +1099,12 @@ begin  -- rtl
     -- Clear TLB when page table address is updated
     tlb_clear <= '0';
 
-    if apbi.paddr(7) = '0' then
+    -- if apbi.paddr(7) = '0' then
       sample(addr) <= apbi.psel(pindex) and apbi.penable and apbi.pwrite;
       if addr = PT_ADDRESS_REG then
         tlb_clear <= '1';
       end if;
-    end if;
+    -- end if;
     bankin(addr) <= apbi.pwdata;
     readdata <= bankreg(addr);
   end process;

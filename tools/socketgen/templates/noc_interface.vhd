@@ -49,6 +49,8 @@ use std.textio.all;
     refclk    : in  std_ulogic;
     pllbypass : in  std_ulogic;
     pllclk    : out std_ulogic;
+    ext_dco_cc_sel  : out std_logic_vector(5 downto 0);
+    ext_ldo_res_sel : out std_logic_vector(7 downto 0);
     local_y   : in  local_yx;
     local_x   : in  local_yx;
     tile_id   : in  integer;
@@ -108,8 +110,9 @@ use std.textio.all;
     --Monitor signals
     mon_acc           : out monitor_acc_type;
     mon_cache         : out monitor_cache_type;
-    mon_dvfs          : out monitor_dvfs_type
-    );
+    mon_dvfs          : out monitor_dvfs_type;
+    -- Coherence
+    coherence         : in integer range 0 to 3);
 
 end;
 
@@ -130,7 +133,8 @@ end;
     STATUS_REG         => '1',
     DEVID_REG          => '1',
     PT_NCHUNK_MAX_REG  => '1',
-    EXP_DO_REG         => '1',
+    -- EXP_DO_REG         => '1', -- uncomment if re-enabling regs for SRAM
+                                  -- expansion to reg bank
     YX_REG             => '1',
     -- <<user_read_only>>
     others             => '0');
@@ -266,6 +270,10 @@ end;
   attribute keep of pllclk_int : signal is "true";
 
 begin
+
+  -- unused DCO and LDO selectors
+  ext_dco_cc_sel  <= (others => '0');
+  ext_ldo_res_sel <= (others => '0');
 
   interrupt_ack_rdreq <= '0';
   

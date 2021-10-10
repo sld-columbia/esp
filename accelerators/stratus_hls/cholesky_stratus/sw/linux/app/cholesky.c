@@ -35,7 +35,7 @@ static int validate_buffer(token_t *out, token_t *gold)
             }
         }
 
-	return errors;
+    return errors;
 }
 
 /* User-defined code */
@@ -119,7 +119,7 @@ int main(int argc, char **argv)
     else
         errors = 0;
 
-	free(gold);
+    free(gold);
 	esp_free(buf);
 
 	if (!errors)

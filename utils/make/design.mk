@@ -34,8 +34,10 @@ endif
 ifneq ($(filter $(TECHLIB),$(FPGALIBS)),)
 include $(ESP_ROOT)/constraints/$(BOARD)/Makefile.inc
 DEVICE = $(PART)-$(PACKAGE)-$(SPEED)
+TECH_TYPE = fpga
 else ifneq ($(filter $(TECHLIB),$(ASICLIBS)),)
 DEVICE = ASIC-$(TECHLIB)
+TECH_TYPE = asic
 else
 $(error technology library not supported)
 endif
@@ -94,6 +96,7 @@ TOP_VHDL_RTL_PKGS += $(DESIGN_PATH)/$(ESP_CFG_BUILD)/socmap.vhd
 TOP_VHDL_RTL_PKGS += $(DESIGN_PATH)/socketgen/sldacc.vhd
 TOP_VHDL_RTL_PKGS += $(ESP_ROOT)/rtl/tiles/tiles_pkg.vhd
 TOP_VHDL_RTL_PKGS += $(ESP_ROOT)/rtl/tiles/asic/tiles_asic_pkg.vhd
+TOP_VHDL_RTL_PKGS += $(ESP_ROOT)/rtl/tiles/fpga/tiles_fpga_pkg.vhd
 TOP_VHDL_RTL_PKGS += $(EXTRA_TOP_VHDL_RTL_PKGS)
 
 TOP_VHDL_SIM_PKGS +=

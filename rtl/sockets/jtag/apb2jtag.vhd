@@ -135,11 +135,12 @@ begin
         g_data_width => NOC_FLIT_SIZE+9,
         g_size       => 40)
       port map (
-        rst_n_i    => rst,
+        rst_wr_n_i => rst,
         clk_wr_i   => main_clk,
         we_i       => en_fifo_in(i),
         d_i        => tracein(i),
         wr_full_o  => full_fifo(i),
+        rst_rd_n_i => rst,
         clk_rd_i   => tclk,
         rd_i       => req_flit(i),
         q_o        => tracein1(i),

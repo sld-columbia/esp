@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sld>
+  <accelerator name="sha1_cxx" desc="Accelerator SHA1 Catapult C++" data_size="4" device_id="087" hls_tool="catapult_hls_cxx">
+    <param name="in_bytes" desc="in_bytes" />
+  </accelerator>
+</sld>

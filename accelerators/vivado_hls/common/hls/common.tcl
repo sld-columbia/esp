@@ -33,7 +33,7 @@ foreach dma $dma_width {
 	set_top "top"
 
 	add_files [glob ../src/*] -cflags "-I../inc -DDMA_SIZE=${dma} -DDATA_BITWIDTH=${width} -std=c++0x "
-	add_files -tb ../tb/tb.cc -cflags "-I../inc -Wno-unknown-pragmas -Wno-unknown-pragmas -DDMA_SIZE=${dma} -DDATA_BITWIDTH=${width} -std=c++0x "
+	add_files -tb ../tb/tb.cc -cflags "-I../inc -Wno-unknown-pragmas -DDMA_SIZE=${dma} -DDATA_BITWIDTH=${width} -std=c++0x "
 
 	open_solution "${ACCELERATOR}_acc"
 

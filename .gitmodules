@@ -44,3 +44,6 @@
 [submodule "rtl/caches/spandex-caches"]
 	path = rtl/caches/spandex-caches
 	url = https://github.com/zzhu35/spandex-caches.git
+[submodule "soft/ariane/opensbi"]
+	path = soft/ariane/opensbi
+	url = https://github.com/sld-columbia/opensbi.git

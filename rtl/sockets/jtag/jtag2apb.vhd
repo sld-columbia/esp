@@ -106,11 +106,12 @@ begin
         g_data_width => NOC_FLIT_SIZE+8,
         g_size       => 20)
       port map (
-        rst_n_i    => rst,
+        rst_wr_n_i => rst,
         clk_wr_i   => tclk,
         we_i       => wr_flit(5-i),
         d_i        => test_out,
         wr_full_o  => open,
+        rst_rd_n_i => rst,
         clk_rd_i   => main_clk,
         rd_i       => req_fifo1(i),
         q_o        => fifo_out_data(i)(73 downto 0),

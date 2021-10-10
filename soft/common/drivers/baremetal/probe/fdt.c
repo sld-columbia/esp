@@ -34,9 +34,14 @@
 
 static inline uint32_t bswap(uint32_t x)
 {
+// #if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
   uint32_t y = (x & 0x00FF00FF) <<  8 | (x & 0xFF00FF00) >>  8;
   uint32_t z = (y & 0x0000FFFF) << 16 | (y & 0xFFFF0000) >> 16;
   return z;
+// #else
+//   /* No need to swap on big endian */
+//   return x;
+// #endif
 }
 
 static inline int isstring(char c)
@@ -75,7 +80,7 @@ static uint32_t *fdt_scan_helper(
         break;
       }
       case FDT_PROP: {
-        /* assert (!last); */
+        // assert (!last);
         prop.name  = strings + bswap(lex[2]);
         prop.len   = bswap(lex[1]);
         prop.value = lex + 3;
@@ -151,6 +156,11 @@ const uint32_t *fdt_get_size(const struct fdt_scan_node *node, const uint32_t *v
   return value;
 }
 
+uint32_t fdt_get_value(const struct fdt_scan_prop *prop, uint32_t index)
+{
+  return bswap(prop->value[index]);
+}
+
 int fdt_string_list_index(const struct fdt_scan_prop *prop, const char *str)
 {
   const char *list = (const char *)prop->value;
@@ -162,10 +172,4 @@ int fdt_string_list_index(const struct fdt_scan_prop *prop, const char *str)
     list += strlen(list) + 1;
   }
   return -1;
-}
-
-const uint32_t *fdt_get_value(const uint32_t *value, uint32_t *result)
-{
-  *result = bswap(*value++);
-  return value;
 }

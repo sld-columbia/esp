@@ -23,6 +23,7 @@ use unisim.all;
 -- pragma translate_on
 use work.monitor_pkg.all;
 use work.esp_csr_pkg.all;
+use work.jtag_pkg.all;
 use work.sldacc.all;
 use work.nocpackage.all;
 use work.tile.all;
@@ -36,12 +37,12 @@ use work.tiles_pkg.all;
 
 entity asic_tile_mem_ddr is
   generic (
+    SIMULATION   : boolean   := false;
     ROUTER_PORTS : ports_vec := "11111");
   port (
     rst                : in  std_ulogic;
     sys_clk            : in  std_ulogic;  -- NoC clock
     ext_clk            : in  std_ulogic;  -- backup tile clock
-    -- ext_clk_sel     : in  std_ulogic;  -- backup tile clock select ??(usign registers otherwise)
     clk_div            : out std_ulogic;  -- tile clock monitor for testing purposes
     -- LPDDR
     lpddr_o            : out lpddr_out_t;
@@ -177,7 +178,7 @@ architecture rtl of asic_tile_mem_ddr is
   signal ddr_cfg1 : std_logic_vector(31 downto 0);
   signal ddr_cfg1 : std_logic_vector(31 downto 0);
 
-  signal ddr_id : integer range 0 to CFG_NDDR_TILE - 1;
+  signal mem_id : integer range 0 to CFG_NDDR_TILE - 1;
 
   constant ext_clk_sel_default : std_ulogic := '0';
 
@@ -186,31 +187,128 @@ architecture rtl of asic_tile_mem_ddr is
   -- FREQ_SEL    DIV_SEL    FC_SEL      CC_SEL    CLK_SEL   EN
 
   -- Tile clock and reset (only for I/O tile)
-  signal raw_rstn     : std_ulogic;
-  signal dco_clk      : std_ulogic;
-  signal dco_rstn     : std_ulogic;
-  signal dco_clk_lock : std_ulogic;
+  signal raw_rstn : std_ulogic;
+  signal noc_rstn : std_ulogic;
+  signal dco_rstn : std_ulogic;
+  signal dco_clk  : std_ulogic;
+
+  -- DCO config
+  signal dco_en            : std_ulogic;
+  signal dco_clk_sel       : std_ulogic;
+  signal dco_cc_sel        : std_logic_vector(5 downto 0);
+  signal dco_fc_sel        : std_logic_vector(5 downto 0);
+  signal dco_div_sel       : std_logic_vector(2 downto 0);
+  signal dco_freq_sel      : std_logic_vector(1 downto 0);
+  signal dco_clk_delay_sel : std_logic_vector(3 downto 0);
 
   signal phy_rstn, phy_raw_rstn : std_logic;
 
+  -- Tile parameters
+  signal tile_config : std_logic_vector(ESP_CSR_WIDTH - 1 downto 0);
+
+  -- Tile NoC interface
+  signal test_rstn             : std_ulogic;
+  signal test1_output_port_s   : noc_flit_type;
+  signal test1_data_void_out_s : std_ulogic;
+  signal test1_stop_in_s       : std_ulogic;
+  signal test2_output_port_s   : noc_flit_type;
+  signal test2_data_void_out_s : std_ulogic;
+  signal test2_stop_in_s       : std_ulogic;
+  signal test3_output_port_s   : noc_flit_type;
+  signal test3_data_void_out_s : std_ulogic;
+  signal test3_stop_in_s       : std_ulogic;
+  signal test4_output_port_s   : noc_flit_type;
+  signal test4_data_void_out_s : std_ulogic;
+  signal test4_stop_in_s       : std_ulogic;
+  signal test5_output_port_s   : misc_noc_flit_type;
+  signal test5_data_void_out_s : std_ulogic;
+  signal test5_stop_in_s       : std_ulogic;
+  signal test6_output_port_s   : noc_flit_type;
+  signal test6_data_void_out_s : std_ulogic;
+  signal test6_stop_in_s       : std_ulogic;
+  signal test1_input_port_s    : noc_flit_type;
+  signal test1_data_void_in_s  : std_ulogic;
+  signal test1_stop_out_s      : std_ulogic;
+  signal test2_input_port_s    : noc_flit_type;
+  signal test2_data_void_in_s  : std_ulogic;
+  signal test2_stop_out_s      : std_ulogic;
+  signal test3_input_port_s    : noc_flit_type;
+  signal test3_data_void_in_s  : std_ulogic;
+  signal test3_stop_out_s      : std_ulogic;
+  signal test4_input_port_s    : noc_flit_type;
+  signal test4_data_void_in_s  : std_ulogic;
+  signal test4_stop_out_s      : std_ulogic;
+  signal test5_input_port_s    : misc_noc_flit_type;
+  signal test5_data_void_in_s  : std_ulogic;
+  signal test5_stop_out_s      : std_ulogic;
+  signal test6_input_port_s    : noc_flit_type;
+  signal test6_data_void_in_s  : std_ulogic;
+  signal test6_stop_out_s      : std_ulogic;
+
+  -- Noc interface
+  signal noc1_stop_in_tile       : std_ulogic;
+  signal noc1_stop_out_tile      : std_ulogic;
+  signal noc1_data_void_in_tile  : std_ulogic;
+  signal noc1_data_void_out_tile : std_ulogic;
+  signal noc2_stop_in_tile       : std_ulogic;
+  signal noc2_stop_out_tile      : std_ulogic;
+  signal noc2_data_void_in_tile  : std_ulogic;
+  signal noc2_data_void_out_tile : std_ulogic;
+  signal noc3_stop_in_tile       : std_ulogic;
+  signal noc3_stop_out_tile      : std_ulogic;
+  signal noc3_data_void_in_tile  : std_ulogic;
+  signal noc3_data_void_out_tile : std_ulogic;
+  signal noc4_stop_in_tile       : std_ulogic;
+  signal noc4_stop_out_tile      : std_ulogic;
+  signal noc4_data_void_in_tile  : std_ulogic;
+  signal noc4_data_void_out_tile : std_ulogic;
+  signal noc5_stop_in_tile       : std_ulogic;
+  signal noc5_stop_out_tile      : std_ulogic;
+  signal noc5_data_void_in_tile  : std_ulogic;
+  signal noc5_data_void_out_tile : std_ulogic;
+  signal noc6_stop_in_tile       : std_ulogic;
+  signal noc6_stop_out_tile      : std_ulogic;
+  signal noc6_data_void_in_tile  : std_ulogic;
+  signal noc6_data_void_out_tile : std_ulogic;
+  signal noc1_input_port_tile    : noc_flit_type;
+  signal noc2_input_port_tile    : noc_flit_type;
+  signal noc3_input_port_tile    : noc_flit_type;
+  signal noc4_input_port_tile    : noc_flit_type;
+  signal noc5_input_port_tile    : misc_noc_flit_type;
+  signal noc6_input_port_tile    : noc_flit_type;
+  signal noc1_output_port_tile   : noc_flit_type;
+  signal noc2_output_port_tile   : noc_flit_type;
+  signal noc3_output_port_tile   : noc_flit_type;
+  signal noc4_output_port_tile   : noc_flit_type;
+  signal noc5_output_port_tile   : misc_noc_flit_type;
+  signal noc6_output_port_tile   : noc_flit_type;
+
+  -- NoC monitors
+  signal noc1_mon_noc_vec_int : monitor_noc_type;
+  signal noc2_mon_noc_vec_int : monitor_noc_type;
+  signal noc3_mon_noc_vec_int : monitor_noc_type;
+  signal noc4_mon_noc_vec_int : monitor_noc_type;
+  signal noc5_mon_noc_vec_int : monitor_noc_type;
+  signal noc6_mon_noc_vec_int : monitor_noc_type;
+
 begin
 
-  -- Tile main clock and reset
-  rst1 : rstgen                         -- reset generator
-    generic map (acthigh => 1, syncin => 0)
-    port map (rst, dco_clk_div2_90, dco_clk_lock, dco_rstn, raw_rstn);
+  raw_rstn <= not rst;
 
-  -- DDR PHY reset
-  rst1 : rstgen                         -- reset generator
+  rst_noc : rstgen
     generic map (acthigh => 1, syncin => 0)
-    port map (rst, dco_clk_div2, dco_clk_lock, phy_rstn, phy_raw_rstn);
+    port map (rst, sys_clk, '1', noc_rstn, open);
+
+  rst_jtag : rstgen
+    generic map (acthigh => 1, syncin => 0)
+    port map (rst, tclk, '1', test_rstn, open);
 
   -- DDR controller
   ahb2bsg_dmc_1 : ahb2bsg_dmc
     port map (
-      hindex          => ddr_hindex(ddr_id),
-      haddr           => ddr_haddr(ddr_id),
-      hmask           => ddr_hmask(ddr_id),
+      hindex          => ddr_hindex(mem_id),
+      haddr           => ddr_haddr(mem_id),
+      hmask           => ddr_hmask(mem_id),
       lpddr_ck_p      => lpddr_o.lpddr_ck_p,
       lpddr_ck_n      => lpddr_o.lpddr_ck_n,
       lpddr_cke       => lpddr_o.lpddr_cke,
@@ -244,126 +342,324 @@ begin
       phy_clk_2x      => dco_clk,
       phy_rstn        => phy_rstn);
 
+  -----------------------------------------------------------------------------
+  -- JTAG for single tile testing / bypass when test_if_en = 0
+  -----------------------------------------------------------------------------
+  jtag_test_i : jtag_test
+    generic map (
+      test_if_en => 1)
+    port map (
+      rst                 => test_rstn,
+      refclk              => dco_clk,
+      tile_rst            => dco_rstn,
+      tdi                 => tdi,
+      tdo                 => tdo,
+      tms                 => tms,
+      tclk                => tclk,
+      noc1_output_port    => noc1_output_port_tile,
+      noc1_data_void_out  => noc1_data_void_out_tile,
+      noc1_stop_in        => noc1_stop_in_tile,
+      noc2_output_port    => noc2_output_port_tile,
+      noc2_data_void_out  => noc2_data_void_out_tile,
+      noc2_stop_in        => noc2_stop_in_tile,
+      noc3_output_port    => noc3_output_port_tile,
+      noc3_data_void_out  => noc3_data_void_out_tile,
+      noc3_stop_in        => noc3_stop_in_tile,
+      noc4_output_port    => noc4_output_port_tile,
+      noc4_data_void_out  => noc4_data_void_out_tile,
+      noc4_stop_in        => noc4_stop_in_tile,
+      noc5_output_port    => noc5_output_port_tile,
+      noc5_data_void_out  => noc5_data_void_out_tile,
+      noc5_stop_in        => noc5_stop_in_tile,
+      noc6_output_port    => noc6_output_port_tile,
+      noc6_data_void_out  => noc6_data_void_out_tile,
+      noc6_stop_in        => noc6_stop_in_tile,
+      test1_output_port   => test1_output_port_s,
+      test1_data_void_out => test1_data_void_out_s,
+      test1_stop_in       => test1_stop_in_s,
+      test2_output_port   => test2_output_port_s,
+      test2_data_void_out => test2_data_void_out_s,
+      test2_stop_in       => test2_stop_in_s,
+      test3_output_port   => test3_output_port_s,
+      test3_data_void_out => test3_data_void_out_s,
+      test3_stop_in       => test3_stop_in_s,
+      test4_output_port   => test4_output_port_s,
+      test4_data_void_out => test4_data_void_out_s,
+      test4_stop_in       => test4_stop_in_s,
+      test5_output_port   => test5_output_port_s,
+      test5_data_void_out => test5_data_void_out_s,
+      test5_stop_in       => test5_stop_in_s,
+      test6_output_port   => test6_output_port_s,
+      test6_data_void_out => test6_data_void_out_s,
+      test6_stop_in       => test6_stop_in_s,
+      test1_input_port    => test1_input_port_s,
+      test1_data_void_in  => test1_data_void_in_s,
+      test1_stop_out      => test1_stop_out_s,
+      test2_input_port    => test2_input_port_s,
+      test2_data_void_in  => test2_data_void_in_s,
+      test2_stop_out      => test2_stop_out_s,
+      test3_input_port    => test3_input_port_s,
+      test3_data_void_in  => test3_data_void_in_s,
+      test3_stop_out      => test3_stop_out_s,
+      test4_input_port    => test4_input_port_s,
+      test4_data_void_in  => test4_data_void_in_s,
+      test4_stop_out      => test4_stop_out_s,
+      test5_input_port    => test5_input_port_s,
+      test5_data_void_in  => test5_data_void_in_s,
+      test5_stop_out      => test5_stop_out_s,
+      test6_input_port    => test6_input_port_s,
+      test6_data_void_in  => test6_data_void_in_s,
+      test6_stop_out      => test6_stop_out_s,
+      noc1_input_port     => noc1_input_port_tile,
+      noc1_data_void_in   => noc1_data_void_in_tile,
+      noc1_stop_out       => noc1_stop_out_tile,
+      noc2_input_port     => noc2_input_port_tile,
+      noc2_data_void_in   => noc2_data_void_in_tile,
+      noc2_stop_out       => noc2_stop_out_tile,
+      noc3_input_port     => noc3_input_port_tile,
+      noc3_data_void_in   => noc3_data_void_in_tile,
+      noc3_stop_out       => noc3_stop_out_tile,
+      noc4_input_port     => noc4_input_port_tile,
+      noc4_data_void_in   => noc4_data_void_in_tile,
+      noc4_stop_out       => noc4_stop_out_tile,
+      noc5_input_port     => noc5_input_port_tile,
+      noc5_data_void_in   => noc5_data_void_in_tile,
+      noc5_stop_out       => noc5_stop_out_tile,
+      noc6_input_port     => noc6_input_port_tile,
+      noc6_data_void_in   => noc6_data_void_in_tile,
+      noc6_stop_out       => noc6_stop_out_tile);
+
   tile_mem_1 : tile_mem
     generic map (
+      SIMULATION   => SIMULATION,
       this_has_dco => 1,
-      test_if_en   => 1,
       this_has_ddr => 1,
-      dco_rst_cfg  => DEFAULT_DCO_LPDDR_CFG,
-      ROUTER_PORTS => ROUTER_PORTS,
-      HAS_SYNC     => 1)
+      dco_rst_cfg  => DEFAULT_DCO_LPDDR_CFG)
     port map (
-      raw_rstn           => raw_rstn,   -- DCO raw reset
-      rst                => dco_rstn,   -- tile main synchronouse reset
-      refclk             => ext_clk,    -- external backup clock
-      clk                => dco_clk_div2_90,      -- tile main clock
-      pllbypass          => ext_clk_sel_default,  -- ext_clk_sel,
-      pllclk             => clk_div,    -- test clock output to PCB
-      dco_clk            => dco_clk,    -- DDR PHY 2x clock
-      dco_clk_lock       => dco_clk_lock,
-      dco_clk_div2       => dco_clk_div2,         -- DDR PHY 1x clock
-      dco_clk_div2_90    => dco_clk_div2_90       -- user clock
-      ddr_ahbsi          => ddr_ahbsi,
-      ddr_ahbso          => ddr_ahbso,
-      ddr_cfg0           => ddr_cfg0,
-      ddr_cfg1           => ddr_cfg1,
-      ddr_cfg2           => ddr_cfg2,
-      ddr_id             => ddr_id,
-      fpga_data_in       => (others => '0'),
-      fpga_data_out      => open,
-      fpga_oen           => open,
-      fpga_valid_in      => '0',
-      fpga_valid_out     => open,
-      fpga_clk_in        => '0',
-      fpga_clk_out       => open,
-      fpga_credit_in     => '0',
-      fpga_credit_out    => open,
-      tdi                => tdi,
-      tdo                => tdo,
-      tms                => tms,
-      tclk               => tclk,
-      pad_cfg            => pad_cfg,
-      sys_clk_int        => sys_clk,
-      noc1_data_n_in     => noc1_data_n_in,
-      noc1_data_s_in     => noc1_data_s_in,
-      noc1_data_w_in     => noc1_data_w_in,
-      noc1_data_e_in     => noc1_data_e_in,
-      noc1_data_void_in  => noc1_data_void_in,
-      noc1_stop_in       => noc1_stop_in,
-      noc1_data_n_out    => noc1_data_n_out,
-      noc1_data_s_out    => noc1_data_s_out,
-      noc1_data_w_out    => noc1_data_w_out,
-      noc1_data_e_out    => noc1_data_e_out,
-      noc1_data_void_out => noc1_data_void_out,
-      noc1_stop_out      => noc1_stop_out,
-      noc2_data_n_in     => noc2_data_n_in,
-      noc2_data_s_in     => noc2_data_s_in,
-      noc2_data_w_in     => noc2_data_w_in,
-      noc2_data_e_in     => noc2_data_e_in,
-      noc2_data_void_in  => noc2_data_void_in,
-      noc2_stop_in       => noc2_stop_in,
-      noc2_data_n_out    => noc2_data_n_out,
-      noc2_data_s_out    => noc2_data_s_out,
-      noc2_data_w_out    => noc2_data_w_out,
-      noc2_data_e_out    => noc2_data_e_out,
-      noc2_data_void_out => noc2_data_void_out,
-      noc2_stop_out      => noc2_stop_out,
-      noc3_data_n_in     => noc3_data_n_in,
-      noc3_data_s_in     => noc3_data_s_in,
-      noc3_data_w_in     => noc3_data_w_in,
-      noc3_data_e_in     => noc3_data_e_in,
-      noc3_data_void_in  => noc3_data_void_in,
-      noc3_stop_in       => noc3_stop_in,
-      noc3_data_n_out    => noc3_data_n_out,
-      noc3_data_s_out    => noc3_data_s_out,
-      noc3_data_w_out    => noc3_data_w_out,
-      noc3_data_e_out    => noc3_data_e_out,
-      noc3_data_void_out => noc3_data_void_out,
-      noc3_stop_out      => noc3_stop_out,
-      noc4_data_n_in     => noc4_data_n_in,
-      noc4_data_s_in     => noc4_data_s_in,
-      noc4_data_w_in     => noc4_data_w_in,
-      noc4_data_e_in     => noc4_data_e_in,
-      noc4_data_void_in  => noc4_data_void_in,
-      noc4_stop_in       => noc4_stop_in,
-      noc4_data_n_out    => noc4_data_n_out,
-      noc4_data_s_out    => noc4_data_s_out,
-      noc4_data_w_out    => noc4_data_w_out,
-      noc4_data_e_out    => noc4_data_e_out,
-      noc4_data_void_out => noc4_data_void_out,
-      noc4_stop_out      => noc4_stop_out,
-      noc5_data_n_in     => noc5_data_n_in,
-      noc5_data_s_in     => noc5_data_s_in,
-      noc5_data_w_in     => noc5_data_w_in,
-      noc5_data_e_in     => noc5_data_e_in,
-      noc5_data_void_in  => noc5_data_void_in,
-      noc5_stop_in       => noc5_stop_in,
-      noc5_data_n_out    => noc5_data_n_out,
-      noc5_data_s_out    => noc5_data_s_out,
-      noc5_data_w_out    => noc5_data_w_out,
-      noc5_data_e_out    => noc5_data_e_out,
-      noc5_data_void_out => noc5_data_void_out,
-      noc5_stop_out      => noc5_stop_out,
-      noc6_data_n_in     => noc6_data_n_in,
-      noc6_data_s_in     => noc6_data_s_in,
-      noc6_data_w_in     => noc6_data_w_in,
-      noc6_data_e_in     => noc6_data_e_in,
-      noc6_data_void_in  => noc6_data_void_in,
-      noc6_stop_in       => noc6_stop_in,
-      noc6_data_n_out    => noc6_data_n_out,
-      noc6_data_s_out    => noc6_data_s_out,
-      noc6_data_w_out    => noc6_data_w_out,
-      noc6_data_e_out    => noc6_data_e_out,
-      noc6_data_void_out => noc6_data_void_out,
-      noc6_stop_out      => noc6_stop_out,
-      noc1_mon_noc_vec   => open,
-      noc2_mon_noc_vec   => open,
-      noc3_mon_noc_vec   => open,
-      noc4_mon_noc_vec   => open,
-      noc5_mon_noc_vec   => open,
-      noc6_mon_noc_vec   => open,
-      mon_mem            => open,
-      mon_cache          => open,
-      mon_dvfs           => open);
+      raw_rstn            => raw_rstn,  -- DCO raw reset
+      tile_rst            => rst,       -- tile main synchronouse reset
+      refclk              => ext_clk,   -- external backup clock
+      clk                 => dco_clk_div2_90,      -- tile main clock
+      pllbypass           => ext_clk_sel_default,  -- ext_clk_sel,
+      pllclk              => clk_div,   -- test clock output to PCB
+      dco_clk             => dco_clk,   -- DDR PHY 2x clock
+      dco_rstn            => dco_rstn,
+      phy_rstn            => phy_rstn,
+      dco_clk_div2        => dco_clk_div2,         -- DDR PHY 1x clock
+      dco_clk_div2_90     => dco_clk_div2_90,      -- user clock
+      dco_freq_sel        => dco_freq_sel,
+      dco_div_sel         => dco_div_sel,
+      dco_fc_sel          => dco_fc_sel,
+      dco_cc_sel          => dco_cc_sel,
+      dco_clk_sel         => dco_clk_sel,
+      dco_en              => dco_en,
+      dco_clk_delay_sel   => dco_clk_delay_sel,
+      ddr_ahbsi           => ddr_ahbsi,
+      ddr_ahbso           => ddr_ahbso,
+      fpga_data_in        => (others => '0'),
+      fpga_data_out       => open,
+      fpga_oen            => open,
+      fpga_valid_in       => '0',
+      fpga_valid_out      => open,
+      fpga_clk_in         => '0',
+      fpga_clk_out        => open,
+      fpga_credit_in      => '0',
+      fpga_credit_out     => open,
+      test1_output_port   => test1_output_port_s,
+      test1_data_void_out => test1_data_void_out_s,
+      test1_stop_in       => test1_stop_out_s,
+      test1_input_port    => test1_input_port_s,
+      test1_data_void_in  => test1_data_void_in_s,
+      test1_stop_out      => test1_stop_in_s,
+      test2_output_port   => test2_output_port_s,
+      test2_data_void_out => test2_data_void_out_s,
+      test2_stop_in       => test2_stop_out_s,
+      test2_input_port    => test2_input_port_s,
+      test2_data_void_in  => test2_data_void_in_s,
+      test2_stop_out      => test2_stop_in_s,
+      test3_output_port   => test3_output_port_s,
+      test3_data_void_out => test3_data_void_out_s,
+      test3_stop_in       => test3_stop_out_s,
+      test3_input_port    => test3_input_port_s,
+      test3_data_void_in  => test3_data_void_in_s,
+      test3_stop_out      => test3_stop_in_s,
+      test4_output_port   => test4_output_port_s,
+      test4_data_void_out => test4_data_void_out_s,
+      test4_stop_in       => test4_stop_out_s,
+      test4_input_port    => test4_input_port_s,
+      test4_data_void_in  => test4_data_void_in_s,
+      test4_stop_out      => test4_stop_in_s,
+      test5_output_port   => test5_output_port_s,
+      test5_data_void_out => test5_data_void_out_s,
+      test5_stop_in       => test5_stop_out_s,
+      test5_input_port    => test5_input_port_s,
+      test5_data_void_in  => test5_data_void_in_s,
+      test5_stop_out      => test5_stop_in_s,
+      test6_output_port   => test6_output_port_s,
+      test6_data_void_out => test6_data_void_out_s,
+      test6_stop_in       => test6_stop_out_s,
+      test6_input_port    => test6_input_port_s,
+      test6_data_void_in  => test6_data_void_in_s,
+      test6_stop_out      => test6_stop_in_s,
+      mon_mem             => open,
+      mon_cache           => open,
+      mon_dvfs            => open);
+
+  noc_domain_socket_i : noc_domain_socket
+    generic map (
+      this_has_token_pm => 0,
+      is_tile_io        => false,
+      SIMULATION        => SIMULATION,
+      ROUTER_PORTS      => ROUTER_PORTS,
+      HAS_SYNC          => 1)
+    port map (
+      raw_rstn                => raw_rstn,
+      noc_rstn                => noc_rstn,
+      dco_rstn                => dco_rstn,
+      sys_clk                 => sys_clk,
+      dco_clk                 => dco_clk,
+      acc_clk                 => open,
+      refclk                  => dco_clk,
+      -- CSRs
+      tile_config             => tile_config,
+      -- DCO config
+      dco_freq_sel            => dco_freq_sel,
+      dco_div_sel             => dco_div_sel,
+      dco_fc_sel              => dco_fc_sel,
+      dco_cc_sel              => dco_cc_sel,
+      dco_clk_sel             => dco_clk_sel,
+      dco_en                  => dco_en,
+      dco_clk_delay_sel       => dco_clk_delay_sel,
+      ext_dco_cc_sel          => (others => '0'),
+      ext_ldo_res_sel         => (others => '0'),
+      -- pad config
+      pad_cfg                 => pad_cfg,
+      -- NoC
+      noc1_data_n_in          => noc1_data_n_in,
+      noc1_data_s_in          => noc1_data_s_in,
+      noc1_data_w_in          => noc1_data_w_in,
+      noc1_data_e_in          => noc1_data_e_in,
+      noc1_data_void_in       => noc1_data_void_in,
+      noc1_stop_in            => noc1_stop_in,
+      noc1_data_n_out         => noc1_data_n_out,
+      noc1_data_s_out         => noc1_data_s_out,
+      noc1_data_w_out         => noc1_data_w_out,
+      noc1_data_e_out         => noc1_data_e_out,
+      noc1_data_void_out      => noc1_data_void_out,
+      noc1_stop_out           => noc1_stop_out,
+      noc2_data_n_in          => noc2_data_n_in,
+      noc2_data_s_in          => noc2_data_s_in,
+      noc2_data_w_in          => noc2_data_w_in,
+      noc2_data_e_in          => noc2_data_e_in,
+      noc2_data_void_in       => noc2_data_void_in,
+      noc2_stop_in            => noc2_stop_in,
+      noc2_data_n_out         => noc2_data_n_out,
+      noc2_data_s_out         => noc2_data_s_out,
+      noc2_data_w_out         => noc2_data_w_out,
+      noc2_data_e_out         => noc2_data_e_out,
+      noc2_data_void_out      => noc2_data_void_out,
+      noc2_stop_out           => noc2_stop_out,
+      noc3_data_n_in          => noc3_data_n_in,
+      noc3_data_s_in          => noc3_data_s_in,
+      noc3_data_w_in          => noc3_data_w_in,
+      noc3_data_e_in          => noc3_data_e_in,
+      noc3_data_void_in       => noc3_data_void_in,
+      noc3_stop_in            => noc3_stop_in,
+      noc3_data_n_out         => noc3_data_n_out,
+      noc3_data_s_out         => noc3_data_s_out,
+      noc3_data_w_out         => noc3_data_w_out,
+      noc3_data_e_out         => noc3_data_e_out,
+      noc3_data_void_out      => noc3_data_void_out,
+      noc3_stop_out           => noc3_stop_out,
+      noc4_data_n_in          => noc4_data_n_in,
+      noc4_data_s_in          => noc4_data_s_in,
+      noc4_data_w_in          => noc4_data_w_in,
+      noc4_data_e_in          => noc4_data_e_in,
+      noc4_data_void_in       => noc4_data_void_in,
+      noc4_stop_in            => noc4_stop_in,
+      noc4_data_n_out         => noc4_data_n_out,
+      noc4_data_s_out         => noc4_data_s_out,
+      noc4_data_w_out         => noc4_data_w_out,
+      noc4_data_e_out         => noc4_data_e_out,
+      noc4_data_void_out      => noc4_data_void_out,
+      noc4_stop_out           => noc4_stop_out,
+      noc5_data_n_in          => noc5_data_n_in,
+      noc5_data_s_in          => noc5_data_s_in,
+      noc5_data_w_in          => noc5_data_w_in,
+      noc5_data_e_in          => noc5_data_e_in,
+      noc5_data_void_in       => noc5_data_void_in,
+      noc5_stop_in            => noc5_stop_in,
+      noc5_data_n_out         => noc5_data_n_out,
+      noc5_data_s_out         => noc5_data_s_out,
+      noc5_data_w_out         => noc5_data_w_out,
+      noc5_data_e_out         => noc5_data_e_out,
+      noc5_data_void_out      => noc5_data_void_out,
+      noc5_stop_out           => noc5_stop_out,
+      noc6_data_n_in          => noc6_data_n_in,
+      noc6_data_s_in          => noc6_data_s_in,
+      noc6_data_w_in          => noc6_data_w_in,
+      noc6_data_e_in          => noc6_data_e_in,
+      noc6_data_void_in       => noc6_data_void_in,
+      noc6_stop_in            => noc6_stop_in,
+      noc6_data_n_out         => noc6_data_n_out,
+      noc6_data_s_out         => noc6_data_s_out,
+      noc6_data_w_out         => noc6_data_w_out,
+      noc6_data_e_out         => noc6_data_e_out,
+      noc6_data_void_out      => noc6_data_void_out,
+      noc6_stop_out           => noc6_stop_out,
+      -- monitors
+      noc1_mon_noc_vec        => noc1_mon_noc_vec_int,
+      noc2_mon_noc_vec        => noc2_mon_noc_vec_int,
+      noc3_mon_noc_vec        => noc3_mon_noc_vec_int,
+      noc4_mon_noc_vec        => noc4_mon_noc_vec_int,
+      noc5_mon_noc_vec        => noc5_mon_noc_vec_int,
+      noc6_mon_noc_vec        => noc6_mon_noc_vec_int,
+      -- synchronizers out to tile
+      noc1_output_port_tile   => noc1_output_port_tile,
+      noc1_data_void_out_tile => noc1_data_void_out_tile,
+      noc1_stop_in_tile       => noc1_stop_in_tile,
+      noc2_output_port_tile   => noc2_output_port_tile,
+      noc2_data_void_out_tile => noc2_data_void_out_tile,
+      noc2_stop_in_tile       => noc2_stop_in_tile,
+      noc3_output_port_tile   => noc3_output_port_tile,
+      noc3_data_void_out_tile => noc3_data_void_out_tile,
+      noc3_stop_in_tile       => noc3_stop_in_tile,
+      noc4_output_port_tile   => noc4_output_port_tile,
+      noc4_data_void_out_tile => noc4_data_void_out_tile,
+      noc4_stop_in_tile       => noc4_stop_in_tile,
+      noc5_output_port_tile   => noc5_output_port_tile,
+      noc5_data_void_out_tile => noc5_data_void_out_tile,
+      noc5_stop_in_tile       => noc5_stop_in_tile,
+      noc6_output_port_tile   => noc6_output_port_tile,
+      noc6_data_void_out_tile => noc6_data_void_out_tile,
+      noc6_stop_in_tile       => noc6_stop_in_tile,
+      -- tile to synchronizers in
+      noc1_input_port_tile    => noc1_input_port_tile,
+      noc1_data_void_in_tile  => noc1_data_void_in_tile,
+      noc1_stop_out_tile      => noc1_stop_out_tile,
+      noc2_input_port_tile    => noc2_input_port_tile,
+      noc2_data_void_in_tile  => noc2_data_void_in_tile,
+      noc2_stop_out_tile      => noc2_stop_out_tile,
+      noc3_input_port_tile    => noc3_input_port_tile,
+      noc3_data_void_in_tile  => noc3_data_void_in_tile,
+      noc3_stop_out_tile      => noc3_stop_out_tile,
+      noc4_input_port_tile    => noc4_input_port_tile,
+      noc4_data_void_in_tile  => noc4_data_void_in_tile,
+      noc4_stop_out_tile      => noc4_stop_out_tile,
+      noc5_input_port_tile    => noc5_input_port_tile,
+      noc5_data_void_in_tile  => noc5_data_void_in_tile,
+      noc5_stop_out_tile      => noc5_stop_out_tile,
+      noc6_input_port_tile    => noc6_input_port_tile,
+      noc6_data_void_in_tile  => noc6_data_void_in_tile,
+      noc6_stop_out_tile      => noc6_stop_out_tile);
+
+  -- DDR Controller configuration
+  ddr_cfg0 <= tile_config(ESP_CSR_DDR_CFG0_MSB downto ESP_CSR_DDR_CFG0_LSB);
+  ddr_cfg1 <= tile_config(ESP_CSR_DDR_CFG1_MSB downto ESP_CSR_DDR_CFG1_LSB);
+  ddr_cfg2 <= tile_config(ESP_CSR_DDR_CFG2_MSB downto ESP_CSR_DDR_CFG2_LSB);
+
+  -- IDs
+  tile_id <= to_integer(unsigned(tile_config(ESP_CSR_TILE_ID_MSB downto ESP_CSR_TILE_ID_LSB)));
+  mem_id  <= tile_mem_id(tile_id);
 
 end;

@@ -6,6 +6,8 @@ module NV_NVDLA_wrapper
    dla_csb_clk,
    dla_reset_rstn,
    direct_reset,
+   ext_dco_cc_sel,
+   ext_ldo_res_sel,
    paddr,
    penable,
    psel,
@@ -62,6 +64,8 @@ module NV_NVDLA_wrapper
    input dla_csb_clk;
    input dla_reset_rstn;
    input direct_reset;
+   output [5:0] ext_dco_cc_sel;
+   output [7:0] ext_ldo_res_sel;
    //apb
    input psel;
    input penable;
@@ -137,6 +141,10 @@ module NV_NVDLA_wrapper
    wire [31:0] 		  nvdla_pwrbus_ram_o_pd;
    wire [31:0] 		  nvdla_pwrbus_ram_a_pd;
    ///////////////
+
+   // set unused wrapper outputs
+   assign ext_dco_cc_sel = 6'b0;
+   assign ext_ldo_res_sel = 8'b0;
 
    // set NVDLA ports not used
    assign global_clk_ovr_on = 1'b0;

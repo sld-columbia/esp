@@ -25,7 +25,8 @@ package ariane_esp_pkg is
       SLMDDRLength     : std_logic_vector(63 downto 0);
       DRAMBase         : std_logic_vector(63 downto 0);
       DRAMLength       : std_logic_vector(63 downto 0);
-      DRAMCachedLength : std_logic_vector(63 downto 0));
+      DRAMCachedLength : std_logic_vector(63 downto 0);
+      NFU_PRESENT      : integer);
     port (
       clk         : in  std_logic;
       rstn        : in  std_logic;
@@ -43,11 +44,15 @@ package ariane_esp_pkg is
       slmo        : in  axi_somi_type;
       slmddri     : out axi_mosi_type;
       slmddro     : in  axi_somi_type;
+      ace_req     : in  ace_req_type;
+      ace_resp    : out ace_resp_type;
       apbi        : out apb_slv_in_type;
       apbo        : in  apb_slv_out_vector;
       apb_req     : out std_ulogic;
       apb_ack     : in  std_ulogic;
-      fence_l2    : out std_logic_vector(1 downto 0));
+      fence_l2    : out std_logic_vector(1 downto 0);
+      flush_l1    : in std_logic;
+      flush_done  : out std_logic);
   end component ariane_axi_wrap;
 
   component riscv_plic_apb_wrap is

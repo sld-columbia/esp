@@ -215,11 +215,12 @@ begin  -- architecture rtl
       g_data_width => 1,
       g_size       => 2 * QUEUE_DEPTH)
     port map (
-      rst_n_i    => rstn,
+      rst_wr_n_i => rstn,
       clk_wr_i   => fpga_clk_out,
       we_i       => fpga_credit_out,
       d_i        => "0",
       wr_full_o  => open,
+      rst_rd_n_i => rstn,
       clk_rd_i   => clk,
       rd_i       => '1',
       q_o(0)     => credit_in,
@@ -251,11 +252,12 @@ begin  -- architecture rtl
       g_data_width => ARCH_BITS,
       g_size       => 2 * QUEUE_DEPTH)
     port map (
-      rst_n_i    => rstn,
+      rst_wr_n_i => rstn,
       clk_wr_i   => fpga_clk_out,
       we_i       => ext_rcv_wrreq,
       d_i        => ext_rcv_data_in,
       wr_full_o  => ext_rcv_full,
+      rst_rd_n_i => rstn,
       clk_rd_i   => clk,
       rd_i       => ext_rcv_rdreq,
       q_o        => ext_rcv_data_out,
