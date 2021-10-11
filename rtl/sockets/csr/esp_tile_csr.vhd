@@ -76,6 +76,8 @@ architecture rtl of esp_tile_csr is
   constant MONITOR_REG_COUNT : integer                                     := MON_NOC_QUEUES_FULL_BASE_INDEX + NOCS_NUM * NOC_QUEUES;  --58
   constant REGISTER_WIDTH    : integer                                     := 32;
 
+  constant BURST_REG_2_INDEX : integer                                     := MONITOR_REG_COUNT + MONITOR_APB_OFFSET; --59
+
   signal burst                  : std_logic_vector(REGISTER_WIDTH-1 downto 0);
   signal readdata               : std_logic_vector(REGISTER_WIDTH-1 downto 0);
   signal wdata                  : std_logic_vector(REGISTER_WIDTH-1 downto 0);
@@ -204,7 +206,7 @@ begin
     wdata <= apbi.pwdata;
 
     burst_sample <= '0';
-    if addr = 0  then
+    if addr = BURST_REG_INDEX or addr = BURST_REG_2_INDEX then
         burst_sample <= apbi.psel(pindex) and apbi.penable and apbi.pwrite;
     end if;
 

@@ -11,6 +11,8 @@
 
 library ieee;
 use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
+use ieee.std_logic_misc.all;
 
 use work.esp_global.all;
 use work.amba.all;
@@ -266,8 +268,8 @@ begin
           -- noc5_stop_in_int <= '1';
           -- TODO do not hard-code these values
           if (reg.msg_type = REQ_REG_RD or reg.msg_type = REQ_REG_WR) and addr_csrs = csr_base_address and
-            (addr_csr_type = "111" or (noc5_output_port_int(8 downto 2) <= "0111001" and
-                                       noc5_output_port_int(8 downto 2) >= "0010110")) then
+            (addr_csr_type = "111" or (unsigned(noc5_output_port_int(8 downto 2)) <= 59 and
+                                       unsigned(noc5_output_port_int(8 downto 2)) >= 23)) then
             if noc5_stop_in_csr_int = '0' then
               reg.state                  := csr_rcv;
               noc5_data_void_out_csr_int <= '0';
