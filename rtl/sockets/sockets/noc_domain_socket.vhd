@@ -36,6 +36,7 @@ use work.dvfs.all;
 entity noc_domain_socket is
   generic (
     this_has_token_pm : integer range 0 to 1 := 0;
+    has_ddr           : boolean              := false;
     is_tile_io        : boolean              := false;
     SIMULATION        : boolean              := false;
     ROUTER_PORTS      : ports_vec            := "11111";
@@ -834,7 +835,8 @@ begin  -- architecture rtl
   -- Memory mapped registers
   tile_csr_gen : esp_tile_csr
     generic map(
-      pindex => 0)
+      pindex  => 0,
+      has_ddr => has_ddr)
     port map(
       clk         => sys_clk,           -- sys_clk_int
       rstn        => noc_rstn,          -- rst

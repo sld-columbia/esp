@@ -87,8 +87,8 @@ package esp_csr_pkg is
 
   component esp_tile_csr
     generic (
-      pindex : integer range 0 to NAPBSLV - 1;
-      dco_rst_cfg : std_logic_vector(22 downto 0) := (others => '0'));
+      pindex  : integer range 0 to NAPBSLV - 1;
+      has_ddr : boolean := false);
     port (
       clk         : in std_logic;
       rstn        : in std_logic;

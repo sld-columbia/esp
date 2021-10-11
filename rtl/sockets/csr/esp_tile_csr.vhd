@@ -20,7 +20,7 @@ entity esp_tile_csr is
 
   generic (
     pindex      : integer range 0 to NAPBSLV -1 := 0;
-    dco_rst_cfg : std_logic_vector(22 downto 0) := (others => '0'));
+    has_ddr     : boolean := false);
   port (
     clk         : in  std_logic;
     rstn        : in  std_logic;
@@ -132,6 +132,10 @@ architecture rtl of esp_tile_csr is
     "0" & "0000" & "11" & "100" & "000000" & "100101" & "0" & "1";
   --  CC_SEL_MUX   reserved LPDDR   FREQ_SEL    DIV_SEL    FC_SEL      CC_SEL    CLK_SEL   EN
 
+  constant DEFAULT_DCO_LPDDR_CFG : std_logic_vector(23 downto 0) :=
+    "0" & "0100" & "00" & "100" & "000000" & "110010" & "0" & "1";
+  -- CC_SEL_MUX   UI_CLK_DEL   FREQ_SEL    DIV_SEL    FC_SEL     CC_SEL    CLK_SEL    EN
+
   constant DEFAULT_LDO_CFG : std_logic_vector(8 downto 0) :=
     "0" & "00000000";
   --  RES_SEL_MUX   RES_SEL
@@ -144,19 +148,19 @@ architecture rtl of esp_tile_csr is
 
   constant DEFAULT_ACC_COH : std_logic_vector(1 downto 0) := (others => '0');
 
-  function dco_reset_config_ovr
+  function dco_reset_config
     return std_logic_vector is
   begin
-    if dco_rst_cfg = ("000" & X"00000") then
+    if has_ddr = false then
       -- Use default
       return DEFAULT_DCO_CFG;
     else
-      -- Use override value at reset (used for ASIC DDR tiles)
-      return "0" & dco_rst_cfg;
+      -- Use config for ASIC DDR tiles
+      return DEFAULT_DCO_LPDDR_CFG;
     end if;
   end function;
 
-  constant RESET_DCO_CFG : std_logic_vector(23 downto 0) := dco_reset_config_ovr;
+  constant RESET_DCO_CFG : std_logic_vector(23 downto 0) := dco_reset_config;
 
   constant DEFAULT_CONFIG : std_logic_vector(ESP_CSR_WIDTH - 1 downto 0) :=
     DEFAULT_LDO_CFG & DEFAULT_TILE_ID & DEFAULT_ACC_COH & DEFAULT_DDR_CFG2 & DEFAULT_DDR_CFG1 &

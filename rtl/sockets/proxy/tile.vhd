@@ -988,6 +988,7 @@ package tile is
   component noc_domain_socket is
     generic (
       this_has_token_pm : integer range 0 to 1 := 0;
+      has_ddr           : boolean              := false;
       is_tile_io        : boolean              := false;
       SIMULATION        : boolean              := false;
       ROUTER_PORTS      : ports_vec            := "11111";
