@@ -9,10 +9,10 @@
 
 #include <mc_scverify.h>   // Enable SCVerify
 
-//#define SHA1_ALGO 1
+#define SHA1_ALGO 1
 //#define SHA2_ALGO 2
 //#define AES_ALGO 3
-#define RSA_ALGO 4
+//#define RSA_ALGO 4
 
 #ifdef SHA1_ALGO
 // This can be read from a file (and should)
