@@ -102,8 +102,8 @@ sockets/monitor/monitor.vhd
 sockets/jtag/mux_6to1.vhd
 sockets/jtag/demux_1to6.vhd
 sockets/jtag/jtag_test.vhd
-sockets/jtag/piso.vhd
-sockets/jtag/sipo.vhd
+sockets/jtag/piso_jtag.vhd
+sockets/jtag/sipo_jtag.vhd
 sockets/dvfs/dvfs_top.vhd
 sockets/dvfs/dvfs_fsm.vhd
 sockets/dvfs/pm2noc.vhd
