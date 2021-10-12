@@ -191,7 +191,7 @@ architecture rtl of tile_acc is
 
   constant little_end          : integer range 0 to 1               := GLOB_CPU_RISCV;
 
-  signal coherence : integer range 0 to 1;
+  signal coherence : integer range 0 to 3;
 
   -- add attribute 'keep' to fix a bug with Vivado HLS accelerators
   attribute keep : string;
