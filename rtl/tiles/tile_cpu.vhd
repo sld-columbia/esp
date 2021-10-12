@@ -97,6 +97,8 @@ entity tile_cpu is
     test6_input_port    : out noc_flit_type;
     test6_data_void_in  : out std_ulogic;
     test6_stop_out      : out std_ulogic;
+    -- monitors
+    mon_noc            : in  monitor_noc_vector(1 to 6);
     mon_cache          : out monitor_cache_type;
     mon_dvfs_in        : in  monitor_dvfs_type;
     mon_dvfs           : out monitor_dvfs_type);
@@ -249,7 +251,6 @@ architecture rtl of tile_cpu is
   -- Mon
   signal mon_cache_int  : monitor_cache_type;
   signal mon_dvfs_int   : monitor_dvfs_type;
-  signal mon_noc        : monitor_noc_vector(1 to 6);
 
   -- GRLIB parameters
   constant disas : integer := CFG_DISAS;
@@ -1110,13 +1111,6 @@ begin
 
   mon_dvfs <= mon_dvfs_int;
 
-  mon_noc(1) <= monitor_noc_none;
-  mon_noc(2) <= monitor_noc_none;
-  mon_noc(3) <= monitor_noc_none;
-  mon_noc(4) <= monitor_noc_none;
-  mon_noc(5) <= monitor_noc_none;
-  mon_noc(6) <= monitor_noc_none;
-
   -- Memory mapped registers
   cpu_tile_csr : esp_tile_csr
     generic map(
@@ -1133,8 +1127,6 @@ begin
       mon_acc => monitor_acc_none,
       mon_dvfs => mon_dvfs_int,
       tile_config => tile_config,
-      pm_config => open,
-      pm_status => (others => (others => '0')),
       srst => srst,
       apbi => noc_apbi,
       apbo => noc_apbo(0)

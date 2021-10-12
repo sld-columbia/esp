@@ -257,94 +257,30 @@ package nocpackage is
       rd_empty_o : out std_logic);
   end component;
 
-  component noc_synchronizers is
+  component noc32_synchronizers is
     port (
       noc_rstn  : in std_ulogic;
       tile_rstn : in std_ulogic;
       noc_clk   : in std_ulogic;
       tile_clk  : in std_ulogic;
-
       -- NoC out to synchronizers
-      noc1_output_port   : in  noc_flit_type;
-      noc1_data_void_out : in  std_ulogic;
-      noc1_stop_in       : out std_ulogic;
-      noc2_output_port   : in  noc_flit_type;
-      noc2_data_void_out : in  std_ulogic;
-      noc2_stop_in       : out std_ulogic;
-      noc3_output_port   : in  noc_flit_type;
-      noc3_data_void_out : in  std_ulogic;
-      noc3_stop_in       : out std_ulogic;
-      noc4_output_port   : in  noc_flit_type;
-      noc4_data_void_out : in  std_ulogic;
-      noc4_stop_in       : out std_ulogic;
-      noc5_output_port   : in  misc_noc_flit_type;
-      noc5_data_void_out : in  std_ulogic;
-      noc5_stop_in       : out std_ulogic;
-      noc6_output_port   : in  noc_flit_type;
-      noc6_data_void_out : in  std_ulogic;
-      noc6_stop_in       : out std_ulogic;
-
+      output_port   : in  misc_noc_flit_type;
+      data_void_out : in  std_ulogic;
+      stop_in       : out std_ulogic;
       -- synchronizers to NoC in
-      noc1_input_port   : out noc_flit_type;
-      noc1_data_void_in : out std_ulogic;
-      noc1_stop_out     : in  std_ulogic;
-      noc2_input_port   : out noc_flit_type;
-      noc2_data_void_in : out std_ulogic;
-      noc2_stop_out     : in  std_ulogic;
-      noc3_input_port   : out noc_flit_type;
-      noc3_data_void_in : out std_ulogic;
-      noc3_stop_out     : in  std_ulogic;
-      noc4_input_port   : out noc_flit_type;
-      noc4_data_void_in : out std_ulogic;
-      noc4_stop_out     : in  std_ulogic;
-      noc5_input_port   : out misc_noc_flit_type;
-      noc5_data_void_in : out std_ulogic;
-      noc5_stop_out     : in  std_ulogic;
-      noc6_input_port   : out noc_flit_type;
-      noc6_data_void_in : out std_ulogic;
-      noc6_stop_out     : in  std_ulogic;
-
+      input_port   : out misc_noc_flit_type;
+      data_void_in : out std_ulogic;
+      stop_out     : in  std_ulogic;
       -- synchronizers out to tile
-      noc1_output_port_tile   : out  noc_flit_type;
-      noc1_data_void_out_tile : out  std_ulogic;
-      noc1_stop_in_tile       : in  std_ulogic;
-      noc2_output_port_tile   : out  noc_flit_type;
-      noc2_data_void_out_tile : out  std_ulogic;
-      noc2_stop_in_tile       : in  std_ulogic;
-      noc3_output_port_tile   : out  noc_flit_type;
-      noc3_data_void_out_tile : out  std_ulogic;
-      noc3_stop_in_tile       : in  std_ulogic;
-      noc4_output_port_tile   : out  noc_flit_type;
-      noc4_data_void_out_tile : out  std_ulogic;
-      noc4_stop_in_tile       : in  std_ulogic;
-      noc5_output_port_tile   : out  misc_noc_flit_type;
-      noc5_data_void_out_tile : out  std_ulogic;
-      noc5_stop_in_tile       : in  std_ulogic;
-      noc6_output_port_tile   : out  noc_flit_type;
-      noc6_data_void_out_tile : out  std_ulogic;
-      noc6_stop_in_tile       : in  std_ulogic;
-
+      output_port_tile   : out  misc_noc_flit_type;
+      data_void_out_tile : out  std_ulogic;
+      stop_in_tile       : in  std_ulogic;
       -- tile to synchronizers in
-      noc1_input_port_tile   : in  noc_flit_type;
-      noc1_data_void_in_tile : in  std_ulogic;
-      noc1_stop_out_tile     : out  std_ulogic;
-      noc2_input_port_tile   : in  noc_flit_type;
-      noc2_data_void_in_tile : in  std_ulogic;
-      noc2_stop_out_tile     : out  std_ulogic;
-      noc3_input_port_tile   : in  noc_flit_type;
-      noc3_data_void_in_tile : in  std_ulogic;
-      noc3_stop_out_tile     : out  std_ulogic;
-      noc4_input_port_tile   : in  noc_flit_type;
-      noc4_data_void_in_tile : in  std_ulogic;
-      noc4_stop_out_tile     : out  std_ulogic;
-      noc5_input_port_tile   : in  misc_noc_flit_type;
-      noc5_data_void_in_tile : in  std_ulogic;
-      noc5_stop_out_tile     : out  std_ulogic;
-      noc6_input_port_tile   : in  noc_flit_type;
-      noc6_data_void_in_tile : in  std_ulogic;
-      noc6_stop_out_tile     : out  std_ulogic);
+      input_port_tile   : in  misc_noc_flit_type;
+      data_void_in_tile : in  std_ulogic;
+      stop_out_tile     : out  std_ulogic);
 
-  end component noc_synchronizers;
+  end component noc32_synchronizers;
 
   component sync_noc_set
     generic (

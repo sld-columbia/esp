@@ -21,7 +21,7 @@ use work.sld_devices.all;
 use work.devices.all;
 use work.allclkgen.all;
 use work.gencomp.all;
-use work.esp_csr_pkg.all;
+use work.esp_noc_csr_pkg.all;
 use work.sldacc.all;
 use work.nocpackage.all;
 use work.tile.all;
@@ -216,13 +216,13 @@ begin
     variable reg           : noc5_rcv_reg_type;
     variable preamble      : noc_preamble_type;
     variable msg_type      : noc_msg_type;
-    variable addr_csr_type : std_logic_vector(2 downto 0);
+    variable addr_csr_type : std_logic_vector(1 downto 0);
     variable addr_csrs     : std_logic_vector(3 downto 0);
 
   begin  -- process
     reg := noc5_rcv_reg;
 
-    noc5_stop_in_int <= '1';  -- <= noc5_stop_in_tile and noc5_stop_in_pm and noc5_stop_in_csr;
+    noc5_stop_in_int <= '1';
 
     noc5_output_port_tile      <= noc5_output_port_int;
     noc5_output_port_pm        <= noc5_output_port_int;
@@ -234,7 +234,7 @@ begin
     preamble := get_preamble_misc(noc5_output_port_int);
     msg_type := get_msg_type_misc(noc5_output_port_int);
 
-    addr_csr_type := noc5_output_port_int(8 downto 6);
+    addr_csr_type := noc5_output_port_int(8 downto 7);
     addr_csrs     := noc5_output_port_int(19 downto 16);
 
     case reg.state is
@@ -265,11 +265,11 @@ begin
 
       when addr_rcv =>
         if noc5_data_void_out_int = '0' then
-          -- noc5_stop_in_int <= '1';
           -- TODO do not hard-code these values
-          if (reg.msg_type = REQ_REG_RD or reg.msg_type = REQ_REG_WR) and addr_csrs = csr_base_address and
-            (addr_csr_type = "111" or (unsigned(noc5_output_port_int(8 downto 2)) <= 59 and
-                                       unsigned(noc5_output_port_int(8 downto 2)) >= 23)) then
+          if (reg.msg_type = REQ_REG_RD or reg.msg_type = REQ_REG_WR) and
+            addr_csrs = csr_base_address and addr_csr_type = "11" and
+            unsigned(noc5_output_port_int(6 downto 2)) >= 12 then
+
             if noc5_stop_in_csr_int = '0' then
               reg.state                  := csr_rcv;
               noc5_data_void_out_csr_int <= '0';

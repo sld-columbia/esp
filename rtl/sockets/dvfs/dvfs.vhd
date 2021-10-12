@@ -20,7 +20,7 @@ use work.genacc.all;
 use work.nocpackage.all;
 
 use work.esp_acc_regmap.all;
-use work.esp_csr_pkg.all;
+use work.esp_noc_csr_pkg.all;
 
 package dvfs is
 

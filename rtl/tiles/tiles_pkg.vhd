@@ -113,9 +113,10 @@ package tiles_pkg is
       test6_input_port    : out noc_flit_type;
       test6_data_void_in  : out std_ulogic;
       test6_stop_out      : out std_ulogic;
-      mon_cache          : out monitor_cache_type;
-      mon_dvfs_in        : in  monitor_dvfs_type;
-      mon_dvfs           : out monitor_dvfs_type);
+      mon_noc             : in  monitor_noc_vector(1 to 6);
+      mon_cache           : out monitor_cache_type;
+      mon_dvfs_in         : in  monitor_dvfs_type;
+      mon_dvfs            : out monitor_dvfs_type);
   end component tile_cpu;
 
   component tile_acc is
@@ -182,11 +183,12 @@ package tiles_pkg is
       test6_input_port    : out noc_flit_type;
       test6_data_void_in  : out std_ulogic;
       test6_stop_out      : out std_ulogic;
-      mon_dvfs_in        : in  monitor_dvfs_type;
       --Monitor signals
-      mon_acc            : out monitor_acc_type;
-      mon_cache          : out monitor_cache_type;
-      mon_dvfs           : out monitor_dvfs_type
+      mon_dvfs_in         : in  monitor_dvfs_type;
+      mon_noc             : in  monitor_noc_vector(1 to 6);
+      mon_acc             : out monitor_acc_type;
+      mon_cache           : out monitor_cache_type;
+      mon_dvfs            : out monitor_dvfs_type
       );
   end component tile_acc;
 
@@ -274,7 +276,8 @@ package tiles_pkg is
       test6_input_port    : out noc_flit_type;
       test6_data_void_in  : out std_ulogic;
       test6_stop_out      : out std_ulogic;
-      mon_dvfs           : out monitor_dvfs_type);
+      mon_noc             : in  monitor_noc_vector(1 to 6);
+      mon_dvfs            : out monitor_dvfs_type);
   end component tile_io;
 
   component tile_mem is
@@ -352,9 +355,10 @@ package tiles_pkg is
       test6_input_port    : out noc_flit_type;
       test6_data_void_in  : out std_ulogic;
       test6_stop_out      : out std_ulogic;
-      mon_mem            : out monitor_mem_type;
-      mon_cache          : out monitor_cache_type;
-      mon_dvfs           : out monitor_dvfs_type);
+      mon_noc             : in  monitor_noc_vector(1 to 6);
+      mon_mem             : out monitor_mem_type;
+      mon_cache           : out monitor_cache_type;
+      mon_dvfs            : out monitor_dvfs_type);
   end component tile_mem;
 
   component tile_empty is
@@ -414,7 +418,8 @@ package tiles_pkg is
       test6_input_port    : out noc_flit_type;
       test6_data_void_in  : out std_ulogic;
       test6_stop_out      : out std_ulogic;
-      mon_dvfs_out       : out monitor_dvfs_type);
+      mon_noc             : in  monitor_noc_vector(1 to 6);
+      mon_dvfs_out        : out monitor_dvfs_type);
   end component tile_empty;
 
   component tile_slm is
@@ -482,8 +487,9 @@ package tiles_pkg is
       test6_input_port    : out noc_flit_type;
       test6_data_void_in  : out std_ulogic;
       test6_stop_out      : out std_ulogic;
-      mon_mem            : out monitor_mem_type;
-      mon_dvfs           : out monitor_dvfs_type);
+      mon_noc             : in  monitor_noc_vector(1 to 6);
+      mon_mem             : out monitor_mem_type;
+      mon_dvfs            : out monitor_dvfs_type);
   end component tile_slm;
 
 end tiles_pkg;

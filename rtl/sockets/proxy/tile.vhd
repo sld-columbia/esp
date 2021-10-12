@@ -15,7 +15,7 @@ use work.gencomp.all;
 use work.genacc.all;
 
 use work.monitor_pkg.all;
-use work.esp_csr_pkg.all;
+use work.esp_noc_csr_pkg.all;
 use work.nocpackage.all;
 use work.cachepackage.all;
 
@@ -1002,7 +1002,7 @@ package tile is
       acc_clk            : out std_ulogic;
       refclk             : in  std_ulogic;
       -- CSRs
-      tile_config        : out std_logic_vector(ESP_CSR_WIDTH - 1 downto 0);
+      tile_config        : out std_logic_vector(ESP_NOC_CSR_WIDTH - 1 downto 0);
       -- DCO config
       dco_freq_sel       : out  std_logic_vector(1 downto 0);
       dco_div_sel        : out  std_logic_vector(2 downto 0);
@@ -1089,12 +1089,7 @@ package tile is
       noc6_data_void_out : out std_logic_vector(3 downto 0);
       noc6_stop_out      : out std_logic_vector(3 downto 0);
       -- monitors
-      noc1_mon_noc_vec : out monitor_noc_type;
-      noc2_mon_noc_vec : out monitor_noc_type;
-      noc3_mon_noc_vec : out monitor_noc_type;
-      noc4_mon_noc_vec : out monitor_noc_type;
-      noc5_mon_noc_vec : out monitor_noc_type;
-      noc6_mon_noc_vec : out monitor_noc_type;
+      mon_noc            : out monitor_noc_vector(1 to 6);
       -- synchronizers out to tile
       noc1_output_port_tile   : out noc_flit_type;
       noc1_data_void_out_tile : out std_ulogic;

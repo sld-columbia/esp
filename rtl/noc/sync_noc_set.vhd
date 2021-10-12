@@ -296,7 +296,8 @@ begin
   sync_noc_set_5: sync_noc32_xy
     generic map (
       PORTS    =>  PORTS,
-      has_sync =>  HAS_SYNC) --further, pass these param to module through CFG_HAS_SYNC parameter pkg file
+      -- the synchronizers for NoC5 are places in the NoC domain socket (noc_domain_socket)
+      has_sync =>  0) --further, pass these param to module through CFG_HAS_SYNC parameter pkg file
     port map (
       clk           => clk,
       clk_tile      => clk_tile,

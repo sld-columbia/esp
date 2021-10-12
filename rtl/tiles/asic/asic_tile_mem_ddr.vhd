@@ -22,7 +22,7 @@ library unisim;
 use unisim.all;
 -- pragma translate_on
 use work.monitor_pkg.all;
-use work.esp_csr_pkg.all;
+use work.esp_noc_csr_pkg.all;
 use work.jtag_pkg.all;
 use work.sldacc.all;
 use work.nocpackage.all;
@@ -200,7 +200,7 @@ architecture rtl of asic_tile_mem_ddr is
   signal phy_rstn, phy_raw_rstn : std_logic;
 
   -- Tile parameters
-  signal tile_config : std_logic_vector(ESP_CSR_WIDTH - 1 downto 0);
+  signal tile_config : std_logic_vector(ESP_NOC_CSR_WIDTH - 1 downto 0);
 
   -- Tile NoC interface
   signal test_rstn             : std_ulogic;
@@ -280,12 +280,7 @@ architecture rtl of asic_tile_mem_ddr is
   signal noc6_output_port_tile   : noc_flit_type;
 
   -- NoC monitors
-  signal noc1_mon_noc_vec_int : monitor_noc_type;
-  signal noc2_mon_noc_vec_int : monitor_noc_type;
-  signal noc3_mon_noc_vec_int : monitor_noc_type;
-  signal noc4_mon_noc_vec_int : monitor_noc_type;
-  signal noc5_mon_noc_vec_int : monitor_noc_type;
-  signal noc6_mon_noc_vec_int : monitor_noc_type;
+  signal mon_noc : monitor_noc_vector(1 to 6);
 
 begin
 

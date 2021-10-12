@@ -69,7 +69,7 @@ noc/fifo2.vhd
 noc/rtr_arbitration_engine.vhd
 noc/sync_noc_xy.vhd
 noc/inferred_async_fifo.vhd
-noc/noc_synchronizers.vhd
+noc/noc32_synchronizers.vhd
 noc/fifo3.vhd
 noc/fifo1.vhd
 noc/sync_noc32_xy.vhd
@@ -97,6 +97,7 @@ sockets/queues/mem_tile_q.vhd
 sockets/queues/empty_tile_q.vhd
 sockets/queues/misc_tile_q.vhd
 sockets/csr/esp_tile_csr.vhd
+sockets/csr/esp_noc_csr.vhd
 sockets/monitor/monitor.vhd
 sockets/jtag/mux_6to1.vhd
 sockets/jtag/demux_1to6.vhd

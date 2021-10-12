@@ -12,6 +12,7 @@ use work.sld_devices.all;
 use work.devices.all;
 use work.misc.all;
 use work.esp_csr_pkg.all;
+use work.esp_noc_csr_pkg.all;
 
 entity esp_init is
 

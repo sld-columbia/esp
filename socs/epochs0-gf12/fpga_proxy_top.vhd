@@ -26,7 +26,7 @@ use std.textio.all;
 use work.stdio.all;
 -- pragma translate_on
 use work.monitor_pkg.all;
-use work.esp_csr_pkg.all;
+use work.esp_noc_csr_pkg.all;
 use work.sldacc.all;
 use work.nocpackage.all;
 use work.tile.all;

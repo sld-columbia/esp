@@ -19,7 +19,7 @@ use work.sld_devices.all;
 use work.devices.all;
 use work.gencomp.all;
 use work.monitor_pkg.all;
-use work.esp_csr_pkg.all;
+use work.esp_noc_csr_pkg.all;
 use work.jtag_pkg.all;
 use work.sldacc.all;
 use work.nocpackage.all;
@@ -50,7 +50,7 @@ entity noc_domain_socket is
     acc_clk            : out std_ulogic;
     refclk             : in  std_ulogic;
     -- CSRs
-    tile_config        : out std_logic_vector(ESP_CSR_WIDTH - 1 downto 0);
+    tile_config        : out std_logic_vector(ESP_NOC_CSR_WIDTH - 1 downto 0);
     -- DCO config
     dco_freq_sel       : out std_logic_vector(1 downto 0);
     dco_div_sel        : out std_logic_vector(2 downto 0);
@@ -138,12 +138,7 @@ entity noc_domain_socket is
     noc6_stop_out      : out std_logic_vector(3 downto 0);
 
     -- monitors
-    noc1_mon_noc_vec : out monitor_noc_type;
-    noc2_mon_noc_vec : out monitor_noc_type;
-    noc3_mon_noc_vec : out monitor_noc_type;
-    noc4_mon_noc_vec : out monitor_noc_type;
-    noc5_mon_noc_vec : out monitor_noc_type;
-    noc6_mon_noc_vec : out monitor_noc_type;
+    mon_noc            : out monitor_noc_vector(1 to 6);
 
     -- synchronizers out to tile
     noc1_output_port_tile   : out noc_flit_type;
@@ -204,7 +199,7 @@ architecture rtl of noc_domain_socket is
   signal ldo_res_sel_to_power_headers : std_logic_vector(7 downto 0);
 
   -- Tile parameters
-  signal tile_config_int : std_logic_vector(ESP_CSR_WIDTH - 1 downto 0);
+  signal tile_config_int : std_logic_vector(ESP_NOC_CSR_WIDTH - 1 downto 0);
 
   signal tile_id : integer range 0 to CFG_TILES_NUM - 1;
 
@@ -231,14 +226,6 @@ architecture rtl of noc_domain_socket is
 
   signal apb_snd_wrreq : std_ulogic;
   signal apb_rcv_rdreq : std_ulogic;
-
-  signal mon_noc              : monitor_noc_vector(1 to 6);
-  signal noc1_mon_noc_vec_int : monitor_noc_type;
-  signal noc2_mon_noc_vec_int : monitor_noc_type;
-  signal noc3_mon_noc_vec_int : monitor_noc_type;
-  signal noc4_mon_noc_vec_int : monitor_noc_type;
-  signal noc5_mon_noc_vec_int : monitor_noc_type;
-  signal noc6_mon_noc_vec_int : monitor_noc_type;
 
   -- Noc signals
   signal noc1_stop_in_s              : std_logic_vector(4 downto 0);
@@ -458,136 +445,77 @@ begin  -- architecture rtl
   noc6_data_void_out     <= noc6_data_void_out_s(3 downto 0);
   noc6_data_void_out_noc <= noc6_data_void_out_s(4);
 
+  noc1_output_port_tile   <= noc1_output_port;
+  noc1_data_void_out_tile <= noc1_data_void_out_noc;
+  noc1_stop_in_noc        <= noc1_stop_in_tile;
+  noc2_output_port_tile   <= noc2_output_port;
+  noc2_data_void_out_tile <= noc2_data_void_out_noc;
+  noc2_stop_in_noc        <= noc2_stop_in_tile;
+  noc3_output_port_tile   <= noc3_output_port;
+  noc3_data_void_out_tile <= noc3_data_void_out_noc;
+  noc3_stop_in_noc        <= noc3_stop_in_tile;
+  noc4_output_port_tile   <= noc4_output_port;
+  noc4_data_void_out_tile <= noc4_data_void_out_noc;
+  noc4_stop_in_noc        <= noc4_stop_in_tile;
+  noc6_output_port_tile   <= noc6_output_port;
+  noc6_data_void_out_tile <= noc6_data_void_out_noc;
+  noc6_stop_in_noc        <= noc6_stop_in_tile;
+
+  noc1_input_port       <= noc1_input_port_tile;
+  noc1_data_void_in_noc <= noc1_data_void_in_tile;
+  noc1_stop_out_tile    <= noc1_stop_out_noc;
+  noc2_input_port       <= noc2_input_port_tile;
+  noc2_data_void_in_noc <= noc2_data_void_in_tile;
+  noc2_stop_out_tile    <= noc2_stop_out_noc;
+  noc3_input_port       <= noc3_input_port_tile;
+  noc3_data_void_in_noc <= noc3_data_void_in_tile;
+  noc3_stop_out_tile    <= noc3_stop_out_noc;
+  noc4_input_port       <= noc4_input_port_tile;
+  noc4_data_void_in_noc <= noc4_data_void_in_tile;
+  noc4_stop_out_tile    <= noc4_stop_out_noc;
+  noc6_input_port       <= noc6_input_port_tile;
+  noc6_data_void_in_noc <= noc6_data_void_in_tile;
+  noc6_stop_out_tile    <= noc6_stop_out_noc;
+
   no_noc_tile_sync_gen : if HAS_SYNC = 0 generate
-    noc1_output_port_tile   <= noc1_output_port;
-    noc1_data_void_out_tile <= noc1_data_void_out_noc;
-    noc1_stop_in_noc        <= noc1_stop_in_tile;
-    noc2_output_port_tile   <= noc2_output_port;
-    noc2_data_void_out_tile <= noc2_data_void_out_noc;
-    noc2_stop_in_noc        <= noc2_stop_in_tile;
-    noc3_output_port_tile   <= noc3_output_port;
-    noc3_data_void_out_tile <= noc3_data_void_out_noc;
-    noc3_stop_in_noc        <= noc3_stop_in_tile;
-    noc4_output_port_tile   <= noc4_output_port;
-    noc4_data_void_out_tile <= noc4_data_void_out_noc;
-    noc4_stop_in_noc        <= noc4_stop_in_tile;
     noc5_output_port_tile   <= noc5_output_port_tile_int;
     noc5_data_void_out_tile <= noc5_data_void_out_tile_int;
     noc5_stop_in_tile_int   <= noc5_stop_in_tile;
-    noc6_output_port_tile   <= noc6_output_port;
-    noc6_data_void_out_tile <= noc6_data_void_out_noc;
-    noc6_stop_in_noc        <= noc6_stop_in_tile;
 
-    noc1_input_port            <= noc1_input_port_tile;
-    noc1_data_void_in_noc      <= noc1_data_void_in_tile;
-    noc1_stop_out_tile         <= noc1_stop_out_noc;
-    noc2_input_port            <= noc2_input_port_tile;
-    noc2_data_void_in_noc      <= noc2_data_void_in_tile;
-    noc2_stop_out_tile         <= noc2_stop_out_noc;
-    noc3_input_port            <= noc3_input_port_tile;
-    noc3_data_void_in_noc      <= noc3_data_void_in_tile;
-    noc3_stop_out_tile         <= noc3_stop_out_noc;
-    noc4_input_port            <= noc4_input_port_tile;
-    noc4_data_void_in_noc      <= noc4_data_void_in_tile;
-    noc4_stop_out_tile         <= noc4_stop_out_noc;
     noc5_input_port_tile_int   <= noc5_input_port_tile;
     noc5_data_void_in_tile_int <= noc5_data_void_in_tile;
     noc5_stop_out_tile         <= noc5_stop_out_tile_int;
-    noc6_input_port            <= noc6_input_port_tile;
-    noc6_data_void_in_noc      <= noc6_data_void_in_tile;
-    noc6_stop_out_tile         <= noc6_stop_out_noc;
   end generate;
 
-  -- The noc_synchronizers component adds synchronizers between NoC and tile.
-  -- By default the synchronizers are instantiated inside the NoC (when the
-  -- generic HAS_SYNC=1). For this tile, however, the power management logic
+  -- The noc_synchronizers component adds synchronizers between NoC and tile
+  -- for NoC plane 5. The synchronizers for the other planes are instantiated inside the NoC (when the
+  -- generic HAS_SYNC=1). For NoC plane 5 however, there is some logic that
   -- needs to sit in the NoC domain, between the NoC and the synchronizers. For
   -- that reason the synchronizers (noc_synchronizers component) are
   -- instantiated here instead of inside the NoC.
-
   noc_tile_sync_gen : if HAS_SYNC = 1 generate
-    noc_tile_synchronizers : noc_synchronizers
+    noc5_tile_synchronizers : noc32_synchronizers
       port map (
-        noc_rstn  => noc_rstn,          -- noc_rstn for asic, rst for fpga
-        tile_rstn => dco_rstn,          -- same
+        noc_rstn  => noc_rstn,  -- noc_rstn for asic, rst for fpga
+        tile_rstn => dco_rstn,  -- same
         noc_clk   => sys_clk,   -- sys_clk for asic, sys_clk_int for fpga
-        tile_clk  => dco_clk,           -- dco_clk for asic, acc_clk for fpga
+        tile_clk  => dco_clk,   -- dco_clk for asic, acc_clk for fpga
 
-        noc1_output_port   => noc1_output_port,
-        noc1_data_void_out => noc1_data_void_out_noc,
-        noc1_stop_in       => noc1_stop_in_noc,
-        noc2_output_port   => noc2_output_port,
-        noc2_data_void_out => noc2_data_void_out_noc,
-        noc2_stop_in       => noc2_stop_in_noc,
-        noc3_output_port   => noc3_output_port,
-        noc3_data_void_out => noc3_data_void_out_noc,
-        noc3_stop_in       => noc3_stop_in_noc,
-        noc4_output_port   => noc4_output_port,
-        noc4_data_void_out => noc4_data_void_out_noc,
-        noc4_stop_in       => noc4_stop_in_noc,
-        noc5_output_port   => noc5_output_port_tile_int,
-        noc5_data_void_out => noc5_data_void_out_tile_int,
-        noc5_stop_in       => noc5_stop_in_tile_int,
-        noc6_output_port   => noc6_output_port,
-        noc6_data_void_out => noc6_data_void_out_noc,
-        noc6_stop_in       => noc6_stop_in_noc,
+        output_port   => noc5_output_port_tile_int,
+        data_void_out => noc5_data_void_out_tile_int,
+        stop_in       => noc5_stop_in_tile_int,
 
-        noc1_input_port   => noc1_input_port,
-        noc1_data_void_in => noc1_data_void_in_noc,
-        noc1_stop_out     => noc1_stop_out_noc,
-        noc2_input_port   => noc2_input_port,
-        noc2_data_void_in => noc2_data_void_in_noc,
-        noc2_stop_out     => noc2_stop_out_noc,
-        noc3_input_port   => noc3_input_port,
-        noc3_data_void_in => noc3_data_void_in_noc,
-        noc3_stop_out     => noc3_stop_out_noc,
-        noc4_input_port   => noc4_input_port,
-        noc4_data_void_in => noc4_data_void_in_noc,
-        noc4_stop_out     => noc4_stop_out_noc,
-        noc5_input_port   => noc5_input_port_tile_int,
-        noc5_data_void_in => noc5_data_void_in_tile_int,
-        noc5_stop_out     => noc5_stop_out_tile_int,
-        noc6_input_port   => noc6_input_port,
-        noc6_data_void_in => noc6_data_void_in_noc,
-        noc6_stop_out     => noc6_stop_out_noc,
+        input_port   => noc5_input_port_tile_int,
+        data_void_in => noc5_data_void_in_tile_int,
+        stop_out     => noc5_stop_out_tile_int,
 
-        noc1_output_port_tile   => noc1_output_port_tile,
-        noc1_data_void_out_tile => noc1_data_void_out_tile,
-        noc1_stop_in_tile       => noc1_stop_in_tile,
-        noc2_output_port_tile   => noc2_output_port_tile,
-        noc2_data_void_out_tile => noc2_data_void_out_tile,
-        noc2_stop_in_tile       => noc2_stop_in_tile,
-        noc3_output_port_tile   => noc3_output_port_tile,
-        noc3_data_void_out_tile => noc3_data_void_out_tile,
-        noc3_stop_in_tile       => noc3_stop_in_tile,
-        noc4_output_port_tile   => noc4_output_port_tile,
-        noc4_data_void_out_tile => noc4_data_void_out_tile,
-        noc4_stop_in_tile       => noc4_stop_in_tile,
-        noc5_output_port_tile   => noc5_output_port_tile,
-        noc5_data_void_out_tile => noc5_data_void_out_tile,
-        noc5_stop_in_tile       => noc5_stop_in_tile,
-        noc6_output_port_tile   => noc6_output_port_tile,
-        noc6_data_void_out_tile => noc6_data_void_out_tile,
-        noc6_stop_in_tile       => noc6_stop_in_tile,
+        output_port_tile   => noc5_output_port_tile,
+        data_void_out_tile => noc5_data_void_out_tile,
+        stop_in_tile       => noc5_stop_in_tile,
 
-        noc1_input_port_tile   => noc1_input_port_tile,
-        noc1_data_void_in_tile => noc1_data_void_in_tile,
-        noc1_stop_out_tile     => noc1_stop_out_tile,
-        noc2_input_port_tile   => noc2_input_port_tile,
-        noc2_data_void_in_tile => noc2_data_void_in_tile,
-        noc2_stop_out_tile     => noc2_stop_out_tile,
-        noc3_input_port_tile   => noc3_input_port_tile,
-        noc3_data_void_in_tile => noc3_data_void_in_tile,
-        noc3_stop_out_tile     => noc3_stop_out_tile,
-        noc4_input_port_tile   => noc4_input_port_tile,
-        noc4_data_void_in_tile => noc4_data_void_in_tile,
-        noc4_stop_out_tile     => noc4_stop_out_tile,
-        noc5_input_port_tile   => noc5_input_port_tile,
-        noc5_data_void_in_tile => noc5_data_void_in_tile,
-        noc5_stop_out_tile     => noc5_stop_out_tile,
-        noc6_input_port_tile   => noc6_input_port_tile,
-        noc6_data_void_in_tile => noc6_data_void_in_tile,
-        noc6_stop_out_tile     => noc6_stop_out_tile);
+        input_port_tile   => noc5_input_port_tile,
+        data_void_in_tile => noc5_data_void_in_tile,
+        stop_out_tile     => noc5_stop_out_tile);
   end generate;
 
   -- HAS_SYNC = 0: no synchronizers in the NoC because
@@ -596,7 +524,7 @@ begin  -- architecture rtl
   sync_noc_set_acc : sync_noc_set
     generic map (
       PORTS    => ROUTER_PORTS,
-      HAS_SYNC => 0)
+      HAS_SYNC => HAS_SYNC)
     port map (
       clk                => sys_clk,    -- sys_clk_int
       clk_tile           => dco_clk,    -- acc_clk
@@ -688,13 +616,12 @@ begin  -- architecture rtl
       noc6_output_port   => noc6_output_port,
       noc6_data_void_out => noc6_data_void_out_s,
       noc6_stop_out      => noc6_stop_out_s,
-      noc1_mon_noc_vec   => noc1_mon_noc_vec_int,
-      noc2_mon_noc_vec   => noc2_mon_noc_vec_int,
-      noc3_mon_noc_vec   => noc3_mon_noc_vec_int,
-      noc4_mon_noc_vec   => noc4_mon_noc_vec_int,
-      noc5_mon_noc_vec   => noc5_mon_noc_vec_int,
-      noc6_mon_noc_vec   => noc6_mon_noc_vec_int
-      );
+      noc1_mon_noc_vec   => mon_noc(1),
+      noc2_mon_noc_vec   => mon_noc(2),
+      noc3_mon_noc_vec   => mon_noc(3),
+      noc4_mon_noc_vec   => mon_noc(4),
+      noc5_mon_noc_vec   => mon_noc(5),
+      noc6_mon_noc_vec   => mon_noc(6));
 
   token_pm_gen : if this_has_token_pm = 1 generate
 
@@ -819,42 +746,21 @@ begin  -- architecture rtl
     end if;
   end process pready_gen;
 
-  mon_noc(1)       <= noc1_mon_noc_vec_int;
-  mon_noc(2)       <= noc2_mon_noc_vec_int;
-  mon_noc(3)       <= noc3_mon_noc_vec_int;
-  mon_noc(4)       <= noc4_mon_noc_vec_int;
-  mon_noc(5)       <= noc5_mon_noc_vec_int;
-  mon_noc(6)       <= noc6_mon_noc_vec_int;
-  noc1_mon_noc_vec <= noc1_mon_noc_vec_int;
-  noc2_mon_noc_vec <= noc2_mon_noc_vec_int;
-  noc3_mon_noc_vec <= noc3_mon_noc_vec_int;
-  noc4_mon_noc_vec <= noc4_mon_noc_vec_int;
-  noc5_mon_noc_vec <= noc5_mon_noc_vec_int;
-  noc6_mon_noc_vec <= noc6_mon_noc_vec_int;
-
   -- Memory mapped registers
-  tile_csr_gen : esp_tile_csr
+  tile_csr_gen : esp_noc_csr
     generic map(
       pindex  => 0,
+      has_token_pm => this_has_token_pm,
       has_ddr => has_ddr)
     port map(
       clk         => sys_clk,           -- sys_clk_int
       rstn        => noc_rstn,          -- rst
       pconfig     => this_csr_pconfig,
-      mon_ddr     => monitor_ddr_none,
-      mon_mem     => monitor_mem_none,
-      mon_noc     => mon_noc,
-      mon_l2      => monitor_cache_none,
-      mon_llc     => monitor_cache_none,
-      mon_acc     => monitor_acc_none,
-      mon_dvfs    => monitor_dvfs_none,
       tile_config => tile_config_int,
       pm_config   => pm_config,
       pm_status   => pm_status,
-      srst        => open,
       apbi        => apbi,
-      apbo        => apbo(0)
-      );
+      apbo        => apbo(0));
 
   -- APB proxy
   noc2apb_1 : noc2apb

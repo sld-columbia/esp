@@ -98,8 +98,9 @@ entity tile_slm is
     test6_input_port    : out noc_flit_type;
     test6_data_void_in  : out std_ulogic;
     test6_stop_out      : out std_ulogic;
-    mon_mem            : out monitor_mem_type;
-    mon_dvfs           : out monitor_dvfs_type);
+    mon_noc             : in  monitor_noc_vector(1 to 6);
+    mon_mem             : out monitor_mem_type;
+    mon_dvfs            : out monitor_dvfs_type);
 end;
 
 
@@ -181,7 +182,6 @@ architecture rtl of tile_slm is
   -- Mon
   signal mon_mem_int  : monitor_mem_type;
   signal mon_dvfs_int : monitor_dvfs_type;
-  signal mon_noc      : monitor_noc_vector(1 to 6);
 
   -- Tile parameters
   signal tile_config : std_logic_vector(ESP_CSR_WIDTH - 1 downto 0);
@@ -397,13 +397,6 @@ begin
   
   mon_mem <= mon_mem_int;
 
-  mon_noc(1) <= monitor_noc_none;
-  mon_noc(2) <= monitor_noc_none;
-  mon_noc(3) <= monitor_noc_none;
-  mon_noc(4) <= monitor_noc_none;
-  mon_noc(5) <= monitor_noc_none;
-  mon_noc(6) <= monitor_noc_none;
-
   -- Memory mapped registers
   slm_tile_csr : esp_tile_csr
     generic map(
@@ -420,8 +413,6 @@ begin
       mon_acc => monitor_acc_none,
       mon_dvfs => mon_dvfs_int,
       tile_config => tile_config,
-      pm_config => open,
-      pm_status => (others => (others => '0')),
       srst => open,
       apbi => apbi,
       apbo => apbo(0)

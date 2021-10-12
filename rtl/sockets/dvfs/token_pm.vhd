@@ -19,7 +19,7 @@ use work.sld_devices.all;
 use work.devices.all;
 use work.allclkgen.all;
 use work.gencomp.all;
-use work.esp_csr_pkg.all;
+use work.esp_noc_csr_pkg.all;
 use work.sldacc.all;
 use work.nocpackage.all;
 use work.tile.all;

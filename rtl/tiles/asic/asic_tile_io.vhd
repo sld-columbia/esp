@@ -24,7 +24,7 @@ library unisim;
 use unisim.all;
 -- pragma translate_on
 use work.monitor_pkg.all;
-use work.esp_csr_pkg.all;
+use work.esp_noc_csr_pkg.all;
 use work.jtag_pkg.all;
 use work.sldacc.all;
 use work.nocpackage.all;
@@ -185,7 +185,7 @@ architecture rtl of asic_tile_io is
   signal dco_noc_freq_sel : std_logic_vector(1 downto 0);
 
   -- Tile parameters
-  signal tile_config : std_logic_vector(ESP_CSR_WIDTH - 1 downto 0);
+  signal tile_config : std_logic_vector(ESP_NOC_CSR_WIDTH - 1 downto 0);
   
   -- Ethernet and Debug link
   signal mdcscaler : integer range 0 to 2047;
@@ -294,12 +294,7 @@ architecture rtl of asic_tile_io is
   signal noc6_output_port_tile       : noc_flit_type;
 
   -- NoC monitors
-  signal noc1_mon_noc_vec_int  : monitor_noc_type;
-  signal noc2_mon_noc_vec_int  : monitor_noc_type;
-  signal noc3_mon_noc_vec_int  : monitor_noc_type;
-  signal noc4_mon_noc_vec_int  : monitor_noc_type;
-  signal noc5_mon_noc_vec_int  : monitor_noc_type;
-  signal noc6_mon_noc_vec_int  : monitor_noc_type;
+  signal mon_noc : monitor_noc_vector(1 to 6);
 
 begin
 
@@ -577,7 +572,8 @@ begin
       test6_input_port    => test6_input_port_s,
       test6_data_void_in  => test6_data_void_in_s,
       test6_stop_out      => test6_stop_in_s,
-      mon_dvfs           => open);
+      mon_noc             => mon_noc,
+      mon_dvfs            => open);
 
   noc_domain_socket_i : noc_domain_socket
     generic map (
@@ -682,12 +678,7 @@ begin
       noc6_data_void_out      => noc6_data_void_out,
       noc6_stop_out           => noc6_stop_out,
       -- monitors
-      noc1_mon_noc_vec        => noc1_mon_noc_vec_int,
-      noc2_mon_noc_vec        => noc2_mon_noc_vec_int,
-      noc3_mon_noc_vec        => noc3_mon_noc_vec_int,
-      noc4_mon_noc_vec        => noc4_mon_noc_vec_int,
-      noc5_mon_noc_vec        => noc5_mon_noc_vec_int,
-      noc6_mon_noc_vec        => noc6_mon_noc_vec_int,
+      mon_noc                 => mon_noc,
       -- synchronizers out to tile
       noc1_output_port_tile   => noc1_output_port_tile,
       noc1_data_void_out_tile => noc1_data_void_out_tile,

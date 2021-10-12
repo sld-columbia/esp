@@ -10,7 +10,7 @@ use work.amba.all;
 use work.stdlib.all;
 use work.sld_devices.all;
 use work.monitor_pkg.all;
-use work.esp_csr_pkg.all;
+use work.esp_noc_csr_pkg.all;
 use work.nocpackage.all;
 use work.cachepackage.all;
 use work.socmap.all;

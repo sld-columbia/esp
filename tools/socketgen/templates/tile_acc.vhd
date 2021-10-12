@@ -93,6 +93,7 @@ entity tile_acc is
     test6_stop_out      : out std_ulogic;
     mon_dvfs_in         : in  monitor_dvfs_type;
     --Monitor signals
+    mon_noc             : in  monitor_noc_vector(1 to 6);
     mon_acc             : out monitor_acc_type;
     mon_cache           : out monitor_cache_type;
     mon_dvfs            : out monitor_dvfs_type
@@ -120,7 +121,6 @@ architecture rtl of tile_acc is
   signal mon_dvfs_int   : monitor_dvfs_type;
   signal mon_cache_int  : monitor_cache_type;
   signal mon_acc_int    : monitor_acc_type;
-  signal mon_noc        : monitor_noc_vector(1 to 6);
 
   signal coherence_req_wrreq        : std_ulogic;
   signal coherence_req_data_in      : noc_flit_type;
@@ -359,13 +359,6 @@ begin
   mon_cache <= mon_cache_int;
   mon_acc   <= mon_acc_int;
 
-  mon_noc(1) <= monitor_noc_none;
-  mon_noc(2) <= monitor_noc_none;
-  mon_noc(3) <= monitor_noc_none;
-  mon_noc(4) <= monitor_noc_none;
-  mon_noc(5) <= monitor_noc_none;
-  mon_noc(6) <= monitor_noc_none;
-
   -- Memory mapped registers
   acc_tile_csr : esp_tile_csr
     generic map(
@@ -382,8 +375,6 @@ begin
       mon_acc => mon_acc_int,
       mon_dvfs => mon_dvfs_int,
       tile_config => tile_config,
-      pm_config => open,
-      pm_status => (others => (others => '0')),
       srst => open,
       apbi => apbi,
       apbo => apbo(0)
