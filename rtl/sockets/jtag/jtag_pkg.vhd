@@ -6,11 +6,12 @@ use ieee.std_logic_1164.all;
 
 use work.esp_global.all;
 use work.nocpackage.all;
+use work.amba.all;
 
 package jtag_pkg is
 
   component demux_1to6
-    port(
+    port (
       data_in : in  std_ulogic;
       sel     : in  std_logic_vector(5 downto 0);
       out1    : out std_ulogic;
@@ -35,36 +36,39 @@ package jtag_pkg is
       X   : out std_logic_vector(sz-1 downto 0));
   end component mux_6to1;
 
-  component sipo
+  component sipo_jtag
     generic (
-      DIM : integer);
+      DIM       : integer;
+      en_mo     : integer := 0;
+      shift_dir : integer := 0
+      );
     port (
       rst       : in  std_logic;
       clk       : in  std_ulogic;
       clear     : in  std_ulogic;
-      en_in     : in  std_ulogic;
+      en_in     : in  std_logic;
       serial_in : in  std_ulogic;
-      test_comp : out std_logic_vector(DIM-3 downto 0);
-      data_out  : out std_logic_vector(DIM-6 downto 0);
+      test_comp : out std_logic_vector(DIM-1 downto 0);
+      data_out  : out std_logic_vector(DIM-10 downto 0);
       op        : out std_ulogic;
       done      : out std_ulogic;
       end_trace : out std_ulogic);
-  end component sipo;
+  end component sipo_jtag;
 
-  component piso
+  component piso_jtag
     generic (
-      sz : integer);
+      sz        : integer;
+      shift_dir : integer := 0);
     port (
       rst      : in  std_logic;
       clk      : in  std_ulogic;
       clear    : in  std_ulogic;
       load     : in  std_ulogic;
       A        : in  std_logic_vector(sz-1 downto 0);
-      B        : out std_logic_vector(sz-1 downto 0);
       shift_en : in  std_ulogic;
       Y        : out std_ulogic;
       done     : out std_ulogic);
-  end component piso;
+  end component piso_jtag;
 
   component jtag_test is
     generic (
