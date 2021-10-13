@@ -1081,6 +1081,8 @@ begin
       elsif clk_feedthru'event and clk_feedthru = '1' then  -- rising clock edge
         if this_has_dvfs /= 0 then
           mon_dvfs_int.vf <= mon_dvfs_in.vf;
+        else
+          mon_dvfs_int.vf <= "1000";
         end if;
       end if;
     end process;
