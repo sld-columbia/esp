@@ -67,7 +67,7 @@ architecture rtl of esp_noc_csr is
 
   constant DEFAULT_MDC_SCALER_CFG : std_logic_vector(10 downto 0) := conv_std_logic_vector(490, 11);
   -- Assume default I/O tile DCO frequency is 490MHz
- 
+
   constant DEFAULT_TILE_ID : std_logic_vector(7 downto 0) := (others => '0');
 
   -- DDR_CFG0
@@ -87,7 +87,7 @@ architecture rtl of esp_noc_csr is
     '0' & X"9C4A" & "011" & "011001" & "10" & X"E";
   -- | 31 |     30-15   |    14-12    |   11-6   |     5-4    |    3-0    |
   -- | /  | init_cycles | dqs_sel_cal | bank_pos | bank_width | row_width |
-  
+
   function dco_reset_config
     return std_logic_vector is
   begin
@@ -151,14 +151,14 @@ begin
           when ESP_CSR_MDC_SCALER_CFG_ADDR =>
             readdata(ESP_CSR_MDC_SCALER_CFG_MSB - ESP_CSR_MDC_SCALER_CFG_LSB downto 0) <=
               config_r(ESP_CSR_MDC_SCALER_CFG_MSB downto ESP_CSR_MDC_SCALER_CFG_LSB);
-            when ESP_CSR_DDR_CFG0_ADDR =>
-              readdata(ESP_CSR_DDR_CFG0_MSB - ESP_CSR_DDR_CFG0_LSB downto 0) <=
+          when ESP_CSR_DDR_CFG0_ADDR =>
+            readdata(ESP_CSR_DDR_CFG0_MSB - ESP_CSR_DDR_CFG0_LSB downto 0) <=
               config_r(ESP_CSR_DDR_CFG0_MSB downto ESP_CSR_DDR_CFG0_LSB);
-            when ESP_CSR_DDR_CFG1_ADDR =>
-              readdata(ESP_CSR_DDR_CFG1_MSB - ESP_CSR_DDR_CFG1_LSB downto 0) <=
+          when ESP_CSR_DDR_CFG1_ADDR =>
+            readdata(ESP_CSR_DDR_CFG1_MSB - ESP_CSR_DDR_CFG1_LSB downto 0) <=
               config_r(ESP_CSR_DDR_CFG1_MSB downto ESP_CSR_DDR_CFG1_LSB);
-            when ESP_CSR_DDR_CFG2_ADDR =>
-              readdata(ESP_CSR_DDR_CFG2_MSB - ESP_CSR_DDR_CFG2_LSB downto 0) <=
+          when ESP_CSR_DDR_CFG2_ADDR =>
+            readdata(ESP_CSR_DDR_CFG2_MSB - ESP_CSR_DDR_CFG2_LSB downto 0) <=
               config_r(ESP_CSR_DDR_CFG2_MSB downto ESP_CSR_DDR_CFG2_LSB);
 
           when others =>
@@ -192,16 +192,16 @@ begin
                 apbi.pwdata(ESP_CSR_LDO_CFG_MSB - ESP_CSR_LDO_CFG_LSB downto 0);
             when ESP_CSR_MDC_SCALER_CFG_ADDR =>
               config_r(ESP_CSR_MDC_SCALER_CFG_MSB downto ESP_CSR_MDC_SCALER_CFG_LSB) <=
-              apbi.pwdata(ESP_CSR_MDC_SCALER_CFG_MSB - ESP_CSR_MDC_SCALER_CFG_LSB downto 0);
-          when ESP_CSR_DDR_CFG0_ADDR =>
+                apbi.pwdata(ESP_CSR_MDC_SCALER_CFG_MSB - ESP_CSR_MDC_SCALER_CFG_LSB downto 0);
+            when ESP_CSR_DDR_CFG0_ADDR =>
               config_r(ESP_CSR_DDR_CFG0_MSB downto ESP_CSR_DDR_CFG0_LSB) <=
-              apbi.pwdata(ESP_CSR_DDR_CFG0_MSB - ESP_CSR_DDR_CFG0_LSB downto 0);
-          when ESP_CSR_DDR_CFG1_ADDR =>
+                apbi.pwdata(ESP_CSR_DDR_CFG0_MSB - ESP_CSR_DDR_CFG0_LSB downto 0);
+            when ESP_CSR_DDR_CFG1_ADDR =>
               config_r(ESP_CSR_DDR_CFG1_MSB downto ESP_CSR_DDR_CFG1_LSB) <=
-              apbi.pwdata(ESP_CSR_DDR_CFG1_MSB - ESP_CSR_DDR_CFG1_LSB downto 0);
-          when ESP_CSR_DDR_CFG2_ADDR =>
+                apbi.pwdata(ESP_CSR_DDR_CFG1_MSB - ESP_CSR_DDR_CFG1_LSB downto 0);
+            when ESP_CSR_DDR_CFG2_ADDR =>
               config_r(ESP_CSR_DDR_CFG2_MSB downto ESP_CSR_DDR_CFG2_LSB) <=
-              apbi.pwdata(ESP_CSR_DDR_CFG2_MSB - ESP_CSR_DDR_CFG2_LSB downto 0);
+                apbi.pwdata(ESP_CSR_DDR_CFG2_MSB - ESP_CSR_DDR_CFG2_LSB downto 0);
 
             when others => null;
           end case;
@@ -243,14 +243,29 @@ begin
             readdata(ESP_CSR_TILE_ID_NOC_MSB - ESP_CSR_TILE_ID_NOC_LSB downto 0) <=
               config_r(ESP_CSR_TILE_ID_NOC_MSB downto ESP_CSR_TILE_ID_NOC_LSB);
           when ESP_CSR_PAD_CFG_ADDR =>
-            readdata(ESP_CSR_PAD_CFG_MSB - ESP_CSR_PAD_CFG_LSB downto 0) <= config_r(ESP_CSR_PAD_CFG_MSB downto ESP_CSR_PAD_CFG_LSB);
+            readdata(ESP_CSR_PAD_CFG_MSB - ESP_CSR_PAD_CFG_LSB downto 0) <=
+              config_r(ESP_CSR_PAD_CFG_MSB downto ESP_CSR_PAD_CFG_LSB);
           when ESP_CSR_DCO_CFG_ADDR =>
-            readdata(ESP_CSR_DCO_CFG_MSB - ESP_CSR_DCO_CFG_LSB downto 0) <= config_r(ESP_CSR_DCO_CFG_MSB downto ESP_CSR_DCO_CFG_LSB);
+            readdata(ESP_CSR_DCO_CFG_MSB - ESP_CSR_DCO_CFG_LSB downto 0) <=
+              config_r(ESP_CSR_DCO_CFG_MSB downto ESP_CSR_DCO_CFG_LSB);
           when ESP_CSR_DCO_NOC_CFG_ADDR =>
             readdata(ESP_CSR_DCO_NOC_CFG_MSB - ESP_CSR_DCO_NOC_CFG_LSB downto 0) <=
               config_r(ESP_CSR_DCO_NOC_CFG_MSB downto ESP_CSR_DCO_NOC_CFG_LSB);
           when ESP_CSR_LDO_CFG_ADDR =>
-            readdata(ESP_CSR_LDO_CFG_MSB - ESP_CSR_LDO_CFG_LSB downto 0) <= config_r(ESP_CSR_LDO_CFG_MSB downto ESP_CSR_LDO_CFG_LSB);
+            readdata(ESP_CSR_LDO_CFG_MSB - ESP_CSR_LDO_CFG_LSB downto 0) <=
+              config_r(ESP_CSR_LDO_CFG_MSB downto ESP_CSR_LDO_CFG_LSB);
+          when ESP_CSR_MDC_SCALER_CFG_ADDR =>
+            readdata(ESP_CSR_MDC_SCALER_CFG_MSB - ESP_CSR_MDC_SCALER_CFG_LSB downto 0) <=
+              config_r(ESP_CSR_MDC_SCALER_CFG_MSB downto ESP_CSR_MDC_SCALER_CFG_LSB);
+          when ESP_CSR_DDR_CFG0_ADDR =>
+            readdata(ESP_CSR_DDR_CFG0_MSB - ESP_CSR_DDR_CFG0_LSB downto 0) <=
+              config_r(ESP_CSR_DDR_CFG0_MSB downto ESP_CSR_DDR_CFG0_LSB);
+          when ESP_CSR_DDR_CFG1_ADDR =>
+            readdata(ESP_CSR_DDR_CFG1_MSB - ESP_CSR_DDR_CFG1_LSB downto 0) <=
+              config_r(ESP_CSR_DDR_CFG1_MSB downto ESP_CSR_DDR_CFG1_LSB);
+          when ESP_CSR_DDR_CFG2_ADDR =>
+            readdata(ESP_CSR_DDR_CFG2_MSB - ESP_CSR_DDR_CFG2_LSB downto 0) <=
+              config_r(ESP_CSR_DDR_CFG2_MSB downto ESP_CSR_DDR_CFG2_LSB);
 
           -- Power management
           when ESP_CSR_PM_MIN to ESP_CSR_PM_MIN + PM_REGNUM_CONFIG - 1 =>
@@ -289,6 +304,18 @@ begin
             when ESP_CSR_LDO_CFG_ADDR =>
               config_r(ESP_CSR_LDO_CFG_MSB downto ESP_CSR_LDO_CFG_LSB) <=
                 apbi.pwdata(ESP_CSR_LDO_CFG_MSB - ESP_CSR_LDO_CFG_LSB downto 0);
+            when ESP_CSR_MDC_SCALER_CFG_ADDR =>
+              config_r(ESP_CSR_MDC_SCALER_CFG_MSB downto ESP_CSR_MDC_SCALER_CFG_LSB) <=
+                apbi.pwdata(ESP_CSR_MDC_SCALER_CFG_MSB - ESP_CSR_MDC_SCALER_CFG_LSB downto 0);
+            when ESP_CSR_DDR_CFG0_ADDR =>
+              config_r(ESP_CSR_DDR_CFG0_MSB downto ESP_CSR_DDR_CFG0_LSB) <=
+                apbi.pwdata(ESP_CSR_DDR_CFG0_MSB - ESP_CSR_DDR_CFG0_LSB downto 0);
+            when ESP_CSR_DDR_CFG1_ADDR =>
+              config_r(ESP_CSR_DDR_CFG1_MSB downto ESP_CSR_DDR_CFG1_LSB) <=
+                apbi.pwdata(ESP_CSR_DDR_CFG1_MSB - ESP_CSR_DDR_CFG1_LSB downto 0);
+            when ESP_CSR_DDR_CFG2_ADDR =>
+              config_r(ESP_CSR_DDR_CFG2_MSB downto ESP_CSR_DDR_CFG2_LSB) <=
+                apbi.pwdata(ESP_CSR_DDR_CFG2_MSB - ESP_CSR_DDR_CFG2_LSB downto 0);
 
             -- Power management
             when ESP_CSR_PM_MIN to ESP_CSR_PM_MIN + PM_REGNUM_CONFIG - 1 =>
