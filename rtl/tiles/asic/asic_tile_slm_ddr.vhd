@@ -379,7 +379,7 @@ begin
       test_if_en => 1)
     port map (
       rst                 => test_rstn,
-      refclk              => dco_clk,
+      refclk              => dco_clk_div2_90,
       tile_rst            => dco_rstn,
       tdi                 => tdi,
       tdo                 => tdo,
@@ -537,7 +537,7 @@ begin
       noc_rstn                => noc_rstn,
       dco_rstn                => dco_rstn,
       sys_clk                 => sys_clk,
-      dco_clk                 => dco_clk,
+      dco_clk                 => dco_clk_div2_90,
       acc_clk                 => open,
       refclk                  => dco_clk,
       -- CSRs
