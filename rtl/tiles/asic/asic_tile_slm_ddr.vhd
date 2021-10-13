@@ -524,7 +524,7 @@ begin
       test_if_en => 1)
     port map (
       rst                 => test_rstn,
-      refclk              => dco_clk,
+      refclk              => dco_clk_div2_90,
       tile_rst            => dco_rstn,
       tdi                 => tdi,
       tdo                 => tdo,
