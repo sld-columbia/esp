@@ -210,9 +210,9 @@ architecture rtl of asic_tile_slm_ddr is
 
   constant ext_clk_sel_default : std_ulogic := '0';
 
-  constant DEFAULT_DCO_LPDDR_CFG : std_logic_vector(22 downto 0) :=
-    "0100"      &   "00"   &   "100"  & "000000" & "110010" &   "0"   & "1";
-  -- UI_CLK_DEL   FREQ_SEL    DIV_SEL    FC_SEL     CC_SEL    CLK_SEL    EN
+  constant DEFAULT_DCO_LPDDR_CFG : std_logic_vector(30 downto 0) :=
+    "00000000" & "0100"      &   "00"   &   "100"  & "000000" & "110010" &   "0"   & "1";
+  -- DCO_CLK_DEL  UI_CLK_DEL   FREQ_SEL    DIV_SEL    FC_SEL     CC_SEL    CLK_SEL    EN
 
   -- Tile clock and reset (only for I/O tile)
   signal raw_rstn        : std_ulogic;

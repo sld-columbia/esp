@@ -20,7 +20,7 @@ entity esp_tile_csr is
 
   generic (
     pindex      : integer range 0 to NAPBSLV -1 := 0;
-    dco_rst_cfg : std_logic_vector(22 downto 0) := (others => '0'));
+    dco_rst_cfg : std_logic_vector(30 downto 0) := (others => '0'));
   port (
     clk         : in std_logic;
     rstn        : in std_logic;
@@ -122,8 +122,8 @@ architecture rtl of esp_tile_csr is
        "00"     &  "100"   &  "000000" & "100101" & "0"     & "1";
     -- FREQ_SEL    DIV_SEL    FC_SEL      CC_SEL    CLK_SEL   EN
 
-    constant DEFAULT_DCO_CFG : std_logic_vector(22 downto 0) :=
-       "0000"          & "00"     &  "100"   &  "000000" & "100101" & "0"     & "1";
+    constant DEFAULT_DCO_CFG : std_logic_vector(30 downto 0) :=
+       "000000000000"          & "00"     &  "100"   &  "000000" & "100101" & "0"     & "1";
     --  reserved LPDDR   FREQ_SEL    DIV_SEL    FC_SEL      CC_SEL    CLK_SEL   EN
 
     constant DEFAULT_PAD_CFG : std_logic_vector(2 downto 0) :=
@@ -137,7 +137,7 @@ architecture rtl of esp_tile_csr is
     function dco_reset_config_ovr
       return std_logic_vector is
     begin
-      if dco_rst_cfg = ("000" & X"00000") then
+      if dco_rst_cfg = ("000" & X"0000000") then
         -- Use default
         return DEFAULT_DCO_CFG;
       else
@@ -146,7 +146,7 @@ architecture rtl of esp_tile_csr is
       end if;
     end function;
 
-    constant RESET_DCO_CFG : std_logic_vector(22 downto 0) := dco_reset_config_ovr;
+    constant RESET_DCO_CFG : std_logic_vector(30 downto 0) := dco_reset_config_ovr;
 
     constant DEFAULT_CONFIG : std_logic_vector(ESP_CSR_WIDTH - 1 downto 0) :=
         DEFAULT_ACC_COH & DEFAULT_DDR_CFG2 & DEFAULT_DDR_CFG1 & DEFAULT_DDR_CFG0 & DEFAULT_CPU_LOC_OVR & DEFAULT_ARIANE_HARTID &

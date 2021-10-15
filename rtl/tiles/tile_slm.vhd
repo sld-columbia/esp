@@ -38,7 +38,7 @@ entity tile_slm is
     SIMULATION   : boolean := false;
     this_has_dco : integer range 0 to 1 := 0;
     this_has_ddr : integer range 0 to 1 := 0;
-    dco_rst_cfg  : std_logic_vector(22 downto 0) := (others => '0'));
+    dco_rst_cfg  : std_logic_vector(30 downto 0) := (others => '0'));
   port (
     raw_rstn           : in  std_ulogic;
     tile_rst           : in  std_ulogic;
@@ -124,11 +124,13 @@ architecture rtl of tile_slm is
   signal dco_freq_sel : std_logic_vector(1 downto 0);
   signal dco_clk_lock : std_ulogic;
   signal dco_clk_int  : std_ulogic;
+  signal dco_clk_int_delay      : std_ulogic;
+  signal dco_clk_div2_int_delay : std_ulogic;
 
   -- Delay line for DDR ui_clk delay
   signal dco_clk_div2_int    : std_logic;
   signal dco_clk_div2_90_int : std_logic;
-  signal dco_clk_delay_sel   : std_logic_vector(3 downto 0);
+  signal dco_clk_delay_sel   : std_logic_vector(11 downto 0);
   component DELAY_CELL_GF12_C14 is
     port (
       data_in : in std_logic;
@@ -283,8 +285,20 @@ begin
       DELAY_CELL_GF12_C14_1: DELAY_CELL_GF12_C14
         port map (
           data_in  => dco_clk_div2_int,
-          sel      => dco_clk_delay_sel,
+          sel      => dco_clk_delay_sel(3 downto 0),
           data_out => dco_clk_div2_90_int);
+
+      DELAY_CELL_GF12_C14_2: DELAY_CELL_GF12_C14
+        port map (
+          data_in  => dco_clk_div2_int,
+          sel      => dco_clk_delay_sel(7 downto 4),
+          data_out => dco_clk_div2_int_delay);
+
+      DELAY_CELL_GF12_C14_3: DELAY_CELL_GF12_C14
+        port map (
+          data_in  => dco_clk_int,
+          sel      => dco_clk_delay_sel(11 downto 8),
+          data_out => dco_clk_int_delay);
     end generate clk_delay_gf12_gen;
 
     noc_clk_delay_gen: if CFG_FABTECH /= gf12 generate
@@ -309,8 +323,8 @@ begin
     dco_clk_div2_90_int <= '0';
   end generate no_dco_gen;
 
-  dco_clk         <= dco_clk_int;
-  dco_clk_div2    <= dco_clk_div2_int;
+  dco_clk         <= dco_clk_int_delay;
+  dco_clk_div2    <= dco_clk_div2_int_delay;
   dco_clk_div2_90 <= dco_clk_div2_90_int;
 
   -- DDR Controller configuration
@@ -318,7 +332,7 @@ begin
   ddr_cfg1 <= tile_config(ESP_CSR_DDR_CFG1_MSB downto ESP_CSR_DDR_CFG1_LSB);
   ddr_cfg2 <= tile_config(ESP_CSR_DDR_CFG2_MSB downto ESP_CSR_DDR_CFG2_LSB);
 
-  dco_clk_delay_sel <= tile_config(ESP_CSR_DCO_CFG_MSB downto ESP_CSR_DCO_CFG_MSB - 3);
+  dco_clk_delay_sel <= tile_config(ESP_CSR_DCO_CFG_MSB downto ESP_CSR_DCO_CFG_MSB - 11);
 
   -----------------------------------------------------------------------------
   -- Tile parameters
