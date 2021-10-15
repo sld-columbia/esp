@@ -242,28 +242,28 @@ architecture rtl of ahb2bsg_dmc is
     case hsize is
       when HSIZE_BYTE =>
         case offset is
-          when "000" => hrdata := ahbdrivedata(data(7 downto 0));
-          when "001" => hrdata := ahbdrivedata(data(15 downto 8));
-          when "010" => hrdata := ahbdrivedata(data(23 downto 16));
-          when "011" => hrdata := ahbdrivedata(data(31 downto 24));
-          when "100" => hrdata := ahbdrivedata(data(39 downto 32));
-          when "101" => hrdata := ahbdrivedata(data(47 downto 40));
-          when "110" => hrdata := ahbdrivedata(data(55 downto 48));
-          when "111" => hrdata := ahbdrivedata(data(63 downto 56));
+          when "111" => hrdata := ahbdrivedata(data(7 downto 0));
+          when "110" => hrdata := ahbdrivedata(data(15 downto 8));
+          when "101" => hrdata := ahbdrivedata(data(23 downto 16));
+          when "100" => hrdata := ahbdrivedata(data(31 downto 24));
+          when "011" => hrdata := ahbdrivedata(data(39 downto 32));
+          when "010" => hrdata := ahbdrivedata(data(47 downto 40));
+          when "001" => hrdata := ahbdrivedata(data(55 downto 48));
+          when "000" => hrdata := ahbdrivedata(data(63 downto 56));
           when others => hrdata := ahbdrivedata(data(7 downto 0));
         end case;
       when HSIZE_HWORD =>
         case offset(2 downto 1) is
-          when "00" => hrdata := ahbdrivedata(data(15 downto 0));
-          when "01" => hrdata := ahbdrivedata(data(31 downto 16));
-          when "10" => hrdata := ahbdrivedata(data(47 downto 32));
-          when "11" => hrdata := ahbdrivedata(data(63 downto 48));
+          when "11" => hrdata := ahbdrivedata(data(15 downto 0));
+          when "10" => hrdata := ahbdrivedata(data(31 downto 16));
+          when "01" => hrdata := ahbdrivedata(data(47 downto 32));
+          when "00" => hrdata := ahbdrivedata(data(63 downto 48));
           when others => hrdata := ahbdrivedata(data(15 downto 0));
         end case;
       when HSIZE_WORD =>
         case offset(2) is
-          when '0' => hrdata := ahbdrivedata(data(31 downto 0));
-          when '1' => hrdata := ahbdrivedata(data(63 downto 32));
+          when '1' => hrdata := ahbdrivedata(data(31 downto 0));
+          when '0' => hrdata := ahbdrivedata(data(63 downto 32));
           when others => hrdata := ahbdrivedata(data(32 downto 0));
         end case;
       when others => hrdata := ahbdrivedata(data);
@@ -295,28 +295,28 @@ architecture rtl of ahb2bsg_dmc is
     case hsize is
       when HSIZE_BYTE =>
         case offset is
-          when "000" => mask := "11111110";
-          when "001" => mask := "11111101";
-          when "010" => mask := "11111011";
-          when "011" => mask := "11110111";
-          when "100" => mask := "11101111";
-          when "101" => mask := "11011111";
-          when "110" => mask := "10111111";
-          when "111" => mask := "01111111";
+          when "111" => mask := "11111110";
+          when "110" => mask := "11111101";
+          when "101" => mask := "11111011";
+          when "100" => mask := "11110111";
+          when "011" => mask := "11101111";
+          when "010" => mask := "11011111";
+          when "001" => mask := "10111111";
+          when "000" => mask := "01111111";
           when others => mask := "00000000";
         end case;
       when HSIZE_HWORD =>
         case offset(2 downto 1) is
-          when "00" => mask := "11111100";
-          when "01" => mask := "11110011";
-          when "10" => mask := "11001111";
-          when "11" => mask := "00111111";
+          when "11" => mask := "11111100";
+          when "10" => mask := "11110011";
+          when "01" => mask := "11001111";
+          when "00" => mask := "00111111";
           when others => mask := "00000000";
         end case;
       when HSIZE_WORD =>
         case offset(2) is
-          when '0' => mask := "11110000";
-          when '1' => mask := "00001111";
+          when '1' => mask := "11110000";
+          when '0' => mask := "00001111";
           when others => mask := "00000000";
         end case;
       when others => mask := "00000000";
@@ -335,7 +335,7 @@ begin
     4 => ahb_membar(haddr, '1', '1', hmask),
     others => zero32);
 
-  comb : process(current_state, r, rnxt, rprev, ahbsi, migout, hindex, calib_done_delayed)
+  comb : process(current_state, r, rnxt, rprev, ahbsi, migin, migout, hindex, calib_done_delayed)
     variable vprev : reg_type;
     variable vnxt : reg_type;
     variable v : reg_type;
@@ -431,6 +431,31 @@ begin
         when others =>
           v := r;
       end case;
+
+      if migin.app_en = '1' and migin.app_wdf_wren = '0' and migout.app_rdy = '1' and migout.app_wdf_rdy = '1' then
+        v.valid := '0';
+      end if;
+
+      if ahbsi.hready = '1' and ahbsi.htrans = "11" then
+         if ahbsi.hwrite = '0' then
+            v.addr         := vnxt.addr;
+            v.haddr_offset := vnxt.haddr_offset;
+            v.hsize        := vnxt.hsize;
+            v.wdf_mask     := vnxt.wdf_mask;
+            v.wdf_data     := set_wdf_data(ahbsi.hwdata);
+            v.hwrite       := vnxt.hwrite;
+            v.cmd          := vnxt.cmd;
+         elsif migin.app_en = '1' and migout.app_rdy = '1' and migout.app_wdf_rdy = '1' then
+            v.addr         := rnxt.addr;
+            v.haddr_offset := rnxt.haddr_offset;
+            v.hsize        := rnxt.hsize;
+            v.wdf_mask     := rnxt.wdf_mask;
+            v.wdf_data     := set_wdf_data(ahbsi.hwdata);
+            v.hwrite       := rnxt.hwrite;
+            v.cmd          := rnxt.cmd;
+            v.valid        := rnxt.valid;
+        end if;
+      end if;
 
       -- Special handling for reads --
       case current_state is
