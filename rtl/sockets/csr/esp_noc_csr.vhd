@@ -54,7 +54,7 @@ architecture rtl of esp_noc_csr is
   --  CC_SEL_MUX   reserved LPDDR   FREQ_SEL    DIV_SEL    FC_SEL      CC_SEL    CLK_SEL   EN
 
   constant DEFAULT_DCO_LPDDR_CFG : std_logic_vector(23 downto 0) :=
-    "0" & "0100" & "00" & "100" & "000000" & "110010" & "0" & "1";
+    "0" & "0111" & "00" & "100" & "000000" & "110001" & "0" & "1";
   -- CC_SEL_MUX   UI_CLK_DEL   FREQ_SEL    DIV_SEL    FC_SEL     CC_SEL    CLK_SEL    EN
 
   constant DEFAULT_LDO_CFG : std_logic_vector(8 downto 0) :=

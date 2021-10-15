@@ -144,6 +144,7 @@ architecture rtl of asic_tile_slm is
   signal dco_div_sel       : std_logic_vector(2 downto 0);
   signal dco_freq_sel      : std_logic_vector(1 downto 0);
   signal dco_clk_delay_sel : std_logic_vector(3 downto 0);
+  signal dco_clk_delay_sel_x3 : std_logic_vector(11 downto 0);
 
   -- Tile parameters
   signal tile_config : std_logic_vector(ESP_NOC_CSR_WIDTH - 1 downto 0);
@@ -327,6 +328,8 @@ begin
       noc6_data_void_in   => noc6_data_void_in_tile,
       noc6_stop_out       => noc6_stop_out_tile);
 
+  dco_clk_delay_sel_x3 <= "00000000" & dco_clk_delay_sel;
+
   tile_slm_1 : tile_slm
     generic map (
       SIMULATION   => SIMULATION,
@@ -350,7 +353,7 @@ begin
       dco_cc_sel          => dco_cc_sel,
       dco_clk_sel         => dco_clk_sel,
       dco_en              => dco_en,
-      dco_clk_delay_sel   => dco_clk_delay_sel,
+      dco_clk_delay_sel   => dco_clk_delay_sel_x3,
       ddr_ahbsi           => open,
       ddr_ahbso           => ahbs_none,
       test1_output_port   => test1_output_port_s,

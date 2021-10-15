@@ -227,6 +227,7 @@ architecture rtl of asic_tile_slm_ddr is
   signal dco_div_sel       : std_logic_vector(2 downto 0);
   signal dco_freq_sel      : std_logic_vector(1 downto 0);
   signal dco_clk_delay_sel : std_logic_vector(3 downto 0);
+  signal dco_clk_delay_sel_x3 : std_logic_vector(11 downto 0);
 
   signal phy_rstn, phy_raw_rstn : std_logic;
 
@@ -458,6 +459,11 @@ begin
       noc6_data_void_in   => noc6_data_void_in_tile,
       noc6_stop_out       => noc6_stop_out_tile);
 
+  -- WARNING
+  -- The above line is using the LDO configufation register (unused in this tile) to control 2 delay cells in tile_slm
+  -- Fix for EPOCHS-1 to avoid changing many files at the last minute. FIX ME!!
+  dco_clk_delay_sel_x3 <= tile_config(ESP_CSR_LDO_CFG_MSB - 1 downto ESP_CSR_LDO_CFG_LSB) & dco_clk_delay_sel;
+
   tile_slm_1 : tile_slm
     generic map (
       SIMULATION   => SIMULATION,
@@ -480,7 +486,7 @@ begin
       dco_cc_sel          => dco_cc_sel,
       dco_clk_sel         => dco_clk_sel,
       dco_en              => dco_en,
-      dco_clk_delay_sel   => dco_clk_delay_sel,
+      dco_clk_delay_sel   => dco_clk_delay_sel_x3,
       phy_rstn            => phy_rstn,
       ddr_ahbsi           => ddr_ahbsi,
       ddr_ahbso           => ddr_ahbso,

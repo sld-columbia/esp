@@ -53,7 +53,7 @@ entity tile_slm is
     dco_cc_sel         : in std_logic_vector(5 downto 0);
     dco_clk_sel        : in std_ulogic;
     dco_en             : in std_ulogic;  
-    dco_clk_delay_sel  : in std_logic_vector(3 downto 0);
+    dco_clk_delay_sel  : in std_logic_vector(11 downto 0);
     -- DDR controller ports (this_has_ddr -> 1)
     dco_clk_div2       : out std_ulogic;
     dco_clk_div2_90    : out std_ulogic;
@@ -112,6 +112,8 @@ architecture rtl of tile_slm is
   -- DCO
   signal dco_clk_lock : std_ulogic;
   signal dco_clk_int  : std_ulogic;
+  signal dco_clk_int_delay      : std_ulogic;
+  signal dco_clk_div2_int_delay : std_ulogic;
 
   -- Delay line for DDR ui_clk delay
   signal dco_clk_div2_int    : std_logic;
@@ -266,8 +268,20 @@ begin
       DELAY_CELL_GF12_C14_1: DELAY_CELL_GF12_C14
         port map (
           data_in  => dco_clk_div2_int,
-          sel      => dco_clk_delay_sel,
+          sel      => dco_clk_delay_sel(3 downto 0),
           data_out => dco_clk_div2_90_int);
+
+      DELAY_CELL_GF12_C14_2: DELAY_CELL_GF12_C14
+        port map (
+          data_in  => dco_clk_div2_int,
+          sel      => dco_clk_delay_sel(7 downto 4),
+          data_out => dco_clk_div2_int_delay);
+
+      DELAY_CELL_GF12_C14_3: DELAY_CELL_GF12_C14
+        port map (
+          data_in  => dco_clk_int,
+          sel      => dco_clk_delay_sel(11 downto 8),
+          data_out => dco_clk_int_delay);
     end generate clk_delay_gf12_gen;
 
     noc_clk_delay_gen: if CFG_FABTECH /= gf12 generate
@@ -284,8 +298,8 @@ begin
     dco_clk_div2_90_int <= '0';
   end generate no_dco_gen;
 
-  dco_clk         <= dco_clk_int;
-  dco_clk_div2    <= dco_clk_div2_int;
+  dco_clk         <= dco_clk_int_delay;
+  dco_clk_div2    <= dco_clk_div2_int_delay;
   dco_clk_div2_90 <= dco_clk_div2_90_int;
 
   -----------------------------------------------------------------------------
