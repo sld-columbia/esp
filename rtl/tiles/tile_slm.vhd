@@ -271,17 +271,25 @@ begin
           sel      => dco_clk_delay_sel(3 downto 0),
           data_out => dco_clk_div2_90_int);
 
-      DELAY_CELL_GF12_C14_2: DELAY_CELL_GF12_C14
-        port map (
-          data_in  => dco_clk_div2_int,
-          sel      => dco_clk_delay_sel(7 downto 4),
-          data_out => dco_clk_div2_int_delay);
+      delay_ddr_gen : if this_has_ddr /= 0 generate
+        DELAY_CELL_GF12_C14_2: DELAY_CELL_GF12_C14
+          port map (
+            data_in  => dco_clk_div2_int,
+            sel      => dco_clk_delay_sel(7 downto 4),
+            data_out => dco_clk_div2_int_delay);
 
-      DELAY_CELL_GF12_C14_3: DELAY_CELL_GF12_C14
-        port map (
-          data_in  => dco_clk_int,
-          sel      => dco_clk_delay_sel(11 downto 8),
-          data_out => dco_clk_int_delay);
+        DELAY_CELL_GF12_C14_3: DELAY_CELL_GF12_C14
+          port map (
+            data_in  => dco_clk_int,
+            sel      => dco_clk_delay_sel(11 downto 8),
+            data_out => dco_clk_int_delay);
+      end generate delay_ddr_gen;
+
+      no_delay_ddr_gen : if this_has_ddr = 0 generate
+        dco_clk_div2_int_delay <= dco_clk_div2_int;
+        dco_clk_int_delay <= dco_clk_int;
+      end generate no_delay_ddr_gen;
+      
     end generate clk_delay_gf12_gen;
 
     noc_clk_delay_gen: if CFG_FABTECH /= gf12 generate
