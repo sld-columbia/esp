@@ -107,6 +107,9 @@ architecture rtl of ext2ahbm is
     haddr   : std_logic_vector(GLOB_PHYS_ADDR_BITS - 1 downto 0);
     hwrite  : std_ulogic;
     hwdata  : std_logic_vector(ARCH_BITS - 1 downto 0);
+    first_busy : std_ulogic;
+    valid_data : std_ulogic;
+    saved_data : std_logic_vector(ARCH_BITS - 1 downto 0);
   end record ext_ahbm_fsm_t;
 
   constant DEFAULT_EXT_AHBM : ext_ahbm_fsm_t := (
@@ -114,7 +117,10 @@ architecture rtl of ext2ahbm is
     count   => 0,
     haddr   => (others => '0'),
     hwrite  => '0',
-    hwdata  => (others => '0')
+    hwdata  => (others => '0'),
+    first_busy => '1',
+    valid_data => '0',
+    saved_data => (others => '0')
     );
 
   signal r, rin : ext_ahbm_fsm_t;
@@ -318,6 +324,8 @@ begin  -- architecture rtl
     ahbmo.hbusreq <= '0';
     ahbmo.htrans  <= HTRANS_IDLE;
 
+    v.first_busy := '1';
+
     case r.state is
       when  receive_address =>
         if ext_rcv_empty = '0' then
@@ -421,18 +429,29 @@ begin  -- architecture rtl
           if (granted and ahbmi.hready) = '1' then
             -- Read data is valid
             -- Push ext queue
-            ext_snd_data_in <= fix_endian(ahbmi.hrdata);
+            if r.valid_data = '1' then
+              ext_snd_data_in <= r.saved_data;
+              v.valid_data := '0';
+            else
+              ext_snd_data_in <= fix_endian(ahbmi.hrdata);
+            end if;
+
             ext_snd_wrreq   <= '1';
             -- End of transaction
             v.state := receive_address;
           end if;
         elsif (ext_snd_almost_full or ext_snd_full) = '0' then
-          -- Continue with burst transaction
           ahbmo.htrans <= HTRANS_SEQ;
+          -- Continue with burst transaction
           if (granted and ahbmi.hready) = '1' then
             -- Read data is valid
             -- Push ext queue
-            ext_snd_data_in <= fix_endian(ahbmi.hrdata);
+            if r.valid_data = '1' then
+              ext_snd_data_in <= r.saved_data;
+              v.valid_data := '0';
+            else
+              ext_snd_data_in <= fix_endian(ahbmi.hrdata);
+            end if;
             ext_snd_wrreq   <= '1';
             -- Increment address
             v.haddr := r.haddr + default_incr;
@@ -447,6 +466,15 @@ begin  -- architecture rtl
           end if;
         else
           -- ext queue is full
+          v.first_busy := '0';
+          if r.first_busy = '1' then
+            if (granted and ahbmi.hready) = '1' then
+              v.saved_data := fix_endian(ahbmi.hrdata);
+              v.valid_data := '1';
+            else
+              v.first_busy := '1';
+            end if;
+          end if;
           ahbmo.htrans <= HTRANS_BUSY;
         end if;
 
