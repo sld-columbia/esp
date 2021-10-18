@@ -120,29 +120,26 @@ sim-compile: socketgen check_all_srcs modelsim/vsim.mk soft
 	rm -f prom.srec ram.srec; \
 	ln -s $(SOFT_BUILD)/prom.srec; \
 	ln -s $(SOFT_BUILD)/ram.srec;
-	
-
-
 
 sim-compile-gate: socketgen check_all_srcs modelsim/vsim.mk soft
-        @for dat in $(DAT_SRCS); do \
-                cp $$dat modelsim; \
-        done;
-        $(QUIET_MAKE)make -C modelsim -f vsim.mk
-        @cd modelsim; \
-        rm -f prom.srec ram.srec; \
-        ln -s $(SOFT_BUILD)/prom.srec; \
-        ln -s $(SOFT_BUILD)/ram.srec; \
-        $(VLOG) -work work +define+ARM_EN_X_SQUASH +define+ARM_X_SQUASH_VAL=0 +define+ARM_UD_MODEL $(ESP_ROOT)/../gf12/gate_sim/asic_tile_*.v; \
-        $(VLOG) -work work +define+ARM_EN_X_SQUASH +define+ARM_X_SQUASH_VAL=0 +define+ARM_UD_MODEL $(ESP_ROOT)/../gf12/gate_sim/sc9mcpp84_12lp_*.v
+	@for dat in $(DAT_SRCS); do \
+		cp $$dat modelsim; \
+	done;
+	$(QUIET_MAKE)make -C modelsim -f vsim.mk
+	@cd modelsim; \
+	rm -f prom.srec ram.srec; \
+	ln -s $(SOFT_BUILD)/prom.srec; \
+	ln -s $(SOFT_BUILD)/ram.srec; \
+	$(VLOG) -work work +define+ARM_EN_X_SQUASH +define+ARM_X_SQUASH_VAL=0 +define+ARM_UD_MODEL $(ESP_ROOT)/../gf12/gate_sim/asic_tile_*.v; \
+	$(VLOG) -work work +define+ARM_EN_X_SQUASH +define+ARM_X_SQUASH_VAL=0 +define+ARM_UD_MODEL $(ESP_ROOT)/../gf12/gate_sim/sc9mcpp84_12lp_*.v
 
 sim-gate: sim-compile-gate
-        $(QUIET_RUN)cd modelsim;\
-        $(VSIM) -c;     
+	$(QUIET_RUN)cd modelsim;\
+	$(VSIM) -c;     
 
 sim-gui-gate: sim-compile-gate
-        $(QUIET_RUN)cd modelsim; \
-        $(VSIM); 
+	$(QUIET_RUN)cd modelsim; \
+	$(VSIM); 
 
 sim: sim-compile
 	$(QUIET_RUN)cd modelsim; \
