@@ -25,7 +25,7 @@ uintptr_t dtb = DTB_ADDRESS;
 #ifdef OVERRIDE_DRAM_SIZE
 static uintptr_t uncached_area_ptr = DRAM_BASE + (OVERRIDE_DRAM_SIZE >> 1);
 #else
-static uintptr_t uncached_area_ptr = 0xa0100000;
+static uintptr_t uncached_area_ptr = 0x88200000;
 #endif
 
 #endif /* __riscv */
@@ -81,14 +81,14 @@ void aligned_free(void *ptr) {
 }
 
 
-void esp_flush(int coherence)
+void esp_flush(int coherence, int nmem)
 {
 	int i;
 	const int cmd = 1 << ESP_CACHE_CMD_FLUSH_BIT;
-	struct esp_device *llcs = NULL;
-	struct esp_device *l2s = NULL;
-	int nllc = 0;
-	int nl2 = 0;
+	struct esp_device llcs[4];
+	struct esp_device l2;
+	int nllc = nmem;
+	int nl2 = 1;
 	int pid = get_pid();
 
 	switch (coherence) {
@@ -99,23 +99,27 @@ void esp_flush(int coherence)
 	}
 
 
-	if (coherence == ACC_COH_NONE)
+	//if (coherence == ACC_COH_NONE)
 		/* Look for LLC controller */
-		nllc = probe(&llcs, VENDOR_CACHE, DEVID_LLC_CACHE, DEVNAME_LLC_CACHE);
+		//nllc = probe(&llcs, VENDOR_CACHE, DEVID_LLC_CACHE, DEVNAME_LLC_CACHE);
 
-	if (coherence < ACC_COH_RECALL)
+	//if (coherence < ACC_COH_RECALL)
 		/* Look for L2 controller */
-		nl2 = probe(&l2s, VENDOR_CACHE, DEVID_L2_CACHE, DEVNAME_L2_CACHE);
+		//nl2 = probe(&l2s, VENDOR_CACHE, DEVID_L2_CACHE, DEVNAME_L2_CACHE);
+    l2.addr = 0x6000d900;
+    llcs[0].addr = 0x6000e000;
+    llcs[1].addr = 0x6000e100;
+    llcs[2].addr = 0x6000e200;
+    llcs[3].addr = 0x6000e300;
 
-	if (coherence < ACC_COH_RECALL) {
+    if (coherence < ACC_COH_RECALL) {
 
 		if (nl2 > 0) {
 			/* Set L2 flush (waits for L1 to flush first) */
 			for (i = 0; i < nl2; i++) {
-				struct esp_device *l2 = &l2s[i];
-				int cpuid = (ioread32(l2, ESP_CACHE_REG_STATUS) & ESP_CACHE_STATUS_CPUID_MASK) >> ESP_CACHE_STATUS_CPUID_SHIFT;
+				int cpuid = (ioread32(&l2, ESP_CACHE_REG_STATUS) & ESP_CACHE_STATUS_CPUID_MASK) >> ESP_CACHE_STATUS_CPUID_SHIFT;
 				if (cpuid == pid) {
-					iowrite32(l2, ESP_CACHE_REG_CMD, cmd);
+					iowrite32(&l2, ESP_CACHE_REG_CMD, cmd);
 					break;
 				}
 			}
@@ -127,11 +131,10 @@ void esp_flush(int coherence)
 #endif
 
 			/* Wait for L2 flush to complete */
-			struct esp_device *l2 = &l2s[i];
 			/* Poll for completion */
-			while (!(ioread32(l2, ESP_CACHE_REG_STATUS) & ESP_CACHE_STATUS_DONE_MASK));
+			while (!(ioread32(&l2, ESP_CACHE_REG_STATUS) & ESP_CACHE_STATUS_DONE_MASK));
 			/* Clear IRQ */
-			iowrite32(l2, ESP_CACHE_REG_CMD, 0);
+			iowrite32(&l2, ESP_CACHE_REG_CMD, 0);
 		}
 
 		if (nllc > 0) {

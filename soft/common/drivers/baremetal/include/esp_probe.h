@@ -96,7 +96,7 @@ void aligned_free(void *ptr);
 int probe(struct esp_device **espdevs, unsigned vendor, unsigned devid, const char *name);
 unsigned ioread32(struct esp_device *dev, unsigned offset);
 void iowrite32(struct esp_device *dev, unsigned offset, unsigned payload);
-void esp_flush(int coherence);
+void esp_flush(int coherence, int nmem);
 void esp_p2p_init(struct esp_device *dev, struct esp_device **srcs, unsigned nsrcs);
 
 #define esp_get_y(_dev) (YX_MASK_YX & (ioread32(_dev, YX_REG) >> YX_SHIFT_Y))
