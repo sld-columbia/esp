@@ -458,7 +458,11 @@ $(ACC-app): $(SOFT_BUILD)/sysroot soft-build
 		mkdir -p $$BUILD_PATH; \
 		CROSS_COMPILE=$(CROSS_COMPILE_LINUX) CPU_ARCH=$(CPU_ARCH) DRIVERS=$(DRV_LINUX) DESIGN_PATH=$(DESIGN_PATH) BUILD_PATH=$$BUILD_PATH $(MAKE) -C $$ACC_PATH/sw/linux/app; \
 		if [ `ls -1 $$BUILD_PATH/*.exe 2>/dev/null | wc -l ` -gt 0 ]; then \
-			echo '   ' CP $@; cp  $$BUILD_PATH/*.exe $(SOFT_BUILD)/sysroot/applications/test/$(@:-app=).exe; \
+			if [ `ls -1 $$BUILD_PATH/*.exe 2>/dev/null | wc -l ` -eq 1 ]; then \
+				echo '   ' CP $@; cp  $$BUILD_PATH/*.exe $(SOFT_BUILD)/sysroot/applications/test/ ; \
+			else \
+				for f in $$BUILD_PATH/*.exe; do echo '   ' CP $@ $${f##*/}; cp $$f $(SOFT_BUILD)/sysroot/applications/test/$(@:-app=)_$${f##*/}.exe ; done; \
+			fi; \
 		else \
 			echo '   ' WARNING $@ compilation failed!; \
 		fi; \

@@ -2,6 +2,7 @@
 #define __ESP_CFG_000_H__
 
 #include "libesp.h"
+#include "svd_vivado.h"
 
 typedef int32_t token_t;
 
@@ -17,25 +18,30 @@ const int32_t m = M;
 
 #define NACC 1
 
+struct svd_access svd_cfg_000[] = {
+	{
+		.q = Q,
+		.p = P,
+		.m = M,
+		.p2p_out = 0,
+		.p2p_in = 0,
+		.p2p_iter = 1,
+		.load_state = 0,
+		.src_offset = 0,
+		.dst_offset = 0,
+		.esp.coherence = ACC_COH_NONE,
+		.esp.p2p_store = 0,
+		.esp.p2p_nsrcs = 0,
+		.esp.p2p_srcs = {"", "", "", ""},
+	}
+};
+
 esp_thread_info_t cfg_000[] = {
 	{
 		.run = true,
 		.devname = "svd.0",
-		.type = svd,
-		/* <<--descriptor-->> */
-		.desc.svd_desc.q = Q,
-		.desc.svd_desc.p = P,
-		.desc.svd_desc.m = M,
-		.desc.svd_desc.src_offset = 0,
-		.desc.svd_desc.dst_offset = 0,
-		.desc.svd_desc.p2p_out = 0,
-		.desc.svd_desc.p2p_in = 0,
-		.desc.svd_desc.p2p_iter = 1,
-		.desc.svd_desc.load_state = 0,
-		.desc.svd_desc.esp.coherence = ACC_COH_NONE,
-		.desc.svd_desc.esp.p2p_store = 0,
-		.desc.svd_desc.esp.p2p_nsrcs = 0,
-		.desc.svd_desc.esp.p2p_srcs = {"", "", "", ""},
+		.ioctl_req = SVD_IOC_ACCESS,
+		.esp_desc = &(svd_cfg_000[0].esp),
 	}
 };
 

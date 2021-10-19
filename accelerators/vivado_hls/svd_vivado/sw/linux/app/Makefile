@@ -1,5 +1,5 @@
 
-OBJS := libcrunsvd.so svd.exe
+EXTRA_OBJS := libcrunsvd.so
 CFLAGS += -L.
 LDFLAGS += -lcrunsvd
 CXX := riscv64-unknown-linux-gnu-g++

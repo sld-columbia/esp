@@ -29,13 +29,13 @@ static struct esp_driver sinkhorn_driver;
 
 static struct of_device_id sinkhorn_device_ids[] = {
 	{
-		.name = "SLD_SINKHORN",
+		.name = "SLD_SINKHORN_STRATUS",
 	},
 	{
 		.name = "eb_144",
 	},
 	{
-		.compatible = "sld,sinkhorn",
+		.compatible = "sld,sinkhorn_stratus",
 	},
 	{ },
 };
@@ -141,4 +141,4 @@ MODULE_DEVICE_TABLE(of, sinkhorn_device_ids);
 
 MODULE_AUTHOR("Emilio G. Cota <cota@braap.org>");
 MODULE_LICENSE("GPL");
-MODULE_DESCRIPTION("sinkhorn driver");
+MODULE_DESCRIPTION("sinkhorn_stratus driver");

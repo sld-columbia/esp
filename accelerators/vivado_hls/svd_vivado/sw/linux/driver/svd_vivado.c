@@ -8,7 +8,7 @@
 
 #include "svd_vivado.h"
 
-#define DRV_NAME	"svd"
+#define DRV_NAME	"svd_vivado"
 
 /* <<--regs-->> */
 #define SVD_LOAD_STATE_REG 0x58
@@ -27,13 +27,13 @@ static struct esp_driver svd_driver;
 
 static struct of_device_id svd_device_ids[] = {
 	{
-		.name = "SLD_SVD",
+		.name = "SLD_SVD_VIVADO",
 	},
 	{
 		.name = "eb_222",
 	},
 	{
-		.compatible = "sld,svd",
+		.compatible = "sld,svd_vivado",
 	},
 	{ },
 };
@@ -137,4 +137,4 @@ MODULE_DEVICE_TABLE(of, svd_device_ids);
 
 MODULE_AUTHOR("Emilio G. Cota <cota@braap.org>");
 MODULE_LICENSE("GPL");
-MODULE_DESCRIPTION("svd driver");
+MODULE_DESCRIPTION("svd_vivado driver");

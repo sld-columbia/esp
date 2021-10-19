@@ -1,4 +1,3 @@
-
 include $(DRIVERS)/driver.mk
 
 Module.symvers:
