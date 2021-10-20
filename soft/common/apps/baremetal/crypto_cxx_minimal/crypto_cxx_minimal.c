@@ -21,6 +21,7 @@ static unsigned DMA_WORD_PER_BEAT(unsigned _st)
 
 #define SLD_CRYPTO_CXX 0x091
 #define DEV_NAME "sld,crypto_cxx_catapult"
+#define AES_ECB_OPERATION_MODE 1
 
 /* <<--params-->> */
 static unsigned crypto_algo;
@@ -266,11 +267,11 @@ int main(int argc, char * argv[])
         aes_aad_bytes = 0;
         aes_iv_bytes = 0;
 
-        mem_bytes = aes_key_bytes + aes_in_bytes + aes_out_bytes;
-
         out_offset = aes_key_words + aes_in_words;
         out_bytes = aes_in_bytes;
         out_words = aes_in_words;
+
+        mem_bytes = aes_key_bytes + aes_in_bytes + out_bytes;
 #endif
 
 #if defined(AES_ALGO) && defined(AES_CTR_OPERATION_MODE)
@@ -290,11 +291,11 @@ int main(int argc, char * argv[])
         aes_tag_bytes = 0;
         aes_aad_bytes = 0;
 
-        mem_bytes = aes_key_bytes + aes_iv_bytes + aes_in_bytes + out_bytes;
-
         out_offset = aes_key_words + aes_iv_words + aes_in_words;
         out_bytes = aes_in_bytes;
         out_words = aes_in_words;
+
+        mem_bytes = aes_key_bytes + aes_iv_bytes + aes_in_bytes + out_bytes;
 #endif
 
 #if defined(AES_ALGO) && defined(AES_CBC_OPERATION_MODE)
@@ -314,11 +315,11 @@ int main(int argc, char * argv[])
         aes_tag_bytes = 0;
         aes_aad_bytes = 0;
 
-        mem_bytes = aes_key_bytes + aes_iv_bytes + aes_in_bytes + out_bytes;
-
         out_offset = aes_key_words + aes_iv_words + aes_in_words;
         out_bytes = aes_in_bytes;
         out_words = aes_in_words;
+
+        mem_bytes = aes_key_bytes + aes_iv_bytes + aes_in_bytes + out_bytes;
 #endif
 
 #ifdef RSA_ALGO
