@@ -16,16 +16,17 @@
 #define CSR_NOC_BASE_ADDR 0x600901c0
 #define CSR_TILE_OFFSET 0x200
 
-#define N_TILES 7
+#define N_TILES 36
 //#define N_TILE_CSRS 6 (0-1-2-3-4-5)
 //#define N_NOC_CSRS 9 (12-13-14-15-16-17-18-19-31)
 //#define N_PM_CFG_CSRS 9 (20-28)
 //#define N_PM_STATUS_CSRS 2 (29-30)
-#define N_CSRS_READ 25
+#define N_CSRS_READ 24
 #define N_CSRS_WRITE 23
 #define TILE_ID_CSR 1
 #define TILE_ID_NOC_CSR 16
-#define CPU0_TILE 1
+#define CPU0_TILE 7
+#define PM_TILE 20
 
 #define MONITOR_BASE_ADDR 0x60090000
 #define MONITOR_TILE_SIZE 0x200
@@ -51,7 +52,7 @@ int main(int argc, char * argv[])
 
     int csr_ids[N_CSRS_READ] = { 0,  1,  2,  3,  4,  12, 13, 14,
 			   15, 16, 17, 18, 19, 31, 20, 21, 22,
-			    23, 24, 25, 26, 27, 28, 29, 30}; // excluding soft reset
+			    23, 24, 25, 26, 27, 28, 29}; // excluding soft reset
 
     int csr_write_ids[N_CSRS_WRITE] = {0, 2, 3, 4,
                                        12, 13, 14, 15, 17, 18, 19, 31,
@@ -59,11 +60,11 @@ int main(int argc, char * argv[])
 
     unsigned csr_def_val[N_CSRS_READ] = {1, 777, 0, 0, 0, 0x2af13ff4, 0xb3a7a217,
 				    0x4e25366e, 490, 777, 3, 0x70095, 0x70095,
-					 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 , 0};
+					 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
-    unsigned csr_write_val[N_CSRS_WRITE] = {0x1, 0x1d, 0x876, 0x3,
+    unsigned csr_write_val[N_CSRS_WRITE] = {0x1, 0x1d, 0x76, 0x3,
                              0x28e01ff4, 0xb1832017, 0x4601122e, 495, 4, 0x7c081, 0x7c081, 0x1ff,
-					         0x1111, 0x2222, 0x3333, 0x4444, 0x5555, 0x6666, 0x7777, 0x8888, 0x9999};
+					         0x1110, 0x2222, 0x3333, 0x4444, 0x5555, 0x6666, 0x7777, 0x8888, 0x9999};
 
     int data[11];
     for (tid = 0; tid < N_TILES; ++tid) {
@@ -79,7 +80,7 @@ int main(int argc, char * argv[])
             offset = csr_write_ids[rid] * 4;
             iowrite32(&dev, offset, csr_write_val[rid]);
             csr_val = ioread32(&dev, offset);
-            if (csr_val != csr_write_val[rid] && !(tid == CPU0_TILE && csr_write_ids[rid] >= 12))
+            if (csr_val != csr_write_val[rid] && !(tid == CPU0_TILE && csr_write_ids[rid] >= 12) && !(tid != PM_TILE && csr_write_ids[rid] >= 20))
                 printf("write tid %u - rid %u - exp %u - val %u <-- error\n", tid, csr_write_ids[rid], csr_write_val[rid], csr_val);
         }
 
