@@ -137,11 +137,11 @@ static int validate_final(token_t *out_svd, token_t *out_hiwa, float* final_svd,
 			//printf("%d: out = %f , gold = %f \n", j, val_out, val_gold);
 
 			MAE_sum += pow(MAE, 2);
-			if (MAE < -0.1 || MAE > 0.1)
-			{
-				printf("Q: %d: out = %.10f , gold = %.10f \n", j, val_out, val_gold);
-				//errors++;
-			}
+			/* if (MAE < -0.1 || MAE > 0.1) */
+			/* { */
+			/* 	printf("Q: %d: out = %.10f , gold = %.10f \n", j, val_out, val_gold); */
+			/* 	//errors++; */
+			/* } */
 
 		}
 

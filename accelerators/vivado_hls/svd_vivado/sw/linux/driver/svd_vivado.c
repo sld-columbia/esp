@@ -8,7 +8,7 @@
 
 #include "svd_vivado.h"
 
-#define DRV_NAME	"svd_vivado"
+#define DRV_NAME	"svd"
 
 /* <<--regs-->> */
 #define SVD_LOAD_STATE_REG 0x58
