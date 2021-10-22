@@ -227,10 +227,16 @@ architecture rtl of esp_acc_dma is
   signal irq_info                            : std_logic_vector(RESERVED_WIDTH - 1 downto 0);
 
   -- DMA
+  -- TODO, FIXME: Have the acc_rst pass through a register instead of being connected
+  -- to the accelerator directly. Otherwise a glitch in the reset signal being
+  -- set in the DMA FSM can cause an unwanted accelerator reset.
+  -- As a temporary solution here we moved the `reset` state to the 17th position, and
+  -- we added a `dummy` state in the previous place of the `reset` state. This
+  -- prevents the FSM state to glitch to the reset state.
   type dma_fsm is (idle, request_header, request_address, request_length,
                    request_data, reply_header, reply_data, config,
                    send_header, rd_handshake, wr_handshake, wait_req_p2p,
-                   running, reset, wait_for_completion, fully_coherent_request);
+                   running, dummy, wait_for_completion, fully_coherent_request, reset);
   signal dma_state, dma_next : dma_fsm;
   signal status : std_logic_vector(31 downto 0);
   signal sample_status : std_ulogic;
