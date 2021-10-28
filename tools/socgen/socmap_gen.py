@@ -135,7 +135,7 @@ SLD_APB_ADDR = 0x100
 SLD_APB_ADDR_MSK = 0xfff
 
 # Number of bits for the custom I/O link interface
-IOLINK_BITS = 8
+IOLINK_BITS = 16
 
 ###########
 # Constants for third-party accelerators

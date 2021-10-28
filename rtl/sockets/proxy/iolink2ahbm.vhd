@@ -642,11 +642,11 @@ begin  -- architecture rtl
       when receive_data =>
         if r.count = 0 then
           -- Release address bus
+          -- End of transaction
           ahbmo.htrans <= HTRANS_IDLE;
-          if (granted and ahbmi.hready) = '1' then
-            -- End of transaction
-            v.state := receive_address;
-          end if;
+          -- if (granted and ahbmi.hready) = '1' then
+          v.state := receive_address;
+          -- end if;
         elsif io_rcv_empty = '0' then
           -- Continue with burst transaction
           ahbmo.htrans <= HTRANS_SEQ;
