@@ -134,7 +134,7 @@ architecture rtl of esp_tile_csr is
     --  reserved LPDDR   FREQ_SEL    DIV_SEL    FC_SEL      CC_SEL    CLK_SEL   EN
 
     constant DEFAULT_PAD_CFG : std_logic_vector(2 downto 0) :=
-      "0"       &  "11";
+      "0"       &  "00";
     -- Slew rate   Drive strength
 
     constant DEFAULT_TILE_ID : std_logic_vector(7 downto 0) := (others => '0');
