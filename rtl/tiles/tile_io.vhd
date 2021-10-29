@@ -1168,7 +1168,7 @@ begin
       generic map (
         hindex   => ahbrom_hindex,
         tech     => 0,
-        kbytes   => 128,
+        kbytes   => 16,
         pipe     => 0,
         maccsz   => AHBDW,
         fname    => "prom.srec"
@@ -1190,7 +1190,7 @@ begin
         hindex   => ahbrom_hindex,
         tech     => CFG_FABTECH,
         large_banks => 0,
-        kbytes   => 128,
+        kbytes   => 16,
         pipe     => 0,
         maccsz   => AHBDW)
       port map (

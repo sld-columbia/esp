@@ -119,7 +119,7 @@ begin
 -- pragma translate_on
   end generate;
 
-  nosbw : if has_srambw(tech) = 0 or (tech = gf12 and large_banks = 0) generate
+  nosbw : if has_srambw(tech) = 0 or (tech = gf12 and large_banks = 0) or (tech = gf22 and large_banks = 0) generate
     rx : for i in 0 to dbits/8-1 generate
       x0 : syncram generic map (tech, abits, 8, testen, custombits)
          port map (clk, address, datain(i*8+7 downto i*8),
