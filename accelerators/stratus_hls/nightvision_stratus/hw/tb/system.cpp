@@ -59,7 +59,8 @@ void system_t::config_proc()
 
     // Validate
     {
-        dump_memory(); // store the output in more suitable data structure if needed
+        // store the output in more suitable data structure if needed
+        dump_memory();
 
         if (do_validation) {
             if (validate()) {
@@ -72,7 +73,6 @@ void system_t::config_proc()
 
     // Conclude
     {
-        // while(true) wait();
         sc_stop();
     }
 }

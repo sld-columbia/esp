@@ -285,4 +285,4 @@ void nightvision::dwt_row_transpose(uint32_t n_Rows, uint32_t n_Cols, int16_t bu
     // printf("------- Finsih dwt_row_transpose -------\n");
 }
 
-#endif /* __NIGHTVISION_FUNCTIONS_HPP__ */
+#endif // __NIGHTVISION_FUNCTIONS_HPP__

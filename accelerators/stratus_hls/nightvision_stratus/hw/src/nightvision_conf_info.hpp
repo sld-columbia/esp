@@ -12,14 +12,10 @@
 class conf_info_t
 {
   public:
-    // Rows of input image
-    uint32_t n_Images;
-    // Rows of input image
-    uint32_t n_Rows;
-    // Columns of input image
-    uint32_t n_Cols;
-    // Optional DWT step
-    uint32_t do_dwt;
+    uint32_t n_Images; // Rows of input image
+    uint32_t n_Rows;   // Rows of input image
+    uint32_t n_Cols;   // Columns of input image
+    uint32_t do_dwt;   // Optional DWT step
 
     //
     // constructors

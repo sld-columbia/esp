@@ -23,9 +23,9 @@ typedef sc_uint<16> pixel_t;
         #elif (WORDS_PER_DMA == 8)
             #define HLS_MAP_mem_buff_1 HLS_MAP_TO_MEMORY(mem_buff_1, "plm_data16_1024_8w8r")
             #define HLS_MAP_mem_buff_2 HLS_MAP_TO_MEMORY(mem_buff_2, "plm_data16_1024_8w8r")
-        #else /* WORDS_PER_DMA */
+        #else // WORDS_PER_DMA
             #error Unsupported DMA width
-        #endif /* WORDS_PER_DMA */
+        #endif // WORDS_PER_DMA
 
     #elif (PLM_IMG_SIZE == 19200)
 
@@ -38,9 +38,9 @@ typedef sc_uint<16> pixel_t;
         #elif (WORDS_PER_DMA == 8)
             #define HLS_MAP_mem_buff_1 HLS_MAP_TO_MEMORY(mem_buff_1, "plm_data16_19200_8w8r")
             #define HLS_MAP_mem_buff_2 HLS_MAP_TO_MEMORY(mem_buff_2, "plm_data16_19200_8w8r")
-        #else /* WORDS_PER_DMA */
+        #else // WORDS_PER_DMA
             #error Unsupported DMA width
-        #endif /* WORDS_PER_DMA */
+        #endif // WORDS_PER_DMA
 
     #else // PLM_IMG_SIZE == 307200
 
@@ -53,11 +53,11 @@ typedef sc_uint<16> pixel_t;
         #elif (WORDS_PER_DMA == 8)
             #define HLS_MAP_mem_buff_1 HLS_MAP_TO_MEMORY(mem_buff_1, "plm_data16_8w8r")
             #define HLS_MAP_mem_buff_2 HLS_MAP_TO_MEMORY(mem_buff_2, "plm_data16_8w8r")
-        #else /* WORDS_PER_DMA */
+        #else // WORDS_PER_DMA
             #error Unsupported DMA width
-        #endif /* WORDS_PER_DMA */
+        #endif // WORDS_PER_DMA
 
-    #endif /* PLM_IMG_SIZE */
+    #endif // PLM_IMG_SIZE
 
     #if (PLM_HIST_SIZE == 256)
         #define HLS_MAP_mem_hist_1 HLS_MAP_TO_MEMORY(mem_hist_1, "plm_hist_256_1w1r")
@@ -95,9 +95,9 @@ typedef sc_uint<16> pixel_t;
 
         #error Unsupported or undefined HLS configuration
 
-    #endif /* HLS_DIRECTIVES_* */
+    #endif // HLS_DIRECTIVES_*
 
-#else /* !STRATUS_HLS */
+#else // !STRATUS_HLS
 
     #define HLS_MAP_mem_buff_1
     #define HLS_MAP_mem_buff_2
@@ -113,6 +113,6 @@ typedef sc_uint<16> pixel_t;
 
     #define HLS_DWT_XPOSE_CONSTR(_m, _s)
 
-#endif /* STRATUS_HLS */
+#endif // STRATUS_HLS
 
-#endif /* __NIGHTVISION_DIRECTIVES_HPP_ */
+#endif // __NIGHTVISION_DIRECTIVES_HPP__

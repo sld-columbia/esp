@@ -35,6 +35,7 @@ class system_t : public esp_system<DMA_WIDTH, MEM_SIZE>
 
     // Constructor
     SC_HAS_PROCESS(system_t);
+
     system_t(sc_module_name name, std::string image_A_path, std::string image_out_path, uint32_t n_Images,
              uint32_t n_Rows, uint32_t n_Cols, std::string image_gold_test_path, bool do_validation, bool do_dwt)
         : esp_system<DMA_WIDTH, MEM_SIZE>(name)

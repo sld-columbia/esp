@@ -94,4 +94,4 @@ inline void nightvision::load_store_handshake()
     }
 }
 
-#endif /* __NIGHTVISION_HPP__ */
+#endif // __NIGHTVISION_HPP__
