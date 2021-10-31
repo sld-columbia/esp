@@ -35,7 +35,7 @@ architecture rtl of gf22_syncram is
       write   : in  std_ulogic);
   end component;
 
-  component GF22_SRAM_SP_256x8_PG
+  component GF22_SRAM_SP_256x8
   port (
     CLK  : in  std_ulogic;
     A0   : in  std_logic_vector(7 downto 0);
@@ -46,7 +46,7 @@ architecture rtl of gf22_syncram is
     CE0  : in  std_ulogic);
   end component;
 
-  component GF22_SRAM_SP_256x16_PG
+  component GF22_SRAM_SP_256x16
   port (
     CLK  : in  std_ulogic;
     A0   : in  std_logic_vector(7 downto 0);
@@ -57,7 +57,7 @@ architecture rtl of gf22_syncram is
     CE0  : in  std_ulogic);
   end component;
 
-  component GF22_SRAM_SP_256x32_PG
+  component GF22_SRAM_SP_256x32
   port (
     CLK  : in  std_ulogic;
     A0   : in  std_logic_vector(7 downto 0);
@@ -68,7 +68,7 @@ architecture rtl of gf22_syncram is
     CE0  : in  std_ulogic);
   end component;
 
-  component GF22_SRAM_SP_256x64_PG
+  component GF22_SRAM_SP_256x64
   port (
     CLK  : in  std_ulogic;
     A0   : in  std_logic_vector(7 downto 0);
@@ -79,7 +79,7 @@ architecture rtl of gf22_syncram is
     CE0  : in  std_ulogic);
   end component;
 
-  component GF22_SRAM_SP_512x8_PG
+  component GF22_SRAM_SP_512x8
   port (
     CLK  : in  std_ulogic;
     A0   : in  std_logic_vector(8 downto 0);
@@ -90,7 +90,7 @@ architecture rtl of gf22_syncram is
     CE0  : in  std_ulogic);
   end component;
 
-  component GF22_SRAM_SP_512x16_PG
+  component GF22_SRAM_SP_512x16
   port (
     CLK  : in  std_ulogic;
     A0   : in  std_logic_vector(8 downto 0);
@@ -101,7 +101,7 @@ architecture rtl of gf22_syncram is
     CE0  : in  std_ulogic);
   end component;
 
-  component GF22_SRAM_SP_512x32_PG
+  component GF22_SRAM_SP_512x32
   port (
     CLK  : in  std_ulogic;
     A0   : in  std_logic_vector(8 downto 0);
@@ -112,7 +112,7 @@ architecture rtl of gf22_syncram is
     CE0  : in  std_ulogic);
   end component;
 
-  component GF22_SRAM_SP_512x64_PG
+  component GF22_SRAM_SP_512x64
   port (
     CLK  : in  std_ulogic;
     A0   : in  std_logic_vector(8 downto 0);
@@ -123,7 +123,7 @@ architecture rtl of gf22_syncram is
     CE0  : in  std_ulogic);
   end component;
 
-  component GF22_SRAM_SP_1024x8_PG
+  component GF22_SRAM_SP_1024x8
   port (
     CLK  : in  std_ulogic;
     A0   : in  std_logic_vector(9 downto 0);
@@ -134,7 +134,7 @@ architecture rtl of gf22_syncram is
     CE0  : in  std_ulogic);
   end component;
 
-  component GF22_SRAM_SP_1024x16_PG
+  component GF22_SRAM_SP_1024x16
   port (
     CLK  : in  std_ulogic;
     A0   : in  std_logic_vector(9 downto 0);
@@ -145,7 +145,7 @@ architecture rtl of gf22_syncram is
     CE0  : in  std_ulogic);
   end component;
 
-  component GF22_SRAM_SP_1024x32_PG
+  component GF22_SRAM_SP_1024x32
   port (
     CLK  : in  std_ulogic;
     A0   : in  std_logic_vector(9 downto 0);
@@ -156,7 +156,7 @@ architecture rtl of gf22_syncram is
     CE0  : in  std_ulogic);
   end component;
 
-  component GF22_SRAM_SP_1024x64_PG
+  component GF22_SRAM_SP_1024x64
   port (
     CLK  : in  std_ulogic;
     A0   : in  std_logic_vector(9 downto 0);
@@ -164,17 +164,6 @@ architecture rtl of gf22_syncram is
     Q0   : out std_logic_vector(63 downto 0);
     WE0  : in  std_ulogic;
     WEM0 : in  std_logic_vector(63 downto 0);
-    CE0  : in  std_ulogic);
-  end component;
-
-  component GF22_SRAM_SP_2048x8_PG
-  port (
-    CLK  : in  std_ulogic;
-    A0   : in  std_logic_vector(10 downto 0);
-    D0   : in  std_logic_vector(7 downto 0);
-    Q0   : out std_logic_vector(7 downto 0);
-    WE0  : in  std_ulogic;
-    WEM0 : in  std_logic_vector(7 downto 0);
     CE0  : in  std_ulogic);
   end component;
 
@@ -189,7 +178,7 @@ architecture rtl of gf22_syncram is
     CE0  : in  std_ulogic);
   end component;
 
-  component GF22_SRAM_SP_2048x16_PG
+  component GF22_SRAM_SP_2048x16
   port (
     CLK  : in  std_ulogic;
     A0   : in  std_logic_vector(10 downto 0);
@@ -200,7 +189,7 @@ architecture rtl of gf22_syncram is
     CE0  : in  std_ulogic);
   end component;
 
-  component GF22_SRAM_SP_2048x32_PG
+  component GF22_SRAM_SP_2048x32
   port (
     CLK  : in  std_ulogic;
     A0   : in  std_logic_vector(10 downto 0);
@@ -211,7 +200,7 @@ architecture rtl of gf22_syncram is
     CE0  : in  std_ulogic);
   end component;
 
-  component GF22_SRAM_SP_2048x64_PG
+  component GF22_SRAM_SP_2048x64
   port (
     CLK  : in  std_ulogic;
     A0   : in  std_logic_vector(10 downto 0);
@@ -222,7 +211,7 @@ architecture rtl of gf22_syncram is
     CE0  : in  std_ulogic);
   end component;
 
-  component GF22_SRAM_SP_4096x8_PG
+  component GF22_SRAM_SP_4096x8
   port (
     CLK  : in  std_ulogic;
     A0   : in  std_logic_vector(11 downto 0);
@@ -233,7 +222,7 @@ architecture rtl of gf22_syncram is
     CE0  : in  std_ulogic);
   end component;
 
-  component GF22_SRAM_SP_4096x16_PG
+  component GF22_SRAM_SP_4096x16
   port (
     CLK  : in  std_ulogic;
     A0   : in  std_logic_vector(11 downto 0);
@@ -244,7 +233,7 @@ architecture rtl of gf22_syncram is
     CE0  : in  std_ulogic);
   end component;
 
-  component GF22_SRAM_SP_4096x32_PG
+  component GF22_SRAM_SP_4096x32
   port (
     CLK  : in  std_ulogic;
     A0   : in  std_logic_vector(11 downto 0);
@@ -255,7 +244,7 @@ architecture rtl of gf22_syncram is
     CE0  : in  std_ulogic);
   end component;
 
-  component GF22_SRAM_SP_4096x64_PG
+  component GF22_SRAM_SP_4096x64
   port (
     CLK  : in  std_ulogic;
     A0   : in  std_logic_vector(11 downto 0);
@@ -266,7 +255,7 @@ architecture rtl of gf22_syncram is
     CE0  : in  std_ulogic);
   end component;
 
-  component GF22_SRAM_SP_8192x8_PG
+  component GF22_SRAM_SP_8192x8
   port (
     CLK  : in  std_ulogic;
     A0   : in  std_logic_vector(12 downto 0);
@@ -277,7 +266,7 @@ architecture rtl of gf22_syncram is
     CE0  : in  std_ulogic);
   end component;
 
-  component GF22_SRAM_SP_8192x16_PG
+  component GF22_SRAM_SP_8192x16
   port (
     CLK  : in  std_ulogic;
     A0   : in  std_logic_vector(12 downto 0);
@@ -288,7 +277,7 @@ architecture rtl of gf22_syncram is
     CE0  : in  std_ulogic);
   end component;
 
-  component GF22_SRAM_SP_8192x32_PG
+  component GF22_SRAM_SP_8192x32
   port (
     CLK  : in  std_ulogic;
     A0   : in  std_logic_vector(12 downto 0);
@@ -299,7 +288,7 @@ architecture rtl of gf22_syncram is
     CE0  : in  std_ulogic);
   end component;
 
-  component GF22_SRAM_SP_8192x64_PG
+  component GF22_SRAM_SP_8192x64
   port (
     CLK  : in  std_ulogic;
     A0   : in  std_logic_vector(12 downto 0);
@@ -310,7 +299,7 @@ architecture rtl of gf22_syncram is
     CE0  : in  std_ulogic);
   end component;
 
-  component GF22_SRAM_SP_16384x8_PG
+  component GF22_SRAM_SP_16384x8
   port (
     CLK  : in  std_ulogic;
     A0   : in  std_logic_vector(13 downto 0);
@@ -321,7 +310,7 @@ architecture rtl of gf22_syncram is
     CE0  : in  std_ulogic);
   end component;
 
-  component GF22_SRAM_SP_16384x16_PG
+  component GF22_SRAM_SP_16384x16
   port (
     CLK  : in  std_ulogic;
     A0   : in  std_logic_vector(13 downto 0);
@@ -332,7 +321,7 @@ architecture rtl of gf22_syncram is
     CE0  : in  std_ulogic);
   end component;
 
-  component GF22_SRAM_SP_16384x32_PG
+  component GF22_SRAM_SP_16384x32
   port (
     CLK  : in  std_ulogic;
     A0   : in  std_logic_vector(13 downto 0);
@@ -343,7 +332,7 @@ architecture rtl of gf22_syncram is
     CE0  : in  std_ulogic);
   end component;
 
-  component GF22_SRAM_SP_16384x64_PG
+  component GF22_SRAM_SP_16384x64
   port (
     CLK  : in  std_ulogic;
     A0   : in  std_logic_vector(13 downto 0);
@@ -391,7 +380,7 @@ begin
 
   a8 : if abits = 8 generate
     d8 : if dbits = 8 generate
-      s : GF22_SRAM_SP_256x8_PG
+      s : GF22_SRAM_SP_256x8
         port map (
           CLK  => clk,
           A0   => xa(7 downto 0),
@@ -404,7 +393,7 @@ begin
     end generate d8;
 
     d16 : if dbits = 16 generate
-      s : GF22_SRAM_SP_256x16_PG
+      s : GF22_SRAM_SP_256x16
         port map (
           CLK  => clk,
           A0   => xa(7 downto 0),
@@ -417,7 +406,7 @@ begin
     end generate d16;
 
     d32 : if dbits = 32 generate
-      s : GF22_SRAM_SP_256x32_PG
+      s : GF22_SRAM_SP_256x32
         port map (
           CLK  => clk,
           A0   => xa(7 downto 0),
@@ -430,7 +419,7 @@ begin
     end generate d32;
 
     d64 : if dbits = 64 generate
-      s : GF22_SRAM_SP_256x64_PG
+      s : GF22_SRAM_SP_256x64
         port map (
           CLK  => clk,
           A0   => xa(7 downto 0),
@@ -445,7 +434,7 @@ begin
 
   a9 : if abits = 9 generate
     d8 : if dbits = 8 generate
-      s : GF22_SRAM_SP_512x8_PG
+      s : GF22_SRAM_SP_512x8
         port map (
           CLK  => clk,
           A0   => xa(8 downto 0),
@@ -458,7 +447,7 @@ begin
     end generate d8;
 
     d16 : if dbits = 16 generate
-      s : GF22_SRAM_SP_512x16_PG
+      s : GF22_SRAM_SP_512x16
         port map (
           CLK  => clk,
           A0   => xa(8 downto 0),
@@ -471,7 +460,7 @@ begin
     end generate d16;
 
     d32 : if dbits = 32 generate
-      s : GF22_SRAM_SP_512x32_PG
+      s : GF22_SRAM_SP_512x32
         port map (
           CLK  => clk,
           A0   => xa(8 downto 0),
@@ -484,7 +473,7 @@ begin
     end generate d32;
 
     d64 : if dbits = 64 generate
-      s : GF22_SRAM_SP_512x64_PG
+      s : GF22_SRAM_SP_512x64
         port map (
           CLK  => clk,
           A0   => xa(8 downto 0),
@@ -499,7 +488,7 @@ begin
 
   a10 : if abits = 10 generate
     d8 : if dbits = 8 generate
-      s : GF22_SRAM_SP_1024x8_PG
+      s : GF22_SRAM_SP_1024x8
         port map (
           CLK  => clk,
           A0   => xa(9 downto 0),
@@ -512,7 +501,7 @@ begin
     end generate d8;
 
     d16 : if dbits = 16 generate
-      s : GF22_SRAM_SP_1024x16_PG
+      s : GF22_SRAM_SP_1024x16
         port map (
           CLK  => clk,
           A0   => xa(9 downto 0),
@@ -525,7 +514,7 @@ begin
     end generate d16;
 
     d32 : if dbits = 32 generate
-      s : GF22_SRAM_SP_1024x32_PG
+      s : GF22_SRAM_SP_1024x32
         port map (
           CLK  => clk,
           A0   => xa(9 downto 0),
@@ -538,7 +527,7 @@ begin
     end generate d32;
 
     d64 : if dbits = 64 generate
-      s : GF22_SRAM_SP_1024x64_PG
+      s : GF22_SRAM_SP_1024x64
         port map (
           CLK  => clk,
           A0   => xa(9 downto 0),
@@ -553,7 +542,7 @@ begin
 
   a11 : if abits = 11 generate
     d8 : if dbits = 8 generate
-      s : GF22_SRAM_SP_2048x8_PG
+      s : GF22_SRAM_SP_2048x8
         port map (
           CLK  => clk,
           A0   => xa(10 downto 0),
@@ -566,7 +555,7 @@ begin
     end generate d8;
 
     d16 : if dbits = 16 generate
-      s : GF22_SRAM_SP_2048x16_PG
+      s : GF22_SRAM_SP_2048x16
         port map (
           CLK  => clk,
           A0   => xa(10 downto 0),
@@ -579,7 +568,7 @@ begin
     end generate d16;
 
     d32 : if dbits = 32 generate
-      s : GF22_SRAM_SP_2048x32_PG
+      s : GF22_SRAM_SP_2048x32
         port map (
           CLK  => clk,
           A0   => xa(10 downto 0),
@@ -592,7 +581,7 @@ begin
     end generate d32;
 
     d64 : if dbits = 64 generate
-      s : GF22_SRAM_SP_2048x64_PG
+      s : GF22_SRAM_SP_2048x64
         port map (
           CLK  => clk,
           A0   => xa(10 downto 0),
@@ -607,7 +596,7 @@ begin
 
   a12 : if abits = 12 generate
     d8 : if dbits = 8 generate
-      s : GF22_SRAM_SP_4096x8_PG
+      s : GF22_SRAM_SP_4096x8
         port map (
           CLK  => clk,
           A0   => xa(11 downto 0),
@@ -620,7 +609,7 @@ begin
     end generate d8;
 
     d16 : if dbits = 16 generate
-      s : GF22_SRAM_SP_4096x16_PG
+      s : GF22_SRAM_SP_4096x16
         port map (
           CLK  => clk,
           A0   => xa(11 downto 0),
@@ -633,7 +622,7 @@ begin
     end generate d16;
 
     d32 : if dbits = 32 generate
-      s : GF22_SRAM_SP_4096x32_PG
+      s : GF22_SRAM_SP_4096x32
         port map (
           CLK  => clk,
           A0   => xa(11 downto 0),
@@ -646,7 +635,7 @@ begin
     end generate d32;
 
     d64 : if dbits = 64 generate
-      s : GF22_SRAM_SP_4096x64_PG
+      s : GF22_SRAM_SP_4096x64
         port map (
           CLK  => clk,
           A0   => xa(11 downto 0),
@@ -661,7 +650,7 @@ begin
 
   a13 : if abits = 13 generate
     d8 : if dbits = 8 generate
-      s : GF22_SRAM_SP_8192x8_PG
+      s : GF22_SRAM_SP_8192x8
         port map (
           CLK  => clk,
           A0   => xa(12 downto 0),
@@ -674,7 +663,7 @@ begin
     end generate d8;
 
     d16 : if dbits = 16 generate
-      s : GF22_SRAM_SP_8192x16_PG
+      s : GF22_SRAM_SP_8192x16
         port map (
           CLK  => clk,
           A0   => xa(12 downto 0),
@@ -687,7 +676,7 @@ begin
     end generate d16;
 
     d32 : if dbits = 32 generate
-      s : GF22_SRAM_SP_8192x32_PG
+      s : GF22_SRAM_SP_8192x32
         port map (
           CLK  => clk,
           A0   => xa(12 downto 0),
@@ -700,7 +689,7 @@ begin
     end generate d32;
 
     d64 : if dbits = 64 generate
-      s : GF22_SRAM_SP_8192x64_PG
+      s : GF22_SRAM_SP_8192x64
         port map (
           CLK  => clk,
           A0   => xa(12 downto 0),
@@ -771,7 +760,7 @@ begin
     end generate d8;
 
     d16 : if dbits = 16 generate
-      s : GF22_SRAM_SP_16384x16_PG
+      s : GF22_SRAM_SP_16384x16
         port map (
           CLK  => clk,
           A0   => xa(13 downto 0),
@@ -784,7 +773,7 @@ begin
     end generate d16;
 
     d32 : if dbits = 32 generate
-      s : GF22_SRAM_SP_16384x32_PG
+      s : GF22_SRAM_SP_16384x32
         port map (
           CLK  => clk,
           A0   => xa(13 downto 0),
@@ -797,7 +786,7 @@ begin
     end generate d32;
 
     d64 : if dbits = 64 generate
-      s : GF22_SRAM_SP_16384x64_PG
+      s : GF22_SRAM_SP_16384x64
         port map (
           CLK  => clk,
           A0   => xa(13 downto 0),
