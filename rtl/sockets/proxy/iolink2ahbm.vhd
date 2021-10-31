@@ -538,7 +538,7 @@ begin  -- architecture rtl
       rd_empty_o => open);
 
   
-  io_fsm : process (r, ahbmi,
+  io_fsm : process (r, ahbmi, oen_fsm_idle_sync,
                     io_rcv_data_out, io_rcv_empty,
                     io_snd_full, io_snd_almost_full) is
     variable v       : iolink2ahbm_fsm_t;
