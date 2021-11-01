@@ -417,8 +417,12 @@ begin
 
   no_dco_gen: if this_has_dco = 0 generate
     pllclk <= '0';
+    dco_clk <= '0';
+    dco_clk_div2 <= '0';
+    dco_clk_div2_90 <= '0';
+    dco_clk_lock <= '0';
   end generate no_dco_gen;
-
+  
   -- DDR Controller configuration
   ddr_cfg0 <= tile_config(ESP_CSR_DDR_CFG0_MSB downto ESP_CSR_DDR_CFG0_LSB);
   ddr_cfg1 <= tile_config(ESP_CSR_DDR_CFG1_MSB downto ESP_CSR_DDR_CFG1_LSB);

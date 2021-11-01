@@ -150,6 +150,7 @@ begin
 
   no_rst_gen: if this_has_dco = 0 generate
     dco_rstn <= rst;
+    raw_rstn <= rst;
   end generate no_rst_gen;
 
   tile_cpu_1: tile_cpu
