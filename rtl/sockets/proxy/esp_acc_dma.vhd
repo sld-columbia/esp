@@ -71,9 +71,9 @@ entity esp_acc_dma is
     pllclk        : out std_ulogic;
     local_y       : in  local_yx;
     local_x       : in  local_yx;
-    paddr         : in  integer;
-    pmask         : in  integer;
-    pirq          : in  integer;
+    paddr         : in  integer range 0 to 4095;
+    pmask         : in  integer range 0 to 4095;
+    pirq          : in  integer range 0 to NAHBIRQ - 1;
     -- APB interface
     apbi          : in  apb_slv_in_type;
     apbo          : out apb_slv_out_type;
