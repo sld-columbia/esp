@@ -1683,7 +1683,7 @@ def gen_interfaces(accelerator_list, axi_accelerator_list, dma_width, template_d
         f.write("      pllclk            : out std_ulogic;\n")
         f.write("      local_y           : in  local_yx;\n")
         f.write("      local_x           : in  local_yx;\n")
-        f.write("      tile_id           : in  integer;\n")
+        f.write("      tile_id           : in  integer range 0 to CFG_TILES_NUM - 1;\n")
         f.write("      paddr             : in  integer range 0 to 4095;\n")
         f.write("      pmask             : in  integer range 0 to 4095;\n")
         f.write("      paddr_ext         : in  integer range 0 to 4095;\n")
