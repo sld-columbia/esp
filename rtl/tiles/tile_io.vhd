@@ -301,7 +301,7 @@ architecture rtl of tile_io is
 
   -- Interrupt ack to NoC
   type intr_ack_fsm is (idle, send_packet);
-  signal intr_ack_state, intr_ack_state_next : intr_ack_fsm := idle;
+  signal intr_ack_state, intr_ack_state_next : intr_ack_fsm;
   signal header, header_next : std_logic_vector(MISC_NOC_FLIT_SIZE - 1 downto 0);
 
   -- Tile parameters

@@ -55,9 +55,7 @@ end intreq2noc;
 architecture rtl of intreq2noc is
 
   constant IRQ_FIFO_DEPTH : integer := 8;
-
-  constant ncpu_log : integer range 0 to 4 := log2(ncpu);
-
+ 
   type irq_snd_fsm is (idle, irq_snd_header, irq_snd_payload_1, irq_snd_payload_2);
   type irq_rcv_fsm is (idle, irq_ack_rcv);
   signal irq_snd_state, irq_snd_next : irq_snd_fsm;
@@ -89,8 +87,8 @@ architecture rtl of intreq2noc is
   signal fifo_empty : std_logic_vector(ncpu-1 downto 0);
   signal overflow   : std_logic_vector(ncpu-1 downto 0);
 
-  signal priority          : std_logic_vector(ncpu_log-1 downto 0);
-  signal forwarding        : std_logic_vector(ncpu_log-1 downto 0);
+  signal priority          : std_logic_vector(ncpu_log(ncpu)-1 downto 0);
+  signal forwarding        : std_logic_vector(ncpu_log(ncpu)-1 downto 0);
   signal forwarding_req    : std_logic_vector(ncpu-1 downto 0);
   signal sample_forwarding : std_ulogic;
 
@@ -422,7 +420,7 @@ begin  -- rtl
     irq_ack_rdreq <= '0';
 
     if ncpu > 1 then
-      index := conv_integer(irq_ack_data_out(IRQ_INDEX_LSB + ncpu_log - 1 downto IRQ_INDEX_LSB));
+      index := conv_integer(irq_ack_data_out(IRQ_INDEX_LSB + ncpu_log(ncpu) - 1 downto IRQ_INDEX_LSB));
     else
       index := 0;
     end if;

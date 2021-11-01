@@ -59,7 +59,6 @@ package nocpackage is
   type noc_flit_vector is array (natural range <>) of noc_flit_type;
   type misc_noc_flit_vector is array (natural range <>) of misc_noc_flit_type;
 
-
   constant noc_flit_pad : std_logic_vector(NOC_FLIT_SIZE - MISC_NOC_FLIT_SIZE - 1 downto 0) := (others => '0');
 
   -- Preamble encoding
@@ -361,6 +360,10 @@ package nocpackage is
   end component;
 
   -- Helper functions
+  function ncpu_log (
+    ncpu : integer)
+    return integer;
+
   function set_mem_id_range
     return integer;
 
@@ -475,6 +478,17 @@ package nocpackage is
 end nocpackage;
 
 package body nocpackage is
+
+  function ncpu_log(
+    ncpu : integer)
+    return integer is
+  begin
+    if log2(ncpu) = 0 then
+      return 1;
+    else
+      return log2(ncpu);
+    end if;
+  end;
 
   function set_mem_id_range
     return integer is

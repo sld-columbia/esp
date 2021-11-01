@@ -130,7 +130,7 @@ begin  -- rtl
     -- Get routing info
     mem_x := mem_info(0).x;
     mem_y := mem_info(0).y;
-    if mem_num /= 1 then
+    if mem_num > 1 then
       for i in 0 to mem_num - 1 loop
         -- Need to match which memory split is selected
         if ((ahbsi.haddr(31 downto 20) xor conv_std_logic_vector(mem_info(i).haddr, 12))
