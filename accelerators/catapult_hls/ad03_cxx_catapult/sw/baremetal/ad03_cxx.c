@@ -39,14 +39,16 @@ const int32_t size = 128;
 /* Size of the contiguous chunks for scatter/gather */
 #define CHUNK_SHIFT 20
 #define CHUNK_SIZE BIT(CHUNK_SHIFT)
-#define NCHUNK(_sz) ((_sz % CHUNK_SIZE == 0) ?        \
-        (_sz / CHUNK_SIZE) :        \
-        (_sz / CHUNK_SIZE) + 1)
+#define NCHUNK(_sz) ((_sz % CHUNK_SIZE == 0) ?	\
+		     (_sz / CHUNK_SIZE) :	\
+		     (_sz / CHUNK_SIZE) + 1)
 
-         /* User defined registers */
-         /* <<--regs-->> */
+/* User defined registers */
+/* <<--regs-->> */
 #define AD03_CXX_BATCH_REG 0x40
 #define AD03_CXX_MODE_REG 0x44
+#define AD03_CXX_IN_HANDSHAKE_REG 0x48
+#define AD03_CXX_OUT_HANDSHAKE_REG 0x4c
 
 static token_t raw_inputs[1][128] = {{ -53, -2, -6, -4, -19, -17, -17, -22, -16, -19, -22, -27, -25, -25, -25, -31, -27, -37, -36, -35, -36, -34, -39, -37, -40, -40, -43, -43, -43, -42, -43, -38, -53, -4, -10, -1, -10, -17, -19, -18, -15, -26, -27, -24, -32, -25, -23, -36, -28, -35, -31, -37, -41, -42, -43, -35, -35, -37, -38, -39, -41, -41, -44, -35, -41, -2, -18, -13, -13, -9, -22, -21, -12, -24, -18, -23, -29, -26, -29, -37, -32, -28, -33, -34, -36, -38, -36, -40, -30, -37, -42, -43, -42, -38, -40, -38, -46, -2, -8, -15, -15, -13, -31, -29, -21, -27, -25, -27, -30, -29, -29, -32, -30, -39, -34, -34, -40, -40, -42, -38, -40, -41, -41, -42, -42, -42, -44, -38 }};
 
@@ -144,11 +146,14 @@ int main(int argc, char * argv[])
     int ndev;
     struct esp_device *espdevs;
     struct esp_device *dev;
+    struct esp_device hk_dev;
     unsigned done;
     unsigned **ptable;
     token_t *mem;
     token_t *gold;
     unsigned errors = 0;
+    unsigned niter;
+    /* unsigned *input_handshake, *output_handshake; */
 
     in_words_adj = size;
     out_words_adj = size;
@@ -159,6 +164,9 @@ int main(int argc, char * argv[])
     out_size = out_len * sizeof(token_t);
     out_offset  = in_len;
     mem_size = (out_offset * sizeof(token_t)) + out_size;
+
+    /* input_handshake  = (unsigned *) 0x00000000; */
+    /* output_handshake = (unsigned *) 0x00000004; */
 
     // Search for the device
     printf("Scanning device tree... \n");
@@ -187,46 +195,44 @@ int main(int argc, char * argv[])
     printf("  ptable = %p\n", ptable);
     printf("  nchunk = %lu\n", NCHUNK(mem_size));
 
-    printf("  Generate input...\n");
+    dev = &espdevs[0];
 
-    init_buf(mem, gold);
+    // Check DMA capabilities
+    if (ioread32(dev, PT_NCHUNK_MAX_REG) == 0) {
+	printf("  -> scatter-gather DMA is disabled. Abort.\n");
+	return 0;
+    }
 
-    printf("  ... input ready!\n");
+    if (ioread32(dev, PT_NCHUNK_MAX_REG) < NCHUNK(mem_size)) {
+	printf("  -> Not enough TLB entries available. Abort.\n");
+	return 0;
+    }
+    
+    // Pass common configuration parameters
+    iowrite32(dev, SELECT_REG, ioread32(dev, DEVID_REG));
+    iowrite32(dev, COHERENCE_REG, ACC_COH_NONE);
+    iowrite32(dev, PT_ADDRESS_REG, (unsigned long) ptable);
+    iowrite32(dev, PT_NCHUNK_REG, NCHUNK(mem_size));
+    iowrite32(dev, PT_SHIFT_REG, CHUNK_SHIFT);
+
+    // Pass accelerator-specific configuration parameters
+    /* <<--regs-config-->> */
+    iowrite32(dev, AD03_CXX_BATCH_REG, batch);
+    iowrite32(dev, AD03_CXX_MODE_REG, mode);
+
+    hk_dev.addr = 0x60090380;
 
     // Pass common configuration parameters
-    for (n = 0; n < ndev; n++) {
+    niter = 2;
+    for (n = 0; n < niter; n++) {
 
-        dev = &espdevs[n];
+	printf(" Wait for input...\n");
 
-        // Check DMA capabilities
-        if (ioread32(dev, PT_NCHUNK_MAX_REG) == 0) {
-            printf("  -> scatter-gather DMA is disabled. Abort.\n");
-            return 0;
+	//init_buf(mem, gold);
+        done = 0;
+        while (!done) {
+            done = ioread32(&hk_dev, 0);
         }
-
-        if (ioread32(dev, PT_NCHUNK_MAX_REG) < NCHUNK(mem_size)) {
-            printf("  -> Not enough TLB entries available. Abort.\n");
-            return 0;
-        }
-
-        // Pass common configuration parameters
-        iowrite32(dev, SELECT_REG, ioread32(dev, DEVID_REG));
-        iowrite32(dev, COHERENCE_REG, ACC_COH_NONE);
-        iowrite32(dev, PT_ADDRESS_REG, (unsigned long) ptable);
-        iowrite32(dev, PT_NCHUNK_REG, NCHUNK(mem_size));
-        iowrite32(dev, PT_SHIFT_REG, CHUNK_SHIFT);
-
-        // Use the following if input and output data are not allocated at the default offsets
-        //iowrite32(dev, SRC_OFFSET_REG, 0x0);
-        //iowrite32(dev, DST_OFFSET_REG, 0x0);
-
-        // Pass accelerator-specific configuration parameters
-        /* <<--regs-config-->> */
-        iowrite32(dev, AD03_CXX_BATCH_REG, batch);
-        iowrite32(dev, AD03_CXX_MODE_REG, mode);
-
-        // Flush (customize coherence model here)
-        esp_flush(ACC_COH_NONE);
 
         // Start accelerators
         printf("  Start...\n");
@@ -251,11 +257,19 @@ int main(int argc, char * argv[])
         else
             printf("  ... PASS\n");
 
-        aligned_free(ptable);
-        aligned_free(mem);
-        aligned_free(gold);
+	iowrite32(&hk_dev, 6 * 4, 0x1);
+        done = 1;
+        while (done) {
+            done = ioread32(&hk_dev, 0);
+        }
+	iowrite32(&hk_dev, 6 * 4, 0x0);
+
     }
 
+    aligned_free(ptable);
+    aligned_free(mem);
+    aligned_free(gold);
+    
     printf("DONE\n");
 
     return 0;
