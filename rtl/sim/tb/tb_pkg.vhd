@@ -17,12 +17,15 @@ package tb_pkg is
 
   component tb_cryoai is
     port (
-      reset                : in  std_ulogic;
-      iolink_valid_in_int  : in  std_ulogic;
-      iolink_clk_out_int   : in  std_ulogic;
-      iolink_valid_out_int : out std_ulogic;
-      iolink_data_out_int  : out std_logic_vector(CFG_IOLINK_BITS - 1 downto 0);
-      iolink_data_oen      : out std_ulogic);
+      reset                 : in  std_ulogic;
+      iolink_clk_in_int     : in  std_ulogic;
+      iolink_valid_in_int   : in  std_ulogic;
+      iolink_data_in_int    : in  std_logic_vector(CFG_IOLINK_BITS - 1 downto 0);
+      iolink_clk_out_int    : in  std_ulogic;
+      iolink_credit_out_int : out std_ulogic;
+      iolink_valid_out_int  : out std_ulogic;
+      iolink_data_out_int   : out std_logic_vector(CFG_IOLINK_BITS - 1 downto 0);
+      iolink_data_oen       : out std_ulogic);
   end component tb_cryoai;
 
   procedure snd_flit_iolink (

@@ -660,12 +660,12 @@ begin  -- architecture rtl
             v.haddr      := r.haddr + default_incr;
             -- Decrement word count
             v.count      := r.count - 1;
-            if r.count = 1 then
-              -- Let abritration occur at the next cycle
-              ahbmo.hbusreq <= '0';
-            else
+            -- if r.count = 1 then
+            --   -- Let abritration occur at the next cycle
+            --   ahbmo.hbusreq <= '0';
+            -- else
               ahbmo.hbusreq <= '1';
-            end if;
+            -- end if;
           end if;
         else
           -- Data not received from chip
