@@ -31,21 +31,21 @@ module gf22_sram32_be_16abits(
   output [31:0] Q1;
   genvar d, h, v, hh;
 
-  reg               bank_CE  [0:0][0:0][7:0][0:0][0:0];
-  reg        [12:0] bank_A   [0:0][0:0][7:0][0:0][0:0];
-  reg        [31:0] bank_D   [0:0][0:0][7:0][0:0][0:0];
-  reg               bank_WE  [0:0][0:0][7:0][0:0][0:0];
-  reg        [31:0] bank_WEM [0:0][0:0][7:0][0:0][0:0];
-  wire       [31:0] bank_Q   [0:0][0:0][7:0][0:0][0:0];
+  reg               bank_CE  [0:0][0:0][31:0][0:0][0:0];
+  reg        [10:0] bank_A   [0:0][0:0][31:0][0:0][0:0];
+  reg        [31:0] bank_D   [0:0][0:0][31:0][0:0][0:0];
+  reg               bank_WE  [0:0][0:0][31:0][0:0][0:0];
+  reg        [31:0] bank_WEM [0:0][0:0][31:0][0:0][0:0];
+  wire       [31:0] bank_Q   [0:0][0:0][31:0][0:0][0:0];
   wire        [0:0] ctrld    [1:1];
   wire        [0:0] ctrlh    [1:0];
-  wire        [2:0] ctrlv    [1:0];
+  wire        [4:0] ctrlv    [1:0];
   reg         [0:0] seld     [1:1];
   reg         [0:0] selh     [1:1];
-  reg         [2:0] selv     [1:1];
+  reg         [4:0] selv     [1:1];
 // synthesis translate_off
 // synopsys translate_off
-  integer check_bank_access [0:0][0:0][7:0][0:0][0:0];
+  integer check_bank_access [0:0][0:0][31:0][0:0][0:0];
 
   task check_access;
     input integer iface;
@@ -71,8 +71,8 @@ module gf22_sram32_be_16abits(
   assign ctrld[1] = 0;
   assign ctrlh[0] = 0;
   assign ctrlh[1] = 0;
-  assign ctrlv[0] = A0[15:13];
-  assign ctrlv[1] = A1[15:13];
+  assign ctrlv[0] = A0[15:11];
+  assign ctrlv[1] = A1[15:11];
 
   always @(posedge CLK) begin
     seld[1] <= ctrld[1];
@@ -82,7 +82,7 @@ module gf22_sram32_be_16abits(
 
   generate
   for (h = 0; h < 1; h = h + 1) begin : gen_ctrl_hbanks
-    for (v = 0; v < 8; v = v + 1) begin : gen_ctrl_vbanks
+    for (v = 0; v < 32; v = v + 1) begin : gen_ctrl_vbanks
       for (hh = 0; hh < 1; hh = hh + 1) begin : gen_ctrl_hhbanks
 
         always @(*) begin : handle_ops
@@ -111,11 +111,11 @@ module gf22_sram32_be_16abits(
             if (ctrlh[0] == h && ctrlv[0] == v && CE0 == 1'b1) begin
 // synthesis translate_off
 // synopsys translate_off
-              // check_access(0, 0, h, v, hh, 0);
+              //check_access(0, 0, h, v, hh, 0);
 // synopsys translate_on
 // synthesis translate_on
                 bank_CE[0][h][v][hh][0]  = CE0;
-                bank_A[0][h][v][hh][0]   = A0[12:0];
+                bank_A[0][h][v][hh][0]   = A0[10:0];
               if (hh != 0) begin
                 bank_D[0][h][v][hh][0]   = D0[32 * (hh + 1) - 1:32 * hh];
                 bank_WEM[0][h][v][hh][0] = WEM0[32 * (hh + 1) - 1:32 * hh];
@@ -132,11 +132,11 @@ module gf22_sram32_be_16abits(
             if (ctrlh[1] == h && ctrlv[1] == v && CE1 == 1'b1) begin
 // synthesis translate_off
 // synopsys translate_off
-              // check_access(1, 0, h, v, hh, 0);
+              //check_access(1, 0, h, v, hh, 0);
 // synopsys translate_on
 // synthesis translate_on
                 bank_CE[0][h][v][hh][0]  = CE1;
-                bank_A[0][h][v][hh][0]   = A1[12:0];
+                bank_A[0][h][v][hh][0]   = A1[10:0];
             end
 
         end
@@ -159,10 +159,10 @@ module gf22_sram32_be_16abits(
   generate
   for (d = 0; d < 1; d = d + 1) begin : gen_wires_dbanks
     for (h = 0; h < 1; h = h + 1) begin : gen_wires_hbanks
-      for (v = 0; v < 8; v = v + 1) begin : gen_wires_vbanks
+      for (v = 0; v < 32; v = v + 1) begin : gen_wires_vbanks
         for (hh = 0; hh < 1; hh = hh + 1) begin : gen_wires_hhbanks
 
-          GF22_SRAM_SP_8192x32 bank_i(
+          GF22_SRAM_SP_2048x32 bank_i(
               .CLK(CLK),
               .CE0(bank_CE[d][h][v][hh][0]),
               .A0(bank_A[d][h][v][hh][0]),
