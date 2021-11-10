@@ -223,11 +223,9 @@ begin  -- architecture rtl
         end if;
 
       when ird =>
-        if (ahbmi.hready and granted) = '1' then
+        if ahbmi.hready = '1' then
           v.haddr        := instr_addr_o;
-          instr_rvalid_i <= '1';
           if instr_req_o = '1' then
-            instr_gnt_i <= '1';
             if is_seq_trans(instr_addr_o, r.haddr) = '1' then
               -- continue sequential burst
               v.htrans := HTRANS_SEQ;
@@ -237,17 +235,24 @@ begin  -- architecture rtl
           else
             v.hbusreq := '0';
             v.htrans  := HTRANS_IDLE;
-            v.state   := idle;
+          end if;
+
+          if granted = '1' then
+            instr_rvalid_i <= '1';
+            if instr_req_o = '1' then
+              instr_gnt_i <= '1';
+            else
+              v.state   := idle;
+            end if;
           end if;
         end if;
 
       when drd =>
-        if (ahbmi.hready and granted) = '1' then
+        if ahbmi.hready = '1' then
           set_bus_control(data_be_o, data_addr_o, v.hsize, v.haddr, v.misaligned);
           set_bus_data(data_be_o, data_wdata_o, v.hwdata);
-          data_rvalid_i <= '1';
+
           if data_req_o = '1' then
-            data_gnt_i <= '1';
             if data_we_o = '0' then
               if data_be_o = "1111" and is_seq_trans(data_addr_o, r.haddr) = '1' then
                 -- continue sequential burst
@@ -259,22 +264,32 @@ begin  -- architecture rtl
               -- Move to data write
               v.htrans := HTRANS_NONSEQ;
               v.hwrite := '1';
-              v.state  := dwr;
             end if;
           else
             v.hbusreq := '0';
             v.htrans  := HTRANS_IDLE;
-            v.state   := idle;
+          end if;
+
+          if granted = '1' then
+            data_rvalid_i <= '1';
+            if data_req_o = '1' then
+              data_gnt_i <= '1';
+              if data_we_o /= '0' then
+                -- Move to data write
+                v.state  := dwr;
+              end if;
+            else
+              v.state   := idle;
+            end if;
           end if;
         end if;
 
       when dwr =>
-        if (ahbmi.hready and granted) = '1' then
-          data_rvalid_i <= '1';
+        if ahbmi.hready = '1' then
           set_bus_control(data_be_o, data_addr_o, v.hsize, v.haddr, v.misaligned);
           set_bus_data(data_be_o, data_wdata_o, v.hwdata);
+
           if data_req_o = '1' then
-            data_gnt_i <= '1';
             if data_we_o = '1' then
               if data_be_o = "1111" and is_seq_trans(data_addr_o, r.haddr) = '1' then
                 -- continue sequential burst
@@ -286,15 +301,25 @@ begin  -- architecture rtl
               -- Move to data read
               v.htrans := HTRANS_NONSEQ;
               v.hwrite := '0';
-              v.state  := drd;
             end if;
           else
             v.hbusreq := '0';
             v.htrans  := HTRANS_IDLE;
-            v.state   := idle;
+          end if;
+
+          if granted = '1' then
+            data_rvalid_i <= '1';
+            if data_req_o = '1' then
+              data_gnt_i <= '1';
+              if data_we_o /= '1' then
+                -- Move to data read
+                v.state  := drd;
+              end if;
+            else
+              v.state   := idle;
+            end if;
           end if;
         end if;
-
 
       when others =>
         v.hbusreq := '0';
