@@ -644,12 +644,11 @@ begin  -- architecture rtl
           -- Release address bus
           -- End of transaction
           ahbmo.htrans <= HTRANS_IDLE;
-          -- if (granted and ahbmi.hready) = '1' then
           v.state := receive_address;
-          -- end if;
         elsif io_rcv_empty = '0' then
           -- Continue with burst transaction
           ahbmo.htrans <= HTRANS_SEQ;
+          ahbmo.hbusreq <= '1';
           if (granted and ahbmi.hready) = '1' then
             -- Data bus acquired
             -- Set data
@@ -660,12 +659,6 @@ begin  -- architecture rtl
             v.haddr      := r.haddr + default_incr;
             -- Decrement word count
             v.count      := r.count - 1;
-            -- if r.count = 1 then
-            --   -- Let abritration occur at the next cycle
-            --   ahbmo.hbusreq <= '0';
-            -- else
-              ahbmo.hbusreq <= '1';
-            -- end if;
           end if;
         else
           -- Data not received from chip
