@@ -226,6 +226,8 @@ begin
         snd_flit_iolink(iolink_clk_out_int, word, valid_out, data_out);
       end loop;  -- j
 
+      wait for 100 ns;
+      
       -------------------------------------------------------------------------
       -- Wait for reset of output data handshake
       -------------------------------------------------------------------------
@@ -269,6 +271,8 @@ begin
         end loop;
       end loop;
 
+      wait for 100 ns;
+      
       -------------------------------------------------------------------------
       -- Set input data handshake
       -------------------------------------------------------------------------
@@ -282,6 +286,8 @@ begin
       word <= X"00000001";
       snd_flit_iolink(iolink_clk_out_int, word, valid_out, data_out);
 
+      wait for 100 ns;
+      
       -------------------------------------------------------------------------
       -- Wait for output data handshake
       -------------------------------------------------------------------------
@@ -323,6 +329,8 @@ begin
           wait until rising_edge(iolink_clk_in_int);
         end loop;
       end loop;
+
+      wait for 100 ns;
 
       -------------------------------------------------------------------------
       -- Read output data
