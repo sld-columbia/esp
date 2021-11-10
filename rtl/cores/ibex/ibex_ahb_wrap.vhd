@@ -285,7 +285,7 @@ begin  -- architecture rtl
         end if;
 
       when dwr =>
-        if (ahbmi.hready and granted) = '1' then
+        if ahbmi.hready = '1' then
           set_bus_control(data_be_o, data_addr_o, v.hsize, v.haddr, v.misaligned);
           set_bus_data(data_be_o, data_wdata_o, v.hwdata);
 
