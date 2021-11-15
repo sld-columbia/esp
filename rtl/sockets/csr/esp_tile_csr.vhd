@@ -126,7 +126,7 @@ architecture rtl of esp_tile_csr is
     -- Assume default I/O tile DCO frequency is 490MHz
 
     constant DEFAULT_DCO_NOC_CFG : std_logic_vector(18 downto 0) :=
-       "00"     &  "000"   &  "111111" & "111111" & "1"     & "1";
+       "00"     &  "111"   &  "111111" & "111111" & "1"     & "1";
     -- FREQ_SEL    DIV_SEL    FC_SEL      CC_SEL    CLK_SEL   EN
 
     constant DEFAULT_DCO_CFG : std_logic_vector(22 downto 0) :=

@@ -26,6 +26,8 @@ end entity dco_gf22_wrapper;
 
 architecture rtl of dco_gf22_wrapper is
 
+  signal RST : std_ulogic;
+
   component DCO_GF22 is
     port (
       RSTN     : in  std_ulogic;
@@ -58,10 +60,12 @@ architecture rtl of dco_gf22_wrapper is
 
 begin  -- architecture rtl
 
+  RST <= not RSTN;
+
   no_div2: if enable_div2 = 0 generate
     DCO_GF22_1 : DCO_GF22
       port map (
-        RSTN     => RSTN,
+        RSTN     => RST,
         EXT_CLK  => EXT_CLK,
         EN       => EN,
         CLK_SEL  => CLK_SEL,
