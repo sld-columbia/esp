@@ -147,14 +147,13 @@ void system_t::dump_memory()
     int   mem_j;
     FILE *fileOut = NULL;
 
-    // -- Read the gold image
+    // Store output file
     if ((fileOut = fopen(image_out_path.c_str(), "w")) == (FILE *)NULL) {
         ESP_REPORT_ERROR("[Err] could not open %s", image_out_path.c_str());
         fclose(fileOut);
     }
     ESP_REPORT_INFO("image_out_path: %s", image_out_path.c_str());
 
-    // Store output file
     mem_j = 0;
     for (i = 0; i < n_Images; i++) {
         for (j = 0; j < n_Pixels; j += WORDS_PER_DMA) {
