@@ -82,9 +82,6 @@ architecture rtl of esp_tile_csr is
     signal burst_start            : std_ulogic;
     signal burst_state            : std_ulogic;
     signal burst_state_next       : std_ulogic;
-    signal acc_state              : std_ulogic;
-    signal acc_state_next         : std_ulogic;
-    signal acc_rst                : std_ulogic;
 
     type counter_type is array (0 to MONITOR_REG_COUNT-1) of std_logic_vector(REGISTER_WIDTH-1 downto 0);
     signal count : counter_type;
@@ -287,32 +284,6 @@ architecture rtl of esp_tile_csr is
     end if;
   end process wr_registers;
 
-  --reset accelerator cycle counters at start of invoation
-  acc_state_reg : process(clk, rstn)
-  begin
-    if rstn = '0' then
-      acc_state <= '0';
-    elsif clk'event and clk = '1' then
-      acc_state <= acc_state_next;
-    end if;
-  end process acc_state_reg;
-
-  acc_reset  : process(mon_acc, acc_state)
-  begin
-    acc_state_next <= acc_state;
-    acc_rst <= '0';
-    if acc_state = '0' then
-      if mon_acc.go = '1' and mon_acc.done = '0' then
-        acc_state_next <= '1';
-        acc_rst <= '1';
-      end if;
-    else
-      if mon_acc.done = '1' then
-        acc_state_next <= '0';
-      end if;
-    end if;
-  end process acc_reset;
-
   --"burst" mode provides synchronization to all monitors in a tile
   --by sampling all counters to a different set of registers, while
   --the counters continue to increment. Any queries are served to this
@@ -437,12 +408,6 @@ architecture rtl of esp_tile_csr is
         for R in 0 to MONITOR_REG_COUNT - 1 loop
           count_value(R) <= count(R);
         end loop;
-      end if;
-
-      if acc_rst = '1' then
-        accelerator_tlb_count := (others => '0');
-        accelerator_mem_count := (others => '0');
-        accelerator_tot_count := (others => '0');
       end if;
 
     end if;
