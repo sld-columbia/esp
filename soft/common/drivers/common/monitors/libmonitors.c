@@ -326,11 +326,11 @@ esp_monitor_vals_t esp_monitor_diff(esp_monitor_vals_t vals_start, esp_monitor_v
 	for (t = 0; t < SOC_NACC; t++) {
 		tile = acc_locs[t].row * SOC_COLS + acc_locs[t].col;
 		//accelerator counters are cleared at the start of an invocation, so merely report the final count
-		vals_diff.acc_stats[t].acc_tlb = vals_end.acc_stats[t].acc_tlb;
-		vals_diff.acc_stats[t].acc_mem_lo = vals_end.acc_stats[t].acc_mem_lo;
-		vals_diff.acc_stats[t].acc_mem_hi = vals_end.acc_stats[t].acc_mem_hi;
-		vals_diff.acc_stats[t].acc_tot_lo = vals_end.acc_stats[t].acc_tot_lo;
-		vals_diff.acc_stats[t].acc_tot_hi = vals_end.acc_stats[t].acc_tot_hi;
+		vals_diff.acc_stats[t].acc_tlb = sub_monitor_vals(vals_start.acc_stats[t].acc_tlb, vals_end.acc_stats[t].acc_tlb);
+		vals_diff.acc_stats[t].acc_mem_lo = sub_monitor_vals(vals_start.acc_stats[t].acc_mem_lo, vals_end.acc_stats[t].acc_mem_lo);
+		vals_diff.acc_stats[t].acc_mem_hi = sub_monitor_vals(vals_start.acc_stats[t].acc_mem_hi, vals_end.acc_stats[t].acc_mem_hi);
+		vals_diff.acc_stats[t].acc_tot_lo = sub_monitor_vals(vals_start.acc_stats[t].acc_tot_lo, vals_end.acc_stats[t].acc_tot_lo);
+		vals_diff.acc_stats[t].acc_tot_hi = sub_monitor_vals(vals_start.acc_stats[t].acc_tot_hi, vals_end.acc_stats[t].acc_tot_hi);
 	}
 
 #endif
