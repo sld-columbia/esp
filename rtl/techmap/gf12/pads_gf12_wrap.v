@@ -8,7 +8,7 @@ module PBIDIRN_18_18_H
    DS0,
    DS1,
    SR,
-   IE,
+   IE
    );
 
    inout PAD;
@@ -50,7 +50,7 @@ module PBIDIRN_18_18_V
    DS0,
    DS1,
    SR,
-   IE,
+   IE
    );
 
    inout PAD;

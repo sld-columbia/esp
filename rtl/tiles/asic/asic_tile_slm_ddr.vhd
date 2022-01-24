@@ -158,8 +158,8 @@ architecture rtl of asic_tile_slm_ddr is
   component ahb2bsg_dmc is
     port (
       hindex          : in  integer;
-      haddr           : in  integer;
-      hmask           : in  integer;
+      haddr           : in  integer range 0 to 4095;
+      hmask           : in  integer range 0 to 4095;
       lpddr_ck_p      : out std_logic;
       lpddr_ck_n      : out std_logic;
       lpddr_cke       : out std_logic;
@@ -206,8 +206,8 @@ architecture rtl of asic_tile_slm_ddr is
 
   signal tile_id           : integer range 0 to CFG_TILES_NUM - 1;
   signal this_slmddr_id    : integer range 0 to SLMDDR_ID_RANGE_MSB;
-  signal this_slmddr_haddr : integer range 0 to 4096;
-  signal this_slmddr_hmask : integer range 0 to 4096;
+  signal this_slmddr_haddr : integer range 0 to 4095;
+  signal this_slmddr_hmask : integer range 0 to 4095;
 
   constant ext_clk_sel_default : std_ulogic := '0';
 
