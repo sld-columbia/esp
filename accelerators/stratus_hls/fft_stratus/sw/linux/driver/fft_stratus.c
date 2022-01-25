@@ -13,9 +13,10 @@
 #define DRV_NAME	"fft_stratus"
 
 /* <<--regs-->> */
-#define FFT_DO_PEAK_REG 0x48
-#define FFT_DO_BITREV_REG 0x44
-#define FFT_LOG_LEN_REG 0x40
+#define FFT_DO_PEAK_REG 0x4c
+#define FFT_DO_BITREV_REG 0x48
+#define FFT_LOG_LEN_REG 0x44
+#define FFT_BATCH_SIZE_REG 0x40
 
 struct fft_stratus_device {
 	struct esp_device esp;
@@ -49,6 +50,7 @@ static void fft_prep_xfer(struct esp_device *esp, void *arg)
 
 	/* <<--regs-config-->> */
 	iowrite32be(0, esp->iomem + FFT_DO_PEAK_REG);
+	iowrite32be(a->batch_size, esp->iomem + FFT_BATCH_SIZE_REG);
 	iowrite32be(a->do_bitrev, esp->iomem + FFT_DO_BITREV_REG);
 	iowrite32be(a->log_len, esp->iomem + FFT_LOG_LEN_REG);
 	iowrite32be(a->src_offset, esp->iomem + SRC_OFFSET_REG);
