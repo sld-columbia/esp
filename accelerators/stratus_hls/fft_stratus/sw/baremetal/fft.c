@@ -28,7 +28,7 @@ const float ERR_TH = 0.05;
 
 static unsigned DMA_WORD_PER_BEAT(unsigned _st)
 {
-        return (sizeof(void *) / _st);
+		return (sizeof(void *) / _st);
 }
 
 
@@ -37,6 +37,7 @@ static unsigned DMA_WORD_PER_BEAT(unsigned _st)
 
 /* <<--params-->> */
 const int32_t log_len = 3;
+const int32_t batch_size = 1;
 int32_t len;
 int32_t do_bitrev = 1;
 
@@ -58,23 +59,25 @@ static unsigned mem_size;
 
 /* User defined registers */
 /* <<--regs-->> */
-#define FFT_DO_PEAK_REG 0x48
-#define FFT_DO_BITREV_REG 0x44
-#define FFT_LOG_LEN_REG 0x40
-
+#define FFT_DO_PEAK_REG 0x4c
+#define FFT_DO_BITREV_REG 0x48
+#define FFT_LOG_LEN_REG 0x44
+#define FFT_BATCH_SIZE_REG 0x40
 
 static int validate_buf(token_t *out, float *gold)
 {
 	int j;
 	unsigned errors = 0;
 
-	for (j = 0; j < 2 * len; j++) {
+	for (j = 0; j < 2 * len * batch_size; j++) {
 		native_t val = fx2float(out[j], FX_IL);
-		if ((fabs(gold[j] - val) / fabs(gold[j])) > ERR_TH)
+		if ((fabs(gold[j] - val) / fabs(gold[j])) > ERR_TH){
 			errors++;
+			printf("%d: gold %f, val %f\n", j, gold[j], val);
+		}
 	}
 
-	//printf("  %u errors\n", errors);
+	printf("  %u errors\n", errors);
 	return errors;
 }
 
@@ -87,7 +90,7 @@ static void init_buf(token_t *in, float *gold)
 
 	/* srand((unsigned int) time(NULL)); */
 
-	for (j = 0; j < 2 * len; j++) {
+	for (j = 0; j < 2 * len * batch_size; j++) {
 		float scaling_factor = (float) rand () / (float) RAND_MAX;
 		gold[j] = LO + scaling_factor * (HI - LO);
 	}
@@ -97,12 +100,13 @@ static void init_buf(token_t *in, float *gold)
 		fft_bit_reverse(gold, len, log_len);
 
 	// convert input to fixed point
-	for (j = 0; j < 2 * len; j++)
+	for (j = 0; j < 2 * len * batch_size; j++)
 		in[j] = float2fx((native_t) gold[j], FX_IL);
 
 
 	// Compute golden output
-	fft_comp(gold, len, log_len, -1, do_bitrev);
+	for (j = 0; j < batch_size; j++)
+		fft_comp(&gold[j * 2 * len], len, log_len, -1, do_bitrev);
 }
 
 
@@ -119,22 +123,22 @@ int main(int argc, char * argv[])
 	float *gold;
 	unsigned errors = 0;
 	unsigned coherence;
-        const int ERROR_COUNT_TH = 0.001;
+		const int ERROR_COUNT_TH = 0.001;
 
 	len = 1 << log_len;
 
 	if (DMA_WORD_PER_BEAT(sizeof(token_t)) == 0) {
-		in_words_adj = 2 * len;
-		out_words_adj = 2 * len;
+		in_words_adj = 2 * len * batch_size;
+		out_words_adj = 2 * len * batch_size;
 	} else {
-		in_words_adj = round_up(2 * len, DMA_WORD_PER_BEAT(sizeof(token_t)));
-		out_words_adj = round_up(2 * len, DMA_WORD_PER_BEAT(sizeof(token_t)));
+		in_words_adj = round_up(2 * len * batch_size, DMA_WORD_PER_BEAT(sizeof(token_t)));
+		out_words_adj = round_up(2 * len * batch_size, DMA_WORD_PER_BEAT(sizeof(token_t)));
 	}
 	in_len = in_words_adj;
 	out_len = out_words_adj;
 	in_size = in_len * sizeof(token_t);
 	out_size = out_len * sizeof(token_t);
-	out_offset  = 0;
+	out_offset = 0;
 	mem_size = (out_offset * sizeof(token_t)) + out_size;
 
 
@@ -177,13 +181,7 @@ int main(int argc, char * argv[])
 		printf("  ptable = %p\n", ptable);
 		printf("  nchunk = %lu\n", NCHUNK(mem_size));
 
-#ifndef __riscv
-		for (coherence = ACC_COH_NONE; coherence <= ACC_COH_FULL; coherence++) {
-#else
-		{
-			/* TODO: Restore full test once ESP caches are integrated */
-			coherence = ACC_COH_NONE;
-#endif
+		for (coherence = ACC_COH_NONE; coherence < ACC_COH_FULL; coherence++) {
 			printf("  --------------------\n");
 			printf("  Generate input...\n");
 			init_buf(mem, gold);
@@ -207,6 +205,7 @@ int main(int argc, char * argv[])
 			iowrite32(dev, FFT_DO_PEAK_REG, 0);
 			iowrite32(dev, FFT_DO_BITREV_REG, do_bitrev);
 			iowrite32(dev, FFT_LOG_LEN_REG, log_len);
+			iowrite32(dev, FFT_BATCH_SIZE_REG, batch_size);
 
 			// Flush (customize coherence model here)
 			esp_flush(coherence);

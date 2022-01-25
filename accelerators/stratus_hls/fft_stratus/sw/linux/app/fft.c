@@ -20,13 +20,14 @@ static int validate_buffer(token_t *out, float *gold)
 	int j;
 	unsigned errors = 0;
 
-	for (j = 0; j < 2 * len; j++) {
+	for (j = 0; j < 2 * len * num_batches; j++) {
 		native_t val = fx2float(out[j], FX_IL);
-		if ((fabs(gold[j] - val) / fabs(gold[j])) > ERR_TH)
-			errors++;
+		if ((fabs(gold[j] - val) / fabs(gold[j])) > ERR_TH) {
+            errors++;
+		}
 	}
 
-	printf("  + Relative error > %.02f for %d output values out of %d\n", ERR_TH, errors, 2 * len);
+	printf("  + Relative error > %.02f for %d output values out of %d\n", ERR_TH, errors, 2 * len * num_batches);
 
 	return errors;
 }
@@ -35,27 +36,27 @@ static int validate_buffer(token_t *out, float *gold)
 /* User-defined code */
 static void init_buffer(token_t *in, float *gold)
 {
-	int j;
+	int j, b;
 	const float LO = -1.0;
 	const float HI = 1.0;
 
 	srand((unsigned int) time(NULL));
 
-	for (j = 0; j < 2 * len; j++) {
+	for (j = 0; j < 2 * len * num_batches; j++) {
 		float scaling_factor = (float) rand () / (float) RAND_MAX;
 		gold[j] = LO + scaling_factor * (HI - LO);
 	}
-
 	// preprocess with bitreverse (fast in software anyway)
 	if (!do_bitrev)
 		fft_bit_reverse(gold, len, log_len);
 
 	// convert input to fixed point
-	for (j = 0; j < 2 * len; j++)
+	for (j = 0; j < in_len; j++)
 		in[j] = float2fx((native_t) gold[j], FX_IL);
 
 	// Compute golden output
-	fft_comp(gold, len, log_len,  -1,  do_bitrev);
+	for (b = 0; b < num_batches; b++)
+		fft_comp(&gold[b*2*len], len, log_len,	-1,  do_bitrev);
 }
 
 
@@ -63,20 +64,19 @@ static void init_buffer(token_t *in, float *gold)
 static void init_parameters()
 {
 	if (DMA_WORD_PER_BEAT(sizeof(token_t)) == 0) {
-		in_words_adj = 2 * len;
-		out_words_adj = 2 * len;
+		in_words_adj = 2 * len * num_batches;
+		out_words_adj = 2 * len * num_batches;
 	} else {
-		in_words_adj = round_up(2 * len, DMA_WORD_PER_BEAT(sizeof(token_t)));
-		out_words_adj = round_up(2 * len, DMA_WORD_PER_BEAT(sizeof(token_t)));
+		in_words_adj = round_up(2 * len * num_batches, DMA_WORD_PER_BEAT(sizeof(token_t)));
+		out_words_adj = round_up(2 * len * num_batches, DMA_WORD_PER_BEAT(sizeof(token_t)));
 	}
 	in_len = in_words_adj;
 	out_len =  out_words_adj;
 	in_size = in_len * sizeof(token_t);
 	out_size = out_len * sizeof(token_t);
-	out_offset = 0;
+	out_offset = in_len;
 	size = (out_offset * sizeof(token_t)) + out_size;
 }
-
 
 int main(int argc, char **argv)
 {
@@ -85,37 +85,48 @@ int main(int argc, char **argv)
 	float *gold;
 	token_t *buf;
 
-        const int ERROR_COUNT_TH = 0.001;
+	const float ERROR_COUNT_TH = 0.001;
 
+	//set parameters
 	init_parameters();
 
+	//allocate buffers
 	buf = (token_t *) esp_alloc(size);
 	cfg_000[0].hw_buf = buf;
-	gold = malloc(out_len * sizeof(float));
+	gold = malloc(out_len * sizeof(float) * num_batches);
 
-	init_buffer(buf, gold);
-
-	printf("\n====== %s ======\n\n", cfg_000[0].devname);
-	/* <<--print-params-->> */
+    printf("\n====== %s ======\n\n", cfg_000[0].devname);
 	printf("  .len = %d\n", len);
-	printf("  .log_len = %d\n", log_len);
-	printf("\n  ** START **\n");
+	printf("  .batch_size = %d\n", fft_cfg_000[0].batch_size);
 
-	esp_run(cfg_000, NACC);
+	unsigned coherence;
+	for (coherence = ACC_COH_NONE; coherence < ACC_COH_FULL; coherence++) {
 
-	printf("\n  ** DONE **\n");
+		init_buffer(buf, gold);
 
-	errors = validate_buffer(&buf[out_offset], gold);
+		//set coherence mode
+		fft_cfg_000[0].esp.coherence = coherence;
 
+		//run accelerator
+		printf("  ** START **\n");
+		esp_run(cfg_000, NACC);
+		printf("  ** DONE **\n");
+
+		//validate output
+		errors = validate_buffer(buf, gold);
+		float err_rate = (float) errors / (float) (2 * len * num_batches);
+
+		if (err_rate > ERROR_COUNT_TH)
+			printf("\n  + TEST FAIL: exceeding error count threshold\n");
+		else
+			printf("\n  + TEST PASS: not exceeding error count threshold\n");
+	}
+
+    printf("\n====== %s ======\n\n", cfg_000[0].devname);
+
+	//cleanup
 	free(gold);
 	esp_free(buf);
-
-        if ((errors / len) > ERROR_COUNT_TH)
-		printf("  + TEST FAIL: exceeding error count threshold\n");
-        else
-		printf("  + TEST PASS: not exceeding error count threshold\n");
-
-	printf("\n====== %s ======\n\n", cfg_000[0].devname);
 
 	return errors;
 }

@@ -20,6 +20,7 @@
 struct fft_stratus_access {
 	struct esp_access esp;
 	/* <<--regs-->> */
+	unsigned batch_size;
 	unsigned log_len;
 	unsigned do_bitrev;
 	unsigned src_offset;

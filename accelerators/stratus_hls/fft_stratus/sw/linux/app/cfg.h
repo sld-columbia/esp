@@ -24,17 +24,18 @@ typedef float native_t;
 #define LOG_LEN 10
 #define LEN (1 << LOG_LEN)
 #define DO_BITREV 1
-
+#define NUM_BATCHES 1
 /* <<--params-->> */
 const int32_t do_bitrev = DO_BITREV;
 const int32_t len = LEN;
 const int32_t log_len = LOG_LEN;
+const int32_t num_batches = 1;
 
 #define NACC 1
 
 struct fft_stratus_access fft_cfg_000[] = {
 	{
-		/* <<--descriptor-->> */
+		.batch_size = NUM_BATCHES,
 		.do_bitrev = DO_BITREV,
 		.log_len = LOG_LEN,
 		.src_offset = 0,
