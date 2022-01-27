@@ -619,7 +619,8 @@ package tile is
       remote_ahbs_snd_full       : in  std_ulogic;
       remote_ahbs_rcv_rdreq      : out std_ulogic;
       remote_ahbs_rcv_data_out   : in  misc_noc_flit_type;
-      remote_ahbs_rcv_empty      : in  std_ulogic);
+      remote_ahbs_rcv_empty      : in  std_ulogic;
+      coherence                  : in integer range 0 to 3);
   end component axislv2noc;
 
   component noc2apb
