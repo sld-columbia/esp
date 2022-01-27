@@ -85,7 +85,7 @@ architecture rtl of axislv2noc is
     write                  : std_ulogic;
     id                     : std_logic_vector (XID_WIDTH-1 downto 0);
     addr                   : std_logic_vector (GLOB_PHYS_ADDR_BITS - 1 downto 0);
-    len                    : std_logic_vector (7 downto 0);
+    len                    : std_logic_vector (8 downto 0);
     size                   : std_logic_vector (2 downto 0);
     burst                  : std_logic_vector (1 downto 0);
     lock                   : std_logic;
@@ -196,7 +196,7 @@ begin  -- rtl
     if tran.write = '1' then
       tran.id     := mosi(tran.xindex).aw.id;
       tran.addr   := mosi(tran.xindex).aw.addr;
-      tran.len    := mosi(tran.xindex).aw.len + "0000001";
+      tran.len    := ('0' & mosi(tran.xindex).aw.len) + "0000001";
       tran.size   := mosi(tran.xindex).aw.size;
       tran.burst  := mosi(tran.xindex).aw.burst;
       tran.lock   := mosi(tran.xindex).aw.lock;
@@ -209,7 +209,7 @@ begin  -- rtl
     else
       tran.id     := mosi(tran.xindex).ar.id;
       tran.addr   := mosi(tran.xindex).ar.addr;
-      tran.len    := mosi(tran.xindex).ar.len + "0000001";
+      tran.len    := ('0' & mosi(tran.xindex).ar.len) + "0000001";
       tran.size   := mosi(tran.xindex).ar.size;
       tran.burst  := mosi(tran.xindex).ar.burst;
       tran.lock   := mosi(tran.xindex).ar.lock;
@@ -323,10 +323,10 @@ begin  -- rtl
     else
       tran.payload_length(NOC_FLIT_SIZE-1 downto NOC_FLIT_SIZE-PREAMBLE_WIDTH) := PREAMBLE_TAIL;
     end if;
-    tran.payload_length(7 downto 0) := tran.len;
+    tran.payload_length(8 downto 0) := tran.len;
     -- (read transaction only)
     tran.payload_length_narrow(MISC_NOC_FLIT_SIZE-1 downto MISC_NOC_FLIT_SIZE-PREAMBLE_WIDTH) := PREAMBLE_TAIL;
-    tran.payload_length_narrow(7 downto 0) := tran.len;
+    tran.payload_length_narrow(8 downto 0) := tran.len;
 
     -- Create header flit
     tran.reserved             := (others => '0');
