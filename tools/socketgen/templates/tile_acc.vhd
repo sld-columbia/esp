@@ -198,6 +198,8 @@ architecture rtl of tile_acc is
 
   constant little_end          : integer range 0 to 1               := GLOB_CPU_RISCV;
 
+  signal coherence : integer range 0 to 3;
+
   -- add attribute 'keep' to fix a bug with Vivado HLS accelerators
   attribute keep : string;
 
@@ -318,6 +320,7 @@ begin
   this_local_y     <= tile_y(tile_id);
   this_local_x     <= tile_x(tile_id);
 
+  coherence        <= to_integer(unsigned(tile_config(ESP_CSR_ACC_COH_MSB downto ESP_CSR_ACC_COH_LSB)));
 
 -------------------------------------------------------------------------------
 -- ACCELERATOR ----------------------------------------------------------------

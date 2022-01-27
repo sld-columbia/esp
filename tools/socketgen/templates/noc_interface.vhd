@@ -108,8 +108,9 @@ use std.textio.all;
     --Monitor signals
     mon_acc           : out monitor_acc_type;
     mon_cache         : out monitor_cache_type;
-    mon_dvfs          : out monitor_dvfs_type
-    );
+    mon_dvfs          : out monitor_dvfs_type;
+    -- Coherence
+    coherence         : in integer range 0 to 3);
 
 end;
 
