@@ -98,8 +98,8 @@ architecture syn of inferred_async_fifo is
   signal wr_count, rd_count : t_counter;
   signal rd_int, we_int : std_logic;
 
-  signal wr_empty_xm, wr_empty_x : std_logic;
-  signal rd_full_xm, rd_full_x   : std_logic;
+--  signal wr_empty_xm, wr_empty_x : std_logic;
+--  signal rd_full_xm, rd_full_x   : std_logic;
 
 begin  -- syn
 
@@ -184,13 +184,13 @@ begin  -- syn
 
   rd_empty_o <= empty_int;
 
-  p_sync_empty : process(clk_wr_i)
-  begin
-    if rising_edge(clk_wr_i) then
-      wr_empty_xm <= empty_int;
-      wr_empty_x  <= wr_empty_xm;
-    end if;
-  end process;
+--  p_sync_empty : process(clk_wr_i)
+--  begin
+--    if rising_edge(clk_wr_i) then
+--      wr_empty_xm <= empty_int;
+--      wr_empty_x  <= wr_empty_xm;
+--    end if;
+--  end process;
 
   p_gen_going_full : process(we_int, wcb, rcb)
   begin
@@ -215,13 +215,13 @@ begin  -- syn
     end if;
   end process;
 
-  p_sync_full : process(clk_rd_i)
-  begin
-    if rising_edge(clk_rd_i) then
-      rd_full_xm <= full_int;
-      rd_full_x  <= rd_full_xm;
-    end if;
-  end process p_sync_full;
+--  p_sync_full : process(clk_rd_i)
+--  begin
+--    if rising_edge(clk_rd_i) then
+--      rd_full_xm <= full_int;
+--      rd_full_x  <= rd_full_xm;
+--    end if;
+--  end process p_sync_full;
 
   wr_full_o <= full_int;
 
