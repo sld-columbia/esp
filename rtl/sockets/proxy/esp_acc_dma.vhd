@@ -231,6 +231,7 @@ architecture rtl of esp_acc_dma is
                    request_data, reply_header, reply_data, config,
                    send_header, rd_handshake, wr_handshake, wait_req_p2p,
                    running, reset, wait_for_completion, fully_coherent_request);
+  signal acc_rst_next : std_ulogic;
   signal dma_state, dma_next : dma_fsm;
   signal status : std_logic_vector(31 downto 0);
   signal sample_status : std_ulogic;
@@ -630,6 +631,13 @@ begin  -- rtl
   -----------------------------------------------------------------------------
   -- DMA
   -----------------------------------------------------------------------------
+  acc_rst_reg : process (clk)
+  begin
+    if clk'event and clk = '1' then -- rising clock edge
+        acc_rst <= acc_rst_next;
+    end if;
+  end process acc_rst_reg;
+
   sample_acc_done: process (clk, rst)
   begin  -- process sample_acc_done
     if rst = '0' then                   -- asynchronous reset (active low)
@@ -703,7 +711,7 @@ begin  -- rtl
     coherent_dma_write <= '0';
 
     -- Default accelerator inputs
-    acc_rst <= rst;
+    acc_rst_next <= rst;
     conf_done <= '0';
     rd_grant <= '0';
     fixen_bufdin_data <= fix_endian(dma_rcv_data_out_int(ARCH_BITS - 1 downto 0), size_r);
@@ -817,7 +825,7 @@ begin  -- rtl
       when reset =>
         -- Reset the accelerator and go back to idle. Note that the TLB is
         -- still valid until the register PT_ADDRESS is written again.
-        acc_rst <= '0';
+        acc_rst_next <= '0';
         status <= (others => '0');
         sample_status <= '1';
         clear_acc_done <= '1';
