@@ -1,6 +1,8 @@
 /* Copyright (c) 2011-2019 Columbia University, System Level Design Group */
 /* SPDX-License-Identifier: Apache-2.0 */
 
+/* This version of the svd accelerator is for if it was implemented with float datatype. The defulat svd accelerator works with fixed point datatype */
+
 #include <stdio.h>
 #ifndef __riscv
 #include <stdlib.h>
@@ -8,34 +10,10 @@
 
 #include <esp_accelerator.h>
 #include <esp_probe.h>
-#include <fixed_point.h>
 
-typedef int32_t token_t;
-#define Q 5
-#define P 5
-#define M 3
+#include "input.h"
 
-float inputX[] = { -0.99729546, -0.48864438, -1.1597335 , -1.83951924, -0.50367543,
-		   -0.67540379, -1.76116705, -0.56847006, -0.96412516, -1.54168092,
-		   -0.5463881 , -1.02347615, -1.03408063, -0.43882483, -0.9527715 };
-
-float inputY[] = { 6.72627056e-01,  3.69826234e-02, -9.02181788e-17,
-		   1.15215940e+00,  1.19119133e-01, -1.56858856e-16,
-		   1.26133188e+00,  1.41772359e-01, -1.72195174e-16,
-		   1.03926143e+00, -1.38062725e-01, -1.31267156e-16,
-		   6.69471981e-01, -3.40943350e-01, -7.40678875e-17};
-
-float inputT[] = { 0.00166667, 0        , 0        ,
-		    0        , 0.00166667, 0        ,
-		    0        , 0        , 0.00166667 };
-
-float inputP = 0.0625;
-
-float gold_out[] = { -0.8082151413, -0.2470283508, -0.534570694,
-		       -0.2470264435, 0.966252327, -0.07303285599,
-		       -0.5345711708, -0.07302713394, 0.8419623375 };
-
-float gold_out_sink[M][P];
+typedef float token_t;
 
 
 static unsigned DMA_WORD_PER_BEAT(unsigned _st)
@@ -48,13 +26,13 @@ static unsigned DMA_WORD_PER_BEAT(unsigned _st)
 #define DEV_NAME "sld,svd_vivado"
 
 /* <<--params-->> */
-const int32_t q = 5;
-const int32_t p = 5;
-const int32_t m = 3;
 const int32_t p2p_out = 0;
 const int32_t p2p_in = 0;
 const int32_t p2p_iter = 1;
 const int32_t load_state = 0;
+const int32_t q = 177;
+const int32_t p = 229;
+const int32_t m = 3;
 
 static unsigned in_words_adj;
 static unsigned out_words_adj;
@@ -83,7 +61,7 @@ static unsigned mem_size;
 #define SVD_M_REG 0x40
 
 
-static int validate_buf(token_t *out, float *gold)
+static int validate_buf(token_t *out, token_t *gold)
 {
 	int i;
 	int j;
@@ -92,21 +70,16 @@ static int validate_buf(token_t *out, float *gold)
 	MAE_sum = 0;
 
 	for (i = 0; i < 1; i++)
-		for (j = 0; j < m*m; j++)
+		for (j = 0; j < m*m+m*p; j++)
 		{
 
-			float val = fixed32_to_float(out[i * out_words_adj + j], 11);
-			float gold_val = gold[i * out_words_adj + j];
+			MAE = (out[i * out_words_adj + j] - gold[i * out_words_adj + j])
+				/ gold[i * out_words_adj + j];
 
-			//MAE = (out[i * out_words_adj + j] - gold[i * out_words_adj + j])
-			//	/ gold[i * out_words_adj + j];
-
-			MAE = (val - gold_val) / gold_val;
-
-			//uint32_t* tmp1 = (uint32_t*) &gold[i * out_words_adj + j];
-			//print_uart("gold = ");print_uart_int(*tmp1);print_uart(" ");
-			//uint32_t* tmp2 = (uint32_t*) &val;
-			//print_uart("out = ");print_uart_int(*tmp2);print_uart("\n");
+			/* uint32_t* tmp1 = (uint32_t*) &gold[i * out_words_adj + j]; */
+			/* print_uart("gold = ");print_uart_int(*tmp1);print_uart(" "); */
+			/* uint32_t* tmp2 = (uint32_t*) &out[i * out_words_adj + j]; */
+			/* print_uart("out = ");print_uart_int(*tmp2);print_uart("\n"); */
 
 			MAE_sum += MAE*MAE;
 
@@ -117,7 +90,7 @@ static int validate_buf(token_t *out, float *gold)
 
 		}
 
-	num = m*m;
+	num = m*m+p*m;
 	if (MAE_sum / num > 0.01)
 		errors++;
 
@@ -127,7 +100,7 @@ static int validate_buf(token_t *out, float *gold)
 }
 
 
-static void init_buf (token_t *in, float * gold)
+static void init_buf (token_t *in, token_t * gold)
 {
 	int i;
 	int j;
@@ -139,33 +112,29 @@ static void init_buf (token_t *in, float * gold)
 	{
 		for(j = 0; j < p*q; j++) //Q
 		{
-			float val = (float) 1/(p * q);
-			in[i * in_words_adj + j] = (token_t) float_to_fixed32(val, 11);
-			//in[i * in_words_adj + j] = (token_t) j;
+			//print_uart("saving Q[");print_uart_int(j);print_uart("]\n");
+			in[i * in_words_adj + j] = (token_t) 1/(p * q);
 		}
 
 		printf("  Generated Q \n");
 
 		for(x = 0; x < m*p; x++) //X
-			in[i * in_words_adj + j + x] = (token_t) float_to_fixed32(inputX[x], 11);
-			//in[i * in_words_adj + j + x] = (token_t) j+x;
+			in[i * in_words_adj + j + x] = inputX[x];
 
 		printf("  Generated X \n");
 
 		for(y = 0; y < m*q; y++) //Y
-			in[i * in_words_adj + j + x + y] = (token_t) float_to_fixed32(inputY[y], 11);
-			//in[i * in_words_adj + j + x + y] = (token_t) j+x+y;
+			in[i * in_words_adj + j + x + y] = inputY[y];
 
 		printf("  Generated Y \n");
 
 		for(t = 0; t < m*m; t++) //T
-			in[i * in_words_adj + j + x + y + t] = (token_t) float_to_fixed32(inputT[t], 11);
-			//in[i * in_words_adj + j + x + y + t] = (token_t) j+x+y+t;
+			in[i * in_words_adj + j + x + y + t] = inputT[t];
 
 		printf("  Generated T \n");
 
-		in[i * in_words_adj + j + x + y + t] = (token_t) float_to_fixed32(inputP, 11);
-		//in[i * in_words_adj + j + x + y + t] = (token_t) j+x+y+t;
+		in[i * in_words_adj + j + x + y + t] = inputP;
+
 		printf("  Generated P \n");
 
 	}
@@ -181,7 +150,7 @@ static void init_buf (token_t *in, float * gold)
 			for(j = 0; j < m; j++)
 				gold_out_sink[k][i] += inputX[i * m + j] * gold_out[k * m + j];
 
-	print_uart("  Generated golden output for sinkhorn \n");
+	printf("  Generated golden output for sinkhorn \n");
 
 	for (i = 0; i < 1; i++)
 	{
@@ -198,15 +167,15 @@ static void init_buf (token_t *in, float * gold)
 
 int main(int argc, char * argv[])
 {
-	int i;
-	int n;
+        int i;
+        int n;
 	int ndev;
 	struct esp_device *espdevs;
 	struct esp_device *dev;
 	unsigned done;
 	unsigned **ptable;
 	token_t *mem;
-	float *gold;
+	token_t *gold;
 	unsigned errors = 0;
 	unsigned coherence;
 
@@ -263,15 +232,16 @@ int main(int argc, char * argv[])
 			ptable[i] = (unsigned *) &mem[i * (CHUNK_SIZE / sizeof(token_t))];
 
 		printf("  ptable = %p\n", ptable);
-		printf("  nchunk = %lu\n", NCHUNK(mem_size));
+                printf("  nchunk = %lu\n", NCHUNK(mem_size));
 
 #ifndef __riscv
-		for (coherence = ACC_COH_NONE; coherence <= ACC_COH_FULL; coherence++) {
+                for (coherence = ACC_COH_NONE; coherence <= ACC_COH_FULL; coherence++) {
 #else
 		{
 			/* TODO: Restore full test once ESP caches are integrated */
 			coherence = ACC_COH_NONE;
 #endif
+
 			printf("  Generate input...\n");
 
 			init_buf(mem, gold);
@@ -304,16 +274,16 @@ int main(int argc, char * argv[])
 
 			// Start accelerators
 			printf("  Start...\n");
+
 			iowrite32(dev, CMD_REG, CMD_MASK_START);
 
 			// Wait for completion
 			done = 0;
 			while (!done) {
-				done = ioread32(dev, STATUS_REG);
-				done &= STATUS_MASK_DONE;
-			}
+			      done = ioread32(dev, STATUS_REG);
+			      done &= STATUS_MASK_DONE;
+		        }
 			iowrite32(dev, CMD_REG, 0x0);
-
 
 			printf("  Done\n");
 			printf("  validating...\n");
@@ -325,7 +295,6 @@ int main(int argc, char * argv[])
 				printf("  ... FAIL\n");
 			else
 				printf("  ... PASS\n");
-
 		}
 		aligned_free(ptable);
 		aligned_free(mem);

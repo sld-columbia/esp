@@ -93,10 +93,6 @@ void top(dma_word_t *out, dma_word_t *in1,
 	 const unsigned conf_info_load_state,
 	 dma_info_t &load_ctrl, dma_info_t &store_ctrl);
 
-//void compute(word_t _inbuff[SIZE_IN_CHUNK_DATA],
-//	     word_t _outbuff[SIZE_OUT_CHUNK_DATA]);
-
-//void compute(word_t _inbuff[SIZE_IN_CHUNK_DATA],
 void compute(word_t Q[P_MAX][Q_MAX], word_t X[P_MAX][M_MAX],
 	word_t Y[Q_MAX][M_MAX], word_t T[M_MAX][M_MAX], word_t &P,
 	const unsigned q,
@@ -108,7 +104,6 @@ void compute(word_t Q[P_MAX][Q_MAX], word_t X[P_MAX][M_MAX],
 	const unsigned p2p_iter,
 	word_t _outbuff[SIZE_OUT_CHUNK_DATA]);
 
-//void load(word_t _inbuff[SIZE_IN_CHUNK_DATA], dma_word_t *in1,
 void load(word_t Q[P_MAX][Q_MAX], word_t X[P_MAX][M_MAX],
 	word_t Y[Q_MAX][M_MAX], word_t T[M_MAX][M_MAX], word_t &P, dma_word_t *in1,
 	const unsigned q,

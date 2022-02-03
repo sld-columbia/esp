@@ -61,7 +61,6 @@ static void init_buffer(token_t *in, token_t * gold)
 		{
 			float val = (float) 1/(p * q);
 			in[i * in_words_adj + j] = (token_t) float_to_fixed32(val, 11);
-//            inbuff[i * in_words_adj + j] = (word_t) j;
 		}
 
 		for(x = 0; x < m*p; x++) //X
@@ -69,21 +68,19 @@ static void init_buffer(token_t *in, token_t * gold)
 			in[i * in_words_adj + j + x] = (token_t) float_to_fixed32(inputX[x], 11);
 			//printf(" in[%d] = %f \n", i * in_words_adj + j + x, in[i * in_words_adj + j + x]);
 		}
-//            inbuff[i * in_words_adj + j + x] = (word_t) j+x;
 
 		for(y = 0; y < m*q; y++) //Y
 		{
 			in[i * in_words_adj + j + x + y] = (token_t) float_to_fixed32(inputY[y], 11);
 			//printf(" in[%d] = %f \n", i * in_words_adj + j + x + y, in[i * in_words_adj + j + x +y]);
 		}
-//            inbuff[i * in_words_adj + j + x + y] = (word_t) j+x+y;
 
 		for(t = 0; t < m*m; t++) //T
 		{
 			in[i * in_words_adj + j + x + y + t] = (token_t) float_to_fixed32(inputT[t], 11);
 			//printf(" in[%d] = %f \n", i * in_words_adj + j + x + y + t, in[i * in_words_adj + j + x + y + t]);
 		}
-		//for(; j < p*q+m*p+m*q+m*m+1; j++) //P
+
 		in[i * in_words_adj + j + x + y + t] = (token_t) float_to_fixed32(inputP, 11);
 		//printf(" in[%d] = %f \n", i * in_words_adj + j + x + y + t, in[i * in_words_adj + j + x + y + t]);
 
@@ -104,7 +101,7 @@ static void init_buffer(token_t *in, token_t * gold)
 	{
 		for(j = 0; j < m*m; j++)
 		{
-			gold[i * out_words_adj + j] = (token_t) float_to_fixed32(gold_out[j], 11);
+p			gold[i * out_words_adj + j] = (token_t) float_to_fixed32(gold_out[j], 11);
 			//printf("gold: %d: val = %f \n", j, gold_out[j]);
 		}
 

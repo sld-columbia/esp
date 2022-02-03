@@ -33,9 +33,6 @@ void sinkhorn::compute_C(uint32_t p, uint32_t q, uint32_t m, FPDATA_WORD gamma)
     for(uint8_t i = 0; i < READ_INPUT_WRITE_CK; i++)
     {
         HLS_UNROLL_LOOP(ON);
-        // gamma_word[i] = gamma;
-        // cynw_interpret(gamma_word[i], gamma_fp[i]);
-        // gamma_fp[i] = 1 / gamma_fp[i];
         gamma_fp[i] = gamma_fp_val;
     }
 
@@ -214,87 +211,6 @@ void sinkhorn::compute_P(uint32_t p, uint32_t q, uint32_t maxiter/*, FPDATA_WORD
     float sum = 0;
 #endif
 
-//     FPDATA_WORD C_word[READ_C_WRITE_K];
-//     FPDATA C_fp[READ_C_WRITE_K];
-//     FPDATA_WORD K_word[READ_C_WRITE_K];
-//     FPDATA K_fp[READ_C_WRITE_K];
-//     HLS_FLAT(C_word);
-//     HLS_FLAT(C_fp);
-//     HLS_FLAT(K_word);
-//     HLS_FLAT(K_fp);
-
-//     // FPDATA_WORD gamma_word[READ_C_WRITE_K];
-//     FPDATA gamma_fp[READ_C_WRITE_K];
-//     // HLS_FLAT(gamma_word);
-//     HLS_FLAT(gamma_fp);
-
-//     FPDATA exponent[READ_C_WRITE_K];
-//     FPDATA term[READ_C_WRITE_K];
-//     FPDATA exp_result[READ_C_WRITE_K];
-//     HLS_FLAT(exponent);
-//     HLS_FLAT(term);
-//     HLS_FLAT(exp_result);
-
-//     FPDATA_WORD gamma_word_val = gamma;
-//     FPDATA gamma_fp_val;
-//     cynw_interpret(gamma_word_val, gamma_fp_val);
-//     gamma_fp_val = 1 / gamma_fp_val;
-
-//     for(uint8_t i = 0; i < READ_C_WRITE_K; i++)
-//     {
-//         HLS_UNROLL_LOOP(ON);
-//         // gamma_word[i] = gamma;
-//         // cynw_interpret(gamma_word[i], gamma_fp[i]);
-//         // gamma_fp[i] = 1 / gamma_fp[i];
-//         gamma_fp[i] = gamma_fp_val;
-//     }
-
-//     //Compute K
-//     for(uint32_t i = 0; i < P_MAX*Q_MAX; i+=READ_C_WRITE_K)
-//     {
-//         //HLS_CONSTRAIN_LATENCY("K LOOP");
-//         HLS_PIPELINE_LOOP(SOFT_STALL, 1, "K loop");
-//         if(i >= p*q){}
-//         else
-//         {
-//             for(uint8_t h = 0; h < READ_C_WRITE_K; h++)
-//             {
-//                 HLS_BREAK_DEP(C);
-//                 HLS_BREAK_DEP(K);
-
-//                 if(i+h >= p*q){}
-//                 else
-//                 {
-//                     C_word[h] = C[i + h];// + i/q];
-//                     cynw_interpret(C_word[h], C_fp[h]);
-//                     K_fp[h] = neg_exp(C_fp[h] * gamma_fp[h]);
-
-//                     cynw_interpret(K_fp[h], K_word[h]);
-//                     K[i+h] = K_word[h];
-
-
-// #ifndef STRATUS_HLS
-//                     sum += K_fp[h];
-//                     //sum += K_fp[h+1];
-//                 // //sum += K_fp[0];
-//                 //     float tmp1, tmp2;
-//                 //     fp2native(K_fp[h], tmp1);
-//                 //     fp2native(K_fp[h+1], tmp2);
-//                 //     ESP_REPORT_INFO("%f %f \n", tmp1, tmp2);
-
-// #endif
-//                 }
-//                 // }
-//             }
-//         }
-//     }
-
-
-// #ifndef STRATUS_HLS
-//     ESP_REPORT_INFO("K sum is %f", sum);
-// #else
-//     printf("Compute K is done\n");
-// #endif
 
 
     FPDATA q_fp = q;
@@ -336,8 +252,8 @@ void sinkhorn::compute_P(uint32_t p, uint32_t q, uint32_t maxiter/*, FPDATA_WORD
 
     // kernel_op_alt(p, q, maxiter);
     bool converge = false;
-    FPDATA error;//, prev_error = 1;
-    FPDATA limit_val = 0.00001;
+    FPDATA a_error, b_error;//, prev_error = 1;
+    FPDATA limit_val = 0.0001;
     FPDATA limit = limit_val;// * q_fp;
     uint16_t counter = 0;
 
@@ -355,25 +271,26 @@ void sinkhorn::compute_P(uint32_t p, uint32_t q, uint32_t maxiter/*, FPDATA_WORD
 #endif
 
             //a
-            error = kernel_operation(p, q, false);
+            a_error = kernel_operation(p, q, false);
 
 #ifdef STRATUS_HLS
             printf("Finished a starting b\n");
 #endif
 
             //b
-            error = kernel_operation(p, q, true);
+            b_error = kernel_operation(p, q, true);
             counter = counter + 1;
-            if(error < limit /*|| (prev_error-error)*(prev_error-error) < limit*/ || counter >= maxiter)
+            if(a_error <= limit || b_error <= limit || counter >= maxiter)
                 converge = true;
-
-            //prev_error = error;
 
 #ifndef STRATUS_HLS
             float error_val;
-            fp2native(error, error_val);
-            ESP_REPORT_INFO("End iteration %d with %f, min %f, max %f", counter, error_val, min, max);
+            fp2native(a_error, error_val);
+            ESP_REPORT_INFO("End iteration %d with %.20f a_error, min %f, max %f", counter, error_val, min, max);
+            fp2native(b_error, error_val);
+            ESP_REPORT_INFO("End iteration %d with %.20f b_error, min %f, max %f", counter, error_val, min, max);
 #endif
+
         // }
 
     }
@@ -442,6 +359,7 @@ FPDATA sinkhorn::kernel_operation(uint32_t p, uint32_t q, bool a_or_b)
 
     if(!a_or_b) //Do a = p / (K @ b)
     {
+        FPDATA a_error = 0;
         for(uint8_t i = 0; i < P_MAX; i++)
         {
             //HLS_PIPELINE_LOOP(SOFT_STALL, 64, "pipe a loop");
@@ -535,11 +453,24 @@ FPDATA sinkhorn::kernel_operation(uint32_t p, uint32_t q, bool a_or_b)
                 //x_a[i] = 1/(p * x_a[i]);
                 a_fp_total = 1 / (p_fp * a_fp_total);
                 //a_fp_total = inv_p_fp * inv_a_taylor;
+
+                FPDATA_WORD a_prev = x_a[i];
+                FPDATA a_fp_prev, new_err;
+                cynw_interpret(a_prev, a_fp_prev);
+                new_err = (a_fp_prev - a_fp_total);// / a_fp_prev;
+                // a_error += new_err * new_err;
+                if(new_err >= 0)
+                    a_error += new_err;
+                else
+                    a_error -= new_err;
+
                 cynw_interpret(a_fp_total, a_word);
                 x_a[i] = a_word;
 
             }
         }
+
+        return a_error;
     }
     else //Do b = q / (K.T @ a)
     {
@@ -661,7 +592,6 @@ FPDATA sinkhorn::kernel_operation(uint32_t p, uint32_t q, bool a_or_b)
         return b_error;
     }
 
-    return 1;
 }
 
 

@@ -11,7 +11,9 @@
 //Inputs: inputX[m*p], inputY[m*q], p, q, m, gamma, maxiter
 //Outputs: P[p*q], CP_sum
 //Memories: P[q*p], C[q*p], K[q*p], x_a[p], y_b[q], inputX[m*p], inputY[m*q]
-//Registers: CP_sum
+//Config Registers: Inputs dimensions - rows, q_cols, m_rows
+//                  Sinkhorn Algorithm constants - gamma, maxiter
+//                  P2P feature support - p2p_in, p2p_out, p2p_iter, store_state
 
 // Processes
 
@@ -31,10 +33,25 @@ void sinkhorn::load_input()
         m_rows = 0;
         gamma = 0;
         maxiter = 0;
-        p2p_in = 0;
-        p2p_out = 0;
-        p2p_iter = 1;
+        p2p_in = 0; //Expect input to come directly from P2P
+        p2p_out = 0; //Expect output to be sent in P2P
+        p2p_iter = 1; //How many iterations of P2P
         store_state = 0;
+
+        //The store_state configuration register is used to control executions
+        //of the processes while using the P2P feature from ESP. As for the current
+        //P2P feature (2021). Executions of the first and last iterations of the
+        //algorithm require disabling P2P and sending/receiving data to/from
+        //memory:
+        //0 - accelerator expects regular source/destination interactions
+        //1 - accelerator loads data from source in the first iteration, stops
+        //    when norm check converges (or p2p_iter) - no final store to
+        //    destination (used if N Sinkhorn x N SVD)
+        //2 - if p2p_iter == 1 the accelrator only stores the data - allows to
+        //    run only one iteration and then only store to memory/P2P
+        //3 - accelerator doesn't load from source in the first iteration,
+        //    doesn't stop on norm check (only when p2p_iter finishes), doesn't
+        //    store in the last iteration of p2p_iter (used if N Sinkhorn x 1 SVD)
 
         wait();
     }
@@ -79,6 +96,7 @@ void sinkhorn::load_input()
 
             if((store_state == 2 && p2p_iter == 1) || (store_state == 3 && b == 0))
             {
+                //Do not load new data
                 this->load_compute_handshake();
                 this->load_compute_handshake();
             }
@@ -197,6 +215,7 @@ void sinkhorn::load_input()
             ESP_REPORT_INFO("DMA read inputX and inputY complete, offset is %d", offset);
 #endif
 
+            //Check if SVD accelerator signaled that norm check converged
             wait();
             FPDATA data_fp, tmp = 1.0;
             FPDATA_WORD data_word = inputY[length_Y];
@@ -282,6 +301,7 @@ void sinkhorn::compute_kernel()
 
     this->compute_load_handshake();
 
+    //Check if SVD accelerator signaled that norm check converged
     FPDATA data_fp, tmp = 1.0;
     FPDATA_WORD data_word = inputY[length_Y];
     cynw_interpret(data_word, data_fp);
@@ -291,24 +311,14 @@ void sinkhorn::compute_kernel()
 
     if((store_state == 2 && p2p_iter == 1) || (store_state == 3 && b == 0))
     {
-        // this->compute_store_handshake();
-        // this->compute_store_handshake();
-        // this->compute_load_handshake();
-
+        //Do nothing - P2P related
     }
     else
     {
 
-    //CP_sum = 0;
 
     // Compute
 
-    // for (uint32_t i = 0; i < p_rows*q_cols; i++) {
-    //     //Temporary
-    //     P[i] = i;
-    //     CP_sum = CP_sum + i;
-    //    wait();
-    // }
 #ifndef STRATUS_HLS
     ESP_REPORT_INFO("START COMPUTING");
 #else
@@ -330,27 +340,6 @@ void sinkhorn::compute_kernel()
     printf("Compute K is done\n");
 #endif
 
-    // wait();
-    // compute_CP(p_rows, q_cols);
-// #ifndef STRATUS_HLS
-//     ESP_REPORT_INFO("Compute CP is done");
-// #else
-//     printf("Compute CP is done\n");
-// #endif
-
-    // FPDATA data_fp;
-    // FPDATA_WORD data_word = CP_sum;
-    // //cynw_interpret(data_word, data_fp);
-    // bv2fp<FPDATA, FPDATA_WL, FPDATA_WL>(sc_bv<DMA_WIDTH>(CP_sum), data_fp);
-    // float data_float;
-    // fp2native(data_fp, data_float);
-
-    // ESP_REPORT_INFO("Final CP_sum is: %f", data_float);
-
-    // this->compute_store_handshake(); // Output is ready
-    // // this->compute_load_handshake(); // Start loading next batch
-    // this->compute_store_handshake(); // Wait for store to finish
-    // this->compute_load_handshake(); // Start loading next batch
 
     }
         this->compute_store_handshake();
@@ -441,51 +430,50 @@ void sinkhorn::store_output()
                 b = p2p_iter - 1;//Finish if norm check succeeded
 
             //When we are in the last iteration, don't store
-            //the data if store state is 1
-        if((store_state == 1 || store_state == 3) && b == p2p_iter - 1)
-        {
-            //this->store_compute_handshake();
-            this->store_compute_handshake();
-        }
-        else
-        {
-            wait();
-            bool pingpong = false;
-
-#if (DMA_WORD_PER_BEAT == 0)
-            uint32_t length = length_P + 1;
-            offset = store_offset;
-            if(p2p_out == 1)
-                length = length_P;
-#else
-            uint32_t length = round_up(length_P + 1, DMA_WORD_PER_BEAT);
-            offset = store_offset;
-            if(p2p_out == 1)
-                length = round_up(length_P, DMA_WORD_PER_BEAT);
-#endif
-            // Chunking
-            for (int rem = length; rem > 0; rem -= PLM_OUT_WORD)
+            //the data if store state is 1 or 3
+            if((store_state == 1 || store_state == 3) && b == p2p_iter - 1)
             {
+                this->store_compute_handshake();
+            }
+            else
+            {
+                wait();
+                bool pingpong = false;
 
-#ifndef STRATUS_HLS
-                ESP_REPORT_INFO("DMA write start offset is %d", offset);
-#endif
-                // Configure DMA transaction
-                uint32_t len = rem > PLM_OUT_WORD ? PLM_OUT_WORD : rem;
 #if (DMA_WORD_PER_BEAT == 0)
-                // data word is wider than NoC links
-                dma_info_t dma_info(offset * DMA_BEAT_PER_WORD, len * DMA_BEAT_PER_WORD, DMA_SIZE);
+                uint32_t length = length_P + 1;
+                offset = store_offset;
+                if(p2p_out == 1)
+                    length = length_P;
 #else
-                dma_info_t dma_info(offset / DMA_WORD_PER_BEAT, len / DMA_WORD_PER_BEAT, DMA_SIZE);
-                // dma_info_t dma_info(offset >> LOG_DMA_WORD_PER_BEAT, len >> LOG_DMA_WORD_PER_BEAT, DMA_SIZE);
+                uint32_t length = round_up(length_P + 1, DMA_WORD_PER_BEAT);
+                offset = store_offset;
+                if(p2p_out == 1)
+                    length = round_up(length_P, DMA_WORD_PER_BEAT);
+#endif
+                // Chunking
+                for (int rem = length; rem > 0; rem -= PLM_OUT_WORD)
+                {
+
+#ifndef STRATUS_HLS
+                    ESP_REPORT_INFO("DMA write start offset is %d", offset);
+#endif
+                    // Configure DMA transaction
+                    uint32_t len = rem > PLM_OUT_WORD ? PLM_OUT_WORD : rem;
+#if (DMA_WORD_PER_BEAT == 0)
+                    // data word is wider than NoC links
+                    dma_info_t dma_info(offset * DMA_BEAT_PER_WORD, len * DMA_BEAT_PER_WORD, DMA_SIZE);
+#else
+                    dma_info_t dma_info(offset / DMA_WORD_PER_BEAT, len / DMA_WORD_PER_BEAT, DMA_SIZE);
+                    // dma_info_t dma_info(offset >> LOG_DMA_WORD_PER_BEAT, len >> LOG_DMA_WORD_PER_BEAT, DMA_SIZE);
 #endif
 
 #ifndef STRATUS_HLS
-                ESP_REPORT_INFO("DMA INFO STORE: index = %d, length = %d, size = %d \n", dma_info.index, dma_info.length, DMA_SIZE.to_uint());
+                    ESP_REPORT_INFO("DMA INFO STORE: index = %d, length = %d, size = %d \n", dma_info.index, dma_info.length, DMA_SIZE.to_uint());
 #endif
-                offset += len;
+                    offset += len;
 
-                this->dma_write_ctrl.put(dma_info);
+                    this->dma_write_ctrl.put(dma_info);
 
 //     sc_bv<DMA_WIDTH> data;
 
@@ -500,110 +488,110 @@ void sinkhorn::store_output()
 
 
 #if (DMA_WORD_PER_BEAT == 0)
-                // data word is wider than NoC links
-                for (uint16_t i = 0; i < len; i++)
-                {
-
-                    // Read from PLM
-                    sc_dt::sc_int<DATA_WIDTH> data;
-                    wait();
-
-                    data = P[i];
-
-                    sc_dt::sc_bv<DATA_WIDTH> dataBv(data);
-
-                    uint16_t k = 0;
-                    for (k = 0; k < DMA_BEAT_PER_WORD - 1; k++)
+                    // data word is wider than NoC links
+                    for (uint16_t i = 0; i < len; i++)
                     {
-                        this->dma_write_chnl.put(dataBv.range((k+1) * DMA_WIDTH - 1, k * DMA_WIDTH));
+
+                        // Read from PLM
+                        sc_dt::sc_int<DATA_WIDTH> data;
                         wait();
+
+                        data = P[i];
+
+                        sc_dt::sc_bv<DATA_WIDTH> dataBv(data);
+
+                        uint16_t k = 0;
+                        for (k = 0; k < DMA_BEAT_PER_WORD - 1; k++)
+                        {
+                            this->dma_write_chnl.put(dataBv.range((k+1) * DMA_WIDTH - 1, k * DMA_WIDTH));
+                            wait();
+                        }
+                        // Last beat on the bus does not require wait(), which is
+                        // placed before accessing the PLM
+                        this->dma_write_chnl.put(dataBv.range((k+1) * DMA_WIDTH - 1, k * DMA_WIDTH));
                     }
-                    // Last beat on the bus does not require wait(), which is
-                    // placed before accessing the PLM
-                    this->dma_write_chnl.put(dataBv.range((k+1) * DMA_WIDTH - 1, k * DMA_WIDTH));
-                }
 #else
 
-                //wait();
-                //compute_store_P(p_rows, q_cols);
-                uint16_t h = 0;
-                sc_dt::sc_bv<DMA_WIDTH> dataBv;
+                    //wait();
+                    //compute_store_P(p_rows, q_cols);
+                    uint16_t h = 0;
+                    sc_dt::sc_bv<DMA_WIDTH> dataBv;
 
 #ifndef STRATUS_HLS
-                ESP_REPORT_INFO("len = %d, size = %d", len, len / DMA_WORD_PER_BEAT);
+                    ESP_REPORT_INFO("len = %d, size = %d", len, len / DMA_WORD_PER_BEAT);
 #endif
 
-                for (uint16_t i = 0; i < length_P; i += q_cols)
-                {
-
-                    wait();
-
-                    this->store_computeP_handshake();
-
-                    for(uint16_t k = 0; k < q_cols; k++)
+                    for (uint16_t i = 0; i < length_P; i += q_cols)
                     {
 
                         wait();
 
-                        if(pingpong == false)
-                        {
-                            dataBv.range((h+1) * DATA_WIDTH - 1, h * DATA_WIDTH) = Ping[k];
-                            // dataBv.range(((h+1) << LOG_DATA_WIDTH) - 1, h << LOG_DATA_WIDTH) = Ping[k];
-                        }
-                        //this->dma_write_chnl.put(dataBv_ping);
-                        else
-                        {
-                            dataBv.range((h+1) * DATA_WIDTH - 1, h * DATA_WIDTH) = Pong[k];
-                            // dataBv.range(((h+1) << LOG_DATA_WIDTH) - 1, h << LOG_DATA_WIDTH) = Pong[k];
-                        }
-                        //this->dma_write_chnl.put(dataBv_pong);
+                        this->store_computeP_handshake();
 
-                        h = h + 1;
-                        if(h == DMA_WORD_PER_BEAT)
+                        for(uint16_t k = 0; k < q_cols; k++)
                         {
-                            h = 0;
-                            this->dma_write_chnl.put(dataBv);
+
+                            wait();
+
+                            if(pingpong == false)
+                            {
+                                dataBv.range((h+1) * DATA_WIDTH - 1, h * DATA_WIDTH) = Ping[k];
+                                // dataBv.range(((h+1) << LOG_DATA_WIDTH) - 1, h << LOG_DATA_WIDTH) = Ping[k];
+                            }
+                            //this->dma_write_chnl.put(dataBv_ping);
+                            else
+                            {
+                                dataBv.range((h+1) * DATA_WIDTH - 1, h * DATA_WIDTH) = Pong[k];
+                                // dataBv.range(((h+1) << LOG_DATA_WIDTH) - 1, h << LOG_DATA_WIDTH) = Pong[k];
+                            }
+                            //this->dma_write_chnl.put(dataBv_pong);
+
+                            h = h + 1;
+                            if(h == DMA_WORD_PER_BEAT)
+                            {
+                                h = 0;
+                                this->dma_write_chnl.put(dataBv);
+                            }
+
                         }
 
-                    }
-
-                    pingpong = !pingpong;
+                        pingpong = !pingpong;
 
 #ifndef STRATUS_HLS
-                    //ESP_REPORT_INFO("store pingpong is %d", pingpong);
+                        //ESP_REPORT_INFO("store pingpong is %d", pingpong);
 #endif
-                }
+                    }
 
-                this->store_computeP_handshake();
-                wait();
-                //Store CP_sum
-                if(pingpong == false)
-                {
-                    dataBv.range((h+1) * DATA_WIDTH - 1, h * DATA_WIDTH) = Ping[0];
-                    // dataBv.range(((h+1) << LOG_DATA_WIDTH) - 1, h << LOG_DATA_WIDTH) = Ping[0];
-                }
-                //this->dma_write_chnl.put(dataBv_ping);
-                else
-                {
-                    dataBv.range((h+1) * DATA_WIDTH - 1, h * DATA_WIDTH) = Pong[0];
-                    // dataBv.range(((h+1) << LOG_DATA_WIDTH) - 1, h << LOG_DATA_WIDTH) = Pong[0];
-                }
-                //this->dma_write_chnl.put(dataBv_pong);
+                    this->store_computeP_handshake();
+                    wait();
+                    //Store CP_sum
+                    if(pingpong == false)
+                    {
+                        dataBv.range((h+1) * DATA_WIDTH - 1, h * DATA_WIDTH) = Ping[0];
+                        // dataBv.range(((h+1) << LOG_DATA_WIDTH) - 1, h << LOG_DATA_WIDTH) = Ping[0];
+                    }
+                    //this->dma_write_chnl.put(dataBv_ping);
+                    else
+                    {
+                        dataBv.range((h+1) * DATA_WIDTH - 1, h * DATA_WIDTH) = Pong[0];
+                        // dataBv.range(((h+1) << LOG_DATA_WIDTH) - 1, h << LOG_DATA_WIDTH) = Pong[0];
+                    }
+                    //this->dma_write_chnl.put(dataBv_pong);
 
-                if(!(p2p_out == 1 && h == 0))
-                    this->dma_write_chnl.put(dataBv);
-                pingpong = !pingpong;
+                    if(!(p2p_out == 1 && h == 0))
+                        this->dma_write_chnl.put(dataBv);
+                    pingpong = !pingpong;
 
-                //ESP_REPORT_INFO("counter = %d", counter)
+                    //ESP_REPORT_INFO("counter = %d", counter)
 
 #endif
 
 
+                }
+
+
+                this->store_compute_handshake(); // Store is done, compute next batch
             }
-
-
-            this->store_compute_handshake(); // Store is done, compute next batch
-        }
         }
     }
 
@@ -697,7 +685,9 @@ void sinkhorn::compute_store_P()
                 b = p2p_iter - 1;//Finish if norm check succeeded
 
             //The no-store states
-            if((store_state == 1 || store_state == 3) && b == p2p_iter - 1){}
+            if((store_state == 1 || store_state == 3) && b == p2p_iter - 1){
+                //Do nothing - Skip P computation
+            }
             else
             {
 

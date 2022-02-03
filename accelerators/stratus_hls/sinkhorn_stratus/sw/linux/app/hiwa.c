@@ -32,7 +32,7 @@ static int validate_buffer(token_t *out, token_t *gold)
 			float val = fixed32_to_float(out[i * out_words_adj + j], 11);
 			if (j != p_rows * q_cols) // P sum
 				sum += val;
-else
+			else
 			{
 				float CP_val = fixed32_to_float(gold[i * out_words_adj + j],11);
 				if (CP_val != val) // CP_sum
@@ -58,7 +58,7 @@ else
 			printf("P sum is: %f\n", sum);
 			if (P_error > 3)
 			{
-				printf("P error is bigger than 3 percen.\n");
+				printf("P error is bigger than 3 percent\n");
 				errors++;
 			}
 
