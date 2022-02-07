@@ -101,7 +101,7 @@ static void init_buffer(token_t *in, token_t * gold)
 	{
 		for(j = 0; j < m*m; j++)
 		{
-p			gold[i * out_words_adj + j] = (token_t) float_to_fixed32(gold_out[j], 11);
+			gold[i * out_words_adj + j] = (token_t) float_to_fixed32(gold_out[j], 11);
 			//printf("gold: %d: val = %f \n", j, gold_out[j]);
 		}
 
