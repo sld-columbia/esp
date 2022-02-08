@@ -79,16 +79,23 @@ static int validate_buf(token_t *out, float *gold)
 
 			MAE = (val - gold_val) / gold_val;
 
-			/* uint32_t* tmp1 = (uint32_t*) &gold[i * out_words_adj + j]; */
-			/* print_uart("gold = ");print_uart_int(*tmp1);print_uart(" "); */
-			/* uint32_t* tmp2 = (uint32_t*) &out[i * out_words_adj + j]; */
-			/* print_uart("out = ");print_uart_int(*tmp2);print_uart("\n"); */
+			if(j < m*m){
+				uint32_t* tmp1 = (uint32_t*) &gold[i * out_words_adj + j];
+				print_uart("gold = ");print_uart_int(*tmp1);print_uart(" ");
+				uint32_t* tmp2 = (uint32_t*) &val;
+				print_uart("out = ");print_uart_int(*tmp2);print_uart("\n");
+			}
 
 			MAE_sum += MAE*MAE;
 
 			if (MAE > 0.15 || MAE < -0.15)
 			{
+				print_uart("Error for j = ");print_uart_int(j);print_uart("\n");
 				errors++;
+				uint32_t* tmp3 = (uint32_t*) &gold_val;
+				print_uart("gold = ");print_uart_int(*tmp3);print_uart(" ");
+				uint32_t* tmp4 = (uint32_t*) &val;
+				print_uart("out = ");print_uart_int(*tmp4);print_uart("\n");
 			}
 
 		}

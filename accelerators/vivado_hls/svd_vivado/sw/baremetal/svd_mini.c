@@ -15,27 +15,27 @@ typedef int32_t token_t;
 #define P 5
 #define M 3
 
-float inputX[] = { -0.99729546, -0.48864438, -1.1597335 , -1.83951924, -0.50367543,
+float inputX_mini[] = { -0.99729546, -0.48864438, -1.1597335 , -1.83951924, -0.50367543,
 		   -0.67540379, -1.76116705, -0.56847006, -0.96412516, -1.54168092,
 		   -0.5463881 , -1.02347615, -1.03408063, -0.43882483, -0.9527715 };
 
-float inputY[] = { 6.72627056e-01,  3.69826234e-02, -9.02181788e-17,
+float inputY_mini[] = { 6.72627056e-01,  3.69826234e-02, -9.02181788e-17,
 		   1.15215940e+00,  1.19119133e-01, -1.56858856e-16,
 		   1.26133188e+00,  1.41772359e-01, -1.72195174e-16,
 		   1.03926143e+00, -1.38062725e-01, -1.31267156e-16,
 		   6.69471981e-01, -3.40943350e-01, -7.40678875e-17};
 
-float inputT[] = { 0.00166667, 0        , 0        ,
+float inputT_mini[] = { 0.00166667, 0        , 0        ,
 		    0        , 0.00166667, 0        ,
 		    0        , 0        , 0.00166667 };
 
-float inputP = 0.0625;
+float inputP_mini = 0.0625;
 
-float gold_out[] = { -0.8082151413, -0.2470283508, -0.534570694,
+float gold_out_mini[] = { -0.8082151413, -0.2470283508, -0.534570694,
 		       -0.2470264435, 0.966252327, -0.07303285599,
 		       -0.5345711708, -0.07302713394, 0.8419623375 };
 
-float gold_out_sink[M][P];
+float gold_out_sink_mini[M][P];
 
 
 static unsigned DMA_WORD_PER_BEAT(unsigned _st)
@@ -103,16 +103,22 @@ static int validate_buf(token_t *out, float *gold)
 
 			MAE = (val - gold_val) / gold_val;
 
-			//uint32_t* tmp1 = (uint32_t*) &gold[i * out_words_adj + j];
-			//print_uart("gold = ");print_uart_int(*tmp1);print_uart(" ");
-			//uint32_t* tmp2 = (uint32_t*) &val;
-			//print_uart("out = ");print_uart_int(*tmp2);print_uart("\n");
+			uint32_t* tmp1 = (uint32_t*) &gold_val;
+			print_uart("gold = ");print_uart_int(*tmp1);print_uart(" ");
+			uint32_t* tmp2 = (uint32_t*) &val;
+			print_uart("out = ");print_uart_int(*tmp2);print_uart("\n");
 
 			MAE_sum += MAE*MAE;
 
 			if (MAE > 0.15 || MAE < -0.15)
 			{
+				print_uart("Error for j = ");print_uart_int(j);print_uart("\n");
 				errors++;
+				uint32_t* tmp3 = (uint32_t*) &gold_val;
+				print_uart("gold = ");print_uart_int(*tmp3);print_uart(" ");
+				uint32_t* tmp4 = (uint32_t*) &val;
+				print_uart("out = ");print_uart_int(*tmp4);print_uart("\n");
+
 			}
 
 		}
@@ -147,24 +153,24 @@ static void init_buf (token_t *in, float * gold)
 		printf("  Generated Q \n");
 
 		for(x = 0; x < m*p; x++) //X
-			in[i * in_words_adj + j + x] = (token_t) float_to_fixed32(inputX[x], 11);
+			in[i * in_words_adj + j + x] = (token_t) float_to_fixed32(inputX_mini[x], 11);
 			//in[i * in_words_adj + j + x] = (token_t) j+x;
 
 		printf("  Generated X \n");
 
 		for(y = 0; y < m*q; y++) //Y
-			in[i * in_words_adj + j + x + y] = (token_t) float_to_fixed32(inputY[y], 11);
+			in[i * in_words_adj + j + x + y] = (token_t) float_to_fixed32(inputY_mini[y], 11);
 			//in[i * in_words_adj + j + x + y] = (token_t) j+x+y;
 
 		printf("  Generated Y \n");
 
 		for(t = 0; t < m*m; t++) //T
-			in[i * in_words_adj + j + x + y + t] = (token_t) float_to_fixed32(inputT[t], 11);
+			in[i * in_words_adj + j + x + y + t] = (token_t) float_to_fixed32(inputT_mini[t], 11);
 			//in[i * in_words_adj + j + x + y + t] = (token_t) j+x+y+t;
 
 		printf("  Generated T \n");
 
-		in[i * in_words_adj + j + x + y + t] = (token_t) float_to_fixed32(inputP, 11);
+		in[i * in_words_adj + j + x + y + t] = (token_t) float_to_fixed32(inputP_mini, 11);
 		//in[i * in_words_adj + j + x + y + t] = (token_t) j+x+y+t;
 		printf("  Generated P \n");
 
@@ -174,22 +180,22 @@ static void init_buf (token_t *in, float * gold)
 
 	for(k = 0; k < m; k++)
 		for(j = 0; j < p; j++)
-			gold_out_sink[k][j] = 0.0;
+			gold_out_sink_mini[k][j] = 0.0;
 
 	for(k = 0; k < m; k++)
 		for(i = 0; i < p; i++)
 			for(j = 0; j < m; j++)
-				gold_out_sink[k][i] += inputX[i * m + j] * gold_out[k * m + j];
+				gold_out_sink_mini[k][i] += inputX_mini[i * m + j] * gold_out_mini[k * m + j];
 
 	print_uart("  Generated golden output for sinkhorn \n");
 
 	for (i = 0; i < 1; i++)
 	{
 		for(j = 0; j < m*m; j++)
-			gold[i * out_words_adj + j] = gold_out[j];
+			gold[i * out_words_adj + j] = gold_out_mini[j];
 
 		for(k = 0; k < m*p; k++)
-			gold[i * out_words_adj + j + k] = gold_out_sink[k / p][k % p];
+			gold[i * out_words_adj + j + k] = gold_out_sink_mini[k / p][k % p];
 	}
 
 	printf("  Generated output \n");
@@ -256,6 +262,9 @@ int main(int argc, char * argv[])
 		mem = aligned_malloc(mem_size);
 
 		printf("  memory buffer base-address = %p\n", mem);
+
+		for(int i = 0; i < mem_size/sizeof(token_t); i++)
+			mem[i] = 0;
 
 		// Alocate and populate page table
 		ptable = aligned_malloc(NCHUNK(mem_size) * sizeof(unsigned *));

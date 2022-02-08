@@ -91,11 +91,11 @@ static int validate_buf(token_t *out, token_t *gold)
 				if (CP_val != val) // CP_sum
 				{
 					float CP_error = 100*(CP_val-val)/CP_val;
-					printf("CP_sum is: %f\n", val);
-					printf("Expected CP_sum is: %f\n", CP_val);
+					printf("CP_sum is: %d\n", out[i * out_words_adj + j]);
+					printf("Expected CP_sum is: %d\n", gold[i * out_words_adj + j]);
 					if (CP_error > 3 || CP_error < -3)
 					{
-						printf("CP error is bigger than 3 percent - %f.\n", CP_error);
+						printf("CP error is bigger than 3 percent\n");
 						errors++;
 					}
 					else
@@ -107,9 +107,10 @@ static int validate_buf(token_t *out, token_t *gold)
 		if (sum != 1.0)
 		{
 			float P_error = 100*(1.0-sum)/1.0;
-			/* int32_t sum_fixed = float_to_fixed32(sum, 11); */
-			/* int32_t sum_expected = float_to_fixed32(1.0, 11); */
-			printf("P sum is: %f\n", sum);
+			int32_t sum_fixed = float_to_fixed32(sum, 11);
+			int32_t sum_expected = float_to_fixed32(1.0, 11);
+			printf("P sum is: %d\n", sum_fixed);
+			printf("Expected P sum is: %d\n", sum_expected);
 			if (P_error > 3)
 			{
 				printf("P error is bigger than 3 percent");
