@@ -89,8 +89,8 @@ static int validate_buf(token_t *out, token_t *gold)
     int j;
     unsigned errors = 0;
 
-    printf("  gold output data @%p\n", gold);
-    printf("       output data @%p\n", out);
+    //printf("  gold output data @%p\n", gold);
+    //printf("       output data @%p\n", out);
 
     for (i = 0; i < batch; i++) {
         for (j = 0; j < size; j++)
@@ -107,7 +107,7 @@ static int validate_buf(token_t *out, token_t *gold)
         }
     }
 
-    printf("  total errors %u\n", errors);
+    //printf("  total errors %u\n", errors);
 
     return errors;
 }
@@ -117,7 +117,7 @@ static void init_buf (token_t *inputs, token_t * gold_outputs)
     int i;
     int j;
 
-    printf("  input data @%p\n", inputs);
+    //printf("  input data @%p\n", inputs);
 
     for (i = 0; i < batch; i++)
     {
@@ -128,7 +128,7 @@ static void init_buf (token_t *inputs, token_t * gold_outputs)
         }
     }
 
-    printf("  gold output data @%p\n", gold_outputs);
+    //printf("  gold output data @%p\n", gold_outputs);
 
     for (i = 0; i < batch; i++) {
         for (j = 0; j < size; j++) {
@@ -169,44 +169,44 @@ int main(int argc, char * argv[])
     /* output_handshake = (unsigned *) 0x00000004; */
 
     // Search for the device
-    printf("Scanning device tree... \n");
+    //printf("Scanning device tree... \n");
 
     ndev = probe(&espdevs, VENDOR_SLD, SLD_AD03_CXX, DEV_NAME);
 
-    printf("Found %d devices: %s\n", ndev, DEV_NAME);
+    //printf("Found %d devices: %s\n", ndev, DEV_NAME);
 
-    if (ndev == 0) {
-        printf("ad03_cxx not found\n");
-        return 0;
-    }
+    /* if (ndev == 0) { */
+    /*     printf("ad03_cxx not found\n"); */
+    /*     return 0; */
+    /* } */
 
     // Allocate memory
     gold = aligned_malloc(out_size);
     mem = aligned_malloc(mem_size);
-    printf("  memory buffer base-address = %p\n", mem);
-    printf("  memory buffer size = %p\n", mem_size);
-    printf("  golden buffer base-address = %p\n", gold);
-    printf("  golden buffer size = %p\n", out_size);
+    //printf("  memory buffer base-address = %p\n", mem);
+    //printf("  memory buffer size = %p\n", mem_size);
+    //printf("  golden buffer base-address = %p\n", gold);
+    //printf("  golden buffer size = %p\n", out_size);
 
     // Alocate and populate page table
     ptable = aligned_malloc(NCHUNK(mem_size) * sizeof(unsigned *));
     for (i = 0; i < NCHUNK(mem_size); i++)
         ptable[i] = (unsigned *) &mem[i * (CHUNK_SIZE / sizeof(token_t))];
-    printf("  ptable = %p\n", ptable);
-    printf("  nchunk = %lu\n", NCHUNK(mem_size));
+    //printf("  ptable = %p\n", ptable);
+    //printf("  nchunk = %lu\n", NCHUNK(mem_size));
 
     dev = &espdevs[0];
 
     // Check DMA capabilities
-    if (ioread32(dev, PT_NCHUNK_MAX_REG) == 0) {
-	printf("  -> scatter-gather DMA is disabled. Abort.\n");
-	return 0;
-    }
+    /* if (ioread32(dev, PT_NCHUNK_MAX_REG) == 0) { */
+    /* 	printf("  -> scatter-gather DMA is disabled. Abort.\n"); */
+    /* 	return 0; */
+    /* } */
 
-    if (ioread32(dev, PT_NCHUNK_MAX_REG) < NCHUNK(mem_size)) {
-	printf("  -> Not enough TLB entries available. Abort.\n");
-	return 0;
-    }
+    /* if (ioread32(dev, PT_NCHUNK_MAX_REG) < NCHUNK(mem_size)) { */
+    /* 	printf("  -> Not enough TLB entries available. Abort.\n"); */
+    /* 	return 0; */
+    /* } */
     
     // Pass common configuration parameters
     iowrite32(dev, SELECT_REG, ioread32(dev, DEVID_REG));
@@ -226,7 +226,7 @@ int main(int argc, char * argv[])
     niter = 2;
     for (n = 0; n < niter; n++) {
 
-	printf(" Wait for input...\n");
+	//printf(" Wait for input...\n");
 
 	//init_buf(mem, gold);
         done = 0;
@@ -235,7 +235,7 @@ int main(int argc, char * argv[])
         }
 
         // Start accelerators
-        printf("  Start...\n");
+        //printf("  Start...\n");
 
         iowrite32(dev, CMD_REG, CMD_MASK_START);
 
@@ -247,15 +247,15 @@ int main(int argc, char * argv[])
         }
         iowrite32(dev, CMD_REG, 0x0);
 
-        printf("  Done\n");
-        printf("  validating...\n");
+        //printf("  Done\n");
+        //printf("  validating...\n");
 
         /* Validation */
         errors = validate_buf(mem + out_offset, gold);
-        if (errors)
-            printf("  ... FAIL\n");
-        else
-            printf("  ... PASS\n");
+        //if (errors)
+        //    printf("  ... FAIL\n");
+        //else
+        //    printf("  ... PASS\n");
 
 	iowrite32(&hk_dev, 6 * 4, 0x1);
         done = 1;
@@ -270,7 +270,7 @@ int main(int argc, char * argv[])
     aligned_free(mem);
     aligned_free(gold);
     
-    printf("DONE\n");
+    /* printf("DONE\n"); */
 
     return 0;
 }

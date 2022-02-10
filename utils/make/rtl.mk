@@ -51,6 +51,10 @@ SIM_VLOG_SRCS += $(VLOG_SRCS)
 SIM_VLOG_SRCS += $(foreach f, $(shell strings $(FLISTS)/sim_vlog.flist), $(ESP_ROOT)/rtl/$(f))
 SIM_VLOG_SRCS += $(shell (find $(ESP_ROOT)/rtl/sim/$(TECHLIB)/verilog/ -name "*.v" ))
 SIM_VLOG_SRCS += $(shell (find $(ESP_ROOT)/rtl/sim/$(TECHLIB)/verilog/ -name "*.sv" ))
+SIM_VLOG_SRCS += $(shell (find $(ESP_ROOT)/../gf22/netlist/ -name "*.v" ))
+SIM_GATE_VLOG_SRCS += $(shell (find $(ESP_ROOT)/../gf22/netlist/ -name "*.v" ))
+SIM_GATE_VLOG_SRCS += $(shell (find $(ESP_ROOT)/../gf22/verilog/ -name "*.v" ))
+SIM_GATE_VLOG_SRCS += $(shell (find $(ESP_ROOT)/../gf22/verilog/ -name "*.sv" ))
 SIM_VLOG_SRCS += $(TOP_VLOG_SIM_SRCS)
 
 ## Vivado HLS generated files

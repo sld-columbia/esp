@@ -105,7 +105,7 @@ TOP_VHDL_RTL_SRCS += $(DESIGN_PATH)/socketgen/tile_acc.vhd
 ifeq ($(filter $(TECHLIB),$(FPGALIBS)),)
 # ASIC flow: the top module of the hierarchy connects the FPGA design
 # for testing with the chip desing and is used only for simulation
-TOP_VHDL_RTL_SRCS += $(DESIGN_PATH)/$(CHIP_TOP).vhd
+#TOP_VHDL_RTL_SRCS += $(DESIGN_PATH)/$(CHIP_TOP).vhd
 TOP_VHDL_SIM_SRCS += $(DESIGN_PATH)/$(TOP).vhd
 else
 # FPGA flow: add FPGA top module
@@ -115,7 +115,7 @@ endif
 # Testbench
 TOP_VHDL_SIM_SRCS += $(DESIGN_PATH)/$(SIMTOP).vhd
 
-TOP_VLOG_RTL_SRCS +=
+TOP_VLOG_RTL_SRCS += $(DESIGN_PATH)/$(CHIP_TOP).v
 ifneq ($(filter $(TECHLIB),$(FPGALIBS)),)
 TOP_VLOG_SIM_SRCS += $(XILINX_VIVADO)/data/verilog/src/glbl.v
 endif

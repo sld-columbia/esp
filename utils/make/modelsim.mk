@@ -133,6 +133,29 @@ sim-gui: sim-compile
 		$(VSIM); \
 	fi;
 
+sim-compile-gate: socketgen check_all_srcs modelsim/vsim.mk soft
+	@for dat in $(DAT_SRCS); do \
+		cp $$dat modelsim; \
+	done;
+	$(QUIET_MAKE)make -C modelsim -f vsim.mk
+	@cd modelsim; \
+	rm -f prom.srec ram.srec; \
+	ln -s $(SOFT_BUILD)/prom.srec; \
+	ln -s $(SOFT_BUILD)/ram.srec; \
+	echo $(SPACES)"### Compile Verilog source files for Gate sim ###"; \
+	for rtl in $(SIM_GATE_VLOG_SRCS); do \
+		echo $(SPACES)"$(VLOG) -work work +define+ARM_EN_X_SQUASH +define+ARM_X_SQUASH_VAL=0 +define+ARM_UD_MODEL $$rtl"; \
+		$(VLOG) -work work +define+ARM_EN_X_SQUASH +define+ARM_X_SQUASH_VAL=0 +define+ARM_UD_MODEL $$rtl || exit; \
+	done;
+
+sim-gate: sim-compile-gate
+	$(QUIET_RUN)cd modelsim;\
+	$(VSIM) -c;     
+
+sim-gui-gate: sim-compile-gate
+	$(QUIET_RUN)cd modelsim; \
+	$(VSIM); 
+
 sim-clean:
 	$(QUIET_CLEAN)rm -rf transcript *.wlf
 
