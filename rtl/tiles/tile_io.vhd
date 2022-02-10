@@ -2005,7 +2005,7 @@ begin
       icap_prerror  => icap_prerror);
  end generate generate_prc;
 
-  axi2noc_1: axislv2noc_prc
+  axi2noc_1: axislv2noc
     generic map (
       tech             => CFG_FABTECH,
       nmst             => 1,

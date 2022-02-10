@@ -83,7 +83,7 @@ architecture rtl of axislv2noc is
     write                  : std_ulogic;
     id                     : std_logic_vector (XID_WIDTH-1 downto 0);
     addr                   : std_logic_vector (GLOB_PHYS_ADDR_BITS - 1 downto 0);
-    len                    : std_logic_vector (7 downto 0);
+    len                    : std_logic_vector (8 downto 0);
     size                   : std_logic_vector (2 downto 0);
     burst                  : std_logic_vector (1 downto 0);
     lock                   : std_logic;
@@ -139,7 +139,8 @@ architecture rtl of axislv2noc is
     payload_length         => (others => '0'),
     payload_length_narrow  => (others => '0')
     );
-
+  
+  constant len_mask : std_logic := '0';
 
   signal transaction, transaction_reg : transaction_type;
   signal current_state, next_state    : axi_fsm;
@@ -195,7 +196,7 @@ begin  -- rtl
     if tran.write = '1' then
       tran.id     := mosi(tran.xindex).aw.id;
       tran.addr   := mosi(tran.xindex).aw.addr;
-      tran.len    := mosi(tran.xindex).aw.len;
+      tran.len    := len_mask & mosi(tran.xindex).aw.len;
       tran.size   := mosi(tran.xindex).aw.size;
       tran.burst  := mosi(tran.xindex).aw.burst;
       tran.lock   := mosi(tran.xindex).aw.lock;
@@ -208,7 +209,7 @@ begin  -- rtl
     else
       tran.id     := mosi(tran.xindex).ar.id;
       tran.addr   := mosi(tran.xindex).ar.addr;
-      tran.len    := mosi(tran.xindex).ar.len;
+      tran.len    := len_mask & mosi(tran.xindex).ar.len;
       tran.size   := mosi(tran.xindex).ar.size;
       tran.burst  := mosi(tran.xindex).ar.burst;
       tran.lock   := mosi(tran.xindex).ar.lock;
@@ -219,7 +220,7 @@ begin  -- rtl
       tran.user   := mosi(tran.xindex).ar.user;
     end if;
     
-    tran.len := mosi(tran.xindex).ar.len + "0000001";
+    tran.len := (len_mask & mosi(tran.xindex).ar.len) + "0000001";
 
     -- Get routing info
     tran.mem_x := mem_info(0).x;
@@ -312,10 +313,10 @@ begin  -- rtl
 
     -- Set length (read transaction only)
     tran.payload_length(NOC_FLIT_SIZE-1 downto NOC_FLIT_SIZE-PREAMBLE_WIDTH) := PREAMBLE_TAIL;
-    tran.payload_length(7 downto 0) := tran.len;
+    tran.payload_length(8 downto 0) := tran.len;
 
     tran.payload_length_narrow(MISC_NOC_FLIT_SIZE-1 downto MISC_NOC_FLIT_SIZE-PREAMBLE_WIDTH) := PREAMBLE_TAIL;
-    tran.payload_length_narrow(7 downto 0) := tran.len;
+    tran.payload_length_narrow(8 downto 0) := tran.len;
 
     -- Create header flit
     tran.reserved             := (others => '0');
