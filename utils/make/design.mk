@@ -55,7 +55,7 @@ endif
 
 
 ### Toolchain
-ifdef LINUX_SMP
+ifeq ("$(SMP)", "1")
 LINUX_CONFIG = $(CPU_ARCH)_smp_defconfig
 else
 LINUX_CONFIG = $(CPU_ARCH)_defconfig
