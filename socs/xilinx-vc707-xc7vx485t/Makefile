@@ -12,10 +12,10 @@ ESP_ROOT = $(realpath ../../)
 TECHLIB  = virtex7
 BOARD    = xilinx-vc707-xc7vx485t
 DESIGN   = esp-$(BOARD)
-#LINUX_SMP = 1
-LEON3_BASE_FREQ_MHZ ?= 50
+SMP = 0
+BASE_FREQ_MHZ ?= 50
 LEON3_STACK ?= 0x5bfffff0
-
+USE_OPENSBI ?= 1
 
 ### Design top level and testbench ###
 TOP    = top

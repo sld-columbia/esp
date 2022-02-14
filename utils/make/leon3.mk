@@ -52,7 +52,7 @@ $(SOFT_BUILD)/mkprom/mkprom2: $(wildcard $(UTILS_GRLIB)/mkprom2/*.S) $(wildcard 
 
 $(SOFT_BUILD)/prom.out: $(SOFT_BUILD)/dummy.exe $(SOFT_BUILD)/mkprom/mkprom2
 	@cd $(SOFT_BUILD); \
-	./mkprom/mkprom2 -leon3 -freq $(LEON3_BASE_FREQ_MHZ) -nomsg -baud 38343 -stack $(LEON3_STACK) dummy.exe;
+	./mkprom/mkprom2 -leon3 -freq $(BASE_FREQ_MHZ) -nomsg -baud 38343 -stack $(LEON3_STACK) dummy.exe;
 
 $(SOFT_BUILD)/prom.bin: $(SOFT_BUILD)/prom.out
 	$(QUIET_OBJCP) $(CROSS_COMPILE_ELF)objcopy -O binary --change-addresses -0x40000000 $< $@
