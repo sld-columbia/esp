@@ -78,14 +78,10 @@ static void init_buffer(token_t *in, token_t * gold)
 
 	printf("Initializing buffer\n");
 
-	//inX_len = round_up(p_rows * m_rows, DMA_WORD_PER_BEAT(sizeof(token_t)));
-	//inY_len = round_up(q_cols * m_rows, DMA_WORD_PER_BEAT(sizeof(token_t)));
-
 	for (i = 0; i < 1; i++)
 	{
 		for (j = 0; j < p_rows * m_rows; j++)
 		{
-			//print_uart_int(j); print_uart("\n");
 			in[i * in_words_adj + j] = (token_t) float_to_fixed32(inputX[j], 11);
 		}
 
@@ -95,7 +91,6 @@ static void init_buffer(token_t *in, token_t * gold)
 
 		for (k = 0; k < q_cols * m_rows; k++)
 		{
-			//print_uart_int(k); print_uart("\n");
 			in[i * in_words_adj + j + k] = (token_t) float_to_fixed32(inputYT[k], 11);
 		}
 
@@ -103,14 +98,6 @@ static void init_buffer(token_t *in, token_t * gold)
 	}
 
 	gold[p_rows * q_cols] = (token_t) float_to_fixed32(0.868033, 11);
-
-	/* for (i = 0; i < 1; i++) */
-	/* 	for (j = 0; j < p_rows * q_cols + 1; j++) */
-	/* 	{ */
-	/* 		gold[i * out_words_adj + j] = 0; */
-	/* 		if (j == p_rows * q_cols) //CP_sum */
-	/* 			gold[i * out_words_adj + j] = (token_t) float_to_fixed32(0.868033, 11); */
-	/* 	} */
 
 	printf("Finished initialization");
 }
@@ -371,31 +358,16 @@ void c_run()
 	((struct sinkhorn_access*) cfg_000[1].esp_desc)->gamma = float_to_fixed32(gamma_float, 11);
 	cfg_000[1].hw_buf = buf;
 
-        //Only load and compute
-	//cfg_000[1].desc.sinkhorn_desc.p2p_out = 0,
-	//cfg_000[1].desc.sinkhorn_desc.p2p_in = 0,
-	//cfg_000[1].desc.sinkhorn_desc.p2p_iter = 1,
-	//cfg_000[1].desc.sinkhorn_desc.store_state = 1,
-
+	//Run software execution for comparison
 	c_run();
 
-	//esp_run(&cfg_000[1], 1);
-
-        //Only store
-	//cfg_000[1].desc.sinkhorn_desc.p2p_out = 0,
-	//cfg_000[1].desc.sinkhorn_desc.p2p_in = 0,
-	//cfg_000[1].desc.sinkhorn_desc.p2p_iter = 1,
-	//cfg_000[1].desc.sinkhorn_desc.store_state = 2,
-
+	//Run Sinkhorn accelerator
 	esp_run(&cfg_000[1], 1);
 
 	printf("\n  ** DONE **\n");
 
+	//Validate the output
 	errors = validate_buffer(&buf[out_offset], gold);
-
-	free(gold);
-	//esp_cleanup();
-	esp_free(buf);
 
 	if (!errors)
 		printf("+ Test PASSED\n");
@@ -403,6 +375,34 @@ void c_run()
 		printf("+ Test FAILED\n");
 
 	printf("\n====== %s ======\n\n", cfg_000[1].devname);
+
+
+	//In case we have more than one sinkhorn - check maximum 4
+	for(int8_t i = 1; i < 4; i++){
+		char acc[3][16];
+		sprintf(acc[i-1], "/dev/sinkhorn.%d", i);
+
+		if(access(acc[i-1], F_OK) == 0){
+
+			printf("\nAdditional accelerator: %s\n\n", acc[i-1]);
+
+			((struct sinkhorn_access*) cfg_000[i+1].esp_desc)->gamma = float_to_fixed32(gamma_float, 11);
+			cfg_000[i+1].hw_buf = buf;
+			esp_run(&cfg_000[i+1], 1);
+
+			errors = validate_buffer(&buf[out_offset], gold);
+
+			if (!errors)
+				printf("+ Test PASSED for %s\n", acc[i-1]);
+			else
+				printf("+ Test FAILED for %s\n", acc[i-1]);
+		}
+	}
+
+	printf("\n  ** DONE **\n");
+
+	esp_free(buf);
+	free(gold);
 
 	return errors;
 	return 0;

@@ -9,6 +9,7 @@
 #include <stdio.h>
 
 #include "system.hpp"
+#include "input.h"
 
 std::ofstream ofs;
 
@@ -197,67 +198,6 @@ void system_t::load_memory()
 
     ESP_REPORT_INFO("Offset in memory is %d", in_size / DMA_WORD_PER_BEAT);
 
-    // int32_t offset = in_size / DMA_WORD_PER_BEAT;
-
-//     // Y initialization
-//     for (int i = 0; i < 1; i++)
-//         for (int j = 0; j < inY_size; j++)
-//         {
-//             float data;
-//             data = inputY[i * inY_words_adj +j];
-//             //data = inputY[i * in_words_adj +j];
-
-//             FPDATA data_fp(data);
-//             inY[i * inY_words_adj + j] = data_fp;
-//         }
-
-//     // Memory initialization:
-// #if (DMA_WORD_PER_BEAT == 0)
-//     for (int i = 0; i < inY_size; i++)  {
-//         sc_dt::sc_bv<DATA_WIDTH> data_bv;
-//         fp2bv<FPDATA, FPDATA_WL, FPDATA_WL>(inY[i], data_bv);
-//         //sc_dt::sc_bv<DATA_WIDTH> data_bv(in[i]);
-//         for (int j = 0; j < DMA_BEAT_PER_WORD; j++)
-//             mem[DMA_BEAT_PER_WORD * i + j] = data_bv.range((j + 1) * DMA_WIDTH - 1, j * DMA_WIDTH);
-//     }
-// #else
-//     for (int i = 0; i < inY_size / DMA_WORD_PER_BEAT; i++)  {
-//         sc_dt::sc_bv<DMA_WIDTH> data_bv;
-//         //  fp2bv<FPDATA, FPDATA_WL, FPDATA_WL>(in[i], data_bv);
-//         //sc_dt::sc_bv<DMA_WIDTH> data_bv(in[i]);
-//         for (int j = 0; j < DMA_WORD_PER_BEAT; j++)
-//         {
-//             sc_dt::sc_bv<DATA_WIDTH> data_bv32;
-//             fp2bv<FPDATA, FPDATA_WL, FPDATA_WL>(inY[i * DMA_WORD_PER_BEAT + j], data_bv32);
-//             data_bv.range((j+1) * DATA_WIDTH - 1, j * DATA_WIDTH) = data_bv32;
-//         }
-//         mem[offset + i] = data_bv;
-//         //ESP_REPORT_INFO("saved in memory value %d", data_bv.to_uint());
-//     }
-// #endif
-
-    // mem_i = 0;
-    // //Load X into memory
-    // for (int i = 0; i < X_size; i++) {
-    //     float data = inputX[i];
-    //     FPDATA data_fp(data);
-    //     //uint32_t data = 0x00000000 | (uint32_t) i;
-    //     sc_dt::sc_bv<FPDATA_WL> data_bv;
-    //     fp2bv<FPDATA, FPDATA_WL, FPDATA_WL>(data_fp, data_bv);
-    //     mem[mem_i] = data_bv;
-    //     mem_i++;
-    // }
-    // //Load Y into memory
-    // for (int i = 0; i < Y_size; i++) {
-    //     float data = inputY[i];
-    //     FPDATA data_fp(data);
-    //     //uint32_t data = 0x00000000 | (uint32_t) i;
-    //     sc_dt::sc_bv<FPDATA_WL> data_bv;
-    //     fp2bv<FPDATA, FPDATA_WL, FPDATA_WL>(data_fp, data_bv);
-    //     mem[mem_i] = data_bv;
-    //     mem_i++;
-    // }
-
     ESP_REPORT_INFO("load memory completed");
 }
 
@@ -290,30 +230,6 @@ void system_t::dump_memory()
             // ESP_REPORT_INFO("value: %d, i: %d, X size is %d, Y size is %d", mem[offset + i].range((j + 1) * DATA_WIDTH - 1, j * DATA_WIDTH).to_uint(), i, inX_size, inY_size);
         }
 #endif
-
-    // int P_size = p_rows * q_cols;
-    // P = (float *) calloc(P_size, sizeof(uint32_t));
-
-    // ESP_REPORT_INFO("Index in memory for P is: %u", mem_i);
-
-    // // Get results from memory
-    // for(int i = 0; i < P_size; i++) {
-    //     sc_dt::sc_bv<32> data_bv;
-    //     data_bv = mem[mem_i];
-    //     FPDATA data_fp;
-    //     bv2fp<FPDATA, FPDATA_WL, FPDATA_WL>(data_bv, data_fp);                 float data_float;
-    //     fp2native(data_fp, data_float);
-    //     P[i] = data_float;
-    //     mem_i++;
-    // }
-
-    // ESP_REPORT_INFO("Index in memory for CP_sum is: %u", mem_i);
-    // sc_dt::sc_bv<32> data_bv;
-    // data_bv = mem[mem_i];
-    // FPDATA data_fp;
-    // bv2fp<FPDATA, FPDATA_WL, FPDATA_WL>(data_bv, data_fp);                                                   float data_float;
-    // fp2native(data_fp, data_float);
-    // CP_sum = data_float;
 
     ESP_REPORT_INFO("dump memory completed");
 }

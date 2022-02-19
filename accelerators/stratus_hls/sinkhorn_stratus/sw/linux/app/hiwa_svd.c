@@ -206,15 +206,10 @@ static void init_buffer(token_t *in, token_t * gold, token_t * inX, token_t * in
 
 	printf("\nInitializing buffer\n");
 
-	//inX_len = round_up(p_rows * m_rows, DMA_WORD_PER_BEAT(sizeof(token_t)));
-	//inY_len = round_up(q_cols * m_rows, DMA_WORD_PER_BEAT(sizeof(token_t)));
-
 	for (i = 0; i < 1; i++)
 	{
 		for (j = 0; j < p_rows * m_rows; j++)
 		{
-			//print_uart_int(j); print_uart("\n");
-			//in[i * inX_words_adj + j] = (token_t) float_to_fixed32(inputX[j], 11);
 			in[i * in_words_adj + j] = inX[j];
 		}
 
@@ -224,9 +219,6 @@ static void init_buffer(token_t *in, token_t * gold, token_t * inX, token_t * in
 
 		for (k = 0; k < q_cols * m_rows; k++)
 		{
-			//print_uart_int(k); print_uart("\n");
-			//in[i * inY_words_adj + j + k] = float_to_fixed32(inputYT[k], 11);
-			//printf("Y[%d] = %f \n", k, fixed32_to_float(in[i * inY_words_adj + j + k], 11));
 			in[i * in_words_adj + j + k] = inY[k];
 		}
 
@@ -247,7 +239,7 @@ static void init_Q(token_t *in, token_t * out)
 	{
 		for(j = 0; j < p_rows*q_cols; j++) //Q
 			out[i * in_words_adj_svd + j] = in[i * in_words_adj_svd + j];
-//            inbuff[i * in_words_adj + j] = (word_t) j;
+
 		for(j = 0; j < m_rows*m_rows; j++)
 			prev_R[j] = out[out_offset_svd + j];
 	}
@@ -281,8 +273,6 @@ static void init_X(token_t *in, token_t * out)
 	{
 		for (j = 0; j < p_rows * m_rows; j++)
 		{
-			//print_uart_int(j); print_uart("\n");
-			//in[i * inX_words_adj + j] = (token_t) float_to_fixed32(inputX[j], 11);
 			out[i * in_words_adj + j] = in[i * in_words_adj + j];
 		}
 
@@ -300,31 +290,27 @@ static void init_buffer_svd(token_t *in, token_t * gold)
 		{
 			float val = (float) 1/(p_rows * q_cols);
 			in[i * in_words_adj_svd + j] = (token_t) float_to_fixed32(val, 11);
-//            inbuff[i * in_words_adj + j] = (word_t) j;
 		}
 
 		for(x = 0; x < m_rows*p_rows; x++) //X
 		{
 			in[i * in_words_adj_svd + j + x] = (token_t) float_to_fixed32(svd_inputX[x], 11);
-			//printf(" in[%d] = %f \n", i * in_words_adj_svd + j + x, in[i * in_words_adj_svd + j + x]);
+
 		}
-//            inbuff[i * in_words_adj + j + x] = (word_t) j+x;
 
 		for(y = 0; y < m_rows*q_cols; y++) //Y
 		{
 			in[i * in_words_adj_svd + j + x + y] = (token_t) float_to_fixed32(inputY[y], 11);
-			//printf(" in[%d] = %f \n", i * in_words_adj_svd + j + x + y, in[i * in_words_adj_svd + j + x + y]);
+
 		}
-//            inbuff[i * in_words_adj + j + x + y] = (word_t) j+x+y;
 
 		for(t = 0; t < m_rows*m_rows; t++) //T
 		{
 			in[i * in_words_adj_svd + j + x + y + t] = (token_t) float_to_fixed32(inputT[t],11);
-			//printf(" in[%d] = %f \n", i * in_words_adj_svd + j + x + y + t, in[i * in_words_adj_svd + j + x + y + t]);
+
 		}
-		//for(; j < p*q+m*p+m*q+m*m+1; j++) //P
+
 		in[i * in_words_adj_svd + j + x + y + t] = (token_t) float_to_fixed32(inputP,11);
-		//printf(" in[%d] = %f \n", i * in_words_adj_svd + j + x + y + t, in[i * in_words_adj_svd + j + x + y + t]);
 
 	}
 
@@ -341,24 +327,6 @@ static void init_buffer_svd(token_t *in, token_t * gold)
 		for(h = 0; h < m_rows*q_cols; h++)
 			gold[i * out_words_adj_svd + j + k + h] = (token_t) float_to_fixed32(inputYT[i * out_words_adj_svd + h], 11);
 	}
-
-	/* for(k = 0; k < m_rows; k++) */
-	/* 	for(j = 0; j < p_rows; j++) */
-	/* 		gold_out_sink[k][j] = 0.0; */
-
-	/* for(k = 0; k < m_rows; k++) */
-	/* 	for(i = 0; i < p_rows; i++) */
-	/* 		for(j = 0; j < m_rows; j++) */
-	/* 			gold_out_sink[k][i] += svd_inputX[i * m_rows + j] * gold_out[k * m_rows + j]; */
-
-	/* for (i = 0; i < 1; i++) */
-	/* { */
-	/* 	for(j = 0; j < m_rows*m_rows; j++) */
-	/* 		gold[i * out_words_adj + j] = gold_out[j]; */
-
-	/* 	for(k = 0; k < m_rows*p_rows; k++) */
-	/* 		gold[i * out_words_adj + j + k] = gold_out_sink[k / p_rows][k % p_rows]; */
-	/* } */
 
 
 	printf("  Generated golden output \n");
@@ -583,7 +551,7 @@ void c_run()
 
 	gettime(&startn);
 
-	//Simulate running software for 10 iterations
+	//Simulate running software for 9 iterations - not real computation
 	for(int i = 0; i < N; i++)
 	{
 		//Sinkhorn
@@ -598,8 +566,9 @@ void c_run()
 
 	sw_ns = ts_subtract(&startn, &endn);
 	printf("  > Software test time: %llu ns (%d iterations)\n", sw_ns, N);
+	(void)sum; // Silent warning about sum
 
-        //New software Eigen mixed
+        //New software Eigen mixed - real computation
 	int pq = 0*4+0;
 
 	gettime(&startn);
@@ -609,7 +578,7 @@ void c_run()
 	gettime(&endn);
 
 	sw_ns = ts_subtract(&startn, &endn);
-	printf("  > New software test time: %llu ns , CP_sum = %f, Expected = %f\n", sw_ns, CP_res[pq], CP_tot[pq]);
+	printf("  > Optimized software test time: %llu ns , CP_sum = %f, Expected = %f\n", sw_ns, CP_res[pq], CP_tot[pq]);
 
 }
 
@@ -781,9 +750,6 @@ void c_run()
 	cfg_p2p[1].hw_buf = buf;
 	printf("\nSinkhorn's source is now %s \n\n", ((struct sinkhorn_access*) cfg_p2p[1].esp_desc)->esp.p2p_srcs[0]);
 
-	//char key;
-	//printf("  ** Press ENTER to START ** ");
-	//scanf("%c", &key);
 
 	printf("\n  ** START **\n");
 
@@ -838,9 +804,6 @@ void c_run()
 
 	printf("\n\nSVD's source is now %s \n\n", ((struct svd_access*) cfg_p2p[0].esp_desc)->esp.p2p_srcs[0]);
 
-	//char key;
-	//printf("  ** Press ENTER to START ** ");
-	//scanf("%c", &key);
 
 	printf("\n  ** START **\n");
 
@@ -1120,6 +1083,7 @@ void c_run()
 	free(gold);
 	esp_free(buf);
 
+	printf("\nRunning full computation in software on RISC-V CPU...\n");
 	c_run();
 
 	return errors;

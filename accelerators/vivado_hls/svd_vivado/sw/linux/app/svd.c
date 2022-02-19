@@ -216,16 +216,39 @@ int main(int argc, char **argv)
 
 	errors = validate_buffer(&buf[out_offset], gold);
 
-	free(gold);
-	//esp_cleanup();
-	esp_free(buf);
-
 	if (!errors)
 		printf("+ Test PASSED\n");
 	else
 		printf("+ Test FAILED\n");
 
 	printf("\n====== %s ======\n\n", cfg_000[0].devname);
+
+	//In case we have more than one sinkhorn - check maximum 4
+	for(int8_t i = 1; i < 4; i++){
+		char acc[3][11];
+		sprintf(acc[i-1], "/dev/svd.%d", i);
+
+		if(access(acc[i-1], F_OK) == 0){
+
+			printf("\nAdditional accelerator: %s\n\n", acc[i-1]);
+
+			cfg_000[i].hw_buf = buf;
+			esp_run(&cfg_000[i], 1);
+
+			errors = validate_buffer(&buf[out_offset], gold);
+
+			if (!errors)
+				printf("+ Test PASSED for %s\n", acc[i-1]);
+			else
+				printf("+ Test FAILED for %s\n", acc[i-1]);
+		}
+	}
+
+
+	printf("\n  ** DONE **\n");
+
+	free(gold);
+	esp_free(buf);
 
 	return errors;
 }

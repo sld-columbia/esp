@@ -70,7 +70,7 @@ static int validate_final(token_t *out_svd, token_t* out_hiwa, float* final_svd,
 
 	printf("Total MSE in R is %f\n", MAE_sum / (m_rows*m_rows));
 
-	if (MAE_sum / (m_rows*m_rows) > 0.011)
+	if (MAE_sum / (m_rows*m_rows) > 0.11)
 		errors++;
 
 	printf("Sum of errors is %d \n", errors);
@@ -79,23 +79,6 @@ static int validate_final(token_t *out_svd, token_t* out_hiwa, float* final_svd,
 }
 
 /* User-defined code */
-
-/* static float check_norm(token_t* mat_1, token_t* mat_2) */
-/* { */
-/* 	float norm = 0; */
-/* 	float mat = 0; */
-
-/* 	for(int i = 0; i < m_rows*m_rows; i++) */
-/* 	{ */
-/* 		mat = fixed32_to_float(mat_1[i], 11) - fixed32_to_float(mat_2[i], 11); */
-/* 		mat = pow(mat, 2); */
-/* 		norm += mat; */
-/* 	} */
-
-/* 	norm = pow(norm, 0.5); */
-/* 	return norm; */
-/* } */
-
 
 static void init_buffer_svd(token_t *in, int32_t p_i, int32_t q_i, int32_t n, int32_t l)
 {
@@ -108,31 +91,25 @@ static void init_buffer_svd(token_t *in, int32_t p_i, int32_t q_i, int32_t n, in
 		{
 			float val = (float) 1/(p_i * q_i);
 			in[i * in_words_adj_svd + j] = (token_t) float_to_fixed32(val, 11);
-//            inbuff[i * in_words_adj + j] = (word_t) j;
 		}
 
 		for(x = 0; x < m_rows*p_i; x++) //X
 		{
 			in[i * in_words_adj_svd + j + x] = (token_t) float_to_fixed32(X_tot[n][x], 11);
-//			printf(" in[%d] = %f \n", i * in_words_adj_svd + j + x, X_tot[n][x]);
 		}
-//            inbuff[i * in_words_adj + j + x] = (word_t) j+x;
 
 		for(y = 0; y < m_rows*q_i; y++) //Y
 		{
 			in[i * in_words_adj_svd + j + x + y] = (token_t) float_to_fixed32(Y_tot[l][y], 11);
-			//printf(" in[%d] = %f \n", i * in_words_adj_svd + j + x + y, in[i * in_words_adj_svd + j + x + y]);
 		}
-//            inbuff[i * in_words_adj + j + x + y] = (word_t) j+x+y;
+
 
 		for(t = 0; t < m_rows*m_rows; t++) //T
 		{
 			in[i * in_words_adj_svd + j + x + y + t] = (token_t) float_to_fixed32(inputT[t],11);
-			//printf(" in[%d] = %f \n", i * in_words_adj_svd + j + x + y + t, in[i * in_words_adj_svd + j + x + y + t]);
 		}
-		//for(; j < p*q+m*p+m*q+m*m+1; j++) //P
+
 		in[i * in_words_adj_svd + j + x + y + t] = (token_t) float_to_fixed32(inputP,11);
-		//printf(" in[%d] = %f \n", i * in_words_adj_svd + j + x + y + t, in[i * in_words_adj_svd + j + x + y + t]);
 
 	}
 

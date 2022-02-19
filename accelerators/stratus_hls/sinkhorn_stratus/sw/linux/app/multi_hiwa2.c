@@ -77,30 +77,6 @@ else
 	return errors;
 }
 
-/* static int validate_svd_2(token_t *out, float* gold) */
-/* { */
-/* 	int i, j; */
-/* 	unsigned errors = 0; */
-/* 	float MAE; */
-
-/* 	for (i = 0; i < 1; i++) */
-/* 		for (j = 0; j < m_rows*m_rows; j++) */
-/* 		{ */
-/* 			float val_out, val_gold; */
-/* 			val_out = fixed32_to_float(out[i * out_words_adj_svd + j], 11); */
-/* 			val_gold = gold[i * out_words_adj_svd + j]; */
-
-/* 			MAE = (val_out - val_gold) / val_gold; */
-
-/* 			printf("%d: out = %f , gold = %f \n", j, val_out, val_gold); */
-
-/* 			if (MAE < -0.01 || MAE > 0.01) */
-/* 				errors++; */
-
-/* 		} */
-
-/* 	return errors; */
-/* } */
 
 static int validate_final(token_t *out_svd, token_t *out_hiwa, float* final_svd, float* final_hiwa)
 {
@@ -206,28 +182,19 @@ static void init_buffer(token_t *in, token_t * gold)
 
 	printf("\nInitializing buffer\n");
 
-	//inX_len = round_up(p_rows * m_rows, DMA_WORD_PER_BEAT(sizeof(token_t)));
-	//inY_len = round_up(q_cols * m_rows, DMA_WORD_PER_BEAT(sizeof(token_t)));
-
 	for (i = 0; i < 1; i++)
 	{
 		for (j = 0; j < p_rows * m_rows; j++)
 		{
-			//print_uart_int(j); print_uart("\n");
 			in[i * inX_words_adj + j] = (token_t) float_to_fixed32(inputX[j], 11);
-			//in[i * in_words_adj + j] = inX[j];
 		}
 
-		//j = inX_len;
 
 		printf("Finished loading X\n");
 
 		for (k = 0; k < q_cols * m_rows; k++)
 		{
-			//print_uart_int(k); print_uart("\n");
 			in[i * inY_words_adj + j + k] = float_to_fixed32(inputYT[k], 11);
-			//printf("Y[%d] = %f \n", k, fixed32_to_float(in[i * inY_words_adj + j + k], 11));
-			//in[i * in_words_adj + j + k] = inY[k];
 		}
 
 		printf("Finished loading Y\n");
@@ -238,55 +205,6 @@ static void init_buffer(token_t *in, token_t * gold)
 	printf("Finished initialization\n");
 }
 
-/* static void init_Q(token_t *in, token_t * out) */
-/* { */
-
-/* 	int i, j; */
-
-/* 	for (i = 0; i < 1; i++) */
-/* 	{ */
-/* 		for(j = 0; j < p_rows*q_cols; j++) //Q */
-/* 			out[i * in_words_adj_svd + j] = in[i * in_words_adj_svd + j]; */
-/* //            inbuff[i * in_words_adj + j] = (word_t) j; */
-/* 		for(j = 0; j < m_rows*m_rows; j++) */
-/* 			prev_R[j] = out[out_offset_svd + j]; */
-/* 	} */
-/* } */
-
-static float check_norm(token_t* mat_1, token_t* mat_2)
-{
-	float norm = 0;
-	float mat = 0;
-
-	for(int i = 0; i < m_rows*m_rows; i++)
-	{
-		mat = fixed32_to_float(mat_1[i], 11) - fixed32_to_float(mat_2[i], 11);
-		mat = pow(mat, 2);
-		norm += mat;
-	}
-
-	norm = pow(norm, 0.5);
-	return norm;
-}
-
-/* static void init_X(token_t *in, token_t * out) */
-/* { */
-/* 	int i; */
-/* 	int j; */
-
-/* //	printf("Initializing buffer\n"); */
-
-/* 	for (i = 0; i < 1; i++) */
-/* 	{ */
-/* 		for (j = 0; j < p_rows * m_rows; j++) */
-/* 		{ */
-/* 			//print_uart_int(j); print_uart("\n"); */
-/* 			//in[i * inX_words_adj + j] = (token_t) float_to_fixed32(inputX[j], 11); */
-/* 			out[i * in_words_adj + j] = in[i * in_words_adj + j]; */
-/* 		} */
-
-/* 	} */
-/* } */
 
 static void init_buffer_svd(token_t *in, token_t * gold)
 {
@@ -299,31 +217,29 @@ static void init_buffer_svd(token_t *in, token_t * gold)
 		{
 			float val = (float) 1/(p_rows * q_cols);
 			in[i * in_words_adj_svd + j] = (token_t) float_to_fixed32(val, 11);
-//            inbuff[i * in_words_adj + j] = (word_t) j;
 		}
 
 		for(x = 0; x < m_rows*p_rows; x++) //X
 		{
 			in[i * in_words_adj_svd + j + x] = (token_t) float_to_fixed32(svd_inputX[x], 11);
-			//printf(" in[%d] = %f \n", i * in_words_adj_svd + j + x, in[i * in_words_adj_svd + j + x]);
+
 		}
-//            inbuff[i * in_words_adj + j + x] = (word_t) j+x;
+
 
 		for(y = 0; y < m_rows*q_cols; y++) //Y
 		{
 			in[i * in_words_adj_svd + j + x + y] = (token_t) float_to_fixed32(inputY[y], 11);
-			//printf(" in[%d] = %f \n", i * in_words_adj_svd + j + x + y, in[i * in_words_adj_svd + j + x + y]);
+
 		}
-//            inbuff[i * in_words_adj + j + x + y] = (word_t) j+x+y;
+
 
 		for(t = 0; t < m_rows*m_rows; t++) //T
 		{
 			in[i * in_words_adj_svd + j + x + y + t] = (token_t) float_to_fixed32(inputT[t],11);
-			//printf(" in[%d] = %f \n", i * in_words_adj_svd + j + x + y + t, in[i * in_words_adj_svd + j + x + y + t]);
+
 		}
-		//for(; j < p*q+m*p+m*q+m*m+1; j++) //P
+
 		in[i * in_words_adj_svd + j + x + y + t] = (token_t) float_to_fixed32(inputP,11);
-		//printf(" in[%d] = %f \n", i * in_words_adj_svd + j + x + y + t, in[i * in_words_adj_svd + j + x + y + t]);
 
 	}
 
@@ -340,24 +256,6 @@ static void init_buffer_svd(token_t *in, token_t * gold)
 		for(h = 0; h < m_rows*q_cols; h++)
 			gold[i * out_words_adj_svd + j + k + h] = (token_t) float_to_fixed32(inputYT[i * out_words_adj_svd + h], 11);
 	}
-
-	/* for(k = 0; k < m_rows; k++) */
-	/* 	for(j = 0; j < p_rows; j++) */
-	/* 		gold_out_sink[k][j] = 0.0; */
-
-	/* for(k = 0; k < m_rows; k++) */
-	/* 	for(i = 0; i < p_rows; i++) */
-	/* 		for(j = 0; j < m_rows; j++) */
-	/* 			gold_out_sink[k][i] += svd_inputX[i * m_rows + j] * gold_out[k * m_rows + j]; */
-
-	/* for (i = 0; i < 1; i++) */
-	/* { */
-	/* 	for(j = 0; j < m_rows*m_rows; j++) */
-	/* 		gold[i * out_words_adj + j] = gold_out[j]; */
-
-	/* 	for(k = 0; k < m_rows*p_rows; k++) */
-	/* 		gold[i * out_words_adj + j + k] = gold_out_sink[k / p_rows][k % p_rows]; */
-	/* } */
 
 
 	printf("  Generated golden output \n");

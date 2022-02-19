@@ -112,7 +112,7 @@ void sinkhorn::compute_C(uint32_t p, uint32_t q, uint32_t m, FPDATA_WORD gamma)
                         else
                         {
                             // uint32_t X_index;
-                            uint32_t Y_index;
+                            uint32_t Y_index = 0;
                             if(k < m){
                                 Y_index = k * q + j;}
 #if (READ_INPUT_WRITE_CK >= 2)

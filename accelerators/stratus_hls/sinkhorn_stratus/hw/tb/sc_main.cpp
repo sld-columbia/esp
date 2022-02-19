@@ -19,7 +19,7 @@ uint32_t store_state = 0;
 
 extern void esc_elaborate()
 {
-	// Creating the whole system
+    // Creating the whole system
     testbench = new system_t("testbench", p_rows, q_cols, m_rows, gamma_sink, maxiter, p2p_in, p2p_out, p2p_iter, store_state);
 }
 
