@@ -99,8 +99,7 @@ if test ! -e ${TARGET_DIR}; then
 fi
 
 # Remove and create temporary folder
-cmd="rm -rf $TMP"
-runsudo ${TARGET_DIR} "$cmd"
+rm -rf $TMP
 mkdir $TMP
 cd $TMP
 
@@ -206,8 +205,7 @@ fi
 fi
 
 # Remove temporary folder
-cmd="rm -rf $TMP"
-runsudo ${TARGET_DIR} "$cmd"
+rm -rf $TMP
 
 cd ${ESP_ROOT}
 

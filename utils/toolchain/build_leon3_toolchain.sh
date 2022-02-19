@@ -104,8 +104,7 @@ cmd="chown $USER:$(id -gn) ${TARGET_DIR}"
 runsudo ${TARGET_DIR} "$cmd"
 
 # Remove and create temporary folder
-cmd="rm -rf $TMP"
-runsudo ${TARGET_DIR} "$cmd"
+rm -rf $TMP
 mkdir $TMP
 cd $TMP
 
@@ -249,8 +248,9 @@ if [ $(noyes "Skip buildroot?") == "n" ]; then
 fi
 
 # Remove temporary folder
-cmd="rm -rf $TMP"
-runsudo ${TARGET_DIR} "$cmd"
+rm -rf $TMP
+
+cd ${ESP_ROOT}
 
 #Leon
 echo ""
