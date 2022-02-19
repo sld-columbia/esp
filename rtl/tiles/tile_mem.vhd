@@ -762,6 +762,13 @@ begin
     remote_ahbm_snd_wrreq <= '0';
     end generate mem2ext_gen;
 
+    no_fpga_mem_gen: if this_has_ddr /= 0 generate
+      fpga_data_out <= (others => '0');
+      fpga_oen <= '0';
+      fpga_valid_out <= '0';
+      fpga_clk_out <= '0';
+      fpga_credit_out <= '0';
+    end generate no_fpga_mem_gen;
 
     esplink_proxy_gen: if this_has_ddr /= 0 generate
     -- Handle JTAG or EDCL requests to memory
