@@ -73,32 +73,32 @@ define_system_module tb ../tb/system.cpp ../tb/sc_main.cpp
 set DEFAULT_ARGV ""
 
 foreach dma [list 64] {
-    foreach plm_img_size [list 1024] {
-	foreach max_pxl_width_log [list 3] {
+    foreach plm_img_size [list 307200] {
+        foreach max_pxl_width_log [list 4] {
 
-	    # # Skip these configurations
-	    # if {$plm_img_size == 1024 && $max_pxl_width_log == 4} {continue}
-	    # if {$plm_img_size == 307200 && $max_pxl_width_log == 3} {continue}
+            # # Skip these configurations
+            # if {$plm_img_size == 1024 && $max_pxl_width_log == 4} {continue}
+            # if {$plm_img_size == 307200 && $max_pxl_width_log == 3} {continue}
 
-	    set ext DMA$dma\_IMG$plm_img_size\_PXL$max_pxl_width_log
+            set ext DMA$dma\_IMG$plm_img_size\_PXL$max_pxl_width_log
 
-	    define_io_config * IOCFG_$ext -DDMA_WIDTH=$dma \
-		-DPLM_IMG_SIZE=$plm_img_size -DMAX_PXL_WIDTH_LOG=$max_pxl_width_log
+            define_io_config * IOCFG_$ext -DDMA_WIDTH=$dma \
+            -DPLM_IMG_SIZE=$plm_img_size -DMAX_PXL_WIDTH_LOG=$max_pxl_width_log
 
-	    define_system_config tb TESTBENCH_$ext -io_config IOCFG_$ext
+            define_system_config tb TESTBENCH_$ext -io_config IOCFG_$ext
 
-	    define_sim_config "BEHAV_$ext" "nightvision BEH" "tb TESTBENCH_$ext" -io_config IOCFG_$ext -argv $DEFAULT_ARGV
+            define_sim_config "BEHAV_$ext" "nightvision BEH" "tb TESTBENCH_$ext" -io_config IOCFG_$ext -argv $DEFAULT_ARGV
 
-	    foreach cfg [list FAST] {
-		set cname $cfg\_$ext
-		define_hls_config nightvision $cname -io_config IOCFG_$ext --clock_period=$CLOCK_PERIOD $COMMON_HLS_FLAGS -DHLS_DIRECTIVES_$cfg
-		if {$TECH_IS_XILINX == 1} {
-		    define_sim_config "$cname\_V" "nightvision RTL_V $cname" "tb TESTBENCH_$ext" -io_config IOCFG_$ext -argv $DEFAULT_ARGV -verilog_top_modules glbl
-		} else {
-		    define_sim_config "$cname\_V" "nightvision RTL_V $cname" "tb TESTBENCH_$ext" -io_config IOCFG_$ext -argv $DEFAULT_ARGV
-		}
+            foreach cfg [list FAST] {
+                set cname $cfg\_$ext
+                define_hls_config nightvision $cname -io_config IOCFG_$ext --clock_period=$CLOCK_PERIOD $COMMON_HLS_FLAGS -DHLS_DIRECTIVES_$cfg
+                if {$TECH_IS_XILINX == 1} {
+                    define_sim_config "$cname\_V" "nightvision RTL_V $cname" "tb TESTBENCH_$ext" -io_config IOCFG_$ext -argv $DEFAULT_ARGV -verilog_top_modules glbl
+                } else {
+                    define_sim_config "$cname\_V" "nightvision RTL_V $cname" "tb TESTBENCH_$ext" -io_config IOCFG_$ext -argv $DEFAULT_ARGV
+                }
+            }
 	    }
-	}
     }
 }
 
