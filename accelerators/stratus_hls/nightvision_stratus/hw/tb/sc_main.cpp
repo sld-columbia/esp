@@ -9,50 +9,50 @@ system_t *testbench = NULL;
 
 // Default settings if argv[] is not set
 
-// std::string image_A_path = "lena-18x28.txt";
-// std::string image_out_path = "out-18x28.txt";
-// std::string image_gold_path = "gold-18x28.txt";
-// uint32_t n_Images = 1;
-// uint32_t n_Rows = 18;
-// uint32_t n_Cols = 28;
-// bool do_validation = true;
-// bool do_dwt = true;
+// std::string image_A_path    = "../../data/lena-18x28.txt";
+// std::string image_out_path  = "../../data/out-18x28.txt";
+// std::string image_gold_path = "../../data/gold-18x28.txt";
+// uint32_t    n_Images        = 1;
+// uint32_t    n_Rows          = 18;
+// uint32_t    n_Cols          = 28;
+// bool        do_validation   = true;
+// bool        do_dwt          = true;
 
-// std::string image_A_path = "lena-30x40.txt";
-// std::string image_out_path = "out-30x40.txt";
-// std::string image_gold_path = "gold-30x40.txt";
-// uint32_t n_Images = 1;
-// uint32_t n_Rows = 30;
-// uint32_t n_Cols = 40;
-// bool do_validation = true;
-// bool do_dwt = true;
+// std::string image_A_path    = "../../data/lena-30x40.txt";
+// std::string image_out_path  = "../../data/out-30x40.txt";
+// std::string image_gold_path = "../../data/gold-30x40.txt";
+// uint32_t    n_Images        = 1;
+// uint32_t    n_Rows          = 30;
+// uint32_t    n_Cols          = 40;
+// bool        do_validation   = true;
+// bool        do_dwt          = true;
 
-// std::string image_A_path = "svhn_0_32x32.txt";
-// std::string image_out_path = "svhn_0_out_32x32.txt";
-// std::string image_gold_path = "svhn_0_gold_32x32.txt";
-// uint32_t n_Images = 1;
-// uint32_t n_Rows = 32;
-// uint32_t n_Cols = 32;
-// bool do_validation = true;
-// bool do_dwt = false;
+// std::string image_A_path    = "../../data/svhn_0_32x32.txt";
+// std::string image_out_path  = "../../data/svhn_0_out_32x32.txt";
+// std::string image_gold_path = "../../data/svhn_0_gold_32x32.txt";
+// uint32_t    n_Images        = 1;
+// uint32_t    n_Rows          = 32;
+// uint32_t    n_Cols          = 32;
+// bool        do_validation   = true;
+// bool        do_dwt          = false;
 
-std::string image_A_path    = "lena-120x160.txt";
-std::string image_out_path  = "out-120x160.txt";
-std::string image_gold_path = "gold-120x160.txt";
+// std::string image_A_path    = "../../data/lena-120x160.txt";
+// std::string image_out_path  = "../../data/out-120x160.txt";
+// std::string image_gold_path = "../../data/gold-120x160.txt";
+// uint32_t    n_Images        = 1;
+// uint32_t    n_Rows          = 120;
+// uint32_t    n_Cols          = 160;
+// bool        do_validation   = true;
+// bool        do_dwt          = true;
+
+std::string image_A_path    = "../../data/lena-480x640.txt";
+std::string image_out_path  = "../../data/out-480x640.txt";
+std::string image_gold_path = "../../data/gold-480x640.txt";
 uint32_t    n_Images        = 1;
-uint32_t    n_Rows          = 120;
-uint32_t    n_Cols          = 160;
+uint32_t    n_Rows          = 480;
+uint32_t    n_Cols          = 640;
 bool        do_validation   = true;
 bool        do_dwt          = true;
-
-// std::string image_A_path = "lena-480x640.txt";
-// std::string image_out_path = "out-480x640.txt";
-// std::string image_gold_path = "gold-480x640.txt";
-// uint32_t n_Images = 1;
-// uint32_t n_Rows = 480;
-// uint32_t n_Cols = 640;
-// bool do_validation = true;
-// bool do_dwt = true;
 
 extern void esc_elaborate()
 {

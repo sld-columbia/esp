@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 # coding=utf-8
 
-#with open('lena-480x640.txt', 'r') as fileA:
-with open('lena-120x160.txt', 'r') as fileA:
+#with open('../../data/lena-480x640.txt', 'r') as fileA:
+with open('../../data/lena-120x160.txt', 'r') as fileA:
     lines = fileA.readlines()
 
 fileA.close()
