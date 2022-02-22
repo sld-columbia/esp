@@ -20,13 +20,12 @@ const size_t MEM_SIZE = 5000000;
 #include "core/systems/esp_system.hpp"
 
 #ifdef CADENCE
-#include "nightvision_wrap.h"
+    #include "nightvision_wrap.h"
 #endif
 
 class system_t : public esp_system<DMA_WIDTH, MEM_SIZE>
 {
-public:
-
+  public:
     // ACC instance
 #ifdef CADENCE
     nightvision_wrapper *acc;
@@ -36,15 +35,9 @@ public:
 
     // Constructor
     SC_HAS_PROCESS(system_t);
-    system_t(sc_module_name name,
-             std::string image_A_path,
-             std::string image_out_path,
-             uint32_t n_Images,
-             uint32_t n_Rows,
-             uint32_t n_Cols,
-             std::string image_gold_test_path,
-	     bool do_validation,
-	     bool do_dwt)
+
+    system_t(sc_module_name name, std::string image_A_path, std::string image_out_path, uint32_t n_Images,
+             uint32_t n_Rows, uint32_t n_Cols, std::string image_gold_test_path, bool do_validation, bool do_dwt)
         : esp_system<DMA_WIDTH, MEM_SIZE>(name)
         , image_A_path(image_A_path)
         , image_out_path(image_out_path)
@@ -52,8 +45,8 @@ public:
         , n_Images(n_Images)
         , n_Rows(n_Rows)
         , n_Cols(n_Cols)
-	, do_validation(do_validation)
-	, do_dwt(do_dwt)
+        , do_validation(do_validation)
+        , do_dwt(do_dwt)
     {
         // ACC
 #ifdef CADENCE
@@ -94,9 +87,9 @@ public:
     // Accelerator-specific data
 
     // Configuration parameters
-    uint32_t n_Images; // number of input images
-    uint32_t n_Rows;   // number of rows
-    uint32_t n_Cols;   // number of columns
+    uint32_t n_Images;      // number of input images
+    uint32_t n_Rows;        // number of rows
+    uint32_t n_Cols;        // number of columns
     uint32_t n_Invocations; // number of accelerator invocations
 
     // Path for the input images

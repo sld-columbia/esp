@@ -42,7 +42,10 @@ void system_t::config_proc()
         ESP_REPORT_TIME(begin_time, "BEGIN - nightvision");
 
         // Wait the termination of the accelerator
-        do { wait(); } while (!acc_done.read());
+        do {
+            wait();
+        } while (!acc_done.read());
+
         debug_info_t debug_code = debug.read();
 
         // Print information about end time
@@ -56,22 +59,20 @@ void system_t::config_proc()
 
     // Validate
     {
-        dump_memory(); // store the output in more suitable data structure if needed
+        // store the output in more suitable data structure if needed
+        dump_memory();
 
-	if (do_validation) {
-	    if (validate())
-	    {
-		ESP_REPORT_ERROR("validation failed!");
-	    } else
-	    {
-		ESP_REPORT_INFO("validation passed!");
-	    }
-	}
+        if (do_validation) {
+            if (validate()) {
+                ESP_REPORT_ERROR("validation failed!");
+            } else {
+                ESP_REPORT_INFO("validation passed!");
+            }
+        }
     }
 
     // Conclude
     {
-        // while(true) wait();
         sc_stop();
     }
 }
@@ -81,8 +82,7 @@ void system_t::load_memory()
 {
 #ifdef CADENCE
     // Optional usage check
-    if (esc_argc() != 1)
-    {
+    if (esc_argc() != 1) {
         ESP_REPORT_INFO("usage: %s\n", esc_argv()[0]);
         sc_stop();
     }
@@ -104,83 +104,72 @@ void system_t::load_memory()
     //  |  in/out image n_Images (int32)  |  | img_size (in bytes)
     //  ===================================  v
 
+    int       i, j, k;
+    int       n_Pixels = n_Rows * n_Cols;
+    uint16_t *imgA     = (uint16_t *)calloc(n_Pixels, sizeof(uint16_t));
+    uint16_t  val      = 0;
+    FILE *    fileA    = NULL;
+    int       mem_i;
+
     // -- Read images
-    int n_Pixels = n_Rows * n_Cols;
-    uint16_t *imgA = (uint16_t *) calloc(n_Pixels, sizeof(uint16_t));
-
-    ESP_REPORT_INFO("------------ read image start ------------");
-
-    int i = 0, j = 0;
-    uint16_t val = 0;
-    FILE *fileA = NULL;
-
-    if((fileA = fopen(image_A_path.c_str(), "r")) == (FILE*)NULL)
-    {
+    if ((fileA = fopen(image_A_path.c_str(), "r")) == (FILE *)NULL) {
         ESP_REPORT_ERROR("[Err] could not open %s", image_A_path.c_str());
         fclose(fileA);
     }
 
     i = 0;
     fscanf(fileA, "%d", &val);
-    while(!feof(fileA))
-    {
+    while (!feof(fileA)) {
         imgA[i++] = val;
         fscanf(fileA, "%d", &val);
     }
 
-    fclose(fileA);
-
-    int mem_i = 0;
+    mem_i = 0;
     for (i = 0; i < n_Images; i++) {
         for (j = 0; j < n_Pixels; j += WORDS_PER_DMA) {
-            for (uint8_t k = 0; k < WORDS_PER_DMA; k++)
+            for (k = 0; k < WORDS_PER_DMA; k++) {
                 mem[mem_i].range(((k + 1) << MAX_PXL_WIDTH_LOG) - 1, k << MAX_PXL_WIDTH_LOG) =
-		    sc_bv<MAX_PXL_WIDTH>(imgA[j + k]);
+                    sc_bv<MAX_PXL_WIDTH>(imgA[j + k]);
+            }
             mem_i++;
         }
     }
 
     free(imgA);
-
-    ESP_REPORT_INFO("------------ read image finish ------------");
-
+    fclose(fileA);
     ESP_REPORT_INFO("load memory completed");
 }
 
 void system_t::dump_memory()
 {
-    int n_Pixels = n_Rows * n_Cols;
-
-    // -- Read the gold image
+    int   i, j, k;
+    int   n_Pixels = n_Rows * n_Cols;
+    int   mem_j;
     FILE *fileOut = NULL;
-    if((fileOut = fopen(image_out_path.c_str(), "w")) == (FILE*)NULL)
-    {
+
+    // Store output file
+    if ((fileOut = fopen(image_out_path.c_str(), "w")) == (FILE *)NULL) {
         ESP_REPORT_ERROR("[Err] could not open %s", image_out_path.c_str());
         fclose(fileOut);
     }
-
     ESP_REPORT_INFO("image_out_path: %s", image_out_path.c_str());
 
-    // Store output file
-    int mem_j = 0;
-    for (int i = 0; i < n_Images; i++) {
-        for(uint32_t j = 0 ; j < n_Pixels ; j += WORDS_PER_DMA) {
-            for (uint8_t k = 0; k < WORDS_PER_DMA; k++) {
-		if (do_dwt)
-		    fprintf(fileOut, "%u\n",
-			    mem[mem_j].range(((k + 1) << MAX_PXL_WIDTH_LOG) - 1,
-					     k << MAX_PXL_WIDTH_LOG).to_int());
-		else
-		    fprintf(fileOut, "%u\n",
-			    mem[mem_j].range(((k + 1) << MAX_PXL_WIDTH_LOG) - 1,
-					     k << MAX_PXL_WIDTH_LOG).to_uint());
-	    }
+    mem_j = 0;
+    for (i = 0; i < n_Images; i++) {
+        for (j = 0; j < n_Pixels; j += WORDS_PER_DMA) {
+            for (k = 0; k < WORDS_PER_DMA; k++) {
+                if (do_dwt)
+                    fprintf(fileOut, "%u\n",
+                            mem[mem_j].range(((k + 1) << MAX_PXL_WIDTH_LOG) - 1, k << MAX_PXL_WIDTH_LOG).to_int());
+                else
+                    fprintf(fileOut, "%u\n",
+                            mem[mem_j].range(((k + 1) << MAX_PXL_WIDTH_LOG) - 1, k << MAX_PXL_WIDTH_LOG).to_uint());
+            }
             mem_j++;
         }
     }
 
     fclose(fileOut);
-
     ESP_REPORT_INFO("dump memory completed");
 }
 
@@ -188,74 +177,68 @@ int system_t::validate()
 {
     ESP_REPORT_INFO("---- validate ----");
 
-    uint32_t errors = 0;
-    int n_Pixels = n_Rows * n_Cols;
+    uint32_t i, j;
+    int      val      = 0;
+    uint32_t errors   = 0;
+    int      n_Pixels = n_Rows * n_Cols;
 
-    // Load golden output
-    int *imgGold = (int*)calloc(n_Pixels, sizeof(int));
+    int * imgGold  = (int *)calloc(n_Pixels, sizeof(int));
+    int * imgOut   = (int *)calloc(n_Pixels, sizeof(int));
+    FILE *fileGold = NULL;
+    FILE *fileOut  = NULL;
 
     // -- Read the gold image
-    FILE *fileGold = NULL;
-    if((fileGold = fopen(image_gold_test_path.c_str(), "r")) == (FILE*)NULL)
-    {
+    if ((fileGold = fopen(image_gold_test_path.c_str(), "r")) == (FILE *)NULL) {
         ESP_REPORT_ERROR("[Err] could not open %s", image_gold_test_path.c_str());
         fclose(fileGold);
     }
-
     ESP_REPORT_INFO("image_gold_test_path: %s", image_gold_test_path.c_str());
 
-    uint32_t i = 0;
-    int val = 0;
+    i   = 0;
+    val = 0;
     fscanf(fileGold, "%d", &val);
-    while(!feof(fileGold))
-    {
+    while (!feof(fileGold)) {
         imgGold[i++] = val;
         fscanf(fileGold, "%d", &val);
     }
 
-    // Check for mismatches
-    // -- Compare the output with gold image
-    int mem_j = 0;
-    for (int i = 0; i < n_Images; i++) {
-        for(uint32_t j = 0 ; j < n_Pixels ; j += WORDS_PER_DMA) {
-            for (uint8_t k = 0; k < WORDS_PER_DMA; k++) {
-		if (do_dwt) {
-		    if (mem[mem_j].range(((k + 1) << MAX_PXL_WIDTH_LOG) - 1,
-					 k << MAX_PXL_WIDTH_LOG).to_int() != imgGold[j + k])
-		    {
-			ESP_REPORT_INFO("Error: %d: %d %d.", mem_j,
-					mem[mem_j].range(((k + 1) << MAX_PXL_WIDTH_LOG) - 1,
-							 k << MAX_PXL_WIDTH_LOG).to_int(), imgGold[j + k]);
-			errors++;
-		    }
-		} else {
-		    if (mem[mem_j].range(((k + 1) << MAX_PXL_WIDTH_LOG) - 1,
-					 k << MAX_PXL_WIDTH_LOG).to_uint() != imgGold[j + k])
-		    {
-			ESP_REPORT_INFO("Error: %d: %d %d.", mem_j,
-					mem[mem_j].range(((k + 1) << MAX_PXL_WIDTH_LOG) - 1,
-							 k << MAX_PXL_WIDTH_LOG).to_uint(), imgGold[j + k]);
-			errors++;
-		    }
-		}
-	    }
-            mem_j++;
+    // -- Read the output image
+    if ((fileOut = fopen(image_out_path.c_str(), "r")) == (FILE *)NULL) {
+        ESP_REPORT_ERROR("[Err] could not open %s", image_out_path.c_str());
+        fclose(fileOut);
+    }
+    ESP_REPORT_INFO("image_out_path: %s", image_out_path.c_str());
+
+    i   = 0;
+    val = 0;
+    fscanf(fileOut, "%d", &val);
+    while (!feof(fileOut)) {
+        imgOut[i++] = val;
+        fscanf(fileOut, "%d", &val);
+    }
+
+    // -- Check for mismatches. Compare the output with gold image
+    for (j = 0; j < n_Images; j++) {
+        for (i = 0; i < n_Pixels; i++) {
+            if (imgOut[i] != imgGold[i]) {
+                //                ESP_REPORT_INFO("Error: i = %d\tOut = %d\tGold = %d\n", i, imgOut[i], imgGold[i]);
+                errors++;
+            }
         }
     }
 
     ESP_REPORT_INFO("====================================================");
-    if (errors)
-    {
-        ESP_REPORT_INFO("Errors: %d pixel(s) not match.", errors);
-    }
-    else
-    {
+    if (errors) {
+        ESP_REPORT_INFO("Errors: %d out of %d pixel(s) not match.", errors, n_Pixels);
+    } else {
         ESP_REPORT_INFO("Correct!!");
     }
     ESP_REPORT_INFO("====================================================");
 
-
+    free(imgGold);
+    free(imgOut);
     fclose(fileGold);
+    fclose(fileOut);
     ESP_REPORT_INFO("Validate completed");
 
     return errors;
