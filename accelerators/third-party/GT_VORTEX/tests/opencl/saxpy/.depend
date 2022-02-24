@@ -1,0 +1,3 @@
+main.o: main.cc /home/esp2022/sr3859/BIN/pocl/runtime/include/CL/cl.h \
+ /home/esp2022/sr3859/BIN/pocl/runtime/include/CL/cl_version.h \
+ /home/esp2022/sr3859/BIN/pocl/runtime/include/CL/cl_platform.h
