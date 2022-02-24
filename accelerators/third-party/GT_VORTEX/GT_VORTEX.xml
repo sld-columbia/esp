@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sld>
+  <accelerator name="GT_VORTEX" desc="GeorgiaTech, Vortex GPU" device_id="108" axi_prefix="m_axi_" interrupt="busy" addr_width="32" id_width="8" user_width="0">
+    <clock name="clk"/>
+    <reset name="reset" polarity="HIGH"/>
+  </accelerator>
+</sld>
