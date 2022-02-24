@@ -1,5 +1,5 @@
-/driver/stub/libvortex.so
-umd/out/apps/runtime/nvdla_runtime/nvdla_runtime
+/driver/soc/libvortex.so
+/runtime/libvortexrt.o
 ../test/opencl/convolution/Makefile
 ../test/opencl/convolution/convolution.dump
 ../test/opencl/convolution/input.bmp
