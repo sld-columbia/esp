@@ -33,8 +33,8 @@
 #define READ_INPUT_WRITE_CK 2
 //#define WRITE_OUTPUT 4 // equal to READ_INPUT
 //#define READ_C_WRITE_K 8 // Multiple of 4
-#define READ_A 10 // Multiple of 4
-#define READ_B 10 // Multiple of 4
+#define READ_A 8 // Multiple of 4
+#define READ_B 8 // Multiple of 4
 #define INIT_B 8
 //#define WRITE_INTERMED 4 // equal to READ_INPUT
 #define MAX_ITER 150

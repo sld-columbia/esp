@@ -90,6 +90,9 @@ void sinkhorn::compute_C(uint32_t p, uint32_t q, uint32_t m, FPDATA_WORD gamma)
             for(uint8_t j = 0; j < Q_MAX; j+=READ_INPUT_WRITE_CK)
             {
                 HLS_PIPELINE_LOOP(SOFT_STALL, 1, "write C loop");
+                // HLS_CONSTRAIN_ARRAY_MAX_DISTANCE(inputY , 1, "constrain_Y");
+                // HLS_CONSTRAIN_ARRAY_MAX_DISTANCE(K , 1, "constrain_K");
+                // HLS_CONSTRAIN_ARRAY_MAX_DISTANCE(C , 1, "constrain_C");
                 if(j >= q){}
                 else
                 {
