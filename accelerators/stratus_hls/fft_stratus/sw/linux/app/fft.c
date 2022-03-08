@@ -23,7 +23,7 @@ static int validate_buffer(token_t *out, float *gold)
 	for (j = 0; j < 2 * len * num_batches; j++) {
 		native_t val = fx2float(out[j], FX_IL);
 		if ((fabs(gold[j] - val) / fabs(gold[j])) > ERR_TH) {
-            errors++;
+			errors++;
 		}
 	}
 
@@ -85,7 +85,7 @@ int main(int argc, char **argv)
 	float *gold;
 	token_t *buf;
 
-	const float ERROR_COUNT_TH = 0.001;
+	const float ERROR_COUNT_TH = 0.01;
 
 	//set parameters
 	init_parameters();
@@ -95,13 +95,12 @@ int main(int argc, char **argv)
 	cfg_000[0].hw_buf = buf;
 	gold = malloc(out_len * sizeof(float) * num_batches);
 
-    printf("\n====== %s ======\n\n", cfg_000[0].devname);
+	printf("\n====== %s ======\n\n", cfg_000[0].devname);
 	printf("  .len = %d\n", len);
 	printf("  .batch_size = %d\n", fft_cfg_000[0].batch_size);
 
 	unsigned coherence;
 	for (coherence = ACC_COH_NONE; coherence < ACC_COH_FULL; coherence++) {
-
 		init_buffer(buf, gold);
 
 		//set coherence mode
@@ -117,12 +116,12 @@ int main(int argc, char **argv)
 		float err_rate = (float) errors / (float) (2 * len * num_batches);
 
 		if (err_rate > ERROR_COUNT_TH)
-			printf("\n  + TEST FAIL: exceeding error count threshold\n");
+			printf("\n	+ TEST FAIL: exceeding error count threshold\n");
 		else
-			printf("\n  + TEST PASS: not exceeding error count threshold\n");
+			printf("\n	+ TEST PASS: not exceeding error count threshold\n");
 	}
 
-    printf("\n====== %s ======\n\n", cfg_000[0].devname);
+	printf("\n====== %s ======\n\n", cfg_000[0].devname);
 
 	//cleanup
 	free(gold);

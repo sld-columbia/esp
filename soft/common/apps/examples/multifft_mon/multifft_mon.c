@@ -95,7 +95,7 @@ int main(int argc, char **argv)
 	float *gold[3];
 	token_t *buf[3];
 
-	const int ERROR_COUNT_TH = 0.001;
+	const float ERROR_COUNT_TH = 0.01;
 	int k;
 
 	init_parameters();
@@ -145,7 +145,7 @@ int main(int argc, char **argv)
 
 	errors = validate_buffer(&buf[0][out_offset], gold[0]);
 
-		if ((errors / len) > ERROR_COUNT_TH)
+		if (((float) errors / (float) len) > ERROR_COUNT_TH)
 		printf("  + TEST FAIL: exceeding error count threshold\n");
 		else
 		printf("  + TEST PASS: not exceeding error count threshold\n");
@@ -191,7 +191,7 @@ int main(int argc, char **argv)
 
 	errors = validate_buffer(&buf[0][out_offset], gold[0]);
 
-	if ((errors / len) > ERROR_COUNT_TH)
+	if (((float) errors / (float) len) > ERROR_COUNT_TH)
 		printf("  + TEST FAIL: exceeding error count threshold\n");
 	else
 		printf("  + TEST PASS: not exceeding error count threshold\n");
@@ -265,7 +265,7 @@ int main(int argc, char **argv)
 
 	errors = validate_buffer(&buf[0][out_offset], gold[0]);
 
-	if ((errors / len) > ERROR_COUNT_TH)
+	if (((float) errors / (float) len) > ERROR_COUNT_TH)
 		printf("  + TEST FAIL: exceeding error count threshold\n");
 	else
 		printf("  + TEST PASS: not exceeding error count threshold\n");
@@ -274,8 +274,6 @@ int main(int argc, char **argv)
 
 	/* Parallel test */
 	for (k = 0; k < NACC; k++) {
-		((struct fft_stratus_access*) cfg_parallel[k].esp_desc)->src_offset = size * k;
-		((struct fft_stratus_access*) cfg_parallel[k].esp_desc)->dst_offset = size * k;
 		init_buffer(buf[k], gold[k], false);
 	}
 
@@ -297,9 +295,8 @@ int main(int argc, char **argv)
 	printf("\n	** DONE **\n");
 
 	for (k = 0; k < NACC; k++) {
-		errors = validate_buffer(&buf[k][out_offset], gold[k]);	
-
-		if ((errors / (len * NACC)) > ERROR_COUNT_TH)
+		errors = validate_buffer(&buf[k][out_offset], gold[k]);
+		if (( (float) errors / (float) (len * NACC)) > ERROR_COUNT_TH)
 		printf("  + TEST FAIL fft.%d: exceeding error count threshold\n", k);
 		else
 		printf("  + TEST PASS fft.%d: not exceeding error count threshold\n", k);
@@ -328,7 +325,7 @@ int main(int argc, char **argv)
 
 	errors = validate_buffer(&buf[0][out_offset], gold[0]);
 
-		if ((errors / len) > ERROR_COUNT_TH)
+		if (((float) errors / (float) (len * NACC)) > ERROR_COUNT_TH)
 		printf("  + TEST FAIL: exceeding error count threshold\n");
 		else
 		printf("  + TEST PASS: not exceeding error count threshold\n");
