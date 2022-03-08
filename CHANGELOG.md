@@ -43,14 +43,14 @@ adheres to [Calendar Versioning](https://calver.org/) with format
     - _FFT_: add batching
     - _Nightvision_: handle larger image sizes (#130)
   - Increase number of accelerator configuration registers from 14 to 48
-  - Make accelerator reset synchronous from DMA FSM
+  - Ensure accelerator reset is synchronous by adding register to DMA FSM
 
 - **Infrastructure**
   - Use local paths for toolchain installation (#119)
   - Standardize selection of the number of LLC sets across cache implementations
 
 - **Software**
-  - Bump _riscv-pk_ and update baremetal probe library (#120)
+  - Upgrade _riscv-pk_ and update baremetal probe library (#120)
 
 ### Fixed
 - **Architecture**
@@ -63,7 +63,7 @@ adheres to [Calendar Versioning](https://calver.org/) with format
   - Xcelium compilation
 
 - **Software**
-  - RCU stall issue with RISC-V Linux
+  - RCU stall issue during Linux boot on Ariane mitigated with new kernel configuration
   - Various accelerator applications
 
 ## [2021.2.0]
