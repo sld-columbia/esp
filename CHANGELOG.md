@@ -7,6 +7,63 @@ Changelog](https://keepachangelog.com/en/1.0.0/), and this project
 adheres to [Calendar Versioning](https://calver.org/) with format
 `YYYY.MINOR.MICRO`.
 
+## [2022.1.0]
+
+### Added
+
+- **Architecture**
+    - Ariane SMP: enabled by adding ACE bus for L1 invalidations and changes to the ESP cache hierarchy
+    - Hardware monitoring system: new implementation to enable easy access from software
+    - Coherence modes for third-party accelerators: non-coherent DMA, llc-coherent-DMA, coherent-DMA
+
+- **Accelerators**
+    - Stratus HLS flow
+        - _FFT2_: improves upon the _FFT_ accelerator with support for batching, FFT sizes larger than accelerator private local memory, and inverse FFT
+
+- **Accelerator design flows**
+    - RTL accelerator design flow
+
+-**Software**
+    - Python support
+    - OpenSBI support for Ariane-based SoCs
+    - Creation of a baremetal test library for baremetal applications not tied to an ESP accelerator
+        - NVDLA with coherence selection
+        - Monitors API
+        - SLM tile test
+
+### Improved
+
+- **Architecture**
+    - Move NoC and JTAG to the top level of the tile
+    - Reset of asynchronous FIFOs
+
+- **Accelerators**
+    - _FFT_: add batching
+    - _Nightvision_: handle larger image sizes
+    - Increase number of accelerator configuration registers from 14 to 48
+    - Make accelerator reset synchronous from DMA FSM
+
+- **Infrastructure**
+    - Use local paths for toolchain installation
+    - Standardize selection of the number of LLC sets across cache implementations
+
+- **Software**
+    - Bump _riscv-pk_ and update baremetal probe library
+
+### Fixed
+- **Architecture**
+    - Overflow issue in _axislv2noc_
+    - CPU DMA to SLM tile
+    - Proxies for ASIC memory link
+    - Various latches and incomplete sensitivity lists
+
+- **Infrastructure**
+    - Xcelium compilation
+
+- **Software**
+    - RCU stall issue with RISC-V Linux
+    - Various accelerator applications
+
 ## [2021.2.0]
 
 ### Added
