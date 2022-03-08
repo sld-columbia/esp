@@ -73,7 +73,6 @@ static int validate_buf(token_t *out, float *gold)
 		native_t val = fx2float(out[j], FX_IL);
 		if ((fabs(gold[j] - val) / fabs(gold[j])) > ERR_TH){
 			errors++;
-			printf("%d: gold %f, val %f\n", j, gold[j], val);
 		}
 	}
 
@@ -123,7 +122,7 @@ int main(int argc, char * argv[])
 	float *gold;
 	unsigned errors = 0;
 	unsigned coherence;
-		const int ERROR_COUNT_TH = 0.001;
+	const float ERROR_COUNT_TH = 0.01;
 
 	len = 1 << log_len;
 
@@ -227,7 +226,7 @@ int main(int argc, char * argv[])
 
 			/* Validation */
 			errors = validate_buf(&mem[out_offset], gold);
-			if ((errors / len) > ERROR_COUNT_TH)
+			if (((float) errors / (float) len) > ERROR_COUNT_TH)
 				printf("  ... FAIL\n");
 			else
 				printf("  ... PASS\n");

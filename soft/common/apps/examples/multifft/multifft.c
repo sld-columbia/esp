@@ -52,17 +52,17 @@ static void init_buffer(token_t *in, float *gold, bool p2p)
 		iters = 1;
 
 	for (j = 0; j < 2 * len; j++) {
-	    float scaling_factor = (float) rand () / (float) RAND_MAX;
-	    gold[j] = LO + scaling_factor * (HI - LO);
+		float scaling_factor = (float) rand () / (float) RAND_MAX;
+		gold[j] = LO + scaling_factor * (HI - LO);
 	}
 
 	// convert input to fixed point
 	for (j = 0; j < 2 * len; j++)
-	    in[j] = float2fx((native_t) gold[j], FX_IL);
+		in[j] = float2fx((native_t) gold[j], FX_IL);
 
 	for (p = 0; p < iters; p++) {
-	    // Compute golden output
-	    fft_comp(gold, len, log_len,  -1, DO_BITREV);
+		// Compute golden output
+		fft_comp(gold, len, log_len,  -1, DO_BITREV);
 	}
 }
 
@@ -94,19 +94,19 @@ int main(int argc, char **argv)
 	float *gold[3];
 	token_t *buf[3];
 
-        const int ERROR_COUNT_TH = 0.001;
+	const float ERROR_COUNT_TH = 0.01;
 
 	int k;
 
 	init_parameters();
 
-	for (k = 0; k < NACC; k++) {	
-	    buf[k] = (token_t *) esp_alloc(NACC * size);
-	    gold[k] = malloc(NACC * out_len * sizeof(float));
+	for (k = 0; k < NACC; k++) {
+		buf[k] = (token_t *) esp_alloc(NACC * size);
+		gold[k] = malloc(NACC * out_len * sizeof(float));
 	}
 
 	init_buffer(buf[0], gold[0], false);
-	
+
 	printf("\n====== Non coherent DMA ======\n\n");
 	printf("  .len = %d\n", len);
 	printf("  .log_len = %d\n", log_len);
@@ -117,13 +117,13 @@ int main(int argc, char **argv)
 	cfg_nc[0].hw_buf = buf[0];
 	esp_run(cfg_nc, 1);
 
-	printf("\n  ** DONE **\n");
+	printf("\n	** DONE **\n");
 
 	errors = validate_buffer(&buf[0][out_offset], gold[0]);
 
-        if ((errors / len) > ERROR_COUNT_TH)
+		if (((float) errors / (float) len) > ERROR_COUNT_TH)
 		printf("  + TEST FAIL: exceeding error count threshold\n");
-        else
+		else
 		printf("  + TEST PASS: not exceeding error count threshold\n");
 
 	printf("\n============\n\n");
@@ -138,17 +138,17 @@ int main(int argc, char **argv)
 
 	printf("  ** Press ENTER to START ** ");
 	scanf("%c", &key);
-	
+
 	cfg_llc[0].hw_buf = buf[0];
 	esp_run(cfg_llc, 1);
 
-	printf("\n  ** DONE **\n");
+	printf("\n	** DONE **\n");
 
 	errors = validate_buffer(&buf[0][out_offset], gold[0]);
 
-        if ((errors / len) > ERROR_COUNT_TH)
+		if (((float) errors / (float) len) > ERROR_COUNT_TH)
 		printf("  + TEST FAIL: exceeding error count threshold\n");
-        else
+		else
 		printf("  + TEST PASS: not exceeding error count threshold\n");
 
 	printf("\n============\n\n");
@@ -167,13 +167,13 @@ int main(int argc, char **argv)
 	cfg_fc[0].hw_buf = buf[0];
 	esp_run(cfg_fc, 1);
 
-	printf("\n  ** DONE **\n");
+	printf("\n	** DONE **\n");
 
 	errors = validate_buffer(&buf[0][out_offset], gold[0]);
 
-        if ((errors / len) > ERROR_COUNT_TH)
+		if (((float) errors / (float) len) > ERROR_COUNT_TH)
 		printf("  + TEST FAIL: exceeding error count threshold\n");
-        else
+		else
 		printf("  + TEST PASS: not exceeding error count threshold\n");
 
 	printf("\n============\n\n");
@@ -181,8 +181,6 @@ int main(int argc, char **argv)
 
 	/* Parallel test */
 	for (k = 0; k < NACC; k++) {
-		((struct fft_stratus_access*) cfg_parallel[k].esp_desc)->src_offset = size * k;
-		((struct fft_stratus_access*) cfg_parallel[k].esp_desc)->dst_offset = size * k;
 		init_buffer(buf[k], gold[k], false);
 	}
 
@@ -201,14 +199,14 @@ int main(int argc, char **argv)
 
 	esp_run(cfg_parallel, NACC);
 
-	printf("\n  ** DONE **\n");
+	printf("\n	** DONE **\n");
 
 	for (k = 0; k < NACC; k++) {
-	    errors = validate_buffer(&buf[k][out_offset], gold[k]);	
+		errors = validate_buffer(&buf[k][out_offset], gold[k]);
 
-	    if ((errors / (len * NACC)) > ERROR_COUNT_TH)
+		if (((float) errors / (float) (len * NACC)) > ERROR_COUNT_TH)
 		printf("  + TEST FAIL fft.%d: exceeding error count threshold\n", k);
-	    else
+		else
 		printf("  + TEST PASS fft.%d: not exceeding error count threshold\n", k);
 	}
 
@@ -231,20 +229,20 @@ int main(int argc, char **argv)
 
 	esp_run(cfg_p2p, NACC);
 
-	printf("\n  ** DONE **\n");
+	printf("\n	** DONE **\n");
 
 	errors = validate_buffer(&buf[0][out_offset], gold[0]);
 
-        if ((errors / len) > ERROR_COUNT_TH)
+		if (((float) errors / (float) (len * NACC)) > ERROR_COUNT_TH)
 		printf("  + TEST FAIL: exceeding error count threshold\n");
-        else
+		else
 		printf("  + TEST PASS: not exceeding error count threshold\n");
 
 	printf("\n============\n\n");
 
 	for (k = 0; k < NACC; k++) {
-	    free(gold[k]);
-	    esp_free(buf[k]);
+		free(gold[k]);
+		esp_free(buf[k]);
 	}
 
 	return errors;
