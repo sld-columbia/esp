@@ -263,18 +263,25 @@ void esp_run_parallel(esp_thread_info_t* cfg[], unsigned nthreads, unsigned* nac
 		args->info = cfg[i];
 		args->nacc = nacc[i];
 
-		if (thread_is_p2p(cfg[i]))
-			rc = pthread_create(&thread[i], NULL, accelerator_thread_p2p, (void*) args);
-		else
-			rc = pthread_create(&thread[i], NULL, accelerator_thread_serial, (void*) args);
+		if (thread_is_p2p(cfg[i])) {
+			if (nthreads == 1)
+				accelerator_thread_p2p( (void*) args);
+			else
+				rc = pthread_create(&thread[i], NULL, accelerator_thread_p2p, (void*) args);
+		} else {
+			if (nthreads == 1)
+				accelerator_thread_serial( (void*) args);
+			else
+				rc = pthread_create(&thread[i], NULL, accelerator_thread_serial, (void*) args);
+		}
 
 		if(rc != 0) {
 			perror("pthread_create");
 		}
 	}
-
 	for (i = 0; i < nthreads; i++) {
-		rc = pthread_join(thread[i], NULL);
+		if (nthreads > 1)
+			rc = pthread_join(thread[i], NULL);
 
 		if(rc != 0) {
 			perror("pthread_join");
