@@ -9,6 +9,7 @@ std::string fplan_xdc_file= "pblocks.xdc";
     input_to_flora in_flora;
     in_flora.num_rm_partitions = atol(argv[1]);
     in_flora.path_to_input = argv[2];
+    in_flora.path_to_output = argv[3];
 
     flora fl(&in_flora);
     fl.clear_vectors();

@@ -37,6 +37,7 @@ def print_usage():
     print("      <emu_freq>         : Ethernet MDC scaler override for FPGA emulation of ASIC design")
     print("")
 
+
 class PRCFrame(Frame):
 
     def __init__(self, soc, top_frame, main_frame):
