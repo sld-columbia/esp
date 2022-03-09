@@ -277,7 +277,7 @@ vivado-syn: vivado-setup
             echo "read_ip -quiet $(ESP_ROOT)/socs/$(BOARD)/vivado/$(DESIGN).srcs/sources_1/ip/sgmii/sgmii.xci" >> static_config.tcl; \
         fi; \
         echo "link_design -top $(TOP) -part $(DEVICE)" >> static_config.tcl; \
-        echo "read_xdc $(ESP_ROOT)/socs/$(BOARD)/top_latest.xdc" >> static_config.tcl;\
+		echo "read_xdc $(ESP_ROOT)/socs/$(BOARD)/top_latest.xdc" >> static_config.tcl;\
 		echo "write_checkpoint -force $(ESP_ROOT)/socs/$(BOARD)/vivado/$(DESIGN).runs/synth_1/top_dpr.dcp" >> static_config.tcl; \
         echo "close_project" >> static_config.tcl; \
         echo "exit" >> static_config.tcl; \
@@ -301,6 +301,9 @@ vivado-syn: vivado-setup
 		sh $(ESP_ROOT)/socs/common/process_dpr.sh $(ESP_ROOT) $(BOARD) $(DEVICE) IMPL_DPR;  \
         cd vivado_dpr; \
         vivado $(VIVADO_BATCH_OPT) -source impl.tcl | tee ../vivado_syn_dpr.log; \
+		sh $(ESP_ROOT)/socs/common/process_dpr.sh $(ESP_ROOT) $(BOARD) $(DEVICE) GEN_BS;  \
+        cd vivado_dpr; \
+        vivado $(VIVADO_BATCH_OPT) -source bs.tcl | tee ../vivado_syn_dpr.log; \
 		cd ../ ; \
 		cp res_reqs.csv vivado_dpr/ ; \
     fi;
@@ -308,7 +311,7 @@ vivado-syn: vivado-setup
 vivado-syn-dpr: DPR_ENABLED = y
 vivado-syn-dpr: vivado-syn
 
-vivado-syn-dpr-acc: vivado/srcs.tcl 
+vivado-syn-dpr-acc: check_all_rtl_srcs vivado/srcs.tcl 
 	$(QUIET_INFO)echo "launching setup script for Vivado DPR flow"  
 	@if ! test -d vivado_dpr; then \
         echo $(SPACES)"DPR: vivado_dpr directory not found"; \
@@ -323,7 +326,11 @@ vivado-syn-dpr-acc: vivado/srcs.tcl
         cd vivado_dpr; \
         vivado $(VIVADO_BATCH_OPT) -source impl.tcl | tee ../vivado_impl_dpr.log; \
         cd ../ ; \
-        cp ./socgen/esp/.esp_config vivado_dpr/; \
+        sh $(ESP_ROOT)/socs/common/process_dpr.sh $(ESP_ROOT) $(BOARD) $(DEVICE) GEN_BS;  \
+        cd vivado_dpr; \
+        vivado $(VIVADO_BATCH_OPT) -source bs.tcl | tee ../vivado_syn_dpr.log; \
+        cd ../ ; \
+		cp ./socgen/esp/.esp_config vivado_dpr/; \
 		cp res_reqs.csv vivado_dpr/ ; \
     fi;
 
@@ -354,7 +361,7 @@ vivado-prog-fpga: vivado/program.tcl
     else \
         echo $(SPACES)"DPR: copying partial bitstream";\
         mkdir -p $(ESP_ROOT)/socs/$(BOARD)/vivado/$(DESIGN).runs/impl_1; \
-        cp $(ESP_ROOT)/socs/$(BOARD)/vivado_dpr/Bitstreams/top_dpr.bit $(ESP_ROOT)/socs/$(BOARD)/vivado/$(DESIGN).runs/impl_1/$(TOP).bit; \
+        cp $(ESP_ROOT)/socs/$(BOARD)/vivado_dpr/Bitstreams/acc_bs.bit $(ESP_ROOT)/socs/$(BOARD)/vivado/$(DESIGN).runs/impl_1/$(TOP).bit; \
         bit=$(DESIGN).runs/impl_1/top.bit; \
     fi;\
     if test -r $$bit; then \

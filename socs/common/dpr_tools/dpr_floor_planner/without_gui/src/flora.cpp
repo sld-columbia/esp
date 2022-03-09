@@ -81,6 +81,43 @@ void flora::prep_input()
     }
 }
 
+void flora::write_output(param_from_solver *from_solver)
+{
+    unsigned long row, col;
+    int i , k;
+    unsigned int ptr;
+    string str;
+    CSVData csv_data_in(flora_input->path_to_input);
+    CSVData csv_data_out(flora_input->path_to_input);
+
+    cout << endl << "FLORA: writing resource inside slots " <<endl;
+    cout << "\t clb " << " \t bram " << "\t dsp " <<endl;
+    for(i = 0, ptr = 0, k = 0; i < num_rm_partitions; i++, ptr++) {
+        str = to_string((*from_solver->clb_from_solver)[i]);
+        csv_data_out.set_value(i, k++, str);
+        //cout << "clb after flora " << str <<endl;
+        
+        str = to_string((*from_solver->bram_from_solver)[i]);
+        csv_data_out.set_value(i, k++, " " + str);
+        //cout << "bram after flora " << str <<endl;
+        
+        str = to_string((*from_solver->dsp_from_solver)[i]);
+        csv_data_out.set_value(i, k++, " " + str); 
+        //cout << "dsp after flora " << str <<endl;
+        
+        str = csv_data_in.get_value(i, k);
+        csv_data_out.set_value(i, k++, " " + str); 
+        //cout << "cell after flora " << str <<endl;
+        
+        str = csv_data_in.get_value(i, k);
+        csv_data_out.set_value(i, k++, " " + str); 
+        //cout << "cell after flora " << str <<endl;
+
+
+        k = 0;
+    }
+   csv_data_out.write_data(flora_input->path_to_output);
+}
 void flora::start_optimizer()
 {
     int i;
@@ -155,6 +192,7 @@ void flora::start_optimizer()
 
     cout <<"FLORA: starting VC707 MILP optimizer " <<endl;
     vc707_start_optimizer(&param, &from_solver);
+    write_output(&from_solver);
     cout <<"FLORA: finished VC707 optimizer " <<endl;
 
 #endif  

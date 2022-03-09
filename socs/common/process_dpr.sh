@@ -10,7 +10,7 @@ dpr_srcs="$1/socs/$2/socketgen/dpr_srcs"
 dpr_bbox="$dpr_srcs/acc_top_bbox.vhd"
 original_src="$1/socs/$2/vivado/srcs.tcl"
 temp_srcs="/tmp/temp_srcs.tcl"
-esp_config="$1/socs/$2/./socgen/esp/.esp_config"
+esp_config="$1/socs/$2/socgen/esp/.esp_config"
 esp_config_old="$1/socs/$2/vivado_dpr/.esp_config"
 tcl_dir="$1/socs/common/dpr_tools/Tcl"
 
@@ -139,6 +139,88 @@ do
             echo "  $acc_src" >> $acc_dir/acc_$i.vhd;
         fi
     done <$tile_acc
+done
+}
+
+function patch_acc_devid() {
+for ((i=0; i<$num_modified_acc_tiles; i++))
+do
+    #extract the names of the newly modified accs and parse them to name and type of acc
+    acc_name=$(echo ${modified_accelerators[$i,1]} | awk -F'[_]' '{print($1)}');
+    acc_type=$(echo ${modified_accelerators[$i,1]} | awk -F'[_]' '{print($2)}');
+    acc_def=$(echo "sld_"$acc_name | awk '{print toupper($0)}');
+
+    #extract the id of the tile where the accelerators were modified
+    for ((k=0; k<$num_acc_tiles; k++)) do
+        if [[ "$old_accelerators[$k,0]" == "$modified_accelerators[$i,0]" ]]; then
+            parent_tile=$k;
+            break;
+        fi
+    done
+    
+    #extract the name of old tiles and do the same parsing (name and type)
+    modified_tile=$(echo ${modified_accelerators[$i,0]} | awk -F'[_]' '{print($2)}');
+    old_acc_name=$(echo ${old_accelerators[$parent_tile,1]} | awk -F'[_]' '{print($1)}');
+    old_acc_type=$(echo ${old_accelerators[$parent_tile,1]} | awk -F'[_]' '{print($2)}');
+    old_acc_def=$(echo "sld_"$old_acc_name | awk '{print toupper($0)}');
+    
+    #extract the tile id from old acc tile and assign them to new acc
+    if [[ $old_acc_type == "stratus" ]]; then
+        sw_src="$1/accelerators/stratus_hls/$old_acc_name"_"$old_acc_type/sw/baremetal/$old_acc_name".c"";
+    elif [[ $old_acc_type == "vivado" ]]; then
+        sw_src="$1/accelerators/vivado_hls/$old_acc_name"_"$old_acc_type/sw/baremetal/$old_acc_name".c"";
+    elif [[ $old_acc_type == "catapult" ]]; then
+        sw_src="$1/accelerators/catapult_hls/$old_acc_name"_"$old_acc_type/sw/baremetal/$old_acc_name".c"";
+    elif [[ $old_acc_type == "hls4ml" ]]; then
+        sw_src="$1/accelerators/hls4ml/$old_acc_name"_"$old_acc_type/sw/baremetal/$old_acc_name".c"";
+    else
+        echo "unknown type of accelerator";
+    fi
+    
+
+    if [[ $acc_type == "stratus" ]]; then
+        temp_sw_dest="$1/accelerators/stratus_hls/$acc_name"_"$acc_type/sw/baremetal/$acc_name"_dpr.c""; 
+        sw_dest="$1/accelerators/stratus_hls/$acc_name"_"$acc_type/sw/baremetal/$acc_name".c""; 
+    elif [[ $acc_type == "vivado" ]]; then
+        temp_sw_dest="$1/accelerators/vivado_hls/$acc_name"_"$acc_type/sw/baremetal/$acc_name"_dpr.c"";
+        sw_dest="$1/accelerators/vivado_hls/$acc_name"_"$acc_type/sw/baremetal/$acc_name".c"";
+    elif [[ $acc_type == "catapult" ]]; then
+        temp_sw_dest="$1/accelerators/catapult_hls/$acc_name"_"$acc_type/sw/baremetal/$acc_name"_dpr.c"";
+        sw_dest="$1/accelerators/catapult_hls/$acc_name"_"$acc_type/sw/baremetal/$acc_name".c"";
+    elif [[ $acc_type == "hls4ml" ]]; then
+        temp_sw_dest="$1/accelerators/hls4ml/$acc_name"_"$acc_type/sw/baremetal/$acc_name"_dpr.c"";
+        sw_dest="$1/accelerators/hls4ml/$acc_name"_"$acc_type/sw/baremetal/$acc_name".c"";
+    else
+        echo "unknown type of accelerator";
+    fi
+    
+    echo " " > $temp_sw_dest;
+    
+    while IFS= read -r line; do
+        if [[ $line  == "#define $old_acc_def"* ]]; then
+            new_acc_id=$(echo $line | awk '{print($3)}');
+            new_line="#define $acc_def  $new_acc_id";
+            #echo "new acc id $new_line";
+            break;
+        fi
+    done < $sw_src
+    
+    while IFS= read -r line; do
+        if [[ "$line"  == "/* DPR patch:"* ||  "$line"  == "For non-DPR"* || "$line" == "//#define $acc_def"* ]]; then
+            continue;
+        elif [[ "$line"  == "#define $acc_def"* ]]; then
+            printf "/* DPR patch: line commented to make DPR work. \n"  >> $temp_sw_dest;
+            printf  "For non-DPR acceleration, swap the commented defs */\n" >> $temp_sw_dest;
+            printf "//%s\n" "$line" >> $temp_sw_dest;
+            printf "%s\n" "$new_line" >> $temp_sw_dest;
+        else
+            printf "%s\n" "$line" >> $temp_sw_dest;
+    
+        fi
+    done < $sw_dest
+    
+    cp $temp_sw_dest $sw_dest;
+    rm $temp_sw_dest;
 done
 }
 
@@ -441,7 +523,7 @@ fi;
 #else    
 #    echo "set_attribute impl top_dpr implXDC     [list [ list $1/constraints/$2/pblocks.xdc $1/constraints/$2/$2.xdc $1/constraints/$2/$2-eth-constraints.xdc $1/constraints/$2/$2-eth-pins.xdc  $1/socs/$2/vivado/esp-$2.srcs/sources_1/ip/mig/mig/user_design/constraints/mig.xdc $1/socs/$2/vivado/esp-$2.srcs/sources_1/ip/sgmii/synth/sgmii.xdc ] ]" >> $dpr_syn_tcl;
 #fi;
-echo "set_property SEVERITY {Warning} [get_drc_checks HDPR-41]" >> $dpr_syn_tcl;
+#echo "set_property SEVERITY {Warning} [get_drc_checks HDPR-41]" >> $dpr_syn_tcl;
 
 if [[ "$4" == "IMPL_DPR" ]]; then
     echo "set_attribute impl top_dpr partitions  [list [list \$static \$top  implement ] \\" >> $dpr_syn_tcl;
@@ -451,8 +533,12 @@ if [[ "$4" == "IMPL_DPR" ]]; then
     done
     echo "]"  >> $dpr_syn_tcl;
 elif [[ "$4" == "IMPL_ACC" ]] && [[ "$num_modified_acc_tiles" != "0" ]]; then
-    echo "set_attribute impl top_dpr partitions  [list [list \$static \$top  import ] \\" >> $dpr_syn_tcl; 
-    
+    if  [[ $regenerate_fplan == 1 ]]; then
+        echo "set_attribute impl top_dpr partitions  [list [list \$static \$top  implement ] \\" >> $dpr_syn_tcl; 
+    else
+        echo "set_attribute impl top_dpr partitions  [list [list \$static \$top  import ] \\" >> $dpr_syn_tcl; 
+    fi
+
     for ((i=0, j=0; j<$num_acc_tiles; j++))
     do
         if  [[ $regenerate_fplan == 1 ]]; then
@@ -480,10 +566,24 @@ echo "source \$tclDir/run.tcl" >> $dpr_syn_tcl;
 echo "exit" >> $dpr_syn_tcl;
 }
 
+function gen_bs_script() {
+bs_gen_script=$1/socs/$2/vivado_dpr/bs.tcl;
+
+    echo " " > $bs_gen_script;
+    
+    echo "open_checkpoint Implement/top_dpr/top_route_design.dcp" >> $bs_gen_script;
+    echo "write_bitstream -force -bin_file Bitstreams/acc_bs" >> $bs_gen_script;
+    echo "source [get_property REPOSITORY [get_ipdefs *prc:1.3]]/xilinx/prc_v1_3/tcl/api.tcl" >> $bs_gen_script;
+    
+    for((i=0; i<$num_acc_tiles; i++)) do
+        echo "prc_v1_3::format_bin_for_icap -i Bitstreams/acc_bs_pblock_slot_"$i"_partial.bin -o Bitstreams/${new_accelerators[$i,1]}.bin" >> $bs_gen_script;
+    done
+}
+
 #This function parses the synthesis reports of accelerators to extract their resource requirements
 function parse_synth_report() {
 synth_report_base=$1/socs/$2/vivado_dpr/Synth;
-flora_input=$1/socs/$2/res_reqs.csv;
+flora_input=$1/socs/$2/flora_input.csv;
 
 lut_keyword=LUTs*;
 bram_keyword=Block;
@@ -542,9 +642,9 @@ done
 for ((i=0; i<$num_acc_tiles; i++))
 do
     if [[ "$i" == "0" ]]; then
-        echo ${res_consumption["$i,0"]} , ${res_consumption["$i,1"]} , ${res_consumption["$i,2"]} , esp_1/tiles_gen[${new_accelerators[$i,0]}].accelerator_tile.tile_acc_i/acc_top_inst , ${new_accelerators[$i,0]} > $flora_input;
+        echo ${res_consumption["$i,0"]}, ${res_consumption["$i,1"]}, ${res_consumption["$i,2"]}, esp_1/tiles_gen[${new_accelerators[$i,0]}].accelerator_tile.tile_acc_i/acc_top_inst, ${new_accelerators[$i,0]} > $flora_input;
     else
-        echo ${res_consumption["$i,0"]} , ${res_consumption["$i,1"]} , ${res_consumption["$i,2"]} , esp_1/tiles_gen[${new_accelerators[$i,0]}].accelerator_tile.tile_acc_i/acc_top_inst , ${new_accelerators[$i,0]} >> $flora_input;
+        echo ${res_consumption["$i,0"]}, ${res_consumption["$i,1"]}, ${res_consumption["$i,2"]}, esp_1/tiles_gen[${new_accelerators[$i,0]}].accelerator_tile.tile_acc_i/acc_top_inst, ${new_accelerators[$i,0]} >> $flora_input;
     fi;
 done
 }
@@ -556,7 +656,7 @@ function gen_floorplan() {
     #TODO:type of FPGA must be a variable of $2
     cd $fplan_dir;
     make flora FPGA=VC707;
-    ./bin/flora $num_acc_tiles $1/socs/$2/res_reqs.csv;
+    ./bin/flora $num_acc_tiles  $1/socs/$2/flora_input.csv $1/socs/$2/res_reqs.csv;
     cp pblocks.xdc $1/constraints/$2/;
     cd $src_dir;
 }
@@ -570,17 +670,16 @@ regenerate_fplan=0;
     do
         while read line
         do
-            lut_new=$(echo ${line} | awk '{print($1)}');
-            bram_new=$(echo ${line} | awk '{print($3)}');
-            dsp_new=$(echo ${line} | awk '{print($5)}');
-            tile_id_new=$(echo ${line} | awk '{print($9)}');
-
+            lut_new=$(echo ${line} | awk -F'[, ]' '{print($1)}');
+            bram_new=$(echo ${line} | awk -F'[, ]' '{print($3)}');
+            dsp_new=$(echo ${line} | awk -F'[, ]' '{print($5)}');
+            tile_id_new=$(echo ${line} | awk -F'[, ]' '{print($9)}');
             while read line2
             do
-                lut_old=$(echo ${line2} | awk '{print($1)}');
-                bram_old=$(echo ${line2} | awk '{print($3)}');
-                dsp_old=$(echo ${line2} | awk '{print($5)}');
-                tile_id_old=$(echo ${line2} | awk '{print($9)}');
+                lut_old=$(echo ${line2} | awk -F'[, ]' '{print($1)}');
+                bram_old=$(echo ${line2} | awk -F'[, ]' '{print($3)}');
+                dsp_old=$(echo ${line2} | awk -F'[, ]' '{print($5)}');
+                tile_id_old=$(echo ${line2} | awk -F'[, ]' '{print($9)}');
                 if [[ "$tile_id_new" == "$tile_id_old" ]]; then
                     if [[ "${lut_new%%.*}" -gt "${lut_old%%.*}" ]] || [[ "${bram_new%%.*}" -gt "${bram_old%%.*}" ]] || [[ "${dsp_new%%.*}" -gt "${dsp_old%%.*}" ]]; then
                         regenerate_fplan=1;
@@ -629,6 +728,7 @@ elif [ $4 == "IMPL_ACC" ]; then
     extract_acc_old $1 $2 $3; 
     diff_accelerators $1 $2 $3; 
     initialize_acc_tiles $1 $2 $3;
+    patch_acc_devid $1 $2 $3 $4;
     add_acc_prj_file $1 $2 $3;
     parse_synth_report $1 $2 $3 $4;
     acc_fplan $1 $2 $3 $4;
@@ -637,19 +737,26 @@ elif [ $4 == "IMPL_ACC" ]; then
     fi;
     gen_impl_script $1 $2 $3 $4;
    
+elif [ $4 == "GEN_BS" ]; then
+    extract_acc $1 $2 $3; 
+    extract_acc_old $1 $2 $3; 
+    diff_accelerators $1 $2 $3; 
+    gen_bs_script $1 $2 $3 $4;
 
 elif [ $4 == "test" ]; then
     extract_acc $1 $2 $3
-#    extract_acc_old $1 $2 $3
-#    diff_accelerators $1 $2 $3 
-    initialize_acc_tiles $1 $2 $3
-#    add_acc_prj_file $1 $2 $3
-#    gen_synth_script $1 $2 $3 $4
+    extract_acc_old $1 $2 $3
+    diff_accelerators $1 $2 $3 
+    patch_acc_devid $1 $2 $3 $4
+    gen_bs_script $1 $2 $3 $4 
+    #initialize_acc_tiles $1 $2 $3
+    #add_acc_prj_file $1 $2 $3
+    #gen_synth_script $1 $2 $3 $4
     #gen_fplan $1 $2 $3;
-#    echo " regenarate before parse is $regenerate_fplan";
+    #echo " regenarate before parse is $regenerate_fplan";
     #parse_synth_report $1 $2 $3 $4
     #gen_floorplan $1 $2 $3 $4;
-#    acc_fplan $1 $2 $3 $4;
+    #acc_fplan $1 $2 $3 $4;
     #echo " regenarate after parse is $regenerate_fplan";
     #gen_floorplan $1 $2 $3 $4
 

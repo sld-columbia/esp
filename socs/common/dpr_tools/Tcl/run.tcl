@@ -89,7 +89,8 @@ if {[llength $configurations] > 1} {
 
 #### Genearte PR bitstreams 
 if {[llength $configurations] > 0} {
-   generate_pr_bitstreams $configurations
+   #generate_pr_bitstreams $configurations
+   #generate_pr_binfiles $configurations 
 }
 
 close $RFH
