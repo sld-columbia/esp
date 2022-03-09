@@ -1,4 +1,4 @@
-# Copyright (c) 2011-2021 Columbia University, System Level Design Group
+# Copyright (c) 2011-2022 Columbia University, System Level Design Group
 # SPDX-License-Identifier: Apache-2.0
 
 STRATUSHLS_ACC_PATH      = $(ESP_ROOT)/accelerators/stratus_hls
@@ -53,6 +53,14 @@ CHISEL_ACC_PATHS     = $(addprefix $(ESP_ROOT)/accelerators/chisel/, $(CHISEL_AC
 CHISEL_ACC-clean     = $(addsuffix -clean, $(CHISEL_ACC))
 CHISEL_ACC-distclean = $(addsuffix -distclean, $(CHISEL_ACC))
 
+RTL_ACC_PATH      = $(ESP_ROOT)/accelerators/rtl
+RTL_ACC           = $(filter-out common, $(shell ls -d $(RTL_ACC_PATH)/*/ | awk -F/ '{print $$(NF-1)}'))
+RTL_ACC_PATHS     = $(addprefix $(RTL_ACC_PATH)/, $(RTL_ACC))
+RTL_ACC-wdir      = $(addsuffix -wdir, $(RTL_ACC))
+RTL_ACC-hls       = $(addsuffix -hls, $(RTL_ACC))
+RTL_ACC-clean     = $(addsuffix -clean, $(RTL_ACC))
+RTL_ACC-distclean = $(addsuffix -distclean, $(RTL_ACC))
+
 THIRDPARTY_PATH = $(ESP_ROOT)/accelerators/third-party
 ifdef CPU_ARCH
 THIRDPARTY_ACC  = $(foreach acc, $(shell ls $(THIRDPARTY_PATH)), $(shell if grep -q $(CPU_ARCH) $(THIRDPARTY_PATH)/$(acc)/$(acc).hosts; then echo $(acc); fi))
@@ -69,20 +77,21 @@ THIRDPARTY_SVLOG      = $(foreach acc, $(THIRDPARTY_ACC), $(foreach rtl, $(shell
 THIRDPARTY_VHDL_PKGS  = $(foreach acc, $(THIRDPARTY_ACC), $(foreach rtl, $(shell strings $(THIRDPARTY_PATH)/$(acc)/$(acc).pkgs),     $(shell f=$(THIRDPARTY_PATH)/$(acc)/out/$(rtl); if test -e $$f; then echo $$f; fi;)))
 THIRDPARTY_VHDL       = $(foreach acc, $(THIRDPARTY_ACC), $(foreach rtl, $(shell strings $(THIRDPARTY_PATH)/$(acc)/$(acc).vhdl),     $(shell f=$(THIRDPARTY_PATH)/$(acc)/out/$(rtl); if test -e $$f; then echo $$f; fi;)))
 
-ACC_PATHS = $(STRATUSHLS_ACC_PATHS) $(VIVADOHLS_ACC_PATHS) $(CATAPULTHLS_ACC_PATHS) $(HLS4ML_ACC_PATHS) $(CHISEL_ACC_PATHS)
+ACC_PATHS = $(STRATUSHLS_ACC_PATHS) $(VIVADOHLS_ACC_PATHS) $(CATAPULTHLS_ACC_PATHS) $(HLS4ML_ACC_PATHS) $(CHISEL_ACC_PATHS) $(RTL_ACC_PATHS)
 
-ACC-driver       = $(addsuffix -driver, $(STRATUSHLS_ACC)) $(addsuffix -driver, $(VIVADOHLS_ACC)) $(addsuffix -driver, $(HLS4ML_ACC)) $(addsuffix -driver, $(CHISEL_ACC)) $(addsuffix -driver, $(CATAPULTHLS_ACC))
-ACC-driver-clean = $(addsuffix -driver-clean, $(STRATUSHLS_ACC)) $(addsuffix -driver-clean, $(VIVADOHLS_ACC)) $(addsuffix -driver-clean, $(HLS4ML_ACC)) $(addsuffix -driver-clean, $(CHISEL_ACC)) $(addsuffix -driver-clean, $(CATAPULTHLS_ACC))
-ACC-app          = $(addsuffix -app, $(STRATUSHLS_ACC)) $(addsuffix -app, $(VIVADOHLS_ACC)) $(addsuffix -app, $(HLS4ML_ACC)) $(addsuffix -app, $(CHISEL_ACC)) $(addsuffix -app, $(CATAPULTHLS_ACC))
-ACC-app-clean    = $(addsuffix -app-clean, $(STRATUSHLS_ACC)) $(addsuffix -app-clean, $(VIVADOHLS_ACC)) $(addsuffix -app-clean, $(HLS4ML_ACC)) $(addsuffix -app-clean, $(CHISEL_ACC)) $(addsuffix -app-clean, $(CATAPULTHLS_ACC))
-ACC-baremetal        = $(addsuffix -baremetal, $(STRATUSHLS_ACC)) $(addsuffix -baremetal, $(VIVADOHLS_ACC)) $(addsuffix -baremetal, $(HLS4ML_ACC)) $(addsuffix -baremetal, $(CHISEL_ACC)) $(addsuffix -baremetal, $(CATAPULTHLS_ACC))
-ACC-baremetal-clean  = $(addsuffix -baremetal-clean, $(STRATUSHLS_ACC)) $(addsuffix -baremetal-clean, $(VIVADOHLS_ACC)) $(addsuffix -baremetal-clean, $(HLS4ML_ACC)) $(addsuffix -baremetal-clean, $(CHISEL_ACC)) $(addsuffix -baremetal-clean, $(CATAPULTHLS_ACC))
+ACC-driver       = $(addsuffix -driver, $(STRATUSHLS_ACC)) $(addsuffix -driver, $(VIVADOHLS_ACC)) $(addsuffix -driver, $(HLS4ML_ACC)) $(addsuffix -driver, $(CHISEL_ACC)) $(addsuffix -driver, $(CATAPULTHLS_ACC)) $(addsuffix -driver, $(RTL_ACC))
+ACC-driver-clean = $(addsuffix -driver-clean, $(STRATUSHLS_ACC)) $(addsuffix -driver-clean, $(VIVADOHLS_ACC)) $(addsuffix -driver-clean, $(HLS4ML_ACC)) $(addsuffix -driver-clean, $(CHISEL_ACC)) $(addsuffix -driver-clean, $(CATAPULTHLS_ACC)) $(addsuffix -driver-clean, $(RTL_ACC))
+ACC-app          = $(addsuffix -app, $(STRATUSHLS_ACC)) $(addsuffix -app, $(VIVADOHLS_ACC)) $(addsuffix -app, $(HLS4ML_ACC)) $(addsuffix -app, $(CHISEL_ACC)) $(addsuffix -app, $(CATAPULTHLS_ACC)) $(addsuffix -app, $(RTL_ACC)) 
+ACC-app-clean    = $(addsuffix -app-clean, $(STRATUSHLS_ACC)) $(addsuffix -app-clean, $(VIVADOHLS_ACC)) $(addsuffix -app-clean, $(HLS4ML_ACC)) $(addsuffix -app-clean, $(CHISEL_ACC)) $(addsuffix -app-clean, $(CATAPULTHLS_ACC)) $(addsuffix -app-clean, $(RTL_ACC))
+ACC-baremetal        = $(addsuffix -baremetal, $(STRATUSHLS_ACC)) $(addsuffix -baremetal, $(VIVADOHLS_ACC)) $(addsuffix -baremetal, $(HLS4ML_ACC)) $(addsuffix -baremetal, $(CHISEL_ACC)) $(addsuffix -baremetal, $(CATAPULTHLS_ACC)) $(addsuffix -baremetal, $(RTL_ACC))
+ACC-baremetal-clean  = $(addsuffix -baremetal-clean, $(STRATUSHLS_ACC)) $(addsuffix -baremetal-clean, $(VIVADOHLS_ACC)) $(addsuffix -baremetal-clean, $(HLS4ML_ACC)) $(addsuffix -baremetal-clean, $(CHISEL_ACC)) $(addsuffix -baremetal-clean, $(CATAPULTHLS_ACC)) $(addsuffix -baremetal-clean, $(RTL_ACC))
 
 print-available-acc:
 	$(QUIET_INFO)echo "Available accelerators generated from Stratus HLS: $(STRATUSHLS_ACC)"
 	$(QUIET_INFO)echo "Available accelerators generated from Vivado HLS: $(VIVADOHLS_ACC)"
 	$(QUIET_INFO)echo "Available accelerators generated from hls4ml: $(HLS4ML_ACC)"
 	$(QUIET_INFO)echo "Available accelerators generated from Chisel3: $(CHISEL_ACC)"
+	$(QUIET_INFO)echo "Available accelerators generated from RTL: $(RTL_ACC)"
 	$(QUIET_INFO)echo "Available third-party accelerators: $(THIRDPARTY_ACC)"
 
 
@@ -353,6 +362,40 @@ catapulthls_acc-distclean: $(CATAPULTHLS_ACC-distclean)
 
 .PHONY: catapulthls_acc catapulthls_acc-clean catapulthls_acc-distclean
 
+### RTL ###
+$(RTL_ACC-wdir):
+	$(QUIET_MKDIR)mkdir -p $(RTL_ACC_PATH)/$(@:-wdir=)/hw/hls-work-$(TECHLIB)
+	@cd $(RTL_ACC_PATH)/$(@:-wdir=)/hw/hls-work-$(TECHLIB); \
+	rm -f Makefile; \
+	ln -s ../hls/Makefile
+
+$(RTL_ACC-hls): %-hls : %-wdir
+	$(QUIET_INFO)echo "Installing available implementations for $(@:-hls=) to $(ESP_ROOT)/tech/$(TECHLIB)/acc/$(@:-hls=)"
+	$(QUIET_MAKE)ACCELERATOR=$(@:-hls=) TECH=$(TECHLIB) ESP_ROOT=$(ESP_ROOT) make -C $(RTL_ACC_PATH)/$(@:-hls=)/hw/hls-work-$(TECHLIB) install
+	@if test -e $(ESP_ROOT)/tech/$(TECHLIB)/acc/installed.log; then \
+		sed -i '/$(@:-hls=)/d' $(ESP_ROOT)/tech/$(TECHLIB)/acc/installed.log; \
+	fi;
+	@echo "$(@:-hls=)" >> $(ESP_ROOT)/tech/$(TECHLIB)/acc/installed.log
+
+$(RTL_ACC-clean): %-clean : %-wdir
+	$(QUIET_CLEAN)ACCELERATOR=$(@:-clean=) TECH=$(TECHLIB) ESP_ROOT=$(ESP_ROOT) make -C $(RTL_ACC_PATH)/$(@:-clean=)/hw/hls-work-$(TECHLIB) clean
+
+$(RTL_ACC-distclean): %-distclean : %-wdir
+	$(QUIET_CLEAN)ACCELERATOR=$(@:-distclean=) TECH=$(TECHLIB) ESP_ROOT=$(ESP_ROOT) make -C $(RTL_ACC_PATH)/$(@:-distclean=)/hw/hls-work-$(TECHLIB) distclean
+	@if test -e $(ESP_ROOT)/tech/$(TECHLIB)/acc/installed.log; then \
+		sed -i '/$(@:-distclean=)/d' $(ESP_ROOT)/tech/$(TECHLIB)/acc/installed.log; \
+	fi;
+
+.PHONY: print-available-acc $(RTL_ACC-wdir) $(RTL_ACC-hls) $(RTL_ACC-clean) $(RTL_ACC-distclean)
+
+rtl_acc: $(RTL_ACC-hls)
+
+rtl_acc-clean: $(RTL_ACC-clean)
+
+rtl_acc-distclean: $(RTL_ACC-distclean)
+
+.PHONY: rtl_acc rtl_acc-clean rtl_acc-distclean
+
 ### Common ###
 $(ESP_ROOT)/tech/$(TECHLIB)/acc/installed.log:
 	touch $@
@@ -383,7 +426,7 @@ $(ACC-driver): $(SOFT_BUILD)/sysroot $(SOFT_BUILD)/linux-build/vmlinux soft-buil
 	ln -sf $$ACC_PATH/sw/linux/driver/* $$BUILD_PATH; \
 	if test -e $$BUILD_PATH/Makefile; then \
 		echo '   ' MAKE $@; mkdir -p $(SOFT_BUILD)/sysroot/opt/drivers; \
-		ARCH=$(ARCH) CROSS_COMPILE=$(CROSS_COMPILE_LINUX) KSRC=$(SOFT_BUILD)/linux-build DRIVERS=$(DRV_LINUX) ACC_SW=$$ACC_PATH/sw $(MAKE) ESP_CORE_PATH=$(BUILD_DRIVERS)/esp -C $$BUILD_PATH; \
+		ARCH=$(ARCH) CROSS_COMPILE=$(CROSS_COMPILE_LINUX) KSRC=$(SOFT_BUILD)/linux-build DRIVERS=$(DRV_LINUX) ACC_SW=$$ACC_PATH/sw $(MAKE) ESP_CORE_PATH=$(BUILD_DRIVERS)/esp DESIGN_PATH=$(DESIGN_PATH) -C $$BUILD_PATH; \
 		if test -e $$BUILD_PATH/*.ko; then \
 			echo '   ' CP $@; cp $$BUILD_PATH/*.ko $(SOFT_BUILD)/sysroot/opt/drivers/$(@:-driver=).ko; \
 		else \
@@ -403,7 +446,7 @@ $(ACC-app): $(SOFT_BUILD)/sysroot soft-build
 		echo '   ' MAKE $@; \
 		mkdir -p $(SOFT_BUILD)/sysroot/applications/test/; \
 		mkdir -p $$BUILD_PATH; \
-		CROSS_COMPILE=$(CROSS_COMPILE_LINUX) CPU_ARCH=$(CPU_ARCH) DRIVERS=$(DRV_LINUX) BUILD_PATH=$$BUILD_PATH $(MAKE) -C $$ACC_PATH/sw/linux/app; \
+		CROSS_COMPILE=$(CROSS_COMPILE_LINUX) CPU_ARCH=$(CPU_ARCH) DRIVERS=$(DRV_LINUX) DESIGN_PATH=$(DESIGN_PATH) BUILD_PATH=$$BUILD_PATH $(MAKE) -C $$ACC_PATH/sw/linux/app; \
 		if [ `ls -1 $$BUILD_PATH/*.exe 2>/dev/null | wc -l ` -gt 0 ]; then \
 			echo '   ' CP $@; cp  $$BUILD_PATH/*.exe $(SOFT_BUILD)/sysroot/applications/test/$(@:-app=).exe; \
 		else \

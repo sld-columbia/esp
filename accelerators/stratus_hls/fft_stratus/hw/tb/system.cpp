@@ -1,4 +1,4 @@
-// Copyright (c) 2011-2021 Columbia University, System Level Design Group
+// Copyright (c) 2011-2022 Columbia University, System Level Design Group
 // SPDX-License-Identifier: Apache-2.0
 
 #include <random>
@@ -49,6 +49,7 @@ void system_t::config_proc()
         config.do_peak = do_peak;
         config.do_bitrev = do_bitrev;
         config.log_len = log_len;
+        config.batch_size = batch_size;
 
         wait(); conf_info.write(config);
         conf_done.write(true);
@@ -79,7 +80,7 @@ void system_t::config_proc()
         const int ERROR_COUNT_TH = 0.001;
         dump_memory(); // store the output in more suitable data structure if needed
         // check the results with the golden model
-        if ((validate() / len) > ERROR_COUNT_TH)
+        if ((validate() / (batch_size * len)) > ERROR_COUNT_TH)
         {
             ESP_REPORT_ERROR("Exceeding error count threshold: validation failed!");
         } else
@@ -108,11 +109,11 @@ void system_t::load_memory()
 
     // Input data and golden output (aligned to DMA_WIDTH makes your life easier)
 #if (DMA_WORD_PER_BEAT == 0)
-    in_words_adj = 2 * len;
-    out_words_adj = 2 * len;
+    in_words_adj = 2 * len * batch_size;
+    out_words_adj = 2 * len * batch_size;
 #else
-    in_words_adj = round_up(2 * len, DMA_WORD_PER_BEAT);
-    out_words_adj = round_up(2 * len, DMA_WORD_PER_BEAT);
+    in_words_adj = round_up(2 * len * batch_size, DMA_WORD_PER_BEAT);
+    out_words_adj = round_up(2 * len * batch_size, DMA_WORD_PER_BEAT);
 #endif
 
     in_size = in_words_adj;
@@ -120,18 +121,21 @@ void system_t::load_memory()
 
     init_random_distribution();
     in = new float[in_size];
-    for (int j = 0; j < 2 * len; j++) {
+    for (int j = 0; j < 2 * len * batch_size; j++) {
         in[j] = gen_random_float();
     }
 
     // preprocess with bitreverse (fast in software anyway)
+    // TODO since batch_size was introduced this is not correct anymore
     if (!do_bitrev)
         fft_bit_reverse(in, len, log_len);
 
     // Compute golden output
     gold = new float[out_size];
     memcpy(gold, in, out_size * sizeof(float));
-    fft_comp(gold, len, log_len,  -1,  do_bitrev);
+    for (int j = 0; j < batch_size; j++) {
+        fft_comp(&gold[j * 2 * len], len, log_len,  -1,  do_bitrev);
+    }
 
     // Memory initialization:
 #if (DMA_WORD_PER_BEAT == 0)
@@ -188,11 +192,15 @@ int system_t::validate()
     uint32_t errors = 0;
     const float ERR_TH = 0.05;
 
-    for (int j = 0; j < 2 * len; j++)
-        if ((fabs(gold[j] - out[j]) / fabs(gold[j])) > ERR_TH)
+    for (int j = 0; j < batch_size * 2 * len; j++) {
+        std::cout << j << " : " << gold[j] << " : " << out[j] << std::endl;
+        if ((fabs(gold[j] - out[j]) / fabs(gold[j])) > ERR_TH) {
             errors++;
+        }
+    }
 
-    ESP_REPORT_INFO("Relative error > %.02f for %d output values out of %d\n", ERR_TH, errors, 2*len);
+    ESP_REPORT_INFO("Relative error > %.02f for %d output values out of %d\n",
+                    ERR_TH, errors, batch_size * 2 * len);
 
     delete [] in;
     delete [] out;

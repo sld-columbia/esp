@@ -1,4 +1,4 @@
-# Copyright (c) 2011-2021 Columbia University, System Level Design Group
+# Copyright (c) 2011-2022 Columbia University, System Level Design Group
 # SPDX-License-Identifier: Apache-2.0
 EXAMPLES_PATH = $(ESP_ROOT)/soft/common/apps/examples/
 EXAMPLES_OUT_PATH = $(SOFT_BUILD)/apps/examples
@@ -13,7 +13,7 @@ $(EXAMPLES_OUT_PATHS):
 define EXAMPLES_GEN
 
 $(1):  $(EXAMPLES_OUT_PATH)/$(1)
-	@ESP_ROOT=$(ESP_ROOT) CPU_ARCH=$(CPU_ARCH) DRIVERS=$(DRV_LINUX) BUILD_PATH=$(EXAMPLES_OUT_PATH)/$(1) BUILD_DRIVERS=$(SOFT_BUILD)/drivers $(MAKE) -C $(EXAMPLES_PATH)/$(1)
+	@ESP_ROOT=$(ESP_ROOT) CPU_ARCH=$(CPU_ARCH) DRIVERS=$(DRV_LINUX) BUILD_PATH=$(EXAMPLES_OUT_PATH)/$(1) BUILD_DRIVERS=$(SOFT_BUILD)/drivers DESIGN_PATH=$(DESIGN_PATH) $(MAKE) -C $(EXAMPLES_PATH)/$(1)
 
 endef
 

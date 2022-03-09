@@ -1,4 +1,4 @@
--- Copyright (c) 2011-2021 Columbia University, System Level Design Group
+-- Copyright (c) 2011-2022 Columbia University, System Level Design Group
 -- SPDX-License-Identifier: Apache-2.0
 
 library ieee;
@@ -626,7 +626,8 @@ package tile is
       remote_ahbs_snd_full       : in  std_ulogic;
       remote_ahbs_rcv_rdreq      : out std_ulogic;
       remote_ahbs_rcv_data_out   : in  misc_noc_flit_type;
-      remote_ahbs_rcv_empty      : in  std_ulogic);
+      remote_ahbs_rcv_empty      : in  std_ulogic;
+      coherence                  : in integer range 0 to 3);
   end component axislv2noc;
 
   component axislv2noc_prc is
@@ -765,8 +766,8 @@ package tile is
       pindex             : integer;
       revision           : integer;
       devid              : devid_t;
-      available_reg_mask : std_logic_vector(0 to 31);
-      rdonly_reg_mask    : std_logic_vector(0 to 31);
+      available_reg_mask : std_logic_vector(0 to MAXREGNUM - 1);
+      rdonly_reg_mask    : std_logic_vector(0 to MAXREGNUM - 1);
       exp_registers      : integer range 0 to 1;
       scatter_gather     : integer range 0 to 1;
       tlb_entries        : integer;

@@ -1,4 +1,4 @@
-// Copyright (c) 2011-2021 Columbia University, System Level Design Group
+// Copyright (c) 2011-2022 Columbia University, System Level Design Group
 // SPDX-License-Identifier: Apache-2.0
 
 #ifndef __FFT_HPP__
@@ -15,7 +15,7 @@
 #define __round_mask(x, y) ((y)-1)
 #define round_up(x, y) ((((x)-1) | __round_mask(x, y))+1)
 /* <<--defines-->> */
-#define LOG_LEN_MAX 14
+#define LOG_LEN_MAX 12
 #define LEN_MAX (1 << LOG_LEN_MAX)
 #define DATA_WIDTH FX_WIDTH
 #if (FX_WIDTH == 64)
@@ -39,7 +39,10 @@ public:
 
         // Map arrays to memories
         /* <<--plm-bind-->> */
-        HLS_MAP_plm(A0, PLM_IN_NAME);
+        HLS_MAP_plm(PLM_IN_PING, PLM_IN_NAME);
+        HLS_MAP_plm(PLM_IN_PONG, PLM_IN_NAME);
+        HLS_MAP_plm(PLM_OUT_PING, PLM_IN_NAME);
+        HLS_MAP_plm(PLM_OUT_PONG, PLM_IN_NAME);
     }
 
     // Processes
@@ -57,10 +60,13 @@ public:
     esp_config_proc cfg;
 
     // Functions
-    void fft_bit_reverse(unsigned int n, unsigned int bits);
+    void fft_bit_reverse(unsigned int n, unsigned int bits, bool pingpong);
 
     // Private local memories
-    sc_dt::sc_int<DATA_WIDTH> A0[PLM_IN_WORD];
+    sc_dt::sc_int<DATA_WIDTH> PLM_IN_PING[PLM_IN_WORD];
+    sc_dt::sc_int<DATA_WIDTH> PLM_IN_PONG[PLM_IN_WORD];
+    sc_dt::sc_int<DATA_WIDTH> PLM_OUT_PING[PLM_IN_WORD];
+    sc_dt::sc_int<DATA_WIDTH> PLM_OUT_PONG[PLM_IN_WORD];
 
 };
 

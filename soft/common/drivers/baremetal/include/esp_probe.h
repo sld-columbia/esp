@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2021 Columbia University, System Level Design Group
+ * Copyright (c) 2011-2022 Columbia University, System Level Design Group
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -12,7 +12,7 @@
 #include <uart.h>
 #endif
 
-#include "socmap.h"
+#include "esplink.h"
 
 #ifndef __ESP_PROBE_H__
 #define __ESP_PROBE_H__

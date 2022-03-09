@@ -21,7 +21,8 @@ static int validate_buffer(token_t *out, float *gold)
 	unsigned errors1 = 0;
 	unsigned errors2 = 0;
 	unsigned errors3 = 0;
-	const unsigned num_samples = 1<<logn_samples;
+	
+    const unsigned num_samples = 1<<logn_samples;
 
 	for (j = 0; j < 2 * num_ffts * num_samples; j++) {
 		native_t val = fx2float(out[j], FX_IL);
@@ -60,6 +61,18 @@ static int validate_buffer(token_t *out, float *gold)
 	printf("  + Relative error > %.02f for %d gold %d output %d GvO values out of %d\n", ERR_TH, errors1, errors2, errors3, 2 * num_ffts * num_samples);
 
 	return errors1;
+/*
+		if ((fabs(gold[j] - val) / fabs(gold[j])) > ERR_TH) {
+			if (errors < 2) {
+				printf(" GOLD[%u] = %f vs %f = out[%u]\n", j, gold[j], val, j);
+			}
+			errors++;
+		}
+	}
+	printf("  + Relative error > %.02f for %d values out of %d\n", ERR_TH, errors, 2 * num_ffts * num_samples);
+
+	return errors;
+*/
 }
 
 
@@ -67,8 +80,10 @@ static int validate_buffer(token_t *out, float *gold)
 static void init_buffer(token_t *in, float *gold)
 {
 	int j;
-	//const float LO = -2.0;
+	
+    //const float LO = -2.0;
 	//const float HI = 2.0;
+
 	const unsigned num_samples = (1 << logn_samples);
 
 	srand((unsigned int) time(NULL));

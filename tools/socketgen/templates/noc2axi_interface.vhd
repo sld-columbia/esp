@@ -1,4 +1,4 @@
--- Copyright (c) 2011-2021 Columbia University, System Level Design Group
+-- Copyright (c) 2011-2022 Columbia University, System Level Design Group
 -- SPDX-License-Identifier: Apache-2.0
 
 library ieee;
@@ -111,8 +111,13 @@ use std.textio.all;
     mon_acc           : out monitor_acc_type;
     mon_cache         : out monitor_cache_type;
     mon_dvfs          : out monitor_dvfs_type;
+<<<<<<< HEAD
     dvfs_transient_acc    : in std_ulogic
     );
+=======
+    -- Coherence
+    coherence         : in integer range 0 to 3);
+>>>>>>> dev
 
 end;
 
@@ -148,6 +153,15 @@ end;
 
   constant nofb_mem_info : tile_mem_info_vector(0 to CFG_NSLM_TILE + CFG_NSLMDDR_TILE + CFG_NMEM_TILE - 1) := mem_info(0 to CFG_NSLM_TILE + CFG_NSLMDDR_TILE + CFG_NMEM_TILE - 1);
 
+  -- NoC plane MEM2DEV
+  signal dma_rcv_rdreq_int    : std_ulogic;
+  signal dma_rcv_data_out_int : noc_flit_type;
+  signal dma_rcv_empty_int    : std_ulogic;
+  -- NoC plane DEV2MEM
+  signal dma_snd_wrreq_int    : std_ulogic;
+  signal dma_snd_data_in_int  : noc_flit_type;
+  signal dma_snd_full_int     : std_ulogic;
+
 begin
 
   pconfig <= (
@@ -159,10 +173,6 @@ begin
 
   apbi_paddr <= apbi.paddr and X"0FFFFFFF";
 
-  -- <<accelerator_instance>>
-
-  -- <<axi_unused>>
-
   -- Unused queues
   coherence_req_wrreq <= '0';
   coherence_req_data_in <= (others => '0');
@@ -173,9 +183,9 @@ begin
   coherence_fwd_snd_wrreq <= '0';
   coherence_fwd_snd_data_in <= (others => '0');
 
-  coherent_dma_rcv_rdreq <= '0';
-  coherent_dma_snd_wrreq <= '0';
-  coherent_dma_snd_data_in <= (others => '0');
+  -- <<accelerator_instance>>
+
+  -- <<axi_unused>>
 
   axi2noc_1: axislv2noc
     generic map (
@@ -194,18 +204,53 @@ begin
       local_x                    => local_x,
       mosi                       => mosi,
       somi                       => somi,
-      coherence_req_wrreq        => dma_snd_wrreq,
-      coherence_req_data_in      => dma_snd_data_in,
-      coherence_req_full         => dma_snd_full,
-      coherence_rsp_rcv_rdreq    => dma_rcv_rdreq,
-      coherence_rsp_rcv_data_out => dma_rcv_data_out,
-      coherence_rsp_rcv_empty    => dma_rcv_empty,
+      coherence_req_wrreq        => dma_snd_wrreq_int,
+      coherence_req_data_in      => dma_snd_data_in_int,
+      coherence_req_full         => dma_snd_full_int,
+      coherence_rsp_rcv_rdreq    => dma_rcv_rdreq_int,
+      coherence_rsp_rcv_data_out => dma_rcv_data_out_int,
+      coherence_rsp_rcv_empty    => dma_rcv_empty_int,
       remote_ahbs_snd_wrreq      => open,
       remote_ahbs_snd_data_in    => open,
       remote_ahbs_snd_full       => '0',
       remote_ahbs_rcv_rdreq      => open,
       remote_ahbs_rcv_data_out   => (others => '0'),
-      remote_ahbs_rcv_empty      => '1');
+      remote_ahbs_rcv_empty      => '1',
+      coherence                  => coherence);
+
+  -- Coherence selection
+  -- coherence <= conv_integer(bankreg(COHERENCE_REG)(COH_T_LOG2 - 1 downto 0));
+
+  coherence_model_select: process (coherence,
+                                   dma_snd_wrreq_int, dma_snd_data_in_int, dma_rcv_rdreq_int,
+                                   dma_snd_full, dma_rcv_data_out, dma_rcv_empty,
+                                   coherent_dma_snd_full, coherent_dma_rcv_data_out, coherent_dma_rcv_empty)
+  begin -- process coherence_model_select
+
+    if coherence = ACC_COH_LLC or coherence = ACC_COH_RECALL then
+      coherent_dma_snd_wrreq    <= dma_snd_wrreq_int;
+      coherent_dma_snd_data_in  <= dma_snd_data_in_int;
+      dma_snd_full_int          <= coherent_dma_snd_full;
+      coherent_dma_rcv_rdreq    <= dma_rcv_rdreq_int;
+      dma_rcv_data_out_int      <= coherent_dma_rcv_data_out;
+      dma_rcv_empty_int         <= coherent_dma_rcv_empty;
+
+      dma_rcv_rdreq   <= '0';
+      dma_snd_wrreq   <= '0';
+      dma_snd_data_in <= (others => '0');
+    else
+      dma_snd_wrreq        <= dma_snd_wrreq_int;
+      dma_snd_data_in      <= dma_snd_data_in_int;
+      dma_snd_full_int     <= dma_snd_full;
+      dma_rcv_rdreq        <= dma_rcv_rdreq_int;
+      dma_rcv_data_out_int <= dma_rcv_data_out;
+      dma_rcv_empty_int    <= dma_rcv_empty;
+
+      coherent_dma_snd_wrreq   <= '0';
+      coherent_dma_snd_data_in <= (others => '0');
+      coherent_dma_rcv_rdreq   <= '0';
+    end if;
+  end process coherence_model_select;
 
   apbo.pirq <= (others => '0');         -- IRQ forwarded to NoC directly
   apbo.pconfig <= pconfig;

@@ -1,11 +1,11 @@
-// Copyright (c) 2011-2021 Columbia University, System Level Design Group
+// Copyright (c) 2011-2022 Columbia University, System Level Design Group
 // SPDX-License-Identifier: Apache-2.0
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <getopt.h>
 
-#include "socmap.h"
+#include "esplink.h"
 #include "edcl.h"
 
 static char *exe;

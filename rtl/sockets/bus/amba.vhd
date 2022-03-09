@@ -507,6 +507,45 @@ type apb_config_type is array (0 to NAPBCFG-1) of amba_config_word;
     b  => axi_b_somi_none
   );
 
+  -- ACE (using only Snoop Address Channel for now to send invalidate from L2 to L1)
+  type ace_ac_req_type is record   -- Interconnect output master input
+    addr   : std_logic_vector (GLOB_PHYS_ADDR_BITS - 1 downto 0);
+    prot   : std_logic_vector (2 downto 0);
+    snoop  : std_logic_vector (3 downto 0);
+    valid  : std_logic;
+  end record;
+
+  type ace_ac_resp_type is record   -- Interconnect input master output
+    ready  : std_logic;
+  end record;
+
+  type ace_req_type is record      -- Interconnect output master input
+    ac     : ace_ac_req_type;
+  end record;
+
+  type ace_resp_type is record     -- Interconnect input master output
+    ac     : ace_ac_resp_type;
+  end record;
+
+  constant ace_ac_req_none : ace_ac_req_type := (
+    addr  => (others => '0'),
+    prot  => (others => '0'),
+    snoop => (others => '0'),
+    valid => '0'
+    );
+
+  constant ace_ac_resp_none : ace_ac_resp_type := (
+    ready => '0'
+    );
+
+  constant ace_req_none : ace_req_type := (
+    ac  => ace_ac_req_none
+    );
+
+  constant ace_resp_none : ace_resp_type := (
+    ac  => ace_ac_resp_none
+    );
+
 -- AXI constants
   constant XBURST_FIXED:          std_logic_vector(1 downto 0) := "00";
   constant XBURST_INCR:           std_logic_vector(1 downto 0) := "01";
@@ -526,6 +565,7 @@ type apb_config_type is array (0 to NAPBCFG-1) of amba_config_word;
   constant XRESP_SLVERR:          std_logic_vector(1 downto 0) := "10";
   constant XRESP_DECERR:          std_logic_vector(1 downto 0) := "11";
 
+  constant XSNOOP_MAKEINVALID:    std_logic_vector(3 downto 0) := "1101";
 
 -------------------------------------------------------------------------------
 -- Subprograms

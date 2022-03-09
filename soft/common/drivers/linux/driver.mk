@@ -1,4 +1,4 @@
-# Copyright (c) 2011-2021 Columbia University, System Level Design Group
+# Copyright (c) 2011-2022 Columbia University, System Level Design Group
 # SPDX-License-Identifier: Apache-2.0
 ifeq ("$(CPU_ARCH)", "ariane")
 CROSS_COMPILE ?= riscv64-unknown-linux-gnu-
@@ -11,7 +11,7 @@ endif
 ESP_CORE_PATH ?= $(DRIVERS)/esp
 
 all: check Module.symvers
-	make -C $(KSRC) M=`pwd` CROSS_COMPILE=$(CROSS_COMPILE) ARCH=$(ARCH)
+	make -C $(KSRC) M=`pwd` CROSS_COMPILE=$(CROSS_COMPILE) ARCH=$(ARCH) DESIGN_PATH=$(DESIGN_PATH)
 
 check:
 ifeq ($(KSRC),)

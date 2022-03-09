@@ -1,4 +1,4 @@
--- Copyright (c) 2011-2021 Columbia University, System Level Design Group
+-- Copyright (c) 2011-2022 Columbia University, System Level Design Group
 -- SPDX-License-Identifier: Apache-2.0
 
 library ieee;
@@ -19,6 +19,7 @@ entity sync_noc_set is
     clk           : in  std_logic;
     clk_tile      : in  std_logic;
     rst           : in  std_logic;
+    rst_tile      : in  std_logic;
 --    CONST_PORTS   : in  std_logic_vector(4 downto 0);
     CONST_local_x : in  std_logic_vector(2 downto 0);
     CONST_local_y : in  std_logic_vector(2 downto 0);
@@ -131,6 +132,7 @@ architecture mesh of sync_noc_set is
       clk           : in  std_logic;
       clk_tile      : in  std_logic;
       rst           : in  std_logic;
+      rst_tile      : in  std_logic;
 --      CONST_PORTS   : in  std_logic_vector(4 downto 0);
       CONST_local_x : in  std_logic_vector(2 downto 0);
       CONST_local_y : in  std_logic_vector(2 downto 0);
@@ -163,6 +165,7 @@ architecture mesh of sync_noc_set is
       clk           : in  std_logic;
       clk_tile      : in  std_logic;
       rst           : in  std_logic;
+      rst_tile      : in  std_logic;
 --      CONST_PORTS   : in  std_logic_vector(4 downto 0);
       CONST_local_x : in  std_logic_vector(2 downto 0);
       CONST_local_y : in  std_logic_vector(2 downto 0);
@@ -198,6 +201,7 @@ begin
       clk           => clk,
       clk_tile      => clk_tile,
       rst           => rst,
+      rst_tile      => rst_tile,
 --      CONST_PORTS   => CONST_PORTS,
       CONST_local_x => CONST_local_x,
       CONST_local_y => CONST_local_y,
@@ -228,6 +232,7 @@ begin
       clk           => clk,
       clk_tile      => clk_tile,
       rst           => rst,
+      rst_tile      => rst_tile,
 --      CONST_PORTS   => CONST_PORTS,
       CONST_local_x => CONST_local_x,
       CONST_local_y => CONST_local_y,
@@ -258,6 +263,7 @@ begin
       clk           => clk,
       clk_tile      => clk_tile,
       rst           => rst,
+      rst_tile      => rst_tile,
 --      CONST_PORTS   => CONST_PORTS,
       CONST_local_x => CONST_local_x,
       CONST_local_y => CONST_local_y,
@@ -287,6 +293,7 @@ begin
       clk           => clk,
       clk_tile      => clk_tile,
       rst           => rst,
+      rst_tile      => rst_tile,
 --      CONST_PORTS   => CONST_PORTS,
       CONST_local_x => CONST_local_x,
       CONST_local_y => CONST_local_y,
@@ -317,6 +324,7 @@ begin
       clk           => clk,
       clk_tile      => clk_tile,
       rst           => rst,
+      rst_tile      => rst_tile,
 --      CONST_PORTS   => CONST_PORTS,
       CONST_local_x => CONST_local_x,
       CONST_local_y => CONST_local_y,
@@ -347,6 +355,7 @@ begin
       clk           => clk,
       clk_tile      => clk_tile,
       rst           => rst,
+      rst_tile      => rst_tile,
 --      CONST_PORTS   => CONST_PORTS,
       CONST_local_x => CONST_local_x,
       CONST_local_y => CONST_local_y,

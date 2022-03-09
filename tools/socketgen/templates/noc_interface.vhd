@@ -1,4 +1,4 @@
--- Copyright (c) 2011-2021 Columbia University, System Level Design Group
+-- Copyright (c) 2011-2022 Columbia University, System Level Design Group
 -- SPDX-License-Identifier: Apache-2.0
 
 library ieee;
@@ -106,8 +106,9 @@ use std.textio.all;
     mon_acc           : out monitor_acc_type;
     mon_cache         : out monitor_cache_type;
     mon_dvfs          : out monitor_dvfs_type;
-    dvfs_transient_acc    : in std_ulogic
-    );
+    -- Coherence
+    coherence         : in integer range 0 to 3);
+>>>>>>> dev
 
 end;
 
@@ -128,7 +129,8 @@ end;
     STATUS_REG         => '1',
     DEVID_REG          => '1',
     PT_NCHUNK_MAX_REG  => '1',
-    EXP_DO_REG         => '1',
+    -- EXP_DO_REG         => '1', -- uncomment if re-enabling regs for SRAM
+                                  -- expansion to reg bank
     YX_REG             => '1',
     -- <<user_read_only>>
     others             => '0');

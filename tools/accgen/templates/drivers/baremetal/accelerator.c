@@ -1,4 +1,4 @@
-/* Copyright (c) 2011-2021 Columbia University, System Level Design Group */
+/* Copyright (c) 2011-2022 Columbia University, System Level Design Group */
 /* SPDX-License-Identifier: Apache-2.0 */
 
 #include <stdio.h>
@@ -105,7 +105,7 @@ int main(int argc, char * argv[])
 	// Search for the device
 	printf("Scanning device tree... \n");
 
-	ndev = probe(&espdevs, SLD_<ACCELERATOR_NAME>, DEV_NAME);
+	ndev = probe(&espdevs, VENDOR_SLD, SLD_<ACCELERATOR_NAME>, DEV_NAME);
 	if (ndev == 0) {
 		printf("<accelerator_name> not found\n");
 		return 0;
@@ -142,7 +142,7 @@ int main(int argc, char * argv[])
 		printf("  nchunk = %lu\n", NCHUNK(mem_size));
 
 #ifndef __riscv
-		for (coherence = ACC_COH_NONE; coherence <= ACC_COH_FULL; coherence++) {
+		for (coherence = ACC_COH_NONE; coherence <= ACC_COH_RECALL; coherence++) {
 #else
 		{
 			/* TODO: Restore full test once ESP caches are integrated */

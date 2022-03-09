@@ -49,6 +49,7 @@ const int32_t do_inverse = 0;
 const int32_t do_shift = 0;
 const int32_t scale_factor = 1;
 int32_t num_samples; // = (1 << logn_samples);
+
 int32_t len;
 
 static unsigned in_words_adj;
@@ -198,6 +199,13 @@ int main(int argc, char * argv[])
 			/* TODO: Restore full test once ESP caches are integrated */
 			coherence = ACC_COH_NONE;
 
+/*#ifndef __riscv
+		for (coherence = ACC_COH_NONE; coherence <= ACC_COH_FULL; coherence++) {
+#else
+		{
+*/			/* TODO: Restore full test once ESP caches are integrated */
+/*			coherence = ACC_COH_NONE;
+#endif*/
 			printf("  --------------------\n");
 			printf("  Generate input...\n");
 			init_buf(mem, gold);

@@ -75,6 +75,7 @@ src/cache_subsystem/wt_dcache_wbuffer.sv
 src/cache_subsystem/wt_l15_adapter.sv
 src/cache_subsystem/wt_dcache_mem.sv
 src/cache_subsystem/std_cache_subsystem.sv
+src/cache_subsystem/wt_dcache_inval.sv
 src/cache_subsystem/wt_dcache.sv
 src/clint/axi_lite_interface.sv
 src/clint/clint.sv
