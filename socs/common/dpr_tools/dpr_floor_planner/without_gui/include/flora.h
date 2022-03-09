@@ -56,6 +56,7 @@ typedef struct{
 typedef struct{
     unsigned long num_rm_partitions;
     std::string path_to_input;
+    std::string path_to_output;
 }input_to_flora;
 
 #define MY_RAND() ((double)((double)rand()/(double)RAND_MAX))
@@ -125,8 +126,9 @@ public:
 
     void clear_vectors();
     void prep_input();
+    void write_output(param_from_solver *from_solver);
     void start_optimizer();
-void generate_cell_name(unsigned long num_part, vector<std::string> *cell);
+    void generate_cell_name(unsigned long num_part, vector<std::string> *cell);
     void generate_xdc(std::string fplan_file_name);
 
 //    void init_fpga(enum fpga_type);
