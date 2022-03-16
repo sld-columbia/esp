@@ -200,6 +200,7 @@ distclean:	check_srcs-distclean     	\
 		xmsim-distclean			\
 		config-distclean		\
 		vivado-distclean		\
+		vivado-dpr-clean    \
 		zynq-distclean			\
 		genus-distclean			\
 		socketgen-distclean		\

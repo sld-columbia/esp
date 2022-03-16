@@ -1059,7 +1059,9 @@ package tile is
     mon_dvfs_in       : in  monitor_dvfs_type;
     dvfs_transient_in    : in std_ulogic;
     mon_acc           : out monitor_acc_type;
-    mon_cache         : out monitor_cache_type
+    mon_cache         : out monitor_cache_type;
+    mon_dvfs          : out monitor_dvfs_type;
+    coherence         : in  integer range 0 to 3
     );
 end component acc_top;
   

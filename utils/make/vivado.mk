@@ -277,7 +277,6 @@ vivado-syn: vivado-setup
             echo "read_ip -quiet $(ESP_ROOT)/socs/$(BOARD)/vivado/$(DESIGN).srcs/sources_1/ip/sgmii/sgmii.xci" >> static_config.tcl; \
         fi; \
         echo "link_design -top $(TOP) -part $(DEVICE)" >> static_config.tcl; \
-		echo "read_xdc $(ESP_ROOT)/socs/$(BOARD)/top_latest.xdc" >> static_config.tcl;\
 		echo "write_checkpoint -force $(ESP_ROOT)/socs/$(BOARD)/vivado/$(DESIGN).runs/synth_1/top_dpr.dcp" >> static_config.tcl; \
         echo "close_project" >> static_config.tcl; \
         echo "exit" >> static_config.tcl; \
@@ -285,7 +284,9 @@ vivado-syn: vivado-setup
         vivado $(VIVADO_BATCH_OPT) -source static_config.tcl | tee ../vivado_syn.log; \
         echo $(SPACES)"DPR: creating Vivado dpr directory"; \
         $(RM) vivado_dpr; \
-        mkdir -p vivado_dpr; \
+        $(RM) partial_bitstreams;\
+		mkdir -p partial_bitstreams;\
+		mkdir -p vivado_dpr; \
         mkdir -p vivado_dpr/Bitstreams; \
         mkdir -p vivado_dpr/Checkpoint; \
         mkdir -p vivado_dpr/Implement; \
@@ -306,6 +307,7 @@ vivado-syn: vivado-setup
         vivado $(VIVADO_BATCH_OPT) -source bs.tcl | tee ../vivado_syn_dpr.log; \
 		cd ../ ; \
 		cp res_reqs.csv vivado_dpr/ ; \
+		sh $(ESP_ROOT)/socs/common/process_dpr.sh $(ESP_ROOT) $(BOARD) $(DEVICE) GEN_HDR;  \
     fi;
 
 vivado-syn-dpr: DPR_ENABLED = y
@@ -332,6 +334,7 @@ vivado-syn-dpr-acc: check_all_rtl_srcs vivado/srcs.tcl
         cd ../ ; \
 		cp ./socgen/esp/.esp_config vivado_dpr/; \
 		cp res_reqs.csv vivado_dpr/ ; \
+		sh $(ESP_ROOT)/socs/common/process_dpr.sh $(ESP_ROOT) $(BOARD) $(DEVICE) GEN_HDR;  \
     fi;
 
 
@@ -378,5 +381,14 @@ vivado-distclean: vivado-clean
 	$(QUIET_CLEAN)$(RM) \
 		vivado	\
 		*.bit
+vivado-dpr-clean:
+	$(QUIET_CLEAN)$(RM) \
+		vivado_dpr \
+		pblocks* \
+		partial_bitstreams \
+		partial.bin \
+		flora* \
+		*.csv \
+		static_config.tcl
 
-.PHONY: vivado-clean vivado-distclean vivado-syn vivado-prog-fpga vivado/$(DESIGN) vivado-setup vivado-gui
+.PHONY: vivado-clean vivado-distclean vivado-syn vivado-prog-fpga vivado/$(DESIGN) vivado-setup vivado-gui vivado-dpr-clean

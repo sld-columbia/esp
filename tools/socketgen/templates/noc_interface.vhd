@@ -106,9 +106,9 @@ use std.textio.all;
     mon_acc           : out monitor_acc_type;
     mon_cache         : out monitor_cache_type;
     mon_dvfs          : out monitor_dvfs_type;
+    dvfs_transient_acc    : in std_ulogic;
     -- Coherence
     coherence         : in integer range 0 to 3);
->>>>>>> dev
 
 end;
 

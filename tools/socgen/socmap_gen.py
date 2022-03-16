@@ -95,6 +95,10 @@ DDR_HADDR["leon3"] = 0x400
 DDR_HADDR["ariane"] = 0x800
 DDR_HADDR["ibex"] = 0x800
 
+PBS_HADDR = dict()
+PBS_HADDR["leon3"] = 0x500
+PBS_HADDR["ariane"] = 0xA00
+
 # SLM base address
 SLM_HADDR = 0x040
 SLMDDR_HADDR = 0xC00
@@ -1857,6 +1861,7 @@ def print_esplink_header(fp, esp_config, soc):
   fp.write("#define BOOTROM_BASE_ADDR " + hex(RST_ADDR[esp_config.cpu_arch]) + "\n")
   fp.write("#define RODATA_START_ADDR " + hex(RODATA_ADDR[esp_config.cpu_arch]) + "\n")
   fp.write("#define DRAM_BASE_ADDR 0x" + format(DDR_HADDR[esp_config.cpu_arch], '03X') + "00000\n")
+  fp.write("#define PBS_BASE_ADDR 0x" + format(PBS_HADDR[esp_config.cpu_arch], '03X') + "00000\n")
   if esp_config.nmem == 0:
     fp.write("#define OVERRIDE_DRAM_SIZE 0x" + format(esp_config.slm_tot_kbytes * 1024, '08X') + "\n")
   fp.write("#define ESPLINK_BASE_ADDR 0x" + format(AHB2APB_HADDR[esp_config.cpu_arch], '03X') + "00400\n")

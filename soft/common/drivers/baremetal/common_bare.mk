@@ -64,6 +64,7 @@ LDFLAGS += -lmonitors
 LDFLAGS += $(BUILD_PATH)/../../probe/libprobe.a
 LDFLAGS += $(BUILD_PATH)/../../monitors/libmonitors.a
 LDFLAGS += $(BUILD_PATH)/../../utils/baremetal/libutils.a
+LDFLAGS += $(BUILD_PATH)/../../prc/libprc.a
 CC := $(CROSS_COMPILE)gcc
 LD := $(CROSS_COMPILE)$(LD)
 
@@ -75,6 +76,7 @@ $(BUILD_PATH)/%.o: %.c $(HEADERS)
 	CPU_ARCH=$(CPU_ARCH) DESIGN_PATH=$(DESIGN_PATH) BUILD_PATH=$(BUILD_PATH)/../../monitors MODE=BAREC \
 			 $(MAKE) -B -C $(DRIVERS)/../common/monitors
 	CPU_ARCH=$(CPU_ARCH) DESIGN_PATH=$(DESIGN_PATH) BUILD_PATH=$(BUILD_PATH)/../../utils/baremetal $(MAKE) -C $(DRIVERS)/utils
+	CPU_ARCH=$(CPU_ARCH) DESIGN_PATH=$(DESIGN_PATH) BUILD_PATH=$(BUILD_PATH)/../../prc $(MAKE) -C $(DRIVERS)/prc
 	$(CC) $(CFLAGS) -c $< -o $@ $(LDFLAGS)
 endif
 
@@ -83,6 +85,7 @@ $(BUILD_PATH)/%.exe: %.c $(OBJS) $(SRCS_PROBE) $(HEADERS)
 	CPU_ARCH=$(CPU_ARCH) DESIGN_PATH=$(DESIGN_PATH) BUILD_PATH=$(BUILD_PATH)/../../monitors MODE=BAREC \
 			 $(MAKE) -B -C $(DRIVERS)/../common/monitors
 	CPU_ARCH=$(CPU_ARCH) DESIGN_PATH=$(DESIGN_PATH) BUILD_PATH=$(BUILD_PATH)/../../utils/baremetal $(MAKE) -C $(DRIVERS)/utils
+	CPU_ARCH=$(CPU_ARCH) DESIGN_PATH=$(DESIGN_PATH) BUILD_PATH=$(BUILD_PATH)/../../prc $(MAKE) -C $(DRIVERS)/prc
 	$(CC) $(CFLAGS) -o $@ $< $(LDFLAGS_RISCV) $(LDFLAGS) $(OBJS)
 
 $(BUILD_PATH)/%.bin: $(BUILD_PATH)/%.exe

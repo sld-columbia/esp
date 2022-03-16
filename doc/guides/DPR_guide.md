@@ -1,38 +1,30 @@
-# ESP Dynamic Partial Reconfiguration Flow Guide
+# ESP Dynamic Partial Reconfiguration (DPR) guide
 
-A guide to using the dynamic partial reconfiguration (DPR) flow in
-ESP.
-
-## Why the DPR flow for ESP?
-
-The major advantage of using the DPR flow in ESP is to reduce the FPGA
-prototyping (FPGA implementation) time of a design for design
-iterations where only some portion of the design is modified.  In the
-near future, a run-time partial reconfiguration will also be
-integrated into ESP. In the run-time partial reconfiguration of
-accelerators, all the accelerator tiles are partially reconfigurable
-and can be swapped in and out of the design at run-time without the
-need to fully reconfigure the FPGA (while the rest of the system
-continues to be operational).  The DPR flow is an alternative to the
-exisiting monolithic vivado prototyping of ESP.
-        
-## An example of the ESP DPR flow
+This guides introduces the ESP DPR FPGA flow and the runtime reconfiguration 
+of accelerators using DPR. The flow explains the necessary design steps 
+to generate the bitstreams as well as the post-bitstream-generation 
+processing to prepare for an execution. Meanwhile, the runtime reconfiguation 
+demonstrates how to swap accelerators on the fly.
+       
+## Brief description
 
 This guide demonstrates FPGA prototyping of ESP in 2x2 tile
 configuration using the DPR flow. The tiles are configured as, a cpu
 tile, an accelerator tile, a mem tile and an I/O tile.  Protoyping ESP
 with the DPR flow is almost the same as the non-dpr flow except the
 make targets that are used to generate the FPGA bitstream and
-programming the FPGA in Xilinx Vivado.  The example focuses on
-implementing ESP with a MAC accelerator in the accelerator tile in the
-first design run, and then replacing the MAC accelerator with a FIR
-accelerator in the second run. Both accelerators are designed using
-the Vivado HLS based acceleration design flow from the ESP website,
-https://www.esp.cs.columbia.edu/docs/cpp_acc/cpp_acc-guide, but it
-should also work for the systemC based accelerator design flow.
+programming the FPGA in Xilinx Vivado.  
 
-The DPR flow was tested on the Xilinx VC707, VCU118 and VCU128 design
-targets.
+This simple example demonstrates the implementation and execution of two accelerators 
+(MAC and FIR) using the DPR flow. In the first design run, the full and partial bitstreams
+of the MAC accelerator are generated. Then in the second design run, only the partial 
+bitstreams are generated for the FIR accelerators. Both accelerators are designed using
+the Vivado HLS based acceleration design flow from the ESP website,
+https://www.esp.cs.columbia.edu/docs/cpp_acc/cpp_acc-guide, but the flow does not change
+for SystemC based accelerators designed using Stratus/Catapult.
+
+The DPR flow was fully tested on the Xilinx VC707. The development for the
+VCU118 and VCU128 targets is still in progress.
 
 ### First design run: MAC accelerator implementaion
 
@@ -47,24 +39,33 @@ targets.
 3. At the FPGA prototyping stage replace the `make vivado-syn` target
    with `make vivado-syn-dpr`.
 
-4. Finally when deploying the bitstream into the FPGA, replace the
-`fpga-run` and `fpga-run-linux` targets with `fpga-run-dpr` and
-`fpga-run-linux-dpr`, to load the bitstream to the FPGA and run a
-baremetal application or linux respectively.
+At the end of this step, you should note the following
+    a. The full and partial bitstreams of the design are located inside
+    `socs/xilinx-vc707-xc7vx485t/vivado_dpr/Bitstreams` folder.
+    The `acc_bs.bit` represents the full bitstream and `mac_vivado_x.bin` 
+    (x representing the tile_id) is the partial bitstream.
+    
+    b. The partial bistreams are also stored inside 
+    `socs/xilinx-vc707-xc7vx485t/partial_bistreams` folder.
 
-### Second design run: Replacing the MAC accelerator with a FIR accelerator
+    c. The flow also generates a struct inside 
+    `socs/xilinx-vc707-xc7vx485tsocgen/esp/pbs_map.h` that contains 
+    general information used when the partial bitstreams are loaded 
+    on the FPGA. 
+
+### Second design run: Implementing the FIR accelerator
 
 In the second design run, the MAC accelerator is replaced with FIR
 accelerator. All the other tiles in the design remain unchanged.
 
 1. Follow the steps to create the FIR accelerator using the guide
    https://www.esp.cs.columbia.edu/docs/cpp_acc/cpp_acc-guide/. Run
-   the `init_accelerator.sh` with the following specifications
+   the `/tools/accgen/accgen.sh` and customize the accelerator template as follows
    ```
    * Enter accelerator name [dummy]: fir
    * Select design flow (Stratus HLS, Vivado HLS, hls4ml) [S]: V
    * Enter ESP path [/home/sholmes/esp_new/esp]: 
-   * Enter unique accelerator id as three hex digits [04A]: 100
+   * Enter unique accelerator id as three hex digits [04A]: 122
    * Enter accelerator registers
      - register 0 name [size]: fir_in
      - register 0 default value [1]: 120
@@ -87,7 +88,7 @@ accelerator. All the other tiles in the design remain unchanged.
    ```
 
 2. Replace the body of the `compute()` function in
-   `accelerators/vivado_hls/fir/src/espacc.cpp` with the following
+   `accelerators/vivado_hls/fir_vivado/hw/src/espacc.cpp` with the following
    code
    ```c
    //FIR window size
@@ -122,7 +123,7 @@ accelerator. All the other tiles in the design remain unchanged.
    ```
 
 3. Replace the initialization of the inbuff and outbuff_gold in
-   accelerators/vivado_hls/fir/tb/tb.cc with the following code
+   accelerators/vivado_hls/fir_vivado/hw/tb/tb.cc with the following code
    ```c
    //FIR window size
    const unsigned N = 10;
@@ -153,7 +154,7 @@ accelerator. All the other tiles in the design remain unchanged.
    ```
 
 4. Replace the code inside the init_buff function in
-   soft/ariane/drivers/fir/barec/fir.c with the following code
+   accelerators/vivado_hls/fir_vivado/sw/baremetal/fir.c with the following code
    ```c
    int i;
    int j;
@@ -183,7 +184,7 @@ accelerator. All the other tiles in the design remain unchanged.
    would for the mac accelerator.
 
 5. run the `make esp-xconfig` target to change the accelerator tile
-   from MAC to FIR
+   from MAC_VIVADO to FIR_VIVADO
 
 6. run `make vivado-syn-dpr-acc` to replace the accelerator and run
    vivado implementation
@@ -193,10 +194,65 @@ accelerator. All the other tiles in the design remain unchanged.
 `fpga-run-linux-dpr`, to load the bitstream to the FPGA and run a
 baremetal application or linux.
 
-## Things to Note
+## Once again, things to Note
 
-In the existing DPR integration, only the accelerator tiles are
-partially reconfigurable, hence if any of the tiles, besides the
-accelerator tile, are modified, then the flow must be run again with
-`make vivado-syn-dpr`.  The design flow has been tested with a 3x2,
-2x3, 3x3 and 4x3 tile configuration.
+    a. The `socs/xilinx-vc707-xc7vx485t/partial_bistreams` folder is updated
+    with the new fir bitstream. 
+    
+    b. The struct inside `socs/xilinx-vc707-xc7vx485tsocgen/esp/pbs_map.h` is
+    also updated with fir bistream information.
+
+
+## Executing the accelerators
+    Performing the DPR execution consists of three steps
+
+    a. Loading the design with the full bitstream and the partial bitstreams
+        using the `make fpga-reconf` target
+
+    b. Slightly patching the baremetal software and compiling them.
+    The sw patch is added to call the DPR library to enable the tile 
+    decoupler during reconfiguation and trigger the reconfiguration.
+    
+    The patched files are `accelerators/vivado_hls/fir_vivado/sw/baremetal/fir.c` 
+    and `accelerators/vivado_hls/mac_vivado/sw/baremetal/mac.c` 
+    
+    Patch 1. add
+
+    ```c
+    
+    #include <prc_utils.h>
+    
+    ```
+    Patch 2. replace the 
+    
+    ```c
+    printf("**************** %s.%d ****************\n", DEV_NAME, n);
+    
+    dev = &espdevs[n];
+    
+    ``` code with 
+    
+    ```c
+    printf("**************** %s.%d ****************\n", DEV_NAME, n);
+            
+    dev = &espdevs[n];
+    
+    decouple_acc(dev, 0); //disable decoupler
+    
+    ```
+
+    Patch 3. add the following before the end of the function
+
+    ```c
+    //
+    decouple_acc(dev, 1); //enable decoupler
+    reconfigure_FPGA(dev, 0);
+
+    return 0; 
+
+    ```
+    The baremetal sw is compiled as 
+        `make mac_vivado-baremetal` and  `make mac_vivado-baremetal`
+
+    c. Run the accelerator using 
+        make `fpga-run-sw` target
