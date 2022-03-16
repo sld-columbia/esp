@@ -15,6 +15,7 @@ fpga-program: vivado-prog-fpga
 	@sleep 5
 endif
 
+fpga-reconf: DPR_ENABLED = y
 fpga-reconf: esplink
 	@./$(ESP_CFG_BUILD)/esplink --reset
 	@./$(ESP_CFG_BUILD)/esplink --pbs -i $(ESP_ROOT)/socs/$(BOARD)/partial.bit

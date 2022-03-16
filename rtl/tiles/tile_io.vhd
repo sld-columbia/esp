@@ -372,7 +372,7 @@ architecture rtl of tile_io is
   signal vsm_VS_0_sw_startup_req        : std_logic;  --interrupt
 
   constant prc_mask  : std_logic_vector(31 downto 0) := x"000000FF";
-
+  constant prc_coherence : integer := 0;
   -- Mon
   signal mon_dvfs_int   : monitor_dvfs_type;
 
@@ -1610,7 +1610,7 @@ begin
       remote_ahbs_rcv_rdreq      => open,
       remote_ahbs_rcv_data_out   => (others => '0'),
       remote_ahbs_rcv_empty      => '1',
-      coherence                  => 0);
+      coherence                  => prc_coherence);
 
       mosi(0).ar.addr(31 downto 0)      <= m_axi_mem_araddr;
       mosi(0).ar.len                    <= m_axi_mem_arlen;

@@ -25,6 +25,9 @@ device=$(echo ${DEVICE} | awk '{print tolower($0)}')
 acc_id_match="hls_conf       : hlscfg_t"
 declare -A new_accelerators old_accelerators modified_accelerators
 declare -A res_consumption
+declare -A bitstream_descr
+
+PBS_DDR_OFFSET=0x3000;
 
 #function to extract the number and types of accelerator tiles from current esp_config
 function extract_acc() {
@@ -529,7 +532,7 @@ if [[ "$4" == "IMPL_DPR" ]]; then
     echo "set_attribute impl top_dpr partitions  [list [list \$static \$top  implement ] \\" >> $dpr_syn_tcl;
     for ((i=0; i<$num_acc_tiles; i++))
     do
-        echo "[list ${new_accelerators[$i,1]}  esp_1/tiles_gen[${new_accelerators[$i,0]}].accelerator_tile.tile_acc_i/acc_top_inst implement ] \\" >>  $dpr_syn_tcl;
+        echo "[list ${new_accelerators[$i,1]}  esp_1/tiles_gen[${new_accelerators[$i,0]}].accelerator_tile.tile_acc_i/tile_acc_1/acc_top_inst implement ] \\" >>  $dpr_syn_tcl;
     done
     echo "]"  >> $dpr_syn_tcl;
 elif [[ "$4" == "IMPL_ACC" ]] && [[ "$num_modified_acc_tiles" != "0" ]]; then
@@ -542,13 +545,13 @@ elif [[ "$4" == "IMPL_ACC" ]] && [[ "$num_modified_acc_tiles" != "0" ]]; then
     for ((i=0, j=0; j<$num_acc_tiles; j++))
     do
         if  [[ $regenerate_fplan == 1 ]]; then
-            echo "[list ${new_accelerators[$j,1]}  esp_1/tiles_gen[${new_accelerators[$j,0]}].accelerator_tile.tile_acc_i/acc_top_inst implement ] \\" >>  $dpr_syn_tcl;
+            echo "[list ${new_accelerators[$j,1]}  esp_1/tiles_gen[${new_accelerators[$j,0]}].accelerator_tile.tile_acc_i/tile_acc_1/acc_top_inst implement ] \\" >>  $dpr_syn_tcl;
 
         elif [[ ${modified_accelerators[$i,0]} == ${new_accelerators[$j,0]} ]]; then
-            echo "[list ${modified_accelerators[$i,1]}  esp_1/tiles_gen[${modified_accelerators[$i,0]}].accelerator_tile.tile_acc_i/acc_top_inst implement ] \\" >>  $dpr_syn_tcl;
+            echo "[list ${modified_accelerators[$i,1]}  esp_1/tiles_gen[${modified_accelerators[$i,0]}].accelerator_tile.tile_acc_i/tile_acc_1/acc_top_inst implement ] \\" >>  $dpr_syn_tcl;
             ((i++));
         else
-            echo "[list ${new_accelerators[$j,1]}  esp_1/tiles_gen[${new_accelerators[$j,0]}].accelerator_tile.tile_acc_i/acc_top_inst import ] \\" >>  $dpr_syn_tcl;
+            echo "[list ${new_accelerators[$j,1]}  esp_1/tiles_gen[${new_accelerators[$j,0]}].accelerator_tile.tile_acc_i/tile_acc_1/acc_top_inst import ] \\" >>  $dpr_syn_tcl;
         fi
     done
     echo "]"  >> $dpr_syn_tcl;
@@ -580,6 +583,65 @@ bs_gen_script=$1/socs/$2/vivado_dpr/bs.tcl;
     done
 }
 
+function gen_bs_descriptor() {
+pbs_map=$1/socs/$2/socgen/esp/pbs_map.h;
+pbs_path=$1/socs/$2/partial_bitstreams;
+
+    for((i=0; i<$num_acc_tiles; i++)) do
+        cp $1/socs/$2/vivado_dpr/Bitstreams/${new_accelerators[$i,1]}.bin $1/socs/$2/partial_bitstreams; 
+    done
+    
+
+num_pbs=$(cd $1/socs/$2/partial_bitstreams && (ls | wc -l));
+pbs_addr=0;
+array=$(ls -ls $1/socs/$2/partial_bitstreams)
+    
+    echo " " > $pbs_map;
+    echo "pbs_map bs_descriptor [$num_pbs] = { " >> $pbs_map;
+    
+    for FILE in $pbs_path/*; do
+        pbs_name=$(basename $FILE | awk -F'[.]' '{print($1)}');
+        pbs_size=$(echo `ls -ls $FILE` | awk '{print($6)}'); 
+        pbs_tile_id=$(echo $pbs_name | awk -F'[_]' '{print($3)}');
+        echo "{\"$pbs_name\", $pbs_size, $pbs_addr, $pbs_tile_id}, " >> $pbs_map;
+        pbs_addr=$(($pbs_addr + $pbs_size + $PBS_DDR_OFFSET));
+        echo "file is $pbs_size $pbs_tile_id $pbs_name";
+    done
+    echo "};" >>$pbs_map;
+    
+}
+
+function load_bs() {
+#get cpu arch
+while read line
+do
+    for word in $line
+    do
+        if [[ $word == "CPU_ARCH"* ]]; then
+            _line=( $line )
+            arch=${_line[2]}
+            echo "$arch"
+            if [[ $arch == "leon3" ]]; then
+               pbs_base_addr=0x50000000;
+            else
+               pbs_base_addr=0xA0000000; 
+            fi
+        fi
+    done
+done < $esp_config
+
+num_pbs=$(cd $1/socs/$2/partial_bitstreams && (ls | wc -l));
+pbs_addr=$pbs_base_addr;
+pbs_path=$1/socs/$2/partial_bitstreams;
+        
+    for FILE in $pbs_path/*; do
+        pbs_name=$(basename $FILE);
+        pbs_size=$(echo `ls -ls $FILE` | awk '{print($6)}'); 
+        $1/socs/$2/socgen/esp/esplink --load -a $pbs_addr  -i $1/socs/$2/partial_bitstreams/$pbs_name;
+        pbs_addr=$(($pbs_base_addr + $pbs_size + $PBS_DDR_OFFSET));
+    done
+}
+
 #This function parses the synthesis reports of accelerators to extract their resource requirements
 function parse_synth_report() {
 synth_report_base=$1/socs/$2/vivado_dpr/Synth;
@@ -589,7 +651,7 @@ lut_keyword=LUTs*;
 bram_keyword=Block;
 dsp_keyword=""DSPs;
 
-LUT_TOLERANCE=250;
+LUT_TOLERANCE=700;
 BRAM_TOLERANCE=20;
 DSP_TOLERANCE=20;
 
@@ -642,9 +704,9 @@ done
 for ((i=0; i<$num_acc_tiles; i++))
 do
     if [[ "$i" == "0" ]]; then
-        echo ${res_consumption["$i,0"]}, ${res_consumption["$i,1"]}, ${res_consumption["$i,2"]}, esp_1/tiles_gen[${new_accelerators[$i,0]}].accelerator_tile.tile_acc_i/acc_top_inst, ${new_accelerators[$i,0]} > $flora_input;
+        echo ${res_consumption["$i,0"]}, ${res_consumption["$i,1"]}, ${res_consumption["$i,2"]}, esp_1/tiles_gen[${new_accelerators[$i,0]}].accelerator_tile.tile_acc_i/tile_acc_1/acc_top_inst, ${new_accelerators[$i,0]} > $flora_input;
     else
-        echo ${res_consumption["$i,0"]}, ${res_consumption["$i,1"]}, ${res_consumption["$i,2"]}, esp_1/tiles_gen[${new_accelerators[$i,0]}].accelerator_tile.tile_acc_i/acc_top_inst, ${new_accelerators[$i,0]} >> $flora_input;
+        echo ${res_consumption["$i,0"]}, ${res_consumption["$i,1"]}, ${res_consumption["$i,2"]}, esp_1/tiles_gen[${new_accelerators[$i,0]}].accelerator_tile.tile_acc_i/tile_acc_1/acc_top_inst, ${new_accelerators[$i,0]} >> $flora_input;
     fi;
 done
 }
@@ -743,12 +805,21 @@ elif [ $4 == "GEN_BS" ]; then
     diff_accelerators $1 $2 $3; 
     gen_bs_script $1 $2 $3 $4;
 
-elif [ $4 == "test" ]; then
+elif [ $4 == "GEN_HDR" ]; then
     extract_acc $1 $2 $3
-    extract_acc_old $1 $2 $3
-    diff_accelerators $1 $2 $3 
-    patch_acc_devid $1 $2 $3 $4
-    gen_bs_script $1 $2 $3 $4 
+    gen_bs_descriptor $1 $2 $3 $4
+     
+elif [ $4 == "LOAD_BS" ]; then
+    load_bs $1 $2 $3 $4
+
+elif [ $4 == "test" ]; then
+    #extract_acc $1 $2 $3
+    #extract_acc_old $1 $2 $3
+    #diff_accelerators $1 $2 $3 
+    #patch_acc_devid $1 $2 $3 $4
+    #gen_bs_script $1 $2 $3 $4 
+    #gen_bs_descriptor $1 $2 $3 $4
+    load_bs $1 $2 $3 $4
     #initialize_acc_tiles $1 $2 $3
     #add_acc_prj_file $1 $2 $3
     #gen_synth_script $1 $2 $3 $4
@@ -759,5 +830,4 @@ elif [ $4 == "test" ]; then
     #acc_fplan $1 $2 $3 $4;
     #echo " regenarate after parse is $regenerate_fplan";
     #gen_floorplan $1 $2 $3 $4
-
 fi;

@@ -10,6 +10,7 @@ soft-build:
 	@mkdir -p $(BUILD_DRIVERS)/libesp
 	@mkdir -p $(BUILD_DRIVERS)/monitors
 	@mkdir -p $(BUILD_DRIVERS)/probe
+	@mkdir -p $(BUILD_DRIVERS)/prc
 	@mkdir -p $(BUILD_DRIVERS)/test
 	@mkdir -p $(BUILD_DRIVERS)/utils/baremetal
 	@mkdir -p $(BUILD_DRIVERS)/utils/linux
