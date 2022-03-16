@@ -42,6 +42,7 @@ SRCS := $(wildcard *.c)
 HEADERS := $(wildcard *.h) $(wildcard $(DRIVERS)/include/*.h)
 HEADERS += $(wildcard $(DRIVERS)/../common/include/*.h) $(wildcard $(DESIGN_PATH)/*.h)
 SRCS_PROBE := $(wildcard $(DRIVERS)/probe/*.c) 
+SRCS_PRC := $(wildcard $(DRIVERS)/prc/*.c)
 ifeq ($(APPNAME),)
 EXES := $(SRCS:.c=.exe)
 EXES := $(addprefix  $(BUILD_PATH)/, $(EXES))
@@ -80,7 +81,7 @@ $(BUILD_PATH)/%.o: %.c $(HEADERS)
 	$(CC) $(CFLAGS) -c $< -o $@ $(LDFLAGS)
 endif
 
-$(BUILD_PATH)/%.exe: %.c $(OBJS) $(SRCS_PROBE) $(HEADERS)
+$(BUILD_PATH)/%.exe: %.c $(OBJS) $(SRCS_PROBE) $(SRCS_PRC) $(HEADERS)
 	CPU_ARCH=$(CPU_ARCH) DESIGN_PATH=$(DESIGN_PATH) BUILD_PATH=$(BUILD_PATH)/../../probe $(MAKE) -C $(DRIVERS)/probe
 	CPU_ARCH=$(CPU_ARCH) DESIGN_PATH=$(DESIGN_PATH) BUILD_PATH=$(BUILD_PATH)/../../monitors MODE=BAREC \
 			 $(MAKE) -B -C $(DRIVERS)/../common/monitors

@@ -21,12 +21,14 @@ static int get_decoupler_addr(struct esp_device *dev, struct esp_device *decoupl
     dev_addr = (unsigned) dev->addr;
     dev_addr_trunc = (dev_addr << 12) >> 12;
     
-    //printf("device address is %0x %0x \n", dev_addr, dev_addr_trunc);
+    //printf("device address %0x truncated addr %0x \n", dev_addr, dev_addr_trunc);
 //#ifdef ACCS_PRESENT
     //Obtain tile id
     for (i = 0; i < SOC_NACC; i++) {
-        if(dev_start_addr == dev_addr_trunc)
+        if(dev_start_addr == dev_addr_trunc) {
             tile_id = acc_locs[i].row * SOC_COLS + acc_locs[i].col;
+            break;
+        }
          else
             dev_start_addr += addr_incr;
     }
@@ -58,11 +60,7 @@ static void init_prc()
     esp_prc.addr = (long long unsigned) APB_BASE_ADDR + 0xE400;
     
     pb_map = (struct pbs_map *) &bs_descriptor;
-/*    
-    pb_map = (struct pbs_map *) malloc(sizeof(struct pbs_map));
-    pb_map->pbs_size = 5741484;
-    pb_map->addr = PBS_BASE_ADDR;
-*/    
+    
     //printf("bitstream addr %0x %08x \n", pb_map->pbs_size, (unsigned) pb_map->pbs_addr);
 }
 
@@ -100,7 +98,7 @@ static int start_prc()
     return 0;
 }
 
-//TODO: trigger registers need to be modified for US
+//TODO: trigger registers need to be modified for Ultrascale devices
 static void set_trigger(unsigned pbs_id)
 {
     if (!shutdown_prc()) {

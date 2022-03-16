@@ -39,7 +39,7 @@ endif
 
 endif
 
-all: $(BUILD_PATH)/libprc.a
+target: $(BUILD_PATH)/libprc.a
 
 $(BUILD_PATH)/libprc.a: $(BUILD_PATH)/libprc.o
 	$(CROSS_COMPILE)ar r $@ $^
@@ -51,4 +51,4 @@ $(BUILD_PATH)/libprc.o: prc.c
 clean:
 	rm -rf $(BUILD_PATH)
 
-.PHONY: all clean
+.PHONY: target clean

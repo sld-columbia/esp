@@ -638,6 +638,7 @@ pbs_path=$1/socs/$2/partial_bitstreams;
         pbs_name=$(basename $FILE);
         pbs_size=$(echo `ls -ls $FILE` | awk '{print($6)}'); 
         $1/socs/$2/socgen/esp/esplink --load -a $pbs_addr  -i $1/socs/$2/partial_bitstreams/$pbs_name;
+        pbs_base_addr=$pbs_addr;
         pbs_addr=$(($pbs_base_addr + $pbs_size + $PBS_DDR_OFFSET));
     done
 }
