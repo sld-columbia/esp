@@ -94,6 +94,10 @@ DDR_HADDR["leon3"] = 0x400
 DDR_HADDR["ariane"] = 0x800
 DDR_HADDR["ibex"] = 0x800
 
+PBS_HADDR = dict()
+PBS_HADDR["leon3"] = 0x500
+PBS_HADDR["ariane"] = 0xA00
+
 # SLM base address
 SLM_HADDR = 0x040
 SLMDDR_HADDR = 0xC00
@@ -2263,7 +2267,6 @@ def print_tiles(fp, esp_config):
 
 
 def print_esplink_header(fp, esp_config, soc):
-
     # Get CPU base frequency
     with open("../../top.vhd") as top_fp:
         for line in top_fp:
@@ -2287,6 +2290,7 @@ def print_esplink_header(fp, esp_config, soc):
              hex(RODATA_ADDR[esp_config.cpu_arch]) + "\n")
     fp.write("#define DRAM_BASE_ADDR 0x" +
              format(DDR_HADDR[esp_config.cpu_arch], '03X') + "00000\n")
+    fp.write("#define PBS_BASE_ADDR 0x" + format(PBS_HADDR[esp_config.cpu_arch], '03X') + "00000\n")
     if esp_config.nmem == 0:
         fp.write(
             "#define OVERRIDE_DRAM_SIZE 0x" +
@@ -2300,7 +2304,6 @@ def print_esplink_header(fp, esp_config, soc):
     fp.write("#define TARGET_BYTE_ORDER __ORDER_BIG_ENDIAN__\n")
     fp.write("\n")
     fp.write("#endif /* __SOCMAP_H__ */\n")
-
 
 def print_soc_defines(fp, esp_config, soc):
     fp.write("#ifndef __SOC_DEFS_H__\n")
