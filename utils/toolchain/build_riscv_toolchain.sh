@@ -1,5 +1,5 @@
 #!/bin/bash
-# Copyright (c) 2011-2021 Columbia University, System Level Design Group
+# Copyright (c) 2011-2022 Columbia University, System Level Design Group
 # SPDX-License-Identifier: Apache-2.0
 
 set -e
@@ -10,11 +10,16 @@ ESP_ROOT=$(realpath ${SCRIPT_PATH}/../..)
 LINUXSRC=${ESP_ROOT}/soft/ariane/linux
 LINUX_VERSION=4.20.0
 export SYSROOT=${ESP_ROOT}/soft/ariane/sysroot
-RISCV_GNU_TOOLCHAIN_SHA=afcc8bc655d30cf6af054ac1d3f5f89d0627aa79
-BUILDROOT_SHA=d6fa6a45e196665d6607b522f290b1451b949c2c
+RISCV_GNU_TOOLCHAIN_SHA_DEFAULT=afcc8bc655d30cf6af054ac1d3f5f89d0627aa79
+RISCV_GNU_TOOLCHAIN_SHA_PYTHON=2c037e631e27bc01582476f5b3c5d5e9e51489b8
+BUILDROOT_SHA_DEFAULT=d6fa6a45e196665d6607b522f290b1451b949c2c
+BUILDROOT_SHA_PYTHON=fbff7d7289cc95db991184f890f4ca1fcf8a101e
+
+# A patch for buildroot RISCV64 with numpy enabled
+BUILDROOT_PATCH=${ESP_ROOT}/utils/toolchain/python-patches/python-numpy.patch
 
 DEFAULT_TARGET_DIR="/opt/riscv"
-TMP=/tmp/_riscv_build
+TMP=${ESP_ROOT}/_riscv_build
 
 # Helper functions
 yesno () {
@@ -68,7 +73,7 @@ TARGET_DIR=${TARGET_DIR:-${DEFAULT_TARGET_DIR}}
 echo "*** Installing to ${TARGET_DIR} ... ***"
 
 # Prompt number of cores to use
-read -p "Number of threads for Make (defaults to as many as possible)? :" NTHREADS
+read -p "Number of threads for Make (defaults to as many as possible)? : " NTHREADS
 NTHREADS=${NTHREADS:-""}
 
 # Tool chain environment
@@ -93,9 +98,25 @@ if test ! -e ${TARGET_DIR}; then
     runsudo $pdir "$cmd"
 fi
 
-# Create temporary folder
-mkdir -p $TMP
+# Remove and create temporary folder
+rm -rf $TMP
+mkdir $TMP
 cd $TMP
+
+# Python
+echo "*** Python ... ***"
+if [ $(noyes "Do you want to enable Python") == "y" ]; then
+    python_en=1
+    RISCV_GNU_TOOLCHAIN_SHA=$RISCV_GNU_TOOLCHAIN_SHA_PYTHON
+    BUILDROOT_SHA=$BUILDROOT_SHA_PYTHON
+else
+    python_en=0
+    RISCV_GNU_TOOLCHAIN_SHA=$RISCV_GNU_TOOLCHAIN_SHA_DEFAULT
+    BUILDROOT_SHA=$BUILDROOT_SHA_DEFAULT
+fi
+cd $TMP
+
+
 
 # Bare-metal compiler
 src=riscv-gnu-toolchain
@@ -158,12 +179,20 @@ if [ $(noyes "Skip buildroot?") == "n" ]; then
     	cd $src
     fi
 
+if [[ "$python_en" -eq 1 ]]; then       # python enable
     git reset --hard ${BUILDROOT_SHA}
     git submodule update --init --recursive
-
+    git apply ${BUILDROOT_PATCH}
+    make distclean
+    make defconfig BR2_DEFCONFIG=${SCRIPT_PATH}/riscv_buildroot_python_defconfig
+    make -j ${NTHREADS}
+else                                    # default
+    git reset --hard ${BUILDROOT_SHA}
+    git submodule update --init --recursive
     make distclean
     make defconfig BR2_DEFCONFIG=${SCRIPT_PATH}/riscv_buildroot_defconfig
     make -j ${NTHREADS}
+fi
 
     # Populate repository sysroot overlay w/ generated files (git ignores them)
     rm output/target/THIS_IS_NOT_YOUR_ROOT_FILESYSTEM
@@ -175,14 +204,24 @@ if [ $(noyes "Skip buildroot?") == "n" ]; then
     cd $TMP
 fi
 
+# Remove temporary folder
+rm -rf $TMP
+
+cd ${ESP_ROOT}
+
 #Riscv
 echo ""
+git checkout HEAD -- ${ESP_ROOT}/soft/ariane/sysroot/etc/init.d/S65drivers
+if [[ "$python_en" -eq 1 ]]; then       # python enable
+    echo 'echo root:openesp | chpasswd' >> ${ESP_ROOT}/soft/ariane/sysroot/etc/init.d/S65drivers
+    echo "This build comes with Python"
+else                                    # default
+    echo "This build doesn't have Python"
+fi
 echo ""
 echo "=== Use the following to load RISC-V environment ==="
 echo -n "  export PATH=${RISCV}/bin:"; echo '$PATH'
 echo "  export RISCV=${RISCV}"
 echo ""
-
-cd $CURRENT_DIR
 
 echo "*** Successfully installed RISC-V toolchain to $TARGET_DIR ***"

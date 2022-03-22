@@ -1,4 +1,4 @@
-# Copyright (c) 2011-2021 Columbia University, System Level Design Group
+# Copyright (c) 2011-2022 Columbia University, System Level Design Group
 # SPDX-License-Identifier: Apache-2.0
 
 ### Supported technology libraries ###
@@ -55,7 +55,7 @@ endif
 
 
 ### Toolchain
-ifdef LINUX_SMP
+ifeq ("$(SMP)", "1")
 LINUX_CONFIG = $(CPU_ARCH)_smp_defconfig
 else
 LINUX_CONFIG = $(CPU_ARCH)_defconfig
@@ -94,6 +94,7 @@ TOP_VHDL_RTL_PKGS += $(DESIGN_PATH)/$(ESP_CFG_BUILD)/socmap.vhd
 TOP_VHDL_RTL_PKGS += $(DESIGN_PATH)/socketgen/sldacc.vhd
 TOP_VHDL_RTL_PKGS += $(ESP_ROOT)/rtl/tiles/tiles_pkg.vhd
 TOP_VHDL_RTL_PKGS += $(ESP_ROOT)/rtl/tiles/asic/tiles_asic_pkg.vhd
+TOP_VHDL_RTL_PKGS += $(ESP_ROOT)/rtl/tiles/fpga/tiles_fpga_pkg.vhd
 TOP_VHDL_RTL_PKGS += $(EXTRA_TOP_VHDL_RTL_PKGS)
 
 TOP_VHDL_SIM_PKGS +=

@@ -1,4 +1,4 @@
-// Copyright (c) 2011-2021 Columbia University, System Level Design Group
+// Copyright (c) 2011-2022 Columbia University, System Level Design Group
 // SPDX-License-Identifier: Apache-2.0
 
 // complex number multiplication
@@ -44,7 +44,7 @@ inline unsigned int fft_rev(unsigned int v)
     return r;
 }
 
-inline void fft::fft_bit_reverse(unsigned int n, unsigned int bits)
+inline void fft::fft_bit_reverse(unsigned int n, unsigned int bits, bool pingpong)
 {
 	unsigned int i, s, shift;
 
@@ -60,21 +60,38 @@ inline void fft::fft_bit_reverse(unsigned int n, unsigned int bits)
             r >>= shift;
 
             wait();
-            t1_real = A0[2 * i];
-            t1_imag = A0[2 * i + 1];
-            wait();
-            t2_real = A0[2 * r];
-            t2_imag = A0[2 * r + 1];
+            if (!pingpong) {
+                t1_real = PLM_IN_PING[2 * i];
+                t1_imag = PLM_IN_PING[2 * i + 1];
+                wait();
+                t2_real = PLM_IN_PING[2 * r];
+                t2_imag = PLM_IN_PING[2 * r + 1];
+            } else {
+                t1_real = PLM_IN_PONG[2 * i];
+                t1_imag = PLM_IN_PONG[2 * i + 1];
+                wait();
+                t2_real = PLM_IN_PONG[2 * r];
+                t2_imag = PLM_IN_PONG[2 * r + 1];
+            }
 
             if (i < r) {
-                HLS_PROTO("bit-rev-memread");
-                HLS_BREAK_DEP(A0);
+                HLS_CONSTRAIN_LATENCY(0, HLS_ACHIEVABLE);
+                HLS_BREAK_DEP(PLM_IN_PING);
+                HLS_BREAK_DEP(PLM_IN_PONG);
                 wait();
-                A0[2 * i] = t2_real;
-                A0[2 * i + 1] = t2_imag;
-                wait();
-                A0[2 * r] = t1_real;
-                A0[2 * r + 1] = t1_imag;
+                if (!pingpong) {
+                    PLM_IN_PING[2 * i] = t2_real;
+                    PLM_IN_PING[2 * i + 1] = t2_imag;
+                    wait();
+                    PLM_IN_PING[2 * r] = t1_real;
+                    PLM_IN_PING[2 * r + 1] = t1_imag;
+                } else {
+                    PLM_IN_PONG[2 * i] = t2_real;
+                    PLM_IN_PONG[2 * i + 1] = t2_imag;
+                    wait();
+                    PLM_IN_PONG[2 * r] = t1_real;
+                    PLM_IN_PONG[2 * r + 1] = t1_imag;
+                }
             }
         }
 }

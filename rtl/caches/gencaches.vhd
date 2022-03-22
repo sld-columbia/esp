@@ -1,4 +1,4 @@
--- Copyright (c) 2011-2021 Columbia University, System Level Design Group
+-- Copyright (c) 2011-2022 Columbia University, System Level Design Group
 -- SPDX-License-Identifier: Apache-2.0
 
 library ieee;
@@ -28,6 +28,7 @@ package gencaches is
       l2_cpu_req_data_hprot : in hprot_t;
       l2_cpu_req_data_addr : in addr_t;
       l2_cpu_req_data_word : in word_t;
+      l2_cpu_req_data_amo : in amo_t;
       l2_fwd_in_valid : in std_ulogic;
       l2_fwd_in_data_coh_msg : in std_logic_vector(2 downto 0);
       l2_fwd_in_data_addr : in line_addr_t;
@@ -53,7 +54,8 @@ package gencaches is
       l2_rd_rsp_valid : out std_ulogic;
       l2_rd_rsp_data_line : out line_t;
       l2_inval_valid : out std_ulogic;
-      l2_inval_data : out line_addr_t;
+      l2_inval_data_addr : out line_addr_t;
+      l2_inval_data_hprot : out hprot_t;
       l2_bresp_valid : out std_ulogic;
       l2_bresp_data : out bresp_t;
       l2_req_out_valid : out std_ulogic;

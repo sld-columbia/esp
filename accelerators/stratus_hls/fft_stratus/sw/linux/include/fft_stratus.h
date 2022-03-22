@@ -1,4 +1,4 @@
-// Copyright (c) 2011-2021 Columbia University, System Level Design Group
+// Copyright (c) 2011-2022 Columbia University, System Level Design Group
 // SPDX-License-Identifier: Apache-2.0
 #ifndef _FFT_STRATUS_H_
 #define _FFT_STRATUS_H_
@@ -20,6 +20,7 @@
 struct fft_stratus_access {
 	struct esp_access esp;
 	/* <<--regs-->> */
+	unsigned batch_size;
 	unsigned log_len;
 	unsigned do_bitrev;
 	unsigned src_offset;

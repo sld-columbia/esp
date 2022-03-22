@@ -1,5 +1,5 @@
 #!/bin/bash
-# Copyright (c) 2011-2021 Columbia University, System Level Design Group
+# Copyright (c) 2011-2022 Columbia University, System Level Design Group
 # SPDX-License-Identifier: Apache-2.0
 
 set -e
@@ -12,7 +12,7 @@ export SYSROOT=${ESP_ROOT}/soft/leon3/sysroot
 BUILDROOT_SHA=d6fa6a45e196665d6607b522f290b1451b949c2c
 
 DEFAULT_TARGET_DIR="/opt/leon"
-TMP=/tmp/_leon3_build
+TMP=${ESP_ROOT}/_leon3_build
 
 # Prebuilt from Cobham Gaisler
 SRC_MIRROR="https://espdev.cs.columbia.edu/stuff/leon3"
@@ -72,7 +72,7 @@ TARGET_DIR=${TARGET_DIR:-${DEFAULT_TARGET_DIR}}
 echo "*** Installing to ${TARGET_DIR} ... ***"
 
 # Prompt number of cores to use
-read -p "Number of threads for Make (defaults to as many as possible)? :" NTHREADS
+read -p "Number of threads for Make (defaults to as many as possible)? : " NTHREADS
 NTHREADS=${NTHREADS:-""}
 
 # Tool chain environment
@@ -103,8 +103,9 @@ fi
 cmd="chown $USER:$(id -gn) ${TARGET_DIR}"
 runsudo ${TARGET_DIR} "$cmd"
 
-# Create temporary folder
-mkdir -p $TMP
+# Remove and create temporary folder
+rm -rf $TMP
+mkdir $TMP
 cd $TMP
 
 # Bare-metal compiler
@@ -246,14 +247,17 @@ if [ $(noyes "Skip buildroot?") == "n" ]; then
     cd $TMP
 fi
 
+# Remove temporary folder
+rm -rf $TMP
+
+cd ${ESP_ROOT}
+
 #Leon
 echo ""
 echo ""
 echo "=== Use the following to load LEON environment ==="
 echo -n "  export PATH=${LEON}/bin:"; echo '$PATH'
 echo ""
-
-cd $CURRENT_DIR
 
 echo "*** Successfully installed LEON toolchain to $TARGET_DIR ***"
 

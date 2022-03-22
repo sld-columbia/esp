@@ -1,4 +1,4 @@
--- Copyright (c) 2011-2021 Columbia University, System Level Design Group
+-- Copyright (c) 2011-2022 Columbia University, System Level Design Group
 -- SPDX-License-Identifier: Apache-2.0
 
 -------------------------------------------------------------------------------
@@ -209,11 +209,12 @@ begin  -- architecture rtl
       g_data_width => 1,
       g_size       => 2 * QUEUE_DEPTH)
     port map (
-      rst_n_i    => rstn,
+      rst_wr_n_i => rstn,
       clk_wr_i   => clk,
       we_i       => ext_rcv_rdreq,
       d_i        => "0",
       wr_full_o  => open,
+      rst_rd_n_i => rstn,
       clk_rd_i   => fpga_clk_in,
       rd_i       => '1',
       q_o(0)     => credit_out,
@@ -229,11 +230,12 @@ begin  -- architecture rtl
       g_data_width => ARCH_BITS,
       g_size       => 2 * QUEUE_DEPTH)
     port map (
-      rst_n_i    => rstn,
+      rst_wr_n_i => rstn,
       clk_wr_i   => clk,
       we_i       => ext_snd_wrreq,
       d_i        => ext_snd_data_in,
       wr_full_o  => ext_snd_full,
+      rst_rd_n_i => rstn,
       clk_rd_i   => fpga_clk_in,
       rd_i       => ext_snd_rdreq,
       q_o        => ext_snd_data_out,
@@ -251,11 +253,12 @@ begin  -- architecture rtl
       g_data_width => ARCH_BITS,
       g_size       => 2 * QUEUE_DEPTH)
     port map (
-      rst_n_i    => rstn,
+      rst_wr_n_i => rstn,
       clk_wr_i   => fpga_clk_in,
       we_i       => ext_rcv_wrreq,
       d_i        => ext_rcv_data_in,
       wr_full_o  => ext_rcv_full,       -- ignored: using credits
+      rst_rd_n_i => rstn,
       clk_rd_i   => clk,
       rd_i       => ext_rcv_rdreq,
       q_o        => ext_rcv_data_out,
@@ -470,7 +473,7 @@ begin  -- architecture rtl
             when dma_req =>
               -- Set data
               ext_snd_data_in <= dma_rcv_data_out(ARCH_BITS - 1 downto 0);
-              if dma_snd_full = '0' then
+              if dma_rcv_empty = '0' then
                 -- Decrement counter
                 tran_count_en <= '1';
                 -- Push ext queue
