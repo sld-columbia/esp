@@ -1,9 +1,1 @@
-/driver/soc/libvortex.so
-/runtime/libvortexrt.o
-../test/opencl/convolution/Makefile
-../test/opencl/convolution/convolution.dump
-../test/opencl/convolution/input.bmp
-../test/opencl/convolution/kernel.cl
-../test/opencl/convolution/main.cpp
-../test/opencl/convolution/utils.cpp
-../test/opencl/convolution/utils.h
+blackbox.sh --driver=fpga --cores=4 --clusters=2 --app=demo --args="-n1"

@@ -2,49 +2,60 @@
 // Originally NVDLA wrapper modified
 `include "VX_define.vh"
 module GT_VORTEX_wrapper #(
-   parameter AXI_DATA_WIDTH   = `VX_MEM_DATA_WIDTH,
+   parameter AXI_DATA_WIDTH   = 64,
    parameter AXI_ADDR_WIDTH   = 32,
-   parameter AXI_TID_WIDTH    = `VX_MEM_TAG_WIDTH,
-   parameter AXI_STROBE_WIDTH = (`VX_MEM_DATA_WIDTH / 8)
+   parameter AXI_TID_WIDTH    = 8,
+   parameter AXI_STROBE_WIDTH = 8
 ) (clk,
-   reset,
-   m_axi_awid,
-   m_axi_awaddr,
-   m_axi_awlen,
-   m_axi_awsize,
-   m_axi_awburst,
-   m_axi_awlock,
-   m_axi_awcache,
-   m_axi_awprot,
-   m_axi_awqos,
+   reset, 
+   paddr,
+   penable,
+   psel,
+   pwdata,
+   pwrite,
+   prdata,
+   pready,
+   pslverr,
    m_axi_awvalid,
    m_axi_awready,
+   m_axi_awid,
+   m_axi_awlen,
+   m_axi_awaddr,
+   m_axi_wvalid,
+   m_axi_wready,
    m_axi_wdata,
    m_axi_wstrb,
    m_axi_wlast,
-   m_axi_wvalid,
-   m_axi_wready,
-   m_axi_bid,
+   m_axi_arvalid,
+   m_axi_arready,
+   m_axi_arid,
+   m_axi_arlen,
+   m_axi_araddr,
    m_axi_bresp,
    m_axi_bvalid,
    m_axi_bready,
-   m_axi_arid,
-   m_axi_araddr,
-   m_axi_arlen,
-   m_axi_arsize,
-   m_axi_arburst,
-   m_axi_arlock,
-   m_axi_arcache,
-   m_axi_arprot,
-   m_axi_arqos,
-   m_axi_arvalid,
-   m_axi_arready,
-   m_axi_rid,
-   m_axi_rdata,
-   m_axi_rresp,
-   m_axi_rlast,
+   m_axi_bid,
    m_axi_rvalid,
    m_axi_rready,
+   m_axi_rid,
+   m_axi_rlast,
+   m_axi_rdata,
+   m_axi_rresp,
+   m_axi_awsize,
+   m_axi_arsize,
+   m_axi_awburst,
+   m_axi_arburst,
+   m_axi_awlock,
+   m_axi_arlock,
+   m_axi_awcache,
+   m_axi_arcache,
+   m_axi_awprot,
+   m_axi_arprot,
+   m_axi_awqos,
+   m_axi_awatop,
+   m_axi_awregion,
+   m_axi_arqos,
+   m_axi_arregion,
    busy
    );
 
@@ -103,15 +114,38 @@ module GT_VORTEX_wrapper #(
 
     // Status
     output wire                         busy;
+    output wire [5:0] 		        m_axi_awatop;
+    //Unused for VORTEX 
+   input psel;
+   input penable;
+   input pwrite;
+   input [31:0] paddr;
+   input [31:0] pwdata;
+   output [31:0] prdata;
+   output pready;
+   output pslverr;
+   output wire [3:0]      m_axi_awregion;
+   output wire [3:0]      m_axi_arregion;
    ////////////////////////////////////////////////////////////////////////////////
 
+   // Set unused wires to 0
+   //assign paddr=0;
+   //assign penable=0;
+   //assign psel=0;
+   //assign pwdata=0;
+   //assign pwrite=0;
+   assign prdata=0;
+   assign pready=0;
+   assign pslverr=0;
+   assign m_axi_awatop   =    4'b0000; 
+   assign m_axi_awregion =    4'b0000; 
 
   Vortex_axi  #(
     .AXI_DATA_WIDTH    ( `VX_MEM_DATA_WIDTH     ),
     .AXI_ADDR_WIDTH    (  32                    ),
     .AXI_TID_WIDTH     ( `VX_MEM_TAG_WIDTH      ),
-    .AXI_STROBE_WIDTH  ( `VX_MEM_DATA_WIDTH / 8 )
-) Vortex_axi_0 (
+    .AXI_STROBE_WIDTH  ( `VX_MEM_DATA_WIDTH / 8 ) 
+    )Vortex_axi_0 (
     .clk            ( clk   ),
     .reset          ( reset ),
 
