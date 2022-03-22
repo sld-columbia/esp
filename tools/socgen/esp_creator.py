@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# Copyright (c) 2011-2021 Columbia University, System Level Design Group
+# Copyright (c) 2011-2022 Columbia University, System Level Design Group
 # SPDX-License-Identifier: Apache-2.0
 
 ###############################################################################
@@ -99,7 +99,7 @@ class CacheFrame(Frame):
     OptionMenu(cache_config_frame, soc.l2_sets, *sets_choices, command=main_frame.update_noc_config).grid(row=3, column=2)
     Label(cache_config_frame, text = "L2 WAYS: ").grid(row=4, column=1)
     OptionMenu(cache_config_frame, soc.l2_ways, *l2_ways_choices, command=main_frame.update_noc_config).grid(row=4, column=2)
-    Label(cache_config_frame, text = "LLC SETS: ").grid(row=5, column=1)
+    Label(cache_config_frame, text = "LLC SETS (per mem tile): ").grid(row=5, column=1)
     OptionMenu(cache_config_frame, soc.llc_sets, *sets_choices, command=main_frame.update_noc_config).grid(row=5, column=2)
     Label(cache_config_frame, text = "LLC WAYS: ").grid(row=6, column=1)
     OptionMenu(cache_config_frame, soc.llc_ways, *llc_ways_choices, command=main_frame.update_noc_config).grid(row=6, column=2)

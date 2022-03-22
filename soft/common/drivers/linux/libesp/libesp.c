@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2021 Columbia University, System Level Design Group
+ * Copyright (c) 2011-2022 Columbia University, System Level Design Group
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -196,7 +196,7 @@ static void print_time_info(esp_thread_info_t *info[], unsigned long long hw_ns,
 		for (j = 0; j < len; j++) {
 			esp_thread_info_t* cur = info[i] + j;
 			if (cur->run)
-				printf("    - %s time: %llu ns\n", cur->devname, cur->hw_ns);
+				printf("	- %s time: %llu ns\n", cur->devname, cur->hw_ns);
 		}
 	}
 }
@@ -243,7 +243,7 @@ void esp_run_parallel(esp_thread_info_t* cfg[], unsigned nthreads, unsigned* nac
 				contig_handle_t *handle = lookup_handle(info->hw_buf, NULL);
 				contig_free(*handle);
 				die("Error: device name %s exceeds maximum length of 64 characters\n",
-				    info->devname);
+					info->devname);
 			}
 
 			sprintf(path, "%s%s", prefix, info->devname);
@@ -263,18 +263,25 @@ void esp_run_parallel(esp_thread_info_t* cfg[], unsigned nthreads, unsigned* nac
 		args->info = cfg[i];
 		args->nacc = nacc[i];
 
-		if (thread_is_p2p(cfg[i]))
-			rc = pthread_create(&thread[i], NULL, accelerator_thread_p2p, (void*) args);
-		else
-			rc = pthread_create(&thread[i], NULL, accelerator_thread_serial, (void*) args);
+		if (thread_is_p2p(cfg[i])) {
+			if (nthreads == 1)
+				accelerator_thread_p2p( (void*) args);
+			else
+				rc = pthread_create(&thread[i], NULL, accelerator_thread_p2p, (void*) args);
+		} else {
+			if (nthreads == 1)
+				accelerator_thread_serial( (void*) args);
+			else
+				rc = pthread_create(&thread[i], NULL, accelerator_thread_serial, (void*) args);
+		}
 
 		if(rc != 0) {
 			perror("pthread_create");
 		}
 	}
-
 	for (i = 0; i < nthreads; i++) {
-		rc = pthread_join(thread[i], NULL);
+		if (nthreads > 1)
+			rc = pthread_join(thread[i], NULL);
 
 		if(rc != 0) {
 			perror("pthread_join");
@@ -286,7 +293,6 @@ void esp_run_parallel(esp_thread_info_t* cfg[], unsigned nthreads, unsigned* nac
 
 	free(thread);
 }
-
 
 void esp_free(void *buf)
 {

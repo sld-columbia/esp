@@ -1,4 +1,4 @@
--- Copyright (c) 2011-2021 Columbia University, System Level Design Group
+-- Copyright (c) 2011-2022 Columbia University, System Level Design Group
 -- SPDX-License-Identifier: Apache-2.0
 
 library ieee;
@@ -120,7 +120,6 @@ architecture rtl of l2_acc_wrapper is
   signal rd_rsp_data_line       : line_t;
   signal inval_ready            : std_ulogic;
   signal inval_valid            : std_ulogic;
-  signal inval_data             : line_addr_t;
   -- cache to NoC
   signal req_out_ready          : std_ulogic;
   signal req_out_valid          : std_ulogic;
@@ -474,6 +473,7 @@ begin  -- architecture rtl of l2_acc_wrapper
       l2_cpu_req_data_hprot     => cpu_req_data_hprot,
       l2_cpu_req_data_addr      => cpu_req_data_addr,
       l2_cpu_req_data_word      => cpu_req_data_word,
+      l2_cpu_req_data_amo       => (others => '0'),
       l2_flush_ready            => flush_ready,
       l2_flush_valid            => flush_valid,
       l2_flush_data             => flush_data,
@@ -483,7 +483,8 @@ begin  -- architecture rtl of l2_acc_wrapper
       l2_rd_rsp_data_line       => rd_rsp_data_line,
       l2_inval_ready            => inval_ready,
       l2_inval_valid            => inval_valid,
-      l2_inval_data             => inval_data,
+      l2_inval_data_addr        => open,
+      l2_inval_data_hprot       => open,
       l2_bresp_ready            => '1',
       l2_bresp_valid            => open,
       l2_bresp_data             => open,
@@ -578,7 +579,7 @@ begin  -- architecture rtl of l2_acc_wrapper
       l2_rd_rsp_data_line       => rd_rsp_data_line,
       l2_inval_ready            => inval_ready,
       l2_inval_valid            => inval_valid,
-      l2_inval_data             => inval_data,
+      l2_inval_data             => open,
       l2_bresp_ready            => '1',
       l2_bresp_valid            => open,
       l2_bresp_data             => open,

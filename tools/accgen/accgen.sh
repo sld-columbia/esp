@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Copyright (c) 2011-2021 Columbia University, System Level Design Group
+# Copyright (c) 2011-2022 Columbia University, System Level Design Group
 # SPDX-License-Identifier: Apache-2.0
 
 set -e
@@ -85,12 +85,13 @@ echo ""
 read -p "  * Enter accelerator name ${def}[${NAME_DEFAULT}]${normal}: " NAME
 NAME=${NAME:-$NAME_DEFAULT}
 
-read -p "  * Select design flow (${bold}S${normal}tratus HLS, ${bold}V${normal}ivado HLS, ${bold}h${normal}ls4ml) ${def}[S]${normal}: " FLOW_SELECT
+read -p "  * Select design flow (${bold}S${normal}tratus HLS, ${bold}V${normal}ivado HLS, ${bold}h${normal}ls4ml, ${bold}R${normal}TL) ${def}[S]${normal}: " FLOW_SELECT
 FLOW_SELECT=${FLOW_SELECT:-S}
 case $FLOW_SELECT in
     [Ss]* ) FLOW="stratus_hls" FLOWSUFFIX="stratus";;
     [Vv]* ) FLOW="vivado_hls" FLOWSUFFIX="vivado";;
     [Hh]* ) FLOW="hls4ml" FLOWSUFFIX="hls4ml";;
+    [Rr]* ) FLOW="rtl" FLOWSUFFIX="rtl";;
     * ) FLOW="stratus_hls" FLOWSUFFIX="stratus";;
 esac
 
@@ -111,6 +112,9 @@ if  test -e ${ESP_ROOT}/accelerators/vivado_hls/$NAMEFULL; then
     die "accelerator ${NAMEFULL} already defined"
 fi
 if  test -e ${ESP_ROOT}/accelerators/hls4ml/$NAMEFULL; then
+    die "accelerator ${NAMEFULL} already defined"
+fi
+if  test -e ${ESP_ROOT}/accelerators/rtl/$NAMEFULL; then
     die "accelerator ${NAMEFULL} already defined"
 fi
 
@@ -146,10 +150,11 @@ if [ $FLOW != "hls4ml" ]; then
 
 	values+=( ["$param"]=$val )
 	maxs+=( ["$param"]=$max )
+
 	NPARAMS=$((NPARAMS+1))
 
-	if [ $NPARAMS == 14 ]; then
-	    echo "    # Cannot specify more than 14 configuration registers"
+	if [ $NPARAMS == 48 ]; then
+	    echo "    # Cannot specify more than 48 configuration registers"
 	    break;
 	fi
 
@@ -270,7 +275,6 @@ memory_footprint=$(( memory_words * (data_width/8) ))
 TLB_ENTRIES=$(( (memory_footprint + 1048575) / 1048576 ))
 if (( $TLB_ENTRIES < 4 )); then TLB_ENTRIES=4; fi;
 
-
 ### Generate accelerator skeleton
 CURR_DIR=${PWD}
 cd $ESP_ROOT
@@ -300,34 +304,50 @@ elif [ "$FLOW" == "hls4ml" ]; then
 
     dirs="src  inc  hls  tb"
 
+elif [ "$FLOW" == "rtl" ]; then
+    dirs="src hls"
 fi
 
 ## initialize all design folders
 for d in $dirs; do
     mkdir -p $ACC_DIR/hw/$d
     cd $ACC_DIR/hw/$d
-    cp $TEMPLATES_DIR/$d/* .
-
+    if ! [[ "$FLOW" == "rtl" && "$d" == "hls" ]]; then
+	cp -r $TEMPLATES_DIR/$d/* .
+    fi
+    
     if cat /etc/os-release | grep -q -i ubuntu; then
         rename "s/accelerator/$LOWER/g" *
 	rename "s/acc_full/$LOWERFULL/g" *
+        rename "s/accelerator/$LOWER/g" */*
+	rename "s/acc_full/$LOWERFULL/g" */*
     elif cat /etc/os-release | grep -q -i centos; then
         rename accelerator $LOWER *
 	rename acc_full $LOWERFULL *
+        rename accelerator $LOWER */*
+	rename acc_full $LOWERFULL */*
     elif cat /etc/os-release | grep -q -i rhel; then
         rename accelerator $LOWER *
 	rename acc_full $LOWERFULL *
+        rename accelerator $LOWER */*
+	rename acc_full $LOWERFULL */*
     fi
-
-    sed -i "s/<accelerator_name>/$LOWER/g" *
-    sed -i "s/<ACCELERATOR_NAME>/$UPPER/g" *
-    sed -i "s/<acc_full_name>/$LOWERFULL/g" *
-    sed -i "s/<ACC_FULL_NAME>/$UPPERFULL/g" *
+    
+    if [[ "$FLOW" == "rtl" && "$d" != "hls" ]]; then
+	sed -i "s/<accelerator_name>/$LOWER/g" */*
+	sed -i "s/<ACCELERATOR_NAME>/$UPPER/g" */*
+	sed -i "s/<acc_full_name>/$LOWERFULL/g" */*
+	sed -i "s/<ACC_FULL_NAME>/$UPPERFULL/g" */*
+    elif [ "$FLOW" != "rtl" ]; then
+	sed -i "s/<accelerator_name>/$LOWER/g" *
+	sed -i "s/<ACCELERATOR_NAME>/$UPPER/g" *
+	sed -i "s/<acc_full_name>/$LOWERFULL/g" *
+	sed -i "s/<ACC_FULL_NAME>/$UPPERFULL/g" *
+    fi
 
     if [[ "$FLOW" == "stratus_hls" && "$d" == "hls" ]]; then
 	ln -s ../../../common/hls/Makefile
     fi
-
     if [[ "$FLOW" == "vivado_hls" && "$d" == "hls" ]]; then
 	ln -s ../../../common/hls/Makefile
 	ln -s ../../../common/hls/common.tcl
@@ -335,6 +355,9 @@ for d in $dirs; do
     if [[ "$FLOW" == "hls4ml" && "$d" == "hls" ]]; then
 	ln -s ../../../common/hls/Makefile
 	ln -s ../../../common/hls/common.tcl
+    fi
+    if [[ "$FLOW" == "rtl" && "$d" == "hls" ]]; then
+	ln -s ../../../common/hls/Makefile
     fi
 done
 
@@ -396,6 +419,18 @@ if [ "$FLOW" == "stratus_hls" ]; then
     done
 fi
 
+indent="\ \ \ "
+if [ "$FLOW" == "rtl" ]; then
+    cd $ACC_DIR/hw/src
+    sep=","
+    for key in ${!values[@]}; do
+	sed -i "/\/\* <<--params-list-->> \*\//a conf_info_${key}${sep}" ${LOWERFULL}_basic_dma32/${LOWERFULL}_basic_dma32.v
+	sed -i "/\/\* <<--params-list-->> \*\//a conf_info_${key}${sep}" ${LOWERFULL}_basic_dma64/${LOWERFULL}_basic_dma64.v
+	sed -i "/\/\* <<--params-def-->> \*\//a ${indent}input [31:0]  conf_info_${key};" ${LOWERFULL}_basic_dma32/${LOWERFULL}_basic_dma32.v
+	sed -i "/\/\* <<--params-def-->> \*\//a ${indent}input [31:0]  conf_info_${key};" ${LOWERFULL}_basic_dma64/${LOWERFULL}_basic_dma64.v
+    done
+fi
+indent="\ \ \ \ \ \ \ \ "
 
 ## PLM memories for both 32-bit and 64-bit NoC
 dma_width=(32 64)

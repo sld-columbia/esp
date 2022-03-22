@@ -11,9 +11,10 @@ TECHLIB  = gf12
 FPGA_TECHLIB = virtex7
 BOARD    = profpga-xc7v2000t-epochs-0
 DESIGN   = $(BOARD)
-#LINUX_SMP = 1
-LEON3_BASE_FREQ_MHZ ?= 50
+SMP = 0
+BASE_FREQ_MHZ ?= 50
 LEON3_STACK ?= 0x5bfffff0
+USE_OPENSBI ?= 1
 
 OVR_TECHLIB ?=
 ifneq ("$(OVR_TECHLIB)", "")

@@ -1,4 +1,4 @@
-#include "socmap.h"
+#include "esplink.h"
 
 #define DRAM_BASE 0x80000000
 #ifdef OVERRIDE_DRAM_SIZE

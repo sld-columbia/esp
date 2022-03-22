@@ -1,11 +1,11 @@
-// Copyright (c) 2011-2021 Columbia University, System Level Design Group
+// Copyright (c) 2011-2022 Columbia University, System Level Design Group
 // SPDX-License-Identifier: Apache-2.0
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include <le.h>
-#include "socmap.h"
+#include "esplink.h"
 
 /**
  * fread()  and  fwrite()  return  the number of items successfully read

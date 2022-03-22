@@ -1,4 +1,4 @@
-# Copyright (c) 2011-2021 Columbia University, System Level Design Group
+# Copyright (c) 2011-2022 Columbia University, System Level Design Group
 # SPDX-License-Identifier: Apache-2.0
 
 
@@ -6,6 +6,7 @@ ARIANE ?= $(ESP_ROOT)/rtl/cores/ariane/ariane
 
 RISCV_TESTS = $(SOFT)/riscv-tests
 RISCV_PK = $(SOFT)/riscv-pk
+OPENSBI = $(SOFT)/opensbi
 
 soft: $(SOFT_BUILD)/prom.srec $(SOFT_BUILD)/ram.srec $(SOFT_BUILD)/prom.bin $(SOFT_BUILD)/systest.bin
 
@@ -34,10 +35,10 @@ $(SOFT_BUILD)/startup.o: $(BOOTROM_PATH)/startup.S $(SOFT_BUILD)/riscv.dtb
 		-Os \
 		-Wall -Werror \
 		-mcmodel=medany -mexplicit-relocs \
-		-I$(BOOTROM_PATH) \
+		-I$(BOOTROM_PATH) -DSMP=$(SMP)\
 		-c $< -o startup.o
 
-$(SOFT_BUILD)/main.o: $(BOOTROM_PATH)/main.c $(ESP_CFG_BUILD)/socmap.h
+$(SOFT_BUILD)/main.o: $(BOOTROM_PATH)/main.c $(ESP_CFG_BUILD)/esplink.h
 	@mkdir -p $(SOFT_BUILD)
 	$(QUIET_CC) $(CROSS_COMPILE_ELF)gcc \
 		-Os \
@@ -47,7 +48,7 @@ $(SOFT_BUILD)/main.o: $(BOOTROM_PATH)/main.c $(ESP_CFG_BUILD)/socmap.h
 		-I$(DESIGN_PATH)/$(ESP_CFG_BUILD) \
 		-c $< -o $@
 
-$(SOFT_BUILD)/uart.o: $(BOOTROM_PATH)/uart.c $(ESP_CFG_BUILD)/socmap.h
+$(SOFT_BUILD)/uart.o: $(BOOTROM_PATH)/uart.c $(ESP_CFG_BUILD)/esplink.h
 	@mkdir -p $(SOFT_BUILD)
 	$(QUIET_CC) $(CROSS_COMPILE_ELF)gcc \
 		-Os \
@@ -153,10 +154,20 @@ $(SOFT_BUILD)/pk-build/bbl: $(SOFT_BUILD)/pk-build sysroot-update
 		fi;
 	$(QUIET_MAKE) $(MAKE) -C $(SOFT_BUILD)/pk-build
 
+$(SOFT_BUILD)/opensbi-build:
+	$(QUIET_MKDIR)mkdir -p $@
 
+$(SOFT_BUILD)/opensbi-build/platform/esp-fpga/firmware/fw_payload.bin: $(SOFT_BUILD)/opensbi-build sysroot-update
+	$(QUIET_MAKE) CROSS_COMPILE=$(CROSS_COMPILE_LINUX) BASE_FREQ=$(BASE_FREQ_MHZ) $(MAKE) -C $(OPENSBI) PLATFORM=esp-fpga \
+		FW_PAYLOAD_PATH=$(SOFT_BUILD)/linux-build/arch/riscv/boot/Image O=$<
+
+ifeq ("$(USE_OPENSBI)", "1")
+$(SOFT_BUILD)/linux.bin: $(SOFT_BUILD)/opensbi-build/platform/esp-fpga/firmware/fw_payload.bin
+	$(QUIET_CP) cp $< $@
+else
 $(SOFT_BUILD)/linux.bin: $(SOFT_BUILD)/pk-build/bbl
 	$(QUIET_OBJCP) riscv64-unknown-elf-objcopy -S -O binary --change-addresses -0x80000000 $< $@
-
+endif
 
 linux: $(SOFT_BUILD)/linux.bin $(SOFT_BUILD)/prom.bin
 

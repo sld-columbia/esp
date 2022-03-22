@@ -1,5 +1,5 @@
 #!/bin/bash
-# Copyright (c) 2011-2021 Columbia University, System Level Design Group
+# Copyright (c) 2011-2022 Columbia University, System Level Design Group
 # SPDX-License-Identifier: Apache-2.0
 
 set -e
@@ -10,7 +10,7 @@ ESP_ROOT=$(realpath ${SCRIPT_PATH}/../..)
 RISCV_GNU_TOOLCHAIN_SHA=afcc8bc655d30cf6af054ac1d3f5f89d0627aa79
 
 DEFAULT_TARGET_DIR="/opt/riscv32imc"
-TMP=/tmp/_riscv32imc_build
+TMP=${ESP_ROOT}/_riscv32imc_build
 
 # Helper functions
 yesno () {
@@ -55,7 +55,7 @@ TARGET_DIR=${TARGET_DIR:-${DEFAULT_TARGET_DIR}}
 echo "*** Installing to ${TARGET_DIR} ... ***"
 
 # Prompt number of cores to use
-read -p "Number of threads for Make (defaults to as many as possible)? :" NTHREADS
+read -p "Number of threads for Make (defaults to as many as possible)? : " NTHREADS
 NTHREADS=${NTHREADS:-""}
 
 # Tool chain environment
@@ -80,8 +80,9 @@ if test ! -e ${TARGET_DIR}; then
     runsudo $pdir "$cmd"
 fi
 
-# Create temporary folder
-mkdir -p $TMP
+# Remove and create temporary folder
+rm -rf $TMP
+mkdir $TMP
 cd $TMP
 
 # Bare-metal compiler
@@ -103,8 +104,12 @@ if [ $(noyes "Skip ${src}") == "n" ]; then
     runsudo ${TARGET_DIR} "$cmd"
 
 fi
-cd $TMP
 
+
+# Remove temporary folder
+rm -rf $TMP
+
+cd ${ESP_ROOT}
 
 #Riscv
 echo ""
@@ -113,7 +118,5 @@ echo "=== Use the following to load RISC-V environment ==="
 echo -n "  export PATH=${RISCV}/bin:"; echo '$PATH'
 echo "  export RISCV=${RISCV}"
 echo ""
-
-cd $CURRENT_DIR
 
 echo "*** Successfully installed RISC-V (rv32imc) toolchain to $TARGET_DIR ***"
