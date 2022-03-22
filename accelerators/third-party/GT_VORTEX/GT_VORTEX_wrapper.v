@@ -141,10 +141,10 @@ module GT_VORTEX_wrapper #(
    assign m_axi_awregion =    4'b0000; 
 
   Vortex_axi  #(
-    .AXI_DATA_WIDTH    ( `VX_MEM_DATA_WIDTH     ),
-    .AXI_ADDR_WIDTH    (  32                    ),
-    .AXI_TID_WIDTH     ( `VX_MEM_TAG_WIDTH      ),
-    .AXI_STROBE_WIDTH  ( `VX_MEM_DATA_WIDTH / 8 ) 
+    .AXI_DATA_WIDTH    (64),
+    .AXI_ADDR_WIDTH    (32),
+    .AXI_TID_WIDTH     (8),
+    .AXI_STROBE_WIDTH  (8) 
     )Vortex_axi_0 (
     .clk            ( clk   ),
     .reset          ( reset ),
