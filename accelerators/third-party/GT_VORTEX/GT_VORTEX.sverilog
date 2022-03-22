@@ -52,7 +52,6 @@ rtl/fp_cores/VX_fp_ncomp.sv
 rtl/fp_cores/VX_fp_rounding.sv
 rtl/fp_cores/VX_fp_sqrt.sv
 rtl/fp_cores/VX_fpu_fpga.sv
-dpi/util_dpi.cpp
 rtl/interfaces/VX_alu_req_if.sv
 rtl/interfaces/VX_branch_ctl_if.sv
 rtl/interfaces/VX_cmt_to_csr_if.sv
