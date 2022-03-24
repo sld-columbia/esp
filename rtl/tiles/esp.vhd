@@ -649,7 +649,7 @@ begin
         ROUTER_PORTS       => set_router_ports(CFG_FABTECH, CFG_XLEN, CFG_YLEN, tile_x(i), tile_y(i)),
         HAS_SYNC           => CFG_HAS_SYNC)
       port map (
-        raw_rstn           => '0',
+        raw_rstn           => rst_int,
         rst                => rst_int,
         refclk             => refclk_int(i),
         pllbypass          => pllbypass_int(i),

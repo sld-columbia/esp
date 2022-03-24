@@ -142,7 +142,22 @@ set_clock_groups -asynchronous \
     -group [get_clocks $clkm_elab]   \
     -group [get_clocks $clkm1_elab]  \
     -group [get_clocks $clkm2_elab]  \
-    -group [get_clocks $clkm3_elab]
+    -group [get_clocks $clkm3_elab] \
+    -group {dvfs_clk0 dvfs_clk0_*} \
+    -group {dvfs_clk1 dvfs_clk1_*} \
+    -group {dvfs_clk2 dvfs_clk2_*} \
+    -group {dvfs_clk3 dvfs_clk3_*} \
+    -group {dvfs_clk4 dvfs_clk4_*} \
+    -group {dvfs_clk5 dvfs_clk5_*} \
+    -group {dvfs_clk6 dvfs_clk6_*} \
+    -group {dvfs_clk7 dvfs_clk7_*} \
+    -group {dvfs_clk8 dvfs_clk8_*} \
+    -group {dvfs_clk9 dvfs_clk9_*} \
+    -group {dvfs_clk10 dvfs_clk10_*} \
+    -group {dvfs_clk11 dvfs_clk11_*} \
+
+set_property CLOCK_DEDICATED_ROUTE ANY_CMT_COLUMN [get_nets esp_clkgen/xcu.v/in0]
+
 #-----------------------------------------------------------
 #              False Paths                                 -
 #-----------------------------------------------------------

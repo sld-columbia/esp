@@ -40,7 +40,8 @@ entity noc_domain_socket is
     is_tile_io        : boolean              := false;
     SIMULATION        : boolean              := false;
     ROUTER_PORTS      : ports_vec            := "11111";
-    HAS_SYNC          : integer range 0 to 1 := 1);
+    HAS_SYNC          : integer range 0 to 1 := 1;
+    is_asic           : boolean              := false);
   port (
     raw_rstn           : in  std_ulogic;
     noc_rstn           : in  std_ulogic;
@@ -49,6 +50,7 @@ entity noc_domain_socket is
     dco_clk            : in  std_ulogic;
     acc_clk            : out std_ulogic;
     refclk             : in  std_ulogic;
+    plllock            : out std_ulogic;
     -- CSRs
     tile_config        : out std_logic_vector(ESP_NOC_CSR_WIDTH - 1 downto 0);
     -- DCO config
@@ -628,10 +630,12 @@ begin  -- architecture rtl
     token_pm_i : token_pm
       generic map (
         SIMULATION => SIMULATION,
-        is_asic    => true)
+        is_asic    => is_asic,
+        tech       => CFG_FABTECH)
       port map (
         noc_rstn           => noc_rstn,
         tile_rstn          => dco_rstn,
+        raw_rstn           => raw_rstn,
         noc_clk            => sys_clk,
         refclk             => refclk,
         tile_clk           => dco_clk,
@@ -645,7 +649,8 @@ begin  -- architecture rtl
         noc5_output_port   => noc5_output_port_pm,
         noc5_data_void_out => noc5_data_void_out_pm,
         noc5_stop_in       => noc5_stop_in_pm,
-        acc_clk            => acc_clk);
+        acc_clk            => acc_clk,
+        plllock            => plllock);
   end generate;
 
   no_token_pm_gen : if this_has_token_pm = 0 generate
@@ -654,6 +659,7 @@ begin  -- architecture rtl
     noc5_input_port_pm   <= (others => '0');
     noc5_data_void_in_pm <= '1';
     noc5_stop_in_pm      <= '0';
+    plllock              <= '1';
   end generate;
 
   noc5_mux_i : noc5_mux

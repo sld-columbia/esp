@@ -992,7 +992,8 @@ package tile is
       is_tile_io        : boolean              := false;
       SIMULATION        : boolean              := false;
       ROUTER_PORTS      : ports_vec            := "11111";
-      HAS_SYNC          : integer range 0 to 1 := 1);
+      HAS_SYNC          : integer range 0 to 1 := 1;
+      is_asic           : boolean              := false);
     port (
       raw_rstn           : in  std_ulogic;
       noc_rstn           : in  std_ulogic;
@@ -1001,6 +1002,7 @@ package tile is
       dco_clk            : in  std_ulogic;
       acc_clk            : out std_ulogic;
       refclk             : in  std_ulogic;
+      plllock            : out std_ulogic;
       -- CSRs
       tile_config        : out std_logic_vector(ESP_NOC_CSR_WIDTH - 1 downto 0);
       -- DCO config

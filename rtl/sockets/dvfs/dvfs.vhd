@@ -164,10 +164,12 @@ package dvfs is
 component token_pm is
   generic (
     SIMULATION : boolean := false;
-    is_asic    : boolean := false);
+    is_asic    : boolean := false;
+    tech       : integer := virtex7);
   port (
     noc_rstn           : in  std_ulogic;
     tile_rstn          : in  std_ulogic;
+    raw_rstn           : in  std_ulogic;
     noc_clk            : in  std_ulogic;
     refclk             : in  std_ulogic;
     tile_clk           : in  std_ulogic;
@@ -186,7 +188,8 @@ component token_pm is
     noc5_data_void_out : in  std_ulogic;
     noc5_stop_in       : out std_ulogic;
     -- LDO switch control
-    acc_clk            : out std_ulogic);
+    acc_clk            : out std_ulogic;
+    plllock            : out std_ulogic);
 end component token_pm;
 
 end dvfs;

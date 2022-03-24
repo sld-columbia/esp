@@ -128,13 +128,15 @@ package tiles_pkg is
       this_has_dvfs      : integer range 0 to 1 := 0;
       this_has_pll       : integer range 0 to 1 := 0;
       this_has_dco       : integer range 0 to 1 := 0;
-      this_extra_clk_buf : integer range 0 to 1 := 0);
+      this_extra_clk_buf : integer range 0 to 1 := 0;
+      this_has_token_pm  : integer range 0 to 1 := 0);
     port (
       raw_rstn           : in  std_ulogic;
       tile_rst           : in  std_ulogic;
       refclk             : in  std_ulogic;
       pllbypass          : in  std_ulogic;
       pllclk             : out std_ulogic;
+      plllock            : in  std_ulogic;
       dco_clk            : out std_ulogic;
       dco_rstn           : out std_ulogic;
       -- DCO config

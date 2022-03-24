@@ -410,7 +410,8 @@ begin
       is_tile_io        => false,
       SIMULATION        => SIMULATION,
       ROUTER_PORTS      => ROUTER_PORTS,
-      HAS_SYNC          => HAS_SYNC)
+      HAS_SYNC          => HAS_SYNC,
+      is_asic           => false)
     port map (
       raw_rstn                => raw_rstn,
       noc_rstn                => rst,
@@ -419,6 +420,7 @@ begin
       dco_clk                 => refclk,
       acc_clk                 => open,
       refclk                  => refclk,
+      plllock                 => open,
       -- CSRs
       tile_config             => open,
       -- DCO config

@@ -36,13 +36,15 @@ entity tile_acc is
     this_has_dvfs      : integer range 0 to 1 := 0;
     this_has_pll       : integer range 0 to 1 := 0;
     this_has_dco       : integer range 0 to 1 := 0;
-    this_extra_clk_buf : integer range 0 to 1 := 0);
+    this_extra_clk_buf : integer range 0 to 1 := 0;
+    this_has_token_pm  : integer range 0 to 1 := 0);
   port (
     raw_rstn           : in  std_ulogic;
     tile_rst           : in  std_ulogic;
     refclk             : in  std_ulogic;
     pllbypass          : in  std_ulogic;
     pllclk             : out std_ulogic;
+    plllock            : in  std_ulogic;
     dco_clk            : out std_ulogic;
     dco_rstn           : out std_ulogic;
     -- DCO config
@@ -232,7 +234,7 @@ architecture rtl of tile_acc is
   attribute keep of apb_rcv_rdreq              : signal is "true";
   attribute keep of apb_rcv_data_out           : signal is "true";
   attribute keep of apb_rcv_empty              : signal is "true";
-  
+
 begin
 
   -- DCO Reset synchronizer
@@ -242,7 +244,13 @@ begin
       port map (tile_rst, dco_clk_int, dco_clk_lock, rst, open);
   end generate rst_gen;
 
-  no_rst_gen: if this_has_dco = 0 generate
+  token_pm_rst_gen: if this_has_dco = 0 and this_has_token_pm /= 0 generate
+    tile_rstn_token_pm : rstgen
+      generic map (acthigh => 0, syncin => 0)
+      port map (tile_rst, refclk, plllock, rst, open);
+  end generate token_pm_rst_gen;
+
+  no_rst_gen: if this_has_dco = 0 and this_has_token_pm = 0 generate
     rst <= tile_rst;
   end generate no_rst_gen;
 

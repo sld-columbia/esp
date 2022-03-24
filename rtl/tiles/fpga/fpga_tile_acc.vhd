@@ -147,6 +147,7 @@ architecture rtl of fpga_tile_acc is
 
   -- -- Token-based power management clock for accelerator tile
   signal acc_clk : std_ulogic;
+  signal plllock : std_ulogic;
 
   -- DCO reset -> keeping the logic compliant with the asic flow
   signal dco_rstn : std_ulogic;
@@ -347,13 +348,15 @@ begin
       this_has_dvfs      => this_has_dvfs,  -- no DVFS controller
       this_has_pll       => this_has_pll,
       this_has_dco       => 0,
-      this_extra_clk_buf => this_extra_clk_buf)
+      this_extra_clk_buf => this_extra_clk_buf,
+      this_has_token_pm  => this_has_token_pm)
     port map (
       raw_rstn            => raw_rstn,
       tile_rst            => rst,
       refclk              => acc_clk,
       pllbypass           => pllbypass,
       pllclk              => pllclk,
+      plllock             => plllock,
       dco_clk             => dco_clk,
       dco_rstn            => dco_rstn,
       dco_freq_sel        => dco_freq_sel,
@@ -413,7 +416,8 @@ begin
       is_tile_io        => false,
       SIMULATION        => SIMULATION,
       ROUTER_PORTS      => ROUTER_PORTS,
-      HAS_SYNC          => HAS_SYNC)
+      HAS_SYNC          => HAS_SYNC,
+      is_asic           => false)
     port map (
       raw_rstn                => raw_rstn,
       noc_rstn                => rst,
@@ -422,6 +426,7 @@ begin
       dco_clk                 => acc_clk,
       acc_clk                 => acc_clk,
       refclk                  => refclk,
+      plllock                 => plllock,
       -- CSRs
       tile_config             => open,
       -- DCO config

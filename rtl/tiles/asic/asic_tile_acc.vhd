@@ -135,6 +135,7 @@ architecture rtl of asic_tile_acc is
   signal raw_rstn : std_ulogic;
   signal dco_clk  : std_ulogic;
   signal dco_rstn : std_ulogic;
+  signal plllock : std_ulogic;
 
   -- DCO config
   signal dco_clk_int  : std_ulogic;
@@ -346,6 +347,7 @@ begin
       refclk              => ext_clk,
       pllbypass           => ext_clk_sel_default,  --ext_clk_sel,
       pllclk              => clk_div,
+      plllock             => plllock,
       dco_clk             => dco_clk,
       dco_rstn            => dco_rstn,
       dco_freq_sel        => dco_freq_sel,
@@ -405,7 +407,8 @@ begin
       is_tile_io        => false,
       SIMULATION        => SIMULATION,
       ROUTER_PORTS      => ROUTER_PORTS,
-      HAS_SYNC          => 1)
+      HAS_SYNC          => 1,
+      is_asic           => true)
     port map (
       raw_rstn                => raw_rstn,
       noc_rstn                => noc_rstn,
@@ -414,6 +417,7 @@ begin
       dco_clk                 => dco_clk,
       acc_clk                 => open,
       refclk                  => dco_clk,
+      plllock                 => plllock,
       -- CSRs
       tile_config             => open,
       -- DCO config

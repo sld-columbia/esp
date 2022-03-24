@@ -27,16 +27,19 @@ use work.esp_acc_regmap.all;
 use work.socmap.all;
 use work.tiles_pkg.all;
 use work.dvfs.all;
+use work.allpll.all;
 
 entity token_pm is
 
   generic (
     SIMULATION : boolean := false;
-    is_asic    : boolean := false);
+    is_asic    : boolean := false;
+    tech       : integer := virtex7);
 
   port (
     noc_rstn           : in  std_ulogic;
     tile_rstn          : in  std_ulogic;
+    raw_rstn           : in  std_ulogic;
     noc_clk            : in  std_ulogic;
     refclk             : in  std_ulogic;
     tile_clk           : in  std_ulogic;
@@ -55,7 +58,8 @@ entity token_pm is
     noc5_data_void_out : in  std_ulogic;
     noc5_stop_in       : out std_ulogic;
     -- LDO switch control
-    acc_clk            : out std_ulogic);
+    acc_clk            : out std_ulogic;
+    plllock            : out std_ulogic);
 
 end entity token_pm;
 
@@ -92,13 +96,48 @@ architecture rtl of token_pm is
   -------------------------------------------------------------------------------
 
   signal freq_target                                    : std_logic_vector(7 downto 0);
-  signal freq_sel, freq_sel_sync                        : std_logic_vector(1 downto 0);
-  signal freq_sel0, freq_sel1                           : std_ulogic;
+  signal freq_sel, freq_sel_sync                        : std_logic_vector(3 downto 0);
+  signal freq_sel0, freq_sel1, freq_sel2, freq_sel3     : std_ulogic;
   signal LDO0, LDO1, LDO2, LDO3, LDO4, LDO5, LDO6, LDO7 : std_ulogic;
 
   signal acc_clk_div1, acc_clk_div2, acc_clk_div3, acc_clk_div4 : std_ulogic;
   signal acc_clk_div12, acc_clk_div34                           : std_ulogic;
   signal acc_clk_int                                            : std_ulogic;
+  signal pll_rst                                                : std_ulogic;
+  signal rangea                                                 : std_logic_vector(4 downto 0);
+  signal plllock1, plllock2                                     : std_ulogic;
+
+  signal dvfs_clk0   : std_ulogic;
+  signal dvfs_clk1   : std_ulogic;
+  signal dvfs_clk2   : std_ulogic;
+  signal dvfs_clk3   : std_ulogic;
+  signal dvfs_clk4   : std_ulogic;
+  signal dvfs_clk5   : std_ulogic;
+  signal dvfs_clk6   : std_ulogic;
+  signal dvfs_clk7   : std_ulogic;
+  signal dvfs_clk8   : std_ulogic;
+  signal dvfs_clk9   : std_ulogic;
+  signal dvfs_clk10  : std_ulogic;
+  signal dvfs_clk11  : std_ulogic;
+
+  signal clk01, clk23, clk45, clk67, clk89, clk1011, clk1213, clk1415 : std_ulogic;
+  signal clk03, clk47, clk811, clk1215 : std_ulogic;
+  signal clk07, clk815 : std_ulogic;
+  signal sel : std_logic_vector(3 downto 0);
+
+  attribute keep : string;
+  attribute keep of dvfs_clk0 : signal is "true";
+  attribute keep of dvfs_clk1 : signal is "true";
+  attribute keep of dvfs_clk2 : signal is "true";
+  attribute keep of dvfs_clk3 : signal is "true";
+  attribute keep of dvfs_clk4 : signal is "true";
+  attribute keep of dvfs_clk5 : signal is "true";
+  attribute keep of dvfs_clk6 : signal is "true";
+  attribute keep of dvfs_clk7 : signal is "true";
+  attribute keep of dvfs_clk8 : signal is "true";
+  attribute keep of dvfs_clk9 : signal is "true";
+  attribute keep of dvfs_clk10 : signal is "true";
+  attribute keep of dvfs_clk11 : signal is "true";
 
   attribute mark_debug                     : string;
   attribute mark_debug of freq_target      : signal is "true";
@@ -131,28 +170,23 @@ begin
   ------------------------------------------------------------------------------
 
   acc_clk <= acc_clk_int;
+  plllock <= plllock1 and plllock2;
 
   no_clk_mux : if (is_asic = true) generate
     acc_clk_int <= refclk;
   end generate;
 
   clk_mux : if (is_asic = false) generate
+    pll_rst <= not raw_rstn;
 
-    clkdiv1234_i : clkdiv1234
-      port map (
-        rstn     => tile_rstn,
-        clkin    => refclk,
-        clk_div1 => acc_clk_div1,
-        clk_div2 => acc_clk_div2,
-        clk_div3 => acc_clk_div3,
-        clk_div4 => acc_clk_div4);
-
-    freq_sel(0) <= LDO6;
-    freq_sel(1) <= LDO7;
+    freq_sel(0) <= LDO4;
+    freq_sel(1) <= LDO5;
+    freq_sel(2) <= LDO6;
+    freq_sel(3) <= LDO7;
 
     freq_sel_synchronizer : inferred_async_fifo
       generic map (
-        g_data_width => 2,
+        g_data_width => 4,
         g_size       => 2)
       port map (
         -- write port
@@ -170,13 +204,198 @@ begin
 
     freq_sel0 <= '1' when freq_sel_sync(0) = '1' else '0';  -- avoid X propagation
     freq_sel1 <= '1' when freq_sel_sync(1) = '1' else '0';  -- avoid X propagation
+    freq_sel2 <= '1' when freq_sel_sync(2) = '1' else '0';  -- avoid X propagation
+    freq_sel3 <= '1' when freq_sel_sync(2) = '1' else '0';  -- avoid X propagation
 
-    acc_clk_div12 <= acc_clk_div1 when freq_sel0 = '0' else acc_clk_div2;
-    acc_clk_div34 <= acc_clk_div3 when freq_sel0 = '0' else acc_clk_div4;
-    clkmux_1234 : clkmux
-      port map (acc_clk_div12, acc_clk_div34, freq_sel1, acc_clk_int, tile_rstn);
+    xcvup : if (tech = virtexup) generate
+    pll_virtexup_1: pll_virtexup
+      generic map (
+        clk_mul    => 16,
+        clk0_div   => 16,               --78MHz
+        clk1_div   => 18,               --69.3MHz
+        clk2_div   => 20,               --62.4MHz
+        clk3_div   => 22,               --56.7MHz
+        clk4_div   => 25,               --49.0MHz
+        clk5_div   => 29,               --43.0MHz
+        clk0_phase => 0.0,
+        clk1_phase => 0.0,
+        clk2_phase => 0.0,
+        clk3_phase => 0.0,
+        clk4_phase => 0.0,
+        clk5_phase => 0.0,
+        freq       => 78000)
+      port map (
+        clk    => refclk,
+        rst    => pll_rst,
+        dvfs_clk0   => dvfs_clk0,
+        dvfs_clk1   => dvfs_clk1,
+        dvfs_clk2   => dvfs_clk2,
+        dvfs_clk3   => dvfs_clk3,
+        dvfs_clk4   => dvfs_clk4,
+        dvfs_clk5   => dvfs_clk5,
+        locked => plllock1);
 
-  end generate;
+    pll_virtexup_2: pll_virtexup
+      generic map (
+        clk_mul    => 4,
+        clk0_div   => 9,                --34.7MHz
+        clk1_div   => 11,               --28.4MHz
+        clk2_div   => 14,               --22.3MHz
+        clk3_div   => 21,               --14.9MHz
+        clk4_div   => 39,               --8MHz
+        clk5_div   => 128,              --2.4MHz
+        clk0_phase => 0.0,
+        clk1_phase => 0.0,
+        clk2_phase => 0.0,
+        clk3_phase => 0.0,
+        clk4_phase => 0.0,
+        clk5_phase => 0.0,
+        freq       => 78000)
+      port map (
+        clk    => refclk,
+        rst    => pll_rst,
+        dvfs_clk0   => dvfs_clk6,
+        dvfs_clk1   => dvfs_clk7,
+        dvfs_clk2   => dvfs_clk8,
+        dvfs_clk3   => dvfs_clk9,
+        dvfs_clk4   => dvfs_clk10,
+        dvfs_clk5   => dvfs_clk11,
+        locked => plllock2);
+    end generate;
+
+    xcvu : if (tech = virtexu) generate
+    pll_virtexu_1: pll_virtexu
+      generic map (
+        clk_mul    => 16,
+        clk0_div   => 16,               --78MHz
+        clk1_div   => 18,               --69.3MHz
+        clk2_div   => 20,               --62.4MHz
+        clk3_div   => 22,               --56.7MHz
+        clk4_div   => 25,               --49.0MHz
+        clk5_div   => 29,               --43.0MHz
+        clk0_phase => 0.0,
+        clk1_phase => 0.0,
+        clk2_phase => 0.0,
+        clk3_phase => 0.0,
+        clk4_phase => 0.0,
+        clk5_phase => 0.0,
+        freq       => 78000)
+      port map (
+        clk    => refclk,
+        rst    => pll_rst,
+        dvfs_clk0   => dvfs_clk0,
+        dvfs_clk1   => dvfs_clk1,
+        dvfs_clk2   => dvfs_clk2,
+        dvfs_clk3   => dvfs_clk3,
+        dvfs_clk4   => dvfs_clk4,
+        dvfs_clk5   => dvfs_clk5,
+        locked => plllock1);
+
+    pll_virtexu_2: pll_virtexu
+      generic map (
+        clk_mul    => 4,
+        clk0_div   => 9,                --34.7MHz
+        clk1_div   => 11,               --28.4MHz
+        clk2_div   => 14,               --22.3MHz
+        clk3_div   => 21,               --14.9MHz
+        clk4_div   => 39,               --8MHz
+        clk5_div   => 128,              --2.4MHz
+        clk0_phase => 0.0,
+        clk1_phase => 0.0,
+        clk2_phase => 0.0,
+        clk3_phase => 0.0,
+        clk4_phase => 0.0,
+        clk5_phase => 0.0,
+        freq       => 78000)
+      port map (
+        clk    => refclk,
+        rst    => pll_rst,
+        dvfs_clk0   => dvfs_clk6,
+        dvfs_clk1   => dvfs_clk7,
+        dvfs_clk2   => dvfs_clk8,
+        dvfs_clk3   => dvfs_clk9,
+        dvfs_clk4   => dvfs_clk10,
+        dvfs_clk5   => dvfs_clk11,
+        locked => plllock2);
+    end generate;
+
+    xcv : if (tech = virtex7) generate
+    pll_virtex7_1: pll_virtex7
+      generic map (
+        clk_mul    => 16,
+        clk0_div   => 16,               --50MHz
+        clk1_div   => 18,               --44.4MHz
+        clk2_div   => 20,               --40MHz
+        clk3_div   => 22,               --36.3MHz
+        clk4_div   => 25,               --32MHz
+        clk5_div   => 29,               --27.6MHz
+        clk0_phase => 0.0,
+        clk1_phase => 0.0,
+        clk2_phase => 0.0,
+        clk3_phase => 0.0,
+        clk4_phase => 0.0,
+        clk5_phase => 0.0,
+        freq       => 78000)
+      port map (
+        clk    => refclk,
+        rst    => pll_rst,
+        dvfs_clk0   => dvfs_clk0,
+        dvfs_clk1   => dvfs_clk1,
+        dvfs_clk2   => dvfs_clk2,
+        dvfs_clk3   => dvfs_clk3,
+        dvfs_clk4   => dvfs_clk4,
+        dvfs_clk5   => dvfs_clk5,
+        locked => plllock1);
+
+    pll_virtex7_2: pll_virtex7
+      generic map (
+        clk_mul    => 4,
+        clk0_div   => 9,                --22.2MHz
+        clk1_div   => 11,               --18.2MHz
+        clk2_div   => 14,               --14.3MHz
+        clk3_div   => 21,               --9.6MHz
+        clk4_div   => 39,               --5.1MHz
+        clk5_div   => 128,              --1.5MHz
+        clk0_phase => 0.0,
+        clk1_phase => 0.0,
+        clk2_phase => 0.0,
+        clk3_phase => 0.0,
+        clk4_phase => 0.0,
+        clk5_phase => 0.0,
+        freq       => 78000)
+      port map (
+        clk    => refclk,
+        rst    => pll_rst,
+        dvfs_clk0   => dvfs_clk6,
+        dvfs_clk1   => dvfs_clk7,
+        dvfs_clk2   => dvfs_clk8,
+        dvfs_clk3   => dvfs_clk9,
+        dvfs_clk4   => dvfs_clk10,
+        dvfs_clk5   => dvfs_clk11,
+        locked => plllock2);
+    end generate;
+
+    clk01 <= dvfs_clk0;
+    clk23 <= dvfs_clk0 when freq_sel0 = '0' else dvfs_clk1;
+    clk45 <= dvfs_clk2 when freq_sel0 = '0' else dvfs_clk3;
+    clk67 <= dvfs_clk4 when freq_sel0 = '0' else dvfs_clk5;
+    clk89 <= dvfs_clk6 when freq_sel0 = '0' else dvfs_clk7;
+    clk1011 <= dvfs_clk8 when freq_sel0 = '0' else dvfs_clk9;
+    clk1213 <= dvfs_clk10 when freq_sel0 = '0' else dvfs_clk11;
+    clk1415 <= dvfs_clk11;
+
+    clk03 <= clk01 when freq_sel1 = '0' else clk23;
+    clk47 <= clk45 when freq_sel1 = '0' else clk67;
+    clk811 <= clk89 when freq_sel1 = '0' else clk1011;
+    clk1215 <= clk1213 when freq_sel1 = '0' else clk1415;
+
+    clk07 <= clk03 when freq_sel2 = '0' else clk47;
+    clk815 <= clk811 when freq_sel2 = '0' else clk1215;
+
+    clkmux_i : clkmuxctrl_unisim
+      port map (clk07, clk815, freq_sel3, acc_clk_int);
+
+end generate;
 
   -----------------------------------------------------------------------------
   --  Token-based DVFS core
