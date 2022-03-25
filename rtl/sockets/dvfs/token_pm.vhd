@@ -211,12 +211,12 @@ begin
     pll_virtexup_1: pll_virtexup
       generic map (
         clk_mul    => 16,
-        clk0_div   => 16,               --78MHz
-        clk1_div   => 18,               --69.3MHz
-        clk2_div   => 20,               --62.4MHz
-        clk3_div   => 22,               --56.7MHz
-        clk4_div   => 25,               --49.0MHz
-        clk5_div   => 29,               --43.0MHz
+        clk0_div   => 15,               --83,2MHz
+        clk1_div   => 16,               --78MHz
+        clk2_div   => 18,               --69.3MHz
+        clk3_div   => 20,               --62.4MHz
+        clk4_div   => 22,               --56.7MHz
+        clk5_div   => 25,               --49.9MHz
         clk0_phase => 0.0,
         clk1_phase => 0.0,
         clk2_phase => 0.0,
@@ -237,13 +237,13 @@ begin
 
     pll_virtexup_2: pll_virtexup
       generic map (
-        clk_mul    => 4,
-        clk0_div   => 9,                --34.7MHz
-        clk1_div   => 11,               --28.4MHz
-        clk2_div   => 14,               --22.3MHz
-        clk3_div   => 21,               --14.9MHz
-        clk4_div   => 39,               --8MHz
-        clk5_div   => 128,              --2.4MHz
+        clk_mul    => 12,
+        clk0_div   => 22,              --42.5MHz
+        clk1_div   => 26,              --36MHz
+        clk2_div   => 32,              --29.3MHz
+        clk3_div   => 43,              --21.8MHz
+        clk4_div   => 62,              --15.1MHz
+        clk5_div   => 117,             --8MHz
         clk0_phase => 0.0,
         clk1_phase => 0.0,
         clk2_phase => 0.0,
@@ -267,12 +267,12 @@ begin
     pll_virtexu_1: pll_virtexu
       generic map (
         clk_mul    => 16,
-        clk0_div   => 16,               --78MHz
-        clk1_div   => 18,               --69.3MHz
-        clk2_div   => 20,               --62.4MHz
-        clk3_div   => 22,               --56.7MHz
-        clk4_div   => 25,               --49.0MHz
-        clk5_div   => 29,               --43.0MHz
+        clk0_div   => 15,               --83,2MHz
+        clk1_div   => 16,               --78MHz
+        clk2_div   => 18,               --69.3MHz
+        clk3_div   => 20,               --62.4MHz
+        clk4_div   => 22,               --56.7MHz
+        clk5_div   => 25,               --49.9MHz
         clk0_phase => 0.0,
         clk1_phase => 0.0,
         clk2_phase => 0.0,
@@ -293,13 +293,13 @@ begin
 
     pll_virtexu_2: pll_virtexu
       generic map (
-        clk_mul    => 4,
-        clk0_div   => 9,                --34.7MHz
-        clk1_div   => 11,               --28.4MHz
-        clk2_div   => 14,               --22.3MHz
-        clk3_div   => 21,               --14.9MHz
-        clk4_div   => 39,               --8MHz
-        clk5_div   => 128,              --2.4MHz
+        clk_mul    => 12,
+        clk0_div   => 22,              --42.5MHz
+        clk1_div   => 26,              --36MHz
+        clk2_div   => 32,              --29.3MHz
+        clk3_div   => 43,              --21.8MHz
+        clk4_div   => 62,              --15.1MHz
+        clk5_div   => 117,             --8MHz
         clk0_phase => 0.0,
         clk1_phase => 0.0,
         clk2_phase => 0.0,
@@ -319,16 +319,17 @@ begin
         locked => plllock2);
     end generate;
 
+
     xcv : if (tech = virtex7) generate
     pll_virtex7_1: pll_virtex7
       generic map (
         clk_mul    => 16,
-        clk0_div   => 16,               --50MHz
-        clk1_div   => 18,               --44.4MHz
-        clk2_div   => 20,               --40MHz
-        clk3_div   => 22,               --36.3MHz
-        clk4_div   => 25,               --32MHz
-        clk5_div   => 29,               --27.6MHz
+        clk0_div   => 15,               --53,3MHz
+        clk1_div   => 16,               --50Hz
+        clk2_div   => 18,               --44.4MHz
+        clk3_div   => 20,               --40MHz
+        clk4_div   => 22,               --36.3MHz
+        clk5_div   => 25,               --32MHz
         clk0_phase => 0.0,
         clk1_phase => 0.0,
         clk2_phase => 0.0,
@@ -349,13 +350,13 @@ begin
 
     pll_virtex7_2: pll_virtex7
       generic map (
-        clk_mul    => 4,
-        clk0_div   => 9,                --22.2MHz
-        clk1_div   => 11,               --18.2MHz
-        clk2_div   => 14,               --14.3MHz
-        clk3_div   => 21,               --9.6MHz
-        clk4_div   => 39,               --5.1MHz
-        clk5_div   => 128,              --1.5MHz
+        clk_mul    => 12,
+        clk0_div   => 22,              --27.2MHz
+        clk1_div   => 26,              --23.1MHz
+        clk2_div   => 32,               --18.8MHz
+        clk3_div   => 43,              --14MHz
+        clk4_div   => 62,              --9.7MHz
+        clk5_div   => 117,             --5.1MHz
         clk0_phase => 0.0,
         clk1_phase => 0.0,
         clk2_phase => 0.0,
