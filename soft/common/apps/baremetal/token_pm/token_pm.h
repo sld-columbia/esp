@@ -78,6 +78,16 @@
 #define CSR_TILE_OFFSET 0x200
 #define CSR_TOKEN_PM_OFFSET 0x1d0
 
+
+#define ACC_BASE_ADDR 0x60010000
+#define ACC_OFFSET 0x100
+// Set accelerator ID (ACC_TILE_ID) according to the position of the accelerator in the
+// SoC. Acc IDs increment from left to right and from top to bottom.
+#define ACC_ID_FFT 0
+#define ACC_ADDR_FFT (ACC_BASE_ADDR + (ACC_OFFSET * ACC_ID_FFT))
+#define ACC_ID_VITERBI 1
+#define ACC_ADDR_VITERBI (ACC_BASE_ADDR + (ACC_OFFSET * ACC_ID_VITERBI))
+
 const unsigned acc_tile_ids[N_ACC] = {2, 4};
 
 
@@ -133,9 +143,11 @@ const unsigned pm_network_const = 0;
 // Uncomment the tests that you want to execute
 // #define TEST_0 1
 // basic test for vc707 FPGA
-#define TEST_1 1
+//#define TEST_1 1
 // test for vc707 FPGA including FFT accelerator execution
-// #define TEST_2 1
+//#define TEST_2 1
+// test for vc707 FPGA including Viterbi accelerator execution
+#define TEST_3 1
 
 ///////////////////////
 // Functions
