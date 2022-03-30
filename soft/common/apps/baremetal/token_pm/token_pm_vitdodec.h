@@ -12,7 +12,7 @@
 
 //#include "vitdodec_minimal.h"
 
-//typedef int8_t token_t;
+typedef int8_t vit_token_t;
 
 //static unsigned DMA_WORD_PER_BEAT(unsigned _st)
 //{
@@ -86,7 +86,7 @@ static const unsigned char PARTAB[256] = {
          1, 0, 0, 1, 0, 1, 1, 0,
 };
 
-static int validate_buf(token_t *out, token_t *gold)
+static int validate_buf(vit_token_t *out, vit_token_t *gold)
 {
 	int i;
 	int j;
@@ -106,7 +106,7 @@ static int validate_buf(token_t *out, token_t *gold)
 
 #define ABS(x) ((x > 0) ? x : -x)
 
-static void init_buf (token_t *in, token_t * gold)
+static void init_buf (vit_token_t *in, vit_token_t * gold)
 {
     int i;
 	int j;

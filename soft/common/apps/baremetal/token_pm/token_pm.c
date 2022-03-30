@@ -133,15 +133,14 @@ int main(int argc, char * argv[])
 #endif
 
 #ifdef TEST_2
-
     struct esp_device *espdevs_fft;
     struct esp_device *dev;
     unsigned done;
     unsigned **ptable = NULL;
-    token_t *mem;
+    fft_token_t *mem;
     float *gold;
     unsigned errors = 0;
-    unsigned coherence;
+    unsigned coherence = ACC_COH_RECALL;
     const int ERROR_COUNT_TH = 0.001;
     unsigned iterations = 1;
     uint64_t cycles_start = 0, cycles_end = 0;
@@ -171,7 +170,7 @@ int main(int argc, char * argv[])
     // Allocate and populate page table
     ptable = aligned_malloc(NCHUNK(mem_size) * sizeof(unsigned *));
     for (i = 0; i < NCHUNK(mem_size); i++)
-	ptable[i] = (unsigned *) &mem[i * (CHUNK_SIZE / sizeof(token_t))];
+	ptable[i] = (unsigned *) &mem[i * (CHUNK_SIZE / sizeof(fft_token_t))];
 
     printf("  ptable = %p\n", ptable);
     printf("  nchunk = %lu\n", NCHUNK(mem_size));
@@ -241,7 +240,8 @@ int main(int argc, char * argv[])
 	iowrite32(dev, FFT_LOG_LEN_REG, log_len);
 
 	// Flush (customize coherence model here)
-	esp_flush(ACC_COH_NONE,1);
+    if (coherence != ACC_COH_RECALL)
+        esp_flush(coherence, 1);
 	
 	//Enable tile 0
 	espdev = &espdevs[0];
@@ -295,8 +295,8 @@ int main(int argc, char * argv[])
 	int ndev;
 	unsigned done;
 	unsigned **ptable = NULL;
-	token_t *mem;
-	token_t *gold;
+	vit_token_t *mem;
+	vit_token_t *gold;
 	unsigned errors = 0;
     int coherence = ACC_COH_RECALL;
 	uint64_t cycles_start = 0, cycles_end = 0;
@@ -328,19 +328,19 @@ int main(int argc, char * argv[])
 
 	//Viterbi stuff
     printf("Starting viterbi init\n");
-	if (DMA_WORD_PER_BEAT(sizeof(token_t)) == 0) {
+	if (DMA_WORD_PER_BEAT(sizeof(vit_token_t)) == 0) {
 		in_words_adj = 24852;
 		out_words_adj = 18585;
 	} else {
-		in_words_adj = round_up(24852, DMA_WORD_PER_BEAT(sizeof(token_t)));
-		out_words_adj = round_up(18585, DMA_WORD_PER_BEAT(sizeof(token_t)));
+		in_words_adj = round_up(24852, DMA_WORD_PER_BEAT(sizeof(vit_token_t)));
+		out_words_adj = round_up(18585, DMA_WORD_PER_BEAT(sizeof(vit_token_t)));
 	}
 	in_len = in_words_adj * (1);
 	out_len = out_words_adj * (1);
-	in_size = in_len * sizeof(token_t);
-	out_size = out_len * sizeof(token_t);
+	in_size = in_len * sizeof(vit_token_t);
+	out_size = out_len * sizeof(vit_token_t);
 	out_offset  = in_len;
-	mem_size = (out_offset * sizeof(token_t)) + out_size;
+	mem_size = (out_offset * sizeof(vit_token_t)) + out_size;
 
 	dev_vit.addr=ACC_ADDR_VITERBI;
 
@@ -352,7 +352,7 @@ int main(int argc, char * argv[])
     // Alocate and populate page table
     ptable = aligned_malloc(NCHUNK(mem_size) * sizeof(unsigned *));
     for (i = 0; i < NCHUNK(mem_size); i++)
-        ptable[i] = (unsigned *) &mem[i * (CHUNK_SIZE / sizeof(token_t))];
+        ptable[i] = (unsigned *) &mem[i * (CHUNK_SIZE / sizeof(vit_token_t))];
     printf("  ptable = %p\n", ptable);
     printf("  nchunk = %lu\n", NCHUNK(mem_size));
 
@@ -381,12 +381,11 @@ int main(int argc, char * argv[])
 
     // Flush (customize coherence model here)
     if (coherence != ACC_COH_RECALL)
-        esp_flush(coherence,1);
+        esp_flush(coherence, 1);
 
 	//Enable tile 1
 	espdev = &espdevs[1];
 	write_config1(espdev, activity_const, random_rate_const, 0, 0);
-
 
     // Start accelerators
     printf("  Start...\n");

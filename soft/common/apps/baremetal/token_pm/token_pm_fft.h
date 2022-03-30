@@ -11,7 +11,7 @@
 #include "utils/fft_utils.h"
 
 // FFT_FX_WIDTH == 32
-typedef int token_t;
+typedef int fft_token_t;
 typedef float native_t;
 #define fx2float fixed32_to_float
 #define float2fx float_to_fixed32
@@ -54,7 +54,7 @@ static unsigned mem_size;
 #define FFT_DO_BITREV_REG 0x44
 #define FFT_LOG_LEN_REG 0x40
 
-static int fft_validate_buf(token_t *out, float *gold)
+static int fft_validate_buf(fft_token_t *out, float *gold)
 {
 	int j;
 	unsigned errors = 0;
@@ -70,7 +70,7 @@ static int fft_validate_buf(token_t *out, float *gold)
 }
 
 
-static void fft_init_buf(token_t *in, float *gold)
+static void fft_init_buf(fft_token_t *in, float *gold)
 {
 	int j;
 	const float LO = -10.0;
@@ -100,19 +100,19 @@ static void fft_init_params()
 {
     len = 1 << log_len;
 
-    if (DMA_WORD_PER_BEAT(sizeof(token_t)) == 0) {
+    if (DMA_WORD_PER_BEAT(sizeof(fft_token_t)) == 0) {
 	in_words_adj = 2 * len;
 	out_words_adj = 2 * len;
     } else {
-	in_words_adj = round_up(2 * len, DMA_WORD_PER_BEAT(sizeof(token_t)));
-	out_words_adj = round_up(2 * len, DMA_WORD_PER_BEAT(sizeof(token_t)));
+	in_words_adj = round_up(2 * len, DMA_WORD_PER_BEAT(sizeof(fft_token_t)));
+	out_words_adj = round_up(2 * len, DMA_WORD_PER_BEAT(sizeof(fft_token_t)));
     }
     in_len = in_words_adj;
     out_len = out_words_adj;
-    in_size = in_len * sizeof(token_t);
-    out_size = out_len * sizeof(token_t);
+    in_size = in_len * sizeof(fft_token_t);
+    out_size = out_len * sizeof(fft_token_t);
     out_offset  = 0;
-    mem_size = (out_offset * sizeof(token_t)) + out_size;
+    mem_size = (out_offset * sizeof(fft_token_t)) + out_size;
 }
 
 static void fft_probe(struct esp_device **espdevs_fft)
