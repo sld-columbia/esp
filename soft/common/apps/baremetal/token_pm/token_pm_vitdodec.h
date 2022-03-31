@@ -86,7 +86,7 @@ static const unsigned char PARTAB[256] = {
          1, 0, 0, 1, 0, 1, 1, 0,
 };
 
-static int validate_buf(vit_token_t *out, vit_token_t *gold)
+static int vit_validate_buf(vit_token_t *out, vit_token_t *gold)
 {
 	int i;
 	int j;
@@ -114,5 +114,4 @@ static void init_buf (vit_token_t *in, vit_token_t * gold)
 
     #include "vitdodec_minimal_vals.h"
 }
-
 

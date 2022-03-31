@@ -326,7 +326,8 @@ int main(int argc, char * argv[])
 	espdev = &espdevs[0];
 	write_config1(espdev, no_activity_const, random_rate_const, 0, 0);
 
-	//Viterbi stuff
+
+ 		//Viterbi stuff
     printf("Starting viterbi init\n");
 	if (DMA_WORD_PER_BEAT(sizeof(vit_token_t)) == 0) {
 		in_words_adj = 24852;
@@ -382,17 +383,14 @@ int main(int argc, char * argv[])
     // Flush (customize coherence model here)
     if (coherence != ACC_COH_RECALL)
         esp_flush(coherence, 1);
-
-	//Enable tile 1
-	espdev = &espdevs[1];
-	write_config1(espdev, activity_const, random_rate_const, 0, 0);
-
-    // Start accelerators
+	
+	
+	// Start accelerators
     printf("  Start...\n");
+	espdev = &espdevs[1];
+	//Enable tile 1
+	write_config1(espdev, activity_const, random_rate_const, 0, 0);
 	cycles_start = get_counter();
-	
-
-	
     iowrite32(&dev_vit, CMD_REG, CMD_MASK_START);
 	
 
@@ -403,7 +401,7 @@ int main(int argc, char * argv[])
         done &= STATUS_MASK_DONE;
     }
 	cycles_end = get_counter();
-
+	
     iowrite32(&dev_vit, CMD_REG, 0x0);
 	//Disable tile 1
 	espdev = &espdevs[1];
@@ -430,6 +428,238 @@ int main(int argc, char * argv[])
     aligned_free(gold);
 #endif
 
+
+#ifdef TEST_4
+
+//Test running both viterbi and FFT
+
+    struct esp_device *espdevs_fft;
+    struct esp_device *dev;
+	struct esp_device dev_vit;
+    unsigned done, done_fft, done_vit, done_fft_before,done_vit_before;
+    unsigned **ptable = NULL;
+	vit_token_t *mem_vit;
+	vit_token_t *gold_vit;
+	fft_token_t *mem_fft;
+	float *gold_fft;
+    unsigned errors = 0;
+    unsigned coherence = ACC_COH_RECALL;
+    const int ERROR_COUNT_TH = 0.001;
+    uint64_t cycles_start = 0, cycles_end_fft = 0,cycles_end_vit = 0;
+	int ndev;
+	
+	
+	////FFT setup/////
+	
+    fft_init_params();
+    fft_probe(&espdevs_fft);
+    dev = &espdevs_fft[0];
+	
+
+    // Check DMA capabilities
+    if (ioread32(dev, PT_NCHUNK_MAX_REG) == 0) {
+	printf("  -> scatter-gather DMA is disabled. Abort.\n");
+	return 0;
+    }
+
+    if (ioread32(dev, PT_NCHUNK_MAX_REG) < NCHUNK(mem_size)) {
+	printf("  -> Not enough TLB entries available. Abort.\n");
+	return 0;
+    }
+
+    // Allocate memory
+    gold_fft = aligned_malloc(out_len * sizeof(float));
+    mem_fft = aligned_malloc(mem_size);
+    printf("  memory buffer base-address = %p\n", mem_fft);
+
+    // Allocate and populate page table
+    ptable = aligned_malloc(NCHUNK(mem_size) * sizeof(unsigned *));
+    for (i = 0; i < NCHUNK(mem_size); i++)
+	ptable[i] = (unsigned *) &mem_fft[i * (CHUNK_SIZE / sizeof(fft_token_t))];
+
+    printf("  ptable = %p\n", ptable);
+    printf("  nchunk = %lu\n", NCHUNK(mem_size));
+
+    reset_token_pm(espdevs);
+
+    write_lut(espdevs, lut_data_const_vc707, random_rate_const, no_activity_const);
     
+    // Configure and start PM of all accelerator tiles
+    printf("Config and start PM of all accelerators\n");
+    unsigned token_counter_override_vc707[N_ACC] = {0x80, 0xb0}; // {1000 0000 (0), 1011 0000 (48)}    
+    unsigned max_tokens_vc707[N_ACC] = {0, 48};
+    for (i = 0; i < N_ACC; i++) {
+	espdev = &espdevs[i];
+	write_config2(espdev, neighbors_id_const[i]);
+	write_config3(espdev, pm_network_const);
+	write_config1(espdev, activity_const, random_rate_const, 0, token_counter_override_vc707[i]);
+	write_config1(espdev, activity_const, random_rate_const, 0, 0);
+	write_config0(espdev, enable_const, max_tokens_vc707[i], refresh_rate_min_const, refresh_rate_max_const);
+    }
+    wait_for_token_next(&espdevs[0], 0);
+    wait_for_token_next(&espdevs[1], 48);
+    printf("   --> tokens_next converged\n");
+
+ 
+	//Disable tile 0
+	espdev = &espdevs[0];
+	write_config1(espdev, no_activity_const, random_rate_const, 0, 0);
+
+	//Enable tile 1
+	espdev = &espdevs[1];
+	write_config1(espdev, activity_const, random_rate_const, 0, 0);
+
+
+	printf("  --------------------\n");
+	printf("  Generate input...\n");
+	//init_buf(mem_fft, gold_fft);
+
+	// Pass common configuration parameters
+
+	iowrite32(dev, SELECT_REG, ioread32(dev, DEVID_REG));
+	iowrite32(dev, COHERENCE_REG, ACC_COH_NONE);
+
+	iowrite32(dev, PT_ADDRESS_REG, (unsigned long) ptable);
+
+	iowrite32(dev, PT_NCHUNK_REG, NCHUNK(mem_size));
+	iowrite32(dev, PT_SHIFT_REG, CHUNK_SHIFT);
+
+	// Use the following if input and output data are not allocated at the default offsets
+	iowrite32(dev, SRC_OFFSET_REG, 0x0);
+	iowrite32(dev, DST_OFFSET_REG, 0x0);
+
+	// Pass accelerator-specific configuration parameters
+	/* <<--regs-config-->> */
+	iowrite32(dev, FFT_DO_PEAK_REG, 0);
+	iowrite32(dev, FFT_DO_BITREV_REG, do_bitrev);
+	iowrite32(dev, FFT_LOG_LEN_REG, log_len);
+	
+	//FFT is all set
+	
+	
+ 	//////Viterbi setup//////
+	
+    printf("Starting viterbi init\n");
+	if (DMA_WORD_PER_BEAT(sizeof(vit_token_t)) == 0) {
+		in_words_adj = 24852;
+		out_words_adj = 18585;
+	} else {
+		in_words_adj = round_up(24852, DMA_WORD_PER_BEAT(sizeof(vit_token_t)));
+		out_words_adj = round_up(18585, DMA_WORD_PER_BEAT(sizeof(vit_token_t)));
+	}
+	in_len = in_words_adj * (1);
+	out_len = out_words_adj * (1);
+	in_size = in_len * sizeof(vit_token_t);
+	out_size = out_len * sizeof(vit_token_t);
+	out_offset  = in_len;
+	mem_size = (out_offset * sizeof(vit_token_t)) + out_size;
+
+	dev_vit.addr=ACC_ADDR_VITERBI;
+
+    // Allocate memory
+    gold_vit = aligned_malloc(out_size);
+    mem_vit = aligned_malloc(mem_size);
+
+    //printf("  memory buffer base-address = %p\n", mem_vit);
+    // Alocate and populate page table
+    ptable = aligned_malloc(NCHUNK(mem_size) * sizeof(unsigned *));
+    for (i = 0; i < NCHUNK(mem_size); i++)
+        ptable[i] = (unsigned *) &mem_vit[i * (CHUNK_SIZE / sizeof(vit_token_t))];
+    printf("  ptable = %p\n", ptable);
+    printf("  nchunk = %lu\n", NCHUNK(mem_size));
+
+    printf("  Generate input...\n");
+    init_buf(mem_vit, gold_vit);
+
+    // Pass common configuration parameters
+
+    iowrite32(&dev_vit, SELECT_REG, ioread32(&dev_vit, DEVID_REG));
+    iowrite32(&dev_vit, COHERENCE_REG, coherence);
+
+    iowrite32(&dev_vit, PT_ADDRESS_REG, (unsigned long) ptable);
+
+    iowrite32(&dev_vit, PT_NCHUNK_REG, NCHUNK(mem_size));
+    iowrite32(&dev_vit, PT_SHIFT_REG, CHUNK_SHIFT);
+
+    // Use the following if input and output data are not allocated at the default offsets
+    iowrite32(&dev_vit, SRC_OFFSET_REG, 0x0);
+    iowrite32(&dev_vit, DST_OFFSET_REG, 0x0);
+
+    // Pass accelerator-specific configuration parameters
+    /* <<--regs-config-->> */
+    iowrite32(&dev_vit, VITDODEC_CBPS_REG, cbps);
+    iowrite32(&dev_vit, VITDODEC_NTRACEBACK_REG, ntraceback);
+    iowrite32(&dev_vit, VITDODEC_DATA_BITS_REG, data_bits);
+
+    // Flush (customize coherence model here)
+    if (coherence != ACC_COH_RECALL)
+        esp_flush(coherence, 1);
+	
+	///////Start accelerators//////
+		
+	iowrite32(dev, CMD_REG, CMD_MASK_START);
+	espdev = &espdevs[0];
+	//Enable tile 0
+	write_config1(espdev, activity_const, random_rate_const, 0, 0);
+ 	espdev = &espdevs[1];
+	iowrite32(&dev_vit, CMD_REG, CMD_MASK_START);
+	write_config1(espdev, activity_const, random_rate_const, 0, 0);
+	cycles_start = get_counter();
+
+
+	////Wait for them to complete////
+	
+	done_fft = 0;
+	done_vit = 0;
+	done_fft_before = 0;
+	done_vit_before = 0;
+	
+    while (!(done_fft && done_vit)) {
+		if(!done_vit) {
+        	done_vit = ioread32(&dev_vit, STATUS_REG);
+			done_vit &= STATUS_MASK_DONE;
+		}
+		if(!done_fft) {
+			done_fft = ioread32(dev, STATUS_REG);
+        	done_fft &= STATUS_MASK_DONE;
+		}
+		if(done_fft && !done_fft_before) {
+			cycles_end_fft = get_counter();
+			espdev = &espdevs[0];
+			write_config1(espdev, 0, random_rate_const, 0, 0);
+			done_fft_before=done_fft;
+		}
+		if(done_vit && !done_vit_before) {
+			cycles_end_vit = get_counter();
+			espdev = &espdevs[1];
+			write_config1(espdev, 0, random_rate_const, 0, 0);
+			done_vit_before=done_vit;
+		}
+    }
+	
+	printf("  Done\n");
+	printf("  Execution cycles FFT: %llu\n", cycles_end_fft - cycles_start);
+	printf("  Execution cycles Viterbi: %llu\n", cycles_end_vit - cycles_start);
+
+	
+	 printf("  validating...\n");
+
+    /* Validation Viterbi*/
+    errors = vit_validate_buf(&mem_vit[out_offset], gold_vit);
+    if (errors)
+        printf("  ... FAIL Viterbi\n");
+    else
+        printf("  ... PASS Viterbi\n");
+
+    /* Validation FFT*/
+	errors = fft_validate_buf(&mem_fft[out_offset], gold_fft);
+	if ((errors / len) > ERROR_COUNT_TH)
+	     printf("  ... FAIL FFT\n");
+	 else
+	     printf("  ... PASS FFT\n");
+
+
+#endif
+
     return 0;
 }
