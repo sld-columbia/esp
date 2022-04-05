@@ -14,7 +14,7 @@
 `endif
 
 `ifndef NUM_WARPS
-`define NUM_WARPS 4
+`define NUM_WARPS 2
 `endif
 
 `ifndef NUM_THREADS
@@ -38,7 +38,7 @@
 `endif
 
 `ifndef MEM_BLOCK_SIZE
-`define MEM_BLOCK_SIZE 64
+`define MEM_BLOCK_SIZE 8
 `endif
 
 `ifndef L1_BLOCK_SIZE

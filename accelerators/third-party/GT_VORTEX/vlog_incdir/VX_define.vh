@@ -34,7 +34,7 @@
 
 `define PERF_CTR_BITS   44
 
-`define UUID_BITS       44
+`define UUID_BITS       1 // ESP MODIFIED was 44 initially
 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -401,12 +401,10 @@
 
 `define VX_MEM_BYTEEN_WIDTH     `L3_MEM_BYTEEN_WIDTH   
 `define VX_MEM_ADDR_WIDTH       `L3_MEM_ADDR_WIDTH
-`define VX_MEM_DATA_WIDTH       64
-`define VX_MEM_TAG_WIDTH        8
+`define VX_MEM_DATA_WIDTH       `L3_MEM_DATA_WIDTH
+`define VX_MEM_TAG_WIDTH        `L3_MEM_TAG_WIDTH
 `define VX_CORE_TAG_WIDTH       `L3_CORE_TAG_WIDTH 
 `define VX_CSR_ID_WIDTH         `LOG2UP(`NUM_CLUSTERS * `NUM_CORES)
-
-`define TO_FULL_ADDR(x)         {x, (32-$bits(x))'(0)}
 
 ///////////////////////////////////////////////////////////////////////////////
 
