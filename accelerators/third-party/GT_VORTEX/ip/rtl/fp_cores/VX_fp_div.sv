@@ -53,13 +53,13 @@ module VX_fp_div #(
     `else
         `RESET_RELAY (fdiv_reset);
 
-        acl_fdiv fdiv (
-            .clk    (clk),
-            .areset (fdiv_reset),
-            .en     (enable),
-            .a      (dataa[i]),
-            .b      (datab[i]),
-            .q      (result[i])
+        acl_div fdiv (
+            .aclk          (clk),
+            .aresetn       (fdiv_reset),
+            .aclken        (enable),
+            .s_axis_a_tdata(dataa[i]),
+            .s_axis_b_tdata(datab[i]),
+            .m_axis_result_tdata(result[i])
         );
     `endif
     end
