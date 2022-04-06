@@ -14,7 +14,7 @@ endif
 VLOGOPT += $(INCDIR_MODELSIM)
 
 # Flag for VORTEX SIMULATION VERILATOR
-VLOGOPT += +define+VERILATOR 
+#VLOGOPT += +define+VERILATOR 
 
 # define for excluding floating point unit
 
