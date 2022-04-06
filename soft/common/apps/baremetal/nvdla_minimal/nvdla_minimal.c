@@ -67,7 +67,7 @@ int main(int argc, char * argv[])
     int n;
     int ndev;
     struct esp_device *espdevs;
-    struct esp_device dev, coh_dev;
+    struct esp_device dev, coh_dev, plic_dev;
     unsigned done;
     token_t *mem;
     native_t *gold;
@@ -99,8 +99,8 @@ int main(int argc, char * argv[])
     coherence = ACC_COH_RECALL;
     coh_dev.addr = CSR_TILE_ADDR;
     iowrite32(&coh_dev, CSR_REG_OFFSET*4, coherence);
-    if (coherence != ACC_COH_RECALL)
-	esp_flush(coherence);
+//    if (coherence != ACC_COH_RECALL)
+//	esp_flush(coherence, 1);
 
     // Write the accelerator configuration registers
 
@@ -284,9 +284,9 @@ int main(int argc, char * argv[])
     iowrite32(&dev, 16392, 1);
     iowrite32(&dev, 12304, 1);
 
-    for (i = 0; i < 2; ++i)
-	printf("wait...\n");
-		
+    plic_dev.addr = PLIC_ADDR;
+    while(ioread32(&plic_dev, PLIC_IP_OFFSET) != 0x40);
+
     read_val = ioread32(&dev, 4100);
     if (read_val != 0)
 	printf("error %u\n", error_id);
