@@ -1,11 +1,17 @@
 // File Name: GT_VORTEX_wrapper.v
 // Originally NVDLA wrapper modified
+
+//    parameter AXI_DATA_WIDTH   = `VX_MEM_DATA_WIDTH,
+//    parameter AXI_ADDR_WIDTH   = 32,
+//    parameter AXI_TID_WIDTH    = `VX_MEM_TAG_WIDTH,    
+//    parameter AXI_STROBE_WIDTH = (`VX_MEM_DATA_WIDTH / 8)
+
 `include "VX_define.vh"
 module GT_VORTEX_wrapper #(
-   parameter AXI_DATA_WIDTH   = 64,
+   parameter AXI_DATA_WIDTH   = `VX_MEM_DATA_WIDTH,
    parameter AXI_ADDR_WIDTH   = 32,
-   parameter AXI_TID_WIDTH    = 8,
-   parameter AXI_STROBE_WIDTH = 8
+   parameter AXI_TID_WIDTH    = `VX_MEM_TAG_WIDTH,
+   parameter AXI_STROBE_WIDTH = (`VX_MEM_DATA_WIDTH / 8)
 ) (clk,
    reset, 
    paddr,
@@ -141,10 +147,10 @@ module GT_VORTEX_wrapper #(
    assign m_axi_awregion =    4'b0000; 
 
   Vortex_axi  #(
-    .AXI_DATA_WIDTH    (64),
+    .AXI_DATA_WIDTH    (`VX_MEM_DATA_WIDTH),
     .AXI_ADDR_WIDTH    (32),
-    .AXI_TID_WIDTH     (8),
-    .AXI_STROBE_WIDTH  (8) 
+    .AXI_TID_WIDTH     (`VX_MEM_TAG_WIDTH),
+    .AXI_STROBE_WIDTH  ((`VX_MEM_DATA_WIDTH / 8)) 
     )Vortex_axi_0 (
     .clk            ( clk   ),
     .reset          ( reset ),
