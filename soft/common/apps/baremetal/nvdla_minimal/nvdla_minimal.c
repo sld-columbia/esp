@@ -75,6 +75,7 @@ int main(int argc, char * argv[])
     unsigned coherence;
     unsigned error_id;
     unsigned read_val;
+	long time0, time1, time2, time3;
 
     i_base = 0x200;
     w_base  = 0x000;
@@ -112,180 +113,32 @@ int main(int argc, char * argv[])
     //error_id++;
 
     printf("  start NVDLA\n");
-    
-    iowrite32(&dev, 28676, 0);
-    iowrite32(&dev, 20484, 0);
-    iowrite32(&dev, 24580, 0);
-    iowrite32(&dev, 16388, 0);
-    iowrite32(&dev, 12292, 0);
+	
+    for (i = 0; i < 3; i++) {
 
-    read_val = ioread32(&dev, 28672);
-    if (read_val != 0)
-	printf("error %u\n", error_id);
-    error_id++;
-
-    read_val = ioread32(&dev, 20480);
-    if (read_val != 0)
-	printf("error %u\n", error_id);
-    error_id++;
-
-    read_val = ioread32(&dev, 24576);
-    if (read_val != 0)
-	printf("error %u\n", error_id);
-    error_id++;
-
-    read_val = ioread32(&dev, 16384);
-    if (read_val != 0)
-	printf("error %u\n", error_id);
-    error_id++;
-
-    read_val = ioread32(&dev, 12288);
-    if (read_val != 0)
-	printf("error %u\n", error_id);
-    error_id++;
-
-    iowrite32(&dev, 28684, 0);
-    iowrite32(&dev, 28688, 65537);
-    iowrite32(&dev, 28692, 19);
-    iowrite32(&dev, 28696, 0);
-    iowrite32(&dev, 28700, 0);
-    iowrite32(&dev, 28704, 16);
-    iowrite32(&dev, 28708, 32);
-    iowrite32(&dev, 28712, 0);
-    iowrite32(&dev, 28716, 0);
-    iowrite32(&dev, 20492, 0);
-    iowrite32(&dev, 24588, 0);
-    iowrite32(&dev, 16396, 0);
-    iowrite32(&dev, 16400, 0);
-    iowrite32(&dev, 16404, 327685);
-    iowrite32(&dev, 16408, 0);
-    iowrite32(&dev, 16412, 0);
-    iowrite32(&dev, 16416, 0);
-    iowrite32(&dev, 16420, 5);
-    iowrite32(&dev, 16424, 0);
-    iowrite32(&dev, 16428, 262148);
-    iowrite32(&dev, 16432, 1245184);
-    iowrite32(&dev, 16436, 504);
-    iowrite32(&dev, 16440, 0);
-    iowrite32(&dev, 16444, 65537);
-    iowrite32(&dev, 16448, 19);
-    iowrite32(&dev, 16452, 3);
-    iowrite32(&dev, 16456, 5);
-    iowrite32(&dev, 16460, 0);
-    iowrite32(&dev, 16464, 0);
-    iowrite32(&dev, 16468, 0);
-    iowrite32(&dev, 16472, 0);
-    iowrite32(&dev, 16476, 0);
-    iowrite32(&dev, 16480, 0);
-    iowrite32(&dev, 12308, 0);
-    iowrite32(&dev, 12312, 1048576);
-    iowrite32(&dev, 12316, 327685);
-    iowrite32(&dev, 12320, 0);
-    iowrite32(&dev, 12324, 327685);
-    iowrite32(&dev, 12332, 1);
-    iowrite32(&dev, 12336, 0);
-    iowrite32(&dev, 12340, ((unsigned) mem) + b_base); // 2686488576
-    iowrite32(&dev, 12344, 0);
-    iowrite32(&dev, 12348, ((unsigned) mem) + b_base); // 2686488576
-    iowrite32(&dev, 12352, 48);
-    iowrite32(&dev, 12360, 288);
-    iowrite32(&dev, 12356, 0);
-    iowrite32(&dev, 12364, 65537);
-    iowrite32(&dev, 12376, 0);
-    iowrite32(&dev, 12380, 0);
-    iowrite32(&dev, 12384, 5);
-    iowrite32(&dev, 12388, 0);
-    iowrite32(&dev, 12392, 0);
-    iowrite32(&dev, 12396, 24);
-    iowrite32(&dev, 12400, 19);
-    iowrite32(&dev, 12404, 1);
-    iowrite32(&dev, 12408, 0);
-    iowrite32(&dev, 12412, ((unsigned) mem) + w_base); // 2686459904
-    iowrite32(&dev, 12416, 504);
-    iowrite32(&dev, 12440, 0);
-    iowrite32(&dev, 12452, 1);
-    iowrite32(&dev, 12456, 0);
-    iowrite32(&dev, 12460, 1);
-    iowrite32(&dev, 12464, 0);
-    iowrite32(&dev, 12468, 0);
-    iowrite32(&dev, 12472, 0);
-    iowrite32(&dev, 12476, 0);
-
-    //read_val = ioread32(&dev, 36868);
-    //if (read_val != 1 && read_val != 65536)
-    //    printf("error %u\n", error_id);
-    //error_id++;
-
-    //read_val = ioread32(&dev, 32772);
-    //if (read_val != 1 && read_val != 65536)
-    //    printf("error %u\n", error_id);
-    //error_id++;
-
-    iowrite32(&dev, 36868, 0);
-    iowrite32(&dev, 32772, 0);
-
-    read_val = ioread32(&dev, 4100);
-    if (read_val != 0)
-	printf("error %u\n", error_id);
-    error_id++;
-
-    iowrite32(&dev, 4100, 0);
-    iowrite32(&dev, 32880, 0);
-    iowrite32(&dev, 32808, 0);
-    iowrite32(&dev, 32832, 0);
-    iowrite32(&dev, 32856, 0);
-    iowrite32(&dev, 32880, 1);
-    iowrite32(&dev, 32780, 1);
-    iowrite32(&dev, 32784, 1);
-    iowrite32(&dev, 32788, 19);
-    iowrite32(&dev, 32808, 44);
-    iowrite32(&dev, 32812, ((unsigned) mem) + i_base); // 2686464000
-    iowrite32(&dev, 32816, 0);
-    iowrite32(&dev, 32820, 32);
-    iowrite32(&dev, 32824, 32);
-    iowrite32(&dev, 32832, 49);
-    iowrite32(&dev, 32856, 49);
-    iowrite32(&dev, 36924, 1);
-    iowrite32(&dev, 36928, 1);
-    iowrite32(&dev, 36932, 19);
-    iowrite32(&dev, 36940, 0);
-    iowrite32(&dev, 36936, ((unsigned) mem) + o_base); // 2686492672
-    iowrite32(&dev, 36944, 16);
-    iowrite32(&dev, 36948, 32);
-    iowrite32(&dev, 36952, 72);
-    iowrite32(&dev, 36956, 1);
-    iowrite32(&dev, 36964, 6145);
-    iowrite32(&dev, 36972, 83);
-    iowrite32(&dev, 36992, 83);
-    iowrite32(&dev, 37040, 1);
-    iowrite32(&dev, 37044, 1);
-    iowrite32(&dev, 37052, 0);
-    iowrite32(&dev, 37056, 0);
-    iowrite32(&dev, 37060, 1);
-    iowrite32(&dev, 37064, 0);
-    iowrite32(&dev, 36868, 0);
-    iowrite32(&dev, 32772, 0);
-    iowrite32(&dev, 32776, 1);
-    iowrite32(&dev, 36920, 1);
-    iowrite32(&dev, 28676, 0);
-    iowrite32(&dev, 20484, 0);
-    iowrite32(&dev, 24580, 0);
-    iowrite32(&dev, 16388, 0);
-    iowrite32(&dev, 12292, 0);
-
-    read_val = ioread32(&dev, 12300);
-    if (read_val != 1)
-	printf("error %u\n", error_id);
-    error_id++;
-
-    iowrite32(&dev, 28680, 1);
-    iowrite32(&dev, 20488, 1);
-    iowrite32(&dev, 24584, 1);
-    iowrite32(&dev, 16392, 1);
-    iowrite32(&dev, 12304, 1);
-
+    time0=get_counter();
+	setup_nvdla(mem,i_base,o_base,b_base,w_base);
+    time1=get_counter();
     plic_dev.addr = PLIC_ADDR;
     while(ioread32(&plic_dev, PLIC_IP_OFFSET) != 0x40);
+
+    time2=get_counter();	
+	printf("Time load: %llu\n", time1 - time0);
+	printf("Time run: %llu\n", time2 - time1);
+	
+	    /* Validation */
+    errors = validate_buf(&mem[out_offset], gold);
+
+    if (errors)
+	printf("  ... FAIL\n");
+    else
+	printf("  ... PASS\n");
+	
+	//Interrupt acknowledge and reset
+	iowrite32(&plic_dev, PLIC_INTACK_OFFSET, NVDLA_IRQ + 1);
+	}
+	//printf(" Time load+run: %llu\n", time2 - time0);
+
 
     read_val = ioread32(&dev, 4100);
     if (read_val != 0)
