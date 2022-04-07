@@ -31,6 +31,7 @@ entity dvfs_top is
     pindex        : integer              := 0);
   port (
     rst       : in  std_ulogic;
+    raw_rstn  : in  std_ulogic;
     clk       : in  std_ulogic;
     paddr     : in integer;
     pmask     : in integer;
@@ -42,6 +43,7 @@ entity dvfs_top is
     acc_idle  : in  std_ulogic;
     traffic   : in  std_ulogic;
     burst     : in  std_ulogic;
+    plllock   : out std_ulogic;
     --Monitor signals
     mon_dvfs  : out monitor_dvfs_type);
 
@@ -66,6 +68,7 @@ begin  -- rtl
       extra_clk_buf => extra_clk_buf)
     port map (
       rst           => rst,
+      raw_rstn      => raw_rstn,
       refclk        => refclk,
       pllbypass     => pllbypass,
       pllclk        => pllclk,
@@ -78,6 +81,7 @@ begin  -- rtl
       acc_idle      => acc_idle,
       traffic       => traffic,
       burst         => burst,
+      plllock_out   => plllock,
       mon_dvfs      => mon_dvfs);
 
   tile_dvfs_1: tile_dvfs

@@ -47,6 +47,7 @@ use std.textio.all;
     extra_clk_buf  : integer);
   port (
     rst       : in  std_ulogic;
+    raw_rstn  : in  std_ulogic;
     clk       : in  std_ulogic;
     refclk    : in  std_ulogic;
     pllbypass : in  std_ulogic;
@@ -65,6 +66,7 @@ use std.textio.all;
     apbi      : in apb_slv_in_type;
     apbo      : out apb_slv_out_type;
     pready    : out std_ulogic;
+    plllock   : out std_ulogic;
 
     -- NoC plane coherence request
     coherence_req_wrreq        : out std_ulogic;
@@ -158,7 +160,7 @@ end;
   signal dma_snd_wrreq_int    : std_ulogic;
   signal dma_snd_data_in_int  : noc_flit_type;
   signal dma_snd_full_int     : std_ulogic;
-
+  signal acc_rstn, force_rstn : std_ulogic;
 begin
 
   pconfig <= (
@@ -259,7 +261,8 @@ begin
   irq_header(MISC_NOC_FLIT_SIZE-PREAMBLE_WIDTH-1 downto 0) <=
     irq_header_i(MISC_NOC_FLIT_SIZE-PREAMBLE_WIDTH-1 downto 0);
 
- 
+  acc_rstn <= rst and force_rstn;
+
   -- Interrupt over NoC
   irq_send: process (acc_done, interrupt_full, irq_state, irq_header,
                      interrupt_ack_empty, interrupt_ack_data_out)
@@ -268,6 +271,7 @@ begin
     interrupt_wrreq <= '0';
     interrupt_ack_rdreq <= '0';
     irq_next <= irq_state;
+    force_rstn <= '1';
 
     case irq_state is
       when idle =>
@@ -294,16 +298,18 @@ begin
         else
           if interrupt_ack_empty = '0' then
             interrupt_ack_rdreq <= '1';
-            if acc_done = '0' then
-              irq_next <= idle;
-            else
-              if interrupt_full = '1' then
-                irq_next <= pending;
-              else
-                interrupt_wrreq <= '1';
-                irq_next <= wait_for_clear_irq;
-              end if;
-            end if;
+            irq_next <= idle;
+            force_rstn <= '0';
+            --if acc_done = '0' then
+            --  irq_next <= idle;
+            --else
+            --  if interrupt_full = '1' then
+            --    irq_next <= pending;
+            --  else
+            --    interrupt_wrreq <= '1';
+            --    irq_next <= wait_for_clear_irq;
+            --  end if;
+            --end if;
           end if;
 
         end if;

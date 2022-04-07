@@ -65,6 +65,7 @@ entity esp_acc_dma is
     has_pll            : integer);
   port (
     rst           : in  std_ulogic;
+    raw_rstn      : in  std_ulogic;
     clk           : in  std_ulogic;
     refclk        : in  std_ulogic;
     pllbypass     : in  std_ulogic;
@@ -100,6 +101,7 @@ entity esp_acc_dma is
     bufdout_valid : in  std_ulogic;
     acc_done      : in  std_ulogic;
     flush         : out std_ulogic;
+    plllock       : out std_ulogic;
     mon_dvfs_in   : in  monitor_dvfs_type;
     --Monitor signals
     mon_dvfs      : out monitor_dvfs_type;
@@ -1158,6 +1160,7 @@ begin  -- rtl
     mon_dvfs.vf <= "1000";
     mon_dvfs.transient <= '0';
     dvfs_transient <= '0';
+    plllock <= '1';
   end generate;
 
   dvfs_no_master: if has_dvfs /= 0 and has_pll = 0 generate
@@ -1167,6 +1170,7 @@ begin  -- rtl
     mon_dvfs.vf <= mon_dvfs_in.vf;
     mon_dvfs.transient <= mon_dvfs_in.transient;
     dvfs_transient <= mon_dvfs_in.transient;
+    plllock <= '1';
   end generate dvfs_no_master;
 
   noc_delay <= dma_snd_delay or dma_rcv_delay;
@@ -1183,6 +1187,7 @@ begin  -- rtl
       pindex        => pindex)
     port map (
       rst       => rst,
+      raw_rstn  => raw_rstn,
       clk       => clk,
       paddr     => paddr,
       pmask     => pmask,
@@ -1194,6 +1199,7 @@ begin  -- rtl
       acc_idle  => mon_dvfs_in.acc_idle,
       traffic   => mon_dvfs_in.traffic,
       burst     => mon_dvfs_in.burst,
+      plllock   => plllock,
       mon_dvfs  => mon_dvfs_ctrl);
   mon_dvfs.clk <= mon_dvfs_ctrl.clk;
   mon_dvfs.vf  <= mon_dvfs_ctrl.vf;

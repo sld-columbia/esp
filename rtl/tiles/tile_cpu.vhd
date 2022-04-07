@@ -1052,6 +1052,7 @@ begin
         pindex        => 2)
       port map (
         rst       => cleanrstn,
+        raw_rstn  => raw_rstn,
         clk       => clk_feedthru,
         paddr     => this_dvfs_paddr,
         pmask     => this_dvfs_pmask,

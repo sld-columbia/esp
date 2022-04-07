@@ -106,6 +106,7 @@ sockets/jtag/piso_jtag.vhd
 sockets/jtag/sipo_jtag.vhd
 sockets/dvfs/dvfs_top.vhd
 sockets/dvfs/dvfs_fsm.vhd
+sockets/dvfs/tile_dvfs.vhd
 sockets/dvfs/pm2noc.vhd
 sockets/dvfs/token_pm.vhd
 sockets/bus/patient_apbctrl.vhd

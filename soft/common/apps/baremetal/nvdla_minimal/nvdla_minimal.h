@@ -19,5 +19,7 @@
 
 #define PLIC_ADDR 0x6c000000
 #define PLIC_IP_OFFSET 0x1000
+#define PLIC_INTACK_OFFSET 0x200004
+#define NVDLA_IRQ 5
 
 #endif /* __NVDLA_MINIMAL_H__ */

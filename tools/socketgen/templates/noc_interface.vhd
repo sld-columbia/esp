@@ -45,6 +45,7 @@ use std.textio.all;
     extra_clk_buf  : integer);
   port (
     rst       : in  std_ulogic;
+    raw_rstn  : in  std_ulogic;
     clk       : in  std_ulogic;
     refclk    : in  std_ulogic;
     pllbypass : in  std_ulogic;
@@ -63,6 +64,7 @@ use std.textio.all;
     apbi      : in apb_slv_in_type;
     apbo      : out apb_slv_out_type;
     pready    : out std_ulogic;
+    plllock   : out std_ulogic;
 
     -- NoC plane coherence request
     coherence_req_wrreq        : out std_ulogic;
@@ -369,6 +371,7 @@ begin
       has_pll            => has_pll)
     port map (
       rst                           => rst,
+      raw_rstn                      => raw_rstn,
       clk                           => clk,
       refclk                        => refclk,
       pllbypass                     => pllbypass,
@@ -402,6 +405,7 @@ begin
       bufdout_valid                 => dma_write_chnl_valid,
       acc_done                      => acc_done,
       flush                         => flush,
+      plllock                       => plllock,
       mon_dvfs_in                   => mon_dvfs_in,
       mon_dvfs                      => mon_dvfs_feedthru,
       llc_coherent_dma_rcv_rdreq    => coherent_dma_rcv_rdreq,

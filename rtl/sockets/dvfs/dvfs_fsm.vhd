@@ -33,6 +33,7 @@ entity dvfs_fsm is
 
   port (
     rst           : in  std_ulogic;
+    raw_rstn      : in  std_ulogic;
     refclk        : in  std_ulogic;
     pllbypass     : in  std_ulogic;
     pllclk        : out std_ulogic;
@@ -45,6 +46,7 @@ entity dvfs_fsm is
     acc_idle      : in  std_ulogic;
     traffic       : in  std_ulogic;
     burst         : in  std_ulogic;
+    plllock_out   : out std_ulogic;
     --Monitor signals
     mon_dvfs      : out monitor_dvfs_type);
 
@@ -64,6 +66,7 @@ architecture rtl of dvfs_fsm is
 
   signal plllock   : std_ulogic;
   signal pllouta   : std_ulogic;
+  signal pll_rst   : std_ulogic;
   signal reset     : std_ulogic;
 
   signal divchange, divchange_in : std_ulogic;
@@ -121,13 +124,16 @@ begin  -- rtl
     pllclk <= pllouta and clk_gate_latch;
   end generate no_extra_buf_gen;
 
+  plllock_out <= plllock;
+  pll_rst     <= not raw_rstn;
+
   pll_1: pll
     generic map (
       tech => tech)
     port map (
       plllock   => plllock,
       pllouta   => pllouta,
-      reset     => reset,
+      reset     => pll_rst,
       divchange => divchange,           --strobe unused. Frequency updates on rangea
       rangea    => rangea,              --one hot encoding
       refclk    => refclk,
@@ -201,7 +207,7 @@ begin  -- rtl
     handshake_next <= handshake_current;
     set_pll_reset_count <= '0';
     pll_reset_count_in <= (others => '0');
-    reset <= '0';
+--    reset <= '0';
 
     case handshake_current is
       when hs_idle =>
@@ -218,7 +224,7 @@ begin  -- rtl
         end if;
 
       when hs_counting =>
-        reset <= '1';                   -- PLL reset is active high
+--        reset <= '1';                   -- PLL reset is active high
         if pll_reset_count = "00000" then
           handshake_next <= hs_done;
         end if;

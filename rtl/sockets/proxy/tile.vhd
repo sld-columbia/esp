@@ -738,6 +738,7 @@ package tile is
       has_pll            : integer);
     port (
       rst                           : in  std_ulogic;
+      raw_rstn                      : in  std_ulogic;
       clk                           : in  std_ulogic;
       refclk                        : in  std_ulogic;
       pllbypass                     : in  std_ulogic;
@@ -771,6 +772,7 @@ package tile is
       bufdout_valid                 : in  std_ulogic;
       acc_done                      : in  std_ulogic;
       flush                         : out std_ulogic;
+      plllock                       : out std_ulogic;
       mon_dvfs_in                   : in  monitor_dvfs_type;
       mon_dvfs                      : out monitor_dvfs_type;
       llc_coherent_dma_rcv_rdreq    : out std_ulogic;
@@ -864,6 +866,7 @@ package tile is
       extra_clk_buf : integer range 0 to 1 := 1);
     port (
       rst           : in  std_ulogic;
+      raw_rstn      : in  std_ulogic;
       refclk        : in  std_ulogic;
       pllbypass     : in  std_ulogic;
       pllclk        : out std_ulogic;
@@ -876,6 +879,7 @@ package tile is
       acc_idle      : in  std_ulogic;
       traffic       : in  std_ulogic;
       burst         : in  std_ulogic;
+      plllock_out   : out std_ulogic;
       mon_dvfs      : out monitor_dvfs_type
       );
 
@@ -888,6 +892,7 @@ package tile is
       pindex        : integer              := 0);
     port (
       rst       : in  std_ulogic;
+      raw_rstn  : in  std_ulogic;
       clk       : in  std_ulogic;
       paddr     : in  integer;
       pmask     : in  integer;
@@ -899,6 +904,7 @@ package tile is
       acc_idle  : in  std_ulogic;
       traffic   : in  std_ulogic;
       burst     : in  std_ulogic;
+      plllock   : out std_ulogic;
       mon_dvfs  : out monitor_dvfs_type);
   end component;
 
