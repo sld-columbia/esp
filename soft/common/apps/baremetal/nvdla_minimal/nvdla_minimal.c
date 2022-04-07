@@ -105,69 +105,69 @@ int main(int argc, char * argv[])
 
     // Write the accelerator configuration registers
 
-    error_id = 0;
 
     //read_val = ioread32(dev, 28676);
     //if (read_val != 1 && read_val != 65536)
     //    printf("error %u\n", error_id);
     //error_id++;
 
-    printf("  start NVDLA\n");
-	
-    for (i = 0; i < 3; i++) {
 
-    time0=get_counter();
-	setup_nvdla(mem,i_base,o_base,b_base,w_base);
-    time1=get_counter();
-    plic_dev.addr = PLIC_ADDR;
-    while(ioread32(&plic_dev, PLIC_IP_OFFSET) != 0x40);
+for (int i = 0; i < 3; i++) {
 
-    time2=get_counter();	
-	printf("Time load: %llu\n", time1 - time0);
-	printf("Time run: %llu\n", time2 - time1);
-	
-	    /* Validation */
-    errors = validate_buf(&mem[out_offset], gold);
+        error_id = 0;
 
-    if (errors)
-	printf("  ... FAIL\n");
-    else
-	printf("  ... PASS\n");
-	
-	//Interrupt acknowledge and reset
-	iowrite32(&plic_dev, PLIC_INTACK_OFFSET, NVDLA_IRQ + 1);
-	}
-	//printf(" Time load+run: %llu\n", time2 - time0);
+        //read_val = ioread32(dev, 28676);
+        //if (read_val != 1 && read_val != 65536)
+        //    printf("error %u\n", error_id);
+        //error_id++;
 
+        printf("  start NVDLA\n");
+        time0=get_counter();
+        setup_nvdla(mem, i_base, o_base, b_base, w_base, dev);
+        time1=get_counter();
+        plic_dev.addr = PLIC_ADDR;
+        while(ioread32(&plic_dev, PLIC_IP_OFFSET) != 0x40);
+        time2 = get_counter();
 
-    read_val = ioread32(&dev, 4100);
-    if (read_val != 0)
-	printf("error %u\n", error_id);
-    error_id++;
+        printf("Time load: %llu\n", time1 - time0);
+        printf("Time run: %llu\n", time2 - time1);
 
-    read_val = ioread32(&dev, 4108);
-    if (read_val != 1376257  && read_val != 2752514)
-	printf("error %u\n", error_id);
-    error_id++;
-    iowrite32(&dev, 4108, read_val);
+        read_val = ioread32(&dev, 4100);
+        if (read_val != 0)
+        printf("error %u\n", error_id);
+        error_id++;
 
-    read_val = ioread32(&dev, 4100);
-    if (read_val != 0)
-	printf("error %u\n", error_id);
-    error_id++;
+        read_val = ioread32(&dev, 4108);
+        if (read_val != 1376257  && read_val != 2752514)
+        printf("error %u\n", error_id);
+        error_id++;
+        *((unsigned int*) (NVDLA_BASE_ADDR + 4108)) = read_val;
 
-    read_val = ioread32(&dev, 4108);
-    if (read_val != 0)
-	printf("error %u\n", error_id);
-    error_id++;
-		
-    /* Validation */
-    errors = validate_buf(&mem[out_offset], gold);
+        read_val = ioread32(&dev, 4100);
+        if (read_val != 0)
+        printf("error %u\n", error_id);
+        error_id++;
 
-    if (errors)
-	printf("  ... FAIL\n");
-    else
-	printf("  ... PASS\n");
+        read_val = ioread32(&dev, 4108);
+        if (read_val != 0)
+        printf("error %u\n", error_id);
+        error_id++;
+
+        iowrite32(&plic_dev, PLIC_INTACK_OFFSET, NVDLA_IRQ + 1);
+        iowrite32(&plic_dev, 0x2000, 0x40);
+        iowrite32(&plic_dev, 0x18, 0x2);
+        ioread32(&plic_dev, PLIC_INTACK_OFFSET);
+
+        /* Validation */
+        errors = validate_buf(&mem[out_offset], gold);
+
+        if (errors)
+        printf("  ... FAIL\n");
+        else
+        printf("  ... PASS\n");
+        for (int j = 0; j < out_len; j++)
+            mem[out_offset+j] = 0;
+    }
 
     aligned_free(mem);
     aligned_free(gold);
