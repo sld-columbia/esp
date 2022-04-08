@@ -123,7 +123,7 @@ for (int i = 0; i < 3; i++) {
 
         printf("  start NVDLA\n");
         time0=get_counter();
-        setup_nvdla(mem, i_base, o_base, b_base, w_base, dev);
+        setup_nvdla(mem, i_base, o_base, b_base, w_base);
         time1=get_counter();
         plic_dev.addr = PLIC_ADDR;
         while(ioread32(&plic_dev, PLIC_IP_OFFSET) != 0x40);

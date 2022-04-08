@@ -43,7 +43,7 @@ static inline uint64_t get_counter()
     return counter;
 }
 
-void setup_nvdla(token_t *mem,unsigned i_base, unsigned o_base, unsigned b_base, unsigned w_base, struct esp_device dev)
+void setup_nvdla(token_t *mem,unsigned i_base, unsigned o_base, unsigned b_base, unsigned w_base)
 {
         *((unsigned int*) (NVDLA_BASE_ADDR + 28676)) = 0;
         *((unsigned int*) (NVDLA_BASE_ADDR + 20484)) = 0;
