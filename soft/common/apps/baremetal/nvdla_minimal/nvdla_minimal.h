@@ -51,6 +51,7 @@ void setup_nvdla(token_t *mem,unsigned i_base, unsigned o_base, unsigned b_base,
         *((unsigned int*) (NVDLA_BASE_ADDR + 16388)) = 0;
         *((unsigned int*) (NVDLA_BASE_ADDR + 12292)) = 0;
         int read_val, error_id = 0;
+		/*
         read_val = ioread32(&dev, 28672);
         if (read_val != 0)
         printf("error %u\n", error_id);
@@ -74,7 +75,7 @@ void setup_nvdla(token_t *mem,unsigned i_base, unsigned o_base, unsigned b_base,
         read_val = ioread32(&dev, 12288);
         if (read_val != 0)
         printf("error %u\n", error_id);
-        error_id++;
+        error_id++;*/
 
 
         *((unsigned int*) (NVDLA_BASE_ADDR + 28684)) = 0;
@@ -157,10 +158,10 @@ void setup_nvdla(token_t *mem,unsigned i_base, unsigned o_base, unsigned b_base,
         *((unsigned int*) (NVDLA_BASE_ADDR + 36868)) = 0;
         *((unsigned int*) (NVDLA_BASE_ADDR + 32772)) = 0;
 
-        read_val = ioread32(&dev, 4100);
+        /*read_val = ioread32(&dev, 4100);
         if (read_val != 0)
         printf("error %u\n", error_id);
-        error_id++;
+        error_id++;*/
 
         *((unsigned int*) (NVDLA_BASE_ADDR + 4100)) = 0;
         *((unsigned int*) (NVDLA_BASE_ADDR + 32880)) = 0;
@@ -206,10 +207,10 @@ void setup_nvdla(token_t *mem,unsigned i_base, unsigned o_base, unsigned b_base,
         *((unsigned int*) (NVDLA_BASE_ADDR + 16388)) = 0;
         *((unsigned int*) (NVDLA_BASE_ADDR + 12292)) = 0;
 
-        read_val = ioread32(&dev, 12300);
+        /*read_val = ioread32(&dev, 12300);
         if (read_val != 1)
         printf("error %u\n", error_id);
-        error_id++;
+        error_id++;*/
 
 
         *((unsigned int*) (NVDLA_BASE_ADDR + 28680)) = 1;
