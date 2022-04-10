@@ -458,7 +458,9 @@ int main(int argc, char * argv[])
    const int ERROR_COUNT_TH = 0.001;
    uint64_t cycles_start = 0, cycles_end_n1 = 0, cycles_end_f1 = 0,cycles_end_v1 = 0, cycles_end_f2 = 0, cycles_end_v2 = 0, cycles_end_f3 = 0;
    int ndev;
-       
+    
+   //Initialize tokens
+   init_consts();
    reset_token_pm(espdevs);
    #ifdef PID_CONFIG
 	   write_lut_all(espdevs, lut_data_const_vc707, random_rate_const, no_activity_const);
@@ -482,7 +484,7 @@ int main(int argc, char * argv[])
        write_config3(espdev, pm_network_const[i]);
        write_config1(espdev, activity_const, random_rate_const, 0, token_counter_override_vc707[i]);
        write_config1(espdev, activity_const, random_rate_const, 0, 0);
-       write_config0(espdev, enable_const, max_tokens_vc707[i], refresh_rate_min_const, refresh_rate_max_const);
+       write_config0(espdev, enable_const, max_tokens_vc707[i], refresh_rate_min_const-i, refresh_rate_max_const);
    }
 
    /*

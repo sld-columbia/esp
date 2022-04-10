@@ -30,7 +30,7 @@
 #define PLIC_IP_OFFSET 0x1000
 #define PLIC_INTACK_OFFSET 0x200004
 #define NVDLA_IRQ 5
-#define N_ITER 1	//number of loop iterations for which nvdla is to be run
+#define N_ITER 10	//number of loop iterations for which nvdla is to be run
 
 #define NVDLA_BASE_ADDR NVDLA_ACC_ADDR
 
@@ -361,7 +361,7 @@ for (int i = 0; i < N_ITER; i++) {
 
         printf("Time load: %llu\n", time1 - time0);
         printf("Time run: %llu\n", time2 - time1);
-	
+	/*
         read_val = ioread32(dev, 4100);
         if (read_val != 0)
         printf("error %u\n", error_id);
@@ -382,12 +382,11 @@ for (int i = 0; i < N_ITER; i++) {
         if (read_val != 0)
         printf("error %u\n", error_id);
         error_id++;
-
+	*/
         iowrite32(&plic_dev, PLIC_INTACK_OFFSET, NVDLA_IRQ + 1);
         iowrite32(&plic_dev, 0x2000, 0x40);
         iowrite32(&plic_dev, 0x18, 0x2);
         ioread32(&plic_dev, PLIC_INTACK_OFFSET);
-
         /* Validation */
         //errors = validate_buf(&mem[out_offset], gold);
 

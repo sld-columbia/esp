@@ -4,7 +4,7 @@
 #define __TOKEN_PM_H__
 
 //Define to run dummy config
-//#define PID_CONFIG 1
+#define PID_CONFIG 1
 
 //DEBUG Flag
 #define DEBUG
