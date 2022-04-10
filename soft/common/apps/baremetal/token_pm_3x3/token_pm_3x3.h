@@ -1,9 +1,10 @@
-/* Copyright (c) 2011-2021 Columbia University, System Level Design Group */
-/* SPDX-License-Identifier: Apache-2.0 */
+
 
 #ifndef __TOKEN_PM_H__
 #define __TOKEN_PM_H__
 
+//Define to run dummy config
+//#define PID_CONFIG 1
 
 //DEBUG Flag
 #define DEBUG
@@ -64,7 +65,12 @@
 #define TOKEN_PM_CONFIG5_REG_DEFAULT 0x666663E0
 #define TOKEN_PM_CONFIG6_REG_DEFAULT 0x7CFFFFFF
 #define TOKEN_PM_CONFIG7_REG_DEFAULT 0xFFFFF830
-#define TOKEN_PM_CONFIG8_REG_DEFAULT 0x07FFFAA7
+#ifdef PID_CONFIG
+	#define TOKEN_PM_CONFIG8_REG_DEFAULT 0x07FFFAA7
+#else
+	#define TOKEN_PM_CONFIG8_REG_DEFAULT 0x2FFFFAFD
+#endif
+
 
 /* #define TOKEN_PM_CONFIG4_REG_DEFAULT 0x0A3D70A3 */
 /* #define TOKEN_PM_CONFIG5_REG_DEFAULT 0xD70A3D80 */
@@ -72,7 +78,8 @@
 /* //#define TOKEN_PM_CONFIG6_REG_DEFAULT 0x0000000 */
 /* #define TOKEN_PM_CONFIG7_REG_DEFAULT 0x00000000 */
 /* #define TOKEN_PM_CONFIG8_REG_DEFAULT 0x07fffaa9 */
-
+//#define TOKEN_PM_CONFIG8_REG_DEFAULT 0x2FFFFAFD
+//#define TOKEN_PM_CONFIG8_REG_DEFAULT 0x07FFFAA7
 ///////////////////////
 // Accelerator Tiles and Address Map
 ///////////////////////
@@ -87,18 +94,18 @@
 // Set accelerator ID (ACC_TILE_ID) according to the position of the accelerator in the
 // SoC. Acc IDs increment from left to right and from top to bottom.
 // Running for config
-// cpu - IO  - Vit 
+// cpu - IO  - nvdla 
 // FFT - Mem - Vit
 // FFT - Vit - FFT
-#define ACC_ID_VITERBI1 0
+#define ACC_ID_NVDLA 0
 #define ACC_ADDR_VITERBI1 (ACC_BASE_ADDR + (ACC_OFFSET * ACC_ID_VITERBI1))
 #define ACC_ID_FFT1 1
 #define ACC_ADDR_FFT1 (ACC_BASE_ADDR + (ACC_OFFSET * ACC_ID_FFT1))
-#define ACC_ID_VITERBI2 2
+#define ACC_ID_VITERBI1 2
 #define ACC_ADDR_VITERBI2 (ACC_BASE_ADDR + (ACC_OFFSET * ACC_ID_VITERBI2))
 #define ACC_ID_FFT2 3
 #define ACC_ADDR_FFT2 (ACC_BASE_ADDR + (ACC_OFFSET * ACC_ID_FFT2))
-#define ACC_ID_VITERBI3 4
+#define ACC_ID_VITERBI2 4
 #define ACC_ADDR_VITERBI3 (ACC_BASE_ADDR + (ACC_OFFSET * ACC_ID_VITERBI3))
 #define ACC_ID_FFT3 5
 #define ACC_ADDR_FFT3 (ACC_BASE_ADDR + (ACC_OFFSET * ACC_ID_FFT3))
@@ -132,36 +139,84 @@ const unsigned enable_const = 1;
 const unsigned activity_const = 1;
 const unsigned no_activity_const = 0;
 
-const unsigned max_tokens_vc707[N_ACC] = {60, 60, 60, 60, 60, 60};
+const unsigned max_tokens_vc707[N_ACC] = {24, 4, 11, 4, 11, 4};
 const unsigned refresh_rate_min_const = 1000;
 const unsigned refresh_rate_max_const = 1000;
-const unsigned total_tokens = 200;
+const unsigned total_tokens = 24;
 
 #define LUT_SIZE 64
-const unsigned lut_data_const[LUT_SIZE] = {  0,   4,   8,  12,  16,  20,  24,  28,
-					    32,  36,  40,  44,  48,  52,  56,  60,
-					    64,  68,  72,  76,  80,  84,  88,  92,
-					    96, 100, 104, 108, 112, 116, 120, 124,
-					   128, 132, 136, 140, 144, 148, 152, 156,
-					   160, 164, 168, 172, 176, 180, 184, 188,
-					   192, 196, 200, 204, 208, 212, 216, 220,
-					   224, 228, 232, 236, 240, 244, 248, 252};
-const unsigned lut_data_const_vc707[LUT_SIZE] = {2, 2, 2, 2, 2, 2, 2, 2,
-						 2, 2, 2, 2, 2, 2, 2, 2,
-						 3, 3, 3, 3, 3, 3, 3, 3,
-						 3, 3, 3, 3, 3, 3, 3, 3,
-						 5, 5, 5, 5, 5, 5, 5, 5,
-						 5, 5, 5, 5, 5, 5, 5, 5,
-						 10, 10, 10, 10, 10, 10, 10, 10,
-						 10, 10, 10, 10, 10, 10, 10, 10};
-/* const unsigned lut_data_const_vc707[LUT_SIZE] = {1, 1, 1, 1, 1, 1, 1, 1, */
-/* 						 1, 1, 1, 1, 1, 1, 1, 1, */
-/* 						 3, 3, 3, 3, 3, 3, 3, 3, */
-/* 						 3, 3, 3, 3, 3, 3, 3, 3, */
-/* 						 4, 4, 4, 4, 4, 4, 4, 4, */
-/* 						 4, 4, 4, 4, 4, 4, 4, 4, */
-/* 						 10, 10, 10, 10, 10, 10, 10, 10, */
-/* 						 10, 10, 10, 10, 10, 10, 10, 10}; */
+
+#ifdef PID_CONFIG
+	const unsigned lut_data_const[LUT_SIZE] = { 0, 0, 0, 0, 0, 0, 0, 0,
+						    0, 0, 0, 0, 0, 0, 0, 0,
+						    0, 0, 0, 0, 0, 0, 0, 0,
+						    0, 0, 0, 0, 0, 0, 0, 0,
+						    0, 0, 0, 0, 0, 0, 0, 0,
+						    0, 0, 0, 0, 0, 0, 0, 0,
+						    0, 0, 0, 0, 0, 0, 0, 0,
+						    0, 0, 0, 0, 0, 0, 0, 0};
+	const unsigned lut_data_const_vc707[LUT_SIZE] = { 0, 0, 0, 0, 0, 0, 0, 0,
+						    0, 0, 0, 0, 0, 0, 0, 0,
+						    0, 0, 0, 0, 0, 0, 0, 0,
+						    0, 0, 0, 0, 0, 0, 0, 0,
+						    0, 0, 0, 0, 0, 0, 0, 0,
+						    0, 0, 0, 0, 0, 0, 0, 0,
+						    0, 0, 0, 0, 0, 0, 0, 0,
+						    0, 0, 0, 0, 0, 0, 0, 0};
+#else
+	const unsigned lut_data_const[LUT_SIZE] = {  0,   4,   8,  12,  16,  20,  24,  28,
+						    32,  36,  40,  44,  48,  52,  56,  60,
+						    64,  68,  72,  76,  80,  84,  88,  92,
+						    96, 100, 104, 108, 112, 116, 120, 124,
+						   128, 132, 136, 140, 144, 148, 152, 156,
+						   160, 164, 168, 172, 176, 180, 184, 188,
+						   192, 196, 200, 204, 208, 212, 216, 220,
+						   224, 228, 232, 236, 240, 244, 248, 252};
+
+	const unsigned lut_data_const_vc707[LUT_SIZE] = {2, 2, 2, 2, 2, 2, 2, 2,
+							 2, 2, 2, 2, 2, 2, 2, 2,
+							 3, 3, 3, 3, 3, 3, 3, 3,
+							 3, 3, 3, 3, 3, 3, 3, 3,
+							 5, 5, 5, 5, 5, 5, 5, 5,
+							 5, 5, 5, 5, 5, 5, 5, 5,
+							 10, 10, 10, 10, 10, 10, 10, 10,
+							 10, 10, 10, 10, 10, 10, 10, 10};
+
+ 	const unsigned lut_data_const_vc707_FFT[LUT_SIZE] = {0xB<<4,7<<4, 4<<4, 2<<4, 1<<4, 0, 0, 0,
+						 0, 0, 0, 0, 0, 0, 0, 0,
+						 0, 0, 0, 0, 0, 0, 0, 0,
+						 0, 0, 0, 0, 0, 0, 0, 0,
+						 0, 0, 0, 0, 0, 0, 0, 0,
+						 0, 0, 0, 0, 0, 0, 0, 0,
+						 0, 0, 0, 0, 0, 0, 0, 0,
+						 0, 0, 0, 0, 0, 0, 0, 0};
+						 
+	const unsigned lut_data_const_vc707_VIT[LUT_SIZE] = {0xB<<4, 0xA<<4, 9<<4, 8<<4, 7<<4, 6<<4, 6<<4, 5<<4,
+						 4<<4, 4<<4, 3<<4, 3<<4, 0, 0, 0, 0,
+						 0, 0, 0, 0, 0, 0, 0, 0,
+						 0, 0, 0, 0, 0, 0, 0, 0,
+						 0, 0, 0, 0, 0, 0, 0, 0,
+						 0, 0, 0, 0, 0, 0, 0, 0,
+						 0, 0, 0, 0, 0, 0, 0, 0,
+						 0, 0, 0, 0, 0, 0, 0, 0};							
+						 
+	const unsigned lut_data_const_vc707_NVDLA[LUT_SIZE] = {0xB<<4, 0xB<<4, 0xB<<4, 0xB<<4, 0xA<<4, 0xA<<4, 9<<4, 9<<4,
+						 8<<4, 8<<4, 8<<4, 8<<4, 7<<4, 7<<4, 6<<4, 6<<4,
+						 5<<4, 5<<4, 5<<4, 5<<4, 4<<4, 4<<4, 4<<4, 4<<4,
+						 3<<4, 3<<4, 3<<4, 3<<4, 2<<4, 2<<4, 0, 0,
+						 0, 0, 0, 0, 0, 0, 0, 0,
+						 0, 0, 0, 0, 0, 0, 0, 0,
+						 0, 0, 0, 0, 0, 0, 0, 0,
+						 0, 0, 0, 0, 0, 0, 0, 0};	
+	/* const unsigned lut_data_const_vc707[LUT_SIZE] = {1, 1, 1, 1, 1, 1, 1, 1, */
+	/* 						 1, 1, 1, 1, 1, 1, 1, 1, */
+	/* 						 3, 3, 3, 3, 3, 3, 3, 3, */
+	/* 						 3, 3, 3, 3, 3, 3, 3, 3, */
+	/* 						 4, 4, 4, 4, 4, 4, 4, 4, */
+	/* 						 4, 4, 4, 4, 4, 4, 4, 4, */
+	/* 						 10, 10, 10, 10, 10, 10, 10, 10, */
+	/* 						 10, 10, 10, 10, 10, 10, 10, 10}; */
+#endif
 
 const unsigned random_rate_const = 0;
 //const unsigned neighbors_id_const[N_ACC] = {33825, 0}; // 00001 00001 00001 00001, 00000 00000 00000 00000 
@@ -185,7 +240,7 @@ unsigned token_counter_override_vc707[N_ACC];
 //// basic test for vc707 FPGA
 //#define TEST_1 0
 //// test for vc707 FPGA including FFT accelerator execution
-//#define TEST_2 0
+//#define TEST_2 1
 //// test for vc707 FPGA including Viterbi accelerator execution
 //#define TEST_3 0
 // test for vc707 FPGA including Viterbi and FFT parallel accelerator executions
@@ -276,6 +331,22 @@ void wait_for_token_next(struct esp_device *espdev, unsigned tokens_next_expecte
 }
 
 void write_lut(struct esp_device espdevs[], const unsigned lut_data[LUT_SIZE],
+               unsigned random_rate, unsigned activity,unsigned myindex)
+{
+	int i, j;
+	unsigned reg_val = 0, lut_val = 0;
+
+	//printf("Write LUT\n");
+
+	for (j = 0; j < LUT_SIZE; j++) {
+		lut_val = (1 << 17) | (0 << 16) | (lut_data[j] << 8) | j;
+		write_config1(&espdevs[myindex], activity, random_rate, lut_val, 0); 
+	}   
+}
+				   
+
+
+void write_lut_all(struct esp_device espdevs[], const unsigned lut_data[LUT_SIZE],
 	       unsigned random_rate, unsigned activity)
 {
     int i, j;

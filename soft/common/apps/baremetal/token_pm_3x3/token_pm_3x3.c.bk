@@ -17,8 +17,8 @@ int main(int argc, char * argv[])
 {
     int i;
     int n;
-    //unsigned config0, config1_v1, config1_v2, config2, config3;
-    //unsigned tokens_next0, tokens_next1;
+    unsigned config0, config1_v1, config1_v2, config2, config3;
+    unsigned tokens_next0, tokens_next1;
 
 
 
@@ -432,48 +432,36 @@ int main(int argc, char * argv[])
 
 #ifdef TEST_4
 
-//Test running all viterbi, NVDLA and FFT tiles
-   struct esp_device *espdevs_fft, *espdevs_viterbi, *espdevs_nvdla;
-   struct esp_device *dev_n1;
+//Test running all viterbi and FFT tiles
+   struct esp_device *espdevs_fft, *espdevs_viterbi;
    struct esp_device *dev, *dev_f1, *dev_f2, *dev_f3 ;
-   struct esp_device *dev_v1, *dev_v2 ;
+   struct esp_device *dev_v1, *dev_v2, *dev_v3 ;
    unsigned done_all, done_f1=0, done_v1=0, done_f1_before=0, done_v1_before=0;
    unsigned done_f2=0, done_v2=0, done_f2_before=0, done_v2_before=0;
-   unsigned done_f3=0, done_n1=0, done_f3_before=0, done_n1_before=0;
-
+   unsigned done_f3=0, done_v3=0, done_f3_before=0, done_v3_before=0;
+   unsigned **ptable = NULL;
    unsigned **ptable_f1 = NULL;
    unsigned **ptable_f2 = NULL;
    unsigned **ptable_f3 = NULL;
    unsigned **ptable_v1 = NULL;
    unsigned **ptable_v2 = NULL;
-   nvdla_token_t *mem_n1;
-   nvdla_token_t *gold_nvdla;
+   unsigned **ptable_v3 = NULL;
+   vit_token_t *mem_v1, *mem_v2, *mem_v3;
+   vit_token_t *gold_vit;
    fft_token_t *mem_f1, *mem_f2, *mem_f3;
    fft_token_t *gold_fft;
-   vit_token_t *mem_v1, *mem_v2;
-   vit_token_t *gold_vit;
-
    unsigned errors = 0;
    unsigned coherence = ACC_COH_RECALL;
    const int ERROR_COUNT_TH = 0.001;
-   uint64_t cycles_start = 0, cycles_end_n1 = 0, cycles_end_f1 = 0,cycles_end_v1 = 0, cycles_end_f2 = 0, cycles_end_v2 = 0, cycles_end_f3 = 0;
-   int ndev;
+   uint64_t cycles_start = 0, cycles_end_f1 = 0,cycles_end_v1 = 0, cycles_end_f2 = 0, cycles_end_v2 = 0, cycles_end_f3 = 0, cycles_end_v3 = 0 ;
+       int ndev;
        
    reset_token_pm(espdevs);
-   #ifdef PID_CONFIG
-	   write_lut_all(espdevs, lut_data_const_vc707, random_rate_const, no_activity_const);
-   #else	   
-	   write_lut(espdevs, lut_data_const_vc707_NVDLA, random_rate_const, no_activity_const,0);    
-	   write_lut(espdevs, lut_data_const_vc707_FFT, random_rate_const, no_activity_const,1);    
-	   write_lut(espdevs, lut_data_const_vc707_VIT, random_rate_const, no_activity_const,2);    
-	   write_lut(espdevs, lut_data_const_vc707_FFT, random_rate_const, no_activity_const,3);    
-	   write_lut(espdevs, lut_data_const_vc707_VIT, random_rate_const, no_activity_const,4);    
-	   write_lut(espdevs, lut_data_const_vc707_FFT, random_rate_const, no_activity_const,5);    
-   #endif
+
+   write_lut(espdevs, lut_data_const_vc707, random_rate_const, no_activity_const);
    
    // Configure and start PM of all accelerator tiles
    printf("Test 4: Config and start PM of all accelerators\n");
-   printf("Clock frequency: 0x%x\n",TOKEN_PM_CONFIG8_REG_DEFAULT);
    //unsigned token_counter_override_vc707[N_ACC] = {0x80, 0xb0}; // {1000 0000 (0), 1011 0000 (48)}    
    //unsigned max_tokens_vc707[N_ACC] = {0, 48};
    for (i = 0; i < N_ACC; i++) {
@@ -538,141 +526,127 @@ int main(int argc, char * argv[])
     #ifdef DEBUG
     	printf("Viterbi2 setup complete, address=0x%x\n",dev_v2->addr);
     #endif
+    dev_v3 = &espdevs_viterbi[2];
+    //dev_v3.addr = ACC_ADDR_VITERBI3;
+    setup_viterbi(dev_v3, gold_vit, mem_v3, ptable_v3);
+    #ifdef DEBUG
+    	printf("Viterbi3 setup complete, address=0x%x\n",dev_v3->addr);
+    #endif
     //printf("Viterbi setup complete\n");
-    
-   //////NVDLA setup//////
-    printf("NVDLA init and start\n");
-    nvdla_probe(&espdevs_nvdla);
-    dev_n1 = &espdevs_nvdla[0];
-    //dev_v1.addr = ACC_ADDR_VITERBI1;
 
+
+    //dev_vit.addr=ACC_ADDR_VITERBI;
+    
 
     // Flush (customize coherence model here)
     if (coherence != ACC_COH_RECALL)
         esp_flush(coherence, 1);
 	
-    //printf("Start accelerators\n");
+    printf("Start accelerators\n");
     ///////Start accelerators//////
-    iowrite32(dev_f1, CMD_REG, CMD_MASK_START);
-    espdev = &espdevs[1];
-    write_config1(espdev, activity_const, random_rate_const, 0, 0);
-    #ifdef DEBUG
-    	printf("Started F1\n");
-    #endif
     iowrite32(dev_v1, CMD_REG, CMD_MASK_START);
-    espdev = &espdevs[2];
-    write_config1(espdev, activity_const, random_rate_const, 0, 0);
     #ifdef DEBUG
     	printf("Started V1\n");
     #endif
-    iowrite32(dev_f2, CMD_REG, CMD_MASK_START);
-    espdev = &espdevs[3];
-    write_config1(espdev, activity_const, random_rate_const, 0, 0);
+    iowrite32(dev_f1, CMD_REG, CMD_MASK_START);
     #ifdef DEBUG
-    	printf("Started F2\n");
+    	printf("Started F1\n");
     #endif
     iowrite32(dev_v2, CMD_REG, CMD_MASK_START);
-    espdev = &espdevs[4];
-    write_config1(espdev, activity_const, random_rate_const, 0, 0);
     #ifdef DEBUG
     	printf("Started V2\n");
     #endif
+    iowrite32(dev_f2, CMD_REG, CMD_MASK_START);
+    #ifdef DEBUG
+    	printf("Started F2\n");
+    #endif
+    iowrite32(dev_v3, CMD_REG, CMD_MASK_START);
+    #ifdef DEBUG
+    	printf("Started V3\n");
+    #endif
     iowrite32(dev_f3, CMD_REG, CMD_MASK_START);
-    espdev = &espdevs[5];
-    write_config1(espdev, activity_const, random_rate_const, 0, 0);
     #ifdef DEBUG
     	printf("Started F3\n");
     #endif
 
+    //Enable tiles
+    printf("Enabling tiles\n");
+    for (i=0; i<N_ACC; i++)
+    {
+    	espdev = &espdevs[i];
+    	write_config1(espdev, activity_const, random_rate_const, 0, 0);
+    }
     cycles_start = get_counter();
 
-   // //Enable tiles
-   // printf("Enabling tiles\n");
-   // for (i=0; i<N_ACC; i++)
-   // {
-   // 	espdev = &espdevs[i];
-   // 	write_config1(espdev, activity_const, random_rate_const, 0, 0);
-   // }
-    espdev = &espdev[0];
-    run_nvdla(espdev, dev_n1, gold_nvdla, mem_n1, random_rate_const);
-    #ifdef DEBUG
-    	printf("NVDLA finished, address=0x%x\n",dev_n1->addr);
-    #endif
 
     ////Wait for them to complete////
     printf("Running all accelerators... Start cycles = %u\n",cycles_start);
-    //NVDLA is handled separately... We assume FFT and Viterbi terminate only after NVDLA
-    while (!(done_f1 && done_f2 && done_f3 && done_v1 && done_v2)) {
-		if(!done_f1) {
-        		done_f1 = ioread32(dev_f1, STATUS_REG);
-			done_f1 &= STATUS_MASK_DONE;
-		}
-		if(!done_f2) {
-        		done_f2 = ioread32(dev_f2, STATUS_REG);
-			done_f2 &= STATUS_MASK_DONE;
-		}
-		if(!done_f3) {
-        		done_f3 = ioread32(dev_f3, STATUS_REG);
-			done_f3 &= STATUS_MASK_DONE;
-		}
+    while (!(done_f1 && done_f2 && done_f3 && done_v1 && done_v2 && done_v3)) {
 		if(!done_v1) {
         		done_v1 = ioread32(dev_v1, STATUS_REG);
 			done_v1 &= STATUS_MASK_DONE;
+		}
+		if(!done_f1) {
+        		done_f1 = ioread32(dev_f1, STATUS_REG);
+			done_f1 &= STATUS_MASK_DONE;
 		}
 		if(!done_v2) {
         		done_v2 = ioread32(dev_v2, STATUS_REG);
 			done_v2 &= STATUS_MASK_DONE;
 		}
+		if(!done_f2) {
+        		done_f2 = ioread32(dev_f2, STATUS_REG);
+			done_f2 &= STATUS_MASK_DONE;
+		}
+		if(!done_v3) {
+        		done_v3 = ioread32(dev_v3, STATUS_REG);
+			done_v3 &= STATUS_MASK_DONE;
+		}
+		if(!done_f3) {
+        		done_f3 = ioread32(dev_f3, STATUS_REG);
+			done_f3 &= STATUS_MASK_DONE;
+		}
 
+		if(done_v1 && !done_v1_before) {
+			cycles_end_v1 = get_counter();
+			espdev = &espdevs[0];
+			write_config1(espdev, 0, random_rate_const, 0, 0);
+			done_v1_before=done_v1;
+		}
 		if(done_f1 && !done_f1_before) {
 			cycles_end_f1 = get_counter();
 			espdev = &espdevs[1];
 			write_config1(espdev, 0, random_rate_const, 0, 0);
 			done_f1_before=done_f1;
-    			#ifdef DEBUG
-				printf("Finished F1\n");
-    			#endif
 		}
-		if(done_v1 && !done_v1_before) {
-			cycles_end_v1 = get_counter();
+		if(done_v2 && !done_v2_before) {
+			cycles_end_v2 = get_counter();
 			espdev = &espdevs[2];
 			write_config1(espdev, 0, random_rate_const, 0, 0);
-			done_v1_before=done_v1;
-    			#ifdef DEBUG
-				printf("Finished V1\n");
-    			#endif
+			done_v2_before=done_v2;
 		}
 		if(done_f2 && !done_f2_before) {
 			cycles_end_f2 = get_counter();
 			espdev = &espdevs[3];
 			write_config1(espdev, 0, random_rate_const, 0, 0);
 			done_f2_before=done_f2;
-    			#ifdef DEBUG
-				printf("Finished F2\n");
-    			#endif
 		}
-		if(done_v2 && !done_v2_before) {
-			cycles_end_v2 = get_counter();
+		if(done_v3 && !done_v3_before) {
+			cycles_end_v3 = get_counter();
 			espdev = &espdevs[4];
 			write_config1(espdev, 0, random_rate_const, 0, 0);
-			done_v2_before=done_v2;
-    			#ifdef DEBUG
-				printf("Finished V2\n");
-    			#endif
+			done_v3_before=done_v3;
 		}
 		if(done_f3 && !done_f3_before) {
 			cycles_end_f3 = get_counter();
 			espdev = &espdevs[5];
 			write_config1(espdev, 0, random_rate_const, 0, 0);
 			done_f3_before=done_f3;
-    			#ifdef DEBUG
-				printf("Finished F3\n");
-    			#endif
 		}
     }
 	
 	printf("  Done\n");
-	printf("  Viterbi Execution cycles : v1=%llu, v2=%llu\n", cycles_end_v1 - cycles_start,cycles_end_v2 - cycles_start);
+	printf("  Viterbi Execution cycles : v1=%llu, v2=%llu, v3=%llu\n", cycles_end_v1 - cycles_start,cycles_end_v2 - cycles_start,cycles_end_v3 - cycles_start);
 	printf("  FFT Execution cycles : f1=%llu, f2=%llu, f3=%llu\n", cycles_end_f1 - cycles_start,cycles_end_f2 - cycles_start,cycles_end_f3 - cycles_start);
 
 	

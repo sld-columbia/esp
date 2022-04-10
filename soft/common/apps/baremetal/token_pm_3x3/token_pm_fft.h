@@ -12,7 +12,7 @@
 
 // FFT_FX_WIDTH == 32
 typedef int fft_token_t;
-typedef float native_t;
+typedef float fft_native_tt;
 #define fx2float fixed32_to_float
 #define float2fx float_to_fixed32
 #define FX_IL 12
@@ -28,7 +28,7 @@ static unsigned DMA_WORD_PER_BEAT(unsigned _st)
 #define FFT_DEV_NAME "sld,fft_stratus"
 
 /* <<--params-->> */
-const int32_t log_len = 14;
+const int32_t log_len = 12;
 int32_t len;
 int32_t do_bitrev = 1;
 
@@ -51,7 +51,7 @@ static int fft_validate_buf(fft_token_t *out, fft_token_t *gold)
 	unsigned errors = 0;
 
 	for (j = 0; j < 2 * len; j++) {
-		native_t val = fx2float(out[j], FX_IL);
+		fft_native_tt val = fx2float(out[j], FX_IL);
 		if ((fabs(gold[j] - val) / fabs(gold[j])) > ERR_TH)
 			errors++;
 	}
@@ -81,7 +81,7 @@ static void fft_init_buf(fft_token_t *in, fft_token_t *gold)
 	printf("  Done bit reverse ...\n");
 	// convert input to fixed point
 	for (j = 0; j < 2 * len; j++)
-		in[j] = float2fx((native_t) gold[j], FX_IL);
+		in[j] = float2fx((fft_native_tt) gold[j], FX_IL);
 
 	printf("  Done type convert ...\n");
 
