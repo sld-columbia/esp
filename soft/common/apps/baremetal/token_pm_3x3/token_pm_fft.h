@@ -28,7 +28,7 @@ static unsigned DMA_WORD_PER_BEAT(unsigned _st)
 #define FFT_DEV_NAME "sld,fft_stratus"
 
 /* <<--params-->> */
-const int32_t log_len = 12;
+const int32_t log_len = 11;
 int32_t len;
 int32_t do_bitrev = 1;
 

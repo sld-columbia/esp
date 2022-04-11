@@ -4,10 +4,10 @@
 #define __TOKEN_PM_H__
 
 //Define to run dummy config
-#define PID_CONFIG 1
+//#define PID_CONFIG 1
 
 //DEBUG Flag
-#define DEBUG
+//#define DEBUG
 ///////////////////////
 // Offset and width of CSR fields of token FSM
 ///////////////////////
@@ -218,7 +218,7 @@ const unsigned total_tokens = 24;
 	/* 						 10, 10, 10, 10, 10, 10, 10, 10}; */
 #endif
 
-const unsigned random_rate_const = 0;
+const unsigned random_rate_const = 17;
 //const unsigned neighbors_id_const[N_ACC] = {33825, 0}; // 00001 00001 00001 00001, 00000 00000 00000 00000 
 /*Define neighbors*/
 const unsigned int neighbors_id_const[N_ACC] = {(5 << 15) + (2 << 10) + (2 << 5) + 1, (0 << 15) + (2 << 10) + (3 << 5) + 4, (1 << 15) + (0 << 10) + (0 << 5) + 5, (1 << 15) + (4 << 10) + (5 << 5) + 4, (1 << 10) + (3 << 5) + 5, (4 << 15) + (2 << 10) + (3 << 5) + 0};
