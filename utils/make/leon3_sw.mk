@@ -1,3 +1,5 @@
+# Copyright (c) 2011-2022 Columbia University, System Level Design Group
+# SPDX-License-Identifier: Apache-2.0
 
 VPATH  += $(UTILS_GRLIB)/software/leon3
 XINC   +=-I$(UTILS_GRLIB)/software/leon3
