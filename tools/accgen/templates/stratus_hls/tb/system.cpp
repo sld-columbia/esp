@@ -91,6 +91,7 @@ void system_t::load_memory()
     in_size = in_words_adj * (/* <<--number of transfers-->> */);
     out_size = out_words_adj * (/* <<--number of transfers-->> */);
 
+    // Initialize input
     in = new int/* <<--data-width-->> */_t[in_size];
     for (int i = 0; i < /* <<--number of transfers-->> */; i++)
         for (int j = 0; j < /* <<--data_in_size-->> */; j++)
