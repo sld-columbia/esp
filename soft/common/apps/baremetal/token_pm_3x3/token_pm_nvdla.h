@@ -293,7 +293,7 @@ void setup_nvdla(nvdla_token_t *mem,unsigned i_base, unsigned o_base, unsigned b
         *((unsigned int*) (NVDLA_BASE_ADDR + 12304)) = 1;
 }
 
-int run_nvdla(struct esp_device *espdev, struct esp_device *dev, nvdla_token_t *mem, nvdla_native_t *gold, int random_rate_const)
+void run_nvdla(struct esp_device *espdev, struct esp_device *dev, nvdla_token_t *mem, nvdla_native_t *gold, int random_rate_const)
 {
     int i;
     int n;
@@ -305,9 +305,8 @@ int run_nvdla(struct esp_device *espdev, struct esp_device *dev, nvdla_token_t *
     unsigned coherence;
     unsigned error_id;
     unsigned read_val;
-    long st_time, time0, time1, time2, time3, end_time;
-    
-    st_time = nvdla_get_counter();
+	long time0, time1, time2, time3;
+
     i_base = 0x200;
     w_base  = 0x000;
     b_base  = 0x280;
@@ -322,7 +321,7 @@ int run_nvdla(struct esp_device *espdev, struct esp_device *dev, nvdla_token_t *
     // Allocation of the accelerator data array (mem) and of the expected output array (gold)
     mem = aligned_malloc(mem_size);
     gold = aligned_malloc(out_size);
-    //printf("  memory buffer base-address = %p\n", mem);
+    printf("  memory buffer base-address = %p\n", mem);
 
     nvdla_init_buf(mem, gold);
 
@@ -352,21 +351,16 @@ for (int i = 0; i < N_ITER; i++) {
         //    printf("error %u\n", error_id);
         //error_id++;
 
-	#ifdef DEBUG
-        	time0=nvdla_get_counter();
-        	printf(" start NVDLA: %d\n", i);
-	#endif
+        //printf("  start NVDLA\n");
+        //time0=nvdla_get_counter();
         setup_nvdla(mem, i_base, o_base, b_base, w_base);
-	#ifdef DEBUG
-        	time1 = nvdla_get_counter();
-	#endif
+        //time1 = nvdla_get_counter();
         plic_dev.addr = PLIC_ADDR;
         while(ioread32(&plic_dev, PLIC_IP_OFFSET) != 0x40);
-	#ifdef DEBUG
-        	time2 = nvdla_get_counter();
-		printf("Time load: %llu\n", time1 - time0);
-		printf("Time run: %llu\n", time2 - time1);
-	#endif
+        //time2 = nvdla_get_counter();
+
+        //printf("Time load: %llu\n", time1 - time0);
+       // printf("Time run: %llu\n", time2 - time1);
 	/*
         read_val = ioread32(dev, 4100);
         if (read_val != 0)
@@ -406,6 +400,4 @@ for (int i = 0; i < N_ITER; i++) {
 
    //aligned_free(mem);
    //aligned_free(gold);
-   end_time = nvdla_get_counter();
-   return end_time - st_time;  
 }

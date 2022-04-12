@@ -140,8 +140,8 @@ const unsigned activity_const = 1;
 const unsigned no_activity_const = 0;
 
 const unsigned max_tokens_vc707[N_ACC] = {24, 4, 11, 4, 11, 4};
-const unsigned refresh_rate_min_const = 1000;
-const unsigned refresh_rate_max_const = 1000;
+const unsigned refresh_rate_min_const = 20;
+const unsigned refresh_rate_max_const = 20;
 const unsigned total_tokens = 24;
 
 #define LUT_SIZE 64
@@ -218,13 +218,16 @@ const unsigned total_tokens = 24;
 	/* 						 10, 10, 10, 10, 10, 10, 10, 10}; */
 #endif
 
+const unsigned random_rate_const_0= 0;//For tile 0
 const unsigned random_rate_const = 17;
 //const unsigned neighbors_id_const[N_ACC] = {33825, 0}; // 00001 00001 00001 00001, 00000 00000 00000 00000 
 /*Define neighbors*/
-const unsigned int neighbors_id_const[N_ACC] = {(5 << 15) + (2 << 10) + (2 << 5) + 1, (0 << 15) + (2 << 10) + (3 << 5) + 4, (1 << 15) + (0 << 10) + (0 << 5) + 5, (1 << 15) + (4 << 10) + (5 << 5) + 4, (1 << 10) + (3 << 5) + 5, (4 << 15) + (2 << 10) + (3 << 5) + 0};
+const unsigned int neighbors_id_const[N_ACC] = {(1 << 15) + (2 << 10) + (4 << 5) + 5, (0 << 15) + (2 << 10) + (3 << 5) + 5, (0 << 15) + (3 << 10) + (4 << 5) + 5, (0 << 15) + (1 << 10) + (4 << 5) + 5, (0 << 15) +(1 << 10) + (3 << 5) + 5, (0 << 15) + (1 << 10) + (2 << 5) + 3};
+const unsigned int pm_network_const[N_ACC] = {0,4,1,2,2,4};
+		// Allocate inital tokens - max 6 bit
 //const unsigned pm_network_const = 0;
 //Initialized by init_consts()
-unsigned int pm_network_const[N_ACC];
+//unsigned int pm_network_const[N_ACC];
 unsigned token_counter_override_vc707[N_ACC];
 
 #define TOKEN_NEXT_MASK 0x7f
@@ -257,8 +260,7 @@ void init_consts()
 
 	for (n = 0; n < N_ACC; n++) {
 		// 1 for all accs part of token PM
-		pm_network_const[n] = 1<<(N_ACC+1)-1;
-		// Allocate inital tokens - max 6 bit
+		
 		if(remaining_tokens>(2<<6-1)){
 			token_counter_override_vc707[n]=(1 << 7)+2<<6;
 			remaining_tokens=remaining_tokens-2<<6;

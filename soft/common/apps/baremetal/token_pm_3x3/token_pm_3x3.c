@@ -310,8 +310,14 @@ int main(int argc, char * argv[])
 	espdev = &espdevs[i];
 	write_config2(espdev, neighbors_id_const[i]);
 	write_config3(espdev, pm_network_const[i]);
-	write_config1(espdev, activity_const, random_rate_const, 0, token_counter_override_vc707[i]);
-	write_config1(espdev, activity_const, random_rate_const, 0, 0);
+	if(n>0){
+		write_config1(espdev, activity_const, random_rate_const, 0, token_counter_override_vc707[i]);
+		write_config1(espdev, activity_const, random_rate_const, 0, 0);
+		}
+	else {
+		write_config1(espdev, activity_const, 0, 0, token_counter_override_vc707[i]);
+		write_config1(espdev, activity_const, 0, 0, 0);	
+	}
 	write_config0(espdev, enable_const, max_tokens_vc707[i], refresh_rate_min_const, refresh_rate_max_const);
     }
     wait_for_token_next(&espdevs[0], 24);
@@ -455,7 +461,7 @@ int main(int argc, char * argv[])
    unsigned errors = 0;
    unsigned coherence = ACC_COH_RECALL;
    const int ERROR_COUNT_TH = 0.001;
-   uint64_t cycles_start = 0, cycles_end_n1 = 0, cycles_end_f1 = 0,cycles_end_v1 = 0, cycles_end_f2 = 0, cycles_end_v2 = 0, cycles_end_f3 = 0, cycles_nvdla = 0;
+   uint64_t cycles_start = 0, cycles_end_n1 = 0, cycles_end_f1 = 0,cycles_end_v1 = 0, cycles_end_f2 = 0, cycles_end_v2 = 0, cycles_end_f3 = 0;
    int ndev;
     
    //Initialize tokens
@@ -464,7 +470,7 @@ int main(int argc, char * argv[])
    #ifdef PID_CONFIG
 	   write_lut_all(espdevs, lut_data_const_vc707, random_rate_const, no_activity_const);
    #else	   
-	   write_lut(espdevs, lut_data_const_vc707_NVDLA, random_rate_const, no_activity_const,0);    
+	   write_lut(espdevs, lut_data_const_vc707_NVDLA, random_rate_const_0, no_activity_const,0);    
 	   write_lut(espdevs, lut_data_const_vc707_FFT, random_rate_const, no_activity_const,1);    
 	   write_lut(espdevs, lut_data_const_vc707_VIT, random_rate_const, no_activity_const,2);    
 	   write_lut(espdevs, lut_data_const_vc707_FFT, random_rate_const, no_activity_const,3);    
@@ -481,8 +487,15 @@ int main(int argc, char * argv[])
        espdev = &espdevs[i];
        write_config2(espdev, neighbors_id_const[i]);
        write_config3(espdev, pm_network_const[i]);
-       write_config1(espdev, no_activity_const, random_rate_const, 0, token_counter_override_vc707[i]);
-       write_config1(espdev, no_activity_const, random_rate_const, 0, 0);
+		if(i>0){
+			write_config1(espdev, no_activity_const, random_rate_const, 0, token_counter_override_vc707[i]);
+			write_config1(espdev, no_activity_const, random_rate_const, 0, 0);
+		}
+		else {
+			write_config1(espdev, no_activity_const,random_rate_const_0, 0, token_counter_override_vc707[i]);
+			write_config1(espdev, no_activity_const, random_rate_const_0, 0, 0);	
+		}
+
        write_config0(espdev, enable_const, max_tokens_vc707[i], refresh_rate_min_const-i, refresh_rate_max_const);
    }
 
@@ -492,7 +505,6 @@ int main(int argc, char * argv[])
    wait_for_token_next(&espdevs[2], 0);
    printf("   --> tokens_next converged\n");
 
- 
    //Disable tile 0
    espdev = &espdevs[0];
    write_config1(espdev, no_activity_const, random_rate_const, 0, 0);
@@ -504,37 +516,27 @@ int main(int argc, char * argv[])
    */
 
    ////FFT setup/////
-   #ifdef DEBUG
-   	printf("Setting up FFT accelerators\n");
-   #endif
+   printf("Setting up FFT accelerators\n");
    mem_size=fft_init_params();
    fft_probe(&espdevs_fft);
     
    dev_f1 = &espdevs_fft[0];
    setup_fft(dev_f1, gold_fft, mem_f1, ptable_f1);
-   #ifdef DEBUG
-   	printf("FFT1 setup complete, address=0x%x\n",dev_f1->addr);
-   #endif
+   printf("FFT1 setup complete, address=0x%x\n",dev_f1->addr);
    dev_f2= &espdevs_fft[1];
    setup_fft(dev_f2, gold_fft, mem_f2, ptable_f2);
-   #ifdef DEBUG
-   	printf("FFT2 setup complete, address=0x%x\n",dev_f2->addr);
-   #endif
+   printf("FFT2 setup complete, address=0x%x\n",dev_f2->addr);
    //printf("FFT2 setup complete\n");
    dev_f3 = &espdevs_fft[2];
    setup_fft(dev_f3, gold_fft, mem_f3, ptable_f3);
-   #ifdef DEBUG
-   	printf("FFT3 setup complete, address=0x%x\n",dev_f3->addr);
-   #endif
-    //printf("FFT setup complete\n");
+   printf("FFT3 setup complete, address=0x%x\n",dev_f3->addr);
+   //printf("FFT setup complete\n");
 
     //FFT is all set
 	
    //////Viterbi setup//////
 	
-    #ifdef DEBUG
-    	printf("Setting up Viterbi accelerators\n");
-    #endif
+    printf("Starting viterbi init\n");
     mem_size=vit_init_params();
     vit_probe(&espdevs_viterbi);
     dev_v1 = &espdevs_viterbi[0];
@@ -552,9 +554,7 @@ int main(int argc, char * argv[])
     //printf("Viterbi setup complete\n");
     
    //////NVDLA setup//////
-    #ifdef DEBUG
-    	printf("Setting up NVDLA accelerators\n");
-    #endif
+    printf("NVDLA init and start\n");
     nvdla_probe(&espdevs_nvdla);
     dev_n1 = &espdevs_nvdla[0];
     //dev_v1.addr = ACC_ADDR_VITERBI1;
@@ -607,18 +607,16 @@ int main(int argc, char * argv[])
    // 	write_config1(espdev, activity_const, random_rate_const, 0, 0);
    // }
     espdev = &espdevs[0];
-    write_config1(espdev, activity_const, random_rate_const, 0, 0);
-    cycles_nvdla = run_nvdla(espdev, dev_n1, gold_nvdla, mem_n1, random_rate_const);
-    write_config1(espdev, 0, random_rate_const, 0, 0);
+	write_config1(espdev,activity_const, random_rate_const_0, 0, 0);
+    run_nvdla(espdev, dev_n1, gold_nvdla, mem_n1, 0);
+	write_config1(espdev, 0, random_rate_const_0, 0, 0);
 
     #ifdef DEBUG
     	printf("NVDLA finished, address=0x%x\n",dev_n1->addr);
     #endif
 
     ////Wait for them to complete////
-    #ifdef DEBUG
-    	printf("Running all accelerators... Start cycles = %u\n",cycles_start);
-    #endif
+    printf("Running all accelerators... Start cycles = %u\n",cycles_start);
     //NVDLA is handled separately... We assume FFT and Viterbi terminate only after NVDLA
     while (!(done_f1 && done_f2 && done_f3 && done_v1 && done_v2)) {
 		if(!done_f1) {
@@ -692,7 +690,6 @@ int main(int argc, char * argv[])
 	printf("  Done\n");
 	printf("  Viterbi Execution cycles : v1=%llu, v2=%llu\n", cycles_end_v1 - cycles_start,cycles_end_v2 - cycles_start);
 	printf("  FFT Execution cycles : f1=%llu, f2=%llu, f3=%llu\n", cycles_end_f1 - cycles_start,cycles_end_f2 - cycles_start,cycles_end_f3 - cycles_start);
-	printf("  NVDLA Execution cycles : n1=%llu\n", cycles_nvdla);
 
 	
     printf("  validating...\n");
