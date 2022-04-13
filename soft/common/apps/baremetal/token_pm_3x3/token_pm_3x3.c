@@ -439,9 +439,14 @@ int main(int argc, char * argv[])
 
 //Test running all viterbi, NVDLA and FFT tiles
    struct esp_device *espdevs_fft, *espdevs_viterbi, *espdevs_nvdla;
-   struct esp_device *dev_n1;
-   struct esp_device *dev, *dev_f1, *dev_f2, *dev_f3 ;
-   struct esp_device *dev_v1, *dev_v2 ;
+   struct esp_device *dev_n1 = aligned_malloc(sizeof(struct esp_device));
+   struct esp_device *dev_f1 = aligned_malloc(sizeof(struct esp_device));
+   struct esp_device *dev_f2 = aligned_malloc(sizeof(struct esp_device));
+   struct esp_device *dev_f3 = aligned_malloc(sizeof(struct esp_device));
+   struct esp_device *dev_v1 = aligned_malloc(sizeof(struct esp_device));
+   struct esp_device *dev_v2 = aligned_malloc(sizeof(struct esp_device));
+   //struct esp_device *dev, *dev_f1, *dev_f2, *dev_f3 ;
+   //struct esp_device *dev_v1, *dev_v2 ;
    unsigned done_all, done_f1=0, done_v1=0, done_f1_before=0, done_v1_before=0;
    unsigned done_f2=0, done_v2=0, done_f2_before=0, done_v2_before=0;
    unsigned done_f3=0, done_n1=0, done_f3_before=0, done_n1_before=0;
@@ -464,6 +469,8 @@ int main(int argc, char * argv[])
    uint64_t cycles_start = 0, cycles_end_n1 = 0, cycles_end_f1 = 0,cycles_end_v1 = 0, cycles_end_f2 = 0, cycles_end_v2 = 0, cycles_end_f3 = 0;
    int ndev;
     
+  
+
    //Initialize tokens
    init_consts();
    reset_token_pm(espdevs);
@@ -516,49 +523,64 @@ int main(int argc, char * argv[])
    */
 
    ////FFT setup/////
-   printf("Setting up FFT accelerators\n");
+   #ifdef DEBUG
+   	printf("Setting up FFT accelerators\n");
+   #endif
    mem_size=fft_init_params();
-   fft_probe(&espdevs_fft);
+   //fft_probe(&espdevs_fft);
     
-   dev_f1 = &espdevs_fft[0];
+   //dev_f1 = &espdevs_fft[0];
+   dev_f1->addr = ACC_ADDR_FFT1;
    setup_fft(dev_f1, gold_fft, mem_f1, ptable_f1);
-   printf("FFT1 setup complete, address=0x%x\n",dev_f1->addr);
-   dev_f2= &espdevs_fft[1];
+   #ifdef DEBUG
+   	printf("FFT1 setup complete, address=0x%x\n",dev_f1->addr);
+   #endif
+   //dev_f2= &espdevs_fft[1];
+   dev_f2->addr = ACC_ADDR_FFT2;
    setup_fft(dev_f2, gold_fft, mem_f2, ptable_f2);
-   printf("FFT2 setup complete, address=0x%x\n",dev_f2->addr);
-   //printf("FFT2 setup complete\n");
-   dev_f3 = &espdevs_fft[2];
+   #ifdef DEBUG
+   	printf("FFT2 setup complete, address=0x%x\n",dev_f2->addr);
+   #endif
+   //dev_f3 = &espdevs_fft[2];
+   dev_f3->addr = ACC_ADDR_FFT3;
    setup_fft(dev_f3, gold_fft, mem_f3, ptable_f3);
-   printf("FFT3 setup complete, address=0x%x\n",dev_f3->addr);
+   #ifdef DEBUG
+   	printf("FFT3 setup complete, address=0x%x\n",dev_f3->addr);
+   #endif
    //printf("FFT setup complete\n");
 
     //FFT is all set
 	
    //////Viterbi setup//////
 	
-    printf("Starting viterbi init\n");
+    #ifdef DEBUG
+    	printf("Starting viterbi init\n");
+    #endif
     mem_size=vit_init_params();
-    vit_probe(&espdevs_viterbi);
-    dev_v1 = &espdevs_viterbi[0];
-    //dev_v1.addr = ACC_ADDR_VITERBI1;
+    //vit_probe(&espdevs_viterbi);
+
+    //dev_v1 = &espdevs_viterbi[0];
+    dev_v1->addr = ACC_ADDR_VITERBI1;
     setup_viterbi(dev_v1, gold_vit, mem_v1, ptable_v1);
     #ifdef DEBUG
     	printf("Viterbi1 setup complete, address=0x%x\n",dev_v1->addr);
     #endif
-    dev_v2= &espdevs_viterbi[1];
+    //dev_v2= &espdevs_viterbi[1];
     //dev_v2.addr = ACC_ADDR_VITERBI2;
+    dev_v2->addr = ACC_ADDR_VITERBI2;
     setup_viterbi(dev_v2, gold_vit, mem_v2, ptable_v2);
     #ifdef DEBUG
     	printf("Viterbi2 setup complete, address=0x%x\n",dev_v2->addr);
     #endif
     //printf("Viterbi setup complete\n");
     
-   //////NVDLA setup//////
-    printf("NVDLA init and start\n");
-    nvdla_probe(&espdevs_nvdla);
-    dev_n1 = &espdevs_nvdla[0];
-    //dev_v1.addr = ACC_ADDR_VITERBI1;
-
+    //////NVDLA setup//////
+    #ifdef DEBUG
+    	printf("NVDLA init and start\n");
+    #endif
+    //nvdla_probe(&espdevs_nvdla);
+    //dev_n1 = &espdevs_nvdla[0];
+    dev_n1->addr = ACC_ADDR_NVDLA;
 
     // Flush (customize coherence model here)
     if (coherence != ACC_COH_RECALL)
