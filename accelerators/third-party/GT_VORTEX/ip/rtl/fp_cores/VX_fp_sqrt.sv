@@ -28,6 +28,8 @@ module VX_fp_sqrt #(
     wire stall = ~ready_out && valid_out;
     wire enable = ~stall;
 
+    //xilinx fpu wires
+    //reg a_tready_fpdiv;
     for (genvar i = 0; i < LANES; i++) begin
     `ifdef VERILATOR
         reg [31:0] r;
@@ -53,11 +55,14 @@ module VX_fp_sqrt #(
         `RESET_RELAY (fsqrt_reset);
 
         acl_fsqrt fsqrt (
-            .clk    (clk),
-            .areset (fsqrt_reset),
-            .en     (enable),
-            .a      (dataa[i]),
-            .q      (result[i])
+            .aclk    (clk),
+            .aresetn (fsqrt_reset),
+            .aclken     (enable),
+            .s_axis_a_tdata(dataa[i]),
+            .m_axis_result_tdata(result[i]),
+	    .s_axis_a_tvalid(valid_in)                       // input wire s_axis_c_tvalid
+            //.s_axis_a_tready(a_tready_fpdiv),       // output wire s_axis_c_tready
+            //.m_axis_result_tvalid(valid_out)  // output wire m_axis_result_tvalid
         );
     `endif
     end
@@ -75,6 +80,7 @@ module VX_fp_sqrt #(
     );
 
     assign ready_in = enable;
+   // || a_tready_fpdiv;
 
     `UNUSED_VAR (frm)
     assign has_fflags = 0;

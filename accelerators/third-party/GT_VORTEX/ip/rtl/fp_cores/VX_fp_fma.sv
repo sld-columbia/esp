@@ -34,7 +34,9 @@ module VX_fp_fma #(
 
     wire stall = ~ready_out && valid_out;
     wire enable = ~stall;
-
+    //Xilinx FPU wires
+    //assign valid_out = 
+    //reg c_tready_fpdiv, b_tready_fpdiv, a_tready_fpdiv; 
     for (genvar i = 0; i < LANES; i++) begin       
         reg [31:0] a, b, c;
 
@@ -83,13 +85,20 @@ module VX_fp_fma #(
         `RESET_RELAY (fma_reset);
 
         acl_fmadd fmadd (
-            .clk    (clk),
-            .areset (fma_reset),
-            .en     (enable),
-            .a      (a),
-            .b      (b),
-            .c      (c),
-            .q      (result[i])
+            .aclk    (clk),
+            .aresetn (fma_reset),
+            .aclken     (enable),
+            .s_axis_a_tdata      (a),
+            .s_axis_b_tdata      (b),
+            .s_axis_c_tdata      (c),
+            .m_axis_result_tdata      (result[i]),
+	    .s_axis_a_tvalid(valid_in),               // input wire s_axis_a_tvalid
+            //.s_axis_a_tready(a_tready_fpdiv),       // output wire s_axis_a_tready
+            .s_axis_b_tvalid(valid_in),                       // input wire s_axis_b_tvalid
+            //.s_axis_b_tready(b_tready_fpdiv),       // output wire s_axis_b_tready
+            .s_axis_c_tvalid(valid_in)                       // input wire s_axis_c_tvalid
+            //.s_axis_c_tready(c_tready_fpdiv),       // output wire s_axis_c_tready
+	    //.m_axis_result_tvalid()  // output wire m_axis_result_tvalid
         );
     `endif
     end
@@ -107,6 +116,7 @@ module VX_fp_fma #(
     );
 
     assign ready_in = enable;
+   // || (a_tready_fpdiv && b_tready_fpdiv && c_tready_fpdiv);
 
     `UNUSED_VAR (frm)
     assign has_fflags = 0;

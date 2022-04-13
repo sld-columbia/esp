@@ -28,6 +28,10 @@ module VX_fp_div #(
 );    
     wire stall = ~ready_out && valid_out;
     wire enable = ~stall;
+    
+    //Unused wires for xilinx FPU usage
+   // (* keep="soft" *)
+    //reg       a_tready_fpdiv, b_tready_fpdiv;
 
     for (genvar i = 0; i < LANES; i++) begin        
     `ifdef VERILATOR
@@ -50,17 +54,22 @@ module VX_fp_div #(
             .data_in  (r),
             .data_out (result[i])
         );
-    `else
+     `else
         `RESET_RELAY (fdiv_reset);
-
-        acl_div fdiv (
+     
+        acl_fdiv fdiv (
             .aclk          (clk),
             .aresetn       (fdiv_reset),
             .aclken        (enable),
             .s_axis_a_tdata(dataa[i]),
             .s_axis_b_tdata(datab[i]),
-            .m_axis_result_tdata(result[i])
-        );
+            .m_axis_result_tdata(result[i]),
+            .s_axis_a_tvalid(valid_in),              // input wire s_axis_a_tvalid
+  	    //.s_axis_a_tready(a_tready_fpdiv),       // output wire s_axis_a_tready
+  	    .s_axis_b_tvalid(valid_in)            	      // input wire s_axis_b_tvalid
+  	    //.s_axis_b_tready(b_tready_fpdiv),       // output wire s_axis_b_tready
+  	    //.m_axis_result_tvalid(valid_out)  // output wire m_axis_result_tvalid
+  	);
     `endif
     end
 
@@ -77,6 +86,7 @@ module VX_fp_div #(
     );
 
     assign ready_in = enable;
+    // || (a_tready_fpdiv&&b_tready_fpdiv);
 
     `UNUSED_VAR (frm)
     assign has_fflags = 0;
