@@ -130,13 +130,13 @@ module VX_fpu_dpi #(
 
         always @(*) begin        
             for (integer i = 0; i < `NUM_THREADS; i++) begin
-                dpi_fadd   (fma_fire, dataa[i], datab[i], frm, result_fadd[i], fflags_fadd[i]);
-                dpi_fsub   (fma_fire, dataa[i], datab[i], frm, result_fsub[i], fflags_fsub[i]);
-                dpi_fmul   (fma_fire, dataa[i], datab[i], frm, result_fmul[i], fflags_fmul[i]);
-                dpi_fmadd  (fma_fire, dataa[i], datab[i], datac[i], frm, result_fmadd[i], fflags_fmadd[i]);
-                dpi_fmsub  (fma_fire, dataa[i], datab[i], datac[i], frm, result_fmsub[i], fflags_fmsub[i]);
-                dpi_fnmadd (fma_fire, dataa[i], datab[i], datac[i], frm, result_fnmadd[i], fflags_fnmadd[i]);
-                dpi_fnmsub (fma_fire, dataa[i], datab[i], datac[i], frm, result_fnmsub[i], fflags_fnmsub[i]);
+                //dpi_fadd   (fma_fire, dataa[i], datab[i], frm, result_fadd[i], fflags_fadd[i]);
+                //dpi_fsub   (fma_fire, dataa[i], datab[i], frm, result_fsub[i], fflags_fsub[i]);
+                //dpi_fmul   (fma_fire, dataa[i], datab[i], frm, result_fmul[i], fflags_fmul[i]);
+                //dpi_fmadd  (fma_fire, dataa[i], datab[i], datac[i], frm, result_fmadd[i], fflags_fmadd[i]);
+                //dpi_fmsub  (fma_fire, dataa[i], datab[i], datac[i], frm, result_fmsub[i], fflags_fmsub[i]);
+                //dpi_fnmadd (fma_fire, dataa[i], datab[i], datac[i], frm, result_fnmadd[i], fflags_fnmadd[i]);
+                //dpi_fnmsub (fma_fire, dataa[i], datab[i], datac[i], frm, result_fnmsub[i], fflags_fnmsub[i]);
             end
         end
 
@@ -189,7 +189,7 @@ module VX_fpu_dpi #(
         
         always @(*) begin        
             for (integer i = 0; i < `NUM_THREADS; i++) begin
-                dpi_fdiv (fdiv_fire, dataa[i], datab[i], frm, result_fdiv[i], fflags_fdiv[i]);
+                //dpi_fdiv (fdiv_fire, dataa[i], datab[i], frm, result_fdiv[i], fflags_fdiv[i]);
             end
         end
 
@@ -224,7 +224,7 @@ module VX_fpu_dpi #(
         
         always @(*) begin        
             for (integer i = 0; i < `NUM_THREADS; i++) begin
-                dpi_fsqrt (fsqrt_fire, dataa[i], frm, result_fsqrt[i], fflags_fsqrt[i]);
+                //dpi_fsqrt (fsqrt_fire, dataa[i], frm, result_fsqrt[i], fflags_fsqrt[i]);
             end
         end
 
@@ -268,10 +268,10 @@ module VX_fpu_dpi #(
                 
         always @(*) begin        
             for (integer i = 0; i < `NUM_THREADS; i++) begin
-                dpi_itof (fcvt_fire, dataa[i], frm, result_itof[i], fflags_itof[i]);
-                dpi_utof (fcvt_fire, dataa[i], frm, result_utof[i], fflags_utof[i]);
-                dpi_ftoi (fcvt_fire, dataa[i], frm, result_ftoi[i], fflags_ftoi[i]);
-                dpi_ftou (fcvt_fire, dataa[i], frm, result_ftou[i], fflags_ftou[i]);
+                //dpi_itof (fcvt_fire, dataa[i], frm, result_itof[i], fflags_itof[i]);
+                //dpi_utof (fcvt_fire, dataa[i], frm, result_utof[i], fflags_utof[i]);
+                //dpi_ftoi (fcvt_fire, dataa[i], frm, result_ftoi[i], fflags_ftoi[i]);
+                //dpi_ftou (fcvt_fire, dataa[i], frm, result_ftou[i], fflags_ftou[i]);
             end
         end
 
@@ -334,15 +334,15 @@ module VX_fpu_dpi #(
                 
         always @(*) begin        
             for (integer i = 0; i < `NUM_THREADS; i++) begin
-                dpi_fclss  (fncp_fire, dataa[i], result_fclss[i]);
-                dpi_flt    (fncp_fire, dataa[i], datab[i], result_flt[i], fflags_flt[i]);
-                dpi_fle    (fncp_fire, dataa[i], datab[i], result_fle[i], fflags_fle[i]);
-                dpi_feq    (fncp_fire, dataa[i], datab[i], result_feq[i], fflags_feq[i]);
-                dpi_fmin   (fncp_fire, dataa[i], datab[i], result_fmin[i], fflags_fmin[i]);
-                dpi_fmax   (fncp_fire, dataa[i], datab[i], result_fmax[i], fflags_fmax[i]);            
-                dpi_fsgnj  (fncp_fire, dataa[i], datab[i], result_fsgnj[i]);
-                dpi_fsgnjn (fncp_fire, dataa[i], datab[i], result_fsgnjn[i]);
-                dpi_fsgnjx (fncp_fire, dataa[i], datab[i], result_fsgnjx[i]);
+                //dpi_fclss  (fncp_fire, dataa[i], result_fclss[i]);
+                //dpi_flt    (fncp_fire, dataa[i], datab[i], result_flt[i], fflags_flt[i]);
+                //dpi_fle    (fncp_fire, dataa[i], datab[i], result_fle[i], fflags_fle[i]);
+                //dpi_feq    (fncp_fire, dataa[i], datab[i], result_feq[i], fflags_feq[i]);
+                //dpi_fmin   (fncp_fire, dataa[i], datab[i], result_fmin[i], fflags_fmin[i]);
+                //dpi_fmax   (fncp_fire, dataa[i], datab[i], result_fmax[i], fflags_fmax[i]);            
+                //dpi_fsgnj  (fncp_fire, dataa[i], datab[i], result_fsgnj[i]);
+                //dpi_fsgnjn (fncp_fire, dataa[i], datab[i], result_fsgnjn[i]);
+                //dpi_fsgnjx (fncp_fire, dataa[i], datab[i], result_fsgnjx[i]);
                 result_fmv[i] = dataa[i];
             end
         end
