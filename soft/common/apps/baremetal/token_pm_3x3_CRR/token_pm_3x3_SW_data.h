@@ -3,10 +3,9 @@
 #define LUT_SIZE 64
 
 
-#define max_tokens_FFT = 4;
-#define max_tokens_VIT = 11;
-#define max_tokens_NVDLA = 24;
-
+#define max_tokens_FFT 4
+#define max_tokens_VIT 11
+#define max_tokens_NVDLA 24
 
  	const unsigned lut_data_const_FFT[LUT_SIZE] = {0xB,7, 4, 2, 1, 0, 0, 0,
 						 0, 0, 0, 0, 0, 0, 0, 0,
