@@ -141,9 +141,10 @@ const unsigned activity_const = 1;
 const unsigned no_activity_const = 0;
 
 const unsigned max_tokens_vc707[N_ACC] = {24, 4, 11, 4, 11, 4};
-const unsigned refresh_rate_min_const = 20;
-const unsigned refresh_rate_max_const = 20;
+const unsigned refresh_rate_min_const = 90;
+const unsigned refresh_rate_max_const = 90;
 const unsigned total_tokens = 24;
+const unsigned total_tokens_ini = 24; //Change to 24 for original test
 
 #define LUT_SIZE 64
 
@@ -257,20 +258,29 @@ unsigned token_counter_override_vc707[N_ACC];
 void init_consts()
 {
 	int n;
-	unsigned remaining_tokens=total_tokens;
+	unsigned remaining_tokens=total_tokens_ini;
 
-	for (n = 0; n < N_ACC; n++) {
+	/*for (n = 0; n < N_ACC; n++) {
 		// 1 for all accs part of token PM
 		
-		if(remaining_tokens>(2<<6-1)){
-			token_counter_override_vc707[n]=(1 << 7)+2<<6;
-			remaining_tokens=remaining_tokens-2<<6;
+		if(remaining_tokens>(1<<6-1)){
+			token_counter_override_vc707[n]=(1 << 7)+1<<6-1;
+			remaining_tokens=remaining_tokens-1<<6;
 		}
 		else{
 			token_counter_override_vc707[n]=(1 << 7)+remaining_tokens;
 			remaining_tokens=0;
 		}
-	}
+	}*/
+	
+	token_counter_override_vc707[0]=(1<<7) + total_tokens_ini;
+	token_counter_override_vc707[1]=0;
+	token_counter_override_vc707[2]=0;
+	token_counter_override_vc707[3]=0;
+	token_counter_override_vc707[4]=0;
+	token_counter_override_vc707[5]=0;
+
+
 }
 
 void reset_token_pm(struct esp_device espdevs[])

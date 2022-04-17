@@ -503,7 +503,7 @@ int main(int argc, char * argv[])
 			write_config1(espdev, no_activity_const, random_rate_const_0, 0, 0);	
 		}
 
-       write_config0(espdev, enable_const, max_tokens_vc707[i], refresh_rate_min_const-i, refresh_rate_max_const);
+       write_config0(espdev, enable_const, max_tokens_vc707[i], refresh_rate_min_const-i, refresh_rate_max_const-i);
    }
 
    /*
