@@ -364,7 +364,7 @@ begin
     c0_ddr4_dqs_t    <= (others => 'Z');
 
     calib_done <= '1';
-    clkm       <= not clkm after 12.1 ns;
+    clkm       <= not clkm after 3.2 ns;
     chip_refclk <= not chip_refclk after 6.4 ns;
 
   -- pragma translate_on
