@@ -364,7 +364,11 @@ begin
     c0_ddr4_dqs_t    <= (others => 'Z');
 
     calib_done <= '1';
+<<<<<<< HEAD
     clkm       <= not clkm after 9.6 ns;
+=======
+    clkm       <= not clkm after 3.2 ns;
+>>>>>>> 21a7ffbfd231ea5d2aed66bc887effd6fa98dd05
     chip_refclk <= not chip_refclk after 6.4 ns;
 
   -- pragma translate_on
