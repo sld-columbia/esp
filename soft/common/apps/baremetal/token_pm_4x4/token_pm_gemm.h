@@ -77,12 +77,13 @@ static unsigned GEMM_DMA_WORD_PER_BEAT(unsigned _st)
 #define MAX_PRINTED_ERRORS 10
 
 #define SLD_GEMM 0x051
-#define NV_DEV_GEMM "sld,gemm_stratus"
+#define GEMM_DEV_NAME "sld,gemm_stratus"
 
 /* <<--params-->> */
 const int32_t gemm_do_relu = 0;
 const int32_t transpose = 1;
-const int32_t ninputs = 2;
+//const int32_t ninputs = 2;
+const int32_t ninputs = 40;
 const int32_t d3 = 8;
 const int32_t d2 = 8;
 const int32_t d1 = 8;
@@ -135,6 +136,19 @@ static int gemm_validate_buf(gemm_token_t *out, native_t *gold)
 	return errors;
 }
 
+static void gemm_probe(struct esp_device **espdevs_gemm)
+{
+    int ndev;
+
+    // Search for the device
+    printf("Probing for GEMM accs, scanning device tree... \n");
+
+    ndev = probe(espdevs_gemm, VENDOR_SLD, SLD_GEMM, GEMM_DEV_NAME);
+    if (ndev == 0)
+	printf("GEMM not found\n");
+    else
+	printf("Found %d GEMM instances\n",ndev);
+}
 
 static void gemm_init_buf (gemm_token_t *in, native_t * gold)
 {

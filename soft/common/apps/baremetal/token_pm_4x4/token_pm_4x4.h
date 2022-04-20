@@ -65,11 +65,12 @@
 #define TOKEN_PM_CONFIG5_REG_DEFAULT 0x666663E0
 #define TOKEN_PM_CONFIG6_REG_DEFAULT 0x7CFFFFFF
 #define TOKEN_PM_CONFIG7_REG_DEFAULT 0xFFFFF830
-#ifdef PID_CONFIG
-	#define TOKEN_PM_CONFIG8_REG_DEFAULT 0x07FFFAA7
-#else
-	#define TOKEN_PM_CONFIG8_REG_DEFAULT 0x2FFFFAFD
-#endif
+//#ifdef PID_CONFIG
+//	#define TOKEN_PM_CONFIG8_REG_DEFAULT 0x07FFFAA7
+//#else
+//	#define TOKEN_PM_CONFIG8_REG_DEFAULT 0x2FFFFAFD
+//#endif
+#define TOKEN_PM_CONFIG8_REG_DEFAULT 0x2FFFFAFD
 
 
 /* #define TOKEN_PM_CONFIG4_REG_DEFAULT 0x0A3D70A3 */
@@ -83,7 +84,7 @@
 ///////////////////////
 // Accelerator Tiles and Address Map
 ///////////////////////
-#define N_ACC 12
+#define N_ACC 13
 #define CSR_BASE_ADDR 0x60090000
 #define CSR_TILE_OFFSET 0x200
 #define CSR_TOKEN_PM_OFFSET 0x1d0
@@ -96,9 +97,9 @@
 // SoC. Acc IDs increment from left to right and from top to bottom.
 // Running for config
 // gemm - gemm - gemm   - gemm  
-// nv   - nv   - conv2d - conv2d  
-// nv   - nv   - cpu    - mem  
-// nv   - nv   - mem    - io  
+// nv   - nv   - nv	- nv  
+// conv - conv - conv   - mem  
+// nv   - nv   - cpu    - io  
 //
 #define ACC_ID_GEMM1 0
 #define ACC_ADDR_GEMM1 (ACC_BASE_ADDR + (ACC_OFFSET * ACC_ID_GEMM1))
@@ -112,17 +113,19 @@
 #define ACC_ADDR_NV1 (ACC_BASE_ADDR + (ACC_OFFSET * ACC_ID_NV1))
 #define ACC_ID_NV2 5
 #define ACC_ADDR_NV2 (ACC_BASE_ADDR + (ACC_OFFSET * ACC_ID_NV2))
-#define ACC_ID_CONV2D1 6
-#define ACC_ADDR_CONV2D1 (ACC_BASE_ADDR + (ACC_OFFSET * ACC_ID_CONV2D1))
-#define ACC_ID_CONV2D2 7
-#define ACC_ADDR_CONV2D2 (ACC_BASE_ADDR + (ACC_OFFSET * ACC_ID_CONV2D2))
-#define ACC_ID_NV3 8
+#define ACC_ID_NV3 6
 #define ACC_ADDR_NV3 (ACC_BASE_ADDR + (ACC_OFFSET * ACC_ID_NV3))
-#define ACC_ID_NV4 9
+#define ACC_ID_NV4 7
 #define ACC_ADDR_NV4 (ACC_BASE_ADDR + (ACC_OFFSET * ACC_ID_NV4))
-#define ACC_ID_NV5 10
+#define ACC_ID_CONV2D1 8
+#define ACC_ADDR_CONV2D1 (ACC_BASE_ADDR + (ACC_OFFSET * ACC_ID_CONV2D1))
+#define ACC_ID_CONV2D2 9
+#define ACC_ADDR_CONV2D2 (ACC_BASE_ADDR + (ACC_OFFSET * ACC_ID_CONV2D2))
+#define ACC_ID_CONV2D3 10
+#define ACC_ADDR_CONV2D3 (ACC_BASE_ADDR + (ACC_OFFSET * ACC_ID_CONV2D3))
+#define ACC_ID_NV5 11
 #define ACC_ADDR_NV5 (ACC_BASE_ADDR + (ACC_OFFSET * ACC_ID_NV5))
-#define ACC_ID_NV6 11
+#define ACC_ID_NV6 12
 #define ACC_ADDR_NV6 (ACC_BASE_ADDR + (ACC_OFFSET * ACC_ID_NV6))
 
 //Common params
@@ -143,7 +146,7 @@ static unsigned out_offset;
 
 
 
-const unsigned acc_tile_ids[N_ACC] = {0,1,2,3,4,5,6,7,8,9,12,13};
+const unsigned acc_tile_ids[N_ACC] = {0,1,2,3,4,5,6,7,8,9,10,12,13};
 
 
 ///////////////////////
@@ -153,11 +156,11 @@ const unsigned enable_const = 1;
 const unsigned activity_const = 1;
 const unsigned no_activity_const = 0;
 
-const unsigned max_tokens_vc707[N_ACC] = {24, 4, 11, 4, 11, 4};
+const unsigned max_tokens_vc707[N_ACC] = {324, 324, 324, 324, 24, 24, 24, 24, 48, 48, 48, 24, 24};
 const unsigned refresh_rate_min_const = 90;
 const unsigned refresh_rate_max_const = 90;
-const unsigned total_tokens = 24;
-const unsigned total_tokens_ini = 24; //Change to 24 for original test
+const unsigned total_tokens = 150;
+const unsigned total_tokens_ini = 150; //Change to 24 for original test
 
 #define LUT_SIZE 64
 
@@ -179,50 +182,25 @@ const unsigned total_tokens_ini = 24; //Change to 24 for original test
 						    0, 0, 0, 0, 0, 0, 0, 0,
 						    0, 0, 0, 0, 0, 0, 0, 0};
 #else
-	const unsigned lut_data_const[LUT_SIZE] = {  0,   4,   8,  12,  16,  20,  24,  28,
-						    32,  36,  40,  44,  48,  52,  56,  60,
-						    64,  68,  72,  76,  80,  84,  88,  92,
-						    96, 100, 104, 108, 112, 116, 120, 124,
-						   128, 132, 136, 140, 144, 148, 152, 156,
-						   160, 164, 168, 172, 176, 180, 184, 188,
-						   192, 196, 200, 204, 208, 212, 216, 220,
-						   224, 228, 232, 236, 240, 244, 248, 252};
+	const unsigned lut_data_const_vc707_GEMM[LUT_SIZE] = {  11<<4,  11<<4,  11<<4,  11<<4,  11<<4,  10<<4,  10<<4,  10<<4,   9<<4,   9<<4,   9<<4,   8<<4,   8<<4,   7<<4,   7<<4,
+					       	        	6<<4,   6<<4,   6<<4,   5<<4,   5<<4,   5<<4,   5<<4,   5<<4,   4<<4,   4<<4,   4<<4,   4<<4,   4<<4,   4<<4,   3<<4,
+					  	        	3<<4,   3<<4,   3<<4,   3<<4,   3<<4,   3<<4,   2<<4,   2<<4,   2<<4,   2<<4,   2<<4,   2<<4,   2<<4,   2<<4,   2<<4,
+							        2<<4,   2<<4,   2<<4,   2<<4,   2<<4,   2<<4,   2<<4,   2<<4,   2<<4,   2<<4,   2<<4,   2<<4,   2<<4,   2<<4,   2<<4,
+								2<<4,   2<<4,   2<<4,   2<<4};
+						
+								
+	const unsigned lut_data_const_vc707_CONV2D[LUT_SIZE] = {  11<<4,  11<<4,  11<<4,  11<<4,  11<<4,  11<<4,  10<<4,  10<<4,  10<<4,   9<<4,   9<<4,   9<<4,   8<<4,   8<<4,   8<<4,
+								7<<4,   7<<4,   6<<4,   6<<4,   6<<4,   6<<4,   5<<4,   5<<4,   5<<4,   5<<4,   4<<4,   4<<4,   4<<4,   4<<4,   4<<4,
+								3<<4,   3<<4,   3<<4,   3<<4,   3<<4,   3<<4,   3<<4,   3<<4,   2<<4,   2<<4,   2<<4,   2<<4,   2<<4,   2<<4,   2<<4,
+								2<<4,   2<<4,   1<<4,   1<<4,   1<<4,   1<<4,   1<<4,   1<<4,   1<<4,   1<<4,   1<<4,   1<<4,   1<<4,   1<<4,   1<<4,
+								1<<4,   1<<4,   1<<4,   1<<4};
 
-	const unsigned lut_data_const_vc707[LUT_SIZE] = {2, 2, 2, 2, 2, 2, 2, 2,
-							 2, 2, 2, 2, 2, 2, 2, 2,
-							 3, 3, 3, 3, 3, 3, 3, 3,
-							 3, 3, 3, 3, 3, 3, 3, 3,
-							 5, 5, 5, 5, 5, 5, 5, 5,
-							 5, 5, 5, 5, 5, 5, 5, 5,
-							 10, 10, 10, 10, 10, 10, 10, 10,
-							 10, 10, 10, 10, 10, 10, 10, 10};
+	const unsigned lut_data_const_vc707_NV[LUT_SIZE] = {  11<<4,  11<<4,  11<<4,  10<<4,  10<<4,   9<<4,   8<<4,   8<<4,   7<<4,   6<<4,   6<<4,   5<<4,   5<<4,   5<<4,   4<<4,
+								4<<4,   4<<4,   4<<4,   4<<4,   3<<4,   3<<4,   3<<4,   3<<4,   3<<4,   2<<4,   2<<4,   2<<4,   2<<4,   2<<4,   2<<4,
+								2<<4,   2<<4,   2<<4,   2<<4,   2<<4,   2<<4,   2<<4,   2<<4,   2<<4,   2<<4,   2<<4,   2<<4,   2<<4,   2<<4,   2<<4,
+								2<<4,   2<<4,   2<<4,   2<<4,   2<<4,   2<<4,   2<<4,   2<<4,   2<<4,   2<<4,   2<<4,   2<<4,   2<<4,   2<<4,   2<<4,
+								2<<4,   2<<4,   2<<4,   2<<4};
 
- 	const unsigned lut_data_const_vc707_FFT[LUT_SIZE] = {0xB<<4,7<<4, 4<<4, 2<<4, 1<<4, 0, 0, 0,
-						 0, 0, 0, 0, 0, 0, 0, 0,
-						 0, 0, 0, 0, 0, 0, 0, 0,
-						 0, 0, 0, 0, 0, 0, 0, 0,
-						 0, 0, 0, 0, 0, 0, 0, 0,
-						 0, 0, 0, 0, 0, 0, 0, 0,
-						 0, 0, 0, 0, 0, 0, 0, 0,
-						 0, 0, 0, 0, 0, 0, 0, 0};
-						 
-	const unsigned lut_data_const_vc707_VIT[LUT_SIZE] = {0xB<<4, 0xA<<4, 9<<4, 8<<4, 7<<4, 6<<4, 6<<4, 5<<4,
-						 4<<4, 4<<4, 3<<4, 3<<4, 0, 0, 0, 0,
-						 0, 0, 0, 0, 0, 0, 0, 0,
-						 0, 0, 0, 0, 0, 0, 0, 0,
-						 0, 0, 0, 0, 0, 0, 0, 0,
-						 0, 0, 0, 0, 0, 0, 0, 0,
-						 0, 0, 0, 0, 0, 0, 0, 0,
-						 0, 0, 0, 0, 0, 0, 0, 0};							
-						 
-	const unsigned lut_data_const_vc707_NVDLA[LUT_SIZE] = {0xB<<4, 0xB<<4, 0xB<<4, 0xB<<4, 0xA<<4, 0xA<<4, 9<<4, 9<<4,
-						 8<<4, 8<<4, 8<<4, 8<<4, 7<<4, 7<<4, 6<<4, 6<<4,
-						 5<<4, 5<<4, 5<<4, 5<<4, 4<<4, 4<<4, 4<<4, 4<<4,
-						 3<<4, 3<<4, 3<<4, 3<<4, 2<<4, 2<<4, 0, 0,
-						 0, 0, 0, 0, 0, 0, 0, 0,
-						 0, 0, 0, 0, 0, 0, 0, 0,
-						 0, 0, 0, 0, 0, 0, 0, 0,
-						 0, 0, 0, 0, 0, 0, 0, 0};	
 	/* const unsigned lut_data_const_vc707[LUT_SIZE] = {1, 1, 1, 1, 1, 1, 1, 1, */
 	/* 						 1, 1, 1, 1, 1, 1, 1, 1, */
 	/* 						 3, 3, 3, 3, 3, 3, 3, 3, */
@@ -233,12 +211,15 @@ const unsigned total_tokens_ini = 24; //Change to 24 for original test
 	/* 						 10, 10, 10, 10, 10, 10, 10, 10}; */
 #endif
 
-const unsigned random_rate_const_0= 0;//For tile 0
+const unsigned random_rate_const_0 = 0;//For tile 0
 const unsigned random_rate_const = 17;
 //const unsigned neighbors_id_const[N_ACC] = {33825, 0}; // 00001 00001 00001 00001, 00000 00000 00000 00000 
 /*Define neighbors*/
-const unsigned int neighbors_id_const[N_ACC] = {(1 << 15) + (2 << 10) + (4 << 5) + 5, (0 << 15) + (2 << 10) + (3 << 5) + 5, (0 << 15) + (3 << 10) + (4 << 5) + 5, (0 << 15) + (1 << 10) + (4 << 5) + 5, (0 << 15) +(1 << 10) + (3 << 5) + 5, (0 << 15) + (1 << 10) + (2 << 5) + 3};
-const unsigned int pm_network_const[N_ACC] = {0,4,1,2,2,4};
+//const unsigned int neighbors_id_const[N_ACC] = {(1 << 15) + (2 << 10) + (4 << 5) + 5, (0 << 15) + (2 << 10) + (3 << 5) + 5, (0 << 15) + (3 << 10) + (4 << 5) + 5, (0 << 15) + (1 << 10) + (4 << 5) + 5, (0 << 15) +(1 << 10) + (3 << 5) + 5, (0 << 15) + (1 << 10) + (2 << 5) + 3};
+//const unsigned int pm_network_const[N_ACC] = {0,4,1,2,2,4};
+const unsigned int neighbors_id_const[N_ACC] = {(3 << 15) + (11 << 10) + (1 << 5) + 4, (0 << 15) + (12 << 10) + (2 << 5) + 5, (1 << 15) + (10 << 10) + (3 << 5) + 6, (2 << 15) + (7 << 10) + (0 << 5) + 11, (7 << 15) +(0 << 10) + (5 << 5) + 8, (4 << 15) + (1 << 10) + (6 << 5) + 9, (5 << 15) + (2 << 10) + (7 << 5) + 10, (6 << 15) + (3 << 10) + (4 << 5) + 9, (10 << 15) + (4 << 10) + (9 << 5) + 11, (8 << 15) + (5 << 10) + (10 << 5) + 12, (9 << 15) + (6 << 10) + (8 << 5) + 2, (12 << 15) + (8 << 10) + (3 << 5) + 0, (11 << 15) + (9 << 10) + (0 << 5) + 1};
+const unsigned int pm_network_const[N_ACC] = {0,8,0,8,2,0,4,0,2,2,0,4,4};
+
 		// Allocate inital tokens - max 6 bit
 //const unsigned pm_network_const = 0;
 //Initialized by init_consts()
@@ -292,6 +273,13 @@ void init_consts()
 	token_counter_override_vc707[3]=0;
 	token_counter_override_vc707[4]=0;
 	token_counter_override_vc707[5]=0;
+	token_counter_override_vc707[6]=0;
+	token_counter_override_vc707[7]=0;
+	token_counter_override_vc707[8]=0;
+	token_counter_override_vc707[9]=0;
+	token_counter_override_vc707[10]=0;
+	token_counter_override_vc707[11]=0;
+	token_counter_override_vc707[12]=0;
 
 
 }
