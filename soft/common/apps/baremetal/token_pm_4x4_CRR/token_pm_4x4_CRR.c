@@ -40,13 +40,12 @@ int main(int argc, char * argv[])
     printf("Test 0: Starting\n");
 	
     reset_token_pm(espdevs);
-	
-	set_freq(&espdevs[0],0xA);
-	set_freq(&espdevs[1],0x7);
-	set_freq(&espdevs[2],0x3);
-	set_freq(&espdevs[3],0x0);
-	set_freq(&espdevs[4],0x8);
-	set_freq(&espdevs[5],0x4);
+    for (i = 0; i < N_ACC; i++) {
+		set_freq(&espdevs[i],Fmax[i]);
+	}
+	for (i = 0; i < N_ACC; i++) {
+		set_freq(&espdevs[i],Fmin[i]);
+	}
     printf("Test 0: End\n");
 
 #endif

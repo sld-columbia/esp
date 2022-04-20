@@ -156,14 +156,16 @@ void CRR_step_rotate()
 				iowrite32(dev_list_acc[waitNode->data], CMD_REG, CMD_MASK_START);
 				write_config1(&espdevs[waitNode->data],1,0,0,0);
 				addLast(&head_run,waitNode->data);
-				p_available<-p_available-Pmax[waitNode->data];
+				removeFromList(&head_wait,waitNode->data);
+				p_available=p_available-Pmax[waitNode->data];
 				printf("wait->run tile %u new Pav %u\n",waitNode->data,p_available);
 			}
 			else if(Pmin[waitNode->data]<=p_available){
 				iowrite32(dev_list_acc[waitNode->data], CMD_REG, CMD_MASK_START);
 				write_config1(&espdevs[waitNode->data],1,0,0,0);
 				addLast(&head_idle,waitNode->data);
-				p_available<-p_available-Pmin[waitNode->data];
+				removeFromList(&head_wait,waitNode->data);
+				p_available=p_available-Pmin[waitNode->data];
 				printf("wait->idle tile %u new Pav %u\n",waitNode->data,p_available);
 			}
 		waitNode = waitNode->next;
@@ -174,7 +176,8 @@ void CRR_step_rotate()
             if(Pmax[idleNode->data]<=p_available){
 				set_freq(dev_list_acc[idleNode->data],Fmax[idleNode->data]);
 				addLast(&head_run,idleNode->data);
-				p_available<-p_available-Pmax[idleNode->data];
+				removeFromList(&head_idle,idleNode->data);
+				p_available=p_available-Pmax[idleNode->data];
 				printf("Idle->run tile %u new Pav %u\n",idleNode->data,p_available);
 			}
 		idleNode = idleNode->next;
