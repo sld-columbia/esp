@@ -4,10 +4,13 @@
 #define __TOKEN_PM_H__
 
 //Define to run dummy config
-#define PID_CONFIG 1
+//#define PID_CONFIG 1
 
 //DEBUG Flag
-#define DEBUG
+//#define DEBUG
+
+//Run short or long workload
+#define SHORT 1
 ///////////////////////
 // Offset and width of CSR fields of token FSM
 ///////////////////////

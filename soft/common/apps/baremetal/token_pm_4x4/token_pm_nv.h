@@ -19,21 +19,23 @@
 // Prepare in this path the corresponding data_ROWSxCOLS.h
 #define IS_SMALL
 
-//#ifndef IS_SMALL
-//#define COLS 8
-//#define ROWS 8
-//// Define data type of the pixel
-//typedef short pixel;
-//#else
-//#define COLS 16
-//#define ROWS 16
-//// Define data type of the pixel
-//typedef char pixel;
-//#endif
-
-#define COLS 48
-#define ROWS 48
-typedef char pixel;
+#ifdef SHORT
+	#ifndef IS_SMALL
+		#define COLS 8
+		#define ROWS 8
+		// Define data type of the pixel
+		typedef short pixel;
+	#else
+		#define COLS 16
+		#define ROWS 16
+		// Define data type of the pixel
+		typedef char pixel;
+	#endif
+#else
+	#define COLS 48
+	#define ROWS 48
+	typedef char pixel;
+#endif
 
 #define NIGHTVISION_BUF_SIZE (ROWS * COLS * 2 * sizeof(pixel))
 

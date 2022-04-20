@@ -99,8 +99,11 @@ const int32_t dilation_h = 1;
 const int32_t dilation_w = 1;
 const int32_t conv2d_do_relu = 0;
 const int32_t pool_type = 0;
-//const int32_t batch_size = 1;
-const int32_t batch_size = 70;
+#ifdef SHORT
+	const int32_t batch_size = 1;
+#else
+	const int32_t batch_size = 70;
+#endif
 
 static unsigned in_words_adj;
 static unsigned weights_words_adj;

@@ -82,8 +82,11 @@ static unsigned GEMM_DMA_WORD_PER_BEAT(unsigned _st)
 /* <<--params-->> */
 const int32_t gemm_do_relu = 0;
 const int32_t transpose = 1;
-//const int32_t ninputs = 2;
-const int32_t ninputs = 40;
+#ifdef SHORT
+	const int32_t ninputs = 2;
+#else
+	const int32_t ninputs = 40;
+#endif
 const int32_t d3 = 8;
 const int32_t d2 = 8;
 const int32_t d1 = 8;

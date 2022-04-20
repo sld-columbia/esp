@@ -242,54 +242,80 @@ int main(int argc, char * argv[])
     ///////Start accelerators//////
     printf("Start accelerators\n");
     iowrite32(dev_g1, CMD_REG, CMD_MASK_START);
+    espdev = &espdevs[0];
+    write_config1(espdev, activity_const, random_rate_const_0, 0, 0);
     #ifdef DEBUG
     	printf("Started G1\n");
     #endif
     iowrite32(dev_g2, CMD_REG, CMD_MASK_START);
+    espdev = &espdevs[1];
+    write_config1(espdev, activity_const, random_rate_const, 0, 0);
     #ifdef DEBUG
     	printf("Started G2\n");
     #endif
     iowrite32(dev_g3, CMD_REG, CMD_MASK_START);
+    espdev = &espdevs[2];
+    write_config1(espdev, activity_const, random_rate_const, 0, 0);
     #ifdef DEBUG
     	printf("Started G3\n");
     #endif
     iowrite32(dev_g4, CMD_REG, CMD_MASK_START);
+    espdev = &espdevs[3];
+    write_config1(espdev, activity_const, random_rate_const, 0, 0);
     #ifdef DEBUG
     	printf("Started G4\n");
     #endif
     iowrite32(dev_n1, CMD_REG, CMD_MASK_START);
+    espdev = &espdevs[4];
+    write_config1(espdev, activity_const, random_rate_const, 0, 0);
     #ifdef DEBUG
     	printf("Started N1\n");
     #endif
     iowrite32(dev_n2, CMD_REG, CMD_MASK_START);
+    espdev = &espdevs[5];
+    write_config1(espdev, activity_const, random_rate_const, 0, 0);
     #ifdef DEBUG
     	printf("Started N2\n");
     #endif
     iowrite32(dev_n3, CMD_REG, CMD_MASK_START);
+    espdev = &espdevs[6];
+    write_config1(espdev, activity_const, random_rate_const, 0, 0);
     #ifdef DEBUG
     	printf("Started N3\n");
     #endif
     iowrite32(dev_n4, CMD_REG, CMD_MASK_START);
+    espdev = &espdevs[7];
+    write_config1(espdev, activity_const, random_rate_const, 0, 0);
     #ifdef DEBUG
     	printf("Started N4\n");
     #endif
     iowrite32(dev_c1, CMD_REG, CMD_MASK_START);
+    espdev = &espdevs[8];
+    write_config1(espdev, activity_const, random_rate_const, 0, 0);
     #ifdef DEBUG
     	printf("Started C1\n");
     #endif
     iowrite32(dev_c2, CMD_REG, CMD_MASK_START);
+    espdev = &espdevs[9];
+    write_config1(espdev, activity_const, random_rate_const, 0, 0);
     #ifdef DEBUG
     	printf("Started C2\n");
     #endif
     iowrite32(dev_c3, CMD_REG, CMD_MASK_START);
+    espdev = &espdevs[10];
+    write_config1(espdev, activity_const, random_rate_const, 0, 0);
     #ifdef DEBUG
     	printf("Started C3\n");
     #endif
     iowrite32(dev_n5, CMD_REG, CMD_MASK_START);
+    espdev = &espdevs[11];
+    write_config1(espdev, activity_const, random_rate_const, 0, 0);
     #ifdef DEBUG
     	printf("Started N5\n");
     #endif
     iowrite32(dev_n6, CMD_REG, CMD_MASK_START);
+    espdev = &espdevs[12];
+    write_config1(espdev, activity_const, random_rate_const, 0, 0);
     #ifdef DEBUG
     	printf("Started N6\n");
     #endif
