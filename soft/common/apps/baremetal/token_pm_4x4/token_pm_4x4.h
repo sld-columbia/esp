@@ -238,15 +238,15 @@ unsigned token_counter_override_vc707[N_ACC];
 
 // Set of tests of the bare-metal app.
 // Uncomment the tests that you want to execute
-// #define TEST_0 0
+// #define TEST_0 1
 //// basic test for vc707 FPGA
-//#define TEST_1 0
+#define TEST_1 1
 //// test for vc707 FPGA including FFT accelerator execution
 //#define TEST_2 1
 //// test for vc707 FPGA including Viterbi accelerator execution
 //#define TEST_3 0
 // test for vc707 FPGA including Viterbi and FFT parallel accelerator executions
-#define TEST_4 1
+//#define TEST_4 1
 
 ///////////////////////
 // Functions

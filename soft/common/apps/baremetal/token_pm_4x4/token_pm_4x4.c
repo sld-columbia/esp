@@ -117,7 +117,21 @@ int main(int argc, char * argv[])
        }
        write_config0(espdev, enable_const, max_tokens_vc707[i], refresh_rate_min_const, refresh_rate_max_const);
    }
+#ifdef TEST_0
+   printf("Test0\n");
 
+for (i = 0; i < N_ACC; i++) {
+	espdev = &espdevs[i];
+    write_config1(espdev, activity_const, random_rate_const, 0, 0);
+	}
+for (i = 0; i < N_ACC; i++) {
+	espdev = &espdevs[i];
+    write_config1(espdev, no_activity_const, random_rate_const, 0, 0);
+	}
+  
+#endif
+
+#ifdef TEST_1
    /*
    wait_for_token_next(&espdevs[0], 0);
    wait_for_token_next(&espdevs[1], 48);
@@ -416,43 +430,43 @@ int main(int argc, char * argv[])
 		}
 		if(done_n3 && !done_n3_before) {
 			cycles_end_n3 = get_counter();
-			espdev = &espdevs[8];
+			espdev = &espdevs[6];
 			write_config1(espdev, 0, random_rate_const, 0, 0);
 			done_n3_before=done_n3;
 		}
 		if(done_n4 && !done_n4_before) {
 			cycles_end_n4 = get_counter();
-			espdev = &espdevs[9];
+			espdev = &espdevs[7];
 			write_config1(espdev, 0, random_rate_const, 0, 0);
 			done_n4_before=done_n4;
 		}
 		if(done_c1 && !done_c1_before) {
 			cycles_end_c1 = get_counter();
-			espdev = &espdevs[6];
+			espdev = &espdevs[8];
 			write_config1(espdev, 0, random_rate_const, 0, 0);
 			done_c1_before=done_c1;
 		}
 		if(done_c2 && !done_c2_before) {
 			cycles_end_c2 = get_counter();
-			espdev = &espdevs[7];
+			espdev = &espdevs[9];
 			write_config1(espdev, 0, random_rate_const, 0, 0);
 			done_c2_before=done_c2;
 		}
 		if(done_c3 && !done_c3_before) {
 			cycles_end_c3 = get_counter();
-			espdev = &espdevs[7];
+			espdev = &espdevs[10];
 			write_config1(espdev, 0, random_rate_const, 0, 0);
 			done_c3_before=done_c3;
 		}
 		if(done_n5 && !done_n5_before) {
 			cycles_end_n5 = get_counter();
-			espdev = &espdevs[10];
+			espdev = &espdevs[11];
 			write_config1(espdev, 0, random_rate_const, 0, 0);
 			done_n5_before=done_n5;
 		}
 		if(done_n6 && !done_n6_before) {
 			cycles_end_n6 = get_counter();
-			espdev = &espdevs[11];
+			espdev = &espdevs[12];
 			write_config1(espdev, 0, random_rate_const, 0, 0);
 			done_n6_before=done_n6;
 		}
@@ -463,7 +477,7 @@ int main(int argc, char * argv[])
 	printf("  GEMM Execution cycles : g1=%llu, g2=%llu, g3=%llu, g4=%llu \n", cycles_end_g1 - cycles_start, cycles_end_g2 - cycles_start, cycles_end_g3 - cycles_start, cycles_end_g4 - cycles_start);
 	printf("  Conv2D Execution cycles : c1=%llu, c2=%llu, c3=%llu\n", cycles_end_c1 - cycles_start, cycles_end_c2 - cycles_start, cycles_end_c3 - cycles_start);
 
-
+#endif
 
     return 0;
 }
