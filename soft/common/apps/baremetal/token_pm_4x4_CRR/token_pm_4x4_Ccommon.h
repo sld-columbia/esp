@@ -153,9 +153,9 @@ const unsigned acc_tile_ids[N_ACC] = {0,1,2,3,4,5,6,7,8,9,10,12,13};
 
 // Set of tests of the bare-metal app.
 // Uncomment the tests that you want to execute
-#define TEST_0 1
+//#define TEST_0 1
 //// basic test to directly set frequencies from CPU SW 
-//#define TEST_1 1
+#define TEST_1 1
 ////Test with dummy actiivyt changes for faster debug
 
 
