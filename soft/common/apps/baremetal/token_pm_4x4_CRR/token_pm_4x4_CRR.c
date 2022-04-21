@@ -35,6 +35,8 @@ int main(int argc, char * argv[])
 	espdevs[i].addr = acc_tile_pm_csr_addr[i];
     }
 
+	reset_token_pm(espdevs);
+
 #ifdef TEST_0
 	//Simply puts the token PM in full bypass mode to test the frequency write commands
     printf("Test 0: Starting\n");
@@ -220,7 +222,9 @@ int main(int argc, char * argv[])
 	while((head_run != NULL) ||(head_idle != NULL) ||(head_wait != NULL) ) {
 		CRR_step_checkend();
 		CRR_step_rotate();
+		#ifdef DEBUG
 		printf("Run step\n");
+		#endif
 	
 	}
 		

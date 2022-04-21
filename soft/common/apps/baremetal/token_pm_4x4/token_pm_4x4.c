@@ -91,8 +91,8 @@ int main(int argc, char * argv[])
 	   write_lut(espdevs, lut_data_const_vc707_CONV2D, random_rate_const, no_activity_const,8);    
 	   write_lut(espdevs, lut_data_const_vc707_CONV2D, random_rate_const, no_activity_const,9);    
 	   write_lut(espdevs, lut_data_const_vc707_CONV2D, random_rate_const, no_activity_const,10);    
+	   write_lut(espdevs, lut_data_const_vc707_NV, random_rate_const, no_activity_const,11);    
 	   write_lut(espdevs, lut_data_const_vc707_NV, random_rate_const, no_activity_const,12);    
-	   write_lut(espdevs, lut_data_const_vc707_NV, random_rate_const, no_activity_const,13);    
    #endif
    
    
@@ -115,7 +115,7 @@ int main(int argc, char * argv[])
 	       write_config1(espdev, no_activity_const,random_rate_const_0, 0, token_counter_override_vc707[i]);
 	       write_config1(espdev, no_activity_const, random_rate_const_0, 0, 0);	
        }
-       write_config0(espdev, enable_const, max_tokens_vc707[i], refresh_rate_min_const, refresh_rate_max_const);
+       write_config0(espdev, enable_const, max_tokens_vc707[i], refresh_rate_min_const-i, refresh_rate_max_const-i);
    }
 #ifdef TEST_0
    printf("Test0\n");
@@ -327,6 +327,9 @@ for (i = 0; i < N_ACC; i++) {
     #ifdef DEBUG
     	printf("Started N5\n");
     #endif
+	
+	printf("A\n");
+	
     iowrite32(dev_n6, CMD_REG, CMD_MASK_START);
     espdev = &espdevs[12];
     write_config1(espdev, activity_const, random_rate_const, 0, 0);
