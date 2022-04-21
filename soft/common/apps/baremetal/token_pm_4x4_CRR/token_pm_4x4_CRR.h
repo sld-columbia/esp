@@ -24,6 +24,7 @@ struct node *head_run;
 struct node *head_idle;
 struct node *head_wait;
 
+//#define DEBUG 1
 
 
    
@@ -91,7 +92,9 @@ void start_tile( unsigned i)
 	if(Pmax[i]<=p_available) {
 		set_freq(&espdevs[i],Fmax[i]);
 		p_available=p_available-Pmax[i];
+		#ifdef DEBUG
 		printf("Starting tile %u at Pmax new Pav %u\n",i,p_available);
+		#endif
 		addLast(&head_run,i);
 		iowrite32(dev_list_acc[i], CMD_REG, CMD_MASK_START);
 		write_config1(&espdevs[i],1,0,0,0);
@@ -99,14 +102,18 @@ void start_tile( unsigned i)
 	else if(Pmin[i]<=p_available) {
 		set_freq(&espdevs[i],Fmin[i]);
 		p_available=p_available-Pmin[i];
+		#ifdef DEBUG
 		printf("Starting tile %u at Pmin new Pav %u\n",i,p_available);
+		#endif
 		addLast(&head_idle,i);
 		iowrite32(dev_list_acc[i], CMD_REG, CMD_MASK_START);
 		write_config1(&espdevs[i],1,0,0,0);
 		}
 	else {
 		set_freq(&espdevs[i],Fmin[i]);
+		#ifdef DEBUG
 		printf("Waiting tile %u at new Pav %u\n",i,p_available);
+		#endif
 		//set_freq(&espdevs[i],Fmin[i]);
 		addLast(&head_wait,i);
 	}
@@ -119,7 +126,7 @@ void CRR_step_checkend()
 	int i_run;
 	int i_idl;
 
- 	for (i = 1; i < N_ACC; i++) {  //Starting at 1 because of NVDLA
+ 	for (i = 0; i < N_ACC; i++) { 
         	done[i] = ioread32(dev_list_acc[i], STATUS_REG);
 			done[i] &= STATUS_MASK_DONE;
 		
@@ -132,53 +139,69 @@ void CRR_step_checkend()
 			if(i_run) {
 			p_available=p_available+Pmax[i];}
 			else if(i_idl) {
-			p_available=p_available+Pmin[i];}			
+			p_available=p_available+Pmin[i];}		
+			#ifdef DEBUG
 			printf("Finished tile %u was in %u%u new Pav %u\n",i,i_run,i_idl, p_available);
+			#endif
 		}
 	}
 }
 
 void CRR_step_rotate()
 {
-	int index_stop=popFirst(&head_run);
-	addLast(&head_idle,index_stop);
-	set_freq(&espdevs[index_stop],Fmin[index_stop]);
-	p_available=p_available+Pmax[index_stop]-Pmin[index_stop];
-	printf("Idling tile %u new Pav %u\n",index_stop,p_available);
-
+	int index_stop;
+	if(head_run != NULL){
+		index_stop=popFirst(&head_run);
+		addLast(&head_idle,index_stop);
+		set_freq(&espdevs[index_stop],Fmin[index_stop]);
+		p_available=p_available+Pmax[index_stop]-Pmin[index_stop];
+		#ifdef DEBUG
+		printf("Idling tile %u new Pav %u\n",index_stop,p_available);
+		#endif
+	}
     struct node *idleNode = head_idle;
     struct node *waitNode = head_wait;	
 	
-           while(waitNode->next != NULL)
+           while(waitNode != NULL)
         {
             if(Pmax[waitNode->data]<=p_available){
-				set_freq(dev_list_acc[waitNode->data],Fmax[waitNode->data]);
+				set_freq(&espdevs[waitNode->data],Fmax[waitNode->data]);
 				iowrite32(dev_list_acc[waitNode->data], CMD_REG, CMD_MASK_START);
 				write_config1(&espdevs[waitNode->data],1,0,0,0);
 				addLast(&head_run,waitNode->data);
 				removeFromList(&head_wait,waitNode->data);
 				p_available=p_available-Pmax[waitNode->data];
+				#ifdef DEBUG
 				printf("wait->run tile %u new Pav %u\n",waitNode->data,p_available);
+				#endif
+
 			}
 			else if(Pmin[waitNode->data]<=p_available){
+				set_freq(&espdevs[waitNode->data],Fmin[waitNode->data]);
 				iowrite32(dev_list_acc[waitNode->data], CMD_REG, CMD_MASK_START);
 				write_config1(&espdevs[waitNode->data],1,0,0,0);
 				addLast(&head_idle,waitNode->data);
 				removeFromList(&head_wait,waitNode->data);
 				p_available=p_available-Pmin[waitNode->data];
+				#ifdef DEBUG
 				printf("wait->idle tile %u new Pav %u\n",waitNode->data,p_available);
+				#endif
+
 			}
 		waitNode = waitNode->next;
         }
 		
-		while(idleNode->next != NULL)
+		while(idleNode != NULL)
         {
             if(Pmax[idleNode->data]<=p_available){
-				set_freq(dev_list_acc[idleNode->data],Fmax[idleNode->data]);
+				set_freq(&espdevs[idleNode->data],Fmax[idleNode->data]);
 				addLast(&head_run,idleNode->data);
 				removeFromList(&head_idle,idleNode->data);
 				p_available=p_available-Pmax[idleNode->data];
+				#ifdef DEBUG
 				printf("Idle->run tile %u new Pav %u\n",idleNode->data,p_available);
+				#endif
+
 			}
 		idleNode = idleNode->next;
         }
