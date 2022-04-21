@@ -10,7 +10,7 @@
 //#define DEBUG
 
 //Run short or long workload
-#define SHORT 1
+//#define SHORT 1
 ///////////////////////
 // Offset and width of CSR fields of token FSM
 ///////////////////////
@@ -160,8 +160,8 @@ const unsigned activity_const = 1;
 const unsigned no_activity_const = 0;
 
 const unsigned max_tokens_vc707[N_ACC] = {38, 38, 38, 38, 24, 24, 24, 24, 48, 48, 48, 24, 24};
-const unsigned refresh_rate_min_const = 100;
-const unsigned refresh_rate_max_const = 100;
+const unsigned refresh_rate_min_const = 225;
+const unsigned refresh_rate_max_const = 225;
 const unsigned total_tokens = 150;
 const unsigned total_tokens_ini = 150; //Change to 24 for original test
 
