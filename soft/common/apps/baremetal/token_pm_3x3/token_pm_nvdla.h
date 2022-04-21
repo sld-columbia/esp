@@ -344,6 +344,16 @@ void run_nvdla(struct esp_device *espdev, struct esp_device *dev, nvdla_token_t 
 
 for (int i = 0; i < N_ITER; i++) {
 
+		/*if(i==2)
+			{	
+			//Here we remove tokens
+			int curr_NVDLA_token = 	ioread32(espdev, TOKEN_PM_STATUS0_REG) & TOKEN_NEXT_MASK;
+ 			printf("Toekn read %u\n", curr_NVDLA_token);
+			write_config1(espdev, activity_const, random_rate_const, 0, (1<<7)+curr_NVDLA_token-12); //+total_tokens-total_tokens_ini
+			write_config1(espdev, activity_const, random_rate_const, 0, 0);
+
+			}*/
+
         error_id = 0;
 
         //read_val = ioread32(dev, 28676);
@@ -356,8 +366,9 @@ for (int i = 0; i < N_ITER; i++) {
         setup_nvdla(mem, i_base, o_base, b_base, w_base);
         //time1 = nvdla_get_counter();
         plic_dev.addr = PLIC_ADDR;
-        while(ioread32(&plic_dev, PLIC_IP_OFFSET) != 0x40);
-        //time2 = nvdla_get_counter();
+        while((ioread32(&plic_dev, PLIC_IP_OFFSET) & 0x40) == 0);
+		printf("wait %u\n");
+		        //time2 = nvdla_get_counter();
 
         //printf("Time load: %llu\n", time1 - time0);
        // printf("Time run: %llu\n", time2 - time1);

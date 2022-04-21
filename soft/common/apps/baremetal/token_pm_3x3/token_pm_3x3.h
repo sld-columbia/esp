@@ -141,10 +141,10 @@ const unsigned activity_const = 1;
 const unsigned no_activity_const = 0;
 
 const unsigned max_tokens_vc707[N_ACC] = {24, 4, 11, 4, 11, 4};
-const unsigned refresh_rate_min_const = 90;
-const unsigned refresh_rate_max_const = 90;
-const unsigned total_tokens = 24;
-const unsigned total_tokens_ini = 24; //Change to 24 for original test
+const unsigned refresh_rate_min_const = 250;
+const unsigned refresh_rate_max_const = 250;
+const unsigned total_tokens = 12;
+const unsigned total_tokens_ini = 12; //Change to 24 for original test
 
 #define LUT_SIZE 64
 
@@ -193,8 +193,8 @@ const unsigned total_tokens_ini = 24; //Change to 24 for original test
 						 0, 0, 0, 0, 0, 0, 0, 0,
 						 0, 0, 0, 0, 0, 0, 0, 0};
 						 
-	const unsigned lut_data_const_vc707_VIT[LUT_SIZE] = {0xB<<4, 0xA<<4, 9<<4, 8<<4, 7<<4, 6<<4, 6<<4, 5<<4,
-						 4<<4, 4<<4, 3<<4, 3<<4, 0, 0, 0, 0,
+	const unsigned lut_data_const_vc707_VIT[LUT_SIZE] = {0xB<<4, 0xA<<4, 0xA<<4, 8<<4, 7<<4, 6<<4, 6<<4, 5<<4,
+						 4<<4, 4<<4, 3<<4, 3<<4, 2<<4, 2<<4, 2<<4, 2<<4,
 						 0, 0, 0, 0, 0, 0, 0, 0,
 						 0, 0, 0, 0, 0, 0, 0, 0,
 						 0, 0, 0, 0, 0, 0, 0, 0,
@@ -205,7 +205,7 @@ const unsigned total_tokens_ini = 24; //Change to 24 for original test
 	const unsigned lut_data_const_vc707_NVDLA[LUT_SIZE] = {0xB<<4, 0xB<<4, 0xB<<4, 0xB<<4, 0xA<<4, 0xA<<4, 9<<4, 9<<4,
 						 8<<4, 8<<4, 8<<4, 8<<4, 7<<4, 7<<4, 6<<4, 6<<4,
 						 5<<4, 5<<4, 5<<4, 5<<4, 4<<4, 4<<4, 4<<4, 4<<4,
-						 3<<4, 3<<4, 3<<4, 3<<4, 2<<4, 2<<4, 0, 0,
+						 3<<4, 3<<4, 3<<4, 3<<4, 2<<4, 2<<4, 2<<4, 2<<4,
 						 0, 0, 0, 0, 0, 0, 0, 0,
 						 0, 0, 0, 0, 0, 0, 0, 0,
 						 0, 0, 0, 0, 0, 0, 0, 0,
