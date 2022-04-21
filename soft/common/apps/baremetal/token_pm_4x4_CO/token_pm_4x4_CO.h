@@ -1,7 +1,7 @@
-#include "token_pm_3x3_SW_data.h"
-#include "token_pm_fft.h"
-#include "token_pm_vitdodec.h"
-#include "token_pm_nvdla.h"
+#include "token_pm_4x4_SW_data.h"
+#include "token_pm_gemm.h"
+#include "token_pm_nv.h"
+#include "token_pm_conv2d.h"
 
 
 //struct esp_device **dev_list = aligned_malloc(N_ACC*sizeof((struct *)esp_device));
@@ -79,7 +79,7 @@ unsigned* set_tokens(unsigned sum_max, unsigned tile_id)
 		for (j=0; j<N_ACC; j++)
 		{
 			freq[j] = LUT_DATA[j][token_has_int[j]];
-		//	printf("FINAL Index: %d TOKENS: %d, freq: 0x%x, active: %d\n", j, token_has_int[j], freq[j], activity[j]); 
+			//printf("FINAL Index: %d TOKENS: %d, freq: 0x%x, active: %d\n", j, token_has_int[j], freq[j], activity[j]); 
 		}
 		//set_freq(&espdevs[tile_id],freq);
 		//write_config1(&espdevs[i],1,0,0,0);

@@ -158,7 +158,9 @@ int main(int argc, char * argv[])
 		iowrite32(dev_list_acc[i], CMD_REG, CMD_MASK_START);
 		start_tile(espdevs, i);
 		tot_activity += 1;
-		printf("Start tile %d, Num active accelerators %d\n", i, tot_activity);
+		#ifdef DEBUG
+			printf("Start tile %d, Num active accelerators %d\n", i, tot_activity);
+		#endif
 	}
 
 
@@ -173,7 +175,7 @@ int main(int argc, char * argv[])
 
 	//set_freq(&espdevs[0],Fmin[0]);
 	//#ifdef DEBUG
-	printf("Finished N1\n");
+	//printf("Finished N1\n");
 	//#endif
 
 	while (tot_activity != 0)
@@ -185,10 +187,14 @@ int main(int argc, char * argv[])
 			{
 				end_tile(espdevs, i);
 				tot_activity -= 1;
-				printf("End tile %d, Num active accelerators %d\n", i, tot_activity);
+				#ifdef DEBUG
+					printf("End tile %d, Num active accelerators %d\n", i, tot_activity);
+				#endif
 			}
 		}
 	}
+   	aligned_free(dev_list_acc);
+	printf("Execution complete\n");
 
 #endif
 

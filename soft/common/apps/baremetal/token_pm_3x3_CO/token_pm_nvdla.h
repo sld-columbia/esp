@@ -113,7 +113,7 @@ static int nvdla_validate_buf(nvdla_token_t *out, nvdla_native_t *gold)
 static void nvdla_init_buf (nvdla_token_t *in, nvdla_native_t * gold)
 {
 #include "nvdla_input.h"
-#include "nvdla_gold.h"
+//#include "nvdla_gold.h"
 }
 
 void setup_nvdla(nvdla_token_t *mem,unsigned i_base, unsigned o_base, unsigned b_base, unsigned w_base)
@@ -320,7 +320,7 @@ void run_nvdla(struct esp_device *espdev, struct esp_device *dev, nvdla_token_t 
 
     // Allocation of the accelerator data array (mem) and of the expected output array (gold)
     mem = aligned_malloc(mem_size);
-    gold = aligned_malloc(out_size);
+    //gold = aligned_malloc(out_size);
     printf("  memory buffer base-address = %p\n", mem);
 
     nvdla_init_buf(mem, gold);
@@ -342,7 +342,7 @@ void run_nvdla(struct esp_device *espdev, struct esp_device *dev, nvdla_token_t 
     //error_id++;
     //Increment total_activity
     *act++;
-    printf("NVDLA started, total activity is now: %d\n", *act);
+    //printf("NVDLA started, total activity is now: %d\n", *act);
 
     for (int i = 0; i < N_ITER; i++) {
 
@@ -359,6 +359,7 @@ void run_nvdla(struct esp_device *espdev, struct esp_device *dev, nvdla_token_t 
         //time1 = nvdla_get_counter();
         plic_dev.addr = PLIC_ADDR;
         while(ioread32(&plic_dev, PLIC_IP_OFFSET) != 0x40);
+	printf("Wait\n");
         //time2 = nvdla_get_counter();
 
         //printf("Time load: %llu\n", time1 - time0);
@@ -402,6 +403,6 @@ void run_nvdla(struct esp_device *espdev, struct esp_device *dev, nvdla_token_t 
 
     //Decrement total_activity
     *act--;
-   //aligned_free(mem);
+   aligned_free(mem);
    //aligned_free(gold);
 }

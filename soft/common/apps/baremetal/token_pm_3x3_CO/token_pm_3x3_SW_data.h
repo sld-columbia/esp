@@ -1,5 +1,5 @@
 #include "token_pm_3x3_Ccommon.h"
-#define total_tokens 24
+#define total_tokens 12
 //#define N_ACC 6 //Already define in main .h
 #define LUT_SIZE 64
 
