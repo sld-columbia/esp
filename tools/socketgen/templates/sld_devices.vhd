@@ -37,7 +37,7 @@ package sld_devices is
   constant SLD_TILE_CSR  : devid_t := 16#024#;
   constant SLD_ESP_INIT  : devid_t := 16#025#;
   constant SLD_EXTMEM_LINK : devid_t := 16#026#;
-  --constant SLD_PRC         : devid_t := 16#030#;
+  --constant SLD_PRC         : devid_t := 16#031#;
   -- <<devid>>
 
   constant VENDOR_SIFIVE : vendor_t := 16#EC#;
@@ -51,8 +51,6 @@ package sld_devices is
   constant LOWRISC_IBEX_SMALL : devid_t := 16#001#;
   constant LOWRISC_IBEX_TIMER : devid_t := 16#002#;
 
-  constant VENDOR_XILINX       : vendor_t := 16#EF#;
-  constant XILINX_PRC          : devid_t  := 16#030#;
 
   constant VENDOR_UIUC      : vendor_t := 16#EE#;
 
@@ -74,7 +72,6 @@ package sld_devices is
     SLD_TILE_CSR    => "ESP tile ctrl & stats          ",
     SLD_ESP_INIT    => "ESP self init module           ",
     SLD_EXTMEM_LINK => "FPGA external memory link      ",
-    --SLD_PRC         => "Reconfiguration Controller    ",
     -- <<ddesc>>
     others => "Unknown Device                 ");
 
@@ -122,6 +119,21 @@ package sld_devices is
     vendorid     => VENDOR_UIUC,
     vendordesc   => UIUC_DESC,
     device_table => uiuc_device_table
+    );
+
+  constant VENDOR_XIL       : vendor_t := 16#EF#;
+  constant XILINX_PRC       : devid_t  := 16#031#;
+
+  constant XILINX_DESC : vdesc_t := "Xilinx                  ";
+
+  constant xil_device_table : dtable_t := (
+    XILINX_PRC     => "Reconfiguration Controller     ",
+    others => "Unknown Device                 ");
+
+  constant xilinx_dev_lib : vlib_t := (
+    vendorid    => VENDOR_XIL,
+    vendordesc  => XILINX_DESC,
+    device_table => xil_device_table
     );
 
 -- pragma translate_on

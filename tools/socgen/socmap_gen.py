@@ -918,7 +918,7 @@ def print_mapping(fp, soc, esp_config):
   #
   fp.write("  -- PRC \n") 
   fp.write("  constant prc_pconfig : apb_config_type := (\n")
-  fp.write("  0 => ahb_device_reg ( VENDOR_XILINX, XILINX_PRC, 0, 1, CFG_PRC_IRQ),\n") #define device 
+  fp.write("  0 => ahb_device_reg ( VENDOR_XIL, XILINX_PRC, 0, 1, CFG_PRC_IRQ),\n") #define device 
   fp.write("  1 => apb_iobar(16#0E4#, 16#fff#),\n")
   fp.write("  2 => (others => '0'));\n\n")
 
