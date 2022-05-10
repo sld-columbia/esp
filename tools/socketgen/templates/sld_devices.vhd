@@ -57,6 +57,9 @@ package sld_devices is
   constant UIUC_SPANDEX_L2  : devid_t := 16#020#;
   constant UIUC_SPANDEX_LLC : devid_t := 16#021#;
 
+  constant VENDOR_XIL       : vendor_t := 16#EF#;
+  constant XILINX_PRC       : devid_t  := 16#031#;
+
 -- pragma translate_off
 
   constant SLD_DESC : vdesc_t := "Columbia University SLD ";
@@ -120,9 +123,6 @@ package sld_devices is
     vendordesc   => UIUC_DESC,
     device_table => uiuc_device_table
     );
-
-  constant VENDOR_XIL       : vendor_t := 16#EF#;
-  constant XILINX_PRC       : devid_t  := 16#031#;
 
   constant XILINX_DESC : vdesc_t := "Xilinx                  ";
 
