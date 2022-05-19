@@ -205,7 +205,7 @@ begin
     freq_sel0 <= '1' when freq_sel_sync(0) = '1' else '0';  -- avoid X propagation
     freq_sel1 <= '1' when freq_sel_sync(1) = '1' else '0';  -- avoid X propagation
     freq_sel2 <= '1' when freq_sel_sync(2) = '1' else '0';  -- avoid X propagation
-    freq_sel3 <= '1' when freq_sel_sync(2) = '1' else '0';  -- avoid X propagation
+    freq_sel3 <= '1' when freq_sel_sync(3) = '1' else '0';  -- avoid X propagation
 
     xcvup : if (tech = virtexup) generate
     pll_virtexup_1: pll_virtexup
