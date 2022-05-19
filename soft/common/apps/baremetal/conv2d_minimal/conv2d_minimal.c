@@ -100,7 +100,7 @@ const int32_t dilation_h = 1;
 const int32_t dilation_w = 1;
 const int32_t do_relu = 0;
 const int32_t pool_type = 0;
-const int32_t batch_size = 1;
+const int32_t batch_size = 70;
 
 static unsigned in_words_adj;
 static unsigned weights_words_adj;
@@ -190,6 +190,7 @@ int main(int argc, char * argv[])
 	native_t *gold;
 	unsigned errors = 0;
 	unsigned coherence;
+	uint64_t cycles_start = 0, cycles_end = 0;
 
 	// Input data and golden output (aligned to DMA_WIDTH makes your life easier)
 	if (DMA_WORD_PER_BEAT(sizeof(token_t)) == 0) {
@@ -284,6 +285,8 @@ int main(int argc, char * argv[])
 
     // Start accelerators
     printf("  Start...\n");
+	cycles_start = get_counter();
+
     iowrite32(&dev, CMD_REG, CMD_MASK_START);
 
     // Wait for completion
@@ -292,6 +295,8 @@ int main(int argc, char * argv[])
         done = ioread32(&dev, STATUS_REG);
         done &= STATUS_MASK_DONE;
     }
+	cycles_end = get_counter();
+
     iowrite32(&dev, CMD_REG, 0x0);
 
     printf("  Done\n");
@@ -303,6 +308,7 @@ int main(int argc, char * argv[])
         printf("  ... FAIL\n");
     else
         printf("  ... PASS\n");
+	printf("  Execution cycles: %llu\n", cycles_end - cycles_start);
 
     aligned_free(ptable);
     aligned_free(mem);
