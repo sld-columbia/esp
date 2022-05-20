@@ -1,3 +1,4 @@
+#include <stdio.h>
 
 
 #ifndef __TOKEN_PM_H__
@@ -77,7 +78,9 @@
 #define CSR_TOKEN_PM_OFFSET 0x1d0
 
 
+
 #define ACC_BASE_ADDR 0x60010000
+#define ACC_THIRD_PARTY_BASE_ADDR 0x60400000
 #define ACC_OFFSET 0x100
 // Set accelerator ID (ACC_TILE_ID) according to the position of the accelerator in the
 // SoC. Acc IDs increment from left to right and from top to bottom.
@@ -86,17 +89,18 @@
 // FFT - Mem - Vit
 // FFT - Vit - FFT
 #define ACC_ID_NVDLA 0
-#define ACC_ADDR_VITERBI1 (ACC_BASE_ADDR + (ACC_OFFSET * ACC_ID_VITERBI1))
+#define ACC_ADDR_NVDLA (ACC_THIRD_PARTY_BASE_ADDR + (ACC_OFFSET * ACC_ID_NVDLA))
 #define ACC_ID_FFT1 1
 #define ACC_ADDR_FFT1 (ACC_BASE_ADDR + (ACC_OFFSET * ACC_ID_FFT1))
 #define ACC_ID_VITERBI1 2
-#define ACC_ADDR_VITERBI2 (ACC_BASE_ADDR + (ACC_OFFSET * ACC_ID_VITERBI2))
+#define ACC_ADDR_VITERBI1 (ACC_BASE_ADDR + (ACC_OFFSET * ACC_ID_VITERBI1))
 #define ACC_ID_FFT2 3
 #define ACC_ADDR_FFT2 (ACC_BASE_ADDR + (ACC_OFFSET * ACC_ID_FFT2))
 #define ACC_ID_VITERBI2 4
-#define ACC_ADDR_VITERBI3 (ACC_BASE_ADDR + (ACC_OFFSET * ACC_ID_VITERBI3))
+#define ACC_ADDR_VITERBI2 (ACC_BASE_ADDR + (ACC_OFFSET * ACC_ID_VITERBI2))
 #define ACC_ID_FFT3 5
 #define ACC_ADDR_FFT3 (ACC_BASE_ADDR + (ACC_OFFSET * ACC_ID_FFT3))
+
 
 //Common params
 static unsigned in_words_adj;
@@ -134,9 +138,9 @@ const unsigned acc_tile_ids[N_ACC] = {2,3,5,6,7,8};
 
 // Set of tests of the bare-metal app.
 // Uncomment the tests that you want to execute
- #define TEST_0 1
-//// basic test to directly set frequencies from CPU SW
-// #define TEST_1 1
+//#define TEST_0 1
+//// basic test to directly set frequencies from CPU SW 
+#define TEST_1 1
 ////Test with dummy actiivyt changes for faster debug
 
 
