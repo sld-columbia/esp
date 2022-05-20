@@ -12,3 +12,17 @@
 #define ACC_ADDR (ACC_BASE_ADDR + (ACC_OFFSET * ACC_ID))
 
 #endif /* __GEMM_STRATUS_MINIMAL_H__ */
+
+static inline uint64_t get_counter()
+{
+    uint64_t counter;
+    asm volatile (
+	"li t0, 0;"
+	"csrr t0, mcycle;"
+	"mv %0, t0"
+	: "=r" ( counter )
+	:
+	: "t0"
+        );
+    return counter;
+} 

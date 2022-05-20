@@ -83,7 +83,7 @@ static unsigned DMA_WORD_PER_BEAT(unsigned _st)
 /* <<--params-->> */
 const int32_t do_relu = 0;
 const int32_t transpose = 1;
-const int32_t ninputs = 2;
+const int32_t ninputs = 40;
 const int32_t d3 = 8;
 const int32_t d2 = 8;
 const int32_t d1 = 8;
@@ -171,6 +171,7 @@ int main(int argc, char * argv[])
 	native_t *gold;
 	unsigned errors = 0;
 	unsigned coherence;
+	uint64_t cycles_start = 0, cycles_end = 0;
 
 	st_offset = ninputs * (d1 * d2 + d2 * d3);
 	ld_offset2 = ninputs * (d1 * d2);
@@ -254,6 +255,7 @@ int main(int argc, char * argv[])
 
     // Start accelerators
     printf("  Start...\n");
+	cycles_start = get_counter();
 
     iowrite32(&dev, CMD_REG, CMD_MASK_START);
 
@@ -264,6 +266,7 @@ int main(int argc, char * argv[])
         done &= STATUS_MASK_DONE;
     }
     iowrite32(&dev, CMD_REG, 0x0);
+	cycles_end = get_counter();
 
     printf("  Done\n");
     printf("  validating...\n");
@@ -275,6 +278,7 @@ int main(int argc, char * argv[])
         printf("  ... FAIL\n");
     else
         printf("  ... PASS\n");
+	printf("  Execution cycles: %llu\n", cycles_end - cycles_start);
 
     aligned_free(ptable);
     aligned_free(mem);

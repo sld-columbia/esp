@@ -8,7 +8,22 @@
 #define ACC_OFFSET 0x100
 // Set accelerator ID (ACC_TILE_ID) according to the position of the accelerator in the
 // SoC. Acc IDs increment from left to right and from top to bottom.
-#define ACC_ID 6
+#define ACC_ID 0
 #define ACC_ADDR (ACC_BASE_ADDR + (ACC_OFFSET * ACC_ID))
 
 #endif /* __FFT2_STRATUS_MINIMAL_H__ */
+
+
+static inline uint64_t get_counter()
+{
+    uint64_t counter;
+    asm volatile (
+	"li t0, 0;"
+	"csrr t0, mcycle;"
+	"mv %0, t0"
+	: "=r" ( counter )
+	:
+	: "t0"
+        );
+    return counter;
+} 

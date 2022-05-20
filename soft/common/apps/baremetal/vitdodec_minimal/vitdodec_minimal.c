@@ -127,6 +127,7 @@ int main(int argc, char * argv[])
 	token_t *gold;
 	unsigned errors = 0;
     int coherence = ACC_COH_RECALL;
+	uint64_t cycles_start = 0, cycles_end = 0;
 
 	if (DMA_WORD_PER_BEAT(sizeof(token_t)) == 0) {
 		in_words_adj = 24852;
@@ -181,11 +182,14 @@ int main(int argc, char * argv[])
 
     // Flush (customize coherence model here)
     if (coherence != ACC_COH_RECALL)
-        esp_flush(coherence);
+        esp_flush(coherence,1);
 
     // Start accelerators
     //printf("  Start...\n");
+	cycles_start = get_counter();
+
     iowrite32(&dev, CMD_REG, CMD_MASK_START);
+	
 
     // Wait for completion
     done = 0;
@@ -193,6 +197,8 @@ int main(int argc, char * argv[])
         done = ioread32(&dev, STATUS_REG);
         done &= STATUS_MASK_DONE;
     }
+	cycles_end = get_counter();
+
     iowrite32(&dev, CMD_REG, 0x0);
 
     //printf("  Done\n");
@@ -204,6 +210,7 @@ int main(int argc, char * argv[])
         printf("  ... FAIL\n");
     else
         printf("  ... PASS\n");
+	printf("  Execution cycles: %llu\n", cycles_end - cycles_start);
 
     aligned_free(ptable);
     aligned_free(mem);

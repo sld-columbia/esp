@@ -26,8 +26,8 @@
 // Define data type of the pixel
 typedef short pixel;
 #else
-#define COLS 16
-#define ROWS 16
+#define COLS 48
+#define ROWS 48
 // Define data type of the pixel
 typedef char pixel;
 #endif
@@ -64,12 +64,13 @@ int main(int argc, char * argv[])
     pixel gold[COLS * ROWS];
     unsigned errors = 0;
     int scatter_gather = 1;
+	uint64_t cycles_start = 0, cycles_end = 0;
 
     dev.addr = ACC_ADDR;
 
     // Allocate memory (will be contigous anyway in baremetal)
     mem = aligned_malloc(NIGHTVISION_BUF_SIZE);
-    //printf("  memory buffer base-address = %p\n", mem);
+    printf("  memory buffer base-address = %p\n", mem);
 
     ptable = aligned_malloc(NCHUNK * sizeof(unsigned *));
     for (i = 0; i < NCHUNK; i++)
@@ -102,10 +103,11 @@ int main(int argc, char * argv[])
 
     // Flush for non-coherent DMA
     if (coherence != ACC_COH_RECALL)
-        esp_flush(coherence);
+        esp_flush(coherence,1);
 
     // Start accelerator
-    //printf("  Start..\n");
+    printf("  Start..\n");
+	cycles_start = get_counter();
 
     iowrite32(&dev, CMD_REG, CMD_MASK_START);
 
@@ -114,11 +116,13 @@ int main(int argc, char * argv[])
         done = ioread32(&dev, STATUS_REG);
         done &= STATUS_MASK_DONE;
     }
+	cycles_end = get_counter();
+
     iowrite32(&dev, CMD_REG, 0x0);
-    //printf("  Done\n");
+    printf("  Done\n");
 
     /* Validation */
-    //printf("  validating...\n");
+    printf("  validating...\n");
 
     for (i = 0; i < ROWS; i++)
         for (j = 0; j < COLS; j++) {
@@ -135,6 +139,7 @@ int main(int argc, char * argv[])
     } else {
         printf("  ... PASS\n");
     }
+	printf("  Execution cycles: %llu\n", cycles_end - cycles_start);
 
     aligned_free(ptable);
     aligned_free(mem);
