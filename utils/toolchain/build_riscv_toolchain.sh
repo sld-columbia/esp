@@ -132,7 +132,7 @@ if [ $(noyes "Skip ${src}") == "n" ]; then
 
     git reset --hard ${RISCV_GNU_TOOLCHAIN_SHA}
     git submodule update --init --recursive
-    ./configure --prefix=${TARGET_DIR} --disable-gdb
+    ./configure --prefix=${TARGET_DIR} --disable-gdb --with-cmodel=medany
     cmd="make -j ${NTHREADS}"
     runsudo ${TARGET_DIR} "$cmd"
 
