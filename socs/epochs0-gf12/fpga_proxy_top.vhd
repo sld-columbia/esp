@@ -892,11 +892,12 @@ begin  -- architecture rtl
         g_data_width => MISC_NOC_FLIT_SIZE,
         g_size       => 8)
       port map (
-        rst_n_i    => rstn,
+        rst_wr_n_i    => rstn,
         clk_wr_i   => sys_clk(i),
         we_i       => ahbm_snd_wrreq(i),
         d_i        => ahbm_snd_data_in(i),
         wr_full_o  => ahbm_snd_full(i),
+        rst_rd_n_i => rstn,
         clk_rd_i   => main_clk,
         rd_i       => ahbs_rcv_rdreq(i),
         q_o        => ahbs_rcv_data_out(i),
@@ -908,11 +909,12 @@ begin  -- architecture rtl
         g_data_width => MISC_NOC_FLIT_SIZE,
         g_size       => 8)
       port map (
-        rst_n_i    => rstn,
+        rst_wr_n_i    => rstn,
         clk_wr_i   => main_clk,
         we_i       => ahbs_snd_wrreq(i),
         d_i        => ahbs_snd_data_in(i),
         wr_full_o  => ahbs_snd_full(i),
+        rst_rd_n_i => rstn,
         clk_rd_i   => sys_clk(i),
         rd_i       => ahbm_rcv_rdreq(i),
         q_o        => ahbm_rcv_data_out(i),

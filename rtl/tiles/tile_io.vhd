@@ -39,7 +39,8 @@ use work.ibex_esp_pkg.all;
 entity tile_io is
   generic (
     SIMULATION : boolean := false;
-    this_has_dco : integer range 0 to 1 := 0);
+    this_has_dco : integer range 0 to 2 := 0); --0: no DCO 1: tile and NoC DCO
+                                               --2: NoC DCO only
   port (
     raw_rstn           : in  std_ulogic;  -- active low raw reset (connect to DCO if present)
     tile_rst           : in  std_ulogic;  -- active low tile reset synch on clk
@@ -380,13 +381,13 @@ begin
   local_y <= this_local_y;
 
   -- DCO Reset synchronizer
-  rst_gen: if this_has_dco /= 0 generate
+  rst_gen: if this_has_dco = 1 generate
     tile_rstn : rstgen
       generic map (acthigh => 1, syncin => 0)
       port map (tile_rst, dco_clk_int, dco_clk_lock, rst, open);
   end generate rst_gen;
 
-  no_rst_gen: if this_has_dco = 0 generate
+  no_rst_gen: if this_has_dco /= 1 generate
     rst <= tile_rst;
   end generate no_rst_gen;
 
@@ -419,42 +420,49 @@ begin
     dco_noc_clk_sel  <= tile_config(ESP_CSR_DCO_NOC_CFG_LSB + 1);
     dco_noc_en       <= raw_rstn and tile_config(ESP_CSR_DCO_NOC_CFG_LSB);
 
-    dco_i: dco
-      generic map (
-        tech => CFG_FABTECH,
-        enable_div2 => 0,
-        dlog => 10)                     -- Tile I/O is the first sending NoC
-                                        -- packets; last reset to be released
-      port map (
-        rstn     => raw_rstn,
-        ext_clk  => refclk,
-        en       => dco_en,
-        clk_sel  => dco_clk_sel,
-        cc_sel   => dco_cc_sel,
-        fc_sel   => dco_fc_sel,
-        div_sel  => dco_div_sel,
-        freq_sel => dco_freq_sel,
-        clk      => dco_clk_int,
-        clk_div  => pllclk,
-        lock     => dco_clk_lock);
+    dco_tile_gen : if this_has_dco = 1 generate
+      dco_i: dco
+        generic map (
+          tech => CFG_FABTECH,
+          enable_div2 => 0,
+          dlog => 10)                     -- Tile I/O is the first sending NoC
+        port map (
+          rstn     => raw_rstn,
+          ext_clk  => refclk,
+          en       => dco_en,
+          clk_sel  => dco_clk_sel,
+          cc_sel   => dco_cc_sel,
+          fc_sel   => dco_fc_sel,
+          div_sel  => dco_div_sel,
+          freq_sel => dco_freq_sel,
+          clk      => dco_clk_int,
+          clk_div  => pllclk,
+          lock     => dco_clk_lock);
 
-    dco_freq_sel <= tile_config(ESP_CSR_DCO_CFG_MSB - DCO_CFG_LPDDR_CTRL_BITS - 0  downto ESP_CSR_DCO_CFG_MSB - DCO_CFG_LPDDR_CTRL_BITS - 0  - 1);
-    dco_div_sel  <= tile_config(ESP_CSR_DCO_CFG_MSB - DCO_CFG_LPDDR_CTRL_BITS - 2  downto ESP_CSR_DCO_CFG_MSB - DCO_CFG_LPDDR_CTRL_BITS - 2  - 2);
-    dco_fc_sel   <= tile_config(ESP_CSR_DCO_CFG_MSB - DCO_CFG_LPDDR_CTRL_BITS - 5  downto ESP_CSR_DCO_CFG_MSB - DCO_CFG_LPDDR_CTRL_BITS - 5  - 5);
-    dco_cc_sel   <= tile_config(ESP_CSR_DCO_CFG_MSB - DCO_CFG_LPDDR_CTRL_BITS - 11 downto ESP_CSR_DCO_CFG_MSB - DCO_CFG_LPDDR_CTRL_BITS - 11 - 5);
-    dco_clk_sel  <= tile_config(ESP_CSR_DCO_CFG_LSB + 1);
-    dco_en       <= raw_rstn and tile_config(ESP_CSR_DCO_CFG_LSB);
+      dco_freq_sel <= tile_config(ESP_CSR_DCO_CFG_MSB - DCO_CFG_LPDDR_CTRL_BITS - 0  downto ESP_CSR_DCO_CFG_MSB - DCO_CFG_LPDDR_CTRL_BITS - 0  - 1);
+      dco_div_sel  <= tile_config(ESP_CSR_DCO_CFG_MSB - DCO_CFG_LPDDR_CTRL_BITS - 2  downto ESP_CSR_DCO_CFG_MSB - DCO_CFG_LPDDR_CTRL_BITS - 2  - 2);
+      dco_fc_sel   <= tile_config(ESP_CSR_DCO_CFG_MSB - DCO_CFG_LPDDR_CTRL_BITS - 5  downto ESP_CSR_DCO_CFG_MSB - DCO_CFG_LPDDR_CTRL_BITS - 5  - 5);
+      dco_cc_sel   <= tile_config(ESP_CSR_DCO_CFG_MSB - DCO_CFG_LPDDR_CTRL_BITS - 11 downto ESP_CSR_DCO_CFG_MSB - DCO_CFG_LPDDR_CTRL_BITS - 11 - 5);
+      dco_clk_sel  <= tile_config(ESP_CSR_DCO_CFG_LSB + 1);
+      dco_en       <= raw_rstn and tile_config(ESP_CSR_DCO_CFG_LSB);
 
+    end generate dco_tile_gen;
   end generate dco_gen;
 
   no_dco_gen: if this_has_dco = 0 generate
     pllclk       <= '0';
     pllclk_noc   <= '0';
-    dco_clk_int  <= '0';
-    sys_clk_out  <= '0';
+    dco_clk_int  <= refclk;
+    sys_clk_out  <= refclk_noc;
     dco_clk_lock <= '1';
     sys_clk_lock <= '1';
   end generate no_dco_gen;
+
+  no_tile_dco_gen: if this_has_dco = 2 generate
+    pllclk       <= '0';
+    dco_clk_int  <= refclk;
+    dco_clk_lock <= '1';
+  end generate no_tile_dco_gen;
 
   dco_clk <= dco_clk_int;
 
