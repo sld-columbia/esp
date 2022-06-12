@@ -37,7 +37,8 @@ use work.tiles_pkg.all;
 entity asic_tile_mem is
   generic (
     SIMULATION   : boolean   := false;
-    ROUTER_PORTS : ports_vec := "11111");
+    ROUTER_PORTS : ports_vec := "11111";
+    this_has_dco : integer range 0 to 1 := 1);
   port (
     rst                : in  std_ulogic;
     sys_clk            : in  std_ulogic;  -- NoC clock
@@ -144,6 +145,7 @@ architecture rtl of asic_tile_mem is
   signal raw_rstn     : std_ulogic;
   signal dco_clk      : std_ulogic;
   signal dco_rstn     : std_ulogic;
+  signal tile_rstn     : std_ulogic;
 --  signal dco_clk_lock : std_ulogic;
 
   -- Tile parameters
@@ -385,6 +387,16 @@ begin
     generic map (acthigh => 1, syncin => 0)
     port map (rst, tclk, '1', test_rstn, open);
 
+  -- with no DCO, there is no reset generator inside the tile
+  -- since the reset generator converts to active low, do manually here
+  no_dco_tile_rstn_gen : if this_has_dco = 0 generate
+    tile_rstn <= not rst;
+  end generate no_dco_tile_rstn_gen;
+
+  dco_tile_rstn_gen : if this_has_dco /= 0 generate
+    tile_rstn <= rst;
+  end generate dco_tile_rstn_gen;
+
   -----------------------------------------------------------------------------
   -- JTAG for single tile testing / bypass when test_if_en = 0
   -----------------------------------------------------------------------------
@@ -619,12 +631,12 @@ begin
   tile_mem_1: tile_mem
     generic map (
       SIMULATION   => SIMULATION,
-      this_has_dco => 1,
+      this_has_dco => this_has_dco,
       this_has_ddr => 0,
       dco_rst_cfg  => (others => '0'))
     port map (
       raw_rstn           => raw_rstn,
-      tile_rst           => rst,
+      tile_rst           => tile_rstn,
       refclk             => ext_clk,
       clk                => dco_clk,
       pllbypass          => ext_clk_sel_default,  --ext_clk_sel,

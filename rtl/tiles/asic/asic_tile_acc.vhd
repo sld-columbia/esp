@@ -34,7 +34,8 @@ entity asic_tile_acc is
     this_device        : devid_t              := 0;
     this_irq_type      : integer              := 0;
     this_has_l2        : integer range 0 to 1 := 0;
-    ROUTER_PORTS       : ports_vec            := "11111");
+    ROUTER_PORTS       : ports_vec            := "11111";
+    this_has_dco       : integer range 0 to 1 := 0);
   port (
     rst                : in  std_ulogic;
     sys_clk            : in  std_ulogic;  -- NoC clock
@@ -132,6 +133,7 @@ architecture rtl of asic_tile_acc is
   signal raw_rstn     : std_ulogic;
   signal dco_clk      : std_ulogic;
   signal dco_rstn     : std_ulogic;
+  signal tile_rstn     : std_ulogic;
 --  signal dco_clk_lock : std_ulogic;
 
   -- Tile parameters
@@ -374,6 +376,15 @@ begin
     generic map (acthigh => 1, syncin => 0)
     port map (rst, tclk, '1', test_rstn, open);
 
+  -- with no DCO, there is no reset generator inside the tile
+  -- since the reset generator converts to active low, do manually here
+  no_dco_tile_rstn_gen : if this_has_dco = 0 generate
+    tile_rstn <= not rst;
+  end generate no_dco_tile_rstn_gen;
+
+  dco_tile_rstn_gen : if this_has_dco /= 0 generate
+    tile_rstn <= rst;
+  end generate dco_tile_rstn_gen;
   -----------------------------------------------------------------------------
   -- JTAG for single tile testing / bypass when test_if_en = 0
   -----------------------------------------------------------------------------
@@ -610,13 +621,13 @@ begin
       this_device        => this_device,
       this_irq_type      => this_irq_type,
       this_has_l2        => this_has_l2,
-      this_has_dvfs      => 0,          -- no DVFS controller
+      this_has_dvfs      => 0,              -- no DVFS controller
       this_has_pll       => 0,
-      this_has_dco       => 1,          -- use DCO
+      this_has_dco       => this_has_dco,   -- use DCO
       this_extra_clk_buf => 0)
     port map (
       raw_rstn           => raw_rstn,
-      tile_rst           => rst,
+      tile_rst           => tile_rstn,
       refclk             => ext_clk,
       pllbypass          => ext_clk_sel_default,  --ext_clk_sel,
       pllclk             => clk_div,

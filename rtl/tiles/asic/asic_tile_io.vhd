@@ -38,7 +38,9 @@ use work.tiles_pkg.all;
 entity asic_tile_io is
   generic (
     SIMULATION   : boolean   := false;
-    ROUTER_PORTS : ports_vec := "11111");
+    ROUTER_PORTS : ports_vec := "11111";
+    this_has_dco : integer range 0 to 2 := 1); -- 0: no DCO, 1: tile and NoC DCO
+                                               -- 2: NoC DCO only
   port (
     rst                : in    std_ulogic;  -- Global reset (active high)
     sys_rstn_out       : out   std_ulogic;  -- NoC reset (active low)
@@ -166,6 +168,7 @@ architecture rtl of asic_tile_io is
   -- Tile clock and reset (only for I/O tile)
   signal dco_clk      : std_ulogic;
   signal dco_rstn     : std_ulogic;
+  signal tile_rstn     : std_ulogic;
 --  signal dco_clk_lock : std_ulogic;
 
   -- Ethernet and Debug link
@@ -441,6 +444,16 @@ begin
   rst_jtag : rstgen
     generic map (acthigh => 1, syncin => 0)
     port map (rst, tclk, '1', test_rstn, open);
+
+  -- with no DCO, there is no reset generator inside the tile
+  -- since the reset generator converts to active low, do manually here
+  no_dco_tile_rstn_gen : if this_has_dco = 0 generate
+    tile_rstn <= not rst;
+  end generate no_dco_tile_rstn_gen;
+
+  dco_tile_rstn_gen : if this_has_dco /= 0 generate
+    tile_rstn <= rst;
+  end generate dco_tile_rstn_gen;
 
   -----------------------------------------------------------------------------
   -- JTAG for single tile testing / bypass when test_if_en = 0
@@ -755,10 +768,10 @@ begin
   tile_io_1 : tile_io
     generic map (
       SIMULATION   => SIMULATION,
-      this_has_dco => 1)
+      this_has_dco => this_has_dco)
     port map (
       raw_rstn           => raw_rstn,
-      tile_rst           => rst,
+      tile_rst           => tile_rstn,
       clk                => dco_clk,    -- Local DCO clock
       refclk_noc         => ext_clk_noc,  -- Backup NoC clock when DCO is enabled
       pllclk_noc         => clk_div_noc,  -- NoC DCO clock out
