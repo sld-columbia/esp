@@ -642,6 +642,7 @@ begin  -- architecture rtl of l2_acc_wrapper
 
   acc_ready_gen: if USE_SPANDEX = 0 generate
     acc_done_l2_ready <= '0';
+    acc_flush_done <= '0';
   end generate acc_ready_gen;
 
   ----------------------------------------------------------------------------
