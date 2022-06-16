@@ -384,8 +384,8 @@ module ariane_wrap
        .AXI_DATA_WIDTH     ( AXI_DATA_WIDTH     ),
        .AXI_USER_WIDTH     ( AXI_USER_WIDTH     ),
        .AXI_ID_WIDTH       ( AXI_ID_WIDTH ),
-       .MASTER_SLICE_DEPTH ( 2                ),
-       .SLAVE_SLICE_DEPTH  ( 2                )
+       .MASTER_SLICE_DEPTH ( 1                ),
+       .SLAVE_SLICE_DEPTH  ( 1                )
        ) i_axi_xbar
        (
 	.clk          ( clk     ),
