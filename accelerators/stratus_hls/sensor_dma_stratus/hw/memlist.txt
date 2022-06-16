@@ -1,0 +1,4 @@
+sensor_dma_plm_block_in_dma32 12288 64 1w:0r 0w:1r
+sensor_dma_plm_block_out_dma32 12288 64 1w:0r 0w:1r
+sensor_dma_plm_block_in_dma64 12288 64 1w:0r 0w:1r
+sensor_dma_plm_block_out_dma64 12288 64 1w:0r 0w:1r

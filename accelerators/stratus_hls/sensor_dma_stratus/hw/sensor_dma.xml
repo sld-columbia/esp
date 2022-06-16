@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sld>
+  <accelerator name="sensor_dma" desc="Accelerator SENSOR_DMA" data_size="4" device_id="050" hls_tool="stratus_hls">
+    <param name="src_offset" desc="src_offset" />
+    <param name="dst_offset" desc="dst_offset" />
+    <param name="rd_size" desc="rd_size" />
+    <param name="wr_sp_offset" desc="wr_sp_offset" />
+    <param name="wr_size" desc="wr_size" />
+    <param name="rd_wr_enable" desc="rd_wr_enable" />
+    <param name="rd_sp_offset" desc="rd_sp_offset" />
+  </accelerator>
+</sld>
