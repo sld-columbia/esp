@@ -35,7 +35,8 @@ entity asic_tile_acc is
     this_irq_type      : integer              := 0;
     this_has_l2        : integer range 0 to 1 := 0;
     ROUTER_PORTS       : ports_vec            := "11111";
-    this_has_dco       : integer range 0 to 1 := 0);
+    this_has_dco       : integer range 0 to 1 := 0;
+    test_if_en         : integer range 0 to 1 := 1);
   port (
     rst                : in  std_ulogic;
     sys_clk            : in  std_ulogic;  -- NoC clock
@@ -390,7 +391,7 @@ begin
   -----------------------------------------------------------------------------
   jtag_test_i : jtag_test
     generic map (
-      test_if_en => 1)
+      test_if_en => test_if_en)
     port map (
       rst                 => test_rstn,
       refclk              => dco_clk,

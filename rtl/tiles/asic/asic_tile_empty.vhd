@@ -39,7 +39,8 @@ entity asic_tile_empty is
   generic (
     SIMULATION   : boolean              := false;
     ROUTER_PORTS : ports_vec            := "11111";
-    this_has_dco : integer range 0 to 1 := 1);
+    this_has_dco : integer range 0 to 1 := 1;
+    test_if_en         : integer range 0 to 1 := 1);
   port (
     rst                : in  std_logic;
     sys_clk            : in  std_ulogic;  -- NoC clock
@@ -392,7 +393,7 @@ begin
   -----------------------------------------------------------------------------
   jtag_test_i : jtag_test
     generic map (
-      test_if_en => 1)
+      test_if_en => test_if_en)
     port map (
       rst                 => test_rstn,
       refclk              => dco_clk,

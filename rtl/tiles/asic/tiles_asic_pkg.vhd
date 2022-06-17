@@ -22,7 +22,8 @@ package tiles_asic_pkg is
     generic (
       SIMULATION   : boolean;
       ROUTER_PORTS : ports_vec;
-      this_has_dco : integer range 0 to 1);
+      this_has_dco : integer range 0 to 1;
+      test_if_en   : integer range 0 to 1);
     port (
       rst                : in  std_ulogic;
       sys_clk            : in  std_ulogic;
@@ -114,7 +115,8 @@ package tiles_asic_pkg is
       this_irq_type : integer;
       this_has_l2   : integer range 0 to 1;
       ROUTER_PORTS  : ports_vec;
-      this_has_dco  : integer range 0 to 1);
+      this_has_dco  : integer range 0 to 1;
+      test_if_en   : integer range 0 to 1);
     port (
       rst                : in  std_ulogic;
       sys_clk            : in  std_ulogic;
@@ -203,7 +205,8 @@ package tiles_asic_pkg is
     generic (
       SIMULATION   : boolean := false;
       ROUTER_PORTS : ports_vec;
-      this_has_dco : integer range 0 to 1);
+      this_has_dco : integer range 0 to 1;
+      test_if_en   : integer range 0 to 1);
     port (
       rst                : in    std_ulogic;
       sys_clk            : in    std_ulogic;
@@ -301,7 +304,8 @@ package tiles_asic_pkg is
     generic (
       SIMULATION   : boolean;
       ROUTER_PORTS : ports_vec;
-      this_has_dco : integer range 0 to 2);
+      this_has_dco : integer range 0 to 2;
+      test_if_en   : integer range 0 to 1);
     port (
       rst                : in  std_ulogic;
       sys_rstn_out       : out std_ulogic;
@@ -413,7 +417,8 @@ package tiles_asic_pkg is
     generic (
       SIMULATION   : boolean;
       ROUTER_PORTS : ports_vec;
-      this_has_dco : integer range 0 to 1);
+      this_has_dco : integer range 0 to 1;
+      test_if_en   : integer range 0 to 1);
     port (
       rst                : in  std_logic;
       sys_clk            : in  std_ulogic;
@@ -502,7 +507,8 @@ package tiles_asic_pkg is
     generic (
       SIMULATION   : boolean := false;
       ROUTER_PORTS : ports_vec;
-      this_has_dco : integer range 0 to 1);
+      this_has_dco : integer range 0 to 1;
+      test_if_en   : integer range 0 to 1);
     port (
       rst                : in  std_ulogic;
       sys_clk            : in  std_ulogic;
@@ -591,7 +597,8 @@ package tiles_asic_pkg is
     generic (
       SIMULATION   : boolean := false;
       ROUTER_PORTS : ports_vec;
-      this_has_dco : integer range 0 to 1);
+      this_has_dco : integer range 0 to 1;
+      test_if_en   : integer range 0 to 1);
     port (
       rst                : in  std_ulogic;
       sys_clk            : in  std_ulogic;
