@@ -115,9 +115,9 @@ package allmem is
   end component;
 
 
-  -- GF12
+  -- ASIC
 
-  component gf12_syncram is
+  component asic_syncram is
     generic (
       abits : integer;
       dbits : integer);
@@ -128,9 +128,9 @@ package allmem is
       dataout : out std_logic_vector (dbits -1 downto 0);
       enable  : in  std_ulogic;
       write   : in  std_ulogic);
-  end component gf12_syncram;
+  end component asic_syncram;
 
-  component gf12_syncram_2p is
+  component asic_syncram_2p is
     generic (
       abits : integer;
       dbits : integer);
@@ -143,9 +143,9 @@ package allmem is
       write    : in  std_ulogic;
       waddress : in  std_logic_vector((abits -1) downto 0);
       datain   : in  std_logic_vector((dbits -1) downto 0));
-  end component gf12_syncram_2p;
+  end component asic_syncram_2p;
 
-  component gf12_syncram_be is
+  component asic_syncram_be is
     generic (
       abits : integer;
       dbits : integer);
@@ -156,7 +156,7 @@ package allmem is
       dataout : out std_logic_vector(dbits -1 downto 0);
       enable  : in  std_logic_vector(dbits/8-1 downto 0);
       write   : in  std_logic_vector(dbits/8-1 downto 0));
-  end component gf12_syncram_be;
+  end component asic_syncram_be;
 
   -- Inferred
   component generic_syncram

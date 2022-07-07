@@ -142,6 +142,9 @@ include $(ESP_ROOT)/utils/make/ncsim.mk
 include $(ESP_ROOT)/utils/make/genus.mk
 
 
+### Asic Integration Targets
+include $(ESP_ROOT)/utils/make/asicgen.mk
+
 ### FPGA Deploy targets ###
 include $(ESP_ROOT)/utils/make/fpga.mk
 

@@ -539,6 +539,9 @@ def print_constants(fp, soc, esp_config):
   fp.write("  constant CFG_SLD_LLC_CACHE_IRQ : integer := " + str(LLC_CACHE_PIRQ) + ";\n\n")
   fp.write("  constant CFG_SLD_L2_CACHE_IRQ : integer := " + str(L2_CACHE_PIRQ) + ";\n\n")
 
+def print_slm(fp, soc, esp_config):
+  abits = int(math.log(esp_config.slm_kbytes,2) + 8 - soc.DMA_WIDTH/64)
+  fp.write('slm_sram_be_%dabits_64dbits ' %abits + str(2**abits) + ' 64' + ' 1w:0r 0w:1r')
 
 def print_mapping(fp, soc, esp_config):
 
@@ -2470,6 +2473,14 @@ def create_socmap(esp_config, soc):
 
   print("Created configuration into 'socmap.vhd'")
 
+  if int(esp_config.nslm) > 0:
+    print("Created SLM config file into 'slm_memgen.txt'")
+    fp = open('slm_memgen.txt' , 'w')
+
+    print_slm(fp, soc, esp_config)
+
+    fp.close()
+
   # ESPLink header
   fp = open('esplink.h', 'w')
 
@@ -2536,3 +2547,4 @@ def create_socmap(esp_config, soc):
     fp.close()
 
     print("Created floorplanning constraints for profgpa-xcvu440 into 'mem_tile_floorplanning.xdc'")
+
