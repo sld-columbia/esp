@@ -96,8 +96,8 @@ begin
         port map (clk, address, datain, dataoutx, xenable, xwrite);
     end generate;
 
-    g12 : if tech = gf12 and large_banks /= 0 generate
-      x0 : gf12_syncram_be generic map (abits, dbits)
+    asic : if tech = gf12 and large_banks /= 0 generate
+      x0 : asic_syncram_be generic map (abits, dbits)
         port map (clk, address, datain, dataoutx, xenable, xwrite);
     end generate;
 

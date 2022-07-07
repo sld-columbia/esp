@@ -128,7 +128,10 @@ endif
 # Testbench
 TOP_VHDL_SIM_SRCS += $(DESIGN_PATH)/$(SIMTOP).vhd
 
-TOP_VLOG_RTL_SRCS +=
+ifneq ($(filter $(TECHLIB),$(ASICLIBS)),)
+TOP_VLOG_RTL_SRCS += $(DESIGN_PATH)/cache_def_mem_asic.sv
+endif
+
 ifneq ($(filter $(TECHLIB),$(FPGALIBS)),)
 TOP_VLOG_SIM_SRCS += $(XILINX_VIVADO)/data/verilog/src/glbl.v
 endif
