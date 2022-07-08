@@ -2,32 +2,35 @@
 # SPDX-License-Identifier: Apache-2.0
 include ../../../common/common.mk
 
-ifeq ("$(CATAPULT_PATH)", "")
-$(error please define CATAPULT_PATH required for Catapult HLS library headers)
-endif
+# ifeq ("$(CATAPULT_PATH)", "")
+# $(error please define CATAPULT_PATH required for Catapult HLS library headers)
+# endif
 
-ifeq ("$(MGC_HOME)", "")
-$(error please define MGC_HOME required for Catapult HLS library headers)
-endif
+# ifeq ("$(MGC_HOME)", "")
+# $(error please define MGC_HOME required for Catapult HLS library headers)
+# endif
 
 ifeq ("$(SYSTEMC)", "")
 $(error please define SYSTEMC to execute a standalone simulation)
 endif
 
 ifeq ("$(DMA_WIDTH)", "")
-$(error please define the desired DMA_WIDTH for simulation)
+$(error DMA_WIDTH variable is not set! Please enter DMA_WIDTH=64 for Ariane or DMA_WIDTH=32 for Leon3 before the corresponding make target)
 endif
 
 INCDIR ?=
 INCDIR += -I../tb
 INCDIR += -I../tb/tests
 INCDIR += -I../inc
+INCDIR += -I../inc/mem_bank/
 INCDIR += -I../../../common/inc
-INCDIR += -I$(SYSTEMC)/include
-#INCDIR += -I$(CATAPULT_PATH)/shared/include
+INCDIR += -I../../../common/inc/core/systems
+INCDIR += -I$(SYSTEMC_HOME)/include
+INCDIR += -I$(CATAPULT_HOME)/shared/include
+INCDIR += -I$(CATAPULT_HOME)/shared/pkgs/matchlib/cmod/include
 INCDIR += -I$(MGC_HOME)/shared/include
-INCDIR += -I$(ESP_ROOT)/accelerators/catapult_hls/common/matchlib/cmod/include
 INCDIR += -I$(BOOST_HOME)/include
+
 
 CXXFLAGS ?=
 CXXFLAGS += -MMD
@@ -40,6 +43,9 @@ CXXFLAGS += -D__CUSTOM_SIM__
 CXXFLAGS += -D__MATCHLIB_CONNECTIONS__
 #CXXFLAGS += -D__MNTR_AC_SHARED__
 CXXFLAGS += -DHLS_CATAPULT
+
+CXXFLAGS += -DCONNECTIONS_ACCURATE_SIM -DSC_INCLUDE_DYNAMIC_PROCESSES -DCONNECTIONS_NAMING_ORIGINAL
+
 CXXFLAGS += -std=c++11
 CXXFLAGS += -Wno-unknown-pragmas
 CXXFLAGS += -Wno-unused-variable
@@ -48,7 +54,7 @@ CXXFLAGS += -Wall
 #CXXFLAGS += -DDMA_SINGLE_PROCESS
 
 LDLIBS :=
-LDLIBS += -L$(MGC_HOME)/shared/lib
+LDLIBS += -L$(CATAPULT_HOME)/shared/lib
 #LDLIBS += -L$(CATAPULT_PATH)/shared/lib
 
 LDFLAGS :=
@@ -89,7 +95,7 @@ $(TARGET): $(OBJS)
 	$(QUIET_CXX)$(CXX) $(CXXFLAGS) ${INCDIR} -c $< -o $@
 
 run: $(TARGET)
-	$(QUIET_RUN) LD_LIBRARY_PATH=$(LD_LIBRARY_PATH):$(SYSTEMC)/lib-linux64 ./$< $(RUN_ARGS)
+	$(QUIET_RUN) LD_LIBRARY_PATH=$(LD_LIBRARY_PATH):$(SYSTEMC_HOME)/lib-linux64 ./$< $(RUN_ARGS)
 
 clean:
 	$(QUIET_CLEAN)rm -f *.o *.d *.txt *.vcd $(TARGET)
