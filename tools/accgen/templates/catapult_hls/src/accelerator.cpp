@@ -1,4 +1,7 @@
-#include "../inc/<accelerator_name>.hpp"
+//Copyright (c) 2011-2022 Columbia University, System Level Design Group
+//SPDX-License-Identifier: Apache-2.0
+
+#include "<accelerator_name>.hpp"
 #include <mc_scverify.h>
 #define DMA_SIZE 3
 

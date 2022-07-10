@@ -1,7 +1,8 @@
-/* Copyright 2021 Columbia University SLD Group */
+// Copyright (c) 2011-2022 Columbia University, System Level Design Group
+// SPDX-License-Identifier: Apache-2.0
 
-#ifndef __ACCSPEC__
-#define __ACCSPEC__
+#ifndef __ACCSPECS__
+#define __ACCSPECS__
 
 #include <mc_connections.h>
 #include "nvhls_connections.h"
@@ -14,10 +15,6 @@
 /* <<--defines-->> */
 #define MEM_SIZE /* <<--mem-footprint-->> *//(DMA_WIDTH/8)
 #define DMA_SIZE 3
-
-#define FPDATA_WL DATA_WIDTH
-#define FPDATA_IL DATA_WIDTH/2
-
 
 #if (DMA_WIDTH == 32)
 /* <<--defines_32-->> */
@@ -112,9 +109,5 @@ public:
         data = 0;
     }
 };
-
-
-
-
 
 #endif

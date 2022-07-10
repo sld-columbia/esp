@@ -1,3 +1,6 @@
+//Copyright (c) 2011-2022 Columbia University, System Level Design Group
+//SPDX-License-Identifier: Apache-2.0
+
 #include "testbench.hpp"
 #include "ac_math/ac_random.h"
 #include <mc_connections.h>

@@ -1,7 +1,6 @@
-CXXFLAGS += -std=c++11
+#Copyright (c) 2011-2022 Columbia University, System Level Design Group
+#SPDX-License-Identifier: Apache-2.0
 
-#CXXFLAGS += -DHIERARCHICAL_BLOCKS
-#SRCS += $(foreach s, $(wildcard ../src/hier/*.cpp), $(shell basename $(s)))
-#VPATH += ../src/hier
+CXXFLAGS += -std=c++11
 
 include ../../../common/systemc.mk

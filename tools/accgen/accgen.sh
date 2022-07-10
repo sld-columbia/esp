@@ -363,16 +363,12 @@ for d in $dirs; do
 	sed -i "s/<acc_full_name>/$LOWERFULL/g" */*
 	sed -i "s/<ACC_FULL_NAME>/$UPPERFULL/g" */*
     elif [ "$FLOW" != "rtl" ]; then
-	sed -i "s/<accelerator_name>/$LOWER/g" *
-	sed -i "s/<ACCELERATOR_NAME>/$UPPER/g" *
-	sed -i "s/<acc_full_name>/$LOWERFULL/g" *
-	sed -i "s/<ACC_FULL_NAME>/$UPPERFULL/g" *
+	find . -type f -exec sed -i "s/<accelerator_name>/$LOWER/g" {} +
+	find . -type f -exec sed -i "s/<ACCELERATOR_NAME>/$UPPER/g" {} +
+	find . -type f -exec sed -i "s/<acc_full_name>/$LOWERFULL/g" {} +
+	find . -type f -exec sed -i "s/<ACC_FULL_NAME>/$UPPERFULL/g" {} +
     fi
 
-    find . -type f -exec sed -i "s/<accelerator_name>/$LOWER/g" {} +
-    find . -type f -exec sed -i "s/<ACCELERATOR_NAME>/$UPPER/g" {} +
-    find . -type f -exec sed -i "s/<acc_full_name>/$LOWERFULL/g" {} +
-    find . -type f -exec sed -i "s/<ACC_FULL_NAME>/$UPPERFULL/g" {} +
 
     if [[ "$FLOW" == "stratus_hls" && "$d" == "hls" ]]; then
 	ln -s ../../../common/hls/Makefile
@@ -416,17 +412,12 @@ if [ "$FLOW" == "hls4ml" ]; then
 fi
 
 if [ "$FLOW" != "catapult_hls" ]; then
-    echo "flow != catapulh hls"
     XML_NAME=$LOWER
 else
-    echo "flow = catapulh hls"
-    echo "${FLOWLANG}"
     XML_NAME="$LOWER"
     XML_NAME+="_"
     XML_NAME+="$FLOWLANG"
 fi
-
-echo "XML NAME ${XML_NAME}"
 
 if [ "$FLOW" != "catapult_hls" ]; then
     FLOW_NAME="${FLOW}"

@@ -1,7 +1,8 @@
-/* Copyright 2021 Columbia University SLD Group */
+// Copyright (c) 2011-2022 Columbia University, System Level Design Group
+// SPDX-License-Identifier: Apache-2.0
 
-#ifndef MEMWRAP_H
-#define MEMWRAP_H
+#ifndef __MEMWRAP_HPP__
+#define __MEMWRAP_HPP__
 
 #pragma once
 
@@ -23,19 +24,19 @@ class mem_wrap : public sc_module
     Connections::In<DataRReq>      read_req;
     Connections::Out<DataRRsp>    read_rsp;
 
-    Address_type    mem1_read_addrs[kNumReadPorts];
-    bool        mem1_read_req_valid[kNumReadPorts];
-    Address_type    mem1_write_addrs[kNumWritePorts];
-    bool        mem1_write_req_valid[kNumWritePorts];
-    WordType  mem1_write_data[kNumWritePorts];
-    bool        mem1_read_ack[kNumReadPorts];
-    bool        mem1_write_ack[kNumWritePorts];
-    bool        mem1_read_ready[kNumReadPorts];
-    WordType  mem1_port_read_out[kNumReadPorts];
-    bool        mem1_port_read_out_valid[kNumReadPorts];
+    Address_type    mem_read_addrs[kNumReadPorts];
+    bool        mem_read_req_valid[kNumReadPorts];
+    Address_type    mem_write_addrs[kNumWritePorts];
+    bool        mem_write_req_valid[kNumWritePorts];
+    WordType  mem_write_data[kNumWritePorts];
+    bool        mem_read_ack[kNumReadPorts];
+    bool        mem_write_ack[kNumWritePorts];
+    bool        mem_read_ready[kNumReadPorts];
+    WordType  mem_port_read_out[kNumReadPorts];
+    bool        mem_port_read_out_valid[kNumReadPorts];
 
     SC_CTOR(mem_wrap) {
-        SC_THREAD(mem1_run);
+        SC_THREAD(mem_run);
         sensitive << clk.pos();
         async_reset_signal_is(rst, false);
 
@@ -46,9 +47,9 @@ class mem_wrap : public sc_module
                            kNumWritePorts, 
                            kEntriesPerBank, 
                            WordType , 
-                           false, false> mem1;           
+                           false, false> mem;           
 
-    void mem1_run() {
+    void mem_run() {
         write_req.Reset();
         read_req.Reset();
         read_rsp.Reset();
@@ -58,7 +59,7 @@ class mem_wrap : public sc_module
         while(1){
 
             NVUINT2 valid_regs = 0;
-            NVUINT4 rsp_mode = 0;
+            bool rsp = 0;
 
             DataRReq large_rreq_regs;
             DataWReq large_wreq_regs;
@@ -70,48 +71,42 @@ class mem_wrap : public sc_module
 #pragma hls_unroll yes
                 for (int i=0; i<kNumWritePorts; i++)
                 {
-                    mem1_write_addrs[i] = large_wreq_regs.indx[i];
-                    mem1_write_req_valid[i] = 1;
-                    mem1_write_data[i] = large_wreq_regs.data[i];
+                    mem_write_addrs[i] = large_wreq_regs.indx[i];
+                    mem_write_req_valid[i] = 1;
+                    mem_write_data[i] = large_wreq_regs.data[i];
                 }
             }
 
             if (valid_regs[1] !=0) {
-                    rsp_mode = 0x1;
+                    rsp = 1;
 #pragma hls_unroll yes
                 for (int i=0; i<kNumReadPorts; i++)
                 {
-                    mem1_read_addrs[i] = large_rreq_regs.indx[i];
-                    mem1_read_req_valid[i] = 1;
-                    mem1_read_ready[i] = 1;
+                    mem_read_addrs[i] = large_rreq_regs.indx[i];
+                    mem_read_req_valid[i] = 1;
+                    mem_read_ready[i] = 1;
                 }
             }
 
-            mem1.run(
-                mem1_read_addrs          ,
-                mem1_read_req_valid      ,
-                mem1_write_addrs         ,
-                mem1_write_req_valid     ,
-                mem1_write_data          ,
-                mem1_read_ack            ,
-                mem1_write_ack           ,
-                mem1_read_ready          ,
-                mem1_port_read_out       ,
-                mem1_port_read_out_valid
+            mem.run(
+                mem_read_addrs          ,
+                mem_read_req_valid      ,
+                mem_write_addrs         ,
+                mem_write_req_valid     ,
+                mem_write_data          ,
+                mem_read_ack            ,
+                mem_write_ack           ,
+                mem_read_ready          ,
+                mem_port_read_out       ,
+                mem_port_read_out_valid
                 );
 
-            switch (rsp_mode) {
-            case 0x1: {
-                DataRRsp  mem1_rsp_reg;
-#pragma hls_unroll yes
+            if (rsp){
+                DataRRsp  mem_rsp_reg;
+                #pragma hls_unroll yes
                 for (int i=0; i<kNumReadPorts; i++)
-                    mem1_rsp_reg.data[i] = mem1_port_read_out[i];
-                read_rsp.Push(mem1_rsp_reg);
-                break;
-            }
-            default: {
-                break;
-            }
+                    mem_rsp_reg.data[i] = mem_port_read_out[i];
+                read_rsp.Push(mem_rsp_reg);
             }
             wait();
         }
@@ -120,5 +115,4 @@ class mem_wrap : public sc_module
 
 };
 
-
-#endif 
+#endif

@@ -323,7 +323,7 @@ hls4ml_acc-distclean: $(HLS4ML_ACC-distclean)
 
 ### Catapult HLS ###
 $(CATAPULTHLS_ACC-exe):
-	$(QUIET_RUN) ACCELERATOR=$(@:-exe=) TECH=$(TECHLIB) ESP_ROOT=$(ESP_ROOT) DMA_WIDTH=$(NOC_WIDTH) RUN_ARGS="$(RUN_ARGS)" $(MAKE) -C $(CATAPULTHLS_ACC_PATH)/$(@:-exe=)/hw/sim run
+	$(QUIET_RUN) ACCELERATOR=$(@:-exe=) TECH=$(TECHLIB) ESP_ROOT=$(ESP_ROOT) DMA_WIDTH=$(DMA_WIDTH) RUN_ARGS="$(RUN_ARGS)" $(MAKE) -C $(CATAPULTHLS_ACC_PATH)/$(@:-exe=)/hw/sim run
 
 
 $(CATAPULTHLS_ACC-wdir): $(HLS_LOGS)

@@ -1,22 +1,15 @@
-
-#
-# Technology-dependend reports and project dirs.
-#
+#Copyright (c) 2011-2022 Columbia University, System Level Design Group
+#SPDX-License-Identifier: Apache-2.0
 
 project new -name $ACCELERATOR\_dma$DMA_WIDTH
 set CSIM_RESULTS "./tb_data/catapult_csim_results.log"
 set RTL_COSIM_RESULTS "./tb_data/catapult_rtl_cosim_results.log"
 set sfd [file dir [info script]]
 
-#
-# Reset the options to the factory defaults
-#
 
 solution new -state initial
 solution options defaults
 
-
-# options defaults
 
 options set /Input/CppStandard c++11
 options set /Input/CompilerFlags "-DCONNECTIONS_ACCURATE_SIM -DCONNECTIONS_NAMING_ORIGINAL -DHLS_CATAPULT"
@@ -24,9 +17,7 @@ options set /Input/SearchPath {/opt/cad/catapult/shared/examples/matchlib/toolki
 options set /Input/SearchPath {/opt/cad/catapult/shared/pkgs/matchlib/cmod/include} -append
 options set /Input/SearchPath "$sfd/../inc/mem_bank" -append
 options set /ComponentLibs/SearchPath "$sfd/../inc/mem_bank" -append
-# options set /Flows/QuestaSIM/MSIM_DOFILE $sfd/run.do 
 
-# project new
 
 flow package require /SCVerify
 
@@ -37,6 +28,7 @@ flow package option set /QuestaSIM/ENABLE_CODE_COVERAGE true
 #
 # Input
 #
+
 solution options set /Input/SearchPath { \
     ../inc/ \
     ../tb/ \
@@ -97,7 +89,7 @@ solution library \
     -speed $FPGA_SPEED_GRADE \
     -part $FPGA_PART_NUM
 
-solution library add BLOCK_1R1W_RBW
+solution library add DUAL_PORT_RBW
 
 go libraries
 directive set -CLOCKS {clk {-CLOCK_PERIOD 5.0}}

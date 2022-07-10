@@ -1,5 +1,8 @@
-#ifndef __TESTBENCH_H__
-#define __TESTBENCH_H__
+//Copyright (c) 2011-2022 Columbia University, System Level Design Group
+//SPDX-License-Identifier: Apache-2.0
+
+#ifndef __TESTBENCH_HPP__
+#define __TESTBENCH_HPP__
 
 #pragma once
 
