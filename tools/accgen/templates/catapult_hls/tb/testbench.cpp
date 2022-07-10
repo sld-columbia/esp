@@ -16,11 +16,6 @@ void testbench::proc()
     CCS_LOG("ESP - <accelerator_name> [Catapult HLS SystemC]");
     CCS_LOG("--------------------------------");
 
-    FPDATA acc=0;
-    FPDATA data;
-
-    int k=0;
-
 #if (DMA_WORD_PER_BEAT == 0)
     in_words_adj = /* <<--data_in_size-->> */;
     out_words_adj = /* <<--data_out_size-->> */;
@@ -39,11 +34,12 @@ void testbench::proc()
 
     in = new ac_int<DATA_WIDTH,false>[in_size];
     gold= new ac_int<DATA_WIDTH,false>[out_size];
+    FPDATA data;
 
     //Initialize input
-    for (int i= 0; i< /* <<--number of transfers-->> */ ; i++)
+    for (uint32_t i= 0; i< /* <<--number of transfers-->> */ ; i++)
     {
-        for (int j=0; j< /* <<--data_in_size-->> */ ; j+=1)
+        for (uint32_t j=0; j< /* <<--data_in_size-->> */ ; j+=1)
         {
             ac_random(data);
             FPDATA_WORD data_int32;
@@ -58,11 +54,11 @@ void testbench::proc()
     //     for (int j = 0; j < /* <<--data_out_size-->> */ ; j++)
     //         gold[i * out_words_adj + j] = in[i * in_words_adj + j];
 
-    for (int i = 0; i < mac_n; i++)
-        for (int j = 0; j < mac_vec; j++) {
+    for (uint32_t i = 0; i < mac_n; i++)
+        for (uint32_t j = 0; j < mac_vec; j++) {
             gold[i * out_words_adj + j] = 0;
             FPDATA acc=0;
-            for (int k = 0; k < mac_len; k += 2)
+            for (uint32_t k = 0; k < mac_len; k += 2)
             {
                 FPDATA data1;
                 FPDATA data2;
@@ -76,13 +72,13 @@ void testbench::proc()
         }
 
 #if (DMA_WORD_PER_BEAT == 0)
-    for (int i = 0; i < in_size; i++)  {
+    for (uint32_t i = 0; i < in_size; i++)  {
         ac_int<DATA_WIDTH> data_bv=in[i];
         for (int j = 0; j < DMA_BEAT_PER_WORD; j++)
             mem[DMA_BEAT_PER_WORD * i + j] = data_bv.slc<DMA_WIDTH>(j * DMA_WIDTH);
     }
 #else
-    for (int i = 0; i < in_size / DMA_WORD_PER_BEAT; i++)  {
+    for (uint32_t i = 0; i < in_size / DMA_WORD_PER_BEAT; i++)  {
         ac_int<DMA_WIDTH> data_bv;
         for (int j = 0; j < DMA_WORD_PER_BEAT; j++)
         {
@@ -119,7 +115,7 @@ void testbench::proc()
 
 #if (DMA_WORD_PER_BEAT == 0)
     offset = offset * DMA_BEAT_PER_WORD;
-    for (int i = 0; i < out_size; i++)  {
+    for (uint32_t i = 0; i < out_size; i++)  {
         ac_int<DATA_WIDTH> data_bv;
 
         for (int j = 0; j < DMA_BEAT_PER_WORD; j++)
@@ -130,8 +126,8 @@ void testbench::proc()
 #else
 
     offset = offset / DMA_WORD_PER_BEAT;
-    for (int i = 0; i < out_size / DMA_WORD_PER_BEAT; i++)
-        for (int j = 0; j < DMA_WORD_PER_BEAT; j++)
+    for (uint32_t i = 0; i < out_size / DMA_WORD_PER_BEAT; i++)
+        for (uint32_t j = 0; j < DMA_WORD_PER_BEAT; j++)
         {
             out[i * DMA_WORD_PER_BEAT + j] = mem[offset + i].slc<DATA_WIDTH>(j*DATA_WIDTH);
         }
@@ -139,8 +135,8 @@ void testbench::proc()
 
     CCS_LOG( "dump memory completed");
 
-    for (int i = 0; i < /* <<--number of transfers-->> */; i++)
-        for (int j = 0; j < /* <<--data_out_size-->> */; j++)
+    for (uint32_t i = 0; i < /* <<--number of transfers-->> */; i++)
+        for (uint32_t j = 0; j < /* <<--data_out_size-->> */; j++)
         {
             FPDATA out_gold_fx = 0;
             int2fx(gold[i * out_words_adj + j],out_gold_fx);

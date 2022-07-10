@@ -10,11 +10,11 @@
 #include <nvhls_types.h>
 #include <nvhls_vector.h>
 #include "<accelerator_name>_conf_info.hpp"
+#include "esp_dma_info_sysc.hpp"
 #include <ArbitratedScratchpadDP.h>
 
 /* <<--defines-->> */
 #define MEM_SIZE /* <<--mem-footprint-->> *//(DMA_WIDTH/8)
-#define DMA_SIZE 3
 
 #if (DMA_WIDTH == 32)
 /* <<--defines_32-->> */

@@ -1,4 +1,7 @@
-#include "system.hpp"  //contains the DUT and testbench
+//Copyright (c) 2011-2022 Columbia University, System Level Design Group
+//SPDX-License-Identifier: Apache-2.0
+
+#include "system.hpp"
 #include <systemc.h>
 #include <mc_scverify.h>
 
@@ -11,8 +14,6 @@ int sc_main (int argc, char *argv[])
 
     system_t system_inst("system_t");
     trace_hierarchy(&system_inst, trace_file_ptr);
-
-    // sc_report_handler::set_actions(SC_ERROR, SC_DISPLAY);
 
     sc_report_handler::set_actions("/IEEE_Std_1666/deprecated", SC_DO_NOTHING);
     sc_start();

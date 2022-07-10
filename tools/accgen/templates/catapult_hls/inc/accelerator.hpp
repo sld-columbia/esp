@@ -10,13 +10,11 @@
 #include "<accelerator_name>_data_types.hpp"
 #include "<accelerator_name>_specs.hpp"
 #include "<accelerator_name>_conf_info.hpp"
-#include "esp_dma_info_sysc.hpp"
 
 #define __round_mask(x, y) ((y)-1)
 #define round_up(x, y) ((((x)-1) | __round_mask(x, y))+1)
 
-
-SC_MODULE(<acc_full_name>) 
+SC_MODULE(<acc_full_name>)
 {
 public:
   sc_in<bool> CCS_INIT_S1(clk);

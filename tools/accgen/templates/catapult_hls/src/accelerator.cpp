@@ -3,7 +3,6 @@
 
 #include "<accelerator_name>.hpp"
 #include <mc_scverify.h>
-#define DMA_SIZE 3
 
 void <acc_full_name>:: config() {
     conf_info.Reset();
@@ -51,10 +50,10 @@ void <acc_full_name>:: load() {
     sync12.reset_sync_out();
     sync12b.reset_sync_out();
 
+    conf1.ResetRead();
+
     in_ping_w.ResetWrite();
     in_pong_w.ResetWrite();
-
-    conf1.ResetRead();
 
     wait();
 
@@ -79,7 +78,7 @@ void <acc_full_name>:: load() {
 #else
             uint32_t len=round_up(/* <<--data_in_size-->> */, DMA_WORD_PER_BEAT);
 #endif
-
+            // Chunking
             for (int rem = len; rem > 0; rem -= PLM_IN_WORD)
             {
                 uint32_t len1 = rem > PLM_IN_WORD ? PLM_IN_WORD : rem;
@@ -155,11 +154,12 @@ void <acc_full_name>::compute_dataReq() {
     sync12.reset_sync_in();
     sync23.reset_sync_out();
     sync23b.reset_sync_out();
+
+    sync02.ResetRead();
+    conf2.ResetRead();
+
     in_ping_ra.ResetWrite();
     in_pong_ra.ResetWrite();
-
-    conf2.ResetRead();
-    sync02.ResetRead();
 
     wait();
 
@@ -172,11 +172,12 @@ void <acc_full_name>::compute_dataReq() {
 
         /* <<--local-params-->> */
 
+        // Batching
         for (uint16_t b = 0; b < /* <<--number of transfers-->> */; b++)
         {
             wait();
 
-
+            // Chunking
             for (int in_rem = /* <<--data_in_size-->> */ ; in_rem > 0; in_rem -= PLM_IN_WORD)
             {
 
@@ -186,7 +187,7 @@ void <acc_full_name>::compute_dataReq() {
 
 #pragma hls_pipeline_init_interval 1
 #pragma pipeline_stall_mode stall
-                for (int  i=0; i < in_len; i+=1) {
+                for (uint32_t i=0; i < in_len; i++) {
 
                     wait();
 
@@ -218,15 +219,14 @@ void <acc_full_name>:: compute() {
     sync12b.reset_sync_in();
     sync2b3.reset_sync_out();
     sync2b3b.reset_sync_out();
-    out_ping_w.ResetWrite();
-    out_pong_w.ResetWrite();
-
-    in_ping_rd.ResetRead();
-    in_pong_rd.ResetRead();
-
-    conf2b.ResetRead();
 
     sync02b.ResetRead();
+    conf2b.ResetRead();
+
+    out_ping_w.ResetWrite();
+    out_pong_w.ResetWrite();
+    in_ping_rd.ResetRead();
+    in_pong_rd.ResetRead();
 
     wait();
 
@@ -239,13 +239,14 @@ void <acc_full_name>:: compute() {
 
         /* <<--local-params-->> */
 
+        // Batching
         for (uint16_t b = 0; b < /* <<--number of transfers-->> */; b++)
         {
             wait();
 
             uint32_t in_length = /* <<--data_in_size-->> */;
 
-
+            // Chunking
             for (int in_rem = in_length; in_rem > 0; in_rem -= PLM_IN_WORD)
             {
 
@@ -261,7 +262,7 @@ void <acc_full_name>:: compute() {
 
 #pragma hls_pipeline_init_interval 2
 #pragma pipeline_stall_mode flush
-                for (int  i=0; i < in_len; i+=2) {
+                for (uint32_t  i=0; i < in_len; i+=2) {
 
                     FPDATA_WORD op[2];
                     if (ping_pong)
@@ -322,12 +323,11 @@ void <acc_full_name>:: store_dataReq() {
     sync23.reset_sync_in();
     sync2b3.reset_sync_in();
 
-    out_pong_ra.ResetWrite();
-    out_ping_ra.ResetWrite();
-
+    sync03.ResetRead();
     conf3.ResetRead();
 
-    sync03.ResetRead();
+    out_pong_ra.ResetWrite();
+    out_ping_ra.ResetWrite();
 
     wait();
 
@@ -339,10 +339,10 @@ void <acc_full_name>:: store_dataReq() {
 
         /* <<--local-params-->> */
 
+        // Batching
         for (uint16_t b = 0; b < /* <<--number of transfers-->> */; b++)
         {
             wait();
-
 
 #if (DMA_WORD_PER_BEAT == 0)
             uint32_t length = /* <<--data_out_size-->> */;
@@ -361,7 +361,7 @@ void <acc_full_name>:: store_dataReq() {
 #if (DMA_WORD_PER_BEAT == 0)
 #pragma hls_pipeline_init_interval 1
 #pragma pipeline_stall_mode stall
-                for (uint16_t i = 0; i < len; i++)
+                for (uint32_t i = 0; i < len; i++)
                 {
                     FPDATA_WORD dataBv;
                     plm_RRq<out_as,outrp> rreq;
@@ -377,12 +377,12 @@ void <acc_full_name>:: store_dataReq() {
 #else
 #pragma hls_pipeline_init_interval 1
 #pragma pipeline_stall_mode stall
-                for (uint16_t i = 0; i < len; i += DMA_WORD_PER_BEAT)
+                for (uint32_t i = 0; i < len; i += DMA_WORD_PER_BEAT)
                 {
                     DMA_WORD dataBv;
 
                     plm_RRq<out_as,outrp> rreq;
-                    for (uint16_t k = 0; k < DMA_WORD_PER_BEAT; k++)
+                    for (int k = 0; k < DMA_WORD_PER_BEAT; k++)
                     {
                         rreq.indx[k]=i+k;
                     }
@@ -406,16 +406,17 @@ void <acc_full_name>:: store() {
     bool ping_pong = false;
     dma_write_chnl.Reset();
     dma_write_ctrl.Reset();
+
     sync23b.reset_sync_in();
     sync2b3b.reset_sync_in();
+
+    sync03b.ResetRead();
+    conf3b.ResetRead();
 
     out_pong_rd.ResetRead();
     out_ping_rd.ResetRead();
 
     acc_done.write(false);
-    conf3b.ResetRead();
-
-    sync03b.ResetRead();
 
     wait();
 
@@ -434,7 +435,7 @@ void <acc_full_name>:: store() {
 #endif
         uint32_t offset = store_offset;
 
-
+        // Batching
         for (uint16_t b = 0; b < /* <<--number of transfers-->> */; b++)
         {
             wait();
@@ -466,7 +467,7 @@ void <acc_full_name>:: store() {
 #if (DMA_WORD_PER_BEAT == 0)
 #pragma hls_pipeline_init_interval 1
 #pragma pipeline_stall_mode stall
-                for (uint16_t i = 0; i < len; i++)
+                for (uint32_t i = 0; i < len; i++)
                 {
                     FPDATA_WORD dataBv;
 
@@ -475,11 +476,9 @@ void <acc_full_name>:: store() {
                     else
                         dataBv=out_pong_rd.Pop().data[0];
 
-
-                    uint16_t k = 0;
 #pragma hls_pipeline_init_interval 1
 #pragma pipeline_stall_mode flush
-                    for (k = 0; k < DMA_BEAT_PER_WORD; k++)
+                    for (uint16_t k = 0; k < DMA_BEAT_PER_WORD; k++)
                     {
                         dma_write_chnl.Push(dataBv.slc<DMA_WIDTH>(k*DMA_WIDTH));
                     }
@@ -489,7 +488,7 @@ void <acc_full_name>:: store() {
 #else
 #pragma hls_pipeline_init_interval 1
 #pragma pipeline_stall_mode stall
-                for (uint16_t i = 0; i < len; i += DMA_WORD_PER_BEAT)
+                for (uint32_t i = 0; i < len; i += DMA_WORD_PER_BEAT)
                 {
                     DMA_WORD dataBv;
 

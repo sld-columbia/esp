@@ -1,9 +1,20 @@
+// Copyright (c) 2011-2022 Columbia University, System Level Design Group
+// SPDX-License-Identifier: Apache-2.0
+
 #ifndef __ESP_CONF_INFO_HPP__
 #define __ESP_CONF_INFO_HPP__
 
 #include <sstream>
 #include <mc_connections.h>
-// #include "<accelerator_name>_specs.hpp"
+
+#define SIZE_BYTE   0
+#define SIZE_HWORD  1
+#define SIZE_WORD   2
+#define SIZE_DWORD  3
+#define SIZE_4WORD  4
+#define SIZE_8WORD  5
+#define SIZE_16WORD 6
+#define SIZE_32WORD 7
 
 struct dma_info_t {
 
