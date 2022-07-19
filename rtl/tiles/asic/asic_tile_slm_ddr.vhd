@@ -211,7 +211,7 @@ architecture rtl of asic_tile_slm_ddr is
   constant ext_clk_sel_default : std_ulogic := '0';
 
   constant DEFAULT_DCO_LPDDR_CFG : std_logic_vector(30 downto 0) :=
-    "00000000" & "0100"      &   "00"   &   "100"  & "000000" & "110010" &   "0"   & "1";
+    "00000001" & "1000"      &   "00"   &   "100"  & "000000" & "110010" &   "0"   & "1";
   -- DCO_CLK_DEL  UI_CLK_DEL   FREQ_SEL    DIV_SEL    FC_SEL     CC_SEL    CLK_SEL    EN
 
   -- Tile clock and reset (only for I/O tile)
@@ -649,7 +649,7 @@ begin
      HAS_SYNC => 1 )
    port map (
      clk                => sys_clk,
-     clk_tile           => dco_clk,
+     clk_tile           => dco_clk_div2_90,
      rst                => noc_rstn,
      rst_tile           => dco_rstn,
      CONST_local_x      => this_local_x,

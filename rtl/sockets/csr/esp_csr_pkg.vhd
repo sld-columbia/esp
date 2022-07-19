@@ -63,6 +63,8 @@ package esp_csr_pkg is
 
   constant ESP_CSR_SRST_ADDR : integer range 0 to 31 := 31;  -- reserved address
 
+  constant DCO_CFG_LPDDR_CTRL_BITS : integer range 0 to 31 := 12;
+
   component esp_tile_csr
     generic (
       pindex : integer range 0 to NAPBSLV - 1;
