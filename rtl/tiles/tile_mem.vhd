@@ -38,7 +38,7 @@ entity tile_mem is
     SIMULATION   : boolean := false;
     this_has_dco : integer range 0 to 1 := 0;
     this_has_ddr : integer range 0 to 1 := 1;
-    dco_rst_cfg  : std_logic_vector(22 downto 0) := (others => '0'));
+    dco_rst_cfg  : std_logic_vector(30 downto 0) := (others => '0'));
   port (
     raw_rstn           : in  std_ulogic;
     tile_rst           : in  std_ulogic;
@@ -337,10 +337,10 @@ begin
 
 
   -- DCO runtime reconfiguration
-  dco_freq_sel <= tile_config(ESP_CSR_DCO_CFG_MSB - 4 - 0  downto ESP_CSR_DCO_CFG_MSB - 4 - 0  - 1);
-  dco_div_sel  <= tile_config(ESP_CSR_DCO_CFG_MSB - 4 - 2  downto ESP_CSR_DCO_CFG_MSB - 4 - 2  - 2);
-  dco_fc_sel   <= tile_config(ESP_CSR_DCO_CFG_MSB - 4 - 5  downto ESP_CSR_DCO_CFG_MSB - 4 - 5  - 5);
-  dco_cc_sel   <= tile_config(ESP_CSR_DCO_CFG_MSB - 4 - 11 downto ESP_CSR_DCO_CFG_MSB - 4 - 11 - 5);
+  dco_freq_sel <= tile_config(ESP_CSR_DCO_CFG_MSB - DCO_CFG_LPDDR_CTRL_BITS - 0  downto ESP_CSR_DCO_CFG_MSB - DCO_CFG_LPDDR_CTRL_BITS - 0  - 1);
+  dco_div_sel  <= tile_config(ESP_CSR_DCO_CFG_MSB - DCO_CFG_LPDDR_CTRL_BITS - 2  downto ESP_CSR_DCO_CFG_MSB - DCO_CFG_LPDDR_CTRL_BITS - 2  - 2);
+  dco_fc_sel   <= tile_config(ESP_CSR_DCO_CFG_MSB - DCO_CFG_LPDDR_CTRL_BITS - 5  downto ESP_CSR_DCO_CFG_MSB - DCO_CFG_LPDDR_CTRL_BITS - 5  - 5);
+  dco_cc_sel   <= tile_config(ESP_CSR_DCO_CFG_MSB - DCO_CFG_LPDDR_CTRL_BITS - 11 downto ESP_CSR_DCO_CFG_MSB - DCO_CFG_LPDDR_CTRL_BITS - 11 - 5);
   dco_clk_sel  <= tile_config(ESP_CSR_DCO_CFG_LSB + 1);
   dco_en       <= raw_rstn and tile_config(ESP_CSR_DCO_CFG_LSB);
 
