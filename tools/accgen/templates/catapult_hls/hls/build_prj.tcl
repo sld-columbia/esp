@@ -6,10 +6,8 @@ set CSIM_RESULTS "./tb_data/catapult_csim_results.log"
 set RTL_COSIM_RESULTS "./tb_data/catapult_rtl_cosim_results.log"
 set sfd [file dir [info script]]
 
-
 solution new -state initial
 solution options defaults
-
 
 options set /Input/CppStandard c++11
 options set /Input/CompilerFlags "-DCONNECTIONS_ACCURATE_SIM -DCONNECTIONS_NAMING_ORIGINAL -DHLS_CATAPULT"
@@ -18,12 +16,10 @@ options set /Input/SearchPath {/opt/cad/catapult/shared/pkgs/matchlib/cmod/inclu
 options set /Input/SearchPath "$sfd/../inc/mem_bank" -append
 options set /ComponentLibs/SearchPath "$sfd/../inc/mem_bank" -append
 
-
 flow package require /SCVerify
 
 flow package require /QuestaSIM
 flow package option set /QuestaSIM/ENABLE_CODE_COVERAGE true
-
 
 #
 # Input
@@ -70,11 +66,6 @@ solution options set Output/SubBlockNamePrefix "esp_acc_${ACCELERATOR}_"
 solution option set Output/DoNotModifyNames true
 
 go new
-
-#
-#
-#
-
 
 go analyze
 solution design set $ACCELERATOR -top

@@ -2,13 +2,9 @@
 # SPDX-License-Identifier: Apache-2.0
 include ../../../common/common.mk
 
-# ifeq ("$(CATAPULT_PATH)", "")
-# $(error please define CATAPULT_PATH required for Catapult HLS library headers)
-# endif
-
-# ifeq ("$(MGC_HOME)", "")
-# $(error please define MGC_HOME required for Catapult HLS library headers)
-# endif
+ifeq ("$(CATAPULT_HOME)", "")
+$(error please define CATAPULT_HOME required for Catapult HLS library headers)
+endif
 
 ifeq ("$(SYSTEMC)", "")
 $(error please define SYSTEMC to execute a standalone simulation)
@@ -25,10 +21,9 @@ INCDIR += -I../inc
 INCDIR += -I../inc/mem_bank/
 INCDIR += -I../../../common/inc
 INCDIR += -I../../../common/inc/core/systems
-INCDIR += -I$(SYSTEMC_HOME)/include
+INCDIR += -I$(SYSTEMC)/include
 INCDIR += -I$(CATAPULT_HOME)/shared/include
 INCDIR += -I$(CATAPULT_HOME)/shared/pkgs/matchlib/cmod/include
-INCDIR += -I$(MGC_HOME)/shared/include
 INCDIR += -I$(BOOST_HOME)/include
 
 
@@ -55,7 +50,6 @@ CXXFLAGS += -Wall
 
 LDLIBS :=
 LDLIBS += -L$(CATAPULT_HOME)/shared/lib
-#LDLIBS += -L$(CATAPULT_PATH)/shared/lib
 
 LDFLAGS :=
 LDFLAGS += -lsystemc
@@ -95,7 +89,7 @@ $(TARGET): $(OBJS)
 	$(QUIET_CXX)$(CXX) $(CXXFLAGS) ${INCDIR} -c $< -o $@
 
 run: $(TARGET)
-	$(QUIET_RUN) LD_LIBRARY_PATH=$(LD_LIBRARY_PATH):$(SYSTEMC_HOME)/lib-linux64 ./$< $(RUN_ARGS)
+	$(QUIET_RUN) LD_LIBRARY_PATH=$(LD_LIBRARY_PATH):$(SYSTEMC)/lib-linux64 ./$< $(RUN_ARGS)
 
 clean:
 	$(QUIET_CLEAN)rm -f *.o *.d *.txt *.vcd $(TARGET)

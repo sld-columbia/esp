@@ -29,8 +29,7 @@ SC_MODULE(system_t)
   Connections::Combinational<dma_info_t>        CCS_INIT_S1(dma_read_ctrl);
   Connections::Combinational<dma_info_t>        CCS_INIT_S1(dma_write_ctrl);
   Connections::Combinational<conf_info_t>        CCS_INIT_S1(conf_info);
- sc_signal<bool>        CCS_INIT_S1(acc_done);
-
+  sc_signal<bool>        CCS_INIT_S1(acc_done);
 
   SC_HAS_PROCESS(system_t);
   system_t(const sc_module_name& name) :
@@ -40,7 +39,6 @@ SC_MODULE(system_t)
 
       Connections::set_sim_clk(&clk);
       sc_object_tracer<sc_clock> trace_clk(clk);
-
 
       testbench_inst.clk(clk);
       testbench_inst.rst_bar(rst);

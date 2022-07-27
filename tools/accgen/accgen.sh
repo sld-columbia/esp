@@ -273,11 +273,6 @@ while true; do
     fi
 done
 
-# if [ $FLOW == "catapult_hl" ]; then
-#     	read -p "    - Enter desired number of input plm read ports: " in_r
-#     	read -p "    - Enter desired number of output plm write ports: " out_w
-# fi
-
 if [[ $data_in_size_max == $data_out_size_max && $FLOW != "hls4ml" ]]; then
     IN_PLACE=$(yes_no "    - Is output stored in place?")
 else
@@ -476,7 +471,6 @@ if [ "$FLOW" == "catapult_hls" ]; then
     sed -i "s/\/\* <<--nparam-->> \*\//$NPARAMS/g" ${LOWER}_conf_info.hpp
     for key in ${!values[@]}; do
 	if [ $key == $(first_key) ]; then sep=""; else sep=", "; fi
-	# sed -i "/\/\* <<--nparam-->> \*\//a $NPARAMS" ${LOWER}_conf_info.hpp
 	sed -i "/\/\* <<--marsh-->> \*\//a ${indent}m &${key};" ${LOWER}_conf_info.hpp
 	sed -i "/\/\* <<--ctor-->> \*\//a ${indent}this->${key} = ${values[$key]};" ${LOWER}_conf_info.hpp
 	sed -i "/\/\* <<--ctor-args-->> \*\//a ${indent}int32_t ${key}${sep}" ${LOWER}_conf_info.hpp
@@ -531,7 +525,6 @@ fi
 
 
 if [ "$FLOW" == "catapult_hls" ]; then
-
     # accelerator.hpp
     cd $ACC_DIR/hw/inc
     indent="\ \ \ \ \ \ \ \ "

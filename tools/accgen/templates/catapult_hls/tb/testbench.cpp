@@ -50,26 +50,9 @@ void testbench::proc()
     }
 
     //Compute golden output
-    // for (int i = 0; i < /* <<--number of transfers-->> */; i++)
-    //     for (int j = 0; j < /* <<--data_out_size-->> */ ; j++)
-    //         gold[i * out_words_adj + j] = in[i * in_words_adj + j];
-
-    for (uint32_t i = 0; i < mac_n; i++)
-        for (uint32_t j = 0; j < mac_vec; j++) {
-            gold[i * out_words_adj + j] = 0;
-            FPDATA acc=0;
-            for (uint32_t k = 0; k < mac_len; k += 2)
-            {
-                FPDATA data1;
-                FPDATA data2;
-                int2fx(in[i * in_words_adj + j * mac_len + k],data1);
-                int2fx(in[i * in_words_adj + j * mac_len + k + 1],data2);
-                acc+=data1*data2;
-            }
-            FPDATA_WORD acc_int;
-            fx2int(acc,acc_int);
-            gold[i * out_words_adj + j] =acc_int;
-        }
+    for (uint32_t i = 0; i < /* <<--number of transfers-->> */; i++)
+        for (uint32_t j = 0; j < /* <<--data_out_size-->> */ ; j++)
+            gold[i * out_words_adj + j] = in[i * in_words_adj + j];
 
 #if (DMA_WORD_PER_BEAT == 0)
     for (uint32_t i = 0; i < in_size; i++)  {
@@ -90,7 +73,6 @@ void testbench::proc()
     }
 #endif
 
-
     CCS_LOG( "load memory completed");
 
     {
@@ -101,9 +83,7 @@ void testbench::proc()
         conf_info.Push(config);
     }
 
-
     CCS_LOG( "config done");
-
 
     do { wait(); } while (!acc_done.read());
 
@@ -111,7 +91,6 @@ void testbench::proc()
     int offset=in_size;
 
     out= new ac_int<DATA_WIDTH,false>[out_size];
-
 
 #if (DMA_WORD_PER_BEAT == 0)
     offset = offset * DMA_BEAT_PER_WORD;
@@ -124,7 +103,6 @@ void testbench::proc()
         out[i] = data_bv.to_int64();
     }
 #else
-
     offset = offset / DMA_WORD_PER_BEAT;
     for (uint32_t i = 0; i < out_size / DMA_WORD_PER_BEAT; i++)
         for (uint32_t j = 0; j < DMA_WORD_PER_BEAT; j++)
@@ -148,15 +126,14 @@ void testbench::proc()
                 err++;
         }
 
-
     if (err > 0)
         CCS_LOG("SIMULATION FAILED ! \n - errors "<< err);
     else
         CCS_LOG("SIMULATION PASSED ! ");
 
     sc_stop();
-    wait();
 
+    wait();
 }
 
 

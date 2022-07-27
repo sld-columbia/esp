@@ -14,16 +14,14 @@ void esp_dma_controller<_DMA_WIDTH_, _MEM_SIZE_>::read()
 
     wait();
 
-    while(1)
+    while(1) {
+        // Read request
+        dma_info_t dma_info_r=dma_read_ctrl.Pop();
 
-    {
-    // Read request
-    dma_info_t dma_info_r=dma_read_ctrl.Pop();
+        uint32_t mem_base = dma_info_r.index;
+        uint32_t burst_size = dma_info_r.length;
 
-    uint32_t mem_base = dma_info_r.index;
-    uint32_t burst_size = dma_info_r.length;
-
-    dma_read(mem_base, burst_size);
+        dma_read(mem_base, burst_size);
 
     }
 
@@ -41,18 +39,17 @@ void esp_dma_controller<_DMA_WIDTH_, _MEM_SIZE_>::write()
 
     wait();
 
-    while(1)
-    {
-    // Read request
-    dma_info_t dma_info_w=dma_write_ctrl.Pop();
+    while(1) {
+        // Write request
+        dma_info_t dma_info_w=dma_write_ctrl.Pop();
 
-    uint32_t mem_base = dma_info_w.index;
-    uint32_t burst_size = dma_info_w.length;
+        uint32_t mem_base = dma_info_w.index;
+        uint32_t burst_size = dma_info_w.length;
 
-    num_of_write_burst++;
-    total_write_bytes += dma_info_w.length * (_DMA_WIDTH_ / 8);
+        num_of_write_burst++;
+        total_write_bytes += dma_info_w.length * (_DMA_WIDTH_ / 8);
 
-    dma_write(mem_base, burst_size);
+        dma_write(mem_base, burst_size);
     }
 }
 
@@ -68,12 +65,11 @@ void esp_dma_controller<_DMA_WIDTH_, _MEM_SIZE_>::res()
     acc_rst.write(true);
     wait();
 
-    if (acc_done.read())
-        {
-            acc_rst.write(false);
-            wait();
-            acc_rst.write(true);
-        }
+    if (acc_done.read()) {
+        acc_rst.write(false);
+        wait();
+        acc_rst.write(true);
+    }
 }
 
 // Functions
@@ -82,7 +78,7 @@ template <int _DMA_WIDTH_, int _MEM_SIZE_> inline
 void esp_dma_controller<_DMA_WIDTH_, _MEM_SIZE_>::dma_read(
     uint32_t mem_base, uint32_t burst_size)
 {
-    // std::cout << "test" ;
+
     static bool first_dma_read = true;
     if (first_dma_read)
     {
@@ -91,11 +87,9 @@ void esp_dma_controller<_DMA_WIDTH_, _MEM_SIZE_>::dma_read(
     sc_assert(mem != NULL);
     for (uint32_t i = 0; i < burst_size; ++i)
     {
-
         sc_assert(mem_base + i < _MEM_SIZE_);
         ac_int<_DMA_WIDTH_> data = mem[mem_base + i];
         dma_read_chnl.Push(data);
-
     }
     if (first_dma_read)
     {
@@ -118,7 +112,6 @@ void esp_dma_controller<_DMA_WIDTH_, _MEM_SIZE_>::dma_write(
     sc_assert(mem != NULL);
     for (uint32_t i = 0; i < burst_size; ++i)
     {
-
         sc_assert(mem_base + i < _MEM_SIZE_);
 
         ac_int<_DMA_WIDTH_> data = dma_write_chnl.Pop();

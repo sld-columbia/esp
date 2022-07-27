@@ -28,5 +28,3 @@ int sc_main (int argc, char *argv[])
     return errcnt; // return 0 for passed
 }
 
-
-

@@ -4,11 +4,7 @@
 #ifndef __ESP_DMA_CONTROLLER_HPP__
 #define __ESP_DMA_CONTROLLER_HPP__
 
-//#include "utils/esp_utils.hpp" 
-
-// check if this is an issue 
 #include <mc_connections.h>
-// #include <esp_dma_info.hpp>
 
 template <
     int _DMA_WIDTH_,
@@ -65,10 +61,6 @@ class esp_dma_controller : public sc_module
             , total_read_bytes(0)
             , mem(ptr)
         {
-            // SC_CTHREAD(controller, clk.pos());
-            // reset_signal_is(rst, false);
-            // set_stack_size(0x400000);
-
             SC_THREAD(read);
             sensitive << clk.pos();
             async_reset_signal_is(rst, false);
@@ -81,12 +73,6 @@ class esp_dma_controller : public sc_module
             sensitive << clk.pos();
             async_reset_signal_is(rst, false);
 
-
-            // Binding
-            // dma_read_ctrl.clk_rst(clk, rst);
-            // dma_read_chnl.clk_rst(clk, rst);
-            // dma_write_ctrl.clk_rst(clk, rst);
-            // dma_write_chnl.clk_rst(clk, rst);
         }
 
         // Process

@@ -36,18 +36,19 @@ class mem_wrap : public sc_module
     bool        mem_port_read_out_valid[kNumReadPorts];
 
     SC_CTOR(mem_wrap) {
+
         SC_THREAD(mem_run);
         sensitive << clk.pos();
         async_reset_signal_is(rst, false);
 
-        }
+    }
 
-    ArbitratedScratchpadDP<kNumBanks,      
-                           kNumReadPorts,  
-                           kNumWritePorts, 
-                           kEntriesPerBank, 
-                           WordType , 
-                           false, false> mem;           
+    ArbitratedScratchpadDP<kNumBanks,
+                           kNumReadPorts,
+                           kNumWritePorts,
+                           kEntriesPerBank,
+                           WordType ,
+                           false, false> mem;
 
     void mem_run() {
         write_req.Reset();
@@ -60,7 +61,6 @@ class mem_wrap : public sc_module
 
             NVUINT2 valid_regs = 0;
             bool rsp = 0;
-
             DataRReq large_rreq_regs;
             DataWReq large_wreq_regs;
             valid_regs[0] = write_req.PopNB(large_wreq_regs);
@@ -111,8 +111,6 @@ class mem_wrap : public sc_module
             wait();
         }
     };
-
-
 };
 
 #endif

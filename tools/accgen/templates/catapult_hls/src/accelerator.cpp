@@ -20,8 +20,7 @@ void <acc_full_name>:: config() {
 
     wait();
 
-    while(1)
-    {
+    while(1) {
         conf_info_t conf_di = conf_info.Pop();
 
         conf1.Push(conf_di);
@@ -57,8 +56,7 @@ void <acc_full_name>:: load() {
 
     wait();
 
-    while(1)
-    {
+    while(1) {
         sync01.Pop();
 
         bool ping = true;
@@ -163,8 +161,7 @@ void <acc_full_name>::compute_dataReq() {
 
     wait();
 
-    while(1)
-    {
+    while(1) {
 
         sync02.Pop();
 
@@ -230,8 +227,7 @@ void <acc_full_name>:: compute() {
 
     wait();
 
-    while(1)
-    {
+    while(1) {
 
         sync02b.Pop();
 
@@ -255,56 +251,29 @@ void <acc_full_name>:: compute() {
                 sync12b.sync_in();
 
                 // Compute Kernel
+                for (uint32_t  i=0; i < in_len; i+=1) {
 
-                FPDATA acc_fx=0;
-                int vec_indx=0;
-                int vec_num=0;
+                    FPDATA_WORD op;
 
-#pragma hls_pipeline_init_interval 2
-#pragma pipeline_stall_mode flush
-                for (uint32_t  i=0; i < in_len; i+=2) {
-
-                    FPDATA_WORD op[2];
                     if (ping_pong)
-                    {
-                        op[0]=in_ping_rd.Pop().data[0];
-                        op[1]=in_ping_rd.Pop().data[0];
-                    }
+                        op=in_ping_rd.Pop().data[0];
                     else
-                    {
-                        op[0]=in_pong_rd.Pop().data[0];
-                        op[1]=in_pong_rd.Pop().data[0];
-                    }
+                        op=in_pong_rd.Pop().data[0];
 
-                    FPDATA op1_fx=0;
-                    FPDATA op3_fx=0;
+                    plm_WR<out_as, outwp> rreq;
+                    rreq.indx[0]=i;
+                    rreq.data[0]=op;
 
-                    int2fx(op[0],op1_fx);
-                    int2fx(op[1],op3_fx);
-
-                    acc_fx+=op1_fx * op3_fx;
-
-                    vec_indx+=2;
-
-                    if (vec_indx == mac_len)
-                    {
-                        FPDATA_WORD acc=0;
-                        fx2int(acc_fx,acc);
-                        plm_WR<out_as, outwp> rreq;
-
-                        rreq.indx[0]=vec_num;
-                        rreq.data[0]=acc;
+                    if (i < /* <<--data_out_size-->> */){
 
                         if (out_ping_pong)
                             out_ping_w.Push(rreq);
                         else
                             out_pong_w.Push(rreq);
 
-                        vec_num++;
-                        vec_indx=0;
-                        acc_fx=0;
                     }
                 }
+                // End Compute Kernel
 
                 sync2b3.sync_out();
                 sync2b3b.sync_out();
@@ -331,7 +300,7 @@ void <acc_full_name>:: store_dataReq() {
 
     wait();
 
-    while(1){
+    while(1) {
 
         sync03.Pop();
 
@@ -420,7 +389,7 @@ void <acc_full_name>:: store() {
 
     wait();
 
-    while(1){
+    while(1) {
 
         sync03b.Pop();
 
