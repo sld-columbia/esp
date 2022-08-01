@@ -11,7 +11,7 @@ $(error please define SYSTEMC to execute a standalone simulation)
 endif
 
 ifeq ("$(DMA_WIDTH)", "")
-$(error DMA_WIDTH variable is not set! Please enter DMA_WIDTH=64 for Ariane or DMA_WIDTH=32 for Leon3 before the corresponding make target)
+$(error DMA_WIDTH variable is not set! Please enter DMA_WIDTH=64 for Ariane or DMA_WIDTH=32 for Leon3 and Ibex before the corresponding make target)
 endif
 
 INCDIR ?=
