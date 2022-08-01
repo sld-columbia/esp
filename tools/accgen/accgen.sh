@@ -85,19 +85,28 @@ echo ""
 read -p "  * Enter accelerator name ${def}[${NAME_DEFAULT}]${normal}: " NAME
 NAME=${NAME:-$NAME_DEFAULT}
 
-read -p "  * Select design flow (${bold}S${normal}tratus HLS, ${bold}V${normal}ivado HLS, ${bold}h${normal}ls4ml, ${bold}R${normal}TL) ${def}[S]${normal}: " FLOW_SELECT
+read -p "  * Select design flow (${bold}S${normal}tratus HLS, ${bold}V${normal}ivado HLS, ${bold}h${normal}ls4ml, ${bold}C${normal}atapult HLS, ${bold}R${normal}TL) ${def}[S]${normal}: " FLOW_SELECT
 FLOW_SELECT=${FLOW_SELECT:-S}
 case $FLOW_SELECT in
     [Ss]* ) FLOW="stratus_hls" FLOWSUFFIX="stratus";;
     [Vv]* ) FLOW="vivado_hls" FLOWSUFFIX="vivado";;
     [Hh]* ) FLOW="hls4ml" FLOWSUFFIX="hls4ml";;
+    [Cc]* ) FLOW="catapult_hls" FLOWLANG="sysc" FLOWSUFFIX="catapult";;
     [Rr]* ) FLOW="rtl" FLOWSUFFIX="rtl";;
     * ) FLOW="stratus_hls" FLOWSUFFIX="stratus";;
 esac
 
-NAMEFULL="$NAME"
-NAMEFULL+="_"
-NAMEFULL+="$FLOWSUFFIX"
+if [ $FLOW != "catapult_hls" ]; then
+    NAMEFULL="$NAME"
+    NAMEFULL+="_"
+    NAMEFULL+="$FLOWSUFFIX"
+else
+    NAMEFULL="$NAME"
+    NAMEFULL+="_"
+    NAMEFULL+="$FLOWLANG"
+    NAMEFULL+="_"
+    NAMEFULL+="$FLOWSUFFIX"
+fi
 
 read -p "  * Enter ESP path ${def}[${ESP_ROOT_DEFAULT}]${normal}: " ESP_ROOT
 ESP_ROOT=${ESP_ROOT:-$ESP_ROOT_DEFAULT}
@@ -112,6 +121,9 @@ if  test -e ${ESP_ROOT}/accelerators/vivado_hls/$NAMEFULL; then
     die "accelerator ${NAMEFULL} already defined"
 fi
 if  test -e ${ESP_ROOT}/accelerators/hls4ml/$NAMEFULL; then
+    die "accelerator ${NAMEFULL} already defined"
+fi
+if  test -e ${ESP_ROOT}/accelerators/catapult_hls/$NAMEFULL; then
     die "accelerator ${NAMEFULL} already defined"
 fi
 if  test -e ${ESP_ROOT}/accelerators/rtl/$NAMEFULL; then
@@ -136,9 +148,11 @@ read -p "  * Enter unique accelerator id as three hex digits ${def}[${ID_DEFAULT
 ID=${ID:-$ID_DEFAULT}
 ID=$(echo $ID | awk '{print tolower($0)}')
 
+
+NPARAMS=0
+
 ### Configuration registers
 if [ $FLOW != "hls4ml" ]; then
-    NPARAMS=0
     echo "  * Enter accelerator registers"
     read -p "    - register $NPARAMS name ${def}[size]${normal}: " param
     param=${param:-"size"}
@@ -162,6 +176,7 @@ if [ $FLOW != "hls4ml" ]; then
 
     done
 fi
+
 
 first_param=$(first_key)
 keys_to_max
@@ -296,6 +311,10 @@ if [ "$FLOW" == "stratus_hls" ]; then
 
     dirs="src  hls  tb"
 
+elif [ "$FLOW" == "catapult_hls" ]; then
+
+    dirs="src  hls  tb  inc  sim"
+
 elif [ "$FLOW" == "vivado_hls" ]; then
 
     dirs="src  inc  hls  tb"
@@ -315,7 +334,7 @@ for d in $dirs; do
     if ! [[ "$FLOW" == "rtl" && "$d" == "hls" ]]; then
 	cp -r $TEMPLATES_DIR/$d/* .
     fi
-    
+
     if cat /etc/os-release | grep -q -i ubuntu; then
         rename "s/accelerator/$LOWER/g" *
 	rename "s/acc_full/$LOWERFULL/g" *
@@ -339,11 +358,12 @@ for d in $dirs; do
 	sed -i "s/<acc_full_name>/$LOWERFULL/g" */*
 	sed -i "s/<ACC_FULL_NAME>/$UPPERFULL/g" */*
     elif [ "$FLOW" != "rtl" ]; then
-	sed -i "s/<accelerator_name>/$LOWER/g" *
-	sed -i "s/<ACCELERATOR_NAME>/$UPPER/g" *
-	sed -i "s/<acc_full_name>/$LOWERFULL/g" *
-	sed -i "s/<ACC_FULL_NAME>/$UPPERFULL/g" *
+	find . -type f -exec sed -i "s/<accelerator_name>/$LOWER/g" {} +
+	find . -type f -exec sed -i "s/<ACCELERATOR_NAME>/$UPPER/g" {} +
+	find . -type f -exec sed -i "s/<acc_full_name>/$LOWERFULL/g" {} +
+	find . -type f -exec sed -i "s/<ACC_FULL_NAME>/$UPPERFULL/g" {} +
     fi
+
 
     if [[ "$FLOW" == "stratus_hls" && "$d" == "hls" ]]; then
 	ln -s ../../../common/hls/Makefile
@@ -376,6 +396,7 @@ if [ "$FLOW" == "vivado_hls" ]; then
     echo "$LOWER" > .gitignore
     echo "*.log" >> .gitignore
 fi
+
 if [ "$FLOW" == "hls4ml" ]; then
     ## Initialize gitignore
     cd $ACC_DIR/hw
@@ -385,22 +406,35 @@ if [ "$FLOW" == "hls4ml" ]; then
     cp -r $HLS4ML_PRJ_PATH $ACC_DIR/hw/hls4ml
 fi
 
+if [ "$FLOW" != "catapult_hls" ]; then
+    XML_NAME=$LOWER
+else
+    XML_NAME="$LOWER"
+    XML_NAME+="_"
+    XML_NAME+="$FLOWLANG"
+fi
+
+if [ "$FLOW" != "catapult_hls" ]; then
+    FLOW_NAME="${FLOW}"
+else
+    FLOW_NAME="${FLOW}_${FLOWLANG}"
+fi
 ## initialize xml file
 cd $ACC_DIR/hw
-echo '<?xml version="1.0" encoding="UTF-8"?>' > $LOWER.xml
-echo '<sld>' >> $LOWER.xml
-echo -n  "  <accelerator name=\"${LOWER}\" " >> $LOWER.xml
-echo -n                 "desc=\"Accelerator ${UPPER}\" " >> $LOWER.xml
-echo -n                 "data_size=\"${TLB_ENTRIES}\" " >> $LOWER.xml
-echo -n                 "device_id=\"${ID}\" " >> $LOWER.xml
-echo                    "hls_tool=\"${FLOW}\">" >> $LOWER.xml
+echo '<?xml version="1.0" encoding="UTF-8"?>' > $XML_NAME.xml
+echo '<sld>' >> $XML_NAME.xml
+echo -n  "  <accelerator name=\"${XML_NAME}\" " >> $XML_NAME.xml
+echo -n                 "desc=\"Accelerator ${UPPER}\" " >> $XML_NAME.xml
+echo -n                 "data_size=\"${TLB_ENTRIES}\" " >> $XML_NAME.xml
+echo -n                 "device_id=\"${ID}\" " >> $XML_NAME.xml
+echo                    "hls_tool=\"${FLOW_NAME}\">" >> $XML_NAME.xml
 for key in ${!values[@]}; do
-    echo -n  "    <param name=\"${key}\" " >> $LOWER.xml
-    echo -n             "desc=\"${key}\" " >> $LOWER.xml
-    echo "/>" >> $LOWER.xml
+    echo -n  "    <param name=\"${key}\" " >> $XML_NAME.xml
+    echo -n             "desc=\"${key}\" " >> $XML_NAME.xml
+    echo "/>" >> $XML_NAME.xml
 done
-echo '  </accelerator>' >> $LOWER.xml
-echo '</sld>' >> $LOWER.xml
+echo '  </accelerator>' >> $XML_NAME.xml
+echo '</sld>' >> $XML_NAME.xml
 
 
 ## customize configuration registers
@@ -431,6 +465,24 @@ if [ "$FLOW" == "rtl" ]; then
     done
 fi
 indent="\ \ \ \ \ \ \ \ "
+
+if [ "$FLOW" == "catapult_hls" ]; then
+    cd $ACC_DIR/hw/inc
+    sed -i "s/\/\* <<--nparam-->> \*\//$NPARAMS/g" ${LOWER}_conf_info.hpp
+    for key in ${!values[@]}; do
+	if [ $key == $(first_key) ]; then sep=""; else sep=", "; fi
+	sed -i "/\/\* <<--marsh-->> \*\//a ${indent}m &${key};" ${LOWER}_conf_info.hpp
+	sed -i "/\/\* <<--ctor-->> \*\//a ${indent}this->${key} = ${values[$key]};" ${LOWER}_conf_info.hpp
+	sed -i "/\/\* <<--ctor-args-->> \*\//a ${indent}int32_t ${key}${sep}" ${LOWER}_conf_info.hpp
+	sed -i "/\/\* <<--ctor-custom-->> \*\//a ${indent}this->${key} = ${key};" ${LOWER}_conf_info.hpp
+	sed -i "/\/\* <<--sctrc-->> \*\//a ${indent}sc_trace(tf,v.${key}, NAME + \".${key}\");" ${LOWER}_conf_info.hpp
+	sed -i "/\/\* <<--eq-->> \*\//a ${indent}if (${key} != rhs.${key}) return false;" ${LOWER}_conf_info.hpp
+	sed -i "/\/\* <<--assign-->> \*\//a ${indent}${key} = other.${key};" ${LOWER}_conf_info.hpp
+	sed -i "/\/\* <<--print-->> \*\//a ${indent}os << \"${key}\ = \" << conf_info.${key} << \"${sep}\";" ${LOWER}_conf_info.hpp
+	sed -i "/\/\* <<--params-->> \*\//a ${indent}int32_t ${key};" ${LOWER}_conf_info.hpp
+    done
+fi
+
 
 ## PLM memories for both 32-bit and 64-bit NoC
 dma_width=(32 64)
@@ -467,6 +519,29 @@ if [ "$FLOW" == "stratus_hls" ]; then
 	sed -i "s/\/\* <<--dwpb${d}-->> \*\//${dwpb}/g" ${LOWER}_directives.hpp
 	sed -i "s/\/\* <<--plm_in_name${d}-->> \*\//\"${plm_in_name}\"/g" ${LOWER}_directives.hpp
 	sed -i "s/\/\* <<--plm_out_name${d}-->> \*\//\"${plm_out_name}\"/g" ${LOWER}_directives.hpp
+    done
+
+fi
+
+
+if [ "$FLOW" == "catapult_hls" ]; then
+    # accelerator.hpp
+    cd $ACC_DIR/hw/inc
+    indent="\ \ \ \ \ \ \ \ "
+    sed -i "/\/\* <<--defines-->> \*\//a #define PLM_IN_WORD $in_word" ${LOWER}_specs.hpp
+    sed -i "/\/\* <<--defines-->> \*\//a #define PLM_OUT_WORD $out_word" ${LOWER}_specs.hpp
+    sed -i "/\/\* <<--defines-->> \*\//a #define DMA_SIZE $hsize" ${LOWER}_specs.hpp
+    sed -i "/\/\* <<--defines-->> \*\//a #define DATA_WIDTH $data_width" ${LOWER}_specs.hpp
+    sed -i "s/\/\* <<--mem-footprint-->> \*\//${memory_footprint}/g" ${LOWER}_specs.hpp
+
+
+    for d in ${dma_width[@]}; do
+	p=$(( (d+data_width-1)/data_width ))
+	dbpw=$(( (data_width+d-1)/d ))
+	dwpb=$(( d/data_width ))
+	sed -i "s/\/\* <<--dbpw${d}-->> \*\//${dbpw}/g" ${LOWER}_specs.hpp
+	sed -i "s/\/\* <<--dwpb${d}-->> \*\//${dwpb}/g " ${LOWER}_specs.hpp
+	sed -i "s/\/\* <<--inwp${d}-->> \*\//${p}/g" ${LOWER}_specs.hpp
     done
 
 fi
@@ -527,7 +602,7 @@ fi
 if [ "$FLOW" == "hls4ml" ]; then
 
     cd $ACC_DIR/hw
-    
+
     # espacc_config.h
     sed -i "s/\/\* <<--frac-bits-->> \*\//$frac_bits/g" inc/espacc_config.h
     sed -i "s/\/\* <<--plm-in-word-->> \*\//$data_in_size_expr/g" inc/espacc_config.h
@@ -556,6 +631,23 @@ if [ "$FLOW" == "stratus_hls" ]; then
 	sed -i "/\/\* <<--params-->> \*\//a ${indent}int32_t ${key};" ${LOWER}.cpp
 	indent="\ \ \ \ \ \ \ \ "
 	sed -i "/\/\* <<--local-params-->> \*\//a ${indent}${key} = config.${key};" ${LOWER}.cpp
+    done
+    sed -i "s/\/\* <<--number of transfers-->> \*\//${batching_factor_expr}/g" ${LOWER}.cpp
+    sed -i "s/\/\* <<--data_in_size-->> \*\//${data_in_size_expr}/g" ${LOWER}.cpp
+    sed -i "s/\/\* <<--data_out_size-->> \*\//${data_out_size_expr}/g" ${LOWER}.cpp
+    if [ "$IN_PLACE" == "y" ]; then
+	sed -i "s/\/\* <<--store-offset-->> \*\//0/g" ${LOWER}.cpp
+    else
+	sed -i "s/\/\* <<--store-offset-->> \*\//store_offset/g" ${LOWER}.cpp
+    fi
+fi
+
+if [ "$FLOW" == "catapult_hls" ]; then
+    # accelerator.cpp
+    cd $ACC_DIR/hw/src
+    for key in ${!values[@]}; do
+	indent="\ \ \ \ \ \ \ \ "
+	sed -i "/\/\* <<--local-params-->> \*\//a ${indent}uint32_t ${key} = conf.${key};" ${LOWER}.cpp
     done
     sed -i "s/\/\* <<--number of transfers-->> \*\//${batching_factor_expr}/g" ${LOWER}.cpp
     sed -i "s/\/\* <<--data_in_size-->> \*\//${data_in_size_expr}/g" ${LOWER}.cpp
@@ -596,6 +688,34 @@ if [ "$FLOW" == "stratus_hls" ]; then
     else
 	sed -i "s/\/\* <<--store-offset-->> \*\//in_size/g" system.cpp
     fi
+fi
+
+### Generate skeleton for unit testbench
+if [ "$FLOW" == "catapult_hls" ]; then
+    cd $ACC_DIR/hw/inc
+    # accelerator_specs.hpp
+    sed -i "s/\/\* <<--mem-footprint-->> \*\//${memory_footprint}/g" ${LOWER}_specs.hpp
+    sed -i "/\/\* <<--defines-->> \*\//a #define DATA_WIDTH $data_width" ${LOWER}_specs.hpp
+    sed -i "/\/\* <<--defines-->> \*\//a #define PLM_IN_WORD $in_word" ${LOWER}_specs.hpp
+    sed -i "/\/\* <<--defines-->> \*\//a #define PLM_OUT_WORD $out_word" ${LOWER}_specs.hpp
+
+    cd $ACC_DIR/hw/tb
+    # testbench.hpp
+    sed -i "s/\/\* <<--data_out_size-->> \*\//${data_out_size_expr}/g" testbench.hpp
+    for key in ${!values[@]}; do
+	indent="\ \ \ \ "
+	sed -i "/\/\* <<--params-->> \*\//a ${indent}uint32_t ${key};" testbench.hpp
+	indent="\ \ \ \ \ \ \ \ "
+	sed -i "/\/\* <<--params-default-->> \*\//a ${indent}${key} = ${values[$key]};" testbench.hpp
+    done
+    # testbench.cpp
+    sed -i "s/\/\* <<--number of transfers-->> \*\//${batching_factor_expr}/g" testbench.cpp
+    sed -i "s/\/\* <<--data_in_size-->> \*\//${data_in_size_expr}/g" testbench.cpp
+    sed -i "s/\/\* <<--data_out_size-->> \*\//${data_out_size_expr}/g" testbench.cpp
+    for key in ${!values[@]}; do
+	indent="\ \ \ \ \ \ \ \ "
+	sed -i "/\/\* <<--params-->> \*\//a ${indent}config.${key} = ${key};" testbench.cpp
+    done
 fi
 
 
