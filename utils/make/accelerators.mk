@@ -322,6 +322,9 @@ hls4ml_acc-distclean: $(HLS4ML_ACC-distclean)
 .PHONY: hls4ml_acc hls4ml_acc-clean hls4ml_acc-distclean
 
 ### Catapult HLS ###
+$(CATAPULTHLS_ACC-exe):
+	$(QUIET_RUN) ACCELERATOR=$(@:-exe=) TECH=$(TECHLIB) ESP_ROOT=$(ESP_ROOT) DMA_WIDTH=$(DMA_WIDTH) RUN_ARGS="$(RUN_ARGS)" $(MAKE) -C $(CATAPULTHLS_ACC_PATH)/$(@:-exe=)/hw/sim run
+
 $(CATAPULTHLS_ACC-wdir): $(HLS_LOGS)
 	$(QUIET_MKDIR) if ! test -e $(CATAPULTHLS_ACC_PATH)/$(@:-wdir=)/hw/hls-work-$(TECHLIB); then \
 		mkdir -p $(CATAPULTHLS_ACC_PATH)/$(@:-wdir=)/hw/hls-work-$(TECHLIB); \
@@ -329,6 +332,7 @@ $(CATAPULTHLS_ACC-wdir): $(HLS_LOGS)
 		ln -f -s ../hls/build_prj.tcl; \
 		ln -f -s ../hls/build_prj_top.tcl; \
 		ln -f -s ../hls/Makefile; \
+		ln -f -s ../hls/rtl_sim.tcl; \
 	fi;
 
 $(CATAPULTHLS_ACC-hls): %-hls : %-wdir
@@ -341,8 +345,13 @@ $(CATAPULTHLS_ACC-hls): %-hls : %-wdir
 	fi;
 	@echo "$(@:-hls=)" >> $(ESP_ROOT)/tech/$(TECHLIB)/acc/installed.log
 
+$(CATAPULTHLS_ACC-sim): %-hls : %-wdir
+	$(QUIET_INFO)echo "Running RTL simulation for available implementations of $(@:-hls=)"
+	$(QUIET_MAKE)ACCELERATOR=$(@:-sim=) TECH=$(TECHLIB) ESP_ROOT=$(ESP_ROOT) make -C $(CATAPULTHLS_ACC_PATH)/$(@:-sim=)/hw/hls-work-$(TECHLIB) sim | tee $(HLS_LOGS)/$(@:-hls=)_hls.log
+
 $(CATAPULTHLS_ACC-clean): %-clean : %-wdir
 	$(QUIET_CLEAN)ACCELERATOR=$(@:-clean=) TECH=$(TECHLIB) ESP_ROOT=$(ESP_ROOT) make -C $(CATAPULTHLS_ACC_PATH)/$(@:-clean=)/hw/hls-work-$(TECHLIB) clean
+	@ACCELERATOR=$(@:-clean=) TECH=$(TECHLIB) ESP_ROOT=$(ESP_ROOT) DMA_WIDTH=$(NOC_WIDTH) $(MAKE) -C $(CATAPULTHLS_ACC_PATH)/$(@:-clean=)/hw/sim clean
 	@$(RM) $(HLS_LOGS)/$(@:-clean=)*.log
 
 $(CATAPULTHLS_ACC-distclean): %-distclean : %-wdir

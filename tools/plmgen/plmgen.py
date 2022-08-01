@@ -1196,7 +1196,7 @@ for mem in mem_list:
     mem.print()
     mem.gen(sram_list)
     mem.write_verilog(out_path)
-    # mem.write_tb(tb_path)
+    mem.write_tb(tb_path)
     mem.write_hpp()
     mem.write_bdm(out_path, tech_path)
 
