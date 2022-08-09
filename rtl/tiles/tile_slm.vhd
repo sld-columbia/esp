@@ -458,7 +458,8 @@ begin
       tile_config => tile_config,
       srst => open,
       apbi => apbi,
-      apbo => apbo(0)
+      apbo => apbo(0),
+      prc_interrupt => '0'
     );
 
   -----------------------------------------------------------------------------

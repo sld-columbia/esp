@@ -1154,7 +1154,8 @@ begin
       tile_config => tile_config,
       srst => srst,
       apbi => noc_apbi,
-      apbo => noc_apbo(0)
+      apbo => noc_apbo(0),
+      prc_interrupt => '0' --remove after implementing interrupt
     );
 
   -- I/O bus proxy - remote memory-mapped I/O accessed from local masters

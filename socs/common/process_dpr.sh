@@ -775,7 +775,7 @@ elif [ "$4" == "IMPL_DPR" ]; then
     gen_impl_script $1 $2 $3 $4
 
     #gen_dpr $1 $2 $3 $4
-elif [ $4 == "ACC" ]; then
+elif [ "$4" == "ACC" ]; then
     extract_acc $1 $2 $3; 
     extract_acc_old $1 $2 $3; 
     diff_accelerators $1 $2 $3; 
@@ -786,7 +786,7 @@ elif [ $4 == "ACC" ]; then
     #gen_fplan $1 $2 $3
     #gen_dpr $1 $2 $3 $4;
 
-elif [ $4 == "IMPL_ACC" ]; then
+elif [ "$4" == "IMPL_ACC" ]; then
     extract_acc $1 $2 $3; 
     extract_acc_old $1 $2 $3; 
     diff_accelerators $1 $2 $3; 
@@ -800,34 +800,34 @@ elif [ $4 == "IMPL_ACC" ]; then
     fi;
     gen_impl_script $1 $2 $3 $4;
    
-elif [ $4 == "GEN_BS" ]; then
+elif [ "$4" == "GEN_BS" ]; then
     extract_acc $1 $2 $3; 
     extract_acc_old $1 $2 $3; 
     diff_accelerators $1 $2 $3; 
     gen_bs_script $1 $2 $3 $4;
 
-elif [ $4 == "GEN_HDR" ]; then
+elif [ "$4" == "GEN_HDR" ]; then
     extract_acc $1 $2 $3
     gen_bs_descriptor $1 $2 $3 $4
      
-elif [ $4 == "LOAD_BS" ]; then
+elif [ "$4" == "LOAD_BS" ]; then
     load_bs $1 $2 $3 $4
 
 elif [ $4 == "test" ]; then
-    #extract_acc $1 $2 $3
+    extract_acc $1 $2 $3
     #extract_acc_old $1 $2 $3
     #diff_accelerators $1 $2 $3 
     #patch_acc_devid $1 $2 $3 $4
     #gen_bs_script $1 $2 $3 $4 
     #gen_bs_descriptor $1 $2 $3 $4
-    load_bs $1 $2 $3 $4
-    #initialize_acc_tiles $1 $2 $3
+    #load_bs $1 $2 $3 $4
+    initialize_acc_tiles $1 $2 $3
     #add_acc_prj_file $1 $2 $3
     #gen_synth_script $1 $2 $3 $4
     #gen_fplan $1 $2 $3;
     #echo " regenarate before parse is $regenerate_fplan";
-    #parse_synth_report $1 $2 $3 $4
-    #gen_floorplan $1 $2 $3 $4;
+    parse_synth_report $1 $2 $3 $4
+    gen_floorplan $1 $2 $3 $4;
     #acc_fplan $1 $2 $3 $4;
     #echo " regenarate after parse is $regenerate_fplan";
     #gen_floorplan $1 $2 $3 $4

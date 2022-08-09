@@ -1,5 +1,7 @@
 #include <stdio.h>
+#ifndef __riscv
 #include <stdlib.h>
+#endif
 #include <esp_probe.h>
 
 #define LEN_DEVNAME_MAX 32

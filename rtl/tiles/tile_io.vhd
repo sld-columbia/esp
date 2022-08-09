@@ -462,6 +462,8 @@ architecture rtl of tile_io is
   attribute mark_debug of icap_avail     : signal is "true";
   attribute mark_debug of icap_prdone    : signal is "true";
   attribute mark_debug of icap_prerror   : signal is "true";
+  
+  attribute mark_debug of vsm_VS_0_sw_startup_req : signal is "true";
 
   attribute mark_debug of m_axi_mem_araddr   : signal is "true";
   attribute mark_debug of m_axi_mem_arlen    : signal is "true";
@@ -1095,8 +1097,8 @@ begin
       s_axil_bready     => s_axil_bready,
       s_axil_bresp      => s_axil_bresp);
 
+  noc_apbo(127).pirq <= (CFG_PRC_IRQ => vsm_VS_0_sw_startup_req, others => '0'); --connect PRC interrupt
   -- tie off the other apbo signals
-  noc_apbo(127).pirq <= (others => '0');
   noc_apbo(127).pconfig <= fixed_apbo_pconfig(127);
   noc_apbo(127).pindex <= 127;
 
@@ -1445,7 +1447,8 @@ begin
       tile_config => tile_config,
       srst => open,
       apbi => noc_apbi,
-      apbo => noc_apbo(0)
+      apbo => noc_apbo(0),
+      prc_interrupt => vsm_VS_0_sw_startup_req --to be removed after submission
     );
 
   -- PRC 
@@ -1480,7 +1483,7 @@ begin
       --vsm_VS_0_rm_reset         => vsm_VS_0_rm_reset,
       --vsm_VS_0_event_error      => vsm_VS_0_event_error,
       --vsm_VS_0_sw_shutdown_req  => vsm_VS_0_sw_shutdown_req,
-      --vsm_VS_0_sw_startup_req   => vsm_VS_0_sw_startup_req,
+      vsm_VS_0_sw_startup_req   => vsm_VS_0_sw_startup_req,
       --icap_avail                => icap_avail,
       --icap_prdone               => icap_prdone,
       --icap_prerror              => icap_prerror,
@@ -1503,7 +1506,9 @@ begin
 
     s_axil_araddr_masked <= s_axil_araddr and prc_mask;
     s_axil_awaddr_masked <= s_axil_awaddr and prc_mask;
-  
+
+  --vsm_VS_0_sw_startup_req <= '1';
+  --tile_config(0) <= vsm_VS_0_sw_startup_req;
   -- ICAP3 instance
   icap_inst_1: icap
     generic map (

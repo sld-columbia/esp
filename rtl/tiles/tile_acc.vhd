@@ -582,7 +582,8 @@ begin
       tile_config => tile_config,
       srst => open,
       apbi => apbi,
-      apbo => apbo(0)
+      apbo => apbo(0),
+      prc_interrupt => '0'
     );
 
   acc_tile_q_1 : acc_tile_q
