@@ -473,7 +473,8 @@ begin
       srst => srst,
       tp_acc_rst => open,
       apbi => apbi,
-      apbo => apbo(0)
+      apbo => apbo(0),
+      prc_interrupt => '0'
     );
 
   -----------------------------------------------------------------------------
