@@ -2398,6 +2398,16 @@ def print_soc_locations(fp, esp_config, soc):
         fp.write("};\n")
 
 
+def print_aux_tile_locs (fp, esp_config, soc):
+  fp.write("soc_loc_t io_loc = ")
+  for i in range(0, esp_config.ntiles):
+    t = esp_config.tiles[i]
+    if t.type == "misc":
+        fp.write("{" + str(t.row) + "," + str(t.col) + "};")
+        break
+  fp.write("\n\n")
+
+
 def print_devtree(fp, soc, esp_config):
 
     # Get CPU base frequency
@@ -3702,6 +3712,15 @@ def create_socmap(esp_config, soc):
     fp.close()
 
     print("Created soc defines into 'soc_defs.h'")
+
+    # io_tile locations
+    fp = open('prc_aux.h', 'w')
+
+    print_aux_tile_locs(fp, esp_config, soc)
+
+    fp.close()
+
+    print("Created io_tile locations into 'prc_aux.h'")
 
     # soc tile locations
     fp = open('soc_locs.h', 'w')
