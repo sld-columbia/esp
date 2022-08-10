@@ -770,6 +770,7 @@ package tile is
       bufdout_valid     : in  std_ulogic;
       acc_done          : in  std_ulogic;
       flush             : out std_ulogic;
+      acc_flush_done    : in std_ulogic;
       mon_dvfs_in       : in  monitor_dvfs_type;
       mon_dvfs          : out monitor_dvfs_type;
       llc_coherent_dma_rcv_rdreq    : out std_ulogic;
