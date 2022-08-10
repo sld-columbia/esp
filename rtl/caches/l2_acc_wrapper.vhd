@@ -69,6 +69,7 @@ entity l2_acc_wrapper is
     aq                        : in  std_ulogic;
     rl                        : in  std_ulogic;
     spandex_conf              : in  std_logic_vector(31 downto 0);
+    acc_flush_done            : out std_ulogic;
 
     -- backend (cache - NoC)
     -- tile->NoC1
@@ -174,8 +175,9 @@ architecture rtl of l2_acc_wrapper is
   signal acc_done_l2_valid         : std_logic;
   signal acc_done_l2_data          : std_logic_vector(1 downto 0);
 
-  type acc_done_state_t is (idle, valid_acc_done);
+  type acc_done_state_t is (idle, wait_for_cpu_ready, valid_acc_done);
   signal acc_done_state, acc_done_next : acc_done_state_t;
+  signal flush_sync : std_ulogic;
 
   -------------------------------------------------------------------------------
   -- Flush FSM signals
@@ -571,7 +573,7 @@ begin  -- architecture rtl of l2_acc_wrapper
       l2_cpu_req_data_dcs       => cpu_req_data_dcs,
       l2_cpu_req_data_pred_cid  => cpu_req_data_pred_cid,
       l2_flush_ready            => flush_ready,
-      l2_flush_valid            => flush_valid,
+      l2_flush_valid            => '0',
       l2_flush_data             => flush_data,
       -- cache to AHB
       l2_rd_rsp_ready           => rd_rsp_ready,
@@ -579,7 +581,8 @@ begin  -- architecture rtl of l2_acc_wrapper
       l2_rd_rsp_data_line       => rd_rsp_data_line,
       l2_inval_ready            => inval_ready,
       l2_inval_valid            => inval_valid,
-      l2_inval_data             => open,
+      l2_inval_data_addr        => open,
+      l2_inval_data_hprot       => open,
       l2_bresp_ready            => '1',
       l2_bresp_valid            => open,
       l2_bresp_data             => open,
@@ -623,6 +626,7 @@ begin  -- architecture rtl of l2_acc_wrapper
       l2_rsp_in_data_word_mask  => rsp_in_data_word_mask,
       l2_rsp_in_data_invack_cnt => rsp_in_data_invack_cnt,
       flush_done                => flush_done,
+      acc_flush_done            => acc_flush_done,
       -- debug
       --asserts                   => asserts,
       --bookmark                  => bookmark,
@@ -638,6 +642,7 @@ begin  -- architecture rtl of l2_acc_wrapper
 
   acc_ready_gen: if USE_SPANDEX = 0 generate
     acc_done_l2_ready <= '0';
+    acc_flush_done <= '0';
   end generate acc_ready_gen;
 
   ----------------------------------------------------------------------------
@@ -647,12 +652,14 @@ begin  -- architecture rtl of l2_acc_wrapper
   begin
     if rst = '0' then
       acc_done_state <= idle;
+      flush_sync <= '0';
     elsif clk'event and clk = '1' then
       acc_done_state <= acc_done_next;
+      flush_sync <= flush;
     end if;
   end process acc_done_update;
 
-  acc_done_state_fsm : process (rl, acc_done_l2_ready, acc_done_state) is
+  acc_done_state_fsm : process (flush_sync, cpu_req_ready, acc_done_l2_ready, acc_done_state) is
   begin
     acc_done_next     <= acc_done_state;
     acc_done_l2_data  <= "11";
@@ -660,7 +667,12 @@ begin  -- architecture rtl of l2_acc_wrapper
 
     case acc_done_state is
       when idle =>
-        if rl = '1' and USE_SPANDEX /= 0 then
+        if flush_sync = '1' and USE_SPANDEX /= 0 then
+          acc_done_next <= wait_for_cpu_ready;
+        end if;
+
+      when wait_for_cpu_ready =>
+        if cpu_req_ready = '1' then
           acc_done_l2_valid <= '1';
           if acc_done_l2_ready = '0' then
             acc_done_next <= valid_acc_done;

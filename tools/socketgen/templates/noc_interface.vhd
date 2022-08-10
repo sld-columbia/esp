@@ -216,6 +216,7 @@ end;
   signal dma_write_chnl_data        : std_logic_vector(ARCH_BITS - 1 downto 0);
   signal acc_done                   : std_ulogic;
   signal flush                      : std_ulogic;
+  signal acc_flush_done             : std_ulogic;
   -- Register control, interrupt and monitor signals
   signal pllclk_int        : std_ulogic;
   signal mon_dvfs_feedthru : monitor_dvfs_type;
@@ -307,6 +308,7 @@ begin
         aq                         => conf_done,
         rl                         => acc_done,
         spandex_conf               => bank(SPANDEX_REG),
+        acc_flush_done             => acc_flush_done,
         coherence_req_wrreq        => coherence_req_wrreq,
         coherence_req_data_in      => coherence_req_data_in,
         coherence_req_full         => coherence_req_full,
@@ -396,6 +398,7 @@ begin
       bufdout_valid                 => dma_write_chnl_valid,
       acc_done                      => acc_done,
       flush                         => flush,
+      acc_flush_done                => acc_flush_done,
       mon_dvfs_in                   => mon_dvfs_in,
       mon_dvfs                      => mon_dvfs_feedthru,
       llc_coherent_dma_rcv_rdreq    => coherent_dma_rcv_rdreq,
