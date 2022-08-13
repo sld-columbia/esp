@@ -24,7 +24,7 @@ prc_v1_3::set_property -dict [list                                              
                                     CONFIG.VS.VS_0.HAS_POR_RM                   0\
                                     CONFIG.VS.VS_0.SKIP_RM_STARTUP_AFTER_RESET  0\
                                     CONFIG.VS.VS_0.RM.RM_0.SHUTDOWN_REQUIRED    no\
-                                    CONFIG.VS.VS_0.RM.RM_0.STARTUP_REQUIRED     no\
+                                    CONFIG.VS.VS_0.RM.RM_0.STARTUP_REQUIRED     sw\
                                     CONFIG.VS.VS_0.RM.RM_0.RESET_REQUIRED       no\
                                     CONFIG.VS.VS_0.RM.RM_0.BS.0.ADDRESS         0\
                                     CONFIG.VS.VS_0.RM.RM_0.BS.0.SIZE            0\
