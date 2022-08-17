@@ -78,6 +78,21 @@ const static unsigned Mask_buffer_size = 8192; // in 'bytes'
 const static unsigned input_buffer_size = 65536;
 const static unsigned aux_buffer_size = 4096; // 128X128 ??
 
+
+static inline uint64_t get_counter()
+{
+    uint64_t counter;
+    asm volatile (
+    "li t0, 0;"
+    "csrr t0, mcycle;"
+    "mv %0, t0"
+    : "=r" ( counter )
+    :
+    : "t0"
+        );
+    return counter;
+} 
+
 void CPU_transpose(token_t *array, int m, int n){
 
     token_t new_array[m*n];
@@ -665,6 +680,12 @@ static void EdgeBert_Attension (struct esp_device *dev, struct esp_device *plic_
 
     unsigned data = 0, data_read = 0;
     int num_interrupts;
+	 
+    uint64_t total_exe_cycle = 0;
+    uint64_t count1;
+    uint64_t count2;
+    double exe_time;
+    uint64_t exe_cycle;
 
     unsigned input_rd1_base = ((unsigned) mem) + Mask_buffer_size;
     unsigned input_rd2_base = ((unsigned) mem) + Mask_buffer_size+input_buffer_size;
@@ -749,8 +770,9 @@ static void EdgeBert_Attension (struct esp_device *dev, struct esp_device *plic_
     
     data = 0xA;
     iowrite32(dev, 0x04, data);
-
-    //printf("......wait for EADD interrupt\n");
+    
+    count1 = get_counter(); 
+    printf("......wait for EADD interrupt\n");
     //iointerrupt();
     while((ioread32(plic_dev, PLIC_IP_OFFSET) & 0x40) == 0);
     iowrite32(plic_dev, PLIC_INTACK_OFFSET, EDGEBERT_IRQ + 1);
@@ -759,6 +781,10 @@ static void EdgeBert_Attension (struct esp_device *dev, struct esp_device *plic_
     ioread32(plic_dev, PLIC_INTACK_OFFSET);
     num_interrupts++;
     //printf("......got the EADD interrupt\n");
+    count2 = get_counter();
+    exe_cycle = (count2-count1);
+    printf("......got the EADD interrupt, and it takes %"PRIu64" clock cycles...\n", exe_cycle);
+
 
 
     //layernorm
@@ -797,8 +823,8 @@ static void EdgeBert_Attension (struct esp_device *dev, struct esp_device *plic_
     data = 0x8;
     iowrite32(dev, 0x04, data);
 
-
-    //printf("wait for LayerNorm interrupt\n");
+    count1 = get_counter();
+    printf("wait for LayerNorm interrupt\n");
     //iointerrupt();
     while((ioread32(plic_dev, PLIC_IP_OFFSET) & 0x40) == 0);
     iowrite32(plic_dev, PLIC_INTACK_OFFSET, EDGEBERT_IRQ + 1);
@@ -807,6 +833,9 @@ static void EdgeBert_Attension (struct esp_device *dev, struct esp_device *plic_
     ioread32(plic_dev, PLIC_INTACK_OFFSET);
     num_interrupts++;
     //printf("got the LayerNorm interrupt\n");
+    count2 = get_counter();
+    exe_cycle = (count2-count1);
+    printf("......got the LayerNorm interrupt, and it takes %"PRIu64" clock cycles...\n", exe_cycle);
 
     //read masterinput out
     data = 0x1;
@@ -1047,19 +1076,6 @@ static void init_buf(token_t *input_ids1st, token_t *input_ids2nd, token_t *we_m
 }
 
 
-static inline uint64_t get_counter()
-{
-    uint64_t counter;
-    asm volatile (
-    "li t0, 0;"
-    "csrr t0, mcycle;"
-    "mv %0, t0"
-    : "=r" ( counter )
-    :
-    : "t0"
-        );
-    return counter;
-} 
 
 
 
@@ -1232,6 +1248,8 @@ CPU_multiply(output1, we2, N0, M_mat, N1, output2);
 
 //edgebert compuatation
 
+
+/*
 int main(int argc, char * argv[])
 {
     int i;
@@ -1557,10 +1575,115 @@ int main(int argc, char * argv[])
     return 0;
 }
 
+*/
+
+// only profiling EADD+LayerNorm
+int main(int argc, char * argv[])
+{
+    int i;
+    int n;
+    int ndev;
+    struct esp_device dev, coh_dev;
+    dev.addr = ACC_ADDR;
+
+    struct esp_device plic_dev;
+    plic_dev.addr = PLIC_ADDR;
 
 
+    unsigned done;
+    token_t *mem;
 
 
+    unsigned errors1 = 0;
+    unsigned errors2 = 0;
+    unsigned coherence;
+    unsigned data = 0, data_read = 0;
+    
+
+	
+    mem_size = Mask_buffer_size + aux_buffer_size + 3*input_buffer_size;
+    
+    // TO MODIFY: Allocate memory
+    // Allocation of the accelerator data array (mem) and of the expected output array (gold)
+    mem = aligned_malloc(mem_size);
+
+    
+
+    // Flush (customize coherence model here)
+    coherence = ACC_COH_RECALL;
+    coh_dev.addr = CSR_TILE_ADDR;
+    iowrite32(&coh_dev, CSR_REG_OFFSET*4, coherence);
+    if (coherence != ACC_COH_RECALL)
+	esp_flush(coherence,4);
+    int num_interrupts;
+
+    
+
+    token_t* attention_heads;
+    attention_heads = aligned_malloc(128*768);
+
+    uint64_t total_exe_cycle = 0;
+    uint64_t count1;
+    uint64_t count2;
+    double exe_time;
+    uint64_t exe_cycle;
+	
+    
+
+    token_t *input_1;  //64*768
+    token_t *input_2;  //768*64
+  
+
+    unsigned N0 ;
+    unsigned N1 ;
+    unsigned M_mat;
+    unsigned is_relu;
+    N0 = 64;
+   M_mat = 768;
+   N1 = 64;
+   
+   token_t* attention_out;
+   input_1 = aligned_malloc(N0*M_mat);
+   input_2  = aligned_malloc(M_mat*N1);
+
+
+    token_t* input_ids;
+    input_ids = aligned_malloc(128*768);
+    memset(input_ids, -1, 128*768*sizeof(token_t));
+
+
+   CPU_transpose(input_ids, 768, 128); 
+   attention_out = aligned_malloc(128*768);
+
+
+    token_t * attention_head_out;
+    attention_head_out = aligned_malloc(128*768);
+    memset(attention_out, 100, 128*768*sizeof(token_t));
+
+
+   for (int i=0; i<2; i++)
+   {
+   memcpy(input_1, attention_head_out+i*N0*M_mat, N0*M_mat*sizeof(token_t));
+   memcpy(input_2, input_ids+i*N1*M_mat, N1*M_mat*sizeof(token_t));
+   EdgeBert_Init(&dev, &plic_dev, mem);
+           count1 = get_counter(); 
+	   EdgeBert_ElementAddLayerNorm(&dev, &plic_dev, N0, N1, M_mat, mem, input_1, input_2);
+	   count2 = get_counter(); 
+           exe_cycle = (count2-count1);
+            printf("...ElementAddLayerNorm Head %d takes %"PRIu64" clock cycles...\n", i, exe_cycle);
+
+   memcpy(attention_out + i*N0*M_mat, mem+Mask_buffer_size+2*input_buffer_size+aux_buffer_size, N0*M_mat*sizeof(token_t));
+   }	
+
+	
+	
+	
+aligned_free(mem);
+   return 0;
+}
+	
+	
+	
 
 
 
