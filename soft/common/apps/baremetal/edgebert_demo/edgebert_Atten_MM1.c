@@ -263,7 +263,7 @@ static int EdgeBert_MatMul
 	uint64_t count1;
     uint64_t count2;
     uint64_t exe_cycle;
-    count1 = get_counter();
+    
     //printf("...STARTing Matmul in EdgeBert...\n");
     
     int num_interrupts = 0;
@@ -353,7 +353,7 @@ static int EdgeBert_MatMul
     iowrite32(dev, 0x14, data);
     iowrite32(dev, 0x18, data);
     
-    
+    count1 = get_counter();
     // Start PUModule Computation with use_lowprec_mac=0" 
     data = 0x07;
     iowrite32(dev, 0x04, data);
@@ -367,6 +367,12 @@ static int EdgeBert_MatMul
     ioread32(plic_dev, PLIC_INTACK_OFFSET);
     //printf("......receiving the 3rd interrupt\n");
     num_interrupts++;
+
+    count2 = get_counter();
+            
+    exe_cycle = (count2-count1);
+            //printf("...Attention Head %d takes %u ns seconds...\n", i, exe_time);
+    printf("...This MatMul takes %"PRIu64" clock cycles...\n", exe_cycle);
 
 
     if (softmax==0)
@@ -394,11 +400,7 @@ static int EdgeBert_MatMul
 
     
     //printf("...FINISHing Matmul in EdgeBert...\n");
-    count2 = get_counter();
-            
-    exe_cycle = (count2-count1);
-            //printf("...Attention Head %d takes %u ns seconds...\n", i, exe_time);
-    printf("...This MatMul %d takes %"PRIu64" clock cycles...\n", i, exe_cycle);
+    
     
     return num_interrupts;
 }
