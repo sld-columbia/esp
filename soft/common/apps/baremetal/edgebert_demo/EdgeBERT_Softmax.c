@@ -79,6 +79,107 @@ const static unsigned Mask_buffer_size = 8192; // in 'bytes'
 const static unsigned input_buffer_size = 65536;
 const static unsigned aux_buffer_size = 4096; // 128X128 ??
 
+static int EdgeBert_SoftAttenM 
+(struct esp_device *dev, struct esp_device *plic_dev, int N0, int N1, int M_mat)
+
+{
+    //printf("STARTing SoftAttenM in EdgeBert...\n");
+    unsigned data = 0, data_read = 0;
+    int num_interrupts;
+    
+    //" Start use_gb 0x50 and reset_mode 0x58"
+    data = 0x0;
+    iowrite32(dev,  0x08, data); //flip_mem = 0;
+    data = 0x1;
+    iowrite32(dev, 0x50, data); //use_gb = 1
+    data = 0x08;
+    iowrite32(dev, 0x58, data); //reset_mode = 0x02 layernorm pu mode
+    data = 0x02;
+    iowrite32(dev, 0x54, data); //gb_mode_config = 2 // SMax gb mode
+
+
+    data = 0;
+    data += base_attn_span;
+    data += base_gamma << 7;
+    data += base_beta << 15;
+    data += adpbias_attn_span << 23;
+    data += adpbias_gamma << 26;
+    data += adpbias_beta << 29;
+    iowrite32(dev, 0x1C, data);
+    
+    data = 0;
+    data += num_vector;
+    data += num_timestep << 8;
+    data += adpbias_act1 << 16;
+    data += adpbias_act2 << 20;
+    data += adpbias_act3 << 24;
+    iowrite32(dev, 0x20, data);
+
+
+    // Start MatrixConfig 0x10" 
+
+    data = 0x0;
+    data += N0;
+    data += N1 << 10;
+    data += M_mat << 20;
+    iowrite32(dev, 0x10, data);
+
+
+    data = 0;
+    data += base_input0;
+    data += base_input1 << 16;
+    iowrite32(dev, 0x14, data);
+    iowrite32(dev, 0x18, data);
+
+
+    //Finish config for SMax
+
+    //Start SMax Computation
+    data = 0x0;
+    iowrite32(dev,  0x08, data); //flip_mem = 0;
+
+    data = 0x9;
+    iowrite32(dev, 0x04, data);
+
+    //End SMax Computation"
+
+
+    // 1st interrupt
+    //printf("...waiting for interrupt\n");
+    //iointerrupt();
+    while((ioread32(plic_dev, PLIC_IP_OFFSET) & 0x40) == 0);
+    iowrite32(plic_dev, PLIC_INTACK_OFFSET, EDGEBERT_IRQ + 1);
+    iowrite32(plic_dev, 0x2000, 0x40);
+    iowrite32(plic_dev, 0x18, 0x2);
+    ioread32(plic_dev, PLIC_INTACK_OFFSET);
+    //printf("...receiving the interrupt\n");
+    num_interrupts++;
+
+    
+    //read masterinput out
+    data = 0x1;
+    iowrite32(dev,  0x4C, data); 
+
+    // Start Input Master Write" << endl;
+    data = 0x04;
+    iowrite32(dev,  0x04, data);
+    
+    // 7th interrupt
+    //printf("......waiting for 4th interrupt\n");
+    //iointerrupt();
+    while((ioread32(plic_dev, PLIC_IP_OFFSET) & 0x40) == 0);
+    iowrite32(plic_dev, PLIC_INTACK_OFFSET, EDGEBERT_IRQ + 1);
+    iowrite32(plic_dev, 0x2000, 0x40);
+    iowrite32(plic_dev, 0x18, 0x2);
+    ioread32(plic_dev, PLIC_INTACK_OFFSET);
+    //printf("......receiving the 4th interrupt\n");
+    num_interrupts++;
+
+    
+    //printf("FINISHing SoftAttenM in EdgeBert...\n");
+    return num_interrupts;
+
+}
 
 static void EdgeBert_Attension_softmax (struct esp_device *dev, struct esp_device *plic_dev, token_t *mem)
 
