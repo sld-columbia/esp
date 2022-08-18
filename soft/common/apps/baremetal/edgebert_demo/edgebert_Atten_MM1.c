@@ -361,6 +361,7 @@ static int EdgeBert_MatMul
     //printf("......waiting for 3rd interrupt\n");
     //iointerrupt();
     while((ioread32(plic_dev, PLIC_IP_OFFSET) & 0x40) == 0);
+    count2 = get_counter();
     iowrite32(plic_dev, PLIC_INTACK_OFFSET, EDGEBERT_IRQ + 1);
     iowrite32(plic_dev, 0x2000, 0x40);
     iowrite32(plic_dev, 0x18, 0x2);
@@ -368,7 +369,7 @@ static int EdgeBert_MatMul
     //printf("......receiving the 3rd interrupt\n");
     num_interrupts++;
 
-    count2 = get_counter();
+    
             
     exe_cycle = (count2-count1);
             //printf("...Attention Head %d takes %u ns seconds...\n", i, exe_time);
