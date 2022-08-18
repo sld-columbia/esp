@@ -78,6 +78,21 @@ const static unsigned Mask_buffer_size = 8192; // in 'bytes'
 const static unsigned input_buffer_size = 65536;
 const static unsigned aux_buffer_size = 4096; // 128X128 ??
 
+
+static inline uint64_t get_counter()
+{
+    uint64_t counter;
+    asm volatile (
+    "li t0, 0;"
+    "csrr t0, mcycle;"
+    "mv %0, t0"
+    : "=r" ( counter )
+    :
+    : "t0"
+        );
+    return counter;
+} 
+
 void CPU_transpose(token_t *array, int m, int n){
 
     token_t new_array[m*n];
@@ -1126,29 +1141,17 @@ static int validate_buf(token_t *out, native_t *gold, int out_len)
 // input and expected output initialization
 static void init_buf(token_t *input_ids1st, token_t *input_ids2nd, token_t *we_mat1,token_t *we_mat2, token_t *we_mat3, token_t *Mask_mat, token_t *Aux_mat)
 {
-   #include "input_ids1st.h" //128*768 -> 64*768
-   #include "input_ids2nd.h" //128*768 -> 64*768
-   #include "we_mat1.h" //768*64
-   #include "we_mat2.h" //768*64
-   #include "we_mat3.h" //768*64
-   #include "Mask_mat.h" //8192 chars
-   #include "Aux_mat.h" // 4096 chars
+   //#include "input_ids1st.h" //128*768 -> 64*768
+   //#include "input_ids2nd.h" //128*768 -> 64*768
+   //#include "we_mat1.h" //768*64
+   //#include "we_mat2.h" //768*64
+   //#include "we_mat3.h" //768*64
+   //#include "Mask_mat.h" //8192 chars
+   //#include "Aux_mat.h" // 4096 chars
 }
 
 
-static inline uint64_t get_counter()
-{
-    uint64_t counter;
-    asm volatile (
-    "li t0, 0;"
-    "csrr t0, mcycle;"
-    "mv %0, t0"
-    : "=r" ( counter )
-    :
-    : "t0"
-        );
-    return counter;
-} 
+
 
 
 
