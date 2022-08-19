@@ -755,7 +755,7 @@ static void EdgeBert_Attension_MM3 (struct esp_device *dev, struct esp_device *p
 
    
    
-   softmax = 1;
+   //softmax = 1;
    
    aligned_free(query_mat_1);
    aligned_free(key_mat_1);
