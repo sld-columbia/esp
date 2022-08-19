@@ -756,7 +756,7 @@ static void EdgeBert_Attension_MM2 (struct esp_device *dev, struct esp_device *p
    
    EdgeBert_Init(dev, plic_dev, mem); 
    //printf("Attension  8. Matmul\n");
-   softmax = 1;
+   //softmax = 1;
    EdgeBert_MatMul (dev, plic_dev, N0, N1, M_mat, is_relu, mem, Mask_mat, query_mat_1, key_mat_1, softmax);
    //combining to 128X128
    //memcpy(query_mat_2, mem+Mask_buffer_size+2*input_buffer_size+aux_buffer_size, N0*N1*sizeof(token_t));
