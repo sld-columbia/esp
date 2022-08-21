@@ -1249,7 +1249,6 @@ CPU_multiply(output1, we2, N0, M_mat, N1, output2);
 //edgebert compuatation
 
 
-/*
 int main(int argc, char * argv[])
 {
     int i;
@@ -1575,8 +1574,9 @@ int main(int argc, char * argv[])
     return 0;
 }
 
-*/
 
+
+/*
 // only profiling EADD+LayerNorm
 int main(int argc, char * argv[])
 {
@@ -1689,7 +1689,7 @@ aligned_free(mem);
 
 
 
-/*
+
 int main(int argc, char * argv[])
 {
     int i;
