@@ -38,6 +38,7 @@ entity axislv2noc is
   generic (
     tech             : integer;
     nmst             : integer;
+    is_mst_prc       : integer range 0 to 1 := 0; -- '1' if mst is PRC 
     retarget_for_dma : integer range 0 to 1 := 0;
     mem_axi_port     : integer range -1 to NAHBSLV - 1;
     mem_num          : integer;
@@ -76,7 +77,8 @@ architecture rtl of axislv2noc is
   type axi_fsm is (idle, request_header, request_address,
                    request_length, request_data, reply_header,
                    reply_data, request_data_lsb, request_data_msb,
-                   reply_data_lsb, reply_data_msb, request_data_ack);
+                   reply_data_lsb, reply_data_msb, request_data_ack,
+                   reply_data_first_word, reply_data_second_word);
 
   type transaction_type is record
     -- Selected master interfaces
@@ -151,6 +153,9 @@ architecture rtl of axislv2noc is
   signal remote_ahbs_rcv_data_out_hold  : misc_noc_flit_type;
   signal sample_and_hold : std_ulogic;
 
+  signal load_second_word : std_ulogic;
+  signal prc_last : std_ulogic;
+
    attribute mark_debug : string;
 
    attribute mark_debug of coherence_req_wrreq : signal is "true";
@@ -168,6 +173,7 @@ architecture rtl of axislv2noc is
    attribute mark_debug of sample_and_hold : signal is "true";
    attribute mark_debug of mosi : signal is "true";
    attribute mark_debug of somi : signal is "true";
+   attribute mark_debug of load_second_word : signal is "true";
 
 begin  -- rtl
 
@@ -323,10 +329,23 @@ begin  -- rtl
     else
       tran.payload_length(NOC_FLIT_SIZE-1 downto NOC_FLIT_SIZE-PREAMBLE_WIDTH) := PREAMBLE_TAIL;
     end if;
-    tran.payload_length(8 downto 0) := tran.len;
+   
+    -- For 32 bit PRC slave on 64-bit AXI bus, the burst size should be halved
+    if is_mst_prc = 0 then
+      tran.payload_length(8 downto 0) := tran.len;
+    else
+      tran.payload_length(8 downto 0) := ('0' & tran.len(8 downto 1));
+    end if;
+
     -- (read transaction only)
     tran.payload_length_narrow(MISC_NOC_FLIT_SIZE-1 downto MISC_NOC_FLIT_SIZE-PREAMBLE_WIDTH) := PREAMBLE_TAIL;
-    tran.payload_length_narrow(8 downto 0) := tran.len;
+    
+    -- For 32 bit PRC slave on 64-bit AXI bus, the burst size should be halved
+    if is_mst_prc = 0 then
+      tran.payload_length_narrow(8 downto 0) := tran.len;
+    else
+      tran.payload_length_narrow(8 downto 0) := ('0' & tran.len(8 downto 1));
+    end if;
 
     -- Create header flit
     tran.reserved             := (others => '0');
@@ -369,10 +388,21 @@ begin  -- rtl
 
     -- Response data flit (AXI Read)
     if transaction_reg.dst_is_mem = '1' then
-      rsp_preamble := get_preamble(NOC_FLIT_SIZE, coherence_rsp_rcv_data_out);
-      for i in 0 to nmst - 1 loop
-        somi(i).r.data <= (coherence_rsp_rcv_data_out(AHBDW - 1 downto 0));
-      end loop;
+      if is_mst_prc = 0 or ARCH_BITS = 32 then
+        rsp_preamble := get_preamble(NOC_FLIT_SIZE, coherence_rsp_rcv_data_out);
+        for i in 0 to nmst - 1 loop
+          somi(i).r.data <= (coherence_rsp_rcv_data_out(AHBDW - 1 downto 0));
+        end loop;
+      else
+        rsp_preamble := get_preamble(NOC_FLIT_SIZE, coherence_rsp_rcv_data_out);
+        for i in 0 to nmst - 1 loop
+          somi(i).r.data <= (others => '0');
+          case load_second_word is
+            when '1' => somi(i).r.data <= (x"00000000" & coherence_rsp_rcv_data_out(ARCH_BITS - 1 downto ARCH_BITS - 32));
+            when others => somi(i).r.data <= (x"00000000" & coherence_rsp_rcv_data_out(31 downto 0));
+          end case;
+        end loop;
+      end if;
     else
       rsp_preamble := get_preamble(MISC_NOC_FLIT_SIZE, noc_flit_pad & remote_ahbs_rcv_data_out);
       for i in 0 to nmst - 1 loop
@@ -411,10 +441,18 @@ begin  -- rtl
       -- r
       somi(i).r.id    <= transaction_reg.id;
       somi(i).r.resp  <= RBRESP_OKAY;
-      if rsp_preamble = PREAMBLE_TAIL then
-        somi(i).r.last  <= '1';
+      if is_mst_prc = 0 then
+        if rsp_preamble = PREAMBLE_TAIL then
+          somi(i).r.last  <= '1';
+        else
+          somi(i).r.last  <= '0';
+        end if;
       else
-        somi(i).r.last  <= '0';
+        if prc_last = '1' then
+          somi(i).r.last  <= '1';
+        else
+          somi(i).r.last  <= '0';
+        end if;
       end if;
       somi(i).r.user  <= (others => '0');
       somi(i).r.valid <= '0';
@@ -506,8 +544,11 @@ begin  -- rtl
     mst_ready  := mosi(transaction_reg.xindex).r.ready;
     mst_valid  := mosi(transaction_reg.xindex).w.valid;
     mst_bready := mosi(transaction_reg.xindex).b.ready;
-
-
+    
+    -- Flag to choose between first and second words in 32-bit AXI over 64-bit bus
+    load_second_word <= '0'; 
+    prc_last <= '0';
+    
     -- FSM
     case current_state is
       when idle =>
@@ -650,8 +691,13 @@ begin  -- rtl
       when reply_header =>
         if transaction_reg.dst_is_mem = '1' then
           if coherence_rsp_rcv_empty = '0' then
-            coherence_rsp_rcv_rdreq <= '1';
-            next_state              <= reply_data;
+            if is_mst_prc = 0 then
+              coherence_rsp_rcv_rdreq <= '1';
+              next_state <= reply_data;
+            else
+              coherence_rsp_rcv_rdreq <= '1';
+              next_state <= reply_data_first_word;   
+            end if;
           end if;
         else
           if remote_ahbs_rcv_empty = '0' then
@@ -710,6 +756,37 @@ begin  -- rtl
             end if;
           end if;
         end if;
+      
+      --These two states are added to serve a buffered read for 32-bit AXI slaves on 64-bit AXI bus
+      when reply_data_first_word => 
+        if coherence_rsp_rcv_empty = '0' then
+          slv_valid := '1';
+          if mst_ready = '1' then
+            next_state <= reply_data_second_word;
+          end if;
+        end if;
+      
+      when reply_data_second_word =>
+        if coherence_rsp_rcv_empty = '0' and mst_ready = '1' then 
+          coherence_rsp_rcv_rdreq <= '1';
+        end if;  
+        if coherence_rsp_rcv_empty = '0' then
+          slv_valid := '1';
+          load_second_word <= '1';
+          if mst_ready = '1' then
+            if rsp_preamble = PREAMBLE_TAIL then
+              prc_last <= '1'; 
+              if selected = '0' then
+                next_state <= idle;
+              else
+                next_state <= request_header;
+                sample_flits <= '1';
+              end if;
+            else
+              next_state <= reply_data_first_word;
+            end if;
+          end if;
+        end if;
 
       when others =>
         next_state <= idle;
@@ -723,7 +800,7 @@ begin  -- rtl
 
   -- Update FSM state
   process (clk, rst)
-  begin  -- process
+  begin  -- pocess
     if rst = '0' then                   -- asynchronous reset (active low)
       current_state <= idle;
       transaction_reg <= transaction_none;

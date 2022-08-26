@@ -1528,6 +1528,7 @@ begin
     generic map (
       tech             => CFG_FABTECH,
       nmst             => 1,
+      is_mst_prc       => IS_PRC_MST,
       retarget_for_dma => 1,    --enable retarget_for_dma
       mem_axi_port     => 0,
       mem_num          => CFG_NSLM_TILE + CFG_NSLMDDR_TILE + CFG_NMEM_TILE,

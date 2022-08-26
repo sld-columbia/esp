@@ -478,6 +478,10 @@ def print_global_constants(fp, soc):
   #prc config
   if soc.prc.get() == 1:
     fp.write("  constant CFG_PRC   : integer := 1;\n")
+    if soc.CPU_ARCH.get() == "leon3":
+      fp.write("  constant IS_PRC_MST : integer range 0 to 1 := 0;\n")
+    else:
+      fp.write("  constant IS_PRC_MST : integer range 0 to 1 := 1;\n")  
   else:
     fp.write("  constant CFG_PRC   : integer := 0;\n")
   if soc.cache_spandex.get() == 1:
