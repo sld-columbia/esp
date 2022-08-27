@@ -36,16 +36,15 @@ use work.cachepackage.all;
 
 entity axislv2noc is
   generic (
-    tech                : integer;
-    nmst                : integer;
-    is_mst_prc          : integer range 0 to 1 := 0; -- '1' if mst is PRC
-    retarget_for_dma    : integer range 0 to 1 := 0;
-    mem_axi_port        : integer range -1 to NAHBSLV - 1;
-    mem_num             : integer;
-    mem_info            : tile_mem_info_vector(0 to CFG_NMEM_TILE + CFG_NSLM_TILE + CFG_NSLMDDR_TILE - 1);
-    this_noc_flit_size  : integer;
-    slv_y               : local_yx;
-    slv_x               : local_yx);
+    tech             : integer;
+    nmst             : integer;
+    split_transaction : integer range 0 to 1 := 0; -- '1' for 32-bit masters on 64-bit bus
+    retarget_for_dma : integer range 0 to 1 := 0;
+    mem_axi_port     : integer range -1 to NAHBSLV - 1;
+    mem_num          : integer;
+    mem_info         : tile_mem_info_vector(0 to CFG_NMEM_TILE + CFG_NSLM_TILE + CFG_NSLMDDR_TILE - 1);
+    slv_y            : local_yx;
+    slv_x            : local_yx);
   port (
     rst                        : in  std_ulogic;
     clk                        : in  std_ulogic;
@@ -55,11 +54,11 @@ entity axislv2noc is
     somi                       : out axi_somi_vector(0 to nmst - 1);
     -- tile->NoC1
     coherence_req_wrreq        : out std_ulogic;
-    coherence_req_data_in      : out std_logic_vector(this_noc_flit_size - 1 downto 0);
+    coherence_req_data_in      : out noc_flit_type;
     coherence_req_full         : in  std_ulogic;
     -- Noc3->tile
     coherence_rsp_rcv_rdreq    : out std_ulogic;
-    coherence_rsp_rcv_data_out : in  std_logic_vector(this_noc_flit_size - 1 downto 0);
+    coherence_rsp_rcv_data_out : in  noc_flit_type;
     coherence_rsp_rcv_empty    : in  std_ulogic;
     -- tile->NoC5
     remote_ahbs_snd_wrreq      : out std_ulogic;
@@ -107,11 +106,11 @@ architecture rtl of axislv2noc is
     hsize_msb              : std_ulogic;  -- distinguish HSIZE_WORD from HSIZE_DWORD
     dst_is_mem             : std_ulogic;
     -- NoC flits
-    header                 : std_logic_vector(this_noc_flit_size - 1 downto 0);
+    header                 : noc_flit_type;
     header_narrow          : misc_noc_flit_type;
-    payload_address        : std_logic_vector(this_noc_flit_size - 1 downto 0);
+    payload_address        : noc_flit_type;
     payload_address_narrow : misc_noc_flit_type;
-    payload_length         : std_logic_vector(this_noc_flit_size - 1 downto 0);
+    payload_length         : noc_flit_type;
     payload_length_narrow  : misc_noc_flit_type;
   end record transaction_type;
 
@@ -145,7 +144,6 @@ architecture rtl of axislv2noc is
     payload_length_narrow  => (others => '0')
     );
 
-  constant this_noc_flit_pad : std_logic_vector(MAX_NOC_FLIT_SIZE - this_noc_flit_size downto 0) := (others => '0');
 
   signal transaction, transaction_reg : transaction_type;
   signal current_state, next_state    : axi_fsm;
@@ -319,7 +317,7 @@ begin  -- rtl
     end if;
 
     -- Set address
-    tran.payload_address(this_noc_flit_size-1 downto this_noc_flit_size-PREAMBLE_WIDTH) := PREAMBLE_BODY;
+    tran.payload_address(NOC_FLIT_SIZE-1 downto NOC_FLIT_SIZE-PREAMBLE_WIDTH) := PREAMBLE_BODY;
     tran.payload_address(GLOB_PHYS_ADDR_BITS - 1 downto 0) := tran.addr;
 
     tran.payload_address_narrow(MISC_NOC_FLIT_SIZE-1 downto MISC_NOC_FLIT_SIZE-PREAMBLE_WIDTH) := PREAMBLE_BODY;
@@ -327,13 +325,13 @@ begin  -- rtl
 
     -- Set length
     if tran.write = '1' then
-      tran.payload_length(this_noc_flit_size-1 downto this_noc_flit_size-PREAMBLE_WIDTH) := PREAMBLE_BODY;
+      tran.payload_length(NOC_FLIT_SIZE-1 downto NOC_FLIT_SIZE-PREAMBLE_WIDTH) := PREAMBLE_BODY;
     else
-      tran.payload_length(this_noc_flit_size-1 downto this_noc_flit_size-PREAMBLE_WIDTH) := PREAMBLE_TAIL;
+      tran.payload_length(NOC_FLIT_SIZE-1 downto NOC_FLIT_SIZE-PREAMBLE_WIDTH) := PREAMBLE_TAIL;
     end if;
 
     -- For 32 bit PRC slave on 64-bit AXI bus, the burst size should be halved
-    if is_mst_prc = 0 then
+    if split_transaction = 0 then
       tran.payload_length(8 downto 0) := tran.len;
     else
       tran.payload_length(8 downto 0) := ('0' & tran.len(8 downto 1));
@@ -343,7 +341,7 @@ begin  -- rtl
     tran.payload_length_narrow(MISC_NOC_FLIT_SIZE-1 downto MISC_NOC_FLIT_SIZE-PREAMBLE_WIDTH) := PREAMBLE_TAIL;
 
     -- For 32 bit PRC slave on 64-bit AXI bus, the burst size should be halved
-    if is_mst_prc = 0 then
+    if split_transaction = 0 then
       tran.payload_length_narrow(8 downto 0) := tran.len;
     else
       tran.payload_length_narrow(8 downto 0) := ('0' & tran.len(8 downto 1));
@@ -354,8 +352,8 @@ begin  -- rtl
     tran.reserved(3)          := tran.hsize_msb;
     tran.reserved(2 downto 0) := tran.prot;
 
-    tran.header := create_header(this_noc_flit_size, local_y, local_x, tran.mem_y, tran.mem_x, tran.msg_type, tran.reserved);
-    tran.header_narrow := create_header_misc(MISC_NOC_FLIT_SIZE, local_y, local_x, tran.mem_y, tran.mem_x, tran.msg_type, tran.reserved(RESERVED_WIDTH_MISC-1 downto 0))(MISC_NOC_FLIT_SIZE - 1 downto 0);
+    tran.header := create_header(NOC_FLIT_SIZE, local_y, local_x, tran.mem_y, tran.mem_x, tran.msg_type, tran.reserved);
+    tran.header_narrow := create_header(MISC_NOC_FLIT_SIZE, local_y, local_x, tran.mem_y, tran.mem_x, tran.msg_type, tran.reserved)(MISC_NOC_FLIT_SIZE - 1 downto 0);
 
     -- Write signal
     transaction <= tran;
@@ -371,7 +369,7 @@ begin  -- rtl
                           remote_ahbs_rcv_data_out, remote_ahbs_rcv_empty,
                           remote_ahbs_rcv_data_out_hold)
     variable wdata                   : std_logic_vector(AHBDW - 1 downto 0);
-    variable payload_data            : std_logic_vector(this_noc_flit_size - 1 downto 0);
+    variable payload_data            : noc_flit_type;
     variable payload_data_narrow_lsb : misc_noc_flit_type;
     variable payload_data_narrow_msb : misc_noc_flit_type;
     variable rsp_preamble            : noc_preamble_type;
@@ -390,13 +388,13 @@ begin  -- rtl
 
     -- Response data flit (AXI Read)
     if transaction_reg.dst_is_mem = '1' then
-      if is_mst_prc = 0 or ARCH_BITS = 32 then
-        rsp_preamble := get_preamble(this_noc_flit_size, this_noc_flit_pad & coherence_rsp_rcv_data_out);
+      if split_transaction = 0 then
+        rsp_preamble := get_preamble(NOC_FLIT_SIZE, coherence_rsp_rcv_data_out);
         for i in 0 to nmst - 1 loop
           somi(i).r.data <= (coherence_rsp_rcv_data_out(AHBDW - 1 downto 0));
         end loop;
       else
-        rsp_preamble := get_preamble(this_noc_flit_size, this_noc_flit_pad & coherence_rsp_rcv_data_out);
+        rsp_preamble := get_preamble(NOC_FLIT_SIZE, coherence_rsp_rcv_data_out);
         for i in 0 to nmst - 1 loop
           somi(i).r.data <= (others => '0');
           case load_second_word is
@@ -406,7 +404,7 @@ begin  -- rtl
         end loop;
       end if;
     else
-      rsp_preamble := get_preamble(MISC_NOC_FLIT_SIZE, misc_noc_flit_pad & remote_ahbs_rcv_data_out);
+      rsp_preamble := get_preamble(MISC_NOC_FLIT_SIZE, noc_flit_pad & remote_ahbs_rcv_data_out);
       for i in 0 to nmst - 1 loop
         somi(i).r.data <= (others => '0');
         if transaction_reg.size = HSIZE_DWORD then
@@ -443,7 +441,7 @@ begin  -- rtl
       -- r
       somi(i).r.id    <= transaction_reg.id;
       somi(i).r.resp  <= RBRESP_OKAY;
-      if is_mst_prc = 0 then
+      if split_transaction = 0 then
         if rsp_preamble = PREAMBLE_TAIL then
           somi(i).r.last  <= '1';
         else
@@ -481,7 +479,7 @@ begin  -- rtl
       if AHBDW = 64 then
         case transaction_reg.addr(2) is
           when '0'    => wdata := ahbdrivedata(mosi(transaction_reg.xindex).w.data(31 downto 0));
-          when others => wdata := ahbdrivedata(mosi(transaction_reg.xindex).w.data(ARCH_BITS - 1 downto ARCH_BITS - 32));
+          when others => wdata := ahbdrivedata(mosi(transaction_reg.xindex).w.data(63 downto 32));
         end case;
       else
         wdata := ahbdrivedata(mosi(transaction_reg.xindex).w.data);
@@ -491,8 +489,8 @@ begin  -- rtl
         case transaction_reg.addr(2 downto 1) is
           when "00"   => wdata := ahbdrivedata(mosi(transaction_reg.xindex).w.data(15 downto 0));
           when "01"   => wdata := ahbdrivedata(mosi(transaction_reg.xindex).w.data(31 downto 16));
-          when "10"   => wdata := ahbdrivedata(mosi(transaction_reg.xindex).w.data(ARCH_BITS - 17 downto ARCH_BITS - 32));
-          when others => wdata := ahbdrivedata(mosi(transaction_reg.xindex).w.data(ARCH_BITS - 1 downto ARCH_BITS - 16));
+          when "10"   => wdata := ahbdrivedata(mosi(transaction_reg.xindex).w.data(47 downto 32));
+          when others => wdata := ahbdrivedata(mosi(transaction_reg.xindex).w.data(63 downto 48));
         end case;
       else
         case transaction_reg.addr(1) is
@@ -507,10 +505,10 @@ begin  -- rtl
           when "001"  => wdata := ahbdrivedata(mosi(transaction_reg.xindex).w.data(15 downto 8));
           when "010"  => wdata := ahbdrivedata(mosi(transaction_reg.xindex).w.data(23 downto 16));
           when "011"  => wdata := ahbdrivedata(mosi(transaction_reg.xindex).w.data(31 downto 24));
-          when "100"  => wdata := ahbdrivedata(mosi(transaction_reg.xindex).w.data(ARCH_BITS - 25 downto ARCH_BITS - 32));
-          when "101"  => wdata := ahbdrivedata(mosi(transaction_reg.xindex).w.data(ARCH_BITS - 17 downto ARCH_BITS - 24));
-          when "110"  => wdata := ahbdrivedata(mosi(transaction_reg.xindex).w.data(ARCH_BITS -  9 downto ARCH_BITS - 16));
-          when others => wdata := ahbdrivedata(mosi(transaction_reg.xindex).w.data(ARCH_BITS -  1 downto ARCH_BITS -  8));
+          when "100"  => wdata := ahbdrivedata(mosi(transaction_reg.xindex).w.data(39 downto 32));
+          when "101"  => wdata := ahbdrivedata(mosi(transaction_reg.xindex).w.data(47 downto 40));
+          when "110"  => wdata := ahbdrivedata(mosi(transaction_reg.xindex).w.data(55 downto 48));
+          when others => wdata := ahbdrivedata(mosi(transaction_reg.xindex).w.data(63 downto 56));
         end case;
       else
         case transaction_reg.addr(1 downto 0) is
@@ -527,11 +525,11 @@ begin  -- rtl
     payload_data_narrow_msb := (others => '0');
     payload_data_narrow_lsb(MISC_NOC_FLIT_SIZE-1 downto MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH) := PREAMBLE_BODY;
     if (mosi(transaction_reg.xindex).w.last = '1') then
-      payload_data(this_noc_flit_size-1 downto this_noc_flit_size - PREAMBLE_WIDTH)                      := PREAMBLE_TAIL;
+      payload_data(NOC_FLIT_SIZE-1 downto NOC_FLIT_SIZE - PREAMBLE_WIDTH)                      := PREAMBLE_TAIL;
       payload_data_narrow_msb(MISC_NOC_FLIT_SIZE-1 downto MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH) := PREAMBLE_TAIL;
       last                                                                                     := '1';
     else
-      payload_data(this_noc_flit_size-1 downto this_noc_flit_size - PREAMBLE_WIDTH)                      := PREAMBLE_BODY;
+      payload_data(NOC_FLIT_SIZE-1 downto NOC_FLIT_SIZE - PREAMBLE_WIDTH)                      := PREAMBLE_BODY;
       payload_data_narrow_msb(MISC_NOC_FLIT_SIZE-1 downto MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH) := PREAMBLE_BODY;
       last                                                                                     := '0';
     end if;
@@ -693,7 +691,7 @@ begin  -- rtl
       when reply_header =>
         if transaction_reg.dst_is_mem = '1' then
           if coherence_rsp_rcv_empty = '0' then
-            if is_mst_prc = 0 then
+            if split_transaction = 0 then
               coherence_rsp_rcv_rdreq <= '1';
               next_state <= reply_data;
             else

@@ -15,24 +15,17 @@ fpga-program: vivado-prog-fpga
 	@sleep 5
 endif
 
-fpga-reconf: DPR_ENABLED = y
-fpga-reconf: esplink
-	@./$(ESP_CFG_BUILD)/esplink --reset
-	@./$(ESP_CFG_BUILD)/esplink --pbs -i $(ESP_ROOT)/socs/$(BOARD)/partial.bit
-	@./$(ESP_CFG_BUILD)/esplink --reset
+fpga-run-dpr: DPR_ENABLED = y
+fpga-run-dpr: fpga-run
 
-fpga-reset:
-	@./$(ESP_CFG_BUILD)/esplink --reset
-	@./$(ESP_CFG_BUILD)/esplink --brom -i $(SOFT_BUILD)/prom.bin
-	@./$(ESP_CFG_BUILD)/esplink --reset
+fpga-run-linux-dpr: DPR_ENABLED = y
+fpga-run-linux-dpr: fpga-run-linux
 
-fpga-run-sw: esplink soft
-	@./$(ESP_CFG_BUILD)/esplink --reset
-	@./$(ESP_CFG_BUILD)/esplink --brom -i $(SOFT_BUILD)/prom.bin
-	@./$(ESP_CFG_BUILD)/esplink --dram -i $(SOFT_BUILD)/systest.bin
-	@./$(ESP_CFG_BUILD)/esplink --reset
+fpga-load-pbs: DPR_ENABLED = y
+fpga-load-pbs: esplink
+	@$(ESP_ROOT)/socs/common/process_dpr.sh $(ESP_ROOT) $(BOARD) $(DEVICE) LOAD_BS;
 
-fpga-run: esplink fpga-program soft
+fpga-run: esplink soft
 	@./$(ESP_CFG_BUILD)/esplink --reset
 	@./$(ESP_CFG_BUILD)/esplink --brom -i $(SOFT_BUILD)/prom.bin
 	@./$(ESP_CFG_BUILD)/esplink --dram -i $(SOFT_BUILD)/systest.bin
