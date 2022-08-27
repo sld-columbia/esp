@@ -41,6 +41,7 @@ entity esp_tile_csr is
 end esp_tile_csr;
 
 architecture rtl of esp_tile_csr is
+
   constant MONITOR_APB_OFFSET : integer := 1;
 
   constant BURST_REG_INDEX : integer := 0;
@@ -136,22 +137,22 @@ architecture rtl of esp_tile_csr is
   --- constant DEFAULT_CONFIG : std_logic_vector(ESP_CSR_WIDTH - 1 downto 0) :=
   ---   DEFAULT_ACC_COH & DEFAULT_CPU_LOC_OVR & DEFAULT_ARIANE_HARTID & DEFAULT_TILE_ID & "0";
   constant DEFAULT_CONFIG : std_logic_vector(ESP_CSR_WIDTH - 1 downto 0) :=
-    DEFAULT_CPU_LOC_OVR & DEFAULT_DDR_CFG2 & DEFAULT_DDR_CFG1 & DEFAULT_DDR_CFG0 & DEFAULT_MDC_SCALER_CFG &
+    "00" & DEFAULT_CPU_LOC_OVR & DEFAULT_DDR_CFG2 & DEFAULT_DDR_CFG1 & DEFAULT_DDR_CFG0 & DEFAULT_MDC_SCALER_CFG &
     DEFAULT_DCO_NOC_CFG & DEFAULT_ACC_COH & DEFAULT_ARIANE_HARTID & DEFAULT_TILE_ID & "0";
 
   -- Maico modification end
 
   signal csr_addr : integer range 0 to 31;
 
-    begin
+begin
 
-      apbo.prdata  <= readdata;
-      apbo.pirq    <= (others => '0');
-      apbo.pindex  <= pindex;
-      apbo.pconfig <= pconfig;
+  apbo.prdata  <= readdata;
+  apbo.pirq    <= (others => '0');
+  apbo.pindex  <= pindex;
+  apbo.pconfig <= pconfig;
 
-      tile_config <= config_r;
-      csr_addr    <= conv_integer(apbi.paddr(6 downto 2));
+  tile_config <= config_r;
+  csr_addr    <= conv_integer(apbi.paddr(6 downto 2));
 
 
   rd_registers : process(apbi, count, count_value, burst, config_r, csr_addr, burst_state)
@@ -214,6 +215,8 @@ architecture rtl of esp_tile_csr is
         when ESP_CSR_CPU_LOC_OVR_3_ADDR =>
           readdata <=
             config_r(ESP_CSR_CPU_LOC_OVR_LSB + 128 downto ESP_CSR_CPU_LOC_OVR_LSB + 97);
+        when ESP_CSR_PRC_INTR_ADDR =>
+          readdata(ESP_CSR_PRC_INTR_MSB - ESP_CSR_PRC_INTR_LSB downto 0) <= config_r(ESP_CSR_PRC_INTR_MSB downto ESP_CSR_PRC_INTR_LSB);
         when others =>
           readdata <= (others => '0');
       end case;
@@ -297,11 +300,14 @@ architecture rtl of esp_tile_csr is
             config_r(ESP_CSR_CPU_LOC_OVR_LSB + 96 downto ESP_CSR_CPU_LOC_OVR_LSB + 65) <= apbi.pwdata;
           when ESP_CSR_CPU_LOC_OVR_3_ADDR =>
             config_r(ESP_CSR_CPU_LOC_OVR_LSB + 128 downto ESP_CSR_CPU_LOC_OVR_LSB + 97) <= apbi.pwdata;
+          when ESP_CSR_ACC_DECOUPLER_ADDR =>
+            config_r(ESP_CSR_ACC_DECOUPLER_MSB downto ESP_CSR_ACC_DECOUPLER_LSB) <= apbi.pwdata(ESP_CSR_ACC_DECOUPLER_MSB - ESP_CSR_ACC_DECOUPLER_LSB downto 0);
           when others => null;
         end case;
       end if;
     end if;
   end process wr_registers;
+  config_r(ESP_CSR_PRC_INTR_MSB downto ESP_CSR_PRC_INTR_LSB) <= prc_interrupt;
 
   --"burst" mode provides synchronization to all monitors in a tile
   --by sampling all counters to a different set of registers, while

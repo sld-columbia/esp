@@ -14,7 +14,7 @@ package esp_csr_pkg is
   constant CPU_LOC_YX_WIDTH : integer := 4;
 
   constant NCPU_TILE_MAX : integer := 16;
-  constant ESP_CSR_WIDTH : integer := 143 + 2 * CPU_LOC_YX_WIDTH * NCPU_TILE_MAX;
+  constant ESP_CSR_WIDTH : integer := 145 + 2 * CPU_LOC_YX_WIDTH * NCPU_TILE_MAX;
 
   constant ESP_CSR_VALID_ADDR : integer range 0 to 31 := 0;
   constant ESP_CSR_VALID_LSB  : integer range 0 to ESP_CSR_WIDTH-1 := 0;
@@ -63,8 +63,16 @@ package esp_csr_pkg is
   constant ESP_CSR_CPU_LOC_OVR_1_ADDR : integer range 0 to 31 := 13;
   constant ESP_CSR_CPU_LOC_OVR_2_ADDR : integer range 0 to 31 := 14;
   constant ESP_CSR_CPU_LOC_OVR_3_ADDR : integer range 0 to 31 := 15;
-  constant ESP_CSR_CPU_LOC_OVR_LSB : integer range 0 to ESP_CSR_WIDTH - 1 := 142;
-  constant ESP_CSR_CPU_LOC_OVR_MSB : integer range 0 to ESP_CSR_WIDTH - 1 := 142 + NCPU_TILE_MAX * 2 * YX_WIDTH;
+  constant ESP_CSR_CPU_LOC_OVR_LSB : integer range 0 to ESP_CSR_WIDTH - 1 := 144;
+  constant ESP_CSR_CPU_LOC_OVR_MSB : integer range 0 to ESP_CSR_WIDTH - 1 := 144 + NCPU_TILE_MAX * 2 * YX_WIDTH;
+
+  constant ESP_CSR_ACC_DECOUPLER_ADDR : integer range 0 to 31 := 16;
+  constant ESP_CSR_ACC_DECOUPLER_LSB : integer range 0 to ESP_CSR_WIDTH - 1 := 142;
+  constant ESP_CSR_ACC_DECOUPLER_MSB : integer range 0 to ESP_CSR_WIDTH - 1 := 142;
+
+  constant ESP_CSR_PRC_INTR_ADDR : integer range 0 to 31 := 17;
+  constant ESP_CSR_PRC_INTR_LSB : integer range 0 to ESP_CSR_WIDTH - 1 := 143;
+  constant ESP_CSR_PRC_INTR_MSB : integer range 0 to ESP_CSR_WIDTH - 1 := 143;
 
   component esp_tile_csr
     generic (

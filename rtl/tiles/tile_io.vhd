@@ -1410,7 +1410,7 @@ begin
       srst => open,
       apbi => noc_apbi,
       apbo => noc_apbo(0),
-      prc_interrupt => vsm_VS_0_sw_startup_req --to be removed after submission
+      prc_interrupt => vsm_VS_0_sw_startup_req 
     );
 
   -- PRC 
@@ -1418,7 +1418,7 @@ begin
   prc_1: prc_inst
     port map (
       clk                       => clk,
-      reset                     => rst,                 --check reset polarity
+      reset                     => rst,
       m_axi_mem_araddr          => m_axi_mem_araddr,
       m_axi_mem_arlen           => m_axi_mem_arlen,
       m_axi_mem_arsize          => m_axi_mem_arsize,
@@ -1487,7 +1487,7 @@ begin
     generic map (
       tech             => CFG_FABTECH,
       nmst             => 1,
-      split_transaction => IS_PRC_MST,
+      split_transaction => SPLIT_TRANS,
       retarget_for_dma => 1,    --enable retarget_for_dma
       mem_axi_port     => 0,
       mem_num          => CFG_NSLM_TILE + CFG_NSLMDDR_TILE + CFG_NMEM_TILE,
