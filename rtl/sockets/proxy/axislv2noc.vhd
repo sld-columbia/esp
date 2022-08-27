@@ -38,7 +38,7 @@ entity axislv2noc is
   generic (
     tech             : integer;
     nmst             : integer;
-    is_mst_prc       : integer range 0 to 1 := 0; -- '1' if mst is PRC 
+    split_transaction : integer range 0 to 1 := 0; -- '1' for 32-bit masters on 64-bit bus 
     retarget_for_dma : integer range 0 to 1 := 0;
     mem_axi_port     : integer range -1 to NAHBSLV - 1;
     mem_num          : integer;
@@ -331,7 +331,7 @@ begin  -- rtl
     end if;
    
     -- For 32 bit PRC slave on 64-bit AXI bus, the burst size should be halved
-    if is_mst_prc = 0 then
+    if split_transaction = 0 then
       tran.payload_length(8 downto 0) := tran.len;
     else
       tran.payload_length(8 downto 0) := ('0' & tran.len(8 downto 1));
@@ -341,7 +341,7 @@ begin  -- rtl
     tran.payload_length_narrow(MISC_NOC_FLIT_SIZE-1 downto MISC_NOC_FLIT_SIZE-PREAMBLE_WIDTH) := PREAMBLE_TAIL;
     
     -- For 32 bit PRC slave on 64-bit AXI bus, the burst size should be halved
-    if is_mst_prc = 0 then
+    if split_transaction = 0 then
       tran.payload_length_narrow(8 downto 0) := tran.len;
     else
       tran.payload_length_narrow(8 downto 0) := ('0' & tran.len(8 downto 1));
@@ -388,7 +388,7 @@ begin  -- rtl
 
     -- Response data flit (AXI Read)
     if transaction_reg.dst_is_mem = '1' then
-      if is_mst_prc = 0 or ARCH_BITS = 32 then
+      if split_transaction = 0 then
         rsp_preamble := get_preamble(NOC_FLIT_SIZE, coherence_rsp_rcv_data_out);
         for i in 0 to nmst - 1 loop
           somi(i).r.data <= (coherence_rsp_rcv_data_out(AHBDW - 1 downto 0));
@@ -441,7 +441,7 @@ begin  -- rtl
       -- r
       somi(i).r.id    <= transaction_reg.id;
       somi(i).r.resp  <= RBRESP_OKAY;
-      if is_mst_prc = 0 then
+      if split_transaction = 0 then
         if rsp_preamble = PREAMBLE_TAIL then
           somi(i).r.last  <= '1';
         else
@@ -691,7 +691,7 @@ begin  -- rtl
       when reply_header =>
         if transaction_reg.dst_is_mem = '1' then
           if coherence_rsp_rcv_empty = '0' then
-            if is_mst_prc = 0 then
+            if split_transaction = 0 then
               coherence_rsp_rcv_rdreq <= '1';
               next_state <= reply_data;
             else

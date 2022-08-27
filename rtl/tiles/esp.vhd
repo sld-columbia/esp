@@ -880,17 +880,17 @@ begin
         HAS_SYNC     => CFG_HAS_SYNC)
       port map (
         raw_rstn           => '0',
-	    rst                => rst_int,
+	rst                => rst_int,
         refclk             => '0',
-	    clk                => sys_clk_int(tile_mem_id(i)),
+	clk                => sys_clk_int(tile_mem_id(i)),
         pllbypass          => '0',
         pllclk             => open,
         dco_clk            => open,
         -- DDR controller ports (this_has_ddr -> 1)
         dco_clk_div2       => open,
         dco_clk_div2_90    => open,
-	    ddr_ahbsi          => ddr_ahbsi(tile_mem_id(i)),
-	    ddr_ahbso          => ddr_ahbso(tile_mem_id(i)),
+	ddr_ahbsi          => ddr_ahbsi(tile_mem_id(i)),
+	ddr_ahbso          => ddr_ahbso(tile_mem_id(i)),
         ddr_cfg0           => open,
         ddr_cfg1           => open,
         ddr_cfg2           => open,

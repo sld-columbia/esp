@@ -949,7 +949,7 @@ begin
         generic map (
           tech         => CFG_FABTECH,
           nmst         => 3,
-          is_mst_prc   => 0,
+          split_transaction   => 0,
           retarget_for_dma => 0,
           mem_axi_port => 1,
           mem_num      => CFG_NMEM_TILE,
@@ -995,7 +995,7 @@ begin
         generic map (
           tech         => CFG_FABTECH,
           nmst         => 3,
-          is_mst_prc   => 0,
+          split_transaction   => 0,
           retarget_for_dma => 0,
           mem_axi_port => 1,
           mem_num      => CFG_NMEM_TILE,
@@ -1030,7 +1030,7 @@ begin
       generic map (
         tech         => CFG_FABTECH,
         nmst         => 2,
-        is_mst_prc   => 0,
+        split_transaction   => 0,
         retarget_for_dma => 0,
         mem_axi_port => -1,
         mem_num      => CFG_NSLM_TILE + CFG_NSLMDDR_TILE,

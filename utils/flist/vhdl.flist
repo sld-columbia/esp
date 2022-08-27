@@ -88,7 +88,6 @@ sockets/proxy/fixen_64to32.vhd
 sockets/proxy/intack2noc.vhd
 sockets/proxy/mem2ext.vhd
 sockets/proxy/axislv2noc.vhd
-sockets/proxy/axislv2noc_prc.vhd
 sockets/adapters/ahb2axi_l.vhd
 sockets/queues/slm_tile_q.vhd
 sockets/queues/acc_tile_q.vhd

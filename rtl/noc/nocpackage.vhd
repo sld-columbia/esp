@@ -138,7 +138,6 @@ package nocpackage is
   constant RSP_EDATA    : noc_msg_type := "11001";  --Cache Line (Exclusive)
   constant RSP_INV_ACK  : noc_msg_type := "11010";  --Invalidation Acknowledge
   -- [LLC|Non]-Coherent DMA request plane 6 and response plane 4
-  constant DMA_TO_PRC    : noc_msg_type := "11000";
   constant DMA_TO_DEV    : noc_msg_type := "11001";
   constant DMA_FROM_DEV  : noc_msg_type := "11010";
   -- constant RSP_DATA_DMA  : noc_msg_type := "11011";  --CacheLine (DMA)
@@ -147,7 +146,6 @@ package nocpackage is
   constant REQ_DMA_READ  : noc_msg_type := "11110";  -- Read coherent with LLC
   constant REQ_DMA_WRITE : noc_msg_type := "11111";  -- Write coherent with LLC
   constant CPU_DMA       : noc_msg_type := "11100";  -- identify DMA from CPU
-
   -- Configuration plane 5 -> RD/WR registers
   constant REQ_REG_RD   : noc_msg_type := "11000";
   constant REQ_REG_WR   : noc_msg_type := "11001";

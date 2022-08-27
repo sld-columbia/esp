@@ -602,6 +602,7 @@ package tile is
     generic (
       tech         : integer;
       nmst         : integer;
+      split_transaction : integer range 0 to 1 := 0;
       retarget_for_dma : integer range 0 to 1;
       mem_axi_port : integer range -1 to NAHBSLV - 1;
       mem_num      : integer;
@@ -629,37 +630,6 @@ package tile is
       remote_ahbs_rcv_empty      : in  std_ulogic;
       coherence                  : in integer range 0 to 3);
   end component axislv2noc;
-
-  component axislv2noc_prc is
-    generic (
-      tech         : integer;
-      nmst         : integer;
-      retarget_for_dma : integer range 0 to 1;
-      mem_axi_port : integer range -1 to NAHBSLV - 1;
-      mem_num      : integer;
-      mem_info     : tile_mem_info_vector(0 to CFG_NMEM_TILE + CFG_NSLM_TILE + CFG_NSLMDDR_TILE - 1);
-      slv_y        : local_yx;
-      slv_x        : local_yx);
-    port (
-      rst                        : in  std_ulogic;
-      clk                        : in  std_ulogic;
-      local_y                    : in  local_yx;
-      local_x                    : in  local_yx;
-      mosi                       : in  axi_mosi_vector(0 to nmst - 1);
-      somi                       : out axi_somi_vector(0 to nmst - 1);
-      coherence_req_wrreq        : out std_ulogic;
-      coherence_req_data_in      : out noc_flit_type;
-      coherence_req_full         : in  std_ulogic;
-      coherence_rsp_rcv_rdreq    : out std_ulogic;
-      coherence_rsp_rcv_data_out : in  noc_flit_type;
-      coherence_rsp_rcv_empty    : in  std_ulogic;
-      remote_ahbs_snd_wrreq      : out std_ulogic;
-      remote_ahbs_snd_data_in    : out misc_noc_flit_type;
-      remote_ahbs_snd_full       : in  std_ulogic;
-      remote_ahbs_rcv_rdreq      : out std_ulogic;
-      remote_ahbs_rcv_data_out   : in  misc_noc_flit_type;
-      remote_ahbs_rcv_empty      : in  std_ulogic);
-  end component axislv2noc_prc;
 
   component noc2apb
     generic (

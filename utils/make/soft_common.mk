@@ -124,7 +124,6 @@ baremetal-all: soft-build $(ESP_CFG_BUILD)/socmap.vhd
 	@mkdir -p $(BUILD_DRIVERS)/dvi/baremetal
 	@CPU_ARCH=$(CPU_ARCH) DESIGN_PATH=$(DESIGN_PATH)/$(ESP_CFG_BUILD) DRIVERS=$(DRV_BARE) BUILD_PATH=$(BUILD_DRIVERS)/dvi/baremetal DESIGN_PATH=$(DESIGN_PATH) $(MAKE) -C $(DRV_BARE)/dvi
 	@cp $(BUILD_DRIVERS)/dvi/baremetal/*.bin $(BAREMETAL_BIN)/dvi
-
 	@$(MAKE) acc-baremetal
 	@$(MAKE) apps-baremetal
 
