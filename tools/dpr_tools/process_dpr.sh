@@ -12,7 +12,7 @@ original_src="$1/socs/$2/vivado/srcs.tcl"
 temp_srcs="/tmp/temp_srcs.tcl"
 esp_config="$1/socs/$2/socgen/esp/.esp_config"
 esp_config_old="$1/socs/$2/vivado_dpr/.esp_config"
-tcl_dir="$1/socs/common/dpr_tools/Tcl"
+tcl_dir="$1/tools/dpr_tools/Tcl"
 
 #variables related to accelerator tiles
 num_acc_tiles=0
@@ -716,7 +716,7 @@ done
 
 function gen_floorplan() {
     src_dir=$1/socs/$2;
-    fplan_dir=$1/socs/common/dpr_tools/dpr_floor_planner;
+    fplan_dir=$1/tools/dpr_tools/dpr_floor_planner;
 
     #TODO:type of FPGA must be a variable of $2
     cd $fplan_dir;

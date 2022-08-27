@@ -11,7 +11,7 @@ use work.monitor_pkg.all;
 package esp_csr_pkg is
 
   constant ESP_CSR_8_LSB : integer := 79 + CFG_NCPU_TILE * 2 * 3;
-  constant ESP_CSR_WIDTH : integer := 98 + ESP_CSR_8_LSB;
+  constant ESP_CSR_WIDTH : integer := 100 + ESP_CSR_8_LSB;
 
   constant ESP_CSR_VALID_ADDR : integer range 0 to 31 := 0;
   constant ESP_CSR_VALID_LSB  : integer range 0 to ESP_CSR_WIDTH-1 := 0;
@@ -60,6 +60,14 @@ package esp_csr_pkg is
   constant ESP_CSR_ACC_COH_ADDR : integer range 0 to 31 := 11;
   constant ESP_CSR_ACC_COH_LSB : integer range 0 to ESP_CSR_WIDTH - 1 := 96 + ESP_CSR_8_LSB;
   constant ESP_CSR_ACC_COH_MSB : integer range 0 to ESP_CSR_WIDTH - 1 := 97 + ESP_CSR_8_LSB;
+  
+  constant ESP_CSR_ACC_DECOUPLER_ADDR : integer range 0 to 31 := 12;
+  constant ESP_CSR_ACC_DECOUPLER_LSB : integer range 0 to ESP_CSR_WIDTH - 1 := 98;
+  constant ESP_CSR_ACC_DECOUPLER_MSB : integer range 0 to ESP_CSR_WIDTH - 1 := 98;
+  
+  constant ESP_CSR_PRC_INTR_ADDR : integer range 0 to 31 := 13;
+  constant ESP_CSR_PRC_INTR_LSB : integer range 0 to ESP_CSR_WIDTH - 1 := 99;
+  constant ESP_CSR_PRC_INTR_MSB : integer range 0 to ESP_CSR_WIDTH - 1 := 99;
 
   constant ESP_CSR_SRST_ADDR : integer range 0 to 31 := 31;  -- reserved address
 
