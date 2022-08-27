@@ -731,6 +731,5 @@ package net is
       miio  : out eth_out_type
     ) ;
   end component ;
-
 end;
 

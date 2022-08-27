@@ -160,7 +160,7 @@ package nocpackage is
   constant RSP_EDATA    : noc_msg_type := "11001";  --Cache Line (Exclusive)
   constant RSP_INV_ACK  : noc_msg_type := "11010";  --Invalidation Acknowledge
   -- [LLC|Non]-Coherent DMA request plane 6 and response plane 4
-  constant DMA_TO_PRC    : noc_msg_type := "11000"; -- MG Verify
+  --constant DMA_TO_PRC    : noc_msg_type := "11000"; -- MG Verify
   constant DMA_TO_DEV    : noc_msg_type := "11001";
   constant DMA_FROM_DEV  : noc_msg_type := "11010";
   -- constant RSP_DATA_DMA  : noc_msg_type := "11011";  --CacheLine (DMA)
