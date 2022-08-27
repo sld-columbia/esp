@@ -4,7 +4,9 @@
 #include <pbs_map.h>
 #include <prc_aux.h>
 
-//#define APB_BASE_ADDR 0x60000000
+#ifdef __riscv
+#define APB_BASE_ADDR 0x60000000
+#endif
 static struct esp_device esp_tile_decoupler;
 static struct esp_device esp_prc;
 struct pbs_map *pb_map;
@@ -48,8 +50,8 @@ static int get_decoupler_addr(struct esp_device *dev, struct esp_device *decoupl
 
     if(tile_id == 0XFF) {
         printf("Error: cannot find tile id\n");
-        //return -1;
-        exit(EXIT_FAILURE);
+        return -1;
+        //exit(EXIT_FAILURE);
     }
 
     //compute apb address for tile decoupler
@@ -126,8 +128,8 @@ static void set_trigger(unsigned pbs_id)
     else
         printf("PRC: Error arming trigger \n");
    
-    //printf("address %08x %08x \n", (unsigned) pb_map[pbs_id].pbs_addr, ioread32(&esp_prc, 0x64));
-    //printf("size %u \n", ioread32(&esp_prc, 0x68));
+    //printf("PBS address local %08x remote %08x \n", (unsigned) pb_map[pbs_id].pbs_addr, ioread32(&esp_prc, 0x64));
+    //printf("PBS size local %08x  remote %08x \n", pb_map[pbs_id].pbs_size, ioread32(&esp_prc, 0x68));
 }
 
 void reconfigure_FPGA(struct esp_device *dev, unsigned pbs_id)
@@ -161,7 +163,7 @@ void reconfigure_FPGA(struct esp_device *dev, unsigned pbs_id)
     if (!(start_prc())) {
         decouple_acc(dev, 1); //decouple tile
         printf("PRC: Starting Reconfiguration \n");
-        //iowrite32(&esp_prc, 0x4, 0); //send reconfig trigger
+        iowrite32(&esp_prc, 0x4, 0); //send reconfig trigger
    }
 
     else {
@@ -171,11 +173,11 @@ void reconfigure_FPGA(struct esp_device *dev, unsigned pbs_id)
 #ifdef MEASURE_RECONF_TIME
     cycles_start = esp_monitor(mon_args, NULL);
 #endif
-/*
+
     while (prc_done == 0) {
         prc_done = ioread32(&io_tile, 0);
     }
-*/
+
 #ifdef MEASURE_RECONF_TIME
     cycles_end = esp_monitor(mon_args, NULL);
     cycles_diff = sub_monitor_vals(cycles_start, cycles_end);
