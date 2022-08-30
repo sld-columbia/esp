@@ -216,7 +216,7 @@ begin
           readdata <=
             config_r(ESP_CSR_CPU_LOC_OVR_LSB + 128 downto ESP_CSR_CPU_LOC_OVR_LSB + 97);
         when ESP_CSR_PRC_INTR_ADDR =>
-          readdata(ESP_CSR_PRC_INTR_MSB - ESP_CSR_PRC_INTR_LSB downto 0) <= config_r(ESP_CSR_PRC_INTR_MSB downto ESP_CSR_PRC_INTR_LSB);
+          readdata(ESP_CSR_PRC_INTR_MSB - ESP_CSR_PRC_INTR_LSB downto 0) <= (0 =>  prc_interrupt, others => '0'); --config_r(ESP_CSR_PRC_INTR_MSB downto ESP_CSR_PRC_INTR_LSB);
         when others =>
           readdata <= (others => '0');
       end case;
@@ -226,7 +226,7 @@ begin
         readdata <= burst;
       elsif addr < MONITOR_REG_COUNT + MONITOR_APB_OFFSET then
         if burst_state = '0' then
-            readdata <= count(addr - MONITOR_APB_OFFSET);
+          readdata <= count(addr - MONITOR_APB_OFFSET);
         else
           -- Monitors read access
           if addr = 0 then
@@ -307,7 +307,6 @@ begin
       end if;
     end if;
   end process wr_registers;
-  config_r(ESP_CSR_PRC_INTR_MSB downto ESP_CSR_PRC_INTR_LSB) <= prc_interrupt;
 
   --"burst" mode provides synchronization to all monitors in a tile
   --by sampling all counters to a different set of registers, while
