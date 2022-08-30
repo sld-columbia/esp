@@ -217,7 +217,7 @@ architecture rtl of esp_tile_csr is
             when ESP_CSR_ACC_COH_ADDR =>
               readdata(ESP_CSR_ACC_COH_MSB - ESP_CSR_ACC_COH_LSB downto 0) <= config_r(ESP_CSR_ACC_COH_MSB downto ESP_CSR_ACC_COH_LSB);
             when ESP_CSR_PRC_INTR_ADDR =>
-              readdata(ESP_CSR_PRC_INTR_MSB - ESP_CSR_PRC_INTR_LSB downto 0) <= config_r(ESP_CSR_PRC_INTR_MSB downto ESP_CSR_PRC_INTR_LSB);
+              readdata(ESP_CSR_PRC_INTR_MSB - ESP_CSR_PRC_INTR_LSB downto 0) <= (0 =>  prc_interrupt, others => '0'); --config_r(ESP_CSR_PRC_INTR_MSB downto ESP_CSR_PRC_INTR_LSB);
             when others =>
               readdata <= (others => '0');
           end case;

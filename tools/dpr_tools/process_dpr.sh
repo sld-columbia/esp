@@ -579,7 +579,11 @@ bs_gen_script=$1/socs/$2/vivado_dpr/bs.tcl;
     echo "source [get_property REPOSITORY [get_ipdefs *prc:1.3]]/xilinx/prc_v1_3/tcl/api.tcl" >> $bs_gen_script;
     
     for((i=0; i<$num_acc_tiles; i++)) do
-        echo "prc_v1_3::format_bin_for_icap -i Bitstreams/acc_bs_pblock_slot_"$i"_partial.bin -o Bitstreams/${new_accelerators[$i,1]}.bin -c 1" >> $bs_gen_script;
+        if [[ $arch == "leon3" ]]; then
+            echo "prc_v1_3::format_bin_for_icap -i Bitstreams/acc_bs_pblock_slot_"$i"_partial.bin -o Bitstreams/${new_accelerators[$i,1]}.bin" >> $bs_gen_script;
+        else
+            echo "prc_v1_3::format_bin_for_icap -i Bitstreams/acc_bs_pblock_slot_"$i"_partial.bin -o Bitstreams/${new_accelerators[$i,1]}.bin -bs 1" >> $bs_gen_script;
+        fi
     done
 }
 

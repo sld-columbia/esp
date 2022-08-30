@@ -509,7 +509,7 @@ begin
   end process decoupler_gen;
 
   -- CSR map for decoupler
-  decouple_acc <= tile_config(0);
+  decouple_acc <= tile_config(98);
 
   -- Using only one apbo signal
   no_apb : for i in 0 to NAPBSLV - 1 generate
