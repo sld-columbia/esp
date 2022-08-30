@@ -388,7 +388,7 @@ begin  -- rtl
 
     -- Response data flit (AXI Read)
     if transaction_reg.dst_is_mem = '1' then
-      if split_transaction = 0 then
+      if split_transaction = 0 or ARCH_BITS = 32 then
         rsp_preamble := get_preamble(NOC_FLIT_SIZE, coherence_rsp_rcv_data_out);
         for i in 0 to nmst - 1 loop
           somi(i).r.data <= (coherence_rsp_rcv_data_out(AHBDW - 1 downto 0));

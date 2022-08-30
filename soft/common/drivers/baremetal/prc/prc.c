@@ -128,8 +128,8 @@ static void set_trigger(unsigned pbs_id)
     else
         printf("PRC: Error arming trigger \n");
    
-    //printf("PBS address local %08x remote %08x \n", (unsigned) pb_map[pbs_id].pbs_addr, ioread32(&esp_prc, 0x64));
-    //printf("PBS size local %08x  remote %08x \n", pb_map[pbs_id].pbs_size, ioread32(&esp_prc, 0x68));
+    printf("PBS address local %08x remote %08x \n", (unsigned) pb_map[pbs_id].pbs_addr, ioread32(&esp_prc, 0x64));
+    printf("PBS size local %08x  remote %08x \n", pb_map[pbs_id].pbs_size, ioread32(&esp_prc, 0x68));
 }
 
 void reconfigure_FPGA(struct esp_device *dev, unsigned pbs_id)
@@ -146,14 +146,14 @@ void reconfigure_FPGA(struct esp_device *dev, unsigned pbs_id)
     unsigned int cycles_start, cycles_end, cycles_diff;
 #endif
 
-    struct esp_device io_tile;
-    //io_tile.addr = (long long unsigned) APB_BASE_ADDR + 0x90980;
-    get_io_tile_id(&io_tile);
+    struct esp_device io_tile_csr;
+    //io_tile_csr.addr = (long long unsigned) APB_BASE_ADDR + 0x90980;
+    get_io_tile_id(&io_tile_csr);
     
     init_prc();    
     
     //send a Proceed cmd to PRC to reset pending interrupt 
-    prc_done = ioread32(&io_tile, 0);
+    prc_done = ioread32(&io_tile_csr, 13);
     if (prc_done == 1)
         iowrite32(&esp_prc, 0x0, 0x3);
 
@@ -175,7 +175,7 @@ void reconfigure_FPGA(struct esp_device *dev, unsigned pbs_id)
 #endif
 
     while (prc_done == 0) {
-        prc_done = ioread32(&io_tile, 0);
+        prc_done = ioread32(&io_tile_csr, 13);
     }
 
 #ifdef MEASURE_RECONF_TIME
