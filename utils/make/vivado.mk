@@ -11,10 +11,10 @@ XDC  += $(ESP_ROOT)/constraints/$(BOARD)/$(BOARD)-mmi64.xdc
 endif
 XDC  += $(ESP_ROOT)/constraints/$(BOARD)/$(BOARD)-eth-pins.xdc
 XDC  += $(ESP_ROOT)/constraints/$(BOARD)/$(BOARD)-dvi-pins.xdc
-ifeq ($(CONFIG_GRETH_ENABLE),y)
+ifeq ($(CONFIG_ETH_EN),y)
 XDC  += $(ESP_ROOT)/constraints/$(BOARD)/$(BOARD)-eth-constraints.xdc
 endif
-ifeq ($(CONFIG_SVGA_ENABLE),y)
+ifeq ($(CONFIG_SVGA_EN),y)
 XDC  += $(ESP_ROOT)/constraints/$(BOARD)/$(BOARD)-dvi-constraints.xdc
 endif
 ifeq ($(CONFIG_HAS_DVFS),y)
@@ -114,7 +114,7 @@ endif
 		echo "unset argv" >> $@; \
 		echo "set argc 0" >> $@; \
 	fi;
-ifeq ($(CONFIG_GRETH_ENABLE),y)
+ifeq ($(CONFIG_ETH_EN),y)
 	@if test -r $(ESP_ROOT)/constraints/$(BOARD)/sgmii.xci; then \
 		echo $(SPACES)"INFO including SGMII IP"; \
 		mkdir -p vivado/sgmii; \
