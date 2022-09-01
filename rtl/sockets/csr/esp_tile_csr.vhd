@@ -133,14 +133,15 @@ architecture rtl of esp_tile_csr is
   -- | 31 |     30-15   |    14-12    |   11-6   |     5-4    |    3-0    |
   -- | /  | init_cycles | dqs_sel_cal | bank_pos | bank_width | row_width |
 
+  constant DEFAULT_PRC_INTR_CFG : std_ulogic := '0';
+
+  constant DEFAULT_DECOUP_CFG   :std_ulogic := '0';
 
   --- constant DEFAULT_CONFIG : std_logic_vector(ESP_CSR_WIDTH - 1 downto 0) :=
   ---   DEFAULT_ACC_COH & DEFAULT_CPU_LOC_OVR & DEFAULT_ARIANE_HARTID & DEFAULT_TILE_ID & "0";
   constant DEFAULT_CONFIG : std_logic_vector(ESP_CSR_WIDTH - 1 downto 0) :=
-    "00" & DEFAULT_CPU_LOC_OVR & DEFAULT_DDR_CFG2 & DEFAULT_DDR_CFG1 & DEFAULT_DDR_CFG0 & DEFAULT_MDC_SCALER_CFG &
+    DEFAULT_PRC_INTR_CFG & DEFAULT_DECOUP_CFG & DEFAULT_CPU_LOC_OVR & DEFAULT_DDR_CFG2 & DEFAULT_DDR_CFG1 & DEFAULT_DDR_CFG0 & DEFAULT_MDC_SCALER_CFG &
     DEFAULT_DCO_NOC_CFG & DEFAULT_ACC_COH & DEFAULT_ARIANE_HARTID & DEFAULT_TILE_ID & "0";
-
-  -- Maico modification end
 
   signal csr_addr : integer range 0 to 31;
 
@@ -215,6 +216,8 @@ begin
         when ESP_CSR_CPU_LOC_OVR_3_ADDR =>
           readdata <=
             config_r(ESP_CSR_CPU_LOC_OVR_LSB + 128 downto ESP_CSR_CPU_LOC_OVR_LSB + 97);
+        when ESP_CSR_ACC_DECOUPLER_ADDR =>
+          readdata(ESP_CSR_ACC_DECOUPLER_MSB - ESP_CSR_ACC_DECOUPLER_LSB downto 0) <= config_r(ESP_CSR_ACC_DECOUPLER_MSB downto ESP_CSR_ACC_DECOUPLER_LSB);
         when ESP_CSR_PRC_INTR_ADDR =>
           readdata(ESP_CSR_PRC_INTR_MSB - ESP_CSR_PRC_INTR_LSB downto 0) <= (0 =>  prc_interrupt, others => '0'); --config_r(ESP_CSR_PRC_INTR_MSB downto ESP_CSR_PRC_INTR_LSB);
         when others =>
