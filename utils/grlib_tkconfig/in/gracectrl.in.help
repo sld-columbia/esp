@@ -1,3 +1,0 @@
-AMBA System ACE Interface Controller
-CONFIG_GRACECTRL
-  Say Y here to enable the AMBA System ACE Interface Controller
