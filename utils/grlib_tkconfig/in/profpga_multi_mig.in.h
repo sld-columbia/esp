@@ -1,3 +1,0 @@
-#ifndef CONFIG_MIG_PROFPGA
-#define CONFIG_MIG_PROFPGA 0
-#endif

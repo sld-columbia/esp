@@ -1,3 +1,0 @@
-#ifndef CONFIG_I2C_ENABLE
-#define CONFIG_I2C_ENABLE 0
-#endif

@@ -5,10 +5,6 @@ CONFIG_LEON3FT_PRESENT=y
 CONFIG_HAS_SHARED_GRFPU=y
 
 #
-# Synthesis      
-#
-
-#
 # Processor            
 #
 CONFIG_LEON3=y
@@ -141,90 +137,8 @@ CONFIG_DSU_ENABLE=y
 # CONFIG_LEON3FT_EN is not set
 
 #
-# VHDL debug settings       
+# Timers and IRQ control         
 #
-# CONFIG_IU_DISAS is not set
-CONFIG_DEBUG_PC32=y
-
-#
-# AMBA configuration
-#
-CONFIG_AHB_DEFMST=0
-CONFIG_AHB_RROBIN=y
-# CONFIG_AHB_SPLIT is not set
-CONFIG_AHB_FPNPEN=y
-CONFIG_AHB_IOADDR=FFF
-# CONFIG_AHB_MON is not set
-# CONFIG_AHB_DTRACE is not set
-
-#
-# Debug Link           
-#
-# CONFIG_DSU_JTAG is not set
-CONFIG_DSU_ETH=y
-# CONFIG_DSU_ETHSZ1 is not set
-# CONFIG_DSU_ETHSZ2 is not set
-# CONFIG_DSU_ETHSZ4 is not set
-# CONFIG_DSU_ETHSZ8 is not set
-CONFIG_DSU_ETHSZ16=y
-CONFIG_DSU_IPMSB=C0A8
-CONFIG_DSU_IPLSB=0107
-CONFIG_DSU_ETHMSB=A6A7A0
-CONFIG_DSU_ETHLSB=F8043D
-# CONFIG_DSU_ETH_PROG is not set
-
-#
-# Peripherals             
-#
-
-#
-# Memory controller             
-#
-
-#
-# Leon2 memory controller        
-#
-CONFIG_MCTRL_LEON2=y
-CONFIG_MCTRL_8BIT=y
-CONFIG_MCTRL_16BIT=y
-# CONFIG_MCTRL_5CS is not set
-# CONFIG_MCTRL_SDRAM is not set
-
-#
-# MIG 7-Series memory controller   
-#
-CONFIG_MIG_7SERIES_MODEL=y
-# CONFIG_AHBSTAT_ENABLE is not set
-
-#
-# On-chip RAM/ROM                 
-#
-# CONFIG_AHBROM_ENABLE is not set
-# CONFIG_AHBRAM_ENABLE is not set
-
-#
-# Ethernet             
-#
-CONFIG_GRETH_ENABLE=y
-# CONFIG_GRETH_GIGA is not set
-# CONFIG_GRETH_FIFO4 is not set
-CONFIG_GRETH_FIFO8=y
-# CONFIG_GRETH_FIFO16 is not set
-# CONFIG_GRETH_FIFO32 is not set
-# CONFIG_GRETH_FIFO64 is not set
-# CONFIG_GRETH_FT is not set
-
-#
-# UARTs, timers and irq control         
-#
-CONFIG_UART1_ENABLE=y
-CONFIG_UA1_IRQ=2
-# CONFIG_UA1_FIFO1 is not set
-# CONFIG_UA1_FIFO2 is not set
-# CONFIG_UA1_FIFO4 is not set
-# CONFIG_UA1_FIFO8 is not set
-# CONFIG_UA1_FIFO16 is not set
-CONFIG_UA1_FIFO32=y
 CONFIG_IRQ3_ENABLE=y
 # CONFIG_IRQ3_SEC is not set
 CONFIG_GPT_ENABLE=y
@@ -234,15 +148,3 @@ CONFIG_GPT_TW=32
 CONFIG_GPT_IRQ=8
 CONFIG_GPT_SEPIRQ=y
 # CONFIG_GPT_WDOGEN is not set
-
-#
-# Keybord and VGA interface
-#
-# CONFIG_KBD_ENABLE is not set
-# CONFIG_VGA_ENABLE is not set
-# CONFIG_SVGA_ENABLE is not set
-
-#
-# VHDL Debugging        
-#
-CONFIG_DEBUG_UART=y
