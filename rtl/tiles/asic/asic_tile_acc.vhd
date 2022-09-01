@@ -379,7 +379,7 @@ begin
   -----------------------------------------------------------------------------
   jtag_test_i : jtag_test
     generic map (
-      test_if_en => 1)
+      test_if_en => CFG_JTAG_EN)
     port map (
       rst                 => test_rstn,
       refclk              => dco_clk,
