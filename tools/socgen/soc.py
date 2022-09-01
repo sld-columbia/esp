@@ -87,7 +87,6 @@ class Components():
 #board configuration
 class SoC_Config():
   LEON3_HAS_FPU = "0"
-  HAS_JTAG = False
   HAS_ETH = False
   HAS_SG = False
   HAS_SGMII = True
@@ -198,6 +197,12 @@ class SoC_Config():
     line = fp.readline()
     item = line.split()
     self.slm_kbytes.set(int(item[2]))
+    # JTAG (test)
+    line = fp.readline()
+    if line.find("CONFIG_JTAG_EN = y") != -1:
+      self.jtag_en.set(1)
+    else:
+      self.jtag_en.set(0)
     # Ethernet
     line = fp.readline()
     if line.find("CONFIG_ETH_EN = y") != -1:
@@ -311,6 +316,10 @@ class SoC_Config():
     fp.write("CONFIG_CPU_CACHES = " + str(self.l2_sets.get()) + " " + str(self.l2_ways.get()) + " " + str(self.llc_sets.get()) + " " + str(self.llc_ways.get()) + "\n")
     fp.write("CONFIG_ACC_CACHES = " + str(self.acc_l2_sets.get()) + " " + str(self.acc_l2_ways.get()) + "\n")
     fp.write("CONFIG_SLM_KBYTES = " + str(self.slm_kbytes.get()) + "\n")
+    if self.jtag_en.get() == 1:
+      fp.write("CONFIG_JTAG_EN = y\n")
+    else:
+      fp.write("#CONFIG_JTAG_EN is not set\n")
     if self.eth_en.get() == 1:
       fp.write("CONFIG_ETH_EN = y\n")
     else:
@@ -456,6 +465,7 @@ class SoC_Config():
     # SLM
     self.slm_kbytes = IntVar()
     # Peripherals
+    self.jtag_en = IntVar()
     self.eth_en = IntVar()
     self.svga_en = IntVar()
     # Debug Link

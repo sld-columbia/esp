@@ -285,7 +285,7 @@ class soc_config:
     self.has_svga = soc.svga_en.get()
     self.has_eth = soc.eth_en.get()
     self.has_sgmii = soc.HAS_SGMII
-    self.has_jtag = soc.HAS_JTAG
+    self.has_jtag = soc.jtag_en.get()
     if self.coherence:
       self.ncdma = self.nacc + 1
       self.nllc = self.nmem
@@ -520,6 +520,10 @@ def print_constants(fp, soc, esp_config):
   #
   fp.write("  ------ JTAG based DSU interface (DO NOT ENABLE, NOT SUPPORTED)\n")
   fp.write("  constant CFG_AHB_JTAG : integer := 0;\n\n")
+
+  #
+  fp.write("  ------ JTAG based test interface\n")
+  fp.write("  constant CFG_JTAG_EN : integer := " + str(soc.jtag_en.get()) + ";\n\n")
 
   #
   fp.write("  ------ Ethernet\n")

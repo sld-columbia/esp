@@ -114,10 +114,12 @@ class PeripheralFrame(Frame):
     Label(periph_config_frame, text = "UART ", fg="darkgreen").grid(row=1, column=1)
 
     # JTAG
-    jtag_label = Label(periph_config_frame, text="No JTAG", fg="red")
-    jtag_label.grid(row=2, column=1)
-    if soc.HAS_JTAG == 1:
-       jtag_label.config(text="JTAG", fg="darkgreen")
+    if soc.TECH == "gf12":
+      Label(periph_config_frame, text = "JTAG (test) :").grid(row=2, column=1)
+      Checkbutton(periph_config_frame, text="", variable=soc.jtag_en,
+                  onvalue = 1, offvalue = 0, command=main_frame.update_noc_config).grid(row=2, column=2)
+    else:
+      Label(periph_config_frame, text = "JTAG (test) ", fg="red").grid(row=2, column=1)
 
     # Ethernet
     # if soc.HAS_SGMII == 1:
