@@ -800,7 +800,7 @@ begin  -- rtl
 
   -- Update FSM state
   process (clk, rst)
-  begin  -- pocess
+  begin  -- process
     if rst = '0' then                   -- asynchronous reset (active low)
       current_state <= idle;
       transaction_reg <= transaction_none;
