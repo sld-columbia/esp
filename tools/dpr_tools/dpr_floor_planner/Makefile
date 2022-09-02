@@ -1,5 +1,5 @@
 CC = g++
-CFLAGS = -Iwithout_gui/include/
+CFLAGS = -Iflora/include/
 CFLAGS += -Iinclude/
 CFLAGS += -std=c++17
 #CFLAGS += -L$(GUROBI_HOME)/lib
@@ -16,7 +16,7 @@ all:
 	@echo "For example make flora FPGA=VC707"
 
 
-SOURCES_SHARED = src/csv_data_manipulator.cpp include/fpga.h without_gui/src/main.cpp
+SOURCES_SHARED = src/csv_data_manipulator.cpp include/fpga.h flora/src/main.cpp
 
 ifeq ($(FPGA),PYNQ)
 SOURCES_SHARED += include/pynq.h src/pynq.cpp include/pynq_fine_grained.h src/pynq_fine_grained.cpp
@@ -37,7 +37,7 @@ ifeq ($(FPGA),VC707)
 flora: SOURCES_MILP = src/milp_model_vc707.cpp
 endif
 
-flora: SOURCES += without_gui/src/flora.cpp
+flora: SOURCES += flora/src/flora.cpp
 flora: BIN = flora
 flora: CFLAGS += -DRUN_FLORA
 flora: build
