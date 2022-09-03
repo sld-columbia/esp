@@ -140,6 +140,7 @@ package misc is
       vsm_VS_0_rm_decouple              : out std_logic;
       vsm_VS_0_rm_reset                 : out std_logic;
       vsm_VS_0_event_error              : out std_logic;
+      vsm_VS_0_sw_startup_req           : out std_logic;
       icap_clk                          : in  std_logic;
       icap_reset                        : in  std_logic;
       icap_i                            : in  std_logic_vector(31 downto 0);

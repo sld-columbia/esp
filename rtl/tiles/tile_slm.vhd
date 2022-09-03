@@ -212,9 +212,170 @@ architecture rtl of tile_slm is
 
   signal this_local_y      : local_yx;
   signal this_local_x      : local_yx;
+  
+  attribute mark_debug : string;
+  attribute keep       : string;
+
+  -- DPR DMA queue entries
+  signal prc_dma_rcv_rdreq             : std_ulogic;
+  signal prc_dma_rcv_data_out          : noc_flit_type;
+  signal prc_dma_rcv_empty             : std_ulogic;
+  signal prc_dma_snd_wrreq             : std_ulogic;
+  signal prc_dma_snd_data_in           : noc_flit_type;
+  signal prc_dma_snd_full              : std_ulogic;
+
+  -- PRC noc2ahbm queue entries
+  signal prc_noc2ahbm_dma_rcv_rdreq             : std_ulogic;
+  signal prc_noc2ahbm_dma_rcv_data_out          : noc_flit_type;
+  signal prc_noc2ahbm_dma_rcv_empty             : std_ulogic;
+  signal prc_noc2ahbm_dma_snd_wrreq             : std_ulogic;
+  signal prc_noc2ahbm_dma_snd_data_in           : noc_flit_type;
+  signal prc_noc2ahbm_dma_snd_full              : std_ulogic;
+  signal prc_noc2ahbm_dma_snd_atleast_4slots     : std_ulogic;
+  signal prc_noc2ahbm_dma_snd_exactly_3slots     : std_ulogic;  
+  
+  -- apb2axil
+  signal s_axil_awvalid     : std_logic;
+  signal s_axil_awready     : std_logic;
+  signal s_axil_awaddr      : std_logic_vector(31 downto 0);
+  signal s_axil_awaddr_masked : std_logic_vector(31 downto 0);
+  signal s_axil_wvalid      : std_logic;
+  signal s_axil_wready      : std_logic;
+  signal s_axil_wdata       : std_logic_vector(31 downto 0);
+  signal s_axil_wstrb       : std_logic_vector(3 downto 0);
+  signal s_axil_arvalid     : std_logic;
+  signal s_axil_arready     : std_logic;
+  signal s_axil_araddr      : std_logic_vector(31 downto 0);
+  signal s_axil_araddr_masked      : std_logic_vector(31 downto 0);
+  signal s_axil_rvalid      : std_logic;
+  signal s_axil_rready      : std_logic;
+  signal s_axil_rdata       : std_logic_vector(31 downto 0);
+  signal s_axil_rresp       : std_logic_vector(1 downto 0);
+  signal s_axil_bvalid      : std_logic;
+  signal s_axil_bready      : std_logic;
+  signal s_axil_bresp       : std_logic_vector(1 downto 0);
+
+  signal prc_pready         : std_logic;
+  signal pready             : std_ulogic;
+  
+-- AXI4 Master
+  signal mosi : axi_mosi_vector(0 to 0);
+  signal somi : axi_somi_vector(0 to 0);
+
+  -- PRC axi master bus
+  signal m_axi_mem_araddr   : std_logic_vector(31 downto 0);
+  signal m_axi_mem_arlen    : std_logic_vector(7 downto 0);
+  signal m_axi_mem_arsize   : std_logic_vector(2 downto 0);
+  signal m_axi_mem_arburst  : std_logic_vector(1 downto 0);
+  signal m_axi_mem_arprot   : std_logic_vector(2 downto 0);
+  signal m_axi_mem_arcache  : std_logic_vector(3 downto 0);
+  signal m_axi_mem_aruser   : std_logic_vector(3 downto 0);
+  signal m_axi_mem_arvalid  : std_logic;
+  signal m_axi_mem_arready  : std_logic;
+  signal m_axi_mem_rdata    : std_logic_vector(31 downto 0);
+  signal m_axi_mem_rresp    : std_logic_vector(1  downto 0);
+  signal m_axi_mem_rlast    : std_logic;
+  signal m_axi_mem_rvalid   : std_logic;
+  signal m_axi_mem_rready   : std_logic;
+
+  --ICAP3 
+  signal icap_clk       : std_logic;
+  signal icap_reset     : std_logic;
+  signal icap_csib      : std_logic;
+  signal icap_rdwrb     : std_logic;
+  signal icap_i         : std_logic_vector(31 downto 0);
+  signal icap_o         : std_logic_vector(31 downto 0);
+  signal icap_avail     : std_logic;
+  signal icap_prdone    : std_logic;
+  signal icap_prerror   : std_logic;
+
+  --PRC configuration signals
+  signal vsm_VS_0_rm_shutdown_req       : std_logic := '0';
+  signal vsm_VS_0_rm_shutdown_ack       : std_logic := '1';
+  signal vsm_VS_0_rm_decouple           : std_logic := '0';
+  signal vsm_VS_0_rm_reset              : std_logic := '0';
+  signal vsm_VS_0_event_error           : std_logic;
+  signal vsm_VS_0_sw_shutdown_req       : std_logic;
+  signal vsm_VS_0_sw_startup_req        : std_logic;  --interrupt
+
+  constant prc_mask  : std_logic_vector(31 downto 0) := x"000000FF";
+  constant prc_coherence : integer := 0;
+  constant DISABLE_PRC_INST           : integer := 1; 
+  
+  --attribute mark_debug of ahbmo  : signal is "true";
+  --attribute mark_debug of ahbso  : signal is "true";
+
+  attribute mark_debug of s_axil_awvalid     : signal is "true";
+  attribute mark_debug of s_axil_awready     : signal is "true";
+  attribute mark_debug of s_axil_awaddr      : signal is "true";
+  attribute mark_debug of s_axil_awaddr_masked      : signal is "true";
+  attribute mark_debug of s_axil_wvalid      : signal is "true";
+  attribute mark_debug of s_axil_wready      : signal is "true";
+  attribute mark_debug of s_axil_wdata       : signal is "true";
+  attribute mark_debug of s_axil_wstrb       : signal is "true";
+  attribute mark_debug of s_axil_arvalid     : signal is "true";
+  attribute mark_debug of s_axil_arready     : signal is "true";
+  attribute mark_debug of s_axil_araddr      : signal is "true";
+  attribute mark_debug of s_axil_araddr_masked      : signal is "true";
+  attribute mark_debug of s_axil_rvalid      : signal is "true";
+  attribute mark_debug of s_axil_rready      : signal is "true";
+  attribute mark_debug of s_axil_rdata       : signal is "true";
+  attribute mark_debug of s_axil_rresp       : signal is "true";
+  attribute mark_debug of s_axil_bvalid      : signal is "true";
+  attribute mark_debug of s_axil_bready      : signal is "true";
+  attribute mark_debug of s_axil_bresp       : signal is "true";
+
+  attribute mark_debug of icap_clk       : signal is "true";
+  attribute mark_debug of icap_reset     : signal is "true";
+  attribute mark_debug of icap_csib      : signal is "true";
+  attribute mark_debug of icap_rdwrb     : signal is "true";
+  attribute mark_debug of icap_i         : signal is "true";
+  attribute mark_debug of icap_o         : signal is "true";
+  attribute mark_debug of icap_avail     : signal is "true";
+  attribute mark_debug of icap_prdone    : signal is "true";
+  attribute mark_debug of icap_prerror   : signal is "true";
+
+  attribute mark_debug of vsm_VS_0_sw_startup_req : signal is "true";
+
+  attribute mark_debug of m_axi_mem_araddr   : signal is "true";
+  attribute mark_debug of m_axi_mem_arlen    : signal is "true";
+  attribute mark_debug of m_axi_mem_arsize   : signal is "true";
+  attribute mark_debug of m_axi_mem_arburst  : signal is "true";
+  attribute mark_debug of m_axi_mem_arprot   : signal is "true";
+  attribute mark_debug of m_axi_mem_arcache  : signal is "true";
+  attribute mark_debug of m_axi_mem_aruser   : signal is "true";
+  attribute mark_debug of m_axi_mem_arvalid  : signal is "true";
+  attribute mark_debug of m_axi_mem_arready  : signal is "true";
+  attribute mark_debug of m_axi_mem_rdata    : signal is "true";
+  attribute mark_debug of m_axi_mem_rresp    : signal is "true";
+  attribute mark_debug of m_axi_mem_rlast    : signal is "true";
+  attribute mark_debug of m_axi_mem_rvalid   : signal is "true";
+  attribute mark_debug of m_axi_mem_rready   : signal is "true";
+
+  attribute mark_debug of prc_dma_rcv_rdreq    : signal is "true";
+  attribute mark_debug of prc_dma_rcv_data_out : signal is "true";
+  attribute mark_debug of prc_dma_rcv_empty    : signal is "true";
+  attribute mark_debug of prc_dma_snd_wrreq    : signal is "true";
+  attribute mark_debug of prc_dma_snd_data_in  : signal is "true";
+  attribute mark_debug of prc_dma_snd_full     : signal is "true";
+
+  attribute mark_debug of prc_noc2ahbm_dma_rcv_rdreq    : signal is "true";
+  attribute mark_debug of prc_noc2ahbm_dma_rcv_data_out : signal is "true";
+  attribute mark_debug of prc_noc2ahbm_dma_rcv_empty    : signal is "true";
+  attribute mark_debug of prc_noc2ahbm_dma_snd_wrreq    : signal is "true";
+  attribute mark_debug of prc_noc2ahbm_dma_snd_data_in  : signal is "true";
+  attribute mark_debug of prc_noc2ahbm_dma_snd_full     : signal is "true";
+  attribute mark_debug of prc_noc2ahbm_dma_snd_atleast_4slots  : signal is "true";
+  attribute mark_debug of prc_noc2ahbm_dma_snd_exactly_3slots  : signal is "true";  
+  
+  attribute mark_debug of ahbmo  : signal is "true";
+  attribute mark_debug of ahbso  : signal is "true";
+  attribute mark_debug of ddr_ahbso : signal is "true";
+  attribute mark_debug of ddr_ahbsi : signal is "true";
 
   constant this_local_apb_en : std_logic_vector(0 to NAPBSLV - 1) := (
     0 => '1',                           -- CSRs
+    127    => to_std_logic(CFG_PRC),    -- prc
     others => '0');
 
   constant this_local_ahb_en : std_logic_vector(0 to NAHBSLV - 1) := (
@@ -355,7 +516,7 @@ begin
   ---  Drive unused bus ports
   -----------------------------------------------------------------------
 
-  no_hmst_gen : for i in 2 to NAHBMST-1 generate
+  no_hmst_gen : for i in 3 to NAHBMST-1 generate
     ahbmo(i) <= ahbm_none;
   end generate;
 
@@ -458,7 +619,8 @@ begin
       tile_config => tile_config,
       srst => open,
       apbi => apbi,
-      apbo => apbo(0)
+      apbo => apbo(0),
+      prc_interrupt =>  vsm_VS_0_sw_startup_req --'0'
     );
 
   -----------------------------------------------------------------------------
@@ -568,7 +730,7 @@ begin
       local_x          => this_local_x,
       apbi             => apbi,
       apbo             => apbo,
-      pready           => '1',
+      pready           => pready, --'1',
       dvfs_transient   => '0',
       apb_snd_wrreq    => apb_snd_wrreq,
       apb_snd_data_in  => apb_snd_data_in,
@@ -576,6 +738,240 @@ begin
       apb_rcv_rdreq    => apb_rcv_rdreq,
       apb_rcv_data_out => apb_rcv_data_out,
       apb_rcv_empty    => apb_rcv_empty);
+
+  -----------------------------------------------------------------------------
+  --- The modification of the MEM tile for PRC controller starts here
+  -----------------------------------------------------------------------------
+    pready_gen: process(prc_pready, apbi) is
+    begin
+        if apbi.psel(127) = '1' then
+          pready <= prc_pready;
+        else
+          pready <= '1';
+        end if;
+    end process pready_gen;
+
+  -----------------------------------------------------------------------------
+  -- APB 127: apb2axi 
+  -----------------------------------------------------------------------------
+  disable_prc : if DISABLE_PRC_INST = 1 generate
+  apb2axil_1: apb2axil
+    port map (
+      clk               => clk,
+      rstn              => rst,
+      paddr             => apbi.paddr,
+      penable           => apbi.penable,
+      psel              => apbi.psel(127),
+      pwdata            => apbi.pwdata,
+      pwrite            => apbi.pwrite,
+      prdata            => apbo(127).prdata,
+      pready            => prc_pready,            -- prc_pready -->axil_rvalid      
+      pslverr           => open,                  -- temporary assignement
+      s_axil_awvalid    => s_axil_awvalid,
+      s_axil_awready    => s_axil_awready,
+      s_axil_awaddr     => s_axil_awaddr,
+      s_axil_wvalid     => s_axil_wvalid,
+      s_axil_wready     => s_axil_wready,
+      s_axil_wdata      => s_axil_wdata,
+      s_axil_wstrb      => s_axil_wstrb,
+      s_axil_arvalid    => s_axil_arvalid,
+      s_axil_arready    => s_axil_arready,
+      s_axil_araddr     => s_axil_araddr,
+      s_axil_rvalid     => s_axil_rvalid,
+      s_axil_rready     => s_axil_rready,
+      s_axil_rdata      => s_axil_rdata,
+      s_axil_rresp      => s_axil_rresp,
+      s_axil_bvalid     => s_axil_bvalid,
+      s_axil_bready     => s_axil_bready,
+      s_axil_bresp      => s_axil_bresp);
+  
+  -- tie off the other apbo signals
+  apbo(127).pirq <= (others => '0');
+  apbo(127).pconfig <= fixed_apbo_pconfig(127);
+  apbo(127).pindex <= 127;
+
+  -- PRC 
+  generate_prc : if has_prc(CFG_FABTECH) = 1 and CFG_PRC = 1 and SIMULATION = false generate
+  prc_1: prc_inst
+    port map (
+      clk                       => clk,
+      reset                     => rst,                 --check reset polarity
+      m_axi_mem_araddr          => m_axi_mem_araddr,
+      m_axi_mem_arlen           => m_axi_mem_arlen,
+      m_axi_mem_arsize          => m_axi_mem_arsize,
+      m_axi_mem_arburst         => m_axi_mem_arburst,
+      m_axi_mem_arprot          => m_axi_mem_arprot,
+      m_axi_mem_arcache         => m_axi_mem_arcache,
+      m_axi_mem_aruser          => m_axi_mem_aruser,
+      m_axi_mem_arvalid         => m_axi_mem_arvalid,
+      m_axi_mem_arready         => m_axi_mem_arready,
+      m_axi_mem_rdata           => m_axi_mem_rdata,
+      m_axi_mem_rresp           => m_axi_mem_rresp,
+      m_axi_mem_rlast           => m_axi_mem_rlast,
+      m_axi_mem_rvalid          => m_axi_mem_rvalid,
+      m_axi_mem_rready          => m_axi_mem_rready,
+      icap_clk                  => clk,
+      icap_reset                => rst,
+      icap_csib                 => icap_csib,
+      icap_rdwrb                => icap_rdwrb,
+      icap_i                    => icap_o,
+      icap_o                    => icap_i,
+      --vsm_VS_0_rm_shutdown_req  => vsm_VS_0_rm_shutdown_req,
+      vsm_VS_0_rm_shutdown_ack  => vsm_VS_0_rm_shutdown_ack,
+      --vsm_VS_0_rm_decouple      => vsm_VS_0_rm_decouple,
+      --vsm_VS_0_rm_reset         => vsm_VS_0_rm_reset,
+      --vsm_VS_0_event_error      => vsm_VS_0_event_error,
+      --vsm_VS_0_sw_shutdown_req  => vsm_VS_0_sw_shutdown_req,
+      vsm_VS_0_sw_startup_req   => vsm_VS_0_sw_startup_req,
+      --icap_avail                => icap_avail,
+      --icap_prdone               => icap_prdone,
+      --icap_prerror              => icap_prerror,
+      s_axi_reg_awaddr          => s_axil_awaddr_masked,
+      s_axi_reg_awvalid         => s_axil_awvalid,
+      s_axi_reg_awready         => s_axil_awready,
+      s_axi_reg_wdata           => s_axil_wdata,
+      s_axi_reg_wvalid          => s_axil_wvalid,
+      s_axi_reg_wready          => s_axil_wready,
+      s_axi_reg_bresp           => s_axil_bresp,
+      s_axi_reg_bvalid          => s_axil_bvalid,
+      s_axi_reg_bready          => s_axil_bready,
+      s_axi_reg_araddr          => s_axil_araddr_masked,
+      s_axi_reg_arvalid         => s_axil_arvalid,
+      s_axi_reg_arready         => s_axil_arready,
+      s_axi_reg_rdata           => s_axil_rdata,
+      s_axi_reg_rresp           => s_axil_rresp,
+      s_axi_reg_rvalid          => s_axil_rvalid,
+      s_axi_reg_rready          => s_axil_rready);
+
+    s_axil_araddr_masked <= s_axil_araddr and prc_mask;
+    s_axil_awaddr_masked <= s_axil_awaddr and prc_mask;
+
+  -- ICAP3 instance
+  icap_inst_1: icap
+    generic map (
+      tech  =>  CFG_FABTECH)
+    port map (
+      icap_clk      => clk,
+      icap_csib     => icap_csib,
+      icap_rdwrb    => icap_rdwrb,
+      icap_i        => icap_i,
+      icap_o        => icap_o,
+      icap_avail    => icap_avail,
+      icap_prdone   => icap_prdone,
+      icap_prerror  => icap_prerror);
+ end generate generate_prc;
+
+  axi2noc_1: axislv2noc
+    generic map (
+      tech             => CFG_FABTECH,
+      nmst             => 1,
+      retarget_for_dma => 1,    --enable retarget_for_dma
+      mem_axi_port     => 0,
+      mem_num          => CFG_NSLM_TILE + CFG_NSLMDDR_TILE + CFG_NMEM_TILE,
+      mem_info         => tile_mem_list(0 to CFG_NMEM_TILE + CFG_NSLM_TILE - 1), --tile_mem_list, --nofb_mem_info,
+      slv_y            => tile_x(slm_tile_id(0)), --this_local_y, --io_y,
+      slv_x            => tile_y(slm_tile_id(0))) --this_local_x) --, io_x)
+    port map (
+      rst                        => rst,
+      clk                        => clk,
+      local_y                    => this_local_y, --local_y,
+      local_x                    => this_local_x, --local_x,
+      mosi                       => mosi,
+      somi                       => somi,
+      coherence_req_wrreq        => prc_dma_snd_wrreq,
+      coherence_req_data_in      => prc_dma_snd_data_in,
+      coherence_req_full         => prc_dma_snd_full,
+      coherence_rsp_rcv_rdreq    => prc_dma_rcv_rdreq,
+      coherence_rsp_rcv_data_out => prc_dma_rcv_data_out,
+      coherence_rsp_rcv_empty    => prc_dma_rcv_empty,
+      remote_ahbs_snd_wrreq      => open,
+      remote_ahbs_snd_data_in    => open,
+      remote_ahbs_snd_full       => '0',
+      remote_ahbs_rcv_rdreq      => open,
+      remote_ahbs_rcv_data_out   => (others => '0'),
+      remote_ahbs_rcv_empty      => '1',
+      coherence                  => prc_coherence);
+
+      mosi(0).ar.addr(31 downto 0)      <= m_axi_mem_araddr;
+      mosi(0).ar.len                    <= m_axi_mem_arlen;
+      mosi(0).ar.size                   <= m_axi_mem_arsize;
+      mosi(0).ar.burst                  <= m_axi_mem_arburst;
+      mosi(0).ar.prot                   <= m_axi_mem_arprot;
+      mosi(0).ar.cache                  <= m_axi_mem_arcache;
+      mosi(0).ar.valid                  <= m_axi_mem_arvalid;
+      mosi(0).r.ready                   <= m_axi_mem_rready;
+      m_axi_mem_arready                 <= somi(0).ar.ready;
+      m_axi_mem_rdata                   <= somi(0).r.data(31 downto 0);
+      m_axi_mem_rresp                   <= somi(0).r.resp;
+      m_axi_mem_rlast                   <= somi(0).r.last;
+      m_axi_mem_rvalid                  <= somi(0).r.valid;
+
+    -- Handle non-coherent mem requests from the PRC (reconfigurable bitstreams)
+    noc2ahbmst_prc : noc2ahbmst
+      generic map (
+        tech        => CFG_FABTECH,
+        hindex      => 2,
+        axitran     => GLOB_CPU_AXI,
+        little_end  => GLOB_CPU_RISCV,
+        eth_dma     => 0,
+        narrow_noc  => 0,
+        cacheline   => CFG_DLINE,
+        l2_cache_en => CFG_L2_ENABLE)
+      port map (
+        rst                       => rst,
+        clk                       => clk,
+        local_y                   => this_local_y,
+        local_x                   => this_local_x,
+        ahbmi                     => ahbmi,
+        ahbmo                     => ahbmo(2),
+        coherence_req_rdreq       => open,
+        coherence_req_data_out    => (others => '0'),
+        coherence_req_empty       => '1',
+        coherence_fwd_wrreq       => open,
+        coherence_fwd_data_in     => open,
+        coherence_fwd_full        => '0',
+        coherence_rsp_snd_wrreq   => open,
+        coherence_rsp_snd_data_in => open,
+        coherence_rsp_snd_full    => '0',
+        dma_rcv_rdreq             => prc_noc2ahbm_dma_rcv_rdreq,
+        dma_rcv_data_out          => prc_noc2ahbm_dma_rcv_data_out,
+        dma_rcv_empty             => prc_noc2ahbm_dma_rcv_empty,
+        dma_snd_wrreq             => prc_noc2ahbm_dma_snd_wrreq,
+        dma_snd_data_in           => prc_noc2ahbm_dma_snd_data_in,
+        dma_snd_full              => prc_noc2ahbm_dma_snd_full,
+        dma_snd_atleast_4slots    => '1', --prc_noc2ahbm_dma_snd_atleast_4slots,
+        dma_snd_exactly_3slots    => '0'); --prc_noc2ahbm_dma_snd_exactly_3slots);
+
+     fifo0_from_prc : fifo0 
+     generic map (
+      depth => 1024,
+      width => NOC_FLIT_SIZE)
+     port map (
+      clk      => clk,
+      rst      => rst,
+      rdreq    => prc_noc2ahbm_dma_rcv_rdreq,
+      wrreq    => prc_dma_snd_wrreq,
+      data_in  => prc_dma_snd_data_in,
+      empty    => prc_noc2ahbm_dma_rcv_empty,
+      full     => prc_dma_snd_full,
+      data_out => prc_noc2ahbm_dma_rcv_data_out);
+
+     fifo0_to_prc : fifo0 
+     generic map (
+      depth => 1024,
+      width => NOC_FLIT_SIZE)
+     port map (
+      clk      => clk,
+      rst      => rst,
+      rdreq    => prc_dma_rcv_rdreq,
+      wrreq    => prc_noc2ahbm_dma_snd_wrreq,
+      data_in  => prc_noc2ahbm_dma_snd_data_in,
+      empty    => prc_dma_rcv_empty,
+      full     => prc_noc2ahbm_dma_snd_full,
+      data_out => prc_dma_rcv_data_out);
+
+    end generate disable_prc;
+
 
   -----------------------------------------------------------------------------
   -- Tile queues

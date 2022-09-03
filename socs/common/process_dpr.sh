@@ -575,11 +575,12 @@ bs_gen_script=$1/socs/$2/vivado_dpr/bs.tcl;
     echo " " > $bs_gen_script;
     
     echo "open_checkpoint Implement/top_dpr/top_route_design.dcp" >> $bs_gen_script;
+    echo "set_property BITSTREAM.GENERAL.COMPRESS TRUE [current_design]" >> $bs_gen_script;
     echo "write_bitstream -force -bin_file Bitstreams/acc_bs" >> $bs_gen_script;
     echo "source [get_property REPOSITORY [get_ipdefs *prc:1.3]]/xilinx/prc_v1_3/tcl/api.tcl" >> $bs_gen_script;
     
     for((i=0; i<$num_acc_tiles; i++)) do
-        echo "prc_v1_3::format_bin_for_icap -i Bitstreams/acc_bs_pblock_slot_"$i"_partial.bin -o Bitstreams/${new_accelerators[$i,1]}.bin" >> $bs_gen_script;
+        echo "prc_v1_3::format_bin_for_icap -i Bitstreams/acc_bs_pblock_slot_"$i"_partial.bin -o Bitstreams/${new_accelerators[$i,1]}.bin -c 1" >> $bs_gen_script;
     done
 }
 
@@ -622,7 +623,8 @@ do
             arch=${_line[2]}
             echo "$arch"
             if [[ $arch == "leon3" ]]; then
-               pbs_base_addr=0x50000000;
+               #pbs_base_addr=0x04000000;
+               pbs_base_addr=0x60000000;
             else
                pbs_base_addr=0xA0000000; 
             fi
@@ -775,7 +777,7 @@ elif [ "$4" == "IMPL_DPR" ]; then
     gen_impl_script $1 $2 $3 $4
 
     #gen_dpr $1 $2 $3 $4
-elif [ $4 == "ACC" ]; then
+elif [ "$4" == "ACC" ]; then
     extract_acc $1 $2 $3; 
     extract_acc_old $1 $2 $3; 
     diff_accelerators $1 $2 $3; 
@@ -786,7 +788,7 @@ elif [ $4 == "ACC" ]; then
     #gen_fplan $1 $2 $3
     #gen_dpr $1 $2 $3 $4;
 
-elif [ $4 == "IMPL_ACC" ]; then
+elif [ "$4" == "IMPL_ACC" ]; then
     extract_acc $1 $2 $3; 
     extract_acc_old $1 $2 $3; 
     diff_accelerators $1 $2 $3; 
@@ -800,28 +802,28 @@ elif [ $4 == "IMPL_ACC" ]; then
     fi;
     gen_impl_script $1 $2 $3 $4;
    
-elif [ $4 == "GEN_BS" ]; then
+elif [ "$4" == "GEN_BS" ]; then
     extract_acc $1 $2 $3; 
     extract_acc_old $1 $2 $3; 
     diff_accelerators $1 $2 $3; 
     gen_bs_script $1 $2 $3 $4;
 
-elif [ $4 == "GEN_HDR" ]; then
+elif [ "$4" == "GEN_HDR" ]; then
     extract_acc $1 $2 $3
     gen_bs_descriptor $1 $2 $3 $4
      
-elif [ $4 == "LOAD_BS" ]; then
+elif [ "$4" == "LOAD_BS" ]; then
     load_bs $1 $2 $3 $4
 
 elif [ $4 == "test" ]; then
-    #extract_acc $1 $2 $3
+    extract_acc $1 $2 $3
     #extract_acc_old $1 $2 $3
     #diff_accelerators $1 $2 $3 
     #patch_acc_devid $1 $2 $3 $4
     #gen_bs_script $1 $2 $3 $4 
-    #gen_bs_descriptor $1 $2 $3 $4
-    load_bs $1 $2 $3 $4
-    #initialize_acc_tiles $1 $2 $3
+    #load_bs $1 $2 $3 $4
+    initialize_acc_tiles $1 $2 $3
+    gen_bs_descriptor $1 $2 $3 $4
     #add_acc_prj_file $1 $2 $3
     #gen_synth_script $1 $2 $3 $4
     #gen_fplan $1 $2 $3;

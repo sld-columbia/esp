@@ -35,7 +35,8 @@ entity esp_tile_csr is
     tile_config : out std_logic_vector(ESP_CSR_WIDTH - 1 downto 0);
     srst        : out std_ulogic;
     apbi        : in apb_slv_in_type;
-    apbo        : out apb_slv_out_type
+    apbo        : out apb_slv_out_type;
+    prc_interrupt : in std_ulogic
   );
 end esp_tile_csr;
 
@@ -74,7 +75,7 @@ architecture rtl of esp_tile_csr is
 
     constant MONITOR_REG_COUNT : integer := MON_NOC_QUEUES_FULL_BASE_INDEX + NOCS_NUM * NOC_QUEUES; --58
     constant REGISTER_WIDTH : integer := 32;
-
+     
     signal burst                  : std_logic_vector(REGISTER_WIDTH-1 downto 0);
     signal readdata               : std_logic_vector(REGISTER_WIDTH-1 downto 0);
     signal wdata                  : std_logic_vector(REGISTER_WIDTH-1 downto 0);
@@ -183,7 +184,7 @@ architecture rtl of esp_tile_csr is
           case csr_addr is
             when ESP_CSR_VALID_ADDR =>
               readdata(ESP_CSR_VALID_MSB - ESP_CSR_VALID_LSB downto 0) <=
-                config_r(ESP_CSR_VALID_MSB downto ESP_CSR_VALID_LSB);
+               (0 =>  prc_interrupt, others => '0'); --config_r(ESP_CSR_VALID_MSB downto ESP_CSR_VALID_LSB);
             when ESP_CSR_TILE_ID_ADDR =>
               readdata(ESP_CSR_TILE_ID_MSB - ESP_CSR_TILE_ID_LSB downto 0) <=
                 config_r(ESP_CSR_TILE_ID_MSB downto ESP_CSR_TILE_ID_LSB);

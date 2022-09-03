@@ -63,9 +63,9 @@ CFLAGS += -L$(BUILD_PATH)/../../monitors
 LDFLAGS += -lm
 LDFLAGS += -lmonitors
 LDFLAGS += $(BUILD_PATH)/../../probe/libprobe.a
+LDFLAGS += $(BUILD_PATH)/../../prc/libprc.a
 LDFLAGS += $(BUILD_PATH)/../../monitors/libmonitors.a
 LDFLAGS += $(BUILD_PATH)/../../utils/baremetal/libutils.a
-LDFLAGS += $(BUILD_PATH)/../../prc/libprc.a
 CC := $(CROSS_COMPILE)gcc
 LD := $(CROSS_COMPILE)$(LD)
 

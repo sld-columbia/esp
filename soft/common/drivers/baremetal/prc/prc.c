@@ -1,8 +1,12 @@
 #include "prc_utils.h"
 #include "soc_defs.h"
 #include "soc_locs.h"
-#include "pbs_map.h"
+#include <pbs_map.h>
+#include <monitors.h>
 
+#ifdef __riscv
+#define APB_BASE_ADDR 0xA0000000
+#endif
 static struct esp_device esp_tile_decoupler;
 static struct esp_device esp_prc;
 struct pbs_map *pb_map;
@@ -23,6 +27,7 @@ static int get_decoupler_addr(struct esp_device *dev, struct esp_device *decoupl
     
     //printf("device address %0x truncated addr %0x \n", dev_addr, dev_addr_trunc);
 //#ifdef ACCS_PRESENT
+
     //Obtain tile id
     for (i = 0; i < SOC_NACC; i++) {
         if(dev_start_addr == dev_addr_trunc) {
@@ -34,19 +39,21 @@ static int get_decoupler_addr(struct esp_device *dev, struct esp_device *decoupl
     }
 
     if(tile_id == 0XFF) {
-        fprintf(stderr, "Error: cannot find tile id\n");
-        exit(EXIT_FAILURE);
+        printf("Error: cannot find tile id\n");
+        return -1;
+        //exit(EXIT_FAILURE);
     }
 
     //compute apb address for tile decoupler
     (*decoupler).addr = APB_BASE_ADDR + (monitor_base + tile_id * 0x200);
-    //printf("tile_id is %0x decoupler addr is %0x \n", tile_id, (unsigned) esp_tile_decoupler.addr);
+    printf("tile_id is %0x decoupler addr is %0x \n", tile_id, (unsigned) esp_tile_decoupler.addr);
     return 0;
 }
 
 int decouple_acc(struct esp_device *dev, unsigned val)
 {
     get_decoupler_addr(dev, &esp_tile_decoupler);
+    
     if (val == 0)
         iowrite32(&esp_tile_decoupler, 0, 0);
     else 
@@ -56,11 +63,11 @@ int decouple_acc(struct esp_device *dev, unsigned val)
 }
 
 static void init_prc()
-{
+{   
+    //TODO: replace this with probe
     esp_prc.addr = (long long unsigned) APB_BASE_ADDR + 0xE400;
     
-    pb_map = (struct pbs_map *) &bs_descriptor;
-    
+    pb_map = (struct pbs_map *) &bs_descriptor;    
     //printf("bitstream addr %0x %08x \n", pb_map->pbs_size, (unsigned) pb_map->pbs_addr);
 }
 
@@ -72,6 +79,7 @@ static int shutdown_prc()
     iowrite32(&esp_prc, 0x0, 0x0);
 
     prc_status = ioread32(&esp_prc, 0x0);
+    printf("PRC status: %0x \n", prc_status);
     prc_status &= (1<<7);
     if (!prc_status) {
         printf("PRC: error shutting controller \n");
@@ -89,6 +97,7 @@ static int start_prc()
     iowrite32(&esp_prc, 0x0, 0x1);
 
     prc_status = ioread32(&esp_prc, 0x0);
+    printf("PRC: start status %08x \n", prc_status);
     prc_status &= (1<<7);
     if (prc_status) {
         printf("PRC: error starting controller \n");
@@ -104,38 +113,72 @@ static void set_trigger(unsigned pbs_id)
     if (!shutdown_prc()) {
         iowrite32(&esp_prc, 0x60, 0x0);
         iowrite32(&esp_prc, 0x64, PBS_BASE_ADDR + pb_map[pbs_id].pbs_addr);
+        //iowrite32(&esp_prc, 0x64, 0x04000000 + pb_map[pbs_id].pbs_addr);
         iowrite32(&esp_prc, 0x68, pb_map[pbs_id].pbs_size);
         printf("PRC: Trigger armed \n");
     }
     else
         printf("PRC: Error arming trigger \n");
    
-    //printf("address %08x %08x \n", (unsigned) pb_map[pbs_id].pbs_addr, ioread32(&esp_prc, 0x64));
-    //printf("size %u %u \n", pb_map[pbs_id].pbs_size, ioread32(&esp_prc, 0x68));
+    printf("address %08x size %08x addr from PRC %08x \n", (unsigned) pb_map[pbs_id].pbs_addr, pb_map[pbs_id].pbs_size, ioread32(&esp_prc, 0x64));
+    printf("size %u \n", ioread32(&esp_prc, 0x68));
 }
 
 void reconfigure_FPGA(struct esp_device *dev, unsigned pbs_id)
 {
- //   int status = 0;
+    unsigned prc_done = 0;
+    
+    //esp monitor for measuring time
+    esp_monitor_args_t mon_args;
+    const int CPU_TILE_IDX = 1;
+    mon_args.read_mode = ESP_MON_READ_SINGLE;
+    mon_args.tile_index = CPU_TILE_IDX;
+    mon_args.mon_index = MON_DVFS_BASE_INDEX + 3;
 
-    init_prc();
+    unsigned int cycles_start, cycles_end, cycles_diff;
+
+    //TODO: add a method to add io_tile id
+    struct esp_device mem_tile;
+    mem_tile.addr = (long long unsigned) APB_BASE_ADDR + 0x90980;
+    
+    
+    init_prc();    
+    //iowrite32(&esp_prc, 0x0, 0x3);
+    
+    //prc_done = ioread32(&mem_tile, 0);
+    //printf("PRC:interrupt status before %u \n", prc_done);
+
+    //send a Proceed cmd to PRC 
+    //prc_done = ioread32(&mem_tile, 0);
+    //if (prc_done == 1)
+
+    //set bitstream trigger
     set_trigger(pbs_id);
     
-    if(!(start_prc())) {
-        //decouple_acc(dev, 1); //decouple tile
+    if (!(start_prc())) {
+        decouple_acc(dev, 1); //decouple tile
         printf("PRC: Starting Reconfiguration \n");
         iowrite32(&esp_prc, 0x4, 0); //send reconfig trigger
    }
 
     else {
-        fprintf(stderr, "PRC: Error reconfiguring FPGA \n");
-        exit(EXIT_FAILURE);
+        printf("PRC: Error reconfiguring FPGA \n");
+        //return -1;;
     }
-/*        
-    while(!status){
-        status = ioread32(&esp_prc, 0x0);
-        status &= (1 << 2);
+    
+    cycles_start = esp_monitor(mon_args, NULL);
+    
+    while (prc_done == 0) {
+        prc_done = ioread32(&mem_tile, 0);
     }
-*/
-    printf("PRC: Reconfigured FPGA \n");
+
+    cycles_end = esp_monitor(mon_args, NULL);
+    cycles_diff = sub_monitor_vals(cycles_start, cycles_end);
+
+    printf("time is %u %u %u \n", cycles_start, cycles_end, cycles_diff);
+
+    //send a Proceed cmd to PRC 
+    iowrite32(&esp_prc, 0x0, 0x3);
+
+    printf("PRC: Reconfigured FPGA \n \n \n");
 }

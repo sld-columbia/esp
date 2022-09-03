@@ -1558,7 +1558,7 @@ def print_mapping(fp, soc, esp_config):
       if esp_config.coherence:
         fp.write("    " + str(t.l2.idx) + " => " + str(i) + ",\n")
   if soc.prc.get() == 1:
-    fp.write("    127 => io_tile_id,\n")
+    fp.write("    127 => slm_tile_id(0),\n")
   fp.write("    others => 0);\n\n")
 
   #
@@ -1952,6 +1952,15 @@ def print_soc_locations(fp, esp_config, soc):
             if not t.acc.id == esp_config.nacc - 1:
                 fp.write(", ")
       fp.write("};\n")
+
+def print_aux_tile_locs (fp, esp_config, soc):
+  fp.write("soc_loc_t io_loc = ")
+  for i in range(0, esp_config.ntiles):
+    t = esp_config.tiles[i]
+    if t.type == "misc":
+        fp.write("{" + str(t.row) + "," + str(t.col) + "};")
+        break
+  fp.write("\n\n")
 
 def print_devtree(fp, soc, esp_config):
 
@@ -2542,7 +2551,15 @@ def create_socmap(esp_config, soc):
 
   print("Created soc locations into 'soc_locs.h'")
 
+  # io_tile locations
+  fp = open('prc_aux.h', 'w')
+  
+  print_aux_tile_locs(fp, esp_config, soc)
+  
+  fp.close()
 
+  print("created io_tile locations into 'prc_aux.h'")
+  
   # Device tree
   if esp_config.cpu_arch == "ariane" or esp_config.cpu_arch == "ibex":
 

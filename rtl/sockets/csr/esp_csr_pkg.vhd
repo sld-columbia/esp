@@ -81,7 +81,8 @@ package esp_csr_pkg is
       tile_config : out std_logic_vector(ESP_CSR_WIDTH - 1 downto 0);
       srst        : out std_ulogic;
       apbi        : in apb_slv_in_type;
-      apbo        : out apb_slv_out_type);
+      apbo        : out apb_slv_out_type;
+      prc_interrupt : in std_ulogic);
   end component;
 
 end esp_csr_pkg;

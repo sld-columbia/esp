@@ -384,6 +384,9 @@ architecture rtl of tile_io is
   constant this_csr_pindex        : integer                            := tile_csr_pindex(io_tile_id);
   constant this_csr_pconfig       : apb_config_type                    := fixed_apbo_pconfig(this_csr_pindex);
 
+ 
+  constant DISABLE_PRC_INST           : integer := 0;
+
   constant this_local_apb_en : std_logic_vector(0 to NAPBSLV - 1) := (
     0      => '1',                                  -- CSRs
     1      => '1',                                  -- uart
@@ -393,7 +396,7 @@ architecture rtl of tile_io is
     13     => to_std_logic(CFG_SVGA_ENABLE),        -- svga
     14     => to_std_logic(CFG_GRETH),              -- eth mac
     15     => to_std_logic(CFG_SGMII * CFG_GRETH),  -- eth phy
-    127    => to_std_logic(CFG_PRC),                -- prc
+    --127    => to_std_logic(CFG_PRC),                -- prc
     others => '0');
 
   constant this_local_ahb_en : std_logic_vector(0 to NAHBSLV - 1) := (
@@ -462,6 +465,8 @@ architecture rtl of tile_io is
   attribute mark_debug of icap_avail     : signal is "true";
   attribute mark_debug of icap_prdone    : signal is "true";
   attribute mark_debug of icap_prerror   : signal is "true";
+  
+  attribute mark_debug of vsm_VS_0_sw_startup_req : signal is "true";
 
   attribute mark_debug of m_axi_mem_araddr   : signal is "true";
   attribute mark_debug of m_axi_mem_arlen    : signal is "true";
@@ -1065,6 +1070,7 @@ begin
   -----------------------------------------------------------------------------
   -- APB 127: apb2axi 
   -----------------------------------------------------------------------------
+  disable_prc_axi : if DISABLE_PRC_INST = 1 generate
   apb2axil_1: apb2axil
     port map (
       clk               => clk,
@@ -1099,6 +1105,7 @@ begin
   noc_apbo(127).pirq <= (others => '0');
   noc_apbo(127).pconfig <= fixed_apbo_pconfig(127);
   noc_apbo(127).pindex <= 127;
+  end generate disable_prc_axi;
 
   -----------------------------------------------------------------------------
   -- APB 13: DVI
@@ -1445,10 +1452,12 @@ begin
       tile_config => tile_config,
       srst => open,
       apbi => noc_apbi,
-      apbo => noc_apbo(0)
+      apbo => noc_apbo(0),
+      prc_interrupt => '0' --vsm_VS_0_sw_startup_req --to be removed after submission
     );
 
   -- PRC 
+  disable_prc : if DISABLE_PRC_INST = 1 generate
   generate_prc : if has_prc(CFG_FABTECH) = 1 and CFG_PRC = 1 and SIMULATION = false generate
   prc_1: prc_inst
     port map (
@@ -1480,7 +1489,7 @@ begin
       --vsm_VS_0_rm_reset         => vsm_VS_0_rm_reset,
       --vsm_VS_0_event_error      => vsm_VS_0_event_error,
       --vsm_VS_0_sw_shutdown_req  => vsm_VS_0_sw_shutdown_req,
-      --vsm_VS_0_sw_startup_req   => vsm_VS_0_sw_startup_req,
+      vsm_VS_0_sw_startup_req   => vsm_VS_0_sw_startup_req,
       --icap_avail                => icap_avail,
       --icap_prdone               => icap_prdone,
       --icap_prerror              => icap_prerror,
@@ -1503,7 +1512,9 @@ begin
 
     s_axil_araddr_masked <= s_axil_araddr and prc_mask;
     s_axil_awaddr_masked <= s_axil_awaddr and prc_mask;
-  
+
+  --vsm_VS_0_sw_startup_req <= '1';
+  --tile_config(0) <= vsm_VS_0_sw_startup_req;
   -- ICAP3 instance
   icap_inst_1: icap
     generic map (
@@ -1526,7 +1537,7 @@ begin
       retarget_for_dma => 1,    --enable retarget_for_dma
       mem_axi_port     => 0,
       mem_num          => CFG_NSLM_TILE + CFG_NSLMDDR_TILE + CFG_NMEM_TILE,
-      mem_info         => tile_mem_list(0 to CFG_NMEM_TILE + CFG_NSLM_TILE - 1), --tile_mem_list, --nofb_mem_info,
+      mem_info         => tile_mem_list(0 to CFG_NMEM_TILE + CFG_NSLM_TILE + CFG_NSLMDDR_TILE - 1), --tile_mem_list, --nofb_mem_info,
       slv_y            => tile_y(io_tile_id), --io_y,
       slv_x            => tile_x(io_tile_id)) --, io_x)
     port map (
@@ -1563,6 +1574,7 @@ begin
       m_axi_mem_rresp                   <= somi(0).r.resp;
       m_axi_mem_rlast                   <= somi(0).r.last;
       m_axi_mem_rvalid                  <= somi(0).r.valid;
+ end generate disable_prc;
 
 -----------------------------------------------------------------------------
   -- Tile queues
