@@ -43,6 +43,7 @@ entity asic_tile_mem_ddr is
     test_if_en         : integer range 0 to 1 := 1);
   port (
     rst                : in  std_ulogic;
+    sys_rstn           : in  std_ulogic;
     sys_clk            : in  std_ulogic;  -- NoC clock
     ext_clk            : in  std_ulogic;  -- backup tile clock
     clk_div            : out std_ulogic;  -- tile clock monitor for testing purposes
@@ -192,6 +193,7 @@ architecture rtl of asic_tile_mem_ddr is
   signal raw_rstn     : std_ulogic;
   signal dco_clk      : std_ulogic;
   signal dco_rstn     : std_ulogic;
+  signal tile_rst     : std_ulogic;
 --  signal dco_clk_lock : std_ulogic;
 
   -- Tile parameters
@@ -424,13 +426,20 @@ begin
   raw_rstn <= not rst;
 
   rst_noc : rstgen
-    generic map (acthigh => this_has_dco, syncin => 0)
+    generic map (acthigh => 1, syncin => 0)
     port map (rst, sys_clk, '1', noc_rstn, open);
 
   rst_jtag : rstgen
-    generic map (acthigh => this_has_dco, syncin => 0)
+    generic map (acthigh => 1, syncin => 0)
     port map (rst, tclk, '1', test_rstn, open);
 
+  no_dco_rst : if this_has_dco = 0 generate
+    tile_rst <= sys_rstn;
+  end generate no_dco_rst;
+
+  has_dco_rst : if this_has_dco /= 0 generate
+    tile_rst <= rst;
+  end generate has_dco_rst;
 
   -- DDR controller
   ahb2bsg_dmc_1 : ahb2bsg_dmc
@@ -711,7 +720,7 @@ begin
       dco_rst_cfg  => DEFAULT_DCO_LPDDR_CFG)
     port map (
       raw_rstn           => raw_rstn,   -- DCO raw reset
-      tile_rst           => rst,   -- tile main synchronouse reset
+      tile_rst           => tile_rst,   -- tile main synchronouse reset
       refclk             => ext_clk,    -- external backup clock
       clk                => dco_clk_div2_90,      -- tile main clock
       pllbypass          => ext_clk_sel_default,  -- ext_clk_sel,

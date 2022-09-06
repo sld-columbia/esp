@@ -26,6 +26,7 @@ package tiles_asic_pkg is
       test_if_en   : integer range 0 to 1);
     port (
       rst                : in  std_ulogic;
+      sys_rstn           : in  std_ulogic;
       sys_clk            : in  std_ulogic;
       ext_clk            : in  std_ulogic;
       clk_div            : out std_ulogic;
@@ -119,6 +120,7 @@ package tiles_asic_pkg is
       test_if_en   : integer range 0 to 1);
     port (
       rst                : in  std_ulogic;
+      sys_rstn           : in  std_ulogic;
       sys_clk            : in  std_ulogic;
       ext_clk            : in  std_ulogic;
       clk_div            : out std_ulogic;
@@ -209,6 +211,7 @@ package tiles_asic_pkg is
       test_if_en   : integer range 0 to 1);
     port (
       rst                : in    std_ulogic;
+      sys_rstn           : in  std_ulogic;
       sys_clk            : in    std_ulogic;
       ext_clk            : in    std_ulogic;
       clk_div            : out   std_ulogic;
@@ -421,6 +424,7 @@ package tiles_asic_pkg is
       test_if_en   : integer range 0 to 1);
     port (
       rst                : in  std_logic;
+      sys_rstn           : in  std_ulogic;
       sys_clk            : in  std_ulogic;
       ext_clk            : in  std_ulogic;
       clk_div            : out std_ulogic;
@@ -511,6 +515,7 @@ package tiles_asic_pkg is
       test_if_en   : integer range 0 to 1);
     port (
       rst                : in  std_ulogic;
+      sys_rstn           : in  std_ulogic;
       sys_clk            : in  std_ulogic;
       ext_clk            : in  std_ulogic;
       clk_div            : out std_ulogic;
@@ -601,6 +606,7 @@ package tiles_asic_pkg is
       test_if_en   : integer range 0 to 1);
     port (
       rst                : in  std_ulogic;
+      sys_rstn           : in  std_ulogic;
       sys_clk            : in  std_ulogic;
       ext_clk            : in  std_ulogic;
       clk_div            : out std_ulogic;

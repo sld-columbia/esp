@@ -43,6 +43,7 @@ entity asic_tile_empty is
     test_if_en         : integer range 0 to 1 := 1);
   port (
     rst                : in  std_logic;
+    sys_rstn           : in  std_ulogic;
     sys_clk            : in  std_ulogic;  -- NoC clock
     ext_clk            : in  std_ulogic;  -- backup tile clock
     clk_div            : out std_ulogic;  -- tile clock monitor for testing purposes
@@ -137,6 +138,7 @@ architecture rtl of asic_tile_empty is
   signal raw_rstn     : std_ulogic;
   signal dco_clk      : std_ulogic;
   signal dco_rstn     : std_ulogic;
+  signal tile_rst     : std_ulogic;
 --  signal dco_clk_lock : std_ulogic;
 
   -- Tile parameters
@@ -366,12 +368,20 @@ begin
   raw_rstn <= not rst;
 
   rst_noc : rstgen
-    generic map (acthigh => this_has_dco, syncin => 0)
+    generic map (acthigh => 1, syncin => 0)
     port map (rst, sys_clk, '1', noc_rstn, open);
 
   rst_jtag : rstgen
-    generic map (acthigh => this_has_dco, syncin => 0)
+    generic map (acthigh => 1, syncin => 0)
     port map (rst, tclk, '1', test_rstn, open);
+
+  no_dco_rst : if this_has_dco = 0 generate
+    tile_rst <= sys_rstn;
+  end generate no_dco_rst;
+
+  has_dco_rst : if this_has_dco /= 0 generate
+    tile_rst <= rst;
+  end generate has_dco_rst;
 
   -----------------------------------------------------------------------------
   -- JTAG for single tile testing / bypass when test_if_en = 0
@@ -611,7 +621,7 @@ begin
       this_has_dco => this_has_dco)
     port map (
       raw_rstn           => raw_rstn,
-      tile_rst           => rst,
+      tile_rst           => tile_rst,
       clk                => dco_clk,
       refclk             => ext_clk,
       pllbypass          => ext_clk_sel_default,  --ext_clk_sel,
