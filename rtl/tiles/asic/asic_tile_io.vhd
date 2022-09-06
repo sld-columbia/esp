@@ -165,11 +165,11 @@ architecture rtl of asic_tile_io is
   signal sys_clk_lock : std_ulogic;
   signal sys_rstn     : std_ulogic;
   signal raw_rstn     : std_ulogic;
+  signal tile_rst     : std_ulogic;
 
   -- Tile clock and reset (only for I/O tile)
   signal dco_clk      : std_ulogic;
   signal dco_rstn     : std_ulogic;
-  signal tile_rstn     : std_ulogic;
 --  signal dco_clk_lock : std_ulogic;
 
   -- Ethernet and Debug link
@@ -429,12 +429,7 @@ begin
     generic map (acthigh => 1, syncin => 0)
     port map (rst, sys_clk, sys_clk_lock, sys_rstn, open);
 
-  -- NoC output clock and reset
   sys_rstn_out <= sys_rstn;
-
---  rst1 : rstgen                         -- reset generator
---    generic map (acthigh => 1, syncin => 0)
---    port map (rst, dco_clk, dco_clk_lock, dco_rstn, open);
 
   raw_rstn <= not rst;
 
@@ -446,15 +441,13 @@ begin
     generic map (acthigh => 1, syncin => 0)
     port map (rst, tclk, '1', test_rstn, open);
 
-  -- with no DCO, there is no reset generator inside the tile
-  -- since the reset generator converts to active low, do manually here
-  no_dco_tile_rstn_gen : if this_has_dco = 0 generate
-    tile_rstn <= not rst;
-  end generate no_dco_tile_rstn_gen;
+  has_dco_rst : if this_has_dco = 1 generate
+    tile_rst <= rst;
+  end generate has_dco_rst;
 
-  dco_tile_rstn_gen : if this_has_dco /= 0 generate
-    tile_rstn <= rst;
-  end generate dco_tile_rstn_gen;
+  no_dco_rst : if this_has_dco /= 1 generate
+    tile_rst <= sys_rstn;
+  end generate no_dco_rst;
 
   -----------------------------------------------------------------------------
   -- JTAG for single tile testing / bypass when test_if_en = 0
@@ -772,7 +765,7 @@ begin
       this_has_dco => this_has_dco)
     port map (
       raw_rstn           => raw_rstn,
-      tile_rst           => tile_rstn,
+      tile_rst           => tile_rst,
       clk                => dco_clk,    -- Local DCO clock
       refclk_noc         => ext_clk_noc,  -- Backup NoC clock when DCO is enabled
       pllclk_noc         => clk_div_noc,  -- NoC DCO clock out

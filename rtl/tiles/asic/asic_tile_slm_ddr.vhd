@@ -222,7 +222,6 @@ architecture rtl of asic_tile_slm_ddr is
   signal dco_clk_div2    : std_ulogic;
   signal dco_clk_div2_90 : std_ulogic;
   signal dco_rstn        : std_ulogic;
-  signal tile_rstn        : std_ulogic;
   --signal dco_clk_lock    : std_ulogic;
 
   signal phy_rstn, phy_raw_rstn : std_logic;
@@ -453,35 +452,15 @@ architecture rtl of asic_tile_slm_ddr is
 
 begin
 
-  -- Tile main clock and reset
-  --rst_tile : rstgen                         -- reset generator
-  --  generic map (acthigh => 1, syncin => 0)
-  --  port map (rst, dco_clk_div2_90, dco_clk_lock, dco_rstn, raw_rstn);
-
-  -- DDR PHY reset
-  --rst_ddr : rstgen                         -- reset generator
-  --  generic map (acthigh => 1, syncin => 0)
-  --  port map (rst, dco_clk_div2, dco_clk_lock, phy_rstn, phy_raw_rstn);
-
   raw_rstn <= not rst;
 
   rst_noc : rstgen
-    generic map (acthigh => 1, syncin => 0)
+    generic map (acthigh => this_has_dco, syncin => 0)
     port map (rst, sys_clk, '1', noc_rstn, open);
 
   rst_jtag : rstgen
-    generic map (acthigh => 1, syncin => 0)
+    generic map (acthigh => this_has_dco, syncin => 0)
     port map (rst, tclk, '1', test_rstn, open);
-
-  -- with no DCO, there is no reset generator inside the tile
-  -- since the reset generator converts to active low, do manually here
-  no_dco_tile_rstn_gen : if this_has_dco = 0 generate
-    tile_rstn <= not rst;
-  end generate no_dco_tile_rstn_gen;
-
-  dco_tile_rstn_gen : if this_has_dco /= 0 generate
-    tile_rstn <= rst;
-  end generate dco_tile_rstn_gen;
 
   -- DDR Controller address range
   this_slmddr_haddr    <= slmddr_haddr(this_slmddr_id);
@@ -768,7 +747,7 @@ begin
       dco_rst_cfg  => DEFAULT_DCO_LPDDR_CFG)
     port map (
       raw_rstn           => raw_rstn,   -- DCO raw reset
-      tile_rst           => tile_rstn,        -- tile main synchronouse reset
+      tile_rst           => rst,        -- tile main synchronouse reset
       clk                => dco_clk_div2_90,      -- tile main clock
       refclk             => ext_clk,    -- external backup clock
       pllbypass          => ext_clk_sel_default,  -- ext_clk_sel,

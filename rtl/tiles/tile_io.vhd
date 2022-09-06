@@ -381,13 +381,13 @@ begin
   local_y <= this_local_y;
 
   -- DCO Reset synchronizer
-  rst_gen: if this_has_dco /= 0 generate
+  rst_gen: if this_has_dco = 1 generate
     tile_rstn : rstgen
       generic map (acthigh => 1, syncin => 0)
       port map (tile_rst, dco_clk_int, dco_clk_lock, rst, open);
   end generate rst_gen;
 
-  no_rst_gen: if this_has_dco = 0 generate
+  no_rst_gen: if this_has_dco /= 1 generate
     rst <= tile_rst;
   end generate no_rst_gen;
 
