@@ -46,14 +46,10 @@ rtl/cache/VX_shared_mem.sv
 rtl/cache/VX_tag_access.sv
 rtl/fp_cores/VX_fp_class.sv
 rtl/fp_cores/VX_fp_cvt.sv
-rtl/fp_cores/VX_fp_div.sv
-rtl/fp_cores/xilinx/vc707/acl_fdiv/acl_fdiv.ip_user_files/ip/acl_div/acl_div_stub.v
-rtl/fp_cores/VX_fp_fma.sv
 rtl/fp_cores/VX_fp_ncomp.sv
 rtl/fp_cores/VX_fp_rounding.sv
-rtl/fp_cores/VX_fp_sqrt.sv
-rtl/fp_cores/VX_fpu_fpga.sv
 rtl/fp_cores/VX_fpu_dpi.sv
+rtl/fp_cores/VX_fpu_fpnew.sv
 rtl/interfaces/VX_alu_req_if.sv
 rtl/interfaces/VX_branch_ctl_if.sv
 rtl/interfaces/VX_cmt_to_csr_if.sv

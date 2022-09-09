@@ -15,6 +15,7 @@ VLOGOPT += $(INCDIR_MODELSIM)
 
 # Flag for VORTEX SIMULATION VERILATOR
 #VLOGOPT += +define+VERILATOR 
+VLOGOPT += +define+FPU_FPNEW
 
 # define for excluding floating point unit
 
