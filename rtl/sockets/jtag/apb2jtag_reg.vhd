@@ -1,5 +1,4 @@
-
--- Copyright (c) 2011-2021 Columbia University, System Level Design Group
+-- Copyright (c) 2011-2022 Columbia University, System Level Design Group
 -- SPDX-License-Identifier: Apache-2.0
 
 library ieee;
@@ -62,7 +61,6 @@ architecture arch of apb2jtag_reg is
   attribute mark_debug of r : signal is "true";
   attribute mark_debug of sample : signal is "true";
 
-
 begin
 
   apbo.prdata  <= (others => '0');
@@ -106,6 +104,7 @@ begin
         v.write_en := '0';
         if rstn = '1' and apbreq = '1' and apbi.psel(pindex) = '1' then
           v.state := aread;
+          v.write_en := '1';
         end if;
 
 

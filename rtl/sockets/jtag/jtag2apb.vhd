@@ -1,4 +1,4 @@
--- Copyright (c) 2011-2021 Columbia University, System Level Design Group
+-- Copyright (c) 2011-2022 Columbia University, System Level Design Group
 -- SPDX-License-Identifier: Apache-2.0
 
 library ieee;
@@ -104,7 +104,7 @@ begin
     async_fifo_01 : inferred_async_fifo
       generic map (
         g_data_width => NOC_FLIT_SIZE+8,
-        g_size       => 20)
+        g_size       => 200)
       port map (
         rst_wr_n_i => rst,
         clk_wr_i   => tclk,

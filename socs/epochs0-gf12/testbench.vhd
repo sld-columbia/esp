@@ -21,7 +21,7 @@ use work.esp_global.all;
 entity testbench is
   generic (
     SIMULATION : boolean := true;
-    JTAG_TRACE : integer range -1 to CFG_TILES_NUM - 1 := 4);
+    JTAG_TRACE : integer range -1 to CFG_TILES_NUM - 1 := -1);
 end;
 
 architecture behav of testbench is
@@ -182,8 +182,7 @@ architecture behav of testbench is
 
   component top
     generic (
-      SIMULATION : boolean;
-      JTAG_TRACE : integer range -1 to CFG_TILES_NUM - 1);
+      SIMULATION : boolean);
     port (
       -- Main reset
       reset             : in    std_ulogic;
@@ -383,9 +382,7 @@ begin
 
   top_1 : top
     generic map (
-      SIMULATION => SIMULATION,
-      JTAG_TRACE => JTAG_TRACE
-      )
+      SIMULATION => SIMULATION)
     port map (
       reset             => reset,
       clk_emu_p         => clk_emu_p,

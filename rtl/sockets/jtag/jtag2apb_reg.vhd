@@ -1,4 +1,4 @@
--- Copyright (c) 2011-2021 Columbia University, System Level Design Group
+-- Copyright (c) 2011-2022 Columbia University, System Level Design Group
 -- SPDX-License-Identifier: Apache-2.0
 
 library ieee;
@@ -181,7 +181,6 @@ begin
     readdata <= (others => '0');
     readd    <= (others => '0');
 
-    -- if (apbi.psel(pindex) = '1' and apbi.penable = '1' and apbi.pwrite = '0' and read_en = '1' and r.free(DEV_START) = '0') then
     if (apbi.psel(pindex) = '1' and apbi.penable = '1' and r.free(DEV_START)='0' and apbi.pwrite='0' and read_en='1') then
 
       readd(idx) <= '1';

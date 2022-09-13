@@ -59,14 +59,19 @@ begin
 
       -- pragma translate_off
       PROC_SEQUENCER : process
-        file text_file1 : text open read_mode is "stim1.txt";
-        file text_file2 : text open read_mode is "stim2.txt";
-        file text_file3 : text open read_mode is "stim3.txt";
-        file text_file4 : text open read_mode is "stim4.txt";
-        file text_file5 : text open read_mode is "stim5.txt";
-        file text_file6 : text open read_mode is "stim6.txt";
-        file out_file0 : text open write_mode is "stim5_origin.txt";
-        file out_file1 : text open write_mode is "stim5_fin.txt";
+        file text_file : text open read_mode is "stim.txt";
+        file out_file1 : text open write_mode is "stim1_origin.txt";
+        file out_file1f : text open write_mode is "stim1_fin.txt";
+        file out_file2 : text open write_mode is "stim2_origin.txt";
+        file out_file2f : text open write_mode is "stim2_fin.txt";
+        file out_file3 : text open write_mode is "stim3_origin.txt";
+        file out_file3f : text open write_mode is "stim3_fin.txt";
+        file out_file4 : text open write_mode is "stim4_origin.txt";
+        file out_file4f : text open write_mode is "stim4_fin.txt";
+        file out_file5 : text open write_mode is "stim5_origin.txt";
+        file out_file5f : text open write_mode is "stim5_fin.txt";
+        file out_file6 : text open write_mode is "stim6_origin.txt";
+        file out_file6f : text open write_mode is "stim6_fin.txt";
         file out_file : text open write_mode is "test_out.txt";
         variable text_line :line ;
         variable out_line :line;
@@ -78,19 +83,22 @@ begin
         variable testout1 : std_logic_vector(31 downto 0); --replace with sipo
         variable testout2 : std_logic_vector(31 downto 0); --replace with sipo
         variable testout3 : std_logic_vector(31 downto 0); --replace with sipo
-        variable testfin : std_logic_vector(33 downto 0); --replace with sipo
+        variable testfin : std_logic_vector(33 downto 0); --replace with sip
+        variable testfin1 : std_logic_vector(65 downto 0); --replace with sipo
 
         constant ZERO_20 : std_logic_vector(19 downto 0) := (others => '0');
         constant ZERO_32 : std_logic_vector(31 downto 0) := (others => '0');
         variable testin_addr : std_logic_vector(31 downto 0); --replace
                                                               --with sipo
-        variable flit66 : std_logic_vector(71 downto 0);--(103 downto 0);
+        -- variable flit66 : std_logic_vector(71 downto 0);--(103 downto 0);
+        variable flit66 : std_logic_vector(75 downto 0);--(103 downto 0);
         variable flit34 : std_logic_vector(39 downto 0);--(71 downto 0);
 
         variable source : source_t ;
         variable addr,addr_r : addr_t;
-
+        variable addr1,addr2,addr3 : std_logic_vector(31 downto 0);
         variable end_trace : std_logic_vector(1 to 6);
+        variable end_strace : std_logic ;
         variable testout : std_logic_vector(73 downto 0);
 
       begin
@@ -160,9 +168,7 @@ begin
         addr_r(17):= std_logic_vector(to_unsigned(16#00010158#, 32));
 
 
-
         testout := (others => '0');
-        end_trace := (others => '0');
 
         wait for 2600 ns;
 
@@ -172,644 +178,155 @@ begin
           ahbsi_sim.hwrite<='1';
 
 
-          if not endfile(text_file1) then
-            readline(text_file1, text_line);
+          if not endfile(text_file) then
+            readline(text_file, text_line);
             hread(text_line, flit66, ok);
-            testin1 := flit66(NOC_FLIT_SIZE + 4 -1 downto 38);
-            testin2 := flit66(37 downto 6);
-            testin3 := flit66(6 downto 4) & source(1) & "0" & flit66(0) & "1" & ZERO_20;
-            -- WRITE FLIT1
 
-            ahbsi_sim.haddr(31 downto 0)<= addr(0);
-            ahbsi_sim.hwdata <= ZERO_32 & testin1;
+            case flit66(3 downto 0) is
+              when "0001" =>
+                addr1:=addr(0);
+                addr2:=addr(1);
+                addr3:=addr(2);
+                testin1 := X"00000" & '0' & flit66(NOC_FLIT_SIZE + 4 + 4 -1 downto 59+4);
+                testin2 := flit66(58+4 downto 27+4);
+                testin3 := flit66(26+4 downto 4+4) & source(1) & "0" & flit66(0+4) & "1";
+                assert false report "write1" severity note;
+                if flit66(0+4)='0' then
+                  hwrite(out_line, flit66(NOC_FLIT_SIZE + 4 + 4  - 1 downto 4+4),right, 4);
+                  hwrite(out_line, flit66(4 downto 4), right, 4);
+                  writeline(out_file1,out_line);
+                end if;
+              when "0010" =>
+                addr1:=addr(3);
+                addr2:=addr(4);
+                addr3:=addr(5);
+                testin1 := X"00000" & '0' & flit66(NOC_FLIT_SIZE + 4 + 4 -1 downto 59+4);
+                testin2 := flit66(58+4 downto 27+4);
+                testin3 := flit66(26+4 downto 4+4) & source(1) & "0" & flit66(0+4) & "1";
+                assert false report "write2" severity note;
+                if flit66(0+4)='0' then
+                  hwrite(out_line, flit66(NOC_FLIT_SIZE + 4 + 4  - 1 downto 4+4),right, 4);
+                  hwrite(out_line, flit66(4 downto 4), right, 4);
+                  writeline(out_file2,out_line);
+                end if;
+              when "0011" =>
+                addr1:=addr(6);
+                addr2:=addr(7);
+                addr3:=addr(8);
+                testin1 := X"00000" & '0' & flit66(NOC_FLIT_SIZE + 4 + 4 -1 downto 59+4);
+                testin2 := flit66(58+4 downto 27+4);
+                testin3 := flit66(26+4 downto 4+4) & source(1) & "0" & flit66(0+4) & "1";
+                assert false report "write3" severity note;
+                if flit66(0+4)='0' then
+                  hwrite(out_line, flit66(NOC_FLIT_SIZE + 4 + 4  - 1 downto 4+4),right, 4);
+                  hwrite(out_line, flit66(4 downto 4), right, 4);
+                  writeline(out_file3,out_line);
+                end if;
+              when "0100" =>
+                addr1:=addr(9);
+                addr2:=addr(10);
+                addr3:=addr(11);
+                testin1 := X"00000" & '0' & flit66(NOC_FLIT_SIZE + 4 + 4 -1 downto 59+4);
+                testin2 := flit66(58+4 downto 27+4);
+                testin3 := flit66(26+4 downto 4+4) & source(1) & "0" & flit66(0+4) & "1";
+                assert false report "write4" severity note;
+                if flit66(0+4)='0' then
+                  hwrite(out_line, flit66(NOC_FLIT_SIZE + 4 + 4  - 1 downto 4+4),right, 4);
+                  hwrite(out_line, flit66(4 downto 4), right, 4);
+                  writeline(out_file4,out_line);
+                end if;
+              when "0101" =>
+                addr1:=addr(12);
+                addr2:=addr(13);
+                addr3:=addr(14);
+                testin1 := ZERO_32;
+                testin2 := X"00000" & "0" & flit66( MISC_NOC_FLIT_SIZE + 4 + 4 - 1 downto 27+4);
+                testin3 := flit66(26+4 downto 4+4)& source(5) & "0" & flit66(0+4) & "1";
+                assert false report "write5" severity note;
+                if flit66(0+4)='0' then
+                  hwrite(out_line, flit66(MISC_NOC_FLIT_SIZE + 4 + 4  - 1 downto 4+4),right, 4);
+                  hwrite(out_line, flit66(4 downto 4), right, 4);
+                  writeline(out_file5,out_line);
+                end if;
+              when "0110" =>
+                addr1:=addr(15);
+                addr2:=addr(16);
+                addr3:=addr(17);
+                testin1 := X"00000" & '0' & flit66(NOC_FLIT_SIZE + 4 + 4 -1 downto 59+4);
+                testin2 := flit66(58+4 downto 27+4);
+                testin3 := flit66(26+4 downto 4+4) & source(1) & "0" & flit66(0+4) & "1";
+                assert false report "write6" severity note;
+                if flit66(0+4)='0' then
+                  hwrite(out_line, flit66(NOC_FLIT_SIZE + 4 + 4  - 1 downto 4+4),right, 4);
+                  hwrite(out_line, flit66(4 downto 4), right, 4);
+                  writeline(out_file6,out_line);
+                end if;
 
-            wait until rising_edge(tclk_sim);
-            wait until rising_edge(tclk_sim);
-            wait until rising_edge(tclk_sim);
-            wait until rising_edge(tclk_sim);
-
-            -- WRITE FLIT2
-
-            ahbsi_sim.haddr(31 downto 0)<= addr(1);
-            ahbsi_sim.hwdata <= ZERO_32 & testin2;
-
-            wait until rising_edge(tclk_sim);
-            wait until rising_edge(tclk_sim);
-            wait until rising_edge(tclk_sim);
-            wait until rising_edge(tclk_sim);
-
-            -- WRITE FLIT3
-            ahbsi_sim.haddr(31 downto 0)<= addr(2);
-            ahbsi_sim.hwdata <= ZERO_32 & testin3;
-
-            wait until rising_edge(tclk_sim);
-            wait until rising_edge(tclk_sim);
-            wait until rising_edge(tclk_sim);
-            wait until rising_edge(tclk_sim);
-
-          elsif (end_trace(1)/='1') then
-            assert false report "end trace " & integer'image(1)  severity note;
-            end_trace(1) := '1';
-
-            ---
-            testin1 := ZERO_32;
-            testin2 := ZERO_32;
-            testin3 := X"0000000" & "0001";
-
-            -- WRITE FLIT1
-
-            ahbsi_sim.hsel(0)<='1';
-            ahbsi_sim.haddr(31 downto 0)<= addr(0);
-            ahbsi_sim.hwrite <='1';
-            ahbsi_sim.hwdata <= ZERO_32 & testin1;
-
-            if ahbso_sim.hready='0' then
-              wait until rising_edge(ahbso_sim.hready);
-              ahbsi_sim.hready <='1';
-            else
-              ahbsi_sim.hready <='1';
-            end if ;
-
-            wait until rising_edge(tclk_sim);
-            ahbsi_sim.hsel(0)<='0';
-            ahbsi_sim.hwrite <='0';
-            ahbsi_sim.hready <='0';
-
-            wait until rising_edge(tclk_sim);
-            wait until rising_edge(tclk_sim);
-            wait until rising_edge(tclk_sim);
-
-            -- WRITE FLIT2
-
-            ahbsi_sim.hsel(0)<='1';
-            ahbsi_sim.haddr(31 downto 0)<= addr(1);
-            ahbsi_sim.hwrite <='1';
-            ahbsi_sim.hwdata <= ZERO_32 & testin2;
-
-            if ahbso_sim.hready='0' then
-              wait until rising_edge(ahbso_sim.hready);
-              ahbsi_sim.hready <='1';
-            else
-              ahbsi_sim.hready <='1';
-            end if ;
-
-            wait until rising_edge(tclk_sim);
-
-            ahbsi_sim.hsel(0)<='0';
-            ahbsi_sim.hwrite <='0';
-            ahbsi_sim.hready <='0';
-
-            wait until rising_edge(tclk_sim);
-            wait until rising_edge(tclk_sim);
-            wait until rising_edge(tclk_sim);
-
-            -- WRITE FLIT3
-
-            ahbsi_sim.hsel(0)<='1';
-            ahbsi_sim.haddr(31 downto 0)<= addr(2);
-            ahbsi_sim.hwrite <='1';
-            ahbsi_sim.hwdata <= ZERO_32 & testin3;
-
-            if ahbso_sim.hready='0' then
-              wait until rising_edge(ahbso_sim.hready);
-              ahbsi_sim.hready <='1';
-            else
-              ahbsi_sim.hready <='1';
-            end if ;
-
-            wait until rising_edge(tclk_sim);
-
-            ahbsi_sim.hsel(0)<='0';
-            ahbsi_sim.hwrite <='0';
-            ahbsi_sim.hready <='0';
-
-            wait until rising_edge(tclk_sim);
-            wait until rising_edge(tclk_sim);
-            wait until rising_edge(tclk_sim);
-
-          end if;
-          assert false report "end trace " & integer'image(1)  severity note;
-
-          if not endfile(text_file2) then
-            readline(text_file2, text_line);
-            hread(text_line, flit66, ok);
-            testin1 := flit66(NOC_FLIT_SIZE + 4 -1 downto 38);
-            testin2 := flit66(37 downto 6);
-            testin3 := flit66(6 downto 4) & source(2) & "0" & flit66(0) & "1" & ZERO_20;
+              when others => null;
+            end case;
 
             -- WRITE FLIT1
-
-            ahbsi_sim.haddr(31 downto 0)<= addr(3);
-            ahbsi_sim.hwdata <= ZERO_32 & testin1;
-
-            wait until rising_edge(tclk_sim);
-            wait until rising_edge(tclk_sim);
-            wait until rising_edge(tclk_sim);
-            wait until rising_edge(tclk_sim);
-            -- WRITE FLIT2
-
-            ahbsi_sim.haddr(31 downto 0)<= addr(4);
-            ahbsi_sim.hwdata <= ZERO_32 & testin2;
-
-            wait until rising_edge(tclk_sim);
-            wait until rising_edge(tclk_sim);
-            wait until rising_edge(tclk_sim);
-            wait until rising_edge(tclk_sim);
-
-            -- WRITE FLIT3
-
-            ahbsi_sim.haddr(31 downto 0)<= addr(5);
-            ahbsi_sim.hwdata <= ZERO_32 & testin3;
-
-            wait until rising_edge(tclk_sim);
-            wait until rising_edge(tclk_sim);
-            wait until rising_edge(tclk_sim);
-            wait until rising_edge(tclk_sim);
-          elsif (end_trace(2)/='1') then
-            assert false report "end trace " & integer'image(2)  severity note;
-            end_trace(2) := '1';
-
-            ---
-            testin1 := ZERO_32;
-            testin2 := ZERO_32;
-            testin3 := X"0000000" & "0001";
-
-            -- WRITE FLIT1
-
             ahbsi_sim.hsel(0)<='1';
-            ahbsi_sim.haddr(31 downto 0)<= addr(3);
+            ahbsi_sim.haddr(31 downto 0)<= addr1;
             ahbsi_sim.hwrite <='1';
             ahbsi_sim.hwdata <= ZERO_32 & testin1;
 
-            if ahbso_sim.hready='0' then
+            if ahbso_sim.hready='0'  then
               wait until rising_edge(ahbso_sim.hready);
-              ahbsi_sim.hready <='1';
+              ahbsi_sim.hready <= '1';
             else
-              ahbsi_sim.hready <='1';
-            end if ;
-
-            wait until rising_edge(tclk_sim);
-
-            ahbsi_sim.hsel(0)<='0';
-            ahbsi_sim.hwrite <='0';
-            ahbsi_sim.hready <='0';
-
-            wait until rising_edge(tclk_sim);
-            wait until rising_edge(tclk_sim);
-            wait until rising_edge(tclk_sim);
-
-            -- WRITE FLIT2
-
-            ahbsi_sim.hsel(0)<='1';
-            ahbsi_sim.haddr(31 downto 0)<= addr(4);
-            ahbsi_sim.hwrite <='1';
-            ahbsi_sim.hwdata <= ZERO_32 & testin2;
-
-            if ahbso_sim.hready='0' then
-              wait until rising_edge(ahbso_sim.hready);
-              ahbsi_sim.hready <='1';
-            else
-              ahbsi_sim.hready <='1';
-            end if ;
-            wait until rising_edge(tclk_sim);
-
-            ahbsi_sim.hsel(0)<='0';
-            ahbsi_sim.hwrite <='0';
-            ahbsi_sim.hready <='0';
-
-            wait until rising_edge(tclk_sim);
-            wait until rising_edge(tclk_sim);
-            wait until rising_edge(tclk_sim);
-
-            -- WRITE FLIT3
-
-            ahbsi_sim.hsel(0)<='1';
-            ahbsi_sim.haddr(31 downto 0)<= addr(5);
-            ahbsi_sim.hwrite <='1';
-            ahbsi_sim.hwdata <= ZERO_32 & testin3;
-
-            if ahbso_sim.hready='0' then
-              wait until rising_edge(ahbso_sim.hready);
-              ahbsi_sim.hready <='1';
-            else
-              ahbsi_sim.hready <='1';
-            end if ;
-
-            wait until rising_edge(tclk_sim);
-
-            ahbsi_sim.hsel(0)<='0';
-            ahbsi_sim.hwrite <='0';
-            ahbsi_sim.hready <='0';
-
-            wait until rising_edge(tclk_sim);
-            wait until rising_edge(tclk_sim);
-            wait until rising_edge(tclk_sim);
-
-          end if;
-          assert false report "end trace " & integer'image(2)  severity note;
-          if not endfile(text_file3) then
-            readline(text_file3, text_line);
-            hread(text_line, flit66, ok);
-            testin1 := flit66(NOC_FLIT_SIZE + 4 -1 downto 38);
-            testin2 := flit66(37 downto 6);
-            testin3 := flit66(6 downto 4) & source(2) & "0" & flit66(0) & "1" & ZERO_20;
-
-            -- WRITE FLIT1
-
-            ahbsi_sim.haddr(31 downto 0)<= addr(6);
-            ahbsi_sim.hwdata <= ZERO_32 & testin1;
-
-            wait until rising_edge(tclk_sim);
-            wait until rising_edge(tclk_sim);
-            wait until rising_edge(tclk_sim);
-            wait until rising_edge(tclk_sim);
-
-            -- WRITE FLIT2
-
-            ahbsi_sim.haddr(31 downto 0)<= addr(7);
-            ahbsi_sim.hwdata <= ZERO_32 & testin2;
-
-            wait until rising_edge(tclk_sim);
-            wait until rising_edge(tclk_sim);
-            wait until rising_edge(tclk_sim);
-            wait until rising_edge(tclk_sim);
-
-            -- WRITE FLIT3
-
-            ahbsi_sim.haddr(31 downto 0)<= addr(8);
-            ahbsi_sim.hwdata <= ZERO_32 & testin3;
-
-            wait until rising_edge(tclk_sim);
-            wait until rising_edge(tclk_sim);
-            wait until rising_edge(tclk_sim);
-            wait until rising_edge(tclk_sim);
-
-          elsif (end_trace(3)/='1') then
-            assert false report "end trace " & integer'image(3)  severity note;
-            end_trace(3) := '1';
-
-            ---
-            testin1 := ZERO_32;
-            testin2 := ZERO_32;
-            testin3 := X"0000000" & "0001";
-
-            -- WRITE FLIT1
-
-            ahbsi_sim.hsel(0)<='1';
-            ahbsi_sim.haddr(31 downto 0)<= addr(6);
-            ahbsi_sim.hwrite <='1';
-            ahbsi_sim.hwdata <= ZERO_32 & testin1;
-
-            if ahbso_sim.hready='0' then
-              wait until rising_edge(ahbso_sim.hready);
-              ahbsi_sim.hready <='1';
-            else
-              ahbsi_sim.hready <='1';
-            end if ;
-
-            wait until rising_edge(tclk_sim);
-
-            ahbsi_sim.hsel(0)<='0';
-            ahbsi_sim.hwrite <='0';
-            ahbsi_sim.hready <='0';
-
-            wait until rising_edge(tclk_sim);
-            wait until rising_edge(tclk_sim);
-            wait until rising_edge(tclk_sim);
-
-            -- WRITE FLIT2
-
-            ahbsi_sim.hsel(0)<='1';
-            ahbsi_sim.haddr(31 downto 0)<= addr(7);
-            ahbsi_sim.hwrite <='1';
-            ahbsi_sim.hwdata <= ZERO_32 & testin2;
-
-            if ahbso_sim.hready='0' then
-              wait until rising_edge(ahbso_sim.hready);
-              ahbsi_sim.hready <='1';
-            else
-              ahbsi_sim.hready <='1';
-            end if ;
-
-            wait until rising_edge(tclk_sim);
-
-            -- --free the bus and wait for 4 clock cycles
-
-            ahbsi_sim.hsel(0)<='0';
-            ahbsi_sim.hwrite <='0';
-            ahbsi_sim.hready <='0';
-
-            wait until rising_edge(tclk_sim);
-            wait until rising_edge(tclk_sim);
-            wait until rising_edge(tclk_sim);
-            -- WRITE FLIT3
-
-            ahbsi_sim.hsel(0)<='1';
-            ahbsi_sim.haddr(31 downto 0)<= addr(8);
-            ahbsi_sim.hwrite <='1';
-            ahbsi_sim.hwdata <= ZERO_32 & testin3;
-
-            if ahbso_sim.hready='0' then
-              wait until rising_edge(ahbso_sim.hready);
-              ahbsi_sim.hready <='1';
-            else
-              ahbsi_sim.hready <='1';
-            end if ;
-
-            wait until rising_edge(tclk_sim);
-
-            -- --free the bus and wait for 4 clock cycles
-
-            ahbsi_sim.hsel(0)<='0';
-            ahbsi_sim.hwrite <='0';
-            ahbsi_sim.hready <='0';
-
-            wait until rising_edge(tclk_sim);
-            wait until rising_edge(tclk_sim);
-            wait until rising_edge(tclk_sim);
-
-          end if;
-          assert false report "end trace " & integer'image(3)  severity note;
-
-          if not endfile(text_file4) then
-            readline(text_file4, text_line);
-            hread(text_line, flit66, ok);
-            testin1 := flit66(NOC_FLIT_SIZE + 4 -1 downto 38);
-            testin2 := flit66(37 downto 6);
-            testin3 := flit66(6 downto 4) & source(4) & "0" & flit66(0) & "1" & ZERO_20;
-
-            -- WRITE FLIT1
-
-            ahbsi_sim.haddr(31 downto 0)<= addr(9);
-            ahbsi_sim.hwdata <= ZERO_32 & testin1;
-
-            wait until rising_edge(tclk_sim);
-            wait until rising_edge(tclk_sim);
-            wait until rising_edge(tclk_sim);
-            wait until rising_edge(tclk_sim);
-
-            -- WRITE FLIT2
-
-            ahbsi_sim.haddr(31 downto 0)<= addr(10);
-            ahbsi_sim.hwdata <= ZERO_32 & testin2;
-
-            wait until rising_edge(tclk_sim);
-            wait until rising_edge(tclk_sim);
-            wait until rising_edge(tclk_sim);
-            wait until rising_edge(tclk_sim);
-
-            -- WRITE FLIT3
-
-            ahbsi_sim.haddr(31 downto 0)<= addr(11);
-            ahbsi_sim.hwdata <= ZERO_32 & testin3;
-
-            wait until rising_edge(tclk_sim);
-            wait until rising_edge(tclk_sim);
-            wait until rising_edge(tclk_sim);
-            wait until rising_edge(tclk_sim);
-
-          elsif (end_trace(4)/='1') then
-            assert false report "end trace " & integer'image(4)  severity note;
-            end_trace(4) := '1';
-
-            ---
-            testin1 := ZERO_32;
-            testin2 := ZERO_32;
-            testin3 := X"0000000" & "0001";
-
-            -- WRITE FLIT1
-
-            ahbsi_sim.hsel(0)<='1';
-            ahbsi_sim.haddr(31 downto 0)<= addr(9);
-            ahbsi_sim.hwrite <='1';
-            ahbsi_sim.hwdata <= ZERO_32 & testin1;
-
-            if ahbso_sim.hready='0' then
-              wait until rising_edge(ahbso_sim.hready);
-              ahbsi_sim.hready <='1';
-            else
-              ahbsi_sim.hready <='1';
-            end if ;
-
-            wait until rising_edge(tclk_sim);
-
-            ahbsi_sim.hsel(0)<='0';
-            ahbsi_sim.hwrite <='0';
-            ahbsi_sim.hready <='0';
-
-            wait until rising_edge(tclk_sim);
-            wait until rising_edge(tclk_sim);
-            wait until rising_edge(tclk_sim);
-
-            -- WRITE FLIT2
-
-            ahbsi_sim.hsel(0)<='1';
-            ahbsi_sim.haddr(31 downto 0)<= addr(10);
-            ahbsi_sim.hwrite <='1';
-            ahbsi_sim.hwdata <= ZERO_32 & testin2;
-
-            if ahbso_sim.hready='0' then
-              wait until rising_edge(ahbso_sim.hready);
-              ahbsi_sim.hready <='1';
-            else
-              ahbsi_sim.hready <='1';
-            end if ;
-
-            wait until rising_edge(tclk_sim);
-
-
-            ahbsi_sim.hsel(0)<='0';
-            ahbsi_sim.hwrite <='0';
-            ahbsi_sim.hready <='0';
-
-            wait until rising_edge(tclk_sim);
-            wait until rising_edge(tclk_sim);
-            wait until rising_edge(tclk_sim);
-
-            -- WRITE FLIT3
-
-            ahbsi_sim.hsel(0)<='1';
-            ahbsi_sim.haddr(31 downto 0)<= addr(11);
-            ahbsi_sim.hwrite <='1';
-            ahbsi_sim.hwdata <= ZERO_32 & testin3;
-
-            if ahbso_sim.hready='0' then
-              wait until rising_edge(ahbso_sim.hready);
-              ahbsi_sim.hready <='1';
-            else
-              ahbsi_sim.hready <='1';
-            end if ;
-
-            wait until rising_edge(tclk_sim);
-
-            ahbsi_sim.hsel(0)<='0';
-            ahbsi_sim.hwrite <='0';
-            ahbsi_sim.hready <='0';
-
-            wait until rising_edge(tclk_sim);
-            wait until rising_edge(tclk_sim);
-            wait until rising_edge(tclk_sim);
-
-          end if;
-          assert false report "end trace " & integer'image(4)  severity note;
-
-          if not endfile(text_file5) then
-            readline(text_file5, text_line);
-            hread(text_line, flit34, ok);
-            testin1 := ZERO_32;
-            testin2 := X"00000" & "0" & flit34( MISC_NOC_FLIT_SIZE + 4 - 1 downto 27);
-            testin3 := flit34(26 downto 4)& source(5) & "0" & flit34(0) & "1";
-
-            if flit34(0)='0' then
-
-              hwrite(out_line, flit34(MISC_NOC_FLIT_SIZE + 4 - 1 downto 4),right, 4);
-              hwrite(out_line, flit34(0 downto 0), right, 4);
-              writeline(out_file0,out_line);
-
+              ahbsi_sim.hready <= '1';
             end if;
 
-            -- WRITE FLIT1
-
-            ahbsi_sim.hsel(0)<='1';
-            ahbsi_sim.haddr(31 downto 0)<= addr(12);
-            ahbsi_sim.hwrite <='1';
-            ahbsi_sim.hwdata <= ZERO_32 & testin1;
-
-            if ahbso_sim.hready='0' then
-              wait until rising_edge(ahbso_sim.hready);
-              ahbsi_sim.hready <='1';
-            else
-              ahbsi_sim.hready <='1';
-            end if ;
-
-            wait until rising_edge(tclk_sim);
-
-
-            ahbsi_sim.hsel(0)<='0';
-            ahbsi_sim.hwrite <='0';
-            ahbsi_sim.hready <='0';
-
-            wait until rising_edge(tclk_sim);
-            wait until rising_edge(tclk_sim);
-            wait until rising_edge(tclk_sim);
-            -- WRITE FLIT2
-
-            ahbsi_sim.hsel(0)<='1';
-            ahbsi_sim.haddr(31 downto 0)<= addr(13);
-            ahbsi_sim.hwrite <='1';
-            ahbsi_sim.hwdata <= ZERO_32 & testin2;
-
-            if ahbso_sim.hready='0' then
-              wait until rising_edge(ahbso_sim.hready);
-              ahbsi_sim.hready <='1';
-            else
-              ahbsi_sim.hready <='1';
-            end if ;
-
-            wait until rising_edge(tclk_sim);
-
-
-            ahbsi_sim.hsel(0)<='0';
-            ahbsi_sim.hwrite <='0';
-            ahbsi_sim.hready <='0';
-
-            wait until rising_edge(tclk_sim);
-            wait until rising_edge(tclk_sim);
-            wait until rising_edge(tclk_sim);
-
-            -- WRITE FLIT3
-
-            ahbsi_sim.hsel(0)<='1';
-            ahbsi_sim.haddr(31 downto 0)<= addr(14);
-            ahbsi_sim.hwrite <='1';
-            ahbsi_sim.hwdata <= ZERO_32 & testin3;
-
-            if ahbso_sim.hready='0' then
-              wait until rising_edge(ahbso_sim.hready);
-              ahbsi_sim.hready <='1';
-            else
-              ahbsi_sim.hready <='1';
-            end if ;
-
             wait until rising_edge(tclk_sim);
 
             ahbsi_sim.hsel(0)<='0';
             ahbsi_sim.hwrite <='0';
             ahbsi_sim.hready <='0';
 
-            wait until rising_edge(tclk_sim);
-            wait until rising_edge(tclk_sim);
-            wait until rising_edge(tclk_sim);
-
-          elsif (end_trace(5)/='1') then
-            assert false report "end trace " & integer'image(5)  severity note;
-            end_trace(5) := '1';
-
-            ---
-            testin1 := ZERO_32;
-            testin2 := ZERO_32;
-            testin3 := X"0000000" & "0001";
-
-            -- WRITE FLIT1
-
-            ahbsi_sim.hsel(0)<='1';
-            ahbsi_sim.haddr(31 downto 0)<= addr(12);
-            ahbsi_sim.hwrite <='1';
-            ahbsi_sim.hwdata <= ZERO_32 & testin1;
-
-            if ahbso_sim.hready='0' then
-              wait until rising_edge(ahbso_sim.hready);
-              ahbsi_sim.hready <='1';
-            else
-              ahbsi_sim.hready <='1';
-            end if ;
 
             wait until rising_edge(tclk_sim);
-
-            ahbsi_sim.hsel(0)<='0';
-            ahbsi_sim.hwrite <='0';
-            ahbsi_sim.hready <='0';
             wait until rising_edge(tclk_sim);
             wait until rising_edge(tclk_sim);
 
             -- WRITE FLIT2
 
             ahbsi_sim.hsel(0)<='1';
-            ahbsi_sim.haddr(31 downto 0)<= addr(13);
             ahbsi_sim.hwrite <='1';
+            ahbsi_sim.haddr(31 downto 0)<= addr2;
             ahbsi_sim.hwdata <= ZERO_32 & testin2;
 
-            if ahbso_sim.hready='0' then
+            if ahbso_sim.hready='0'  then
               wait until rising_edge(ahbso_sim.hready);
-              ahbsi_sim.hready <='1';
+              ahbsi_sim.hready <= '1';
             else
-              ahbsi_sim.hready <='1';
-            end if ;
+              ahbsi_sim.hready <= '1';
+            end if;
 
             wait until rising_edge(tclk_sim);
-
 
             ahbsi_sim.hsel(0)<='0';
             ahbsi_sim.hwrite <='0';
             ahbsi_sim.hready <='0';
 
+
             wait until rising_edge(tclk_sim);
             wait until rising_edge(tclk_sim);
             wait until rising_edge(tclk_sim);
+
 
             -- WRITE FLIT3
-
             ahbsi_sim.hsel(0)<='1';
-            ahbsi_sim.haddr(31 downto 0)<= addr(14);
             ahbsi_sim.hwrite <='1';
+            ahbsi_sim.haddr(31 downto 0)<= addr3;
             ahbsi_sim.hwdata <= ZERO_32 & testin3;
 
-            if ahbso_sim.hready='0' then
+            if ahbso_sim.hready='0'  then
               wait until rising_edge(ahbso_sim.hready);
-              ahbsi_sim.hready <='1';
+              ahbsi_sim.hready <= '1';
             else
-              ahbsi_sim.hready <='1';
-            end if ;
+              ahbsi_sim.hready <= '1';
+            end if;
 
             wait until rising_edge(tclk_sim);
 
@@ -821,131 +338,10 @@ begin
             wait until rising_edge(tclk_sim);
             wait until rising_edge(tclk_sim);
 
+          elsif end_strace /='1' then
+            assert false report "end_trace" severity note;
+            end_strace :='1';
           end if;
-          assert false report "end trace " & integer'image(5)  severity note;
-
-          if not endfile(text_file6) then
-            readline(text_file6, text_line);
-            hread(text_line, flit66, ok);
-            testin1 := flit66(NOC_FLIT_SIZE + 4 -1 downto 38);
-            testin2 := flit66(37 downto 6);
-            testin3 := flit66(6 downto 4) & source(6) & "0" & flit66(0) & "1" & ZERO_20;
-
-
-            -- WRITE FLIT1
-
-            ahbsi_sim.haddr(31 downto 0)<= addr(15);
-            ahbsi_sim.hwdata <= ZERO_32 & testin1;
-
-            wait until rising_edge(tclk_sim);
-            wait until rising_edge(tclk_sim);
-            wait until rising_edge(tclk_sim);
-            wait until rising_edge(tclk_sim);
-
-            -- WRITE FLIT2
-
-            ahbsi_sim.haddr(31 downto 0)<= addr(16);
-
-            ahbsi_sim.hwdata <= ZERO_32 & testin2;
-
-            wait until rising_edge(tclk_sim);
-            wait until rising_edge(tclk_sim);
-            wait until rising_edge(tclk_sim);
-            wait until rising_edge(tclk_sim);
-
-            -- WRITE FLIT3
-
-
-            ahbsi_sim.haddr(31 downto 0)<= addr(17);
-            ahbsi_sim.hwdata <= ZERO_32 & testin3;
-
-            wait until rising_edge(tclk_sim);
-            wait until rising_edge(tclk_sim);
-            wait until rising_edge(tclk_sim);
-            wait until rising_edge(tclk_sim);
-
-
-          elsif (end_trace(6)/='1') then
-            assert false report "end trace " & integer'image(6)  severity note;
-            end_trace(6) := '1';
-
-            ---
-            testin1 := ZERO_32;
-            testin2 := ZERO_32;
-            testin3 := X"0000000" & "0001";
-
-            -- WRITE FLIT1
-
-            ahbsi_sim.hsel(0)<='1';
-            ahbsi_sim.haddr(31 downto 0)<= addr(15);
-            ahbsi_sim.hwrite <='1';
-            ahbsi_sim.hwdata <= ZERO_32 & testin1;
-
-            if ahbso_sim.hready='0' then
-              wait until rising_edge(ahbso_sim.hready);
-              ahbsi_sim.hready <='1';
-            else
-              ahbsi_sim.hready <='1';
-            end if ;
-
-            wait until rising_edge(tclk_sim);
-            ahbsi_sim.hsel(0)<='0';
-            ahbsi_sim.hwrite <='0';
-            ahbsi_sim.hready <='0';
-
-            wait until rising_edge(tclk_sim);
-            wait until rising_edge(tclk_sim);
-            wait until rising_edge(tclk_sim);
-
-            -- WRITE FLIT2
-
-            ahbsi_sim.hsel(0)<='1';
-            ahbsi_sim.haddr(31 downto 0)<= addr(16);
-            ahbsi_sim.hwrite <='1';
-            ahbsi_sim.hwdata <= ZERO_32 & testin2;
-
-            if ahbso_sim.hready='0' then
-              wait until rising_edge(ahbso_sim.hready);
-              ahbsi_sim.hready <='1';
-            else
-              ahbsi_sim.hready <='1';
-            end if ;
-
-            wait until rising_edge(tclk_sim);
-
-            ahbsi_sim.hsel(0)<='0';
-            ahbsi_sim.hwrite <='0';
-            ahbsi_sim.hready <='0';
-
-            wait until rising_edge(tclk_sim);
-            wait until rising_edge(tclk_sim);
-            wait until rising_edge(tclk_sim);
-
-            -- WRITE FLIT3
-
-            ahbsi_sim.hsel(0)<='1';
-            ahbsi_sim.haddr(31 downto 0)<= addr(17);
-            ahbsi_sim.hwrite <='1';
-            ahbsi_sim.hwdata <= ZERO_32 & testin3;
-            if ahbso_sim.hready='0' then
-              wait until rising_edge(ahbso_sim.hready);
-              ahbsi_sim.hready <='1';
-            else
-              ahbsi_sim.hready <='1';
-            end if ;
-
-            wait until rising_edge(tclk_sim);
-
-            ahbsi_sim.hsel(0)<='0';
-            ahbsi_sim.hwrite <='0';
-            ahbsi_sim.hready <='0';
-
-            wait until rising_edge(tclk_sim);
-            wait until rising_edge(tclk_sim);
-            wait until rising_edge(tclk_sim);
-
-          end if;
-          assert false report "end trace " & integer'image(6)  severity note;
 
           wait until rising_edge(tclk_sim);
 
@@ -988,8 +384,6 @@ begin
             -- wait until rising_edge(ahbso_sim.hready);
 
             testout1 := ahbso_sim.hrdata(31 downto 0);
-
-
 
             wait until rising_edge(tclk_sim);
             wait until rising_edge(tclk_sim);
@@ -1048,16 +442,71 @@ begin
             wait until rising_edge(tclk_sim);
             wait until rising_edge(tclk_sim);
 
-            if testout1/=X"00000000" or testout2/=X"00000000" or testout3/=X"00000000" then
-              testfin:=testout2(8 downto 0) &  testout1(31 downto 7);
-              hwrite(out_line, testfin, right, 4);
-              hwrite(out_line, testout1(6 downto 6), right, 4);
-              writeline(out_file1, out_line);
+            if testout1(6)='1'  then
+              assert false report "********* mismatch ******** on NoC " & integer'image(i) severity note;
             end if;
+
+            if i=1 then
+              if testout1/=X"00000000" or testout2/=X"00000000" or testout3/=X"00000000" then
+                testfin1:=testout3(8 downto 0) & testout2(31 downto 0) &  testout1(31 downto 7);
+                hwrite(out_line, testfin1, right, 4);
+                hwrite(out_line, testout1(6 downto 6), right, 4);
+                writeline(out_file1f, out_line);
+              end if;
+            end if;
+            if i=2 then
+              if testout1/=X"00000000" or testout2/=X"00000000" or testout3/=X"00000000" then
+                testfin1:=testout3(8 downto 0) & testout2(31 downto 0) &  testout1(31 downto 7);
+                hwrite(out_line, testfin1, right, 4);
+                hwrite(out_line, testout1(6 downto 6), right, 4);
+                writeline(out_file2f, out_line);
+              end if;
+            end if;
+            if i=3 then
+              if testout1/=X"00000000" or testout2/=X"00000000" or testout3/=X"00000000" then
+                testfin1:=testout3(8 downto 0) & testout2(31 downto 0) &  testout1(31 downto 7);
+                hwrite(out_line, testfin1, right, 4);
+                hwrite(out_line, testout1(6 downto 6), right, 4);
+                writeline(out_file3f, out_line);
+              end if;
+            end if;
+
+            if i=4 then
+              if testout1/=X"00000000" or testout2/=X"00000000" or testout3/=X"00000000" then
+                testfin1:=testout3(8 downto 0) & testout2(31 downto 0) &  testout1(31 downto 7);
+                hwrite(out_line, testfin1, right, 4);
+                hwrite(out_line, testout1(6 downto 6), right, 4);
+                writeline(out_file4f, out_line);
+              end if;
+            end if;
+
+            if i=5 then
+              if testout1/=X"00000000" or testout2/=X"00000000" or testout3/=X"00000000" then
+                testfin:=testout2(8 downto 0) &  testout1(31 downto 7);
+                hwrite(out_line, testfin, right, 4);
+                hwrite(out_line, testout1(6 downto 6), right, 4);
+                writeline(out_file5f, out_line);
+              end if;
+            end if;
+
+            if i=6 then
+              if testout1/=X"00000000" or testout2/=X"00000000" or testout3/=X"00000000" then
+                testfin1:=testout3(8 downto 0) & testout2(31 downto 0) &  testout1(31 downto 7);
+                hwrite(out_line, testfin1, right, 4);
+                hwrite(out_line, testout1(6 downto 6), right, 4);
+                writeline(out_file6f, out_line);
+              end if;
+            end if;
+
+            -- for i in 0 to 450 loop
+            --   wait until rising_edge(tclk_sim);
+            -- end loop;
+
 
           end loop;
 
-        ahbsi_sim.hwrite <='1';
+          ahbsi_sim.hwrite <='1';
+          assert false report "iterate" severity note;
 
         end loop;
       end process;

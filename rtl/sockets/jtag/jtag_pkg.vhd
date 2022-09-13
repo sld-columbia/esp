@@ -1,4 +1,4 @@
--- Copyright (c) 2011-2021 Columbia University, System Level Design Group
+-- Copyright (c) 2011-2022 Columbia University, System Level Design Group
 -- SPDX-License-Identifier: Apache-2.0
 
 library ieee;
@@ -173,7 +173,6 @@ package jtag_pkg is
       main_clk     : in  std_logic;
       apbi     : in  apb_slv_in_type;
       apbo     : out apb_slv_out_type;
-      -- ack_w    : in  std_logic_vector(5 downto 0);
       apbreq   : in  std_logic;
       ack2apb  : out std_logic;
       req_flit : in  std_logic_vector(5 downto 0);
@@ -181,6 +180,7 @@ package jtag_pkg is
       piso_c   : in  std_logic;
       piso_l   : in  std_logic;
       piso_en  : in  std_logic;
+      load_invld : in std_logic;
       tdi      : out std_logic);
   end component apb2jtag;
 
@@ -198,6 +198,46 @@ package jtag_pkg is
       ahbso : out ahb_slv_out_type);
   end component fpga_proxy_jtag;
 
+  component jtag_apb_config
+    generic(
+      DEF_TILE : std_logic_vector(31 downto 0) := (others => '0');
+      DEF_TMS : std_logic_vector(31 downto 0) := (others => '0'));
+    port (
+      rst   : in  std_ulogic;
+      main_clk  : in  std_ulogic;
+      ahbsi : in  ahb_slv_in_type;
+      ahbso : out ahb_slv_out_type;
+      out_p : out std_logic_vector(31 downto 0);
+      out_p1 : out std_logic_vector(31 downto 0));
+  end component jtag_apb_config;
+
+  component jtag_apb_slv_config
+    generic(
+      lpindex :  integer range 0 to 2;
+      DEF_TMS : std_logic_vector(31 downto 0) := (others => '0'));
+    port (
+      rst   : in  std_ulogic;
+      main_clk : in std_logic;
+      apbi     : in  apb_slv_in_type;
+      apbo     : out apb_slv_out_type;
+      apbreq   : in  std_logic;
+      out_p    : out std_logic_vector(31 downto 0));
+  end component jtag_apb_slv_config;
+
+  component jtag_apb_slv
+    generic (
+      pindex :  integer range 0 to 2;
+      DEF_TMS : std_logic_vector(31 downto 0) := (others => '0')
+      );
+    port(
+      clk     : in  std_logic;
+      rstn    : in  std_logic;
+      pconfig : in  apb_config_type;
+      apbi    : in  apb_slv_in_type;
+      apbo    : out apb_slv_out_type;
+      apbreq  : in  std_logic;
+      out_p   : out std_logic_vector(31 downto 0));
+  end component jtag_apb_slv;
 
 
   component counter_jtag
@@ -223,8 +263,6 @@ package jtag_pkg is
       sel                                : in  std_logic_vector(5 downto 0);
       out1, out2, out3, out4, out5, out6 : out std_logic_vector(SZ-1 downto 0));
   end component demux_1to6_vs;
-
-
 
   component jtag_test is
     generic (

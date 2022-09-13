@@ -33,3 +33,5 @@ set clk_emu_elab [get_clocks -of_objects [get_nets clk_emu_p]]
 set_clock_groups -asynchronous -group [get_clocks erx_clk] -group [get_clocks $clk_emu_elab]
 
 set_clock_groups -asynchronous -group [get_clocks etx_clk] -group [get_clocks $clk_emu_elab]
+
+set_property CLOCK_DEDICATED_ROUTE FALSE [get_nets chip_i/tclk_pad/xcv.x0/tclk_0]

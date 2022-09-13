@@ -1,5 +1,4 @@
-
--- Copyright (c) 2011-2021 Columbia University, System Level Design Group
+-- Copyright (c) 2011-2022 Columbia University, System Level Design Group
 -- SPDX-License-Identifier: Apache-2.0
 
 library ieee;
@@ -36,8 +35,8 @@ entity jtag_test is
   generic (
     test_if_en : integer range 0 to 1 := 0);
   port (
-    rst                 : in std_ulogic;
-    refclk              : in std_ulogic;
+    rst    : in std_ulogic;
+    refclk : in std_ulogic;
     tile_rst            : in std_ulogic;
     tdi                 : in  std_ulogic;
     tdo                 : out std_ulogic;
@@ -125,9 +124,9 @@ end;
 
 architecture rtl of jtag_test is
 
-  type jtag_state_type is (rti, rti1, inject1, inject2, inject3,
+  type jtag_state_type is (rti, inject1, inject2, inject3,
                            inject4, inject5, inject6, extract,
-                           read_and_check, request_instr,
+                           read_and_check, request_instr,sw_plane,
                            waitforvoid1, waitforvoid2, waitforvoid3,
                            waitforvoid4, waitforvoid5, waitforvoid6);
 
@@ -294,8 +293,6 @@ architecture rtl of jtag_test is
 begin
 
 
-  -- tclk_int <= tclk;
-
   test_if_gen : if test_if_en /= 0 generate
 
     -- jtag_fsm
@@ -363,7 +360,6 @@ begin
 
                         if sipo_done_i(1) = '1' then
                           sipo_en_in <= '0';
-                          v.compare  := (others => '0');
                           v.state    := waitforvoid1;
                         end if;
 
@@ -374,7 +370,6 @@ begin
                         sipo_en_in  <= '1';
                         if sipo_done_i(2) = '1' then
                           sipo_en_in <= '0';
-                          v.compare  := (others => '0');
                           v.state    := waitforvoid2;
                         end if;
 
@@ -384,7 +379,6 @@ begin
                         sipo_en_in  <= '1';
                         if sipo_done_i(3) = '1' then
                           sipo_en_in <= '0';
-                          v.compare  := (others => '0');
                           v.state    := waitforvoid3;
                         end if;
 
@@ -394,7 +388,6 @@ begin
                         sipo_en_in  <= '1';
                         if sipo_done_i(4) = '1' then
                           sipo_en_in <= '0';
-                          v.compare  := (others => '0');
                           v.state    := waitforvoid4;
                         end if;
 
@@ -404,7 +397,6 @@ begin
                         sipo_en_in  <= '1';
                         if sipo_done_i(5) = '1' then
                           sipo_en_in <= '0';
-                          v.compare  := (others => '0');
                           v.state    := waitforvoid5;
                         end if;
 
@@ -414,49 +406,55 @@ begin
                         sipo_en_in  <= '1';
                         if sipo_done_i(6) = '1' then
                           sipo_en_in <= '0';
-                          v.compare  := (others => '0');
                           v.state    := waitforvoid6;
                         end if;
 
+        when sw_plane =>
+          case r.compare is
+            when "100000" => v.compare := "010000" ;
+            when "010000" => v.compare := "001000" ;
+            when "001000" => v.compare := "000100" ;
+            when "000100" => v.compare := "000010" ;
+            when "000010" => v.compare := "000001" ;
+            when "000001" => v.compare := "100000" ;
+            when others => null;
+          end case;
+          v.state :=request_instr;
+          v.piso_load0 := '1';
 
-
-
-        when rti1 =>
-          if end_trace(5) = '0' then
-            v.state := waitforvoid5;
-          elsif end_trace(1) = '0' then
-            v.state := waitforvoid1;
-          elsif end_trace(2) = '0' then
-            v.state := waitforvoid2;
-          elsif end_trace(3) = '0' then
-            v.state := waitforvoid3;
-          elsif end_trace(4) = '0' then
-            v.state := waitforvoid4;
-          elsif end_trace(6) = '0' then
-            v.state := waitforvoid6;
-          end if;
 
         when waitforvoid1 =>
           if sipo_done_i(1) = '1' then
-            if op_i(1) = '0' then                   -- instr is a wait
-              if test1_cpu_data_void_in = '0' then  -- check queue
-                v.compare := "100000";
-                --piso_load<='1';
-                --rd_i_out(1)<='1';
-                v.state   := read_and_check;
-              else                                  --plane not manageable
-                v.state := waitforvoid2;
-              end if;
-            else                                    -- instr is a write
-              if fwd_wr_full_o(1) = '0' then        -- check queue
-                v.compare := "100000";
-
-                we_in(1)     <= '1';
+            if sipo_comp_i(1)(2)='1' then       -- if "not yet" instruction go to
+                                                -- next plane 
+              if sipo_comp_i(2)(2)='1' then
+                v.state :=request_instr;
+                v.compare :="010000";
                 v.piso_load0 := '1';
-                v.piso_clear0 := '0';
-                v.state      := request_instr;
-              else                      --plane not manageable
-                v.state := waitforvoid2;
+              else
+                v.state :=waitforvoid2;
+              end if;
+            else
+              if op_i(1) = '0' then                   -- instr is a wait
+                if test1_cpu_data_void_in = '0' then  -- check queue
+                  v.compare := "100000";
+                  v.state   := read_and_check;
+                else                                  --plane not manageable
+                  v.state := waitforvoid2;
+                end if;
+              else                                    -- instr is a write
+                if fwd_wr_full_o(1) = '0' then        -- check queue
+                  v.sipo_clear  := '1';
+                  we_in(1)     <= '1';
+                  if sipo_comp_i(2)(2)='1' then
+                    v.state :=sw_plane;               -- go to next plane after
+                                                      -- writing
+                  else
+                    v.state :=waitforvoid2;
+                  end if;
+                else                      --plane not manageable
+                  v.state := waitforvoid2;
+                end if;
               end if;
             end if;
           else                          -- register still empty
@@ -467,25 +465,34 @@ begin
 
         when waitforvoid2 =>
           if sipo_done_i(2) = '1' then
-            if op_i(2) = '0' then                   -- instr is a wait
-              if test2_cpu_data_void_in = '0' then  -- check queue
-                v.compare := "010000";
-                --piso_load<='1';
-                --rd_i_out(2)<='1';
-                v.state   := read_and_check;
-              else                                  --plane not manageable
-                v.state := waitforvoid3;
+            if sipo_comp_i(2)(2)='1' then
+              if sipo_comp_i(3)(2)='1' then
+                v.state :=request_instr;
+                v.compare :="001000";
+                v.piso_load0 := '1';
+              else
+                v.state :=waitforvoid3;
               end if;
-            else                                    -- instr is a write
-              if fwd_wr_full_o(2) = '0' then        -- check queue
-                v.compare := "010000";
-
-                we_in(2)      <= '1';
-                v.piso_load0  := '1';
-                v.piso_clear0 := '0';
-                v.state       := request_instr;
-              else                      --plane not manageable
-                v.state := waitforvoid3;
+            else
+              if op_i(2) = '0' then                   -- instr is a wait
+                if test2_cpu_data_void_in = '0' then  -- check queue
+                  v.compare := "010000";
+                  v.state   := read_and_check;
+                else                                  --plane not manageable
+                  v.state := waitforvoid3;
+                end if;
+              else                                    -- instr is a write
+                if fwd_wr_full_o(2) = '0' then        -- check queue
+                  v.sipo_clear  := '1';
+                  we_in(2)      <= '1';
+                  if sipo_comp_i(3)(2)='1' then
+                    v.state :=sw_plane;
+                  else
+                    v.state :=waitforvoid3;
+                  end if;
+                else                      --plane not manageable
+                  v.state := waitforvoid3;
+                end if;
               end if;
             end if;
           else                          -- register still empty
@@ -497,25 +504,34 @@ begin
 
         when waitforvoid3 =>
           if sipo_done_i(3) = '1' then
-            if op_i(3) = '0' then                   -- instr is a wait
-              if test3_cpu_data_void_in = '0' then  -- check queue
-                v.compare := "001000";
-                --piso_load<='1';
-                --rd_i_out(3)<='1';
-                v.state   := read_and_check;
-              else                                  --plane not manageable
-                v.state := waitforvoid4;
+            if sipo_comp_i(3)(2)='1' then
+              if sipo_comp_i(4)(2)='1' then
+                v.state :=request_instr;
+                v.compare :="000100";
+                v.piso_load0 := '1';
+              else
+                v.state :=waitforvoid4;
               end if;
-            else                                    -- instr is a write
-              if fwd_wr_full_o(3) = '0' then        -- check queue
-                v.compare := "001000";
-
-                we_in(3)      <= '1';
-                v.piso_load0  := '1';
-                v.piso_clear0 := '0';
-                v.state       := request_instr;
-              else                      --plane not manageable
-                v.state := waitforvoid4;
+            else
+              if op_i(3) = '0' then                   -- instr is a wait
+                if test3_cpu_data_void_in = '0' then  -- check queue
+                  v.compare := "001000";
+                  v.state   := read_and_check;
+                else                                  --plane not manageable
+                  v.state := waitforvoid4;
+                end if;
+              else                                    -- instr is a write
+                if fwd_wr_full_o(3) = '0' then        -- check queue
+                  v.sipo_clear  := '1';
+                  we_in(3)      <= '1';
+                  if sipo_comp_i(4)(2)='1' then
+                    v.state :=sw_plane;
+                  else
+                    v.state :=waitforvoid4;
+                  end if;
+                else                      --plane not manageable
+                  v.state := waitforvoid4;
+                end if;
               end if;
             end if;
           else                          -- register still empty
@@ -526,25 +542,34 @@ begin
 
         when waitforvoid4 =>
           if sipo_done_i(4) = '1' then
-            if op_i(4) = '0' then                   -- instr is a wait
-              if test4_cpu_data_void_in = '0' then  -- check queue
-                v.compare := "000100";
-                --piso_load<='1';
-                --rd_i_out(4)<='1';
-                v.state   := read_and_check;
-              else                                  --plane not manageable
-                v.state := waitforvoid5;
+            if sipo_comp_i(4)(2)='1' then
+              if sipo_comp_i(5)(2)='1' then
+                v.state :=request_instr;
+                v.compare :="000010";
+                v.piso_load0 := '1';
+              else
+                v.state :=waitforvoid5;
               end if;
-            else                                    -- instr is a write
-              if fwd_wr_full_o(1) = '0' then        -- check queue
-                v.compare := "000100";
-
-                we_in(4)      <= '1';
-                v.piso_load0  := '1';
-                v.piso_clear0 := '0';
-                v.state       := request_instr;
-              else                      --plane not manageable
-                v.state := waitforvoid5;
+            else
+              if op_i(4) = '0' then                   -- instr is a wait
+                if test4_cpu_data_void_in = '0' then  -- check queue
+                  v.compare := "000100";
+                  v.state   := read_and_check;
+                else                                  --plane not manageable
+                  v.state := waitforvoid5;
+                end if;
+              else                                    -- instr is a write
+                if fwd_wr_full_o(1) = '0' then        -- check queue
+                  v.sipo_clear  := '1';
+                  we_in(4)      <= '1';
+                  if sipo_comp_i(5)(2)='1' then
+                    v.state :=sw_plane;
+                  else
+                    v.state :=waitforvoid5;
+                  end if;
+                else                      --plane not manageable
+                  v.state := waitforvoid5;
+                end if;
               end if;
             end if;
           else                          -- register still empty
@@ -555,25 +580,32 @@ begin
 
         when waitforvoid5 =>
           if sipo_done_i(5) = '1' then
-            if op_i(5) = '0' then                   -- instr is a wait
-              if test5_cpu_data_void_in = '0' then  -- check queue
-                v.compare := "000010";
-                --piso_load<='1';
-                --rd_i_out(5)<='1';
-                v.state   := read_and_check;
-              else                                  --plane not manageable
-                v.state := waitforvoid6;
+            if sipo_comp_i(5)(2)='1' then
+              if sipo_comp_i(6)(2)='1' then
+                v.state :=request_instr;
+                v.compare :="000001";
+                v.piso_load0 := '1';
+              else
+                v.state :=waitforvoid6;
               end if;
-            else                                    -- instr is a write
-              if fwd_wr_full_o(5) = '0' then        -- check queue
-                v.compare := "000010";
-
-                we_in(5)      <= '1';
-                v.piso_load0  := '1';
-                v.piso_clear0 := '0';
-                v.state       := request_instr;
-              else                      --plane not manageable
-                v.state := waitforvoid6;
+            else
+              if op_i(5) = '0' then                   -- instr is a wait
+                if test5_cpu_data_void_in = '0' then  -- check queue
+                  v.compare := "000010";
+                  v.state   := read_and_check;
+                else                                  --plane not manageable
+                  v.state := waitforvoid5;
+                end if;
+              else                                    -- instr is a write
+                if fwd_wr_full_o(5) = '0' then        -- check queue
+                  v.sipo_clear  := '1';
+                  we_in(5)      <= '1';
+                  v.compare :="000010";
+                  v.piso_load0 := '1';
+                  v.state:=request_instr;
+                else                      --plane not manageable
+                  v.state := waitforvoid6;
+                end if;
               end if;
             end if;
           else                          -- register still empty
@@ -584,25 +616,34 @@ begin
 
         when waitforvoid6 =>
           if sipo_done_i(6) = '1' then
-            if op_i(6) = '0' then                   -- instr is a wait
-              if test6_cpu_data_void_in = '0' then  -- check queue
-                v.compare := "000001";
-                --piso_load<='1';
-                --rd_i_out(6)<='1';
-                v.state   := read_and_check;
-              else                                  --plane not manageable
-                v.state := rti1;
+            if sipo_comp_i(6)(2)='1' then
+              if sipo_comp_i(1)(2)='1' then
+                v.state :=request_instr;
+                v.compare :="100000";
+                v.piso_load0 := '1';
+              else
+                v.state :=waitforvoid1;
               end if;
-            else                                    -- instr is a write
-              if fwd_wr_full_o(6) = '0' then        -- check queue
-                v.compare := "000001";
-
-                we_in(1)      <= '1';
-                v.piso_load0  := '1';
-                v.piso_clear0 := '0';
-                v.state       := request_instr;
-              else                      --plane not manageable
-                v.state := rti1;
+            else
+              if op_i(6) = '0' then                   -- instr is a wait
+                if test6_cpu_data_void_in = '0' then  -- check queue
+                  v.compare := "000001";
+                  v.state   := read_and_check;
+                else                                  --plane not manageable
+                  v.state := waitforvoid1;
+                end if;
+              else                                    -- instr is a write
+                if fwd_wr_full_o(6) = '0' then        -- check queue
+                  v.sipo_clear  := '1';
+                  we_in(1)      <= '1';
+                  if sipo_comp_i(1)(2)='1' then
+                    v.state :=sw_plane;
+                  else
+                    v.state :=waitforvoid1;
+                  end if;
+                else                      --plane not manageable
+                  v.state := waitforvoid1;
+                end if;
               end if;
             end if;
           else                          -- register still empty
@@ -611,27 +652,48 @@ begin
             v.compare    := "000001";
           end if;
 
-
         when read_and_check =>
           case r.compare is
-            when "100000" => rd_i_out(1) <= '1';
-            when "010000" => rd_i_out(2) <= '1';
-            when "001000" => rd_i_out(3) <= '1';
-            when "000100" => rd_i_out(4) <= '1';
-            when "000010" => rd_i_out(5) <= '1';
-            when "000001" => rd_i_out(6) <= '1';
+            when "100000" =>
+              rd_i_out(1) <= '1';
+            when "010000" =>
+              rd_i_out(2) <= '1';
+            when "001000" =>
+              rd_i_out(3) <= '1';
+            when "000100" =>
+              rd_i_out(4) <= '1';
+            when "000010" =>
+              rd_i_out(5) <= '1';
+            when "000001" =>
+              rd_i_out(6) <= '1';
             when others   => null;
           end case;
           piso_load  <= '1';
           v.state    := extract;
           v.piso_en  := '1';
+          v.sipo_clear :='1';
 
         when extract => piso_load <= '0';
                         rd_i_out <= (others => '0');
                         if piso_done = '1' then
+                          case r.compare is
+                            when "100000" =>
+                              v.compare :="010000";
+                            when "010000" =>
+                              v.compare :="001000";
+                            when "001000" =>
+                              v.compare :="000100";
+                            when "000100" =>
+                              v.compare :="000010";
+                            when "000010" =>
+                              v.compare :="000001";
+                            when "000001" =>
+                              v.compare :="100000";
+                            when others   => null;
+                          end case;
                           v.state      := request_instr;
                           v.piso_load0 := '1';
-                          v.sipo_clear := '1';
+                          v.sipo_clear := '0';
                           v.piso_en    := '0';
                         end if;
 
@@ -766,7 +828,7 @@ begin
         g_data_width => NOC_FLIT_SIZE,
         g_size       => 2)
       port map (
-        rst_wr_n_i => rst,
+        rst_wr_n_i    => rst,
         clk_wr_i   => tclk,
         we_i       => we_in(2),
         d_i        => test_in(2),

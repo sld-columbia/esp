@@ -1,8 +1,8 @@
-# Copyright (c) 2011-2021 Columbia University, System Level Design Group
+# Copyright (c) 2011-2022 Columbia University, System Level Design Group
 # SPDX-License-Identifier: Apache-2.0
 
 ## Use the following for single tile
-set target_tile 4
+set target_tile 7
 set target_instance [lsearch -all -inline -regexp [find instances -bydu -nodu jtag_test] "tiles_gen\\($target_tile\\)"]
 
 ## Use the following for multiple tiles
@@ -16,7 +16,6 @@ set target_ports { \
 		       data_void_out \
 		       stop_in \
 		   }
-
 
 proc inst_to_tile_name { inst } {
     set RE /testbench/top_1/chip_i/
@@ -50,15 +49,15 @@ view -new -title $name list
 #}
 
 # This is enough for Hello world.
-run 125 us
+# run 125 us
 
 
-foreach inst $target_instance {
-    set name [inst_to_tile_name $inst]
-    # Force current active window
-    view list -window $name -dock
-    # Save window
-    write list -window $name $name.lst
-}
+# foreach inst $target_instance {
+#     set name [inst_to_tile_name $inst]
+#     # Force current active window
+#     view list -window $name -dock
+#     # Save window
+#     write list -window $name $name.lst
+# }
 
-quit -f
+# quit -f

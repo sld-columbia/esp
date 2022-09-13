@@ -1,4 +1,4 @@
--- Copyright (c) 2011-2021 Columbia University, System Level Design Group
+-- Copyright (c) 2011-2022 Columbia University, System Level Design Group
 -- SPDX-License-Identifier: Apache-2.0
 
 library ieee;
@@ -90,6 +90,7 @@ architecture rtl of fpga_proxy_jtag is
   signal testin_piso_en, count_clear, source_sipo_clear  : std_logic;
   signal testout_sipo_clear, count_en, ack2apb           : std_logic;
   signal ack2apb_r, apbreq                               : std_logic;
+  signal load_invld                                      : std_logic;
   signal sel_tdo                                         : std_logic_vector(1 downto 0);
 
   signal source_sipo_out, req_flit, wr_flit, empty_fifo : std_logic_vector(5 downto 0);
@@ -155,18 +156,6 @@ begin
   apbo(1)<=apbo1;
 
   ack_r <= '1';
-  
-  -- process (apbi, ack2apb, ack2apb_r)
-  -- begin
-  --   if apbi.psel(0) = '1' then
-  --     ack_r <= ack2apb;
-  --   elsif apbi.psel(1) = '1' then
-  --     ack_r <= ack2apb_r;
-  --   else
-  --     ack_r <= '0';
-  --   end if;
-  -- end process;
-
 
   apb2jtagdev : apb2jtag
     port map(
@@ -175,7 +164,6 @@ begin
       main_clk => main_clk,
       apbi     => apbi,
       apbo     => apbo0,
-      -- ack_w    => ack,
       apbreq   => apbreq,
       ack2apb  => ack2apb,
       req_flit => req_flit,
@@ -183,6 +171,7 @@ begin
       piso_c   => testin_piso_clear,
       piso_l   => testin_piso_load,
       piso_en  => testin_piso_en,
+      load_invld => load_invld,
       tdi      => tdi);
 
   jtag2apbdev : jtag2apb
@@ -225,6 +214,7 @@ begin
 
     testin_piso_clear <= '0';
     testin_piso_load  <= '0';
+    load_invld <= '0';
     testin_piso_en    <= '0';
 
     testout_sipo_en   <= '0';
@@ -271,6 +261,10 @@ begin
                          req_flit <= source_sipo_out;
                          testin_piso_load <= '1';
                          v.state          := inject;
+                       else
+                         testin_piso_load <='1';
+                         load_invld <= '1';
+                         v.state := inject;
                        end if;
 
       when inject => source_sipo_clear <= '1';

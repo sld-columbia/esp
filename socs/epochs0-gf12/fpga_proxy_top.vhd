@@ -39,8 +39,7 @@ use work.jtag_pkg.all;
 entity fpga_proxy_top is
 
   generic (
-    SIMULATION : boolean                               := false;
-    JTAG_TRACE : integer range -1 to CFG_TILES_NUM - 1 := 4);
+    SIMULATION : boolean                               := false);
   port (
     reset             : in    std_ulogic;  -- GLobal FPGA reset (active high)
     chip_reset        : out   std_ulogic;  -- Chip reset (active high)
@@ -176,6 +175,9 @@ end entity fpga_proxy_top;
 
 architecture rtl of fpga_proxy_top is
 
+  constant NORMAL_MODE : integer := 1;
+  constant DEF_TMS : std_logic_vector(31 downto 0) := (others=>'0');
+  constant DEF_TILE : std_logic_vector(31 downto 0) := (others=>'0');
   constant FPGA_PROXY_TECH : integer := virtex7;
   constant FPGA_PROXY_FREQ : integer := 100000;  -- FPGA frequency in KHz
   constant MAX_NMEM_TILES  : integer := 4;
@@ -566,6 +568,7 @@ architecture rtl of fpga_proxy_top is
   signal ahbso_edcl : ahb_slv_out_vector;
   signal ahbsi_in  : ahb_slv_in_type;
   signal ahbso_apb : ahb_slv_out_type;
+  signal ahbso_apb1 : ahb_slv_out_type;
 
   function set_remote_ahb_mask (
     constant N : in integer range 1 to CFG_NMEM_TILE)
@@ -609,43 +612,20 @@ architecture rtl of fpga_proxy_top is
   signal tdo_int : std_logic_vector(0 to CFG_TILES_NUM - 1);
   signal tclk_int : std_logic ;
   signal tms_int : std_logic ;
+  signal out_tms : std_logic_vector(31 downto 0);
+  signal out_jtile : std_logic_vector(31 downto 0);
 
   signal tms_in : std_logic := '0';
   -- signal tclk_sim : std_logic := '0';
   -- signal tclk_in : std_logic := '0';
+  signal jtag_tile : integer range 0 to 35 := 0 ;  --23
 
   type source_t is array (1 to 6) of std_logic_vector(5 downto 0);
   type addr_t is array (17 downto 0) of std_logic_vector(31 downto 0);
 
   -- control
   signal rst_l : std_logic;
-
   signal tdi_jtag, tdo_jtag : std_logic;
-
-
-  attribute keep : boolean;
-  attribute keep of main_clk : signal is true;
-  attribute keep of jtag_clk : signal is true;
-  attribute keep of sys_clk  : signal is true;
-
-  attribute mark_debug : string;
-
-  attribute mark_debug of ahbsi : signal is "true";
-  attribute mark_debug of ahbso_apb : signal is "true";
-
-  attribute mark_debug of tdi_jtag : signal is "true";
-  attribute mark_debug of tdo_jtag : signal is "true";
-
-
-  attribute mark_debug of tdi_int : signal is "true";
-  attribute mark_debug of tdo_int : signal is "true";
-  attribute mark_debug of tclk_int : signal is "true";
-  attribute mark_debug of tms_int : signal is "true";
-
-  attribute mark_debug of tms_in : signal is "true";
-  attribute mark_debug of tclk : signal is "true";
-  attribute mark_debug of jtag_clk : signal is "true";
-
 
 begin  -- architecture rtl
 
@@ -1671,47 +1651,52 @@ begin  -- architecture rtl
         ahbsi  => ahbsi_in,
         ahbso  => ahbso_apb);
 
-  ahbso(0)<= ahbso_apb;
-  ahbso(1 to NAHBSLV-1) <= ahbso_edcl(1 to NAHBSLV-1);
+  jtag_apb_config0: jtag_apb_config
+    generic map (
+      DEF_TILE => DEF_TILE,
+      DEF_TMS => DEF_TMS)
+      port map (
+        rst    => rst_l,
+        main_clk   => main_clk,             -- running at proxy clock
+        ahbsi  => ahbsi_in,
+        ahbso  => ahbso_apb1,
+        out_p  => out_tms,
+        out_p1  => out_jtile);
 
-  normal_mode_gen: if JTAG_TRACE = -1 generate
+  ahbso(0)<= ahbso_apb;
+  ahbso(1)<= ahbso_apb1;
+  ahbso(2 to NAHBSLV-1) <= ahbso_edcl(2 to NAHBSLV-1);
+
+  jtag_tile <= to_integer(unsigned(out_jtile));
+
+  process(out_tms, tdi_jtag, tdo_int, jtag_clk, jtag_tile)
+  begin
     tdi_int <= (others => '0');
     tms_int <= '0';
     tclk_int <= '0';
     tdo_jtag <= '0';
+    if out_tms(0) = '1' then            --test mode
+      tdi_int(jtag_tile) <= tdi_jtag;
+      tdo_jtag <= tdo_int(jtag_tile);
+      tms_in <= '1';
+      tclk_int <= jtag_clk;
+      tms_int <= '1';
+    end if;
+  end process;
 
-  end generate normal_mode_gen;
+  jtag_gen_norm: if SIMULATION = false generate
+    ahbsi_in<=ahbsi;
+  end generate jtag_gen_norm;
 
-  jtag_driver_gen: if JTAG_TRACE /= -1 generate
+    -- pragma translate_off
+  jtag_gen_sim: if SIMULATION = true and NORMAL_MODE /= 1  generate
 
-    tdi_int(JTAG_TRACE) <= tdi_jtag;
-    tdo_jtag <= tdo_int(JTAG_TRACE);
+    jtag_tb0: jtag_tb
+      port map (
+        ahbsi => ahbsi_in,
+        ahbso => ahbso_apb);
 
-    tdi_gen: for i in 0 to CFG_TILES_NUM - 1 generate
-      tdi_inactive_tile_gen: if i /= JTAG_TRACE generate
-        tdi_int(i) <= '0';
-      end generate tdi_inactive_tile_gen;
-    end generate tdi_gen;
-
-    tms_in <= '1';
-    tclk_int <= jtag_clk;
-    tms_int <= tms_in;
-
-    jtag_gen_norm: if SIMULATION= false generate
-      ahbsi_in<=ahbsi;
-    end generate jtag_gen_norm;
-
-      -- pragma translate_off
-    jtag_gen_sim: if SIMULATION= true generate
-
-      jtag_tb0: jtag_tb
-        port map (
-          ahbsi => ahbsi_in,
-          ahbso => ahbso_apb);
-
-    end generate jtag_gen_sim;
-      -- pragma translate_on
-
-  end generate jtag_driver_gen;
+  end generate jtag_gen_sim;
+    -- pragma translate_on
 
 end architecture rtl;

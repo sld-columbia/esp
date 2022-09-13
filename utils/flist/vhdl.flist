@@ -110,6 +110,9 @@ sockets/jtag/jtag2apb.vhd
 sockets/jtag/apb2jtag.vhd
 sockets/jtag/jtag2apb_reg.vhd
 sockets/jtag/apb2jtag_reg.vhd
+sockets/jtag/jtag_apb_config.vhd
+sockets/jtag/jtag_apb_slv_config.vhd
+sockets/jtag/jtag_apb_slv.vhd
 sockets/jtag/fpga_proxy_jtag.vhd
 sockets/jtag/proc_seq.vhd
 sockets/dvfs/dvfs_top.vhd
