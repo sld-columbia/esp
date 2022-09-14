@@ -32,13 +32,15 @@ static unsigned DMA_WORD_PER_BEAT(unsigned _st)
 }
 
 
-#define SLD_FFT 0x059
-#define DEV_NAME "sld,fft_stratus"
+#define GT_VORTEX 0x108
+#define DEV_NAME "GATech,gt_vortex"
 
 /* <<--params-->> */
 const int32_t log_len = 3;
 int32_t len;
-int32_t do_bitrev = 1;
+int32_t base_addr = 0x90000000;
+int32_t start_vortex = 1;
+int32_t vortex_busy; // Stores polled value of busy signal
 
 static unsigned in_words_adj;
 static unsigned out_words_adj;
@@ -56,12 +58,14 @@ static unsigned mem_size;
 			(_sz / CHUNK_SIZE) :		\
 			(_sz / CHUNK_SIZE) + 1)
 
-/* User defined registers */
+/* Configuration registers */
 /* <<--regs-->> */
-#define FFT_DO_PEAK_REG 0x48
-#define FFT_DO_BITREV_REG 0x44
-#define FFT_LOG_LEN_REG 0x40
+#define VX_BASE_ADDR    0x00
+#define VX_SOFT_RESET   0x08
+#define VX_BUSY_INT	0x04 // Vortex busy signal read only	 
 
+const intptr_t src_addr = 0x7fff0; // source value address
+const intptr_t dst_addr = 0x7fff4; // destination value address
 
 static int validate_buf(token_t *out, float *gold)
 {
@@ -74,7 +78,7 @@ static int validate_buf(token_t *out, float *gold)
 			errors++;
 	}
 
-	//printf("  %u errors\n", errors);
+	printf("  %u errors\n", errors);
 	return errors;
 }
 
@@ -91,7 +95,6 @@ static void init_buf(token_t *in, float *gold)
 		float scaling_factor = (float) rand () / (float) RAND_MAX;
 		gold[j] = LO + scaling_factor * (HI - LO);
 	}
-
 	// preprocess with bitreverse (fast in software anyway)
 	if (!do_bitrev)
 		fft_bit_reverse(gold, len, log_len);
@@ -141,7 +144,7 @@ int main(int argc, char * argv[])
 	// Search for the device
 	printf("Scanning device tree... \n");
 
-	ndev = probe(&espdevs, VENDOR_SLD, SLD_FFT, DEV_NAME);
+	ndev = probe(&espdevs, VENDOR_SLD, GT_VORTEX, DEV_NAME);
 	if (ndev == 0) {
 		printf("fft not found\n");
 		return 0;
@@ -190,23 +193,18 @@ int main(int argc, char * argv[])
 
 			// Pass common configuration parameters
 
+			vortex_busy = ioread32(dev, VX_BUSY_INT);
 			iowrite32(dev, SELECT_REG, ioread32(dev, DEVID_REG));
 			iowrite32(dev, COHERENCE_REG, coherence);
 
 			iowrite32(dev, PT_ADDRESS_REG, (unsigned long) ptable);
 
-			iowrite32(dev, PT_NCHUNK_REG, NCHUNK(mem_size));
-			iowrite32(dev, PT_SHIFT_REG, CHUNK_SHIFT);
 
-			// Use the following if input and output data are not allocated at the default offsets
-			iowrite32(dev, SRC_OFFSET_REG, 0x0);
-			iowrite32(dev, DST_OFFSET_REG, 0x0);
 
 			// Pass accelerator-specific configuration parameters
 			/* <<--regs-config-->> */
-			iowrite32(dev, FFT_DO_PEAK_REG, 0);
-			iowrite32(dev, FFT_DO_BITREV_REG, do_bitrev);
-			iowrite32(dev, FFT_LOG_LEN_REG, log_len);
+			iowrite32(dev, VX_BASE_ADDR, base_addr);
+			iowrite32(dev, VX_SOFT_RESET, start_vortex);
 
 			// Flush (customize coherence model here)
 			esp_flush(coherence);
@@ -216,12 +214,12 @@ int main(int argc, char * argv[])
 			iowrite32(dev, CMD_REG, CMD_MASK_START);
 
 			// Wait for completion
-			done = 0;
-			while (!done) {
-				done = ioread32(dev, STATUS_REG);
-				done &= STATUS_MASK_DONE;
+			vortex_busy = 1;
+			while (vortex_busy) {
+				vortex_busy = ioread32(dev, VX_BUSY_INT);
+				vortex_busy &= STATUS_MASK_DONE;
 			}
-			iowrite32(dev, CMD_REG, 0x0);
+			iowrite32(dev, VX_SOFT_RESET, 0x01);
 
 			printf("  Done\n");
 			printf("  validating...\n");
