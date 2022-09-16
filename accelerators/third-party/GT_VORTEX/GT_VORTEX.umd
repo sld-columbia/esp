@@ -1,1 +1,0 @@
-blackbox.sh --driver=fpga --cores=4 --clusters=2 --app=demo --args="-n1"
