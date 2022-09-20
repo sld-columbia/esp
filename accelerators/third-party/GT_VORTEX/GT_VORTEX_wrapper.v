@@ -134,66 +134,77 @@ module GT_VORTEX_wrapper #(
    output wire [3:0]      m_axi_awregion;
    output wire [3:0]      m_axi_arregion;
    ////////////////////////////////////////////////////////////////////////////////
-
+   parameter RESET_DELAY = 12; 
    
    // Unused wires 
-   assign m_axi_awatop   =    4'b0000; 
-   assign m_axi_awregion =    4'b0000; 
+   assign m_axi_awatop   =    4'b0; 
+   assign m_axi_awregion =    4'b0; 
 
     // Configuration Registers
    reg vx_reset_soft = 0;
    reg [31:0] addr;
-   reg  vx_reset_started; // Indicates start and stop of reset operation for multicycle reset.
+   reg  vx_started; // Indicates that vortex is started and running for multicycle reset.
    reg  vx_reset; 
    wire apb_write = psel & penable & pwrite;
    wire apb_read  = psel & ~pwrite;
    reg [$clog2(`RESET_DELAY+1)-1:0] vx_reset_ctr;
-   wire m_axi_araddr_with_base; 
-   wire m_axi_awaddr_with_base;
+   wire m_axi_araddr_raw; 
+   wire m_axi_awaddr_raw;
+   wire vx_busy_int = busy;
    assign pready  = 1'b1;
    assign pslverr = 1'b0;
    // Adding the base address to the memory addresses reserved for Vortex programs
-   assign m_axi_araddr_with_base = m_axi_araddr + addr; // FIXME: Replace with addr 
-   assign m_axi_awaddr_with_base = m_axi_awaddr + addr; // FIXME: Replace with addr
+   assign m_axi_araddr = m_axi_araddr_raw + addr; // FIXME: check for comb loop 
+   assign m_axi_awaddr = m_axi_awaddr_raw + addr; // FIXME: check for comb loop
+
+    // Detecting positive edge of reset
+    reg   reset_dly, reset_pe;                          
+    always @ (posedge clk) begin
+	    reset_dly <= reset;
+    end
+    assign reset_pe = reset & ~reset_dly; // Positive edge of reset
 
    always @(posedge clk) begin
-      if (reset) begin
+      if (reset_pe) begin
          addr           <= 32'b0; // reset initial value 
          vx_reset_soft  <= 1'b0;  // Software reset to start Vortex 
 	 prdata         <= 32'b0;
+	 vx_reset       <= 1'b0;
+	 vx_started     <= 1'b0;
       end // reset 
       if (apb_write) begin
         case (paddr[7:0])
           8'h50 : addr          <= pwdata;
 	  8'h54 : vx_reset_soft <= pwdata[0]; 
         endcase
-      end // write
-      if (apb_read) begin
+      end  // write
+      else if (apb_read) begin
+         
         case (paddr[7:0])
            8'h50 : prdata <= addr; 
-           8'h58 : prdata <= {31'b0, busy}; // Interrupt Read only
+           8'h58 : prdata <= {31'b0, vx_busy_int}; // Interrupt Read only
            8'h54 : prdata <= {31'b0, vx_reset_soft};	
         endcase
       end // read
+
    end // always 
   
    always @(posedge clk) begin
-      if (vx_reset_started == 0) begin
+      if (vx_started == 0 && vx_reset_soft == 1) begin
          vx_reset_ctr <= 0;
-      end else if (vx_reset_started == 1) begin
+      end else if (vx_started == 1) begin
          vx_reset_ctr <= vx_reset_ctr + 1;
       end
    end
 
    always @(posedge clk) begin
-      if (vx_reset_soft == 1 && vx_reset_started == 0) begin
-         vx_reset         <= 1;
-	 vx_reset_started <= 1;
+      if (vx_reset_soft == 1 && vx_started == 0) begin
+	 vx_reset <= 1;
+	 vx_started <= 1;
  end // end reset begin if
       // Vortex reset cycles
-      if (vx_reset_ctr == (`RESET_DELAY-1)) begin
-         vx_reset_started <= 0;
-         vx_reset   <= 0;
+      if (vx_reset_ctr == (`RESET_DELAY-1) && vx_started == 1'b1) begin
+         vx_reset         <= 1'b0;
       end // end delay to reset if
    end // always
     
@@ -203,11 +214,11 @@ module GT_VORTEX_wrapper #(
     .AXI_TID_WIDTH     (`VX_MEM_TAG_WIDTH),
     .AXI_STROBE_WIDTH  ((`VX_MEM_DATA_WIDTH / 8)) 
     )Vortex_axi_0 (
-    .clk            ( clk   ),
-    .reset          ( vx_reset_soft || reset ),
+    .clk            ( vx_started & clk   ),
+    .reset          ( vx_reset ),
 
     .m_axi_awid     ( m_axi_awid    ),
-    .m_axi_awaddr   ( m_axi_awaddr_with_base  ),
+    .m_axi_awaddr   ( m_axi_awaddr_raw  ),
     .m_axi_awlen    ( m_axi_awlen   ),
     .m_axi_awsize   ( m_axi_awsize  ),
     .m_axi_awburst  ( m_axi_awburst ),
@@ -230,7 +241,7 @@ module GT_VORTEX_wrapper #(
     .m_axi_bready   ( m_axi_bready  ),
 
     .m_axi_arid     ( m_axi_arid    ),
-    .m_axi_araddr   ( m_axi_araddr_with_base ),
+    .m_axi_araddr   ( m_axi_araddr_raw ),
     .m_axi_arlen    ( m_axi_arlen   ),
     .m_axi_arsize   ( m_axi_arsize  ),
     .m_axi_arburst  ( m_axi_arburst ),

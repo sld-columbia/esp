@@ -8,7 +8,6 @@
 
 #include <esp_accelerator.h>
 #include <esp_probe.h>
-#include "utils/fft_utils.h"
 
 #if (FFT_FX_WIDTH == 64)
 typedef long long token_t;
@@ -34,12 +33,16 @@ static unsigned DMA_WORD_PER_BEAT(unsigned _st)
 
 #define GT_VORTEX 0x108
 #define DEV_NAME "GATech,gt_vortex"
+#define START_VORTEX 1
+#define  BASE_ADDR 0x20000000
+
+#define CSR_TILE_SIZE 0x200
+#define CSR_BASE_ADDR 0x60090000
+#define COH_REG_INDEX 107
 
 /* <<--params-->> */
 const int32_t log_len = 3;
 int32_t len;
-int32_t base_addr = 0x90000000;
-int32_t start_vortex = 1;
 int32_t vortex_busy; // Stores polled value of busy signal
 
 static unsigned in_words_adj;
@@ -64,10 +67,7 @@ static unsigned mem_size;
 #define VX_SOFT_RESET   0x54
 #define VX_BUSY_INT	0x58 // Vortex busy signal read only	 
 
-const intptr_t src_addr = 0x7fff0; // source value address
-const intptr_t dst_addr = 0x7fff4; // destination value address
-
-static int validate_buf(token_t *out, float *gold)
+/*static int validate_buf(token_t *out, float *gold)
 {
 	int j;
 	unsigned errors = 0;
@@ -80,28 +80,12 @@ static int validate_buf(token_t *out, float *gold)
 
 	printf("  %u errors\n", errors);
 	return errors;
-}
+}*/
 
 
-static void init_buf(token_t *in, float *gold)
+static void init_buf(token_t *in)
 {
-	int j;
-	const float LO = -10.0;
-	const float HI = 10.0;
-
-	/* srand((unsigned int) time(NULL)); */
-
-	for (j = 0; j < 2 * len; j++) {
-		float scaling_factor = (float) rand () / (float) RAND_MAX;
-		gold[j] = LO + scaling_factor * (HI - LO);
-	}
-	// convert input to fixed point
-	for (j = 0; j < 2 * len; j++)
-		in[j] = float2fx((native_t) gold[j], FX_IL);
-
-
-	// Compute golden output
-	fft_comp(gold, len, log_len, -1, 1);
+ #include "input.h"
 }
 
 
@@ -119,6 +103,7 @@ int main(int argc, char * argv[])
 	unsigned errors = 0;
 	unsigned coherence;
         const int ERROR_COUNT_TH = 0.001;
+	unsigned int vx_tile_numbers[1] = {2};
 
 	len = 1 << log_len;
 
@@ -129,13 +114,17 @@ int main(int argc, char * argv[])
 		in_words_adj = round_up(2 * len, DMA_WORD_PER_BEAT(sizeof(token_t)));
 		out_words_adj = round_up(2 * len, DMA_WORD_PER_BEAT(sizeof(token_t)));
 	}
+
 	in_len = in_words_adj;
 	out_len = out_words_adj;
 	in_size = in_len * sizeof(token_t);
 	out_size = out_len * sizeof(token_t);
 	out_offset  = 0;
-	mem_size = (out_offset * sizeof(token_t)) + out_size;
-
+	unsigned int _fibonacci_bin_len_in_words = 7372/4;
+	mem_size = _fibonacci_bin_len_in_words * sizeof(token_t);
+	unsigned int coh;
+        unsigned int tile_offset;
+        unsigned int* coh_reg_addr;
 
 	// Search for the device
 	printf("Scanning device tree... \n");
@@ -152,15 +141,23 @@ int main(int argc, char * argv[])
 
 		dev = &espdevs[n];
 
-
 		// Allocate memory
-		gold = aligned_malloc(out_len * sizeof(float));
+		// gold = aligned_malloc(out_len * sizeof(float));
 		mem = aligned_malloc(mem_size);
-		printf("  memory buffer base-address = %p\n", mem);
-
+		// printf("  memory buffer base-address = %p\n", mem);
+		init_buf(mem);
+		printf("**************** Memory Details ****************\n");
+		printf("  memory buffer base-address = %x\n", (uint32_t)mem);
 		// Allocate and populate page table
-		ptable = aligned_malloc(NCHUNK(mem_size) * sizeof(unsigned *));
-		printf("  nchunk = %lu\n", NCHUNK(mem_size));
+		// ptable = aligned_malloc(NCHUNK(mem_size) * sizeof(unsigned *));
+		// printf("  nchunk = %lu\n", NCHUNK(mem_size));
+
+		// Write coherence mode and flush (customize coherence model here)
+                tile_offset = (CSR_TILE_SIZE / sizeof(unsigned int)) * vx_tile_numbers[n];
+                coh_reg_addr = ((unsigned int*) CSR_BASE_ADDR) + tile_offset + COH_REG_INDEX;
+                coh = ACC_COH_RECALL;
+                *coh_reg_addr = coh;
+                esp_flush(coh);
 
 #ifndef __riscv
 		for (coherence = ACC_COH_NONE; coherence <= ACC_COH_FULL; coherence++) {
@@ -174,22 +171,25 @@ int main(int argc, char * argv[])
 
 			// Pass accelerator-specific configuration parameters
 			/* <<--regs-config-->> */
-			iowrite32(dev, VX_BASE_ADDR, base_addr);
-			iowrite32(dev, VX_SOFT_RESET, start_vortex);
+			
+			// Set memory offset
+			iowrite32(dev, VX_BASE_ADDR, (uint32_t)mem-0x2000000);
 
 			// Flush (customize coherence model here)
-			esp_flush(coherence);
 
 			// Start accelerators
 			printf("  Start...\n");
-
-			// Wait for completion
+			iowrite32(dev, VX_SOFT_RESET, START_VORTEX);
 			vortex_busy = ioread32(dev, VX_BUSY_INT);
+                        vortex_busy &= BIT(0); // Since higher order bits may contain routing headers
+			printf("  Busy Reg Value = %d \n", vortex_busy);
+			// Wait for completion
 			while (vortex_busy==1) {
+		        	printf("  Running GPU workload...\n");
 				vortex_busy = ioread32(dev, VX_BUSY_INT);
+				vortex_busy &= BIT(0); // Since higher order bits may contain routing headers
+				printf("  Busy Reg Value = %d \n", vortex_busy);
 			}
-			iowrite32(dev, VX_SOFT_RESET, 0x01);
-
 			printf("  Done\n");
 		}
 		aligned_free(ptable);
