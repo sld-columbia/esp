@@ -22,6 +22,7 @@ NCELABOPT += -nocopyright
 NCELABOPT += -disable_sem2009
 NCELABOPT += -nomxindr
 NCELABOPT += -timescale 10ps/10ps
+NCELABOPT += -notimingchecks
 
 NCSIMOPT += $(SIMTOP)
 NCSIMOPT += -input ncsim.in
