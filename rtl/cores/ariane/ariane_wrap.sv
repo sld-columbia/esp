@@ -1,4 +1,4 @@
-// Copyright (c) 2011-2021 Columbia University, System Level Design Group
+// Copyright (c) 2011-2022 Columbia University, System Level Design Group
 // SPDX-License-Identifier: Apache-2.0
 
 module ariane_wrap
@@ -12,7 +12,6 @@ module ariane_wrap
      parameter AXI_USER_WIDTH = 1,
      parameter AXI_STRB_WIDTH = AXI_DATA_WIDTH / 8,
      parameter USE_SPANDEX = 0,
-     parameter NFU_PRESENT = 0,
      // Slave 0
      parameter logic [63:0] ROMBase             = 64'h0000_0000_0001_0000,
      parameter logic [63:0] ROMLength           = 64'h0000_0000_0001_0000,
@@ -336,8 +335,7 @@ module ariane_wrap
     Axi64BitCompliant:      1'b1,
     SwapEndianess:          1'b0,
     // debug
-    DmBaseAddress:          64'd0,
-    NFU_PRESENT:            NFU_PRESENT
+    DmBaseAddress:          64'd0
   };
 
    // TODO: move this to I/O tile and socmap CFG_NCPUTILE

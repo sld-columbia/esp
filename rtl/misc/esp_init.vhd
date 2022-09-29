@@ -1,4 +1,4 @@
--- Copyright (c) 2011-2021 Columbia University, System Level Design Group
+-- Copyright (c) 2011-2022 Columbia University, System Level Design Group
 -- SPDX-License-Identifier: Apache-2.0
 
 library ieee;
@@ -37,9 +37,22 @@ architecture rtl of esp_init is
     0 => ahb_device_reg ( VENDOR_SLD, SLD_ESP_INIT, 0, 0, 0),
     others => zero32);
 
+  function get_apb_base_address (
+    constant arch : cpu_arch_type := ariane)
+    return std_logic_vector is
+    variable addr : std_logic_vector(11 downto 0);
+  begin
+    if arch= leon3 then
+      addr := X"800";
+    else
+      addr := X"600";
+    end if;
+    return addr;
+  end function get_apb_base_address;
+
   constant apb_base_address : std_logic_vector(31 downto 20) := get_apb_base_address(GLOB_CPU_ARCH);
   constant csr_base_address : std_logic_vector(19 downto 16) := X"9";
-  
+
   constant data_width : integer := ESP_CSR_TILE_ID_MSB - ESP_CSR_TILE_ID_LSB + 1;
 
   signal req : eth_tx_ahb_in_type;
@@ -56,8 +69,6 @@ architecture rtl of esp_init is
   signal count : integer range 0 to CFG_TILES_NUM + CFG_NCPU_TILE - 1;
   signal incr : std_ulogic;
   signal clear : std_ulogic;
-  signal tile_id_toggle : std_ulogic;
-  signal tile_id_loc : std_ulogic;
 
   signal timer : integer range 0 to 15;
   signal timer_rst : std_ulogic;
@@ -84,7 +95,6 @@ begin  -- architecture rtl
       req_reg <= req_none;
       timer <= 0;
       init_done <= '0';
-      tile_id_loc <= '0';
     elsif clk'event and clk = '1' then  -- rising clock edge
       init_state <= init_next;
       if clear = '1' then
@@ -105,21 +115,16 @@ begin  -- architecture rtl
       elsif timer_en = '1' then
         timer <= (timer + 1) mod 16;
       end if;
-      if tile_id_toggle = '1' then
-        tile_id_loc <= not tile_id_loc;
-      end if;
     end if;
   end process count_gen;
 
-  init_fsm: process (init_state, count, rsp, srst, srst_reg, req_reg, timer, tile_id_loc) is
+  init_fsm: process (init_state, count, rsp, srst, srst_reg, req_reg, timer) is
     variable tile_id_address : std_logic_vector(31 downto 0);
-    variable tile_id_noc_address : std_logic_vector(31 downto 0);
     variable valid_address : std_logic_vector(31 downto 0);
     variable data : std_logic_vector(data_width - 1 downto 0);
   begin  -- process init_fsm
 
     tile_id_address := apb_base_address & csr_base_address & conv_std_logic_vector(sequence(count), 7) & "11" & conv_std_logic_vector(ESP_CSR_TILE_ID_ADDR, 5) & "00";
-    tile_id_noc_address := apb_base_address & csr_base_address & conv_std_logic_vector(sequence(count), 7) & "11" & conv_std_logic_vector(ESP_CSR_TILE_ID_NOC_ADDR, 5) & "00";
     valid_address   := apb_base_address & csr_base_address & conv_std_logic_vector(sequence(count), 7) & "11" & conv_std_logic_vector(ESP_CSR_VALID_ADDR, 5) & "00";
     data            := conv_std_logic_vector(sequence(count), data_width);
 
@@ -133,7 +138,6 @@ begin  -- architecture rtl
     timer_rst <= '0';
     sample_srst <= '0';
     init_next <= init_state;
-    tile_id_toggle <= '0';
 
     case init_state is
       when start =>
@@ -151,11 +155,7 @@ begin  -- architecture rtl
           req.data(0)                       <= '1';
           req.addr                          <= valid_address;
         else
-          if tile_id_loc = '0' then
-            req.addr                          <= tile_id_address;
-          else
-            req.addr                          <= tile_id_noc_address;
-          end if;
+          req.addr                          <= tile_id_address;
           req.data(data_width - 1 downto 0) <= data;
         end if;
         if rsp.grant = '1' then
@@ -165,14 +165,9 @@ begin  -- architecture rtl
       when pause =>
         if rsp.ready = '1' then
           if count /= CFG_TILES_NUM + CFG_NCPU_TILE - 1 then
-            tile_id_toggle <= '1';
-            if tile_id_loc = '1' then
-              incr      <= '1';              
-              init_next <= timeout;
-              timer_rst <= '1';
-            else
-              init_next <= busy;
-            end if;
+            incr      <= '1';
+            init_next <= timeout;
+            timer_rst <= '1';
           else
             init_next <= done;
           end if;
@@ -245,7 +240,9 @@ begin  -- architecture rtl
   ahbmo.hsize                           <= msto.hsize;
   ahbmo.hburst                          <= msto.hburst;
   ahbmo.hprot                           <= msto.hprot;
-  ahbmo.hwdata(ARCH_BITS - 1 downto 32) <= (others => '0');
+  hwdata_padding: if ARCH_BITS > 32 generate 
+    ahbmo.hwdata(ARCH_BITS - 1 downto 32) <= (others => '0');
+  end generate;
   ahbmo.hwdata(31 downto 0)             <= msto.hwdata;
   ahbmo.hirq                            <= (others => '0');
   ahbmo.hconfig                         <= hconfig;

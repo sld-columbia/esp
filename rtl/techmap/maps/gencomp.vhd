@@ -881,21 +881,6 @@ component clkpad
   port (pad : in std_ulogic; o : out std_ulogic; rstn : std_ulogic := '1'; lock : out std_ulogic);
 end component;
 
-component clkpadv is
-  generic (
-    tech    : integer := 0;
-    level   : integer := 0;
-    voltage : integer := x33v;
-    arch    : integer := 0;
-    hf      : integer := 0;
-    filter  : integer := 0;
-    loc     : std_logic_vector := (31 downto 0 => '0');
-    width   : integer := 1);
-  port (
-    pad : in  std_logic_vector(width-1 downto 0);
-    o   : out std_logic_vector(width-1 downto 0));
-end component clkpadv;
-
 component inpad_ds
   generic (tech : integer := 0; level : integer := lvds; voltage : integer := x33v; term : integer := 0);
   port (padp, padn : in std_ulogic; o : out std_ulogic);
@@ -1192,16 +1177,6 @@ component clkrand is
   );
 end component;
 
-component clkdiv1234 is
-  port(
-    rstn     :  in  std_ulogic;
-    clkin    :  in  std_ulogic;
-    clk_div1 :  out std_ulogic;
-    clk_div2 :  out std_ulogic;
-    clk_div3 :  out std_ulogic;
-    clk_div4 :  out std_ulogic
-  );
-end component;
 
 ---------------------------------------------------------------------------
 -- DDR registers and PHY

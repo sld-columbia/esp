@@ -1,4 +1,4 @@
--- Copyright (c) 2011-2021 Columbia University, System Level Design Group
+-- Copyright (c) 2011-2022 Columbia University, System Level Design Group
 -- SPDX-License-Identifier: Apache-2.0
 
 -------------------------------------------------------------------------------
@@ -473,7 +473,7 @@ begin  -- architecture rtl
             when dma_req =>
               -- Set data
               ext_snd_data_in <= dma_rcv_data_out(ARCH_BITS - 1 downto 0);
-              if dma_snd_full = '0' then
+              if dma_rcv_empty = '0' then
                 -- Decrement counter
                 tran_count_en <= '1';
                 -- Push ext queue

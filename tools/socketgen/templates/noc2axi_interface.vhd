@@ -1,4 +1,4 @@
--- Copyright (c) 2011-2021 Columbia University, System Level Design Group
+-- Copyright (c) 2011-2022 Columbia University, System Level Design Group
 -- SPDX-License-Identifier: Apache-2.0
 
 library ieee;
@@ -53,9 +53,7 @@ use std.textio.all;
     pllclk    : out std_ulogic;
     local_y   : in  local_yx;
     local_x   : in  local_yx;
-    tile_id   : in  integer;
-    ext_dco_cc_sel  : out std_logic_vector(5 downto 0);
-    ext_ldo_res_sel : out std_logic_vector(7 downto 0);
+    tile_id   : in  integer range 0 to CFG_TILES_NUM - 1;
     paddr     : in  integer range 0 to 4095;
     pmask     : in  integer range 0 to 4095;
     paddr_ext : in  integer range 0 to 4095;

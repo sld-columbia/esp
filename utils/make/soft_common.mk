@@ -1,4 +1,4 @@
-# Copyright (c) 2011-2021 Columbia University, System Level Design Group
+# Copyright (c) 2011-2022 Columbia University, System Level Design Group
 # SPDX-License-Identifier: Apache-2.0
 
 
@@ -8,6 +8,7 @@ soft-build:
 	@mkdir -p $(BUILD_DRIVERS)/esp
 	@mkdir -p $(BUILD_DRIVERS)/esp_cache
 	@mkdir -p $(BUILD_DRIVERS)/libesp
+	@mkdir -p $(BUILD_DRIVERS)/monitors
 	@mkdir -p $(BUILD_DRIVERS)/probe
 	@mkdir -p $(BUILD_DRIVERS)/test
 	@mkdir -p $(BUILD_DRIVERS)/utils/baremetal
@@ -40,7 +41,7 @@ $(SOFT_BUILD)/sysroot/opt/drivers-esp/esp_private_cache.ko: $(SOFT_BUILD)/sysroo
 
 $(SOFT_BUILD)/sysroot/opt/drivers-esp/esp.ko: $(SOFT_BUILD)/linux-build/vmlinux $(wildcard $(ESP_CORE_PATH)/*.c) $(wildcard $(ESP_CORE_PATH)/*.h) $(wildcard $(DRV_LINUX)/include/*.h)
 	@mkdir -p $(SOFT_BUILD)/sysroot/opt/drivers-esp
-	$(QUIET_MAKE)ARCH=$(ARCH) CROSS_COMPILE=$(CROSS_COMPILE_LINUX) DRIVERS=$(DRV_LINUX) KSRC=$(SOFT_BUILD)/linux-build $(MAKE) -C $(BUILD_DRIVERS)/esp
+	$(QUIET_MAKE)ARCH=$(ARCH) CROSS_COMPILE=$(CROSS_COMPILE_LINUX) DRIVERS=$(DRV_LINUX) KSRC=$(SOFT_BUILD)/linux-build DESIGN_PATH=$(DESIGN_PATH) $(MAKE) -C $(BUILD_DRIVERS)/esp
 	$(QUIET_CP)cp $(BUILD_DRIVERS)/esp/esp.ko $@
 
 # This is a PHONY to guarantee sysroot is always updated when apps or drivers change
@@ -53,7 +54,7 @@ sysroot-update: $(SOFT_BUILD)/linux-build/vmlinux $(ESP_CFG_BUILD)/socmap.vhd so
 	@$(MAKE) $(SOFT_BUILD)/sysroot/opt/drivers-esp/esp_private_cache.ko
 	@$(MAKE) $(SOFT_BUILD)/sysroot/opt/drivers-esp/esp.ko
 	@mkdir -p $(BUILD_DRIVERS)/dvi/linux/app
-	@CPU_ARCH=$(CPU_ARCH) DRIVERS=$(DRV_LINUX) BUILD_PATH=$(BUILD_DRIVERS)/dvi/linux/app $(MAKE) -C $(DRV_LINUX)/dvi/app
+	@CPU_ARCH=$(CPU_ARCH) DRIVERS=$(DRV_LINUX) BUILD_PATH=$(BUILD_DRIVERS)/dvi/linux/app DESIGN_PATH=$(DESIGN_PATH) $(MAKE) -C $(DRV_LINUX)/dvi/app
 	@mkdir -p $(SOFT_BUILD)/sysroot/applications/dvi; cp $(BUILD_DRIVERS)/dvi/linux/app/*.exe $(SOFT_BUILD)/sysroot/applications/dvi
 	@$(MAKE) acc-driver
 	@$(MAKE) acc-app
@@ -97,7 +98,7 @@ $(BAREMETAL_APPS-baremetal): $(BAREMETAL_BIN) soft-build $(ESP_CFG_BUILD)/socmap
 	if [ `ls -1 $$BAREMETAL_APPS_PATH/*.c 2>/dev/null | wc -l ` -gt 0 ]; then \
 		echo '   ' MAKE $@; \
 		mkdir -p $$BUILD_PATH; \
-		CROSS_COMPILE=$(CROSS_COMPILE_ELF) EXTRA_CFLAGS=$(EXTRA_CFLAGS) CPU_ARCH=$(CPU_ARCH) DRIVERS=$(DRV_BARE) DESIGN_PATH=$(DESIGN_PATH)/$(ESP_CFG_BUILD) BUILD_PATH=$$BUILD_PATH $(MAKE) -C  $$BAREMETAL_APPS_PATH; \
+		CROSS_COMPILE=$(CROSS_COMPILE_ELF) CPU_ARCH=$(CPU_ARCH) DRIVERS=$(DRV_BARE) DESIGN_PATH=$(DESIGN_PATH)/$(ESP_CFG_BUILD) BUILD_PATH=$$BUILD_PATH $(MAKE) -C  $$BAREMETAL_APPS_PATH; \
 		if [ `ls -1 $$BUILD_PATH/*.bin 2>/dev/null | wc -l ` -gt 0 ]; then \
 			echo '   ' CP $@; cp $$BUILD_PATH/*.bin $(BAREMETAL_BIN)/$(@:-baremetal=).bin; \
 		fi; \
@@ -120,10 +121,10 @@ apps-baremetal-clean: $(BAREMETAL_APPS-baremetal-clean) probe-clean
 baremetal-all: soft-build $(ESP_CFG_BUILD)/socmap.vhd
 	@mkdir -p $(BAREMETAL_BIN)/dvi
 	@mkdir -p $(BUILD_DRIVERS)/dvi/baremetal
-	@CPU_ARCH=$(CPU_ARCH) DESIGN_PATH=$(DESIGN_PATH)/$(ESP_CFG_BUILD) DRIVERS=$(DRV_BARE) BUILD_PATH=$(BUILD_DRIVERS)/dvi/baremetal $(MAKE) -C $(DRV_BARE)/dvi
+	@CPU_ARCH=$(CPU_ARCH) DESIGN_PATH=$(DESIGN_PATH)/$(ESP_CFG_BUILD) DRIVERS=$(DRV_BARE) BUILD_PATH=$(BUILD_DRIVERS)/dvi/baremetal DESIGN_PATH=$(DESIGN_PATH) $(MAKE) -C $(DRV_BARE)/dvi
 	@cp $(BUILD_DRIVERS)/dvi/baremetal/*.bin $(BAREMETAL_BIN)/dvi
-	@$(MAKE) acc-baremetal 
-	@$(MAKE) apps-baremetal 
+	@$(MAKE) acc-baremetal
+	@$(MAKE) apps-baremetal
 
 baremetal-distclean:
 	$(QUIET_CLEAN)$(RM) $(BAREMETAL_BIN)

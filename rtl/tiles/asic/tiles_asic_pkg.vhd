@@ -1,4 +1,4 @@
--- Copyright (c) 2011-2021 Columbia University, System Level Design Group
+-- Copyright (c) 2011-2022 Columbia University, System Level Design Group
 -- SPDX-License-Identifier: Apache-2.0
 
 library ieee;
@@ -21,11 +21,13 @@ package tiles_asic_pkg is
   component asic_tile_cpu is
     generic (
       SIMULATION   : boolean;
+      HAS_SYNC     : integer range 0 to 1 := 1;
       ROUTER_PORTS : ports_vec;
-      this_has_nfu : integer range 0 to 1);
+      this_has_dco : integer range 0 to 1);
     port (
       rst                : in  std_ulogic;
       sys_clk            : in  std_ulogic;
+      sys_clk_lock       : in  std_ulogic;
       ext_clk            : in  std_ulogic;
       clk_div            : out std_ulogic;
       tdi                : in  std_logic;
@@ -109,16 +111,17 @@ package tiles_asic_pkg is
 
   component asic_tile_acc is
     generic (
-      SIMULATION        : boolean := false;
-      this_hls_conf     : hlscfg_t;
-      this_device       : devid_t;
-      this_irq_type     : integer;
-      this_has_l2       : integer range 0 to 1;
-      this_has_token_pm : integer range 0 to 1;
-      ROUTER_PORTS      : ports_vec);
+      this_hls_conf : hlscfg_t;
+      this_device   : devid_t;
+      this_irq_type : integer;
+      this_has_l2   : integer range 0 to 1;
+      HAS_SYNC      : integer range 0 to 1 := 1;
+      ROUTER_PORTS  : ports_vec;
+      this_has_dco  : integer range 0 to 1);
     port (
       rst                : in  std_ulogic;
       sys_clk            : in  std_ulogic;
+      sys_clk_lock       : in  std_ulogic;
       ext_clk            : in  std_ulogic;
       clk_div            : out std_ulogic;
       tdi                : in  std_logic;
@@ -203,109 +206,115 @@ package tiles_asic_pkg is
   component asic_tile_mem is
     generic (
       SIMULATION   : boolean := false;
-      ROUTER_PORTS : ports_vec);
+      ROUTER_PORTS : ports_vec;
+      HAS_SYNC     : integer range 0 to 1 := 1;
+      this_has_dco : integer range 0 to 1 := 0);
     port (
-      rst                : in  std_ulogic;
-      sys_clk            : in  std_ulogic;
-      ext_clk            : in  std_ulogic;
-      clk_div            : out std_ulogic;
-      fpga_data_in       : in  std_logic_vector(ARCH_BITS - 1 downto 0);
-      fpga_data_out      : out std_logic_vector(ARCH_BITS - 1 downto 0);
-      fpga_oen           : out std_ulogic;
-      fpga_valid_in      : in  std_ulogic;
-      fpga_valid_out     : out std_ulogic;
-      fpga_clk_in        : in  std_ulogic;
-      fpga_clk_out       : out std_ulogic;
-      fpga_credit_in     : in  std_ulogic;
-      fpga_credit_out    : out std_ulogic;
-      tdi                : in  std_logic;
-      tdo                : out std_logic;
-      tms                : in  std_logic;
-      tclk               : in  std_logic;
+      rst                : in    std_ulogic;
+      sys_clk            : in    std_ulogic;
+      sys_clk_lock       : in  std_ulogic;
+      ext_clk            : in    std_ulogic;
+      clk_div            : out   std_ulogic;
+      fpga_data_in       : in    std_logic_vector(ARCH_BITS - 1 downto 0);
+      fpga_data_out      : out   std_logic_vector(ARCH_BITS - 1 downto 0);
+      fpga_oen           : out   std_ulogic;
+      fpga_valid_in      : in    std_ulogic;
+      fpga_valid_out     : out   std_ulogic;
+      fpga_clk_in        : in    std_ulogic;
+      fpga_clk_out       : out   std_ulogic;
+      fpga_credit_in     : in    std_ulogic;
+      fpga_credit_out    : out   std_ulogic;
+      tdi                : in    std_logic;
+      tdo                : out   std_logic;
+      tms                : in    std_logic;
+      tclk               : in    std_logic;
       pad_cfg            : out std_logic_vector(ESP_CSR_PAD_CFG_MSB - ESP_CSR_PAD_CFG_LSB downto 0);
-      noc1_data_n_in     : in  noc_flit_type;
-      noc1_data_s_in     : in  noc_flit_type;
-      noc1_data_w_in     : in  noc_flit_type;
-      noc1_data_e_in     : in  noc_flit_type;
-      noc1_data_void_in  : in  std_logic_vector(3 downto 0);
-      noc1_stop_in       : in  std_logic_vector(3 downto 0);
-      noc1_data_n_out    : out noc_flit_type;
-      noc1_data_s_out    : out noc_flit_type;
-      noc1_data_w_out    : out noc_flit_type;
-      noc1_data_e_out    : out noc_flit_type;
-      noc1_data_void_out : out std_logic_vector(3 downto 0);
-      noc1_stop_out      : out std_logic_vector(3 downto 0);
-      noc2_data_n_in     : in  noc_flit_type;
-      noc2_data_s_in     : in  noc_flit_type;
-      noc2_data_w_in     : in  noc_flit_type;
-      noc2_data_e_in     : in  noc_flit_type;
-      noc2_data_void_in  : in  std_logic_vector(3 downto 0);
-      noc2_stop_in       : in  std_logic_vector(3 downto 0);
-      noc2_data_n_out    : out noc_flit_type;
-      noc2_data_s_out    : out noc_flit_type;
-      noc2_data_w_out    : out noc_flit_type;
-      noc2_data_e_out    : out noc_flit_type;
-      noc2_data_void_out : out std_logic_vector(3 downto 0);
-      noc2_stop_out      : out std_logic_vector(3 downto 0);
-      noc3_data_n_in     : in  noc_flit_type;
-      noc3_data_s_in     : in  noc_flit_type;
-      noc3_data_w_in     : in  noc_flit_type;
-      noc3_data_e_in     : in  noc_flit_type;
-      noc3_data_void_in  : in  std_logic_vector(3 downto 0);
-      noc3_stop_in       : in  std_logic_vector(3 downto 0);
-      noc3_data_n_out    : out noc_flit_type;
-      noc3_data_s_out    : out noc_flit_type;
-      noc3_data_w_out    : out noc_flit_type;
-      noc3_data_e_out    : out noc_flit_type;
-      noc3_data_void_out : out std_logic_vector(3 downto 0);
-      noc3_stop_out      : out std_logic_vector(3 downto 0);
-      noc4_data_n_in     : in  noc_flit_type;
-      noc4_data_s_in     : in  noc_flit_type;
-      noc4_data_w_in     : in  noc_flit_type;
-      noc4_data_e_in     : in  noc_flit_type;
-      noc4_data_void_in  : in  std_logic_vector(3 downto 0);
-      noc4_stop_in       : in  std_logic_vector(3 downto 0);
-      noc4_data_n_out    : out noc_flit_type;
-      noc4_data_s_out    : out noc_flit_type;
-      noc4_data_w_out    : out noc_flit_type;
-      noc4_data_e_out    : out noc_flit_type;
-      noc4_data_void_out : out std_logic_vector(3 downto 0);
-      noc4_stop_out      : out std_logic_vector(3 downto 0);
-      noc5_data_n_in     : in  misc_noc_flit_type;
-      noc5_data_s_in     : in  misc_noc_flit_type;
-      noc5_data_w_in     : in  misc_noc_flit_type;
-      noc5_data_e_in     : in  misc_noc_flit_type;
-      noc5_data_void_in  : in  std_logic_vector(3 downto 0);
-      noc5_stop_in       : in  std_logic_vector(3 downto 0);
-      noc5_data_n_out    : out misc_noc_flit_type;
-      noc5_data_s_out    : out misc_noc_flit_type;
-      noc5_data_w_out    : out misc_noc_flit_type;
-      noc5_data_e_out    : out misc_noc_flit_type;
-      noc5_data_void_out : out std_logic_vector(3 downto 0);
-      noc5_stop_out      : out std_logic_vector(3 downto 0);
-      noc6_data_n_in     : in  noc_flit_type;
-      noc6_data_s_in     : in  noc_flit_type;
-      noc6_data_w_in     : in  noc_flit_type;
-      noc6_data_e_in     : in  noc_flit_type;
-      noc6_data_void_in  : in  std_logic_vector(3 downto 0);
-      noc6_stop_in       : in  std_logic_vector(3 downto 0);
-      noc6_data_n_out    : out noc_flit_type;
-      noc6_data_s_out    : out noc_flit_type;
-      noc6_data_w_out    : out noc_flit_type;
-      noc6_data_e_out    : out noc_flit_type;
-      noc6_data_void_out : out std_logic_vector(3 downto 0);
-      noc6_stop_out      : out std_logic_vector(3 downto 0));
+      noc1_data_n_in     : in    noc_flit_type;
+      noc1_data_s_in     : in    noc_flit_type;
+      noc1_data_w_in     : in    noc_flit_type;
+      noc1_data_e_in     : in    noc_flit_type;
+      noc1_data_void_in  : in    std_logic_vector(3 downto 0);
+      noc1_stop_in       : in    std_logic_vector(3 downto 0);
+      noc1_data_n_out    : out   noc_flit_type;
+      noc1_data_s_out    : out   noc_flit_type;
+      noc1_data_w_out    : out   noc_flit_type;
+      noc1_data_e_out    : out   noc_flit_type;
+      noc1_data_void_out : out   std_logic_vector(3 downto 0);
+      noc1_stop_out      : out   std_logic_vector(3 downto 0);
+      noc2_data_n_in     : in    noc_flit_type;
+      noc2_data_s_in     : in    noc_flit_type;
+      noc2_data_w_in     : in    noc_flit_type;
+      noc2_data_e_in     : in    noc_flit_type;
+      noc2_data_void_in  : in    std_logic_vector(3 downto 0);
+      noc2_stop_in       : in    std_logic_vector(3 downto 0);
+      noc2_data_n_out    : out   noc_flit_type;
+      noc2_data_s_out    : out   noc_flit_type;
+      noc2_data_w_out    : out   noc_flit_type;
+      noc2_data_e_out    : out   noc_flit_type;
+      noc2_data_void_out : out   std_logic_vector(3 downto 0);
+      noc2_stop_out      : out   std_logic_vector(3 downto 0);
+      noc3_data_n_in     : in    noc_flit_type;
+      noc3_data_s_in     : in    noc_flit_type;
+      noc3_data_w_in     : in    noc_flit_type;
+      noc3_data_e_in     : in    noc_flit_type;
+      noc3_data_void_in  : in    std_logic_vector(3 downto 0);
+      noc3_stop_in       : in    std_logic_vector(3 downto 0);
+      noc3_data_n_out    : out   noc_flit_type;
+      noc3_data_s_out    : out   noc_flit_type;
+      noc3_data_w_out    : out   noc_flit_type;
+      noc3_data_e_out    : out   noc_flit_type;
+      noc3_data_void_out : out   std_logic_vector(3 downto 0);
+      noc3_stop_out      : out   std_logic_vector(3 downto 0);
+      noc4_data_n_in     : in    noc_flit_type;
+      noc4_data_s_in     : in    noc_flit_type;
+      noc4_data_w_in     : in    noc_flit_type;
+      noc4_data_e_in     : in    noc_flit_type;
+      noc4_data_void_in  : in    std_logic_vector(3 downto 0);
+      noc4_stop_in       : in    std_logic_vector(3 downto 0);
+      noc4_data_n_out    : out   noc_flit_type;
+      noc4_data_s_out    : out   noc_flit_type;
+      noc4_data_w_out    : out   noc_flit_type;
+      noc4_data_e_out    : out   noc_flit_type;
+      noc4_data_void_out : out   std_logic_vector(3 downto 0);
+      noc4_stop_out      : out   std_logic_vector(3 downto 0);
+      noc5_data_n_in     : in    misc_noc_flit_type;
+      noc5_data_s_in     : in    misc_noc_flit_type;
+      noc5_data_w_in     : in    misc_noc_flit_type;
+      noc5_data_e_in     : in    misc_noc_flit_type;
+      noc5_data_void_in  : in    std_logic_vector(3 downto 0);
+      noc5_stop_in       : in    std_logic_vector(3 downto 0);
+      noc5_data_n_out    : out   misc_noc_flit_type;
+      noc5_data_s_out    : out   misc_noc_flit_type;
+      noc5_data_w_out    : out   misc_noc_flit_type;
+      noc5_data_e_out    : out   misc_noc_flit_type;
+      noc5_data_void_out : out   std_logic_vector(3 downto 0);
+      noc5_stop_out      : out   std_logic_vector(3 downto 0);
+      noc6_data_n_in     : in    noc_flit_type;
+      noc6_data_s_in     : in    noc_flit_type;
+      noc6_data_w_in     : in    noc_flit_type;
+      noc6_data_e_in     : in    noc_flit_type;
+      noc6_data_void_in  : in    std_logic_vector(3 downto 0);
+      noc6_stop_in       : in    std_logic_vector(3 downto 0);
+      noc6_data_n_out    : out   noc_flit_type;
+      noc6_data_s_out    : out   noc_flit_type;
+      noc6_data_w_out    : out   noc_flit_type;
+      noc6_data_e_out    : out   noc_flit_type;
+      noc6_data_void_out : out   std_logic_vector(3 downto 0);
+      noc6_stop_out      : out   std_logic_vector(3 downto 0));
   end component asic_tile_mem;
 
   component asic_tile_io is
     generic (
       SIMULATION   : boolean;
-      ROUTER_PORTS : ports_vec);
+      HAS_SYNC     : integer range 0 to 1 := 1;
+      ROUTER_PORTS : ports_vec;
+      this_has_dco : integer range 0 to 2);
     port (
       rst                : in  std_ulogic;
       sys_rstn_out       : out std_ulogic;
       sys_clk_out        : out std_ulogic;
       sys_clk            : in  std_ulogic;
+      sys_clk_lock_out   : out std_ulogic;
       ext_clk_noc        : in  std_ulogic;
       clk_div_noc        : out std_ulogic;
       ext_clk            : in  std_ulogic;
@@ -410,11 +419,14 @@ package tiles_asic_pkg is
 
   component asic_tile_empty is
     generic (
-      SIMULATION   : boolean;
-      ROUTER_PORTS : ports_vec);
+      SIMULATION   : boolean; 
+      HAS_SYNC     : integer range 0 to 1 := 1;
+      ROUTER_PORTS : ports_vec;
+      this_has_dco : integer range 0 to 1);
     port (
       rst                : in  std_logic;
       sys_clk            : in  std_ulogic;
+      sys_clk_lock       : in  std_ulogic;
       ext_clk            : in  std_ulogic;
       clk_div            : out std_ulogic;
       tdi                : in  std_logic;
@@ -499,10 +511,13 @@ package tiles_asic_pkg is
   component asic_tile_slm is
     generic (
       SIMULATION   : boolean := false;
-      ROUTER_PORTS : ports_vec);
+      HAS_SYNC     : integer range 0 to 1 := 1;
+      ROUTER_PORTS : ports_vec;
+      this_has_dco : integer range 0 to 1);
     port (
       rst                : in  std_ulogic;
       sys_clk            : in  std_ulogic;
+      sys_clk_lock       : in  std_ulogic;
       ext_clk            : in  std_ulogic;
       clk_div            : out std_ulogic;
       tdi                : in  std_logic;
@@ -587,10 +602,13 @@ package tiles_asic_pkg is
   component asic_tile_slm_ddr is
     generic (
       SIMULATION   : boolean := false;
-      ROUTER_PORTS : ports_vec);
+      ROUTER_PORTS : ports_vec;
+      this_has_dco : integer range 0 to 1;
+      HAS_SYNC     : integer range 0 to 1 := 1);
     port (
       rst                : in  std_ulogic;
       sys_clk            : in  std_ulogic;
+      sys_clk_lock       : in  std_ulogic;
       ext_clk            : in  std_ulogic;
       clk_div            : out std_ulogic;
       lpddr_o_calib_done : out std_ulogic;

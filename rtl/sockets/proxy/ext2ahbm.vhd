@@ -1,4 +1,4 @@
--- Copyright (c) 2011-2021 Columbia University, System Level Design Group
+-- Copyright (c) 2011-2022 Columbia University, System Level Design Group
 -- SPDX-License-Identifier: Apache-2.0
 
 -------------------------------------------------------------------------------
@@ -92,7 +92,6 @@ architecture rtl of ext2ahbm is
     sync_fpga : std_ulogic;
   end record snd_sync_type;
 
-  signal receiving_fsm : std_ulogic;
   signal receiving : rcv_sync_type;
   signal sending : snd_sync_type;
 
@@ -108,6 +107,9 @@ architecture rtl of ext2ahbm is
     haddr   : std_logic_vector(GLOB_PHYS_ADDR_BITS - 1 downto 0);
     hwrite  : std_ulogic;
     hwdata  : std_logic_vector(ARCH_BITS - 1 downto 0);
+    first_busy : std_ulogic;
+    valid_data : std_ulogic;
+    saved_data : std_logic_vector(ARCH_BITS - 1 downto 0);
   end record ext_ahbm_fsm_t;
 
   constant DEFAULT_EXT_AHBM : ext_ahbm_fsm_t := (
@@ -115,7 +117,10 @@ architecture rtl of ext2ahbm is
     count   => 0,
     haddr   => (others => '0'),
     hwrite  => '0',
-    hwdata  => (others => '0')
+    hwdata  => (others => '0'),
+    first_busy => '1',
+    valid_data => '0',
+    saved_data => (others => '0')
     );
 
   signal r, rin : ext_ahbm_fsm_t;
@@ -186,8 +191,6 @@ begin  -- architecture rtl
   state_delay: process (clk) is
   begin
     if rising_edge(clk) then  -- rising clock edge
-      receiving.sync_clk <= receiving_fsm;
-
       sending.async     <= sending.sync_clk;
       sending.delay(0)  <= sending.async;
       sending.delay(1)  <= sending.delay(0);
@@ -310,7 +313,7 @@ begin  -- architecture rtl
 
     v := r;
 
-    receiving_fsm <= '1';
+    receiving.sync_clk <= '1';
 
     ext_rcv_rdreq <= '0';
     ext_snd_wrreq <= '0';
@@ -320,6 +323,8 @@ begin  -- architecture rtl
 
     ahbmo.hbusreq <= '0';
     ahbmo.htrans  <= HTRANS_IDLE;
+
+    v.first_busy := '1';
 
     case r.state is
       when  receive_address =>
@@ -378,27 +383,22 @@ begin  -- architecture rtl
               v.count := r.count - 1;
               -- Read data next time hready is high
               v.state := send_data;
-              -- Change the channel state from receiving to send
-              receiving_fsm <= '0';
             end if;
           end if;
         end if;
 
       when receive_data =>
-        if r.count > 1 then
-          ahbmo.hbusreq <= '1';
-        end if;
         if r.count = 0 then
           -- Release address bus
           ahbmo.htrans <= HTRANS_IDLE;
-          if ahbmi.hready = '1' then
+          if (granted and ahbmi.hready) = '1' then
             -- End of transaction
             v.state := receive_address;
           end if;
         elsif ext_rcv_empty = '0' then
           -- Continue with burst transaction
           ahbmo.htrans <= HTRANS_SEQ;
-          if ahbmi.hready = '1' then
+          if (granted and ahbmi.hready) = '1' then
             -- Data bus acquired
             -- Set data
             v.hwdata := fix_endian(ext_rcv_data_out);
@@ -408,6 +408,12 @@ begin  -- architecture rtl
             v.haddr := r.haddr + default_incr;
             -- Decrement word count
             v.count := r.count - 1;
+            if r.count = 1 then
+              -- Let abritration occur at the next cycle
+              ahbmo.hbusreq <= '0';
+            else
+              ahbmo.hbusreq <= '1';
+            end if;
           end if;
         else
           -- Data not received from chip
@@ -416,37 +422,59 @@ begin  -- architecture rtl
 
 
       when send_data =>
-        receiving_fsm <= '0';
-        if r.count > 1 then
-          ahbmo.hbusreq <= '1';
-        end if;
+        receiving.sync_clk <= '0';
         if r.count = 0 then
           -- Release address bus
           ahbmo.htrans <= HTRANS_IDLE;
           if (granted and ahbmi.hready) = '1' then
             -- Read data is valid
             -- Push ext queue
-            ext_snd_data_in <= fix_endian(ahbmi.hrdata);
+            if r.valid_data = '1' then
+              ext_snd_data_in <= r.saved_data;
+              v.valid_data := '0';
+            else
+              ext_snd_data_in <= fix_endian(ahbmi.hrdata);
+            end if;
+
             ext_snd_wrreq   <= '1';
             -- End of transaction
             v.state := receive_address;
-            receiving_fsm <= '1';
           end if;
         elsif (ext_snd_almost_full or ext_snd_full) = '0' then
-          -- Continue with burst transaction
           ahbmo.htrans <= HTRANS_SEQ;
+          -- Continue with burst transaction
           if (granted and ahbmi.hready) = '1' then
             -- Read data is valid
             -- Push ext queue
-            ext_snd_data_in <= fix_endian(ahbmi.hrdata);
+            if r.valid_data = '1' then
+              ext_snd_data_in <= r.saved_data;
+              v.valid_data := '0';
+            else
+              ext_snd_data_in <= fix_endian(ahbmi.hrdata);
+            end if;
             ext_snd_wrreq   <= '1';
             -- Increment address
             v.haddr := r.haddr + default_incr;
             -- Decrement word count
             v.count := r.count - 1;
+            if r.count = 1 then
+              -- Let abritration occur at the next cycle
+              ahbmo.hbusreq <= '0';
+            else
+              ahbmo.hbusreq <= '1';
+            end if;
           end if;
         else
           -- ext queue is full
+          v.first_busy := '0';
+          if r.first_busy = '1' then
+            if (granted and ahbmi.hready) = '1' then
+              v.saved_data := fix_endian(ahbmi.hrdata);
+              v.valid_data := '1';
+            else
+              v.first_busy := '1';
+            end if;
+          end if;
           ahbmo.htrans <= HTRANS_BUSY;
         end if;
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2021 Columbia University, System Level Design Group
+ * Copyright (c) 2011-2022 Columbia University, System Level Design Group
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -10,7 +10,7 @@
 
 #include <esp_probe.h>
 
-#include "socmap.h"
+#include "esplink.h"
 
 #ifdef __riscv
 
@@ -32,16 +32,16 @@ static uintptr_t uncached_area_ptr = 0xa0100000;
 
 #ifdef __sparc
 asm(
-    "	.text\n"
-    "	.align 4\n"
-    "	.global get_pid\n"
+	"	.text\n"
+	"	.align 4\n"
+	"	.global get_pid\n"
 
-    "get_pid:\n"
-    "        mov  %asr17, %o0\n"
-    "        srl  %o0, 28, %o0\n"
-    "        retl\n"
-    "        and %o0, 0xf, %o0\n"
-    );
+	"get_pid:\n"
+	"		 mov  %asr17, %o0\n"
+	"		 srl  %o0, 28, %o0\n"
+	"		 retl\n"
+	"		 and %o0, 0xf, %o0\n"
+	);
 #elif __riscv
 int get_pid()
 {
@@ -92,10 +92,10 @@ void esp_flush(int coherence)
 	int pid = get_pid();
 
 	switch (coherence) {
-	case ACC_COH_NONE   : printf("  -> Non-coherent DMA\n"); break;
-	case ACC_COH_LLC    : printf("  -> LLC-coherent DMA\n"); break;
-	case ACC_COH_RECALL : printf("  -> Coherent DMA\n"); break;
-	case ACC_COH_FULL   : printf("  -> Fully-coherent cache access\n"); break;
+	case ACC_COH_NONE	: printf("	-> Non-coherent DMA\n"); break;
+	case ACC_COH_LLC	: printf("	-> LLC-coherent DMA\n"); break;
+	case ACC_COH_RECALL : printf("	-> Coherent DMA\n"); break;
+	case ACC_COH_FULL	: printf("	-> Fully-coherent cache access\n"); break;
 	}
 
 
@@ -113,7 +113,8 @@ void esp_flush(int coherence)
 			/* Set L2 flush (waits for L1 to flush first) */
 			for (i = 0; i < nl2; i++) {
 				struct esp_device *l2 = &l2s[i];
-				int cpuid = (ioread32(l2, ESP_CACHE_REG_STATUS) & ESP_CACHE_STATUS_CPUID_MASK) >> ESP_CACHE_STATUS_CPUID_SHIFT;
+				int cpuid = (ioread32(l2, ESP_CACHE_REG_STATUS) & ESP_CACHE_STATUS_CPUID_MASK)
+							>> ESP_CACHE_STATUS_CPUID_SHIFT;
 				if (cpuid == pid) {
 					iowrite32(l2, ESP_CACHE_REG_CMD, cmd);
 					break;
@@ -178,7 +179,7 @@ int probe(struct esp_device **espdevs, unsigned vendor, unsigned devid, const ch
 		id_reg = devtable[2 * i];
 		bank_addr_reg = devtable[2 * i + 1];
 		vend = (id_reg >> 24);
-		id   = (id_reg >> 12) & 0x00fff;
+		id	 = (id_reg >> 12) & 0x00fff;
 
 		if (vend == vendor && id == devid) {
 			number = ndev;
@@ -197,8 +198,8 @@ int probe(struct esp_device **espdevs, unsigned vendor, unsigned devid, const ch
 			(*espdevs)[ndev-1].irq = irq;
 			(*espdevs)[ndev-1].addr = addr;
 			printf("[probe]  %s.%u registered\n", name, (*espdevs)[ndev-1].number);
-			printf("         Address   : 0x%08x\n", (unsigned) (*espdevs)[ndev-1].addr);
-			printf("         Interrupt : %u\n", (*espdevs)[ndev-1].irq);
+			printf("		 Address   : 0x%08x\n", (unsigned) (*espdevs)[ndev-1].addr);
+			printf("		 Interrupt : %u\n", (*espdevs)[ndev-1].irq);
 		}
 	}
 	printf("\n");
@@ -233,8 +234,8 @@ static void esp_done(const struct fdt_scan_node *node, void *extra)
 
 	if ((*espdevs)[ndev].compat != 0) {
 		printf("[probe] %s.%d registered\n", name, ndev);
-		printf("        Address   : 0x%08x\n", (unsigned) (*espdevs)[ndev].addr);
-		printf("        Interrupt : %d\n", (*espdevs)[ndev].irq);
+		printf("		Address   : 0x%08x\n", (unsigned) (*espdevs)[ndev].addr);
+		printf("		Interrupt : %d\n", (*espdevs)[ndev].irq);
 		ndev++;
 
 		// Initialize new entry (may not be discovered!)

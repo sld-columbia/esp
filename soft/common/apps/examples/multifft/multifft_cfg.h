@@ -1,4 +1,4 @@
-// Copyright (c) 2011-2021 Columbia University, System Level Design Group
+// Copyright (c) 2011-2022 Columbia University, System Level Design Group
 // SPDX-License-Identifier: Apache-2.0
 #ifndef __MULTIFFT_STRATUS_CFG_H__
 #define __MULTIFFT_STRATUS_CFG_H__
@@ -18,6 +18,7 @@ typedef float native_t;
 #define LOG_LEN 7
 #define LEN (1 << LOG_LEN)
 #define DO_BITREV 1
+#define NUM_BATCHES 1
 
 /* <<--params-->> */
 const int32_t len = LEN;
@@ -28,6 +29,7 @@ const int32_t log_len = LOG_LEN;
 struct fft_stratus_access fft_cfg_coh[] = {
 	{
 		/* <<--descriptor-->> */
+		.batch_size = NUM_BATCHES,
 		.do_bitrev = DO_BITREV,
 		.log_len = LOG_LEN,
 		.src_offset = 0,
@@ -39,6 +41,7 @@ struct fft_stratus_access fft_cfg_coh[] = {
 	},
 	{
 		/* <<--descriptor-->> */
+		.batch_size = NUM_BATCHES,
 		.do_bitrev = DO_BITREV,
 		.log_len = LOG_LEN,
 		.src_offset = 0,
@@ -50,6 +53,7 @@ struct fft_stratus_access fft_cfg_coh[] = {
 	},
 	{
 		/* <<--descriptor-->> */
+		.batch_size = NUM_BATCHES,
 		.do_bitrev = DO_BITREV,
 		.log_len = LOG_LEN,
 		.src_offset = 0,
@@ -64,6 +68,7 @@ struct fft_stratus_access fft_cfg_coh[] = {
 struct fft_stratus_access fft_cfg_p2p[] = {
 	{
 		/* <<--descriptor-->> */
+		.batch_size = NUM_BATCHES,
 		.do_bitrev = DO_BITREV,
 		.log_len = LOG_LEN,
 		.src_offset = 0,
@@ -75,6 +80,7 @@ struct fft_stratus_access fft_cfg_p2p[] = {
 	},
 	{
 		/* <<--descriptor-->> */
+		.batch_size = NUM_BATCHES,
 		.do_bitrev = DO_BITREV,
 		.log_len = LOG_LEN,
 		.src_offset = 0,
@@ -86,6 +92,7 @@ struct fft_stratus_access fft_cfg_p2p[] = {
 	},
 	{
 		/* <<--descriptor-->> */
+		.batch_size = NUM_BATCHES,
 		.do_bitrev = DO_BITREV,
 		.log_len = LOG_LEN,
 		.src_offset = 0,
@@ -102,13 +109,13 @@ esp_thread_info_t cfg_parallel[] = {
 		.run = true,
 		.devname = "fft_stratus.0",
 		.ioctl_req = FFT_STRATUS_IOC_ACCESS,
-		.esp_desc = &(fft_cfg_coh[0].esp),
+		.esp_desc = &(fft_cfg_coh[2].esp),
 	},
 	{
 		.run = true,
 		.devname = "fft_stratus.1",
 		.ioctl_req = FFT_STRATUS_IOC_ACCESS,
-		.esp_desc = &(fft_cfg_coh[0].esp),
+		.esp_desc = &(fft_cfg_coh[1].esp),
 	},
 	{
 		.run = true,

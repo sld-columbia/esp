@@ -1,4 +1,4 @@
--- Copyright (c) 2011-2021 Columbia University, System Level Design Group
+-- Copyright (c) 2011-2022 Columbia University, System Level Design Group
 -- SPDX-License-Identifier: Apache-2.0
 
 library ieee;
@@ -26,8 +26,7 @@ entity ariane_axi_wrap is
     SLMDDRLength     : std_logic_vector(63 downto 0) := X"0000_0000_4000_0000";
     DRAMBase         : std_logic_vector(63 downto 0) := X"0000_0000_8000_0000";
     DRAMLength       : std_logic_vector(63 downto 0) := X"0000_0000_2000_0000";
-    DRAMCachedLength : std_logic_vector(63 downto 0) := X"0000_0000_2000_0000";
-    NFU_PRESENT      : integer                       := 0);
+    DRAMCachedLength : std_logic_vector(63 downto 0) := X"0000_0000_2000_0000");
   port (
     clk         : in  std_logic;
     rstn        : in  std_logic;
@@ -72,7 +71,6 @@ architecture rtl of ariane_axi_wrap is
       AXI_USER_WIDTH   : integer;
       AXI_STRB_WIDTH   : integer;
       USE_SPANDEX      : integer;
-      NFU_PRESENT      : integer;
       ROMBase          : std_logic_vector(63 downto 0);
       ROMLength        : std_logic_vector(63 downto 0);
       APBBase          : std_logic_vector(63 downto 0);
@@ -363,7 +361,6 @@ begin  -- architecture rtl
       AXI_USER_WIDTH   => XUSER_WIDTH,
       AXI_STRB_WIDTH   => ARCH_BITS / 8,
       USE_SPANDEX      => USE_SPANDEX,
-      NFU_PRESENT      => NFU_PRESENT,
       ROMBase          => ROMBase,
       ROMLength        => ROMLength,
       APBBase          => APBBase,

@@ -1,1 +1,0 @@
-../../../extras/hardroid/accelerators/sha2/src/properties.h

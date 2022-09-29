@@ -50,26 +50,3 @@ begin
   end generate;
 end;
 
-
-library ieee;
-use ieee.std_logic_1164.all;
-use work.gencomp.all;
-use work.allpads.all;
-
-entity clkpadv is
-  generic (tech : integer := 0; level : integer := 0;
-	   voltage : integer := x33v; arch : integer := 0;
-           hf : integer := 0; filter : integer := 0;
-           loc : std_logic_vector := (31 downto 0 => '0');
-           width : integer := 1);
-  port (
-    pad : in  std_logic_vector(width-1 downto 0);
-    o   : out std_logic_vector(width-1 downto 0));
-end;
-architecture rtl of clkpadv is
-begin
-  v : for i in width-1 downto 0 generate
-    x0 : clkpad generic map (tech, level, voltage, arch, hf, filter, loc(i)) port map (pad(i), o(i));
-  end generate;
-end;
-

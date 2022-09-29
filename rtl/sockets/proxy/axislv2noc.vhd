@@ -1,4 +1,4 @@
--- Copyright (c) 2011-2021 Columbia University, System Level Design Group
+-- Copyright (c) 2011-2022 Columbia University, System Level Design Group
 -- SPDX-License-Identifier: Apache-2.0
 
 -------------------------------------------------------------------------------
@@ -85,7 +85,7 @@ architecture rtl of axislv2noc is
     write                  : std_ulogic;
     id                     : std_logic_vector (XID_WIDTH-1 downto 0);
     addr                   : std_logic_vector (GLOB_PHYS_ADDR_BITS - 1 downto 0);
-    len                    : std_logic_vector (7 downto 0);
+    len                    : std_logic_vector (8 downto 0);
     size                   : std_logic_vector (2 downto 0);
     burst                  : std_logic_vector (1 downto 0);
     lock                   : std_logic;
@@ -196,7 +196,7 @@ begin  -- rtl
     if tran.write = '1' then
       tran.id     := mosi(tran.xindex).aw.id;
       tran.addr   := mosi(tran.xindex).aw.addr;
-      tran.len    := mosi(tran.xindex).aw.len + "0000001";
+      tran.len    := ('0' & mosi(tran.xindex).aw.len) + "0000001";
       tran.size   := mosi(tran.xindex).aw.size;
       tran.burst  := mosi(tran.xindex).aw.burst;
       tran.lock   := mosi(tran.xindex).aw.lock;
@@ -209,7 +209,7 @@ begin  -- rtl
     else
       tran.id     := mosi(tran.xindex).ar.id;
       tran.addr   := mosi(tran.xindex).ar.addr;
-      tran.len    := mosi(tran.xindex).ar.len + "0000001";
+      tran.len    := ('0' & mosi(tran.xindex).ar.len) + "0000001";
       tran.size   := mosi(tran.xindex).ar.size;
       tran.burst  := mosi(tran.xindex).ar.burst;
       tran.lock   := mosi(tran.xindex).ar.lock;
@@ -323,10 +323,10 @@ begin  -- rtl
     else
       tran.payload_length(NOC_FLIT_SIZE-1 downto NOC_FLIT_SIZE-PREAMBLE_WIDTH) := PREAMBLE_TAIL;
     end if;
-    tran.payload_length(7 downto 0) := tran.len;
+    tran.payload_length(8 downto 0) := tran.len;
     -- (read transaction only)
     tran.payload_length_narrow(MISC_NOC_FLIT_SIZE-1 downto MISC_NOC_FLIT_SIZE-PREAMBLE_WIDTH) := PREAMBLE_TAIL;
-    tran.payload_length_narrow(7 downto 0) := tran.len;
+    tran.payload_length_narrow(8 downto 0) := tran.len;
 
     -- Create header flit
     tran.reserved             := (others => '0');
@@ -441,7 +441,7 @@ begin  -- rtl
       if AHBDW = 64 then
         case transaction_reg.addr(2) is
           when '0'    => wdata := ahbdrivedata(mosi(transaction_reg.xindex).w.data(31 downto 0));
-          when others => wdata := ahbdrivedata(mosi(transaction_reg.xindex).w.data(63 downto 32));
+          when others => wdata := ahbdrivedata(mosi(transaction_reg.xindex).w.data(ARCH_BITS - 1 downto ARCH_BITS - 32));
         end case;
       else
         wdata := ahbdrivedata(mosi(transaction_reg.xindex).w.data);
@@ -451,8 +451,8 @@ begin  -- rtl
         case transaction_reg.addr(2 downto 1) is
           when "00"   => wdata := ahbdrivedata(mosi(transaction_reg.xindex).w.data(15 downto 0));
           when "01"   => wdata := ahbdrivedata(mosi(transaction_reg.xindex).w.data(31 downto 16));
-          when "10"   => wdata := ahbdrivedata(mosi(transaction_reg.xindex).w.data(47 downto 32));
-          when others => wdata := ahbdrivedata(mosi(transaction_reg.xindex).w.data(63 downto 48));
+          when "10"   => wdata := ahbdrivedata(mosi(transaction_reg.xindex).w.data(ARCH_BITS - 17 downto ARCH_BITS - 32));
+          when others => wdata := ahbdrivedata(mosi(transaction_reg.xindex).w.data(ARCH_BITS - 1 downto ARCH_BITS - 16));
         end case;
       else
         case transaction_reg.addr(1) is
@@ -467,10 +467,10 @@ begin  -- rtl
           when "001"  => wdata := ahbdrivedata(mosi(transaction_reg.xindex).w.data(15 downto 8));
           when "010"  => wdata := ahbdrivedata(mosi(transaction_reg.xindex).w.data(23 downto 16));
           when "011"  => wdata := ahbdrivedata(mosi(transaction_reg.xindex).w.data(31 downto 24));
-          when "100"  => wdata := ahbdrivedata(mosi(transaction_reg.xindex).w.data(39 downto 32));
-          when "101"  => wdata := ahbdrivedata(mosi(transaction_reg.xindex).w.data(47 downto 40));
-          when "110"  => wdata := ahbdrivedata(mosi(transaction_reg.xindex).w.data(55 downto 48));
-          when others => wdata := ahbdrivedata(mosi(transaction_reg.xindex).w.data(63 downto 56));
+          when "100"  => wdata := ahbdrivedata(mosi(transaction_reg.xindex).w.data(ARCH_BITS - 25 downto ARCH_BITS - 32));
+          when "101"  => wdata := ahbdrivedata(mosi(transaction_reg.xindex).w.data(ARCH_BITS - 17 downto ARCH_BITS - 24));
+          when "110"  => wdata := ahbdrivedata(mosi(transaction_reg.xindex).w.data(ARCH_BITS -  9 downto ARCH_BITS - 16));
+          when others => wdata := ahbdrivedata(mosi(transaction_reg.xindex).w.data(ARCH_BITS -  1 downto ARCH_BITS -  8));
         end case;
       else
         case transaction_reg.addr(1 downto 0) is

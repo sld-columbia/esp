@@ -1,4 +1,4 @@
-# Copyright (c) 2011-2021 Columbia University, System Level Design Group
+# Copyright (c) 2011-2022 Columbia University, System Level Design Group
 # SPDX-License-Identifier: Apache-2.0
 
 
@@ -42,8 +42,6 @@ RTL_TECH_FOLDERS = $(shell ls -d $(ESP_ROOT)/tech/$(TECHLIB)/*/)
 VLOG_SRCS += $(foreach f, $(shell strings $(FLISTS)/vlog.flist), $(ESP_ROOT)/rtl/$(f))
 VLOG_SRCS += $(foreach f, $(shell strings $(FLISTS)/cores_vlog.flist), $(if $(findstring cores/$(CPU_ARCH), $(f)), $(ESP_ROOT)/rtl/$(f),))
 VLOG_SRCS += $(foreach f, $(shell strings $(FLISTS)/techmap_vlog.flist), $(if $(findstring techmap/$(TECHLIB), $(f)), $(ESP_ROOT)/rtl/$(f),))
-# TO DO this is a temporary solution to include the token-based power management modules
-VLOG_SRCS += $(foreach f, $(ESP_ROOT)/../rtl/sockets/dvfs, $(shell (find $(f) -name "*.v")))
 VLOG_SRCS += $(foreach f, $(RTL_TECH_FOLDERS), $(shell (find $(f) -name "*.v")))
 VLOG_SRCS += $(foreach f, $(RTL_TECH_FOLDERS), $(shell (find $(f) -name "*.sv")))
 VLOG_SRCS += $(THIRDPARTY_VLOG) $(THIRDPARTY_SVLOG)

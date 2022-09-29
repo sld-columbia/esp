@@ -1,4 +1,4 @@
--- Copyright (c) 2011-2021 Columbia University, System Level Design Group
+-- Copyright (c) 2011-2022 Columbia University, System Level Design Group
 -- SPDX-License-Identifier: Apache-2.0
 
 -------------------------------------------------------------------------------
@@ -71,9 +71,9 @@ entity esp_acc_dma is
     pllclk        : out std_ulogic;
     local_y       : in  local_yx;
     local_x       : in  local_yx;
-    paddr         : in  integer;
-    pmask         : in  integer;
-    pirq          : in  integer;
+    paddr         : in  integer range 0 to 4095;
+    pmask         : in  integer range 0 to 4095;
+    pirq          : in  integer range 0 to NAHBIRQ - 1;
     -- APB interface
     apbi          : in  apb_slv_in_type;
     apbo          : out apb_slv_out_type;
@@ -100,6 +100,7 @@ entity esp_acc_dma is
     bufdout_valid : in  std_ulogic;
     acc_done      : in  std_ulogic;
     flush         : out std_ulogic;
+    acc_flush_done: in  std_ulogic;
     mon_dvfs_in   : in  monitor_dvfs_type;
     --Monitor signals
     mon_dvfs      : out monitor_dvfs_type;
@@ -230,7 +231,8 @@ architecture rtl of esp_acc_dma is
   type dma_fsm is (idle, request_header, request_address, request_length,
                    request_data, reply_header, reply_data, config,
                    send_header, rd_handshake, wr_handshake, wait_req_p2p,
-                   running, reset, wait_for_completion, fully_coherent_request);
+                   running, reset, wait_for_completion, wait_flush_done, fully_coherent_request);
+  signal acc_rst_next : std_ulogic;
   signal dma_state, dma_next : dma_fsm;
   signal status : std_logic_vector(31 downto 0);
   signal sample_status : std_ulogic;
@@ -630,6 +632,13 @@ begin  -- rtl
   -----------------------------------------------------------------------------
   -- DMA
   -----------------------------------------------------------------------------
+  acc_rst_reg : process (clk)
+  begin
+    if clk'event and clk = '1' then -- rising clock edge
+        acc_rst <= acc_rst_next;
+    end if;
+  end process acc_rst_reg;
+
   sample_acc_done: process (clk, rst)
   begin  -- process sample_acc_done
     if rst = '0' then                   -- asynchronous reset (active low)
@@ -651,7 +660,7 @@ begin  -- rtl
                           dma_tran_start, tlb_empty, pending_dma_write,
                           pending_dma_read, coherent_dma_ready, dvfs_transient,
                           size_r, coherence,
-                          p2p_req_rcv_empty, p2p_req_rcv_data_out, p2p_rsp_snd_full)
+                          p2p_req_rcv_empty, p2p_req_rcv_data_out, p2p_rsp_snd_full, acc_flush_done)
     variable payload_data : noc_flit_type;
     variable preamble : noc_preamble_type;
     variable msg : noc_msg_type;
@@ -703,7 +712,7 @@ begin  -- rtl
     coherent_dma_write <= '0';
 
     -- Default accelerator inputs
-    acc_rst <= rst;
+    acc_rst_next <= rst;
     conf_done <= '0';
     rd_grant <= '0';
     fixen_bufdin_data <= fix_endian(dma_rcv_data_out_int(ARCH_BITS - 1 downto 0), size_r);
@@ -786,13 +795,18 @@ begin  -- rtl
         elsif bankreg(CMD_REG)(CMD_BIT_LAST downto 0) = zero(CMD_BIT_LAST downto 0) then
           dma_next <= reset;
         elsif pending_acc_done = '1' then
-          status <= (others => '0');
-          status(STATUS_BIT_DONE) <= '1';
-          sample_status <= '1';
-          if coherence = ACC_COH_FULL then
+          if USE_SPANDEX /= 0 and coherence = ACC_COH_FULL then
             flush <= '1';
+            dma_next <= wait_flush_done; 
+          else
+            status <= (others => '0');
+            status(STATUS_BIT_DONE) <= '1';
+            sample_status <= '1';
+            if coherence = ACC_COH_FULL then
+              flush <= '1';
+            end if;
+            dma_next <= wait_for_completion; 
           end if;
-          dma_next <= wait_for_completion;
         elsif rd_request = '1' then
           if scatter_gather = 0 then
             sample_flits <= '1';
@@ -807,6 +821,14 @@ begin  -- rtl
           dma_next <= wr_handshake;
         end if;
 
+      when wait_flush_done =>
+        if acc_flush_done = '1' and USE_SPANDEX /= 0 then
+          status <= (others => '0');
+          status(STATUS_BIT_DONE) <= '1';
+          sample_status <= '1';
+          dma_next <= wait_for_completion; 
+        end if;
+
       when wait_for_completion =>
         -- The software must reset the accelerator on completion by writing a 0
         -- to the command register
@@ -817,7 +839,7 @@ begin  -- rtl
       when reset =>
         -- Reset the accelerator and go back to idle. Note that the TLB is
         -- still valid until the register PT_ADDRESS is written again.
-        acc_rst <= '0';
+        acc_rst_next <= '0';
         status <= (others => '0');
         sample_status <= '1';
         clear_acc_done <= '1';

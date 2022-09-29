@@ -1,4 +1,4 @@
--- Copyright (c) 2011-2021 Columbia University, System Level Design Group
+-- Copyright (c) 2011-2022 Columbia University, System Level Design Group
 -- SPDX-License-Identifier: Apache-2.0
 
 library ieee;
@@ -25,8 +25,7 @@ package ariane_esp_pkg is
       SLMDDRLength     : std_logic_vector(63 downto 0);
       DRAMBase         : std_logic_vector(63 downto 0);
       DRAMLength       : std_logic_vector(63 downto 0);
-      DRAMCachedLength : std_logic_vector(63 downto 0);
-      NFU_PRESENT      : integer);
+      DRAMCachedLength : std_logic_vector(63 downto 0));
     port (
       clk         : in  std_logic;
       rstn        : in  std_logic;

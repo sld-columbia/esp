@@ -1,4 +1,4 @@
--- Copyright (c) 2011-2021 Columbia University, System Level Design Group
+-- Copyright (c) 2011-2022 Columbia University, System Level Design Group
 -- SPDX-License-Identifier: Apache-2.0
 
 library ieee;
@@ -49,11 +49,9 @@ use std.textio.all;
     refclk    : in  std_ulogic;
     pllbypass : in  std_ulogic;
     pllclk    : out std_ulogic;
-    ext_dco_cc_sel  : out std_logic_vector(5 downto 0);
-    ext_ldo_res_sel : out std_logic_vector(7 downto 0);
     local_y   : in  local_yx;
     local_x   : in  local_yx;
-    tile_id   : in  integer;
+    tile_id   : in  integer range 0 to CFG_TILES_NUM - 1;
     paddr     : in  integer range 0 to 4095;
     pmask     : in  integer range 0 to 4095;
     paddr_ext : in  integer range 0 to 4095;
@@ -218,6 +216,7 @@ end;
   signal dma_write_chnl_data        : std_logic_vector(ARCH_BITS - 1 downto 0);
   signal acc_done                   : std_ulogic;
   signal flush                      : std_ulogic;
+  signal acc_flush_done             : std_ulogic;
   -- Register control, interrupt and monitor signals
   signal pllclk_int        : std_ulogic;
   signal mon_dvfs_feedthru : monitor_dvfs_type;
@@ -271,10 +270,6 @@ end;
 
 begin
 
-  -- unused DCO and LDO selectors
-  ext_dco_cc_sel  <= (others => '0');
-  ext_ldo_res_sel <= (others => '0');
-
   interrupt_ack_rdreq <= '0';
   
   -- <<accelerator_instance>>
@@ -313,6 +308,7 @@ begin
         aq                         => conf_done,
         rl                         => acc_done,
         spandex_conf               => bank(SPANDEX_REG),
+        acc_flush_done             => acc_flush_done,
         coherence_req_wrreq        => coherence_req_wrreq,
         coherence_req_data_in      => coherence_req_data_in,
         coherence_req_full         => coherence_req_full,
@@ -402,6 +398,7 @@ begin
       bufdout_valid                 => dma_write_chnl_valid,
       acc_done                      => acc_done,
       flush                         => flush,
+      acc_flush_done                => acc_flush_done,
       mon_dvfs_in                   => mon_dvfs_in,
       mon_dvfs                      => mon_dvfs_feedthru,
       llc_coherent_dma_rcv_rdreq    => coherent_dma_rcv_rdreq,

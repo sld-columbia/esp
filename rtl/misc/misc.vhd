@@ -1,4 +1,4 @@
--- Copyright (c) 2011-2021 Columbia University, System Level Design Group
+-- Copyright (c) 2011-2022 Columbia University, System Level Design Group
 -- SPDX-License-Identifier: Apache-2.0
 
 library ieee;
@@ -11,10 +11,6 @@ use work.gencomp.all;
 package misc is
 
   type attribute_vector is array (natural range <>) of integer;
-
-  function get_apb_base_address (
-    constant arch : cpu_arch_type := ariane)
-    return std_logic_vector;
 
   component esp_init is
     generic (
@@ -80,8 +76,8 @@ package misc is
   port (
     rst    : in  std_ulogic;
     clk    : in  std_ulogic;
-    haddr  : in  integer;
-    hmask  : in  integer;
+    haddr  : in  integer range 0 to 4095;
+    hmask  : in  integer range 0 to 4095;
     ahbsi  : in  ahb_slv_in_type;
     ahbso  : out ahb_slv_out_type);
   end component;
@@ -120,21 +116,4 @@ package misc is
       ahbso : out ahb_slv_out_type);
   end component ahbslm;
 
-end misc;
-
-package body misc is
-
-  function get_apb_base_address (
-    constant arch : cpu_arch_type := ariane)
-    return std_logic_vector is
-    variable addr : std_logic_vector(11 downto 0);
-  begin
-    if arch = leon3 then
-      addr := X"800";
-    else
-      addr := X"600";
-    end if;
-    return addr;
-  end function get_apb_base_address;
-
-end misc;
+end;
