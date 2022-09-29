@@ -1,4 +1,4 @@
--- Copyright (c) 2011-2021 Columbia University, System Level Design Group
+-- Copyright (c) 2011-2022 Columbia University, System Level Design Group
 -- SPDX-License-Identifier: Apache-2.0
 
 library ieee;
@@ -246,6 +246,7 @@ architecture rtl of EPOCHS0_TOP is
   -- Global NoC reset and clock
   signal sys_clk  : std_ulogic;
   signal sys_rstn : std_ulogic;
+  signal sys_clk_lock : std_ulogic;
 
   -- I/O for PADS
   constant pad_fixed_cfg : std_logic_vector(19 - (ESP_CSR_PAD_CFG_MSB - ESP_CSR_PAD_CFG_LSB + 1) downto 0) := (others => '0');
@@ -331,13 +332,6 @@ architecture rtl of EPOCHS0_TOP is
   signal uart_ctsn_int   : std_logic;   -- UART1_RTSN (u1i.ctsn)
   signal uart_rtsn_int   : std_logic;   -- UART1_RTSN (u1o.rtsn)
 
-  attribute mark_debug : string;
-
-  attribute mark_debug of tdi_int : signal is "true";
-  attribute mark_debug of tdo_int : signal is "true";
-  attribute mark_debug of tms_int : signal is "true";
-  attribute mark_debug of tclk_int : signal is "true";
-
 begin
 
   -----------------------------------------------------------------------------
@@ -409,7 +403,7 @@ begin
 
   unused_interface_gen : for i in 0 to CFG_TILES_NUM - 1 generate
     unused_ext_clk_io_gen: if i /= cpu_tile_id(0) and i /= io_tile_id and i /= 1 and i /= 12 and i /= mem_tile_id(0) generate
-      ext_clk_int(i) <= '0';
+      ext_clk_int(i) <= ext_clk_noc_int;
     end generate unused_ext_clk_io_gen;
     unused_td_io_gen: if i /= cpu_tile_id(0) and i /= io_tile_id and i /= mem_tile_id(0) and i /= mem_tile_id(1) and i /= mem_tile_id(2) and i /= mem_tile_id(3)
                          and i /= 8 and i /= 4 and i /= 1 and i /= 2 and i /= 15 generate
@@ -619,7 +613,7 @@ begin
     port map (fpga_valid_in, fpga_valid_in_swap);
   fpga_valid_out_pad : outpadvvv generic map (loc => fpga_valid_out_pad_loc, level => cmos, voltage => x18v, tech => CFG_FABTECH, width => 4)
     port map (fpga_valid_out, fpga_valid_out_swap, fpga_c_pad_cfg);
-  fpga_clk_in_pad : clkpadv generic map (loc => fpga_clk_in_pad_loc, level => cmos, voltage => x18v, tech => CFG_FABTECH, width => 4)
+  fpga_clk_in_pad : inpadv generic map (loc => fpga_clk_in_pad_loc, level => cmos, voltage => x18v, tech => CFG_FABTECH, width => 4)
     port map (fpga_clk_in, fpga_clk_in_swap);
   fpga_clk_out_pad : outpadvvv generic map (loc => fpga_clk_out_pad_loc, level => cmos, voltage => x18v, tech => CFG_FABTECH, width => 4)
     port map (fpga_clk_out, fpga_clk_out_swap, fpga_c_pad_cfg);
@@ -823,10 +817,12 @@ begin
       tile_empty_i : asic_tile_empty
         generic map (
           SIMULATION   => SIMULATION,
-          ROUTER_PORTS => set_router_ports(CFG_FABTECH, CFG_XLEN, CFG_YLEN, tile_x(i), tile_y(i)))
+          ROUTER_PORTS => set_router_ports(CFG_FABTECH, CFG_XLEN, CFG_YLEN, tile_x(i), tile_y(i)),
+          this_has_dco => 1)
         port map (
           rst                => reset_int,
           sys_clk            => sys_clk,
+          sys_clk_lock       => '1',
           ext_clk            => ext_clk_int(i),
           clk_div            => clk_div_int(i),
           tdi                => tdi_int(i),
@@ -916,11 +912,12 @@ begin
       tile_cpu_i : asic_tile_cpu
         generic map (
           SIMULATION   => SIMULATION,
-          this_has_nfu => tile_has_nfu(i),
-          ROUTER_PORTS => set_router_ports(CFG_FABTECH, CFG_XLEN, CFG_YLEN, tile_x(i), tile_y(i)))
+          ROUTER_PORTS => set_router_ports(CFG_FABTECH, CFG_XLEN, CFG_YLEN, tile_x(i), tile_y(i)),
+          this_has_dco => 1)
         port map (
           rst                => reset_int,
           sys_clk            => sys_clk,
+          sys_clk_lock       => '1',
           ext_clk            => ext_clk_int(i),
           clk_div            => clk_div_int(i),
           tdi                => tdi_int(i),
@@ -1009,16 +1006,16 @@ begin
 -- pragma translate_on
       tile_acc_i : asic_tile_acc
         generic map (
-          SIMULATION         => SIMULATION,
           this_hls_conf => tile_design_point(i),
           this_device   => tile_device(i),
           this_irq_type => tile_irq_type(i),
           this_has_l2   => tile_has_l2(i),
-          this_has_token_pm  => tile_has_tdvfs(i),
-          ROUTER_PORTS  => set_router_ports(CFG_FABTECH, CFG_XLEN, CFG_YLEN, tile_x(i), tile_y(i)))
+          ROUTER_PORTS  => set_router_ports(CFG_FABTECH, CFG_XLEN, CFG_YLEN, tile_x(i), tile_y(i)),
+          this_has_dco => 1)
         port map (
           rst                => reset_int,
           sys_clk            => sys_clk,
+          sys_clk_lock       => '1',
           ext_clk            => ext_clk_int(i),
           clk_div            => clk_div_int(i),
           tdi                => tdi_int(i),
@@ -1106,12 +1103,14 @@ begin
       tile_io_i : asic_tile_io
         generic map (
           SIMULATION   => SIMULATION,
-          ROUTER_PORTS => set_router_ports(CFG_FABTECH, CFG_XLEN, CFG_YLEN, tile_x(i), tile_y(i)))
+          ROUTER_PORTS => set_router_ports(CFG_FABTECH, CFG_XLEN, CFG_YLEN, tile_x(i), tile_y(i)),
+          this_has_dco => 1)
         port map (
           rst                => reset_int,       -- from I/O PAD reset
           sys_rstn_out       => sys_rstn,        -- NoC reset out (unused; connect other tiles directly to reset PAD)
           sys_clk_out        => sys_clk,         -- NoC clock out
           sys_clk            => sys_clk,         -- NoC clock in
+          sys_clk_lock_out   => sys_clk_lock,     -- NoC DCO lock
           ext_clk_noc        => ext_clk_noc_int, -- backup NoC clock
           clk_div_noc        => clk_div_noc_int,
           ext_clk            => ext_clk_int(i),  -- backup clock (fixed)
@@ -1234,10 +1233,12 @@ begin
     mem_tile : if tile_type(i) = 4 generate
       tile_mem_i : asic_tile_mem
         generic map (
-          ROUTER_PORTS => set_router_ports(CFG_FABTECH, CFG_XLEN, CFG_YLEN, tile_x(i), tile_y(i)))
+          ROUTER_PORTS => set_router_ports(CFG_FABTECH, CFG_XLEN, CFG_YLEN, tile_x(i), tile_y(i)),
+          this_has_dco => 1)
         port map (
           rst                => reset_int,
           sys_clk            => sys_clk,
+          sys_clk_lock       => '1',
           ext_clk            => ext_clk_int(i),
           clk_div            => clk_div_int(i),
           fpga_data_in       => fpga_data_in((tile_mem_id(i) + 1) * (ARCH_BITS) - 1 downto tile_mem_id(i) * (ARCH_BITS)),
@@ -1331,10 +1332,12 @@ begin
     slm_tile : if tile_type(i) = 5 generate
       tile_slm_i : asic_tile_slm
         generic map (
-          ROUTER_PORTS => set_router_ports(CFG_FABTECH, CFG_XLEN, CFG_YLEN, tile_x(i), tile_y(i)))
+          ROUTER_PORTS => set_router_ports(CFG_FABTECH, CFG_XLEN, CFG_YLEN, tile_x(i), tile_y(i)),
+          this_has_dco => 1)
         port map (
           rst                => reset_int,
           sys_clk            => sys_clk,
+          sys_clk_lock       => '1',
           ext_clk            => ext_clk_int(i),
           clk_div            => clk_div_int(i),
           tdi                => tdi_int(i),

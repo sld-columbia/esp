@@ -332,8 +332,6 @@ class soc_config:
         self.tiles[t].has_pll = soc.noc.topology[x][y].has_pll.get()
         self.tiles[t].has_clkbuf = soc.noc.topology[x][y].has_clkbuf.get()
         self.tiles[t].has_l2 = soc.noc.topology[x][y].has_l2.get()
-        self.tiles[t].has_nfu = soc.noc.topology[x][y].has_nfu.get()
-        self.tiles[t].has_tdvfs = soc.noc.topology[x][y].has_tdvfs.get()
         self.tiles[t].has_ddr = soc.noc.topology[x][y].has_ddr.get()
 
         # Assign IDs
@@ -1191,20 +1189,6 @@ def print_mapping(fp, soc, esp_config):
   fp.write("  constant tile_has_l2 : attribute_vector(0 to CFG_TILES_NUM - 1) := (\n")
   for i in range(0, esp_config.ntiles):
     fp.write("    " + str(i) + " => " + str(esp_config.tiles[i].has_l2) + ",\n")
-  fp.write("    others => 0);\n\n")
-
-  #
-  fp.write("  -- Flag tiles that have a NFU\n")
-  fp.write("  constant tile_has_nfu : attribute_vector(0 to CFG_TILES_NUM - 1) := (\n")
-  for i in range(0, esp_config.ntiles):
-    fp.write("    " + str(i) + " => " + str(esp_config.tiles[i].has_nfu) + ",\n")
-  fp.write("    others => 0);\n\n")
-
-  #
-  fp.write("  -- Flag tiles that have a token-based DVFS\n")
-  fp.write("  constant tile_has_tdvfs : attribute_vector(0 to CFG_TILES_NUM - 1) := (\n")
-  for i in range(0, esp_config.ntiles):
-    fp.write("    " + str(i) + " => " + str(esp_config.tiles[i].has_tdvfs) + ",\n")
   fp.write("    others => 0);\n\n")
 
   #

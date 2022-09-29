@@ -69,7 +69,6 @@ noc/fifo2.vhd
 noc/rtr_arbitration_engine.vhd
 noc/sync_noc_xy.vhd
 noc/inferred_async_fifo.vhd
-noc/noc_synchronizers.vhd
 noc/fifo3.vhd
 noc/fifo1.vhd
 noc/sync_noc32_xy.vhd
@@ -117,16 +116,12 @@ sockets/jtag/fpga_proxy_jtag.vhd
 sockets/jtag/proc_seq.vhd
 sockets/dvfs/dvfs_top.vhd
 sockets/dvfs/dvfs_fsm.vhd
-sockets/dvfs/pm2noc.vhd
-sockets/dvfs/token_pm.vhd
 sockets/bus/patient_apbctrl.vhd
 sockets/bus/ahbmst.vhd
 sockets/bus/ahbtrace_mb.vhd
 sockets/bus/ahbtrace_mmb.vhd
 sockets/bus/ahbtrace.vhd
 sockets/bus/ahbctrl.vhd
-sockets/muxes/noc5_mux.vhd
-sockets/sockets/noc_domain_socket.vhd
 tiles/tile_empty.vhd
 tiles/tile_slm.vhd
 tiles/tile_mem.vhd
