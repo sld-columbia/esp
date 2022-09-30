@@ -148,8 +148,8 @@ module GT_VORTEX_wrapper #(
    wire apb_write = psel & penable & pwrite;
    wire apb_read  = psel & ~pwrite;
    reg [$clog2(`RESET_DELAY+1)-1:0] vx_reset_ctr;
-   wire m_axi_araddr_raw; 
-   wire m_axi_awaddr_raw;
+   wire [AXI_ADDR_WIDTH-1:0] m_axi_araddr_raw; 
+   wire [AXI_ADDR_WIDTH-1:0] m_axi_awaddr_raw;
    wire vx_busy_int = busy;
    assign pready  = 1'b1;
    assign pslverr = 1'b0;
