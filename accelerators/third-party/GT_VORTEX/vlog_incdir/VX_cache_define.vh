@@ -4,7 +4,7 @@
 `include "VX_platform.vh"
 
 // cache request identifier
-`define DBG_CACHE_REQ_IDW       44
+`define DBG_CACHE_REQ_IDW       1
 
 `define REQS_BITS               `LOG2UP(NUM_REQS)
 
