@@ -143,26 +143,27 @@ module GT_VORTEX_wrapper #(
     // Configuration Registers
    reg vx_reset_soft = 0;
    reg [31:0] addr;
-   reg  vx_started; // Indicates that vortex is started and running for multicycle reset.
-   reg  vx_reset; 
+   reg  vx_started = 1'b0; // Indicates that vortex is started and running for multicycle reset.
+   reg  vx_reset   = 1'b0; 
    wire apb_write = psel & penable & pwrite;
    wire apb_read  = psel & ~pwrite;
    reg [$clog2(`RESET_DELAY+1)-1:0] vx_reset_ctr;
-   wire m_axi_araddr_raw; 
-   wire m_axi_awaddr_raw;
-   wire vx_busy_int = busy;
+   wire [31:0] m_axi_araddr_raw; 
+   wire [31:0] m_axi_awaddr_raw;
+   wire   vx_busy_int = busy;
    assign pready  = 1'b1;
    assign pslverr = 1'b0;
    // Adding the base address to the memory addresses reserved for Vortex programs
    assign m_axi_araddr = m_axi_araddr_raw + addr; // FIXME: check for comb loop 
    assign m_axi_awaddr = m_axi_awaddr_raw + addr; // FIXME: check for comb loop
-
+   assign vx_busy_int  = busy;  
     // Detecting positive edge of reset
-    reg   reset_dly, reset_pe;                          
-    always @ (posedge clk) begin
-	    reset_dly <= reset;
-    end
-    assign reset_pe = reset & ~reset_dly; // Positive edge of reset
+   reg   reset_dly, reset_pe;                          
+   always @ (posedge clk) begin
+        reset_dly <= reset;
+   end
+   
+   assign reset_pe = reset & ~reset_dly; // Positive edge of reset
 
    always @(posedge clk) begin
       if (reset_pe) begin
@@ -178,12 +179,12 @@ module GT_VORTEX_wrapper #(
 	  8'h54 : vx_reset_soft <= pwdata[0]; 
         endcase
       end  // write
-      else if (apb_read) begin
+      else begin
          
         case (paddr[7:0])
-           8'h50 : prdata <= addr; 
-           8'h58 : prdata <= {31'b0, vx_busy_int}; // Interrupt Read only
-           8'h54 : prdata <= {31'b0, vx_reset_soft};	
+           8'h50 : prdata    <= addr; 
+           8'h58 : prdata[0] <= vx_busy_int; // Interrupt Read only
+           8'h54 : prdata[0] <= vx_reset_soft;	
         endcase
       end // read
 
@@ -199,12 +200,12 @@ module GT_VORTEX_wrapper #(
 
    always @(posedge clk) begin
       if (vx_reset_soft == 1 && vx_started == 0) begin
-	 vx_reset <= 1;
+	 vx_reset   <= 1;
 	 vx_started <= 1;
- end // end reset begin if
+      end // end reset begin if
       // Vortex reset cycles
       if (vx_reset_ctr == (`RESET_DELAY-1) && vx_started == 1'b1) begin
-         vx_reset         <= 1'b0;
+         vx_reset   <= 1'b0;
       end // end delay to reset if
    end // always
     
@@ -212,9 +213,9 @@ module GT_VORTEX_wrapper #(
     .AXI_DATA_WIDTH    (`VX_MEM_DATA_WIDTH),
     .AXI_ADDR_WIDTH    (32),
     .AXI_TID_WIDTH     (`VX_MEM_TAG_WIDTH),
-    .AXI_STROBE_WIDTH  ((`VX_MEM_DATA_WIDTH / 8)) 
+    .AXI_STROBE_WIDTH  (`VX_MEM_DATA_WIDTH / 8) 
     )Vortex_axi_0 (
-    .clk            ( vx_started & clk   ),
+    .clk            ( clk & vx_started  ),
     .reset          ( vx_reset ),
 
     .m_axi_awid     ( m_axi_awid    ),
