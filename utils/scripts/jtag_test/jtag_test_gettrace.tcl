@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 ## Use the following for single tile
-set target_tile 7
+set target_tile $::env(JTAG_TEST_TILE)
 set target_instance [lsearch -all -inline -regexp [find instances -bydu -nodu jtag_test] "tiles_gen\\($target_tile\\)"]
 
 ## Use the following for multiple tiles
@@ -18,9 +18,9 @@ set target_ports { \
 		   }
 
 proc inst_to_tile_name { inst } {
-    set RE /testbench/top_1/chip_i/
+    set RE /testbench/top_1/chip_i/chip_i/
     set tmp1 [regsub -all $RE $inst ""]
-    set RE /.*/.*/.*/jtag_test_i
+    set RE /.*/.*/jtag_test_i
     set tmp2 [regsub -all $RE $tmp1 ""]
     set tmp3 [regsub \\( $tmp2 "_"]
     set name [regsub \\) $tmp3 ""]
@@ -28,7 +28,6 @@ proc inst_to_tile_name { inst } {
 }
 
 set name [inst_to_tile_name $target_instance]
-
 #foreach inst $target_instance {
 #set name [inst_to_tile_name $inst]
 
@@ -49,8 +48,10 @@ view -new -title $name list
 #}
 
 # This is enough for Hello world.
-# run 125 us
+run 130 us
 
+view list -window $name -dock
+write list -window $name jtag/$name.lst
 
 # foreach inst $target_instance {
 #     set name [inst_to_tile_name $inst]
@@ -60,4 +61,4 @@ view -new -title $name list
 #     write list -window $name $name.lst
 # }
 
-# quit -f
+quit -f

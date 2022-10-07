@@ -241,7 +241,7 @@ class SoC_Config():
           if tokens[3] == "acc":
             tile.point.set(tokens[8])
             tile.has_l2.set(tokens[9])
-            tile.vendor = tokens[11]
+            tile.vendor = tokens[10]
     # DVFS (skip whether it has it or not; we know that already)
     line = fp.readline()
     line = fp.readline()

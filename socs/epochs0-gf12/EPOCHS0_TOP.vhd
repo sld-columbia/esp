@@ -818,7 +818,7 @@ begin
         generic map (
           SIMULATION   => SIMULATION,
           ROUTER_PORTS => set_router_ports(CFG_FABTECH, CFG_XLEN, CFG_YLEN, tile_x(i), tile_y(i)),
-          this_has_dco => 1)
+          this_has_dco => 1 - ESP_EMU)
         port map (
           rst                => reset_int,
           sys_clk            => sys_clk,
@@ -913,7 +913,7 @@ begin
         generic map (
           SIMULATION   => SIMULATION,
           ROUTER_PORTS => set_router_ports(CFG_FABTECH, CFG_XLEN, CFG_YLEN, tile_x(i), tile_y(i)),
-          this_has_dco => 1)
+          this_has_dco => 1 - ESP_EMU)
         port map (
           rst                => reset_int,
           sys_clk            => sys_clk,
@@ -1011,7 +1011,7 @@ begin
           this_irq_type => tile_irq_type(i),
           this_has_l2   => tile_has_l2(i),
           ROUTER_PORTS  => set_router_ports(CFG_FABTECH, CFG_XLEN, CFG_YLEN, tile_x(i), tile_y(i)),
-          this_has_dco => 1)
+          this_has_dco => 1 - ESP_EMU)
         port map (
           rst                => reset_int,
           sys_clk            => sys_clk,
@@ -1104,7 +1104,7 @@ begin
         generic map (
           SIMULATION   => SIMULATION,
           ROUTER_PORTS => set_router_ports(CFG_FABTECH, CFG_XLEN, CFG_YLEN, tile_x(i), tile_y(i)),
-          this_has_dco => 1)
+          this_has_dco => 1 - ESP_EMU)
         port map (
           rst                => reset_int,       -- from I/O PAD reset
           sys_rstn_out       => sys_rstn,        -- NoC reset out (unused; connect other tiles directly to reset PAD)
@@ -1234,7 +1234,7 @@ begin
       tile_mem_i : asic_tile_mem
         generic map (
           ROUTER_PORTS => set_router_ports(CFG_FABTECH, CFG_XLEN, CFG_YLEN, tile_x(i), tile_y(i)),
-          this_has_dco => 1)
+          this_has_dco => 1 - ESP_EMU)
         port map (
           rst                => reset_int,
           sys_clk            => sys_clk,
@@ -1333,7 +1333,7 @@ begin
       tile_slm_i : asic_tile_slm
         generic map (
           ROUTER_PORTS => set_router_ports(CFG_FABTECH, CFG_XLEN, CFG_YLEN, tile_x(i), tile_y(i)),
-          this_has_dco => 1)
+          this_has_dco => 1 - ESP_EMU)
         port map (
           rst                => reset_int,
           sys_clk            => sys_clk,

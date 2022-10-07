@@ -182,7 +182,8 @@ architecture behav of testbench is
 
   component top
     generic (
-      SIMULATION : boolean);
+      SIMULATION : boolean;
+      JTAG_TRACE : integer range -1 to CFG_TILES_NUM - 1);
     port (
       -- Main reset
       reset             : in    std_ulogic;
@@ -382,7 +383,8 @@ begin
 
   top_1 : top
     generic map (
-      SIMULATION => SIMULATION)
+      SIMULATION => SIMULATION,
+      JTAG_TRACE => JTAG_TRACE)
     port map (
       reset             => reset,
       clk_emu_p         => clk_emu_p,

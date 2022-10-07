@@ -149,26 +149,34 @@ JTAG_TEST_TILE ?= 0
 
 jtag-trace: sim-compile
 	$(QUIET_RUN)cd modelsim; \
+	mkdir -p jtag; \
 	if test -e $(DESIGN_PATH)/vsim.tcl; then \
 		VSIMOPT='$(VSIMOPT) -do "do $(JTAG_TEST_SCRIPTS_DIR)/jtag_test_gettrace.tcl"' TECHLIB=$(TECHLIB) ESP_ROOT=$(ESP_ROOT) vsim $(VSIMOPT) -do "do $(DESIGN_PATH)/vsim.tcl"; \
 	else \
 		$(VSIM) -do "do $(JTAG_TEST_SCRIPTS_DIR)/jtag_test_gettrace.tcl"; \
-	fi;
-
-jtag-trace-pretty:
-	$(QUIET_BUILD)cd modelsim; \
-	$(JTAG_TEST_SCRIPTS_DIR)/jtag_test_format.sh
-
-jtag-stim: jtag-trace-pretty
-	$(QUIET_BUILD)cd modelsim; \
+	fi; \
+	cd jtag; \
+	$(JTAG_TEST_SCRIPTS_DIR)/jtag_test_format.sh; \
 	LD_LIBRARY_PATH="" $(JTAG_TEST_SCRIPTS_DIR)/jtag_test_stim.py $(JTAG_TEST_TILE)
 
-sim-jtag: sim-compile jtag-stim
-	$(QUIET_RUN)cd modelsim; \
-	if test -e $(DESIGN_PATH)/vsim.tcl; then \
-		VSIMOPT='$(VSIMOPT) -g JTAG_TRACE=$(JTAG_TEST_TILE)' TECHLIB=$(TECHLIB) ESP_ROOT=$(ESP_ROOT) vsim $(VSIMOPT) -do "do $(DESIGN_PATH)/vsim.tcl"; \
+sim-jtag: sim-compile
+	$(QUIET_RUN)if test -e $(DESIGN_PATH)/modelsim/jtag/stim.txt; then \
+	cd modelsim; \
+		if test -e $(DESIGN_PATH)/vsim.tcl; then \
+			VSIMOPT='$(VSIMOPT) -g JTAG_TRACE=$(JTAG_TEST_TILE)' TECHLIB=$(TECHLIB) ESP_ROOT=$(ESP_ROOT) vsim $(VSIMOPT) -do "do $(DESIGN_PATH)/vsim.tcl"; \
+		else \
+			$(VSIM) -g JTAG_TRACE=$(JTAG_TEST_TILE); \
+		fi; \
 	else \
-		$(VSIM) -g JTAG_TRACE=$(JTAG_TEST_TILE); \
+		echo "Run make jtag-trace to generate stimulus file"; \
 	fi;
 
-.PHONY: jtag-trace jtag-trace-pretty jtag-stim
+jtag-clean:
+	$(QUIET_CLEAN)$(RM) \
+		modelsim/jtag/stim*_*.txt \
+		modelsim/jtag/*.lst
+
+jtag-distclean: jtag-clean
+	$(QUIET_CLEAN)$(RM) modelsim/jtag
+
+.PHONY: jtag-trace jtag-trace-pretty jtag-stim jtag-clean jtag-distclean

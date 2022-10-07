@@ -188,7 +188,6 @@ class tile_info:
   acc = acc_info()
   clk_region = 0
   has_l2 = 0
-  has_tdvfs = 0
   design_point = 0
   has_pll = 0
   has_clkbuf = 0

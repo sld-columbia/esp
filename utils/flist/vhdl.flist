@@ -113,7 +113,7 @@ sockets/jtag/jtag_apb_config.vhd
 sockets/jtag/jtag_apb_slv_config.vhd
 sockets/jtag/jtag_apb_slv.vhd
 sockets/jtag/fpga_proxy_jtag.vhd
-sockets/jtag/proc_seq.vhd
+sockets/jtag/jtag_tb.vhd
 sockets/dvfs/dvfs_top.vhd
 sockets/dvfs/dvfs_fsm.vhd
 sockets/bus/patient_apbctrl.vhd

@@ -59,20 +59,19 @@ begin
 
       -- pragma translate_off
       PROC_SEQUENCER : process
-        file text_file : text open read_mode is "stim.txt";
-        file out_file1 : text open write_mode is "stim1_origin.txt";
-        file out_file1f : text open write_mode is "stim1_fin.txt";
-        file out_file2 : text open write_mode is "stim2_origin.txt";
-        file out_file2f : text open write_mode is "stim2_fin.txt";
-        file out_file3 : text open write_mode is "stim3_origin.txt";
-        file out_file3f : text open write_mode is "stim3_fin.txt";
-        file out_file4 : text open write_mode is "stim4_origin.txt";
-        file out_file4f : text open write_mode is "stim4_fin.txt";
-        file out_file5 : text open write_mode is "stim5_origin.txt";
-        file out_file5f : text open write_mode is "stim5_fin.txt";
-        file out_file6 : text open write_mode is "stim6_origin.txt";
-        file out_file6f : text open write_mode is "stim6_fin.txt";
-        file out_file : text open write_mode is "test_out.txt";
+        file text_file : text open read_mode is "jtag/stim.txt";
+        file out_file1 : text open write_mode is "jtag/stim1_origin.txt";
+        file out_file1f : text open write_mode is "jtag/stim1_fin.txt";
+        file out_file2 : text open write_mode is "jtag/stim2_origin.txt";
+        file out_file2f : text open write_mode is "jtag/stim2_fin.txt";
+        file out_file3 : text open write_mode is "jtag/stim3_origin.txt";
+        file out_file3f : text open write_mode is "jtag/stim3_fin.txt";
+        file out_file4 : text open write_mode is "jtag/stim4_origin.txt";
+        file out_file4f : text open write_mode is "jtag/stim4_fin.txt";
+        file out_file5 : text open write_mode is "jtag/stim5_origin.txt";
+        file out_file5f : text open write_mode is "jtag/stim5_fin.txt";
+        file out_file6 : text open write_mode is "jtag/stim6_origin.txt";
+        file out_file6f : text open write_mode is "jtag/stim6_fin.txt";
         variable text_line :line ;
         variable out_line :line;
         variable ok : boolean;
@@ -498,10 +497,9 @@ begin
               end if;
             end if;
 
-            -- for i in 0 to 450 loop
-            --   wait until rising_edge(tclk_sim);
-            -- end loop;
-
+            --for i in 0 to 10 loop
+            --  wait until rising_edge(tclk_sim);
+            --end loop;
 
           end loop;
 

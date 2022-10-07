@@ -14,7 +14,8 @@ use work.socmap.all;
 
 entity top is
   generic (
-    SIMULATION : boolean                               := false);
+    SIMULATION : boolean                               := false;
+    JTAG_TRACE : integer range -1 to CFG_TILES_NUM -1 := -1);
   port (
     reset             : in    std_logic;
     -- Chip clock used for emulation on FPGA only
@@ -257,7 +258,8 @@ architecture rtl of top is
 
   component fpga_proxy_top is
     generic (
-      SIMULATION : boolean);
+      SIMULATION : boolean;
+      JTAG_TRACE : integer range -1 to CFG_TILES_NUM - 1);
     port (
       reset             : in    std_ulogic;
       chip_reset        : out   std_ulogic;  -- Chip reset (active high)
@@ -417,7 +419,8 @@ begin
 
   fpga_proxy_top_i : fpga_proxy_top
     generic map (
-      SIMULATION => SIMULATION)
+      SIMULATION => SIMULATION,
+      JTAG_TRACE => JTAG_TRACE)
     port map (
       reset             => reset,
       chip_reset        => chip_reset,
