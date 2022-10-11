@@ -594,7 +594,7 @@ begin
                   v.compare := "000010";
                   v.state   := read_and_check;
                 else                                  --plane not manageable
-                  v.state := waitforvoid5;
+                  v.state := waitforvoid6;
                 end if;
               else                                    -- instr is a write
                 if fwd_wr_full_o(5) = '0' then        -- check queue
@@ -635,7 +635,7 @@ begin
               else                                    -- instr is a write
                 if fwd_wr_full_o(6) = '0' then        -- check queue
                   v.sipo_clear  := '1';
-                  we_in(1)      <= '1';
+                  we_in(6)      <= '1';
                   if sipo_comp_i(1)(2)='1' then
                     v.state :=sw_plane;
                   else
