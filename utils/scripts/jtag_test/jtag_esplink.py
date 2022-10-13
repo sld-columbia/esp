@@ -6,7 +6,12 @@ import sys
 import os
 import time
 
-fp = open("stim.txt")
+if len(sys.argv) == 1:
+    f = "modelsim/jtag/stim.txt"
+else:
+    f = sys.argv[1]
+
+fp = open(f)
 
 line = fp.readline()
 

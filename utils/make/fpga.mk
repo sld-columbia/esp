@@ -40,5 +40,7 @@ fpga-run-linux-proxy: esplink esplink-fpga-proxy soft
 	@./$(ESP_CFG_BUILD)/esplink-fpga-proxy --dram -i $(SOFT_BUILD)/linux.bin
 	@./$(ESP_CFG_BUILD)/esplink --reset
 
+fpga-run-jtag: esplink-fpga-proxy
+	@python $(ESP_ROOT)/utils/scripts/jtag_test/jtag_esplink.py $(STIM_FILE)
 
 .PHONY: fpga-run fpga-run-linux fpga-program fpga-run-proxy fpga-run-linux-proxy

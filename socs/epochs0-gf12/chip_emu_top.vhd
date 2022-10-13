@@ -207,12 +207,18 @@ architecture rtl of chip_emu_top is
       );
   end component EPOCHS0_TOP;
 
+  signal ext_clk_int : std_logic;
   signal ext_clk_noc_int : std_logic;
+  signal ext_clk_io_int : std_logic;
+  signal ext_clk_cpu_int : std_logic;
+  signal ext_clk_mem_int : std_logic;
+  signal ext_clk_acc0_int : std_logic;
+  signal ext_clk_acc1_int : std_logic;
 
   attribute keep         : boolean;
   attribute syn_keep     : string;
-  attribute keep of ext_clk_noc_int : signal is true;
-  attribute syn_keep of ext_clk_noc_int : signal is "true";
+  attribute keep of ext_clk_int : signal is true;
+  attribute syn_keep of ext_clk_int : signal is "true";
 
 begin  -- architecture rtl
 
@@ -232,12 +238,25 @@ begin  -- architecture rtl
       port map (
         I  => clk_emu_p,
         IB => clk_emu_n,
-        O  => ext_clk_noc_int
+        O  => ext_clk_int
         );
+
+    ext_clk_noc_int <= ext_clk_int;
+    ext_clk_io_int <= ext_clk_int;
+    ext_clk_cpu_int <= ext_clk_int;
+    ext_clk_mem_int <= ext_clk_int;
+    ext_clk_acc0_int <= ext_clk_int;
+    ext_clk_acc1_int <= ext_clk_int;
+
   end generate clk_emu_gen;
 
   chip_clk_gen: if ESP_EMU = 0 generate
     ext_clk_noc_int <= ext_clk_noc;
+    ext_clk_io_int <= ext_clk_io;
+    ext_clk_cpu_int <= ext_clk_cpu;
+    ext_clk_mem_int <= ext_clk_mem;
+    ext_clk_acc0_int <= ext_clk_acc0;
+    ext_clk_acc1_int <= ext_clk_acc1;
   end generate chip_clk_gen;
 
 
@@ -247,11 +266,11 @@ begin  -- architecture rtl
     port map (
       reset           => reset,
       ext_clk_noc     => ext_clk_noc_int,
-      ext_clk_io      => ext_clk_io,
-      ext_clk_cpu     => ext_clk_cpu,
-      ext_clk_mem     => ext_clk_mem,
-      ext_clk_acc0    => ext_clk_acc0,
-      ext_clk_acc1    => ext_clk_acc1,
+      ext_clk_io      => ext_clk_io_int,
+      ext_clk_cpu     => ext_clk_cpu_int,
+      ext_clk_mem     => ext_clk_mem_int,
+      ext_clk_acc0    => ext_clk_acc0_int,
+      ext_clk_acc1    => ext_clk_acc1_int,
       clk_div_noc     => open,
       clk_div_io      => open,
       clk_div_cpu     => open,
