@@ -19,6 +19,7 @@ XMLOGOPT += $(INCDIR_XCELIUM)
 XMELABOPT += -nowarn DLCPT
 XMELABOPT += -v93
 XMELABOPT += -nocopyright
+XMELABOPT += -notimingchecks
 XMELABOPT += -disable_sem2009
 XMELABOPT += -nomxindr
 XMELABOPT += -timescale 10ps/10ps
