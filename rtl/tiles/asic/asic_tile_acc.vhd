@@ -232,6 +232,9 @@ architecture rtl of asic_tile_acc is
   signal noc5_output_port_tile   : misc_noc_flit_type;
   signal noc6_output_port_tile   : noc_flit_type;
 
+
+  signal acc_activity : std_ulogic;
+
 begin
 
   raw_rstn <= not rst;
@@ -396,6 +399,7 @@ begin
       test6_stop_out      => test6_stop_in_s,
       mon_dvfs_in         => monitor_dvfs_none,
       mon_noc             => mon_noc,
+	  acc_activity		  => acc_activity,
       mon_acc             => open,
       mon_cache           => open,
       mon_dvfs            => open
@@ -507,6 +511,7 @@ begin
       noc6_stop_out           => noc6_stop_out,
       -- monitors
       mon_noc                 => mon_noc,
+	  acc_activity			  => acc_activity,
       -- synchronizers out to tile
       noc1_output_port_tile   => noc1_output_port_tile,
       noc1_data_void_out_tile => noc1_data_void_out_tile,

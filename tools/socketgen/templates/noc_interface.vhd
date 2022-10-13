@@ -65,6 +65,7 @@ use std.textio.all;
     apbo      : out apb_slv_out_type;
     pready    : out std_ulogic;
     plllock   : out std_ulogic;
+	acc_activity : out std_ulogic;
 
     -- NoC plane coherence request
     coherence_req_wrreq        : out std_ulogic;
@@ -223,7 +224,7 @@ end;
   -- Register control, interrupt and monitor signals
   signal pllclk_int        : std_ulogic;
   signal mon_dvfs_feedthru : monitor_dvfs_type;
-
+  
   constant ahbslv_proxy_hindex : hindex_vector(0 to NAHBSLV - 1) := (
     others => 0);
 
@@ -427,7 +428,8 @@ begin
       dma_snd_full                  => dma_snd_full_int,
       interrupt_wrreq               => interrupt_wrreq,
       interrupt_data_in             => interrupt_data_in,
-      interrupt_full                => interrupt_full
+      interrupt_full                => interrupt_full,
+	  acc_activity					=> acc_activity
       );
 
   pready <= '1';

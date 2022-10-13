@@ -386,6 +386,7 @@ def write_acc_interface(f, acc, dma_width, datatype, rst, is_vivadohls_if, is_ca
     f.write("      dma_write_chnl_rdy         : in  std_ulogic;\n")
     f.write("\n")
     f.write("      acc_done                   : out std_ulogic\n")
+
   elif is_vivadohls_if:
     for param in acc.param:
       if not param.readonly:
@@ -450,6 +451,7 @@ def write_acc_interface(f, acc, dma_width, datatype, rst, is_vivadohls_if, is_ca
     f.write("      dma_write_chnl_ready       : in  std_ulogic;\n")
     f.write("      dma_write_chnl_data        : out std_logic_vector(" + str(dma_width - 1) + " downto 0);\n")
     f.write("      acc_done                   : out std_ulogic\n")
+    #f.write("      acc_activity               : out std_ulogic\n")
 
 def write_ap_acc_signals(f):
   f.write("\n")
@@ -684,6 +686,7 @@ def write_acc_port_map(f, acc, dma_width, datatype, rst, is_noc_interface, is_vi
     f.write("      dma_write_chnl_ready       => dma_write_chnl_ready,\n")
     f.write("      dma_write_chnl_data        => dma_write_chnl_data,\n")
     f.write("      acc_done                   => acc_done\n")
+    #f.write("      acc_activity               => acc_activity\n")
     f.write("    );\n")
 
 
@@ -1639,6 +1642,7 @@ def gen_interfaces(accelerator_list, axi_accelerator_list, dma_width, template_d
         f.write("      apbo              : out apb_slv_out_type;\n")
         f.write("      pready            : out std_ulogic;\n")
         f.write("      plllock           : out std_ulogic;\n")
+        f.write("      acc_activity      : out std_ulogic;\n")
         f.write("      coherence_req_wrreq        : out std_ulogic;\n")
         f.write("      coherence_req_data_in      : out noc_flit_type;\n")
         f.write("      coherence_req_full         : in  std_ulogic;\n")
@@ -1823,6 +1827,8 @@ def gen_tile_acc(accelerator_list, axi_acceleratorlist, template_dir, out_dir):
           f.write("        mon_acc           => mon_acc_int,\n")
           f.write("        mon_cache         => mon_cache_int,\n")
           f.write("        mon_dvfs          => mon_dvfs_int,\n")
+          f.write("        acc_activity      => acc_activity,\n")
+
           f.write("        -- Coherence\n")
           f.write("        coherence         => coherence\n")
           f.write("      );\n")

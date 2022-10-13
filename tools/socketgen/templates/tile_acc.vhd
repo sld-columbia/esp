@@ -98,7 +98,8 @@ entity tile_acc is
     mon_noc             : in  monitor_noc_vector(1 to 6);
     mon_acc             : out monitor_acc_type;
     mon_cache           : out monitor_cache_type;
-    mon_dvfs            : out monitor_dvfs_type
+    mon_dvfs            : out monitor_dvfs_type;
+	acc_activity		: out std_ulogic
     );
 
 end;

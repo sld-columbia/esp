@@ -105,6 +105,8 @@ entity esp_acc_dma is
     mon_dvfs_in   : in  monitor_dvfs_type;
     --Monitor signals
     mon_dvfs      : out monitor_dvfs_type;
+	--Direct output of tile status
+	acc_activity  : out std_ulogic;
 
     -- Coherent requests parallel control
     coherent_dma_read    : out std_ulogic;
@@ -332,6 +334,7 @@ architecture rtl of esp_acc_dma is
   -- attribute mark_debug of mon_dvfs_ctrl : signal is "true";
 
 begin  -- rtl
+
 
   -----------------------------------------------------------------------------
   -- IRQ packet
@@ -1206,5 +1209,11 @@ begin  -- rtl
   mon_dvfs.transient <= mon_dvfs_ctrl.transient;
   dvfs_transient <= mon_dvfs_ctrl.transient;
   end generate;
+  
+  -----------------------------------------------------------------------------
+  -- Direct acc access
+  -----------------------------------------------------------------------------
+
+	acc_activity<=bankreg(STATUS_REG)(STATUS_BIT_RUN);
 
 end rtl;

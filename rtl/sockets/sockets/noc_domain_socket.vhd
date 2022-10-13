@@ -41,7 +41,8 @@ entity noc_domain_socket is
     SIMULATION        : boolean              := false;
     ROUTER_PORTS      : ports_vec            := "11111";
     HAS_SYNC          : integer range 0 to 1 := 1;
-    is_asic           : boolean              := false);
+    is_asic           : boolean              := false
+	);
   port (
     raw_rstn           : in  std_ulogic;
     noc_rstn           : in  std_ulogic;
@@ -141,6 +142,7 @@ entity noc_domain_socket is
 
     -- monitors
     mon_noc            : out monitor_noc_vector(1 to 6);
+	acc_activity	   : in std_ulogic;
 
     -- synchronizers out to tile
     noc1_output_port_tile   : out noc_flit_type;
@@ -308,7 +310,8 @@ architecture rtl of noc_domain_socket is
   signal noc5_output_port_csr        : misc_noc_flit_type;
   signal noc5_output_port_tile_int   : misc_noc_flit_type;
   signal noc6_output_port            : noc_flit_type;
-
+  
+ 
   attribute syn_keep : string;
 
   attribute syn_keep of ldo_res_sel_to_power_headers : signal is "true";
@@ -650,7 +653,8 @@ begin  -- architecture rtl
         noc5_data_void_out => noc5_data_void_out_pm,
         noc5_stop_in       => noc5_stop_in_pm,
         acc_clk            => acc_clk,
-        plllock            => plllock);
+        acc_activity       => acc_activity
+		);
   end generate;
 
   no_token_pm_gen : if this_has_token_pm = 0 generate

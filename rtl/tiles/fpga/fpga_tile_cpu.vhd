@@ -510,6 +510,8 @@ begin
       noc6_stop_out           => noc6_stop_out,
       -- monitors
       mon_noc                 => mon_noc,
+	  acc_activity            => '0',
+
       -- synchronizers out to tile
       noc1_output_port_tile   => noc1_output_port_tile,
       noc1_data_void_out_tile => noc1_data_void_out_tile,

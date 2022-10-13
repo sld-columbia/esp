@@ -1,7 +1,7 @@
 #include "token_pm_3x3_Ccommon.h"
 #include "token_pm_3x3_SW_data.h"
 #include "token_pm_nvdla.h"
-
+#define DEBUG
 unsigned p_available = P_TOTAL;
 
 const unsigned Pmax[N_ACC] = {max_power_NVDLA,max_power_FFT,max_power_VIT,max_power_FFT,max_power_VIT,max_power_FFT};
@@ -83,7 +83,7 @@ int removeFromList(struct node **head,int index)
 			return 1;
 		}
 		else {
-			removeFromList(&(current_node->next),index);
+			return(removeFromList(&(current_node->next),index));
 			}
     }
 	else {return 0;}
@@ -179,7 +179,7 @@ void CRR_step_rotate()
            while(waitNode!= NULL)
         {
             if(Pmax[waitNode->data]<=p_available){
-				set_freq(dev_list_acc[waitNode->data],Fmax[waitNode->data]);
+				set_freq(&espdevs[waitNode->data],Fmax[waitNode->data]);
 				if((waitNode->data)>0){
 					iowrite32(dev_list_acc[waitNode->data], CMD_REG, CMD_MASK_START);
 					write_config1(&espdevs[waitNode->data],1,0,0,0);}
@@ -216,7 +216,8 @@ void CRR_step_rotate()
 		while(idleNode!= NULL)
         {
             if(Pmax[idleNode->data]<=p_available){
-				set_freq(dev_list_acc[idleNode->data],Fmax[idleNode->data]);
+				//set_freq(dev_list_acc[idleNode->data],Fmax[idleNode->data]);
+				set_freq(&espdevs[idleNode->data],Fmax[idleNode->data]);
 				addLast(&head_run,idleNode->data);
 				removeFromList(&head_idle,idleNode->data);
 				p_available=p_available-Pmax[idleNode->data];

@@ -116,6 +116,7 @@ use std.textio.all;
     mon_cache         : out monitor_cache_type;
     mon_dvfs          : out monitor_dvfs_type;
     -- Coherence
+	acc_activity	  : out std_ulogic;	
     coherence         : in integer range 0 to 3);
 
 end;
@@ -390,5 +391,7 @@ begin
   mon_cache     <= monitor_cache_none;
 
   mon_dvfs_feedthru.transient <= '0';
+  
+  acc_activity <= '0';
 
 end rtl;
