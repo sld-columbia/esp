@@ -1,4 +1,4 @@
-# Copyright (c) 2011-2021 Columbia University, System Level Design Group
+# Copyright (c) 2011-2022 Columbia University, System Level Design Group
 # SPDX-License-Identifier: Apache-2.0
 
 
@@ -22,6 +22,7 @@ NCELABOPT += -nocopyright
 NCELABOPT += -disable_sem2009
 NCELABOPT += -nomxindr
 NCELABOPT += -timescale 10ps/10ps
+NCELABOPT += -notimingchecks
 
 NCSIMOPT += $(SIMTOP)
 NCSIMOPT += -input ncsim.in

@@ -1,4 +1,4 @@
-# Copyright (c) 2011-2021 Columbia University, System Level Design Group
+# Copyright (c) 2011-2022 Columbia University, System Level Design Group
 # SPDX-License-Identifier: Apache-2.0
 CPU_SOFT_PATH := $(DRIVERS)/../../../$(CPU_ARCH)
 
@@ -58,8 +58,11 @@ CFLAGS += $(EXTRA_CFLAGS)
 CFLAGS += -I$(DRIVERS)/include -I$(DRIVERS)/../common/include -I$(DESIGN_PATH)
 CFLAGS +=-std=gnu99
 CFLAGS +=-O2
+CFLAGS += -L$(BUILD_PATH)/../../monitors
 LDFLAGS += -lm
+LDFLAGS += -lmonitors
 LDFLAGS += $(BUILD_PATH)/../../probe/libprobe.a
+LDFLAGS += $(BUILD_PATH)/../../monitors/libmonitors.a
 LDFLAGS += $(BUILD_PATH)/../../utils/baremetal/libutils.a
 CC := $(CROSS_COMPILE)gcc
 LD := $(CROSS_COMPILE)$(LD)
@@ -69,12 +72,16 @@ all: $(OBJS) $(EXES) $(EXE) $(BINS) $(BIN)
 ifneq ($(APPNAME),)
 $(BUILD_PATH)/%.o: %.c $(HEADERS)
 	CPU_ARCH=$(CPU_ARCH) DESIGN_PATH=$(DESIGN_PATH) BUILD_PATH=$(BUILD_PATH)/../../probe $(MAKE) -C $(DRIVERS)/probe
+	CPU_ARCH=$(CPU_ARCH) DESIGN_PATH=$(DESIGN_PATH) BUILD_PATH=$(BUILD_PATH)/../../monitors MODE=BAREC \
+			 $(MAKE) -B -C $(DRIVERS)/../common/monitors
 	CPU_ARCH=$(CPU_ARCH) DESIGN_PATH=$(DESIGN_PATH) BUILD_PATH=$(BUILD_PATH)/../../utils/baremetal $(MAKE) -C $(DRIVERS)/utils
 	$(CC) $(CFLAGS) -c $< -o $@ $(LDFLAGS)
 endif
 
 $(BUILD_PATH)/%.exe: %.c $(OBJS) $(SRCS_PROBE) $(HEADERS)
 	CPU_ARCH=$(CPU_ARCH) DESIGN_PATH=$(DESIGN_PATH) BUILD_PATH=$(BUILD_PATH)/../../probe $(MAKE) -C $(DRIVERS)/probe
+	CPU_ARCH=$(CPU_ARCH) DESIGN_PATH=$(DESIGN_PATH) BUILD_PATH=$(BUILD_PATH)/../../monitors MODE=BAREC \
+			 $(MAKE) -B -C $(DRIVERS)/../common/monitors
 	CPU_ARCH=$(CPU_ARCH) DESIGN_PATH=$(DESIGN_PATH) BUILD_PATH=$(BUILD_PATH)/../../utils/baremetal $(MAKE) -C $(DRIVERS)/utils
 	$(CC) $(CFLAGS) -o $@ $< $(LDFLAGS_RISCV) $(LDFLAGS) $(OBJS)
 

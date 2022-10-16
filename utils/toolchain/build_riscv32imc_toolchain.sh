@@ -1,5 +1,5 @@
 #!/bin/bash
-# Copyright (c) 2011-2021 Columbia University, System Level Design Group
+# Copyright (c) 2011-2022 Columbia University, System Level Design Group
 # SPDX-License-Identifier: Apache-2.0
 
 set -e
@@ -55,7 +55,7 @@ TARGET_DIR=${TARGET_DIR:-${DEFAULT_TARGET_DIR}}
 echo "*** Installing to ${TARGET_DIR} ... ***"
 
 # Prompt number of cores to use
-read -p "Number of threads for Make (defaults to as many as possible)? :" NTHREADS
+read -p "Number of threads for Make (defaults to as many as possible)? : " NTHREADS
 NTHREADS=${NTHREADS:-""}
 
 # Tool chain environment
@@ -81,8 +81,7 @@ if test ! -e ${TARGET_DIR}; then
 fi
 
 # Remove and create temporary folder
-cmd="rm -rf $TMP"
-runsudo ${TARGET_DIR} "$cmd"
+rm -rf $TMP
 mkdir $TMP
 cd $TMP
 
@@ -108,8 +107,9 @@ fi
 
 
 # Remove temporary folder
-cmd="rm -rf $TMP"
-runsudo ${TARGET_DIR} "$cmd"
+rm -rf $TMP
+
+cd ${ESP_ROOT}
 
 #Riscv
 echo ""

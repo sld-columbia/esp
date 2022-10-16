@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# Copyright (c) 2011-2021 Columbia University, System Level Design Group
+# Copyright (c) 2011-2022 Columbia University, System Level Design Group
 # SPDX-License-Identifier: Apache-2.0
 
 from collections import defaultdict
@@ -246,6 +246,7 @@ class soc_config:
   dvfs_ctrls = []
   tiles = []
   regions = []
+  contig_alloc_ddr = []
 
   def __init__(self, soc):
     #components
@@ -281,10 +282,10 @@ class soc_config:
     else:
       self.regions = []
       self.ndomain = 1
-    self.has_svga = soc.HAS_SVGA
-    self.has_eth = soc.HAS_ETH
+    self.has_svga = soc.svga_en.get()
+    self.has_eth = soc.eth_en.get()
     self.has_sgmii = soc.HAS_SGMII
-    self.has_jtag = soc.HAS_JTAG
+    self.has_jtag = soc.jtag_en.get()
     if self.coherence:
       self.ncdma = self.nacc + 1
       self.nllc = self.nmem
@@ -404,7 +405,7 @@ class soc_config:
 
 
 def print_header(fp, package):
-  fp.write("-- Copyright (c) 2011-2021 Columbia University, System Level Design Group\n")
+  fp.write("-- Copyright (c) 2011-2022 Columbia University, System Level Design Group\n")
   fp.write("-- SPDX-License-Identifier: Apache-2.0\n\n")
 
 def print_libs(fp, std_only):
@@ -429,7 +430,6 @@ def print_libs(fp, std_only):
   fp.write("\n")
 
 def print_global_constants(fp, soc):
-
   fp.write("  ------ Emulation parameters for ASIC designs\n")
   if soc.ESP_EMU_TECH != "none":
     fp.write("  constant ESP_EMU : integer := 1;\n")
@@ -440,8 +440,9 @@ def print_global_constants(fp, soc):
   fp.write("\n")
 
   fp.write("  ------ Global architecture parameters\n")
+
+  fp.write("  ------ General\n")
   fp.write("  constant ARCH_BITS : integer := " + str(soc.DMA_WIDTH) + ";\n")
-  fp.write("  constant GLOB_MAXIOSLV : integer := " + str(NAPBS) + ";\n")
   # Keep cache-line size constant to 128 bits for now. We don't want huge line buffers
   fp.write("  constant GLOB_WORD_OFFSET_BITS : integer := " + str(int(math.log2(128/soc.DMA_WIDTH))) + ";\n")
   fp.write("  constant GLOB_BYTE_OFFSET_BITS : integer := " + str(int(math.log2(soc.DMA_WIDTH/8))) +";\n")
@@ -449,6 +450,10 @@ def print_global_constants(fp, soc):
   fp.write("  constant GLOB_ADDR_INCR : integer := " + str(int(soc.DMA_WIDTH/8)) +";\n")
   # TODO: Keep physical address to 32 bits for now to reduce tag size. This will increase to support more memory
   fp.write("  constant GLOB_PHYS_ADDR_BITS : integer := " + str(32) +";\n")
+  fp.write("  constant GLOB_MAXIOSLV : integer := " + str(NAPBS) + ";\n\n")
+
+  #
+  fp.write("  ------ CPU\n")
   fp.write("  type cpu_arch_type is (leon3, ariane, ibex);\n")
   fp.write("  constant GLOB_CPU_ARCH : cpu_arch_type := " + soc.CPU_ARCH.get() + ";\n")
   if soc.CPU_ARCH.get() == "ariane":
@@ -460,11 +465,23 @@ def print_global_constants(fp, soc):
   else:
     fp.write("  constant GLOB_CPU_RISCV : integer range 0 to 1 := 1;\n")
   if soc.CPU_ARCH.get() == "ariane":
-    fp.write("  constant GLOB_CPU_LLSC : integer range 0 to 1 := 1;\n")
+    fp.write("  constant GLOB_CPU_LLSC : integer range 0 to 1 := 1;\n\n")
   else:
-    fp.write("  constant GLOB_CPU_LLSC : integer range 0 to 1 := 0;\n")
-  fp.write("\n")
-  # RTL caches
+    fp.write("  constant GLOB_CPU_LLSC : integer range 0 to 1 := 0;\n\n")
+
+def print_constants(fp, soc, esp_config):
+
+  #
+  fp.write("  ------ Shared local memory (SLM)\n")
+  fp.write("  constant CFG_SLM_KBYTES : integer := " + str(esp_config.slm_kbytes) + ";\n")
+  fp.write("  constant CFG_SLMDDR_KBYTES : integer := " + str(esp_config.slmddr_kbytes) + ";\n\n")
+
+  #
+  fp.write("  ------ DMA memory allocation (contiguous buffer or scatter/gather)\n")
+  fp.write("  constant CFG_SCATTER_GATHER : integer range 0 to 1 := " + str(soc.transfers.get()) + ";\n\n")
+
+  #
+  fp.write("  ------ Cache hierarchy\n")
   if soc.cache_rtl.get() == 1:
     fp.write("  constant CFG_CACHE_RTL   : integer := 1;\n")
   else:
@@ -473,26 +490,76 @@ def print_global_constants(fp, soc):
     fp.write("  constant USE_SPANDEX     : integer := 1;\n")
   else:
     fp.write("  constant USE_SPANDEX     : integer := 0;\n")
-  fp.write("\n")
-
-
-def print_constants(fp, soc, esp_config):
-  fp.write("  ------ NoC parameters\n")
-  fp.write("  constant CFG_XLEN : integer := " + str(soc.noc.cols) + ";\n")
-  fp.write("  constant CFG_YLEN : integer := " + str(soc.noc.rows) + ";\n")
-  fp.write("  constant CFG_TILES_NUM : integer := CFG_XLEN * CFG_YLEN;\n")
-
-  fp.write("  ------ DMA memory allocation (contiguous buffer or scatter/gather\n")
-  fp.write("  constant CFG_SCATTER_GATHER : integer range 0 to 1 := " + str(soc.transfers.get()) + ";\n")
-
+  if esp_config.coherence:
+    fp.write("  constant CFG_L2_ENABLE   : integer := 1;\n")
+    fp.write("  constant CFG_L2_DISABLE  : integer := 0;\n")
+    fp.write("  constant CFG_LLC_ENABLE  : integer := 1;\n")
+  else:
+    fp.write("  constant CFG_L2_ENABLE   : integer := 0;\n")
+    fp.write("  constant CFG_L2_DISABLE  : integer := 1;\n")
+    fp.write("  constant CFG_LLC_ENABLE  : integer := 0;\n")
   fp.write("  constant CFG_L2_SETS     : integer := " + str(soc.l2_sets.get()      ) +  ";\n")
   fp.write("  constant CFG_L2_WAYS     : integer := " + str(soc.l2_ways.get()      ) +  ";\n")
   fp.write("  constant CFG_LLC_SETS    : integer := " + str(soc.llc_sets.get()     ) +  ";\n")
   fp.write("  constant CFG_LLC_WAYS    : integer := " + str(soc.llc_ways.get()     ) +  ";\n")
   fp.write("  constant CFG_ACC_L2_SETS : integer := " + str(soc.acc_l2_sets.get()  ) +  ";\n")
-  fp.write("  constant CFG_ACC_L2_WAYS : integer := " + str(soc.acc_l2_ways.get()  ) +  ";\n")
+  fp.write("  constant CFG_ACC_L2_WAYS : integer := " + str(soc.acc_l2_ways.get()  ) +  ";\n\n")
 
-  fp.write("  ------ Monitors enable (requires proFPGA MMI64)\n")
+  #
+  fp.write("  ------ Caches interrupt line\n")
+  fp.write("  constant CFG_SLD_LLC_CACHE_IRQ : integer := " + str(LLC_CACHE_PIRQ) + ";\n")
+  fp.write("  constant CFG_SLD_L2_CACHE_IRQ : integer := " + str(L2_CACHE_PIRQ) + ";\n\n")
+
+  #
+  fp.write("  ------ UART\n")
+  fp.write("  constant CFG_UART1_ENABLE : integer := 1;\n")
+  fp.write("  constant CFG_UART1_FIFO : integer := 32;\n")
+  fp.write("  constant CFG_UART1_IRQ : integer := (2);\n\n")
+
+  #
+  fp.write("  ------ JTAG based DSU interface (DO NOT ENABLE, NOT SUPPORTED)\n")
+  fp.write("  constant CFG_AHB_JTAG : integer := 0;\n\n")
+
+  #
+  fp.write("  ------ JTAG based test interface\n")
+  fp.write("  constant CFG_JTAG_EN : integer := " + str(soc.jtag_en.get()) + ";\n\n")
+
+  #
+  fp.write("  ------ Ethernet\n")
+  fp.write("  constant CFG_ETH_EN : integer := " + str(soc.eth_en.get()) + ";\n\n")
+  fp.write("  ------ Gaisler Ethernet core\n")
+  fp.write("  constant CFG_GRETH : integer := 1;\n")
+  fp.write("  constant CFG_GRETH1G : integer := 0;\n")
+  fp.write("  constant CFG_ETH_FIFO : integer := 8;\n")
+  fp.write("  constant CFG_GRETH_FT : integer := 0;\n")
+  fp.write("  constant CFG_GRETH_EDCLFT : integer := 0;\n\n")
+
+  #
+  fp.write("  ------ SVGA\n")
+  if esp_config.has_svga:
+    fp.write("  constant CFG_SVGA_ENABLE : integer := 1;\n")
+    fp.write("  constant CFG_SVGA_MEMORY_HADDR : integer := 16#301#;\n\n")
+  else:
+    fp.write("  constant CFG_SVGA_ENABLE : integer := 0;\n")
+    fp.write("  constant CFG_SVGA_MEMORY_HADDR : integer := 16#B01#;\n\n")
+
+  #
+  fp.write("  ------ Ethernet DSU\n")
+  fp.write("  constant CFG_DSU_ETH : integer := 1 + 0 + 0;\n")
+  fp.write("  constant CFG_ETH_BUF : integer := 16;\n")
+  fp.write("  constant CFG_ETH_IPM : integer := 16#" + soc.dsu_ip[:4] + "#;\n")
+  fp.write("  constant CFG_ETH_IPL : integer := 16#" + soc.dsu_ip[4:] + "#;\n")
+  fp.write("  constant CFG_ETH_ENM : integer := 16#" + soc.dsu_eth[:6] + "#;\n")
+  fp.write("  constant CFG_ETH_ENL : integer := 16#" + soc.dsu_eth[6:] + "#;\n\n")
+
+  #
+  fp.write("  ------ NoC\n")
+  fp.write("  constant CFG_XLEN : integer := " + str(soc.noc.cols) + ";\n")
+  fp.write("  constant CFG_YLEN : integer := " + str(soc.noc.rows) + ";\n")
+  fp.write("  constant CFG_TILES_NUM : integer := CFG_XLEN * CFG_YLEN;\n\n")
+  
+  #
+  fp.write("  ------ Monitors (requires proFPGA MMI64)\n")
   fp.write("  constant CFG_MON_DDR_EN : integer := " + str(soc.noc.monitor_ddr.get()) + ";\n")
   fp.write("  constant CFG_MON_MEM_EN : integer := " + str(soc.noc.monitor_mem.get()) + ";\n")
   fp.write("  constant CFG_MON_NOC_INJECT_EN : integer := " + str(soc.noc.monitor_inj.get()) + ";\n")
@@ -502,16 +569,6 @@ def print_constants(fp, soc, esp_config):
   fp.write("  constant CFG_MON_LLC_EN : integer := " + str(soc.noc.monitor_llc.get()) + ";\n")
   fp.write("  constant CFG_MON_DVFS_EN : integer := " + str(soc.noc.monitor_dvfs.get()) + ";\n\n")
 
-  fp.write("  ------ Coherence enabled\n")
-  if esp_config.coherence:
-    fp.write("  constant CFG_L2_ENABLE   : integer := 1;\n")
-    fp.write("  constant CFG_L2_DISABLE  : integer := 0;\n")
-    fp.write("  constant CFG_LLC_ENABLE  : integer := 1;\n\n")
-  else:
-    fp.write("  constant CFG_L2_ENABLE   : integer := 0;\n")
-    fp.write("  constant CFG_L2_DISABLE  : integer := 1;\n")
-    fp.write("  constant CFG_LLC_ENABLE  : integer := 0;\n\n")
-
   #
   fp.write("  ------ Number of components\n")
   fp.write("  constant CFG_NCPU_TILE : integer := " + str(esp_config.ncpu) + ";\n")
@@ -520,23 +577,39 @@ def print_constants(fp, soc, esp_config):
   fp.write("  constant CFG_NSLMDDR_TILE : integer := " + str(esp_config.nslmddr) + ";\n")
   fp.write("  constant CFG_NL2 : integer := " + str(esp_config.nl2) + ";\n")
   fp.write("  constant CFG_NLLC : integer := " + str(esp_config.nllc) + ";\n")
-  fp.write("  constant CFG_NLLC_COHERENT : integer := " + str(esp_config.ncdma) + ";\n")
-  fp.write("  constant CFG_SLM_KBYTES : integer := " + str(esp_config.slm_kbytes) + ";\n\n")
-  fp.write("  constant CFG_SLMDDR_KBYTES : integer := " + str(esp_config.slmddr_kbytes) + ";\n\n")
+  fp.write("  constant CFG_NLLC_COHERENT : integer := " + str(esp_config.ncdma) + ";\n\n")
+
+  
+  #
+  fp.write("  ------ AMBA settings\n")
+  fp.write("  constant CFG_DEFMST : integer := (0);\n")
+  fp.write("  constant CFG_RROBIN : integer := 1;\n")
+  fp.write("  constant CFG_SPLIT : integer := 0;\n")
+  fp.write("  constant CFG_FPNPEN : integer := 1;\n")
+  fp.write("  constant CFG_AHBIO : integer := 16#FFF#;\n")
+  fp.write("  constant CFG_AHB_MON : integer := 0;\n")
+  fp.write("  constant CFG_AHB_MONERR : integer := 0;\n")
+  fp.write("  constant CFG_AHB_MONWAR : integer := 0;\n")
+  fp.write("  constant CFG_AHB_DTRACE : integer := 0;\n\n")
 
   #
-  fp.write("  ------ Local-port Synchronizers are always present)\n")
-  fp.write("  constant CFG_HAS_SYNC : integer := 1;\n")
+  fp.write("  ------ Local-port synchronizers (always present)\n")
+  fp.write("  constant CFG_HAS_SYNC : integer := 1;\n\n")
+
+  #
+  fp.write("  ------ Domain voltage-frequency scaling (DVFS)\n")
   if esp_config.has_dvfs:
-    fp.write("  constant CFG_HAS_DVFS : integer := 1;\n")
+    fp.write("  constant CFG_HAS_DVFS : integer := 1;\n\n")
   else:
-    fp.write("  constant CFG_HAS_DVFS : integer := 0;\n")
-  fp.write("\n")
+    fp.write("  constant CFG_HAS_DVFS : integer := 0;\n\n")
 
   #
-  fp.write("  ------ Caches interrupt line\n")
-  fp.write("  constant CFG_SLD_LLC_CACHE_IRQ : integer := " + str(LLC_CACHE_PIRQ) + ";\n\n")
-  fp.write("  constant CFG_SLD_L2_CACHE_IRQ : integer := " + str(L2_CACHE_PIRQ) + ";\n\n")
+  fp.write("  ------ Synthesis options\n")
+  fp.write("  constant CFG_SCAN : integer := 0;\n\n")
+   
+  #
+  fp.write("  ------ GRLIB debugging\n")
+  fp.write("  constant CFG_DUART : integer := 1;\n\n")
 
 def print_mapping(fp, soc, esp_config):
 
@@ -617,7 +690,7 @@ def print_mapping(fp, soc, esp_config):
 
   #
   fp.write("  -- Ethernet master interface, acting as debug access point\n")
-  if esp_config.has_eth:
+  if soc.eth_en.get():
     fp.write("  constant eth0_hconfig : ahb_config_type := (\n")
     fp.write("    0 => ahb_device_reg ( VENDOR_GAISLER, GAISLER_ETHMAC, 0, 0, 0),\n")
     fp.write("    others => zero32);\n\n")
@@ -1853,7 +1926,89 @@ def print_esplink_header(fp, esp_config, soc):
   fp.write("\n")
   fp.write("#endif /* __SOCMAP_H__ */\n")
 
+def print_soc_defines(fp, esp_config, soc):
+  fp.write("#ifndef __SOC_DEFS_H__\n")
+  fp.write("#define __SOC_DEFS_H__\n")
+  fp.write("\n")
+  fp.write("#define SOC_ROWS " + str(soc.noc.rows) + "\n");
+  fp.write("#define SOC_COLS " + str(soc.noc.cols) + "\n");
+  fp.write("#define SOC_NCPU " + str(esp_config.ncpu) + "\n");
+  fp.write("#define SOC_NMEM " + str(esp_config.nmem) + "\n");
+  fp.write("#define SOC_NDDR_CONTIG " + str(len(esp_config.contig_alloc_ddr)) +"\n")
+  if esp_config.nacc > 0:
+      fp.write("#define ACCS_PRESENT 1\n")
+  fp.write("#define SOC_NACC " + str(esp_config.nacc) + "\n");
 
+  if esp_config.cpu_arch == "leon3":
+      fp.write("#define MONITOR_BASE_ADDR 0x80090000\n")
+  else:
+      fp.write("#define MONITOR_BASE_ADDR 0x60090000\n")
+  fp.write("#define MONITOR_TILE_SIZE 0x200\n\n")
+
+  fp.write("#endif /* __SOC_DEFS_H__ */\n")
+
+def print_soc_locations(fp, esp_config, soc):
+  fp.write("soc_loc_t cpu_locs[" + str(esp_config.ncpu) + "] = {")
+  for i in range(0, esp_config.ntiles):
+    t = esp_config.tiles[i]
+    if t.type == "cpu":
+        fp.write("{" + str(t.row) + "," + str(t.col) + "}")
+        if not t.cpu_id == esp_config.ncpu - 1:
+            fp.write(", ")
+  fp.write("};\n\n")
+
+  fp.write("soc_loc_t mem_locs[" + str(esp_config.nmem) + "] = {")
+  for i in range(0, esp_config.ntiles):
+    t = esp_config.tiles[i]
+    if t.type == "mem":
+        fp.write("{" + str(t.row) + "," + str(t.col) + "}")
+        if not t.mem_id == esp_config.nmem - 1:
+            fp.write(", ")
+  fp.write("};\n\n")
+
+  #fp.write("soc_loc_t contig_alloc_locs[" + str(len(esp_config.contig_alloc_ddr)) + "] = {")
+  #for i in range(0, esp_config.ntiles):
+  #  t = esp_config.tiles[i]
+  #  if t.type == "mem" and t.mem_id in esp_config.contig_alloc_ddr:
+  #      fp.write("{" + str(t.row) + "," + str(t.col) + "}")
+  #      if not t.mem_id == esp_config.nmem - 1:
+  #          fp.write(", ")
+  #fp.write("};\n\n")
+
+  #fp.write("soc_loc_t io_loc = ")
+  #for i in range(0, esp_config.ntiles):
+  #  t = esp_config.tiles[i]
+  #  if t.type == "misc":
+  #      fp.write("{" + str(t.row) + "," + str(t.col) + "};")
+  #      break
+  #fp.write("\n\n")
+
+  if esp_config.nacc > 0:
+      acc_counts = {}
+      fp.write("soc_loc_t acc_locs[" + str(esp_config.nacc) + "] = {")
+      for i in range(0, esp_config.ntiles):
+        t = esp_config.tiles[i]
+        if t.type == "acc":
+            if not t.acc.lowercase_name in acc_counts:
+                acc_counts[t.acc.lowercase_name] = 0
+            else:
+                acc_counts[t.acc.lowercase_name] += 1
+
+            fp.write("{" + str(t.row) + "," + str(t.col) + "}")
+            if not t.acc.id == esp_config.nacc - 1:
+                fp.write(", ")
+      fp.write("};\n\n")
+      fp.write("unsigned int acc_has_l2[" + str(esp_config.nacc) + "] = {")
+      for i in range(0, esp_config.ntiles):
+        t = esp_config.tiles[i]
+        if t.type == "acc":
+            if t.has_l2:
+                fp.write("1")
+            else:
+                fp.write("0")
+            if not t.acc.id == esp_config.nacc - 1:
+                fp.write(", ")
+      fp.write("};\n")
 
 def print_devtree(fp, soc, esp_config):
 
@@ -2295,7 +2450,7 @@ def print_floorplan_constraints(fp, soc, esp_config):
     fp.write("resize_pblock [get_pblocks {pblock_mem_tile_3}] -add {DSP48E2_X5Y258:DSP48E2_X5Y323}\n")
     fp.write("resize_pblock [get_pblocks {pblock_mem_tile_3}] -add {RAMB18_X7Y258:RAMB18_X8Y323}\n")
     fp.write("resize_pblock [get_pblocks {pblock_mem_tile_3}] -add {RAMB36_X7Y129:RAMB36_X8Y161}\n")
-  
+
   fp.write("set_property C_CLK_INPUT_FREQ_HZ 300000000 [get_debug_cores dbg_hub]\n")
   fp.write("set_property C_ENABLE_CLK_DIVIDER false [get_debug_cores dbg_hub]\n")
   fp.write("set_property C_USER_SCAN_CHAIN 1 [get_debug_cores dbg_hub]\n")
@@ -2313,23 +2468,24 @@ def print_load_script(fp, soc, esp_config):
   start = int(str(DDR_HADDR[soc.CPU_ARCH.get()])) * int(0x100000)
   nddr = 0
   line_size = int(0x10)
-  
+
   end = start + ddr_size
   if soc.CPU_ARCH.get() == "ariane" or soc.CPU_ARCH.get() == "ibex":
-    sp = int(0xa0200000) - line_size 
-    if esp_config.nthirdparty > 0:        
+    sp = int(0xa0200000) - line_size
+    if esp_config.nthirdparty > 0:
         end = int(0xb0000000)
-  else: 
+  else:
     sp = int(str(soc.LEON3_STACK), 16)
 
   addr = start
-  for _ in range(nmem):
+  for m in range(nmem):
     if addr >= (sp + line_size) and addr < end:
         starts.append(hex(addr))
-        if addr + size <= end: 
+        if addr + size <= end:
             sizes.append(hex(size))
         else:
             size.append(hex(end - addr))
+        esp_config.contig_alloc_ddr.append(m)
         nddr += 1
     elif (addr + size) > (sp + line_size) and addr < end:
         starts.append(hex(sp + line_size))
@@ -2337,6 +2493,7 @@ def print_load_script(fp, soc, esp_config):
             sizes.append(hex((addr + size) - (sp + line_size)))
         else:
             sizes.append(hex(end - (sp + line_size)))
+        esp_config.contig_alloc_ddr.append(m)
         nddr += 1
     addr += size
 
@@ -2398,14 +2555,40 @@ def create_socmap(esp_config, soc):
   print("Created configuration into 'socmap.vhd'")
 
   # ESPLink header
-  fp = open('socmap.h', 'w')
+  fp = open('esplink.h', 'w')
 
   print_esplink_header(fp, esp_config, soc)
 
   fp.close()
 
-  print("Created ESPLink header into 'socmap.h'")
+  print("Created ESPLink header into 'esplink.h'")
 
+  if esp_config.nmem != 0:
+    fp = open('S64esp', 'w')
+
+    print_load_script(fp, soc, esp_config)
+
+    fp.close()
+
+    print("Created kernel module load script into 'S64esp'")
+
+  # socmap defines
+  fp = open('soc_defs.h', 'w')
+
+  print_soc_defines(fp, esp_config, soc)
+
+  fp.close()
+
+  print("Created soc defines into 'soc_defs.h'")
+
+  # soc tile locations
+  fp = open('soc_locs.h', 'w')
+
+  print_soc_locations(fp, esp_config, soc)
+
+  fp.close()
+
+  print("Created soc locations into 'soc_locs.h'")
 
 
   # Device tree
@@ -2419,31 +2602,21 @@ def create_socmap(esp_config, soc):
 
     print("Created device-tree into 'riscv.dts'")
 
-
   # RTL Caches configuration
   fp = open('cache_cfg.svh', 'w')
 
   print_cache_config(fp, soc, esp_config)
 
   fp.close()
-  
+
   print("Created RTL caches configuration into 'cache_cfg.svh'")
 
   #memory floorplanning for profpga-xcvu440
   if (soc.TECH == "virtexu") and esp_config.nmem > 1:
-    fp = open('mem_tile_floorplanning.xdc', 'w')  
-    
+    fp = open('mem_tile_floorplanning.xdc', 'w')
+
     print_floorplan_constraints(fp, soc, esp_config)
-    
+
     fp.close()
-    
+
     print("Created floorplanning constraints for profgpa-xcvu440 into 'mem_tile_floorplanning.xdc'")
-  
-  if esp_config.nmem != 0:
-    fp = open('S64esp', 'w')
-
-    print_load_script(fp, soc, esp_config)
-
-    fp.close()
-  
-    print("Created kernel module load script into 'S64esp'")

@@ -90,6 +90,6 @@ please refer to the READMEs inside each of them for more information.
 
 ## Stay tuned for the new features under development:
 
-   - Multi-core RISC-V [Ariane](https://github.com/openhwgroup/cva6)
-   - Accelerator design flow in C/C++ and SystemC with Catapult HLS
-   - Regression testing
+   - Accelerator design flow in SystemC with Catapult HLS
+   - Dynamic partial reconfiguration SoC flow
+   - New machine learning and cryptography accelerators

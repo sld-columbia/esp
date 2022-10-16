@@ -1,4 +1,4 @@
--- Copyright (c) 2011-2021 Columbia University, System Level Design Group
+-- Copyright (c) 2011-2022 Columbia University, System Level Design Group
 -- SPDX-License-Identifier: Apache-2.0
 
 library ieee;
@@ -28,7 +28,7 @@ entity intack2noc is
     rst : in std_ulogic;
     clk : in std_ulogic;
 
-    cpu_id  : in integer;
+    cpu_id  : in integer range 0 to CFG_NCPU_TILE - 1;
     local_y : in local_yx;
     local_x : in local_yx;
 

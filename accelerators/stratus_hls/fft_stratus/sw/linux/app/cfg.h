@@ -1,4 +1,4 @@
-// Copyright (c) 2011-2021 Columbia University, System Level Design Group
+// Copyright (c) 2011-2022 Columbia University, System Level Design Group
 // SPDX-License-Identifier: Apache-2.0
 #ifndef __ESP_CFG_000_H__
 #define __ESP_CFG_000_H__
@@ -24,17 +24,18 @@ typedef float native_t;
 #define LOG_LEN 10
 #define LEN (1 << LOG_LEN)
 #define DO_BITREV 1
-
+#define NUM_BATCHES 1
 /* <<--params-->> */
 const int32_t do_bitrev = DO_BITREV;
 const int32_t len = LEN;
 const int32_t log_len = LOG_LEN;
+const int32_t num_batches = 1;
 
 #define NACC 1
 
 struct fft_stratus_access fft_cfg_000[] = {
 	{
-		/* <<--descriptor-->> */
+		.batch_size = NUM_BATCHES,
 		.do_bitrev = DO_BITREV,
 		.log_len = LOG_LEN,
 		.src_offset = 0,

@@ -1,4 +1,4 @@
-// Copyright (c) 2011-2021 Columbia University, System Level Design Group
+// Copyright (c) 2011-2022 Columbia University, System Level Design Group
 // SPDX-License-Identifier: Apache-2.0
 
 #ifndef __SYSTEM_HPP__
@@ -59,6 +59,7 @@ public:
         len = (1 << log_len);
         do_peak = 0;
         do_bitrev = 1;
+        batch_size = 4;
     }
 
     // Processes
@@ -81,6 +82,7 @@ public:
     int32_t do_bitrev;
     int32_t len;
     int32_t log_len;
+    int32_t batch_size;
 
     uint32_t in_words_adj;
     uint32_t out_words_adj;

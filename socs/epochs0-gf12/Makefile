@@ -11,9 +11,10 @@ TECHLIB  = gf12
 FPGA_TECHLIB = virtex7
 BOARD    = profpga-xc7v2000t-epochs0-gf12
 DESIGN   = $(BOARD)
-#LINUX_SMP = 1
-LEON3_BASE_FREQ_MHZ ?= 50
+SMP = 0
+BASE_FREQ_MHZ ?= 50
 LEON3_STACK ?= 0x5bfffff0
+USE_OPENSBI ?= 1
 
 OVR_TECHLIB ?=
 ifneq ("$(OVR_TECHLIB)", "")
@@ -21,7 +22,6 @@ TECHLIB = $(OVR_TECHLIB)
 endif
 
 ### Chip-specific configuration ####
-GRLIB_DEFCONFIG = $(DESIGN_PATH)/grlib_epochs0_defconfig
 ESP_DEFCONFIG = $(DESIGN_PATH)/esp_epochs0_defconfig
 
 
@@ -41,8 +41,11 @@ XMLOGOPT +=
 NCLOGOPT +=
 else
 VCOMOPT +=
+VLOGOPT += +define+ASIC
 VLOGOPT += +define+GF12
+XMLOGOPT += -DEFINE ASIC
 XMLOGOPT += -DEFINE GF12
+NCLOGOPT += -DEFINE ASIC
 NCLOGOPT += -DEFINE GF12
 endif
 
@@ -55,6 +58,7 @@ VSIMOPT += -g SIMULATION=true
 
 
 # Genus flags
+GENUS_VLOGOPT += -define ASIC
 GENUS_VLOGOPT += -define GF12
 
 

@@ -1,4 +1,4 @@
--- Copyright (c) 2011-2021 Columbia University, System Level Design Group
+-- Copyright (c) 2011-2022 Columbia University, System Level Design Group
 -- SPDX-License-Identifier: Apache-2.0
 
 library ieee;
@@ -81,11 +81,11 @@ entity llc_wrapper is
     coherence_rsp_rcv_rdreq    : out std_ulogic;
     coherence_rsp_rcv_data_out : in  noc_flit_type;
     coherence_rsp_rcv_empty    : in  std_ulogic;
-    -- NoC6->tile
+    -- NoC4->tile
     dma_rcv_rdreq              : out std_ulogic;
     dma_rcv_data_out           : in  noc_flit_type;
     dma_rcv_empty              : in  std_ulogic;
-    -- tile->NoC4
+    -- tile->NoC6
     dma_snd_wrreq              : out std_ulogic;
     dma_snd_data_in            : out noc_flit_type;
     dma_snd_full               : in  std_ulogic;

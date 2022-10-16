@@ -35,8 +35,8 @@ entity jtag_test is
   generic (
     test_if_en : integer range 0 to 1 := 0);
   port (
-    rst    : in std_ulogic;
-    refclk : in std_ulogic;
+    rst                 : in std_ulogic;
+    refclk              : in std_ulogic;
     tile_rst            : in std_ulogic;
     tdi                 : in  std_ulogic;
     tdo                 : out std_ulogic;
@@ -828,7 +828,7 @@ begin
         g_data_width => NOC_FLIT_SIZE,
         g_size       => 2)
       port map (
-        rst_wr_n_i    => rst,
+        rst_wr_n_i => rst,
         clk_wr_i   => tclk,
         we_i       => we_in(2),
         d_i        => test_in(2),

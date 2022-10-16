@@ -1,8 +1,8 @@
-# Copyright (c) 2011-2021 Columbia University, System Level Design Group
+# Copyright (c) 2011-2022 Columbia University, System Level Design Group
 # SPDX-License-Identifier: Apache-2.0
 
 ### Supported technology libraries ###
-ASICLIBS = gf12
+ASICLIBS = gf12 inferred
 FPGALIBS = virtex7 virtexu virtexup
 
 
@@ -57,7 +57,7 @@ endif
 
 
 ### Toolchain
-ifdef LINUX_SMP
+ifeq ("$(SMP)", "1")
 LINUX_CONFIG = $(CPU_ARCH)_smp_defconfig
 else
 LINUX_CONFIG = $(CPU_ARCH)_defconfig

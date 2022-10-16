@@ -1,4 +1,4 @@
-# Copyright (c) 2011-2021 Columbia University, System Level Design Group
+# Copyright (c) 2011-2022 Columbia University, System Level Design Group
 # SPDX-License-Identifier: Apache-2.0
 
 
@@ -22,6 +22,7 @@ XMELABOPT += -nocopyright
 XMELABOPT += -disable_sem2009
 XMELABOPT += -nomxindr
 XMELABOPT += -timescale 10ps/10ps
+XMELABOPT += -notimingchecks
 
 XMSIMOPT += $(SIMTOP)
 XMSIMOPT += -input xmsim.in

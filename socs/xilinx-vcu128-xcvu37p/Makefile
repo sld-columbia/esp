@@ -1,4 +1,4 @@
-# Copyright (c) 2011-2021 Columbia University, System Level Design Group
+# Copyright (c) 2011-2022 Columbia University, System Level Design Group
 # SPDX-License-Identifier: Apache-2.0
 ##########################
 ### ESP Local Makefile ###
@@ -12,10 +12,10 @@ ESP_ROOT = $(realpath ../../)
 TECHLIB  = virtexup
 BOARD    = xilinx-vcu128-xcvu37p
 DESIGN   = esp-$(BOARD)
-#LINUX_SMP = 1
-LEON3_BASE_FREQ_MHZ ?= 75
+SMP = 0
+BASE_FREQ_MHZ ?= 75
 LEON3_STACK ?= 0x5bfffff0
-
+USE_OPENSBI ?= 1
 
 ### Design top level and testbench ###
 TOP    = top

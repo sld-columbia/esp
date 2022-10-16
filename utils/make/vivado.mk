@@ -1,4 +1,4 @@
-# Copyright (c) 2011-2021 Columbia University, System Level Design Group
+# Copyright (c) 2011-2022 Columbia University, System Level Design Group
 # SPDX-License-Identifier: Apache-2.0
 
 ### Constaints ###
@@ -128,7 +128,7 @@ endif
 		echo "unset argv" >> $@; \
 		echo "set argc 0" >> $@; \
 	fi;
-ifeq ($(CONFIG_GRETH_ENABLE),y)
+ifeq ($(CONFIG_ETH_EN),y)
 	@if test -r $(ESP_ROOT)/constraints/$(BOARD)/sgmii.xci; then \
 		echo $(SPACES)"INFO including SGMII IP"; \
 		mkdir -p vivado/sgmii; \
