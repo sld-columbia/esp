@@ -69,6 +69,10 @@ architecture behav of testbench is
   signal c0_sys_clk_p : std_ulogic := '0';
   signal c0_sys_clk_n : std_ulogic := '1';
 
+  -- Chip clock used for emulation on FPGA only
+  signal clk_emu_p   : std_ulogic  := '0';
+  signal clk_emu_n   : std_ulogic  := '1';
+
   -- FPGA Ethernet
   signal fpga_reset_o2     : std_ulogic;
   signal fpga_etx_clk      : std_ulogic;
@@ -116,6 +120,9 @@ architecture behav of testbench is
     port (
       -- Main reset
       reset             : in    std_ulogic;
+      -- Chip clock used for emulation on FPGA only
+      clk_emu_p         : in    std_ulogic;
+      clk_emu_n         : in    std_ulogic;
       -- Ethernet signals
       reset_o2          : out   std_ulogic;
       etx_clk           : in    std_ulogic;
@@ -249,6 +256,8 @@ begin
       )
     port map (
       reset             => reset,
+      clk_emu_p         => clk_emu_p,
+      clk_emu_n         => clk_emu_n,
       uart_rxd          => uart_rxd,
       uart_txd          => uart_txd,
       uart_ctsn         => uart_ctsn,
