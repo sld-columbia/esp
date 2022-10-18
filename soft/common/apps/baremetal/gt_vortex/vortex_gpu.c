@@ -8,6 +8,7 @@
 
 #include <esp_accelerator.h>
 #include <esp_probe.h>
+#define FFT_FX_WIDTH 32
 
 #if (FFT_FX_WIDTH == 64)
 typedef long long token_t;
@@ -111,24 +112,25 @@ int main(int argc, char * argv[])
 	
         len = 1 << log_len;
 
-	if (DMA_WORD_PER_BEAT(sizeof(token_t)) == 0) {
+	/*if (DMA_WORD_PER_BEAT(sizeof(token_t)) == 0) {
 		in_words_adj = 2 * len;
 		out_words_adj = 2 * len;
 	} else {
 		in_words_adj = round_up(2 * len, DMA_WORD_PER_BEAT(sizeof(token_t)));
 		out_words_adj = round_up(2 * len, DMA_WORD_PER_BEAT(sizeof(token_t)));
-	}
+	}*/
 
-	in_len = in_words_adj;
-	out_len = out_words_adj;
-	in_size = in_len * sizeof(token_t);
-	out_size = out_len * sizeof(token_t);
+	in_len   =  in_words_adj;
+	out_len  =  out_words_adj;
+	in_size  =  in_len * sizeof(token_t);
+	out_size =  out_len * sizeof(token_t);
 	out_offset  = 0;
-	unsigned int _fibonacci_bin_len_in_words = 7780/4;
+	unsigned int _fibonacci_bin_len_in_words = 7780/4; 
+        //9732/4; // adding +4 to original to make div by 8
 	mem_size = _fibonacci_bin_len_in_words * sizeof(token_t);
 	unsigned int coh;
         unsigned int tile_offset;
-        unsigned int* coh_reg_addr;
+        unsigned int * coh_reg_addr;
 
 	// Search for the device
 	printf("Scanning device tree... \n");
@@ -151,7 +153,8 @@ int main(int argc, char * argv[])
 		// printf("  memory buffer base-address = %p\n", mem);
 		init_buf(mem);
 		printf("**************** Memory Details ****************\n");
-		printf("  memory buffer base-address = %x\n", (intptr_t)(mem-0x20000000));
+		printf("  memory buffer base-address = %x\n", (intptr_t)(mem));
+		printf(" Last word address: %x \n", (intptr_t)(mem+_fibonacci_bin_len_in_words-1));
 		// Allocate and populate page table
 		// ptable = aligned_malloc(NCHUNK(mem_size) * sizeof(unsigned *));
 		// printf("  nchunk = %lu\n", NCHUNK(mem_size));
@@ -177,16 +180,16 @@ int main(int argc, char * argv[])
 			/* <<--regs-config-->> */
 			
 			// Set memory offset
-			iowrite32(dev, VX_BASE_ADDR, (intptr_t) (mem-0x20000000));
+			iowrite32(dev, VX_BASE_ADDR, (intptr_t)mem); // -0x20000000
 			// Flush (customize coherence model here)
-                        input_n  =    (mem+0x7fff0);
+                        input_n  =    (mem+0x7fff0); //(mem+0x7fff0)
 			*input_n = 5; // Assigning input value to memory
-		        output_fact = (mem+0x7fff4); 	
+		        output_fact = (mem+0x7fff4); //(mem+0x7fff4) 	
 			
 			// Start accelerators
 			printf("  Start...\n");
 			iowrite32(dev, VX_SOFT_RESET, START_VORTEX);
-			
+	
 			vortex_busy = ioread32(dev, VX_BUSY_INT);
                         vortex_busy &= BIT(0);
 			// Since higher order bits may contain routing headers
@@ -200,7 +203,7 @@ int main(int argc, char * argv[])
 		            vortex_busy = ioread32(dev, VX_BUSY_INT);
 			    vortex_busy &= BIT(0); // Since higher order bits may contain routing headers
 			    printf("  Busy Reg Value = %d \n", vortex_busy);
-			    printf("  Value at %p = %d \n",output_fact,*(output_fact));
+			    printf("  Value at %p = %d \n",    output_fact,*(output_fact));
 			}
 		       
 			printf("  Value of %d! after computation in VX = %d \n",(*input_n) ,*(output_fact));
@@ -210,6 +213,5 @@ int main(int argc, char * argv[])
 		aligned_free(mem);
 		aligned_free(gold);
 	}
-
 	return 0;
 }

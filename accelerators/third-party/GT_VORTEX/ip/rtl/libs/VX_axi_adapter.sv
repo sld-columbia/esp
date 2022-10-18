@@ -77,33 +77,52 @@ module VX_axi_adapter #(
     output wire                         m_axi_rready
 );
     localparam AXSIZE = $clog2(VX_DATA_WIDTH/8);
-
+    localparam STATE_WR_ADDR = 1;
     `STATIC_ASSERT((AXI_DATA_WIDTH == VX_DATA_WIDTH), ("invalid parameter"))
     `STATIC_ASSERT((AXI_TID_WIDTH == VX_TAG_WIDTH), ("invalid parameter"))
 
     //`UNUSED_VAR ()
-
+    
     reg awvalid_ack;
     reg wvalid_ack;
 
-    wire mem_req_fire = mem_req_valid && mem_req_ready;
+    reg wrstate = 0; 
 
+    wire mem_req_fire = mem_req_valid && mem_req_ready;
+    
+    wire axi_write_ready = ((wrstate == STATE_WR_ADDR) && (m_axi_wready || wvalid_ack));
+    reg  axi_write_ready_dly = 0; 
+   
     always @(posedge clk) begin
-		if (reset) begin
-			awvalid_ack <= 0;
-            wvalid_ack  <= 0;
-		end else begin			
-            if (mem_req_fire) begin
+           if (reset) begin
+	     awvalid_ack <= 0;
+             wvalid_ack  <= 0;
+	     wrstate 	 <= 0; 
+	   end else begin			
+             if (mem_req_fire) begin
                 awvalid_ack <= 0;
                 wvalid_ack  <= 0;
-            end else begin
+             end else begin
                 awvalid_ack <= m_axi_awvalid && m_axi_awready;
                 wvalid_ack  <= m_axi_wvalid && m_axi_wready;
-            end
-		end
+             end
+
+	     if (m_axi_awready || awvalid_ack) begin
+		// state when only addres is write ready and there write data
+		// isn't yet
+                wrstate <= STATE_WR_ADDR; 
+	     end 
+                // when address has and data write ready have arrived and vortex can write
+		// to write
+		// default write state
+             axi_write_ready_dly = axi_write_ready; // Detecting edge of axi_write_ready to reset wrstate. 
+	     if(axi_write_ready_dly!=axi_write_ready) begin
+		    wrstate <=0; 
+    	     end
+	   end
 	end
 
-    wire axi_write_ready = (m_axi_awready || awvalid_ack) && (m_axi_wready || wvalid_ack);
+	   //(m_axi_awready || awvalid_ack) && (m_axi_wready || wvalid_ack);
 
     // AXI write request address channel        
     assign m_axi_awvalid    = mem_req_valid && mem_req_rw && !awvalid_ack;

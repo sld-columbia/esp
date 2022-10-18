@@ -18,11 +18,11 @@
 `endif
 
 `ifndef NUM_THREADS
-`define NUM_THREADS 4
+`define NUM_THREADS 8
 `endif
 
 `ifndef NUM_BARRIERS
-`define NUM_BARRIERS 4
+`define NUM_BARRIERS 8
 `endif
 
 `ifndef L2_ENABLE
@@ -34,7 +34,7 @@
 `endif
 
 `ifndef SM_ENABLE
-`define SM_ENABLE 1
+`define SM_ENABLE 0
 `endif
 
 `ifndef MEM_BLOCK_SIZE
@@ -46,19 +46,19 @@
 `endif
 
 `ifndef STARTUP_ADDR
-`define STARTUP_ADDR 32'h80000000
+`define STARTUP_ADDR 32'h00000000 // Originally 0x80000000
 `endif
 
 `ifndef IO_BASE_ADDR
-`define IO_BASE_ADDR 32'hFF000000
+`define IO_BASE_ADDR 32'h0FF00000
 `endif
 
 `ifndef IO_ADDR_SIZE
-`define IO_ADDR_SIZE (32'hFFFFFFFF - `IO_BASE_ADDR + 1)
+`define IO_ADDR_SIZE (32'h0FFFFFFF - `IO_BASE_ADDR + 1)
 `endif
 
 `ifndef IO_COUT_ADDR
-`define IO_COUT_ADDR (32'hFFFFFFFF - `MEM_BLOCK_SIZE + 1)
+`define IO_COUT_ADDR (32'h0FFFFFFF - `MEM_BLOCK_SIZE + 1)
 `endif
 
 `ifndef IO_COUT_SIZE
@@ -299,7 +299,7 @@
 
 // Size of cache in bytes
 `ifndef ICACHE_SIZE
-`define ICACHE_SIZE 16384
+`define ICACHE_SIZE 16384 //16384
 `endif
 
 // Core Request Queue Size
@@ -331,7 +331,7 @@
 
 // Size of cache in bytes
 `ifndef DCACHE_SIZE
-`define DCACHE_SIZE 16384
+`define DCACHE_SIZE 16384 // 16384
 `endif
 
 // Number of banks
