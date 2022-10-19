@@ -33,7 +33,6 @@ INCDIR += -I../../../common/matchlib_toolkit/examples/ac_types/include
 INCDIR += -I../../../common/matchlib_toolkit/examples/ac_math/include
 INCDIR += -I../../../common/matchlib_toolkit/examples/ac_simutils/include
 
-
 CXXFLAGS ?=
 CXXFLAGS += -MMD
 CXXFLAGS += -g

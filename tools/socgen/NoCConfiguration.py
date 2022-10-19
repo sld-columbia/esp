@@ -436,19 +436,19 @@ class NoCFrame(Pmw.ScrolledFrame):
     tile.label.pack()
 
     tile.has_l2_selection = Checkbutton(config_frame, text="Has cache", variable=tile.has_l2, onvalue = 1, offvalue = 0, command=self.changed);
-    tile.has_l2_selection.grid(row=1, column=1, columnspan=2)
+    tile.has_l2_selection.grid(row=1, column=1)
     tile.has_ddr_selection = Checkbutton(config_frame, text="Has DDR", variable=tile.has_ddr, onvalue = 1, offvalue = 0, command=self.changed);
-    tile.has_ddr_selection.grid(row=1, column=3, columnspan=2)
+    tile.has_ddr_selection.grid(row=1, column=4)
     Separator(config_frame, orient="horizontal").grid(row=2, column=1, columnspan=4, ipadx=140, pady=3)
 
     tile.label.bind("<Double-Button-1>", lambda event:tile.power_window(event, self.soc, self))
-    Label(config_frame, text="Clk Reg: ").grid(row=3, column=1)
-    tile.clk_reg_selection = Spinbox(config_frame, state='readonly', from_=0, to=len(self.soc.noc.get_clk_regions()), wrap=True, textvariable=tile.clk_region,width=3);
-    tile.clk_reg_selection.grid(row=3, column=2)
+    Label(config_frame, text="Clk Reg: ", justify=LEFT, anchor="w").grid(sticky = W, row=3, column=1)
+    tile.clk_reg_selection = Spinbox(config_frame, state='readonly', from_=0, to=len(self.soc.noc.get_clk_regions()), wrap=True, textvariable=tile.clk_region,width=3, justify=RIGHT);
+    tile.clk_reg_selection.grid(sticky = E, row=3, column=1)
     tile.pll_selection = Checkbutton(config_frame, text="Has PLL", variable=tile.has_pll, onvalue = 1, offvalue = 0, command=self.changed);
-    tile.pll_selection.grid(row=3, column=3)
+    tile.pll_selection.grid(row=3, column=2)
     tile.clkbuf_selection = Checkbutton(config_frame, text="CLK BUF", variable=tile.has_clkbuf, onvalue = 1, offvalue = 0, command=self.changed);
-    tile.clkbuf_selection.grid(row=3, column=4)
+    tile.clkbuf_selection.grid(row=3, column=3)
     try:
       int(self.vf_points_entry.get())
       tile.load_characterization(self.soc, int(self.vf_points_entry.get()))
