@@ -18,6 +18,8 @@ entity top is
     JTAG_TRACE : integer range -1 to CFG_TILES_NUM - 1 := -1);
   port (
     reset             : in    std_logic;
+    clk_emu_p         : in    std_logic;
+    clk_emu_n         : in    std_logic;
     -- Ethernet signals
     reset_o2          : out   std_ulogic;
     etx_clk           : in    std_ulogic;
@@ -88,14 +90,16 @@ architecture rtl of top is
   -----------------------------------------------------------------------------
   -- ESP chip specific instance
   -----------------------------------------------------------------------------
-  component ESP_ASIC_TOP is
+  component chip_emu_top is
     generic (
       SIMULATION : boolean);
     port (
       reset           : in    std_logic;
+      clk_emu_p       : in    std_logic;
+      clk_emu_n       : in    std_logic;
       ext_clk         : in    std_logic;
-      fpga_data_in    : in std_logic_vector(64 - 1 downto 0);
-      fpga_data_out   : out std_logic_vector(64 - 1 downto 0);
+      fpga_data_in    : in    std_logic_vector(64 - 1 downto 0);
+      fpga_data_out   : out   std_logic_vector(64 - 1 downto 0);
       fpga_valid_in   : in    std_logic_vector(0 downto 0);
       fpga_valid_out  : out   std_logic_vector(0 downto 0);
       fpga_clk_in     : in    std_logic_vector(0 downto 0);
@@ -114,12 +118,13 @@ architecture rtl of top is
       etx_en          : out   std_ulogic;
       etx_er          : out   std_ulogic;
       emdc            : out   std_ulogic;
-      emdio_i         : in std_logic;
-      emdio_o         : out std_logic;
+      emdio_i         : in    std_logic;
+      emdio_o         : out   std_logic;
       uart_rxd        : in    std_logic;
       uart_txd        : out   std_logic;
       uart_ctsn       : in    std_logic;
       uart_rtsn       : out   std_logic;
+      --JTAG
       tdi_io          : in    std_logic;
       tdi_cpu         : in    std_logic;
       tdi_mem         : in    std_logic;
@@ -128,8 +133,8 @@ architecture rtl of top is
       tdo_cpu         : out   std_logic;
       tdo_mem         : out   std_logic;
       tdo_acc         : out   std_logic
-    );
-  end component ESP_ASIC_TOP;
+  );
+  end component chip_emu_top;
 
   component fpga_proxy_top is
     generic (
@@ -142,7 +147,7 @@ architecture rtl of top is
       main_clk_p        : in    std_ulogic;
       main_clk_n        : in    std_ulogic;
       fpga_data_out     : in    std_logic_vector(CFG_NMEM_TILE * (ARCH_BITS) - 1 downto 0);
-      fpga_data_in      : out std_logic_vector(CFG_NMEM_TILE * (ARCH_BITS) - 1 downto 0);
+      fpga_data_in      : out   std_logic_vector(CFG_NMEM_TILE * (ARCH_BITS) - 1 downto 0);
       fpga_valid_in     : out   std_logic_vector(0 to CFG_NMEM_TILE - 1);
       fpga_valid_out    : in    std_logic_vector(0 to CFG_NMEM_TILE - 1);
       fpga_clk_in       : out   std_logic_vector(0 to CFG_NMEM_TILE - 1);
@@ -287,11 +292,13 @@ begin
   --  end generate unused_td_io_gen;
   --end generate unused_interface_gen;
 
-  chip_i : ESP_ASIC_TOP
+  chip_i : chip_emu_top
     generic map (
       SIMULATION => SIMULATION)
     port map (
       reset           => reset,
+      clk_emu_p       => clk_emu_p,
+      clk_emu_n       => clk_emu_n,
       ext_clk         => ext_clk_noc,
       fpga_data_in    => fpga_data_in,
       fpga_data_out   => fpga_data_out,

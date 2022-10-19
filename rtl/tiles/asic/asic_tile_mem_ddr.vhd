@@ -484,7 +484,6 @@ begin
   -----------------------------------------------------------------------------
   jtag_test_i : jtag_test
     generic map (
-      --test_if_en => test_if_en)
       test_if_en => CFG_JTAG_EN)
     port map (
       rst                 => test_rstn,

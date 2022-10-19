@@ -68,10 +68,10 @@ entity ESP_ASIC_TOP is
     tdi_cpu         : in    std_logic;
     tdi_mem         : in    std_logic;
     tdi_acc         : in    std_logic;
-    tdo_io          : out    std_logic;
-    tdo_cpu         : out    std_logic;
-    tdo_mem         : out    std_logic;
-    tdo_acc         : out    std_logic
+    tdo_io          : out   std_logic;
+    tdo_cpu         : out   std_logic;
+    tdo_mem         : out   std_logic;
+    tdo_acc         : out   std_logic
    );
 end;
 
