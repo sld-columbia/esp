@@ -107,7 +107,7 @@ module VX_axi_adapter #(
                 wvalid_ack  <= m_axi_wvalid && m_axi_wready;
              end
 
-	     if (m_axi_awready || awvalid_ack) begin
+	     if (m_axi_awvalid && m_axi_awready) begin
 		// state when only addres is write ready and there write data
 		// isn't yet
                 wrstate <= STATE_WR_ADDR; 
@@ -115,7 +115,7 @@ module VX_axi_adapter #(
                 // when address has and data write ready have arrived and vortex can write
 		// to write
 		// default write state
-             axi_write_ready_dly = axi_write_ready; // Detecting edge of axi_write_ready to reset wrstate. 
+             axi_write_ready_dly <= axi_write_ready; // Detecting edge of axi_write_ready to reset wrstate. 
 	     if(axi_write_ready_dly!=axi_write_ready) begin
 		    wrstate <=0; 
     	     end

@@ -126,7 +126,6 @@ int main(int argc, char * argv[])
 	out_size =  out_len * sizeof(token_t);
 	out_offset  = 0;
 	unsigned int _fibonacci_bin_len_in_words = 7780/4; 
-        //9732/4; // adding +4 to original to make div by 8
 	mem_size = _fibonacci_bin_len_in_words * sizeof(token_t);
 	unsigned int coh;
         unsigned int tile_offset;
@@ -140,12 +139,12 @@ int main(int argc, char * argv[])
 		printf("Vortex GPU not found\n");
 		return 0;
 	}
-
+        
 	for (n = 0; n < ndev; n++) {
 
 		printf("**************** %s.%d ****************\n", DEV_NAME, n);
 
-		dev = &espdevs[n];
+		dev =  &espdevs[n];
 
 		// Allocate memory
 		// gold = aligned_malloc(out_len * sizeof(float));
@@ -180,33 +179,35 @@ int main(int argc, char * argv[])
 			/* <<--regs-config-->> */
 			
 			// Set memory offset
-			iowrite32(dev, VX_BASE_ADDR, (intptr_t)mem); // -0x20000000
-			// Flush (customize coherence model here)
-                        input_n  =    (mem+0x7fff0); //(mem+0x7fff0)
-			*input_n = 5; // Assigning input value to memory
-		        output_fact = (mem+0x7fff4); //(mem+0x7fff4) 	
 			
+		        intptr_t mem_top = (intptr_t)mem; 
+			iowrite32(dev, VX_BASE_ADDR, mem_top); // -0x20000000
+			// Flush (customize coherence model here)
+                        input_n  =   (token_t*) (mem_top+0x7fff0); //(mem+0x7fff0)
+			*input_n = 5; // Assigning input value to memory
+		        output_fact = (token_t*)(mem_top+0x7fff4); //(mem+0x7fff4) 	
 			// Start accelerators
 			printf("  Start...\n");
+
+			// START_VORTEX
 			iowrite32(dev, VX_SOFT_RESET, START_VORTEX);
-	
+			
 			vortex_busy = ioread32(dev, VX_BUSY_INT);
                         vortex_busy &= BIT(0);
 			// Since higher order bits may contain routing headers
 			printf("  Busy Reg Value = %d \n", vortex_busy);
 			// Wait for completion
-			vortex_busy = ioread32(dev, VX_BUSY_INT);
+			vortex_busy =  ioread32(dev, VX_BUSY_INT);
                         vortex_busy &= BIT(0);
 			
 			while (vortex_busy==1) {
 		            printf("  Running GPU workload...\n");
 		            vortex_busy = ioread32(dev, VX_BUSY_INT);
 			    vortex_busy &= BIT(0); // Since higher order bits may contain routing headers
-			    printf("  Busy Reg Value = %d \n", vortex_busy);
-			    printf("  Value at %p = %d \n",    output_fact,*(output_fact));
+			    // printf(" Busy Reg Value = %d \n", vortex_busy);
 			}
-		       
-			printf("  Value of %d! after computation in VX = %d \n",(*input_n) ,*(output_fact));
+
+			printf("  Value of %dth fibbonacci after computation in Vortex = %llu \n",*(input_n), *(output_fact));
 			printf("  Done\n");
 		}
 		aligned_free(ptable);
