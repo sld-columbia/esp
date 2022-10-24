@@ -5,8 +5,8 @@
 //    parameter AXI_ADDR_WIDTH   = 32,
 //    parameter AXI_TID_WIDTH    = `VX_MEM_TAG_WIDTH,    
 //    parameter AXI_STROBE_WIDTH = (`VX_MEM_DATA_WIDTH / 8)
-`include "VX_define.vh"
 `include "VX_config.vh"
+`include "VX_define.vh"
 module GT_VORTEX_wrapper #(
    parameter AXI_DATA_WIDTH   = `VX_MEM_DATA_WIDTH,
    parameter AXI_ADDR_WIDTH   = 32,
@@ -134,29 +134,27 @@ module GT_VORTEX_wrapper #(
    output wire [3:0]      m_axi_awregion;
    output wire [3:0]      m_axi_arregion;
    ////////////////////////////////////////////////////////////////////////////////
-   parameter RESET_DELAY = 12; 
+   // parameter RESET_DELAY = 1; 
    
    // Unused wires 
    assign m_axi_awatop   =    4'b0; 
    assign m_axi_awregion =    4'b0; 
-
+  
     // Configuration Registers
-   reg vx_reset_soft = 0;
+   reg vx_reset_soft=0;
    reg [31:0] addr;
    reg  vx_started = 1'b0; // Indicates that vortex is started and running for multicycle reset.
    reg  vx_reset   = 1'b0; 
    wire apb_write = psel & penable & pwrite;
    wire apb_read  = psel & ~pwrite;
    reg [$clog2(`RESET_DELAY+1)-1:0] vx_reset_ctr;
-   wire [AXI_ADDR_WIDTH-1:0] m_axi_araddr_raw; 
-   wire [AXI_ADDR_WIDTH-1:0] m_axi_awaddr_raw;
-   wire vx_busy_int = busy;
+   wire [31:0] m_axi_araddr_raw; 
+   wire [31:0] m_axi_awaddr_raw;
    assign pready  = 1'b1;
    assign pslverr = 1'b0;
    // Adding the base address to the memory addresses reserved for Vortex programs
-   assign m_axi_araddr = m_axi_araddr_raw + addr; // FIXME: check for comb loop 
-   assign m_axi_awaddr = m_axi_awaddr_raw + addr; // FIXME: check for comb loop
-   assign vx_busy_int  = busy;  
+   assign m_axi_araddr = m_axi_araddr_raw + addr; 
+   assign m_axi_awaddr = m_axi_awaddr_raw + addr;
     // Detecting positive edge of reset
    reg   reset_dly, reset_pe;                          
    always @ (posedge clk) begin
@@ -164,26 +162,27 @@ module GT_VORTEX_wrapper #(
    end
    
    assign reset_pe = reset & ~reset_dly; // Positive edge of reset
+   
+   // Clk gating to clock vortex only after copying data to memory to avoid
+   // invalid vx caches
+   assign vx_clk = clk & vx_started; 
 
    always @(posedge clk) begin
       if (reset_pe) begin
          addr           <= 32'b0; // reset initial value 
          vx_reset_soft  <= 1'b0;  // Software reset to start Vortex 
 	 prdata         <= 32'b0;
-	 vx_reset       <= 1'b0;
-	 vx_started     <= 1'b0;
-      end // reset 
+      end // reset
       if (apb_write) begin
         case (paddr[7:0])
           8'h50 : addr          <= pwdata;
 	  8'h54 : vx_reset_soft <= pwdata[0]; 
         endcase
       end  // write
-      else begin
-         
+      else begin 
         case (paddr[7:0])
            8'h50 : prdata    <= addr; 
-           8'h58 : prdata[0] <= vx_busy_int; // Interrupt Read only
+           8'h58 : prdata[0] <= busy; // Interrupt Read only
            8'h54 : prdata[0] <= vx_reset_soft;	
         endcase
       end // read
@@ -191,31 +190,40 @@ module GT_VORTEX_wrapper #(
    end // always 
   
    always @(posedge clk) begin
-      if (vx_started == 0 && vx_reset_soft == 1) begin
-         vx_reset_ctr <= 0;
-      end else if (vx_started == 1) begin
-         vx_reset_ctr <= vx_reset_ctr + 1;
-      end
-   end
-
-   always @(posedge clk) begin
-      if (vx_reset_soft == 1 && vx_started == 0) begin
+     
+     if (reset_pe) begin
+ 	 // vx_reset       <= 1'b0;
+         vx_started	<= 1'b0;
+         vx_reset_ctr   <= 0;
+      end else begin   
+       
+       if (vx_reset_soft == 1'b1 && vx_started == 1'b0) begin
 	 vx_reset   <= 1;
 	 vx_started <= 1;
-      end // end reset begin if
-      // Vortex reset cycles
-      if (vx_reset_ctr == (`RESET_DELAY-1) && vx_started == 1'b1) begin
+       end // end reset begin if
+       
+       // Vortex reset cycles
+       else if (vx_reset_ctr == (`RESET_DELAY-1) && vx_reset == 1'b1) begin
          vx_reset   <= 1'b0;
-      end // end delay to reset if
+       end // end delay to reset if
+       else if (vx_reset == 1'b1) begin
+         vx_reset_ctr <= vx_reset_ctr + 1; 
+       end
+       //if (vx_started == 0 && vx_reset_soft == 1) begin
+       //  vx_reset_ctr <= 0;
+       //end else if (vx_started == 1) begin
+       //  vx_reset_ctr <= vx_reset_ctr + 1;
+       //end
+     end
    end // always
-    
+  
    Vortex_axi  #(
     .AXI_DATA_WIDTH    (`VX_MEM_DATA_WIDTH),
     .AXI_ADDR_WIDTH    (32),
     .AXI_TID_WIDTH     (`VX_MEM_TAG_WIDTH),
     .AXI_STROBE_WIDTH  (`VX_MEM_DATA_WIDTH / 8) 
     )Vortex_axi_0 (
-    .clk            ( clk & vx_started  ),
+    .clk            ( vx_clk   ),
     .reset          ( vx_reset ),
 
     .m_axi_awid     ( m_axi_awid    ),

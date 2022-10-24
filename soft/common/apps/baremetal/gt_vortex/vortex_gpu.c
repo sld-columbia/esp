@@ -89,6 +89,13 @@ static void init_buf(token_t *in)
  #include "input.h"
 }
 
+int fibonacci(int n)
+{
+	if (n <= 1) 
+	  return n; 
+        return fibonacci(n - 1) + fibonacci(n - 2); 
+}
+
 
 int main(int argc, char * argv[])
 {
@@ -100,7 +107,7 @@ int main(int argc, char * argv[])
 	unsigned done;
 	unsigned **ptable = NULL;
 	token_t *mem;
-	float *gold;
+	int output_golden;
 	unsigned errors = 0;
 	unsigned coherence;
         const int ERROR_COUNT_TH = 0.001;
@@ -108,7 +115,8 @@ int main(int argc, char * argv[])
         // const intptr_t src_addr = 0x7fff0; 
         // const intptr_t dst_addr = 0x7fff4; 	
 	token_t *input_n;
-	token_t *output_fact;
+	int input_n_val; // Since Vortex writes to this location, storing this value. 
+	token_t *output_computed;
 	
         len = 1 << log_len;
 
@@ -181,19 +189,24 @@ int main(int argc, char * argv[])
 			// Set memory offset
 			
 		        intptr_t mem_top = (intptr_t)mem; 
-			iowrite32(dev, VX_BASE_ADDR, mem_top); // -0x20000000
-			// Flush (customize coherence model here)
-                        input_n  =   (token_t*) (mem_top+0x7fff0); //(mem+0x7fff0)
-			*input_n = 5; // Assigning input value to memory
-		        output_fact = (token_t*)(mem_top+0x7fff4); //(mem+0x7fff4) 	
+
+                        
+			input_n  =   (token_t*) (mem_top+0x7fff0); //(mem+0x7fff0)
+			input_n_val = 5; 
+			*input_n = input_n_val; // Assigning input value to memory
+			
+		        output_computed = (token_t*)(mem_top+0x7fff4); //(mem+0x7fff4) 	
+			output_golden = fibonacci(input_n_val); 
 			// Start accelerators
 			printf("  Start...\n");
 
 			// START_VORTEX
 			iowrite32(dev, VX_SOFT_RESET, START_VORTEX);
-			
+		        printf("  Started\n");	
+
+			iowrite32(dev, VX_BASE_ADDR, mem_top); // -0x20000000
 			vortex_busy = ioread32(dev, VX_BUSY_INT);
-                        vortex_busy &= BIT(0);
+			vortex_busy &= BIT(0);
 			// Since higher order bits may contain routing headers
 			printf("  Busy Reg Value = %d \n", vortex_busy);
 			// Wait for completion
@@ -206,13 +219,20 @@ int main(int argc, char * argv[])
 			    vortex_busy &= BIT(0); // Since higher order bits may contain routing headers
 			    // printf(" Busy Reg Value = %d \n", vortex_busy);
 			}
+			if(*output_computed != output_golden)
+			{	
+				errors+=1;
+			}
+			if(errors){
+			   printf("Completed run with %d mismatches between computed and golden outputs.", errors); 
+			
+			}	
 
-			printf("  Value of %dth fibbonacci after computation in Vortex = %llu \n",*(input_n), *(output_fact));
+			printf("  Value of %dth fibbonacci after computation in Vortex = %llu \n",input_n_val, *(output_computed));
 			printf("  Done\n");
 		}
 		aligned_free(ptable);
 		aligned_free(mem);
-		aligned_free(gold);
 	}
 	return 0;
 }
