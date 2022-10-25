@@ -165,7 +165,7 @@ module GT_VORTEX_wrapper #(
    
    // Clk gating to clock vortex only after copying data to memory to avoid
    // invalid vx caches
-   assign vx_clk = clk & vx_started; 
+   wire vx_clk = clk & vx_started; 
 
    always @(posedge clk) begin
       if (reset_pe) begin
@@ -173,20 +173,21 @@ module GT_VORTEX_wrapper #(
          vx_reset_soft  <= 1'b0;  // Software reset to start Vortex 
 	 prdata         <= 32'b0;
       end // reset
-      if (apb_write) begin
-        case (paddr[7:0])
-          8'h50 : addr          <= pwdata;
-	  8'h54 : vx_reset_soft <= pwdata[0]; 
-        endcase
-      end  // write
-      else begin 
-        case (paddr[7:0])
-           8'h50 : prdata    <= addr; 
-           8'h58 : prdata[0] <= busy; // Interrupt Read only
-           8'h54 : prdata[0] <= vx_reset_soft;	
-        endcase
-      end // read
-
+      else begin
+	if (apb_write) begin
+          case (paddr[7:0])
+            8'h50 : addr          <= pwdata;
+	    8'h54 : vx_reset_soft <= pwdata[0]; 
+          endcase
+        end  // write
+        else begin 
+          case (paddr[7:0])
+            8'h50 : prdata    <= addr; 
+            8'h58 : prdata[0] <= busy; // Interrupt Read only
+            8'h54 : prdata[0] <= vx_reset_soft;	
+          endcase
+        end // read
+     end // !reset
    end // always 
   
    always @(posedge clk) begin
@@ -198,8 +199,8 @@ module GT_VORTEX_wrapper #(
       end else begin   
        
        if (vx_reset_soft == 1'b1 && vx_started == 1'b0) begin
-	 vx_reset   <= 1;
-	 vx_started <= 1;
+	 vx_reset   <= 1'b1;
+	 vx_started <= 1'b1;
        end // end reset begin if
        
        // Vortex reset cycles
@@ -214,7 +215,7 @@ module GT_VORTEX_wrapper #(
        //end else if (vx_started == 1) begin
        //  vx_reset_ctr <= vx_reset_ctr + 1;
        //end
-     end
+     end // !reset
    end // always
   
    Vortex_axi  #(

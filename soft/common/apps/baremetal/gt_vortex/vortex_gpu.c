@@ -36,6 +36,7 @@ static unsigned DMA_WORD_PER_BEAT(unsigned _st)
 #define DEV_NAME "GATech,gt_vortex"
 #define START_VORTEX 1
 #define  BASE_ADDR 0x20000000
+#define VX_ADDR 0x60400000+0x100000+3
 
 #define CSR_TILE_SIZE 0x200
 #define CSR_BASE_ADDR 0x60090000
@@ -142,23 +143,32 @@ int main(int argc, char * argv[])
 	// Search for the device
 	printf("Scanning device tree... \n");
 
-	ndev = probe(&espdevs, VENDOR_SLD, GT_VORTEX, DEV_NAME);
+	ndev = 1;  
+	probe(&espdevs, VENDOR_SLD, GT_VORTEX, DEV_NAME);
 	if (ndev == 0) {
 		printf("Vortex GPU not found\n");
 		return 0;
-	}
+	} //FIXME
         
 	for (n = 0; n < ndev; n++) {
 
 		printf("**************** %s.%d ****************\n", DEV_NAME, n);
 
-		dev =  &espdevs[n];
+		dev = &espdevs[n];
 
 		// Allocate memory
 		// gold = aligned_malloc(out_len * sizeof(float));
 		mem = aligned_malloc(mem_size);
 		// printf("  memory buffer base-address = %p\n", mem);
 		init_buf(mem);
+		
+		intptr_t mem_top = (intptr_t)mem; 
+	        input_n  =   (token_t*) (mem_top+0x7fff0); //(mem+0x7fff0)
+		input_n_val = 5; 
+		*input_n = input_n_val; // Assigning input value to memory
+			
+		output_computed = (token_t*)(mem_top+0x7fff4); //(mem+0x7fff4) 	
+	        output_golden = fibonacci(input_n_val); 
 		printf("**************** Memory Details ****************\n");
 		printf("  memory buffer base-address = %x\n", (intptr_t)(mem));
 		printf(" Last word address: %x \n", (intptr_t)(mem+_fibonacci_bin_len_in_words-1));
@@ -187,24 +197,16 @@ int main(int argc, char * argv[])
 			/* <<--regs-config-->> */
 			
 			// Set memory offset
-			
-		        intptr_t mem_top = (intptr_t)mem; 
+		        	
+			iowrite32(dev, VX_BASE_ADDR, mem_top); // -0x20000000
 
                         
-			input_n  =   (token_t*) (mem_top+0x7fff0); //(mem+0x7fff0)
-			input_n_val = 5; 
-			*input_n = input_n_val; // Assigning input value to memory
-			
-		        output_computed = (token_t*)(mem_top+0x7fff4); //(mem+0x7fff4) 	
-			output_golden = fibonacci(input_n_val); 
 			// Start accelerators
 			printf("  Start...\n");
 
 			// START_VORTEX
 			iowrite32(dev, VX_SOFT_RESET, START_VORTEX);
-		        printf("  Started\n");	
 
-			iowrite32(dev, VX_BASE_ADDR, mem_top); // -0x20000000
 			vortex_busy = ioread32(dev, VX_BUSY_INT);
 			vortex_busy &= BIT(0);
 			// Since higher order bits may contain routing headers
