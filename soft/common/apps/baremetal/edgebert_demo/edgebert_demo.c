@@ -583,7 +583,7 @@ static void EdgeBert_Attension (struct esp_device *dev, struct esp_device *plic_
       
    
    
-   EdgeBert_Init(dev, plic_dev, mem); 
+   //EdgeBert_Init(dev, plic_dev, mem); 
    //printf("Attension 3 Matmul\n");
    //Key matmul1 1st half -> 64*768 X 768*64 = 64*64
    EdgeBert_MatMul (dev, plic_dev, N0, N1, M_mat, is_relu, mem, Mask_mat, input_ids1st, we_mat2, softmax);
@@ -599,7 +599,7 @@ static void EdgeBert_Attension (struct esp_device *dev, struct esp_device *plic_
    memcpy(key_mat_1 + N0*N1, mem+Mask_buffer_size+2*input_buffer_size+aux_buffer_size, N0*N1*sizeof(token_t));
 
    
-   EdgeBert_Init(dev, plic_dev, mem); 
+   //EdgeBert_Init(dev, plic_dev, mem); 
    //printf("Attension 5. Matmul\n");
    //Value matmul1 1st half -> 64*768 X 768*64 = 64*64
    EdgeBert_MatMul (dev, plic_dev, N0, N1, M_mat, is_relu, mem, Mask_mat, input_ids1st, we_mat3, softmax);
@@ -628,7 +628,7 @@ static void EdgeBert_Attension (struct esp_device *dev, struct esp_device *plic_
    query_mat_2 = aligned_malloc(2*N0*N1);    
 
    
-   EdgeBert_Init(dev, plic_dev, mem); 
+   //EdgeBert_Init(dev, plic_dev, mem); 
    //printf("Attension  8. Matmul\n");
    softmax = 1;
    EdgeBert_MatMul (dev, plic_dev, N0, N1, M_mat, is_relu, mem, Mask_mat, query_mat_1, key_mat_1, softmax);
@@ -653,7 +653,7 @@ static void EdgeBert_Attension (struct esp_device *dev, struct esp_device *plic_
    M_mat = 128;
    N1 = 64;
 
-   EdgeBert_Init(dev, plic_dev, mem); 
+   //EdgeBert_Init(dev, plic_dev, mem); 
    //printf("9. Matmul\n");
    EdgeBert_MatMul (dev, plic_dev, N0, N1, M_mat, is_relu, mem, Mask_mat, query_mat_2, vaule_mat_1, softmax);
    memcpy(vaule_mat_1, mem+Mask_buffer_size+2*input_buffer_size+aux_buffer_size, N0*N1*sizeof(token_t));
@@ -959,7 +959,7 @@ static void EdgeBert_FeedForward (struct esp_device *dev, struct esp_device *pli
     We2_output = aligned_malloc(128*768);
 
 
-    EdgeBert_Init(dev, plic_dev, mem); 
+    //EdgeBert_Init(dev, plic_dev, mem); 
     count = 0;
 
     
@@ -978,7 +978,7 @@ static void EdgeBert_FeedForward (struct esp_device *dev, struct esp_device *pli
         
         if (count == 2)
          {
-            EdgeBert_Init(dev, plic_dev, mem);
+            //EdgeBert_Init(dev, plic_dev, mem);
             count = 0; 
           } 
 
@@ -1066,13 +1066,13 @@ static int validate_buf(token_t *out, native_t *gold, int out_len)
 // input and expected output initialization
 static void init_buf(token_t *input_ids1st, token_t *input_ids2nd, token_t *we_mat1,token_t *we_mat2, token_t *we_mat3, token_t *Mask_mat, token_t *Aux_mat)
 {
-   #include "input_ids1st.h" //128*768 -> 64*768
-   #include "input_ids2nd.h" //128*768 -> 64*768
-   #include "we_mat1.h" //768*64
-   #include "we_mat2.h" //768*64
-   #include "we_mat3.h" //768*64
-   #include "Mask_mat.h" //8192 chars
-   #include "Aux_mat.h" // 4096 chars
+   //#include "input_ids1st.h" //128*768 -> 64*768
+   //#include "input_ids2nd.h" //128*768 -> 64*768
+   //#include "we_mat1.h" //768*64
+   //#include "we_mat2.h" //768*64
+   //#include "we_mat3.h" //768*64
+   //#include "Mask_mat.h" //8192 chars
+   //#include "Aux_mat.h" // 4096 chars
 }
 
 
