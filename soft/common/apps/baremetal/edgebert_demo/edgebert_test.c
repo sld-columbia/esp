@@ -1260,9 +1260,9 @@ static void EdgeBert_Test (struct esp_device *dev, struct esp_device *plic_dev, 
    unsigned M_mat;
    unsigned is_relu;
    
-   N0 = 64;
+   N0 = 32;
    M_mat = 32;
-   N1 = 64;
+   N1 = 32;
    is_relu = 0;
    token_t *query_mat_1; // appending two 64*64 array to 128X64
    token_t *key_mat_1; // 128x64
