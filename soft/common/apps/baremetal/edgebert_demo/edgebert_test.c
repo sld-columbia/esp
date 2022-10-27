@@ -1222,35 +1222,24 @@ static void EdgeBert_Test (struct esp_device *dev, struct esp_device *plic_dev, 
 
 {
 
-    //printf("STARTing Attention Head in EdgeBert...\n");
     int num_interrupts;
     int softmax = 0;
 
     token_t *input_ids1st;
-    token_t *input_ids2nd;
     token_t *we_mat1;
-    token_t *we_mat2; 
-    token_t *we_mat3; 
     token_t *Mask_mat; 
     //token_t *Aux_mat;
     
-    input_ids1st  = aligned_malloc(2048); //64*768
-    input_ids2nd = aligned_malloc(2048);   
-    we_mat1  = aligned_malloc(2048);   //768*64
-    we_mat2  = aligned_malloc(2048);
-    we_mat3  = aligned_malloc(2048);
+    input_ids1st  = aligned_malloc(256); 
+      
+    we_mat1  = aligned_malloc(2048);  
     Mask_mat = aligned_malloc(8192);
     //Aux_mat = aligned_malloc(4096);
 
-    //init_buf(input_ids1st, input_ids2nd, we_mat1, we_mat2, we_mat3, Mask_mat, Aux_mat);
-    memset(input_ids1st, 11, 2048*sizeof(token_t));
-    memset(input_ids2nd, 115, 2048*sizeof(token_t));
-    memset(we_mat1, 35, 2048*sizeof(token_t));
-    memset(we_mat2, -1, 2048*sizeof(token_t));
-    memset(we_mat3, -12, 2048*sizeof(token_t));
-    memset(Mask_mat, 255, 8192*sizeof(token_t));
-    //memset(Aux_mat, 3, 4096*sizeof(token_t));
-
+   
+    memset(input_ids1st, 11, 256*sizeof(token_t));
+    memset(we_mat1, 35, 256*sizeof(token_t));
+   
       
    EdgeBert_Init(dev, plic_dev, mem); 
 
@@ -1260,51 +1249,28 @@ static void EdgeBert_Test (struct esp_device *dev, struct esp_device *plic_dev, 
    unsigned M_mat;
    unsigned is_relu;
    
-   N0 = 32;
-   M_mat = 32;
-   N1 = 32;
+   N0 = 16;
+   M_mat = 16;
+   N1 = 16;
    is_relu = 0;
-   token_t *query_mat_1; // appending two 64*64 array to 128X64
-   token_t *key_mat_1; // 128x64
-   token_t *vaule_mat_1; // 128x64
-
-   query_mat_1 = aligned_malloc(2*N0*N1);
-   key_mat_1  = aligned_malloc(2*N0*N1);
-   vaule_mat_1 = aligned_malloc(2*N0*N1);
-   
-   
-   //printf("Attension 1 Matmul.\n");
-   //Query matmul1 1st half -> 64*768 X 768*64 = 64*64
+  
+   printf('MM1\n');
    EdgeBert_MatMul (dev, plic_dev, N0, N1, M_mat, is_relu, mem, Mask_mat, input_ids1st, we_mat1, softmax);
-   
-
-   //printf("Attension 2 Matmul\n");
-   //Query matmul1 2st half -> 64*768 X 768*64 = 64*64
-   EdgeBert_MatMul (dev, plic_dev, N0, N1, M_mat, is_relu, mem, Mask_mat, input_ids2nd, we_mat1, softmax);
-   //combining to 128X64
-     
-   //printf("Attension 3 Matmul\n");
-   //Key matmul1 1st half -> 64*768 X 768*64 = 64*64
-   EdgeBert_MatMul (dev, plic_dev, N0, N1, M_mat, is_relu, mem, Mask_mat, input_ids1st, we_mat2, softmax);
-   
-   
-   //printf("Attension 4 Matmul\n");
-   //Key matmul1 2st half -> 64*768 X 768*64 = 64*64
-   EdgeBert_MatMul (dev, plic_dev, N0, N1, M_mat, is_relu, mem, Mask_mat, input_ids2nd, we_mat2, softmax);
-   
-   //printf("Attension 5. Matmul\n");
-   //Value matmul1 1st half -> 64*768 X 768*64 = 64*64
-   EdgeBert_MatMul (dev, plic_dev, N0, N1, M_mat, is_relu, mem, Mask_mat, input_ids1st, we_mat3, softmax);
-   
+   printf('MM2\n');
+   EdgeBert_MatMul (dev, plic_dev, N0, N1, M_mat, is_relu, mem, Mask_mat, input_ids1st, we_mat1, softmax);
+   printf('MM3\n');
+   EdgeBert_MatMul (dev, plic_dev, N0, N1, M_mat, is_relu, mem, Mask_mat, input_ids1st, we_mat1, softmax);
+   printf('MM4\n');
+   EdgeBert_MatMul (dev, plic_dev, N0, N1, M_mat, is_relu, mem, Mask_mat, input_ids1st, we_mat1, softmax);
+   printf('MM5\n');
+   EdgeBert_MatMul (dev, plic_dev, N0, N1, M_mat, is_relu, mem, Mask_mat, input_ids1st, we_mat1, softmax);
+	
 
 
     aligned_free(input_ids1st);
-    aligned_free(input_ids2nd);
+   
     aligned_free(we_mat1);
-    aligned_free(we_mat2);
-    aligned_free(we_mat3);
-    aligned_free(Mask_mat);
-    //aligned_free(Aux_mat);
+    
 
     //printf("FINISHing Attention Head in EdgeBert...\n");
     
@@ -1352,10 +1318,6 @@ int main(int argc, char * argv[])
 	esp_flush(coherence,4);
     int num_interrupts;
 
-    
-   
-    
-    printf("STARTing EdgeBERT MM Computation...\n");
 
     EdgeBert_Test (&dev, &plic_dev, mem);
 
