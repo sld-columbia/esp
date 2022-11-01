@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sld>
+  <accelerator name="hu_sysarray" desc="Harvard U, Systolic Array" device_id="102" axi_prefix="if_data_" interrupt="interrupt" addr_width="32" id_width="10" user_width="0">
+    <clock name="clk"/>
+    <reset name="rstn" polarity="LOW"/>
+  </accelerator>
+</sld>
