@@ -574,10 +574,21 @@ void c_run()
 	buf = (token_t *) esp_alloc(size+size_svd);
 	gold = (token_t *) malloc(out_size);
 
+	for(int i = 0; i < (size+size_svd)/sizeof(token_t); i++)
+	{
+		buf[i] = 0;
+	}
 	//init_buffer(buf, gold);
 
 	buf_svd = &buf[size/sizeof(token_t)];
 	gold_svd = (token_t *) malloc(out_size_svd);
+
+	((struct svd_access*) cfg_000[0].esp_desc)->src_offset = size;
+	((struct svd_access*) cfg_000[0].esp_desc)->dst_offset = size;
+	cfg_000[0].hw_buf = buf;
+
+	printf("\nClean SVD - send all zeros\n");
+	esp_run(&cfg_000[0], 1);
 
 	init_buffer_svd(buf_svd, gold_svd);
 
@@ -590,9 +601,9 @@ void c_run()
 	printf("  .m = %d\n", m_rows);
 	printf("\n  ** START **\n");
 
-	((struct svd_access*) cfg_000[0].esp_desc)->src_offset = size;
-	((struct svd_access*) cfg_000[0].esp_desc)->dst_offset = size;
-	cfg_000[0].hw_buf = buf;
+	/* ((struct svd_access*) cfg_000[0].esp_desc)->src_offset = size; */
+	/* ((struct svd_access*) cfg_000[0].esp_desc)->dst_offset = size; */
+	/* cfg_000[0].hw_buf = buf; */
 
 	esp_run(&cfg_000[0], 1);
 
@@ -712,8 +723,8 @@ void c_run()
 	free(gold);
 	esp_free(buf);
 
-	printf("\nRunning full computation in software on RISC-V CPU...\n");
-	c_run();
+	/* printf("\nRunning full computation in software on RISC-V CPU...\n"); */
+	/* c_run(); */
 
 	return errors;
 	return 0;

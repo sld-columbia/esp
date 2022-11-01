@@ -188,6 +188,14 @@ int main(int argc, char **argv)
 	buf = (token_t *) esp_alloc(size);
 	gold = malloc(out_size);
 
+	for(int i = 0; i < size/sizeof(token_t); i++)
+		buf[i] = 0;
+
+	cfg_000[0].hw_buf = buf;
+
+	printf("\nClean SVD - send all zeros\n");
+	esp_run(&cfg_000[0], 1);
+
 	init_buffer(buf, gold);
 
 	printf("\n====== %s ======\n\n", cfg_000[0].devname);
