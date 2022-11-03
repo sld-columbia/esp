@@ -34,7 +34,7 @@
 
 `define PERF_CTR_BITS   44
 
-`define UUID_BITS       1 // ESP MODIFIED was 44 initially
+`define UUID_BITS       1  // ESP MODIFIED was 44 initially
 
 ///////////////////////////////////////////////////////////////////////////////
 
