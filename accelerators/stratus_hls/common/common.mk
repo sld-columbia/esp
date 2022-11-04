@@ -60,7 +60,8 @@ TARGET_NAME = $(COMPONENT)
 endif
 
 # Memory wrappers
-MEMGEN = $(ESP_ROOT)/tools/plmgen/plmgen.py
+#MEMGEN = $(ESP_ROOT)/tools/plmgen/plmgen.py
+MEMGEN = $(ESP_ROOT)/tools/asicgen/asic_plmgen.py
 MEMTECH = $(ESP_ROOT)/rtl/techmap/$(TECH)/mem
 MEMGEN_OUT = $(ESP_ROOT)/tech/$(TECH)/memgen/$(TARGET_NAME)
 

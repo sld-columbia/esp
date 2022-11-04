@@ -29,6 +29,12 @@ then
   ln -sf $TECH_DIR_PATH/mem_wrappers/ ../../rtl/techmap/asic/mem
 fi
 
+if [ ! -d "TECH_DIR_PATH/lib" ]
+then
+  mkdir "$TECH_DIR_PATH/lib"
+  ln -sf $TECH_DIR_PATH/lib/ ../../tech/lib
+fi
+
 if [ ! -d "PROJ_DIR_PATH" ]
 then
   mkdir "$PROJ_DIR_PATH"

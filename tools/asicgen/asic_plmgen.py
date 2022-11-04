@@ -1171,6 +1171,7 @@ sram_list = []
 
 tile = str(infile).split("_") 
 tile = tile[0].split("/")
+print(infile)
 print("  INFO: Tile %s" %tile[2])
 print("  INFO: Target technology path: " + tech_path)
 read_techfile(tech_path, sram_list, tile[2])
@@ -1184,9 +1185,10 @@ if not os.path.exists(out_path):
 if not os.path.exists(tb_path):
     os.makedirs(tb_path)
 
-#print("  INFO: Stratus memory library path: ./memlib")
-#if not os.path.exists("memlib"):
-#    os.makedirs("memlib")
+# not required for other tiles, testing ACC
+print("  INFO: Stratus memory library path: ./memlib")
+if not os.path.exists("memlib"):
+    os.makedirs("memlib")
 
 
 print("  INFO: Memory list file: " + infile)
