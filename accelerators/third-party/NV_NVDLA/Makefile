@@ -16,8 +16,8 @@ all: sw hw
 sw: umd kmd
 
 hw: vmod
-	@cp config/NV_NVDLA_fpga.verilog NV_NVDLA.verilog
-#@cp config/NV_NVDLA_$(TECH_TYPE).verilog NV_NVDLA.verilog
+	#@cp config/NV_NVDLA_fpga.verilog NV_NVDLA.verilog
+	@cp config/NV_NVDLA_$(TECH_TYPE).verilog NV_NVDLA.verilog
 
 clean: vmod-clean umd-clean kmd-clean
 

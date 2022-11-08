@@ -60,7 +60,9 @@ entity token_pm is
     noc5_stop_in       : out std_ulogic;
     -- LDO switch control
     acc_clk            : out std_ulogic;
-    plllock            : out std_ulogic);
+    plllock            : out std_ulogic;
+	LDOCTRL			   : out std_logic_vector(7 downto 0)
+	);
 
 end entity token_pm;
 
@@ -170,7 +172,7 @@ begin
   --  (voltage scaling is not possible). On ASIC there is full DVFS by controlling
   --  an LDO.
   ------------------------------------------------------------------------------
-
+  LDOCTRL <= LDO7 & LDO6 & LDO5 & LDO4 & LDO3 & LDO2 & LDO1 & LDO0;
   acc_clk <= acc_clk_int;
   plllock <= plllock1 and plllock2;
 

@@ -190,7 +190,9 @@ component token_pm is
     noc5_stop_in       : out std_ulogic;
     -- LDO switch control
     acc_clk            : out std_ulogic;
-    plllock            : out std_ulogic);
+    plllock            : out std_ulogic;
+	LDOCTRL			   : out std_logic_vector(7 downto 0)
+	);
 end component token_pm;
 
 end dvfs;

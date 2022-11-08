@@ -234,6 +234,7 @@ architecture rtl of asic_tile_acc is
 
 
   signal acc_activity : std_ulogic;
+  signal LDOCTRL : std_logic_vector(7 downto 0);
 
 begin
 
@@ -353,9 +354,9 @@ begin
       plllock             => plllock,
       dco_clk             => dco_clk,
       dco_rstn            => dco_rstn,
-      dco_freq_sel        => dco_freq_sel,
+      dco_freq_sel        => LDOCTRL(7 downto 6),
       dco_div_sel         => dco_div_sel,
-      dco_fc_sel          => dco_fc_sel,
+      dco_fc_sel          => LDOCTRL(5 downto 0),
       dco_cc_sel          => dco_cc_sel,
       dco_clk_sel         => dco_clk_sel,
       dco_en              => dco_en,
@@ -425,9 +426,9 @@ begin
       -- CSRs
       tile_config             => open,
       -- DCO config
-      dco_freq_sel            => dco_freq_sel,
+      dco_freq_sel            => open,
       dco_div_sel             => dco_div_sel,
-      dco_fc_sel              => dco_fc_sel,
+      dco_fc_sel              => open,
       dco_cc_sel              => dco_cc_sel,
       dco_clk_sel             => dco_clk_sel,
       dco_en                  => dco_en,
@@ -512,6 +513,7 @@ begin
       -- monitors
       mon_noc                 => mon_noc,
 	  acc_activity			  => acc_activity,
+	  LDOCTRL				  => LDOCTRL,
       -- synchronizers out to tile
       noc1_output_port_tile   => noc1_output_port_tile,
       noc1_data_void_out_tile => noc1_data_void_out_tile,

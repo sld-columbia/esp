@@ -1101,6 +1101,7 @@ package tile is
       noc6_stop_out      : out std_logic_vector(3 downto 0);
       -- monitors
       mon_noc            : out monitor_noc_vector(1 to 6);
+	  LDOCTRL			 : out std_logic_vector(7 downto 0);
       -- synchronizers out to tile
       noc1_output_port_tile   : out noc_flit_type;
       noc1_data_void_out_tile : out std_ulogic;

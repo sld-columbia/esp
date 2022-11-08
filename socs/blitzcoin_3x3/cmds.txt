@@ -1,0 +1,5 @@
+make xmsim-distclean xmsim-clean
+mkdir -p xcelium
+mkdir -p xcelium/profpga
+make token_pm-baremetal
+TEST_PROGRAM=soft-build/ariane/baremetal/token_pm_3x3.exe make -j8 xmsim-gui

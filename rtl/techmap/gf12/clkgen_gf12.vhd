@@ -40,6 +40,21 @@ architecture rtl of gf12_dco is
       CLK_DIV  : out std_logic);
   end component DCO_GF12_C14;
 
+  component DCO_GF12_C14_TUNE is
+    port (
+      RSTN     : in  std_ulogic;
+      EXT_CLK  : in  std_logic;
+      EN       : in  std_ulogic;
+      CLK_SEL  : in  std_ulogic;
+      CC_SEL   : in  std_logic_vector(5 downto 0);
+      FC_SEL   : in  std_logic_vector(5 downto 0);
+      DIV_SEL  : in  std_logic_vector(2 downto 0);
+      FREQ_SEL : in  std_logic_vector(1 downto 0);
+      CLK      : out std_logic;
+      CLK_DIV  : out std_logic);
+  end component DCO_GF12_C14_TUNE;
+
+
   component DCO_LPDDR_GF12_C14 is
     port (
       RSTN        : in  std_ulogic;
@@ -59,7 +74,7 @@ architecture rtl of gf12_dco is
 begin  -- architecture rtl
 
   no_div2: if enable_div2 = 0 generate
-    DCO_GF12_C14_1 : DCO_GF12_C14
+    DCO_GF12_C14_1 : DCO_GF12_C14_TUNE
       port map (
         RSTN     => RSTN,
         EXT_CLK  => EXT_CLK,

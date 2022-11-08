@@ -165,6 +165,7 @@ architecture rtl of tile_acc is
   signal apb_rcv_rdreq              : std_ulogic;
   signal apb_rcv_data_out           : misc_noc_flit_type;
   signal apb_rcv_empty              : std_ulogic;
+  
 
   -- Tile parameters
   signal tile_config : std_logic_vector(ESP_CSR_WIDTH - 1 downto 0);
@@ -284,7 +285,8 @@ begin
         freq_sel => dco_freq_sel,
         clk      => dco_clk_int,
         clk_div  => pllclk,
-        lock     => dco_clk_lock);
+        lock     => dco_clk_lock
+		);
 
     -- PLL reference clock comes from DCO
     dvfs_clk <= dco_clk_int;
