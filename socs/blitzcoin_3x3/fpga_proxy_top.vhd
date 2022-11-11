@@ -364,8 +364,8 @@ begin  -- architecture rtl
   ----------------------------------------------------------------------
   --- FPGA Reset and Clock generation
 
-  lock <= c0_calib_done and c1_calib_done and c2_calib_done and c3_calib_done;
-
+  --lock <= c0_calib_done and c1_calib_done and c2_calib_done and c3_calib_done;
+  lock<= c0_calib_done;
   reset_pad : inpad generic map (tech => FPGA_PROXY_TECH, level => cmos, voltage => x12v) port map (reset, rst);
   rst0      : rstgen                    -- reset generator
     generic map (acthigh => 1, syncin => 0)
