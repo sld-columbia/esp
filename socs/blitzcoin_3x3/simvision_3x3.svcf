@@ -1,4 +1,4 @@
-# SimVision Command Script (Fri Nov 11 09:05:07 AM EST 2022)
+# SimVision Command Script (Fri Nov 11 04:04:50 PM EST 2022)
 #
 # Version 19.03.s008
 #
@@ -96,6 +96,9 @@ catch {group new -name VIT0 -overlay 0}
 catch {group new -name FFT1 -overlay 0}
 catch {group new -name VIT1 -overlay 0}
 catch {group new -name FFT2 -overlay 0}
+catch {group new -name ACC8 -overlay 0}
+catch {group new -name ACC2 -overlay 0}
+catch {group new -name {Misc Debug} -overlay 0}
 group using TokenPM
 group set -overlay 0
 group set -comment {}
@@ -825,7 +828,7 @@ group clear 0 end
 
 group insert \
     [subst  {[format {:top_1:chip_i:tiles_gen(2):regular_tiles_gen:accelerator_tile:tile_acc_i:LDOCTRL}]} ] \
-    [subst  {[format {:top_1:chip_i:tiles_gen(2):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:acc_activity}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(2):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:Token_FSM_i.activity}]} ] \
     [subst  {[format {:top_1:chip_i:tiles_gen(2):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:Token_FSM_i.tokens_next[6:0]}]} ]
 group using FFT0
 group set -overlay 0
@@ -834,7 +837,7 @@ group clear 0 end
 
 group insert \
     [subst  {[format {:top_1:chip_i:tiles_gen(3):regular_tiles_gen:accelerator_tile:tile_acc_i:LDOCTRL}]} ] \
-    [subst  {[format {:top_1:chip_i:tiles_gen(3):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:acc_activity}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(3):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:Token_FSM_i.activity}]} ] \
     [subst  {[format {:top_1:chip_i:tiles_gen(3):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:Token_FSM_i.tokens_next[6:0]}]} ]
 group using VIT0
 group set -overlay 0
@@ -842,9 +845,9 @@ group set -comment {}
 group clear 0 end
 
 group insert \
-    [subst  {[format {:top_1:chip_i:tiles_gen(5):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:Token_FSM_i.tokens_next[6:0]}]} ] \
     [subst  {[format {:top_1:chip_i:tiles_gen(5):regular_tiles_gen:accelerator_tile:tile_acc_i:LDOCTRL}]} ] \
-    [subst  {[format {:top_1:chip_i:tiles_gen(6):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:acc_activity}]} ]
+    [subst  {[format {:top_1:chip_i:tiles_gen(5):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:Token_FSM_i.activity}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(5):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:Token_FSM_i.tokens_next[6:0]}]} ]
 group using FFT1
 group set -overlay 0
 group set -comment {}
@@ -852,8 +855,8 @@ group clear 0 end
 
 group insert \
     [subst  {[format {:top_1:chip_i:tiles_gen(6):regular_tiles_gen:accelerator_tile:tile_acc_i:LDOCTRL}]} ] \
-    [subst  {[format {:top_1:chip_i:tiles_gen(6):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:Token_FSM_i.tokens_next[6:0]}]} ] \
-    [subst  {[format {:top_1:chip_i:tiles_gen(6):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:acc_activity}]} ]
+    [subst  {[format {:top_1:chip_i:tiles_gen(6):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:Token_FSM_i.activity}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(6):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:Token_FSM_i.tokens_next[6:0]}]} ]
 group using VIT1
 group set -overlay 0
 group set -comment {}
@@ -861,7 +864,7 @@ group clear 0 end
 
 group insert \
     [subst  {[format {:top_1:chip_i:tiles_gen(7):regular_tiles_gen:accelerator_tile:tile_acc_i:LDOCTRL}]} ] \
-    [subst  {[format {:top_1:chip_i:tiles_gen(7):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:acc_activity}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(7):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:Token_FSM_i.activity}]} ] \
     [subst  {[format {:top_1:chip_i:tiles_gen(7):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:Token_FSM_i.tokens_next[6:0]}]} ]
 group using FFT2
 group set -overlay 0
@@ -869,9 +872,40 @@ group set -comment {}
 group clear 0 end
 
 group insert \
-    [subst  {[format {:top_1:chip_i:tiles_gen(8):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:acc_activity}]} ] \
     [subst  {[format {:top_1:chip_i:tiles_gen(8):regular_tiles_gen:accelerator_tile:tile_acc_i:LDOCTRL}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(8):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:Token_FSM_i.activity}]} ] \
     [subst  {[format {:top_1:chip_i:tiles_gen(8):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:Token_FSM_i.tokens_next[6:0]}]} ]
+group using ACC8
+group set -overlay 0
+group set -comment {}
+group clear 0 end
+
+group insert \
+    [subst  {[format {:top_1:chip_i:tiles_gen(8):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:acc_activity}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(8):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:acc_activity_1}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(8):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:acc_activity_3}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(8):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:acc_activity_2}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(8):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:pm_config}]} ]
+group using ACC2
+group set -overlay 0
+group set -comment {}
+group clear 0 end
+
+group insert \
+    [subst  {[format {:top_1:chip_i:tiles_gen(2):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:acc_activity_1}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(2):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:acc_activity}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(2):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:acc_activity_2}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(2):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:acc_activity_3}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(2):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:pm_config}]} ]
+group using {Misc Debug}
+group set -overlay 0
+group set -comment {}
+group clear 0 end
+
+group insert \
+    [subst  {[format {:top_1:chip_i:tiles_gen(7):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:acc_activity}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(6):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:acc_activity}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(8):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:acc_activity}]} ]
 
 #
 # Mnemonic Maps
@@ -987,8 +1021,8 @@ waveform hierarchy collapse $groupId0
 
 waveform xview limits 0 3323296612380fs
 
-if {[catch {window new WaveWindow -name "Waveform 2" -geometry 1010x600+772+379}] != ""} {
-    window geometry "Waveform 2" 1010x600+772+379
+if {[catch {window new WaveWindow -name "Waveform 2" -geometry 2560x1362+0+0}] != ""} {
+    window geometry "Waveform 2" 2560x1362+0+0
 }
 waveform using {Waveform 2}
 waveform sidebar visibility partial
@@ -1019,7 +1053,7 @@ set groupId0 [waveform add -groups VIT1]
 set groupId0 [waveform add -groups FFT2]
 
 
-waveform xview limits 0 2000fs
+waveform xview limits 0 1512046365540fs
 
 #
 # Waveform Window Links
