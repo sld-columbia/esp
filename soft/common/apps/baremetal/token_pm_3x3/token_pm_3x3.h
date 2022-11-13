@@ -100,16 +100,16 @@
 // FFT - Vit - FFT
 #define ACC_ID_NVDLA 0
 #define ACC_ADDR_NVDLA (ACC_THIRD_PARTY_BASE_ADDR + (ACC_OFFSET * ACC_ID_NVDLA))
-#define ACC_ID_FFT1 1
+#define ACC_ID_FFT0 1
+#define ACC_ADDR_FFT0 (ACC_BASE_ADDR + (ACC_OFFSET * ACC_ID_FFT0))
+#define ACC_ID_VITERBI0 2
+#define ACC_ADDR_VITERBI0 (ACC_BASE_ADDR + (ACC_OFFSET * ACC_ID_VITERBI0))
+#define ACC_ID_FFT1 3
 #define ACC_ADDR_FFT1 (ACC_BASE_ADDR + (ACC_OFFSET * ACC_ID_FFT1))
-#define ACC_ID_VITERBI1 2
+#define ACC_ID_VITERBI1 4
 #define ACC_ADDR_VITERBI1 (ACC_BASE_ADDR + (ACC_OFFSET * ACC_ID_VITERBI1))
-#define ACC_ID_FFT2 3
+#define ACC_ID_FFT2 5
 #define ACC_ADDR_FFT2 (ACC_BASE_ADDR + (ACC_OFFSET * ACC_ID_FFT2))
-#define ACC_ID_VITERBI2 4
-#define ACC_ADDR_VITERBI2 (ACC_BASE_ADDR + (ACC_OFFSET * ACC_ID_VITERBI2))
-#define ACC_ID_FFT3 5
-#define ACC_ADDR_FFT3 (ACC_BASE_ADDR + (ACC_OFFSET * ACC_ID_FFT3))
 
 //Common params
 static unsigned in_words_adj;
@@ -143,8 +143,8 @@ const unsigned no_activity_const = 0;
 const unsigned max_tokens_vc707[N_ACC] = {63, 10, 36, 10, 36, 10};
 const unsigned refresh_rate_min_const = 250;
 const unsigned refresh_rate_max_const = 250;
-const unsigned total_tokens = 60;
-const unsigned total_tokens_ini = 60; //Change to 24 for original test
+const unsigned total_tokens = 30;
+const unsigned total_tokens_ini = 30; //Change to 24 for original test
 
 #define LUT_SIZE 64
 

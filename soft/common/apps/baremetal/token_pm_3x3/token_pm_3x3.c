@@ -38,6 +38,9 @@ int main(int argc, char * argv[])
 	 #endif
 	unsigned int* noc_dco_ptr = (unsigned int *) 0x600903CC;
 	*noc_dco_ptr = 0x5000D;
+	//Set CPU to 800Mz - exact value is 800.9MHz 
+	unsigned int* cpu_dco_ptr = (unsigned int *) 0x600901C8;
+	*cpu_dco_ptr = 0x5000D;
 
 
 #ifdef TEST_0
@@ -448,11 +451,11 @@ int main(int argc, char * argv[])
 //Test running all viterbi, NVDLA and FFT tiles
    struct esp_device *espdevs_fft, *espdevs_viterbi, *espdevs_nvdla;
    struct esp_device *dev_n0 = aligned_malloc(sizeof(struct esp_device));
+   struct esp_device *dev_f0 = aligned_malloc(sizeof(struct esp_device));
    struct esp_device *dev_f1 = aligned_malloc(sizeof(struct esp_device));
    struct esp_device *dev_f2 = aligned_malloc(sizeof(struct esp_device));
-   struct esp_device *dev_f2 = aligned_malloc(sizeof(struct esp_device));
+   struct esp_device *dev_v0 = aligned_malloc(sizeof(struct esp_device));
    struct esp_device *dev_v1 = aligned_malloc(sizeof(struct esp_device));
-   struct esp_device *dev_v2 = aligned_malloc(sizeof(struct esp_device));
    //struct esp_device *dev, *dev_f0, *dev_f1, *dev_f2 ;
    //struct esp_device *dev_v0, *dev_v1 ;
    unsigned done_all, done_f0=0, done_v0=0, done_f0_before=0, done_v0_before=0;
@@ -539,7 +542,7 @@ int main(int argc, char * argv[])
     
    //dev_f0 = &espdevs_fft[0];
    dev_f0->addr = ACC_ADDR_FFT0;
-   setup_fft(dev_f1, gold_fft, mem_f0, ptable_f0);
+   setup_fft(dev_f0, gold_fft, mem_f0, ptable_f0);
    #ifdef DEBUG
    	printf("FFT0 setup complete, address=0x%x\n",dev_f0->addr);
    #endif
@@ -568,17 +571,17 @@ int main(int argc, char * argv[])
     //vit_probe(&espdevs_viterbi);
 
     //dev_v0 = &espdevs_viterbi[0];
-    dev_v0->addr = ACC_ADDR_VITERBI1;
+    dev_v0->addr = ACC_ADDR_VITERBI0;
     setup_viterbi(dev_v0, gold_vit, mem_v0, ptable_v0);
     #ifdef DEBUG
-    	printf("Viterbi1 setup complete, address=0x%x\n",dev_v0->addr);
+    	printf("Viterbi0 setup complete, address=0x%x\n",dev_v0->addr);
     #endif
     //dev_v1= &espdevs_viterbi[1];
     //dev_v1.addr = ACC_ADDR_VITERBI2;
-    dev_v1->addr = ACC_ADDR_VITERBI2;
+    dev_v1->addr = ACC_ADDR_VITERBI1;
     setup_viterbi(dev_v1, gold_vit, mem_v1, ptable_v1);
     #ifdef DEBUG
-    	printf("Viterbi2 setup complete, address=0x%x\n",dev_v1->addr);
+    	printf("Viterbi1 setup complete, address=0x%x\n",dev_v1->addr);
     #endif
     //printf("Viterbi setup complete\n");
     
