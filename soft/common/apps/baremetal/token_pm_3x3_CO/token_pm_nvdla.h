@@ -358,7 +358,7 @@ void run_nvdla(struct esp_device *espdev, struct esp_device *dev, nvdla_token_t 
         setup_nvdla(mem, i_base, o_base, b_base, w_base);
         //time1 = nvdla_get_counter();
         plic_dev.addr = PLIC_ADDR;
-		while((ioread32(&plic_dev, PLIC_IP_OFFSET) & 0x40) == 0);	
+	while((ioread32(&plic_dev, PLIC_IP_OFFSET) & 0x40) == 0);	
 		printf("Wait\n");
         //time2 = nvdla_get_counter();
 

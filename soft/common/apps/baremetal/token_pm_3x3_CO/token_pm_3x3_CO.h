@@ -110,11 +110,13 @@ void start_tile(struct esp_device espdevs[], unsigned tile_id)
 	int i;
 	activity[tile_id] = 1;
 	sum_max += max_tokens[tile_id];
-	write_config1(&espdevs[tile_id],1,0,0,0);
+	//if (tile_id == 0)	//Only NVDLA
+	//	write_config1(&espdevs[tile_id],1,0,0,0);
 	//freq = LUT_DATA[tile_id][token_has_int[tile_id]];
 	unsigned *freq = set_tokens(sum_max, tile_id);
 	for (i=0; i<N_ACC; i++)
 		set_freq(&espdevs[i],freq[i]);
+	iowrite32(dev_list_acc[i], CMD_REG, CMD_MASK_START);
 	//printf("Tile %d addr: 0x%x, frequency is 0x%x\n",tile_id, espdevs[tile_id].addr, freq[tile_id]);
 	//Add to running list
 	
@@ -128,7 +130,8 @@ unsigned CO_step_checkend(unsigned tile_id)
 	
 	if(done[tile_id] && !done_before[tile_id]) 
 	{
-		write_config1(&espdevs[tile_id],0,0,0,0);
+		//if (tile_id == 0)	//Only NVDLA
+		//	write_config1(&espdevs[tile_id],0,0,0,0);
 		done_before[tile_id]=done[tile_id];
 		//set_freq(&espdevs[i],Fmin[i]);
 		//p_available=p_available+Pmax[i];

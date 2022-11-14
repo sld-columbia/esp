@@ -72,7 +72,6 @@ int main(int argc, char * argv[])
 
 #ifdef TEST_2
 //Test with activity from all tiles 
-	printf("Test 2: Starting\n");
 	
 	unsigned int sum_max = 0;
 	unsigned int tot_activity = 0;
@@ -96,6 +95,7 @@ int main(int argc, char * argv[])
 	unsigned **ptable_v1 = NULL;
 	unsigned **ptable_v2 = NULL;
 
+   	printf("Setup accelerators\n");
 
 	////FFT setup/////
 	#ifdef DEBUG
@@ -145,17 +145,17 @@ int main(int argc, char * argv[])
 	#endif
 	dev_list_acc[0]->addr = ACC_ADDR_NVDLA;
 
-	printf("Accelerators setup done\n");
+	//printf("Accelerators setup done\n");
 	// Flush (customize coherence model here)
 	if (coherence != ACC_COH_RECALL)
 		esp_flush(coherence, 1);
 
-	//printf("Start accelerators\n");
+	printf("Start accelerators\n");
 	///////Start accelerators//////
 
 	for (i=1; i<N_ACC; i++)
 	{
-		iowrite32(dev_list_acc[i], CMD_REG, CMD_MASK_START);
+		//iowrite32(dev_list_acc[i], CMD_REG, CMD_MASK_START);
 		start_tile(espdevs, i);
 		tot_activity += 1;
 		#ifdef DEBUG
@@ -166,7 +166,8 @@ int main(int argc, char * argv[])
 
 	//Start NVDLA
 	start_tile(espdevs, 0);
-	run_nvdla( &espdevs[0], dev_list_acc[0], gold_nvdla, mem_n1, 0, &tot_activity);
+	write_config1(&espdevs[0], 1, 0, 0, 0);
+	run_nvdla(&espdevs[0], dev_list_acc[0], gold_nvdla, mem_n1, 0, &tot_activity);
 	//tot_activity += activity[0];
 	//Wait for NVDLA done
 	write_config1(&espdevs[0], 0, 0, 0, 0);
