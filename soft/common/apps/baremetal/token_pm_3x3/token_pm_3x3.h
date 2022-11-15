@@ -144,7 +144,7 @@ const unsigned max_tokens_vc707[N_ACC] = {63, 10, 36, 10, 36, 10};
 const unsigned refresh_rate_min_const = 250;
 const unsigned refresh_rate_max_const = 250;
 const unsigned total_tokens = 30;
-const unsigned total_tokens_ini = 30; //Change to 24 for original test
+const unsigned total_tokens_ini = 60; //Change to 24 for original test
 
 #define LUT_SIZE 64
 
@@ -191,13 +191,13 @@ const unsigned total_tokens_ini = 30; //Change to 24 for original test
    14,   14,   14,   14,   14,   14,   14,   14,   14,   14,   14,   14,
    14,   14,   14,   14};
 
-	const unsigned lut_data_const_vc707_VIT[LUT_SIZE]= {255,  250,  238,  226,  214,  203,  194,  184,  175,  165,  156,  149,
+	const unsigned lut_data_const_vc707_VIT[LUT_SIZE]= { 255,  250,  238,  226,  214,  203,  194,  184,  175,  165,  156,  149,
   142,  134,  127,  120,  113,  106,  101,   96,   91,   87,   82,   77,
-   73,   68,   77,   99,  121,  143,  164,  186,  195,  158,  121,   84,
-   47,   39,   39,   39,   39,   39,   39,   39,   39,   39,   39,   39,
+   73,   68,   63,   59,   55,   51,   47,   43,   39,   39,   39,   39,
    39,   39,   39,   39,   39,   39,   39,   39,   39,   39,   39,   39,
-   39,   39,   39,   39};
-					
+   39,   39,   39,   39,   39,   39,   39,   39,   39,   39,   39,   39,
+   39,   39,   39,   39}
+
 						 
 	const unsigned lut_data_const_vc707_NVDLA[LUT_SIZE]= {255,  255,  254,  251,  247,  243,  239,  235,  231,  227,  223,  219,
   215,  211,  207,  203,  199,  196,  192,  188,  184,  180,  176,  172,
