@@ -141,8 +141,8 @@ const unsigned activity_const = 1;
 const unsigned no_activity_const = 0;
 
 const unsigned max_tokens_vc707[N_ACC] = {63, 10, 36, 10, 36, 10};
-const unsigned refresh_rate_min_const = 250;
-const unsigned refresh_rate_max_const = 250;
+const unsigned refresh_rate_min_const = 25;
+const unsigned refresh_rate_max_const = 25;
 const unsigned total_tokens = 30;
 const unsigned total_tokens_ini = 60; //Change to 24 for original test
 
@@ -196,7 +196,7 @@ const unsigned total_tokens_ini = 60; //Change to 24 for original test
    73,   68,   63,   59,   55,   51,   47,   43,   39,   39,   39,   39,
    39,   39,   39,   39,   39,   39,   39,   39,   39,   39,   39,   39,
    39,   39,   39,   39,   39,   39,   39,   39,   39,   39,   39,   39,
-   39,   39,   39,   39}
+   39,   39,   39,   39};
 
 						 
 	const unsigned lut_data_const_vc707_NVDLA[LUT_SIZE]= {255,  255,  254,  251,  247,  243,  239,  235,  231,  227,  223,  219,
