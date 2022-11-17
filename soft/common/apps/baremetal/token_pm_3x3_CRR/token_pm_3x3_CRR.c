@@ -20,6 +20,7 @@ int main(int argc, char * argv[])
 {
     int i;
     int n;
+    int rot_iter;
     //unsigned config0, config1_v1, config1_v2, config2, config3;
     //unsigned tokens_next0, tokens_next1;
 
@@ -54,8 +55,6 @@ int main(int argc, char * argv[])
 //#define DEBUG 1
 
 //Test with dummy activity. In progress
-    printf("Test 1: Starting 4/17\n");
-
 
    //nvdla_token_t *mem_n1;
    //nvdla_token_t *gold_nvdla;
@@ -77,7 +76,7 @@ int main(int argc, char * argv[])
    unsigned **ptable_v1 = NULL;
    unsigned **ptable_v2 = NULL;
 
-   printf("Test 1: Starting debug CRR\n");
+   printf("Setup accelerators\n");
 	
 	for (i=0;i<N_ACC;i++){
 		dev_list_acc[i]=aligned_malloc(sizeof(struct esp_device));
@@ -164,9 +163,10 @@ int main(int argc, char * argv[])
 	while((head_run != NULL) ||(head_idle != NULL) ||(head_wait != NULL) ) {
 		CRR_step_checkend();
 		CRR_step_rotate();
-		printf("Run step\n");
-	
+		//printf("Run step %u\n", rot_iter);
+		rot_iter++;
 	}
+	printf("Finished CRR %u\n", rot_iter);
 		
 	
 #endif

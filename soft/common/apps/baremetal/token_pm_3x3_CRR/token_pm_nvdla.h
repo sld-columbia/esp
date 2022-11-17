@@ -30,7 +30,7 @@
 #define PLIC_IP_OFFSET 0x1000
 #define PLIC_INTACK_OFFSET 0x200004
 #define NVDLA_IRQ 5
-#define N_ITER 10	//number of loop iterations for which nvdla is to be run
+#define N_ITER 5	//number of loop iterations for which nvdla is to be run
 
 #define NVDLA_BASE_ADDR NVDLA_ACC_ADDR
 
