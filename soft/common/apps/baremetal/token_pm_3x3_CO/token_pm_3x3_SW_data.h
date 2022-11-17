@@ -3,9 +3,9 @@
 //#define N_ACC 6 //Already define in main .h
 #define LUT_SIZE 64
 
-#define max_tokens_FFT 4
-#define max_tokens_VIT 11
-#define max_tokens_NVDLA 24
+#define max_tokens_FFT 10
+#define max_tokens_VIT 36
+#define max_tokens_NVDLA 63
 
 const unsigned max_tokens[N_ACC] = {max_tokens_NVDLA, max_tokens_FFT, max_tokens_VIT, max_tokens_FFT, max_tokens_VIT, max_tokens_FFT};
 

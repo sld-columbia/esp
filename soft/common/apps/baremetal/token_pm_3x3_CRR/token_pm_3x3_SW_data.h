@@ -1,29 +1,29 @@
 #include "token_pm_3x3_Ccommon.h"
 
 #define P_TOTAL 60
-#define max_power_NVDLA 120
+#define max_power_NVDLA 60
 #define max_power_FFT 20
-#define max_power_VIT 64
-#define min_power_NVDLA 12
-#define min_power_FFT 1
-#define min_power_VIT 3
+#define max_power_VIT 40
+#define min_power_NVDLA 4
+#define min_power_FFT 0
+#define min_power_VIT 1
 
 //#define NACC 6 //Already define in main .h
 //#define LUT_SIZE 64
 //
 //
-//#define max_tokens_FFT 4
-//#define max_tokens_VIT 13
-//#define max_tokens_NVDLA 24
+//#define max_tokens_FFT 10
+//#define max_tokens_VIT 20
+//#define max_tokens_NVDLA 30
 //
 
-#define total_tokens 12
+#define total_tokens 30
 //#define N_ACC 6 //Already define in main .h
 #define LUT_SIZE 64
 
-#define max_tokens_FFT 4
-#define max_tokens_VIT 11
-#define max_tokens_NVDLA 24
+#define max_tokens_FFT 10
+#define max_tokens_VIT 20
+#define max_tokens_NVDLA 30
 
 const unsigned max_tokens[N_ACC] = {max_tokens_NVDLA, max_tokens_FFT, max_tokens_VIT, max_tokens_FFT, max_tokens_VIT, max_tokens_FFT};
 
