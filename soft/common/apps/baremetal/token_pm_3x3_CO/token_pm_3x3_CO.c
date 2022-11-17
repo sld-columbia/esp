@@ -155,7 +155,7 @@ int main(int argc, char * argv[])
 
 	for (i=1; i<N_ACC; i++)
 	{
-		//iowrite32(dev_list_acc[i], CMD_REG, CMD_MASK_START);
+		iowrite32(dev_list_acc[i], CMD_REG, CMD_MASK_START);
 		start_tile(espdevs, i);
 		tot_activity += 1;
 		#ifdef DEBUG
@@ -165,6 +165,7 @@ int main(int argc, char * argv[])
 
 
 	//Start NVDLA
+	iowrite32(dev_list_acc[0], CMD_REG, CMD_MASK_START);
 	start_tile(espdevs, 0);
 	write_config1(&espdevs[0], 1, 0, 0, 0);
 	run_nvdla(&espdevs[0], dev_list_acc[0], gold_nvdla, mem_n1, 0, &tot_activity);
@@ -194,8 +195,8 @@ int main(int argc, char * argv[])
 			}
 		}
 	}
-   	aligned_free(dev_list_acc);
 	printf("Execution complete\n");
+   	aligned_free(dev_list_acc);
 
 #endif
 

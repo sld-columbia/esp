@@ -114,10 +114,13 @@ void start_tile(struct esp_device espdevs[], unsigned tile_id)
 	//	write_config1(&espdevs[tile_id],1,0,0,0);
 	//freq = LUT_DATA[tile_id][token_has_int[tile_id]];
 	unsigned *freq = set_tokens(sum_max, tile_id);
+	//iowrite32(dev_list_acc[i], CMD_REG, CMD_MASK_START);
 	for (i=0; i<N_ACC; i++)
 		set_freq(&espdevs[i],freq[i]);
-	iowrite32(dev_list_acc[i], CMD_REG, CMD_MASK_START);
-	//printf("Tile %d addr: 0x%x, frequency is 0x%x\n",tile_id, espdevs[tile_id].addr, freq[tile_id]);
+	if 
+	#ifdef DEBUG
+		printf("Starting Tile %d addr: 0x%x, frequency is 0x%x\n",tile_id, espdevs[tile_id].addr, freq[tile_id]);
+	#endif
 	//Add to running list
 	
 }
@@ -153,6 +156,9 @@ void end_tile(struct esp_device espdevs[], unsigned tile_id)
 	unsigned *freq = set_tokens(sum_max, tile_id);
 	for (i=0; i<N_ACC; i++)
 		set_freq(&espdevs[i],freq[i]);
+	#ifdef DEBUG
+		printf("Ending Tile %d addr: 0x%x, frequency is 0x%x\n",tile_id, espdevs[tile_id].addr, freq[tile_id]);
+	#endif
 	//write_config1(&espdevs[i],1,0,0,0);
 	//Add to running list
 }

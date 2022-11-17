@@ -101,8 +101,10 @@ void start_tile( unsigned i)
 		addLast(&head_run,i);
 		if(i>0){
 			iowrite32(dev_list_acc[i], CMD_REG, CMD_MASK_START);
-			write_config1(&espdevs[i],1,0,0,0);}
+			//write_config1(&espdevs[i],1,0,0,0);
+		}
 		else{
+			//write_config1(&espdevs[i],1,0,0,0);
 			run_nvdla( &espdevs[0], dev_list_acc[0], gold_nvdla, mem_n1, 0);
 		}
 	}
@@ -116,11 +118,13 @@ void start_tile( unsigned i)
 		addLast(&head_idle,i);
 		if(i>0){
 			iowrite32(dev_list_acc[i], CMD_REG, CMD_MASK_START);
-			write_config1(&espdevs[i],1,0,0,0);}
+			//write_config1(&espdevs[i],1,0,0,0);
+		}
 		else{
 			run_nvdla( &espdevs[0], dev_list_acc[0], gold_nvdla, mem_n1, 0);
+			//write_config1(&espdevs[i],1,0,0,0);}
 		}	
-		}
+	}
 	else {
 		set_freq(&espdevs[i],Fmin[i]);
 		#ifdef DEBUG
@@ -144,7 +148,7 @@ void CRR_step_checkend()
 			done[i] &= STATUS_MASK_DONE;
 		
 		if(done[i] && !done_before[i]) {
-			write_config1(&espdevs[i], 0, 0, 0, 0);
+			//write_config1(&espdevs[i], 0, 0, 0, 0);
 			done_before[i]=done[i];
 			set_freq(&espdevs[i],Fmin[i]);
 			i_run=removeFromList(&head_run,i);
@@ -182,11 +186,12 @@ void CRR_step_rotate()
 				set_freq(&espdevs[waitNode->data],Fmax[waitNode->data]);
 				if((waitNode->data)>0){
 					iowrite32(dev_list_acc[waitNode->data], CMD_REG, CMD_MASK_START);
-					write_config1(&espdevs[waitNode->data],1,0,0,0);}
+					//write_config1(&espdevs[waitNode->data],1,0,0,0);
+				}
 				else{
 					run_nvdla( &espdevs[0], dev_list_acc[0], gold_nvdla, mem_n1, 0);
+					//write_config1(&espdevs[waitNode->data],1,0,0,0);
 				}
-				write_config1(&espdevs[waitNode->data],1,0,0,0);
 				addLast(&head_run,waitNode->data);
 				removeFromList(&head_wait,waitNode->data);
 				p_available=p_available-Pmax[waitNode->data];
@@ -198,12 +203,13 @@ void CRR_step_rotate()
 			else if(Pmin[waitNode->data]<=p_available){
 				if(waitNode->data>0){
 					iowrite32(dev_list_acc[waitNode->data], CMD_REG, CMD_MASK_START);
-					write_config1(&espdevs[waitNode->data],1,0,0,0);}
+					//write_config1(&espdevs[waitNode->data],1,0,0,0);
+				}
 				else{
 					run_nvdla( &espdevs[0], dev_list_acc[0], gold_nvdla, mem_n1, 0);
+					//write_config1(&espdevs[waitNode->data],1,0,0,0);
 				}
 				removeFromList(&head_wait,waitNode->data);
-				write_config1(&espdevs[waitNode->data],1,0,0,0);
 				addLast(&head_idle,waitNode->data);
 				p_available=p_available-Pmin[waitNode->data];
 				#ifdef DEBUG
