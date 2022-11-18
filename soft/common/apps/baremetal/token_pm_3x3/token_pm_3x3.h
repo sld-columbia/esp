@@ -140,11 +140,13 @@ const unsigned enable_const = 1;
 const unsigned activity_const = 1;
 const unsigned no_activity_const = 0;
 
-const unsigned max_tokens_vc707[N_ACC] = {63, 10, 36, 10, 36, 10};
-const unsigned refresh_rate_min_const = 25;
-const unsigned refresh_rate_max_const = 25;
+//const unsigned max_tokens_vc707[N_ACC] = {63, 10, 36, 10, 36, 10};
+
+const unsigned max_tokens_vc707[N_ACC] = {20, 20, 20, 20, 20, 20};
+const unsigned refresh_rate_min_const = 100;
+const unsigned refresh_rate_max_const = refresh_rate_min_const;
 const unsigned total_tokens = 30;
-const unsigned total_tokens_ini = 60; //Change to 24 for original test
+const unsigned total_tokens_ini = total_tokens; //Change to 24 for original test
 
 #define LUT_SIZE 64
 
@@ -269,12 +271,12 @@ void init_consts()
 		}
 	}*/
 	
-	token_counter_override_vc707[0]=(1<<7) + total_tokens_ini;
-	token_counter_override_vc707[1]=0;
-	token_counter_override_vc707[2]=0;
-	token_counter_override_vc707[3]=0;
-	token_counter_override_vc707[4]=0;
-	token_counter_override_vc707[5]=0;
+	token_counter_override_vc707[0]=(1<<7) + total_tokens_ini/6;
+	token_counter_override_vc707[1]=(1<<7) + total_tokens_ini/6;
+	token_counter_override_vc707[2]=(1<<7) + total_tokens_ini/6;
+	token_counter_override_vc707[3]=(1<<7) + total_tokens_ini/6;
+	token_counter_override_vc707[4]=(1<<7) + total_tokens_ini/6;
+	token_counter_override_vc707[5]=(1<<7) + total_tokens_ini/6;
 
 
 }
