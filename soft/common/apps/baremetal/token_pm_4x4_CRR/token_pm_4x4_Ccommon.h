@@ -187,7 +187,7 @@ void reset_token_pm(struct esp_device espdevs[])
 
 void set_freq(struct esp_device *espdev, unsigned freq_set)
 {
-	iowrite32(espdev, TOKEN_PM_CONFIG8_REG, (freq_set<<(11+4)));
+	iowrite32(espdev, TOKEN_PM_CONFIG8_REG, freq_set<<11);
 }
 
 
