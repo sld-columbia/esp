@@ -1,0 +1,1072 @@
+# SimVision Command Script (Fri Nov 18 09:32:29 AM EST 2022)
+#
+# Version 19.03.s008
+#
+# You can restore this configuration with:
+#
+#     simvision -input /gsa/yktgsa-p4/09/epochs_chip0/mcochet/epochs-isca/epochs/esp/socs/blitzcoin_4x4/simvision_4x4.svcf
+#
+
+
+#
+# Preferences
+#
+preferences set toolbar-Standard-WatchWindow {
+  usual
+  shown 0
+}
+preferences set plugin-enable-svdatabrowser-new 1
+preferences set toolbar-SimControl-WaveWindow {
+  usual
+  position -anchor e
+}
+preferences set cursorctl-dont-show-sync-warning 1
+preferences set toolbar-Windows-WatchWindow {
+  usual
+  shown 0
+}
+preferences set toolbar-sendToIndago-WaveWindow {
+  usual
+  position -pos 3
+}
+preferences set toolbar-Standard-Console {
+  usual
+  position -pos 1
+}
+preferences set watchwindow-dont-show-probe-warning 1
+preferences set toolbar-Search-Console {
+  usual
+  position -pos 2
+}
+preferences set toolbar-txe_waveform_toggle-WaveWindow {
+  usual
+  position -pos 1
+}
+preferences set plugin-enable-groupscope 0
+preferences set sb-display-values 1
+preferences set plugin-enable-interleaveandcompare 0
+preferences set plugin-enable-waveformfrequencyplot 0
+preferences set toolbar-SimControl-WatchWindow {
+  usual
+  shown 0
+}
+preferences set watchwindow-always-probe-added 1
+preferences set toolbar-Windows-WaveWindow {
+  usual
+  position -pos 2
+}
+preferences set toolbar-TimeSearch-WatchWindow {
+  usual
+  shown 0
+}
+
+#
+# Conditions
+#
+set expression :top_1:chip_i:tiles_gen(6):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:plllock
+if {[catch {condition new -name  Token_PM6 -expr $expression}] != ""} {
+    condition set -using Token_PM6 -expr $expression
+}
+#
+# Groups
+#
+catch {group new -name TokenPM -overlay 0}
+catch {group new -name {tile IOs} -overlay 0}
+catch {group new -name Tile2 -overlay 0}
+catch {group new -name {Tile IOs} -overlay 0}
+catch {group new -name {Token PM} -overlay 0}
+catch {group new -name Tile3 -overlay 0}
+catch {group new -name {NoC DCO} -overlay 0}
+catch {group new -name Tile5 -overlay 0}
+catch {group new -name {tile IOa} -overlay 0}
+catch {group new -name {Token PM5} -overlay 0}
+catch {group new -name Tile6 -overlay 0}
+catch {group new -name {tile IOs } -overlay 0}
+catch {group new -name {Group 1} -overlay 0}
+catch {group new -name TokenMP6 -overlay 0}
+catch {group new -name {tile IOs7} -overlay 0}
+catch {group new -name TokenPM7 -overlay 0}
+catch {group new -name Tile7 -overlay 0}
+catch {group new -name Tile8 -overlay 0}
+catch {group new -name TileIO8 -overlay 0}
+catch {group new -name TokenPM8 -overlay 0}
+catch {group new -name GEMM2 -overlay 0}
+catch {group new -name GEMM3 -overlay 0}
+catch {group new -name NV1 -overlay 0}
+catch {group new -name NV2 -overlay 0}
+catch {group new -name NV3 -overlay 0}
+catch {group new -name CONV0 -overlay 0}
+catch {group new -name ACC8 -overlay 0}
+catch {group new -name ACC2 -overlay 0}
+catch {group new -name {Misc Debug} -overlay 0}
+catch {group new -name {CPU DCO} -overlay 0}
+catch {group new -name GEMM0 -overlay 0}
+catch {group new -name GEMM1 -overlay 0}
+catch {group new -name NV0 -overlay 0}
+catch {group new -name CONV1 -overlay 0}
+catch {group new -name CONV2 -overlay 0}
+catch {group new -name NV4 -overlay 0}
+catch {group new -name NV5 -overlay 0}
+group using TokenPM
+group set -overlay 0
+group set -comment {}
+group clear 0 end
+
+group insert \
+    [subst  {[format {:top_1:chip_i:tiles_gen(2):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:pm_config}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(2):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:acc_activity}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(2):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:acc_clk}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(2):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:LDOCTRL}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(2):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:local_x}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(2):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:local_y}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(2):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:noc5_data_void_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(2):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:noc5_data_void_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(2):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:noc5_input_port}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(2):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:noc5_output_port}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(2):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:noc5_stop_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(2):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:noc5_stop_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(2):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:noc_clk}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(2):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:noc_rstn}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(2):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:plllock}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(2):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:pm_status}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(2):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:raw_rstn}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(2):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:refclk}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(2):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:tile_clk}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(2):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:tile_rstn}]} ]
+group using {tile IOs}
+group set -overlay 0
+group set -comment {}
+group clear 0 end
+
+group insert \
+    [subst  {[format {:top_1:chip_i:tiles_gen(2):regular_tiles_gen:accelerator_tile:tile_acc_i:noc1_data_e_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(2):regular_tiles_gen:accelerator_tile:tile_acc_i:noc1_data_e_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(2):regular_tiles_gen:accelerator_tile:tile_acc_i:noc1_data_n_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(2):regular_tiles_gen:accelerator_tile:tile_acc_i:noc1_data_n_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(2):regular_tiles_gen:accelerator_tile:tile_acc_i:noc1_data_s_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(2):regular_tiles_gen:accelerator_tile:tile_acc_i:noc1_data_s_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(2):regular_tiles_gen:accelerator_tile:tile_acc_i:noc1_data_void_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(2):regular_tiles_gen:accelerator_tile:tile_acc_i:noc1_data_void_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(2):regular_tiles_gen:accelerator_tile:tile_acc_i:noc1_data_w_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(2):regular_tiles_gen:accelerator_tile:tile_acc_i:noc1_data_w_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(2):regular_tiles_gen:accelerator_tile:tile_acc_i:noc1_stop_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(2):regular_tiles_gen:accelerator_tile:tile_acc_i:noc1_stop_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(2):regular_tiles_gen:accelerator_tile:tile_acc_i:noc2_data_e_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(2):regular_tiles_gen:accelerator_tile:tile_acc_i:noc2_data_e_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(2):regular_tiles_gen:accelerator_tile:tile_acc_i:noc2_data_n_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(2):regular_tiles_gen:accelerator_tile:tile_acc_i:noc2_data_n_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(2):regular_tiles_gen:accelerator_tile:tile_acc_i:noc2_data_s_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(2):regular_tiles_gen:accelerator_tile:tile_acc_i:noc2_data_s_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(2):regular_tiles_gen:accelerator_tile:tile_acc_i:noc2_data_void_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(2):regular_tiles_gen:accelerator_tile:tile_acc_i:noc2_data_void_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(2):regular_tiles_gen:accelerator_tile:tile_acc_i:noc2_data_w_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(2):regular_tiles_gen:accelerator_tile:tile_acc_i:noc2_data_w_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(2):regular_tiles_gen:accelerator_tile:tile_acc_i:noc2_stop_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(2):regular_tiles_gen:accelerator_tile:tile_acc_i:noc2_stop_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(2):regular_tiles_gen:accelerator_tile:tile_acc_i:noc3_data_e_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(2):regular_tiles_gen:accelerator_tile:tile_acc_i:noc3_data_e_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(2):regular_tiles_gen:accelerator_tile:tile_acc_i:noc3_data_n_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(2):regular_tiles_gen:accelerator_tile:tile_acc_i:noc3_data_n_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(2):regular_tiles_gen:accelerator_tile:tile_acc_i:noc3_data_s_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(2):regular_tiles_gen:accelerator_tile:tile_acc_i:noc3_data_s_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(2):regular_tiles_gen:accelerator_tile:tile_acc_i:noc3_data_void_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(2):regular_tiles_gen:accelerator_tile:tile_acc_i:noc3_data_void_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(2):regular_tiles_gen:accelerator_tile:tile_acc_i:noc3_data_w_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(2):regular_tiles_gen:accelerator_tile:tile_acc_i:noc3_data_w_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(2):regular_tiles_gen:accelerator_tile:tile_acc_i:noc3_stop_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(2):regular_tiles_gen:accelerator_tile:tile_acc_i:noc3_stop_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(2):regular_tiles_gen:accelerator_tile:tile_acc_i:noc4_data_e_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(2):regular_tiles_gen:accelerator_tile:tile_acc_i:noc4_data_e_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(2):regular_tiles_gen:accelerator_tile:tile_acc_i:noc4_data_n_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(2):regular_tiles_gen:accelerator_tile:tile_acc_i:noc4_data_n_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(2):regular_tiles_gen:accelerator_tile:tile_acc_i:noc4_data_s_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(2):regular_tiles_gen:accelerator_tile:tile_acc_i:noc4_data_s_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(2):regular_tiles_gen:accelerator_tile:tile_acc_i:noc4_data_void_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(2):regular_tiles_gen:accelerator_tile:tile_acc_i:noc4_data_void_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(2):regular_tiles_gen:accelerator_tile:tile_acc_i:noc4_data_w_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(2):regular_tiles_gen:accelerator_tile:tile_acc_i:noc4_data_w_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(2):regular_tiles_gen:accelerator_tile:tile_acc_i:noc4_stop_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(2):regular_tiles_gen:accelerator_tile:tile_acc_i:noc4_stop_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(2):regular_tiles_gen:accelerator_tile:tile_acc_i:noc5_data_e_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(2):regular_tiles_gen:accelerator_tile:tile_acc_i:noc5_data_e_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(2):regular_tiles_gen:accelerator_tile:tile_acc_i:noc5_data_n_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(2):regular_tiles_gen:accelerator_tile:tile_acc_i:noc5_data_n_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(2):regular_tiles_gen:accelerator_tile:tile_acc_i:noc5_data_s_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(2):regular_tiles_gen:accelerator_tile:tile_acc_i:noc5_data_s_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(2):regular_tiles_gen:accelerator_tile:tile_acc_i:noc5_data_void_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(2):regular_tiles_gen:accelerator_tile:tile_acc_i:noc5_data_void_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(2):regular_tiles_gen:accelerator_tile:tile_acc_i:noc5_data_w_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(2):regular_tiles_gen:accelerator_tile:tile_acc_i:noc5_data_w_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(2):regular_tiles_gen:accelerator_tile:tile_acc_i:noc5_stop_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(2):regular_tiles_gen:accelerator_tile:tile_acc_i:noc5_stop_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(2):regular_tiles_gen:accelerator_tile:tile_acc_i:noc6_data_e_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(2):regular_tiles_gen:accelerator_tile:tile_acc_i:noc6_data_e_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(2):regular_tiles_gen:accelerator_tile:tile_acc_i:noc6_data_n_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(2):regular_tiles_gen:accelerator_tile:tile_acc_i:noc6_data_n_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(2):regular_tiles_gen:accelerator_tile:tile_acc_i:noc6_data_s_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(2):regular_tiles_gen:accelerator_tile:tile_acc_i:noc6_data_s_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(2):regular_tiles_gen:accelerator_tile:tile_acc_i:noc6_data_void_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(2):regular_tiles_gen:accelerator_tile:tile_acc_i:noc6_data_void_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(2):regular_tiles_gen:accelerator_tile:tile_acc_i:noc6_data_w_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(2):regular_tiles_gen:accelerator_tile:tile_acc_i:noc6_data_w_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(2):regular_tiles_gen:accelerator_tile:tile_acc_i:noc6_stop_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(2):regular_tiles_gen:accelerator_tile:tile_acc_i:noc6_stop_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(2):regular_tiles_gen:accelerator_tile:tile_acc_i:rst}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(2):regular_tiles_gen:accelerator_tile:tile_acc_i:sys_clk}]} ]
+group using Tile2
+group set -overlay 0
+group set -comment {}
+group clear 0 end
+
+group insert \
+    [subst  {[format {:top_1:chip_i:tiles_gen(2):regular_tiles_gen:accelerator_tile:tile_acc_i:LDOCTRL}]} ] \
+    {tile IOs} \
+    TokenPM
+group using {Tile IOs}
+group set -overlay 0
+group set -comment {}
+group clear 0 end
+
+group insert \
+    [subst  {[format {:top_1:chip_i:tiles_gen(3):regular_tiles_gen:accelerator_tile:tile_acc_i:noc5_data_n_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(3):regular_tiles_gen:accelerator_tile:tile_acc_i:clk_div}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(3):regular_tiles_gen:accelerator_tile:tile_acc_i:ext_clk}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(3):regular_tiles_gen:accelerator_tile:tile_acc_i:noc1_data_e_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(3):regular_tiles_gen:accelerator_tile:tile_acc_i:noc1_data_e_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(3):regular_tiles_gen:accelerator_tile:tile_acc_i:noc1_data_n_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(3):regular_tiles_gen:accelerator_tile:tile_acc_i:noc1_data_n_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(3):regular_tiles_gen:accelerator_tile:tile_acc_i:noc1_data_s_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(3):regular_tiles_gen:accelerator_tile:tile_acc_i:noc1_data_s_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(3):regular_tiles_gen:accelerator_tile:tile_acc_i:noc1_data_void_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(3):regular_tiles_gen:accelerator_tile:tile_acc_i:noc1_data_void_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(3):regular_tiles_gen:accelerator_tile:tile_acc_i:noc1_data_w_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(3):regular_tiles_gen:accelerator_tile:tile_acc_i:noc1_data_w_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(3):regular_tiles_gen:accelerator_tile:tile_acc_i:noc1_stop_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(3):regular_tiles_gen:accelerator_tile:tile_acc_i:noc1_stop_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(3):regular_tiles_gen:accelerator_tile:tile_acc_i:noc2_data_e_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(3):regular_tiles_gen:accelerator_tile:tile_acc_i:noc2_data_e_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(3):regular_tiles_gen:accelerator_tile:tile_acc_i:noc2_data_n_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(3):regular_tiles_gen:accelerator_tile:tile_acc_i:noc2_data_n_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(3):regular_tiles_gen:accelerator_tile:tile_acc_i:noc2_data_s_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(3):regular_tiles_gen:accelerator_tile:tile_acc_i:noc2_data_s_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(3):regular_tiles_gen:accelerator_tile:tile_acc_i:noc2_data_void_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(3):regular_tiles_gen:accelerator_tile:tile_acc_i:noc2_data_void_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(3):regular_tiles_gen:accelerator_tile:tile_acc_i:noc2_data_w_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(3):regular_tiles_gen:accelerator_tile:tile_acc_i:noc2_data_w_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(3):regular_tiles_gen:accelerator_tile:tile_acc_i:noc2_stop_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(3):regular_tiles_gen:accelerator_tile:tile_acc_i:noc2_stop_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(3):regular_tiles_gen:accelerator_tile:tile_acc_i:noc3_data_e_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(3):regular_tiles_gen:accelerator_tile:tile_acc_i:noc3_data_e_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(3):regular_tiles_gen:accelerator_tile:tile_acc_i:noc3_data_n_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(3):regular_tiles_gen:accelerator_tile:tile_acc_i:noc3_data_n_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(3):regular_tiles_gen:accelerator_tile:tile_acc_i:noc3_data_s_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(3):regular_tiles_gen:accelerator_tile:tile_acc_i:noc3_data_s_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(3):regular_tiles_gen:accelerator_tile:tile_acc_i:noc3_data_void_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(3):regular_tiles_gen:accelerator_tile:tile_acc_i:noc3_data_void_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(3):regular_tiles_gen:accelerator_tile:tile_acc_i:noc3_data_w_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(3):regular_tiles_gen:accelerator_tile:tile_acc_i:noc3_data_w_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(3):regular_tiles_gen:accelerator_tile:tile_acc_i:noc3_stop_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(3):regular_tiles_gen:accelerator_tile:tile_acc_i:noc3_stop_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(3):regular_tiles_gen:accelerator_tile:tile_acc_i:noc4_data_e_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(3):regular_tiles_gen:accelerator_tile:tile_acc_i:noc4_data_e_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(3):regular_tiles_gen:accelerator_tile:tile_acc_i:noc4_data_n_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(3):regular_tiles_gen:accelerator_tile:tile_acc_i:noc4_data_n_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(3):regular_tiles_gen:accelerator_tile:tile_acc_i:noc4_data_s_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(3):regular_tiles_gen:accelerator_tile:tile_acc_i:noc4_data_s_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(3):regular_tiles_gen:accelerator_tile:tile_acc_i:noc4_data_void_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(3):regular_tiles_gen:accelerator_tile:tile_acc_i:noc4_data_void_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(3):regular_tiles_gen:accelerator_tile:tile_acc_i:noc4_data_w_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(3):regular_tiles_gen:accelerator_tile:tile_acc_i:noc4_data_w_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(3):regular_tiles_gen:accelerator_tile:tile_acc_i:noc4_stop_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(3):regular_tiles_gen:accelerator_tile:tile_acc_i:noc4_stop_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(3):regular_tiles_gen:accelerator_tile:tile_acc_i:noc5_data_e_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(3):regular_tiles_gen:accelerator_tile:tile_acc_i:noc5_data_e_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(3):regular_tiles_gen:accelerator_tile:tile_acc_i:noc5_data_n_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(3):regular_tiles_gen:accelerator_tile:tile_acc_i:noc5_data_s_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(3):regular_tiles_gen:accelerator_tile:tile_acc_i:noc5_data_s_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(3):regular_tiles_gen:accelerator_tile:tile_acc_i:noc5_data_void_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(3):regular_tiles_gen:accelerator_tile:tile_acc_i:noc5_data_void_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(3):regular_tiles_gen:accelerator_tile:tile_acc_i:noc5_data_w_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(3):regular_tiles_gen:accelerator_tile:tile_acc_i:noc5_data_w_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(3):regular_tiles_gen:accelerator_tile:tile_acc_i:noc5_stop_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(3):regular_tiles_gen:accelerator_tile:tile_acc_i:noc5_stop_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(3):regular_tiles_gen:accelerator_tile:tile_acc_i:noc6_data_e_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(3):regular_tiles_gen:accelerator_tile:tile_acc_i:noc6_data_e_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(3):regular_tiles_gen:accelerator_tile:tile_acc_i:noc6_data_n_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(3):regular_tiles_gen:accelerator_tile:tile_acc_i:noc6_data_n_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(3):regular_tiles_gen:accelerator_tile:tile_acc_i:noc6_data_s_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(3):regular_tiles_gen:accelerator_tile:tile_acc_i:noc6_data_s_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(3):regular_tiles_gen:accelerator_tile:tile_acc_i:noc6_data_void_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(3):regular_tiles_gen:accelerator_tile:tile_acc_i:noc6_data_void_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(3):regular_tiles_gen:accelerator_tile:tile_acc_i:noc6_data_w_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(3):regular_tiles_gen:accelerator_tile:tile_acc_i:noc6_data_w_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(3):regular_tiles_gen:accelerator_tile:tile_acc_i:noc6_stop_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(3):regular_tiles_gen:accelerator_tile:tile_acc_i:noc6_stop_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(3):regular_tiles_gen:accelerator_tile:tile_acc_i:pad_cfg}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(3):regular_tiles_gen:accelerator_tile:tile_acc_i:rst}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(3):regular_tiles_gen:accelerator_tile:tile_acc_i:sys_clk}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(3):regular_tiles_gen:accelerator_tile:tile_acc_i:tclk}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(3):regular_tiles_gen:accelerator_tile:tile_acc_i:tdi}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(3):regular_tiles_gen:accelerator_tile:tile_acc_i:tdo}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(3):regular_tiles_gen:accelerator_tile:tile_acc_i:tms}]} ]
+group using {Token PM}
+group set -overlay 0
+group set -comment {}
+group clear 0 end
+
+group insert \
+    [subst  {[format {:top_1:chip_i:tiles_gen(3):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:noc5_input_port}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(3):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:acc_activity}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(3):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:acc_clk}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(3):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:LDOCTRL}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(3):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:local_x}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(3):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:local_y}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(3):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:noc5_data_void_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(3):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:noc5_data_void_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(3):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:noc5_output_port}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(3):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:noc5_stop_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(3):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:noc5_stop_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(3):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:noc_clk}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(3):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:noc_rstn}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(3):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:plllock}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(3):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:pm_config}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(3):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:pm_status}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(3):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:raw_rstn}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(3):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:refclk}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(3):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:tile_clk}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(3):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:tile_rstn}]} ]
+group using Tile3
+group set -overlay 0
+group set -comment {}
+group clear 0 end
+
+group insert \
+    [subst  {[format {:top_1:chip_i:tiles_gen(3):regular_tiles_gen:accelerator_tile:tile_acc_i:LDOCTRL}]} ] \
+    {Token PM} \
+    {Tile IOs}
+group using {NoC DCO}
+group set -overlay 0
+group set -comment {}
+group clear 0 end
+
+
+group using Tile5
+group set -overlay 0
+group set -comment {}
+group clear 0 end
+
+group insert \
+    [subst  {[format {:top_1:chip_i:tiles_gen(5):regular_tiles_gen:accelerator_tile:tile_acc_i:LDOCTRL}]} ] \
+    {Token PM5} \
+    {tile IOa}
+group using {tile IOa}
+group set -overlay 0
+group set -comment {}
+group clear 0 end
+
+group insert \
+    [subst  {[format {:top_1:chip_i:tiles_gen(5):regular_tiles_gen:accelerator_tile:tile_acc_i:tms}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(5):regular_tiles_gen:accelerator_tile:tile_acc_i:tdo}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(5):regular_tiles_gen:accelerator_tile:tile_acc_i:tdi}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(5):regular_tiles_gen:accelerator_tile:tile_acc_i:tclk}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(5):regular_tiles_gen:accelerator_tile:tile_acc_i:sys_clk}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(5):regular_tiles_gen:accelerator_tile:tile_acc_i:rst}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(5):regular_tiles_gen:accelerator_tile:tile_acc_i:pad_cfg}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(5):regular_tiles_gen:accelerator_tile:tile_acc_i:noc6_stop_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(5):regular_tiles_gen:accelerator_tile:tile_acc_i:noc6_stop_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(5):regular_tiles_gen:accelerator_tile:tile_acc_i:noc6_data_w_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(5):regular_tiles_gen:accelerator_tile:tile_acc_i:noc6_data_w_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(5):regular_tiles_gen:accelerator_tile:tile_acc_i:noc6_data_void_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(5):regular_tiles_gen:accelerator_tile:tile_acc_i:noc6_data_void_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(5):regular_tiles_gen:accelerator_tile:tile_acc_i:noc6_data_s_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(5):regular_tiles_gen:accelerator_tile:tile_acc_i:noc6_data_s_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(5):regular_tiles_gen:accelerator_tile:tile_acc_i:noc6_data_n_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(5):regular_tiles_gen:accelerator_tile:tile_acc_i:noc6_data_n_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(5):regular_tiles_gen:accelerator_tile:tile_acc_i:noc6_data_e_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(5):regular_tiles_gen:accelerator_tile:tile_acc_i:noc6_data_e_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(5):regular_tiles_gen:accelerator_tile:tile_acc_i:noc5_stop_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(5):regular_tiles_gen:accelerator_tile:tile_acc_i:noc5_stop_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(5):regular_tiles_gen:accelerator_tile:tile_acc_i:noc5_data_w_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(5):regular_tiles_gen:accelerator_tile:tile_acc_i:noc5_data_w_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(5):regular_tiles_gen:accelerator_tile:tile_acc_i:noc5_data_void_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(5):regular_tiles_gen:accelerator_tile:tile_acc_i:noc5_data_void_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(5):regular_tiles_gen:accelerator_tile:tile_acc_i:noc5_data_s_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(5):regular_tiles_gen:accelerator_tile:tile_acc_i:noc5_data_s_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(5):regular_tiles_gen:accelerator_tile:tile_acc_i:noc5_data_n_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(5):regular_tiles_gen:accelerator_tile:tile_acc_i:noc5_data_n_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(5):regular_tiles_gen:accelerator_tile:tile_acc_i:noc5_data_e_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(5):regular_tiles_gen:accelerator_tile:tile_acc_i:noc5_data_e_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(5):regular_tiles_gen:accelerator_tile:tile_acc_i:noc4_stop_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(5):regular_tiles_gen:accelerator_tile:tile_acc_i:noc4_data_w_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(5):regular_tiles_gen:accelerator_tile:tile_acc_i:noc4_data_w_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(5):regular_tiles_gen:accelerator_tile:tile_acc_i:noc4_data_void_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(5):regular_tiles_gen:accelerator_tile:tile_acc_i:noc4_data_void_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(5):regular_tiles_gen:accelerator_tile:tile_acc_i:noc4_data_s_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(5):regular_tiles_gen:accelerator_tile:tile_acc_i:noc4_data_s_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(5):regular_tiles_gen:accelerator_tile:tile_acc_i:noc4_data_n_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(5):regular_tiles_gen:accelerator_tile:tile_acc_i:noc4_data_n_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(5):regular_tiles_gen:accelerator_tile:tile_acc_i:noc4_data_e_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(5):regular_tiles_gen:accelerator_tile:tile_acc_i:noc4_data_e_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(5):regular_tiles_gen:accelerator_tile:tile_acc_i:noc3_stop_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(5):regular_tiles_gen:accelerator_tile:tile_acc_i:noc3_stop_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(5):regular_tiles_gen:accelerator_tile:tile_acc_i:noc3_data_w_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(5):regular_tiles_gen:accelerator_tile:tile_acc_i:noc3_data_w_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(5):regular_tiles_gen:accelerator_tile:tile_acc_i:noc3_data_void_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(5):regular_tiles_gen:accelerator_tile:tile_acc_i:noc3_data_void_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(5):regular_tiles_gen:accelerator_tile:tile_acc_i:noc3_data_s_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(5):regular_tiles_gen:accelerator_tile:tile_acc_i:noc3_data_s_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(5):regular_tiles_gen:accelerator_tile:tile_acc_i:noc3_data_n_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(5):regular_tiles_gen:accelerator_tile:tile_acc_i:noc3_data_n_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(5):regular_tiles_gen:accelerator_tile:tile_acc_i:noc3_data_e_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(5):regular_tiles_gen:accelerator_tile:tile_acc_i:noc3_data_e_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(5):regular_tiles_gen:accelerator_tile:tile_acc_i:noc2_stop_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(5):regular_tiles_gen:accelerator_tile:tile_acc_i:noc2_stop_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(5):regular_tiles_gen:accelerator_tile:tile_acc_i:noc2_data_w_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(5):regular_tiles_gen:accelerator_tile:tile_acc_i:noc2_data_w_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(5):regular_tiles_gen:accelerator_tile:tile_acc_i:noc2_data_void_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(5):regular_tiles_gen:accelerator_tile:tile_acc_i:noc2_data_void_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(5):regular_tiles_gen:accelerator_tile:tile_acc_i:noc2_data_s_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(5):regular_tiles_gen:accelerator_tile:tile_acc_i:noc2_data_s_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(5):regular_tiles_gen:accelerator_tile:tile_acc_i:noc2_data_n_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(5):regular_tiles_gen:accelerator_tile:tile_acc_i:noc2_data_n_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(5):regular_tiles_gen:accelerator_tile:tile_acc_i:noc2_data_e_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(5):regular_tiles_gen:accelerator_tile:tile_acc_i:noc2_data_e_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(5):regular_tiles_gen:accelerator_tile:tile_acc_i:noc1_stop_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(5):regular_tiles_gen:accelerator_tile:tile_acc_i:noc1_stop_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(5):regular_tiles_gen:accelerator_tile:tile_acc_i:noc1_data_w_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(5):regular_tiles_gen:accelerator_tile:tile_acc_i:noc1_data_w_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(5):regular_tiles_gen:accelerator_tile:tile_acc_i:noc1_data_void_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(5):regular_tiles_gen:accelerator_tile:tile_acc_i:noc1_data_void_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(5):regular_tiles_gen:accelerator_tile:tile_acc_i:noc1_data_s_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(5):regular_tiles_gen:accelerator_tile:tile_acc_i:noc1_data_s_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(5):regular_tiles_gen:accelerator_tile:tile_acc_i:noc1_data_n_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(5):regular_tiles_gen:accelerator_tile:tile_acc_i:noc1_data_n_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(5):regular_tiles_gen:accelerator_tile:tile_acc_i:noc1_data_e_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(5):regular_tiles_gen:accelerator_tile:tile_acc_i:noc1_data_e_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(5):regular_tiles_gen:accelerator_tile:tile_acc_i:ext_clk}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(5):regular_tiles_gen:accelerator_tile:tile_acc_i:clk_div}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(5):regular_tiles_gen:accelerator_tile:tile_acc_i:noc4_stop_in}]} ]
+group using {Token PM5}
+group set -overlay 0
+group set -comment {}
+group clear 0 end
+
+group insert \
+    [subst  {[format {:top_1:chip_i:tiles_gen(5):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:noc5_output_port}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(5):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:acc_activity}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(5):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:acc_clk}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(5):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:LDOCTRL}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(5):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:local_x}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(5):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:local_y}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(5):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:noc5_data_void_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(5):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:noc5_data_void_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(5):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:noc5_input_port}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(5):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:noc5_stop_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(5):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:noc5_stop_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(5):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:noc_clk}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(5):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:noc_rstn}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(5):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:plllock}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(5):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:pm_config}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(5):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:pm_status}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(5):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:raw_rstn}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(5):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:refclk}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(5):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:tile_clk}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(5):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:tile_rstn}]} ]
+group using Tile6
+group set -overlay 0
+group set -comment {}
+group clear 0 end
+
+group insert \
+    [subst  {[format {:top_1:chip_i:tiles_gen(6):regular_tiles_gen:accelerator_tile:tile_acc_i:LDOCTRL}]} ] \
+    TokenMP6 \
+    {tile IOs }
+group using {tile IOs }
+group set -overlay 0
+group set -comment {}
+group clear 0 end
+
+group insert \
+    [subst  {[format {:top_1:chip_i:tiles_gen(6):regular_tiles_gen:accelerator_tile:tile_acc_i:tile_acc_1:tile_rst}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(6):regular_tiles_gen:accelerator_tile:tile_acc_i:tile_acc_1:test6_stop_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(6):regular_tiles_gen:accelerator_tile:tile_acc_i:tile_acc_1:test6_stop_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(6):regular_tiles_gen:accelerator_tile:tile_acc_i:tile_acc_1:test6_output_port}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(6):regular_tiles_gen:accelerator_tile:tile_acc_i:tile_acc_1:test6_input_port}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(6):regular_tiles_gen:accelerator_tile:tile_acc_i:tile_acc_1:test6_data_void_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(6):regular_tiles_gen:accelerator_tile:tile_acc_i:tile_acc_1:test6_data_void_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(6):regular_tiles_gen:accelerator_tile:tile_acc_i:tile_acc_1:test5_stop_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(6):regular_tiles_gen:accelerator_tile:tile_acc_i:tile_acc_1:test5_stop_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(6):regular_tiles_gen:accelerator_tile:tile_acc_i:tile_acc_1:test5_output_port}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(6):regular_tiles_gen:accelerator_tile:tile_acc_i:tile_acc_1:test5_input_port}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(6):regular_tiles_gen:accelerator_tile:tile_acc_i:tile_acc_1:test5_data_void_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(6):regular_tiles_gen:accelerator_tile:tile_acc_i:tile_acc_1:test5_data_void_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(6):regular_tiles_gen:accelerator_tile:tile_acc_i:tile_acc_1:test4_stop_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(6):regular_tiles_gen:accelerator_tile:tile_acc_i:tile_acc_1:test4_stop_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(6):regular_tiles_gen:accelerator_tile:tile_acc_i:tile_acc_1:test4_output_port}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(6):regular_tiles_gen:accelerator_tile:tile_acc_i:tile_acc_1:test4_input_port}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(6):regular_tiles_gen:accelerator_tile:tile_acc_i:tile_acc_1:test4_data_void_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(6):regular_tiles_gen:accelerator_tile:tile_acc_i:tile_acc_1:test4_data_void_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(6):regular_tiles_gen:accelerator_tile:tile_acc_i:tile_acc_1:test3_stop_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(6):regular_tiles_gen:accelerator_tile:tile_acc_i:tile_acc_1:test3_output_port}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(6):regular_tiles_gen:accelerator_tile:tile_acc_i:tile_acc_1:test3_input_port}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(6):regular_tiles_gen:accelerator_tile:tile_acc_i:tile_acc_1:test3_data_void_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(6):regular_tiles_gen:accelerator_tile:tile_acc_i:tile_acc_1:test3_data_void_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(6):regular_tiles_gen:accelerator_tile:tile_acc_i:tile_acc_1:test2_stop_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(6):regular_tiles_gen:accelerator_tile:tile_acc_i:tile_acc_1:test2_stop_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(6):regular_tiles_gen:accelerator_tile:tile_acc_i:tile_acc_1:test2_output_port}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(6):regular_tiles_gen:accelerator_tile:tile_acc_i:tile_acc_1:test2_input_port}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(6):regular_tiles_gen:accelerator_tile:tile_acc_i:tile_acc_1:test2_data_void_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(6):regular_tiles_gen:accelerator_tile:tile_acc_i:tile_acc_1:test2_data_void_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(6):regular_tiles_gen:accelerator_tile:tile_acc_i:tile_acc_1:test1_stop_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(6):regular_tiles_gen:accelerator_tile:tile_acc_i:tile_acc_1:test1_stop_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(6):regular_tiles_gen:accelerator_tile:tile_acc_i:tile_acc_1:test1_output_port}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(6):regular_tiles_gen:accelerator_tile:tile_acc_i:tile_acc_1:test1_input_port}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(6):regular_tiles_gen:accelerator_tile:tile_acc_i:tile_acc_1:test1_data_void_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(6):regular_tiles_gen:accelerator_tile:tile_acc_i:tile_acc_1:test1_data_void_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(6):regular_tiles_gen:accelerator_tile:tile_acc_i:tile_acc_1:refclk}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(6):regular_tiles_gen:accelerator_tile:tile_acc_i:tile_acc_1:raw_rstn}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(6):regular_tiles_gen:accelerator_tile:tile_acc_i:tile_acc_1:plllock}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(6):regular_tiles_gen:accelerator_tile:tile_acc_i:tile_acc_1:pllclk}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(6):regular_tiles_gen:accelerator_tile:tile_acc_i:tile_acc_1:pllbypass}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(6):regular_tiles_gen:accelerator_tile:tile_acc_i:tile_acc_1:mon_noc}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(6):regular_tiles_gen:accelerator_tile:tile_acc_i:tile_acc_1:mon_dvfs_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(6):regular_tiles_gen:accelerator_tile:tile_acc_i:tile_acc_1:mon_dvfs}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(6):regular_tiles_gen:accelerator_tile:tile_acc_i:tile_acc_1:mon_cache}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(6):regular_tiles_gen:accelerator_tile:tile_acc_i:tile_acc_1:mon_acc}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(6):regular_tiles_gen:accelerator_tile:tile_acc_i:tile_acc_1:ext_ldo_res_sel}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(6):regular_tiles_gen:accelerator_tile:tile_acc_i:tile_acc_1:ext_dco_cc_sel}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(6):regular_tiles_gen:accelerator_tile:tile_acc_i:tile_acc_1:dco_rstn}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(6):regular_tiles_gen:accelerator_tile:tile_acc_i:tile_acc_1:dco_freq_sel}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(6):regular_tiles_gen:accelerator_tile:tile_acc_i:tile_acc_1:dco_fc_sel}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(6):regular_tiles_gen:accelerator_tile:tile_acc_i:tile_acc_1:dco_en}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(6):regular_tiles_gen:accelerator_tile:tile_acc_i:tile_acc_1:dco_div_sel}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(6):regular_tiles_gen:accelerator_tile:tile_acc_i:tile_acc_1:dco_clk_sel}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(6):regular_tiles_gen:accelerator_tile:tile_acc_i:tile_acc_1:dco_clk}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(6):regular_tiles_gen:accelerator_tile:tile_acc_i:tile_acc_1:dco_cc_sel}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(6):regular_tiles_gen:accelerator_tile:tile_acc_i:tile_acc_1:acc_activity}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(6):regular_tiles_gen:accelerator_tile:tile_acc_i:tile_acc_1:test3_stop_out}]} ]
+group using {Group 1}
+group set -overlay 0
+group set -comment {}
+group clear 0 end
+
+group using TokenMP6
+group set -overlay 0
+group set -comment {}
+group clear 0 end
+
+group insert \
+    [subst  {[format {:top_1:chip_i:tiles_gen(6):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:acc_activity}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(6):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:acc_clk}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(6):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:LDOCTRL}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(6):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:local_x}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(6):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:local_y}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(6):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:noc5_data_void_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(6):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:noc5_data_void_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(6):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:noc5_input_port}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(6):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:noc5_output_port}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(6):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:noc5_stop_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(6):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:noc5_stop_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(6):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:noc_clk}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(6):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:noc_rstn}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(6):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:pm_config}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(6):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:pm_status}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(6):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:raw_rstn}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(6):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:refclk}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(6):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:tile_clk}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(6):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:tile_rstn}]} ]
+group using {tile IOs7}
+group set -overlay 0
+group set -comment {}
+group clear 0 end
+
+group insert \
+    [subst  {[format {:top_1:chip_i:tiles_gen(7):regular_tiles_gen:accelerator_tile:tile_acc_i:noc3_data_n_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(7):regular_tiles_gen:accelerator_tile:tile_acc_i:clk_div}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(7):regular_tiles_gen:accelerator_tile:tile_acc_i:ext_clk}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(7):regular_tiles_gen:accelerator_tile:tile_acc_i:noc1_data_e_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(7):regular_tiles_gen:accelerator_tile:tile_acc_i:noc1_data_e_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(7):regular_tiles_gen:accelerator_tile:tile_acc_i:noc1_data_n_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(7):regular_tiles_gen:accelerator_tile:tile_acc_i:noc1_data_n_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(7):regular_tiles_gen:accelerator_tile:tile_acc_i:noc1_data_s_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(7):regular_tiles_gen:accelerator_tile:tile_acc_i:noc1_data_s_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(7):regular_tiles_gen:accelerator_tile:tile_acc_i:noc1_data_void_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(7):regular_tiles_gen:accelerator_tile:tile_acc_i:noc1_data_void_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(7):regular_tiles_gen:accelerator_tile:tile_acc_i:noc1_data_w_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(7):regular_tiles_gen:accelerator_tile:tile_acc_i:noc1_data_w_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(7):regular_tiles_gen:accelerator_tile:tile_acc_i:noc1_stop_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(7):regular_tiles_gen:accelerator_tile:tile_acc_i:noc1_stop_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(7):regular_tiles_gen:accelerator_tile:tile_acc_i:noc2_data_e_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(7):regular_tiles_gen:accelerator_tile:tile_acc_i:noc2_data_e_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(7):regular_tiles_gen:accelerator_tile:tile_acc_i:noc2_data_n_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(7):regular_tiles_gen:accelerator_tile:tile_acc_i:noc2_data_n_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(7):regular_tiles_gen:accelerator_tile:tile_acc_i:noc2_data_s_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(7):regular_tiles_gen:accelerator_tile:tile_acc_i:noc2_data_s_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(7):regular_tiles_gen:accelerator_tile:tile_acc_i:noc2_data_void_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(7):regular_tiles_gen:accelerator_tile:tile_acc_i:noc2_data_void_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(7):regular_tiles_gen:accelerator_tile:tile_acc_i:noc2_data_w_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(7):regular_tiles_gen:accelerator_tile:tile_acc_i:noc2_data_w_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(7):regular_tiles_gen:accelerator_tile:tile_acc_i:noc2_stop_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(7):regular_tiles_gen:accelerator_tile:tile_acc_i:noc2_stop_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(7):regular_tiles_gen:accelerator_tile:tile_acc_i:noc3_data_e_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(7):regular_tiles_gen:accelerator_tile:tile_acc_i:noc3_data_e_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(7):regular_tiles_gen:accelerator_tile:tile_acc_i:noc3_data_n_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(7):regular_tiles_gen:accelerator_tile:tile_acc_i:noc3_data_s_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(7):regular_tiles_gen:accelerator_tile:tile_acc_i:noc3_data_s_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(7):regular_tiles_gen:accelerator_tile:tile_acc_i:noc3_data_void_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(7):regular_tiles_gen:accelerator_tile:tile_acc_i:noc3_data_void_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(7):regular_tiles_gen:accelerator_tile:tile_acc_i:noc3_data_w_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(7):regular_tiles_gen:accelerator_tile:tile_acc_i:noc3_data_w_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(7):regular_tiles_gen:accelerator_tile:tile_acc_i:noc3_stop_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(7):regular_tiles_gen:accelerator_tile:tile_acc_i:noc3_stop_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(7):regular_tiles_gen:accelerator_tile:tile_acc_i:noc4_data_e_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(7):regular_tiles_gen:accelerator_tile:tile_acc_i:noc4_data_e_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(7):regular_tiles_gen:accelerator_tile:tile_acc_i:noc4_data_n_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(7):regular_tiles_gen:accelerator_tile:tile_acc_i:noc4_data_n_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(7):regular_tiles_gen:accelerator_tile:tile_acc_i:noc4_data_s_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(7):regular_tiles_gen:accelerator_tile:tile_acc_i:noc4_data_s_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(7):regular_tiles_gen:accelerator_tile:tile_acc_i:noc4_data_void_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(7):regular_tiles_gen:accelerator_tile:tile_acc_i:noc4_data_void_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(7):regular_tiles_gen:accelerator_tile:tile_acc_i:noc4_data_w_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(7):regular_tiles_gen:accelerator_tile:tile_acc_i:noc4_data_w_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(7):regular_tiles_gen:accelerator_tile:tile_acc_i:noc4_stop_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(7):regular_tiles_gen:accelerator_tile:tile_acc_i:noc4_stop_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(7):regular_tiles_gen:accelerator_tile:tile_acc_i:noc5_data_e_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(7):regular_tiles_gen:accelerator_tile:tile_acc_i:noc5_data_e_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(7):regular_tiles_gen:accelerator_tile:tile_acc_i:noc5_data_n_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(7):regular_tiles_gen:accelerator_tile:tile_acc_i:noc5_data_n_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(7):regular_tiles_gen:accelerator_tile:tile_acc_i:noc5_data_s_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(7):regular_tiles_gen:accelerator_tile:tile_acc_i:noc5_data_s_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(7):regular_tiles_gen:accelerator_tile:tile_acc_i:noc5_data_void_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(7):regular_tiles_gen:accelerator_tile:tile_acc_i:noc5_data_void_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(7):regular_tiles_gen:accelerator_tile:tile_acc_i:noc5_data_w_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(7):regular_tiles_gen:accelerator_tile:tile_acc_i:noc5_data_w_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(7):regular_tiles_gen:accelerator_tile:tile_acc_i:noc5_stop_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(7):regular_tiles_gen:accelerator_tile:tile_acc_i:noc5_stop_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(7):regular_tiles_gen:accelerator_tile:tile_acc_i:noc6_data_e_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(7):regular_tiles_gen:accelerator_tile:tile_acc_i:noc6_data_e_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(7):regular_tiles_gen:accelerator_tile:tile_acc_i:noc6_data_n_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(7):regular_tiles_gen:accelerator_tile:tile_acc_i:noc6_data_n_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(7):regular_tiles_gen:accelerator_tile:tile_acc_i:noc6_data_s_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(7):regular_tiles_gen:accelerator_tile:tile_acc_i:noc6_data_s_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(7):regular_tiles_gen:accelerator_tile:tile_acc_i:noc6_data_void_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(7):regular_tiles_gen:accelerator_tile:tile_acc_i:noc6_data_void_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(7):regular_tiles_gen:accelerator_tile:tile_acc_i:noc6_data_w_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(7):regular_tiles_gen:accelerator_tile:tile_acc_i:noc6_data_w_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(7):regular_tiles_gen:accelerator_tile:tile_acc_i:noc6_stop_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(7):regular_tiles_gen:accelerator_tile:tile_acc_i:noc6_stop_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(7):regular_tiles_gen:accelerator_tile:tile_acc_i:pad_cfg}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(7):regular_tiles_gen:accelerator_tile:tile_acc_i:rst}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(7):regular_tiles_gen:accelerator_tile:tile_acc_i:sys_clk}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(7):regular_tiles_gen:accelerator_tile:tile_acc_i:tclk}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(7):regular_tiles_gen:accelerator_tile:tile_acc_i:tdi}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(7):regular_tiles_gen:accelerator_tile:tile_acc_i:tdo}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(7):regular_tiles_gen:accelerator_tile:tile_acc_i:tms}]} ]
+group using TokenPM7
+group set -overlay 0
+group set -comment {}
+group clear 0 end
+
+group insert \
+    [subst  {[format {:top_1:chip_i:tiles_gen(7):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:noc_clk}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(7):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:acc_activity}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(7):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:acc_clk}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(7):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:LDOCTRL}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(7):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:local_x}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(7):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:local_y}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(7):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:noc5_data_void_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(7):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:noc5_data_void_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(7):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:noc5_input_port}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(7):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:noc5_output_port}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(7):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:noc5_stop_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(7):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:noc5_stop_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(7):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:noc_rstn}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(7):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:plllock}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(7):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:pm_config}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(7):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:pm_status}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(7):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:raw_rstn}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(7):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:refclk}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(7):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:tile_clk}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(7):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:tile_rstn}]} ]
+group using Tile7
+group set -overlay 0
+group set -comment {}
+group clear 0 end
+
+group insert \
+    {tile IOs7} \
+    [subst  {[format {:top_1:chip_i:tiles_gen(7):regular_tiles_gen:accelerator_tile:tile_acc_i:LDOCTRL}]} ] \
+    TokenPM7
+group using Tile8
+group set -overlay 0
+group set -comment {}
+group clear 0 end
+
+group insert \
+    TokenPM8 \
+    [subst  {[format {:top_1:chip_i:tiles_gen(8):regular_tiles_gen:accelerator_tile:tile_acc_i:LDOCTRL}]} ] \
+    TileIO8
+group using TileIO8
+group set -overlay 0
+group set -comment {}
+group clear 0 end
+
+group insert \
+    [subst  {[format {:top_1:chip_i:tiles_gen(8):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:noc5_stop_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(8):regular_tiles_gen:accelerator_tile:tile_acc_i:noc4_data_void_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(8):regular_tiles_gen:accelerator_tile:tile_acc_i:clk_div}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(8):regular_tiles_gen:accelerator_tile:tile_acc_i:ext_clk}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(8):regular_tiles_gen:accelerator_tile:tile_acc_i:noc1_data_e_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(8):regular_tiles_gen:accelerator_tile:tile_acc_i:noc1_data_e_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(8):regular_tiles_gen:accelerator_tile:tile_acc_i:noc1_data_n_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(8):regular_tiles_gen:accelerator_tile:tile_acc_i:noc1_data_n_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(8):regular_tiles_gen:accelerator_tile:tile_acc_i:noc1_data_s_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(8):regular_tiles_gen:accelerator_tile:tile_acc_i:noc1_data_s_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(8):regular_tiles_gen:accelerator_tile:tile_acc_i:noc1_data_void_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(8):regular_tiles_gen:accelerator_tile:tile_acc_i:noc1_data_void_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(8):regular_tiles_gen:accelerator_tile:tile_acc_i:noc1_data_w_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(8):regular_tiles_gen:accelerator_tile:tile_acc_i:noc1_data_w_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(8):regular_tiles_gen:accelerator_tile:tile_acc_i:noc1_stop_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(8):regular_tiles_gen:accelerator_tile:tile_acc_i:noc1_stop_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(8):regular_tiles_gen:accelerator_tile:tile_acc_i:noc2_data_e_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(8):regular_tiles_gen:accelerator_tile:tile_acc_i:noc2_data_e_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(8):regular_tiles_gen:accelerator_tile:tile_acc_i:noc2_data_n_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(8):regular_tiles_gen:accelerator_tile:tile_acc_i:noc2_data_n_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(8):regular_tiles_gen:accelerator_tile:tile_acc_i:noc2_data_s_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(8):regular_tiles_gen:accelerator_tile:tile_acc_i:noc2_data_s_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(8):regular_tiles_gen:accelerator_tile:tile_acc_i:noc2_data_void_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(8):regular_tiles_gen:accelerator_tile:tile_acc_i:noc2_data_void_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(8):regular_tiles_gen:accelerator_tile:tile_acc_i:noc2_data_w_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(8):regular_tiles_gen:accelerator_tile:tile_acc_i:noc2_data_w_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(8):regular_tiles_gen:accelerator_tile:tile_acc_i:noc2_stop_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(8):regular_tiles_gen:accelerator_tile:tile_acc_i:noc2_stop_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(8):regular_tiles_gen:accelerator_tile:tile_acc_i:noc3_data_e_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(8):regular_tiles_gen:accelerator_tile:tile_acc_i:noc3_data_e_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(8):regular_tiles_gen:accelerator_tile:tile_acc_i:noc3_data_n_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(8):regular_tiles_gen:accelerator_tile:tile_acc_i:noc3_data_n_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(8):regular_tiles_gen:accelerator_tile:tile_acc_i:noc3_data_s_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(8):regular_tiles_gen:accelerator_tile:tile_acc_i:noc3_data_s_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(8):regular_tiles_gen:accelerator_tile:tile_acc_i:noc3_data_void_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(8):regular_tiles_gen:accelerator_tile:tile_acc_i:noc3_data_void_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(8):regular_tiles_gen:accelerator_tile:tile_acc_i:noc3_data_w_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(8):regular_tiles_gen:accelerator_tile:tile_acc_i:noc3_data_w_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(8):regular_tiles_gen:accelerator_tile:tile_acc_i:noc3_stop_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(8):regular_tiles_gen:accelerator_tile:tile_acc_i:noc3_stop_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(8):regular_tiles_gen:accelerator_tile:tile_acc_i:noc4_data_e_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(8):regular_tiles_gen:accelerator_tile:tile_acc_i:noc4_data_e_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(8):regular_tiles_gen:accelerator_tile:tile_acc_i:noc4_data_n_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(8):regular_tiles_gen:accelerator_tile:tile_acc_i:noc4_data_n_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(8):regular_tiles_gen:accelerator_tile:tile_acc_i:noc4_data_s_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(8):regular_tiles_gen:accelerator_tile:tile_acc_i:noc4_data_s_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(8):regular_tiles_gen:accelerator_tile:tile_acc_i:noc4_data_void_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(8):regular_tiles_gen:accelerator_tile:tile_acc_i:noc4_data_w_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(8):regular_tiles_gen:accelerator_tile:tile_acc_i:noc4_data_w_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(8):regular_tiles_gen:accelerator_tile:tile_acc_i:noc4_stop_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(8):regular_tiles_gen:accelerator_tile:tile_acc_i:noc4_stop_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(8):regular_tiles_gen:accelerator_tile:tile_acc_i:noc5_data_e_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(8):regular_tiles_gen:accelerator_tile:tile_acc_i:noc5_data_e_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(8):regular_tiles_gen:accelerator_tile:tile_acc_i:noc5_data_n_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(8):regular_tiles_gen:accelerator_tile:tile_acc_i:noc5_data_n_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(8):regular_tiles_gen:accelerator_tile:tile_acc_i:noc5_data_s_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(8):regular_tiles_gen:accelerator_tile:tile_acc_i:noc5_data_s_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(8):regular_tiles_gen:accelerator_tile:tile_acc_i:noc5_data_void_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(8):regular_tiles_gen:accelerator_tile:tile_acc_i:noc5_data_void_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(8):regular_tiles_gen:accelerator_tile:tile_acc_i:noc5_data_w_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(8):regular_tiles_gen:accelerator_tile:tile_acc_i:noc5_data_w_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(8):regular_tiles_gen:accelerator_tile:tile_acc_i:noc5_stop_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(8):regular_tiles_gen:accelerator_tile:tile_acc_i:noc5_stop_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(8):regular_tiles_gen:accelerator_tile:tile_acc_i:noc6_data_e_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(8):regular_tiles_gen:accelerator_tile:tile_acc_i:noc6_data_e_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(8):regular_tiles_gen:accelerator_tile:tile_acc_i:noc6_data_n_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(8):regular_tiles_gen:accelerator_tile:tile_acc_i:noc6_data_n_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(8):regular_tiles_gen:accelerator_tile:tile_acc_i:noc6_data_s_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(8):regular_tiles_gen:accelerator_tile:tile_acc_i:noc6_data_s_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(8):regular_tiles_gen:accelerator_tile:tile_acc_i:noc6_data_void_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(8):regular_tiles_gen:accelerator_tile:tile_acc_i:noc6_data_void_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(8):regular_tiles_gen:accelerator_tile:tile_acc_i:noc6_data_w_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(8):regular_tiles_gen:accelerator_tile:tile_acc_i:noc6_data_w_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(8):regular_tiles_gen:accelerator_tile:tile_acc_i:noc6_stop_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(8):regular_tiles_gen:accelerator_tile:tile_acc_i:noc6_stop_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(8):regular_tiles_gen:accelerator_tile:tile_acc_i:pad_cfg}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(8):regular_tiles_gen:accelerator_tile:tile_acc_i:rst}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(8):regular_tiles_gen:accelerator_tile:tile_acc_i:sys_clk}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(8):regular_tiles_gen:accelerator_tile:tile_acc_i:tclk}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(8):regular_tiles_gen:accelerator_tile:tile_acc_i:tdi}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(8):regular_tiles_gen:accelerator_tile:tile_acc_i:tdo}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(8):regular_tiles_gen:accelerator_tile:tile_acc_i:tms}]} ]
+group using TokenPM8
+group set -overlay 0
+group set -comment {}
+group clear 0 end
+
+group insert \
+    [subst  {[format {:top_1:chip_i:tiles_gen(8):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:acc_activity}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(8):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:acc_clk}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(8):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:LDOCTRL}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(8):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:local_x}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(8):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:local_y}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(8):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:noc5_data_void_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(8):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:noc5_data_void_out}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(8):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:noc5_input_port}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(8):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:noc5_output_port}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(8):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:noc5_stop_in}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(8):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:noc_clk}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(8):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:noc_rstn}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(8):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:plllock}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(8):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:pm_config}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(8):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:pm_status}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(8):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:raw_rstn}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(8):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:refclk}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(8):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:tile_clk}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(8):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:tile_rstn}]} ]
+group using GEMM2
+group set -overlay 0
+group set -comment {}
+group clear 0 end
+
+group insert \
+    [subst  {[format {:top_1:chip_i:tiles_gen(2):regular_tiles_gen:accelerator_tile:tile_acc_i:LDOCTRL}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(2):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:Token_FSM_i.activity}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(2):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:Token_FSM_i.tokens_next[6:0]}]} ]
+group using GEMM3
+group set -overlay 0
+group set -comment {}
+group clear 0 end
+
+group insert \
+    [subst  {[format {:top_1:chip_i:tiles_gen(3):regular_tiles_gen:accelerator_tile:tile_acc_i:LDOCTRL}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(3):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:Token_FSM_i.activity}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(3):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:Token_FSM_i.tokens_next[6:0]}]} ]
+group using NV1
+group set -overlay 0
+group set -comment {}
+group clear 0 end
+
+group insert \
+    [subst  {[format {:top_1:chip_i:tiles_gen(5):regular_tiles_gen:accelerator_tile:tile_acc_i:LDOCTRL}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(5):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:Token_FSM_i.activity}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(5):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:Token_FSM_i.tokens_next[6:0]}]} ]
+group using NV2
+group set -overlay 0
+group set -comment {}
+group clear 0 end
+
+group insert \
+    [subst  {[format {:top_1:chip_i:tiles_gen(6):regular_tiles_gen:accelerator_tile:tile_acc_i:LDOCTRL}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(6):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:Token_FSM_i.activity}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(6):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:Token_FSM_i.tokens_next[6:0]}]} ]
+group using NV3
+group set -overlay 0
+group set -comment {}
+group clear 0 end
+
+group insert \
+    [subst  {[format {:top_1:chip_i:tiles_gen(7):regular_tiles_gen:accelerator_tile:tile_acc_i:LDOCTRL}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(7):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:Token_FSM_i.activity}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(7):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:Token_FSM_i.tokens_next[6:0]}]} ]
+group using CONV0
+group set -overlay 0
+group set -comment {}
+group clear 0 end
+
+group insert \
+    [subst  {[format {:top_1:chip_i:tiles_gen(8):regular_tiles_gen:accelerator_tile:tile_acc_i:LDOCTRL}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(8):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:Token_FSM_i.activity}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(8):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:Token_FSM_i.tokens_next[6:0]}]} ]
+group using ACC8
+group set -overlay 0
+group set -comment {}
+group clear 0 end
+
+group insert \
+    [subst  {[format {:top_1:chip_i:tiles_gen(8):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:acc_activity}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(8):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:acc_activity_1}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(8):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:acc_activity_3}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(8):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:acc_activity_2}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(8):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:pm_config}]} ]
+group using ACC2
+group set -overlay 0
+group set -comment {}
+group clear 0 end
+
+group insert \
+    [subst  {[format {:top_1:chip_i:tiles_gen(2):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:acc_activity_1}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(2):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:acc_activity}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(2):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:acc_activity_2}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(2):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:acc_activity_3}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(2):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:pm_config}]} ]
+group using {Misc Debug}
+group set -overlay 0
+group set -comment {}
+group clear 0 end
+
+group insert \
+    [subst  {[format {:top_1:chip_i:tiles_gen(7):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:acc_activity}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(6):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:acc_activity}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(8):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:acc_activity}]} ]
+group using {CPU DCO}
+group set -overlay 0
+group set -comment {}
+group clear 0 end
+
+
+group using GEMM0
+group set -overlay 0
+group set -comment {}
+group clear 0 end
+
+group insert \
+    [subst  {[format {:top_1:chip_i:tiles_gen(0):regular_tiles_gen:accelerator_tile:tile_acc_i:LDOCTRL}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(0):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:Token_FSM_i.activity}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(0):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:Token_FSM_i.tokens_next[6:0]}]} ]
+group using GEMM1
+group set -overlay 0
+group set -comment {}
+group clear 0 end
+
+group insert \
+    [subst  {[format {:top_1:chip_i:tiles_gen(1):regular_tiles_gen:accelerator_tile:tile_acc_i:LDOCTRL}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(1):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:Token_FSM_i.activity}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(1):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:Token_FSM_i.tokens_next[6:0]}]} ]
+group using NV0
+group set -overlay 0
+group set -comment {}
+group clear 0 end
+
+group insert \
+    [subst  {[format {:top_1:chip_i:tiles_gen(4):regular_tiles_gen:accelerator_tile:tile_acc_i:LDOCTRL}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(4):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:Token_FSM_i.activity}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(4):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:Token_FSM_i.tokens_next[6:0]}]} ]
+group using CONV1
+group set -overlay 0
+group set -comment {}
+group clear 0 end
+
+group insert \
+    [subst  {[format {:top_1:chip_i:tiles_gen(9):regular_tiles_gen:accelerator_tile:tile_acc_i:LDOCTRL}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(9):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:Token_FSM_i.activity}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(9):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:Token_FSM_i.tokens_next[6:0]}]} ]
+group using CONV2
+group set -overlay 0
+group set -comment {}
+group clear 0 end
+
+group insert \
+    [subst  {[format {:top_1:chip_i:tiles_gen(10):regular_tiles_gen:accelerator_tile:tile_acc_i:LDOCTRL}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(10):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:Token_FSM_i.activity}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(10):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:Token_FSM_i.tokens_next[6:0]}]} ]
+group using NV4
+group set -overlay 0
+group set -comment {}
+group clear 0 end
+
+group insert \
+    [subst  {[format {:top_1:chip_i:tiles_gen(12):regular_tiles_gen:accelerator_tile:tile_acc_i:LDOCTRL}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(12):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:Token_FSM_i.activity}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(12):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:Token_FSM_i.tokens_next[6:0]}]} ]
+group using NV5
+group set -overlay 0
+group set -comment {}
+group clear 0 end
+
+group insert \
+    [subst  {[format {:top_1:chip_i:tiles_gen(13):regular_tiles_gen:accelerator_tile:tile_acc_i:LDOCTRL}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(13):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:Token_FSM_i.activity}]} ] \
+    [subst  {[format {:top_1:chip_i:tiles_gen(13):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:Token_FSM_i.tokens_next[6:0]}]} ]
+
+#
+# Mnemonic Maps
+#
+mmap new  -reuse -name {Boolean as Logic} -radix %b -contents {{%c=FALSE -edgepriority 1 -shape low}
+{%c=TRUE -edgepriority 1 -shape high}}
+mmap new  -reuse -name {Example Map} -radix %x -contents {{%b=11???? -bgcolor orange -label REG:%x -linecolor yellow -shape bus}
+{%x=1F -bgcolor red -label ERROR -linecolor white -shape EVENT}
+{%x=2C -bgcolor red -label ERROR -linecolor white -shape EVENT}
+{%x=* -label %x -linecolor gray -shape bus}}
+
+#
+# Design Browser windows
+#
+if {[catch {window new WatchList -name "Design Browser 1" -geometry 2560x1362+0+0}] != ""} {
+    window geometry "Design Browser 1" 2560x1362+0+0
+}
+window target "Design Browser 1" on
+browser using {Design Browser 1}
+browser set -scope [subst  {[format {:top_1:chip_i:tiles_gen(13):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:Token_FSM_i}]} ]
+browser set \
+    -signalsort name
+browser yview see [subst  {[format {:top_1:chip_i:tiles_gen(13):regular_tiles_gen:accelerator_tile:tile_acc_i:noc_domain_socket_i:token_pm_gen:token_pm_i:Token_FSM_i}]} ]
+browser timecontrol set -lock 0
+
+#
+# Waveform windows
+#
+if {[catch {window new WaveWindow -name "Waveform 2" -geometry 2560x1362+0+0}] != ""} {
+    window geometry "Waveform 2" 2560x1362+0+0
+}
+waveform using {Waveform 2}
+waveform sidebar visibility partial
+waveform set \
+    -primarycursor TimeA \
+    -signalnames name \
+    -signalwidth 175 \
+    -units fs \
+    -valuewidth 75
+waveform baseline set -time 0
+
+
+set groupId0 [waveform add -groups GEMM0]
+
+
+set groupId0 [waveform add -groups GEMM1]
+
+
+set groupId0 [waveform add -groups GEMM2]
+
+
+set groupId0 [waveform add -groups GEMM3]
+
+
+set groupId0 [waveform add -groups NV0]
+
+
+set groupId0 [waveform add -groups NV1]
+
+
+set groupId0 [waveform add -groups NV2]
+
+
+set groupId0 [waveform add -groups NV3]
+
+
+set groupId0 [waveform add -groups CONV0]
+
+
+set groupId0 [waveform add -groups CONV1]
+
+
+set groupId0 [waveform add -groups CONV2]
+
+
+set groupId0 [waveform add -groups NV4]
+
+
+set groupId0 [waveform add -groups NV5]
+
+
+waveform xview limits 0 1512046365540fs
+
+#
+# Waveform Window Links
+#
+
+#
+# Console windows
+#
+console set -windowname Console
+window geometry Console 2560x1362+0+0
+
+#
+# Layout selection
+#
+
