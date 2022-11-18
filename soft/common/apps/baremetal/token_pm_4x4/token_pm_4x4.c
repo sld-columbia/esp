@@ -31,6 +31,13 @@ int main(int argc, char * argv[])
 	espdevs[i].addr = acc_tile_pm_csr_addr[i];
     }
 
+	//Set NoC LDO to 800Mz - exact value is 800.9MHz 
+	 #ifdef DEBUG
+	 	 printf("Set NoC RO\n");
+	 #endif
+	unsigned int* noc_dco_ptr = (unsigned int *) 0x60091FCC;
+	*noc_dco_ptr = 0x5000D;
+	//Set CPU to 800Mz - exact value is 800.9MHz 
 
 //Test running all tiles
    struct esp_device *espdevs_gemm, *espdevs_viterbi, *espdevs_nvdla;
@@ -256,83 +263,81 @@ for (i = 0; i < N_ACC; i++) {
     ///////Start accelerators//////
     printf("Start accelerators\n");
     iowrite32(dev_g1, CMD_REG, CMD_MASK_START);
-    espdev = &espdevs[0];
-    write_config1(espdev, activity_const, random_rate_const_0, 0, 0);
+    //espdev =&espdevs[0];
+    //write_config1(espdev, activity_const, random_rate_const_0, 0, 0);
     #ifdef DEBUG
     	printf("Started G1\n");
     #endif
     iowrite32(dev_g2, CMD_REG, CMD_MASK_START);
-    espdev = &espdevs[1];
-    write_config1(espdev, activity_const, random_rate_const, 0, 0);
+    //espdev =&espdevs[1];
+    //write_config1(espdev, activity_const, random_rate_const, 0, 0);
     #ifdef DEBUG
     	printf("Started G2\n");
     #endif
     iowrite32(dev_g3, CMD_REG, CMD_MASK_START);
-    espdev = &espdevs[2];
-    write_config1(espdev, activity_const, random_rate_const, 0, 0);
+    //espdev =&espdevs[2];
+    //write_config1(espdev, activity_const, random_rate_const, 0, 0);
     #ifdef DEBUG
     	printf("Started G3\n");
     #endif
     iowrite32(dev_g4, CMD_REG, CMD_MASK_START);
-    espdev = &espdevs[3];
-    write_config1(espdev, activity_const, random_rate_const, 0, 0);
+    //espdev =&espdevs[3];
+    //write_config1(espdev, activity_const, random_rate_const, 0, 0);
     #ifdef DEBUG
     	printf("Started G4\n");
     #endif
     iowrite32(dev_n1, CMD_REG, CMD_MASK_START);
-    espdev = &espdevs[4];
-    write_config1(espdev, activity_const, random_rate_const, 0, 0);
+    //espdev =&espdevs[4];
+    //write_config1(espdev, activity_const, random_rate_const, 0, 0);
     #ifdef DEBUG
     	printf("Started N1\n");
     #endif
     iowrite32(dev_n2, CMD_REG, CMD_MASK_START);
-    espdev = &espdevs[5];
-    write_config1(espdev, activity_const, random_rate_const, 0, 0);
+    //espdev =&espdevs[5];
+    //write_config1(espdev, activity_const, random_rate_const, 0, 0);
     #ifdef DEBUG
     	printf("Started N2\n");
     #endif
     iowrite32(dev_n3, CMD_REG, CMD_MASK_START);
-    espdev = &espdevs[6];
-    write_config1(espdev, activity_const, random_rate_const, 0, 0);
+    //espdev =&espdevs[6];
+    //write_config1(espdev, activity_const, random_rate_const, 0, 0);
     #ifdef DEBUG
     	printf("Started N3\n");
     #endif
     iowrite32(dev_n4, CMD_REG, CMD_MASK_START);
-    espdev = &espdevs[7];
-    write_config1(espdev, activity_const, random_rate_const, 0, 0);
+    //espdev =&espdevs[7];
+    //write_config1(espdev, activity_const, random_rate_const, 0, 0);
     #ifdef DEBUG
     	printf("Started N4\n");
     #endif
     iowrite32(dev_c1, CMD_REG, CMD_MASK_START);
-    espdev = &espdevs[8];
-    write_config1(espdev, activity_const, random_rate_const, 0, 0);
+    //espdev =&espdevs[8];
+    //write_config1(espdev, activity_const, random_rate_const, 0, 0);
     #ifdef DEBUG
     	printf("Started C1\n");
     #endif
     iowrite32(dev_c2, CMD_REG, CMD_MASK_START);
-    espdev = &espdevs[9];
-    write_config1(espdev, activity_const, random_rate_const, 0, 0);
+    //espdev =&espdevs[9];
+    //write_config1(espdev, activity_const, random_rate_const, 0, 0);
     #ifdef DEBUG
     	printf("Started C2\n");
     #endif
     iowrite32(dev_c3, CMD_REG, CMD_MASK_START);
-    espdev = &espdevs[10];
-    write_config1(espdev, activity_const, random_rate_const, 0, 0);
+    //espdev =&espdevs[10];
+    //write_config1(espdev, activity_const, random_rate_const, 0, 0);
     #ifdef DEBUG
     	printf("Started C3\n");
     #endif
     iowrite32(dev_n5, CMD_REG, CMD_MASK_START);
-    espdev = &espdevs[11];
-    write_config1(espdev, activity_const, random_rate_const, 0, 0);
+    //espdev =&espdevs[11];
+    //write_config1(espdev, activity_const, random_rate_const, 0, 0);
     #ifdef DEBUG
     	printf("Started N5\n");
     #endif
-	
-	printf("A\n");
-	
+    //printf("A\n");
     iowrite32(dev_n6, CMD_REG, CMD_MASK_START);
-    espdev = &espdevs[12];
-    write_config1(espdev, activity_const, random_rate_const, 0, 0);
+    //espdev =&espdevs[12];
+    //write_config1(espdev, activity_const, random_rate_const, 0, 0);
     #ifdef DEBUG
     	printf("Started N6\n");
     #endif
@@ -396,89 +401,89 @@ for (i = 0; i < N_ACC; i++) {
 		}
 
 		if(done_g1 && !done_g1_before) {
-			cycles_end_g1 = get_counter();
-			espdev = &espdevs[0];
-			write_config1(espdev, 0, random_rate_const_0, 0, 0);
+			//cycles_end_g1 = get_counter();
+			//espdev =&espdevs[0];
+			//write_config1(espdev, 0, random_rate_const_0, 0, 0);
 			done_g1_before=done_g1;
 		}
 		if(done_g2 && !done_g2_before) {
-			cycles_end_g2 = get_counter();
-			espdev = &espdevs[1];
-			write_config1(espdev, 0, random_rate_const, 0, 0);
+			//cycles_end_g2 = get_counter();
+			//espdev =&espdevs[1];
+			//write_config1(espdev, 0, random_rate_const, 0, 0);
 			done_g2_before=done_g2;
 		}
 		if(done_g3 && !done_g3_before) {
-			cycles_end_g3 = get_counter();
-			espdev = &espdevs[2];
-			write_config1(espdev, 0, random_rate_const, 0, 0);
+			//cycles_end_g3 = get_counter();
+			//espdev =&espdevs[2];
+			//write_config1(espdev, 0, random_rate_const, 0, 0);
 			done_g3_before=done_g3;
 		}
 		if(done_g4 && !done_g4_before) {
-			cycles_end_g4 = get_counter();
-			espdev = &espdevs[3];
-			write_config1(espdev, 0, random_rate_const, 0, 0);
+			//cycles_end_g4 = get_counter();
+			//espdev =&espdevs[3];
+			//write_config1(espdev, 0, random_rate_const, 0, 0);
 			done_g4_before=done_g4;
 		}
 		if(done_n1 && !done_n1_before) {
-			cycles_end_n1 = get_counter();
-			espdev = &espdevs[4];
-			write_config1(espdev, 0, random_rate_const, 0, 0);
+			//cycles_end_n1 = get_counter();
+			//espdev =&espdevs[4];
+			//write_config1(espdev, 0, random_rate_const, 0, 0);
 			done_n1_before=done_n1;
 		}
 		if(done_n2 && !done_n2_before) {
-			cycles_end_n2 = get_counter();
-			espdev = &espdevs[5];
-			write_config1(espdev, 0, random_rate_const, 0, 0);
+			//cycles_end_n2 = get_counter();
+			//espdev =&espdevs[5];
+			//write_config1(espdev, 0, random_rate_const, 0, 0);
 			done_n2_before=done_n2;
 		}
 		if(done_n3 && !done_n3_before) {
-			cycles_end_n3 = get_counter();
-			espdev = &espdevs[6];
-			write_config1(espdev, 0, random_rate_const, 0, 0);
+			//cycles_end_n3 = get_counter();
+			//espdev =&espdevs[6];
+			//write_config1(espdev, 0, random_rate_const, 0, 0);
 			done_n3_before=done_n3;
 		}
 		if(done_n4 && !done_n4_before) {
-			cycles_end_n4 = get_counter();
-			espdev = &espdevs[7];
-			write_config1(espdev, 0, random_rate_const, 0, 0);
+			//cycles_end_n4 = get_counter();
+			//espdev =&espdevs[7];
+			//write_config1(espdev, 0, random_rate_const, 0, 0);
 			done_n4_before=done_n4;
 		}
 		if(done_c1 && !done_c1_before) {
-			cycles_end_c1 = get_counter();
-			espdev = &espdevs[8];
-			write_config1(espdev, 0, random_rate_const, 0, 0);
+			//cycles_end_c1 = get_counter();
+			//espdev =&espdevs[8];
+			//write_config1(espdev, 0, random_rate_const, 0, 0);
 			done_c1_before=done_c1;
 		}
 		if(done_c2 && !done_c2_before) {
-			cycles_end_c2 = get_counter();
-			espdev = &espdevs[9];
-			write_config1(espdev, 0, random_rate_const, 0, 0);
+			//cycles_end_c2 = get_counter();
+			//espdev =&espdevs[9];
+			//write_config1(espdev, 0, random_rate_const, 0, 0);
 			done_c2_before=done_c2;
 		}
 		if(done_c3 && !done_c3_before) {
-			cycles_end_c3 = get_counter();
-			espdev = &espdevs[10];
-			write_config1(espdev, 0, random_rate_const, 0, 0);
+			//cycles_end_c3 = get_counter();
+			//espdev =&espdevs[10];
+			//write_config1(espdev, 0, random_rate_const, 0, 0);
 			done_c3_before=done_c3;
 		}
 		if(done_n5 && !done_n5_before) {
-			cycles_end_n5 = get_counter();
-			espdev = &espdevs[11];
-			write_config1(espdev, 0, random_rate_const, 0, 0);
+			//cycles_end_n5 = get_counter();
+			//espdev =&espdevs[11];
+			//write_config1(espdev, 0, random_rate_const, 0, 0);
 			done_n5_before=done_n5;
 		}
 		if(done_n6 && !done_n6_before) {
-			cycles_end_n6 = get_counter();
-			espdev = &espdevs[12];
-			write_config1(espdev, 0, random_rate_const, 0, 0);
+			//cycles_end_n6 = get_counter();
+			//espdev =&espdevs[12];
+			//write_config1(espdev, 0, random_rate_const, 0, 0);
 			done_n6_before=done_n6;
 		}
     }
 	
 	printf("  Done\n");
-	printf("  Nightvision Execution cycles : n1=%llu, n2=%llu, n3=%llu, n4=%llu, n5=%llu, n6=%llu\n", cycles_end_n1 - cycles_start, cycles_end_n2 - cycles_start, cycles_end_n3 - cycles_start, cycles_end_n4 - cycles_start, cycles_end_n5 - cycles_start, cycles_end_n6 - cycles_start);
-	printf("  GEMM Execution cycles : g1=%llu, g2=%llu, g3=%llu, g4=%llu \n", cycles_end_g1 - cycles_start, cycles_end_g2 - cycles_start, cycles_end_g3 - cycles_start, cycles_end_g4 - cycles_start);
-	printf("  Conv2D Execution cycles : c1=%llu, c2=%llu, c3=%llu\n", cycles_end_c1 - cycles_start, cycles_end_c2 - cycles_start, cycles_end_c3 - cycles_start);
+	//printf("  Nightvision Execution cycles : n1=%llu, n2=%llu, n3=%llu, n4=%llu, n5=%llu, n6=%llu\n", cycles_end_n1 - cycles_start, cycles_end_n2 - cycles_start, cycles_end_n3 - cycles_start, cycles_end_n4 - cycles_start, cycles_end_n5 - cycles_start, cycles_end_n6 - cycles_start);
+	//printf("  GEMM Execution cycles : g1=%llu, g2=%llu, g3=%llu, g4=%llu \n", cycles_end_g1 - cycles_start, cycles_end_g2 - cycles_start, cycles_end_g3 - cycles_start, cycles_end_g4 - cycles_start);
+	//printf("  Conv2D Execution cycles : c1=%llu, c2=%llu, c3=%llu\n", cycles_end_c1 - cycles_start, cycles_end_c2 - cycles_start, cycles_end_c3 - cycles_start);
 
 #endif
 

@@ -160,59 +160,37 @@ const unsigned activity_const = 1;
 const unsigned no_activity_const = 0;
 
 const unsigned max_tokens_vc707[N_ACC] = {38, 38, 38, 38, 24, 24, 24, 24, 48, 48, 48, 24, 24};
-const unsigned refresh_rate_min_const = 225;
-const unsigned refresh_rate_max_const = 225;
+const unsigned refresh_rate_min_const = 100;
+const unsigned refresh_rate_max_const = 100;
 const unsigned total_tokens = 150;
 const unsigned total_tokens_ini = 150; //Change to 24 for original test
 
 #define LUT_SIZE 64
 
-#ifdef PID_CONFIG
-	const unsigned lut_data_const[LUT_SIZE] = { 0, 0, 0, 0, 0, 0, 0, 0,
-						    0, 0, 0, 0, 0, 0, 0, 0,
-						    0, 0, 0, 0, 0, 0, 0, 0,
-						    0, 0, 0, 0, 0, 0, 0, 0,
-						    0, 0, 0, 0, 0, 0, 0, 0,
-						    0, 0, 0, 0, 0, 0, 0, 0,
-						    0, 0, 0, 0, 0, 0, 0, 0,
-						    0, 0, 0, 0, 0, 0, 0, 0};
-	const unsigned lut_data_const_vc707[LUT_SIZE] = { 0, 0, 0, 0, 0, 0, 0, 0,
-						    0, 0, 0, 0, 0, 0, 0, 0,
-						    0, 0, 0, 0, 0, 0, 0, 0,
-						    0, 0, 0, 0, 0, 0, 0, 0,
-						    0, 0, 0, 0, 0, 0, 0, 0,
-						    0, 0, 0, 0, 0, 0, 0, 0,
-						    0, 0, 0, 0, 0, 0, 0, 0,
-						    0, 0, 0, 0, 0, 0, 0, 0};
-#else
-	const unsigned lut_data_const_vc707_GEMM[LUT_SIZE] = {  11<<4,  11<<4,  11<<4,  11<<4,  11<<4,  10<<4,  10<<4,  10<<4,   9<<4,   9<<4,   9<<4,   8<<4,   8<<4,   7<<4,   7<<4,
-					       	        	6<<4,   6<<4,   6<<4,   5<<4,   5<<4,   5<<4,   5<<4,   5<<4,   4<<4,   4<<4,   4<<4,   4<<4,   4<<4,   4<<4,   3<<4,
-					  	        	3<<4,   3<<4,   3<<4,   3<<4,   3<<4,   3<<4,   2<<4,   2<<4,   2<<4,   2<<4,   2<<4,   2<<4,   2<<4,   2<<4,   2<<4,
-							        2<<4,   2<<4,   2<<4,   2<<4,   2<<4,   2<<4,   2<<4,   2<<4,   2<<4,   2<<4,   2<<4,   2<<4,   2<<4,   2<<4,   2<<4,
-								2<<4,   2<<4,   2<<4,   2<<4};
+	const unsigned lut_data_const_vc707_GEMM[LUT_SIZE] =
+{ 255,  254,  246,  239,  231,  223,  215,  207,  199,  191,  183,  173,
+  163,  154,  144,  136,  129,  122,  115,  108,  102,   97,   94,   91,
+   88,   85,   82,   79,   76,   73,   70,   67,   64,   60,   57,   54,
+   51,   48,   46,   46,   46,   46,   46,   46,   46,   46,   46,   46,
+   46,   46,   46,   46,   46,   46,   46,   46,   46,   46,   46,   46,
+   46,   46,   46,   46};
 						
 								
-	const unsigned lut_data_const_vc707_CONV2D[LUT_SIZE] = {  11<<4,  11<<4,  11<<4,  11<<4,  11<<4,  11<<4,  10<<4,  10<<4,  10<<4,   9<<4,   9<<4,   9<<4,   8<<4,   8<<4,   8<<4,
-								7<<4,   7<<4,   6<<4,   6<<4,   6<<4,   6<<4,   5<<4,   5<<4,   5<<4,   5<<4,   4<<4,   4<<4,   4<<4,   4<<4,   4<<4,
-								3<<4,   3<<4,   3<<4,   3<<4,   3<<4,   3<<4,   3<<4,   3<<4,   2<<4,   2<<4,   2<<4,   2<<4,   2<<4,   2<<4,   2<<4,
-								2<<4,   2<<4,   1<<4,   1<<4,   1<<4,   1<<4,   1<<4,   1<<4,   1<<4,   1<<4,   1<<4,   1<<4,   1<<4,   1<<4,   1<<4,
-								1<<4,   1<<4,   1<<4,   1<<4};
+	const unsigned lut_data_const_vc707_CONV2D[LUT_SIZE] = { 255,  255,  248,  242,  235,  228,  221,  214,  207,  200,  193,  186,
+  179,  171,  162,  153,  145,  136,  128,  122,  116,  111,  105,   99,
+   94,   88,   84,   81,   78,   76,   73,   70,   67,   65,   62,   59,
+   57,   54,   51,   48,   46,   43,   40,   38,   35,   32,   30,   27,
+   24,   24,   24,   24,   24,   24,   24,   24,   24,   24,   24,   24,
+   24,   24,   24,   24};
 
-	const unsigned lut_data_const_vc707_NV[LUT_SIZE] = {  11<<4,  11<<4,  11<<4,  10<<4,  10<<4,   9<<4,   8<<4,   8<<4,   7<<4,   6<<4,   6<<4,   5<<4,   5<<4,   5<<4,   4<<4,
-								4<<4,   4<<4,   4<<4,   4<<4,   3<<4,   3<<4,   3<<4,   3<<4,   3<<4,   2<<4,   2<<4,   2<<4,   2<<4,   2<<4,   2<<4,
-								2<<4,   2<<4,   2<<4,   2<<4,   2<<4,   2<<4,   2<<4,   2<<4,   2<<4,   2<<4,   2<<4,   2<<4,   2<<4,   2<<4,   2<<4,
-								2<<4,   2<<4,   2<<4,   2<<4,   2<<4,   2<<4,   2<<4,   2<<4,   2<<4,   2<<4,   2<<4,   2<<4,   2<<4,   2<<4,   2<<4,
-								2<<4,   2<<4,   2<<4,   2<<4};
+	const unsigned lut_data_const_vc707_NV[LUT_SIZE] = { 255,  253,  244,  234,  225,  216,  206,  183,  157,  132,  122,  113,
+  103,   94,   90,   86,   82,   79,   75,   71,   67,   63,   60,   56,
+   52,   52,   52,   52,   52,   52,   52,   52,   52,   52,   52,   52,
+   52,   52,   52,   52,   52,   52,   52,   52,   52,   52,   52,   52,
+   52,   52,   52,   52,   52,   52,   52,   52,   52,   52,   52,   52,
+   52,   52,   52,   52};
 
-	/* const unsigned lut_data_const_vc707[LUT_SIZE] = {1, 1, 1, 1, 1, 1, 1, 1, */
-	/* 						 1, 1, 1, 1, 1, 1, 1, 1, */
-	/* 						 3, 3, 3, 3, 3, 3, 3, 3, */
-	/* 						 3, 3, 3, 3, 3, 3, 3, 3, */
-	/* 						 4, 4, 4, 4, 4, 4, 4, 4, */
-	/* 						 4, 4, 4, 4, 4, 4, 4, 4, */
-	/* 						 10, 10, 10, 10, 10, 10, 10, 10, */
-	/* 						 10, 10, 10, 10, 10, 10, 10, 10}; */
-#endif
+
 
 const unsigned random_rate_const_0 = 0;//For tile 0
 const unsigned random_rate_const = 17;
@@ -270,12 +248,12 @@ void init_consts()
 		}
 	}*/
 	
-	token_counter_override_vc707[0]=(1<<7) + total_tokens_ini/3;
-	token_counter_override_vc707[1]=(1<<7) + total_tokens_ini/3;
-	token_counter_override_vc707[2]=(1<<7) + total_tokens_ini/3;
-	token_counter_override_vc707[3]=0;
-	token_counter_override_vc707[4]=0;
-	token_counter_override_vc707[5]=0;
+	token_counter_override_vc707[0]=(1<<7) + total_tokens_ini/6;
+	token_counter_override_vc707[1]=(1<<7) + total_tokens_ini/6;
+	token_counter_override_vc707[2]=(1<<7) + total_tokens_ini/6;
+	token_counter_override_vc707[3]=(1<<7) + total_tokens_ini/6;
+	token_counter_override_vc707[4]=(1<<7) + total_tokens_ini/6;
+	token_counter_override_vc707[5]=(1<<7) + total_tokens_ini/6;
 	token_counter_override_vc707[6]=0;
 	token_counter_override_vc707[7]=0;
 	token_counter_override_vc707[8]=0;
