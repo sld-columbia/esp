@@ -106,6 +106,7 @@ void start_tile( unsigned i)
 		else{
 			write_config1(&espdevs[0], 1, 0, 0, 0);
 			run_nvdla( &espdevs[0], dev_list_acc[0], gold_nvdla, mem_n1, 0);
+			write_config1(&espdevs[0], 0, 0, 0, 0);
 			//set_freq(&espdevs[0],Fmin[0]);
 			p_available=p_available+Pmin[0];
 			removeFromList(&head_idle,0);
@@ -126,6 +127,7 @@ void start_tile( unsigned i)
 		else {
 			write_config1(&espdevs[0],1,0,0,0);
 			run_nvdla( &espdevs[0], dev_list_acc[0], gold_nvdla, mem_n1, 0);
+			write_config1(&espdevs[0], 0, 0, 0, 0);
 			p_available=p_available+Pmin[0];
 			removeFromList(&head_idle,0);
 		}	
@@ -195,7 +197,7 @@ void CRR_step_rotate()
 			   else{
 				   write_config1(&espdevs[0],1,0,0,0);
 				   run_nvdla( &espdevs[0], dev_list_acc[0], gold_nvdla, mem_n1, 0);
-				   //write_config1(&espdevs[waitNode->data],1,0,0,0);
+				   write_config1(&espdevs[0],0,0,0,0);
 			   }
 			   removeFromList(&head_wait,waitNode->data);
 			   addLast(&head_run,waitNode->data);
@@ -209,12 +211,11 @@ void CRR_step_rotate()
 			   set_freq(&espdevs[waitNode->data],Fmin[waitNode->data]);
 			   if(waitNode->data>0){
 				   iowrite32(dev_list_acc[waitNode->data], CMD_REG, CMD_MASK_START);
-				   //write_config1(&espdevs[waitNode->data],1,0,0,0);
 			   }
 			   else{
 				   write_config1(&espdevs[0],1,0,0,0);
 				   run_nvdla( &espdevs[0], dev_list_acc[0], gold_nvdla, mem_n1, 0);
-				   //write_config1(&espdevs[waitNode->data],1,0,0,0);
+				   write_config1(&espdevs[0],0,0,0,0);
 			   }
 			   removeFromList(&head_wait,waitNode->data);
 			   addLast(&head_idle,waitNode->data);

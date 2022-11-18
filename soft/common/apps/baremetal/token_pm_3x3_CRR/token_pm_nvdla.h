@@ -30,7 +30,7 @@
 #define PLIC_IP_OFFSET 0x1000
 #define PLIC_INTACK_OFFSET 0x200004
 #define NVDLA_IRQ 5
-#define N_ITER 5	//number of loop iterations for which nvdla is to be run
+#define N_ITER 2	//number of loop iterations for which nvdla is to be run
 
 #define NVDLA_BASE_ADDR NVDLA_ACC_ADDR
 
@@ -321,7 +321,7 @@ void run_nvdla(struct esp_device *espdev, struct esp_device *dev, nvdla_token_t 
     // Allocation of the accelerator data array (mem) and of the expected output array (gold)
     mem = aligned_malloc(mem_size);
     gold = aligned_malloc(out_size);
-    printf("  memory buffer base-address = %p\n", mem);
+    //printf("  memory buffer base-address = %p\n", mem);
 
     nvdla_init_buf(mem, gold);
 

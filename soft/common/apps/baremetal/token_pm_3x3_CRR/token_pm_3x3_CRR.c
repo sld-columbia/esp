@@ -30,7 +30,8 @@ int main(int argc, char * argv[])
 
 
     // setup CSR base addresses
-    for (i = 0; i < N_ACC; i++) {
+    for (i = 0; i < N_ACC; i++) 
+    {
 	acc_tile_pm_csr_addr[i] = CSR_BASE_ADDR + CSR_TILE_OFFSET * acc_tile_ids[i] + CSR_TOKEN_PM_OFFSET;
 	espdevs[i].addr = acc_tile_pm_csr_addr[i];
     }
@@ -141,16 +142,12 @@ int main(int argc, char * argv[])
 	}
 	
 	//Start NVDLA
-	write_config1(&espdevs[0], 1, 0, 0, 0);
+	start_tile(0);
 
 	//run_nvdla( &espdevs[0], dev_list_acc[0], gold_nvdla, mem_n1, 0);
-	start_tile(0);
 	
 	//Wait for NVDLA done
-	write_config1(&espdevs[0], 0, 0, 0, 0);
-	set_freq(&espdevs[0],Fmin[0]);
-	p_available=p_available+Pmin[0];
-	removeFromList(&head_idle,0);
+	//write_config1(&espdevs[0], 0, 0, 0, 0);
 	#ifdef DEBUG
 		printf("Finished NVDLA new Pav %u\n",p_available);
     #endif
