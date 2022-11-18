@@ -202,7 +202,7 @@ int main(int argc, char * argv[])
 			espdev = &espdevs[1];
 			write_config1(espdev, 0, random_rate_const, 0, 0);
 			is_running_fft0 = 0;
-			cycles_end_fft0 = get_counter();
+			//cycles_end_fft0 = get_counter();
 			#ifdef DEBUG
 				printf("Finished fft0\n");
 			#endif
@@ -246,7 +246,7 @@ int main(int argc, char * argv[])
 				espdev = &espdevs[3];
 				write_config1(espdev, 0, random_rate_const, 0, 0);
 				is_running_fft1 = 0;
-				cycles_end_fft1 = get_counter();
+				//cycles_end_fft1 = get_counter();
 				#ifdef DEBUG
 					printf("Finished fft1\n");
 				#endif
@@ -266,7 +266,7 @@ int main(int argc, char * argv[])
 			espdev = &espdevs[2];
 			write_config1(espdev, 0, random_rate_const, 0, 0);
 			is_running_viterbi0 = 0;
-			cycles_end_viterbi0 = get_counter();
+			//cycles_end_viterbi0 = get_counter();
 			#ifdef DEBUG
 				printf("Finished viterbi0\n");
 			#endif
@@ -276,7 +276,7 @@ int main(int argc, char * argv[])
 			espdev = &espdevs[5];
 			write_config1(espdev, 0, random_rate_const, 0, 0);
 			is_running_fft2 = 0;
-			cycles_end_fft2 = get_counter();
+			//cycles_end_fft2 = get_counter();
 			#ifdef DEBUG
 				printf("Finished fft2\n");
 			#endif
@@ -291,12 +291,12 @@ int main(int argc, char * argv[])
 	}
 	printf(" Finished execution\n");
 	cycles_end = get_counter();
-	printf("nvdla0 execution cycles: ", cycles_end_nvdla0-cycles_start);
-	printf("viterbi0 execution cycles: ", cycles_end_viterbi0-cycles_start);
-	printf("viterbi1 execution cycles: ", cycles_end_viterbi1-cycles_start);
-	printf("fft0 execution cycles: ", cycles_end_fft0-cycles_start);
-	printf("fft1 execution cycles: ", cycles_end_fft1-cycles_start);
-	printf("fft2 execution cycles: ", cycles_end_fft2-cycles_start);
+	//printf("nvdla0 execution cycles: ", cycles_end_nvdla0-cycles_start);
+	//printf("viterbi0 execution cycles: ", cycles_end_viterbi0-cycles_start);
+	//printf("viterbi1 execution cycles: ", cycles_end_viterbi1-cycles_start);
+	//printf("fft0 execution cycles: ", cycles_end_fft0-cycles_start);
+	//printf("fft1 execution cycles: ", cycles_end_fft1-cycles_start);
+	//printf("fft2 execution cycles: ", cycles_end_fft2-cycles_start);
 	printf("Total execution cycles: ", cycles_end-cycles_start);
 	return 0;
 }
