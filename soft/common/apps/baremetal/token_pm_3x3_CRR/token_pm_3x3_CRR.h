@@ -6,7 +6,7 @@ unsigned p_available = P_TOTAL;
 
 const unsigned Pmax[N_ACC] = {max_power_NVDLA,max_power_FFT,max_power_VIT,max_power_FFT,max_power_VIT,max_power_FFT};
 const unsigned Fmax[N_ACC]= {lut_data_const_NVDLA[max_tokens_NVDLA],lut_data_const_FFT[max_tokens_FFT],lut_data_const_VIT[max_tokens_VIT],lut_data_const_FFT[max_tokens_FFT],lut_data_const_VIT[max_tokens_VIT],lut_data_const_FFT[max_tokens_FFT]};
-const unsigned Fmin[N_ACC] = {lut_data_const_NVDLA[0],lut_data_const_FFT[0],lut_data_const_VIT[0],lut_data_const_FFT[0],lut_data_const_VIT[0],lut_data_const_FFT[0]};
+const unsigned Fmin[N_ACC] = {lut_data_const_NVDLA[8],lut_data_const_FFT[0],lut_data_const_VIT[0],lut_data_const_FFT[0],lut_data_const_VIT[0],lut_data_const_FFT[0]};
 const unsigned Pmin[N_ACC] = {min_power_NVDLA,min_power_FFT,min_power_VIT,min_power_FFT,min_power_VIT,min_power_FFT};
 
 struct esp_device espdevs[N_ACC];
@@ -109,7 +109,7 @@ void start_tile( unsigned i)
 			write_config1(&espdevs[0], 0, 0, 0, 0);
 			//set_freq(&espdevs[0],Fmin[0]);
 			p_available=p_available+Pmin[0];
-			removeFromList(&head_idle,0);
+			removeFromList(&head_run,0);
 		}
 	}
 	else if(Pmin[i]<=p_available) {
@@ -229,12 +229,13 @@ void CRR_step_rotate()
 		
 		while(idleNode!= NULL)
         {
-            if(Pmax[idleNode->data]<=p_available){
+            if((Pmax[idleNode->data]-Pmin[idleNode->data])<=p_available){
 				//set_freq(dev_list_acc[idleNode->data],Fmax[idleNode->data]);
 				set_freq(&espdevs[idleNode->data],Fmax[idleNode->data]);
+				// Moving from Idle queue to Run queue
 				addLast(&head_run,idleNode->data);
 				removeFromList(&head_idle,idleNode->data);
-				p_available=p_available-Pmax[idleNode->data];
+				p_available=p_available-Pmax[idleNode->data] + Pmin[idleNode->data];
 				#ifdef DEBUG
 					printf("Idle->run tile %u new Pav %u\n",idleNode->data,p_available);
 				#endif

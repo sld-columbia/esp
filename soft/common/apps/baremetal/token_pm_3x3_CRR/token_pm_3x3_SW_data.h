@@ -4,8 +4,8 @@
 #define max_power_NVDLA 60
 #define max_power_FFT 20
 #define max_power_VIT 40
-#define min_power_NVDLA 4
-#define min_power_FFT 0
+#define min_power_NVDLA 16
+#define min_power_FFT 1
 #define min_power_VIT 1
 
 //#define NACC 6 //Already define in main .h
