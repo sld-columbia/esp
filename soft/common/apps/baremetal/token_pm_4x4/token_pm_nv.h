@@ -32,8 +32,8 @@
 		typedef char pixel;
 	#endif
 #else
-	#define COLS 48
-	#define ROWS 48
+	#define COLS 16
+	#define ROWS 16
 	typedef char pixel;
 #endif
 

@@ -160,7 +160,7 @@ const unsigned activity_const = 1;
 const unsigned no_activity_const = 0;
 
 const unsigned max_tokens_vc707[N_ACC] = {38, 38, 38, 38, 24, 24, 24, 24, 48, 48, 48, 24, 24};
-const unsigned refresh_rate_min_const = 100;
+const unsigned refresh_rate_min_const = 180;
 const unsigned refresh_rate_max_const = refresh_rate_min_const;
 const unsigned total_tokens = 50;
 const unsigned total_tokens_ini = total_tokens;
@@ -245,16 +245,16 @@ void init_consts()
 		}
 	}*/
 	
-	token_counter_override_vc707[0]=(1<<7) + total_tokens_ini/6;
-	token_counter_override_vc707[1]=(1<<7) + total_tokens_ini/6;
-	token_counter_override_vc707[2]=(1<<7) + total_tokens_ini/6;
-	token_counter_override_vc707[3]=(1<<7) + total_tokens_ini/6;
-	token_counter_override_vc707[4]=(1<<7) + total_tokens_ini/6;
-	token_counter_override_vc707[5]=(1<<7) + total_tokens_ini/6;
-	token_counter_override_vc707[6]=0;
-	token_counter_override_vc707[7]=0;
-	token_counter_override_vc707[8]=0;
-	token_counter_override_vc707[9]=0;
+	token_counter_override_vc707[0]=(1<<7) + total_tokens_ini/10;
+	token_counter_override_vc707[1]=(1<<7) + total_tokens_ini/10;
+	token_counter_override_vc707[2]=(1<<7) + total_tokens_ini/10;
+	token_counter_override_vc707[3]=(1<<7) + total_tokens_ini/10;
+	token_counter_override_vc707[4]=(1<<7) + total_tokens_ini/10;
+	token_counter_override_vc707[5]=(1<<7) + total_tokens_ini/10;
+	token_counter_override_vc707[6]=(1<<7) + total_tokens_ini/10;
+	token_counter_override_vc707[7]=(1<<7) + total_tokens_ini/10;
+	token_counter_override_vc707[8]=(1<<7) + total_tokens_ini/10;
+	token_counter_override_vc707[9]=(1<<7) + total_tokens_ini/10;
 	token_counter_override_vc707[10]=0;
 	token_counter_override_vc707[11]=0;
 	token_counter_override_vc707[12]=0;
