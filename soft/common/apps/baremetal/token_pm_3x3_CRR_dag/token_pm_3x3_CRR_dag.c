@@ -92,6 +92,9 @@ int main(int argc, char * argv[])
 	if (coherence != ACC_COH_RECALL) 
 		esp_flush(coherence, 1);
 	
+	//Set min freq on NVDLA
+	set_freq(&espdevs[0],Fmin[0]);
+
 	cycles_start = get_counter();
 	is_running[1] = 1;
 	start_tile(1);
