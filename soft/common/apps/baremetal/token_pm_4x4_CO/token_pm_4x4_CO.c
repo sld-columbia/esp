@@ -79,7 +79,7 @@ int main(int argc, char * argv[])
 
 #ifdef TEST_2
 	//Test with activity from all tiles 
-	printf("Test 2: Starting\n");
+	//printf("Test 2: Starting\n");
 	
 	unsigned int sum_max = 0;
 	unsigned int tot_activity = 0;
@@ -207,20 +207,20 @@ int main(int argc, char * argv[])
 	#endif
 
 
-	printf("Accelerators setup done\n");
+	//printf("Accelerators setup done\n");
 	// Flush (customize coherence model here)
 	if (coherence != ACC_COH_RECALL)
 		esp_flush(coherence, 1);
 
-	//printf("Start accelerators\n");
+	printf("Start accelerators\n");
 	///////Start accelerators//////
 
 	for (i=0; i<N_ACC; i++)
 	{
 		if(i == (N_ACC-1))
     			printf("A\n");
-		iowrite32(dev_list_acc[i], CMD_REG, CMD_MASK_START);
 		start_tile(espdevs, i);
+		iowrite32(dev_list_acc[i], CMD_REG, CMD_MASK_START);
 		tot_activity += 1;
 		#ifdef DEBUG
 			printf("Start tile %d, Num active accelerators %d\n", i, tot_activity);
@@ -244,6 +244,8 @@ int main(int argc, char * argv[])
 			}
 		}
 	}
+	printf("Execution complete\n");
+   	aligned_free(dev_list_acc);
 
 #endif
 

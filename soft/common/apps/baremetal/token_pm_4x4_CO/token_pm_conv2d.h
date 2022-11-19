@@ -102,7 +102,7 @@ const int32_t pool_type = 0;
 #ifdef SHORT
 	const int32_t batch_size = 1;
 #else
-	const int32_t batch_size = 70;
+	const int32_t batch_size = 35;
 #endif
 
 static unsigned in_words_adj;

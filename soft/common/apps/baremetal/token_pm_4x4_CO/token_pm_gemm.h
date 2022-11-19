@@ -85,7 +85,7 @@ const int32_t transpose = 1;
 #ifdef SHORT
 	const int32_t ninputs = 2;
 #else
-	const int32_t ninputs = 40;
+	const int32_t ninputs = 20;
 #endif
 const int32_t d3 = 8;
 const int32_t d2 = 8;

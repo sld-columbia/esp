@@ -75,11 +75,12 @@ unsigned* set_tokens(unsigned sum_max, unsigned tile_id)
 				//printf("Pass2 Index: %d, token float: %f,  token: %d, Max flag: %d, activity: %d\n", max_index, token_has_float[max_index], token_has_int[max_index],max_flag[max_index],activity[max_index]);
 			}
 		}
-		//printf("Remaining tokens: %d\n", remaining_tokens);
 		for (j=0; j<N_ACC; j++)
 		{
 			freq[j] = LUT_DATA[j][token_has_int[j]];
-			//printf("FINAL Index: %d TOKENS: %d, freq: 0x%x, active: %d\n", j, token_has_int[j], freq[j], activity[j]); 
+			#ifdef DEBUG
+				printf("Index: %d TOKENS: %d, freq: 0x%x, active: %d\n", j, token_has_int[j], freq[j], activity[j]); 
+			#endif
 		}
 		//set_freq(&espdevs[tile_id],freq);
 		//write_config1(&espdevs[i],1,0,0,0);
@@ -110,12 +111,14 @@ void start_tile(struct esp_device espdevs[], unsigned tile_id)
 	int i;
 	activity[tile_id] = 1;
 	sum_max += max_tokens[tile_id];
-	write_config1(&espdevs[tile_id],1,0,0,0);
+	//write_config1(&espdevs[tile_id],1,0,0,0);
 	//freq = LUT_DATA[tile_id][token_has_int[tile_id]];
 	unsigned *freq = set_tokens(sum_max, tile_id);
 	for (i=0; i<N_ACC; i++)
 		set_freq(&espdevs[i],freq[i]);
-	//printf("Tile %d addr: 0x%x, frequency is 0x%x\n",tile_id, espdevs[tile_id].addr, freq[tile_id]);
+	#ifdef DEBUG
+		printf("Starting Tile %d addr: 0x%x, frequency is 0x%x\n",tile_id, espdevs[tile_id].addr, freq[tile_id]);
+	#endif
 	//Add to running list
 	
 }
@@ -128,7 +131,7 @@ unsigned CO_step_checkend(unsigned tile_id)
 	
 	if(done[tile_id] && !done_before[tile_id]) 
 	{
-		write_config1(&espdevs[tile_id],0,0,0,0);
+		//write_config1(&espdevs[tile_id],0,0,0,0);
 		done_before[tile_id]=done[tile_id];
 		//set_freq(&espdevs[i],Fmin[i]);
 		//p_available=p_available+Pmax[i];
@@ -150,6 +153,9 @@ void end_tile(struct esp_device espdevs[], unsigned tile_id)
 	unsigned *freq = set_tokens(sum_max, tile_id);
 	for (i=0; i<N_ACC; i++)
 		set_freq(&espdevs[i],freq[i]);
+	#ifdef DEBUG
+		printf("Ending Tile %d addr: 0x%x, frequency is 0x%x\n",tile_id, espdevs[tile_id].addr, freq[tile_id]);
+	#endif
 	//write_config1(&espdevs[i],1,0,0,0);
 	//Add to running list
 }
