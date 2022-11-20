@@ -82,8 +82,11 @@ static unsigned GEMM_DMA_WORD_PER_BEAT(unsigned _st)
 /* <<--params-->> */
 const int32_t gemm_do_relu = 0;
 const int32_t transpose = 1;
-//const int32_t ninputs = 2;
-const int32_t ninputs = 40;
+#ifdef SHORT
+	const int32_t ninputs = 2;
+#else
+	const int32_t ninputs = 20;
+#endif
 const int32_t d3 = 8;
 const int32_t d2 = 8;
 const int32_t d1 = 8;
@@ -150,7 +153,7 @@ static void gemm_probe(struct esp_device **espdevs_gemm)
 	printf("Found %d GEMM instances\n",ndev);
 }
 
-static void gemm_init_buf (gemm_token_t *in, native_t * gold)
+static void gemm_init_buf (gemm_token_t *in)
 {
     int i;
 
@@ -162,7 +165,7 @@ static void gemm_init_buf (gemm_token_t *in, native_t * gold)
     }
 #endif
 
-#include "gemm_gold.h"
+//#include "gemm_gold.h"
 }
 
 
@@ -225,7 +228,8 @@ void setup_gemm(struct esp_device *dev, gemm_token_t *mem_gemm, unsigned **ptabl
     #ifdef DEBUG
    	 printf("Common params: DEVID: 0x%x, Coherence: %u\n", DEVID_REG, coherence);
     #endif
-
+    gemm_init_buf(mem_gemm);
+	
     iowrite32(dev, SELECT_REG, ioread32(dev, DEVID_REG));
     iowrite32(dev, COHERENCE_REG, coherence);
 
