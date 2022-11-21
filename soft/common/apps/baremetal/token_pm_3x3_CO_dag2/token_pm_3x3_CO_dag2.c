@@ -234,6 +234,7 @@ int main(int argc, char * argv[])
 			if (done[3] && done[4]) {
 				is_running_nvdla0 = 1;
 				start_tile(espdevs, 0);
+				write_config1(&espdevs[0], 1, 0, 0, 0);
 				run_nvdla(&espdevs[0], dev_list_acc[0], gold_nvdla, mem_nvdla0, 0, &tot_activity);
 				#ifdef DEBUG
 					printf("Finished nvdla0\n");
@@ -257,9 +258,6 @@ int main(int argc, char * argv[])
 			#endif
 		}
 		
-		if (done[0] && !done_before[0]) {
-		}
-	
 		done_before[5] = done[5];
 		done_before[3] = done[3];
 		done_before[2] = done[2];
