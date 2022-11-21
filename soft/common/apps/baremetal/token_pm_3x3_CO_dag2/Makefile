@@ -1,0 +1,4 @@
+# Copyright (c) 2011-2021 Columbia University, System Level Design Group
+# SPDX-License-Identifier: Apache-2.0
+APPNAME := token_pm_3x3_CO_dag2
+include $(DRIVERS)/common_bare.mk
