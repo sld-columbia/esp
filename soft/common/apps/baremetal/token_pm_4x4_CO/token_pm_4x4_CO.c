@@ -27,6 +27,10 @@ int main(int argc, char * argv[])
     }
 	reset_token_pm(espdevs);
 
+	unsigned int* noc_dco_ptr = (unsigned int *) 0x60091FCC;
+	*noc_dco_ptr = 0x5000D;
+
+
 #ifdef TEST_0
 	//Simply puts the token PM in full bypass mode to test the frequency write commands
     	printf("Test 0: Starting\n");
@@ -217,8 +221,8 @@ int main(int argc, char * argv[])
 
 	for (i=0; i<N_ACC; i++)
 	{
-		if(i == (N_ACC-1))
-    			printf("A\n");
+		//if(i == (N_ACC-1))
+    	//		printf("A\n");
 		start_tile(espdevs, i);
 		iowrite32(dev_list_acc[i], CMD_REG, CMD_MASK_START);
 		tot_activity += 1;

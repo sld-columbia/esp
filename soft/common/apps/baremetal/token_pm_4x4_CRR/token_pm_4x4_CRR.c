@@ -37,6 +37,10 @@ int main(int argc, char * argv[])
 
 	reset_token_pm(espdevs);
 
+	unsigned int* noc_dco_ptr = (unsigned int *) 0x60091FCC;
+	*noc_dco_ptr = 0x5000D;
+
+
 #ifdef TEST_0
 	//Simply puts the token PM in full bypass mode to test the frequency write commands
     printf("Test 0: Starting\n");
@@ -53,7 +57,7 @@ int main(int argc, char * argv[])
 #endif
 
 #ifdef TEST_1
-#define DEBUG 1
+//#define DEBUG 1
 
 //Test with dummy activity. In progress
     printf("Test 1: Starting CRR on 4x4\n");
