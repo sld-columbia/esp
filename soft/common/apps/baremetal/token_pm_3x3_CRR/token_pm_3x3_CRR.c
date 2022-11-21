@@ -35,6 +35,8 @@ int main(int argc, char * argv[])
 	acc_tile_pm_csr_addr[i] = CSR_BASE_ADDR + CSR_TILE_OFFSET * acc_tile_ids[i] + CSR_TOKEN_PM_OFFSET;
 	espdevs[i].addr = acc_tile_pm_csr_addr[i];
     }
+	unsigned int* noc_dco_ptr = (unsigned int *) 0x600903CC;
+	*noc_dco_ptr = 0x5000D;
 
 #ifdef TEST_0
 	//Simply puts the token PM in full bypass mode to test the frequency write commands
