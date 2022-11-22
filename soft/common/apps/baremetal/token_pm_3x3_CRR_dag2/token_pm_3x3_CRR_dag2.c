@@ -218,12 +218,12 @@ int main(int argc, char * argv[])
 			}
 			if (done[3] && done[4]) {
 				is_running[0] = 1;
-				write_config1(&espdevs[0], 1, 0, 0, 0);
+				//write_config1(&espdevs[0], 1, 0, 0, 0);
 				start_tile(0);
-				write_config1(&espdevs[0], 0, 0, 0, 0);
-				set_freq(&espdevs[0],Fmin[0]);
-				p_available=p_available+Pmin[0];
-				removeFromList(&head_idle,0);
+				//write_config1(&espdevs[0], 0, 0, 0, 0);
+				//set_freq(&espdevs[0],Fmin[0]);
+				//p_available=p_available+Pmin[0];
+				//removeFromList(&head_idle,0);
 				done[0] = 1;
 				is_running[0] = 0;
 				#ifdef DEBUG

@@ -121,8 +121,8 @@ void start_tile( unsigned i)
 			write_config1(&espdevs[0], 1, 0, 0, 0);
 			run_nvdla( &espdevs[0], dev_list_acc[0], gold_nvdla, mem_nvdla0, 0);
 			write_config1(&espdevs[0], 0, 0, 0, 0);
-			//set_freq(&espdevs[0],Fmin[0]);
-			p_available=p_available+Pmin[0];
+			set_freq(&espdevs[0],Fmin[0]);
+			p_available=p_available+Pmax[0];
 			removeFromList(&head_run,0);
 		}
 	}

@@ -189,16 +189,16 @@ int main(int argc, char * argv[])
 		}
 		if ((done[2] && !done_before[2]) || (done[5] && !done_before[5])) {
 			if (done[2] && !done_before[2]) {
-				end_tile(espdevs, 2);
-				tot_activity -= 1;
+				//end_tile(espdevs, 2);
+				//tot_activity -= 1;
 				is_running_viterbi0 = 0;
 				#ifdef DEBUG
 					printf("End tile viterbi0, Num active accelerators %d\n", tot_activity);
 				#endif
 			}
 			if (done[5] && !done_before[5]) {
-				end_tile(espdevs, 5);
-				tot_activity -= 1;
+				//end_tile(espdevs, 5);
+				//tot_activity -= 1;
 				is_running_fft2 = 0;
 				#ifdef DEBUG
 					printf("End tile fft2, Num active accelerators %d\n", tot_activity);
@@ -216,8 +216,8 @@ int main(int argc, char * argv[])
 		}
 		if ((done[5] && !done_before[5]) || (done[4] && !done_before[4])) {
 			if (done[4] && !done_before[4]) {
-				end_tile(espdevs, 4);
-				tot_activity -= 1;
+				//end_tile(espdevs, 4);
+				//tot_activity -= 1;
 				is_running_viterbi1 = 0;
 				#ifdef DEBUG
 					printf("End tile viterbi1, Num active accelerators %d\n", tot_activity);
@@ -244,8 +244,8 @@ int main(int argc, char * argv[])
 		}
 		
 		if (done[2] && !done_before[2]) {
-			end_tile(espdevs, 2);
-			tot_activity -= 1;
+			//end_tile(espdevs, 2);
+			//tot_activity -= 1;
 			is_running_fft1 = 0;
 			#ifdef DEBUG
 				printf("End tile fft1, Num active accelerators %d\n", tot_activity);
@@ -253,8 +253,8 @@ int main(int argc, char * argv[])
 		}
 		
 		if (done[1] && !done_before[1]) {
-			end_tile(espdevs, 1);
-			tot_activity -= 1;
+			//end_tile(espdevs, 1);
+			//tot_activity -= 1;
 			is_running_fft0 = 0;
 			#ifdef DEBUG
 				printf("End tile fft0, Num active accelerators %d\n", tot_activity);
@@ -268,6 +268,11 @@ int main(int argc, char * argv[])
 		done_before[2] = done[2];
 		done_before[1] = done[1];
 	}
+
+	//Fallback option - to indicate end of program
+	write_config1(&espdevs[0], 1, 0, 0, 0);
+	write_config1(&espdevs[0], 0, 0, 0, 0);
+
 	aligned_free(dev_list_acc);
 	printf("Execution complete\n");
 	return 0;

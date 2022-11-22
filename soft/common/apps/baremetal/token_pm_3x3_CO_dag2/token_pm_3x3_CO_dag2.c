@@ -181,8 +181,8 @@ int main(int argc, char * argv[])
 			}
 		}
 		if ((done[2] && !done_before[2])) {
-			end_tile(espdevs, 2);
-			tot_activity -= 1;
+			//end_tile(espdevs, 2);
+			//tot_activity -= 1;
 			is_running_viterbi0 = 0;
 			#ifdef DEBUG
 				printf("End tile viterbi0, Num active accelerators %d\n", tot_activity);
@@ -197,16 +197,16 @@ int main(int argc, char * argv[])
 		}
 		if ((done[3] && !done_before[3]) || (done[5] && !done_before[5])) {
 			if (done[3] && !done_before[3]) {
-				end_tile(espdevs, 3);
-				tot_activity -= 1;
+				//end_tile(espdevs, 3);
+				//tot_activity -= 1;
 				is_running_fft1 = 0;
 				#ifdef DEBUG
 					printf("End tile fft1, Num active accelerators %d\n", tot_activity);
 				#endif
 			}
 			if (done[5] && !done_before[5]) {
-				end_tile(espdevs, 5);
-				tot_activity -= 1;
+				//end_tile(espdevs, 5);
+				//tot_activity -= 1;
 				is_running_fft2 = 0;
 				#ifdef DEBUG
 					printf("End tile fft2, Num active accelerators %d\n", tot_activity);
@@ -224,8 +224,8 @@ int main(int argc, char * argv[])
 		}
 		if ((done[3] && !done_before[3]) || (done[4] && !done_before[4])) {
 			if (done[4] && !done_before[4]) {
-				end_tile(espdevs, 4);
-				tot_activity -= 1;
+				//end_tile(espdevs, 4);
+				//tot_activity -= 1;
 				is_running_viterbi1 = 0;
 				#ifdef DEBUG
 					printf("End tile viterbi1, Num active accelerators %d\n", tot_activity);
@@ -235,6 +235,7 @@ int main(int argc, char * argv[])
 				is_running_nvdla0 = 1;
 				start_tile(espdevs, 0);
 				write_config1(&espdevs[0], 1, 0, 0, 0);
+				tot_activity += 1;
 				run_nvdla(&espdevs[0], dev_list_acc[0], gold_nvdla, mem_nvdla0, 0, &tot_activity);
 				#ifdef DEBUG
 					printf("Finished nvdla0\n");
@@ -243,6 +244,7 @@ int main(int argc, char * argv[])
 				done[0] = 1;
 				end_tile(espdevs, 0);
 				is_running_nvdla0 = 0;
+				tot_activity -= 1;
 				#ifdef DEBUG
 					printf("Started tile nvdla0, Num active accelerators %d\n", tot_activity);
 				#endif
@@ -250,8 +252,8 @@ int main(int argc, char * argv[])
 		}
 		
 		if (done[1] && !done_before[1]) {
-			end_tile(espdevs, 1);
-			tot_activity -= 1;
+			//end_tile(espdevs, 1);
+			//tot_activity -= 1;
 			is_running_fft0 = 0;
 			#ifdef DEBUG
 				printf("End tile fft0, Num active accelerators %d\n", tot_activity);
@@ -265,6 +267,10 @@ int main(int argc, char * argv[])
 		done_before[4] = done[4];
 		done_before[0] = done[0];
 	}
+	//Fallback option - to indicate end of program
+	write_config1(&espdevs[0], 1, 0, 0, 0);
+	write_config1(&espdevs[0], 0, 0, 0, 0);
+
 	aligned_free(dev_list_acc);
 	printf("Execution complete\n");
 	return 0;
