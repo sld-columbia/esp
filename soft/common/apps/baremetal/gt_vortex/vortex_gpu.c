@@ -106,7 +106,6 @@ int main(int argc, char * argv[])
 	struct esp_device *espdevs;
 	struct esp_device *dev;
 	unsigned done;
-	unsigned **ptable = NULL;
 	token_t *mem;
 	int output_golden;
 	unsigned errors = 0;
@@ -164,11 +163,11 @@ int main(int argc, char * argv[])
 		
 		intptr_t mem_top = (intptr_t)mem; 
 	        input_n  =   (token_t*) (mem_top+0x7fff0); //(mem+0x7fff0)
-		input_n_val = 5; 
+		input_n_val = 42; 
 		*input_n = input_n_val; // Assigning input value to memory
 			
 		output_computed = (token_t*)(mem_top+0x7fff4); //(mem+0x7fff4) 	
-	        output_golden = fibonacci(input_n_val); 
+	        output_golden = 267914296; //fibonacci(input_n_val); 
 		printf("**************** Memory Details ****************\n");
 		printf("  memory buffer base-address = %x\n", (intptr_t)(mem));
 		printf(" Last word address: %x \n", (intptr_t)(mem+_fibonacci_bin_len_in_words-1));
@@ -195,6 +194,8 @@ int main(int argc, char * argv[])
 
 			// Pass accelerator-specific configuration parameters
 			/* <<--regs-config-->> */
+			// FIXME: READ BUSY EARLIER
+                        // Wait for completion  
 			
 			// Set memory offset
 		        	
@@ -202,19 +203,20 @@ int main(int argc, char * argv[])
 
                         
 			// Start accelerators
-			printf("  Start...\n");
 
 			// START_VORTEX
 			iowrite32(dev, VX_SOFT_RESET, START_VORTEX);
 
+			printf("  Start...\n");
 			vortex_busy = ioread32(dev, VX_BUSY_INT);
 			vortex_busy &= BIT(0);
 			// Since higher order bits may contain routing headers
-			printf("  Busy Reg Value = %d \n", vortex_busy);
-			// Wait for completion
-			vortex_busy =  ioread32(dev, VX_BUSY_INT);
-                        vortex_busy &= BIT(0);
-			
+			//printf("  Busy Reg Value = %d \n", vortex_busy);
+			// Wait for completion	
+
+			//vortex_busy = ioread32(dev, VX_BUSY_INT);
+                        //vortex_busy &= BIT(0);
+
 			while (vortex_busy==1) {
 		            printf("  Running GPU workload...\n");
 		            vortex_busy = ioread32(dev, VX_BUSY_INT);
@@ -225,16 +227,14 @@ int main(int argc, char * argv[])
 			{	
 				errors+=1;
 			}
-			if(errors){
-			   printf("Completed run with %d mismatches between computed and golden outputs.", errors); 
 			
-			}	
-
-			printf("  Value of %dth fibbonacci after computation in Vortex = %llu \n",input_n_val, *(output_computed));
+			printf("Completed run with %d mismatches between computed and golden outputs.", errors); 	
+		        
+			printf("  Value of %dth fibbonacci in Vortex = %llu \n",input_n_val, *(output_computed));
 			printf("  Done\n");
 		}
-		aligned_free(ptable);
 		aligned_free(mem);
+		aligned_free(output_computed); 
 	}
 	return 0;
 }

@@ -72,13 +72,13 @@ module GT_VORTEX_wrapper #(
    m_axi_awregion,
    m_axi_arqos,
    m_axi_arregion,
-   busy
+   busy_interrupt
    );
 
    ////////////////////////////////////////////////////////////////////////////////
    ///////////////
    // Clock
-    input  wire                         clk;
+    input  wire                                       clk;
     `DEBUG_XILINX input  wire                         reset;
 
    // AXI write request address channel
@@ -129,7 +129,8 @@ module GT_VORTEX_wrapper #(
     `DEBUG_XILINX output wire                         m_axi_rready;
 
     // Status
-    `DEBUG_XILINX output wire                         busy;
+    `DEBUG_XILINX wire 				      busy; 
+    `DEBUG_XILINX output wire                         busy_interrupt;
     output wire [5:0] 		        m_axi_awatop;
    
     // APB for configuration and memory offset 
@@ -138,11 +139,12 @@ module GT_VORTEX_wrapper #(
    input pwrite;
    `DEBUG_XILINX input [31:0] paddr;
    `DEBUG_XILINX input [31:0] pwdata;
-   `DEBUG_XILINX output reg [31:0] prdata;
+   `DEBUG_XILINX output [31:0] prdata;
    output pready;
    output pslverr;
    output wire [3:0]      m_axi_awregion;
    output wire [3:0]      m_axi_arregion;
+   wire busy;
    ////////////////////////////////////////////////////////////////////////////////
    // parameter RESET_DELAY = 1; 
    
@@ -156,7 +158,7 @@ module GT_VORTEX_wrapper #(
    `DEBUG_XILINX reg  vx_started = 1'b0; // Indicates that vortex is started and running for multicycle reset.
    `DEBUG_XILINX reg  vx_reset   = 1'b0; 
    `DEBUG_XILINX wire apb_write = psel & penable & pwrite;
-   `DEBUG_XILINX wire apb_read  = psel & ~pwrite;
+   `DEBUG_XILINX wire apb_read  = psel & penable & ~pwrite;
    `DEBUG_XILINX reg [$clog2(`RESET_DELAY+1)-1:0] vx_reset_ctr;
    `DEBUG_XILINX wire [31:0] m_axi_araddr_raw; 
    `DEBUG_XILINX wire [31:0] m_axi_awaddr_raw;
@@ -165,6 +167,7 @@ module GT_VORTEX_wrapper #(
    // Adding the base address to the memory addresses reserved for Vortex programs
    assign m_axi_araddr = m_axi_araddr_raw + addr; 
    assign m_axi_awaddr = m_axi_awaddr_raw + addr;
+   reg read_apb_data = 0; 
     // Detecting positive edge of reset
    //`DEBUG_XILINX reg   reset_dly, reset_pe;                          
    //always @ (posedge clk) begin
@@ -182,8 +185,23 @@ module GT_VORTEX_wrapper #(
 	  .CE(vx_started),
 	  .I(clk)
   	);
+// logic for busy_interrupt
+/*wire fall_edge_sig_busy;
+reg level_sig_busy_ff;
+wire level_sig_b = busy;
 
-   always @(posedge clk) begin
+always @(posedge clk) begin
+  if(!reset)
+    level_sig_busy_ff <= 1'b0;
+  else
+    level_sig_busy_ff    <= level_sig_b;
+end
+
+assign fall_edge_sig_busy = (~level_sig_b) & level_sig_busy_ff;
+*/
+
+assign busy_interrupt = busy & vx_started;
+always @(posedge clk) begin
       if (!reset) begin
          addr           <= 32'b0; // reset initial value 
          vx_reset_soft  <= 1'b0;  // Software reset to start Vortex 
@@ -198,18 +216,15 @@ module GT_VORTEX_wrapper #(
      end // !reset
    end // always 
    
-   always @(*) begin
-	if(!reset)
-	       prdata =0; 
-	else if(apb_read) begin 
-          case (paddr[7:0])
-            8'h58 : prdata[0] = busy; // Interrupt Read only
-            8'h54 : prdata[0] = vx_reset_soft; 
-            8'h50 : prdata    = addr; 
-	    default: prdata[0] = 0;	    
+   always @(addr or vx_reset_soft or busy) begin
+          case (paddr[7:0]) 
+            8'h50 :  read_apb_data   = addr; 
+	    8'h54 :  read_apb_data   = {31'b0, vx_reset_soft}; 
+            8'h58 :  read_apb_data   = {31'b0, busy}; // Interrupt Read only
+	    default: read_apb_data   = 32'b0;	    
           endcase
-        end // read
-   end //always
+   end //always comb for apb reads
+   assign prdata = read_apb_data; 
    
    always @(posedge clk) begin
      
