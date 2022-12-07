@@ -506,7 +506,7 @@ begin
   ahb0 : ahbctrl                        -- AHB arbiter/multiplexer
     generic map (defmast => CFG_DEFMST, split => CFG_SPLIT,
                  rrobin  => CFG_RROBIN, ioaddr => CFG_AHBIO, fpnpen => CFG_FPNPEN,
-                 nahbm   => CFG_GRETH + CFG_DSU_ETH + 2, nahbs => maxahbs,
+                 nahbm   => CFG_GRETH + CFG_DSU_ETH  + CFG_IOLINK_EN + 2, nahbs => maxahbs,
                  cfgmask => 0)
     port map (rst, clk, ahbmi, ahbmo, ahbsi, ctrl_ahbso);
 
@@ -527,7 +527,7 @@ begin
   -- Drive unused bus ports
   -----------------------------------------------------------------------------
 
-  nam0 : for i in (CFG_GRETH + CFG_DSU_ETH + 2) to NAHBMST-1 generate
+  nam0 : for i in (CFG_GRETH + CFG_DSU_ETH + CFG_IOLINK_EN + 2) to NAHBMST-1 generate
     ahbmo(i) <= ahbm_none;
   end generate;
 
@@ -547,7 +547,7 @@ begin
   -----------------------------------------------------------------------------
   esp_init_1 : esp_init
     generic map (
-      hindex => CFG_GRETH + CFG_DSU_ETH + 1,
+      hindex => CFG_GRETH + CFG_DSU_ETH + CFG_IOLINK_EN + 1,
       sequence => esp_init_sequence,
       srst_sequence => esp_srst_sequence)
     port map (
@@ -557,7 +557,7 @@ begin
       srst   => srst,
       init_done  => init_done,
       ahbmi  => ahbmi,
-      ahbmo  => ahbmo(CFG_GRETH + CFG_DSU_ETH + 1));
+      ahbmo  => ahbmo(CFG_GRETH + CFG_DSU_ETH + CFG_IOLINK_EN + 1));
 
   -----------------------------------------------------------------------------
   -- ETH0 and EDCL Master
@@ -578,18 +578,11 @@ begin
     edcl_gen : if CFG_DSU_ETH = 1 generate
       ahbmo(1) <= edcl_ahbmo;
     end generate edcl_gen;
-
-    iolink_data_out   <= (others => '0');
-    iolink_valid_out  <= '0';
-    iolink_data_oen   <= '0';
-    iolink_clk_out    <= '0';
-    iolink_credit_out <= '0';
-
   end generate onchip_ethernet;
 
   no_onchip_ethernet : if CFG_ETH_EN = 0 and CFG_GRETH = 1 generate
     ahbmo(0)       <= eth0_ahbmo;
-    ahbmo(1)       <= edcl_ahbmo_int;
+    ahbmo(1)       <= edcl_ahbmo;
     eth0_ahbmi_int <= ahbmi;
   end generate no_onchip_ethernet;
 
@@ -604,10 +597,10 @@ begin
     noc_apbo(15) <= apb_none;
   end generate no_sgmii_gen;
 
-  iolink_en: if CFG_ETH_EN = 0 generate
+  iolink_en: if CFG_IOLINK_EN = 1 generate
     iolink2ahbm_i : iolink2ahbm
       generic map (
-        hindex        => 1, -- TODO define constant
+        hindex        => CFG_GRETH + CFG_DSU_ETH,
         io_bitwidth   => CFG_IOLINK_BITS,
         word_bitwidth => ARCH_BITS,
         little_end    => 0)
@@ -623,16 +616,24 @@ begin
         io_valid_out  => iolink_valid_out,
         io_credit_in  => iolink_credit_in,
         io_credit_out => iolink_credit_out,
-        ahbmi         => eth0_ahbmi_int,
-        ahbmo         => edcl_ahbmo_int);
+        ahbmi         => ahbmi,
+        ahbmo         => ahbmo(CFG_GRETH + CFG_DSU_ETH));
   end generate iolink_en;
+
+  no_iolink_en: if CFG_IOLINK_EN = 0 generate
+    iolink_data_out   <= (others => '0');
+    iolink_valid_out  <= '0';
+    iolink_data_oen   <= '0';
+    iolink_clk_out    <= '0';
+    iolink_credit_out <= '0';
+  end generate no_iolink_en;
 
   -----------------------------------------------------------------------------
   -- Memory Controller Slave (BOOTROM is implemented as RAM for development)
   -----------------------------------------------------------------------------
 
 -- pragma translate_off
-  bootram_model_gen: if SIMULATION = true generate
+  bootram_model_gen: if SIMULATION = true and CFG_IOLINK_EN = 0 generate
     ahbram_1 : ahbram_sim
       generic map (
         hindex   => ahbrom_hindex,
@@ -653,7 +654,7 @@ begin
   end generate bootram_model_gen;
 -- pragma translate_on
 
-  bootram_gen: if SIMULATION = false generate
+  bootram_gen: if SIMULATION = false or CFG_IOLINK_EN = 1 generate
     ahbram_2: ahbram
       generic map (
         hindex   => ahbrom_hindex,
@@ -1194,7 +1195,7 @@ begin
   noc2ahbmst_1 : noc2ahbmst
     generic map (
       tech        => CFG_FABTECH,
-      hindex      => CFG_GRETH + CFG_DSU_ETH,
+      hindex      => CFG_GRETH + CFG_DSU_ETH + CFG_IOLINK_EN,
       axitran     => GLOB_CPU_AXI,
       little_end  => GLOB_CPU_RISCV,
       narrow_noc  => 1,
@@ -1207,7 +1208,7 @@ begin
       local_y                   => this_local_y,
       local_x                   => this_local_x,
       ahbmi                     => ahbmi,
-      ahbmo                     => ahbmo(CFG_GRETH + CFG_DSU_ETH),
+      ahbmo                     => ahbmo(CFG_GRETH + CFG_DSU_ETH + CFG_IOLINK_EN),
       coherence_req_rdreq       => ahbm_rcv_rdreq,
       coherence_req_data_out    => ahbm_rcv_data_out,
       coherence_req_empty       => ahbm_rcv_empty,

@@ -286,6 +286,7 @@ class soc_config:
       self.ndomain = 1
     self.has_svga = soc.svga_en.get()
     self.has_eth = soc.eth_en.get()
+    self.has_iolink = soc.iolink_en.get()
     self.has_sgmii = soc.HAS_SGMII
     self.has_jtag = soc.jtag_en.get()
     if self.coherence:
@@ -535,6 +536,8 @@ def print_constants(fp, soc, esp_config):
   fp.write("  constant CFG_ETH_FIFO : integer := 8;\n")
   fp.write("  constant CFG_GRETH_FT : integer := 0;\n")
   fp.write("  constant CFG_GRETH_EDCLFT : integer := 0;\n\n")
+  fp.write("  ------ Custom IO Link\n")
+  fp.write("  constant CFG_IOLINK_EN : integer := " + str(soc.iolink_en.get()) + ";\n\n")
 
   #
   fp.write("  ------ SVGA\n")

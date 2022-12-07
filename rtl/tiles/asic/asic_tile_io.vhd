@@ -767,13 +767,6 @@ begin
     emdc     <= etho.mdc;
     emdio_o  <= etho.mdio_o;
     emdio_oe <= etho.mdio_oe;
-
-    -- I/O Link
-    iolink_data_oen   <= '0';
-    iolink_data_out   <= (others => '0');
-    iolink_valid_out  <= '0';
-    iolink_clk_out    <= '0';
-    iolink_credit_out <= '0';
   end generate onchip_ethernet;
 
   no_onchip_ethernet: if CFG_ETH_EN = 0 generate
@@ -790,15 +783,23 @@ begin
     emdc <= '0';
     emdio_o <= '0';
     emdio_oe <= '0';
+  end generate no_onchip_ethernet;
 
-    -- I/O Link
+  iolink : if CFG_IOLINK_EN = 1 generate
     iolink_data_oen   <= iolink_data_oen_int;
     iolink_data_out   <= iolink_data_out_int;
     iolink_valid_out  <= iolink_valid_out_int;
     iolink_clk_out    <= iolink_clk_out_int;
     iolink_credit_out <= iolink_credit_out_int;
-  end generate no_onchip_ethernet;
+  end generate iolink;
 
+  no_iolink : if CFG_IOLINK_EN = 0 generate
+    iolink_data_oen   <= '0';
+    iolink_data_out   <= (others => '0');
+    iolink_valid_out  <= '0';
+    iolink_clk_out    <= '0';
+    iolink_credit_out <= '0';
+  end generate no_iolink;
   -----------------------------------------------------------------------------
   -- DVI (not available for GF12 for now)
   -----------------------------------------------------------------------------
