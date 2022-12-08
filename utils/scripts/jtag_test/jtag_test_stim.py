@@ -23,16 +23,10 @@ for i in range(5):
     sys.exit(1)
   line = fp.readline()
 
-of = []
-for i in range(0,6):
-  of.append(open("stim" + str(i + 1) + ".txt", 'w'))
+of = open("stim.txt",'w')
 
 i =0
 while line:
-  # i = i + 1
-  # if i == 5:
-  #   break
-  # print(line)
 
   line.strip()
   tok = line.split()
@@ -41,15 +35,20 @@ while line:
 
     if tok[offset + 1] == "0" and tok[offset + 2] == "0":
       # Valid input port with no stop -> Read and check operation (tile to NoC)
-      of[noc].write(tok[offset] + "0\n")
+      if noc==4 : #noc=5
+        of.write("00000000"+tok[offset] + "0" + str(noc+1) +"\n")
+      else:
+        of.write(tok[offset] + "0" + str(noc+1) +"\n")
     if tok[offset + 4] == "0" and tok[offset + 5] == "0":
       # Valid output port with no stop -> Write operation (NoC to tile)
-      of[noc].write(tok[offset + 3] + "1\n")
+      if noc==4 :
+        of.write("00000000"+tok[offset + 3] + "1" + str(noc+1) +"\n")
+      else:
+        of.write(tok[offset + 3] + "1" + str(noc+1) +"\n")
 
   line = fp.readline()
 
 
 fp.close()
 
-for i in range(0,6):
-  of[i].close()
+of.close()

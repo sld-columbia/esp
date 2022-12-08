@@ -346,7 +346,7 @@ begin
 
   no_dco_gen: if this_has_dco = 0 generate
     pllclk              <= '0';
-    dco_clk_int         <= '0';
+    dco_clk_int         <= refclk;
     dco_clk_lock        <= '1';
     dco_clk_div2_int    <= '0';
     dco_clk_div2_90_int <= '0';

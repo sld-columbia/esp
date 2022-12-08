@@ -86,14 +86,13 @@ class Components():
 
 #board configuration
 class SoC_Config():
-  HAS_FPU = "0"
-  HAS_JTAG = False
+  LEON3_HAS_FPU = "0"
   HAS_ETH = False
   HAS_SG = False
   HAS_SGMII = True
-  HAS_SVGA = False
   IP_ADDR = ""
   TECH = "virtex7"
+  FPGA_BOARD = "xilinx-vc707-xc7vx485t"
   DMA_WIDTH = 32
 
   def changed(self, *args): 
@@ -202,6 +201,31 @@ class SoC_Config():
     line = fp.readline()
     if line.find("CONFIG_PRC_EN = y") != -1:
         self.prc.set(1)
+    # JTAG (test)
+    line = fp.readline()
+    if line.find("CONFIG_JTAG_EN = y") != -1:
+      self.jtag_en.set(1)
+    else:
+      self.jtag_en.set(0)
+    # Ethernet
+    line = fp.readline()
+    if line.find("CONFIG_ETH_EN = y") != -1:
+      self.eth_en.set(1)
+    else:
+      self.eth_en.set(0)
+    # SVGA
+    line = fp.readline()
+    if line.find("CONFIG_SVGA_EN = y") != -1:
+      self.svga_en.set(1)
+    else:
+      self.svga_en.set(0)
+    # Debug Link
+    line = fp.readline()
+    item = line.split()
+    self.dsu_ip = item[2]
+    line = fp.readline()
+    item = line.split()
+    self.dsu_eth = item[2]
     # Monitors
     line = fp.readline()
     if line.find("CONFIG_MON_DDR = y") != -1:
@@ -231,6 +255,7 @@ class SoC_Config():
     for y in range(0, self.noc.rows):
       for x in range(0, self.noc.cols):
         line = fp.readline().replace("\n","")
+        print(line)
         tile = self.noc.topology[y][x]
         tokens = line.split(' ')
         if len(tokens) > 1:
@@ -268,7 +293,7 @@ class SoC_Config():
             tile.energy_values.vf_points[vf].energy = float(tokens[3 + vf * 3 + 2])
     return 0
 
-  def write_config(self):
+  def write_config(self, dsu_ip, dsu_eth):
     print("Writing backup configuration: \".esp_config.bak\"")
     fp = open('.esp_config.bak', 'w')
     has_dvfs = False;
@@ -300,6 +325,23 @@ class SoC_Config():
         fp.write("CONFIG_PRC_EN = y\n")
     else:
         fp.write("#CONFIG_PRC_EN is not set\n")
+    if self.jtag_en.get() == 1:
+      fp.write("CONFIG_JTAG_EN = y\n")
+    else:
+      fp.write("#CONFIG_JTAG_EN is not set\n")
+    if self.eth_en.get() == 1:
+      fp.write("CONFIG_ETH_EN = y\n")
+    else:
+      fp.write("#CONFIG_ETH_EN is not set\n")
+    if self.svga_en.get() == 1:
+      fp.write("CONFIG_SVGA_EN = y\n")
+    else:
+      fp.write("#CONFIG_SVGA_EN is not set\n")
+    if len(dsu_ip) == 8 and len(dsu_eth) == 12:
+      self.dsu_ip = dsu_ip
+      self.dsu_eth = dsu_eth
+    fp.write("CONGIG_DSU_IP = " + self.dsu_ip + "\n")
+    fp.write("CONGIG_DSU_ETH = " + self.dsu_eth + "\n")
     if self.noc.monitor_ddr.get() == 1:
       fp.write("CONFIG_MON_DDR = y\n")
     else:
@@ -337,6 +379,7 @@ class SoC_Config():
       for x in range(0, self.noc.cols):
         tile = self.noc.topology[y][x]
         selection = tile.ip_type.get()
+        is_cpu = False
         is_accelerator = False
         is_slm = False
         fp.write("TILE_" + str(y) + "_" + str(x) + " = ")
@@ -344,6 +387,7 @@ class SoC_Config():
         fp.write(str(i) + " ")
         # Tile type
         if self.IPs.PROCESSORS.count(selection):
+          is_cpu = True
           fp.write("cpu")
         elif self.IPs.MISC.count(selection):
           fp.write("misc")
@@ -406,62 +450,68 @@ class SoC_Config():
     return line
 
   def set_IP(self):
-    self.IP_ADDR = str(int('0x' + self.IPM[:2], 16)) + "." + str(int('0x' + self.IPM[2:], 16)) + "." + str(int('0x' + self.IPL[:2], 16)) + "." + str(int('0x' + self.IPL[2:], 16))
+    self.IP_ADDR = str(int('0x' + self.dsu_ip[:2], 16)) + "." + str(int('0x' + self.dsu_ip[2:4], 16)) + "." + str(int('0x' + self.dsu_ip[4:6], 16)) + "." + str(int('0x' + self.dsu_ip[6:], 16))
 
-  def __init__(self, DMA_WIDTH, TECH, LINUX_MAC, LEON3_STACK, temporary):
+  def __init__(self, DMA_WIDTH, TECH, LINUX_MAC, LEON3_STACK, FPGA_BOARD, EMU_TECH, EMU_FREQ, temporary):
     self.DMA_WIDTH = DMA_WIDTH
     self.TECH = TECH
     self.LINUX_MAC = LINUX_MAC
     self.LEON3_STACK = LEON3_STACK
-    #define whether SGMII has to be used or not: it is not used for PROFPGA boards
-    with open("../../Makefile") as fp:
-      for line in fp:
-        if line.find("BOARD") != -1 and line.find("profpga") != -1:
-          self.HAS_SGMII = False
-    IPM = ""
-    IPL = ""
-    #determine other parameters
-    with open("../grlib/grlib_config.vhd") as fp:
-      for line in fp:
-        #check if the CPU is configured to used the CPU
-        if line.find("CFG_FPU : integer") != -1:
-          self.HAS_FPU = self.check_cfg(line, "integer := ", " ")
-        #check if the SoC uses JTAG
-        if line.find("CFG_AHB_JTAG") != -1:
-          self.HAS_JTAG = int(self.check_cfg(line, "integer := ", ";"))
-        #check if the SoC uses ETH
-        if line.find("CFG_GRETH ") != -1:
-          self.HAS_ETH = int(self.check_cfg(line, "integer := ", ";"))
-        #check if the SoC has ethernet
-        if line.find("CFG_ETH_IPM") != -1:
-          self.IPM = self.check_cfg(line, "16#", "#")
-        if line.find("CFG_ETH_IPL") != -1:
-          self.IPL = self.check_cfg(line, "16#", "#")
-        #check if the SoC uses SVGA
-        if line.find("CFG_SVGA_ENABLE ") != -1:
-          self.HAS_SVGA = int(self.check_cfg(line, "integer := ", ";"))
-    #post process configuration
-    self.set_IP()
+    self.FPGA_BOARD = FPGA_BOARD
+    self.ESP_EMU_TECH = EMU_TECH
+    self.ESP_EMU_FREQ = EMU_FREQ
     #0 = Bigphysical area ; 1 = Scatter/Gather
     self.transfers = IntVar()
+    # CPU architecture
+    self.CPU_ARCH = StringVar()
+    # Cache hierarchy
+    self.cache_en = IntVar()
+    self.cache_rtl = IntVar()
+    self.cache_spandex = IntVar()
+    self.cache_impl = StringVar()
     self.l2_sets = IntVar()
     self.l2_ways = IntVar()
     self.llc_sets = IntVar()
     self.llc_ways = IntVar()
     self.acc_l2_sets = IntVar()
     self.acc_l2_ways = IntVar()
+    # SLM
     self.slm_kbytes = IntVar()
-    # CPU architecture
-    self.CPU_ARCH = StringVar()
-    self.cache_en = IntVar()
-    self.cache_rtl = IntVar()
-    self.cache_spandex = IntVar()
-    self.cache_impl = StringVar()
     # Partial-reconfiguration ctrl
     self.prc = IntVar() 
     # Read configuration
+    # Peripherals
+    self.jtag_en = IntVar()
+    self.eth_en = IntVar()
+    self.svga_en = IntVar()
+    # Debug Link
+    self.dsu_ip = ""
+    self.dsu_eth = ""
+
+    # Define whether SGMII has to be used or not: it is not used for ProFPGA boards
+    if self.FPGA_BOARD.find("profpga") != -1:
+      self.HAS_SGMII = False
+
+    # Define maximum number of memory tiles
+    if self.FPGA_BOARD.find("xilinx") != -1:
+      self.nmem_max = 1
+    elif self.FPGA_BOARD == "profpga-xc7v2000t":
+      self.nmem_max = 2
+    else:
+      self.nmem_max = 4
+
+    # Read GRLIB configurations
+    with open("../grlib/grlib_config.vhd") as fp:
+      for line in fp:
+        # Check if Leon3 is configured to use the FPU
+        if line.find("CFG_FPU : integer") != -1:
+          self.LEON3_HAS_FPU = self.check_cfg(line, "integer := ", " ")
+
+    # Read ESP configuration
     self.noc = ncfg.NoC()
     self.read_config(temporary)
-    # Discover compoenets
+    self.set_IP()
+
+    # Discover components
     self.IPs = Components(self.TECH, self.DMA_WIDTH, self.CPU_ARCH.get())
     self.update_list_of_ips()

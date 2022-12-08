@@ -10,6 +10,11 @@ CONFIG_CPU_CACHES = 512 4 1024 16
 CONFIG_ACC_CACHES = 512 4
 CONFIG_SLM_KBYTES = 256
 #CONFIG_PRC_EN is not set
+#CONFIG_JTAG_EN is not set
+CONFIG_ETH_EN = y
+CONFIG_SVGA_EN = y
+CONFIG_DSU_IP = C0A8010A
+CONFIG_DSU_ETH = A6A7A0F80440
 #CONFIG_MON_DDR is not set
 #CONFIG_MON_MEM is not set
 #CONFIG_MON_INJ is not set
@@ -20,11 +25,16 @@ CONFIG_SLM_KBYTES = 256
 #CONFIG_MON_DVFS is not set
 TILE_0_0 = 0 mem mem 0 0 0
 TILE_0_1 = 1 cpu cpu 0 0 0
-TILE_1_0 = 2 misc IO 0 0 0
-TILE_1_1 = 3 empty empty 0 0 0
+TILE_1_0 = 2 empty empty 0 0 0
+TILE_1_1 = 3 misc IO 0 0 0
 #CONFIG_HAS_DVFS is not set
 CONFIG_VF_POINTS = 4
 POWER_0_0 = mem 0 0 0 0 0 0 0 0 0 0 0 0 
 POWER_0_1 = cpu 0 0 0 0 0 0 0 0 0 0 0 0 
+<<<<<<< HEAD
 POWER_1_0 = IO 0 0 0 0 0 0 0 0 0 0 0 0 
 POWER_1_1 = empty 0 0 0 0 0 0 0 0 0 0 0 0
+=======
+POWER_1_0 = empty 0 0 0 0 0 0 0 0 0 0 0 0 
+POWER_1_1 = IO 0 0 0 0 0 0 0 0 0 0 0 0 
+>>>>>>> dev

@@ -28,7 +28,7 @@ entity intack2noc is
     rst : in std_ulogic;
     clk : in std_ulogic;
 
-    cpu_id  : in integer;
+    cpu_id  : in integer range 0 to CFG_NCPU_TILE - 1;
     local_y : in local_yx;
     local_x : in local_yx;
 

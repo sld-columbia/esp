@@ -2,20 +2,34 @@
 # SPDX-License-Identifier: Apache-2.0
 
 ### Constaints ###
-ifneq ($(filter $(TECHLIB),$(FPGALIBS)),)
-XDC   = $(ESP_ROOT)/constraints/$(BOARD)/$(BOARD).xdc
-XDC  += $(ESP_ROOT)/constraints/$(BOARD)/$(BOARD)-mig-pins.xdc
-XDC  += $(ESP_ROOT)/constraints/$(BOARD)/$(BOARD)-mig-constraints.xdc
-ifneq ($(findstring profpga, $(BOARD)),)
-XDC  += $(ESP_ROOT)/constraints/$(BOARD)/$(BOARD)-mmi64.xdc
+ifneq ("$(OVR_TECHLIB)","")
+XDC_SUFFIX = -fpga-proxy
+XDC_EMU_SUFFIX = -chip-emu
+
+XDC_EMU += $(ESP_ROOT)/constraints/$(BOARD)/$(BOARD)$(XDC_EMU_SUFFIX).xdc
+XDC_EMU += $(ESP_ROOT)/constraints/$(BOARD)/$(BOARD)$(XDC_EMU_SUFFIX)-eth-pins.xdc
+XDC_EMU += $(ESP_ROOT)/constraints/$(BOARD)/$(BOARD)$(XDC_EMU_SUFFIX)-eth-constraints.xdc
+XDC_EMU += $(ESP_ROOT)/constraints/$(BOARD)/$(BOARD)$(XDC_EMU_SUFFIX)-cable-pins.xdc
+else
+XDC_SUFFIX =
 endif
-XDC  += $(ESP_ROOT)/constraints/$(BOARD)/$(BOARD)-eth-pins.xdc
-XDC  += $(ESP_ROOT)/constraints/$(BOARD)/$(BOARD)-dvi-pins.xdc
+
+
+ifneq ($(filter $(TECHLIB),$(FPGALIBS)),)
+XDC   = $(ESP_ROOT)/constraints/$(BOARD)/$(BOARD)$(XDC_SUFFIX).xdc
+XDC  += $(ESP_ROOT)/constraints/$(BOARD)/$(BOARD)$(XDC_SUFFIX)-mig-pins.xdc
+XDC  += $(ESP_ROOT)/constraints/$(BOARD)/$(BOARD)$(XDC_SUFFIX)-mig-constraints.xdc
+ifneq ($(findstring profpga, $(BOARD)),)
+XDC  += $(ESP_ROOT)/constraints/$(BOARD)/$(BOARD)$(XDC_SUFFIX)-mmi64.xdc
+XDC  += $(ESP_ROOT)/constraints/$(BOARD)/$(BOARD)$(XDC_SUFFIX)-cable-pins.xdc
+endif
+XDC  += $(ESP_ROOT)/constraints/$(BOARD)/$(BOARD)$(XDC_SUFFIX)-eth-pins.xdc
+XDC  += $(ESP_ROOT)/constraints/$(BOARD)/$(BOARD)$(XDC_SUFFIX)-dvi-pins.xdc
 ifeq ($(CONFIG_GRETH_ENABLE),y)
-XDC  += $(ESP_ROOT)/constraints/$(BOARD)/$(BOARD)-eth-constraints.xdc
+XDC  += $(ESP_ROOT)/constraints/$(BOARD)/$(BOARD)$(XDC_SUFFIX)-eth-constraints.xdc
 endif
 ifeq ($(CONFIG_SVGA_ENABLE),y)
-XDC  += $(ESP_ROOT)/constraints/$(BOARD)/$(BOARD)-dvi-constraints.xdc
+XDC  += $(ESP_ROOT)/constraints/$(BOARD)/$(BOARD)$(XDC_SUFFIX)-dvi-constraints.xdc
 endif
 ifeq ($(CONFIG_HAS_DVFS),y)
 XDC  += $(ESP_ROOT)/constraints/esp-common/esp-plls.xdc
@@ -67,7 +81,7 @@ endif
 
 
 
-vivado/setup.tcl: vivado $(XDC) $(BOARD_FILES)
+vivado/setup.tcl: vivado $(BOARD_FILES)
 	$(QUIET_INFO)echo "generating project script for Vivado"
 	@$(RM) $@
 	@echo "create_project $(DESIGN) -part ${DEVICE} -force" > $@
@@ -120,21 +134,21 @@ endif
 		echo "unset argv" >> $@; \
 		echo "set argc 0" >> $@; \
 	fi;
-ifeq ($(CONFIG_GRETH_ENABLE),y)
+ifeq ($(CONFIG_ETH_EN),y)
 	@if test -r $(ESP_ROOT)/constraints/$(BOARD)/sgmii.xci; then \
 		echo $(SPACES)"INFO including SGMII IP"; \
 		mkdir -p vivado/sgmii; \
 		cp $(ESP_ROOT)/constraints/$(BOARD)/sgmii.xci ./vivado/sgmii; \
 		echo "set_property target_language verilog [current_project]" >> $@; \
 		echo "import_ip -files ./sgmii/sgmii.xci" >> $@; \
-		echo "generate_target  all [get_ips sgmii] -force " >> $@; \
+		echo "generate_target  all [get_ips sgmii] -force" >> $@; \
 	elif test -r $(ESP_ROOT)/constraints/$(BOARD)/sgmii.tcl; then \
 		echo $(SPACES)"INFO including SGMII IP"; \
 		mkdir -p vivado/sgmii; \
 		cp $(ESP_ROOT)/constraints/$(BOARD)/sgmii.tcl ./vivado/sgmii; \
 		echo "set_property target_language verilog [current_project]" >> $@; \
 		echo "source ./sgmii/sgmii.tcl" >> $@; \
-		echo "generate_target  all [get_ips sgmii] -force " >> $@; \
+		echo "generate_target  all [get_ips sgmii] -force" >> $@; \
 	else \
 		echo $(SPACES)"WARNING: no SGMII IP was found"; \
 	fi;
@@ -157,11 +171,41 @@ endif
 	echo "set_property strategy Congestion_SpreadLogic_high [get_runs impl_1]" >> $@; \
 	fi;
 	@for i in $(XDC); do \
-	  echo "read_xdc $$i" >> $@; \
-	  echo "set_property used_in_synthesis true [get_files $$i]" >> $@; \
-	  echo "set_property used_in_implementation true [get_files $$i]" >> $@; \
+	  if test -e $$i; then \
+	    echo "read_xdc $$i" >> $@; \
+	    echo "set_property used_in_synthesis true [get_files $$i]" >> $@; \
+	    echo "set_property used_in_implementation true [get_files $$i]" >> $@; \
+          fi; \
 	done;
 	@echo "set_property top $(TOP) [current_fileset]" >> $@
+
+
+vivado/setup_emu.tcl: vivado $(BOARD_FILES)
+	$(QUIET_INFO)echo "generating project script for Vivado"
+	@$(RM) $@
+	@echo "create_project $(DESIGN)-chip-emu -part ${DEVICE} -force" > $@
+	@echo "set_property target_language verilog [current_project]" >> $@
+	@echo "set_property include_dirs {$(INCDIR)} [get_filesets {sim_1 sources_1}]" >> $@
+ifeq ("$(CPU_ARCH)","ibex")
+	@echo "set_property verilog_define {XILINX_FPGA=1 WT_DCACHE=1 PRIM_DEFAULT_IMPL=prim_pkg::ImplXilinx} [get_filesets {sim_1 sources_1}]" >> $@
+else
+	@echo "set_property verilog_define {XILINX_FPGA=1 WT_DCACHE=1} [get_filesets {sim_1 sources_1}]" >> $@
+endif
+	@echo "source ./srcs.tcl" >> $@
+ifneq ("$(PROTOBOARD)","")
+	@echo "set_property board_part $(PROTOBOARD) [current_project]"  >> $@
+endif
+	@for i in $(XDC_EMU); do \
+	  if test -e $$i; then \
+	    echo "read_xdc $$i" >> $@; \
+	    echo "set_property used_in_synthesis true [get_files $$i]" >> $@; \
+	    echo "set_property used_in_implementation true [get_files $$i]" >> $@; \
+          fi; \
+	done;
+	@echo "set_property top chip_emu_top [get_filesets {sim_1 sources_1}]" >> $@
+	@echo "update_compile_order -fileset sources_1" >> $@
+	@echo "update_compile_order -fileset sim_1" >> $@
+
 
 vivado/syn.tcl: vivado
 	$(QUIET_INFO)echo "generating synthesis script for Vivado"
@@ -184,6 +228,26 @@ vivado/syn.tcl: vivado
         echo "launch_runs impl_1 -to_step write_bitstream" >> $@; \
         echo "wait_on_run -timeout 60 impl_1" >> $@; \
     fi;
+
+vivado/syn_emu.tcl: vivado
+	$(QUIET_INFO)echo "generating synthesis script for Vivado"
+	@$(RM) $@
+	@echo "open_project $(DESIGN)-chip-emu.xpr" > $@
+	@echo "update_ip_catalog" >> $@
+	@echo "update_compile_order -fileset sources_1" >> $@
+	@echo "reset_run impl_1" >> $@
+	@echo "reset_run synth_1" >> $@
+#	@echo "synth_design -rtl -name rtl_1" >> $@
+#	@echo "synth_design -directive runtimeoptimize -resource_sharing off -keep_equivalent_registers -no_lc -rtl -name rtl_1" >> $@
+#	@echo "synth_design -resource_sharing off -keep_equivalent_registers -no_lc -rtl -name rtl_1" >> $@
+	@echo "launch_runs synth_1 -jobs 12" >> $@
+	@echo "get_ips" >> $@
+	@echo "wait_on_run -timeout 360 synth_1" >> $@
+	@echo "set_msg_config -suppress -id {Drc 23-20}" >> $@
+	@echo "launch_runs impl_1 -jobs 12" >> $@
+	@echo "wait_on_run -timeout 360 impl_1" >> $@
+	@echo "launch_runs impl_1 -to_step write_bitstream" >> $@
+	@echo "wait_on_run -timeout 60 impl_1" >> $@
 
 vivado/program.tcl: vivado
 	$(QUIET_INFO)echo "generating programming script for $(PART)"
@@ -241,12 +305,43 @@ vivado/$(DESIGN): vivado vivado/srcs.tcl vivado/setup.tcl vivado/syn.tcl
 	fi; \
 	cd ../;
 
+vivado/$(DESIGN)-chip-emu: vivado vivado/srcs.tcl vivado/setup_emu.tcl vivado/syn_emu.tcl
+	$(QUIET_INFO)echo "launching Vivado setup script"
+	@cd vivado; \
+	if test -r $(DESIGN)-chip-emu.xpr; then \
+		echo -n $(SPACES)"WARNING: overwrite existing Vivado project \"$(DESIGN)-chip-emu\"? [y|n]"; \
+		while true; do \
+			read -p " " yn; \
+			case $$yn in \
+				[Yy] ) \
+					$(RM) $(DESIGN)-chip-emu; \
+					vivado $(VIVADO_BATCH_OPT) -source setup_emu.tcl | tee ../$(VIVADO_LOGS)/vivado_setup_emu.log; \
+					break;; \
+				[Nn] ) \
+					echo $(SPACES)"INFO aborting $@"; \
+					break;; \
+				* ) echo -n $(SPACES)"INFO Please answer yes or no [y|n].";; \
+			esac; \
+		done; \
+	else \
+		vivado $(VIVADO_BATCH_OPT) -source setup_emu.tcl | tee ../$(VIVADO_LOGS)/vivado_setup_emu.log; \
+	fi; \
+	cd ../;
+
 vivado-setup: check_all_rtl_srcs vivado/$(DESIGN)
+
+vivado-setup-emu: check_all_rtl_srcs vivado/$(DESIGN)-chip-emu
 
 vivado-gui: vivado-setup
 	$(QUIET_RUN)
 	@cd vivado; \
 	vivado $(DESIGN).xpr; \
+	cd ../;
+
+vivado-gui-emu: vivado-setup-emu
+	$(QUIET_RUN)
+	@cd vivado; \
+	vivado $(DESIGN)-chip-emu.xpr; \
 	cd ../;
 
 vivado-syn: vivado-setup
@@ -338,6 +433,19 @@ vivado-syn-dpr-acc: check_all_rtl_srcs vivado/srcs.tcl
     fi;
 
 
+vivado-syn-emu: vivado-setup-emu
+	$(QUIET_INFO)echo "launching Vivado implementation script"
+	@cd vivado; \
+	vivado $(VIVADO_BATCH_OPT) -source syn_emu.tcl | tee ../$(VIVADO_LOGS)/vivado_syn_emu.log; \
+	cd ../;
+	@bit=vivado/$(DESIGN)-chip-emu.runs/impl_1/chip_emu_top.bit; \
+	if test -r $$bit; then \
+		rm -rf chip_emu_top.bit; \
+		ln -s $$bit; \
+	else \
+		echo $(SPACES)"ERROR: bistream not found; synthesis failed"; \
+	fi; \
+
 vivado-update: vivado vivado/syn.tcl
 	$(QUIET_INFO)echo "Updating implementaiton with Vivado"
 	@cd vivado; \
@@ -349,6 +457,23 @@ vivado-update: vivado vivado/syn.tcl
 		bit=vivado/$(DESIGN).runs/impl_1/$(TOP).bit; \
 		if test -r $$bit; then \
 			rm -rf $(TOP).bit; \
+			ln -s $$bit; \
+		else \
+			echo $(SPACES)"ERROR: bistream not found; synthesis failed"; \
+		fi; \
+	fi;
+
+vivado-update-emu: vivado vivado/syn_emu.tcl
+	$(QUIET_INFO)echo "Updating implementaiton with Vivado"
+	@cd vivado; \
+	if ! test -r $(DESIGN)-chip-emu.xpr; then \
+		echo -n $(SPACES)"Error: Vivado project \"$(DESIGN)-chip-emu\" does not exist. Please run 'make vivado-syn' first"; \
+	else \
+		vivado $(VIVADO_BATCH_OPT) -source syn_emu.tcl | tee ../$(VIVADO_LOGS)/vivado_syn_emu.log; \
+		cd ../; \
+		bit=vivado/$(DESIGN)-chip-emu.runs/impl_1/chip_emu_top.bit; \
+		if test -r $$bit; then \
+			rm -rf chip_emu_top.bit; \
 			ln -s $$bit; \
 		else \
 			echo $(SPACES)"ERROR: bistream not found; synthesis failed"; \

@@ -130,7 +130,7 @@ begin  -- rtl
     -- Get routing info
     mem_x := mem_info(0).x;
     mem_y := mem_info(0).y;
-    if mem_num /= 1 then
+    if mem_num > 1 then
       for i in 0 to mem_num - 1 loop
         -- Need to match which memory split is selected
         if ((ahbsi.haddr(31 downto 20) xor conv_std_logic_vector(mem_info(i).haddr, 12))
@@ -422,13 +422,15 @@ begin  -- rtl
         else
           if remote_ahbs_snd_full = '0' then
             hready := '1';
-            remote_ahbs_snd_data_in <= payload_data;
-            remote_ahbs_snd_wrreq <= '1';
-            if selected = '0' or ahbsi.htrans = HTRANS_IDLE then
-              ahbs_next <= idle;
-            elsif sequential = '0' then
-              sample_flits <= '1';
-              ahbs_next <= request_header;
+            if ahbsi.htrans /= HTRANS_BUSY then
+              remote_ahbs_snd_data_in <= payload_data;
+              remote_ahbs_snd_wrreq <= '1';
+              if selected = '0' or ahbsi.htrans = HTRANS_IDLE then
+                ahbs_next <= idle;
+              elsif sequential = '0' then
+                sample_flits <= '1';
+                ahbs_next <= request_header;
+              end if;
             end if;
           end if;
         end if;

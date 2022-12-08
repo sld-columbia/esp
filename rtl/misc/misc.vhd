@@ -76,8 +76,8 @@ package misc is
   port (
     rst    : in  std_ulogic;
     clk    : in  std_ulogic;
-    haddr  : in  integer;
-    hmask  : in  integer;
+    haddr  : in  integer range 0 to 4095;
+    hmask  : in  integer range 0 to 4095;
     ahbsi  : in  ahb_slv_in_type;
     ahbso  : out ahb_slv_out_type);
   end component;

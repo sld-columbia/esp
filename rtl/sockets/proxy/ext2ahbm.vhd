@@ -92,6 +92,7 @@ architecture rtl of ext2ahbm is
     sync_fpga : std_ulogic;
   end record snd_sync_type;
 
+  signal receiving_fsm : std_ulogic;
   signal receiving : rcv_sync_type;
   signal sending : snd_sync_type;
 
@@ -191,6 +192,8 @@ begin  -- architecture rtl
   state_delay: process (clk) is
   begin
     if rising_edge(clk) then  -- rising clock edge
+      receiving.sync_clk <= receiving_fsm;
+
       sending.async     <= sending.sync_clk;
       sending.delay(0)  <= sending.async;
       sending.delay(1)  <= sending.delay(0);
@@ -313,7 +316,7 @@ begin  -- architecture rtl
 
     v := r;
 
-    receiving.sync_clk <= '1';
+    receiving_fsm <= '1';
 
     ext_rcv_rdreq <= '0';
     ext_snd_wrreq <= '0';
@@ -383,22 +386,27 @@ begin  -- architecture rtl
               v.count := r.count - 1;
               -- Read data next time hready is high
               v.state := send_data;
+              -- Change the channel state from receiving to send
+              receiving_fsm <= '0';
             end if;
           end if;
         end if;
 
       when receive_data =>
+        if r.count > 1 then
+          ahbmo.hbusreq <= '1';
+        end if;
         if r.count = 0 then
           -- Release address bus
           ahbmo.htrans <= HTRANS_IDLE;
-          if (granted and ahbmi.hready) = '1' then
+          if ahbmi.hready = '1' then
             -- End of transaction
             v.state := receive_address;
           end if;
         elsif ext_rcv_empty = '0' then
           -- Continue with burst transaction
           ahbmo.htrans <= HTRANS_SEQ;
-          if (granted and ahbmi.hready) = '1' then
+          if ahbmi.hready = '1' then
             -- Data bus acquired
             -- Set data
             v.hwdata := fix_endian(ext_rcv_data_out);
@@ -408,12 +416,6 @@ begin  -- architecture rtl
             v.haddr := r.haddr + default_incr;
             -- Decrement word count
             v.count := r.count - 1;
-            if r.count = 1 then
-              -- Let abritration occur at the next cycle
-              ahbmo.hbusreq <= '0';
-            else
-              ahbmo.hbusreq <= '1';
-            end if;
           end if;
         else
           -- Data not received from chip
@@ -422,7 +424,10 @@ begin  -- architecture rtl
 
 
       when send_data =>
-        receiving.sync_clk <= '0';
+        receiving_fsm <= '0';
+        if r.count > 1 then
+            ahbmo.hbusreq <= '1';
+        end if;
         if r.count = 0 then
           -- Release address bus
           ahbmo.htrans <= HTRANS_IDLE;
@@ -439,6 +444,7 @@ begin  -- architecture rtl
             ext_snd_wrreq   <= '1';
             -- End of transaction
             v.state := receive_address;
+            receiving_fsm <= '1';
           end if;
         elsif (ext_snd_almost_full or ext_snd_full) = '0' then
           ahbmo.htrans <= HTRANS_SEQ;
@@ -457,12 +463,6 @@ begin  -- architecture rtl
             v.haddr := r.haddr + default_incr;
             -- Decrement word count
             v.count := r.count - 1;
-            if r.count = 1 then
-              -- Let abritration occur at the next cycle
-              ahbmo.hbusreq <= '0';
-            else
-              ahbmo.hbusreq <= '1';
-            end if;
           end if;
         else
           -- ext queue is full

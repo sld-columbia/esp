@@ -34,10 +34,13 @@ entity asic_tile_acc is
     this_device        : devid_t              := 0;
     this_irq_type      : integer              := 0;
     this_has_l2        : integer range 0 to 1 := 0;
-    ROUTER_PORTS       : ports_vec            := "11111");
+    HAS_SYNC           : integer range 0 to 1 := 1;
+    ROUTER_PORTS       : ports_vec            := "11111";
+    this_has_dco       : integer range 0 to 1 := 0);
   port (
     rst                : in  std_ulogic;
     sys_clk            : in  std_ulogic;  -- NoC clock
+    sys_clk_lock       : in  std_ulogic;  -- sys_clk_lock
     ext_clk            : in  std_ulogic;  -- backup tile clock
     clk_div            : out std_ulogic;  -- tile clock monitor for testing purposes
     -- Test interface
@@ -132,7 +135,8 @@ architecture rtl of asic_tile_acc is
   signal raw_rstn     : std_ulogic;
   signal dco_clk      : std_ulogic;
   signal dco_rstn     : std_ulogic;
---  signal dco_clk_lock : std_ulogic;
+  signal tile_rst     : std_ulogic;
+  --  signal dco_clk_lock : std_ulogic;
 
   -- Tile parameters
   signal this_local_y : local_yx;
@@ -360,26 +364,28 @@ architecture rtl of asic_tile_acc is
 
 begin
 
---  rst1 : rstgen                         -- reset generator
---    generic map (acthigh => 1, syncin => 0)
---    port map (rst, dco_clk, dco_clk_lock, dco_rstn, raw_rstn);
-
-  raw_rstn <= not rst;
-
   rst_noc : rstgen                         -- reset generator
     generic map (acthigh => 1, syncin => 0)
-    port map (rst, sys_clk, '1', noc_rstn, open);
+    port map (rst, sys_clk, sys_clk_lock, noc_rstn, raw_rstn);
 
   rst_jtag : rstgen                         -- reset generator
     generic map (acthigh => 1, syncin => 0)
     port map (rst, tclk, '1', test_rstn, open);
+
+  has_dco_rst : if this_has_dco = 1 generate
+    tile_rst <= rst;
+  end generate has_dco_rst;
+
+  no_dco_rst : if this_has_dco /= 1 generate
+    tile_rst <= noc_rstn;
+  end generate no_dco_rst;
 
   -----------------------------------------------------------------------------
   -- JTAG for single tile testing / bypass when test_if_en = 0
   -----------------------------------------------------------------------------
   jtag_test_i : jtag_test
     generic map (
-      test_if_en => 1)
+      test_if_en => CFG_JTAG_EN)
     port map (
       rst                 => test_rstn,
       refclk              => dco_clk,
@@ -504,7 +510,7 @@ begin
   sync_noc_set_acc: sync_noc_set
   generic map (
      PORTS    => ROUTER_PORTS,
-     HAS_SYNC => 1 )
+     HAS_SYNC => HAS_SYNC)
    port map (
      clk                => sys_clk,
      clk_tile           => dco_clk,
@@ -610,13 +616,13 @@ begin
       this_device        => this_device,
       this_irq_type      => this_irq_type,
       this_has_l2        => this_has_l2,
-      this_has_dvfs      => 0,          -- no DVFS controller
+      this_has_dvfs      => 0,              -- no DVFS controller
       this_has_pll       => 0,
-      this_has_dco       => 1,          -- use DCO
+      this_has_dco       => this_has_dco, -- use DCO
       this_extra_clk_buf => 0)
     port map (
       raw_rstn           => raw_rstn,
-      tile_rst           => rst,
+      tile_rst           => tile_rst,
       refclk             => ext_clk,
       pllbypass          => ext_clk_sel_default,  --ext_clk_sel,
       pllclk             => clk_div,

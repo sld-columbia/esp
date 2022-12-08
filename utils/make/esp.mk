@@ -3,6 +3,13 @@
 
 ESP_DEFCONFIG ?= $(ESP_ROOT)/socs/defconfig/esp_$(BOARD)_defconfig
 
+EMU_FREQ = $(BASE_FREQ_MHZ)
+ifneq ("$(OVR_TECHLIB)", "")
+EMU_TECH = $(OVR_TECHLIB)
+else
+EMU_TECH = "none"
+endif
+
 $(ESP_CFG_BUILD):
 	$(QUIET_MKDIR)mkdir -p $(ESP_CFG_BUILD)
 
@@ -27,7 +34,7 @@ $(ESP_CFG_BUILD)/socmap.vhd: $(ESP_CFG_BUILD)/.esp_config $(GRLIB_CFG_BUILD)/grl
 	fi; \
 	echo ""; \
 	echo "Generating ESP configuration..."; \
-	LD_LIBRARY_PATH="" xvfb-run -a python3 $(ESP_ROOT)/tools/socgen/esp_creator_batch.py $(NOC_WIDTH) $(TECHLIB) $(LINUX_MAC) $(LEON3_STACK)
+	LD_LIBRARY_PATH="" xvfb-run -a python3 $(ESP_ROOT)/tools/socgen/esp_creator_batch.py $(NOC_WIDTH) $(TECHLIB) $(LINUX_MAC) $(LEON3_STACK) $(BOARD) $(EMU_TECH) $(EMU_FREQ)
 
 $(ESP_CFG_BUILD)/esplink.h: $(ESP_CFG_BUILD)/socmap.vhd
 
@@ -41,13 +48,21 @@ esplink: $(ESP_CFG_BUILD)/esplink.h $(ESPLINK_HDRS) $(ESPLINK_SRCS)
 		-I$(ESP_ROOT)/tools/esplink/src/ -I$(DESIGN_PATH)/$(ESP_CFG_BUILD) \
 		$(ESPLINK_SRCS) -o $@
 
+esplink-fpga-proxy: $(ESP_CFG_BUILD)/socmap.h $(ESPLINK_HDRS) $(ESPLINK_SRCS)
+	$(QUIET_CC) \
+	cd $(ESP_CFG_BUILD); \
+	gcc -O3 -Wall -Werror -fmax-errors=5 \
+		-DESPLINK_IP=\"$(FPGA_PROXY_IP)\" -DPORT=$(FPGA_PROXY_PORT) \
+		-I$(ESP_ROOT)/tools/esplink/src/ -I$(DESIGN_PATH)/$(ESP_CFG_BUILD) \
+		$(ESPLINK_SRCS) -o $@
+
 esp-config: $(ESP_CFG_BUILD)/socmap.vhd
 
 esp-xconfig: $(ESP_CFG_BUILD) $(GRLIB_CFG_BUILD)/grlib_config.vhd
 	@echo ""
 	@echo "Running interactive ESP configuration..."
 	@cd $(ESP_CFG_BUILD); \
-	LD_LIBRARY_PATH="" python3 $(ESP_ROOT)/tools/socgen/esp_creator.py $(NOC_WIDTH) $(TECHLIB) $(LINUX_MAC) $(LEON3_STACK)
+	LD_LIBRARY_PATH="" python3 $(ESP_ROOT)/tools/socgen/esp_creator.py $(NOC_WIDTH) $(TECHLIB) $(LINUX_MAC) $(LEON3_STACK) $(BOARD) $(EMU_TECH) $(EMU_FREQ)
 
 esp-config-clean:
 	$(QUIET_CLEAN)$(RM) \

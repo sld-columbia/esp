@@ -68,9 +68,9 @@ entity esp_acc_dma is
     clk           : in  std_ulogic;
     local_y       : in  local_yx;
     local_x       : in  local_yx;
-    paddr         : in  integer;
-    pmask         : in  integer;
-    pirq          : in  integer;
+    paddr         : in  integer range 0 to 4095;
+    pmask         : in  integer range 0 to 4095;
+    pirq          : in  integer range 0 to NAHBIRQ - 1;
     -- APB interface
     apbi          : in  apb_slv_in_type;
     apbo          : out apb_slv_out_type;
@@ -97,6 +97,7 @@ entity esp_acc_dma is
     bufdout_valid : in  std_ulogic;
     acc_done      : in  std_ulogic;
     flush         : out std_ulogic;
+    acc_flush_done: in  std_ulogic;
     mon_dvfs_in   : in  monitor_dvfs_type;
     --Monitor signals
     mon_dvfs      : out monitor_dvfs_type;
@@ -229,7 +230,7 @@ architecture rtl of esp_acc_dma is
   type dma_fsm is (idle, request_header, request_address, request_length,
                    request_data, reply_header, reply_data, config,
                    send_header, rd_handshake, wr_handshake, wait_req_p2p,
-                   running, reset, wait_for_completion, fully_coherent_request);
+                   running, reset, wait_for_completion, wait_flush_done, fully_coherent_request);
   signal acc_rst_next : std_ulogic;
   signal dma_state, dma_next : dma_fsm;
   signal status : std_logic_vector(31 downto 0);
@@ -663,7 +664,7 @@ begin  -- rtl
                           dma_tran_start, tlb_empty, pending_dma_write,
                           pending_dma_read, coherent_dma_ready, dvfs_transient,
                           size_r, coherence,
-                          p2p_req_rcv_empty, p2p_req_rcv_data_out, p2p_rsp_snd_full)
+                          p2p_req_rcv_empty, p2p_req_rcv_data_out, p2p_rsp_snd_full, acc_flush_done)
     variable payload_data : noc_flit_type;
     variable preamble : noc_preamble_type;
     variable msg : noc_msg_type;
@@ -798,13 +799,18 @@ begin  -- rtl
         elsif bankreg(CMD_REG)(CMD_BIT_LAST downto 0) = zero(CMD_BIT_LAST downto 0) then
           dma_next <= reset;
         elsif pending_acc_done = '1' then
-          status <= (others => '0');
-          status(STATUS_BIT_DONE) <= '1';
-          sample_status <= '1';
-          if coherence = ACC_COH_FULL then
+          if USE_SPANDEX /= 0 and coherence = ACC_COH_FULL then
             flush <= '1';
+            dma_next <= wait_flush_done; 
+          else
+            status <= (others => '0');
+            status(STATUS_BIT_DONE) <= '1';
+            sample_status <= '1';
+            if coherence = ACC_COH_FULL then
+              flush <= '1';
+            end if;
+            dma_next <= wait_for_completion; 
           end if;
-          dma_next <= wait_for_completion;
         elsif rd_request = '1' then
           if scatter_gather = 0 then
             sample_flits <= '1';
@@ -817,6 +823,14 @@ begin  -- rtl
           end if;
           sample_wr_size <= '1';
           dma_next <= wr_handshake;
+        end if;
+
+      when wait_flush_done =>
+        if acc_flush_done = '1' and USE_SPANDEX /= 0 then
+          status <= (others => '0');
+          status(STATUS_BIT_DONE) <= '1';
+          sample_status <= '1';
+          dma_next <= wait_for_completion; 
         end if;
 
       when wait_for_completion =>

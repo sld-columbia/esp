@@ -1,0 +1,24 @@
+#
+# LEON3 configuration written in linux configuration language
+#
+# Written by Jiri Gaisler, Gaisler Research
+#
+# Comments and bug reports to support@gaisler.com
+#
+#
+
+#define_bool CONFIG_MCTRL_RMW y
+define_bool CONFIG_LEON3FT_PRESENT y
+define_bool CONFIG_HAS_SHARED_GRFPU y
+
+mainmenu_name "LEON3MP Design Configuration"
+
+source leon3.in
+
+mainmenu_option next_comment
+comment 'Timers and IRQ control         '
+
+  source irqmp.in
+  source gptimer.in
+
+endmenu

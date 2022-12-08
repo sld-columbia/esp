@@ -692,13 +692,6 @@ fi
 
 ### Generate skeleton for unit testbench
 if [ "$FLOW" == "catapult_hls" ]; then
-    cd $ACC_DIR/hw/inc
-    # accelerator_specs.hpp
-    sed -i "s/\/\* <<--mem-footprint-->> \*\//${memory_footprint}/g" ${LOWER}_specs.hpp
-    sed -i "/\/\* <<--defines-->> \*\//a #define DATA_WIDTH $data_width" ${LOWER}_specs.hpp
-    sed -i "/\/\* <<--defines-->> \*\//a #define PLM_IN_WORD $in_word" ${LOWER}_specs.hpp
-    sed -i "/\/\* <<--defines-->> \*\//a #define PLM_OUT_WORD $out_word" ${LOWER}_specs.hpp
-
     cd $ACC_DIR/hw/tb
     # testbench.hpp
     sed -i "s/\/\* <<--data_out_size-->> \*\//${data_out_size_expr}/g" testbench.hpp

@@ -5,7 +5,7 @@ caches/esp-caches/llc/rtl/llc_interface_defs.sv
 caches/esp-caches/llc/rtl/llc_lookup_way.sv
 caches/esp-caches/llc/rtl/pri_enc_half.sv
 caches/esp-caches/llc/rtl/llc_localmem.sv
-caches/esp-caches/llc/rtl/llc_localmem_gf12.sv
+caches/esp-caches/llc/rtl/llc_localmem_asic.sv
 caches/esp-caches/llc/rtl/llc_update.sv
 caches/esp-caches/llc/rtl/llc_rtl_top.sv
 caches/esp-caches/llc/rtl/pri_enc.sv
@@ -20,7 +20,7 @@ caches/esp-caches/l2/rtl/l2_rtl_top.sv
 caches/esp-caches/l2/rtl/l2_interfaces.sv
 caches/esp-caches/l2/rtl/l2_lookup.sv
 caches/esp-caches/l2/rtl/l2_localmem.sv
-caches/esp-caches/l2/rtl/l2_localmem_gf12.sv
+caches/esp-caches/l2/rtl/l2_localmem_asic.sv
 caches/esp-caches/l2/rtl/l2_regs.sv
 caches/esp-caches/l2/rtl/l2_reqs.sv
 caches/esp-caches/l2/rtl/l2_core.sv

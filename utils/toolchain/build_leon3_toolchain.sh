@@ -260,4 +260,3 @@ echo -n "  export PATH=${LEON}/bin:"; echo '$PATH'
 echo ""
 
 echo "*** Successfully installed LEON toolchain to $TARGET_DIR ***"
-

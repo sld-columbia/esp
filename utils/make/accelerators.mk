@@ -86,14 +86,20 @@ ACC-app-clean    = $(addsuffix -app-clean, $(STRATUSHLS_ACC)) $(addsuffix -app-c
 ACC-baremetal        = $(addsuffix -baremetal, $(STRATUSHLS_ACC)) $(addsuffix -baremetal, $(VIVADOHLS_ACC)) $(addsuffix -baremetal, $(HLS4ML_ACC)) $(addsuffix -baremetal, $(CHISEL_ACC)) $(addsuffix -baremetal, $(CATAPULTHLS_ACC)) $(addsuffix -baremetal, $(RTL_ACC))
 ACC-baremetal-clean  = $(addsuffix -baremetal-clean, $(STRATUSHLS_ACC)) $(addsuffix -baremetal-clean, $(VIVADOHLS_ACC)) $(addsuffix -baremetal-clean, $(HLS4ML_ACC)) $(addsuffix -baremetal-clean, $(CHISEL_ACC)) $(addsuffix -baremetal-clean, $(CATAPULTHLS_ACC)) $(addsuffix -baremetal-clean, $(RTL_ACC))
 
+THIRDPARTY_ACC_PRINT  = $(foreach acc, $(shell ls $(THIRDPARTY_PATH)), $(shell echo $(acc)))
 print-available-acc:
 	$(QUIET_INFO)echo "Available accelerators generated from Stratus HLS: $(STRATUSHLS_ACC)"
+	$(QUIET_INFO)echo "Available accelerators generated from Catapult HLS: $(CATAPULTHLS_ACC)"
 	$(QUIET_INFO)echo "Available accelerators generated from Vivado HLS: $(VIVADOHLS_ACC)"
 	$(QUIET_INFO)echo "Available accelerators generated from hls4ml: $(HLS4ML_ACC)"
 	$(QUIET_INFO)echo "Available accelerators generated from Chisel3: $(CHISEL_ACC)"
 	$(QUIET_INFO)echo "Available accelerators generated from RTL: $(RTL_ACC)"
+<<<<<<< HEAD
 	$(QUIET_INFO)echo "Available third-party accelerators: $(THIRDPARTY_ACC)"
 
+=======
+	$(QUIET_INFO)echo "Available third-party accelerators: $(THIRDPARTY_ACC_PRINT)"
+>>>>>>> 08df2210a4198d98ca3723ebb13b7b5852f976c5
 
 ### Chisel ###
 sbt-run:
@@ -138,7 +144,7 @@ $(THIRDPARTY_ACC): $(BAREMETAL_BIN)
 	$(QUIET_BUILD)
 	@cd $(THIRDPARTY_PATH)/$@; \
 	if ! test -e $(THIRDPARTY_PATH)/$@/out; then \
-		$(MAKE) CROSS_COMPILE_ELF=$(CROSS_COMPILE_ELF) CROSS_COMPILE=$(CROSS_COMPILE_LINUX) ARCH=$(ARCH) KSRC=$(SOFT_BUILD)/linux-build hw; \
+		$(MAKE) TECH_TYPE=$(TECH_TYPE) CROSS_COMPILE_ELF=$(CROSS_COMPILE_ELF) CROSS_COMPILE=$(CROSS_COMPILE_LINUX) ARCH=$(ARCH) KSRC=$(SOFT_BUILD)/linux-build hw; \
 	fi;
 	@cd $(THIRDPARTY_PATH)/$@; \
 	$(MAKE) ESP_ROOT=$(ESP_ROOT) DESIGN_PATH=$(DESIGN_PATH)/$(ESP_CFG_BUILD) CPU_ARCH=$(CPU_ARCH) CROSS_COMPILE_ELF=$(CROSS_COMPILE_ELF) CROSS_COMPILE=$(CROSS_COMPILE_LINUX) ARCH=$(ARCH) KSRC=$(SOFT_BUILD)/linux-build sw;
@@ -345,9 +351,15 @@ $(CATAPULTHLS_ACC-hls): %-hls : %-wdir
 	fi;
 	@echo "$(@:-hls=)" >> $(ESP_ROOT)/tech/$(TECHLIB)/acc/installed.log
 
+<<<<<<< HEAD
 $(CATAPULTHLS_ACC-sim): %-hls : %-wdir
 	$(QUIET_INFO)echo "Running RTL simulation for available implementations of $(@:-hls=)"
 	$(QUIET_MAKE)ACCELERATOR=$(@:-sim=) TECH=$(TECHLIB) ESP_ROOT=$(ESP_ROOT) make -C $(CATAPULTHLS_ACC_PATH)/$(@:-sim=)/hw/hls-work-$(TECHLIB) sim | tee $(HLS_LOGS)/$(@:-hls=)_hls.log
+=======
+$(CATAPULTHLS_ACC-sim): %-sim : %-wdir
+	$(QUIET_INFO)echo "Running RTL simulation for available implementations of $(@:-hls=)"
+	$(QUIET_RUN)ACCELERATOR=$(@:-sim=) TECH=$(TECHLIB) ESP_ROOT=$(ESP_ROOT) make -C $(CATAPULTHLS_ACC_PATH)/$(@:-sim=)/hw/hls-work-$(TECHLIB) sim | tee $(HLS_LOGS)/$(@:-hls=)_hls.log
+>>>>>>> 08df2210a4198d98ca3723ebb13b7b5852f976c5
 
 $(CATAPULTHLS_ACC-clean): %-clean : %-wdir
 	$(QUIET_CLEAN)ACCELERATOR=$(@:-clean=) TECH=$(TECHLIB) ESP_ROOT=$(ESP_ROOT) make -C $(CATAPULTHLS_ACC_PATH)/$(@:-clean=)/hw/hls-work-$(TECHLIB) clean

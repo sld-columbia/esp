@@ -1,4 +1,0 @@
-#ifndef CONFIG_BOUNDSCAN_EN
-#define CONFIG_BOUNDSCAN_EN 0
-#endif
-

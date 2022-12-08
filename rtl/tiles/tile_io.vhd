@@ -39,7 +39,8 @@ use work.ibex_esp_pkg.all;
 entity tile_io is
   generic (
     SIMULATION : boolean := false;
-    this_has_dco : integer range 0 to 1 := 0);
+    this_has_dco : integer range 0 to 2 := 0); --0: no DCO 1: tile and NoC DCO
+                                               --2: NoC DCO only
   port (
     raw_rstn           : in  std_ulogic;  -- active low raw reset (connect to DCO if present)
     tile_rst           : in  std_ulogic;  -- active low tile reset synch on clk
@@ -71,6 +72,16 @@ entity tile_io is
     uart_txd           : out std_ulogic;
     uart_ctsn          : in  std_ulogic;
     uart_rtsn          : out std_ulogic;
+    -- I/O link
+    iolink_data_oen   : out std_logic;
+    iolink_data_in    : in  std_logic_vector(CFG_IOLINK_BITS - 1 downto 0);
+    iolink_data_out   : out std_logic_vector(CFG_IOLINK_BITS - 1 downto 0);
+    iolink_valid_in   : in  std_ulogic;
+    iolink_valid_out  : out std_ulogic;
+    iolink_clk_in     : in  std_ulogic;
+    iolink_clk_out    : out std_ulogic;
+    iolink_credit_in  : in  std_ulogic;
+    iolink_credit_out : out std_ulogic;
     -- Pads configuration
     pad_cfg            : out std_logic_vector(ESP_CSR_PAD_CFG_MSB - ESP_CSR_PAD_CFG_LSB downto 0);
     -- NOC
@@ -135,6 +146,7 @@ architecture rtl of tile_io is
   signal dco_noc_fc_sel   : std_logic_vector(5 downto 0);
   signal dco_noc_div_sel  : std_logic_vector(2 downto 0);
   signal dco_noc_freq_sel : std_logic_vector(1 downto 0);
+  signal sys_clk_out_int  : std_ulogic;
 
   signal dco_en       : std_ulogic;
   signal dco_clk_sel  : std_ulogic;
@@ -367,13 +379,16 @@ architecture rtl of tile_io is
 
   constant prc_mask  : std_logic_vector(31 downto 0) := x"000000FF";
   constant prc_coherence : integer := 0;
+  signal eth0_ahbmi_int   : ahb_mst_in_type;
+  signal edcl_ahbmo_int   : ahb_mst_out_type;
+
   -- Mon
   signal mon_dvfs_int   : monitor_dvfs_type;
   signal mon_noc        : monitor_noc_vector(1 to 6);
 
   -- Interrupt ack to NoC
   type intr_ack_fsm is (idle, send_packet);
-  signal intr_ack_state, intr_ack_state_next : intr_ack_fsm := idle;
+  signal intr_ack_state, intr_ack_state_next : intr_ack_fsm;
   signal header, header_next : std_logic_vector(MISC_NOC_FLIT_SIZE - 1 downto 0);
 
   -- Tile parameters
@@ -567,13 +582,13 @@ begin
   local_y <= this_local_y;
 
   -- DCO Reset synchronizer
-  rst_gen: if this_has_dco /= 0 generate
+  rst_gen: if this_has_dco = 1 generate
     tile_rstn : rstgen
       generic map (acthigh => 1, syncin => 0)
       port map (tile_rst, dco_clk_int, dco_clk_lock, rst, open);
   end generate rst_gen;
 
-  no_rst_gen: if this_has_dco = 0 generate
+  no_rst_gen: if this_has_dco /= 1 generate
     rst <= tile_rst;
   end generate no_rst_gen;
 
@@ -595,7 +610,7 @@ begin
         fc_sel   => dco_noc_fc_sel,
         div_sel  => dco_noc_div_sel,
         freq_sel => dco_noc_freq_sel,
-        clk      => sys_clk_out,
+        clk      => sys_clk_out_int,
         clk_div  => pllclk_noc,
         lock     => sys_clk_lock);
 
@@ -606,42 +621,51 @@ begin
     dco_noc_clk_sel  <= tile_config(ESP_CSR_DCO_NOC_CFG_LSB + 1);
     dco_noc_en       <= raw_rstn and tile_config(ESP_CSR_DCO_NOC_CFG_LSB);
 
-    dco_i: dco
-      generic map (
-        tech => CFG_FABTECH,
-        enable_div2 => 0,
-        dlog => 10)                     -- Tile I/O is the first sending NoC
-                                        -- packets; last reset to be released
-      port map (
-        rstn     => raw_rstn,
-        ext_clk  => refclk,
-        en       => dco_en,
-        clk_sel  => dco_clk_sel,
-        cc_sel   => dco_cc_sel,
-        fc_sel   => dco_fc_sel,
-        div_sel  => dco_div_sel,
-        freq_sel => dco_freq_sel,
-        clk      => dco_clk_int,
-        clk_div  => pllclk,
-        lock     => dco_clk_lock);
+    sys_clk_out <= sys_clk_out_int;
 
-    dco_freq_sel <= tile_config(ESP_CSR_DCO_CFG_MSB - DCO_CFG_LPDDR_CTRL_BITS - 0  downto ESP_CSR_DCO_CFG_MSB - DCO_CFG_LPDDR_CTRL_BITS - 0  - 1);
-    dco_div_sel  <= tile_config(ESP_CSR_DCO_CFG_MSB - DCO_CFG_LPDDR_CTRL_BITS - 2  downto ESP_CSR_DCO_CFG_MSB - DCO_CFG_LPDDR_CTRL_BITS - 2  - 2);
-    dco_fc_sel   <= tile_config(ESP_CSR_DCO_CFG_MSB - DCO_CFG_LPDDR_CTRL_BITS - 5  downto ESP_CSR_DCO_CFG_MSB - DCO_CFG_LPDDR_CTRL_BITS - 5  - 5);
-    dco_cc_sel   <= tile_config(ESP_CSR_DCO_CFG_MSB - DCO_CFG_LPDDR_CTRL_BITS - 11 downto ESP_CSR_DCO_CFG_MSB - DCO_CFG_LPDDR_CTRL_BITS - 11 - 5);
-    dco_clk_sel  <= tile_config(ESP_CSR_DCO_CFG_LSB + 1);
-    dco_en       <= raw_rstn and tile_config(ESP_CSR_DCO_CFG_LSB);
+    dco_tile_gen : if this_has_dco = 1 generate
+      dco_i: dco
+        generic map (
+          tech => CFG_FABTECH,
+          enable_div2 => 0,
+          dlog => 10)                     -- Tile I/O is the first sending NoC
+        port map (
+          rstn     => raw_rstn,
+          ext_clk  => refclk,
+          en       => dco_en,
+          clk_sel  => dco_clk_sel,
+          cc_sel   => dco_cc_sel,
+          fc_sel   => dco_fc_sel,
+          div_sel  => dco_div_sel,
+          freq_sel => dco_freq_sel,
+          clk      => dco_clk_int,
+          clk_div  => pllclk,
+          lock     => dco_clk_lock);
 
+      dco_freq_sel <= tile_config(ESP_CSR_DCO_CFG_MSB - DCO_CFG_LPDDR_CTRL_BITS - 0  downto ESP_CSR_DCO_CFG_MSB - DCO_CFG_LPDDR_CTRL_BITS - 0  - 1);
+      dco_div_sel  <= tile_config(ESP_CSR_DCO_CFG_MSB - DCO_CFG_LPDDR_CTRL_BITS - 2  downto ESP_CSR_DCO_CFG_MSB - DCO_CFG_LPDDR_CTRL_BITS - 2  - 2);
+      dco_fc_sel   <= tile_config(ESP_CSR_DCO_CFG_MSB - DCO_CFG_LPDDR_CTRL_BITS - 5  downto ESP_CSR_DCO_CFG_MSB - DCO_CFG_LPDDR_CTRL_BITS - 5  - 5);
+      dco_cc_sel   <= tile_config(ESP_CSR_DCO_CFG_MSB - DCO_CFG_LPDDR_CTRL_BITS - 11 downto ESP_CSR_DCO_CFG_MSB - DCO_CFG_LPDDR_CTRL_BITS - 11 - 5);
+      dco_clk_sel  <= tile_config(ESP_CSR_DCO_CFG_LSB + 1);
+      dco_en       <= raw_rstn and tile_config(ESP_CSR_DCO_CFG_LSB);
+
+    end generate dco_tile_gen;
   end generate dco_gen;
 
   no_dco_gen: if this_has_dco = 0 generate
     pllclk       <= '0';
     pllclk_noc   <= '0';
-    dco_clk_int  <= '0';
-    sys_clk_out  <= '0';
+    dco_clk_int  <= refclk;
+    sys_clk_out  <= refclk_noc;
     dco_clk_lock <= '1';
     sys_clk_lock <= '1';
   end generate no_dco_gen;
+
+  no_tile_dco_gen: if this_has_dco = 2 generate
+    pllclk       <= '0';
+    dco_clk_int  <= sys_clk_out_int;
+    dco_clk_lock <= '1';
+  end generate no_tile_dco_gen;
 
   dco_clk <= dco_clk_int;
 
@@ -727,9 +751,9 @@ begin
   -- ETH0 and EDCL Master
   -----------------------------------------------------------------------------
 
-  eth0_gen : if CFG_GRETH = 1 generate
-    ahbmo(0) <= eth0_ahbmo;
-    eth0_ahbmi          <= ahbmi;
+  onchip_ethernet : if CFG_ETH_EN = 1 and CFG_GRETH = 1 generate
+    ahbmo(0)   <= eth0_ahbmo;
+    eth0_ahbmi <= ahbmi;
 
     noc_apbo(14) <= eth0_apbo;
     eth0_apbi    <= noc_apbi;
@@ -743,18 +767,53 @@ begin
       ahbmo(1) <= edcl_ahbmo;
     end generate edcl_gen;
 
-  end generate eth0_gen;
+    iolink_data_out   <= (others => '0');
+    iolink_valid_out  <= '0';
+    iolink_data_oen   <= '0';
+    iolink_clk_out    <= '0';
+    iolink_credit_out <= '0';
 
-  no_ethernet : if CFG_GRETH = 0 generate
+  end generate onchip_ethernet;
+
+  no_onchip_ethernet : if CFG_ETH_EN = 0 and CFG_GRETH = 1 generate
+    ahbmo(0)       <= eth0_ahbmo;
+    ahbmo(1)       <= edcl_ahbmo_int;
+    eth0_ahbmi_int <= ahbmi;
+  end generate no_onchip_ethernet;
+
+  no_ethernet : if CFG_ETH_EN = 0 or CFG_GRETH = 0 generate
     eth0_ahbmi   <= ahbm_in_none;
     eth0_apbi    <= apb_slv_in_none;
     noc_apbo(14) <= apb_none;
   end generate no_ethernet;
 
-  no_sgmii_gen : if (CFG_GRETH * CFG_SGMII) = 0 generate
+  no_sgmii_gen : if CFG_ETH_EN = 0 or CFG_GRETH = 0 or CFG_SGMII = 0 generate
     sgmii0_apbi  <= apb_slv_in_none;
     noc_apbo(15) <= apb_none;
   end generate no_sgmii_gen;
+
+  iolink_en: if CFG_ETH_EN = 0 generate
+    iolink2ahbm_i : iolink2ahbm
+      generic map (
+        hindex        => 1, -- TODO define constant
+        io_bitwidth   => CFG_IOLINK_BITS,
+        word_bitwidth => ARCH_BITS,
+        little_end    => 0)
+      port map (
+        clk           => clk,
+        rstn          => rst,
+        io_clk_in     => iolink_clk_in,
+        io_clk_out    => iolink_clk_out,
+        io_data_oen   => iolink_data_oen,
+        io_data_in    => iolink_data_in,
+        io_data_out   => iolink_data_out,
+        io_valid_in   => iolink_valid_in,
+        io_valid_out  => iolink_valid_out,
+        io_credit_in  => iolink_credit_in,
+        io_credit_out => iolink_credit_out,
+        ahbmi         => eth0_ahbmi_int,
+        ahbmo         => edcl_ahbmo_int);
+  end generate iolink_en;
 
   -----------------------------------------------------------------------------
   -- Memory Controller Slave (BOOTROM is implemented as RAM for development)

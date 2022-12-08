@@ -37,7 +37,7 @@ package sld_devices is
   constant SLD_TILE_CSR  : devid_t := 16#024#;
   constant SLD_ESP_INIT  : devid_t := 16#025#;
   constant SLD_EXTMEM_LINK : devid_t := 16#026#;
-  --constant SLD_PRC         : devid_t := 16#031#;
+  constant SLD_IO_LINK : devid_t := 16#027#;
   -- <<devid>>
 
   constant VENDOR_SIFIVE : vendor_t := 16#EC#;

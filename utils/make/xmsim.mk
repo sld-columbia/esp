@@ -22,6 +22,7 @@ XMELABOPT += -nocopyright
 XMELABOPT += -disable_sem2009
 XMELABOPT += -nomxindr
 XMELABOPT += -timescale 10ps/10ps
+XMELABOPT += -notimingchecks
 
 XMSIMOPT += $(SIMTOP)
 XMSIMOPT += -input xmsim.in
