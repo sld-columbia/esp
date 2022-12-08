@@ -47,3 +47,6 @@
 [submodule "soft/ariane/opensbi"]
 	path = soft/ariane/opensbi
 	url = https://github.com/sld-columbia/opensbi.git
+[submodule "tools/dpr_tools/dpr_floor_planner"]
+	path = tools/dpr_tools/dpr_floor_planner
+	url = https://github.com/biruk-belay/FLORA.git
