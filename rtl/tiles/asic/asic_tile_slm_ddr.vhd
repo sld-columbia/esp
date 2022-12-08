@@ -38,10 +38,13 @@ use work.tiles_pkg.all;
 entity asic_tile_slm_ddr is
   generic (
     SIMULATION   : boolean   := false;
-    ROUTER_PORTS : ports_vec := "11111");
+    ROUTER_PORTS : ports_vec := "11111";
+    this_has_dco : integer range 0 to 1 := 1;
+    HAS_SYNC     : integer range 0 to 1 := 1);
   port (
     rst                : in  std_ulogic;
     sys_clk            : in  std_ulogic;  -- NoC clock
+    sys_clk_lock       : in  std_ulogic;  -- sys_clk_lock
     ext_clk            : in  std_ulogic;  -- backup tile clock
     clk_div            : out std_ulogic;  -- tile clock monitor for testing purposes
     -- LPDDR
@@ -220,6 +223,7 @@ architecture rtl of asic_tile_slm_ddr is
   signal dco_clk_div2    : std_ulogic;
   signal dco_clk_div2_90 : std_ulogic;
   signal dco_rstn        : std_ulogic;
+  signal tile_rst     : std_ulogic;
   --signal dco_clk_lock    : std_ulogic;
 
   signal phy_rstn, phy_raw_rstn : std_logic;
@@ -450,25 +454,21 @@ architecture rtl of asic_tile_slm_ddr is
 
 begin
 
-  -- Tile main clock and reset
-  --rst_tile : rstgen                         -- reset generator
-  --  generic map (acthigh => 1, syncin => 0)
-  --  port map (rst, dco_clk_div2_90, dco_clk_lock, dco_rstn, raw_rstn);
-
-  -- DDR PHY reset
-  --rst_ddr : rstgen                         -- reset generator
-  --  generic map (acthigh => 1, syncin => 0)
-  --  port map (rst, dco_clk_div2, dco_clk_lock, phy_rstn, phy_raw_rstn);
-
-  raw_rstn <= not rst;
-
   rst_noc : rstgen
     generic map (acthigh => 1, syncin => 0)
-    port map (rst, sys_clk, '1', noc_rstn, open);
+    port map (rst, sys_clk, sys_clk_lock, noc_rstn, raw_rstn);
 
   rst_jtag : rstgen
     generic map (acthigh => 1, syncin => 0)
     port map (rst, tclk, '1', test_rstn, open);
+
+  has_dco_rst : if this_has_dco = 1 generate
+    tile_rst <= rst;
+  end generate has_dco_rst;
+
+  no_dco_rst : if this_has_dco /= 1 generate
+    tile_rst <= noc_rstn;
+  end generate no_dco_rst;
 
   -- DDR Controller address range
   this_slmddr_haddr    <= slmddr_haddr(this_slmddr_id);
@@ -521,7 +521,7 @@ begin
   -----------------------------------------------------------------------------
   jtag_test_i : jtag_test
     generic map (
-      test_if_en => 1)
+      test_if_en => CFG_JTAG_EN)
     port map (
       rst                 => test_rstn,
       refclk              => dco_clk_div2_90,
@@ -646,7 +646,7 @@ begin
   sync_noc_set_slm: sync_noc_set
   generic map (
      PORTS    => ROUTER_PORTS,
-     HAS_SYNC => 1 )
+     HAS_SYNC => HAS_SYNC)
    port map (
      clk                => sys_clk,
      clk_tile           => dco_clk_div2_90,
@@ -750,12 +750,12 @@ begin
   tile_slm_1 : tile_slm
     generic map (
       SIMULATION   => SIMULATION,
-      this_has_dco => 1,
+      this_has_dco => this_has_dco,
       this_has_ddr => 1,
       dco_rst_cfg  => DEFAULT_DCO_LPDDR_CFG)
     port map (
       raw_rstn           => raw_rstn,   -- DCO raw reset
-      tile_rst           => rst,        -- tile main synchronouse reset
+      tile_rst           => tile_rst,        -- tile main synchronouse reset
       clk                => dco_clk_div2_90,      -- tile main clock
       refclk             => ext_clk,    -- external backup clock
       pllbypass          => ext_clk_sel_default,  -- ext_clk_sel,

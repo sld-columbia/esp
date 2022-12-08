@@ -240,7 +240,9 @@ begin  -- architecture rtl
   ahbmo.hsize                           <= msto.hsize;
   ahbmo.hburst                          <= msto.hburst;
   ahbmo.hprot                           <= msto.hprot;
-  ahbmo.hwdata(ARCH_BITS - 1 downto 32) <= (others => '0');
+  hwdata_padding: if ARCH_BITS > 32 generate 
+    ahbmo.hwdata(ARCH_BITS - 1 downto 32) <= (others => '0');
+  end generate;
   ahbmo.hwdata(31 downto 0)             <= msto.hwdata;
   ahbmo.hirq                            <= (others => '0');
   ahbmo.hconfig                         <= hconfig;

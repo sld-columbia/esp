@@ -1,4 +1,0 @@
-mainmenu_option next_comment
-    comment 'MIG 7-Series memory controller   '
-        bool 'Enable fast simulation model  ' CONFIG_MIG_7SERIES_MODEL y
-endmenu

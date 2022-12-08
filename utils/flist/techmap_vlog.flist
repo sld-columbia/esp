@@ -54,6 +54,7 @@ techmap/gf12/sram_dw/gf12_sram64_be_17abits.v
 techmap/gf12/sram_dw/gf12_sram64_be_18abits.v
 techmap/gf12/sram_dw/gf12_sram64_be_19abits.v
 techmap/gf12/sram_dw/gf12_sram64_be_20abits.v
+techmap/inferred/SyncSpRamBeNx64.sv
 techmap/virtex7/sram_b/unisim_sram_b_10abits.v
 techmap/virtex7/sram_b/unisim_sram_b_16abits.v
 techmap/virtex7/sram_b/unisim_sram_b_14abits.v

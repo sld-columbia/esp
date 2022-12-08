@@ -9,6 +9,11 @@ CONFIG_CACHE_RTL = y
 CONFIG_CPU_CACHES = 512 4 2048 16
 CONFIG_ACC_CACHES = 512 4
 CONFIG_SLM_KBYTES = 256
+CONFIG_JTAG_EN = y
+CONFIG_ETH_EN = y
+#CONFIG_SVGA_EN is not set
+CONFIG_DSU_IP = C0A80113
+CONFIG_DSU_ETH = A6A7A0F81440
 #CONFIG_MON_DDR is not set
 #CONFIG_MON_MEM is not set
 #CONFIG_MON_INJ is not set
@@ -18,21 +23,21 @@ CONFIG_SLM_KBYTES = 256
 #CONFIG_MON_LLC is not set
 #CONFIG_MON_DVFS is not set
 TILE_0_0 = 0 misc IO 0 0 0
-TILE_0_1 = 1 acc NV_NVDLA 0 0 0  0 nvidia
-TILE_0_2 = 2 acc NV_NVDLA 0 0 0  0 nvidia
-TILE_0_3 = 3 acc NV_NVDLA 0 0 0  0 nvidia
-TILE_1_0 = 4 acc FFT_STRATUS 0 0 0 basic_fx32_dma64 0 sld
-TILE_1_1 = 5 cpu cpu 0 0 0
-TILE_1_2 = 6 cpu cpu 0 0 0
+TILE_0_1 = 1 acc NV_NVDLA 0 0 0  0 0 nvidia
+TILE_0_2 = 2 acc NV_NVDLA 0 0 0  0 0 nvidia
+TILE_0_3 = 3 acc NV_NVDLA 0 0 0  0 0 nvidia
+TILE_1_0 = 4 acc FFT_STRATUS 0 0 0 basic_fx32_dma64 0 0 sld
+TILE_1_1 = 5 cpu cpu 0 0 0 0
+TILE_1_2 = 6 cpu cpu 0 0 0 0
 TILE_1_3 = 7 mem mem 0 0 0
-TILE_2_0 = 8 acc FFT_STRATUS 0 0 0 basic_fx32_dma64 0 sld
-TILE_2_1 = 9 cpu cpu 0 0 0
-TILE_2_2 = 10 cpu cpu 0 0 0
+TILE_2_0 = 8 acc FFT_STRATUS 0 0 0 basic_fx32_dma64 0 0 sld
+TILE_2_1 = 9 cpu cpu 0 0 0 0
+TILE_2_2 = 10 cpu cpu 0 0 0 0
 TILE_2_3 = 11 mem mem 0 0 0
-TILE_3_0 = 12 acc FFT_STRATUS 0 0 0 basic_fx32_dma64 0 sld
+TILE_3_0 = 12 acc FFT_STRATUS 0 0 0 basic_fx32_dma64 0 0 sld
 TILE_3_1 = 13 mem mem 0 0 0
 TILE_3_2 = 14 mem mem 0 0 0
-TILE_3_3 = 15 acc VITDODEC_STRATUS 0 0 0 basic_dma64 0 sld
+TILE_3_3 = 15 acc VITDODEC_STRATUS 0 0 0 basic_dma64 0 0 sld
 #CONFIG_HAS_DVFS is not set
 CONFIG_VF_POINTS = 4
 POWER_0_0 = IO 0 0 0 0 0 0 0 0 0 0 0 0 

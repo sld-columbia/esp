@@ -668,6 +668,16 @@ begin
       uart_txd           => uart_txd,
       uart_ctsn          => uart_ctsn,
       uart_rtsn          => uart_rtsn,
+      -- I/O link
+      iolink_data_oen    => open,
+      iolink_data_in     => (others => '0'),
+      iolink_data_out    => open,
+      iolink_valid_in    => '0',
+      iolink_valid_out   => open,
+      iolink_clk_in      => '0',
+      iolink_clk_out     => open,
+      iolink_credit_in   => '0',
+      iolink_credit_out  => open,
       -- Pad configuration
       pad_cfg            => open,
       -- NOC

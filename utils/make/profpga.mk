@@ -7,6 +7,9 @@ boards:
 profpga-prog-fpga: boards
 	$(QUIET_RUN)profpga_run profpga.cfg --up
 
+profpga-prog-fpga-emu: boards
+	$(QUIET_RUN)profpga_run profpga_emu.cfg --up
+
 profpga-close-fpga: boards
 	$(QUIET_RUN)profpga_run profpga.cfg --down
 

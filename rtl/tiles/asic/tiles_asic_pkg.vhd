@@ -21,10 +21,13 @@ package tiles_asic_pkg is
   component asic_tile_cpu is
     generic (
       SIMULATION   : boolean;
-      ROUTER_PORTS : ports_vec);
+      HAS_SYNC     : integer range 0 to 1 := 1;
+      ROUTER_PORTS : ports_vec;
+      this_has_dco : integer range 0 to 1);
     port (
       rst                : in  std_ulogic;
       sys_clk            : in  std_ulogic;
+      sys_clk_lock       : in  std_ulogic;
       ext_clk            : in  std_ulogic;
       clk_div            : out std_ulogic;
       tdi                : in  std_logic;
@@ -112,10 +115,13 @@ package tiles_asic_pkg is
       this_device   : devid_t;
       this_irq_type : integer;
       this_has_l2   : integer range 0 to 1;
-      ROUTER_PORTS  : ports_vec);
+      HAS_SYNC      : integer range 0 to 1 := 1;
+      ROUTER_PORTS  : ports_vec;
+      this_has_dco  : integer range 0 to 1);
     port (
       rst                : in  std_ulogic;
       sys_clk            : in  std_ulogic;
+      sys_clk_lock       : in  std_ulogic;
       ext_clk            : in  std_ulogic;
       clk_div            : out std_ulogic;
       tdi                : in  std_logic;
@@ -200,10 +206,13 @@ package tiles_asic_pkg is
   component asic_tile_mem is
     generic (
       SIMULATION   : boolean := false;
-      ROUTER_PORTS : ports_vec);
+      ROUTER_PORTS : ports_vec;
+      HAS_SYNC     : integer range 0 to 1 := 1;
+      this_has_dco : integer range 0 to 1 := 0);
     port (
       rst                : in    std_ulogic;
       sys_clk            : in    std_ulogic;
+      sys_clk_lock       : in  std_ulogic;
       ext_clk            : in    std_ulogic;
       clk_div            : out   std_ulogic;
       fpga_data_in       : in    std_logic_vector(ARCH_BITS - 1 downto 0);
@@ -297,12 +306,15 @@ package tiles_asic_pkg is
   component asic_tile_io is
     generic (
       SIMULATION   : boolean;
-      ROUTER_PORTS : ports_vec);
+      HAS_SYNC     : integer range 0 to 1 := 1;
+      ROUTER_PORTS : ports_vec;
+      this_has_dco : integer range 0 to 2);
     port (
       rst                : in  std_ulogic;
       sys_rstn_out       : out std_ulogic;
       sys_clk_out        : out std_ulogic;
       sys_clk            : in  std_ulogic;
+      sys_clk_lock_out   : out std_ulogic;
       ext_clk_noc        : in  std_ulogic;
       clk_div_noc        : out std_ulogic;
       ext_clk            : in  std_ulogic;
@@ -326,6 +338,16 @@ package tiles_asic_pkg is
       uart_txd           : out std_ulogic;
       uart_ctsn          : in  std_ulogic;
       uart_rtsn          : out std_ulogic;
+      -- I/O link
+      iolink_data_oen    : out std_logic;
+      iolink_data_in     : in  std_logic_vector(CFG_IOLINK_BITS - 1 downto 0);
+      iolink_data_out    : out std_logic_vector(CFG_IOLINK_BITS - 1 downto 0);
+      iolink_valid_in    : in  std_ulogic;
+      iolink_valid_out   : out std_ulogic;
+      iolink_clk_in      : in  std_ulogic;
+      iolink_clk_out     : out std_ulogic;
+      iolink_credit_in   : in  std_ulogic;
+      iolink_credit_out  : out std_ulogic;
       tdi                : in  std_logic;
       tdo                : out std_logic;
       tms                : in  std_logic;
@@ -407,11 +429,14 @@ package tiles_asic_pkg is
 
   component asic_tile_empty is
     generic (
-      SIMULATION   : boolean;
-      ROUTER_PORTS : ports_vec);
+      SIMULATION   : boolean; 
+      HAS_SYNC     : integer range 0 to 1 := 1;
+      ROUTER_PORTS : ports_vec;
+      this_has_dco : integer range 0 to 1);
     port (
       rst                : in  std_logic;
       sys_clk            : in  std_ulogic;
+      sys_clk_lock       : in  std_ulogic;
       ext_clk            : in  std_ulogic;
       clk_div            : out std_ulogic;
       tdi                : in  std_logic;
@@ -496,10 +521,13 @@ package tiles_asic_pkg is
   component asic_tile_slm is
     generic (
       SIMULATION   : boolean := false;
-      ROUTER_PORTS : ports_vec);
+      HAS_SYNC     : integer range 0 to 1 := 1;
+      ROUTER_PORTS : ports_vec;
+      this_has_dco : integer range 0 to 1);
     port (
       rst                : in  std_ulogic;
       sys_clk            : in  std_ulogic;
+      sys_clk_lock       : in  std_ulogic;
       ext_clk            : in  std_ulogic;
       clk_div            : out std_ulogic;
       tdi                : in  std_logic;
@@ -584,10 +612,13 @@ package tiles_asic_pkg is
   component asic_tile_slm_ddr is
     generic (
       SIMULATION   : boolean := false;
-      ROUTER_PORTS : ports_vec);
+      ROUTER_PORTS : ports_vec;
+      this_has_dco : integer range 0 to 1;
+      HAS_SYNC     : integer range 0 to 1 := 1);
     port (
       rst                : in  std_ulogic;
       sys_clk            : in  std_ulogic;
+      sys_clk_lock       : in  std_ulogic;
       ext_clk            : in  std_ulogic;
       clk_div            : out std_ulogic;
       lpddr_o_calib_done : out std_ulogic;

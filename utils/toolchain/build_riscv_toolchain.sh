@@ -101,6 +101,7 @@ fi
 # Remove and create temporary folder
 rm -rf $TMP
 mkdir $TMP
+<<<<<<< HEAD
 cd $TMP
 
 # Python
@@ -116,6 +117,26 @@ else
 fi
 cd $TMP
 
+=======
+cd $TMP
+
+git config --global url.https://github.com/qemu/.insteadOf git://git.qemu-project.org/
+git config --global url.https://anongit.freedesktop.org/git/.insteadOf git://anongit.freedesktop.org/
+
+# Python
+echo "*** Python ... ***"
+if [ $(noyes "Do you want to enable Python") == "y" ]; then
+    python_en=1
+    RISCV_GNU_TOOLCHAIN_SHA=$RISCV_GNU_TOOLCHAIN_SHA_PYTHON
+    BUILDROOT_SHA=$BUILDROOT_SHA_PYTHON
+else
+    python_en=0
+    RISCV_GNU_TOOLCHAIN_SHA=$RISCV_GNU_TOOLCHAIN_SHA_DEFAULT
+    BUILDROOT_SHA=$BUILDROOT_SHA_DEFAULT
+fi
+cd $TMP
+
+>>>>>>> 08df2210a4198d98ca3723ebb13b7b5852f976c5
 
 
 # Bare-metal compiler

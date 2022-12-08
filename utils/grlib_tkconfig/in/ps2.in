@@ -1,3 +1,0 @@
-    bool 'Keyboard/mouse (PS2) interface  ' CONFIG_PS2_ENABLE
-
-

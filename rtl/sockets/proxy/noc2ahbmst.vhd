@@ -956,7 +956,7 @@ begin  -- rtl
           narrow_coherence_rsp_snd_full <= '1';
           coherence_rsp_snd_data_in <=
             rsp_reg(NOC_FLIT_SIZE - 1 downto NOC_FLIT_SIZE - PREAMBLE_WIDTH) &
-            rsp_reg(63 downto 32) & rsp_reg(63 downto 32);
+            rsp_reg(ARCH_BITS - 1 downto ARCH_BITS - 32) & rsp_reg(ARCH_BITS - 1 downto ARCH_BITS - 32);
           if coherence_rsp_snd_full = '0' then
             coherence_rsp_snd_wrreq <= '1';
             serdes_next <= passthru;
@@ -967,7 +967,7 @@ begin  -- rtl
 
         when req_msb =>
           narrow_coherence_req_data_out(NOC_FLIT_SIZE - 1 downto 64) <= coherence_req_data_out(NOC_FLIT_SIZE - 1 downto 64);
-          narrow_coherence_req_data_out(63 downto 32) <= coherence_req_data_out(31 downto 0);
+          narrow_coherence_req_data_out(ARCH_BITS - 1 downto ARCH_BITS - 32) <= coherence_req_data_out(ARCH_BITS - 1 downto ARCH_BITS - 32);
           narrow_coherence_req_data_out(31 downto 0) <= req_reg(31 downto 0);
           if coherence_req_empty = '0' and narrow_coherence_req_rdreq = '1'  then
             serdes_next <= passthru;
