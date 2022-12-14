@@ -65,20 +65,23 @@ static irqreturn_t esp_irq(int irq, void *dev)
 	struct esp_device *esp = dev_get_drvdata(dev);
 	u32 status, error, done;
 
-	status = ioread32be(esp->iomem + STATUS_REG);
-	error = status & STATUS_MASK_ERR;
-	done = status & STATUS_MASK_DONE;
+        status = ioread32be(esp->iomem + 0x58); // Modified for vortex
+	error = !(status & BIT(0));
+	done = status & BIT(0);
+	// status = ioread32be(esp->iomem + STATUS_REG);
+        // error = status & STATUS_MASK_ERR;
+        // done = status & STATUS_MASK_DONE;
 
-	/* printk(KERN_INFO "IRQ: %08x\n", status); */
+	// printk(KERN_INFO "IRQ: %ld\n", status);
 
 	if (error) {
-		iowrite32be(0, esp->iomem + CMD_REG);
+		// iowrite32be(0, esp->iomem + CMD_REG);
 		esp->err = -1;
 		complete_all(&esp->completion);
 		return IRQ_HANDLED;
 	}
 	if (done) {
-		iowrite32be(0, esp->iomem + CMD_REG);
+		// iowrite32be(0, esp->iomem + CMD_REG);
 		complete_all(&esp->completion);
 		return IRQ_HANDLED;
 	}
@@ -211,13 +214,19 @@ static void esp_transfer(struct esp_device *esp, const struct contig_desc *conti
 {
 	esp->err = 0;
 	reinit_completion(&esp->completion);
-
 	iowrite32be(contig->arr_dma_addr, esp->iomem + PT_ADDRESS_REG);
 	iowrite32be(contig_chunk_size_log, esp->iomem + PT_SHIFT_REG);
 	iowrite32be(contig->n, esp->iomem + PT_NCHUNK_REG);
 	iowrite32be(esp->coherence, esp->iomem + COHERENCE_REG);
 	iowrite32be(0x0, esp->iomem + SRC_OFFSET_REG);
 	iowrite32be(0x0, esp->iomem + DST_OFFSET_REG);
+	
+	//iowrite32be(contig->arr[0], esp->iomem + 0x50); // Write base address
+        //iowrite32be(0x1, esp->iomem + 0x54); //Start Vortex
+
+ 	//pr_info("contig array 0 addr %ld", contig->arr[0]);
+     //  pr_info("contig array 1 addr %ld", contig->arr[1]); 
+//	pr_info("contig array 2 addr %ld", contig->arr[2]); 
 }
 
 static void esp_run(struct esp_device *esp)
@@ -229,9 +238,10 @@ static int esp_wait(struct esp_device *esp)
 {
 	/* Interrupt */
 	int wait;
-
+        // pr_info("Reached esp_wait\n"); 
 	wait = wait_for_completion_interruptible(&esp->completion);
-	if (wait < 0)
+	// pr_info("Launched wait for esp completion\n");
+        if (wait < 0)
 		return -EINTR;
 	if (esp->err) {
 		pr_info(PFX "Error occured\n");
@@ -443,7 +453,7 @@ static long esp_flush_ioctl(struct esp_device *esp, void __user *argp)
 	struct esp_access *access;
 	void *arg;
 	int rc = 0;
-
+        // pr_info("Reached esp_flush_ioctl\n");
 	arg = kmalloc(esp->driver->arg_size, GFP_KERNEL);
 	if (arg == NULL)
 		return -ENOMEM;

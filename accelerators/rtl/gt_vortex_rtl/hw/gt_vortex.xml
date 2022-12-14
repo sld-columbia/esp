@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sld>
+  <accelerator name="GT_VORTEX" desc="GeorgiaTech, Vortex GPU" data_size="64" device_id="108" hls_tool="rtl">
+    <param name="START_VORTEX" desc="START_VORTEX" />
+    <param name="BASE_ADDR" desc="BASE_ADDR" />
+    <param name="VX_BUSY_INT" desc="VX_BUSY_INT" />
+  </accelerator>
+</sld>
