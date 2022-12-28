@@ -516,7 +516,7 @@ begin
         ahbso(i).hindex <= i;
       else
         ahbso(i).hconfig <= hconfig_none;
-        ahbso(i).hindex <= 0;
+        ahbso(i).hindex <= 15; --fix this 
       end if;
     end loop;
 
@@ -528,7 +528,7 @@ begin
     case r.state is
 
       when recv_address =>
-        if (ahb_rcv_full = '0') then
+        if (ahb_rcv_full or ahb_rcv_almost_full) = '0' then
           v.burst_mode := '0';
           v.load_first := '1';
             if (selected = '1' and ahbsi.hready = '1' and ahbsi.htrans = HTRANS_NONSEQ) then
@@ -551,7 +551,7 @@ begin
       when get_length =>
         v.ahbsout.hready := '0';
         --ahbso.hready <= '0';
-        if(ahb_rcv_full = '0') then
+        if(ahb_rcv_full or ahb_rcv_almost_full ) = '0' then
           --undefined burst length
           if (hburst_reg = "001" and ahbsi.htrans = HTRANS_SEQ) then
             ahb_rcv_data_in <= std_logic_vector(to_signed (MAX_BURST_SIZE, ahb_rcv_data_in'length));
@@ -577,10 +577,11 @@ begin
             -- burst mode
             --check early termination of burst
             if ((ahbsi.htrans = HTRANS_IDLE or ahbsi.htrans = HTRANS_NONSEQ) and r.cnt /= 0) then
-                v.ahbsout.hready := '0';
-                v.state := early_burst_term;
+              v.ahbsout.hready := '0';
+              v.state := early_burst_term;
              --first word of the burst
             elsif (v.load_first = '1') then
+              v.ahbsout.hready := '0';
               ahb_rcv_data_in <= hwdata_reg;
               ahb_rcv_wrreq <= '1';
               v.load_first := '0';
