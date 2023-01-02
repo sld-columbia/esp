@@ -29,10 +29,7 @@ use work.socmap.all;
 
 entity ahbslv2iolink is
   generic (
-    --hindex        : integer range 0 to  NAHBSLV - 1 := 0;
-    hindex        : std_logic_vector(0 to NAHBSLV - 1);
-    hconfig       : ahb_slv_config_vector;
-    --hindex        : integer range 0 to NAHBSLV - 1;
+    hindex        : integer range 0 to  NAHBSLV - 1 := 0;
     io_bitwidth   : integer range 1 to ARCH_BITS := 32;  -- power of 2, <= word_bitwidth
     word_bitwidth : integer range 1 to ARCH_BITS := 32;  -- 32 or 64
     little_end    : integer range 0 to 1         := 0);
@@ -49,7 +46,7 @@ entity ahbslv2iolink is
     io_data_in    : in  std_logic_vector(io_bitwidth - 1 downto 0);
     io_data_out   : out std_logic_vector(io_bitwidth - 1 downto 0);
     ahbsi         : in  ahb_slv_in_type;
-    ahbso         : out ahb_slv_out_vector_type);
+    ahbso         : out ahb_slv_out_type);
 
 end entity ahbslv2iolink;
 
@@ -67,7 +64,13 @@ architecture rtl of ahbslv2iolink is
   constant dw : integer := maccsz;
   constant kbytes : integer := 2 * 1024;
   constant abits : integer := log2ext(kbytes) + 10 - log2(dw/8); -- understand value 
-
+  
+  -- AHB bus configuration
+  constant hconfig : ahb_config_type := (
+    0      => ahb_device_reg (VENDOR_SLD, SLD_IO_LINK, 0, 0, 0),
+    4      => ahb_membar(16#000#, '0', '0', 16#100#),
+    others => zero32); 
+  
   -----------------------------------------------------------------------------
   --FSM: ahb rd/wr
   ------------------------------------------------------------------------------
@@ -124,7 +127,7 @@ architecture rtl of ahbslv2iolink is
 
   constant default_len : std_logic_vector := x"00000001";
   constant MAX_BURST_SIZE : integer := 27; --256;
-  constant IO_BEATS : natural range 1 to 64 := 2; --word_bitwidth / io_bitwidth;
+  constant IO_BEATS : natural range 1 to 64 := word_bitwidth / io_bitwidth;
   
   ---------------------------------------------------
   -- io_en sync delay
@@ -237,10 +240,10 @@ architecture rtl of ahbslv2iolink is
   signal io_rcv_almost_full : std_ulogic;
   signal io_rcv_empty       : std_logic;
   
-  attribute mark_debug : string;                                                                                                                                                     
-   --attribute keep       : string;                                                                                                                                                     
+  attribute mark_debug : string;
+  --attribute keep       : string;
   
-  attribute mark_debug of ahb_snd_wrreq : signal is "true";        
+  attribute mark_debug of ahb_snd_wrreq : signal is "true";
   attribute mark_debug of ahb_snd_rdreq : signal is "true";
   attribute mark_debug of ahb_snd_data_in : signal is "true";
   attribute mark_debug of ahb_snd_data_out : signal is "true";
@@ -357,7 +360,7 @@ begin
     oen_reg_next <= reg;
   end process oen_fsm;
 
-  oen_fsm_idle <= '1' when oen_reg.state = receive_address else '0';
+  oen_fsm_idle <= '1' when oen_reg.state = '0';
   
   -- Credits in
   oen_reg_fifo : inferred_async_fifo
@@ -504,24 +507,18 @@ begin
     --ahbso.hrdata <= X"00000000";
     
     -- Default ahbso assignment
-    for i in 0 to NAHBSLV - 1 loop
-      ahbso(i).hready <= '1';
-      ahbso(i).hrdata <= (others => '0');
-      ahbso(i).hresp <= HRESP_OKAY;
-      ahbso(i).hsplit <= (others => '0');
-      ahbso(i).hirq <= (others => '0');
-      ahbso(i).hrdata <= X"00000000";
-      if hindex(i) /= '0' then
-        ahbso(i).hconfig <= hconfig(i);
-        ahbso(i).hindex <= i;
-      else
-        ahbso(i).hconfig <= hconfig_none;
-        ahbso(i).hindex <= 15; --fix this 
-      end if;
-    end loop;
-
+    ahbso.hready <= '1';
+    ahbso.hrdata <= (others => '0');
+    ahbso.hresp <= HRESP_OKAY;
+    ahbso.hsplit <= (others => '0');
+    ahbso.hirq <= (others => '0');
+    ahbso.hrdata <= (others => '0');
+    ahbso.hconfig <= hconfig;
+    ahbso.hindex <= hindex;
+    
     selected := '0';
-    if (ahbsi.hsel and hindex) /= zero_ahb_flags then
+    --if (ahbsi.hsel and hindex) /= zero_ahb_flags then
+    if (ahbsi.hsel(hindex)) = '1' then
       selected := '1';
     end if;
  
@@ -533,8 +530,6 @@ begin
           v.load_first := '1';
             if (selected = '1' and ahbsi.hready = '1' and ahbsi.htrans = HTRANS_NONSEQ) then
               sample_bus <= '1';
-              v.ahbsout.hready := '0';
-              --ahbso.hready <= '0';
               if (ahbsi.hwrite = '1') then
                 ahb_rcv_data_in <= ahbsi.haddr(31 downto 1) & '1';
               else
@@ -543,7 +538,7 @@ begin
               ahb_rcv_wrreq <= '1';
               v.state := get_length;
             end if;
-              --splitted burst transaction
+              --TODO: hanlde splitted burst transaction
           --end if;
         end if;
        
@@ -572,16 +567,16 @@ begin
         end if;
 
       when snd_data =>
+        v.ahbsout.hready := '0';
         if (ahb_rcv_almost_full or ahb_rcv_full) = '0' then
+          v.ahbsout.hready := '1';
           if (v.burst_mode = '1') then
             -- burst mode
             --check early termination of burst
             if ((ahbsi.htrans = HTRANS_IDLE or ahbsi.htrans = HTRANS_NONSEQ) and r.cnt /= 0) then
-              v.ahbsout.hready := '0';
               v.state := early_burst_term;
-             --first word of the burst
+            --first word of the burst
             elsif (v.load_first = '1') then
-              v.ahbsout.hready := '0';
               ahb_rcv_data_in <= hwdata_reg;
               ahb_rcv_wrreq <= '1';
               v.load_first := '0';
@@ -592,7 +587,6 @@ begin
               ahb_rcv_wrreq <= '1';
               v.load_first := '0';
               v.cnt := r.cnt - 1;
-              --ahbso.hready <= '1';
             else
                v.state := recv_address;
             end if;
@@ -601,13 +595,7 @@ begin
             ahb_rcv_data_in <= hwdata_reg;
             ahb_rcv_wrreq <= '1';
             v.state := recv_address;
-            v.ahbsout.hready := '0';
-            --ahbso.hready <= '0';
           end if;
-        -- Input FIFO full
-        else
-            v.ahbsout.hready := '0';
-            --ahbso.hready <= '0';
         end if;
 
       --In case of early burst termination
@@ -629,33 +617,28 @@ begin
         if (v.cnt = 0) then 
           v.state := recv_address;
         else
+          v.ahbsout.hready := '0';
           -- flush receieved data if burst is terminated early
-          if (ahbsi.htrans = HTRANS_IDLE or ahbsi.htrans = HTRANS_NONSEQ) then
-            if (ahb_snd_empty = '0') then
-              ahb_snd_rdreq <= '1';
-              v.cnt := r.cnt - 1;
+          --if (ahbsi.htrans = HTRANS_IDLE or ahbsi.htrans = HTRANS_NONSEQ) then
+          --  if (ahb_snd_empty = '0') then
+          --    ahb_snd_rdreq <= '1';
+          --    v.cnt := r.cnt - 1;
               --ahbso.hready <= '0';
-            end if;
-          elsif (ahb_snd_empty = '0') then
+          --  end if;
+          if (ahb_snd_empty = '0') then
             v.ahbsout.hready := '1';
-            --ahbso.hready <= '1';
             v.ahbsout.hrdata := ahb_snd_data_out;
-            --ahbso.hrdata <= ahb_snd_data_out;
             ahb_snd_rdreq <= '1';
             v.cnt := r.cnt - 1;
-          --v.state := recv_address;
         end if;
       end if;
     end case; 
     rin <= v;
   
-    for i in 0 to NAHBSLV - 1 loop
-      if hsel_reg(i) = '1' then
-        ahbso(i).hrdata <= v.ahbsout.hrdata; -- hrdata;
-        ahbso(i).hready <= v.ahbsout.hready; --hready;
-        --ahbso(i).hresp  <= v.ahbsout.hresp;
-      end if;
-    end loop;
+    if hsel_reg(hindex) = '1' then
+      ahbso.hrdata <= v.ahbsout.hrdata; -- hrdata;
+      ahbso.hready <= v.ahbsout.hready; --hready;
+    end if;
 
   end process ahb_rdwr_reqsts_fsm;
 
