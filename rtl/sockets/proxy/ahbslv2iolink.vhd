@@ -359,8 +359,8 @@ begin
 
     oen_reg_next <= reg;
   end process oen_fsm;
-
-  oen_fsm_idle <= '1' when oen_reg.state = '0';
+ oen_fsm_idle <= '1' when oen_reg.state = receive_address else '0';  
+ --oen_fsm_idle <= '1' when oen_reg.state = '0';
   
   -- Credits in
   oen_reg_fifo : inferred_async_fifo
