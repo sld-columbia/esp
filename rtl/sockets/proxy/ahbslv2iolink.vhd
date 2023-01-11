@@ -30,6 +30,7 @@ use work.socmap.all;
 entity ahbslv2iolink is
   generic (
     hindex        : integer range 0 to  NAHBSLV - 1 := 0;
+    hconfig       : ahb_config_type;
     io_bitwidth   : integer range 1 to ARCH_BITS := 32;  -- power of 2, <= word_bitwidth
     word_bitwidth : integer range 1 to ARCH_BITS := 32;  -- 32 or 64
     little_end    : integer range 0 to 1         := 0);
@@ -65,11 +66,6 @@ architecture rtl of ahbslv2iolink is
   constant kbytes : integer := 2 * 1024;
   constant abits : integer := log2ext(kbytes) + 10 - log2(dw/8); -- understand value 
   
-  -- AHB bus configuration
-  constant hconfig : ahb_config_type := (
-    0      => ahb_device_reg (VENDOR_SLD, SLD_IO_LINK, 0, 0, 0),
-    4      => ahb_membar(16#000#, '0', '0', 16#100#),
-    others => zero32); 
   
   -----------------------------------------------------------------------------
   --FSM: ahb rd/wr
@@ -189,14 +185,14 @@ architecture rtl of ahbslv2iolink is
   
   signal ahb_rcv_wrreq      : std_ulogic;
   signal ahb_rcv_rdreq      : std_ulogic;
-  signal ahb_rcv_data_in    : std_logic_vector(AHBDW - 1 downto 0);
-  signal ahb_rcv_data_out   : std_logic_vector(AHBDW - 1 downto 0);
+  signal ahb_rcv_data_in    : std_logic_vector(word_bitwidth - 1 downto 0);
+  signal ahb_rcv_data_out   : std_logic_vector(word_bitwidth - 1 downto 0);
   signal ahb_rcv_full       : std_ulogic;
   signal ahb_rcv_empty      : std_ulogic;
   signal ahb_rcv_almost_full : std_ulogic;
   
   signal hsel_reg   : std_logic_vector(0 to NAHBSLV - 1);
-  signal hwdata_reg : std_logic_vector (AHBDW - 1 downto 0);
+  signal hwdata_reg : std_logic_vector (word_bitwidth - 1 downto 0);
   signal hwrite_reg : std_ulogic;
   signal hburst_reg : std_logic_vector (2 downto 0);
   signal htrans_reg : std_logic_vector (1 downto 0);
@@ -212,11 +208,11 @@ architecture rtl of ahbslv2iolink is
   signal credit_received : std_ulogic;
 
   signal io_snd_wrreq_in    : std_logic;
-  signal io_snd_data_in     : std_logic_vector (AHBDW - 1 downto 0);
+  signal io_snd_data_in     : std_logic_vector (word_bitwidth - 1 downto 0);
   signal io_snd_full_in     : std_logic;
   signal io_snd_clk_out     : std_logic;
   signal io_snd_rdreq_out   : std_logic;
-  signal io_snd_data_out    : std_logic_vector (AHBDW - 1 downto 0);
+  signal io_snd_data_out    : std_logic_vector (word_bitwidth - 1 downto 0);
   signal io_snd_empty       : std_logic;
   
   signal io_clk_out_int   : std_logic;
@@ -225,55 +221,63 @@ architecture rtl of ahbslv2iolink is
   
   signal ahb_snd_wrreq      : std_ulogic;
   signal ahb_snd_rdreq      : std_ulogic;
-  signal ahb_snd_data_in    : std_logic_vector(AHBDW - 1 downto 0);
-  signal ahb_snd_data_out   : std_logic_vector(AHBDW - 1 downto 0);
+  signal ahb_snd_data_in    : std_logic_vector(word_bitwidth - 1 downto 0);
+  signal ahb_snd_data_out   : std_logic_vector(word_bitwidth - 1 downto 0);
   signal ahb_snd_full       : std_ulogic;
   signal ahb_snd_almost_full       : std_ulogic;
   signal ahb_snd_empty      : std_ulogic;
   
   signal io_rcv_wrreq_in    : std_logic;
-  signal io_rcv_data_in     : std_logic_vector (AHBDW - 1 downto 0);
+  signal io_rcv_data_in     : std_logic_vector (word_bitwidth - 1 downto 0);
   signal io_rcv_full_in     : std_logic;
   signal io_rcv_clk_out     : std_logic;
   signal io_rcv_rdreq_out   : std_logic;
-  signal io_rcv_data_out    : std_logic_vector (AHBDW - 1 downto 0);
+  signal io_rcv_data_out    : std_logic_vector (word_bitwidth - 1 downto 0);
   signal io_rcv_almost_full : std_ulogic;
   signal io_rcv_empty       : std_logic;
   
   attribute mark_debug : string;
   --attribute keep       : string;
   
-  attribute mark_debug of ahb_snd_wrreq : signal is "true";
-  attribute mark_debug of ahb_snd_rdreq : signal is "true";
-  attribute mark_debug of ahb_snd_data_in : signal is "true";
-  attribute mark_debug of ahb_snd_data_out : signal is "true";
-  attribute mark_debug of ahb_snd_full : signal is "true";
-  attribute mark_debug of ahb_snd_almost_full : signal is "true";
-  attribute mark_debug of ahb_snd_empty : signal is "true";
-  attribute mark_debug of io_rcv_wrreq_in : signal is "true";
-  attribute mark_debug of io_rcv_data_in : signal is "true";
-  attribute mark_debug of io_rcv_full_in : signal is "true";
-  attribute mark_debug of io_rcv_clk_out : signal is "true";
-  attribute mark_debug of io_rcv_rdreq_out : signal is "true";
-  attribute mark_debug of io_rcv_data_out : signal is "true";
-  attribute mark_debug of io_rcv_almost_full : signal is "true";
-  attribute mark_debug of io_rcv_empty : signal is "true";
-  attribute mark_debug of credits : signal is "true";  
-  attribute mark_debug of credit_in : signal is "true";  
-  attribute mark_debug of credit_in_empty : signal is "true";  
-  attribute mark_debug of credit_received : signal is "true";  
-  attribute mark_debug of r : signal is "true";  
-  attribute mark_debug of ahb_rcv_wrreq : signal is "true";  
-  attribute mark_debug of ahb_rcv_rdreq : signal is "true";  
-  attribute mark_debug of ahb_rcv_data_in : signal is "true";  
-  attribute mark_debug of ahb_rcv_data_out : signal is "true";  
-  attribute mark_debug of ahb_rcv_full : signal is "true";  
-  attribute mark_debug of ahb_rcv_empty : signal is "true";  
-  attribute mark_debug of ahb_rcv_almost_full : signal is "true";  
-  attribute mark_debug of io_snd_reg : signal is "true";  
-  attribute mark_debug of receiving : signal is "true";  
-  attribute mark_debug of sending : signal is "true";
-  
+  --attribute mark_debug of ahb_snd_wrreq : signal is "true";
+  --attribute mark_debug of ahb_snd_rdreq : signal is "true";
+  --attribute mark_debug of ahb_snd_data_in : signal is "true";
+  --attribute mark_debug of ahb_snd_data_out : signal is "true";
+  --attribute mark_debug of ahb_snd_full : signal is "true";
+  --attribute mark_debug of ahb_snd_almost_full : signal is "true";
+  --attribute mark_debug of ahb_snd_empty : signal is "true";
+  --attribute mark_debug of io_rcv_wrreq_in : signal is "true";
+  --attribute mark_debug of io_rcv_data_in : signal is "true";
+  --attribute mark_debug of io_rcv_full_in : signal is "true";
+  --attribute mark_debug of io_rcv_clk_out : signal is "true";
+  --attribute mark_debug of io_rcv_rdreq_out : signal is "true";
+  --attribute mark_debug of io_rcv_data_out : signal is "true";
+  --attribute mark_debug of io_rcv_almost_full : signal is "true";
+  --attribute mark_debug of io_rcv_empty : signal is "true";
+  --attribute mark_debug of credits : signal is "true";  
+  --attribute mark_debug of credit_in : signal is "true";  
+  --attribute mark_debug of credit_in_empty : signal is "true";  
+  --attribute mark_debug of credit_received : signal is "true";  
+  --attribute mark_debug of r : signal is "true";  
+  --attribute mark_debug of ahb_rcv_wrreq : signal is "true";  
+  --attribute mark_debug of ahb_rcv_rdreq : signal is "true";  
+  --attribute mark_debug of ahb_rcv_data_in : signal is "true";  
+  --attribute mark_debug of ahb_rcv_data_out : signal is "true";  
+  --attribute mark_debug of ahb_rcv_full : signal is "true";  
+  --attribute mark_debug of ahb_rcv_empty : signal is "true";  
+  --attribute mark_debug of ahb_rcv_almost_full : signal is "true";  
+  --attribute mark_debug of io_snd_reg : signal is "true";  
+  --attribute mark_debug of receiving : signal is "true";  
+  --attribute mark_debug of sending : signal is "true";
+  --attribute mark_debug of hsel_reg   : signal is "true";
+  --attribute mark_debug of hwdata_reg : signal is "true";
+  --attribute mark_debug of hwrite_reg : signal is "true";
+  --attribute mark_debug of hburst_reg : signal is "true";
+  --attribute mark_debug of htrans_reg : signal is "true";
+  --attribute mark_debug of io_rcv_reg : signal is "true";
+  --attribute mark_debug of oen_reg : signal is "true";
+  --attribute mark_debug of oen_fsm_idle : signal is "true";
+ 
 begin
   
   rst <= not rstn;
@@ -368,11 +372,12 @@ begin
       g_data_width => 1,
       g_size       => 2)
     port map (
-      rst_n_i    => rstn,
+      rst_wr_n_i    => rstn,
       clk_wr_i   => io_clk_in,
       we_i       => '1',
       d_i(0)     => oen_fsm_idle,
       wr_full_o  => open,
+      rst_rd_n_i    => rstn,
       clk_rd_i   => clk,
       rd_i       => '1',
       q_o(0)     => oen_fsm_idle_sync,
@@ -401,11 +406,12 @@ begin
       g_data_width => word_bitwidth,
       g_size       => QUEUE_DEPTH)
     port map (
-      rst_n_i    => rstn,
+      rst_wr_n_i    => rstn,
       clk_wr_i   => io_clk_in,
       we_i       => io_rcv_wrreq_in, 
       d_i        => io_rcv_data_in,
       wr_full_o  => io_rcv_full_in,
+      rst_rd_n_i    => rstn,
       clk_rd_i   => clk,
       rd_i       => io_rcv_rdreq_out,
       q_o        => io_rcv_data_out,
@@ -448,11 +454,12 @@ begin
       g_data_width => 1,
       g_size       => 2 * QUEUE_DEPTH)
     port map (
-      rst_n_i    => rstn,
+      rst_wr_n_i    => rstn,
       clk_wr_i   => io_clk_in,
       we_i       => io_credit_in,
       d_i        => "0",
       wr_full_o  => open,
+      rst_rd_n_i    => rstn,
       clk_rd_i   => clk,
       rd_i       => '1',
       q_o(0)     => credit_in,
@@ -530,10 +537,11 @@ begin
           v.load_first := '1';
             if (selected = '1' and ahbsi.hready = '1' and ahbsi.htrans = HTRANS_NONSEQ) then
               sample_bus <= '1';
+              ahb_rcv_data_in <= (others => '0');
               if (ahbsi.hwrite = '1') then
-                ahb_rcv_data_in <= ahbsi.haddr(31 downto 1) & '1';
+                ahb_rcv_data_in(GLOB_PHYS_ADDR_BITS - 1 downto 0) <= ahbsi.haddr(31 downto 1) & '1';
               else
-                ahb_rcv_data_in <= ahbsi.haddr(31 downto 1) & '0';
+                ahb_rcv_data_in(GLOB_PHYS_ADDR_BITS - 1 downto 0) <= ahbsi.haddr(31 downto 1) & '0';
               end if;
               ahb_rcv_wrreq <= '1';
               v.state := get_length;
@@ -553,7 +561,8 @@ begin
             v.cnt := MAX_BURST_SIZE;
             v.burst_mode := '1';
           else 
-            ahb_rcv_data_in <= default_len;
+            ahb_rcv_data_in <= (others => '0');
+            ahb_rcv_data_in(0) <= '1';
             v.cnt := 1;
             v.burst_mode := '0';
            end if;         
@@ -573,7 +582,7 @@ begin
           if (v.burst_mode = '1') then
             -- burst mode
             --check early termination of burst
-            if ((ahbsi.htrans = HTRANS_IDLE or ahbsi.htrans = HTRANS_NONSEQ) and r.cnt /= 0) then
+            if (ahbsi.htrans = HTRANS_IDLE and r.cnt > 2) then
               v.state := early_burst_term;
             --first word of the burst
             elsif (v.load_first = '1') then
@@ -583,7 +592,7 @@ begin
               v.cnt := r.cnt - 1;
             --load remaining burst words
             elsif (r.cnt /= 0) then
-              ahb_rcv_data_in <= ahbsi.hwdata;
+              ahb_rcv_data_in <= ahbreadword(ahbsi.hwdata);
               ahb_rcv_wrreq <= '1';
               v.load_first := '0';
               v.cnt := r.cnt - 1;
@@ -604,7 +613,7 @@ begin
         v.ahbsout.hready := '0';
         if (ahb_rcv_almost_full or ahb_rcv_full) = '0' then
           if (r.cnt /= 0) then
-            ahb_rcv_data_in <= X"00000000";
+            ahb_rcv_data_in <= (others => '0');
             ahb_rcv_wrreq <= '1';
             v.load_first := '0';
             v.cnt := r.cnt - 1;
@@ -627,7 +636,7 @@ begin
           --  end if;
           if (ahb_snd_empty = '0') then
             v.ahbsout.hready := '1';
-            v.ahbsout.hrdata := ahb_snd_data_out;
+            v.ahbsout.hrdata := ahbdrivedata(ahb_snd_data_out);
             ahb_snd_rdreq <= '1';
             v.cnt := r.cnt - 1;
         end if;
@@ -751,7 +760,7 @@ begin
     elsif  clk'event and clk = '1' then
       if (sample_bus = '1') then
         hsel_reg <= ahbsi.hsel;
-        hwdata_reg <= ahbsi.hwdata;
+        hwdata_reg <= ahbreadword(ahbsi.hwdata);
         hwrite_reg <= ahbsi.hwrite;
         hburst_reg <= ahbsi.hburst;
         htrans_reg <= ahbsi.htrans;

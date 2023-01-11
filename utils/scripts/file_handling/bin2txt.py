@@ -4,7 +4,7 @@ import string
 
 binfile = ["soft-build/ariane/prom.bin", "soft-build/ariane/systest.bin"]
 txtfile = ["soft-build/ariane/prom.txt", "soft-build/ariane/systest.txt"]
-arch_bits = 64
+arch_bits = 32
 
 for i in range(len(binfile)):
 

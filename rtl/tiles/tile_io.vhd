@@ -602,7 +602,7 @@ begin
       generic map (
         hindex        => CFG_GRETH + CFG_DSU_ETH,
         io_bitwidth   => CFG_IOLINK_BITS,
-        word_bitwidth => ARCH_BITS,
+        word_bitwidth => 32,
         little_end    => 0)
       port map (
         clk           => clk,

@@ -974,9 +974,10 @@ package tile is
       ahbmi         : in  ahb_mst_in_type);
   end component iolink2ahbm;
 
-  component ahbm2iolink is
+  component ahbslv2iolink is
     generic (
       hindex        : integer range 0 to NAHBSLV - 1;
+      hconfig       : ahb_config_type;
       io_bitwidth   : integer range 1 to ARCH_BITS := 32;  -- power of 2, <= word_bitwidth
       word_bitwidth : integer range 1 to ARCH_BITS := 32;  -- 32 or 64
       little_end    : integer range 0 to 1         := 0);
@@ -992,8 +993,8 @@ package tile is
       io_data_oen   : out std_logic;
       io_data_in    : in  std_logic_vector(io_bitwidth - 1 downto 0);
       io_data_out   : out std_logic_vector(io_bitwidth - 1 downto 0);
-      ahbmi         : in  ahb_mst_in_type;
-      ahbmo         : out ahb_mst_out_type);
-  end component ahbm2iolink;
+      ahbsi         : in  ahb_slv_in_type;
+      ahbso         : out ahb_slv_out_type);
+  end component ahbslv2iolink;
 
 end tile;
