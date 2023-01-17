@@ -103,6 +103,9 @@ rm -rf $TMP
 mkdir $TMP
 cd $TMP
 
+git config --global url.https://github.com/qemu/.insteadOf git://git.qemu-project.org/
+git config --global url.https://anongit.freedesktop.org/git/.insteadOf git://anongit.freedesktop.org/
+
 # Python
 echo "*** Python ... ***"
 if [ $(noyes "Do you want to enable Python") == "y" ]; then
