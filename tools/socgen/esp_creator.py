@@ -116,7 +116,7 @@ class PeripheralFrame(Frame):
     Label(periph_config_frame, text = "UART ", fg="darkgreen").grid(row=1, column=1)
 
     # JTAG
-    if soc.TECH == "gf12" or soc.TECH == "inferred":
+    if soc.TECH == "gf12" or soc.TECH == "inferred" or soc.ESP_EMU_TECH != "none":
       Label(periph_config_frame, text = "JTAG (test) :").grid(row=2, column=1)
       Checkbutton(periph_config_frame, text="", variable=soc.jtag_en,
                   onvalue = 1, offvalue = 0, command=main_frame.update_noc_config).grid(row=2, column=2)
@@ -128,7 +128,7 @@ class PeripheralFrame(Frame):
     #   eth_text = "Ethernet (use SGMII): "
     # else:
     #   eth_text = "Ethernet (no SGMII): "
-    if soc.TECH == "gf12" or soc.TECH == "inferred":
+    if soc.TECH == "gf12" or soc.TECH == "inferred" or soc.ESP_EMU_TECH != "none":
         Label(periph_config_frame, text = "Ethernet :").grid(row=3, column=1)
         Checkbutton(periph_config_frame, text="", variable=soc.eth_en,
                     onvalue = 1, offvalue = 0, command=main_frame.update_noc_config).grid(row=3, column=2)
@@ -136,7 +136,7 @@ class PeripheralFrame(Frame):
         Label(periph_config_frame, text = "Ethernet", fg="darkgreen").grid(row=3, column=1)
 
 
-    if soc.TECH == "gf12" or soc.TECH == "inferred":
+    if soc.TECH == "gf12" or soc.TECH == "inferred" or soc.ESP_EMU_TECH != "none":
         Label(periph_config_frame, text = "Custom IO Link:").grid(row=4, column=1)
         Checkbutton(periph_config_frame, text="", variable=soc.iolink_en,
                 onvalue = 1, offvalue = 0, command=main_frame.update_noc_config).grid(row=4, column=2)
