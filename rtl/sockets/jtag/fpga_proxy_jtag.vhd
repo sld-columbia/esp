@@ -46,7 +46,7 @@ end;
 
 architecture rtl of fpga_proxy_jtag is
 
-  constant CFG_APBADDR_FP    : integer := 16#100#;
+  constant CFG_APBADDR_FP    : integer := 16#C00#;
   constant ahb2apb_hmask_fp  : integer := 16#FFE#;
   constant ahb2apb_hindex_fp : integer := 0;
 

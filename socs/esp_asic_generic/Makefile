@@ -10,12 +10,12 @@ ESP_ROOT = $(realpath ../../)
 
 TECHLIB  = inferred
 FPGA_TECHLIB = virtex7
-BOARD    = profpga-xc7v2000t-epochs-0
+BOARD    = profpga-xc7v2000t-esp_asic_generic
 DESIGN   = $(BOARD)
 SMP = 0
 BASE_FREQ_MHZ ?= 50
 LEON3_STACK ?= 0x5bfffff0
-USE_OPENSBI ?= 1
+USE_OPENSBI ?= 0
 
 OVR_TECHLIB ?=
 ifneq ("$(OVR_TECHLIB)", "")

@@ -38,62 +38,62 @@ while line:
   if flit[-4:]=='0001':
     source="100000"
     plane=1
-    addr1="0x10010000"
-    addr2="0x10010004"
-    addr3="0x10010008"
-    addrr1="0x10010100"
-    addrr2="0x10010104"
-    addrr3="0x10010108"
+    addr1="0xC0010000"
+    addr2="0xC0010004"
+    addr3="0xC0010008"
+    addrr1="0xC0010100"
+    addrr2="0xC0010104"
+    addrr3="0xC0010108"
 
   elif flit[-4:]=='0010':
     source="010000"
     plane=2
-    addr1="0x10010010"
-    addr2="0x10010014"
-    addr3="0x10010018"
-    addrr1="0x10010110"
-    addrr2="0x10010114"
-    addrr3="0x10010118"
+    addr1="0xC0010010"
+    addr2="0xC0010014"
+    addr3="0xC0010018"
+    addrr1="0xC0010110"
+    addrr2="0xC0010114"
+    addrr3="0xC0010118"
 
   elif flit[-4:]=='0011':
     source="001000"
     plane=3
-    addr1="0x10010020"
-    addr2="0x10010024"
-    addr3="0x10010028"
-    addrr1="0x10010120"
-    addrr2="0x10010124"
-    addrr3="0x10010128"
+    addr1="0xC0010020"
+    addr2="0xC0010024"
+    addr3="0xC0010028"
+    addrr1="0xC0010120"
+    addrr2="0xC0010124"
+    addrr3="0xC0010128"
 
   elif flit[-4:]=='0100':
     source="000100"
     plane=4
-    addr1="0x10010030"
-    addr2="0x10010034"
-    addr3="0x10010038"
-    addrr1="0x10010130"
-    addrr2="0x10010134"
-    addrr3="0x10010138"
+    addr1="0xC0010030"
+    addr2="0xC0010034"
+    addr3="0xC0010038"
+    addrr1="0xC0010130"
+    addrr2="0xC0010134"
+    addrr3="0xC0010138"
 
   elif flit[-4:]=='0101':
     source="000010"
     plane=5
-    addr1="0x10010040"
-    addr2="0x10010044"
-    addr3="0x10010048"
-    addrr1="0x10010140"
-    addrr2="0x10010144"
-    addrr3="0x10010148"
+    addr1="0xC0010040"
+    addr2="0xC0010044"
+    addr3="0xC0010048"
+    addrr1="0xC0010140"
+    addrr2="0xC0010144"
+    addrr3="0xC0010148"
 
   elif flit[-4:]=='0110':
     source="000001"
     plane=6
-    addr1="0x10010050"
-    addr2="0x10010054"
-    addr3="0x10010058"
-    addrr1="0x10010150"
-    addrr2="0x10010154"
-    addrr3="0x10010158"
+    addr1="0xC0010050"
+    addr2="0xC0010054"
+    addr3="0xC0010058"
+    addrr1="0xC0010150"
+    addrr2="0xC0010154"
+    addrr3="0xC0010158"
 
 
   zeros=""

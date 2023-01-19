@@ -517,7 +517,7 @@ begin
     end if;
   end process cpu_rstn_state_update;
 
-  cpu_rstn_gen_sim: if SIMULATION = true generate
+  cpu_rstn_gen_sim: if SIMULATION = true and CFG_IOLINK_EN = 0 generate
 
     cpu_rstn_sim_fsm: process (cpu_rstn_state, cleanrstn) is
     begin
@@ -563,7 +563,7 @@ begin
 
   end generate cpu_rstn_gen_sim;
 
-  cpu_rstn_gen: if SIMULATION = false generate
+  cpu_rstn_gen: if SIMULATION = false or CFG_IOLINK_EN = 1 generate
 
     cpu_rstn_fsm: process (cpu_rstn_state, srst) is
     begin  -- process cpu_rstn_fsm
