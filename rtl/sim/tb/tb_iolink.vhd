@@ -30,7 +30,7 @@ architecture rtl of tb_iolink is
 
   signal valid_out      : std_ulogic;
   signal data_out       : std_logic_vector(CFG_IOLINK_BITS - 1 downto 0);
-  signal word, exp_word : std_logic_vector(63 downto 0);
+  signal word, exp_word : std_logic_vector(31 downto 0);
 
 begin
 
@@ -47,7 +47,7 @@ begin
     file program    : text open read_mode is "../soft-build/ariane/systest.txt";
 
     variable text_word, text_data : line;
-    variable word_var             : std_logic_vector(63 downto 0);
+    variable word_var             : std_logic_vector(31 downto 0);
     variable ok                   : boolean;
     variable credit_to_clear      : boolean;
     variable credit_to_set        : boolean;
@@ -64,60 +64,60 @@ begin
     wait until reset = '0';
     wait for 20000 ns;
 
-      -- read some data
-      -- send address
-      word <= X"000000006009078D";
-      snd_flit_iolink(iolink_clk_out_int, word, valid_out, data_out);
-      -- send length
-      word <= X"0000000000000001";
-      snd_flit_iolink(iolink_clk_out_int, word, valid_out, data_out);
+    -- TEST of CSR Read through IOLink; uncomment to run
+    -- send address
+    --word <= X"000000006009078D";
+    --snd_flit_iolink(iolink_clk_out_int, word, valid_out, data_out);
+    -- send length
+    --word <= X"0000000000000001";
+    --snd_flit_iolink(iolink_clk_out_int, word, valid_out, data_out);
 
-      word <= X"0000000000014085";
-      snd_flit_iolink(iolink_clk_out_int, word, valid_out, data_out);
+    --word <= X"0000000000014085";
+    --snd_flit_iolink(iolink_clk_out_int, word, valid_out, data_out);
 
-      --iolink_data_oen <= '0';
+    --iolink_data_oen <= '0';
 
-      --while true loop
-      --  wait until rising_edge(iolink_clk_in_int);
-      --  if iolink_valid_in_int = '1' then
-      --    word(15 downto 0) <= iolink_data_in_int;
-      --    exit;
-      --  end if;
-      --end loop;
+    --while true loop
+    --  wait until rising_edge(iolink_clk_in_int);
+    --  if iolink_valid_in_int = '1' then
+    --    word(15 downto 0) <= iolink_data_in_int;
+    --    exit;
+    --  end if;
+    --end loop;
 
-      --while true loop
-      --  wait until rising_edge(iolink_clk_in_int);
-      --    if iolink_valid_in_int = '1' then
-      --    word(31 downto 16) <= iolink_data_in_int;
-      --    exit;
-      --  end if;
-      --end loop;
+    --while true loop
+    --  wait until rising_edge(iolink_clk_in_int);
+    --    if iolink_valid_in_int = '1' then
+    --    word(31 downto 16) <= iolink_data_in_int;
+    --    exit;
+    --  end if;
+    --end loop;
 
-      --while true loop
-      --  wait until rising_edge(iolink_clk_in_int);
-      --    if iolink_valid_in_int = '1' then
-      --    word(47 downto 32) <= iolink_data_in_int;
-      --    exit;
-      --  end if;
-      --end loop;
+    --while true loop
+    --  wait until rising_edge(iolink_clk_in_int);
+    --    if iolink_valid_in_int = '1' then
+    --    word(47 downto 32) <= iolink_data_in_int;
+    --    exit;
+    --  end if;
+    --end loop;
 
-      --while true loop
-      --  wait until rising_edge(iolink_clk_in_int);
-      --    if iolink_valid_in_int = '1' then
-      --    word(63 downto 48) <= iolink_data_in_int;
-      --    exit;
-      --  end if;
-      --end loop;
+    --while true loop
+    --  wait until rising_edge(iolink_clk_in_int);
+    --    if iolink_valid_in_int = '1' then
+    --    word(63 downto 48) <= iolink_data_in_int;
+    --    exit;
+    --  end if;
+    --end loop;
 
-      --wait until rising_edge(iolink_clk_out_int);
-      --iolink_credit_out_int <= '1';
-      --wait until rising_edge(iolink_clk_out_int);
-      --iolink_credit_out_int <= '0';
-      --iolink_data_oen       <= '1';
+    --wait until rising_edge(iolink_clk_out_int);
+    --iolink_credit_out_int <= '1';
+    --wait until rising_edge(iolink_clk_out_int);
+    --iolink_credit_out_int <= '0';
+    --iolink_data_oen       <= '1';
 
-      --wait for 0.2 ns;
+    --wait for 0.2 ns;
 
-      --report "word: " & integer'image(to_integer(unsigned(word)));
+    --report "word: " & integer'image(to_integer(unsigned(word)));
 
 
     ---------------------------------------------------------------------------
@@ -125,22 +125,22 @@ begin
     ---------------------------------------------------------------------------
     for i in 0 to 1 loop
       -- send address
-      word <= X"0000000060000401";
+      word <= X"60000401";
       snd_flit_iolink(iolink_clk_out_int, word, valid_out, data_out);
       -- send length
-      word <= X"0000000000000001";
+      word <= X"00000001";
       snd_flit_iolink(iolink_clk_out_int, word, valid_out, data_out);
       -- send data
-      word <= X"0000000100000001";
+      word <= X"00000001";
       snd_flit_iolink(iolink_clk_out_int, word, valid_out, data_out);
-      wait for 80000 ns;
+      wait for 100000 ns;
     end loop;  -- i
 
     ---------------------------------------------------------------------------
     -- Send bootloader binary
     ---------------------------------------------------------------------------
     -- send address
-    word <= X"0000000000010001";
+    word <= X"00010001";
     snd_flit_iolink(iolink_clk_out_int, word, valid_out, data_out);
     -- send length
     readline(bootloader, text_word);
@@ -185,15 +185,15 @@ begin
     ---------------------------------------------------------------------------
     for i in 0 to 1 loop
       -- send address
-      word <= X"0000000060000401";
+      word <= X"60000401";
       snd_flit_iolink(iolink_clk_out_int, word, valid_out, data_out);
       -- send length
-      word <= X"0000000000000001";
+      word <= X"00000001";
       snd_flit_iolink(iolink_clk_out_int, word, valid_out, data_out);
       -- send data
-      word <= X"0000000100000001";
+      word <= X"00000001";
       snd_flit_iolink(iolink_clk_out_int, word, valid_out, data_out);
-      wait for 80000 ns;
+      wait for 100000 ns;
     end loop;  -- i
   end process;
   -- pragma translate_on

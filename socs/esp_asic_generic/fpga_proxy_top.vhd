@@ -34,6 +34,7 @@ use work.coretypes.all;
 use work.grlib_config.all;
 use work.socmap.all;
 use work.tb_pkg.all;
+use work.jtag_pkg.all;
 
 entity fpga_proxy_top is
 
@@ -42,11 +43,15 @@ entity fpga_proxy_top is
     JTAG_TRACE : integer range -1 to CFG_TILES_NUM - 1 := -1);
   port (
     reset             : in    std_ulogic;  -- GLobal FPGA reset (active high)
+    chip_reset        : out   std_ulogic;  -- Chip reset (active high)
     ext_clk_noc       : out   std_logic;
-    ext_clk           : out   std_logic_vector(0 to CFG_TILES_NUM - 1);
+    ext_clk           : out   std_logic;
     -- Main clock
     main_clk_p         : in    std_ulogic;  -- 78.25 MHz clock
     main_clk_n         : in    std_ulogic;  -- 78.25 MHz clock
+    -- JTAG clock
+    jtag_clk_p        : in    std_ulogic;
+    jtag_clk_n        : in    std_ulogic;
     -- Memory link
     fpga_data         : inout std_logic_vector(CFG_NMEM_TILE * (ARCH_BITS) - 1 downto 0);
     fpga_valid_in     : out   std_logic_vector(CFG_NMEM_TILE - 1 downto 0);
@@ -82,25 +87,29 @@ entity fpga_proxy_top is
     etx_er            : out   std_ulogic;
     emdc              : out   std_ulogic;
     emdio             : inout std_logic;
+    -- DDR
+    clk_ref_p         : in    std_ulogic;  -- 200 MHz clock
+    clk_ref_n         : in    std_ulogic;  -- 200 MHz clock-- DDR0
     -- DDR0
-    c0_sys_clk_p      : in    std_logic;   -- 125 MHz clock
-    c0_sys_clk_n      : in    std_logic;   -- 125 MHz clock
-    c0_ddr4_act_n     : out   std_logic;
-    c0_ddr4_adr       : out   std_logic_vector(16 downto 0);
-    c0_ddr4_ba        : out   std_logic_vector(1 downto 0);
-    c0_ddr4_bg        : out   std_logic_vector(1 downto 0);
-    c0_ddr4_cke       : out   std_logic_vector(1 downto 0);
-    c0_ddr4_odt       : out   std_logic_vector(1 downto 0);
-    c0_ddr4_cs_n      : out   std_logic_vector(1 downto 0);
-    c0_ddr4_ck_t      : out   std_logic_vector(0 downto 0);
-    c0_ddr4_ck_c      : out   std_logic_vector(0 downto 0);
-    c0_ddr4_reset_n   : out   std_logic;
-    c0_ddr4_dm_dbi_n  : inout std_logic_vector(8 downto 0);
-    c0_ddr4_dq        : inout std_logic_vector(71 downto 0);
-    c0_ddr4_dqs_c     : inout std_logic_vector(8 downto 0);
-    c0_ddr4_dqs_t     : inout std_logic_vector(8 downto 0);
-    c0_calib_complete : out   std_logic;
-    c0_diagnostic_led : out   std_ulogic;
+    sys_clk_p      : in    std_logic;   -- 200 MHz clock
+    sys_clk_n      : in    std_logic;   -- 200 MHz clock
+    ddr3_dq        : inout std_logic_vector(63 downto 0);
+    ddr3_dqs_p     : inout std_logic_vector(7 downto 0);
+    ddr3_dqs_n     : inout std_logic_vector(7 downto 0);
+    ddr3_addr      : out   std_logic_vector(14 downto 0);
+    ddr3_ba        : out   std_logic_vector(2 downto 0);
+    ddr3_ras_n     : out   std_logic;
+    ddr3_cas_n     : out   std_logic;
+    ddr3_we_n      : out   std_logic;
+    ddr3_reset_n   : out   std_logic;
+    ddr3_ck_p      : out   std_logic_vector(0 downto 0);
+    ddr3_ck_n      : out   std_logic_vector(0 downto 0);
+    ddr3_cke       : out   std_logic_vector(0 downto 0);
+    ddr3_cs_n      : out   std_logic_vector(0 downto 0);
+    ddr3_dm        : out   std_logic_vector(7 downto 0);
+    ddr3_odt       : out   std_logic_vector(0 downto 0);
+    calib_complete : out   std_logic;
+    diagnostic_led : out   std_ulogic;
     LED_RED           : out   std_ulogic;
     LED_GREEN         : out   std_ulogic;
     LED_BLUE          : out   std_ulogic;
@@ -110,42 +119,84 @@ end entity fpga_proxy_top;
 
 architecture rtl of fpga_proxy_top is
 
-  constant FPGA_PROXY_TECH : integer := virtexu;
-  constant FPGA_PROXY_FREQ : integer := 78125;  -- FPGA frequency in KHz
+  constant DEF_TMS : std_logic_vector(31 downto 0) := conv_std_logic_vector(0, 32);
+  constant DEF_TILE : std_logic_vector(31 downto 0) := conv_std_logic_vector(abs(JTAG_TRACE), 32);
+  constant FPGA_PROXY_TECH : integer := virtex7;
+  constant FPGA_PROXY_FREQ : integer := 100000;  -- FPGA frequency in KHz
   constant MAX_NMEM_TILES  : integer := 4;
 
-  component ahb2mig_ebddr4r5 is
-    generic (
-      hindex : integer;
-      haddr  : integer;
-      hmask  : integer
+  component ahb2mig_7series_profpga
+    generic(
+      hindex : integer := 0;
+      haddr  : integer := 0;
+      hmask  : integer := 16#f00#
       );
+    port(
+      app_addr          : out std_logic_vector(28 downto 0);
+      app_cmd           : out std_logic_vector(2 downto 0);
+      app_en            : out std_logic;
+      app_wdf_data      : out std_logic_vector(511 downto 0);
+      app_wdf_end       : out std_logic;
+      app_wdf_mask      : out std_logic_vector(63 downto 0);
+      app_wdf_wren      : out std_logic;
+      app_rd_data       : in  std_logic_vector(511 downto 0);
+      app_rd_data_end   : in  std_logic;
+      app_rd_data_valid : in  std_logic;
+      app_rdy           : in  std_logic;
+      app_wdf_rdy       : in  std_logic;
+      ahbso             : out ahb_slv_out_type;
+      ahbsi             : in  ahb_slv_in_type;
+      clk_amba          : in  std_logic;
+      rst_n_syn         : in  std_logic
+      );
+  end component;
+
+  component mig is
     port (
-      c0_sys_clk_p     : in    std_logic;
-      c0_sys_clk_n     : in    std_logic;
-      c0_ddr4_act_n    : out   std_logic;
-      c0_ddr4_adr      : out   std_logic_vector(16 downto 0);
-      c0_ddr4_ba       : out   std_logic_vector(1 downto 0);
-      c0_ddr4_bg       : out   std_logic_vector(1 downto 0);
-      c0_ddr4_cke      : out   std_logic_vector(1 downto 0);
-      c0_ddr4_odt      : out   std_logic_vector(1 downto 0);
-      c0_ddr4_cs_n     : out   std_logic_vector(1 downto 0);
-      c0_ddr4_ck_t     : out   std_logic_vector(0 downto 0);
-      c0_ddr4_ck_c     : out   std_logic_vector(0 downto 0);
-      c0_ddr4_reset_n  : out   std_logic;
-      c0_ddr4_dm_dbi_n : inout std_logic_vector(8 downto 0);
-      c0_ddr4_dq       : inout std_logic_vector(71 downto 0);
-      c0_ddr4_dqs_c    : inout std_logic_vector(8 downto 0);
-      c0_ddr4_dqs_t    : inout std_logic_vector(8 downto 0);
-      ahbso            : out   ahb_slv_out_type;
-      ahbsi            : in    ahb_slv_in_type;
-      calib_done       : out   std_logic;
-      rst_n_syn        : in    std_logic;
-      rst_n_async      : in    std_logic;
-      clk_amba         : in    std_logic;
-      ui_clk           : out   std_logic;
-      ui_clk_sync_rst  : out   std_logic);
-  end component ahb2mig_ebddr4r5;
+      ddr3_dq             : inout std_logic_vector(63 downto 0);
+      ddr3_addr           : out   std_logic_vector(14 downto 0);
+      ddr3_ba             : out   std_logic_vector(2 downto 0);
+      ddr3_ras_n          : out   std_logic;
+      ddr3_cas_n          : out   std_logic;
+      ddr3_we_n           : out   std_logic;
+      ddr3_reset_n        : out   std_logic;
+      ddr3_dqs_n          : inout std_logic_vector(7 downto 0);
+      ddr3_dqs_p          : inout std_logic_vector(7 downto 0);
+      ddr3_ck_p           : out   std_logic_vector(0 downto 0);
+      ddr3_ck_n           : out   std_logic_vector(0 downto 0);
+      ddr3_cke            : out   std_logic_vector(0 downto 0);
+      ddr3_cs_n           : out   std_logic_vector(0 downto 0);
+      ddr3_dm             : out   std_logic_vector(7 downto 0);
+      ddr3_odt            : out   std_logic_vector(0 downto 0);
+      app_addr            : in    std_logic_vector(28 downto 0);
+      app_cmd             : in    std_logic_vector(2 downto 0);
+      app_en              : in    std_logic;
+      app_wdf_data        : in    std_logic_vector(511 downto 0);
+      app_wdf_end         : in    std_logic;
+      app_wdf_mask        : in    std_logic_vector(63 downto 0);
+      app_wdf_wren        : in    std_logic;
+      app_rd_data         : out   std_logic_vector(511 downto 0);
+      app_rd_data_end     : out   std_logic;
+      app_rd_data_valid   : out   std_logic;
+      app_rdy             : out   std_logic;
+      app_wdf_rdy         : out   std_logic;
+      app_sr_req          : in    std_logic;
+      app_ref_req         : in    std_logic;
+      app_zq_req          : in    std_logic;
+      app_sr_active       : out   std_logic;
+      app_ref_ack         : out   std_logic;
+      app_zq_ack          : out   std_logic;
+      sys_clk_p           : in    std_logic;
+      sys_clk_n           : in    std_logic;
+      clk_ref_p              : in    std_logic;  -- 200 MHz clock
+      clk_ref_n              : in    std_logic;  -- 200 MHz clock
+      ui_clk              : out   std_logic;
+      ui_clk_sync_rst     : out   std_logic;
+      init_calib_complete : out   std_logic;
+      device_temp         : out   std_logic_vector(11 downto 0);
+      sys_rst                : in    std_logic
+      );
+  end component mig;
 
   function set_ddr_index (
     constant n : integer range 0 to 3)
@@ -187,39 +238,65 @@ architecture rtl of fpga_proxy_top is
 
   -----------------------------------------------------------------------------
   -- clock and reset
+  attribute mark_debug : string;
 
   -- main clock (EDCL clock)
-  signal main_clk                         : std_ulogic;
+  signal main_clk, jtag_clk                         : std_ulogic;
+  attribute mark_debug of main_clk : signal is "true";
 
   -- DDR clocks
   signal sys_clk  : std_logic_vector(0 to MAX_NMEM_TILES - 1) := (others => '0');
   signal sys_rst  : std_logic_vector(0 to MAX_NMEM_TILES - 1);
+  attribute mark_debug of sys_clk : signal is "true";
 
   -- Resets
   signal rstn, rstraw, rstraw_1, rstraw_2, rstraw_3 : std_ulogic;
   signal lock, rst                                  : std_ulogic;
   signal migrstn, migrstn_1, migrstn_2, migrstn_3   : std_logic;
+  attribute mark_debug of rstn : signal is "true";
+  attribute mark_debug of rstraw : signal is "true";
+  attribute mark_debug of lock : signal is "true";
+  attribute mark_debug of migrstn : signal is "true";
 
   -- ESP backup clocks
   signal ext_clk_noc_int : std_logic := '0';
   -- ESP clock monitors
-  signal ext_clk_int : std_logic_vector(0 to CFG_TILES_NUM - 1) := (others  => '0');
+  signal ext_clk_int : std_logic := '0';
 
   -----------------------------------------------------------------------------
   -- DDRs domain
   -- MIG clock and diagnostic
-  signal c0_calib_done        : std_ulogic;
-  signal c0_diagnostic_count  : std_logic_vector(26 downto 0);
-  signal c0_diagnostic_toggle : std_ulogic;
-  signal c1_calib_done        : std_ulogic;
-  signal c1_diagnostic_count  : std_logic_vector(26 downto 0);
-  signal c1_diagnostic_toggle : std_ulogic;
-  signal c2_calib_done        : std_ulogic;
-  signal c2_diagnostic_count  : std_logic_vector(26 downto 0);
-  signal c2_diagnostic_toggle : std_ulogic;
-  signal c3_calib_done        : std_ulogic;
-  signal c3_diagnostic_count  : std_logic_vector(26 downto 0);
-  signal c3_diagnostic_toggle : std_ulogic;
+  signal app_addr          : std_logic_vector(28 downto 0);
+  signal app_cmd           : std_logic_vector(2 downto 0);
+  signal app_en            : std_ulogic;
+  signal app_wdf_data      : std_logic_vector(511 downto 0);
+  signal app_wdf_end       : std_ulogic;
+  signal app_wdf_mask      : std_logic_vector(63 downto 0); 
+  signal app_wdf_wren      : std_ulogic;
+  signal app_rd_data       : std_logic_vector(511 downto 0);
+  signal app_rd_data_end   : std_ulogic;
+  signal app_rd_data_valid : std_ulogic;
+  signal app_rdy           : std_ulogic;
+  signal app_wdf_rdy       : std_ulogic;
+  signal calib_done        : std_ulogic;
+  signal diagnostic_count  : std_logic_vector(26 downto 0);
+  signal diagnostic_toggle : std_ulogic;
+
+  attribute mark_debug of app_addr          : signal is "true";
+  attribute mark_debug of app_cmd           : signal is "true";
+  attribute mark_debug of app_en            : signal is "true";
+  attribute mark_debug of app_wdf_data      : signal is "true";
+  attribute mark_debug of app_wdf_end       : signal is "true";
+  attribute mark_debug of app_wdf_mask      : signal is "true"; 
+  attribute mark_debug of app_wdf_wren      : signal is "true";
+  attribute mark_debug of app_rd_data       : signal is "true";
+  attribute mark_debug of app_rd_data_end   : signal is "true";
+  attribute mark_debug of app_rd_data_valid : signal is "true";
+  attribute mark_debug of app_rdy           : signal is "true";
+  attribute mark_debug of app_wdf_rdy       : signal is "true";
+  attribute mark_debug of calib_done        : signal is "true";
+  attribute mark_debug of diagnostic_count  : signal is "true";
+  attribute mark_debug of diagnostic_toggle : signal is "true";
 
   -- AHB proxy extended
   type noc_flit_vector is array (natural range <>) of noc_flit_type;
@@ -229,6 +306,13 @@ architecture rtl of fpga_proxy_top is
   signal extended_ahbm_snd_wrreq    : std_logic_vector(0 to CFG_NMEM_TILE - 1);
   signal extended_ahbm_snd_data_in  : noc_flit_vector(0 to CFG_NMEM_TILE - 1);
   signal extended_ahbm_snd_full     : std_logic_vector(0 to CFG_NMEM_TILE - 1);
+
+  attribute mark_debug of extended_ahbm_rcv_rdreq    : signal is "true";
+  attribute mark_debug of extended_ahbm_rcv_data_out : signal is "true";
+  attribute mark_debug of extended_ahbm_rcv_empty    : signal is "true";
+  attribute mark_debug of extended_ahbm_snd_wrreq    : signal is "true";
+  attribute mark_debug of extended_ahbm_snd_data_in  : signal is "true";
+  attribute mark_debug of extended_ahbm_snd_full     : signal is "true";
 
   -- AHB proxy queues
   type misc_noc_flit_vector is array (natural range <>) of misc_noc_flit_type;
@@ -260,6 +344,12 @@ architecture rtl of fpga_proxy_top is
   signal ddr_ahbsi        : ahb_slv_in_vector_type(0 to MAX_NMEM_TILES - 1);
   signal ddr_ahbso        : ahb_slv_out_vector_type(0 to MAX_NMEM_TILES - 1);
 
+  attribute mark_debug of ahb_mst_out_ddr : signal is "true";
+  attribute mark_debug of ahb_slv_out_ddr : signal is "true";
+
+  attribute mark_debug of ahb_mst_in_ddr  : signal is "true";
+  attribute mark_debug of ahb_slv_in_ddr  : signal is "true";
+
   -----------------------------------------------------------------------------
   -- Debug domain
   -- Mux to/from debug queues
@@ -276,6 +366,19 @@ architecture rtl of fpga_proxy_top is
   signal mux_ahbs_snd_data_in   : misc_noc_flit_type;
   signal mux_ahbs_snd_full      : std_ulogic;
 
+  attribute mark_debug of mux_ahbs_rcv_rdreq     : signal is "true";
+  attribute mark_debug of mux_ahbs_rcv_data_out  : signal is "true";
+  attribute mark_debug of mux_ahbs_rcv_empty     : signal is "true";
+  attribute mark_debug of mux_ahbs_rcv_wrreq     : signal is "true";
+  attribute mark_debug of mux_ahbs_rcv_data_in   : signal is "true";
+  attribute mark_debug of mux_ahbs_rcv_full      : signal is "true";
+  attribute mark_debug of mux_ahbs_snd_rdreq     : signal is "true";
+  attribute mark_debug of mux_ahbs_snd_data_out  : signal is "true";
+  attribute mark_debug of mux_ahbs_snd_empty     : signal is "true";
+  attribute mark_debug of mux_ahbs_snd_wrreq     : signal is "true";
+  attribute mark_debug of mux_ahbs_snd_data_in   : signal is "true";
+  attribute mark_debug of mux_ahbs_snd_full      : signal is "true";
+
   signal sending_packet : std_logic_vector(0 to CFG_NMEM_TILE - 1);
   signal receiving_packet : std_logic_vector(0 to CFG_NMEM_TILE - 1);
 
@@ -287,6 +390,17 @@ architecture rtl of fpga_proxy_top is
   signal ahbmo : ahb_mst_out_vector;
   signal ahbsi : ahb_slv_in_type;
   signal ahbso : ahb_slv_out_vector;
+  signal ahbso_edcl : ahb_slv_out_vector;
+  signal ahbsi_in  : ahb_slv_in_type;
+  signal ahbso_apb : ahb_slv_out_type;
+  signal ahbso_apb1 : ahb_slv_out_type;
+  signal ahbso_iolink : ahb_slv_out_type;
+
+  attribute mark_debug of ahbmi : signal is "true";
+  attribute mark_debug of ahbmo : signal is "true";
+  attribute mark_debug of ahbsi : signal is "true";
+  attribute mark_debug of ahbso : signal is "true";
+  attribute mark_debug of ahbsi_in  : signal is "true";
 
   function set_remote_ahb_mask (
     constant N : in integer range 1 to CFG_NMEM_TILE)
@@ -312,6 +426,9 @@ architecture rtl of fpga_proxy_top is
   signal ethi : eth_in_type;
   signal etho : eth_out_type;
 
+  attribute mark_debug of ethi : signal is "true";
+  attribute mark_debug of etho : signal is "true";
+
   -----------------------------------------------------------------------------
   -- FPGA proxy
   signal fpga_data_ien       : std_logic_vector(CFG_NMEM_TILE - 1 downto 0);
@@ -335,17 +452,37 @@ architecture rtl of fpga_proxy_top is
   signal iolink_credit_in_int  : std_ulogic;
   signal iolink_credit_out_int : std_ulogic;
 
+  -- AHB bus configuration
+  constant iolink_hconfig : ahb_config_type := (
+    0      => ahb_device_reg (VENDOR_SLD, SLD_IO_LINK, 0, 0, 0),
+    4      => ahb_membar(16#000#, '0', '0', 16#800#),
+    others => zero32); 
+
   -----------------------------------------------------------------------------
   -- JTAG
-  signal tclk_sim : std_logic := '0';
+  signal tdi_int : std_logic_vector(0 to CFG_TILES_NUM - 1);
+  signal tdo_int : std_logic_vector(0 to CFG_TILES_NUM - 1);
+  signal tclk_int : std_logic ;
+  signal tms_int : std_logic ;
+  signal out_tms : std_logic_vector(31 downto 0);
+  signal out_jtile : std_logic_vector(31 downto 0);
 
-  -- pragma translate_off
-  type jtag_trace_count_t is array (1 to 6) of integer;
-  -- pragma translate_on
+  signal tms_in : std_logic := '0';
+  -- signal tclk_sim : std_logic := '0';
+  -- signal tclk_in : std_logic := '0';
+  signal jtag_tile : integer range 0 to 35 := 0 ;  --23
+
+  type source_t is array (1 to 6) of std_logic_vector(5 downto 0);
+  type addr_t is array (17 downto 0) of std_logic_vector(31 downto 0);
+
+  -- control
+  signal rst_l : std_logic;
+  signal tdi_jtag, tdo_jtag : std_logic;
 
   attribute keep : boolean;
 
   attribute keep of main_clk : signal is true;
+  attribute keep of jtag_clk : signal is true;
   attribute keep of sys_clk  : signal is true;
 
 begin  -- architecture rtl
@@ -353,16 +490,16 @@ begin  -- architecture rtl
   -----------------------------------------------------------------------------
   -- DDR clock diagnostic
 
-  c0_diagnostic : process (sys_clk(0), sys_rst(0))
+  diagnostic : process (sys_clk(0), sys_rst(0))
   begin  -- process c0_diagnostic
     if sys_rst(0) = '1' then           -- asynchronous reset (active high)
-      c0_diagnostic_count <= (others => '0');
+      diagnostic_count <= (others => '0');
     elsif sys_clk(0)'event and sys_clk(0) = '1' then  -- rising clock edge
-      c0_diagnostic_count <= c0_diagnostic_count + 1;
+      diagnostic_count <= diagnostic_count + 1;
     end if;
-  end process c0_diagnostic;
-  c0_diagnostic_toggle <= c0_diagnostic_count(26);
-  c0_led_diag_pad : outpad generic map (tech => FPGA_PROXY_TECH, level => cmos, voltage => x12v) port map (c0_diagnostic_led, c0_diagnostic_toggle);
+  end process diagnostic;
+  diagnostic_toggle <= diagnostic_count(26);
+  led_diag_pad : outpad generic map (tech => FPGA_PROXY_TECH, level => cmos, voltage => x12v) port map (diagnostic_led, diagnostic_toggle);
 
   -------------------------------------------------------------------------------
   -- Leds
@@ -371,7 +508,7 @@ begin  -- architecture rtl
   lock_pad : outpad generic map (tech => FPGA_PROXY_TECH, level => cmos, voltage => x18v) port map (LED_GREEN, lock);
 
   -- From DDR controller (on FPGA)
-  calib0_complete_pad : outpad generic map (tech => FPGA_PROXY_TECH, level => cmos, voltage => x12v) port map (c0_calib_complete, c0_calib_done);
+  calib0_complete_pad : outpad generic map (tech => FPGA_PROXY_TECH, level => cmos, voltage => x12v) port map (calib_complete, calib_done);
 
 
   led_red_pad : outpad generic map (tech => FPGA_PROXY_TECH, level => cmos, voltage => x18v) port map (LED_RED, '0');
@@ -383,7 +520,7 @@ begin  -- architecture rtl
   ----------------------------------------------------------------------
   --- FPGA Reset and Clock generation
 
-  lock <= c0_calib_done and c1_calib_done and c2_calib_done and c3_calib_done;
+  lock <= calib_done;
 
   reset_pad : inpad generic map (tech => FPGA_PROXY_TECH, level => cmos, voltage => x12v) port map (reset, rst);
   rst0      : rstgen                    -- reset generator
@@ -404,42 +541,97 @@ begin  -- architecture rtl
       O  => main_clk
       );
 
+  jtag_clk_buf : ibufgds
+    generic map(
+      IBUF_LOW_PWR => FALSE
+      )
+    port map (
+      I  => jtag_clk_p,
+      IB => jtag_clk_n,
+      O  => jtag_clk
+      );
+
+  -- Chip reset
+  chip_rst_gen: process (sys_clk(0)) is
+  begin  -- process chip_rst_gen
+    if sys_clk(0)'event and sys_clk(0) = '1' then  -- rising clock edge
+      chip_reset <= not rstn;
+    end if;
+  end process chip_rst_gen;
+
   ----------------------------------------------------------------------
   ---  DDR4 memory controller
 
   gen_mig : if (SIMULATION /= true) generate
-    ddrc0 : ahb2mig_ebddr4r5
+    ddrc : ahb2mig_7series_profpga
       generic map (
         hindex => 0,
         haddr  => ddr_haddr(this_ddr_index(0)),
         hmask  => ddr_hmask(this_ddr_index(0)))
-      port map (
-        c0_sys_clk_p     => c0_sys_clk_p,
-        c0_sys_clk_n     => c0_sys_clk_n,
-        c0_ddr4_act_n    => c0_ddr4_act_n,
-        c0_ddr4_adr      => c0_ddr4_adr,
-        c0_ddr4_ba       => c0_ddr4_ba,
-        c0_ddr4_bg       => c0_ddr4_bg,
-        c0_ddr4_cke      => c0_ddr4_cke,
-        c0_ddr4_odt      => c0_ddr4_odt,
-        c0_ddr4_cs_n     => c0_ddr4_cs_n,
-        c0_ddr4_ck_t     => c0_ddr4_ck_t,
-        c0_ddr4_ck_c     => c0_ddr4_ck_c,
-        c0_ddr4_reset_n  => c0_ddr4_reset_n,
-        c0_ddr4_dm_dbi_n => c0_ddr4_dm_dbi_n,
-        c0_ddr4_dq       => c0_ddr4_dq,
-        c0_ddr4_dqs_c    => c0_ddr4_dqs_c,
-        c0_ddr4_dqs_t    => c0_ddr4_dqs_t,
-        ahbso            => ddr_ahbso(0),
-        ahbsi            => ddr_ahbsi(0),
-        calib_done       => c0_calib_done,
-        rst_n_syn        => migrstn,
-        rst_n_async      => rstraw,
-        clk_amba         => sys_clk(0),
-        ui_clk           => sys_clk(0),
-        ui_clk_sync_rst  => sys_rst(0)
+      port map(
+        app_addr          => app_addr,
+        app_cmd           => app_cmd,
+        app_en            => app_en,
+        app_wdf_data      => app_wdf_data,
+        app_wdf_end       => app_wdf_end,
+        app_wdf_mask      => app_wdf_mask,
+        app_wdf_wren      => app_wdf_wren,
+        app_rd_data       => app_rd_data,
+        app_rd_data_end   => app_rd_data_end,
+        app_rd_data_valid => app_rd_data_valid,
+        app_rdy           => app_rdy,
+        app_wdf_rdy       => app_wdf_rdy,
+        ahbsi             => ddr_ahbsi(0),
+        ahbso             => ddr_ahbso(0),
+        rst_n_syn         => migrstn,
+        clk_amba          => sys_clk(0)
         );
 
+    MCB_quad_mig_inst : mig
+      port map (
+        sys_clk_p            => sys_clk_p,
+        sys_clk_n            => sys_clk_n,
+        ddr3_dq              => ddr3_dq,
+        ddr3_dqs_p           => ddr3_dqs_p,
+        ddr3_dqs_n           => ddr3_dqs_n,
+        ddr3_addr            => ddr3_addr,
+        ddr3_ba              => ddr3_ba,
+        ddr3_ras_n           => ddr3_ras_n,
+        ddr3_cas_n           => ddr3_cas_n,
+        ddr3_we_n            => ddr3_we_n,
+        ddr3_reset_n         => ddr3_reset_n,
+        ddr3_ck_p            => ddr3_ck_p,
+        ddr3_ck_n            => ddr3_ck_n,
+        ddr3_cke             => ddr3_cke,
+        ddr3_cs_n            => ddr3_cs_n,
+        ddr3_dm              => ddr3_dm,
+        ddr3_odt             => ddr3_odt,
+        clk_ref_p               => clk_ref_p,
+        clk_ref_n               => clk_ref_n,
+        app_addr             => app_addr,
+        app_cmd              => app_cmd,
+        app_en               => app_en,
+        app_wdf_data         => app_wdf_data,
+        app_wdf_end          => app_wdf_end,
+        app_wdf_mask         => app_wdf_mask,
+        app_wdf_wren         => app_wdf_wren,
+        app_rd_data          => app_rd_data,
+        app_rd_data_end      => app_rd_data_end,
+        app_rd_data_valid    => app_rd_data_valid,
+        app_rdy              => app_rdy,
+        app_wdf_rdy          => app_wdf_rdy,
+        app_sr_req           => '0',
+        app_ref_req          => '0',
+        app_zq_req           => '0',
+        app_sr_active        => open,
+        app_ref_ack          => open,
+        app_zq_ack           => open,
+        ui_clk               => sys_clk(0),
+        ui_clk_sync_rst      => sys_rst(0),
+        init_calib_complete  => calib_done,
+        device_temp          => open,
+        sys_rst                 => rstraw
+        );
 
   end generate gen_mig;
 
@@ -464,21 +656,24 @@ begin  -- architecture rtl
         ahbso => ddr_ahbso(0)
         );
 
-    c0_ddr4_act_n    <= '1';
-    c0_ddr4_adr      <= (others => '0');
-    c0_ddr4_ba       <= (others => '0');
-    c0_ddr4_bg       <= (others => '0');
-    c0_ddr4_cke      <= (others => '0');
-    c0_ddr4_odt      <= (others => '0');
-    c0_ddr4_cs_n     <= (others => '0');
-    c0_ddr4_ck_t     <= (others => '0');
-    c0_ddr4_ck_c     <= (others => '0');
-    c0_ddr4_reset_n  <= '1';
-    c0_ddr4_dm_dbi_n <= (others => 'Z');
-    c0_ddr4_dq       <= (others => 'Z');
-    c0_ddr4_dqs_c    <= (others => 'Z');
-    c0_ddr4_dqs_t    <= (others => 'Z');
-    c0_calib_done    <= '1';
+    ddr3_dq           <= (others => 'Z');
+    ddr3_dqs_p        <= (others => 'Z');
+    ddr3_dqs_n        <= (others => 'Z');
+    ddr3_addr         <= (others => '0');
+    ddr3_ba           <= (others => '0');
+    ddr3_ras_n        <= '0';
+    ddr3_cas_n        <= '0';
+    ddr3_we_n         <= '0';
+    ddr3_reset_n      <= '1';
+    ddr3_ck_p         <= (others => '0');
+    ddr3_ck_n         <= (others => '0');
+    ddr3_cke          <= (others => '0');
+    ddr3_cs_n         <= (others => '0');
+    ddr3_dm           <= (others => '0');
+    ddr3_odt          <= (others => '0');
+
+    calib_done <= '1';
+
     sys_clk(0)       <= not sys_clk(0) after 3.2 ns;
 
   -- pragma translate_on
@@ -535,7 +730,6 @@ begin  -- architecture rtl
     generic map (level => cmos, voltage => x18v, tech => inferred)
     port map (iolink_credit_out, iolink_credit_out_int);
 
-    iolink_clk_out_int <= ext_clk_noc_int;
 
     ahb_slv_out_ddr(i)(0) <= ddr_ahbso(i);
     ddr_ahbsi(i) <= ahb_slv_in_ddr(i);
@@ -754,7 +948,7 @@ begin  -- architecture rtl
         end if;
       else
         -- Wait for current transaction to complete (look for tail)
-        if (mux_ahbs_snd_empty = '0') and (mux_ahbs_snd_data_out(MISC_NOC_FLIT_SIZE - 2) = '1') then
+        if (mux_ahbs_snd_empty = '0') and (mux_ahbs_snd_data_out(MISC_NOC_FLIT_SIZE - 2) = '1') and (ahbs_snd_full = "0") then
           sending_packet <= (others => '0');
         end if;
       end if;
@@ -770,7 +964,7 @@ begin  -- architecture rtl
         end loop;  -- i
       else
         -- Wait for current transaction to complete (look for tail)
-        if (mux_ahbs_rcv_empty = '0') and (mux_ahbs_rcv_data_out(MISC_NOC_FLIT_SIZE - 2) = '1') then
+        if (mux_ahbs_rcv_empty = '0') and (mux_ahbs_rcv_data_out(MISC_NOC_FLIT_SIZE - 2) = '1') and (mux_ahbs_rcv_full = '0') then
           receiving_packet <= (others => '0');
         end if;
       end if;
@@ -797,7 +991,7 @@ begin  -- architecture rtl
       local_y                    => tile_y(io_tile_id),
       local_x                    => tile_x(io_tile_id),
       ahbsi                      => ahbsi,
-      ahbso                      => ahbso,
+      ahbso                      => ahbso_edcl,
       dma_selected               => '0',
       coherence_req_wrreq        => open,
       coherence_req_data_in      => open,
@@ -908,15 +1102,12 @@ begin  -- architecture rtl
   -- DCO backup clocks
   ext_clk_sim_gen: if SIMULATION = true generate
     ext_clk_noc_int <= not ext_clk_noc_int after 5 ns;
-    ext_clk_sim_for_gen: for i in 0 to CFG_TILES_NUM - 1 generate
-      ext_clk_int(i) <= not ext_clk_int(i) after 8 ns;
-    end generate ext_clk_sim_for_gen;
-
+    ext_clk_int <= not ext_clk_int after 8 ns;
   end generate ext_clk_sim_gen;
 
   ext_clk_gen: if SIMULATION = false generate
     -- TODO: generate external backup clocks
-    ext_clk_int <= (others => '0');
+    ext_clk_int <= '0';
     ext_clk_noc_int <= '0';
   end generate ext_clk_gen;
 
@@ -926,226 +1117,143 @@ begin  -- architecture rtl
   -----------------------------------------------------------------------------
   -- JTAG interface
 
-  jtag_driver_gen: if SIMULATION = false generate
-    -- TODO: ADD synthesizable TB for JTAG interface. This will run on proxy FPGA.
-    tdi <= (others => '0');
-    tms <= '0';
-    tclk <= '0';
+  tdi_pad_gen : for i in 0 to CFG_TILES_NUM -1 generate
+    tdi_in_pad  : outpad generic map (level => cmos, voltage => x18v, tech => FPGA_PROXY_TECH) port map (tdi(i), tdi_int(i));
+  end generate tdi_pad_gen;
+
+  tdo_pad_gen : for i in 0 to CFG_TILES_NUM -1 generate
+    tdo_out_pad : inpad generic map (level  => cmos, voltage => x18v, tech => FPGA_PROXY_TECH) port map (tdo(i), tdo_int(i));
+  end generate tdo_pad_gen;
+
+  tclk_pad  : outpad generic map (level => cmos, voltage => x18v, tech => FPGA_PROXY_TECH) port map (tclk, tclk_int);
+
+  tms_pad  : outpad generic map (level => cmos, voltage => x18v, tech => FPGA_PROXY_TECH) port map(tms, tms_int);
+
+
+  rst_l <= not(rst);
+
+  fpga_proxy_jtag0: fpga_proxy_jtag
+      port map (
+        rst    => rst_l,
+        tdi    => tdi_jtag,
+        tdo    => tdo_jtag,
+        tms    => tms_in,
+        tclk   => jtag_clk,
+        main_clk   => main_clk,
+        ahbsi  => ahbsi_in,
+        ahbso  => ahbso_apb);
+
+  jtag_apb_config0: jtag_apb_config
+    generic map (
+      DEF_TILE => DEF_TILE,
+      DEF_TMS => DEF_TMS)
+      port map (
+        rst    => rst_l,
+        main_clk   => main_clk,             -- running at proxy clock
+        ahbsi  => ahbsi_in,
+        ahbso  => ahbso_apb1,
+        out_p  => out_tms,
+        out_p1  => out_jtile);
+
+  ahbso(0) <= ahbso_apb;
+  ahbso(1) <= ahbso_apb1;
+  ahbso(2) <= ahbso_iolink;
+  ahbso(3 to NAHBSLV-1) <= ahbso_edcl(3 to NAHBSLV-1);
+
+  normal_mode_gen: if JTAG_TRACE = -1 generate
+    tdi_int <= (others => '0');
+    tms_int <= '0';
+    tclk_int <= '0';
+    tdo_jtag <= '0';
+  end generate normal_mode_gen;
+
+  jtag_driver_gen: if JTAG_TRACE /= -1 generate
+
+    jtag_gen_norm: if SIMULATION = false generate
+
+      ahbsi_in<=ahbsi;
+      jtag_tile <= to_integer(unsigned(out_jtile));
+
+      process(out_tms, tdi_jtag, tdo_int, jtag_clk, jtag_tile)
+      begin
+        tdi_int <= (others => '0');
+        tms_int <= '0';
+        tclk_int <= '0';
+        tdo_jtag <= '0';
+        if out_tms(0) = '1' then            --test mode
+          tdi_int(jtag_tile) <= tdi_jtag;
+          tdo_jtag <= tdo_int(jtag_tile);
+          tms_in <= '1';
+          tclk_int <= jtag_clk;
+          tms_int <= '1';
+        end if;
+      end process;
+    end generate jtag_gen_norm;
+
+      -- pragma translate_off
+    jtag_gen_sim: if SIMULATION = true  generate
+
+      tdi_int(JTAG_TRACE) <= tdi_jtag;
+      tdo_jtag <= tdo_int(JTAG_TRACE);
+
+      tdi_gen: for i in 0 to CFG_TILES_NUM - 1 generate
+        tdi_inactive_tile_gen: if i /= JTAG_TRACE generate
+          tdi_int(i) <= '0';
+        end generate tdi_inactive_tile_gen;
+      end generate tdi_gen;
+
+      tms_in <= '1';
+      tclk_int <= jtag_clk;
+      tms_int <= tms_in;
+
+      jtag_tb0: jtag_tb
+        port map (
+          ahbsi => ahbsi_in,
+          ahbso => ahbso_apb);
+
+    end generate jtag_gen_sim;
+      -- pragma translate_on
+
   end generate jtag_driver_gen;
 
-  -- pragma translate_off
-  jtag_sim_gen: if SIMULATION = true and JTAG_TRACE /= -1 generate
+  iolink_sim_gen: if SIMULATION = true generate
+    tb_iolink_i : tb_iolink port map (
+      reset                 => reset,
+      iolink_clk_in_int     => iolink_clk_in_int,
+      iolink_valid_in_int   => iolink_valid_in_int,
+      iolink_data_in_int    => iolink_data_in_int,
+      iolink_clk_out_int    => iolink_clk_out_int,
+      iolink_credit_out_int => iolink_credit_out_int,
+      iolink_valid_out_int  => iolink_valid_out_int,
+      iolink_data_out_int   => iolink_data_out_int,
+      iolink_data_oen       => iolink_data_oen);
 
-    tclk_sim <= not tclk_sim after 10 ns;
-    tclk <= tclk_sim;
-    tms <= '1';
+    ahbso_iolink <= ahbs_none;
+    iolink_clk_out_int <= ext_clk_noc_int;
+  end generate iolink_sim_gen;
 
-    tdi_sim_gen: for i in 0 to CFG_TILES_NUM - 1 generate
-      tdi_inactive_tile_sim_gen: if i /= JTAG_TRACE generate
-        tdi(i) <= '0';
-      end generate tdi_inactive_tile_sim_gen;
-    end generate tdi_sim_gen;
-
-    PROC_SEQUENCER : process
-      file text_file1 : text open read_mode is "stim1.txt";
-      file text_file2 : text open read_mode is "stim2.txt";
-      file text_file3 : text open read_mode is "stim3.txt";
-      file text_file4 : text open read_mode is "stim4.txt";
-      file text_file5 : text open read_mode is "stim5.txt";
-      file text_file6 : text open read_mode is "stim6.txt";
-      file out_file : text open write_mode is "test_out.txt";
-      variable text_line :line ;
-      variable out_line :line;
-      variable ok : boolean;
-      variable testin : std_logic_vector(74 downto 0);
-      variable flit66 : std_logic_vector(71 downto 0);
-      variable flit34 : std_logic_vector(39 downto 0);
-      variable source : std_logic_vector(5 downto 0);
-      variable source_bin : integer range 1 to 6;
-      variable injection_counter : jtag_trace_count_t;
-      variable end_trace : std_logic_vector(1 to 6);
-      variable testout : std_logic_vector(73 downto 0);
-    begin
-
-      source := "000000";
-      testout := (others => '0');
-      injection_counter := (others => 0);
-      source_bin := 5;
-      end_trace := (others => '0');
-
-      while true loop
-
-        assert end_trace /= "111111"  report "JTAG mode test complete!" severity failure;
-
-        wait until rising_edge(tclk_sim);
-        if tdo(JTAG_TRACE)= '1' then
-          assert false report "TDO_RISE" severity note;
-
-          wait until rising_edge(tclk_sim);
-
-          if tdo(JTAG_TRACE)= '0' then
-            --extract
-            assert false report "start_extract " severity note;
-
-            wait until rising_edge(tclk_sim);
-
-            for i in 0 to 72 loop
-              testout(72 - i) := tdo(JTAG_TRACE);
-              wait until rising_edge(tclk_sim);
-            end loop;
-
-            --hwrite(out_line, testout(5 downto 0), right, 5);
-            --hwrite(out_line, testout(NOC_FLIT_SIZE - 1 downto 7), right, 18);
-
-            if testout(6) = '1' then
-              -- Mismatch detected
-              assert false report "*** mismatch *** on NoC " & tost(testout(5 downto 0)) & " " & tost(testout(NOC_FLIT_SIZE + 7 - 1 downto 7)) severity note;
-              --hwrite(out_line, "1", right, 4);
-            else
-              --hwrite(out_line, "0", right, 4);
-            end if;
-
-            writeline(out_file,out_line);
-
-            assert false report "end_extract " severity note;
-
-          else
-            --- update plane+inject
-            wait until rising_edge(tclk_sim);
-
-            for i in 0 to 5 loop
-              source(5 - i) := tdo(JTAG_TRACE);
-              wait until rising_edge(tclk_sim);
-            end loop;
-
-            assert false report " update plane+inject " & tost(source)  severity note;
-
-            case source is
-              when "100000" =>  if not endfile(text_file1) then
-                                  readline(text_file1, text_line);
-                                  hread(text_line, flit66, ok);
-                                  testin := flit66(NOC_FLIT_SIZE + 4 - 1 downto 4) & source & "0" & flit66(0) & '1';
-                                else
-                                  assert false report "End trace 1" severity note;
-                                  testin := (others => '0');
-                                  testin(8 downto 3) := (others => '1');
-                                  testin(0) := '1';
-                                  end_trace(1) := '1';
-                                end if;
-                                source_bin := 1;
-                                injection_counter(1) := injection_counter(1) + 1;
-
-              when "010000" =>  if not endfile(text_file2) then
-                                  readline(text_file2, text_line);
-                                  hread(text_line, flit66, ok);
-                                  testin := flit66(NOC_FLIT_SIZE + 4 - 1 downto 4) & source & "0" &  flit66(0) & '1';
-                                else
-                                  assert false report "End trace 2" severity note;
-                                  testin := (others => '0');
-                                  testin(8 downto 3) := (others => '1');
-                                  testin(0) := '1';
-                                  end_trace(2) := '1';
-                                end if;
-                                source_bin := 2;
-                                injection_counter(2) := injection_counter(2) + 1;
-
-              when "001000" => if not endfile(text_file3) then
-                                 readline(text_file3, text_line);
-                                 hread(text_line, flit66, ok);
-                                 testin := flit66(NOC_FLIT_SIZE + 4 - 1 downto 4) & source & "0" &  flit66(0) & '1';
-                               else
-                                  assert false report "End trace 3" severity note;
-                                  testin := (others => '0');
-                                  testin(8 downto 3) := (others => '1');
-                                  testin(0) := '1';
-                                  end_trace(3) := '1';
-                               end if;
-                               source_bin := 3;
-                               injection_counter(3) := injection_counter(3) + 1;
-
-              when "000100" =>  if not endfile(text_file4) then
-                                  readline(text_file4, text_line);
-                                  hread(text_line, flit66, ok);
-                                  testin := flit66(NOC_FLIT_SIZE + 4 - 1 downto 4) & source & "0" &  flit66(0) & '1';
-                                else
-                                  assert false report "End trace 4" severity note;
-                                  testin := (others => '0');
-                                  testin(8 downto 3) := (others => '1');
-                                  testin(0) := '1';
-                                  end_trace(4) := '1';
-                                end if;
-                                source_bin := 4;
-                                injection_counter(4) := injection_counter(4) + 1;
-
-              when "000010" =>  if not endfile(text_file5) then
-                                  readline(text_file5, text_line);
-                                  hread(text_line, flit34, ok);
-                                  testin := X"00000000" & flit34(MISC_NOC_FLIT_SIZE + 4 - 1 downto 4) & source & "0" & flit34(0) & '1';
-                                else
-                                  assert false report "End trace 5" severity note;
-                                  testin := (others => '0');
-                                  testin(8 downto 3) := (others => '1');
-                                  testin(0) := '1';
-                                  end_trace(5) := '1';
-                                end if;
-                                source_bin := 5;
-                                injection_counter(5) := injection_counter(5) + 1;
-
-              when "000001" =>  if not endfile(text_file6) then
-                                  readline(text_file6, text_line);
-                                  hread(text_line, flit66, ok);
-                                  testin := flit66(NOC_FLIT_SIZE + 4 - 1 downto 4) & source & "0" &  flit66(0) & '1';
-                                else
-                                  assert false report "End trace 6" severity note;
-                                  testin := (others => '0');
-                                  testin(8 downto 3) := (others => '1');
-                                  testin(0) := '1';
-                                  end_trace(6) := '1';
-                                end if;
-                                source_bin := 6;
-                                injection_counter(6) := injection_counter(6) + 1;
-
-              when others => assert false report "invalid NoC plane for injection" severity failure;
-
-            end case ;
-
-            assert false report "start_injection N" & tost(source_bin) & "[" & tost(injection_counter(source_bin)) & "]: " & tost(testin(74 downto 9)) & " - " & tost(testin(1)) severity note;
-
-
-            for i in 0 to 74 loop
-              wait until rising_edge(tclk_sim);
-              tdi(JTAG_TRACE) <= testin(i);
-            end loop;
-
-            wait until rising_edge(tclk_sim);
-            tdi(JTAG_TRACE) <= '0';
-
-            assert false report "end_injection" severity note;
-
-          end if;
-        end if ;
-      end loop;
-    end process;
-
-  end generate jtag_sim_gen;
-  -- pragma translate_on
-
-  normal_mode_sim_gen: if SIMULATION = true and JTAG_TRACE = -1 generate
-    tdi <= (others => '0');
-    tms <= '0';
-    tclk <= '0';
-  end generate normal_mode_sim_gen;
-
-  tb_iolink_i : tb_iolink port map (
-    reset                 => reset,
-    iolink_clk_in_int     => iolink_clk_in_int,
-    iolink_valid_in_int   => iolink_valid_in_int,
-    iolink_data_in_int    => iolink_data_in_int,
-    iolink_clk_out_int    => iolink_clk_out_int,
-    iolink_credit_out_int => iolink_credit_out_int,
-    iolink_valid_out_int  => iolink_valid_out_int,
-    iolink_data_out_int   => iolink_data_out_int,
-    iolink_data_oen       => iolink_data_oen);
-
+  iolink_no_sim_gen: if SIMULATION = false generate
+ahbslv2iolink_i : ahbslv2iolink
+  generic map (
+    hindex => 2,
+    hconfig => iolink_hconfig,
+    io_bitwidth => CFG_IOLINK_BITS,
+    word_bitwidth => 32,
+    little_end => 0 )
+  port map (
+    clk           => main_clk,
+    rstn          => rstn,
+    io_clk_in     => iolink_clk_in_int,
+    io_clk_out    => iolink_clk_out_int,
+    io_valid_in   => iolink_valid_in_int,
+    io_valid_out  => iolink_valid_out_int,
+    io_credit_in  => iolink_credit_in_int,
+    io_credit_out => iolink_credit_out_int,
+    io_data_oen   => iolink_data_oen,
+    io_data_in    => iolink_data_in_int,
+    io_data_out   => iolink_data_out_int,
+    ahbsi             => ahbsi,
+    ahbso             => ahbso_iolink);
+  end generate iolink_no_sim_gen;
 
 end architecture rtl;

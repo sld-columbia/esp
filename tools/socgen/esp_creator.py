@@ -116,29 +116,40 @@ class PeripheralFrame(Frame):
     Label(periph_config_frame, text = "UART ", fg="darkgreen").grid(row=1, column=1)
 
     # JTAG
-    if soc.TECH == "gf12":
+    if soc.TECH == "gf12" or soc.TECH == "inferred" or soc.ESP_EMU_TECH != "none":
       Label(periph_config_frame, text = "JTAG (test) :").grid(row=2, column=1)
       Checkbutton(periph_config_frame, text="", variable=soc.jtag_en,
                   onvalue = 1, offvalue = 0, command=main_frame.update_noc_config).grid(row=2, column=2)
     else:
-      Label(periph_config_frame, text = "JTAG (test) ", fg="red").grid(row=2, column=1)
+      Label(periph_config_frame, text = "No JTAG (test) ", fg="red").grid(row=2, column=1)
 
     # Ethernet
     # if soc.HAS_SGMII == 1:
     #   eth_text = "Ethernet (use SGMII): "
     # else:
     #   eth_text = "Ethernet (no SGMII): "
-    Label(periph_config_frame, text = "Ethernet :").grid(row=3, column=1)
-    Checkbutton(periph_config_frame, text="", variable=soc.eth_en,
-                onvalue = 1, offvalue = 0, command=main_frame.update_noc_config).grid(row=3, column=2)
+    if soc.TECH == "gf12" or soc.TECH == "inferred" or soc.ESP_EMU_TECH != "none":
+        Label(periph_config_frame, text = "Ethernet :").grid(row=3, column=1)
+        Checkbutton(periph_config_frame, text="", variable=soc.eth_en,
+                    onvalue = 1, offvalue = 0, command=main_frame.update_noc_config).grid(row=3, column=2)
+    else:
+        Label(periph_config_frame, text = "Ethernet", fg="darkgreen").grid(row=3, column=1)
+
+
+    if soc.TECH == "gf12" or soc.TECH == "inferred" or soc.ESP_EMU_TECH != "none":
+        Label(periph_config_frame, text = "Custom IO Link:").grid(row=4, column=1)
+        Checkbutton(periph_config_frame, text="", variable=soc.iolink_en,
+                onvalue = 1, offvalue = 0, command=main_frame.update_noc_config).grid(row=4, column=2)
+    else:
+        Label(periph_config_frame, text = "No Custom IO Link", fg="red").grid(row=4, column=1)
 
     # SVGA
-    if soc.FPGA_BOARD.find("profpga") != -1:
-      Label(periph_config_frame, text = "SVGA: ").grid(row=4, column=1)
+    if soc.FPGA_BOARD.find("profpga") != -1 and (soc.TECH == "virtex7" or soc.TECH == "virtexu"):
+      Label(periph_config_frame, text = "SVGA: ").grid(row=5, column=1)
       Checkbutton(periph_config_frame, text="", variable=soc.svga_en,
-                  onvalue = 1, offvalue = 0, command=main_frame.update_noc_config).grid(row=4, column=2)
+                  onvalue = 1, offvalue = 0, command=main_frame.update_noc_config).grid(row=5, column=2)
     else:
-      Label(periph_config_frame, text = "No SVGA", fg="red").grid(row=4, column=1)
+      Label(periph_config_frame, text = "No SVGA", fg="red").grid(row=5, column=1)
 
     #
     # Debug Link

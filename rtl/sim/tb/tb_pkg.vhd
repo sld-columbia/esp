@@ -30,7 +30,7 @@ package tb_pkg is
 
   procedure snd_flit_iolink (
     signal clk   : in  std_ulogic;
-    signal word  : in  std_logic_vector(ARCH_BITS - 1 downto 0);
+    signal word  : in  std_logic_vector(31 downto 0);
     signal valid : out std_ulogic;
     signal data  : out std_logic_vector(CFG_IOLINK_BITS - 1 downto 0));
 
@@ -40,7 +40,7 @@ package body tb_pkg is
 
   procedure snd_flit_iolink (
     signal clk   : in  std_ulogic;
-    signal word  : in  std_logic_vector(ARCH_BITS - 1 downto 0);
+    signal word  : in  std_logic_vector(31 downto 0);
     signal valid : out std_ulogic;
     signal data  : out std_logic_vector(CFG_IOLINK_BITS - 1 downto 0)) is
   begin
@@ -51,12 +51,6 @@ package body tb_pkg is
     wait until rising_edge(clk);
     valid <= '1';
     data  <= word(31 downto 16);
-    wait until rising_edge(clk);
-    valid <= '1';
-    data  <= word(47 downto 32);
-    wait until rising_edge(clk);
-    valid <= '1';
-    data  <= word(63 downto 48);
     wait until rising_edge(clk);
     valid <= '0';
     wait until rising_edge(clk);

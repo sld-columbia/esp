@@ -48,7 +48,7 @@ esplink: $(ESP_CFG_BUILD)/esplink.h $(ESPLINK_HDRS) $(ESPLINK_SRCS)
 		-I$(ESP_ROOT)/tools/esplink/src/ -I$(DESIGN_PATH)/$(ESP_CFG_BUILD) \
 		$(ESPLINK_SRCS) -o $@
 
-esplink-fpga-proxy: $(ESP_CFG_BUILD)/socmap.h $(ESPLINK_HDRS) $(ESPLINK_SRCS)
+esplink-fpga-proxy: $(ESP_CFG_BUILD)/esplink.h $(ESPLINK_HDRS) $(ESPLINK_SRCS)
 	$(QUIET_CC) \
 	cd $(ESP_CFG_BUILD); \
 	gcc -O3 -Wall -Werror -fmax-errors=5 \
