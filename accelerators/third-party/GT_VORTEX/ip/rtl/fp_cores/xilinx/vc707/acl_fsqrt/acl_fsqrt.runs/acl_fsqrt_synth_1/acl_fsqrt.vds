@@ -1,0 +1,535 @@
+#-----------------------------------------------------------
+# Vivado v2019.2 (64-bit)
+# SW Build 2708876 on Wed Nov  6 21:39:14 MST 2019
+# IP Build 2700528 on Thu Nov  7 00:09:20 MST 2019
+# Start of session at: Mon Apr  4 18:59:17 2022
+# Process ID: 30557
+# Current directory: /home/esp2022/sr3859/esp/esp/accelerators/third-party/GT_VORTEX/ip/rtl/fp_cores/xilinx/vc707/acl_fsqrt/acl_fsqrt.runs/acl_fsqrt_synth_1
+# Command line: vivado -log acl_fsqrt.vds -product Vivado -mode batch -messageDb vivado.pb -notrace -source acl_fsqrt.tcl
+# Log file: /home/esp2022/sr3859/esp/esp/accelerators/third-party/GT_VORTEX/ip/rtl/fp_cores/xilinx/vc707/acl_fsqrt/acl_fsqrt.runs/acl_fsqrt_synth_1/acl_fsqrt.vds
+# Journal file: /home/esp2022/sr3859/esp/esp/accelerators/third-party/GT_VORTEX/ip/rtl/fp_cores/xilinx/vc707/acl_fsqrt/acl_fsqrt.runs/acl_fsqrt_synth_1/vivado.jou
+#-----------------------------------------------------------
+source acl_fsqrt.tcl -notrace
+Command: synth_design -top acl_fsqrt -part xc7vx485tffg1761-2 -mode out_of_context
+Starting synth_design
+Attempting to get a license for feature 'Synthesis' and/or device 'xc7vx485t'
+INFO: [Common 17-349] Got license for feature 'Synthesis' and/or device 'xc7vx485t'
+INFO: [Common 17-1540] The version limit for your license is '2021.05' and has expired for new software. A version limit expiration means that, although you may be able to continue to use the current version of tools or IP with this license, you will not be eligible for any updates or new releases.
+INFO: [Device 21-403] Loading part xc7vx485tffg1761-2
+INFO: Launching helper process for spawning children vivado processes
+INFO: Helper process launched with PID 32494 
+---------------------------------------------------------------------------------
+Starting RTL Elaboration : Time (s): cpu = 00:00:07 ; elapsed = 00:00:11 . Memory (MB): peak = 2122.859 ; gain = 201.684 ; free physical = 7187 ; free virtual = 39926
+---------------------------------------------------------------------------------
+INFO: [Synth 8-638] synthesizing module 'acl_fsqrt' [/home/esp2022/sr3859/esp/esp/accelerators/third-party/GT_VORTEX/ip/rtl/fp_cores/xilinx/vc707/acl_fsqrt/acl_fsqrt.srcs/sources_1/ip/acl_fsqrt/synth/acl_fsqrt.vhd:72]
+	Parameter C_XDEVICEFAMILY bound to: virtex7 - type: string 
+	Parameter C_HAS_ADD bound to: 0 - type: integer 
+	Parameter C_HAS_SUBTRACT bound to: 0 - type: integer 
+	Parameter C_HAS_MULTIPLY bound to: 0 - type: integer 
+	Parameter C_HAS_DIVIDE bound to: 0 - type: integer 
+	Parameter C_HAS_SQRT bound to: 1 - type: integer 
+	Parameter C_HAS_COMPARE bound to: 0 - type: integer 
+	Parameter C_HAS_FIX_TO_FLT bound to: 0 - type: integer 
+	Parameter C_HAS_FLT_TO_FIX bound to: 0 - type: integer 
+	Parameter C_HAS_FLT_TO_FLT bound to: 0 - type: integer 
+	Parameter C_HAS_RECIP bound to: 0 - type: integer 
+	Parameter C_HAS_RECIP_SQRT bound to: 0 - type: integer 
+	Parameter C_HAS_ABSOLUTE bound to: 0 - type: integer 
+	Parameter C_HAS_LOGARITHM bound to: 0 - type: integer 
+	Parameter C_HAS_EXPONENTIAL bound to: 0 - type: integer 
+	Parameter C_HAS_FMA bound to: 0 - type: integer 
+	Parameter C_HAS_FMS bound to: 0 - type: integer 
+	Parameter C_HAS_UNFUSED_MULTIPLY_ADD bound to: 0 - type: integer 
+	Parameter C_HAS_UNFUSED_MULTIPLY_SUB bound to: 0 - type: integer 
+	Parameter C_HAS_UNFUSED_MULTIPLY_ACCUMULATOR_A bound to: 0 - type: integer 
+	Parameter C_HAS_UNFUSED_MULTIPLY_ACCUMULATOR_S bound to: 0 - type: integer 
+	Parameter C_HAS_ACCUMULATOR_A bound to: 0 - type: integer 
+	Parameter C_HAS_ACCUMULATOR_S bound to: 0 - type: integer 
+	Parameter C_HAS_ACCUMULATOR_PRIMITIVE_A bound to: 0 - type: integer 
+	Parameter C_HAS_ACCUMULATOR_PRIMITIVE_S bound to: 0 - type: integer 
+	Parameter C_A_WIDTH bound to: 32 - type: integer 
+	Parameter C_A_FRACTION_WIDTH bound to: 24 - type: integer 
+	Parameter C_B_WIDTH bound to: 32 - type: integer 
+	Parameter C_B_FRACTION_WIDTH bound to: 24 - type: integer 
+	Parameter C_C_WIDTH bound to: 32 - type: integer 
+	Parameter C_C_FRACTION_WIDTH bound to: 24 - type: integer 
+	Parameter C_RESULT_WIDTH bound to: 32 - type: integer 
+	Parameter C_RESULT_FRACTION_WIDTH bound to: 24 - type: integer 
+	Parameter C_COMPARE_OPERATION bound to: 8 - type: integer 
+	Parameter C_LATENCY bound to: 29 - type: integer 
+	Parameter C_OPTIMIZATION bound to: 1 - type: integer 
+	Parameter C_MULT_USAGE bound to: 0 - type: integer 
+	Parameter C_BRAM_USAGE bound to: 0 - type: integer 
+	Parameter C_RATE bound to: 1 - type: integer 
+	Parameter C_ACCUM_INPUT_MSB bound to: 32 - type: integer 
+	Parameter C_ACCUM_MSB bound to: 32 - type: integer 
+	Parameter C_ACCUM_LSB bound to: -31 - type: integer 
+	Parameter C_HAS_UNDERFLOW bound to: 0 - type: integer 
+	Parameter C_HAS_OVERFLOW bound to: 0 - type: integer 
+	Parameter C_HAS_INVALID_OP bound to: 0 - type: integer 
+	Parameter C_HAS_DIVIDE_BY_ZERO bound to: 0 - type: integer 
+	Parameter C_HAS_ACCUM_OVERFLOW bound to: 0 - type: integer 
+	Parameter C_HAS_ACCUM_INPUT_OVERFLOW bound to: 0 - type: integer 
+	Parameter C_HAS_ACLKEN bound to: 1 - type: integer 
+	Parameter C_HAS_ARESETN bound to: 1 - type: integer 
+	Parameter C_THROTTLE_SCHEME bound to: 4 - type: integer 
+	Parameter C_HAS_A_TUSER bound to: 0 - type: integer 
+	Parameter C_HAS_A_TLAST bound to: 0 - type: integer 
+	Parameter C_HAS_B bound to: 0 - type: integer 
+	Parameter C_HAS_B_TUSER bound to: 0 - type: integer 
+	Parameter C_HAS_B_TLAST bound to: 0 - type: integer 
+	Parameter C_HAS_C bound to: 0 - type: integer 
+	Parameter C_HAS_C_TUSER bound to: 0 - type: integer 
+	Parameter C_HAS_C_TLAST bound to: 0 - type: integer 
+	Parameter C_HAS_OPERATION bound to: 0 - type: integer 
+	Parameter C_HAS_OPERATION_TUSER bound to: 0 - type: integer 
+	Parameter C_HAS_OPERATION_TLAST bound to: 0 - type: integer 
+	Parameter C_HAS_RESULT_TUSER bound to: 0 - type: integer 
+	Parameter C_HAS_RESULT_TLAST bound to: 0 - type: integer 
+	Parameter C_TLAST_RESOLUTION bound to: 0 - type: integer 
+	Parameter C_A_TDATA_WIDTH bound to: 32 - type: integer 
+	Parameter C_A_TUSER_WIDTH bound to: 1 - type: integer 
+	Parameter C_B_TDATA_WIDTH bound to: 32 - type: integer 
+	Parameter C_B_TUSER_WIDTH bound to: 1 - type: integer 
+	Parameter C_C_TDATA_WIDTH bound to: 32 - type: integer 
+	Parameter C_C_TUSER_WIDTH bound to: 1 - type: integer 
+	Parameter C_OPERATION_TDATA_WIDTH bound to: 8 - type: integer 
+	Parameter C_OPERATION_TUSER_WIDTH bound to: 1 - type: integer 
+	Parameter C_RESULT_TDATA_WIDTH bound to: 32 - type: integer 
+	Parameter C_RESULT_TUSER_WIDTH bound to: 1 - type: integer 
+	Parameter C_FIXED_DATA_UNSIGNED bound to: 0 - type: integer 
+INFO: [Synth 8-3491] module 'floating_point_v7_1_9' declared at '/home/esp2022/sr3859/esp/esp/accelerators/third-party/GT_VORTEX/ip/rtl/fp_cores/xilinx/vc707/acl_fsqrt/acl_fsqrt.srcs/sources_1/ip/acl_fsqrt/hdl/floating_point_v7_1_rfs.vhd:94207' bound to instance 'U0' of component 'floating_point_v7_1_9' [/home/esp2022/sr3859/esp/esp/accelerators/third-party/GT_VORTEX/ip/rtl/fp_cores/xilinx/vc707/acl_fsqrt/acl_fsqrt.srcs/sources_1/ip/acl_fsqrt/synth/acl_fsqrt.vhd:210]
+INFO: [Synth 8-256] done synthesizing module 'acl_fsqrt' (15#1) [/home/esp2022/sr3859/esp/esp/accelerators/third-party/GT_VORTEX/ip/rtl/fp_cores/xilinx/vc707/acl_fsqrt/acl_fsqrt.srcs/sources_1/ip/acl_fsqrt/synth/acl_fsqrt.vhd:72]
+WARNING: [Synth 8-3331] design xbip_pipe_v3_0_6_viv__parameterized9 has unconnected port CLK
+WARNING: [Synth 8-3331] design xbip_pipe_v3_0_6_viv__parameterized9 has unconnected port CE
+WARNING: [Synth 8-3331] design xbip_pipe_v3_0_6_viv__parameterized9 has unconnected port SCLR
+WARNING: [Synth 8-3331] design xbip_pipe_v3_0_6_viv__parameterized9 has unconnected port SSET
+WARNING: [Synth 8-3331] design xbip_pipe_v3_0_6_viv__parameterized9 has unconnected port SINIT
+WARNING: [Synth 8-3331] design xbip_pipe_v3_0_6_viv__parameterized171 has unconnected port CLK
+WARNING: [Synth 8-3331] design xbip_pipe_v3_0_6_viv__parameterized171 has unconnected port CE
+WARNING: [Synth 8-3331] design xbip_pipe_v3_0_6_viv__parameterized171 has unconnected port SCLR
+WARNING: [Synth 8-3331] design xbip_pipe_v3_0_6_viv__parameterized171 has unconnected port SSET
+WARNING: [Synth 8-3331] design xbip_pipe_v3_0_6_viv__parameterized171 has unconnected port SINIT
+WARNING: [Synth 8-3331] design xbip_pipe_v3_0_6_viv__parameterized3 has unconnected port SCLR
+WARNING: [Synth 8-3331] design xbip_pipe_v3_0_6_viv__parameterized3 has unconnected port SSET
+WARNING: [Synth 8-3331] design xbip_pipe_v3_0_6_viv__parameterized3 has unconnected port SINIT
+WARNING: [Synth 8-3331] design flt_dec_op has unconnected port DEC_OP_STATE[11]
+WARNING: [Synth 8-3331] design flt_dec_op has unconnected port DEC_OP_STATE[10]
+WARNING: [Synth 8-3331] design flt_dec_op has unconnected port DEC_OP_STATE[9]
+WARNING: [Synth 8-3331] design flt_dec_op has unconnected port DEC_OP_STATE[8]
+WARNING: [Synth 8-3331] design flt_dec_op has unconnected port DIVIDE_BY_ZERO_IN
+WARNING: [Synth 8-3331] design xbip_pipe_v3_0_6_viv__parameterized67 has unconnected port SCLR
+WARNING: [Synth 8-3331] design xbip_pipe_v3_0_6_viv__parameterized67 has unconnected port SSET
+WARNING: [Synth 8-3331] design xbip_pipe_v3_0_6_viv__parameterized67 has unconnected port SINIT
+WARNING: [Synth 8-3331] design xbip_pipe_v3_0_6_viv__parameterized81 has unconnected port SCLR
+WARNING: [Synth 8-3331] design xbip_pipe_v3_0_6_viv__parameterized81 has unconnected port SSET
+WARNING: [Synth 8-3331] design xbip_pipe_v3_0_6_viv__parameterized81 has unconnected port SINIT
+WARNING: [Synth 8-3331] design carry_chain__parameterized26 has unconnected port B[11]
+WARNING: [Synth 8-3331] design xbip_pipe_v3_0_6_viv__parameterized65 has unconnected port CLK
+WARNING: [Synth 8-3331] design xbip_pipe_v3_0_6_viv__parameterized65 has unconnected port CE
+WARNING: [Synth 8-3331] design xbip_pipe_v3_0_6_viv__parameterized65 has unconnected port SCLR
+WARNING: [Synth 8-3331] design xbip_pipe_v3_0_6_viv__parameterized65 has unconnected port SSET
+WARNING: [Synth 8-3331] design xbip_pipe_v3_0_6_viv__parameterized65 has unconnected port SINIT
+WARNING: [Synth 8-3331] design xbip_pipe_v3_0_6_viv__parameterized167 has unconnected port CLK
+WARNING: [Synth 8-3331] design xbip_pipe_v3_0_6_viv__parameterized167 has unconnected port CE
+WARNING: [Synth 8-3331] design xbip_pipe_v3_0_6_viv__parameterized167 has unconnected port SCLR
+WARNING: [Synth 8-3331] design xbip_pipe_v3_0_6_viv__parameterized167 has unconnected port SSET
+WARNING: [Synth 8-3331] design xbip_pipe_v3_0_6_viv__parameterized167 has unconnected port SINIT
+WARNING: [Synth 8-3331] design flt_round_bit has unconnected port NORMALIZE[1]
+WARNING: [Synth 8-3331] design flt_round_bit has unconnected port FIXED_POINT
+WARNING: [Synth 8-3331] design flt_round_bit has unconnected port FIX_MANT_SIGN
+WARNING: [Synth 8-3331] design flt_round_bit has unconnected port SIGN
+WARNING: [Synth 8-3331] design xbip_pipe_v3_0_6_viv__parameterized169 has unconnected port CLK
+WARNING: [Synth 8-3331] design xbip_pipe_v3_0_6_viv__parameterized169 has unconnected port CE
+WARNING: [Synth 8-3331] design xbip_pipe_v3_0_6_viv__parameterized169 has unconnected port SCLR
+WARNING: [Synth 8-3331] design xbip_pipe_v3_0_6_viv__parameterized169 has unconnected port SSET
+WARNING: [Synth 8-3331] design xbip_pipe_v3_0_6_viv__parameterized169 has unconnected port SINIT
+WARNING: [Synth 8-3331] design xbip_pipe_v3_0_6_viv__parameterized41 has unconnected port CLK
+WARNING: [Synth 8-3331] design xbip_pipe_v3_0_6_viv__parameterized41 has unconnected port CE
+WARNING: [Synth 8-3331] design xbip_pipe_v3_0_6_viv__parameterized41 has unconnected port SCLR
+WARNING: [Synth 8-3331] design xbip_pipe_v3_0_6_viv__parameterized41 has unconnected port SSET
+WARNING: [Synth 8-3331] design xbip_pipe_v3_0_6_viv__parameterized41 has unconnected port SINIT
+WARNING: [Synth 8-3331] design xbip_pipe_v3_0_6_viv__parameterized61 has unconnected port SCLR
+WARNING: [Synth 8-3331] design xbip_pipe_v3_0_6_viv__parameterized61 has unconnected port SSET
+WARNING: [Synth 8-3331] design xbip_pipe_v3_0_6_viv__parameterized61 has unconnected port SINIT
+WARNING: [Synth 8-3331] design xbip_pipe_v3_0_6_viv__parameterized165 has unconnected port CLK
+WARNING: [Synth 8-3331] design xbip_pipe_v3_0_6_viv__parameterized165 has unconnected port CE
+WARNING: [Synth 8-3331] design xbip_pipe_v3_0_6_viv__parameterized165 has unconnected port SCLR
+WARNING: [Synth 8-3331] design xbip_pipe_v3_0_6_viv__parameterized165 has unconnected port SSET
+WARNING: [Synth 8-3331] design xbip_pipe_v3_0_6_viv__parameterized165 has unconnected port SINIT
+WARNING: [Synth 8-3331] design xbip_pipe_v3_0_6_viv__parameterized163 has unconnected port CLK
+WARNING: [Synth 8-3331] design xbip_pipe_v3_0_6_viv__parameterized163 has unconnected port CE
+WARNING: [Synth 8-3331] design xbip_pipe_v3_0_6_viv__parameterized163 has unconnected port SCLR
+WARNING: [Synth 8-3331] design xbip_pipe_v3_0_6_viv__parameterized163 has unconnected port SSET
+WARNING: [Synth 8-3331] design xbip_pipe_v3_0_6_viv__parameterized163 has unconnected port SINIT
+WARNING: [Synth 8-3331] design xbip_pipe_v3_0_6_viv__parameterized83 has unconnected port CLK
+WARNING: [Synth 8-3331] design xbip_pipe_v3_0_6_viv__parameterized83 has unconnected port CE
+WARNING: [Synth 8-3331] design xbip_pipe_v3_0_6_viv__parameterized83 has unconnected port SCLR
+WARNING: [Synth 8-3331] design xbip_pipe_v3_0_6_viv__parameterized83 has unconnected port SSET
+WARNING: [Synth 8-3331] design xbip_pipe_v3_0_6_viv__parameterized83 has unconnected port SINIT
+WARNING: [Synth 8-3331] design renorm_and_round_logic has unconnected port EXP_OUT[7]
+WARNING: [Synth 8-3331] design renorm_and_round_logic has unconnected port EXP_OUT[6]
+WARNING: [Synth 8-3331] design renorm_and_round_logic has unconnected port EXP_OUT[5]
+WARNING: [Synth 8-3331] design renorm_and_round_logic has unconnected port EXP_OUT[4]
+WARNING: [Synth 8-3331] design renorm_and_round_logic has unconnected port EXP_OUT[3]
+WARNING: [Synth 8-3331] design renorm_and_round_logic has unconnected port EXP_OUT[2]
+WARNING: [Synth 8-3331] design renorm_and_round_logic has unconnected port EXP_OUT[1]
+WARNING: [Synth 8-3331] design renorm_and_round_logic has unconnected port EXP_OUT[0]
+WARNING: [Synth 8-3331] design renorm_and_round_logic has unconnected port EXP_INC_IN
+WARNING: [Synth 8-3331] design xbip_pipe_v3_0_6_viv__parameterized63 has unconnected port SCLR
+WARNING: [Synth 8-3331] design xbip_pipe_v3_0_6_viv__parameterized63 has unconnected port SSET
+WARNING: [Synth 8-3331] design xbip_pipe_v3_0_6_viv__parameterized63 has unconnected port SINIT
+WARNING: [Synth 8-3331] design xbip_pipe_v3_0_6_viv__parameterized161 has unconnected port SCLR
+WARNING: [Synth 8-3331] design xbip_pipe_v3_0_6_viv__parameterized161 has unconnected port SSET
+WARNING: [Synth 8-3331] design xbip_pipe_v3_0_6_viv__parameterized161 has unconnected port SINIT
+WARNING: [Synth 8-3331] design xbip_pipe_v3_0_6_viv__parameterized159 has unconnected port SCLR
+WARNING: [Synth 8-3331] design xbip_pipe_v3_0_6_viv__parameterized159 has unconnected port SSET
+WARNING: [Synth 8-3331] design xbip_pipe_v3_0_6_viv__parameterized159 has unconnected port SINIT
+WARNING: [Synth 8-3331] design xbip_pipe_v3_0_6_viv__parameterized157 has unconnected port SCLR
+WARNING: [Synth 8-3331] design xbip_pipe_v3_0_6_viv__parameterized157 has unconnected port SSET
+WARNING: [Synth 8-3331] design xbip_pipe_v3_0_6_viv__parameterized157 has unconnected port SINIT
+WARNING: [Synth 8-3331] design special_detect has unconnected port A[31]
+WARNING: [Synth 8-3331] design xbip_pipe_v3_0_6_viv__parameterized155 has unconnected port SCLR
+WARNING: [Synth 8-3331] design xbip_pipe_v3_0_6_viv__parameterized155 has unconnected port SSET
+WARNING: [Synth 8-3331] design xbip_pipe_v3_0_6_viv__parameterized155 has unconnected port SINIT
+WARNING: [Synth 8-3331] design xbip_pipe_v3_0_6_viv__parameterized143 has unconnected port CLK
+WARNING: [Synth 8-3331] design xbip_pipe_v3_0_6_viv__parameterized143 has unconnected port CE
+WARNING: [Synth 8-3331] design xbip_pipe_v3_0_6_viv__parameterized143 has unconnected port SCLR
+WARNING: [Synth 8-3331] design xbip_pipe_v3_0_6_viv__parameterized143 has unconnected port SSET
+WARNING: [Synth 8-3331] design xbip_pipe_v3_0_6_viv__parameterized143 has unconnected port SINIT
+WARNING: [Synth 8-3331] design xbip_pipe_v3_0_6_viv__parameterized5 has unconnected port SCLR
+WARNING: [Synth 8-3331] design xbip_pipe_v3_0_6_viv__parameterized5 has unconnected port SSET
+WARNING: [Synth 8-3331] design xbip_pipe_v3_0_6_viv__parameterized5 has unconnected port SINIT
+INFO: [Common 17-14] Message 'Synth 8-3331' appears 100 times and further instances of the messages will be disabled. Use the Tcl command set_msg_config to change the current settings.
+---------------------------------------------------------------------------------
+Finished RTL Elaboration : Time (s): cpu = 00:00:14 ; elapsed = 00:00:22 . Memory (MB): peak = 2240.578 ; gain = 319.402 ; free physical = 7084 ; free virtual = 39864
+---------------------------------------------------------------------------------
+
+Report Check Netlist: 
++------+------------------+-------+---------+-------+------------------+
+|      |Item              |Errors |Warnings |Status |Description       |
++------+------------------+-------+---------+-------+------------------+
+|1     |multi_driven_nets |      0|        0|Passed |Multi driven nets |
++------+------------------+-------+---------+-------+------------------+
+---------------------------------------------------------------------------------
+Start Handling Custom Attributes
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Handling Custom Attributes : Time (s): cpu = 00:00:15 ; elapsed = 00:00:23 . Memory (MB): peak = 2243.547 ; gain = 322.371 ; free physical = 7151 ; free virtual = 39934
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished RTL Optimization Phase 1 : Time (s): cpu = 00:00:15 ; elapsed = 00:00:23 . Memory (MB): peak = 2243.547 ; gain = 322.371 ; free physical = 7151 ; free virtual = 39934
+---------------------------------------------------------------------------------
+Netlist sorting complete. Time (s): cpu = 00:00:00.05 ; elapsed = 00:00:00.05 . Memory (MB): peak = 2246.516 ; gain = 0.000 ; free physical = 7160 ; free virtual = 39943
+INFO: [Netlist 29-17] Analyzing 875 Unisim elements for replacement
+INFO: [Netlist 29-28] Unisim Transformation completed in 0 CPU seconds
+INFO: [Project 1-570] Preparing netlist for logic optimization
+
+Processing XDC Constraints
+Initializing timing engine
+Parsing XDC File [/home/esp2022/sr3859/esp/esp/accelerators/third-party/GT_VORTEX/ip/rtl/fp_cores/xilinx/vc707/acl_fsqrt/acl_fsqrt.srcs/sources_1/ip/acl_fsqrt/acl_fsqrt_ooc.xdc] for cell 'U0'
+Finished Parsing XDC File [/home/esp2022/sr3859/esp/esp/accelerators/third-party/GT_VORTEX/ip/rtl/fp_cores/xilinx/vc707/acl_fsqrt/acl_fsqrt.srcs/sources_1/ip/acl_fsqrt/acl_fsqrt_ooc.xdc] for cell 'U0'
+Parsing XDC File [/home/esp2022/sr3859/esp/esp/accelerators/third-party/GT_VORTEX/ip/rtl/fp_cores/xilinx/vc707/acl_fsqrt/acl_fsqrt.runs/acl_fsqrt_synth_1/dont_touch.xdc]
+Finished Parsing XDC File [/home/esp2022/sr3859/esp/esp/accelerators/third-party/GT_VORTEX/ip/rtl/fp_cores/xilinx/vc707/acl_fsqrt/acl_fsqrt.runs/acl_fsqrt_synth_1/dont_touch.xdc]
+Completed Processing XDC Constraints
+
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 2403.359 ; gain = 0.000 ; free physical = 7001 ; free virtual = 39821
+INFO: [Project 1-111] Unisim Transformation Summary:
+  A total of 1 instances were transformed.
+  FDE => FDRE: 1 instance 
+
+Constraint Validation Runtime : Time (s): cpu = 00:00:00.13 ; elapsed = 00:00:00.07 . Memory (MB): peak = 2403.359 ; gain = 0.000 ; free physical = 6995 ; free virtual = 39815
+---------------------------------------------------------------------------------
+Finished Constraint Validation : Time (s): cpu = 00:00:25 ; elapsed = 00:00:35 . Memory (MB): peak = 2403.359 ; gain = 482.184 ; free physical = 7062 ; free virtual = 39901
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Loading Part and Timing Information
+---------------------------------------------------------------------------------
+Loading part: xc7vx485tffg1761-2
+---------------------------------------------------------------------------------
+Finished Loading Part and Timing Information : Time (s): cpu = 00:00:25 ; elapsed = 00:00:35 . Memory (MB): peak = 2403.359 ; gain = 482.184 ; free physical = 7071 ; free virtual = 39911
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Applying 'set_property' XDC Constraints
+---------------------------------------------------------------------------------
+Applied set_property DONT_TOUCH = true for U0. (constraint file  /home/esp2022/sr3859/esp/esp/accelerators/third-party/GT_VORTEX/ip/rtl/fp_cores/xilinx/vc707/acl_fsqrt/acl_fsqrt.runs/acl_fsqrt_synth_1/dont_touch.xdc, line 9).
+---------------------------------------------------------------------------------
+Finished applying 'set_property' XDC Constraints : Time (s): cpu = 00:00:25 ; elapsed = 00:00:35 . Memory (MB): peak = 2403.359 ; gain = 482.184 ; free physical = 7068 ; free virtual = 39908
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished RTL Optimization Phase 2 : Time (s): cpu = 00:00:27 ; elapsed = 00:00:39 . Memory (MB): peak = 2403.359 ; gain = 482.184 ; free physical = 7054 ; free virtual = 39907
+---------------------------------------------------------------------------------
+INFO: [Synth 8-223] decloning instance 'U0/i_synth/SQRT_OP.SPD.OP/i_mant_calc.ROUND/EXTRA_LSB_BIT_DEL' (delay__parameterized77) to 'U0/i_synth/SQRT_OP.SPD.OP/i_mant_calc.ROUND/EXTRA_LSB_RND1_DEL'
+INFO: [Synth 8-223] decloning instance 'U0/i_synth/SQRT_OP.SPD.OP/i_mant_calc.ROUND/EXP_INC_DELAY' (delay__parameterized77) to 'U0/i_synth/SQRT_OP.SPD.OP/i_mant_calc.ROUND/EXP_INC_RND1_DELAY'
+INFO: [Synth 8-223] decloning instance 'U0/i_synth/DELAY_DIVIDE_BY_ZERO' (delay__parameterized77) to 'U0/i_synth/DELAY_OVERFLOW'
+INFO: [Synth 8-223] decloning instance 'U0/i_synth/DELAY_DIVIDE_BY_ZERO' (delay__parameterized77) to 'U0/i_synth/DELAY_UNDERFLOW'
+INFO: [Synth 8-223] decloning instance 'U0/i_synth/DELAY_DIVIDE_BY_ZERO' (delay__parameterized77) to 'U0/i_synth/DELAY_ACCUM_OVERFLOW'
+INFO: [Synth 8-223] decloning instance 'U0/i_synth/DELAY_DIVIDE_BY_ZERO' (delay__parameterized77) to 'U0/i_synth/DELAY_ACCUM_INPUT_OVERFLOW'
+
+Report RTL Partitions: 
++-+--------------+------------+----------+
+| |RTL Partition |Replication |Instances |
++-+--------------+------------+----------+
++-+--------------+------------+----------+
+---------------------------------------------------------------------------------
+Start RTL Component Statistics 
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished RTL Component Statistics 
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start RTL Hierarchical Component Statistics 
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished RTL Hierarchical Component Statistics
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Part Resource Summary
+---------------------------------------------------------------------------------
+Part Resources:
+DSPs: 2800 (col length:140)
+BRAMs: 2060 (col length: RAMB18 140 RAMB36 70)
+---------------------------------------------------------------------------------
+Finished Part Resource Summary
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Cross Boundary and Area Optimization
+---------------------------------------------------------------------------------
+Warning: Parallel synthesis criteria is not met 
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (U0/i_synth/\SQRT_OP.SPD.OP/i_mant_calc.MANT_SQRT/RT[0].MA_DEL.MANT_DEL/i_pipe/opt_has_pipe.first_q_reg[0] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (U0/i_synth/\SQRT_OP.SPD.OP/i_mant_calc.MANT_SQRT/RT[0].MA_DEL.MANT_DEL/i_pipe/opt_has_pipe.first_q_reg[1] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (U0/i_synth/\SQRT_OP.SPD.OP/i_mant_calc.MANT_SQRT/RT[0].Q_DEL/i_pipe/opt_has_pipe.first_q_reg[0] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (U0/i_synth/\SQRT_OP.SPD.OP/i_mant_calc.MANT_SQRT/RT[0].Q_DEL/i_pipe/opt_has_pipe.first_q_reg[1] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (U0/i_synth/\SQRT_OP.SPD.OP/i_mant_calc.EXP/STATE_DEC_DELAY/i_pipe/opt_has_pipe.first_q_reg[4] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (U0/i_synth/\SQRT_OP.SPD.OP/i_mant_calc.EXP/STATE_DEC_DELAY/i_pipe/opt_has_pipe.first_q_reg[6] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (U0/i_synth/\SQRT_OP.SPD.OP/i_mant_calc.EXP/STATE_DEC_DELAY/i_pipe/opt_has_pipe.first_q_reg[7] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (U0/i_synth/\SQRT_OP.SPD.OP/i_mant_calc.MANT_SQRT/RT[1].MA_DEL.MANT_DEL/i_pipe/opt_has_pipe.first_q_reg[0] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (U0/i_synth/\SQRT_OP.SPD.OP/i_mant_calc.MANT_SQRT/RT[1].MA_DEL.MANT_DEL/i_pipe/opt_has_pipe.first_q_reg[1] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (U0/i_synth/\SQRT_OP.SPD.OP/i_mant_calc.MANT_SQRT/RT[1].Q_DEL/i_pipe/opt_has_pipe.first_q_reg[1] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (U0/i_synth/\SQRT_OP.SPD.OP/i_mant_calc.MANT_SQRT/RT[1].Q_DEL/i_pipe/opt_has_pipe.first_q_reg[2] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (U0/i_synth/\SQRT_OP.SPD.OP/i_mant_calc.MANT_SQRT/RT[2].MA_DEL.MANT_DEL/i_pipe/opt_has_pipe.first_q_reg[0] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (U0/i_synth/\SQRT_OP.SPD.OP/i_mant_calc.MANT_SQRT/RT[2].MA_DEL.MANT_DEL/i_pipe/opt_has_pipe.first_q_reg[1] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (U0/i_synth/\SQRT_OP.SPD.OP/i_mant_calc.MANT_SQRT/RT[2].Q_DEL/i_pipe/opt_has_pipe.first_q_reg[2] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (U0/i_synth/\SQRT_OP.SPD.OP/i_mant_calc.MANT_SQRT/RT[2].Q_DEL/i_pipe/opt_has_pipe.first_q_reg[3] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (U0/i_synth/\SQRT_OP.SPD.OP/i_mant_calc.MANT_SQRT/RT[3].MA_DEL.MANT_DEL/i_pipe/opt_has_pipe.first_q_reg[0] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (U0/i_synth/\SQRT_OP.SPD.OP/i_mant_calc.MANT_SQRT/RT[3].MA_DEL.MANT_DEL/i_pipe/opt_has_pipe.first_q_reg[1] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (U0/i_synth/\SQRT_OP.SPD.OP/i_mant_calc.MANT_SQRT/RT[3].Q_DEL/i_pipe/opt_has_pipe.first_q_reg[3] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (U0/i_synth/\SQRT_OP.SPD.OP/i_mant_calc.MANT_SQRT/RT[3].Q_DEL/i_pipe/opt_has_pipe.first_q_reg[4] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (U0/i_synth/\SQRT_OP.SPD.OP/i_mant_calc.MANT_SQRT/RT[4].MA_DEL.MANT_DEL/i_pipe/opt_has_pipe.first_q_reg[0] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (U0/i_synth/\SQRT_OP.SPD.OP/i_mant_calc.MANT_SQRT/RT[4].MA_DEL.MANT_DEL/i_pipe/opt_has_pipe.first_q_reg[1] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (U0/i_synth/\SQRT_OP.SPD.OP/i_mant_calc.MANT_SQRT/RT[4].Q_DEL/i_pipe/opt_has_pipe.first_q_reg[4] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (U0/i_synth/\SQRT_OP.SPD.OP/i_mant_calc.MANT_SQRT/RT[4].Q_DEL/i_pipe/opt_has_pipe.first_q_reg[5] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (U0/i_synth/\SQRT_OP.SPD.OP/i_mant_calc.MANT_SQRT/RT[5].MA_DEL.MANT_DEL/i_pipe/opt_has_pipe.first_q_reg[0] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (U0/i_synth/\SQRT_OP.SPD.OP/i_mant_calc.MANT_SQRT/RT[5].MA_DEL.MANT_DEL/i_pipe/opt_has_pipe.first_q_reg[1] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (U0/i_synth/\SQRT_OP.SPD.OP/i_mant_calc.MANT_SQRT/RT[5].Q_DEL/i_pipe/opt_has_pipe.first_q_reg[5] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (U0/i_synth/\SQRT_OP.SPD.OP/i_mant_calc.MANT_SQRT/RT[5].Q_DEL/i_pipe/opt_has_pipe.first_q_reg[6] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (U0/i_synth/\SQRT_OP.SPD.OP/i_mant_calc.MANT_SQRT/RT[6].MA_DEL.MANT_DEL/i_pipe/opt_has_pipe.first_q_reg[0] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (U0/i_synth/\SQRT_OP.SPD.OP/i_mant_calc.MANT_SQRT/RT[6].MA_DEL.MANT_DEL/i_pipe/opt_has_pipe.first_q_reg[1] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (U0/i_synth/\SQRT_OP.SPD.OP/i_mant_calc.MANT_SQRT/RT[6].Q_DEL/i_pipe/opt_has_pipe.first_q_reg[6] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (U0/i_synth/\SQRT_OP.SPD.OP/i_mant_calc.MANT_SQRT/RT[6].Q_DEL/i_pipe/opt_has_pipe.first_q_reg[7] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (U0/i_synth/\SQRT_OP.SPD.OP/i_mant_calc.MANT_SQRT/RT[7].MA_DEL.MANT_DEL/i_pipe/opt_has_pipe.first_q_reg[0] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (U0/i_synth/\SQRT_OP.SPD.OP/i_mant_calc.MANT_SQRT/RT[7].MA_DEL.MANT_DEL/i_pipe/opt_has_pipe.first_q_reg[1] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (U0/i_synth/\SQRT_OP.SPD.OP/i_mant_calc.MANT_SQRT/RT[7].Q_DEL/i_pipe/opt_has_pipe.first_q_reg[7] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (U0/i_synth/\SQRT_OP.SPD.OP/i_mant_calc.MANT_SQRT/RT[7].Q_DEL/i_pipe/opt_has_pipe.first_q_reg[8] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (U0/i_synth/\SQRT_OP.SPD.OP/i_mant_calc.MANT_SQRT/RT[8].MA_DEL.MANT_DEL/i_pipe/opt_has_pipe.first_q_reg[0] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (U0/i_synth/\SQRT_OP.SPD.OP/i_mant_calc.MANT_SQRT/RT[8].MA_DEL.MANT_DEL/i_pipe/opt_has_pipe.first_q_reg[1] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (U0/i_synth/\SQRT_OP.SPD.OP/i_mant_calc.MANT_SQRT/RT[8].Q_DEL/i_pipe/opt_has_pipe.first_q_reg[8] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (U0/i_synth/\SQRT_OP.SPD.OP/i_mant_calc.MANT_SQRT/RT[8].Q_DEL/i_pipe/opt_has_pipe.first_q_reg[9] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (U0/i_synth/\SQRT_OP.SPD.OP/i_mant_calc.MANT_SQRT/RT[9].MA_DEL.MANT_DEL/i_pipe/opt_has_pipe.first_q_reg[0] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (U0/i_synth/\SQRT_OP.SPD.OP/i_mant_calc.MANT_SQRT/RT[9].MA_DEL.MANT_DEL/i_pipe/opt_has_pipe.first_q_reg[1] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (U0/i_synth/\SQRT_OP.SPD.OP/i_mant_calc.MANT_SQRT/RT[9].Q_DEL/i_pipe/opt_has_pipe.first_q_reg[9] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (U0/i_synth/\SQRT_OP.SPD.OP/i_mant_calc.MANT_SQRT/RT[9].Q_DEL/i_pipe/opt_has_pipe.first_q_reg[10] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (U0/i_synth/\SQRT_OP.SPD.OP/i_mant_calc.MANT_SQRT/RT[10].MA_DEL.MANT_DEL/i_pipe/opt_has_pipe.first_q_reg[0] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (U0/i_synth/\SQRT_OP.SPD.OP/i_mant_calc.MANT_SQRT/RT[10].MA_DEL.MANT_DEL/i_pipe/opt_has_pipe.first_q_reg[1] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (U0/i_synth/\SQRT_OP.SPD.OP/i_mant_calc.MANT_SQRT/RT[10].Q_DEL/i_pipe/opt_has_pipe.first_q_reg[10] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (U0/i_synth/\SQRT_OP.SPD.OP/i_mant_calc.MANT_SQRT/RT[10].Q_DEL/i_pipe/opt_has_pipe.first_q_reg[11] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (U0/i_synth/\SQRT_OP.SPD.OP/i_mant_calc.MANT_SQRT/RT[11].MA_DEL.MANT_DEL/i_pipe/opt_has_pipe.first_q_reg[0] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (U0/i_synth/\SQRT_OP.SPD.OP/i_mant_calc.MANT_SQRT/RT[11].MA_DEL.MANT_DEL/i_pipe/opt_has_pipe.first_q_reg[1] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (U0/i_synth/\SQRT_OP.SPD.OP/i_mant_calc.MANT_SQRT/RT[11].Q_DEL/i_pipe/opt_has_pipe.first_q_reg[11] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (U0/i_synth/\SQRT_OP.SPD.OP/i_mant_calc.MANT_SQRT/RT[11].Q_DEL/i_pipe/opt_has_pipe.first_q_reg[12] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (U0/i_synth/\SQRT_OP.SPD.OP/i_mant_calc.MANT_SQRT/RT[12].MA_DEL.MANT_DEL/i_pipe/opt_has_pipe.first_q_reg[0] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (U0/i_synth/\SQRT_OP.SPD.OP/i_mant_calc.MANT_SQRT/RT[12].Q_DEL/i_pipe/opt_has_pipe.first_q_reg[12] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (U0/i_synth/\SQRT_OP.SPD.OP/i_mant_calc.MANT_SQRT/RT[12].Q_DEL/i_pipe/opt_has_pipe.first_q_reg[13] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (U0/i_synth/\SQRT_OP.SPD.OP/i_mant_calc.MANT_SQRT/RT[13].Q_DEL/i_pipe/opt_has_pipe.first_q_reg[13] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (U0/i_synth/\SQRT_OP.SPD.OP/i_mant_calc.MANT_SQRT/RT[13].Q_DEL/i_pipe/opt_has_pipe.first_q_reg[14] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (U0/i_synth/\SQRT_OP.SPD.OP/i_mant_calc.MANT_SQRT/RT[14].Q_DEL/i_pipe/opt_has_pipe.first_q_reg[14] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (U0/i_synth/\SQRT_OP.SPD.OP/i_mant_calc.MANT_SQRT/RT[14].Q_DEL/i_pipe/opt_has_pipe.first_q_reg[15] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (U0/i_synth/\SQRT_OP.SPD.OP/i_mant_calc.MANT_SQRT/RT[15].Q_DEL/i_pipe/opt_has_pipe.first_q_reg[15] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (U0/i_synth/\SQRT_OP.SPD.OP/i_mant_calc.MANT_SQRT/RT[15].Q_DEL/i_pipe/opt_has_pipe.first_q_reg[16] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (U0/i_synth/\SQRT_OP.SPD.OP/i_mant_calc.MANT_SQRT/RT[16].Q_DEL/i_pipe/opt_has_pipe.first_q_reg[16] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (U0/i_synth/\SQRT_OP.SPD.OP/i_mant_calc.MANT_SQRT/RT[16].Q_DEL/i_pipe/opt_has_pipe.first_q_reg[17] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (U0/i_synth/\SQRT_OP.SPD.OP/i_mant_calc.MANT_SQRT/RT[17].Q_DEL/i_pipe/opt_has_pipe.first_q_reg[17] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (U0/i_synth/\SQRT_OP.SPD.OP/i_mant_calc.MANT_SQRT/RT[17].Q_DEL/i_pipe/opt_has_pipe.first_q_reg[18] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (U0/i_synth/\SQRT_OP.SPD.OP/i_mant_calc.MANT_SQRT/RT[18].Q_DEL/i_pipe/opt_has_pipe.first_q_reg[18] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (U0/i_synth/\SQRT_OP.SPD.OP/i_mant_calc.MANT_SQRT/RT[18].Q_DEL/i_pipe/opt_has_pipe.first_q_reg[19] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (U0/i_synth/\SQRT_OP.SPD.OP/i_mant_calc.MANT_SQRT/RT[19].Q_DEL/i_pipe/opt_has_pipe.first_q_reg[19] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (U0/i_synth/\SQRT_OP.SPD.OP/i_mant_calc.MANT_SQRT/RT[19].Q_DEL/i_pipe/opt_has_pipe.first_q_reg[20] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (U0/i_synth/\SQRT_OP.SPD.OP/i_mant_calc.MANT_SQRT/RT[20].Q_DEL/i_pipe/opt_has_pipe.first_q_reg[20] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (U0/i_synth/\SQRT_OP.SPD.OP/i_mant_calc.MANT_SQRT/RT[20].Q_DEL/i_pipe/opt_has_pipe.first_q_reg[21] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (U0/i_synth/\SQRT_OP.SPD.OP/i_mant_calc.MANT_SQRT/RT[21].Q_DEL/i_pipe/opt_has_pipe.first_q_reg[21] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (U0/i_synth/\SQRT_OP.SPD.OP/i_mant_calc.MANT_SQRT/RT[21].Q_DEL/i_pipe/opt_has_pipe.first_q_reg[22] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (U0/i_synth/\SQRT_OP.SPD.OP/i_mant_calc.MANT_SQRT/RT[22].Q_DEL/i_pipe/opt_has_pipe.first_q_reg[22] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (U0/i_synth/\SQRT_OP.SPD.OP/i_mant_calc.MANT_SQRT/RT[22].Q_DEL/i_pipe/opt_has_pipe.first_q_reg[23] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (U0/i_synth/\SQRT_OP.SPD.OP/i_mant_calc.MANT_SQRT/RT[23].Q_DEL/i_pipe/opt_has_pipe.first_q_reg[23] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (U0/i_synth/\SQRT_OP.SPD.OP/i_mant_calc.MANT_SQRT/RT[23].Q_DEL/i_pipe/opt_has_pipe.first_q_reg[24] )
+INFO: [Synth 8-3332] Sequential element (SQRT_OP.SPD.OP/i_mant_calc.ROUND/LOGIC.RND2/CARRYS_Q_DEL.FAST_DEL.CARRY_FD) is unused and will be removed from module floating_point_v7_1_9_viv.
+---------------------------------------------------------------------------------
+Finished Cross Boundary and Area Optimization : Time (s): cpu = 00:00:30 ; elapsed = 00:00:42 . Memory (MB): peak = 2403.359 ; gain = 482.184 ; free physical = 7029 ; free virtual = 39892
+---------------------------------------------------------------------------------
+
+Report RTL Partitions: 
++-+--------------+------------+----------+
+| |RTL Partition |Replication |Instances |
++-+--------------+------------+----------+
++-+--------------+------------+----------+
+---------------------------------------------------------------------------------
+Start Applying XDC Timing Constraints
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Applying XDC Timing Constraints : Time (s): cpu = 00:00:38 ; elapsed = 00:00:51 . Memory (MB): peak = 2403.359 ; gain = 482.184 ; free physical = 6883 ; free virtual = 39787
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Timing Optimization
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Timing Optimization : Time (s): cpu = 00:00:38 ; elapsed = 00:00:51 . Memory (MB): peak = 2403.359 ; gain = 482.184 ; free physical = 6885 ; free virtual = 39789
+---------------------------------------------------------------------------------
+
+Report RTL Partitions: 
++-+--------------+------------+----------+
+| |RTL Partition |Replication |Instances |
++-+--------------+------------+----------+
++-+--------------+------------+----------+
+---------------------------------------------------------------------------------
+Start Technology Mapping
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Technology Mapping : Time (s): cpu = 00:00:39 ; elapsed = 00:00:52 . Memory (MB): peak = 2403.359 ; gain = 482.184 ; free physical = 6881 ; free virtual = 39790
+---------------------------------------------------------------------------------
+
+Report RTL Partitions: 
++-+--------------+------------+----------+
+| |RTL Partition |Replication |Instances |
++-+--------------+------------+----------+
++-+--------------+------------+----------+
+---------------------------------------------------------------------------------
+Start IO Insertion
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Flattening Before IO Insertion
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Flattening Before IO Insertion
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Final Netlist Cleanup
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Final Netlist Cleanup
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished IO Insertion : Time (s): cpu = 00:00:43 ; elapsed = 00:00:56 . Memory (MB): peak = 2403.359 ; gain = 482.184 ; free physical = 6858 ; free virtual = 39776
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Renaming Generated Instances
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Renaming Generated Instances : Time (s): cpu = 00:00:43 ; elapsed = 00:00:56 . Memory (MB): peak = 2403.359 ; gain = 482.184 ; free physical = 6869 ; free virtual = 39786
+---------------------------------------------------------------------------------
+
+Report RTL Partitions: 
++-+--------------+------------+----------+
+| |RTL Partition |Replication |Instances |
++-+--------------+------------+----------+
++-+--------------+------------+----------+
+
+Report Check Netlist: 
++------+------------------+-------+---------+-------+------------------+
+|      |Item              |Errors |Warnings |Status |Description       |
++------+------------------+-------+---------+-------+------------------+
+|1     |multi_driven_nets |      0|        0|Passed |Multi driven nets |
++------+------------------+-------+---------+-------+------------------+
+---------------------------------------------------------------------------------
+Start Rebuilding User Hierarchy
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Rebuilding User Hierarchy : Time (s): cpu = 00:00:43 ; elapsed = 00:00:57 . Memory (MB): peak = 2403.359 ; gain = 482.184 ; free physical = 6857 ; free virtual = 39775
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Renaming Generated Ports
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Renaming Generated Ports : Time (s): cpu = 00:00:43 ; elapsed = 00:00:57 . Memory (MB): peak = 2403.359 ; gain = 482.184 ; free physical = 6868 ; free virtual = 39786
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Handling Custom Attributes
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Handling Custom Attributes : Time (s): cpu = 00:00:43 ; elapsed = 00:00:57 . Memory (MB): peak = 2403.359 ; gain = 482.184 ; free physical = 6858 ; free virtual = 39777
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Renaming Generated Nets
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Renaming Generated Nets : Time (s): cpu = 00:00:43 ; elapsed = 00:00:57 . Memory (MB): peak = 2403.359 ; gain = 482.184 ; free physical = 6854 ; free virtual = 39772
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Writing Synthesis Report
+---------------------------------------------------------------------------------
+
+Report BlackBoxes: 
++-+--------------+----------+
+| |BlackBox name |Instances |
++-+--------------+----------+
++-+--------------+----------+
+
+Report Cell Usage: 
++------+--------+------+
+|      |Cell    |Count |
++------+--------+------+
+|1     |LUT1    |    39|
+|2     |LUT2    |    53|
+|3     |LUT3    |   329|
+|4     |LUT4    |     8|
+|5     |LUT5    |     3|
+|6     |LUT6    |     9|
+|7     |MUXCY   |   424|
+|8     |SRL16E  |    21|
+|9     |SRLC32E |    11|
+|10    |XORCY   |   448|
+|11    |FDRE    |   904|
++------+--------+------+
+---------------------------------------------------------------------------------
+Finished Writing Synthesis Report : Time (s): cpu = 00:00:43 ; elapsed = 00:00:57 . Memory (MB): peak = 2403.359 ; gain = 482.184 ; free physical = 6853 ; free virtual = 39772
+---------------------------------------------------------------------------------
+Synthesis finished with 0 errors, 0 critical warnings and 84 warnings.
+Synthesis Optimization Runtime : Time (s): cpu = 00:00:39 ; elapsed = 00:00:52 . Memory (MB): peak = 2403.359 ; gain = 322.371 ; free physical = 6912 ; free virtual = 39830
+Synthesis Optimization Complete : Time (s): cpu = 00:00:44 ; elapsed = 00:00:57 . Memory (MB): peak = 2403.359 ; gain = 482.184 ; free physical = 6911 ; free virtual = 39830
+INFO: [Project 1-571] Translating synthesized netlist
+Netlist sorting complete. Time (s): cpu = 00:00:00.03 ; elapsed = 00:00:00.03 . Memory (MB): peak = 2403.359 ; gain = 0.000 ; free physical = 6987 ; free virtual = 39906
+INFO: [Netlist 29-17] Analyzing 872 Unisim elements for replacement
+INFO: [Netlist 29-28] Unisim Transformation completed in 0 CPU seconds
+INFO: [Project 1-570] Preparing netlist for logic optimization
+INFO: [Opt 31-138] Pushed 0 inverter(s) to 0 load pin(s).
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 2403.359 ; gain = 0.000 ; free physical = 6887 ; free virtual = 39809
+INFO: [Project 1-111] Unisim Transformation Summary:
+  A total of 123 instances were transformed.
+  (MUXCY,XORCY) => CARRY4: 123 instances
+
+INFO: [Common 17-83] Releasing license: Synthesis
+101 Infos, 100 Warnings, 0 Critical Warnings and 0 Errors encountered.
+synth_design completed successfully
+synth_design: Time (s): cpu = 00:01:02 ; elapsed = 00:01:20 . Memory (MB): peak = 2403.359 ; gain = 869.707 ; free physical = 7045 ; free virtual = 39969
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 2403.359 ; gain = 0.000 ; free physical = 7045 ; free virtual = 39968
+WARNING: [Constraints 18-5210] No constraints selected for write.
+Resolution: This message can indicate that there are no constraints for the design, or it can indicate that the used_in flags are set such that the constraints are ignored. This later case is used when running synth_design to not write synthesis constraints to the resulting checkpoint. Instead, project constraints are read when the synthesized design is opened.
+INFO: [Common 17-1381] The checkpoint '/home/esp2022/sr3859/esp/esp/accelerators/third-party/GT_VORTEX/ip/rtl/fp_cores/xilinx/vc707/acl_fsqrt/acl_fsqrt.runs/acl_fsqrt_synth_1/acl_fsqrt.dcp' has been generated.
+WARNING: [Common 17-576] 'use_project_ipc' is deprecated. This option is deprecated and no longer used.
+INFO: [Coretcl 2-1648] Added synthesis output to IP cache for IP acl_fsqrt, cache-ID = ab53980c4baa3103
+INFO: [Coretcl 2-1174] Renamed 210 cell refs.
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 2427.371 ; gain = 0.000 ; free physical = 7035 ; free virtual = 39965
+WARNING: [Constraints 18-5210] No constraints selected for write.
+Resolution: This message can indicate that there are no constraints for the design, or it can indicate that the used_in flags are set such that the constraints are ignored. This later case is used when running synth_design to not write synthesis constraints to the resulting checkpoint. Instead, project constraints are read when the synthesized design is opened.
+INFO: [Common 17-1381] The checkpoint '/home/esp2022/sr3859/esp/esp/accelerators/third-party/GT_VORTEX/ip/rtl/fp_cores/xilinx/vc707/acl_fsqrt/acl_fsqrt.runs/acl_fsqrt_synth_1/acl_fsqrt.dcp' has been generated.
+INFO: [runtcl-4] Executing : report_utilization -file acl_fsqrt_utilization_synth.rpt -pb acl_fsqrt_utilization_synth.pb
+INFO: [Common 17-206] Exiting Vivado at Mon Apr  4 19:00:52 2022...

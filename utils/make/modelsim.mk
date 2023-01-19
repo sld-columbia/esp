@@ -1,4 +1,4 @@
-# Copyright (c) 2011-2022 Columbia University, System Level Design Group
+# Copyright (c) 2011-2021 Columbia University, System Level Design Group
 # SPDX-License-Identifier: Apache-2.0
 
 
@@ -12,6 +12,12 @@ ifneq ($(filter $(TECHLIB),$(FPGALIBS)),)
 VLOGOPT += +define+XILINX_FPGA
 endif
 VLOGOPT += $(INCDIR_MODELSIM)
+
+# Flag for VORTEX SIMULATION VERILATOR
+#VLOGOPT += +define+VERILATOR 
+VLOGOPT += +define+FPU_FPNEW
+
+# define for excluding floating point unit
 
 VSIMOPT += -suppress 3812
 VSIMOPT += -suppress 2697
