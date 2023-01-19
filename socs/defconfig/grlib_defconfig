@@ -1,0 +1,150 @@
+#
+# Automatically generated make config: don't edit
+#
+CONFIG_LEON3FT_PRESENT=y
+CONFIG_HAS_SHARED_GRFPU=y
+
+#
+# Processor            
+#
+CONFIG_LEON3=y
+# CONFIG_LEON3_MIN is not set
+# CONFIG_LEON3_GP is not set
+# CONFIG_LEON3_HP is not set
+CONFIG_LEON3_CUSTOM=y
+
+#
+# Integer unit                                           
+#
+CONFIG_IU_NWINDOWS=8
+CONFIG_IU_V8MULDIV=y
+# CONFIG_IU_MUL_LATENCY_2 is not set
+# CONFIG_IU_MUL_LATENCY_4 is not set
+CONFIG_IU_MUL_LATENCY_5=y
+# CONFIG_IU_MUL_MAC is not set
+CONFIG_IU_MUL_INFERRED=y
+# CONFIG_IU_MUL_MODGEN is not set
+# CONFIG_IU_MUL_TECHSPEC is not set
+# CONFIG_IU_MUL_DW is not set
+CONFIG_IU_BP=y
+CONFIG_IU_SVT=y
+# CONFIG_NOTAG is not set
+CONFIG_IU_LDELAY=1
+CONFIG_IU_WATCHPOINTS=2
+CONFIG_PWD=y
+CONFIG_IU_RSTADDR=00000
+# CONFIG_NP_ASI is not set
+# CONFIG_WRPSR is not set
+# CONFIG_ALTWIN is not set
+# CONFIG_REX is not set
+
+#
+# Floating-point unit
+#
+CONFIG_FPU_ENABLE=y
+# CONFIG_FPU_GRFPU is not set
+# CONFIG_FPU_GRFPULITE is not set
+CONFIG_FPU_SLD=y
+
+#
+# Cache system
+#
+CONFIG_ICACHE_ENABLE=y
+# CONFIG_ICACHE_ASSO1 is not set
+CONFIG_ICACHE_ASSO2=y
+# CONFIG_ICACHE_ASSO3 is not set
+# CONFIG_ICACHE_ASSO4 is not set
+# CONFIG_ICACHE_SZ1 is not set
+# CONFIG_ICACHE_SZ2 is not set
+# CONFIG_ICACHE_SZ4 is not set
+CONFIG_ICACHE_SZ8=y
+# CONFIG_ICACHE_SZ16 is not set
+# CONFIG_ICACHE_SZ32 is not set
+# CONFIG_ICACHE_SZ64 is not set
+# CONFIG_ICACHE_SZ128 is not set
+# CONFIG_ICACHE_SZ256 is not set
+CONFIG_ICACHE_LZ16=y
+# CONFIG_ICACHE_LZ32 is not set
+# CONFIG_ICACHE_ALGORND is not set
+# CONFIG_ICACHE_ALGODIR is not set
+# CONFIG_ICACHE_ALGOLRR is not set
+CONFIG_ICACHE_ALGOLRU=y
+# CONFIG_ICACHE_LOCK is not set
+CONFIG_DCACHE_ENABLE=y
+# CONFIG_DCACHE_ASSO1 is not set
+# CONFIG_DCACHE_ASSO2 is not set
+# CONFIG_DCACHE_ASSO3 is not set
+CONFIG_DCACHE_ASSO4=y
+# CONFIG_DCACHE_SZ1 is not set
+# CONFIG_DCACHE_SZ2 is not set
+CONFIG_DCACHE_SZ4=y
+# CONFIG_DCACHE_SZ8 is not set
+# CONFIG_DCACHE_SZ16 is not set
+# CONFIG_DCACHE_SZ32 is not set
+# CONFIG_DCACHE_SZ64 is not set
+# CONFIG_DCACHE_SZ128 is not set
+# CONFIG_DCACHE_SZ256 is not set
+CONFIG_DCACHE_LZ16=y
+# CONFIG_DCACHE_LZ32 is not set
+# CONFIG_DCACHE_ALGORND is not set
+# CONFIG_DCACHE_ALGODIR is not set
+# CONFIG_DCACHE_ALGOLRR is not set
+CONFIG_DCACHE_ALGOLRU=y
+# CONFIG_DCACHE_LOCK is not set
+CONFIG_DCACHE_SNOOP=y
+CONFIG_DCACHE_SNOOP_SEPTAG=y
+# CONFIG_DCACHE_SNOOP_SP is not set
+CONFIG_CACHE_FIXED=0
+
+#
+# MMU
+#
+CONFIG_MMU_ENABLE=y
+# CONFIG_MMU_COMBINED is not set
+CONFIG_MMU_SPLIT=y
+CONFIG_MMU_REPARRAY=y
+# CONFIG_MMU_REPINCREMENT is not set
+# CONFIG_MMU_I2 is not set
+# CONFIG_MMU_I4 is not set
+CONFIG_MMU_I8=y
+# CONFIG_MMU_I16 is not set
+# CONFIG_MMU_I32 is not set
+# CONFIG_MMU_I64 is not set
+# CONFIG_MMU_D2 is not set
+# CONFIG_MMU_D4 is not set
+CONFIG_MMU_D8=y
+# CONFIG_MMU_D16 is not set
+# CONFIG_MMU_D32 is not set
+# CONFIG_MMU_D64 is not set
+CONFIG_MMU_FASTWB=y
+CONFIG_MMU_PAGE_4K=y
+# CONFIG_MMU_PAGE_8K is not set
+# CONFIG_MMU_PAGE_16K is not set
+# CONFIG_MMU_PAGE_32K is not set
+# CONFIG_MMU_PAGE_PROG is not set
+
+#
+# Debug Support Unit        
+#
+CONFIG_DSU_ENABLE=y
+# CONFIG_DSU_ITRACE is not set
+# CONFIG_DSU_ATRACE is not set
+# CONFIG_STAT_ENABLE is not set
+
+#
+# Fault-tolerance  
+#
+# CONFIG_LEON3FT_EN is not set
+
+#
+# Timers and IRQ control         
+#
+CONFIG_IRQ3_ENABLE=y
+# CONFIG_IRQ3_SEC is not set
+CONFIG_GPT_ENABLE=y
+CONFIG_GPT_NTIM=2
+CONFIG_GPT_SW=8
+CONFIG_GPT_TW=32
+CONFIG_GPT_IRQ=8
+CONFIG_GPT_SEPIRQ=y
+# CONFIG_GPT_WDOGEN is not set

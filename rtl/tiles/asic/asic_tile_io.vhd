@@ -38,11 +38,15 @@ use work.tiles_pkg.all;
 entity asic_tile_io is
   generic (
     SIMULATION   : boolean   := false;
-    ROUTER_PORTS : ports_vec := "11111");
+    HAS_SYNC     : integer range 0 to 1 := 1;
+    ROUTER_PORTS : ports_vec := "11111";
+    this_has_dco : integer range 0 to 2 := 1); -- 0: no DCO, 1: tile and NoC DCO
+                                               -- 2: NoC DCO only
   port (
     rst                : in    std_ulogic;  -- Global reset (active high)
     sys_rstn_out       : out   std_ulogic;  -- NoC reset (active low)
     sys_clk_out        : out   std_ulogic;  -- NoC clock
+    sys_clk_lock_out   : out   std_ulogic;  -- system clock lock
     ext_clk_noc        : in    std_ulogic;
     clk_div_noc        : out   std_ulogic;
     sys_clk            : in    std_ulogic;  -- NoC clock in (connect to sys_clk_out)
@@ -69,6 +73,16 @@ entity asic_tile_io is
     uart_txd           : out   std_ulogic;
     uart_ctsn          : in    std_ulogic;
     uart_rtsn          : out   std_ulogic;
+    -- I/O link
+    iolink_data_oen    : out std_logic;
+    iolink_data_in     : in  std_logic_vector(CFG_IOLINK_BITS - 1 downto 0);
+    iolink_data_out    : out std_logic_vector(CFG_IOLINK_BITS - 1 downto 0);
+    iolink_valid_in    : in  std_ulogic;
+    iolink_valid_out   : out std_ulogic;
+    iolink_clk_in      : in  std_ulogic;
+    iolink_clk_out     : out std_ulogic;
+    iolink_credit_in   : in  std_ulogic;
+    iolink_credit_out  : out std_ulogic;
     -- Test interface
     tdi                : in    std_logic;
     tdo                : out   std_logic;
@@ -162,6 +176,7 @@ architecture rtl of asic_tile_io is
   signal sys_clk_lock : std_ulogic;
   signal sys_rstn     : std_ulogic;
   signal raw_rstn     : std_ulogic;
+  signal tile_rst     : std_ulogic;
 
   -- Tile clock and reset (only for I/O tile)
   signal dco_clk      : std_ulogic;
@@ -190,6 +205,13 @@ architecture rtl of asic_tile_io is
   signal dvi_ahbmo : ahb_mst_out_type;
 
   attribute keep                        : string;
+  -- I/O Link
+  signal iolink_data_oen_int   : std_logic;
+  signal iolink_data_out_int   : std_logic_vector(CFG_IOLINK_BITS - 1 downto 0);
+  signal iolink_valid_out_int  : std_ulogic;
+  signal iolink_clk_out_int    : std_logic;
+  signal iolink_credit_out_int : std_logic;
+
   attribute syn_keep                    : boolean;
   attribute syn_preserve                : boolean;
 
@@ -423,31 +445,33 @@ begin
 
   rst0 : rstgen                         -- reset generator
     generic map (acthigh => 1, syncin => 0)
-    port map (rst, sys_clk, sys_clk_lock, sys_rstn, open);
+    port map (rst, sys_clk, sys_clk_lock, sys_rstn, raw_rstn);
 
-  -- NoC output clock and reset
   sys_rstn_out <= sys_rstn;
-
---  rst1 : rstgen                         -- reset generator
---    generic map (acthigh => 1, syncin => 0)
---    port map (rst, dco_clk, dco_clk_lock, dco_rstn, open);
-
-  raw_rstn <= not rst;
+  sys_clk_lock_out <= sys_clk_lock;
 
   rst_noc : rstgen
     generic map (acthigh => 1, syncin => 0)
-    port map (rst, sys_clk, '1', noc_rstn, open);
+    port map (rst, sys_clk, sys_clk_lock, noc_rstn, open);
 
   rst_jtag : rstgen
     generic map (acthigh => 1, syncin => 0)
     port map (rst, tclk, '1', test_rstn, open);
+
+  has_dco_rst : if this_has_dco = 1 generate
+    tile_rst <= rst;
+  end generate has_dco_rst;
+
+  no_dco_rst : if this_has_dco /= 1 generate
+    tile_rst <= noc_rstn;
+  end generate no_dco_rst;
 
   -----------------------------------------------------------------------------
   -- JTAG for single tile testing / bypass when test_if_en = 0
   -----------------------------------------------------------------------------
   jtag_test_i : jtag_test
     generic map (
-      test_if_en => 1)
+      test_if_en => CFG_JTAG_EN)
     port map (
       rst                 => test_rstn,
       refclk              => dco_clk,
@@ -572,7 +596,7 @@ begin
   sync_noc_set_io: sync_noc_set
   generic map (
      PORTS    => ROUTER_PORTS,
-     HAS_SYNC => 1 )
+     HAS_SYNC => HAS_SYNC)
    port map (
      clk                => sys_clk,
      clk_tile           => dco_clk,
@@ -687,61 +711,95 @@ begin
   mdcscaler_not_changed <= '1' when mdcscaler_reg = mdcscaler else '0';
   eth_rstn <= dco_rstn and mdcscaler_not_changed;
 
-  e1 : grethm
-    generic map(
-      hindex      => 0,
-      ehindex     => 1,
-      pindex      => 14,
-      paddr       => 16#800#,
-      pmask       => 16#f00#,
-      pirq        => 12,
-      little_end  => GLOB_CPU_AXI * CFG_L2_DISABLE,
-      memtech     => CFG_FABTECH,
-      enable_mdio => 1,
-      fifosize    => CFG_ETH_FIFO,
-      nsync       => 1,
-      oepol       => 1,
-      edcl        => CFG_DSU_ETH,
-      edclbufsz   => CFG_ETH_BUF,
-      macaddrh    => CFG_ETH_ENM,
-      macaddrl    => CFG_ETH_ENL,
-      phyrstadr   => 1,
-      ipaddrh     => CFG_ETH_IPM,
-      ipaddrl     => CFG_ETH_IPL,
-      giga        => CFG_GRETH1G,
-      edclsepahbg => 1)
-    port map(
-      rst    => dco_rstn,
-      clk    => dco_clk,                -- Fixed I/O tile frequency
-      mdcscaler => mdcscaler,
-      ahbmi  => eth0_ahbmi,
-      ahbmo  => eth0_ahbmo,
-      eahbmo => edcl_ahbmo,
-      apbi   => eth0_apbi,
-      apbo   => eth0_apbo,
-      ethi   => ethi,
-      etho   => etho);
+  onchip_ethernet : if CFG_ETH_EN = 1 generate
+    
+    e1 : grethm
+      generic map(
+        hindex      => 0,
+        ehindex     => 1,
+        pindex      => 14,
+        paddr       => 16#800#,
+        pmask       => 16#f00#,
+        pirq        => 12,
+        little_end  => GLOB_CPU_AXI * CFG_L2_DISABLE,
+        memtech     => CFG_FABTECH,
+        enable_mdio => 1,
+        fifosize    => CFG_ETH_FIFO,
+        nsync       => 1,
+        oepol       => 1,
+        edcl        => CFG_DSU_ETH,
+        edclbufsz   => CFG_ETH_BUF,
+        macaddrh    => CFG_ETH_ENM,
+        macaddrl    => CFG_ETH_ENL,
+        phyrstadr   => 1,
+        ipaddrh     => CFG_ETH_IPM,
+        ipaddrl     => CFG_ETH_IPL,
+        giga        => CFG_GRETH1G,
+        edclsepahbg => 1)
+      port map(
+        rst    => dco_rstn,
+        clk    => dco_clk,                -- Fixed I/O tile frequency
+        mdcscaler => mdcscaler,
+        ahbmi  => eth0_ahbmi,
+        ahbmo  => eth0_ahbmo,
+        eahbmo => edcl_ahbmo,
+        apbi   => eth0_apbi,
+        apbo   => eth0_apbo,
+        ethi   => ethi,
+        etho   => etho);
 
-  ethi.edclsepahb <= '1';
+    ethi.edclsepahb <= '1';
 
-  -- Ethernet I/O
-  reset_o2             <= dco_rstn;
-  ethi.tx_clk          <= etx_clk;
-  ethi.rx_clk          <= erx_clk;
-  ethi.rxd(3 downto 0) <= erxd;
-  ethi.rx_dv           <= erx_dv;
-  ethi.rx_er           <= erx_er;
-  ethi.rx_col          <= erx_col;
-  ethi.rx_crs          <= erx_crs;
-  ethi.mdio_i          <= emdio_i;
+    -- Ethernet I/O
+    reset_o2             <= dco_rstn;
+    ethi.tx_clk          <= etx_clk;
+    ethi.rx_clk          <= erx_clk;
+    ethi.rxd(3 downto 0) <= erxd;
+    ethi.rx_dv           <= erx_dv;
+    ethi.rx_er           <= erx_er;
+    ethi.rx_col          <= erx_col;
+    ethi.rx_crs          <= erx_crs;
+    ethi.mdio_i          <= emdio_i;
 
-  etxd     <= etho.txd(3 downto 0);
-  etx_en   <= etho.tx_en;
-  etx_er   <= etho.tx_er;
-  emdc     <= etho.mdc;
-  emdio_o  <= etho.mdio_o;
-  emdio_oe <= etho.mdio_oe;
+    etxd     <= etho.txd(3 downto 0);
+    etx_en   <= etho.tx_en;
+    etx_er   <= etho.tx_er;
+    emdc     <= etho.mdc;
+    emdio_o  <= etho.mdio_o;
+    emdio_oe <= etho.mdio_oe;
+  end generate onchip_ethernet;
 
+  no_onchip_ethernet: if CFG_ETH_EN = 0 generate
+    -- Ethernet bus interface
+    eth0_ahbmo <= ahbm_none;
+    edcl_ahbmo <= ahbm_none;
+    eth0_apbo  <= apb_none;
+
+    -- Ethernet I/O
+    reset_o2 <= '0';
+    etxd <= (others => '0');
+    etx_en <= '0';
+    etx_er <= '0';
+    emdc <= '0';
+    emdio_o <= '0';
+    emdio_oe <= '0';
+  end generate no_onchip_ethernet;
+
+  iolink : if CFG_IOLINK_EN = 1 generate
+    iolink_data_oen   <= iolink_data_oen_int;
+    iolink_data_out   <= iolink_data_out_int;
+    iolink_valid_out  <= iolink_valid_out_int;
+    iolink_clk_out    <= iolink_clk_out_int;
+    iolink_credit_out <= iolink_credit_out_int;
+  end generate iolink;
+
+  no_iolink : if CFG_IOLINK_EN = 0 generate
+    iolink_data_oen   <= '0';
+    iolink_data_out   <= (others => '0');
+    iolink_valid_out  <= '0';
+    iolink_clk_out    <= '0';
+    iolink_credit_out <= '0';
+  end generate no_iolink;
   -----------------------------------------------------------------------------
   -- DVI (not available for GF12 for now)
   -----------------------------------------------------------------------------
@@ -755,10 +813,10 @@ begin
   tile_io_1 : tile_io
     generic map (
       SIMULATION   => SIMULATION,
-      this_has_dco => 1)
+      this_has_dco => this_has_dco)
     port map (
       raw_rstn           => raw_rstn,
-      tile_rst           => rst,
+      tile_rst           => tile_rst,
       clk                => dco_clk,    -- Local DCO clock
       refclk_noc         => ext_clk_noc,  -- Backup NoC clock when DCO is enabled
       pllclk_noc         => clk_div_noc,  -- NoC DCO clock out
@@ -789,6 +847,16 @@ begin
       uart_txd           => uart_txd,
       uart_ctsn          => uart_ctsn,
       uart_rtsn          => uart_rtsn,
+      -- I/O link
+      iolink_data_oen    => iolink_data_oen_int,
+      iolink_data_in     => iolink_data_in,
+      iolink_data_out    => iolink_data_out_int,
+      iolink_valid_in    => iolink_valid_in,
+      iolink_valid_out   => iolink_valid_out_int,
+      iolink_clk_in      => iolink_clk_in,
+      iolink_clk_out     => iolink_clk_out_int,
+      iolink_credit_in   => iolink_credit_in,
+      iolink_credit_out  => iolink_credit_out_int,
       -- Pad configuration
       pad_cfg            => pad_cfg,
       -- NOC

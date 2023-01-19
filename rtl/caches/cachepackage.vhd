@@ -151,7 +151,7 @@ package cachepackage is
                         word_mask    : word_mask_t)
     return noc_flit_type;
 
-  function make_dcs_header (coh_msg     : coh_msg_t; mem_info : tile_mem_info_vector(0 to CFG_NMEM_TILE - 1);
+  function make_dcs_header (coh_msg     : coh_msg_t; mem_info : tile_mem_info_vector(0 to MEM_ID_RANGE_MSB);
     mem_num     : integer; hprot : hprot_t; addr : line_addr_t;
     local_x     : local_yx; local_y : local_yx;
     to_req      : std_ulogic; req_id : cache_id_t; src_id : cache_id_t;
@@ -275,6 +275,7 @@ package cachepackage is
       aq                        : in  std_ulogic;
       rl                        : in  std_ulogic;
       spandex_conf              : in  std_logic_vector(31 downto 0);
+      acc_flush_done            : out std_ulogic;
       -- backend (cache - NoC)
       -- tile->NoC1
       coherence_req_wrreq        : out std_ulogic;
@@ -500,7 +501,7 @@ package body cachepackage is
 
   end function make_header;
 
-  function make_dcs_header (coh_msg     : coh_msg_t; mem_info : tile_mem_info_vector(0 to CFG_NMEM_TILE - 1);
+  function make_dcs_header (coh_msg     : coh_msg_t; mem_info : tile_mem_info_vector(0 to MEM_ID_RANGE_MSB);
                         mem_num     : integer; hprot : hprot_t; addr : line_addr_t;
                         local_x     : local_yx; local_y : local_yx;
                         to_req      : std_ulogic; req_id : cache_id_t; src_id : cache_id_t;

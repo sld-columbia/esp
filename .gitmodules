@@ -47,3 +47,6 @@
 [submodule "soft/ariane/opensbi"]
 	path = soft/ariane/opensbi
 	url = https://github.com/sld-columbia/opensbi.git
+[submodule "accelerators/catapult_hls/common/matchlib_toolkit"]
+	path = accelerators/catapult_hls/common/matchlib_toolkit
+	url = https://github.com/hlslibs/matchlib_toolkit.git

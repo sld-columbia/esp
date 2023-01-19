@@ -185,7 +185,8 @@ clean: 		soft-clean		\
 		socketgen-clean		\
 		espmon-clean		\
 		mmi64-clean		\
-		soft-build-clean
+		soft-build-clean \
+		jtag-clean
 
 distclean:	check_srcs-distclean     	\
 		xilinx_lib-clean 		\
@@ -205,7 +206,8 @@ distclean:	check_srcs-distclean     	\
 		socketgen-distclean		\
 		espmon-distclean		\
 		mmi64-distclean			\
-		soft-build-distclean
+		soft-build-distclean	\
+		jtag-distclean
 	$(QUIET_CLEAN)$(RM) $(LOGS)
 
 

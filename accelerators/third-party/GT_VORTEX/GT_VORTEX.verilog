@@ -1,0 +1,3 @@
+rtl/fp_cores/xilinx/vc707/acl_fdiv/acl_fdiv.ip_user_files/ip/acl_div/acl_div_stub.v
+rtl/fp_cores/xilinx/vc707/acl_fmadd/acl_fmadd.ip_user_files/ip/acl_fmadd/acl_fmadd_stub.v
+rtl/fp_cores/xilinx/vc707/acl_fsqrt/acl_fsqrt.ip_user_files/ip/acl_fsqrt/acl_fsqrt_stub.v

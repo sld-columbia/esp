@@ -1,0 +1,225 @@
+2019.2:
+ * Version 7.1 (Rev. 9)
+ * General: initialization of internal signals to address benign warnings.
+ * Revision change in one or more subcores
+
+2019.1.3:
+ * Version 7.1 (Rev. 8)
+ * No changes
+
+2019.1.2:
+ * Version 7.1 (Rev. 8)
+ * No changes
+
+2019.1.1:
+ * Version 7.1 (Rev. 8)
+ * No changes
+
+2019.1:
+ * Version 7.1 (Rev. 8)
+ * General: support for new devices. No change to functionality.
+ * Revision change in one or more subcores
+
+2018.3.1:
+ * Version 7.1 (Rev. 7)
+ * No changes
+
+2018.3:
+ * Version 7.1 (Rev. 7)
+ * General: Support for new devices. No change to functionality
+ * General: Disabled internal debug messaging seen when simulating exponential operator
+
+2018.2:
+ * Version 7.1 (Rev. 6)
+ * No changes
+
+2018.1:
+ * Version 7.1 (Rev. 6)
+ * Revision change in one or more subcores
+
+2017.4:
+ * Version 7.1 (Rev. 5)
+ * No changes
+
+2017.3:
+ * Version 7.1 (Rev. 5)
+ * General: Comment change in C model. No change to functionality
+ * Revision change in one or more subcores
+
+2017.2:
+ * Version 7.1 (Rev. 4)
+ * No changes
+
+2017.1:
+ * Version 7.1 (Rev. 4)
+ * General: Corrected fixed-to-float conversion options to avoid illegal configurations in which the fixed-point number range was too large to allow all values to be represented by the half precision exponent.
+
+2016.4:
+ * Version 7.1 (Rev. 3)
+ * No changes
+
+2016.3:
+ * Version 7.1 (Rev. 3)
+ * General: Support for Spartan7 devices
+ * Revision change in one or more subcores
+
+2016.2:
+ * Version 7.1 (Rev. 2)
+ * No changes
+
+2016.1:
+ * Version 7.1 (Rev. 2)
+ * Revision change in one or more subcores
+
+2015.4.2:
+ * Version 7.1 (Rev. 1)
+ * No changes
+
+2015.4.1:
+ * Version 7.1 (Rev. 1)
+ * No changes
+
+2015.4:
+ * Version 7.1 (Rev. 1)
+ * Revision change in one or more subcores
+
+2015.3:
+ * Version 7.1
+ * Added optimizations for half precision operators.
+ * IP revision number added to HDL module, library, and include file names, to support designs with both locked and upgraded IP instances
+ * Removed IP GUI resource utilization graph tab now full performance and resource figures are available on xilinx.com.
+ * Added support for fixed-to-float conversions from uint32, uint64 and int64 formats.
+ * Added medium DSP48 usage option for single-precision Add/Subtract
+ * Revision change in one or more subcores
+
+2015.2.1:
+ * Version 7.0 (Rev. 9)
+ * No changes
+
+2015.2:
+ * Version 7.0 (Rev. 9)
+ * Fixed latency allocation bug in double-precision natural logarithm operator affecting UltraScale devices only.  Fully-pipelined latency consequently increases from 63 to 64 cycles.
+ * Added Half Precision option to GUI. This is Ease-of-Use only as Custom widths already allow this. No functional changes.
+ * Added default values to some signals to allow correct simulation with Synopsys VCS.  No functional changes.
+
+2015.1:
+ * Version 7.0 (Rev. 8)
+ * Addition of Beta support for 16nm devices
+ * Supported devices and production status are now determined automatically, to simplify support for future devices
+ * C models are no longer provided for 32-bit operating systems as Vivado has deprecated 32-bit OS support
+ * Sign bit of NaNs returned by _flt and _d functions is now zero (positive) to be consistent with other xip_fpo functions and RTL behavior when performing direct bitwise comparisons
+
+2014.4.1:
+ * Version 7.0 (Rev. 7)
+ * No changes
+
+2014.4:
+ * Version 7.0 (Rev. 7)
+ * Encrypted source files are concatenated together to reduce the number of files and to reduce simulator compile time
+ * Enabled out-of-context clock frequency setting by adding FREQ_HZ parameter to clock interface aclk_intf
+
+2014.3:
+ * Version 7.0 (Rev. 6)
+ * Added default values to signals in the Float-to-Fixed, Exponential and Natural Logarithm operators to avoid X's being output in behavioral simulation while the pipeline fills and M_AXIS_RESULT_TVALID is Low.  Functionality is unchanged.
+ * Disabled debug assertions which were written to transcript during simulation, no functional changes.
+ * Fixed C model to prevent crashes that could occur on 32-bit Windows platform.
+
+2014.2:
+ * Version 7.0 (Rev. 5)
+ * Added default values to signals in the Exponential operator to avoid X's being output in behavioral simulation while the pipeline fills and M_AXIS_RESULT_TVALID is Low.  Functionality is unchanged.
+ * Removed component statement for DSP48E2, no functional changes
+ * Internal change management process enhancements, no functional changes
+
+2014.1:
+ * Version 7.0 (Rev. 4)
+ * GUI fix to disable internal debug messages from Accumulator
+ * Core will now deliver an ooc_xdc file, without constraints, when latency is zero.
+ * C models for Windows are compiled using Microsoft Visual Studio 2012
+ * Rephased RTL in file flt_round_dsp_opt_full.vhd. Functionality is unaffected.
+ * Internal device family name change, no functional changes
+ * Corrected parameter order and comments for Accumulator operator in allfns.c
+ * Netlists created by write_verilog and write_vhdl are IEEE P1735 encrypted, with keys for supported simulators so that netlist simulation can still be done
+ * Enable third party synthesis tools to read encrypted netlists (but not source HDL)
+ * Support for Virtex Ultrascale devices at Pre-Production Status
+ * Added attribute in flt_log_addsub_taylor_fabric.vhd to avoid packing error when logic replication occurs in synthesis. Functionality is unchanged.
+
+2013.4:
+ * Version 7.0 (Rev. 3)
+ * Missing tooltips added to GUI
+ * GUI fix for possible illegal Latency values
+ * Support for Kintex Ultrascale devices at Pre-Production Status
+
+2013.3:
+ * Version 7.0 (Rev. 2)
+ * Warning. For the Floating Point Accumulator configured with C_MULT_USE = full_usage, output values from any post-synthesis model may be incorrect. The behavioral model outputs will be correct. Recommend use C_MULT_USE = medium_usage. This will be fixed in 2013.4.
+ * Cosmetic GUI changes to table header row, no change in functionality
+ * Added additional support for future devices
+ * Behavioral VHDL model replaced by Encrypted RTL
+ * Internal standardization in source file delivery, does not change behavior
+ * Support for Automotive Artix7, Automotive Zynq, Defense Grade Artix7 Defence Grade Zynq and Lower Power Artix7 devices at Production Status
+ * Added support for Cadence IES and Synopsys VCS simulators
+ * Added default constraints for out of context flow
+ * Added support for IP Integrator
+ * Optimized support for UltraScale devices
+ * Removed C model dependency on stlport (STL Portability) library; C model now uses STL built into the compiler
+ * Windows C model DLLs are statically linked to the Windows C run-time (CRT) library, to remove the runtime dependency on MSVCRT90.dll, which can cause problems when using the C model in a Windows compiler other than Visual Studio 2008
+ * C model updated to use third-party library MPIR version 2.6.0 (previously was version 2.2.1); the Windows MPIR DLLs are also statically linked to the Windows CRT library, to remove the dependency on MSVCRT90.dll
+ * C model updated to use third-party library MPFR version 3.1.2 (previously was version 3.0.1); the Windows MPFR DLLs are also statically linked to the Windows CRT library, to remove the dependency on MSVCRT90.dll
+
+2013.2:
+ * Version 7.0 (Rev. 1)
+ * Support for Series 7 devices at Production status
+ * Added STL portability library to the C model zip files, to support the example code
+ * Beta support for future devices
+ * Removing support for Defense Grade Low Power Artix7
+
+2013.1:
+ * Version 7.0
+ * Native Vivado Release
+ * There have been no functional or interface changes to this IP.  The version number has changed to support unique versioning in Vivado starting with 2013.1.
+
+(c) Copyright 2005 - 2019 Xilinx, Inc. All rights reserved.
+
+This file contains confidential and proprietary information
+of Xilinx, Inc. and is protected under U.S. and
+international copyright and other intellectual property
+laws.
+
+DISCLAIMER
+This disclaimer is not a license and does not grant any
+rights to the materials distributed herewith. Except as
+otherwise provided in a valid license issued to you by
+Xilinx, and to the maximum extent permitted by applicable
+law: (1) THESE MATERIALS ARE MADE AVAILABLE "AS IS" AND
+WITH ALL FAULTS, AND XILINX HEREBY DISCLAIMS ALL WARRANTIES
+AND CONDITIONS, EXPRESS, IMPLIED, OR STATUTORY, INCLUDING
+BUT NOT LIMITED TO WARRANTIES OF MERCHANTABILITY, NON-
+INFRINGEMENT, OR FITNESS FOR ANY PARTICULAR PURPOSE; and
+(2) Xilinx shall not be liable (whether in contract or tort,
+including negligence, or under any other theory of
+liability) for any loss or damage of any kind or nature
+related to, arising under or in connection with these
+materials, including for any direct, or any indirect,
+special, incidental, or consequential loss or damage
+(including loss of data, profits, goodwill, or any type of
+loss or damage suffered as a result of any action brought
+by a third party) even if such damage or loss was
+reasonably foreseeable or Xilinx had been advised of the
+possibility of the same.
+
+CRITICAL APPLICATIONS
+Xilinx products are not designed or intended to be fail-
+safe, or for use in any application requiring fail-safe
+performance, such as life-support or safety devices or
+systems, Class III medical devices, nuclear facilities,
+applications related to the deployment of airbags, or any
+other applications that could lead to death, personal
+injury, or severe property or environmental damage
+(individually and collectively, "Critical
+Applications"). Customer assumes the sole risk and
+liability of any use of Xilinx products in Critical
+Applications, subject only to applicable laws and
+regulations governing limitations on product liability.
+
+THIS COPYRIGHT NOTICE AND DISCLAIMER MUST BE RETAINED AS
+PART OF THIS FILE AT ALL TIMES.
