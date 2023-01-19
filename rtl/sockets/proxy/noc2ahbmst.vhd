@@ -967,7 +967,7 @@ begin  -- rtl
 
         when req_msb =>
           narrow_coherence_req_data_out(NOC_FLIT_SIZE - 1 downto 64) <= coherence_req_data_out(NOC_FLIT_SIZE - 1 downto 64);
-          narrow_coherence_req_data_out(ARCH_BITS - 1 downto ARCH_BITS - 32) <= coherence_req_data_out(ARCH_BITS - 1 downto ARCH_BITS - 32);
+          narrow_coherence_req_data_out(ARCH_BITS - 1 downto ARCH_BITS - 32) <= coherence_req_data_out(31 downto 0);
           narrow_coherence_req_data_out(31 downto 0) <= req_reg(31 downto 0);
           if coherence_req_empty = '0' and narrow_coherence_req_rdreq = '1'  then
             serdes_next <= passthru;
