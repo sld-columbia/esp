@@ -303,6 +303,7 @@ architecture rtl of tile_cpu is
   constant this_remote_apb_slv_en : std_logic_vector(0 to NAPBSLV - 1) := remote_apb_slv_mask_cpu;
   constant this_remote_ahb_slv_en : std_logic_vector(0 to NAHBSLV - 1) := remote_ahb_mask_cpu;
 
+  constant ariane_cacheable_len : integer := (1 + CFG_L2_ENABLE) * 16#20000000#;
 
   attribute mark_debug : string;
 
@@ -701,7 +702,7 @@ begin
         SLMDDRLength     => X"0000_0000_4000_0000",  -- Reserving up to 1GB; devtree can set less
         DRAMBase         => X"0000_0000" & conv_std_logic_vector(ddr_haddr(0), 12) & X"0_0000",
         DRAMLength       => X"0000_0000_4000_0000",
-        DRAMCachedLength => X"0000_0000_4000_0000")  -- TODO: length set automatically to match devtree
+        DRAMCachedLength => conv_std_logic_vector(ariane_cacheable_len, 64))  -- TODO: length set automatically to match devtree
       port map (
         clk         => clk_feedthru,
         rstn        => cpurstn,
