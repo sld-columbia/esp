@@ -1,6 +1,6 @@
 #include "c_run.h"
-#include "eigen3/Eigen/Dense"
-#include "eigen3/Eigen/SVD"
+#include "eigen/Eigen/Dense"
+#include "eigen/Eigen/SVD"
 #include <time.h>
 #include <bits/stdc++.h>
 #include <stdio.h>
