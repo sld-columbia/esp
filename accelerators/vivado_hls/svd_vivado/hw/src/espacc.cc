@@ -269,12 +269,20 @@ compute_data:
                 if (i < m && j < m)
                 {
                     A[i][j] = T[i][j] + P_d * A[i][j];
+#if IS_TYPE_FLOAT
+                    A_f[i][j] = A[i][j];
+#else
                     A_f[i][j] = A[i][j].to_float();
+#endif
                 }
             }
 
 #ifndef __SYNTHESIS__
+#if IS_TYPE_FLOAT
+        printf("2*P is %f \n", P);
+#else
         printf("2*P is %f \n", P.to_float());
+#endif
         printf("Saved 2P*A+T \n");
         printf("A = 2P*A + T = \n");
         hls::print_matrix<M_MAX, M_MAX, word_t, hls::NoTranspose>(A, "   ");
@@ -381,7 +389,11 @@ LOOP_OUT1:for (; i < m; i++)//T_size
         {
 
 #ifndef __SYNTHESIS__
+#if IS_TYPE_FLOAT
+            printf("norm_sum is %f \n", norm_sum);
+#else
             printf("norm_sum is %f \n", norm_sum.to_float());
+#endif
 #endif
 
             if(norm_sum < 0.0002 && load_state != 0)

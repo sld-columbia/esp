@@ -5,6 +5,7 @@
 
 set dma_width {32 64}
 set word_widths {32}
+# set datatype to "fl32" for flaoting point implementation
 set datatype ""
 
 # Clock period

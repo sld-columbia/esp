@@ -196,10 +196,18 @@ int main(int argc, char **argv) {
     for(unsigned i = 0; i < 1; i++)
         for(unsigned j = 0; j < check_size/*+m*q*/; j++)
         {
+#if IS_TYPE_FLOAT
+           MAE = (outbuff[i * out_words_adj + j] - outbuff_gold[i * out_words_adj + j])/outbuff_gold[i * out_words_adj + j];
+
+            printf("%d: out = %.20f , gold = %.20f \n", j, outbuff[i *
+            VALUES_PER_WORD + j], outbuff_gold[i * out_words_adj + j]);
+
+#else
             MAE = (outbuff[i * out_words_adj + j].to_float() - outbuff_gold[i * out_words_adj + j].to_float())/outbuff_gold[i * out_words_adj + j].to_float();
 
             printf("%d: out = %.20f , gold = %.20f \n", j, outbuff[i *
             VALUES_PER_WORD + j].to_float(), outbuff_gold[i * out_words_adj + j].to_float());
+#endif
 
             // printf("MAE is %f \n", MAE);
 	    // if (outbuff[i * out_words_adj + j] != outbuff_gold[i * out_words_adj + j])

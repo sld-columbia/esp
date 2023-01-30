@@ -238,6 +238,9 @@ int main(int argc, char * argv[])
 
 		printf("  memory buffer base-address = %p\n", mem);
 
+        for(int i = 0; i < mem_size/sizeof(token_t); i++)
+			mem[i] = 0;
+
 		// Alocate and populate page table
 		ptable = aligned_malloc(NCHUNK(mem_size) * sizeof(unsigned *));
 		for (i = 0; i < NCHUNK(mem_size); i++)

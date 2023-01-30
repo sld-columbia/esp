@@ -5,6 +5,7 @@
 
 // Data type
 
+// if using floating point, also change the datatype in hls/custom.tcl
 #define IS_TYPE_FIXED_POINT 1
 #define IS_TYPE_MIXED 0
 #define FRAC_BITS 21
