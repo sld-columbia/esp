@@ -41,8 +41,10 @@ foreach dma $dma_width {
 
 	if {[lsearch $fpga_techs $TECH] >= 0} {
 	    if {$TECH eq "virtex7"} {
-		#set_part "xc7vx485tffg1761-2"
-		set_part "xc7v2000tflg1925-2"
+		#xilinx-vc707
+		set_part "xc7vx485tffg1761-2"
+		#profpga-xc7v2000t
+		#set_part "xc7v2000tflg1925-2"
 	    }
 	    if {$TECH eq "zynq7000"} {
 		set_part "xc7z020clg484-1"
@@ -51,7 +53,10 @@ foreach dma $dma_width {
 		set_part "xcvu440-flga2892-2-e"
 	    }
 	    if {$TECH eq "virtexup"} {
+		#xilinx-vcu118
 		set_part "xcvu9p-flga2104-2L-e"
+		#xilinx-vcu128
+		#set_part "xcvu37p-fsvh2892-2L-e"
 	    }
 	}
 
