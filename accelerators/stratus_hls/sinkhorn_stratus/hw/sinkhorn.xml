@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sld>
+  <accelerator name="sinkhorn" desc="SINKHORN" data_size="4" device_id="144" hls_tool="stratus_hls">
+    <param name="p_rows" desc="p_rows" size="32"/>
+    <param name="q_cols" desc="q_cols" size="32"/>
+    <param name="m_rows" desc="m_rows" size="32"/>
+    <param name="gamma" desc="gamma" size="32"/>
+    <param name="maxiter" desc="maxiter" size="32"/>
+    <param name="p2p_in" desc="p2p_in" size="32"/>
+    <param name="p2p_out" desc="p2p_out" size="32"/>
+    <param name="p2p_iter" desc="p2p_iter" size="32"/>
+    <param name="store_state" desc="store_state" size="32"/>
+  </accelerator>
+</sld>

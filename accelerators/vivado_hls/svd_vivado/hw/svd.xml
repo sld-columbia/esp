@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sld>
+  <accelerator name="svd" desc="Accelerator SVD" data_size="4" device_id="222" hls_tool="vivado_hls">
+    <param name="m" desc="m" />
+    <param name="p" desc="p" />
+    <param name="q" desc="q" />
+    <param name="p2p_out" desc="p2p_out" />
+    <param name="p2p_in" desc="p2p_in" />
+    <param name="p2p_iter" desc="p2p_iter" />
+    <param name="load_state" desc="load_state" />
+  </accelerator>
+</sld>
