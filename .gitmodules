@@ -50,3 +50,6 @@
 [submodule "accelerators/catapult_hls/common/matchlib_toolkit"]
 	path = accelerators/catapult_hls/common/matchlib_toolkit
 	url = https://github.com/hlslibs/matchlib_toolkit.git
+[submodule "soft/common/drivers/common/utils/eigen"]
+	path = soft/common/drivers/common/utils/eigen
+	url = https://gitlab.com/libeigen/eigen.git

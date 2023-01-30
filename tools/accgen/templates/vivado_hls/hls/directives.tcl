@@ -5,4 +5,4 @@
 # <<--directives-param-->>
 
 # Insert here any custom directive
-
+set_directive_dataflow "top/go"
