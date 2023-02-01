@@ -1,4 +1,4 @@
-# Copyright (c) 2011-2022 Columbia University, System Level Design Group
+# Copyright (c) 2011-2023 Columbia University, System Level Design Group
 # SPDX-License-Identifier: Apache-2.0
 
 ESP_DEFCONFIG ?= $(ESP_ROOT)/socs/defconfig/esp_$(BOARD)_defconfig

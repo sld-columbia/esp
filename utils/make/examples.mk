@@ -1,4 +1,4 @@
-# Copyright (c) 2011-2022 Columbia University, System Level Design Group
+# Copyright (c) 2011-2023 Columbia University, System Level Design Group
 # SPDX-License-Identifier: Apache-2.0
 EXAMPLES_PATH = $(ESP_ROOT)/soft/common/apps/examples/
 EXAMPLES_OUT_PATH = $(SOFT_BUILD)/apps/examples
