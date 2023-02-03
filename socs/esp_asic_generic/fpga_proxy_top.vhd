@@ -1233,27 +1233,27 @@ begin  -- architecture rtl
   end generate iolink_sim_gen;
 
   iolink_no_sim_gen: if SIMULATION = false generate
-ahbslv2iolink_i : ahbslv2iolink
-  generic map (
-    hindex => 2,
-    hconfig => iolink_hconfig,
-    io_bitwidth => CFG_IOLINK_BITS,
-    word_bitwidth => 32,
-    little_end => 0 )
-  port map (
-    clk           => main_clk,
-    rstn          => rstn,
-    io_clk_in     => iolink_clk_in_int,
-    io_clk_out    => iolink_clk_out_int,
-    io_valid_in   => iolink_valid_in_int,
-    io_valid_out  => iolink_valid_out_int,
-    io_credit_in  => iolink_credit_in_int,
-    io_credit_out => iolink_credit_out_int,
-    io_data_oen   => iolink_data_oen,
-    io_data_in    => iolink_data_in_int,
-    io_data_out   => iolink_data_out_int,
-    ahbsi             => ahbsi,
-    ahbso             => ahbso_iolink);
-  end generate iolink_no_sim_gen;
+    ahbslv2iolink_i : ahbslv2iolink
+      generic map (
+        hindex => 2,
+        hconfig => iolink_hconfig,
+        io_bitwidth => CFG_IOLINK_BITS,
+        word_bitwidth => 32,
+        little_end => 0 )
+      port map (
+        clk           => main_clk,
+        rstn          => rstn,
+        io_clk_in     => iolink_clk_in_int,
+        io_clk_out    => iolink_clk_out_int,
+        io_valid_in   => iolink_valid_in_int,
+        io_valid_out  => iolink_valid_out_int,
+        io_credit_in  => iolink_credit_in_int,
+        io_credit_out => iolink_credit_out_int,
+        io_data_oen   => iolink_data_oen,
+        io_data_in    => iolink_data_in_int,
+        io_data_out   => iolink_data_out_int,
+        ahbsi             => ahbsi,
+        ahbso             => ahbso_iolink);
+    end generate iolink_no_sim_gen;
 
 end architecture rtl;
