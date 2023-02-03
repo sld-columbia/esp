@@ -7,6 +7,51 @@ Changelog](https://keepachangelog.com/en/1.0.0/), and this project
 adheres to [Calendar Versioning](https://calver.org/) with format
 `YYYY.MINOR.MICRO`.
 
+## [2023.1.0]
+
+### Added
+- **Architecture**
+  - New custom I/O Link for ASIC designs and its coexistence with Ethernet (#183)
+
+- **Accelerators**
+  - Stratus HLS flow
+    - _Sinkhorn_: iterative algorithm used in machine learning to evaluate the correlation and alignment of two different datasets with a focus on their data distribution. (#185)
+  - Vivado HLS flow
+    - _SVD_ (Singular Value Decomposition): linear algebra algorithm that decomposes/factorizes matrices according to their eigenvalues; commonly used as part of dimensionality reduction algorithms. (#185)
+
+- **Accelerator design flows**
+  - Catapult HLS with SystemC and Matchlib flow (#165)
+
+- **ASIC Design, Verification, and Testing**
+  - New minimal, technology-independent ASIC design example
+  - Synthesizable FPGA proxy design for providing DRAM access to ASIC designs; also used to stimulate JTAG test unit (#177)
+  - FPGA emulation of ASIC designs; dual-FPGA emulation infrastructure including FPGA proxy design (#177)
+
+### Improved
+- **Architecture**
+  - SLM+DDR Tile: fix clock assignments, add configurable delay cells, support accelerator execution (#169)
+  - Spandex Caches: fixes and performance improvements (#163)
+  - Flexible ASIC clocking strategy with 3 choices: external clock only, single global clock generator, per-tile clock generator
+  - JTAG-based debug unit: new implementation to improve robustness (#177)
+  - JTAG and NoC synchronizers are now optional for ASIC designs
+
+- **Infrastructure**
+  - ESP GUI: add more configuration options and remove dependence on GRLIB GUI
+
+### Fixed
+- **Architecture**
+  - Various Genus errors and warnings
+  - Busy handling from AHB bus in _ahbslv2noc_
+  - Combinational loop in Ibex AHB wrapper
+  - Ariane L1 cacheable length to support SoCs with and without ESP caches
+
+- **Accelerators**
+  - Use correct RTL sources for NVDLA in ASIC designs
+
+- **Infrastructure**
+  - Xcelium simulation support
+  - Toolchains: fix cloning issue for RISC-V, change default install path to remove _sudo_ dependence
+
 ## [2022.1.0]
 
 ### Added

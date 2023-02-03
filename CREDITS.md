@@ -6,19 +6,21 @@ repository, including co-authors of portions of code from the first commit.
 ### Core Team Members
 
  - Luca P. Carloni (principal investigator)
+ - Maico Cassel dos Santos
  - Kuan-lin Chiu
- - Giuseppe Di Guglielmo
- - Davide Giri
- - Paolo Mantovani (main architect)
- - Luca Piccolboni
- - Maico C. Santos
+ - Guy Eichler
+ - Biruk Seyoum
  - Gabriele Tombesi
- - Joseph Zuckerman
+ - Joseph Zuckerman (project lead)
 
 ### Former Team Members
 
  - Emilio G. Cota
+ - Giuseppe Di Guglielmo
+ - Davide Giri
+ - Paolo Mantovani (main architect)
  - Michele Petracca
+ - Luca Piccolboni
  - Christian Pilato
 
 ### External collaborators
@@ -29,6 +31,7 @@ contribution. Current affiliation may be different.
  - Juan E. Contreras (Pacific Northwest National Laboratory)
  - Schuyler Eldridge (IBM)
  - Tianyu Jia (Harvard University)
+ - Vignesh Suresh (University of Illinois)
  - John-David Wellman (IBM)
  - Jeff Zhang (Harvard University)
  - Zeran Zhu (University of Illinois)
