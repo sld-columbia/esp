@@ -15,9 +15,9 @@ adheres to [Calendar Versioning](https://calver.org/) with format
 
 - **Accelerators**
   - Stratus HLS flow
-    - _Sinkhorn_ : iterative algorithm used in machine learning to evaluate the correlation and alignment of two different datasets with a focus on their data distribution.
+    - _Sinkhorn_: iterative algorithm used in machine learning to evaluate the correlation and alignment of two different datasets with a focus on their data distribution. (#185)
   - Vivado HLS flow
-    - _SVD_ (Singular Value Decomposition): linear algebra algorithm that decomposes/factorizes matrices according to their eigenvalues; commonly used as part of dimensionality reduction algorithms.
+    - _SVD_ (Singular Value Decomposition): linear algebra algorithm that decomposes/factorizes matrices according to their eigenvalues; commonly used as part of dimensionality reduction algorithms. (#185)
 
 - **Accelerator design flows**
   - Catapult HLS with SystemC and Matchlib flow (#165)
@@ -29,10 +29,10 @@ adheres to [Calendar Versioning](https://calver.org/) with format
 
 ### Improved
 - **Architecture**
-  - SLM+DDR Tile: fix clock assignments, adjust configuration, support accelerator execution (#169)
+  - SLM+DDR Tile: fix clock assignments, add configurable delay cells, support accelerator execution (#169)
   - Spandex Caches: fixes and performance improvements (#163)
   - Flexible ASIC clocking strategy with 3 choices: external clock only, single global clock generator, per-tile clock generator
-  - JTAG-based debug unit: new implementation to improve robustness
+  - JTAG-based debug unit: new implementation to improve robustness (#177)
   - JTAG and NoC synchronizers are now optional for ASIC designs
 
 - **Infrastructure**
