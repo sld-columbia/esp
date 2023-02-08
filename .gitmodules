@@ -53,3 +53,9 @@
 [submodule "soft/common/drivers/common/utils/eigen"]
 	path = soft/common/drivers/common/utils/eigen
 	url = https://gitlab.com/libeigen/eigen.git
+[submodule "rtl/sockets/bus/ahb3lite_wb_bridge"]
+	path = rtl/sockets/bus/ahb3lite_wb_bridge
+	url = https://github.com/vfinotti/ahb3lite_wb_bridge.git
+[submodule "rtl/peripherals/sdcard/SD-card-controller"]
+	path = rtl/peripherals/sdcard/SD-card-controller
+	url = https://github.com/mczerski/SD-card-controller.git

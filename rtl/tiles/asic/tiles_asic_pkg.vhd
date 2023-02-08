@@ -348,6 +348,14 @@ package tiles_asic_pkg is
       iolink_clk_out     : out std_ulogic;
       iolink_credit_in   : in  std_ulogic;
       iolink_credit_out  : out std_ulogic;
+      ahbsdc_sd_cmd_dat_i : in std_ulogic;
+      ahbsdc_sd_cmd_out_o : out std_ulogic;
+      ahbsdc_sd_cmd_oe_o  : out std_ulogic;
+      ahbsdc_sd_dat_dat_i : in std_logic_vector(3 downto 0);
+      ahbsdc_sd_dat_out_o : out std_logic_vector(3 downto 0);
+      ahbsdc_sd_dat_oe_o  : out std_ulogic;
+      ahbsdc_sd_clk_o_pad : out std_ulogic;
+      ahbsdc_sd_clk_i_pad : in std_ulogic;
       tdi                : in  std_logic;
       tdo                : out std_logic;
       tms                : in  std_logic;

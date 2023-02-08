@@ -68,6 +68,15 @@ entity fpga_tile_io is
     uart_txd           : out   std_ulogic;
     uart_ctsn          : in    std_ulogic;
     uart_rtsn          : out   std_ulogic;
+    --SD Card Controller
+    ahbsdc_sd_cmd_dat_i : in std_ulogic;
+    ahbsdc_sd_cmd_out_o : out std_ulogic;
+    ahbsdc_sd_cmd_oe_o  : out std_ulogic;
+    ahbsdc_sd_dat_dat_i : in std_logic_vector(3 downto 0);
+    ahbsdc_sd_dat_out_o : out std_logic_vector(3 downto 0);
+    ahbsdc_sd_dat_oe_o  : out std_ulogic;
+    ahbsdc_sd_clk_o_pad : out std_ulogic;
+    ahbsdc_sd_clk_i_pad : in std_ulogic;
     -- Test interface
     tdi                : in    std_logic;
     tdo                : out   std_logic;
@@ -678,6 +687,15 @@ begin
       iolink_clk_out     => open,
       iolink_credit_in   => '0',
       iolink_credit_out  => open,
+      -- SD Card
+      ahbsdc_sd_cmd_dat_i => ahbsdc_sd_cmd_dat_i,
+      ahbsdc_sd_cmd_out_o => ahbsdc_sd_cmd_out_o,
+      ahbsdc_sd_cmd_oe_o  => ahbsdc_sd_cmd_oe_o,
+      ahbsdc_sd_dat_dat_i => ahbsdc_sd_dat_dat_i,
+      ahbsdc_sd_dat_out_o => ahbsdc_sd_dat_out_o,
+      ahbsdc_sd_dat_oe_o  => ahbsdc_sd_dat_oe_o,
+      ahbsdc_sd_clk_o_pad => ahbsdc_sd_clk_o_pad,
+      ahbsdc_sd_clk_i_pad => ahbsdc_sd_clk_i_pad, 
       -- Pad configuration
       pad_cfg            => open,
       -- NOC

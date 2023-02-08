@@ -81,6 +81,9 @@ AHB2APB_HADDR["ibex"] = 0x600
 # RISC-V CPU Local Interruptor index
 RISCV_CLINT_HINDEX = 2
 
+#SD Card slave index
+SDCARD_HINDEX = 3
+
 # Memory controller slave index
 DDR_HINDEX = [4, 5, 6, 7]
 
@@ -728,7 +731,15 @@ def print_mapping(fp, soc, esp_config):
   fp.write("    4 => ahb_membar(ahbrom_haddr, '1', '1', ahbrom_hmask),\n")
   fp.write("    others => zero32);\n")
 
-  
+  #
+  fp.write("  -- AHB SDCARD CONTROLLER slave\n")
+  fp.write("  constant ahbsdc_haddr   : integer := 16#100#;\n")
+  fp.write("  constant ahbsdc_hmask   : integer := 16#fff#;\n")
+  fp.write("  constant ahbsdc_hconfig : ahb_config_type := (\n")
+  fp.write("    0 => ahb_device_reg ( VENDOR_GAISLER, GAISLER_AHBROM, 0, 0, 0),\n")
+  fp.write("    4 => ahb_membar(ahbsdc_haddr, '0', '0', ahbsdc_hmask),\n")
+  fp.write("    others => zero32);\n")
+
   fp.write("  -- AHB2APB bus bridge slave\n")
   fp.write("  constant CFG_APBADDR : integer := 16#" + format(AHB2APB_HADDR[esp_config.cpu_arch], '03X') + "#;\n")
   fp.write("  constant ahb2apb_hindex : integer := " + str(AHB2APB_HINDEX) + ";\n")
@@ -945,6 +956,7 @@ def print_mapping(fp, soc, esp_config):
   fp.write("    " + str(AHB2APB_HINDEX) + " => ahb2apb_hconfig,\n")
   if esp_config.cpu_arch == "ariane" or esp_config.cpu_arch == "ibex":
     fp.write("    " + str(RISCV_CLINT_HINDEX) + " => clint_hconfig,\n")
+  fp.write("    " + str(SDCARD_HINDEX) + " => ahbsdc_hconfig,\n")
   for i in range(0, esp_config.nmem):
     fp.write("    " + str(DDR_HINDEX[i]) + " => mig7_hconfig(" + str(i) + "),\n")
   for i in range(0, esp_config.nslm):
@@ -968,6 +980,7 @@ def print_mapping(fp, soc, esp_config):
   fp.write("    " + str(AHB2APB_HINDEX) + " => ahb2apb_hconfig,\n")
   if esp_config.cpu_arch == "ariane" or esp_config.cpu_arch == "ibex":
     fp.write("    " + str(RISCV_CLINT_HINDEX) + " => clint_hconfig,\n")
+  fp.write("    " + str(SDCARD_HINDEX) + " => ahbsdc_hconfig,\n")
   if esp_config.nmem != 0:
     fp.write("    " + str(DDR_HINDEX[0]) + " => cpu_tile_mig7_hconfig,\n")
   fp.write("    " + str(SLM_HINDEX) + " => cpu_tile_slm_hconfig,\n")
@@ -1893,6 +1906,7 @@ def print_tiles(fp, esp_config):
 
   fp.write("  constant remote_ahb_mask_cpu : std_logic_vector(0 to NAHBSLV - 1) := (\n")
   fp.write("    " + str(AHBROM_HINDEX) + "  => '1',\n")
+  fp.write("    " + str(SDCARD_HINDEX) + "  => '1',\n")
   fp.write("    " + str(DDR_HINDEX[0]) + " => to_std_logic(CFG_L2_DISABLE),\n")
   fp.write("    " + str(FB_HINDEX) + "  => to_std_logic(CFG_SVGA_ENABLE),\n")
   fp.write("    others => '0');\n\n")

@@ -29,6 +29,14 @@ package tiles_pkg is
       uart_txd           : out std_logic;
       uart_ctsn          : in  std_logic;
       uart_rtsn          : out std_logic;
+      ahbsdc_sd_cmd_dat_i : in std_ulogic;
+      ahbsdc_sd_cmd_out_o : out std_ulogic;
+      ahbsdc_sd_cmd_oe_o  : out std_ulogic;
+      ahbsdc_sd_dat_dat_i : in std_logic_vector(3 downto 0);
+      ahbsdc_sd_dat_out_o : out std_logic_vector(3 downto 0);
+      ahbsdc_sd_dat_oe_o  : out std_ulogic;
+      ahbsdc_sd_clk_o_pad : out std_ulogic;
+      ahbsdc_sd_clk_i_pad : in std_ulogic;
       cpuerr             : out   std_logic;
       ddr_ahbsi          : out ahb_slv_in_vector_type(0 to MEM_ID_RANGE_MSB);
       ddr_ahbso          : in  ahb_slv_out_vector_type(0 to MEM_ID_RANGE_MSB);
@@ -237,6 +245,15 @@ package tiles_pkg is
       iolink_clk_out    : out std_ulogic;
       iolink_credit_in  : in  std_ulogic;
       iolink_credit_out : out std_ulogic;
+      -- SD Card Controller 
+      ahbsdc_sd_cmd_dat_i : in std_ulogic;
+      ahbsdc_sd_cmd_out_o : out std_ulogic;
+      ahbsdc_sd_cmd_oe_o  : out std_ulogic;
+      ahbsdc_sd_dat_dat_i : in std_logic_vector(3 downto 0);
+      ahbsdc_sd_dat_out_o : out std_logic_vector(3 downto 0);
+      ahbsdc_sd_dat_oe_o  : out std_ulogic;
+      ahbsdc_sd_clk_o_pad : out std_ulogic;
+      ahbsdc_sd_clk_i_pad : in std_ulogic;
       -- Pads configuration
       pad_cfg            : out std_logic_vector(ESP_CSR_PAD_CFG_MSB - ESP_CSR_PAD_CFG_LSB downto 0);
       -- NOC

@@ -83,6 +83,15 @@ entity asic_tile_io is
     iolink_clk_out     : out std_ulogic;
     iolink_credit_in   : in  std_ulogic;
     iolink_credit_out  : out std_ulogic;
+    -- sdc interfaces
+    ahbsdc_sd_cmd_dat_i : in std_ulogic;
+    ahbsdc_sd_cmd_out_o : out std_ulogic;
+    ahbsdc_sd_cmd_oe_o  : out std_ulogic;
+    ahbsdc_sd_dat_dat_i : in std_logic_vector(3 downto 0);
+    ahbsdc_sd_dat_out_o : out std_logic_vector(3 downto 0);
+    ahbsdc_sd_dat_oe_o  : out std_ulogic;
+    ahbsdc_sd_clk_o_pad : out std_ulogic;
+    ahbsdc_sd_clk_i_pad : in std_ulogic;
     -- Test interface
     tdi                : in    std_logic;
     tdo                : out   std_logic;
@@ -857,6 +866,15 @@ begin
       iolink_clk_out     => iolink_clk_out_int,
       iolink_credit_in   => iolink_credit_in,
       iolink_credit_out  => iolink_credit_out_int,
+      -- SD Card
+      ahbsdc_sd_cmd_dat_i => ahbsdc_sd_cmd_dat_i,
+      ahbsdc_sd_cmd_out_o => ahbsdc_sd_cmd_out_o,
+      ahbsdc_sd_cmd_oe_o  => ahbsdc_sd_cmd_oe_o,
+      ahbsdc_sd_dat_dat_i => ahbsdc_sd_dat_dat_i,
+      ahbsdc_sd_dat_out_o => ahbsdc_sd_dat_out_o,
+      ahbsdc_sd_dat_oe_o  => ahbsdc_sd_dat_oe_o,
+      ahbsdc_sd_clk_o_pad => ahbsdc_sd_clk_o_pad,
+      ahbsdc_sd_clk_i_pad => ahbsdc_sd_clk_i_pad,
       -- Pad configuration
       pad_cfg            => pad_cfg,
       -- NOC

@@ -272,6 +272,15 @@ package tiles_fpga_pkg is
       uart_txd           : out std_ulogic;
       uart_ctsn          : in  std_ulogic;
       uart_rtsn          : out std_ulogic;
+      -- SD Card Controller
+      ahbsdc_sd_cmd_dat_i : in std_ulogic;
+      ahbsdc_sd_cmd_out_o : out std_ulogic;
+      ahbsdc_sd_cmd_oe_o  : out std_ulogic;
+      ahbsdc_sd_dat_dat_i : in std_logic_vector(3 downto 0);
+      ahbsdc_sd_dat_out_o : out std_logic_vector(3 downto 0);
+      ahbsdc_sd_dat_oe_o  : out std_ulogic;
+      ahbsdc_sd_clk_o_pad : out std_ulogic;
+      ahbsdc_sd_clk_i_pad : in std_ulogic;
       -- NOC
       sys_clk_int        : in  std_ulogic;
       sys_rstn           : in  std_ulogic;

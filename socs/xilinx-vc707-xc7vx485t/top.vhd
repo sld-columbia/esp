@@ -139,6 +139,25 @@ component ahb2mig_7series
 end component ;
 
 
+-- SD Card Model for simulation
+--signal sd_clk : std_ulogic;
+signal sd_cmd : std_logic;
+signal sd_dat : std_logic_vector(3 downto 0);
+
+component sdModel
+generic(
+	ramdisk : string;
+	log_file : string
+);
+  port(
+    sdClk : in    std_ulogic;
+    cmd   : inout std_logic;
+    dat   : inout std_logic_vector(3 downto 0)
+   );
+end component ;
+
+
+
 -- constants
 signal vcc, gnd   : std_logic_vector(31 downto 0);
 
@@ -162,6 +181,19 @@ signal uart_rxd_int  : std_logic;       -- UART1_RX (u1i.rxd)
 signal uart_txd_int  : std_logic;       -- UART1_TX (u1o.txd)
 signal uart_ctsn_int : std_logic;       -- UART1_RTSN (u1i.ctsn)
 signal uart_rtsn_int : std_logic;       -- UART1_RTSN (u1o.rtsn)
+--SD Card
+signal sdc_cmd_in : std_ulogic;
+signal sdc_cmd_out : std_ulogic;
+signal sdc_cmd_oe  : std_ulogic;
+signal sdc_dat_in : std_logic_vector(3 downto 0);
+signal sdc_dat_out : std_logic_vector(3 downto 0);
+signal sdc_dat_oe  : std_ulogic;
+signal sd_clk : std_ulogic;
+--signal sdc_clk : std_ulogic;
+
+
+
+
 
 -- Memory controller DDR3
 signal ddr_ahbsi   : ahb_slv_in_vector_type(0 to MEM_ID_RANGE_MSB);
@@ -296,13 +328,44 @@ begin
   uart_rtsn_pad : outpad generic map (level => cmos, voltage => x18v, tech => CFG_FABTECH) port map (uart_rtsn, uart_rtsn_int);
 
 ----------------------------------------------------------------------
+---  SD card Model ------------------------------------------
+----------------------------------------------------------------------
+  sdcard : sdModel
+  generic map(
+    ramdisk => "../ramdisk2.hex",
+    log_file => "../sd_model.log"
+)
+    port map(
+      sdClk => sd_clk,
+      cmd   => sd_cmd,
+      dat   => sd_dat);
+--process(sdc_cmd_oe, sdc_dat_oe)
+--begin
+--  if sdc_cmd_oe = "1" then
+--     sd_cmd <= sdc_cmd_out;
+--  else
+--     sd_cmd <= "Z";
+--  end if;
+
+--  if sdc_dat_oe = "1" then
+--     sd_dat <= sdc_dat_out;
+--  else
+--     sd_dat <= "ZZZZ";
+--  end if;
+--end process;
+sdc_cmd_in <= sd_cmd;
+sd_cmd <= sdc_cmd_out when sdc_cmd_oe = '1' else 'Z';
+sdc_dat_in <= sd_dat;
+sd_dat <= sdc_dat_out when sdc_dat_oe = '1' else (others => 'Z');
+
+----------------------------------------------------------------------
 ---  DDR3 memory controller ------------------------------------------
 ----------------------------------------------------------------------
 
   clkgenmigref0 : clkgen
     generic map (CFG_FABTECH, 16, 32, 0, 0, 0, 0, 0, 100000)
     port map (clkm, clkm, chip_refclk, open, clkref, open, open, cgi, cgo, open, open, open);
-
+  
 
   gen_mig : if (SIMULATION /= true) generate
     ddrc : ahb2mig_7series
@@ -505,6 +568,14 @@ begin
       uart_txd       => uart_txd_int,
       uart_ctsn      => uart_ctsn_int,
       uart_rtsn      => uart_rtsn_int,
+      ahbsdc_sd_cmd_dat_i => sdc_cmd_in,
+      ahbsdc_sd_cmd_out_o => sdc_cmd_out,
+      ahbsdc_sd_cmd_oe_o  => sdc_cmd_oe,
+      ahbsdc_sd_dat_dat_i => sdc_dat_in,
+      ahbsdc_sd_dat_out_o => sdc_dat_out,
+      ahbsdc_sd_dat_oe_o  => sdc_dat_oe,
+      ahbsdc_sd_clk_o_pad => sd_clk,
+      ahbsdc_sd_clk_i_pad => sys_clk(0),
       cpuerr         => cpuerr,
       ddr_ahbsi      => ddr_ahbsi,
       ddr_ahbso      => ddr_ahbso,

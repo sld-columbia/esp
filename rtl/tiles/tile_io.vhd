@@ -82,6 +82,15 @@ entity tile_io is
     iolink_clk_out    : out std_ulogic;
     iolink_credit_in  : in  std_ulogic;
     iolink_credit_out : out std_ulogic;
+    -- sdc interfaces
+    ahbsdc_sd_cmd_dat_i : in std_ulogic;
+    ahbsdc_sd_cmd_out_o : out std_ulogic; 
+    ahbsdc_sd_cmd_oe_o  : out std_ulogic;
+    ahbsdc_sd_dat_dat_i : in std_logic_vector(3 downto 0);
+    ahbsdc_sd_dat_out_o : out std_logic_vector(3 downto 0);
+    ahbsdc_sd_dat_oe_o  : out std_ulogic;
+    ahbsdc_sd_clk_o_pad : out std_ulogic;
+    ahbsdc_sd_clk_i_pad : in std_ulogic;
     -- Pads configuration
     pad_cfg            : out std_logic_vector(ESP_CSR_PAD_CFG_MSB - ESP_CSR_PAD_CFG_LSB downto 0);
     -- NOC
@@ -173,6 +182,41 @@ architecture rtl of tile_io is
       ahbso : out ahb_slv_out_type);
   end component ahbrom;
 
+  --SD Card
+  --signal ahbsdc_sd_cmd_dat_i : std_ulogic;
+  --signal ahbsdc_sd_cmd_out_o : std_ulogic; 
+  --signal ahbsdc_sd_cmd_oe_o  : std_ulogic;
+  --signal ahbsdc_sd_dat_dat_i : std_logic_vector(3 downto 0);
+  --signal ahbsdc_sd_dat_out_o : std_logic_vector(3 downto 0);
+  --signal ahbsdc_sd_dat_oe_o  : std_ulogic;
+  --signal ahbsdc_sd_clk_o_pad : std_ulogic;
+  --signal ahbsdc_sd_clk_i_pad : std_ulogic;
+  
+  component ahb_sdc_controller is
+    port(
+      rst_n        : in  std_ulogic; 
+      clk          : in  std_ulogic;
+      haddr        : in  std_logic_vector(31 downto 0);
+      hwdata       : in  std_logic_vector(31 downto 0);
+      hwrite       : in  std_ulogic;
+      hready       : in  std_ulogic;
+      hsize        : in  std_logic_vector(2 downto 0);
+      hburst       : in  std_logic_vector(2 downto 0);
+      hsel   	   : in  std_ulogic;
+      htrans 	   : in  std_logic_vector(1 downto 0);
+      hrdata 	   : out  std_logic_vector(31 downto 0);
+      hresp   	   : out  std_ulogic;
+      hreadyout    : out  std_ulogic;
+      hprot        : in  std_logic_vector(3 downto 0);
+      sd_cmd_dat_i : in std_ulogic;
+      sd_cmd_out_o : out std_ulogic; 
+      sd_cmd_oe_o  : out std_ulogic;
+      sd_dat_dat_i : in std_logic_vector(3 downto 0);
+      sd_dat_out_o : out std_logic_vector(3 downto 0);
+      sd_dat_oe_o  : out std_ulogic;
+      sd_clk_o_pad : out std_ulogic;
+      sd_clk_i_pad : in std_ulogic);
+  end component ahb_sdc_controller;
 
   -- Interrupt controller
   signal irqi               : irq_in_vector(0 to CFG_NCPU_TILE-1);
@@ -339,6 +383,7 @@ architecture rtl of tile_io is
     0      => '1',                            -- bootrom
     1      => '1',                            -- ahb2apb
     2      => to_std_logic(GLOB_CPU_RISCV * GLOB_CPU_AXI),  -- risc-v clint
+    3      => '1',                            -- ahbsdc
     12     => to_std_logic(CFG_SVGA_ENABLE),  -- frame buffer
     others => '0');
 
@@ -672,7 +717,37 @@ begin
         ahbso => ahbso(ahbrom_hindex));
   end generate bootram_gen;
 
-
+  -------------------------------------------------------------------------------
+  -- SD Card Controller ------------------------------------------------------
+  -------------------------------------------------------------------------------
+  ahbso(3).hconfig <= ahbsdc_hconfig;
+  ahbso(3).hindex <= 3;
+  ahbsdc: ahb_sdc_controller
+    port map(
+      --rst_n 	   => tile_config(173),
+      rst_n 	   => rst,
+      clk 	   => clk,
+      haddr 	   => ahbsi.haddr, 
+      hwdata 	   => ahbsi.hwdata,      
+      hwrite 	   => ahbsi.hwrite,     
+      hready       => ahbsi.hready,   
+      hsize 	   => ahbsi.hsize,    
+      hburst 	   => ahbsi.hburst,
+      hprot  	   => ahbsi.hprot,      
+      hsel 	   => ahbsi.hsel(3), 
+      htrans 	   => ahbsi.htrans,      
+      hrdata 	   => ahbso(3).hrdata,      
+      hresp 	   => ahbso(3).hresp(0),        
+      hreadyout       => ahbso(3).hready,      
+      sd_cmd_dat_i => ahbsdc_sd_cmd_dat_i, 
+      sd_cmd_out_o => ahbsdc_sd_cmd_out_o, 
+      sd_cmd_oe_o  => ahbsdc_sd_cmd_oe_o, 
+      sd_dat_dat_i => ahbsdc_sd_dat_dat_i, 
+      sd_dat_out_o => ahbsdc_sd_dat_out_o, 
+      sd_dat_oe_o  => ahbsdc_sd_dat_oe_o,  
+      sd_clk_o_pad => ahbsdc_sd_clk_o_pad, 
+      sd_clk_i_pad => ahbsdc_sd_clk_i_pad); 
+  	
   -------------------------------------------------------------------------------
   -- APB 1: UART interface ------------------------------------------------------
   -------------------------------------------------------------------------------
