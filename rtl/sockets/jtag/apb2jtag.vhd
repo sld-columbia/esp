@@ -55,7 +55,7 @@ architecture rtl of apb2jtag is
   constant reg_a2j_pindex : integer range 0 to NAPBSLV - 1 := 0;
   constant reg_a2j_paddr  : integer range 0 to 4095        := 16#100#;
   constant reg_a2j_pmask  : integer range 0 to 4095        := 16#FFF#;
-  constant invld_flit : std_logic_vector(NOC_FLIT_SIZE+8 downto 0) := X"000000000000000000" & "101";
+  constant invld_flit : std_logic_vector(NOC_FLIT_SIZE+8 downto 0) := conv_std_logic_vector(5, NOC_FLIT_SIZE+8);
   signal this_paddr, this_pmask : integer range 0 to 4095;
   signal this_pirq              : integer range 0 to 15;
 
