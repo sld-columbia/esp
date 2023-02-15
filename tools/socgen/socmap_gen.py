@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# Copyright (c) 2011-2022 Columbia University, System Level Design Group
+# Copyright (c) 2011-2023 Columbia University, System Level Design Group
 # SPDX-License-Identifier: Apache-2.0
 
 from collections import defaultdict
@@ -291,6 +291,7 @@ class soc_config:
       self.ndomain = 1
     self.has_svga = soc.svga_en.get()
     self.has_eth = soc.eth_en.get()
+    self.has_iolink = soc.iolink_en.get()
     self.has_sgmii = soc.HAS_SGMII
     self.has_jtag = soc.jtag_en.get()
     if self.coherence:
@@ -412,7 +413,7 @@ class soc_config:
 
 
 def print_header(fp, package):
-  fp.write("-- Copyright (c) 2011-2022 Columbia University, System Level Design Group\n")
+  fp.write("-- Copyright (c) 2011-2023 Columbia University, System Level Design Group\n")
   fp.write("-- SPDX-License-Identifier: Apache-2.0\n\n")
 
 def print_libs(fp, std_only):
@@ -549,6 +550,8 @@ def print_constants(fp, soc, esp_config):
   fp.write("  constant CFG_ETH_FIFO : integer := 8;\n")
   fp.write("  constant CFG_GRETH_FT : integer := 0;\n")
   fp.write("  constant CFG_GRETH_EDCLFT : integer := 0;\n\n")
+  fp.write("  ------ Custom IO Link\n")
+  fp.write("  constant CFG_IOLINK_EN : integer := " + str(soc.iolink_en.get()) + ";\n\n")
 
   #
   fp.write("  ------ SVGA\n")
@@ -624,9 +627,6 @@ def print_constants(fp, soc, esp_config):
     fp.write("  constant CFG_HAS_DVFS : integer := 0;\n\n")
 
   #
-  fp.write("  ------ PRC interrupt line\n")
-  fp.write("  constant CFG_PRC_IRQ : integer := 5;\n")
-
   fp.write("  ------ Synthesis options\n")
   fp.write("  constant CFG_SCAN : integer := 0;\n\n")
    

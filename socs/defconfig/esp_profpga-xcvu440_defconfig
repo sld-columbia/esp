@@ -12,6 +12,7 @@ CONFIG_SLM_KBYTES = 256
 #CONFIG_PRC_EN is not set
 #CONFIG_JTAG_EN is not set
 CONFIG_ETH_EN = y
+#CONFIG_IOLINK_EN is not set
 CONFIG_SVGA_EN = y
 CONFIG_DSU_IP = C0A8010A
 CONFIG_DSU_ETH = A6A7A0F80440
@@ -31,10 +32,5 @@ TILE_1_1 = 3 misc IO 0 0 0
 CONFIG_VF_POINTS = 4
 POWER_0_0 = mem 0 0 0 0 0 0 0 0 0 0 0 0 
 POWER_0_1 = cpu 0 0 0 0 0 0 0 0 0 0 0 0 
-<<<<<<< HEAD
-POWER_1_0 = IO 0 0 0 0 0 0 0 0 0 0 0 0 
-POWER_1_1 = empty 0 0 0 0 0 0 0 0 0 0 0 0
-=======
 POWER_1_0 = empty 0 0 0 0 0 0 0 0 0 0 0 0 
 POWER_1_1 = IO 0 0 0 0 0 0 0 0 0 0 0 0 
->>>>>>> dev

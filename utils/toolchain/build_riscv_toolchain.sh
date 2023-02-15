@@ -1,5 +1,5 @@
 #!/bin/bash
-# Copyright (c) 2011-2022 Columbia University, System Level Design Group
+# Copyright (c) 2011-2023 Columbia University, System Level Design Group
 # SPDX-License-Identifier: Apache-2.0
 
 set -e
@@ -18,7 +18,7 @@ BUILDROOT_SHA_PYTHON=fbff7d7289cc95db991184f890f4ca1fcf8a101e
 # A patch for buildroot RISCV64 with numpy enabled
 BUILDROOT_PATCH=${ESP_ROOT}/utils/toolchain/python-patches/python-numpy.patch
 
-DEFAULT_TARGET_DIR="/opt/riscv"
+DEFAULT_TARGET_DIR="/home/${USER}/riscv"
 TMP=${ESP_ROOT}/_riscv_build
 
 # Helper functions
@@ -103,6 +103,7 @@ rm -rf $TMP
 mkdir $TMP
 cd $TMP
 
+git config --global url.https://.insteadOf git://
 git config --global url.https://github.com/qemu/.insteadOf git://git.qemu-project.org/
 git config --global url.https://anongit.freedesktop.org/git/.insteadOf git://anongit.freedesktop.org/
 
@@ -228,3 +229,8 @@ echo "  export RISCV=${RISCV}"
 echo ""
 
 echo "*** Successfully installed RISC-V toolchain to $TARGET_DIR ***"
+
+
+git config --global --remove-section url."https://"
+git config --global --remove-section url."https://github.com/qemu/"
+git config --global --remove-section url."https://anongit.freedesktop.org/git/"

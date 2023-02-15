@@ -1,4 +1,4 @@
-# Copyright (c) 2011-2022 Columbia University, System Level Design Group
+# Copyright (c) 2011-2023 Columbia University, System Level Design Group
 # SPDX-License-Identifier: Apache-2.0
 ifeq ("$(CPU_ARCH)", "ariane")
 CROSS_COMPILE ?= riscv64-unknown-linux-gnu-
@@ -38,7 +38,7 @@ LDFLAGS += -lm -lrt -lpthread -lesp -ltest -lcontig -lutils -lmonitors
 CC := $(CROSS_COMPILE)gcc
 LD := $(CROSS_COMPILE)$(LD)
 
-all: $(OBJS) $(EXES) $(EXE) $(BINS) $(BIN)
+all: $(EXTRA_OBJS) $(OBJS) $(EXES) $(EXE) $(BINS) $(BIN)
 
 ifneq ($(APPNAME),)
 $(BUILD_PATH)/%.o: %.c $(HEADERS)

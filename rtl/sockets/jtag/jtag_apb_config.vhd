@@ -47,7 +47,7 @@ end;
 
 architecture rtl of jtag_apb_config is
 
-  constant CFG_APBADDR_FP    : integer := 16#200#;
+  constant CFG_APBADDR_FP    : integer := 16#D00#;
   constant ahb2apb_hmask_fp  : integer := 16#FFE#;
   constant ahb2apb_hindex_fp : integer := 1;
 

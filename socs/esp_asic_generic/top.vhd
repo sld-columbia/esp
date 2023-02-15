@@ -52,28 +52,34 @@ entity top is
     fpga_etx_er       : out   std_ulogic;
     fpga_emdc         : out   std_ulogic;
     fpga_emdio        : inout std_logic;
+    -- DDR
+    clk_ref_p         : in    std_ulogic;  -- 200 MHz clock
+    clk_ref_n         : in    std_ulogic;  -- 200 MHz clock
     -- DDR0
-    c0_sys_clk_p      : in    std_logic;
-    c0_sys_clk_n      : in    std_logic;
-    c0_ddr4_act_n     : out   std_logic;
-    c0_ddr4_adr       : out   std_logic_vector(16 downto 0);
-    c0_ddr4_ba        : out   std_logic_vector(1 downto 0);
-    c0_ddr4_bg        : out   std_logic_vector(1 downto 0);
-    c0_ddr4_cke       : out   std_logic_vector(1 downto 0);
-    c0_ddr4_odt       : out   std_logic_vector(1 downto 0);
-    c0_ddr4_cs_n      : out   std_logic_vector(1 downto 0);
-    c0_ddr4_ck_t      : out   std_logic_vector(0 downto 0);
-    c0_ddr4_ck_c      : out   std_logic_vector(0 downto 0);
-    c0_ddr4_reset_n   : out   std_logic;
-    c0_ddr4_dm_dbi_n  : inout std_logic_vector(8 downto 0);
-    c0_ddr4_dq        : inout std_logic_vector(71 downto 0);
-    c0_ddr4_dqs_c     : inout std_logic_vector(8 downto 0);
-    c0_ddr4_dqs_t     : inout std_logic_vector(8 downto 0);
-    c0_calib_complete : out   std_logic;
-    c0_diagnostic_led : out   std_ulogic;
+    sys_clk_p      : in    std_logic;
+    sys_clk_n      : in    std_logic;
+    ddr3_dq        : inout std_logic_vector(63 downto 0);
+    ddr3_dqs_p     : inout std_logic_vector(7 downto 0);
+    ddr3_dqs_n     : inout std_logic_vector(7 downto 0);
+    ddr3_addr      : out   std_logic_vector(14 downto 0);
+    ddr3_ba        : out   std_logic_vector(2 downto 0);
+    ddr3_ras_n     : out   std_logic;
+    ddr3_cas_n     : out   std_logic;
+    ddr3_we_n      : out   std_logic;
+    ddr3_reset_n   : out   std_logic;
+    ddr3_ck_p      : out   std_logic_vector(0 downto 0);
+    ddr3_ck_n      : out   std_logic_vector(0 downto 0);
+    ddr3_cke       : out   std_logic_vector(0 downto 0);
+    ddr3_cs_n      : out   std_logic_vector(0 downto 0);
+    ddr3_dm        : out   std_logic_vector(7 downto 0);
+    ddr3_odt       : out   std_logic_vector(0 downto 0);
+    calib_complete : out   std_logic;
+    diagnostic_led : out   std_ulogic;
     -- FPGA proxy main clock
     main_clk_p        : in    std_ulogic;
     main_clk_n        : in    std_ulogic;
+    jtag_clk_p        : in    std_ulogic;
+    jtag_clk_n        : in    std_ulogic;
     -- FPGA proxy LEDs
     LED_RED           : out   std_ulogic;
     LED_GREEN         : out   std_ulogic;
@@ -150,10 +156,13 @@ architecture rtl of top is
       JTAG_TRACE : integer range -1 to CFG_TILES_NUM - 1);
     port (
       reset             : in    std_ulogic;
+      chip_reset        : out   std_ulogic;
       ext_clk_noc       : out   std_logic;
-      ext_clk           : out   std_logic_vector(0 to CFG_TILES_NUM - 1);
+      ext_clk           : out   std_logic;
       main_clk_p        : in    std_ulogic;
       main_clk_n        : in    std_ulogic;
+      jtag_clk_p        : in    std_ulogic;
+      jtag_clk_n        : in    std_ulogic;
       fpga_data         : inout std_logic_vector(CFG_NMEM_TILE * (ARCH_BITS) - 1 downto 0);
       fpga_valid_in     : out   std_logic_vector(0 to CFG_NMEM_TILE - 1);
       fpga_valid_out    : in    std_logic_vector(0 to CFG_NMEM_TILE - 1);
@@ -185,6 +194,7 @@ architecture rtl of top is
       etx_er            : out   std_ulogic;
       emdc              : out   std_ulogic;
       emdio             : inout std_logic;
+<<<<<<< HEAD
       c0_sys_clk_p      : in    std_logic;
       c0_sys_clk_n      : in    std_logic;
       c0_ddr4_act_n     : out   std_logic;
@@ -203,12 +213,41 @@ architecture rtl of top is
       c0_ddr4_dqs_t     : inout std_logic_vector(8 downto 0);
       c0_calib_complete : out   std_logic;
       c0_diagnostic_led : out   std_ulogic;
+=======
+      clk_ref_p         : in    std_logic;
+      clk_ref_n         : in    std_logic;
+      sys_clk_p      : in    std_logic;
+      sys_clk_n      : in    std_logic;
+      ddr3_dq        : inout std_logic_vector(63 downto 0);
+      ddr3_dqs_p     : inout std_logic_vector(7 downto 0);
+      ddr3_dqs_n     : inout std_logic_vector(7 downto 0);
+      ddr3_addr      : out   std_logic_vector(14 downto 0);
+      ddr3_ba        : out   std_logic_vector(2 downto 0);
+      ddr3_ras_n     : out   std_logic;
+      ddr3_cas_n     : out   std_logic;
+      ddr3_we_n      : out   std_logic;
+      ddr3_reset_n   : out   std_logic;
+      ddr3_ck_p      : out   std_logic_vector(0 downto 0);
+      ddr3_ck_n      : out   std_logic_vector(0 downto 0);
+      ddr3_cke       : out   std_logic_vector(0 downto 0);
+      ddr3_cs_n      : out   std_logic_vector(0 downto 0);
+      ddr3_dm        : out   std_logic_vector(7 downto 0);
+      ddr3_odt       : out   std_logic_vector(0 downto 0);
+      calib_complete : out   std_logic;
+      diagnostic_led : out   std_ulogic;
+>>>>>>> master
       LED_RED           : out   std_ulogic;
       LED_GREEN         : out   std_ulogic;
       LED_BLUE          : out   std_ulogic;
       LED_YELLOW        : out   std_ulogic);
   end component fpga_proxy_top;
 
+<<<<<<< HEAD
+=======
+  --Chip reset
+  signal chip_reset : std_logic;
+
+>>>>>>> master
   -- FPGA proxy memory link
   signal fpga_data       : std_logic_vector(CFG_NMEM_TILE * (ARCH_BITS) - 1 downto 0);
   signal fpga_valid_in   : std_logic_vector(CFG_NMEM_TILE - 1 downto 0);
@@ -225,9 +264,15 @@ architecture rtl of top is
 
   -- FPGA-genertated backup external clocks
   signal ext_clk_noc : std_logic;
+<<<<<<< HEAD
   signal ext_clk     : std_logic_vector(0 to CFG_TILES_NUM - 1);  -- backup tile clock
 
   constant CPU_FREQ : integer := 78125;  -- cpu frequency in KHz
+=======
+  signal ext_clk     : std_logic;  -- backup tile clock
+
+  constant CPU_FREQ : integer := 50000;  -- cpu frequency in KHz
+>>>>>>> master
                                          -- (TODO: change for device tree)
 
   signal iolink_data_chip       : std_logic_vector(CFG_IOLINK_BITS - 1 downto 0);
@@ -250,10 +295,19 @@ begin
       JTAG_TRACE => JTAG_TRACE)
     port map (
       reset             => reset,
+<<<<<<< HEAD
+=======
+      chip_reset        => chip_reset,
+>>>>>>> master
       ext_clk_noc       => ext_clk_noc,
       ext_clk           => ext_clk,
       main_clk_p        => main_clk_p,
       main_clk_n        => main_clk_n,
+<<<<<<< HEAD
+=======
+      jtag_clk_p        => jtag_clk_p,
+      jtag_clk_n        => jtag_clk_n,
+>>>>>>> master
       fpga_data         => fpga_data,
       fpga_valid_in     => fpga_valid_in,
       fpga_valid_out    => fpga_valid_out,
@@ -285,6 +339,7 @@ begin
       etx_er            => fpga_etx_er,
       emdc              => fpga_emdc,
       emdio             => fpga_emdio,
+<<<<<<< HEAD
       c0_sys_clk_p      => c0_sys_clk_p,
       c0_sys_clk_n      => c0_sys_clk_n,
       c0_ddr4_act_n     => c0_ddr4_act_n,
@@ -303,6 +358,29 @@ begin
       c0_ddr4_dqs_t     => c0_ddr4_dqs_t,
       c0_calib_complete => c0_calib_complete,
       c0_diagnostic_led => c0_diagnostic_led,
+=======
+      clk_ref_p         => clk_ref_p,
+      clk_ref_n         => clk_ref_n,
+      sys_clk_p      => sys_clk_p,
+      sys_clk_n      => sys_clk_n,
+      ddr3_dq        => ddr3_dq,
+      ddr3_dqs_p     => ddr3_dqs_p,
+      ddr3_dqs_n     => ddr3_dqs_n,
+      ddr3_addr      => ddr3_addr,
+      ddr3_ba        => ddr3_ba,
+      ddr3_ras_n     => ddr3_ras_n,
+      ddr3_cas_n     => ddr3_cas_n,
+      ddr3_we_n      => ddr3_we_n,
+      ddr3_reset_n   => ddr3_reset_n,
+      ddr3_ck_p      => ddr3_ck_p,
+      ddr3_ck_n      => ddr3_ck_n,
+      ddr3_cke       => ddr3_cke,
+      ddr3_cs_n      => ddr3_cs_n,
+      ddr3_dm        => ddr3_dm,
+      ddr3_odt       => ddr3_odt,
+      calib_complete => calib_complete,
+      diagnostic_led => diagnostic_led,
+>>>>>>> master
       LED_RED           => LED_RED,
       LED_GREEN         => LED_GREEN,
       LED_BLUE          => LED_BLUE,
@@ -324,7 +402,11 @@ begin
     generic map (
       SIMULATION => SIMULATION)
     port map (
+<<<<<<< HEAD
       reset             => reset,
+=======
+      reset             => chip_reset,
+>>>>>>> master
       clk_emu_p         => clk_emu_p,
       clk_emu_n         => clk_emu_n,
       ext_clk           => ext_clk_noc,

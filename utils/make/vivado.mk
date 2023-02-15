@@ -1,4 +1,4 @@
-# Copyright (c) 2011-2022 Columbia University, System Level Design Group
+# Copyright (c) 2011-2023 Columbia University, System Level Design Group
 # SPDX-License-Identifier: Apache-2.0
 
 ### Constaints ###
@@ -25,9 +25,7 @@ XDC  += $(ESP_ROOT)/constraints/$(BOARD)/$(BOARD)$(XDC_SUFFIX)-cable-pins.xdc
 endif
 XDC  += $(ESP_ROOT)/constraints/$(BOARD)/$(BOARD)$(XDC_SUFFIX)-eth-pins.xdc
 XDC  += $(ESP_ROOT)/constraints/$(BOARD)/$(BOARD)$(XDC_SUFFIX)-dvi-pins.xdc
-ifeq ($(CONFIG_GRETH_ENABLE),y)
 XDC  += $(ESP_ROOT)/constraints/$(BOARD)/$(BOARD)$(XDC_SUFFIX)-eth-constraints.xdc
-endif
 ifeq ($(CONFIG_SVGA_ENABLE),y)
 XDC  += $(ESP_ROOT)/constraints/$(BOARD)/$(BOARD)$(XDC_SUFFIX)-dvi-constraints.xdc
 endif
@@ -78,7 +76,6 @@ endif
 		echo $(SPACES)"DPR generating bbox sources"; \
         sh $(ESP_ROOT)/tools/dpr_tools/process_dpr.sh $(ESP_ROOT) $(BOARD) $(DEVICE) BBOX; \
 	fi;
-
 
 
 vivado/setup.tcl: vivado $(BOARD_FILES)
@@ -228,6 +225,26 @@ vivado/syn.tcl: vivado
         echo "launch_runs impl_1 -to_step write_bitstream" >> $@; \
         echo "wait_on_run -timeout 60 impl_1" >> $@; \
     fi;
+
+vivado/syn_emu.tcl: vivado
+	$(QUIET_INFO)echo "generating synthesis script for Vivado"
+	@$(RM) $@
+	@echo "open_project $(DESIGN)-chip-emu.xpr" > $@
+	@echo "update_ip_catalog" >> $@
+	@echo "update_compile_order -fileset sources_1" >> $@
+	@echo "reset_run impl_1" >> $@
+	@echo "reset_run synth_1" >> $@
+#	@echo "synth_design -rtl -name rtl_1" >> $@
+#	@echo "synth_design -directive runtimeoptimize -resource_sharing off -keep_equivalent_registers -no_lc -rtl -name rtl_1" >> $@
+#	@echo "synth_design -resource_sharing off -keep_equivalent_registers -no_lc -rtl -name rtl_1" >> $@
+	@echo "launch_runs synth_1 -jobs 12" >> $@
+	@echo "get_ips" >> $@
+	@echo "wait_on_run -timeout 360 synth_1" >> $@
+	@echo "set_msg_config -suppress -id {Drc 23-20}" >> $@
+	@echo "launch_runs impl_1 -jobs 12" >> $@
+	@echo "wait_on_run -timeout 360 impl_1" >> $@
+	@echo "launch_runs impl_1 -to_step write_bitstream" >> $@
+	@echo "wait_on_run -timeout 60 impl_1" >> $@
 
 vivado/syn_emu.tcl: vivado
 	$(QUIET_INFO)echo "generating synthesis script for Vivado"
@@ -432,6 +449,19 @@ vivado-syn-dpr-acc: check_all_rtl_srcs vivado/srcs.tcl
 		sh $(ESP_ROOT)/tools/dpr_tools/process_dpr.sh $(ESP_ROOT) $(BOARD) $(DEVICE) GEN_HDR;  \
     fi;
 
+
+vivado-syn-emu: vivado-setup-emu
+	$(QUIET_INFO)echo "launching Vivado implementation script"
+	@cd vivado; \
+	vivado $(VIVADO_BATCH_OPT) -source syn_emu.tcl | tee ../$(VIVADO_LOGS)/vivado_syn_emu.log; \
+	cd ../;
+	@bit=vivado/$(DESIGN)-chip-emu.runs/impl_1/chip_emu_top.bit; \
+	if test -r $$bit; then \
+		rm -rf chip_emu_top.bit; \
+		ln -s $$bit; \
+	else \
+		echo $(SPACES)"ERROR: bistream not found; synthesis failed"; \
+	fi; \
 
 vivado-syn-emu: vivado-setup-emu
 	$(QUIET_INFO)echo "launching Vivado implementation script"

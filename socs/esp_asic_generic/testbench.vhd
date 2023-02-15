@@ -1,8 +1,8 @@
--- Copyright (c) 2011-2022 Columbia University, System Level Design Group
+-- Copyright (c) 2011-2023 Columbia University, System Level Design Group
 -- SPDX-License-Identifier: Apache-2.0
 
 -----------------------------------------------------------------------------
---  Testbench for ESP on proFPGA xcvu440 with DDR4, Ethernet and DVI
+--  Testbench for ESP on proFPGA xc7v2000t with DDR3, Ethernet and DVI
 ------------------------------------------------------------------------------
 
 
@@ -65,8 +65,14 @@ architecture behav of testbench is
   signal main_clk_p : std_ulogic := '0';
   signal main_clk_n : std_ulogic := '1';
 
-  signal c0_sys_clk_p : std_ulogic := '0';
-  signal c0_sys_clk_n : std_ulogic := '1';
+  signal jtag_clk_p : std_ulogic := '0';
+  signal jtag_clk_n : std_ulogic := '1';
+
+  signal clk_ref_p     : std_ulogic := '0';
+  signal clk_ref_n     : std_ulogic := '1';
+
+  signal sys_clk_p : std_ulogic := '0';
+  signal sys_clk_n : std_ulogic := '1';
 
   -- Chip clock used for emulation on FPGA only
   signal clk_emu_p   : std_ulogic  := '0';
@@ -87,23 +93,24 @@ architecture behav of testbench is
   signal fpga_emdc         : std_ulogic;
   signal fpga_emdio        : std_logic;
 
-  -- DDR4 memory
-  signal c0_ddr4_act_n     : std_logic;
-  signal c0_ddr4_adr       : std_logic_vector(16 downto 0);
-  signal c0_ddr4_ba        : std_logic_vector(1 downto 0);
-  signal c0_ddr4_bg        : std_logic_vector(1 downto 0);
-  signal c0_ddr4_cke       : std_logic_vector(1 downto 0);
-  signal c0_ddr4_odt       : std_logic_vector(1 downto 0);
-  signal c0_ddr4_cs_n      : std_logic_vector(1 downto 0);
-  signal c0_ddr4_ck_t      : std_logic_vector(0 downto 0);
-  signal c0_ddr4_ck_c      : std_logic_vector(0 downto 0);
-  signal c0_ddr4_reset_n   : std_logic;
-  signal c0_ddr4_dm_dbi_n  : std_logic_vector(8 downto 0);
-  signal c0_ddr4_dq        : std_logic_vector(71 downto 0);
-  signal c0_ddr4_dqs_c     : std_logic_vector(8 downto 0);
-  signal c0_ddr4_dqs_t     : std_logic_vector(8 downto 0);
-  signal c0_calib_complete : std_logic;
-  signal c0_diagnostic_led : std_ulogic;
+ -- DDR3 memory
+  signal ddr3_dq      : std_logic_vector(63 downto 0);
+  signal ddr3_dqs_p   : std_logic_vector(7 downto 0);
+  signal ddr3_dqs_n   : std_logic_vector(7 downto 0);
+  signal ddr3_addr    : std_logic_vector(14 downto 0);
+  signal ddr3_ba      : std_logic_vector(2 downto 0);
+  signal ddr3_ras_n   : std_logic;
+  signal ddr3_cas_n   : std_logic;
+  signal ddr3_we_n    : std_logic;
+  signal ddr3_reset_n : std_logic;
+  signal ddr3_ck_p    : std_logic_vector(0 downto 0);
+  signal ddr3_ck_n    : std_logic_vector(0 downto 0);
+  signal ddr3_cke     : std_logic_vector(0 downto 0);
+  signal ddr3_cs_n    : std_logic_vector(0 downto 0);
+  signal ddr3_dm      : std_logic_vector(7 downto 0);
+  signal ddr3_odt     : std_logic_vector(0 downto 0);
+  signal calib_complete : std_logic;
+  signal diagnostic_led : std_ulogic;
 
   -- UART
   signal uart_rxd  : std_ulogic;
@@ -173,28 +180,34 @@ architecture behav of testbench is
       fpga_etx_er       : out   std_ulogic;
       fpga_emdc         : out   std_ulogic;
       fpga_emdio        : inout std_logic;
-      -- DDR4
-      c0_sys_clk_p      : in    std_logic;
-      c0_sys_clk_n      : in    std_logic;
-      c0_ddr4_act_n     : out   std_logic;
-      c0_ddr4_adr       : out   std_logic_vector(16 downto 0);
-      c0_ddr4_ba        : out   std_logic_vector(1 downto 0);
-      c0_ddr4_bg        : out   std_logic_vector(1 downto 0);
-      c0_ddr4_cke       : out   std_logic_vector(1 downto 0);
-      c0_ddr4_odt       : out   std_logic_vector(1 downto 0);
-      c0_ddr4_cs_n      : out   std_logic_vector(1 downto 0);
-      c0_ddr4_ck_t      : out   std_logic_vector(0 downto 0);
-      c0_ddr4_ck_c      : out   std_logic_vector(0 downto 0);
-      c0_ddr4_reset_n   : out   std_logic;
-      c0_ddr4_dm_dbi_n  : inout std_logic_vector(8 downto 0);
-      c0_ddr4_dq        : inout std_logic_vector(71 downto 0);
-      c0_ddr4_dqs_c     : inout std_logic_vector(8 downto 0);
-      c0_ddr4_dqs_t     : inout std_logic_vector(8 downto 0);
-      c0_calib_complete : out   std_logic;
-      c0_diagnostic_led : out   std_ulogic;
+      -- DDR
+      clk_ref_p         : in    std_ulogic;  -- 200 MHz clock
+      clk_ref_n         : in    std_ulogic;  -- 200 MHz clock
+      -- DDR3
+      sys_clk_p      : in    std_logic;
+      sys_clk_n      : in    std_logic;
+      ddr3_dq        : inout std_logic_vector(63 downto 0);
+      ddr3_dqs_p     : inout std_logic_vector(7 downto 0);
+      ddr3_dqs_n     : inout std_logic_vector(7 downto 0);
+      ddr3_addr      : out   std_logic_vector(14 downto 0);
+      ddr3_ba        : out   std_logic_vector(2 downto 0);
+      ddr3_ras_n     : out   std_logic;
+      ddr3_cas_n     : out   std_logic;
+      ddr3_we_n      : out   std_logic;
+      ddr3_reset_n   : out   std_logic;
+      ddr3_ck_p      : out   std_logic_vector(0 downto 0);
+      ddr3_ck_n      : out   std_logic_vector(0 downto 0);
+      ddr3_cke       : out   std_logic_vector(0 downto 0);
+      ddr3_cs_n      : out   std_logic_vector(0 downto 0);
+      ddr3_dm        : out   std_logic_vector(7 downto 0);
+      ddr3_odt       : out   std_logic_vector(0 downto 0);
+      calib_complete : out   std_logic;
+      diagnostic_led : out   std_ulogic;
       -- FPGA proxy main clock
       main_clk_p        : in    std_ulogic;  -- 78.25 MHz clock
       main_clk_n        : in    std_ulogic;  -- 78.25 MHz clock
+      jtag_clk_p        : in    std_ulogic;
+      jtag_clk_n        : in    std_ulogic;
       -- LEDs
       LED_RED           : out   std_ulogic;
       LED_GREEN         : out   std_ulogic;
@@ -208,11 +221,20 @@ begin
   -- clock and reset
   reset        <= '0'              after 2500 ns;
 
-  main_clk_p <= not main_clk_p after 6.4 ns;
-  main_clk_n <= not main_clk_n after 6.4 ns;
+  main_clk_p <= not main_clk_p after 5 ns;
+  main_clk_n <= not main_clk_n after 5 ns;
 
-  c0_sys_clk_p <= not c0_sys_clk_p after 4.0 ns;
-  c0_sys_clk_n <= not c0_sys_clk_n after 4.0 ns;
+  jtag_clk_p <= not jtag_clk_p after 25 ns;
+  jtag_clk_n <= not jtag_clk_n after 25 ns;
+
+  clk_ref_p <= not clk_ref_p after 2.5 ns;
+  clk_ref_n <= not clk_ref_n after 2.5 ns;
+
+  sys_clk_p <= not sys_clk_p after 2.5 ns;
+  sys_clk_n <= not sys_clk_n after 2.5 ns;
+
+  clk_emu_p <= not clk_emu_p after 10 ns;
+  clk_emu_n <= not clk_emu_n after 10 ns;
 
   -- UART
   uart_rxd  <= '0';
@@ -228,11 +250,10 @@ begin
   fpga_erx_crs           <= '0';
   fpga_emdio             <= 'Z';
 
-  -- DDR4 (memory simulation model does not emulate DDR behavior)
-  c0_ddr4_dm_dbi_n <= (others => 'Z');
-  c0_ddr4_dq       <= (others => 'Z');
-  c0_ddr4_dqs_c    <= (others => 'Z');
-  c0_ddr4_dqs_t    <= (others => 'Z');
+  -- DDR3 (memory simulation model does not emulate DDR behavior)
+  ddr3_dq    <= (others => 'Z');
+  ddr3_dqs_p <= (others => 'Z');
+  ddr3_dqs_n <= (others => 'Z');
 
   -- Ethernet
   etx_clk           <= '0';
@@ -302,26 +323,31 @@ begin
       fpga_etx_er       => fpga_etx_er,
       fpga_emdc         => fpga_emdc,
       fpga_emdio        => fpga_emdio,
-      c0_sys_clk_p      => c0_sys_clk_p,
-      c0_sys_clk_n      => c0_sys_clk_n,
-      c0_ddr4_act_n     => c0_ddr4_act_n,
-      c0_ddr4_adr       => c0_ddr4_adr,
-      c0_ddr4_ba        => c0_ddr4_ba,
-      c0_ddr4_bg        => c0_ddr4_bg,
-      c0_ddr4_cke       => c0_ddr4_cke,
-      c0_ddr4_odt       => c0_ddr4_odt,
-      c0_ddr4_cs_n      => c0_ddr4_cs_n,
-      c0_ddr4_ck_t      => c0_ddr4_ck_t,
-      c0_ddr4_ck_c      => c0_ddr4_ck_c,
-      c0_ddr4_reset_n   => c0_ddr4_reset_n,
-      c0_ddr4_dm_dbi_n  => c0_ddr4_dm_dbi_n,
-      c0_ddr4_dq        => c0_ddr4_dq,
-      c0_ddr4_dqs_c     => c0_ddr4_dqs_c,
-      c0_ddr4_dqs_t     => c0_ddr4_dqs_t,
-      c0_calib_complete => open,
-      c0_diagnostic_led => open,
+      clk_ref_p         => clk_ref_p,
+      clk_ref_n         => clk_ref_n,
+      sys_clk_p      => sys_clk_p,
+      sys_clk_n      => sys_clk_n,
+      ddr3_dq        => ddr3_dq,
+      ddr3_dqs_p     => ddr3_dqs_p,
+      ddr3_dqs_n     => ddr3_dqs_n,
+      ddr3_addr      => ddr3_addr,
+      ddr3_ba        => ddr3_ba,
+      ddr3_ras_n     => ddr3_ras_n,
+      ddr3_cas_n     => ddr3_cas_n,
+      ddr3_we_n      => ddr3_we_n,
+      ddr3_reset_n   => ddr3_reset_n,
+      ddr3_ck_p      => ddr3_ck_p,
+      ddr3_ck_n      => ddr3_ck_n,
+      ddr3_cke       => ddr3_cke,
+      ddr3_cs_n      => ddr3_cs_n,
+      ddr3_dm        => ddr3_dm,
+      ddr3_odt       => ddr3_odt,
+      calib_complete => open,
+      diagnostic_led => open,
       main_clk_p        => main_clk_p,
       main_clk_n        => main_clk_n,
+      jtag_clk_p        => jtag_clk_p,
+      jtag_clk_n        => jtag_clk_n,
       LED_RED           => open,
       LED_GREEN         => open,
       LED_BLUE          => open,

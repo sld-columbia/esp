@@ -1,5 +1,5 @@
 #!/bin/bash
-# Copyright (c) 2011-2022 Columbia University, System Level Design Group
+# Copyright (c) 2011-2023 Columbia University, System Level Design Group
 # SPDX-License-Identifier: Apache-2.0
 
 set -e
@@ -9,7 +9,7 @@ export SCRIPT_PATH=$(realpath $(dirname "$0"))
 ESP_ROOT=$(realpath ${SCRIPT_PATH}/../..)
 RISCV_GNU_TOOLCHAIN_SHA=afcc8bc655d30cf6af054ac1d3f5f89d0627aa79
 
-DEFAULT_TARGET_DIR="/opt/riscv32imc"
+DEFAULT_TARGET_DIR="/home/${USER}/riscv32imc"
 TMP=${ESP_ROOT}/_riscv32imc_build
 
 # Helper functions
@@ -85,6 +85,10 @@ rm -rf $TMP
 mkdir $TMP
 cd $TMP
 
+git config --global url.https://.insteadOf git://
+git config --global url.https://github.com/qemu/.insteadOf git://git.qemu-project.org/
+git config --global url.https://anongit.freedesktop.org/git/.insteadOf git://anongit.freedesktop.org/
+
 # Bare-metal compiler
 src=riscv-gnu-toolchain
 echo "*** Installing baremetal newlib tool chain... ***"
@@ -120,3 +124,8 @@ echo "  export RISCV=${RISCV}"
 echo ""
 
 echo "*** Successfully installed RISC-V (rv32imc) toolchain to $TARGET_DIR ***"
+
+
+git config --global --remove-section url."https://"
+git config --global --remove-section url."https://github.com/qemu/"
+git config --global --remove-section url."https://anongit.freedesktop.org/git/"

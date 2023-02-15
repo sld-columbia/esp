@@ -135,7 +135,7 @@ architecture rtl of iolink2ahbm is
     count  : integer;
     haddr  : std_logic_vector(GLOB_PHYS_ADDR_BITS - 1 downto 0);
     hwrite : std_ulogic;
-    hwdata : std_logic_vector(word_bitwidth - 1 downto 0);
+    hwdata : std_logic_vector(ARCH_BITS - 1 downto 0);
   end record iolink2ahbm_fsm_t;
 
   constant DEFAULT_IOLINK2AHBM : iolink2ahbm_fsm_t := (
@@ -204,21 +204,11 @@ architecture rtl of iolink2ahbm is
     0      => ahb_device_reg (VENDOR_SLD, SLD_IO_LINK, 0, 0, 0),
     others => zero32);
 
-  function target_word_hsize
-    return std_logic_vector is
-  begin
-    case word_bitwidth is
-      when 64     => return HSIZE_DWORD;
-      when others => return HSIZE_WORD;
-    end case;
-  end target_word_hsize;
-
   -- Endianness fix
   function fix_endian (
-    le : std_logic_vector(word_bitwidth - 1 downto 0))
+    le : std_logic_vector(ARCH_BITS -  1 downto 0))
     return std_logic_vector is
-    variable be     : std_logic_vector(word_bitwidth - 1 downto 0);
-    variable padded : std_logic_vector(ARCH_BITS - 1 downto 0);
+    variable be     : std_logic_vector(ARCH_BITS - 1 downto 0);
   begin
     if little_end = 0 then
       be := le;
@@ -227,13 +217,7 @@ architecture rtl of iolink2ahbm is
         be(8 * (i + 1) - 1 downto 8 * i) := le(word_bitwidth - 8 * i - 1 downto word_bitwidth - 8 * (i + 1));
       end loop;  -- i
     end if;
-
-    if ARCH_BITS = 64 and word_bitwidth = 32 then
-      padded := be & be;
-    else
-      padded := be;
-    end if;
-    return padded;
+  return be;
 
   end fix_endian;
 
@@ -245,6 +229,34 @@ architecture rtl of iolink2ahbm is
   attribute keep            : string;
   attribute keep of credits : signal is "true";
 
+  attribute mark_debug            : string;
+  --attribute mark_debug of io_clk_out_int   : signal is "true";
+  --attribute mark_debug of io_valid_out_int : signal is "true";
+  --attribute mark_debug of io_snd_wrreq, io_snd_wrreq_int       : signal is "true";
+  --attribute mark_debug of io_snd_data_in, io_snd_data_in_int   : signal is "true";
+  --attribute mark_debug of io_snd_full, io_snd_full_int         : signal is "true";
+  --attribute mark_debug of io_snd_almost_full                   : signal is "true";
+  --attribute mark_debug of io_rcv_rdreq                         : signal is "true";
+  --attribute mark_debug of io_rcv_data_out                      : signal is "true";
+  --attribute mark_debug of io_rcv_empty                         : signal is "true";
+  --attribute mark_debug of io_snd_rdreq, io_snd_rdreq_int       : signal is "true";
+  --attribute mark_debug of io_snd_data_out, io_snd_data_out_int : signal is "true";
+  --attribute mark_debug of io_snd_empty, io_snd_empty_int       : signal is "true";
+  --attribute mark_debug of io_rcv_wrreq                         : signal is "true";
+  --attribute mark_debug of io_rcv_data_in                       : signal is "true";
+  --attribute mark_debug of io_rcv_full                          : signal is "true";
+  --attribute mark_debug of credits         : signal is "true";
+  --attribute mark_debug of credit_in       : signal is "true";
+  --attribute mark_debug of credit_in_empty : signal is "true";
+  --attribute mark_debug of credit_received : signal is "true";
+  --attribute mark_debug of receiving : signal is "true";
+  --attribute mark_debug of sending   : signal is "true";
+  --attribute mark_debug of r : signal is "true";
+  --attribute mark_debug of io_rcv_reg : signal is "true";
+  --attribute mark_debug of io_snd_reg : signal is "true";
+  --attribute mark_debug of oen_fsm_idle : signal is "true";
+
+>>>>>>> master
 begin  -- architecture rtl
 
   io_clk_out     <= io_clk_out_int;
@@ -619,7 +631,7 @@ begin  -- architecture rtl
               -- Decrement word count
               v.count      := r.count - 1;
               -- Set data
-              v.hwdata     := fix_endian(io_rcv_data_out);
+              v.hwdata     := fix_endian(ahbdrivedata(io_rcv_data_out));
               -- Pop io queue
               io_rcv_rdreq <= '1';
               -- Write data next cycle
@@ -656,7 +668,7 @@ begin  -- architecture rtl
           if (granted and ahbmi.hready) = '1' then
             -- Data bus acquired
             -- Set data
-            v.hwdata     := fix_endian(io_rcv_data_out);
+            v.hwdata     := fix_endian(ahbdrivedata(io_rcv_data_out));
             -- Pop io queue
             io_rcv_rdreq <= '1';
             -- Increment address
@@ -678,7 +690,7 @@ begin  -- architecture rtl
           if (ahbmi.hready) = '1' then
             -- Read data is valid
             -- Push io queue
-            io_snd_data_in <= fix_endian(ahbmi.hrdata);
+            io_snd_data_in <= ahbreadword(fix_endian(ahbmi.hrdata));
             io_snd_wrreq   <= '1';
             -- End of transaction
             v.state        := wait_send_data;
@@ -689,7 +701,7 @@ begin  -- architecture rtl
           if (ahbmi.hready) = '1' then
             -- Read data is valid
             -- Push io queue
-            io_snd_data_in <= fix_endian(ahbmi.hrdata);
+            io_snd_data_in <= ahbreadword(fix_endian(ahbmi.hrdata));
             io_snd_wrreq   <= '1';
             -- Increment address
             v.haddr        := r.haddr + default_incr;
@@ -722,7 +734,7 @@ begin  -- architecture rtl
   ahbmo.hwdata <= r.hwdata;
 
   ahbmo.hprot   <= "0011";
-  ahbmo.hsize   <= target_word_hsize;
+  ahbmo.hsize   <= HSIZE_WORD;
   ahbmo.hlock   <= '0';
   ahbmo.hirq    <= (others => '0');
   ahbmo.hconfig <= hconfig;

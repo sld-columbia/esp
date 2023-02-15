@@ -1,4 +1,4 @@
-# Copyright (c) 2011-2022 Columbia University, System Level Design Group
+# Copyright (c) 2011-2023 Columbia University, System Level Design Group
 # SPDX-License-Identifier: Apache-2.0
 include ../../../common/common.mk
 
@@ -32,7 +32,6 @@ INCDIR += -I../../../common/matchlib_toolkit/examples/rapidjson/include
 INCDIR += -I../../../common/matchlib_toolkit/examples/ac_types/include
 INCDIR += -I../../../common/matchlib_toolkit/examples/ac_math/include
 INCDIR += -I../../../common/matchlib_toolkit/examples/ac_simutils/include
-
 
 CXXFLAGS ?=
 CXXFLAGS += -MMD

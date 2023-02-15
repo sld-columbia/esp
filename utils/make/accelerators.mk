@@ -1,4 +1,4 @@
-# Copyright (c) 2011-2022 Columbia University, System Level Design Group
+# Copyright (c) 2011-2023 Columbia University, System Level Design Group
 # SPDX-License-Identifier: Apache-2.0
 
 STRATUSHLS_ACC_PATH      = $(ESP_ROOT)/accelerators/stratus_hls
@@ -458,7 +458,14 @@ $(ACC-app): $(SOFT_BUILD)/sysroot soft-build
 		mkdir -p $$BUILD_PATH; \
 		CROSS_COMPILE=$(CROSS_COMPILE_LINUX) CPU_ARCH=$(CPU_ARCH) DRIVERS=$(DRV_LINUX) DESIGN_PATH=$(DESIGN_PATH) BUILD_PATH=$$BUILD_PATH $(MAKE) -C $$ACC_PATH/sw/linux/app; \
 		if [ `ls -1 $$BUILD_PATH/*.exe 2>/dev/null | wc -l ` -gt 0 ]; then \
-			echo '   ' CP $@; cp  $$BUILD_PATH/*.exe $(SOFT_BUILD)/sysroot/applications/test/$(@:-app=).exe; \
+			if [ `ls -1 $$BUILD_PATH/*.exe 2>/dev/null | wc -l ` -eq 1 ]; then \
+				echo '   ' CP $@; cp  $$BUILD_PATH/*.exe $(SOFT_BUILD)/sysroot/applications/test/$(@:-app=).exe ; \
+			else \
+				for f in $$BUILD_PATH/*.exe; do echo '   ' CP $@ $${f##*/}; cp $$f $(SOFT_BUILD)/sysroot/applications/test/$(@:-app=)_$${f##*/} ; done; \
+			fi; \
+			if [ `ls -1 $$ACC_PATH/sw/linux/app/*.so 2>/dev/null | wc -l ` -gt 0 ]; then \
+				echo '   ' CP "shared libraries"; cp $$ACC_PATH/sw/linux/app/*.so $(SOFT_BUILD)/sysroot/lib/ ; \
+			fi; \
 		else \
 			echo '   ' WARNING $@ compilation failed!; \
 		fi; \
@@ -477,10 +484,18 @@ $(ACC-baremetal): $(BAREMETAL_BIN) soft-build $(ESP_CFG_BUILD)/socmap.vhd
 		mkdir -p $$BUILD_PATH; \
 		CROSS_COMPILE=$(CROSS_COMPILE_ELF) CPU_ARCH=$(CPU_ARCH) DRIVERS=$(DRV_BARE) DESIGN_PATH=$(DESIGN_PATH)/$(ESP_CFG_BUILD) BUILD_PATH=$$BUILD_PATH $(MAKE) -C  $$ACC_PATH/sw/baremetal; \
 		if [ `ls -1 $$BUILD_PATH/*.bin 2>/dev/null | wc -l ` -gt 0 ]; then \
-			echo '   ' CP $@; cp $$BUILD_PATH/*.bin $(BAREMETAL_BIN)/$(@:-baremetal=).bin; \
+			if [ `ls -1 $$BUILD_PATH/*.bin 2>/dev/null | wc -l ` -eq 1 ]; then \
+				echo '   ' CP $@; cp $$BUILD_PATH/*.bin $(BAREMETAL_BIN)/$(@:-baremetal=).bin ; \
+			else \
+				for f in $$BUILD_PATH/*.bin; do echo '   ' CP $@ $${f##*/}; cp $$f $(BAREMETAL_BIN)/$(@:-baremetal=)_$${f##*/} ; done; \
+			fi; \
 		fi; \
 		if [ `ls -1 $$BUILD_PATH/*.exe 2>/dev/null | wc -l ` -gt 0 ]; then \
-			echo '   ' CP $@; cp $$BUILD_PATH/*.exe $(BAREMETAL_BIN)/$(@:-baremetal=).exe; \
+			if [ `ls -1 $$BUILD_PATH/*.exe 2>/dev/null | wc -l ` -eq 1 ]; then \
+				echo '   ' CP $@; cp $$BUILD_PATH/*.exe $(BAREMETAL_BIN)/$(@:-baremetal=).exe ; \
+			else \
+				for f in $$BUILD_PATH/*.exe; do echo '   ' CP $@ $${f##*/}; cp $$f $(BAREMETAL_BIN)/$(@:-baremetal=)_$${f##*/} ; done; \
+			fi; \
 		else \
 			echo '   ' WARNING $@ compilation failed!; \
 		fi; \

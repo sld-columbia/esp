@@ -1,5 +1,5 @@
 #!/bin/bash
-# Copyright (c) 2011-2022 Columbia University, System Level Design Group
+# Copyright (c) 2011-2023 Columbia University, System Level Design Group
 # SPDX-License-Identifier: Apache-2.0
 
 set -e
@@ -11,7 +11,7 @@ LINUXSRC=${ESP_ROOT}/soft/leon3/linux
 export SYSROOT=${ESP_ROOT}/soft/leon3/sysroot
 BUILDROOT_SHA=d6fa6a45e196665d6607b522f290b1451b949c2c
 
-DEFAULT_TARGET_DIR="/opt/leon"
+DEFAULT_TARGET_DIR="/home/${USER}/leon"
 TMP=${ESP_ROOT}/_leon3_build
 
 # Prebuilt from Cobham Gaisler
@@ -107,6 +107,10 @@ runsudo ${TARGET_DIR} "$cmd"
 rm -rf $TMP
 mkdir $TMP
 cd $TMP
+
+git config --global url.https://.insteadOf git://
+git config --global url.https://github.com/qemu/.insteadOf git://git.qemu-project.org/
+git config --global url.https://anongit.freedesktop.org/git/.insteadOf git://anongit.freedesktop.org/
 
 # Bare-metal compiler
 src=sparc-elf-${BAREC_GCC_VERSION}
@@ -260,3 +264,7 @@ echo -n "  export PATH=${LEON}/bin:"; echo '$PATH'
 echo ""
 
 echo "*** Successfully installed LEON toolchain to $TARGET_DIR ***"
+
+git config --global --remove-section url."https://"
+git config --global --remove-section url."https://github.com/qemu/"
+git config --global --remove-section url."https://anongit.freedesktop.org/git/"

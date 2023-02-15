@@ -1,0 +1,18 @@
+# PLM Specifications
+#
+# Add a line for each memory element required with the following syntax
+# <accelerator_name>_<memory_element_name> <#_words> <#_bits> <parallel_access_list>
+#
+# Example:
+# sort_plm_block_multi_op 1024 32 1w:1r 4w:2r 0w:2ru
+#
+# See the ESP documentation for more info
+#
+sinkhorn_input_plm_dma32 750 32 1w:0r 0w:1r
+sinkhorn_output_plm_dma32 50000 32 1w:0r 0w:1r
+sinkhorn_intermed_plm 256 32 8w:0r 0w:16r
+sinkhorn_intermed2_plm 256 32 1w:0r 0w:1r
+sinkhorn_inputx_plm_dma64 690 32 2w:0r 0w:4r
+sinkhorn_inputy_plm_dma64 540 32 2w:0r 0w:6ru
+sinkhorn_output_plm_dma64 40960 32 2w:0r 0w:1r
+sinkhorn_output2_plm_dma64 40960 32 8w:0r 0w:16r

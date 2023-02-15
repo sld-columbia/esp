@@ -1,4 +1,4 @@
--- Copyright (c) 2011-2022 Columbia University, System Level Design Group
+-- Copyright (c) 2011-2023 Columbia University, System Level Design Group
 -- SPDX-License-Identifier: Apache-2.0
 
 library ieee;
@@ -744,40 +744,43 @@ package tile is
       has_dvfs           : integer := 1;
       has_pll            : integer);
     port (
-      rst               : in  std_ulogic;
-      clk               : in  std_ulogic;
-      local_y           : in  local_yx;
-      local_x           : in  local_yx;
-      paddr             : in  integer;
-      pmask             : in  integer;
-      pirq              : in  integer;
-      apbi              : in  apb_slv_in_type;
-      apbo              : out apb_slv_out_type;
-      bank              : out bank_type(0 to MAXREGNUM - 1);
-      bankdef           : in  bank_type(0 to MAXREGNUM - 1);
-      acc_rst           : out std_ulogic;
-      conf_done         : out std_ulogic;
-      rd_request        : in  std_ulogic;
-      rd_index          : in  std_logic_vector(31 downto 0);
-      rd_length         : in  std_logic_vector(31 downto 0);
-      rd_size           : in  std_logic_vector(2 downto 0);
-      rd_grant          : out std_ulogic;
-      bufdin_ready      : in  std_ulogic;
-      bufdin_data       : out std_logic_vector(ARCH_BITS - 1 downto 0);
-      bufdin_valid      : out std_ulogic;
-      wr_request        : in  std_ulogic;
-      wr_index          : in  std_logic_vector(31 downto 0);
-      wr_length         : in  std_logic_vector(31 downto 0);
-      wr_size           : in  std_logic_vector(2 downto 0);
-      wr_grant          : out std_ulogic;
-      bufdout_ready     : out std_ulogic;
-      bufdout_data      : in  std_logic_vector(ARCH_BITS - 1 downto 0);
-      bufdout_valid     : in  std_ulogic;
-      acc_done          : in  std_ulogic;
-      flush             : out std_ulogic;
-      mon_dvfs_in       : in  monitor_dvfs_type;
-      mon_dvfs          : out monitor_dvfs_type;
-      dvfs_transient_in : in std_ulogic;
+      rst                           : in  std_ulogic;
+      clk                           : in  std_ulogic;
+      refclk                        : in  std_ulogic;
+      pllbypass                     : in  std_ulogic;
+      pllclk                        : out std_ulogic;
+      local_y                       : in  local_yx;
+      local_x                       : in  local_yx;
+      paddr                         : in  integer;
+      pmask                         : in  integer;
+      pirq                          : in  integer;
+      apbi                          : in  apb_slv_in_type;
+      apbo                          : out apb_slv_out_type;
+      bank                          : out bank_type(0 to MAXREGNUM - 1);
+      bankdef                       : in  bank_type(0 to MAXREGNUM - 1);
+      acc_rst                       : out std_ulogic;
+      conf_done                     : out std_ulogic;
+      rd_request                    : in  std_ulogic;
+      rd_index                      : in  std_logic_vector(31 downto 0);
+      rd_length                     : in  std_logic_vector(31 downto 0);
+      rd_size                       : in  std_logic_vector(2 downto 0);
+      rd_grant                      : out std_ulogic;
+      bufdin_ready                  : in  std_ulogic;
+      bufdin_data                   : out std_logic_vector(ARCH_BITS - 1 downto 0);
+      bufdin_valid                  : out std_ulogic;
+      wr_request                    : in  std_ulogic;
+      wr_index                      : in  std_logic_vector(31 downto 0);
+      wr_length                     : in  std_logic_vector(31 downto 0);
+      wr_size                       : in  std_logic_vector(2 downto 0);
+      wr_grant                      : out std_ulogic;
+      bufdout_ready                 : out std_ulogic;
+      bufdout_data                  : in  std_logic_vector(ARCH_BITS - 1 downto 0);
+      bufdout_valid                 : in  std_ulogic;
+      acc_done                      : in  std_ulogic;
+      flush                         : out std_ulogic;
+      acc_flush_done                : in std_ulogic;
+      mon_dvfs_in                   : in  monitor_dvfs_type;
+      mon_dvfs                      : out monitor_dvfs_type;
       llc_coherent_dma_rcv_rdreq    : out std_ulogic;
       llc_coherent_dma_rcv_data_out : in  noc_flit_type;
       llc_coherent_dma_rcv_empty    : in  std_ulogic;
@@ -1089,9 +1092,10 @@ end component apb2axil;
       ahbmi         : in  ahb_mst_in_type);
   end component iolink2ahbm;
 
-  component ahbm2iolink is
+  component ahbslv2iolink is
     generic (
       hindex        : integer range 0 to NAHBSLV - 1;
+      hconfig       : ahb_config_type;
       io_bitwidth   : integer range 1 to ARCH_BITS := 32;  -- power of 2, <= word_bitwidth
       word_bitwidth : integer range 1 to ARCH_BITS := 32;  -- 32 or 64
       little_end    : integer range 0 to 1         := 0);
@@ -1107,8 +1111,8 @@ end component apb2axil;
       io_data_oen   : out std_logic;
       io_data_in    : in  std_logic_vector(io_bitwidth - 1 downto 0);
       io_data_out   : out std_logic_vector(io_bitwidth - 1 downto 0);
-      ahbmi         : in  ahb_mst_in_type;
-      ahbmo         : out ahb_mst_out_type);
-  end component ahbm2iolink;
+      ahbsi         : in  ahb_slv_in_type;
+      ahbso         : out ahb_slv_out_type);
+  end component ahbslv2iolink;
 
 end tile;
