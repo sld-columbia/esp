@@ -195,9 +195,9 @@ void synth::load_input()
 		   
             //validate read data
             if ((!in_place || r == 0) && data != rd_data){
-                rd_err = data;
+                rd_err += 1;
             } else if (in_place && r > 0 && data != wr_data){
-                rd_err = data;
+                rd_err += 1;
             }
             rd_errs.write(rd_err); 
 		    }
