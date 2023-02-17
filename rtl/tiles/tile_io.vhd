@@ -301,9 +301,9 @@ architecture rtl of tile_io is
   signal local_apb_ack    : std_ulogic;
   signal remote_apb_ack   : std_ulogic;
   signal pready           : std_ulogic;
-  
+
   -- apb2axil
-  signal s_axil_awvalid     : std_logic; 
+  signal s_axil_awvalid     : std_logic;
   signal s_axil_awready     : std_logic;
   signal s_axil_awaddr      : std_logic_vector(31 downto 0);
   signal s_axil_awaddr_masked : std_logic_vector(31 downto 0);
@@ -324,7 +324,7 @@ architecture rtl of tile_io is
   signal s_axil_bresp       : std_logic_vector(1 downto 0);
 
   signal prc_pready         : std_logic;
-  
+
   -- AXI4 Master
   signal mosi : axi_mosi_vector(0 to 0);
   signal somi : axi_somi_vector(0 to 0);
@@ -344,8 +344,8 @@ architecture rtl of tile_io is
   signal m_axi_mem_rlast    : std_logic;
   signal m_axi_mem_rvalid   : std_logic;
   signal m_axi_mem_rready   : std_logic;
-  
-  --ICAP3 
+
+  --ICAP3
   signal icap_clk       : std_logic;
   signal icap_reset     : std_logic;
   signal icap_csib      : std_logic;
@@ -354,7 +354,7 @@ architecture rtl of tile_io is
   signal icap_o         : std_logic_vector(31 downto 0);
   signal icap_avail     : std_logic;
   signal icap_prdone    : std_logic;
-  signal icap_prerror   : std_logic; 
+  signal icap_prerror   : std_logic;
 
   --PRC configuration signals
   signal vsm_VS_0_rm_shutdown_req       : std_logic := '0';
@@ -406,10 +406,10 @@ architecture rtl of tile_io is
   constant this_remote_apb_slv_en : std_logic_vector(0 to NAPBSLV - 1) := remote_apb_slv_mask_misc;
   constant this_apb_en            : std_logic_vector(0 to NAPBSLV - 1) := this_local_apb_en or this_remote_apb_slv_en;
   constant this_remote_ahb_slv_en : std_logic_vector(0 to NAHBSLV - 1) := remote_ahb_mask_misc;
-  
+
   --constant nofb_mem_info : tile_mem_info_vector(0 to CFG_NSLM_TILE + CFG_NSLMDDR_TILE + CFG_NMEM_TILE - 1) := mem_info(0 to CFG_NSLM_TILE + CFG_NSLMDDR_TILE + CFG_NMEM_TILE - 1);
-  
-  
+
+
   function set_local_pconfig (
     constant csr_pconfig   : apb_config_type;
     constant fixed_pconfig : apb_slv_config_vector)
@@ -462,7 +462,7 @@ architecture rtl of tile_io is
   attribute mark_debug of icap_avail     : signal is "true";
   attribute mark_debug of icap_prdone    : signal is "true";
   attribute mark_debug of icap_prerror   : signal is "true";
-  
+
   attribute mark_debug of vsm_VS_0_sw_startup_req : signal is "true";
 
   attribute mark_debug of m_axi_mem_araddr   : signal is "true";
@@ -519,14 +519,14 @@ architecture rtl of tile_io is
   -- attribute mark_debug of coherent_dma_snd_wrreq : signal is "true";
   -- attribute mark_debug of coherent_dma_snd_data_in : signal is "true";
   -- attribute mark_debug of coherent_dma_snd_full : signal is "true";
-  
+
   attribute keep of apb_rcv_rdreq : signal is "true";
   attribute keep of apb_rcv_data_out : signal is "true";
   attribute keep of apb_rcv_empty : signal is "true";
   attribute keep of apb_snd_wrreq : signal is "true";
   attribute keep of apb_snd_data_in : signal is "true";
   attribute keep of apb_snd_full : signal is "true";
- 
+
   -- attribute mark_debug of remote_apb_rcv_rdreq : signal is "true";
   -- attribute mark_debug of remote_apb_rcv_data_out : signal is "true";
   -- attribute mark_debug of remote_apb_rcv_empty : signal is "true";
@@ -552,7 +552,7 @@ architecture rtl of tile_io is
   attribute keep of interrupt_ack_data_in : signal is "true";
   attribute keep of interrupt_ack_full : signal is "true";
   attribute keep of noc_apbi_wirq : signal is "true";
-  
+
   attribute mark_debug of noc_apbo : signal is "true";
   attribute mark_debug of noc_apbi : signal is "true";
 
@@ -742,7 +742,6 @@ begin
     edcl_gen : if CFG_DSU_ETH = 1 generate
       ahbmo(1) <= edcl_ahbmo;
     end generate edcl_gen;
-
   end generate eth0_gen;
 
   no_ethernet : if CFG_GRETH = 0 generate
@@ -942,11 +941,11 @@ begin
           dest_x := tile_x(i);
         end if;
       end loop;  -- i
-      
+
       case intr_ack_state is
 
         when idle =>
-          
+
           if (plic_pready = '1' and noc_apbi_wirq.penable = '1' and noc_apbi_wirq.psel(2) = '1' and
               noc_apbi_wirq.pwrite = '1' and noc_apbi_wirq.paddr(11 downto 0) = x"004" and
               noc_apbi_wirq.paddr(31 downto 16) = x"0c20" and irq_pwdata_hit = '1') then
@@ -973,12 +972,12 @@ begin
           end if;
 
       end case;
-      
+
       intr_ack_state_next <= state_reg;
       header_next <= header_reg;
 
-    end process fsm_intr_ack; 
-   
+    end process fsm_intr_ack;
+
   end generate;
 
   unused_riscv_irq_gen: if GLOB_CPU_ARCH /= ariane and GLOB_CPU_ARCH /= ibex generate
@@ -991,7 +990,7 @@ begin
     intr_ack_state_next <= idle;
     header_next <= (others => '0');
   end generate;
-  
+
   ----------------------------------------------------------------------
   ---  APB 3: Timer ----------------------------------------------------
   ----------------------------------------------------------------------
@@ -1383,7 +1382,7 @@ begin
   mon_dvfs_int.burst     <= '0';
 
   mon_dvfs <= mon_dvfs_int;
-  
+
   mon_noc(1) <= noc1_mon_noc_vec;
   mon_noc(2) <= noc2_mon_noc_vec;
   mon_noc(3) <= noc3_mon_noc_vec;
@@ -1410,10 +1409,10 @@ begin
       srst => open,
       apbi => noc_apbi,
       apbo => noc_apbo(0),
-      prc_interrupt => vsm_VS_0_sw_startup_req 
+      prc_interrupt => vsm_VS_0_sw_startup_req
     );
 
-  -- PRC 
+  -- PRC
   generate_prc : if has_prc(CFG_FABTECH) = 1 and CFG_PRC = 1 and SIMULATION = false generate
   prc_1: prc_inst
     port map (
@@ -1482,7 +1481,7 @@ begin
       icap_avail    => icap_avail,
       icap_prdone   => icap_prdone,
       icap_prerror  => icap_prerror);
-  
+
   axi2noc_1: axislv2noc
     generic map (
       tech             => CFG_FABTECH,
@@ -1516,21 +1515,21 @@ begin
       coherence                  => prc_coherence);
 
       mosi(0).ar.addr(31 downto 0)      <= m_axi_mem_araddr;
-      mosi(0).ar.len                    <= m_axi_mem_arlen;  
+      mosi(0).ar.len                    <= m_axi_mem_arlen;
       mosi(0).ar.size                   <= m_axi_mem_arsize;
       mosi(0).ar.burst                  <= m_axi_mem_arburst;
-      mosi(0).ar.prot                   <= m_axi_mem_arprot; 
+      mosi(0).ar.prot                   <= m_axi_mem_arprot;
       mosi(0).ar.cache                  <= m_axi_mem_arcache;
-      mosi(0).ar.valid                  <= m_axi_mem_arvalid; 
+      mosi(0).ar.valid                  <= m_axi_mem_arvalid;
       mosi(0).r.ready                   <= m_axi_mem_rready;
       m_axi_mem_arready                 <= somi(0).ar.ready;
       m_axi_mem_rdata                   <= somi(0).r.data(31 downto 0);
       m_axi_mem_rresp                   <= somi(0).r.resp;
       m_axi_mem_rlast                   <= somi(0).r.last;
       m_axi_mem_rvalid                  <= somi(0).r.valid;
-  
+
   -----------------------------------------------------------------------------
-  -- APB 127: apb2axi 
+  -- APB 127: apb2axi
   -----------------------------------------------------------------------------
   apb2axil_1: apb2axil
     port map (
@@ -1542,9 +1541,9 @@ begin
       pwdata            => noc_apbi.pwdata,
       pwrite            => noc_apbi.pwrite,
       prdata            => noc_apbo(127).prdata,
-      pready            => prc_pready,      
+      pready            => prc_pready,
       pslverr           => open,
-      s_axil_awvalid    => s_axil_awvalid,  
+      s_axil_awvalid    => s_axil_awvalid,
       s_axil_awready    => s_axil_awready,
       s_axil_awaddr     => s_axil_awaddr,
       s_axil_wvalid     => s_axil_wvalid,
