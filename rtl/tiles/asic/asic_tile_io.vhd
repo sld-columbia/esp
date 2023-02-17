@@ -455,7 +455,7 @@ begin
 --    generic map (acthigh => 1, syncin => 0)
 --    port map (rst, dco_clk, dco_clk_lock, dco_rstn, open);
 
-  raw_rstn <= not rst;
+  --raw_rstn <= not rst;
 
   rst_noc : rstgen
     generic map (acthigh => 1, syncin => 0)

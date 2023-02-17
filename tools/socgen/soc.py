@@ -196,15 +196,11 @@ class SoC_Config():
     # CONFIG_SLM_KBYTES
     line = fp.readline()
     item = line.split()
-<<<<<<< HEAD
     self.slm_kbytes.set(int(item[2])) 
     # PRC configuration
     line = fp.readline()
     if line.find("CONFIG_PRC_EN = y") != -1:
         self.prc.set(1)
-=======
-    self.slm_kbytes.set(int(item[2]))
->>>>>>> master
     # JTAG (test)
     line = fp.readline()
     if line.find("CONFIG_JTAG_EN = y") != -1:
@@ -217,15 +213,12 @@ class SoC_Config():
       self.eth_en.set(1)
     else:
       self.eth_en.set(0)
-<<<<<<< HEAD
-=======
     # IO Link
     line = fp.readline()
     if line.find("CONFIG_IOLINK_EN = y") != -1:
       self.iolink_en.set(1)
     else:
       self.iolink_en.set(0)
->>>>>>> master
     # SVGA
     line = fp.readline()
     if line.find("CONFIG_SVGA_EN = y") != -1:
@@ -332,16 +325,12 @@ class SoC_Config():
       fp.write("#CONFIG_CACHE_SPANDEX is not set\n")
     fp.write("CONFIG_CPU_CACHES = " + str(self.l2_sets.get()) + " " + str(self.l2_ways.get()) + " " + str(self.llc_sets.get()) + " " + str(self.llc_ways.get()) + "\n")
     fp.write("CONFIG_ACC_CACHES = " + str(self.acc_l2_sets.get()) + " " + str(self.acc_l2_ways.get()) + "\n")
-<<<<<<< HEAD
     fp.write("CONFIG_SLM_KBYTES = " + str(self.slm_kbytes.get()) + "\n") 
     # Write prc config
     if self.prc.get() == 1:
         fp.write("CONFIG_PRC_EN = y\n")
     else:
         fp.write("#CONFIG_PRC_EN is not set\n")
-=======
-    fp.write("CONFIG_SLM_KBYTES = " + str(self.slm_kbytes.get()) + "\n")
->>>>>>> master
     if self.jtag_en.get() == 1:
       fp.write("CONFIG_JTAG_EN = y\n")
     else:
@@ -350,13 +339,10 @@ class SoC_Config():
       fp.write("CONFIG_ETH_EN = y\n")
     else:
       fp.write("#CONFIG_ETH_EN is not set\n")
-<<<<<<< HEAD
-=======
     if self.iolink_en.get() == 1:
       fp.write("CONFIG_IOLINK_EN = y\n")
     else:
       fp.write("#CONFIG_IOLINK_EN is not set\n")
->>>>>>> master
     if self.svga_en.get() == 1:
       fp.write("CONFIG_SVGA_EN = y\n")
     else:
@@ -501,19 +487,13 @@ class SoC_Config():
     self.acc_l2_ways = IntVar()
     # SLM
     self.slm_kbytes = IntVar()
-<<<<<<< HEAD
     # Partial-reconfiguration ctrl
     self.prc = IntVar() 
     # Read configuration
     # Peripherals
     self.jtag_en = IntVar()
     self.eth_en = IntVar()
-=======
-    # Peripherals
-    self.jtag_en = IntVar()
-    self.eth_en = IntVar()
     self.iolink_en = IntVar()
->>>>>>> master
     self.svga_en = IntVar()
     # Debug Link
     self.dsu_ip = ""

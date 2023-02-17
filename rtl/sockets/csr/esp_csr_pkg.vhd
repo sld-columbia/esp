@@ -11,7 +11,7 @@ use work.monitor_pkg.all;
 package esp_csr_pkg is
 
   constant ESP_CSR_8_LSB : integer := 79 + CFG_NCPU_TILE * 2 * 3;
-  constant ESP_CSR_WIDTH : integer := 98 + ESP_CSR_8_LSB;
+  constant ESP_CSR_WIDTH : integer := 100 + ESP_CSR_8_LSB;
 
   constant ESP_CSR_VALID_ADDR : integer range 0 to 31 := 0;
   constant ESP_CSR_VALID_LSB  : integer range 0 to ESP_CSR_WIDTH-1 := 0;

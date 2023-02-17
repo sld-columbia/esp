@@ -256,7 +256,6 @@ architecture rtl of iolink2ahbm is
   --attribute mark_debug of io_snd_reg : signal is "true";
   --attribute mark_debug of oen_fsm_idle : signal is "true";
 
->>>>>>> master
 begin  -- architecture rtl
 
   io_clk_out     <= io_clk_out_int;

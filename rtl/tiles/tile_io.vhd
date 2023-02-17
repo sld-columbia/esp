@@ -768,13 +768,6 @@ begin
     end generate edcl_gen;
   end generate onchip_ethernet;
 
-    iolink_data_out   <= (others => '0');
-    iolink_valid_out  <= '0';
-    iolink_data_oen   <= '0';
-    iolink_clk_out    <= '0';
-    iolink_credit_out <= '0';
-
-  end generate onchip_ethernet;
 
   no_onchip_ethernet : if CFG_ETH_EN = 0 and CFG_GRETH = 1 generate
     ahbmo(0)       <= eth0_ahbmo;

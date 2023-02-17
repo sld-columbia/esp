@@ -627,6 +627,8 @@ def print_constants(fp, soc, esp_config):
     fp.write("  constant CFG_HAS_DVFS : integer := 0;\n\n")
 
   #
+  fp.write("  ------ PRC interrupt line\n")
+  fp.write("  constant CFG_PRC_IRQ : integer := 5;\n")
   fp.write("  ------ Synthesis options\n")
   fp.write("  constant CFG_SCAN : integer := 0;\n\n")
    
