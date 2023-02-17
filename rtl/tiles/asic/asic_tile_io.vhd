@@ -44,7 +44,7 @@ entity asic_tile_io is
     rst                : in    std_ulogic;  -- Global reset (active high)
     raw_rstn           : in  std_ulogic;
     noc_rstn           : in  std_ulogic;
-    tile_rstn          : out std_ulogic;  
+    tile_rstn          : out std_ulogic;
     tile_clk           : out std_ulogic;
     noc_clk_out        : out   std_ulogic;  -- NoC clock
     noc_clk_lock_out   : out   std_ulogic;  -- system clock lock
@@ -224,7 +224,6 @@ architecture rtl of asic_tile_io is
 
 begin
 
-
   rst_jtag : rstgen
     generic map (acthigh => 1, syncin => 0)
     port map (rst, tclk, '1', test_rstn, open);
@@ -347,7 +346,7 @@ begin
   eth_rstn <= tile_rstn_s and mdcscaler_not_changed;
 
   onchip_ethernet : if CFG_ETH_EN = 1 generate
-    
+
     e1 : grethm
       generic map(
         hindex      => 0,

@@ -141,6 +141,12 @@ package tile is
       dma_snd_full                 : out std_ulogic;
       dma_snd_atleast_4slots       : out std_ulogic;
       dma_snd_exactly_3slots       : out std_ulogic;
+      prc_dma_rcv_rdreq               : in  std_ulogic;
+      prc_dma_rcv_data_out            : out noc_flit_type;
+      prc_dma_rcv_empty               : out std_ulogic;
+      prc_dma_snd_wrreq               : in  std_ulogic;
+      prc_dma_snd_data_in             : in  noc_flit_type;
+      prc_dma_snd_full                : out std_ulogic;
       coherent_dma_rcv_rdreq       : in  std_ulogic;
       coherent_dma_rcv_data_out    : out dma_noc_flit_type;
       coherent_dma_rcv_empty       : out std_ulogic;
@@ -785,6 +791,7 @@ package tile is
       flush                         : out std_ulogic;
       acc_flush_done                : in  std_ulogic;
       mon_dvfs                      : out monitor_dvfs_type;
+      dvfs_transient_in            : in std_ulogic;
       llc_coherent_dma_rcv_rdreq    : out std_ulogic;
       llc_coherent_dma_rcv_data_out : in  dma_noc_flit_type;
       llc_coherent_dma_rcv_empty    : in  std_ulogic;

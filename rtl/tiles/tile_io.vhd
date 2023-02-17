@@ -742,7 +742,6 @@ begin
     edcl_gen : if CFG_DSU_ETH = 1 generate
       ahbmo(1) <= edcl_ahbmo;
     end generate edcl_gen;
-
   end generate eth0_gen;
 
   no_ethernet : if CFG_GRETH = 0 generate
@@ -1410,7 +1409,7 @@ begin
       srst => open,
       apbi => noc_apbi,
       apbo => noc_apbo(0),
-      prc_interrupt => vsm_VS_0_sw_startup_req 
+      prc_interrupt => vsm_VS_0_sw_startup_req
     );
 
   -- PRC
