@@ -1,6 +1,3 @@
-#include <stdio.h>
-
-
 #ifndef __TOKEN_PM_H__
 #define __TOKEN_PM_H__
 
@@ -11,6 +8,8 @@
 
 //DEBUG Flag
 //#define DEBUG
+//
+//#define SHORT 1
 ///////////////////////
 // Offset and width of CSR fields of token FSM
 ///////////////////////
@@ -92,32 +91,32 @@
 // conv - conv - conv   - mem  
 // nv   - nv   - cpu    - io  
 //
-#define ACC_ID_GEMM1 0
+#define ACC_ID_GEMM0 0
+#define ACC_ADDR_GEMM0 (ACC_BASE_ADDR + (ACC_OFFSET * ACC_ID_GEMM0))
+#define ACC_ID_GEMM1 1
 #define ACC_ADDR_GEMM1 (ACC_BASE_ADDR + (ACC_OFFSET * ACC_ID_GEMM1))
-#define ACC_ID_GEMM2 1
+#define ACC_ID_GEMM2 2
 #define ACC_ADDR_GEMM2 (ACC_BASE_ADDR + (ACC_OFFSET * ACC_ID_GEMM2))
-#define ACC_ID_GEMM3 2
+#define ACC_ID_GEMM3 3
 #define ACC_ADDR_GEMM3 (ACC_BASE_ADDR + (ACC_OFFSET * ACC_ID_GEMM3))
-#define ACC_ID_GEMM4 3
-#define ACC_ADDR_GEMM4 (ACC_BASE_ADDR + (ACC_OFFSET * ACC_ID_GEMM4))
-#define ACC_ID_NV1 4
+#define ACC_ID_NV0 4
+#define ACC_ADDR_NV0 (ACC_BASE_ADDR + (ACC_OFFSET * ACC_ID_NV0))
+#define ACC_ID_NV1 5
 #define ACC_ADDR_NV1 (ACC_BASE_ADDR + (ACC_OFFSET * ACC_ID_NV1))
-#define ACC_ID_NV2 5
+#define ACC_ID_NV2 6
 #define ACC_ADDR_NV2 (ACC_BASE_ADDR + (ACC_OFFSET * ACC_ID_NV2))
-#define ACC_ID_NV3 6
+#define ACC_ID_NV3 7
 #define ACC_ADDR_NV3 (ACC_BASE_ADDR + (ACC_OFFSET * ACC_ID_NV3))
-#define ACC_ID_NV4 7
-#define ACC_ADDR_NV4 (ACC_BASE_ADDR + (ACC_OFFSET * ACC_ID_NV4))
-#define ACC_ID_CONV2D1 8
+#define ACC_ID_CONV2D0 8
+#define ACC_ADDR_CONV2D0 (ACC_BASE_ADDR + (ACC_OFFSET * ACC_ID_CONV2D0))
+#define ACC_ID_CONV2D1 9
 #define ACC_ADDR_CONV2D1 (ACC_BASE_ADDR + (ACC_OFFSET * ACC_ID_CONV2D1))
-#define ACC_ID_CONV2D2 9
+#define ACC_ID_CONV2D2 10
 #define ACC_ADDR_CONV2D2 (ACC_BASE_ADDR + (ACC_OFFSET * ACC_ID_CONV2D2))
-#define ACC_ID_CONV2D3 10
-#define ACC_ADDR_CONV2D3 (ACC_BASE_ADDR + (ACC_OFFSET * ACC_ID_CONV2D3))
-#define ACC_ID_NV5 11
+#define ACC_ID_NV4 11
+#define ACC_ADDR_NV4 (ACC_BASE_ADDR + (ACC_OFFSET * ACC_ID_NV4))
+#define ACC_ID_NV5 12
 #define ACC_ADDR_NV5 (ACC_BASE_ADDR + (ACC_OFFSET * ACC_ID_NV5))
-#define ACC_ID_NV6 12
-#define ACC_ADDR_NV6 (ACC_BASE_ADDR + (ACC_OFFSET * ACC_ID_NV6))
 
 //Common params
 static unsigned in_words_adj;
@@ -155,10 +154,12 @@ const unsigned acc_tile_ids[N_ACC] = {0,1,2,3,4,5,6,7,8,9,10,12,13};
 
 // Set of tests of the bare-metal app.
 // Uncomment the tests that you want to execute
-//#define TEST_0 1
-//// basic test to directly set frequencies from CPU SW 
-#define TEST_1 1
-////Test with dummy actiivyt changes for faster debug
+//// basic test to directly set frequencies from CPU SW
+// #define TEST_0 1
+////Test with dummy activity changes for faster debug
+// #define TEST_1 1
+//Test with activity from all tiles 
+#define TEST_2 1
 
 
 ///////////////////////
