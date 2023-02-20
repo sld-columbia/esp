@@ -127,7 +127,7 @@ do
             echo "  scatter_gather     : integer range 0 to 1  := CFG_SCATTER_GATHER;">> $acc_dir/acc_$i.vhd;
             echo "  sets               : integer  := CFG_ACC_L2_SETS;">> $acc_dir/acc_$i.vhd;
             echo "  ways               : integer  := CFG_ACC_L2_WAYS;">> $acc_dir/acc_$i.vhd;
-            echo "  little_end     : integer range 0 to 1 := 0;">> $acc_dir/acc_$i.vhd;
+            echo "  little_end         : integer range 0 to 1 := 0;">> $acc_dir/acc_$i.vhd;
             echo "  cache_tile_id      : cache_attribute_array := cache_tile_id;">> $acc_dir/acc_$i.vhd;
             echo "  cache_y            : yx_vec(0 to 2**NL2_MAX_LOG2 - 1) := cache_y;">> $acc_dir/acc_$i.vhd;
             echo "  cache_x            : yx_vec(0 to 2**NL2_MAX_LOG2 - 1) := cache_x;">> $acc_dir/acc_$i.vhd;
@@ -626,11 +626,11 @@ do
             arch=${_line[2]}
             echo "$arch"
             if [[ $arch == "leon3" ]]; then
-               pbs_base_addr=0x04000000
-               #pbs_base_addr=0x50000000;
+               #pbs_base_addr=0x04000000
+               pbs_base_addr=0x50000000;
             else
                #pbs_base_addr=0x04000000
-               pbs_base_addr=0xA0000000; 
+               pbs_base_addr=0xB0000000; 
             fi
         fi
     done
