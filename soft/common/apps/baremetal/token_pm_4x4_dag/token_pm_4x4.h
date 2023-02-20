@@ -160,7 +160,7 @@ const unsigned activity_const = 1;
 const unsigned no_activity_const = 0;
 
 const unsigned max_tokens_vc707[N_ACC] = {38, 38, 38, 38, 24, 24, 24, 24, 48, 48, 48, 24, 24};
-const unsigned refresh_rate_min_const = 180;
+const unsigned refresh_rate_min_const = 90;
 const unsigned refresh_rate_max_const = refresh_rate_min_const;
 const unsigned total_tokens = 50;
 //const unsigned total_tokens = 100;
