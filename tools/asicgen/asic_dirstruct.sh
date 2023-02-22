@@ -20,19 +20,23 @@ fi
 if [ ! -d "TECH_DIR_PATH/mem_models" ]
 then
   mkdir "$TECH_DIR_PATH/mem_models"
-  ln -sf $TECH_DIR_PATH/mem_models/ ../../rtl/sim/asic/verilog
+  if [ ! -d "../../rtl/sim/asic" ]
+  then
+    mkdir "../../rtl/sim/asic"
+  fi
+  ln -sf ../$TECH_DIR_PATH/mem_models/ ../../rtl/sim/asic/verilog
 fi
 
 if [ ! -d "TECH_DIR_PATH/mem_wrappers" ]
 then
   mkdir "$TECH_DIR_PATH/mem_wrappers"
-  ln -sf $TECH_DIR_PATH/mem_wrappers/ ../../rtl/techmap/asic/mem
+  ln -sf ../$TECH_DIR_PATH/mem_wrappers/ ../../rtl/techmap/asic/mem
 fi
 
 if [ ! -d "TECH_DIR_PATH/lib" ]
 then
   mkdir "$TECH_DIR_PATH/lib"
-  ln -sf $TECH_DIR_PATH/lib/ ../../tech/lib
+  ln -sf ../../$DIRTECH_NAME/lib/ ../../tech/lib
 fi
 
 if [ ! -d "PROJ_DIR_PATH" ]
