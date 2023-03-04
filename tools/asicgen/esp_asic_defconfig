@@ -1,4 +1,4 @@
-CPU_ARCH = leon3
+CPU_ARCH = ariane
 NCPU_TILE = 1
 CONFIG_HAS_SG = y
 CONFIG_NOC_ROWS = 2
