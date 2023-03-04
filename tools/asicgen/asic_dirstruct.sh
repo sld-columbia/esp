@@ -9,35 +9,50 @@
 
 source asic_defs.sh
 
-TECH_DIR_PATH="../../../$DIRTECH_NAME"
-PROJ_DIR_PATH="../../../$PROJECT_NAME"
+TECH_DIR_PATH=$(realpath ../../../$DIRTECH_NAME)
+PROJ_DIR_PATH=$(realpath ../../../$PROJECT_NAME)
 
 if [ ! -d "$TECH_DIR_PATH" ]
 then
   mkdir "$TECH_DIR_PATH"
 fi
 
+if [ ! -d "../../rtl/techmap/$DIRTECH_NAME" ]
+then
+  mkdir "../../rtl/techmap/$DIRTECH_NAME"
+fi
+
 if [ ! -d "TECH_DIR_PATH/mem_models" ]
 then
   mkdir "$TECH_DIR_PATH/mem_models"
-  if [ ! -d "../../rtl/sim/asic" ]
-  then
-    mkdir "../../rtl/sim/asic"
-  fi
-  ln -sf ../$TECH_DIR_PATH/mem_models/ ../../rtl/sim/asic/verilog
+fi
+
+if [ ! -d "../../rtl/sim/$DIRTECH_NAME" ]
+then
+  mkdir "../../rtl/sim/$DIRTECH_NAME"
 fi
 
 if [ ! -d "TECH_DIR_PATH/mem_wrappers" ]
 then
   mkdir "$TECH_DIR_PATH/mem_wrappers"
-  ln -sf ../$TECH_DIR_PATH/mem_wrappers/ ../../rtl/techmap/asic/mem
 fi
 
 if [ ! -d "TECH_DIR_PATH/lib" ]
 then
   mkdir "$TECH_DIR_PATH/lib"
-  ln -sf ../../$DIRTECH_NAME/lib/ ../../tech/lib
 fi
+
+cd ../../rtl/sim/$DIRTECH_NAME
+ln -sf $TECH_DIR_PATH/mem_models/ verilog
+cd -
+
+cd ../../rtl/techmap/$DIRTECH_NAME
+ln -sf $TECH_DIR_PATH/mem_wrappers/ mem
+cd -
+
+cd ../../tech/
+ln -sf ../../$DIRTECH_NAME/lib/ lib
+cd -
 
 if [ ! -d "PROJ_DIR_PATH" ]
 then

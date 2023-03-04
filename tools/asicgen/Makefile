@@ -14,7 +14,7 @@ TECHLIB  = $(DIRTECH_NAME)
 FPGA_TECHLIB = virtexu
 BOARD    = profpga-xcvu440-epochs-1
 DESIGN   = $(BOARD)
-#LINUX_SMP = 1
+SMP = 0
 LEON3_BASE_FREQ_MHZ ?= 78
 LEON3_STACK ?= 0x5bfffff0
 
@@ -29,7 +29,7 @@ ESP_DEFCONFIG = $(DESIGN_PATH)/esp_asic_defconfig
 
 
 ### Design top level and testbench ###
-CHIP_TOP = EPOCHS1_TOP
+CHIP_TOP = esp_top
 TOP = fpga_proxy_top
 SIMTOP = testbench
 
@@ -61,7 +61,6 @@ GENUS_VLOGOPT += -define ASIC
 ### Additional design files ###
 TOP_VHDL_RTL_PKGS += $(DESIGN_PATH)/pads_loc.vhd
 TOP_VHDL_RTL_SRCS += $(DESIGN_PATH)/fpga_proxy_top.vhd
-TOP_VHDL_RTL_SRCS += $(DESIGN_PATH)/tiles_cluster.vhd
 TOP_VLOG_RTL_SRCS +=
 TOP_VHDL_SIM_PKGS +=
 TOP_VHDL_SIM_SRCS += $(DESIGN_PATH)/top.vhd
