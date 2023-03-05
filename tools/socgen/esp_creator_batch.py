@@ -36,15 +36,16 @@ if len(sys.argv) != 8:
     sys.exit(1)
 
 DMA_WIDTH = int(sys.argv[1])
-TECH = sys.argv[2]
-LINUX_MAC = sys.argv[3]
-LEON3_STACK = sys.argv[4]
-FPGA_BOARD = sys.argv[5]
-EMU_TECH = sys.argv[6]
-EMU_FREQ = sys.argv[7]
+TECH_TYPE = sys.argv[2]
+TECH = sys.argv[3]
+LINUX_MAC = sys.argv[4]
+LEON3_STACK = sys.argv[5]
+FPGA_BOARD = sys.argv[6]
+EMU_TECH = sys.argv[7]
+EMU_FREQ = sys.argv[8]
 
 root = Tk()
-soc = SoC_Config(DMA_WIDTH, TECH, LINUX_MAC, LEON3_STACK, FPGA_BOARD, EMU_TECH, EMU_FREQ, False)
+soc = SoC_Config(DMA_WIDTH, TECH_TYPE, TECH, LINUX_MAC, LEON3_STACK, FPGA_BOARD, EMU_TECH, EMU_FREQ, False)
 
 esp_config = soc_config(soc)
 create_socmap(esp_config, soc)

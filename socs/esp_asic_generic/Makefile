@@ -6,9 +6,12 @@ all: help
 
 ### Global design variables ###
 DESIGN_PATH = $(PWD)
-ESP_ROOT = $(realpath ../../)
+ESP_ROOT = $(realpath ../esp)
 
-TECHLIB  = inferred
+include $(ESP_ROOT)/tools/asicgen/asic_defs.sh
+
+TECHLIB  = $(DIRTECH_NAME)
+TECH_TYPE = asic
 FPGA_TECHLIB = virtex7
 BOARD    = profpga-xc7v2000t-esp_asic_generic
 DESIGN   = $(BOARD)

@@ -17,64 +17,109 @@ then
   mkdir "$TECH_DIR_PATH"
 fi
 
-if [ ! -d "../../rtl/techmap/$DIRTECH_NAME" ]
+if [ ! -d "../../rtl/techmap/asic" ]
 then
-  mkdir "../../rtl/techmap/$DIRTECH_NAME"
+  mkdir "../../rtl/techmap/asic"
 fi
 
-if [ ! -d "TECH_DIR_PATH/mem_models" ]
+if [ ! -d "$TECH_DIR_PATH/mem_models" ]
 then
   mkdir "$TECH_DIR_PATH/mem_models"
 fi
 
-if [ ! -d "../../rtl/sim/$DIRTECH_NAME" ]
+if [ ! -d "../../rtl/sim/asic" ]
 then
-  mkdir "../../rtl/sim/$DIRTECH_NAME"
+  mkdir "../../rtl/sim/asic"
 fi
 
-if [ ! -d "TECH_DIR_PATH/mem_wrappers" ]
+if [ ! -d "$TECH_DIR_PATH/mem_wrappers" ]
 then
   mkdir "$TECH_DIR_PATH/mem_wrappers"
 fi
 
-if [ ! -d "TECH_DIR_PATH/lib" ]
+if [ ! -d "$TECH_DIR_PATH/lib" ]
 then
   mkdir "$TECH_DIR_PATH/lib"
 fi
 
-cd ../../rtl/sim/$DIRTECH_NAME
-ln -sf $TECH_DIR_PATH/mem_models/ verilog
+if [ ! -d "../../tech/$DIRTECH_NAME" ]
+then
+  mkdir "../../tech/$DIRTECH_NAME"
+fi
+
+if [ ! -d "../../tech/$DIRTECH_NAME/acc" ]
+then
+  mkdir "../../tech/$DIRTECH_NAME/acc"
+fi
+
+cd ../../rtl/sim/asic
+ln -sf $TECH_DIR_PATH/mem_models verilog
 cd -
 
-cd ../../rtl/techmap/$DIRTECH_NAME
-ln -sf $TECH_DIR_PATH/mem_wrappers/ mem
+cd ../../rtl/techmap/asic
+ln -sf $TECH_DIR_PATH/mem_wrappers mem
 cd -
 
-cd ../../tech/
-ln -sf ../../$DIRTECH_NAME/lib/ lib
+cd ../../tech/$DIRTECH_NAME
+ln -sf $TECH_DIR_PATH/lib lib
 cd -
 
-if [ ! -d "PROJ_DIR_PATH" ]
+if [ ! -d "$PROJ_DIR_PATH" ]
 then
   mkdir "$PROJ_DIR_PATH"
 fi
 
-if [ ! -f "PROJ_DIR_PATH/Makefile" ]
+if [ ! -f "$PROJ_DIR_PATH/Makefile" ]
 then
-  cp Makefile "$PROJ_DIR_PATH/"
+  cp ../../socs/esp_asic_generic/Makefile "$PROJ_DIR_PATH/"
 fi
 
-if [ ! -f "PROJ_DIR_PATH/esp_asic_defconfig" ]
+if [ ! -f "$PROJ_DIR_PATH/esp_asic_defconfig" ]
 then
-  cp esp_asic_defconfig "$PROJ_DIR_PATH/"
+  cp ../../socs/esp_asic_generic/esp_defconfig "$PROJ_DIR_PATH/"
 fi
 
-if [ ! -f "PROJ_DIR_PATH/grlib_asic_defconfig" ]
+if [ ! -f "$PROJ_DIR_PATH/grlib_asic_defconfig" ]
 then
-  cp grlib_asic_defconfig "$PROJ_DIR_PATH/"
+  cp ../../socs/esp_asic_generic/grlib_defconfig "$PROJ_DIR_PATH/"
 fi
 
-if [ ! -f "PROJ_DIR_PATH/grlib_config.in" ]
+if [ ! -f "$PROJ_DIR_PATH/grlib_config.in" ]
 then
-  cp grlib_config.in "$PROJ_DIR_PATH/"
+  cp ../../socs/esp_asic_generic/grlib_config.in "$PROJ_DIR_PATH/"
+fi
+
+if [ ! -f "$PROJ_DIR_PATH/chip_emu_top.vhd" ]
+then
+  cp ../../socs/esp_asic_generic/chip_emu_top.vhd "$PROJ_DIR_PATH/"
+fi
+
+if [ ! -f "$PROJ_DIR_PATH/ESP_ASIC_TOP.vhd" ]
+then
+  cp ../../socs/esp_asic_generic/ESP_ASIC_TOP.vhd "$PROJ_DIR_PATH/"
+fi
+
+if [ ! -f "$PROJ_DIR_PATH/fpga_proxy_top.vhd" ]
+then
+  cp ../../socs/esp_asic_generic/fpga_proxy_top.vhd "$PROJ_DIR_PATH/"
+fi
+
+if [ ! -f "$PROJ_DIR_PATH/pads_loc.vhd" ]
+then
+  cp ../../socs/esp_asic_generic/pads_loc.vhd "$PROJ_DIR_PATH/"
+fi
+
+if [ ! -f "$PROJ_DIR_PATH/systest.c" ]
+then
+  cp ../../socs/esp_asic_generic/systest.c "$PROJ_DIR_PATH/"
+fi
+
+if [ ! -f "$PROJ_DIR_PATH/testbench.vhd" ]
+then
+  cp ../../socs/esp_asic_generic/testbench.vhd "$PROJ_DIR_PATH/"
+fi
+
+if [ ! -f "$PROJ_DIR_PATH/top.vhd" ]
+then
+  cp ../../socs/esp_asic_generic/top.vhd "$PROJ_DIR_PATH/"
 fi

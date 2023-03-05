@@ -19,7 +19,11 @@ mem_slmgen: socgen/esp/slm_memgen.txt $(MEMGEN)
 	@$(MEMGEN) $(MEMTECH) $< $(MEMGEN_OUT) | tee mem_slmgen.log
 
 link_memories:
-	rm $(ESP_ROOT)/rtl/sim/$(TECHLIB)/verilog ; \
-	rm $(ESP_ROOT)/rtl/techmap/$(TECHLIB)/mem ; \
-	ln -s ../../../../$(DIRTECH_NAME)/mem_models/ $(ESP_ROOT)/rtl/sim/$(TECHLIB)/verilog ; \
-	ln -s ../../../../$(DIRTECH_NAME)/mem_wrappers/ $(ESP_ROOT)/rtl/techmap/$(TECHLIB)/mem
+	cd $(ESP_ROOT)/rtl/sim/asic ; \
+        rm verilog; \
+	ln -s $(TECH_DIR_PATH)/mem_models verilog ; \
+        cd - ; \
+	cd $(ESP_ROOT)/rtl/techmap/asic ; \
+	rm mem ; \
+	ln -s $(TECH_DIR_PATH)/mem_wrappers mem ; \
+	cd -

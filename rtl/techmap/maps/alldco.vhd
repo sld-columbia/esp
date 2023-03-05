@@ -5,7 +5,8 @@ use ieee.std_logic_1164.all;
 
 package alldco is
 
-  component gf12_dco is
+  --component gf12_dco is
+  component asic_dco is
     generic (
       enable_div2 : integer range 0 to 1);
     port (
@@ -21,6 +22,7 @@ package alldco is
       CLK_DIV2    : out std_logic;
       CLK_DIV2_90 : out std_logic;
       CLK_DIV  : out std_logic);
-  end component gf12_dco;
+  --end component gf12_dco;
+  end component asic_dco;
 
 end package alldco;
