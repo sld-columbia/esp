@@ -19,10 +19,11 @@ from mmi64_gen import *
 from power_gen import *
 
 def print_usage():
-  print("Usage                    : ./esp_creator_batch.py <dma_width> <tech> <linux_mac> <leon3_stack> <fpga_board> <emu_tech> <emu_freq>")
+  print("Usage                    : ./esp_creator_batch.py <dma_width> <tech_type> <tech> <linux_mac> <leon3_stack> <fpga_board> <emu_tech> <emu_freq>")
   print("")
   print("")
   print("      <dma_width>        : Bit-width for the DMA channel (currently supporting 32 bits only)")
+  print("      <tech_type>        : Technology type (fpga or asic)")
   print("      <tech>             : Target technology (e.g. virtex7, virtexu, virtexup, ...)")
   print("      <linux_mac>        : MAC Address for Linux network interface")
   print("      <leon3_stack>      : Stack Pointer for LEON3")
@@ -31,7 +32,7 @@ def print_usage():
   print("      <emu_freq>         : Ethernet MDC scaler override for FPGA emulation of ASIC design")
   print("")
 
-if len(sys.argv) != 8:
+if len(sys.argv) != 9:
     print_usage()
     sys.exit(1)
 
