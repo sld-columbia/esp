@@ -119,12 +119,14 @@ xmsim-compile: socketgen check_all_srcs soft xcelium/xmready xcelium/xmsim.in
 	$(XMUPDATE) $(SIMTOP);
 
 xmsim: xmsim-compile
+	python3 ../esp/utils/scripts/file_handling/bin2txt.py; \
 	@cd xcelium; \
 	echo $(SPACES)"$(XMSIM)"; \
 	$(XMSIM); \
 	cd ../
 
 xmsim-gui: xmsim-compile
+	python3 ../esp/utils/scripts/file_handling/bin2txt.py; \
 	@cd xcelium; \
 	echo $(SPACES)"$(XMSIM) -gui"; \
 	$(XMSIM) -gui; \
