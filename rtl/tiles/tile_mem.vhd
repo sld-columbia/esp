@@ -322,16 +322,16 @@ begin
         lock     => dco_clk_lock);
 
     --clk_delay_gf12_gen: if CFG_FABTECH = gf12 generate
-    clk_delay_gf12_gen: if CFG_FABTECH = inferred generate
+    clk_delay_asic_gen: if CFG_FABTECH = asic and this_has_ddr /= 0 generate
       DELAY_CELL_GF12_C14_1: DELAY_CELL_GF12_C14
         port map (
           data_in  => dco_clk_div2_int,
           sel      => dco_clk_delay_sel,
           data_out => dco_clk_div2_90_int);
-    end generate clk_delay_gf12_gen;
+    end generate clk_delay_asic_gen;
 
     --noc_clk_delay_gen: if CFG_FABTECH /= gf12 generate
-    noc_clk_delay_gen: if CFG_FABTECH /= inferred generate
+    noc_clk_delay_gen: if this_has_ddr = 0 generate
       dco_clk_div2_90_int <= dco_clk_div2_int;
     end generate noc_clk_delay_gen;
 
