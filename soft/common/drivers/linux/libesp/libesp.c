@@ -208,7 +208,6 @@ void esp_run(esp_thread_info_t cfg[], unsigned nacc)
 	if (thread_is_p2p(&cfg[0])) {
 		esp_thread_info_t *cfg_ptrs[1];
 		cfg_ptrs[0] = cfg;
-
 		esp_run_parallel(cfg_ptrs, 1, &nacc);
 	} else{
 		esp_thread_info_t **cfg_ptrs = malloc(sizeof(esp_thread_info_t*) * nacc);
@@ -217,7 +216,9 @@ void esp_run(esp_thread_info_t cfg[], unsigned nacc)
 		for (i = 0; i < nacc; i++) {
 			nacc_arr[i] = 1;
 			cfg_ptrs[i] = &cfg[i];
-		}
+		
+                // perror("Reached acc config loop ESP RUN");  
+                }
 		esp_run_parallel(cfg_ptrs, nacc, nacc_arr);
 		free(nacc_arr);
 		free(cfg_ptrs);
@@ -232,6 +233,8 @@ void esp_run_parallel(esp_thread_info_t* cfg[], unsigned nthreads, unsigned* nac
 	pthread_t *thread = malloc(nthreads * sizeof(pthread_t));
 	int rc = 0;
 	esp_config(cfg, nthreads, nacc);
+        
+        //perror("Reachedi ESP config done in esp_run_parallel");  
 	for (i = 0; i < nthreads; i++) {
 		unsigned len = nacc[i];
 		for (j = 0; j < len; j++) {

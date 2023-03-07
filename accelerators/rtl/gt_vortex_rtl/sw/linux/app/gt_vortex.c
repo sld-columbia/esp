@@ -3,6 +3,7 @@
 #include "libesp.h"
 #include "cfg.h"
 #include <esp_accelerator.h>
+#include <time.h>
 static unsigned in_words_adj;
 static unsigned out_words_adj;
 static unsigned in_len;
@@ -52,7 +53,8 @@ static void init_buffer(token_t *in, token_t * gold)
 
 static void init_buf(token_t *in)
 {
-  #include "input.h"
+ #include "input_sgemm_opencl.h" 
+// #include "input_simple_tests.h"
 }
 
 
@@ -95,16 +97,20 @@ int main(int argc, char **argv)
         //init_parameters();
 
 	// esp_alloc(out_size);
-        unsigned int _fibonacci_bin_len_in_words = 7780/4;
-        
+        unsigned int _fibonacci_bin_len_in_words =93421/4; // length of sgemm opencl kernel 
+        // 29900/4;
+        // this is length of fibonacci binary-->7780/4;
+        // unsigned int simple_bin_len = 29900; 
+        clock_t start, end;
+        double cpu_time_used;
 	size_t mem_size = _fibonacci_bin_len_in_words * sizeof(token_t);	
 	mem = esp_alloc(mem_size); 
 	init_buf(mem); 
 	intptr_t mem_top = (intptr_t)mem;
-	int input_val = 9;
+	int input_val = 21;
 	// init_buffer(buf, gold);
         // printf("  memory buffer base-address = %lx\n", (intptr_t)(mem));        
-
+        
 	buf = (token_t *) (mem_top+0x7fff0); // 0xa0200000
 	*buf = input_val; 
 	cfg_000[0].hw_buf = mem;
@@ -113,7 +119,13 @@ int main(int argc, char **argv)
 	acc_out = (token_t *) (mem_top+0x7fff4); 
 	printf("print acc_out set\n");
         gold = esp_alloc(sizeof(token_t));
-        *gold = fibonacci(input_val); 
+        
+        start = clock();
+        *gold = fibonacci(input_val); 	
+        end = clock();
+	
+        cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
+        printf("Fibonacci CPU took %f seconds to execute \n", cpu_time_used);
 	printf("\n====== %s ======\n\n", cfg_000[0].devname);
         // cfg_000[0].BASE_ADDR = mem_top; 
 	// cfg_000[0].START_VORTEX = 1; 	
@@ -122,11 +134,15 @@ int main(int argc, char **argv)
 	printf("  .BASE_ADDR = %d\n", BASE_ADDR);
 	printf("  .START_VORTEX = %d\n", START_VORTEX);
 	printf("\n  ** START **\n");
-
+      
+        start = clock();
 	esp_run(cfg_000, NACC);
-
+	
+        end = clock();
+	cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
 	printf("\n  ** DONE **\n");
-
+        
+        printf("Fibonacci GPU took %f seconds to execute \n", cpu_time_used);
 	errors = validate_buffer(acc_out, gold);
 
 	//free(gold);
