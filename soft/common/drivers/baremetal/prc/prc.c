@@ -65,9 +65,9 @@ int decouple_acc(struct esp_device *dev, unsigned val)
     get_decoupler_addr(dev, &esp_tile_decoupler);
     
     if (val == 0)
-        iowrite32(&esp_tile_decoupler, 0, 0);
+        iowrite32(&esp_tile_decoupler, DECOUPLER_REG, 0);
     else 
-        iowrite32(&esp_tile_decoupler, 0, BIT(0));
+        iowrite32(&esp_tile_decoupler, DECOUPLER_REG, BIT(0));
     
     return 0;
 }
@@ -78,7 +78,7 @@ static void init_prc()
     esp_prc.addr = (long long unsigned) APB_BASE_ADDR + 0xE400;
     
     pb_map = (struct pbs_map *) &bs_descriptor;    
-    //printf("bitstream addr %0x %08x \n", pb_map->pbs_size, (unsigned) pb_map->pbs_addr);
+    printf("bitstream addr %0x %08x \n", pb_map->pbs_size, (unsigned) pb_map->pbs_addr);
 }
 
 static int shutdown_prc()
@@ -128,8 +128,8 @@ static void set_trigger(unsigned pbs_id)
     else
         printf("PRC: Error arming trigger \n");
    
-    printf("PBS address local %08x remote %08x \n", (unsigned) pb_map[pbs_id].pbs_addr, ioread32(&esp_prc, 0x64));
-    printf("PBS size local %08x  remote %08x \n", pb_map[pbs_id].pbs_size, ioread32(&esp_prc, 0x68));
+    //printf("PBS address local %08x remote %08x \n", (unsigned) pb_map[pbs_id].pbs_addr, ioread32(&esp_prc, 0x64));
+    //printf("PBS size local %08x  remote %08x \n", pb_map[pbs_id].pbs_size, ioread32(&esp_prc, 0x68));
 }
 
 void reconfigure_FPGA(struct esp_device *dev, unsigned pbs_id)
@@ -150,12 +150,14 @@ void reconfigure_FPGA(struct esp_device *dev, unsigned pbs_id)
     //io_tile_csr.addr = (long long unsigned) APB_BASE_ADDR + 0x90980;
     get_io_tile_id(&io_tile_csr);
     
-    init_prc();    
+    init_prc();
     
     //send a Proceed cmd to PRC to reset pending interrupt 
-    prc_done = ioread32(&io_tile_csr, 13);
+    prc_done = ioread32(&io_tile_csr, PRC_INTERRUPT_REG);
+    printf("prc done %u \n", prc_done);
     if (prc_done == 1)
         iowrite32(&esp_prc, 0x0, 0x3);
+    
 
     //set bitstream trigger
     set_trigger(pbs_id);
@@ -175,7 +177,7 @@ void reconfigure_FPGA(struct esp_device *dev, unsigned pbs_id)
 #endif
 
     while (prc_done == 0) {
-        prc_done = ioread32(&io_tile_csr, 13);
+        prc_done = ioread32(&io_tile_csr, PRC_INTERRUPT_REG);
     }
 
 #ifdef MEASURE_RECONF_TIME
