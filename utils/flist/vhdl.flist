@@ -60,6 +60,7 @@ misc/ahbslm.vhd
 misc/esp_init.vhd
 misc/ahbram_dp.vhd
 misc/rstgen.vhd
+misc/prc.vhd
 noc/routing_engine.vhd
 noc/bypassable_queue.vhd
 noc/sync_noc_set.vhd

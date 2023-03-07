@@ -1,7 +1,7 @@
 # Copyright (c) 2011-2021 Columbia University, System Level Design Group
 # SPDX-License-Identifier: Apache-2.0
 
-set ip_name prc_inst
+set ip_name prc_ctrlr_v7
 source [get_property REPOSITORY [get_ipdefs *prc:1.3]]/xilinx/prc_v1_3/tcl/api.tcl -notrace
 create_ip -name prc -vendor xilinx.com -library ip -module_name $ip_name
 

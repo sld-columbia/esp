@@ -42,7 +42,6 @@ SRCS := $(wildcard *.c)
 HEADERS := $(wildcard *.h) $(wildcard $(DRIVERS)/include/*.h)
 HEADERS += $(wildcard $(DRIVERS)/../common/include/*.h) $(wildcard $(DESIGN_PATH)/*.h)
 SRCS_PROBE := $(wildcard $(DRIVERS)/probe/*.c) 
-SRCS_PRC := $(wildcard $(DRIVERS)/prc/*.c)
 ifeq ($(APPNAME),)
 EXES := $(SRCS:.c=.exe)
 EXES := $(addprefix  $(BUILD_PATH)/, $(EXES))
@@ -65,32 +64,41 @@ LDFLAGS += -lmonitors
 LDFLAGS += $(BUILD_PATH)/../../probe/libprobe.a
 LDFLAGS += $(BUILD_PATH)/../../monitors/libmonitors.a
 LDFLAGS += $(BUILD_PATH)/../../utils/baremetal/libutils.a
+ifneq ($(CONFIG_PRC_EN),)
+SRCS_PRC := $(wildcard $(DRIVERS)/prc/*.c)
+BUILD_PRC := BUILD_PRC
 LDFLAGS += $(BUILD_PATH)/../../prc/libprc.a
+
+endif
+
 CC := $(CROSS_COMPILE)gcc
 LD := $(CROSS_COMPILE)$(LD)
 
 all: $(OBJS) $(EXES) $(EXE) $(BINS) $(BIN)
 
 ifneq ($(APPNAME),)
-$(BUILD_PATH)/%.o: %.c $(HEADERS)
+$(BUILD_PATH)/%.o: %.c $(HEADERS) $(BUILD_PRC)
 	CPU_ARCH=$(CPU_ARCH) DESIGN_PATH=$(DESIGN_PATH) BUILD_PATH=$(BUILD_PATH)/../../probe $(MAKE) -C $(DRIVERS)/probe
 	CPU_ARCH=$(CPU_ARCH) DESIGN_PATH=$(DESIGN_PATH) BUILD_PATH=$(BUILD_PATH)/../../monitors MODE=BAREC \
 			 $(MAKE) -B -C $(DRIVERS)/../common/monitors
 	CPU_ARCH=$(CPU_ARCH) DESIGN_PATH=$(DESIGN_PATH) BUILD_PATH=$(BUILD_PATH)/../../utils/baremetal $(MAKE) -C $(DRIVERS)/utils
-	CPU_ARCH=$(CPU_ARCH) DESIGN_PATH=$(DESIGN_PATH) BUILD_PATH=$(BUILD_PATH)/../../prc $(MAKE) -C $(DRIVERS)/prc
 	$(CC) $(CFLAGS) -c $< -o $@ $(LDFLAGS)
 endif
 
-$(BUILD_PATH)/%.exe: %.c $(OBJS) $(SRCS_PROBE) $(SRCS_PRC) $(HEADERS)
+$(BUILD_PATH)/%.exe: %.c $(OBJS) $(SRCS_PROBE) $(BUILD_PRC) $(HEADERS)
 	CPU_ARCH=$(CPU_ARCH) DESIGN_PATH=$(DESIGN_PATH) BUILD_PATH=$(BUILD_PATH)/../../probe $(MAKE) -C $(DRIVERS)/probe
 	CPU_ARCH=$(CPU_ARCH) DESIGN_PATH=$(DESIGN_PATH) BUILD_PATH=$(BUILD_PATH)/../../monitors MODE=BAREC \
 			 $(MAKE) -B -C $(DRIVERS)/../common/monitors
 	CPU_ARCH=$(CPU_ARCH) DESIGN_PATH=$(DESIGN_PATH) BUILD_PATH=$(BUILD_PATH)/../../utils/baremetal $(MAKE) -C $(DRIVERS)/utils
-	CPU_ARCH=$(CPU_ARCH) DESIGN_PATH=$(DESIGN_PATH) BUILD_PATH=$(BUILD_PATH)/../../prc $(MAKE) -C $(DRIVERS)/prc
 	$(CC) $(CFLAGS) -o $@ $< $(LDFLAGS_RISCV) $(LDFLAGS) $(OBJS)
 
 $(BUILD_PATH)/%.bin: $(BUILD_PATH)/%.exe
 	$(CROSS_COMPILE)objcopy -O binary $(OBJCPFLAGS) $< $@
+
+ifneq ($(CONFIG_PRC_EN),)
+BUILD_PRC: $(SRCS_PRC)
+	CPU_ARCH=$(CPU_ARCH) DESIGN_PATH=$(DESIGN_PATH) BUILD_PATH=$(BUILD_PATH)/../../prc $(MAKE) -C $(DRIVERS)/prc
+endif
 
 clean:
 	rm -rf $(BUILD_PATH)

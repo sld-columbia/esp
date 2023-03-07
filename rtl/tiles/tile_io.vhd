@@ -1477,6 +1477,8 @@ begin
   -- PRC 
   generate_prc : if has_prc(CFG_FABTECH) = 1 and CFG_PRC = 1 and SIMULATION = false generate
   prc_1: prc_inst
+    generic map (
+      tech => CFG_FABTECH)
     port map (
       clk                       => clk,
       reset                     => rst,
@@ -1507,9 +1509,9 @@ begin
       --vsm_VS_0_event_error      => vsm_VS_0_event_error,
       --vsm_VS_0_sw_shutdown_req  => vsm_VS_0_sw_shutdown_req,
       vsm_VS_0_sw_startup_req   => vsm_VS_0_sw_startup_req,
-      --icap_avail                => icap_avail,
-      --icap_prdone               => icap_prdone,
-      --icap_prerror              => icap_prerror,
+      icap_avail                => icap_avail,
+      icap_prdone               => icap_prdone,
+      icap_prerror              => icap_prerror,
       s_axi_reg_awaddr          => s_axil_awaddr_masked,
       s_axi_reg_awvalid         => s_axil_awvalid,
       s_axi_reg_awready         => s_axil_awready,

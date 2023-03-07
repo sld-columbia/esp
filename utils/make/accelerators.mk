@@ -482,7 +482,7 @@ $(ACC-baremetal): $(BAREMETAL_BIN) soft-build $(ESP_CFG_BUILD)/socmap.vhd
 	if [ `ls -1 $$ACC_PATH/sw/baremetal/*.c 2>/dev/null | wc -l ` -gt 0 ]; then \
 		echo '   ' MAKE $@; \
 		mkdir -p $$BUILD_PATH; \
-		CROSS_COMPILE=$(CROSS_COMPILE_ELF) CPU_ARCH=$(CPU_ARCH) DRIVERS=$(DRV_BARE) DESIGN_PATH=$(DESIGN_PATH)/$(ESP_CFG_BUILD) BUILD_PATH=$$BUILD_PATH $(MAKE) -C  $$ACC_PATH/sw/baremetal; \
+		CROSS_COMPILE=$(CROSS_COMPILE_ELF) CPU_ARCH=$(CPU_ARCH) CONFIG_PRC_EN=$(CONFIG_PRC_EN) DRIVERS=$(DRV_BARE) DESIGN_PATH=$(DESIGN_PATH)/$(ESP_CFG_BUILD) BUILD_PATH=$$BUILD_PATH $(MAKE) -C  $$ACC_PATH/sw/baremetal; \
 		if [ `ls -1 $$BUILD_PATH/*.bin 2>/dev/null | wc -l ` -gt 0 ]; then \
 			if [ `ls -1 $$BUILD_PATH/*.bin 2>/dev/null | wc -l ` -eq 1 ]; then \
 				echo '   ' CP $@; cp $$BUILD_PATH/*.bin $(BAREMETAL_BIN)/$(@:-baremetal=).bin ; \

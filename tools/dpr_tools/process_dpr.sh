@@ -127,7 +127,7 @@ do
             echo "  scatter_gather     : integer range 0 to 1  := CFG_SCATTER_GATHER;">> $acc_dir/acc_$i.vhd;
             echo "  sets               : integer  := CFG_ACC_L2_SETS;">> $acc_dir/acc_$i.vhd;
             echo "  ways               : integer  := CFG_ACC_L2_WAYS;">> $acc_dir/acc_$i.vhd;
-            echo "  little_end     : integer range 0 to 1 := 0;">> $acc_dir/acc_$i.vhd;
+            echo "  little_end         : integer range 0 to 1 := 0;">> $acc_dir/acc_$i.vhd;
             echo "  cache_tile_id      : cache_attribute_array := cache_tile_id;">> $acc_dir/acc_$i.vhd;
             echo "  cache_y            : yx_vec(0 to 2**NL2_MAX_LOG2 - 1) := cache_y;">> $acc_dir/acc_$i.vhd;
             echo "  cache_x            : yx_vec(0 to 2**NL2_MAX_LOG2 - 1) := cache_x;">> $acc_dir/acc_$i.vhd;
@@ -626,11 +626,11 @@ do
             arch=${_line[2]}
             echo "$arch"
             if [[ $arch == "leon3" ]]; then
-               pbs_base_addr=0x04000000
-               #pbs_base_addr=0x50000000;
+               #pbs_base_addr=0x04000000
+               pbs_base_addr=0x50000000;
             else
                #pbs_base_addr=0x04000000
-               pbs_base_addr=0xA0000000; 
+               pbs_base_addr=0xB0000000; 
             fi
         fi
     done
@@ -675,30 +675,32 @@ do
         lut=$(echo ${line} | awk '{print($5)}');
         clb=$((($lut / 8) + LUT_TOLERANCE));
         res_consumption["$i,0"]=$clb;
-        #echo "found one $lut $clb";
+        #echo "found CLB $lut $clb";
     fi;
-   
+  
+    if [[ "$device" == "xc7vx485t-ffg1761-2" ]]; then
+        if [[ "$dsp_match" == "$dsp_keyword" ]]; then
+            dsp=$(echo ${line} | awk '{print($4)}');
+            dsp=$((dsp + DSP_TOLERANCE ));
+            res_consumption["$i,2"]=$dsp;
+            #echo "found DSP $dsp";
+        fi;
+    else 
     #TODO this should be for DSP matching for VCU118 and VCu128
-    #if [[ "$dsp_aux_match" == "$dsp_keyword" ]] && [[ $dsp_match == "DSP48E2" ]]; then
-    #    dsp=$(echo ${dsp_line} | awk '{print($4)}');
-    #    dsp=$((dsp + DSP_TOLERANCE ));
-    #    res_consumption["$i,2"]=$dsp;
-    #    #echo "found one $dsp";
-    #fi;
-    
-    if [[ "$dsp_match" == "$dsp_keyword" ]]; then
-        dsp=$(echo ${line} | awk '{print($4)}');
-        dsp=$((dsp + DSP_TOLERANCE ));
-        res_consumption["$i,2"]=$dsp;
-        #echo "found one $dsp";
+        if [[ "$dsp_aux_match" == "$dsp_keyword" ]] && [[ $dsp_match == "DSP48E2" ]]; then
+            dsp=$(echo ${dsp_line} | awk '{print($4)}');
+            dsp=$((dsp + DSP_TOLERANCE ));
+            res_consumption["$i,2"]=$dsp;
+            #echo "found one $dsp";
+        fi;
     fi;
-    
+
     if [[ "$bram_aux_match" == "$bram_keyword" ]] && [[ $bram_match == "RAMB36/FIFO*" ]]; then
         bram=$(echo ${bram_line} | awk '{print($6)}');
         #bram=$(bram%.*);
         bram=$(echo $bram $BRAM_TOLERANCE | awk '{print $1 + $2}');
         res_consumption["$i,1"]=$bram;
-        #echo "found one $bram";
+        #echo "found BRAM $bram";
     fi; 
     
     dsp_aux_match=$dsp_match;
@@ -723,8 +725,14 @@ function gen_floorplan() {
     fplan_dir=$1/tools/dpr_tools/dpr_floor_planner;
 
     #TODO:type of FPGA must be a variable of $2
+    if [[ "$device" == "xc7vx485t-ffg1761-2" ]]; then
+        TARGET_DEV="VC707"
+    else
+        TARGET_DEV="VCU118"
+    fi;
+
     cd $fplan_dir;
-    make flora FPGA=VC707;
+    make flora FPGA=$TARGET_DEV;
     ./bin/flora $num_acc_tiles  $1/socs/$2/flora_input.csv $1/socs/$2/res_reqs.csv;
     cp pblocks.xdc $1/constraints/$2/;
     cd $src_dir;

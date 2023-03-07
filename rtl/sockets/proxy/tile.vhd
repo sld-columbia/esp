@@ -748,7 +748,7 @@ package tile is
       clk                           : in  std_ulogic;
       --refclk                        : in  std_ulogic;
       --pllbypass                     : in  std_ulogic;
-      pllclk                        : out std_ulogic;
+      --pllclk                        : out std_ulogic;
       local_y                       : in  local_yx;
       local_x                       : in  local_yx;
       paddr                         : in  integer;

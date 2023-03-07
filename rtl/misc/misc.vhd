@@ -132,6 +132,8 @@ package misc is
   end component icap;
 
   component prc_inst is
+    generic (
+      tech : integer);
     port (
       clk                               : in  std_logic;
       reset                             : in  std_logic;
@@ -147,6 +149,9 @@ package misc is
       icap_o                            : out std_logic_vector(31 downto 0);
       icap_csib                         : out std_logic;
       icap_rdwrb                        : out std_logic;
+      icap_avail                        : in std_logic;
+      icap_prdone                       : in std_logic;
+      icap_prerror                      : in std_logic;
       s_axi_reg_awaddr                  : in  std_logic_vector(31 downto 0);
       s_axi_reg_awvalid                 : in  std_logic;
       s_axi_reg_awready                 : out std_logic;
@@ -177,6 +182,6 @@ package misc is
       m_axi_mem_rlast                   : in  std_logic;
       m_axi_mem_rvalid                  : in  std_logic;
       m_axi_mem_rready                  : out std_logic);
-  end component;
+  end component prc_inst;
 
 end;
