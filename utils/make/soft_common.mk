@@ -8,15 +8,17 @@ soft-build:
 	@mkdir -p $(BUILD_DRIVERS)/esp
 	@mkdir -p $(BUILD_DRIVERS)/esp_cache
 	@mkdir -p $(BUILD_DRIVERS)/libesp
+	@mkdir -p $(BUILD_DRIVERS)/libdpr
 	@mkdir -p $(BUILD_DRIVERS)/monitors
 	@mkdir -p $(BUILD_DRIVERS)/probe
-	@mkdir -p $(BUILD_DRIVERS)/prc
+	@mkdir -p $(BUILD_DRIVERS)/dpr
 	@mkdir -p $(BUILD_DRIVERS)/test
 	@mkdir -p $(BUILD_DRIVERS)/utils/baremetal
 	@mkdir -p $(BUILD_DRIVERS)/utils/linux
 	@ln -sf $(DRV_LINUX)/contig_alloc/* $(BUILD_DRIVERS)/contig_alloc
 	@ln -sf $(DRV_LINUX)/esp/* $(BUILD_DRIVERS)/esp
 	@ln -sf $(DRV_LINUX)/esp_cache/* $(BUILD_DRIVERS)/esp_cache
+	@ln -sf $(DRV_LINUX)/dpr/* $(BUILD_DRIVERS)/dpr
 	@ln -sf $(DRV_LINUX)/driver.mk $(BUILD_DRIVERS)
 
 soft-build-clean:
@@ -45,6 +47,11 @@ $(SOFT_BUILD)/sysroot/opt/drivers-esp/esp.ko: $(SOFT_BUILD)/linux-build/vmlinux 
 	$(QUIET_MAKE)ARCH=$(ARCH) CROSS_COMPILE=$(CROSS_COMPILE_LINUX) DRIVERS=$(DRV_LINUX) KSRC=$(SOFT_BUILD)/linux-build DESIGN_PATH=$(DESIGN_PATH) $(MAKE) -C $(BUILD_DRIVERS)/esp
 	$(QUIET_CP)cp $(BUILD_DRIVERS)/esp/esp.ko $@
 
+$(SOFT_BUILD)/sysroot/opt/drivers-esp/esp_dpr.ko: $(SOFT_BUILD)/linux-build/vmlinux $(wildcard $(ESP_CORE_PATH)/*.c) $(wildcard $(ESP_CORE_PATH)/*.h) $(wildcard $(DRV_LINUX)/include/*.h)
+	@mkdir -p $(SOFT_BUILD)/sysroot/opt/drivers-esp
+	$(QUIET_MAKE)ARCH=$(ARCH) CROSS_COMPILE=$(CROSS_COMPILE_LINUX) DRIVERS=$(DRV_LINUX) KSRC=$(SOFT_BUILD)/linux-build DESIGN_PATH=$(DESIGN_PATH) $(MAKE) -C $(BUILD_DRIVERS)/dpr
+	$(QUIET_CP)cp $(BUILD_DRIVERS)/dpr/esp_dpr.ko $@
+
 # This is a PHONY to guarantee sysroot is always updated when apps or drivers change
 # Most targets won't actually do anything if their dependencies have not changed.
 # Linux is compiled twice if necessary to ensure drivers are compiled against the most recent kernel
@@ -54,6 +61,7 @@ sysroot-update: $(SOFT_BUILD)/linux-build/vmlinux $(ESP_CFG_BUILD)/socmap.vhd so
 	@$(MAKE) $(SOFT_BUILD)/sysroot/opt/drivers-esp/esp_cache.ko
 	@$(MAKE) $(SOFT_BUILD)/sysroot/opt/drivers-esp/esp_private_cache.ko
 	@$(MAKE) $(SOFT_BUILD)/sysroot/opt/drivers-esp/esp.ko
+	@$(MAKE) $(SOFT_BUILD)/sysroot/opt/drivers-esp/esp_dpr.ko
 	@mkdir -p $(BUILD_DRIVERS)/dvi/linux/app
 	@CPU_ARCH=$(CPU_ARCH) DRIVERS=$(DRV_LINUX) BUILD_PATH=$(BUILD_DRIVERS)/dvi/linux/app DESIGN_PATH=$(DESIGN_PATH) $(MAKE) -C $(DRV_LINUX)/dvi/app
 	@mkdir -p $(SOFT_BUILD)/sysroot/applications/dvi; cp $(BUILD_DRIVERS)/dvi/linux/app/*.exe $(SOFT_BUILD)/sysroot/applications/dvi

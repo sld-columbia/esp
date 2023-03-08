@@ -37,6 +37,13 @@
 static DEFINE_SPINLOCK(esp_devices_lock);
 static LIST_HEAD(esp_devices);
 
+DEFINE_SPINLOCK(esp_drivers_lock);
+LIST_HEAD(esp_drivers);
+
+EXPORT_SYMBOL_GPL(esp_drivers_lock);
+EXPORT_SYMBOL_GPL(esp_drivers);
+
+
 /* These are overwritten whith insmod flags */
 static unsigned long cache_line_bytes = 16;
 module_param_named(line_bytes, cache_line_bytes, ulong, S_IRUGO);
@@ -494,14 +501,25 @@ out:
 static long esp_do_ioctl(struct file *file, unsigned int cm, void __user *arg)
 {
     struct esp_device *esp = file->private_data;
+    int ret;
+    mutex_lock(&esp->dpr_lock);
+
 
     switch (cm) {
-        case ESP_IOC_RUN: return esp_run_ioctl(esp);
-        case ESP_IOC_FLUSH: return esp_flush_ioctl(esp, arg);
-        default:
-            if (cm == esp->driver->ioctl_cm) return esp_access_ioctl(esp, arg);
-            return -ENOTTY;
+    case ESP_IOC_RUN:
+        ret = esp_run_ioctl(esp);
+        break;
+    case ESP_IOC_FLUSH:
+        ret = esp_flush_ioctl(esp, arg);
+        break;
+    default:
+        if (cm == esp->driver->ioctl_cm)
+            ret = esp_access_ioctl(esp, arg);
+        ret = -ENOTTY;
+        break;
     }
+    mutex_unlock(&esp->dpr_lock);
+    return ret;
 }
 
 static long esp_ioctl(struct file *file, unsigned int cm, unsigned long arg)
@@ -560,6 +578,8 @@ int esp_device_register(struct esp_device *esp, struct platform_device *pdev)
     struct resource *res;
     int rc;
 
+    esp->driver->esp = esp;
+    esp->driver->pdev = pdev;
     esp->pdev = &pdev->dev;
     mutex_init(&esp->lock);
     init_completion(&esp->completion);
@@ -594,13 +614,22 @@ int esp_device_register(struct esp_device *esp, struct platform_device *pdev)
     /* set type of coherence to no coherence by default */
     esp->coherence = ACC_COH_NONE;
 
-    dev_info(esp->pdev, "l2_size: %zu, llc_size %zu, llc_banks: %lu.\n", cache_l2_size,
-             cache_llc_size, cache_llc_banks);
+	  dev_info(esp->pdev, "l2_size: %zu, llc_size %zu, llc_banks: %lu.\n"
+			  "iomem:%lu devno: %lu\n"
+			  "footprint:%d inplace: %d\n",
+		    cache_l2_size, cache_llc_size, cache_llc_banks,
+		    esp->iomem, esp->driver->devno,
+		    esp->footprint, esp->in_place);
 
     /* Add device to ESP devices list */
     spin_lock(&esp_devices_lock);
     list_add(&esp->list, &esp_devices);
     spin_unlock(&esp_devices_lock);
+
+    dev_info(esp->pdev, "searching tiles\n");
+    unsigned y = esp_get_y(esp);
+    unsigned x = esp_get_x(esp);
+    dev_info(esp->pdev, " on tile %d,%d\n", x, y);
 
     dev_info(esp->pdev, "device registered.\n");
     platform_set_drvdata(pdev, esp);
@@ -660,19 +689,45 @@ static void esp_sysfs_device_remove(struct esp_driver *drv)
     unregister_chrdev_region(devno, ESP_MAX_DEVICES);
 }
 
+bool prc_loaded = false;
+EXPORT_SYMBOL_GPL(prc_loaded);
+
 int esp_driver_register(struct esp_driver *driver)
 {
     struct platform_driver *plat = &driver->plat;
     int rc;
 
-    rc = esp_sysfs_device_create(driver);
-    if (rc) return rc;
-    rc = platform_driver_register(plat);
-    if (rc) goto err;
-    return 0;
+	  if(driver->dpr)
+	  {
+        spin_lock(&esp_drivers_lock);
+        list_add(&driver->list, &esp_drivers);
+        spin_unlock(&esp_drivers_lock);
+        pr_info("Added %s to driver list...\n", driver->plat.driver.name);
+        driver->dpr = false;
+        return 0;
+	  }
+
+//	if(prc_loaded && !driver->dpr) {
+//		spin_lock(&esp_drivers_lock);
+//		list_add(&driver->list, &esp_drivers);
+//		spin_unlock(&esp_drivers_lock);
+//		//pr_info("Added %s to driver list...\n", driver->plat.driver.name);
+//
+//		driver->dpr = true;
+//		return 0;
+//	}
+
+	  pr_info(PFX ": Registering driver: %s\n", driver->plat.driver.name);
+	  rc = esp_sysfs_device_create(driver);
+	  if (rc)
+		    return rc;
+	  rc = platform_driver_register(plat);
+	  if (rc)
+		    goto err;
+	  return 0;
 err:
-    esp_sysfs_device_remove(driver);
-    return rc;
+	  esp_sysfs_device_remove(driver);
+	  return rc;
 }
 EXPORT_SYMBOL_GPL(esp_driver_register);
 
