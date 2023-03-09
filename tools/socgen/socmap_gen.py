@@ -459,6 +459,7 @@ def print_global_constants(fp, soc):
   fp.write("  ------ CPU\n")
   fp.write("  type cpu_arch_type is (leon3, ariane, ibex);\n")
   fp.write("  constant GLOB_CPU_ARCH : cpu_arch_type := " + soc.CPU_ARCH.get() + ";\n")
+  fp.write("  constant CPU_STR : string := \"" + soc.CPU_ARCH.get() + "\";\n")
   if soc.CPU_ARCH.get() == "ariane":
     fp.write("  constant GLOB_CPU_AXI : integer range 0 to 1 := 1;\n")
   else:

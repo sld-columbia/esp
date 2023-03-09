@@ -107,7 +107,7 @@ endif
 	vmake 2> /dev/null > vsim.mk; \
 	cd ../;
 
-sim-compile: socketgen check_all_srcs modelsim/vsim.mk soft
+sim-compile: socketgen check_all_srcs modelsim/vsim.mk soft iolink-txt-files
 	@for dat in $(DAT_SRCS); do \
 		cp $$dat modelsim; \
 	done;
