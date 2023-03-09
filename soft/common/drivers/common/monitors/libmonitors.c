@@ -125,6 +125,7 @@ unsigned int esp_monitor(esp_monitor_args_t args, esp_monitor_vals_t *vals)
 			vals->acc_stats[t].acc_mem_hi = read_monitor(tile, MON_ACC_MEM_HI_INDEX);
 			vals->acc_stats[t].acc_tot_lo = read_monitor(tile, MON_ACC_TOT_LO_INDEX);
 			vals->acc_stats[t].acc_tot_hi = read_monitor(tile, MON_ACC_TOT_HI_INDEX);
+			vals->acc_stats[t].acc_invocations = read_monitor(tile, MON_ACC_INVOCATIONS);
 		}
 
 #endif
@@ -216,6 +217,7 @@ unsigned int esp_monitor(esp_monitor_args_t args, esp_monitor_vals_t *vals)
 			vals->acc_stats[args.acc_index].acc_mem_hi = read_monitor(tile, MON_ACC_MEM_HI_INDEX);
 			vals->acc_stats[args.acc_index].acc_tot_lo = read_monitor(tile, MON_ACC_TOT_LO_INDEX);
 			vals->acc_stats[args.acc_index].acc_tot_hi = read_monitor(tile, MON_ACC_TOT_HI_INDEX);
+			vals->acc_stats[args.acc_index].acc_invocations = read_monitor(tile, MON_ACC_INVOCATIONS);
 		}
 #endif
 
@@ -259,6 +261,14 @@ uint32_t sub_monitor_vals (uint32_t val_start, uint32_t val_end)
 		return val_end - val_start;
 	else
 		return (0xFFFFFFFF - val_start + val_end);
+}
+
+uint64_t sub_monitor_vals64 (uint64_t val_start, uint64_t val_end)
+{
+	if (val_end >= val_start)
+		return val_end - val_start;
+	else
+		return (0xFFFFFFFFFFFFFFFF - val_start + val_end);
 }
 
 esp_monitor_vals_t esp_monitor_diff(esp_monitor_vals_t vals_start, esp_monitor_vals_t vals_end)
@@ -326,11 +336,26 @@ esp_monitor_vals_t esp_monitor_diff(esp_monitor_vals_t vals_start, esp_monitor_v
 	for (t = 0; t < SOC_NACC; t++) {
 		tile = acc_locs[t].row * SOC_COLS + acc_locs[t].col;
 		//accelerator counters are cleared at the start of an invocation, so merely report the final count
+		uint64_t acc_mem_start, acc_mem_end, acc_mem_diff;
+		uint64_t acc_tot_start, acc_tot_end, acc_tot_diff;
+		acc_mem_start = ((uint64_t) vals_start.acc_stats[t].acc_mem_lo)
+						| (((uint64_t) vals_start.acc_stats[t].acc_mem_hi) << 32);
+		acc_mem_end = ((uint64_t) vals_end.acc_stats[t].acc_mem_lo)
+						| (((uint64_t) vals_end.acc_stats[t].acc_mem_hi) << 32);
+		acc_tot_start = ((uint64_t) vals_start.acc_stats[t].acc_tot_lo)
+						| (((uint64_t) vals_start.acc_stats[t].acc_tot_hi) << 32);
+		acc_tot_end = ((uint64_t) vals_end.acc_stats[t].acc_tot_lo)
+						| (((uint64_t) vals_end.acc_stats[t].acc_tot_hi) << 32);
+
+		acc_mem_diff = sub_monitor_vals64(acc_mem_start, acc_mem_end);
+		acc_tot_diff = sub_monitor_vals64(acc_tot_start, acc_tot_end);
+
 		vals_diff.acc_stats[t].acc_tlb = sub_monitor_vals(vals_start.acc_stats[t].acc_tlb, vals_end.acc_stats[t].acc_tlb);
-		vals_diff.acc_stats[t].acc_mem_lo = sub_monitor_vals(vals_start.acc_stats[t].acc_mem_lo, vals_end.acc_stats[t].acc_mem_lo);
-		vals_diff.acc_stats[t].acc_mem_hi = sub_monitor_vals(vals_start.acc_stats[t].acc_mem_hi, vals_end.acc_stats[t].acc_mem_hi);
-		vals_diff.acc_stats[t].acc_tot_lo = sub_monitor_vals(vals_start.acc_stats[t].acc_tot_lo, vals_end.acc_stats[t].acc_tot_lo);
-		vals_diff.acc_stats[t].acc_tot_hi = sub_monitor_vals(vals_start.acc_stats[t].acc_tot_hi, vals_end.acc_stats[t].acc_tot_hi);
+		vals_diff.acc_stats[t].acc_mem_lo = acc_mem_diff & 0xFFFFFFFF;
+		vals_diff.acc_stats[t].acc_mem_hi = (acc_mem_diff >> 32) & 0xFFFFFFFF;
+		vals_diff.acc_stats[t].acc_tot_lo = acc_tot_diff & 0xFFFFFFFF;
+		vals_diff.acc_stats[t].acc_tot_hi = (acc_tot_diff >> 32) & 0xFFFFFFFF;
+		vals_diff.acc_stats[t].acc_invocations = sub_monitor_vals(vals_start.acc_stats[t].acc_invocations, vals_end.acc_stats[t].acc_invocations);
 	}
 
 #endif
@@ -428,21 +453,23 @@ void esp_monitor_print(esp_monitor_args_t args, esp_monitor_vals_t vals)
 		for (t = 0; t < SOC_NACC; t++) {
 			tile = acc_locs[t].row * SOC_COLS + acc_locs[t].col;
 			print_mon( "Accelerator %d TLB-loading cycles: %d\n", t, vals.acc_stats[t].acc_tlb);
-			print_mon( "Accelerator %d mem cycles: %llu\n", t
-					, ((unsigned long long) vals.acc_stats[t].acc_mem_lo)
-					+ (((unsigned long long) vals.acc_stats[t].acc_mem_hi) << 32));
-			print_mon( "Accelerator %d total cycles: %llu\n", t
-					, ((unsigned long long) vals.acc_stats[t].acc_tot_lo)
-					+ (((unsigned long long) vals.acc_stats[t].acc_tot_hi) << 32));
+			print_mon( "Accelerator %d mem cycles: %lu\n", t
+					, ((uint64_t) vals.acc_stats[t].acc_mem_lo)
+					| (((uint64_t) vals.acc_stats[t].acc_mem_hi) << 32));
+			print_mon( "Accelerator %d total cycles: %lu\n", t
+					, ((uint64_t) vals.acc_stats[t].acc_tot_lo)
+					| (((uint64_t) vals.acc_stats[t].acc_tot_hi) << 32));
+			print_mon( "Accelerator %d invocations: %d\n", t, vals.acc_stats[t].acc_invocations);
 		}
 	} else if (args.read_mask & (1 << ESP_MON_READ_LLC_STATS)) {
-		print_mon( "Accelerator %d TLB-loading cycles: %d\n", t, vals.acc_stats[args.acc_index].acc_tlb);
-		print_mon( "Accelerator %d mem cycles: %llu\n", t
-				, ((unsigned long long) vals.acc_stats[args.acc_index].acc_mem_lo)
-				+ (((unsigned long long) vals.acc_stats[args.acc_index].acc_mem_hi) << 32));
-		print_mon( "Accelerator %d total cycles: %llu\n", t
-				, ((unsigned long long) vals.acc_stats[args.acc_index].acc_tot_lo)
-				+ (((unsigned long long) vals.acc_stats[args.acc_index].acc_tot_hi) << 32));
+		print_mon( "Accelerator %d TLB-loading cycles: %d\n", args.acc_index, vals.acc_stats[args.acc_index].acc_tlb);
+		print_mon( "Accelerator %d mem cycles: %lu\n", args.acc_index
+				, ((uint64_t) vals.acc_stats[args.acc_index].acc_mem_lo)
+				| (((uint64_t) vals.acc_stats[args.acc_index].acc_mem_hi) << 32));
+		print_mon( "Accelerator %d total cycles: %lu\n", args.acc_index
+				, ((uint64_t) vals.acc_stats[args.acc_index].acc_tot_lo)
+				| (((uint64_t) vals.acc_stats[args.acc_index].acc_tot_hi) << 32));
+		print_mon( "Accelerator %d invocations: %d\n", args.acc_index, vals.acc_stats[args.acc_index].acc_invocations);
 	}
 #endif
 
