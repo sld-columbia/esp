@@ -131,7 +131,10 @@ baremetal-distclean:
 	@DRIVERS=$(DRV_BARE) CPU_ARCH=$(CPU_ARCH) BUILD_PATH=$(BUILD_DRIVERS)/dvi/baremetal $(MAKE) --quiet -C $(DRV_BARE)/dvi clean
 	@$(MAKE) --quiet acc-baremetal-clean
 
-
+# This target creates txt files needed by the testbench of ASIC designs using the IO Link interface
+# It is a dependence of the simulation targets for each simulator
+iolink-txt-files: soft
+	python3 ../../utils/scripts/file_handling/bin2txt.py $(CPU_ARCH)
 
 .PHONY: soft-build soft-build-clean soft-build-distclean
 .PHONY: soft soft-clean soft-distclean

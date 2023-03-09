@@ -12,6 +12,7 @@ use std.textio.all;
 use work.stdio.all;
 -- pragma translate_on
 use work.tb_pkg.all;
+use work.esp_global.all;
 
 entity tb_iolink is
   port (
@@ -43,8 +44,8 @@ begin
   ---------------------------------------------------------------------------
   test_iolink : process
 
-    file bootloader : text open read_mode is "../soft-build/ariane/prom.txt";
-    file program    : text open read_mode is "../soft-build/ariane/systest.txt";
+    file bootloader : text open read_mode is "../soft-build/" & CPU_STR & "/prom.txt";
+    --file program    : text open read_mode is "../soft-build/ariane/systest.txt";
 
     variable text_word, text_data : line;
     variable word_var             : std_logic_vector(31 downto 0);
