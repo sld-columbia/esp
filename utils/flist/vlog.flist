@@ -28,3 +28,9 @@ caches/esp-caches/l2/rtl/l2_input_decoder.sv
 caches/esp-caches/common/rtl/interface_controller.sv
 misc/esplink.sv
 sockets/adapters/apb2axil.sv
+noc/router/noc_pkg.sv
+noc/router/router_fifo.sv
+noc/router/router_arbiter.sv
+noc/router/lookahead_routing.sv
+noc/router/lookahead_router.sv
+noc/router/lookahead_router_wrapper.sv
