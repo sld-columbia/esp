@@ -16,7 +16,7 @@ fpga-program: vivado-prog-fpga
 endif
 
 fpga-run-dpr: DPR_ENABLED = y
-fpga-run-dpr: fpga-run
+fpga-run-dpr: fpga-program fpga-load-pbs fpga-run
 
 fpga-run-linux-dpr: DPR_ENABLED = y
 fpga-run-linux-dpr: fpga-run-linux
