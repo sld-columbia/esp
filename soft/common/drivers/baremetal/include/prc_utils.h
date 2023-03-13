@@ -16,4 +16,4 @@ typedef struct pbs_map {
 }pbs_map;
 
 int decouple_acc(struct esp_device *dev, unsigned val);
-void reconfigure_FPGA(struct esp_device *dev, unsigned pbs_id);
+unsigned int reconfigure_FPGA(struct esp_device *dev, unsigned pbs_id);
