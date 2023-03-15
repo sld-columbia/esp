@@ -1169,12 +1169,16 @@ tb_path = out_path + "/tb"
 mem_list = []
 sram_list = []
 
-tile = str(infile).split("_") 
-tile = tile[0].split("/")
+tile = str(infile).split("/")
+if "memlist.txt" == str(tile[-1]):
+    tile[-1] = "acc_memlist.txt"
+tile = tile[-1].split("_")
+#tile = str(infile).split("_")
+#tile = tile[0].split("/")
 print(infile)
-print("  INFO: Tile %s" %tile[2])
+print("  INFO: Tile %s" %tile[-2])
 print("  INFO: Target technology path: " + tech_path)
-read_techfile(tech_path, sram_list, tile[2])
+read_techfile(tech_path, sram_list, tile[-2])
 for ram in sram_list:
     ram.print()
 
@@ -1186,9 +1190,9 @@ if not os.path.exists(tb_path):
     os.makedirs(tb_path)
 
 # not required for other tiles, testing ACC
-print("  INFO: Stratus memory library path: ./memlib")
-if not os.path.exists("memlib"):
-    os.makedirs("memlib")
+#print("  INFO: Stratus memory library path: ./memlib")
+#if not os.path.exists("memlib"):
+#    os.makedirs("memlib")
 
 
 print("  INFO: Memory list file: " + infile)
@@ -1201,7 +1205,7 @@ for mem in mem_list:
     mem.print()
     mem.gen(sram_list)
     mem.write_verilog(out_path)
-    # mem.write_tb(tb_path)
-    # mem.write_hpp()
-    # mem.write_bdm(out_path, tech_path)
-
+    if tile[-2] == "acc":
+        mem.write_tb(tb_path)
+        #mem.write_hpp()
+        mem.write_bdm(out_path, tech_path)

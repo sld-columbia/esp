@@ -304,15 +304,15 @@ begin
               data_out => dco_clk_int_delay);
         end generate delay_ddr_gen;
 
-        no_delay_ddr_gen : if this_has_ddr = 0 generate
-          dco_clk_div2_int_delay <= dco_clk_div2_int;
-          dco_clk_int_delay <= dco_clk_int;
-        end generate no_delay_ddr_gen;
+      no_delay_ddr_gen : if this_has_ddr = 0 generate
+        dco_clk_div2_int_delay <= dco_clk_div2_int;
+        dco_clk_int_delay <= dco_clk_int;
+      end generate no_delay_ddr_gen;
 
     end generate clk_delay_asic_gen;
 
     --noc_clk_delay_gen: if CFG_FABTECH /= gf12 generate
-    noc_clk_delay_gen: if CFG_FABTECH /= inferred generate
+    noc_clk_delay_gen: if CFG_FABTECH /= asic generate
       dco_clk_div2_90_int <= dco_clk_div2_int;
     end generate noc_clk_delay_gen;
 
@@ -329,6 +329,7 @@ begin
   no_dco_gen: if this_has_dco = 0 generate
     pllclk              <= '0';
     dco_clk_int         <= refclk;
+    dco_clk_int_delay   <= dco_clk_int;
     dco_clk_lock        <= '1';
     dco_clk_div2_int    <= '0';
     dco_clk_div2_90_int <= '0';
