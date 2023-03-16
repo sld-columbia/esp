@@ -118,7 +118,7 @@ sim-compile: socketgen check_all_srcs modelsim/vsim.mk soft
 	ln -s $(SOFT_BUILD)/ram.srec;
 
 sim: sim-compile
-	python3 ../esp/utils/scripts/file_handling/bin2txt.py
+	python3 $(ESP_ROOT)/utils/scripts/file_handling/bin2txt.py
 	$(QUIET_RUN)cd modelsim; \
 	if test -e $(DESIGN_PATH)/vsim.tcl; then \
 		$(VSIM) -c -do "do $(DESIGN_PATH)/vsim.tcl"; \
@@ -127,7 +127,7 @@ sim: sim-compile
 	fi;
 
 sim-gui: sim-compile
-	python3 ../esp/utils/scripts/file_handling/bin2txt.py
+	python3 $(ESP_ROOT)/utils/scripts/file_handling/bin2txt.py
 	$(QUIET_RUN)cd modelsim; \
 	if test -e $(DESIGN_PATH)/vsim.tcl; then \
 		$(VSIM) -do "do $(DESIGN_PATH)/vsim.tcl"; \

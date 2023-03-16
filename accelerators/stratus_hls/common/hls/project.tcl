@@ -18,7 +18,8 @@ set TECH_PATH "$ESP_ROOT/tech/$TECH"
 # Setup technology and include behavioral models and/or libraries
 #
 set fpga_techs [list "virtex7" "zynq7000" "virtexu" "virtexup"]
-set asic_techs [list "cmos32soi" "gf12"]
+#set asic_techs [list "cmos32soi" "gf12"]
+set asic_techs [list "sky130"]
 
 if {[lsearch $fpga_techs $TECH] >= 0} {
     set VIVADO $::env(XILINX_VIVADO)
@@ -46,7 +47,8 @@ if {[lsearch $fpga_techs $TECH] >= 0} {
 
 }
 if {[lsearch $asic_techs $TECH] >= 0} {
-    set_attr verilog_files "$ESP_ROOT/rtl/sim/$TECH/verilog/*v $ESP_ROOT/rtl/techmap/$TECH/mem/*v"
+    #set_attr verilog_files "$ESP_ROOT/rtl/sim/$TECH/verilog/*v $ESP_ROOT/rtl/techmap/$TECH/mem/*v"
+    set_attr verilog_files "$ESP_ROOT/rtl/sim/asic/verilog/*v $ESP_ROOT/rtl/techmap/asic/mem/*v"
     set LIB_PATH "$TECH_PATH/lib"
     set LIB_NAME "$TECH.lib"
     use_tech_lib "$LIB_PATH/$LIB_NAME"

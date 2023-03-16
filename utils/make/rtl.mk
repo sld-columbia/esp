@@ -23,8 +23,11 @@ VHDL_PKGS += $(TOP_VHDL_RTL_PKGS)
 ## VHDL Source
 VHDL_SRCS += $(foreach f, $(shell strings $(FLISTS)/vhdl.flist), $(ESP_ROOT)/rtl/$(f))
 VHDL_SRCS += $(foreach f, $(shell strings $(FLISTS)/cores_vhdl.flist), $(if $(findstring cores/$(CPU_ARCH), $(f)), $(ESP_ROOT)/rtl/$(f),))
-#VHDL_SRCS += $(foreach f, $(shell strings $(FLISTS)/techmap_vhdl.flist), $(if $(findstring techmap/$(TECHLIB), $(f)), $(ESP_ROOT)/rtl/$(f),))
+ifeq ("$(TECH_TYPE)", "asic")
 VHDL_SRCS += $(foreach f, $(shell strings $(FLISTS)/techmap_vhdl.flist), $(if $(findstring techmap/asic, $(f)), $(ESP_ROOT)/rtl/$(f),))
+else
+VHDL_SRCS += $(foreach f, $(shell strings $(FLISTS)/techmap_vhdl.flist), $(if $(findstring techmap/$(TECHLIB), $(f)), $(ESP_ROOT)/rtl/$(f),))
+endif
 VHDL_SRCS += $(shell (find $(ESP_ROOT)/tech/$(TECHLIB)/ -name "*.vhd" ))
 VHDL_SRCS += $(THIRDPARTY_VHDL)
 VHDL_SRCS += $(TOP_VHDL_RTL_SRCS)
@@ -42,8 +45,11 @@ RTL_TECH_FOLDERS = $(shell ls -d $(ESP_ROOT)/tech/$(TECHLIB)/*/)
 
 VLOG_SRCS += $(foreach f, $(shell strings $(FLISTS)/vlog.flist), $(ESP_ROOT)/rtl/$(f))
 VLOG_SRCS += $(foreach f, $(shell strings $(FLISTS)/cores_vlog.flist), $(if $(findstring cores/$(CPU_ARCH), $(f)), $(ESP_ROOT)/rtl/$(f),))
-#VLOG_SRCS += $(foreach f, $(shell strings $(FLISTS)/techmap_vlog.flist), $(if $(findstring techmap/$(TECHLIB), $(f)), $(ESP_ROOT)/rtl/$(f),))
+ifeq ("$(TECH_TYPE)", "asic")
 VLOG_SRCS += $(foreach f, $(shell strings $(FLISTS)/techmap_vlog.flist), $(if $(findstring techmap/asic, $(f)), $(ESP_ROOT)/rtl/$(f),))
+else
+VLOG_SRCS += $(foreach f, $(shell strings $(FLISTS)/techmap_vlog.flist), $(if $(findstring techmap/$(TECHLIB), $(f)), $(ESP_ROOT)/rtl/$(f),))
+endif
 VLOG_SRCS += $(foreach f, $(RTL_TECH_FOLDERS), $(shell (find $(f) -name "*.v")))
 VLOG_SRCS += $(foreach f, $(RTL_TECH_FOLDERS), $(shell (find $(f) -name "*.sv")))
 VLOG_SRCS += $(THIRDPARTY_VLOG) $(THIRDPARTY_SVLOG)
@@ -51,10 +57,16 @@ VLOG_SRCS += $(TOP_VLOG_RTL_SRCS)
 
 SIM_VLOG_SRCS += $(VLOG_SRCS)
 SIM_VLOG_SRCS += $(foreach f, $(shell strings $(FLISTS)/sim_vlog.flist), $(ESP_ROOT)/rtl/$(f))
-#SIM_VLOG_SRCS += $(shell (find $(ESP_ROOT)/rtl/sim/$(TECHLIB)/verilog/ -name "*.v" ))
+ifeq ("$(TECH_TYPE)", "asic")  
 SIM_VLOG_SRCS += $(shell (find $(ESP_ROOT)/rtl/sim/asic/verilog/ -name "*.v" ))
-#SIM_VLOG_SRCS += $(shell (find $(ESP_ROOT)/rtl/sim/$(TECHLIB)/verilog/ -name "*.sv" ))
+else
+SIM_VLOG_SRCS += $(shell (find $(ESP_ROOT)/rtl/sim/$(TECHLIB)/verilog/ -name "*.v" ))
+endif
+ifeq ("$(TECH_TYPE)", "asic")
 SIM_VLOG_SRCS += $(shell (find $(ESP_ROOT)/rtl/sim/asic/verilog/ -name "*.sv" ))
+else
+SIM_VLOG_SRCS += $(shell (find $(ESP_ROOT)/rtl/sim/$(TECHLIB)/verilog/ -name "*.sv" ))
+endif
 SIM_VLOG_SRCS += $(TOP_VLOG_SIM_SRCS)
 
 ## Vivado HLS generated files
@@ -76,7 +88,7 @@ techmap_flist:
 		(find -L techmap/ -not \( -path techmap/unisim -prune \) -name "*.sv") >> $(ESP_ROOT)/utils/flist/techmap_vlog.flist  ; cd $(ESP_ROOT)/../$(PROJECT_NAME) )
 
 
-check_all_srcs: $(GRLIB_CFG_BUILD)/grlib_config.vhd $(ESP_CFG_BUILD)/socmap.vhd socketgen $(ESP_CFG_BUILD)/plic_regmap.sv $(RTL_CFG_BUILD)
+check_all_srcs: $(GRLIB_CFG_BUILD)/grlib_config.vhd $(ESP_CFG_BUILD)/socmap.vhd socketgen $(ESP_CFG_BUILD)/plic_regmap.sv techmap_flist $(RTL_CFG_BUILD)
 	@echo $(ALL_SIM_SRCS) > $@.new; \
 	if test -f $(RTL_CFG_BUILD)/$@.old; then \
 		/usr/bin/diff -q $(RTL_CFG_BUILD)/$@.old $@.new > /dev/null; \
