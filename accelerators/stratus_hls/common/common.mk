@@ -60,10 +60,14 @@ TARGET_NAME = $(COMPONENT)
 endif
 
 # Memory wrappers
-#MEMGEN = $(ESP_ROOT)/tools/plmgen/plmgen.py
+ifeq ("$(TECH_TYPE)","asic")
 MEMGEN = $(ESP_ROOT)/tools/asicgen/asic_plmgen.py
-#MEMTECH = $(ESP_ROOT)/rtl/techmap/$(TECH)/mem
 MEMTECH = $(ESP_ROOT)/rtl/techmap/asic/mem
+else
+MEMGEN = $(ESP_ROOT)/tools/plmgen/plmgen.py
+MEMTECH = $(ESP_ROOT)/rtl/techmap/$(TECH)/mem
+endif
+
 MEMGEN_OUT = $(ESP_ROOT)/tech/$(TECH)/memgen/$(TARGET_NAME)
 
 ifneq ("$(ACCELERATOR)","")
