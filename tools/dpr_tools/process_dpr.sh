@@ -658,9 +658,9 @@ lut_keyword=LUTs*;
 bram_keyword=Block;
 dsp_keyword=""DSPs;
 
-LUT_TOLERANCE=700;
-BRAM_TOLERANCE=20;
-DSP_TOLERANCE=20;
+LUT_TOLERANCE=1000;
+BRAM_TOLERANCE=40;
+DSP_TOLERANCE=40;
 
 echo -e "\t DPR: Parsing synthesis report";
 for ((i=0; i<$num_acc_tiles; i++))
@@ -829,8 +829,8 @@ elif [ "$4" == "LOAD_BS" ]; then
 
 elif [ $4 == "test" ]; then
     extract_acc $1 $2 $3
-    #extract_acc_old $1 $2 $3
-    #diff_accelerators $1 $2 $3 
+    extract_acc_old $1 $2 $3
+    diff_accelerators $1 $2 $3 
     #patch_acc_devid $1 $2 $3 $4
     #gen_bs_script $1 $2 $3 $4 
     #gen_bs_descriptor $1 $2 $3 $4
@@ -842,6 +842,7 @@ elif [ $4 == "test" ]; then
     #echo " regenarate before parse is $regenerate_fplan";
     parse_synth_report $1 $2 $3 $4
     gen_floorplan $1 $2 $3 $4;
+    #gen_impl_script $1 $2 $3 $4;
     #acc_fplan $1 $2 $3 $4;
     #echo " regenarate after parse is $regenerate_fplan";
     #gen_floorplan $1 $2 $3 $4

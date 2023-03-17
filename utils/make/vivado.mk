@@ -380,7 +380,7 @@ vivado-syn: vivado-setup
         $(RM) static_config.tcl; \
         echo "set part $(DEVICE) " >> static_config.tcl; \
         echo "set board $(BOARD) " >> static_config.tcl; \
-        echo "add_files $(ESP_ROOT)/socs/$(BOARD)/vivado/$(DESIGN).runs/synth_1/top.dcp" >> static_config.tcl; \
+		echo "add_files $(ESP_ROOT)/socs/$(BOARD)/vivado/$(DESIGN).runs/synth_1/top.dcp" >> static_config.tcl; \
 		if [  $(BOARD) == xilinx-vc707-xc7vx485t ]; then \
 			echo "read_ip -quiet $(ESP_ROOT)/socs/$(BOARD)/vivado/$(DESIGN).srcs/sources_1/ip/prc_ctrlr_v7/prc_ctrlr_v7.xci" >> static_config.tcl; \
         else \
@@ -441,7 +441,7 @@ vivado-syn-dpr-acc: check_all_rtl_srcs vivado/srcs.tcl
         cd vivado_dpr; \
         vivado $(VIVADO_BATCH_OPT) -source ooc_syn.tcl | tee ../vivado_syn_dpr.log; \
         cd ../ ; \
-		bin/bash $(ESP_ROOT)/tools/dpr_tools/process_dpr.sh $(ESP_ROOT) $(BOARD) $(DEVICE) IMPL_ACC;  \
+		/bin/bash $(ESP_ROOT)/tools/dpr_tools/process_dpr.sh $(ESP_ROOT) $(BOARD) $(DEVICE) IMPL_ACC;  \
         cd vivado_dpr; \
         vivado $(VIVADO_BATCH_OPT) -source impl.tcl | tee ../vivado_impl_dpr.log; \
         cd ../ ; \

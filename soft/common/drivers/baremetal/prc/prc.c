@@ -188,6 +188,9 @@ unsigned int reconfigure_FPGA(struct esp_device *dev, unsigned pbs_id)
 
     //send a Proceed cmd to PRC 
     iowrite32(&esp_prc, 0x0, 0x3);
+    
+    //remove decoupling
+    decouple_acc(dev, 0); //decouple tile
 
     printf("[PRC DRIVER]: Reconfigured FPGA \n \n \n");
     
