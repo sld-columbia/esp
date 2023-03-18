@@ -1,0 +1,5 @@
+EXTRA_CFLAGS += \
+	     -I$(DRIVERS)/include -I$(DRIVERS)/../common/include
+
+esp_dpr-objs := dpr_prc.o dpr_tile_manager.o
+obj-m := esp_dpr.o
