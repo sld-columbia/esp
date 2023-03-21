@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sld>
+  <accelerator name="mac_sysc" desc="Accelerator MAC" data_size="65" device_id="04a" hls_tool="catapult_hls_sysc">
+    <param name="mac_len" desc="mac_len" />
+    <param name="mac_vec" desc="mac_vec" />
+    <param name="mac_n" desc="mac_n" />
+  </accelerator>
+</sld>
