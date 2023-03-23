@@ -46,6 +46,7 @@ $(BUILD_PATH)/libprc.a: $(BUILD_PATH)/libprc.o
 	$(CROSS_COMPILE)ranlib $@
 
 $(BUILD_PATH)/libprc.o: prc.c
+	mkdir -p $(BUILD_PATH)/prc
 	$(CROSS_COMPILE)gcc $(CFLAGS) -c $^ -o $@
 
 clean:
