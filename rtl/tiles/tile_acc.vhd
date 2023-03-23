@@ -510,8 +510,7 @@ begin
   end process decoupler_gen;
 
   -- CSR map for decoupler
-  --decouple_acc <= tile_config(ESP_CSR_ACC_DECOUPLER_MSB downto ESP_CSR_ACC_DECOUPLER_LSB);
-  decouple_acc <= tile_config(98);
+  decouple_acc <= tile_config(98 + ESP_CSR_8_LSB);
 
   -- Using only one apbo signal
   no_apb : for i in 0 to NAPBSLV - 1 generate
