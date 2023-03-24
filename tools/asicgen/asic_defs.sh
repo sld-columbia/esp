@@ -8,6 +8,6 @@
 ########################################################################
 
 # Define technology integration folder name
-DIRTECH_NAME=gf12
-PROJECT_NAME="epochs-1"
+DIRTECH_NAME=""
+PROJECT_NAME=""
 
