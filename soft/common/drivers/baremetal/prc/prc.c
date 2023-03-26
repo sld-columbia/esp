@@ -1,12 +1,16 @@
 #include "prc_utils.h"
 #include "soc_defs.h"
 #include "soc_locs.h"
+#include "monitors.h"
 #include <pbs_map.h>
 #include <prc_aux.h>
 
 #ifdef __riscv
 #define APB_BASE_ADDR 0x60000000
 #endif
+
+//#define DPR_VERBOSE
+//#define MEASURE_RECONF_TIME
 static struct esp_device esp_tile_decoupler;
 static struct esp_device esp_prc;
 struct pbs_map *pb_map;
@@ -19,7 +23,9 @@ static void get_io_tile_id(struct esp_device* io_tile)
 
     tile_id = io_loc.row * SOC_COLS + io_loc.col;
     io_tile->addr = (long long unsigned) APB_BASE_ADDR + (monitor_base + tile_id * 0x200);
+#ifdef DPR_VERBOSE   
     printf("[PRC DRIVER]: io_tile id -- %u, io_tile addr -- 0x%0x \n", tile_id, (unsigned) io_tile->addr); 
+#endif
 }
 
 static int get_decoupler_addr(struct esp_device *dev, struct esp_device *decoupler)
@@ -34,8 +40,9 @@ static int get_decoupler_addr(struct esp_device *dev, struct esp_device *decoupl
 
     dev_addr = (unsigned) dev->addr;
     dev_addr_trunc = (dev_addr << 12) >> 12;
-    
+#ifdef DPR_VERBOSE       
     printf("[PRC DRIVER]: device address -- 0x%0x, truncated addr -- 0x%0x \n", dev_addr, dev_addr_trunc);
+#endif
 //#ifdef ACCS_PRESENT
 
     //Obtain tile id
@@ -56,7 +63,9 @@ static int get_decoupler_addr(struct esp_device *dev, struct esp_device *decoupl
 
     //compute apb address for tile decoupler
     (*decoupler).addr = APB_BASE_ADDR + (monitor_base + tile_id * 0x200);
+#ifdef DPR_VERBOSE   
     printf("[PRC DRIVER]: tile_id -- 0x%0x, decoupler addr is -- 0x%0x \n", tile_id, (unsigned) esp_tile_decoupler.addr);
+#endif
     return 0;
 }
 
@@ -78,21 +87,28 @@ static void init_prc()
     esp_prc.addr = (long long unsigned) APB_BASE_ADDR + 0xE400;
     
     pb_map = (struct pbs_map *) &bs_descriptor;    
+#ifdef DPR_VERBOSE   
     printf("[PRC DRIVER]: bitstream size -- 0x%0x, bitstream addr -- 0x%08x \n", pb_map->pbs_size, (unsigned) pb_map->pbs_addr);
+#endif
 }
 
 static int shutdown_prc()
 {
     int prc_status;
-
+#ifdef DPR_VERBOSE
     printf("[PRC DRIVER]: Shutting down PRC\n");
+#endif
     iowrite32(&esp_prc, 0x0, 0x0);
 
     prc_status = ioread32(&esp_prc, 0x0);
+#ifdef DPR_VERBOSE   
     printf("[PRC DRIVER]: PRC status -- 0x%0x \n", prc_status);
+#endif
     prc_status &= (1<<7);
     if (!prc_status) {
+#ifdef DPR_VERBOSE   
         printf("[PRC DRIVER]: error shutting controller \n");
+#endif
         return 1;    
     }
 
@@ -102,14 +118,17 @@ static int shutdown_prc()
 static int start_prc()
 {
     int prc_status;
-
+#ifdef DPR_VERBOSE   
     printf("[PRC DRIVER]: Restarting PRC\n");
+#endif
     iowrite32(&esp_prc, 0x0, 0x1);
 
     prc_status = ioread32(&esp_prc, 0x0);
     prc_status &= (1<<7);
     if (prc_status) {
-        printf("[PRC DRIVER]: error starting controller \n");
+#ifdef DPR_VERBOSE   
+         printf("[PRC DRIVER]: error starting controller \n");
+#endif
         return 1;    
     }
 
@@ -123,13 +142,16 @@ static void set_trigger(unsigned pbs_id)
         iowrite32(&esp_prc, 0x60, 0x0);
         iowrite32(&esp_prc, 0x64, PBS_BASE_ADDR + pb_map[pbs_id].pbs_addr);
         iowrite32(&esp_prc, 0x68, pb_map[pbs_id].pbs_size);
+#ifdef DPR_VERBOSE   
         printf("[PRC DRIVER]: Trigger armed \n");    
+#endif
     }
     else
         printf("[PRC DRIVER]: Error arming trigger \n");
-   
+#ifdef DPR_VERBOSE   
     printf("[PRC DRIVER]: PBS addr -- 0x%08x \n", (unsigned) pb_map[pbs_id].pbs_addr);
     printf("[PRC DRIVER]: PBS size -- 0x%08x \n", pb_map[pbs_id].pbs_size);
+#endif   
 }
 
 unsigned int reconfigure_FPGA(struct esp_device *dev, unsigned pbs_id)
@@ -154,7 +176,9 @@ unsigned int reconfigure_FPGA(struct esp_device *dev, unsigned pbs_id)
     
     //send a Proceed cmd to PRC to reset pending interrupt 
     prc_done = ioread32(&io_tile_csr, PRC_INTERRUPT_REG);
+#ifdef DPR_VERBOSE   
     printf("[PRC DRIVER]: prc done -- %u \n", prc_done);
+#endif
     if (prc_done == 1)
         iowrite32(&esp_prc, 0x0, 0x3);
     
@@ -183,7 +207,8 @@ unsigned int reconfigure_FPGA(struct esp_device *dev, unsigned pbs_id)
 #ifdef MEASURE_RECONF_TIME
     cycles_end = esp_monitor(mon_args, NULL);
     cycles_diff = sub_monitor_vals(cycles_start, cycles_end);
-    printf("[PRC DRIVER]: time is %u %u %u \n", cycles_start, cycles_end, cycles_diff);
+    float cycles_ns = (float)  1e9 / BASE_FREQ;
+    unsigned long reconf_us = (cycles_ns * cycles_diff) / (1e3);
 #endif
 
     //send a Proceed cmd to PRC 
@@ -192,6 +217,9 @@ unsigned int reconfigure_FPGA(struct esp_device *dev, unsigned pbs_id)
     //remove decoupling
     decouple_acc(dev, 0); //decouple tile
 
+#ifdef MEASURE_RECONF_TIME    
+    printf("[PRC DRIVER]: Reconfiguration time -> %u cycles or  %lu(us) \n", cycles_diff, reconf_us);
+#endif
     printf("[PRC DRIVER]: Reconfigured FPGA \n \n \n");
     
     return 0;
