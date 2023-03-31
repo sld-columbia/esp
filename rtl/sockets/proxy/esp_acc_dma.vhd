@@ -210,7 +210,7 @@ architecture rtl of esp_acc_dma is
   signal p2p_rsp_snd_wrreq    : std_ulogic;
   signal p2p_rsp_snd_data_in  : noc_flit_type;
   signal p2p_rsp_snd_full     : std_ulogic;
-
+  signal dma_toggle           : std_ulogic;
   -- IRQ
   signal irq      : std_ulogic;
   signal irqset   : std_ulogic;
@@ -441,7 +441,7 @@ begin  -- rtl
   p2p_dst_x <= get_origin_x(NOC_FLIT_SIZE, p2p_req_rcv_data_out);
 
   make_packet: process (bankreg, pending_dma_write, tlb_empty, dma_address, dma_length,
-                        p2p_src_index_r, p2p_dst_y, p2p_dst_x, coherence, local_y, local_x, dma_tran_done)
+                        p2p_src_index_r, p2p_dst_y, p2p_dst_x, coherence, local_y, local_x, dma_toggle)
     variable msg_type : noc_msg_type;
     variable header_v : noc_flit_type;
     variable tmp : std_logic_vector(63 downto 0);
@@ -449,18 +449,11 @@ begin  -- rtl
     variable length : std_logic_vector(31 downto 0);
     variable mem_x, mem_y : local_yx;
     variable is_p2p : std_ulogic;
-    variable dma_toggle : std_ulogic;
     variable p2p_src_x, p2p_src_y : local_yx;
     variable p2p_header_v : noc_flit_type;
   begin  -- process make_packet
 
     is_p2p := '0';
-    dma_toggle := '1';
-
-    if dma_tran_done = '1' then
-      -- toggle src dma mode after each transaction
-      dma_toggle := not (dma_toggle);
-    end if;
 
     if tlb_empty = '1' then
       -- fetch page table
@@ -556,7 +549,12 @@ begin  -- rtl
       count <= conv_std_logic_vector(1, 32);
       size_r <= HSIZE_WORD;
       p2p_src_index_r <= 0;
+      dma_toggle <= '1';
     elsif clk'event and clk = '1' then  -- rising clock edge
+      if dma_tran_done = '1' then
+        -- toggle src dma mode after each transaction
+        dma_toggle <= not (dma_toggle);
+      end if;
       if sample_flits = '1' then
         header_r <= header;
         payload_address_r <= payload_address;
