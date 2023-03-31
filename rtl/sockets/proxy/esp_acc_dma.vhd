@@ -441,7 +441,7 @@ begin  -- rtl
   p2p_dst_x <= get_origin_x(NOC_FLIT_SIZE, p2p_req_rcv_data_out);
 
   make_packet: process (bankreg, pending_dma_write, tlb_empty, dma_address, dma_length,
-                        p2p_src_index_r, p2p_dst_y, p2p_dst_x, coherence, local_y, local_x)
+                        p2p_src_index_r, p2p_dst_y, p2p_dst_x, coherence, local_y, local_x, dma_tran_done)
     variable msg_type : noc_msg_type;
     variable header_v : noc_flit_type;
     variable tmp : std_logic_vector(63 downto 0);
@@ -449,11 +449,18 @@ begin  -- rtl
     variable length : std_logic_vector(31 downto 0);
     variable mem_x, mem_y : local_yx;
     variable is_p2p : std_ulogic;
+    variable dma_toggle : std_ulogic;
     variable p2p_src_x, p2p_src_y : local_yx;
     variable p2p_header_v : noc_flit_type;
   begin  -- process make_packet
 
     is_p2p := '0';
+    dma_toggle := '1';
+
+    if dma_tran_done = '1' then
+      -- toggle src dma mode after each transaction
+      dma_toggle := not (dma_toggle);
+    end if;
 
     if tlb_empty = '1' then
       -- fetch page table
@@ -488,7 +495,7 @@ begin  -- rtl
       -- accelerator read burst
       address := dma_address;
       length  := len_pad & dma_length(31 downto GLOB_BYTE_OFFSET_BITS);
-      if bankreg(P2P_REG)(P2P_BIT_SRC_IS_P2P) = '1' then
+      if bankreg(P2P_REG)(P2P_BIT_SRC_IS_P2P) = '1' and dma_toggle = '1' then
         msg_type := REQ_P2P;
         is_p2p := '1';
       else
