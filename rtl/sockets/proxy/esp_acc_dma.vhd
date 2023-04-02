@@ -100,7 +100,7 @@ entity esp_acc_dma is
     acc_flush_done: in  std_ulogic;
     mon_dvfs_in   : in  monitor_dvfs_type;
     --Monitor signals
-    mon_dvfs      : out monitor_dvfs_type;
+    --mon_dvfs      : out monitor_dvfs_type;
 
     -- Coherent requests parallel control
     coherent_dma_read    : out std_ulogic;

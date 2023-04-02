@@ -247,26 +247,6 @@ vivado/syn_emu.tcl: vivado
 	@echo "launch_runs impl_1 -to_step write_bitstream" >> $@
 	@echo "wait_on_run -timeout 60 impl_1" >> $@
 
-vivado/syn_emu.tcl: vivado
-	$(QUIET_INFO)echo "generating synthesis script for Vivado"
-	@$(RM) $@
-	@echo "open_project $(DESIGN)-chip-emu.xpr" > $@
-	@echo "update_ip_catalog" >> $@
-	@echo "update_compile_order -fileset sources_1" >> $@
-	@echo "reset_run impl_1" >> $@
-	@echo "reset_run synth_1" >> $@
-#	@echo "synth_design -rtl -name rtl_1" >> $@
-#	@echo "synth_design -directive runtimeoptimize -resource_sharing off -keep_equivalent_registers -no_lc -rtl -name rtl_1" >> $@
-#	@echo "synth_design -resource_sharing off -keep_equivalent_registers -no_lc -rtl -name rtl_1" >> $@
-	@echo "launch_runs synth_1 -jobs 12" >> $@
-	@echo "get_ips" >> $@
-	@echo "wait_on_run -timeout 360 synth_1" >> $@
-	@echo "set_msg_config -suppress -id {Drc 23-20}" >> $@
-	@echo "launch_runs impl_1 -jobs 12" >> $@
-	@echo "wait_on_run -timeout 360 impl_1" >> $@
-	@echo "launch_runs impl_1 -to_step write_bitstream" >> $@
-	@echo "wait_on_run -timeout 60 impl_1" >> $@
-
 vivado/program.tcl: vivado
 	$(QUIET_INFO)echo "generating programming script for $(PART)"
 	@$(RM) $@
@@ -437,7 +417,7 @@ vivado-syn-dpr-acc: check_all_rtl_srcs vivado/srcs.tcl
         echo $(SPACES)"DPR: you should run vivado-syn-dpr first"; \
     else \
         echo $(SPACES)"INFO starting DPR flow"; \
-        /bin/bash $(ESP_ROOT)/tools/dpr_tools/process_dpr.sh $(ESP_ROOT) $(BOARD) $(DEVICE) ACC;  \
+        /bin/bash $(ESP_ROOT)/tools/dpr_tools/process_dpr.sh $(ESP_ROOT) $(BOARD)_mac $(DEVICE) ACC;  \
         cd vivado_dpr; \
         vivado $(VIVADO_BATCH_OPT) -source ooc_syn.tcl | tee ../vivado_syn_dpr.log; \
         cd ../ ; \
@@ -454,19 +434,6 @@ vivado-syn-dpr-acc: check_all_rtl_srcs vivado/srcs.tcl
 		/bin/bash $(ESP_ROOT)/tools/dpr_tools/process_dpr.sh $(ESP_ROOT) $(BOARD) $(DEVICE) GEN_HDR;  \
     fi;
 
-
-vivado-syn-emu: vivado-setup-emu
-	$(QUIET_INFO)echo "launching Vivado implementation script"
-	@cd vivado; \
-	vivado $(VIVADO_BATCH_OPT) -source syn_emu.tcl | tee ../$(VIVADO_LOGS)/vivado_syn_emu.log; \
-	cd ../;
-	@bit=vivado/$(DESIGN)-chip-emu.runs/impl_1/chip_emu_top.bit; \
-	if test -r $$bit; then \
-		rm -rf chip_emu_top.bit; \
-		ln -s $$bit; \
-	else \
-		echo $(SPACES)"ERROR: bistream not found; synthesis failed"; \
-	fi; \
 
 vivado-syn-emu: vivado-setup-emu
 	$(QUIET_INFO)echo "launching Vivado implementation script"
