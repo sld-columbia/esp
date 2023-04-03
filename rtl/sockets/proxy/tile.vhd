@@ -777,7 +777,6 @@ package tile is
       flush                         : out std_ulogic;
       acc_flush_done                : in std_ulogic;
       mon_dvfs_in                   : in  monitor_dvfs_type;
-      --mon_dvfs                      : out monitor_dvfs_type;
       dvfs_transient_in            : in std_ulogic;
       llc_coherent_dma_rcv_rdreq    : out std_ulogic;
       llc_coherent_dma_rcv_data_out : in  noc_flit_type;
@@ -1031,7 +1030,6 @@ package tile is
     dvfs_transient_in    : in std_ulogic;
     mon_acc           : out monitor_acc_type;
     mon_cache         : out monitor_cache_type;
-    --mon_dvfs          : out monitor_dvfs_type;
     coherence         : in  integer range 0 to 3
     );
 end component acc_top;

@@ -417,7 +417,7 @@ vivado-syn-dpr-acc: check_all_rtl_srcs vivado/srcs.tcl
         echo $(SPACES)"DPR: you should run vivado-syn-dpr first"; \
     else \
         echo $(SPACES)"INFO starting DPR flow"; \
-        /bin/bash $(ESP_ROOT)/tools/dpr_tools/process_dpr.sh $(ESP_ROOT) $(BOARD)_mac $(DEVICE) ACC;  \
+        /bin/bash $(ESP_ROOT)/tools/dpr_tools/process_dpr.sh $(ESP_ROOT) $(BOARD) $(DEVICE) ACC;  \
         cd vivado_dpr; \
         vivado $(VIVADO_BATCH_OPT) -source ooc_syn.tcl | tee ../vivado_syn_dpr.log; \
         cd ../ ; \

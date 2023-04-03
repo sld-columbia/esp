@@ -469,7 +469,6 @@ begin
       -- Monitor signals
       mon_acc           => mon_acc_int,
       mon_cache         => mon_cache_int,
-      --mon_dvfs          => mon_dvfs_int,
       coherence         => coherence
       );
 

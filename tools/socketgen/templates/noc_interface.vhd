@@ -105,7 +105,6 @@ use std.textio.all;
     --Monitor signals
     mon_acc           : out monitor_acc_type;
     mon_cache         : out monitor_cache_type;
-    --mon_dvfs          : out monitor_dvfs_type;
     dvfs_transient_acc    : in std_ulogic;
     -- Coherence
     coherence         : in integer range 0 to 3);
@@ -397,7 +396,6 @@ begin
       flush                         => flush,
       acc_flush_done                => acc_flush_done,
       mon_dvfs_in                   => mon_dvfs_in,
-      --mon_dvfs                      => mon_dvfs_feedthru,
       dvfs_transient_in             => dvfs_transient_acc,
       llc_coherent_dma_rcv_rdreq    => coherent_dma_rcv_rdreq,
       llc_coherent_dma_rcv_data_out => coherent_dma_rcv_data_out,
@@ -467,6 +465,5 @@ begin
   mon_acc.run   <= bank(STATUS_REG)(STATUS_BIT_RUN);
   mon_acc.done  <= bank(STATUS_REG)(STATUS_BIT_DONE);
   mon_acc.burst <= mon_dvfs_feedthru.burst;
-  --mon_dvfs      <= mon_dvfs_feedthru;
 
 end rtl;
