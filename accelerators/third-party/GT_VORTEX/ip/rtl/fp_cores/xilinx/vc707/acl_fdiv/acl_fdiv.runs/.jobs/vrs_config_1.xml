@@ -1,9 +1,0 @@
-<?xml version="1.0"?>
-<Runs Version="1" Minor="0">
-	<Run Id="acl_div_synth_1" LaunchDir="/home/esp2022/sr3859/esp/esp/accelerators/third-party/GT_VORTEX/ip/rtl/fp_cores/xilinx/vc707/acl_fdiv/acl_fdiv.runs/acl_div_synth_1" FlowId="Vivado_Synthesis" FromStepId="vivado" ToStepId="vivado"/>
-	<Parameters>
-		<Parameter Name="runs.monitorLSFJobs" Val="true" Type="bool"/>
-		<Parameter Name="runs.enableClusterConf" Val="true" Type="bool"/>
-	</Parameters>
-</Runs>
-

@@ -1,4 +1,0 @@
-vhdl xil_defaultlib  \
-"../../../../acl_fdiv.srcs/sources_1/ip/acl_div/sim/acl_div.vhd" \
-
-nosort

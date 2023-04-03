@@ -50,3 +50,6 @@
 [submodule "accelerators/catapult_hls/common/matchlib_toolkit"]
 	path = accelerators/catapult_hls/common/matchlib_toolkit
 	url = https://github.com/hlslibs/matchlib_toolkit.git
+[submodule "accelerators/third-party/GT_VORTEX/vortex"]
+	path = accelerators/third-party/GT_VORTEX/vortex
+	url = https://github.com/sld-columbia/vortex

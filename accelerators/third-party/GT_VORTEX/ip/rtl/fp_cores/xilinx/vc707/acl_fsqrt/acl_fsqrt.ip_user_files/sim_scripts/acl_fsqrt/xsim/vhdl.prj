@@ -1,4 +1,0 @@
-vhdl xil_defaultlib  \
-"../../../../acl_fsqrt.srcs/sources_1/ip/acl_fsqrt/sim/acl_fsqrt.vhd" \
-
-nosort

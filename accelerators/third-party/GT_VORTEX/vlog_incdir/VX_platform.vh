@@ -1,10 +1,6 @@
 `ifndef VX_PLATFORM
 `define VX_PLATFORM
 
-`ifndef SYNTHESIS
-`include "util_dpi.vh"
-`endif
-
 `include "VX_scope.vh"
 
 ///////////////////////////////////////////////////////////////////////////////

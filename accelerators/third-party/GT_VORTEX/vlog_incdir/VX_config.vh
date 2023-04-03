@@ -10,19 +10,19 @@
 `endif
 
 `ifndef NUM_CORES
-`define NUM_CORES 1
+`define NUM_CORES 1 //1 works now
 `endif
 
 `ifndef NUM_WARPS
-`define NUM_WARPS 2
+`define NUM_WARPS 2 //2 works now
 `endif
 
 `ifndef NUM_THREADS
-`define NUM_THREADS 8
+`define NUM_THREADS 4 //4works now
 `endif
 
 `ifndef NUM_BARRIERS
-`define NUM_BARRIERS 8
+`define NUM_BARRIERS 2 //2 works now
 `endif
 
 `ifndef L2_ENABLE
@@ -34,7 +34,7 @@
 `endif
 
 `ifndef SM_ENABLE
-`define SM_ENABLE 0
+`define SM_ENABLE 1
 `endif
 
 `ifndef MEM_BLOCK_SIZE
@@ -124,7 +124,7 @@
 `define LATENCY_FCVT 5
 `endif
 
-`define RESET_DELAY 6
+`define RESET_DELAY 12
 
 // CSR Addresses //////////////////////////////////////////////////////////////
 
@@ -373,7 +373,7 @@
 
 // per thread stack size
 `ifndef STACK_LOG2_SIZE
-`define STACK_LOG2_SIZE 10
+`define STACK_LOG2_SIZE 13
 `endif
 `define STACK_SIZE (1 << `STACK_LOG2_SIZE)
 

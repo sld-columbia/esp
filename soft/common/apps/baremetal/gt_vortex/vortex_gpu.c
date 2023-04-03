@@ -104,7 +104,7 @@ int main(int argc, char * argv[])
 	int n;
 	int ndev;
 	struct esp_device *espdevs;
-	struct esp_device *dev;
+	struct esp_device dev;
 	unsigned done;
 	token_t *mem;
 	int output_golden;
@@ -143,7 +143,7 @@ int main(int argc, char * argv[])
 	printf("Scanning device tree... \n");
 
 	ndev = 1;  
-	probe(&espdevs, VENDOR_SLD, GT_VORTEX, DEV_NAME);
+//	probe(&espdevs, VENDOR_SLD, GT_VORTEX, DEV_NAME);
 	if (ndev == 0) {
 		printf("Vortex GPU not found\n");
 		return 0;
@@ -153,7 +153,7 @@ int main(int argc, char * argv[])
 
 		printf("**************** %s.%d ****************\n", DEV_NAME, n);
 
-		dev = &espdevs[n];
+		dev.addr = 0x60400000;
 
 		// Allocate memory
 		// gold = aligned_malloc(out_len * sizeof(float));
@@ -163,14 +163,14 @@ int main(int argc, char * argv[])
 		
 		intptr_t mem_top = (intptr_t)mem; 
 	        input_n  =   (token_t*) (mem_top+0x7fff0); //(mem+0x7fff0)
-		input_n_val = 42; 
+		input_n_val = 5; 
 		*input_n = input_n_val; // Assigning input value to memory
 			
 		output_computed = (token_t*)(mem_top+0x7fff4); //(mem+0x7fff4) 	
-	        output_golden = 267914296; //fibonacci(input_n_val); 
-		printf("**************** Memory Details ****************\n");
-		printf("  memory buffer base-address = %x\n", (intptr_t)(mem));
-		printf(" Last word address: %x \n", (intptr_t)(mem+_fibonacci_bin_len_in_words-1));
+	        output_golden = fibonacci(input_n_val); 
+		//printf("**************** Memory Details ****************\n");
+		//printf("  memory buffer base-address = %x\n", (intptr_t)(mem));
+		//printf(" Last word address: %x \n", (intptr_t)(mem+_fibonacci_bin_len_in_words-1));
 		// Allocate and populate page table
 		// ptable = aligned_malloc(NCHUNK(mem_size) * sizeof(unsigned *));
 		// printf("  nchunk = %lu\n", NCHUNK(mem_size));
@@ -199,38 +199,39 @@ int main(int argc, char * argv[])
 			
 			// Set memory offset
 		        	
-			iowrite32(dev, VX_BASE_ADDR, mem_top); // -0x20000000
+			iowrite32(&dev, VX_BASE_ADDR, mem_top); // -0x20000000
 
                         
 			// Start accelerators
 
 			// START_VORTEX
-			iowrite32(dev, VX_SOFT_RESET, START_VORTEX);
+			iowrite32(&dev, VX_SOFT_RESET, START_VORTEX);
 
 			printf("  Start...\n");
-			vortex_busy = ioread32(dev, VX_BUSY_INT);
+			vortex_busy = ioread32(&dev, VX_BUSY_INT);
 			vortex_busy &= BIT(0);
 			// Since higher order bits may contain routing headers
 			//printf("  Busy Reg Value = %d \n", vortex_busy);
 			// Wait for completion	
 
-			//vortex_busy = ioread32(dev, VX_BUSY_INT);
+			//vortex_busy = ioread32(&dev, VX_BUSY_INT);
                         //vortex_busy &= BIT(0);
 
 			while (vortex_busy==1) {
 		            printf("  Running GPU workload...\n");
-		            vortex_busy = ioread32(dev, VX_BUSY_INT);
+		            vortex_busy = ioread32(&dev, VX_BUSY_INT);
 			    vortex_busy &= BIT(0); // Since higher order bits may contain routing headers
 			    // printf(" Busy Reg Value = %d \n", vortex_busy);
-			}
+			}	
+		  
+			printf("  Value of %dth fibbonacci in Vortex = %llu \n",input_n_val, *(output_computed));
+			
 			if(*output_computed != output_golden)
 			{	
 				errors+=1;
 			}
-			
+
 			printf("Completed run with %d mismatches between computed and golden outputs.", errors); 	
-		        
-			printf("  Value of %dth fibbonacci in Vortex = %llu \n",input_n_val, *(output_computed));
 			printf("  Done\n");
 		}
 		aligned_free(mem);

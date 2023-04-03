@@ -186,21 +186,24 @@ module GT_VORTEX_wrapper #(
 	  .I(clk)
   	);
 // logic for busy_interrupt
-/*wire fall_edge_sig_busy;
-reg level_sig_busy_ff;
-wire level_sig_b = busy;
-
+//wire fall_edge_sig_busy;
+//reg level_sig_busy_ff;
+//wire level_sig_b = busy & vx_started;
+reg reg_done; 
 always @(posedge clk) begin
-  if(!reset)
-    level_sig_busy_ff <= 1'b0;
+  if(!reset || !vx_reset_soft)
+     reg_done <= 0;
+	  //level_sig_busy_ff <= 1'b0;
   else
-    level_sig_busy_ff    <= level_sig_b;
+     reg_done <= !busy; 
+	  // level_sig_busy_ff <= level_sig_b;
 end
 
-assign fall_edge_sig_busy = (~level_sig_b) & level_sig_busy_ff;
-*/
+//assign fall_edge_sig_busy = (!level_sig_b) & level_sig_busy_ff;
 
-assign busy_interrupt = busy & vx_started;
+
+`DEBUG_XILINX assign busy_interrupt = reg_done;
+
 always @(posedge clk) begin
       if (!reset) begin
          addr           <= 32'b0; // reset initial value 
@@ -232,7 +235,7 @@ always @(posedge clk) begin
  	 // vx_reset    <= 1'b0;
          vx_started	<= 1'b0;
          vx_reset_ctr   <= 0;
-      end else begin   
+     end else begin   
        
        if (vx_reset_soft == 1'b1 && vx_started == 1'b0) begin
 	 vx_reset   <= 1'b1;
@@ -246,7 +249,7 @@ always @(posedge clk) begin
        else if (vx_reset == 1'b1) begin
          vx_reset_ctr <= vx_reset_ctr + 1; 
        end
-
+       
        //if (vx_started == 0 && vx_reset_soft == 1) begin
        //  vx_reset_ctr <= 0;
        //end else if (vx_started == 1) begin
