@@ -28,6 +28,7 @@ declare -A res_consumption
 declare -A bitstream_descr
 
 PBS_DDR_OFFSET=0x3000;
+ESP_CPU_ARCH="leon3"
 
 #function to extract the number and types of accelerator tiles from current esp_config
 function extract_acc() {
@@ -579,7 +580,7 @@ bs_gen_script=$1/socs/$2/vivado_dpr/bs.tcl;
     echo "source [get_property REPOSITORY [get_ipdefs *prc:1.3]]/xilinx/prc_v1_3/tcl/api.tcl" >> $bs_gen_script;
     
     for((i=0; i<$num_acc_tiles; i++)) do
-        if [[ $arch == "leon3" ]]; then
+        if [[ $ESP_CPU_ARCH == "leon3" ]]; then
             echo "prc_v1_3::format_bin_for_icap -i Bitstreams/acc_bs_pblock_slot_"$i"_partial.bin -o Bitstreams/${new_accelerators[$i,1]}.bin" >> $bs_gen_script;
         else
             echo "prc_v1_3::format_bin_for_icap -i Bitstreams/acc_bs_pblock_slot_"$i"_partial.bin -o Bitstreams/${new_accelerators[$i,1]}.bin -bs 1" >> $bs_gen_script;
@@ -606,7 +607,7 @@ array=$(ls -ls $1/socs/$2/partial_bitstreams)
     for FILE in $pbs_path/*; do
         pbs_name=$(basename $FILE | awk -F'[.]' '{print($1)}');
         pbs_size=$(echo `ls -ls $FILE` | awk '{print($6)}'); 
-        pbs_tile_id=$(echo $pbs_name | awk -F'[_]' '{print($3)}');
+        pbs_tile_id=$(basename $FILE | sed 's/.*_\([^\.]*\)\..*/\1/');
         echo "{\"$pbs_name\", $pbs_size, $pbs_addr, $pbs_tile_id}, " >> $pbs_map;
         pbs_addr=$(($pbs_addr + $pbs_size + $PBS_DDR_OFFSET));
         echo "file is $pbs_size $pbs_tile_id $pbs_name";
@@ -615,7 +616,7 @@ array=$(ls -ls $1/socs/$2/partial_bitstreams)
     
 }
 
-function load_bs() {
+function get_cpu_arch() {
 #get cpu arch
 while read line
 do
@@ -623,18 +624,22 @@ do
     do
         if [[ $word == "CPU_ARCH"* ]]; then
             _line=( $line )
-            arch=${_line[2]}
-            echo "$arch"
-            if [[ $arch == "leon3" ]]; then
-               #pbs_base_addr=0x04000000
-               pbs_base_addr=0x50000000;
-            else
-               #pbs_base_addr=0x04000000
-               pbs_base_addr=0xB0000000; 
-            fi
+            ESP_CPU_ARCH=${_line[2]}
+            echo "$ESP_CPU_ARCH"
         fi
     done
 done < $esp_config
+}
+
+function load_bs() {
+
+    if [[ $ESP_CPU_ARCH == "leon3" ]]; then
+       #pbs_base_addr=0x04000000
+       pbs_base_addr=0x50000000;
+    else
+       #pbs_base_addr=0x04000000
+       pbs_base_addr=0xB0000000; 
+    fi
 
 num_pbs=$(cd $1/socs/$2/partial_bitstreams && (ls | wc -l));
 pbs_addr=$pbs_base_addr;
@@ -805,7 +810,7 @@ elif [ "$4" == "IMPL_ACC" ]; then
     extract_acc_old $1 $2 $3; 
     diff_accelerators $1 $2 $3; 
     initialize_acc_tiles $1 $2 $3;
-    patch_acc_devid $1 $2 $3 $4;
+    #patch_acc_devid $1 $2 $3 $4;
     add_acc_prj_file $1 $2 $3;
     parse_synth_report $1 $2 $3 $4;
     acc_fplan $1 $2 $3 $4;
@@ -818,16 +823,21 @@ elif [ "$4" == "GEN_BS" ]; then
     extract_acc $1 $2 $3; 
     extract_acc_old $1 $2 $3; 
     diff_accelerators $1 $2 $3; 
+    get_cpu_arch $1 $2 $3
     gen_bs_script $1 $2 $3 $4;
 
 elif [ "$4" == "GEN_HDR" ]; then
     extract_acc $1 $2 $3
+    get_cpu_arch $1 $2 $3 
     gen_bs_descriptor $1 $2 $3 $4
      
 elif [ "$4" == "LOAD_BS" ]; then
+    get_cpu_arch $1 $2 $3
     load_bs $1 $2 $3 $4
 
 elif [ $4 == "test" ]; then
+    get_cpu_arch $1 $2 $3 
+    echo "$ESP_CPU_ARCH is arch"
     extract_acc $1 $2 $3
     extract_acc_old $1 $2 $3
     diff_accelerators $1 $2 $3 

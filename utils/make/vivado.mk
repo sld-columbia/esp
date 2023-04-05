@@ -344,8 +344,8 @@ vivado-gui-emu: vivado-setup-emu
 
 vivado-syn: vivado-setup 
 	$(QUIET_INFO)echo "launching Vivado implementation script"
-	@cd vivado; \
-	vivado $(VIVADO_BATCH_OPT) -source syn.tcl | tee ../vivado_syn.log;
+	  @cd vivado; \
+    vivado $(VIVADO_BATCH_OPT) -source syn.tcl | tee ../vivado_syn.log;
 	@if [ "$(DPR_ENABLED)" != "y" ]; then \
         bit=vivado/$(DESIGN).runs/impl_1/$(TOP).bit; \
         if  test -r $$bit; then \
@@ -355,33 +355,9 @@ vivado-syn: vivado-setup
             echo $(SPACES)"ERROR: bistream not found; synthesis failed"; \
         fi; \
     else \
-        echo $(SPACES)"DPR: starting DPR implementation"; \
-        echo $(SPACES)"DPR: assembling top level static design"; \
-        $(RM) static_config.tcl; \
-        echo "set part $(DEVICE) " >> static_config.tcl; \
-        echo "set board $(BOARD) " >> static_config.tcl; \
-		echo "add_files $(ESP_ROOT)/socs/$(BOARD)/vivado/$(DESIGN).runs/synth_1/top.dcp" >> static_config.tcl; \
-		if [  $(BOARD) == xilinx-vc707-xc7vx485t ]; then \
-			echo "read_ip -quiet $(ESP_ROOT)/socs/$(BOARD)/vivado/$(DESIGN).srcs/sources_1/ip/prc_ctrlr_v7/prc_ctrlr_v7.xci" >> static_config.tcl; \
-        else \
-			echo "read_ip -quiet $(ESP_ROOT)/socs/$(BOARD)/vivado/$(DESIGN).srcs/sources_1/ip/prc_ctrlr_us/prc_ctrlr_us.xci" >> static_config.tcl; \
-		fi;\
-		if [ $(BOARD) == xilinx-vcu128-xcvu37p ]; then \
-            echo "read_ip -quiet $(ESP_ROOT)/socs/$(BOARD)/vivado/$(DESIGN).srcs/sources_1/ip/mig_clamshell/mig_clamshell.xci" >> static_config.tcl; \
-            echo "read_ip -quiet $(ESP_ROOT)/socs/$(BOARD)/vivado/$(DESIGN).srcs/sources_1/ip/sgmii_vcu128/sgmii_vcu128.xci" >> static_config.tcl; \
-        else \
-            echo "read_ip -quiet $(ESP_ROOT)/socs/$(BOARD)/vivado/$(DESIGN).srcs/sources_1/ip/mig/mig.xci" >> static_config.tcl; \
-            echo "read_ip -quiet $(ESP_ROOT)/socs/$(BOARD)/vivado/$(DESIGN).srcs/sources_1/ip/sgmii/sgmii.xci" >> static_config.tcl; \
-        fi; \
-        echo "link_design -top $(TOP) -part $(DEVICE)" >> static_config.tcl; \
-		echo "write_checkpoint -force $(ESP_ROOT)/socs/$(BOARD)/vivado/$(DESIGN).runs/synth_1/top_dpr.dcp" >> static_config.tcl; \
-        echo "close_project" >> static_config.tcl; \
-        echo "exit" >> static_config.tcl; \
-        echo $(SPACES)"DPR: Assembling sgmii and mig into static part"; \
-        vivado $(VIVADO_BATCH_OPT) -source static_config.tcl | tee ../vivado_syn.log; \
-        echo $(SPACES)"DPR: creating Vivado dpr directory"; \
         $(RM) vivado_dpr; \
         $(RM) partial_bitstreams;\
+        echo $(SPACES)"DPR: creating Vivado dpr directory"; \
 		mkdir -p partial_bitstreams;\
 		mkdir -p vivado_dpr; \
         mkdir -p vivado_dpr/Bitstreams; \
@@ -390,7 +366,34 @@ vivado-syn: vivado-setup
         mkdir -p vivado_dpr/Synth; \
         mkdir -p vivado_dpr/Synth/Static; \
         cp ./socgen/esp/.esp_config vivado_dpr/; \
-        cp $(ESP_ROOT)/socs/$(BOARD)/vivado/$(DESIGN).runs/synth_1/top_dpr.dcp vivado_dpr/Synth/Static/top_synth.dcp; \
+        echo $(SPACES)"DPR: starting DPR implementation"; \
+        echo $(SPACES)"DPR: assembling top level static design"; \
+        $(RM) vivado_dpr/static_config.tcl; \
+        echo "set part $(DEVICE) " >> vivado_dpr/static_config.tcl; \
+        echo "set board $(BOARD) " >> vivado_dpr/static_config.tcl; \
+		echo "add_files $(ESP_ROOT)/socs/$(BOARD)/vivado/$(DESIGN).runs/synth_1/top.dcp" >> vivado_dpr/static_config.tcl; \
+		echo "read_xdc $(ESP_ROOT)/socs/$(BOARD)/debug_ariane.xdc" >>  vivado_dpr/static_config.tcl; \
+		if [  $(BOARD) == xilinx-vc707-xc7vx485t ]; then \
+			echo "read_ip -quiet $(ESP_ROOT)/socs/$(BOARD)/vivado/$(DESIGN).srcs/sources_1/ip/prc_ctrlr_v7/prc_ctrlr_v7.xci" >> vivado_dpr/static_config.tcl; \
+        else \
+			echo "read_ip -quiet $(ESP_ROOT)/socs/$(BOARD)/vivado/$(DESIGN).srcs/sources_1/ip/prc_ctrlr_us/prc_ctrlr_us.xci" >> vivado_dpr/static_config.tcl; \
+		fi;\
+		if [ $(BOARD) == xilinx-vcu128-xcvu37p ]; then \
+            echo "read_ip -quiet $(ESP_ROOT)/socs/$(BOARD)/vivado/$(DESIGN).srcs/sources_1/ip/mig_clamshell/mig_clamshell.xci" >> vivado_dpr/static_config.tcl; \
+            echo "read_ip -quiet $(ESP_ROOT)/socs/$(BOARD)/vivado/$(DESIGN).srcs/sources_1/ip/sgmii_vcu128/sgmii_vcu128.xci" >> vivado_dpr/static_config.tcl; \
+        else \
+            echo "read_ip -quiet $(ESP_ROOT)/socs/$(BOARD)/vivado/$(DESIGN).srcs/sources_1/ip/mig/mig.xci" >> vivado_dpr/static_config.tcl; \
+            echo "read_ip -quiet $(ESP_ROOT)/socs/$(BOARD)/vivado/$(DESIGN).srcs/sources_1/ip/sgmii/sgmii.xci" >> vivado_dpr/static_config.tcl; \
+        fi; \
+        echo "link_design -top $(TOP) -part $(DEVICE)" >> vivado_dpr/static_config.tcl; \
+		echo "write_checkpoint -force $(ESP_ROOT)/socs/$(BOARD)/vivado/$(DESIGN).runs/synth_1/top_dpr.dcp" >> vivado_dpr/static_config.tcl; \
+        echo "close_project" >> vivado_dpr/static_config.tcl; \
+        echo "exit" >> vivado_dpr/static_config.tcl; \
+        echo $(SPACES)"DPR: Assembling sgmii and mig into static part"; \
+        cd vivado_dpr; \
+		vivado $(VIVADO_BATCH_OPT) -source static_config.tcl | tee ../vivado_syn.log; \
+        cd ../; \
+		cp $(ESP_ROOT)/socs/$(BOARD)/vivado/$(DESIGN).runs/synth_1/top_dpr.dcp vivado_dpr/Synth/Static/top_synth.dcp; \
         echo $(SPACES)"DPR : launching setup script for Vivado DPR flow";  \
         /bin/bash $(ESP_ROOT)/tools/dpr_tools//process_dpr.sh $(ESP_ROOT) $(BOARD) $(DEVICE) DPR;  \
         cd vivado_dpr; \

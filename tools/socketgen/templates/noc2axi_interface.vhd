@@ -48,9 +48,6 @@ use std.textio.all;
   port (
     rst       : in  std_ulogic;
     clk       : in  std_ulogic;
-    refclk    : in  std_ulogic;
-    pllbypass : in  std_ulogic;
-    pllclk    : out std_ulogic;
     local_y   : in  local_yx;
     local_x   : in  local_yx;
     tile_id   : in  integer range 0 to CFG_TILES_NUM - 1;
@@ -110,7 +107,6 @@ use std.textio.all;
     --Monitor signals
     mon_acc           : out monitor_acc_type;
     mon_cache         : out monitor_cache_type;
-    mon_dvfs          : out monitor_dvfs_type;
     dvfs_transient_acc    : in std_ulogic;
     -- Coherence
     coherence         : in integer range 0 to 3);
@@ -369,17 +365,6 @@ begin
   end process;
 
 
-  mon_acc.clk   <= pllclk_int;
-  mon_acc.go    <= acc_go;
-  mon_acc.run   <= acc_run;
-  mon_acc.done  <= acc_done;
-  mon_acc.burst <= mosi(0).w.valid or mosi(0).r.ready;
-
-  -- No DVFS on this tile for now
-  pllclk_int <= refclk;
-  pllclk <= pllclk_int;
-
-  mon_dvfs      <= monitor_dvfs_none;
   mon_cache     <= monitor_cache_none;
 
   mon_dvfs_feedthru.transient <= '0';

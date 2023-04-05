@@ -1625,7 +1625,7 @@ begin
       s_axil_bready     => s_axil_bready,
       s_axil_bresp      => s_axil_bresp);
 
-  noc_apbo(127).pirq <= (CFG_PRC_IRQ => vsm_VS_0_sw_startup_req); --connect PRC interrupt
+  noc_apbo(127).pirq(CFG_PRC_IRQ) <= vsm_VS_0_sw_startup_req; --connect PRC interrupt
   noc_apbo(127).pconfig <= fixed_apbo_pconfig(127);
   noc_apbo(127).pindex <= 127;
  end generate generate_prc;
