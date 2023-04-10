@@ -82,7 +82,7 @@ vivado/setup.tcl: vivado $(BOARD_FILES)
 ifeq ("$(CPU_ARCH)","ibex")
 	@echo "set_property verilog_define {XILINX_FPGA=1 WT_DCACHE=1 PRIM_DEFAULT_IMPL=prim_pkg::ImplXilinx} [get_filesets {sim_1 sources_1}]" >> $@
 else
-	@echo "set_property verilog_define {XILINX_FPGA=1 WT_DCACHE=1} [get_filesets {sim_1 sources_1}]" >> $@
+	@echo "set_property verilog_define {XILINX_FPGA=1 WT_DCACHE=1 FPU_FPNEW=1 SYNTHESIS=1} [get_filesets {sim_1 sources_1}]" >> $@
 endif
 	@echo "source ./srcs.tcl" >> $@
 ifneq ("$(PROTOBOARD)","")

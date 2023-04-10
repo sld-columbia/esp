@@ -471,6 +471,11 @@ out:
 	return rc;
 }
 
+static long esp_wait_ioctl(struct esp_device *esp)
+{
+	return esp_wait(esp);
+}
+
 static long esp_do_ioctl(struct file *file, unsigned int cm, void __user *arg)
 {
 	struct esp_device *esp = file->private_data;
@@ -480,6 +485,8 @@ static long esp_do_ioctl(struct file *file, unsigned int cm, void __user *arg)
 		return esp_run_ioctl(esp);
 	case ESP_IOC_FLUSH:
 		return esp_flush_ioctl(esp, arg);
+	case ESP_IOC_WAIT:
+		return esp_wait_ioctl(esp);
 	default:
 		if (cm == esp->driver->ioctl_cm)
 			return esp_access_ioctl(esp, arg);

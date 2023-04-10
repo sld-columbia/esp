@@ -1,3 +1,0 @@
-EXTRA_CFLAGS += \
-             -I$(DRIVERS)/include -I$(DRIVERS)/../common/include -I$(ACC_SW)/linux/include
-obj-m := gt_vortex_rtl.o

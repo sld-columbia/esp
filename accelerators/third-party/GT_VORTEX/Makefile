@@ -13,7 +13,8 @@ endif
 
 all: sw hw
 
-sw: umd kmd
+#sw: umd kmd
+sw: umd
 
 hw: rtl
 
@@ -35,8 +36,13 @@ rtl-clean:
 
 ## User-space application and libraries ##
 umd:
-	@cd $(SW_PATH)/umd; \
-	$(MAKE) TOOLCHAIN_PREFIX=$(CROSS_COMPILE) TOP=$(SW_PATH)/umd runtime
+	@cd $(SW_PATH)/driver/esp; \
+	$(MAKE) CC=$(CROSS_COMPILE) SOFT_BUILD=$(SOFT_BUILD) DRIVERS=$(DRIVERS)/linux all; \
+	cd $(SW_PATH)/driver/stub; \
+	$(MAKE) CXX=$(CROSS_COMPILE)g++ all; \
+	cd $(SW_PATH)/tests; \
+	$(MAKE) CXX=$(CROSS_COMPILE)g++ regression; \
+	#$(MAKE) CXX=$(CROSS_COMPILE)g++ opencl
 
 umd-clean:
 	@cd $(SW_PATH)/umd; \
@@ -46,12 +52,12 @@ umd-clean:
 
 
 ## Device drivers ##
-kmd:
-	@cd sw/kmd; \
-	$(MAKE) KDIR=$(KSRC) ARCH=$(ARCH) CROSS_COMPILE=$(CROSS_COMPILE)
+#kmd:
+#	@cd sw/kmd; \
+#	$(MAKE) KDIR=$(KSRC) ARCH=$(ARCH) CROSS_COMPILE=$(CROSS_COMPILE)
 
-kmd-clean:
-	@cd sw/kmd; \
-	$(MAKE) KDIR=$(KSRC) ARCH=$(ARCH) CROSS_COMPILE=$(CROSS_COMPILE) clean
+#kmd-clean:
+#	@cd sw/kmd; \
+#	$(MAKE) KDIR=$(KSRC) ARCH=$(ARCH) CROSS_COMPILE=$(CROSS_COMPILE) clean
 
 .PHONY: kmd kmd-clean

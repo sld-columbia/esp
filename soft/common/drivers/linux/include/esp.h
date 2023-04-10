@@ -21,6 +21,7 @@
 struct esp_access {
 	contig_khandle_t contig;
 	uint8_t run;
+	uint8_t third_party;
 	uint8_t p2p_store;
 	uint8_t p2p_nsrcs;
 	char p2p_srcs[4][64];
@@ -34,6 +35,7 @@ struct esp_access {
 
 #define ESP_IOC_RUN _IO('E', 0)
 #define ESP_IOC_FLUSH _IO('E', 1)
+#define ESP_IOC_WAIT _IO('E', 2)
 
 #ifdef __KERNEL__
 
