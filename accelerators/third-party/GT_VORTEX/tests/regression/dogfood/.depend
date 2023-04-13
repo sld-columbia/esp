@@ -1,4 +1,0 @@
-main.o: main.cpp \
- /home/esp2022/sr3859/Vortex2/vortex/driver/include/vortex.h \
- /home/esp2022/sr3859/Vortex2/vortex/runtime/../hw/VX_config.h \
- testcases.h common.h

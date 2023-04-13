@@ -238,9 +238,9 @@ static int esp_wait(struct esp_device *esp)
 {
 	/* Interrupt */
 	int wait;
-        // pr_info("Reached esp_wait\n"); 
+         pr_info("Reached esp_wait\n"); 
 	wait = wait_for_completion_interruptible(&esp->completion);
-	// pr_info("Launched wait for esp completion\n");
+         pr_info("interrupt returned\n"); 
         if (wait < 0)
 		return -EINTR;
 	if (esp->err) {
@@ -355,7 +355,7 @@ static int esp_access_ioctl(struct esp_device *esp, void __user *argp)
 	struct esp_access *access;
 	void *arg;
 	int rc = 0;
-
+	
 	arg = kmalloc(esp->driver->arg_size, GFP_KERNEL);
 	if (arg == NULL)
 		return -ENOMEM;
@@ -366,6 +366,7 @@ static int esp_access_ioctl(struct esp_device *esp, void __user *argp)
 	}
 
 	access = arg;
+	if (!access->third_party) {
 	contig = contig_khandle_to_desc(access->contig);
 	if (contig == NULL) {
 		rc = -EFAULT;
@@ -381,6 +382,7 @@ static int esp_access_ioctl(struct esp_device *esp, void __user *argp)
 		rc = -EINVAL;
 		goto out;
 	}
+	}
 
 	if (esp->driver->xfer_input_ok && !esp->driver->xfer_input_ok(esp, arg)) {
 		rc = -EINVAL;
@@ -391,11 +393,10 @@ static int esp_access_ioctl(struct esp_device *esp, void __user *argp)
 		rc = -EINTR;
 		goto out;
 	}
-
 	rc = esp_p2p_init(esp, access);
 	if (rc)
 		goto out;
-
+	
 	esp->coherence = access->coherence;
 	esp->footprint = access->footprint;
         esp->alloc_policy = access->alloc_policy;
@@ -407,25 +408,30 @@ static int esp_access_ioctl(struct esp_device *esp, void __user *argp)
         rc = -EINTR;
         goto out;
     }
+    
+    if (!access->third_party){
 
     esp_runtime_config(esp);
 
     mutex_unlock(&esp_status.lock);
-
+    }
 	rc = esp_flush(esp);
 	if (rc)
 		goto out;
 
+	if (!access->third_party)
 	esp_transfer(esp, contig);
-
+	
 	if (esp->driver->prep_xfer)
 		esp->driver->prep_xfer(esp, arg);
-
 	if (access->run) {
-		esp_run(esp);
-		rc = esp_wait(esp);
+		if (!access->third_party)
+			esp_run(esp);
+		if (!access->third_party)
+			rc = esp_wait(esp);
 	}
 
+    if (!access->third_party) {
     if (mutex_lock_interruptible(&esp_status.lock)) {
         rc = -EINTR;
         goto out;
@@ -434,7 +440,7 @@ static int esp_access_ioctl(struct esp_device *esp, void __user *argp)
     esp_update_status(esp);
 
     mutex_unlock(&esp_status.lock);
-
+    }
 	mutex_unlock(&esp->lock);
 
 out:
@@ -473,6 +479,7 @@ out:
 
 static long esp_wait_ioctl(struct esp_device *esp)
 {
+	pr_info("esp_wait_ioctl\n");
 	return esp_wait(esp);
 }
 

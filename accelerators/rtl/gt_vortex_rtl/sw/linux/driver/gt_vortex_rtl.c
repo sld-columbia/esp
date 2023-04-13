@@ -49,11 +49,10 @@ static void gt_vortex_prep_xfer(struct esp_device *esp, void *arg)
 
 	/* <<--regs-config-->> */
 	//iowrite32be(a->VX_BUSY_INT, esp->iomem + GT_VORTEX_VX_BUSY_INT_REG);
-	iowrite32be(0xa0200000, esp->iomem + GT_VORTEX_BASE_ADDR_REG);
+	iowrite32be(a->BASE_ADDR, esp->iomem + GT_VORTEX_BASE_ADDR_REG);
 	iowrite32be(a->START_VORTEX, esp->iomem + GT_VORTEX_START_VORTEX_REG);
 	// iowrite32be(a->src_offset, esp->iomem + SRC_OFFSET_REG);
 	// iowrite32be(a->dst_offset, esp->iomem + DST_OFFSET_REG);
-	// pr_info("Reached gt_vortex_prep_xfer\n");
 }
 
 static bool gt_vortex_xfer_input_ok(struct esp_device *esp, void *arg)

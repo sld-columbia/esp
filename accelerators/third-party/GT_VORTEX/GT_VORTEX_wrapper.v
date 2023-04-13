@@ -191,7 +191,7 @@ module GT_VORTEX_wrapper #(
 //wire level_sig_b = busy & vx_started;
 reg reg_done; 
 always @(posedge clk) begin
-  if(!reset || !vx_reset_soft)
+  if(!reset || vx_reset_soft)
      reg_done <= 0;
 	  //level_sig_busy_ff <= 1'b0;
   else
@@ -209,17 +209,17 @@ always @(posedge clk) begin
          addr           <= 32'b0; // reset initial value 
          vx_reset_soft  <= 1'b0;  // Software reset to start Vortex 
       end // reset
-      else begin
-	if (apb_write) begin
+      else if (apb_write) begin
           case (paddr[7:0])
             8'h50 : addr          <= pwdata;
 	    8'h54 : vx_reset_soft <= pwdata[0];  
           endcase
-        end  // write
-     end // !reset
-   end // always 
+      end else begin
+          vx_reset_soft <= 1'b0;
+      end // !reset
+ end // always 
    
-   always @(addr or vx_reset_soft or busy) begin
+   always @(*) begin
           case (paddr[7:0]) 
             8'h50 :  read_apb_data   = addr; 
 	    8'h54 :  read_apb_data   = {31'b0, vx_reset_soft}; 
@@ -231,13 +231,13 @@ always @(posedge clk) begin
    
    always @(posedge clk) begin
      
-     if (!reset || cmd_run_done) begin
+     if (!reset) begin
  	 // vx_reset    <= 1'b0;
          vx_started	<= 1'b0;
          vx_reset_ctr   <= 0;
      end else begin   
        
-       if (vx_reset_soft == 1'b1 && vx_started == 1'b0) begin
+       if (vx_reset_soft == 1'b1) begin
 	 vx_reset   <= 1'b1;
 	 vx_started <= 1'b1;
        end // end reset begin if
@@ -249,7 +249,9 @@ always @(posedge clk) begin
        else if (vx_reset == 1'b1) begin
          vx_reset_ctr <= vx_reset_ctr + 1; 
        end
-       
+       else if (vx_started && cmd_run_done) begin
+         vx_reset_ctr <= 0;	 
+       end 
        //if (vx_started == 0 && vx_reset_soft == 1) begin
        //  vx_reset_ctr <= 0;
        //end else if (vx_started == 1) begin

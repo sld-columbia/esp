@@ -18,7 +18,7 @@ THIRDPARTY_IRQ_TYPE["nv_nvdla"]   = "1"
 
 # GT_VORTEX
 THIRDPARTY_COMPATIBLE["gt_vortex"] = "gt_vortex"
-THIRDPARTY_IRQ_TYPE["gt_vortex"]   = "1"
+THIRDPARTY_IRQ_TYPE["gt_vortex"]   = "0"
 
 #
 ######
