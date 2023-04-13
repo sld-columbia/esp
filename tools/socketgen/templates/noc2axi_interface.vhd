@@ -364,7 +364,11 @@ begin
 
   end process;
 
-
+  mon_acc.clk   <= clk;
+  mon_acc.go    <= acc_go;
+  mon_acc.run   <= acc_run;
+  mon_acc.done  <= acc_done;
+  mon_acc.burst <= mosi(0).w.valid or mosi(0).r.ready;
   mon_cache     <= monitor_cache_none;
 
   mon_dvfs_feedthru.transient <= '0';

@@ -477,6 +477,7 @@ begin
 
   -- decouple signals if decouple_acc is asserted
   decoupler_gen: process (decouple_acc, coherence_req_wrreq_acc, coherence_fwd_rdreq_acc,
+                          coherence_fwd_snd_wrreq_acc, coherent_dma_rcv_rdreq_acc,
                           coherent_dma_snd_wrreq_acc, coherence_rsp_rcv_rdreq_acc,
                           coherence_rsp_snd_wrreq_acc, dma_rcv_rdreq_acc, dma_snd_wrreq_acc,
                           interrupt_wrreq_acc, interrupt_ack_rdreq_acc) is

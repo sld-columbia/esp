@@ -372,7 +372,6 @@ vivado-syn: vivado-setup
         echo "set part $(DEVICE) " >> vivado_dpr/static_config.tcl; \
         echo "set board $(BOARD) " >> vivado_dpr/static_config.tcl; \
 		echo "add_files $(ESP_ROOT)/socs/$(BOARD)/vivado/$(DESIGN).runs/synth_1/top.dcp" >> vivado_dpr/static_config.tcl; \
-		echo "read_xdc $(ESP_ROOT)/socs/$(BOARD)/debug_ariane.xdc" >>  vivado_dpr/static_config.tcl; \
 		if [  $(BOARD) == xilinx-vc707-xc7vx485t ]; then \
 			echo "read_ip -quiet $(ESP_ROOT)/socs/$(BOARD)/vivado/$(DESIGN).srcs/sources_1/ip/prc_ctrlr_v7/prc_ctrlr_v7.xci" >> vivado_dpr/static_config.tcl; \
         else \
