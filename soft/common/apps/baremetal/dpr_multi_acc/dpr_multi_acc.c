@@ -6,21 +6,23 @@
 #include <stdlib.h>
 #endif
 
+#include <monitors.h>
+
 #include "prc_utils.h"
 #include "dpr_multi_acc.h"
 #include "mac.h"
 #include "adder.h"
 
 #define NUM_ACC_INVOC_ITER 5
-#define RUN_LOOP
+//#define RUN_LOOP
 
-#define SLD_ACC_TILE_1 0x99
+#define SLD_ACC_TILE_1 0x98
 #define DEV_NAME_ADDER "sld,adder_vivado"
-#define DEV_NAME_MAC "sld,adder_vivado"
+#define DEV_NAME_MAC "sld,mac_vivado"
 
 int main(int argc, char * argv[])
 {
-	int i, j, k;
+	int i;
 	int n;
 	int ndev;
 	unsigned done;
@@ -51,31 +53,33 @@ int main(int argc, char * argv[])
     for(k = 0; k < NUM_ACC_INVOC_ITER; k++) {
 #endif
     //Adder acceleraotr section
-	// Probing ADDER
-	printf("  Probing... ADDER\n");
+    // Probing ADDER
+    printf("  Probing... ADDER\n");
 
-	// adder
-	printf(" Initialize Adder app...\n");
-	ndev = probe(&espdevs_tile_1, VENDOR_SLD, SLD_ACC_TILE_1, DEV_NAME_ADDER);
-	if (ndev == 0) {
-		printf("adder not found\n");
-		return 0;
-	}
+    // adder
+    printf(" Initialize Adder app...\n");
+    ndev = probe(&espdevs_tile_1, VENDOR_SLD, SLD_ACC_TILE_1, DEV_NAME_ADDER);
+    if (ndev == 0) {
+      printf("adder not found\n");
+      return 0;
+    }
 
-	dev_tile_1 = &espdevs_tile_1[0];
+    dev_tile_1 = &espdevs_tile_1[0];
 
+    printf("  ****  Loading Adder accelerator onto FPGA  **** \n");
+    reconfigure_FPGA(dev_tile_1, 0);
     // Check DMA capabilities
-	if (ioread32(dev_tile_1, PT_NCHUNK_MAX_REG) == 0) {
-	    printf("  -> scatter-gather DMA is disabled. Abort.\n");
-	    return 0;
-	}
-	if (ioread32(dev_tile_1, PT_NCHUNK_MAX_REG) < NCHUNK_ADDER) {
-	    printf("  -> Not enough TLB entries available. Abort.\n");
-	    return 0;
-	}
+    if (ioread32(dev_tile_1, PT_NCHUNK_MAX_REG) == 0) {
+        printf("  -> scatter-gather DMA is disabled. Abort.\n");
+        return 0;
+    }
+    if (ioread32(dev_tile_1, PT_NCHUNK_MAX_REG) < NCHUNK_ADDER) {
+        printf("  -> Not enough TLB entries available. Abort.\n");
+        return 0;
+    }
 
-	// Allocation
-	printf("  Allocation...\n");
+    // Allocation
+    printf("  Allocation...\n");
 
     // Allocate memory (will be contiguos anyway in baremetal)
     mem_adder = aligned_malloc(SIZE_ADDER);
@@ -141,7 +145,9 @@ int main(int argc, char * argv[])
 
 
     //reconfigure the accelerator tile :- load the mac accelerator
-    reconfigure_FPGA(dev_tile_1, 2);
+    printf("   **** Loading MAC accelerator onto FPGA ****\n");
+    reconfigure_FPGA(dev_tile_1, 1);
+
 
     //MAC acceleraotr section
 	// Probing
@@ -249,7 +255,7 @@ int main(int argc, char * argv[])
         aligned_free(mem_gold_mac);
     }
 
-    reconfigure_FPGA(dev_tile_1, 0);
+    //reconfigure_FPGA(dev_tile_1, 0);
 #ifdef RUN_LOOP
 }
 #endif
