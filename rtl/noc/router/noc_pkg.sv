@@ -84,7 +84,7 @@ package noc;
   typedef logic [4:0][CreditsWidth-1:0] credits_t;
 
   //
-  // Packet info encoding
+  // Packet   encoding
   //
 
   typedef logic [messageTypeWidth-1:0] message_t;
@@ -93,11 +93,16 @@ package noc;
     logic head;
     logic tail;
   } preamble_t;
-
+  
+  // ajay_v
+  // Modified the structure to add more destinataions and valid indications to each destination
   typedef struct packed {
     xy_t source;
-    xy_t destination;
+    xy_t [1:0] destination;
+    //xy_t destination_1;
     message_t message;
+    bit [1:0] val; // 1 indicates Destination still awaits, 0 indicates destination already reached/taken care
+    //logic val; // 1 indicates Destination 1 still awaits, 0 indicates destination already reached/crossed
   } packet_info_t;
 
 endpackage

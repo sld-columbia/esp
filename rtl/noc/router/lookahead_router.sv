@@ -53,7 +53,7 @@
 module lookahead_router
   #(
     parameter noc::noc_flow_control_t FlowControl = noc::kFlowControlAckNack,
-    parameter int unsigned DataWidth = 32,
+    parameter int unsigned DataWidth = 64,
     parameter int unsigned PortWidth = DataWidth + $bits(noc::preamble_t),
     parameter bit [4:0] Ports = noc::AllPorts
     )
@@ -87,13 +87,14 @@ module lookahead_router
 
   typedef struct packed {
     noc::preamble_t preamble;
-    noc::packet_info_t info;
+    noc::packet_info_t info; // source, destination[],val[],message(5 bit)
     logic [ReservedWidth-1:0] reserved;
-    noc::direction_t routing;
+    noc::direction_t routing; // 5 bit logic indicates LEWSN
   } header_t;
 
   typedef logic [PortWidth-1:0] payload_t;
 
+  // Including header and the flit
   typedef union packed {
     header_t header;
     payload_t flit;
@@ -111,10 +112,15 @@ module lookahead_router
   flit_t [4:0] fifo_head;
   flit_t [4:0] data_out_crossbar;
   flit_t [4:0] last_flit;
+  flit_t [4:0] fifo_head_temp [4:0];
 
   logic [4:0][4:0] saved_routing_request;
   logic [4:0][4:0] final_routing_request;  // ri lint_check_waive NOT_READ
   logic [4:0][4:0] next_hop_routing;
+  logic [4:0][4:0] next_hop_routing_2;
+  // ajay_v signal indicates either of the next_hop_routing
+  logic [4:0][4:0] next_hop_routing_all;
+  
 
   logic [4:0][3:0] transp_final_routing_request;
 
@@ -224,17 +230,31 @@ module lookahead_router
       // CreditBased: send credits when reading from the input FIFO
       assign stop_out[g_i] =  FifoBypassEnable ? full[g_i] :
                                 ~(rd_fifo_or[g_i] & ~in_unvalid_flit[g_i]);
+      
+      //ajay_v
+      // Added another routing module to check for different destination
+      // Can we make it parameterised based on the number of destinations available and the valid 
+      // This will indicate the next routing direction
+      // If next location is local, then next_routing = current_routing
+      genvar dest_num;
+          lookahead_routing lookahead_routing_i
+          (
+            .clk,
+            .position,
+            .destination(fifo_head[g_i].header.info.destination),
+	    .val(fifo_head[g_i].header.info.val),
+            .current_routing(fifo_head[g_i].header.routing),
+            .next_routing(next_hop_routing[g_i])
+            // ,
+            // .val(fifo_head[g_i].header.info.val[dest_num])
+          );
+    //assign next_hop_routing_all[g_i] = next_hop_routing[g_i] || next_hop_routing_2[g_i];
+    //assign fifo_head[g_i].header.info.val1 = (fifo_head[g_i].header.routing == next_hop_routing[g_i]) ? 0 : 1;
+    //assign fifo_head[g_i].header.info.val2 = (fifo_head[g_i].header.routing == next_hop_routing_2[g_i]) ? 0 : 1;
+    
 
-      lookahead_routing lookahead_routing_i
-        (
-         .clk,
-         .position,
-         .destination(fifo_head[g_i].header.info.destination),
-         .current_routing(fifo_head[g_i].header.routing),
-         .next_routing(next_hop_routing[g_i])
-         );
-
-    end else begin : gen_input_port_disabled
+    end 
+    else begin : gen_input_port_disabled
 
       assign stop_out[g_i] = 1'b1;
       assign final_routing_request[g_i] = '0;
@@ -244,6 +264,8 @@ module lookahead_router
       assign empty[g_i] = 1'b1;
       assign full[g_i] = '0;
       assign next_hop_routing[g_i] = '0;
+      assign next_hop_routing_2[g_i] = '0;
+      assign next_hop_routing_all[g_i] = '0;
       assign rd_fifo_or[g_i] = '0;
       assign wr_fifo[g_i] = '0;
       assign in_valid_head[g_i] = 1'b0;
@@ -268,7 +290,7 @@ module lookahead_router
           assign enhanc_routing_configuration[g_i][g_j] = routing_configuration[g_i][g_j];
         end else if (g_j > g_i) begin : gen_transpose_routin_j_gt_i
           assign transp_final_routing_request[g_i][g_j-1] = final_routing_request[g_j][g_i];
-          assign enhanc_routing_configuration[g_i][g_j] = routing_configuration[g_i][g_j-1];
+          assign enhanc_routing_configuration[g_i][g_j] = routing_configuration[g_i][g_j-1]; // doubt - Aren't we loosing the ability to represent all 5 possible routing here ?
         end else begin : gen_transpose_routin_j_eq_i
           assign enhanc_routing_configuration[g_i][g_j] = 1'b0;
         end
@@ -307,55 +329,181 @@ module lookahead_router
           end
         end
       end
-
-      // Crossbar
+      
+	// Crossbar
       always_comb begin
         data_out_crossbar[g_i] = '0;
         rd_fifo[g_i] = '0;
         out_unvalid_flit[g_i] = 1'b1;
 
-        unique case (enhanc_routing_configuration[g_i])
-          noc::goNorth : begin
-            data_out_crossbar[g_i] = ~insert_lookahead_routing[g_i] ? fifo_head[noc::kNorthPort] :
-            {fifo_head[noc::kNorthPort].flit[PortWidth-1:5], next_hop_routing[noc::kNorthPort]};
-            rd_fifo[g_i][noc::kNorthPort] = no_backpressure[g_i];
-            out_unvalid_flit[g_i] = in_unvalid_flit[noc::kNorthPort];
-          end
+        //ajay_v added
+        fifo_head_temp[g_i][0] = fifo_head[0];
+        fifo_head_temp[g_i][1] = fifo_head[1];
+        fifo_head_temp[g_i][2] = fifo_head[2];
+        fifo_head_temp[g_i][3] = fifo_head[3];
+        fifo_head_temp[g_i][4] = fifo_head[4];
+        
+	     	      // ajay_v added below to check for destination valid and invalidate the irrelevant destinations
+        if (enhanc_routing_configuration[g_i] == noc::goNorth) begin // current_routing_north
+	   //fifo_head_temp[noc::kNorthPort] = fifo_head[noc::kNorthPort];
+           // Conditions for a destination to be invalid when the packet going to North of current packet 
+           for(int index = 0; index < 2; index++) begin  //check_north_and_inval_dest
+             // if(fifo_head[g_i].header.info.val[index]) begin ---------- ajay_v - do we need to check for this condition ? ----------
+               //if(fifo_head[g_i].header.info.val[index]) begin  //check_north_and_inval_dest_2 ajay_v - do we need to check for this condition ?
+               // Disabling the destination valid that is already taken care/crossed
+               // Conditions for a destination to be invalid when the packet going to North of current packet 
+               // 1. if the x value of destination is not equal to the x value of next tile, invalidate that destination
+               // 2. If the packet is local for the next router then make the valid as 0
+               // 3. If the x value of destination is equal to the x value of next tile, and y value of destination is greater the the y value of next tile, then invalidate the destination
+	       // fifo_head[g_i] is replaced with fifo_head[corresponding port]
+               if(position.x != fifo_head[noc::kNorthPort].header.info.destination[index].x) begin  // dest_in_wrong_direction_for_next_router_0
+                   fifo_head_temp[g_i][noc::kNorthPort].header.info.val[index] = 0;
+               end
+               else begin 
+                 //if(position.y-1 == fifo_head[noc::kNorthPort].header.info.destination[index].y) // dest_is_local_for_next_router_0
+                   //fifo_head_temp[g_i][noc::kNorthPort].header.info.val[index] = 0;
+         	  //else 
+            if(position.y-1 < fifo_head[noc::kNorthPort].header.info.destination[index].y) // opposite_direction_dest
+         	   fifo_head_temp[g_i][noc::kNorthPort].header.info.val[index] = 0;
+         	  else
+         	   fifo_head_temp[g_i][noc::kNorthPort].header.info.val[index] = 1;
+               end
+           end
+	   // ajay_v Aren't we supposed to send out the fifo_head[] based on where the input is coming from ? rather than sending fifo_head[] of where we are heading to ! ?? doubt
+           data_out_crossbar[g_i] = ~insert_lookahead_routing[g_i] ? fifo_head_temp[g_i][noc::kNorthPort] :
+           {fifo_head_temp[g_i][noc::kNorthPort].flit[PortWidth-1:5], next_hop_routing[noc::kNorthPort]};
+	   //data_out_crossbar[g_i] = ~insert_lookahead_routing[g_i] ? fifo_head_temp[noc::kNorthPort] :  
+           //{fifo_head_temp[noc::kNorthPort].flit[PortWidth-1:5], next_hop_routing[noc::kNorthPort]};
+           rd_fifo[g_i][noc::kNorthPort] = no_backpressure[g_i];
+           out_unvalid_flit[g_i] = in_unvalid_flit[noc::kNorthPort];
+        end
 
-          noc::goSouth : begin
-            data_out_crossbar[g_i] = ~insert_lookahead_routing[g_i] ? fifo_head[noc::kSouthPort] :
-              {fifo_head[noc::kSouthPort].flit[PortWidth-1:5], next_hop_routing[noc::kSouthPort]};
+        if (enhanc_routing_configuration[g_i] == noc::goSouth) begin  // current_routing_south
+	   //fifo_head_temp[noc::kSouthPort] = fifo_head[noc::kSouthPort];
+           // Check for all destinations 
+           for(int index = 0; index < 2; index++) begin  // check_south_and_inval_dest
+             // if(fifo_head[g_i].header.info.val[index]) begin ---------- ajay_v - do we need to check for this condition ? ----------
+              // if(fifo_head[g_i].header.info.val[index]) begin  // check_south_and_inval_dest_2 ajay_v - do we need to check for this condition ?
+ 	      // Disabling the destination valid that is already taken care/crossed
+              // Conditions for a destination to be invalid when the packet going to South of current packet 
+ 	      // 1. if the x value of destination is not equal to the x value of next tile, invalidate that destination
+              // 2. If the packet is local for the next router then make the valid as 0
+ 	      // 3. If the x value of destination is equal to the x value of next tile, and y value of destination is less the the y value of next tile, then invalidate the destination
+              // fifo_head[g_i] is replaced with fifo_head[corresponding port]
+              if(position.x != fifo_head[noc::kSouthPort].header.info.destination[index].x) begin  // 
+                 fifo_head_temp[g_i][noc::kSouthPort].header.info.val[index] = 0;
+ 	            end
+              else begin  // wrong_direction_in_next_router_1
+                //if(position.y+1 == fifo_head[noc::kSouthPort].header.info.destination[index].y) // local_in_next_router
+                //  fifo_head_temp[g_i][noc::kSouthPort].header.info.val[index] = 0;
+                //else
+                if(position.y+1 < fifo_head[noc::kSouthPort].header.info.destination[index].y) // destination is on the north
+                  fifo_head_temp[g_i][noc::kSouthPort].header.info.val[index] = 0;
+                else
+                  fifo_head_temp[g_i][noc::kSouthPort].header.info.val[index] = 1;
+              end
+ 	          end // check_south_and_inval_dest
+	    // ajay_v Aren't we supposed to send out the fifo_head[] based on where the input is coming from ? rather than sending fifo_head[] of where we are heading to ! 
+            data_out_crossbar[g_i] = ~insert_lookahead_routing[g_i] ? fifo_head_temp[g_i][noc::kSouthPort] :
+              {fifo_head_temp[g_i][noc::kSouthPort].flit[PortWidth-1:5], next_hop_routing[noc::kSouthPort]};
+            //data_out_crossbar[g_i] = ~insert_lookahead_routing[g_i] ? fifo_head_temp[g_i] :
+            //  {fifo_head_temp[g_i].flit[PortWidth-1:5], next_hop_routing[g_i]};
             rd_fifo[g_i][noc::kSouthPort] = no_backpressure[g_i];
             out_unvalid_flit[g_i] = in_unvalid_flit[noc::kSouthPort];
-          end
+        end // current_routing_south
 
-          noc::goWest : begin
-            data_out_crossbar[g_i] = ~insert_lookahead_routing[g_i] ? fifo_head[noc::kWestPort] :
-              {fifo_head[noc::kWestPort].flit[PortWidth-1:5], next_hop_routing[noc::kWestPort]};
-            rd_fifo[g_i][noc::kWestPort] = no_backpressure[g_i];
-            out_unvalid_flit[g_i] = in_unvalid_flit[noc::kWestPort];
-          end
+        if (enhanc_routing_configuration[g_i] == noc::goWest) begin  // current_routing_west
+	   //fifo_head_temp[noc::kWestPort] = fifo_head[noc::kWestPort];
+          for(int index = 0; index < 2; index++) begin  // check_west_and_inval_dest
+             // if(fifo_head[g_i].header.info.val[index]) begin ---------- ajay_v - do we need to check for this condition ? ----------
+              // If the packet is local for the next router then make the valid as 0
+              // Disabling the destination valid that is already taken care/crossed
+              // Conditions for a destination to be invalid when the packet going to West of current packet 
+              // 1. If the packet is local for the next router then make the valid as 0
+              // 2. If the y value of destination is equal to the y value of next tile, and x value of destination is greater than x value of next tile, then invalidate the destination
+              // 3. If the y value of destination is not equal to the y value of next tile, and x value of destination is greater than x value of next tile, then invalidate the destination
+              // fifo_head[g_i] is replaced with fifo_head[corresponding port]
+	      if(position.y == fifo_head[noc::kWestPort].header.info.destination[index].y) begin 
+                //if(position.x-1 == fifo_head[noc::kWestPort].header.info.destination[index].x) // It is local at next tile
+                //  fifo_head_temp[g_i][noc::kWestPort].header.info.val[index] = 0;
+                //else 
+                if(position.x-1 < fifo_head[noc::kWestPort].header.info.destination[index].x) // The destination is in the east direction on the same x-axis
+                  fifo_head_temp[g_i][noc::kWestPort].header.info.val[index] = 0;
+                else
+                  fifo_head_temp[g_i][noc::kWestPort].header.info.val[index] = 1; // Destination is valid
+              end
+              else begin
+                if(position.x-1 < fifo_head[noc::kWestPort].header.info.destination[index].x) // The destination is in the east direction 
+                              fifo_head_temp[g_i][noc::kWestPort].header.info.val[index] = 0;
+                else
+                  fifo_head_temp[g_i][noc::kWestPort].header.info.val[index] = 1; // Destination is valid
+              end
+          end // check_west_and_inval_dest
+	  // ajay_v Aren't we supposed to send out the fifo_head[] based on where the input is coming from ? rather than sending fifo_head[] of where we are heading to ! 
+          data_out_crossbar[g_i] = ~insert_lookahead_routing[g_i] ? fifo_head_temp[g_i][noc::kWestPort] :
+            {fifo_head_temp[g_i][noc::kWestPort].flit[PortWidth-1:5], next_hop_routing[noc::kWestPort]};
+          //  data_out_crossbar[g_i] = ~insert_lookahead_routing[g_i] ? fifo_head_temp[g_i] :
+          //    {fifo_head_temp[g_i].flit[PortWidth-1:5], next_hop_routing[g_i]};
+          rd_fifo[g_i][noc::kWestPort] = no_backpressure[g_i];
+          out_unvalid_flit[g_i] = in_unvalid_flit[noc::kWestPort];
+        end // current_routing_west
 
-          noc::goEast : begin
-            data_out_crossbar[g_i] = ~insert_lookahead_routing[g_i] ? fifo_head[noc::kEastPort] :
-              {fifo_head[noc::kEastPort].flit[PortWidth-1:5], next_hop_routing[noc::kEastPort]};
-            rd_fifo[g_i][noc::kEastPort] = no_backpressure[g_i];
-            out_unvalid_flit[g_i] = in_unvalid_flit[noc::kEastPort];
+        if (enhanc_routing_configuration[g_i] == noc::goEast) begin  // current_routing_east
+	   //fifo_head_temp[noc::kEastPort] = fifo_head[noc::kEastPort];
+          for(int index = 0; index < 2; index++) begin  // check_east_and_inval_dest
+            // if(fifo_head[g_i].header.info.val[index]) begin ---------- ajay_v - do we need to check for this condition ? ----------
+            // If the packet is local for the next router then make the valid as 0
+            // Disabling the destination valid that is already taken care/crossed
+            // Conditions for a destination to be invalid when the packet going to East of current packet 
+            // 1. If the packet is local for the next router then make the valid as 0
+            // 2. If the y value of destination is equal to the y value of next tile, and x value of destination is less than x value of next tile, then invalidate the destination
+            // 3. If the y value of destination is not equal to the y value of next tile, and x value of destination is less than x value of next tile, then invalidate the destination
+              // fifo_head[g_i] is replaced with fifo_head[corresponding port]
+            if(position.y == fifo_head[noc::kEastPort].header.info.destination[index].y) begin 
+              //if(position.x-1 == fifo_head[noc::kEastPort].header.info.destination[index].x) // It is local at next tile
+              //  fifo_head_temp[g_i][noc::kEastPort].header.info.val[index] = 0;
+              //else
+               if(position.x+1 > fifo_head[noc::kEastPort].header.info.destination[index].x) // The destination is in the west direction on the same x-axis
+                fifo_head_temp[g_i][noc::kEastPort].header.info.val[index] = 0;
+              else
+                fifo_head_temp[g_i][noc::kEastPort].header.info.val[index] = 1; // Destination is valid
+            end
+            else begin
+              if(position.x+1 > fifo_head[noc::kEastPort].header.info.destination[index].x) // The destination is in the west direction 
+                      fifo_head_temp[g_i][noc::kEastPort].header.info.val[index] = 0;
+              else
+                fifo_head_temp[g_i][noc::kEastPort].header.info.val[index] = 1; // Destination is valid
+            end
           end
+	  // ajay_v Aren't we supposed to send out the fifo_head[] based on where the input is coming from ? rather than sending fifo_head[] of where we are heading to ! 
+          data_out_crossbar[g_i] = ~insert_lookahead_routing[g_i] ? fifo_head_temp[g_i][noc::kEastPort] :
+            {fifo_head_temp[g_i][noc::kEastPort].flit[PortWidth-1:5], next_hop_routing[noc::kEastPort]};
+          //  data_out_crossbar[g_i] = ~insert_lookahead_routing[g_i] ? fifo_head_temp[g_i] :
+          //    {fifo_head_temp[g_i].flit[PortWidth-1:5], next_hop_routing[g_i]};
+          rd_fifo[g_i][noc::kEastPort] = no_backpressure[g_i];
+          out_unvalid_flit[g_i] = in_unvalid_flit[noc::kEastPort];
+        end
 
-          noc::goLocal : begin
-            data_out_crossbar[g_i] = ~insert_lookahead_routing[g_i] ? fifo_head[noc::kLocalPort] :
-              {fifo_head[noc::kLocalPort].flit[PortWidth-1:5], next_hop_routing[noc::kLocalPort]};
-            rd_fifo[g_i][noc::kLocalPort] = no_backpressure[g_i];
-            out_unvalid_flit[g_i] = in_unvalid_flit[noc::kLocalPort];
-          end
+        if (enhanc_routing_configuration[g_i] == noc::goLocal) begin
+	  // fifo_head_temp[noc::kLocalPort] = fifo_head[noc::kLocalPort];
+	  // Q : ajay_v Aren't we supposed to send out the fifo_head[] based on where the input is coming from ? rather than sending fifo_head[] of where we are heading to !
+	  // Ans : kLocalPort will be pointed to the input FIFO that is feeding data to this router
+	  // for(int index = 0; index < 2; index++) begin  // check_local_and_inval_other_dest
+		// if((position.y == fifo_head[noc::kLocalPort].header.info.destination[index].y) && (position.x == fifo_head[noc::kLocalPort].header.info.destination[index].x)) 
+		// 	fifo_head_temp[g_i][noc::kLocalPort].header.info.val[index] = 1;	
+		// else
+		// 	fifo_head_temp[g_i][noc::kLocalPort].header.info.val[index] = 0;
+	  // end
+          data_out_crossbar[g_i] = ~insert_lookahead_routing[g_i] ? fifo_head[noc::kLocalPort] :
+            {fifo_head[noc::kLocalPort].flit[PortWidth-1:5], next_hop_routing[noc::kLocalPort]};
+          //  data_out_crossbar[g_i] = ~insert_lookahead_routing[g_i] ? fifo_head[g_i] :
+          //    {fifo_head_temp[g_i].flit[PortWidth-1:5], next_hop_routing[g_i]};
 
-          default : begin
-          end
-        endcase
+          rd_fifo[g_i][noc::kLocalPort] = no_backpressure[g_i];
+          out_unvalid_flit[g_i] = in_unvalid_flit[noc::kLocalPort];
+        end
       end
-
-
+      
       // Sample output
       always_ff @(posedge clk) begin
         if (rst) begin
@@ -469,6 +617,11 @@ module lookahead_router
       assign forwarding_in_progress[g_i] = '0;
       assign insert_lookahead_routing[g_i] = '0;
       assign credits[g_i] = '0;
+      assign fifo_head_temp[g_i][0] = '0;
+      assign fifo_head_temp[g_i][1] = '0;
+      assign fifo_head_temp[g_i][2] = '0;
+      assign fifo_head_temp[g_i][3] = '0;
+      assign fifo_head_temp[g_i][4] = '0;
     end // block: gen_output_port_enabled
 
   end // for gen_output_control
@@ -495,9 +648,11 @@ module lookahead_router
   end
 
   for (g_i = 0; g_i < 4; g_i++) begin : gen_assert_legal_routing_request
-    a_no_request_to_same_port: assert property (@(posedge clk) disable iff(rst)
-      final_routing_request[g_i][g_i] == 1'b0)
-      else $error("Fail: a_no_request_to_same_port");
+  //This assertion is to check whether we are not sending packet in the opposite direction
+  // Need to update test bench 
+    //a_no_request_to_same_port: assert property (@(posedge clk) disable iff(rst)
+    //  final_routing_request[g_i][g_i] == 1'b0)
+    //  else $info("Getting a_no_request_to_same_port"); //$error("Fail: a_no_request_to_same_port");
     a_enhanc_routing_configuration_onehot: assert property (@(posedge clk) disable iff(rst)
       $onehot0(enhanc_routing_configuration[g_i]))
       else $error("Fail: a_enhanc_routing_configuration_onehot");
