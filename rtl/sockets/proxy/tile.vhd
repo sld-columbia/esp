@@ -756,6 +756,7 @@ package tile is
       rd_index                      : in  std_logic_vector(31 downto 0);
       rd_length                     : in  std_logic_vector(31 downto 0);
       rd_size                       : in  std_logic_vector(2 downto 0);
+      rd_mode                       : in  std_logic_vector(3 downto 0);
       rd_grant                      : out std_ulogic;
       bufdin_ready                  : in  std_ulogic;
       bufdin_data                   : out std_logic_vector(ARCH_BITS - 1 downto 0);

@@ -86,6 +86,7 @@ entity esp_acc_dma is
     rd_index      : in  std_logic_vector(31 downto 0);
     rd_length     : in  std_logic_vector(31 downto 0);
     rd_size       : in  std_logic_vector(2 downto 0);
+    rd_mode       : in  std_logic_vector(3 downto 0);
     rd_grant      : out std_ulogic;
     bufdin_ready  : in  std_ulogic;
     bufdin_data   : out std_logic_vector(ARCH_BITS - 1 downto 0);
@@ -210,7 +211,7 @@ architecture rtl of esp_acc_dma is
   signal p2p_rsp_snd_wrreq    : std_ulogic;
   signal p2p_rsp_snd_data_in  : noc_flit_type;
   signal p2p_rsp_snd_full     : std_ulogic;
-  signal dma_toggle           : std_ulogic;
+
   -- IRQ
   signal irq      : std_ulogic;
   signal irqset   : std_ulogic;
@@ -441,7 +442,7 @@ begin  -- rtl
   p2p_dst_x <= get_origin_x(NOC_FLIT_SIZE, p2p_req_rcv_data_out);
 
   make_packet: process (bankreg, pending_dma_write, tlb_empty, dma_address, dma_length,
-                        p2p_src_index_r, p2p_dst_y, p2p_dst_x, coherence, local_y, local_x, dma_toggle)
+                        p2p_src_index_r, p2p_dst_y, p2p_dst_x, coherence, local_y, local_x)
     variable msg_type : noc_msg_type;
     variable header_v : noc_flit_type;
     variable tmp : std_logic_vector(63 downto 0);
@@ -488,7 +489,7 @@ begin  -- rtl
       -- accelerator read burst
       address := dma_address;
       length  := len_pad & dma_length(31 downto GLOB_BYTE_OFFSET_BITS);
-      if bankreg(P2P_REG)(P2P_BIT_SRC_IS_P2P) = '1' and dma_toggle = '1' then
+      if bankreg(P2P_REG)(P2P_BIT_SRC_IS_P2P) = '1' then
         msg_type := REQ_P2P;
         is_p2p := '1';
       else
@@ -549,11 +550,12 @@ begin  -- rtl
       count <= conv_std_logic_vector(1, 32);
       size_r <= HSIZE_WORD;
       p2p_src_index_r <= 0;
-      dma_toggle <= '1';
+      -- Assign DMA mode index 0 by default
+      bankreg(P2P_REG)(31 downto 0) <= bankreg(DMA_IDX_REG)(31 downto 0)
     elsif clk'event and clk = '1' then  -- rising clock edge
       if dma_tran_done = '1' then
-        -- toggle src dma mode after each transaction
-        dma_toggle <= not (dma_toggle);
+        -- Assign DMA mode based on index sent by accelerator
+      bankreg(P2P_REG)(31 downto 0) <= bankreg(DMA_IDX_REG+rd_mode)(31 downto 0)
       end if;
       if sample_flits = '1' then
         header_r <= header;
