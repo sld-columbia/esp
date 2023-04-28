@@ -74,7 +74,10 @@ package esp_acc_regmap is
 
   -- bank(15)       : RESERVED
 
-  -- bank(16 to 63) : USR (user defined)
+  -- bank(16 to 47) : USR (user defined)
+
+  -- banck(48 to 63): Use for DMA mode index table
+  constant DMA_IDX_REG : integer range 0 to MAXREGNUM - 1 := 48;
 
   -- Re-enable the following 3 registers if adding an SRAM expanding the register bank
   -- -- bank(29)       : EXP_ADDR (bits 29:0 address an SRAM expanding the register bank)

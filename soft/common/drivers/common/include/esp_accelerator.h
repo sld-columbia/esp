@@ -62,6 +62,15 @@ enum accelerator_coherence {ACC_COH_NONE = 0, ACC_COH_LLC, ACC_COH_RECALL, ACC_C
 #define P2P_SHIFT_SRCS_Y(_n) (7 + _n * 6)
 #define P2P_SHIFT_SRCS_X(_n) (4 + _n * 6)
 
+/* bank(48)       : DMA_IDX_REG : to store user defined dma mode index table*/
+#define DMA_IDX_TABLE 0xc0
+#define MODE_MASK_NSRCS 0x3
+#define MODE_MASK_SRC_IS_P2P BIT(2)
+#define MODE_MASK_DST_IS_P2P BIT(3)
+#define MODE_MASK_SRCS_YX 0x7
+#define MODE_SHIFT_SRCS_Y(_n) (7 + _n * 6)
+#define MODE_SHIFT_SRCS_X(_n) (4 + _n * 6)
+
 /* bank(11)       : RESERVED */
 #define YX_REG 0x2c
 #define YX_SHIFT_X 0

@@ -8,7 +8,7 @@
 	branch = restructuring
 [submodule "accelerators/stratus_hls/common/inc"]
 	path = accelerators/stratus_hls/common/inc
-	url = https://github.com/sld-columbia/esp-accelerator-templates.git
+	url = https://github.com/apm98/esp-accelerator-templates
 [submodule "soft/ariane/linux"]
 	path = soft/ariane/linux
 	url = https://github.com/sld-columbia/linux.git

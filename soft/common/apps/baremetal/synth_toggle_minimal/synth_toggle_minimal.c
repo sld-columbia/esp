@@ -69,14 +69,14 @@
 
 // User defined registers
 
-void p2p_setup(struct esp_device* dev, int p2p_store, int p2p_load, struct esp_device* p2p_src){
-    esp_p2p_reset(dev);
+void dma_idx_setup(struct esp_device* dev, int p2p_store, int p2p_load, struct esp_device* p2p_src, int idx){
+    esp_dma_mode_reset(dev, idx);
     if (p2p_store)
-        esp_p2p_enable_dst(dev);
+        esp_dma_mode_enable_dst(dev, idx);
     if (p2p_load) {
-        esp_p2p_enable_src(dev);
-        esp_p2p_set_y(dev, 0, esp_get_y(p2p_src));
-        esp_p2p_set_x(dev, 0, esp_get_x(p2p_src));
+        esp_dma_mode_enable_src(dev, idx);
+        esp_dma_mode_set_y(dev, idx, 0, esp_get_y(p2p_src));
+        esp_dma_mode_set_x(dev, idx, 0, esp_get_x(p2p_src));
     }
 }
 
@@ -136,7 +136,9 @@ int main(int argc, char * argv[])
             // Configure device
             iowrite32(&dev0, SELECT_REG, ioread32(&dev0, DEVID_REG));
             iowrite32(&dev0, COHERENCE_REG, coherence);
-            p2p_setup(&dev0, 1, 0, NULL);
+            /*setup just 2 entries for now*/
+            dma_idx_setup(&dev0, 0, 0, NULL, 0);
+            dma_idx_setup(&dev0, 1, 0, NULL, 1);
 
             if (scatter_gather) {
                 iowrite32(&dev0, PT_ADDRESS_REG, (unsigned long) ptable);
@@ -168,7 +170,8 @@ int main(int argc, char * argv[])
             // Configure device
             iowrite32(&dev1, SELECT_REG, ioread32(&dev1, DEVID_REG));
             iowrite32(&dev1, COHERENCE_REG, coherence);
-            p2p_setup(&dev1, 0, 1, &dev0);
+            dma_idx_setup(&dev1, 0, 0, NULL, 0);
+            dma_idx_setup(&dev1, 0, 1, &dev0, 1);
 
             if (scatter_gather) {
                 iowrite32(&dev1, PT_ADDRESS_REG, (unsigned long) ptable);

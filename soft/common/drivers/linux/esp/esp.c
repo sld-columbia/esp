@@ -290,6 +290,12 @@ static bool esp_xfer_input_ok(struct esp_device *esp, const struct contig_desc *
 #define esp_p2p_set_nsrcs(_dev, _n) iowrite32be(ioread32be(_dev->iomem + P2P_REG) | (P2P_MASK_NSRCS & (_n - 1)), _dev->iomem + P2P_REG)
 #define esp_p2p_set_y(_dev, _n, _y) iowrite32be(ioread32be(_dev->iomem + P2P_REG) | ((P2P_MASK_SRCS_YX & _y) << P2P_SHIFT_SRCS_Y(_n)), _dev->iomem + P2P_REG)
 #define esp_p2p_set_x(_dev, _n, _x) iowrite32be(ioread32be(_dev->iomem + P2P_REG) | ((P2P_MASK_SRCS_YX & _x) << P2P_SHIFT_SRCS_X(_n)), _dev->iomem + P2P_REG)
+/* User functions to populate DMA mode index table*/
+#define esp_dma_mode_reset(_dev, _idx) iowrite32be(0, _dev->iomem + DMA_IDX_REG + _idx)
+#define esp_dma_mode_enable_dst(_dev, idx) iowrite32be(ioread32be(_dev->iomem + DMA_IDX_REG + _idx) | P2P_MASK_DST_IS_P2P, _dev->iomem + DMA_IDX_REG + _idx)
+#define esp_dma_mode_enable_src(_dev, _idx) iowrite32be(ioread32be(_dev->iomem + DMA_IDX_REG + _idx) | P2P_MASK_SRC_IS_P2P, _dev->iomem + DMA_IDX_REG + _idx)
+#define esp_dma_mode_set_y(_dev, _idx, _n, _y) iowrite32be(ioread32be(_dev->iomem + DMA_IDX_REG + _idx) | ((P2P_MASK_SRCS_YX & _y) << P2P_SHIFT_SRCS_Y(_n)), _dev->iomem + DMA_IDX_REG + _idx)
+#define esp_dma_mode_set_x(_dev, _idx, _n, _x) iowrite32be(ioread32be(_dev->iomem + DMA_IDX_REG + _idx) | ((P2P_MASK_SRCS_YX & _x) << P2P_SHIFT_SRCS_X(_n)), _dev->iomem + DMA_IDX_REG + _idx)
 
 static long esp_p2p_set_src(struct esp_device *esp, char *src_name, int src_index)
 {
