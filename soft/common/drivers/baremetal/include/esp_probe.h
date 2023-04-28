@@ -108,4 +108,11 @@ void esp_p2p_init(struct esp_device *dev, struct esp_device **srcs, unsigned nsr
 #define esp_p2p_set_y(_dev, _n, _y) iowrite32(_dev, P2P_REG, ioread32(_dev, P2P_REG) | ((P2P_MASK_SRCS_YX & _y) << P2P_SHIFT_SRCS_Y(_n)))
 #define esp_p2p_set_x(_dev, _n, _x) iowrite32(_dev, P2P_REG, ioread32(_dev, P2P_REG) | ((P2P_MASK_SRCS_YX & _x) << P2P_SHIFT_SRCS_X(_n)))
 
+/* User functions to populate DMA mode index table*/
+#define esp_dma_mode_reset(_dev, _idx) iowrite32(_dev, DMA_IDX_REG + _idx, 0)
+#define esp_dma_mode_enable_dst(_dev, _idx) iowrite32(_dev, DMA_IDX_REG + _idx, ioread32(_dev, DMA_IDX_REG + _idx) | MODE_MASK_DST_IS_P2P)
+#define esp_dma_mode_enable_src(_dev, _idx) iowrite32(_dev, DMA_IDX_REG + _idx, ioread32(_dev, DMA_IDX_REG + _idx) | MODE_MASK_SRC_IS_P2P)
+#define esp_dma_mode_set_y(_dev, _idx, _n, _y) iowrite32(_dev, DMA_IDX_REG + _idx, ioread32(_dev, DMA_IDX_REG + _idx) | ((MODE_MASK_SRCS_YX & _y) << MODE_SHIFT_SRCS_Y(_n)))
+#define esp_dma_mode_set_x(_dev, _idx, _n, _x) iowrite32(_dev, DMA_IDX_REG + _idx, ioread32(_dev, DMA_IDX_REG + _idx) | ((MODE_MASK_SRCS_YX & _x) << MODE_SHIFT_SRCS_X(_n)))
+
 #endif /* __ESP_PROBE_H__ */
