@@ -765,6 +765,7 @@ package tile is
       wr_index                      : in  std_logic_vector(31 downto 0);
       wr_length                     : in  std_logic_vector(31 downto 0);
       wr_size                       : in  std_logic_vector(2 downto 0);
+      wr_mode                       : in  std_logic_vector(3 downto 0);
       wr_grant                      : out std_ulogic;
       bufdout_ready                 : out std_ulogic;
       bufdout_data                  : in  std_logic_vector(ARCH_BITS - 1 downto 0);

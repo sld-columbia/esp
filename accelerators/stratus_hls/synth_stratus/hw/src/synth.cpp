@@ -70,6 +70,7 @@ void synth::load_input()
     uint32_t stride;
     uint32_t burst_len_log;
     uint32_t rd_err;
+    uint32_t mode;
     // Reset
     {
 	HLS_DEFINE_PROTOCOL("load-reset");
@@ -98,7 +99,9 @@ void synth::load_input()
 	index = 0;
 	stride = 0;
 	burst_len_log = 0;
-    rd_err = 0; 
+    rd_err = 0;
+    mode = 0;
+
 #ifdef COLLECT_LATENCY
     this->sig_load.write(false);
 #endif
@@ -125,6 +128,15 @@ void synth::load_input()
 	offset = config.offset;
     rd_data = config.rd_data;
     wr_data = config.wr_data;
+
+    //for dev0 - rd_mode=0, wr_mode=1; dev1 - rd_mode=1, wr_mode=0;
+    //determine dev number based on IN_DATA value for now
+    if(rd_data == 0x11111111){
+        mode = 0;
+    }
+    else if(rd_data == 0x22222222){
+        mode = 1;
+    }
 
 	// Logarithms
 	burst_len_log = ilog2(burst_len);
@@ -180,7 +192,7 @@ void synth::load_input()
 		    HLS_DEFINE_PROTOCOL("load-dma-conf");
 
 		    // Configure DMA transaction
-		    dma_info_t dma_info(index + offset, burst_len, SIZE_WORD);
+		    dma_info_t dma_info(index + offset, burst_len, SIZE_WORD, mode);
 		    this->dma_read_ctrl.put(dma_info);
 		}
         
@@ -274,6 +286,7 @@ void synth::store_output()
     uint32_t burst_len_log;
     uint32_t wr_data;
     uint32_t stride;
+    uint32_t mode;
     // Reset
     {
 	HLS_DEFINE_PROTOCOL("store-reset");
@@ -300,6 +313,8 @@ void synth::store_output()
 	burst_len_log = 0;
     wr_data = 0;   
     stride = 0;
+    mode = 0;
+
 #ifdef COLLECT_LATENCY
     this->sig_store.write(false);
 #endif
@@ -329,6 +344,14 @@ void synth::store_output()
 
     if (pattern == IRREGULAR){
         in_place = 0;     
+    }
+
+    // DMA mode index
+    if(rd_data == 0x11111111){
+        mode = 1;
+    }
+    else if(rd_data == 0x22222222){
+        mode = 0;
     }
 
 	// Logarithms
@@ -368,7 +391,7 @@ void synth::store_output()
 	    HLS_DEFINE_PROTOCOL("store-dma-conf");
         rd_err = rd_errs.read();
 		// Configure DMA transaction
-		dma_info_t dma_info(index + offset, burst_len, SIZE_WORD);
+		dma_info_t dma_info(index + offset, burst_len, SIZE_WORD, mode);
 		this->dma_write_ctrl.put(dma_info);
 		}
         

@@ -209,6 +209,7 @@ end;
   signal dma_write_ctrl_data_index  : std_logic_vector(31 downto 0);
   signal dma_write_ctrl_data_length : std_logic_vector(31 downto 0);
   signal dma_write_ctrl_data_size   : std_logic_vector(2 downto 0);
+  signal dma_write_ctrl_data_mode   : std_logic_vector(3 downto 0);
   signal dma_read_chnl_valid        : std_ulogic;
   signal dma_read_chnl_ready        : std_ulogic;
   signal dma_read_chnl_data         : std_logic_vector(ARCH_BITS - 1 downto 0);
@@ -260,6 +261,7 @@ end;
   attribute keep of dma_write_ctrl_data_index : signal is "true";
   attribute keep of dma_write_ctrl_data_length : signal is "true";
   attribute keep of dma_write_ctrl_data_size : signal is "true";
+  attribute keep of dma_write_ctrl_data_mode : signal is "true";
   attribute keep of dma_read_chnl_valid : signal is "true";
   attribute keep of dma_read_chnl_ready : signal is "true";
   attribute keep of dma_read_chnl_data : signal is "true";
@@ -395,6 +397,7 @@ begin
       wr_index                      => dma_write_ctrl_data_index,
       wr_length                     => dma_write_ctrl_data_length,
       wr_size                       => dma_write_ctrl_data_size,
+      wr_mode                       => dma_write_ctrl_data_mode,
       wr_grant                      => dma_write_ctrl_ready,
       bufdout_ready                 => dma_write_chnl_ready,
       bufdout_data                  => dma_write_chnl_data,
