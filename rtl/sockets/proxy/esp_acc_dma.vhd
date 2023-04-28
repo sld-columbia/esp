@@ -552,12 +552,8 @@ begin  -- rtl
       size_r <= HSIZE_WORD;
       p2p_src_index_r <= 0;
       -- Assign DMA mode index 0 by default
-      bankreg(P2P_REG)(31 downto 0) <= bankreg(DMA_IDX_REG)(31 downto 0)
+      bankreg(P2P_REG)(31 downto 0) <= bankreg(DMA_IDX_REG)(31 downto 0);
     elsif clk'event and clk = '1' then  -- rising clock edge
-      if dma_tran_done = '1' then
-        -- Assign DMA mode based on index sent by accelerator
-      bankreg(P2P_REG)(31 downto 0) <= bankreg(DMA_IDX_REG+rd_mode)(31 downto 0)
-      end if;
       if sample_flits = '1' then
         header_r <= header;
         payload_address_r <= payload_address;
@@ -816,12 +812,14 @@ begin  -- rtl
             dma_next <= wait_for_completion; 
           end if;
         elsif rd_request = '1' then
+          bankreg(P2P_REG)(31 downto 0) <= bankreg(DMA_IDX_REG + conv_integer(rd_mode))(31 downto 0);
           if scatter_gather = 0 then
             sample_flits <= '1';
           end if;
           sample_rd_size <= '1';
           dma_next <= rd_handshake;
         elsif wr_request = '1' then
+          bankreg(P2P_REG)(31 downto 0) <= bankreg(DMA_IDX_REG + conv_integer(wr_mode))(31 downto 0);
           if scatter_gather = 0 then
             sample_flits <= '1';
           end if;
