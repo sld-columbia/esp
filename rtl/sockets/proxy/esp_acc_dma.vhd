@@ -353,9 +353,11 @@ begin  -- rtl
         rst                  => rst,
         bankreg              => bankreg,
         rd_request           => rd_request,
+        rd_mode              => rd_mode,
         rd_index             => rd_index,
         rd_length            => rd_length,
         wr_request           => wr_request,
+        wr_mode              => wr_mode,
         wr_index             => wr_index,
         wr_length            => wr_length,
         dma_tran_start       => dma_tran_start,
@@ -812,14 +814,14 @@ begin  -- rtl
             dma_next <= wait_for_completion; 
           end if;
         elsif rd_request = '1' then
-          bankreg(P2P_REG)(31 downto 0) <= bankreg(DMA_IDX_REG + conv_integer(rd_mode))(31 downto 0);
+          bankreg(P2P_REG)(31 downto 0) <= bankreg(DMA_IDX_REG + CONV_INTEGER(rd_mode))(31 downto 0);
           if scatter_gather = 0 then
             sample_flits <= '1';
           end if;
           sample_rd_size <= '1';
           dma_next <= rd_handshake;
         elsif wr_request = '1' then
-          bankreg(P2P_REG)(31 downto 0) <= bankreg(DMA_IDX_REG + conv_integer(wr_mode))(31 downto 0);
+          bankreg(P2P_REG)(31 downto 0) <= bankreg(DMA_IDX_REG + CONV_INTEGER(wr_mode))(31 downto 0);
           if scatter_gather = 0 then
             sample_flits <= '1';
           end if;

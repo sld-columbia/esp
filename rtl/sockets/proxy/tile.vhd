@@ -820,9 +820,11 @@ package tile is
       rst                  : in  std_ulogic;
       bankreg              : in  bank_type(0 to MAXREGNUM - 1);
       rd_request           : in  std_ulogic;
+      rd_mode              : in  std_logic_vector(3 downto 0);
       rd_index             : in  std_logic_vector(31 downto 0);
       rd_length            : in  std_logic_vector(31 downto 0);
       wr_request           : in  std_ulogic;
+      wr_mode              : in  std_logic_vector(3 downto 0);
       wr_index             : in  std_logic_vector(31 downto 0);
       wr_length            : in  std_logic_vector(31 downto 0);
       dma_tran_start       : out std_ulogic;
