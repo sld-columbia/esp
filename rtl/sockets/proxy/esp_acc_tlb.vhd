@@ -71,9 +71,11 @@ entity esp_acc_tlb is
     rst                  : in  std_ulogic;
     bankreg              : in  bank_type(0 to MAXREGNUM - 1);
     rd_request           : in  std_ulogic;
+    rd_mode              : in  std_logic_vector(3 downto 0);
     rd_index             : in  std_logic_vector(31 downto 0);
     rd_length            : in  std_logic_vector(31 downto 0);
     wr_request           : in  std_ulogic;
+    wr_mode              : in  std_logic_vector(3 downto 0);
     wr_index             : in  std_logic_vector(31 downto 0);
     wr_length            : in  std_logic_vector(31 downto 0);
     dma_tran_start       : out std_ulogic;
@@ -215,9 +217,9 @@ begin  -- tlb
   remaining_length_update_in <= remaining_length - dma_length_int;
   vaddress_update_in <= vaddress + dma_length_int;
 
-  tlb_fsm_proc: process(tlb_fsm_current, rd_request, wr_request, rd_mode, wr_mode, tlb_empty_int,
+  tlb_fsm_proc: process(tlb_fsm_current, rd_request, wr_request, tlb_empty_int,
                         dma_tran_done, dma_tran_header_sent, remaining_length,
-                        src_is_p2p, dst_is_p2p, is_p2p)
+                        is_p2p, rd_mode, wr_mode)
   begin  -- process tlb_fsm_proc
     pt_fsm_sample_0 <= '0';
     pt_fsm_sample_1 <= '0';
@@ -240,20 +242,20 @@ begin  -- tlb
       when tlb_s0 =>
         -- Priority is always read first
         if rd_request = '1' then
-          src_is_p2p <= bankreg(DMA_IDX_REG + conv_integer(rd_mode))(P2P_BIT_SRC_IS_P2P);
+          src_is_p2p <= bankreg(DMA_IDX_REG + CONV_INTEGER(rd_mode))(P2P_BIT_SRC_IS_P2P);
           dma_read_start <= '1';
           pt_fsm_sample_0 <= '1';
-          if bankreg(DMA_IDX_REG + conv_integer(rd_mode))(P2P_BIT_SRC_IS_P2P) = '0' then
+          if bankreg(DMA_IDX_REG + CONV_INTEGER(rd_mode))(P2P_BIT_SRC_IS_P2P) = '0' then
             tlb_fsm_next <= tlb_s1;
           else
             is_p2p_in <= '1';
             tlb_fsm_next <= tlb_s3;
           end if;
         elsif wr_request = '1' then
-          dst_is_p2p <= bankreg(DMA_IDX_REG + conv_integer(rd_mode))(P2P_BIT_DST_IS_P2P);
+          dst_is_p2p <= bankreg(DMA_IDX_REG + CONV_INTEGER(rd_mode))(P2P_BIT_DST_IS_P2P);
           dma_write_start <= '1';
           pt_fsm_sample_0 <= '1';
-          if bankreg(DMA_IDX_REG + conv_integer(rd_mode))(P2P_BIT_DST_IS_P2P) = '0' then
+          if bankreg(DMA_IDX_REG + CONV_INTEGER(rd_mode))(P2P_BIT_DST_IS_P2P) = '0' then
             tlb_fsm_next <= tlb_s1;
           else
             is_p2p_in <= '1';
