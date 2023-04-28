@@ -347,10 +347,10 @@ void synth::store_output()
     }
 
     // DMA mode index
-    if(rd_data == 0x11111111){
+    if(wr_data == 0x22222222){
         mode = 1;
     }
-    else if(rd_data == 0x22222222){
+    else if(wr_data == 0x33333333){
         mode = 0;
     }
 
