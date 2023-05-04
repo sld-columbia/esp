@@ -445,7 +445,8 @@ begin  -- rtl
   p2p_dst_x <= get_origin_x(NOC_FLIT_SIZE, p2p_req_rcv_data_out);
 
   make_packet: process (bankreg, pending_dma_write, tlb_empty, dma_address, dma_length,
-                        p2p_src_index_r, p2p_dst_y, p2p_dst_x, coherence, local_y, local_x)
+                        p2p_src_index_r, p2p_dst_y, p2p_dst_x, coherence, local_y, local_x,
+                        dma_tran_done)
     variable msg_type : noc_msg_type;
     variable header_v : noc_flit_type;
     variable tmp : std_logic_vector(63 downto 0);
@@ -478,7 +479,7 @@ begin  -- rtl
       -- accelerator write burst
       address := dma_address;
       length  := len_pad & dma_length(31 downto GLOB_BYTE_OFFSET_BITS);
-      if bankreg(P2P_REG)(P2P_BIT_DST_IS_P2P) = '1' then
+      if bankreg(DMA_IDX_REG + CONV_INTEGER(wr_mode))(P2P_BIT_DST_IS_P2P) = '1' then
         msg_type := RSP_P2P;
         is_p2p := '1';
       else
@@ -492,7 +493,7 @@ begin  -- rtl
       -- accelerator read burst
       address := dma_address;
       length  := len_pad & dma_length(31 downto GLOB_BYTE_OFFSET_BITS);
-      if bankreg(P2P_REG)(P2P_BIT_SRC_IS_P2P) = '1' then
+      if bankreg(DMA_IDX_REG + CONV_INTEGER(rd_mode))(P2P_BIT_SRC_IS_P2P) = '1' then
         msg_type := REQ_P2P;
         is_p2p := '1';
       else
@@ -516,8 +517,8 @@ begin  -- rtl
       end loop;  -- i
     end if;
 
-    p2p_src_y := bankreg(P2P_REG)(9 + 6 * p2p_src_index_r downto 7 + 6 * p2p_src_index_r);
-    p2p_src_x := bankreg(P2P_REG)(6 + 6 * p2p_src_index_r downto 4 + 6 * p2p_src_index_r);
+    p2p_src_y := bankreg(DMA_IDX_REG + CONV_INTEGER(rd_mode))(9 + 6 * p2p_src_index_r downto 7 + 6 * p2p_src_index_r);
+    p2p_src_x := bankreg(DMA_IDX_REG + CONV_INTEGER(rd_mode))(6 + 6 * p2p_src_index_r downto 4 + 6 * p2p_src_index_r);
 
     if msg_type = REQ_P2P then
       p2p_header_v := create_header(NOC_FLIT_SIZE, local_y, local_x, p2p_src_y, p2p_src_x, msg_type, hprot);
@@ -553,8 +554,6 @@ begin  -- rtl
       count <= conv_std_logic_vector(1, 32);
       size_r <= HSIZE_WORD;
       p2p_src_index_r <= 0;
-      -- Assign DMA mode index 0 by default
-      bankreg(P2P_REG)(31 downto 0) <= bankreg(DMA_IDX_REG)(31 downto 0);
     elsif clk'event and clk = '1' then  -- rising clock edge
       if sample_flits = '1' then
         header_r <= header;
@@ -573,7 +572,7 @@ begin  -- rtl
         size_r <= wr_size;
       end if;
       if p2p_src_index_inc = '1' then
-        if p2p_src_index_r = conv_integer(bankreg(P2P_REG)(P2P_BIT_NSRCS + P2P_WIDTH_NSRCS - 1 downto P2P_BIT_NSRCS)) then
+        if p2p_src_index_r = conv_integer(bankreg(DMA_IDX_REG + CONV_INTEGER(rd_mode))(P2P_BIT_NSRCS + P2P_WIDTH_NSRCS - 1 downto P2P_BIT_NSRCS)) then
           p2p_src_index_r <= 0;
         else
           p2p_src_index_r <= p2p_src_index_r + 1;
@@ -814,14 +813,12 @@ begin  -- rtl
             dma_next <= wait_for_completion; 
           end if;
         elsif rd_request = '1' then
-          bankreg(P2P_REG)(31 downto 0) <= bankreg(DMA_IDX_REG + CONV_INTEGER(rd_mode))(31 downto 0);
           if scatter_gather = 0 then
             sample_flits <= '1';
           end if;
           sample_rd_size <= '1';
           dma_next <= rd_handshake;
         elsif wr_request = '1' then
-          bankreg(P2P_REG)(31 downto 0) <= bankreg(DMA_IDX_REG + CONV_INTEGER(wr_mode))(31 downto 0);
           if scatter_gather = 0 then
             sample_flits <= '1';
           end if;
@@ -887,7 +884,7 @@ begin  -- rtl
           elsif dma_tran_start = '1' and scatter_gather /= 0 then
             sample_flits <= '1';
             if coherence /= ACC_COH_FULL then
-              if bankreg(P2P_REG)(P2P_BIT_DST_IS_P2P) = '1' then
+              if bankreg(DMA_IDX_REG + CONV_INTEGER(wr_mode))(P2P_BIT_DST_IS_P2P) = '1' then
                 dma_next <= wait_req_p2p;
               else
                 dma_next <= send_header;
@@ -897,7 +894,7 @@ begin  -- rtl
             end if;
           elsif scatter_gather = 0 then
             if coherence /= ACC_COH_FULL then
-              if bankreg(P2P_REG)(P2P_BIT_DST_IS_P2P) = '1' then
+              if bankreg(DMA_IDX_REG + CONV_INTEGER(wr_mode))(P2P_BIT_DST_IS_P2P) = '1' then
                 dma_next <= wait_req_p2p;
               else
                 dma_next <= send_header;

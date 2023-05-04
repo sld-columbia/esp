@@ -160,8 +160,6 @@ begin  -- tlb
 
   tlb_empty <= tlb_empty_int;
   dma_length <= dma_length_int;
-  src_is_p2p <= bankreg(P2P_REG)(P2P_BIT_SRC_IS_P2P);
-  dst_is_p2p <= bankreg(P2P_REG)(P2P_BIT_DST_IS_P2P);
 
   -- TODO: without scatter-gather we only support 32-bits physical address and data width
   no_scatter_gather: if scatter_gather = 0 generate
@@ -237,6 +235,8 @@ begin  -- tlb
     case tlb_fsm_current is
       when tlb_init =>
         if tlb_empty_int = '0' then
+          src_is_p2p <= bankreg(DMA_IDX_REG)(P2P_BIT_SRC_IS_P2P);
+          dst_is_p2p <= bankreg(DMA_IDX_REG)(P2P_BIT_DST_IS_P2P);
           tlb_fsm_next <= tlb_s0;
         end if;
       when tlb_s0 =>
@@ -252,10 +252,10 @@ begin  -- tlb
             tlb_fsm_next <= tlb_s3;
           end if;
         elsif wr_request = '1' then
-          dst_is_p2p <= bankreg(DMA_IDX_REG + CONV_INTEGER(rd_mode))(P2P_BIT_DST_IS_P2P);
+          dst_is_p2p <= bankreg(DMA_IDX_REG + CONV_INTEGER(wr_mode))(P2P_BIT_DST_IS_P2P);
           dma_write_start <= '1';
           pt_fsm_sample_0 <= '1';
-          if bankreg(DMA_IDX_REG + CONV_INTEGER(rd_mode))(P2P_BIT_DST_IS_P2P) = '0' then
+          if bankreg(DMA_IDX_REG + CONV_INTEGER(wr_mode))(P2P_BIT_DST_IS_P2P) = '0' then
             tlb_fsm_next <= tlb_s1;
           else
             is_p2p_in <= '1';
