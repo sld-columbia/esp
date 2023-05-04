@@ -138,7 +138,8 @@ int main(int argc, char * argv[])
             iowrite32(&dev0, COHERENCE_REG, coherence);
             /*setup just 2 entries for now*/
             dma_idx_setup(&dev0, 0, 0, NULL, 0);
-            dma_idx_setup(&dev0, 1, 0, NULL, 1);
+            dma_idx_setup(&dev0, 1, 0, NULL, 4);
+            dma_idx_setup(&dev0, 1, 1, &dev0, 8);
 
             if (scatter_gather) {
                 iowrite32(&dev0, PT_ADDRESS_REG, (unsigned long) ptable);
@@ -171,7 +172,7 @@ int main(int argc, char * argv[])
             iowrite32(&dev1, SELECT_REG, ioread32(&dev1, DEVID_REG));
             iowrite32(&dev1, COHERENCE_REG, coherence);
             dma_idx_setup(&dev1, 0, 0, NULL, 0);
-            dma_idx_setup(&dev1, 0, 1, &dev0, 1);
+            dma_idx_setup(&dev1, 0, 1, &dev0, 4);
 
             if (scatter_gather) {
                 iowrite32(&dev1, PT_ADDRESS_REG, (unsigned long) ptable);
@@ -206,7 +207,8 @@ int main(int argc, char * argv[])
             printf("  Start..\n");
             iowrite32(&dev0, CMD_REG, CMD_MASK_START);
             iowrite32(&dev1, CMD_REG, CMD_MASK_START);
-
+            unsigned dmareg= ioread32(&dev0, DMA_IDX_REG);
+            printf("Dev0 DMA reg1 value is: %x",dmareg );
             unsigned done = 0;
 
             while (!done) {
