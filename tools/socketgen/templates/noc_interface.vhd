@@ -152,6 +152,9 @@ end;
     P2P_REG            => '1',
     YX_REG             => '1',
     SPANDEX_REG        => '1',
+    DMA_IDX_REG        => '1',
+    49                 => '1',
+    50                 => '1',
     -- <<user_mask>>
     others             => '0');
 
