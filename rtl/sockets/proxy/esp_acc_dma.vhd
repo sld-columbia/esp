@@ -1077,11 +1077,7 @@ begin  -- rtl
 
   process (apbi, readdata, dvfs_apbo)
   begin  -- process
-    if apbi.paddr(7) = '1' then
-      apbo.prdata <= dvfs_apbo.prdata;
-    else
-      apbo.prdata <= readdata;
-    end if;
+    apbo.prdata <= readdata;
   end process;
   apbo.pirq    <= (others => '0');      -- IRQ forwarded to the NoC directly
   apbo.pindex  <= pindex;
