@@ -109,11 +109,11 @@ void esp_p2p_init(struct esp_device *dev, struct esp_device **srcs, unsigned nsr
 #define esp_p2p_set_x(_dev, _n, _x) iowrite32(_dev, P2P_REG, ioread32(_dev, P2P_REG) | ((P2P_MASK_SRCS_YX & _x) << P2P_SHIFT_SRCS_X(_n)))
 
 /* User functions to populate DMA mode index table*/
-#define esp_dma_mode_reset(_dev, _idx) iowrite32(_dev, DMA_IDX_REG + _idx<<2, 0)
-#define esp_dma_mode_enable_dst(_dev, _idx) iowrite32(_dev, DMA_IDX_REG + _idx<<2, ioread32(_dev, DMA_IDX_REG + _idx<<2) | P2P_MASK_DST_IS_P2P)
-#define esp_dma_mode_enable_src(_dev, _idx) iowrite32(_dev, DMA_IDX_REG + _idx<<2, ioread32(_dev, DMA_IDX_REG + _idx<<2) | P2P_MASK_SRC_IS_P2P)
-#define esp_dma_mode_set_nsrcs(_dev, _idx, _n) iowrite32(_dev, DMA_IDX_REG + _idx<<2, ioread32(_dev, DMA_IDX_REG + _idx<<2) | (P2P_MASK_NSRCS & (_n - 1)))
-#define esp_dma_mode_set_y(_dev, _idx, _n, _y) iowrite32(_dev, DMA_IDX_REG + _idx<<2, ioread32(_dev, DMA_IDX_REG + _idx<<2) | ((P2P_MASK_SRCS_YX & _y) << P2P_SHIFT_SRCS_Y(_n)))
-#define esp_dma_mode_set_x(_dev, _idx, _n, _x) iowrite32(_dev, DMA_IDX_REG + _idx<<2, ioread32(_dev, DMA_IDX_REG + _idx<<2) | ((P2P_MASK_SRCS_YX & _x) << P2P_SHIFT_SRCS_X(_n)))
+#define esp_dma_mode_reset(_dev, _idx) iowrite32(_dev, DMA_IDX_REG + (_idx<<2), 0)
+#define esp_dma_mode_enable_dst(_dev, _idx) iowrite32(_dev, DMA_IDX_REG + (_idx<<2), ioread32(_dev, DMA_IDX_REG + (_idx<<2)) | P2P_MASK_DST_IS_P2P)
+#define esp_dma_mode_enable_src(_dev, _idx) iowrite32(_dev, DMA_IDX_REG + (_idx<<2), ioread32(_dev, DMA_IDX_REG + (_idx<<2)) | P2P_MASK_SRC_IS_P2P)
+#define esp_dma_mode_set_nsrcs(_dev, _idx, _n) iowrite32(_dev, DMA_IDX_REG + (_idx<<2), ioread32(_dev, DMA_IDX_REG + (_idx<<2)) | (P2P_MASK_NSRCS & (_n - 1)))
+#define esp_dma_mode_set_y(_dev, _idx, _n, _y) iowrite32(_dev, DMA_IDX_REG + (_idx<<2), ioread32(_dev, DMA_IDX_REG + (_idx<<2)) | ((P2P_MASK_SRCS_YX & _y) << P2P_SHIFT_SRCS_Y(_n)))
+#define esp_dma_mode_set_x(_dev, _idx, _n, _x) iowrite32(_dev, DMA_IDX_REG + (_idx<<2), ioread32(_dev, DMA_IDX_REG + (_idx<<2)) | ((P2P_MASK_SRCS_YX & _x) << P2P_SHIFT_SRCS_X(_n)))
 
 #endif /* __ESP_PROBE_H__ */

@@ -138,8 +138,7 @@ int main(int argc, char * argv[])
             iowrite32(&dev0, COHERENCE_REG, coherence);
             /*setup just 2 entries for now*/
             dma_idx_setup(&dev0, 0, 0, NULL, 0);
-            dma_idx_setup(&dev0, 1, 0, NULL, 4);
-            dma_idx_setup(&dev0, 1, 1, &dev0, 8);
+            dma_idx_setup(&dev0, 1, 0, NULL, 1);
 
             if (scatter_gather) {
                 iowrite32(&dev0, PT_ADDRESS_REG, (unsigned long) ptable);
@@ -172,7 +171,7 @@ int main(int argc, char * argv[])
             iowrite32(&dev1, SELECT_REG, ioread32(&dev1, DEVID_REG));
             iowrite32(&dev1, COHERENCE_REG, coherence);
             dma_idx_setup(&dev1, 0, 0, NULL, 0);
-            dma_idx_setup(&dev1, 0, 1, &dev0, 4);
+            dma_idx_setup(&dev1, 0, 1, &dev0, 1);
 
             if (scatter_gather) {
                 iowrite32(&dev1, PT_ADDRESS_REG, (unsigned long) ptable);
@@ -188,7 +187,7 @@ int main(int argc, char * argv[])
             // Accelerator-specific registers
             iowrite32(&dev1, SYNTH_OFFSET_REG, OFFSET);
             iowrite32(&dev1, SYNTH_PATTERN_REG, PATTERN_IRREGULAR);
-            iowrite32(&dev1, SYNTH_IN_SIZE_REG, IN_SIZE1);
+            iowrite32(&dev1, SYNTH_IN_SIZE_REG, IN_SIZE);
             iowrite32(&dev1, SYNTH_ACCESS_FACTOR_REG, ACCESS_FACTOR);
             iowrite32(&dev1, SYNTH_BURST_LEN_REG, BURST_LEN);
             iowrite32(&dev1, SYNTH_COMPUTE_BOUND_FACTOR_REG, COMPUTE_BOUND_FACTOR);
@@ -196,7 +195,7 @@ int main(int argc, char * argv[])
             iowrite32(&dev1, SYNTH_REUSE_FACTOR_REG, REUSE_FACTOR);
             iowrite32(&dev1, SYNTH_LD_ST_RATIO_REG, LD_ST_RATIO);
             iowrite32(&dev1, SYNTH_STRIDE_LEN_REG, STRIDE_LEN);
-            iowrite32(&dev1, SYNTH_OUT_SIZE_REG, OUT_SIZE1);
+            iowrite32(&dev1, SYNTH_OUT_SIZE_REG, OUT_SIZE);
             iowrite32(&dev1, SYNTH_IN_PLACE_REG, IN_PLACE);
             iowrite32(&dev1, SYNTH_WR_DATA_REG, OUT1_DATA); //dont care - not validating in this application
             iowrite32(&dev1, SYNTH_RD_DATA_REG, IN1_DATA); //dont care
@@ -207,8 +206,8 @@ int main(int argc, char * argv[])
             printf("  Start..\n");
             iowrite32(&dev0, CMD_REG, CMD_MASK_START);
             iowrite32(&dev1, CMD_REG, CMD_MASK_START);
-            unsigned dmareg= ioread32(&dev0, DMA_IDX_REG);
-            printf("Dev0 DMA reg1 value is: %x",dmareg );
+            unsigned dmareg= ioread32(&dev0, DMA_IDX_REG + 4);
+            printf("Dev0 DMA reg1 value is: %x \n",dmareg );
             unsigned done = 0;
 
             while (!done) {
@@ -218,7 +217,7 @@ int main(int argc, char * argv[])
 
             iowrite32(&dev0, CMD_REG, 0x0);
             printf("  Acc0 done...\n");
-
+            printf("*************************************** \n \n");
             done = 0;
             while (!done) {
                 done = ioread32(&dev1, STATUS_REG);
