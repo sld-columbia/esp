@@ -31,7 +31,7 @@ endif
 
 
 ### Create FPGA part name ###
-ifeq ("$(TECH_TYPE)", "asic")
+ifeq ($(TECH_TYPE),asic)
 DEVICE = ASIC-$(TECHLIB)
 else ifneq ($(filter $(TECHLIB),$(FPGALIBS)),)
 include $(ESP_ROOT)/constraints/$(BOARD)/Makefile.inc
@@ -130,8 +130,10 @@ endif
 # Testbench
 TOP_VHDL_SIM_SRCS += $(DESIGN_PATH)/$(SIMTOP).vhd
 
-ifeq ("$(TECH_TYPE)","asic")
+ifeq ($(TECH_TYPE),asic)
+ifneq ($(TECHLIB),inferred)
 TOP_VLOG_RTL_SRCS += $(DESIGN_PATH)/cache_def_mem_asic.sv
+endif
 endif
 
 ifneq ($(filter $(TECHLIB),$(FPGALIBS)),)

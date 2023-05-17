@@ -628,7 +628,7 @@ def print_mapping(fp, soc, esp_config):
 
   if soc.ESP_EMU_TECH != "none":
     fp.write("  constant CFG_FABTECH : integer := " + soc.ESP_EMU_TECH  + ";\n\n")
-  elif soc.TECH_TYPE == "asic":
+  elif soc.TECH_TYPE == "asic" and soc.TECH != "inferred":
     fp.write("  constant CFG_FABTECH : integer := asic;\n\n")
   else:
     fp.write("  constant CFG_FABTECH : integer := " + soc.TECH  + ";\n\n")

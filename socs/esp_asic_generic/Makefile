@@ -6,9 +6,14 @@ all: help
 
 ### Global design variables ###
 DESIGN_PATH = $(PWD)
-ESP_ROOT = $(realpath ../esp)
 
+ifneq ("$(shell basename $(PWD))", "esp_asic_generic")
+ESP_ROOT = $(realpath ../esp)
 include $(ESP_ROOT)/tools/asicgen/asic_defs.sh
+else
+ESP_ROOT = $(realpath ../../)
+DIRTECH_NAME = inferred
+endif
 
 TECHLIB  = $(DIRTECH_NAME)
 TECH_TYPE = asic
@@ -40,6 +45,11 @@ SIMTOP = testbench
 
 # Compile flags
 ifneq ("$(OVR_TECHLIB)", "")
+VCOMOPT +=
+VLOGOPT +=
+XMLOGOPT +=
+NCLOGOPT +=
+else ifeq ($(TECHLIB),inferred)
 VCOMOPT +=
 VLOGOPT +=
 XMLOGOPT +=
