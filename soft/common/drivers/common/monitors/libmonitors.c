@@ -461,7 +461,7 @@ void esp_monitor_print(esp_monitor_args_t args, esp_monitor_vals_t vals)
 					| (((uint64_t) vals.acc_stats[t].acc_tot_hi) << 32));
 			print_mon( "Accelerator %d invocations: %d\n", t, vals.acc_stats[t].acc_invocations);
 		}
-	} else if (args.read_mask & (1 << ESP_MON_READ_LLC_STATS)) {
+	} else if (args.read_mask & (1 << ESP_MON_READ_ACC_STATS)) {
 		print_mon( "Accelerator %d TLB-loading cycles: %d\n", args.acc_index, vals.acc_stats[args.acc_index].acc_tlb);
 		print_mon( "Accelerator %d mem cycles: %lu\n", args.acc_index
 				, ((uint64_t) vals.acc_stats[args.acc_index].acc_mem_lo)
