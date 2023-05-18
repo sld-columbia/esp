@@ -7,8 +7,3 @@ __pycache__
 _leon3_build
 _riscv_build
 _riscv32imc_build
-utils/flist/techmap_vhdl.flist
-utils/flist/techmap_vlog.flist
-rtl/techmap/asic/mem
-rtl/techmap/asic/wrappers
-rtl/sim/gf12/verilog
