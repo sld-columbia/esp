@@ -63,6 +63,84 @@ set_attr dpopt_effort high
 #
 define_hls_module gemm ../src/gemm.cpp
 
+
+if {[info exists ::env(NET)]} {
+
+set NET $::env(NET)
+set LAYER $::env(LAYER)
+
+append INCLUDES " -I../src/gemm -I../tb/common -I../tb/common/mojo_utils"
+
+#
+# Testbench configuration
+#
+
+if {$NET eq "dwarf-7"} {
+    # exec /bin/sh -c "source ../tb/dwarf_tb/data.sh"
+    append INCLUDES " -I../tb/dwarf_tb/mojo_utils"
+    define_system_module tb ../tb/dwarf_tb/system.cpp ../tb/dwarf_tb/sc_main.cpp
+} elseif {$NET eq "convnet"} {
+    define_system_module tb ../tb/convnet_tb/system.cpp ../tb/convnet_tb/sc_main.cpp
+}
+
+#
+# Common options for all configurations
+#
+
+append COMMON_HLS_FLAGS \
+    " -DFIXED_POINT --clock_period=$CLOCK_PERIOD"
+set COMMON_CFG_FLAGS \
+    "-DFIXED_POINT -DCLOCK_PERIOD=$SIM_CLOCK_PERIOD"
+
+# append COMMON_HLS_FLAGS \
+#     " -DFLOAT_POINT --clock_period=$CLOCK_PERIOD"
+# set COMMON_CFG_FLAGS \
+#     "-DFLOAT_POINT -DCLOCK_PERIOD=$SIM_CLOCK_PERIOD"
+
+if {$TECH_IS_XILINX == 1} {
+    append COMMON_HLS_FLAGS " -DTECH_IS_FPGA "
+    append COMMON_CFG_FLAGS " -DTECH_IS_FPGA "
+}
+
+#
+# DSE configuration
+#
+set DMA_WIDTH "64"
+set DMA_CHUNK "2048"
+set WORD_SIZE "32"
+set PARALLELISM "8"
+
+set_attr split_multiply 32
+set_attr split_add 32
+
+set conf "CHK$DMA_CHUNK\_DMA$DMA_WIDTH\_WORD$WORD_SIZE\_PARAL$PARALLELISM"
+
+define_io_config * IOCFG_$conf -DDMA_CHUNK=$DMA_CHUNK \
+    -DDMA_WIDTH=$DMA_WIDTH -DWORD_SIZE=$WORD_SIZE -DPARALLELISM=$PARALLELISM $COMMON_CFG_FLAGS
+
+define_system_config tb TESTBENCH_$conf -io_config IOCFG_$conf
+
+
+if {$NET eq "dwarf-7"} {
+define_sim_config "BEHAV_$conf\_dwarf" "gemm BEH" \
+    "tb TESTBENCH_$conf" -io_config IOCFG_$conf
+} else {
+define_sim_config "BEHAV_$conf\_convnet" "gemm BEH" \
+    "tb TESTBENCH_$conf" -io_config IOCFG_$conf
+}
+
+#
+# Simulation Options
+#
+use_systemc_simulator xcelium
+set_attr cc_options "$INCLUDES -DCLOCK_PERIOD=$SIM_CLOCK_PERIOD -DTARGET_LAYER=$LAYER -DTARGET_LAYER_$LAYER"
+# enable_waveform_logging -vcd
+set_attr end_of_sim_command "make saySimPassed"
+
+
+} else {
+
+
 #
 # Testbench or system level modules
 #
@@ -187,3 +265,4 @@ use_systemc_simulator xcelium
 set_attr cc_options "$INCLUDES -DCLOCK_PERIOD=$SIM_CLOCK_PERIOD"
 # enable_waveform_logging -vcd
 set_attr end_of_sim_command "make saySimPassed"
+}

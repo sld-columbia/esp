@@ -31,6 +31,19 @@ memlib: ../memlist.txt $(MEMGEN)
 		bdw_memgen ./memlib/*.bdm; \
 	fi;
 
+dwarf_model:
+	@cd $(ESP_ROOT)/accelerators/stratus_hls/$(ACCELERATOR)_stratus/hw/tb/dwarf_tb; \
+	if test -e data.sh; then \
+		./data.sh; \
+	fi;
+
+convnet_model:
+	@cd $(ESP_ROOT)/accelerators/stratus_hls/$(ACCELERATOR)_stratus/hw/tb/convnet_tb; \
+	if test -e data.sh; then \
+		./data.sh; \
+	fi;
+
+
 Makefile.prj: memlib project.tcl $(COMMON_HLS_PATH)/project.tcl
 	@bdw_makegen
 

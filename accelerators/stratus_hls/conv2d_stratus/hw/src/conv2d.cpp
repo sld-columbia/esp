@@ -42,6 +42,8 @@ void conv2d::load_input()
     uint16_t width;
     uint2_t pool_type;
     uint16_t batch_size;
+    // uint16_t load_dma_mode;
+    // uint16_t store_dma_mode;
     {
         HLS_PROTO("load-config");
 
@@ -59,6 +61,8 @@ void conv2d::load_input()
         width = config.feature_map_width;
         pool_type = config.pool_type;
         batch_size = config.batch_size;
+        // load_dma_mode = config.load_dma_mode;
+        // store_dma_mode = config.store_dma_mode;
     }
 
     // Precompute sizes
@@ -180,13 +184,15 @@ void conv2d::load_input()
 	    bool misaligned = filters_offset_start_phys & 1 & (DMA_WORD_PER_BEAT - 1);
 	    uint16_t adj_words_to_load = n_words_to_load + misaligned;
 
+
+            //SETMODE to 0 for filters always
 	    dma_info_t dma_info(filters_offset_start_phys >> DMA_WORD_PER_BEAT_LOG2,
 				(n_words_to_load + misaligned + DMA_WORD_PER_BEAT_LOG2) >>
-				DMA_WORD_PER_BEAT_LOG2, DMA_SIZE);
+				DMA_WORD_PER_BEAT_LOG2, DMA_SIZE, 0);
 
 #ifndef STRATUS_HLS
-	    ESP_REPORT_INFO("load_input load filters dma_info. offset: %u len %u",
-	    		filters_offset_start_phys, n_words_to_load);
+	    // ESP_REPORT_INFO("load_input load filters dma_info. offset: %u len %u",
+	    // 		filters_offset_start_phys, n_words_to_load);
 #endif
 	    this->dma_read_ctrl.put(dma_info);
 
@@ -251,13 +257,13 @@ void conv2d::load_input()
 		bool misaligned = bias_offset_start_phys & 1 & (DMA_WORD_PER_BEAT - 1);
 		uint16_t adj_words_to_load = n_words_to_load + misaligned;
 
+                //SETMODE to 0 for bias always
 		dma_info_t dma_info(bias_offset_start_phys >> DMA_WORD_PER_BEAT_LOG2,
-				    (n_words_to_load + misaligned + DMA_WORD_PER_BEAT_LOG2) >> DMA_WORD_PER_BEAT_LOG2,
-				    DMA_SIZE);
+				    (n_words_to_load + misaligned + DMA_WORD_PER_BEAT_LOG2) >> DMA_WORD_PER_BEAT_LOG2,DMA_SIZE,0);
 
 #ifndef STRATUS_HLS
-		ESP_REPORT_INFO("load_input load bias dma_info. offset: %u len %u",
-				bias_offset_start_phys, n_words_to_load);
+		// ESP_REPORT_INFO("load_input load bias dma_info. offset: %u len %u",
+		// 		bias_offset_start_phys, n_words_to_load);
 #endif
 		this->dma_read_ctrl.put(dma_info);
 
@@ -364,10 +370,10 @@ void conv2d::load_input()
 
 			    dma_info_t dma_info(offset_start >> DMA_WORD_PER_BEAT_LOG2,
 						(n_words_to_load + DMA_WORD_PER_BEAT_LOG2) >>
-						DMA_WORD_PER_BEAT_LOG2, DMA_SIZE);
+						DMA_WORD_PER_BEAT_LOG2, DMA_SIZE, 1);
 
 #ifndef STRATUS_HLS
-			    ESP_REPORT_INFO("load_input load features dma_info. offset: %u len %u", offset_start, n_words_to_load);
+			    // ESP_REPORT_INFO("load_input load features dma_info. offset: %u len %u", offset_start, n_words_to_load);
 #endif
 			    this->dma_read_ctrl.put(dma_info);
 
@@ -455,6 +461,8 @@ void conv2d::store_output()
     uint16_t height;
     uint2_t pool_type;
     uint16_t batch_size;
+    // uint16_t load_dma_mode;
+    // uint16_t store_dma_mode;
 
     {
         HLS_PROTO("store-config");
@@ -470,6 +478,8 @@ void conv2d::store_output()
         height = config.feature_map_height;
 	pool_type = config.pool_type;
 	batch_size = config.batch_size;
+	// load_dma_mode = config.load_dma_mode;
+	// store_dma_mode = config.store_dma_mode;
     }
 
     store_load_cfg_handshake();
@@ -606,10 +616,10 @@ void conv2d::store_output()
 			
 			dma_info_t dma_info(offset_start >> DMA_WORD_PER_BEAT_LOG2,
 					    (n_words_to_store + DMA_WORD_PER_BEAT_LOG2) >>
-					    DMA_WORD_PER_BEAT_LOG2, DMA_SIZE);
+					    DMA_WORD_PER_BEAT_LOG2, DMA_SIZE, 1);
 #ifndef STRATUS_HLS
-                        ESP_REPORT_INFO("store dma info. offset: %u len %u",
-                        		offset_start, n_words_to_store);
+                        // ESP_REPORT_INFO("store dma info. offset: %u len %u",
+                        // 		offset_start, n_words_to_store);
 #endif
 			this->dma_write_ctrl.put(dma_info);
 
@@ -626,15 +636,15 @@ void conv2d::store_output()
 
 		    	    // Write to PLM (all DMA_WORD_PER_BEAT words in one cycle)
 		    	    if (ping_output) {
-		    		std::cout << "store ping " <<
-		    		INT2FP(plm_out_ping[plm_out_index]) << std::endl;
+		    		// std::cout << "store ping " <<
+		    		// INT2FP(plm_out_ping[plm_out_index]) << std::endl;
 		    		dataBv.range(31, 0) = plm_out_ping[plm_out_index++];
 #if (DMA_WORD_PER_BEAT == 2)
 		    		dataBv.range(63, 32) = plm_out_ping[plm_out_index++];
 #endif
 		    	    } else {
-		    		std::cout << "store pong " <<
-		    		INT2FP(plm_out_pong[plm_out_index]) << std::endl;
+		    		// std::cout << "store pong " <<
+		    		// INT2FP(plm_out_pong[plm_out_index]) << std::endl;
 		    		dataBv.range(31, 0) = plm_out_pong[plm_out_index++];
 #if (DMA_WORD_PER_BEAT == 2)
 		    		dataBv.range(63, 32) = plm_out_pong[plm_out_index++];
@@ -693,6 +703,8 @@ void conv2d::compute_kernel()
     uint16_t width;
     bool do_relu;
     uint16_t batch_size;
+    // uint16_t load_dma_mode;
+    // uint16_t store_dma_mode;
 
     {
         HLS_PROTO("compute-config");
@@ -710,6 +722,8 @@ void conv2d::compute_kernel()
         width = config.feature_map_width;
 	do_relu = config.do_relu;
 	batch_size = config.batch_size;
+	// load_dma_mode = config.load_dma_mode;
+	// store_dma_mode = config.store_dma_mode;
     }
 
     compute_load_cfg_handshake();
@@ -790,8 +804,8 @@ void conv2d::compute_kernel()
 		    this->compute_load_handshake();
 
 #ifndef STRATUS_HLS
-		    ESP_REPORT_INFO("compute_load_handshake %u %u %u %u",
-				    filter_chunk, b, input_chunk, (unsigned) in_i);
+		    // ESP_REPORT_INFO("compute_load_handshake %u %u %u %u",
+		    //     	    filter_chunk, b, input_chunk, (unsigned) in_i);
 #endif
 		    uint12_t channels;
 		    uint16_t filt_sz_loc;

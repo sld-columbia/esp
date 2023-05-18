@@ -1,0 +1,1 @@
+../../../../conv2d_stratus/hw/tb/dwarf_tb/golden.cpp

@@ -109,6 +109,7 @@ inline void conv2d::compute_dimensions(
     *filters_offset_start_base =  *channel_offset_incr * n_channels * batch_size;
     *bias_offset_start_base = *filters_offset_start_base + *filters_size;
     *feature_offset_start_base = *filters_offset_start_base + *filters_size + n_filters;
+
 }
 
 inline void conv2d::load_compute_cfg_handshake()

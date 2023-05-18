@@ -29,6 +29,8 @@ public:
         this->do_relu = 1;
         this->pool_type = 1;
         this->batch_size = 1;
+        // this->load_dma_mode = 1;
+        // this->store_dma_mode = 1;
     }
 
     conf_info_t(
@@ -43,6 +45,8 @@ public:
         int32_t do_relu,
         int32_t pool_type,
         int32_t batch_size
+        // int32_t load_dma_mode,
+        // int32_t store_dma_mode
         )
     {
         /* <<--ctor-custom-->> */
@@ -56,6 +60,8 @@ public:
         this->do_relu = do_relu;
         this->pool_type = pool_type;
         this->batch_size = batch_size;
+        // this->load_dma_mode = load_dma_mode;
+        // this->store_dma_mode = store_dma_mode;
     }
 
     // equals operator
@@ -72,6 +78,8 @@ public:
         if (do_relu != rhs.do_relu) return false;
         if (pool_type != rhs.pool_type) return false;
         if (batch_size != rhs.batch_size) return false;
+        // if (load_dma_mode != rhs.load_dma_mode) return false;
+        // if (store_dma_mode != rhs.store_dma_mode) return false;
         return true;
     }
 
@@ -89,6 +97,8 @@ public:
         do_relu = other.do_relu;
         pool_type = other.pool_type;
         batch_size = other.batch_size;
+        // load_dma_mode = other.load_dma_mode;
+        // store_dma_mode = other.store_dma_mode;
         return *this;
     }
 
@@ -111,6 +121,8 @@ public:
         os << "do_relu = " << conf_info.do_relu << "";
         os << "pool_type = " << conf_info.pool_type << "";
         os << "batch_size = " << conf_info.batch_size << "";
+        // os << "load_dma_mode = " << conf_info.load_dma_mode << "";
+        // os << "store_dma_mode = " << conf_info.store_dma_mode << "";
         os << "}";
         return os;
     }
@@ -126,6 +138,8 @@ public:
         int32_t do_relu;
         int32_t pool_type; // 0: no pooling, 1: 2x2 max pooling, 2: 2x2 average pooling
         int32_t batch_size;
+        // int32_t load_dma_mode;
+        // int32_t store_dma_mode;
 };
 
 #endif // __CONV2D_CONF_INFO_HPP__

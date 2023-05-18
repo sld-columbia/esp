@@ -5,6 +5,8 @@
 # Design Parameters
 ############################################################
 
+
+
 #
 # Source the common configurations
 #
@@ -60,6 +62,103 @@ set_attr clock_period $CLOCK_PERIOD
 #
 define_hls_module conv2d ../src/conv2d.cpp
 
+
+if {[info exists ::env(NET)]} {
+
+set NET $::env(NET)
+set LAYER $::env(LAYER)
+
+append INCLUDES " -I../src/conv2d -I../tb/common -I../tb/common/mojo_utils"
+
+#
+# Testbench or system level modules
+#
+
+define_system_module ../tb/utils.cpp
+
+if {$NET eq "dwarf-7"} {
+    # exec /bin/sh -c "source ../tb/dwarf_tb/data.sh"
+    append INCLUDES " -I../tb/dwarf_tb/mojo_utils"
+    define_system_module tb ../tb/dwarf_tb/system.cpp ../tb/dwarf_tb/sc_main.cpp
+} elseif {$NET eq "convnet"} {
+    define_system_module tb ../tb/convnet_tb1/system.cpp ../tb/convnet_tb1/sc_main.cpp
+}
+
+
+######################################################################
+# HLS and Simulation configurations
+######################################################################
+
+#
+# Common options for all configurations
+#
+
+append COMMON_HLS_FLAGS \
+    " -DFIXED_POINT --clock_period=$CLOCK_PERIOD"
+set COMMON_CFG_FLAGS \
+    "-DFIXED_POINT -DCLOCK_PERIOD=$SIM_CLOCK_PERIOD"
+
+# append COMMON_HLS_FLAGS \
+#     " -DFLOAT_POINT --clock_period=$CLOCK_PERIOD"
+# set COMMON_CFG_FLAGS \
+#     "-DFLOAT_POINT -DCLOCK_PERIOD=$SIM_CLOCK_PERIOD"
+
+if {$TECH_IS_XILINX == 1} {
+    append COMMON_HLS_FLAGS " -DTECH_IS_FPGA "
+    append COMMON_CFG_FLAGS " -DTECH_IS_FPGA "
+}
+
+#
+# DSE configuration
+#
+
+set data_width 32
+set input_plm_size 32768
+set weights_plm_size 2048
+set bias_plm_size 16
+set output_plm_size 32768
+set patch_plm_size 512
+set mac_plm_size 512
+set dma 64
+
+append COMMON_HLS_FLAGS \
+    " -DDATA_WIDTH=${data_width} -DWORD_SIZE=${data_width} -DINPUT_PLM_SIZE=$input_plm_size \
+      -DWEIGHTS_PLM_SIZE=$weights_plm_size -DBIAS_PLM_SIZE=$bias_plm_size \
+      -DOUTPUT_PLM_SIZE=$output_plm_size \
+      -DPATCH_PLM_SIZE=$patch_plm_size -DMAC_PLM_SIZE=$mac_plm_size"
+append COMMON_CFG_FLAGS \
+    " -DDATA_WIDTH=${data_width} -DWORD_SIZE=${data_width} -DINPUT_PLM_SIZE=$input_plm_size \
+      -DWEIGHTS_PLM_SIZE=$weights_plm_size -DBIAS_PLM_SIZE=$bias_plm_size \
+      -DOUTPUT_PLM_SIZE=$output_plm_size \
+      -DPATCH_PLM_SIZE=$patch_plm_size -DMAC_PLM_SIZE=$mac_plm_size"
+
+define_io_config * IOCFG_DMA$dma -DDMA_WIDTH=$dma $COMMON_CFG_FLAGS
+define_system_config tb TESTBENCH_DMA$dma -io_config IOCFG_DMA$dma
+
+if {$NET eq "dwarf-7"} {
+define_sim_config "BEHAV_DMA$dma\_dwarf" "conv2d BEH" \
+    "tb TESTBENCH_DMA$dma" -io_config IOCFG_DMA$dma
+} else {
+define_sim_config "BEHAV_DMA$dma\_convnet" "conv2d BEH" \
+    "tb TESTBENCH_DMA$dma" -io_config IOCFG_DMA$dma
+}
+
+#
+# Compile Flags
+#
+set_attr hls_cc_options "$INCLUDES"
+
+#
+# Simulation Options
+#
+use_systemc_simulator xcelium
+set_attr cc_options "$INCLUDES -DCLOCK_PERIOD=$SIM_CLOCK_PERIOD -DTARGET_LAYER=$LAYER -DTARGET_LAYER_$LAYER"
+# enable_waveform_logging -vcd
+set_attr end_of_sim_command "make saySimPassed"
+
+
+} else {
+
 #
 # Testbench or system level modules
 #
@@ -73,7 +172,7 @@ define_system_module tb ../tb/system.cpp ../tb/sc_main.cpp
 #
 # Testbench configuration
 #
-set TB_INOUT_SIZE "XS S M L XL"
+set TB_INOUT_SIZE "XS S M L XL custom"
 set TB_FILTER_SIZE "1x1 3x3 5x5"
 
 #
@@ -100,10 +199,10 @@ if {$TECH_IS_XILINX == 1} {
 #
 
 set data_width 32
-set input_plm_size 2048
+set input_plm_size 32768
 set weights_plm_size 2048
 set bias_plm_size 16
-set output_plm_size 2048
+set output_plm_size 32768
 set patch_plm_size 512
 set mac_plm_size 512
 
@@ -169,3 +268,5 @@ use_systemc_simulator xcelium
 set_attr cc_options "$INCLUDES -DCLOCK_PERIOD=$SIM_CLOCK_PERIOD"
 # enable_waveform_logging -vcd
 set_attr end_of_sim_command "make saySimPassed"
+
+}
