@@ -153,8 +153,9 @@ end;
     YX_REG             => '1',
     SPANDEX_REG        => '1',
     DMA_IDX_REG        => '1',
-    49                 => '1',
-    50                 => '1',
+    DMA_IDX_REG + 1    => '1',
+    DMA_IDX_REG + 2    => '1',
+    DMA_IDX_REG + 3    => '1',
     -- <<user_mask>>
     others             => '0');
 

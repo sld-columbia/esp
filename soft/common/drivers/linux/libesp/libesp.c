@@ -59,7 +59,11 @@ void remove_buf(void *buf)
 
 bool thread_is_p2p(esp_thread_info_t *thread)
 {
-	return ((thread->esp_desc)->p2p_store || (thread->esp_desc)->p2p_nsrcs);
+	for (int i = 0; i < (thread->esp_desc)->dma_modes; i++) {
+		if ((thread->esp_desc)->p2p_store[i] || (thread->esp_desc)->p2p_nsrcs[i])
+			return true;
+	}
+	return false;
 }
 
 unsigned DMA_WORD_PER_BEAT(unsigned _st)

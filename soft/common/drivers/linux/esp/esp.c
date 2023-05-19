@@ -284,14 +284,14 @@ static bool esp_xfer_input_ok(struct esp_device *esp, const struct contig_desc *
 
 #define esp_get_y(_dev) (YX_MASK_YX & (ioread32be(_dev->iomem + YX_REG) >> YX_SHIFT_Y))
 #define esp_get_x(_dev) (YX_MASK_YX & (ioread32be(_dev->iomem + YX_REG) >> YX_SHIFT_X))
-#define esp_p2p_reset(_dev) iowrite32be(0, _dev->iomem + P2P_REG)
-#define esp_p2p_enable_dst(_dev) iowrite32be(ioread32be(_dev->iomem + P2P_REG) | P2P_MASK_DST_IS_P2P, _dev->iomem + P2P_REG)
-#define esp_p2p_enable_src(_dev) iowrite32be(ioread32be(_dev->iomem + P2P_REG) | P2P_MASK_SRC_IS_P2P, _dev->iomem + P2P_REG)
-#define esp_p2p_set_nsrcs(_dev, _n) iowrite32be(ioread32be(_dev->iomem + P2P_REG) | (P2P_MASK_NSRCS & (_n - 1)), _dev->iomem + P2P_REG)
-#define esp_p2p_set_y(_dev, _n, _y) iowrite32be(ioread32be(_dev->iomem + P2P_REG) | ((P2P_MASK_SRCS_YX & _y) << P2P_SHIFT_SRCS_Y(_n)), _dev->iomem + P2P_REG)
-#define esp_p2p_set_x(_dev, _n, _x) iowrite32be(ioread32be(_dev->iomem + P2P_REG) | ((P2P_MASK_SRCS_YX & _x) << P2P_SHIFT_SRCS_X(_n)), _dev->iomem + P2P_REG)
+#define esp_p2p_reset(_dev, _j) iowrite32be(0, _dev->iomem + DMA_IDX_REG + 4*_j)
+#define esp_p2p_enable_dst(_dev, _j) iowrite32be(ioread32be(_dev->iomem + DMA_IDX_REG + 4*_j) | P2P_MASK_DST_IS_P2P, _dev->iomem + DMA_IDX_REG + 4*_j)
+#define esp_p2p_enable_src(_dev, _j) iowrite32be(ioread32be(_dev->iomem + DMA_IDX_REG + 4*_j) | P2P_MASK_SRC_IS_P2P, _dev->iomem + DMA_IDX_REG + 4*_j)
+#define esp_p2p_set_nsrcs(_dev, _n, _j) iowrite32be(ioread32be(_dev->iomem + DMA_IDX_REG + 4*_j) | (P2P_MASK_NSRCS & (_n - 1)), _dev->iomem + DMA_IDX_REG + 4*_j)
+#define esp_p2p_set_y(_dev, _n, _y, _j) iowrite32be(ioread32be(_dev->iomem + DMA_IDX_REG + 4*_j) | ((P2P_MASK_SRCS_YX & _y) << P2P_SHIFT_SRCS_Y(_n)), _dev->iomem + DMA_IDX_REG + 4*_j)
+#define esp_p2p_set_x(_dev, _n, _x, _j) iowrite32be(ioread32be(_dev->iomem + DMA_IDX_REG + 4*_j) | ((P2P_MASK_SRCS_YX & _x) << P2P_SHIFT_SRCS_X(_n)), _dev->iomem + DMA_IDX_REG + 4*_j)
 
-static long esp_p2p_set_src(struct esp_device *esp, char *src_name, int src_index)
+static long esp_p2p_set_src(struct esp_device *esp, char *src_name, int src_index, int mode)
 {
 	struct list_head *ele;
 	struct esp_device *dev;
@@ -303,8 +303,8 @@ static long esp_p2p_set_src(struct esp_device *esp, char *src_name, int src_inde
 		if (!strncmp(src_name, dev->dev->kobj.name, strlen(dev->dev->kobj.name))) {
 			unsigned y = esp_get_y(dev);
 			unsigned x = esp_get_x(dev);
-			esp_p2p_set_y(esp, src_index, y);
-			esp_p2p_set_x(esp, src_index, x);
+			esp_p2p_set_y(esp, src_index, y, mode);
+			esp_p2p_set_x(esp, src_index, x, mode);
 			spin_unlock(&esp_devices_lock);
 			dev_dbg(esp->pdev, "P2P source %s on tile %d,%d\n", dev->dev->kobj.name, y, x);
 			return true;
@@ -319,23 +319,23 @@ static long esp_p2p_set_src(struct esp_device *esp, char *src_name, int src_inde
 static long esp_p2p_init(struct esp_device *esp, struct esp_access *access)
 {
 	int i = 0;
+	int j;
+	for (j = 0; j < access->dma_modes; j++) {
+		esp_p2p_reset(esp, j);
+		for (i = 0; i < access->p2p_nsrcs[j]; i++)
+			if (!esp_p2p_set_src(esp, access->p2p_srcs[j][i], i, j))
+				return -ENODEV;
 
-	esp_p2p_reset(esp);
+		if (access->p2p_store[j]) {
+			dev_dbg(esp->pdev, "P2P store enabled\n");
+			esp_p2p_enable_dst(esp, j);
+		}
 
-	for (i = 0; i < access->p2p_nsrcs; i++)
-		if (!esp_p2p_set_src(esp, access->p2p_srcs[i], i))
-			return -ENODEV;
-
-	if (access->p2p_store) {
-		dev_dbg(esp->pdev, "P2P store enabled\n");
-		esp_p2p_enable_dst(esp);
+		if (access->p2p_nsrcs[j] != 0) {
+			esp_p2p_enable_src(esp, j);
+			esp_p2p_set_nsrcs(esp, access->p2p_nsrcs[j],  j);
+		}
 	}
-
-	if (access->p2p_nsrcs != 0) {
-		esp_p2p_enable_src(esp);
-		esp_p2p_set_nsrcs(esp, access->p2p_nsrcs);
-	}
-
 	return 0;
 }
 
@@ -345,6 +345,7 @@ static int esp_access_ioctl(struct esp_device *esp, void __user *argp)
 	struct esp_access *access;
 	void *arg;
 	int rc = 0;
+	int i;
 
 	arg = kmalloc(esp->driver->arg_size, GFP_KERNEL);
 	if (arg == NULL)
@@ -362,9 +363,16 @@ static int esp_access_ioctl(struct esp_device *esp, void __user *argp)
 		goto out;
 	}
 
-	if (access->p2p_nsrcs > 4) {
+	if (access->dma_modes <= 0) {
 		rc = -EINVAL;
 		goto out;
+	}
+
+	for (i = 0; i < access->dma_modes; i++) {
+		if (access->p2p_nsrcs[i] > 4) {
+			rc = -EINVAL;
+			goto out;
+		}
 	}
 
 	if (!esp_xfer_input_ok(esp, contig)) {

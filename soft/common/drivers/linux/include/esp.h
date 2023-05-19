@@ -17,13 +17,16 @@
 #include <stdint.h>
 #endif /* __KERNEL__ */
 
+#define DMA_MODES 4
+
 /* embed this struct at the beginning of the access struct */
 struct esp_access {
 	contig_khandle_t contig;
 	uint8_t run;
-	uint8_t p2p_store;
-	uint8_t p2p_nsrcs;
-	char p2p_srcs[4][64];
+	uint8_t dma_modes;
+	uint8_t p2p_store[DMA_MODES];
+	uint8_t p2p_nsrcs[DMA_MODES];
+	char p2p_srcs[DMA_MODES][4][64];
 	enum accelerator_coherence coherence;
         unsigned int footprint;
         enum contig_alloc_policy alloc_policy;
