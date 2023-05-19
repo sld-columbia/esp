@@ -85,8 +85,9 @@ static void __dev_init(struct test_info *info, bool pr)
 	}
 
 	/* Disable P2P by default: user can override configuraion later */
-	info->esp->p2p_store = 0;
-	info->esp->p2p_nsrcs = 0;
+	memset (info->esp->p2p_store,0,DMA_MODES);
+	memset (info->esp->p2p_nsrcs,0,DMA_MODES);
+	info->esp->dma_modes=1;
 
 	if (info->set_access)
 		info->set_access(info);
