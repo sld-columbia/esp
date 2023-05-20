@@ -6,7 +6,7 @@
 void load_model(float* test_1,float** w_conv,float** bias_conv,float** w_fc,float** bias_fc)
 {
 
-	FILE* inFile0=fopen("data/dwarf_model1/cat.bin","rb");
+	FILE* inFile0 = fopen("data/dwarf_model1/cat.bin","rb");
 
 	if (inFile0!=NULL)
 	{
