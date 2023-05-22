@@ -31,22 +31,26 @@ use work.gencomp.all;
 package allpads is
 
 -- GF12
-component gf12_inpad
+--component gf12_inpad
+component asic_inpad
   generic (PAD_TYPE : std_logic := '0');
   port (pad : in std_ulogic; o : out std_ulogic);
 end component;
 
-component gf12_iopad
+--component gf12_iopad
+component asic_iopad
   generic (PAD_TYPE : std_logic := '0');
   port (pad : inout std_logic; i, en : in std_ulogic; o : out std_logic; sr, ds0, ds1 : in std_ulogic);
 end component;
 
-component gf12_iopadien
+--component gf12_iopadien
+component asic_iopadien
   generic (PAD_TYPE : std_logic := '0');
   port (pad : inout std_logic; i, en : in std_ulogic; o : out std_logic; ien : in std_ulogic; sr, ds0, ds1 : in std_ulogic);
 end component;
 
-component gf12_outpad
+--component gf12_outpad
+component asic_outpad
   generic (PAD_TYPE : std_logic := '0');
   port (pad : out std_ulogic; i : in std_ulogic; sr, ds0, ds1 : in std_ulogic);
 end component;

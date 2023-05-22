@@ -281,35 +281,38 @@ begin
         clk_div  => pllclk,
         lock     => dco_clk_lock);
 
-    clk_delay_gf12_gen: if CFG_FABTECH = gf12 generate
-      DELAY_CELL_GF12_C14_1: DELAY_CELL_GF12_C14
-        port map (
-          data_in  => dco_clk_div2_int,
-          sel      => dco_clk_delay_sel(3 downto 0),
-          data_out => dco_clk_div2_90_int);
-
-      delay_ddr_gen : if this_has_ddr /= 0 generate
-        DELAY_CELL_GF12_C14_2: DELAY_CELL_GF12_C14
+    --clk_delay_gf12_gen: if CFG_FABTECH = gf12 generate
+    clk_delay_asic_gen: if CFG_FABTECH = asic generate
+      delay_ddr_gen : if  this_has_ddr /= 0 generate
+        DELAY_CELL_GF12_C14_1: DELAY_CELL_GF12_C14
           port map (
             data_in  => dco_clk_div2_int,
-            sel      => dco_clk_delay_sel(7 downto 4),
-            data_out => dco_clk_div2_int_delay);
+            sel      => dco_clk_delay_sel(3 downto 0),
+            data_out => dco_clk_div2_90_int);
 
-        DELAY_CELL_GF12_C14_3: DELAY_CELL_GF12_C14
-          port map (
-            data_in  => dco_clk_int,
-            sel      => dco_clk_delay_sel(11 downto 8),
-            data_out => dco_clk_int_delay);
-      end generate delay_ddr_gen;
+        --delay_ddr_gen : if this_has_ddr /= 0 generate
+          DELAY_CELL_GF12_C14_2: DELAY_CELL_GF12_C14
+            port map (
+              data_in  => dco_clk_div2_int,
+              sel      => dco_clk_delay_sel(7 downto 4),
+              data_out => dco_clk_div2_int_delay);
+
+          DELAY_CELL_GF12_C14_3: DELAY_CELL_GF12_C14
+            port map (
+              data_in  => dco_clk_int,
+              sel      => dco_clk_delay_sel(11 downto 8),
+              data_out => dco_clk_int_delay);
+        end generate delay_ddr_gen;
 
       no_delay_ddr_gen : if this_has_ddr = 0 generate
         dco_clk_div2_int_delay <= dco_clk_div2_int;
         dco_clk_int_delay <= dco_clk_int;
       end generate no_delay_ddr_gen;
 
-    end generate clk_delay_gf12_gen;
+    end generate clk_delay_asic_gen;
 
-    noc_clk_delay_gen: if CFG_FABTECH /= gf12 generate
+    --noc_clk_delay_gen: if CFG_FABTECH /= gf12 generate
+    noc_clk_delay_gen: if CFG_FABTECH /= asic generate
       dco_clk_div2_90_int <= dco_clk_div2_int;
     end generate noc_clk_delay_gen;
 
@@ -326,6 +329,7 @@ begin
   no_dco_gen: if this_has_dco = 0 generate
     pllclk              <= '0';
     dco_clk_int         <= refclk;
+    dco_clk_int_delay   <= dco_clk_int;
     dco_clk_lock        <= '1';
     dco_clk_div2_int    <= '0';
     dco_clk_div2_90_int <= '0';

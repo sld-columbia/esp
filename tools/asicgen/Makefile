@@ -6,24 +6,17 @@ all: help
 
 ### Global design variables ###
 DESIGN_PATH = $(PWD)
-
-ifneq ("$(shell basename $(PWD))", "esp_asic_generic")
 ESP_ROOT = $(realpath ../esp)
+
 include $(ESP_ROOT)/tools/asicgen/asic_defs.sh
-else
-ESP_ROOT = $(realpath ../../)
-DIRTECH_NAME = inferred
-endif
 
 TECHLIB  = $(DIRTECH_NAME)
-TECH_TYPE = asic
-FPGA_TECHLIB = virtex7
-BOARD    = profpga-xc7v2000t-esp_asic_generic
+FPGA_TECHLIB = virtexu
+BOARD    = profpga-xcvu440-epochs-1
 DESIGN   = $(BOARD)
 SMP = 0
-BASE_FREQ_MHZ ?= 50
+LEON3_BASE_FREQ_MHZ ?= 78
 LEON3_STACK ?= 0x5bfffff0
-USE_OPENSBI ?= 0
 
 OVR_TECHLIB ?=
 ifneq ("$(OVR_TECHLIB)", "")
@@ -31,12 +24,12 @@ TECHLIB = $(OVR_TECHLIB)
 endif
 
 ### Chip-specific configuration ####
-GRLIB_DEFCONFIG = $(DESIGN_PATH)/grlib_defconfig
-ESP_DEFCONFIG = $(DESIGN_PATH)/esp_defconfig
+GRLIB_DEFCONFIG = $(DESIGN_PATH)/grlib_asic_defconfig
+ESP_DEFCONFIG = $(DESIGN_PATH)/esp_asic_defconfig
 
 
 ### Design top level and testbench ###
-CHIP_TOP = ESP_ASIC_TOP
+CHIP_TOP = esp_top
 TOP = fpga_proxy_top
 SIMTOP = testbench
 
@@ -44,22 +37,13 @@ SIMTOP = testbench
 ### Modelsim Simulation Options ###
 
 # Compile flags
-ifneq ("$(OVR_TECHLIB)", "")
 VCOMOPT +=
-VLOGOPT +=
-XMLOGOPT +=
-NCLOGOPT +=
-else ifeq ($(TECHLIB),inferred)
-VCOMOPT +=
-VLOGOPT +=
-XMLOGOPT +=
-NCLOGOPT +=
-else
-VCOMOPT +=
+#VLOGOPT += +define+GF12
 VLOGOPT += +define+ASIC
+#XMLOGOPT += -DEFINE GF12
 XMLOGOPT += -DEFINE ASIC
+#NCLOGOPT += -DEFINE GF12
 NCLOGOPT += -DEFINE ASIC
-endif
 
 # Add Unisim libraries to simulate FPGA proxy
 VSIMOPT += -L secureip_ver -L unisims_ver
@@ -70,12 +54,13 @@ VSIMOPT += -g SIMULATION=true
 
 
 # Genus flags
+#GENUS_VLOGOPT += -define GF12
 GENUS_VLOGOPT += -define ASIC
 
 
 ### Additional design files ###
+TOP_VHDL_RTL_PKGS += $(DESIGN_PATH)/pads_loc.vhd
 TOP_VHDL_RTL_SRCS += $(DESIGN_PATH)/fpga_proxy_top.vhd
-TOP_VHDL_RTL_SRCS += $(DESIGN_PATH)/pads_loc.vhd
 TOP_VLOG_RTL_SRCS +=
 TOP_VHDL_SIM_PKGS +=
 TOP_VHDL_SIM_SRCS += $(DESIGN_PATH)/top.vhd
