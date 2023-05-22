@@ -189,32 +189,32 @@ $(STRATUSHLS_ACC-wdir): $(HLS_LOGS)
 	fi;
 
 $(STRATUSHLS_ACC-hls): %-hls : %-wdir
-	$(QUIET_MAKE)ACCELERATOR=$(@:-hls=) TECH=$(TECHLIB) ESP_ROOT=$(ESP_ROOT) make -C $(STRATUSHLS_ACC_PATH)/$(@:-hls=)/hw/hls-work-$(TECHLIB) memlib | tee $(HLS_LOGS)/$(@:-hls=)_memgen.log
+	$(QUIET_MAKE)ACCELERATOR=$(@:-hls=) TECH_TYPE=$(TECH_TYPE) TECH=$(TECHLIB) ESP_ROOT=$(ESP_ROOT) make -C $(STRATUSHLS_ACC_PATH)/$(@:-hls=)/hw/hls-work-$(TECHLIB) memlib | tee $(HLS_LOGS)/$(@:-hls=)_memgen.log
 	$(QUIET_INFO)echo "Running HLS for available implementations of $(@:-hls=)"
-	$(QUIET_MAKE)ACCELERATOR=$(@:-hls=) TECH=$(TECHLIB) ESP_ROOT=$(ESP_ROOT) make -C $(STRATUSHLS_ACC_PATH)/$(@:-hls=)/hw/hls-work-$(TECHLIB) hls_all | tee $(HLS_LOGS)/$(@:-hls=)_hls.log
+	$(QUIET_MAKE)ACCELERATOR=$(@:-hls=) TECH_TYPE=$(TECH_TYPE) TECH=$(TECHLIB) ESP_ROOT=$(ESP_ROOT) make -C $(STRATUSHLS_ACC_PATH)/$(@:-hls=)/hw/hls-work-$(TECHLIB) hls_all | tee $(HLS_LOGS)/$(@:-hls=)_hls.log
 	$(QUIET_INFO)echo "Installing available implementations for $(@:-hls=) to $(ESP_ROOT)/tech/$(TECHLIB)/acc/$(@:-hls=)"
-	$(QUIET_MAKE)ACCELERATOR=$(@:-hls=) TECH=$(TECHLIB) ESP_ROOT=$(ESP_ROOT) make -C $(STRATUSHLS_ACC_PATH)/$(@:-hls=)/hw/hls-work-$(TECHLIB) install
+	$(QUIET_MAKE)ACCELERATOR=$(@:-hls=) TECH_TYPE=$(TECH_TYPE) TECH=$(TECHLIB) ESP_ROOT=$(ESP_ROOT) make -C $(STRATUSHLS_ACC_PATH)/$(@:-hls=)/hw/hls-work-$(TECHLIB) install
 	@if test -e $(ESP_ROOT)/tech/$(TECHLIB)/acc/installed.log; then \
 		sed -i '/$(@:-hls=)/d' $(ESP_ROOT)/tech/$(TECHLIB)/acc/installed.log; \
 	fi;
 	@echo "$(@:-hls=)" >> $(ESP_ROOT)/tech/$(TECHLIB)/acc/installed.log
 
 $(STRATUSHLS_ACC-sim): %-sim : %-wdir
-	$(QUIET_RUN)ACCELERATOR=$(@:-sim=) TECH=$(TECHLIB) ESP_ROOT=$(ESP_ROOT) make -C $(STRATUSHLS_ACC_PATH)/$(@:-sim=)/hw/hls-work-$(TECHLIB) sim_all | tee $(HLS_LOGS)/$(@:-sim=)_sim.log
+	$(QUIET_RUN)ACCELERATOR=$(@:-sim=) TECH_TYPE=$(TECH_TYPE) TECH=$(TECHLIB) ESP_ROOT=$(ESP_ROOT) make -C $(STRATUSHLS_ACC_PATH)/$(@:-sim=)/hw/hls-work-$(TECHLIB) sim_all | tee $(HLS_LOGS)/$(@:-sim=)_sim.log
 
 $(STRATUSHLS_ACC-plot): %-plot : %-wdir
-	$(QUIET_RUN)ACCELERATOR=$(@:-plot=) TECH=$(TECHLIB) ESP_ROOT=$(ESP_ROOT) make -C $(STRATUSHLS_ACC_PATH)/$(@:-plot=)/hw/hls-work-$(TECHLIB) plot
+	$(QUIET_RUN)ACCELERATOR=$(@:-plot=) TECH_TYPE=$(TECH_TYPE) TECH=$(TECHLIB) ESP_ROOT=$(ESP_ROOT) make -C $(STRATUSHLS_ACC_PATH)/$(@:-plot=)/hw/hls-work-$(TECHLIB) plot
 
 $(STRATUSHLS_ACC-exe):
-	$(QUIET_RUN) ACCELERATOR=$(@:-exe=) TECH=$(TECHLIB) ESP_ROOT=$(ESP_ROOT) DMA_WIDTH=$(NOC_WIDTH) RUN_ARGS="$(RUN_ARGS)" $(MAKE) -C $(STRATUSHLS_ACC_PATH)/$(@:-exe=)/hw/sim run
+	$(QUIET_RUN) ACCELERATOR=$(@:-exe=) TECH_TYPE=$(TECH_TYPE) TECH=$(TECHLIB) ESP_ROOT=$(ESP_ROOT) DMA_WIDTH=$(NOC_WIDTH) RUN_ARGS="$(RUN_ARGS)" $(MAKE) -C $(STRATUSHLS_ACC_PATH)/$(@:-exe=)/hw/sim run
 
 $(STRATUSHLS_ACC-clean): %-clean : %-wdir
-	$(QUIET_CLEAN)ACCELERATOR=$(@:-clean=) TECH=$(TECHLIB) ESP_ROOT=$(ESP_ROOT) make -C $(STRATUSHLS_ACC_PATH)/$(@:-clean=)/hw/hls-work-$(TECHLIB) clean
-	@ACCELERATOR=$(@:-clean=) TECH=$(TECHLIB) ESP_ROOT=$(ESP_ROOT) DMA_WIDTH=$(NOC_WIDTH) $(MAKE) -C $(STRATUSHLS_ACC_PATH)/$(@:-clean=)/hw/sim clean
+	$(QUIET_CLEAN)ACCELERATOR=$(@:-clean=) TECH_TYPE=$(TECH_TYPE) TECH=$(TECHLIB) ESP_ROOT=$(ESP_ROOT) make -C $(STRATUSHLS_ACC_PATH)/$(@:-clean=)/hw/hls-work-$(TECHLIB) clean
+	@ACCELERATOR=$(@:-clean=) TECH_TYPE=$(TECH_TYPE) TECH=$(TECHLIB) ESP_ROOT=$(ESP_ROOT) DMA_WIDTH=$(NOC_WIDTH) $(MAKE) -C $(STRATUSHLS_ACC_PATH)/$(@:-clean=)/hw/sim clean
 	@$(RM) $(HLS_LOGS)/$(@:-clean=)*.log
 
 $(STRATUSHLS_ACC-distclean): %-distclean : %-wdir
-	$(QUIET_CLEAN)ACCELERATOR=$(@:-distclean=) TECH=$(TECHLIB) ESP_ROOT=$(ESP_ROOT) make -C $(STRATUSHLS_ACC_PATH)/$(@:-distclean=)/hw/hls-work-$(TECHLIB) distclean
+	$(QUIET_CLEAN)ACCELERATOR=$(@:-distclean=) TECH_TYPE=$(TECH_TYPE) TECH=$(TECHLIB) ESP_ROOT=$(ESP_ROOT) make -C $(STRATUSHLS_ACC_PATH)/$(@:-distclean=)/hw/hls-work-$(TECHLIB) distclean
 	@$(RM) $(HLS_LOGS)/$(@:-distclean=)*.log
 	@if test -e $(ESP_ROOT)/tech/$(TECHLIB)/acc/installed.log; then \
 		sed -i '/$(@:-distclean=)/d' $(ESP_ROOT)/tech/$(TECHLIB)/acc/installed.log; \

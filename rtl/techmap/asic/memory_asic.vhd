@@ -1,4 +1,4 @@
--- Copyright (c) 2011-2023 Columbia University, System Level Design Group
+-- Copyright (c) 2011-2022 Columbia University, System Level Design Group
 -- SPDX-License-Identifier: Apache-2.0
 
 
@@ -11,7 +11,7 @@ use ieee.std_logic_1164.all;
 use work.config_types.all;
 use work.config.all;
 
-entity gf12_syncram is
+entity asic_syncram is
   generic (abits : integer := 9; dbits : integer := 32);
   port (
     clk     : in  std_ulogic;
@@ -23,7 +23,7 @@ entity gf12_syncram is
     );
 end;
 
-architecture rtl of gf12_syncram is
+architecture rtl of asic_syncram is
 
   component generic_syncram
     generic (abits : integer := 10; dbits : integer := 8);
@@ -35,7 +35,7 @@ architecture rtl of gf12_syncram is
       write   : in  std_ulogic);
   end component;
 
-  component GF12_SRAM_SP_256x8_PG
+  component IO_SP_256x8
   port (
     CLK  : in  std_ulogic;
     A0   : in  std_logic_vector(7 downto 0);
@@ -46,7 +46,7 @@ architecture rtl of gf12_syncram is
     CE0  : in  std_ulogic);
   end component;
 
-  component GF12_SRAM_SP_256x16_PG
+  component IO_SP_256x16
   port (
     CLK  : in  std_ulogic;
     A0   : in  std_logic_vector(7 downto 0);
@@ -57,7 +57,7 @@ architecture rtl of gf12_syncram is
     CE0  : in  std_ulogic);
   end component;
 
-  component GF12_SRAM_SP_256x32_PG
+  component IO_SP_256x32
   port (
     CLK  : in  std_ulogic;
     A0   : in  std_logic_vector(7 downto 0);
@@ -68,7 +68,7 @@ architecture rtl of gf12_syncram is
     CE0  : in  std_ulogic);
   end component;
 
-  component GF12_SRAM_SP_256x64_PG
+  component IO_SP_256x64
   port (
     CLK  : in  std_ulogic;
     A0   : in  std_logic_vector(7 downto 0);
@@ -79,7 +79,7 @@ architecture rtl of gf12_syncram is
     CE0  : in  std_ulogic);
   end component;
 
-  component GF12_SRAM_SP_512x8_PG
+  component IO_SP_512x8
   port (
     CLK  : in  std_ulogic;
     A0   : in  std_logic_vector(8 downto 0);
@@ -90,7 +90,7 @@ architecture rtl of gf12_syncram is
     CE0  : in  std_ulogic);
   end component;
 
-  component GF12_SRAM_SP_512x16_PG
+  component IO_SP_512x16
   port (
     CLK  : in  std_ulogic;
     A0   : in  std_logic_vector(8 downto 0);
@@ -101,7 +101,7 @@ architecture rtl of gf12_syncram is
     CE0  : in  std_ulogic);
   end component;
 
-  component GF12_SRAM_SP_512x32_PG
+  component IO_SP_512x32
   port (
     CLK  : in  std_ulogic;
     A0   : in  std_logic_vector(8 downto 0);
@@ -112,7 +112,7 @@ architecture rtl of gf12_syncram is
     CE0  : in  std_ulogic);
   end component;
 
-  component GF12_SRAM_SP_512x64_PG
+  component IO_SP_512x64
   port (
     CLK  : in  std_ulogic;
     A0   : in  std_logic_vector(8 downto 0);
@@ -123,7 +123,7 @@ architecture rtl of gf12_syncram is
     CE0  : in  std_ulogic);
   end component;
 
-  component GF12_SRAM_SP_1024x8_PG
+  component IO_SP_1024x8
   port (
     CLK  : in  std_ulogic;
     A0   : in  std_logic_vector(9 downto 0);
@@ -134,7 +134,7 @@ architecture rtl of gf12_syncram is
     CE0  : in  std_ulogic);
   end component;
 
-  component GF12_SRAM_SP_1024x16_PG
+  component IO_SP_1024x16
   port (
     CLK  : in  std_ulogic;
     A0   : in  std_logic_vector(9 downto 0);
@@ -145,7 +145,7 @@ architecture rtl of gf12_syncram is
     CE0  : in  std_ulogic);
   end component;
 
-  component GF12_SRAM_SP_1024x32_PG
+  component IO_SP_1024x32
   port (
     CLK  : in  std_ulogic;
     A0   : in  std_logic_vector(9 downto 0);
@@ -156,7 +156,7 @@ architecture rtl of gf12_syncram is
     CE0  : in  std_ulogic);
   end component;
 
-  component GF12_SRAM_SP_1024x64_PG
+  component IO_SP_1024x64
   port (
     CLK  : in  std_ulogic;
     A0   : in  std_logic_vector(9 downto 0);
@@ -167,7 +167,7 @@ architecture rtl of gf12_syncram is
     CE0  : in  std_ulogic);
   end component;
 
-  component GF12_SRAM_SP_2048x8_PG
+  component IO_SP_2048x8
   port (
     CLK  : in  std_ulogic;
     A0   : in  std_logic_vector(10 downto 0);
@@ -178,18 +178,7 @@ architecture rtl of gf12_syncram is
     CE0  : in  std_ulogic);
   end component;
 
-  component GF12_SRAM_SP_2048x8
-  port (
-    CLK  : in  std_ulogic;
-    A0   : in  std_logic_vector(10 downto 0);
-    D0   : in  std_logic_vector(7 downto 0);
-    Q0   : out std_logic_vector(7 downto 0);
-    WE0  : in  std_ulogic;
-    WEM0 : in  std_logic_vector(7 downto 0);
-    CE0  : in  std_ulogic);
-  end component;
-
-  component GF12_SRAM_SP_2048x16_PG
+  component IO_SP_2048x16
   port (
     CLK  : in  std_ulogic;
     A0   : in  std_logic_vector(10 downto 0);
@@ -200,7 +189,7 @@ architecture rtl of gf12_syncram is
     CE0  : in  std_ulogic);
   end component;
 
-  component GF12_SRAM_SP_2048x32_PG
+  component IO_SP_2048x32
   port (
     CLK  : in  std_ulogic;
     A0   : in  std_logic_vector(10 downto 0);
@@ -211,7 +200,7 @@ architecture rtl of gf12_syncram is
     CE0  : in  std_ulogic);
   end component;
 
-  component GF12_SRAM_SP_2048x64_PG
+  component IO_SP_2048x64
   port (
     CLK  : in  std_ulogic;
     A0   : in  std_logic_vector(10 downto 0);
@@ -222,7 +211,7 @@ architecture rtl of gf12_syncram is
     CE0  : in  std_ulogic);
   end component;
 
-  component GF12_SRAM_SP_4096x8_PG
+  component IO_SP_4096x8
   port (
     CLK  : in  std_ulogic;
     A0   : in  std_logic_vector(11 downto 0);
@@ -233,7 +222,7 @@ architecture rtl of gf12_syncram is
     CE0  : in  std_ulogic);
   end component;
 
-  component GF12_SRAM_SP_4096x16_PG
+  component IO_SP_4096x16
   port (
     CLK  : in  std_ulogic;
     A0   : in  std_logic_vector(11 downto 0);
@@ -244,7 +233,7 @@ architecture rtl of gf12_syncram is
     CE0  : in  std_ulogic);
   end component;
 
-  component GF12_SRAM_SP_4096x32_PG
+  component IO_SP_4096x32
   port (
     CLK  : in  std_ulogic;
     A0   : in  std_logic_vector(11 downto 0);
@@ -255,7 +244,7 @@ architecture rtl of gf12_syncram is
     CE0  : in  std_ulogic);
   end component;
 
-  component GF12_SRAM_SP_4096x64_PG
+  component IO_SP_4096x64
   port (
     CLK  : in  std_ulogic;
     A0   : in  std_logic_vector(11 downto 0);
@@ -266,7 +255,7 @@ architecture rtl of gf12_syncram is
     CE0  : in  std_ulogic);
   end component;
 
-  component GF12_SRAM_SP_8192x8_PG
+  component IO_SP_8192x8
   port (
     CLK  : in  std_ulogic;
     A0   : in  std_logic_vector(12 downto 0);
@@ -277,7 +266,7 @@ architecture rtl of gf12_syncram is
     CE0  : in  std_ulogic);
   end component;
 
-  component GF12_SRAM_SP_8192x16_PG
+  component IO_SP_8192x16
   port (
     CLK  : in  std_ulogic;
     A0   : in  std_logic_vector(12 downto 0);
@@ -288,7 +277,7 @@ architecture rtl of gf12_syncram is
     CE0  : in  std_ulogic);
   end component;
 
-  component GF12_SRAM_SP_8192x32_PG
+  component IO_SP_8192x32
   port (
     CLK  : in  std_ulogic;
     A0   : in  std_logic_vector(12 downto 0);
@@ -299,7 +288,7 @@ architecture rtl of gf12_syncram is
     CE0  : in  std_ulogic);
   end component;
 
-  component GF12_SRAM_SP_8192x64_PG
+  component IO_SP_8192x64
   port (
     CLK  : in  std_ulogic;
     A0   : in  std_logic_vector(12 downto 0);
@@ -310,7 +299,7 @@ architecture rtl of gf12_syncram is
     CE0  : in  std_ulogic);
   end component;
 
-  component GF12_SRAM_SP_16384x8_PG
+  component IO_SP_16384x8
   port (
     CLK  : in  std_ulogic;
     A0   : in  std_logic_vector(13 downto 0);
@@ -321,7 +310,7 @@ architecture rtl of gf12_syncram is
     CE0  : in  std_ulogic);
   end component;
 
-  component GF12_SRAM_SP_16384x16_PG
+  component IO_SP_16384x16
   port (
     CLK  : in  std_ulogic;
     A0   : in  std_logic_vector(13 downto 0);
@@ -332,7 +321,7 @@ architecture rtl of gf12_syncram is
     CE0  : in  std_ulogic);
   end component;
 
-  component GF12_SRAM_SP_16384x32_PG
+  component IO_SP_16384x32
   port (
     CLK  : in  std_ulogic;
     A0   : in  std_logic_vector(13 downto 0);
@@ -343,7 +332,7 @@ architecture rtl of gf12_syncram is
     CE0  : in  std_ulogic);
   end component;
 
-  component GF12_SRAM_SP_16384x64_PG
+  component IO_SP_16384x64
   port (
     CLK  : in  std_ulogic;
     A0   : in  std_logic_vector(13 downto 0);
@@ -357,7 +346,7 @@ architecture rtl of gf12_syncram is
   signal do, di : std_logic_vector(63 downto 0);
   signal xa     : std_logic_vector(13 downto 0);
 
-  -- Replace GF12 16kx8 memory with 8 2kx8 banks
+  -- Replace Asic 16kx8 memory with 8 2kx8 banks
   signal mux_sel : std_logic_vector(2 downto 0);
   signal enable_int : std_logic_vector(7 downto 0);
   type bank_out_type is array (0 to 7) of std_logic_vector(7 downto 0);
@@ -391,7 +380,7 @@ begin
 
   a8 : if abits = 8 generate
     d8 : if dbits = 8 generate
-      s : GF12_SRAM_SP_256x8_PG
+      s : IO_SP_256x8
         port map (
           CLK  => clk,
           A0   => xa(7 downto 0),
@@ -404,7 +393,7 @@ begin
     end generate d8;
 
     d16 : if dbits = 16 generate
-      s : GF12_SRAM_SP_256x16_PG
+      s : IO_SP_256x16
         port map (
           CLK  => clk,
           A0   => xa(7 downto 0),
@@ -417,7 +406,7 @@ begin
     end generate d16;
 
     d32 : if dbits = 32 generate
-      s : GF12_SRAM_SP_256x32_PG
+      s : IO_SP_256x32
         port map (
           CLK  => clk,
           A0   => xa(7 downto 0),
@@ -430,7 +419,7 @@ begin
     end generate d32;
 
     d64 : if dbits = 64 generate
-      s : GF12_SRAM_SP_256x64_PG
+      s : IO_SP_256x64
         port map (
           CLK  => clk,
           A0   => xa(7 downto 0),
@@ -445,7 +434,7 @@ begin
 
   a9 : if abits = 9 generate
     d8 : if dbits = 8 generate
-      s : GF12_SRAM_SP_512x8_PG
+      s : IO_SP_512x8
         port map (
           CLK  => clk,
           A0   => xa(8 downto 0),
@@ -458,7 +447,7 @@ begin
     end generate d8;
 
     d16 : if dbits = 16 generate
-      s : GF12_SRAM_SP_512x16_PG
+      s : IO_SP_512x16
         port map (
           CLK  => clk,
           A0   => xa(8 downto 0),
@@ -471,7 +460,7 @@ begin
     end generate d16;
 
     d32 : if dbits = 32 generate
-      s : GF12_SRAM_SP_512x32_PG
+      s : IO_SP_512x32
         port map (
           CLK  => clk,
           A0   => xa(8 downto 0),
@@ -484,7 +473,7 @@ begin
     end generate d32;
 
     d64 : if dbits = 64 generate
-      s : GF12_SRAM_SP_512x64_PG
+      s : IO_SP_512x64
         port map (
           CLK  => clk,
           A0   => xa(8 downto 0),
@@ -499,7 +488,7 @@ begin
 
   a10 : if abits = 10 generate
     d8 : if dbits = 8 generate
-      s : GF12_SRAM_SP_1024x8_PG
+      s : IO_SP_1024x8
         port map (
           CLK  => clk,
           A0   => xa(9 downto 0),
@@ -512,7 +501,7 @@ begin
     end generate d8;
 
     d16 : if dbits = 16 generate
-      s : GF12_SRAM_SP_1024x16_PG
+      s : IO_SP_1024x16
         port map (
           CLK  => clk,
           A0   => xa(9 downto 0),
@@ -525,7 +514,7 @@ begin
     end generate d16;
 
     d32 : if dbits = 32 generate
-      s : GF12_SRAM_SP_1024x32_PG
+      s : IO_SP_1024x32
         port map (
           CLK  => clk,
           A0   => xa(9 downto 0),
@@ -538,7 +527,7 @@ begin
     end generate d32;
 
     d64 : if dbits = 64 generate
-      s : GF12_SRAM_SP_1024x64_PG
+      s : IO_SP_1024x64
         port map (
           CLK  => clk,
           A0   => xa(9 downto 0),
@@ -553,7 +542,7 @@ begin
 
   a11 : if abits = 11 generate
     d8 : if dbits = 8 generate
-      s : GF12_SRAM_SP_2048x8_PG
+      s : IO_SP_2048x8
         port map (
           CLK  => clk,
           A0   => xa(10 downto 0),
@@ -566,7 +555,7 @@ begin
     end generate d8;
 
     d16 : if dbits = 16 generate
-      s : GF12_SRAM_SP_2048x16_PG
+      s : IO_SP_2048x16
         port map (
           CLK  => clk,
           A0   => xa(10 downto 0),
@@ -579,7 +568,7 @@ begin
     end generate d16;
 
     d32 : if dbits = 32 generate
-      s : GF12_SRAM_SP_2048x32_PG
+      s : IO_SP_2048x32
         port map (
           CLK  => clk,
           A0   => xa(10 downto 0),
@@ -592,7 +581,7 @@ begin
     end generate d32;
 
     d64 : if dbits = 64 generate
-      s : GF12_SRAM_SP_2048x64_PG
+      s : IO_SP_2048x64
         port map (
           CLK  => clk,
           A0   => xa(10 downto 0),
@@ -607,7 +596,7 @@ begin
 
   a12 : if abits = 12 generate
     d8 : if dbits = 8 generate
-      s : GF12_SRAM_SP_4096x8_PG
+      s : IO_SP_4096x8
         port map (
           CLK  => clk,
           A0   => xa(11 downto 0),
@@ -620,7 +609,7 @@ begin
     end generate d8;
 
     d16 : if dbits = 16 generate
-      s : GF12_SRAM_SP_4096x16_PG
+      s : IO_SP_4096x16
         port map (
           CLK  => clk,
           A0   => xa(11 downto 0),
@@ -633,7 +622,7 @@ begin
     end generate d16;
 
     d32 : if dbits = 32 generate
-      s : GF12_SRAM_SP_4096x32_PG
+      s : IO_SP_4096x32
         port map (
           CLK  => clk,
           A0   => xa(11 downto 0),
@@ -646,7 +635,7 @@ begin
     end generate d32;
 
     d64 : if dbits = 64 generate
-      s : GF12_SRAM_SP_4096x64_PG
+      s : IO_SP_4096x64
         port map (
           CLK  => clk,
           A0   => xa(11 downto 0),
@@ -661,7 +650,7 @@ begin
 
   a13 : if abits = 13 generate
     d8 : if dbits = 8 generate
-      s : GF12_SRAM_SP_8192x8_PG
+      s : IO_SP_8192x8
         port map (
           CLK  => clk,
           A0   => xa(12 downto 0),
@@ -674,7 +663,7 @@ begin
     end generate d8;
 
     d16 : if dbits = 16 generate
-      s : GF12_SRAM_SP_8192x16_PG
+      s : IO_SP_8192x16
         port map (
           CLK  => clk,
           A0   => xa(12 downto 0),
@@ -687,7 +676,7 @@ begin
     end generate d16;
 
     d32 : if dbits = 32 generate
-      s : GF12_SRAM_SP_8192x32_PG
+      s : IO_SP_8192x32
         port map (
           CLK  => clk,
           A0   => xa(12 downto 0),
@@ -700,7 +689,7 @@ begin
     end generate d32;
 
     d64 : if dbits = 64 generate
-      s : GF12_SRAM_SP_8192x64_PG
+      s : IO_SP_8192x64
         port map (
           CLK  => clk,
           A0   => xa(12 downto 0),
@@ -758,7 +747,7 @@ begin
 
       -- banks
       b8: for b in 0 to 7 generate
-        s : GF12_SRAM_SP_2048x8
+        s : IO_SP_2048x8
           port map (
             CLK  => clk,
             A0   => xa(10 downto 0),
@@ -771,7 +760,7 @@ begin
     end generate d8;
 
     d16 : if dbits = 16 generate
-      s : GF12_SRAM_SP_16384x16_PG
+      s : IO_SP_16384x16
         port map (
           CLK  => clk,
           A0   => xa(13 downto 0),
@@ -784,7 +773,7 @@ begin
     end generate d16;
 
     d32 : if dbits = 32 generate
-      s : GF12_SRAM_SP_16384x32_PG
+      s : IO_SP_16384x32
         port map (
           CLK  => clk,
           A0   => xa(13 downto 0),
@@ -797,7 +786,7 @@ begin
     end generate d32;
 
     d64 : if dbits = 64 generate
-      s : GF12_SRAM_SP_16384x64_PG
+      s : IO_SP_16384x64
         port map (
           CLK  => clk,
           A0   => xa(13 downto 0),
@@ -815,7 +804,7 @@ begin
    x : process
    begin
      assert false
-     report  "Address depth larger than 14 not supported for gf12_syncram"
+     report  "Address depth larger than 14 not supported for asic_syncram"
      severity failure;
      wait;
    end process;
@@ -824,7 +813,7 @@ begin
    x : process
    begin
      assert false
-     report  "Data width larger than 64 not supported for gf12_syncram"
+     report  "Data width larger than 64 not supported for asic_syncram"
      severity failure;
      wait;
    end process;
@@ -849,7 +838,7 @@ use std.textio.all;
 use work.stdio.all;
 -- pragma translate_on
 
-entity gf12_syncram_2p is
+entity asic_syncram_2p is
   generic (abits  : integer := 6; dbits : integer := 8);
   port (
     rclk     : in  std_ulogic;
@@ -862,7 +851,7 @@ entity gf12_syncram_2p is
     datain   : in  std_logic_vector((dbits -1) downto 0));
 end;
 
-architecture behav of gf12_syncram_2p is
+architecture behav of asic_syncram_2p is
 
   component generic_syncram_2p
     generic (abits  : integer := 8; dbits : integer := 32);
@@ -877,7 +866,7 @@ architecture behav of gf12_syncram_2p is
       );
   end component;
 
-  component GF12_RF_2P_4096x16
+  component IO_DP_4096x16
   port (
     CLK0 : in  std_ulogic;
     A0   : in  std_logic_vector(11 downto 0);
@@ -891,7 +880,7 @@ architecture behav of gf12_syncram_2p is
     CE1  : in  std_ulogic);
   end component;
 
-  component GF12_RF_2P_256x32
+  component IO_DP_256x32
   port (
     CLK0 : in  std_ulogic;
     A0   : in  std_logic_vector(7 downto 0);
@@ -929,7 +918,7 @@ begin
   end generate;
 
   a12d16: if abits = 12 and dbits = 16 generate
-    s: GF12_RF_2P_4096x16
+    s: IO_DP_4096x16
       port map (
         CLK0 => rclk,
         A0   => rxa(11 downto 0),
@@ -944,7 +933,7 @@ begin
   end generate a12d16;
 
   a8d32: if abits = 8 and dbits = 32 generate
-    s: GF12_RF_2P_256x32
+    s: IO_DP_256x32
       port map (
         CLK0 => rclk,
         A0   => rxa(7 downto 0),
@@ -965,7 +954,7 @@ begin
    x : process
    begin
      assert false
-     report  "Requested dual-port memory " & tost(2**12) & "x" & tost(dbits) & " is not available for GF12"
+     report  "Requested dual-port memory " & tost(2**12) & "x" & tost(dbits) & " is not available for Asic"
      severity failure;
      wait;
    end process;
@@ -976,7 +965,7 @@ end;
 
 
 -------------------------
--- gf12_syncram with byte enable
+-- asic_syncram with byte enable
 
 library ieee;
 use ieee.std_logic_1164.all;
@@ -984,7 +973,7 @@ use work.stdlib.all;
 use work.config_types.all;
 use work.config.all;
 
-entity gf12_syncram_be is
+entity asic_syncram_be is
   generic ( abits : integer := 17; dbits : integer := 64);
   port (
     clk     : in std_ulogic;
@@ -996,10 +985,10 @@ entity gf12_syncram_be is
   );
 end;
 
-architecture behav of gf12_syncram_be is
+architecture behav of asic_syncram_be is
 
 
-  component gf12_sram64_be_13abits is
+  component slm_sram_be_13abits_64dbits is
     port (
       CLK : in std_ulogic;
       CE0 : in std_ulogic;
@@ -1011,9 +1000,9 @@ architecture behav of gf12_syncram_be is
       A1  : in std_logic_vector(12 downto 0);
       Q1  : out std_logic_vector(63 downto 0)
       );
-  end component gf12_sram64_be_13abits;
+  end component slm_sram_be_13abits_64dbits;
 
-  component gf12_sram64_be_14abits is
+  component slm_sram_be_14abits_64dbits is
     port (
       CLK : in std_ulogic;
       CE0 : in std_ulogic;
@@ -1025,9 +1014,9 @@ architecture behav of gf12_syncram_be is
       A1  : in std_logic_vector(13 downto 0);
       Q1  : out std_logic_vector(63 downto 0)
       );
-  end component gf12_sram64_be_14abits;
+  end component slm_sram_be_14abits_64dbits;
 
-  component gf12_sram64_be_15abits is
+  component slm_sram_be_15abits_64dbits is
     port (
       CLK : in std_ulogic;
       CE0 : in std_ulogic;
@@ -1039,9 +1028,9 @@ architecture behav of gf12_syncram_be is
       A1  : in std_logic_vector(14 downto 0);
       Q1  : out std_logic_vector(63 downto 0)
       );
-  end component gf12_sram64_be_15abits;
+  end component slm_sram_be_15abits_64dbits;
 
-  component gf12_sram64_be_16abits is
+  component slm_sram_be_16abits_64dbits is
     port (
       CLK : in std_ulogic;
       CE0 : in std_ulogic;
@@ -1053,9 +1042,9 @@ architecture behav of gf12_syncram_be is
       A1  : in std_logic_vector(15 downto 0);
       Q1  : out std_logic_vector(63 downto 0)
       );
-  end component gf12_sram64_be_16abits;
+  end component slm_sram_be_16abits_64dbits;
 
-  component gf12_sram64_be_17abits is
+  component slm_sram_be_17abits_64dbits is
     port (
       CLK : in std_ulogic;
       CE0 : in std_ulogic;
@@ -1067,9 +1056,9 @@ architecture behav of gf12_syncram_be is
       A1  : in std_logic_vector(16 downto 0);
       Q1  : out std_logic_vector(63 downto 0)
       );
-  end component gf12_sram64_be_17abits;
+  end component slm_sram_be_17abits_64dbits;
 
-  component gf12_sram64_be_18abits is
+  component slm_sram_be_18abits_64dbits is
     port (
       CLK : in std_ulogic;
       CE0 : in std_ulogic;
@@ -1081,9 +1070,9 @@ architecture behav of gf12_syncram_be is
       A1  : in std_logic_vector(17 downto 0);
       Q1  : out std_logic_vector(63 downto 0)
       );
-  end component gf12_sram64_be_18abits;
+  end component slm_sram_be_18abits_64dbits;
 
-  component gf12_sram64_be_19abits is
+  component slm_sram_be_19abits_64dbits is
     port (
       CLK : in std_ulogic;
       CE0 : in std_ulogic;
@@ -1095,9 +1084,9 @@ architecture behav of gf12_syncram_be is
       A1  : in std_logic_vector(18 downto 0);
       Q1  : out std_logic_vector(63 downto 0)
       );
-  end component gf12_sram64_be_19abits;
+  end component slm_sram_be_19abits_64dbits;
 
-  component gf12_sram64_be_20abits is
+  component slm_sram_be_20abits_64dbits is
     port (
       CLK : in std_ulogic;
       CE0 : in std_ulogic;
@@ -1109,7 +1098,7 @@ architecture behav of gf12_syncram_be is
       A1  : in std_logic_vector(19 downto 0);
       Q1  : out std_logic_vector(63 downto 0)
       );
-  end component gf12_sram64_be_20abits;
+  end component slm_sram_be_20abits_64dbits;
 
 signal gnd : std_ulogic;
 signal do, di : std_logic_vector(dbits+8 downto 0);
@@ -1140,7 +1129,7 @@ begin
   xwren <= xenable when write /= zeroen else '0';
 
   a13 : if abits = 13 generate
-    r0 : gf12_sram64_be_13abits
+    r0 : slm_sram_be_13abits_64dbits
       port map (
         CLK  => clk,
         CE0  => xenable,
@@ -1155,7 +1144,7 @@ begin
   end generate;
 
   a14 : if abits = 14 generate
-    r0 : gf12_sram64_be_14abits
+    r0 : slm_sram_be_14abits_64dbits
       port map (
         CLK  => clk,
         CE0  => xenable,
@@ -1170,7 +1159,7 @@ begin
   end generate;
 
   a15 : if abits = 15 generate
-    r0 : gf12_sram64_be_15abits
+    r0 : slm_sram_be_15abits_64dbits
       port map (
         CLK  => clk,
         CE0  => xenable,
@@ -1185,7 +1174,7 @@ begin
   end generate;
 
   a16 : if abits = 16 generate
-    r0 : gf12_sram64_be_16abits
+    r0 : slm_sram_be_16abits_64dbits
       port map (
         CLK  => clk,
         CE0  => xenable,
@@ -1200,7 +1189,7 @@ begin
   end generate;
 
   a17 : if abits = 17 generate
-    r0 : gf12_sram64_be_17abits
+    r0 : slm_sram_be_17abits_64dbits
       port map (
         CLK  => clk,
         CE0  => xenable,
@@ -1215,7 +1204,7 @@ begin
   end generate;
 
   a18 : if abits = 18 generate
-    r0 : gf12_sram64_be_18abits
+    r0 : slm_sram_be_18abits_64dbits
       port map (
         CLK  => clk,
         CE0  => xenable,
@@ -1230,7 +1219,7 @@ begin
   end generate;
 
   a19 : if abits = 19 generate
-    r0 : gf12_sram64_be_19abits
+    r0 : slm_sram_be_19abits_64dbits
       port map (
         CLK  => clk,
         CE0  => xenable,
@@ -1245,7 +1234,7 @@ begin
   end generate;
 
   a20 : if abits = 20 generate
-    r0 : gf12_sram64_be_20abits
+    r0 : slm_sram_be_20abits_64dbits
       port map (
         CLK  => clk,
         CE0  => xenable,
@@ -1264,7 +1253,7 @@ begin
     x : process
     begin
       assert false
-        report  "Data width must be 64 and address width must be between 13 and 20 gf12_syncram_be"
+        report  "Data width must be 64 and address width must be between 13 and 20 asic_syncram_be"
         severity failure;
       wait;
     end process;

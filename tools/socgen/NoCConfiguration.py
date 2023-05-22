@@ -109,7 +109,8 @@ class Tile():
         else:
           self.has_l2.set(0)
         self.has_l2_selection.config(state=DISABLED)
-      if soc.IPs.SLM.count(selection) and soc.TECH == "gf12":
+      #if soc.IPs.SLM.count(selection) and soc.TECH == "gf12":
+      if soc.IPs.SLM.count(selection) and soc.TECH == "asic":
         self.has_ddr_selection.config(state=NORMAL)
       else:
         # DDR SLM tile only supported w/ GF12 technology
@@ -638,7 +639,8 @@ class NoCFrame(Pmw.ScrolledFrame):
       if self.soc.cache_spandex.get() != 0 and self.soc.cache_en.get() == 1:
         string += "***              Spandex support is still beta                 ***\n"
         string += "    The default HLS configuration is 512x4 L2 and 1024x8 LLC\n"
-        if self.soc.TECH != "gf12" and self.soc.TECH != "virtexu" and self.soc.TECH != "virtexup":
+        #if self.soc.TECH != "gf12" and self.soc.TECH != "virtexu" and self.soc.TECH != "virtexup":
+        if self.soc.TECH != "asic" and self.soc.TECH != "virtexu" and self.soc.TECH != "virtexup":
           string += "    Use a smaller implementation if not using a Virtex US/US+\n"
       self.done.config(state=NORMAL)
     else:

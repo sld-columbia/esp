@@ -25,10 +25,11 @@ from mmi64_gen import *
 from power_gen import *
 
 def print_usage():
-  print("Usage                    : ./esp_creator.py <dma_width> <tech> <linux_mac> <leon3_stack> <fpga_board> <emu_tech> <emu_freq>")
+  print("Usage                    : ./esp_creator.py <dma_width> <tech_type> <tech> <linux_mac> <leon3_stack> <fpga_board> <emu_tech> <emu_freq>")
   print("")
   print("")
   print("      <dma_width>        : Bit-width for the DMA channel (currently supporting 32 bits only)")
+  print("      <tech_type>        : Technology type (fpga or asic)")
   print("      <tech>             : Target technology (e.g. virtex7, virtexu, virtexup, ...)")
   print("      <linux_mac>        : MAC Address for Linux network interface")
   print("      <leon3_stack>      : Stack Pointer for LEON3")
@@ -116,7 +117,8 @@ class PeripheralFrame(Frame):
     Label(periph_config_frame, text = "UART ", fg="darkgreen").grid(row=1, column=1)
 
     # JTAG
-    if soc.TECH == "gf12" or soc.TECH == "inferred" or soc.ESP_EMU_TECH != "none":
+    #if soc.TECH == "gf12" or soc.TECH == "inferred" or soc.ESP_EMU_TECH != "none":
+    if soc.TECH_TYPE == "asic" or soc.TECH == "inferred" or soc.ESP_EMU_TECH != "none":
       Label(periph_config_frame, text = "JTAG (test) :").grid(row=2, column=1)
       Checkbutton(periph_config_frame, text="", variable=soc.jtag_en,
                   onvalue = 1, offvalue = 0, command=main_frame.update_noc_config).grid(row=2, column=2)
@@ -128,7 +130,8 @@ class PeripheralFrame(Frame):
     #   eth_text = "Ethernet (use SGMII): "
     # else:
     #   eth_text = "Ethernet (no SGMII): "
-    if soc.TECH == "gf12" or soc.TECH == "inferred" or soc.ESP_EMU_TECH != "none":
+    #if soc.TECH == "gf12" or soc.TECH == "inferred" or soc.ESP_EMU_TECH != "none":
+    if soc.TECH_TYPE == "asic" or soc.TECH == "inferred" or soc.ESP_EMU_TECH != "none":
         Label(periph_config_frame, text = "Ethernet :").grid(row=3, column=1)
         Checkbutton(periph_config_frame, text="", variable=soc.eth_en,
                     onvalue = 1, offvalue = 0, command=main_frame.update_noc_config).grid(row=3, column=2)
@@ -136,7 +139,8 @@ class PeripheralFrame(Frame):
         Label(periph_config_frame, text = "Ethernet", fg="darkgreen").grid(row=3, column=1)
 
 
-    if soc.TECH == "gf12" or soc.TECH == "inferred" or soc.ESP_EMU_TECH != "none":
+    #if soc.TECH == "gf12" or soc.TECH == "inferred" or soc.ESP_EMU_TECH != "none":
+    if soc.TECH_TYPE == "asic" or soc.TECH == "inferred" or soc.ESP_EMU_TECH != "none":
         Label(periph_config_frame, text = "Custom IO Link:").grid(row=4, column=1)
         Checkbutton(periph_config_frame, text="", variable=soc.iolink_en,
                 onvalue = 1, offvalue = 0, command=main_frame.update_noc_config).grid(row=4, column=2)
@@ -344,21 +348,22 @@ class EspCreator(Frame):
   def generate_mmi64_regs(self):
       create_mmi64_regs(soc)
 
-if len(sys.argv) != 8:
+if len(sys.argv) != 9:
     print_usage()
     sys.exit(1)
 
 DMA_WIDTH = int(sys.argv[1])
-TECH = sys.argv[2]
-LINUX_MAC = sys.argv[3]
-LEON3_STACK = sys.argv[4]
-FPGA_BOARD = sys.argv[5]
-EMU_TECH = sys.argv[6]
-EMU_FREQ = sys.argv[7]
+TECH_TYPE = sys.argv[2]
+TECH = sys.argv[3]
+LINUX_MAC = sys.argv[4]
+LEON3_STACK = sys.argv[5]
+FPGA_BOARD = sys.argv[6]
+EMU_TECH = sys.argv[7]
+EMU_FREQ = sys.argv[8]
 
 root = Tk()
 root.title("ESP SoC Generator")
-soc = SoC_Config(DMA_WIDTH, TECH, LINUX_MAC, LEON3_STACK, FPGA_BOARD, EMU_TECH, EMU_FREQ, True)
+soc = SoC_Config(DMA_WIDTH, TECH_TYPE, TECH, LINUX_MAC, LEON3_STACK, FPGA_BOARD, EMU_TECH, EMU_FREQ, True)
 
 root.geometry("1024x768")
 w, h = root.winfo_screenwidth(), root.winfo_screenheight()

@@ -41,8 +41,10 @@ begin
   gen0 : if has_pads(tech) = 0 generate
     o <= to_X01(pad); lock <= '1';
   end generate;
-  gf12p : if (tech = gf12) generate
-    x0 : gf12_inpad generic map (PAD_TYPE => loc) port map (pad, o);
+  --gf12p : if (tech = gf12) generate
+  asicp : if (tech = asic) and has_pads(tech) = 1 generate
+    --x0 : gf12_inpad generic map (PAD_TYPE => loc) port map (pad, o);
+    x0 : asic_inpad generic map (PAD_TYPE => loc) port map (pad, o);
     lock <= '1';
   end generate;
   xcv2 : if (is_unisim(tech) = 1) generate
