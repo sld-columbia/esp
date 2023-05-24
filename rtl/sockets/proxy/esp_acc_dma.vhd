@@ -138,6 +138,9 @@ end esp_acc_dma;
 
 architecture rtl of esp_acc_dma is
 
+
+  signal read_length : std_logic_vector(31 downto 0);
+
   -- plug & play info
   signal pconfig : apb_config_type;
   constant hprot : std_logic_vector(7 downto 0) := "00000011";
@@ -329,6 +332,8 @@ architecture rtl of esp_acc_dma is
 
 begin  -- rtl
 
+  read_length <= rd_length;
+
   -----------------------------------------------------------------------------
   -- IRQ packet
   -----------------------------------------------------------------------------
@@ -446,7 +451,7 @@ begin  -- rtl
 
   make_packet: process (bankreg, pending_dma_write, tlb_empty, dma_address, dma_length,
                         p2p_src_index_r, p2p_dst_y, p2p_dst_x, coherence, local_y, local_x,
-                        dma_tran_done)
+                        dma_tran_done, rd_mode, wr_mode)
     variable msg_type : noc_msg_type;
     variable header_v : noc_flit_type;
     variable tmp : std_logic_vector(63 downto 0);
@@ -479,7 +484,7 @@ begin  -- rtl
       -- accelerator write burst
       address := dma_address;
       length  := len_pad & dma_length(31 downto GLOB_BYTE_OFFSET_BITS);
-      if bankreg(DMA_IDX_REG + CONV_INTEGER(wr_mode))(P2P_BIT_DST_IS_P2P) = '1' then
+       if bankreg(DMA_IDX_REG + CONV_INTEGER(wr_mode))(P2P_BIT_DST_IS_P2P) = '1' then
         msg_type := RSP_P2P;
         is_p2p := '1';
       else
@@ -665,7 +670,7 @@ begin  -- rtl
                           dma_tran_start, tlb_empty, pending_dma_write,
                           pending_dma_read, coherent_dma_ready, dvfs_transient,
                           size_r, coherence,
-                          p2p_req_rcv_empty, p2p_req_rcv_data_out, p2p_rsp_snd_full, acc_flush_done)
+                          p2p_req_rcv_empty, p2p_req_rcv_data_out, p2p_rsp_snd_full, acc_flush_done, read_length)
     variable payload_data : noc_flit_type;
     variable preamble : noc_preamble_type;
     variable msg : noc_msg_type;
@@ -1013,9 +1018,15 @@ begin  -- rtl
           read_burst <= '1';
           if fixen_bufdin_ready = '1' then
             dma_rcv_rdreq_int <= '1';
+            increment_count <= '1';
             if preamble = PREAMBLE_TAIL then
-              dma_tran_done <= '1';
-              dma_next <= running;
+              if count < read_length then  --modified
+                dma_next <= send_header;
+              else
+                dma_tran_done <= '1';
+                dma_next <= running;
+                clear_count <= '1';
+              end if;
             end if;
           end if;
         end if;
