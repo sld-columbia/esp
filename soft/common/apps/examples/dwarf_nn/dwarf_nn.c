@@ -396,8 +396,8 @@ int main(int argc, char **argv)
 
     //fully connected layers
 
-    int32_t do_relu_fc         [N_FC_LAYERS] = { 1, 0} ;
-    int32_t soft               [N_FC_LAYERS] = { 0, 1} ;
+    int32_t do_relu_fc         [N_FC_LAYERS] = { 1, 0};
+    int32_t soft               [N_FC_LAYERS] = { 0, 1};
     int32_t transpose          [N_FC_LAYERS] = { 1, 1};
     int32_t ninputs            [N_FC_LAYERS] = { 1, 1};
     int32_t d3                 [N_FC_LAYERS] = { 1, 1};
@@ -455,7 +455,7 @@ int main(int argc, char **argv)
 
     float* input_conv; /* =(float*)malloc(sizeof(float)*32768); */
 
-    printf("Run programmer views \n");
+    printf("\n\n Run programmer views \n \n");
 
     struct timespec ts_start, ts_end;
 
@@ -573,13 +573,13 @@ int main(int argc, char **argv)
 
     //Print network outputs
 
-    printf("\n \n Output results hardware : \n");
+    printf("\n \n Output results hardware : \n\n");
     for (int i = 0; i < d1[N_FC_LAYERS-1]; i++ ){
     	    printf("Class %d (%s): %f \n", i, labels[i], fx2float(acc_buf[offset-d1[N_FC_LAYERS-1] +  i], FX_IL));
     }
 
 
-    printf("\n \n Output results software: \n");
+    printf("\n \n Output results software: \n\n");
     for (int i = 0; i < d1[N_FC_LAYERS-1]; i++ ){
     	    printf("Class %d (%s): %f \n", i, labels[i], output_fc[N_FC_LAYERS-1][i]);
     }
@@ -594,6 +594,10 @@ int main(int argc, char **argv)
     printf("  > HW Test time : %llu (ns)\n", sw_ns1);
 
     printf("  > SW Test time : %llu (ns)\n", sw_ns);
+
+    float speedup=(float) sw_ns/sw_ns1;
+
+    printf("\n\n Speedup = %f \n\n",speedup);
 
 
     // free
