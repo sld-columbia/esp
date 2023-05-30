@@ -1020,7 +1020,7 @@ begin  -- rtl
             dma_rcv_rdreq_int <= '1';
             increment_count <= '1';
             if preamble = PREAMBLE_TAIL then
-              if count < read_length then  --modified
+              if msg = REQ_P2P and count < read_length then  --modified
                 dma_next <= send_header;
               else
                 dma_tran_done <= '1';
