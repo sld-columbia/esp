@@ -41,6 +41,8 @@ void gemm::load_input()
     uint32_t index_m2_incr;
     uint16_t m2_plm_incr;
 
+    bool c;
+
     // Reset
     {
 	HLS_DEFINE_PROTOCOL("load-reset");
@@ -85,10 +87,10 @@ void gemm::load_input()
 	length_m2_dma = 0;
 	index_m2_incr = 0;
 	m2_plm_incr = 0;
+        c=false;
 
 	wait();
     }
-
     // Config
     {
 	HLS_DEFINE_PROTOCOL("load-config");
@@ -113,6 +115,27 @@ void gemm::load_input()
     			 matrix_chk_out, matrix_rem_out,
     			 load_cfg, loadable_rows, loadable_chunk, index_d1_incr,
 			 m2_loop_iters, m2_plm_incr);
+#ifndef STRATUS_HLS
+        ESP_REPORT_INFO("ninputs %u", (uint32_t) ninputs);
+        ESP_REPORT_INFO("matrix_d1 %u", (uint32_t) matrix_d1);
+        ESP_REPORT_INFO("matrix_d2 %u", (uint32_t) matrix_d2);
+        ESP_REPORT_INFO("matrix_d3 %u", (uint32_t)matrix_d3);
+        ESP_REPORT_INFO("transpose %u", (uint32_t) transpose);
+        ESP_REPORT_INFO("size_matrix1 %u", (uint32_t)size_matrix1);
+        ESP_REPORT_INFO("size_matrix2 %u", (uint32_t)size_matrix2);
+        ESP_REPORT_INFO("size_matrix_out %u", (uint32_t) size_matrix_out);
+        ESP_REPORT_INFO("matrix_chk_in %u", (uint32_t) matrix_chk_in);
+        ESP_REPORT_INFO("matrix_rem_in1 %u", (uint32_t)matrix_rem_in1);
+        ESP_REPORT_INFO("matrix_rem_in2 %u", (uint32_t)matrix_rem_in2);
+        ESP_REPORT_INFO("matrix_chk_out %u", (uint32_t) matrix_chk_out);
+        ESP_REPORT_INFO("matrix_rem_out %u", (uint32_t) matrix_rem_out);
+        ESP_REPORT_INFO("load_cfg %u", (uint32_t) load_cfg);
+        ESP_REPORT_INFO("loadable_rows %u", (uint32_t) loadable_rows);
+        ESP_REPORT_INFO("loadable_chunk %u", (uint32_t) loadable_chunk);
+        ESP_REPORT_INFO("index_d1_incr %u", (uint32_t) index_d1_incr);
+        ESP_REPORT_INFO("m2_loop_iters %u", (uint32_t) m2_loop_iters);
+        ESP_REPORT_INFO("m2_plm_incr %u", (uint32_t) m2_plm_incr);
+#endif
 
     	{
     	    HLS_DEFINE_PROTOCOL("load-config-sig");
@@ -191,7 +214,7 @@ void gemm::load_input()
     			    HLS_DEFINE_PROTOCOL("load-matrix1-info");
     			    dma_info_t dma_info(index_d1_tmp >> WORDS_PER_DMA_LOG,
 						round_up(length1, WORDS_PER_DMA) >> WORDS_PER_DMA_LOG,
-						SIZE_WORD);
+						SIZE_WORD, 0);
     			    this->dma_read_ctrl.put(dma_info);
 
                             // ESP_REPORT_INFO("load m1 %u %u",
@@ -245,80 +268,100 @@ void gemm::load_input()
 
     		    // TODO
     		    // This does not work when WORDS_PER_DMA != 1
-		    if (transpose || matrix_d3 == 1) {
-    			length_m2_dma = length2;
-    			index_m2_incr = length2;
-		    } else {
-			if (load_cfg == LESS_THAN_ROW) {
-			    m2_loop_iters = length2;
-			} else if (load_cfg == LESS_THAN_MATRIX2) {
-			    length_m2_dma = min(loadable_rows, matrix_d3 - d2);
-			    // ESP_REPORT_INFO("here1 %d", length_m2_dma);
-			}
-		    }
 
-		    int16_t base_i = 0;
-    		    i = 0;
-    		    for (uint16_t t = 0; t < m2_loop_iters; ++t)
-    		    {
-			i = base_i;
-    			{
-    			    HLS_DEFINE_PROTOCOL("load-matrix2-info");
+                    if (!(matrix_chk_in == 1 && c==true))
+                    {
+                        if (transpose || matrix_d3 == 1) {
+                            length_m2_dma = length2;
+                            index_m2_incr = length2;
+                        } else {
+                            if (load_cfg == LESS_THAN_ROW) {
+                                m2_loop_iters = length2;
+                            } else if (load_cfg == LESS_THAN_MATRIX2) {
+                                length_m2_dma = min(loadable_rows, matrix_d3 - d2);
+                                // ESP_REPORT_INFO("here1 %d", length_m2_dma);
+                            }
+                        }
 
-    			    dma_info_t dma_info(index_m2_dma >> WORDS_PER_DMA_LOG,
-    						round_up(length_m2_dma, WORDS_PER_DMA) >> WORDS_PER_DMA_LOG, SIZE_WORD);
-    			    this->dma_read_ctrl.put(dma_info);
+                        int16_t base_i = 0;
+                        i = 0;
+                        for (uint16_t t = 0; t < m2_loop_iters; ++t)
+                        {
+                            i = base_i;
+                            {
+                                HLS_DEFINE_PROTOCOL("load-matrix2-info");
 
-    			    // ESP_REPORT_INFO("load m2 %u %u",
-    			    // 		    (unsigned) index_m2_dma, (unsigned) round_up(length_m2_dma, WORDS_PER_DMA));
-    			}
+                                dma_info_t dma_info(index_m2_dma >> WORDS_PER_DMA_LOG,
+                                                    round_up(length_m2_dma, WORDS_PER_DMA) >> WORDS_PER_DMA_LOG, SIZE_WORD,1);
 
-			bool misaligned = index_m2_dma & 1 & (WORDS_PER_DMA - 1);
+                                // ESP_REPORT_INFO("load input %d %d",length_m2_dma, index_m2_dma);
+                                this->dma_read_ctrl.put(dma_info);
+                                c=true;
+                                // ESP_REPORT_INFO("LOAD DATA !!! ");
+                                // ESP_REPORT_INFO("load m2 %u %u",
+                                // 		    (unsigned) index_m2_dma, (unsigned) round_up(length_m2_dma, WORDS_PER_DMA));
+                            }
 
-    			for (uint16_t k = 0; k < round_up(length_m2_dma + misaligned,
-							  WORDS_PER_DMA) >> WORDS_PER_DMA_LOG; ++k)
-    			{
-    			    sc_dt::sc_bv<DMA_WIDTH> data = this->dma_read_chnl.get();
+                            bool misaligned = index_m2_dma & 1 & (WORDS_PER_DMA - 1);
 
-			    {
-				// This ensures the maximum throughput
-				HLS_DEFINE_PROTOCOL("protocol-load-matrix2");
-				HLS_BREAK_ARRAY_DEPENDENCY(input2);
-				HLS_BREAK_ARRAY_DEPENDENCY(input3);
+                            for (uint16_t k = 0; k < round_up(length_m2_dma + misaligned,
+                                                              WORDS_PER_DMA) >> WORDS_PER_DMA_LOG; ++k)
+                            {
+                                sc_dt::sc_bv<DMA_WIDTH> data = this->dma_read_chnl.get();
+
+                                {
+                                    // This ensures the maximum throughput
+                                    HLS_DEFINE_PROTOCOL("protocol-load-matrix2");
+                                    HLS_BREAK_ARRAY_DEPENDENCY(input2);
+                                    HLS_BREAK_ARRAY_DEPENDENCY(input3);
 
 #if (WORDS_PER_DMA != 2)
-                                if (pingpong_m2)
-                                    input2[i] = data.to_uint();
-                                else
-                                    input3[i] = data.to_uint();
-                                i += m2_plm_incr;
-#else        
-				if (!(misaligned && !k)) {
-				    if (pingpong_m2)
-					input2[i] = data.range(31,0).to_uint();
-				    else
-					input3[i] = data.range(31,0).to_uint();
-				    i += m2_plm_incr;
-				}
-				if (i < DMA_CHUNK) {
-				    if (m2_plm_incr != 1) {
-					wait();
-				    }
-				    if (pingpong_m2)
-					input2[i] = data.range(63,32).to_uint();
-				    else
-					input3[i] = data.range(63,32).to_uint();
-				    i += m2_plm_incr;
-				}
-#endif
-				wait();
-			    }
-    			}
+                                    if (pingpong_m2)
+                                        input2[i] = data.to_uint();
+                                    else
+                                    {
+                                        input3[i] = data.to_uint();
+                                        if (matrix_chk_in == 1)
+                                            input2[i] = data.to_uint();
+                                    }
 
-    			index_m2_dma += index_m2_incr;
-			base_i++;
-    		    }
-		    
+                                    i += m2_plm_incr;
+#else
+                                    if (!(misaligned && !k)) {
+                                        if (pingpong_m2)
+                                            input2[i] = data.range(31,0).to_uint();
+                                        else
+                                        {
+                                            input3[i] = data.range(31,0).to_uint();
+                                            if (matrix_chk_in == 1)
+                                                input2[i] = data.range(31,0).to_uint();
+                                        }
+                                        i += m2_plm_incr;
+                                    }
+                                    if (i < DMA_CHUNK) {
+                                        if (m2_plm_incr != 1) {
+                                            wait();
+                                        }
+                                        if (pingpong_m2)
+                                            input2[i] = data.range(63,32).to_uint();
+                                        else
+                                        {
+                                            input3[i] = data.range(63,32).to_uint();
+                                            if (matrix_chk_in == 1)
+                                                input2[i] = data.range(63,32).to_uint();
+                                        }
+                                        i += m2_plm_incr;
+                                    }
+#endif
+                                    wait();
+                                }
+                            }
+
+                            index_m2_dma += index_m2_incr;
+                            base_i++;
+                        }
+                    }
+
     		    // Call the compute_kernel process
     		    load_compute_handshake();
 
@@ -470,7 +513,7 @@ void gemm::store_output()
     			    HLS_DEFINE_PROTOCOL("store-matrix-info");
     			    dma_info_t dma_info(index >> WORDS_PER_DMA_LOG,
 						round_up(length, WORDS_PER_DMA) >> WORDS_PER_DMA_LOG,
-						SIZE_WORD);
+						SIZE_WORD,0);
     			    this->dma_write_ctrl.put(dma_info);
 
     			    // ESP_REPORT_INFO("STORE index %u length %u",
