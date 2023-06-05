@@ -215,6 +215,9 @@ class SoC_Config():
       self.iolink_en.set(1)
     else:
       self.iolink_en.set(0)
+    line = fp.readline()
+    item = line.split()
+    self.iolink_width.set(int(item[2]))
     # SVGA
     line = fp.readline()
     if line.find("CONFIG_SVGA_EN = y") != -1:
@@ -334,6 +337,7 @@ class SoC_Config():
       fp.write("CONFIG_IOLINK_EN = y\n")
     else:
       fp.write("#CONFIG_IOLINK_EN is not set\n")
+    fp.write("CONFIG_IOLINK_WIDTH = " + str(self.iolink_width.get()) + "\n")
     if self.svga_en.get() == 1:
       fp.write("CONFIG_SVGA_EN = y\n")
     else:
@@ -483,6 +487,7 @@ class SoC_Config():
     self.jtag_en = IntVar()
     self.eth_en = IntVar()
     self.iolink_en = IntVar()
+    self.iolink_width = IntVar()
     self.svga_en = IntVar()
     # Debug Link
     self.dsu_ip = ""
