@@ -287,6 +287,7 @@ class soc_config:
     self.has_svga = soc.svga_en.get()
     self.has_eth = soc.eth_en.get()
     self.has_iolink = soc.iolink_en.get()
+    self.iolink_width = soc.iolink_width.get()
     self.has_sgmii = soc.HAS_SGMII
     self.has_jtag = soc.jtag_en.get()
     if self.coherence:
@@ -537,8 +538,10 @@ def print_constants(fp, soc, esp_config):
   fp.write("  constant CFG_ETH_FIFO : integer := 8;\n")
   fp.write("  constant CFG_GRETH_FT : integer := 0;\n")
   fp.write("  constant CFG_GRETH_EDCLFT : integer := 0;\n\n")
+
   fp.write("  ------ Custom IO Link\n")
-  fp.write("  constant CFG_IOLINK_EN : integer := " + str(soc.iolink_en.get()) + ";\n\n")
+  fp.write("  constant CFG_IOLINK_EN : integer := " + str(soc.iolink_en.get()) + ";\n")
+  fp.write("  constant CFG_IOLINK_BITS : integer := " + str(soc.iolink_width.get()) + ";\n\n")
 
   #
   fp.write("  ------ SVGA\n")
@@ -564,10 +567,6 @@ def print_constants(fp, soc, esp_config):
   fp.write("  constant CFG_YLEN : integer := " + str(soc.noc.rows) + ";\n")
   fp.write("  constant CFG_TILES_NUM : integer := CFG_XLEN * CFG_YLEN;\n\n")
 
-  #
-  fp.write("  ------ Custom I/O link\n")
-  fp.write("  constant CFG_IOLINK_BITS : integer := " + str(IOLINK_BITS) + ";\n")
-  
   #
   fp.write("  ------ Monitors (requires proFPGA MMI64)\n")
   fp.write("  constant CFG_MON_DDR_EN : integer := " + str(soc.noc.monitor_ddr.get()) + ";\n")
