@@ -107,6 +107,7 @@ class SoC_Config():
     else:
       self.cache_rtl.set(0)
       self.cache_spandex.set(1)
+      self.cache_line_size.set(128)
 
   def update_list_of_ips(self):
     self.list_of_ips = tuple(self.IPs.EMPTY) + tuple(self.IPs.PROCESSORS) + tuple(self.IPs.MISC) + tuple(self.IPs.MEM) + tuple(self.IPs.SLM) + tuple(self.IPs.ACCELERATORS)
@@ -193,6 +194,10 @@ class SoC_Config():
     item = line.split()
     self.acc_l2_sets.set(int(item[2]))
     self.acc_l2_ways.set(int(item[3]))
+    # CONFIG_CACHE_LINE_SIZE = CACHE_LINE_BITS
+    line = fp.readline()
+    item = line.split()
+    self.cache_line_size.set(int(item[2]))
     # CONFIG_SLM_KBYTES
     line = fp.readline()
     item = line.split()
@@ -324,6 +329,7 @@ class SoC_Config():
       fp.write("#CONFIG_CACHE_SPANDEX is not set\n")
     fp.write("CONFIG_CPU_CACHES = " + str(self.l2_sets.get()) + " " + str(self.l2_ways.get()) + " " + str(self.llc_sets.get()) + " " + str(self.llc_ways.get()) + "\n")
     fp.write("CONFIG_ACC_CACHES = " + str(self.acc_l2_sets.get()) + " " + str(self.acc_l2_ways.get()) + "\n")
+    fp.write("CONFIG_CACHE_LINE_SIZE = " + str(self.cache_line_size.get()) + "\n")
     fp.write("CONFIG_SLM_KBYTES = " + str(self.slm_kbytes.get()) + "\n")
     if self.jtag_en.get() == 1:
       fp.write("CONFIG_JTAG_EN = y\n")
@@ -481,6 +487,7 @@ class SoC_Config():
     self.llc_ways = IntVar()
     self.acc_l2_sets = IntVar()
     self.acc_l2_ways = IntVar()
+    self.cache_line_size = IntVar()
     # SLM
     self.slm_kbytes = IntVar()
     # Peripherals

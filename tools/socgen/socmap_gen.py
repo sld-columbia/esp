@@ -448,7 +448,7 @@ def print_global_constants(fp, soc):
   fp.write("  ------ General\n")
   fp.write("  constant ARCH_BITS : integer := " + str(soc.DMA_WIDTH) + ";\n")
   # Keep cache-line size constant to 128 bits for now. We don't want huge line buffers
-  fp.write("  constant GLOB_WORD_OFFSET_BITS : integer := " + str(int(math.log2(128/soc.DMA_WIDTH))) + ";\n")
+  fp.write("  constant GLOB_WORD_OFFSET_BITS : integer := " + str(int(math.log2(soc.cache_line_size.get()/soc.DMA_WIDTH))) + ";\n")
   fp.write("  constant GLOB_BYTE_OFFSET_BITS : integer := " + str(int(math.log2(soc.DMA_WIDTH/8))) +";\n")
   fp.write("  constant GLOB_OFFSET_BITS : integer := GLOB_WORD_OFFSET_BITS + GLOB_BYTE_OFFSET_BITS;\n")
   fp.write("  constant GLOB_ADDR_INCR : integer := " + str(int(soc.DMA_WIDTH/8)) +";\n")
@@ -2283,11 +2283,11 @@ def print_cache_config(fp, soc, esp_config):
   fp.write("\n")
   addr_bits = 32
   byte_bits = 2
-  word_bits = 2
+  word_bits = int(math.log2(soc.cache_line_size.get()/soc.DMA_WIDTH))
   if soc.CPU_ARCH.get() == "ariane":
     addr_bits = 32
     byte_bits = 3
-    word_bits = 1
+    word_bits = int(math.log2(soc.cache_line_size.get()/soc.DMA_WIDTH))
     fp.write("`define LLSC\n")
   if soc.CPU_ARCH.get() == "leon3":
     fp.write("`define BIG_ENDIAN\n")

@@ -79,6 +79,7 @@ class CacheFrame(Frame):
     l2_ways_choices = [2, 4, 8]
     llc_ways_choices = [4, 8, 16]
     cache_choices = ["ESP RTL", "SPANDEX HLS", "ESP HLS"]
+    cache_line_choices = ["128", "256", "512", "1024"]
 
     Label(cache_config_frame, text = "Caches: ").grid(row=1, column=1)
     Checkbutton(cache_config_frame, text="", variable=soc.cache_en,
@@ -97,6 +98,8 @@ class CacheFrame(Frame):
     OptionMenu(cache_config_frame, soc.acc_l2_sets, *sets_choices, command=main_frame.update_noc_config).grid(row=7, column=2)
     Label(cache_config_frame, text = "ACC L2 WAYS: ").grid(row=8, column=1)
     OptionMenu(cache_config_frame, soc.acc_l2_ways, *l2_ways_choices, command=main_frame.update_noc_config).grid(row=8, column=2)
+    Label(cache_config_frame, text = "Cache Line Size: ").grid(row=9, column=1)
+    OptionMenu(cache_config_frame, soc.cache_line_size, *cache_line_choices, command=main_frame.update_noc_config).grid(row=9, column=2)
 
 class PeripheralFrame(Frame):
 
