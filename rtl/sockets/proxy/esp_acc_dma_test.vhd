@@ -236,7 +236,7 @@ architecture rtl of esp_acc_dma is
   type dma_fsm is (idle, request_header, request_address, request_length,
                    request_data, reply_header, reply_data, config,
                    send_header, rd_handshake, wr_handshake, wait_req_p2p,
-                   running, reset, wait_for_completion, wait_flush_done, fully_coherent_request);
+                   running, reset, wait_for_completion, wait_flush_done, fully_coherent_request, receive_p2p_length);
   signal acc_rst_next : std_ulogic;
   signal dma_state, dma_next : dma_fsm;
   signal status : std_logic_vector(31 downto 0);
@@ -766,7 +766,7 @@ begin  -- rtl
         -- check could be done in hardware with multiple flags.
         -- There is no need to check the status register, because whenever the
         -- FSM returns to idle, the status register is set to zero.
-        v<='0';
+        v :='0';
         clear_acc_done <= '1';
         if bankreg(CMD_REG)(CMD_BIT_START) = '1' and tlb_empty = '1' and scatter_gather /= 0 then
           sample_flits <= '1';
@@ -932,7 +932,7 @@ begin  -- rtl
 
       when wait_req_p2p =>
         burst <= '1';
-        if skip_wait_req_p2p = '1' then  --skipping the consumer request in
+        if skip_wait_p2p_req = '1' then  --skipping the consumer request in
                                          --case consumer wants 1x100 but
                                          --procuder generates 2x50
           dma_next <=send_header;
@@ -1025,11 +1025,11 @@ begin  -- rtl
             if count = len then
               if count < rcv_p2p_length then  --case consumer reqs 100 and
                                               --procucer generates 2x50
-                v <= '1';
+                v := '1';
               else
                 clear_count <= '1';
-                v<= '0';
-                
+                v := '0';
+              end if;
               dma_tran_done <= '1';     --inside else ?
               dma_next <= running;
             else
@@ -1080,6 +1080,9 @@ begin  -- rtl
         dma_next <= idle;
 
     end case;
+
+    skip_wait_p2p_req_in <= v;
+
   end process dma_roundtrip;
 
   -- Interrupt over NoC
