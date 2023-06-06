@@ -236,11 +236,21 @@ architecture rtl of esp_acc_dma is
   type dma_fsm is (idle, request_header, request_address, request_length,
                    request_data, reply_header, reply_data, config,
                    send_header, rd_handshake, wr_handshake, wait_req_p2p,
-                   running, reset, wait_for_completion, wait_flush_done, fully_coherent_request);
+                   running, reset, wait_for_completion, wait_flush_done, fully_coherent_request, receive_p2p_length);
   signal acc_rst_next : std_ulogic;
   signal dma_state, dma_next : dma_fsm;
   signal status : std_logic_vector(31 downto 0);
   signal sample_status : std_ulogic;
+  signal skip_wait_p2p_req, skip_wait_p2p_req_in : std_ulogic;  --register for
+                                                                --flag to skip
+                                                                --wait for dst
+                                                                --req when
+                                                                --producer
+                                                                --genetates
+                                                                --smaller
+                                                                --chunks than
+                                                                --what expected
+                                                                --from consumer
 
   -- Internal signals muxed to output queues depending on coherence configuration
   signal dma_rcv_rdreq_int    :  std_ulogic;
@@ -254,6 +264,11 @@ architecture rtl of esp_acc_dma is
   signal count                : std_logic_vector(31 downto 0);
   signal increment_count      : std_ulogic;
   signal clear_count          : std_ulogic;
+
+  signal count1                : std_logic_vector(31 downto 0);
+  signal increment_count1      : std_ulogic;
+  signal clear_count1          : std_ulogic;
+
   signal dma_tran_done        : std_ulogic;
   signal dma_tran_header_sent : std_ulogic;
   signal dma_tran_start       : std_ulogic;
@@ -265,6 +280,7 @@ architecture rtl of esp_acc_dma is
   signal tlb_wr_address : std_logic_vector((log2xx(tlb_entries) -1) downto 0);
   signal dma_address : addr_t;
   signal dma_length : std_logic_vector(31 downto 0);
+  signal rcv_p2p_length,rcv_p2p_length_in : std_logic_vector(31 downto 0);  --not sure if necessary
 
   -- Sample acc_done:
   signal pending_acc_done, clear_acc_done : std_ulogic;
@@ -449,7 +465,15 @@ begin  -- rtl
   p2p_dst_y <= get_origin_y(NOC_FLIT_SIZE, p2p_req_rcv_data_out);
   p2p_dst_x <= get_origin_x(NOC_FLIT_SIZE, p2p_req_rcv_data_out);
 
-  make_packet: process (bankreg, pending_dma_write, tlb_empty, dma_address, dma_length,
+  -- rcv_p2p_length <= p2p_req_rcv_data_out(31 downto 0);
+
+
+                                                        --not sure if
+                                                        --necessary. Sample
+                                                        --lenght when sent from
+                                                        --p2p dst;
+
+    make_packet: process (bankreg, pending_dma_write, tlb_empty, dma_address, dma_length,
                         p2p_src_index_r, p2p_dst_y, p2p_dst_x, coherence, local_y, local_x,
                         dma_tran_done, rd_mode, wr_mode)
     variable msg_type : noc_msg_type;
@@ -557,6 +581,7 @@ begin  -- rtl
       payload_address_r <= (others => '0');
       payload_length_r <= (others => '0');
       count <= conv_std_logic_vector(1, 32);
+      count1 <= conv_std_logic_vector(1, 32);
       size_r <= HSIZE_WORD;
       p2p_src_index_r <= 0;
     elsif clk'event and clk = '1' then  -- rising clock edge
@@ -570,6 +595,12 @@ begin  -- rtl
       end if;
       if clear_count = '1' then
         count <= conv_std_logic_vector(1, 32);
+      end if;
+      if increment_count1 = '1' then
+        count1 <= count1 + 1;
+      end if;
+      if clear_count1 = '1' then
+        count1 <= conv_std_logic_vector(1, 32);
       end if;
       if sample_rd_size = '1' then
         size_r <= rd_size;
@@ -663,19 +694,21 @@ begin  -- rtl
     end if;
   end process sample_acc_done;
 
-  dma_roundtrip: process (dma_state, rst, count, rd_request, fixen_bufdin_ready,
+  dma_roundtrip: process (dma_state, rst, count, count1, rd_request, fixen_bufdin_ready,
                           wr_request, fixen_bufdout_valid, fixen_bufdout_data, bankreg,
                           pending_acc_done, dma_snd_full_int, dma_rcv_empty_int, dma_rcv_data_out_int,
                           header_r, payload_address_r, payload_length_r,
                           dma_tran_start, tlb_empty, pending_dma_write,
                           pending_dma_read, coherent_dma_ready, dvfs_transient,
                           size_r, coherence,
-                          p2p_req_rcv_empty, p2p_req_rcv_data_out, p2p_rsp_snd_full, acc_flush_done, read_length)
+                          p2p_req_rcv_empty, p2p_req_rcv_data_out, p2p_rsp_snd_full, acc_flush_done, read_length,rcv_p2p_length, skip_wait_p2p_req)
     variable payload_data : noc_flit_type;
     variable preamble : noc_preamble_type;
     variable msg : noc_msg_type;
     variable len : std_logic_vector(31 downto 0);
     variable tlb_wr_address_next : std_logic_vector(31 downto 0);
+    variable v : std_ulogic;            --variable for skip_wait_p2p_req register
+    variable v1 : std_logic_vector(31 downto 0);
   begin  -- process dma_roundtrip
 
     dma_next <= dma_state;
@@ -684,6 +717,8 @@ begin  -- rtl
     sample_wr_size <= '0';
     increment_count <= '0';
     clear_count <= '0';
+    increment_count1 <= '0';
+    clear_count1 <= '0';
     --TLB
     tlb_wr_address_next := count - 1;
     tlb_wr_address <= tlb_wr_address_next(log2xx(tlb_entries) - 1 downto 0);
@@ -706,13 +741,16 @@ begin  -- rtl
 
     p2p_src_index_inc <= '0';
 
+    v := skip_wait_p2p_req;
+    v1 := rcv_p2p_length;
+
     preamble := get_preamble(NOC_FLIT_SIZE, dma_rcv_data_out_int);
     msg := get_msg_type(NOC_FLIT_SIZE, header_r);
     len := payload_length_r(31 downto 0);
-    if count /= len then
-      payload_data(NOC_FLIT_SIZE-1 downto NOC_FLIT_SIZE-PREAMBLE_WIDTH) := PREAMBLE_BODY;
-    else
+    if count = len or count = rcv_p2p_length then
       payload_data(NOC_FLIT_SIZE-1 downto NOC_FLIT_SIZE-PREAMBLE_WIDTH) := PREAMBLE_TAIL;
+    else
+      payload_data(NOC_FLIT_SIZE-1 downto NOC_FLIT_SIZE-PREAMBLE_WIDTH) := PREAMBLE_BODY;
     end if;
     -- Note that NOC_FLIT_SIZE os ARCH_BITS + PREAMBLE_WIDTH
     payload_data(ARCH_BITS - 1 downto 0) := fix_endian(fixen_bufdout_data, size_r);
@@ -747,6 +785,7 @@ begin  -- rtl
         -- check could be done in hardware with multiple flags.
         -- There is no need to check the status register, because whenever the
         -- FSM returns to idle, the status register is set to zero.
+        v :='0';
         clear_acc_done <= '1';
         if bankreg(CMD_REG)(CMD_BIT_START) = '1' and tlb_empty = '1' and scatter_gather /= 0 then
           sample_flits <= '1';
@@ -795,7 +834,13 @@ begin  -- rtl
         --    priority over write regardless of P2P configuration.
         if (pending_dma_read or pending_dma_write) = '1' and scatter_gather /= 0 then
           if dma_tran_start = '1' then
-            sample_flits <= '1';
+            if skip_wait_p2p_req = '1' then  --if we are in case consumer reqs
+                                             --bigger chunk, then don't sample
+                                             --again for header
+              sample_flits <= '0';
+            else
+              sample_flits <= '1';
+            end if;
             if coherence /= ACC_COH_FULL then
               dma_next <= send_header;
             else
@@ -887,7 +932,13 @@ begin  -- rtl
           if wr_request = '1' then
             wr_grant <= '1';
           elsif dma_tran_start = '1' and scatter_gather /= 0 then
-            sample_flits <= '1';
+            if skip_wait_p2p_req = '1' then  --if we are in case consumer reqs
+                                             --bigger chunk, then don't sample
+                                             --again for header
+              sample_flits <= '0';
+            else
+              sample_flits <= '1';
+            end if;
             if coherence /= ACC_COH_FULL then
               if bankreg(DMA_IDX_REG + CONV_INTEGER(wr_mode))(P2P_BIT_DST_IS_P2P) = '1' then
                 dma_next <= wait_req_p2p;
@@ -912,9 +963,25 @@ begin  -- rtl
 
       when wait_req_p2p =>
         burst <= '1';
-        if p2p_req_rcv_empty = '0' and dvfs_transient = '0' then
+        if skip_wait_p2p_req = '1' then  --skipping the consumer request in
+                                         --case consumer wants 1x100 but
+                                         --procuder generates 2x50
+          dma_next <=send_header;
+        elsif p2p_req_rcv_empty = '0' and dvfs_transient = '0' then
           p2p_req_rcv_rdreq <= '1';
           sample_flits <= '1';
+          dma_next <= receive_p2p_length;  --going to new state for receiving
+                                           --length from p2p consumer
+          -- dma_next <= send_header;
+        end if;
+
+      when receive_p2p_length =>
+        burst <= '1';
+        if p2p_req_rcv_empty = '0' and dvfs_transient = '0' then
+          v1 := p2p_req_rcv_data_out(31 downto 0);
+          p2p_rsp_snd_data_in <= header_r;
+          p2p_req_rcv_rdreq <= '1';
+          -- sample_flits <= '1';
           dma_next <= send_header;
         end if;
 
@@ -925,8 +992,10 @@ begin  -- rtl
           dma_snd_wrreq_int <= '1';
           dma_tran_header_sent <= '1';
           if msg = REQ_P2P then
-            dma_next <= reply_header;
-            p2p_src_index_inc <= '1';
+            -- dma_next <= reply_header;
+            -- p2p_src_index_inc <= '1'; --not this one right ?
+            dma_snd_data_in_int(64) <= '0';
+            dma_next <= request_length;
           else
             dma_next <= request_address;
           end if;
@@ -959,6 +1028,9 @@ begin  -- rtl
             dma_snd_data_in_int(NOC_FLIT_SIZE - 1 downto NOC_FLIT_SIZE - PREAMBLE_WIDTH) <= PREAMBLE_BODY;
             dma_next <= request_data;
           else
+            if msg = REQ_P2P then
+              p2p_src_index_inc <= '1';  --not sure if necessary
+            end if;
             dma_next <= reply_header;
           end if;
         end if;
@@ -983,12 +1055,34 @@ begin  -- rtl
               dma_snd_data_in_int <= payload_data;
               dma_snd_wrreq_int <= '1';
             end if;
+
             if count = len then
+              if count1 < rcv_p2p_length then  --case consumer reqs 100 but
+                                               --producer generates 2x50
+                v := '1';
+              else
+                                               --case consumer generates what requested
+                v := '0';
+                clear_count1 <= '1';
+              end if;
               clear_count <= '1';
-              dma_tran_done <= '1';
+              dma_tran_done <= '1';     --inside else ?
               dma_next <= running;
+            elsif count = rcv_p2p_length then  --case consumer reqs 2x50 and
+                                              --procucer generates 100 (it goes
+                                              --here only if rcv_p2p_len < len)
+              v := '0';
+              if (count1 = len-1) then
+                dma_next <= running;
+                dma_tran_done <='1';
+                clear_count1 <='1';
+              else
+                dma_next <= wait_req_p2p;             --skip running and wr_handshake 
+              end if;
+                clear_count <= '1';
             else
               increment_count <= '1';
+              increment_count1 <= '1';
             end if;
           end if;
         end if;
@@ -1021,7 +1115,7 @@ begin  -- rtl
             increment_count <= '1';
             if preamble = PREAMBLE_TAIL then
               if msg = REQ_P2P and count < read_length then  --modified
-                dma_next <= send_header;
+                  dma_next <= reply_header;
               else
                 dma_tran_done <= '1';
                 dma_next <= running;
@@ -1035,6 +1129,10 @@ begin  -- rtl
         dma_next <= idle;
 
     end case;
+
+    skip_wait_p2p_req_in <= v;
+    rcv_p2p_length_in <= v1;
+
   end process dma_roundtrip;
 
   -- Interrupt over NoC
@@ -1071,9 +1169,13 @@ begin  -- rtl
     if rst = '0' then                   -- asynchronous reset (active low)
       dma_state <= idle;
       irq_state <= idle;
+      skip_wait_p2p_req <= '0';
+      rcv_p2p_length <= (others => '0');
     elsif clk'event and clk = '1' then  -- rising clock edge
       dma_state <= dma_next;
       irq_state <= irq_next;
+      skip_wait_p2p_req <= skip_wait_p2p_req_in;
+      rcv_p2p_length <= rcv_p2p_length_in;
     end if;
   end process;
 
