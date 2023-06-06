@@ -22,11 +22,14 @@ def get_immediate_subdirectories(a_dir):
         if os.path.isdir(os.path.join(a_dir, name))]
 
 def print_usage():
-  print("Usage                    : ./socketgen.py <dma_width> <cpu_arch> <rtl_path> <template_path> <out_path>")
+  print(sys.argv)
+  print("Usage                    : ./socketgen.py <dma_width> <cpu_arch> <cache_line_size> <rtl_path> <template_path> <out_path>")
   print("")
   print("      <dma_width>        : Bit-width for the DMA channel (32, 64)")
   print("")
   print("      <cpu_arch>         : Target processor (ariane, ibex, leon3)")
+  print("")
+  print("      <cache_line_size>  : Cache line size in bits (128, 256, 512, 1024)")
   print("")
   print("      <rtl_path>         : Path to accelerators' RTL for the target technology")
   print("")
@@ -55,6 +58,7 @@ class Implementation():
   def __init__(self):
     self.name = ""
     self.dma_width = 0
+    self.cache_line_size = 0
     self.datatype = ""
 
   def __str__(self):
@@ -1283,7 +1287,14 @@ def gen_tech_dep(accelerator_list, cache_list, dma_width, template_dir, out_dir)
   f = open(out_dir + '/allcaches.vhd', 'w')
   with open(template_dir + '/allcaches.vhd', 'r') as ftemplate:
     for tline in ftemplate:
-      if tline.find("-- <<caches-components>>") < 0:
+      if tline.find("-- <<invack_cnt_width>>") >= 0:
+        nl2_max_log2 = 4
+        f.write("  constant INVACK_CNT_WIDTH      : integer := ")
+        if word_offset_bits + 1 < nl2_max_log2:
+            f.write(str(nl2_max_log2) + ";\n")
+        else:
+            f.write(str(word_offset_bits + 1) + ";\n")
+      elif tline.find("-- <<caches-components>>") < 0:
         f.write(tline)
         continue
       for cac in cache_list:
@@ -1883,17 +1894,18 @@ def gen_tile_acc(accelerator_list, axi_acceleratorlist, template_dir, out_dir):
 ### Main script ###
 #
 
-if len(sys.argv) != 7:
+if len(sys.argv) != 8:
     print_usage()
     sys.exit(1)
 
 dma_width = int(sys.argv[1])
 cpu_arch = sys.argv[2]
-acc_rtl_dir = sys.argv[3] + "/acc"
-caches_rtl_dir = sys.argv[3] + "/sccs"
-axi_acc_dir = sys.argv[4]
-template_dir = sys.argv[5]
-out_dir = sys.argv[6]
+cache_line_size = int(sys.argv[3])
+acc_rtl_dir = sys.argv[4] + "/acc"
+caches_rtl_dir = sys.argv[4] + "/sccs"
+axi_acc_dir = sys.argv[5]
+template_dir = sys.argv[6]
+out_dir = sys.argv[7]
 if cpu_arch == "leon3":
   little_endian = 0
 else:
@@ -2085,7 +2097,7 @@ for acc in accelerators:
 
 # Compute relevan bitwidths for cache interfaces
 # based on DMA_WIDTH and a fixed 128-bits cache line
-bits_per_line = 128
+bits_per_line = cache_line_size
 words_per_line = int(bits_per_line/dma_width)
 word_offset_bits = int(math.log2(words_per_line))
 byte_offset_bits = int(math.log2(dma_width/8))

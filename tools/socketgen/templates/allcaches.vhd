@@ -45,7 +45,7 @@ package allcaches is
   constant HSIZE_WIDTH           : integer := 3;
   constant HPROT_WIDTH           : integer := 2;
   constant BRESP_WIDTH           : integer := 2;
-  constant INVACK_CNT_WIDTH      : integer := NL2_MAX_LOG2;
+  -- <<invack_cnt_width>>
   constant INVACK_CNT_CALC_WIDTH : integer := INVACK_CNT_WIDTH + 1;
 
   --constant ASSERTS_WIDTH : integer := 19;
