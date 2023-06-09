@@ -45,12 +45,11 @@ package body tb_pkg is
     signal data  : out std_logic_vector(CFG_IOLINK_BITS - 1 downto 0)) is
   begin
 
-    wait until rising_edge(clk);
-    valid <= '1';
-    data  <= word(15 downto 0);
-    wait until rising_edge(clk);
-    valid <= '1';
-    data  <= word(31 downto 16);
+    for i in 1 to 32 / CFG_IOLINK_BITS loop
+      wait until rising_edge(clk);
+      valid <= '1';
+      data  <= word(i * CFG_IOLINK_BITS - 1 downto (i - 1) * CFG_IOLINK_BITS);
+    end loop;
     wait until rising_edge(clk);
     valid <= '0';
     wait until rising_edge(clk);
