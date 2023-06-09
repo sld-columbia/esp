@@ -27,6 +27,7 @@
 library ieee;
 use ieee.std_logic_1164.all;
 use work.gencomp.all;
+use work.esp_csr_pkg.all;
 
 package allpads is
 
@@ -40,7 +41,7 @@ end component;
 --component gf12_iopad
 component asic_iopad
   generic (PAD_TYPE : std_logic := '0');
-  port (pad : inout std_logic; i, en : in std_ulogic; o : out std_logic; sr, ds0, ds1 : in std_ulogic);
+  port (pad : inout std_logic; i, en : in std_ulogic; o : out std_logic; cfg : in std_logic_vector(ESP_CSR_PAD_CFG_MSB - ESP_CSR_PAD_CFG_LSB downto 0));
 end component;
 
 --component gf12_iopadien
@@ -52,7 +53,7 @@ end component;
 --component gf12_outpad
 component asic_outpad
   generic (PAD_TYPE : std_logic := '0');
-  port (pad : out std_ulogic; i : in std_ulogic; sr, ds0, ds1 : in std_ulogic);
+  port (pad : out std_ulogic; i : in std_ulogic; cfg : in std_logic_vector(ESP_CSR_PAD_CFG_MSB - ESP_CSR_PAD_CFG_LSB downto 0));
 end component;
 
 -- Xilinx

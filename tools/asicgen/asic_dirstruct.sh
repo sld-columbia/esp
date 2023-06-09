@@ -22,9 +22,9 @@ then
   mkdir "../../rtl/techmap/asic"
 fi
 
-if [ ! -d "$TECH_DIR_PATH/mem_models" ]
+if [ ! -d "$TECH_DIR_PATH/verilog" ]
 then
-  mkdir "$TECH_DIR_PATH/mem_models"
+  mkdir "$TECH_DIR_PATH/verilog"
 fi
 
 if [ ! -d "../../rtl/sim/asic" ]
@@ -35,6 +35,11 @@ fi
 if [ ! -d "$TECH_DIR_PATH/mem_wrappers" ]
 then
   mkdir "$TECH_DIR_PATH/mem_wrappers"
+fi
+
+if [ ! -d "$TECH_DIR_PATH/pad_wrappers" ]
+then
+  mkdir "$TECH_DIR_PATH/pad_wrappers"
 fi
 
 if [ ! -d "$TECH_DIR_PATH/lib" ]
@@ -53,11 +58,15 @@ then
 fi
 
 cd ../../rtl/sim/asic
-ln -sf $TECH_DIR_PATH/mem_models verilog
+ln -sf $TECH_DIR_PATH/verilog verilog
 cd -
 
 cd ../../rtl/techmap/asic
 ln -sf $TECH_DIR_PATH/mem_wrappers mem
+cd -
+
+cd ../../rtl/techmap/asic
+ln -sf $TECH_DIR_PATH/pad_wrappers pad
 cd -
 
 cd ../../tech/$DIRTECH_NAME
