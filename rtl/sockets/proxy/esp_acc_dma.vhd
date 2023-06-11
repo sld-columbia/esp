@@ -580,8 +580,10 @@ begin  -- rtl
       header_r <= (others => '0');
       payload_address_r <= (others => '0');
       payload_length_r <= (others => '0');
-      count <= conv_std_logic_vector(1, 32);
-      count1 <= conv_std_logic_vector(1, 32);
+      -- count <= conv_std_logic_vector(1, 32);
+      -- count1 <= conv_std_logic_vector(1, 32);
+      count <= conv_std_logic_vector(0, 32);  --ad1
+      count1 <= conv_std_logic_vector(0, 32);  --ad1
       size_r <= HSIZE_WORD;
       p2p_src_index_r <= 0;
     elsif clk'event and clk = '1' then  -- rising clock edge
@@ -594,13 +596,15 @@ begin  -- rtl
         count <= count + 1;
       end if;
       if clear_count = '1' then
-        count <= conv_std_logic_vector(1, 32);
+        count <= conv_std_logic_vector(0, 32);  --ad1
+        -- count <= conv_std_logic_vector(1, 32);
       end if;
       if increment_count1 = '1' then
         count1 <= count1 + 1;
       end if;
       if clear_count1 = '1' then
-        count1 <= conv_std_logic_vector(1, 32);
+        count1 <= conv_std_logic_vector(0, 32);  --ad1
+        -- count1 <= conv_std_logic_vector(1, 32);
       end if;
       if sample_rd_size = '1' then
         size_r <= rd_size;
@@ -1004,6 +1008,8 @@ begin  -- rtl
           p2p_rsp_snd_wrreq <= '1';
           dma_tran_header_sent <= '1';
           dma_next <= request_data;
+          increment_count <= '1';       --add1
+          increment_count1 <= '1';       --add1
         end if;
 
       when request_address =>
@@ -1027,6 +1033,8 @@ begin  -- rtl
             -- In case of a write, length is not the tail!
             dma_snd_data_in_int(NOC_FLIT_SIZE - 1 downto NOC_FLIT_SIZE - PREAMBLE_WIDTH) <= PREAMBLE_BODY;
             dma_next <= request_data;
+            increment_count <= '1';       --add1
+            increment_count1 <= '1';       --add1
           else
             if msg = REQ_P2P then
               p2p_src_index_inc <= '1';  --not sure if necessary
@@ -1068,11 +1076,12 @@ begin  -- rtl
               clear_count <= '1';
               dma_tran_done <= '1';     --inside else ?
               dma_next <= running;
-            elsif count = rcv_p2p_length then  --case consumer reqs 2x50 and
+            elsif count > conv_std_logic_vector(0, 32)  and count = rcv_p2p_length then  --case consumer reqs 2x50 and
                                               --procucer generates 100 (it goes
                                               --here only if rcv_p2p_len < len)
               v := '0';
-              if (count1 = len-1) then
+              -- if (count1 = len-1) then 
+              if (count1 = len) then  --ad1
                 dma_next <= running;
                 dma_tran_done <='1';
                 clear_count1 <='1';
@@ -1114,7 +1123,8 @@ begin  -- rtl
             dma_rcv_rdreq_int <= '1';
             increment_count <= '1';
             if preamble = PREAMBLE_TAIL then
-              if msg = REQ_P2P and count < read_length then  --modified
+              -- if msg = REQ_P2P and count < read_length then  -- 
+              if msg = REQ_P2P and (count < read_length - 1) then  --ad1
                   dma_next <= reply_header;
               else
                 dma_tran_done <= '1';
