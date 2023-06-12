@@ -724,7 +724,7 @@ begin  -- rtl
     increment_count1 <= '0';
     clear_count1 <= '0';
     --TLB
-    tlb_wr_address_next := count - 1;
+    tlb_wr_address_next := count ;
     tlb_wr_address <= tlb_wr_address_next(log2xx(tlb_entries) - 1 downto 0);
     tlb_write <= '0';
     tlb_valid <= '0';
