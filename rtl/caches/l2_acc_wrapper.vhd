@@ -237,7 +237,7 @@ architecture rtl of l2_acc_wrapper is
     coh_msg  : coh_msg_t;
     addr     : line_addr_t;
     line     : line_t;
-    word_cnt : natural range 0 to 3;
+    word_cnt : natural range 0 to 31;
     asserts  : asserts_req_t;
   end record req_reg_type;
 
@@ -262,7 +262,7 @@ architecture rtl of l2_acc_wrapper is
     coh_msg  : coh_msg_t;
     addr     : line_addr_t;
     line     : line_t;
-    word_cnt : natural range 0 to 3;
+    word_cnt : natural range 0 to 31;
     asserts  : asserts_rsp_out_t;
   end record rsp_out_reg_type;
 
@@ -287,7 +287,7 @@ architecture rtl of l2_acc_wrapper is
     coh_msg  : coh_msg_t;
     addr     : line_addr_t;
     line     : line_t;
-    word_cnt : natural range 0 to 3;
+    word_cnt : natural range 0 to 31;
     asserts  : asserts_fwd_t;
   end record fwd_out_reg_type;
 
@@ -316,7 +316,7 @@ architecture rtl of l2_acc_wrapper is
     word_mask : word_mask_t;
     addr    : line_addr_t;
     line    : line_t;
-    word_cnt : natural range 0 to 3;
+    word_cnt : natural range 0 to 31;
     asserts : asserts_fwd_t;
   end record fwd_in_reg_type;
 
@@ -345,7 +345,7 @@ architecture rtl of l2_acc_wrapper is
     invack_cnt : invack_cnt_t;
     addr       : line_addr_t;
     line       : line_t;
-    word_cnt   : natural range 0 to 3;
+    word_cnt   : natural range 0 to 31;
     word_mask  : word_mask_t;
     asserts    : asserts_rsp_in_t;
   end record rsp_in_reg_type;
@@ -1423,7 +1423,11 @@ end process fsm_fwd_out;
           reg.coh_msg := msg_type(reg.coh_msg'length - 1 downto 0);
           reserved    := get_reserved_field(NOC_FLIT_SIZE, coherence_fwd_data_out);
           reg.req_id  := reserved(reg.req_id'length - 1 downto 0);
-          reg.word_mask := reserved(RESERVED_WIDTH - 1 downto RESERVED_WIDTH - WORDS_PER_LINE);
+          if USE_SPANDEX = 0 then
+            reg.word_mask := (others => '0');
+          else
+            reg.word_mask := reserved(RESERVED_WIDTH - 1 downto RESERVED_WIDTH - WORDS_PER_LINE);
+          end if;
 
           reg.state := rcv_addr;
 
@@ -1543,7 +1547,11 @@ end process fsm_fwd_out;
           reg.coh_msg    := msg_type(reg.coh_msg'length - 1 downto 0);
           reserved       := get_reserved_field(NOC_FLIT_SIZE, coherence_rsp_rcv_data_out);
           reg.invack_cnt := reserved(reg.invack_cnt'length - 1 downto 0);
-          reg.word_mask := reserved(RESERVED_WIDTH - 1 downto RESERVED_WIDTH - WORDS_PER_LINE);
+          if USE_SPANDEX = 0 then
+            reg.word_mask := (others => '0');
+          else
+            reg.word_mask := reserved(RESERVED_WIDTH - 1 downto RESERVED_WIDTH - WORDS_PER_LINE);
+          end if;
 
           reg.state := rcv_addr;
 

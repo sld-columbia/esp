@@ -491,10 +491,11 @@ package body cachepackage is
     -- compose header
     if USE_SPANDEX = 0 then
       noc_msg := '1' & coh_msg;
+      reserved := std_logic_vector(resize(unsigned(hprot), RESERVED_WIDTH));
     else
       noc_msg := '0' & coh_msg;
+      reserved := word_mask & std_logic_vector(resize(unsigned(hprot), RESERVED_WIDTH - WORDS_PER_LINE));
     end if;
-    reserved := word_mask & std_logic_vector(resize(unsigned(hprot), RESERVED_WIDTH - WORDS_PER_LINE));
     header := create_header(NOC_FLIT_SIZE, local_y, local_x, dest_y, dest_x, noc_msg, reserved);
 
     return header;
@@ -545,7 +546,11 @@ package body cachepackage is
     end if;
 
     -- compose header
-    reserved := word_mask & std_logic_vector(resize(unsigned(src_id), RESERVED_WIDTH - WORDS_PER_LINE));
+    if USE_SPANDEX = 0 then
+      reserved := std_logic_vector(resize(unsigned(src_id), RESERVED_WIDTH));
+    else
+      reserved := word_mask & std_logic_vector(resize(unsigned(src_id), RESERVED_WIDTH - WORDS_PER_LINE));
+    end if;
     header := create_header(NOC_FLIT_SIZE, local_y, local_x, dest_y, dest_x, '0' & coh_msg, reserved);
 
     return header;

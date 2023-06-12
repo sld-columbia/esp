@@ -299,7 +299,7 @@ architecture rtl of llc_wrapper is
   type fwd_out_reg_type is record
     state   : fwd_out_fsm;
     addr    : line_addr_t;
-    word_cnt : natural range 0 to 3;
+    word_cnt : natural range 0 to 31;
     coh_msg : mix_msg_t;
     line    : line_t;
     asserts : asserts_fwd_t;
@@ -331,7 +331,7 @@ architecture rtl of llc_wrapper is
     woffset    : word_offset_t;
     line       : line_t;
     word_mask  : word_mask_t;
-    word_cnt   : natural range 0 to 3;
+    word_cnt   : natural range 0 to 31;
     invack_cnt : invack_cnt_t;
     dest_x     : local_yx;
     dest_y     : local_yx;
@@ -348,7 +348,7 @@ architecture rtl of llc_wrapper is
     addr       : line_addr_t;
     woffset    : word_offset_t;
     line       : line_t;
-    word_cnt   : natural range 0 to 3;
+    word_cnt   : natural range 0 to 31;
     invack_cnt : invack_cnt_t;
     dest_x     : local_yx;
     dest_y     : local_yx;
@@ -410,7 +410,7 @@ architecture rtl of llc_wrapper is
     line     : line_t;
     word_mask : word_mask_t;
     req_id   : cache_id_t;
-    word_cnt : natural range 0 to 3;
+    word_cnt : natural range 0 to 31;
     origin_x : local_yx;
     origin_y : local_yx;
     tile_id  : integer;
@@ -427,7 +427,7 @@ architecture rtl of llc_wrapper is
     woffset  : word_offset_t;
     line     : line_t;
     req_id   : llc_coh_dev_id_t;
-    word_cnt : natural range 0 to 3;
+    word_cnt : natural range 0 to 31;
     origin_x : local_yx;
     origin_y : local_yx;
     tile_id  : integer;
@@ -483,7 +483,7 @@ architecture rtl of llc_wrapper is
     line     : line_t;
     word_mask : word_mask_t;
     req_id   : cache_id_t;
-    word_cnt : natural range 0 to 3;
+    word_cnt : natural range 0 to 31;
     origin_x : local_yx;
     origin_y : local_yx;
     tile_id  : integer;
@@ -1151,7 +1151,11 @@ begin  -- architecture rtl
           reg.coh_msg := get_msg_type(NOC_FLIT_SIZE, coherence_req_data_out);
           reserved    := get_reserved_field(NOC_FLIT_SIZE, coherence_req_data_out);
           reg.hprot   := reserved(HPROT_WIDTH - 1 downto 0);
-          reg.word_mask := reserved(RESERVED_WIDTH - 1 downto RESERVED_WIDTH - WORDS_PER_LINE);
+          if USE_SPANDEX = 0 then
+            reg.word_mask := (others => '0');
+          else
+            reg.word_mask := reserved(RESERVED_WIDTH - 1 downto RESERVED_WIDTH - WORDS_PER_LINE);
+          end if;
 
           reg.origin_x                                              := get_origin_x(NOC_FLIT_SIZE, coherence_req_data_out);
           reg.origin_y                                              := get_origin_y(NOC_FLIT_SIZE, coherence_req_data_out);
@@ -1498,7 +1502,12 @@ begin  -- architecture rtl
           reg.origin_x := get_origin_x(NOC_FLIT_SIZE, coherence_rsp_rcv_data_out);
           reg.origin_y := get_origin_y(NOC_FLIT_SIZE, coherence_rsp_rcv_data_out);
           reserved    := get_reserved_field(NOC_FLIT_SIZE, coherence_rsp_rcv_data_out);
-          reg.word_mask := reserved(RESERVED_WIDTH - 1 downto RESERVED_WIDTH - WORDS_PER_LINE);
+
+          if USE_SPANDEX = 0 then
+            reg.word_mask := (others => '0');
+          else
+            reg.word_mask := reserved(RESERVED_WIDTH - 1 downto RESERVED_WIDTH - WORDS_PER_LINE);
+          end if;
 
           if unsigned(reg.origin_x) >= 0 and unsigned(reg.origin_x) < noc_xlen and
              unsigned(reg.origin_y) >= 0 and unsigned(reg.origin_y) < noc_ylen
@@ -1661,7 +1670,9 @@ begin  -- architecture rtl
             if llc_fwd_out_data_req_id'length < RESERVED_WIDTH then
               req_id(RESERVED_WIDTH-1 downto llc_fwd_out_data_req_id'length) := (others => '0');
             end if;
-            req_id(RESERVED_WIDTH-1 downto RESERVED_WIDTH - WORDS_PER_LINE) := llc_fwd_out_data_word_mask;
+            if USE_SPANDEX /= 0 then
+              req_id(RESERVED_WIDTH-1 downto RESERVED_WIDTH - WORDS_PER_LINE) := llc_fwd_out_data_word_mask;
+            end if;
             req_id(llc_fwd_out_data_req_id'length - 1 downto 0)            := llc_fwd_out_data_req_id;
 
             coherence_fwd_wrreq <= '1';
@@ -1785,7 +1796,10 @@ begin  -- architecture rtl
           reserved := std_logic_vector(resize(unsigned(
             llc_rsp_out_data_invack_cnt), RESERVED_WIDTH));
 
-          reserved(RESERVED_WIDTH-1 downto RESERVED_WIDTH - WORDS_PER_LINE) := reg.word_mask;
+          --do not send word mask when spandex is disabled to enable larger cache lines
+          if USE_SPANDEX /= 0 then
+            reserved(RESERVED_WIDTH-1 downto RESERVED_WIDTH - WORDS_PER_LINE) := reg.word_mask;
+          end if;
 
           if USE_SPANDEX = 0 then
             -- Set ESP legacy coherence message types

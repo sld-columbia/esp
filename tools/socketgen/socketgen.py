@@ -126,7 +126,7 @@ word_offset_bits = 2
 byte_offset_bits = 2
 offset_bits = 4
 little_endian = 1
-
+invack_cnt_bits = 4
 
 #
 ### VHDL writer ###
@@ -740,7 +740,7 @@ def write_cache_interface(f, cac, is_llc):
     f.write("      llc_rsp_out_data_coh_msg     : out std_logic_vector(1 downto 0);\n")
     f.write("      llc_rsp_out_data_addr        : out std_logic_vector(" + str(phys_addr_bits - offset_bits - 1) + " downto 0);\n")
     f.write("      llc_rsp_out_data_line        : out std_logic_vector(" + str(bits_per_line - 1) + " downto 0);\n")
-    f.write("      llc_rsp_out_data_invack_cnt  : out std_logic_vector(3 downto 0);\n")
+    f.write("      llc_rsp_out_data_invack_cnt  : out std_logic_vector(" + str(invack_cnt_bits - 1) + "  downto 0);\n")
     f.write("      llc_rsp_out_data_req_id      : out std_logic_vector(3 downto 0);\n")
     f.write("      llc_rsp_out_data_dest_id     : out std_logic_vector(3 downto 0);\n")
     f.write("      llc_rsp_out_data_word_offset : out std_logic_vector(" + str(word_offset_bits - 1) + " downto 0);\n")
@@ -748,7 +748,7 @@ def write_cache_interface(f, cac, is_llc):
     f.write("      llc_dma_rsp_out_data_coh_msg     : out std_logic_vector(1 downto 0);\n")
     f.write("      llc_dma_rsp_out_data_addr        : out std_logic_vector(" + str(phys_addr_bits - offset_bits - 1) + " downto 0);\n")
     f.write("      llc_dma_rsp_out_data_line        : out std_logic_vector(" + str(bits_per_line - 1) + " downto 0);\n")
-    f.write("      llc_dma_rsp_out_data_invack_cnt  : out std_logic_vector(3 downto 0);\n")
+    f.write("      llc_dma_rsp_out_data_invack_cnt  : out std_logic_vector(" + str(invack_cnt_bits - 1) + " downto 0);\n")
     f.write("      llc_dma_rsp_out_data_req_id      : out std_logic_vector(5 downto 0);\n")
     f.write("      llc_dma_rsp_out_data_dest_id     : out std_logic_vector(3 downto 0);\n")
     f.write("      llc_dma_rsp_out_data_word_offset : out std_logic_vector(" + str(word_offset_bits - 1) + " downto 0);\n")
@@ -814,7 +814,7 @@ def write_cache_interface(f, cac, is_llc):
     f.write("      llc_rsp_out_data_addr        : out std_logic_vector(" + str(phys_addr_bits - offset_bits - 1) + " downto 0);\n")
     f.write("      llc_rsp_out_data_line        : out std_logic_vector(" + str(bits_per_line - 1) + " downto 0);\n")
     f.write("      llc_rsp_out_data_word_mask   : out std_logic_vector(" + str(words_per_line - 1) + "  downto 0);\n")
-    f.write("      llc_rsp_out_data_invack_cnt  : out std_logic_vector(3 downto 0);\n")
+    f.write("      llc_rsp_out_data_invack_cnt  : out std_logic_vector(" + str(invack_cnt_bits - 1) + " downto 0);\n")
     f.write("      llc_rsp_out_data_req_id      : out std_logic_vector(3 downto 0);\n")
     f.write("      llc_rsp_out_data_dest_id     : out std_logic_vector(3 downto 0);\n")
     f.write("      llc_rsp_out_data_word_offset : out std_logic_vector(" + str(word_offset_bits - 1) + " downto 0);\n")
@@ -822,7 +822,7 @@ def write_cache_interface(f, cac, is_llc):
     f.write("      llc_dma_rsp_out_data_coh_msg     : out std_logic_vector(3 downto 0);\n")
     f.write("      llc_dma_rsp_out_data_addr        : out std_logic_vector(" + str(phys_addr_bits - offset_bits - 1) + " downto 0);\n")
     f.write("      llc_dma_rsp_out_data_line        : out std_logic_vector(" + str(bits_per_line - 1) + " downto 0);\n")
-    f.write("      llc_dma_rsp_out_data_invack_cnt  : out std_logic_vector(3 downto 0);\n")
+    f.write("      llc_dma_rsp_out_data_invack_cnt  : out std_logic_vector(" + str(invack_cnt_bits - 1) + " downto 0);\n")
     f.write("      llc_dma_rsp_out_data_req_id      : out std_logic_vector(5 downto 0);\n")
     f.write("      llc_dma_rsp_out_data_dest_id     : out std_logic_vector(3 downto 0);\n")
     f.write("      llc_dma_rsp_out_data_word_offset : out std_logic_vector(" + str(word_offset_bits - 1) + " downto 0);\n")
@@ -871,7 +871,7 @@ def write_cache_interface(f, cac, is_llc):
     f.write("      l2_rsp_in_data_addr       : in  std_logic_vector(" + str(phys_addr_bits - offset_bits - 1) + " downto 0);\n")
     f.write("      l2_rsp_in_data_line       : in  std_logic_vector(" + str(bits_per_line - 1) + " downto 0);\n")
     f.write("      l2_rsp_in_data_word_mask  : in std_logic_vector(" + str(words_per_line - 1) + "  downto 0);\n")
-    f.write("      l2_rsp_in_data_invack_cnt : in  std_logic_vector(3 downto 0);\n")
+    f.write("      l2_rsp_in_data_invack_cnt : in  std_logic_vector(" + str(invack_cnt_bits - 1) + " downto 0);\n")
     f.write("      l2_flush_valid            : in  std_ulogic;\n")
     f.write("      l2_flush_data             : in  std_ulogic;\n")
     f.write("      l2_rd_rsp_ready           : in  std_ulogic;\n")
@@ -937,7 +937,7 @@ def write_cache_interface(f, cac, is_llc):
     f.write("      l2_rsp_in_data_coh_msg    : in  std_logic_vector(1 downto 0);\n")
     f.write("      l2_rsp_in_data_addr       : in  std_logic_vector(" + str(phys_addr_bits - offset_bits - 1) + " downto 0);\n")
     f.write("      l2_rsp_in_data_line       : in  std_logic_vector(" + str(bits_per_line - 1) + " downto 0);\n")
-    f.write("      l2_rsp_in_data_invack_cnt : in  std_logic_vector(3 downto 0);\n")
+    f.write("      l2_rsp_in_data_invack_cnt : in  std_logic_vector(" + str(invack_cnt_bits - 1) + " downto 0);\n")
     f.write("      l2_flush_valid            : in  std_ulogic;\n")
     f.write("      l2_flush_data             : in  std_ulogic;\n")
     f.write("      l2_rd_rsp_ready           : in  std_ulogic;\n")
@@ -1288,12 +1288,7 @@ def gen_tech_dep(accelerator_list, cache_list, dma_width, template_dir, out_dir)
   with open(template_dir + '/allcaches.vhd', 'r') as ftemplate:
     for tline in ftemplate:
       if tline.find("-- <<invack_cnt_width>>") >= 0:
-        nl2_max_log2 = 4
-        f.write("  constant INVACK_CNT_WIDTH      : integer := ")
-        if word_offset_bits + 1 < nl2_max_log2:
-            f.write(str(nl2_max_log2) + ";\n")
-        else:
-            f.write(str(word_offset_bits + 1) + ";\n")
+        f.write("  constant INVACK_CNT_WIDTH      : integer := " + str(invack_cnt_bits) + ";\n")
       elif tline.find("-- <<caches-components>>") < 0:
         f.write(tline)
         continue
@@ -2102,6 +2097,11 @@ words_per_line = int(bits_per_line/dma_width)
 word_offset_bits = int(math.log2(words_per_line))
 byte_offset_bits = int(math.log2(dma_width/8))
 offset_bits = word_offset_bits + byte_offset_bits
+nl2_max_log2 = 4
+if word_offset_bits + 1 < nl2_max_log2:
+  invack_cnt_bits = nl2_max_log2
+else:
+  invack_cnt_bits = word_offset_bits + 1
 
 for cac in caches:
   cacd = Component()
