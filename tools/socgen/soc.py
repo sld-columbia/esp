@@ -159,6 +159,9 @@ class SoC_Config():
     line = fp.readline()
     item = line.split()
     cols = int(item[2])
+    line = fp.readline()
+    item = line.split()
+    self.noc.noc_width.set(int(item[2]))
     self.noc.create_topology(self.noc.top, rows, cols)
     # CONFIG_CPU_CACHES = L2_SETS L2_WAYS LLC_SETS LLC_WAYS
     line = fp.readline()
@@ -315,6 +318,7 @@ class SoC_Config():
       fp.write("#CONFIG_HAS_SG is not set\n")
     fp.write("CONFIG_NOC_ROWS = " + str(self.noc.rows) + "\n")
     fp.write("CONFIG_NOC_COLS = " + str(self.noc.cols) + "\n")
+    fp.write("CONFIG_NOC_WIDTH = " + str(self.noc.noc_width.get()) + "\n")
     if self.cache_en.get() == 1:
       fp.write("CONFIG_CACHE_EN = y\n")
     else:

@@ -369,6 +369,7 @@ class NoC():
   def __init__(self):
     self.cols = 0
     self.rows = 0
+    self.noc_width = IntVar()
     self.monitor_ddr = IntVar()
     self.monitor_mem = IntVar()
     self.monitor_inj = IntVar()
@@ -472,6 +473,10 @@ class NoCFrame(Pmw.ScrolledFrame):
     self.COLS.pack(side = LEFT)
     Button(self.noc_config_frame, text = "Config", command=self.create_noc).pack(side=TOP)
 
+    noc_width_choices = ["32", "64", "128", "256", "512", "1024"]
+    Label(self.noc_config_frame, text = "NoC Plane Bandwidth: ", height=1).pack()
+    OptionMenu(self.noc_config_frame, self.noc.noc_width, *noc_width_choices).pack()
+
     Label(self.noc_config_frame, height=1).pack()
     Checkbutton(self.noc_config_frame, text="Monitor DDR bandwidth", variable=self.noc.monitor_ddr, anchor=W, width=20).pack()
     Checkbutton(self.noc_config_frame, text="Monitor memory access", variable=self.noc.monitor_mem, anchor=W, width=20).pack()
@@ -483,6 +488,7 @@ class NoCFrame(Pmw.ScrolledFrame):
     Checkbutton(self.noc_config_frame, text="Monitor LLC Hit/Miss", variable=self.noc.monitor_llc, anchor=W, width=20).pack()
     self.monitor_dvfs_selection = Checkbutton(self.noc_config_frame, text="Monitor DVFS", variable=self.noc.monitor_dvfs, width=20, anchor=W)
     self.monitor_dvfs_selection.pack()
+
 
     #statistics
     Label(self.noc_config_frame, height=1).pack()

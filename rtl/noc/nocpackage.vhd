@@ -45,7 +45,7 @@ package nocpackage is
   constant MSG_TYPE_WIDTH      : natural := 5;
   constant RESERVED_WIDTH      : natural := 8;
   constant NEXT_ROUTING_WIDTH  : natural := 5;
-  constant NOC_FLIT_SIZE       : natural := PREAMBLE_WIDTH + ARCH_BITS;
+  constant NOC_FLIT_SIZE       : natural := PREAMBLE_WIDTH + NOC_WIDTH;
   constant MISC_NOC_FLIT_SIZE  : natural := PREAMBLE_WIDTH + 32;
 
   subtype local_yx is std_logic_vector(2 downto 0);

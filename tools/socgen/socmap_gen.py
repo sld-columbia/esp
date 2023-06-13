@@ -447,7 +447,8 @@ def print_global_constants(fp, soc):
 
   fp.write("  ------ General\n")
   fp.write("  constant ARCH_BITS : integer := " + str(soc.DMA_WIDTH) + ";\n")
-  # Keep cache-line size constant to 128 bits for now. We don't want huge line buffers
+  fp.write("  constant NOC_WIDTH : integer := " + str(soc.noc.noc_width.get()) + ";\n")
+
   fp.write("  constant GLOB_WORD_OFFSET_BITS : integer := " + str(int(math.log2(soc.cache_line_size.get()/soc.DMA_WIDTH))) + ";\n")
   fp.write("  constant GLOB_BYTE_OFFSET_BITS : integer := " + str(int(math.log2(soc.DMA_WIDTH/8))) +";\n")
   fp.write("  constant GLOB_OFFSET_BITS : integer := GLOB_WORD_OFFSET_BITS + GLOB_BYTE_OFFSET_BITS;\n")
