@@ -918,6 +918,7 @@ begin  -- rtl
                          narrow_coherence_rsp_snd_wrreq,
                          narrow_coherence_rsp_snd_data_in,
                          coherence_rsp_snd_full)
+    variable wide_noc_data : noc_flit_type;
     begin  -- process serdes_beh
 
       serdes_next <= serdes_current;
@@ -938,10 +939,12 @@ begin  -- rtl
           if r.state = send_data and r.hsize = HSIZE_DWORD and ahbmi.hready = '1' and coherence_rsp_snd_full = '0'then
             sample_rsp <= '1';
             coherence_rsp_snd_wrreq <= '1';
-            coherence_rsp_snd_data_in <=
-              PREAMBLE_BODY &
-              narrow_coherence_rsp_snd_data_in(31 downto 0) &
-              narrow_coherence_rsp_snd_data_in(31 downto 0);
+            wide_noc_data(NOC_FLIT_SIZE - 1 downto NOC_FLIT_SIZE - PREAMBLE_WIDTH) := PREAMBLE_BODY;
+            for i in 1 to NOC_FLIT_SIZE / 32 loop
+              wide_noc_data(32 * i downto 32 * (i - 1)) :=
+                narrow_coherence_rsp_snd_data_in(31 downto 0);
+            end loop;
+            coherence_rsp_snd_data_in <= wide_noc_data;
             serdes_next <= rsp_msb;
           elsif (r.state = wr_request or r.state = write_data or r.state = write_busy) and
             (r.hsize_msb = '1' and ARCH_BITS /= 32) and
@@ -954,9 +957,13 @@ begin  -- rtl
 
         when rsp_msb =>
           narrow_coherence_rsp_snd_full <= '1';
-          coherence_rsp_snd_data_in <=
-            rsp_reg(NOC_FLIT_SIZE - 1 downto NOC_FLIT_SIZE - PREAMBLE_WIDTH) &
-            rsp_reg(ARCH_BITS - 1 downto ARCH_BITS - 32) & rsp_reg(ARCH_BITS - 1 downto ARCH_BITS - 32);
+          wide_noc_data(NOC_FLIT_SIZE - 1 downto NOC_FLIT_SIZE - PREAMBLE_WIDTH) :=
+            rsp_reg(NOC_FLIT_SIZE - 1 downto NOC_FLIT_SIZE - PREAMBLE_WIDTH);
+          for i in 1 to NOC_FLIT_SIZE / 32 loop
+            wide_noc_data(32 * i downto 32 * (i - 1)) :=
+              rsp_reg(ARCH_BITS - 1 downto ARCH_BITS - 32);
+          end loop;
+          coherence_rsp_snd_data_in <= wide_noc_data;
           if coherence_rsp_snd_full = '0' then
             coherence_rsp_snd_wrreq <= '1';
             serdes_next <= passthru;
