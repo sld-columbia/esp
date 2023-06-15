@@ -9,6 +9,9 @@ package noc;
   // Queues
   parameter int unsigned PortQueueDepth = 4;
 
+  // Number of Destinations
+  parameter int unsigned DEST_SIZE = 6;
+
   // Coordinates
   parameter int unsigned xMax = 8;
   parameter int unsigned yMax = 8;
@@ -95,13 +98,13 @@ package noc;
   } preamble_t;
   
   // ajay_v
-  // Modified the structure to add more destinataions and valid indications to each destination
+  // Modified the structure to add more destinataions and vaslid indications to each destination
   typedef struct packed {
     xy_t source;
-    xy_t [1:0] destination;
+    xy_t [5:0] destination;
     //xy_t destination_1;
     message_t message;
-    bit [1:0] val; // 1 indicates Destination still awaits, 0 indicates destination already reached/taken care
+    bit [5:0] val; // 1 indicates Destination still awaits, 0 indicates destination already reached/taken care
     //logic val; // 1 indicates Destination 1 still awaits, 0 indicates destination already reached/crossed
   } packet_info_t;
 
