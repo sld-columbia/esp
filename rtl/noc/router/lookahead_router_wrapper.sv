@@ -1,8 +1,9 @@
 module lookahead_router_wrapper
   #(
     parameter bit FlowControl,
-    parameter int unsigned Width = 32,
-    parameter bit [4:0] Ports = noc::AllPorts
+    parameter int unsigned Width = 66,
+    parameter bit [4:0] Ports = noc::AllPorts,
+    parameter integer DEST_SIZE = 4
     )
   (
    input  logic clk,
@@ -36,7 +37,8 @@ module lookahead_router_wrapper
     #(
       .FlowControl(FlowControl),
       .DataWidth(Width - $bits(noc::preamble_t)),
-      .Ports(Ports)
+      .Ports(Ports),
+      .DEST_SIZE(DEST_SIZE)
       ) router_impl_i
       (
        .clk,
