@@ -24,12 +24,14 @@
 // - next_routing: one-hot encoded routing direction for the next hop.
 //
 
-module lookahead_routing
+module lookahead_routing  #(
+    parameter integer DEST_SIZE = 6
+    )
   (
    input logic clk,
    input noc::xy_t position,
-   input noc::xy_t [1:0] destination,
-   input logic [1:0] val,
+   input noc::xy_t [DEST_SIZE-1:0] destination,
+   input logic [DEST_SIZE-1:0] val,
    input noc::direction_t current_routing,
    output noc::direction_t next_routing
    );
@@ -41,7 +43,7 @@ module lookahead_routing
    logic [4:0] testing_local_local;
 
  
-   noc::direction_t [1:0] routing_paths;
+   noc::direction_t [DEST_SIZE-1:0] routing_paths;
 
   function automatic noc::direction_t routing(
     input noc::xy_t next_position,
@@ -49,35 +51,35 @@ module lookahead_routing
     // Compute next routing: go East/West first, then North/South
     noc::direction_t west, east, north, south, local1;
 
-	west.go_local = 0;
-	west.go_east = 0;
-	west.go_west = 0;
-	west.go_south = 0;
-	west.go_north = 0;
-	east.go_local = 0;
-	east.go_east = 0;
-	east.go_west = 0;
-	east.go_south = 0;
-	east.go_north = 0;
-	north.go_local = 0;
-	north.go_east = 0;
-	north.go_west = 0;
-	north.go_south = 0;
-	north.go_north = 0;
-	south.go_local = 0;
-	south.go_east = 0;
-	south.go_west = 0;
-	south.go_south = 0;
-	south.go_north = 0;
-	local1.go_local = 0;
-	local1.go_east = 0;
-	local1.go_west = 0;
-	local1.go_south = 0;
-	local1.go_north = 0;
+//	west.go_local = 0;
+//	west.go_east = 0;
+//	west.go_west = 0;
+//	west.go_south = 0;
+//	west.go_north = 0;
+//	east.go_local = 0;
+//	east.go_east = 0;
+//	east.go_west = 0;
+//	east.go_south = 0;
+//	east.go_north = 0;
+//	north.go_local = 0;
+//	north.go_east = 0;
+//	north.go_west = 0;
+//	north.go_south = 0;
+//	north.go_north = 0;
+//	south.go_local = 0;
+//	south.go_east = 0;
+//	south.go_west = 0;
+//	south.go_south = 0;
+//	south.go_north = 0;
+//	local1.go_local = 0;
+//	local1.go_east = 0;
+//	local1.go_west = 0;
+//	local1.go_south = 0;
+//	local1.go_north = 0;
 
 
 
-    if(next_position.x > destination.x) 
+  /*  if(next_position.x > destination.x) 
 	begin
 		west.go_west = 1;
 		local1.go_west = 1;
@@ -135,26 +137,29 @@ module lookahead_routing
         	south.go_south = 0;
         	south.go_north = 1;
 	
-	end
+	end*/
+  
 
-
-//    east = next_position.x < destination.x ?
-//           // 01000 : 10111
-//           noc::goEast : ~noc::goEast;
-//    north = next_position.y > destination.y ?
-//            // 01101 : 11110
-//            noc::goNorth | noc::goWest | noc::goEast : ~noc::goNorth;
-//    south = next_position.y < destination.y ?
-//            // 01110 : 11101
-//            noc::goSouth | noc::goWest | noc::goEast : ~noc::goSouth;
+    west = next_position.x > destination.x ?
+	  //  00100 : 11011;
+	   noc::goWest : ~noc::goWest; 
+    east = next_position.x < destination.x ?
+            // 01000 : 10111;
+           noc::goEast : ~noc::goEast;
+    north = next_position.y > destination.y ?
+            //  01101 : 11110;
+            noc::goNorth | noc::goWest | noc::goEast : ~noc::goNorth;
+    south = next_position.y < destination.y ?
+            //  01110 : 11101;
+            noc::goSouth | noc::goWest | noc::goEast : ~noc::goSouth;
     if (next_position.y == destination.y && next_position.x == destination.x)
 	local1.go_local = 1;
  
 
     // Result is go_local when none of the above is true
-    //routing = west & east & north & south;
+    routing = west & east & north & south;
 
-    routing = local1;
+    //routing = local1;
 
     testing_local_west = west;
     testing_local_east =  east;
@@ -191,8 +196,12 @@ module lookahead_routing
     
     // When current_routing is goLocal, we don't care about next_routing assignment
     next_routing = current_routing;
-    routing_paths[0] = current_routing;
-    routing_paths[1] = current_routing;
+    routing_paths[0] = 5'b00000;//current_routing;
+    routing_paths[1] = 5'b00000;//current_routing;
+    routing_paths[2] = 5'b00000;//current_routing;
+    routing_paths[3] = 5'b00000;//current_routing;
+    routing_paths[4] = 5'b00000;//current_routing;
+    routing_paths[5] = 5'b00000;//current_routing;
 
     //if (current_routing == noc::goNorth) 
     //begin
@@ -227,62 +236,50 @@ module lookahead_routing
     //end
     //  // When current_routing is goLocal, we don't care about next_routing assignment
 
-    for(int dest_num = 0; dest_num < 2; dest_num++) begin
-      if(val[dest_num] && (position.x == destination[dest_num].x && position.y == destination[dest_num].y)) begin
-        routing_paths[dest_num].go_local = 0;
-        routing_paths[dest_num].go_east = 0;
-        routing_paths[dest_num].go_west = 0;
-        routing_paths[dest_num].go_south = 0;
-        routing_paths[dest_num].go_north = 0;
-        continue;
-      end
-	
-      //if (current_routing == noc::goNorth) 
-      if (current_routing.go_north) 
-      begin
-          if(val[dest_num])begin
-            routing_paths[dest_num] = routing(next_position_q[noc::kNorthPort],destination[dest_num]);
-	    continue;
-	  end
-      end
-  
-      //if(current_routing == noc::goSouth)
-      if(current_routing.go_south)
-      begin
-          if(val[dest_num]) begin
-            routing_paths[dest_num] = routing(next_position_q[noc::kSouthPort], destination[dest_num]);
-	    continue;
- 	  end
-      end
-      //
-      //if(current_routing == noc::goWest)
-      if(current_routing.go_west)
-      begin
-          if(val[dest_num]) begin
-            routing_paths[dest_num] = routing(next_position_q[noc::kWestPort], destination[dest_num]);
-	    continue;
-	  end
-      end
-      //
-      //if(current_routing == noc::goEast)
-      if(current_routing.go_east)
-      begin
-          if(val[dest_num]) begin
-            routing_paths[dest_num] = routing(next_position_q[noc::kEastPort], destination[dest_num]);
-	    continue;
-	  end
-      end
+    for(int dest_num = 0; dest_num < DEST_SIZE; dest_num++) begin
+      if(val[dest_num])begin
+        if((position.x == destination[dest_num].x && position.y == destination[dest_num].y)) begin
+          routing_paths[dest_num].go_local = 0;
+          routing_paths[dest_num].go_east = 0;
+          routing_paths[dest_num].go_west = 0;
+          routing_paths[dest_num].go_south = 0;
+          routing_paths[dest_num].go_north = 0;
+        end
 
-      
-      if(current_routing.go_local)
-      begin
-          if(val[dest_num]) begin
-            routing_paths[dest_num] = routing(next_position_q[noc::kLocalPort], destination[dest_num]);
-	    continue;
-	  end
+        //if(current_routing == noc::goWest)    
+        else if(current_routing.go_west)
+        begin
+          routing_paths[dest_num] = routing(next_position_q[noc::kWestPort], destination[dest_num]);
+        end 
+
+        //if(current_routing == noc::goEast)
+        else if(current_routing.go_east)
+        begin
+          routing_paths[dest_num] = routing(next_position_q[noc::kEastPort], destination[dest_num]);
+        end
+
+        //if (current_routing == noc::goNorth) 
+        else if (current_routing.go_north) 
+        begin
+          routing_paths[dest_num] = routing(next_position_q[noc::kNorthPort],destination[dest_num]);
+        end
+    
+        //if(current_routing == noc::goSouth)
+        else if(current_routing.go_south)
+        begin
+          routing_paths[dest_num] = routing(next_position_q[noc::kSouthPort], destination[dest_num]);
+        end
+        //
+        //if(current_routing == noc::goLocal)
+        
+        else if(current_routing.go_local)
+        begin
+          routing_paths[dest_num] = routing(next_position_q[noc::kLocalPort], destination[dest_num]);
+        end
       end
     end
-    next_routing = routing_paths[0] | routing_paths[1];
+    next_routing = routing_paths[0] | routing_paths[1] | routing_paths[2] | routing_paths[3] | routing_paths[4] | routing_paths[5];
   end
 
 endmodule
+
