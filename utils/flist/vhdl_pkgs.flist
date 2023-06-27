@@ -3,7 +3,6 @@ misc/stdlib/config_types.vhd
 misc/stdlib/config.vhd
 misc/stdlib/stdlib.vhd
 techmap/maps/gencomp.vhd
-techmap/maps/allpads.vhd
 techmap/maps/allclkgen.vhd
 techmap/maps/alldco.vhd
 techmap/maps/allddr.vhd
@@ -40,6 +39,7 @@ cores/ariane/ariane_esp_pkg.vhd
 sockets/proxy/esp_acc_regmap.vhd
 sockets/monitor/monitor_pkg.vhd
 sockets/csr/esp_csr_pkg.vhd
+techmap/maps/allpads.vhd
 noc/genram_pkg.vhd
 noc/nocpackage.vhd
 caches/cachepackage.vhd
