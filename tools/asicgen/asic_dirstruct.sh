@@ -98,16 +98,6 @@ then
   cp ../../socs/esp_asic_generic/grlib_config.in "$PROJ_DIR_PATH/"
 fi
 
-if [ ! -f "$PROJ_DIR_PATH/chip_emu_top.vhd" ]
-then
-  cp ../../socs/esp_asic_generic/chip_emu_top.vhd "$PROJ_DIR_PATH/"
-fi
-
-if [ ! -f "$PROJ_DIR_PATH/ESP_ASIC_TOP.vhd" ]
-then
-  cp ../../socs/esp_asic_generic/ESP_ASIC_TOP.vhd "$PROJ_DIR_PATH/"
-fi
-
 if [ ! -f "$PROJ_DIR_PATH/fpga_proxy_top.vhd" ]
 then
   cp ../../socs/esp_asic_generic/fpga_proxy_top.vhd "$PROJ_DIR_PATH/"
