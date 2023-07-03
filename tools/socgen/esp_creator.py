@@ -235,6 +235,40 @@ class CpuFrame(Frame):
     Radiobutton(self, text = "Big physical area", variable = soc.transfers, value = 0).pack(side = TOP)
     Radiobutton(self, text = "Scatter/Gather  ", variable = soc.transfers, value = 1).pack(side = TOP)
 
+# Start Maico edit
+class AdvancedFrame(Frame):
+
+  def __init__(self, soc, top_frame, main_frame):
+    self.soc = soc
+
+    #
+    # Advanced configuration
+    #
+    Frame.__init__(self, top_frame, width=50, borderwidth=2, relief=RIDGE)
+    self.pack(side=LEFT, expand=NO, fill=Y)
+    Label(self, text = "Clock strategy ", font="TkDefaultFont 11 bold").pack(side = TOP)
+
+    advanced_config_frame = Frame(self)
+    advanced_config_frame.pack(side=TOP)
+
+    # Clock Strategy
+    if soc.TECH_TYPE == "asic" or soc.TECH == "inferred" or soc.ESP_EMU_TECH != "none":
+      Label(advanced_config_frame, text = "Dual external").grid(row=1, column=2)
+      Radiobutton(advanced_config_frame, text="", variable=soc.clk_str, value = 0, command=main_frame.update_noc_config).grid(row=1, column=1)
+      Label(advanced_config_frame, text = "Multi DCO").grid(row=2, column=2)
+      Radiobutton(advanced_config_frame, text="", variable=soc.clk_str, value = 1, command=main_frame.update_noc_config).grid(row=2, column=1)
+      Label(advanced_config_frame, text = "Single DCO").grid(row=3, column=2)
+      Radiobutton(advanced_config_frame, text="", variable=soc.clk_str, value = 2, command=main_frame.update_noc_config).grid(row=3, column=1)
+      print("Setting value: " + str(soc.clk_str.get()))
+    else:
+      Label(advanced_config_frame, text = "Dual external clocks (NoC and Tile)", fg="darkgreen").pack(side = TOP)
+      Label(advanced_config_frame, text = "No multi DCO clocks (CS-GALS)", fg="red").pack(side = TOP)
+      Label(advanced_config_frame, text = "No single DCO clock ", fg="red").pack(side = TOP)
+# End Maico edit
+    Label(advanced_config_frame, text = "Has synchronizer").grid(row=4, column=2)
+    Checkbutton(advanced_config_frame, text="", variable=soc.sync_en,
+                onvalue = 1, offvalue = 0, command=main_frame.update_noc_config).grid(row=4, column=1)
+
 class EspCreator(Frame):
 
   def __init__(self, master, _soc):
@@ -295,6 +329,10 @@ class EspCreator(Frame):
     #.:: creating the peripherals frame
     self.peripheral_frame = PeripheralFrame(self.soc, self.top_frame, self)
     self.peripheral_frame.update_frame()
+    # Start Maico edit
+    #.:: creating the advanced configuration frame
+    self.advanced_config_frame = AdvancedFrame(self.soc, self.top_frame, self)
+    # End Maico Edit
 
     #noc frame
     self.bottom_frame_noccfg = NoCFrame(self.soc, self.bottom_frame) 

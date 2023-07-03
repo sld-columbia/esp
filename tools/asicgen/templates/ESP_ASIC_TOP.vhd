@@ -438,8 +438,8 @@ begin
         generic map (
           SIMULATION   => SIMULATION,
           ROUTER_PORTS => set_router_ports(CFG_FABTECH, CFG_XLEN, CFG_YLEN, tile_x(i), tile_y(i)),
-          this_has_dco => 0,
-          HAS_SYNC     => 0)
+          this_has_dco => CFG_CLK_STR,
+          HAS_SYNC     => CFG_SYNC_EN)
         port map (
           rst                => reset,
           sys_clk            => sys_clk,
@@ -534,8 +534,8 @@ begin
         generic map (
           SIMULATION   => SIMULATION,
           ROUTER_PORTS => set_router_ports(CFG_FABTECH, CFG_XLEN, CFG_YLEN, tile_x(i), tile_y(i)),
-          this_has_dco => 0,
-          HAS_SYNC     => 0)
+          this_has_dco => CFG_CLK_STR,
+          HAS_SYNC     => CFG_SYNC_EN)
         port map (
           rst                => reset,
           sys_clk            => sys_clk,
@@ -633,8 +633,8 @@ begin
           this_irq_type => tile_irq_type(i),
           this_has_l2   => tile_has_l2(i),
           ROUTER_PORTS  => set_router_ports(CFG_FABTECH, CFG_XLEN, CFG_YLEN, tile_x(i), tile_y(i)),
-          this_has_dco => 0,
-          HAS_SYNC     => 0)
+          this_has_dco  => CFG_CLK_STR,
+          HAS_SYNC      => CFG_SYNC_EN)
         port map (
           rst                => reset,
           sys_clk            => sys_clk,
@@ -727,8 +727,8 @@ begin
         generic map (
           SIMULATION   => SIMULATION,
           ROUTER_PORTS => set_router_ports(CFG_FABTECH, CFG_XLEN, CFG_YLEN, tile_x(i), tile_y(i)),
-          this_has_dco => 0,
-          HAS_SYNC     => 0)
+          this_has_dco => CFG_CLK_STR,
+          HAS_SYNC     => CFG_SYNC_EN)
         port map (
           rst                => reset,       -- from I/O PAD reset
           sys_rstn_out       => sys_rstn,        -- NoC reset out (unused; connect other tiles directly to reset PAD)
@@ -851,8 +851,8 @@ begin
       tile_mem_i : asic_tile_mem
         generic map (
           ROUTER_PORTS => set_router_ports(CFG_FABTECH, CFG_XLEN, CFG_YLEN, tile_x(i), tile_y(i)),
-          this_has_dco => 0,
-          HAS_SYNC     => 0)
+          this_has_dco => CFG_CLK_STR,
+          HAS_SYNC     => CFG_SYNC_EN)
         port map (
           rst                => reset,
           sys_clk            => sys_clk,
@@ -951,8 +951,8 @@ begin
       tile_slm_i : asic_tile_slm
         generic map (
           ROUTER_PORTS => set_router_ports(CFG_FABTECH, CFG_XLEN, CFG_YLEN, tile_x(i), tile_y(i)),
-          this_has_dco => 0,
-          HAS_SYNC     => 0)
+          this_has_dco => CFG_CLK_STR,
+          HAS_SYNC     => CFG_SYNC_EN)
         port map (
           rst                => reset,
           sys_clk            => sys_clk,
