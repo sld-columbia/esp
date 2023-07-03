@@ -642,6 +642,16 @@ class NoCFrame(Pmw.ScrolledFrame):
         #if self.soc.TECH != "gf12" and self.soc.TECH != "virtexu" and self.soc.TECH != "virtexup":
         if self.soc.TECH != "asic" and self.soc.TECH != "virtexu" and self.soc.TECH != "virtexup":
           string += "    Use a smaller implementation if not using a Virtex US/US+\n"
+      if (clk_region_skip > 0):
+        string += "Clock-region IDs must be consecutive; skipping region " + str(clk_region_skip) +" intead\n"
+      if (self.soc.clk_str.get() == 0):
+        string += "Clock strategy: two external clocks - 1 for the NoC and 1 for the Tiles. \n"
+      if (self.soc.clk_str.get() ==1):
+        string += "Clock strategy: 1 DCO per tile plus 1 DCO for the NoC inside the IO tile. \n"
+      if (self.soc.clk_str.get() == 2):
+        string += "Clock strategy: 1 DCO inside the IO tile for the full chip. \n"
+      if (self.soc.sync_en.get() == 1):
+        string += "Clock strategy: enabled synchronizer between the NoC and the Tiles. \n"
       self.done.config(state=NORMAL)
     else:
       if (self.noc.cols > 8 or self.noc.rows > 8): 

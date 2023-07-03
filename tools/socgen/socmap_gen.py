@@ -562,6 +562,11 @@ def print_constants(fp, soc, esp_config):
   fp.write("  constant CFG_ETH_ENL : integer := 16#" + soc.dsu_eth[6:] + "#;\n\n")
 
   #
+  fp.write("  ------ Clock Strategy\n")
+  fp.write("  constant CFG_CLK_STR : integer := " + str(soc.clk_str.get()) + ";\n")
+  fp.write("  constant CFG_SYNC_EN : integer := " + str(soc.sync_en.get()) + ";\n\n")
+
+  #
   fp.write("  ------ NoC\n")
   fp.write("  constant CFG_XLEN : integer := " + str(soc.noc.cols) + ";\n")
   fp.write("  constant CFG_YLEN : integer := " + str(soc.noc.rows) + ";\n")
