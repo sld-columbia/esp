@@ -38,8 +38,8 @@ entity ext2ahbm is
     clk             : in  std_ulogic;
     rstn            : in  std_ulogic;
     -- Memory link
-    fpga_data_in    : out std_logic_vector(ARCH_BITS - 1 downto 0);
-    fpga_data_out   : in  std_logic_vector(ARCH_BITS - 1 downto 0);
+    fpga_data_in    : out std_logic_vector(CFG_MEM_LINK_BITS - 1 downto 0);
+    fpga_data_out   : in  std_logic_vector(CFG_MEM_LINK_BITS - 1 downto 0);
     fpga_valid_in   : out std_ulogic;
     fpga_valid_out  : in  std_ulogic;
     fpga_data_ien   : out std_logic;
@@ -56,19 +56,19 @@ architecture rtl of ext2ahbm is
 
   -- Synchronized to clk
   signal ext_snd_wrreq    : std_ulogic;
-  signal ext_snd_data_in  : std_logic_vector(ARCH_BITS - 1 downto 0);
+  signal ext_snd_data_in  : std_logic_vector(CFG_MEM_LINK_BITS - 1 downto 0);
   signal ext_snd_full     : std_ulogic;
   signal ext_snd_almost_full : std_ulogic;
   signal ext_rcv_rdreq    : std_ulogic;
-  signal ext_rcv_data_out : std_logic_vector(ARCH_BITS - 1 downto 0);
+  signal ext_rcv_data_out : std_logic_vector(CFG_MEM_LINK_BITS - 1 downto 0);
   signal ext_rcv_empty    : std_ulogic;
   -- Synchronized to fpga_clk_in
   signal ext_snd_rdreq    : std_ulogic;
-  signal ext_snd_data_out : std_logic_vector(ARCH_BITS - 1 downto 0);
+  signal ext_snd_data_out : std_logic_vector(CFG_MEM_LINK_BITS - 1 downto 0);
   signal ext_snd_empty    : std_ulogic;
   -- Synchronized to fpga_clk_out
   signal ext_rcv_wrreq    : std_ulogic;
-  signal ext_rcv_data_in  : std_logic_vector(ARCH_BITS - 1 downto 0);
+  signal ext_rcv_data_in  : std_logic_vector(CFG_MEM_LINK_BITS - 1 downto 0);
   signal ext_rcv_full     : std_ulogic;
 
   constant QUEUE_DEPTH : integer := 8;
@@ -255,7 +255,7 @@ begin  -- architecture rtl
   -- Chip to FPGA
   mem2ext_fifo: inferred_async_fifo
     generic map (
-      g_data_width => ARCH_BITS,
+      g_data_width => CFG_MEM_LINK_BITS,
       g_size       => 2 * QUEUE_DEPTH)
     port map (
       rst_wr_n_i => rstn,
@@ -277,7 +277,7 @@ begin  -- architecture rtl
   ext2mem_fifo: fifo3
     generic map (
       depth => 2 * QUEUE_DEPTH,
-      width => ARCH_BITS)
+      width => CFG_MEM_LINK_BITS)
     port map (
       clk         => clk,
       rst         => rstn,

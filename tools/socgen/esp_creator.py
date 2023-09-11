@@ -142,6 +142,7 @@ class PeripheralFrame(Frame):
         Label(periph_config_frame, text = "Ethernet", fg="darkgreen").grid(row=3, column=1)
 
     iolink_width_choices = [8, 16, 32]
+    mem_link_width_choices = [32, 64, 128, 256]
 
     #if soc.TECH == "gf12" or soc.TECH == "inferred" or soc.ESP_EMU_TECH != "none":
     if soc.TECH_TYPE == "asic" or soc.TECH == "inferred" or soc.ESP_EMU_TECH != "none":
@@ -153,13 +154,19 @@ class PeripheralFrame(Frame):
     else:
         Label(periph_config_frame, text = "No Custom IO Link", fg="red").grid(row=4, column=1)
 
+    if soc.TECH_TYPE == "asic" or soc.TECH == "inferred" or soc.ESP_EMU_TECH != "none":
+        Label(periph_config_frame, text = "FPGA Memory Link Width: ").grid(row=6, column=1)
+        OptionMenu(periph_config_frame, soc.mem_link_width, *mem_link_width_choices, command=main_frame.update_noc_config).grid(row=6, column=2)
+    else:
+        Label(periph_config_frame, text = "No FPGA Memory Link", fg="red").grid(row=5, column=1)
+
     # SVGA
     if soc.FPGA_BOARD.find("profpga") != -1 and (soc.TECH == "virtex7" or soc.TECH == "virtexu"):
       Label(periph_config_frame, text = "SVGA: ").grid(row=6, column=1)
       Checkbutton(periph_config_frame, text="", variable=soc.svga_en,
                   onvalue = 1, offvalue = 0, command=main_frame.update_noc_config).grid(row=6, column=2)
     else:
-      Label(periph_config_frame, text = "No SVGA", fg="red").grid(row=6, column=1)
+      Label(periph_config_frame, text = "No SVGA", fg="red").grid(row=7, column=1)
 
     #
     # Debug Link

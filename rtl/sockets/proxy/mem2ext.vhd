@@ -52,8 +52,8 @@ entity mem2ext is
     local_y           : in  local_yx;
     local_x           : in  local_yx;
     -- Memory link
-    fpga_data_in      : in  std_logic_vector(ARCH_BITS - 1 downto 0);
-    fpga_data_out     : out std_logic_vector(ARCH_BITS - 1 downto 0);
+    fpga_data_in      : in  std_logic_vector(CFG_MEM_LINK_BITS - 1 downto 0);
+    fpga_data_out     : out std_logic_vector(CFG_MEM_LINK_BITS - 1 downto 0);
     fpga_valid_in     : in  std_logic;
     fpga_valid_out    : out std_logic;
     fpga_oen          : out std_logic;
@@ -64,11 +64,11 @@ entity mem2ext is
     -- LLC->ext
     llc_ext_req_ready : out std_ulogic;
     llc_ext_req_valid : in  std_ulogic;
-    llc_ext_req_data  : in  std_logic_vector(ARCH_BITS - 1 downto 0);
+    llc_ext_req_data  : in  std_logic_vector(CFG_MEM_LINK_BITS - 1 downto 0);
     -- ext->LLC
     llc_ext_rsp_ready : in  std_ulogic;
     llc_ext_rsp_valid : out std_ulogic;
-    llc_ext_rsp_data  : out std_logic_vector(ARCH_BITS - 1 downto 0);
+    llc_ext_rsp_data  : out std_logic_vector(CFG_MEM_LINK_BITS - 1 downto 0);
     -- DMA->ext
     dma_rcv_rdreq              : out std_ulogic;
     dma_rcv_data_out           : in  noc_flit_type;
@@ -84,17 +84,17 @@ architecture rtl of mem2ext is
 
   -- Synchronized to clk
   signal ext_snd_wrreq    : std_ulogic;
-  signal ext_snd_data_in  : std_logic_vector(ARCH_BITS - 1 downto 0);
+  signal ext_snd_data_in  : std_logic_vector(CFG_MEM_LINK_BITS - 1 downto 0);
   signal ext_snd_full     : std_ulogic;
   signal ext_rcv_rdreq    : std_ulogic;
-  signal ext_rcv_data_out : std_logic_vector(ARCH_BITS - 1 downto 0);
+  signal ext_rcv_data_out : std_logic_vector(CFG_MEM_LINK_BITS - 1 downto 0);
   signal ext_rcv_empty    : std_ulogic;
   -- Synchronized to fpga_clk_in
   signal ext_snd_rdreq    : std_ulogic;
-  signal ext_snd_data_out : std_logic_vector(ARCH_BITS - 1 downto 0);
+  signal ext_snd_data_out : std_logic_vector(CFG_MEM_LINK_BITS - 1 downto 0);
   signal ext_snd_empty    : std_ulogic;
   signal ext_rcv_wrreq    : std_ulogic;
-  signal ext_rcv_data_in  : std_logic_vector(ARCH_BITS - 1 downto 0);
+  signal ext_rcv_data_in  : std_logic_vector(CFG_MEM_LINK_BITS - 1 downto 0);
   signal ext_rcv_full     : std_ulogic;
 
   constant LSB : integer := GLOB_BYTE_OFFSET_BITS;
@@ -227,7 +227,7 @@ begin  -- architecture rtl
   -- Chip to FPGA
   mem2ext_fifo: inferred_async_fifo
     generic map (
-      g_data_width => ARCH_BITS,
+      g_data_width => CFG_MEM_LINK_BITS,
       g_size       => 2 * QUEUE_DEPTH)
     port map (
       rst_wr_n_i => rstn,
@@ -250,7 +250,7 @@ begin  -- architecture rtl
   -- FPGA to Chip
   ext2mem_fifo: inferred_async_fifo
     generic map (
-      g_data_width => ARCH_BITS,
+      g_data_width => CFG_MEM_LINK_BITS,
       g_size       => 2 * QUEUE_DEPTH)
     port map (
       rst_wr_n_i => rstn,
@@ -385,7 +385,7 @@ begin  -- architecture rtl
               -- Set write (not read)
               ext_snd_data_in(0) <= llc_writing_reg;
               -- Set address
-              ext_snd_data_in(ARCH_BITS - 1 downto LSB) <= llc_ext_req_data(ARCH_BITS - 1 downto LSB);
+              ext_snd_data_in(CFG_MEM_LINK_BITS - 1 downto LSB) <= llc_ext_req_data(CFG_MEM_LINK_BITS - 1 downto LSB);
               -- Pop LLC req queue
               llc_ext_req_ready <= '1';
               -- Push ext queue
@@ -397,7 +397,7 @@ begin  -- architecture rtl
               -- Set write (not read)
               ext_snd_data_in(0) <= dma_writing_reg;
               -- Set address
-              ext_snd_data_in(ARCH_BITS - 1 downto LSB) <= dma_rcv_data_out(ARCH_BITS - 1 downto LSB);
+              ext_snd_data_in(CFG_MEM_LINK_BITS - 1 downto LSB) <= dma_rcv_data_out(CFG_MEM_LINK_BITS - 1 downto LSB);
               if dma_rcv_empty = '0' then
                 -- Pop DMA queue
                 dma_rcv_rdreq <= '1';
@@ -416,8 +416,8 @@ begin  -- architecture rtl
           case req_reg is
             when llc_req =>
               -- Set length (cache line)
-              ext_snd_data_in <= conv_std_logic_vector(2**GLOB_WORD_OFFSET_BITS, ARCH_BITS);
-              tran_count <= conv_std_logic_vector(2**GLOB_WORD_OFFSET_BITS, 32);
+              ext_snd_data_in <= conv_std_logic_vector(CFG_CACHE_LINE_SIZE / CFG_MEM_LINK_BITS, CFG_MEM_LINK_BITS);
+              tran_count <= conv_std_logic_vector(CFG_CACHE_LINE_SIZE / CFG_MEM_LINK_BITS, 32);
               -- Sample length
               sample_tran_count <= '1';
               -- Push ext queue
@@ -431,7 +431,7 @@ begin  -- architecture rtl
 
             when dma_req =>
               -- Set length
-              ext_snd_data_in <= dma_rcv_data_out(ARCH_BITS - 1 downto 0);
+              ext_snd_data_in <= dma_rcv_data_out(CFG_MEM_LINK_BITS - 1 downto 0);
               tran_count <= dma_rcv_data_out(31 downto 0);
               if dma_rcv_empty = '0' then
                 -- Sample length
@@ -472,7 +472,7 @@ begin  -- architecture rtl
 
             when dma_req =>
               -- Set data
-              ext_snd_data_in <= dma_rcv_data_out(ARCH_BITS - 1 downto 0);
+              ext_snd_data_in <= dma_rcv_data_out(CFG_MEM_LINK_BITS - 1 downto 0);
               if dma_rcv_empty = '0' then
                 -- Decrement counter
                 tran_count_en <= '1';

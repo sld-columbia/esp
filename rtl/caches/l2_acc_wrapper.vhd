@@ -939,7 +939,7 @@ begin  -- architecture rtl of l2_acc_wrapper
         if dma_rcv_ready = '1' then
 
           dma_rcv_data <= PREAMBLE_BODY &
-                          read_word(reg.line, reg.cnt);
+                          read_noc_word(reg.line, reg.cnt);
 
           if reg.cnt = reg.msw and to_integer(unsigned(reg.length)) = 0 then
 

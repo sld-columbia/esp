@@ -53,7 +53,7 @@ entity fpga_proxy_top is
     jtag_clk_p        : in    std_ulogic;
     jtag_clk_n        : in    std_ulogic;
     -- Memory link
-    fpga_data         : inout std_logic_vector(CFG_NMEM_TILE * (ARCH_BITS) - 1 downto 0);
+    fpga_data         : inout std_logic_vector(CFG_NMEM_TILE * (CFG_MEM_LINK_BITS) - 1 downto 0);
     fpga_valid_in     : out   std_logic_vector(CFG_NMEM_TILE - 1 downto 0);
     fpga_valid_out    : in    std_logic_vector(CFG_NMEM_TILE - 1 downto 0);
     fpga_clk_in       : out   std_logic_vector(CFG_NMEM_TILE - 1 downto 0);
@@ -432,8 +432,8 @@ architecture rtl of fpga_proxy_top is
   -----------------------------------------------------------------------------
   -- FPGA proxy
   signal fpga_data_ien       : std_logic_vector(CFG_NMEM_TILE - 1 downto 0);
-  signal fpga_data_in        : std_logic_vector(CFG_NMEM_TILE * (ARCH_BITS) - 1 downto 0);
-  signal fpga_data_out       : std_logic_vector(CFG_NMEM_TILE * (ARCH_BITS) - 1 downto 0);
+  signal fpga_data_in        : std_logic_vector(CFG_NMEM_TILE * (CFG_MEM_LINK_BITS) - 1 downto 0);
+  signal fpga_data_out       : std_logic_vector(CFG_NMEM_TILE * (CFG_MEM_LINK_BITS) - 1 downto 0);
   signal fpga_valid_in_int   : std_logic_vector(CFG_NMEM_TILE - 1 downto 0);
   signal fpga_valid_out_int  : std_logic_vector(CFG_NMEM_TILE - 1 downto 0);
   signal fpga_clk_in_int     : std_logic_vector(CFG_NMEM_TILE - 1 downto 0);
@@ -690,9 +690,9 @@ begin  -- architecture rtl
   fpga_io_gen : for i in 0 to CFG_NMEM_TILE - 1 generate
 
     -- Bidirection data pins
-    fpga_iopad_data_gen : for j in 0 to ARCH_BITS - 1 generate
+    fpga_iopad_data_gen : for j in 0 to CFG_MEM_LINK_BITS - 1 generate
         fpga_data_pad  : iopad generic map (tech => FPGA_PROXY_TECH, level => cmos, voltage => x18v, oepol => 1) 
-          port map (fpga_data(memswap(i) * ARCH_BITS + j), fpga_data_in(i * ARCH_BITS + j), fpga_data_ien(i), fpga_data_out(i * ARCH_BITS + j));
+          port map (fpga_data(memswap(i) * CFG_MEM_LINK_BITS + j), fpga_data_in(i * CFG_MEM_LINK_BITS + j), fpga_data_ien(i), fpga_data_out(i * CFG_MEM_LINK_BITS + j));
     end generate fpga_iopad_data_gen;
 
     -- Valid bit
@@ -742,8 +742,8 @@ begin  -- architecture rtl
       port map (
         clk             => sys_clk(i),
         rstn            => rstn,
-        fpga_data_in    => fpga_data_in((i + 1) * (ARCH_BITS) - 1 downto i * (ARCH_BITS)),
-        fpga_data_out   => fpga_data_out((i + 1) * (ARCH_BITS) - 1 downto i * (ARCH_BITS)),
+        fpga_data_in    => fpga_data_in((i + 1) * (CFG_MEM_LINK_BITS) - 1 downto i * (CFG_MEM_LINK_BITS)),
+        fpga_data_out   => fpga_data_out((i + 1) * (CFG_MEM_LINK_BITS) - 1 downto i * (CFG_MEM_LINK_BITS)),
         fpga_valid_in   => fpga_valid_in_int(i),
         fpga_valid_out  => fpga_valid_out_int(i),
         fpga_data_ien   => fpga_data_ien(i),
@@ -1132,16 +1132,16 @@ begin  -- architecture rtl
 
   rst_l <= not(rst);
 
-  fpga_proxy_jtag0: fpga_proxy_jtag
-      port map (
-        rst    => rst_l,
-        tdi    => tdi_jtag,
-        tdo    => tdo_jtag,
-        tms    => tms_in,
-        tclk   => jtag_clk,
-        main_clk   => main_clk,
-        ahbsi  => ahbsi_in,
-        ahbso  => ahbso_apb);
+  --fpga_proxy_jtag0: fpga_proxy_jtag
+  --    port map (
+  --      rst    => rst_l,
+  --      tdi    => tdi_jtag,
+  --      tdo    => tdo_jtag,
+  --      tms    => tms_in,
+  --      tclk   => jtag_clk,
+  --      main_clk   => main_clk,
+  --      ahbsi  => ahbsi_in,
+  --      ahbso  => ahbso_apb);
 
   jtag_apb_config0: jtag_apb_config
     generic map (

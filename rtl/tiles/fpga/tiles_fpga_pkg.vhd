@@ -381,8 +381,8 @@ package tiles_fpga_pkg is
       ddr_cfg2           : out std_logic_vector(31 downto 0);
       mem_id             : out integer range 0 to CFG_NMEM_TILE + CFG_NSLM_TILE + CFG_NSLMDDR_TILE - 1;
       -- FPGA proxy memory link (this_has_ddr -> 0)
-      fpga_data_in       : in  std_logic_vector(ARCH_BITS - 1 downto 0);
-      fpga_data_out      : out std_logic_vector(ARCH_BITS - 1 downto 0);
+      fpga_data_in       : in  std_logic_vector(CFG_MEM_LINK_BITS - 1 downto 0);
+      fpga_data_out      : out std_logic_vector(CFG_MEM_LINK_BITS - 1 downto 0);
       fpga_oen           : out std_ulogic;
       fpga_valid_in      : in  std_ulogic;
       fpga_valid_out     : out std_ulogic;

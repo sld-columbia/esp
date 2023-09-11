@@ -59,8 +59,8 @@ entity tile_mem is
     ddr_cfg2           : out std_logic_vector(31 downto 0);
     mem_id             : out integer range 0 to CFG_NMEM_TILE + CFG_NSLM_TILE + CFG_NSLMDDR_TILE - 1;
     -- FPGA proxy memory link (this_has_ddr -> 0)
-    fpga_data_in       : in  std_logic_vector(ARCH_BITS - 1 downto 0);
-    fpga_data_out      : out std_logic_vector(ARCH_BITS - 1 downto 0);
+    fpga_data_in       : in  std_logic_vector(CFG_MEM_LINK_BITS - 1 downto 0);
+    fpga_data_out      : out std_logic_vector(CFG_MEM_LINK_BITS - 1 downto 0);
     fpga_oen           : out std_ulogic;
     fpga_valid_in      : in  std_ulogic;
     fpga_valid_out     : out std_ulogic;
@@ -181,7 +181,7 @@ architecture rtl of tile_mem is
   signal coherent_dma_snd_exactly_3slots : std_ulogic;
   -- These requests are delivered through NoC5 (32 bits always)
   -- however, the proxy that handles expects a flit size in
-  -- accordance with ARCH_BITS. Hence we need to pad and move
+  -- accordance with CFG_MEM_LINK_BITS. Hence we need to pad and move
   -- header info and preamble to the right bit position
   signal remote_ahbs_rcv_rdreq      : std_ulogic;
   signal remote_ahbs_rcv_data_out   : misc_noc_flit_type;
@@ -207,10 +207,10 @@ architecture rtl of tile_mem is
   -- LLC/FPGA-based memory link
   signal llc_ext_req_ready : std_ulogic;
   signal llc_ext_req_valid : std_ulogic;
-  signal llc_ext_req_data  : std_logic_vector(ARCH_BITS - 1 downto 0);
+  signal llc_ext_req_data  : std_logic_vector(CFG_MEM_LINK_BITS - 1 downto 0);
   signal llc_ext_rsp_ready : std_ulogic;
   signal llc_ext_rsp_valid : std_ulogic;
-  signal llc_ext_rsp_data  : std_logic_vector(ARCH_BITS - 1 downto 0);
+  signal llc_ext_rsp_data  : std_logic_vector(CFG_MEM_LINK_BITS - 1 downto 0);
 
 
   -- Bus

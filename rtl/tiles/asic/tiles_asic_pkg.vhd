@@ -215,8 +215,8 @@ package tiles_asic_pkg is
       sys_clk_lock       : in  std_ulogic;
       ext_clk            : in    std_ulogic;
       clk_div            : out   std_ulogic;
-      fpga_data_in       : in    std_logic_vector(ARCH_BITS - 1 downto 0);
-      fpga_data_out      : out   std_logic_vector(ARCH_BITS - 1 downto 0);
+      fpga_data_in       : in    std_logic_vector(CFG_MEM_LINK_BITS - 1 downto 0);
+      fpga_data_out      : out   std_logic_vector(CFG_MEM_LINK_BITS - 1 downto 0);
       fpga_oen           : out   std_ulogic;
       fpga_valid_in      : in    std_ulogic;
       fpga_valid_out     : out   std_ulogic;

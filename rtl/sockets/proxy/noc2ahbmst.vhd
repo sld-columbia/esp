@@ -308,6 +308,7 @@ begin  -- rtl
     variable reserved               : reserved_field_type;
     variable preamble, dma_preamble : noc_preamble_type;
     variable hwdata_be : std_logic_vector(ARCH_BITS - 1 downto 0);
+    variable wide_noc_data          : noc_flit_type;
   begin  -- process ahb_roundtrip
     -- Default ahbmo assignment
     v       := r;
@@ -626,7 +627,11 @@ begin  -- rtl
           else
             -- Send data to noc
             narrow_coherence_rsp_snd_wrreq   <= '1';
-            narrow_coherence_rsp_snd_data_in <= PREAMBLE_BODY & fix_endian(ahbmi.hrdata);
+            wide_noc_data(NOC_FLIT_SIZE -1 downto NOC_FLIT_SIZE - PREAMBLE_WIDTH) := PREAMBLE_BODY;
+            for i in 1 to NOC_WIDTH / ARCH_BITS loop
+                wide_noc_data(ARCH_BITS * i - 1 downto ARCH_BITS * (i -1)) := fix_endian(ahbmi.hrdata);
+            end loop;
+            narrow_coherence_rsp_snd_data_in <= wide_noc_data;
             -- Update address and control bus
             if r.hsize = HSIZE_WORD then
               -- EDCL burst
@@ -643,7 +648,11 @@ begin  -- rtl
               v.hbusreq := '0';
               v.htrans  := HTRANS_IDLE;
             elsif r.count = 0 then
-              narrow_coherence_rsp_snd_data_in <= PREAMBLE_TAIL & fix_endian(ahbmi.hrdata);
+              wide_noc_data(NOC_FLIT_SIZE -1 downto NOC_FLIT_SIZE - PREAMBLE_WIDTH) := PREAMBLE_TAIL;
+              for i in 1 to NOC_WIDTH / ARCH_BITS loop
+                  wide_noc_data(ARCH_BITS * i - 1 downto ARCH_BITS * (i -1)) := fix_endian(ahbmi.hrdata);
+              end loop;
+              narrow_coherence_rsp_snd_data_in <= wide_noc_data;
               v.state                   := receive_header;
             else
               v.htrans := HTRANS_SEQ;
@@ -655,7 +664,11 @@ begin  -- rtl
         if (v.ready = '1') then
           -- Send data to noc
           dma_snd_wrreq   <= '1';
-          dma_snd_data_in <= PREAMBLE_BODY & fix_endian(ahbmi.hrdata);
+          wide_noc_data(NOC_FLIT_SIZE -1 downto NOC_FLIT_SIZE - PREAMBLE_WIDTH) := PREAMBLE_BODY;
+          for i in 1 to NOC_WIDTH / ARCH_BITS loop
+            wide_noc_data(ARCH_BITS * i - 1 downto ARCH_BITS * (i -1)) := fix_endian(ahbmi.hrdata);
+          end loop;
+          dma_snd_data_in <= wide_noc_data;
           -- Accelerators work with data widht equal to the selected processor,
           -- however, non-coherent Ethernet DMA makes 32-bits bursts
           v.addr          := r.addr + target_dma_incr;
@@ -667,7 +680,11 @@ begin  -- rtl
             v.hbusreq := '0';
             v.htrans  := HTRANS_IDLE;
           elsif r.count = 0 then
-            dma_snd_data_in <= PREAMBLE_TAIL & fix_endian(ahbmi.hrdata);
+            wide_noc_data(NOC_FLIT_SIZE -1 downto NOC_FLIT_SIZE - PREAMBLE_WIDTH) := PREAMBLE_TAIL;
+            for i in 1 to NOC_WIDTH / ARCH_BITS loop
+              wide_noc_data(ARCH_BITS * i - 1 downto ARCH_BITS * (i -1)) := fix_endian(ahbmi.hrdata);
+            end loop;
+            dma_snd_data_in <= wide_noc_data;
             v.state         := receive_header;
           else
             if dma_snd_exactly_3slots = '1' then
@@ -682,7 +699,11 @@ begin  -- rtl
       when dma_send_busy =>
         if (v.ready = '1') then
           dma_snd_wrreq   <= '1';
-          dma_snd_data_in <= PREAMBLE_BODY & fix_endian(ahbmi.hrdata);
+          wide_noc_data(NOC_FLIT_SIZE -1 downto NOC_FLIT_SIZE - PREAMBLE_WIDTH) := PREAMBLE_BODY;
+          for i in 1 to NOC_WIDTH / ARCH_BITS loop
+            wide_noc_data(ARCH_BITS * i - 1 downto ARCH_BITS * (i -1)) := fix_endian(ahbmi.hrdata);
+          end loop;
+          dma_snd_data_in <= wide_noc_data;
           v.count         := r.count - 1;
           v.state := dma_wait_busy;
         end if;
@@ -941,7 +962,7 @@ begin  -- rtl
             coherence_rsp_snd_wrreq <= '1';
             wide_noc_data(NOC_FLIT_SIZE - 1 downto NOC_FLIT_SIZE - PREAMBLE_WIDTH) := PREAMBLE_BODY;
             for i in 1 to NOC_FLIT_SIZE / 32 loop
-              wide_noc_data(32 * i downto 32 * (i - 1)) :=
+              wide_noc_data(32 * i - 1 downto 32 * (i - 1)) :=
                 narrow_coherence_rsp_snd_data_in(31 downto 0);
             end loop;
             coherence_rsp_snd_data_in <= wide_noc_data;
@@ -960,7 +981,7 @@ begin  -- rtl
           wide_noc_data(NOC_FLIT_SIZE - 1 downto NOC_FLIT_SIZE - PREAMBLE_WIDTH) :=
             rsp_reg(NOC_FLIT_SIZE - 1 downto NOC_FLIT_SIZE - PREAMBLE_WIDTH);
           for i in 1 to NOC_FLIT_SIZE / 32 loop
-            wide_noc_data(32 * i downto 32 * (i - 1)) :=
+            wide_noc_data(32 * i - 1 downto 32 * (i - 1)) :=
               rsp_reg(ARCH_BITS - 1 downto ARCH_BITS - 32);
           end loop;
           coherence_rsp_snd_data_in <= wide_noc_data;

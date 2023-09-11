@@ -504,12 +504,13 @@ def print_constants(fp, soc, esp_config):
     fp.write("  constant CFG_L2_ENABLE   : integer := 0;\n")
     fp.write("  constant CFG_L2_DISABLE  : integer := 1;\n")
     fp.write("  constant CFG_LLC_ENABLE  : integer := 0;\n")
-  fp.write("  constant CFG_L2_SETS     : integer := " + str(soc.l2_sets.get()      ) +  ";\n")
-  fp.write("  constant CFG_L2_WAYS     : integer := " + str(soc.l2_ways.get()      ) +  ";\n")
-  fp.write("  constant CFG_LLC_SETS    : integer := " + str(soc.llc_sets.get()     ) +  ";\n")
-  fp.write("  constant CFG_LLC_WAYS    : integer := " + str(soc.llc_ways.get()     ) +  ";\n")
-  fp.write("  constant CFG_ACC_L2_SETS : integer := " + str(soc.acc_l2_sets.get()  ) +  ";\n")
-  fp.write("  constant CFG_ACC_L2_WAYS : integer := " + str(soc.acc_l2_ways.get()  ) +  ";\n\n")
+  fp.write("  constant CFG_CACHE_LINE_SIZE  : integer := " + str(soc.cache_line_size.get()  ) +  ";\n")
+  fp.write("  constant CFG_L2_SETS          : integer := " + str(soc.l2_sets.get()          ) +  ";\n")
+  fp.write("  constant CFG_L2_WAYS          : integer := " + str(soc.l2_ways.get()          ) +  ";\n")
+  fp.write("  constant CFG_LLC_SETS         : integer := " + str(soc.llc_sets.get()         ) +  ";\n")
+  fp.write("  constant CFG_LLC_WAYS         : integer := " + str(soc.llc_ways.get()         ) +  ";\n")
+  fp.write("  constant CFG_ACC_L2_SETS      : integer := " + str(soc.acc_l2_sets.get()      ) +  ";\n")
+  fp.write("  constant CFG_ACC_L2_WAYS      : integer := " + str(soc.acc_l2_ways.get()      ) +  ";\n\n")
 
   #
   fp.write("  ------ Caches interrupt line\n")
@@ -543,6 +544,9 @@ def print_constants(fp, soc, esp_config):
   fp.write("  ------ Custom IO Link\n")
   fp.write("  constant CFG_IOLINK_EN : integer := " + str(soc.iolink_en.get()) + ";\n")
   fp.write("  constant CFG_IOLINK_BITS : integer := " + str(soc.iolink_width.get()) + ";\n\n")
+
+  fp.write("  ------ Custom Memory Link to FPGA for DDR access\n")
+  fp.write("  constant CFG_MEM_LINK_BITS : integer := " + str(soc.mem_link_width.get()) + ";\n\n")
 
   #
   fp.write("  ------ SVGA\n")

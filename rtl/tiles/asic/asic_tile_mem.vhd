@@ -47,8 +47,8 @@ entity asic_tile_mem is
     ext_clk            : in  std_ulogic;  -- backup tile clock
     clk_div            : out std_ulogic;  -- tile clock monitor for testing purposes
     -- FPGA proxy memory link
-    fpga_data_in       : in  std_logic_vector(ARCH_BITS - 1 downto 0);
-    fpga_data_out      : out std_logic_vector(ARCH_BITS - 1 downto 0);
+    fpga_data_in       : in  std_logic_vector(CFG_MEM_LINK_BITS - 1 downto 0);
+    fpga_data_out      : out std_logic_vector(CFG_MEM_LINK_BITS - 1 downto 0);
     fpga_oen           : out std_ulogic;
     fpga_valid_in      : in  std_ulogic;
     fpga_valid_out     : out std_ulogic;

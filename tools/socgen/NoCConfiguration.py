@@ -640,7 +640,10 @@ class NoCFrame(Pmw.ScrolledFrame):
        (not (self.soc.TECH == "virtexu" and tot_mem >= 2 and (self.noc.rows < 3 or self.noc.cols < 3))) and \
        (self.soc.cache_spandex.get() == 0 or self.soc.CPU_ARCH.get() == "ariane" or self.soc.cache_en.get() == 0) and \
        (tot_cpu == 1 or self.soc.cache_en.get()) and \
-       (self.soc.llc_sets.get() < 8192 or self.soc.llc_ways.get() < 16 or tot_mem > 1):
+       (self.soc.llc_sets.get() < 8192 or self.soc.llc_ways.get() < 16 or tot_mem > 1) and \
+       (self.soc.cache_line_size.get() >= self.noc.noc_width.get()) and \
+       (self.soc.cache_line_size.get() >= self.soc.mem_link_width.get()) and \
+       (self.noc.noc_width.get() >= self.soc.mem_link_width.get()):
       # Spandex beta warning
       if self.soc.cache_spandex.get() != 0 and self.soc.cache_en.get() == 1:
         string += "***              Spandex support is still beta                 ***\n"
@@ -696,6 +699,13 @@ class NoCFrame(Pmw.ScrolledFrame):
       string += pll_string
       if (clk_region_skip > 0):
         string += "Clock-region IDs must be consecutive; skipping region " + str(clk_region_skip) +" intead\n"
+      if (self.soc.cache_line_size.get() < self.noc.noc_width.get()):
+        string += "Cache line size must be greater than or equal to NoC bitwidth\n"
+      if (self.soc.cache_line_size.get() < self.soc.mem_link_width.get()):
+        string += "Cache line size must be greater than or equal to mem link bitwidth\n"
+      if (self.noc.noc_width.get() < self.soc.mem_link_width.get()):
+        string += "NoC bitwdith must be greater than or equal to mem link bitwidth\n"
+
     # Update message box
     self.message.insert(0.0, string)
 

@@ -92,11 +92,11 @@ entity llc_wrapper is
     -- LLC->ext
     ext_req_ready              : in  std_ulogic;
     ext_req_valid              : out std_ulogic;
-    ext_req_data               : out std_logic_vector(ARCH_BITS - 1 downto 0);
+    ext_req_data               : out std_logic_vector(CFG_MEM_LINK_BITS - 1 downto 0);
     -- ext->LLC
     ext_rsp_ready              : out std_ulogic;
     ext_rsp_valid              : in  std_ulogic;
-    ext_rsp_data               : in  std_logic_vector(ARCH_BITS - 1 downto 0);
+    ext_rsp_data               : in  std_logic_vector(CFG_MEM_LINK_BITS - 1 downto 0);
     -- Monitor
     mon_cache                  : out monitor_cache_type
     );
@@ -1006,26 +1006,26 @@ begin  -- architecture rtl
         if reg.word_cnt = 0 then
 
           ext_req_valid <= '1';
-          if GLOB_PHYS_ADDR_BITS < ARCH_BITS then
-            ext_req_data(ARCH_BITS - 1 downto GLOB_PHYS_ADDR_BITS) <= (others => '0');
+          if GLOB_PHYS_ADDR_BITS < CFG_MEM_LINK_BITS then
+            ext_req_data(CFG_MEM_LINK_BITS - 1 downto GLOB_PHYS_ADDR_BITS) <= (others => '0');
             ext_req_data(GLOB_PHYS_ADDR_BITS - 1 downto 0) <= reg.haddr;
           end if;
-          if GLOB_PHYS_ADDR_BITS = ARCH_BITS then
+          if GLOB_PHYS_ADDR_BITS = CFG_MEM_LINK_BITS then
             ext_req_data  <= reg.haddr;
           end if;
           if ext_req_ready = '1' then
             reg.word_cnt  := reg.word_cnt + 1;
           end if;
 
-        elsif reg.word_cnt = WORDS_PER_LINE then
+        elsif reg.word_cnt = CFG_CACHE_LINE_SIZE / CFG_MEM_LINK_BITS then
           ext_rsp_ready <= llc_mem_rsp_ready;
 
           if ext_rsp_valid = '1' then
-            reg.line(WORDS_PER_LINE*BITS_PER_WORD-1 downto (WORDS_PER_LINE-1)*BITS_PER_WORD) := ext_rsp_data;
+            reg.line(CFG_CACHE_LINE_SIZE-1 downto CFG_CACHE_LINE_SIZE - CFG_MEM_LINK_BITS) := ext_rsp_data;
 
             llc_mem_rsp_valid <= '1';
             if llc_mem_rsp_ready = '1' then
-              llc_mem_rsp_data_line <= ext_rsp_data & reg.line((WORDS_PER_LINE-1)*BITS_PER_WORD-1 downto 0);
+              llc_mem_rsp_data_line <= ext_rsp_data & reg.line(CFG_CACHE_LINE_SIZE - CFG_MEM_LINK_BITS - 1 downto 0);
               reg.state             := idle;
             else
               reg.state := send_mem_rsp;
@@ -1036,7 +1036,7 @@ begin  -- architecture rtl
           ext_rsp_ready <= '1';
 
           if ext_rsp_valid = '1' then
-            reg.line(reg.word_cnt*BITS_PER_WORD-1 downto (reg.word_cnt-1)*BITS_PER_WORD) := ext_rsp_data;
+            reg.line(reg.word_cnt*CFG_MEM_LINK_BITS-1 downto (reg.word_cnt-1)*CFG_MEM_LINK_BITS) := ext_rsp_data;
             reg.word_cnt                                                                 := reg.word_cnt + 1;
           end if;
 
@@ -1057,20 +1057,20 @@ begin  -- architecture rtl
         if reg.word_cnt = 0 then
 
           ext_req_valid <= '1';
-          if GLOB_PHYS_ADDR_BITS < ARCH_BITS then
-            ext_req_data(ARCH_BITS - 1 downto GLOB_PHYS_ADDR_BITS) <= (others => '0');
+          if GLOB_PHYS_ADDR_BITS < CFG_MEM_LINK_BITS then
+            ext_req_data(CFG_MEM_LINK_BITS - 1 downto GLOB_PHYS_ADDR_BITS) <= (others => '0');
             ext_req_data(GLOB_PHYS_ADDR_BITS - 1 downto 0) <= reg.haddr;
           end if;
-          if GLOB_PHYS_ADDR_BITS = ARCH_BITS then
+          if GLOB_PHYS_ADDR_BITS = CFG_MEM_LINK_BITS then
             ext_req_data  <= reg.haddr;
           end if;
           if ext_req_ready = '1' then
             reg.word_cnt  := reg.word_cnt + 1;
           end if;
 
-        elsif reg.word_cnt = WORDS_PER_LINE then
+        elsif reg.word_cnt = CFG_CACHE_LINE_SIZE / CFG_MEM_LINK_BITS then
 
-          ext_req_data <= reg.line(WORDS_PER_LINE*BITS_PER_WORD-1 downto (WORDS_PER_LINE-1)*BITS_PER_WORD);
+          ext_req_data <= reg.line(CFG_CACHE_LINE_SIZE-1 downto CFG_CACHE_LINE_SIZE - CFG_MEM_LINK_BITS);
           ext_req_valid <= '1';
           if ext_req_ready = '1' then
             reg.state     := idle;
@@ -1078,7 +1078,7 @@ begin  -- architecture rtl
 
         else
 
-          ext_req_data <= reg.line(reg.word_cnt*BITS_PER_WORD-1 downto (reg.word_cnt-1)*BITS_PER_WORD);
+          ext_req_data <= reg.line(reg.word_cnt*CFG_MEM_LINK_BITS-1 downto (reg.word_cnt-1)*CFG_MEM_LINK_BITS);
           ext_req_valid <= '1';
           if ext_req_ready = '1' then
             reg.word_cnt  := reg.word_cnt + 1;
@@ -1895,14 +1895,14 @@ begin  -- architecture rtl
           if reg.word_cnt = WORDS_PER_LINE - 1 then
 
             coherence_rsp_snd_data_in <=
-              PREAMBLE_TAIL & read_word(reg.line, reg.word_cnt);
+              PREAMBLE_TAIL & read_noc_word(reg.line, reg.word_cnt);
 
             reg.state := send_header;
 
           else
 
             coherence_rsp_snd_data_in <=
-              PREAMBLE_BODY & read_word(reg.line, reg.word_cnt);
+              PREAMBLE_BODY & read_noc_word(reg.line, reg.word_cnt);
 
             reg.word_cnt := reg.word_cnt + 1;
 
@@ -2045,9 +2045,7 @@ begin  -- architecture rtl
         end if;
 
         if reg.dma32 = '1' then
-          dma_snd_data_in <= preamble & read_word32(reg.line, reg.word_cnt, reg.dma32_cnt);
-        else
-          dma_snd_data_in <= preamble & read_word(reg.line, reg.word_cnt);
+          dma_snd_data_in <= preamble & read_noc_word(reg.line, reg.word_cnt);
         end if;
 
         if dma_snd_full = '0' then

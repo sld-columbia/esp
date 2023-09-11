@@ -89,6 +89,7 @@ package cachepackage is
   subtype hsize_t is std_logic_vector(HSIZE_WIDTH - 1 downto 0);
   subtype hprot_t is std_logic_vector(HPROT_WIDTH - 1 downto 0);
   subtype word_t is std_logic_vector(BITS_PER_WORD - 1 downto 0);
+  subtype noc_word_t is std_logic_vector(NOC_WIDTH - 1 downto 0);
   subtype dcs_t is std_logic_vector(DCS_BITS - 1 downto 0);
   subtype line_t is std_logic_vector(BITS_PER_LINE - 1 downto 0);
   subtype word_mask_t is std_logic_vector(WORDS_PER_LINE - 1 downto 0);
@@ -138,6 +139,9 @@ package cachepackage is
 
   function read_word (line : line_t; w_off : integer)
     return word_t;
+
+  function read_noc_word (line : line_t; w_off : integer)
+    return noc_word_t;
 
   function read_word32 (line : line_t; w_off : integer; w32_off : integer)
     return word_t;
@@ -371,11 +375,11 @@ package cachepackage is
       -- LLC->ext
       ext_req_ready              : in  std_ulogic;
       ext_req_valid              : out std_ulogic;
-      ext_req_data               : out std_logic_vector(ARCH_BITS - 1 downto 0);
+      ext_req_data               : out std_logic_vector(CFG_MEM_LINK_BITS - 1 downto 0);
       -- ext->LLC
       ext_rsp_ready              : out std_ulogic;
       ext_rsp_valid              : in  std_ulogic;
-      ext_rsp_data               : in  std_logic_vector(ARCH_BITS - 1 downto 0);
+      ext_rsp_data               : in  std_logic_vector(CFG_MEM_LINK_BITS- 1 downto 0);
       mon_cache                  : out monitor_cache_type
       );
   end component;
@@ -422,19 +426,31 @@ package body cachepackage is
   function read_word (line : line_t; w_off : integer) return word_t is
 
     variable word  : word_t;
-    
+
+  begin
+
+    word := line((w_off * NOC_WIDTH) + NOC_WIDTH - 1 downto w_off * NOC_WIDTH);
+
+    return word;
+
+  end function read_word;
+
+  function read_noc_word (line : line_t; w_off : integer) return word_t is
+
+    variable word  : word_t;
+
   begin
 
     word := line((w_off * BITS_PER_WORD) + BITS_PER_WORD - 1 downto w_off * BITS_PER_WORD);
 
     return word;
 
-  end function read_word;
-  
+  end function read_noc_word;
+
   function read_word32 (line : line_t; w_off : integer; w32_off : integer) return word_t is
 
     variable word  : word_t;
-    
+
   begin
 
     word := (others => '0');
