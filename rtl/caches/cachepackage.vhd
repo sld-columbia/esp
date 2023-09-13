@@ -429,19 +429,19 @@ package body cachepackage is
 
   begin
 
-    word := line((w_off * NOC_WIDTH) + NOC_WIDTH - 1 downto w_off * NOC_WIDTH);
+    word := line((w_off * BITS_PER_WORD) + BITS_PER_WORD - 1 downto w_off * BITS_PER_WORD);
 
     return word;
 
   end function read_word;
 
-  function read_noc_word (line : line_t; w_off : integer) return word_t is
+  function read_noc_word (line : line_t; w_off : integer) return noc_word_t is
 
-    variable word  : word_t;
+    variable word  : noc_word_t;
 
   begin
 
-    word := line((w_off * BITS_PER_WORD) + BITS_PER_WORD - 1 downto w_off * BITS_PER_WORD);
+    word := line((w_off * NOC_WIDTH) + NOC_WIDTH - 1 downto w_off * NOC_WIDTH);
 
     return word;
 

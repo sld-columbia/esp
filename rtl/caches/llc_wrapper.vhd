@@ -1211,13 +1211,13 @@ begin  -- architecture rtl
       -- RECEIVE DATA
       when rcv_data =>
         if coherence_req_empty = '0' then
-          if reg.word_cnt = WORDS_PER_LINE - 1 then
+          if reg.word_cnt = BITS_PER_LINE / NOC_WIDTH - 1 then
             if llc_req_in_ready = '1' then
               coherence_req_rdreq <= '1';
 
-              reg.line((BITS_PER_WORD * reg.word_cnt) + BITS_PER_WORD - 1 downto
-                       BITS_PER_WORD * reg.word_cnt)
-                := coherence_req_data_out(BITS_PER_WORD - 1 downto 0);
+              reg.line((NOC_WIDTH * reg.word_cnt) + NOC_WIDTH - 1 downto
+                       NOC_WIDTH * reg.word_cnt)
+                := coherence_req_data_out(NOC_WIDTH - 1 downto 0);
               reg.state := rcv_header;
 
               llc_req_in_valid        <= '1';
@@ -1232,9 +1232,9 @@ begin  -- architecture rtl
           else
             coherence_req_rdreq <= '1';
 
-            reg.line((BITS_PER_WORD * reg.word_cnt) + BITS_PER_WORD - 1 downto
-                     (BITS_PER_WORD * reg.word_cnt))
-              := coherence_req_data_out(BITS_PER_WORD - 1 downto 0);
+            reg.line((NOC_WIDTH * reg.word_cnt) + NOC_WIDTH - 1 downto
+                     (NOC_WIDTH * reg.word_cnt))
+              := coherence_req_data_out(NOC_WIDTH - 1 downto 0);
 
             reg.word_cnt := reg.word_cnt + 1;
           end if;
@@ -1379,23 +1379,23 @@ begin  -- architecture rtl
 
         if dma_rcv_empty = '0' then
 
-          if reg.word_cnt = WORDS_PER_LINE - 1 or dma_preamble = PREAMBLE_TAIL then
+          if reg.word_cnt = BITS_PER_LINE / NOC_WIDTH - 1 or dma_preamble = PREAMBLE_TAIL then
 
             if llc_dma_req_in_ready = '1' then
 
               dma_rcv_rdreq <= '1';
 
               if reg.dma32 = '1' then
-                reg.line((BITS_PER_WORD * reg.word_cnt) + (32 * reg.dma32_cnt) + 32 - 1 downto
-                         (BITS_PER_WORD * reg.word_cnt) + (32 * reg.dma32_cnt)) :=
+                reg.line((NOC_WIDTH * reg.word_cnt) + (32 * reg.dma32_cnt) + 32 - 1 downto
+                         (NOC_WIDTH * reg.word_cnt) + (32 * reg.dma32_cnt)) :=
                   dma_rcv_data_out(31 downto 0);
 
                 reg.dma32_cnt := (reg.dma32_cnt + 1) mod dma32_words;
 
               else
-                reg.line((BITS_PER_WORD * reg.word_cnt) + BITS_PER_WORD - 1 downto
-                         BITS_PER_WORD * reg.word_cnt) :=
-                  dma_rcv_data_out(BITS_PER_WORD - 1 downto 0);
+                reg.line((NOC_WIDTH * reg.word_cnt) + NOC_WIDTH - 1 downto
+                         NOC_WIDTH * reg.word_cnt) :=
+                  dma_rcv_data_out(NOC_WIDTH - 1 downto 0);
               end if;
 
               if reg.dma32_cnt = 0 or reg.dma32 = '0' or dma_preamble = PREAMBLE_TAIL then
@@ -1428,8 +1428,8 @@ begin  -- architecture rtl
             dma_rcv_rdreq <= '1';
 
             if reg.dma32 = '1' then
-              reg.line((BITS_PER_WORD * reg.word_cnt) + (32 * reg.dma32_cnt) + 32 - 1 downto
-                       (BITS_PER_WORD * reg.word_cnt) + (32 * reg.dma32_cnt)) :=
+              reg.line((NOC_WIDTH * reg.word_cnt) + (32 * reg.dma32_cnt) + 32 - 1 downto
+                       (NOC_WIDTH * reg.word_cnt) + (32 * reg.dma32_cnt)) :=
               dma_rcv_data_out(31 downto 0);
 
               reg.dma32_cnt := (reg.dma32_cnt + 1) mod dma32_words;
@@ -1439,9 +1439,9 @@ begin  -- architecture rtl
               end if;
 
             else
-              reg.line((BITS_PER_WORD * reg.word_cnt) + BITS_PER_WORD - 1 downto
-                       (BITS_PER_WORD * reg.word_cnt)) :=
-              dma_rcv_data_out(BITS_PER_WORD - 1 downto 0);
+              reg.line((NOC_WIDTH * reg.word_cnt) + NOC_WIDTH - 1 downto
+                       (NOC_WIDTH * reg.word_cnt)) :=
+              dma_rcv_data_out(NOC_WIDTH - 1 downto 0);
 
               reg.word_cnt := reg.word_cnt + 1;
             end if;
@@ -1577,14 +1577,14 @@ begin  -- architecture rtl
       -- RECEIVE DATA
       when rcv_data =>
         if coherence_rsp_rcv_empty = '0' then
-          if reg.word_cnt = WORDS_PER_LINE - 1 then
+          if reg.word_cnt = BITS_PER_LINE / NOC_WIDTH - 1 then
             if llc_rsp_in_ready = '1' then
 
               coherence_rsp_rcv_rdreq <= '1';
 
-              reg.line((BITS_PER_WORD * reg.word_cnt) + BITS_PER_WORD - 1 downto
-                       BITS_PER_WORD * reg.word_cnt)
-                := coherence_rsp_rcv_data_out(BITS_PER_WORD - 1 downto 0);
+              reg.line((NOC_WIDTH * reg.word_cnt) + NOC_WIDTH - 1 downto
+                       NOC_WIDTH * reg.word_cnt)
+                := coherence_rsp_rcv_data_out(NOC_WIDTH - 1 downto 0);
 
               reg.state := rcv_header;
 
@@ -1600,9 +1600,9 @@ begin  -- architecture rtl
 
             coherence_rsp_rcv_rdreq <= '1';
 
-            reg.line((BITS_PER_WORD * reg.word_cnt) + BITS_PER_WORD - 1 downto
-                     (BITS_PER_WORD * reg.word_cnt))
-              := coherence_rsp_rcv_data_out(BITS_PER_WORD - 1 downto 0);
+            reg.line((NOC_WIDTH * reg.word_cnt) + NOC_WIDTH - 1 downto
+                     (NOC_WIDTH * reg.word_cnt))
+              := coherence_rsp_rcv_data_out(NOC_WIDTH - 1 downto 0);
 
             reg.word_cnt := reg.word_cnt + 1;
           end if;
@@ -1714,17 +1714,17 @@ begin  -- architecture rtl
 
           coherence_fwd_wrreq <= '1';
 
-          if reg.word_cnt = WORDS_PER_LINE - 1 then
+          if reg.word_cnt = BITS_PER_LINE / NOC_WIDTH - 1 then
 
-            coherence_fwd_data_in <= PREAMBLE_TAIL & reg.line((BITS_PER_WORD * reg.word_cnt) + BITS_PER_WORD - 1 downto
-                                                              (BITS_PER_WORD * reg.word_cnt));
+            coherence_fwd_data_in <= PREAMBLE_TAIL & reg.line((NOC_WIDTH * reg.word_cnt) + NOC_WIDTH - 1 downto
+                                                              (NOC_WIDTH * reg.word_cnt));
 
             reg.state := send_header;
 
           else
 
-            coherence_fwd_data_in <= PREAMBLE_BODY & reg.line((BITS_PER_WORD * reg.word_cnt) + BITS_PER_WORD - 1 downto
-                                                              (BITS_PER_WORD * reg.word_cnt));
+            coherence_fwd_data_in <= PREAMBLE_BODY & reg.line((NOC_WIDTH * reg.word_cnt) + NOC_WIDTH - 1 downto
+                                                              (NOC_WIDTH * reg.word_cnt));
 
             reg.word_cnt := reg.word_cnt + 1;
 
@@ -1892,7 +1892,7 @@ begin  -- architecture rtl
 
           coherence_rsp_snd_wrreq <= '1';
 
-          if reg.word_cnt = WORDS_PER_LINE - 1 then
+          if reg.word_cnt = BITS_PER_LINE / NOC_WIDTH - 1 then
 
             coherence_rsp_snd_data_in <=
               PREAMBLE_TAIL & read_noc_word(reg.line, reg.word_cnt);
