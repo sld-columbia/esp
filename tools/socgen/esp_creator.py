@@ -264,10 +264,11 @@ class AdvancedFrame(Frame):
       Label(advanced_config_frame, text = "Dual external clocks (NoC and Tile)", fg="darkgreen").pack(side = TOP)
       Label(advanced_config_frame, text = "No multi DCO clocks (CS-GALS)", fg="red").pack(side = TOP)
       Label(advanced_config_frame, text = "No single DCO clock ", fg="red").pack(side = TOP)
-# End Maico edit
+
     Label(advanced_config_frame, text = "Has synchronizer").grid(row=4, column=2)
     Checkbutton(advanced_config_frame, text="", variable=soc.sync_en,
                 onvalue = 1, offvalue = 0, command=main_frame.update_noc_config).grid(row=4, column=1)
+# End Maico edit
 
 class EspCreator(Frame):
 

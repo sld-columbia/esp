@@ -42,6 +42,11 @@ then
   mkdir "$TECH_DIR_PATH/pad_wrappers"
 fi
 
+if [ ! -d "$TECH_DIR_PATH/dco_wrappers" ]
+then
+  mkdir "$TECH_DIR_PATH/dco_wrappers"
+fi
+
 if [ ! -d "$TECH_DIR_PATH/lib" ]
 then
   mkdir "$TECH_DIR_PATH/lib"
@@ -67,6 +72,10 @@ cd -
 
 cd ../../rtl/techmap/asic
 ln -sf $TECH_DIR_PATH/pad_wrappers pad
+cd -
+
+cd ../../rtl/techmap/asic
+ln -sf $TECH_DIR_PATH/dco_wrappers dco
 cd -
 
 cd ../../tech/$DIRTECH_NAME
@@ -108,6 +117,11 @@ then
   cp ../../socs/esp_asic_generic/pads_loc.vhd "$PROJ_DIR_PATH/"
 fi
 
+if [ ! -f "$PROJ_DIR_PATH/pads_loc.txt" ]
+then
+  cp ../../socs/esp_asic_generic/pads_loc.txt "$PROJ_DIR_PATH/"
+fi
+
 if [ ! -f "$PROJ_DIR_PATH/systest.c" ]
 then
   cp ../../socs/esp_asic_generic/systest.c "$PROJ_DIR_PATH/"
@@ -122,3 +136,9 @@ if [ ! -f "$PROJ_DIR_PATH/top.vhd" ]
 then
   cp ../../socs/esp_asic_generic/top.vhd "$PROJ_DIR_PATH/"
 fi
+
+if [ ! -f "$PROJ_DIR_PATH/vsim.tcl" ]
+then
+  cp ../../socs/esp_asic_generic/vsim.tcl "$PROJ_DIR_PATH/"
+fi
+
