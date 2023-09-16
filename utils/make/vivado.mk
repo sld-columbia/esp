@@ -119,8 +119,8 @@ endif
 		echo $(SPACES)"INFO including ZYNQ PS IP"; \
 		mkdir -p vivado/zynq; \
 		cp $(ESP_ROOT)/constraints/$(BOARD)/zynq.tcl ./vivado/zynq; \
-		echo "set argv [list $(NOC_WIDTH)]" >> $@; \
-		echo "set argv [list $(NOC_WIDTH)]" >> $@; \
+		echo "set argv [list $(ARCH_BITS)]" >> $@; \
+		echo "set argv [list $(ARCH_BITS)]" >> $@; \
 		echo "set argc 1" >> $@; \
 		echo "source ./zynq/zynq.tcl" >> $@; \
 		echo "unset argv" >> $@; \

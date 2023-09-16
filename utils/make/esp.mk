@@ -34,7 +34,7 @@ $(ESP_CFG_BUILD)/socmap.vhd: $(ESP_CFG_BUILD)/.esp_config $(GRLIB_CFG_BUILD)/grl
 	fi; \
 	echo ""; \
 	echo "Generating ESP configuration..."; \
-	LD_LIBRARY_PATH="" xvfb-run -a python3 $(ESP_ROOT)/tools/socgen/esp_creator_batch.py $(NOC_WIDTH) $(TECH_TYPE) $(TECHLIB) $(LINUX_MAC) $(LEON3_STACK) $(BOARD) $(EMU_TECH) $(EMU_FREQ)
+	LD_LIBRARY_PATH="" xvfb-run -a python3 $(ESP_ROOT)/tools/socgen/esp_creator_batch.py $(ARCH_BITS) $(TECH_TYPE) $(TECHLIB) $(LINUX_MAC) $(LEON3_STACK) $(BOARD) $(EMU_TECH) $(EMU_FREQ)
 
 $(ESP_CFG_BUILD)/esplink.h: $(ESP_CFG_BUILD)/socmap.vhd
 
@@ -62,7 +62,7 @@ esp-xconfig: $(ESP_CFG_BUILD) $(GRLIB_CFG_BUILD)/grlib_config.vhd
 	@echo ""
 	@echo "Running interactive ESP configuration..."
 	@cd $(ESP_CFG_BUILD); \
-	LD_LIBRARY_PATH="" python3 $(ESP_ROOT)/tools/socgen/esp_creator.py $(NOC_WIDTH) $(TECH_TYPE) $(TECHLIB) $(LINUX_MAC) $(LEON3_STACK) $(BOARD) $(EMU_TECH) $(EMU_FREQ)
+	LD_LIBRARY_PATH="" python3 $(ESP_ROOT)/tools/socgen/esp_creator.py $(ARCH_BITS) $(TECH_TYPE) $(TECHLIB) $(LINUX_MAC) $(LEON3_STACK) $(BOARD) $(EMU_TECH) $(EMU_FREQ)
 
 esp-config-clean:
 	$(QUIET_CLEAN)$(RM) \

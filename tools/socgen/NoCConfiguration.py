@@ -59,14 +59,16 @@ class Tile():
        self.label.config(bg="#78cbbb")
        self.point_label.pack(side=LEFT)
        self.vendor = soc.IPs.VENDOR[selection]
-       self.point_select.setitems(soc.IPs.POINTS[selection])
+       dma_width = str(soc.noc.noc_width.get())
+       display_points = [point for point in soc.IPs.POINTS[selection] if dma_width in point]
+       self.point_select.setitems(display_points)
        point = self.point.get()
-       for p in soc.IPs.POINTS[selection]:
+       for p in display_points:
          if point == p:
            self.point_select.setvalue(point)
            break;
          else:
-           self.point_select.setvalue(str(soc.IPs.POINTS[selection][0]))
+           self.point_select.setvalue(str(display_points[0]))
        self.point_select.pack(side=LEFT)
     else:
        self.label.config(bg='white')

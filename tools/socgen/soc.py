@@ -55,9 +55,9 @@ class Components():
         for item in dp_info:
           if re.match(r'dma[1-9]+', item, re.M|re.I):
             dp_dma_width = int(item.replace("dma", ""))
-            if dp_dma_width != DMA_WIDTH:
-              skip = True
-              break;
+            #if dp_dma_width != DMA_WIDTH:
+            #  skip = True
+            #  break;
         if skip:
           continue
         self.POINTS[acc.upper()].append(dp)
@@ -93,7 +93,7 @@ class SoC_Config():
   IP_ADDR = ""
   TECH = "virtex7"
   FPGA_BOARD = "xilinx-vc707-xc7vx485t"
-  DMA_WIDTH = 32
+  ARCH_BITS = 32
 
   def changed(self, *args): 
     if self.cache_impl.get() == "ESP RTL":
@@ -472,8 +472,8 @@ class SoC_Config():
   def set_IP(self):
     self.IP_ADDR = str(int('0x' + self.dsu_ip[:2], 16)) + "." + str(int('0x' + self.dsu_ip[2:4], 16)) + "." + str(int('0x' + self.dsu_ip[4:6], 16)) + "." + str(int('0x' + self.dsu_ip[6:], 16))
 
-  def __init__(self, DMA_WIDTH, TECH_TYPE, TECH, LINUX_MAC, LEON3_STACK, FPGA_BOARD, EMU_TECH, EMU_FREQ, temporary):
-    self.DMA_WIDTH = DMA_WIDTH
+  def __init__(self, ARCH_BITS, TECH_TYPE, TECH, LINUX_MAC, LEON3_STACK, FPGA_BOARD, EMU_TECH, EMU_FREQ, temporary):
+    self.ARCH_BITS = ARCH_BITS
     self.TECH_TYPE = TECH_TYPE
     self.TECH = TECH
     self.LINUX_MAC = LINUX_MAC
@@ -535,5 +535,5 @@ class SoC_Config():
     self.set_IP()
 
     # Discover components
-    self.IPs = Components(self.TECH, self.DMA_WIDTH, self.CPU_ARCH.get())
+    self.IPs = Components(self.TECH, self.noc.noc_width.get(), self.CPU_ARCH.get())
     self.update_list_of_ips()

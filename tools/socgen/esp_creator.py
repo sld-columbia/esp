@@ -25,10 +25,10 @@ from mmi64_gen import *
 from power_gen import *
 
 def print_usage():
-  print("Usage                    : ./esp_creator.py <dma_width> <tech_type> <tech> <linux_mac> <leon3_stack> <fpga_board> <emu_tech> <emu_freq>")
+  print("Usage                    : ./esp_creator.py <arch_bits> <tech_type> <tech> <linux_mac> <leon3_stack> <fpga_board> <emu_tech> <emu_freq>")
   print("")
   print("")
-  print("      <dma_width>        : Bit-width for the DMA channel (currently supporting 32 bits only)")
+  print("      <arch_bits>        : Word size for CPU architecture (32 for Leon3/Ibex, 64 for Ariane)")
   print("      <tech_type>        : Technology type (fpga or asic)")
   print("      <tech>             : Target technology (e.g. virtex7, virtexu, virtexup, ...)")
   print("      <linux_mac>        : MAC Address for Linux network interface")
@@ -329,10 +329,10 @@ class EspCreator(Frame):
 
   def update_noc_config(self, *args):
     if soc.CPU_ARCH.get() == "ariane":
-      self.soc.DMA_WIDTH = 64
+      self.soc.ARCH_BITS = 64
     else:
-      self.soc.DMA_WIDTH = 32
-    self.soc.IPs = Components(self.soc.TECH, self.soc.DMA_WIDTH, soc.CPU_ARCH.get())
+      self.soc.ARCH_BITS = 32
+    self.soc.IPs = Components(self.soc.TECH, self.noc.noc_width.get(), soc.CPU_ARCH.get())
     self.soc.update_list_of_ips()
     self.soc.changed()
     self.bottom_frame_noccfg.changed()
@@ -365,7 +365,7 @@ if len(sys.argv) != 9:
     print_usage()
     sys.exit(1)
 
-DMA_WIDTH = int(sys.argv[1])
+ARCH_BITS = int(sys.argv[1])
 TECH_TYPE = sys.argv[2]
 TECH = sys.argv[3]
 LINUX_MAC = sys.argv[4]
@@ -376,7 +376,7 @@ EMU_FREQ = sys.argv[8]
 
 root = Tk()
 root.title("ESP SoC Generator")
-soc = SoC_Config(DMA_WIDTH, TECH_TYPE, TECH, LINUX_MAC, LEON3_STACK, FPGA_BOARD, EMU_TECH, EMU_FREQ, True)
+soc = SoC_Config(ARCH_BITS, TECH_TYPE, TECH, LINUX_MAC, LEON3_STACK, FPGA_BOARD, EMU_TECH, EMU_FREQ, True)
 
 root.geometry("1024x768")
 w, h = root.winfo_screenwidth(), root.winfo_screenheight()
