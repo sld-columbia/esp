@@ -103,7 +103,7 @@ package allcaches is
       l2_rd_rsp_valid           : out std_ulogic;
       l2_rd_rsp_data_line       : out std_logic_vector(BITS_PER_LINE - 1 downto 0);
       l2_inval_valid            : out std_ulogic;
-      l2_inval_data_addr        : out std_logic_vector(ADDR_BITS - OFFSET_BITS - 1 downto 0);
+      l2_inval_data_addr        : out std_logic_vector(ADDR_BITS - 1 downto 0);
       l2_inval_data_hprot       : out std_logic_vector(HPROT_WIDTH - 1 downto 0);
       l2_req_out_valid          : out std_ulogic;
       l2_req_out_data_coh_msg   : out std_logic_vector(COH_MSG_TYPE_WIDTH - 2 - 1 downto 0);

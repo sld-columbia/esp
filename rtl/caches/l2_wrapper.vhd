@@ -125,7 +125,7 @@ architecture rtl of l2_wrapper is
   signal rd_rsp_data_line       : line_t;
   signal inval_ready            : std_ulogic;
   signal inval_valid            : std_ulogic;
-  signal inval_data_addr        : line_addr_t;
+  signal inval_data_addr        : addr_t;
   signal inval_data_hprot       : hprot_t;
   signal bresp_ready            : std_ulogic;
   signal bresp_valid            : std_ulogic;
@@ -314,16 +314,16 @@ architecture rtl of l2_wrapper is
   -- FIFO for invalidation addresses
   signal inv_fifo_rdreq        : std_ulogic;
   signal inv_fifo_wrreq        : std_ulogic;
-  signal inv_fifo_data_in      : std_logic_vector((ADDR_BITS - OFFSET_BITS) + HPROT_WIDTH - 1 downto 0);
+  signal inv_fifo_data_in      : std_logic_vector(ADDR_BITS + HPROT_WIDTH - 1 downto 0);
   signal inv_fifo_empty        : std_ulogic;
   signal inv_fifo_almost_empty : std_ulogic;
   signal inv_fifo_full         : std_ulogic;
-  signal inv_fifo_data_out     : std_logic_vector((ADDR_BITS - OFFSET_BITS) + HPROT_WIDTH - 1 downto 0);
+  signal inv_fifo_data_out     : std_logic_vector(ADDR_BITS + HPROT_WIDTH - 1 downto 0);
 
-  signal inv_fifo_data_in_addr  : line_addr_t;
+  signal inv_fifo_data_in_addr  : addr_t;
   signal inv_fifo_data_in_hprot : hprot_t;
 
-  signal inv_fifo_data_out_addr  : line_addr_t;
+  signal inv_fifo_data_out_addr  : addr_t;
   signal inv_fifo_data_out_hprot : hprot_t;
 
   -------------------------------------------------------------------------------
@@ -776,7 +776,7 @@ begin  -- architecture rtl of l2_wrapper
   Invalidate_fifo : fifo_custom
     generic map (
       depth => N_REQS + 12,             -- TODO: what size here?
-      width => ADDR_BITS - OFFSET_BITS + HPROT_WIDTH)
+      width => ADDR_BITS + HPROT_WIDTH)
     port map (
       clk          => clk,
       rst          => rst,
@@ -789,8 +789,8 @@ begin  -- architecture rtl of l2_wrapper
       data_out     => inv_fifo_data_out);
 
   inv_fifo_data_in        <= inv_fifo_data_in_hprot & inv_fifo_data_in_addr;
-  inv_fifo_data_out_hprot <= inv_fifo_data_out(ADDR_BITS - OFFSET_BITS + HPROT_WIDTH - 1 downto ADDR_BITS - OFFSET_BITS);
-  inv_fifo_data_out_addr  <= inv_fifo_data_out(ADDR_BITS - OFFSET_BITS - 1 downto 0);
+  inv_fifo_data_out_hprot <= inv_fifo_data_out(ADDR_BITS + HPROT_WIDTH - 1 downto ADDR_BITS);
+  inv_fifo_data_out_addr  <= inv_fifo_data_out(ADDR_BITS - 1 downto 0);
 
   ----------------------------------------------------------------------------
   -- Fence signal state
@@ -1466,8 +1466,7 @@ begin  -- architecture rtl of l2_wrapper
           ahbmo.hbusreq <= '1';
           ahbmo.hlock   <= '1';
           ahbmo.htrans  <= HTRANS_NONSEQ;
-          ahbmo.haddr(LINE_RANGE_HI downto LINE_RANGE_LO) <= inv_fifo_data_out_addr;
-          ahbmo.haddr(OFFSET_BITS - 1 downto 0) <= (others => '0');
+          ahbmo.haddr(LINE_RANGE_HI downto 0) <= inv_fifo_data_out_addr;
 
           if granted = '1' and ahbmi.hready = '1' then
             reg.state := store_req;
@@ -1482,8 +1481,7 @@ begin  -- architecture rtl of l2_wrapper
         ahbmo.hbusreq <= '1';
         ahbmo.hlock   <= '1';
         ahbmo.htrans  <= HTRANS_NONSEQ;
-        ahbmo.haddr(LINE_RANGE_HI downto LINE_RANGE_LO) <= inv_fifo_data_out_addr;
-        ahbmo.haddr(OFFSET_BITS - 1 downto 0) <= (others => '0');
+        ahbmo.haddr(LINE_RANGE_HI downto 0) <= inv_fifo_data_out_addr;
 
         if (granted = '1' and ahbmi.hready = '1') then
           reg.state := store_req;
@@ -1494,8 +1492,7 @@ begin  -- architecture rtl of l2_wrapper
         ahbmo.hbusreq <= '1';
         ahbmo.hlock   <= '1';
         ahbmo.htrans  <= HTRANS_NONSEQ;
-        ahbmo.haddr(LINE_RANGE_HI downto LINE_RANGE_LO)   <= inv_fifo_data_out_addr;
-        ahbmo.haddr(OFFSET_BITS - 1 downto 0) <= (others => '0');
+        ahbmo.haddr(LINE_RANGE_HI downto 0)   <= inv_fifo_data_out_addr;
 
         if (ahbmi.hready = '1') then
           inv_fifo_rdreq <= '1';
@@ -2858,7 +2855,7 @@ end process fsm_fwd_out;
   inv_fifo_data_in_hprot <= inval_data_hprot;
   inv_fifo_rdreq         <= ace_resp.ac.ready when inv_fifo_empty = '0' else '0';
 
-  ace_req.ac.addr  <= inv_fifo_data_out_addr & empty_offset;
+  ace_req.ac.addr  <= inv_fifo_data_out_addr;
   ace_req.ac.prot  <= (not inv_fifo_data_out_hprot(0)) & "01";
   ace_req.ac.snoop <= XSNOOP_MAKEINVALID;
   ace_req.ac.valid <= not inv_fifo_empty;
