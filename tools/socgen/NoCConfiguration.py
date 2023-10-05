@@ -645,7 +645,9 @@ class NoCFrame(Pmw.ScrolledFrame):
        (self.soc.llc_sets.get() < 8192 or self.soc.llc_ways.get() < 16 or tot_mem > 1) and \
        (self.soc.cache_line_size.get() >= self.noc.noc_width.get()) and \
        (self.soc.cache_line_size.get() >= self.soc.mem_link_width.get()) and \
-       (self.noc.noc_width.get() >= self.soc.mem_link_width.get()):
+       (self.noc.noc_width.get() >= self.soc.mem_link_width.get()) and \
+       ((self.soc.cache_en.get() == 1) or (self.noc.noc_width.get() == self.soc.ARCH_BITS)) and \
+       (self.noc.noc_width.get() >= self.soc.ARCH_BITS):
       # Spandex beta warning
       if self.soc.cache_spandex.get() != 0 and self.soc.cache_en.get() == 1:
         string += "***              Spandex support is still beta                 ***\n"
@@ -707,6 +709,10 @@ class NoCFrame(Pmw.ScrolledFrame):
         string += "Cache line size must be greater than or equal to mem link bitwidth\n"
       if (self.noc.noc_width.get() < self.soc.mem_link_width.get()):
         string += "NoC bitwdith must be greater than or equal to mem link bitwidth\n"
+      if (self.soc.cache_en.get() != 1) and (self.noc.noc_width.get() != self.soc.ARCH_BITS):
+        string += "Caches must be enabled to support a NoC width larger than the CPU architecture size\n"
+      if (self.noc.noc_width.get() < self.soc.ARCH_BITS):
+        string += "NoC width must be greater than or equal to the CPU architecture size\n"
 
     # Update message box
     self.message.insert(0.0, string)
