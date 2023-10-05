@@ -59,6 +59,7 @@ const char* const coherence_label[5] = {
 	"fully-coherent access",
 	0 };
 
+#define CACHELINE_SIZE (CACHELINE_WIDTH / 8)
 void *aligned_malloc(int size) {
 #ifndef __riscv
 	void *mem = malloc(size + CACHELINE_SIZE + sizeof(void*));

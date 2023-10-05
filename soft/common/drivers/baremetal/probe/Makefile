@@ -22,6 +22,7 @@ CFLAGS += -fno-common
 CFLAGS += -fno-builtin-printf
 CFLAGS += -nostdlib
 CFLAGS += -nostartfiles
+CFLAGS += -DCACHELINE_WIDTH=$(CACHELINE_WIDTH)
 LDFLAGS += -lgcc
 
 OBJS_DEP := syscalls.o uart.o fdt.o

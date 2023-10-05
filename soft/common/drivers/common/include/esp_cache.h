@@ -22,7 +22,6 @@
 #else
 #include <stdint.h>
 #define ASI_LEON_DFLUSH 0x11
-#define CACHELINE_SIZE 0x10
 #endif /* __KERNEL__ */
 
 
