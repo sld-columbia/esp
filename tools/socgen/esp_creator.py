@@ -117,7 +117,6 @@ class PeripheralFrame(Frame):
     Label(periph_config_frame, text = "UART ", fg="darkgreen").grid(row=1, column=1)
 
     # JTAG
-    #if soc.TECH == "gf12" or soc.TECH == "inferred" or soc.ESP_EMU_TECH != "none":
     if soc.TECH_TYPE == "asic" or soc.TECH == "inferred" or soc.ESP_EMU_TECH != "none":
       Label(periph_config_frame, text = "JTAG (test) :").grid(row=2, column=1)
       Checkbutton(periph_config_frame, text="", variable=soc.jtag_en,
@@ -130,7 +129,7 @@ class PeripheralFrame(Frame):
     #   eth_text = "Ethernet (use SGMII): "
     # else:
     #   eth_text = "Ethernet (no SGMII): "
-    #if soc.TECH == "gf12" or soc.TECH == "inferred" or soc.ESP_EMU_TECH != "none":
+
     if soc.TECH_TYPE == "asic" or soc.TECH == "inferred" or soc.ESP_EMU_TECH != "none":
         Label(periph_config_frame, text = "Ethernet :").grid(row=3, column=1)
         Checkbutton(periph_config_frame, text="", variable=soc.eth_en,
@@ -140,7 +139,6 @@ class PeripheralFrame(Frame):
 
     iolink_width_choices = [8, 16, 32]
 
-    #if soc.TECH == "gf12" or soc.TECH == "inferred" or soc.ESP_EMU_TECH != "none":
     if soc.TECH_TYPE == "asic" or soc.TECH == "inferred" or soc.ESP_EMU_TECH != "none":
         Label(periph_config_frame, text = "Custom IO Link:").grid(row=4, column=1)
         Checkbutton(periph_config_frame, text="", variable=soc.iolink_en,
@@ -235,7 +233,6 @@ class CpuFrame(Frame):
     Radiobutton(self, text = "Big physical area", variable = soc.transfers, value = 0).pack(side = TOP)
     Radiobutton(self, text = "Scatter/Gather  ", variable = soc.transfers, value = 1).pack(side = TOP)
 
-# Start Maico edit
 class AdvancedFrame(Frame):
 
   def __init__(self, soc, top_frame, main_frame):
@@ -259,16 +256,11 @@ class AdvancedFrame(Frame):
       Radiobutton(advanced_config_frame, text="", variable=soc.clk_str, value = 1, command=main_frame.update_noc_config).grid(row=2, column=1)
       Label(advanced_config_frame, text = "Single DCO").grid(row=3, column=2)
       Radiobutton(advanced_config_frame, text="", variable=soc.clk_str, value = 2, command=main_frame.update_noc_config).grid(row=3, column=1)
-      print("Setting value: " + str(soc.clk_str.get()))
     else:
       Label(advanced_config_frame, text = "Dual external clocks (NoC and Tile)", fg="darkgreen").pack(side = TOP)
       Label(advanced_config_frame, text = "No multi DCO clocks (CS-GALS)", fg="red").pack(side = TOP)
       Label(advanced_config_frame, text = "No single DCO clock ", fg="red").pack(side = TOP)
-
-    Label(advanced_config_frame, text = "Has synchronizer").grid(row=4, column=2)
-    Checkbutton(advanced_config_frame, text="", variable=soc.sync_en,
-                onvalue = 1, offvalue = 0, command=main_frame.update_noc_config).grid(row=4, column=1)
-# End Maico edit
+      soc.clk_str.set(0)
 
 class EspCreator(Frame):
 
@@ -330,10 +322,8 @@ class EspCreator(Frame):
     #.:: creating the peripherals frame
     self.peripheral_frame = PeripheralFrame(self.soc, self.top_frame, self)
     self.peripheral_frame.update_frame()
-    # Start Maico edit
     #.:: creating the advanced configuration frame
     self.advanced_config_frame = AdvancedFrame(self.soc, self.top_frame, self)
-    # End Maico Edit
 
     #noc frame
     self.bottom_frame_noccfg = NoCFrame(self.soc, self.bottom_frame) 
