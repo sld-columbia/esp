@@ -165,7 +165,9 @@ architecture rtl of noc2ahbmst is
     hwrite  : std_ulogic;
     hbusreq : std_ulogic;
     word_cnt : integer;
+    wide_noc_data : noc_flit_type;
   end record;
+
   constant reg_none : reg_type := (
     msg     => REQ_GETS_W,
     hprot   => "0011",
@@ -186,7 +188,9 @@ architecture rtl of noc2ahbmst is
     hburst  => HBURST_INCR,
     hwrite  => '0',
     hbusreq => '0',
-    word_cnt => 0);
+    word_cnt => 0,
+    wide_noc_data => (others => '0')
+  );
 
   signal r, rin : reg_type;
 
@@ -204,14 +208,16 @@ architecture rtl of noc2ahbmst is
   signal req_reg : noc_flit_type;
   signal rsp_reg : noc_flit_type;
 
-  attribute mark_debug : string;
-  -- attribute mark_debug of coherence_req_data_out : signal is "true";
-  -- attribute mark_debug of coherence_req_rdreq : signal is "true";
-  -- attribute mark_debug of coherence_rsp_snd_wrreq : signal is"true";
-  -- attribute mark_debug of coherence_rsp_snd_data_in : signal is"true";
-  -- attribute mark_debug of r : signal is"true";
-  -- attribute mark_debug of ahbmi : signal is"true";
-  -- attribute mark_debug of ahbmo : signal is"true";
+  --attribute mark_debug : string;
+  --attribute mark_debug of dma_rcv_data_out : signal is "true";
+  --attribute mark_debug of dma_rcv_rdreq : signal is "true";
+  --attribute mark_debug of dma_rcv_empty : signal is"true";
+  --attribute mark_debug of dma_snd_data_in : signal is "true";
+  --attribute mark_debug of dma_snd_wrreq : signal is "true";
+  --attribute mark_debug of dma_snd_full : signal is"true";
+  --attribute mark_debug of r : signal is"true";
+  --attribute mark_debug of ahbmi : signal is"true";
+  --attribute mark_debug of ahbmo : signal is"true";
 
 begin  -- rtl
 
@@ -310,7 +316,7 @@ begin  -- rtl
     variable reserved               : reserved_field_type;
     variable preamble, dma_preamble : noc_preamble_type;
     variable hwdata_be : std_logic_vector(ARCH_BITS - 1 downto 0);
-    variable wide_noc_data          : noc_flit_type;
+    variable word_rem               : integer;
   begin  -- process ahb_roundtrip
     -- Default ahbmo assignment
     v       := r;
@@ -338,6 +344,7 @@ begin  -- rtl
 
     case r.state is
       when receive_header =>
+        v.wide_noc_data := (others => '0');
         if narrow_coherence_req_empty = '0' then
           narrow_coherence_req_rdreq <= '1';
           -- Sample request info
@@ -506,7 +513,7 @@ begin  -- rtl
       when dma_rd_request =>
         v.hsize := target_dma_word_hsize;
         if dma_snd_atleast_4slots = '1' then
-          if ((r.count = 1) and (v.grant = '1')
+          if ((r.count = 1 and NOC_WIDTH = ARCH_BITS) and (v.grant = '1')
               and (v.ready = '1')) then
             -- Owning already address
             -- Single word transfer: no request
@@ -524,7 +531,7 @@ begin  -- rtl
             v.state   := dma_send_header;
           else
             -- Need to get ownership of the bus
-            if r.count = 1 then
+            if r.count = 1 and NOC_WIDTH = ARCH_BITS then
               v.hburst := HBURST_SINGLE;
             else
               v.hburst := HBURST_INCR;
@@ -598,11 +605,12 @@ begin  -- rtl
           -- however, non-coherent Ethernet DMA makes 32-bits bursts
           v.addr          := r.addr + target_dma_incr;
           v.count         := r.count - 1;
-          if r.count = 1 then
+          word_rem := r.count * NOC_WIDTH / ARCH_BITS + (NOC_WIDTH / ARCH_BITS - r.word_cnt);
+          if word_rem = 1 then
             v.hbusreq := '0';
             v.htrans  := HTRANS_IDLE;
           else
-            if r.count = 2 then
+            if word_rem = 2 then
               v.hbusreq := '0';
             end if;
             v.htrans := HTRANS_SEQ;
@@ -629,11 +637,11 @@ begin  -- rtl
           else
             -- Send data to noc
             narrow_coherence_rsp_snd_wrreq   <= '1';
-            wide_noc_data(NOC_FLIT_SIZE -1 downto NOC_FLIT_SIZE - PREAMBLE_WIDTH) := PREAMBLE_BODY;
+            v.wide_noc_data(NOC_FLIT_SIZE -1 downto NOC_FLIT_SIZE - PREAMBLE_WIDTH) := PREAMBLE_BODY;
             for i in 1 to NOC_WIDTH / ARCH_BITS loop
-                wide_noc_data(ARCH_BITS * i - 1 downto ARCH_BITS * (i -1)) := fix_endian(ahbmi.hrdata);
+                v.wide_noc_data(ARCH_BITS * i - 1 downto ARCH_BITS * (i -1)) := fix_endian(ahbmi.hrdata);
             end loop;
-            narrow_coherence_rsp_snd_data_in <= wide_noc_data;
+            narrow_coherence_rsp_snd_data_in <= v.wide_noc_data;
             -- Update address and control bus
             if r.hsize = HSIZE_WORD then
               -- EDCL burst
@@ -650,11 +658,11 @@ begin  -- rtl
               v.hbusreq := '0';
               v.htrans  := HTRANS_IDLE;
             elsif r.count = 0 then
-              wide_noc_data(NOC_FLIT_SIZE -1 downto NOC_FLIT_SIZE - PREAMBLE_WIDTH) := PREAMBLE_TAIL;
+              v.wide_noc_data(NOC_FLIT_SIZE -1 downto NOC_FLIT_SIZE - PREAMBLE_WIDTH) := PREAMBLE_TAIL;
               for i in 1 to NOC_WIDTH / ARCH_BITS loop
-                  wide_noc_data(ARCH_BITS * i - 1 downto ARCH_BITS * (i -1)) := fix_endian(ahbmi.hrdata);
+                  v.wide_noc_data(ARCH_BITS * i - 1 downto ARCH_BITS * (i -1)) := fix_endian(ahbmi.hrdata);
               end loop;
-              narrow_coherence_rsp_snd_data_in <= wide_noc_data;
+              narrow_coherence_rsp_snd_data_in <= v.wide_noc_data;
               v.state                   := receive_header;
             else
               v.htrans := HTRANS_SEQ;
@@ -665,9 +673,10 @@ begin  -- rtl
       when dma_send_data =>
         if (v.ready = '1') then
           -- Send data to noc
-          wide_noc_data(NOC_FLIT_SIZE -1 downto NOC_FLIT_SIZE - PREAMBLE_WIDTH) := PREAMBLE_BODY;
-          wide_noc_data(ARCH_BITS * (r.word_cnt + 1) - 1 downto ARCH_BITS * r.word_cnt) := fix_endian(ahbmi.hrdata);
-          dma_snd_data_in <= wide_noc_data;
+          v.wide_noc_data(NOC_FLIT_SIZE -1 downto NOC_FLIT_SIZE - PREAMBLE_WIDTH) := PREAMBLE_BODY;
+          v.wide_noc_data(ARCH_BITS * (r.word_cnt + 1) - 1 downto ARCH_BITS * r.word_cnt) := fix_endian(ahbmi.hrdata);
+          dma_snd_data_in <= v.wide_noc_data;
+          word_rem := r.count * NOC_WIDTH / ARCH_BITS + (NOC_WIDTH / ARCH_BITS - r.word_cnt - 1);
           v.word_cnt := r.word_cnt + 1;
           -- Accelerators work with data widht equal to the selected processor,
           -- however, non-coherent Ethernet DMA makes 32-bits bursts
@@ -676,26 +685,26 @@ begin  -- rtl
             v.word_cnt := 0;
             dma_snd_wrreq   <= '1';
             v.count     := r.count - 1;
-            if r.count = 2 then
-              v.hbusreq := '0';
-              v.htrans  := HTRANS_SEQ;
-            elsif r.count = 1 then
-              v.hbusreq := '0';
-              v.htrans  := HTRANS_IDLE;
-            elsif r.count = 0 then
-              wide_noc_data(NOC_FLIT_SIZE -1 downto NOC_FLIT_SIZE - PREAMBLE_WIDTH) := PREAMBLE_TAIL;
-              --for i in 1 to NOC_WIDTH / ARCH_BITS loop
-              --  wide_noc_data(ARCH_BITS * i - 1 downto ARCH_BITS * (i -1)) := fix_endian(ahbmi.hrdata);
-              --end loop;
-              dma_snd_data_in <= wide_noc_data;
-              v.state         := receive_header;
+          end if;
+          if word_rem = 2 then
+            v.hbusreq := '0';
+            v.htrans  := HTRANS_SEQ;
+          elsif word_rem = 1 then
+            v.hbusreq := '0';
+            v.htrans  := HTRANS_IDLE;
+          elsif word_rem = 0 then
+            v.wide_noc_data(NOC_FLIT_SIZE -1 downto NOC_FLIT_SIZE - PREAMBLE_WIDTH) := PREAMBLE_TAIL;
+            --for i in 1 to NOC_WIDTH / ARCH_BITS loop
+            --  wide_noc_data(ARCH_BITS * i - 1 downto ARCH_BITS * (i -1)) := fix_endian(ahbmi.hrdata);
+            --end loop;
+            dma_snd_data_in <= v.wide_noc_data;
+            v.state         := receive_header;
+          else
+            if dma_snd_exactly_3slots = '1' then
+              v.htrans := HTRANS_BUSY;
+              v.state  := dma_send_busy;
             else
-              if dma_snd_exactly_3slots = '1' then
-                v.htrans := HTRANS_BUSY;
-                v.state  := dma_send_busy;
-              else
-                v.htrans := HTRANS_SEQ;
-              end if;
+              v.htrans := HTRANS_SEQ;
             end if;
           end if;
         end if;
@@ -703,11 +712,11 @@ begin  -- rtl
       when dma_send_busy =>
         if (v.ready = '1') then
           dma_snd_wrreq   <= '1';
-          wide_noc_data(NOC_FLIT_SIZE -1 downto NOC_FLIT_SIZE - PREAMBLE_WIDTH) := PREAMBLE_BODY;
+          v.wide_noc_data(NOC_FLIT_SIZE -1 downto NOC_FLIT_SIZE - PREAMBLE_WIDTH) := PREAMBLE_BODY;
           for i in 1 to NOC_WIDTH / ARCH_BITS loop
-            wide_noc_data(ARCH_BITS * i - 1 downto ARCH_BITS * (i -1)) := fix_endian(ahbmi.hrdata);
+            v.wide_noc_data(ARCH_BITS * i - 1 downto ARCH_BITS * (i -1)) := fix_endian(ahbmi.hrdata);
           end loop;
-          dma_snd_data_in <= wide_noc_data;
+          dma_snd_data_in <= v.wide_noc_data;
           v.count         := r.count - 1;
           v.state := dma_wait_busy;
         end if;
@@ -777,7 +786,11 @@ begin  -- rtl
             -- Prefetch
             dma_rcv_rdreq <= '1';
             v.flit        := dma_rcv_data_out;
-            v.hburst      := HBURST_SINGLE;
+            if (NOC_WIDTH = ARCH_BITS) then
+              v.hburst      := HBURST_SINGLE;
+            else
+              v.hburst      := HBURST_INCR;
+            end if;
             v.htrans      := HTRANS_NONSEQ;
             v.hwrite      := '1';
             v.state       := write_last_data;
@@ -794,7 +807,7 @@ begin  -- rtl
             v.state       := dma_write_data;
           else
             -- Need to get ownership of the bus
-            if (dma_preamble = PREAMBLE_TAIL) then
+            if (dma_preamble = PREAMBLE_TAIL and NOC_WIDTH = ARCH_BITS) then
               v.hburst := HBURST_SINGLE;
             else
               v.hburst := HBURST_INCR;
