@@ -103,7 +103,7 @@ class Tile():
            self.has_pll.set(0)
          if self.has_clkbuf.get() == 1 :
            self.has_clkbuf.set(0)
-      if soc.IPs.ACCELERATORS.count(selection):
+      if soc.IPs.ACCELERATORS.count(selection) and soc.cache_en.get() == 1 and soc.noc.noc_width.get() == soc.ARCH_BITS:
         self.has_l2_selection.config(state=NORMAL)
       else:
         if soc.IPs.PROCESSORS.count(selection) and soc.cache_en.get() == 1:
@@ -473,11 +473,11 @@ class NoCFrame(Pmw.ScrolledFrame):
     Label(self.config_noc_frame, text="Cols: ").pack(side = LEFT)
     self.COLS = Entry(self.config_noc_frame, width=3)
     self.COLS.pack(side = LEFT)
-    Button(self.noc_config_frame, text = "Config", command=self.create_noc).pack(side=TOP)
 
     noc_width_choices = ["32", "64", "128", "256", "512", "1024"]
     Label(self.noc_config_frame, text = "NoC Plane Bandwidth: ", height=1).pack()
     OptionMenu(self.noc_config_frame, self.noc.noc_width, *noc_width_choices).pack()
+    Button(self.noc_config_frame, text = "Config", command=self.create_noc).pack(side=TOP)
 
     Label(self.noc_config_frame, height=1).pack()
     Checkbutton(self.noc_config_frame, text="Monitor DDR bandwidth", variable=self.noc.monitor_ddr, anchor=W, width=20).pack()
@@ -709,7 +709,7 @@ class NoCFrame(Pmw.ScrolledFrame):
         string += "Cache line size must be greater than or equal to mem link bitwidth\n"
       if (self.noc.noc_width.get() < self.soc.mem_link_width.get()):
         string += "NoC bitwdith must be greater than or equal to mem link bitwidth\n"
-      if (self.soc.cache_en.get() != 1) and (self.noc.noc_width.get() != self.soc.ARCH_BITS):
+      if (self.soc.cache_en.get() != 1) and (self.noc.noc_width.get() > self.soc.ARCH_BITS):
         string += "Caches must be enabled to support a NoC width larger than the CPU architecture size\n"
       if (self.noc.noc_width.get() < self.soc.ARCH_BITS):
         string += "NoC width must be greater than or equal to the CPU architecture size\n"
