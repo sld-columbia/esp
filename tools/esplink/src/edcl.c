@@ -156,8 +156,10 @@ static void handle_edcl_message(edcl_snd_t *snd, edcl_rcv_t *rcv)
 	int i = 0;
 #endif
 	int iter = 0;
-	u8 *buf_snd = malloc(BUFSIZE_MAX_SND * sizeof(u8));
-	u8 *buf_rcv = malloc(BUFSIZE_MAX_RCV * sizeof(u8));
+	// u8 *buf_snd = malloc(BUFSIZE_MAX_SND * sizeof(u8));
+	// u8 *buf_rcv = malloc(BUFSIZE_MAX_RCV * sizeof(u8));
+	u8 *buf_snd = calloc(BUFSIZE_MAX_SND, sizeof(u8));
+	u8 *buf_rcv = calloc(BUFSIZE_MAX_RCV, sizeof(u8));
 	socklen_t clen = sizeof(struct sockaddr_in);
 
 	// Prepare Ethernet packet payload
