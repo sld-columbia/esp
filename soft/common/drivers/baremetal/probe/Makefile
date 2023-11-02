@@ -22,7 +22,6 @@ CFLAGS += -fno-common
 CFLAGS += -fno-builtin-printf
 CFLAGS += -nostdlib
 CFLAGS += -nostartfiles
-CFLAGS += -DCACHELINE_WIDTH=$(CACHELINE_WIDTH)
 LDFLAGS += -lgcc
 
 OBJS_DEP := syscalls.o uart.o fdt.o
@@ -37,6 +36,7 @@ endif
 CFLAGS += -I../include
 CFLAGS += -I../../common/include
 CFLAGS += -I$(DESIGN_PATH)
+CFLAGS += -DCACHELINE_WIDTH=$(CACHELINE_WIDTH)
 LDFLAGS := -lm
 EXTRA_CFLAGS += -Wall -Werror
 CC := $(CROSS_COMPILE)gcc
