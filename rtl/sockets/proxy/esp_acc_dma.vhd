@@ -140,7 +140,11 @@ architecture rtl of esp_acc_dma is
   signal pconfig : apb_config_type;
   constant hprot : std_logic_vector(7 downto 0) := "00000011";
 
-  constant len_pad : std_logic_vector(GLOB_BYTE_OFFSET_BITS - 1 downto 0) := (others => '0');
+  constant DMA_OFFSET_BITS: integer := log2(NOC_WIDTH / 8);
+  constant len_pad : std_logic_vector(DMA_OFFSET_BITS - 1 downto 0) := (others => '0');
+  constant WORDS_PER_FLIT : integer := NOC_WIDTH / ARCH_BITS;
+  constant WPF_BITS : integer := ncpu_log(WORDS_PER_FLIT);
+  constant noc_word_pad : std_logic_vector(WPF_BITS - 1 downto 0) := (others => '0');
 
   -- Fix endianness
   function fix_endian (
@@ -234,7 +238,7 @@ architecture rtl of esp_acc_dma is
   -- Internal signals muxed to output queues depending on coherence configuration
   signal dma_rcv_rdreq_int    :  std_ulogic;
   signal dma_rcv_data_out_int :  noc_flit_type;
-  signal dma_rcv_data_out_tlb :  std_logic_vector(GLOB_PHYS_ADDR_BITS - 1 downto 0);
+  signal tlb_wr_data :  std_logic_vector(GLOB_PHYS_ADDR_BITS - 1 downto 0);
   signal dma_rcv_empty_int    :  std_ulogic;
   signal dma_snd_wrreq_int    :  std_ulogic;
   signal dma_snd_data_in_int  :  noc_flit_type;
@@ -242,8 +246,15 @@ architecture rtl of esp_acc_dma is
 
   -- DMA word count
   signal count                : std_logic_vector(31 downto 0);
+  signal tlb_count            : std_logic_vector(31 downto 0);
+  signal word_count           : std_logic_vector(31 downto 0);
   signal increment_count      : std_ulogic;
+  signal increment_tlb_count  : std_ulogic;
+  signal increment_word_count : std_ulogic;
   signal clear_count          : std_ulogic;
+  signal clear_tlb_count         : std_ulogic;
+  signal clear_word_count     : std_ulogic;
+  signal set_word_count     : std_ulogic;
   signal dma_tran_done        : std_ulogic;
   signal dma_tran_header_sent : std_ulogic;
   signal dma_tran_start       : std_ulogic;
@@ -269,7 +280,6 @@ architecture rtl of esp_acc_dma is
   signal acc_idle : std_ulogic;
   signal mon_dvfs_ctrl : monitor_dvfs_type;
 
-  signal dma_offset : std_logic_vector(NOC_WIDTH / ARCH_BITS - 1 downto 0);
 
   -----------------------------------------------------------------------------
   -- De-comment signals you wish to debug
@@ -353,7 +363,6 @@ begin  -- rtl
   -----------------------------------------------------------------------------
   -- TLB
   -----------------------------------------------------------------------------
-  dma_offset <= payload_address_r(W_OFF_RANGE_LO + (NOC_WIDTH / ARCH_BITS) - 1 downto W_OFF_RANGE_LO);
 
   tlb_gen: if tlb_entries /= 0 generate
     esp_acc_tlb_1 : esp_acc_tlb
@@ -381,22 +390,9 @@ begin  -- rtl
         tlb_valid            => tlb_valid,
         tlb_write            => tlb_write,
         tlb_wr_address       => tlb_wr_address,
-        tlb_datain           => dma_rcv_data_out_tlb,
+        tlb_datain           => tlb_wr_data,
         dma_address          => dma_address,
         dma_length           => dma_length);
-
-    dma_offset_select: process(payload_address_r, dma_rcv_data_out_int, coherence)
-      variable offset : integer;
-      variable base   : integer;
-    begin
-        offset := to_integer(unsigned(payload_address_r(W_OFF_RANGE_LO + ncpu_log(NOC_WIDTH / ARCH_BITS) - 1 downto W_OFF_RANGE_LO)));
-        base := offset * ARCH_BITS;
-        if coherence = ACC_COH_NONE or coherence = ACC_COH_FULL then
-            dma_rcv_data_out_tlb <= dma_rcv_data_out_int(GLOB_PHYS_ADDR_BITS - 1 downto 0);
-        else
-            dma_rcv_data_out_tlb <= dma_rcv_data_out_int(base + GLOB_PHYS_ADDR_BITS - 1 downto base);
-        end if;
-    end process dma_offset_select;
   end generate tlb_gen;
 
 
@@ -475,7 +471,9 @@ begin  -- rtl
     variable header_v : noc_flit_type;
     variable tmp : std_logic_vector(63 downto 0);
     variable address : addr_t;
+    variable offset : std_logic_vector(WPF_BITS - 1 downto 0);
     variable length : std_logic_vector(31 downto 0);
+    variable len_tmp : std_logic_vector(31 downto 0);
     variable mem_x, mem_y : local_yx;
     variable is_p2p : std_ulogic;
     variable p2p_src_x, p2p_src_y : local_yx;
@@ -483,6 +481,8 @@ begin  -- rtl
   begin  -- process make_packet
 
     is_p2p := '0';
+    len_tmp := (others => '0');
+    offset := (others => '0');
 
     if tlb_empty = '1' then
       -- fetch page table
@@ -493,7 +493,17 @@ begin  -- rtl
       end if;
       tmp(31 downto 0) := bankreg(PT_ADDRESS_REG);
       address := tmp(GLOB_PHYS_ADDR_BITS - 1 downto 0);
-      length  := bankreg(PT_NCHUNK_REG);
+      if coherence = ACC_COH_LLC or coherence = ACC_COH_RECALL then
+        offset := address(W_OFF_RANGE_LO + WPF_BITS - 1 downto W_OFF_RANGE_LO);
+      else
+        offset := (others => '0');
+      end if;
+      len_tmp := bankreg(PT_NCHUNK_REG) + offset - 1;
+      if WORDS_PER_FLIT = 1 then
+        length := 1 + len_tmp;
+      else
+        length := 1 + (noc_word_pad & len_tmp(31 downto WPF_BITS));
+      end if;
       if coherence = ACC_COH_LLC or coherence = ACC_COH_RECALL then
         msg_type := REQ_DMA_READ;
       else
@@ -502,7 +512,7 @@ begin  -- rtl
     elsif pending_dma_write = '1' then
       -- accelerator write burst
       address := dma_address;
-      length  := len_pad & dma_length(31 downto GLOB_BYTE_OFFSET_BITS);
+      length  := len_pad & dma_length(31 downto DMA_OFFSET_BITS);
       if bankreg(P2P_REG)(P2P_BIT_DST_IS_P2P) = '1' then
         msg_type := RSP_P2P;
         is_p2p := '1';
@@ -516,7 +526,7 @@ begin  -- rtl
     else
       -- accelerator read burst
       address := dma_address;
-      length  := len_pad & dma_length(31 downto GLOB_BYTE_OFFSET_BITS);
+      length  := len_pad & dma_length(31 downto DMA_OFFSET_BITS);
       if bankreg(P2P_REG)(P2P_BIT_SRC_IS_P2P) = '1' then
         msg_type := REQ_P2P;
         is_p2p := '1';
@@ -570,6 +580,7 @@ begin  -- rtl
   end process make_packet;
 
   process (clk, rst)
+    variable dma_offset : std_logic_vector(WPF_BITS - 1 downto 0);
   begin  -- process
     if rst = '0' then                   -- asynchronous reset (active low)
       header_r <= (others => '0');
@@ -578,6 +589,8 @@ begin  -- rtl
       count <= conv_std_logic_vector(1, 32);
       size_r <= HSIZE_WORD;
       p2p_src_index_r <= 0;
+      tlb_count <= (others => '0');
+      word_count <= (others => '0');
     elsif clk'event and clk = '1' then  -- rising clock edge
       if sample_flits = '1' then
         header_r <= header;
@@ -589,6 +602,23 @@ begin  -- rtl
       end if;
       if clear_count = '1' then
         count <= conv_std_logic_vector(1, 32);
+      end if;
+      if increment_tlb_count = '1' then
+        tlb_count <= tlb_count + 1;
+      end if;
+      if clear_tlb_count = '1' then
+        tlb_count <= (others => '0');
+      end if;
+      if increment_word_count = '1' then
+        word_count <= word_count + 1;
+      end if;
+      if clear_word_count = '1' then
+        word_count <= (others => '0');
+      end if;
+      if set_word_count = '1' then
+        dma_offset := payload_address(W_OFF_RANGE_LO + WPF_BITS - 1 downto W_OFF_RANGE_LO);
+        word_count <= (others => '0');
+        word_count(WPF_BITS - 1 downto 0) <= dma_offset;
       end if;
       if sample_rd_size = '1' then
         size_r <= rd_size;
@@ -636,7 +666,7 @@ begin  -- rtl
     end if;
   end process sample_acc_done;
 
-  dma_roundtrip: process (dma_state, rst, count, rd_request, bufdin_ready,
+  dma_roundtrip: process (dma_state, rst, count, word_count, tlb_count, rd_request, bufdin_ready,
                           wr_request, bufdout_valid, bufdout_data, bankreg,
                           pending_acc_done, dma_snd_full_int, dma_rcv_empty_int, dma_rcv_data_out_int,
                           header_r, payload_address_r, payload_length_r,
@@ -649,6 +679,7 @@ begin  -- rtl
     variable msg : noc_msg_type;
     variable len : std_logic_vector(31 downto 0);
     variable tlb_wr_address_next : std_logic_vector(31 downto 0);
+    variable word_count_int : integer;
   begin  -- process dma_roundtrip
 
     dma_next <= dma_state;
@@ -657,11 +688,19 @@ begin  -- rtl
     sample_wr_size <= '0';
     increment_count <= '0';
     clear_count <= '0';
+    increment_tlb_count <= '0';
+    increment_word_count <= '0';
+    clear_tlb_count <= '0';
+    clear_word_count <= '0';
+    set_word_count <= '0';
+    word_count_int := to_integer(unsigned(word_count));
+
     --TLB
-    tlb_wr_address_next := count - 1;
+    tlb_wr_address_next := tlb_count;
     tlb_wr_address <= tlb_wr_address_next(log2xx(tlb_entries) - 1 downto 0);
     tlb_write <= '0';
     tlb_valid <= '0';
+    tlb_wr_data <= (others => '0');
 
     -- Change DMA status
     status <= (others => '0');
@@ -723,6 +762,9 @@ begin  -- rtl
         clear_acc_done <= '1';
         if bankreg(CMD_REG)(CMD_BIT_START) = '1' and tlb_empty = '1' and scatter_gather /= 0 then
           sample_flits <= '1';
+          if coherence = ACC_COH_LLC or coherence = ACC_COH_RECALL then
+            set_word_count <= '1';
+          end if;
           if coherence /= ACC_COH_FULL then
             dma_next <= send_header;
           else
@@ -978,13 +1020,20 @@ begin  -- rtl
         burst <= '1';
         dma_rcv_delay <= dma_rcv_empty_int;       -- for DVFS TRAFFIC policy
         if dma_rcv_empty_int = '0' and tlb_empty = '1' and dvfs_transient = '0' then
-          dma_rcv_rdreq_int <= '1';
           tlb_write <= '1';
-          increment_count <= '1';
-          if preamble = PREAMBLE_TAIL then
-            clear_count <= '1';
-            tlb_valid <= '1';
-            dma_next <= idle;
+          increment_word_count <= '1';
+          increment_tlb_count <= '1';
+          tlb_wr_data <= dma_rcv_data_out_int(word_count_int * ARCH_BITS + GLOB_PHYS_ADDR_BITS - 1 downto word_count_int * ARCH_BITS);
+          if word_count_int = WORDS_PER_FLIT - 1 or tlb_count = bankreg(PT_NCHUNK_REG) - 1 then
+            dma_rcv_rdreq_int <= '1';
+            increment_count <= '1';
+            clear_word_count <= '1';
+            if preamble = PREAMBLE_TAIL and tlb_count = bankreg(PT_NCHUNK_REG) - 1 then
+              clear_count <= '1';
+              clear_tlb_count <= '1';
+              tlb_valid <= '1';
+              dma_next <= idle;
+            end if;
           end if;
         elsif dma_rcv_empty_int = '0' and dvfs_transient = '0' then
           bufdin_valid <= '1';
