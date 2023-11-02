@@ -1238,8 +1238,8 @@ begin
   end generate large_bus;
 
   std_bus: if ARCH_BITS = 32 generate
-    ahbm_rcv_data_out <= ahbs_rcv_data_out;
-    ahbs_snd_data_in  <= ahbm_snd_data_in;
+    ahbm_rcv_data_out <= narrow_to_large_flit(ahbs_rcv_data_out);
+    ahbs_snd_data_in  <= large_to_narrow_flit(ahbm_snd_data_in);
   end generate std_bus;
 
   -----------------------------------------------------------------------------
